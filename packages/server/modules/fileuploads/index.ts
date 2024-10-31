@@ -1,7 +1,6 @@
 /* istanbul ignore file */
 import { insertNewUploadAndNotifyFactory } from '@/modules/fileuploads/services/management'
 import request from 'request'
-import { streamWritePermissions } from '@/modules/shared/authz'
 import { authMiddlewareCreator } from '@/modules/shared/middleware'
 import { moduleLogger } from '@/logging/logging'
 import { listenForImportUpdatesFactory } from '@/modules/fileuploads/services/resultListener'
@@ -11,14 +10,22 @@ import {
 } from '@/modules/fileuploads/repositories/fileUploads'
 import { db } from '@/db/knex'
 import { publish } from '@/modules/shared/utils/subscriptions'
-import { getStreamBranchByName } from '@/modules/core/repositories/branches'
 import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
+import { streamWritePermissionsPipelineFactory } from '@/modules/shared/authz'
+import { getRolesFactory } from '@/modules/shared/repositories/roles'
+import { getAutomationProjectFactory } from '@/modules/automate/repositories/automations'
+import { getStreamBranchByNameFactory } from '@/modules/core/repositories/branches'
+import { getStreamFactory } from '@/modules/core/repositories/streams'
+import { addBranchCreatedActivityFactory } from '@/modules/activitystream/services/branchActivity'
+import { saveActivityFactory } from '@/modules/activitystream/repositories'
+import { getPort } from '@/modules/shared/helpers/envHelper'
 
 const insertNewUploadAndNotify = insertNewUploadAndNotifyFactory({
-  getStreamBranchByName,
+  getStreamBranchByName: getStreamBranchByNameFactory({ db }),
   saveUploadFile: saveUploadFileFactory({ db }),
   publish
 })
+const getStream = getStreamFactory({ db })
 
 const saveFileUploads = async ({
   userId,
@@ -60,7 +67,13 @@ export const init: SpeckleModule['init'] = async (app, isInitial) => {
 
   app.post(
     '/api/file/:fileType/:streamId/:branchName?',
-    authMiddlewareCreator(streamWritePermissions),
+    authMiddlewareCreator(
+      streamWritePermissionsPipelineFactory({
+        getRoles: getRolesFactory({ db }),
+        getStream,
+        getAutomationProject: getAutomationProjectFactory({ db })
+      })
+    ),
     async (req, res) => {
       const branchName = req.params.branchName || 'main'
       req.log = req.log.child({
@@ -69,8 +82,10 @@ export const init: SpeckleModule['init'] = async (app, isInitial) => {
         branchName
       })
       req.pipe(
+        //TODO refactor packages/server/modules/blobstorage/index.js to use the service pattern, and then refactor this to call the service directly from here without the http overhead
         request(
-          `${process.env.CANONICAL_URL}/api/stream/${req.params.streamId}/blob`,
+          // we call this same server on localhost (IPv4) to upload the blob and do not make an external call
+          `http://127.0.0.1:${getPort()}/api/stream/${req.params.streamId}/blob`,
           async (err, response, body) => {
             if (err) {
               res.log.error(err, 'Error while uploading blob.')
@@ -89,7 +104,9 @@ export const init: SpeckleModule['init'] = async (app, isInitial) => {
               res.log.error(
                 {
                   statusCode: response.statusCode,
-                  path: `${process.env.CANONICAL_URL}/api/stream/${req.params.streamId}/blob`
+                  path: `http://127.0.0.1:${getPort()}/api/stream/${
+                    req.params.streamId
+                  }/blob`
                 },
                 'Error while uploading file.'
               )
@@ -105,7 +122,11 @@ export const init: SpeckleModule['init'] = async (app, isInitial) => {
     const listenForImportUpdates = listenForImportUpdatesFactory({
       getFileInfo: getFileInfoFactory({ db }),
       publish,
-      getStreamBranchByName
+      getStreamBranchByName: getStreamBranchByNameFactory({ db }),
+      addBranchCreatedActivity: addBranchCreatedActivityFactory({
+        publish,
+        saveActivity: saveActivityFactory({ db })
+      })
     })
 
     listenForImportUpdates()

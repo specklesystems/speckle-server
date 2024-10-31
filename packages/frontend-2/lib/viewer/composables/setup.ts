@@ -66,6 +66,7 @@ import {
 import { useSynchronizedCookie } from '~~/lib/common/composables/reactiveCookie'
 import { buildManualPromise } from '@speckle/ui-components'
 import { PassReader } from '../extensions/PassReader'
+import { ViewModesKeys } from '../extensions/ViewModesKeys'
 
 export type LoadedModel = NonNullable<
   Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>
@@ -267,6 +268,10 @@ export type InjectableViewerState = Readonly<{
       enabled: Ref<boolean>
     }
     sectionBox: Ref<Nullable<Box3>>
+    sectionBoxContext: {
+      visible: Ref<boolean>
+      edited: Ref<boolean>
+    }
     highlightedObjectIds: Ref<string[]>
     lightConfig: Ref<SunLightConfiguration>
     explodeFactor: Ref<number>
@@ -333,6 +338,7 @@ function createViewerDataBuilder(params: { viewerDebug: boolean }) {
       verbose: !!(import.meta.client && params.viewerDebug)
     })
     viewer.createExtension(PassReader)
+    viewer.createExtension(ViewModesKeys)
     const initPromise = viewer.init()
 
     return {
@@ -988,6 +994,10 @@ function setupInterfaceState(
         isOrthoProjection
       },
       sectionBox: ref(null as Nullable<Box3>),
+      sectionBoxContext: {
+        visible: ref(false),
+        edited: ref(false)
+      },
       filters: {
         isolatedObjectIds,
         hiddenObjectIds,

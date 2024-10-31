@@ -2,12 +2,19 @@ import { db } from '@/db/knex'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
 import {
-  getStream,
-  getUserStreams,
-  getUserStreamsCount
+  getProjectCollaboratorsFactory,
+  getProjectFactory,
+  updateProjectFactory,
+  upsertProjectRoleFactory,
+  getRolesByUserIdFactory,
+  getStreamFactory,
+  deleteStreamFactory,
+  revokeStreamPermissionsFactory,
+  grantStreamPermissionsFactory,
+  legacyGetStreamsFactory,
+  getUserStreamsPageFactory,
+  getUserStreamsCountFactory
 } from '@/modules/core/repositories/streams'
-import { getUser, getUsers } from '@/modules/core/repositories/users'
-import { getStreams } from '@/modules/core/services/streams'
 import { InviteCreateValidationError } from '@/modules/serverinvites/errors'
 import {
   deleteAllResourceInvitesFactory,
@@ -35,20 +42,16 @@ import {
 import { createProjectInviteFactory } from '@/modules/serverinvites/services/projectInviteManagement'
 import { getInvitationTargetUsersFactory } from '@/modules/serverinvites/services/retrieval'
 import { authorizeResolver } from '@/modules/shared'
-import { withTransaction } from '@/modules/shared/helpers/dbHelper'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { WorkspaceInviteResourceType } from '@/modules/workspaces/domain/constants'
 import {
-  WorkspaceAdminError,
-  WorkspaceInvalidProjectError,
   WorkspaceInvalidRoleError,
   WorkspaceJoinNotAllowedError,
   WorkspaceNotFoundError,
   WorkspacesNotAuthorizedError,
   WorkspacesNotYetImplementedError
 } from '@/modules/workspaces/errors/workspace'
-import { isWorkspaceRole } from '@/modules/workspaces/helpers/roles'
 import {
   deleteWorkspaceFactory as repoDeleteWorkspaceFactory,
   deleteWorkspaceRoleFactory as repoDeleteWorkspaceRoleFactory,
@@ -68,7 +71,8 @@ import {
   countProjectsVersionsByWorkspaceIdFactory,
   countWorkspaceRoleWithOptionalProjectRoleFactory,
   getUserIdsWithRoleInWorkspaceFactory,
-  getWorkspaceRoleForUserFactory
+  getWorkspaceRoleForUserFactory,
+  getWorkspaceBySlugFactory
 } from '@/modules/workspaces/repositories/workspaces'
 import {
   buildWorkspaceInviteEmailContentsFactory,
@@ -85,12 +89,17 @@ import {
   createWorkspaceFactory,
   deleteWorkspaceFactory,
   deleteWorkspaceRoleFactory,
+  generateValidSlugFactory,
   updateWorkspaceFactory,
-  updateWorkspaceRoleFactory
+  updateWorkspaceRoleFactory,
+  validateSlugFactory
 } from '@/modules/workspaces/services/management'
 import {
   getWorkspaceProjectsFactory,
-  queryAllWorkspaceProjectsFactory
+  getWorkspaceRoleToDefaultProjectRoleMappingFactory,
+  moveProjectToWorkspaceFactory,
+  queryAllWorkspaceProjectsFactory,
+  updateWorkspaceProjectRoleFactory
 } from '@/modules/workspaces/services/projects'
 import {
   getDiscoverableWorkspacesForUserFactory,
@@ -99,7 +108,6 @@ import {
 } from '@/modules/workspaces/services/retrieval'
 import { Roles, WorkspaceRoles, removeNullOrUndefinedKeys } from '@speckle/shared'
 import { chunk } from 'lodash'
-import { deleteStream } from '@/modules/core/repositories/streams'
 import {
   findEmailsByUserIdFactory,
   findVerifiedEmailsByUserIdFactory,
@@ -119,12 +127,37 @@ import {
   deleteWorkspaceDomainFactory,
   isUserWorkspaceDomainPolicyCompliantFactory
 } from '@/modules/workspaces/services/domains'
-import { getServerInfo } from '@/modules/core/services/generic'
-import { updateStreamRoleAndNotify } from '@/modules/core/services/streams/management'
 import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
+import {
+  isWorkspaceRole,
+  parseDefaultProjectRole
+} from '@/modules/workspaces/domain/logic'
+import { saveActivityFactory } from '@/modules/activitystream/repositories'
+import {
+  addOrUpdateStreamCollaboratorFactory,
+  isStreamCollaboratorFactory,
+  removeStreamCollaboratorFactory,
+  validateStreamAccessFactory
+} from '@/modules/core/services/streams/access'
+import {
+  addStreamInviteAcceptedActivityFactory,
+  addStreamPermissionsAddedActivityFactory,
+  addStreamPermissionsRevokedActivityFactory
+} from '@/modules/activitystream/services/streamActivity'
+import { publish } from '@/modules/shared/utils/subscriptions'
+import { updateStreamRoleAndNotifyFactory } from '@/modules/core/services/streams/management'
+import { getUserFactory, getUsersFactory } from '@/modules/core/repositories/users'
+import { getServerInfoFactory } from '@/modules/core/repositories/server'
+import { commandFactory } from '@/modules/shared/command'
+import { withTransaction } from '@/modules/shared/helpers/dbHelper'
 
+const eventBus = getEventBus()
+const getServerInfo = getServerInfoFactory({ db })
+const getUser = getUserFactory({ db })
+const getUsers = getUsersFactory({ db })
+const getStream = getStreamFactory({ db })
 const requestNewEmailVerification = requestNewEmailVerificationFactory({
   findEmail: findEmailFactory({ db }),
   getUser,
@@ -144,7 +177,7 @@ const buildCollectAndValidateResourceTargets = () =>
 
 const buildCreateAndSendServerOrProjectInvite = () =>
   createAndSendInviteFactory({
-    findUserByTarget: findUserByTargetFactory(),
+    findUserByTarget: findUserByTargetFactory({ db }),
     insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
     collectAndValidateResourceTargets: buildCollectAndValidateResourceTargets(),
     buildInviteEmailContents: buildCoreInviteEmailContentsFactory({
@@ -154,12 +187,14 @@ const buildCreateAndSendServerOrProjectInvite = () =>
       getEventBus().emit({
         eventName,
         payload
-      })
+      }),
+    getUser,
+    getServerInfo
   })
 
 const buildCreateAndSendWorkspaceInvite = () =>
   createAndSendInviteFactory({
-    findUserByTarget: findUserByTargetFactory(),
+    findUserByTarget: findUserByTargetFactory({ db }),
     insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
     collectAndValidateResourceTargets: buildCollectAndValidateResourceTargets(),
     buildInviteEmailContents: buildWorkspaceInviteEmailContentsFactory({
@@ -170,8 +205,44 @@ const buildCreateAndSendWorkspaceInvite = () =>
       getEventBus().emit({
         eventName,
         payload
-      })
+      }),
+    getUser,
+    getServerInfo
   })
+const deleteStream = deleteStreamFactory({ db })
+const saveActivity = saveActivityFactory({ db })
+const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
+const isStreamCollaborator = isStreamCollaboratorFactory({
+  getStream
+})
+const removeStreamCollaborator = removeStreamCollaboratorFactory({
+  validateStreamAccess,
+  isStreamCollaborator,
+  revokeStreamPermissions: revokeStreamPermissionsFactory({ db }),
+  addStreamPermissionsRevokedActivity: addStreamPermissionsRevokedActivityFactory({
+    saveActivity,
+    publish
+  })
+})
+const updateStreamRoleAndNotify = updateStreamRoleAndNotifyFactory({
+  isStreamCollaborator,
+  addOrUpdateStreamCollaborator: addOrUpdateStreamCollaboratorFactory({
+    validateStreamAccess,
+    getUser,
+    grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+    addStreamInviteAcceptedActivity: addStreamInviteAcceptedActivityFactory({
+      saveActivity,
+      publish
+    }),
+    addStreamPermissionsAddedActivity: addStreamPermissionsAddedActivityFactory({
+      saveActivity,
+      publish
+    })
+  }),
+  removeStreamCollaborator
+})
+const getUserStreams = getUserStreamsPageFactory({ db })
+const getUserStreamsCount = getUserStreamsCountFactory({ db })
 
 const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
 
@@ -193,20 +264,49 @@ export = FF_WORKSPACES_MODULE_ENABLED
 
           return workspace
         },
+        workspaceBySlug: async (_parent, args, ctx) => {
+          const workspace = await getWorkspaceBySlugFactory({ db })({
+            workspaceSlug: args.slug
+          })
+
+          if (!workspace) {
+            throw new WorkspaceNotFoundError()
+          }
+          await authorizeResolver(
+            ctx.userId,
+            workspace.id,
+            Roles.Workspace.Guest,
+            ctx.resourceAccessRules
+          )
+
+          return workspace
+        },
         workspaceInvite: async (_parent, args, ctx) => {
           const getPendingInvite = getUserPendingWorkspaceInviteFactory({
             findInvite: findInviteFactory({
               db,
               filterQuery: workspaceInviteValidityFilter
             }),
-            getUser
+            getUser,
+            getWorkspaceBySlug: getWorkspaceBySlugFactory({ db })
           })
+
+          const useSlug = !!args.options?.useSlug
 
           return await getPendingInvite({
             userId: ctx.userId!,
             token: args.token,
-            workspaceId: args.workspaceId
+            ...(useSlug
+              ? { workspaceSlug: args.workspaceId }
+              : { workspaceId: args.workspaceId })
           })
+        },
+        validateWorkspaceSlug: async (_parent, args) => {
+          const validateSlug = validateSlugFactory({
+            getWorkspaceBySlug: getWorkspaceBySlugFactory({ db })
+          })
+          await validateSlug({ slug: args.slug })
+          return true
         }
       },
       Mutation: {
@@ -269,9 +369,15 @@ export = FF_WORKSPACES_MODULE_ENABLED
       },
       WorkspaceMutations: {
         create: async (_parent, args, context) => {
-          const { name, description, defaultLogoIndex, logo } = args.input
+          const { name, description, defaultLogoIndex, logo, slug } = args.input
 
           const createWorkspace = createWorkspaceFactory({
+            validateSlug: validateSlugFactory({
+              getWorkspaceBySlug: getWorkspaceBySlugFactory({ db })
+            }),
+            generateValidSlug: generateValidSlugFactory({
+              getWorkspaceBySlug: getWorkspaceBySlugFactory({ db })
+            }),
             upsertWorkspace: upsertWorkspaceFactory({ db }),
             upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
             emitWorkspaceEvent: getEventBus().emit
@@ -281,6 +387,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
             userId: context.userId!,
             workspaceInput: {
               name,
+              slug,
               description: description ?? null,
               logo: logo ?? null,
               defaultLogoIndex: defaultLogoIndex ?? 0
@@ -301,6 +408,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
           )
 
           // Delete workspace and associated resources (i.e. invites)
+          const getStreams = legacyGetStreamsFactory({ db })
           const deleteWorkspace = deleteWorkspaceFactory({
             deleteWorkspace: repoDeleteWorkspaceFactory({ db }),
             deleteProject: deleteStream,
@@ -323,6 +431,9 @@ export = FF_WORKSPACES_MODULE_ENABLED
           )
 
           const updateWorkspace = updateWorkspaceFactory({
+            validateSlug: validateSlugFactory({
+              getWorkspaceBySlug: getWorkspaceBySlugFactory({ db })
+            }),
             getWorkspace: getWorkspaceWithDomainsFactory({ db }),
             upsertWorkspace: upsertWorkspaceFactory({ db }),
             emitWorkspaceEvent: getEventBus().emit
@@ -330,7 +441,10 @@ export = FF_WORKSPACES_MODULE_ENABLED
 
           const workspace = await updateWorkspace({
             workspaceId,
-            workspaceInput
+            workspaceInput: {
+              ...workspaceInput,
+              defaultProjectRole: parseDefaultProjectRole(args.input.defaultProjectRole)
+            }
           })
 
           return workspace
@@ -346,36 +460,34 @@ export = FF_WORKSPACES_MODULE_ENABLED
           )
 
           if (!role) {
+            // this is currently not working with the command factory
+            // TODO: include the onWorkspaceRoleDeletedFactory listener service
             const trx = await db.transaction()
-
             const deleteWorkspaceRole = deleteWorkspaceRoleFactory({
               deleteWorkspaceRole: repoDeleteWorkspaceRoleFactory({ db: trx }),
               getWorkspaceRoles: getWorkspaceRolesFactory({ db: trx }),
               emitWorkspaceEvent: getEventBus().emit
             })
-
-            await withTransaction(deleteWorkspaceRole(args.input), trx)
+            await withTransaction(deleteWorkspaceRole({ workspaceId, userId }), trx)
           } else {
             if (!isWorkspaceRole(role)) {
               throw new WorkspaceInvalidRoleError()
             }
-
-            const trx = await db.transaction()
-
-            const updateWorkspaceRole = updateWorkspaceRoleFactory({
-              upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db: trx }),
-              getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db: trx }),
-              findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({
-                db: trx
-              }),
-              getWorkspaceRoles: getWorkspaceRolesFactory({ db: trx }),
-              emitWorkspaceEvent: getEventBus().emit
+            const updateWorkspaceRole = commandFactory({
+              db,
+              eventBus,
+              operationFactory: ({ db, emit }) =>
+                updateWorkspaceRoleFactory({
+                  upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
+                  getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db }),
+                  findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({
+                    db
+                  }),
+                  getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
+                  emitWorkspaceEvent: emit
+                })
             })
-
-            await withTransaction(
-              updateWorkspaceRole({ userId, workspaceId, role }),
-              trx
-            )
+            await updateWorkspaceRole({ userId, workspaceId, role })
           }
 
           return await getWorkspaceFactory({ db })({ workspaceId })
@@ -419,6 +531,9 @@ export = FF_WORKSPACES_MODULE_ENABLED
               db
             }),
             updateWorkspace: updateWorkspaceFactory({
+              validateSlug: validateSlugFactory({
+                getWorkspaceBySlug: getWorkspaceBySlugFactory({ db })
+              }),
               getWorkspace: getWorkspaceWithDomainsFactory({ db }),
               upsertWorkspace: upsertWorkspaceFactory({ db }),
               emitWorkspaceEvent: getEventBus().emit
@@ -446,19 +561,18 @@ export = FF_WORKSPACES_MODULE_ENABLED
           })
         },
         leave: async (_parent, args, context) => {
+          // this is currently not working with the command factory
+          // TODO: include the onWorkspaceRoleDeletedFactory listener service
           const trx = await db.transaction()
-
           const deleteWorkspaceRole = deleteWorkspaceRoleFactory({
             deleteWorkspaceRole: repoDeleteWorkspaceRoleFactory({ db: trx }),
             getWorkspaceRoles: getWorkspaceRolesFactory({ db: trx }),
             emitWorkspaceEvent: getEventBus().emit
           })
-
           await withTransaction(
             deleteWorkspaceRole({ workspaceId: args.id, userId: context.userId! }),
             trx
           )
-
           return true
         },
         invites: () => ({}),
@@ -482,12 +596,14 @@ export = FF_WORKSPACES_MODULE_ENABLED
               getStream,
               getWorkspace: getWorkspaceFactory({ db })
             }),
-            findUserByTarget: findUserByTargetFactory(),
+            findUserByTarget: findUserByTargetFactory({ db }),
             findInvite: findInviteFactory({
               db,
               filterQuery: workspaceInviteValidityFilter
             }),
-            markInviteUpdated: markInviteUpdatedfactory({ db })
+            markInviteUpdated: markInviteUpdatedfactory({ db }),
+            getUser,
+            getServerInfo
           })
 
           await resendInviteEmail({
@@ -625,29 +741,63 @@ export = FF_WORKSPACES_MODULE_ENABLED
       },
       WorkspaceProjectMutations: {
         updateRole: async (_parent, args, context) => {
-          const { projectId, userId, role } = args.input
-
-          const { workspaceId } = (await getStream({ streamId: projectId })) ?? {}
-
-          if (!workspaceId) {
-            throw new WorkspaceInvalidProjectError()
-          }
-
-          const currentRole = await getWorkspaceRoleForUserFactory({ db })({
-            workspaceId,
-            userId
+          const updateWorkspaceProjectRole = updateWorkspaceProjectRoleFactory({
+            getStream,
+            updateStreamRoleAndNotify,
+            getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({ db })
           })
 
-          if (currentRole?.role === Roles.Workspace.Admin) {
-            // User is workspace admin and cannot have their project roles changed
-            throw new WorkspaceAdminError()
-          }
+          return await updateWorkspaceProjectRole({
+            role: args.input,
+            updater: {
+              userId: context.userId!,
+              resourceAccessRules: context.resourceAccessRules
+            }
+          })
+        },
+        moveToWorkspace: async (_parent, args, context) => {
+          const { projectId, workspaceId } = args
 
-          return await updateStreamRoleAndNotify(
-            { projectId, userId, role },
-            context.userId!,
+          await authorizeResolver(
+            context.userId,
+            projectId,
+            Roles.Stream.Owner,
             context.resourceAccessRules
           )
+          await authorizeResolver(
+            context.userId,
+            workspaceId,
+            Roles.Workspace.Admin,
+            context.resourceAccessRules
+          )
+
+          const moveProjectToWorkspace = commandFactory({
+            db,
+            eventBus,
+            operationFactory: ({ db, emit }) =>
+              moveProjectToWorkspaceFactory({
+                getProject: getProjectFactory({ db }),
+                updateProject: updateProjectFactory({ db }),
+                upsertProjectRole: upsertProjectRoleFactory({ db }),
+                getProjectCollaborators: getProjectCollaboratorsFactory({ db }),
+                getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
+                getWorkspaceRoleToDefaultProjectRoleMapping:
+                  getWorkspaceRoleToDefaultProjectRoleMappingFactory({
+                    getWorkspace: getWorkspaceFactory({ db })
+                  }),
+                updateWorkspaceRole: updateWorkspaceRoleFactory({
+                  getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
+                  getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db }),
+                  findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({
+                    db
+                  }),
+                  upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
+                  emitWorkspaceEvent: emit
+                })
+              })
+          })
+
+          return await moveProjectToWorkspace({ projectId, workspaceId })
         }
       },
       Workspace: {
@@ -738,6 +888,21 @@ export = FF_WORKSPACES_MODULE_ENABLED
         },
         role: async (parent) => {
           return parent.workspaceRole
+        },
+        projectRoles: async (parent) => {
+          const projectRoles = await getRolesByUserIdFactory({ db })({
+            userId: parent.id,
+            workspaceId: parent.workspaceId
+          })
+          return projectRoles.map(({ role, resourceId }) => ({
+            projectId: resourceId,
+            role
+          }))
+        }
+      },
+      ProjectRole: {
+        project: async (parent, _args, ctx) => {
+          return await ctx.loaders.streams.getStream.load(parent.projectId)
         }
       },
       PendingWorkspaceCollaborator: {
@@ -746,6 +911,12 @@ export = FF_WORKSPACES_MODULE_ENABLED
             parent.workspaceId
           )
           return workspace!.name
+        },
+        workspaceSlug: async (parent, _args, ctx) => {
+          const workspace = await ctx.loaders.workspaces!.getWorkspace.load(
+            parent.workspaceId
+          )
+          return workspace!.slug
         },
         invitedBy: async (parent, _args, ctx) => {
           const { invitedById } = parent

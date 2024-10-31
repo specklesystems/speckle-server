@@ -55,9 +55,29 @@
           "description": "High level flag fully toggles the workspaces module",
           "default": false
         },
+        "workspaceSsoEnabled": {
+          "type": "boolean",
+          "description": "High level flag fully toggles the workspaces dynamic sso",
+          "default": false
+        },
         "multipleEmailsModuleEnabled": {
           "type": "boolean",
           "description": "High level flag fully toggles multiple emails",
+          "default": false
+        },
+        "gatekeeperModuleEnabled": {
+          "type": "boolean",
+          "description": "High level flag that enables the gatekeeper module",
+          "default": false
+        },
+        "billingIntegrationEnabled": {
+          "type": "boolean",
+          "description": "High level flag that enables the billing integration",
+          "default": false
+        },
+        "workspacesMultiRegionEnabled": {
+          "type": "boolean",
+          "description": "Toggles whether multi-region is available within workspaces. workspaceModuleEnabled must also be enabled.",
           "default": false
         }
       }
@@ -483,6 +503,51 @@
         }
       }
     },
+    "openTelemetry": {
+      "type": "object",
+      "properties": {
+        "tracing": {
+          "type": "object",
+          "properties": {
+            "url": {
+              "type": "string",
+              "description": "Required. The URL to which the opentelemetry traces will be exported.",
+              "default": ""
+            },
+            "key": {
+              "type": "string",
+              "description": "Required. The key to be used when exporting opentelemetry traces.",
+              "default": ""
+            },
+            "value": {
+              "type": "string",
+              "description": "Required. The value to be used when exporting opentelemetry traces.",
+              "default": ""
+            }
+          }
+        }
+      }
+    },
+    "multiRegion": {
+      "type": "object",
+      "properties": {
+        "config": {
+          "type": "object",
+          "properties": {
+            "secretName": {
+              "type": "string",
+              "description": "If workspacesMultiRegionEnabled is enabled, the server will be deployed in a multi-region configuration based on the values in a secret. This allows the default secret name to be overridden.",
+              "default": "multi-region-config"
+            },
+            "secretKey": {
+              "type": "string",
+              "description": "If workspacesMultiRegionEnabled is enabled, the server will be deployed in a multi-region configuration based on the values in a secret. This allows the default secret key and filename to be overridden.",
+              "default": "multi-region-config.json"
+            }
+          }
+        }
+      }
+    },
     "server": {
       "type": "object",
       "properties": {
@@ -658,6 +723,156 @@
               "type": "string",
               "description": "The key within the Kubernetes Secret holding the Session secret as its value.",
               "default": ""
+            }
+          }
+        },
+        "billing": {
+          "type": "object",
+          "properties": {
+            "secretName": {
+              "type": "string",
+              "description": "The name of the Kubernetes Secret containing the Session secret.  This is a unique value (can be generated randomly). This is expected to be provided within the Kubernetes cluster as an opaque Kubernetes Secret. Ref: https://kubernetes.io/docs/concepts/configuration/secret/#opaque-secrets",
+              "default": ""
+            },
+            "stripeApiKey": {
+              "type": "object",
+              "properties": {
+                "secretKey": {
+                  "type": "string",
+                  "description": "The key within the Kubernetes Secret holding the stripeApiKey secret as its value.",
+                  "default": "stripeApiKey"
+                }
+              }
+            },
+            "stripeEndpointSigningKey": {
+              "type": "object",
+              "properties": {
+                "secretKey": {
+                  "type": "string",
+                  "description": "The key within the Kubernetes Secret holding the stripeEndpointSigningKey secret as its value.",
+                  "default": "stripeEndpointSigningKey"
+                }
+              }
+            },
+            "workspaceGuestSeatStripeProductId": {
+              "type": "object",
+              "properties": {
+                "secretKey": {
+                  "type": "string",
+                  "description": "The key within the Kubernetes Secret holding the workspaceGuestSeatStripeProductId secret as its value.",
+                  "default": "workspaceGuestSeatStripeProductId"
+                }
+              }
+            },
+            "workspaceMonthlyGuestSeatStripePriceId": {
+              "type": "object",
+              "properties": {
+                "secretKey": {
+                  "type": "string",
+                  "description": "The key within the Kubernetes Secret holding the workspaceMonthlyGuestSeatStripePriceId secret as its value.",
+                  "default": "workspaceMonthlyGuestSeatStripePriceId"
+                }
+              }
+            },
+            "workspaceYearlyGuestSeatStripePriceId": {
+              "type": "object",
+              "properties": {
+                "secretKey": {
+                  "type": "string",
+                  "description": "The key within the Kubernetes Secret holding the workspaceYearlyGuestSeatStripePriceId secret as its value.",
+                  "default": "workspaceYearlyGuestSeatStripePriceId"
+                }
+              }
+            },
+            "workspaceTeamSeatStripeProductId": {
+              "type": "object",
+              "properties": {
+                "secretKey": {
+                  "type": "string",
+                  "description": "The key within the Kubernetes Secret holding the workspaceTeamSeatStripeProductId secret as its value.",
+                  "default": "workspaceTeamSeatStripeProductId"
+                }
+              }
+            },
+            "workspaceMonthlyTeamSeatStripePriceId": {
+              "type": "object",
+              "properties": {
+                "secretKey": {
+                  "type": "string",
+                  "description": "The key within the Kubernetes Secret holding the workspaceMonthlyTeamSeatStripePriceId secret as its value.",
+                  "default": "workspaceMonthlyTeamSeatStripePriceId"
+                }
+              }
+            },
+            "workspaceYearlyTeamSeatStripePriceId": {
+              "type": "object",
+              "properties": {
+                "secretKey": {
+                  "type": "string",
+                  "description": "The key within the Kubernetes Secret holding the workspaceYearlyTeamSeatStripePriceId secret as its value.",
+                  "default": "workspaceYearlyTeamSeatStripePriceId"
+                }
+              }
+            },
+            "workspaceProSeatStripeProductId": {
+              "type": "object",
+              "properties": {
+                "secretKey": {
+                  "type": "string",
+                  "description": "The key within the Kubernetes Secret holding the workspaceProSeatStripeProductId secret as its value.",
+                  "default": "workspaceProSeatStripeProductId"
+                }
+              }
+            },
+            "workspaceMonthlyProSeatStripePriceId": {
+              "type": "object",
+              "properties": {
+                "secretKey": {
+                  "type": "string",
+                  "description": "The key within the Kubernetes Secret holding the workspaceMonthlyProSeatStripePriceId secret as its value.",
+                  "default": "workspaceMonthlyProSeatStripePriceId"
+                }
+              }
+            },
+            "workspaceYearlyProSeatStripePriceId": {
+              "type": "object",
+              "properties": {
+                "secretKey": {
+                  "type": "string",
+                  "description": "The key within the Kubernetes Secret holding the workspaceYearlyProSeatStripePriceId secret as its value.",
+                  "default": "workspaceYearlyProSeatStripePriceId"
+                }
+              }
+            },
+            "workspaceBusinessSeatStripeProductId": {
+              "type": "object",
+              "properties": {
+                "secretKey": {
+                  "type": "string",
+                  "description": "The key within the Kubernetes Secret holding the workspaceBusinessSeatStripeProductId secret as its value.",
+                  "default": "workspaceBusinessSeatStripeProductId"
+                }
+              }
+            },
+            "workspaceMonthlyBusinessSeatStripePriceId": {
+              "type": "object",
+              "properties": {
+                "secretKey": {
+                  "type": "string",
+                  "description": "The key within the Kubernetes Secret holding the workspaceMonthlyBusinessSeatStripePriceId secret as its value.",
+                  "default": "workspaceMonthlyBusinessSeatStripePriceId"
+                }
+              }
+            },
+            "workspaceYearlyBusinessSeatStripePriceId": {
+              "type": "object",
+              "properties": {
+                "secretKey": {
+                  "type": "string",
+                  "description": "The key within the Kubernetes Secret holding the workspaceYearlyBusinessSeatStripePriceId secret as its value.",
+                  "default": "workspaceYearlyBusinessSeatStripePriceId"
+                }
+              }
             }
           }
         },
@@ -1519,9 +1734,9 @@
           "description": "The Docker image to be used for the Speckle Frontend 2 component. If blank, defaults to speckle/speckle-frontend-2:{{ .Values.docker_image_tag }}. If provided, this value should be the full path including tag. The docker_image_tag value will be ignored.",
           "default": ""
         },
-        "ghostApiKey": {
+        "webflowApiToken": {
           "type": "string",
-          "description": "API Key for Ghost, which provides the blog content for the new web application frontend.",
+          "description": "API Key for Webflow, which provides the blog content for the new web application frontend.",
           "default": ""
         },
         "logClientApiToken": {

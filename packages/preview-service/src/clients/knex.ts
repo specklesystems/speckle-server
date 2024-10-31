@@ -1,3 +1,4 @@
+import { knexLogger as logger } from '@/observability/logging.js'
 import { getPostgresConnectionString, getPostgresMaxConnections } from '@/utils/env.js'
 import * as knex from 'knex'
 import { get } from 'lodash-es'
@@ -18,6 +19,11 @@ export const db = knexBuilder({
     max: getPostgresMaxConnections(),
     acquireTimeoutMillis: 16000, //allows for 3x creation attempts plus idle time between attempts
     createTimeoutMillis: 5000
+  },
+  log: {
+    warn: (message) => logger.warn(message),
+    error: (message) => logger.error(message),
+    debug: (message) => logger.debug(message)
   }
   // migrations are managed in the server package
 })

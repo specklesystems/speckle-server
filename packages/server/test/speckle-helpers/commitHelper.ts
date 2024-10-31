@@ -1,7 +1,58 @@
-import { createCommitByBranchName } from '@/modules/core/services/commits'
-import { createObject } from '@/modules/core/services/objects'
+import { db } from '@/db/knex'
+import { saveActivityFactory } from '@/modules/activitystream/repositories'
+import { addCommitCreatedActivityFactory } from '@/modules/activitystream/services/commitActivity'
+import { VersionsEmitter } from '@/modules/core/events/versionsEmitter'
+import {
+  getBranchByIdFactory,
+  getStreamBranchByNameFactory,
+  markCommitBranchUpdatedFactory
+} from '@/modules/core/repositories/branches'
+import {
+  createCommitFactory,
+  insertBranchCommitsFactory,
+  insertStreamCommitsFactory
+} from '@/modules/core/repositories/commits'
+import {
+  getObjectFactory,
+  storeClosuresIfNotFoundFactory,
+  storeSingleObjectIfNotFoundFactory
+} from '@/modules/core/repositories/objects'
+import { markCommitStreamUpdatedFactory } from '@/modules/core/repositories/streams'
+import {
+  createCommitByBranchIdFactory,
+  createCommitByBranchNameFactory
+} from '@/modules/core/services/commit/management'
+import { createObjectFactory } from '@/modules/core/services/objects/management'
+import { publish } from '@/modules/shared/utils/subscriptions'
 import { BasicTestUser } from '@/test/authHelper'
 import { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
+
+const createObject = createObjectFactory({
+  storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({ db }),
+  storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db })
+})
+const markCommitStreamUpdated = markCommitStreamUpdatedFactory({ db })
+const getObject = getObjectFactory({ db })
+const createCommitByBranchId = createCommitByBranchIdFactory({
+  createCommit: createCommitFactory({ db }),
+  getObject,
+  getBranchById: getBranchByIdFactory({ db }),
+  insertStreamCommits: insertStreamCommitsFactory({ db }),
+  insertBranchCommits: insertBranchCommitsFactory({ db }),
+  markCommitStreamUpdated,
+  markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
+  versionsEventEmitter: VersionsEmitter.emit,
+  addCommitCreatedActivity: addCommitCreatedActivityFactory({
+    saveActivity: saveActivityFactory({ db }),
+    publish
+  })
+})
+
+const createCommitByBranchName = createCommitByBranchNameFactory({
+  createCommitByBranchId,
+  getStreamBranchByName: getStreamBranchByNameFactory({ db }),
+  getBranchById: getBranchByIdFactory({ db })
+})
 
 export type BasicTestCommit = {
   /**
@@ -36,7 +87,10 @@ export type BasicTestCommit = {
 }
 
 export async function createTestObject(params: { projectId: string }) {
-  return await createObject({ streamId: params.projectId, object: { foo: 'bar' } })
+  return await createObject({
+    streamId: params.projectId,
+    object: { foo: 'bar' }
+  })
 }
 
 /**
@@ -46,9 +100,10 @@ async function ensureObjects(commits: BasicTestCommit[]) {
   const commitsWithoutObjects = commits.filter((c) => !c.objectId)
   await Promise.all(
     commitsWithoutObjects.map((c) =>
-      createObject({ streamId: c.streamId, object: { foo: 'bar' } }).then(
-        (oid) => (c.objectId = oid)
-      )
+      createObject({
+        streamId: c.streamId,
+        object: { foo: 'bar' }
+      }).then((oid) => (c.objectId = oid))
     )
   )
 }
@@ -79,7 +134,7 @@ export async function createTestCommits(
         authorId: c.authorId,
         totalChildrenCount: 0,
         parents: c.parents || []
-      }).then((cid) => (c.id = cid))
+      }).then((newCommit) => (c.id = newCommit.id))
     )
   )
 }

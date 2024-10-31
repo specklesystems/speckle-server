@@ -13,6 +13,7 @@ export type MixpanelClient = Merge<
     | 'people'
     | 'add_group'
     | 'get_group'
+    | 'alias'
   >,
   {
     people: Pick<OverridedMixpanel['people'], 'set' | 'set_once'>
@@ -33,5 +34,6 @@ export const fakeMixpanelClient = (): MixpanelClient => ({
     set_once: noop
   },
   add_group: noop,
-  get_group: noop as MixpanelClient['get_group']
+  get_group: noop as MixpanelClient['get_group'],
+  alias: noop
 })

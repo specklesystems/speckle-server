@@ -9,9 +9,10 @@
     <LayoutTable
       class="mt-6 md:mt-8"
       :columns="[
-        { id: 'name', header: 'Name', classes: 'col-span-4' },
-        { id: 'company', header: 'Company', classes: 'col-span-4' },
+        { id: 'name', header: 'Name', classes: 'col-span-3' },
+        { id: 'company', header: 'Company', classes: 'col-span-3' },
         { id: 'verified', header: 'Status', classes: 'col-span-3' },
+        { id: 'projects', header: 'Projects', classes: 'col-span-2' },
         { id: 'actions', header: '', classes: 'col-span-1 flex justify-end' }
       ]"
       :items="guests"
@@ -24,18 +25,29 @@
     >
       <template #name="{ item }">
         <div class="flex items-center gap-2">
-          <UserAvatar :user="item" />
-          <span class="truncate text-body-xs text-foreground">{{ item.name }}</span>
+          <UserAvatar hide-tooltip :user="item.user" />
+          <span class="truncate text-body-xs text-foreground">
+            {{ item.user.name }}
+          </span>
         </div>
       </template>
       <template #company="{ item }">
         <span class="text-body-xs text-foreground">
-          {{ item.company ? item.company : '-' }}
+          {{ item.user.company ? item.user.company : '-' }}
         </span>
       </template>
       <template #verified="{ item }">
         <span class="text-body-xs text-foreground-2">
-          {{ item.verified ? 'Verified' : 'Unverified' }}
+          {{ item.user.verified ? 'Verified' : 'Unverified' }}
+        </span>
+      </template>
+      <template #projects="{ item }">
+        <span class="text-body-xs text-foreground-2">
+          <CommonBadge color-classes="bg-foundation-2 text-foreground-2" rounded>
+            {{ item.projectRoles.length }} project{{
+              item.projectRoles.length !== 1 ? 's' : ''
+            }}
+          </CommonBadge>
         </span>
       </template>
       <template #actions="{ item }">
@@ -43,6 +55,7 @@
           v-if="isWorkspaceAdmin"
           v-model:open="showActionsMenu[item.id]"
           :items="actionItems"
+          size="lg"
           mount-menu-on-body
           :menu-position="HorizontalDirection.Left"
           @chosen="({ item: actionItem }) => onActionChosen(actionItem, item)"
@@ -54,25 +67,44 @@
             @click="toggleMenu(item.id)"
           />
         </LayoutMenu>
+        <span v-else />
       </template>
     </LayoutTable>
 
-    <!-- Delete User Dialog -->
     <SettingsSharedDeleteUserDialog
       v-model:open="showDeleteUserRoleDialog"
-      :name="userToModify?.name ?? ''"
+      title="Remove guest"
+      :name="userToModify?.user.name ?? ''"
       @remove-user="onRemoveUser"
+    />
+
+    <SettingsWorkspacesMembersGuestsPermissionsDialog
+      v-if="userToModify"
+      v-model:open="showGuestsPermissionsDialog"
+      :user="userToModify"
+      :workspace-id="workspaceId"
+    />
+
+    <SettingsSharedChangeRoleDialog
+      v-model:open="showChangeUserRoleDialog"
+      :workspace-domain-policy-compliant="
+        userToModify?.user.workspaceDomainPolicyCompliant
+      "
+      :current-role="Roles.Workspace.Guest"
+      @update-role="onUpdateRole"
     />
   </div>
 </template>
 
 <script setup lang="ts">
-import type { SettingsWorkspacesMembersMembersTable_WorkspaceFragment } from '~~/lib/common/generated/gql/graphql'
+import type {
+  SettingsWorkspacesMembersGuestsTable_WorkspaceFragment,
+  WorkspaceCollaborator
+} from '~/lib/common/generated/gql/graphql'
 import { graphql } from '~/lib/common/generated/gql'
-import { Roles } from '@speckle/shared'
+import { Roles, type WorkspaceRoles } from '@speckle/shared'
 import { settingsWorkspacesMembersSearchQuery } from '~~/lib/settings/graphql/queries'
 import { useQuery } from '@vue/apollo-composable'
-import { useMixpanel } from '~/lib/core/composables/mp'
 import { useWorkspaceUpdateRole } from '~/lib/workspaces/composables/management'
 import { HorizontalDirection } from '~~/lib/common/composables/window'
 import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
@@ -88,6 +120,13 @@ graphql(`
       name
       company
       verified
+    }
+    projectRoles {
+      role
+      project {
+        id
+        name
+      }
     }
   }
 `)
@@ -106,29 +145,35 @@ graphql(`
 `)
 
 enum ActionTypes {
-  RemoveMember = 'remove-member'
+  ChangeProjectPermissions = 'change-project-permissions',
+  RemoveMember = 'remove-member',
+  ChangeRole = 'change-role'
 }
 
-type UserItem = (typeof guests)['value'][0]
-
 const props = defineProps<{
-  workspace?: SettingsWorkspacesMembersMembersTable_WorkspaceFragment
+  workspace?: SettingsWorkspacesMembersGuestsTable_WorkspaceFragment
   workspaceId: string
 }>()
 
 const search = ref('')
 const showActionsMenu = ref<Record<string, boolean>>({})
 const showDeleteUserRoleDialog = ref(false)
-const userToModify = ref<UserItem>()
+const showGuestsPermissionsDialog = ref(false)
+const userIdToModify = ref<string | null>(null)
+const showChangeUserRoleDialog = ref(false)
 
-const mixpanel = useMixpanel()
+const userToModify = computed(
+  () => guests.value.find((guest) => guest.id === userIdToModify.value) || null
+)
+
 const updateUserRole = useWorkspaceUpdateRole()
 
 const { result: searchResult, loading: searchResultLoading } = useQuery(
   settingsWorkspacesMembersSearchQuery,
   () => ({
     filter: {
-      search: search.value
+      search: search.value,
+      roles: [Roles.Workspace.Guest]
     },
     workspaceId: props.workspaceId
   }),
@@ -142,49 +187,69 @@ const guests = computed(() => {
     ? searchResult.value?.workspace?.team.items
     : props.workspace?.team.items
 
-  return (guestArray || [])
-    .filter(({ role }) => role === Roles.Workspace.Guest)
-    .map(({ user, ...rest }) => ({
-      ...user,
-      ...rest
-    }))
+  return (guestArray || []).filter(
+    (item): item is WorkspaceCollaborator => item.role === Roles.Workspace.Guest
+  )
 })
 
 const isWorkspaceAdmin = computed(() => props.workspace?.role === Roles.Workspace.Admin)
 
-const actionItems: LayoutMenuItem[][] = [
-  [{ title: 'Remove member', id: ActionTypes.RemoveMember }]
-]
+const actionItems = computed(() => {
+  const items: LayoutMenuItem[][] = [
+    [{ title: 'Remove guest...', id: ActionTypes.RemoveMember }]
+  ]
 
-const onActionChosen = (actionItem: LayoutMenuItem, user: UserItem) => {
-  userToModify.value = user
+  if (isWorkspaceAdmin.value) {
+    items.unshift([{ title: 'Update role...', id: ActionTypes.ChangeRole }])
+  }
 
+  if (guests.value.find((guest) => guest.projectRoles.length)) {
+    items.unshift([
+      {
+        title: 'Change project permissions...',
+        id: ActionTypes.ChangeProjectPermissions
+      }
+    ])
+  }
+
+  return items
+})
+
+const onActionChosen = (actionItem: LayoutMenuItem, user: WorkspaceCollaborator) => {
+  userIdToModify.value = user.id
+
+  if (actionItem.id === ActionTypes.ChangeProjectPermissions) {
+    showGuestsPermissionsDialog.value = true
+  }
+  if (actionItem.id === ActionTypes.ChangeRole) {
+    showChangeUserRoleDialog.value = true
+  }
   if (actionItem.id === ActionTypes.RemoveMember) {
-    openDeleteUserRoleDialog(user)
+    showDeleteUserRoleDialog.value = true
   }
 }
 
-const openDeleteUserRoleDialog = (user: UserItem) => {
-  userToModify.value = user
-  showDeleteUserRoleDialog.value = true
-}
-
 const onRemoveUser = async () => {
-  if (!userToModify.value?.id) return
+  if (!userIdToModify.value) return
 
   await updateUserRole({
-    userId: userToModify.value.id,
+    userId: userIdToModify.value,
     role: null,
     workspaceId: props.workspaceId
-  })
-
-  mixpanel.track('Workspace User Removed', {
-    // eslint-disable-next-line camelcase
-    workspace_id: props.workspaceId
   })
 }
 
 const toggleMenu = (itemId: string) => {
   showActionsMenu.value[itemId] = !showActionsMenu.value[itemId]
+}
+
+const onUpdateRole = async (newRoleValue: WorkspaceRoles) => {
+  if (!userToModify.value || !newRoleValue) return
+
+  await updateUserRole({
+    userId: userToModify.value.id,
+    role: newRoleValue,
+    workspaceId: props.workspaceId
+  })
 }
 </script>

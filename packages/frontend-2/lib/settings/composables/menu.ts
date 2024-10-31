@@ -40,13 +40,13 @@ export const useSettingsMenu = () => {
     [SettingMenuKeys.Workspace.Billing]: {
       title: 'Billing',
       component: SettingsWorkspacesBilling,
-      permission: [Roles.Workspace.Admin]
+      permission: [Roles.Workspace.Admin, Roles.Workspace.Member]
     },
     [SettingMenuKeys.Workspace.Regions]: {
       title: 'Regions',
       disabled: true,
       tooltipText: 'Set up regions for custom data residency',
-      permission: [Roles.Workspace.Admin]
+      permission: [Roles.Workspace.Admin, Roles.Workspace.Member]
     }
   })
 

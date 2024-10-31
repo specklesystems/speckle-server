@@ -15,3 +15,5 @@ const { emit, listen } = initializeModuleEventEmitter<VersionEventsPayloads>({
 })
 
 export const VersionsEmitter = { emit, listen, events: VersionEvents }
+export type VersionsEventEmitter = (typeof VersionsEmitter)['emit']
+export type VersionsEventListener = (typeof VersionsEmitter)['listen']

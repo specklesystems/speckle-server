@@ -235,7 +235,7 @@ export class Viewer extends EventEmitter implements IViewer {
         })
         .catch((reason) => {
           Logger.error(reason)
-          Logger.error('Fallback to null environment!')
+          Logger.error('Environment failed to load!')
         })
     }
   }
@@ -308,6 +308,9 @@ export class Viewer extends EventEmitter implements IViewer {
    */
 
   public async loadObject(loader: Loader, zoomToObject = true) {
+    if (zoomToObject) {
+      this.getExtension(CameraController)?.default()
+    }
     if (++this.inProgressOperations === 1) this.emit(ViewerEvent.Busy, true)
 
     this.loaders[loader.resource] = loader

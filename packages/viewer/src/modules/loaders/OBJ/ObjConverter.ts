@@ -8,10 +8,10 @@ export type ObjConverterNodeDelegate =
   | null
 
 export class ObjConverter {
-  private lastAsyncPause: number = 0
-  private tree: WorldTree
+  protected lastAsyncPause: number = 0
+  protected tree: WorldTree
 
-  private readonly NodeConverterMapping: {
+  protected readonly NodeConverterMapping: {
     [name: string]: ObjConverterNodeDelegate
   } = {
     Group: this.groupToNode.bind(this),

@@ -97,3 +97,15 @@ export type ProcessFinalizedResourceInvite = (params: {
 export type GetInvitationTargetUsers = (params: {
   invites: ServerInviteRecord[]
 }) => Promise<{ [key: string]: UserWithOptionalRole }>
+
+export type ValidateServerInvite = (
+  email?: string,
+  token?: string
+) => Promise<ServerInviteRecord>
+
+export type FinalizeInvitedServerRegistration = (
+  email: string,
+  userId: string
+) => Promise<void>
+
+export type ResolveAuthRedirectPath = (invite?: ServerInviteRecord) => string

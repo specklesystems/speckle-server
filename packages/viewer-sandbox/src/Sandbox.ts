@@ -1,4 +1,19 @@
-import { Box3, SectionTool, SpeckleStandardMaterial, TreeNode } from '@speckle/viewer'
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+import {
+  ArcticViewPipeline,
+  DefaultLightConfiguration,
+  DefaultPipeline,
+  MRTEdgesPipeline,
+  MRTPenViewPipeline,
+  MRTShadedViewPipeline,
+  SectionTool,
+  SpeckleStandardMaterial,
+  TAAPipeline,
+  TreeNode
+} from '@speckle/viewer'
 import {
   CanonicalView,
   Viewer,
@@ -19,7 +34,6 @@ import {
 } from '@speckle/viewer'
 import { FolderApi, Pane } from 'tweakpane'
 import { DiffResult } from '@speckle/viewer'
-import type { PipelineOptions } from '@speckle/viewer/dist/modules/pipeline/Pipeline'
 import { Units } from '@speckle/viewer'
 import { SelectionExtension } from '@speckle/viewer'
 import { FilteringExtension } from '@speckle/viewer'
@@ -32,11 +46,9 @@ import Mild2 from '../assets/hdri/Mild2.png'
 import Sharp from '../assets/hdri/Sharp.png'
 import Bright from '../assets/hdri/Bright.png'
 
-import { Euler, Vector3 } from 'three'
+import { Euler, Vector3, Box3, Color } from 'three'
 import { GeometryType } from '@speckle/viewer'
 import { MeshBatch } from '@speckle/viewer'
-
-import { Color } from 'three'
 
 export default class Sandbox {
   private viewer: Viewer
@@ -51,7 +63,7 @@ export default class Sandbox {
   public ids: Array<string> = []
 
   public urlParams = {
-    url: 'https://latest.speckle.dev/streams/c43ac05d04/commits/ec724cfbeb'
+    url: 'https://latest.speckle.systems/streams/c43ac05d04/commits/ec724cfbeb'
   }
 
   public sceneParams = {
@@ -90,7 +102,7 @@ export default class Sandbox {
       minDistance: 0,
       maxDistance: 0.008
     }
-  } as PipelineOptions
+  }
 
   public lightParams: SunLightConfiguration = {
     enabled: true,
@@ -144,7 +156,6 @@ export default class Sandbox {
     // Mad HTML/CSS skills
     container.appendChild(this.pane['containerElem_'])
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     this.pane['containerElem_'].style = 'pointer-events:auto;'
 
     this.tabs = this.pane.addTab({
@@ -161,6 +172,7 @@ export default class Sandbox {
 
     viewer.on(ViewerEvent.LoadComplete, async (url: string) => {
       url
+      this.viewer.setLightConfiguration(DefaultLightConfiguration)
       this.addStreamControls(url)
       this.addViewControls()
       this.addBatches()
@@ -276,7 +288,6 @@ export default class Sandbox {
       this.objectControls.dispose()
     }
     this.objectControls = this.tabs.pages[0].addFolder({
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       title: `Object: ${node.model.id}`
     })
 
@@ -379,7 +390,6 @@ export default class Sandbox {
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
 
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         const file = e.target?.files[0] as Blob & { name: string }
 
         const reader = new FileReader()
@@ -414,7 +424,7 @@ export default class Sandbox {
     })
     toggleSectionBox.on('click', () => {
       let box = this.viewer.getRenderer().boxFromObjects(
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         this.selectionList.map((val) => val.hits[0].node.model.raw.id) as string[]
       )
       if (!box) {
@@ -422,6 +432,15 @@ export default class Sandbox {
       }
       this.viewer.getExtension(SectionTool).setBox(box)
       this.viewer.getExtension(SectionTool).toggle()
+    })
+
+    const toggleSectionBoxVisibility = this.tabs.pages[0].addButton({
+      title: 'Toggle Section Box Visibility'
+    })
+    toggleSectionBoxVisibility.on('click', () => {
+      this.viewer.getExtension(SectionTool).visible =
+        !this.viewer.getExtension(SectionTool).visible
+      this.viewer.requestRender()
     })
 
     const toggleProjection = this.tabs.pages[0].addButton({
@@ -436,7 +455,7 @@ export default class Sandbox {
     })
     zoomExtents.on('click', () => {
       this.viewer.getExtension(CameraController).setCameraView(
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         this.selectionList.map((val) => val.hits[0].node.model.id) as string[],
         true
       )
@@ -473,7 +492,10 @@ export default class Sandbox {
       title: 'Screenshot'
     })
     screenshot.on('click', async () => {
-      console.warn(await this.viewer.screenshot())
+      // console.warn(await this.viewer.screenshot())
+      this.viewer
+        .getExtension(FilteringExtension)
+        .hideObjects(['1facfaaf1d3682707edd9ac20ef34e62'])
     })
 
     const rotate = this.tabs.pages[0].addButton({
@@ -492,27 +514,80 @@ export default class Sandbox {
         await waitForAnimation(1000)
       }
     })
+    this.tabs.pages[0].addSeparator()
 
+    const pipeline = { output: 0 }
+    this.tabs.pages[0]
+      .addInput(pipeline, 'output', {
+        label: 'Pipeline',
+        options: {
+          DEFAULT: 0,
+          EDGED: 1,
+          SHADED: 2,
+          PEN: 3,
+          ARCTIC: 4,
+          TAA: 5
+        }
+      })
+      .on('change', (value) => {
+        switch (value.value) {
+          case 0:
+            this.viewer.getRenderer().pipeline = new DefaultPipeline(
+              this.viewer.getRenderer()
+            )
+            break
+          case 1:
+            this.viewer.getRenderer().pipeline = new MRTEdgesPipeline(
+              this.viewer.getRenderer()
+            )
+            break
+          case 2:
+            this.viewer.getRenderer().pipeline = new MRTShadedViewPipeline(
+              this.viewer.getRenderer()
+            )
+            break
+          case 3:
+            this.viewer.getRenderer().pipeline = new MRTPenViewPipeline(
+              this.viewer.getRenderer()
+            )
+            break
+          case 4:
+            this.viewer.getRenderer().pipeline = new ArcticViewPipeline(
+              this.viewer.getRenderer()
+            )
+            break
+          case 5:
+            this.viewer.getRenderer().pipeline = new TAAPipeline(
+              this.viewer.getRenderer()
+            )
+            break
+
+          default:
+            break
+        }
+        this.viewer.resize()
+        this.viewer.requestRender(UpdateFlags.RENDER_RESET)
+      })
+
+    this.tabs.pages[0].addSeparator()
     const colors = this.tabs.pages[0].addButton({
       title: `PM's Colors`
     })
     colors.on('click', async () => {
       const colorNodes = this.viewer.getWorldTree().findAll(
         (node: TreeNode) =>
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-return
           node.model.renderView &&
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
           node.model.renderView.renderData.colorMaterial &&
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
           node.model.renderView.geometryType === GeometryType.MESH
       )
       const colorMap: { [color: number]: Array<string> } = {}
       for (let k = 0; k < colorNodes.length; k++) {
         const node = colorNodes[k]
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+
         const color: number = node.model.renderView.renderData.colorMaterial.color
         if (!colorMap[color]) colorMap[color] = []
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
+
         colorMap[color].push(node.model.id)
       }
       const colorGroups = []
@@ -540,6 +615,8 @@ export default class Sandbox {
         }
       })
 
+    this.tabs.pages[0].addSeparator()
+
     const canonicalViewsFolder = this.tabs.pages[0].addFolder({
       title: 'Canonical Views',
       expanded: false
@@ -556,6 +633,122 @@ export default class Sandbox {
             .setCameraView(sides[k] as CanonicalView, true)
         })
     }
+    // const edgesParams = {
+    //   depthMultiplier: 1,
+    //   depthBias: 0.001,
+    //   normalMultiplier: 1,
+    //   normalBias: 1,
+    //   outlineDensity: 0.5,
+    //   outlineThickness: 1,
+    //   smaa: false,
+    //   taa: true
+    // }
+    // const edgesFolder = this.tabs.pages[0].addFolder({
+    //   title: 'Edges',
+    //   expanded: true
+    // })
+    // edgesFolder
+    //   .addInput(edgesParams, 'depthMultiplier', {
+    //     label: 'depthMultiplier',
+    //     min: 0,
+    //     max: 1,
+    //     step: 0.01
+    //   })
+    //   .on('change', (value) => {
+    //     this.viewer.getRenderer().pipeline.edgesPass.edgesMaterial.uniforms[
+    //       'uDepthMultiplier'
+    //     ].value = value.value
+    //     this.viewer.getRenderer().pipeline.edgesPass.edgesMaterial.needsUpdate = true
+    //     this.viewer.requestRender()
+    //   })
+    // edgesFolder
+    //   .addInput(edgesParams, 'depthBias', {
+    //     label: 'depthBias',
+    //     min: 0,
+    //     max: 1,
+    //     step: 0.0001
+    //   })
+    //   .on('change', (value) => {
+    //     this.viewer.getRenderer().pipeline.edgesPass.edgesMaterial.uniforms[
+    //       'uDepthBias'
+    //     ].value = value.value
+    //     this.viewer.getRenderer().pipeline.edgesPass.edgesMaterial.needsUpdate = true
+    //     this.viewer.requestRender()
+    //   })
+    // edgesFolder
+    //   .addInput(edgesParams, 'normalMultiplier', {
+    //     label: 'normalMultiplier',
+    //     min: 0,
+    //     max: 1,
+    //     step: 0.01
+    //   })
+    //   .on('change', (value) => {
+    //     this.viewer.getRenderer().pipeline.edgesPass.edgesMaterial.uniforms[
+    //       'uNormalMultiplier'
+    //     ].value = value.value
+    //     this.viewer.getRenderer().pipeline.edgesPass.edgesMaterial.needsUpdate = true
+    //     this.viewer.requestRender()
+    //   })
+    // edgesFolder
+    //   .addInput(edgesParams, 'normalBias', {
+    //     label: 'normalBias',
+    //     min: 0,
+    //     max: 50,
+    //     step: 0.1
+    //   })
+    //   .on('change', (value) => {
+    //     this.viewer.getRenderer().pipeline.edgesPass.edgesMaterial.uniforms[
+    //       'uNormalBias'
+    //     ].value = value.value
+    //     this.viewer.getRenderer().pipeline.edgesPass.edgesMaterial.needsUpdate = true
+    //     this.viewer.requestRender()
+    //   })
+    // edgesFolder
+    //   .addInput(edgesParams, 'outlineDensity', {
+    //     label: 'outlineDensity',
+    //     min: 0,
+    //     max: 1,
+    //     step: 0.01
+    //   })
+    //   .on('change', (value) => {
+    //     this.viewer.getRenderer().pipeline.edgesPass.edgesMaterial.uniforms[
+    //       'uOutlineDensity'
+    //     ].value = value.value
+    //     this.viewer.getRenderer().pipeline.edgesPass.edgesMaterial.needsUpdate = true
+    //     this.viewer.requestRender()
+    //   })
+    // edgesFolder
+    //   .addInput(edgesParams, 'outlineThickness', {
+    //     label: 'outlineThickness',
+    //     min: 0,
+    //     max: 10,
+    //     step: 0.1
+    //   })
+    //   .on('change', (value) => {
+    //     this.viewer.getRenderer().pipeline.edgesPass.edgesMaterial.uniforms[
+    //       'uOutlineThickness'
+    //     ].value = value.value
+    //     this.viewer.getRenderer().pipeline.edgesPass.edgesMaterial.needsUpdate = true
+    //     this.viewer.requestRender()
+    //   })
+    // edgesFolder
+    //   .addInput(edgesParams, 'smaa', {
+    //     label: 'SMAA'
+    //   })
+    //   .on('change', (value) => {
+    //     this.viewer.getRenderer().pipeline.smaaPass.enabled = edgesParams.smaa
+    //     this.viewer.getRenderer().pipeline.pipelineOutput = 8
+    //     this.viewer.requestRender()
+    //   })
+    // edgesFolder
+    //   .addInput(edgesParams, 'taa', {
+    //     label: 'TAA'
+    //   })
+    //   .on('change', (value) => {
+    //     this.viewer.getRenderer().pipeline.taaPass.enabled = edgesParams.taa
+    //     this.viewer.getRenderer().pipeline.pipelineOutput = 8
+    //     this.viewer.requestRender()
+    //   })
   }
 
   makeSceneUI() {
@@ -680,190 +873,191 @@ export default class Sandbox {
         this.viewer.requestRender(UpdateFlags.RENDER | UpdateFlags.SHADOWS)
       })
 
-    const pipelineFolder = this.tabs.pages[1].addFolder({
-      title: 'Pipeline',
-      expanded: true
-    })
-    pipelineFolder
-      .addInput(this.pipelineParams, 'pipelineOutput', {
-        options: {
-          DEPTH_RGBA: 0,
-          DEPTH: 1,
-          COLOR: 2,
-          GEOMETRY_NORMALS: 3,
-          RECONSTRUCTED_NORMALS: 4,
-          DYNAMIC_AO: 5,
-          DYNAMIC_AO_BLURED: 6,
-          PROGRESSIVE_AO: 7,
-          FINAL: 8
-        }
-      })
-      .on('change', () => {
-        this.viewer.getRenderer().pipelineOptions = this.pipelineParams
-        this.viewer.requestRender()
-      })
-
-    pipelineFolder
-      .addInput(this.pipelineParams, 'accumulationFrames', {
-        min: 1,
-        max: 128,
-        step: 1
-      })
-      .on('change', () => {
-        this.viewer.getRenderer().pipelineOptions = this.pipelineParams
-        this.viewer.requestRender()
-      })
-
-    const dynamicAoFolder = pipelineFolder.addFolder({
-      title: 'Dynamic AO',
-      expanded: false
-    })
-    dynamicAoFolder
-      .addInput(this.pipelineParams, 'dynamicAoEnabled')
-      .on('change', () => {
-        this.viewer.getRenderer().pipelineOptions = this.pipelineParams
-        this.viewer.requestRender()
-      })
-
-    dynamicAoFolder
-      .addInput(this.pipelineParams.dynamicAoParams, 'intensity', { min: 0, max: 5 })
-      .on('change', () => {
-        this.viewer.getRenderer().pipelineOptions = this.pipelineParams
-        this.viewer.requestRender()
-      })
-
-    dynamicAoFolder
-      .addInput(this.pipelineParams.dynamicAoParams, 'kernelRadius', {
-        min: 0,
-        max: 500
-      })
-      .on('change', () => {
-        this.viewer.getRenderer().pipelineOptions = this.pipelineParams
-        this.viewer.requestRender()
-      })
-
-    dynamicAoFolder
-      .addInput(this.pipelineParams.dynamicAoParams, 'bias', {
-        min: -1,
-        max: 1
-      })
-      .on('change', () => {
-        this.viewer.getRenderer().pipelineOptions = this.pipelineParams
-        this.viewer.requestRender()
-      })
-    dynamicAoFolder
-      .addInput(this.pipelineParams.dynamicAoParams, 'normalsType', {
-        options: {
-          DEFAULT: 0,
-          ADVANCED: 1,
-          ACCURATE: 2
-        }
-      })
-      .on('change', () => {
-        this.viewer.getRenderer().pipelineOptions = this.pipelineParams
-        this.viewer.requestRender()
-      })
-
-    dynamicAoFolder
-      .addInput(this.pipelineParams.dynamicAoParams, 'blurEnabled', {})
-      .on('change', () => {
-        this.viewer.getRenderer().pipelineOptions = this.pipelineParams
-        this.viewer.requestRender()
-      })
-
-    dynamicAoFolder
-      .addInput(this.pipelineParams.dynamicAoParams, 'blurRadius', {
-        min: 0,
-        max: 10
-      })
-      .on('change', () => {
-        this.viewer.getRenderer().pipelineOptions = this.pipelineParams
-        this.viewer.requestRender()
-      })
-
-    dynamicAoFolder
-      .addInput(this.pipelineParams.dynamicAoParams, 'blurDepthCutoff', {
-        min: 0,
-        max: 1,
-        step: 0.00001
-      })
-      .on('change', () => {
-        this.viewer.getRenderer().pipelineOptions = this.pipelineParams
-        this.viewer.requestRender()
-      })
-
-    const staticAoFolder = pipelineFolder.addFolder({
-      title: 'Static AO',
-      expanded: false
-    })
-    // staticAoFolder
-    //   .addInput(Sandbox.pipelineParams, 'staticAoEnabled', {})
+    // const pipelineFolder = this.tabs.pages[1].addFolder({
+    //   title: 'Pipeline',
+    //   expanded: true
+    // })
+    // pipelineFolder
+    //   .addInput(this.pipelineParams, 'pipelineOutput', {
+    //     options: {
+    //       DEPTH_RGBA: 0,
+    //       DEPTH: 1,
+    //       COLOR: 2,
+    //       GEOMETRY_NORMALS: 3,
+    //       RECONSTRUCTED_NORMALS: 4,
+    //       DYNAMIC_AO: 5,
+    //       DYNAMIC_AO_BLURED: 6,
+    //       PROGRESSIVE_AO: 7,
+    //       FINAL: 8,
+    //       EDGES: 9
+    //     }
+    //   })
     //   .on('change', () => {
-    //     this.viewer.getRenderer().pipelineOptions = Sandbox.pipelineParams
+    //     this.viewer.getRenderer().pipelineOptions = this.pipelineParams
     //     this.viewer.requestRender()
     //   })
-    staticAoFolder
-      .addInput(this.pipelineParams.staticAoParams, 'intensity', {
-        min: 0,
-        max: 5,
-        step: 0.01
-      })
-      .on('change', () => {
-        this.viewer.getRenderer().pipelineOptions = this.pipelineParams
-        this.viewer.requestRender()
-      })
-    // staticAoFolder
-    //   .addInput(Sandbox.pipelineParams.staticAoParams, 'minDistance', {
+
+    // pipelineFolder
+    //   .addInput(this.pipelineParams, 'accumulationFrames', {
+    //     min: 1,
+    //     max: 128,
+    //     step: 1
+    //   })
+    //   .on('change', () => {
+    //     this.viewer.getRenderer().pipelineOptions = this.pipelineParams
+    //     this.viewer.requestRender()
+    //   })
+
+    // const dynamicAoFolder = pipelineFolder.addFolder({
+    //   title: 'Dynamic AO',
+    //   expanded: false
+    // })
+    // dynamicAoFolder
+    //   .addInput(this.pipelineParams, 'dynamicAoEnabled')
+    //   .on('change', () => {
+    //     this.viewer.getRenderer().pipelineOptions = this.pipelineParams
+    //     this.viewer.requestRender()
+    //   })
+
+    // dynamicAoFolder
+    //   .addInput(this.pipelineParams.dynamicAoParams, 'intensity', { min: 0, max: 5 })
+    //   .on('change', () => {
+    //     this.viewer.getRenderer().pipelineOptions = this.pipelineParams
+    //     this.viewer.requestRender()
+    //   })
+
+    // dynamicAoFolder
+    //   .addInput(this.pipelineParams.dynamicAoParams, 'kernelRadius', {
     //     min: 0,
-    //     max: 100,
-    //     step: 0.000001
+    //     max: 500
     //   })
     //   .on('change', () => {
-    //     this.viewer.getRenderer().pipelineOptions = Sandbox.pipelineParams
+    //     this.viewer.getRenderer().pipelineOptions = this.pipelineParams
+    //     this.viewer.requestRender()
+    //   })
+
+    // dynamicAoFolder
+    //   .addInput(this.pipelineParams.dynamicAoParams, 'bias', {
+    //     min: -1,
+    //     max: 1
+    //   })
+    //   .on('change', () => {
+    //     this.viewer.getRenderer().pipelineOptions = this.pipelineParams
+    //     this.viewer.requestRender()
+    //   })
+    // dynamicAoFolder
+    //   .addInput(this.pipelineParams.dynamicAoParams, 'normalsType', {
+    //     options: {
+    //       DEFAULT: 0,
+    //       ADVANCED: 1,
+    //       ACCURATE: 2
+    //     }
+    //   })
+    //   .on('change', () => {
+    //     this.viewer.getRenderer().pipelineOptions = this.pipelineParams
+    //     this.viewer.requestRender()
+    //   })
+
+    // dynamicAoFolder
+    //   .addInput(this.pipelineParams.dynamicAoParams, 'blurEnabled', {})
+    //   .on('change', () => {
+    //     this.viewer.getRenderer().pipelineOptions = this.pipelineParams
+    //     this.viewer.requestRender()
+    //   })
+
+    // dynamicAoFolder
+    //   .addInput(this.pipelineParams.dynamicAoParams, 'blurRadius', {
+    //     min: 0,
+    //     max: 10
+    //   })
+    //   .on('change', () => {
+    //     this.viewer.getRenderer().pipelineOptions = this.pipelineParams
+    //     this.viewer.requestRender()
+    //   })
+
+    // dynamicAoFolder
+    //   .addInput(this.pipelineParams.dynamicAoParams, 'blurDepthCutoff', {
+    //     min: 0,
+    //     max: 1,
+    //     step: 0.00001
+    //   })
+    //   .on('change', () => {
+    //     this.viewer.getRenderer().pipelineOptions = this.pipelineParams
+    //     this.viewer.requestRender()
+    //   })
+
+    // const staticAoFolder = pipelineFolder.addFolder({
+    //   title: 'Static AO',
+    //   expanded: false
+    // })
+    // // staticAoFolder
+    // //   .addInput(Sandbox.pipelineParams, 'staticAoEnabled', {})
+    // //   .on('change', () => {
+    // //     this.viewer.getRenderer().pipelineOptions = Sandbox.pipelineParams
+    // //     this.viewer.requestRender()
+    // //   })
+    // staticAoFolder
+    //   .addInput(this.pipelineParams.staticAoParams, 'intensity', {
+    //     min: 0,
+    //     max: 5,
+    //     step: 0.01
+    //   })
+    //   .on('change', () => {
+    //     this.viewer.getRenderer().pipelineOptions = this.pipelineParams
+    //     this.viewer.requestRender()
+    //   })
+    // // staticAoFolder
+    // //   .addInput(Sandbox.pipelineParams.staticAoParams, 'minDistance', {
+    // //     min: 0,
+    // //     max: 100,
+    // //     step: 0.000001
+    // //   })
+    // //   .on('change', () => {
+    // //     this.viewer.getRenderer().pipelineOptions = Sandbox.pipelineParams
+    // //     this.viewer.requestRender()
+    // //   })
+
+    // // staticAoFolder
+    // //   .addInput(Sandbox.pipelineParams.staticAoParams, 'maxDistance', {
+    // //     min: 0,
+    // //     max: 100,
+    // //     step: 0.000001
+    // //   })
+    // //   .on('change', () => {
+    // //     this.viewer.getRenderer().pipelineOptions = Sandbox.pipelineParams
+    // //     this.viewer.requestRender()
+    // //   })
+    // staticAoFolder
+    //   .addInput(this.pipelineParams.staticAoParams, 'kernelRadius', {
+    //     min: 0,
+    //     max: 1000
+    //   })
+    //   .on('change', () => {
+    //     this.viewer.getRenderer().pipelineOptions = this.pipelineParams
     //     this.viewer.requestRender()
     //   })
 
     // staticAoFolder
-    //   .addInput(Sandbox.pipelineParams.staticAoParams, 'maxDistance', {
-    //     min: 0,
-    //     max: 100,
-    //     step: 0.000001
+    //   .addInput(this.pipelineParams.staticAoParams, 'bias', {
+    //     min: -1,
+    //     max: 1,
+    //     step: 0.0001
     //   })
     //   .on('change', () => {
-    //     this.viewer.getRenderer().pipelineOptions = Sandbox.pipelineParams
+    //     this.viewer.getRenderer().pipelineOptions = this.pipelineParams
     //     this.viewer.requestRender()
     //   })
-    staticAoFolder
-      .addInput(this.pipelineParams.staticAoParams, 'kernelRadius', {
-        min: 0,
-        max: 1000
-      })
-      .on('change', () => {
-        this.viewer.getRenderer().pipelineOptions = this.pipelineParams
-        this.viewer.requestRender()
-      })
 
-    staticAoFolder
-      .addInput(this.pipelineParams.staticAoParams, 'bias', {
-        min: -1,
-        max: 1,
-        step: 0.0001
-      })
-      .on('change', () => {
-        this.viewer.getRenderer().pipelineOptions = this.pipelineParams
-        this.viewer.requestRender()
-      })
-
-    staticAoFolder
-      .addInput(this.pipelineParams.staticAoParams, 'kernelSize', {
-        min: 1,
-        max: 128,
-        step: 1
-      })
-      .on('change', () => {
-        this.viewer.getRenderer().pipelineOptions = this.pipelineParams
-        this.viewer.requestRender()
-      })
+    // staticAoFolder
+    //   .addInput(this.pipelineParams.staticAoParams, 'kernelSize', {
+    //     min: 1,
+    //     max: 128,
+    //     step: 1
+    //   })
+    //   .on('change', () => {
+    //     this.viewer.getRenderer().pipelineOptions = this.pipelineParams
+    //     this.viewer.requestRender()
+    //   })
 
     const lightsFolder = this.tabs.pages[1].addFolder({
       title: 'Lights',
@@ -1170,47 +1364,47 @@ export default class Sandbox {
     diffButton.on('click', async () => {
       diffResult = await this.viewer.getExtension(DiffExtension).diff(
         //building
-        // 'https://latest.speckle.dev/streams/aea12cab71/objects/bcf37136dea9fe9397cdfd84012f616a',
-        // 'https://latest.speckle.dev/streams/aea12cab71/objects/94af0a6b4eaa318647180f8c230cb867',
+        // 'https://latest.speckle.systems/streams/aea12cab71/objects/bcf37136dea9fe9397cdfd84012f616a',
+        // 'https://latest.speckle.systems/streams/aea12cab71/objects/94af0a6b4eaa318647180f8c230cb867',
         // cubes
-        // 'https://latest.speckle.dev/streams/aea12cab71/objects/d2510c59c203b73473f8bbfe637e0552',
-        // 'https://latest.speckle.dev/streams/aea12cab71/objects/1c327da824fdb04629eb48675101d7b7',
+        // 'https://latest.speckle.systems/streams/aea12cab71/objects/d2510c59c203b73473f8bbfe637e0552',
+        // 'https://latest.speckle.systems/streams/aea12cab71/objects/1c327da824fdb04629eb48675101d7b7',
         // sketchup
-        // 'https://latest.speckle.dev/streams/aea12cab71/objects/06bed1819e6c61d9df7196d424ab1eec',
-        // 'https://latest.speckle.dev/streams/aea12cab71/objects/9026f1d6495789b9eab31b5028c9a8ef',
+        // 'https://latest.speckle.systems/streams/aea12cab71/objects/06bed1819e6c61d9df7196d424ab1eec',
+        // 'https://latest.speckle.systems/streams/aea12cab71/objects/9026f1d6495789b9eab31b5028c9a8ef',
         //latest
-        'https://latest.speckle.dev/streams/cdbe82b016/objects/c14d1a33fd68323193813ec215737472',
-        'https://latest.speckle.dev/streams/cdbe82b016/objects/16676fc95a9ead877f6a825d9e28cbe8',
+        'https://latest.speckle.systems/streams/cdbe82b016/objects/c14d1a33fd68323193813ec215737472',
+        'https://latest.speckle.systems/streams/cdbe82b016/objects/16676fc95a9ead877f6a825d9e28cbe8',
         //lines
-        // 'https://latest.speckle.dev/streams/92b620fb17/objects/3b42d6ef51d3110b4e33b9f8cdc9f357',
-        // 'https://latest.speckle.dev/streams/92b620fb17/objects/774384d431fb34d447d4696abbc4b816',
+        // 'https://latest.speckle.systems/streams/92b620fb17/objects/3b42d6ef51d3110b4e33b9f8cdc9f357',
+        // 'https://latest.speckle.systems/streams/92b620fb17/objects/774384d431fb34d447d4696abbc4b816',
         // points
-        // 'https://latest.speckle.dev/streams/92b620fb17/objects/7118603b197c00944f53be650ce721ec',
-        // 'https://latest.speckle.dev/streams/92b620fb17/objects/4ffcf75dc4a28ed52500df73d08058ee',
+        // 'https://latest.speckle.systems/streams/92b620fb17/objects/7118603b197c00944f53be650ce721ec',
+        // 'https://latest.speckle.systems/streams/92b620fb17/objects/4ffcf75dc4a28ed52500df73d08058ee',
         // randos
-        // 'https://latest.speckle.dev/streams/3ed8357f29/objects/d8786c21f277be67a0ea2cd43a1930df',
-        // 'https://latest.speckle.dev/streams/92b620fb17/objects/8247bbc53865b0e0cb5ee4e252e66216',
+        // 'https://latest.speckle.systems/streams/3ed8357f29/objects/d8786c21f277be67a0ea2cd43a1930df',
+        // 'https://latest.speckle.systems/streams/92b620fb17/objects/8247bbc53865b0e0cb5ee4e252e66216',
         // instances
-        // 'https://speckle.xyz/streams/be0f962efb/objects/37639741c363a123100eda8044f2fe3f',
-        // 'https://speckle.xyz/streams/be0f962efb/objects/746024a9d42eca632889ff9f7685d329',
+        // 'https://app.speckle.systems/streams/be0f962efb/objects/37639741c363a123100eda8044f2fe3f',
+        // 'https://app.speckle.systems/streams/be0f962efb/objects/746024a9d42eca632889ff9f7685d329',
         // blocks
-        // 'https://latest.speckle.dev/streams/92b620fb17/objects/a4e2fad01e69cd886ecbfedf221f5301',
-        // 'https://latest.speckle.dev/streams/92b620fb17/objects/a3c6c58ef9872b17125c9ab2b009e5cd',
+        // 'https://latest.speckle.systems/streams/92b620fb17/objects/a4e2fad01e69cd886ecbfedf221f5301',
+        // 'https://latest.speckle.systems/streams/92b620fb17/objects/a3c6c58ef9872b17125c9ab2b009e5cd',
         // instances & hosting
-        // 'https://speckle.xyz/streams/be0f962efb/objects/fb4f291a13f05f325a5575fddd4276d0',
-        // 'https://speckle.xyz/streams/be0f962efb/objects/21cf63a1496e366b34501429ce7ad2f5',
+        // 'https://app.speckle.systems/streams/be0f962efb/objects/fb4f291a13f05f325a5575fddd4276d0',
+        // 'https://app.speckle.systems/streams/be0f962efb/objects/21cf63a1496e366b34501429ce7ad2f5',
         // bug
-        // 'https://latest.speckle.dev/streams/92b620fb17/objects/91d69894f2ac7b3b2b6de4616d89e478',
-        // 'https://latest.speckle.dev/streams/92b620fb17/objects/ce55c0fb40e77fbfc894d4c27568f1f9',
+        // 'https://latest.speckle.systems/streams/92b620fb17/objects/91d69894f2ac7b3b2b6de4616d89e478',
+        // 'https://latest.speckle.systems/streams/92b620fb17/objects/ce55c0fb40e77fbfc894d4c27568f1f9',
         // bug
-        // 'https://latest.speckle.dev/streams/0c6ad366c4/objects/03f0a8bf0ed8064865eda87a865c7212',
-        // 'https://latest.speckle.dev/streams/0c6ad366c4/objects/33ef6b9b547dc9688eb40157b967eab9',
+        // 'https://latest.speckle.systems/streams/0c6ad366c4/objects/03f0a8bf0ed8064865eda87a865c7212',
+        // 'https://latest.speckle.systems/streams/0c6ad366c4/objects/33ef6b9b547dc9688eb40157b967eab9',
         // large
-        // 'https://speckle.xyz/streams/e6f9156405/objects/650f358d8aac50168d9e9226ef6f5cbc',
-        // 'https://latest.speckle.dev/streams/92b620fb17/objects/1154ca1d997ac631571db55f84cb703d',
+        // 'https://app.speckle.systems/streams/e6f9156405/objects/650f358d8aac50168d9e9226ef6f5cbc',
+        // 'https://latest.speckle.systems/streams/92b620fb17/objects/1154ca1d997ac631571db55f84cb703d',
         // cubes
-        // 'https://latest.speckle.dev/streams/0c6ad366c4/objects/03f0a8bf0ed8064865eda87a865c7212',
-        // 'https://latest.speckle.dev/streams/0c6ad366c4/objects/33ef6b9b547dc9688eb40157b967eab9',
+        // 'https://latest.speckle.systems/streams/0c6ad366c4/objects/03f0a8bf0ed8064865eda87a865c7212',
+        // 'https://latest.speckle.systems/streams/0c6ad366c4/objects/33ef6b9b547dc9688eb40157b967eab9',
         // DUI3
 
         VisualDiffMode.COLORED,
@@ -1334,9 +1528,7 @@ export default class Sandbox {
     const objects = this.viewer.getRenderer().allObjects
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     objects.traverse((obj: any) => {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
       if (obj.hasOwnProperty('boundsTreeSizeInBytes')) {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         size += obj['boundsTreeSizeInBytes']
         // console.log(obj['boundsTreeSizeInBytes'] / 1024 / 1024)
       }
@@ -1350,11 +1542,11 @@ export default class Sandbox {
       url.includes('latest') ? 'AuthTokenLatest' : 'AuthToken'
     ) as string
     const objUrls = await UrlHelper.getResourceUrls(url, authToken)
-    for (const url of objUrls) {
+    for (const objUrl of objUrls) {
       console.log(`Loading ${url}`)
       const loader = new SpeckleLoader(
         this.viewer.getWorldTree(),
-        url,
+        objUrl,
         authToken,
         true,
         undefined
@@ -1370,7 +1562,7 @@ export default class Sandbox {
         console.error(`Loader warning: ${arg.message}`)
       })
 
-      await this.viewer.loadObject(loader, true)
+      void this.viewer.loadObject(loader, true)
     }
     localStorage.setItem('last-load-url', url)
   }

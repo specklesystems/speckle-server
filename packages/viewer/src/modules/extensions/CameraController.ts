@@ -98,7 +98,7 @@ export const DefaultOrbitControlsOptions: Required<CameraControllerOptions> = {
   moveSpeed: 1,
   damperDecay: 30,
   enableLook: true,
-  nearPlaneCalculation: NearPlaneCalculation.ACCURATE
+  nearPlaneCalculation: NearPlaneCalculation.EMPIRIC
 }
 
 export class CameraController extends Extension implements SpeckleCamera {
@@ -199,9 +199,6 @@ export class CameraController extends Extension implements SpeckleCamera {
       this._options
     )
     orbitControls.enabled = true
-    orbitControls.up = new Vector3(0, 0, 1)
-    orbitControls.setOrbit(2.356, 0.955, 0)
-    orbitControls.jumpToGoal()
 
     this.viewer.getRenderer().speckleCamera = this
 
@@ -209,6 +206,16 @@ export class CameraController extends Extension implements SpeckleCamera {
     this._controlsList.push(flyControls)
 
     this._activeControls = orbitControls
+
+    this.default()
+  }
+
+  public default() {
+    if (this._activeControls instanceof SmoothOrbitControls) {
+      this._activeControls.up = new Vector3(0, 0, 1)
+      this._activeControls.setOrbit(2.356, 0.955)
+      this._activeControls.jumpToGoal()
+    }
   }
 
   public on<T extends CameraEvent>(
@@ -512,8 +519,7 @@ export class CameraController extends Extension implements SpeckleCamera {
     this.zoomToBox(box, fit, transition)
   }
 
-  protected zoomToBox(box: Box3, fit = 1.2, _transition = true) {
-    _transition
+  protected zoomToBox(box: Box3, fit = 1.2, transition = true) {
     if (box.max.x === Infinity || box.max.x === -Infinity) {
       box = new Box3(new Vector3(-1, -1, -1), new Vector3(1, 1, 1))
     }
@@ -524,6 +530,10 @@ export class CameraController extends Extension implements SpeckleCamera {
     this._activeControls.fitToSphere(targetSphere)
 
     this.updateCameraPlanes(box, fit)
+
+    if (!transition) {
+      this._activeControls.jumpToGoal()
+    }
   }
 
   protected fitToRadius(radius: number) {

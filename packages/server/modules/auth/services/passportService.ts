@@ -8,6 +8,7 @@ import {
 import type { Handler } from 'express'
 import { Optional } from '@speckle/shared'
 import { get, isArray, isObjectLike, isString } from 'lodash'
+import { PassportAuthenticateHandlerBuilder } from '@/modules/auth/domain/operations'
 
 const resolveInfoMessage = (
   info?: Optional<string | Record<string, unknown> | Array<string | undefined>>
@@ -29,51 +30,50 @@ const resolveInfoMessage = (
 /**
  * Wrapper for passport.authenticate that handles success & failure scenarios correctly
  * (passport.authenticate() by default doesn't, so don't use it)
- * @param {import('passport').Strategy | string} strategy
- * @param {import('passport').AuthenticateOptions | undefined} [options]
- * @returns {import('express').Handler}
  */
-export function passportAuthenticate(
-  strategy: Strategy | string,
-  options: Optional<AuthenticateOptions> = undefined
-): Handler {
-  return (req, res, next) => {
-    passport.authenticate(
-      strategy,
-      options || {},
-      // Not sure why types aren't automatically picked up
-      (
-        err: unknown,
-        user: Optional<Express.User>,
-        info: Optional<string | Record<string, unknown> | Array<string | undefined>>
-      ) => {
-        if (err && !(err instanceof UserInputError)) logger.error(err)
+export const passportAuthenticateHandlerBuilderFactory =
+  (): PassportAuthenticateHandlerBuilder =>
+  (
+    strategy: Strategy | string,
+    options: Optional<AuthenticateOptions> = undefined
+  ): Handler => {
+    return (req, res, next) => {
+      passport.authenticate(
+        strategy,
+        options || {},
+        // Not sure why types aren't automatically picked up
+        (
+          err: unknown,
+          user: Optional<Express.User>,
+          info: Optional<string | Record<string, unknown> | Array<string | undefined>>
+        ) => {
+          if (err && !(err instanceof UserInputError)) logger.error(err)
 
-        if (!user) {
-          const infoMsg = resolveInfoMessage(info)
-          const errMsg = err instanceof UserInputError ? err.message : null
-          const finalMessage =
-            infoMsg ||
-            errMsg ||
-            (err
-              ? 'An issue occurred during authentication, contact server admins'
-              : 'Failed to authenticate, contact server admins')
+          if (!user) {
+            const infoMsg = resolveInfoMessage(info)
+            const errMsg = err instanceof UserInputError ? err.message : null
+            const finalMessage =
+              infoMsg ||
+              errMsg ||
+              (err
+                ? 'An issue occurred during authentication, contact server admins'
+                : 'Failed to authenticate, contact server admins')
 
-          let errPath = `/error?message=${finalMessage}`
+            let errPath = `/error?message=${finalMessage}`
 
-          if (err instanceof UnverifiedEmailSSOLoginError) {
-            const email = err.info()?.email || ''
-            errPath = `/error-email-verify?email=${email}`
+            if (err instanceof UnverifiedEmailSSOLoginError) {
+              const email = err.info()?.email || ''
+              errPath = `/error-email-verify?email=${email}`
+            }
+
+            return useNewFrontend()
+              ? res.redirect(new URL(errPath, getFrontendOrigin()).toString())
+              : res.redirect(errPath)
           }
 
-          return useNewFrontend()
-            ? res.redirect(new URL(errPath, getFrontendOrigin()).toString())
-            : res.redirect(errPath)
+          req.user = user
+          next()
         }
-
-        req.user = user
-        next()
-      }
-    )(req, res, next)
+      )(req, res, next)
+    }
   }
-}

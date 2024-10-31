@@ -57,6 +57,15 @@ spec:
           - name: postgres-certificate
             mountPath: /postgres-certificate
         {{- end }}
+        {{- if .Values.featureFlags.automateModuleEnabled }}
+          - name: encryption-keys
+            readOnly: true
+            mountPath: /encryption-keys
+        {{- end }}
+        {{- if .Values.featureFlags.workspacesMultiRegionEnabled }}
+          - name: multi-region-config
+            mountPath: /multi-region-config
+        {{- end }}
 
         # Allow for k8s to remove the pod from the service endpoints to stop receive traffic
         lifecycle:
@@ -127,4 +136,14 @@ spec:
         - name: postgres-certificate
           configMap:
             name: postgres-certificate
+      {{- end }}
+      {{- if .Values.featureFlags.automateModuleEnabled }}
+        - name: encryption-keys
+          secret:
+            secretName: encryption-keys
+      {{- end }}
+      {{- if .Values.featureFlags.workspacesMultiRegionEnabled }}
+        - name: multi-region-config
+          secret:
+            secretName: {{ .Values.multiRegion.config.secretName }}
       {{- end }}

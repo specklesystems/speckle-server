@@ -78,7 +78,7 @@ export default defineEventHandler(() => {
     style="width: 100vw; height: 100vh; position: absolute; top: 0;"
     id="embeddableSandbox"
     ></div>
-    <script src="https://embeddable-sandbox.cdn.apollographql.com/${version}/embeddable-sandbox.umd.production.min.js"></script>
+    <script src="https://embeddable-sandbox.cdn.apollographql.com/v2/embeddable-sandbox.umd.production.min.js?runtime=%40apollo%2Fserver%404.11.0"></script>
     <script>
       var initialEndpoint = window.location.href;
       new window.EmbeddedSandbox({

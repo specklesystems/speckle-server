@@ -3,11 +3,8 @@ import {
   FindPrimaryEmailForUser
 } from '@/modules/core/domain/userEmails/operations'
 import { UserEmail } from '@/modules/core/domain/userEmails/types'
-import { UsersEmitter, UsersEvents } from '@/modules/core/events/usersEmitter'
 import { getEmailVerificationFinalizationRoute } from '@/modules/core/helpers/routeHelper'
 import { ServerInfo, UserRecord } from '@/modules/core/helpers/types'
-import { getUser } from '@/modules/core/repositories/users'
-import { getServerInfo } from '@/modules/core/services/generic'
 import { EmailVerificationRequestError } from '@/modules/emails/errors'
 import {
   EmailTemplateParams,
@@ -20,13 +17,15 @@ import {
   RequestEmailVerification,
   RequestNewEmailVerification
 } from '@/modules/emails/domain/operations'
+import { GetUser } from '@/modules/core/domain/users/operations'
+import { GetServerInfo } from '@/modules/core/domain/server/operations'
 
 const EMAIL_SUBJECT = 'Speckle Account E-mail Verification'
 
 type CreateNewVerificationDeps = {
-  getUser: typeof getUser
+  getUser: GetUser
   findPrimaryEmailForUser: FindPrimaryEmailForUser
-  getServerInfo: typeof getServerInfo
+  getServerInfo: GetServerInfo
   deleteOldAndInsertNewVerification: DeleteOldAndInsertNewVerification
 }
 
@@ -69,8 +68,8 @@ type VerificationRequestContext = {
 
 type CreateNewEmailVerificationFactoryDeps = {
   findEmail: FindEmail
-  getUser: typeof getUser
-  getServerInfo: typeof getServerInfo
+  getUser: GetUser
+  getServerInfo: GetServerInfo
   deleteOldAndInsertNewVerification: DeleteOldAndInsertNewVerification
 }
 
@@ -184,25 +183,11 @@ export const requestEmailVerificationFactory =
     await sendVerificationEmailFactory(deps)(newVerificationState)
   }
 
-/**
- * Listen for user:created events and trigger email verification initialization
- */
-export const initializeVerificationOnRegistrationFactory =
-  (deps: {
-    userEmitterListener: typeof UsersEmitter.listen
-    requestEmailVerification: RequestEmailVerification
-  }) =>
-  () => {
-    return deps.userEmitterListener(UsersEvents.Created, async ({ user }) => {
-      // user might already be verified because of registration through an external identity provider
-      if (user.verified) return
-
-      await deps.requestEmailVerification(user.id)
-    })
-  }
-
 type RequestNewEmailVerificationDeps = CreateNewEmailVerificationFactoryDeps
 
+/**
+ * Request email verification for email with specified ID
+ */
 export const requestNewEmailVerificationFactory =
   (
     deps: RequestNewEmailVerificationDeps & SendVerificationEmailDeps
