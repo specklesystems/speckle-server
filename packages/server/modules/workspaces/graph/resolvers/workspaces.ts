@@ -52,7 +52,6 @@ import {
   WorkspacesNotAuthorizedError,
   WorkspacesNotYetImplementedError
 } from '@/modules/workspaces/errors/workspace'
-import { isWorkspaceRole } from '@/modules/workspaces/helpers/roles'
 import {
   deleteWorkspaceFactory as repoDeleteWorkspaceFactory,
   deleteWorkspaceRoleFactory as repoDeleteWorkspaceRoleFactory,
@@ -131,7 +130,10 @@ import {
 import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
-import { parseDefaultProjectRole } from '@/modules/workspaces/domain/logic'
+import {
+  isWorkspaceRole,
+  parseDefaultProjectRole
+} from '@/modules/workspaces/domain/logic'
 import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import {
   addOrUpdateStreamCollaboratorFactory,
