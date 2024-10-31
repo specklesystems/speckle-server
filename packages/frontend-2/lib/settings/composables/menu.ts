@@ -4,6 +4,7 @@ import SettingsUserNotifications from '~/components/settings/user/Notifications.
 import SettingsUserDeveloper from '~/components/settings/user/developer/Developer.vue'
 import SettingsUserEmails from '~/components/settings/user/Emails.vue'
 import SettingsServerGeneral from '~/components/settings/server/General.vue'
+import SettingsServerRegions from '~/components/settings/server/Regions.vue'
 import SettingsServerProjects from '~/components/settings/server/Projects.vue'
 import SettingsServerMembers from '~/components/settings/server/Members.vue'
 import SettingsWorkspaceGeneral from '~/components/settings/workspaces/General.vue'
@@ -14,8 +15,12 @@ import SettingsWorkspacesBilling from '~/components/settings/workspaces/Billing.
 import { useIsMultipleEmailsEnabled } from '~/composables/globals'
 import { Roles } from '@speckle/shared'
 import { SettingMenuKeys } from '~/lib/settings/helpers/types'
+import { useIsMultiregionEnabled } from '~/lib/multiregion/composables/main'
 
 export const useSettingsMenu = () => {
+  const isMultipleEmailsEnabled = useIsMultipleEmailsEnabled().value
+  const isMultiRegionEnabled = useIsMultiregionEnabled()
+
   const workspaceMenuItems = shallowRef<SettingsMenuItems>({
     [SettingMenuKeys.Workspace.General]: {
       title: 'General',
@@ -50,23 +55,19 @@ export const useSettingsMenu = () => {
     }
   })
 
-  const multipleEmailsEnabled = useIsMultipleEmailsEnabled().value
-
-  const userMenuItemValues: SettingsMenuItems = {
+  const userMenuItems = shallowRef<SettingsMenuItems>({
     [SettingMenuKeys.User.Profile]: {
       title: 'User profile',
       component: SettingsUserProfile
-    }
-  }
-
-  if (multipleEmailsEnabled) {
-    userMenuItemValues[SettingMenuKeys.User.Emails] = {
-      title: 'Emails',
-      component: SettingsUserEmails
-    }
-  }
-
-  Object.assign(userMenuItemValues, {
+    },
+    ...(isMultipleEmailsEnabled
+      ? {
+          [SettingMenuKeys.User.Emails]: {
+            title: 'Emails',
+            component: SettingsUserEmails
+          }
+        }
+      : {}),
     [SettingMenuKeys.User.Notifications]: {
       title: 'Notifications',
       component: SettingsUserNotifications
@@ -76,8 +77,6 @@ export const useSettingsMenu = () => {
       component: SettingsUserDeveloper
     }
   })
-
-  const userMenuItems = shallowRef<SettingsMenuItems>(userMenuItemValues)
 
   const serverMenuItems = shallowRef<SettingsMenuItems>({
     [SettingMenuKeys.Server.General]: {
@@ -91,7 +90,15 @@ export const useSettingsMenu = () => {
     [SettingMenuKeys.Server.Projects]: {
       title: 'Projects',
       component: SettingsServerProjects
-    }
+    },
+    ...(isMultiRegionEnabled
+      ? {
+          [SettingMenuKeys.Server.Regions]: {
+            title: 'Regions',
+            component: SettingsServerRegions
+          }
+        }
+      : {})
   })
 
   return {

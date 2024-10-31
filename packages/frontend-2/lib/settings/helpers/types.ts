@@ -23,7 +23,8 @@ export const SettingMenuKeys = Object.freeze(<const>{
     General: 'server/general',
     Projects: 'server/projects',
     ActiveUsers: 'server/active-users',
-    PendingInvitations: 'server/pending-invitations'
+    PendingInvitations: 'server/pending-invitations',
+    Regions: 'server/regions'
   },
   Workspace: {
     General: 'workspace/general',

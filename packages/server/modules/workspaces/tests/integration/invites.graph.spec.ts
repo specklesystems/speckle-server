@@ -328,7 +328,10 @@ describe('Workspaces Invites GQL', () => {
 
     before(async () => {
       apollo = await testApolloServer({
-        authUserId: me.id
+        authUserId: me.id,
+        context: {
+          role: Roles.Server.User
+        }
       })
       gqlHelpers = buildGraphqlOperations({ apollo })
     })
@@ -1629,7 +1632,7 @@ describe('Workspaces Invites GQL', () => {
     }
 
     before(async () => {
-      apollo = await testApolloServer({ context: createTestContext() })
+      apollo = await testApolloServer()
       registrationRestApi = localAuthRestApi({ express: app })
       gqlHelpers = buildGraphqlOperations({ apollo })
 
