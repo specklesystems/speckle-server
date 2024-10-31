@@ -14,6 +14,7 @@
   </div>
 </template>
 <script setup lang="ts">
+import { isNullOrUndefined } from '@speckle/shared'
 import { CommonLoadingBar } from '@speckle/ui-components'
 import { useLazyQuery } from '@vue/apollo-composable'
 import { useInjectedViewerState } from '~/lib/viewer/composables/setup'
@@ -42,8 +43,7 @@ const kvps = computed(() => {
   const keys = Object.keys(obj)
   const localKvps = []
   for (const key of keys) {
-    // if (!obj[key]) continue // TODO: deal with null/undef
-    const value = obj[key] || obj[key] === 0 || obj[key] === false ? obj[key] : 'null'
+    const value = !isNullOrUndefined(obj[key]) ? obj[key] : 'null/undefined'
     localKvps.push({
       key,
       value,
