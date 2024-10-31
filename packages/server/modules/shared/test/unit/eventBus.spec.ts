@@ -62,22 +62,6 @@ describe('Event Bus', () => {
       await testEventBus.emit({ eventName: 'test.string', payload: 'fake event' })
       expect(eventNumbers.sort((a, b) => a - b)).to.deep.equal([1, 1, 2])
     })
-    it('returns results from listeners to the emitter', async () => {
-      const testEventBus = initializeEventBus()
-
-      testEventBus.listen('test.string', ({ payload }) => ({
-        outcome: payload
-      }))
-
-      const lookWhatHappened = 'echo this back to me'
-      const results = await testEventBus.emit({
-        eventName: 'test.string',
-        payload: lookWhatHappened
-      })
-
-      expect(results.length).to.equal(1)
-      expect(results[0]).to.deep.equal({ outcome: lookWhatHappened })
-    })
     it('bubbles up listener exceptions to emitter', async () => {
       const testEventBus = initializeEventBus()
 

@@ -2,8 +2,8 @@
 import {
   CreateCheckoutSession,
   GetSubscriptionData,
-  SubscriptionData,
-  WorkspaceSubscription
+  ReconcileSubscriptionData,
+  SubscriptionData
 } from '@/modules/gatekeeper/domain/billing'
 import {
   WorkspacePlanBillingIntervals,
@@ -163,19 +163,13 @@ export const parseSubscriptionData = (
 // this should be a reconcile subscriptions, we keep an accurate state in the DB
 // on each change, we're reconciling that state to stripe
 export const reconcileWorkspaceSubscriptionFactory =
-  ({ stripe }: { stripe: Stripe }) =>
-  async ({
-    workspaceSubscription,
-    applyProrotation
-  }: {
-    workspaceSubscription: WorkspaceSubscription
-    applyProrotation: boolean
-  }) => {
+  ({ stripe }: { stripe: Stripe }): ReconcileSubscriptionData =>
+  async ({ subscriptionData, applyProrotation }) => {
     const existingSubscriptionState = await getSubscriptionDataFactory({ stripe })({
-      subscriptionId: workspaceSubscription.subscriptionData.subscriptionId
+      subscriptionId: subscriptionData.subscriptionId
     })
     const items: Stripe.SubscriptionUpdateParams.Item[] = []
-    for (const product of workspaceSubscription.subscriptionData.products) {
+    for (const product of subscriptionData.products) {
       const existingProduct = existingSubscriptionState.products.find(
         (p) => p.productId === product.productId
       )
@@ -187,13 +181,24 @@ export const reconcileWorkspaceSubscriptionFactory =
         items.push({ quantity: product.quantity, price: product.priceId })
         items.push({ id: product.subscriptionItemId, deleted: true })
       } else {
-        items.push({ quantity: product.quantity, id: product.subscriptionItemId })
+        items.push({
+          quantity: product.quantity,
+          id: existingProduct.subscriptionItemId
+        })
       }
+    }
+    // remove products from the sub
+    const productIds = subscriptionData.products.map((p) => p.productId)
+    const removedProducts = existingSubscriptionState.products.filter(
+      (p) => !productIds.includes(p.productId)
+    )
+    for (const removedProduct of removedProducts) {
+      items.push({ id: removedProduct.subscriptionItemId, deleted: true })
     }
     // workspaceSubscription.subscriptionData.products.
     // const item = workspaceSubscription.subscriptionData.products.find(p => p.)
-    await stripe.subscriptions.update(
-      workspaceSubscription.subscriptionData.subscriptionId,
-      { items, proration_behavior: applyProrotation ? 'create_prorations' : 'none' }
-    )
+    await stripe.subscriptions.update(subscriptionData.subscriptionId, {
+      items,
+      proration_behavior: applyProrotation ? 'create_prorations' : 'none'
+    })
   }
