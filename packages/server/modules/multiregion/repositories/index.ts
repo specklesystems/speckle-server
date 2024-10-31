@@ -8,7 +8,7 @@ import { RegionRecord } from '@/modules/multiregion/helpers/types'
 import { Knex } from 'knex'
 import { pick } from 'lodash'
 
-const Regions = buildTableHelper('regions', [
+export const Regions = buildTableHelper('regions', [
   'key',
   'name',
   'description',
