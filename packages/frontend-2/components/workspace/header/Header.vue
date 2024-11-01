@@ -35,9 +35,7 @@
         </div>
       </div>
     </div>
-    <div
-      class="flex justify-between items-center gap-x-3 items-center"
-    >
+    <div class="flex justify-between items-center gap-x-3">
       <div class="flex items-center gap-x-3 md:mb-0 flex-1">
         <CommonBadge rounded :color-classes="'text-foreground-2 bg-primary-muted'">
           {{ workspaceInfo.totalProjects.totalCount || 0 }} Project{{
