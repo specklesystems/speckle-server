@@ -396,12 +396,12 @@ const {
 } = useInjectedViewerInterfaceState()
 
 const map: Record<ViewerKeyboardActions, [ModifierKeys[], string]> = {
-  [ViewerKeyboardActions.ToggleModels]: [[ModifierKeys.Shift], 'm'],
-  [ViewerKeyboardActions.ToggleExplorer]: [[ModifierKeys.Shift], 'e'],
-  [ViewerKeyboardActions.ToggleDiscussions]: [[ModifierKeys.Shift], 't'],
-  [ViewerKeyboardActions.ToggleMeasurements]: [[ModifierKeys.Shift], 'r'],
-  [ViewerKeyboardActions.ToggleProjection]: [[ModifierKeys.Shift], 'p'],
-  [ViewerKeyboardActions.ToggleSectionBox]: [[ModifierKeys.Shift], 'b'],
+  [ViewerKeyboardActions.ToggleModels]: [[ModifierKeys.Shift], 'M'],
+  [ViewerKeyboardActions.ToggleExplorer]: [[ModifierKeys.Shift], 'E'],
+  [ViewerKeyboardActions.ToggleDiscussions]: [[ModifierKeys.Shift], 'T'],
+  [ViewerKeyboardActions.ToggleMeasurements]: [[ModifierKeys.Shift], 'R'],
+  [ViewerKeyboardActions.ToggleProjection]: [[ModifierKeys.Shift], 'P'],
+  [ViewerKeyboardActions.ToggleSectionBox]: [[ModifierKeys.Shift], 'B'],
   [ViewerKeyboardActions.ZoomExtentsOrSelection]: [[ModifierKeys.Shift], 'space']
 }
 

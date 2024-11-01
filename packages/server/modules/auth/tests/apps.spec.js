@@ -9,7 +9,7 @@ const {
 const { beforeEachContext } = require(`@/test/hooks`)
 
 const { Scopes } = require('@/modules/core/helpers/mainConstants')
-const knex = require('@/db/knex')
+const { knex } = require('@/db/knex')
 const cryptoRandomString = require('crypto-random-string')
 const {
   getAppFactory,

@@ -59,8 +59,8 @@ const updateUserEmail = updateUserEmailFactory({ db })
 const getUserDiscoverableWorkspaces = getUserDiscoverableWorkspacesFactory({ db })
 const upsertProjectRole = upsertProjectRoleFactory({ db })
 const grantStreamPermissions = grantStreamPermissionsFactory({ db })
-
 const upsertWorkspace = upsertWorkspaceFactory({ db })
+
 const createAndStoreTestWorkspace = createAndStoreTestWorkspaceFactory({
   upsertWorkspace
 })

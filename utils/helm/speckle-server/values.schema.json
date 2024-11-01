@@ -74,6 +74,11 @@
           "type": "boolean",
           "description": "High level flag that enables the billing integration",
           "default": false
+        },
+        "workspacesMultiRegionEnabled": {
+          "type": "boolean",
+          "description": "Toggles whether multi-region is available within workspaces. workspaceModuleEnabled must also be enabled.",
+          "default": false
         }
       }
     },
@@ -518,6 +523,26 @@
               "type": "string",
               "description": "Required. The value to be used when exporting opentelemetry traces.",
               "default": ""
+            }
+          }
+        }
+      }
+    },
+    "multiRegion": {
+      "type": "object",
+      "properties": {
+        "config": {
+          "type": "object",
+          "properties": {
+            "secretName": {
+              "type": "string",
+              "description": "If workspacesMultiRegionEnabled is enabled, the server will be deployed in a multi-region configuration based on the values in a secret. This allows the default secret name to be overridden.",
+              "default": "multi-region-config"
+            },
+            "secretKey": {
+              "type": "string",
+              "description": "If workspacesMultiRegionEnabled is enabled, the server will be deployed in a multi-region configuration based on the values in a secret. This allows the default secret key and filename to be overridden.",
+              "default": "multi-region-config.json"
             }
           }
         }

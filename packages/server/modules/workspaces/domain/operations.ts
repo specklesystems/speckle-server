@@ -217,7 +217,7 @@ export type UpdateWorkspaceProjectRole = (
 export type EmitWorkspaceEvent = <TEvent extends WorkspaceEvents>(args: {
   eventName: TEvent
   payload: EventBusPayloads[TEvent]
-}) => Promise<unknown[]>
+}) => Promise<void>
 
 export type CountProjectsVersionsByWorkspaceId = (args: {
   workspaceId: string

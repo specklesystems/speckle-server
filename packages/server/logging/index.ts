@@ -1,20 +1,17 @@
 /* istanbul ignore file */
-const prometheusClient = require('prom-client')
-const promBundle = require('express-prom-bundle')
+import prometheusClient from 'prom-client'
+import promBundle from 'express-prom-bundle'
 
-const { initKnexPrometheusMetrics } = require('@/logging/knexMonitoring')
-const {
-  initHighFrequencyMonitoring
-} = require('@/logging/highFrequencyMetrics/highfrequencyMonitoring')
-const knex = require('@/db/knex')
-const {
-  highFrequencyMetricsCollectionPeriodMs
-} = require('@/modules/shared/helpers/envHelper')
-const { startupLogger: logger } = require('@/logging/logging')
+import { initKnexPrometheusMetrics } from '@/logging/knexMonitoring'
+import { initHighFrequencyMonitoring } from '@/logging/highFrequencyMetrics/highfrequencyMonitoring'
+import knex from '@/db/knex'
+import { highFrequencyMetricsCollectionPeriodMs } from '@/modules/shared/helpers/envHelper'
+import { startupLogger as logger } from '@/logging/logging'
+import type express from 'express'
 
 let prometheusInitialized = false
 
-module.exports = function (app) {
+export default function (app: express.Express) {
   if (!prometheusInitialized) {
     prometheusInitialized = true
     prometheusClient.register.clear()

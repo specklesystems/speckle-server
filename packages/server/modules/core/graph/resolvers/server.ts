@@ -59,6 +59,7 @@ export = {
       const update = removeNullOrUndefinedKeys(args.info)
       await updateServerInfo(update)
       return true
-    }
+    },
+    serverInfoMutations: () => ({})
   }
 } as Resolvers

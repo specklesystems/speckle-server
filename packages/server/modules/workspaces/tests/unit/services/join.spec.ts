@@ -123,7 +123,6 @@ describe('Workspace join services', () => {
         },
         emitWorkspaceEvent: async ({ eventName }) => {
           firedEvents.push(eventName)
-          return []
         }
       })({ userId, workspaceId })
 
