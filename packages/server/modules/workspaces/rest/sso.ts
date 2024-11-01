@@ -180,6 +180,29 @@ export const getSsoRouter = (): Router => {
   )
 
   router.get(
+    '/api/v1/workspaces/:workspaceSlug/sso/oidc/validate',
+    sessionMiddleware,
+    moveAuthParamsToSessionMiddleware,
+    validateRequest({
+      params: z.object({
+        workspaceSlug: z.string().min(1)
+      }),
+      query: oidcProvider
+    }),
+    handleSsoValidationRequestFactory({
+      getWorkspaceBySlug: getWorkspaceBySlugFactory({ db }),
+      startOidcSsoProviderValidation: startOidcSsoProviderValidationFactory({
+        getOidcProviderAttributes: getOIDCProviderAttributes,
+        storeOidcProviderValidationRequest: storeOIDCProviderValidationRequestFactory({
+          redis: getGenericRedis(),
+          encrypt: getEncryptor()
+        }),
+        generateCodeVerifier: generators.codeVerifier
+      })
+    })
+  )
+
+  router.get(
     '/api/v1/workspaces/:workspaceSlug/sso/oidc/callback',
     sessionMiddleware,
     validateRequest({

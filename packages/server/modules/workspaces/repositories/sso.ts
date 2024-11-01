@@ -5,13 +5,15 @@ import {
   GetWorkspaceSsoProvider,
   StoreOidcProviderValidationRequest,
   StoreProviderRecord,
-  UpsertUserSsoSession
+  UpsertUserSsoSession,
+  ListWorkspaceSsoMemberships
 } from '@/modules/workspaces/domain/sso/operations'
 import {
   ProviderRecord,
   UserSsoSessionRecord
 } from '@/modules/workspaces/domain/sso/types'
 import { SsoProviderTypeNotSupportedError } from '@/modules/workspaces/errors/sso'
+import { Workspace, WorkspaceAcl } from '@/modules/workspacesCore/domain/types'
 import Redis from 'ioredis'
 import { Knex } from 'knex'
 import { omit } from 'lodash'
@@ -26,6 +28,7 @@ type WorkspaceSsoProviderRecord = { workspaceId: string; providerId: string }
 const tables = {
   ssoProviders: (db: Knex) => db<SsoProviderRecord>('sso_providers'),
   userSsoSessions: (db: Knex) => db<UserSsoSessionRecord>('user_sso_sessions'),
+  workspaceAcl: (db: Knex) => db<WorkspaceAcl>('workspace_acl'),
   workspaceSsoProviders: (db: Knex) =>
     db<WorkspaceSsoProviderRecord>('workspace_sso_providers')
 }
@@ -100,4 +103,23 @@ export const upsertUserSsoSessionFactory =
       .insert(userSsoSession)
       .onConflict(['userId', 'providerId'])
       .merge(['createdAt', 'validUntil'])
+  }
+
+export const listWorkspaceSsoMembershipsFactory =
+  ({ db }: { db: Knex }): ListWorkspaceSsoMemberships =>
+  async ({ userId }) => {
+    const workspaces = await tables
+      .workspaceAcl(db)
+      .select('*')
+      .join<WorkspaceSsoProviderRecord>(
+        'workspace_sso_providers',
+        'workspace_sso_providers.workspaceId',
+        'workspace_acl.workspaceId'
+      )
+      .join<Workspace>('workspaces', 'id', 'workspace_sso_providers.workspaceId')
+      .where((builder) => {
+        builder.where({ userId })
+        builder.whereNotNull('providerId')
+      })
+    return workspaces
   }

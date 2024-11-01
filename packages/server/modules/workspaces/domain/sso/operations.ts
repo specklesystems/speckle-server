@@ -6,6 +6,7 @@ import type {
   OidcProviderAttributes,
   OidcProviderValidationRequest
 } from '@/modules/workspaces/domain/sso/types'
+import { Workspace } from '@/modules/workspacesCore/domain/types'
 
 // Workspace SSO provider management
 
@@ -23,6 +24,15 @@ export type StoreProviderRecord = (args: {
 }) => Promise<void>
 
 // User session management
+
+/**
+ * List workspaces where:
+ * (1) User is a member
+ * (2) Workspace has SSO configured
+ */
+export type ListWorkspaceSsoMemberships = (args: {
+  userId: string
+}) => Promise<Workspace[]>
 
 export type UpsertUserSsoSession = (args: {
   userSsoSession: UserSsoSessionRecord

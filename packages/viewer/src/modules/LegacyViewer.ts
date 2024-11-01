@@ -1,4 +1,4 @@
-import { Box3, MathUtils, Vector2 } from 'three'
+import { Box3, MathUtils, Vector2, Vector3 } from 'three'
 import {
   FilteringExtension,
   type FilteringState
@@ -155,7 +155,13 @@ export class LegacyViewer extends Viewer {
     if (!box) {
       box = this.speckleRenderer.sceneBox
     }
-    this.sections.setBox(box as Box3, offset)
+    this.sections.setBox(
+      new Box3(
+        new Vector3(box.min.x, box.min.y, box.min.z),
+        new Vector3(box.max.x, box.max.y, box.max.z)
+      ),
+      offset
+    )
   }
 
   public getSectionBoxFromObjects(objectIds: string[]) {

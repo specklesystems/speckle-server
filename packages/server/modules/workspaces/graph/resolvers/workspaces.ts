@@ -148,10 +148,16 @@ import {
 } from '@/modules/activitystream/services/streamActivity'
 import { publish } from '@/modules/shared/utils/subscriptions'
 import { updateStreamRoleAndNotifyFactory } from '@/modules/core/services/streams/management'
-import { getUserFactory, getUsersFactory } from '@/modules/core/repositories/users'
+import {
+  getUserByEmailFactory,
+  getUserFactory,
+  getUsersFactory
+} from '@/modules/core/repositories/users'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { commandFactory } from '@/modules/shared/command'
 import { withTransaction } from '@/modules/shared/helpers/dbHelper'
+import { listWorkspaceSsoMembershipsByUserEmailFactory } from '@/modules/workspaces/services/sso'
+import { listWorkspaceSsoMembershipsFactory } from '@/modules/workspaces/repositories/sso'
 
 const eventBus = getEventBus()
 const getServerInfo = getServerInfoFactory({ db })
@@ -280,6 +286,15 @@ export = FF_WORKSPACES_MODULE_ENABLED
           )
 
           return workspace
+        },
+        workspaceSsoByEmail: async (_parent, args) => {
+          const workspaces = await listWorkspaceSsoMembershipsByUserEmailFactory({
+            getUserByEmail: getUserByEmailFactory({ db }),
+            listWorkspaceSsoMemberships: listWorkspaceSsoMembershipsFactory({ db })
+          })({
+            userEmail: args.email
+          })
+          return workspaces
         },
         workspaceInvite: async (_parent, args, ctx) => {
           const getPendingInvite = getUserPendingWorkspaceInviteFactory({
