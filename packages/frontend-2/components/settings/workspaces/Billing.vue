@@ -2,34 +2,16 @@
   <section>
     <div class="md:max-w-xl md:mx-auto pb-6 md:pb-0">
       <SettingsSectionHeader title="Billing" text="Your workspace billing details" />
-      <CommonCard v-if="versionCount" class="text-body-xs bg-foundation">
+      <CommonCard class="text-body-xs bg-foundation">
         <p class="text-foreground font-medium">Workspaces are free while in beta.</p>
-        <p class="py-6">
-          Once the beta period ends, workspaces are still free up to
-          {{ versionCount.max }} model versions.
-          <br />
-          To store more versions across your projects you will need to upgrade to a paid
-          plan.
+        <p class="pt-1">
+          After the beta ends, your workspace will start a 30-day free trial. You'll
+          have full access until either the trial expires or you upgrade to a paid plan.
         </p>
-        <CommonProgressBar
-          class="my-3"
-          :current-value="versionCount.current"
-          :max-value="versionCount.max"
-        />
-        <div class="flex flex-row justify-between">
-          <p class="text-foreground-2">
-            Current model versions:
-            <span class="text-foreground">{{ versionCount.current }}</span>
-          </p>
-          <p class="text-foreground-2">
-            Free model versions limit:
-            <span class="text-foreground">{{ versionCount.max }}</span>
-          </p>
-        </div>
       </CommonCard>
 
       <SettingsSectionHeader
-        title="What your workspace bill on a team plan will look like"
+        title="What your workspace bill will look like after the trial ends"
         class="pt-6 pb-4 md:pt-10 md:pb-6"
         subheading
       />
@@ -94,10 +76,6 @@ graphql(`
         total
         ...BillingSummary_WorkspaceCost
       }
-      versionsCount {
-        current
-        max
-      }
     }
   }
 `)
@@ -129,6 +107,5 @@ const { result } = useQuery(settingsWorkspaceBillingQuery, () => ({
 }))
 
 const billing = computed(() => result.value?.workspace.billing)
-const versionCount = computed(() => billing.value?.versionsCount)
 const discount = computed(() => billing.value?.cost?.discount)
 </script>

@@ -1,14 +1,21 @@
 /* eslint-disable camelcase */
 import { BaseError } from '@/modules/shared/errors'
-import { OIDCProvider, OIDCProviderAttributes } from '@/modules/workspaces/domain/sso'
+import {
+  OidcProvider,
+  OidcProviderAttributes
+} from '@/modules/workspaces/domain/sso/types'
 import { generators, Issuer, type Client } from 'openid-client'
 
+/**
+ * Generate the url used to direct users to the SSO provider for authorization.
+ * (i.e. the sign in form page for the given SSO provider)
+ */
 export const getProviderAuthorizationUrl = async ({
   provider,
   redirectUrl,
   codeVerifier
 }: {
-  provider: OIDCProvider
+  provider: OidcProvider
   redirectUrl: URL
   codeVerifier: string
 }): Promise<URL> => {
@@ -28,7 +35,7 @@ export const initializeIssuerAndClient = async ({
   provider,
   redirectUrl
 }: {
-  provider: OIDCProvider
+  provider: OidcProvider
   redirectUrl?: URL
 }): Promise<{ issuer: Issuer; client: Client }> => {
   const issuer = await Issuer.discover(provider.issuerUrl)
@@ -44,8 +51,8 @@ export const initializeIssuerAndClient = async ({
 export const getOIDCProviderAttributes = async ({
   provider
 }: {
-  provider: OIDCProvider
-}): Promise<OIDCProviderAttributes> => {
+  provider: OidcProvider
+}): Promise<OidcProviderAttributes> => {
   try {
     const { issuer, client } = await initializeIssuerAndClient({ provider })
     return {
