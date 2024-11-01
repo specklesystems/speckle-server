@@ -13,10 +13,28 @@ services:
       POSTGRES_PASSWORD: speckle
     volumes:
       - postgres-data:/var/lib/postgresql/data/
+      - ./setup/db/0-docker_postgres_aiven.sql:/docker-entrypoint-initdb.d/9-docker_postgres_aiven.sql
       - ./setup/db/10-docker_postgres_init.sql:/docker-entrypoint-initdb.d/10-docker_postgres_init.sql
       - ./setup/db/11-docker_postgres_keycloack_init.sql:/docker-entrypoint-initdb.d/11-docker_postgres_keycloack_init.sql
     ports:
       - '127.0.0.1:5432:5432'
+
+  postgres-region1:
+    build:
+      context: .
+      dockerfile: docker/postgres/Dockerfile
+    restart: always
+    environment:
+      POSTGRES_DB: speckle
+      POSTGRES_USER: speckle
+      POSTGRES_PASSWORD: speckle
+    volumes:
+      - postgres-region1-data:/var/lib/postgresql/data/
+      - ./setup/db/0-docker_postgres_aiven.sql:/docker-entrypoint-initdb.d/9-docker_postgres_aiven.sql
+      - ./setup/db/10-docker_postgres_init.sql:/docker-entrypoint-initdb.d/10-docker_postgres_init.sql
+      - ./setup/db/11-docker_postgres_keycloack_init.sql:/docker-entrypoint-initdb.d/11-docker_postgres_keycloack_init.sql
+    ports:
+      - '127.0.0.1:5401:5432'
 
   redis:
     image: 'redis:7-alpine'
@@ -106,6 +124,7 @@ services:
 
 volumes:
   postgres-data:
+  postgres-region1-data:
   redis-data:
   pgadmin-data:
   redis_insight-data:
