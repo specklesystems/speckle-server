@@ -3,31 +3,128 @@ import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { authorizeResolver } from '@/modules/shared'
 import {
   filteredSubscribe,
-  ProjectSubscriptions
+  ProjectSubscriptions,
+  publish
 } from '@/modules/shared/utils/subscriptions'
 import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
 import {
-  batchDeleteCommits,
-  batchMoveCommits
+  batchDeleteCommitsFactory,
+  batchMoveCommitsFactory
 } from '@/modules/core/services/commit/batchCommitActions'
-import { CommitUpdateError } from '@/modules/core/errors/commit'
+import { CommitNotFoundError, CommitUpdateError } from '@/modules/core/errors/commit'
 import {
-  createCommitByBranchId,
+  createCommitByBranchIdFactory,
   markCommitReceivedAndNotify,
-  updateCommitAndNotify
+  updateCommitAndNotifyFactory
 } from '@/modules/core/services/commit/management'
 import {
   getRateLimitResult,
   isRateLimitBreached
 } from '@/modules/core/services/ratelimiter'
 import { RateLimitError } from '@/modules/core/errors/ratelimit'
+import {
+  createCommitFactory,
+  deleteCommitsFactory,
+  getCommitBranchFactory,
+  getCommitFactory,
+  getCommitsFactory,
+  insertBranchCommitsFactory,
+  insertStreamCommitsFactory,
+  moveCommitsToBranchFactory,
+  switchCommitBranchFactory,
+  updateCommitFactory
+} from '@/modules/core/repositories/commits'
+import { db } from '@/db/knex'
+import {
+  createBranchFactory,
+  getBranchByIdFactory,
+  getStreamBranchByNameFactory,
+  markCommitBranchUpdatedFactory
+} from '@/modules/core/repositories/branches'
+import {
+  getCommitStreamFactory,
+  getStreamFactory,
+  getStreamsFactory,
+  markCommitStreamUpdatedFactory
+} from '@/modules/core/repositories/streams'
+import { VersionsEmitter } from '@/modules/core/events/versionsEmitter'
+import {
+  addCommitCreatedActivityFactory,
+  addCommitDeletedActivityFactory,
+  addCommitMovedActivityFactory,
+  addCommitUpdatedActivityFactory
+} from '@/modules/activitystream/services/commitActivity'
+import { getObjectFactory } from '@/modules/core/repositories/objects'
+import { saveActivityFactory } from '@/modules/activitystream/repositories'
+
+const markCommitStreamUpdated = markCommitStreamUpdatedFactory({ db })
+const getCommitStream = getCommitStreamFactory({ db })
+const getStream = getStreamFactory({ db })
+const getStreams = getStreamsFactory({ db })
+const getObject = getObjectFactory({ db })
+const createCommitByBranchId = createCommitByBranchIdFactory({
+  createCommit: createCommitFactory({ db }),
+  getObject,
+  getBranchById: getBranchByIdFactory({ db }),
+  insertStreamCommits: insertStreamCommitsFactory({ db }),
+  insertBranchCommits: insertBranchCommitsFactory({ db }),
+  markCommitStreamUpdated,
+  markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
+  versionsEventEmitter: VersionsEmitter.emit,
+  addCommitCreatedActivity: addCommitCreatedActivityFactory({
+    saveActivity: saveActivityFactory({ db }),
+    publish
+  })
+})
+
+const updateCommitAndNotify = updateCommitAndNotifyFactory({
+  getCommit: getCommitFactory({ db }),
+  getStream,
+  getCommitStream,
+  getStreamBranchByName: getStreamBranchByNameFactory({ db }),
+  getCommitBranch: getCommitBranchFactory({ db }),
+  switchCommitBranch: switchCommitBranchFactory({ db }),
+  updateCommit: updateCommitFactory({ db }),
+  addCommitUpdatedActivity: addCommitUpdatedActivityFactory({
+    saveActivity: saveActivityFactory({ db }),
+    publish
+  }),
+  markCommitStreamUpdated,
+  markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db })
+})
+
+const batchMoveCommits = batchMoveCommitsFactory({
+  getCommits: getCommitsFactory({ db }),
+  getStreams,
+  getStreamBranchByName: getStreamBranchByNameFactory({ db }),
+  createBranch: createBranchFactory({ db }),
+  moveCommitsToBranch: moveCommitsToBranchFactory({ db }),
+  addCommitMovedActivity: addCommitMovedActivityFactory({
+    saveActivity: saveActivityFactory({ db }),
+    publish
+  })
+})
+const batchDeleteCommits = batchDeleteCommitsFactory({
+  getCommits: getCommitsFactory({ db }),
+  getStreams,
+  deleteCommits: deleteCommitsFactory({ db }),
+  addCommitDeletedActivity: addCommitDeletedActivityFactory({
+    saveActivity: saveActivityFactory({ db }),
+    publish
+  })
+})
 
 export = {
   Project: {
     async version(parent, args, ctx) {
-      return await ctx.loaders.streams.getStreamCommit
+      const version = await ctx.loaders.streams.getStreamCommit
         .forStream(parent.id)
         .load(args.id)
+      if (!version) {
+        throw new CommitNotFoundError('Version not found')
+      }
+
+      return version
     }
   },
   Version: {

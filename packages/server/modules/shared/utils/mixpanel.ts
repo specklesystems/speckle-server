@@ -8,6 +8,7 @@ import {
 import Mixpanel from 'mixpanel'
 import { mixpanelLogger } from '@/logging/logging'
 import type express from 'express'
+import type http from 'http'
 
 let client: Optional<Mixpanel.Mixpanel> = undefined
 let baseTrackingProperties: Optional<Record<string, string>> = undefined
@@ -45,7 +46,7 @@ export function getClient() {
  */
 export function mixpanel(params: {
   userEmail: Optional<string>
-  req: Optional<express.Request>
+  req: Optional<express.Request | http.IncomingMessage>
 }) {
   const { userEmail, req } = params
   const mixpanelUserId = userEmail?.length
@@ -57,7 +58,7 @@ export function mixpanel(params: {
       const payload = {
         ...MixpanelUtils.buildPropertiesPayload({
           distinctId: mixpanelUserId,
-          query: req?.query || {},
+          query: (req && 'query' in req ? req?.query : {}) || {},
           headers: req?.headers || {},
           remoteAddress: req?.socket?.remoteAddress
         }),

@@ -1,8 +1,8 @@
 import { graphql } from '~~/lib/common/generated/gql'
 
 export const workspaceAccessCheckQuery = graphql(`
-  query WorkspaceAccessCheck($id: String!) {
-    workspace(id: $id) {
+  query WorkspaceAccessCheck($slug: String!) {
+    workspaceBySlug(slug: $slug) {
       id
     }
   }
@@ -10,21 +10,26 @@ export const workspaceAccessCheckQuery = graphql(`
 
 export const workspacePageQuery = graphql(`
   query WorkspacePageQuery(
-    $workspaceId: String!
+    $workspaceSlug: String!
     $filter: WorkspaceProjectsFilter
     $cursor: String
     $invitesFilter: PendingWorkspaceCollaboratorsFilter
     $token: String
   ) {
-    workspace(id: $workspaceId) {
+    workspaceBySlug(slug: $workspaceSlug) {
       id
+      ...MoveProjectsDialog_Workspace
       ...WorkspaceHeader_Workspace
       ...WorkspaceMixpanelUpdateGroup_Workspace
-      projects(filter: $filter, cursor: $cursor, limit: 10) {
+      projectListProject: projects(filter: $filter, cursor: $cursor, limit: 10) {
         ...WorkspaceProjectList_ProjectCollection
       }
     }
-    workspaceInvite(workspaceId: $workspaceId, token: $token) {
+    workspaceInvite(
+      workspaceId: $workspaceSlug
+      token: $token
+      options: { useSlug: true }
+    ) {
       id
       ...WorkspaceInviteBanner_PendingWorkspaceCollaborator
       ...WorkspaceInviteBlock_PendingWorkspaceCollaborator
@@ -34,11 +39,11 @@ export const workspacePageQuery = graphql(`
 
 export const workspaceProjectsQuery = graphql(`
   query WorkspaceProjectsQuery(
-    $workspaceId: String!
+    $workspaceSlug: String!
     $filter: WorkspaceProjectsFilter
     $cursor: String
   ) {
-    workspace(id: $workspaceId) {
+    workspaceBySlug(slug: $workspaceSlug) {
       id
       projects(filter: $filter, cursor: $cursor, limit: 10) {
         ...WorkspaceProjectList_ProjectCollection
@@ -48,10 +53,28 @@ export const workspaceProjectsQuery = graphql(`
 `)
 
 export const workspaceInviteQuery = graphql(`
-  query WorkspaceInvite($workspaceId: String, $token: String) {
-    workspaceInvite(workspaceId: $workspaceId, token: $token) {
+  query WorkspaceInvite(
+    $workspaceId: String
+    $token: String
+    $options: WorkspaceInviteLookupOptions
+  ) {
+    workspaceInvite(workspaceId: $workspaceId, token: $token, options: $options) {
       ...WorkspaceInviteBanner_PendingWorkspaceCollaborator
       ...WorkspaceInviteBlock_PendingWorkspaceCollaborator
     }
+  }
+`)
+
+export const moveProjectsDialogQuery = graphql(`
+  query MoveProjectsDialog {
+    activeUser {
+      ...MoveProjectsDialog_User
+    }
+  }
+`)
+
+export const validateWorkspaceSlugQuery = graphql(`
+  query ValidateWorkspaceSlug($slug: String!) {
+    validateWorkspaceSlug(slug: $slug)
   }
 `)

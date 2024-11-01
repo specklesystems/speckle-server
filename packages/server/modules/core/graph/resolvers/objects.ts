@@ -1,14 +1,24 @@
 import { authorizeResolver } from '@/modules/shared'
-
-import {
-  createObjects,
-  getObjectChildren,
-  getObjectChildrenQuery
-} from '@/modules/core/services/objects'
-
-import { Roles } from '@speckle/shared'
+import { isNonNullable, Roles } from '@speckle/shared'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
-import { getObject } from '@/modules/core/repositories/objects'
+import {
+  getObjectChildrenFactory,
+  getObjectChildrenQueryFactory,
+  getObjectFactory,
+  storeClosuresIfNotFoundFactory,
+  storeObjectsIfNotFoundFactory
+} from '@/modules/core/repositories/objects'
+import { db } from '@/db/knex'
+import { createObjectsFactory } from '@/modules/core/services/objects/management'
+
+const getObject = getObjectFactory({ db })
+const createObjects = createObjectsFactory({
+  storeObjectsIfNotFoundFactory: storeObjectsIfNotFoundFactory({ db }),
+  storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db })
+})
+const getObjectChildren = getObjectChildrenFactory({ db })
+const getObjectChildrenQuery = getObjectChildrenQueryFactory({ db })
+type GetObjectChildrenQueryParams = Parameters<typeof getObjectChildrenQuery>[0]
 
 const getStreamObject: NonNullable<Resolvers['Stream']>['object'] =
   async function object(parent, args) {
@@ -31,14 +41,22 @@ export = {
           objectId: parent.id,
           limit: args.limit,
           depth: args.depth,
-          select: args.select,
+          select: args.select?.filter(isNonNullable),
           cursor: args.cursor
         })
-        result.objects.forEach((x) => (x.streamId = parent.streamId))
+
+        // Hacky typing here, but I want to avoid filling up memory with a new array of new objects w/ .map()
+        const objects = result.objects as Array<
+          (typeof result)['objects'][number] & {
+            streamId: string
+          }
+        >
+        objects.forEach((x) => (x.streamId = parent.streamId))
+
         return {
           totalCount: parent.totalChildrenCount || 0,
           cursor: result.cursor,
-          objects: result.objects
+          objects
         }
       }
 
@@ -48,13 +66,27 @@ export = {
         objectId: parent.id,
         limit: args.limit,
         depth: args.depth,
-        select: args.select,
-        query: args.query,
-        orderBy: args.orderBy,
+        select: args.select?.filter(isNonNullable),
+        // TODO: Theoretically users can feed in invalid structures here
+        query: args.query?.filter(
+          isNonNullable
+        ) as GetObjectChildrenQueryParams['query'],
+        orderBy: (args.orderBy || undefined) as GetObjectChildrenQueryParams['orderBy'],
         cursor: args.cursor
       })
-      result.objects.forEach((x) => (x.streamId = parent.streamId))
-      return result
+
+      // Hacky typing here, but I want to avoid filling up memory with a new array of new objects w/ .map()
+      const objects = result.objects as Array<
+        (typeof result)['objects'][number] & {
+          streamId: string
+        }
+      >
+      objects.forEach((x) => (x.streamId = parent.streamId))
+
+      return {
+        ...result,
+        objects
+      }
     }
   },
   Mutation: {
@@ -68,7 +100,7 @@ export = {
 
       const ids = await createObjects({
         streamId: args.objectInput.streamId,
-        objects: args.objectInput.objects
+        objects: args.objectInput.objects.filter(isNonNullable)
       })
       return ids
     }

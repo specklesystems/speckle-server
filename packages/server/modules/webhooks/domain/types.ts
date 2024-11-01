@@ -9,3 +9,13 @@ export type Webhook = {
   createdAt: Date
   updatedAt: Date
 }
+
+export type WebhookEvent = {
+  id: string
+  webhookId: string
+  status: number
+  statusInfo: string
+  retryCount: number
+  lastUpdate: Date
+  payload: string
+}

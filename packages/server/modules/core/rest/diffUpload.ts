@@ -1,11 +1,19 @@
 import zlib from 'zlib'
 import { corsMiddleware } from '@/modules/core/configs/cors'
-import { validatePermissionsWriteStream } from '@/modules/core/rest/authUtils'
-import { hasObjects } from '@/modules/core/services/objects'
 import { chunk } from 'lodash'
 import type { Application } from 'express'
+import { hasObjectsFactory } from '@/modules/core/repositories/objects'
+import { db } from '@/db/knex'
+import { validatePermissionsWriteStreamFactory } from '@/modules/core/services/streams/auth'
+import { authorizeResolver, validateScopes } from '@/modules/shared'
 
 export default (app: Application) => {
+  const hasObjects = hasObjectsFactory({ db })
+  const validatePermissionsWriteStream = validatePermissionsWriteStreamFactory({
+    validateScopes,
+    authorizeResolver
+  })
+
   app.options('/api/diff/:streamId', corsMiddleware())
 
   app.post('/api/diff/:streamId', corsMiddleware(), async (req, res) => {
@@ -31,7 +39,7 @@ export default (app: Application) => {
       objectListChunks.map((objectListChunk) =>
         hasObjects({
           streamId: req.params.streamId,
-          objectIds: objectListChunk
+          objectIds: objectListChunk as string[]
         })
       )
     )

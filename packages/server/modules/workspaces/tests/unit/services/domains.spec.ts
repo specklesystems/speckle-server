@@ -24,11 +24,13 @@ describe('workspace domain services', () => {
           defaultLogoIndex: 0,
           name: cryptoRandomString({ length: 10 }),
           logo: null,
+          slug: cryptoRandomString({ length: 10 }),
           createdAt: new Date(),
           updatedAt: new Date(),
           description: '',
           discoverabilityEnabled: false,
           domainBasedMembershipProtectionEnabled: false,
+          defaultProjectRole: 'stream:contributor',
           domains: [],
           id: cryptoRandomString({ length: 10 })
         }),
@@ -46,11 +48,13 @@ describe('workspace domain services', () => {
           defaultLogoIndex: 0,
           name: cryptoRandomString({ length: 10 }),
           logo: null,
+          slug: cryptoRandomString({ length: 10 }),
           createdAt: new Date(),
           updatedAt: new Date(),
           description: '',
           discoverabilityEnabled: false,
           domainBasedMembershipProtectionEnabled: true,
+          defaultProjectRole: 'stream:contributor',
           domains: [
             {
               createdAt: new Date(),

@@ -1,8 +1,12 @@
 import { db } from '@/db/knex'
-import { deleteExistingAuthTokens } from '@/modules/auth/repositories'
-import { getUserByEmail } from '@/modules/core/repositories/users'
-import { getServerInfo } from '@/modules/core/services/generic'
-import { updateUserPassword } from '@/modules/core/services/users'
+import { deleteExistingAuthTokensFactory } from '@/modules/auth/repositories'
+import { getServerInfoFactory } from '@/modules/core/repositories/server'
+import {
+  getUserByEmailFactory,
+  getUserFactory,
+  updateUserFactory
+} from '@/modules/core/repositories/users'
+import { changePasswordFactory } from '@/modules/core/services/users/management'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
 import {
@@ -16,6 +20,8 @@ import { ensureError } from '@/modules/shared/helpers/errorHelper'
 import { Express } from 'express'
 
 export default function (app: Express) {
+  const getUserByEmail = getUserByEmailFactory({ db })
+
   // sends a password recovery email.
   app.post('/auth/pwdreset/request', async (req, res) => {
     try {
@@ -23,7 +29,7 @@ export default function (app: Express) {
         getUserByEmail,
         getPendingToken: getPendingTokenFactory({ db }),
         createToken: createTokenFactory({ db }),
-        getServerInfo,
+        getServerInfo: getServerInfoFactory({ db }),
         renderEmail,
         sendEmail
       })
@@ -45,8 +51,11 @@ export default function (app: Express) {
         getUserByEmail,
         getPendingToken: getPendingTokenFactory({ db }),
         deleteTokens: deleteTokensFactory({ db }),
-        updateUserPassword,
-        deleteExistingAuthTokens
+        updateUserPassword: changePasswordFactory({
+          getUser: getUserFactory({ db }),
+          updateUser: updateUserFactory({ db })
+        }),
+        deleteExistingAuthTokens: deleteExistingAuthTokensFactory({ db })
       })
 
       if (!req.body.tokenId || !req.body.password) throw new Error('Invalid request.')

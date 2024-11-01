@@ -196,7 +196,6 @@ export const useProcessWorkspaceInvite = () => {
         // eslint-disable-next-line camelcase
         workspace_id: workspaceId
       })
-      mp.add_group('workspace_id', workspaceId)
     } else {
       const err = getFirstErrorMessage(errors)
       const preventErrorToasts = isFunction(options?.preventErrorToasts)
@@ -222,6 +221,7 @@ graphql(`
     id
     token
     workspaceId
+    workspaceSlug
     user {
       id
     }
@@ -284,6 +284,7 @@ export const useWorkspaceInviteManager = <
     if (!token.value || !invite.value) return false
 
     const workspaceId = invite.value.workspaceId
+    const workspaceSlug = invite.value.workspaceSlug
     const shouldAddNewEmail = canAddNewEmail.value && addNewEmail
 
     loading.value = true
@@ -303,8 +304,8 @@ export const useWorkspaceInviteManager = <
 
           // Redirect
           if (accept) {
-            if (workspaceId) {
-              window.location.href = workspaceRoute(workspaceId)
+            if (workspaceSlug) {
+              window.location.href = workspaceRoute(workspaceSlug)
             } else {
               window.location.reload()
             }
@@ -400,7 +401,7 @@ export function useCreateWorkspace() {
       })
 
       if (options?.navigateOnSuccess === true) {
-        router.push(workspaceRoute(res.data?.workspaceMutations.create.id))
+        router.push(workspaceRoute(res.data?.workspaceMutations.create.slug))
       }
     } else {
       const err = getFirstErrorMessage(res.errors)
@@ -418,6 +419,7 @@ export function useCreateWorkspace() {
 export const useWorkspaceUpdateRole = () => {
   const { mutate } = useMutation(workspaceUpdateRoleMutation)
   const { triggerNotification } = useGlobalToast()
+  const mixpanel = useMixpanel()
 
   return async (input: WorkspaceRoleUpdateInput) => {
     const result = await mutate(
@@ -455,6 +457,19 @@ export const useWorkspaceUpdateRole = () => {
           ? 'The user role has been updated'
           : 'The user has been removed from the workspace'
       })
+
+      if (input.role) {
+        mixpanel.track('Workspace User Role Updated', {
+          newRole: input.role,
+          // eslint-disable-next-line camelcase
+          workspace_id: input.workspaceId
+        })
+      } else {
+        mixpanel.track('Workspace User Removed', {
+          // eslint-disable-next-line camelcase
+          workspace_id: input.workspaceId
+        })
+      }
     } else {
       const errorMessage = getFirstErrorMessage(result?.errors)
       triggerNotification({
@@ -466,11 +481,11 @@ export const useWorkspaceUpdateRole = () => {
   }
 }
 
-export const copyWorkspaceLink = async (id: string) => {
+export const copyWorkspaceLink = async (slug: string) => {
   const { copy } = useClipboard()
   const { triggerNotification } = useGlobalToast()
 
-  const url = new URL(workspaceRoute(id), window.location.toString()).toString()
+  const url = new URL(workspaceRoute(slug), window.location.toString()).toString()
 
   await copy(url)
   triggerNotification({

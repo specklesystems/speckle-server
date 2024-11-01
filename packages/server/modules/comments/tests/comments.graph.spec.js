@@ -4,16 +4,7 @@ const crs = require('crypto-random-string')
 const { buildApolloServer } = require('@/app')
 const { beforeEachContext } = require('@/test/hooks')
 const { Roles } = require('@/modules/core/helpers/mainConstants')
-const {
-  grantPermissionsStream,
-  updateStream
-} = require('@/modules/core/services/streams')
-const { createUser } = require('@/modules/core/services/users')
 const { gql } = require('graphql-tag')
-const { createStream } = require('@/modules/core/services/streams')
-const { createObject } = require('@/modules/core/services/objects')
-const { createComment } = require('@/modules/comments/services')
-const { createCommitByBranchName } = require('@/modules/core/services/commits')
 const {
   convertBasicStringToDocument
 } = require('@/modules/core/services/richTextEditorService')
@@ -22,6 +13,227 @@ const {
   createAuthedTestContext,
   executeOperation
 } = require('@/test/graphqlHelper')
+const {
+  streamResourceCheckFactory,
+  createCommentFactory
+} = require('@/modules/comments/services')
+const {
+  checkStreamResourceAccessFactory,
+  markCommentViewedFactory,
+  insertCommentsFactory,
+  insertCommentLinksFactory,
+  deleteCommentFactory
+} = require('@/modules/comments/repositories/comments')
+const { db } = require('@/db/knex')
+const {
+  validateInputAttachmentsFactory
+} = require('@/modules/comments/services/commentTextService')
+const { getBlobsFactory } = require('@/modules/blobstorage/repositories')
+const { CommentsEmitter } = require('@/modules/comments/events/emitter')
+const {
+  createCommitByBranchIdFactory,
+  createCommitByBranchNameFactory
+} = require('@/modules/core/services/commit/management')
+const {
+  createCommitFactory,
+  insertStreamCommitsFactory,
+  insertBranchCommitsFactory
+} = require('@/modules/core/repositories/commits')
+const {
+  getBranchByIdFactory,
+  markCommitBranchUpdatedFactory,
+  getStreamBranchByNameFactory,
+  createBranchFactory
+} = require('@/modules/core/repositories/branches')
+const {
+  getStreamFactory,
+  createStreamFactory,
+  updateStreamFactory,
+  grantStreamPermissionsFactory,
+  markCommitStreamUpdatedFactory
+} = require('@/modules/core/repositories/streams')
+const { VersionsEmitter } = require('@/modules/core/events/versionsEmitter')
+const {
+  getObjectFactory,
+  storeSingleObjectIfNotFoundFactory,
+  storeClosuresIfNotFoundFactory
+} = require('@/modules/core/repositories/objects')
+const {
+  legacyCreateStreamFactory,
+  createStreamReturnRecordFactory,
+  legacyUpdateStreamFactory
+} = require('@/modules/core/services/streams/management')
+const {
+  inviteUsersToProjectFactory
+} = require('@/modules/serverinvites/services/projectInviteManagement')
+const {
+  createAndSendInviteFactory
+} = require('@/modules/serverinvites/services/creation')
+const {
+  findUserByTargetFactory,
+  insertInviteAndDeleteOldFactory,
+  deleteServerOnlyInvitesFactory,
+  updateAllInviteTargetsFactory
+} = require('@/modules/serverinvites/repositories/serverInvites')
+const {
+  collectAndValidateCoreTargetsFactory
+} = require('@/modules/serverinvites/services/coreResourceCollection')
+const {
+  buildCoreInviteEmailContentsFactory
+} = require('@/modules/serverinvites/services/coreEmailContents')
+const { getEventBus } = require('@/modules/shared/services/eventBus')
+const { ProjectsEmitter } = require('@/modules/core/events/projectsEmitter')
+const {
+  addStreamCreatedActivityFactory
+} = require('@/modules/activitystream/services/streamActivity')
+const { saveActivityFactory } = require('@/modules/activitystream/repositories')
+const { publish } = require('@/modules/shared/utils/subscriptions')
+const {
+  addCommitCreatedActivityFactory
+} = require('@/modules/activitystream/services/commitActivity')
+const {
+  getUsersFactory,
+  getUserFactory,
+  storeUserFactory,
+  countAdminUsersFactory,
+  storeUserAclFactory
+} = require('@/modules/core/repositories/users')
+const {
+  findEmailFactory,
+  ensureNoPrimaryEmailForUserFactory,
+  createUserEmailFactory
+} = require('@/modules/core/repositories/userEmails')
+const {
+  requestNewEmailVerificationFactory
+} = require('@/modules/emails/services/verification/request')
+const {
+  deleteOldAndInsertNewVerificationFactory
+} = require('@/modules/emails/repositories')
+const { renderEmail } = require('@/modules/emails/services/emailRendering')
+const { sendEmail } = require('@/modules/emails/services/sending')
+const { createUserFactory } = require('@/modules/core/services/users/management')
+const {
+  validateAndCreateUserEmailFactory
+} = require('@/modules/core/services/userEmails')
+const {
+  finalizeInvitedServerRegistrationFactory
+} = require('@/modules/serverinvites/services/processing')
+const { UsersEmitter } = require('@/modules/core/events/usersEmitter')
+const { getServerInfoFactory } = require('@/modules/core/repositories/server')
+const { createObjectFactory } = require('@/modules/core/services/objects/management')
+
+const getServerInfo = getServerInfoFactory({ db })
+const getUser = getUserFactory({ db })
+const getUsers = getUsersFactory({ db })
+const markCommitStreamUpdated = markCommitStreamUpdatedFactory({ db })
+const streamResourceCheck = streamResourceCheckFactory({
+  checkStreamResourceAccess: checkStreamResourceAccessFactory({ db })
+})
+const markCommentViewed = markCommentViewedFactory({ db })
+const createComment = createCommentFactory({
+  checkStreamResourcesAccess: streamResourceCheck,
+  validateInputAttachments: validateInputAttachmentsFactory({
+    getBlobs: getBlobsFactory({ db })
+  }),
+  insertComments: insertCommentsFactory({ db }),
+  insertCommentLinks: insertCommentLinksFactory({ db }),
+  deleteComment: deleteCommentFactory({ db }),
+  markCommentViewed,
+  commentsEventsEmit: CommentsEmitter.emit
+})
+
+const getObject = getObjectFactory({ db })
+const createCommitByBranchId = createCommitByBranchIdFactory({
+  createCommit: createCommitFactory({ db }),
+  getObject,
+  getBranchById: getBranchByIdFactory({ db }),
+  insertStreamCommits: insertStreamCommitsFactory({ db }),
+  insertBranchCommits: insertBranchCommitsFactory({ db }),
+  markCommitStreamUpdated,
+  markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
+  versionsEventEmitter: VersionsEmitter.emit,
+  addCommitCreatedActivity: addCommitCreatedActivityFactory({
+    saveActivity: saveActivityFactory({ db }),
+    publish
+  })
+})
+
+const createCommitByBranchName = createCommitByBranchNameFactory({
+  createCommitByBranchId,
+  getStreamBranchByName: getStreamBranchByNameFactory({ db }),
+  getBranchById: getBranchByIdFactory({ db })
+})
+
+const addStreamCreatedActivity = addStreamCreatedActivityFactory({
+  saveActivity: saveActivityFactory({ db }),
+  publish
+})
+const getStream = getStreamFactory({ db })
+const createStream = legacyCreateStreamFactory({
+  createStreamReturnRecord: createStreamReturnRecordFactory({
+    inviteUsersToProject: inviteUsersToProjectFactory({
+      createAndSendInvite: createAndSendInviteFactory({
+        findUserByTarget: findUserByTargetFactory({ db }),
+        insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
+        collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
+          getStream
+        }),
+        buildInviteEmailContents: buildCoreInviteEmailContentsFactory({
+          getStream
+        }),
+        emitEvent: ({ eventName, payload }) =>
+          getEventBus().emit({
+            eventName,
+            payload
+          }),
+        getUser,
+        getServerInfo
+      }),
+      getUsers
+    }),
+    createStream: createStreamFactory({ db }),
+    createBranch: createBranchFactory({ db }),
+    addStreamCreatedActivity,
+    projectsEventsEmitter: ProjectsEmitter.emit
+  })
+})
+
+const updateStream = legacyUpdateStreamFactory({
+  updateStream: updateStreamFactory({ db })
+})
+const grantPermissionsStream = grantStreamPermissionsFactory({ db })
+
+const findEmail = findEmailFactory({ db })
+const requestNewEmailVerification = requestNewEmailVerificationFactory({
+  findEmail,
+  getUser: getUserFactory({ db }),
+  getServerInfo,
+  deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db }),
+  renderEmail,
+  sendEmail
+})
+const createUser = createUserFactory({
+  getServerInfo,
+  findEmail,
+  storeUser: storeUserFactory({ db }),
+  countAdminUsers: countAdminUsersFactory({ db }),
+  storeUserAcl: storeUserAclFactory({ db }),
+  validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
+    createUserEmail: createUserEmailFactory({ db }),
+    ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
+    findEmail,
+    updateEmailInvites: finalizeInvitedServerRegistrationFactory({
+      deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
+      updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
+    }),
+    requestNewEmailVerification
+  }),
+  usersEventsEmitter: UsersEmitter.emit
+})
+const createObject = createObjectFactory({
+  storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({ db }),
+  storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db })
+})
 
 function buildCommentInputFromString(textString) {
   return convertBasicStringToDocument(textString)
@@ -477,7 +689,7 @@ const queryCommitCommentCount = async ({ apollo, resources, shouldSucceed }) => 
       notSignal: crs({ length: 10 })
     }
   })
-  const commitId = await createCommitByBranchName({
+  const { id: commitId } = await createCommitByBranchName({
     streamId: resources.streamId,
     branchName: 'main',
     objectId,
@@ -528,7 +740,7 @@ const queryCommitCollectionCommentCount = async ({
       almostMakesSense: crs({ length: 10 })
     }
   })
-  const commitId = await createCommitByBranchName({
+  const { id: commitId } = await createCommitByBranchName({
     streamId: resources.streamId,
     branchName: 'main',
     objectId,

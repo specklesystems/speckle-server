@@ -4,6 +4,7 @@ export const workspaceFragment = gql`
   fragment TestWorkspace on Workspace {
     id
     name
+    slug
     description
     createdAt
     updatedAt
@@ -17,6 +18,13 @@ export const workspaceCollaboratorFragment = gql`
     role
     user {
       name
+    }
+    projectRoles {
+      role
+      project {
+        id
+        name
+      }
     }
   }
 `
@@ -56,6 +64,21 @@ export const deleteWorkspaceQuery = gql`
 export const getWorkspaceQuery = gql`
   query GetWorkspace($workspaceId: String!) {
     workspace(id: $workspaceId) {
+      ...TestWorkspace
+      team {
+        items {
+          ...TestWorkspaceCollaborator
+        }
+      }
+    }
+  }
+  ${workspaceFragment}
+  ${workspaceCollaboratorFragment}
+`
+
+export const getWorkspaceBySlugQuery = gql`
+  query GetWorkspaceBySlug($workspaceSlug: String!) {
+    workspaceBySlug(slug: $workspaceSlug) {
       ...TestWorkspace
       team {
         items {
@@ -187,6 +210,23 @@ export const getProjectWorkspaceQuery = gql`
           workspace {
             id
             name
+          }
+        }
+      }
+    }
+  }
+`
+
+export const moveProjectToWorkspaceMutation = gql`
+  mutation MoveProjectToWorkspace($projectId: String!, $workspaceId: String!) {
+    workspaceMutations {
+      projects {
+        moveToWorkspace(projectId: $projectId, workspaceId: $workspaceId) {
+          id
+          workspaceId
+          team {
+            id
+            role
           }
         }
       }

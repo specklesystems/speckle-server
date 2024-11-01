@@ -7,7 +7,6 @@ import {
   onWorkspaceRoleUpdatedFactory
 } from '@/modules/workspaces/events/eventListener'
 import { expect } from 'chai'
-import { mapWorkspaceRoleToInitialProjectRole } from '@/modules/workspaces/domain/logic'
 import { chunk } from 'lodash'
 
 describe('Event handlers', () => {
@@ -41,7 +40,11 @@ describe('Event handlers', () => {
 
       const onProjectCreated = onProjectCreatedFactory({
         getWorkspaceRoles: async () => workspaceRoles,
-        getDefaultWorkspaceProjectRoleMapping: mapWorkspaceRoleToInitialProjectRole,
+        getWorkspaceRoleToDefaultProjectRoleMapping: async () => ({
+          [Roles.Workspace.Admin]: Roles.Stream.Owner,
+          [Roles.Workspace.Member]: Roles.Stream.Contributor,
+          [Roles.Workspace.Guest]: null
+        }),
         upsertProjectRole: async ({ projectId, userId, role }) => {
           projectRoles.push({
             resourceId: projectId,
@@ -66,7 +69,7 @@ describe('Event handlers', () => {
       let isDeleteCalled = false
 
       await onWorkspaceRoleUpdatedFactory({
-        getDefaultWorkspaceProjectRoleMapping: async () => ({
+        getWorkspaceRoleToDefaultProjectRoleMapping: async () => ({
           [Roles.Workspace.Admin]: Roles.Stream.Owner,
           [Roles.Workspace.Member]: Roles.Stream.Contributor,
           [Roles.Workspace.Guest]: null
@@ -100,8 +103,9 @@ describe('Event handlers', () => {
       const projectRole = Roles.Stream.Reviewer
 
       const storedRoles: { userId: string; role: StreamRoles; projectId: string }[] = []
+      let trackProjectUpdate: boolean | undefined = false
       await onWorkspaceRoleUpdatedFactory({
-        getDefaultWorkspaceProjectRoleMapping: async () => ({
+        getWorkspaceRoleToDefaultProjectRoleMapping: async () => ({
           [Roles.Workspace.Admin]: Roles.Stream.Owner,
           [Roles.Workspace.Member]: projectRole,
           [Roles.Workspace.Guest]: null
@@ -114,8 +118,9 @@ describe('Event handlers', () => {
         deleteProjectRole: async () => {
           expect.fail()
         },
-        upsertProjectRole: async (args) => {
+        upsertProjectRole: async (args, options) => {
           storedRoles.push(args)
+          trackProjectUpdate = trackProjectUpdate || options?.trackProjectUpdate
           return {} as StreamRecord
         }
       })({
@@ -126,6 +131,7 @@ describe('Event handlers', () => {
       expect(storedRoles).deep.equals(
         projectIds.map((projectId) => ({ projectId, role: projectRole, userId }))
       )
+      expect(trackProjectUpdate).to.not.be.true
     })
   })
 })

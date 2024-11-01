@@ -7,13 +7,15 @@
         <slot :toggle="toggle" :open="processOpen(isMenuOpen)" />
       </div>
     </div>
-    <Teleport to="body">
+    <Teleport to="body" :disabled="!mountMenuOnBody">
       <MenuItems
         v-if="isMenuOpen"
         ref="menuItems"
         :class="[
-          'absolute mt-1 w-44 origin-top-right divide-y divide-outline-3 rounded-md bg-foundation shadow-lg border border-outline-2 z-50',
-          menuDirection === HorizontalDirection.Left ? 'right-0' : ''
+          'mt-1 w-44 origin-top-right divide-y divide-outline-3 rounded-md bg-foundation shadow-lg border border-outline-2 z-50',
+          menuDirection === HorizontalDirection.Left ? 'right-0' : '',
+          mountMenuOnBody ? 'fixed' : 'absolute',
+          size === 'lg' ? 'w-52' : 'w-44'
         ]"
         :style="menuItemsStyles"
       >
@@ -66,8 +68,10 @@ const props = defineProps<{
    * 2D array so that items can be grouped with dividers between them
    */
   items: LayoutMenuItem[][]
+  size?: 'base' | 'lg'
   menuId?: string
   menuPosition?: HorizontalDirection
+  mountMenuOnBody?: boolean
 }>()
 
 const menuItems = ref(null as Nullable<{ el: HTMLDivElement }>)
@@ -88,15 +92,18 @@ const menuButtonBounding = useElementBounding(menuButtonWrapper, {
 })
 
 const menuItemsStyles = computed(() => {
+  if (!props.mountMenuOnBody) return {}
+
   if (!menuButtonBounding.width.value) return {}
   let offsetPosition = menuButtonBounding.left.value
 
   if (props.menuPosition === HorizontalDirection.Left) {
-    offsetPosition = menuButtonBounding.left.value - 150
+    const menuWidth = props.size === 'lg' ? 175 : 143
+    offsetPosition = menuButtonBounding.left.value - menuWidth
   }
 
   return {
-    position: 'absolute',
+    position: 'fixed',
     top: `${menuButtonBounding.top.value + menuButtonBounding.height.value}px`,
     left: `${offsetPosition}px`,
     zIndex: 50
@@ -146,7 +153,12 @@ const chooseItem = (item: LayoutMenuItem, event: MouseEvent) => {
   emit('chosen', { item, event })
 }
 
-const toggle = () => menuButton.value?.el.click()
+const toggle = () => {
+  menuButton.value?.el.click()
+  if (props.mountMenuOnBody) {
+    menuButtonBounding.update()
+  }
+}
 
 // ok this is a bit hacky, but it's done because of headlessui's limited API
 // the point of this is 1) cast any to bool 2) store 'open' state locally

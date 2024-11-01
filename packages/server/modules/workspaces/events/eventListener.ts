@@ -5,7 +5,8 @@ import {
 } from '@/modules/core/events/projectsEmitter'
 import {
   deleteProjectRoleFactory,
-  getStream,
+  getStreamFactory,
+  legacyGetStreamsFactory,
   upsertProjectRoleFactory
 } from '@/modules/core/repositories/streams'
 import {
@@ -32,26 +33,29 @@ import {
 } from '@/modules/core/domain/projects/operations'
 import { WorkspaceEvents } from '@/modules/workspacesCore/domain/events'
 import { Knex } from 'knex'
-import { mapWorkspaceRoleToInitialProjectRole } from '@/modules/workspaces/domain/logic'
 import {
+  getWorkspaceFactory,
   getWorkspaceRolesFactory,
   getWorkspaceWithDomainsFactory,
   upsertWorkspaceRoleFactory
 } from '@/modules/workspaces/repositories/workspaces'
-import { queryAllWorkspaceProjectsFactory } from '@/modules/workspaces/services/projects'
-import { getStreams } from '@/modules/core/services/streams'
+import {
+  queryAllWorkspaceProjectsFactory,
+  getWorkspaceRoleToDefaultProjectRoleMappingFactory
+} from '@/modules/workspaces/services/projects'
 import { withTransaction } from '@/modules/shared/helpers/dbHelper'
 import { findVerifiedEmailsByUserIdFactory } from '@/modules/core/repositories/userEmails'
+import { GetStream } from '@/modules/core/domain/streams/operations'
 
 export const onProjectCreatedFactory =
   ({
     getWorkspaceRoles,
     upsertProjectRole,
-    getDefaultWorkspaceProjectRoleMapping
+    getWorkspaceRoleToDefaultProjectRoleMapping
   }: {
     getWorkspaceRoles: GetWorkspaceRoles
     upsertProjectRole: UpsertProjectRole
-    getDefaultWorkspaceProjectRoleMapping: GetWorkspaceRoleToDefaultProjectRoleMapping
+    getWorkspaceRoleToDefaultProjectRoleMapping: GetWorkspaceRoleToDefaultProjectRoleMapping
   }) =>
   async (payload: ProjectEventsPayloads[typeof ProjectEvents.Created]) => {
     const { id: projectId, workspaceId } = payload.project
@@ -62,7 +66,7 @@ export const onProjectCreatedFactory =
 
     const workspaceMembers = await getWorkspaceRoles({ workspaceId })
 
-    const defaultRoleMapping = await getDefaultWorkspaceProjectRoleMapping({
+    const defaultRoleMapping = await getWorkspaceRoleToDefaultProjectRoleMapping({
       workspaceId
     })
 
@@ -86,7 +90,7 @@ export const onProjectCreatedFactory =
 
 export const onInviteFinalizedFactory =
   (deps: {
-    getStream: typeof getStream
+    getStream: GetStream
     logger: typeof logger
     updateWorkspaceRole: ReturnType<typeof updateWorkspaceRoleFactory>
   }) =>
@@ -150,12 +154,12 @@ export const onWorkspaceRoleDeletedFactory =
 
 export const onWorkspaceRoleUpdatedFactory =
   ({
-    getDefaultWorkspaceProjectRoleMapping,
+    getWorkspaceRoleToDefaultProjectRoleMapping,
     queryAllWorkspaceProjects,
     deleteProjectRole,
     upsertProjectRole
   }: {
-    getDefaultWorkspaceProjectRoleMapping: GetWorkspaceRoleToDefaultProjectRoleMapping
+    getWorkspaceRoleToDefaultProjectRoleMapping: GetWorkspaceRoleToDefaultProjectRoleMapping
     queryAllWorkspaceProjects: QueryAllWorkspaceProjects
     deleteProjectRole: DeleteProjectRole
     upsertProjectRole: UpsertProjectRole
@@ -173,9 +177,11 @@ export const onWorkspaceRoleUpdatedFactory =
       skipProjectRoleUpdatesFor: string[]
     }
   }) => {
-    const defaultProjectRoleMapping = await getDefaultWorkspaceProjectRoleMapping({
-      workspaceId
-    })
+    const defaultProjectRoleMapping = await getWorkspaceRoleToDefaultProjectRoleMapping(
+      {
+        workspaceId
+      }
+    )
 
     const nextProjectRole = defaultProjectRoleMapping[role]
 
@@ -194,11 +200,14 @@ export const onWorkspaceRoleUpdatedFactory =
             return
           }
 
-          await upsertProjectRole({
-            projectId,
-            userId,
-            role: nextProjectRole
-          })
+          await upsertProjectRole(
+            {
+              projectId,
+              userId,
+              role: nextProjectRole
+            },
+            { trackProjectUpdate: false }
+          )
         })
       )
     }
@@ -208,10 +217,14 @@ export const initializeEventListenersFactory =
   ({ db }: { db: Knex }) =>
   () => {
     const eventBus = getEventBus()
+    const getStreams = legacyGetStreamsFactory({ db })
     const quitCbs = [
       ProjectsEmitter.listen(ProjectEvents.Created, async (payload) => {
         const onProjectCreated = onProjectCreatedFactory({
-          getDefaultWorkspaceProjectRoleMapping: mapWorkspaceRoleToInitialProjectRole,
+          getWorkspaceRoleToDefaultProjectRoleMapping:
+            getWorkspaceRoleToDefaultProjectRoleMappingFactory({
+              getWorkspace: getWorkspaceFactory({ db })
+            }),
           upsertProjectRole: upsertProjectRoleFactory({ db }),
           getWorkspaceRoles: getWorkspaceRolesFactory({ db })
         })
@@ -219,7 +232,7 @@ export const initializeEventListenersFactory =
       }),
       eventBus.listen(ServerInvitesEvents.Finalized, async ({ payload }) => {
         const onInviteFinalized = onInviteFinalizedFactory({
-          getStream,
+          getStream: getStreamFactory({ db }),
           logger: moduleLogger,
           updateWorkspaceRole: updateWorkspaceRoleFactory({
             getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db }),
@@ -242,7 +255,10 @@ export const initializeEventListenersFactory =
       eventBus.listen(WorkspaceEvents.RoleUpdated, async ({ payload }) => {
         const trx = await db.transaction()
         const onWorkspaceRoleUpdated = onWorkspaceRoleUpdatedFactory({
-          getDefaultWorkspaceProjectRoleMapping: mapWorkspaceRoleToInitialProjectRole,
+          getWorkspaceRoleToDefaultProjectRoleMapping:
+            getWorkspaceRoleToDefaultProjectRoleMappingFactory({
+              getWorkspace: getWorkspaceFactory({ db: trx })
+            }),
           queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({ getStreams }),
           deleteProjectRole: deleteProjectRoleFactory({ db: trx }),
           upsertProjectRole: upsertProjectRoleFactory({ db: trx })

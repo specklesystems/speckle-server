@@ -5,11 +5,11 @@ const {
   authSuccess,
   validateRole,
   validateScope,
-  contextRequiresStream,
   allowForAllRegisteredUsersOnPublicStreamsWithPublicComments,
   allowForRegisteredUsersOnPublicStreamsEvenWithoutRole,
   allowForServerAdmins,
-  validateResourceAccess
+  validateResourceAccess,
+  validateRequiredStreamFactory
 } = require('@/modules/shared/authz')
 const {
   ForbiddenError: SFE,
@@ -310,7 +310,7 @@ describe('AuthZ @shared', () => {
       expect(authResult.error.name).to.equal(expectedError.name)
     }
     it('Without streamId in the params it raises context error', async () => {
-      const step = contextRequiresStream({
+      const step = validateRequiredStreamFactory({
         getStream: async () => ({ ur: 'bamboozled' }),
         getAutomationProject: async () => null
       })
@@ -321,7 +321,7 @@ describe('AuthZ @shared', () => {
       )
     })
     it('If params is not defined it raises context error', async () => {
-      const step = contextRequiresStream({
+      const step = validateRequiredStreamFactory({
         getStream: async () => ({ ur: 'bamboozled' }),
         getAutomationProject: async () => null
       })
@@ -336,7 +336,7 @@ describe('AuthZ @shared', () => {
         id: 'foo',
         name: 'bar'
       }
-      const step = contextRequiresStream({
+      const step = validateRequiredStreamFactory({
         getStream: async () => demoStream,
         getAutomationProject: async () => null
       })
@@ -347,7 +347,7 @@ describe('AuthZ @shared', () => {
       expect(context.stream).to.deep.equal(demoStream)
     })
     it('If context is not defined return auth failure', async () => {
-      const step = contextRequiresStream({
+      const step = validateRequiredStreamFactory({
         getStream: async () => {},
         getAutomationProject: async () => null
       })
@@ -357,7 +357,7 @@ describe('AuthZ @shared', () => {
     })
     it('If stream getter raises, the error is handled', async () => {
       const errorMessage = 'oh dangit'
-      const step = contextRequiresStream({
+      const step = validateRequiredStreamFactory({
         getStream: async () => {
           throw new Error(errorMessage)
         },
@@ -371,7 +371,7 @@ describe('AuthZ @shared', () => {
       expectAuthError(new ContextError(errorMessage), authResult)
     })
     it("If stream getter doesn't find a stream it returns fatal auth failure", async () => {
-      const step = contextRequiresStream({
+      const step = validateRequiredStreamFactory({
         getStream: async () => {},
         getAutomationProject: async () => null
       })

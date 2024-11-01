@@ -34,7 +34,7 @@ if (providedTimeLimit) TIME_LIMIT = providedTimeLimit * 60 * 1000
 async function startTask() {
   const { rows } = await knex.raw(`
     UPDATE file_uploads
-    SET 
+    SET
       "convertedStatus" = 1,
       "convertedLastUpdate" = NOW()
     FROM (
@@ -85,7 +85,7 @@ async function doTask(task) {
     })
     fs.mkdirSync(TMP_INPUT_DIR, { recursive: true })
 
-    serverApi = new ServerAPI({ streamId: info.streamId, logger: taskLogger })
+    serverApi = new ServerAPI({ db: knex, streamId: info.streamId, logger: taskLogger })
 
     branchMetadata = {
       branchName: info.branchName,

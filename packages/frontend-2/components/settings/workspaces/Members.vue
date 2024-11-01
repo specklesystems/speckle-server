@@ -41,6 +41,17 @@ graphql(`
   fragment SettingsWorkspacesMembers_Workspace on Workspace {
     id
     role
+    team {
+      items {
+        id
+        role
+      }
+    }
+    invitedTeam(filter: $invitesFilter) {
+      user {
+        id
+      }
+    }
   }
 `)
 
@@ -53,18 +64,31 @@ const { result } = useQuery(settingsWorkspacesMembersQuery, () => ({
 }))
 
 const isAdmin = computed(() => result.value?.workspace?.role === Roles.Workspace.Admin)
+const workspace = computed(() => result.value?.workspace)
+const memberCount = computed(
+  () =>
+    result.value?.workspace.team.items.filter(
+      (item) => item.role !== Roles.Workspace.Guest
+    ).length
+)
+const guestCount = computed(
+  () =>
+    result.value?.workspace.team.items.filter(
+      (item) => item.role === Roles.Workspace.Guest
+    ).length
+)
+const invitedCount = computed(() => result.value?.workspace.invitedTeam?.length)
 const tabItems = computed<LayoutPageTabItem[]>(() => [
-  { title: 'Members', id: 'members' },
-  { title: 'Guests', id: 'guests' },
+  { title: 'Members', id: 'members', count: memberCount.value },
+  { title: 'Guests', id: 'guests', count: guestCount.value },
   {
     title: 'Pending invites',
     id: 'invites',
     disabled: !isAdmin.value,
-    disabledMessage: 'Only workspace admins can manage invites'
+    disabledMessage: 'Only workspace admins can manage invites',
+    count: invitedCount.value
   }
 ])
 
 const activeTab = ref(tabItems.value[0])
-
-const workspace = computed(() => result.value?.workspace)
 </script>
