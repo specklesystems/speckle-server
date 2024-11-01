@@ -11,7 +11,7 @@
       </CommonCard>
 
       <SettingsSectionHeader
-        title="What your workspace bill after the trial period will look like"
+        title="What your workspace bill will look like after the trial ends"
         class="pt-6 pb-4 md:pt-10 md:pb-6"
         subheading
       />
