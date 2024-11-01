@@ -5,8 +5,8 @@
       <CommonCard class="text-body-xs bg-foundation">
         <p class="text-foreground font-medium">Workspaces are free while in beta.</p>
         <p class="pt-1">
-          Once the beta period ends, your workspace will be converted to a free 30-day
-          trial. You can keep using it for free until it expires or you upgrade.
+          After the beta ends, your workspace will start a 30-day free trial. You'll
+          have full access until either the trial expires or you upgrade to a paid plan.
         </p>
       </CommonCard>
 
