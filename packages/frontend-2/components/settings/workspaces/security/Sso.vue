@@ -40,6 +40,7 @@
         />
         <hr class="border-outline-3" />
         <FormTextInput
+          v-if="!providerName"
           v-model="issuerUrl"
           label="Issuer URL"
           name="issuerUrl"
@@ -50,11 +51,14 @@
           placeholder="https://accounts.google.com"
           :rules="[isRequired, isUrl, isStringOfLength({ minLength: 5 })]"
         />
-        <div class="mt-6">
+        <div v-if="!providerName" class="mt-6">
           <FormButton :disabled="!challenge" color="primary" @click="onSubmit">
             Save
           </FormButton>
         </div>
+        <FormButton v-else :disabled="!challenge" color="primary" @click="onSubmit">
+          Edit
+        </FormButton>
       </div>
     </form>
   </section>
@@ -82,11 +86,19 @@ type FormValues = {
   issuerUrl: string
 }
 
+type SsoConfigResponse = {
+  name: string
+  logo: string | null
+  defaultLogoIndex: number
+  ssoProviderName?: string
+}
+
 const props = defineProps<{
   workspace: SettingsWorkspacesSecuritySso_WorkspaceFragment
 }>()
 
 const apiOrigin = useApiOrigin()
+const logger = useLogger()
 const { challenge } = useLoginOrRegisterUtils()
 const postAuthRedirect = usePostAuthRedirect()
 const { handleSubmit } = useForm<FormValues>()
@@ -112,5 +124,23 @@ const onSubmit = handleSubmit(() => {
   navigateTo(route, {
     external: true
   })
+})
+
+onMounted(async () => {
+  try {
+    const response = await fetch(
+      new URL(`/api/v1/workspaces/${props.workspace.slug}/sso`, apiOrigin)
+    )
+    const data = (await response.json()) as SsoConfigResponse
+
+    if (data.ssoProviderName) {
+      providerName.value = data.ssoProviderName
+      clientId.value = '••••••••••'
+      clientSecret.value = '••••••••••'
+      issuerUrl.value = 'Configuration saved'
+    }
+  } catch (error) {
+    logger.error('Failed to fetch SSO config:', error)
+  }
 })
 </script>
