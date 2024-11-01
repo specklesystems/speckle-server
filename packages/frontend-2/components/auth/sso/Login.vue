@@ -3,7 +3,7 @@
     <div class="flex flex-col">
       <h1 class="text-heading-xl text-center mb-8">Speckle SSO login</h1>
       <FormTextInput
-        v-bind="bind"
+        v-model:model-value="email"
         type="email"
         name="email"
         label="Your work email"
@@ -14,7 +14,7 @@
         show-label
         :disabled="!!loading"
         auto-focus
-        v-on="on"
+        @update:model-value="onEmailChange"
       />
     </div>
     <FormButton
@@ -35,26 +35,39 @@
 <script setup lang="ts">
 import { useForm } from 'vee-validate'
 import { isEmail, isRequired } from '~~/lib/common/helpers/validation'
-import { useDebouncedTextInput } from '@speckle/ui-components'
 import { loginRoute } from '~/lib/common/helpers/route'
 import { useMixpanel } from '~~/lib/core/composables/mp'
+import { useQuery } from '@vue/apollo-composable'
+import { workspaceSsoByEmailQuery } from '~/lib/workspaces/graphql/queries'
+import { debounce } from 'lodash'
 
 type FormValues = { email: string }
 
 const loading = ref(false)
-const isSsoAvailable = ref(false)
-const isChecking = ref(false)
+const email = ref('')
+const debouncedEmail = ref('')
 
 const { handleSubmit, meta } = useForm<FormValues>()
 const mixpanel = useMixpanel()
 
-const {
-  value: email,
-  bind,
-  on
-} = useDebouncedTextInput({
-  debouncedBy: 800
+const { loading: isChecking, result } = useQuery(
+  workspaceSsoByEmailQuery,
+  () => ({
+    email: debouncedEmail.value
+  }),
+  () => ({
+    enabled: meta.value.valid && !!debouncedEmail.value
+  })
+)
+
+const isSsoAvailable = computed(() => {
+  return (result.value?.workspaceSsoByEmail.length ?? 0) > 0
 })
+
+const onEmailChange = (value: string) => {
+  email.value = value
+  updateDebouncedEmail(value)
+}
 
 const onSubmit = handleSubmit(async () => {
   if (!isSsoAvailable.value) return
@@ -68,24 +81,15 @@ const buttonText = computed(() => {
   if (isChecking.value) return 'Checking...'
   if (!meta.value.valid) return 'Single Sign-On'
   if (!isSsoAvailable.value) return 'Single Sign-On not available'
-  return 'Sign in with domain' // todo
+  return 'Sign in with domain'
 })
+
+// Debounced function to update the email used for validation
+const updateDebouncedEmail = debounce((value: string) => {
+  debouncedEmail.value = value
+}, 800)
 
 onMounted(() => {
   mixpanel.track(`Visit SSO Login`)
-})
-
-// Watch email changes and check SSO availability
-watch(email, async (newEmail) => {
-  if (meta.value.valid && newEmail) {
-    isChecking.value = true
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-    // Dummy logic: emails ending with @speckle.systems are valid
-    isSsoAvailable.value = newEmail.endsWith('@speckle.systems')
-    isChecking.value = false
-  } else {
-    isSsoAvailable.value = false
-  }
 })
 </script>

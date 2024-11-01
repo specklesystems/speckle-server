@@ -7,7 +7,10 @@
 
 <script setup lang="ts">
 const currentView = computed(() => {
-  return window.location.hash === '#register' ? 'register' : 'login'
+  if (import.meta.client) {
+    return window.location.hash === '#register' ? 'register' : 'login'
+  }
+  return 'login'
 })
 
 useHead({
