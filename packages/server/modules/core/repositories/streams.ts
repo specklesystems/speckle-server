@@ -31,11 +31,9 @@ import {
 } from '@/modules/core/helpers/types'
 import {
   DiscoverableStreamsSortType,
-  ProjectCreateInput,
   ProjectUpdateInput,
   ProjectVisibility,
   SortDirection,
-  StreamCreateInput,
   StreamUpdateInput
 } from '@/modules/core/graph/generated/graphql'
 import { Nullable, Optional } from '@/modules/shared/helpers/typeHelper'
@@ -790,16 +788,7 @@ export const getUserStreamsCountFactory =
 
 export const createStreamFactory =
   (deps: { db: Knex }): StoreStream =>
-  async (
-    input: StreamCreateInput | ProjectCreateInput,
-    options?: Partial<{
-      /**
-       * If set, will assign owner permissions to this user
-       */
-      ownerId: string
-      trx: Knex.Transaction
-    }>
-  ) => {
+  async (input, options) => {
     const { name, description } = input
     const { ownerId, trx } = options || {}
 
@@ -817,6 +806,7 @@ export const createStreamFactory =
     }
 
     const workspaceId = 'workspaceId' in input ? input.workspaceId : null
+    const regionKey = 'regionKey' in input ? input.regionKey || null : null
 
     const id = generateId()
     const stream = {
@@ -827,7 +817,7 @@ export const createStreamFactory =
       isDiscoverable: shouldBeDiscoverable,
       updatedAt: knex.fn.now(),
       workspaceId: workspaceId || null,
-      regionKey: null
+      regionKey
     }
 
     // Create the stream & set up permissions

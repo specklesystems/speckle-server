@@ -80,7 +80,7 @@ export type LegacyGetStreamCollaborators = (params: { streamId: string }) => Pro
 >
 
 export type StoreStream = (
-  input: StreamCreateInput | ProjectCreateInput,
+  input: StreamCreateInput | (ProjectCreateInput & { regionKey?: string | null }),
   options?: Partial<{
     ownerId: string
     trx: Knex.Transaction

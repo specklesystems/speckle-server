@@ -84,6 +84,7 @@
     "knex": "^2.4.1",
     "libsodium-wrappers": "^0.7.13",
     "lodash": "^4.17.21",
+    "lru-cache": "^11.0.1",
     "mixpanel": "^0.17.0",
     "mjml": "^4.13.0",
     "mjml-bullet-list": "^1.2.2",
