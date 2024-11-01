@@ -3,19 +3,30 @@ import {
   GetWorkspacePlan,
   GetWorkspacePlanPrice,
   GetWorkspacePlanProductId,
+  GetWorkspaceProductPrice,
   GetWorkspaceSubscription,
   GetWorkspaceSubscriptionBySubscriptionId,
   GetWorkspaceSubscriptions,
+  PaidWorkspacePlan,
   PaidWorkspacePlanStatuses,
   ReconcileSubscriptionData,
   SubscriptionData,
   SubscriptionDataInput,
+  SubscriptionProductInput,
   UpsertPaidWorkspacePlan,
   UpsertWorkspaceSubscription,
+  WorkspacePlan,
   WorkspaceSubscription
 } from '@/modules/gatekeeper/domain/billing'
-import { WorkspacePricingPlans } from '@/modules/gatekeeper/domain/workspacePricing'
 import {
+  PaidWorkspacePlans,
+  WorkspacePlanBillingIntervals,
+  WorkspacePlans,
+  WorkspacePricingPlans
+} from '@/modules/gatekeeper/domain/workspacePricing'
+import {
+  BillingIntervalDowngradeError,
+  PaidWorkspaceNotValidError,
   WorkspacePlanMismatchError,
   WorkspacePlanNotFoundError,
   WorkspaceSubscriptionNotFoundError
@@ -23,6 +34,41 @@ import {
 import { CountWorkspaceRoleWithOptionalProjectRole } from '@/modules/workspaces/domain/operations'
 import { throwUncoveredError, WorkspaceRoles } from '@speckle/shared'
 import { cloneDeep, isEqual, sum } from 'lodash'
+
+const isPaidWorkspacePlanName = (
+  workspacePlanName: WorkspacePlans
+): workspacePlanName is PaidWorkspacePlans => {
+  switch (workspacePlanName) {
+    case 'team':
+    case 'pro':
+    case 'business':
+      return true
+    case 'unlimited':
+    case 'academia':
+      return false
+    default:
+      throwUncoveredError(workspacePlanName)
+  }
+}
+
+const isPaidWorkspacePlan = (
+  workspacePlan: WorkspacePlan
+): workspacePlan is PaidWorkspacePlan => {
+  return isPaidWorkspacePlanName(workspacePlan.name)
+}
+
+const getWorkspacePlanOrder = (workspacePlan: PaidWorkspacePlans): number => {
+  switch (workspacePlan) {
+    case 'team':
+      return 0
+    case 'pro':
+      return 1
+    case 'business':
+      return 2
+    default:
+      throwUncoveredError(workspacePlan)
+  }
+}
 
 export const handleSubscriptionUpdateFactory =
   ({
@@ -68,18 +114,7 @@ export const handleSubscriptionUpdateFactory =
     }
 
     if (status) {
-      switch (workspacePlan.name) {
-        case 'team':
-        case 'pro':
-        case 'business':
-          break
-        case 'unlimited':
-        case 'academia':
-          throw new WorkspacePlanMismatchError()
-        default:
-          throwUncoveredError(workspacePlan)
-      }
-
+      if (!isPaidWorkspacePlan(workspacePlan)) throw new WorkspacePlanMismatchError()
       await upsertPaidWorkspacePlan({
         workspacePlan: { ...workspacePlan, status }
       })
@@ -117,17 +152,7 @@ export const addWorkspaceSubscriptionSeatIfNeededFactory =
     const workspaceSubscription = await getWorkspaceSubscription({ workspaceId })
     if (!workspaceSubscription) throw new WorkspaceSubscriptionNotFoundError()
 
-    switch (workspacePlan.name) {
-      case 'team':
-      case 'pro':
-      case 'business':
-        break
-      case 'unlimited':
-      case 'academia':
-        throw new WorkspacePlanMismatchError()
-      default:
-        throwUncoveredError(workspacePlan)
-    }
+    if (!isPaidWorkspacePlan(workspacePlan)) throw new WorkspacePlanMismatchError()
 
     if (workspacePlan.status === 'canceled') return
 
@@ -247,17 +272,7 @@ export const downscaleWorkspaceSubscriptionFactory =
     const workspacePlan = await getWorkspacePlan({ workspaceId })
     if (!workspacePlan) throw new WorkspacePlanNotFoundError()
 
-    switch (workspacePlan.name) {
-      case 'team':
-      case 'pro':
-      case 'business':
-        break
-      case 'unlimited':
-      case 'academia':
-        throw new WorkspacePlanMismatchError()
-      default:
-        throwUncoveredError(workspacePlan)
-    }
+    if (!isPaidWorkspacePlan(workspacePlan)) throw new WorkspacePlanMismatchError()
 
     if (workspacePlan.status === 'canceled') return false
 
@@ -329,4 +344,151 @@ export const manageSubscriptionDownscaleFactory =
       })
       log.info({ updatedWorkspaceSubscription }, 'Updated workspace billing cycle end')
     }
+  }
+
+export const isBillingIntervalUpgrade = ({
+  existingBillingInterval,
+  newBillingInterval
+}: {
+  existingBillingInterval: WorkspacePlanBillingIntervals
+  newBillingInterval: WorkspacePlanBillingIntervals
+}): boolean => {
+  let isBillingCycleUpgrade = false
+  switch (existingBillingInterval) {
+    case 'monthly':
+      switch (newBillingInterval) {
+        case 'monthly':
+          break
+        case 'yearly':
+          isBillingCycleUpgrade = true
+          break
+        default:
+          throwUncoveredError(newBillingInterval)
+      }
+      break
+    case 'yearly':
+      switch (newBillingInterval) {
+        case 'monthly':
+          throw new BillingIntervalDowngradeError()
+        case 'yearly':
+          break
+        default:
+          throwUncoveredError(newBillingInterval)
+      }
+      break
+    default:
+      throwUncoveredError(existingBillingInterval)
+  }
+  return isBillingCycleUpgrade
+}
+
+export const upgradeWorkspacePlanFactory =
+  ({
+    getWorkspacePlan,
+    getWorkspaceSubscription,
+    updateWorkspaceSubscription,
+    getWorkspaceProductPrice,
+    getWorkspacePlanProductId,
+    getWorkspacePlanPrice,
+    reconcileSubscriptionData
+  }: {
+    getWorkspacePlan: GetWorkspacePlan
+    getWorkspaceSubscription: GetWorkspaceSubscription
+    updateWorkspaceSubscription: UpsertWorkspaceSubscription
+    reconcileSubscriptionData: ReconcileSubscriptionData
+    getWorkspaceProductPrice: GetWorkspaceProductPrice
+    getWorkspacePlanProductId: GetWorkspacePlanProductId
+    getWorkspacePlanPrice: GetWorkspacePlanPrice
+  }) =>
+  async ({
+    workspaceId,
+    workspacePlan,
+    billingInterval
+  }: {
+    workspaceId: string
+    workspacePlan: PaidWorkspacePlans
+    billingInterval: WorkspacePlanBillingIntervals
+  }): Promise<PaidWorkspacePlan> => {
+    const existingWorkspacePlan = await getWorkspacePlan({ workspaceId })
+    if (!existingWorkspacePlan) throw new WorkspacePlanNotFoundError()
+
+    // is workspace plan valid
+    switch (existingWorkspacePlan.status) {
+      case 'valid':
+        break
+      case 'paymentFailed':
+      case 'canceled':
+      case 'cancelationScheduled':
+      case 'trial':
+      case 'trialExpired':
+        // TODO: prob each state requires its own error, to show to the user
+        throw new PaidWorkspaceNotValidError()
+      default:
+        throwUncoveredError(existingWorkspacePlan)
+    }
+
+    if (!isPaidWorkspacePlan(existingWorkspacePlan))
+      throw new PaidWorkspaceNotValidError()
+
+    const workspaceSubscription = await getWorkspaceSubscription({ workspaceId })
+    if (!workspaceSubscription) throw new WorkspacePlanMismatchError()
+
+    const isBillingCycleUpgrade = isBillingIntervalUpgrade({
+      existingBillingInterval: workspaceSubscription.billingInterval,
+      newBillingInterval: billingInterval
+    })
+
+    const currentPlanRank = getWorkspacePlanOrder(existingWorkspacePlan.name)
+    const newPlanRank = getWorkspacePlanOrder(workspacePlan)
+
+    // nothing changes
+    if (currentPlanRank === newPlanRank && !isBillingCycleUpgrade)
+      return existingWorkspacePlan
+
+    const subscriptionData: SubscriptionDataInput = cloneDeep(
+      workspaceSubscription.subscriptionData
+    )
+    // if we're moving to a new billing cycle, we need a bit more work
+    if (isBillingCycleUpgrade) {
+      // end the
+      workspaceSubscription.currentBillingCycleEnd = new Date()
+      workspaceSubscription.billingInterval = billingInterval
+      const newBillingCycleEnd = calculateNewBillingCycleEnd({ workspaceSubscription })
+      workspaceSubscription.currentBillingCycleEnd = newBillingCycleEnd
+      await updateWorkspaceSubscription({ workspaceSubscription })
+
+      const newProducts: SubscriptionProductInput[] = subscriptionData.products.map(
+        (p) => {
+          const priceId = getWorkspaceProductPrice({
+            productId: p.productId,
+            billingInterval
+          })
+          if (!priceId) throw new Error('Missing priceId')
+          return {
+            productId: p.productId,
+            quantity: p.quantity,
+            priceId
+          }
+        }
+      )
+      subscriptionData.products = newProducts
+    } else {
+      const guestProductId = getWorkspacePlanProductId({ workspacePlan: 'guest' })
+      const updatedProducts: SubscriptionProductInput[] = subscriptionData.products.map(
+        (p) => {
+          // guest price stays the same
+          if (p.productId === guestProductId) return p
+          // upgrade to new productId and new priceId
+          return {
+            productId: getWorkspacePlanProductId({ workspacePlan }),
+            quantity: p.quantity,
+            priceId: getWorkspacePlanPrice({ workspacePlan, billingInterval })
+          }
+        }
+      )
+      subscriptionData.products = updatedProducts
+    }
+
+    await reconcileSubscriptionData({ subscriptionData, applyProrotation: true })
+    return existingWorkspacePlan
   }

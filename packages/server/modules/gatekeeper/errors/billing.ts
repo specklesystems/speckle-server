@@ -24,6 +24,19 @@ export class WorkspaceAlreadyPaidError extends BaseError {
   static statusCode = 400
 }
 
+export class PaidWorkspaceNotValidError extends BaseError {
+  static defaultMessage =
+    'Workspace is not in a valid payment state, activate your workspace plan'
+  static code = 'PAID_WORKSPACE_NOT_VALID_ERROR'
+  static statusCode = 402
+}
+
+export class BillingIntervalDowngradeError extends BaseError {
+  static defaultMessage = 'Billing interval cannot be downgraded'
+  static code = 'BILLING_INTERVAL_DOWNGRADE_ERROR'
+  static statusCode = 400
+}
+
 export class CheckoutSessionNotFoundError extends BaseError {
   static defaultMessage = 'Checkout session is not found'
   static code = 'CHECKOUT_SESSION_NOT_FOUND'

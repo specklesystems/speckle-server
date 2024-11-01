@@ -3482,6 +3482,12 @@ export type UpdateVersionInput = {
   versionId: Scalars['String']['input'];
 };
 
+export type UpgradeWorkspacePlanInput = {
+  billingInterval: BillingInterval;
+  workspaceId: Scalars['ID']['input'];
+  workspacePlan: PaidWorkspacePlans;
+};
+
 /**
  * Full user type, should only be used in the context of admin operations or
  * when a user is reading/writing info about himself
@@ -4027,6 +4033,7 @@ export type WorkspaceBillingMutations = {
   __typename?: 'WorkspaceBillingMutations';
   cancelCheckoutSession: Scalars['Boolean']['output'];
   createCheckoutSession: CheckoutSession;
+  upgradeWorkspacePlan: WorkspacePlan;
 };
 
 
@@ -4037,6 +4044,11 @@ export type WorkspaceBillingMutationsCancelCheckoutSessionArgs = {
 
 export type WorkspaceBillingMutationsCreateCheckoutSessionArgs = {
   input: CheckoutSessionInput;
+};
+
+
+export type WorkspaceBillingMutationsUpgradeWorkspacePlanArgs = {
+  input: UpgradeWorkspacePlanInput;
 };
 
 /** Overridden by `WorkspaceCollaboratorGraphQLReturn` */
