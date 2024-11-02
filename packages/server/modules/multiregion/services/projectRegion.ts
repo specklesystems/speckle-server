@@ -47,7 +47,7 @@ export const getProjectRegionKeyFactory =
     return regionKey
   }
 
-export type GetRegionDb = (args: { regionKey: string }) => Knex
+export type GetRegionDb = (args: { regionKey: string }) => Promise<Knex>
 type GetDefaultDb = () => Knex
 
 export type GetProjectDb = (args: { projectId: string }) => Promise<Knex>

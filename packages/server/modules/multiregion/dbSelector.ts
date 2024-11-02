@@ -14,7 +14,7 @@ import {
 } from '@/modules/multiregion/services/projectRegion'
 import { getGenericRedis } from '@/modules/core'
 import knex, { Knex } from 'knex'
-import { getRegionsFactory } from '@/modules/multiregion/repositories'
+import { getRegionFactory, getRegionsFactory } from '@/modules/multiregion/repositories'
 import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
 import { createKnexConfig } from '@/knexfile'
 import { InitializeRegion } from '@/modules/multiregion/domain/operations'
@@ -29,9 +29,23 @@ const initializeDbGetter = async (): Promise<GetProjectDb> => {
   // if multi region is not enabled, lets fall back to the main Db ALWAYS
   if (!isMultiRegionEnabled()) return async () => getDefaultDb()
 
+  const getRegion = getRegionFactory({ db })
   const regionClients = await getRegisteredRegionClients()
-  const getRegionDb: GetRegionDb = ({ regionKey }) => {
-    if (!(regionKey in regionClients)) throw new Error('Invalid region key')
+  const getRegionDb: GetRegionDb = async ({ regionKey }) => {
+    if (!(regionKey in regionClients)) {
+      const region = await getRegion({ key: regionKey })
+      if (!region) throw new Error('Invalid region key')
+
+      // the region was initialized in a different server instance
+      const regionConfigs = await getAvailableRegionConfig()
+      if (!(regionKey in regionConfigs))
+        throw new Error(`RegionKey ${regionKey} not available in config`)
+
+      const newRegionConfig = regionConfigs[regionKey]
+      const regionDb = configureKnexClient(newRegionConfig)
+      regionClients[regionKey] = regionDb
+    }
+
     return regionClients[regionKey]
   }
 
@@ -44,7 +58,7 @@ const initializeDbGetter = async (): Promise<GetProjectDb> => {
     writeRegionToMemory: writeRegion,
     getRegionKeyFromCache: getRegionKeyFromCacheFactory({ redis }),
     writeRegionKeyToCache: writeRegionKeyToCacheFactory({ redis }),
-    getRegionKeyFromStorage: getRegionKeyFromStorageFactory({ db: getDefaultDb() })
+    getRegionKeyFromStorage: getRegionKeyFromStorageFactory({ db })
   })
 
   return getProjectDbClientFactory({
@@ -96,6 +110,7 @@ export const initializeRegion: InitializeRegion = async ({ regionKey }) => {
   const knownClients = await getRegisteredRegionClients()
   if (regionKey in knownClients)
     throw new Error(`Region ${regionKey} is already initialized`)
+
   const regionConfigs = await getAvailableRegionConfig()
   if (!(regionKey in regionConfigs))
     throw new Error(`RegionKey ${regionKey} not available in config`)
