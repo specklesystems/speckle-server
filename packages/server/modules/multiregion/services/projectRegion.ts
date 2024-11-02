@@ -47,16 +47,8 @@ export const getProjectRegionKeyFactory =
     return regionKey
   }
 
-type GetRegionDb = (args: { regionKey: string }) => Knex
+export type GetRegionDb = (args: { regionKey: string }) => Knex
 type GetDefaultDb = () => Knex
-
-export const getRegionDbFactory =
-  ({ regionClients }: { regionClients: Record<string, Knex> }): GetRegionDb =>
-  ({ regionKey }) => {
-    const client = regionClients[regionKey]
-    if (client === undefined) throw new Error('This is very very bad!!!!!')
-    return client
-  }
 
 export type GetProjectDb = (args: { projectId: string }) => Promise<Knex>
 export const getProjectDbClientFactory =

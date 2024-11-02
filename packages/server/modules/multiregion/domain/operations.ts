@@ -13,10 +13,12 @@ export type StoreRegion = (params: {
   region: InsertableRegionRecord
 }) => Promise<ServerRegion>
 
-export type GetAvailableRegionConfigs = () => Promise<MultiRegionConfig>
+export type GetAvailableRegionConfig = () => Promise<MultiRegionConfig>
 export type GetAvailableRegionKeys = () => Promise<string[]>
 
 export type GetFreeRegionKeys = () => Promise<string[]>
+export type InitializeRegion = (args: { regionKey: string }) => Promise<void>
+
 export type CreateAndValidateNewRegion = (params: {
   region: InsertableRegionRecord
 }) => Promise<ServerRegion>

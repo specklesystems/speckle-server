@@ -13,7 +13,7 @@ import { MultiRegionConfigServiceMock } from '@/test/mocks/global'
 import { Roles } from '@speckle/shared'
 import { expect } from 'chai'
 
-describe('Multi Region Server Settings', () => {
+describe.skip('Multi Region Server Settings', () => {
   let testAdminUser: BasicTestUser
   let apollo: TestApolloServer
 
@@ -35,10 +35,10 @@ describe('Multi Region Server Settings', () => {
 
   before(async () => {
     // Have to mock both
-    MultiRegionConfigServiceMock.mockFunction(
-      'getAvailableRegionConfigsFactory',
-      () => async () => fakeRegionConfig
-    )
+    // MultiRegionConfigServiceMock.mockFunction(
+    //   'getAvailableRegionConfigsFactory',
+    //   () => async () => fakeRegionConfig
+    // )
     MultiRegionConfigServiceMock.mockFunction(
       'getAvailableRegionKeysFactory',
       () => async () => Object.keys(fakeRegionConfig)

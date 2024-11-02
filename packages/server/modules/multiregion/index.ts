@@ -1,5 +1,5 @@
 import { moduleLogger } from '@/logging/logging'
-import { getRegionClients } from '@/modules/multiregion/dbSelector'
+import { getRegisteredRegionClients } from '@/modules/multiregion/dbSelector'
 import { isMultiRegionEnabled } from '@/modules/multiregion/helpers'
 import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 
@@ -13,7 +13,7 @@ const multiRegion: SpeckleModule = {
     moduleLogger.info('🌍 Init multiRegion module')
     // this should have all the builtin checks to make sure all regions are working
     // and no regions are missing
-    const regionClients = await getRegionClients()
+    const regionClients = await getRegisteredRegionClients()
     moduleLogger.info('Migrating region databases')
     await Promise.all(Object.values(regionClients).map((db) => db.migrate.latest()))
     moduleLogger.info('Migrations done')
