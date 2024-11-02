@@ -146,11 +146,19 @@ type WorkspaceMutations {
   projects: WorkspaceProjectMutations! @hasServerRole(role: SERVER_USER)
 }
 
+input WorkspaceProjectCreateInput {
+  name: String
+  description: String
+  visibility: ProjectVisibility
+  workspaceId: String!
+}
+
 type WorkspaceProjectMutations {
   updateRole(input: ProjectUpdateRoleInput!): Project!
     @hasStreamRole(role: STREAM_OWNER)
     @hasWorkspaceRole(role: MEMBER)
   moveToWorkspace(projectId: String!, workspaceId: String!): Project!
+  create(input: WorkspaceProjectCreateInput!): Project!
 }
 
 input WorkspaceDomainDeleteInput {

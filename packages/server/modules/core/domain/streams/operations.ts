@@ -8,7 +8,6 @@ import {
 import { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
 import {
   DiscoverableStreamsSortingInput,
-  ProjectCreateInput,
   ProjectUpdateInput,
   ProjectUpdateRoleInput,
   QueryDiscoverableStreamsArgs,
@@ -80,7 +79,7 @@ export type LegacyGetStreamCollaborators = (params: { streamId: string }) => Pro
 >
 
 export type StoreStream = (
-  input: StreamCreateInput | (ProjectCreateInput & { regionKey?: string | null }),
+  input: StreamCreateInput | ProjectCreateArgs,
   options?: Partial<{
     ownerId: string
     trx: Knex.Transaction
@@ -246,8 +245,18 @@ export type GrantStreamPermissions = (
   }
 ) => Promise<Optional<Stream>>
 
+export type ProjectVisibility = 'PRIVATE' | 'PUBLIC' | 'UNLISTED'
+
+export type ProjectCreateArgs = {
+  description?: MaybeNullOrUndefined<string>
+  name?: MaybeNullOrUndefined<string>
+  visibility?: MaybeNullOrUndefined<ProjectVisibility>
+  regionKey?: MaybeNullOrUndefined<string>
+  workspaceId?: MaybeNullOrUndefined<string>
+}
+
 export type CreateStream = (
-  params: (StreamCreateInput | ProjectCreateInput) & {
+  params: (StreamCreateInput | ProjectCreateArgs) & {
     ownerId: string
     ownerResourceAccessRules?: MaybeNullOrUndefined<TokenResourceIdentifier[]>
   },

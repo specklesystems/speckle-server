@@ -143,10 +143,12 @@ export const updateWorkspaceRoleQuery = gql`
 `
 
 export const createWorkspaceProjectQuery = gql`
-  mutation CreateWorkspaceProject($input: ProjectCreateInput!) {
-    projectMutations {
-      create(input: $input) {
-        ...TestWorkspaceProject
+  mutation CreateWorkspaceProject($input: WorkspaceProjectCreateInput!) {
+    workspaceMutations {
+      projects {
+        create(input: $input) {
+          ...TestWorkspaceProject
+        }
       }
     }
   }

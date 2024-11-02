@@ -32,7 +32,6 @@ import {
 import {
   DiscoverableStreamsSortType,
   ProjectUpdateInput,
-  ProjectVisibility,
   SortDirection,
   StreamUpdateInput
 } from '@/modules/core/graph/generated/graphql'
@@ -96,7 +95,8 @@ import {
   MarkBranchStreamUpdated,
   MarkCommitStreamUpdated,
   MarkOnboardingBaseStream,
-  GetUserDeletableStreams
+  GetUserDeletableStreams,
+  ProjectVisibility
 } from '@/modules/core/domain/streams/operations'
 export type { StreamWithOptionalRole, StreamWithCommitId }
 
@@ -794,12 +794,10 @@ export const createStreamFactory =
 
     let shouldBePublic: boolean, shouldBeDiscoverable: boolean
     if (isProjectCreateInput(input)) {
-      shouldBeDiscoverable = input.visibility === ProjectVisibility.Public
+      shouldBeDiscoverable = input.visibility === 'PUBLIC'
+      const publicVisibilities: ProjectVisibility[] = ['PUBLIC', 'UNLISTED']
       shouldBePublic =
-        !input.visibility ||
-        [ProjectVisibility.Public, ProjectVisibility.Unlisted].includes(
-          input.visibility
-        )
+        !input.visibility || publicVisibilities.includes(input.visibility)
     } else {
       shouldBePublic = input.isPublic !== false
       shouldBeDiscoverable = input.isDiscoverable !== false && shouldBePublic
@@ -936,8 +934,8 @@ export const updateStreamFactory =
 
     if (isProjectUpdateInput(update)) {
       if (has(validUpdate, 'visibility')) {
-        validUpdate.isPublic = update.visibility !== ProjectVisibility.Private
-        validUpdate.isDiscoverable = update.visibility === ProjectVisibility.Public
+        validUpdate.isPublic = update.visibility !== 'PRIVATE'
+        validUpdate.isDiscoverable = update.visibility === 'PUBLIC'
         delete validUpdate['visibility'] // cause it's not a real column
       }
     } else {

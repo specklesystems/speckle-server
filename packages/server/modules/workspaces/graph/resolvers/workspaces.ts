@@ -13,7 +13,8 @@ import {
   grantStreamPermissionsFactory,
   legacyGetStreamsFactory,
   getUserStreamsPageFactory,
-  getUserStreamsCountFactory
+  getUserStreamsCountFactory,
+  createStreamFactory
 } from '@/modules/core/repositories/streams'
 import { InviteCreateValidationError } from '@/modules/serverinvites/errors'
 import {
@@ -39,7 +40,10 @@ import {
   finalizeInvitedServerRegistrationFactory,
   finalizeResourceInviteFactory
 } from '@/modules/serverinvites/services/processing'
-import { createProjectInviteFactory } from '@/modules/serverinvites/services/projectInviteManagement'
+import {
+  createProjectInviteFactory,
+  inviteUsersToProjectFactory
+} from '@/modules/serverinvites/services/projectInviteManagement'
 import { getInvitationTargetUsersFactory } from '@/modules/serverinvites/services/retrieval'
 import { authorizeResolver } from '@/modules/shared'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
@@ -142,16 +146,28 @@ import {
   validateStreamAccessFactory
 } from '@/modules/core/services/streams/access'
 import {
+  addStreamCreatedActivityFactory,
   addStreamInviteAcceptedActivityFactory,
   addStreamPermissionsAddedActivityFactory,
   addStreamPermissionsRevokedActivityFactory
 } from '@/modules/activitystream/services/streamActivity'
 import { publish } from '@/modules/shared/utils/subscriptions'
-import { updateStreamRoleAndNotifyFactory } from '@/modules/core/services/streams/management'
+import {
+  createStreamReturnRecordFactory,
+  updateStreamRoleAndNotifyFactory
+} from '@/modules/core/services/streams/management'
 import { getUserFactory, getUsersFactory } from '@/modules/core/repositories/users'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { commandFactory } from '@/modules/shared/command'
 import { withTransaction } from '@/modules/shared/helpers/dbHelper'
+import {
+  getRateLimitResult,
+  isRateLimitBreached
+} from '@/modules/core/services/ratelimiter'
+import { RateLimitError } from '@/modules/core/errors/ratelimit'
+import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
+import { createBranchFactory } from '@/modules/core/repositories/branches'
+import { ProjectsEmitter } from '@/modules/core/events/projectsEmitter'
 
 const eventBus = getEventBus()
 const getServerInfo = getServerInfoFactory({ db })
@@ -243,6 +259,36 @@ const updateStreamRoleAndNotify = updateStreamRoleAndNotifyFactory({
 })
 const getUserStreams = getUserStreamsPageFactory({ db })
 const getUserStreamsCount = getUserStreamsCountFactory({ db })
+
+const createStreamReturnRecord = createStreamReturnRecordFactory({
+  inviteUsersToProject: inviteUsersToProjectFactory({
+    createAndSendInvite: createAndSendInviteFactory({
+      findUserByTarget: findUserByTargetFactory({ db }),
+      insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
+      collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
+        getStream
+      }),
+      buildInviteEmailContents: buildCoreInviteEmailContentsFactory({
+        getStream
+      }),
+      emitEvent: ({ eventName, payload }) =>
+        getEventBus().emit({
+          eventName,
+          payload
+        }),
+      getUser,
+      getServerInfo
+    }),
+    getUsers
+  }),
+  createStream: createStreamFactory({ db }),
+  createBranch: createBranchFactory({ db }),
+  addStreamCreatedActivity: addStreamCreatedActivityFactory({
+    saveActivity,
+    publish
+  }),
+  projectsEventsEmitter: ProjectsEmitter.emit
+})
 
 const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
 
@@ -740,6 +786,33 @@ export = FF_WORKSPACES_MODULE_ENABLED
         }
       },
       WorkspaceProjectMutations: {
+        create: async (_parent, args, context) => {
+          const rateLimitResult = await getRateLimitResult(
+            'STREAM_CREATE',
+            context.userId!
+          )
+          if (isRateLimitBreached(rateLimitResult)) {
+            throw new RateLimitError(rateLimitResult)
+          }
+
+          await authorizeResolver(
+            context.userId!,
+            args.input.workspaceId,
+            Roles.Workspace.Member,
+            context.resourceAccessRules
+          )
+
+          const project = await createStreamReturnRecord(
+            {
+              ...args.input,
+              ownerId: context.userId!,
+              ownerResourceAccessRules: context.resourceAccessRules
+            },
+            { createActivity: true }
+          )
+
+          return project
+        },
         updateRole: async (_parent, args, context) => {
           const updateWorkspaceProjectRole = updateWorkspaceProjectRoleFactory({
             getStream,

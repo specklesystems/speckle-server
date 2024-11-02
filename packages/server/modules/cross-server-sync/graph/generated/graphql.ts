@@ -2135,7 +2135,6 @@ export type ProjectCreateInput = {
   description?: InputMaybe<Scalars['String']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
   visibility?: InputMaybe<ProjectVisibility>;
-  workspaceId?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type ProjectFileImportUpdatedMessage = {
@@ -4254,6 +4253,13 @@ export enum WorkspacePlans {
   Unlimited = 'unlimited'
 }
 
+export type WorkspaceProjectCreateInput = {
+  description?: InputMaybe<Scalars['String']['input']>;
+  name?: InputMaybe<Scalars['String']['input']>;
+  visibility?: InputMaybe<ProjectVisibility>;
+  workspaceId: Scalars['String']['input'];
+};
+
 export type WorkspaceProjectInviteCreateInput = {
   /** Either this or userId must be filled */
   email?: InputMaybe<Scalars['String']['input']>;
@@ -4269,8 +4275,14 @@ export type WorkspaceProjectInviteCreateInput = {
 
 export type WorkspaceProjectMutations = {
   __typename?: 'WorkspaceProjectMutations';
+  create: Project;
   moveToWorkspace: Project;
   updateRole: Project;
+};
+
+
+export type WorkspaceProjectMutationsCreateArgs = {
+  input: WorkspaceProjectCreateInput;
 };
 
 

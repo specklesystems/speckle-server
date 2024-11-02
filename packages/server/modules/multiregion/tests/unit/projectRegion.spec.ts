@@ -119,7 +119,7 @@ describe('projectRegions @multiregion', () => {
         getDefaultDb: () => {
           expect.fail()
         },
-        getRegionDb: () => db
+        getRegionDb: async () => db
       })
       const res = await getProjectDbClient({
         projectId: cryptoRandomString({ length: 10 })
