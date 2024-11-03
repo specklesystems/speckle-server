@@ -47,10 +47,15 @@ import {
 import { getStreamFactory } from '@/modules/core/repositories/streams'
 import { getUserFactory } from '@/modules/core/repositories/users'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
-import { storeSsoProviderRecordFactory } from '@/modules/workspaces/repositories/sso'
+import {
+  getWorkspaceSsoProviderRecordFactory,
+  storeSsoProviderRecordFactory,
+  upsertUserSsoSessionFactory
+} from '@/modules/workspaces/repositories/sso'
 import { getEncryptor } from '@/modules/workspaces/helpers/sso'
 import { OidcProvider } from '@/modules/workspaces/domain/sso/types'
 import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
+import { getDefaultSsoSessionExpirationDate } from '@/modules/workspaces/domain/sso/logic'
 
 export type BasicTestWorkspace = {
   /**
@@ -269,4 +274,22 @@ export const createTestOidcProvider = async (
     }
   })
   return providerId
+}
+
+export const createTestSsoSession = async (
+  userId: string,
+  workspaceId: string,
+  validUntil?: Date
+) => {
+  const { providerId } =
+    (await getWorkspaceSsoProviderRecordFactory({ db })({ workspaceId })) ?? {}
+  if (!providerId) throw new Error('No provider found')
+  await upsertUserSsoSessionFactory({ db })({
+    userSsoSession: {
+      userId,
+      providerId,
+      createdAt: new Date(),
+      validUntil: validUntil ?? getDefaultSsoSessionExpirationDate()
+    }
+  })
 }

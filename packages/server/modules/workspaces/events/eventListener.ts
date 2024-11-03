@@ -131,17 +131,6 @@ export const onInviteFinalizedFactory =
     })
   }
 
-// export const onWorkspaceRequestAuthorizedFactory =
-//   ({
-
-//   }: {
-
-//     }) =>
-//     async (args: {}) => {
-//       // Check if workspace has sso configured
-//       // Check if user has valid session
-//     }
-
 export const onWorkspaceRoleDeletedFactory =
   ({
     queryAllWorkspaceProjects,

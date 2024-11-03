@@ -472,7 +472,10 @@ extend type User {
   discoverableWorkspaces: [LimitedWorkspace!]!
 
   """
-  A list of workspaces that the user may want to sign back in to
+  A list of workspaces for the active user where:
+  (1) The user is a member or admin
+  (2) The workspace has SSO provider enabled
+  (3) The user does not have a valid SSO session for the given SSO provider
   """
   expiredSsoSessions: [LimitedWorkspace!]!
 

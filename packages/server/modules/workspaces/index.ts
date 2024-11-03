@@ -40,7 +40,6 @@ const workspacesModule: SpeckleModule = {
     if (FF_WORKSPACES_SSO_ENABLED) app.use(getSsoRouter())
 
     if (isInitial) {
-      // register the SSO endpoints
       quitListeners = initializeEventListenersFactory({ db })()
     }
     await Promise.all([initScopes(), initRoles()])
