@@ -40,6 +40,7 @@ import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useQuery } from '@vue/apollo-composable'
 import { workspaceSsoByEmailQuery } from '~/lib/workspaces/graphql/queries'
 import { debounce } from 'lodash'
+import { useAuthManager, useLoginOrRegisterUtils } from '~/lib/auth/composables/auth'
 
 type FormValues = { email: string }
 
@@ -49,6 +50,9 @@ const debouncedEmail = ref('')
 
 const { handleSubmit, meta } = useForm<FormValues>()
 const mixpanel = useMixpanel()
+const { challenge } = useLoginOrRegisterUtils()
+const { signInOrSignUpWithSso } = useAuthManager()
+const logger = useLogger()
 
 const { loading: isChecking, result } = useQuery(
   workspaceSsoByEmailQuery,
@@ -64,17 +68,29 @@ const isSsoAvailable = computed(() => {
   return (result.value?.workspaceSsoByEmail.length ?? 0) > 0
 })
 
+const workspaceSlug = computed(() => {
+  return result.value?.workspaceSsoByEmail[0]?.slug
+})
+
 const onEmailChange = (value: string) => {
   email.value = value
   updateDebouncedEmail(value)
 }
 
-const onSubmit = handleSubmit(async () => {
-  if (!isSsoAvailable.value) return
+const onSubmit = handleSubmit(() => {
+  if (!isSsoAvailable.value || !workspaceSlug.value) return
   loading.value = true
-  // Simulate API call
-  await new Promise((resolve) => setTimeout(resolve, 1000))
-  loading.value = false
+
+  try {
+    signInOrSignUpWithSso({
+      challenge: challenge.value,
+      workspaceSlug: workspaceSlug.value
+    })
+  } catch (error) {
+    logger.error('SSO login failed:', error)
+  } finally {
+    loading.value = false
+  }
 })
 
 const buttonText = computed(() => {
