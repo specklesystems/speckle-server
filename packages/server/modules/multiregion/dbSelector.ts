@@ -23,31 +23,37 @@ import { RegionServerConfig } from '@/modules/multiregion/domain/types'
 
 let getter: GetProjectDb | undefined = undefined
 
+export const getRegionDb: GetRegionDb = async ({ regionKey }) => {
+  const getRegion = getRegionFactory({ db })
+  const regionClients = await getRegisteredRegionClients()
+  if (!(regionKey in regionClients)) {
+    const region = await getRegion({ key: regionKey })
+    if (!region) throw new Error('Invalid region key')
+
+    // the region was initialized in a different server instance
+    const regionConfigs = await getAvailableRegionConfig()
+    if (!(regionKey in regionConfigs))
+      throw new Error(`RegionKey ${regionKey} not available in config`)
+
+    const newRegionConfig = regionConfigs[regionKey]
+    const regionDb = configureKnexClient(newRegionConfig)
+    regionClients[regionKey] = regionDb
+  }
+
+  return regionClients[regionKey]
+}
+
+export const getDb = async ({
+  regionKey
+}: {
+  regionKey: string | undefined
+}): Promise<Knex> => (regionKey ? getRegionDb({ regionKey }) : db)
+
 const initializeDbGetter = async (): Promise<GetProjectDb> => {
   const getDefaultDb = () => db
 
   // if multi region is not enabled, lets fall back to the main Db ALWAYS
   if (!isMultiRegionEnabled()) return async () => getDefaultDb()
-
-  const getRegion = getRegionFactory({ db })
-  const regionClients = await getRegisteredRegionClients()
-  const getRegionDb: GetRegionDb = async ({ regionKey }) => {
-    if (!(regionKey in regionClients)) {
-      const region = await getRegion({ key: regionKey })
-      if (!region) throw new Error('Invalid region key')
-
-      // the region was initialized in a different server instance
-      const regionConfigs = await getAvailableRegionConfig()
-      if (!(regionKey in regionConfigs))
-        throw new Error(`RegionKey ${regionKey} not available in config`)
-
-      const newRegionConfig = regionConfigs[regionKey]
-      const regionDb = configureKnexClient(newRegionConfig)
-      regionClients[regionKey] = regionDb
-    }
-
-    return regionClients[regionKey]
-  }
 
   const { getRegionKey, writeRegion } = inMemoryRegionKeyStoreFactory()
 
