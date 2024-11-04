@@ -10,6 +10,7 @@ import {
   upsertProjectRoleFactory
 } from '@/modules/core/repositories/streams'
 import {
+  GetWorkspaceRoleForUser,
   GetWorkspaceRoles,
   GetWorkspaceRoleToDefaultProjectRoleMapping,
   QueryAllWorkspaceProjects
@@ -35,6 +36,7 @@ import { WorkspaceEvents } from '@/modules/workspacesCore/domain/events'
 import { Knex } from 'knex'
 import {
   getWorkspaceFactory,
+  getWorkspaceRoleForUserFactory,
   getWorkspaceRolesFactory,
   getWorkspaceWithDomainsFactory,
   upsertWorkspaceRoleFactory
@@ -46,6 +48,17 @@ import {
 import { withTransaction } from '@/modules/shared/helpers/dbHelper'
 import { findVerifiedEmailsByUserIdFactory } from '@/modules/core/repositories/userEmails'
 import { GetStream } from '@/modules/core/domain/streams/operations'
+import {
+  GetUserSsoSession,
+  GetWorkspaceSsoProviderRecord
+} from '@/modules/workspaces/domain/sso/operations'
+import { isValidSsoSession } from '@/modules/workspaces/domain/sso/logic'
+import { SsoSessionMissingOrExpiredError } from '@/modules/workspaces/errors/sso'
+import {
+  getUserSsoSessionFactory,
+  getWorkspaceSsoProviderRecordFactory
+} from '@/modules/workspaces/repositories/sso'
+import { WorkspacesNotAuthorizedError } from '@/modules/workspaces/errors/workspace'
 
 export const onProjectCreatedFactory =
   ({
@@ -129,6 +142,31 @@ export const onInviteFinalizedFactory =
       workspaceId: project.workspaceId,
       skipProjectRoleUpdatesFor: [project.id]
     })
+  }
+
+export const onWorkspaceAuthorizedFactory =
+  ({
+    getWorkspaceRoleForUser,
+    getWorkspaceSsoProviderRecord,
+    getUserSsoSession
+  }: {
+    getWorkspaceRoleForUser: GetWorkspaceRoleForUser
+    getWorkspaceSsoProviderRecord: GetWorkspaceSsoProviderRecord
+    getUserSsoSession: GetUserSsoSession
+  }) =>
+  async ({ userId, workspaceId }: { userId: string | null; workspaceId: string }) => {
+    if (!userId) throw new WorkspacesNotAuthorizedError()
+
+    // Guests cannot use (and are not restricted by) SSO
+    const workspaceRole = await getWorkspaceRoleForUser({ userId, workspaceId })
+    if (workspaceRole?.role === Roles.Workspace.Guest) return
+
+    const provider = await getWorkspaceSsoProviderRecord({ workspaceId })
+    if (!provider) return
+
+    const session = await getUserSsoSession({ userId, workspaceId })
+    if (!session || !isValidSsoSession(session))
+      throw new SsoSessionMissingOrExpiredError()
   }
 
 export const onWorkspaceRoleDeletedFactory =
@@ -243,6 +281,14 @@ export const initializeEventListenersFactory =
           })
         })
         await onInviteFinalized(payload)
+      }),
+      eventBus.listen(WorkspaceEvents.Authorized, async ({ payload }) => {
+        const onWorkspaceAuthorized = onWorkspaceAuthorizedFactory({
+          getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({ db }),
+          getWorkspaceSsoProviderRecord: getWorkspaceSsoProviderRecordFactory({ db }),
+          getUserSsoSession: getUserSsoSessionFactory({ db })
+        })
+        await onWorkspaceAuthorized(payload)
       }),
       eventBus.listen(WorkspaceEvents.RoleDeleted, async ({ payload }) => {
         const trx = await db.transaction()
