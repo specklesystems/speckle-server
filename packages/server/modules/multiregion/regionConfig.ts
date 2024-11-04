@@ -1,22 +1,25 @@
 import { GetAvailableRegionConfig } from '@/modules/multiregion/domain/operations'
-import { MultiRegionConfig } from '@/modules/multiregion/domain/types'
+import { AllRegionsConfig } from '@/modules/multiregion/domain/types'
 import { packageRoot } from '@/bootstrap'
 import path from 'node:path'
 import fs from 'node:fs/promises'
+
 import {
   getMultiRegionConfigPath,
   isDevOrTestEnv
 } from '@/modules/shared/helpers/envHelper'
-import { ensureError, type Optional } from '@speckle/shared'
+import { type Optional } from '@speckle/shared'
 import { multiRegionConfigSchema } from '@/modules/multiregion/helpers/validation'
 import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
 import { get } from 'lodash'
 import { isMultiRegionEnabled } from '@/modules/multiregion/helpers'
 
-let multiRegionConfig: Optional<MultiRegionConfig> = undefined
+let multiRegionConfig: Optional<AllRegionsConfig> = undefined
 
-export const getAvailableRegionConfig: GetAvailableRegionConfig = async () => {
-  if (isDevOrTestEnv() && !isMultiRegionEnabled()) return {}
+const getAllRegionsConfig = async (): Promise<AllRegionsConfig> => {
+  if (isDevOrTestEnv() && !isMultiRegionEnabled())
+    // this should throw somehow
+    return { main: { postgres: { connectionUri: '' } }, regions: {} }
   if (multiRegionConfig) return multiRegionConfig
 
   const relativePath = getMultiRegionConfigPath()
@@ -45,16 +48,21 @@ export const getAvailableRegionConfig: GetAvailableRegionConfig = async () => {
     )
   }
 
-  let multiRegionConfigFileContents: MultiRegionConfig
-  try {
-    multiRegionConfigFileContents = multiRegionConfigSchema.parse(parsedJson) // This will throw if the config is invalid
-  } catch (e) {
+  const multiRegionConfigFileResult = multiRegionConfigSchema.safeParse(parsedJson) // This will throw if the config is invalid
+  if (!multiRegionConfigFileResult.success)
     throw new MisconfiguredEnvironmentError(
       `Multi-region config file at path '${fullPath}' does not fit the schema`,
-      { cause: ensureError(e), info: { parsedJson } }
+      { cause: multiRegionConfigFileResult.error, info: { parsedJson } }
     )
-  }
 
-  multiRegionConfig = multiRegionConfigFileContents
+  multiRegionConfig = multiRegionConfigFileResult.data
   return multiRegionConfig
+}
+
+export const getMainRegionConfig = async (): Promise<AllRegionsConfig['main']> => {
+  return (await getAllRegionsConfig()).main
+}
+
+export const getAvailableRegionConfig: GetAvailableRegionConfig = async () => {
+  return (await getAllRegionsConfig()).regions
 }

@@ -18,8 +18,12 @@ import { getRegionFactory, getRegionsFactory } from '@/modules/multiregion/repos
 import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
 import { createKnexConfig } from '@/knexfile'
 import { InitializeRegion } from '@/modules/multiregion/domain/operations'
-import { getAvailableRegionConfig } from '@/modules/multiregion/regionConfig'
+import {
+  getAvailableRegionConfig,
+  getMainRegionConfig
+} from '@/modules/multiregion/regionConfig'
 import { RegionServerConfig } from '@/modules/multiregion/domain/types'
+import { MaybeNullOrUndefined } from '@speckle/shared'
 
 let getter: GetProjectDb | undefined = undefined
 
@@ -36,7 +40,7 @@ export const getRegionDb: GetRegionDb = async ({ regionKey }) => {
       throw new Error(`RegionKey ${regionKey} not available in config`)
 
     const newRegionConfig = regionConfigs[regionKey]
-    const regionDb = configureKnexClient(newRegionConfig)
+    const regionDb = configureKnexClient(newRegionConfig).public
     regionClients[regionKey] = regionDb
   }
 
@@ -46,7 +50,7 @@ export const getRegionDb: GetRegionDb = async ({ regionKey }) => {
 export const getDb = async ({
   regionKey
 }: {
-  regionKey: string | undefined
+  regionKey: MaybeNullOrUndefined<string>
 }): Promise<Knex> => (regionKey ? getRegionDb({ regionKey }) : db)
 
 const initializeDbGetter = async (): Promise<GetProjectDb> => {
@@ -93,17 +97,27 @@ const initializeRegisteredRegionClients = async (): Promise<RegionClients> => {
         throw new MisconfiguredEnvironmentError(
           `Missing region config for ${region.key} region`
         )
-      return [region.key, configureKnexClient(regionConfigs[region.key])]
+      return [region.key, configureKnexClient(regionConfigs[region.key]).public]
     })
   )
 }
 
-const configureKnexClient = (config: RegionServerConfig): Knex => {
+const configureKnexClient = (
+  config: RegionServerConfig
+): { public: Knex; private?: Knex } => {
   const knexConfig = createKnexConfig({
     connectionString: config.postgres.connectionUri,
     caCertificate: config.postgres.publicTlsCertificate
   })
-  return knex(knexConfig)
+  const privateConfig = config.postgres.privateConnectionUri
+    ? knex(
+        createKnexConfig({
+          connectionString: config.postgres.privateConnectionUri,
+          caCertificate: config.postgres.publicTlsCertificate
+        })
+      )
+    : undefined
+  return { public: knex(knexConfig), private: privateConfig }
 }
 
 export const getRegisteredRegionClients = async (): Promise<RegionClients> => {
@@ -123,12 +137,16 @@ export const initializeRegion: InitializeRegion = async ({ regionKey }) => {
 
   const newRegionConfig = regionConfigs[regionKey]
   const regionDb = configureKnexClient(newRegionConfig)
-  await regionDb.migrate.latest()
+  await regionDb.public.migrate.latest()
   // TODO, set up pub-sub shit
+
+  const mainDbConfig = await getMainRegionConfig()
+  const mainDb = configureKnexClient(mainDbConfig)
+
   const sslmode = newRegionConfig.postgres.publicTlsCertificate ? 'require' : 'disable'
 
   await setUpUserReplication({
-    from: db,
+    from: mainDb,
     to: regionDb,
     regionName: regionKey,
     sslmode
@@ -136,17 +154,17 @@ export const initializeRegion: InitializeRegion = async ({ regionKey }) => {
 
   await setUpProjectReplication({
     from: regionDb,
-    to: db,
+    to: mainDb,
     regionName: regionKey,
     sslmode
   })
   // pushing to the singleton object here
-  knownClients[regionKey] = regionDb
+  knownClients[regionKey] = regionDb.public
 }
 
 interface ReplicationArgs {
-  from: Knex
-  to: Knex
+  from: { public: Knex; private?: Knex }
+  to: { public: Knex; private?: Knex }
   sslmode: string
   regionName: string
 }
@@ -159,13 +177,17 @@ const setUpUserReplication = async ({
 }: ReplicationArgs): Promise<void> => {
   // TODO: ensure its created...
   try {
-    await from.raw('CREATE PUBLICATION userspub FOR TABLE users;')
+    await from.public.raw('CREATE PUBLICATION userspub FOR TABLE users;')
   } catch (err) {
     if (!(err instanceof Error)) throw err
     if (!err.message.includes('already exists')) throw err
   }
 
-  const fromUrl = new URL(from.client.config.connection.connectionString)
+  const fromUrl = new URL(
+    from.private
+      ? from.private.client.config.connection.connectionString
+      : from.public.client.config.connection.connectionString
+  )
   const port = fromUrl.port ? fromUrl.port : '5432'
   const fromDbName = fromUrl.pathname.replace('/', '')
   const subName = `userssub_${regionName}`
@@ -178,7 +200,7 @@ const setUpUserReplication = async ({
     TRUE
   );`
   try {
-    await to.raw(rawSqeel)
+    await to.public.raw(rawSqeel)
   } catch (err) {
     if (!(err instanceof Error)) throw err
     if (!err.message.includes('already exists')) throw err
@@ -193,13 +215,17 @@ const setUpProjectReplication = async ({
 }: ReplicationArgs): Promise<void> => {
   // TODO: ensure its created...
   try {
-    await from.raw('CREATE PUBLICATION projectpub FOR TABLE streams;')
+    await from.public.raw('CREATE PUBLICATION projectpub FOR TABLE streams;')
   } catch (err) {
     if (!(err instanceof Error)) throw err
     if (!err.message.includes('already exists')) throw err
   }
 
-  const fromUrl = new URL(from.client.config.connection.connectionString)
+  const fromUrl = new URL(
+    from.private
+      ? from.private.client.config.connection.connectionString
+      : from.public.client.config.connection.connectionString
+  )
   const port = fromUrl.port ? fromUrl.port : '5432'
   const fromDbName = fromUrl.pathname.replace('/', '')
   const subName = `projectsub_${regionName}`
@@ -212,7 +238,7 @@ const setUpProjectReplication = async ({
     TRUE
   );`
   try {
-    await to.raw(rawSqeel)
+    await to.public.raw(rawSqeel)
   } catch (err) {
     if (!(err instanceof Error)) throw err
     if (!err.message.includes('already exists')) throw err
