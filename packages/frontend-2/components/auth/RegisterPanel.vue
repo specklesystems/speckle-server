@@ -31,6 +31,9 @@
           :app-id="appId"
           :newsletter-consent="newsletterConsent"
         />
+        <FormButton color="outline" full-width size="lg" :to="ssoRegisterRoute">
+          Continue with SSO
+        </FormButton>
         <div>
           <div
             v-if="hasThirdPartyStrategies && hasLocalStrategy"
@@ -56,7 +59,7 @@ import { AuthStrategy } from '~~/lib/auth/helpers/strategies'
 import { useLoginOrRegisterUtils } from '~~/lib/auth/composables/auth'
 import { graphql } from '~~/lib/common/generated/gql'
 import { ExclamationTriangleIcon } from '@heroicons/vue/24/outline'
-import { loginRoute } from '~~/lib/common/helpers/route'
+import { loginRoute, ssoRegisterRoute } from '~~/lib/common/helpers/route'
 import { authRegisterPanelQuery } from '~/lib/auth/graphql/queries'
 
 const registerPanelWorkspaceInviteQuery = graphql(`

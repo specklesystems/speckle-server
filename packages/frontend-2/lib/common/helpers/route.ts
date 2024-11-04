@@ -12,7 +12,7 @@ export const loginRoute = '/authn/login'
 export const registerRoute = '/authn/register'
 export const forgottenPasswordRoute = '/authn/forgotten-password'
 export const ssoLoginRoute = '/authn/sso'
-export const ssoRegisterRoute = '/authn/sso#register'
+export const ssoRegisterRoute = (slug: string) => `/workspaces/${slug}/sso`
 export const onboardingRoute = '/onboarding'
 export const serverManagementRoute = '/server-management'
 export const downloadManagerUrl = 'https://speckle.systems/download'

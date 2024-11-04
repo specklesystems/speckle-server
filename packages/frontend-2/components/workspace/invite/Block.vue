@@ -93,10 +93,14 @@ import { usePostAuthRedirect } from '~/lib/auth/composables/postAuthRedirect'
 import { graphql } from '~/lib/common/generated/gql'
 import type { WorkspaceInviteBlock_PendingWorkspaceCollaboratorFragment } from '~/lib/common/generated/gql/graphql'
 import {
+  ssoRegisterRoute,
   useNavigateToLogin,
   useNavigateToRegistration
 } from '~/lib/common/helpers/route'
-import { useWorkspaceInviteManager } from '~/lib/workspaces/composables/management'
+import {
+  useWorkspaceInviteManager,
+  useWorkspaceSsoCheck
+} from '~/lib/workspaces/composables/management'
 
 graphql(`
   fragment WorkspaceInviteBlock_PendingWorkspaceCollaborator on PendingWorkspaceCollaborator {
@@ -121,6 +125,8 @@ const props = defineProps<{
 
 const { activeUser } = useActiveUser()
 const route = useRoute()
+const router = useRouter()
+const logger = useLogger()
 const postAuthRedirect = usePostAuthRedirect()
 const { logout } = useAuthManager()
 const goToLogin = useNavigateToLogin()
@@ -129,6 +135,7 @@ const { loading, accept, decline, token, isCurrentUserTarget, targetUser } =
   useWorkspaceInviteManager({
     invite: computed(() => props.invite)
   })
+const { checkWorkspaceHasSso } = useWorkspaceSsoCheck()
 
 const buildPostAuthRedirectUrl = (params: {
   autoAccept?: boolean
@@ -168,18 +175,52 @@ const signOutGoToLogin = async (params?: { addNewEmail?: boolean }) => {
  * and adding the target email to the account
  */
 const signOutGoToRegister = async () => {
-  const postAuthRedirectUrl = buildPostAuthRedirectUrl({
-    addNewEmail: true,
-    autoAccept: true
-  })
-
-  await logout({ skipRedirect: true })
-  postAuthRedirect.set(postAuthRedirectUrl, true)
-  await goToRegister({
-    query: {
-      token: token.value
+  try {
+    if (!props.invite.workspaceSlug) {
+      logger.warn(
+        'No workspace slug found in invite, falling back to regular registration'
+      )
+      goToRegister({
+        query: { token: token.value }
+      })
+      return
     }
-  })
+
+    const hasSso = await checkWorkspaceHasSso({
+      workspaceSlug: props.invite.workspaceSlug
+    })
+
+    logger.info('SSO check result:', {
+      workspaceSlug: props.invite.workspaceSlug,
+      hasSso
+    })
+
+    const postAuthRedirectUrl = buildPostAuthRedirectUrl({
+      addNewEmail: true,
+      autoAccept: true
+    })
+
+    await logout({ skipRedirect: true })
+    postAuthRedirect.set(postAuthRedirectUrl, true)
+
+    if (hasSso) {
+      // Go directly to SSO registration using the workspace-specific route
+      router.push({
+        path: ssoRegisterRoute(props.invite.workspaceSlug),
+        query: { token: token.value }
+      })
+    } else {
+      goToRegister({
+        query: { token: token.value }
+      })
+    }
+  } catch (error) {
+    logger.error('Error during SSO check:', error)
+    // If anything fails, fall back to regular registration
+    goToRegister({
+      query: { token: token.value }
+    })
+  }
 }
 
 const acceptAndAddEmail = () => accept({ addNewEmail: true })

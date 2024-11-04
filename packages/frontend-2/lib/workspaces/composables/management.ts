@@ -493,3 +493,60 @@ export const copyWorkspaceLink = async (slug: string) => {
     title: 'Copied workspace link to clipboard'
   })
 }
+
+export const useWorkspaceSsoCheck = () => {
+  const apiOrigin = useApiOrigin()
+  const logger = useLogger()
+
+  type LimitedWorkspace = {
+    name: string
+    logo?: string
+    defaultLogoIndex: number
+    ssoProviderName?: string
+  }
+
+  const isLimitedWorkspace = (data: unknown): data is LimitedWorkspace => {
+    if (!data || typeof data !== 'object') return false
+    const workspace = data as Record<string, unknown>
+
+    return (
+      typeof workspace.name === 'string' &&
+      typeof workspace.defaultLogoIndex === 'number' &&
+      (workspace.logo === undefined ||
+        workspace.logo === null ||
+        typeof workspace.logo === 'string') &&
+      (workspace.ssoProviderName === undefined ||
+        workspace.ssoProviderName === null ||
+        typeof workspace.ssoProviderName === 'string')
+    )
+  }
+
+  const checkWorkspaceHasSso = async (params: {
+    workspaceSlug: string
+  }): Promise<boolean> => {
+    if (import.meta.server) {
+      return false
+    }
+
+    try {
+      const response = await fetch(
+        new URL(`/api/v1/workspaces/${params.workspaceSlug}/sso`, apiOrigin)
+      )
+      const data: unknown = await response.json()
+
+      if (!isLimitedWorkspace(data)) {
+        logger.error('Invalid workspace data received:', data)
+        return false
+      }
+
+      return !!data.ssoProviderName
+    } catch (error) {
+      logger.error('SSO check error:', error)
+      return false
+    }
+  }
+
+  return {
+    checkWorkspaceHasSso
+  }
+}
