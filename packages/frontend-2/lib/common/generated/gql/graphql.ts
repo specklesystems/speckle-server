@@ -2132,7 +2132,6 @@ export type ProjectCreateInput = {
   description?: InputMaybe<Scalars['String']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
   visibility?: InputMaybe<ProjectVisibility>;
-  workspaceId?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type ProjectFileImportUpdatedMessage = {
@@ -2863,7 +2862,7 @@ export type ServerMultiRegionConfiguration = {
 
 export type ServerRegionItem = {
   __typename?: 'ServerRegionItem';
-  description: Scalars['String']['output'];
+  description?: Maybe<Scalars['String']['output']>;
   id: Scalars['String']['output'];
   key: Scalars['String']['output'];
   name: Scalars['String']['output'];
@@ -4251,6 +4250,13 @@ export enum WorkspacePlans {
   Unlimited = 'unlimited'
 }
 
+export type WorkspaceProjectCreateInput = {
+  description?: InputMaybe<Scalars['String']['input']>;
+  name?: InputMaybe<Scalars['String']['input']>;
+  visibility?: InputMaybe<ProjectVisibility>;
+  workspaceId: Scalars['String']['input'];
+};
+
 export type WorkspaceProjectInviteCreateInput = {
   /** Either this or userId must be filled */
   email?: InputMaybe<Scalars['String']['input']>;
@@ -4266,8 +4272,14 @@ export type WorkspaceProjectInviteCreateInput = {
 
 export type WorkspaceProjectMutations = {
   __typename?: 'WorkspaceProjectMutations';
+  create: Project;
   moveToWorkspace: Project;
   updateRole: Project;
+};
+
+
+export type WorkspaceProjectMutationsCreateArgs = {
+  input: WorkspaceProjectCreateInput;
 };
 
 
@@ -4559,11 +4571,11 @@ export type SettingsServerProjects_ProjectCollectionFragment = { __typename?: 'P
 export type SettingsServerRegionsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type SettingsServerRegionsQuery = { __typename?: 'Query', serverInfo: { __typename?: 'ServerInfo', multiRegion: { __typename?: 'ServerMultiRegionConfiguration', availableKeys: Array<string>, regions: Array<{ __typename?: 'ServerRegionItem', id: string, name: string, key: string, description: string }> } } };
+export type SettingsServerRegionsQuery = { __typename?: 'Query', serverInfo: { __typename?: 'ServerInfo', multiRegion: { __typename?: 'ServerMultiRegionConfiguration', availableKeys: Array<string>, regions: Array<{ __typename?: 'ServerRegionItem', id: string, name: string, key: string, description?: string | null }> } } };
 
-export type SettingsServerRegionsAddEditDialog_ServerRegionItemFragment = { __typename?: 'ServerRegionItem', id: string, name: string, description: string, key: string };
+export type SettingsServerRegionsAddEditDialog_ServerRegionItemFragment = { __typename?: 'ServerRegionItem', id: string, name: string, description?: string | null, key: string };
 
-export type SettingsServerRegionsTable_ServerRegionItemFragment = { __typename?: 'ServerRegionItem', id: string, name: string, key: string, description: string };
+export type SettingsServerRegionsTable_ServerRegionItemFragment = { __typename?: 'ServerRegionItem', id: string, name: string, key: string, description?: string | null };
 
 export type SettingsSharedProjects_ProjectFragment = { __typename?: 'Project', id: string, name: string, visibility: ProjectVisibility, createdAt: string, updatedAt: string, models: { __typename?: 'ModelCollection', totalCount: number }, versions: { __typename?: 'VersionCollection', totalCount: number }, team: Array<{ __typename?: 'ProjectCollaborator', id: string, user: { __typename?: 'LimitedUser', name: string, id: string, avatar?: string | null } }> };
 
@@ -4926,7 +4938,7 @@ export type CreateNewRegionMutationVariables = Exact<{
 }>;
 
 
-export type CreateNewRegionMutation = { __typename?: 'Mutation', serverInfoMutations: { __typename?: 'ServerInfoMutations', multiRegion: { __typename?: 'ServerRegionMutations', create: { __typename?: 'ServerRegionItem', id: string, name: string, description: string, key: string } } } };
+export type CreateNewRegionMutation = { __typename?: 'Mutation', serverInfoMutations: { __typename?: 'ServerInfoMutations', multiRegion: { __typename?: 'ServerRegionMutations', create: { __typename?: 'ServerRegionItem', id: string, name: string, description?: string | null, key: string } } } };
 
 export type ProjectPageTeamInternals_ProjectFragment = { __typename?: 'Project', id: string, role?: string | null, invitedTeam?: Array<{ __typename?: 'PendingStreamCollaborator', id: string, title: string, role: string, inviteId: string, user?: { __typename?: 'LimitedUser', role?: string | null, id: string, name: string, avatar?: string | null } | null }> | null, team: Array<{ __typename?: 'ProjectCollaborator', role: string, user: { __typename?: 'LimitedUser', id: string, role?: string | null, name: string, avatar?: string | null } }> };
 
@@ -7566,6 +7578,7 @@ export type WorkspacePlanFieldArgs = {
   status: {},
 }
 export type WorkspaceProjectMutationsFieldArgs = {
+  create: WorkspaceProjectMutationsCreateArgs,
   moveToWorkspace: WorkspaceProjectMutationsMoveToWorkspaceArgs,
   updateRole: WorkspaceProjectMutationsUpdateRoleArgs,
 }

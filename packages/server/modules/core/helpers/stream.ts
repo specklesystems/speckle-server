@@ -1,4 +1,4 @@
-import { ProjectCreateArgs } from '@/modules/core/domain/streams/operations'
+import { ProjectCreateArgs } from '@/modules/core/domain/projects/operations'
 import { StreamCreateInput } from '@/modules/core/graph/generated/graphql'
 import { has } from 'lodash'
 

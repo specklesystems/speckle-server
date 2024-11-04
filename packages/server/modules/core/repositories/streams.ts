@@ -54,7 +54,8 @@ import {
   GetProjectCollaborators,
   UpdateProject,
   GetRolesByUserId,
-  UpsertProjectRole
+  UpsertProjectRole,
+  ProjectVisibility
 } from '@/modules/core/domain/projects/operations'
 import {
   StreamWithCommitId,
@@ -95,9 +96,9 @@ import {
   MarkBranchStreamUpdated,
   MarkCommitStreamUpdated,
   MarkOnboardingBaseStream,
-  GetUserDeletableStreams,
-  ProjectVisibility
+  GetUserDeletableStreams
 } from '@/modules/core/domain/streams/operations'
+import { generateProjectName } from '@/modules/core/domain/projects/logic'
 export type { StreamWithOptionalRole, StreamWithCommitId }
 
 const tables = {
@@ -114,46 +115,6 @@ const tables = {
 export const STREAM_WITH_OPTIONAL_ROLE_COLUMNS = [...Streams.cols, StreamAcl.col.role]
 
 export const generateId = () => cryptoRandomString({ length: 10 })
-
-const adjectives = [
-  'Tall',
-  'Curved',
-  'Stacked',
-  'Purple',
-  'Pink',
-  'Rectangular',
-  'Circular',
-  'Oval',
-  'Shiny',
-  'Speckled',
-  'Blue',
-  'Stretched',
-  'Round',
-  'Spherical',
-  'Majestic',
-  'Symmetrical'
-]
-
-const nouns = [
-  'Building',
-  'House',
-  'Treehouse',
-  'Tower',
-  'Tunnel',
-  'Bridge',
-  'Pyramid',
-  'Structure',
-  'Edifice',
-  'Palace',
-  'Castle',
-  'Villa'
-]
-
-const generateStreamName = () => {
-  return `${adjectives[Math.floor(Math.random() * adjectives.length)]} ${
-    nouns[Math.floor(Math.random() * nouns.length)]
-  }`
-}
 
 /**
  * Get multiple streams. If userId is specified, the role will be resolved as well.
@@ -809,7 +770,7 @@ export const createStreamFactory =
     const id = generateId()
     const stream = {
       id,
-      name: name || generateStreamName(),
+      name: name || generateProjectName(),
       description: description || '',
       isPublic: shouldBePublic,
       isDiscoverable: shouldBeDiscoverable,

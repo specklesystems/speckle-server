@@ -12152,6 +12152,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@lifeomic/attempt@npm:^3.1.0":
+  version: 3.1.0
+  resolution: "@lifeomic/attempt@npm:3.1.0"
+  checksum: 10/051502a81c8aa1914d01f87989280fcf7213872851b5e0c673717d6c85ac78e9509bf916056425fafba3937079c1130823a4d95aec7c9f6ae3a22ad1e59b475e
+  languageName: node
+  linkType: hard
+
 "@linaria/core@npm:3.0.0-beta.13":
   version: 3.0.0-beta.13
   resolution: "@linaria/core@npm:3.0.0-beta.13"
@@ -16946,6 +16953,7 @@ __metadata:
     "@graphql-codegen/typescript-resolvers": "npm:^4.1.0"
     "@graphql-tools/mock": "npm:^9.0.4"
     "@graphql-tools/schema": "npm:^10.0.6"
+    "@lifeomic/attempt": "npm:^3.1.0"
     "@mailchimp/mailchimp_marketing": "npm:^3.0.80"
     "@opentelemetry/api": "npm:^1.9.0"
     "@opentelemetry/exporter-trace-otlp-proto": "npm:^0.53.0"

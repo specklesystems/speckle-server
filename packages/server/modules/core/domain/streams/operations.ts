@@ -20,6 +20,7 @@ import { ContextResourceAccessRules } from '@/modules/core/helpers/token'
 import { MaybeNullOrUndefined, Nullable, Optional, StreamRoles } from '@speckle/shared'
 import { Knex } from 'knex'
 import type express from 'express'
+import { ProjectCreateArgs } from '@/modules/core/domain/projects/operations'
 
 export type LegacyGetStreams = (params: {
   cursor?: string | Date | null | undefined
@@ -244,16 +245,6 @@ export type GrantStreamPermissions = (
     trackProjectUpdate?: boolean
   }
 ) => Promise<Optional<Stream>>
-
-export type ProjectVisibility = 'PRIVATE' | 'PUBLIC' | 'UNLISTED'
-
-export type ProjectCreateArgs = {
-  description?: MaybeNullOrUndefined<string>
-  name?: MaybeNullOrUndefined<string>
-  visibility?: MaybeNullOrUndefined<ProjectVisibility>
-  regionKey?: MaybeNullOrUndefined<string>
-  workspaceId?: MaybeNullOrUndefined<string>
-}
 
 export type CreateStream = (
   params: (StreamCreateInput | ProjectCreateArgs) & {
