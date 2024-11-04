@@ -1,7 +1,4 @@
-import {
-  UserSsoSessionRecord,
-  WorkspaceSsoProviderRecord
-} from '@/modules/workspaces/domain/sso/types'
+import { UserSsoSessionRecord } from '@/modules/workspaces/domain/sso/types'
 
 /**
  * Get the default expiration time for an SSO session based on the current time.
@@ -13,12 +10,6 @@ export const getDefaultSsoSessionExpirationDate = (): Date => {
   return now
 }
 
-export const isValidSsoSession = (
-  workspaceId: string,
-  session: UserSsoSessionRecord & WorkspaceSsoProviderRecord
-): boolean => {
-  return (
-    session.workspaceId === workspaceId &&
-    session.validUntil.getTime() > new Date().getTime()
-  )
+export const isValidSsoSession = (session: UserSsoSessionRecord): boolean => {
+  return session.validUntil.getTime() > new Date().getTime()
 }

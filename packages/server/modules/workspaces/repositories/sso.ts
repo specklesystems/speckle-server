@@ -130,7 +130,7 @@ const listUserSsoSessionsBaseQuery =
       .where({ userId: args.userId })
 
     if (args.workspaceIds) {
-      q.whereIn('providerId', args.workspaceIds)
+      q.whereIn('workspaceId', args.workspaceIds)
     }
 
     return q

@@ -48,6 +48,7 @@ import { getStreamFactory } from '@/modules/core/repositories/streams'
 import { getUserFactory } from '@/modules/core/repositories/users'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import {
+  associateSsoProviderWithWorkspaceFactory,
   getWorkspaceSsoProviderRecordFactory,
   storeSsoProviderRecordFactory,
   upsertUserSsoSessionFactory
@@ -255,6 +256,7 @@ export const createWorkspaceInviteDirectly = async (
 }
 
 export const createTestOidcProvider = async (
+  workspaceId: string,
   providerData: Partial<OidcProvider> = {}
 ) => {
   const providerId = cryptoRandomString({ length: 9 })
@@ -272,6 +274,10 @@ export const createTestOidcProvider = async (
         ...providerData
       }
     }
+  })
+  await associateSsoProviderWithWorkspaceFactory({ db })({
+    workspaceId,
+    providerId
   })
   return providerId
 }

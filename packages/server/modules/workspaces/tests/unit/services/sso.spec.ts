@@ -2,9 +2,12 @@
 
 import { UserEmail } from '@/modules/core/domain/userEmails/types'
 import { UserWithOptionalRole } from '@/modules/core/repositories/users'
+import { getDefaultSsoSessionExpirationDate } from '@/modules/workspaces/domain/sso/logic'
 import {
   OidcProvider,
-  WorkspaceSsoProvider
+  UserSsoSessionRecord,
+  WorkspaceSsoProvider,
+  WorkspaceSsoProviderRecord
 } from '@/modules/workspaces/domain/sso/types'
 import {
   OidcProviderMissingGrantTypeError,
@@ -15,11 +18,14 @@ import { WorkspaceInvalidRoleError } from '@/modules/workspaces/errors/workspace
 import {
   createWorkspaceUserFromSsoProfileFactory,
   linkUserWithSsoProviderFactory,
+  listUserExpiredSsoSessionsFactory,
   listWorkspaceSsoMembershipsByUserEmailFactory,
   saveSsoProviderRegistrationFactory,
   startOidcSsoProviderValidationFactory
 } from '@/modules/workspaces/services/sso'
+import { Workspace } from '@/modules/workspacesCore/domain/types'
 import { expectToThrow } from '@/test/assertionHelper'
+import { wait } from '@speckle/shared'
 import { assert, expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
 
@@ -393,6 +399,96 @@ describe('Workspace SSO services', () => {
       })
 
       expect(Object.keys(workspaces[0]).includes('defaultProjectRole')).to.be.false
+    })
+  })
+  describe('listUserExpiredSsoSessionsFactory creates a function, that', () => {
+    it('returns an empty array if the user has valid sessions for all of their SSO-enabled workspaces', async () => {
+      const listUserExpiredSsoSessions = listUserExpiredSsoSessionsFactory({
+        listWorkspaceSsoMemberships: async () => [
+          {
+            id: 'workspace-a'
+          } as Workspace,
+          {
+            id: 'workspace-b'
+          } as Workspace
+        ],
+        listUserSsoSessions: async () => [
+          {
+            workspaceId: 'workspace-a',
+            validUntil: getDefaultSsoSessionExpirationDate()
+          } as UserSsoSessionRecord & WorkspaceSsoProviderRecord,
+          {
+            workspaceId: 'workspace-b',
+            validUntil: getDefaultSsoSessionExpirationDate()
+          } as UserSsoSessionRecord & WorkspaceSsoProviderRecord
+        ]
+      })
+
+      const expiredSessions = await listUserExpiredSsoSessions({ userId: '' })
+
+      expect(expiredSessions.length).to.equal(0)
+    })
+    it("returns workspaces where the user's SSO session does not exist", async () => {
+      const listUserExpiredSsoSessions = listUserExpiredSsoSessionsFactory({
+        listWorkspaceSsoMemberships: async () => [
+          {
+            id: 'workspace-a'
+          } as Workspace,
+          {
+            id: 'workspace-b'
+          } as Workspace
+        ],
+        listUserSsoSessions: async () => [
+          {
+            workspaceId: 'workspace-a',
+            validUntil: getDefaultSsoSessionExpirationDate()
+          } as UserSsoSessionRecord & WorkspaceSsoProviderRecord
+        ]
+      })
+
+      const expiredSessions = await listUserExpiredSsoSessions({ userId: '' })
+
+      expect(expiredSessions.length).to.equal(1)
+      expect(expiredSessions[0].id).to.equal('workspace-b')
+    })
+    it("returns workspaces where the user's SSO session exists but has expired", async () => {
+      const listUserExpiredSsoSessions = listUserExpiredSsoSessionsFactory({
+        listWorkspaceSsoMemberships: async () => [
+          {
+            id: 'workspace-a'
+          } as Workspace,
+          {
+            id: 'workspace-b'
+          } as Workspace
+        ],
+        listUserSsoSessions: async () => [
+          {
+            workspaceId: 'workspace-a',
+            validUntil: getDefaultSsoSessionExpirationDate()
+          } as UserSsoSessionRecord & WorkspaceSsoProviderRecord,
+          {
+            workspaceId: 'workspace-b',
+            validUntil: new Date()
+          } as UserSsoSessionRecord & WorkspaceSsoProviderRecord
+        ]
+      })
+
+      await wait(50)
+
+      const expiredSessions = await listUserExpiredSsoSessions({ userId: '' })
+
+      expect(expiredSessions.length).to.equal(1)
+      expect(expiredSessions[0].id).to.equal('workspace-b')
+    })
+    it('returns an empty array if the user belongs to no SSO-enabled workspaces', async () => {
+      const listUserExpiredSsoSessions = listUserExpiredSsoSessionsFactory({
+        listWorkspaceSsoMemberships: async () => [],
+        listUserSsoSessions: async () => []
+      })
+
+      const expiredSessions = await listUserExpiredSsoSessions({ userId: '' })
+
+      expect(expiredSessions.length).to.equal(0)
     })
   })
 })

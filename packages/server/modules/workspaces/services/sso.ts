@@ -37,6 +37,7 @@ import {
 } from '@/modules/workspaces/errors/sso'
 import { WorkspaceInvalidRoleError } from '@/modules/workspaces/errors/workspace'
 import { LimitedWorkspace } from '@/modules/workspacesCore/domain/types'
+import { isValidSsoSession } from '@/modules/workspaces/domain/sso/logic'
 
 // this probably should go a lean validation endpoint too
 const validateOidcProviderAttributes = ({
@@ -267,9 +268,12 @@ export const listUserExpiredSsoSessionsFactory =
     const workspaces = await listWorkspaceSsoMemberships({ userId: args.userId })
     const sessions = await listUserSsoSessions({ userId: args.userId })
 
+    const validSessions = sessions.filter(isValidSsoSession)
+
     return workspaces
       .filter(
-        (workspace) => !sessions.some((session) => session.workspaceId === workspace.id)
+        (workspace) =>
+          !validSessions.some((session) => session.workspaceId === workspace.id)
       )
       .map(toLimitedWorkspace)
   }
