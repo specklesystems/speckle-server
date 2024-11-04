@@ -342,10 +342,9 @@ type WorkspaceSso {
 
 type WorkspaceSsoProvider {
   id: ID!
-  """
-  NOTE: there is additional decryption overhead when querying this field. Use `id` if you are just checking for the existence of SSO
-  """
   name: String!
+  clientId: String!
+  issuerUrl: String!
 }
 
 type WorkspaceSsoSession {

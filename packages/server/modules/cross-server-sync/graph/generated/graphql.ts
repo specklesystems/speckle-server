@@ -4332,8 +4332,9 @@ export type WorkspaceSso = {
 
 export type WorkspaceSsoProvider = {
   __typename?: 'WorkspaceSsoProvider';
+  clientId: Scalars['String']['output'];
   id: Scalars['ID']['output'];
-  /** NOTE: there is additional decryption overhead when querying this field. Use `id` if you are just checking for the existence of SSO */
+  issuerUrl: Scalars['String']['output'];
   name: Scalars['String']['output'];
 };
 
