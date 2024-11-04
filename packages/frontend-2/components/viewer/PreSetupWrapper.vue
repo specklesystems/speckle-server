@@ -32,7 +32,7 @@
             v-if="showTour"
             class="fixed w-full h-[100dvh] flex justify-center items-center pointer-events-none z-[100]"
           >
-            <TourOnboarding />
+            <TourOnboarding @complete="showTour = false" />
           </div>
           <!-- Viewer host -->
           <div

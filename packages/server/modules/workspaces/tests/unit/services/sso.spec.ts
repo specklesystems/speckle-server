@@ -1,6 +1,7 @@
 /* eslint-disable camelcase */
 
 import { UserEmail } from '@/modules/core/domain/userEmails/types'
+import { UserWithOptionalRole } from '@/modules/core/repositories/users'
 import {
   OidcProvider,
   WorkspaceSsoProvider
@@ -14,6 +15,7 @@ import { WorkspaceInvalidRoleError } from '@/modules/workspaces/errors/workspace
 import {
   createWorkspaceUserFromSsoProfileFactory,
   linkUserWithSsoProviderFactory,
+  listWorkspaceSsoMembershipsByUserEmailFactory,
   saveSsoProviderRegistrationFactory,
   startOidcSsoProviderValidationFactory
 } from '@/modules/workspaces/services/sso'
@@ -342,6 +344,55 @@ describe('Workspace SSO services', () => {
       expect(userEmails.length).to.equal(1)
       expect(userEmails[0].email).to.equal(email)
       expect(userEmails[0].verified).to.be.true
+    })
+  })
+  describe('listWorkspaceSsoMembershipsByUserEmailFactory creates a function, that', () => {
+    it('returns an empty array if the user does not exist', async () => {
+      const listWorkspaceSsoMemberships = listWorkspaceSsoMembershipsByUserEmailFactory(
+        {
+          getUserByEmail: async () => null,
+          listWorkspaceSsoMemberships: async () => {
+            assert.fail()
+          }
+        }
+      )
+
+      const workspaces = await listWorkspaceSsoMemberships({
+        userEmail: 'fake@example.org '
+      })
+
+      expect(workspaces.length).to.equal(0)
+    })
+    it('returns sanitized results if any matches are found', async () => {
+      const listWorkspaceSsoMemberships = listWorkspaceSsoMembershipsByUserEmailFactory(
+        {
+          getUserByEmail: async () =>
+            ({
+              id: cryptoRandomString({ length: 9 })
+            } as UserWithOptionalRole),
+          listWorkspaceSsoMemberships: async () => [
+            {
+              id: '',
+              slug: '',
+              name: '',
+              description: '',
+              logo: null,
+              defaultLogoIndex: 0,
+              defaultProjectRole: 'stream:contributor',
+              domainBasedMembershipProtectionEnabled: false,
+              discoverabilityEnabled: false,
+              createdAt: new Date(),
+              updatedAt: new Date()
+            }
+          ]
+        }
+      )
+
+      const workspaces = await listWorkspaceSsoMemberships({
+        userEmail: 'anything@example.org'
+      })
+
+      expect(Object.keys(workspaces[0]).includes('defaultProjectRole')).to.be.false
     })
   })
 })

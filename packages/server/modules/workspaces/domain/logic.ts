@@ -4,10 +4,13 @@ import {
   WorkspaceInvalidUpdateError
 } from '@/modules/workspaces/errors/workspace'
 import {
+  LimitedWorkspace,
+  Workspace,
   WorkspaceDefaultProjectRole,
   WorkspaceDomain
 } from '@/modules/workspacesCore/domain/types'
 import { Roles, WorkspaceRoles } from '@speckle/shared'
+import { pick } from 'lodash'
 
 export const userEmailsCompliantWithWorkspaceDomains = ({
   userEmails,
@@ -63,4 +66,15 @@ export const parseDefaultProjectRole = (
 export const isWorkspaceRole = (role: string): role is WorkspaceRoles => {
   const validRoles: string[] = Object.values(Roles.Workspace)
   return validRoles.includes(role)
+}
+
+export const toLimitedWorkspace = (workspace: Workspace): LimitedWorkspace => {
+  return pick(workspace, [
+    'id',
+    'slug',
+    'name',
+    'description',
+    'logo',
+    'defaultLogoIndex'
+  ])
 }
