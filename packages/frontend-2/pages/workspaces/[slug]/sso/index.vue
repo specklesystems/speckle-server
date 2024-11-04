@@ -4,7 +4,6 @@
     <template v-if="isLoading">
       <div class="py-12 flex flex-col items-center gap-2">
         <CommonLoadingIcon />
-        <p class="text-body-xs text-foreground-2">Loading workspace details...</p>
       </div>
     </template>
 
@@ -92,6 +91,7 @@ const route = useRoute()
 const { challenge } = useLoginOrRegisterUtils()
 const { signInOrSignUpWithSso } = useAuthManager()
 const isSsoEnabled = useIsWorkspacesSsoEnabled()
+const isPostSsoFlow = computed(() => !!route.query.access_code)
 
 const { result } = useQuery(authRegisterPanelQuery, {
   token: route.query.token as string
@@ -120,6 +120,11 @@ type LimitedWorkspace = {
 }
 
 onMounted(() => {
+  // If we're in post-SSO flow, keep loading state true
+  // The watchLoginAccessCode handler will handle the redirect
+  if (isPostSsoFlow.value) {
+    return
+  }
   fetch(new URL(`/api/v1/workspaces/${route.params.slug}/sso`, apiOrigin))
     .then((res) => res.json())
     .then((data: LimitedWorkspace) => {
