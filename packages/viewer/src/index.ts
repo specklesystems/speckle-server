@@ -13,7 +13,8 @@ import {
   ViewerEvent,
   type ViewerParams,
   LightConfiguration,
-  ViewerEventPayload
+  ViewerEventPayload,
+  StencilOutlineType
 } from './IViewer.js'
 import type {
   PropertyInfo,
@@ -38,7 +39,11 @@ import {
   MeasurementsExtension
 } from './modules/extensions/measurements/MeasurementsExtension.js'
 import { Units } from './modules/converter/Units.js'
-import { SelectionExtension } from './modules/extensions/SelectionExtension.js'
+import {
+  SelectionExtension,
+  SelectionExtensionOptions,
+  DefaultSelectionExtensionOptions
+} from './modules/extensions/SelectionExtension.js'
 import { CameraController } from './modules/extensions/CameraController.js'
 import { type InlineView } from './modules/extensions/CameraController.js'
 import { type CanonicalView } from './modules/extensions/CameraController.js'
@@ -156,7 +161,8 @@ export {
   SpeckleRenderer,
   ViewModes,
   ViewMode,
-  SectionToolEvent
+  SectionToolEvent,
+  StencilOutlineType
 }
 
 export type {
@@ -188,7 +194,9 @@ export type {
   ViewerEventPayload,
   InputEventPayload,
   SectionToolEventPayload,
-  CameraEventPayload
+  CameraEventPayload,
+  SelectionExtensionOptions,
+  DefaultSelectionExtensionOptions
 }
 
 export * as UrlHelper from './modules/UrlHelper.js'
