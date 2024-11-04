@@ -1,6 +1,8 @@
 import { ProjectTeamMember } from '@/modules/core/domain/projects/types'
 import { Stream } from '@/modules/core/domain/streams/types'
+import { ProjectNotFoundError } from '@/modules/core/errors/projects'
 import { StreamAclRecord, StreamRecord } from '@/modules/core/helpers/types'
+import { WorkspaceInvalidProjectError } from '@/modules/workspaces/errors/workspace'
 import {
   moveProjectToWorkspaceFactory,
   queryAllWorkspaceProjectsFactory,
@@ -93,6 +95,37 @@ describe('Project retrieval services', () => {
 
 describe('Project management services', () => {
   describe('moveProjectToWorkspaceFactory returns a function, that', () => {
+    it('should throw if attempting to move a project, that does not exist', async () => {
+      const moveProjectToWorkspace = moveProjectToWorkspaceFactory({
+        getProject: async () => null,
+        updateProject: async () => {
+          expect.fail()
+        },
+        upsertProjectRole: async () => {
+          expect.fail()
+        },
+        getProjectCollaborators: async () => {
+          expect.fail()
+        },
+        getWorkspaceRoles: async () => {
+          expect.fail()
+        },
+        getWorkspaceRoleToDefaultProjectRoleMapping: async () => {
+          expect.fail()
+        },
+        updateWorkspaceRole: async () => {
+          expect.fail()
+        }
+      })
+
+      const err = await expectToThrow(() =>
+        moveProjectToWorkspace({
+          projectId: cryptoRandomString({ length: 6 }),
+          workspaceId: cryptoRandomString({ length: 6 })
+        })
+      )
+      expect(err.message).to.equal(new ProjectNotFoundError().message)
+    })
     it('should throw if attempting to move a project already in a workspace', async () => {
       const moveProjectToWorkspace = moveProjectToWorkspaceFactory({
         getProject: async () => {
@@ -120,12 +153,13 @@ describe('Project management services', () => {
         }
       })
 
-      await expectToThrow(() =>
+      const err = await expectToThrow(() =>
         moveProjectToWorkspace({
           projectId: cryptoRandomString({ length: 6 }),
           workspaceId: cryptoRandomString({ length: 6 })
         })
       )
+      expect(err instanceof WorkspaceInvalidProjectError).to.be.true
     })
 
     it('should preserve existing workspace roles in target workspace', async () => {
