@@ -10,3 +10,9 @@ export class RegionCreateError extends BaseError {
   static defaultMessage = 'An error occurred while creating the region'
   static statusCode = 400
 }
+
+export class RegionUpdateError extends BaseError {
+  static code = 'REGION_UPDATE_ERROR'
+  static defaultMessage = 'An error occurred while updating the region'
+  static statusCode = 400
+}

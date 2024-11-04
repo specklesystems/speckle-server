@@ -3,13 +3,17 @@ import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import {
   getRegionFactory,
   getRegionsFactory,
-  storeRegionFactory
+  storeRegionFactory,
+  updateRegionFactory
 } from '@/modules/multiregion/repositories'
 import {
   getAvailableRegionKeysFactory,
   getFreeRegionKeysFactory
 } from '@/modules/multiregion/services/config'
-import { createAndValidateNewRegionFactory } from '@/modules/multiregion/services/management'
+import {
+  createAndValidateNewRegionFactory,
+  updateAndValidateRegionFactory
+} from '@/modules/multiregion/services/management'
 
 export default {
   ServerMultiRegionConfiguration: {
@@ -36,6 +40,14 @@ export default {
         storeRegion: storeRegionFactory({ db })
       })
       return await createAndValidateNewRegion({ region: args.input })
+    },
+    update: async (_parent, args) => {
+      const updateAndValidateRegion = updateAndValidateRegionFactory({
+        getRegion: getRegionFactory({ db }),
+        updateRegion: updateRegionFactory({ db })
+      })
+
+      return await updateAndValidateRegion({ input: args.input })
     }
   },
   ServerRegionItem: {
