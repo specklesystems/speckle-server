@@ -8,27 +8,38 @@
     </template>
 
     <template v-else>
-      <div class="flex flex-col gap-1">
+      <div class="flex flex-col gap-1 mt-12">
+        <!-- Error Message Banner -->
         <div
-          class="bg-foundation max-w-sm mt-12 w-full mx-auto border border-outline-3 rounded-md"
+          v-if="errorMessage"
+          class="bg-highlight-1 border border-outline-3 rounded p-2 mb-2"
         >
-          <div class="border-b border-outline-3 py-3 px-6">
-            <h1 class="text-heading">
+          <div class="flex items-center justify-center gap-2">
+            <ExclamationTriangleIcon class="w-5 h-5 text-danger" />
+            <p class="text-body-2xs text-foreground">{{ errorMessage }}</p>
+          </div>
+        </div>
+        <div
+          class="bg-foundation max-w-sm w-full mx-auto border border-outline-3 rounded-md"
+        >
+          <div
+            class="border-b border-outline-3 py-2 px-6 flex justify-start items-center gap-2"
+          >
+            <div v-if="workspace?.logo" class="w-8 h-8">
+              <img
+                :src="workspace.logo"
+                :alt="workspace?.name"
+                class="w-full h-full object-contain rounded-full"
+              />
+            </div>
+            <h1 class="text-heading-sm">
               Sign in to {{ workspace?.name || 'Workspace' }}
             </h1>
           </div>
           <div class="px-6 py-4">
             <!-- SSO Button -->
             <div v-if="isSsoEnabled">
-              <div v-if="workspace?.logo" class="w-16 h-16 mx-auto">
-                <img
-                  :src="workspace.logo"
-                  :alt="workspace?.name"
-                  class="w-full h-full object-contain"
-                />
-              </div>
-
-              <p class="text-body-xs text-foreground mb-3">
+              <p class="text-body-xs text-foreground leading-5 mb-3">
                 Use your
                 <span class="font-medium">{{ ssoProviderName }}</span>
                 account to access this workspace
@@ -75,7 +86,8 @@
 
 <script setup lang="ts">
 import { useAuthManager, useLoginOrRegisterUtils } from '~/lib/auth/composables/auth'
-import { ExclamationTriangleIcon, LockOpenIcon } from '@heroicons/vue/24/outline'
+import { LockOpenIcon } from '@heroicons/vue/24/outline'
+import { ExclamationTriangleIcon } from '@heroicons/vue/24/solid'
 import { CommonLoadingIcon } from '@speckle/ui-components'
 import { useQuery } from '@vue/apollo-composable'
 import { authRegisterPanelQuery } from '~/lib/auth/graphql/queries'
@@ -104,6 +116,14 @@ const serverInfo = computed<ServerTermsOfServicePrivacyPolicyFragmentFragment>(
 const workspace = ref<LimitedWorkspace>()
 const ssoProviderName = ref<string>()
 const isLoading = ref(true)
+
+const errorMessage = computed(() => {
+  const error = route.query.error as string | undefined
+  if (!error) return null
+
+  // Convert URL-friendly error to readable message
+  return decodeURIComponent(error).replace(/\+/g, ' ').trim()
+})
 
 const handleContinue = () => {
   signInOrSignUpWithSso({
