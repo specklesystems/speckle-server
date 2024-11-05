@@ -7,15 +7,6 @@
     }`"
     :disabled="selectedVersionId === version.id && !fromWizard"
   >
-    <!-- Warning identifier -->
-    <div v-if="!objectVersion" class="bottom-0 left-0">
-      <div
-        class="rounded-bl-lg rounded-tr-[5px] text-body-2xs px-2 bg-warning text-foreground-on-primary"
-      >
-        Outdated
-      </div>
-    </div>
-
     <div class="mb-2">
       <img :src="version.previewUrl" alt="version preview" />
     </div>
@@ -57,6 +48,39 @@
       </span>
       <span v-else>Load this version</span>
     </div>
+    <!-- Warning if obj is coming from the v2 side -->
+    <div v-if="!objectVersion" class="bottom-0 left-0">
+      <div
+        class="text-body-2xs px-2 bg-blue-500/5 py-2 text-foreground-2 flex items-center space-x-1 justify-center"
+      >
+        <div>Compatibility warning:</div>
+        <FormButton size="sm" text @click.stop="showCompatWarning = true">
+          read more
+        </FormButton>
+        <LayoutDialog
+          v-model:open="showCompatWarning"
+          title="Compatibility warning"
+          fullscreen="none"
+        >
+          This version might not receive as expected.
+          <br />
+          <br />
+          As we progress with the new Speckle, there are a few things that won’t work as
+          expected. We recommend you send this model again using next connectors if
+          available.
+          <br />
+          <br />
+          We will do our best to convert, but, for example, Instances (Blocks), Render
+          Materials, Parameters and others will not work from the previous version of
+          the connectors.
+          <div class="mt-4 flex justify-end items-center space-x-2">
+            <FormButton size="sm" @click="showCompatWarning = false">
+              Understood
+            </FormButton>
+          </div>
+        </LayoutDialog>
+      </div>
+    </div>
   </button>
 </template>
 <script setup lang="ts">
@@ -95,4 +119,6 @@ const objectVersion = computed(() => {
   const data = objectQueryResult.value?.project?.object?.data as Data | undefined
   return data?.version
 })
+
+const showCompatWarning = ref(false)
 </script>
