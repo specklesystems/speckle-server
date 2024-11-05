@@ -163,7 +163,7 @@ describe('FileUploads @fileuploads', () => {
     } = await beforeEachContext()
     server = tmpServer
     app = tmpApp
-    ;({ serverAddress, sendRequest } = await initializeTestServer({
+    ;({ serverAddress, serverPort, sendRequest } = await initializeTestServer({
       server,
       app,
       graphqlServer,
