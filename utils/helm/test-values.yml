@@ -1,0 +1,25 @@
+namespace: speckle-test
+
+domain: speckle.minikube
+ssl_canonical_url: false
+
+docker_image_tag: 'local'
+
+db:
+  PGSSLMODE: allow3
+
+s3:
+  endpoint: 'http://minio:9000/'
+  bucket: 'speckle'
+  access_key: 'minioadmin'
+  create_bucket: 'true'
+
+server:
+  adminOverrideEnabled: true
+
+cert_manager_issuer: ~
+enable_prometheus_monitoring: true
+file_size_limit_mb: 300
+
+frontend_2:
+  enabled: true
