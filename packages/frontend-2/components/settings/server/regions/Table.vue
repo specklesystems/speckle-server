@@ -20,16 +20,12 @@
         <span class="text-foreground-2">{{ item.description }}</span>
       </template>
       <template #actions="{ item }">
-        <template v-if="true">
-          <!-- Hiding actions for now -->
-          &nbsp;
-        </template>
         <LayoutMenu
-          v-else
           v-model:open="showActionsMenu[item.id]"
           :items="actionItems"
           mount-menu-on-body
           :menu-position="HorizontalDirection.Left"
+          @chosen="({ item: actionItem }) => onActionChosen(actionItem, item)"
         >
           <FormButton
             :color="showActionsMenu[item.id] ? 'outline' : 'subtle'"
@@ -62,6 +58,10 @@ enum ActionTypes {
   Edit = 'edit'
 }
 
+const emit = defineEmits<{
+  edit: [item: SettingsServerRegionsTable_ServerRegionItemFragment]
+}>()
+
 defineProps<{
   items: SettingsServerRegionsTable_ServerRegionItemFragment[] | undefined
 }>()
@@ -73,5 +73,14 @@ const actionItems: LayoutMenuItem[][] = [
 
 const toggleMenu = (itemId: string) => {
   showActionsMenu.value[itemId] = !showActionsMenu.value[itemId]
+}
+
+const onActionChosen = (
+  actionItem: LayoutMenuItem,
+  item: SettingsServerRegionsTable_ServerRegionItemFragment
+) => {
+  if (actionItem.id === ActionTypes.Edit) {
+    emit('edit', item)
+  }
 }
 </script>

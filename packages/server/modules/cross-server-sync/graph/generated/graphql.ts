@@ -2882,11 +2882,17 @@ export type ServerRegionItem = {
 export type ServerRegionMutations = {
   __typename?: 'ServerRegionMutations';
   create: ServerRegionItem;
+  update: ServerRegionItem;
 };
 
 
 export type ServerRegionMutationsCreateArgs = {
   input: CreateServerRegionInput;
+};
+
+
+export type ServerRegionMutationsUpdateArgs = {
+  input: UpdateServerRegionInput;
 };
 
 export enum ServerRole {
@@ -3480,6 +3486,12 @@ export type UpdateModelInput = {
   id: Scalars['ID']['input'];
   name?: InputMaybe<Scalars['String']['input']>;
   projectId: Scalars['ID']['input'];
+};
+
+export type UpdateServerRegionInput = {
+  description?: InputMaybe<Scalars['String']['input']>;
+  key: Scalars['String']['input'];
+  name?: InputMaybe<Scalars['String']['input']>;
 };
 
 /** Only non-null values will be updated */
