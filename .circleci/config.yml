@@ -439,7 +439,7 @@ jobs:
     docker:
       - image: cimg/node:18.19.0
       - image: cimg/redis:7.2.4
-      - image: cimg/postgres:17.0
+      - image: cimg/postgres:16.4@sha256:2e4f1a965bdd9ba77aa6a0a7b93968c07576ba2a8a7cf86d5eb7b31483db1378
         environment:
           POSTGRES_DB: speckle2_test
           POSTGRES_PASSWORD: speckle
@@ -624,7 +624,7 @@ jobs:
   test-preview-service:
     docker:
       - image: cimg/node:18.19.0
-      - image: cimg/postgres:14.11
+      - image: cimg/postgres:16.4@sha256:2e4f1a965bdd9ba77aa6a0a7b93968c07576ba2a8a7cf86d5eb7b31483db1378
         environment:
           POSTGRES_DB: preview_service_test
           POSTGRES_PASSWORD: preview_service_test
@@ -983,6 +983,12 @@ jobs:
       FOLDER: utils
       SPECKLE_SERVER_PACKAGE: docker-compose-ingress
 
+  docker-build-postgresql-client:
+    <<: *build-job
+    environment:
+      FOLDER: utils
+      SPECKLE_SERVER_PACKAGE: postgresql-client
+
   docker-publish: &publish-job
     docker: *docker-base-image
     resource_class: medium
@@ -1046,6 +1052,12 @@ jobs:
     environment:
       FOLDER: utils
       SPECKLE_SERVER_PACKAGE: docker-compose-ingress
+
+  docker-publish-postgresql-client:
+    <<: *publish-job
+    environment:
+      FOLDER: utils
+      SPECKLE_SERVER_PACKAGE: postgresql-client
 
   publish-npm:
     docker: *docker-node-image
