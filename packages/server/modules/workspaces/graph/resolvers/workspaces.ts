@@ -884,7 +884,11 @@ export = FF_WORKSPACES_MODULE_ENABLED
           return await getWorkspaceDomainsFactory({ db })({ workspaceIds: [parent.id] })
         },
         billing: (parent) => ({ parent }),
-        sso: (parent) => parent
+        sso: async (parent) => {
+          return await getWorkspaceSsoProviderRecordFactory({ db })({
+            workspaceId: parent.id
+          })
+        }
       },
       WorkspaceBilling: {
         versionsCount: async ({ parent }) => {
@@ -909,30 +913,27 @@ export = FF_WORKSPACES_MODULE_ENABLED
         }
       },
       WorkspaceSso: {
-        provider: async (parent) => {
-          const provider = await getWorkspaceSsoProviderRecordFactory({ db })({
-            workspaceId: parent.id
-          })
-          return provider ?? null
-        },
-        session: async (parent, _args, context) => {
-          return await getUserSsoSessionFactory({ db })({
-            userId: context.userId!,
-            workspaceId: parent.id
-          })
-        }
-      },
-      WorkspaceSsoProvider: {
-        id: async ({ providerId }) => providerId,
-        name: async ({ workspaceId }) => {
-          const providerData = await getWorkspaceSsoProviderFactory({
+        provider: async ({ workspaceId }) => {
+          const provider = await getWorkspaceSsoProviderFactory({
             db,
             decrypt: getDecryptor()
           })({
             workspaceId
           })
+          if (!provider) return null
 
-          return providerData?.provider.providerName ?? null
+          return {
+            id: provider.id,
+            name: provider.provider.providerName,
+            clientId: provider.provider.clientId,
+            issuerUrl: provider.provider.issuerUrl
+          }
+        },
+        session: async (parent, _args, context) => {
+          return await getUserSsoSessionFactory({ db })({
+            userId: context.userId!,
+            workspaceId: parent.workspaceId
+          })
         }
       },
       WorkspaceCollaborator: {

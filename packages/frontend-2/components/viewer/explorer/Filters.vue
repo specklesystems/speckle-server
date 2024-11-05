@@ -115,7 +115,11 @@ const {
 } = useFilterUtilities()
 
 const revitPropertyRegex = /^parameters\./
-const revitPropertyRegexDui3000 = /^properties\./ // note this is partially valid for civil3d, or dim should test against it
+// Note: we've split this regex check in two to not clash with navis properties. This makes generally makes dim very sad, as we're layering hacks.
+// Navis object properties come under `properties`, same as revit ones - as such we can't assume they're the same. Here we're targeting revit's
+// specific two subcategories of `properties`.
+const revitPropertyRegexDui3000InstanceProps = /^properties\.Instance/ // note this is partially valid for civil3d, or dim should test against it
+const revitPropertyRegexDui3000TypeProps = /^properties\.Type/ // note this is partially valid for civil3d, or dim should test against it
 
 const showAllFilters = ref(false)
 
@@ -124,7 +128,11 @@ const props = defineProps<{
 }>()
 
 const isRevitProperty = (key: string): boolean => {
-  return revitPropertyRegex.test(key) || revitPropertyRegexDui3000.test(key)
+  return (
+    revitPropertyRegex.test(key) ||
+    revitPropertyRegexDui3000InstanceProps.test(key) ||
+    revitPropertyRegexDui3000TypeProps.test(key)
+  )
 }
 
 const relevantFilters = computed(() => {

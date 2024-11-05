@@ -69,7 +69,7 @@ jobs:
     services:
       postgres:
         # Docker Hub image
-        image: postgres:14
+        image: postgres:16.4-bookworm@sha256:91f464e7ba0ad91a106c94cff079fb4384139291b8c0502fd36989cf2c788bbb
         env:
           POSTGRES_DB: preview_service_test
           POSTGRES_PASSWORD: preview_service_test

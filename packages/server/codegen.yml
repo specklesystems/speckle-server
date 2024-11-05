@@ -58,7 +58,6 @@ generates:
         Workspace: '@/modules/workspacesCore/helpers/graphTypes#WorkspaceGraphQLReturn'
         WorkspaceBilling: '@/modules/workspacesCore/helpers/graphTypes#WorkspaceBillingGraphQLReturn'
         WorkspaceSso: '@/modules/workspacesCore/helpers/graphTypes#WorkspaceSsoGraphQLReturn'
-        WorkspaceSsoProvider: '@/modules/workspacesCore/helpers/graphTypes#WorkspaceSsoProviderGraphQLReturn'
         WorkspaceMutations: '@/modules/workspacesCore/helpers/graphTypes#WorkspaceMutationsGraphQLReturn'
         WorkspaceInviteMutations: '@/modules/workspacesCore/helpers/graphTypes#WorkspaceInviteMutationsGraphQLReturn'
         WorkspaceProjectMutations: '@/modules/workspacesCore/helpers/graphTypes#WorkspaceProjectMutationsGraphQLReturn'
