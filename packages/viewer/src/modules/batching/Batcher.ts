@@ -25,6 +25,7 @@ import { Geometry } from '../converter/Geometry.js'
 import { MeshBatch } from './MeshBatch.js'
 import { PointBatch } from './PointBatch.js'
 import Logger from '../utils/Logger.js'
+import { ObjectVisibility } from '../pipeline/Passes/GPass.js'
 
 type BatchTypeMap = {
   [GeometryType.MESH]: MeshBatch
@@ -74,7 +75,7 @@ export default class Batcher {
         await pause.wait(50)
       }
 
-      let instancedNodes = worldTree.findId(g)
+      let instancedNodes = worldTree.findId(g, renderTree.subtreeId)
       if (!instancedNodes) {
         continue
       }
@@ -99,7 +100,7 @@ export default class Batcher {
     }
     for (const v in instancedBatches) {
       for (let k = 0; k < instancedBatches[v].length; k++) {
-        const nodes = worldTree.findId(instancedBatches[v][k])
+        const nodes = worldTree.findId(instancedBatches[v][k], renderTree.subtreeId)
         if (!nodes) continue
         /** Make sure entire instance set is instanced */
         let instanced = true
@@ -413,6 +414,19 @@ export default class Batcher {
     }
   }
 
+  public getVisibility(objectVisibility: ObjectVisibility) {
+    switch (objectVisibility) {
+      case ObjectVisibility.OPAQUE:
+        return this.getOpaque()
+      case ObjectVisibility.TRANSPARENT:
+        return this.getTransparent()
+      case ObjectVisibility.STENCIL:
+        return this.getStencil()
+      case ObjectVisibility.DEPTH:
+        return this.getDepth()
+    }
+  }
+
   public getTransparent(): Record<string, BatchUpdateRange> {
     const visibilityRanges: Record<string, BatchUpdateRange> = {}
     for (const k in this.batches) {
@@ -456,11 +470,30 @@ export default class Batcher {
     }
   }
 
+  public overrideBatchMaterial(
+    ranges: Record<string, BatchUpdateRange>,
+    material: Material
+  ) {
+    for (const k in ranges) {
+      if (this.batches[k].geometryType !== GeometryType.MESH) continue
+      const mesh = this.batches[k].renderObject as SpeckleMesh
+      mesh.setOverrideBatchMaterial(material)
+    }
+  }
+
   public restoreMaterial(ranges: Record<string, BatchUpdateRange>) {
     for (const k in ranges) {
       if (this.batches[k].geometryType !== GeometryType.MESH) continue
       const mesh = this.batches[k].renderObject as SpeckleMesh
       mesh.restoreMaterial()
+    }
+  }
+
+  public restoreBatchMaterial(ranges: Record<string, BatchUpdateRange>) {
+    for (const k in ranges) {
+      if (this.batches[k].geometryType !== GeometryType.MESH) continue
+      const mesh = this.batches[k].renderObject as SpeckleMesh
+      mesh.restoreBatchMaterial()
     }
   }
 

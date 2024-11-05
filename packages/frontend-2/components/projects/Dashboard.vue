@@ -29,6 +29,7 @@
             v-if="!showEmptyState"
             v-model="selectedRoles"
             class="md:w-56 grow md:grow-0"
+            allow-unset
             fixed-height
             clearable
           />

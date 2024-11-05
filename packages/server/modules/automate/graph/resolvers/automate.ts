@@ -11,62 +11,62 @@ import {
 } from '@/modules/automate/clients/executionEngine'
 import {
   GetProjectAutomationsParams,
-  getAutomation,
-  getAutomationRunsItems,
-  getAutomationRunsTotalCount,
-  getAutomationTriggerDefinitions,
-  getFullAutomationRevisionMetadata,
-  getFunctionRun,
-  getLatestAutomationRevision,
-  getLatestVersionAutomationRuns,
-  getProjectAutomationsItems,
-  getProjectAutomationsTotalCount,
-  storeAutomation,
-  storeAutomationRevision,
-  storeAutomationToken,
-  updateAutomationRun,
-  updateAutomation as updateDbAutomation,
-  upsertAutomationFunctionRun
+  getAutomationFactory,
+  getAutomationRunsItemsFactory,
+  getAutomationRunsTotalCountFactory,
+  getAutomationTokenFactory,
+  getAutomationTriggerDefinitionsFactory,
+  getFullAutomationRevisionMetadataFactory,
+  getFunctionRunFactory,
+  getLatestAutomationRevisionFactory,
+  getLatestVersionAutomationRunsFactory,
+  getProjectAutomationsItemsFactory,
+  getProjectAutomationsTotalCountFactory,
+  storeAutomationFactory,
+  storeAutomationRevisionFactory,
+  storeAutomationTokenFactory,
+  updateAutomationFactory,
+  updateAutomationRunFactory,
+  upsertAutomationFunctionRunFactory,
+  upsertAutomationRunFactory
 } from '@/modules/automate/repositories/automations'
 import {
-  createAutomation,
-  createAutomationRevision,
-  createTestAutomation,
-  getAutomationsStatus,
-  updateAutomation
+  createAutomationFactory,
+  createAutomationRevisionFactory,
+  createTestAutomationFactory,
+  getAutomationsStatusFactory,
+  validateAndUpdateAutomationFactory
 } from '@/modules/automate/services/automationManagement'
 import {
   AuthCodePayloadAction,
-  createStoredAuthCode,
-  validateStoredAuthCode
+  createStoredAuthCodeFactory,
+  validateStoredAuthCodeFactory
 } from '@/modules/automate/services/authCode'
 import {
   convertFunctionReleaseToGraphQLReturn,
   convertFunctionToGraphQLReturn,
-  createFunctionFromTemplate,
-  updateFunction
+  createFunctionFromTemplateFactory,
+  updateFunctionFactory
 } from '@/modules/automate/services/functionManagement'
 import {
   Resolvers,
   AutomateRunTriggerType
 } from '@/modules/core/graph/generated/graphql'
 import { getGenericRedis } from '@/modules/core/index'
-import { getUser } from '@/modules/core/repositories/users'
 import { createAutomation as clientCreateAutomation } from '@/modules/automate/clients/executionEngine'
-import { validateStreamAccess } from '@/modules/core/services/streams/streamAccessService'
 import { Automate, Roles, isNullOrUndefined, isNonNullable } from '@speckle/shared'
 import { getFeatureFlags, getServerOrigin } from '@/modules/shared/helpers/envHelper'
 import {
-  getBranchLatestCommits,
-  getBranchesByIds
+  getBranchesByIdsFactory,
+  getBranchLatestCommitsFactory
 } from '@/modules/core/repositories/branches'
 import {
-  createTestAutomationRun,
-  manuallyTriggerAutomation,
-  triggerAutomationRevisionRun
+  createTestAutomationRunFactory,
+  manuallyTriggerAutomationFactory,
+  triggerAutomationRevisionRunFactory
 } from '@/modules/automate/services/trigger'
 import {
-  reportFunctionRunStatus,
+  reportFunctionRunStatusFactory,
   ReportFunctionRunStatusDeps
 } from '@/modules/automate/services/runsManagement'
 import {
@@ -84,8 +84,8 @@ import {
   getEncryptionKeyPair,
   getEncryptionKeyPairFor,
   getEncryptionPublicKey,
-  getFunctionInputDecryptor,
-  getFunctionInputsForFrontend
+  getFunctionInputDecryptorFactory,
+  getFunctionInputsForFrontendFactory
 } from '@/modules/automate/services/encryption'
 import { buildDecryptor } from '@/modules/shared/utils/libsodium'
 import { keyBy } from 'lodash'
@@ -103,8 +103,55 @@ import {
   ExecutionEngineFailedResponseError,
   ExecutionEngineNetworkError
 } from '@/modules/automate/errors/executionEngine'
+import { db } from '@/db/knex'
+import { AutomationsEmitter } from '@/modules/automate/events/automations'
+import { AutomateRunsEmitter } from '@/modules/automate/events/runs'
+import { getCommitFactory } from '@/modules/core/repositories/commits'
+import { validateStreamAccessFactory } from '@/modules/core/services/streams/access'
+import { getUserFactory } from '@/modules/core/repositories/users'
+import { createAppTokenFactory } from '@/modules/core/services/tokens'
+import {
+  storeApiTokenFactory,
+  storeTokenResourceAccessDefinitionsFactory,
+  storeTokenScopesFactory,
+  storeUserServerAppTokenFactory
+} from '@/modules/core/repositories/tokens'
 
 const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
+
+const getUser = getUserFactory({ db })
+const storeAutomation = storeAutomationFactory({ db })
+const storeAutomationToken = storeAutomationTokenFactory({ db })
+const storeAutomationRevision = storeAutomationRevisionFactory({ db })
+const getAutomation = getAutomationFactory({ db })
+const updateDbAutomation = updateAutomationFactory({ db })
+const getLatestVersionAutomationRuns = getLatestVersionAutomationRunsFactory({ db })
+const getFunctionRun = getFunctionRunFactory({ db })
+const upsertAutomationFunctionRun = upsertAutomationFunctionRunFactory({ db })
+const getFullAutomationRevisionMetadata = getFullAutomationRevisionMetadataFactory({
+  db
+})
+const getAutomationToken = getAutomationTokenFactory({ db })
+const upsertAutomationRun = upsertAutomationRunFactory({ db })
+const getAutomationTriggerDefinitions = getAutomationTriggerDefinitionsFactory({ db })
+const getLatestAutomationRevision = getLatestAutomationRevisionFactory({ db })
+const updateAutomationRun = updateAutomationRunFactory({ db })
+
+const getAutomationRunsTotalCount = getAutomationRunsTotalCountFactory({ db })
+const getAutomationRunsItems = getAutomationRunsItemsFactory({ db })
+
+const getProjectAutomationsItems = getProjectAutomationsItemsFactory({ db })
+const getProjectAutomationsTotalCount = getProjectAutomationsTotalCountFactory({ db })
+const getBranchLatestCommits = getBranchLatestCommitsFactory({ db })
+const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
+const createAppToken = createAppTokenFactory({
+  storeApiToken: storeApiTokenFactory({ db }),
+  storeTokenScopes: storeTokenScopesFactory({ db }),
+  storeTokenResourceAccessDefinitions: storeTokenResourceAccessDefinitionsFactory({
+    db
+  }),
+  storeUserServerAppToken: storeUserServerAppTokenFactory({ db })
+})
 
 export = (FF_AUTOMATE_MODULE_ENABLED
   ? {
@@ -192,7 +239,7 @@ export = (FF_AUTOMATE_MODULE_ENABLED
       },
       Model: {
         async automationsStatus(parent, _args, ctx) {
-          const getStatus = getAutomationsStatus({
+          const getStatus = getAutomationsStatusFactory({
             getLatestVersionAutomationRuns
           })
 
@@ -214,7 +261,7 @@ export = (FF_AUTOMATE_MODULE_ENABLED
       },
       Version: {
         async automationsStatus(parent, _args, ctx) {
-          const getStatus = getAutomationsStatus({
+          const getStatus = getAutomationsStatusFactory({
             getLatestVersionAutomationRuns
           })
 
@@ -322,7 +369,7 @@ export = (FF_AUTOMATE_MODULE_ENABLED
           return triggers
         },
         async functions(parent, _args, ctx) {
-          const prepareInputs = getFunctionInputsForFrontend({
+          const prepareInputs = getFunctionInputsForFrontendFactory({
             getEncryptionKeyPairFor,
             buildDecryptor,
             redactWriteOnlyInputData
@@ -432,31 +479,37 @@ export = (FF_AUTOMATE_MODULE_ENABLED
       },
       AutomateMutations: {
         async createFunction(_parent, args, ctx) {
-          const create = createFunctionFromTemplate({
+          const create = createFunctionFromTemplateFactory({
             createExecutionEngineFn: createFunction,
             getUser,
-            createStoredAuthCode: createStoredAuthCode({ redis: getGenericRedis() })
+            createStoredAuthCode: createStoredAuthCodeFactory({
+              redis: getGenericRedis()
+            })
           })
 
           return (await create({ input: args.input, userId: ctx.userId! }))
             .graphqlReturn
         },
         async updateFunction(_parent, args, ctx) {
-          const update = updateFunction({
+          const update = updateFunctionFactory({
             updateFunction: execEngineUpdateFunction,
             getFunction,
-            createStoredAuthCode: createStoredAuthCode({ redis: getGenericRedis() })
+            createStoredAuthCode: createStoredAuthCodeFactory({
+              redis: getGenericRedis()
+            })
           })
           return await update({ input: args.input, userId: ctx.userId! })
         }
       },
       ProjectAutomationMutations: {
         async create(parent, { input }, ctx) {
-          const create = createAutomation({
-            createAuthCode: createStoredAuthCode({ redis: getGenericRedis() }),
+          const create = createAutomationFactory({
+            createAuthCode: createStoredAuthCodeFactory({ redis: getGenericRedis() }),
             automateCreateAutomation: clientCreateAutomation,
             storeAutomation,
-            storeAutomationToken
+            storeAutomationToken,
+            validateStreamAccess,
+            automationsEventsEmit: AutomationsEmitter.emit
           })
 
           return (
@@ -469,9 +522,11 @@ export = (FF_AUTOMATE_MODULE_ENABLED
           ).automation
         },
         async update(parent, { input }, ctx) {
-          const update = updateAutomation({
+          const update = validateAndUpdateAutomationFactory({
             getAutomation,
-            updateAutomation: updateDbAutomation
+            updateAutomation: updateDbAutomation,
+            validateStreamAccess,
+            automationsEventsEmit: AutomationsEmitter.emit
           })
 
           return await update({
@@ -482,14 +537,18 @@ export = (FF_AUTOMATE_MODULE_ENABLED
           })
         },
         async createRevision(parent, { input }, ctx) {
-          const create = createAutomationRevision({
+          const create = createAutomationRevisionFactory({
             getAutomation,
             storeAutomationRevision,
-            getBranchesByIds,
+            getBranchesByIds: getBranchesByIdsFactory({ db }),
             getFunctionRelease,
             getEncryptionKeyPair,
-            getFunctionInputDecryptor: getFunctionInputDecryptor({ buildDecryptor }),
-            getFunctionReleases
+            getFunctionInputDecryptor: getFunctionInputDecryptorFactory({
+              buildDecryptor
+            }),
+            getFunctionReleases,
+            automationsEventsEmit: AutomationsEmitter.emit,
+            validateStreamAccess
           })
 
           return await create({
@@ -500,15 +559,25 @@ export = (FF_AUTOMATE_MODULE_ENABLED
           })
         },
         async trigger(parent, { automationId }, ctx) {
-          const trigger = manuallyTriggerAutomation({
+          const trigger = manuallyTriggerAutomationFactory({
             getAutomationTriggerDefinitions,
             getAutomation,
             getBranchLatestCommits,
-            triggerFunction: triggerAutomationRevisionRun({
+            triggerFunction: triggerAutomationRevisionRunFactory({
               automateRunTrigger: triggerAutomationRun,
               getEncryptionKeyPairFor,
-              getFunctionInputDecryptor: getFunctionInputDecryptor({ buildDecryptor })
-            })
+              getFunctionInputDecryptor: getFunctionInputDecryptorFactory({
+                buildDecryptor
+              }),
+              createAppToken,
+              automateRunsEmitter: AutomateRunsEmitter.emit,
+              getAutomationToken,
+              upsertAutomationRun,
+              getFullAutomationRevisionMetadata,
+              getBranchLatestCommits,
+              getCommit: getCommitFactory({ db })
+            }),
+            validateStreamAccess
           })
 
           const { automationRunId } = await trigger({
@@ -521,11 +590,13 @@ export = (FF_AUTOMATE_MODULE_ENABLED
           return automationRunId
         },
         async createTestAutomation(parent, { input }, ctx) {
-          const create = createTestAutomation({
+          const create = createTestAutomationFactory({
             getEncryptionKeyPair,
             getFunction,
             storeAutomation,
-            storeAutomationRevision
+            storeAutomationRevision,
+            validateStreamAccess,
+            automationsEventsEmit: AutomationsEmitter.emit
           })
 
           return await create({
@@ -536,14 +607,17 @@ export = (FF_AUTOMATE_MODULE_ENABLED
           })
         },
         async createTestAutomationRun(parent, { automationId }, ctx) {
-          const create = createTestAutomationRun({
+          const create = createTestAutomationRunFactory({
             getEncryptionKeyPairFor,
-            getFunctionInputDecryptor: getFunctionInputDecryptor({
+            getFunctionInputDecryptor: getFunctionInputDecryptorFactory({
               buildDecryptor
             }),
             getAutomation,
             getLatestAutomationRevision,
-            getFullAutomationRevisionMetadata
+            getFullAutomationRevisionMetadata,
+            upsertAutomationRun,
+            getBranchLatestCommits,
+            validateStreamAccess
           })
 
           return await create({
@@ -555,7 +629,7 @@ export = (FF_AUTOMATE_MODULE_ENABLED
       },
       Query: {
         async automateValidateAuthCode(_parent, args) {
-          const validate = validateStoredAuthCode({
+          const validate = validateStoredAuthCodeFactory({
             redis: getGenericRedis()
           })
           return await validate({
@@ -628,7 +702,9 @@ export = (FF_AUTOMATE_MODULE_ENABLED
         },
         availableGithubOrgs: async (parent, _args, ctx) => {
           const userId = parent.userId
-          const authCode = await createStoredAuthCode({ redis: getGenericRedis() })({
+          const authCode = await createStoredAuthCodeFactory({
+            redis: getGenericRedis()
+          })({
             userId,
             action: AuthCodePayloadAction.GetAvailableGithubOrganizations
           })
@@ -679,7 +755,8 @@ export = (FF_AUTOMATE_MODULE_ENABLED
           const deps: ReportFunctionRunStatusDeps = {
             getAutomationFunctionRunRecord: getFunctionRun,
             upsertAutomationFunctionRunRecord: upsertAutomationFunctionRun,
-            automationRunUpdater: updateAutomationRun
+            automationRunUpdater: updateAutomationRun,
+            runEventEmit: AutomateRunsEmitter.emit
           }
 
           const payload = {
@@ -691,7 +768,7 @@ export = (FF_AUTOMATE_MODULE_ENABLED
             statusMessage: input.statusMessage ?? null
           }
 
-          const result = await reportFunctionRunStatus(deps)(payload)
+          const result = await reportFunctionRunStatusFactory(deps)(payload)
 
           return result
         },

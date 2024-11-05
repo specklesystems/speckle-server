@@ -28,10 +28,10 @@ import {
   convertThrowIntoFetchResult,
   getCacheId,
   getFirstErrorMessage,
-  modifyObjectFields
+  modifyObjectFields,
+  modifyObjectField
 } from '~~/lib/common/helpers/graphql'
-
-import { useNavigateToHome } from '~~/lib/common/helpers/route'
+import { useNavigateToHome, workspaceRoute } from '~~/lib/common/helpers/route'
 import {
   cancelProjectInviteMutation,
   createProjectMutation,
@@ -42,9 +42,13 @@ import {
   updateProjectMetadataMutation,
   updateProjectRoleMutation,
   updateWorkspaceProjectRoleMutation,
-  useProjectInviteMutation
+  useProjectInviteMutation,
+  useMoveProjectToWorkspaceMutation
 } from '~~/lib/projects/graphql/mutations'
 import { onProjectUpdatedSubscription } from '~~/lib/projects/graphql/subscriptions'
+import { projectRoute } from '~/lib/common/helpers/route'
+import { useMixpanel } from '~/lib/core/composables/mp'
+import { useRouter } from 'vue-router'
 
 export function useProjectUpdateTracking(
   projectId: MaybeRef<string>,
@@ -238,7 +242,13 @@ export function useUpdateUserRole(
     const { data, errors } = await apollo
       .mutate({
         mutation: updateWorkspaceProjectRoleMutation,
-        variables: { input }
+        variables: { input },
+        update: (cache) => {
+          cache.evict({ id: getCacheId('Project', input.projectId) })
+          cache.evict({
+            id: getCacheId('WorkspaceCollaborator', input.userId)
+          })
+        }
       })
       .catch(convertThrowIntoFetchResult)
 
@@ -405,10 +415,14 @@ export function useDeleteProject() {
   const { activeUser } = useActiveUser()
   const { triggerNotification } = useGlobalToast()
   const navigateHome = useNavigateToHome()
+  const router = useRouter()
 
-  return async (id: string, options?: Partial<{ goHome: boolean }>) => {
+  return async (
+    id: string,
+    options?: Partial<{ goHome: boolean; workspaceSlug?: string }>
+  ) => {
     if (!activeUser.value) return
-    const { goHome } = options || {}
+    const { goHome, workspaceSlug } = options || {}
 
     const result = await apollo
       .mutate({
@@ -426,7 +440,11 @@ export function useDeleteProject() {
       })
 
       if (goHome) {
-        navigateHome()
+        if (workspaceSlug) {
+          router.push(workspaceRoute(workspaceSlug))
+        } else {
+          navigateHome()
+        }
       }
 
       // evict project from cache
@@ -534,5 +552,84 @@ export function useLeaveProject() {
         description: errMsg
       })
     }
+  }
+}
+
+export function useMoveProjectToWorkspace() {
+  const apollo = useApolloClient().client
+
+  const { triggerNotification } = useGlobalToast()
+  const mixpanel = useMixpanel()
+
+  return async (params: {
+    projectId: string
+    workspaceId: string
+    workspaceName: string
+    eventSource?: string
+  }) => {
+    const { projectId, workspaceId, workspaceName, eventSource } = params
+
+    const { data, errors } = await apollo
+      .mutate({
+        mutation: useMoveProjectToWorkspaceMutation,
+        variables: { projectId, workspaceId },
+        update: (cache, { data }) => {
+          if (!data?.workspaceMutations.projects.moveToWorkspace) return
+          if (!workspaceId) return
+
+          modifyObjectField(
+            cache,
+            getCacheId('Workspace', workspaceId),
+            'projects',
+            ({ helpers: { createUpdatedValue, ref } }) => {
+              return createUpdatedValue(({ update }) => {
+                update('items', (items) => [ref('Project', projectId), ...items])
+              })
+            }
+          )
+        }
+      })
+      .catch(convertThrowIntoFetchResult)
+
+    if (data?.workspaceMutations) {
+      triggerNotification({
+        type: ToastNotificationType.Success,
+        title: `Moved project to ${workspaceName}`
+      })
+
+      mixpanel.track('Project Moved To Workspace', {
+        projectId,
+        // eslint-disable-next-line camelcase
+        workspace_id: workspaceId,
+        source: eventSource
+      })
+    } else {
+      const errMsg = getFirstErrorMessage(errors)
+      triggerNotification({
+        type: ToastNotificationType.Danger,
+        title: "Couldn't move project",
+        description: errMsg
+      })
+    }
+  }
+}
+
+export function useCopyProjectLink() {
+  const { copy } = useClipboard()
+  const { triggerNotification } = useGlobalToast()
+
+  return async (projectId: string) => {
+    if (import.meta.server) {
+      throw new Error('Not supported in SSR')
+    }
+
+    const path = projectRoute(projectId)
+    const url = new URL(path, window.location.toString()).toString()
+
+    await copy(url)
+    triggerNotification({
+      type: ToastNotificationType.Success,
+      title: 'Project link copied to clipboard'
+    })
   }
 }

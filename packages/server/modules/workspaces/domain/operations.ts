@@ -8,9 +8,17 @@ import {
   WorkspaceWithOptionalRole
 } from '@/modules/workspacesCore/domain/types'
 import { EventBusPayloads } from '@/modules/shared/services/eventBus'
-import { StreamRoles, WorkspaceRoles } from '@speckle/shared'
+import {
+  MaybeNullOrUndefined,
+  Nullable,
+  PartialNullable,
+  StreamRoles,
+  WorkspaceRoles
+} from '@speckle/shared'
 import { WorkspaceRoleToDefaultProjectRoleMapping } from '@/modules/workspaces/domain/types'
 import { WorkspaceTeam } from '@/modules/workspaces/domain/types'
+import { Stream } from '@/modules/core/domain/streams/types'
+import { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
 
 /** Workspace */
 
@@ -24,7 +32,10 @@ export type GetUserDiscoverableWorkspaces = (args: {
   domains: string[]
   userId: string
 }) => Promise<
-  Pick<Workspace, 'id' | 'name' | 'description' | 'logo' | 'defaultLogoIndex'>[]
+  Pick<
+    Workspace,
+    'id' | 'name' | 'slug' | 'description' | 'logo' | 'defaultLogoIndex'
+  >[]
 >
 
 export type GetWorkspace = (args: {
@@ -32,7 +43,17 @@ export type GetWorkspace = (args: {
   userId?: string
 }) => Promise<WorkspaceWithOptionalRole | null>
 
+export type GetWorkspaceBySlug = (args: {
+  workspaceSlug: string
+  userId?: string
+}) => Promise<WorkspaceWithOptionalRole | null>
+
 export type GetWorkspaces = (args: {
+  workspaceIds: string[]
+  userId?: string
+}) => Promise<WorkspaceWithOptionalRole[]>
+
+export type GetWorkspacesBySlug = (args: {
   workspaceIds: string[]
   userId?: string
 }) => Promise<WorkspaceWithOptionalRole[]>
@@ -69,9 +90,9 @@ export type GetWorkspaceCollaboratorsArgs = {
   cursor?: string
   filter?: {
     /**
-     * Optionally filter by workspace role
+     * Optionally filter by workspace role(s)
      */
-    role?: string
+    roles?: string[]
     /**
      * Optionally filter by user name or email
      */
@@ -132,7 +153,22 @@ export type GetWorkspaceRolesForUser = (
   options?: GetWorkspaceRolesForUserOptions
 ) => Promise<WorkspaceAcl[]>
 
+/** Repository-level change to workspace acl record */
 export type UpsertWorkspaceRole = (args: WorkspaceAcl) => Promise<void>
+
+/** Service-level change with protection against invalid role changes */
+export type UpdateWorkspaceRole = (
+  args: Pick<WorkspaceAcl, 'userId' | 'workspaceId' | 'role'> & {
+    /**
+     * If this gets triggered from a project role update, we don't want to override that project's role to the default one
+     */
+    skipProjectRoleUpdatesFor?: string[]
+    /**
+     * Only add or upgrade role, prevent downgrades
+     */
+    preventRoleDowngrade?: boolean
+  }
+) => Promise<void>
 
 export type GetWorkspaceRoleToDefaultProjectRoleMapping = (args: {
   workspaceId: string
@@ -159,12 +195,29 @@ export type GrantWorkspaceProjectRoles = (
   args: GrantWorkspaceProjectRolesArgs
 ) => Promise<void>
 
+type UpdateWorkspaceProjectRoleArgs = {
+  role: {
+    projectId: string
+    userId: string
+    // Undefined or null role means delete role
+    role?: Nullable<string>
+  }
+  updater: {
+    userId: string
+    resourceAccessRules: MaybeNullOrUndefined<TokenResourceIdentifier[]>
+  }
+}
+
+export type UpdateWorkspaceProjectRole = (
+  args: UpdateWorkspaceProjectRoleArgs
+) => Promise<Stream | undefined>
+
 /** Events */
 
 export type EmitWorkspaceEvent = <TEvent extends WorkspaceEvents>(args: {
   eventName: TEvent
   payload: EventBusPayloads[TEvent]
-}) => Promise<unknown[]>
+}) => Promise<void>
 
 export type CountProjectsVersionsByWorkspaceId = (args: {
   workspaceId: string
@@ -187,14 +240,7 @@ export type GetUserIdsWithRoleInWorkspace = (
 
 type WorkspaceUpdateArgs = {
   workspaceId: string
-  workspaceInput: {
-    name?: string | null
-    description?: string | null
-    logo?: string | null
-    defaultLogoIndex?: number | null
-    discoverabilityEnabled?: boolean | null
-    domainBasedMembershipProtectionEnabled?: boolean | null
-  }
+  workspaceInput: PartialNullable<Omit<Workspace, 'id' | 'createdAt' | 'updatedAt'>>
 }
 
 export type UpdateWorkspace = ({

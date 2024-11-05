@@ -467,16 +467,24 @@ export class SectionTool extends Extension {
       box = new Box3(new Vector3(-1, -1, -1), new Vector3(1, 1, 1))
     }
 
-    if (offset === 0) {
-      offset = this.viewer.World.getRelativeOffset()
-    }
+    let x1, y1, z1, x2, y2, z2
 
-    const x1 = box.min.x - (box.max.x - box.min.x) * offset
-    const y1 = box.min.y - (box.max.y - box.min.y) * offset
-    const z1 = box.min.z - (box.max.z - box.min.z) * offset
-    const x2 = box.max.x + (box.max.x - box.min.x) * offset
-    const y2 = box.max.y + (box.max.y - box.min.y) * offset
-    const z2 = box.max.z + (box.max.z - box.min.z) * offset
+    if (offset === 0) {
+      const offsetBox = this.viewer.World.getRelativeOffsetBox(box, 0.0001)
+      x1 = offsetBox.min.x //box.min.x - (box.max.x - box.min.x) * offset
+      y1 = offsetBox.min.y //box.min.y - (box.max.y - box.min.y) * offset
+      z1 = offsetBox.min.z //box.min.z - (box.max.z - box.min.z) * offset
+      x2 = offsetBox.max.x //box.max.x + (box.max.x - box.min.x) * offset
+      y2 = offsetBox.max.y //box.max.y + (box.max.y - box.min.y) * offset
+      z2 = offsetBox.max.z //box.max.z + (box.max.z - box.min.z) * offset
+    } else {
+      x1 = box.min.x - (box.max.x - box.min.x) * offset
+      y1 = box.min.y - (box.max.y - box.min.y) * offset
+      z1 = box.min.z - (box.max.z - box.min.z) * offset
+      x2 = box.max.x + (box.max.x - box.min.x) * offset
+      y2 = box.max.y + (box.max.y - box.min.y) * offset
+      z2 = box.max.z + (box.max.z - box.min.z) * offset
+    }
 
     const newVertices = [
       x1,

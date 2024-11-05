@@ -23,7 +23,7 @@
     </div>
 
     <div
-      class="relative"
+      class="group relative"
       :class="labelPosition === 'left' ? 'w-full md:w-6/12' : 'w-full'"
     >
       <div
@@ -37,6 +37,13 @@
           aria-hidden="true"
         />
       </div>
+      <div
+        v-if="loading"
+        class="absolute top-0 h-full right-0 flex items-center pr-2 text-foreground-3"
+      >
+        <CommonLoadingIcon />
+      </div>
+
       <input
         :id="name"
         ref="inputElement"
@@ -48,6 +55,7 @@
         :disabled="disabled"
         :aria-invalid="errorMessage ? 'true' : 'false'"
         :aria-describedby="helpTipId"
+        :readonly="readOnly"
         role="textbox"
         v-bind="$attrs"
         @change="$emit('change', { event: $event, value })"
@@ -57,7 +65,27 @@
       />
       <slot name="input-right">
         <a
-          v-if="shouldShowClear"
+          v-if="rightIcon"
+          :title="rightIconTitle"
+          :class="[
+            sizeClasses,
+            readOnly
+              ? 'w-full cursor-text border border-transparent group-hover:border-outline-5 rounded-md'
+              : 'cursor-pointer'
+          ]"
+          class="absolute top-0 right-0 hidden group-hover:flex items-center justify-end pr-1 text-foreground-2"
+          @click="onRightIconClick"
+          @keydown="onRightIconClick"
+        >
+          <span class="text-body-xs sr-only">{{ rightIconTitle }}</span>
+          <Component
+            :is="rightIcon"
+            class="h-6 w-6 text-foreground"
+            aria-hidden="true"
+          />
+        </a>
+        <a
+          v-else-if="shouldShowClear"
           title="Clear input"
           class="absolute top-0 bottom-0 right-0 flex items-center pr-2 cursor-pointer"
           @click="clear"
@@ -67,8 +95,8 @@
           <XMarkIcon class="h-5 w-5 text-foreground" aria-hidden="true" />
         </a>
         <div
-          v-if="!showLabel && showRequired && !errorMessage"
-          class="ppointer-events-none absolute top-0 bottom-0 mt-2 text-body right-0 flex items-center text-danger pr-2.5"
+          v-else-if="!showLabel && showRequired && !errorMessage"
+          class="pointer-events-none absolute top-0 bottom-0 mt-2 text-body right-0 flex items-center text-danger pr-2.5"
           :class="[shouldShowClear ? 'pr-8' : 'pr-2']"
         >
           *
@@ -94,6 +122,7 @@ import { useTextInputCore } from '~~/src/composables/form/textInput'
 import type { PropAnyComponent } from '~~/src/helpers/common/components'
 import type { InputColor } from '~~/src/composables/form/textInput'
 import type { LabelPosition } from '~~/src/composables/form/input'
+import { CommonLoadingIcon } from '~~/src/lib'
 
 type InputType = 'text' | 'email' | 'password' | 'url' | 'search' | 'number' | string
 type InputSize = 'sm' | 'base' | 'lg' | 'xl'
@@ -167,6 +196,13 @@ const props = defineProps({
     default: false
   },
   /**
+   * Whether to disable editing the component, making it read only
+   */
+  readOnly: {
+    type: Boolean,
+    default: false
+  },
+  /**
    * vee-validate validation rules
    */
   rules: {
@@ -228,9 +264,17 @@ const props = defineProps({
     type: Boolean,
     default: false
   },
+  loading: {
+    type: Boolean,
+    default: false
+  },
   hideErrorMessage: {
     type: Boolean,
     default: false
+  },
+  customErrorMessage: {
+    type: String,
+    default: null
   },
   wrapperClasses: {
     type: String,
@@ -243,6 +287,14 @@ const props = defineProps({
   labelPosition: {
     type: String as PropType<LabelPosition>,
     default: 'top'
+  },
+  rightIcon: {
+    type: [Object, Function] as PropType<Optional<PropAnyComponent>>,
+    default: undefined
+  },
+  rightIconTitle: {
+    type: String,
+    default: undefined
   }
 })
 
@@ -253,6 +305,7 @@ const emit = defineEmits<{
   (e: 'clear'): void
   (e: 'focus'): void
   (e: 'blur'): void
+  (e: 'rightIconClick'): void
 }>()
 
 const slots = useSlots()
@@ -300,12 +353,8 @@ const iconClasses = computed((): string => {
   }
 
   if (!slots['input-right']) {
-    if (errorMessage.value || shouldShowClear.value) {
-      if (errorMessage.value && shouldShowClear.value) {
-        classParts.push('pr-12')
-      } else {
-        classParts.push('pr-8')
-      }
+    if (props.rightIcon || errorMessage.value || shouldShowClear.value) {
+      classParts.push('pr-8')
     }
   }
 
@@ -340,6 +389,10 @@ const computedWrapperClasses = computed(() => {
   }
   return classes.join(' ')
 })
+
+const onRightIconClick = () => {
+  emit('rightIconClick')
+}
 
 defineExpose({ focus })
 </script>

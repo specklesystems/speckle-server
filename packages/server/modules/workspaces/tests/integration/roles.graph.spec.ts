@@ -1,5 +1,6 @@
+import { db } from '@/db/knex'
 import { AllScopes } from '@/modules/core/helpers/mainConstants'
-import { grantStreamPermissions } from '@/modules/core/repositories/streams'
+import { grantStreamPermissionsFactory } from '@/modules/core/repositories/streams'
 import {
   assignToWorkspace,
   BasicTestWorkspace,
@@ -26,7 +27,10 @@ import { beforeEachContext, truncateTables } from '@/test/hooks'
 import { BasicTestStream, createTestStream } from '@/test/speckle-helpers/streamHelper'
 import { Roles } from '@speckle/shared'
 import { expect } from 'chai'
+import cryptoRandomString from 'crypto-random-string'
 import { isUndefined } from 'lodash'
+
+const grantStreamPermissions = grantStreamPermissionsFactory({ db })
 
 describe('Workspaces Roles GQL', () => {
   let apollo: TestApolloServer
@@ -64,6 +68,7 @@ describe('Workspaces Roles GQL', () => {
     const workspace: BasicTestWorkspace = {
       id: '',
       ownerId: '',
+      slug: cryptoRandomString({ length: 10 }),
       name: 'My Test Workspace'
     }
 
@@ -187,7 +192,9 @@ describe('Workspaces Roles GQL', () => {
     const workspace: BasicTestWorkspace = {
       id: '',
       ownerId: '',
-      name: 'Test Workspace'
+      slug: cryptoRandomString({ length: 10 }),
+      name: 'Test Workspace',
+      defaultProjectRole: Roles.Stream.Reviewer
     }
 
     const workspaceAdminUser: BasicTestUser = {
@@ -530,6 +537,7 @@ describe('Workspaces Roles GQL', () => {
     const workspace: BasicTestWorkspace = {
       id: '',
       ownerId: '',
+      slug: cryptoRandomString({ length: 10 }),
       name: 'Test Workspace w/ Projects'
     }
 

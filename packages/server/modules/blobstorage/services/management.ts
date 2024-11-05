@@ -2,6 +2,7 @@ import {
   DeleteBlob,
   GetBlobMetadata,
   UpdateBlob,
+  UploadFileStream,
   UpsertBlob
 } from '@/modules/blobstorage/domain/operations'
 import { BlobStorageItem } from '@/modules/blobstorage/domain/types'
@@ -15,21 +16,14 @@ import { MaybeAsync } from '@speckle/shared'
 export const getFileSizeLimit = () => getFileSizeLimitMB() * 1024 * 1024
 
 export const uploadFileStreamFactory =
-  (deps: { upsertBlob: UpsertBlob; updateBlob: UpdateBlob }) =>
-  async (
-    storeFileStream: (params: {
-      objectKey: string
-      fileStream: Buffer
-    }) => Promise<{ fileHash: string }>,
-    params1: { streamId: string; userId: string },
-    params2: { blobId: string; fileName: string; fileType: string; fileStream: Buffer }
-  ) => {
+  (deps: { upsertBlob: UpsertBlob; updateBlob: UpdateBlob }): UploadFileStream =>
+  async (storeFileStream, params1, params2) => {
     const { streamId, userId } = params1
     const { blobId, fileName, fileType, fileStream } = params2
 
     if (streamId.length !== 10)
       throw new BadRequestError('The stream id has to be of length 10')
-    if (userId.length !== 10)
+    if (!userId || userId.length !== 10)
       throw new BadRequestError('The user id has to be of length 10')
 
     const objectKey = `assets/${streamId}/${blobId}`

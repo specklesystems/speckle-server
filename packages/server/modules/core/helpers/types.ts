@@ -13,7 +13,7 @@ export type UserRecord = {
   company: Nullable<string>
   email: string
   verified: boolean
-  avatar: string
+  avatar: Nullable<string>
   profiles: Nullable<string>
   /**
    * Marked as optional, cause most queries delete it
@@ -88,6 +88,10 @@ export type ServerInfo = ServerConfigRecord & {
    */
   version: string
   migration?: { movedFrom?: string; movedTo?: string }
+  configuration: {
+    objectSizeLimitBytes: number
+    objectMultipartUploadSizeLimitBytes: number
+  }
 }
 
 export type CommitRecord = {
@@ -121,11 +125,6 @@ export type BranchRecord = {
   updatedAt: Date
 }
 
-export type ScheduledTaskRecord = {
-  taskName: string
-  lockExpiresAt: Date
-}
-
 export type ObjectRecord = {
   id: string
   speckleType: string
@@ -133,6 +132,13 @@ export type ObjectRecord = {
   totalChildrenCountByDepth: Nullable<Record<string, unknown>>
   createdAt: Date
   data: Nullable<Record<string, unknown>>
+  streamId: string
+}
+
+export type ObjectChildrenClosureRecord = {
+  parent: string
+  child: string
+  minDepth: number
   streamId: string
 }
 

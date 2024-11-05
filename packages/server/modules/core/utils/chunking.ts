@@ -1,9 +1,8 @@
+import { InsertableSpeckleObject } from '@/modules/core/domain/objects/types'
 import { BaseError } from '@/modules/shared/errors'
 import { Options } from 'verror'
 
-type InsertionObject = {
-  data: string
-}
+type InsertionObject = Pick<InsertableSpeckleObject, 'data'>
 
 export class ArgumentError extends BaseError {
   static defaultMessage = 'Invalid argument value provided'
@@ -11,6 +10,7 @@ export class ArgumentError extends BaseError {
   constructor(message?: string | undefined, options?: Options | Error | undefined) {
     super(message, options)
   }
+  static statusCode = 400
 }
 
 // since we're mostly using this for an artificial limit calculation
@@ -23,15 +23,15 @@ export const estimateStringByteSize = (str: string) => str.length
 export const estimateStringMegabyteSize = (str: string) =>
   estimateStringByteSize(str) / 1_000_000
 
-export const chunkInsertionObjectArray = ({
+export const chunkInsertionObjectArray = <O extends InsertionObject = InsertionObject>({
   objects,
   chunkSizeLimitMb,
   chunkLengthLimit
 }: {
   chunkSizeLimitMb: number
   chunkLengthLimit: number
-  objects: InsertionObject[]
-}): InsertionObject[][] => {
+  objects: O[]
+}): O[][] => {
   if (chunkLengthLimit < 1)
     throw new ArgumentError('Chunks must have a length limit > 1')
   if (chunkSizeLimitMb <= 0)
@@ -39,8 +39,8 @@ export const chunkInsertionObjectArray = ({
 
   let currentChunkSize = 0
   let currentChunkLength = 0
-  const chunkedObjects: InsertionObject[][] = []
-  let currentBatch: InsertionObject[] = []
+  const chunkedObjects: O[][] = []
+  let currentBatch: O[] = []
   for (const obj of objects) {
     // if limits are exceeded start a new batch
     if (

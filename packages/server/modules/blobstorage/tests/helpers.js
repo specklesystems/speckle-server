@@ -1,7 +1,7 @@
 /* istanbul ignore file */
 const crs = require('crypto-random-string')
 const { range } = require('lodash')
-const knex = require('@/db/knex')
+const { knex } = require('@/db/knex')
 const BlobStorage = () => knex('blob_storage')
 
 const fakeIdGenerator = () => crs({ length: 10 })
