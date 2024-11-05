@@ -61,7 +61,7 @@ export type BasicTestWorkspace = {
    * Leave empty, will be filled on creation
    */
   ownerId: string
-  slug: string
+  slug?: string
   name: string
   description?: string
   logo?: string

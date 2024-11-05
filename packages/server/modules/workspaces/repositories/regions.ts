@@ -8,7 +8,7 @@ import {
 import { WorkspaceRegionAssignment } from '@/modules/workspacesCore/domain/types'
 import { Knex } from 'knex'
 
-const WorkspaceRegions = buildTableHelper('workspace_regions', [
+export const WorkspaceRegions = buildTableHelper('workspace_regions', [
   'workspaceId',
   'regionKey'
 ])
