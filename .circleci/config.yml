@@ -439,7 +439,7 @@ jobs:
     docker:
       - image: cimg/node:18.19.0
       - image: cimg/redis:7.2.4
-      - image: cimg/postgres:17.0
+      - image: cimg/postgres:16.4@sha256:2e4f1a965bdd9ba77aa6a0a7b93968c07576ba2a8a7cf86d5eb7b31483db1378
         environment:
           POSTGRES_DB: speckle2_test
           POSTGRES_PASSWORD: speckle
@@ -624,7 +624,7 @@ jobs:
   test-preview-service:
     docker:
       - image: cimg/node:18.19.0
-      - image: cimg/postgres:14.11
+      - image: cimg/postgres:16.4@sha256:2e4f1a965bdd9ba77aa6a0a7b93968c07576ba2a8a7cf86d5eb7b31483db1378
         environment:
           POSTGRES_DB: preview_service_test
           POSTGRES_PASSWORD: preview_service_test

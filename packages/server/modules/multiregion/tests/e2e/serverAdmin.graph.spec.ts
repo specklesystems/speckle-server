@@ -5,9 +5,15 @@ import {
   CreateNewRegionDocument,
   CreateServerRegionInput,
   GetAvailableRegionKeysDocument,
-  GetRegionsDocument
+  GetRegionsDocument,
+  UpdateRegionDocument,
+  UpdateServerRegionInput
 } from '@/test/graphql/generated/graphql'
-import { testApolloServer, TestApolloServer } from '@/test/graphqlHelper'
+import {
+  ExecuteOperationOptions,
+  testApolloServer,
+  TestApolloServer
+} from '@/test/graphqlHelper'
 import { beforeEachContext, truncateTables } from '@/test/hooks'
 import { MultiRegionConfigServiceMock } from '@/test/mocks/global'
 import { Roles } from '@speckle/shared'
@@ -15,6 +21,7 @@ import { expect } from 'chai'
 
 describe.skip('Multi Region Server Settings', () => {
   let testAdminUser: BasicTestUser
+  let testBasicUser: BasicTestUser
   let apollo: TestApolloServer
 
   const fakeRegionKey1 = 'us-west-1'
@@ -46,6 +53,7 @@ describe.skip('Multi Region Server Settings', () => {
 
     await beforeEachContext()
     testAdminUser = await createTestUser({ role: Roles.Server.Admin })
+    testBasicUser = await createTestUser({ role: Roles.Server.User })
     apollo = await testApolloServer({ authUserId: testAdminUser.id })
   })
 
@@ -54,8 +62,25 @@ describe.skip('Multi Region Server Settings', () => {
   })
 
   describe('server config', () => {
-    const createRegion = (input: CreateServerRegionInput) =>
-      apollo.execute(CreateNewRegionDocument, { input })
+    const createRegion = (
+      input: CreateServerRegionInput,
+      options?: ExecuteOperationOptions
+    ) => apollo.execute(CreateNewRegionDocument, { input }, options)
+
+    it("region keys can't be retrieved by non-admin", async () => {
+      const res = await apollo.execute(
+        GetAvailableRegionKeysDocument,
+        {},
+        {
+          context: {
+            userId: testBasicUser.id,
+            role: Roles.Server.User
+          }
+        }
+      )
+      expect(res).to.haveGraphQLErrors('You do not have the required server role')
+      expect(res.data?.serverInfo.multiRegion.availableKeys).to.be.not.ok
+    })
 
     it('allows retrieving available config keys', async () => {
       const res = await apollo.execute(GetAvailableRegionKeysDocument, {})
@@ -69,6 +94,23 @@ describe.skip('Multi Region Server Settings', () => {
       afterEach(async () => {
         // Wipe created regions
         await truncateTables([Regions.name])
+      })
+
+      it("it can't be created by non-admin", async () => {
+        const res = await createRegion(
+          {
+            key: fakeRegionKey1,
+            name: 'US West 1',
+            description: 'Helloooo'
+          },
+          {
+            context: {
+              userId: testBasicUser.id,
+              role: Roles.Server.User
+            }
+          }
+        )
+        expect(res).to.haveGraphQLErrors('You do not have the required server role')
       })
 
       it('it works with valid input', async () => {
@@ -121,7 +163,21 @@ describe.skip('Multi Region Server Settings', () => {
 
       before(async () => {
         // Create a region
-        await createRegion(createdRegionInput)
+        await createRegion(createdRegionInput, { assertNoErrors: true })
+      })
+
+      it("can't retrieve regions if non-admin", async () => {
+        const res = await apollo.execute(
+          GetRegionsDocument,
+          {},
+          {
+            context: {
+              userId: testBasicUser.id,
+              role: Roles.Server.User
+            }
+          }
+        )
+        expect(res).to.haveGraphQLErrors('You do not have the required server role')
       })
 
       it('allows retrieving all regions', async () => {
@@ -144,6 +200,74 @@ describe.skip('Multi Region Server Settings', () => {
         expect(res.data?.serverInfo.multiRegion.availableKeys).to.deep.equal([
           fakeRegionKey2
         ])
+      })
+    })
+
+    describe('when updating existing region', async () => {
+      const createdRegionInput: CreateServerRegionInput = {
+        key: fakeRegionKey2,
+        name: 'Updatable Region 1',
+        description: 'Helloooo'
+      }
+
+      const updateRegion = (
+        input: UpdateServerRegionInput,
+        options?: ExecuteOperationOptions
+      ) => apollo.execute(UpdateRegionDocument, { input }, options)
+
+      beforeEach(async () => {
+        // Create new region
+        await createRegion(createdRegionInput, { assertNoErrors: true })
+      })
+
+      afterEach(async () => {
+        // Wipe created regions
+        await truncateTables([Regions.name])
+      })
+
+      it("can't update region if non-admin", async () => {
+        const res = await updateRegion(
+          {
+            key: createdRegionInput.key,
+            name: 'Updated Region 1'
+          },
+          {
+            context: {
+              userId: testBasicUser.id,
+              role: Roles.Server.User
+            }
+          }
+        )
+        expect(res).to.haveGraphQLErrors('You do not have the required server role')
+      })
+
+      it('works with valid input', async () => {
+        const updatedName = 'aaa Updated Region 1'
+        const updatedDescription = 'bbb Updated description'
+
+        const res = await updateRegion({
+          key: createdRegionInput.key,
+          name: updatedName,
+          description: updatedDescription
+        })
+
+        expect(res.data?.serverInfoMutations.multiRegion.update).to.deep.equal({
+          ...createdRegionInput,
+          id: createdRegionInput.key,
+          name: updatedName,
+          description: updatedDescription
+        })
+        expect(res).to.not.haveGraphQLErrors()
+      })
+
+      it('fails gracefully with invalid region key', async () => {
+        const res = await updateRegion({
+          key: 'invalid-key',
+          name: 'Updated Region 1'
+        })
+
+        expect(res).to.haveGraphQLErrors('Region not found')
+        expect(res.data?.serverInfoMutations.multiRegion.update).to.be.not.ok
       })
     })
   })

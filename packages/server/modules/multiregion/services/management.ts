@@ -3,12 +3,16 @@ import {
   GetFreeRegionKeys,
   GetRegion,
   InitializeRegion,
-  StoreRegion
+  StoreRegion,
+  UpdateAndValidateRegion,
+  UpdateRegion
 } from '@/modules/multiregion/domain/operations'
 import {
   RegionKeyInvalidError,
   RegionKeyTakenError
 } from '@/modules/multiregion/errors'
+import { RegionUpdateError } from '@/modules/multiregion/errors'
+import { removeNullOrUndefinedKeys } from '@speckle/shared'
 
 export const createAndValidateNewRegionFactory =
   ({
@@ -42,4 +46,25 @@ export const createAndValidateNewRegionFactory =
     await initializeRegion({ regionKey: region.key })
 
     return await storeRegion({ region })
+  }
+
+export const updateAndValidateRegionFactory =
+  (deps: {
+    getRegion: GetRegion
+    updateRegion: UpdateRegion
+  }): UpdateAndValidateRegion =>
+  async (params) => {
+    const { input } = params
+
+    const region = await deps.getRegion({ key: input.key })
+    if (!region) {
+      throw new RegionUpdateError('Region not found', { info: { input } })
+    }
+
+    const update = removeNullOrUndefinedKeys(input)
+    if (Object.keys(update).length === 0) {
+      return region
+    }
+
+    return await deps.updateRegion({ regionKey: input.key, region: update })
   }
