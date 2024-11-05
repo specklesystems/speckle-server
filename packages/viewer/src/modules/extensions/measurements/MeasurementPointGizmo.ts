@@ -225,6 +225,8 @@ export class MeasurementPointGizmo extends Group {
     this.point.add(point2)
 
     this.text = new SpeckleText(MathUtils.generateUUID(), ObjectLayers.MEASUREMENTS)
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    //@ts-ignore
     this.text.textMesh.material = null
 
     this.add(this.point)

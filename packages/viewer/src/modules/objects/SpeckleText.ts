@@ -75,7 +75,7 @@ export class SpeckleText extends Mesh {
     } as SpeckleTextParams
   }
 
-  public get textMesh() {
+  public get textMesh(): Mesh {
     return this._text
   }
 
@@ -138,7 +138,7 @@ export class SpeckleText extends Mesh {
   public setTransform(position?: Vector3, quaternion?: Quaternion, scale?: Vector3) {
     if (position) {
       if (this._style.billboard) {
-        this.textMesh.material.userData.billboardPos.value.copy(position)
+        this._text.material.userData.billboardPos.value.copy(position)
         if (this._background) {
           ;(
             this._background.material as SpeckleBasicMaterial
@@ -152,7 +152,7 @@ export class SpeckleText extends Mesh {
   }
 
   public raycast(raycaster: Raycaster, intersects: Array<Intersection>) {
-    const { textRenderInfo, curveRadius } = this.textMesh
+    const { textRenderInfo, curveRadius } = this._text
     if (textRenderInfo) {
       const bounds = textRenderInfo.blockBounds
       const raycastMesh = curveRadius
@@ -168,11 +168,11 @@ export class SpeckleText extends Mesh {
           z = curveRadius - Math.cos(x / curveRadius) * curveRadius
           x = Math.sin(x / curveRadius) * curveRadius
         }
-        if (this.textMesh.material.defines['BILLBOARD_FIXED']) {
+        if (this._text.material.defines['BILLBOARD_FIXED']) {
           if (this._resolution.length() === 0) return
           const billboardSize = new Vector2().set(
-            (this.textMesh.material.billboardPixelHeight / this._resolution.x) * 2,
-            (this.textMesh.material.billboardPixelHeight / this._resolution.y) * 2
+            (this._text.material.billboardPixelHeight / this._resolution.x) * 2,
+            (this._text.material.billboardPixelHeight / this._resolution.y) * 2
           )
 
           const invProjection = new Matrix4()
@@ -201,7 +201,7 @@ export class SpeckleText extends Mesh {
           position.setXYZ(i, x, y, z)
         }
       }
-      if (this.textMesh.material.defines['BILLBOARD_FIXED']) {
+      if (this._text.material.defines['BILLBOARD_FIXED']) {
         geom.computeBoundingBox()
         geom.computeBoundingSphere()
         raycastMesh.matrixWorld.identity()
@@ -210,7 +210,7 @@ export class SpeckleText extends Mesh {
         geom.boundingBox = this.textMesh.geometry.boundingBox
         raycastMesh.matrixWorld = this.textMesh.matrixWorld
       }
-      raycastMesh.material.side = this.textMesh.material.side
+      raycastMesh.material.side = this._text.material.side
       const tempArray: Array<Intersection> = []
       raycastMesh.raycast(raycaster, tempArray)
       for (let i = 0; i < tempArray.length; i++) {

@@ -13,6 +13,7 @@ import {
 import { SpeckleText } from '../objects/SpeckleText.js'
 import { ObjectLayers } from '../../IViewer.js'
 import Materials from '../materials/Materials.js'
+import SpeckleTextMaterial from '../materials/SpeckleTextMaterial.js'
 
 export default class TextBatch implements Batch {
   public id: string
@@ -40,7 +41,9 @@ export default class TextBatch implements Batch {
   public get vertCount(): number {
     return (
       this.mesh.textMesh.geometry.attributes.position.count +
-      this.mesh.backgroundMesh?.geometry.attributes.position.count
+      (this.mesh.backgroundMesh
+        ? this.mesh.backgroundMesh.geometry.attributes.position.count
+        : 0)
     )
   }
 
@@ -66,8 +69,12 @@ export default class TextBatch implements Batch {
 
   public getCount(): number {
     return (
-      this.mesh.textMesh.geometry.index.count +
-      this.mesh.backgroundMesh?.geometry.index?.count
+      (this.mesh.textMesh.geometry.index
+        ? this.mesh.textMesh.geometry.index.count
+        : 0) +
+      (this.mesh.backgroundMesh && this.mesh.backgroundMesh.geometry.index
+        ? this.mesh.backgroundMesh.geometry.index.count
+        : 0)
     )
   }
 
@@ -122,9 +129,11 @@ export default class TextBatch implements Batch {
   }
 
   public setDrawRanges(ranges: BatchUpdateRange[]) {
-    this.mesh.textMesh.material = ranges[0].material
+    this.mesh.textMesh.material = ranges[0].material as Material
     if (ranges[0].materialOptions && ranges[0].materialOptions.rampIndexColor) {
-      this.mesh.textMesh.material.color.copy(ranges[0].materialOptions.rampIndexColor)
+      ;(this.mesh.textMesh.material as SpeckleTextMaterial).color.copy(
+        ranges[0].materialOptions.rampIndexColor
+      )
     }
   }
 
@@ -152,7 +161,9 @@ export default class TextBatch implements Batch {
     this.renderViews[0].setBatchData(
       this.id,
       0,
-      this.mesh.textMesh.geometry.index.count / 3
+      (this.mesh.textMesh.geometry.index
+        ? this.mesh.textMesh.geometry.index.count
+        : 0) / 3
     )
     this.mesh.textMesh.material = this.batchMaterial
   }
