@@ -93,7 +93,7 @@ const searchResults = computed(() => {
   )
 })
 
-const selectedCategories = ref<string[]>(props.filter.selectedCategories)
+const selectedCategories = ref<string[]>(props.filter.selectedCategories || [])
 
 const selectOrUnselectCategory = (id: string) => {
   const index = selectedCategories.value.indexOf(id)
