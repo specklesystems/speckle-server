@@ -52,6 +52,21 @@
                   </template>
                 </LayoutSidebarMenuGroupItem>
               </NuxtLink>
+
+              <NuxtLink
+                v-if="isAutomateEnabled && userFunctions.length > 0"
+                :to="automationFunctionsRoute"
+                @click="isOpenMobile = false"
+              >
+                <LayoutSidebarMenuGroupItem
+                  label="Functions"
+                  :active="isActive(automationFunctionsRoute)"
+                >
+                  <template #icon>
+                    <IconBolt class="size-4 text-foreground-2" />
+                  </template>
+                </LayoutSidebarMenuGroupItem>
+              </NuxtLink>
             </LayoutSidebarMenuGroup>
 
             <LayoutSidebarMenuGroup
@@ -182,22 +197,42 @@ import {
   LayoutSidebarMenuGroup,
   LayoutSidebarMenuGroupItem
 } from '@speckle/ui-components'
-import { settingsSidebarQuery } from '~/lib/settings/graphql/queries'
+import {
+  settingsSidebarAutomateFunctionsQuery,
+  settingsSidebarQuery
+} from '~/lib/settings/graphql/queries'
 import { useQuery } from '@vue/apollo-composable'
 import {
   homeRoute,
   projectsRoute,
   workspaceRoute,
   workspacesRoute,
-  downloadManagerUrl
+  downloadManagerUrl,
+  automationFunctionsRoute
 } from '~/lib/common/helpers/route'
 import { useRoute } from 'vue-router'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { HomeIcon } from '@heroicons/vue/24/outline'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { Roles } from '@speckle/shared'
+import { graphql } from '~/lib/common/generated/gql'
+
+graphql(`
+  fragment Sidebar_User on User {
+    id
+    automateFunctions {
+      items {
+        id
+        name
+        description
+        logo
+      }
+    }
+  }
+`)
 
 const { isLoggedIn } = useActiveUser()
+const isAutomateEnabled = useIsAutomateModuleEnabled()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
 const route = useRoute()
 const router = useRouter()
@@ -216,6 +251,14 @@ const { result: workspaceResult, onResult: onWorkspaceResult } = useQuery(
   }
 )
 
+const { result: automateResult } = useQuery(
+  settingsSidebarAutomateFunctionsQuery,
+  null,
+  {
+    enabled: isAutomateEnabled.value
+  }
+)
+
 const isActive = (...routes: string[]): boolean => {
   return routes.some((routeTo) => route.path === routeTo)
 }
@@ -223,6 +266,10 @@ const isActive = (...routes: string[]): boolean => {
 const isNotGuest = computed(
   () => Roles.Server.Admin || user.value?.role === Roles.Server.User
 )
+
+const userFunctions = computed(() => {
+  return automateResult.value?.activeUser?.automateFunctions?.items ?? []
+})
 
 const workspacesItems = computed(() =>
   workspaceResult.value?.activeUser

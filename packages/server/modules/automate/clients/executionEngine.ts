@@ -422,11 +422,11 @@ export const getFunctions = async (params: {
     limit?: number
     functionsWithoutVersions?: boolean
     featuredFunctionsOnly?: boolean
+    authorSpeckleUserId?: string
   }
 }) => {
   const { query } = params
-  const url = getApiUrl(`/api/v1/functions`, { query })
-
+  const url = getApiUrl(`/api/v1/functions`, { query: { ...query, authorSpeckleServerOrigin: params.query?.authorSpeckleUserId ? getServerOrigin() : undefined } })
   const result = await invokeJsonRequest<GetFunctionsResponse>({
     url,
     method: 'get'
