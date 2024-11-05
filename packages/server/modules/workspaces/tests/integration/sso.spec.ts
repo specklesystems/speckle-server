@@ -1,27 +1,31 @@
 import {
-  associateSsoProviderWithWorkspaceFactory,
+  getUserSsoSessionFactory,
   getWorkspaceSsoProviderFactory,
+  listUserSsoSessionsFactory,
   listWorkspaceSsoMembershipsFactory,
   upsertUserSsoSessionFactory
 } from '@/modules/workspaces/repositories/sso'
 import {
   BasicTestWorkspace,
   createTestOidcProvider,
-  createTestWorkspace
+  createTestSsoSession,
+  createTestWorkspace,
+  createTestWorkspaces
 } from '@/modules/workspaces/tests/helpers/creation'
-import { BasicTestUser, createTestUser } from '@/test/authHelper'
+import { BasicTestUser, createTestUser, createTestUsers } from '@/test/authHelper'
 import { Roles, wait } from '@speckle/shared'
 import db from '@/db/knex'
 import { getDecryptor } from '@/modules/workspaces/helpers/sso'
 import cryptoRandomString from 'crypto-random-string'
 import { expect } from 'chai'
 import { UserSsoSessionRecord } from '@/modules/workspaces/domain/sso/types'
+import { truncateTables } from '@/test/hooks'
+import { isValidSsoSession } from '@/modules/workspaces/domain/sso/logic'
 
-const associateSsoProviderWithWorkspace = associateSsoProviderWithWorkspaceFactory({
-  db
-})
+const listUserSsoSessions = listUserSsoSessionsFactory({ db })
 const listWorkspaceSsoMemberships = listWorkspaceSsoMembershipsFactory({ db })
 const upsertUserSsoSession = upsertUserSsoSessionFactory({ db })
+const getUserSsoSession = getUserSsoSessionFactory({ db })
 
 describe('Workspace SSO repositories', () => {
   const serverAdminUser: BasicTestUser = {
@@ -53,8 +57,7 @@ describe('Workspace SSO repositories', () => {
 
     it('fetches and decrypts oidc provider information for the given workspace', async () => {
       await createTestWorkspace(workspace, serverAdminUser)
-      const providerId = await createTestOidcProvider()
-      await associateSsoProviderWithWorkspace({ workspaceId: workspace.id, providerId })
+      const providerId = await createTestOidcProvider(workspace.id)
       const provider = await getWorkspaceSsoProviderFactory({
         db,
         decrypt: getDecryptor()
@@ -74,9 +77,21 @@ describe('Workspace SSO repositories', () => {
   })
 
   describe('upsertUserSsoSessionFactory returns a function, that', () => {
-    it('creates a session if none exists', async () => {
-      const providerId = await createTestOidcProvider()
+    const testWorkspace: BasicTestWorkspace = {
+      id: '',
+      ownerId: '',
+      name: 'Test Workspace',
+      slug: 'upsert-session-test-workspace'
+    }
 
+    let providerId: string = ''
+
+    before(async () => {
+      await createTestWorkspace(testWorkspace, serverAdminUser)
+      providerId = await createTestOidcProvider(testWorkspace.id)
+    })
+
+    it('creates a session if none exists', async () => {
       const userSsoSession: UserSsoSessionRecord = {
         userId: serverAdminUser.id,
         providerId,
@@ -96,7 +111,6 @@ describe('Workspace SSO repositories', () => {
     })
 
     it('updates an existing session, if one exists', async () => {
-      const providerId = await createTestOidcProvider()
       const initialValidUntil = new Date()
 
       const userSsoSession: UserSsoSessionRecord = {
@@ -149,14 +163,11 @@ describe('Workspace SSO repositories', () => {
 
     before(async () => {
       await createTestUser(ssoUser)
-      await createTestWorkspace(ssoWorkspace, ssoUser)
-      await createTestWorkspace(nonSsoWorkspace, serverAdminUser)
 
-      const providerId = await createTestOidcProvider()
-      await associateSsoProviderWithWorkspace({
-        workspaceId: ssoWorkspace.id,
-        providerId
-      })
+      await createTestWorkspace(ssoWorkspace, ssoUser)
+      await createTestOidcProvider(ssoWorkspace.id)
+
+      await createTestWorkspace(nonSsoWorkspace, serverAdminUser)
     })
 
     it('lists correct workspaces for the given user', async () => {
@@ -195,6 +206,166 @@ describe('Workspace SSO repositories', () => {
         userId: cryptoRandomString({ length: 9 })
       })
       expect(workspaces.length).to.equal(0)
+    })
+  })
+
+  describe('listUserSsoSessionsFactory returns a function, that', async () => {
+    const testUserA: BasicTestUser = {
+      id: '',
+      name: 'John Speckle',
+      email: `${cryptoRandomString({ length: 9 })}@example.org`
+    }
+
+    const testWorkspaceA: BasicTestWorkspace = {
+      id: '',
+      ownerId: '',
+      name: 'Test Workspace A',
+      slug: 'list-sessions-workspace-a'
+    }
+
+    const testWorkspaceB: BasicTestWorkspace = {
+      id: '',
+      ownerId: '',
+      name: 'Test Workspace B',
+      slug: 'list-sessions-workspace-b'
+    }
+
+    const testWorkspaceC: BasicTestWorkspace = {
+      id: '',
+      ownerId: '',
+      name: 'Test Workspace C',
+      slug: 'list-sessions-workspace-c'
+    }
+
+    before(async () => {
+      await createTestUsers([testUserA])
+      await createTestWorkspaces([
+        [testWorkspaceA, testUserA],
+        [testWorkspaceB, testUserA],
+        [testWorkspaceC, testUserA]
+      ])
+
+      await createTestOidcProvider(testWorkspaceA.id)
+      await createTestOidcProvider(testWorkspaceB.id)
+      await createTestOidcProvider(testWorkspaceC.id)
+    })
+
+    afterEach(async () => {
+      truncateTables(['user_sso_sessions'])
+    })
+
+    it('returns an empty array if there are no sessions', async () => {
+      const sessions = await listUserSsoSessions({ userId: testUserA.id })
+      expect(sessions.length).to.equal(0)
+    })
+
+    it('returns all sessions for the given user', async () => {
+      await createTestSsoSession(testUserA.id, testWorkspaceA.id)
+      await createTestSsoSession(testUserA.id, testWorkspaceB.id)
+      await createTestSsoSession(testUserA.id, testWorkspaceC.id)
+
+      const sessions = await listUserSsoSessions({ userId: testUserA.id })
+      expect(sessions.length).to.equal(3)
+    })
+
+    it('includes sessions that are expired but have not yet been deleted', async () => {
+      await createTestSsoSession(testUserA.id, testWorkspaceA.id)
+      await createTestSsoSession(testUserA.id, testWorkspaceB.id)
+      await createTestSsoSession(testUserA.id, testWorkspaceC.id, new Date())
+
+      await wait(150)
+
+      const sessions = await listUserSsoSessions({ userId: testUserA.id })
+      expect(sessions.length).to.equal(3)
+      expect(sessions.filter((session) => isValidSsoSession(session)).length).to.equal(
+        2
+      )
+    })
+  })
+
+  describe('getUserSsoSessionFactory returns a function, that', async () => {
+    const testUser: BasicTestUser = {
+      id: '',
+      name: 'John Speckle',
+      email: `${cryptoRandomString({ length: 9 })}@example.org`
+    }
+
+    const testWorkspaceWithSsoA: BasicTestWorkspace = {
+      id: '',
+      ownerId: '',
+      name: 'Workspace With SSO A',
+      slug: 'workspace-with-sso-a'
+    }
+
+    const testWorkspaceWithSsoB: BasicTestWorkspace = {
+      id: '',
+      ownerId: '',
+      name: 'Workspace With SSO B',
+      slug: 'workspace-with-sso-b'
+    }
+
+    const testWorkspaceWithoutSso: BasicTestWorkspace = {
+      id: '',
+      ownerId: '',
+      name: 'Workspace Without SSO',
+      slug: 'workspace-without-sso'
+    }
+
+    before(async () => {
+      await createTestUser(testUser)
+
+      await createTestWorkspace(testWorkspaceWithSsoA, testUser)
+      await createTestOidcProvider(testWorkspaceWithSsoA.id)
+
+      await createTestWorkspace(testWorkspaceWithSsoB, testUser)
+      await createTestOidcProvider(testWorkspaceWithSsoB.id)
+
+      await createTestWorkspace(testWorkspaceWithoutSso, testUser)
+    })
+
+    it('returns the session for the specified user and workspace', async () => {
+      await createTestSsoSession(testUser.id, testWorkspaceWithSsoA.id)
+      const session = await getUserSsoSession({
+        userId: testUser.id,
+        workspaceId: testWorkspaceWithSsoA.id
+      })
+      expect(session).to.not.be.undefined
+      expect(session?.workspaceId).to.equal(testWorkspaceWithSsoA.id)
+    })
+
+    it('returns the session if it has expired but has not yet been deleted', async () => {
+      const validUntil = new Date()
+      validUntil.setDate(validUntil.getDate() - 1)
+      await createTestSsoSession(testUser.id, testWorkspaceWithSsoB.id, validUntil)
+      const session = await getUserSsoSession({
+        userId: testUser.id,
+        workspaceId: testWorkspaceWithSsoB.id
+      })
+      expect(session).to.not.be.undefined
+    })
+
+    it('returns null if the session does not exist', async () => {
+      const session = await getUserSsoSession({
+        userId: testUser.id,
+        workspaceId: testWorkspaceWithoutSso.id
+      })
+      expect(session).to.be.null
+    })
+
+    it('returns null if the workspace does not exist', async () => {
+      const session = await getUserSsoSession({
+        userId: testUser.id,
+        workspaceId: cryptoRandomString({ length: 9 })
+      })
+      expect(session).to.be.null
+    })
+
+    it('returns null if the user does not exist', async () => {
+      const session = await getUserSsoSession({
+        userId: cryptoRandomString({ length: 9 }),
+        workspaceId: testWorkspaceWithSsoA.id
+      })
+      expect(session).to.be.null
     })
   })
 })
