@@ -25,7 +25,7 @@
       </div>
     </div>
     <div
-      class="flex space-y-1 flex-col simple-scrollbar h-64 overflow-y-auto overflow-x-hidden"
+      class="flex space-y-1 flex-col simple-scrollbar overflow-y-auto max-h-48 overflow-x-hidden"
     >
       <FormButton
         v-for="cat in searchResults"
@@ -79,7 +79,7 @@ const searchResults = computed(() => {
   )
 })
 
-const selectedCategories = ref<string[]>([])
+const selectedCategories = ref<string[]>(props.filter.selectedCategories)
 
 const selectOrUnselectCategory = (id: string) => {
   const index = selectedCategories.value.indexOf(id)
@@ -97,13 +97,14 @@ const selectedCategoriesObjects = computed(() => {
 })
 
 watch(
-  selectedCategories,
+  selectedCategoriesObjects,
   (newValue) => {
     const filter = { ...props.filter } as RevitCategoriesSendFilter
+    const names = newValue.map((v) => v.name)
     filter.selectedCategories = availableCategories.value
-      .filter((c) => newValue.includes(c.name))
+      .filter((c) => names.includes(c.name))
       .map((c) => c.id)
-    filter.summary = newValue.join(', ') // TODO: better
+    filter.summary = names.join(', ')
     emit('update:filter', filter)
   },
   { deep: true, immediate: true }
