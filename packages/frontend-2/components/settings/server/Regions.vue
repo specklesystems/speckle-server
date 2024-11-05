@@ -8,18 +8,16 @@
       <div class="flex flex-col space-y-6">
         <div class="flex flex-row-reverse">
           <div v-tippy="disabledMessage">
-            <FormButton
-              :disabled="!canCreateRegion"
-              @click="isAddEditDialogOpen = true"
-            >
+            <FormButton :disabled="!canCreateRegion" @click="onCreate">
               Create
             </FormButton>
           </div>
         </div>
-        <SettingsServerRegionsTable :items="tableItems" />
+        <SettingsServerRegionsTable :items="tableItems" @edit="onEditRegion" />
       </div>
     </div>
     <SettingsServerRegionsAddEditDialog
+      v-model="editModel"
       v-model:open="isAddEditDialogOpen"
       :available-region-keys="availableKeys"
     />
@@ -27,6 +25,7 @@
 </template>
 <script setup lang="ts">
 import { useQuery } from '@vue/apollo-composable'
+import type { SettingsServerRegionsTable_ServerRegionItemFragment } from '~/lib/common/generated/gql/graphql'
 import { graphql } from '~~/lib/common/generated/gql'
 
 const isAddEditDialogOpen = ref(false)
@@ -45,6 +44,8 @@ const query = graphql(`
   }
 `)
 
+const editModel = ref<SettingsServerRegionsTable_ServerRegionItemFragment>()
+
 const pageFetchPolicy = usePageQueryStandardFetchPolicy()
 const { result } = useQuery(query, undefined, () => ({
   fetchPolicy: pageFetchPolicy.value
@@ -62,4 +63,14 @@ const disabledMessage = computed(() => {
 
   return undefined
 })
+
+const onCreate = () => {
+  editModel.value = undefined
+  isAddEditDialogOpen.value = true
+}
+
+const onEditRegion = (item: SettingsServerRegionsTable_ServerRegionItemFragment) => {
+  editModel.value = item
+  isAddEditDialogOpen.value = true
+}
 </script>

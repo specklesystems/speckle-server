@@ -2,7 +2,8 @@ import { buildTableHelper } from '@/modules/core/dbSchema'
 import {
   GetRegion,
   GetRegions,
-  StoreRegion
+  StoreRegion,
+  UpdateRegion
 } from '@/modules/multiregion/domain/operations'
 import { RegionRecord } from '@/modules/multiregion/helpers/types'
 import { Knex } from 'knex'
@@ -43,6 +44,20 @@ export const storeRegionFactory =
     const [region] = await tables
       .regions(deps.db)
       .insert(pick(params.region, Regions.withoutTablePrefix.cols))
+      .returning('*')
+
+    return region
+  }
+
+export const updateRegionFactory =
+  (deps: { db: Knex }): UpdateRegion =>
+  async (params) => {
+    const [region] = await tables
+      .regions(deps.db)
+      .where({
+        [Regions.col.key]: params.regionKey
+      })
+      .update(pick(params.region, Regions.withoutTablePrefix.cols))
       .returning('*')
 
     return region

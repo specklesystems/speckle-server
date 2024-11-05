@@ -49,7 +49,10 @@ import type { LayoutDialogButton } from '@speckle/ui-components'
 import { graphql } from '~/lib/common/generated/gql'
 import type { SettingsServerRegionsAddEditDialog_ServerRegionItemFragment } from '~/lib/common/generated/gql/graphql'
 import { useForm } from 'vee-validate'
-import { useCreateRegion } from '~/lib/multiregion/composables/management'
+import {
+  useCreateRegion,
+  useUpdateRegion
+} from '~/lib/multiregion/composables/management'
 import { useMutationLoading } from '@vue/apollo-composable'
 
 graphql(`
@@ -72,6 +75,7 @@ const open = defineModel<boolean>('open', { required: true })
 const model = defineModel<DialogModel>()
 const { handleSubmit, setValues } = useForm<DialogModel>()
 const createRegion = useCreateRegion()
+const updateRegion = useUpdateRegion()
 const loading = useMutationLoading()
 
 const dialogButtons = computed((): LayoutDialogButton[] => {
@@ -82,7 +86,7 @@ const dialogButtons = computed((): LayoutDialogButton[] => {
       onClick: () => (open.value = false)
     },
     {
-      text: 'Create',
+      text: isEditMode.value ? 'Update' : 'Create',
       props: {
         submit: true,
         disabled: loading.value
@@ -94,11 +98,15 @@ const dialogButtons = computed((): LayoutDialogButton[] => {
 const isEditMode = computed(() => !!model.value)
 
 const onSubmit = handleSubmit(async (values) => {
-  if (isEditMode.value) return // TODO:
-
-  const res = await createRegion({
-    input: values
+  const action = isEditMode.value ? updateRegion : createRegion
+  const res = await action({
+    input: {
+      key: values.key,
+      name: values.name,
+      description: values.description
+    }
   })
+
   if (res?.id) {
     open.value = false
   }
@@ -109,6 +117,8 @@ watch(
   (newVal, oldVal) => {
     if (newVal && newVal !== oldVal) {
       setValues(newVal)
+    } else if (!newVal && oldVal) {
+      setValues({ name: '', description: '', key: '' })
     }
   },
   { immediate: true }

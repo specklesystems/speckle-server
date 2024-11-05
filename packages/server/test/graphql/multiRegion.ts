@@ -46,3 +46,17 @@ export const getRegionsQuery = gql`
 
   ${mainRegionMetadataFragment}
 `
+
+export const updateRegionMutation = gql`
+  mutation UpdateRegion($input: UpdateServerRegionInput!) {
+    serverInfoMutations {
+      multiRegion {
+        update(input: $input) {
+          ...MainRegionMetadata
+        }
+      }
+    }
+  }
+
+  ${mainRegionMetadataFragment}
+`
