@@ -4,6 +4,12 @@ import { buildDecryptor, buildEncryptor } from '@/modules/shared/utils/libsodium
 import { SsoVerificationCodeMissingError } from '@/modules/workspaces/errors/sso'
 import { Request } from 'express'
 
+declare module 'express-session' {
+  interface SessionData {
+    workspaceId?: string
+  }
+}
+
 /**
  * Generate Speckle URL to redirect users to after they complete authorization
  * with the given SSO provider.
