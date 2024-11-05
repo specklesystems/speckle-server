@@ -39,17 +39,23 @@
         full-width
         @click="selectOrUnselectCategory(cat.id)"
       >
-        {{ cat.name }}
+        <div class="flex justify-between w-full">
+          <span>{{ cat.name }}</span>
+          <PlusIcon class="w-4" />
+        </div>
       </FormButton>
       <div v-if="searchResults.length === 0" class="text-xs text-center">
         Nothing found
+        <FormButton color="outline" size="sm" @click="searchValue = undefined">
+          Clear search
+        </FormButton>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { XMarkIcon } from '@heroicons/vue/20/solid'
+import { XMarkIcon, PlusIcon } from '@heroicons/vue/20/solid'
 import type {
   CategoriesData,
   ISendFilter,
