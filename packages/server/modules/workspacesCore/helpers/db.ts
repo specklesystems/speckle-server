@@ -30,3 +30,9 @@ export const WorkspaceDomains = buildTableHelper('workspace_domains', [
   'createdByUserId',
   'verified'
 ])
+
+export type WorkspaceRegionsRecord = {
+  workspaceId: string
+  regionKey: string
+  createdAt: Date
+}

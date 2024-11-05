@@ -1,5 +1,6 @@
 import { InviteResourceTarget } from '@/modules/serverinvites/domain/types'
 import { WorkspaceInviteResourceType } from '@/modules/workspacesCore/domain/constants'
+import { WorkspaceRegionsRecord as WorkspaceRegionRecord } from '@/modules/workspacesCore/helpers/db'
 import { StreamRoles, WorkspaceRoles } from '@speckle/shared'
 
 declare module '@/modules/serverinvites/domain/types' {
@@ -55,3 +56,5 @@ export type WorkspaceAcl = {
   workspaceId: string
   createdAt: Date
 }
+
+export type WorkspaceRegionAssignment = WorkspaceRegionRecord

@@ -4,6 +4,7 @@ import {
   Workspace,
   WorkspaceAcl,
   WorkspaceDomain,
+  WorkspaceRegionAssignment,
   WorkspaceWithDomains,
   WorkspaceWithOptionalRole
 } from '@/modules/workspacesCore/domain/types'
@@ -11,6 +12,7 @@ import { EventBusPayloads } from '@/modules/shared/services/eventBus'
 import {
   MaybeNullOrUndefined,
   Nullable,
+  Optional,
   PartialNullable,
   StreamRoles,
   WorkspaceRoles
@@ -19,6 +21,7 @@ import { WorkspaceRoleToDefaultProjectRoleMapping } from '@/modules/workspaces/d
 import { WorkspaceTeam } from '@/modules/workspaces/domain/types'
 import { Stream } from '@/modules/core/domain/streams/types'
 import { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
+import { ServerRegion } from '@/modules/multiregion/domain/types'
 
 /** Workspace */
 
@@ -247,3 +250,29 @@ export type UpdateWorkspace = ({
   workspaceId,
   workspaceInput
 }: WorkspaceUpdateArgs) => Promise<Workspace>
+
+/**
+ * Workspace regions
+ */
+
+export type GetAvailableRegions = (params: {
+  workspaceId: string
+}) => Promise<ServerRegion[]>
+
+export type AssignRegion = (params: {
+  workspaceId: string
+  regionKey: string
+}) => Promise<void>
+
+export type GetDefaultRegion = (params: {
+  workspaceId: string
+}) => Promise<Optional<ServerRegion>>
+
+export type UpsertRegionAssignment = (params: {
+  workspaceId: string
+  regionKey: string
+}) => Promise<WorkspaceRegionAssignment>
+
+export type DeleteAllRegionAssignments = (params: {
+  workspaceId: string
+}) => Promise<void>
