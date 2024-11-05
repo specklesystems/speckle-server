@@ -12,7 +12,12 @@
       />
     </div>
     <div class="flex space-y-1 flex-col">
-      <div v-for="cat in selectedCategoriesObjects" :key="cat.id">
+      <div
+        v-for="cat in selectedCategoriesObjects.sort((a, b) =>
+          a.name.localeCompare(b.name)
+        )"
+        :key="cat.id"
+      >
         <FormButton
           v-tippy="'Remove'"
           size="sm"
@@ -31,7 +36,7 @@
       class="flex space-y-1 flex-col simple-scrollbar overflow-y-auto max-h-48 overflow-x-hidden"
     >
       <FormButton
-        v-for="cat in searchResults"
+        v-for="cat in searchResults.sort((a, b) => a.name.localeCompare(b.name))"
         :key="cat.id"
         :class="`block`"
         size="sm"
