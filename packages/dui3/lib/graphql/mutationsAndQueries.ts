@@ -181,6 +181,17 @@ export const modelVersionsQuery = graphql(`
   }
 `)
 
+export const objectQuery = graphql(`
+  query ObjectQuery($projectId: String!, $objectId: String!) {
+    project(id: $projectId) {
+      object(id: $objectId) {
+        id
+        data
+      }
+    }
+  }
+`)
+
 export const projectAddByUrlQueryWithVersion = graphql(`
   query ProjectAddByUrlQueryWithVersion(
     $projectId: String!
