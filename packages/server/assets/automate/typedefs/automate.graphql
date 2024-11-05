@@ -322,11 +322,11 @@ type AutomateMutations {
 
 extend type Project {
   automations(filter: String, cursor: String, limit: Int): AutomationCollection!
-    @hasStreamRole(role: STREAM_OWNER)
+    @hasStreamRole(role: STREAM_REVIEWER)
   """
   Get a single automation by id. Error will be thrown if automation is not found or inaccessible.
   """
-  automation(id: String!): Automation! @hasStreamRole(role: STREAM_OWNER)
+  automation(id: String!): Automation! @hasStreamRole(role: STREAM_REVIEWER)
 }
 
 input AutomateAuthCodePayloadTest {
