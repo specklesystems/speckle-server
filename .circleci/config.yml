@@ -983,12 +983,6 @@ jobs:
       FOLDER: utils
       SPECKLE_SERVER_PACKAGE: docker-compose-ingress
 
-  docker-build-postgresql-client:
-    <<: *build-job
-    environment:
-      FOLDER: utils
-      SPECKLE_SERVER_PACKAGE: postgresql-client
-
   docker-publish: &publish-job
     docker: *docker-base-image
     resource_class: medium
@@ -1052,12 +1046,6 @@ jobs:
     environment:
       FOLDER: utils
       SPECKLE_SERVER_PACKAGE: docker-compose-ingress
-
-  docker-publish-postgresql-client:
-    <<: *publish-job
-    environment:
-      FOLDER: utils
-      SPECKLE_SERVER_PACKAGE: postgresql-client
 
   publish-npm:
     docker: *docker-node-image
