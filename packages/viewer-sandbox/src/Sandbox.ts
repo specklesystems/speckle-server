@@ -1,7 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+
 import {
   ArcticViewPipeline,
   DefaultLightConfiguration,
@@ -493,9 +491,11 @@ export default class Sandbox {
     })
     screenshot.on('click', async () => {
       // console.warn(await this.viewer.screenshot())
-      this.viewer
-        .getExtension(FilteringExtension)
-        .hideObjects(['1facfaaf1d3682707edd9ac20ef34e62'])
+      const by = 'category'
+      const data = this.properties.find((value) => {
+        return value.key === by
+      }) as PropertyInfo
+      console.log(data)
     })
 
     const rotate = this.tabs.pages[0].addButton({
