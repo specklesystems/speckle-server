@@ -10,6 +10,7 @@ import {
   upsertProjectRoleFactory
 } from '@/modules/core/repositories/streams'
 import {
+  GetWorkspace,
   GetWorkspaceRoleForUser,
   GetWorkspaceRoles,
   GetWorkspaceRoleToDefaultProjectRoleMapping,
@@ -146,10 +147,12 @@ export const onInviteFinalizedFactory =
 
 export const onWorkspaceAuthorizedFactory =
   ({
+    getWorkspace,
     getWorkspaceRoleForUser,
     getWorkspaceSsoProviderRecord,
     getUserSsoSession
   }: {
+    getWorkspace: GetWorkspace
     getWorkspaceRoleForUser: GetWorkspaceRoleForUser
     getWorkspaceSsoProviderRecord: GetWorkspaceSsoProviderRecord
     getUserSsoSession: GetUserSsoSession
@@ -165,8 +168,10 @@ export const onWorkspaceAuthorizedFactory =
     if (!provider) return
 
     const session = await getUserSsoSession({ userId, workspaceId })
-    if (!session || !isValidSsoSession(session))
-      throw new SsoSessionMissingOrExpiredError()
+    if (!session || !isValidSsoSession(session)) {
+      const workspace = await getWorkspace({ workspaceId })
+      throw new SsoSessionMissingOrExpiredError(workspace?.slug)
+    }
   }
 
 export const onWorkspaceRoleDeletedFactory =
@@ -284,6 +289,7 @@ export const initializeEventListenersFactory =
       }),
       eventBus.listen(WorkspaceEvents.Authorized, async ({ payload }) => {
         const onWorkspaceAuthorized = onWorkspaceAuthorizedFactory({
+          getWorkspace: getWorkspaceFactory({ db }),
           getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({ db }),
           getWorkspaceSsoProviderRecord: getWorkspaceSsoProviderRecordFactory({ db }),
           getUserSsoSession: getUserSsoSessionFactory({ db })
