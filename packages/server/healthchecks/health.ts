@@ -2,7 +2,7 @@ import { createRedisClient } from '@/modules/shared/redis/redis'
 import { getRedisUrl, postgresMaxConnections } from '@/modules/shared/helpers/envHelper'
 import type { Redis } from 'ioredis'
 import { numberOfFreeConnections } from '@/modules/shared/helpers/dbHelper'
-
+import { db } from '@/db/knex'
 import type { Knex } from 'knex'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { BaseError } from '@/modules/shared/errors'
