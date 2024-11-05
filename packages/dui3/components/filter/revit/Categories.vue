@@ -14,13 +14,16 @@
     <div class="flex space-y-1 flex-col">
       <div v-for="cat in selectedCategoriesObjects" :key="cat.id">
         <FormButton
+          v-tippy="'Remove'"
           size="sm"
           :class="`block`"
           full-width
-          :icon-right="XMarkIcon"
           @click="selectOrUnselectCategory(cat.id)"
         >
-          {{ cat.name }}
+          <div class="flex justify-between w-full">
+            <span>{{ cat.name }}</span>
+            <XMarkIcon class="w-4" />
+          </div>
         </FormButton>
       </div>
     </div>
