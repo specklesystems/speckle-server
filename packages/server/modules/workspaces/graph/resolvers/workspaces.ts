@@ -184,6 +184,7 @@ import {
   listWorkspaceSsoMembershipsFactory
 } from '@/modules/workspaces/repositories/sso'
 import { getDecryptor } from '@/modules/workspaces/helpers/sso'
+import { getDefaultRegionFactory } from '@/modules/workspaces/repositories/regions'
 
 const eventBus = getEventBus()
 const getServerInfo = getServerInfoFactory({ db })
@@ -800,7 +801,10 @@ export = FF_WORKSPACES_MODULE_ENABLED
           // TODO: resource access rules check
 
           // TODO: get workspace's region here
-          const regionKey = 'region1'
+          const workspaceDefaultRegion = await getDefaultRegionFactory({ db })({
+            workspaceId: args.input.workspaceId
+          })
+          const regionKey = workspaceDefaultRegion?.key
 
           const projectDb = await getDb({ regionKey })
 

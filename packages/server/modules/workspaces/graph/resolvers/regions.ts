@@ -1,5 +1,6 @@
 import { db } from '@/db/knex'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
+import { getDb } from '@/modules/multiregion/dbSelector'
 import { getRegionsFactory } from '@/modules/multiregion/repositories'
 import { authorizeResolver } from '@/modules/shared'
 import {
@@ -39,8 +40,7 @@ export default {
         ctx.resourceAccessRules
       )
 
-      // TODO: Resolve w/ gergo's algo
-      const regionDb = db
+      const regionDb = await getDb({ regionKey: args.regionKey })
 
       const assignRegion = assignRegionFactory({
         getAvailableRegions: getAvailableRegionsFactory({
