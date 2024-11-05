@@ -1,7 +1,7 @@
 import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 
 import { registerOrUpdateScopeFactory } from '@/modules/shared/repositories/scopes'
-import { moduleLogger } from '@/logging/logging'
+import { authLogger, moduleLogger } from '@/logging/logging'
 import db from '@/db/knex'
 import { initializeDefaultAppsFactory } from '@/modules/auth/services/serverApps'
 import {
@@ -13,7 +13,6 @@ import {
 } from '@/modules/auth/repositories/apps'
 import setupStrategiesFactory from '@/modules/auth/strategies'
 import githubStrategyBuilderFactory from '@/modules/auth/strategies/github'
-import { getServerInfo } from '@/modules/core/services/generic'
 import {
   validateServerInviteFactory,
   finalizeInvitedServerRegistrationFactory,
@@ -59,18 +58,20 @@ import { requestNewEmailVerificationFactory } from '@/modules/emails/services/ve
 import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
+import { getServerInfoFactory } from '@/modules/core/repositories/server'
+import { initializeEventListenerFactory } from '@/modules/auth/services/postAuth'
 
 const findEmail = findEmailFactory({ db })
 const requestNewEmailVerification = requestNewEmailVerificationFactory({
   findEmail,
   getUser: getUserFactory({ db }),
-  getServerInfo,
+  getServerInfo: getServerInfoFactory({ db }),
   deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db }),
   renderEmail,
   sendEmail
 })
 const createUser = createUserFactory({
-  getServerInfo,
+  getServerInfo: getServerInfoFactory({ db }),
   findEmail,
   storeUser: storeUserFactory({ db }),
   countAdminUsers: countAdminUsersFactory({ db }),
@@ -110,7 +111,7 @@ const finalizeInvitedServerRegistration = finalizeInvitedServerRegistrationFacto
 const resolveAuthRedirectPath = resolveAuthRedirectPathFactory()
 
 const commonBuilderDeps = {
-  getServerInfo,
+  getServerInfo: getServerInfoFactory({ db }),
   getUserByEmail: legacyGetUserByEmailFactory({ db }),
   findOrCreateUser,
   validateServerInvite,
@@ -139,7 +140,7 @@ const setupStrategies = setupStrategiesFactory({
 
 let authStrategies: AuthStrategyMetadata[]
 
-export const init: SpeckleModule['init'] = async (app) => {
+export const init: SpeckleModule['init'] = async (app, isInitial) => {
   moduleLogger.info('🔑 Init auth module')
 
   // Initialize authn strategies
@@ -152,6 +153,15 @@ export const init: SpeckleModule['init'] = async (app) => {
   const registerFunc = registerOrUpdateScopeFactory({ db })
   for (const scope of authScopes) {
     await registerFunc({ scope })
+  }
+
+  // Listen to event emitters
+  if (isInitial) {
+    const initializeEventListener = initializeEventListenerFactory({
+      usersEventsListener: UsersEmitter.listen,
+      logger: authLogger
+    })
+    initializeEventListener()
   }
 }
 

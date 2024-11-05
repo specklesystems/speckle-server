@@ -2,7 +2,6 @@ const { Buffer } = require('node:buffer')
 const request = require('supertest')
 const expect = require('chai').expect
 const { beforeEachContext } = require('@/test/hooks')
-const { createToken } = require('@/modules/core/services/tokens')
 const { Scopes } = require('@/modules/core/helpers/mainConstants')
 const {
   getStreamFactory,
@@ -54,7 +53,6 @@ const {
 const {
   requestNewEmailVerificationFactory
 } = require('@/modules/emails/services/verification/request')
-const { getServerInfo } = require('@/modules/core/services/generic')
 const {
   deleteOldAndInsertNewVerificationFactory
 } = require('@/modules/emails/repositories')
@@ -68,7 +66,15 @@ const {
   finalizeInvitedServerRegistrationFactory
 } = require('@/modules/serverinvites/services/processing')
 const { UsersEmitter } = require('@/modules/core/events/usersEmitter')
+const { createTokenFactory } = require('@/modules/core/services/tokens')
+const {
+  storeApiTokenFactory,
+  storeTokenScopesFactory,
+  storeTokenResourceAccessDefinitionsFactory
+} = require('@/modules/core/repositories/tokens')
+const { getServerInfoFactory } = require('@/modules/core/repositories/server')
 
+const getServerInfo = getServerInfoFactory({ db })
 const getUser = getUserFactory({ db })
 const getUsers = getUsersFactory({ db })
 const addStreamCreatedActivity = addStreamCreatedActivityFactory({
@@ -93,7 +99,8 @@ const createStream = legacyCreateStreamFactory({
             eventName,
             payload
           }),
-        getUser
+        getUser,
+        getServerInfo
       }),
       getUsers
     }),
@@ -130,6 +137,13 @@ const createUser = createUserFactory({
     requestNewEmailVerification
   }),
   usersEventsEmitter: UsersEmitter.emit
+})
+const createToken = createTokenFactory({
+  storeApiToken: storeApiTokenFactory({ db }),
+  storeTokenScopes: storeTokenScopesFactory({ db }),
+  storeTokenResourceAccessDefinitions: storeTokenResourceAccessDefinitionsFactory({
+    db
+  })
 })
 
 describe('Blobs integration @blobstorage', () => {

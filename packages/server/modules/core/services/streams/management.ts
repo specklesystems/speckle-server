@@ -33,7 +33,7 @@ import {
   AddOrUpdateStreamCollaborator,
   CreateStream,
   DeleteStream,
-  DeleteStreamRecords,
+  DeleteStreamRecord,
   GetStream,
   IsStreamCollaborator,
   LegacyCreateStream,
@@ -138,7 +138,7 @@ export const legacyCreateStreamFactory =
  */
 export const deleteStreamAndNotifyFactory =
   (deps: {
-    deleteStream: DeleteStreamRecords
+    deleteStream: DeleteStreamRecord
     authorizeResolver: AuthorizeResolver
     addStreamDeletedActivity: AddStreamDeletedActivity
     deleteAllResourceInvites: DeleteAllResourceInvites

@@ -2,34 +2,16 @@
   <section>
     <div class="md:max-w-xl md:mx-auto pb-6 md:pb-0">
       <SettingsSectionHeader title="Billing" text="Your workspace billing details" />
-      <CommonCard v-if="versionCount" class="text-body-xs bg-foundation">
+      <CommonCard class="text-body-xs bg-foundation">
         <p class="text-foreground font-medium">Workspaces are free while in beta.</p>
-        <p class="py-6">
-          Once the beta period ends, workspaces are still free up to
-          {{ versionCount.max }} model versions.
-          <br />
-          To store more versions across your projects you will need to upgrade to a paid
-          plan.
+        <p class="pt-1">
+          After the beta ends, your workspace will start a 30-day free trial. You'll
+          have full access until either the trial expires or you upgrade to a paid plan.
         </p>
-        <CommonProgressBar
-          class="my-3"
-          :current-value="versionCount.current"
-          :max-value="versionCount.max"
-        />
-        <div class="flex flex-row justify-between">
-          <p class="text-foreground-2">
-            Current model versions:
-            <span class="text-foreground">{{ versionCount.current }}</span>
-          </p>
-          <p class="text-foreground-2">
-            Free model versions limit:
-            <span class="text-foreground">{{ versionCount.max }}</span>
-          </p>
-        </div>
       </CommonCard>
 
       <SettingsSectionHeader
-        title="What your workspace bill on a team plan will look like"
+        title="What your workspace bill will look like after the trial ends"
         class="pt-6 pb-4 md:pt-10 md:pb-6"
         subheading
       />
@@ -57,6 +39,25 @@
           </FormButton>
         </div>
       </div>
+
+      <div v-if="isBillingIntegrationEnabled" class="flex flex-col space-y-10">
+        <SettingsSectionHeader title="Start payment" class="pt-10" subheading />
+        <div class="flex items-center">
+          <div class="flex-1 flex-col pr-6 gap-y-1">
+            <p class="text-body-xs font-medium text-foreground">Billing cycle</p>
+            <p class="text-body-xs text-foreground-2 leading-5 max-w-md">
+              Choose an annual billing cycle for 20% off
+            </p>
+          </div>
+          <FormSwitch v-model="isYearlyPlan" :show-label="true" name="annual billing" />
+        </div>
+        <div class="text-lg">Add the pricing table here</div>
+        <div class="flex justify-between">
+          <FormButton @click="teamCheckout">Team plan</FormButton>
+          <FormButton @click="proCheckout">Pro plan</FormButton>
+          <FormButton @click="businessCheckout">Business plan</FormButton>
+        </div>
+      </div>
     </div>
   </section>
 </template>
@@ -65,6 +66,7 @@
 import { graphql } from '~/lib/common/generated/gql'
 import { useQuery } from '@vue/apollo-composable'
 import { settingsWorkspaceBillingQuery } from '~/lib/settings/graphql/queries'
+import { useIsBillingIntegrationEnabled } from '~/composables/globals'
 
 graphql(`
   fragment SettingsWorkspacesBilling_Workspace on Workspace {
@@ -74,10 +76,6 @@ graphql(`
         total
         ...BillingSummary_WorkspaceCost
       }
-      versionsCount {
-        current
-        max
-      }
     }
   }
 `)
@@ -86,11 +84,28 @@ const props = defineProps<{
   workspaceId: string
 }>()
 
+const isBillingIntegrationEnabled = useIsBillingIntegrationEnabled()
+const isYearlyPlan = ref(false)
+
+const checkoutUrl = (plan: string) =>
+  `/api/v1/billing/workspaces/${
+    props.workspaceId
+  }/checkout-session/${plan}/${billingCycle()}`
+const billingCycle = () => (isYearlyPlan.value ? 'yearly' : 'monthly')
+const teamCheckout = () => {
+  window.location.href = checkoutUrl('team')
+}
+const proCheckout = () => {
+  window.location.href = checkoutUrl('pro')
+}
+const businessCheckout = () => {
+  window.location.href = checkoutUrl('business')
+}
+
 const { result } = useQuery(settingsWorkspaceBillingQuery, () => ({
   workspaceId: props.workspaceId
 }))
 
 const billing = computed(() => result.value?.workspace.billing)
-const versionCount = computed(() => billing.value?.versionsCount)
 const discount = computed(() => billing.value?.cost?.discount)
 </script>

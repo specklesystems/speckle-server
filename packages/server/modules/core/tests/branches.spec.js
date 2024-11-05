@@ -7,9 +7,7 @@ const { sleep } = require('@/test/helpers')
 
 const expect = chai.expect
 
-const knex = require('@/db/knex')
-const { createObject } = require('../services/objects')
-const { getBranchesByStreamId } = require('../services/branches')
+const { knex } = require('@/db/knex')
 
 const {
   updateBranchAndNotifyFactory,
@@ -21,11 +19,13 @@ const {
   createBranchFactory,
   updateBranchFactory,
   deleteBranchByIdFactory,
-  markCommitBranchUpdatedFactory
+  markCommitBranchUpdatedFactory,
+  getPaginatedStreamBranchesPageFactory,
+  getStreamBranchCountFactory
 } = require('@/modules/core/repositories/branches')
 const {
-  addBranchUpdatedActivity,
-  addBranchDeletedActivity
+  addBranchUpdatedActivityFactory,
+  addBranchDeletedActivityFactory
 } = require('@/modules/activitystream/services/branchActivity')
 const {
   getStreamFactory,
@@ -44,7 +44,11 @@ const {
   insertBranchCommitsFactory
 } = require('@/modules/core/repositories/commits')
 const { VersionsEmitter } = require('@/modules/core/events/versionsEmitter')
-const { getObjectFactory } = require('@/modules/core/repositories/objects')
+const {
+  getObjectFactory,
+  storeSingleObjectIfNotFoundFactory,
+  storeClosuresIfNotFoundFactory
+} = require('@/modules/core/repositories/objects')
 const {
   legacyCreateStreamFactory,
   createStreamReturnRecordFactory
@@ -92,7 +96,6 @@ const {
 const {
   requestNewEmailVerificationFactory
 } = require('@/modules/emails/services/verification/request')
-const { getServerInfo } = require('@/modules/core/services/generic')
 const {
   deleteOldAndInsertNewVerificationFactory
 } = require('@/modules/emails/repositories')
@@ -106,6 +109,11 @@ const {
   finalizeInvitedServerRegistrationFactory
 } = require('@/modules/serverinvites/services/processing')
 const { UsersEmitter } = require('@/modules/core/events/usersEmitter')
+const { getServerInfoFactory } = require('@/modules/core/repositories/server')
+const {
+  getPaginatedStreamBranchesFactory
+} = require('@/modules/core/services/branch/retrieval')
+const { createObjectFactory } = require('@/modules/core/services/objects/management')
 
 const db = knex
 const Commits = () => knex('commits')
@@ -121,17 +129,24 @@ const createBranch = createBranchFactory({ db: knex })
 const updateBranchAndNotify = updateBranchAndNotifyFactory({
   getBranchById: getBranchByIdFactory({ db: knex }),
   updateBranch: updateBranchFactory({ db: knex }),
-  addBranchUpdatedActivity
+  addBranchUpdatedActivity: addBranchUpdatedActivityFactory({
+    saveActivity: saveActivityFactory({ db }),
+    publish
+  })
 })
 const deleteBranchAndNotify = deleteBranchAndNotifyFactory({
   getStream,
   getBranchById: getBranchByIdFactory({ db: knex }),
   modelsEventsEmitter: ModelsEmitter.emit,
   markBranchStreamUpdated,
-  addBranchDeletedActivity,
+  addBranchDeletedActivity: addBranchDeletedActivityFactory({
+    saveActivity: saveActivityFactory({ db }),
+    publish
+  }),
   deleteBranchById: deleteBranchByIdFactory({ db: knex })
 })
 
+const getServerInfo = getServerInfoFactory({ db })
 const getObject = getObjectFactory({ db: knex })
 const createCommitByBranchId = createCommitByBranchIdFactory({
   createCommit: createCommitFactory({ db }),
@@ -175,7 +190,8 @@ const createStream = legacyCreateStreamFactory({
             eventName,
             payload
           }),
-        getUser
+        getUser,
+        getServerInfo
       }),
       getUsers
     }),
@@ -212,6 +228,14 @@ const createUser = createUserFactory({
     requestNewEmailVerification
   }),
   usersEventsEmitter: UsersEmitter.emit
+})
+const getBranchesByStreamId = getPaginatedStreamBranchesFactory({
+  getPaginatedStreamBranchesPage: getPaginatedStreamBranchesPageFactory({ db }),
+  getStreamBranchCount: getStreamBranchCountFactory({ db })
+})
+const createObject = createObjectFactory({
+  storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({ db }),
+  storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db })
 })
 
 describe('Branches @core-branches', () => {
@@ -370,9 +394,7 @@ describe('Branches @core-branches', () => {
       authorId: user.id
     })
 
-    const { items, cursor, totalCount } = await getBranchesByStreamId({
-      streamId: stream.id
-    })
+    const { items, cursor, totalCount } = await getBranchesByStreamId(stream.id)
     expect(items).to.have.lengthOf(5)
     expect(cursor).to.exist
     expect(totalCount).to.exist
@@ -380,7 +402,7 @@ describe('Branches @core-branches', () => {
 
   it('Should delete a branch', async () => {
     await deleteBranchAndNotify({ id: branch.id, streamId: stream.id }, user.id)
-    const { items } = await getBranchesByStreamId({ streamId: stream.id })
+    const { items } = await getBranchesByStreamId(stream.id)
     expect(items).to.have.lengthOf(4)
   })
 
@@ -420,7 +442,7 @@ describe('Branches @core-branches', () => {
   })
 
   it('Should return branches in time createdAt order, MAIN first', async () => {
-    const { items } = await getBranchesByStreamId({ streamId: stream.id })
+    const { items } = await getBranchesByStreamId(stream.id)
 
     expect(items[0].name).to.equal('main')
     expect(items[1].createdAt < items[2].createdAt).to.equal(true)

@@ -5,9 +5,9 @@ const chai = require('chai')
 const expect = chai.expect
 
 const {
-  createPersonalAccessToken,
-  createAppToken,
-  createBareToken
+  createBareToken,
+  createAppTokenFactory,
+  createPersonalAccessTokenFactory
 } = require('@/modules/core/services/tokens')
 const { beforeEachContext, initializeTestServer } = require('@/test/hooks')
 const { Scopes } = require('@speckle/shared')
@@ -36,7 +36,6 @@ const {
   countAdminUsersFactory,
   storeUserAclFactory
 } = require('@/modules/core/repositories/users')
-const { getServerInfo } = require('@/modules/core/services/generic')
 const {
   deleteOldAndInsertNewVerificationFactory
 } = require('@/modules/emails/repositories')
@@ -54,10 +53,26 @@ const {
   updateAllInviteTargetsFactory
 } = require('@/modules/serverinvites/repositories/serverInvites')
 const { UsersEmitter } = require('@/modules/core/events/usersEmitter')
+const {
+  storeApiTokenFactory,
+  storeTokenScopesFactory,
+  storeTokenResourceAccessDefinitionsFactory,
+  storeUserServerAppTokenFactory,
+  storePersonalApiTokenFactory
+} = require('@/modules/core/repositories/tokens')
+const { getServerInfoFactory } = require('@/modules/core/repositories/server')
 
 let sendRequest
 let server
 
+const createAppToken = createAppTokenFactory({
+  storeApiToken: storeApiTokenFactory({ db }),
+  storeTokenScopes: storeTokenScopesFactory({ db }),
+  storeTokenResourceAccessDefinitions: storeTokenResourceAccessDefinitionsFactory({
+    db
+  }),
+  storeUserServerAppToken: storeUserServerAppTokenFactory({ db })
+})
 const createAuthorizationCode = createAuthorizationCodeFactory({ db })
 const createAppTokenFromAccessCode = createAppTokenFromAccessCodeFactory({
   getAuthorizationCode: getAuthorizationCodeFactory({ db }),
@@ -68,6 +83,7 @@ const createAppTokenFromAccessCode = createAppTokenFromAccessCodeFactory({
   createBareToken
 })
 
+const getServerInfo = getServerInfoFactory({ db })
 const findEmail = findEmailFactory({ db })
 const requestNewEmailVerification = requestNewEmailVerificationFactory({
   findEmail,
@@ -94,6 +110,14 @@ const createUser = createUserFactory({
     requestNewEmailVerification
   }),
   usersEventsEmitter: UsersEmitter.emit
+})
+const createPersonalAccessToken = createPersonalAccessTokenFactory({
+  storeApiToken: storeApiTokenFactory({ db }),
+  storeTokenScopes: storeTokenScopesFactory({ db }),
+  storeTokenResourceAccessDefinitions: storeTokenResourceAccessDefinitionsFactory({
+    db
+  }),
+  storePersonalApiToken: storePersonalApiTokenFactory({ db })
 })
 
 describe('GraphQL @apps-api', () => {

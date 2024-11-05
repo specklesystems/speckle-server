@@ -1,12 +1,22 @@
 import zlib from 'zlib'
 import { corsMiddleware } from '@/modules/core/configs/cors'
 import type { Application } from 'express'
-import { validatePermissionsReadStream } from '@/modules/core/rest/authUtils'
 import { SpeckleObjectsStream } from '@/modules/core/rest/speckleObjectsStream'
-import { getObjectsStream } from '@/modules/core/services/objects'
 import { pipeline, PassThrough } from 'stream'
+import { getObjectsStreamFactory } from '@/modules/core/repositories/objects'
+import { db } from '@/db/knex'
+import { validatePermissionsReadStreamFactory } from '@/modules/core/services/streams/auth'
+import { getStreamFactory } from '@/modules/core/repositories/streams'
+import { authorizeResolver, validateScopes } from '@/modules/shared'
 
 export default (app: Application) => {
+  const getObjectsStream = getObjectsStreamFactory({ db })
+  const validatePermissionsReadStream = validatePermissionsReadStreamFactory({
+    getStream: getStreamFactory({ db }),
+    validateScopes,
+    authorizeResolver
+  })
+
   app.options('/api/getobjects/:streamId', corsMiddleware())
 
   app.post('/api/getobjects/:streamId', corsMiddleware(), async (req, res) => {
@@ -72,21 +82,18 @@ export default (app: Application) => {
           streamId: req.params.streamId,
           objectIds: childrenChunk
         })
-
-        const speckleObjStreamCloseHandler = () => {
-          // https://knexjs.org/faq/recipes.html#manually-closing-streams
+        // https://knexjs.org/faq/recipes.html#manually-closing-streams
+        // https://github.com/knex/knex/issues/2324
+        req.on('close', () => {
           dbStream.end.bind(dbStream)
-        }
-
-        speckleObjStream.once('close', speckleObjStreamCloseHandler)
+          dbStream.destroy.bind(dbStream)
+        })
 
         await new Promise((resolve, reject) => {
           dbStream.pipe(speckleObjStream, { end: false })
           dbStream.once('end', resolve)
           dbStream.once('error', reject)
         })
-
-        speckleObjStream.removeListener('close', speckleObjStreamCloseHandler)
       }
     } catch (ex) {
       req.log.error(ex, `DB Error streaming objects`)

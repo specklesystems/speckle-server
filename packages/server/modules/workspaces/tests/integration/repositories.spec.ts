@@ -42,11 +42,11 @@ import {
   upsertProjectRoleFactory
 } from '@/modules/core/repositories/streams'
 import { omit } from 'lodash'
+import { createAndStoreTestWorkspaceFactory } from '@/test/speckle-helpers/workspaces'
 
 const getWorkspace = getWorkspaceFactory({ db })
 const getWorkspaceBySlug = getWorkspaceBySlugFactory({ db })
 const getWorkspaceCollaborators = getWorkspaceCollaboratorsFactory({ db })
-const upsertWorkspace = upsertWorkspaceFactory({ db })
 const deleteWorkspace = deleteWorkspaceFactory({ db })
 const deleteWorkspaceRole = deleteWorkspaceRoleFactory({ db })
 const getWorkspaceRoles = getWorkspaceRolesFactory({ db })
@@ -59,6 +59,11 @@ const updateUserEmail = updateUserEmailFactory({ db })
 const getUserDiscoverableWorkspaces = getUserDiscoverableWorkspacesFactory({ db })
 const upsertProjectRole = upsertProjectRoleFactory({ db })
 const grantStreamPermissions = grantStreamPermissionsFactory({ db })
+const upsertWorkspace = upsertWorkspaceFactory({ db })
+
+const createAndStoreTestWorkspace = createAndStoreTestWorkspaceFactory({
+  upsertWorkspace
+})
 
 const createAndStoreTestUser = async (): Promise<BasicTestUser> => {
   const testId = cryptoRandomString({ length: 6 })
@@ -74,29 +79,6 @@ const createAndStoreTestUser = async (): Promise<BasicTestUser> => {
   await createTestUser(userRecord)
 
   return userRecord
-}
-
-const createAndStoreTestWorkspace = async (
-  workspaceOverrides: Partial<Workspace> = {}
-) => {
-  const workspace: Omit<Workspace, 'domains'> = {
-    id: cryptoRandomString({ length: 10 }),
-    slug: cryptoRandomString({ length: 10 }),
-    name: cryptoRandomString({ length: 10 }),
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    description: null,
-    logo: null,
-    domainBasedMembershipProtectionEnabled: false,
-    discoverabilityEnabled: false,
-    defaultLogoIndex: 0,
-    defaultProjectRole: Roles.Stream.Contributor,
-    ...workspaceOverrides
-  }
-
-  await upsertWorkspace({ workspace })
-
-  return workspace
 }
 
 describe('Workspace repositories', () => {

@@ -46,6 +46,11 @@ import {
 } from '@speckle/shared'
 import { getStreamFactory } from '@/modules/core/repositories/streams'
 import { getUserFactory } from '@/modules/core/repositories/users'
+import { getServerInfoFactory } from '@/modules/core/repositories/server'
+import { storeSsoProviderRecordFactory } from '@/modules/workspaces/repositories/sso'
+import { getEncryptor } from '@/modules/workspaces/helpers/sso'
+import { OidcProvider } from '@/modules/workspaces/domain/sso/types'
+import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
 
 export type BasicTestWorkspace = {
   /**
@@ -208,6 +213,7 @@ export const createWorkspaceInviteDirectly = async (
   args: CreateWorkspaceInviteMutationVariables,
   inviterId: string
 ) => {
+  const getServerInfo = getServerInfoFactory({ db })
   const getStream = getStreamFactory({ db })
   const getUser = getUserFactory({ db })
   const createAndSendInvite = createAndSendInviteFactory({
@@ -228,7 +234,8 @@ export const createWorkspaceInviteDirectly = async (
         eventName,
         payload
       }),
-    getUser
+    getUser,
+    getServerInfo
   })
 
   const createInvite = createWorkspaceInviteFactory({
@@ -240,4 +247,26 @@ export const createWorkspaceInviteDirectly = async (
     inviterId,
     inviterResourceAccessRules: null
   })
+}
+
+export const createTestOidcProvider = async (
+  providerData: Partial<OidcProvider> = {}
+) => {
+  const providerId = cryptoRandomString({ length: 9 })
+  await storeSsoProviderRecordFactory({ db, encrypt: getEncryptor() })({
+    providerRecord: {
+      id: providerId,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      providerType: 'oidc',
+      provider: {
+        providerName: 'Test Provider',
+        clientId: 'test-provider',
+        clientSecret: cryptoRandomString({ length: 12 }),
+        issuerUrl: new URL('', getFrontendOrigin()).toString(),
+        ...providerData
+      }
+    }
+  })
+  return providerId
 }

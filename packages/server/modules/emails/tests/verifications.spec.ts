@@ -24,11 +24,11 @@ import {
 import { buildApolloServer } from '@/app'
 import { db } from '@/db/knex'
 import { requestEmailVerificationFactory } from '@/modules/emails/services/verification/request'
-import { getServerInfo } from '@/modules/core/services/generic'
 import { findPrimaryEmailForUserFactory } from '@/modules/core/repositories/userEmails'
 import { sendEmail } from '@/modules/emails/services/sending'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { getUserFactory } from '@/modules/core/repositories/users'
+import { getServerInfoFactory } from '@/modules/core/repositories/server'
 
 const mailerMock = EmailSendingServiceMock
 const getUser = getUserFactory({ db })
@@ -36,7 +36,7 @@ const getPendingToken = getPendingTokenFactory({ db })
 const deleteVerifications = deleteVerificationsFactory({ db })
 const requestEmailVerification = requestEmailVerificationFactory({
   getUser,
-  getServerInfo,
+  getServerInfo: getServerInfoFactory({ db }),
   deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({
     db
   }),
@@ -70,10 +70,15 @@ describe('Email verifications @emails', () => {
     await cleanup()
   })
 
-  it('sends out verification email immediatelly after new account creation', async () => {
+  afterEach(async () => {
+    mailerMock.resetMockedFunctions()
+  })
+
+  it('sends out 1 verification email immediately after new account creation', async () => {
     const sendEmailInvocations = mailerMock.hijackFunction(
       'sendEmail',
-      async () => true
+      async () => true,
+      { times: 2 }
     )
 
     const newGuy: BasicTestUser = {
@@ -91,6 +96,9 @@ describe('Email verifications @emails', () => {
 
     const verification = await getPendingToken({ email: newGuy.email })
     expect(verification).to.be.ok
+
+    // There should be only 1 email!
+    expect(sendEmailInvocations.args.length).to.eq(1)
   })
 
   describe('when authenticated', () => {

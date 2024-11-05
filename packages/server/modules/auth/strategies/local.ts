@@ -1,4 +1,3 @@
-import { getServerInfo } from '@/modules/core/services/generic'
 import {
   sendRateLimitResponse,
   getRateLimitResult,
@@ -23,12 +22,13 @@ import {
   LegacyGetUserByEmail,
   ValidateUserPassword
 } from '@/modules/core/domain/users/operations'
+import { GetServerInfo } from '@/modules/core/domain/server/operations'
 
 const localStrategyBuilderFactory =
   (deps: {
     validateUserPassword: ValidateUserPassword
     getUserByEmail: LegacyGetUserByEmail
-    getServerInfo: typeof getServerInfo
+    getServerInfo: GetServerInfo
     getRateLimitResult: typeof getRateLimitResult
     validateServerInvite: ValidateServerInvite
     createUser: CreateValidatedUser
@@ -117,7 +117,12 @@ const localStrategyBuilderFactory =
             role: invite
               ? getResourceTypeRole(invite.resource, ServerInviteResourceType)
               : undefined,
-            verified: !!invite
+            verified: !!invite,
+            signUpContext: {
+              req,
+              isInvite: !!invite,
+              newsletterConsent: !!req.session.newsletterConsent
+            }
           })
           req.user = {
             id: userId,

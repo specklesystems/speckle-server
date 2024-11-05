@@ -32,7 +32,10 @@ export type GetUserDiscoverableWorkspaces = (args: {
   domains: string[]
   userId: string
 }) => Promise<
-  Pick<Workspace, 'id' | 'name' | 'description' | 'logo' | 'defaultLogoIndex'>[]
+  Pick<
+    Workspace,
+    'id' | 'name' | 'slug' | 'description' | 'logo' | 'defaultLogoIndex'
+  >[]
 >
 
 export type GetWorkspace = (args: {
@@ -214,7 +217,7 @@ export type UpdateWorkspaceProjectRole = (
 export type EmitWorkspaceEvent = <TEvent extends WorkspaceEvents>(args: {
   eventName: TEvent
   payload: EventBusPayloads[TEvent]
-}) => Promise<unknown[]>
+}) => Promise<void>
 
 export type CountProjectsVersionsByWorkspaceId = (args: {
   workspaceId: string

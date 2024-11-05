@@ -7,11 +7,11 @@ import { AsyncPause } from '../../World.js'
 import Logger from '../../utils/Logger.js'
 
 export class SpeckleLoader extends Loader {
-  private loader: ObjectLoader
-  private converter: SpeckleConverter
-  private tree: WorldTree
-  private isCancelled = false
-  private isFinished = false
+  protected loader: ObjectLoader
+  protected converter: SpeckleConverter
+  protected tree: WorldTree
+  protected isCancelled = false
+  protected isFinished = false
 
   public get resource(): string {
     return this._resource
@@ -140,6 +140,17 @@ export class SpeckleLoader extends Loader {
 
     void p.then(() => {
       Logger.log('ASYNC Tree build time -> ', performance.now() - t0)
+      Logger.log('Node build time -> ', renderTree.buildNodeTime)
+      Logger.log('Apply transform time -> ', renderTree.applyTransformTime)
+      Logger.log('Geometry build time -> ', renderTree.convertTime)
+      Logger.log('Get Node time -> ', renderTree.getNodeTime)
+      Logger.log('Other time -> ', renderTree.otherTime)
+      Logger.log('Triangulation time -> ', geometryConverter.meshTriangulationTime)
+      Logger.log(
+        'ACTUAL Triangulation time -> ',
+        geometryConverter.actualTriangulateTime
+      )
+      Logger.log('Push time -> ', geometryConverter.pushTime)
       this.isFinished = true
     })
 

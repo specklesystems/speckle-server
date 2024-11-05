@@ -7,7 +7,7 @@ const chai = require('chai')
 const chaiAsPromised = require('chai-as-promised')
 const chaiHttp = require('chai-http')
 const deepEqualInAnyOrder = require('deep-equal-in-any-order')
-const knex = require(`@/db/knex`)
+const { knex } = require(`@/db/knex`)
 const { init, startHttp, shutdown } = require(`@/app`)
 const { default: graphqlChaiPlugin } = require('@/test/plugins/graphql')
 const { logger } = require('@/logging/logging')
@@ -39,11 +39,23 @@ exports.truncateTables = async (tableNames) => {
         .whereRaw("tablename not like '%knex%'")
         .whereNotIn('tablename', protectedTables)
     ).map((table) => table.tablename)
+    if (!tableNames.length) return // Nothing to truncate
+
+    // We're deleting everything, so lets turn off triggers to avoid deadlocks/slowdowns
+    await knex.transaction(async (trx) => {
+      await trx.raw(`
+        -- Disable triggers and foreign key constraints for this session
+        SET session_replication_role = replica;
+        
+        truncate table ${tableNames.join(',')} cascade;
+
+        -- Re-enable triggers and foreign key constraints
+        SET session_replication_role = DEFAULT;
+      `)
+    })
+  } else {
+    await knex.raw(`truncate table ${tableNames.join(',')} cascade`)
   }
-
-  if (!tableNames.length) return
-
-  await knex.raw(`truncate table ${tableNames.join(',')} cascade`)
 }
 
 const initializeTestServer = async ({ server, app, graphqlServer, readinessCheck }) => {
@@ -56,6 +68,7 @@ const initializeTestServer = async ({ server, app, graphqlServer, readinessCheck
   return {
     server,
     serverAddress,
+    serverPort: port,
     wsAddress,
     sendRequest(auth, obj) {
       return (

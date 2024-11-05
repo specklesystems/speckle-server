@@ -16,12 +16,11 @@ import {
   getUserByEmailFactory,
   getUserFactory,
   getUsersFactory,
-  listUsers,
+  listUsersFactory,
   storeUserAclFactory,
   storeUserFactory
 } from '@/modules/core/repositories/users'
 import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
-import { getServerInfo } from '@/modules/core/services/generic'
 import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
@@ -33,7 +32,9 @@ import {
   updateAllInviteTargetsFactory
 } from '@/modules/serverinvites/repositories/serverInvites'
 import { UsersEmitter } from '@/modules/core/events/usersEmitter'
+import { getServerInfoFactory } from '@/modules/core/repositories/server'
 
+const getServerInfo = getServerInfoFactory({ db })
 const getUsers = getUsersFactory({ db })
 const findEmail = findEmailFactory({ db })
 const requestNewEmailVerification = requestNewEmailVerificationFactory({
@@ -63,6 +64,7 @@ const createUser = createUserFactory({
   usersEventsEmitter: UsersEmitter.emit
 })
 const getUserByEmail = getUserByEmailFactory({ db })
+const listUsers = listUsersFactory({ db })
 
 describe('Find users @core', () => {
   describe('getUsers', () => {

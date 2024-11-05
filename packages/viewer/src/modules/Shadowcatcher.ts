@@ -16,7 +16,7 @@ import {
 } from 'three'
 import { Geometry } from './converter/Geometry.js'
 import SpeckleBasicMaterial from './materials/SpeckleBasicMaterial.js'
-import { ShadowcatcherPass } from './pipeline/ShadowcatcherPass.js'
+import { ShadowcatcherPass } from './pipeline/Passes/ShadowcatcherPass.js'
 import { ObjectLayers } from '../IViewer.js'
 import {
   DefaultShadowcatcherConfig,
@@ -51,7 +51,6 @@ export class Shadowcatcher {
     this.displayMaterial.map = this.shadowcatcherPass.outputTexture
     // this.displayMaterial.map.wrapS = RepeatWrapping
     // this.displayMaterial.map.repeat.x = -1
-    this.displayMaterial.map.needsUpdate = true
     this.displayMaterial.toneMapped = false
     this.displayMaterial.transparent = true
     this.displayMaterial.blending = CustomBlending

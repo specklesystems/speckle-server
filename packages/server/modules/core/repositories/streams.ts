@@ -70,7 +70,7 @@ import {
   GetStream,
   GetStreamCollaborators,
   GetStreams,
-  DeleteStreamRecords,
+  DeleteStreamRecord,
   UpdateStreamRecord,
   RevokeStreamPermissions,
   GrantStreamPermissions,
@@ -97,7 +97,8 @@ import {
   GetUserStreamsCount,
   MarkBranchStreamUpdated,
   MarkCommitStreamUpdated,
-  MarkOnboardingBaseStream
+  MarkOnboardingBaseStream,
+  GetUserDeletableStreams
 } from '@/modules/core/domain/streams/operations'
 export type { StreamWithOptionalRole, StreamWithCommitId }
 
@@ -825,7 +826,8 @@ export const createStreamFactory =
       isPublic: shouldBePublic,
       isDiscoverable: shouldBeDiscoverable,
       updatedAt: knex.fn.now(),
-      workspaceId: workspaceId || null
+      workspaceId: workspaceId || null,
+      regionKey: null
     }
 
     // Create the stream & set up permissions
@@ -880,7 +882,7 @@ export const getUserStreamCountsFactory =
   }
 
 export const deleteStreamFactory =
-  (deps: { db: Knex }): DeleteStreamRecords =>
+  (deps: { db: Knex }): DeleteStreamRecord =>
   async (streamId: string) => {
     // Delete stream commits (not automatically cascaded)
     await deps.db.raw(
@@ -1305,4 +1307,32 @@ export const legacyGetStreamsFactory =
       totalCount: count,
       cursorDate: cursorDate as Nullable<Date>
     }
+  }
+
+export const getUserDeletableStreamsFactory =
+  (deps: { db: Knex }): GetUserDeletableStreams =>
+  async (id) => {
+    const streams = (await deps.db.raw(
+      `
+      -- Get the stream ids with only this user as owner
+      SELECT "resourceId" as id
+      FROM (
+        -- Compute (streamId, ownerCount) table for streams on which the user is owner
+        SELECT acl."resourceId", count(*) as cnt
+        FROM stream_acl acl
+        INNER JOIN
+          (
+          -- Get streams ids on which the user is owner
+          SELECT "resourceId" FROM stream_acl
+          WHERE role = '${Roles.Stream.Owner}' AND "userId" = ?
+          ) AS us ON acl."resourceId" = us."resourceId"
+        WHERE acl.role = '${Roles.Stream.Owner}'
+        GROUP BY (acl."resourceId")
+      ) AS soc
+      WHERE cnt = 1
+      `,
+      [id]
+    )) as { rows: { id: string }[] }
+
+    return streams.rows.map((s) => s.id)
   }

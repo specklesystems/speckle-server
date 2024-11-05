@@ -63,7 +63,7 @@ import { chunk, isEmpty, omit } from 'lodash'
 import { userEmailsCompliantWithWorkspaceDomains } from '@/modules/workspaces/domain/logic'
 import { workspaceRoles as workspaceRoleDefinitions } from '@/modules/workspaces/roles'
 import { blockedDomains } from '@speckle/shared'
-import { DeleteStreamRecords } from '@/modules/core/domain/streams/operations'
+import { DeleteStreamRecord } from '@/modules/core/domain/streams/operations'
 
 type WorkspaceCreateArgs = {
   userId: string
@@ -278,7 +278,7 @@ export const deleteWorkspaceFactory =
     deleteAllResourceInvites
   }: {
     deleteWorkspace: DeleteWorkspace
-    deleteProject: DeleteStreamRecords
+    deleteProject: DeleteStreamRecord
     queryAllWorkspaceProjects: QueryAllWorkspaceProjects
     deleteAllResourceInvites: DeleteAllResourceInvites
   }) =>

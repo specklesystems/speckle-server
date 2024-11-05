@@ -2,6 +2,13 @@ import { db } from '@/db/knex'
 import { UsersEmitter } from '@/modules/core/events/usersEmitter'
 import { AllScopes, ServerRoles } from '@/modules/core/helpers/mainConstants'
 import { UserRecord } from '@/modules/core/helpers/types'
+import { getServerInfoFactory } from '@/modules/core/repositories/server'
+import {
+  storeApiTokenFactory,
+  storePersonalApiTokenFactory,
+  storeTokenResourceAccessDefinitionsFactory,
+  storeTokenScopesFactory
+} from '@/modules/core/repositories/tokens'
 import {
   createUserEmailFactory,
   ensureNoPrimaryEmailForUserFactory,
@@ -13,8 +20,7 @@ import {
   storeUserAclFactory,
   storeUserFactory
 } from '@/modules/core/repositories/users'
-import { getServerInfo } from '@/modules/core/services/generic'
-import { createPersonalAccessToken } from '@/modules/core/services/tokens'
+import { createPersonalAccessTokenFactory } from '@/modules/core/services/tokens'
 import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
 import { createUserFactory } from '@/modules/core/services/users/management'
 import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
@@ -26,8 +32,11 @@ import {
   updateAllInviteTargetsFactory
 } from '@/modules/serverinvites/repositories/serverInvites'
 import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
+import { faker } from '@faker-js/faker'
+import { ServerScope } from '@speckle/shared'
 import { kebabCase, omit } from 'lodash'
 
+const getServerInfo = getServerInfoFactory({ db })
 const findEmail = findEmailFactory({ db })
 const requestNewEmailVerification = requestNewEmailVerificationFactory({
   findEmail,
@@ -55,6 +64,14 @@ const createUser = createUserFactory({
   }),
   usersEventsEmitter: UsersEmitter.emit
 })
+const createPersonalAccessToken = createPersonalAccessTokenFactory({
+  storeApiToken: storeApiTokenFactory({ db }),
+  storeTokenScopes: storeTokenScopesFactory({ db }),
+  storeTokenResourceAccessDefinitions: storeTokenResourceAccessDefinitionsFactory({
+    db
+  }),
+  storePersonalApiToken: storePersonalApiTokenFactory({ db })
+})
 
 export type BasicTestUser = {
   name: string
@@ -68,21 +85,42 @@ export type BasicTestUser = {
   role?: ServerRoles
 } & Partial<UserRecord>
 
+const initTestUser = (user: Partial<BasicTestUser>): BasicTestUser => ({
+  name: faker.person.fullName(),
+  email: faker.internet.email(),
+  id: '',
+  ...user
+})
+
 /**
  * Create basic user for tests and on success mutate the input object to have
  * the new ID
  */
-export async function createTestUser(userObj: BasicTestUser) {
-  if (!userObj.password) {
-    userObj.password = 'some-random-password-123456789#!@'
+export async function createTestUser(userObj: Partial<BasicTestUser>) {
+  const baseUser = initTestUser(userObj)
+
+  // Need to set values in both, in case userObj was defined outside of the function and passed in.
+  // If we only set on baseUser, the param obj won't be updated
+  const setVal = <Key extends keyof BasicTestUser>(
+    key: Key,
+    val: BasicTestUser[Key]
+  ) => {
+    baseUser[key] = val
+    userObj[key] = val
   }
 
-  if (!userObj.email) {
-    userObj.email = `${kebabCase(userObj.name)}@someemail.com`
+  if (!baseUser.password) {
+    setVal('password', 'some-random-password-123456789#!@')
   }
 
-  const id = await createUser(omit(userObj, ['id']), { skipPropertyValidation: true })
-  userObj.id = id
+  if (!baseUser.email) {
+    setVal('email', `${kebabCase(baseUser.name)}@someemail.com`)
+  }
+
+  const id = await createUser(omit(baseUser, ['id']), { skipPropertyValidation: true })
+  setVal('id', id)
+
+  return baseUser
 }
 
 /**
@@ -101,5 +139,9 @@ export async function createAuthTokenForUser(
   userId: string,
   scopes: string[] = AllScopes
 ): Promise<string> {
-  return await createPersonalAccessToken(userId, 'test-runner-token', scopes)
+  return await createPersonalAccessToken(
+    userId,
+    'test-runner-token',
+    scopes as ServerScope[]
+  )
 }

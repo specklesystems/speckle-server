@@ -76,7 +76,14 @@ const timeOutWait = ref(false)
 
 const enqueMagic = async () => {
   isLoading.value = true
-  const screenshot = await viewerInstance.getExtension(PassReader).read()
+  const [depthData, width, height] = await viewerInstance
+    .getExtension(PassReader)
+    .read('DEPTH')
+  const screenshot = PassReader.toBase64(
+    PassReader.decodeDepth(depthData),
+    width,
+    height
+  )
   void lodgeRequest(screenshot)
 
   timeOutWait.value = true
@@ -117,7 +124,7 @@ const lodgeRequest = async (screenshot: string) => {
     const err = getFirstErrorMessage(res.errors)
     triggerNotification({
       type: ToastNotificationType.Danger,
-      title: 'Failed to enque Gendo render',
+      title: 'Failed to enqueue Gendo render',
       description: err
     })
   } else {

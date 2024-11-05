@@ -1,7 +1,6 @@
 /* istanbul ignore file */
 import passport from 'passport'
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20'
-import { getServerInfo } from '@/modules/core/services/generic'
 
 import {
   UserInputError,
@@ -27,10 +26,11 @@ import {
   FindOrCreateValidatedUser,
   LegacyGetUserByEmail
 } from '@/modules/core/domain/users/operations'
+import { GetServerInfo } from '@/modules/core/domain/server/operations'
 
 const googleStrategyBuilderFactory =
   (deps: {
-    getServerInfo: typeof getServerInfo
+    getServerInfo: GetServerInfo
     getUserByEmail: LegacyGetUserByEmail
     findOrCreateUser: FindOrCreateValidatedUser
     validateServerInvite: ValidateServerInvite
@@ -115,7 +115,12 @@ const googleStrategyBuilderFactory =
               role: invite
                 ? getResourceTypeRole(invite.resource, ServerInviteResourceType)
                 : undefined,
-              verified: !!invite
+              verified: !!invite,
+              signUpContext: {
+                req,
+                isInvite: !!invite,
+                newsletterConsent: !!req.session.newsletterConsent
+              }
             }
           })
 

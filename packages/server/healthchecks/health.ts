@@ -1,10 +1,10 @@
-import { getServerInfo } from '@/modules/core/services/generic'
 import { createRedisClient } from '@/modules/shared/redis/redis'
 import { getRedisUrl, postgresMaxConnections } from '@/modules/shared/helpers/envHelper'
 import type { Redis } from 'ioredis'
 import { numberOfFreeConnections } from '@/modules/shared/helpers/dbHelper'
 
 import type { Knex } from 'knex'
+import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { BaseError } from '@/modules/shared/errors'
 import { ensureErrorOrWrapAsCause } from '@/modules/shared/errors/ensureError'
 
@@ -119,6 +119,8 @@ type CheckResponse = { isAlive: true } | { isAlive: false; err: unknown }
 type DBCheck = () => Promise<CheckResponse>
 
 export const isPostgresAlive: DBCheck = async (): Promise<CheckResponse> => {
+  const getServerInfo = getServerInfoFactory({ db })
+
   try {
     await getServerInfo()
   } catch (err) {

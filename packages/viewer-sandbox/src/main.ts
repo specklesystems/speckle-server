@@ -1,9 +1,11 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import {
   DefaultViewerParams,
   SelectionEvent,
   ViewerEvent,
   Viewer,
-  CameraController
+  CameraController,
+  ViewModes
 } from '@speckle/viewer'
 
 import './style.css'
@@ -17,6 +19,7 @@ import {
 } from '@speckle/viewer'
 import { SectionTool } from '@speckle/viewer'
 import { SectionOutlines } from '@speckle/viewer'
+import { ViewModesKeys } from './Extensions/ViewModesKeys'
 
 const createViewer = async (containerName: string, stream: string) => {
   const container = document.querySelector<HTMLElement>(containerName)
@@ -43,17 +46,18 @@ const createViewer = async (containerName: string, stream: string) => {
   const cameraController = viewer.createExtension(CameraController)
   const selection = viewer.createExtension(SelectionExtension)
   const sections = viewer.createExtension(SectionTool)
-  const sectionOutlines = viewer.createExtension(SectionOutlines)
+  viewer.createExtension(SectionOutlines)
   const measurements = viewer.createExtension(MeasurementsExtension)
   const filtering = viewer.createExtension(FilteringExtension)
   const explode = viewer.createExtension(ExplodeExtension)
   const diff = viewer.createExtension(DiffExtension)
+  viewer.createExtension(ViewModes)
+  viewer.createExtension(ViewModesKeys)
   // const boxSelect = viewer.createExtension(BoxSelection)
   // const rotateCamera = viewer.createExtension(RotateCamera)
   cameraController // use it
   selection // use it
   sections // use it
-  sectionOutlines // use it
   measurements // use it
   filtering // use it
   explode // use it
@@ -68,7 +72,6 @@ const createViewer = async (containerName: string, stream: string) => {
   })
 
   viewer.on(ViewerEvent.ObjectClicked, (event: SelectionEvent | null) => {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     if (event) console.log(event.hits[0].node.model.id)
   })
 
@@ -105,7 +108,7 @@ const getStream = () => {
     // prettier-ignore
     // 'https://app.speckle.systems/streams/da9e320dad/commits/5388ef24b8?c=%5B-7.66134,10.82932,6.41935,-0.07739,-13.88552,1.8697,0,1%5D'
     // Revit sample house (good for bim-like stuff with many display meshes)
-    // 'https://app.speckle.systems/streams/da9e320dad/commits/5388ef24b8'
+    'https://app.speckle.systems/streams/da9e320dad/commits/5388ef24b8'
     // 'https://latest.speckle.systems/streams/c1faab5c62/commits/ab1a1ab2b6'
     // 'https://app.speckle.systems/streams/da9e320dad/commits/5388ef24b8'
     // 'https://latest.speckle.systems/streams/58b5648c4d/commits/60371ecb2d'
@@ -406,11 +409,17 @@ const getStream = () => {
     // 'https://latest.speckle.systems/projects/126cd4b7bb/models/6221c985c0'
 
     // DUI3 Color Proxies
+    // 'https://app.speckle.systems/projects/93200a735d/models/d1fbf678f1'
     // ' https://app.speckle.systems/projects/93200a735d/models/d1fbf678f1'
     // 'https://app.speckle.systems/projects/b53a53697a/models/93fa215ba9'
     // 'https://latest.speckle.systems/projects/126cd4b7bb/models/5ec85fc2a2'
     // 'https://latest.speckle.systems/projects/2af60ce1b6/models/09dbceb25f@5af6d6a3f4'
     // 'https://latest.speckle.systems/projects/2af60ce1b6/models/09dbceb25f@ebb895355d'
+
+    // Backfaces
+    // 'https://app.speckle.systems/projects/69bf87aa61/models/c8f443a03e'
+
+    // 'https://app.speckle.systems/projects/cdaeb201d9/models/1ad10b0a5b'
     // 'https://app.speckle.systems/projects/93200a735d/models/d1fbf678f1@088537140b'
     // 'https://app.speckle.systems/projects/93200a735d/models/e3c3849167'
     // 'https://app.speckle.systems/projects/93200a735d/models/d1fbf678f1@088537140b'
@@ -418,13 +427,26 @@ const getStream = () => {
 
     // Text with no material
     // 'https://latest.speckle.systems/projects/731c6e2fd1/models/bcd3a4a706'
+    // 'https://latest.speckle.systems/projects/126cd4b7bb/models/44a3cddb93'
+    // 'https://latest.speckle.systems/projects/126cd4b7bb/models/afec5fcb04@0c2ad0b86b'
+    // 'https://latest.speckle.systems/projects/126cd4b7bb/models/44a3cddb93'
+    // 'https://latest.speckle.systems/projects/126cd4b7bb/models/44a3cddb93@31654f1e2c'
+    // Homepage
+    // 'https://app.speckle.systems/projects/0c1ea0ca62/models/729a6f557d@9bff3c6f1f'
 
     // BREPs as display values
     // 'https://latest.speckle.systems/projects/126cd4b7bb/models/b613d77690@046b56bf12'
 
     // 'https://app.speckle.systems/projects/00a5c443d6/models/de56edf901'
 
-    'https://app.speckle.systems/projects/6cf358a40e/models/e01ffbc891@f1ddc19011'
+    // 'https://app.speckle.systems/projects/6cf358a40e/models/e01ffbc891@f1ddc19011'
+    // 'https://latest.speckle.systems/projects/2c5c4cd493/models/cb20c2e87b02003d4b2ddf4df96912b9,8a2c9a45093fecb42273607d0c936d66'
+
+    // 'https://app.speckle.systems/projects/71b33ae013/models/3263c25505'
+    // 'https://app.speckle.systems/projects/817c4e8daa/models/f0601ef5f9'
+
+    // Far away house section tool
+    // 'https://app.speckle.systems/projects/817c4e8daa/models/f0601ef5f9@80db5ff26a'
   )
 }
 

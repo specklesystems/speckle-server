@@ -1,24 +1,33 @@
 import { addUserUpdatedActivityFactory } from '@/modules/activitystream/services/userActivity'
 import {
   ChangeUserPassword,
+  ChangeUserRole,
   CountAdminUsers,
   CreateValidatedUser,
+  DeleteUser,
+  DeleteUserRecord,
   FindOrCreateValidatedUser,
   GetUser,
   GetUserByEmail,
+  IsLastAdminUser,
   StoreUser,
   StoreUserAcl,
   UpdateUser,
   UpdateUserAndNotify,
+  UpdateUserServerRole,
   ValidateUserPassword
 } from '@/modules/core/domain/users/operations'
 import { UserUpdateError, UserValidationError } from '@/modules/core/errors/user'
 import { PasswordTooShortError, UserInputError } from '@/modules/core/errors/userinput'
 import { UserUpdateInput } from '@/modules/core/graph/generated/graphql'
 import type { UserRecord } from '@/modules/core/helpers/userHelper'
-import { getServerInfo } from '@/modules/core/services/generic'
 import { sanitizeImageUrl } from '@/modules/shared/helpers/sanitization'
-import { isNullOrUndefined, NullableKeysToOptional, Roles } from '@speckle/shared'
+import {
+  isNullOrUndefined,
+  NullableKeysToOptional,
+  Roles,
+  ServerRoles
+} from '@speckle/shared'
 import { pick } from 'lodash'
 import bcrypt from 'bcrypt'
 import crs from 'crypto-random-string'
@@ -28,6 +37,13 @@ import {
   ValidateAndCreateUserEmail
 } from '@/modules/core/domain/userEmails/operations'
 import { UsersEvents, UsersEventsEmitter } from '@/modules/core/events/usersEmitter'
+import {
+  DeleteStreamRecord,
+  GetUserDeletableStreams
+} from '@/modules/core/domain/streams/operations'
+import { Logger } from '@/logging/logging'
+import { DeleteAllUserInvites } from '@/modules/serverinvites/domain/operations'
+import { GetServerInfo } from '@/modules/core/domain/server/operations'
 
 export const MINIMUM_PASSWORD_LENGTH = 8
 
@@ -116,7 +132,7 @@ export const changePasswordFactory =
 
 export const createUserFactory =
   (deps: {
-    getServerInfo: typeof getServerInfo
+    getServerInfo: GetServerInfo
     findEmail: FindEmail
     storeUser: StoreUser
     countAdminUsers: CountAdminUsers
@@ -128,12 +144,15 @@ export const createUserFactory =
     // ONLY ALLOW SKIPPING WHEN CREATING USERS FOR TESTS, IT'S UNSAFE OTHERWISE
     const { skipPropertyValidation = false } = options || {}
 
+    const signUpCtx = user.signUpContext
+
     let finalUser: typeof user &
       Omit<NullableKeysToOptional<UserRecord>, 'suuid' | 'createdAt'> = {
       ...user,
       id: crs({ length: 10 }),
       verified: user.verified || false
     }
+    delete finalUser.signUpContext
 
     if (!finalUser.email?.length) throw new UserInputError('E-mail address is required')
 
@@ -204,7 +223,7 @@ export const createUserFactory =
       }
     })
 
-    await deps.usersEventsEmitter(UsersEvents.Created, { user: newUser })
+    await deps.usersEventsEmitter(UsersEvents.Created, { user: newUser, signUpCtx })
 
     return newUser.id
   }
@@ -231,4 +250,56 @@ export const findOrCreateUserFactory =
       email: user.email,
       isNewUser: true
     }
+  }
+
+export const deleteUserFactory =
+  (deps: {
+    deleteStream: DeleteStreamRecord
+    logger: Logger
+    isLastAdminUser: IsLastAdminUser
+    getUserDeletableStreams: GetUserDeletableStreams
+    deleteAllUserInvites: DeleteAllUserInvites
+    deleteUserRecord: DeleteUserRecord
+  }): DeleteUser =>
+  async (id) => {
+    deps.logger.info('Deleting user ' + id)
+    const isLastAdmin = await deps.isLastAdminUser(id)
+    if (isLastAdmin) {
+      throw new UserInputError('Cannot remove the last admin role from the server')
+    }
+
+    const streamIds = await deps.getUserDeletableStreams(id)
+    for (const id of streamIds) {
+      await deps.deleteStream(id)
+    }
+
+    // Delete all invites (they don't have a FK, so we need to do this manually)
+    // THIS REALLY SHOULD BE A REACTION TO THE USER DELETED EVENT EMITTED HER
+    await deps.deleteAllUserInvites(id)
+
+    return await deps.deleteUserRecord(id)
+  }
+
+export const changeUserRoleFactory =
+  (deps: {
+    getServerInfo: GetServerInfo
+    isLastAdminUser: IsLastAdminUser
+    updateUserServerRole: UpdateUserServerRole
+  }): ChangeUserRole =>
+  async ({ userId, role }) => {
+    const guestModeEnabled = (await deps.getServerInfo()).guestModeEnabled
+    if (!(Object.values(Roles.Server) as string[]).includes(role))
+      throw new UserInputError(`Invalid role specified: ${role}`)
+
+    if (!guestModeEnabled && role === Roles.Server.Guest)
+      throw new UserInputError('Guest role is not enabled')
+
+    if (role !== Roles.Server.Admin) {
+      const isLastAdmin = await deps.isLastAdminUser(userId)
+      if (isLastAdmin) {
+        throw new UserInputError('Cannot remove the last admin role from the server')
+      }
+    }
+
+    await deps.updateUserServerRole({ userId, role: role as ServerRoles })
   }

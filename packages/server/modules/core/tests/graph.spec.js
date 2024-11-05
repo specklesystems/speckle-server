@@ -5,8 +5,6 @@ const request = require('supertest')
 const { beforeEachContext, initializeTestServer } = require(`@/test/hooks`)
 const { generateManyObjects } = require(`@/test/helpers`)
 
-const { changeUserRole } = require('@/modules/core/services/users')
-const { createPersonalAccessToken } = require('../services/tokens')
 const { Roles, Scopes } = require('@speckle/shared')
 const cryptoRandomString = require('crypto-random-string')
 const { saveActivityFactory } = require('@/modules/activitystream/repositories')
@@ -34,7 +32,9 @@ const {
   legacyGetPaginatedUsersFactory,
   storeUserFactory,
   countAdminUsersFactory,
-  storeUserAclFactory
+  storeUserAclFactory,
+  isLastAdminUserFactory,
+  updateUserServerRoleFactory
 } = require('@/modules/core/repositories/users')
 const {
   findEmailFactory,
@@ -44,13 +44,15 @@ const {
 const {
   requestNewEmailVerificationFactory
 } = require('@/modules/emails/services/verification/request')
-const { getServerInfo } = require('@/modules/core/services/generic')
 const {
   deleteOldAndInsertNewVerificationFactory
 } = require('@/modules/emails/repositories')
 const { renderEmail } = require('@/modules/emails/services/emailRendering')
 const { sendEmail } = require('@/modules/emails/services/sending')
-const { createUserFactory } = require('@/modules/core/services/users/management')
+const {
+  createUserFactory,
+  changeUserRoleFactory
+} = require('@/modules/core/services/users/management')
 const {
   validateAndCreateUserEmailFactory
 } = require('@/modules/core/services/userEmails')
@@ -62,6 +64,14 @@ const {
   updateAllInviteTargetsFactory
 } = require('@/modules/serverinvites/repositories/serverInvites')
 const { UsersEmitter } = require('@/modules/core/events/usersEmitter')
+const { createPersonalAccessTokenFactory } = require('@/modules/core/services/tokens')
+const {
+  storeApiTokenFactory,
+  storeTokenScopesFactory,
+  storeTokenResourceAccessDefinitionsFactory,
+  storePersonalApiTokenFactory
+} = require('@/modules/core/repositories/tokens')
+const { getServerInfoFactory } = require('@/modules/core/repositories/server')
 
 const getUser = getUserFactory({ db })
 const getStream = getStreamFactory({ db })
@@ -95,6 +105,7 @@ const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
 })
 const getUsers = legacyGetPaginatedUsersFactory({ db })
 
+const getServerInfo = getServerInfoFactory({ db })
 const findEmail = findEmailFactory({ db })
 const requestNewEmailVerification = requestNewEmailVerificationFactory({
   findEmail,
@@ -123,9 +134,24 @@ const createUser = createUserFactory({
   usersEventsEmitter: UsersEmitter.emit
 })
 
+const createPersonalAccessToken = createPersonalAccessTokenFactory({
+  storeApiToken: storeApiTokenFactory({ db }),
+  storeTokenScopes: storeTokenScopesFactory({ db }),
+  storeTokenResourceAccessDefinitions: storeTokenResourceAccessDefinitionsFactory({
+    db
+  }),
+  storePersonalApiToken: storePersonalApiTokenFactory({ db })
+})
+
 let app
 let server
 let sendRequest
+
+const changeUserRole = changeUserRoleFactory({
+  getServerInfo,
+  isLastAdminUser: isLastAdminUserFactory({ db }),
+  updateUserServerRole: updateUserServerRoleFactory({ db })
+})
 
 describe('GraphQL API Core @core-api', () => {
   const userA = {

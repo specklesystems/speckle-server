@@ -3,7 +3,6 @@ import { expect } from 'chai'
 
 import { beforeEachContext, initializeTestServer } from '@/test/hooks'
 
-import { createToken } from '@/modules/core/services/tokens'
 import type { Server } from 'http'
 import type { Express } from 'express'
 import request from 'supertest'
@@ -48,7 +47,6 @@ import {
   findEmailFactory
 } from '@/modules/core/repositories/userEmails'
 import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
-import { getServerInfo } from '@/modules/core/services/generic'
 import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { createUserFactory } from '@/modules/core/services/users/management'
@@ -56,7 +54,15 @@ import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userE
 import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
 import { UsersEmitter } from '@/modules/core/events/usersEmitter'
 import { sendEmail } from '@/modules/emails/services/sending'
+import { createTokenFactory } from '@/modules/core/services/tokens'
+import {
+  storeApiTokenFactory,
+  storeTokenResourceAccessDefinitionsFactory,
+  storeTokenScopesFactory
+} from '@/modules/core/repositories/tokens'
+import { getServerInfoFactory } from '@/modules/core/repositories/server'
 
+const getServerInfo = getServerInfoFactory({ db })
 const getUser = getUserFactory({ db })
 const getUsers = getUsersFactory({ db })
 const addStreamCreatedActivity = addStreamCreatedActivityFactory({
@@ -81,7 +87,8 @@ const createStream = legacyCreateStreamFactory({
             eventName,
             payload
           }),
-        getUser
+        getUser,
+        getServerInfo
       }),
       getUsers
     }),
@@ -119,6 +126,13 @@ const createUser = createUserFactory({
   }),
   usersEventsEmitter: UsersEmitter.emit
 })
+const createToken = createTokenFactory({
+  storeApiToken: storeApiTokenFactory({ db }),
+  storeTokenScopes: storeTokenScopesFactory({ db }),
+  storeTokenResourceAccessDefinitions: storeTokenResourceAccessDefinitionsFactory({
+    db
+  })
+})
 
 describe('FileUploads @fileuploads', () => {
   let server: Server
@@ -134,9 +148,11 @@ describe('FileUploads @fileuploads', () => {
   let userOneToken: string
   let createdStreamId: string
   let existingCanonicalUrl: string
+  let existingPort: string
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let sendRequest: (token: string, query: unknown) => Promise<any>
   let serverAddress: string
+  let serverPort: string
 
   before(async () => {
     const {
@@ -156,7 +172,9 @@ describe('FileUploads @fileuploads', () => {
 
     //TODO does mocha have a nicer way of temporarily swapping an environment variable, like vitest?
     existingCanonicalUrl = process.env['CANONICAL_URL'] || ''
+    existingPort = process.env['PORT'] || ''
     process.env['CANONICAL_URL'] = serverAddress
+    process.env['PORT'] = serverPort
 
     userOneId = await createUser(userOne)
   })
@@ -175,6 +193,7 @@ describe('FileUploads @fileuploads', () => {
 
   after(async () => {
     process.env['CANONICAL_URL'] = existingCanonicalUrl
+    process.env['PORT'] = existingPort
     await server?.close()
   })
 

@@ -1,7 +1,18 @@
-import { User, UserWithOptionalRole } from '@/modules/core/domain/users/types'
+import {
+  LimitedUser,
+  User,
+  UserSignUpContext,
+  UserWithOptionalRole
+} from '@/modules/core/domain/users/types'
 import { UserUpdateInput } from '@/modules/core/graph/generated/graphql'
-import { ServerAclRecord } from '@/modules/core/helpers/types'
-import { Nullable, NullableKeysToOptional, ServerRoles } from '@speckle/shared'
+import { ServerInviteGraphQLReturnType } from '@/modules/core/helpers/graphTypes'
+import { ServerAclRecord, UserWithRole } from '@/modules/core/helpers/types'
+import {
+  Nullable,
+  NullableKeysToOptional,
+  Optional,
+  ServerRoles
+} from '@speckle/shared'
 
 export type GetUserParams = Partial<{
   /**
@@ -45,11 +56,40 @@ export type UpdateUser = (
   }>
 ) => Promise<Nullable<User>>
 
+export type DeleteUserRecord = (userId: string) => Promise<boolean>
+
 export type CountAdminUsers = () => Promise<number>
+
+export type IsLastAdminUser = (userId: string) => Promise<boolean>
+
+type UserQuery = {
+  query: string | null
+  role?: ServerRoles | null
+}
+
+export type ListPaginatedUsersPage = (
+  params: {
+    limit: number
+    cursor?: Date | null
+  } & UserQuery
+) => Promise<UserWithRole[]>
+
+export type CountUsers = (params: UserQuery) => Promise<number>
 
 export type StoreUserAcl = (params: {
   acl: ServerAclRecord
 }) => Promise<ServerAclRecord>
+
+export type UpdateUserServerRole = (params: {
+  userId: string
+  role: ServerRoles
+}) => Promise<boolean>
+
+export type MarkUserAsVerified = (email: string) => Promise<boolean>
+
+export type MarkOnboardingComplete = (userId: string) => Promise<boolean>
+
+export type GetFirstAdmin = () => Promise<Optional<User>>
 
 export type LegacyGetUserByEmail = (params: {
   email: string
@@ -67,12 +107,18 @@ export type LegacyGetPaginatedUsersCount = (
   searchQuery?: string | null
 ) => Promise<number>
 
+export type GetUserRole = (id: string) => Promise<Nullable<ServerRoles>>
+
 export type CreateValidatedUser = (
   user: NullableKeysToOptional<Pick<User, 'bio' | 'name' | 'company' | 'avatar'>> & {
     email: string
     verified?: boolean
     password?: string
     role?: ServerRoles
+    /**
+     * Only OK to leave unset in fake/simulated scenarios such as tests
+     */
+    signUpContext?: Optional<UserSignUpContext>
   },
   options?: Partial<{
     skipPropertyValidation: boolean
@@ -86,6 +132,10 @@ export type FindOrCreateValidatedUser = (params: {
     role?: ServerRoles
     bio?: string
     verified?: boolean
+    /**
+     * Only OK to leave unset in fake/simulated scenarios such as tests
+     */
+    signUpContext?: Optional<UserSignUpContext>
   }
 }) => Promise<{
   id: string
@@ -107,3 +157,68 @@ export type ValidateUserPassword = (params: {
   email: string
   password: string
 }) => Promise<boolean>
+
+export type DeleteUser = (id: string) => Promise<boolean>
+
+export type ChangeUserRole = (params: { userId: string; role: string }) => Promise<void>
+
+export type SearchLimitedUsers = (
+  searchQuery: string,
+  limit?: number,
+  cursor?: string,
+  archived?: boolean,
+  emailOnly?: boolean
+) => Promise<{
+  users: LimitedUser[]
+  cursor: Nullable<string>
+}>
+
+type AdminUserListArgs = {
+  cursor: string | null
+  query: string | null
+  limit: number
+  role: ServerRoles | null
+}
+
+export type AdminUserList = (args: AdminUserListArgs) => Promise<{
+  totalCount: number
+  items: UserWithRole[]
+  cursor: string | null
+}>
+
+export type LegacyAdminUsersPaginationParams = {
+  limit: number
+  offset: number
+  query: string | null
+}
+
+export type LegacyAdminUsersListItem = {
+  registeredUser: Nullable<User>
+  invitedUser: Nullable<{
+    id: string
+    email: string
+    invitedById: string
+  }>
+  id: string
+}
+
+type LegacyAdminUsersListCollection = {
+  totalCount: number
+  items: Array<LegacyAdminUsersListItem>
+}
+
+export type LegacyGetAdminUsersListCollection = (
+  params: LegacyAdminUsersPaginationParams
+) => Promise<LegacyAdminUsersListCollection>
+
+type CollectionQueryArgs = {
+  cursor: string | null
+  query: string | null
+  limit: number
+}
+
+export type AdminGetInviteList = (args: CollectionQueryArgs) => Promise<{
+  cursor: string | null
+  totalCount: number
+  items: ServerInviteGraphQLReturnType[]
+}>

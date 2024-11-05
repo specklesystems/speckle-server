@@ -411,13 +411,6 @@ export type AutomationRevisionTriggerDefinition = VersionCreatedTriggerDefinitio
 
 export type AutomationRunTrigger = VersionCreatedTrigger;
 
-export type AvatarUser = {
-  __typename?: 'AvatarUser';
-  avatar?: Maybe<Scalars['String']['output']>;
-  id: Scalars['ID']['output'];
-  name: Scalars['String']['output'];
-};
-
 export type BasicGitRepositoryMetadata = {
   __typename?: 'BasicGitRepositoryMetadata';
   id: Scalars['ID']['output'];
@@ -425,6 +418,11 @@ export type BasicGitRepositoryMetadata = {
   owner: Scalars['String']['output'];
   url: Scalars['String']['output'];
 };
+
+export enum BillingInterval {
+  Monthly = 'monthly',
+  Yearly = 'yearly'
+}
 
 export type BlobMetadata = {
   __typename?: 'BlobMetadata';
@@ -501,6 +499,28 @@ export type BranchUpdateInput = {
   id: Scalars['String']['input'];
   name?: InputMaybe<Scalars['String']['input']>;
   streamId: Scalars['String']['input'];
+};
+
+export type CancelCheckoutSessionInput = {
+  sessionId: Scalars['ID']['input'];
+  workspaceId: Scalars['ID']['input'];
+};
+
+export type CheckoutSession = {
+  __typename?: 'CheckoutSession';
+  billingInterval: BillingInterval;
+  createdAt: Scalars['DateTime']['output'];
+  id: Scalars['ID']['output'];
+  paymentStatus: SessionPaymentStatus;
+  updatedAt: Scalars['DateTime']['output'];
+  url: Scalars['String']['output'];
+  workspacePlan: PaidWorkspacePlans;
+};
+
+export type CheckoutSessionInput = {
+  billingInterval: BillingInterval;
+  workspaceId: Scalars['ID']['input'];
+  workspacePlan: PaidWorkspacePlans;
 };
 
 export type Comment = {
@@ -814,6 +834,12 @@ export type CreateModelInput = {
   projectId: Scalars['ID']['input'];
 };
 
+export type CreateServerRegionInput = {
+  description?: InputMaybe<Scalars['String']['input']>;
+  key: Scalars['String']['input'];
+  name: Scalars['String']['input'];
+};
+
 export type CreateUserEmailInput = {
   email: Scalars['String']['input'];
 };
@@ -857,15 +883,6 @@ export type DiscoverableStreamsSortingInput = {
   type: DiscoverableStreamsSortType;
 };
 
-export type DiscoverableWorkspace = {
-  __typename?: 'DiscoverableWorkspace';
-  defaultLogoIndex: Scalars['Int']['output'];
-  description?: Maybe<Scalars['String']['output']>;
-  id: Scalars['ID']['output'];
-  logo?: Maybe<Scalars['String']['output']>;
-  name: Scalars['String']['output'];
-};
-
 export type EditCommentInput = {
   commentId: Scalars['String']['input'];
   content: CommentContentInput;
@@ -907,7 +924,7 @@ export type FileUpload = {
 export type GendoAiRender = {
   __typename?: 'GendoAIRender';
   camera?: Maybe<Scalars['JSONObject']['output']>;
-  createdAt: Scalars['String']['output'];
+  createdAt: Scalars['DateTime']['output'];
   gendoGenerationId?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   modelId: Scalars['String']['output'];
@@ -916,8 +933,8 @@ export type GendoAiRender = {
   /** This is a blob id. */
   responseImage?: Maybe<Scalars['String']['output']>;
   status: Scalars['String']['output'];
-  updatedAt: Scalars['String']['output'];
-  user?: Maybe<AvatarUser>;
+  updatedAt: Scalars['DateTime']['output'];
+  user?: Maybe<LimitedUser>;
   userId: Scalars['String']['output'];
   versionId: Scalars['String']['output'];
 };
@@ -1053,6 +1070,23 @@ export type LimitedUserTimelineArgs = {
  */
 export type LimitedUserWorkspaceDomainPolicyCompliantArgs = {
   workspaceId?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** Workspace metadata visible to non-workspace members. */
+export type LimitedWorkspace = {
+  __typename?: 'LimitedWorkspace';
+  /** Index of fallback workspace logo to use */
+  defaultLogoIndex: Scalars['Int']['output'];
+  /** Workspace description */
+  description?: Maybe<Scalars['String']['output']>;
+  /** Workspace id */
+  id: Scalars['ID']['output'];
+  /** Optional base64 encoded workspace logo image */
+  logo?: Maybe<Scalars['String']['output']>;
+  /** Workspace name */
+  name: Scalars['String']['output'];
+  /** Unique workspace short id. Used for navigation. */
+  slug: Scalars['String']['output'];
 };
 
 export type MarkReceivedVersionInput = {
@@ -1266,6 +1300,7 @@ export type Mutation = {
   /** (Re-)send the account verification e-mail */
   requestVerification: Scalars['Boolean']['output'];
   requestVerificationByEmail: Scalars['Boolean']['output'];
+  serverInfoMutations: ServerInfoMutations;
   serverInfoUpdate?: Maybe<Scalars['Boolean']['output']>;
   /** Note: The required scope to invoke this is not given out to app or personal access tokens */
   serverInviteBatchCreate: Scalars['Boolean']['output'];
@@ -1704,6 +1739,12 @@ export type ObjectCreateInput = {
   streamId: Scalars['String']['input'];
 };
 
+export enum PaidWorkspacePlans {
+  Business = 'business',
+  Pro = 'pro',
+  Team = 'team'
+}
+
 export type PasswordStrengthCheckFeedback = {
   __typename?: 'PasswordStrengthCheckFeedback';
   suggestions: Array<Scalars['String']['output']>;
@@ -1820,7 +1861,7 @@ export type Project = {
   team: Array<ProjectCollaborator>;
   updatedAt: Scalars['DateTime']['output'];
   /** Retrieve a specific project version by its ID */
-  version?: Maybe<Version>;
+  version: Version;
   /** Returns a flat list of all project versions */
   versions: VersionCollection;
   /** Return metadata about resources being requested in the viewer */
@@ -2504,6 +2545,9 @@ export type Query = {
    * Either token or workspaceId must be specified, or both
    */
   workspaceInvite?: Maybe<PendingWorkspaceCollaborator>;
+  workspacePricingPlans: Scalars['JSONObject']['output'];
+  /** Find workspaces a given user email can use SSO to sign with */
+  workspaceSsoByEmail: Array<LimitedWorkspace>;
 };
 
 
@@ -2651,6 +2695,11 @@ export type QueryWorkspaceInviteArgs = {
   workspaceId?: InputMaybe<Scalars['String']['input']>;
 };
 
+
+export type QueryWorkspaceSsoByEmailArgs = {
+  email: Scalars['String']['input'];
+};
+
 /** Deprecated: Used by old stream-based mutations */
 export type ReplyCreateInput = {
   /** IDs of uploaded blobs that should be attached to this reply */
@@ -2761,6 +2810,8 @@ export type ServerInfo = {
   inviteOnly?: Maybe<Scalars['Boolean']['output']>;
   /** Server relocation / migration info */
   migration?: Maybe<ServerMigration>;
+  /** Available to server admins only */
+  multiRegion: ServerMultiRegionConfiguration;
   name: Scalars['String']['output'];
   /** @deprecated Use role constants from the @speckle/shared npm package instead */
   roles: Array<Role>;
@@ -2769,6 +2820,11 @@ export type ServerInfo = {
   termsOfService?: Maybe<Scalars['String']['output']>;
   version?: Maybe<Scalars['String']['output']>;
   workspaces: ServerWorkspacesInfo;
+};
+
+export type ServerInfoMutations = {
+  __typename?: 'ServerInfoMutations';
+  multiRegion: ServerRegionMutations;
 };
 
 export type ServerInfoUpdateInput = {
@@ -2799,6 +2855,38 @@ export type ServerMigration = {
   __typename?: 'ServerMigration';
   movedFrom?: Maybe<Scalars['String']['output']>;
   movedTo?: Maybe<Scalars['String']['output']>;
+};
+
+export type ServerMultiRegionConfiguration = {
+  __typename?: 'ServerMultiRegionConfiguration';
+  /**
+   * Keys of available regions defined in the multi region config file. Used keys will
+   * be filtered out from the result.
+   */
+  availableKeys: Array<Scalars['String']['output']>;
+  /**
+   * List of regions that are currently enabled on the server using the available region keys
+   * set in the multi region config file.
+   */
+  regions: Array<ServerRegionItem>;
+};
+
+export type ServerRegionItem = {
+  __typename?: 'ServerRegionItem';
+  description: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  key: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+};
+
+export type ServerRegionMutations = {
+  __typename?: 'ServerRegionMutations';
+  create: ServerRegionItem;
+};
+
+
+export type ServerRegionMutationsCreateArgs = {
+  input: CreateServerRegionInput;
 };
 
 export enum ServerRole {
@@ -2845,6 +2933,11 @@ export type ServerWorkspacesInfo = {
    */
   workspacesEnabled: Scalars['Boolean']['output'];
 };
+
+export enum SessionPaymentStatus {
+  Paid = 'paid',
+  Unpaid = 'unpaid'
+}
 
 export type SetPrimaryUserEmailInput = {
   id: Scalars['ID']['input'];
@@ -3424,7 +3517,7 @@ export type User = {
   createdApps?: Maybe<Array<ServerApp>>;
   createdAt?: Maybe<Scalars['DateTime']['output']>;
   /** Get discoverable workspaces with verified domains that match the active user's */
-  discoverableWorkspaces: Array<DiscoverableWorkspace>;
+  discoverableWorkspaces: Array<LimitedWorkspace>;
   /** Only returned if API user is the user being requested or an admin */
   email?: Maybe<Scalars['String']['output']>;
   emails: Array<UserEmail>;
@@ -3883,6 +3976,7 @@ export type Workspace = {
   /** Billing data for Workspaces beta */
   billing?: Maybe<WorkspaceBilling>;
   createdAt: Scalars['DateTime']['output'];
+  customerPortalUrl?: Maybe<Scalars['String']['output']>;
   /** Selected fallback when `logo` not set */
   defaultLogoIndex: Scalars['Int']['output'];
   /** The default role workspace members will receive for workspace projects. */
@@ -3900,10 +3994,12 @@ export type Workspace = {
   /** Logo image as base64-encoded string */
   logo?: Maybe<Scalars['String']['output']>;
   name: Scalars['String']['output'];
+  plan?: Maybe<WorkspacePlan>;
   projects: ProjectCollection;
   /** Active user's role for this workspace. `null` if request is not authenticated, or the workspace is not explicitly shared with you. */
   role?: Maybe<Scalars['String']['output']>;
   slug: Scalars['String']['output'];
+  subscription?: Maybe<WorkspaceSubscription>;
   team: WorkspaceCollaboratorCollection;
   updatedAt: Scalars['DateTime']['output'];
 };
@@ -3931,6 +4027,22 @@ export type WorkspaceBilling = {
   __typename?: 'WorkspaceBilling';
   cost: WorkspaceCost;
   versionsCount: WorkspaceVersionsCount;
+};
+
+export type WorkspaceBillingMutations = {
+  __typename?: 'WorkspaceBillingMutations';
+  cancelCheckoutSession: Scalars['Boolean']['output'];
+  createCheckoutSession: CheckoutSession;
+};
+
+
+export type WorkspaceBillingMutationsCancelCheckoutSessionArgs = {
+  input: CancelCheckoutSessionInput;
+};
+
+
+export type WorkspaceBillingMutationsCreateCheckoutSessionArgs = {
+  input: CheckoutSessionInput;
 };
 
 /** Overridden by `WorkspaceCollaboratorGraphQLReturn` */
@@ -4074,6 +4186,7 @@ export type WorkspaceInviteUseInput = {
 export type WorkspaceMutations = {
   __typename?: 'WorkspaceMutations';
   addDomain: Workspace;
+  billing: WorkspaceBillingMutations;
   create: Workspace;
   delete: Scalars['Boolean']['output'];
   deleteDomain: Workspace;
@@ -4124,6 +4237,29 @@ export type WorkspaceMutationsUpdateArgs = {
 export type WorkspaceMutationsUpdateRoleArgs = {
   input: WorkspaceRoleUpdateInput;
 };
+
+export type WorkspacePlan = {
+  __typename?: 'WorkspacePlan';
+  name: WorkspacePlans;
+  status: WorkspacePlanStatuses;
+};
+
+export enum WorkspacePlanStatuses {
+  CancelationScheduled = 'cancelationScheduled',
+  Canceled = 'canceled',
+  Expired = 'expired',
+  PaymentFailed = 'paymentFailed',
+  Trial = 'trial',
+  Valid = 'valid'
+}
+
+export enum WorkspacePlans {
+  Academia = 'academia',
+  Business = 'business',
+  Pro = 'pro',
+  Team = 'team',
+  Unlimited = 'unlimited'
+}
 
 export type WorkspaceProjectInviteCreateInput = {
   /** Either this or userId must be filled */
@@ -4176,6 +4312,14 @@ export type WorkspaceRoleUpdateInput = {
   role?: InputMaybe<Scalars['String']['input']>;
   userId: Scalars['String']['input'];
   workspaceId: Scalars['String']['input'];
+};
+
+export type WorkspaceSubscription = {
+  __typename?: 'WorkspaceSubscription';
+  billingInterval: BillingInterval;
+  createdAt: Scalars['DateTime']['output'];
+  currentBillingCycleEnd: Scalars['DateTime']['output'];
+  updatedAt: Scalars['DateTime']['output'];
 };
 
 export type WorkspaceTeamFilter = {

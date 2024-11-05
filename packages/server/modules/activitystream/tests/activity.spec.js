@@ -1,9 +1,6 @@
 /* istanbul ignore file */
 const expect = require('chai').expect
 
-const { createPersonalAccessToken } = require('../../core/services/tokens')
-const { createObject } = require('../../core/services/objects')
-
 const { beforeEachContext, initializeTestServer } = require('@/test/hooks')
 const { noErrors } = require('@/test/helpers')
 
@@ -38,7 +35,6 @@ const {
 const {
   requestNewEmailVerificationFactory
 } = require('@/modules/emails/services/verification/request')
-const { getServerInfo } = require('@/modules/core/services/generic')
 const {
   deleteOldAndInsertNewVerificationFactory
 } = require('@/modules/emails/repositories')
@@ -56,6 +52,19 @@ const {
   updateAllInviteTargetsFactory
 } = require('@/modules/serverinvites/repositories/serverInvites')
 const { UsersEmitter } = require('@/modules/core/events/usersEmitter')
+const { createPersonalAccessTokenFactory } = require('@/modules/core/services/tokens')
+const {
+  storePersonalApiTokenFactory,
+  storeApiTokenFactory,
+  storeTokenScopesFactory,
+  storeTokenResourceAccessDefinitionsFactory
+} = require('@/modules/core/repositories/tokens')
+const { getServerInfoFactory } = require('@/modules/core/repositories/server')
+const { createObjectFactory } = require('@/modules/core/services/objects/management')
+const {
+  storeSingleObjectIfNotFoundFactory,
+  storeClosuresIfNotFoundFactory
+} = require('@/modules/core/repositories/objects')
 
 const getUser = getUserFactory({ db })
 const getUserActivity = getUserActivityFactory({ db })
@@ -79,13 +88,13 @@ const findEmail = findEmailFactory({ db })
 const requestNewEmailVerification = requestNewEmailVerificationFactory({
   findEmail,
   getUser: getUserFactory({ db }),
-  getServerInfo,
+  getServerInfo: getServerInfoFactory({ db }),
   deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db }),
   renderEmail,
   sendEmail
 })
 const createUser = createUserFactory({
-  getServerInfo,
+  getServerInfo: getServerInfoFactory({ db }),
   findEmail,
   storeUser: storeUserFactory({ db }),
   countAdminUsers: countAdminUsersFactory({ db }),
@@ -101,6 +110,19 @@ const createUser = createUserFactory({
     requestNewEmailVerification
   }),
   usersEventsEmitter: UsersEmitter.emit
+})
+
+const createPersonalAccessToken = createPersonalAccessTokenFactory({
+  storeApiToken: storeApiTokenFactory({ db }),
+  storeTokenScopes: storeTokenScopesFactory({ db }),
+  storeTokenResourceAccessDefinitions: storeTokenResourceAccessDefinitionsFactory({
+    db
+  }),
+  storePersonalApiToken: storePersonalApiTokenFactory({ db })
+})
+const createObject = createObjectFactory({
+  storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({ db }),
+  storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db })
 })
 
 let server

@@ -25,8 +25,8 @@ import { isObjectLike } from 'lodash'
 import type { PropAnyComponent } from '~~/src/helpers/common/components'
 import { computed, resolveDynamicComponent } from 'vue'
 import type { Nullable } from '@speckle/shared'
-import { ArrowPathIcon } from '@heroicons/vue/24/solid'
 import type { FormButtonStyle, FormButtonSize } from '~~/src/helpers/form/button'
+import { CommonLoadingIcon } from '~~/src/lib'
 
 const emit = defineEmits<{
   /**
@@ -122,7 +122,9 @@ const buttonType = computed(() => {
 })
 
 const isDisabled = computed(() => props.disabled || props.loading)
-const finalLeftIcon = computed(() => (props.loading ? ArrowPathIcon : props.iconLeft))
+const finalLeftIcon = computed(() =>
+  props.loading ? CommonLoadingIcon : props.iconLeft
+)
 
 const bgAndBorderClasses = computed(() => {
   const classParts: string[] = []
@@ -265,10 +267,6 @@ const buttonClasses = computed(() => {
 
 const iconClasses = computed(() => {
   const classParts: string[] = ['shrink-0']
-
-  if (props.loading) {
-    classParts.push('animate-spin')
-  }
 
   switch (props.size) {
     case 'sm':

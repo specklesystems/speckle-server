@@ -19,6 +19,7 @@ workflows:
       - test-server:
           context:
             - speckle-server-licensing
+            - stripe-integration
           filters: &filters-allow-all
             tags:
               # run tests for any commit on any branch, including any tags
@@ -438,11 +439,12 @@ jobs:
     docker:
       - image: cimg/node:18.19.0
       - image: cimg/redis:7.2.4
-      - image: cimg/postgres:14.11
+      - image: cimg/postgres:16.4@sha256:2e4f1a965bdd9ba77aa6a0a7b93968c07576ba2a8a7cf86d5eb7b31483db1378
         environment:
           POSTGRES_DB: speckle2_test
           POSTGRES_PASSWORD: speckle
           POSTGRES_USER: speckle
+        command: -c 'max_connections=1000'
       - image: 'minio/minio'
         command: server /data --console-address ":9001"
         # environment:
@@ -452,6 +454,7 @@ jobs:
       NODE_ENV: test
       DATABASE_URL: 'postgres://speckle:speckle@127.0.0.1:5432/speckle2_test'
       PGDATABASE: speckle2_test
+      POSTGRES_MAX_CONNECTIONS_SERVER: 20
       PGUSER: speckle
       SESSION_SECRET: 'keyboard cat'
       STRATEGY_LOCAL: 'true'
@@ -464,6 +467,7 @@ jobs:
       REDIS_URL: 'redis://127.0.0.1:6379'
       S3_REGION: '' # optional, defaults to 'us-east-1'
       AUTOMATE_ENCRYPTION_KEYS_PATH: 'test/assets/automate/encryptionKeys.json'
+      FF_BILLING_INTEGRATION_ENABLED: 'true'
     steps:
       - checkout
       - restore_cache:
@@ -550,6 +554,8 @@ jobs:
       FF_WORKSPACES_SSO_ENABLED: 'false'
       FF_MULTIPLE_EMAILS_MODULE_ENABLED: 'false'
       FF_GENDOAI_MODULE_ENABLED: 'false'
+      FF_GATEKEEPER_MODULE_ENABLED: 'false'
+      FF_BILLING_INTEGRATION_ENABLED: 'false'
 
   test-frontend-2:
     docker: &docker-node-browsers-image
@@ -618,7 +624,7 @@ jobs:
   test-preview-service:
     docker:
       - image: cimg/node:18.19.0
-      - image: cimg/postgres:14.11
+      - image: cimg/postgres:16.4@sha256:2e4f1a965bdd9ba77aa6a0a7b93968c07576ba2a8a7cf86d5eb7b31483db1378
         environment:
           POSTGRES_DB: preview_service_test
           POSTGRES_PASSWORD: preview_service_test
@@ -1117,6 +1123,7 @@ jobs:
   publish-viewer-sandbox-cloudflare-pages:
     docker: *docker-node-image
     working_directory: *work-dir
+    resource_class: large
     steps:
       - checkout
       - restore_cache:

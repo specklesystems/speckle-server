@@ -1,4 +1,3 @@
-import { getServerInfo as getServerInfoFn } from '@/modules/core/services/generic'
 import { ForbiddenError } from '@/modules/shared/errors'
 import {
   CountWebhooksByStreamId,
@@ -17,6 +16,8 @@ import { ServerInfo } from '@/modules/core/helpers/types'
 import { GetStream } from '@/modules/core/domain/streams/operations'
 import { UserWithOptionalRole } from '@/modules/core/domain/users/types'
 import { GetUser } from '@/modules/core/domain/users/operations'
+import { GetServerInfo } from '@/modules/core/domain/server/operations'
+import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
 
 const MAX_STREAM_WEBHOOKS = 100
 
@@ -105,7 +106,7 @@ export const dispatchStreamEventFactory =
     getUser
   }: {
     db: Knex // TODO: this should not be injected here
-    getServerInfo: typeof getServerInfoFn
+    getServerInfo: GetServerInfo
     getStream: GetStream
     createWebhookEvent: CreateWebhookEvent
     getUser: GetUser
@@ -128,11 +129,11 @@ export const dispatchStreamEventFactory =
       server: Partial<Omit<ServerInfo, 'secret'>>
     } = {
       ...eventPayload,
-      server: { ...(await getServerInfo()), canonicalUrl: process.env.CANONICAL_URL }
+      server: { ...(await getServerInfo()), canonicalUrl: getServerOrigin() }
     }
     // Add server info
     payload.server = await getServerInfo()
-    payload.server.canonicalUrl = process.env.CANONICAL_URL
+    payload.server.canonicalUrl = getServerOrigin()
     delete payload.server.id
 
     // Add stream info
