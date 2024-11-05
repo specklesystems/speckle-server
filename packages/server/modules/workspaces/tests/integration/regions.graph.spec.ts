@@ -14,6 +14,7 @@ import {
 } from '@/test/graphql/generated/graphql'
 import { testApolloServer, TestApolloServer } from '@/test/graphqlHelper'
 import { beforeEachContext } from '@/test/hooks'
+import { MultiRegionDbSelectorMock } from '@/test/mocks/global'
 import { Roles } from '@speckle/shared'
 import { expect } from 'chai'
 
@@ -35,6 +36,9 @@ describe('Workspace regions GQL', () => {
   let apollo: TestApolloServer
 
   before(async () => {
+    MultiRegionDbSelectorMock.mockFunction('getDb', async () => db)
+    MultiRegionDbSelectorMock.mockFunction('getRegionDb', async () => db)
+
     await beforeEachContext()
 
     me = await createTestUser({ role: Roles.Server.Admin })
@@ -64,6 +68,10 @@ describe('Workspace regions GQL', () => {
     ])
 
     apollo = await testApolloServer({ authUserId: me.id })
+  })
+
+  after(() => {
+    MultiRegionDbSelectorMock.resetMockedFunctions()
   })
 
   describe('when listing', () => {

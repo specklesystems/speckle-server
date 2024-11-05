@@ -798,8 +798,6 @@ export = FF_WORKSPACES_MODULE_ENABLED
             context.resourceAccessRules
           )
 
-          // TODO: resource access rules check
-
           // TODO: get workspace's region here
           const workspaceDefaultRegion = await getDefaultRegionFactory({ db })({
             workspaceId: args.input.workspaceId

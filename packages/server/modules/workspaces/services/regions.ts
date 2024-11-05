@@ -1,3 +1,4 @@
+import { WorkspaceFeatureAccessFunction } from '@/modules/gatekeeper/domain/operations'
 import { GetRegions } from '@/modules/multiregion/domain/operations'
 import {
   AssignRegion,
@@ -10,9 +11,17 @@ import {
 import { WorkspaceRegionAssignmentError } from '@/modules/workspaces/errors/regions'
 
 export const getAvailableRegionsFactory =
-  (deps: { getRegions: GetRegions }): GetAvailableRegions =>
-  async () => {
-    // TODO: Gatekeeper checks here? For now just returning all server regions
+  (deps: {
+    getRegions: GetRegions
+    canWorkspaceUseRegions: WorkspaceFeatureAccessFunction
+  }): GetAvailableRegions =>
+  async (params) => {
+    const { workspaceId } = params
+    const canUseMultiRegion = await deps.canWorkspaceUseRegions({ workspaceId })
+    if (!canUseMultiRegion) {
+      return []
+    }
+
     return await deps.getRegions()
   }
 

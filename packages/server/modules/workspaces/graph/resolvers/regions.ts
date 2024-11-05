@@ -1,5 +1,7 @@
 import { db } from '@/db/knex'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
+import { getWorkspacePlanFactory } from '@/modules/gatekeeper/repositories/billing'
+import { canWorkspaceUseRegionsFactory } from '@/modules/gatekeeper/services/featureAuthorization'
 import { getDb } from '@/modules/multiregion/dbSelector'
 import { getRegionsFactory } from '@/modules/multiregion/repositories'
 import { authorizeResolver } from '@/modules/shared'
@@ -21,7 +23,10 @@ export default {
   Workspace: {
     availableRegions: async (parent) => {
       const getAvailableRegions = getAvailableRegionsFactory({
-        getRegions: getRegionsFactory({ db })
+        getRegions: getRegionsFactory({ db }),
+        canWorkspaceUseRegions: canWorkspaceUseRegionsFactory({
+          getWorkspacePlan: getWorkspacePlanFactory({ db })
+        })
       })
 
       return await getAvailableRegions({ workspaceId: parent.id })
@@ -44,7 +49,10 @@ export default {
 
       const assignRegion = assignRegionFactory({
         getAvailableRegions: getAvailableRegionsFactory({
-          getRegions: getRegionsFactory({ db })
+          getRegions: getRegionsFactory({ db }),
+          canWorkspaceUseRegions: canWorkspaceUseRegionsFactory({
+            getWorkspacePlan: getWorkspacePlanFactory({ db })
+          })
         }),
         upsertRegionAssignment: upsertRegionAssignmentFactory({ db }),
         getDefaultRegion: getDefaultRegionFactory({ db }),
