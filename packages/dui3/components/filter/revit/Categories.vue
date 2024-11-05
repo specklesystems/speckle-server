@@ -11,21 +11,42 @@
         color="foundation"
       />
     </div>
-    <div>
-      <ul>
-        <li v-for="i in finalItems" :key="i.id">
-          <FormCheckbox
-            :name="i.name"
-            :model-value="selectedValues.includes(i.id)"
-            @update:model-value="(newValue) => handleCheckBoxChange(i.id, !!newValue)"
-          ></FormCheckbox>
-        </li>
-      </ul>
+    <div class="flex space-y-1 flex-col">
+      <div v-for="cat in selectedCategoriesObjects" :key="cat.id">
+        <FormButton
+          size="sm"
+          :class="`block`"
+          full-width
+          :icon-right="XMarkIcon"
+          @click="selectOrUnselectCategory(cat.id)"
+        >
+          {{ cat.name }}
+        </FormButton>
+      </div>
+    </div>
+    <div
+      class="flex space-y-1 flex-col simple-scrollbar h-64 overflow-y-auto overflow-x-hidden"
+    >
+      <FormButton
+        v-for="cat in searchResults"
+        :key="cat.id"
+        :class="`block`"
+        size="sm"
+        :color="`${selectedCategories.includes(cat.id) ? 'primary' : 'outline'}`"
+        full-width
+        @click="selectOrUnselectCategory(cat.id)"
+      >
+        {{ cat.name }}
+      </FormButton>
+      <div v-if="searchResults.length === 0" class="text-xs text-center">
+        Nothing found
+      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { XMarkIcon } from '@heroicons/vue/20/solid'
 import type {
   CategoriesData,
   ISendFilter,
@@ -33,7 +54,6 @@ import type {
 } from '~/lib/models/card/send'
 
 const searchValue = ref<string>()
-const selectedValues = ref<string[]>([])
 
 const emit = defineEmits<{
   (e: 'update:filter', filter: ISendFilter): void
@@ -44,15 +64,37 @@ const props = defineProps<{
 }>()
 
 const availableCategories = ref<CategoriesData[]>(props.filter.availableCategories)
-const sortedCategories = computed(() => {
-  return [...availableCategories.value].sort((a, b) => {
-    const aSelected = selectedValues.value.includes(a.id) ? -1 : 1
-    const bSelected = selectedValues.value.includes(b.id) ? -1 : 1
-    return aSelected - bSelected || a.name.localeCompare(b.name)
-  })
+
+const searchResults = computed(() => {
+  const searchVal = searchValue.value
+  if (!searchVal?.length)
+    return availableCategories.value.filter(
+      (cat) => !selectedCategories.value.includes(cat.id)
+    )
+
+  return availableCategories.value.filter(
+    (cat) =>
+      cat.name.toLowerCase().includes(searchVal.toLowerCase()) &&
+      !selectedCategories.value.includes(cat.id)
+  )
 })
 
 const selectedCategories = ref<string[]>([])
+
+const selectOrUnselectCategory = (id: string) => {
+  const index = selectedCategories.value.indexOf(id)
+  if (index !== -1) {
+    selectedCategories.value.splice(index, 1)
+  } else {
+    selectedCategories.value.push(id)
+  }
+}
+
+const selectedCategoriesObjects = computed(() => {
+  return selectedCategories.value.map((id) =>
+    availableCategories.value.find((cat) => cat.id === id)
+  ) as CategoriesData[]
+})
 
 watch(
   selectedCategories,
@@ -66,31 +108,4 @@ watch(
   },
   { deep: true, immediate: true }
 )
-
-const searchFilterPredicate = (item: string, search: string) =>
-  item.toLocaleLowerCase().includes(search.toLocaleLowerCase())
-
-const finalItems = computed(() => {
-  const searchVal = searchValue.value
-  if (!searchVal?.length) return sortedCategories.value
-
-  return sortedCategories.value.filter(
-    (i) =>
-      searchFilterPredicate?.(i.name, searchVal) ||
-      selectedCategories.value.includes(i.id)
-  )
-})
-
-const handleCheckBoxChange = (id: string, newValue: boolean) => {
-  console.log(newValue, id)
-
-  if (newValue) {
-    selectedValues.value.push(id)
-  } else {
-    const index = selectedValues.value.indexOf(id)
-    if (index > -1) {
-      selectedValues.value.splice(index, 1)
-    }
-  }
-}
 </script>
