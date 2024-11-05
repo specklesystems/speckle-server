@@ -154,8 +154,8 @@
           </LayoutSidebarMenu>
           <template #promo>
             <LayoutSidebarPromo
-              title="SpeckleCon 2024"
-              text="Join us in London on Nov 13-14 for the ultimate community event."
+              title="Last chance for SpeckleCon!"
+              text="Grab one of the last spots at the ultimate community event in London on Nov 13-14."
               button-text="Get tickets"
               @on-click="onPromoClick"
             />

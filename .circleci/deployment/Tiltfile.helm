@@ -45,11 +45,12 @@ k8s_yaml('./manifests/priorityclass.yaml')
 k8s_yaml('./manifests/speckle-server.secret.yaml')
 
 # Install charts
+# Postgres 16.4 is packaged in chart 15.5.38
 helm_resource('postgresql',
             release_name='postgresql',
             namespace='postgres',
             chart='oci://registry-1.docker.io/bitnamicharts/postgresql',
-            flags=['--version=^12.0.0',
+            flags=['--version=^15.5.38',
                     '--values=./values/postgres.values.yaml',
                     '--kube-context=kind-speckle-server'],
             deps=['./values/postgres.values.yaml'],

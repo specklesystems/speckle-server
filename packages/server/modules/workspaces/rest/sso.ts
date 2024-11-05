@@ -111,6 +111,7 @@ import {
   SsoUserEmailUnverifiedError,
   SsoVerificationCodeMissingError
 } from '@/modules/workspaces/errors/sso'
+import { getEventBus } from '@/modules/shared/services/eventBus'
 
 const moveAuthParamsToSessionMiddleware = moveAuthParamsToSessionMiddlewareFactory()
 const sessionMiddleware = sessionMiddlewareFactory()
@@ -180,6 +181,29 @@ export const getSsoRouter = (): Router => {
   )
 
   router.get(
+    '/api/v1/workspaces/:workspaceSlug/sso/oidc/validate',
+    sessionMiddleware,
+    moveAuthParamsToSessionMiddleware,
+    validateRequest({
+      params: z.object({
+        workspaceSlug: z.string().min(1)
+      }),
+      query: oidcProvider
+    }),
+    handleSsoValidationRequestFactory({
+      getWorkspaceBySlug: getWorkspaceBySlugFactory({ db }),
+      startOidcSsoProviderValidation: startOidcSsoProviderValidationFactory({
+        getOidcProviderAttributes: getOIDCProviderAttributes,
+        storeOidcProviderValidationRequest: storeOIDCProviderValidationRequestFactory({
+          redis: getGenericRedis(),
+          encrypt: getEncryptor()
+        }),
+        generateCodeVerifier: generators.codeVerifier
+      })
+    })
+  )
+
+  router.get(
     '/api/v1/workspaces/:workspaceSlug/sso/oidc/callback',
     sessionMiddleware,
     validateRequest({
@@ -196,7 +220,8 @@ export const getSsoRouter = (): Router => {
           getRoles: getRolesFactory({ db: trx }),
           getUserServerRole: getUserServerRoleFactory({ db: trx }),
           getStream: getStreamFactory({ db: trx }),
-          getUserAclRole: getUserAclRoleFactory({ db: trx })
+          getUserAclRole: getUserAclRoleFactory({ db: trx }),
+          emitWorkspaceEvent: getEventBus().emit
         }),
         getWorkspaceBySlug: getWorkspaceBySlugFactory({ db: trx }),
         createOidcProvider: createOidcProviderFactory({

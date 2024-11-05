@@ -4,18 +4,16 @@
       <p class="text-sm">
         Speckle allows you to load multiple models in the same viewer.
       </p>
-      <p class="text-sm mt-2">
+      <p class="text-sm mt-3">
         <span v-show="!hasAddedOverlay">
           <FormButton
-            link
-            text
-            :icon-right="hasAddedOverlay ? CheckIcon : null"
+            color="outline"
+            :icon-right="hasAddedOverlay ? CheckIcon : PlusIcon"
             :disabled="hasAddedOverlay"
             @click="addOverlay()"
           >
-            Click here
+            Add another model
           </FormButton>
-          to give it a try!
         </span>
       </p>
     </div>
@@ -31,7 +29,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { CheckIcon } from '@heroicons/vue/24/solid'
+import { CheckIcon, PlusIcon } from '@heroicons/vue/24/solid'
 import { SpeckleViewer } from '@speckle/shared'
 import { useQuery } from '@vue/apollo-composable'
 import { latestModelsQuery } from '~~/lib/projects/graphql/queries'
@@ -41,6 +39,8 @@ import {
 } from '~~/lib/viewer/composables/setup'
 
 import { SECOND_MODEL_NAME } from '~~/lib/auth/composables/onboarding'
+
+const emit = defineEmits(['hasAddedOverlay'])
 
 const { items } = useInjectedViewerRequestedResources()
 const { project } = useInjectedViewerLoadedResources()
@@ -62,6 +62,7 @@ async function addOverlay() {
     ])
 
   hasAddedOverlay.value = true
+  emit('hasAddedOverlay')
 }
 
 onBeforeUnmount(() => {

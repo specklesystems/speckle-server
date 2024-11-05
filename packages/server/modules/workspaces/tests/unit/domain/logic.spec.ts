@@ -4,6 +4,10 @@ import {
   isWorkspaceRole,
   userEmailsCompliantWithWorkspaceDomains
 } from '@/modules/workspaces/domain/logic'
+import {
+  getDefaultSsoSessionExpirationDate,
+  isValidSsoSession
+} from '@/modules/workspaces/domain/sso/logic'
 import { WorkspaceDomainsInvalidState } from '@/modules/workspaces/errors/workspace'
 import { WorkspaceDomain } from '@/modules/workspacesCore/domain/types'
 import { expectToThrow } from '@/test/assertionHelper'
@@ -114,6 +118,28 @@ describe('workspace domain logic', () => {
     })
     it('returns true for workspace roles', () => {
       expect(isWorkspaceRole(Roles.Workspace.Admin)).to.equal(true)
+    })
+  })
+  describe('isValidSsoSession', () => {
+    it('returns true for sessions that have not yet expired', () => {
+      expect(
+        isValidSsoSession({
+          userId: '',
+          providerId: '',
+          createdAt: new Date(),
+          validUntil: getDefaultSsoSessionExpirationDate()
+        })
+      ).to.be.true
+    })
+    it('returns false for sessions that have expired', () => {
+      expect(
+        isValidSsoSession({
+          userId: '',
+          providerId: '',
+          createdAt: new Date(),
+          validUntil: new Date()
+        })
+      ).to.be.false
     })
   })
 })

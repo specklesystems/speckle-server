@@ -5,7 +5,9 @@ import {
   StoreOidcProviderValidationRequest,
   StoreProviderRecord,
   AssociateSsoProviderWithWorkspace,
-  GetWorkspaceSsoProvider
+  GetWorkspaceSsoProvider,
+  ListWorkspaceSsoMemberships,
+  ListUserSsoSessions
 } from '@/modules/workspaces/domain/sso/operations'
 import {
   OidcProvider,
@@ -19,11 +21,14 @@ import {
   FindEmailsByUserId,
   UpdateUserEmail
 } from '@/modules/core/domain/userEmails/operations'
-import { isWorkspaceRole } from '@/modules/workspaces/domain/logic'
+import { isWorkspaceRole, toLimitedWorkspace } from '@/modules/workspaces/domain/logic'
 import { UserWithOptionalRole } from '@/modules/core/repositories/users'
 import { DeleteInvite, FindInvite } from '@/modules/serverinvites/domain/operations'
 import { UpsertWorkspaceRole } from '@/modules/workspaces/domain/operations'
-import { CreateValidatedUser } from '@/modules/core/domain/users/operations'
+import {
+  CreateValidatedUser,
+  GetUserByEmail
+} from '@/modules/core/domain/users/operations'
 import {
   OidcProviderMissingGrantTypeError,
   SsoProviderExistsError,
@@ -31,6 +36,8 @@ import {
   SsoUserInviteRequiredError
 } from '@/modules/workspaces/errors/sso'
 import { WorkspaceInvalidRoleError } from '@/modules/workspaces/errors/workspace'
+import { LimitedWorkspace } from '@/modules/workspacesCore/domain/types'
+import { isValidSsoSession } from '@/modules/workspaces/domain/sso/logic'
 
 // this probably should go a lean validation endpoint too
 const validateOidcProviderAttributes = ({
@@ -229,4 +236,44 @@ export const linkUserWithSsoProviderFactory =
         }
       })
     }
+  }
+
+export const listWorkspaceSsoMembershipsByUserEmailFactory =
+  ({
+    getUserByEmail,
+    listWorkspaceSsoMemberships
+  }: {
+    getUserByEmail: GetUserByEmail
+    listWorkspaceSsoMemberships: ListWorkspaceSsoMemberships
+  }) =>
+  async (args: { userEmail: string }): Promise<LimitedWorkspace[]> => {
+    const user = await getUserByEmail(args.userEmail)
+    if (!user) return []
+
+    const workspaces = await listWorkspaceSsoMemberships({ userId: user.id })
+
+    // Return limited workspace version of each workspace
+    return workspaces.map(toLimitedWorkspace)
+  }
+
+export const listUserExpiredSsoSessionsFactory =
+  ({
+    listWorkspaceSsoMemberships,
+    listUserSsoSessions
+  }: {
+    listWorkspaceSsoMemberships: ListWorkspaceSsoMemberships
+    listUserSsoSessions: ListUserSsoSessions
+  }) =>
+  async (args: { userId: string }): Promise<LimitedWorkspace[]> => {
+    const workspaces = await listWorkspaceSsoMemberships({ userId: args.userId })
+    const sessions = await listUserSsoSessions({ userId: args.userId })
+
+    const validSessions = sessions.filter(isValidSsoSession)
+
+    return workspaces
+      .filter(
+        (workspace) =>
+          !validSessions.some((session) => session.workspaceId === workspace.id)
+      )
+      .map(toLimitedWorkspace)
   }
