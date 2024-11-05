@@ -1,34 +1,39 @@
 <template>
   <div class="mt-4 space-y-2">
-    <FormSelectBase
-      key="name"
-      v-model="selectedCategories"
-      :search="true"
-      :search-placeholder="''"
-      :filter-predicate="searchFilterPredicate"
-      name="category"
-      label="Category"
-      placeholder="Nothing selected"
-      class="w-full"
-      fixed-height
-      show-label
-      :items="filter.availableCategories.map((c) => c.name)"
-      :allow-unset="false"
-      multiple
-      mount-menu-on-body
-    >
-      <template #something-selected="{ value }">
-        <span class="text-primary text-base text-sm">{{ value }}</span>
-      </template>
-      <template #option="{ item }">
-        <span class="text-base text-sm">{{ item }}</span>
-      </template>
-    </FormSelectBase>
+    <div class="flex items-center space-x-2 justify-between">
+      <FormTextInput
+        v-model="searchValue"
+        placeholder="Search"
+        name="search"
+        autocomplete="off"
+        :show-clear="!!searchValue"
+        full-width
+        color="foundation"
+      />
+    </div>
+    <div>
+      <ul>
+        <li v-for="i in finalItems" :key="i.id">
+          <FormCheckbox
+            :name="i.name"
+            :model-value="selectedValues.includes(i.id)"
+            @update:model-value="(newValue) => handleCheckBoxChange(i.id, !!newValue)"
+          ></FormCheckbox>
+        </li>
+      </ul>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import type { ISendFilter, RevitCategoriesSendFilter } from '~/lib/models/card/send'
+import type {
+  CategoriesData,
+  ISendFilter,
+  RevitCategoriesSendFilter
+} from '~/lib/models/card/send'
+
+const searchValue = ref<string>()
+const selectedValues = ref<string[]>([])
 
 const emit = defineEmits<{
   (e: 'update:filter', filter: ISendFilter): void
@@ -38,16 +43,22 @@ const props = defineProps<{
   filter: RevitCategoriesSendFilter
 }>()
 
-const selectedCategories = ref<string[]>([])
+const availableCategories = ref<CategoriesData[]>(props.filter.availableCategories)
+const sortedCategories = computed(() => {
+  return [...availableCategories.value].sort((a, b) => {
+    const aSelected = selectedValues.value.includes(a.id) ? -1 : 1
+    const bSelected = selectedValues.value.includes(b.id) ? -1 : 1
+    return aSelected - bSelected || a.name.localeCompare(b.name)
+  })
+})
 
-const searchFilterPredicate = (item: string, search: string) =>
-  item.toLocaleLowerCase().includes(search.toLocaleLowerCase())
+const selectedCategories = ref<string[]>([])
 
 watch(
   selectedCategories,
   (newValue) => {
     const filter = { ...props.filter } as RevitCategoriesSendFilter
-    filter.selectedCategories = filter.availableCategories
+    filter.selectedCategories = availableCategories.value
       .filter((c) => newValue.includes(c.name))
       .map((c) => c.id)
     filter.summary = newValue.join(', ') // TODO: better
@@ -55,4 +66,31 @@ watch(
   },
   { deep: true, immediate: true }
 )
+
+const searchFilterPredicate = (item: string, search: string) =>
+  item.toLocaleLowerCase().includes(search.toLocaleLowerCase())
+
+const finalItems = computed(() => {
+  const searchVal = searchValue.value
+  if (!searchVal?.length) return sortedCategories.value
+
+  return sortedCategories.value.filter(
+    (i) =>
+      searchFilterPredicate?.(i.name, searchVal) ||
+      selectedCategories.value.includes(i.id)
+  )
+})
+
+const handleCheckBoxChange = (id: string, newValue: boolean) => {
+  console.log(newValue, id)
+
+  if (newValue) {
+    selectedValues.value.push(id)
+  } else {
+    const index = selectedValues.value.indexOf(id)
+    if (index > -1) {
+      selectedValues.value.splice(index, 1)
+    }
+  }
+}
 </script>
