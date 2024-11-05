@@ -30,6 +30,7 @@ describe('Workspace regions GQL', () => {
   const myFirstWorkspace: BasicTestWorkspace = {
     id: '',
     ownerId: '',
+    slug: '',
     name: 'My first workspace'
   }
 
@@ -103,6 +104,7 @@ describe('Workspace regions GQL', () => {
     const mySecondWorkspace: BasicTestWorkspace = {
       id: '',
       ownerId: '',
+      slug: '',
       name: 'My second workspace'
     }
 
@@ -147,6 +149,7 @@ describe('Workspace regions GQL', () => {
     const myThirdWorkspace: BasicTestWorkspace = {
       id: '',
       ownerId: '',
+      slug: '',
       name: 'My third workspace'
     }
 

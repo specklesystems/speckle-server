@@ -190,7 +190,7 @@ export const testApolloServer = async (params?: {
       options?.authUserId || options?.context
         ? await buildMergedContext({
             authUserId: options?.authUserId,
-            contexts: options?.context ? [options.context] : []
+            contexts: [baseCtx, ...(options?.context ? [options.context] : [])]
           })
         : undefined
 

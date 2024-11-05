@@ -58,6 +58,7 @@ import { OidcProvider } from '@/modules/workspaces/domain/sso/types'
 import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
 import { getDefaultSsoSessionExpirationDate } from '@/modules/workspaces/domain/sso/logic'
 import { upsertPaidWorkspacePlanFactory } from '@/modules/gatekeeper/repositories/billing'
+import { SetOptional } from 'type-fest'
 
 export type BasicTestWorkspace = {
   /**
@@ -68,7 +69,10 @@ export type BasicTestWorkspace = {
    * Leave empty, will be filled on creation
    */
   ownerId: string
-  slug?: string
+  /**
+   * You can leave empty, will be filled on creation
+   */
+  slug: string
   name: string
   description?: string
   logo?: string
@@ -78,7 +82,7 @@ export type BasicTestWorkspace = {
 }
 
 export const createTestWorkspace = async (
-  workspace: BasicTestWorkspace,
+  workspace: SetOptional<BasicTestWorkspace, 'slug'>,
   owner: BasicTestUser,
   options?: { domain?: string; addPlan?: boolean }
 ) => {
