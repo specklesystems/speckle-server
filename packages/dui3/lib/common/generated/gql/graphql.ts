@@ -4411,7 +4411,6 @@ export type ObjectQueryQueryVariables = Exact<{
   objectId: Scalars['String']['input'];
 }>;
 
-
 export type ObjectQueryQuery = { __typename?: 'Query', project: { __typename?: 'Project', object?: { __typename?: 'Object', id: string, data?: {} | null } | null } };
 
 export type ProjectAddByUrlQueryWithVersionQueryVariables = Exact<{
