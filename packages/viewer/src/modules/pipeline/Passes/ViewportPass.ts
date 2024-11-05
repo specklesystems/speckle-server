@@ -4,7 +4,6 @@ import {
   Material,
   NoBlending,
   NormalBlending,
-  Plane,
   Texture
 } from 'three'
 import { PassOptions } from './GPass.js'
@@ -63,10 +62,6 @@ export class ViewportPass extends GeometryPass {
 
     this.viewportMaterial = new SpeckleViewportMaterial({})
     this.options = DefaultViewportPassOptions
-  }
-
-  public setClippingPlanes(planes: Plane[]) {
-    this.viewportMaterial.clippingPlanes = planes
   }
 
   protected setMatcapTexture(asset: Asset | null) {

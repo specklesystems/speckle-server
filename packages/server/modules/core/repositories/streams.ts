@@ -826,7 +826,8 @@ export const createStreamFactory =
       isPublic: shouldBePublic,
       isDiscoverable: shouldBeDiscoverable,
       updatedAt: knex.fn.now(),
-      workspaceId: workspaceId || null
+      workspaceId: workspaceId || null,
+      regionKey: null
     }
 
     // Create the stream & set up permissions

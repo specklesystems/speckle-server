@@ -1123,6 +1123,7 @@ jobs:
   publish-viewer-sandbox-cloudflare-pages:
     docker: *docker-node-image
     working_directory: *work-dir
+    resource_class: large
     steps:
       - checkout
       - restore_cache:

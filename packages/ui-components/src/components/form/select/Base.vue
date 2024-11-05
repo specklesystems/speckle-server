@@ -133,7 +133,7 @@
                       active: boolean,
                       selected: boolean
                     }"
-                    :value="item"
+                    :value="(item as SingleItem)"
                     :disabled="disabledItemPredicate?.(item) || false"
                   >
                     <li
@@ -344,7 +344,9 @@ const props = defineProps({
    * Validation stuff
    */
   rules: {
-    type: [String, Object, Function, Array] as PropType<RuleExpression<ValueType>>,
+    type: [String, Object, Function, Array] as PropType<
+      Optional<RuleExpression<ValueType>>
+    >,
     default: undefined
   },
   /**

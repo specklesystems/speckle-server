@@ -25,7 +25,7 @@ export interface SelectionExtensionOptions {
   hoverMaterialData?: RenderMaterial & DisplayStyle & MaterialOptions
 }
 
-const DefaultSelectionExtensionOptions: SelectionExtensionOptions = {
+export const DefaultSelectionExtensionOptions: SelectionExtensionOptions = {
   selectionMaterialData: {
     id: MathUtils.generateUUID(),
     color: 0x047efb,

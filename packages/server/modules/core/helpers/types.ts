@@ -54,6 +54,7 @@ export type StreamRecord = {
   allowPublicComments: boolean
   isDiscoverable: boolean
   workspaceId: Nullable<string>
+  regionKey: Nullable<string>
 }
 
 export type StreamAclRecord = {

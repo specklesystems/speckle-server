@@ -42,6 +42,11 @@ function parseFeatureFlags() {
     FF_NO_CLOSURE_WRITES: {
       schema: z.boolean(),
       defaults: { production: false, _: false }
+    },
+    // Enables workspaces multi region DB support
+    FF_WORKSPACES_MULTI_REGION_ENABLED: {
+      schema: z.boolean(),
+      defaults: { production: false, _: true }
     }
   })
 }
@@ -56,6 +61,7 @@ export function getFeatureFlags(): {
   FF_WORKSPACES_SSO_ENABLED: boolean
   FF_GATEKEEPER_MODULE_ENABLED: boolean
   FF_BILLING_INTEGRATION_ENABLED: boolean
+  FF_WORKSPACES_MULTI_REGION_ENABLED: boolean
 } {
   if (!parsedFlags) parsedFlags = parseFeatureFlags()
   return parsedFlags
