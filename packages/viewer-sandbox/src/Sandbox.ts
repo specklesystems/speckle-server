@@ -47,6 +47,7 @@ import Bright from '../assets/hdri/Bright.png'
 import { Euler, Vector3, Box3, Color } from 'three'
 import { GeometryType } from '@speckle/viewer'
 import { MeshBatch } from '@speckle/viewer'
+import { Catalogue } from './Extensions/Catalogue'
 
 export default class Sandbox {
   private viewer: Viewer
@@ -489,12 +490,20 @@ export default class Sandbox {
     const screenshot = this.tabs.pages[0].addButton({
       title: 'Screenshot'
     })
+    let reverse = false
     screenshot.on('click', async () => {
       // console.warn(await this.viewer.screenshot())
+
       const by = 'category'
       const data = this.properties.find((value) => {
         return value.key === by
       }) as PropertyInfo
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      //@ts-ignore
+      await this.viewer.getExtension(Catalogue).categorize(data.valueGroups)
+      if (!reverse) this.viewer.getExtension(Catalogue).play()
+      else this.viewer.getExtension(Catalogue).playReverse()
+      reverse = !reverse
       console.log(data)
     })
 

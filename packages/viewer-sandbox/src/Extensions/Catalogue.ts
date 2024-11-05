@@ -109,20 +109,20 @@ export class Catalogue extends Extension {
   }
 
   /** Example's main function */
-  public async categorize(input: { [categoryName: string]: Array<string> }) {
+  public async categorize(input: Array<{ ids: Array<string>; value: string }>) {
     this.wipe()
 
     const categories: { [id: string]: TreeNode[] } = {}
     this.textGroup = new Group()
 
-    for (const cat in input) {
-      for (let k = 0; k < input[cat].length; k++) {
-        const nodes = this.viewer.getWorldTree().findId(input[cat][k])
+    for (const cat of input) {
+      for (let k = 0; k < cat.ids.length; k++) {
+        const nodes = this.viewer.getWorldTree().findId(cat.ids[k])
         if (!nodes) continue
         const node = nodes[0]
         // if (!node.model.atomic || this.viewer.getWorldTree().isRoot(node)) continue
-        if (!categories[cat]) categories[cat] = []
-        categories[cat].push(node)
+        if (!categories[cat.value]) categories[cat.value] = []
+        categories[cat.value].push(node)
       }
     }
 
@@ -156,9 +156,11 @@ export class Catalogue extends Extension {
           .getRenderViewsForNode(node)
 
         /** Get the batch objects which we'll animate */
-        const objects = rvs.map((rv: NodeRenderView) => {
-          return this.viewer.getRenderer().getObject(rv)
-        })
+        const objects = rvs
+          .map((rv: NodeRenderView) => {
+            return this.viewer.getRenderer().getObject(rv)
+          })
+          .filter((value) => value)
 
         /** Compute the union of all the batch objects bounds in the node */
         objects.forEach((obj: BatchObject | null) => {
@@ -242,59 +244,59 @@ export class Catalogue extends Extension {
       })
     }
 
-    for (const categoryBox of categoryBoxes) {
-      /** Create a speckle text object */
-      const text = new SpeckleText('test-text', ObjectLayers.OVERLAY)
+    // for (const categoryBox of categoryBoxes) {
+    //   /** Create a speckle text object */
+    //   const text = new SpeckleText('test-text', ObjectLayers.OVERLAY)
 
-      /** Simple text material */
-      const material = new SpeckleTextMaterial(
-        {
-          color: 0x1a1a1a,
-          opacity: 1,
-          side: DoubleSide
-        },
-        ['USE_RTE', 'BILLBOARD_FIXED']
-      )
-      material.toneMapped = false
-      material.color.convertSRGBToLinear()
-      material.opacity = 1
-      material.transparent = false
-      material.depthTest = false
-      material.billboardPixelHeight = 20
-      material.userData.billboardPos.value.copy(text.position)(
-        text.textMesh as unknown as Mesh
-      ).material = material.getDerivedMaterial()
+    //   /** Simple text material */
+    //   const material = new SpeckleTextMaterial(
+    //     {
+    //       color: 0x1a1a1a,
+    //       opacity: 1,
+    //       side: DoubleSide
+    //     },
+    //     ['USE_RTE', 'BILLBOARD_FIXED']
+    //   )
+    //   material.toneMapped = false
+    //   material.color.convertSRGBToLinear()
+    //   material.opacity = 1
+    //   material.transparent = false
+    //   material.depthTest = false
+    //   material.billboardPixelHeight = 20
+    //   material.userData.billboardPos.value.copy(text.position)(
+    //     text.textMesh as unknown as Mesh
+    //   ).material = material.getDerivedMaterial()
 
-      if (text.backgroundMesh) text.backgroundMesh.renderOrder = 3
-      ;(text.textMesh as unknown as Mesh).renderOrder = 4
+    //   if (text.backgroundMesh) text.backgroundMesh.renderOrder = 3
+    //   ;(text.textMesh as unknown as Mesh).renderOrder = 4
 
-      /** Set the layers to PROPS, so that AO and interactions will ignore them */
-      text.layers.set(ObjectLayers.OVERLAY)
-      ;(text.textMesh as unknown as Mesh).layers.set(ObjectLayers.OVERLAY)
-      /** Update the text with the cateogry name, size and anchor */
-      await text
-        .update({
-          textValue: categoryBox.category,
-          height: 1,
-          anchorX: '50%',
-          anchorY: '43%'
-        })
-        .then(() => {
-          text.style = {
-            textColor: new Color(0x1a1a1a),
-            backgroundColor: new Color(0xffffff),
-            billboard: true,
-            backgroundPixelHeight: 20
-          }
-          /** Move the text to the bottom center of the category box */
-          text.setTransform(
-            new Vector3(origin.x + categoryBox.x, origin.y + categoryBox.y, 0)
-          )
-        })
-      /** Add the text to the scene */
-      this.textGroup.add(text)
-    }
-    this.viewer.getRenderer().scene.add(this.textGroup)
+    //   /** Set the layers to PROPS, so that AO and interactions will ignore them */
+    //   text.layers.set(ObjectLayers.OVERLAY)
+    //   ;(text.textMesh as unknown as Mesh).layers.set(ObjectLayers.OVERLAY)
+    //   /** Update the text with the cateogry name, size and anchor */
+    //   await text
+    //     .update({
+    //       textValue: categoryBox.category,
+    //       height: 1,
+    //       anchorX: '50%',
+    //       anchorY: '43%'
+    //     })
+    //     .then(() => {
+    //       text.style = {
+    //         textColor: new Color(0x1a1a1a),
+    //         backgroundColor: new Color(0xffffff),
+    //         billboard: true,
+    //         backgroundPixelHeight: 20
+    //       }
+    //       /** Move the text to the bottom center of the category box */
+    //       text.setTransform(
+    //         new Vector3(origin.x + categoryBox.x, origin.y + categoryBox.y, 0)
+    //       )
+    //     })
+    //   /** Add the text to the scene */
+    //   this.textGroup.add(text)
+    // }
+    // this.viewer.getRenderer().scene.add(this.textGroup)
   }
 
   private easeOutQuart(x: number): number {

@@ -81,7 +81,6 @@ const createViewer = async (containerName: string, stream: string) => {
     Object.assign(sandbox.sceneParams.worldSize, viewer.World.worldSize)
     Object.assign(sandbox.sceneParams.worldOrigin, viewer.World.worldOrigin)
     sandbox.refresh()
-    void catalogue.categorize({})
   })
 
   viewer.on(ViewerEvent.UnloadComplete, () => {
