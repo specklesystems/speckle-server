@@ -20,37 +20,6 @@
 </a>
 </p>
 
-# About Speckle
-
-What is Speckle? Check our [![YouTube Video Views](https://img.shields.io/youtube/views/B9humiSpHzM?label=Speckle%20in%201%20minute%20video&style=social)](https://www.youtube.com/watch?v=B9humiSpHzM)
-
-## Features
-
-- **Object-based:** say goodbye to files! Speckle is the first object based platform for the AEC industry
-- **Version control:** Speckle is the Git & Hub for geometry and BIM data
-- **Collaboration:** share your designs collaborate with others
-- **3D Viewer:** see your CAD and BIM models online, share and embed them anywhere
-- **Connectivity:** get your CAD and BIM models into other software without exporting or importing
-- **Real time:** get real time updates and notifications and changes
-- **GraphQL API:** get what you need anywhere you want it
-- **Webhooks:** the base for a automation and next-gen pipelines
-- **Built for developers:** we are building Speckle with developers in mind and have tools for every stack
-- **Built for the AEC industry:** Speckle connectors are plugins for the most common software used in the industry such as Revit, Rhino, Grasshopper, AutoCAD, Civil 3D, Excel, Unreal Engine, Unity, QGIS, Blender, ArchiCAD and more!
-
-## Try Speckle now!
-
-Give Speckle a try in no time by:
-
-- [![app.speckle.systems](https://img.shields.io/badge/https://-app.speckle.systems-0069ff?style=flat-square&logo=hackthebox&logoColor=white)](https://app.speckle.systems) ⇒ Create an account at app.speckle.systems
-- [![Deploy on your own infrastructure with docker compose](https://img.shields.io/badge/https://-speckle.guide-0069ff?style=flat-square&logo=hackthebox&logoColor=white)](<[https://](https://speckle.guide/dev/server-manualsetup.html)>) ⇒ Deploy on your own infrastructure with Docker Compose
-- [![Deploy on your own infrastructure with docker compose](https://img.shields.io/badge/https://-speckle.guide-0069ff?style=flat-square&logo=hackthebox&logoColor=white)](<[https://](https://speckle.guide/dev/server-setup-k8s.html)>) ⇒ Deploy on your own infrastructure with Kubernetes
-
-## Resources
-
-- [![Community forum users](https://img.shields.io/badge/community-forum-green?style=for-the-badge&logo=discourse&logoColor=white)](https://speckle.community) for help, feature requests or just to hang with other speckle enthusiasts, check out our community forum!
-- [![website](https://img.shields.io/badge/tutorials-speckle.systems-royalblue?style=for-the-badge&logo=youtube)](https://speckle.systems) our tutorials portal is full of resources to get you started using Speckle
-- [![docs](https://img.shields.io/badge/docs-speckle.guide-orange?style=for-the-badge&logo=read-the-docs&logoColor=white)](https://speckle.guide/dev/) reference on almost any end-user and developer functionality
-
 # Repo structure
 
 This monorepo is the home of the Speckle v2 web packages:
