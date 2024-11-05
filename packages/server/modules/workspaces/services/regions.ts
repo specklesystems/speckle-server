@@ -2,8 +2,10 @@ import { GetRegions } from '@/modules/multiregion/domain/operations'
 import {
   AssignRegion,
   GetAvailableRegions,
+  GetDefaultRegion,
+  GetWorkspace,
   UpsertRegionAssignment,
-  DeleteAllRegionAssignments
+  UpsertWorkspace
 } from '@/modules/workspaces/domain/operations'
 import { WorkspaceRegionAssignmentError } from '@/modules/workspaces/errors/regions'
 
@@ -18,10 +20,19 @@ export const assignRegionFactory =
   (deps: {
     getAvailableRegions: GetAvailableRegions
     upsertRegionAssignment: UpsertRegionAssignment
-    deleteAllRegionAssignments: DeleteAllRegionAssignments
+    getDefaultRegion: GetDefaultRegion
+    getWorkspace: GetWorkspace
+    insertRegionWorkspace: UpsertWorkspace
   }): AssignRegion =>
   async (params) => {
     const { workspaceId, regionKey } = params
+
+    const workspace = await deps.getWorkspace({ workspaceId })
+    if (!workspace) {
+      throw new WorkspaceRegionAssignmentError('Workspace not found', {
+        info: { params }
+      })
+    }
 
     const availableRegions = await deps.getAvailableRegions({ workspaceId })
     if (!availableRegions.find((region) => region.key === regionKey)) {
@@ -33,7 +44,19 @@ export const assignRegionFactory =
       )
     }
 
-    // For now, only 1 region - delete old assignments
-    await deps.deleteAllRegionAssignments({ workspaceId })
+    const existingRegion = await deps.getDefaultRegion({ workspaceId })
+    if (existingRegion) {
+      throw new WorkspaceRegionAssignmentError(
+        'Workspace already has a region assigned',
+        {
+          info: { params }
+        }
+      )
+    }
+
+    // Set up region
     await deps.upsertRegionAssignment({ workspaceId, regionKey })
+
+    // Copy workspace into region db
+    await deps.insertRegionWorkspace({ workspace })
   }

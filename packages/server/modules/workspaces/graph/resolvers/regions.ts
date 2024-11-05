@@ -3,10 +3,13 @@ import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { getRegionsFactory } from '@/modules/multiregion/repositories'
 import { authorizeResolver } from '@/modules/shared'
 import {
-  deleteAllRegionAssignmentsFactory,
   getDefaultRegionFactory,
   upsertRegionAssignmentFactory
 } from '@/modules/workspaces/repositories/regions'
+import {
+  getWorkspaceFactory,
+  upsertWorkspaceFactory
+} from '@/modules/workspaces/repositories/workspaces'
 import {
   assignRegionFactory,
   getAvailableRegionsFactory
@@ -28,7 +31,7 @@ export default {
     }
   },
   WorkspaceMutations: {
-    setDefaultRegion: async (parent, args, ctx) => {
+    setDefaultRegion: async (_parent, args, ctx) => {
       await authorizeResolver(
         ctx.userId,
         args.workspaceId,
@@ -36,12 +39,17 @@ export default {
         ctx.resourceAccessRules
       )
 
+      // TODO: Resolve w/ gergo's algo
+      const regionDb = db
+
       const assignRegion = assignRegionFactory({
         getAvailableRegions: getAvailableRegionsFactory({
           getRegions: getRegionsFactory({ db })
         }),
         upsertRegionAssignment: upsertRegionAssignmentFactory({ db }),
-        deleteAllRegionAssignments: deleteAllRegionAssignmentsFactory({ db })
+        getDefaultRegion: getDefaultRegionFactory({ db }),
+        getWorkspace: getWorkspaceFactory({ db }),
+        insertRegionWorkspace: upsertWorkspaceFactory({ db: regionDb })
       })
       await assignRegion({ workspaceId: args.workspaceId, regionKey: args.regionKey })
 

@@ -272,7 +272,3 @@ export type UpsertRegionAssignment = (params: {
   workspaceId: string
   regionKey: string
 }) => Promise<WorkspaceRegionAssignment>
-
-export type DeleteAllRegionAssignments = (params: {
-  workspaceId: string
-}) => Promise<void>

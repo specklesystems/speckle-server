@@ -2,7 +2,6 @@ import { buildTableHelper } from '@/modules/core/dbSchema'
 import { RegionRecord } from '@/modules/multiregion/helpers/types'
 import { Regions } from '@/modules/multiregion/repositories'
 import {
-  DeleteAllRegionAssignments,
   GetDefaultRegion,
   UpsertRegionAssignment
 } from '@/modules/workspaces/domain/operations'
@@ -30,13 +29,6 @@ export const upsertRegionAssignmentFactory =
       .merge()
 
     return row
-  }
-
-export const deleteAllRegionAssignmentsFactory =
-  (deps: { db: Knex }): DeleteAllRegionAssignments =>
-  async (params) => {
-    const { workspaceId } = params
-    await tables.workspaceRegions(deps.db).where({ workspaceId }).delete()
   }
 
 export const getDefaultRegionFactory =
