@@ -5,7 +5,7 @@ services:
   postgres:
     build:
       context: .
-      dockerfile: docker/postgres/Dockerfile
+      dockerfile: utils/postgres/Dockerfile
     restart: always
     environment:
       POSTGRES_DB: speckle
@@ -22,7 +22,7 @@ services:
   postgres-region1:
     build:
       context: .
-      dockerfile: docker/postgres/Dockerfile
+      dockerfile: utils/postgres/Dockerfile
     restart: always
     environment:
       POSTGRES_DB: speckle
