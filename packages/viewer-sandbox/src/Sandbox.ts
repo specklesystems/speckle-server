@@ -4,12 +4,19 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import {
   ArcticViewPipeline,
+  ClearFlags,
   DefaultLightConfiguration,
   DefaultPipeline,
+  InputType,
   MRTEdgesPipeline,
   MRTPenViewPipeline,
   MRTShadedViewPipeline,
+  NormalsPass,
+  ObjectLayers,
+  OutputPass,
+  Pipeline,
   SectionTool,
+  SpeckleRenderer,
   SpeckleStandardMaterial,
   TAAPipeline,
   TreeNode
@@ -46,7 +53,7 @@ import Mild2 from '../assets/hdri/Mild2.png'
 import Sharp from '../assets/hdri/Sharp.png'
 import Bright from '../assets/hdri/Bright.png'
 
-import { Euler, Vector3, Box3, Color } from 'three'
+import { Euler, Vector3, Box3, Color, LinearFilter } from 'three'
 import { GeometryType } from '@speckle/viewer'
 import { MeshBatch } from '@speckle/viewer'
 
@@ -526,7 +533,8 @@ export default class Sandbox {
           SHADED: 2,
           PEN: 3,
           ARCTIC: 4,
-          TAA: 5
+          TAA: 5,
+          DEBUG_NORMALS: 6
         }
       })
       .on('change', (value) => {
@@ -561,11 +569,31 @@ export default class Sandbox {
               this.viewer.getRenderer()
             )
             break
+          case 6:
+            this.viewer.getRenderer().pipeline = new (class extends Pipeline {
+              constructor(speckleRenderer: SpeckleRenderer) {
+                super(speckleRenderer)
+                const normalPass = new NormalsPass()
+                normalPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
+                normalPass.setClearColor(0x000000, 1)
+                normalPass.setClearFlags(ClearFlags.COLOR | ClearFlags.DEPTH)
+                normalPass.outputTarget = Pipeline.createRenderTarget({
+                  minFilter: LinearFilter,
+                  magFilter: LinearFilter
+                })
+                normalPass.outputTarget.samples = 4
+
+                const outputPass = new OutputPass()
+                outputPass.setTexture('tDiffuse', normalPass.outputTarget?.texture)
+                outputPass.options = { inputType: InputType.Normals }
+
+                this.passList.push(normalPass, outputPass)
+              }
+            })(this.viewer.getRenderer())
 
           default:
             break
         }
-        this.viewer.resize()
         this.viewer.requestRender(UpdateFlags.RENDER_RESET)
       })
 
@@ -633,122 +661,6 @@ export default class Sandbox {
             .setCameraView(sides[k] as CanonicalView, true)
         })
     }
-    // const edgesParams = {
-    //   depthMultiplier: 1,
-    //   depthBias: 0.001,
-    //   normalMultiplier: 1,
-    //   normalBias: 1,
-    //   outlineDensity: 0.5,
-    //   outlineThickness: 1,
-    //   smaa: false,
-    //   taa: true
-    // }
-    // const edgesFolder = this.tabs.pages[0].addFolder({
-    //   title: 'Edges',
-    //   expanded: true
-    // })
-    // edgesFolder
-    //   .addInput(edgesParams, 'depthMultiplier', {
-    //     label: 'depthMultiplier',
-    //     min: 0,
-    //     max: 1,
-    //     step: 0.01
-    //   })
-    //   .on('change', (value) => {
-    //     this.viewer.getRenderer().pipeline.edgesPass.edgesMaterial.uniforms[
-    //       'uDepthMultiplier'
-    //     ].value = value.value
-    //     this.viewer.getRenderer().pipeline.edgesPass.edgesMaterial.needsUpdate = true
-    //     this.viewer.requestRender()
-    //   })
-    // edgesFolder
-    //   .addInput(edgesParams, 'depthBias', {
-    //     label: 'depthBias',
-    //     min: 0,
-    //     max: 1,
-    //     step: 0.0001
-    //   })
-    //   .on('change', (value) => {
-    //     this.viewer.getRenderer().pipeline.edgesPass.edgesMaterial.uniforms[
-    //       'uDepthBias'
-    //     ].value = value.value
-    //     this.viewer.getRenderer().pipeline.edgesPass.edgesMaterial.needsUpdate = true
-    //     this.viewer.requestRender()
-    //   })
-    // edgesFolder
-    //   .addInput(edgesParams, 'normalMultiplier', {
-    //     label: 'normalMultiplier',
-    //     min: 0,
-    //     max: 1,
-    //     step: 0.01
-    //   })
-    //   .on('change', (value) => {
-    //     this.viewer.getRenderer().pipeline.edgesPass.edgesMaterial.uniforms[
-    //       'uNormalMultiplier'
-    //     ].value = value.value
-    //     this.viewer.getRenderer().pipeline.edgesPass.edgesMaterial.needsUpdate = true
-    //     this.viewer.requestRender()
-    //   })
-    // edgesFolder
-    //   .addInput(edgesParams, 'normalBias', {
-    //     label: 'normalBias',
-    //     min: 0,
-    //     max: 50,
-    //     step: 0.1
-    //   })
-    //   .on('change', (value) => {
-    //     this.viewer.getRenderer().pipeline.edgesPass.edgesMaterial.uniforms[
-    //       'uNormalBias'
-    //     ].value = value.value
-    //     this.viewer.getRenderer().pipeline.edgesPass.edgesMaterial.needsUpdate = true
-    //     this.viewer.requestRender()
-    //   })
-    // edgesFolder
-    //   .addInput(edgesParams, 'outlineDensity', {
-    //     label: 'outlineDensity',
-    //     min: 0,
-    //     max: 1,
-    //     step: 0.01
-    //   })
-    //   .on('change', (value) => {
-    //     this.viewer.getRenderer().pipeline.edgesPass.edgesMaterial.uniforms[
-    //       'uOutlineDensity'
-    //     ].value = value.value
-    //     this.viewer.getRenderer().pipeline.edgesPass.edgesMaterial.needsUpdate = true
-    //     this.viewer.requestRender()
-    //   })
-    // edgesFolder
-    //   .addInput(edgesParams, 'outlineThickness', {
-    //     label: 'outlineThickness',
-    //     min: 0,
-    //     max: 10,
-    //     step: 0.1
-    //   })
-    //   .on('change', (value) => {
-    //     this.viewer.getRenderer().pipeline.edgesPass.edgesMaterial.uniforms[
-    //       'uOutlineThickness'
-    //     ].value = value.value
-    //     this.viewer.getRenderer().pipeline.edgesPass.edgesMaterial.needsUpdate = true
-    //     this.viewer.requestRender()
-    //   })
-    // edgesFolder
-    //   .addInput(edgesParams, 'smaa', {
-    //     label: 'SMAA'
-    //   })
-    //   .on('change', (value) => {
-    //     this.viewer.getRenderer().pipeline.smaaPass.enabled = edgesParams.smaa
-    //     this.viewer.getRenderer().pipeline.pipelineOutput = 8
-    //     this.viewer.requestRender()
-    //   })
-    // edgesFolder
-    //   .addInput(edgesParams, 'taa', {
-    //     label: 'TAA'
-    //   })
-    //   .on('change', (value) => {
-    //     this.viewer.getRenderer().pipeline.taaPass.enabled = edgesParams.taa
-    //     this.viewer.getRenderer().pipeline.pipelineOutput = 8
-    //     this.viewer.requestRender()
-    //   })
   }
 
   makeSceneUI() {
@@ -872,192 +784,6 @@ export default class Sandbox {
         })
         this.viewer.requestRender(UpdateFlags.RENDER | UpdateFlags.SHADOWS)
       })
-
-    // const pipelineFolder = this.tabs.pages[1].addFolder({
-    //   title: 'Pipeline',
-    //   expanded: true
-    // })
-    // pipelineFolder
-    //   .addInput(this.pipelineParams, 'pipelineOutput', {
-    //     options: {
-    //       DEPTH_RGBA: 0,
-    //       DEPTH: 1,
-    //       COLOR: 2,
-    //       GEOMETRY_NORMALS: 3,
-    //       RECONSTRUCTED_NORMALS: 4,
-    //       DYNAMIC_AO: 5,
-    //       DYNAMIC_AO_BLURED: 6,
-    //       PROGRESSIVE_AO: 7,
-    //       FINAL: 8,
-    //       EDGES: 9
-    //     }
-    //   })
-    //   .on('change', () => {
-    //     this.viewer.getRenderer().pipelineOptions = this.pipelineParams
-    //     this.viewer.requestRender()
-    //   })
-
-    // pipelineFolder
-    //   .addInput(this.pipelineParams, 'accumulationFrames', {
-    //     min: 1,
-    //     max: 128,
-    //     step: 1
-    //   })
-    //   .on('change', () => {
-    //     this.viewer.getRenderer().pipelineOptions = this.pipelineParams
-    //     this.viewer.requestRender()
-    //   })
-
-    // const dynamicAoFolder = pipelineFolder.addFolder({
-    //   title: 'Dynamic AO',
-    //   expanded: false
-    // })
-    // dynamicAoFolder
-    //   .addInput(this.pipelineParams, 'dynamicAoEnabled')
-    //   .on('change', () => {
-    //     this.viewer.getRenderer().pipelineOptions = this.pipelineParams
-    //     this.viewer.requestRender()
-    //   })
-
-    // dynamicAoFolder
-    //   .addInput(this.pipelineParams.dynamicAoParams, 'intensity', { min: 0, max: 5 })
-    //   .on('change', () => {
-    //     this.viewer.getRenderer().pipelineOptions = this.pipelineParams
-    //     this.viewer.requestRender()
-    //   })
-
-    // dynamicAoFolder
-    //   .addInput(this.pipelineParams.dynamicAoParams, 'kernelRadius', {
-    //     min: 0,
-    //     max: 500
-    //   })
-    //   .on('change', () => {
-    //     this.viewer.getRenderer().pipelineOptions = this.pipelineParams
-    //     this.viewer.requestRender()
-    //   })
-
-    // dynamicAoFolder
-    //   .addInput(this.pipelineParams.dynamicAoParams, 'bias', {
-    //     min: -1,
-    //     max: 1
-    //   })
-    //   .on('change', () => {
-    //     this.viewer.getRenderer().pipelineOptions = this.pipelineParams
-    //     this.viewer.requestRender()
-    //   })
-    // dynamicAoFolder
-    //   .addInput(this.pipelineParams.dynamicAoParams, 'normalsType', {
-    //     options: {
-    //       DEFAULT: 0,
-    //       ADVANCED: 1,
-    //       ACCURATE: 2
-    //     }
-    //   })
-    //   .on('change', () => {
-    //     this.viewer.getRenderer().pipelineOptions = this.pipelineParams
-    //     this.viewer.requestRender()
-    //   })
-
-    // dynamicAoFolder
-    //   .addInput(this.pipelineParams.dynamicAoParams, 'blurEnabled', {})
-    //   .on('change', () => {
-    //     this.viewer.getRenderer().pipelineOptions = this.pipelineParams
-    //     this.viewer.requestRender()
-    //   })
-
-    // dynamicAoFolder
-    //   .addInput(this.pipelineParams.dynamicAoParams, 'blurRadius', {
-    //     min: 0,
-    //     max: 10
-    //   })
-    //   .on('change', () => {
-    //     this.viewer.getRenderer().pipelineOptions = this.pipelineParams
-    //     this.viewer.requestRender()
-    //   })
-
-    // dynamicAoFolder
-    //   .addInput(this.pipelineParams.dynamicAoParams, 'blurDepthCutoff', {
-    //     min: 0,
-    //     max: 1,
-    //     step: 0.00001
-    //   })
-    //   .on('change', () => {
-    //     this.viewer.getRenderer().pipelineOptions = this.pipelineParams
-    //     this.viewer.requestRender()
-    //   })
-
-    // const staticAoFolder = pipelineFolder.addFolder({
-    //   title: 'Static AO',
-    //   expanded: false
-    // })
-    // // staticAoFolder
-    // //   .addInput(Sandbox.pipelineParams, 'staticAoEnabled', {})
-    // //   .on('change', () => {
-    // //     this.viewer.getRenderer().pipelineOptions = Sandbox.pipelineParams
-    // //     this.viewer.requestRender()
-    // //   })
-    // staticAoFolder
-    //   .addInput(this.pipelineParams.staticAoParams, 'intensity', {
-    //     min: 0,
-    //     max: 5,
-    //     step: 0.01
-    //   })
-    //   .on('change', () => {
-    //     this.viewer.getRenderer().pipelineOptions = this.pipelineParams
-    //     this.viewer.requestRender()
-    //   })
-    // // staticAoFolder
-    // //   .addInput(Sandbox.pipelineParams.staticAoParams, 'minDistance', {
-    // //     min: 0,
-    // //     max: 100,
-    // //     step: 0.000001
-    // //   })
-    // //   .on('change', () => {
-    // //     this.viewer.getRenderer().pipelineOptions = Sandbox.pipelineParams
-    // //     this.viewer.requestRender()
-    // //   })
-
-    // // staticAoFolder
-    // //   .addInput(Sandbox.pipelineParams.staticAoParams, 'maxDistance', {
-    // //     min: 0,
-    // //     max: 100,
-    // //     step: 0.000001
-    // //   })
-    // //   .on('change', () => {
-    // //     this.viewer.getRenderer().pipelineOptions = Sandbox.pipelineParams
-    // //     this.viewer.requestRender()
-    // //   })
-    // staticAoFolder
-    //   .addInput(this.pipelineParams.staticAoParams, 'kernelRadius', {
-    //     min: 0,
-    //     max: 1000
-    //   })
-    //   .on('change', () => {
-    //     this.viewer.getRenderer().pipelineOptions = this.pipelineParams
-    //     this.viewer.requestRender()
-    //   })
-
-    // staticAoFolder
-    //   .addInput(this.pipelineParams.staticAoParams, 'bias', {
-    //     min: -1,
-    //     max: 1,
-    //     step: 0.0001
-    //   })
-    //   .on('change', () => {
-    //     this.viewer.getRenderer().pipelineOptions = this.pipelineParams
-    //     this.viewer.requestRender()
-    //   })
-
-    // staticAoFolder
-    //   .addInput(this.pipelineParams.staticAoParams, 'kernelSize', {
-    //     min: 1,
-    //     max: 128,
-    //     step: 1
-    //   })
-    //   .on('change', () => {
-    //     this.viewer.getRenderer().pipelineOptions = this.pipelineParams
-    //     this.viewer.requestRender()
-    //   })
 
     const lightsFolder = this.tabs.pages[1].addFolder({
       title: 'Lights',
