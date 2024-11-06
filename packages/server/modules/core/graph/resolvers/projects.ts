@@ -17,14 +17,12 @@ import {
 } from '@/modules/comments/repositories/comments'
 import { RateLimitError } from '@/modules/core/errors/ratelimit'
 import { StreamNotFoundError } from '@/modules/core/errors/stream'
-import { WorkspacesModuleDisabledError } from '@/modules/core/errors/workspaces'
 import { ProjectsEmitter } from '@/modules/core/events/projectsEmitter'
 import {
   ProjectVisibility,
   Resolvers,
   TokenResourceIdentifierType
 } from '@/modules/core/graph/generated/graphql'
-import { isWorkspacesModuleEnabled } from '@/modules/core/helpers/features'
 import { Roles, Scopes, StreamRoles } from '@/modules/core/helpers/mainConstants'
 import { isResourceAllowed, toProjectIdWhitelist } from '@/modules/core/helpers/token'
 import {
@@ -262,19 +260,6 @@ export = {
       const rateLimitResult = await getRateLimitResult('STREAM_CREATE', context.userId!)
       if (isRateLimitBreached(rateLimitResult)) {
         throw new RateLimitError(rateLimitResult)
-      }
-
-      if (!!args.input?.workspaceId) {
-        if (!isWorkspacesModuleEnabled()) {
-          // Ugly but complete, will go away if/when resolver moved to workspaces module
-          throw new WorkspacesModuleDisabledError()
-        }
-        await authorizeResolver(
-          context.userId!,
-          args.input.workspaceId,
-          Roles.Workspace.Member,
-          context.resourceAccessRules
-        )
       }
 
       const project = await createStreamReturnRecord(

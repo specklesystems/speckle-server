@@ -5,9 +5,15 @@ export class MultiRegionSupportDisabledError extends BaseError {
   static defaultMessage = 'Multi region support is disabled'
 }
 
-export class RegionCreateError extends BaseError {
-  static code = 'REGION_CREATE_ERROR'
-  static defaultMessage = 'An error occurred while creating the region'
+export class RegionKeyInvalidError extends BaseError {
+  static code = 'REGION_KEY_INVALID_ERROR'
+  static defaultMessage = 'Region key is not valid'
+  static statusCode = 400
+}
+
+export class RegionKeyTakenError extends BaseError {
+  static code = 'REGION_KEY_TAKEN_ERROR'
+  static defaultMessage = 'Region with this key already exists'
   static statusCode = 400
 }
 
