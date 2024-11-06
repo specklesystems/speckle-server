@@ -12,6 +12,7 @@ import SettingsWorkspacesMembers from '~/components/settings/workspaces/Members.
 import SettingsWorkspacesSecurity from '~/components/settings/workspaces/Security.vue'
 import SettingsWorkspacesProjects from '~/components/settings/workspaces/Projects.vue'
 import SettingsWorkspacesBilling from '~/components/settings/workspaces/Billing.vue'
+import SettingsWorkspacesRegions from '~/components/settings/workspaces/Regions.vue'
 import { useIsMultipleEmailsEnabled } from '~/composables/globals'
 import { Roles } from '@speckle/shared'
 import { SettingMenuKeys } from '~/lib/settings/helpers/types'
@@ -49,9 +50,14 @@ export const useSettingsMenu = () => {
     },
     [SettingMenuKeys.Workspace.Regions]: {
       title: 'Regions',
-      disabled: true,
-      tooltipText: 'Set up regions for custom data residency',
-      permission: [Roles.Workspace.Admin, Roles.Workspace.Member]
+      component: SettingsWorkspacesRegions,
+      permission: [Roles.Workspace.Admin, Roles.Workspace.Member],
+      ...(isMultiRegionEnabled
+        ? {}
+        : {
+            tooltipText: 'Set up regions for custom data residency',
+            disabled: true
+          })
     }
   })
 

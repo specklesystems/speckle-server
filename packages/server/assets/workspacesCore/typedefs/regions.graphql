@@ -1,0 +1,18 @@
+extend type Workspace {
+  """
+  Regions available to the workspace for project data residency
+  """
+  availableRegions: [ServerRegionItem!]! @hasWorkspaceRole(role: ADMIN)
+  """
+  The default region where project data will be stored, if set. If undefined, defaults to main/default
+  region.
+  """
+  defaultRegion: ServerRegionItem @hasWorkspaceRole(role: ADMIN)
+}
+
+extend type WorkspaceMutations {
+  """
+  Set the default region where project data will be stored. Only available to admins.
+  """
+  setDefaultRegion(workspaceId: String!, regionKey: String!): Workspace!
+}

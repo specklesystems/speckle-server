@@ -96,8 +96,8 @@ const initTestUser = (user: Partial<BasicTestUser>): BasicTestUser => ({
  * Create basic user for tests and on success mutate the input object to have
  * the new ID
  */
-export async function createTestUser(userObj: Partial<BasicTestUser>) {
-  const baseUser = initTestUser(userObj)
+export async function createTestUser(userObj?: Partial<BasicTestUser>) {
+  const baseUser = initTestUser(userObj || {})
 
   // Need to set values in both, in case userObj was defined outside of the function and passed in.
   // If we only set on baseUser, the param obj won't be updated
@@ -106,7 +106,7 @@ export async function createTestUser(userObj: Partial<BasicTestUser>) {
     val: BasicTestUser[Key]
   ) => {
     baseUser[key] = val
-    userObj[key] = val
+    if (userObj) userObj[key] = val
   }
 
   if (!baseUser.password) {

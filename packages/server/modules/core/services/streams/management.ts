@@ -1,10 +1,8 @@
 import { MaybeNullOrUndefined, Roles, wait } from '@speckle/shared'
 import { addStreamCreatedActivityFactory } from '@/modules/activitystream/services/streamActivity'
 import {
-  ProjectCreateInput,
   ProjectUpdateInput,
   ProjectUpdateRoleInput,
-  StreamCreateInput,
   StreamRevokePermissionInput,
   StreamUpdateInput
 } from '@/modules/core/graph/generated/graphql'
@@ -61,13 +59,7 @@ export const createStreamReturnRecordFactory =
     addStreamCreatedActivity: ReturnType<typeof addStreamCreatedActivityFactory>
     projectsEventsEmitter: ProjectsEventsEmitter
   }): CreateStream =>
-  async (
-    params: (StreamCreateInput | ProjectCreateInput) & {
-      ownerId: string
-      ownerResourceAccessRules?: MaybeNullOrUndefined<TokenResourceIdentifier[]>
-    },
-    options?: Partial<{ createActivity: boolean }>
-  ): Promise<StreamRecord> => {
+  async (params, options): Promise<StreamRecord> => {
     const { ownerId, ownerResourceAccessRules } = params
     const { createActivity = true } = options || {}
 

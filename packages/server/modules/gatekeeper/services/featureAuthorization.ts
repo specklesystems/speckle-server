@@ -4,7 +4,6 @@ import {
   WorkspaceFeatureAccessFunction
 } from '@/modules/gatekeeper/domain/operations'
 import { workspacePlanFeatures } from '@/modules/gatekeeper/domain/workspacePricing'
-import { WorkspacePlanNotFoundError } from '@/modules/gatekeeper/errors/billing'
 import { throwUncoveredError } from '@speckle/shared'
 
 export const canWorkspaceAccessFeatureFactory =
@@ -15,7 +14,7 @@ export const canWorkspaceAccessFeatureFactory =
   }): CanWorkspaceAccessFeature =>
   async ({ workspaceId, workspaceFeature }) => {
     const workspacePlan = await getWorkspacePlan({ workspaceId })
-    if (!workspacePlan) throw new WorkspacePlanNotFoundError()
+    if (!workspacePlan) return false
     switch (workspacePlan.status) {
       case 'valid':
       case 'trial':
@@ -36,7 +35,7 @@ export const canWorkspaceUseOidcSsoFactory =
   async ({ workspaceId }) =>
     canWorkspaceAccessFeatureFactory(deps)({ workspaceId, workspaceFeature: 'oidcSso' })
 
-export const canWorkspaceUseRegions =
+export const canWorkspaceUseRegionsFactory =
   (deps: { getWorkspacePlan: GetWorkspacePlan }): WorkspaceFeatureAccessFunction =>
   async ({ workspaceId }) =>
     canWorkspaceAccessFeatureFactory(deps)({

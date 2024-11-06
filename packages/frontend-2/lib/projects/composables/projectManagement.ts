@@ -21,7 +21,10 @@ import type {
   Workspace,
   WorkspaceProjectInviteCreateInput,
   InviteProjectUserMutation,
-  Project
+  Project,
+  WorkspaceProjectCreateInput,
+  CreateWorkspaceProjectMutation,
+  CreateProjectMutation
 } from '~~/lib/common/generated/gql/graphql'
 import {
   ROOT_QUERY,
@@ -43,7 +46,8 @@ import {
   updateProjectRoleMutation,
   updateWorkspaceProjectRoleMutation,
   useProjectInviteMutation,
-  useMoveProjectToWorkspaceMutation
+  useMoveProjectToWorkspaceMutation,
+  createWorkspaceProjectMutation
 } from '~~/lib/projects/graphql/mutations'
 import { onProjectUpdatedSubscription } from '~~/lib/projects/graphql/subscriptions'
 import { projectRoute } from '~/lib/common/helpers/route'
@@ -117,16 +121,32 @@ export function useCreateProject() {
   const { triggerNotification } = useGlobalToast()
   const { activeUser } = useActiveUser()
 
-  return async (input: ProjectCreateInput) => {
+  return async (input: ProjectCreateInput | WorkspaceProjectCreateInput) => {
     const userId = activeUser.value?.id
     if (!userId) return
 
     const res = await apollo
       .mutate({
-        mutation: createProjectMutation,
-        variables: { input },
+        ...('workspaceId' in input
+          ? {
+              mutation: createWorkspaceProjectMutation,
+              variables: { input }
+            }
+          : {
+              mutation: createProjectMutation,
+              variables: { input }
+            }),
         update: (cache, { data }) => {
-          const newProject = data?.projectMutations.create
+          // not sure why this isn't happening automatically
+          const typedData = data as
+            | CreateWorkspaceProjectMutation
+            | CreateProjectMutation
+
+          if (!typedData) return
+          const newProject =
+            'projectMutations' in typedData
+              ? typedData.projectMutations.create
+              : typedData.workspaceMutations.projects.create
 
           if (newProject?.id) {
             // Existing cache update for projects
@@ -136,7 +156,7 @@ export function useCreateProject() {
             >(
               cache,
               ROOT_QUERY,
-              (fieldName, _variables, value, details) => {
+              (_fieldName, _variables, value, details) => {
                 const projectListFields = Object.keys(value).filter(
                   (k) =>
                     details.revolveFieldNameAndVariables(k).fieldName === 'projectList'
@@ -150,7 +170,7 @@ export function useCreateProject() {
               { fieldNameWhitelist: ['admin'] }
             )
 
-            if (input.workspaceId) {
+            if ('workspaceId' in input && input.workspaceId) {
               const workspaceCacheId = getCacheId('Workspace', input.workspaceId)
 
               modifyObjectFields<WorkspaceProjectsArgs, Workspace['projects']>(
@@ -181,7 +201,18 @@ export function useCreateProject() {
       })
       .catch(convertThrowIntoFetchResult)
 
-    if (!res.data?.projectMutations.create.id) {
+    // not sure why this isn't happening automatically
+    const typedData = res.data as Optional<
+      CreateWorkspaceProjectMutation | CreateProjectMutation
+    >
+
+    const newProject = typedData
+      ? 'projectMutations' in typedData
+        ? typedData.projectMutations.create
+        : typedData.workspaceMutations.projects.create
+      : undefined
+
+    if (!newProject?.id) {
       const err = getFirstErrorMessage(res.errors)
       triggerNotification({
         type: ToastNotificationType.Danger,
@@ -195,7 +226,7 @@ export function useCreateProject() {
       })
     }
 
-    return res
+    return newProject
   }
 }
 

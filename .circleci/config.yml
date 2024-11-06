@@ -24,9 +24,13 @@ workflows:
             tags:
               # run tests for any commit on any branch, including any tags
               only: /.*/
+          requires:
+            - docker-publish-postgres-container
 
       - test-server-no-ff:
           filters: *filters-allow-all
+          requires:
+            - docker-publish-postgres-container
 
       - test-frontend-2:
           filters: *filters-allow-all
@@ -141,6 +145,12 @@ workflows:
             - get-version
 
       - docker-build-test-container:
+          context: *build-context
+          filters: *filters-build
+          requires:
+            - get-version
+
+      - docker-build-postgres-container:
           context: *build-context
           filters: *filters-build
           requires:
@@ -271,6 +281,12 @@ workflows:
             - test-server
             - test-server-no-ff
             - test-preview-service
+
+      - docker-publish-postgres-container:
+          context: *docker-hub-context
+          filters: *filters-publish
+          requires:
+            - docker-build-postgres-container
 
       - docker-publish-monitor-container:
           context: *docker-hub-context
@@ -439,7 +455,7 @@ jobs:
     docker:
       - image: cimg/node:18.19.0
       - image: cimg/redis:7.2.4
-      - image: cimg/postgres:16.4@sha256:2e4f1a965bdd9ba77aa6a0a7b93968c07576ba2a8a7cf86d5eb7b31483db1378
+      - image: 'speckle/speckle-postgres'
         environment:
           POSTGRES_DB: speckle2_test
           POSTGRES_PASSWORD: speckle
@@ -971,6 +987,12 @@ jobs:
       FOLDER: utils
       SPECKLE_SERVER_PACKAGE: test-deployment
 
+  docker-build-postgres-container:
+    <<: *build-job
+    environment:
+      FOLDER: utils
+      SPECKLE_SERVER_PACKAGE: postgres
+
   docker-build-monitor-container:
     <<: *build-job
     environment:
@@ -1034,6 +1056,12 @@ jobs:
     environment:
       FOLDER: utils
       SPECKLE_SERVER_PACKAGE: test-deployment
+
+  docker-publish-postgres-container:
+    <<: *publish-job
+    environment:
+      FOLDER: utils
+      SPECKLE_SERVER_PACKAGE: postgres
 
   docker-publish-monitor-container:
     <<: *publish-job
