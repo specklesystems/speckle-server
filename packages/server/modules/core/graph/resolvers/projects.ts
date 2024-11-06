@@ -126,12 +126,6 @@ const createStreamReturnRecord = createStreamReturnRecordFactory({
   }),
   projectsEventsEmitter: ProjectsEmitter.emit
 })
-const updateStreamAndNotify = updateStreamAndNotifyFactory({
-  authorizeResolver,
-  getStream,
-  updateStream: updateStreamFactory({ db }),
-  addStreamUpdatedActivity: addStreamUpdatedActivityFactory({ saveActivity, publish })
-})
 const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
 const isStreamCollaborator = isStreamCollaboratorFactory({
   getStream
@@ -201,9 +195,7 @@ const getUserStreamsCount = getUserStreamsCountFactory({ db })
 export = {
   Query: {
     async project(_parent, args, context) {
-      const projectDB = await getProjectDbClient({ projectId: args.id })
-
-      const getStream = getStreamFactory({ db: projectDB })
+      const getStream = getStreamFactory({ db })
       const stream = await getStream({
         streamId: args.id,
         userId: context.userId
@@ -272,6 +264,16 @@ export = {
       return await createOnboardingStream(userId!, resourceAccessRules)
     },
     async update(_parent, { update }, { userId, resourceAccessRules }) {
+      const projectDB = await getProjectDbClient({ projectId: update.id })
+      const updateStreamAndNotify = updateStreamAndNotifyFactory({
+        authorizeResolver,
+        getStream: getStreamFactory({ db: projectDB }),
+        updateStream: updateStreamFactory({ db: projectDB }),
+        addStreamUpdatedActivity: addStreamUpdatedActivityFactory({
+          saveActivity,
+          publish
+        })
+      })
       return await updateStreamAndNotify(update, userId!, resourceAccessRules)
     },
     async create(_parent, args, context) {
