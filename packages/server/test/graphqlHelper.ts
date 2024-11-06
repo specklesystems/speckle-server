@@ -5,11 +5,12 @@ import { TypedDocumentNode } from '@graphql-typed-document-node/core'
 import { buildApolloServer } from '@/app'
 import { addLoadersToCtx } from '@/modules/shared/middleware'
 import { Roles } from '@/modules/core/helpers/mainConstants'
-import { AllScopes, MaybeNullOrUndefined, Optional } from '@speckle/shared'
+import { AllScopes, MaybeNullOrUndefined } from '@speckle/shared'
 import { expect } from 'chai'
 import { ApolloServer, GraphQLResponse } from '@apollo/server'
 import { getUserFactory } from '@/modules/core/repositories/users'
 import { db } from '@/db/knex'
+import { pick } from 'lodash'
 
 type TypedGraphqlResponse<R = Record<string, any>> = GraphQLResponse<R>
 
@@ -108,33 +109,46 @@ export const createAuthedTestContext = (
   })
 
 const buildMergedContext = async (params: {
-  contexts?: Array<Partial<GraphQLContext>>
+  /**
+   * Base/initial context, if any
+   */
+  baseCtx?: GraphQLContext
+  /**
+   * Context overrides to apply at the very end
+   */
+  contextOverrides?: Array<Partial<GraphQLContext>>
+  /**
+   * If set, adjust context to be authed w/ all scopes and the actual user role for this user id.
+   */
   authUserId?: string
 }) => {
-  let baseCtx: Optional<GraphQLContext> = undefined
+  let baseCtx: GraphQLContext = params.baseCtx || createTestContext()
 
   // Init ctx from userId?
   if (params?.authUserId) {
     const userData = await getUser(params.authUserId, { withRole: true })
     const role = userData?.role || Roles.Server.User
+    const userCtx = createAuthedTestContext(params.authUserId, { role })
 
-    baseCtx = createAuthedTestContext(params.authUserId, { role })
-  } else {
-    baseCtx = createTestContext()
+    // Apply authed context to base
+    baseCtx = {
+      ...baseCtx,
+      ...pick(userCtx, ['auth', 'userId', 'role', 'token', 'scopes'])
+    }
   }
 
   // If ctx passed in also - merge them
-  if (params?.contexts?.length) {
-    for (const ctx of params.contexts) {
+  if (params?.contextOverrides?.length) {
+    for (const ctx of params.contextOverrides) {
       baseCtx = {
         ...baseCtx,
         ...ctx
       }
     }
-
-    // Apply dataloaders from scratch
-    baseCtx = createTestContext(baseCtx)
   }
+
+  // Apply dataloaders from scratch
+  baseCtx = createTestContext(baseCtx)
 
   return baseCtx
 }
@@ -156,7 +170,7 @@ export const testApolloServer = async (params?: {
 }) => {
   const baseCtx = await buildMergedContext({
     authUserId: params?.authUserId,
-    contexts: params?.context ? [params.context] : undefined
+    contextOverrides: params?.context ? [params.context] : undefined
   })
   const instance = await buildApolloServer()
 
@@ -189,8 +203,9 @@ export const testApolloServer = async (params?: {
     const operationCtx =
       options?.authUserId || options?.context
         ? await buildMergedContext({
+            baseCtx,
             authUserId: options?.authUserId,
-            contexts: [baseCtx, ...(options?.context ? [options.context] : [])]
+            contextOverrides: [...(options?.context ? [options.context] : [])]
           })
         : undefined
 
