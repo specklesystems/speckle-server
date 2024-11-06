@@ -1,6 +1,7 @@
 import { omit } from 'lodash-es'
 import type { SetRequired } from 'type-fest'
 import { useReadUserId } from '~/lib/auth/composables/activeUser'
+import { usePostAuthRedirect } from '~/lib/auth/composables/postAuthRedirect'
 import {
   useCreateErrorLoggingTransport,
   useGetErrorLoggingTransports,
@@ -235,11 +236,20 @@ export default defineNuxtPlugin(async (nuxtApp) => {
     window.addEventListener('unhandledrejection', unhandledHandler)
   }
 
+  const postAuthRedirect = usePostAuthRedirect()
+
   // Uncaught routing error handler
   router.onError((err, to, from) => {
     // skip 404, 403, 401
     if (isObjectLike(err) && 'statusCode' in err) {
       if ([404, 403, 401].includes(err.statusCode as number)) return
+    }
+
+    if (isObjectLike(err) && typeof err.message === 'string' && err.message?.includes('SSO_SESSION_MISSING_OR_EXPIRED_ERROR')) {
+      const path = `/workspaces/${err.message.replace('SSO_SESSION_MISSING_OR_EXPIRED_ERROR:', '')}/sso?expired=true`
+      postAuthRedirect.set(to.path)
+      router.push(path)
+      return
     }
 
     logger.error(err, 'Unhandled error in routing', {
