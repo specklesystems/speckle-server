@@ -4,6 +4,7 @@ import {
   CreateWebhookConfig,
   CreateWebhookEvent,
   DeleteWebhookConfig,
+  GetStreamWebhooks,
   GetWebhookById,
   UpdateWebhookConfig
 } from '@/modules/webhooks/domain/operations'
@@ -11,7 +12,6 @@ import { Webhook } from '@/modules/webhooks/domain/types'
 import { SetValuesNullable } from '@speckle/shared'
 import crs from 'crypto-random-string'
 import { StreamWithOptionalRole } from '@/modules/core/repositories/streams'
-import { Knex } from 'knex'
 import { ServerInfo } from '@/modules/core/helpers/types'
 import { GetStream } from '@/modules/core/domain/streams/operations'
 import { UserWithOptionalRole } from '@/modules/core/domain/users/types'
@@ -99,14 +99,14 @@ export const deleteWebhookFactory =
 
 export const dispatchStreamEventFactory =
   ({
-    db,
     getServerInfo,
     getStream,
     createWebhookEvent,
+    getStreamWebhooks,
     getUser
   }: {
-    db: Knex // TODO: this should not be injected here
     getServerInfo: GetServerInfo
+    getStreamWebhooks: GetStreamWebhooks
     getStream: GetStream
     createWebhookEvent: CreateWebhookEvent
     getUser: GetUser
@@ -138,13 +138,10 @@ export const dispatchStreamEventFactory =
 
     // Add stream info
     if (payload.streamId) {
-      payload.stream = await getStream(
-        {
-          streamId: payload.streamId,
-          userId: payload.userId ?? undefined
-        },
-        { trx: db.isTransaction ? await db.transaction() : undefined }
-      )
+      payload.stream = await getStream({
+        streamId: payload.streamId,
+        userId: payload.userId ?? undefined
+      })
     }
 
     // Add user info (except email and pwd)
@@ -158,12 +155,7 @@ export const dispatchStreamEventFactory =
 
     // with this select, we must have the streamid available on the webhook config,
     // even when the stream is deleted, to dispatch the stream deleted webhook events
-    const { rows } = await db.raw(
-      `
-      SELECT * FROM webhooks_config WHERE "streamId" = ?
-    `,
-      [streamId]
-    )
+    const rows = await getStreamWebhooks({ streamId })
     for (const wh of rows) {
       if (!wh.enabled) continue
       if (!(event in wh.triggers)) continue
