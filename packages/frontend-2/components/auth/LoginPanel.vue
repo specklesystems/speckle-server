@@ -22,9 +22,7 @@
         :app-id="appId"
         :newsletter-consent="false"
       />
-      <FormButton color="outline" full-width size="lg" :to="ssoLoginRoute">
-        Continue with SSO
-      </FormButton>
+
       <div class="h-px w-full bg-outline-3 mt-2 shrink-0" />
       <div>
         <AuthLoginWithEmailBlock
@@ -49,7 +47,7 @@ import { useQuery } from '@vue/apollo-composable'
 import { AuthStrategy } from '~~/lib/auth/helpers/strategies'
 import { useLoginOrRegisterUtils, useAuthManager } from '~~/lib/auth/composables/auth'
 import { LayoutDialog } from '@speckle/ui-components'
-import { registerRoute, ssoLoginRoute } from '~~/lib/common/helpers/route'
+import { registerRoute } from '~~/lib/common/helpers/route'
 import {
   authLoginPanelQuery,
   authLoginPanelWorkspaceInviteQuery

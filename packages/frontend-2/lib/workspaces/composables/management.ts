@@ -520,3 +520,53 @@ export const useWorkspaceSso = (params: { workspaceSlug: string }) => {
     error
   }
 }
+
+type WorkspaceSsoInfo = {
+  hasSsoEnabled: boolean
+  ssoProviderName?: string
+}
+
+type WorkspaceSsoResponse = {
+  ssoProviderName: string | null
+}
+
+export const useWorkspaceSsoPublic = (params: { workspaceSlug: string }) => {
+  const apiOrigin = useApiOrigin()
+  const logger = useLogger()
+
+  const loading = ref(true)
+  const error = ref<Error | null>(null)
+  const ssoInfo = ref<WorkspaceSsoInfo>({
+    hasSsoEnabled: false
+  })
+
+  onMounted(async () => {
+    try {
+      const res = await fetch(
+        `${apiOrigin}/api/v1/workspaces/${params.workspaceSlug}/sso`
+      )
+
+      if (!res.ok && res.status !== 304) {
+        return // SSO not configured
+      }
+
+      const data = (await res.json()) as WorkspaceSsoResponse
+
+      ssoInfo.value = {
+        hasSsoEnabled: !!data?.ssoProviderName,
+        ssoProviderName: data?.ssoProviderName || undefined
+      }
+    } catch (e) {
+      logger.error('SSO info error:', e)
+    } finally {
+      loading.value = false
+    }
+  })
+
+  return {
+    loading,
+    error,
+    hasSsoEnabled: computed(() => ssoInfo.value.hasSsoEnabled),
+    ssoProviderName: computed(() => ssoInfo.value.ssoProviderName)
+  }
+}

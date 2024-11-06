@@ -1,3 +1,4 @@
+import { useWorkspaceSso } from '~/lib/workspaces/composables/management'
 import { useApolloClientFromNuxt } from '~~/lib/common/composables/graphql'
 import {
   convertThrowIntoFetchResult,
@@ -9,6 +10,8 @@ import { workspaceAccessCheckQuery } from '~~/lib/workspaces/graphql/queries'
  * Used to validate that the workspace ID refers to a valid workspace and redirects to 404 if not
  */
 export default defineNuxtRouteMiddleware(async (to) => {
+  const logger = useLogger()
+
   // Skip access check if:
   // 1. We're in SSO flow with access_code
   // 2. We have an invite token
@@ -17,6 +20,19 @@ export default defineNuxtRouteMiddleware(async (to) => {
   }
 
   const workspaceSlug = to.params.slug as string
+
+  const { hasSsoEnabled, needsSsoLogin, error } = useWorkspaceSso({
+    workspaceSlug
+  })
+
+  logger.debug('SSO Middleware - status:', {
+    workspaceSlug,
+    hasSsoEnabled: hasSsoEnabled.value,
+    needsSsoLogin: needsSsoLogin.value,
+    error: error.value
+  })
+
+  logger.debug('SSO Middleware - checking workspace:', workspaceSlug)
 
   const client = useApolloClientFromNuxt()
 

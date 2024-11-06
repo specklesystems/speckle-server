@@ -1,15 +1,16 @@
 <template>
-  <div>
-    <div class="flex flex-col gap-3">
-      <Component
-        :is="getButtonComponent(strat)"
-        v-for="strat in thirdPartyStrategies"
-        :key="strat.id"
-        to="javascript:;"
-        :server-info="serverInfo"
-        @click="() => onClick(strat)"
-      />
-    </div>
+  <div class="flex flex-col gap-3">
+    <Component
+      :is="getButtonComponent(strat)"
+      v-for="strat in thirdPartyStrategies"
+      :key="strat.id"
+      to="javascript:;"
+      :server-info="serverInfo"
+      @click="() => onClick(strat)"
+    />
+    <FormButton color="outline" full-width size="lg" :to="ssoLoginRoute">
+      Continue with SSO
+    </FormButton>
   </div>
 </template>
 <script setup lang="ts">
@@ -19,6 +20,7 @@ import { AuthStrategy } from '~~/lib/auth/helpers/strategies'
 import { graphql } from '~~/lib/common/generated/gql'
 import type { AuthStategiesServerInfoFragmentFragment } from '~~/lib/common/generated/gql/graphql'
 import { useMixpanel } from '~~/lib/core/composables/mp'
+import { ssoLoginRoute } from '~~/lib/common/helpers/route'
 
 /**
  * TODO:

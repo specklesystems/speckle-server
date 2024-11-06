@@ -93,13 +93,12 @@ import { usePostAuthRedirect } from '~/lib/auth/composables/postAuthRedirect'
 import { graphql } from '~/lib/common/generated/gql'
 import type { WorkspaceInviteBlock_PendingWorkspaceCollaboratorFragment } from '~/lib/common/generated/gql/graphql'
 import {
-  ssoRegisterRoute,
   useNavigateToLogin,
   useNavigateToRegistration
 } from '~/lib/common/helpers/route'
 import {
   useWorkspaceInviteManager,
-  useWorkspaceSso
+  useWorkspaceSsoPublic
 } from '~/lib/workspaces/composables/management'
 
 graphql(`
@@ -137,7 +136,7 @@ const { loading, accept, decline, token, isCurrentUserTarget, targetUser } =
   })
 
 const workspaceSlug = computed(() => props.invite.workspaceSlug ?? '')
-const { hasSsoEnabled } = useWorkspaceSso({
+const { hasSsoEnabled } = useWorkspaceSsoPublic({
   workspaceSlug: workspaceSlug.value
 })
 
@@ -197,9 +196,13 @@ const signOutGoToRegister = async () => {
     postAuthRedirect.set(postAuthRedirectUrl, true)
 
     if (hasSsoEnabled.value) {
+      // Change this to go directly to the SSO page with register flag
       router.push({
-        path: ssoRegisterRoute(props.invite.workspaceSlug),
-        query: { token: token.value }
+        path: `/workspaces/${props.invite.workspaceSlug}/sso`,
+        query: {
+          token: token.value,
+          register: 'true' // Add this flag
+        }
       })
     } else {
       goToRegister({ query: { token: token.value } })

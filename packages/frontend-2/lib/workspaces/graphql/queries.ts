@@ -85,6 +85,7 @@ export const workspaceSsoByEmailQuery = graphql(`
       id
       name
       slug
+      logo
     }
   }
 `)
@@ -94,12 +95,17 @@ export const workspaceSsoCheckQuery = graphql(`
     workspaceBySlug(slug: $slug) {
       id
       name
+      slug
       sso {
         provider {
           id
           name
           clientId
           issuerUrl
+        }
+        session {
+          createdAt
+          validUntil
         }
       }
     }
