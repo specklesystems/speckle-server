@@ -693,7 +693,7 @@ export = (FF_AUTOMATE_MODULE_ENABLED
               cursor: args.cursor || undefined,
               limit: isNullOrUndefined(args.limit) ? undefined : args.limit,
               functionsWithoutVersions: true,
-              authorSpeckleUserId: parent.id
+              // authorSpeckleUserId: parent.id,
             }
           })
 

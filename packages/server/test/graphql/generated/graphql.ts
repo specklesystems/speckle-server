@@ -3480,6 +3480,7 @@ export type UpdateAutomateFunctionInput = {
   /** SourceAppNames values from @speckle/shared */
   supportedSourceApps?: InputMaybe<Array<Scalars['String']['input']>>;
   tags?: InputMaybe<Array<Scalars['String']['input']>>;
+  workspaceId?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpdateModelInput = {
