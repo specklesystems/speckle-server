@@ -63,6 +63,11 @@ spec:
           - name: postgres-certificate
             mountPath: /postgres-certificate
         {{- end }}
+        {{- if .Values.featureFlags.workspacesMultiRegionEnabled }}
+          - name: multi-region-config
+            mountPath: /
+            readOnly: true
+        {{- end }}
 
         env:
           - name: SPECKLE_SERVER_URL
@@ -123,5 +128,13 @@ spec:
         - name: postgres-certificate
           configMap:
             name: postgres-certificate
+      {{- end }}
+      {{- if .Values.featureFlags.workspacesMultiRegionEnabled }}
+        - name: multi-region-config
+          secret:
+            secretName: {{ .Values.multiRegion.config.secretName }}
+            items:
+            - key: {{ .Values.multiRegion.config.secretKey }}
+              path: "."
       {{- end }}
 {{- end }}

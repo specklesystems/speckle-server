@@ -51,6 +51,11 @@ spec:
           - name: postgres-certificate
             mountPath: /postgres-certificate
         {{- end }}
+        {{- if .Values.featureFlags.workspacesMultiRegionEnabled }}
+          - name: multi-region-config
+            mountPath: /
+            readOnly: true
+        {{- end }}
 
         env:
           - name: PG_CONNECTION_STRING
@@ -83,11 +88,19 @@ spec:
         seccompProfile:
           type: RuntimeDefault
 
-      {{- if .Values.db.useCertificate }}
       volumes:
+      {{- if .Values.db.useCertificate }}
         - name: postgres-certificate
           configMap:
             name: postgres-certificate
+      {{- end }}
+      {{- if .Values.featureFlags.workspacesMultiRegionEnabled }}
+        - name: multi-region-config
+          secret:
+            secretName: {{ .Values.multiRegion.config.secretName }}
+            items:
+            - key: {{ .Values.multiRegion.config.secretKey }}
+              path: "."
       {{- end }}
 
       {{- if .Values.monitoring.affinity }}

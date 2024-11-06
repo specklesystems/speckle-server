@@ -586,6 +586,8 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 - name: FF_BILLING_INTEGRATION_ENABLED
   value: {{ .Values.featureFlags.billingIntegrationEnabled | quote }}
 
+- name: FF_WORKSPACES_MULTI_REGION_ENABLED
+  value: {{ .Values.featureFlags.workspacesMultiRegionEnabled | quote }}
 
 {{- if .Values.featureFlags.billingIntegrationEnabled }}
 - name: STRIPE_API_KEY
@@ -670,7 +672,6 @@ Generate the environment variables for Speckle server and Speckle objects deploy
   valueFrom:
     secretKeyRef:
       name: "{{ default .Values.secretName .Values.server.billing.secretName }}"
-      
       key: {{ .Values.server.billing.workspaceYearlyBusinessSeatStripePriceId.secretKey }}
 {{- end }}
 
