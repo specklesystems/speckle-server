@@ -6,7 +6,7 @@
         text="Manage verified workspace domains and associated features."
       />
       <template v-if="isSsoEnabled">
-        <SettingsWorkspacesSecuritySso
+        <SettingsWorkspacesSecuritySsoWrapper
           v-if="result?.workspace"
           :workspace="result.workspace"
         />
@@ -138,14 +138,22 @@ import { useIsWorkspacesSsoEnabled } from '~/composables/globals'
 graphql(`
   fragment SettingsWorkspacesSecurity_Workspace on Workspace {
     id
+    slug
     domains {
       id
       domain
       ...SettingsWorkspacesSecurityDomainRemoveDialog_WorkspaceDomain
     }
+    sso {
+      provider {
+        id
+        name
+        clientId
+        issuerUrl
+      }
+    }
     domainBasedMembershipProtectionEnabled
     discoverabilityEnabled
-    ...SettingsWorkspacesSecuritySso_Workspace
   }
 
   fragment SettingsWorkspacesSecurity_User on User {

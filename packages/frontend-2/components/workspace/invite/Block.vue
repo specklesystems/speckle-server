@@ -99,7 +99,7 @@ import {
 } from '~/lib/common/helpers/route'
 import {
   useWorkspaceInviteManager,
-  useWorkspaceSsoCheck
+  useWorkspaceSso
 } from '~/lib/workspaces/composables/management'
 
 graphql(`
@@ -135,7 +135,11 @@ const { loading, accept, decline, token, isCurrentUserTarget, targetUser } =
   useWorkspaceInviteManager({
     invite: computed(() => props.invite)
   })
-const { checkWorkspaceHasSso } = useWorkspaceSsoCheck()
+
+const workspaceSlug = computed(() => props.invite.workspaceSlug ?? '')
+const { hasSsoEnabled } = useWorkspaceSso({
+  workspaceSlug: workspaceSlug.value
+})
 
 const buildPostAuthRedirectUrl = (params: {
   autoAccept?: boolean
@@ -180,20 +184,9 @@ const signOutGoToRegister = async () => {
       logger.warn(
         'No workspace slug found in invite, falling back to regular registration'
       )
-      goToRegister({
-        query: { token: token.value }
-      })
+      goToRegister({ query: { token: token.value } })
       return
     }
-
-    const hasSso = await checkWorkspaceHasSso({
-      workspaceSlug: props.invite.workspaceSlug
-    })
-
-    logger.info('SSO check result:', {
-      workspaceSlug: props.invite.workspaceSlug,
-      hasSso
-    })
 
     const postAuthRedirectUrl = buildPostAuthRedirectUrl({
       addNewEmail: true,
@@ -203,23 +196,17 @@ const signOutGoToRegister = async () => {
     await logout({ skipRedirect: true })
     postAuthRedirect.set(postAuthRedirectUrl, true)
 
-    if (hasSso) {
-      // Go directly to SSO registration using the workspace-specific route
+    if (hasSsoEnabled.value) {
       router.push({
         path: ssoRegisterRoute(props.invite.workspaceSlug),
         query: { token: token.value }
       })
     } else {
-      goToRegister({
-        query: { token: token.value }
-      })
+      goToRegister({ query: { token: token.value } })
     }
   } catch (error) {
     logger.error('Error during SSO check:', error)
-    // If anything fails, fall back to regular registration
-    goToRegister({
-      query: { token: token.value }
-    })
+    goToRegister({ query: { token: token.value } })
   }
 }
 

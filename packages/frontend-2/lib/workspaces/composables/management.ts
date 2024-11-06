@@ -1,6 +1,6 @@
 import type { RouteLocationNormalized } from 'vue-router'
 import { waitForever, type MaybeAsync, type Optional } from '@speckle/shared'
-import { useApolloClient, useMutation } from '@vue/apollo-composable'
+import { useApolloClient, useMutation, useQuery } from '@vue/apollo-composable'
 import { graphql } from '~/lib/common/generated/gql'
 import type {
   UseWorkspaceInviteManager_PendingWorkspaceCollaboratorFragment,
@@ -9,7 +9,8 @@ import type {
   WorkspaceInviteCreateInput,
   WorkspaceInvitedTeamArgs,
   WorkspaceInviteUseInput,
-  WorkspaceRoleUpdateInput
+  WorkspaceRoleUpdateInput,
+  WorkspaceSsoCheckQuery
 } from '~/lib/common/generated/gql/graphql'
 import {
   evictObjectFields,
@@ -31,6 +32,7 @@ import {
 import { isFunction } from 'lodash-es'
 import type { GraphQLError } from 'graphql'
 import { useClipboard } from '~~/composables/browser'
+import { workspaceSsoCheckQuery } from '~/lib/workspaces/graphql/queries'
 
 export const useInviteUserToWorkspace = () => {
   const { activeUser } = useActiveUser()
@@ -494,59 +496,27 @@ export const copyWorkspaceLink = async (slug: string) => {
   })
 }
 
-export const useWorkspaceSsoCheck = () => {
-  const apiOrigin = useApiOrigin()
-  const logger = useLogger()
+export const useWorkspaceSso = (params: { workspaceSlug: string }) => {
+  const { result, loading, error } = useQuery<WorkspaceSsoCheckQuery>(
+    workspaceSsoCheckQuery,
+    { slug: params.workspaceSlug }
+  )
 
-  type LimitedWorkspace = {
-    name: string
-    logo?: string
-    defaultLogoIndex: number
-    ssoProviderName?: string
-  }
+  const hasSsoEnabled = computed(() => !!result.value?.workspaceBySlug.sso?.provider)
+  const provider = computed(() => result.value?.workspaceBySlug.sso?.provider ?? null)
 
-  const isLimitedWorkspace = (data: unknown): data is LimitedWorkspace => {
-    if (!data || typeof data !== 'object') return false
-    const workspace = data as Record<string, unknown>
-
-    return (
-      typeof workspace.name === 'string' &&
-      typeof workspace.defaultLogoIndex === 'number' &&
-      (workspace.logo === undefined ||
-        workspace.logo === null ||
-        typeof workspace.logo === 'string') &&
-      (workspace.ssoProviderName === undefined ||
-        workspace.ssoProviderName === null ||
-        typeof workspace.ssoProviderName === 'string')
+  const needsSsoLogin = computed(() => {
+    if (!result.value?.activeUser) return false
+    return result.value.activeUser.expiredSsoSessions.some(
+      (workspace) => workspace.slug === params.workspaceSlug
     )
-  }
-
-  const checkWorkspaceHasSso = async (params: {
-    workspaceSlug: string
-  }): Promise<boolean> => {
-    if (import.meta.server) {
-      return false
-    }
-
-    try {
-      const response = await fetch(
-        new URL(`/api/v1/workspaces/${params.workspaceSlug}/sso`, apiOrigin)
-      )
-      const data: unknown = await response.json()
-
-      if (!isLimitedWorkspace(data)) {
-        logger.error('Invalid workspace data received:', data)
-        return false
-      }
-
-      return !!data.ssoProviderName
-    } catch (error) {
-      logger.error('SSO check error:', error)
-      return false
-    }
-  }
+  })
 
   return {
-    checkWorkspaceHasSso
+    hasSsoEnabled,
+    needsSsoLogin,
+    provider,
+    loading,
+    error
   }
 }
