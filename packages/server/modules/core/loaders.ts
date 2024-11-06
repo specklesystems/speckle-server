@@ -3,15 +3,40 @@ import { AuthContext } from '@/modules/shared/authz'
 import { graphDataloadersBuilders } from '@/modules'
 import { ModularizedDataLoadersConstraint } from '@/modules/shared/helpers/graphqlHelper'
 import { Knex } from 'knex'
-import { isNonNullable } from '@speckle/shared'
-import { flatten } from 'lodash'
+import { isNonNullable, Optional } from '@speckle/shared'
+import { flatten, noop } from 'lodash'
 import { db } from '@/db/knex'
 
+/**
+ * Lets not waste memory on loaders that may not actually be invoked
+ */
+const makeLazyDataLoader = <K, V, C = K>(
+  ...args: ConstructorParameters<typeof DataLoader<K, V, C>>
+): DataLoader<K, V, C> => {
+  let dataloader: Optional<DataLoader<K, V, C>> = undefined
+
+  return new Proxy({} as DataLoader<K, V, C>, {
+    get(_target, prop) {
+      if (!dataloader) {
+        // If invoking clearAll() - we don't really need to do anything, no loader exists
+        if (prop === 'clearAll') {
+          return noop
+        }
+
+        dataloader = new DataLoader<K, V, C>(...args)
+      }
+
+      return dataloader[prop as keyof DataLoader<K, V, C>]
+    }
+  })
+}
+
 const makeSelfClearingDataloader = <K, V, C = K>(
-  batchLoadFn: DataLoader.BatchLoadFn<K, V>,
-  options?: DataLoader.Options<K, V, C>
+  ...args: ConstructorParameters<typeof DataLoader<K, V, C>>
 ) => {
-  const dataloader = new DataLoader<K, V, C>((ids) => {
+  const [batchLoadFn, options] = args
+
+  const dataloader = makeLazyDataLoader<K, V, C>((ids) => {
     dataloader.clearAll()
     return batchLoadFn(ids)
   }, options)
@@ -19,10 +44,9 @@ const makeSelfClearingDataloader = <K, V, C = K>(
 }
 
 const buildDataLoaderCreator = (selfClearing = false) => {
-  return <K, V, C = K>(
-    batchLoadFn: DataLoader.BatchLoadFn<K, V>,
-    options?: DataLoader.Options<K, V, C>
-  ) => {
+  return <K, V, C = K>(...args: ConstructorParameters<typeof DataLoader<K, V, C>>) => {
+    const [batchLoadFn, options] = args
+
     if (selfClearing) {
       return makeSelfClearingDataloader<K, V, C>(batchLoadFn, {
         ...(options || {}),
@@ -30,7 +54,7 @@ const buildDataLoaderCreator = (selfClearing = false) => {
         cache: false
       })
     } else {
-      return new DataLoader<K, V, C>(batchLoadFn, options)
+      return makeLazyDataLoader(batchLoadFn, options)
     }
   }
 }

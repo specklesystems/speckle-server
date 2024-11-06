@@ -210,6 +210,9 @@ const getUserStreamsCount = getUserStreamsCountFactory({ db })
 export = {
   Query: {
     async project(_parent, args, context) {
+      context.loaders.forRegion({ db }).workspaces
+      context.loaders.clearAll()
+
       const stream = await getStream({
         streamId: args.id,
         userId: context.userId

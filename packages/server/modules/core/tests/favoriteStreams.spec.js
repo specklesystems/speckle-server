@@ -474,7 +474,7 @@ describe('Favorite streams', () => {
     before(async () => {
       apollo = {
         apollo: await buildApolloServer(),
-        context: createTestContext()
+        context: await createTestContext()
       }
     })
 

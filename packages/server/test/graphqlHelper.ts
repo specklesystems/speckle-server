@@ -130,7 +130,7 @@ const buildMergedContext = async (params: {
   if (params?.authUserId) {
     const userData = await getUser(params.authUserId, { withRole: true })
     const role = userData?.role || Roles.Server.User
-    const userCtx = createAuthedTestContext(params.authUserId, { role })
+    const userCtx = await createAuthedTestContext(params.authUserId, { role })
 
     // Apply authed context to base
     baseCtx = {
