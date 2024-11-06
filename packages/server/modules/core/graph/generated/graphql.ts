@@ -2154,7 +2154,6 @@ export type ProjectCreateInput = {
   description?: InputMaybe<Scalars['String']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
   visibility?: InputMaybe<ProjectVisibility>;
-  workspaceId?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type ProjectFileImportUpdatedMessage = {
@@ -2892,7 +2891,7 @@ export type ServerMultiRegionConfiguration = {
 
 export type ServerRegionItem = {
   __typename?: 'ServerRegionItem';
-  description: Scalars['String']['output'];
+  description?: Maybe<Scalars['String']['output']>;
   id: Scalars['String']['output'];
   key: Scalars['String']['output'];
   name: Scalars['String']['output'];
@@ -4011,6 +4010,8 @@ export type WebhookUpdateInput = {
 
 export type Workspace = {
   __typename?: 'Workspace';
+  /** Regions available to the workspace for project data residency */
+  availableRegions: Array<ServerRegionItem>;
   /** Billing data for Workspaces beta */
   billing?: Maybe<WorkspaceBilling>;
   createdAt: Scalars['DateTime']['output'];
@@ -4019,6 +4020,11 @@ export type Workspace = {
   defaultLogoIndex: Scalars['Int']['output'];
   /** The default role workspace members will receive for workspace projects. */
   defaultProjectRole: Scalars['String']['output'];
+  /**
+   * The default region where project data will be stored, if set. If undefined, defaults to main/default
+   * region.
+   */
+  defaultRegion?: Maybe<ServerRegionItem>;
   description?: Maybe<Scalars['String']['output']>;
   /** Enable/Disable discovery of the workspace */
   discoverabilityEnabled: Scalars['Boolean']['output'];
@@ -4234,6 +4240,8 @@ export type WorkspaceMutations = {
   join: Workspace;
   leave: Scalars['Boolean']['output'];
   projects: WorkspaceProjectMutations;
+  /** Set the default region where project data will be stored. Only available to admins. */
+  setDefaultRegion: Workspace;
   update: Workspace;
   updateRole: Workspace;
 };
@@ -4269,6 +4277,12 @@ export type WorkspaceMutationsLeaveArgs = {
 };
 
 
+export type WorkspaceMutationsSetDefaultRegionArgs = {
+  regionKey: Scalars['String']['input'];
+  workspaceId: Scalars['String']['input'];
+};
+
+
 export type WorkspaceMutationsUpdateArgs = {
   input: WorkspaceUpdateInput;
 };
@@ -4301,6 +4315,13 @@ export enum WorkspacePlans {
   Unlimited = 'unlimited'
 }
 
+export type WorkspaceProjectCreateInput = {
+  description?: InputMaybe<Scalars['String']['input']>;
+  name?: InputMaybe<Scalars['String']['input']>;
+  visibility?: InputMaybe<ProjectVisibility>;
+  workspaceId: Scalars['String']['input'];
+};
+
 export type WorkspaceProjectInviteCreateInput = {
   /** Either this or userId must be filled */
   email?: InputMaybe<Scalars['String']['input']>;
@@ -4316,8 +4337,14 @@ export type WorkspaceProjectInviteCreateInput = {
 
 export type WorkspaceProjectMutations = {
   __typename?: 'WorkspaceProjectMutations';
+  create: Project;
   moveToWorkspace: Project;
   updateRole: Project;
+};
+
+
+export type WorkspaceProjectMutationsCreateArgs = {
+  input: WorkspaceProjectCreateInput;
 };
 
 
@@ -4747,6 +4774,7 @@ export type ResolversTypes = {
   WorkspacePlan: ResolverTypeWrapper<WorkspacePlan>;
   WorkspacePlanStatuses: WorkspacePlanStatuses;
   WorkspacePlans: WorkspacePlans;
+  WorkspaceProjectCreateInput: WorkspaceProjectCreateInput;
   WorkspaceProjectInviteCreateInput: WorkspaceProjectInviteCreateInput;
   WorkspaceProjectMutations: ResolverTypeWrapper<WorkspaceProjectMutationsGraphQLReturn>;
   WorkspaceProjectsFilter: WorkspaceProjectsFilter;
@@ -5002,6 +5030,7 @@ export type ResolversParentTypes = {
   WorkspaceInviteUseInput: WorkspaceInviteUseInput;
   WorkspaceMutations: WorkspaceMutationsGraphQLReturn;
   WorkspacePlan: WorkspacePlan;
+  WorkspaceProjectCreateInput: WorkspaceProjectCreateInput;
   WorkspaceProjectInviteCreateInput: WorkspaceProjectInviteCreateInput;
   WorkspaceProjectMutations: WorkspaceProjectMutationsGraphQLReturn;
   WorkspaceProjectsFilter: WorkspaceProjectsFilter;
@@ -6043,7 +6072,7 @@ export type ServerMultiRegionConfigurationResolvers<ContextType = GraphQLContext
 };
 
 export type ServerRegionItemResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ServerRegionItem'] = ResolversParentTypes['ServerRegionItem']> = {
-  description?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   key?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
@@ -6396,11 +6425,13 @@ export type WebhookEventCollectionResolvers<ContextType = GraphQLContext, Parent
 };
 
 export type WorkspaceResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Workspace'] = ResolversParentTypes['Workspace']> = {
+  availableRegions?: Resolver<Array<ResolversTypes['ServerRegionItem']>, ParentType, ContextType>;
   billing?: Resolver<Maybe<ResolversTypes['WorkspaceBilling']>, ParentType, ContextType>;
   createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   customerPortalUrl?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   defaultLogoIndex?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   defaultProjectRole?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  defaultRegion?: Resolver<Maybe<ResolversTypes['ServerRegionItem']>, ParentType, ContextType>;
   description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   discoverabilityEnabled?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   domainBasedMembershipProtectionEnabled?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
@@ -6502,6 +6533,7 @@ export type WorkspaceMutationsResolvers<ContextType = GraphQLContext, ParentType
   join?: Resolver<ResolversTypes['Workspace'], ParentType, ContextType, RequireFields<WorkspaceMutationsJoinArgs, 'input'>>;
   leave?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<WorkspaceMutationsLeaveArgs, 'id'>>;
   projects?: Resolver<ResolversTypes['WorkspaceProjectMutations'], ParentType, ContextType>;
+  setDefaultRegion?: Resolver<ResolversTypes['Workspace'], ParentType, ContextType, RequireFields<WorkspaceMutationsSetDefaultRegionArgs, 'regionKey' | 'workspaceId'>>;
   update?: Resolver<ResolversTypes['Workspace'], ParentType, ContextType, RequireFields<WorkspaceMutationsUpdateArgs, 'input'>>;
   updateRole?: Resolver<ResolversTypes['Workspace'], ParentType, ContextType, RequireFields<WorkspaceMutationsUpdateRoleArgs, 'input'>>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
@@ -6514,6 +6546,7 @@ export type WorkspacePlanResolvers<ContextType = GraphQLContext, ParentType exte
 };
 
 export type WorkspaceProjectMutationsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['WorkspaceProjectMutations'] = ResolversParentTypes['WorkspaceProjectMutations']> = {
+  create?: Resolver<ResolversTypes['Project'], ParentType, ContextType, RequireFields<WorkspaceProjectMutationsCreateArgs, 'input'>>;
   moveToWorkspace?: Resolver<ResolversTypes['Project'], ParentType, ContextType, RequireFields<WorkspaceProjectMutationsMoveToWorkspaceArgs, 'projectId' | 'workspaceId'>>;
   updateRole?: Resolver<ResolversTypes['Project'], ParentType, ContextType, RequireFields<WorkspaceProjectMutationsUpdateRoleArgs, 'input'>>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;

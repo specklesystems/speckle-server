@@ -309,7 +309,7 @@ describe('Workspaces Invites GQL', () => {
 
     await createTestWorkspaces([
       [myFirstWorkspace, me],
-      [domainProtectedWorkspace, me, workspaceDomain],
+      [domainProtectedWorkspace, me, { domain: workspaceDomain }],
       [otherGuysWorkspace, otherGuy]
     ])
     await assignToWorkspaces([
