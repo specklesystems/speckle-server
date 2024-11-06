@@ -2,6 +2,7 @@
   <div class="flex flex-col gap-8">
     <ProjectPageAutomationsHeader
       v-model:search="search"
+      :workspace-slug="workspaceSlug"
       :show-empty-state="shouldShowEmptyState"
       :disabled-create-because-of="
         allowNewCreation !== true ? allowNewCreation : undefined
@@ -39,7 +40,9 @@
       </template>
     </template>
     <AutomateAutomationCreateDialog
+      v-if="workspaceId"
       v-model:open="showNewAutomationDialog"
+      :workspace-id="workspaceId"
       :preselected-project="project"
       :preselected-function="newAutomationTargetFn"
     />
@@ -73,6 +76,9 @@ const { result, loading } = useQuery(
     fetchPolicy: pageFetchPolicy.value
   })
 )
+
+const workspaceId = computed(() => result.value?.project?.workspace?.id)
+const workspaceSlug = computed(() => result.value?.project?.workspace?.slug)
 
 // Pagination query
 const {

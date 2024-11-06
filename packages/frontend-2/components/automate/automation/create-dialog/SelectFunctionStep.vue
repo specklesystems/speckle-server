@@ -43,13 +43,29 @@ import type { Optional } from '@speckle/shared'
 import { usePaginatedQuery } from '~/lib/common/composables/graphql'
 
 const searchQuery = graphql(`
-  query AutomationCreateDialogFunctionsSearch($search: String, $cursor: String = null) {
-    automateFunctions(limit: 20, filter: { search: $search }, cursor: $cursor) {
-      cursor
-      totalCount
-      items {
-        id
-        ...AutomateAutomationCreateDialog_AutomateFunction
+  query AutomationCreateDialogFunctionsSearch(
+    $workspaceId: String!
+    $search: String
+    $cursor: String = null
+  ) {
+    activeUser {
+      automateFunctions(limit: 20, filter: { search: $search }, cursor: $cursor) {
+        cursor
+        totalCount
+        items {
+          id
+          ...AutomateAutomationCreateDialog_AutomateFunction
+        }
+      }
+    }
+    workspace(id: $workspaceId) {
+      automateFunctions(limit: 20, filter: { search: $search }, cursor: $cursor) {
+        cursor
+        totalCount
+        items {
+          id
+          ...AutomateAutomationCreateDialog_AutomateFunction
+        }
       }
     }
   }
@@ -57,6 +73,8 @@ const searchQuery = graphql(`
 
 const props = withDefaults(
   defineProps<{
+    functionSource: 'user' | 'workspace'
+    workspaceId: string
     preselectedFunction: Optional<CreateAutomationSelectableFunction>
     pageSize?: Optional<number>
     showLabel?: Optional<boolean>
@@ -83,10 +101,11 @@ const {
 } = usePaginatedQuery({
   query: searchQuery,
   baseVariables: computed(() => ({
+    workspaceId: props.workspaceId,
     search: search.value?.length ? search.value : null
   })),
   resolveKey: (vars) => [vars.search || ''],
-  resolveCurrentResult: (res) => res?.automateFunctions,
+  resolveCurrentResult: (res) => res?.workspace?.automateFunctions,
   resolveNextPageVariables: (baseVars, cursor) => ({
     ...baseVars,
     cursor
@@ -94,7 +113,17 @@ const {
   resolveCursorFromVariables: (vars) => vars.cursor
 })
 
-const queryItems = computed(() => result.value?.automateFunctions.items)
+const queryItems = computed(() => {
+  switch (props.functionSource) {
+    case 'user': {
+      return result.value?.activeUser?.automateFunctions.items
+    }
+    case 'workspace':
+    default: {
+      return result.value?.workspace?.automateFunctions.items
+    }
+  }
+})
 const items = computed(() => {
   const baseItems = (queryItems.value || []).slice(0, props.pageSize)
   const preselectedFn = props.preselectedFunction

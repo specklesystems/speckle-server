@@ -37,8 +37,7 @@ export const modelRoute = (
   resourceIdString: string,
   hashState?: Partial<Record<ViewerHashStateKeys, string>>
 ) =>
-  `/projects/${projectId}/models/${resourceIdString}${
-    hashState ? serializeHashState(hashState) || '' : ''
+  `/projects/${projectId}/models/${resourceIdString}${hashState ? serializeHashState(hashState) || '' : ''
   }`
 export const modelVersionsRoute = (projectId: string, modelId: string) =>
   `/projects/${projectId}/models/${modelId}/versions`
@@ -69,6 +68,8 @@ export const automationFunctionRoute = (functionId: string) =>
   `${automationFunctionsRoute}/${functionId}`
 
 export const workspaceRoute = (slug: string) => `/workspaces/${slug}`
+
+export const workspaceFunctionsRoute = (slug: string) => `/workspaces/${slug}/functions`
 
 const buildNavigationComposable = (route: string) => () => {
   const router = useRouter()

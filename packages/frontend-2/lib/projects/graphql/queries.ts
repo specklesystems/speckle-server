@@ -243,6 +243,10 @@ export const projectAutomationsTabQuery = graphql(`
         }
         cursor
       }
+      workspace {
+        id
+        slug
+      }
       ...FormSelectProjects_Project
     }
     ...ProjectPageAutomationsEmptyState_Query

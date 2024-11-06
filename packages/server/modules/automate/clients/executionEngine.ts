@@ -422,11 +422,17 @@ export const getFunctions = async (params: {
     limit?: number
     functionsWithoutVersions?: boolean
     featuredFunctionsOnly?: boolean
-    authorSpeckleUserId?: string
+    authorSpeckleUserId?: string,
+    workspaceId?: string
   }
 }) => {
   const { query } = params
-  const url = getApiUrl(`/api/v1/functions`, { query: { ...query, authorSpeckleServerOrigin: params.query?.authorSpeckleUserId ? getServerOrigin() : undefined } })
+  const url = getApiUrl(`/api/v1/functions`, {
+    query: {
+      ...query,
+      authorSpeckleServerOrigin: params.query?.authorSpeckleUserId ? getServerOrigin() : undefined,
+    }
+  })
   const result = await invokeJsonRequest<GetFunctionsResponse>({
     url,
     method: 'get'

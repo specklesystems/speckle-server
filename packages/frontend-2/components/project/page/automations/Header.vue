@@ -17,9 +17,9 @@
         :icon-left="ArrowTopRightOnSquareIcon"
         color="outline"
         class="shrink-0"
-        :to="automationFunctionsRoute"
+        :to="exploreFunctionsRoute"
       >
-        Explore Functions
+        {{ exploreFunctionsMessage }}
       </FormButton>
       <div v-tippy="disabledCreateBecauseOf" class="shrink-0">
         <FormButton
@@ -37,16 +37,29 @@
 <script setup lang="ts">
 import { ArrowTopRightOnSquareIcon, PlusIcon } from '@heroicons/vue/20/solid'
 import { useDebouncedTextInput } from '@speckle/ui-components'
-import { automationFunctionsRoute } from '~/lib/common/helpers/route'
+import {
+  automationFunctionsRoute,
+  workspaceFunctionsRoute
+} from '~/lib/common/helpers/route'
 
 defineEmits<{
   'new-automation': []
 }>()
 
-defineProps<{
+const props = defineProps<{
+  workspaceSlug?: string
   showEmptyState?: boolean
   disabledCreateBecauseOf?: string
 }>()
+
+const exploreFunctionsMessage = computed(() =>
+  props.workspaceSlug ? 'Explore workspace functions' : 'Explore functions'
+)
+const exploreFunctionsRoute = computed(() =>
+  props.workspaceSlug
+    ? workspaceFunctionsRoute(props.workspaceSlug)
+    : automationFunctionsRoute
+)
 
 const search = defineModel<string>('search')
 const { on, bind } = useDebouncedTextInput({ model: search })

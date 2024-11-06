@@ -314,6 +314,11 @@ type Workspace {
     cursor: String
     filter: WorkspaceProjectsFilter
   ): ProjectCollection!
+  automateFunctions(
+    limit: Int! = 25
+    cursor: String
+    filter: AutomateFunctionsFilter
+  ): AutomateFunctionCollection!
   """
   Billing data for Workspaces beta
   """
