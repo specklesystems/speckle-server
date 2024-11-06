@@ -200,6 +200,7 @@ const setUpUserReplication = async ({
     TRUE
   );`
   try {
+    await to.public.raw('CREATE EXTENSION IF NOT EXISTS "aiven_extras"')
     await to.public.raw(rawSqeel)
   } catch (err) {
     if (!(err instanceof Error)) throw err
@@ -238,6 +239,7 @@ const setUpProjectReplication = async ({
     TRUE
   );`
   try {
+    await to.public.raw('CREATE EXTENSION IF NOT EXISTS "aiven_extras"')
     await to.public.raw(rawSqeel)
   } catch (err) {
     if (!(err instanceof Error)) throw err

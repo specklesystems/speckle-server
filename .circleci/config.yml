@@ -455,7 +455,7 @@ jobs:
     docker:
       - image: cimg/node:18.19.0
       - image: cimg/redis:7.2.4
-      - image: 'speckle/speckle-postgres:latest'
+      - image: 'speckle/speckle-postgres'
         environment:
           POSTGRES_DB: speckle2_test
           POSTGRES_PASSWORD: speckle
