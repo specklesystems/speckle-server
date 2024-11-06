@@ -20,6 +20,7 @@ const route = useRoute()
 const { challenge } = useLoginOrRegisterUtils()
 const { signInOrSignUpWithSso } = useAuthManager()
 const isSsoEnabled = useIsWorkspacesSsoEnabled()
+const { triggerNotification } = useGlobalToast()
 
 const ssoProviderName = ref()
 
@@ -46,5 +47,13 @@ onMounted(() => {
     .then((data: LimitedWorkspace) => {
       ssoProviderName.value = data.ssoProviderName
     })
+  if (route.query.expired) {
+    triggerNotification({
+      type: ToastNotificationType.Info,
+      title: 'SSO sign-in required',
+      description:
+        'Your workspace requires authentication with your SSO provider. Please sign in and try again.'
+    })
+  }
 })
 </script>

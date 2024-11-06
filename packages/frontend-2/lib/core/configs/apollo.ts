@@ -23,6 +23,7 @@ import { useAppErrorState } from '~~/lib/core/composables/error'
 import { isInvalidAuth } from '~~/lib/common/helpers/graphql'
 import { intersection, isArray, isBoolean, omit } from 'lodash-es'
 import { useRequestId } from '~/lib/core/composables/server'
+import { usePostAuthRedirect } from '~/lib/auth/composables/postAuthRedirect'
 
 const appName = 'frontend-2'
 
@@ -357,12 +358,19 @@ function createLink(params: {
 }): ApolloLink {
   const { httpEndpoint, wsClient, authToken, nuxtApp, reqId, logout } = params
   const { registerError, isErrorState } = useAppErrorState()
+  const postAuthRedirect = usePostAuthRedirect()
 
   const errorLink = onError((res) => {
     const logger = nuxtApp.$logger
     const isSubTokenMissingError = (res.networkError?.message || '').includes(
       'need a token to subscribe'
     )
+
+    const ssoError = res?.graphQLErrors?.find((err) => err.extensions?.code === 'SSO_SESSION_MISSING_OR_EXPIRED_ERROR')
+    if (ssoError) {
+      postAuthRedirect.setCurrentRoute()
+      nuxtApp.$router.push(`/workspaces/${ssoError.message}/sso?expired=true`)
+    }
 
     let shouldSkip = coreShouldSkipLoggingErrors(res)
     const skipLoggingErrorsResolver = res.operation.getContext().skipLoggingErrors
