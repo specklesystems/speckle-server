@@ -58,7 +58,7 @@ export async function executeOperation<
   context?: GraphQLContext
 ): Promise<ExecuteOperationResponse<R>> {
   const server: ApolloServer<GraphQLContext> = apollo.apollo
-  const contextValue = context || apollo.context || createTestContext()
+  const contextValue = context || apollo.context || (await createTestContext())
 
   const res = (await server.executeOperation(
     {
@@ -83,7 +83,9 @@ export async function executeOperation<
  * Create a test context for a GraphQL request. Optionally override any of the default values.
  * By default the context will be unauthenticated
  */
-export const createTestContext = (ctx?: Partial<GraphQLContext>): GraphQLContext =>
+export const createTestContext = async (
+  ctx?: Partial<GraphQLContext>
+): Promise<GraphQLContext> =>
   addLoadersToCtx({
     auth: false,
     userId: undefined,
@@ -95,10 +97,10 @@ export const createTestContext = (ctx?: Partial<GraphQLContext>): GraphQLContext
     ...(ctx || {})
   })
 
-export const createAuthedTestContext = (
+export const createAuthedTestContext = async (
   userId: string,
   ctxOverrides?: Partial<GraphQLContext>
-): GraphQLContext =>
+): Promise<GraphQLContext> =>
   addLoadersToCtx({
     auth: true,
     userId,
@@ -122,7 +124,7 @@ const buildMergedContext = async (params: {
    */
   authUserId?: string
 }) => {
-  let baseCtx: GraphQLContext = params.baseCtx || createTestContext()
+  let baseCtx: GraphQLContext = params.baseCtx || (await createTestContext())
 
   // Init ctx from userId?
   if (params?.authUserId) {
@@ -148,7 +150,7 @@ const buildMergedContext = async (params: {
   }
 
   // Apply dataloaders from scratch
-  baseCtx = createTestContext(baseCtx)
+  baseCtx = await createTestContext(baseCtx)
 
   return baseCtx
 }

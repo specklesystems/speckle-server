@@ -578,7 +578,7 @@ const buildAutomationUpdate = () => {
         )
 
         apollo = await testApolloServer({
-          context: createTestContext({
+          context: await createTestContext({
             userId: me.id,
             token: 'abc',
             role: Roles.Server.User

@@ -59,7 +59,7 @@ describe('Workspace project GQL CRUD', () => {
     await createTestUsers([serverAdminUser, serverMemberUser])
     const token = await createAuthTokenForUser(serverAdminUser.id, AllScopes)
     apollo = await testApolloServer({
-      context: createTestContext({
+      context: await createTestContext({
         auth: true,
         userId: serverAdminUser.id,
         token,
