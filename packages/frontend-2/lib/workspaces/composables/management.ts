@@ -26,6 +26,7 @@ import {
   createWorkspaceMutation,
   inviteToWorkspaceMutation,
   processWorkspaceInviteMutation,
+  setDefaultRegionMutation,
   workspaceUpdateRoleMutation
 } from '~/lib/workspaces/graphql/mutations'
 import { isFunction } from 'lodash-es'
@@ -492,4 +493,32 @@ export const copyWorkspaceLink = async (slug: string) => {
     type: ToastNotificationType.Success,
     title: 'Copied workspace link to clipboard'
   })
+}
+
+export const useSetDefaultWorkspaceRegion = () => {
+  const { mutate } = useMutation(setDefaultRegionMutation)
+  const { triggerNotification } = useGlobalToast()
+
+  return async (params: { workspaceId: string; regionKey: string }) => {
+    const { workspaceId, regionKey } = params
+    const res = await mutate({ workspaceId, regionKey }).catch(
+      convertThrowIntoFetchResult
+    )
+
+    if (res?.data?.workspaceMutations.setDefaultRegion) {
+      triggerNotification({
+        type: ToastNotificationType.Success,
+        title: 'Default region set successfully'
+      })
+    } else {
+      const err = getFirstErrorMessage(res?.errors)
+      triggerNotification({
+        type: ToastNotificationType.Danger,
+        title: 'Failed to set default region',
+        description: err
+      })
+    }
+
+    return res?.data?.workspaceMutations.setDefaultRegion
+  }
 }

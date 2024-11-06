@@ -1,5 +1,7 @@
 import { db } from '@/db/knex'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
+import { initializeRegion } from '@/modules/multiregion/dbSelector'
+import { getAvailableRegionConfig } from '@/modules/multiregion/regionConfig'
 import {
   getRegionFactory,
   getRegionsFactory,
@@ -19,7 +21,9 @@ export default {
   ServerMultiRegionConfiguration: {
     availableKeys: async () => {
       const getFreeRegionKeys = getFreeRegionKeysFactory({
-        getAvailableRegionKeys: getAvailableRegionKeysFactory(),
+        getAvailableRegionKeys: getAvailableRegionKeysFactory({
+          getAvailableRegionConfig
+        }),
         getRegions: getRegionsFactory({ db })
       })
       return await getFreeRegionKeys()
@@ -33,11 +37,14 @@ export default {
     create: async (_parent, args) => {
       const createAndValidateNewRegion = createAndValidateNewRegionFactory({
         getFreeRegionKeys: getFreeRegionKeysFactory({
-          getAvailableRegionKeys: getAvailableRegionKeysFactory(),
+          getAvailableRegionKeys: getAvailableRegionKeysFactory({
+            getAvailableRegionConfig
+          }),
           getRegions: getRegionsFactory({ db })
         }),
         getRegion: getRegionFactory({ db }),
-        storeRegion: storeRegionFactory({ db })
+        storeRegion: storeRegionFactory({ db }),
+        initializeRegion
       })
       return await createAndValidateNewRegion({ region: args.input })
     },

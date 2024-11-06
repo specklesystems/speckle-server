@@ -157,6 +157,22 @@ import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { commandFactory } from '@/modules/shared/command'
 import { withTransaction } from '@/modules/shared/helpers/dbHelper'
 import {
+  getRateLimitResult,
+  isRateLimitBreached
+} from '@/modules/core/services/ratelimiter'
+import { RateLimitError } from '@/modules/core/errors/ratelimit'
+import { createBranchFactory } from '@/modules/core/repositories/branches'
+import { ProjectsEmitter } from '@/modules/core/events/projectsEmitter'
+import { getDb } from '@/modules/multiregion/dbSelector'
+import { createNewProjectFactory } from '@/modules/core/services/projects'
+import {
+  deleteProjectFactory,
+  storeProjectFactory,
+  storeProjectRoleFactory
+} from '@/modules/core/repositories/projects'
+import { StoreModel } from '@/modules/core/domain/projects/operations'
+import { Knex } from 'knex'
+import {
   listUserExpiredSsoSessionsFactory,
   listWorkspaceSsoMembershipsByUserEmailFactory
 } from '@/modules/workspaces/services/sso'
@@ -168,6 +184,7 @@ import {
   listWorkspaceSsoMembershipsFactory
 } from '@/modules/workspaces/repositories/sso'
 import { getDecryptor } from '@/modules/workspaces/helpers/sso'
+import { getDefaultRegionFactory } from '@/modules/workspaces/repositories/regions'
 
 const eventBus = getEventBus()
 const getServerInfo = getServerInfoFactory({ db })
@@ -765,6 +782,60 @@ export = FF_WORKSPACES_MODULE_ENABLED
         }
       },
       WorkspaceProjectMutations: {
+        create: async (_parent, args, context) => {
+          const rateLimitResult = await getRateLimitResult(
+            'STREAM_CREATE',
+            context.userId!
+          )
+          if (isRateLimitBreached(rateLimitResult)) {
+            throw new RateLimitError(rateLimitResult)
+          }
+
+          await authorizeResolver(
+            context.userId!,
+            args.input.workspaceId,
+            Roles.Workspace.Member,
+            context.resourceAccessRules
+          )
+
+          // TODO: get workspace's region here
+          const workspaceDefaultRegion = await getDefaultRegionFactory({ db })({
+            workspaceId: args.input.workspaceId
+          })
+          const regionKey = workspaceDefaultRegion?.key
+
+          const projectDb = await getDb({ regionKey })
+
+          const storeModelFactory =
+            ({ db }: { db: Knex }): StoreModel =>
+            async ({ authorId, projectId, name, description }) => {
+              await createBranchFactory({ db })({
+                authorId,
+                description,
+                name,
+                streamId: projectId
+              })
+            }
+
+          // todo, use the command factory here, but for that, we need to migrate to the event bus
+          const createNewProject = createNewProjectFactory({
+            storeProject: storeProjectFactory({ db: projectDb }),
+            getProject: getProjectFactory({ db }),
+            deleteProject: deleteProjectFactory({ db: projectDb }),
+            storeModel: storeModelFactory({ db: projectDb }),
+            // THIS MUST GO TO THE MAIN DB
+            storeProjectRole: storeProjectRoleFactory({ db }),
+            projectsEventsEmitter: ProjectsEmitter.emit
+          })
+
+          const project = await createNewProject({
+            ...args.input,
+            regionKey,
+            ownerId: context.userId!
+          })
+
+          return project
+        },
         updateRole: async (_parent, args, context) => {
           const updateWorkspaceProjectRole = updateWorkspaceProjectRoleFactory({
             getStream,

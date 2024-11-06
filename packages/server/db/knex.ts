@@ -21,4 +21,9 @@ dbStartupLogger.info(`Loaded knex conf for ${env}`)
 const knexInstance = knex(config)
 
 export default knexInstance
-export { knexInstance as db, knexInstance as knex, knexInstance as knexInstance }
+export {
+  knexInstance as db,
+  knexInstance as knex,
+  knexInstance as knexInstance,
+  config
+}

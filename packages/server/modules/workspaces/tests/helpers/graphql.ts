@@ -262,3 +262,44 @@ export const deleteWorkspaceDomainMutation = gql`
     }
   }
 `
+
+export const getWorkspaceAvailableRegionsQuery = gql`
+  query GetWorkspaceAvailableRegions($workspaceId: String!) {
+    workspace(id: $workspaceId) {
+      id
+      availableRegions {
+        id
+        key
+        name
+      }
+    }
+  }
+`
+
+export const getDefaultRegionQuery = gql`
+  query GetWorkspaceDefaultRegion($workspaceId: String!) {
+    workspace(id: $workspaceId) {
+      id
+      defaultRegion {
+        id
+        key
+        name
+      }
+    }
+  }
+`
+
+export const setDefaultRegionMutation = gql`
+  mutation SetWorkspaceDefaultRegion($workspaceId: String!, $regionKey: String!) {
+    workspaceMutations {
+      setDefaultRegion(regionKey: $regionKey, workspaceId: $workspaceId) {
+        id
+        defaultRegion {
+          id
+          key
+          name
+        }
+      }
+    }
+  }
+`

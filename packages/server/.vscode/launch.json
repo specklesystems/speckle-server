@@ -32,7 +32,7 @@
       "runtimeArgs": ["dev"],
       "runtimeExecutable": "yarn",
       "skipFiles": ["<node_internals>/**"],
-      "type": "pwa-node",
+      "type": "node",
       "envFile": "${workspaceFolder}/.env"
     },
     {
