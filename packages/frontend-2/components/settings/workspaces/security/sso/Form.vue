@@ -74,6 +74,7 @@ defineEmits<{
   (e: 'submit', data: SsoFormValues): void
 }>()
 
+const logger = useLogger()
 const apiOrigin = useApiOrigin()
 const postAuthRedirect = usePostAuthRedirect()
 const { challenge } = useLoginOrRegisterUtils()
@@ -87,7 +88,7 @@ const formData = ref<SsoFormValues>({
 
 const { handleSubmit } = useForm<SsoFormValues>()
 
-const onSubmit = handleSubmit(() => {
+const handleCreate = () => {
   const baseUrl = `${apiOrigin}/api/v1/workspaces/${props.workspaceSlug}/sso/oidc/validate`
   const params = [
     `providerName=${formData.value.providerName}`,
@@ -103,5 +104,23 @@ const onSubmit = handleSubmit(() => {
   navigateTo(route, {
     external: true
   })
+}
+
+const handleEdit = () => {
+  // TODO: API endpoint for editing SSO configuration is pending
+  // Will need:
+  // - Update provider name
+  // - Update client ID
+  // - Optional client secret update
+  // - Update issuer URL
+  logger.warn('Editing SSO configuration is not yet implemented')
+}
+
+const onSubmit = handleSubmit(() => {
+  if (props.initialData) {
+    handleEdit()
+  } else {
+    handleCreate()
+  }
 })
 </script>
