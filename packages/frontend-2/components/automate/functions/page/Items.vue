@@ -28,7 +28,11 @@ defineEmits<{
 
 graphql(`
   fragment AutomateFunctionsPageItems_Query on Query {
-    automateFunctions(limit: 20, filter: { search: $search }, cursor: $cursor) {
+    automateFunctions(
+      limit: 6
+      filter: { search: $search, featuredFunctionsOnly: true }
+      cursor: $cursor
+    ) {
       totalCount
       items {
         id

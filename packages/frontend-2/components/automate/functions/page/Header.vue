@@ -1,30 +1,18 @@
 <template>
   <div>
-    <div
-      class="pt-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"
-    >
-      <Portal to="navigation">
-        <HeaderNavLink :to="automationFunctionsRoute" :name="'Automate functions'" />
-      </Portal>
-
-      <h1 class="text-heading-xl">Automate functions</h1>
-      <div class="flex flex-col sm:flex-row gap-2">
-        <FormTextInput
-          name="search"
-          placeholder="Search functions..."
-          show-clear
-          color="foundation"
-          v-bind="bind"
-          v-on="on"
-        />
-        <FormButton
-          v-if="canCreateFunction"
-          :icon-left="PlusIcon"
-          @click="() => (createDialogOpen = true)"
-        >
-          New Function
-        </FormButton>
-      </div>
+    <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+      <FormTextInput
+        name="search"
+        placeholder="Search..."
+        :custom-icon="MagnifyingGlassIcon"
+        show-clear
+        color="foundation"
+        v-bind="bind"
+        v-on="on"
+      />
+      <FormButton v-if="canCreateFunction" @click="() => (createDialogOpen = true)">
+        New function
+      </FormButton>
     </div>
     <AutomateFunctionCreateDialog
       v-model:open="createDialogOpen"
@@ -35,12 +23,11 @@
   </div>
 </template>
 <script setup lang="ts">
-import { PlusIcon } from '@heroicons/vue/24/outline'
+import { MagnifyingGlassIcon } from '@heroicons/vue/24/outline'
 import type { Nullable, Optional } from '@speckle/shared'
 import { useDebouncedTextInput } from '@speckle/ui-components'
 import { graphql } from '~/lib/common/generated/gql'
 import type { AutomateFunctionsPageHeader_QueryFragment } from '~/lib/common/generated/gql/graphql'
-import { automationFunctionsRoute } from '~/lib/common/helpers/route'
 
 graphql(`
   fragment AutomateFunctionsPageHeader_Query on Query {
