@@ -107,6 +107,19 @@ export const useAccountStore = defineStore('accountStore', () => {
       // Handle apollo client errors as top level
       const errorLink = onError((res: ErrorResponse) => {
         if (res.graphQLErrors) {
+          if (
+            res.graphQLErrors?.some(
+              (err) => err.extensions.code === 'SSO_SESSION_MISSING_OR_EXPIRED_ERROR'
+            )
+          ) {
+            hostAppStore.setNotification({
+              type: ToastNotificationType.Warning,
+              title: 'SSO Required',
+              description:
+                'Your workspace requires SSO authentication. Please sign in and try again.'
+            })
+          }
+
           const messages: string[] = []
           res.graphQLErrors.forEach(({ message, path }) => {
             messages.push(`${message},\n Path: ${path}`)
