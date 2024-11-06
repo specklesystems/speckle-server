@@ -37,7 +37,8 @@ export const modelRoute = (
   resourceIdString: string,
   hashState?: Partial<Record<ViewerHashStateKeys, string>>
 ) =>
-  `/projects/${projectId}/models/${resourceIdString}${hashState ? serializeHashState(hashState) || '' : ''
+  `/projects/${projectId}/models/${resourceIdString}${
+    hashState ? serializeHashState(hashState) || '' : ''
   }`
 export const modelVersionsRoute = (projectId: string, modelId: string) =>
   `/projects/${projectId}/models/${modelId}/versions`

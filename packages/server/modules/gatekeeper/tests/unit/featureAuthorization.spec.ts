@@ -1,7 +1,5 @@
 import { WorkspacePlan } from '@/modules/gatekeeper/domain/billing'
-import { WorkspacePlanNotFoundError } from '@/modules/gatekeeper/errors/billing'
 import { canWorkspaceAccessFeatureFactory } from '@/modules/gatekeeper/services/featureAuthorization'
-import { expectToThrow } from '@/test/assertionHelper'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
 
@@ -11,14 +9,12 @@ describe('featureAuthorization @gatekeeper', () => {
       const canWorkspaceAccessFeature = canWorkspaceAccessFeatureFactory({
         getWorkspacePlan: async () => null
       })
-      const err = await expectToThrow(
-        async () =>
-          await canWorkspaceAccessFeature({
-            workspaceId: cryptoRandomString({ length: 10 }),
-            workspaceFeature: 'domainBasedSecurityPolicies'
-          })
-      )
-      expect(err.message).to.be.equal(new WorkspacePlanNotFoundError().message)
+      const canAccess = await canWorkspaceAccessFeature({
+        workspaceId: cryptoRandomString({ length: 10 }),
+        workspaceFeature: 'domainBasedSecurityPolicies'
+      })
+
+      expect(canAccess).to.be.false
     })
     ;(
       [

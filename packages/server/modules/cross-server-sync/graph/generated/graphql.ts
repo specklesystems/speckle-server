@@ -2135,7 +2135,6 @@ export type ProjectCreateInput = {
   description?: InputMaybe<Scalars['String']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
   visibility?: InputMaybe<ProjectVisibility>;
-  workspaceId?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type ProjectFileImportUpdatedMessage = {
@@ -2873,7 +2872,7 @@ export type ServerMultiRegionConfiguration = {
 
 export type ServerRegionItem = {
   __typename?: 'ServerRegionItem';
-  description: Scalars['String']['output'];
+  description?: Maybe<Scalars['String']['output']>;
   id: Scalars['String']['output'];
   key: Scalars['String']['output'];
   name: Scalars['String']['output'];
@@ -4006,6 +4005,8 @@ export type WebhookUpdateInput = {
 export type Workspace = {
   __typename?: 'Workspace';
   automateFunctions: AutomateFunctionCollection;
+  /** Regions available to the workspace for project data residency */
+  availableRegions: Array<ServerRegionItem>;
   /** Billing data for Workspaces beta */
   billing?: Maybe<WorkspaceBilling>;
   createdAt: Scalars['DateTime']['output'];
@@ -4014,6 +4015,11 @@ export type Workspace = {
   defaultLogoIndex: Scalars['Int']['output'];
   /** The default role workspace members will receive for workspace projects. */
   defaultProjectRole: Scalars['String']['output'];
+  /**
+   * The default region where project data will be stored, if set. If undefined, defaults to main/default
+   * region.
+   */
+  defaultRegion?: Maybe<ServerRegionItem>;
   description?: Maybe<Scalars['String']['output']>;
   /** Enable/Disable discovery of the workspace */
   discoverabilityEnabled: Scalars['Boolean']['output'];
@@ -4236,6 +4242,8 @@ export type WorkspaceMutations = {
   join: Workspace;
   leave: Scalars['Boolean']['output'];
   projects: WorkspaceProjectMutations;
+  /** Set the default region where project data will be stored. Only available to admins. */
+  setDefaultRegion: Workspace;
   update: Workspace;
   updateRole: Workspace;
 };
@@ -4271,6 +4279,12 @@ export type WorkspaceMutationsLeaveArgs = {
 };
 
 
+export type WorkspaceMutationsSetDefaultRegionArgs = {
+  regionKey: Scalars['String']['input'];
+  workspaceId: Scalars['String']['input'];
+};
+
+
 export type WorkspaceMutationsUpdateArgs = {
   input: WorkspaceUpdateInput;
 };
@@ -4303,6 +4317,13 @@ export enum WorkspacePlans {
   Unlimited = 'unlimited'
 }
 
+export type WorkspaceProjectCreateInput = {
+  description?: InputMaybe<Scalars['String']['input']>;
+  name?: InputMaybe<Scalars['String']['input']>;
+  visibility?: InputMaybe<ProjectVisibility>;
+  workspaceId: Scalars['String']['input'];
+};
+
 export type WorkspaceProjectInviteCreateInput = {
   /** Either this or userId must be filled */
   email?: InputMaybe<Scalars['String']['input']>;
@@ -4318,8 +4339,14 @@ export type WorkspaceProjectInviteCreateInput = {
 
 export type WorkspaceProjectMutations = {
   __typename?: 'WorkspaceProjectMutations';
+  create: Project;
   moveToWorkspace: Project;
   updateRole: Project;
+};
+
+
+export type WorkspaceProjectMutationsCreateArgs = {
+  input: WorkspaceProjectCreateInput;
 };
 
 

@@ -60,3 +60,9 @@ export type WorkspaceAcl = {
   workspaceId: string
   createdAt: Date
 }
+
+export type WorkspaceRegionAssignment = {
+  workspaceId: string
+  regionKey: string
+  createdAt: Date
+}
