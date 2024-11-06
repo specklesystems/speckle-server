@@ -4,7 +4,7 @@
     <template v-if="!loading && fn">
       <AutomateFunctionPageHeader
         :fn="fn"
-        :is-owner="isOwner"
+        :is-owner="true"
         class="mb-12"
         @create-automation="showNewAutomationDialog = true"
         @edit="showEditDialog = true"
@@ -21,6 +21,7 @@
         v-if="editModel"
         v-model:open="showEditDialog"
         :model="editModel"
+        :workspaces="activeUserWorkspaces"
         :fn-id="fn.id"
       />
     </template>
@@ -57,6 +58,13 @@ const pageQuery = graphql(`
     automateFunction(id: $functionId) {
       ...AutomateFunctionPage_AutomateFunction
     }
+    activeUser {
+      workspaces {
+        items {
+          ...AutomateFunctionCreateDialog_Workspace
+        }
+      }
+    }
   }
 `)
 
@@ -91,6 +99,9 @@ const isOwner = computed(
       fn.value?.creator &&
       activeUser.value.id === fn.value.creator.id
     )
+)
+const activeUserWorkspaces = computed(
+  () => result.value?.activeUser?.workspaces.items ?? []
 )
 
 const { html: plaintextDescription } = useMarkdown(

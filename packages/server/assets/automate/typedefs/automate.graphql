@@ -259,6 +259,7 @@ input UpdateAutomateFunctionInput {
   supportedSourceApps: [String!]
   tags: [String!]
   logo: String
+  workspaceId: String
 }
 
 type UserAutomateInfo {

@@ -13,30 +13,37 @@
     <div class="flex items-center gap-4">
       <AutomateFunctionLogo :logo="fn.logo" />
       <h1 class="text-heading-lg">{{ fn.name }}</h1>
-      <FormButton v-if="isOwner" size="sm" text class="mt-1" @click="$emit('edit')">
+    </div>
+    <div class="flex items-center align-center gap-2">
+      <FormButton
+        v-if="isOwner"
+        :icon-left="PencilIcon"
+        color="outline"
+        @click="$emit('edit')"
+      >
         Edit
       </FormButton>
-    </div>
-    <div
-      v-tippy="
-        hasReleases ? undefined : 'Your function needs to have at least one release'
-      "
-      class="flex gap-2 shrink-0"
-    >
-      <FormButton
-        :icon-left="BoltIcon"
-        class="shrink-0"
-        full-width
-        :disabled="!hasReleases"
-        @click="$emit('createAutomation')"
+      <div
+        v-tippy="
+          hasReleases ? undefined : 'Your function needs to have at least one release'
+        "
+        class="flex gap-2 shrink-0"
       >
-        Use in an automation
-      </FormButton>
+        <FormButton
+          :icon-left="BoltIcon"
+          class="shrink-0"
+          full-width
+          :disabled="!hasReleases"
+          @click="$emit('createAutomation')"
+        >
+          Use in an automation
+        </FormButton>
+      </div>
     </div>
   </div>
 </template>
 <script setup lang="ts">
-import { BoltIcon } from '@heroicons/vue/24/outline'
+import { PencilIcon, BoltIcon } from '@heroicons/vue/24/outline'
 import { graphql } from '~/lib/common/generated/gql'
 import type { AutomateFunctionPageHeader_FunctionFragment } from '~/lib/common/generated/gql/graphql'
 import {
