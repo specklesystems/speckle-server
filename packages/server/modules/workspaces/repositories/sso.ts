@@ -167,6 +167,7 @@ export const listWorkspaceSsoMembershipsFactory =
       .where((builder) => {
         builder.where({ userId })
         builder.whereNotNull('providerId')
+        builder.whereNot('role', 'workspace:guest')
       })
     return workspaces
   }

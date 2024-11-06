@@ -173,6 +173,23 @@ export const getWorkspaceProjectsQuery = gql`
   ${workspaceProjectFragment}
 `
 
+export const getWorkspaceSsoQuery = gql`
+  query GetWorkspaceSso($id: String!) {
+    workspace(id: $id) {
+      sso {
+        provider {
+          id
+          name
+        }
+        session {
+          createdAt
+          validUntil
+        }
+      }
+    }
+  }
+`
+
 export const getWorkspaceTeamQuery = gql`
   query GetWorkspaceTeam(
     $workspaceId: String!
@@ -212,6 +229,17 @@ export const getProjectWorkspaceQuery = gql`
             name
           }
         }
+      }
+    }
+  }
+`
+
+export const getActiveUserExpiredSsoSessions = gql`
+  query ActiveUserExpiredSsoSessions {
+    activeUser {
+      expiredSsoSessions {
+        id
+        slug
       }
     }
   }
