@@ -3,26 +3,23 @@
     <div class="flex flex-col gap-4">
       <FormTextInput
         v-model="formData.providerName"
-        label="Provider name"
+        label="Provider"
         help="The label on the button displayed on the login screen."
         name="providerName"
         color="foundation"
         show-label
         label-position="left"
-        placeholder="Google"
         :rules="[isRequired, isStringOfLength({ minLength: 5 })]"
         type="text"
       />
       <hr class="border-outline-3" />
       <FormTextInput
         v-model="formData.clientId"
-        help="Client ID of your OpenID application."
         label="Client ID"
         name="clientId"
         color="foundation"
         show-label
         label-position="left"
-        placeholder="1234567890"
         :rules="[isRequired, isStringOfLength({ minLength: 5 })]"
         type="text"
       />
@@ -31,32 +28,30 @@
         v-model="formData.clientSecret"
         label="Client secret"
         name="clientSecret"
-        help="Client secret provided by your OpenID provider."
         color="foundation"
         show-label
         label-position="left"
         type="text"
-        placeholder="1234567890"
         :rules="[isRequired, isStringOfLength({ minLength: 5 })]"
       />
       <hr class="border-outline-3" />
       <FormTextInput
         v-model="formData.issuerUrl"
         label="Discovery URL"
-        help="The url of the OpenID provider authorization server."
         name="issuerUrl"
         color="foundation"
         show-label
         label-position="left"
         type="text"
-        placeholder="https://accounts.google.com"
         :rules="[isRequired, isUrl, isStringOfLength({ minLength: 5 })]"
       />
       <div class="flex gap-2 mt-4">
         <FormButton :disabled="!challenge" color="primary" type="submit">
           Save
         </FormButton>
-        <FormButton color="outline" @click="$emit('cancel')">Cancel</FormButton>
+        <FormButton v-if="formData.clientId" color="outline" @click="$emit('cancel')">
+          Cancel
+        </FormButton>
       </div>
     </div>
   </form>
@@ -83,7 +78,7 @@ const apiOrigin = useApiOrigin()
 const postAuthRedirect = usePostAuthRedirect()
 const { challenge } = useLoginOrRegisterUtils()
 
-const formData = reactive<SsoFormValues>({
+const formData = ref<SsoFormValues>({
   providerName: props.initialData?.providerName ?? '',
   clientId: props.initialData?.clientId ?? '',
   clientSecret: props.initialData?.clientSecret ?? '',
@@ -95,10 +90,10 @@ const { handleSubmit } = useForm<SsoFormValues>()
 const onSubmit = handleSubmit(() => {
   const baseUrl = `${apiOrigin}/api/v1/workspaces/${props.workspaceSlug}/sso/oidc/validate`
   const params = [
-    `providerName=${formData.providerName}`,
-    `clientId=${formData.clientId}`,
-    `clientSecret=${formData.clientSecret}`,
-    `issuerUrl=${formData.issuerUrl}`,
+    `providerName=${formData.value.providerName}`,
+    `clientId=${formData.value.clientId}`,
+    `clientSecret=${formData.value.clientSecret}`,
+    `issuerUrl=${formData.value.issuerUrl}`,
     `challenge=${challenge.value}`
   ]
   const route = `${baseUrl}?${params.join('&')}`
