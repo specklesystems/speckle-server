@@ -26,4 +26,5 @@ export interface ISendBindingEvents
     versionId: string
     sendConversionResults: ConversionResult[]
   }) => void
+  setFilterObjectIds: (args: { modelCardId: string; objectIds: string[] }) => void
 }

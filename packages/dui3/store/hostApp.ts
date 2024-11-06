@@ -127,10 +127,14 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
       (m) => m.modelCardId === modelCardId
     )
 
+    console.log(documentModelStore.value.models[modelIndex], 'before')
+
     documentModelStore.value.models[modelIndex] = {
       ...documentModelStore.value.models[modelIndex],
       ...properties
     }
+
+    console.log(documentModelStore.value.models[modelIndex], 'after')
 
     await app.$baseBinding.updateModel(documentModelStore.value.models[modelIndex])
   }
@@ -179,6 +183,19 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
   const selectionFilter = computed(
     () => sendFilters.value?.find((f) => f.name === 'Selection') as ISendFilter
   )
+
+  app.$sendBinding?.on('setFilterObjectIds', async ({ modelCardId, objectIds }) => {
+    const modelCard = models.value.find(
+      (card) => card.modelCardId === modelCardId
+    ) as ISenderModelCard
+    if (!modelCard) return
+    console.log('triggered')
+
+    const newFilter = { ...modelCard.sendFilter, objectIds }
+    console.log(newFilter)
+
+    await patchModel(modelCardId, { sendFilter: newFilter })
+  })
 
   app.$selectionBinding?.on('setSelection', (selInfo) => {
     const modelCards = models.value.filter(

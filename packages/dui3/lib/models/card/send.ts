@@ -14,6 +14,7 @@ export interface ISendFilter extends IDiscriminatedObject {
   summary: string
   isDefault: boolean
   expired?: boolean
+  objectIds: string[]
 }
 
 export interface IDirectSelectionSendFilter extends ISendFilter {
