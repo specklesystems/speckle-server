@@ -7,28 +7,8 @@ import {
   Extension
 } from '@speckle/viewer'
 import potpack from 'potpack'
-import {
-  Box3Helper,
-  Color,
-  Matrix4,
-  Vector3,
-  Box3,
-  DoubleSide,
-  Group,
-  Mesh
-} from 'three'
-
-const ZERO = 0.00001
-const ONE = 0.99999
-/** Simple animation data interface */
-interface Animation {
-  target: BatchObject
-  start: Vector3
-  end: Vector3
-  current: Vector3
-  radialEnd: Vector3
-  time: number
-}
+import { Color, Matrix4, Vector3, Box3, DoubleSide, Group, Mesh } from 'three'
+import { AnimationGroup } from './AnimationGroup'
 
 interface Box {
   x: number
@@ -47,52 +27,12 @@ interface CategoryBox extends Box {
 }
 
 export class Catalogue extends Extension {
-  /** We'll store our animations here */
-  private animations: Animation[] = []
+  private animationGroup: AnimationGroup = new AnimationGroup()
   private textGroup: Group = new Group()
-  private reverse = false
-  /** We'll store the boxes for the categories here */
-
-  /** Animation params */
-  private readonly animTimeScale: number = 0.25
 
   /** We're tying in to the viewer core's frame event */
-  public onLateUpdate(deltaTime: number) {
-    if (!this.animations.length) return
-
-    let animCount = 0
-    for (let k = 0; k < this.animations.length; k++) {
-      /** Animation finished, no need to update it */
-      if (this.animations[k].time === 1 || this.animations[k].time === 0) {
-        continue
-      }
-      /** Compute the next animation time value */
-      const t =
-        this.animations[k].time +
-        (this.reverse
-          ? -(deltaTime * this.animTimeScale)
-          : deltaTime * this.animTimeScale)
-
-      /** Clamp it to 1 */
-      this.animations[k].time = Math.min(Math.max(t, 0), 1)
-      /** Compute current position value based on animation time */
-      const valueL = new Vector3().copy(this.animations[k].start).lerp(
-        this.animations[k].end,
-        this.easeOutQuart(this.animations[k].time) // Added easing
-      )
-      const valueR = new Vector3().copy(this.animations[k].start).lerp(
-        this.animations[k].radialEnd,
-        this.easeOutQuart(this.animations[k].time) // Added easing
-      )
-      const value = new Vector3().lerpVectors(
-        valueR,
-        valueL,
-        this.easeOutQuart(this.animations[k].time)
-      )
-      /** Apply the translation */
-      this.animations[k].target.transformTRS(value, undefined, undefined, undefined)
-      animCount++
-    }
+  public onEarlyUpdate(deltaTime: number) {
+    const animCount = this.animationGroup.update(deltaTime)
 
     /** If any animations updated, request a render */
     if (animCount) {
@@ -100,34 +40,16 @@ export class Catalogue extends Extension {
     }
   }
 
-  public onRender() {
-    // NOT IMPLEMENTED for this example
-  }
-  public onResize() {
-    // NOT IMPLEMENTED for this example
-  }
-
-  public play() {
-    this.reverse = false
-    for (let k = 0; k < this.animations.length; k++) {
-      this.animations[k].time = ZERO
-    }
-  }
-
-  public playReverse() {
-    for (let k = 0; k < this.animations.length; k++) {
-      this.animations[k].time = ONE
-    }
-    this.reverse = true
-  }
-
-  public wipe() {
-    this.animations = []
+  public animate(reverse: boolean = false) {
+    reverse ? this.animationGroup.playReverse() : this.animationGroup.play()
   }
 
   /** Example's main function */
-  public async categorize(input: Array<{ ids: Array<string>; value: string }>) {
-    if (this.animations.length) return
+  public async categorize(
+    input: Array<{ ids: Array<string>; value: string }>,
+    annotations = false
+  ) {
+    if (this.animationGroup.animations.length) return
 
     const padding = 0.5
     const categoryPadding = 10
@@ -188,6 +110,14 @@ export class Catalogue extends Extension {
       console.log(categories)
     }
 
+    this.makeAnimations(categories, origin)
+    annotations && (await this.makeAnnotations(categories, origin))
+  }
+
+  private makeAnimations(
+    categories: { [categoryName: string]: CategoryBox },
+    origin: Vector3
+  ) {
     for (const k in categories) {
       for (let i = 0; i < categories[k].boxes.length; i++) {
         const objectBox = categories[k].boxes[i]
@@ -202,13 +132,6 @@ export class Catalogue extends Extension {
           new Matrix4().makeTranslation(categories[k].x, categories[k].y, 0)
         )
 
-        const boxHelper = new Box3Helper(box3, new Color(0x047efb))
-        /** Set the layers to PROPS, so that AO and interactions will ignore them */
-        boxHelper.layers.set(ObjectLayers.OVERLAY)
-        boxHelper.frustumCulled = false
-        /** Add the BoxHelper to the scene */
-        // this.viewer.getRenderer().scene.add(boxHelper)
-
         const bObj = objectBox.object
         const boxCenter = box3.getCenter(new Vector3())
         const aabbCenter = bObj.aabb.getCenter(new Vector3())
@@ -217,23 +140,21 @@ export class Catalogue extends Extension {
           .copy(boxCenter)
           .sub(aabbCenter.sub(new Vector3(0, 0, aabbSize.z * 0.5)))
 
-        const theta = Math.random() * 2 * Math.PI
-        const radius = Math.random() * 150
-        const x = radius * Math.cos(theta)
-        const y = radius * Math.sin(theta)
-
-        const finalRadial = boxCenter.sub(new Vector3(x, y, 0))
-        this.animations.push({
+        this.animationGroup.animations.push({
           target: bObj,
           start: new Vector3(),
           end: finalPos,
           current: new Vector3(),
-          time: 0,
-          radialEnd: finalRadial
+          time: 0
         })
       }
     }
+  }
 
+  private async makeAnnotations(
+    categories: { [categoryName: string]: CategoryBox },
+    origin: Vector3
+  ) {
     for (const categoryBox in categories) {
       /** Create a speckle text object */
       const text = new SpeckleText('test-text', ObjectLayers.OVERLAY)
@@ -292,7 +213,9 @@ export class Catalogue extends Extension {
     this.viewer.getRenderer().scene.add(this.textGroup)
   }
 
-  private easeOutQuart(x: number): number {
-    return 1 - Math.pow(1 - x, 4)
+  public wipe() {
+    this.animationGroup.clear()
+    this.textGroup.clear()
+    this.viewer.getRenderer().scene.remove(this.textGroup)
   }
 }

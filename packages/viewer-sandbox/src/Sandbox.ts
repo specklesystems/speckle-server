@@ -501,8 +501,7 @@ export default class Sandbox {
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       //@ts-ignore
       await this.viewer.getExtension(Catalogue).categorize(data.valueGroups)
-      if (!reverse) this.viewer.getExtension(Catalogue).play()
-      else this.viewer.getExtension(Catalogue).playReverse()
+      this.viewer.getExtension(Catalogue).animate(reverse)
       reverse = !reverse
       console.log(data)
     })
