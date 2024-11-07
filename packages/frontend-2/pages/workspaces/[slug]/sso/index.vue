@@ -1,7 +1,7 @@
 <template>
   <div>
     <!-- Loading State -->
-    <template v-if="isLoading">
+    <template v-if="loading">
       <div class="py-12 flex flex-col items-center gap-2">
         <CommonLoadingIcon />
       </div>
@@ -24,11 +24,11 @@
         </div>
         <div v-if="isSsoEnabled">
           <FormButton
-            :disabled="!challenge || !ssoProviderName"
+            :disabled="!challenge || !workspace?.ssoProviderName"
             :icon-left="LockOpenIcon"
             @click="handleContinue"
           >
-            Continue with {{ ssoProviderName }} SSO
+            Continue with {{ workspace?.ssoProviderName }} SSO
           </FormButton>
         </div>
 
@@ -59,31 +59,36 @@ import { CommonLoadingIcon } from '@speckle/ui-components'
 import { useQuery } from '@vue/apollo-composable'
 import { authRegisterPanelQuery } from '~/lib/auth/graphql/queries'
 import type { ServerTermsOfServicePrivacyPolicyFragmentFragment } from '~/lib/common/generated/gql/graphql'
+import { useWorkspaceSsoPublic } from '~/lib/workspaces/composables/management'
+import { useMixpanel } from '~/lib/core/composables/mp'
 
 definePageMeta({
   layout: 'login-or-register',
   middleware: ['requires-workspaces-enabled']
 })
 
-const apiOrigin = useApiOrigin()
 const route = useRoute()
 const logger = useLogger()
 const { challenge } = useLoginOrRegisterUtils()
 const { signInOrSignUpWithSso } = useAuthManager()
 const isSsoEnabled = useIsWorkspacesSsoEnabled()
-const isPostSsoFlow = computed(() => !!route.query.access_code)
+const mixpanel = useMixpanel()
 
 const { result } = useQuery(authRegisterPanelQuery, {
   token: route.query.token as string
 })
 
+const { workspace, loading, error } = useWorkspaceSsoPublic(
+  route.params.slug.toString()
+)
+
+if (error.value) {
+  logger.error('Failed to fetch workspace data:', error.value)
+}
+
 const serverInfo = computed<ServerTermsOfServicePrivacyPolicyFragmentFragment>(
   () => result.value?.serverInfo || { termsOfService: '' }
 )
-
-const workspace = ref<LimitedWorkspace>()
-const ssoProviderName = ref<string>()
-const isLoading = ref(true)
 
 const errorMessage = computed(() => {
   const error = route.query.error as string | undefined
@@ -94,34 +99,27 @@ const errorMessage = computed(() => {
 })
 
 const handleContinue = () => {
+  mixpanel.track('Workspace SSO Login Attempt', {
+    // eslint-disable-next-line camelcase
+    workspace_slug: route.params.slug.toString(),
+    // eslint-disable-next-line camelcase
+    provider_name: workspace.value?.ssoProviderName
+  })
   signInOrSignUpWithSso({
     challenge: challenge.value,
     workspaceSlug: route.params.slug.toString()
   })
 }
 
-type LimitedWorkspace = {
-  name: string
-  logo?: string | null
-  defaultLogoIndex: number
-  ssoProviderName?: string | null
-}
-
-onMounted(async () => {
-  if (isPostSsoFlow.value) {
-    return
-  }
-  try {
-    const res = await fetch(
-      new URL(`/api/v1/workspaces/${route.params.slug}/sso`, apiOrigin)
-    )
-    const data: LimitedWorkspace = (await res.json()) as LimitedWorkspace
-    workspace.value = data
-    ssoProviderName.value = data.ssoProviderName || undefined
-  } catch (error) {
-    logger.error('Failed to fetch workspace data:', error)
-  } finally {
-    isLoading.value = false
+onMounted(() => {
+  if (errorMessage.value) {
+    mixpanel.track('Workspace SSO Error', {
+      // eslint-disable-next-line camelcase
+      workspace_slug: route.params.slug.toString(),
+      error: errorMessage.value,
+      // eslint-disable-next-line camelcase
+      provider_name: workspace.value?.ssoProviderName
+    })
   }
 })
 </script>

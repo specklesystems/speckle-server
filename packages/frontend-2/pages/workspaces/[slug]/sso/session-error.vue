@@ -1,6 +1,6 @@
 <template>
   <div class="max-w-md mx-auto flex flex-col items-center gap-4">
-    <div v-if="isLoading">
+    <div v-if="loading">
       <CommonLoadingIcon />
     </div>
     <template v-else>
@@ -32,38 +32,30 @@
 import { CommonLoadingIcon } from '@speckle/ui-components'
 import { useAuthManager } from '~/lib/auth/composables/auth'
 import { ssoLoginRoute } from '~/lib/common/helpers/route'
+import { useMixpanel } from '~/lib/core/composables/mp'
+import { useWorkspaceSsoPublic } from '~/lib/workspaces/composables/management'
 
 const route = useRoute()
 const router = useRouter()
-const apiOrigin = useApiOrigin()
 const logger = useLogger()
 const { logout } = useAuthManager()
+const mixpanel = useMixpanel()
 
 const workspaceSlug = route.params.slug as string
-const isLoading = ref(true)
-const workspace = ref<LimitedWorkspace>()
+const { workspace, loading, error } = useWorkspaceSsoPublic(workspaceSlug)
 
-type LimitedWorkspace = {
-  name: string
-  logo?: string | null
-  defaultLogoIndex: number
+if (error.value) {
+  logger.error('Failed to fetch workspace data:', error.value)
 }
 
-onMounted(async () => {
-  try {
-    const res = await fetch(
-      new URL(`/api/v1/workspaces/${workspaceSlug}/sso`, apiOrigin)
-    )
-    const data: LimitedWorkspace = (await res.json()) as LimitedWorkspace
-    workspace.value = data
-  } catch (error) {
-    logger.error('Failed to fetch workspace data:', error)
-  } finally {
-    isLoading.value = false
-  }
-})
-
 const handleLoginRedirect = async () => {
+  mixpanel.track('Workspace SSO Session Error Redirect', {
+    // eslint-disable-next-line camelcase
+    workspace_slug: workspaceSlug,
+    // eslint-disable-next-line camelcase
+    provider_name: workspace.value?.ssoProviderName
+  })
+
   await logout({ skipRedirect: true })
   router.push(ssoLoginRoute)
 }

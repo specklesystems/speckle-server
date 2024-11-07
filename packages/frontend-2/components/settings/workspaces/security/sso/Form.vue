@@ -1,60 +1,78 @@
 <template>
-  <form class="flex flex-col gap-2" @submit="onSubmit">
-    <div class="flex flex-col gap-4">
-      <FormTextInput
-        v-model="formData.providerName"
-        label="Provider"
-        help="The label on the button displayed on the login screen."
-        name="providerName"
-        color="foundation"
-        show-label
-        label-position="left"
-        :rules="[isRequired, isStringOfLength({ minLength: 5 })]"
-        type="text"
-      />
-      <hr class="border-outline-3" />
-      <FormTextInput
-        v-model="formData.clientId"
-        label="Client ID"
-        name="clientId"
-        color="foundation"
-        show-label
-        label-position="left"
-        :rules="[isRequired, isStringOfLength({ minLength: 5 })]"
-        type="text"
-      />
-      <hr class="border-outline-3" />
-      <FormTextInput
-        v-model="formData.clientSecret"
-        label="Client secret"
-        name="clientSecret"
-        color="foundation"
-        show-label
-        label-position="left"
-        type="text"
-        :rules="[isRequired, isStringOfLength({ minLength: 5 })]"
-      />
-      <hr class="border-outline-3" />
-      <FormTextInput
-        v-model="formData.issuerUrl"
-        label="Discovery URL"
-        name="issuerUrl"
-        color="foundation"
-        show-label
-        label-position="left"
-        type="text"
-        :rules="[isRequired, isUrl, isStringOfLength({ minLength: 5 })]"
-      />
-      <div class="flex gap-2 mt-4">
-        <FormButton :disabled="!challenge" color="primary" type="submit">
-          Save
-        </FormButton>
-        <FormButton v-if="formData.clientId" color="outline" @click="$emit('cancel')">
-          Cancel
-        </FormButton>
+  <div>
+    <form class="flex flex-col gap-2" @submit="onSubmit">
+      <div class="flex flex-col gap-4">
+        <FormTextInput
+          v-model="formData.providerName"
+          :disabled="!!initialData?.clientId"
+          label="Provider"
+          help="The label on the button displayed on the login screen."
+          name="providerName"
+          color="foundation"
+          show-label
+          label-position="left"
+          :rules="[isRequired, isStringOfLength({ minLength: 5 })]"
+          type="text"
+        />
+        <hr class="border-outline-3" />
+        <FormTextInput
+          v-model="formData.clientId"
+          :disabled="!!initialData?.clientId"
+          label="Client ID"
+          name="clientId"
+          color="foundation"
+          show-label
+          label-position="left"
+          :rules="[isRequired, isStringOfLength({ minLength: 5 })]"
+          type="text"
+        />
+        <hr class="border-outline-3" />
+        <FormTextInput
+          v-model="formData.clientSecret"
+          :disabled="!!initialData?.clientId"
+          label="Client secret"
+          name="clientSecret"
+          color="foundation"
+          show-label
+          label-position="left"
+          type="text"
+          :rules="[isRequired, isStringOfLength({ minLength: 5 })]"
+        />
+        <hr class="border-outline-3" />
+        <FormTextInput
+          v-model="formData.issuerUrl"
+          :disabled="!!initialData?.clientId"
+          label="Issuer URL"
+          name="issuerUrl"
+          color="foundation"
+          show-label
+          label-position="left"
+          type="text"
+          :rules="[isRequired, isUrl, isStringOfLength({ minLength: 5 })]"
+        />
+        <div class="flex gap-2 mt-4">
+          <FormButton
+            v-if="!initialData"
+            :disabled="!challenge"
+            color="primary"
+            type="submit"
+          >
+            Save
+          </FormButton>
+          <FormButton v-else color="danger" @click="isDeleteDialogOpen = true">
+            Delete
+          </FormButton>
+          <FormButton color="outline" @click="$emit('cancel')">Cancel</FormButton>
+        </div>
       </div>
-    </div>
-  </form>
+    </form>
+    <SettingsWorkspacesSecuritySsoDeleteDialog
+      v-model:open="isDeleteDialogOpen"
+      :provider-name="formData.providerName"
+      :workspace-slug="workspaceSlug"
+      @deleted="handleDeleted"
+    />
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -63,13 +81,14 @@ import { isRequired, isStringOfLength, isUrl } from '~~/lib/common/helpers/valid
 import { useLoginOrRegisterUtils } from '~/lib/auth/composables/auth'
 import { usePostAuthRedirect } from '~/lib/auth/composables/postAuthRedirect'
 import type { SsoFormValues } from '~/lib/workspaces/helpers/types'
+import { useMixpanel } from '~/lib/core/composables/mp'
 
 const props = defineProps<{
   initialData?: SsoFormValues
   workspaceSlug: string
 }>()
 
-defineEmits<{
+const emit = defineEmits<{
   (e: 'cancel'): void
   (e: 'submit', data: SsoFormValues): void
 }>()
@@ -78,6 +97,7 @@ const logger = useLogger()
 const apiOrigin = useApiOrigin()
 const postAuthRedirect = usePostAuthRedirect()
 const { challenge } = useLoginOrRegisterUtils()
+const mixpanel = useMixpanel()
 
 const formData = ref<SsoFormValues>({
   providerName: props.initialData?.providerName ?? '',
@@ -85,6 +105,7 @@ const formData = ref<SsoFormValues>({
   clientSecret: props.initialData?.clientSecret ?? '',
   issuerUrl: props.initialData?.issuerUrl ?? ''
 })
+const isDeleteDialogOpen = ref(false)
 
 const { handleSubmit } = useForm<SsoFormValues>()
 
@@ -100,6 +121,13 @@ const handleCreate = () => {
   const route = `${baseUrl}?${params.join('&')}`
 
   postAuthRedirect.set(`/workspaces/${props.workspaceSlug}?settings=server/general`)
+
+  mixpanel.track('Workspace SSO Configuration Started', {
+    // eslint-disable-next-line camelcase
+    workspace_slug: props.workspaceSlug,
+    // eslint-disable-next-line camelcase
+    provider_name: formData.value.providerName
+  })
 
   navigateTo(route, {
     external: true
@@ -123,4 +151,10 @@ const onSubmit = handleSubmit(() => {
     handleCreate()
   }
 })
+
+const handleDeleted = () => {
+  isDeleteDialogOpen.value = false
+  // Emit cancel to close the form after deletion
+  emit('cancel')
+}
 </script>

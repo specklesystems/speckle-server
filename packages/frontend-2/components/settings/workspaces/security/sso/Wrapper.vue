@@ -7,81 +7,81 @@
     </div>
 
     <template v-else>
-      <template v-if="!provider">
-        <div class="flex items-center">
-          <div class="flex-1 flex-col pr-6 gap-y-1">
-            <p class="text-body-xs font-medium text-foreground">Enable SSO</p>
-            <p class="text-body-2xs text-foreground-2 leading-5 max-w-md">
-              Allow logins through your OpenID identity provider.
-            </p>
-          </div>
-          <FormSwitch
-            v-model="isSsoToggleEnabled"
-            name="domain-discoverability"
-            :show-label="false"
-          />
+      <div class="flex items-center">
+        <div class="flex-1 flex-col pr-6 gap-y-1">
+          <p class="text-body-xs font-medium text-foreground">Enable SSO</p>
+          <p class="text-body-2xs text-foreground-2 leading-5 max-w-md">
+            Allow logins through your OpenID identity provider.
+          </p>
         </div>
-
-        <!-- Show form only when SSO is enabled but not yet configured -->
-        <div
-          v-if="isSsoToggleEnabled"
-          class="py-6 px-8 border border-outline-3 rounded-lg mt-4"
+        <FormButton
+          :disabled="isFormVisible || !!provider"
+          :color="provider ? 'outline' : 'primary'"
+          @click="handleConfigureClick"
         >
-          <p class="text-body-xs mb-4">
-            To set up SSO, create a new web application using the OpenID Connect
-            protocol in your identity provider's panel, which will contain the necessary
-            settings for Speckle. When asked about
-            <span class="font-bold">Redirect URL</span>
-            (callback) please use:
-          </p>
-          <div class="mb-4">
-            <CommonClipboardInputWithToast is-multiline :value="redirectUrl" />
-          </div>
+          Configure
+        </FormButton>
+      </div>
 
-          <p class="text-body-xs mb-4">
-            The application grant type should be set to "authorization_code." Below is a
-            list of supported scopes and claims to configure in the application:
-          </p>
-          <div
-            class="mb-8 bg-foundation border border-outline-3 rounded-lg p-4 text-body-xs"
-          >
-            <div class="grid grid-cols-3 gap-y-1.5">
-              <div class="col-span-1 font-medium">Scope</div>
-              <div class="col-span-2 font-medium">Resultant claims</div>
-
-              <template v-for="(claims, scope) in scopesAndClaims" :key="scope">
-                <div class="col-span-1">{{ scope }}</div>
-                <div class="col-span-2">{{ claims }}</div>
-              </template>
-            </div>
-          </div>
-
-          <SettingsWorkspacesSecuritySsoForm
-            :workspace-slug="workspace.slug"
-            @cancel="handleCancel"
-            @submit="handleFormSubmit"
-          />
-        </div>
-      </template>
-      <div v-else class="p-4 border border-outline-3 rounded-lg">
-        <div v-if="provider && !isEditing" class="flex items-center justify-between">
+      <!-- Existing Provider Configuration -->
+      <div v-if="provider" class="p-4 border border-outline-3 rounded-lg mt-4">
+        <div v-if="!isEditing" class="flex items-center justify-between">
           <div>
             <h3 class="text-body-xs font-medium text-foreground">
               {{ provider.name }}
             </h3>
-            <p class="text-body-2xs text-foreground-2">
-              {{ provider.issuerUrl }}
-            </p>
           </div>
-          <FormButton color="outline" @click="startEditing">Edit</FormButton>
+          <div class="flex gap-2">
+            <FormButton color="outline" @click="startEditing">Edit</FormButton>
+          </div>
         </div>
 
-        <!-- Show form when editing or no providers exist -->
         <SettingsWorkspacesSecuritySsoForm
           v-else
           :initial-data="formInitialData"
           :workspace-slug="workspace.slug"
-          @cancel="isEditing = false"
+          @cancel="handleCancel"
+          @submit="handleFormSubmit"
+        />
+      </div>
+
+      <!-- Configuration Instructions -->
+      <div
+        v-if="isFormVisible && !provider"
+        class="py-6 px-8 border border-outline-3 rounded-lg mt-4"
+      >
+        <p class="text-body-xs mb-4">
+          To set up SSO, create a new web application using the OpenID Connect protocol
+          in your identity provider's panel, which will contain the necessary settings
+          for Speckle. When asked about
+          <span class="font-bold">Redirect URL</span>
+          (callback) please use:
+        </p>
+        <div class="mb-4">
+          <CommonClipboardInputWithToast is-multiline :value="redirectUrl" />
+        </div>
+
+        <p class="text-body-xs mb-4">
+          The application grant type should be set to "authorization_code." Below is a
+          list of supported scopes and claims to configure in the application:
+        </p>
+        <div
+          class="mb-8 bg-foundation border border-outline-3 rounded-lg p-4 text-body-xs"
+        >
+          <div class="grid grid-cols-3 gap-y-1.5">
+            <div class="col-span-1 font-medium">Scope</div>
+            <div class="col-span-2 font-medium">Resultant claims</div>
+
+            <template v-for="(claims, scope) in scopesAndClaims" :key="scope">
+              <div class="col-span-1">{{ scope }}</div>
+              <div class="col-span-2">{{ claims }}</div>
+            </template>
+          </div>
+        </div>
+
+        <SettingsWorkspacesSecuritySsoForm
+          :workspace-slug="workspace.slug"
+          @cancel="handleCancel"
           @submit="handleFormSubmit"
         />
       </div>
@@ -104,8 +104,8 @@ const { provider, loading } = useWorkspaceSso({
   workspaceSlug: props.workspace.slug
 })
 
+const isFormVisible = ref(false)
 const isEditing = ref(false)
-const isSsoToggleEnabled = ref(false)
 
 const scopesAndClaims = ref({
   openid: '-',
@@ -113,18 +113,23 @@ const scopesAndClaims = ref({
   email: 'email'
 })
 
+const handleConfigureClick = () => {
+  isFormVisible.value = true
+}
+
 const startEditing = () => {
   isEditing.value = true
 }
 
 const handleFormSubmit = (data: SsoFormValues) => {
-  // Handle form submission
   logger.info('Form submitted:', data)
   isEditing.value = false
+  isFormVisible.value = false
 }
 
 const handleCancel = () => {
-  isSsoToggleEnabled.value = false
+  isFormVisible.value = false
+  isEditing.value = false
 }
 
 const redirectUrl = computed(() => {

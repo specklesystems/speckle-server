@@ -34,6 +34,10 @@ import { isFunction } from 'lodash-es'
 import type { GraphQLError } from 'graphql'
 import { useClipboard } from '~~/composables/browser'
 import { workspaceSsoCheckQuery } from '~/lib/workspaces/graphql/queries'
+import type {
+  WorkspaceSsoError,
+  WorkspaceSsoProviderPublic
+} from '~/lib/workspaces/helpers/types'
 
 export const useInviteUserToWorkspace = () => {
   const { activeUser } = useActiveUser()
@@ -444,53 +448,40 @@ export const useWorkspaceSso = (params: { workspaceSlug: string }) => {
   }
 }
 
-export const useWorkspaceSsoPublic = (params: { workspaceSlug: string }) => {
-  type WorkspaceSsoInfo = {
-    hasSsoEnabled: boolean
-    ssoProviderName?: string
-  }
-
-  type WorkspaceSsoResponse = {
-    ssoProviderName: string | null
-  }
-
+export function useWorkspaceSsoPublic(workspaceSlug: string) {
   const apiOrigin = useApiOrigin()
   const logger = useLogger()
 
+  const workspace = ref<WorkspaceSsoProviderPublic>()
   const loading = ref(true)
   const error = ref<Error | null>(null)
-  const ssoInfo = ref<WorkspaceSsoInfo>({
-    hasSsoEnabled: false
-  })
 
   onMounted(async () => {
     try {
       const res = await fetch(
-        `${apiOrigin}/api/v1/workspaces/${params.workspaceSlug}/sso`
+        new URL(`/api/v1/workspaces/${workspaceSlug}/sso`, apiOrigin)
       )
-
-      if (!res.ok && res.status !== 304) {
-        return // SSO not configured
+      if (!res.ok) {
+        const errorData = (await res.json()) as WorkspaceSsoError
+        throw new Error(
+          errorData?.message || `Failed to fetch workspace data: ${res.status}`
+        )
       }
 
-      const data = (await res.json()) as WorkspaceSsoResponse
-
-      ssoInfo.value = {
-        hasSsoEnabled: !!data?.ssoProviderName,
-        ssoProviderName: data?.ssoProviderName || undefined
-      }
-    } catch (e) {
-      logger.error('SSO info error:', e)
+      const data = (await res.json()) as WorkspaceSsoProviderPublic
+      workspace.value = data
+    } catch (err) {
+      error.value = err instanceof Error ? err : new Error('Unknown error')
+      logger.error('Failed to fetch workspace data:', err)
     } finally {
       loading.value = false
     }
   })
 
   return {
-    loading,
-    error,
-    hasSsoEnabled: computed(() => ssoInfo.value.hasSsoEnabled),
-    ssoProviderName: computed(() => ssoInfo.value.ssoProviderName)
+    workspace: readonly(workspace),
+    loading: readonly(loading),
+    error: readonly(error)
   }
 }
 
@@ -616,4 +607,54 @@ export function useSsoAuth(workspaceSlug: string) {
   }
 
   return { ssoError }
+}
+
+export function useWorkspaceSsoDelete() {
+  const apiOrigin = useApiOrigin()
+  const { triggerNotification } = useGlobalToast()
+  const mixpanel = useMixpanel()
+
+  const deleteSsoProvider = async (workspaceSlug: string) => {
+    try {
+      const res = await fetch(
+        new URL(`/api/v1/workspaces/${workspaceSlug}/sso`, apiOrigin),
+        {
+          method: 'DELETE',
+          credentials: 'include'
+        }
+      )
+
+      if (!res.ok) {
+        const errorData = (await res.json()) as WorkspaceSsoError
+        throw new Error(
+          errorData?.message || `Failed to delete SSO provider (${res.status})`
+        )
+      }
+
+      triggerNotification({
+        type: ToastNotificationType.Success,
+        title: 'SSO provider removed',
+        description: 'SSO provider was successfully removed'
+      })
+
+      mixpanel.track('Workspace SSO Provider Removed', {
+        // eslint-disable-next-line camelcase
+        workspace_slug: workspaceSlug
+      })
+
+      return true
+    } catch (error) {
+      triggerNotification({
+        type: ToastNotificationType.Danger,
+        title: 'Failed to remove SSO provider',
+        description:
+          error instanceof Error ? error.message : 'An unexpected error occurred'
+      })
+      return false
+    }
+  }
+
+  return {
+    deleteSsoProvider
+  }
 }
