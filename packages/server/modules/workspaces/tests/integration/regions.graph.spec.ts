@@ -93,10 +93,9 @@ describe('Workspace regions GQL', () => {
       })
 
       expect(res).to.not.haveGraphQLErrors()
-      expect(res.data?.workspace.availableRegions.map((r) => r.key)).to.deep.equal([
-        region1Key,
-        region2Key
-      ])
+      expect(
+        res.data?.workspace.availableRegions.map((r) => r.key)
+      ).to.deep.equalInAnyOrder([region1Key, region2Key])
     })
   })
 
