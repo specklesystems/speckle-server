@@ -160,13 +160,13 @@ export async function authContextMiddleware(
   next()
 }
 
-export function addLoadersToCtx(
+export async function addLoadersToCtx(
   ctx: Merge<Omit<GraphQLContext, 'loaders'>, { log?: Optional<pino.Logger> }>,
   options?: Partial<{ cleanLoadersEarly: boolean }>
-): GraphQLContext {
+): Promise<GraphQLContext> {
   const log =
     ctx.log || Observability.extendLoggerComponent(Observability.getLogger(), 'graphql')
-  const loaders = buildRequestLoaders(ctx, options)
+  const loaders = await buildRequestLoaders(ctx, options)
   return { ...ctx, loaders, log }
 }
 
@@ -212,7 +212,7 @@ export async function buildContext({
   }
 
   // Adding request data loaders
-  return addLoadersToCtx(
+  return await addLoadersToCtx(
     {
       ...ctx,
       log
