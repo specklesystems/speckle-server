@@ -94,18 +94,12 @@ export const workspaceSsoCheckQuery = graphql(`
   query WorkspaceSsoCheck($slug: String!) {
     workspaceBySlug(slug: $slug) {
       id
-      name
-      slug
       sso {
         provider {
           id
           name
           clientId
           issuerUrl
-        }
-        session {
-          createdAt
-          validUntil
         }
       }
     }

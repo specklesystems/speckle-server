@@ -8,74 +8,41 @@
     </template>
 
     <template v-else>
-      <div class="flex flex-col gap-1 mt-12">
+      <div class="flex flex-col items-center gap-2 mt-8">
+        <NuxtImg
+          v-if="workspace?.logo"
+          :src="workspace.logo"
+          :alt="workspace?.name"
+          class="w-16 h-16 object-contain rounded-full"
+        />
+        <h1 class="text-heading-xl mb-2">
+          Sign in to {{ workspace?.name || 'Workspace' }}
+        </h1>
         <!-- Error Message Banner -->
-        <div
-          v-if="errorMessage"
-          class="bg-highlight-1 border border-outline-3 rounded p-2 mb-2"
-        >
-          <div class="flex items-center justify-center gap-2">
-            <ExclamationTriangleIcon class="w-5 h-5 text-danger" />
-            <p class="text-body-2xs text-foreground">{{ errorMessage }}</p>
-          </div>
+        <div v-if="errorMessage" class="border border-outline-3 rounded p-4 mb-2">
+          <p class="text-body-2xs text-foreground">{{ errorMessage }}</p>
         </div>
-        <div
-          class="bg-foundation max-w-sm w-full mx-auto border border-outline-3 rounded-md"
-        >
-          <div
-            class="border-b border-outline-3 py-2 px-6 flex justify-start items-center gap-2"
+        <div v-if="isSsoEnabled">
+          <FormButton
+            :disabled="!challenge || !ssoProviderName"
+            :icon-left="LockOpenIcon"
+            @click="handleContinue"
           >
-            <div v-if="workspace?.logo" class="w-8 h-8">
-              <img
-                :src="workspace.logo"
-                :alt="workspace?.name"
-                class="w-full h-full object-contain rounded-full"
-              />
-            </div>
-            <h1 class="text-heading-sm">
-              Sign in to {{ workspace?.name || 'Workspace' }}
-            </h1>
-          </div>
-          <div class="px-6 py-4">
-            <!-- SSO Button -->
-            <div v-if="isSsoEnabled">
-              <p class="text-body-xs text-foreground leading-5 mb-3">
-                Use your
-                <span class="font-medium">{{ ssoProviderName }}</span>
-                account to access this workspace
-              </p>
+            Continue with {{ ssoProviderName }} SSO
+          </FormButton>
+        </div>
 
-              <FormButton
-                :disabled="!challenge || !ssoProviderName"
-                :icon-left="LockOpenIcon"
-                @click="handleContinue"
-              >
-                Continue with {{ ssoProviderName }} SSO
-              </FormButton>
-            </div>
-
-            <!-- Error State -->
-            <div
-              v-else
-              class="flex items-center gap-2 border border-outline-2 bg-foundation-page p-2 rounded"
-            >
-              <ExclamationTriangleIcon class="w-6 h-6 text-foreground-2" />
-              <div>
-                <p class="text-body-xs font-medium">
-                  SSO is not configured for this workspace.
-                </p>
-                <p class="text-body-2xs">
-                  Please contact your workspace administrator.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <!-- Help Text -->
-          <div class="px-6 py-3 border-t border-outline-3 select-none">
-            <p class="text-body-2xs text-foreground-3">
-              Having trouble? Contact your workspace administrator
+        <!-- Error State -->
+        <div
+          v-else
+          class="flex items-center gap-2 border border-outline-2 bg-foundation-page p-2 rounded"
+        >
+          <ExclamationTriangleIcon class="w-6 h-6 text-foreground-2" />
+          <div>
+            <p class="text-body-xs font-medium">
+              SSO is not configured for this workspace.
             </p>
+            <p class="text-body-2xs">Please contact your workspace administrator.</p>
           </div>
         </div>
         <AuthRegisterTerms :server-info="serverInfo" />
