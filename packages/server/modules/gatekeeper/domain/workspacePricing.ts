@@ -60,7 +60,7 @@ const limits: Record<Limits, LimitDetails> = {
   }
 }
 
-export const workspacePricingPlanInformation = { info, features, limits }
+export const workspacePricingPlanInformation = { features, limits }
 
 type WorkspaceLimits = Record<keyof typeof limits, number | null>
 
