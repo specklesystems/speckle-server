@@ -79,7 +79,7 @@ import type {
   ProjectListProjectItemFragment
 } from '~/lib/common/generated/gql/graphql'
 import type { ISendFilter } from '~/lib/models/card/send'
-import { RevitSenderModelCard, SenderModelCard } from '~/lib/models/card/send'
+import { SenderModelCard } from '~/lib/models/card/send'
 import { useHostAppStore } from '~/store/hostApp'
 import { useAccountStore } from '~/store/accounts'
 import { ChevronRightIcon } from '@heroicons/vue/24/solid'
@@ -167,10 +167,7 @@ const addModel = async () => {
     return
   }
 
-  const model =
-    hostAppStore.hostAppName === 'revit'
-      ? new RevitSenderModelCard()
-      : new SenderModelCard()
+  const model = new SenderModelCard()
   model.accountId = selectedAccountId.value
   model.serverUrl = activeAccount.value?.accountInfo.serverInfo.url as string
   model.projectId = selectedProject.value?.id as string

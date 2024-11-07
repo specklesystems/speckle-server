@@ -20,6 +20,7 @@ export interface ISendFilter extends IDiscriminatedObject {
   summary: string
   isDefault: boolean
   expired?: boolean
+  idMap?: Record<string, string>
   objectIds: string[]
 }
 
@@ -48,15 +49,5 @@ export class SenderModelCard extends ModelCard implements ISenderModelCard {
 
   constructor() {
     super('SenderModelCard')
-  }
-}
-
-export class RevitSenderModelCard extends ModelCard implements ISenderModelCard {
-  sendFilter?: ISendFilter | undefined
-  sending?: boolean | undefined
-  sendFilterObjectIdentifiers?: unknown
-  constructor() {
-    super('RevitSenderModelCard')
-    this.sendFilterObjectIdentifiers = {}
   }
 }

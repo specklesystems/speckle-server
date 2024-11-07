@@ -9,7 +9,6 @@ import type {
   IDirectSelectionSendFilter,
   ISendFilter,
   ISenderModelCard,
-  RevitSenderModelCard,
   RevitViewsSendFilter
 } from 'lib/models/card/send'
 import type { ToastNotification } from '@speckle/ui-components'
@@ -181,18 +180,17 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     () => sendFilters.value?.find((f) => f.name === 'Selection') as ISendFilter
   )
 
-  app.$sendBinding?.on('setFilterObjectIds', async ({ modelCardId, objectIds }) => {
+  app.$sendBinding?.on('setIdMap', async ({ modelCardId, idMap }) => {
     const modelCard = models.value.find(
       (card) => card.modelCardId === modelCardId
-    ) as RevitSenderModelCard
+    ) as ISenderModelCard
     if (!modelCard) return
 
     const newFilter = {
       ...modelCard.sendFilter,
-      objectIds: Object.values(objectIds).map((o) => o.uniqueId)
+      objectIds: Object.values(idMap),
+      idMap
     }
-    modelCard.sendFilterObjectIdentifiers = objectIds
-    console.log(modelCard)
 
     await patchModel(modelCardId, { sendFilter: newFilter })
   })
