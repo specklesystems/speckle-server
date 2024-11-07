@@ -53,7 +53,7 @@ spec:
         {{- end }}
         {{- if .Values.featureFlags.workspacesMultiRegionEnabled }}
           - name: multi-region-config
-            mountPath: /
+            mountPath: /multi-region-config
             readOnly: true
         {{- end }}
 
@@ -72,7 +72,7 @@ spec:
           - name: FF_WORKSPACES_MULTI_REGION_ENABLED
             value: {{ .Values.featureFlags.workspacesMultiRegionEnabled | quote }}
           - name: MULTI_REGION_CONFIG_PATH
-            value: {{ (printf "/%s" .Values.multiRegion.config.secretKey) | quote}}
+            value: "/multi-region-config/multi-region-config.json"
           {{- end }}
 
           - name: LOG_LEVEL
@@ -106,7 +106,7 @@ spec:
             secretName: {{ .Values.multiRegion.config.secretName }}
             items:
             - key: {{ .Values.multiRegion.config.secretKey }}
-              path: "."
+              path: "multi-region-config.json"
       {{- end }}
 
       {{- if .Values.monitoring.affinity }}

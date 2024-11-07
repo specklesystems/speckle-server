@@ -1063,6 +1063,6 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 {{- end }}
 {{- if .Values.featureFlags.workspacesMultiRegionEnabled }}
 - name: MULTI_REGION_CONFIG_PATH
-  value: {{ (printf "/%s" .Values.multiRegion.config.secretKey) | quote}}
+  value: "/multi-region-config/multi-region-config.json"
 {{- end }}
 {{- end }}
