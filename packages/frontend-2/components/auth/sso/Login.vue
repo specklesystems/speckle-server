@@ -3,7 +3,6 @@
     <div class="flex flex-col gap-4">
       <h1 class="text-heading-xl text-center mb-8">Speckle SSO login</h1>
 
-      <!-- Email Input -->
       <FormTextInput
         v-model:model-value="email"
         type="email"
@@ -13,15 +12,17 @@
         size="lg"
         color="foundation"
         :rules="[isEmail, isRequired]"
+        :loading="isChecking"
+        :help="helpText"
+        :custom-error-message="errorMessage"
         show-label
         :disabled="loading"
         auto-focus
         @update:model-value="onEmailChange"
       />
 
-      <!-- Workspace Selector -->
       <FormSelectBase
-        v-if="availableWorkspaces.length > 1"
+        v-if="shouldShowWorkspaceSelector"
         v-model="selectedWorkspace"
         name="workspace"
         :multiple="false"
@@ -48,13 +49,13 @@
       </FormSelectBase>
     </div>
 
-    <!-- Buttons -->
     <div class="mt-8 space-y-4">
       <FormButton
         size="lg"
         submit
         full-width
-        :disabled="loading || !isValid || !selectedWorkspace"
+        :loading="loading"
+        :disabled="!isValid || !selectedWorkspace"
       >
         {{ buttonText }}
       </FormButton>
@@ -72,30 +73,66 @@ import { loginRoute } from '~/lib/common/helpers/route'
 import { useQuery } from '@vue/apollo-composable'
 import { workspaceSsoByEmailQuery } from '~/lib/workspaces/graphql/queries'
 import { useAuthManager, useLoginOrRegisterUtils } from '~/lib/auth/composables/auth'
-import { debounce } from 'lodash'
+import { useDebounceFn } from '@vueuse/core'
 import type { WorkspaceSsoByEmailQuery } from '~/lib/common/generated/gql/graphql'
 
 type Workspace = WorkspaceSsoByEmailQuery['workspaceSsoByEmail'][number]
 
 const loading = ref(false)
 const email = ref('')
-const debouncedEmail = ref('')
-const selectedWorkspace = ref<WorkspaceSsoByEmailQuery['workspaceSsoByEmail'][number]>()
+const emailCheckState = ref<'idle' | 'checking' | 'checked'>('idle')
+const selectedWorkspace = ref<Workspace>()
 
 const { meta, handleSubmit } = useForm()
 const { challenge } = useLoginOrRegisterUtils()
 const { signInOrSignUpWithSso } = useAuthManager()
 const logger = useLogger()
 
-// Query available workspaces when email changes
+const helpText = computed(() => {
+  if (isChecking.value) return 'Checking SSO availability...'
+  if (availableWorkspaces.value.length === 0 && emailCheckState.value === 'checked') {
+    return 'No SSO-enabled workspaces found for this email'
+  }
+  return undefined
+})
+
+const errorMessage = computed(() => {
+  if (emailCheckState.value === 'checked' && availableWorkspaces.value.length === 0) {
+    return 'This email is not associated with any SSO-enabled workspaces'
+  }
+  return undefined
+})
+
+const debouncedCheckEmail = useDebounceFn((value: string) => {
+  if (!value || !meta.value.valid) {
+    emailCheckState.value = 'idle'
+    return
+  }
+  emailCheckState.value = 'checking'
+}, 300)
+
 const { loading: isChecking, result } = useQuery(
   workspaceSsoByEmailQuery,
-  () => ({ email: debouncedEmail.value }),
-  () => ({ enabled: !!debouncedEmail.value })
+  () => ({ email: email.value }),
+  () => ({
+    enabled: emailCheckState.value === 'checking'
+  })
 )
 
 const availableWorkspaces = computed(() => result.value?.workspaceSsoByEmail || [])
-const isValid = computed(() => meta.value.valid && availableWorkspaces.value.length > 0)
+
+// Show workspace selector only if multiple options exist
+const shouldShowWorkspaceSelector = computed(
+  () => availableWorkspaces.value.length > 1 && emailCheckState.value === 'checked'
+)
+
+// Valid when email passes validation and has associated workspaces
+const isValid = computed(
+  () =>
+    meta.value.valid &&
+    emailCheckState.value === 'checked' &&
+    availableWorkspaces.value.length > 0
+)
 
 const buttonText = computed(() => {
   if (isChecking.value) return 'Checking...'
@@ -105,16 +142,18 @@ const buttonText = computed(() => {
     : 'Sign in'
 })
 
+// Type guard for workspace selection
 function isWorkspace(value: unknown): value is Workspace {
   return (
     value !== null && typeof value === 'object' && 'name' in value && 'slug' in value
   )
 }
 
-// Handlers
 const onEmailChange = (value: string) => {
   email.value = value
-  updateDebouncedEmail(value)
+  emailCheckState.value = 'idle'
+  selectedWorkspace.value = undefined
+  debouncedCheckEmail(value)
 }
 
 const onSubmit = handleSubmit(() => {
@@ -133,18 +172,10 @@ const onSubmit = handleSubmit(() => {
   }
 })
 
-const updateDebouncedEmail = debounce((value: string) => {
-  debouncedEmail.value = value
-}, 800)
-
-// Watch for available workspaces and auto-select if only one
-watch(
-  availableWorkspaces,
-  (workspaces) => {
-    if (workspaces.length === 1) {
-      selectedWorkspace.value = workspaces[0]
-    }
-  },
-  { immediate: true }
-)
+// Update state when query completes
+watch(isChecking, (currentlyChecking, wasChecking) => {
+  if (wasChecking && !currentlyChecking) {
+    emailCheckState.value = 'checked'
+  }
+})
 </script>
