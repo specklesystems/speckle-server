@@ -8,11 +8,7 @@
           <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
             <CommonCard class="gap-y-1 bg-foundation">
               <p class="text-body-xs text-foreground-2 font-medium">
-                {{
-                  currentPlan?.status === WorkspacePlanStatuses.Trial
-                    ? 'Trial plan'
-                    : 'Current plan'
-                }}
+                {{ isTrialPeriod ? 'Trial plan' : 'Current plan' }}
               </p>
               <h4 class="text-heading-lg text-foreground capitalize">
                 {{ currentPlan?.name }} plan
@@ -21,15 +17,14 @@
                 v-if="currentPlan?.name && subscription?.billingInterval"
                 class="text-body-xs text-foreground-2"
               >
-                £{{ seatPrices[currentPlan.name][subscription.billingInterval] }} per
-                seat/month, billed
+                £{{ seatPrice }} per seat/month, billed
                 {{ subscription?.billingInterval }}
               </p>
             </CommonCard>
             <CommonCard class="gap-y-1 bg-foundation">
               <p class="text-body-xs text-foreground-2">
                 {{
-                  currentPlan?.status === WorkspacePlanStatuses.Trial
+                  isTrialPeriod
                     ? 'Expected bill'
                     : subscription?.billingInterval === BillingInterval.Monthly
                     ? 'Monthly bill'
@@ -40,40 +35,23 @@
             </CommonCard>
             <CommonCard class="gap-y-1 bg-foundation">
               <p class="text-body-xs text-foreground-2">
-                {{
-                  currentPlan?.status === WorkspacePlanStatuses.Trial
-                    ? 'First payment due'
-                    : 'Next payment due'
-                }}
+                {{ isTrialPeriod ? 'First payment due' : 'Next payment due' }}
               </p>
               <h4 class="text-heading-lg text-foreground capitalize">
                 {{
-                  currentPlan?.name === WorkspacePlans.Academia ||
-                  currentPlan?.name === WorkspacePlans.Unlimited
-                    ? 'Never'
-                    : dayjs(subscription?.currentBillingCycleEnd).format('MMMM D, YYYY')
+                  isPaidPlan
+                    ? dayjs(subscription?.currentBillingCycleEnd).format('MMMM D, YYYY')
+                    : 'Never'
                 }}
               </h4>
-              <p
-                v-if="
-                  currentPlan?.name !== WorkspacePlans.Academia &&
-                  currentPlan?.name !== WorkspacePlans.Unlimited
-                "
-                class="text-body-xs text-foreground-2"
-              >
+              <p v-if="isPaidPlan" class="text-body-xs text-foreground-2">
                 <span class="capitalize">{{ subscription?.billingInterval }}</span>
                 billing period
               </p>
             </CommonCard>
           </div>
 
-          <CommonCard
-            v-if="
-              currentPlan?.status !== WorkspacePlanStatuses.Trial &&
-              currentPlan?.status !== WorkspacePlanStatuses.Canceled
-            "
-            class="bg-foundation"
-          >
+          <CommonCard v-if="isActivePlan" class="bg-foundation">
             <div class="flex flex-row gap-x-4 items-center">
               <p class="text-body-xs text-foreground-2 flex-1">
                 View invoices, edit payment details, and manage your subscription from
@@ -225,6 +203,24 @@ const billing = computed(() => workspaceResult.value?.workspace.billing)
 const discount = computed(() => billing.value?.cost?.discount)
 const currentPlan = computed(() => workspaceResult.value?.workspace.plan)
 const subscription = computed(() => workspaceResult.value?.workspace.subscription)
+const isPaidPlan = computed(
+  () =>
+    currentPlan.value?.name !== WorkspacePlans.Academia &&
+    currentPlan.value?.name !== WorkspacePlans.Unlimited
+)
+const isTrialPeriod = computed(
+  () => currentPlan.value?.status === WorkspacePlanStatuses.Trial
+)
+const isActivePlan = computed(
+  () =>
+    currentPlan.value?.status !== WorkspacePlanStatuses.Trial &&
+    currentPlan.value?.status !== WorkspacePlanStatuses.Canceled
+)
+const seatPrice = computed(() =>
+  currentPlan.value && subscription.value
+    ? seatPrices.value[currentPlan.value?.name][subscription.value?.billingInterval]
+    : 0
+)
 const pricingPlans = computed(() =>
   isWorkspacePricingPlans(pricingPlansResult.value?.workspacePricingPlans)
     ? pricingPlansResult.value?.workspacePricingPlans.workspacePlanInformation
