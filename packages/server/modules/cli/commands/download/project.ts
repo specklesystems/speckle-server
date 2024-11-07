@@ -3,7 +3,6 @@ import { cliLogger } from '@/logging/logging'
 import { downloadProjectFactory } from '@/modules/cross-server-sync/services/project'
 import { downloadCommitFactory } from '@/modules/cross-server-sync/services/commit'
 import {
-  createStreamFactory,
   getStreamCollaboratorsFactory,
   getStreamFactory,
   markCommitStreamUpdatedFactory
@@ -60,29 +59,25 @@ import {
 import { getBlobsFactory } from '@/modules/blobstorage/repositories'
 import { validateInputAttachmentsFactory } from '@/modules/comments/services/commentTextService'
 import { VersionsEmitter } from '@/modules/core/events/versionsEmitter'
-import { createStreamReturnRecordFactory } from '@/modules/core/services/streams/management'
-import { inviteUsersToProjectFactory } from '@/modules/serverinvites/services/projectInviteManagement'
-import { createAndSendInviteFactory } from '@/modules/serverinvites/services/creation'
-import {
-  findUserByTargetFactory,
-  insertInviteAndDeleteOldFactory
-} from '@/modules/serverinvites/repositories/serverInvites'
-import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
-import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
-import { getEventBus } from '@/modules/shared/services/eventBus'
 import { ProjectsEmitter } from '@/modules/core/events/projectsEmitter'
-import { addStreamCreatedActivityFactory } from '@/modules/activitystream/services/streamActivity'
 import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import { publish } from '@/modules/shared/utils/subscriptions'
 import { addCommitCreatedActivityFactory } from '@/modules/activitystream/services/commitActivity'
-import { getUserFactory, getUsersFactory } from '@/modules/core/repositories/users'
-import { getServerInfoFactory } from '@/modules/core/repositories/server'
+import { getUserFactory } from '@/modules/core/repositories/users'
 import { createObjectFactory } from '@/modules/core/services/objects/management'
 import { addBranchCreatedActivityFactory } from '@/modules/activitystream/services/branchActivity'
 import { authorizeResolver } from '@/modules/shared'
 import { Roles } from '@speckle/shared'
 import { getDefaultRegionFactory } from '@/modules/workspaces/repositories/regions'
 import { getDb } from '@/modules/multiregion/dbSelector'
+import { createNewProjectFactory } from '@/modules/core/services/projects'
+import {
+  deleteProjectFactory,
+  getProjectFactory,
+  storeProjectFactory,
+  storeProjectRoleFactory
+} from '@/modules/core/repositories/projects'
+import { storeModelFactory } from '@/modules/core/repositories/models'
 
 const command: CommandModule<
   unknown,
@@ -122,8 +117,9 @@ const command: CommandModule<
   },
   handler: async (argv) => {
     let projectDb = db
+    console.log(argv)
     if (argv.workspaceId) {
-      authorizeResolver(argv.authorId, argv.workspaceId, Roles.Workspace.Member, [])
+      authorizeResolver(argv.authorId, argv.workspaceId, Roles.Workspace.Member, null)
       const workspaceDefaultRegion = await getDefaultRegionFactory({ db })({
         workspaceId: argv.workspaceId
       })
@@ -208,36 +204,15 @@ const command: CommandModule<
       })
     })
 
-    const getServerInfo = getServerInfoFactory({ db })
     const getUser = getUserFactory({ db })
-    const getUsers = getUsersFactory({ db })
-    const createStreamReturnRecord = createStreamReturnRecordFactory({
-      inviteUsersToProject: inviteUsersToProjectFactory({
-        createAndSendInvite: createAndSendInviteFactory({
-          findUserByTarget: findUserByTargetFactory({ db }),
-          insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
-          collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
-            getStream
-          }),
-          buildInviteEmailContents: buildCoreInviteEmailContentsFactory({
-            getStream
-          }),
-          emitEvent: ({ eventName, payload }) =>
-            getEventBus().emit({
-              eventName,
-              payload
-            }),
-          getUser,
-          getServerInfo
-        }),
-        getUsers
-      }),
-      createStream: createStreamFactory({ db: projectDb }),
-      createBranch: createBranchFactory({ db: projectDb }),
-      addStreamCreatedActivity: addStreamCreatedActivityFactory({
-        saveActivity: saveActivityFactory({ db: projectDb }),
-        publish
-      }),
+
+    const createNewProject = createNewProjectFactory({
+      storeProject: storeProjectFactory({ db: projectDb }),
+      getProject: getProjectFactory({ db }),
+      deleteProject: deleteProjectFactory({ db: projectDb }),
+      storeModel: storeModelFactory({ db: projectDb }),
+      // THIS MUST GO TO THE MAIN DB
+      storeProjectRole: storeProjectRoleFactory({ db }),
       projectsEventsEmitter: ProjectsEmitter.emit
     })
 
@@ -261,7 +236,7 @@ const command: CommandModule<
         createCommentThreadAndNotify,
         createCommentReplyAndNotify
       }),
-      createStreamReturnRecord,
+      createNewProject,
       getUser,
       getStreamBranchByName,
       createBranchAndNotify: createBranchAndNotifyFactory({

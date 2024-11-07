@@ -13,7 +13,6 @@ services:
       POSTGRES_PASSWORD: speckle
     volumes:
       - postgres-data:/var/lib/postgresql/data/
-      - ./setup/db/0-docker_postgres_aiven.sql:/docker-entrypoint-initdb.d/9-docker_postgres_aiven.sql
       - ./setup/db/10-docker_postgres_init.sql:/docker-entrypoint-initdb.d/10-docker_postgres_init.sql
       - ./setup/db/11-docker_postgres_keycloack_init.sql:/docker-entrypoint-initdb.d/11-docker_postgres_keycloack_init.sql
     ports:
@@ -30,7 +29,6 @@ services:
       POSTGRES_PASSWORD: speckle
     volumes:
       - postgres-region1-data:/var/lib/postgresql/data/
-      - ./setup/db/0-docker_postgres_aiven.sql:/docker-entrypoint-initdb.d/9-docker_postgres_aiven.sql
       - ./setup/db/10-docker_postgres_init.sql:/docker-entrypoint-initdb.d/10-docker_postgres_init.sql
       - ./setup/db/11-docker_postgres_keycloack_init.sql:/docker-entrypoint-initdb.d/11-docker_postgres_keycloack_init.sql
     ports:
