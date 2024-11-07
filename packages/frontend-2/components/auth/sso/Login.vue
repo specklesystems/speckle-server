@@ -111,7 +111,11 @@ const debouncedCheckEmail = useDebounceFn((value: string) => {
   emailCheckState.value = 'checking'
 }, 300)
 
-const { loading: isChecking, result } = useQuery(
+const {
+  loading: isChecking,
+  result,
+  onResult
+} = useQuery(
   workspaceSsoByEmailQuery,
   () => ({ email: email.value }),
   () => ({
@@ -172,10 +176,12 @@ const onSubmit = handleSubmit(() => {
   }
 })
 
-// Update state when query completes
-watch(isChecking, (currentlyChecking, wasChecking) => {
-  if (wasChecking && !currentlyChecking) {
-    emailCheckState.value = 'checked'
+onResult((res) => {
+  if (!res.data) return
+  emailCheckState.value = 'checked'
+  const workspaces = res.data.workspaceSsoByEmail || []
+  if (workspaces.length === 1) {
+    selectedWorkspace.value = workspaces[0]
   }
 })
 </script>
