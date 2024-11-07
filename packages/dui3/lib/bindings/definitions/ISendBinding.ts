@@ -28,6 +28,6 @@ export interface ISendBindingEvents
   }) => void
   setFilterObjectIds: (args: {
     modelCardId: string
-    objectIds: SendFilterObjectIdentifier[]
+    objectIds: Record<string, SendFilterObjectIdentifier>
   }) => void
 }

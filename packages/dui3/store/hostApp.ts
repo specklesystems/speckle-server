@@ -189,7 +189,7 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
 
     const newFilter = {
       ...modelCard.sendFilter,
-      objectIds: objectIds.map((o) => o.uniqueId)
+      objectIds: Object.values(objectIds).map((o) => o.uniqueId)
     }
     modelCard.sendFilterObjectIdentifiers = objectIds
     console.log(modelCard)
