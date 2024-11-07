@@ -52,14 +52,14 @@ export type AvailableSettingsMenuKeys =
 
 export type WorkspacePricingPlans = {
   workspacePlanInformation: {
-    name: WorkspacePlans
+    [key: string]: {
+      name: WorkspacePlans
+    }
   }
 }
 
 export function isWorkspacePricingPlans(
   pricingPlans: unknown
 ): pricingPlans is WorkspacePricingPlans {
-  return (
-    isObjectLike(pricingPlans) && has(pricingPlans, 'workspacePlanInformation.name')
-  )
+  return isObjectLike(pricingPlans) && has(pricingPlans, 'workspacePlanInformation')
 }

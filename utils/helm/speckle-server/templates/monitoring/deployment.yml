@@ -46,10 +46,15 @@ spec:
           runAsNonRoot: true
           runAsUser: 20000
 
-        {{- if .Values.db.useCertificate }}
         volumeMounts:
+        {{- if .Values.db.useCertificate }}
           - name: postgres-certificate
             mountPath: /postgres-certificate
+        {{- end }}
+        {{- if .Values.featureFlags.workspacesMultiRegionEnabled }}
+          - name: multi-region-config
+            mountPath: /
+            readOnly: true
         {{- end }}
 
         env:
@@ -62,6 +67,12 @@ spec:
           {{- if .Values.db.useCertificate }}
           - name: NODE_EXTRA_CA_CERTS
             value: "/postgres-certificate/ca-certificate.crt"
+          {{- end }}
+          {{- if .Values.featureFlags.workspacesMultiRegionEnabled }}
+          - name: FF_WORKSPACES_MULTI_REGION_ENABLED
+            value: {{ .Values.featureFlags.workspacesMultiRegionEnabled | quote }}
+          - name: MULTI_REGION_CONFIG_PATH
+            value: {{ (printf "/%s" .Values.multiRegion.config.secretKey) | quote}}
           {{- end }}
 
           - name: LOG_LEVEL
@@ -83,11 +94,19 @@ spec:
         seccompProfile:
           type: RuntimeDefault
 
-      {{- if .Values.db.useCertificate }}
       volumes:
+      {{- if .Values.db.useCertificate }}
         - name: postgres-certificate
           configMap:
             name: postgres-certificate
+      {{- end }}
+      {{- if .Values.featureFlags.workspacesMultiRegionEnabled }}
+        - name: multi-region-config
+          secret:
+            secretName: {{ .Values.multiRegion.config.secretName }}
+            items:
+            - key: {{ .Values.multiRegion.config.secretKey }}
+              path: "."
       {{- end }}
 
       {{- if .Values.monitoring.affinity }}

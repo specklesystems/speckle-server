@@ -279,7 +279,7 @@ describe('subscriptions @gatekeeper', () => {
       })
       expect(true).to.be.true
     })
-    it('throws if the workspaceSubscription is not found', async () => {
+    it('returns if the workspaceSubscription is not found', async () => {
       const workspaceId = cryptoRandomString({ length: 10 })
       const addWorkspaceSubscriptionSeatIfNeeded =
         addWorkspaceSubscriptionSeatIfNeededFactory({
@@ -302,13 +302,10 @@ describe('subscriptions @gatekeeper', () => {
             expect.fail()
           }
         })
-      const err = await expectToThrow(async () => {
-        await addWorkspaceSubscriptionSeatIfNeeded({
-          workspaceId,
-          role: 'workspace:admin'
-        })
+      await addWorkspaceSubscriptionSeatIfNeeded({
+        workspaceId,
+        role: 'workspace:admin'
       })
-      expect(err.message).to.equal(new WorkspaceSubscriptionNotFoundError().message)
     })
     it('throws if a non paid plan, has a subscription', async () => {
       const workspaceId = cryptoRandomString({ length: 10 })

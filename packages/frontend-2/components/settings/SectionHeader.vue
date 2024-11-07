@@ -20,11 +20,7 @@
         </FormButton>
       </div>
     </div>
-    <p
-      v-if="text"
-      class="text-body-xs text-foreground-2 pt-1"
-      :class="{ 'pt-6': subheading }"
-    >
+    <p v-if="text" class="text-body-xs text-foreground-2 pt-1">
       {{ text }}
     </p>
     <hr v-if="!subheading && !hideDivider" class="my-6 border-outline-2" />

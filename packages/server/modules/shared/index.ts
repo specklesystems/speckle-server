@@ -10,6 +10,7 @@ import {
   authorizeResolverFactory,
   validateScopesFactory
 } from '@/modules/shared/services/auth'
+import { getEventBus } from '@/modules/shared/services/eventBus'
 import {
   pubsub,
   StreamSubscriptions,
@@ -30,5 +31,6 @@ export const authorizeResolver = authorizeResolverFactory({
   adminOverrideEnabled,
   getUserServerRole: getUserServerRoleFactory({ db }),
   getStream: getStreamFactory({ db }),
-  getUserAclRole: getUserAclRoleFactory({ db })
+  getUserAclRole: getUserAclRoleFactory({ db }),
+  emitWorkspaceEvent: getEventBus().emit
 })

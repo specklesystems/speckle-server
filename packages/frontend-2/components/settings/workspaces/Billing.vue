@@ -227,7 +227,7 @@ const currentPlan = computed(() => workspaceResult.value?.workspace.plan)
 const subscription = computed(() => workspaceResult.value?.workspace.subscription)
 const pricingPlans = computed(() =>
   isWorkspacePricingPlans(pricingPlansResult.value?.workspacePricingPlans)
-    ? pricingPlansResult.value?.workspacePricingPlans
+    ? pricingPlansResult.value?.workspacePricingPlans.workspacePlanInformation
     : undefined
 )
 

@@ -156,8 +156,35 @@ import {
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { commandFactory } from '@/modules/shared/command'
 import { withTransaction } from '@/modules/shared/helpers/dbHelper'
-import { listWorkspaceSsoMembershipsByUserEmailFactory } from '@/modules/workspaces/services/sso'
-import { listWorkspaceSsoMembershipsFactory } from '@/modules/workspaces/repositories/sso'
+import {
+  getRateLimitResult,
+  isRateLimitBreached
+} from '@/modules/core/services/ratelimiter'
+import { RateLimitError } from '@/modules/core/errors/ratelimit'
+import { createBranchFactory } from '@/modules/core/repositories/branches'
+import { ProjectsEmitter } from '@/modules/core/events/projectsEmitter'
+import { getDb } from '@/modules/multiregion/dbSelector'
+import { createNewProjectFactory } from '@/modules/core/services/projects'
+import {
+  deleteProjectFactory,
+  storeProjectFactory,
+  storeProjectRoleFactory
+} from '@/modules/core/repositories/projects'
+import { StoreModel } from '@/modules/core/domain/projects/operations'
+import { Knex } from 'knex'
+import {
+  listUserExpiredSsoSessionsFactory,
+  listWorkspaceSsoMembershipsByUserEmailFactory
+} from '@/modules/workspaces/services/sso'
+import {
+  getUserSsoSessionFactory,
+  getWorkspaceSsoProviderFactory,
+  getWorkspaceSsoProviderRecordFactory,
+  listUserSsoSessionsFactory,
+  listWorkspaceSsoMembershipsFactory
+} from '@/modules/workspaces/repositories/sso'
+import { getDecryptor } from '@/modules/workspaces/helpers/sso'
+import { getDefaultRegionFactory } from '@/modules/workspaces/repositories/regions'
 
 const eventBus = getEventBus()
 const getServerInfo = getServerInfoFactory({ db })
@@ -755,6 +782,60 @@ export = FF_WORKSPACES_MODULE_ENABLED
         }
       },
       WorkspaceProjectMutations: {
+        create: async (_parent, args, context) => {
+          const rateLimitResult = await getRateLimitResult(
+            'STREAM_CREATE',
+            context.userId!
+          )
+          if (isRateLimitBreached(rateLimitResult)) {
+            throw new RateLimitError(rateLimitResult)
+          }
+
+          await authorizeResolver(
+            context.userId!,
+            args.input.workspaceId,
+            Roles.Workspace.Member,
+            context.resourceAccessRules
+          )
+
+          // TODO: get workspace's region here
+          const workspaceDefaultRegion = await getDefaultRegionFactory({ db })({
+            workspaceId: args.input.workspaceId
+          })
+          const regionKey = workspaceDefaultRegion?.key
+
+          const projectDb = await getDb({ regionKey })
+
+          const storeModelFactory =
+            ({ db }: { db: Knex }): StoreModel =>
+            async ({ authorId, projectId, name, description }) => {
+              await createBranchFactory({ db })({
+                authorId,
+                description,
+                name,
+                streamId: projectId
+              })
+            }
+
+          // todo, use the command factory here, but for that, we need to migrate to the event bus
+          const createNewProject = createNewProjectFactory({
+            storeProject: storeProjectFactory({ db: projectDb }),
+            getProject: getProjectFactory({ db }),
+            deleteProject: deleteProjectFactory({ db: projectDb }),
+            storeModel: storeModelFactory({ db: projectDb }),
+            // THIS MUST GO TO THE MAIN DB
+            storeProjectRole: storeProjectRoleFactory({ db }),
+            projectsEventsEmitter: ProjectsEmitter.emit
+          })
+
+          const project = await createNewProject({
+            ...args.input,
+            regionKey,
+            ownerId: context.userId!
+          })
+
+          return project
+        },
         updateRole: async (_parent, args, context) => {
           const updateWorkspaceProjectRole = updateWorkspaceProjectRoleFactory({
             getStream,
@@ -873,7 +954,12 @@ export = FF_WORKSPACES_MODULE_ENABLED
         domains: async (parent) => {
           return await getWorkspaceDomainsFactory({ db })({ workspaceIds: [parent.id] })
         },
-        billing: (parent) => ({ parent })
+        billing: (parent) => ({ parent }),
+        sso: async (parent) => {
+          return await getWorkspaceSsoProviderRecordFactory({ db })({
+            workspaceId: parent.id
+          })
+        }
       },
       WorkspaceBilling: {
         versionsCount: async ({ parent }) => {
@@ -895,6 +981,30 @@ export = FF_WORKSPACES_MODULE_ENABLED
               })
             })
           })({ workspaceId })
+        }
+      },
+      WorkspaceSso: {
+        provider: async ({ workspaceId }) => {
+          const provider = await getWorkspaceSsoProviderFactory({
+            db,
+            decrypt: getDecryptor()
+          })({
+            workspaceId
+          })
+          if (!provider) return null
+
+          return {
+            id: provider.id,
+            name: provider.provider.providerName,
+            clientId: provider.provider.clientId,
+            issuerUrl: provider.provider.issuerUrl
+          }
+        },
+        session: async (parent, _args, context) => {
+          return await getUserSsoSessionFactory({ db })({
+            userId: context.userId!,
+            workspaceId: parent.workspaceId
+          })
         }
       },
       WorkspaceCollaborator: {
@@ -991,20 +1101,31 @@ export = FF_WORKSPACES_MODULE_ENABLED
 
           return await getDiscoverableWorkspacesForUser({ userId: context.userId })
         },
+        expiredSsoSessions: async (_parent, _args, context) => {
+          if (!context.userId) {
+            throw new WorkspacesNotAuthorizedError()
+          }
+
+          const listExpiredSsoSessions = listUserExpiredSsoSessionsFactory({
+            listWorkspaceSsoMemberships: listWorkspaceSsoMembershipsFactory({ db }),
+            listUserSsoSessions: listUserSsoSessionsFactory({ db })
+          })
+
+          return await listExpiredSsoSessions({ userId: context.userId })
+        },
         workspaces: async (_parent, _args, context) => {
           if (!context.userId) {
             throw new WorkspacesNotAuthorizedError()
           }
 
-          const getWorkspace = getWorkspaceFactory({ db })
-          const getWorkspaceRolesForUser = getWorkspaceRolesForUserFactory({ db })
-
-          const getWorkspacesForUser = getWorkspacesForUserFactory({
-            getWorkspace,
-            getWorkspaceRolesForUser
+          const getWorkspaces = getWorkspacesForUserFactory({
+            getWorkspace: getWorkspaceFactory({ db }),
+            getWorkspaceRolesForUser: getWorkspaceRolesForUserFactory({ db })
           })
 
-          const workspaces = await getWorkspacesForUser({ userId: context.userId })
+          const workspaces = await getWorkspaces({
+            userId: context.userId
+          })
 
           // TODO: Pagination
           return {

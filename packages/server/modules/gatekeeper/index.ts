@@ -56,7 +56,7 @@ const scheduleWorkspaceSubscriptionDownscale = () => {
     updateWorkspaceSubscription: upsertWorkspaceSubscriptionFactory({ db })
   })
 
-  const cronExpression = '*/10 * * * * *'
+  const cronExpression = '*/5 * * * *'
   return scheduleExecution(
     cronExpression,
     'WorkspaceSubscriptionDownscale',

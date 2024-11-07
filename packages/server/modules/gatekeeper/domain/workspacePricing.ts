@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import type { MaybeNullOrUndefined } from '@speckle/shared'
 
-type Features =
+export type WorkspaceFeatureName =
   | 'workspace'
   | 'domainBasedSecurityPolicies'
   | 'oidcSso'
@@ -12,7 +12,7 @@ type FeatureDetails = {
   description?: string
 }
 
-const features: Record<Features, FeatureDetails> = {
+const features: Record<WorkspaceFeatureName, FeatureDetails> = {
   workspace: {
     displayName: 'Workspace'
   },
@@ -175,6 +175,11 @@ export const unpaidWorkspacePlanFeatures: Record<
   academia,
   unlimited
 }
+
+export const workspacePlanFeatures: Record<
+  WorkspacePlans,
+  WorkspacePlanFeaturesAndLimits
+> = { ...paidWorkspacePlanFeatures, ...unpaidWorkspacePlanFeatures }
 
 export const pricingTable = {
   workspacePricingPlanInformation,
