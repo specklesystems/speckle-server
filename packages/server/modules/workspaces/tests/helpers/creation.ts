@@ -47,10 +47,18 @@ import {
 import { getStreamFactory } from '@/modules/core/repositories/streams'
 import { getUserFactory } from '@/modules/core/repositories/users'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
-import { storeSsoProviderRecordFactory } from '@/modules/workspaces/repositories/sso'
+import {
+  associateSsoProviderWithWorkspaceFactory,
+  getWorkspaceSsoProviderRecordFactory,
+  storeSsoProviderRecordFactory,
+  upsertUserSsoSessionFactory
+} from '@/modules/workspaces/repositories/sso'
 import { getEncryptor } from '@/modules/workspaces/helpers/sso'
 import { OidcProvider } from '@/modules/workspaces/domain/sso/types'
 import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
+import { getDefaultSsoSessionExpirationDate } from '@/modules/workspaces/domain/sso/logic'
+import { upsertPaidWorkspacePlanFactory } from '@/modules/gatekeeper/repositories/billing'
+import { SetOptional } from 'type-fest'
 
 export type BasicTestWorkspace = {
   /**
@@ -61,6 +69,9 @@ export type BasicTestWorkspace = {
    * Leave empty, will be filled on creation
    */
   ownerId: string
+  /**
+   * You can leave empty, will be filled on creation
+   */
   slug: string
   name: string
   description?: string
@@ -71,10 +82,13 @@ export type BasicTestWorkspace = {
 }
 
 export const createTestWorkspace = async (
-  workspace: Omit<BasicTestWorkspace, 'slug'> & { slug?: string },
+  workspace: SetOptional<BasicTestWorkspace, 'slug'>,
   owner: BasicTestUser,
-  domain?: string
+  options?: { domain?: string; addPlan?: boolean }
 ) => {
+  const { domain, addPlan = true } = options || {}
+
+  const upsertWorkspacePlan = upsertPaidWorkspacePlanFactory({ db })
   const createWorkspace = createWorkspaceFactory({
     validateSlug: validateSlugFactory({
       getWorkspaceBySlug: getWorkspaceBySlugFactory({ db })
@@ -114,6 +128,16 @@ export const createTestWorkspace = async (
       userId: owner.id,
       workspaceId: workspace.id,
       domain
+    })
+  }
+
+  if (addPlan) {
+    await upsertWorkspacePlan({
+      workspacePlan: {
+        workspaceId: newWorkspace.id,
+        name: 'business',
+        status: 'valid'
+      }
     })
   }
 
@@ -204,9 +228,9 @@ export const assignToWorkspaces = async (
 }
 
 export const createTestWorkspaces = async (
-  pairs: [BasicTestWorkspace, BasicTestUser, string?][]
+  pairs: Parameters<typeof createTestWorkspace>[]
 ) => {
-  await Promise.all(pairs.map((p) => createTestWorkspace(p[0], p[1], p[2])))
+  await Promise.all(pairs.map((p) => createTestWorkspace(...p)))
 }
 
 export const createWorkspaceInviteDirectly = async (
@@ -250,6 +274,7 @@ export const createWorkspaceInviteDirectly = async (
 }
 
 export const createTestOidcProvider = async (
+  workspaceId: string,
   providerData: Partial<OidcProvider> = {}
 ) => {
   const providerId = cryptoRandomString({ length: 9 })
@@ -268,5 +293,27 @@ export const createTestOidcProvider = async (
       }
     }
   })
+  await associateSsoProviderWithWorkspaceFactory({ db })({
+    workspaceId,
+    providerId
+  })
   return providerId
+}
+
+export const createTestSsoSession = async (
+  userId: string,
+  workspaceId: string,
+  validUntil?: Date
+) => {
+  const { providerId } =
+    (await getWorkspaceSsoProviderRecordFactory({ db })({ workspaceId })) ?? {}
+  if (!providerId) throw new Error('No provider found')
+  await upsertUserSsoSessionFactory({ db })({
+    userSsoSession: {
+      userId,
+      providerId,
+      createdAt: new Date(),
+      validUntil: validUntil ?? getDefaultSsoSessionExpirationDate()
+    }
+  })
 }

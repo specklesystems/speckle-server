@@ -1255,7 +1255,7 @@ describe('Comments @comments', () => {
       // Init apollo instance w/ authenticated context
       apollo = {
         apollo: await buildApolloServer(),
-        context: createAuthedTestContext(user.id)
+        context: await createAuthedTestContext(user.id)
       }
 
       // Init token for authenticating w/ REST API

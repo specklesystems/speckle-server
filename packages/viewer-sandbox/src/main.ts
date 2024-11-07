@@ -450,6 +450,8 @@ const getStream = () => {
     // 'https://app.speckle.systems/projects/817c4e8daa/models/f0601ef5f9@80db5ff26a'
 
     'https://app.speckle.systems/projects/7744b171ca/models/7fee46df4b'
+    // Perfectly flat
+    // 'https://app.speckle.systems/projects/344f803f81/models/5582ab673e'
   )
 }
 

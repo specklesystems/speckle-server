@@ -7,6 +7,12 @@ export const regionServerConfigSchema = z.object({
       .describe(
         'Full Postgres connection URI (e.g. "postgres://user:password@host:port/dbname")'
       ),
+    privateConnectionUri: z
+      .string()
+      .describe(
+        'Full Postgres connection URI in VPN or Docker networks (e.g. "postgres://user:password@host:port/dbname")'
+      )
+      .optional(),
     publicTlsCertificate: z
       .string()
       .describe('Public TLS ("CA") certificate for the Postgres server')
@@ -22,4 +28,7 @@ export const regionServerConfigSchema = z.object({
   //   })
 })
 
-export const multiRegionConfigSchema = z.record(z.string(), regionServerConfigSchema)
+export const multiRegionConfigSchema = z.object({
+  main: regionServerConfigSchema,
+  regions: z.record(z.string(), regionServerConfigSchema)
+})

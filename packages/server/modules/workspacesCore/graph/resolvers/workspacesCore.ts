@@ -46,6 +46,9 @@ export = !FF_WORKSPACES_MODULE_ENABLED
         leave: async () => {
           throw new WorkspacesModuleDisabledError()
         },
+        setDefaultRegion: async () => {
+          throw new WorkspacesModuleDisabledError()
+        },
         invites: () => ({})
       },
       WorkspaceInviteMutations: {
