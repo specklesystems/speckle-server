@@ -5,7 +5,7 @@
     no-shadow
     class="mx-auto w-full"
   >
-    <div class="space-y-4">
+    <div class="flex flex-col gap-4">
       <div v-if="!workspaceInvite" class="flex flex-col items-center gap-y-2 pb-4">
         <h1 class="text-heading-xl text-center inline-block">
           {{ title }}
@@ -22,23 +22,20 @@
         :app-id="appId"
         :newsletter-consent="false"
       />
+
+      <div class="h-px w-full bg-outline-3 mt-2 shrink-0" />
       <div>
-        <div
-          v-if="hasLocalStrategy"
-          class="text-center text-foreground-2 mb-2 text-body-2xs font-normal mt-2"
-        >
-          {{ hasThirdPartyStrategies ? 'Or login with your email' : '' }}
-        </div>
         <AuthLoginWithEmailBlock
           v-if="hasLocalStrategy"
           :challenge="challenge"
           :workspace-invite="workspaceInvite || undefined"
         />
-        <div v-if="!forcedInviteEmail" class="text-center text-body-sm">
-          <span class="mr-2">Don't have an account?</span>
-          <CommonTextLink :to="finalRegisterRoute" :icon-right="ArrowRightIcon">
-            Register
-          </CommonTextLink>
+        <div
+          v-if="!forcedInviteEmail"
+          class="text-center text-body-xs text-foreground-3 mt-2 select-none"
+        >
+          Don't have an account?
+          <NuxtLink class="text-foreground" :to="finalRegisterRoute">Sign up</NuxtLink>
         </div>
       </div>
     </div>
@@ -50,7 +47,6 @@ import { useQuery } from '@vue/apollo-composable'
 import { AuthStrategy } from '~~/lib/auth/helpers/strategies'
 import { useLoginOrRegisterUtils, useAuthManager } from '~~/lib/auth/composables/auth'
 import { LayoutDialog } from '@speckle/ui-components'
-import { ArrowRightIcon } from '@heroicons/vue/20/solid'
 import { registerRoute } from '~~/lib/common/helpers/route'
 import {
   authLoginPanelQuery,
@@ -65,8 +61,7 @@ const props = withDefaults(
   }>(),
   {
     dialogMode: false,
-    title: 'Speckle login',
-    subtitle: 'Connectivity, Collaboration and Automation for 3D'
+    title: 'Speckle login'
   }
 )
 

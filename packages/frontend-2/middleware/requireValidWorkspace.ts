@@ -9,6 +9,13 @@ import { workspaceAccessCheckQuery } from '~~/lib/workspaces/graphql/queries'
  * Used to validate that the workspace ID refers to a valid workspace and redirects to 404 if not
  */
 export default defineNuxtRouteMiddleware(async (to) => {
+  // Skip access check if:
+  // 1. We're in SSO flow with access_code
+  // 2. We have an invite token
+  if (to.query.access_code || to.query.token) {
+    return
+  }
+
   const workspaceSlug = to.params.slug as string
 
   const client = useApolloClientFromNuxt()

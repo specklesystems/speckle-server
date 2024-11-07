@@ -1,6 +1,6 @@
 import type { RouteLocationNormalized } from 'vue-router'
 import { waitForever, type MaybeAsync, type Optional } from '@speckle/shared'
-import { useApolloClient, useMutation } from '@vue/apollo-composable'
+import { useApolloClient, useMutation, useQuery } from '@vue/apollo-composable'
 import { graphql } from '~/lib/common/generated/gql'
 import type {
   UseWorkspaceInviteManager_PendingWorkspaceCollaboratorFragment,
@@ -9,7 +9,8 @@ import type {
   WorkspaceInviteCreateInput,
   WorkspaceInvitedTeamArgs,
   WorkspaceInviteUseInput,
-  WorkspaceRoleUpdateInput
+  WorkspaceRoleUpdateInput,
+  WorkspaceSsoCheckQuery
 } from '~/lib/common/generated/gql/graphql'
 import {
   evictObjectFields,
@@ -32,6 +33,7 @@ import {
 import { isFunction } from 'lodash-es'
 import type { GraphQLError } from 'graphql'
 import { useClipboard } from '~~/composables/browser'
+import { workspaceSsoCheckQuery } from '~/lib/workspaces/graphql/queries'
 
 export const useInviteUserToWorkspace = () => {
   const { activeUser } = useActiveUser()
@@ -414,6 +416,81 @@ export function useCreateWorkspace() {
     }
 
     return res
+  }
+}
+
+export const useWorkspaceSso = (params: { workspaceSlug: string }) => {
+  const { result, loading, error } = useQuery<WorkspaceSsoCheckQuery>(
+    workspaceSsoCheckQuery,
+    { slug: params.workspaceSlug }
+  )
+
+  const hasSsoEnabled = computed(() => !!result.value?.workspaceBySlug.sso?.provider)
+  const provider = computed(() => result.value?.workspaceBySlug.sso?.provider ?? null)
+
+  const needsSsoLogin = computed(() => {
+    if (!result.value?.activeUser) return false
+    return result.value.activeUser.expiredSsoSessions.some(
+      (workspace) => workspace.slug === params.workspaceSlug
+    )
+  })
+
+  return {
+    hasSsoEnabled,
+    needsSsoLogin,
+    provider,
+    loading,
+    error
+  }
+}
+
+export const useWorkspaceSsoPublic = (params: { workspaceSlug: string }) => {
+  type WorkspaceSsoInfo = {
+    hasSsoEnabled: boolean
+    ssoProviderName?: string
+  }
+
+  type WorkspaceSsoResponse = {
+    ssoProviderName: string | null
+  }
+
+  const apiOrigin = useApiOrigin()
+  const logger = useLogger()
+
+  const loading = ref(true)
+  const error = ref<Error | null>(null)
+  const ssoInfo = ref<WorkspaceSsoInfo>({
+    hasSsoEnabled: false
+  })
+
+  onMounted(async () => {
+    try {
+      const res = await fetch(
+        `${apiOrigin}/api/v1/workspaces/${params.workspaceSlug}/sso`
+      )
+
+      if (!res.ok && res.status !== 304) {
+        return // SSO not configured
+      }
+
+      const data = (await res.json()) as WorkspaceSsoResponse
+
+      ssoInfo.value = {
+        hasSsoEnabled: !!data?.ssoProviderName,
+        ssoProviderName: data?.ssoProviderName || undefined
+      }
+    } catch (e) {
+      logger.error('SSO info error:', e)
+    } finally {
+      loading.value = false
+    }
+  })
+
+  return {
+    loading,
+    error,
+    hasSsoEnabled: computed(() => ssoInfo.value.hasSsoEnabled),
+    ssoProviderName: computed(() => ssoInfo.value.ssoProviderName)
   }
 }
 
