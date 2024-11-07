@@ -1,9 +1,12 @@
 <template>
   <div>
     <!-- Loading State -->
-    <template v-if="loading">
+    <template v-if="loading || isAuthenticating">
       <div class="py-12 flex flex-col items-center gap-2">
         <CommonLoadingIcon />
+        <p v-if="isAuthenticating" class="text-body-xs text-foreground-2">
+          Completing authentication...
+        </p>
       </div>
     </template>
 
@@ -31,20 +34,6 @@
             Continue with {{ workspace?.ssoProviderName }} SSO
           </FormButton>
         </div>
-
-        <!-- Error State -->
-        <div
-          v-else
-          class="flex items-center gap-2 border border-outline-2 bg-foundation-page p-2 rounded"
-        >
-          <ExclamationTriangleIcon class="w-6 h-6 text-foreground-2" />
-          <div>
-            <p class="text-body-xs font-medium">
-              SSO is not configured for this workspace.
-            </p>
-            <p class="text-body-2xs">Please contact your workspace administrator.</p>
-          </div>
-        </div>
         <AuthRegisterTerms :server-info="serverInfo" />
       </div>
     </template>
@@ -54,7 +43,6 @@
 <script setup lang="ts">
 import { useAuthManager, useLoginOrRegisterUtils } from '~/lib/auth/composables/auth'
 import { LockOpenIcon } from '@heroicons/vue/24/outline'
-import { ExclamationTriangleIcon } from '@heroicons/vue/24/solid'
 import { CommonLoadingIcon } from '@speckle/ui-components'
 import { useQuery } from '@vue/apollo-composable'
 import { authRegisterPanelQuery } from '~/lib/auth/graphql/queries'
@@ -96,6 +84,10 @@ const errorMessage = computed(() => {
 
   // Convert URL-friendly error to readable message
   return decodeURIComponent(error).replace(/\+/g, ' ').trim()
+})
+
+const isAuthenticating = computed(() => {
+  return !!route.query.access_code
 })
 
 const handleContinue = () => {
