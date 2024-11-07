@@ -186,7 +186,6 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
       (card) => card.modelCardId === modelCardId
     ) as RevitSenderModelCard
     if (!modelCard) return
-    console.log('triggered')
 
     const newFilter = {
       ...modelCard.sendFilter,
