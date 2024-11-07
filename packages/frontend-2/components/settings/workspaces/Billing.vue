@@ -36,7 +36,7 @@
                     : 'Yearly bill'
                 }}
               </p>
-              <h4 class="text-heading-lg text-foreground capitalize">£-</h4>
+              <h4 class="text-heading-lg text-foreground capitalize">Coming soon</h4>
             </CommonCard>
             <CommonCard class="gap-y-1 bg-foundation">
               <p class="text-body-xs text-foreground-2">
@@ -59,9 +59,10 @@
                   currentPlan?.name !== WorkspacePlans.Academia &&
                   currentPlan?.name !== WorkspacePlans.Unlimited
                 "
-                class="text-body-xs text-foreground-2 capitalize"
+                class="text-body-xs text-foreground-2"
               >
-                {{ subscription?.billingInterval }} billing period
+                <span class="capitalize">{{ subscription?.billingInterval }}</span>
+                billing period
               </p>
             </CommonCard>
           </div>
@@ -224,8 +225,10 @@ const discount = computed(() => billing.value?.cost?.discount)
 const currentPlan = computed(() => workspaceResult.value?.workspace.plan)
 const subscription = computed(() => workspaceResult.value?.workspace.subscription)
 const pricingPlans = computed(
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-  () => pricingPlansResult.value?.workspacePricingPlans.workspacePlanInformation
+  // Todo: fix the return type of 'workspacePricingPlans', now it's {} but does actually hold values
+  () =>
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+    (pricingPlansResult.value?.workspacePricingPlans as any)?.workspacePlanInformation
 )
 
 const onUpgradePlanClick = (plan: WorkspacePlans) => {
