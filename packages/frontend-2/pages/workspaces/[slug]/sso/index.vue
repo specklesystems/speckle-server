@@ -100,6 +100,7 @@ definePageMeta({
 
 const apiOrigin = useApiOrigin()
 const route = useRoute()
+const logger = useLogger()
 const { challenge } = useLoginOrRegisterUtils()
 const { signInOrSignUpWithSso } = useAuthManager()
 const isSsoEnabled = useIsWorkspacesSsoEnabled()
@@ -139,20 +140,21 @@ type LimitedWorkspace = {
   ssoProviderName?: string | null
 }
 
-onMounted(() => {
-  // If we're in post-SSO flow, keep loading state true
-  // The watchLoginAccessCode handler will handle the redirect
+onMounted(async () => {
   if (isPostSsoFlow.value) {
     return
   }
-  fetch(new URL(`/api/v1/workspaces/${route.params.slug}/sso`, apiOrigin))
-    .then((res) => res.json())
-    .then((data: LimitedWorkspace) => {
-      workspace.value = data
-      ssoProviderName.value = data.ssoProviderName || undefined
-    })
-    .finally(() => {
-      isLoading.value = false
-    })
+  try {
+    const res = await fetch(
+      new URL(`/api/v1/workspaces/${route.params.slug}/sso`, apiOrigin)
+    )
+    const data: LimitedWorkspace = (await res.json()) as LimitedWorkspace
+    workspace.value = data
+    ssoProviderName.value = data.ssoProviderName || undefined
+  } catch (error) {
+    logger.error('Failed to fetch workspace data:', error)
+  } finally {
+    isLoading.value = false
+  }
 })
 </script>
