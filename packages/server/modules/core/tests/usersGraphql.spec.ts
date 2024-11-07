@@ -103,7 +103,7 @@ describe('Users (GraphQL)', () => {
     before(async () => {
       apollo = {
         apollo: await buildApolloServer(),
-        context: createTestContext()
+        context: await createTestContext()
       }
     })
 
@@ -130,7 +130,7 @@ describe('Users (GraphQL)', () => {
     before(async () => {
       apollo = {
         apollo: await buildApolloServer(),
-        context: createAuthedTestContext(me.id)
+        context: await createAuthedTestContext(me.id)
       }
     })
 

@@ -287,7 +287,7 @@ describe('[Admin users list]', () => {
 
     apollo = {
       apollo: await buildApolloServer(),
-      context: createAuthedTestContext(me.id!, { role: Roles.Server.Admin })
+      context: await createAuthedTestContext(me.id!, { role: Roles.Server.Admin })
     }
   })
 

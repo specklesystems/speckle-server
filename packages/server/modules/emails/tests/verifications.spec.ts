@@ -107,7 +107,7 @@ describe('Email verifications @emails', () => {
     before(async () => {
       apollo = {
         apollo: await buildApolloServer(),
-        context: createAuthedTestContext(userA.id)
+        context: await createAuthedTestContext(userA.id)
       }
     })
 
@@ -137,7 +137,7 @@ describe('Email verifications @emails', () => {
       const invokeRequestVerification = async (user: BasicTestUser) => {
         const apollo = {
           apollo: await buildApolloServer(),
-          context: createAuthedTestContext(user.id)
+          context: await createAuthedTestContext(user.id)
         }
         return await requestVerification(apollo, {})
       }
@@ -189,7 +189,7 @@ describe('Email verifications @emails', () => {
     before(async () => {
       apollo = {
         apollo: await buildApolloServer(),
-        context: createTestContext()
+        context: await createTestContext()
       }
     })
 
