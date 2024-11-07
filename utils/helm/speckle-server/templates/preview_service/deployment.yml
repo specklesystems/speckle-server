@@ -102,6 +102,12 @@ spec:
           - name: PREVIEW_TIMEOUT
             value: {{ .Values.preview_service.puppeteer.timeoutMilliseconds | quote }}
           {{- end }}
+          {{- if .Values.featureFlags.workspacesMultiRegionEnabled }}
+          - name: FF_WORKSPACES_MULTI_REGION_ENABLED
+            value: {{ .Values.featureFlags.workspacesMultiRegionEnabled | quote }}
+          - name: MULTI_REGION_CONFIG_PATH
+            value: {{ (printf "/%s" .Values.multiRegion.config.secretKey) | quote}}
+          {{- end }}
 
       {{- if .Values.preview_service.affinity }}
       affinity: {{- include "speckle.renderTpl" (dict "value" .Values.preview_service.affinity "context" $) | nindent 8 }}

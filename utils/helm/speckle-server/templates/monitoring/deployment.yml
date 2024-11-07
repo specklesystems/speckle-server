@@ -68,6 +68,12 @@ spec:
           - name: NODE_EXTRA_CA_CERTS
             value: "/postgres-certificate/ca-certificate.crt"
           {{- end }}
+          {{- if .Values.featureFlags.workspacesMultiRegionEnabled }}
+          - name: FF_WORKSPACES_MULTI_REGION_ENABLED
+            value: {{ .Values.featureFlags.workspacesMultiRegionEnabled | quote }}
+          - name: MULTI_REGION_CONFIG_PATH
+            value: {{ (printf "/%s" .Values.multiRegion.config.secretKey) | quote}}
+          {{- end }}
 
           - name: LOG_LEVEL
             value: {{ .Values.monitoring.logLevel }}

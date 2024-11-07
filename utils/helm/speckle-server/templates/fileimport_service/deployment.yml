@@ -94,6 +94,12 @@ spec:
             value: {{ .Values.fileimport_service.time_limit_min | quote }}
           - name: MAX_OBJECT_SIZE_MB
             value: {{ .Values.objects.max_object_size_mb | quote }}
+          {{- if .Values.featureFlags.workspacesMultiRegionEnabled }}
+          - name: FF_WORKSPACES_MULTI_REGION_ENABLED
+            value: {{ .Values.featureFlags.workspacesMultiRegionEnabled | quote }}
+          - name: MULTI_REGION_CONFIG_PATH
+            value: {{ (printf "/%s" .Values.multiRegion.config.secretKey) | quote}}
+          {{- end }}
       {{- if .Values.fileimport_service.affinity }}
       affinity: {{- include "speckle.renderTpl" (dict "value" .Values.fileimport_service.affinity "context" $) | nindent 8 }}
       {{- end }}
