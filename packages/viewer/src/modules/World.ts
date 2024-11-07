@@ -98,4 +98,31 @@ export class World {
     offsetBox.applyMatrix4(MatBuff1)
     return offsetBox
   }
+
+  public static expandBoxRelative(box: Box3, offsetAmount: number = 0.001) {
+    const center = box.getCenter(new Vector3())
+    const size = box.getSize(new Vector3())
+    MatBuff1.makeTranslation(center.x, center.y, center.z)
+    MatBuff2.copy(MatBuff1).invert()
+    MatBuff0.identity()
+    MatBuff0.makeScale(1 + offsetAmount, 1 + offsetAmount, 1 + offsetAmount)
+    const offsetBox = new Box3().copy(box)
+    if (size.x === 0) {
+      offsetBox.min.x += -offsetAmount * 0.5
+      offsetBox.max.x += offsetAmount * 0.5
+    }
+    if (size.y === 0) {
+      offsetBox.min.y += -offsetAmount * 0.5
+      offsetBox.max.y += offsetAmount * 0.5
+    }
+    if (size.z === 0) {
+      offsetBox.min.z += -offsetAmount * 0.5
+      offsetBox.max.z += offsetAmount * 0.5
+    }
+    offsetBox.applyMatrix4(MatBuff2)
+    offsetBox.applyMatrix4(MatBuff0)
+    offsetBox.applyMatrix4(MatBuff1)
+
+    return offsetBox
+  }
 }
