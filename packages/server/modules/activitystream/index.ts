@@ -9,7 +9,10 @@ import {
   saveActivityFactory
 } from '@/modules/activitystream/repositories'
 import { db } from '@/db/knex'
-import { addStreamInviteSentOutActivityFactory } from '@/modules/activitystream/services/streamActivity'
+import {
+  addStreamCreatedActivityFactory,
+  addStreamInviteSentOutActivityFactory
+} from '@/modules/activitystream/services/streamActivity'
 import { getStreamFactory } from '@/modules/core/repositories/streams'
 import {
   addStreamAccessRequestDeclinedActivityFactory,
@@ -33,11 +36,11 @@ import {
   AccessRequestsEmitter,
   AccessRequestsEvents
 } from '@/modules/accessrequests/events/emitter'
-import { getProjectDbClient } from '@/modules/multiregion/dbSelector'
 import { isProjectResourceTarget } from '@/modules/serverinvites/helpers/core'
 import { publish } from '@/modules/shared/utils/subscriptions'
 import { isStreamAccessRequest } from '@/modules/accessrequests/repositories'
 import { ServerInvitesEvents } from '@/modules/serverinvites/domain/events'
+import { ProjectEvents, ProjectsEmitter } from '@/modules/core/events/projectsEmitter'
 
 let scheduledTask: ReturnType<ScheduleExecution> | null = null
 let quitEventListeners: Optional<() => void> = undefined
@@ -61,38 +64,37 @@ const initializeEventListeners = ({
     ),
     AccessRequestsEmitter.listen(AccessRequestsEvents.Created, async ({ request }) => {
       if (!isStreamAccessRequest(request)) return
-      const projectDb = await getProjectDbClient({ projectId: request.resourceId })
       return await onServerAccessRequestCreatedFactory({
         addStreamAccessRequestedActivity: addStreamAccessRequestedActivityFactory({
-          saveActivity: saveActivityFactory({ db: projectDb })
+          saveActivity: saveActivityFactory({ db })
         })
       })({ request })
     }),
     AccessRequestsEmitter.listen(AccessRequestsEvents.Finalized, async (payload) => {
       if (!isStreamAccessRequest(payload.request)) return
-      const projectDb = await getProjectDbClient({
-        projectId: payload.request.resourceId
-      })
       onServerAccessRequestFinalizedFactory({
         addStreamAccessRequestDeclinedActivity:
           addStreamAccessRequestDeclinedActivityFactory({
-            saveActivity: saveActivityFactory({ db: projectDb })
+            saveActivity: saveActivityFactory({ db })
           })
       })(payload)
     }),
     eventBus.listen(ServerInvitesEvents.Created, async ({ payload }) => {
       if (!isProjectResourceTarget(payload.invite.resource)) return
-      const projectDb = await getProjectDbClient({
-        projectId: payload.invite.resource.resourceId
-      })
       await onServerInviteCreatedFactory({
         addStreamInviteSentOutActivity: addStreamInviteSentOutActivityFactory({
           publish,
-          saveActivity: saveActivityFactory({ db: projectDb })
+          saveActivity: saveActivityFactory({ db })
         }),
         logger,
-        getStream: getStreamFactory({ db: projectDb })
+        getStream: getStreamFactory({ db })
       })(payload)
+    }),
+    ProjectsEmitter.listen(ProjectEvents.Created, async ({ ownerId, project }) => {
+      await addStreamCreatedActivityFactory({
+        saveActivity: saveActivityFactory({ db }),
+        publish
+      })({ streamId: project.id, creatorId: ownerId, stream: project, input: project })
     })
   ]
 

@@ -17,7 +17,6 @@ import {
   requestProjectAccessFactory,
   requestStreamAccessFactory
 } from '@/modules/accessrequests/services/stream'
-import { SaveActivity } from '@/modules/activitystream/domain/operations'
 import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import {
   addStreamInviteAcceptedActivityFactory,
@@ -35,7 +34,6 @@ import {
   addOrUpdateStreamCollaboratorFactory,
   validateStreamAccessFactory
 } from '@/modules/core/services/streams/access'
-import { getProjectDbClient } from '@/modules/multiregion/dbSelector'
 import { authorizeResolver } from '@/modules/shared'
 import { LogicError } from '@/modules/shared/errors'
 import { publish } from '@/modules/shared/utils/subscriptions'
@@ -69,9 +67,33 @@ const getPendingStreamRequests = getPendingStreamRequestsFactory({
   getPendingProjectRequests
 })
 
+const saveActivity = saveActivityFactory({ db })
 const validateStreamAccess = validateStreamAccessFactory({
   authorizeResolver
 })
+const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
+  validateStreamAccess,
+  getUser,
+  grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+  addStreamInviteAcceptedActivity: addStreamInviteAcceptedActivityFactory({
+    saveActivity,
+    publish
+  }),
+  addStreamPermissionsAddedActivity: addStreamPermissionsAddedActivityFactory({
+    saveActivity,
+    publish
+  })
+})
+
+const processPendingStreamRequest = processPendingStreamRequestFactory({
+  getPendingAccessRequest: getPendingAccessRequestFactory({ db }),
+  validateStreamAccess,
+  addOrUpdateStreamCollaborator,
+  deleteRequestById: deleteRequestByIdFactory({ db }),
+  accessRequestsEmitter: AccessRequestsEmitter.emit
+})
+
+const processPendingProjectRequest = processPendingStreamRequest
 
 const resolvers: Resolvers = {
   Mutation: {
@@ -80,35 +102,6 @@ const resolvers: Resolvers = {
       const { requestId, accept, role } = args
 
       if (!userId) throw new LogicError('User ID unexpectedly false')
-
-      const saveActivity: SaveActivity = async (args) => {
-        const projectDb = args.streamId
-          ? await getProjectDbClient({ projectId: args.streamId })
-          : db
-        return await saveActivityFactory({ db: projectDb })(args)
-      }
-
-      const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
-        validateStreamAccess,
-        getUser,
-        grantStreamPermissions: grantStreamPermissionsFactory({ db }),
-        addStreamInviteAcceptedActivity: addStreamInviteAcceptedActivityFactory({
-          saveActivity,
-          publish
-        }),
-        addStreamPermissionsAddedActivity: addStreamPermissionsAddedActivityFactory({
-          saveActivity,
-          publish
-        })
-      })
-
-      const processPendingStreamRequest = processPendingStreamRequestFactory({
-        getPendingAccessRequest: getPendingAccessRequestFactory({ db }),
-        validateStreamAccess,
-        addOrUpdateStreamCollaborator,
-        deleteRequestById: deleteRequestByIdFactory({ db }),
-        accessRequestsEmitter: AccessRequestsEmitter.emit
-      })
 
       await processPendingStreamRequest(
         userId,
@@ -139,33 +132,6 @@ const resolvers: Resolvers = {
     async use(_parent, args, ctx) {
       const { userId, resourceAccessRules } = ctx
       const { requestId, accept, role } = args
-      const saveActivity: SaveActivity = async (args) => {
-        const projectDb = args.streamId
-          ? await getProjectDbClient({ projectId: args.streamId })
-          : db
-        return await saveActivityFactory({ db: projectDb })(args)
-      }
-
-      const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
-        validateStreamAccess,
-        getUser,
-        grantStreamPermissions: grantStreamPermissionsFactory({ db }),
-        addStreamInviteAcceptedActivity: addStreamInviteAcceptedActivityFactory({
-          saveActivity,
-          publish
-        }),
-        addStreamPermissionsAddedActivity: addStreamPermissionsAddedActivityFactory({
-          saveActivity,
-          publish
-        })
-      })
-      const processPendingProjectRequest = processPendingStreamRequestFactory({
-        getPendingAccessRequest: getPendingAccessRequestFactory({ db }),
-        validateStreamAccess,
-        addOrUpdateStreamCollaborator,
-        deleteRequestById: deleteRequestByIdFactory({ db }),
-        accessRequestsEmitter: AccessRequestsEmitter.emit
-      })
 
       const usedReq = await processPendingProjectRequest(
         userId!,
