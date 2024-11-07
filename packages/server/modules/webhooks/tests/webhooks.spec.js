@@ -338,6 +338,7 @@ describe('Webhooks @webhooks', () => {
         getServerInfo,
         getStream,
         createWebhookEvent: createWebhookEventFactory({ db }),
+        getStreamWebhooks: getStreamWebhooksFactory({ db }),
         getUser
       })({
         streamId,
@@ -411,6 +412,7 @@ describe('Webhooks @webhooks', () => {
         db,
         getServerInfo,
         getStream,
+        getStreamWebhooks: getStreamWebhooksFactory({ db }),
         createWebhookEvent: createWebhookEventFactory({ db }),
         getUser
       })({

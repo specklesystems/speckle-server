@@ -158,7 +158,7 @@ export const dispatchStreamEventFactory =
     const rows = await getStreamWebhooks({ streamId })
     for (const wh of rows) {
       if (!wh.enabled) continue
-      if (!(event in wh.triggers)) continue
+      if (!wh.triggers.includes(event)) continue
 
       // Add webhook info (the key `webhook` will be replaced for each webhook configured, before serializing the payload and storing it)
       wh.triggers = Object.keys(wh.triggers)
