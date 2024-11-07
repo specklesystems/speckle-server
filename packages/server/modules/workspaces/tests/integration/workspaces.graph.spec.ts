@@ -129,7 +129,7 @@ describe('Workspaces GQL CRUD', () => {
     await createTestUsers([testAdminUser, testMemberUser])
     const token = await createAuthTokenForUser(testAdminUser.id, AllScopes)
     apollo = await testApolloServer({
-      context: createTestContext({
+      context: await createTestContext({
         auth: true,
         userId: testAdminUser.id,
         token,
@@ -834,7 +834,7 @@ describe('Workspaces GQL CRUD', () => {
 
       it('should throw if non-workspace-admin triggers delete', async () => {
         const memberApollo: TestApolloServer = (apollo = await testApolloServer({
-          context: createTestContext({
+          context: await createTestContext({
             auth: true,
             userId: testAdminUser.id,
             token: '',

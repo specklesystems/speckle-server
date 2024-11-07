@@ -149,7 +149,7 @@ describe('Blobs graphql @blobstorage', () => {
     user.id = await createUser(user)
     graphqlServer = {
       apollo: await buildApolloServer(),
-      context: createAuthedTestContext(user.id)
+      context: await createAuthedTestContext(user.id)
     }
   })
 

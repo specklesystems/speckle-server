@@ -478,7 +478,7 @@ describe('[Stream & Server Invites]', () => {
 
       before(async () => {
         apollo = await testApolloServer({
-          context: createTestContext({
+          context: await createTestContext({
             auth: true,
             userId: me.id,
             role: Roles.Server.Admin, // Marking the user as an admin

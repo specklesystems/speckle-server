@@ -120,7 +120,7 @@ describe('Discoverable streams', () => {
 
     apollo = {
       apollo: await buildApolloServer(),
-      context: createTestContext()
+      context: await createTestContext()
     }
   })
 
@@ -249,7 +249,7 @@ describe('Discoverable streams', () => {
     before(async () => {
       apollo = {
         apollo: await buildApolloServer(),
-        context: createAuthedTestContext(me.id)
+        context: await createAuthedTestContext(me.id)
       }
     })
 
