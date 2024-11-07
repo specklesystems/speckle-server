@@ -174,6 +174,7 @@ const addModel = async () => {
   model.modelId = selectedModel.value?.id as string
   model.workspaceId = selectedProject.value?.workspaceId as string
   model.sendFilter = filter.value as ISendFilter
+  model.sendFilter.idMap = {} // do not let it null from the beginning otherwise we will end up with null state on Revit...
   model.settings = settings.value
   model.expired = false
 
