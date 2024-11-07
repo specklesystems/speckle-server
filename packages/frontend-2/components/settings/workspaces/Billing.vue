@@ -170,6 +170,7 @@ import {
   BillingInterval
 } from '~/lib/common/generated/gql/graphql'
 import { ArrowTopRightOnSquareIcon } from '@heroicons/vue/24/outline'
+import { isWorkspacePricingPlans } from '~/lib/settings/helpers/types'
 
 graphql(`
   fragment SettingsWorkspacesBilling_Workspace on Workspace {
@@ -224,11 +225,10 @@ const billing = computed(() => workspaceResult.value?.workspace.billing)
 const discount = computed(() => billing.value?.cost?.discount)
 const currentPlan = computed(() => workspaceResult.value?.workspace.plan)
 const subscription = computed(() => workspaceResult.value?.workspace.subscription)
-const pricingPlans = computed(
-  // Todo: fix the return type of 'workspacePricingPlans', now it's {} but does actually hold values
-  () =>
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
-    (pricingPlansResult.value?.workspacePricingPlans as any)?.workspacePlanInformation
+const pricingPlans = computed(() =>
+  isWorkspacePricingPlans(pricingPlansResult.value?.workspacePricingPlans)
+    ? pricingPlansResult.value?.workspacePricingPlans
+    : undefined
 )
 
 const onUpgradePlanClick = (plan: WorkspacePlans) => {
