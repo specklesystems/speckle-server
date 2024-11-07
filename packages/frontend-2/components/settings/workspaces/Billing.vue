@@ -1,75 +1,186 @@
 <template>
   <section>
-    <div class="md:max-w-xl md:mx-auto pb-6 md:pb-0">
+    <div class="md:max-w-4xl md:mx-auto pb-6 md:pb-0">
       <SettingsSectionHeader title="Billing" text="Your workspace billing details" />
-      <CommonCard class="text-body-xs bg-foundation">
-        <p class="text-foreground font-medium">Workspaces are free while in beta.</p>
-        <p class="pt-1">
-          After the beta ends, your workspace will start a 30-day free trial. You'll
-          have full access until either the trial expires or you upgrade to a paid plan.
-        </p>
-      </CommonCard>
-
-      <SettingsSectionHeader
-        title="What your workspace bill will look like after the trial ends"
-        class="pt-6 pb-4 md:pt-10 md:pb-6"
-        subheading
-      />
-      <BillingSummary v-if="billing?.cost" :workspace-cost="billing.cost" />
-      <div
-        v-if="discount && billing?.cost?.subTotal"
-        class="flex mt-6 bg-foundation border-dashed border border-success"
-      >
-        <p class="flex-1 p-3">{{ discount.name }}</p>
-        <p class="w-32 md:w-40 ml-4 p-3">
-          £{{ billing.cost.subTotal * discount.amount }} / month
-        </p>
-      </div>
-      <div class="p-3 mt-2 flex flex-col md:flex-row md:items-center">
-        <p class="text-body-xs text-foreground flex-1">
-          To learn more about our pricing plans
-        </p>
-        <div class="pt-4 md:pt-0 md:pl-4 md:w-40">
-          <FormButton
-            :external="true"
-            to="mailto:hello@speckle.systems"
-            color="primary"
-          >
-            Talk to us
-          </FormButton>
-        </div>
-      </div>
-
-      <div v-if="isBillingIntegrationEnabled" class="flex flex-col space-y-10">
-        <SettingsSectionHeader title="Start payment" class="pt-10" subheading />
-        <div class="flex items-center">
-          <div class="flex-1 flex-col pr-6 gap-y-1">
-            <p class="text-body-xs font-medium text-foreground">Billing cycle</p>
-            <p class="text-body-xs text-foreground-2 leading-5 max-w-md">
-              Choose an annual billing cycle for 20% off
-            </p>
+      <template v-if="isBillingIntegrationEnabled">
+        <div class="flex flex-col gap-y-4 md:gap-y-6">
+          <SettingsSectionHeader title="Billing summary" subheading class="pt-4" />
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <CommonCard class="gap-y-1 bg-foundation">
+              <p class="text-body-xs text-foreground-2 font-medium">
+                {{
+                  currentPlan?.status === WorkspacePlanStatuses.Trial
+                    ? 'Trial plan'
+                    : 'Current plan'
+                }}
+              </p>
+              <h4 class="text-heading-lg text-foreground capitalize">
+                {{ currentPlan?.name }} plan
+              </h4>
+              <p
+                v-if="currentPlan?.name && subscription?.billingInterval"
+                class="text-body-xs text-foreground-2"
+              >
+                £{{ seatPrices[currentPlan.name][subscription.billingInterval] }} per
+                seat/month, billed
+                {{ subscription?.billingInterval }}
+              </p>
+            </CommonCard>
+            <CommonCard class="gap-y-1 bg-foundation">
+              <p class="text-body-xs text-foreground-2">
+                {{
+                  currentPlan?.status === WorkspacePlanStatuses.Trial
+                    ? 'Expected bill'
+                    : subscription?.billingInterval === BillingInterval.Monthly
+                    ? 'Monthly bill'
+                    : 'Yearly bill'
+                }}
+              </p>
+              <h4 class="text-heading-lg text-foreground capitalize">£-</h4>
+            </CommonCard>
+            <CommonCard class="gap-y-1 bg-foundation">
+              <p class="text-body-xs text-foreground-2">
+                {{
+                  currentPlan?.status === WorkspacePlanStatuses.Trial
+                    ? 'First payment due'
+                    : 'Next payment due'
+                }}
+              </p>
+              <h4 class="text-heading-lg text-foreground capitalize">
+                {{
+                  currentPlan?.name === WorkspacePlans.Academia ||
+                  currentPlan?.name === WorkspacePlans.Unlimited
+                    ? 'Never'
+                    : dayjs(subscription?.currentBillingCycleEnd).format('MMMM D, YYYY')
+                }}
+              </h4>
+              <p
+                v-if="
+                  currentPlan?.name !== WorkspacePlans.Academia &&
+                  currentPlan?.name !== WorkspacePlans.Unlimited
+                "
+                class="text-body-xs text-foreground-2 capitalize"
+              >
+                {{ subscription?.billingInterval }} billing period
+              </p>
+            </CommonCard>
           </div>
-          <FormSwitch v-model="isYearlyPlan" :show-label="true" name="annual billing" />
+
+          <CommonCard
+            v-if="
+              currentPlan?.status !== WorkspacePlanStatuses.Trial &&
+              currentPlan?.status !== WorkspacePlanStatuses.Canceled
+            "
+            class="bg-foundation"
+          >
+            <div class="flex flex-row gap-x-4 items-center">
+              <p class="text-body-xs text-foreground-2 flex-1">
+                View invoices, edit payment details, and manage your subscription from
+                the billing portal
+              </p>
+              <FormButton
+                color="outline"
+                :icon-right="ArrowTopRightOnSquareIcon"
+                @click="openCustomerPortal"
+              >
+                Open billing portal
+              </FormButton>
+            </div>
+          </CommonCard>
+
+          <SettingsSectionHeader title="Price plans" subheading class="pt-4" />
+          <div class="flex items-center gap-x-4">
+            <div class="flex-col pr-6 gap-y-1">
+              <p class="text-body-xs font-medium text-foreground">Annual billing</p>
+              <p class="text-body-xs text-foreground-2 leading-5 max-w-md">
+                Choose annual billing for a 20% discount
+              </p>
+            </div>
+            <FormSwitch
+              v-model="isYearlyPlan"
+              :show-label="false"
+              name="annual billing"
+            />
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <CommonCard
+              v-for="pricingPlan in pricingPlans"
+              :key="pricingPlan.name"
+              class="gap-y-4"
+            >
+              <h4 class="text-heading text-foreground capitalize">
+                {{ pricingPlan.name }}
+              </h4>
+              <FormButton
+                color="outline"
+                full-width
+                @click="onUpgradePlanClick(pricingPlan.name)"
+              >
+                Upgrade
+              </FormButton>
+            </CommonCard>
+          </div>
         </div>
-        <div class="text-lg">Add the pricing table here</div>
-        <div class="flex justify-between">
-          <FormButton @click="teamCheckout">Team plan</FormButton>
-          <FormButton @click="proCheckout">Pro plan</FormButton>
-          <FormButton @click="businessCheckout">Business plan</FormButton>
+      </template>
+
+      <template v-else>
+        <CommonCard class="text-body-xs bg-foundation">
+          <p class="text-foreground font-medium">Workspaces are free while in beta.</p>
+          <p class="pt-1">
+            After the beta ends, your workspace will start a 30-day free trial. You'll
+            have full access until either the trial expires or you upgrade to a paid
+            plan.
+          </p>
+        </CommonCard>
+
+        <SettingsSectionHeader
+          title="What your workspace bill will look like after the trial ends"
+          class="pt-6 pb-4 md:pt-10 md:pb-6"
+          subheading
+        />
+        <BillingSummary v-if="billing?.cost" :workspace-cost="billing.cost" />
+        <div
+          v-if="discount && billing?.cost?.subTotal"
+          class="flex mt-6 bg-foundation border-dashed border border-success"
+        >
+          <p class="flex-1 p-3">{{ discount.name }}</p>
+          <p class="w-32 md:w-40 ml-4 p-3">
+            £{{ billing.cost.subTotal * discount.amount }} / month
+          </p>
         </div>
-      </div>
+      </template>
     </div>
   </section>
 </template>
 
 <script setup lang="ts">
+import dayjs from 'dayjs'
 import { graphql } from '~/lib/common/generated/gql'
-import { useQuery } from '@vue/apollo-composable'
-import { settingsWorkspaceBillingQuery } from '~/lib/settings/graphql/queries'
+import { useQuery, useApolloClient } from '@vue/apollo-composable'
+import {
+  settingsWorkspaceBillingQuery,
+  settingsWorkspacePricingPlansQuery,
+  settingsWorkspaceBillingCustomerPortalQuery
+} from '~/lib/settings/graphql/queries'
 import { useIsBillingIntegrationEnabled } from '~/composables/globals'
+import {
+  WorkspacePlans,
+  WorkspacePlanStatuses,
+  BillingInterval
+} from '~/lib/common/generated/gql/graphql'
+import { ArrowTopRightOnSquareIcon } from '@heroicons/vue/24/outline'
 
 graphql(`
   fragment SettingsWorkspacesBilling_Workspace on Workspace {
+    id
+    plan {
+      name
+      status
+    }
+    subscription {
+      billingInterval
+      currentBillingCycleEnd
+    }
     billing {
       cost {
         subTotal
@@ -80,32 +191,58 @@ graphql(`
   }
 `)
 
+type SeatPrices = {
+  [key in WorkspacePlans]: {
+    [BillingInterval.Monthly]: number
+    [BillingInterval.Yearly]: number
+  }
+}
+
 const props = defineProps<{
   workspaceId: string
 }>()
 
 const isBillingIntegrationEnabled = useIsBillingIntegrationEnabled()
 const isYearlyPlan = ref(false)
+// TODO: get these from the backend when available
+const seatPrices = ref<SeatPrices>({
+  [WorkspacePlans.Team]: { monthly: 12, yearly: 12 },
+  [WorkspacePlans.Pro]: { monthly: 40, yearly: 40 },
+  [WorkspacePlans.Business]: { monthly: 79, yearly: 79 },
+  [WorkspacePlans.Academia]: { monthly: 0, yearly: 0 },
+  [WorkspacePlans.Unlimited]: { monthly: 0, yearly: 0 }
+})
 
-const checkoutUrl = (plan: string) =>
-  `/api/v1/billing/workspaces/${
-    props.workspaceId
-  }/checkout-session/${plan}/${billingCycle()}`
-const billingCycle = () => (isYearlyPlan.value ? 'yearly' : 'monthly')
-const teamCheckout = () => {
-  window.location.href = checkoutUrl('team')
-}
-const proCheckout = () => {
-  window.location.href = checkoutUrl('pro')
-}
-const businessCheckout = () => {
-  window.location.href = checkoutUrl('business')
-}
-
-const { result } = useQuery(settingsWorkspaceBillingQuery, () => ({
+const { client: apollo } = useApolloClient()
+const { result: workspaceResult } = useQuery(settingsWorkspaceBillingQuery, () => ({
   workspaceId: props.workspaceId
 }))
+const { result: pricingPlansResult } = useQuery(settingsWorkspacePricingPlansQuery)
 
-const billing = computed(() => result.value?.workspace.billing)
+const billing = computed(() => workspaceResult.value?.workspace.billing)
 const discount = computed(() => billing.value?.cost?.discount)
+const currentPlan = computed(() => workspaceResult.value?.workspace.plan)
+const subscription = computed(() => workspaceResult.value?.workspace.subscription)
+const pricingPlans = computed(
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+  () => pricingPlansResult.value?.workspacePricingPlans.workspacePlanInformation
+)
+
+const onUpgradePlanClick = (plan: WorkspacePlans) => {
+  const cycle = isYearlyPlan.value ? BillingInterval.Yearly : BillingInterval.Monthly
+  window.location.href = `/api/v1/billing/workspaces/${props.workspaceId}/checkout-session/${plan}/${cycle}`
+}
+
+const openCustomerPortal = async () => {
+  // We need to fetch this on click because the link expires very quickly
+  const result = await apollo.query({
+    query: settingsWorkspaceBillingCustomerPortalQuery,
+    variables: { workspaceId: props.workspaceId },
+    fetchPolicy: 'no-cache'
+  })
+
+  if (result.data?.workspace.customerPortalUrl) {
+    window.location.href = result.data.workspace.customerPortalUrl
+  }
+}
 </script>
