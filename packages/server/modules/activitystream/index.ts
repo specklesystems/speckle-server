@@ -56,6 +56,7 @@ const initializeEventListeners = ({
   const quitCbs = [
     UsersEmitter.listen(
       UsersEvents.Created,
+      // this activity will always go in the main DB
       onUserCreatedFactory({ saveActivity: saveActivityFactory({ db }) })
     ),
     AccessRequestsEmitter.listen(AccessRequestsEvents.Created, async ({ request }) => {
