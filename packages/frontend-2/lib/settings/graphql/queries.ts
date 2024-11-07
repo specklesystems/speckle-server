@@ -26,7 +26,7 @@ export const settingsWorkspaceBillingQuery = graphql(`
 `)
 
 export const settingsWorkspacePricingPlansQuery = graphql(`
-  query settingsWorkspacePricingPlans {
+  query SettingsWorkspacePricingPlans {
     workspacePricingPlans
   }
 `)
