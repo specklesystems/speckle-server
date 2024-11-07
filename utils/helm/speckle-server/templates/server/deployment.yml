@@ -64,7 +64,7 @@ spec:
         {{- end }}
         {{- if .Values.featureFlags.workspacesMultiRegionEnabled }}
           - name: multi-region-config
-            mountPath: /
+            mountPath: /multi-region-config
             readOnly: true
         {{- end }}
 
