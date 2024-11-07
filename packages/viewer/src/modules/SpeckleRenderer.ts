@@ -522,9 +522,11 @@ export default class SpeckleRenderer {
     }
   }
 
-  public resetPipeline() {
+  public resetPipeline(dynamic: boolean = false) {
     this._needsRender = true
-    this._pipeline.reset()
+    if (dynamic)
+      this._pipeline instanceof ProgressivePipeline && this._pipeline.onStationaryEnd()
+    else this._pipeline.reset()
   }
 
   public render(): void {

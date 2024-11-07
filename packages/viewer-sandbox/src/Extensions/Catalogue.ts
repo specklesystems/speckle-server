@@ -42,6 +42,10 @@ export class Catalogue extends Extension {
 
   public animate(reverse: boolean = false) {
     reverse ? this.animationGroup.playReverse() : this.animationGroup.play()
+    this.viewer.getRenderer().resetPipeline(true)
+    this.animationGroup.onComplete = () => {
+      this.viewer.getRenderer().resetPipeline()
+    }
   }
 
   /** Example's main function */
@@ -142,7 +146,6 @@ export class Catalogue extends Extension {
 
         this.animationGroup.animations.push({
           target: bObj,
-          start: new Vector3(),
           end: finalPos,
           current: new Vector3(),
           time: 0

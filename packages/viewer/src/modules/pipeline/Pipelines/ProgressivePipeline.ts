@@ -53,6 +53,7 @@ export abstract class ProgressivePipeline extends Pipeline {
     return ret
   }
 
+  // TO DO: BETTER WAY OF HANDLING BOTH DYNAMIC AND STATIC RESETS
   public reset() {
     super.reset()
     this.accumulationFrameIndex = 0
