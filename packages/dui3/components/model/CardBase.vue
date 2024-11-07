@@ -234,7 +234,7 @@ const folderPath = computed(() => {
 provide<IModelCard>('cardBase', props.modelCard)
 
 const isSender = computed(() => {
-  return props.modelCard.typeDiscriminator === 'SenderModelCard'
+  return props.modelCard.typeDiscriminator.includes('SenderModelCard')
 })
 
 const highlightModel = () => {

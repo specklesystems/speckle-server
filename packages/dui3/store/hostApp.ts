@@ -9,6 +9,7 @@ import type {
   IDirectSelectionSendFilter,
   ISendFilter,
   ISenderModelCard,
+  RevitSenderModelCard,
   RevitViewsSendFilter
 } from 'lib/models/card/send'
 import type { ToastNotification } from '@speckle/ui-components'
@@ -127,14 +128,10 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
       (m) => m.modelCardId === modelCardId
     )
 
-    console.log(documentModelStore.value.models[modelIndex], 'before')
-
     documentModelStore.value.models[modelIndex] = {
       ...documentModelStore.value.models[modelIndex],
       ...properties
     }
-
-    console.log(documentModelStore.value.models[modelIndex], 'after')
 
     await app.$baseBinding.updateModel(documentModelStore.value.models[modelIndex])
   }
@@ -187,12 +184,16 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
   app.$sendBinding?.on('setFilterObjectIds', async ({ modelCardId, objectIds }) => {
     const modelCard = models.value.find(
       (card) => card.modelCardId === modelCardId
-    ) as ISenderModelCard
+    ) as RevitSenderModelCard
     if (!modelCard) return
     console.log('triggered')
 
-    const newFilter = { ...modelCard.sendFilter, objectIds }
-    console.log(newFilter)
+    const newFilter = {
+      ...modelCard.sendFilter,
+      objectIds: objectIds.map((o) => o.uniqueId)
+    }
+    modelCard.sendFilterObjectIdentifiers = objectIds
+    console.log(modelCard)
 
     await patchModel(modelCardId, { sendFilter: newFilter })
   })
@@ -483,8 +484,8 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     typeDiscriminator: string
   ) => {
     if (documentModelStore.value.models.length === 0) return
-    const modelCards = documentModelStore.value.models.filter(
-      (m) => m.typeDiscriminator === typeDiscriminator
+    const modelCards = documentModelStore.value.models.filter((m) =>
+      m.typeDiscriminator.includes(typeDiscriminator)
     )
     if (modelCards.length === 0) return
 

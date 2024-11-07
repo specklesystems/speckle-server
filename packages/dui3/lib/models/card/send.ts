@@ -8,6 +8,12 @@ export interface ISenderModelCard extends IModelCard {
   latestCreatedVersionId?: string
 }
 
+export interface SendFilterObjectIdentifier {
+  uniqueId: string
+  elementId: string
+  categoryId: string
+}
+
 export interface ISendFilter extends IDiscriminatedObject {
   id: string
   name: string
@@ -42,5 +48,15 @@ export class SenderModelCard extends ModelCard implements ISenderModelCard {
 
   constructor() {
     super('SenderModelCard')
+  }
+}
+
+export class RevitSenderModelCard extends ModelCard implements ISenderModelCard {
+  sendFilter?: ISendFilter | undefined
+  sending?: boolean | undefined
+  sendFilterObjectIdentifiers?: unknown
+  constructor() {
+    super('RevitSenderModelCard')
+    this.sendFilterObjectIdentifiers = {}
   }
 }

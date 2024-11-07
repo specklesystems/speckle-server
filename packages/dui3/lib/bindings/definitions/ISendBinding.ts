@@ -1,4 +1,4 @@
-import type { ISendFilter } from '~~/lib/models/card/send'
+import type { ISendFilter, SendFilterObjectIdentifier } from '~~/lib/models/card/send'
 import type {
   IBinding,
   IBindingSharedEvents
@@ -26,5 +26,8 @@ export interface ISendBindingEvents
     versionId: string
     sendConversionResults: ConversionResult[]
   }) => void
-  setFilterObjectIds: (args: { modelCardId: string; objectIds: string[] }) => void
+  setFilterObjectIds: (args: {
+    modelCardId: string
+    objectIds: SendFilterObjectIdentifier[]
+  }) => void
 }
