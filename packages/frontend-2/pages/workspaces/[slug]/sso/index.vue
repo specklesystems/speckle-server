@@ -110,16 +110,4 @@ const handleContinue = () => {
     workspaceSlug: route.params.slug.toString()
   })
 }
-
-onMounted(() => {
-  if (errorMessage.value) {
-    mixpanel.track('Workspace SSO Error', {
-      // eslint-disable-next-line camelcase
-      workspace_slug: route.params.slug.toString(),
-      error: errorMessage.value,
-      // eslint-disable-next-line camelcase
-      provider_name: workspace.value?.ssoProviderName
-    })
-  }
-})
 </script>

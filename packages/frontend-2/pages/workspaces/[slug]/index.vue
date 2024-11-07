@@ -16,7 +16,6 @@
 </template>
 
 <script setup lang="ts">
-import { useRoute } from 'vue-router'
 import { useSsoAuth } from '~/lib/workspaces/composables/management'
 
 definePageMeta({
