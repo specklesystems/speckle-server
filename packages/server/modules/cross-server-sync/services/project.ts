@@ -193,7 +193,6 @@ const importVersionsFactory =
   }
 
 type DownloadProjectDeps = {
-  // createStreamReturnRecord: CreateStream
   createNewProject: CreateProject
 } & GetLocalResourcesDeps &
   ImportVersionsDeps
