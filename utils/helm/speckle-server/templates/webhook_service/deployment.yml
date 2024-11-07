@@ -135,5 +135,5 @@ spec:
             secretName: {{ .Values.multiRegion.config.secretName }}
             items:
             - key: {{ .Values.multiRegion.config.secretKey }}
-              path: "."
+              path: "multi-region-config.json"
       {{- end }}
