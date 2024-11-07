@@ -46,8 +46,8 @@ spec:
           runAsNonRoot: true
           runAsUser: 20000
 
-        {{- if .Values.db.useCertificate }}
         volumeMounts:
+        {{- if .Values.db.useCertificate }}
           - name: postgres-certificate
             mountPath: /postgres-certificate
         {{- end }}
