@@ -1,11 +1,9 @@
 <template>
-  <div>
-    <AuthSsoLogin />
-  </div>
+  <AuthSsoRegister />
 </template>
 
 <script setup lang="ts">
 useHead({
-  title: 'Log in'
+  title: 'Register with SSO'
 })
 </script>

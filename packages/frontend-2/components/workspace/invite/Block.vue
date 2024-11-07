@@ -136,9 +136,7 @@ const { loading, accept, decline, token, isCurrentUserTarget, targetUser } =
   })
 
 const workspaceSlug = computed(() => props.invite.workspaceSlug ?? '')
-const { hasSsoEnabled } = useWorkspaceSsoPublic({
-  workspaceSlug: workspaceSlug.value
-})
+const { hasSsoEnabled } = useWorkspaceSsoPublic(workspaceSlug.value)
 
 const buildPostAuthRedirectUrl = (params: {
   autoAccept?: boolean
@@ -197,7 +195,7 @@ const signOutGoToRegister = async () => {
 
     if (hasSsoEnabled.value) {
       router.push({
-        path: `/workspaces/${props.invite.workspaceSlug}/sso`,
+        path: `/workspaces/${props.invite.workspaceSlug}/sso/register`,
         query: {
           token: token.value,
           register: 'true'

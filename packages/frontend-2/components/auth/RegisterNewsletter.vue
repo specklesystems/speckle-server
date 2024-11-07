@@ -4,7 +4,7 @@
     v-model="newsletterConsent"
     name="newsletter"
     label="Opt in for exclusive Speckle news and tips"
-    class="text-body-xs"
+    class="text-body-2xs"
   />
 </template>
 

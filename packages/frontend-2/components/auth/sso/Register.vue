@@ -1,0 +1,75 @@
+<template>
+  <div class="flex flex-col items-center gap-4">
+    <div v-if="workspace?.logo" class="w-16 h-16">
+      <NuxtImg
+        :src="workspace.logo"
+        :alt="workspace?.name"
+        class="w-full h-full object-contain rounded-full"
+      />
+    </div>
+
+    <h1 class="text-heading-xl text-center">
+      Sign up to access {{ workspace?.name || 'Workspace' }}
+    </h1>
+
+    <div class="w-full max-w-xs">
+      <AuthRegisterNewsletter v-model:newsletter-consent="newsletterConsent" />
+
+      <div class="my-4">
+        <FormButton
+          size="lg"
+          full-width
+          :loading="loading"
+          :disabled="loading"
+          @click="handleContinue"
+        >
+          Continue with {{ workspace?.ssoProviderName || 'SSO' }}
+        </FormButton>
+      </div>
+      <AuthRegisterTerms v-if="serverInfo" :server-info="serverInfo" />
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { useAuthManager, useLoginOrRegisterUtils } from '~/lib/auth/composables/auth'
+import { useWorkspaceSsoPublic } from '~/lib/workspaces/composables/management'
+import { useMixpanel } from '~/lib/core/composables/mp'
+import { authRegisterPanelQuery } from '~/lib/auth/graphql/queries'
+import { useQuery } from '@vue/apollo-composable'
+
+const route = useRoute()
+const loading = ref(false)
+const newsletterConsent = ref(false)
+
+const { challenge } = useLoginOrRegisterUtils()
+const { signInOrSignUpWithSso } = useAuthManager()
+const mixpanel = useMixpanel()
+const logger = useLogger()
+const { result } = useQuery(authRegisterPanelQuery)
+
+const serverInfo = computed(() => result.value?.serverInfo)
+const workspaceSlug = computed(() => route.params.slug?.toString() || '')
+const { workspace } = useWorkspaceSsoPublic(workspaceSlug.value)
+
+const handleContinue = () => {
+  if (!workspaceSlug.value) return
+
+  loading.value = true
+  try {
+    mixpanel.track('Workspace SSO Register Attempt', {
+      // eslint-disable-next-line camelcase
+      workspace_slug: workspaceSlug.value
+    })
+
+    signInOrSignUpWithSso({
+      challenge: challenge.value,
+      workspaceSlug: workspaceSlug.value
+    })
+  } catch (error) {
+    logger.error('SSO registration failed:', error)
+  } finally {
+    loading.value = false
+  }
+}
+</script>

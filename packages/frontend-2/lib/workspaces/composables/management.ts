@@ -456,6 +456,8 @@ export function useWorkspaceSsoPublic(workspaceSlug: string) {
   const loading = ref(true)
   const error = ref<Error | null>(null)
 
+  const hasSsoEnabled = computed(() => !!workspace.value?.ssoProviderName)
+
   onMounted(async () => {
     try {
       const res = await fetch(
@@ -479,9 +481,10 @@ export function useWorkspaceSsoPublic(workspaceSlug: string) {
   })
 
   return {
-    workspace: readonly(workspace),
-    loading: readonly(loading),
-    error: readonly(error)
+    workspace,
+    loading,
+    error,
+    hasSsoEnabled
   }
 }
 
