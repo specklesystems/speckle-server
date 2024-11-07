@@ -9,13 +9,6 @@ import { workspaceAccessCheckQuery } from '~~/lib/workspaces/graphql/queries'
  * Used to validate that the workspace ID refers to a valid workspace and redirects to 404 if not
  */
 export default defineNuxtRouteMiddleware(async (to) => {
-  // Skip access check if:
-  // 1. We're in SSO flow with access_code
-  // 2. We have an invite token
-  if (to.query.access_code || to.query.token) {
-    return
-  }
-
   const workspaceSlug = to.params.slug as string
 
   const client = useApolloClientFromNuxt()
@@ -52,7 +45,28 @@ export default defineNuxtRouteMiddleware(async (to) => {
   }
 
   if (errors?.length) {
-    const errMsg = getFirstErrorMessage(errors)
+    // Check for SSO session error
+    const ssoSessionError = errors.find(
+      (e) => e.extensions?.['code'] === 'SSO_SESSION_MISSING_OR_EXPIRED_ERROR'
+    )
+
+    if (ssoSessionError) {
+      // Redirect to the SSO error page
+      return navigateTo(`/workspaces/${workspaceSlug}/sso/session-error`)
+    }
+
+    const firstErrorWithCode = errors.find((e) => e.extensions?.['code'])
+    if (firstErrorWithCode) {
+      const errorCode = firstErrorWithCode.extensions['code']
+      return abortNavigation(
+        createError({
+          statusCode: 401,
+          message: `Error: ${errorCode}. Please check your access or contact support.`
+        })
+      )
+    }
+
+    const errMsg = getFirstErrorMessage(errors) || 'An unexpected error occurred.'
     return abortNavigation(
       createError({
         statusCode: 500,

@@ -599,3 +599,21 @@ export const useSetDefaultWorkspaceRegion = () => {
     return res?.data?.workspaceMutations.setDefaultRegion
   }
 }
+
+export function useSsoAuth(workspaceSlug: string) {
+  const logger = useLogger()
+  const ssoError = ref<string | null>(null)
+
+  const { hasSsoEnabled, needsSsoLogin, error } = useWorkspaceSso({
+    workspaceSlug
+  })
+
+  if (error.value) {
+    logger.error('SSO check failed:', error.value)
+    ssoError.value = 'Failed to check workspace SSO requirements'
+  } else if (hasSsoEnabled.value && needsSsoLogin.value) {
+    ssoError.value = 'You need to sign in with SSO to access this workspace.'
+  }
+
+  return { ssoError }
+}
