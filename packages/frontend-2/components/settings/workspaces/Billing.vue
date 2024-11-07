@@ -186,9 +186,9 @@ const isBillingIntegrationEnabled = useIsBillingIntegrationEnabled()
 const isYearlyPlan = ref(false)
 // TODO: get these from the backend when available
 const seatPrices = ref<SeatPrices>({
-  [WorkspacePlans.Team]: { monthly: 12, yearly: 12 },
-  [WorkspacePlans.Pro]: { monthly: 40, yearly: 40 },
-  [WorkspacePlans.Business]: { monthly: 79, yearly: 79 },
+  [WorkspacePlans.Team]: { monthly: 12, yearly: 10 },
+  [WorkspacePlans.Pro]: { monthly: 40, yearly: 36 },
+  [WorkspacePlans.Business]: { monthly: 79, yearly: 63 },
   [WorkspacePlans.Academia]: { monthly: 0, yearly: 0 },
   [WorkspacePlans.Unlimited]: { monthly: 0, yearly: 0 }
 })
