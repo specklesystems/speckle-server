@@ -47,7 +47,7 @@ exports.truncateTables = async (tableNames) => {
         -- Disable triggers and foreign key constraints for this session
         SET session_replication_role = replica;
         
-        truncate table ${tableNames.join(',')} cascade;
+        truncate table ${tableNames.join(',')};
 
         -- Re-enable triggers and foreign key constraints
         SET session_replication_role = DEFAULT;

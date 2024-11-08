@@ -8,7 +8,6 @@ import {
 import { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
 import {
   DiscoverableStreamsSortingInput,
-  ProjectCreateInput,
   ProjectUpdateInput,
   ProjectUpdateRoleInput,
   QueryDiscoverableStreamsArgs,
@@ -21,6 +20,7 @@ import { ContextResourceAccessRules } from '@/modules/core/helpers/token'
 import { MaybeNullOrUndefined, Nullable, Optional, StreamRoles } from '@speckle/shared'
 import { Knex } from 'knex'
 import type express from 'express'
+import { ProjectCreateArgs } from '@/modules/core/domain/projects/operations'
 
 export type LegacyGetStreams = (params: {
   cursor?: string | Date | null | undefined
@@ -80,7 +80,7 @@ export type LegacyGetStreamCollaborators = (params: { streamId: string }) => Pro
 >
 
 export type StoreStream = (
-  input: StreamCreateInput | ProjectCreateInput,
+  input: StreamCreateInput | ProjectCreateArgs,
   options?: Partial<{
     ownerId: string
     trx: Knex.Transaction
@@ -247,13 +247,10 @@ export type GrantStreamPermissions = (
 ) => Promise<Optional<Stream>>
 
 export type CreateStream = (
-  params: (StreamCreateInput | ProjectCreateInput) & {
+  params: (StreamCreateInput | ProjectCreateArgs) & {
     ownerId: string
     ownerResourceAccessRules?: MaybeNullOrUndefined<TokenResourceIdentifier[]>
-  },
-  options?: Partial<{
-    createActivity: boolean
-  }>
+  }
 ) => Promise<Stream>
 
 export type LegacyCreateStream = (

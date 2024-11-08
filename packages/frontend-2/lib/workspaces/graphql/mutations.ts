@@ -53,3 +53,17 @@ export const processWorkspaceInviteMutation = graphql(`
     }
   }
 `)
+
+export const setDefaultRegionMutation = graphql(`
+  mutation SetDefaultWorkspaceRegion($workspaceId: String!, $regionKey: String!) {
+    workspaceMutations {
+      setDefaultRegion(workspaceId: $workspaceId, regionKey: $regionKey) {
+        id
+        defaultRegion {
+          id
+          ...SettingsWorkspacesRegionsSelect_ServerRegionItem
+        }
+      }
+    }
+  }
+`)

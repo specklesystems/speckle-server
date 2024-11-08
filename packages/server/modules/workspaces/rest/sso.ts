@@ -15,7 +15,7 @@ import {
   getProviderAuthorizationUrl,
   initializeIssuerAndClient
 } from '@/modules/workspaces/clients/oidcProvider'
-import { adminOverrideEnabled } from '@/modules/shared/helpers/envHelper'
+import { getFeatureFlags, isProdEnv } from '@/modules/shared/helpers/envHelper'
 import {
   storeOIDCProviderValidationRequestFactory,
   getOIDCProviderValidationRequestFactory,
@@ -33,6 +33,7 @@ import {
 } from '@/modules/workspaces/domain/sso/types'
 import {
   getWorkspaceBySlugFactory,
+  getWorkspaceRolesFactory,
   upsertWorkspaceRoleFactory
 } from '@/modules/workspaces/repositories/workspaces'
 import {
@@ -79,21 +80,16 @@ import { sendEmail } from '@/modules/emails/services/sending'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { createAuthorizationCodeFactory } from '@/modules/auth/repositories/apps'
 import { getDefaultSsoSessionExpirationDate } from '@/modules/workspaces/domain/sso/logic'
-import { GetWorkspaceBySlug } from '@/modules/workspaces/domain/operations'
+import {
+  GetWorkspaceBySlug,
+  GetWorkspaceRoles
+} from '@/modules/workspaces/domain/operations'
 import {
   GetWorkspaceSsoProvider,
   UpsertUserSsoSession
 } from '@/modules/workspaces/domain/sso/operations'
 import { GetUser } from '@/modules/core/domain/users/operations'
 import { FindEmail } from '@/modules/core/domain/userEmails/operations'
-import { AuthorizeResolver } from '@/modules/shared/domain/operations'
-import { authorizeResolverFactory } from '@/modules/shared/services/auth'
-import { getRolesFactory } from '@/modules/shared/repositories/roles'
-import {
-  getUserAclRoleFactory,
-  getUserServerRoleFactory
-} from '@/modules/shared/repositories/acl'
-import { getStreamFactory } from '@/modules/core/repositories/streams'
 import {
   buildAuthRedirectUrl,
   buildErrorUrl,
@@ -111,6 +107,9 @@ import {
   SsoUserEmailUnverifiedError,
   SsoVerificationCodeMissingError
 } from '@/modules/workspaces/errors/sso'
+import { FeatureAccessForbiddenError } from '@/modules/gatekeeper/errors/features'
+import { canWorkspaceUseOidcSsoFactory } from '@/modules/gatekeeper/services/featureAuthorization'
+import { getWorkspacePlanFactory } from '@/modules/gatekeeper/repositories/billing'
 
 const moveAuthParamsToSessionMiddleware = moveAuthParamsToSessionMiddlewareFactory()
 const sessionMiddleware = sessionMiddlewareFactory()
@@ -118,6 +117,37 @@ const finalizeAuthMiddleware = finalizeAuthMiddlewareFactory({
   createAuthorizationCode: createAuthorizationCodeFactory({ db }),
   getUser: legacyGetUserFactory({ db })
 })
+
+const moveWorkspaceIdToSessionMiddleware: RequestHandler<
+  WorkspaceSsoAuthRequestParams
+> = async (req, _res, next) => {
+  const workspace = await getWorkspaceBySlugFactory({ db })({
+    workspaceSlug: req.params.workspaceSlug
+  })
+  req.session.workspaceId = workspace?.id
+  next()
+}
+
+const validateFeatureAccessMiddlewareFactory: RequestHandler<
+  WorkspaceSsoAuthRequestParams
+> = async (req, res, next) => {
+  try {
+    if (!req.session.workspaceId) throw new FeatureAccessForbiddenError()
+
+    const isGatekeeperEnabled =
+      getFeatureFlags().FF_GATEKEEPER_MODULE_ENABLED && isProdEnv()
+    if (!isGatekeeperEnabled) return next()
+
+    const isAllowed = await canWorkspaceUseOidcSsoFactory({
+      getWorkspacePlan: getWorkspacePlanFactory({ db })
+    })({ workspaceId: req.session.workspaceId })
+    if (!isAllowed) throw new FeatureAccessForbiddenError()
+
+    next()
+  } catch (e) {
+    res?.redirect(buildErrorUrl(e, req.params.workspaceSlug))
+  }
+}
 
 export const getSsoRouter = (): Router => {
   const router = Router()
@@ -142,13 +172,14 @@ export const getSsoRouter = (): Router => {
     '/api/v1/workspaces/:workspaceSlug/sso/auth',
     sessionMiddleware,
     moveAuthParamsToSessionMiddleware,
+    moveWorkspaceIdToSessionMiddleware,
+    validateFeatureAccessMiddlewareFactory,
     validateRequest({
       params: z.object({
         workspaceSlug: z.string().min(1)
       })
     }),
     handleSsoAuthRequestFactory({
-      getWorkspaceBySlug: getWorkspaceBySlugFactory({ db }),
       getWorkspaceSsoProvider: getWorkspaceSsoProviderFactory({
         db,
         decrypt: getDecryptor()
@@ -160,6 +191,8 @@ export const getSsoRouter = (): Router => {
     '/api/v1/workspaces/:workspaceSlug/sso/oidc/validate',
     sessionMiddleware,
     moveAuthParamsToSessionMiddleware,
+    moveWorkspaceIdToSessionMiddleware,
+    validateFeatureAccessMiddlewareFactory,
     validateRequest({
       params: z.object({
         workspaceSlug: z.string().min(1)
@@ -167,30 +200,6 @@ export const getSsoRouter = (): Router => {
       query: oidcProvider
     }),
     handleSsoValidationRequestFactory({
-      getWorkspaceBySlug: getWorkspaceBySlugFactory({ db }),
-      startOidcSsoProviderValidation: startOidcSsoProviderValidationFactory({
-        getOidcProviderAttributes: getOIDCProviderAttributes,
-        storeOidcProviderValidationRequest: storeOIDCProviderValidationRequestFactory({
-          redis: getGenericRedis(),
-          encrypt: getEncryptor()
-        }),
-        generateCodeVerifier: generators.codeVerifier
-      })
-    })
-  )
-
-  router.get(
-    '/api/v1/workspaces/:workspaceSlug/sso/oidc/validate',
-    sessionMiddleware,
-    moveAuthParamsToSessionMiddleware,
-    validateRequest({
-      params: z.object({
-        workspaceSlug: z.string().min(1)
-      }),
-      query: oidcProvider
-    }),
-    handleSsoValidationRequestFactory({
-      getWorkspaceBySlug: getWorkspaceBySlugFactory({ db }),
       startOidcSsoProviderValidation: startOidcSsoProviderValidationFactory({
         getOidcProviderAttributes: getOIDCProviderAttributes,
         storeOidcProviderValidationRequest: storeOIDCProviderValidationRequestFactory({
@@ -214,13 +223,7 @@ export const getSsoRouter = (): Router => {
     async (req, res, next) => {
       const trx = await db.transaction()
       const handleOidcCallback = handleOidcCallbackFactory({
-        authorizeResolver: authorizeResolverFactory({
-          adminOverrideEnabled,
-          getRoles: getRolesFactory({ db: trx }),
-          getUserServerRole: getUserServerRoleFactory({ db: trx }),
-          getStream: getStreamFactory({ db: trx }),
-          getUserAclRole: getUserAclRoleFactory({ db: trx })
-        }),
+        getWorkspaceRoles: getWorkspaceRolesFactory({ db: trx }),
         getWorkspaceBySlug: getWorkspaceBySlugFactory({ db: trx }),
         createOidcProvider: createOidcProviderFactory({
           getOIDCProviderValidationRequest: getOIDCProviderValidationRequestFactory({
@@ -346,21 +349,16 @@ const handleGetLimitedWorkspaceRequestFactory =
  */
 const handleSsoAuthRequestFactory =
   ({
-    getWorkspaceBySlug,
     getWorkspaceSsoProvider
   }: {
-    getWorkspaceBySlug: GetWorkspaceBySlug
     getWorkspaceSsoProvider: GetWorkspaceSsoProvider
   }): RequestHandler<WorkspaceSsoAuthRequestParams> =>
   async ({ params, session, res }) => {
     try {
-      const workspace = await getWorkspaceBySlug({
-        workspaceSlug: params.workspaceSlug
-      })
-      if (!workspace) throw new WorkspaceNotFoundError()
+      if (!session.workspaceId) throw new WorkspaceNotFoundError()
 
       const { provider } =
-        (await getWorkspaceSsoProvider({ workspaceId: workspace.id })) ?? {}
+        (await getWorkspaceSsoProvider({ workspaceId: session.workspaceId })) ?? {}
       if (!provider) throw new SsoProviderMissingError()
 
       const codeVerifier = generators.codeVerifier()
@@ -385,10 +383,8 @@ type WorkspaceSsoValidationRequestQuery = z.infer<typeof oidcProvider>
  */
 const handleSsoValidationRequestFactory =
   ({
-    getWorkspaceBySlug,
     startOidcSsoProviderValidation
   }: {
-    getWorkspaceBySlug: GetWorkspaceBySlug
     startOidcSsoProviderValidation: ReturnType<
       typeof startOidcSsoProviderValidationFactory
     >
@@ -400,14 +396,11 @@ const handleSsoValidationRequestFactory =
   > =>
   async ({ session, params, query: provider, res, context }) => {
     try {
-      const workspace = await getWorkspaceBySlug({
-        workspaceSlug: params.workspaceSlug
-      })
-      if (!workspace) throw new WorkspaceNotFoundError()
+      if (!session.workspaceId) throw new WorkspaceNotFoundError()
 
       await authorizeResolver(
         context.userId,
-        workspace.id,
+        session.workspaceId,
         Roles.Workspace.Admin,
         context.resourceAccessRules
       )
@@ -438,7 +431,7 @@ type WorkspaceSsoOidcCallbackRequestQuery = z.infer<typeof oidcCallbackRequestQu
  */
 const handleOidcCallbackFactory =
   ({
-    authorizeResolver,
+    getWorkspaceRoles,
     getWorkspaceBySlug,
     createOidcProvider,
     getOidcProvider,
@@ -448,7 +441,7 @@ const handleOidcCallbackFactory =
     linkUserWithSsoProvider,
     upsertUserSsoSession
   }: {
-    authorizeResolver: AuthorizeResolver
+    getWorkspaceRoles: GetWorkspaceRoles
     getWorkspaceBySlug: GetWorkspaceBySlug
     createOidcProvider: ReturnType<typeof createOidcProviderFactory>
     getOidcProvider: ReturnType<typeof getOidcProviderFactory>
@@ -502,12 +495,9 @@ const handleOidcCallbackFactory =
     })
 
     // TODO: Implicitly consume invite here, if one exists
-    await authorizeResolver(
-      req.user.id,
-      workspace.id,
-      Roles.Workspace.Member,
-      req.context.resourceAccessRules
-    )
+    const workspaceRoles = await getWorkspaceRoles({ workspaceId: workspace.id })
+    if (!workspaceRoles.some((role) => role.userId === req.user?.id))
+      throw new SsoGenericAuthenticationError()
 
     // BTW there is a bit of an issue with PATs and sso sessions, if the session expires, the PAT fails to work
     await upsertUserSsoSession({
@@ -519,7 +509,7 @@ const handleOidcCallbackFactory =
       }
     })
 
-    req.authRedirectPath = buildFinalizeUrl(workspace.slug).toString()
+    req.authRedirectPath = buildFinalizeUrl(req.params.workspaceSlug).toString()
   }
 
 const createOidcProviderFactory =

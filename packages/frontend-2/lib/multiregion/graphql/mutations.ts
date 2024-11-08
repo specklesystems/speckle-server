@@ -13,3 +13,17 @@ export const createNewRegionMutation = graphql(`
     }
   }
 `)
+
+export const updateRegionMutation = graphql(`
+  mutation UpdateRegion($input: UpdateServerRegionInput!) {
+    serverInfoMutations {
+      multiRegion {
+        update(input: $input) {
+          id
+          ...SettingsServerRegionsAddEditDialog_ServerRegionItem
+          ...SettingsServerRegionsTable_ServerRegionItem
+        }
+      }
+    }
+  }
+`)

@@ -115,7 +115,8 @@ export const addWorkspaceSubscriptionSeatIfNeededFactory =
     // if (!workspacePlan) throw new WorkspacePlanNotFoundError()
     if (!workspacePlan) return
     const workspaceSubscription = await getWorkspaceSubscription({ workspaceId })
-    if (!workspaceSubscription) throw new WorkspaceSubscriptionNotFoundError()
+    if (!workspaceSubscription) return
+    // if (!workspaceSubscription) throw new WorkspaceSubscriptionNotFoundError()
 
     switch (workspacePlan.name) {
       case 'team':

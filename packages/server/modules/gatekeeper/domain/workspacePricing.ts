@@ -1,6 +1,8 @@
 import { z } from 'zod'
+import type { MaybeNullOrUndefined } from '@speckle/shared'
 
 export type WorkspaceFeatureName =
+  | 'workspace'
   | 'domainBasedSecurityPolicies'
   | 'oidcSso'
   | 'workspaceDataRegionSpecificity'
@@ -11,6 +13,9 @@ type FeatureDetails = {
 }
 
 const features: Record<WorkspaceFeatureName, FeatureDetails> = {
+  workspace: {
+    displayName: 'Workspace'
+  },
   domainBasedSecurityPolicies: {
     description: 'Email domain based security policies',
     displayName: 'Domain security policies'
@@ -24,6 +29,18 @@ const features: Record<WorkspaceFeatureName, FeatureDetails> = {
 } as const
 
 type WorkspaceFeatures = Record<keyof typeof features, boolean>
+
+type WorkspaceInfoDetails = {
+  name: MaybeNullOrUndefined<WorkspacePlans>
+  description: MaybeNullOrUndefined<string>
+}
+
+const info: WorkspaceInfoDetails = {
+  name: null,
+  description: null
+}
+
+type WorkspaceInfo = Record<keyof typeof info, MaybeNullOrUndefined<string>>
 
 type Limits = 'uploadSize' | 'automateMinutes'
 
@@ -47,10 +64,13 @@ export const workspacePricingPlanInformation = { features, limits }
 
 type WorkspaceLimits = Record<keyof typeof limits, number | null>
 
-type WorkspacePlanFeaturesAndLimits = WorkspaceFeatures & WorkspaceLimits
+type WorkspacePlanFeaturesAndLimits = WorkspaceInfo &
+  WorkspaceFeatures &
+  WorkspaceLimits
 
 const baseFeatures = {
-  domainBasedSecurityPolicies: true
+  domainBasedSecurityPolicies: true,
+  workspace: true
 }
 
 export const trialWorkspacePlans = z.literal('team')
@@ -91,6 +111,8 @@ export type WorkspacePlanBillingIntervals = z.infer<
 
 const team: WorkspacePlanFeaturesAndLimits = {
   ...baseFeatures,
+  name: 'team',
+  description: 'The team plan',
   oidcSso: false,
   workspaceDataRegionSpecificity: false,
   automateMinutes: 300,
@@ -99,6 +121,8 @@ const team: WorkspacePlanFeaturesAndLimits = {
 
 const pro: WorkspacePlanFeaturesAndLimits = {
   ...baseFeatures,
+  name: 'pro',
+  description: 'The pro plan',
   oidcSso: true,
   workspaceDataRegionSpecificity: false,
   automateMinutes: 900,
@@ -107,6 +131,8 @@ const pro: WorkspacePlanFeaturesAndLimits = {
 
 const business: WorkspacePlanFeaturesAndLimits = {
   ...baseFeatures,
+  name: 'business',
+  description: 'The business plan',
   oidcSso: true,
   workspaceDataRegionSpecificity: true,
   automateMinutes: 900,
@@ -115,6 +141,8 @@ const business: WorkspacePlanFeaturesAndLimits = {
 
 const unlimited: WorkspacePlanFeaturesAndLimits = {
   ...baseFeatures,
+  name: 'unlimited',
+  description: 'The unlimited plan',
   oidcSso: true,
   workspaceDataRegionSpecificity: true,
   automateMinutes: null,
@@ -123,6 +151,8 @@ const unlimited: WorkspacePlanFeaturesAndLimits = {
 
 const academia: WorkspacePlanFeaturesAndLimits = {
   ...baseFeatures,
+  name: 'academia',
+  description: 'The academia plan',
   oidcSso: true,
   workspaceDataRegionSpecificity: false,
   automateMinutes: null,
