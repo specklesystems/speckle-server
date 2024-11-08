@@ -60,15 +60,6 @@ const coreModule: SpeckleModule = {
 
     await getGenericRedis().quit()
   }
-  // /**
-  //  * A general purpose redis client that can be used after safely all modules are initialized
-  //  */
-  // getGenericRedis() {
-  //   if (!genericRedisClient) {
-  //     throw new UninitializedResourceAccessError('Generic redis client not initialized')
-  //   }
-  //   return genericRedisClient
-  // }
 }
 
 export = coreModule
