@@ -10,19 +10,19 @@ import {
 } from '@/modules/core/repositories/objects'
 import { db } from '@/db/knex'
 import { createObjectsFactory } from '@/modules/core/services/objects/management'
+import { getProjectDbClient } from '@/modules/multiregion/dbSelector'
 
-const getObject = getObjectFactory({ db })
-const createObjects = createObjectsFactory({
-  storeObjectsIfNotFoundFactory: storeObjectsIfNotFoundFactory({ db }),
-  storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db })
-})
-const getObjectChildren = getObjectChildrenFactory({ db })
-const getObjectChildrenQuery = getObjectChildrenQueryFactory({ db })
-type GetObjectChildrenQueryParams = Parameters<typeof getObjectChildrenQuery>[0]
+type GetObjectChildrenQueryParams = Parameters<
+  ReturnType<typeof getObjectChildrenQueryFactory>
+>[0]
 
 const getStreamObject: NonNullable<Resolvers['Stream']>['object'] =
   async function object(parent, args) {
-    return (await getObject(args.id, parent.id)) || null
+    return (
+      (await getObjectFactory({
+        db: await getProjectDbClient({ projectId: parent.id })
+      })(args.id, parent.id)) || null
+    )
   }
 
 export = {
@@ -34,8 +34,10 @@ export = {
   },
   Object: {
     async children(parent, args) {
+      const projectDB = await getProjectDbClient({ projectId: parent.streamId })
       // The simple query branch
       if (!args.query && !args.orderBy) {
+        const getObjectChildren = getObjectChildrenFactory({ db })
         const result = await getObjectChildren({
           streamId: parent.streamId,
           objectId: parent.id,
@@ -60,6 +62,7 @@ export = {
         }
       }
 
+      const getObjectChildrenQuery = getObjectChildrenQueryFactory({ db: projectDB })
       // The complex query branch
       const result = await getObjectChildrenQuery({
         streamId: parent.streamId,
@@ -98,6 +101,13 @@ export = {
         context.resourceAccessRules
       )
 
+      const projectDB = await getProjectDbClient({
+        projectId: args.objectInput.streamId
+      })
+      const createObjects = createObjectsFactory({
+        storeObjectsIfNotFoundFactory: storeObjectsIfNotFoundFactory({ db: projectDB }),
+        storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db: projectDB })
+      })
       const ids = await createObjects({
         streamId: args.objectInput.streamId,
         objects: args.objectInput.objects.filter(isNonNullable)

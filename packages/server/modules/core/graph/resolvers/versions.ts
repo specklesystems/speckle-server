@@ -56,6 +56,7 @@ import {
 } from '@/modules/activitystream/services/commitActivity'
 import { getObjectFactory } from '@/modules/core/repositories/objects'
 import { saveActivityFactory } from '@/modules/activitystream/repositories'
+import { getProjectDbClient } from '@/modules/multiregion/dbSelector'
 
 const markCommitStreamUpdated = markCommitStreamUpdatedFactory({ db })
 const getCommitStream = getCommitStreamFactory({ db })
@@ -117,8 +118,10 @@ const batchDeleteCommits = batchDeleteCommitsFactory({
 export = {
   Project: {
     async version(parent, args, ctx) {
-      const version = await ctx.loaders.streams.getStreamCommit
-        .forStream(parent.id)
+      const projectDB = await getProjectDbClient({ projectId: parent.id })
+      const version = await ctx.loaders
+        .forRegion({ db: projectDB })
+        .streams.getStreamCommit.forStream(parent.id)
         .load(args.id)
       if (!version) {
         throw new CommitNotFoundError('Version not found')
@@ -134,7 +137,10 @@ export = {
       return (await ctx.loaders.users.getUser.load(author)) || null
     },
     async model(parent, _args, ctx) {
-      return await ctx.loaders.commits.getCommitBranch.load(parent.id)
+      const projectDB = await getProjectDbClient({ projectId: parent.streamId })
+      return await ctx.loaders
+        .forRegion({ db: projectDB })
+        .commits.getCommitBranch.load(parent.id)
     },
     async previewUrl(parent, _args, ctx) {
       const stream = await ctx.loaders.commits.getCommitStream.load(parent.id)
@@ -147,13 +153,16 @@ export = {
   },
   VersionMutations: {
     async moveToModel(_parent, args, ctx) {
+      // TODO: how to get streamId here?
       return await batchMoveCommits(args.input, ctx.userId!)
     },
     async delete(_parent, args, ctx) {
+      // TODO: how to get streamId here?
       await batchDeleteCommits(args.input, ctx.userId!)
       return true
     },
     async update(_parent, args, ctx) {
+      // TODO: how to get streamId here?
       const stream = await ctx.loaders.commits.getCommitStream.load(
         args.input.versionId
       )
