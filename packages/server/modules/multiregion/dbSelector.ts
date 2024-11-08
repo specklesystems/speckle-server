@@ -40,11 +40,11 @@ export const getRegionDb: GetRegionDb = async ({ regionKey }) => {
       throw new Error(`RegionKey ${regionKey} not available in config`)
 
     const newRegionConfig = regionConfigs[regionKey]
-    const regionDb = configureKnexClient(newRegionConfig).public
+    const regionDb = configureKnexClient(newRegionConfig)
     regionClients[regionKey] = regionDb
   }
 
-  return regionClients[regionKey]
+  return regionClients[regionKey].public
 }
 
 export const getDb = async ({
@@ -78,13 +78,18 @@ const initializeDbGetter = async (): Promise<GetProjectDb> => {
   })
 }
 
+export const getMainDbClient = async (): Promise<{ public: Knex; private?: Knex }> => {
+  const mainDbConfig = await getMainRegionConfig()
+  return configureKnexClient(mainDbConfig)
+}
+
 // this guy is the star of the show here
 export const getProjectDbClient: GetProjectDb = async ({ projectId }) => {
   if (!getter) getter = await initializeDbGetter()
   return await getter({ projectId })
 }
 
-type RegionClients = Record<string, Knex>
+type RegionClients = Record<string, { public: Knex; private?: Knex }>
 let registeredRegionClients: RegionClients | undefined = undefined
 
 const initializeRegisteredRegionClients = async (): Promise<RegionClients> => {
@@ -97,7 +102,7 @@ const initializeRegisteredRegionClients = async (): Promise<RegionClients> => {
         throw new MisconfiguredEnvironmentError(
           `Missing region config for ${region.key} region`
         )
-      return [region.key, configureKnexClient(regionConfigs[region.key]).public]
+      return [region.key, configureKnexClient(regionConfigs[region.key])]
     })
   )
 }
@@ -140,8 +145,7 @@ export const initializeRegion: InitializeRegion = async ({ regionKey }) => {
   await regionDb.public.migrate.latest()
   // TODO, set up pub-sub shit
 
-  const mainDbConfig = await getMainRegionConfig()
-  const mainDb = configureKnexClient(mainDbConfig)
+  const mainDb = await getMainDbClient()
 
   const sslmode = newRegionConfig.postgres.publicTlsCertificate ? 'require' : 'disable'
 
@@ -159,7 +163,7 @@ export const initializeRegion: InitializeRegion = async ({ regionKey }) => {
     sslmode
   })
   // pushing to the singleton object here
-  knownClients[regionKey] = regionDb.public
+  knownClients[regionKey] = regionDb
 }
 
 interface ReplicationArgs {
@@ -194,7 +198,7 @@ const setUpUserReplication = async ({
   const rawSqeel = `SELECT * FROM aiven_extras.pg_create_subscription(
     '${subName}',
     'dbname=${fromDbName} host=${fromUrl.hostname} port=${port} sslmode=${sslmode} user=${fromUrl.username} password=${fromUrl.password}',
-    'userspub', 
+    'userspub',
     '${subName}',
     TRUE,
     TRUE

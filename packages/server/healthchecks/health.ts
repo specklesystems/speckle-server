@@ -2,11 +2,17 @@ import { createRedisClient } from '@/modules/shared/redis/redis'
 import { getRedisUrl, postgresMaxConnections } from '@/modules/shared/helpers/envHelper'
 import type { Redis } from 'ioredis'
 import { numberOfFreeConnections } from '@/modules/shared/helpers/dbHelper'
-import { db } from '@/db/knex'
 import type { Knex } from 'knex'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { BaseError } from '@/modules/shared/errors'
 import { ensureErrorOrWrapAsCause } from '@/modules/shared/errors/ensureError'
+import {
+  getMainDbClient,
+  getRegisteredRegionClients
+} from '@/modules/multiregion/dbSelector'
+import { isMultiRegionEnabled } from '@/modules/multiregion/helpers'
+import { join } from 'lodash'
+import { MultiError } from 'verror'
 
 export type ReadinessHandler = () => Promise<{ details: Record<string, string> }>
 
@@ -30,16 +36,31 @@ class ReadinessError extends BaseError {
 export const handleLivenessFactory =
   (deps: {
     isRedisAlive: RedisCheck
-    isPostgresAlive: DBCheck
+    areAllPostgresAlive: MultiDBCheck
     freeConnectionsCalculator: FreeConnectionsCalculator
   }) =>
   async () => {
-    const postgres = await deps.isPostgresAlive()
-    if (!postgres.isAlive) {
-      throw new LivenessError(
-        'Liveness health check failed. Postgres is not available.',
+    const allPostgresResults = await deps.areAllPostgresAlive()
+    const deadPostgresKeys = Object.entries(allPostgresResults)
+      .filter((result) => !result[1].isAlive)
+      .map((result) => result[0])
+
+    if (deadPostgresKeys.length) {
+      throw new ReadinessError(
+        `Readiness health check failed. Postgres for ${join(
+          deadPostgresKeys,
+          ', '
+        )} is not available.`,
         {
-          cause: ensureErrorOrWrapAsCause(postgres.err, 'Unknown postgres error.')
+          cause: new MultiError(
+            Object.entries(allPostgresResults).map((kv) =>
+              ensureErrorOrWrapAsCause(
+                //HACK: kv[1] is not typed correctly as the filter does not narrow the type
+                (kv[1] as { isAlive: false; err: unknown }).err,
+                'Unknown postgres error.'
+              )
+            )
+          )
         }
       )
     }
@@ -73,15 +94,32 @@ export const handleLivenessFactory =
 
 export const handleReadinessFactory = (deps: {
   isRedisAlive: RedisCheck
-  isPostgresAlive: DBCheck
+  areAllPostgresAlive: MultiDBCheck
   freeConnectionsCalculator: FreeConnectionsCalculator
 }): ReadinessHandler => {
   return async () => {
-    const postgres = await deps.isPostgresAlive()
-    if (!postgres.isAlive) {
+    const allPostgresResults = await deps.areAllPostgresAlive()
+    const deadPostgres = Object.entries(allPostgresResults).filter(
+      (result) => !result[1].isAlive
+    )
+
+    if (deadPostgres.length) {
       throw new ReadinessError(
-        'Readiness health check failed. Postgres is not available.',
-        { cause: ensureErrorOrWrapAsCause(postgres.err, 'Unknown postgres error.') }
+        `Readiness health check failed. Postgres for ${join(
+          deadPostgres.map((result) => result[0]),
+          ', '
+        )} is not available.`,
+        {
+          cause: new MultiError(
+            deadPostgres.map((kv) =>
+              ensureErrorOrWrapAsCause(
+                //HACK: kv[1] is not typed correctly as the filter does not narrow the type
+                (kv[1] as { isAlive: false; err: unknown }).err,
+                'Unknown postgres error.'
+              )
+            )
+          )
+        }
       )
     }
 
@@ -116,9 +154,10 @@ export const handleReadinessFactory = (deps: {
 
 type CheckResponse = { isAlive: true } | { isAlive: false; err: unknown }
 
-type DBCheck = () => Promise<CheckResponse>
+type DBCheck = (params: { db: Knex }) => Promise<CheckResponse>
 
-export const isPostgresAlive: DBCheck = async (): Promise<CheckResponse> => {
+export const isPostgresAlive: DBCheck = async (params) => {
+  const { db } = params
   const getServerInfo = getServerInfoFactory({ db })
 
   try {
@@ -127,6 +166,30 @@ export const isPostgresAlive: DBCheck = async (): Promise<CheckResponse> => {
     return { isAlive: false, err }
   }
   return { isAlive: true }
+}
+
+type MultiDBCheck = () => Promise<Record<string, CheckResponse>>
+
+export const areAllPostgresAlive: MultiDBCheck = async (): Promise<
+  Record<string, CheckResponse>
+> => {
+  let publicAndPrivateClients: Record<string, { public: Knex; private?: Knex }> = {}
+  publicAndPrivateClients['main'] = await getMainDbClient()
+  if (isMultiRegionEnabled()) {
+    const regionClients = await getRegisteredRegionClients()
+    publicAndPrivateClients = { ...publicAndPrivateClients, ...regionClients }
+  }
+
+  const results: Record<string, CheckResponse> = {}
+  for (const [key, publicAndPrivateClient] of Object.entries(publicAndPrivateClients)) {
+    const client = publicAndPrivateClient.private
+      ? publicAndPrivateClient.private
+      : publicAndPrivateClient.public
+    const result = await isPostgresAlive({ db: client })
+    results[key] = result
+  }
+
+  return results
 }
 
 type RedisCheck = () => Promise<CheckResponse>

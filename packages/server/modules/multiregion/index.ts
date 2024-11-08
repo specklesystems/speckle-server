@@ -15,7 +15,11 @@ const multiRegion: SpeckleModule = {
     // and no regions are missing
     const regionClients = await getRegisteredRegionClients()
     moduleLogger.info('Migrating region databases')
-    await Promise.all(Object.values(regionClients).map((db) => db.migrate.latest()))
+    await Promise.all(
+      Object.values(regionClients).map((db) =>
+        (db.private ? db.private : db.public).migrate.latest()
+      )
+    )
     moduleLogger.info('Migrations done')
   }
 }
