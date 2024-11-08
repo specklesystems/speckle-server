@@ -269,7 +269,7 @@ describe('Favorite streams', () => {
     before(async () => {
       apollo = {
         apollo: await buildApolloServer(),
-        context: createAuthedTestContext(me.id)
+        context: await createAuthedTestContext(me.id)
       }
 
       // Drop all favorites to ensure we don't favorite already favorited streams
@@ -438,7 +438,7 @@ describe('Favorite streams', () => {
           // "Log in" with other user
           const apollo = {
             apollo: await buildApolloServer(),
-            context: createAuthedTestContext(otherGuy.id)
+            context: await createAuthedTestContext(otherGuy.id)
           }
 
           const { data, errors } = await executeOperation(
@@ -464,7 +464,7 @@ describe('Favorite streams', () => {
     before(async () => {
       apollo = {
         apollo: await buildApolloServer(),
-        context: createTestContext()
+        context: await createTestContext()
       }
     })
 

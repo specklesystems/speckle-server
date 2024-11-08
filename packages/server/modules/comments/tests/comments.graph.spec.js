@@ -1121,10 +1121,10 @@ describe('Graphql @comments', () => {
           apollo = {
             apollo: await buildApolloServer(),
             context: user
-              ? createAuthedTestContext(user.id, {
+              ? await createAuthedTestContext(user.id, {
                   ...(user.role ? { role: user.role } : {})
                 })
-              : createTestContext()
+              : await createTestContext()
           }
 
           if (user && stream.role) {

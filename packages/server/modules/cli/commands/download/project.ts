@@ -119,7 +119,12 @@ const command: CommandModule<
     let projectDb = db
     console.log(argv)
     if (argv.workspaceId) {
-      authorizeResolver(argv.authorId, argv.workspaceId, Roles.Workspace.Member, null)
+      await authorizeResolver(
+        argv.authorId,
+        argv.workspaceId,
+        Roles.Workspace.Member,
+        null
+      )
       const workspaceDefaultRegion = await getDefaultRegionFactory({ db })({
         workspaceId: argv.workspaceId
       })

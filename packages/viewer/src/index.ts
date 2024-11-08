@@ -99,6 +99,26 @@ import SpeckleConverter from './modules/loaders/Speckle/SpeckleConverter.js'
 import { MRTShadedViewPipeline } from './modules/pipeline/Pipelines/MRT/MRTShadedViewPipeline.js'
 import { MRTPenViewPipeline } from './modules/pipeline/Pipelines/MRT/MRTPenViewPipeline.js'
 import { ViewMode, ViewModes } from './modules/extensions/ViewModes.js'
+import {
+  BaseGPass,
+  ClearFlags,
+  GPass,
+  ObjectVisibility,
+  PassOptions,
+  ProgressiveGPass
+} from './modules/pipeline/Passes/GPass.js'
+import { Pipeline } from './modules/pipeline/Pipelines/Pipeline.js'
+import { ProgressivePipeline } from './modules/pipeline/Pipelines/ProgressivePipeline.js'
+import { DepthPass } from './modules/pipeline/Passes/DepthPass.js'
+import { GeometryPass } from './modules/pipeline/Passes/GeometryPass.js'
+import { NormalsPass } from './modules/pipeline/Passes/NormalsPass.js'
+import { InputType, OutputPass } from './modules/pipeline/Passes/OutputPass.js'
+import { ViewportPass } from './modules/pipeline/Passes/ViewportPass.js'
+import { BlendPass } from './modules/pipeline/Passes/BlendPass.js'
+import { DepthNormalPass } from './modules/pipeline/Passes/DepthNormalPass.js'
+import { BasitPass } from './modules/pipeline/Passes/BasitPass.js'
+import { ProgressiveAOPass } from './modules/pipeline/Passes/ProgressiveAOPass.js'
+import { TAAPass } from './modules/pipeline/Passes/TAAPass.js'
 
 export {
   Viewer,
@@ -149,6 +169,28 @@ export {
   Assets,
   AssetType,
   HybridCameraController,
+  SpeckleRenderer,
+  SectionToolEvent,
+  StencilOutlineType,
+  GPass,
+  BaseGPass,
+  ProgressiveGPass,
+  DepthPass,
+  GeometryPass,
+  NormalsPass,
+  OutputPass,
+  ViewportPass,
+  BlendPass,
+  DepthNormalPass,
+  BasitPass,
+  ProgressiveAOPass,
+  TAAPass,
+  PassOptions,
+  ClearFlags,
+  ObjectVisibility,
+  InputType,
+  Pipeline,
+  ProgressivePipeline,
   DefaultPipeline,
   EdgesPipeline,
   ShadedViewPipeline,
@@ -158,11 +200,8 @@ export {
   MRTEdgesPipeline,
   MRTShadedViewPipeline,
   MRTPenViewPipeline,
-  SpeckleRenderer,
   ViewModes,
-  ViewMode,
-  SectionToolEvent,
-  StencilOutlineType
+  ViewMode
 }
 
 export type {

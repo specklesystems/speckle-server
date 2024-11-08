@@ -176,7 +176,7 @@ describe('Stream access requests', () => {
     ])
     apollo = {
       apollo: await buildApolloServer(),
-      context: createAuthedTestContext(me.id)
+      context: await createAuthedTestContext(me.id)
     }
     notificationsStateManager = buildNotificationsStateTracker()
   })

@@ -69,6 +69,7 @@ import {
 } from '@/modules/core/services/streams/management'
 import { createOnboardingStreamFactory } from '@/modules/core/services/streams/onboarding'
 import { getOnboardingBaseProjectFactory } from '@/modules/cross-server-sync/services/onboardingProject'
+import { getProjectDbClient } from '@/modules/multiregion/dbSelector'
 import {
   deleteAllResourceInvitesFactory,
   findUserByTargetFactory,
@@ -119,22 +120,6 @@ const createStreamReturnRecord = createStreamReturnRecordFactory({
   createStream: createStreamFactory({ db }),
   createBranch: createBranchFactory({ db }),
   projectsEventsEmitter: ProjectsEmitter.emit
-})
-const deleteStreamAndNotify = deleteStreamAndNotifyFactory({
-  deleteStream: deleteStreamFactory({ db }),
-  authorizeResolver,
-  addStreamDeletedActivity: addStreamDeletedActivityFactory({
-    saveActivity: saveActivityFactory({ db }),
-    publish,
-    getStreamCollaborators: getStreamCollaboratorsFactory({ db })
-  }),
-  deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db })
-})
-const updateStreamAndNotify = updateStreamAndNotifyFactory({
-  authorizeResolver,
-  getStream,
-  updateStream: updateStreamFactory({ db }),
-  addStreamUpdatedActivity: addStreamUpdatedActivityFactory({ saveActivity, publish })
 })
 const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
 const isStreamCollaborator = isStreamCollaboratorFactory({
@@ -205,6 +190,7 @@ const getUserStreamsCount = getUserStreamsCountFactory({ db })
 export = {
   Query: {
     async project(_parent, args, context) {
+      const getStream = getStreamFactory({ db })
       const stream = await getStream({
         streamId: args.id,
         userId: context.userId
@@ -234,21 +220,55 @@ export = {
   ProjectMutations: {
     async batchDelete(_parent, args, ctx) {
       const results = await Promise.all(
-        args.ids.map((id) =>
-          deleteStreamAndNotify(id, ctx.userId!, ctx.resourceAccessRules, {
+        args.ids.map(async (id) => {
+          const deleteStreamAndNotify = deleteStreamAndNotifyFactory({
+            deleteStream: deleteStreamFactory({
+              db: await getProjectDbClient({ projectId: id })
+            }),
+            authorizeResolver,
+            addStreamDeletedActivity: addStreamDeletedActivityFactory({
+              saveActivity: saveActivityFactory({ db }),
+              publish,
+              getStreamCollaborators: getStreamCollaboratorsFactory({ db })
+            }),
+            deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db })
+          })
+          return deleteStreamAndNotify(id, ctx.userId!, ctx.resourceAccessRules, {
             skipAccessChecks: true
           })
-        )
+        })
       )
       return results.every((res) => res === true)
     },
     async delete(_parent, { id }, { userId, resourceAccessRules }) {
+      const deleteStreamAndNotify = deleteStreamAndNotifyFactory({
+        deleteStream: deleteStreamFactory({
+          db: await getProjectDbClient({ projectId: id })
+        }),
+        authorizeResolver,
+        addStreamDeletedActivity: addStreamDeletedActivityFactory({
+          saveActivity: saveActivityFactory({ db }),
+          publish,
+          getStreamCollaborators: getStreamCollaboratorsFactory({ db })
+        }),
+        deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db })
+      })
       return await deleteStreamAndNotify(id, userId!, resourceAccessRules)
     },
     async createForOnboarding(_parent, _args, { userId, resourceAccessRules }) {
       return await createOnboardingStream(userId!, resourceAccessRules)
     },
     async update(_parent, { update }, { userId, resourceAccessRules }) {
+      const projectDB = await getProjectDbClient({ projectId: update.id })
+      const updateStreamAndNotify = updateStreamAndNotifyFactory({
+        authorizeResolver,
+        getStream: getStreamFactory({ db: projectDB }),
+        updateStream: updateStreamFactory({ db: projectDB }),
+        addStreamUpdatedActivity: addStreamUpdatedActivityFactory({
+          saveActivity,
+          publish
+        })
+      })
       return await updateStreamAndNotify(update, userId!, resourceAccessRules)
     },
     async create(_parent, args, context) {

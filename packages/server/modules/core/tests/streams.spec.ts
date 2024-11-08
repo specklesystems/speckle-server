@@ -365,7 +365,7 @@ describe('Streams @core-streams', () => {
 
       const apollo = {
         apollo: await buildApolloServer(),
-        context: createAuthedTestContext(userTwo.id)
+        context: await createAuthedTestContext(userTwo.id)
       }
       const { data, errors } = await leaveStream(apollo, { streamId })
 
@@ -700,7 +700,7 @@ describe('Streams @core-streams', () => {
         activeUserId = userOne.id
         apollo = {
           apollo: await buildApolloServer(),
-          context: createAuthedTestContext(activeUserId)
+          context: await createAuthedTestContext(activeUserId)
         }
       })
 
@@ -729,7 +729,7 @@ describe('Streams @core-streams', () => {
       before(async () => {
         apollo = {
           apollo: await buildApolloServer(),
-          context: createTestContext()
+          context: await createTestContext()
         }
       })
 
