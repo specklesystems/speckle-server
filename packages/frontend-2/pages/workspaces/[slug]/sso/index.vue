@@ -19,22 +19,31 @@
           class="w-16 h-16 object-contain rounded-full"
         />
         <h1 class="text-heading-xl mb-2">
-          Sign in to {{ workspace?.name || 'Workspace' }}
+          {{ !isSsoAuthenticated ? 'Sign in to' : '' }}
+          {{ workspace?.name || 'Workspace' }}
         </h1>
         <!-- Error Message Banner -->
         <div v-if="errorMessage" class="border border-outline-3 rounded p-4 mb-2">
           <p class="text-body-2xs text-foreground">{{ errorMessage }}</p>
         </div>
-        <div v-if="isSsoEnabled">
+
+        <!-- Already Authenticated Message -->
+        <div v-if="isSsoAuthenticated" class="border border-outline-3 rounded p-4 mb-2">
+          <p class="text-body-xs text-foreground">
+            You already have a valid SSO session for this workspace.
+          </p>
+        </div>
+
+        <!-- SSO Login Button -->
+        <div v-else-if="isSsoEnabled" class="flex flex-col gap-4">
           <FormButton
             :disabled="!challenge || !workspace?.ssoProviderName"
-            :icon-left="LockOpenIcon"
             @click="handleContinue"
           >
             Continue with {{ workspace?.ssoProviderName }} SSO
           </FormButton>
+          <AuthRegisterTerms :server-info="serverInfo" />
         </div>
-        <AuthRegisterTerms :server-info="serverInfo" />
       </div>
     </template>
   </div>
@@ -42,17 +51,19 @@
 
 <script setup lang="ts">
 import { useAuthManager, useLoginOrRegisterUtils } from '~/lib/auth/composables/auth'
-import { LockOpenIcon } from '@heroicons/vue/24/outline'
 import { CommonLoadingIcon } from '@speckle/ui-components'
 import { useQuery } from '@vue/apollo-composable'
 import { authRegisterPanelQuery } from '~/lib/auth/graphql/queries'
 import type { ServerTermsOfServicePrivacyPolicyFragmentFragment } from '~/lib/common/generated/gql/graphql'
-import { useWorkspaceSsoPublic } from '~/lib/workspaces/composables/management'
+import {
+  useWorkspaceSso,
+  useWorkspaceSsoPublic
+} from '~/lib/workspaces/composables/management'
 import { useMixpanel } from '~/lib/core/composables/mp'
 
 definePageMeta({
   layout: 'login-or-register',
-  middleware: ['requires-workspaces-enabled']
+  middleware: ['requires-workspaces-enabled', 'require-sso-enabled']
 })
 
 const route = useRoute()
@@ -62,13 +73,14 @@ const { signInOrSignUpWithSso } = useAuthManager()
 const isSsoEnabled = useIsWorkspacesSsoEnabled()
 const mixpanel = useMixpanel()
 
+const workspaceSlug = computed(() => route.params.slug as string)
+const { isSsoAuthenticated } = useWorkspaceSso({ workspaceSlug: workspaceSlug.value })
+
 const { result } = useQuery(authRegisterPanelQuery, {
   token: route.query.token as string
 })
 
-const { workspace, loading, error } = useWorkspaceSsoPublic(
-  route.params.slug.toString()
-)
+const { workspace, loading, error } = useWorkspaceSsoPublic(workspaceSlug.value)
 
 if (error.value) {
   logger.error('Failed to fetch workspace data:', error.value)

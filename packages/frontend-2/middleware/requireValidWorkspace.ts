@@ -19,7 +19,8 @@ export default defineNuxtRouteMiddleware(async (to) => {
       variables: { slug: workspaceSlug },
       context: {
         skipLoggingErrors: true
-      }
+      },
+      fetchPolicy: 'network-only'
     })
     .catch(convertThrowIntoFetchResult)
 

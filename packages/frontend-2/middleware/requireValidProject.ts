@@ -11,7 +11,6 @@ import { projectAccessCheckQuery } from '~~/lib/projects/graphql/queries'
  */
 export default defineNuxtRouteMiddleware(async (to) => {
   const projectId = to.params.id as string
-
   const client = useApolloClientFromNuxt()
 
   const { data, errors } = await client
@@ -20,11 +19,20 @@ export default defineNuxtRouteMiddleware(async (to) => {
       variables: { id: projectId },
       context: {
         skipLoggingErrors: true
-      }
+      },
+      fetchPolicy: 'network-only'
     })
     .catch(convertThrowIntoFetchResult)
 
-  // Check for SSO session error first
+  // If project is public or link shareable, allow access regardless of SSO
+  if (
+    data?.project?.visibility === ProjectVisibility.Public ||
+    data?.project?.visibility === ProjectVisibility.Unlisted
+  ) {
+    return
+  }
+
+  // Check for SSO session error
   const ssoSessionError = (errors || []).find(
     (e) => e.extensions?.['code'] === 'SSO_SESSION_MISSING_OR_EXPIRED_ERROR'
   )
@@ -33,14 +41,6 @@ export default defineNuxtRouteMiddleware(async (to) => {
   if (ssoSessionError) {
     const workspaceSlug = ssoSessionError.message
     return navigateTo(`/workspaces/${workspaceSlug}/sso/session-error`)
-  }
-
-  // If project is public or link shareable, allow access regardless of SSO
-  if (
-    data?.project?.visibility === ProjectVisibility.Public ||
-    data?.project?.visibility === ProjectVisibility.Unlisted
-  ) {
-    return
   }
 
   // If project successfully resolved and isn't public or link shareable, continue with normal flow
