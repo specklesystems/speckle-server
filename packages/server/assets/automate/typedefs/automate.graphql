@@ -213,7 +213,6 @@ input AutomateFunctionsFilter {
   By default we skip functions without releases. Set this to true to include them.
   """
   functionsWithoutReleases: Boolean
-  featuredFunctionsOnly: Boolean
 }
 
 input AutomateFunctionRunStatusReportInput {

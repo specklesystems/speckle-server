@@ -8,6 +8,8 @@ import { get, has, isObjectLike } from 'lodash'
 export enum AuthCodePayloadAction {
   CreateAutomation = 'createAutomation',
   CreateFunction = 'createFunction',
+  ListWorkspaceFunctions = 'listWorkspaceFunctions',
+  ListUserFunctions = 'listUserFunctions',
   BecomeFunctionAuthor = 'becomeFunctionAuthor',
   GetAvailableGithubOrganizations = 'getAvailableGithubOrganizations',
   UpdateFunction = 'updateFunction'
@@ -31,17 +33,17 @@ const isPayload = (payload: unknown): payload is AuthCodePayload =>
 
 export const createStoredAuthCodeFactory =
   (deps: { redis: Redis }): CreateStoredAuthCode =>
-  async (params: Omit<AuthCodePayload, 'code'>) => {
-    const { redis } = deps
+    async (params: Omit<AuthCodePayload, 'code'>) => {
+      const { redis } = deps
 
-    const payload: AuthCodePayload = {
-      ...params,
-      code: cryptoRandomString({ length: 20 })
+      const payload: AuthCodePayload = {
+        ...params,
+        code: cryptoRandomString({ length: 20 })
+      }
+
+      await redis.set(payload.code, JSON.stringify(payload), 'EX', 60 * 5)
+      return payload
     }
-
-    await redis.set(payload.code, JSON.stringify(payload), 'EX', 60 * 5)
-    return payload
-  }
 
 export const validateStoredAuthCodeFactory =
   (deps: { redis: Redis }) => async (payload: AuthCodePayload) => {
