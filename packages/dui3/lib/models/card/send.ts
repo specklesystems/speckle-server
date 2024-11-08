@@ -21,12 +21,10 @@ export interface ISendFilter extends IDiscriminatedObject {
   isDefault: boolean
   expired?: boolean
   idMap?: Record<string, string>
-  objectIds: string[]
-}
-
-export interface IDirectSelectionSendFilter extends ISendFilter {
   selectedObjectIds: string[]
 }
+
+export interface IDirectSelectionSendFilter extends ISendFilter {}
 
 export interface RevitViewsSendFilter extends ISendFilter {
   selectedView: string
