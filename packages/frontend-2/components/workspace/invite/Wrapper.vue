@@ -1,4 +1,3 @@
-USE
 <template>
   <div class="flex justify-center">
     <WorkspaceInviteBlock v-if="invite" :invite="invite" />
