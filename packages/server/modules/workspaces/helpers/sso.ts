@@ -44,7 +44,7 @@ export const buildErrorUrl = (err: unknown, workspaceSlug: string) => {
   let errorMessage: string
 
   if (err instanceof Error) {
-    errorMessage = `${err.name}: ${err.message}`
+    errorMessage = `${err.message}`
   } else {
     errorMessage = `Unknown error: ${JSON.stringify(err)}`
   }
