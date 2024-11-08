@@ -57,7 +57,7 @@
             color="primary"
             type="submit"
           >
-            Save
+            Add
           </FormButton>
           <FormButton v-else color="danger" @click="isDeleteDialogOpen = true">
             Delete

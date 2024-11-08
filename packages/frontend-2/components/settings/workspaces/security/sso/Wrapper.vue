@@ -16,7 +16,6 @@
         </div>
         <FormButton
           :disabled="isFormVisible || !!provider"
-          :color="provider ? 'outline' : 'primary'"
           @click="handleConfigureClick"
         >
           Configure

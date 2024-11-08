@@ -35,12 +35,15 @@ export default defineNuxtRouteMiddleware(async (to) => {
     return navigateTo(`/workspaces/${workspaceSlug}/sso/session-error`)
   }
 
-  // If project is public, allow access regardless of SSO
-  if (data?.project?.visibility === ProjectVisibility.Public) {
+  // If project is public or link shareable, allow access regardless of SSO
+  if (
+    data?.project?.visibility === ProjectVisibility.Public ||
+    data?.project?.visibility === ProjectVisibility.Unlisted
+  ) {
     return
   }
 
-  // If project successfully resolved and isn't public, continue with normal flow
+  // If project successfully resolved and isn't public or link shareable, continue with normal flow
   if (data?.project?.id) {
     return
   }

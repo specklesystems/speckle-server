@@ -4,7 +4,7 @@
       <CommonLoadingIcon />
     </div>
     <template v-else>
-      <div v-if="workspace?.logo" class="w-16 h-16 mb-2">
+      <div v-if="workspace?.logo" class="w-16 h-16">
         <img
           :src="workspace.logo"
           :alt="workspace?.name"
@@ -13,7 +13,7 @@
       </div>
       <h1 class="text-heading-xl">SSO Required for {{ workspace?.name }}</h1>
       <div
-        class="p-4 rounded-lg border border-outline-2 bg-foundation text-body-xs mb-4"
+        class="p-4 rounded-lg border border-outline-2 bg-foundation text-body-xs mb-2"
       >
         <p class="font-medium mb-2 text-foreground">
           This workspace requires Single Sign-On (SSO) authentication.
@@ -23,7 +23,7 @@
           access it.
         </p>
       </div>
-      <FormButton @click="handleSsoLogin">Sign in with SSO</FormButton>
+      <FormButton size="lg" @click="handleSsoLogin">Sign in with SSO</FormButton>
     </template>
   </div>
 </template>
