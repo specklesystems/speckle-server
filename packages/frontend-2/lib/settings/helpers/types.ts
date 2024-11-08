@@ -51,9 +51,11 @@ export type AvailableSettingsMenuKeys =
   | WorkspaceSettingMenuKeys
 
 export type WorkspacePricingPlans = {
-  workspacePlanInformation: {
-    [key: string]: {
-      name: WorkspacePlans
+  workspacePricingPlans: {
+    workspacePlanInformation: {
+      [key: string]: {
+        name: WorkspacePlans
+      }
     }
   }
 }
@@ -61,5 +63,8 @@ export type WorkspacePricingPlans = {
 export function isWorkspacePricingPlans(
   pricingPlans: unknown
 ): pricingPlans is WorkspacePricingPlans {
-  return isObjectLike(pricingPlans) && has(pricingPlans, 'workspacePlanInformation')
+  return (
+    isObjectLike(pricingPlans) &&
+    has(pricingPlans, 'workspacePricingPlans.workspacePlanInformation')
+  )
 }

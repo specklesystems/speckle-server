@@ -102,32 +102,7 @@
         </div>
       </template>
 
-      <template v-else>
-        <CommonCard class="text-body-xs bg-foundation">
-          <p class="text-foreground font-medium">Workspaces are free while in beta.</p>
-          <p class="pt-1">
-            After the beta ends, your workspace will start a 30-day free trial. You'll
-            have full access until either the trial expires or you upgrade to a paid
-            plan.
-          </p>
-        </CommonCard>
-
-        <SettingsSectionHeader
-          title="What your workspace bill will look like after the trial ends"
-          class="pt-6 pb-4 md:pt-10 md:pb-6"
-          subheading
-        />
-        <BillingSummary v-if="billing?.cost" :workspace-cost="billing.cost" />
-        <div
-          v-if="discount && billing?.cost?.subTotal"
-          class="flex mt-6 bg-foundation border-dashed border border-success"
-        >
-          <p class="flex-1 p-3">{{ discount.name }}</p>
-          <p class="w-32 md:w-40 ml-4 p-3">
-            £{{ billing.cost.subTotal * discount.amount }} / month
-          </p>
-        </div>
-      </template>
+      <template v-else>Coming soon</template>
     </div>
   </section>
 </template>
@@ -161,13 +136,6 @@ graphql(`
       billingInterval
       currentBillingCycleEnd
     }
-    billing {
-      cost {
-        subTotal
-        total
-        ...BillingSummary_WorkspaceCost
-      }
-    }
   }
 `)
 
@@ -199,8 +167,6 @@ const { result: workspaceResult } = useQuery(settingsWorkspaceBillingQuery, () =
 }))
 const { result: pricingPlansResult } = useQuery(settingsWorkspacePricingPlansQuery)
 
-const billing = computed(() => workspaceResult.value?.workspace.billing)
-const discount = computed(() => billing.value?.cost?.discount)
 const currentPlan = computed(() => workspaceResult.value?.workspace.plan)
 const subscription = computed(() => workspaceResult.value?.workspace.subscription)
 const isPaidPlan = computed(
@@ -222,7 +188,7 @@ const seatPrice = computed(() =>
     : 0
 )
 const pricingPlans = computed(() =>
-  isWorkspacePricingPlans(pricingPlansResult.value?.workspacePricingPlans)
+  isWorkspacePricingPlans(pricingPlansResult.value)
     ? pricingPlansResult.value?.workspacePricingPlans.workspacePlanInformation
     : undefined
 )

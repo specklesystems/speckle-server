@@ -113,7 +113,7 @@ const documents = {
     "\n  fragment SettingsUserProfileDeleteAccount_User on User {\n    id\n    email\n  }\n": types.SettingsUserProfileDeleteAccount_UserFragmentDoc,
     "\n  fragment SettingsUserProfileDetails_User on User {\n    id\n    name\n    company\n    ...UserProfileEditDialogAvatar_User\n  }\n": types.SettingsUserProfileDetails_UserFragmentDoc,
     "\n  fragment UserProfileEditDialogAvatar_User on User {\n    id\n    avatar\n    ...ActiveUserAvatar\n  }\n": types.UserProfileEditDialogAvatar_UserFragmentDoc,
-    "\n  fragment SettingsWorkspacesBilling_Workspace on Workspace {\n    id\n    plan {\n      name\n      status\n    }\n    subscription {\n      billingInterval\n      currentBillingCycleEnd\n    }\n    billing {\n      cost {\n        subTotal\n        total\n        ...BillingSummary_WorkspaceCost\n      }\n    }\n  }\n": types.SettingsWorkspacesBilling_WorkspaceFragmentDoc,
+    "\n  fragment SettingsWorkspacesBilling_Workspace on Workspace {\n    id\n    plan {\n      name\n      status\n    }\n    subscription {\n      billingInterval\n      currentBillingCycleEnd\n    }\n  }\n": types.SettingsWorkspacesBilling_WorkspaceFragmentDoc,
     "\n  fragment SettingsWorkspacesGeneral_Workspace on Workspace {\n    ...SettingsWorkspacesGeneralEditAvatar_Workspace\n    ...SettingsWorkspaceGeneralDeleteDialog_Workspace\n    ...SettingsWorkspacesGeneralEditSlugDialog_Workspace\n    id\n    name\n    slug\n    description\n    logo\n    role\n    defaultProjectRole\n  }\n": types.SettingsWorkspacesGeneral_WorkspaceFragmentDoc,
     "\n  fragment SettingsWorkspaceGeneralDeleteDialog_Workspace on Workspace {\n    id\n    name\n  }\n": types.SettingsWorkspaceGeneralDeleteDialog_WorkspaceFragmentDoc,
     "\n  fragment SettingsWorkspacesGeneralEditAvatar_Workspace on Workspace {\n    id\n    logo\n    name\n    defaultLogoIndex\n  }\n": types.SettingsWorkspacesGeneralEditAvatar_WorkspaceFragmentDoc,
@@ -290,7 +290,7 @@ const documents = {
     "\n  query SettingsSidebar {\n    activeUser {\n      ...SettingsDialog_User\n    }\n  }\n": types.SettingsSidebarDocument,
     "\n  query SettingsWorkspaceGeneral($id: String!) {\n    workspace(id: $id) {\n      ...SettingsWorkspacesGeneral_Workspace\n    }\n  }\n": types.SettingsWorkspaceGeneralDocument,
     "\n  query SettingsWorkspaceBilling($workspaceId: String!) {\n    workspace(id: $workspaceId) {\n      id\n      ...SettingsWorkspacesBilling_Workspace\n    }\n  }\n": types.SettingsWorkspaceBillingDocument,
-    "\n  query settingsWorkspacePricingPlans {\n    workspacePricingPlans\n  }\n": types.SettingsWorkspacePricingPlansDocument,
+    "\n  query SettingsWorkspacePricingPlans {\n    workspacePricingPlans\n  }\n": types.SettingsWorkspacePricingPlansDocument,
     "\n  query SettingsWorkspaceBillingCustomerPortal($workspaceId: String!) {\n    workspace(id: $workspaceId) {\n      customerPortalUrl\n    }\n  }\n": types.SettingsWorkspaceBillingCustomerPortalDocument,
     "\n  query SettingsWorkspaceRegions($workspaceId: String!) {\n    workspace(id: $workspaceId) {\n      id\n      ...SettingsWorkspacesRegions_Workspace\n    }\n  }\n": types.SettingsWorkspaceRegionsDocument,
     "\n  query SettingsWorkspacesMembers(\n    $workspaceId: String!\n    $invitesFilter: PendingWorkspaceCollaboratorsFilter\n  ) {\n    workspace(id: $workspaceId) {\n      ...SettingsWorkspacesMembers_Workspace\n      ...SettingsWorkspacesMembersMembersTable_Workspace\n      ...SettingsWorkspacesMembersGuestsTable_Workspace\n      ...SettingsWorkspacesMembersInvitesTable_Workspace\n    }\n  }\n": types.SettingsWorkspacesMembersDocument,
@@ -768,7 +768,7 @@ export function graphql(source: "\n  fragment UserProfileEditDialogAvatar_User o
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment SettingsWorkspacesBilling_Workspace on Workspace {\n    id\n    plan {\n      name\n      status\n    }\n    subscription {\n      billingInterval\n      currentBillingCycleEnd\n    }\n    billing {\n      cost {\n        subTotal\n        total\n        ...BillingSummary_WorkspaceCost\n      }\n    }\n  }\n"): (typeof documents)["\n  fragment SettingsWorkspacesBilling_Workspace on Workspace {\n    id\n    plan {\n      name\n      status\n    }\n    subscription {\n      billingInterval\n      currentBillingCycleEnd\n    }\n    billing {\n      cost {\n        subTotal\n        total\n        ...BillingSummary_WorkspaceCost\n      }\n    }\n  }\n"];
+export function graphql(source: "\n  fragment SettingsWorkspacesBilling_Workspace on Workspace {\n    id\n    plan {\n      name\n      status\n    }\n    subscription {\n      billingInterval\n      currentBillingCycleEnd\n    }\n  }\n"): (typeof documents)["\n  fragment SettingsWorkspacesBilling_Workspace on Workspace {\n    id\n    plan {\n      name\n      status\n    }\n    subscription {\n      billingInterval\n      currentBillingCycleEnd\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -1476,7 +1476,7 @@ export function graphql(source: "\n  query SettingsWorkspaceBilling($workspaceId
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query settingsWorkspacePricingPlans {\n    workspacePricingPlans\n  }\n"): (typeof documents)["\n  query settingsWorkspacePricingPlans {\n    workspacePricingPlans\n  }\n"];
+export function graphql(source: "\n  query SettingsWorkspacePricingPlans {\n    workspacePricingPlans\n  }\n"): (typeof documents)["\n  query SettingsWorkspacePricingPlans {\n    workspacePricingPlans\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
