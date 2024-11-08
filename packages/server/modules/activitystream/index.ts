@@ -72,7 +72,7 @@ const initializeEventListeners = ({
     }),
     AccessRequestsEmitter.listen(AccessRequestsEvents.Finalized, async (payload) => {
       if (!isStreamAccessRequest(payload.request)) return
-      onServerAccessRequestFinalizedFactory({
+      await onServerAccessRequestFinalizedFactory({
         addStreamAccessRequestDeclinedActivity:
           addStreamAccessRequestDeclinedActivityFactory({
             saveActivity: saveActivityFactory({ db })

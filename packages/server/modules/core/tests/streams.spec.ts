@@ -83,7 +83,6 @@ import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/ser
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { ProjectsEmitter } from '@/modules/core/events/projectsEmitter'
 import {
-  addStreamCreatedActivityFactory,
   addStreamInviteAcceptedActivityFactory,
   addStreamPermissionsAddedActivityFactory
 } from '@/modules/activitystream/services/streamActivity'
@@ -148,10 +147,6 @@ const createCommitByBranchName = createCommitByBranchNameFactory({
   getBranchById: getBranchByIdFactory({ db })
 })
 
-const addStreamCreatedActivity = addStreamCreatedActivityFactory({
-  saveActivity: saveActivityFactory({ db }),
-  publish
-})
 const createStream = legacyCreateStreamFactory({
   createStreamReturnRecord: createStreamReturnRecordFactory({
     inviteUsersToProject: inviteUsersToProjectFactory({
@@ -176,7 +171,6 @@ const createStream = legacyCreateStreamFactory({
     }),
     createStream: createStreamFactory({ db }),
     createBranch: createBranchFactory({ db }),
-    addStreamCreatedActivity,
     projectsEventsEmitter: ProjectsEmitter.emit
   })
 })

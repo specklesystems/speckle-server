@@ -2,7 +2,6 @@ import { db } from '@/db/knex'
 import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import {
   addStreamClonedActivityFactory,
-  addStreamCreatedActivityFactory,
   addStreamDeletedActivityFactory,
   addStreamInviteAcceptedActivityFactory,
   addStreamPermissionsAddedActivityFactory,
@@ -119,10 +118,6 @@ const createStreamReturnRecord = createStreamReturnRecordFactory({
   }),
   createStream: createStreamFactory({ db }),
   createBranch: createBranchFactory({ db }),
-  addStreamCreatedActivity: addStreamCreatedActivityFactory({
-    saveActivity,
-    publish
-  }),
   projectsEventsEmitter: ProjectsEmitter.emit
 })
 const deleteStreamAndNotify = deleteStreamAndNotifyFactory({
@@ -262,14 +257,11 @@ export = {
         throw new RateLimitError(rateLimitResult)
       }
 
-      const project = await createStreamReturnRecord(
-        {
-          ...(args.input || {}),
-          ownerId: context.userId!,
-          ownerResourceAccessRules: context.resourceAccessRules
-        },
-        { createActivity: true }
-      )
+      const project = await createStreamReturnRecord({
+        ...(args.input || {}),
+        ownerId: context.userId!,
+        ownerResourceAccessRules: context.resourceAccessRules
+      })
 
       return project
     },

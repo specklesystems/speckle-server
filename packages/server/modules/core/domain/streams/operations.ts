@@ -250,10 +250,7 @@ export type CreateStream = (
   params: (StreamCreateInput | ProjectCreateArgs) & {
     ownerId: string
     ownerResourceAccessRules?: MaybeNullOrUndefined<TokenResourceIdentifier[]>
-  },
-  options?: Partial<{
-    createActivity: boolean
-  }>
+  }
 ) => Promise<Stream>
 
 export type LegacyCreateStream = (
