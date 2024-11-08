@@ -1,3 +1,5 @@
+<!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
+<!-- eslint-disable vuejs-accessibility/click-events-have-key-events -->
 <template>
   <div class="mt-4 space-y-2">
     <div class="flex items-center space-x-2 justify-between">
@@ -18,37 +20,31 @@
         )"
         :key="cat.id"
       >
-        <FormButton
+        <div
           v-tippy="'Remove'"
-          size="sm"
-          :class="`block`"
-          full-width
+          :class="`block h-6 text-body-2xs px-2 py-1 rounded-md flex align-center justify-between w-full hover:cursor-pointer hover:shadow-md bg-primary text-foreground-on-primary border-outline-2 text-foreground font-medium p-1 border focus-visible:border-foundation`"
           @click="selectOrUnselectCategory(cat.id)"
         >
-          <div class="flex justify-between w-full">
-            <span>{{ cat.name }}</span>
-            <XMarkIcon class="w-4" />
-          </div>
-        </FormButton>
+          <span>{{ cat.name }}</span>
+          <XMarkIcon class="w-4" />
+        </div>
       </div>
     </div>
     <div
-      class="flex space-y-1 flex-col simple-scrollbar overflow-y-auto max-h-48 overflow-x-hidden"
+      class="flex space-y-1 flex-col simple-scrollbar overflow-y-auto min-h-0 max-h-48 overflow-x-hidden"
     >
-      <FormButton
+      <div
         v-for="cat in searchResults.sort((a, b) => a.name.localeCompare(b.name))"
         :key="cat.id"
-        :class="`block`"
-        size="sm"
-        :color="`${selectedCategories.includes(cat.id) ? 'primary' : 'outline'}`"
-        full-width
+        v-tippy="'Add'"
+        :class="`block h-6 text-body-2xs ${
+          selectedCategories.includes(cat.id) ? 'bg-primary' : ''
+        } px-2 py-1 rounded-md align-center justify-between w-full hover:cursor-pointer hover:shadow-md bg-foundation border-outline-2 text-foreground font-medium p-1 hover:bg-primary-muted border disabled:hover:bg-foundation focus-visible:border-foundation`"
         @click="selectOrUnselectCategory(cat.id)"
       >
-        <div class="flex justify-between w-full">
-          <span>{{ cat.name }}</span>
-          <PlusIcon class="w-4" />
-        </div>
-      </FormButton>
+        <span>{{ cat.name }}</span>
+        <!-- <PlusIcon class="w-4" /> -->
+      </div>
       <div v-if="searchResults.length === 0" class="text-xs text-center">
         Nothing found
         <FormButton color="outline" size="sm" @click="searchValue = undefined">
@@ -60,7 +56,7 @@
 </template>
 
 <script setup lang="ts">
-import { XMarkIcon, PlusIcon } from '@heroicons/vue/20/solid'
+import { XMarkIcon } from '@heroicons/vue/20/solid'
 import type {
   CategoriesData,
   ISendFilter,
