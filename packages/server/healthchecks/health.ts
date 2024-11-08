@@ -185,8 +185,14 @@ export const areAllPostgresAlive: MultiDBCheck = async (): Promise<
     const client = publicAndPrivateClient.private
       ? publicAndPrivateClient.private
       : publicAndPrivateClient.public
-    const result = await isPostgresAlive({ db: client })
-    results[key] = result
+    try {
+      results[key] = await isPostgresAlive({ db: client })
+    } catch (err) {
+      results[key] = {
+        isAlive: false,
+        err: ensureErrorOrWrapAsCause(err, 'Unknown postgres error.')
+      }
+    }
   }
 
   return results

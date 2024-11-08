@@ -132,7 +132,7 @@ export const getRegisteredRegionClients = async (): Promise<RegionClients> => {
 }
 
 export const getRegisteredDbClients = async (): Promise<Knex[]> =>
-  Object.values(await getRegisteredRegionClients())
+  Object.values(await getRegisteredRegionClients()).map((client) => client.public)
 
 export const initializeRegion: InitializeRegion = async ({ regionKey }) => {
   const knownClients = await getRegisteredRegionClients()
