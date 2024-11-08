@@ -185,7 +185,7 @@ const { mutate: cancelCheckoutSession } = useMutation(
   {
     variables: {
       input: {
-        sessionId: String(route.query?.sessions_id),
+        sessionId: String(route.query?.session_id),
         workspaceId: props.workspaceId
       }
     }
@@ -238,7 +238,7 @@ const openCustomerPortal = async () => {
 
 onMounted(() => {
   const paymentStatusQuery = route.query?.payment_status
-  const sessionIdQuery = route.query?.sessions_id
+  const sessionIdQuery = route.query?.session_id
 
   if (sessionIdQuery && String(paymentStatusQuery) === WorkspacePlanStatuses.Canceled) {
     cancelCheckoutSession()
