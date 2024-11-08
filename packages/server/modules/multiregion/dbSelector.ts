@@ -172,6 +172,8 @@ export const initializeRegion: InitializeRegion = async ({ regionKey }) => {
   })
 
   //update liveness and readiness checks
+  //TODO if/when pubsub is implemented, the healthcheck should subscribe
+  //to new region events, and dbSelector should not call healthcheck directly here
   await updateFreeDbConnectionSamplers()
 
   // pushing to the singleton object here

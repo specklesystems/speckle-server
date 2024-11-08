@@ -32,11 +32,12 @@ export const knexFreeDbConnectionSamplerFactory = (opts: {
 }
 
 export const calculatePercentageFreeConnections = (deps: {
-  freeConnectionsCalculators: FreeConnectionsCalculators
+  getFreeConnectionsCalculators: () => FreeConnectionsCalculators
 }) => {
   const percentageFreeConnections: Record<string, number> = {}
+  const freeConnectionsCalculators = deps.getFreeConnectionsCalculators()
 
-  for (const [region, value] of Object.entries(deps.freeConnectionsCalculators)) {
+  for (const [region, value] of Object.entries(freeConnectionsCalculators)) {
     const numFreeConnections = value.mean()
     percentageFreeConnections[region] = Math.floor(
       (numFreeConnections * 100) / postgresMaxConnections()

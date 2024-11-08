@@ -21,6 +21,11 @@ const knexFreeDbConnectionSamplerReadiness: Record<
   }
 > = {}
 
+export const getKnexFreeDbConnectionSamplerLiveness = () =>
+  knexFreeDbConnectionSamplerLiveness
+export const getKnexFreeDbConnectionSamplerReadiness = () =>
+  knexFreeDbConnectionSamplerReadiness
+
 export const updateFreeDbConnectionSamplers = async () => {
   const allClients = await getAllClients()
   for (const [key, client] of Object.entries(allClients)) {
@@ -55,7 +60,7 @@ export const initFactory: () => (
     const livenessHandler = handleLivenessFactory({
       isRedisAlive,
       areAllPostgresAlive,
-      freeConnectionsCalculators: knexFreeDbConnectionSamplerLiveness
+      getFreeConnectionsCalculators: getKnexFreeDbConnectionSamplerLiveness
     })
 
     app.get('/liveness', async (req, res) => {
@@ -66,7 +71,7 @@ export const initFactory: () => (
     const readinessHandler = handleReadinessFactory({
       isRedisAlive,
       areAllPostgresAlive,
-      freeConnectionsCalculators: knexFreeDbConnectionSamplerReadiness
+      getFreeConnectionsCalculators: getKnexFreeDbConnectionSamplerReadiness
     })
 
     app.get('/readiness', async (req, res) => {

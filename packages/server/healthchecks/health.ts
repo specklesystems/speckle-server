@@ -14,7 +14,7 @@ export const handleLivenessFactory =
   (deps: {
     isRedisAlive: RedisCheck
     areAllPostgresAlive: MultiDBCheck
-    freeConnectionsCalculators: FreeConnectionsCalculators
+    getFreeConnectionsCalculators: () => FreeConnectionsCalculators
   }) =>
   async () => {
     const allPostgresResults = await deps.areAllPostgresAlive()
@@ -87,7 +87,7 @@ export const handleLivenessFactory =
 export const handleReadinessFactory = (deps: {
   isRedisAlive: RedisCheck
   areAllPostgresAlive: MultiDBCheck
-  freeConnectionsCalculators: FreeConnectionsCalculators
+  getFreeConnectionsCalculators: () => FreeConnectionsCalculators
 }): ReadinessHandler => {
   return async () => {
     const allPostgresResults = await deps.areAllPostgresAlive()
