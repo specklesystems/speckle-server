@@ -24,6 +24,7 @@ import {
 } from '@/modules/multiregion/regionConfig'
 import { RegionServerConfig } from '@/modules/multiregion/domain/types'
 import { MaybeNullOrUndefined } from '@speckle/shared'
+import { updateFreeDbConnectionSamplers } from '@/healthchecks'
 
 let getter: GetProjectDb | undefined = undefined
 
@@ -126,6 +127,14 @@ export const getRegisteredRegionClients = async (): Promise<RegionClients> => {
   return registeredRegionClients
 }
 
+/**
+ * @description This is the main db + all the region dbs
+ */
+export const getAllClients = async (): Promise<RegionClients> => {
+  const regionClients = await getRegisteredRegionClients()
+  return { main: db, ...regionClients }
+}
+
 export const getRegisteredDbClients = async (): Promise<Knex[]> =>
   Object.values(await getRegisteredRegionClients())
 
@@ -161,6 +170,10 @@ export const initializeRegion: InitializeRegion = async ({ regionKey }) => {
     regionName: regionKey,
     sslmode
   })
+
+  //update liveness and readiness checks
+  await updateFreeDbConnectionSamplers()
+
   // pushing to the singleton object here
   knownClients[regionKey] = regionDb.public
 }
@@ -197,7 +210,7 @@ const setUpUserReplication = async ({
   const rawSqeel = `SELECT * FROM aiven_extras.pg_create_subscription(
     '${subName}',
     'dbname=${fromDbName} host=${fromUrl.hostname} port=${port} sslmode=${sslmode} user=${fromUrl.username} password=${fromUrl.password}',
-    'userspub', 
+    'userspub',
     '${subName}',
     TRUE,
     TRUE

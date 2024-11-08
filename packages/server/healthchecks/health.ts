@@ -1,40 +1,20 @@
-import { createRedisClient } from '@/modules/shared/redis/redis'
-import { getRedisUrl, postgresMaxConnections } from '@/modules/shared/helpers/envHelper'
-import type { Redis } from 'ioredis'
-import { numberOfFreeConnections } from '@/modules/shared/helpers/dbHelper'
-import type { Knex } from 'knex'
-import { getServerInfoFactory } from '@/modules/core/repositories/server'
-import { BaseError } from '@/modules/shared/errors'
 import { ensureErrorOrWrapAsCause } from '@/modules/shared/errors/ensureError'
-import { getDb, getRegisteredRegionClients } from '@/modules/multiregion/dbSelector'
-import { isMultiRegionEnabled } from '@/modules/multiregion/helpers'
-import { join } from 'lodash-es'
+import { join, merge } from 'lodash'
 import { MultiError } from 'verror'
-
-export type ReadinessHandler = () => Promise<{ details: Record<string, string> }>
-
-export type FreeConnectionsCalculator = {
-  mean: () => number
-}
-
-class LivenessError extends BaseError {
-  static defaultMessage = 'The application is not yet alive. Please try again later.'
-  static code = 'LIVENESS_ERROR'
-  static statusCode = 500
-}
-
-class ReadinessError extends BaseError {
-  static defaultMessage =
-    'The application is not ready to accept requests. Please try again later.'
-  static code = 'READINESS_ERROR'
-  static statusCode = 500
-}
+import {
+  FreeConnectionsCalculators,
+  MultiDBCheck,
+  ReadinessHandler,
+  RedisCheck
+} from '@/healthchecks/types'
+import { LivenessError, ReadinessError } from '@/healthchecks/errors'
+import { calculatePercentageFreeConnections } from '@/healthchecks/connectionPool'
 
 export const handleLivenessFactory =
   (deps: {
     isRedisAlive: RedisCheck
     areAllPostgresAlive: MultiDBCheck
-    freeConnectionsCalculator: FreeConnectionsCalculator
+    freeConnectionsCalculators: FreeConnectionsCalculators
   }) =>
   async () => {
     const allPostgresResults = await deps.areAllPostgresAlive()
@@ -43,7 +23,7 @@ export const handleLivenessFactory =
       .map((result) => result[0])
 
     if (deadPostgresKeys.length) {
-      throw new ReadinessError(
+      throw new LivenessError(
         `Readiness health check failed. Postgres for ${join(
           deadPostgresKeys,
           ', '
@@ -69,24 +49,37 @@ export const handleLivenessFactory =
       })
     }
 
-    const numFreeConnections = await deps.freeConnectionsCalculator.mean()
-    const percentageFreeConnections = Math.floor(
-      (numFreeConnections * 100) / postgresMaxConnections()
-    )
-    //unready if less than 10%
-    if (percentageFreeConnections < 10) {
+    const percentageFreeConnections = calculatePercentageFreeConnections({
+      ...deps
+    })
+    const failingfreeConnectionsAboveThresholdKeys: string[] = []
+    for (const [region, percentageFree] of Object.entries(percentageFreeConnections)) {
+      //unready if less than 10%
+      if (percentageFree < 10) {
+        failingfreeConnectionsAboveThresholdKeys.push(region)
+      }
+    }
+    if (failingfreeConnectionsAboveThresholdKeys.length) {
       throw new LivenessError(
-        'Liveness health check failed. Insufficient free database connections for a sustained duration.'
+        `Liveness health check failed. Insufficient free database connections for a sustained duration for regions ${join(
+          failingfreeConnectionsAboveThresholdKeys,
+          ', '
+        )}.`
       )
     }
 
     return {
       details: {
-        postgres: Object.fromEntries(
-          Object.entries(allPostgresResults).map(([k, v]) => [k, v.isAlive])
+        postgres: merge(
+          allPostgresResults,
+          Object.fromEntries(
+            Object.entries(percentageFreeConnections).map(([k, v]) => [
+              k,
+              { percentageFreeConnections: v.toFixed(0) }
+            ])
+          )
         ),
-        redis: true,
-        percentageFreeConnections: percentageFreeConnections.toFixed(0)
+        redis: true
       }
     }
   }
@@ -94,7 +87,7 @@ export const handleLivenessFactory =
 export const handleReadinessFactory = (deps: {
   isRedisAlive: RedisCheck
   areAllPostgresAlive: MultiDBCheck
-  freeConnectionsCalculator: FreeConnectionsCalculator
+  freeConnectionsCalculators: FreeConnectionsCalculators
 }): ReadinessHandler => {
   return async () => {
     const allPostgresResults = await deps.areAllPostgresAlive()
@@ -130,109 +123,38 @@ export const handleReadinessFactory = (deps: {
       )
     }
 
-    const numFreeConnections = await deps.freeConnectionsCalculator.mean()
-    const percentageFreeConnections = Math.floor(
-      (numFreeConnections * 100) / postgresMaxConnections()
-    )
-    //unready if less than 10%
-    if (percentageFreeConnections < 10) {
-      const message =
-        'Readiness health check failed. Insufficient free database connections for a sustained duration.'
-      throw new ReadinessError(message)
+    const percentageFreeConnections = calculatePercentageFreeConnections({
+      ...deps
+    })
+    const failingfreeConnectionsAboveThresholdKeys: string[] = []
+    for (const [region, percentageFree] of Object.entries(percentageFreeConnections)) {
+      //unready if less than 10%
+      if (percentageFree < 10) {
+        failingfreeConnectionsAboveThresholdKeys.push(region)
+      }
+    }
+    if (failingfreeConnectionsAboveThresholdKeys.length) {
+      throw new LivenessError(
+        `Liveness health check failed. Insufficient free database connections for a sustained duration for regions ${join(
+          failingfreeConnectionsAboveThresholdKeys,
+          ', '
+        )}.`
+      )
     }
 
     return {
       details: {
-        postgres: 'true',
-        redis: 'true',
-        percentageFreeConnections: percentageFreeConnections.toFixed(0)
+        postgres: merge(
+          allPostgresResults,
+          Object.fromEntries(
+            Object.entries(percentageFreeConnections).map(([k, v]) => [
+              k,
+              { percentageFreeConnections: v.toFixed(0) }
+            ])
+          )
+        ),
+        redis: true
       }
-    }
-  }
-}
-
-type CheckResponse = { isAlive: true } | { isAlive: false; err: unknown }
-
-type DBCheck = (params: { db: Knex }) => Promise<CheckResponse>
-
-export const isPostgresAlive: DBCheck = async (params) => {
-  const { db } = params
-  const getServerInfo = getServerInfoFactory({ db })
-
-  try {
-    await getServerInfo()
-  } catch (err) {
-    return { isAlive: false, err }
-  }
-  return { isAlive: true }
-}
-
-type MultiDBCheck = () => Promise<Record<string, CheckResponse>>
-
-export const areAllPostgresAlive: MultiDBCheck = async (): Promise<
-  Record<string, CheckResponse>
-> => {
-  let clients: Record<string, Knex> = {}
-  clients['main'] = await getDb({ regionKey: null })
-  if (isMultiRegionEnabled()) {
-    const regionClients = await getRegisteredRegionClients()
-    clients = { ...clients, ...regionClients }
-  }
-
-  const results: Record<string, CheckResponse> = {}
-  for (const [key, dbClient] of Object.entries(clients)) {
-    try {
-      results[key] = await isPostgresAlive({ db: dbClient })
-    } catch (err) {
-      results[key] = {
-        isAlive: false,
-        err: ensureErrorOrWrapAsCause(err, 'Unknown postgres error.')
-      }
-    }
-  }
-
-  return results
-}
-
-type RedisCheck = () => Promise<CheckResponse>
-
-export const isRedisAlive: RedisCheck = async (): Promise<CheckResponse> => {
-  let client: Redis | undefined = undefined
-  let result: CheckResponse = { isAlive: true }
-  try {
-    client = createRedisClient(getRedisUrl(), {})
-    const redisResponse = await client.ping()
-    if (redisResponse !== 'PONG') {
-      result = { isAlive: false, err: 'Redis did not respond correctly.' }
-    }
-  } catch (err) {
-    result = { isAlive: false, err }
-  } finally {
-    await client?.quit()
-    return result
-  }
-}
-
-export const knexFreeDbConnectionSamplerFactory = (opts: {
-  db: Knex
-  collectionPeriod: number
-  sampledDuration: number
-}): FreeConnectionsCalculator & { start: () => void } => {
-  const dataQueue = new Array<number>()
-  const maxQueueSize = opts.sampledDuration / opts.collectionPeriod
-  return {
-    start: () => {
-      setInterval(() => {
-        dataQueue.push(numberOfFreeConnections(opts.db))
-        if (dataQueue.length > maxQueueSize) {
-          dataQueue.shift()
-        }
-      }, opts.collectionPeriod)
-    },
-    mean: () => {
-      // return the current value if the queue is empty
-      if (!dataQueue.length) return numberOfFreeConnections(opts.db)
-      return dataQueue.reduce((a, b) => a + b) / dataQueue.length
     }
   }
 }

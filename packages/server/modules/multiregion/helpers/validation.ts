@@ -30,5 +30,11 @@ export const regionServerConfigSchema = z.object({
 
 export const multiRegionConfigSchema = z.object({
   main: regionServerConfigSchema,
-  regions: z.record(z.string(), regionServerConfigSchema)
+  regions: z.record(
+    z.string().refine((arg) => arg !== 'main', {
+      message:
+        '"main" is a protected region key and cannot be used. Please use another key for the region.'
+    }),
+    regionServerConfigSchema
+  )
 })
