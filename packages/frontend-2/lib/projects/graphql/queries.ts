@@ -4,6 +4,11 @@ export const projectAccessCheckQuery = graphql(`
   query ProjectAccessCheck($id: String!) {
     project(id: $id) {
       id
+      visibility
+      workspace {
+        id
+        slug
+      }
     }
   }
 `)

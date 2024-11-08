@@ -23,23 +23,22 @@
           access it.
         </p>
       </div>
-      <FormButton @click="handleLoginRedirect">Logout and sign in with SSO</FormButton>
+      <FormButton @click="handleSsoLogin">Sign in with SSO</FormButton>
     </template>
   </div>
 </template>
 
 <script setup lang="ts">
 import { CommonLoadingIcon } from '@speckle/ui-components'
-import { useAuthManager } from '~/lib/auth/composables/auth'
-import { ssoLoginRoute } from '~/lib/common/helpers/route'
-import { useMixpanel } from '~/lib/core/composables/mp'
 import { useWorkspaceSsoPublic } from '~/lib/workspaces/composables/management'
+import { useMixpanel } from '~/lib/core/composables/mp'
+import { useAuthManager, useLoginOrRegisterUtils } from '~/lib/auth/composables/auth'
 
 const route = useRoute()
-const router = useRouter()
 const logger = useLogger()
-const { logout } = useAuthManager()
 const mixpanel = useMixpanel()
+const { signInOrSignUpWithSso } = useAuthManager()
+const { challenge } = useLoginOrRegisterUtils()
 
 const workspaceSlug = route.params.slug as string
 const { workspace, loading, error } = useWorkspaceSsoPublic(workspaceSlug)
@@ -48,7 +47,7 @@ if (error.value) {
   logger.error('Failed to fetch workspace data:', error.value)
 }
 
-const handleLoginRedirect = async () => {
+const handleSsoLogin = () => {
   mixpanel.track('Workspace SSO Session Error Redirect', {
     // eslint-disable-next-line camelcase
     workspace_slug: workspaceSlug,
@@ -56,7 +55,9 @@ const handleLoginRedirect = async () => {
     provider_name: workspace.value?.ssoProviderName
   })
 
-  await logout({ skipRedirect: true })
-  router.push(ssoLoginRoute)
+  signInOrSignUpWithSso({
+    workspaceSlug,
+    challenge: challenge.value
+  })
 }
 </script>
