@@ -74,7 +74,7 @@ export type CreateCommitByBranchId = (
   options?: Partial<{
     notify: boolean
   }>
-) => Promise<Commit>
+) => Promise<Omit<CommitWithStreamBranchMetadata, 'branchName'>>
 
 export type CreateCommitByBranchName = (
   params: NullableKeysToOptional<{
@@ -109,7 +109,7 @@ export type InsertStreamCommits = (
 export type UpdateCommitAndNotify = (
   params: CommitUpdateInput | UpdateVersionInput,
   userId: string
-) => Promise<Commit>
+) => Promise<Omit<CommitWithStreamBranchMetadata, 'branchName'>>
 
 export type GetCommitBranches = (commitIds: string[]) => Promise<CommitBranch[]>
 

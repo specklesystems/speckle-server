@@ -89,6 +89,7 @@ import {
   getUsersFactory,
   UserWithOptionalRole
 } from '@/modules/core/repositories/users'
+import { CommitWithStreamBranchMetadata } from '@/modules/core/domain/commits/types'
 
 declare module '@/modules/core/loaders' {
   interface ModularizedDataLoaders extends ReturnType<typeof dataLoadersDefinition> {}
@@ -170,14 +171,17 @@ const dataLoadersDefinition = defineRequestDataloaders(
          * thus its own query.
          */
         getStreamCommit: (() => {
-          type CommitDataLoader = DataLoader<string, Nullable<CommitRecord>>
+          type CommitDataLoader = DataLoader<
+            string,
+            Nullable<CommitWithStreamBranchMetadata>
+          >
           const streamCommitLoaders = new Map<string, CommitDataLoader>()
           return {
             clearAll: () => streamCommitLoaders.clear(),
             forStream(streamId: string): CommitDataLoader {
               let loader = streamCommitLoaders.get(streamId)
               if (!loader) {
-                loader = createLoader<string, Nullable<CommitRecord>>(
+                loader = createLoader<string, Nullable<CommitWithStreamBranchMetadata>>(
                   async (commitIds) => {
                     const results = keyBy(
                       await getCommits(commitIds.slice(), { streamId }),
