@@ -4,7 +4,7 @@ import {
   handleAutomateFunctionCreatorAuthCallbackFactory,
   startAutomateFunctionCreatorAuthFactory
 } from '@/modules/automate/services/functionManagement'
-import { getGenericRedis } from '@/modules/core'
+import { getGenericRedis } from '@/modules/shared/redis/redis'
 import { corsMiddleware } from '@/modules/core/configs/cors'
 import { validateScope, validateServerRoleBuilderFactory } from '@/modules/shared/authz'
 import { authMiddlewareCreator } from '@/modules/shared/middleware'
