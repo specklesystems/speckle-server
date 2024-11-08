@@ -17,9 +17,10 @@ import { isMultiRegionEnabled } from '@/modules/multiregion/helpers'
 let multiRegionConfig: Optional<AllRegionsConfig> = undefined
 
 const getAllRegionsConfig = async (): Promise<AllRegionsConfig> => {
-  if (isDevOrTestEnv() && !isMultiRegionEnabled())
+  if (isDevOrTestEnv() && !isMultiRegionEnabled()) {
     // this should throw somehow
     return { main: { postgres: { connectionUri: '' } }, regions: {} }
+  }
   if (multiRegionConfig) return multiRegionConfig
 
   const relativePath = getMultiRegionConfigPath()
