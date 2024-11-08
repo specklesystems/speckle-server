@@ -1,21 +1,30 @@
+import { Logger } from '@/logging/logging'
 import {
-  AccessRequestsEmitter,
   AccessRequestsEvents,
   AccessRequestsEventsPayloads
 } from '@/modules/accessrequests/events/emitter'
-import { AccessRequestType } from '@/modules/accessrequests/repositories'
+import {
+  AccessRequestType,
+  isStreamAccessRequest
+} from '@/modules/accessrequests/repositories'
 import {
   AddStreamAccessRequestDeclinedActivity,
   AddStreamAccessRequestedActivity,
+  AddStreamInviteSentOutActivity,
   SaveActivity
 } from '@/modules/activitystream/domain/operations'
+import { GetStream } from '@/modules/core/domain/streams/operations'
+import { UsersEvents, UsersEventsPayloads } from '@/modules/core/events/usersEmitter'
 import {
-  UsersEmitter,
-  UsersEvents,
-  UsersEventsPayloads
-} from '@/modules/core/events/usersEmitter'
+  ServerInvitesEvents,
+  ServerInvitesEventsPayloads
+} from '@/modules/serverinvites/domain/events'
+import {
+  isProjectResourceTarget,
+  resolveTarget
+} from '@/modules/serverinvites/helpers/core'
 
-const onUserCreatedFactory =
+export const onUserCreatedFactory =
   ({ saveActivity }: { saveActivity: SaveActivity }) =>
   async (payload: UsersEventsPayloads[UsersEvents.Created]) => {
     const { user } = payload
@@ -31,7 +40,7 @@ const onUserCreatedFactory =
     })
   }
 
-const onServerAccessRequestCreatedFactory =
+export const onServerAccessRequestCreatedFactory =
   ({
     addStreamAccessRequestedActivity
   }: {
@@ -39,19 +48,18 @@ const onServerAccessRequestCreatedFactory =
   }) =>
   async (payload: AccessRequestsEventsPayloads[AccessRequestsEvents.Created]) => {
     const {
-      request: { resourceId, resourceType, requesterId }
+      request: { resourceId, requesterId }
     } = payload
+    if (!isStreamAccessRequest(payload.request)) return
     if (!resourceId) return
 
-    if (resourceType === AccessRequestType.Stream) {
-      await addStreamAccessRequestedActivity({
-        streamId: resourceId,
-        requesterId
-      })
-    }
+    await addStreamAccessRequestedActivity({
+      streamId: resourceId,
+      requesterId
+    })
   }
 
-const onServerAccessRequestFinalizedFactory =
+export const onServerAccessRequestFinalizedFactory =
   ({
     addStreamAccessRequestDeclinedActivity
   }: {
@@ -77,34 +85,34 @@ const onServerAccessRequestFinalizedFactory =
     }
   }
 
-/**
- * Initialize event listener for tracking various Speckle events and responding
- * to them by creating activitystream entries
- */
-export const initializeEventListenerFactory =
+export const onServerInviteCreatedFactory =
   ({
-    addStreamAccessRequestedActivity,
-    addStreamAccessRequestDeclinedActivity,
-    saveActivity
+    getStream,
+    logger,
+    addStreamInviteSentOutActivity
   }: {
-    addStreamAccessRequestedActivity: AddStreamAccessRequestedActivity
-    addStreamAccessRequestDeclinedActivity: AddStreamAccessRequestDeclinedActivity
-    saveActivity: SaveActivity
+    getStream: GetStream
+    logger: Logger
+    addStreamInviteSentOutActivity: AddStreamInviteSentOutActivity
   }) =>
-  () => {
-    const quitCbs = [
-      UsersEmitter.listen(UsersEvents.Created, onUserCreatedFactory({ saveActivity })),
-      AccessRequestsEmitter.listen(
-        AccessRequestsEvents.Created,
-        onServerAccessRequestCreatedFactory({ addStreamAccessRequestedActivity })
-      ),
-      AccessRequestsEmitter.listen(
-        AccessRequestsEvents.Finalized,
-        onServerAccessRequestFinalizedFactory({
-          addStreamAccessRequestDeclinedActivity
-        })
-      )
-    ]
+  async (payload: ServerInvitesEventsPayloads[typeof ServerInvitesEvents.Created]) => {
+    const { invite } = payload
+    const primaryResourceTarget = invite.resource
 
-    return () => quitCbs.forEach((quit) => quit())
+    if (!isProjectResourceTarget(primaryResourceTarget)) return
+
+    const userTarget = resolveTarget(invite.target)
+    const project = await getStream({ streamId: primaryResourceTarget.resourceId })
+    if (!project) {
+      logger.warn('No project found for project invite', { invite })
+      return
+    }
+
+    await addStreamInviteSentOutActivity({
+      streamId: project.id,
+      inviterId: invite.inviterId,
+      inviteTargetEmail: userTarget.userEmail,
+      inviteTargetId: userTarget.userId,
+      stream: project
+    })
   }

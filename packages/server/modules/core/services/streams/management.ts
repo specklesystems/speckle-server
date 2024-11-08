@@ -1,5 +1,4 @@
 import { MaybeNullOrUndefined, Roles, wait } from '@speckle/shared'
-import { addStreamCreatedActivityFactory } from '@/modules/activitystream/services/streamActivity'
 import {
   ProjectUpdateInput,
   ProjectUpdateRoleInput,
@@ -56,12 +55,10 @@ export const createStreamReturnRecordFactory =
     createStream: StoreStream
     createBranch: StoreBranch
     inviteUsersToProject: ReturnType<typeof inviteUsersToProjectFactory>
-    addStreamCreatedActivity: ReturnType<typeof addStreamCreatedActivityFactory>
     projectsEventsEmitter: ProjectsEventsEmitter
   }): CreateStream =>
-  async (params, options): Promise<StreamRecord> => {
+  async (params): Promise<StreamRecord> => {
     const { ownerId, ownerResourceAccessRules } = params
-    const { createActivity = true } = options || {}
 
     const canCreateStream = isNewResourceAllowed({
       resourceType: TokenResourceIdentifierType.Project,
@@ -95,16 +92,6 @@ export const createStreamReturnRecordFactory =
       )
     }
 
-    // Save activity
-    if (createActivity) {
-      await deps.addStreamCreatedActivity({
-        streamId,
-        input: params,
-        stream,
-        creatorId: ownerId
-      })
-    }
-
     await deps.projectsEventsEmitter(ProjectEvents.Created, {
       project: stream,
       ownerId
@@ -119,9 +106,7 @@ export const createStreamReturnRecordFactory =
 export const legacyCreateStreamFactory =
   (deps: { createStreamReturnRecord: CreateStream }): LegacyCreateStream =>
   async (params) => {
-    const { id } = await deps.createStreamReturnRecord(params, {
-      createActivity: false
-    })
+    const { id } = await deps.createStreamReturnRecord(params)
     return id
   }
 
