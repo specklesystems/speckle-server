@@ -20,6 +20,7 @@
         )"
         :key="cat.id"
       >
+        <!-- We were use to use FormButton for this but our lovely Revit 2022 (CEF 65) but it didn't work properly in terms of CSS. -->
         <div
           v-tippy="'Remove'"
           :class="`block h-6 text-body-2xs px-2 py-1 rounded-md flex align-center justify-between w-full hover:cursor-pointer hover:shadow-md bg-primary text-foreground-on-primary border-outline-2 text-foreground font-medium p-1 border focus-visible:border-foundation`"
@@ -33,6 +34,7 @@
     <div
       class="flex space-y-1 flex-col simple-scrollbar overflow-y-auto min-h-0 max-h-48 overflow-x-hidden"
     >
+      <!-- We were use to use FormButton for this but our lovely Revit 2022 (CEF 65) but it didn't work properly in terms of CSS. -->
       <div
         v-for="cat in searchResults.sort((a, b) => a.name.localeCompare(b.name))"
         :key="cat.id"
