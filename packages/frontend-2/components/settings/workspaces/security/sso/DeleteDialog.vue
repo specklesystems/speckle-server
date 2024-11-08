@@ -10,7 +10,7 @@
       <span class="font-semibold">{{ providerName }}</span>
       from your workspace's SSO configuration?
     </p>
-    <p class="text-body-xs text-foreground-2 mt-2">
+    <p class="text-body-xs text-foreground-2 my-2">
       Users who have used SSO will no longer be able to sign in using their
       organization's credentials.
     </p>

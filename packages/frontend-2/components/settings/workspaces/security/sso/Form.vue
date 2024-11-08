@@ -1,78 +1,67 @@
 <template>
-  <div>
-    <form class="flex flex-col gap-2" @submit="onSubmit">
-      <div class="flex flex-col gap-4">
-        <FormTextInput
-          v-model="formData.providerName"
-          :disabled="!!initialData?.clientId"
-          label="Provider"
-          help="The label on the button displayed on the login screen."
-          name="providerName"
-          color="foundation"
-          show-label
-          label-position="left"
-          :rules="[isRequired, isStringOfLength({ minLength: 5 })]"
-          type="text"
-        />
-        <hr class="border-outline-3" />
-        <FormTextInput
-          v-model="formData.clientId"
-          :disabled="!!initialData?.clientId"
-          label="Client ID"
-          name="clientId"
-          color="foundation"
-          show-label
-          label-position="left"
-          :rules="[isRequired, isStringOfLength({ minLength: 5 })]"
-          type="text"
-        />
-        <hr class="border-outline-3" />
-        <FormTextInput
-          v-model="formData.clientSecret"
-          :disabled="!!initialData?.clientId"
-          label="Client secret"
-          name="clientSecret"
-          color="foundation"
-          show-label
-          label-position="left"
-          type="text"
-          :rules="[isRequired, isStringOfLength({ minLength: 5 })]"
-        />
-        <hr class="border-outline-3" />
-        <FormTextInput
-          v-model="formData.issuerUrl"
-          :disabled="!!initialData?.clientId"
-          label="Issuer URL"
-          name="issuerUrl"
-          color="foundation"
-          show-label
-          label-position="left"
-          type="text"
-          :rules="[isRequired, isUrl, isStringOfLength({ minLength: 5 })]"
-        />
-        <div class="flex gap-2 mt-4">
-          <FormButton
-            v-if="!initialData"
-            :disabled="!challenge"
-            color="primary"
-            type="submit"
-          >
-            Add
-          </FormButton>
-          <FormButton v-else color="danger" @click="isDeleteDialogOpen = true">
-            Delete
-          </FormButton>
-          <FormButton color="outline" @click="$emit('cancel')">Cancel</FormButton>
-        </div>
+  <form class="flex flex-col gap-2" @submit="onSubmit">
+    <div class="flex flex-col gap-4">
+      <FormTextInput
+        v-model="formData.providerName"
+        :disabled="!!initialData?.clientId"
+        label="Provider"
+        help="The label on the button displayed on the login screen."
+        name="providerName"
+        color="foundation"
+        show-label
+        label-position="left"
+        :rules="[isRequired, isStringOfLength({ minLength: 5 })]"
+        type="text"
+      />
+      <hr class="border-outline-3" />
+      <FormTextInput
+        v-model="formData.clientId"
+        :disabled="!!initialData?.clientId"
+        label="Client ID"
+        name="clientId"
+        color="foundation"
+        show-label
+        label-position="left"
+        :rules="[isRequired, isStringOfLength({ minLength: 5 })]"
+        type="text"
+      />
+      <hr class="border-outline-3" />
+      <FormTextInput
+        v-model="formData.clientSecret"
+        :disabled="!!initialData?.clientId"
+        label="Client secret"
+        name="clientSecret"
+        color="foundation"
+        show-label
+        label-position="left"
+        type="text"
+        :rules="[isRequired, isStringOfLength({ minLength: 5 })]"
+      />
+      <hr class="border-outline-3" />
+      <FormTextInput
+        v-model="formData.issuerUrl"
+        :disabled="!!initialData?.clientId"
+        label="Issuer URL"
+        name="issuerUrl"
+        color="foundation"
+        show-label
+        label-position="left"
+        type="text"
+        :rules="[isRequired, isUrl, isStringOfLength({ minLength: 5 })]"
+      />
+      <div class="flex gap-2 mt-4">
+        <FormButton
+          v-if="!initialData"
+          :disabled="!challenge"
+          color="primary"
+          type="submit"
+        >
+          Add
+        </FormButton>
+        <FormButton color="outline" @click="$emit('cancel')">Cancel</FormButton>
       </div>
-    </form>
-    <SettingsWorkspacesSecuritySsoDeleteDialog
-      v-model:open="isDeleteDialogOpen"
-      :provider-name="formData.providerName"
-      :workspace-slug="workspaceSlug"
-      @deleted="handleDeleted"
-    />
-  </div>
+    </div>
+  </form>
 </template>
 
 <script setup lang="ts">
@@ -88,7 +77,7 @@ const props = defineProps<{
   workspaceSlug: string
 }>()
 
-const emit = defineEmits<{
+defineEmits<{
   (e: 'cancel'): void
   (e: 'submit', data: SsoFormValues): void
 }>()
@@ -105,7 +94,6 @@ const formData = ref<SsoFormValues>({
   clientSecret: props.initialData?.clientSecret ?? '',
   issuerUrl: props.initialData?.issuerUrl ?? ''
 })
-const isDeleteDialogOpen = ref(false)
 
 const { handleSubmit } = useForm<SsoFormValues>()
 
@@ -151,10 +139,4 @@ const onSubmit = handleSubmit(() => {
     handleCreate()
   }
 })
-
-const handleDeleted = () => {
-  isDeleteDialogOpen.value = false
-  // Emit cancel to close the form after deletion
-  emit('cancel')
-}
 </script>

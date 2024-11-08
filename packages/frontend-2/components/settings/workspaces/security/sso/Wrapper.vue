@@ -30,9 +30,21 @@
               {{ provider.name }}
             </h3>
           </div>
-          <div class="flex gap-2">
-            <FormButton color="outline" @click="startEditing">Edit</FormButton>
-          </div>
+          <LayoutMenu
+            v-model:open="showActionsMenu"
+            :menu-id="menuId"
+            :items="actionsItems"
+            :menu-position="HorizontalDirection.Left"
+            @chosen="onActionChosen"
+          >
+            <FormButton
+              color="subtle"
+              hide-text
+              :icon-right="EllipsisHorizontalIcon"
+              class="!text-foreground-2"
+              @click="onButtonClick"
+            />
+          </LayoutMenu>
         </div>
 
         <SettingsWorkspacesSecuritySsoForm
@@ -85,6 +97,12 @@
         />
       </div>
     </template>
+    <SettingsWorkspacesSecuritySsoDeleteDialog
+      v-if="provider"
+      v-model:open="isDeleteDialogOpen"
+      :provider-name="provider?.name"
+      :workspace-slug="workspace.slug"
+    />
   </section>
 </template>
 
@@ -92,19 +110,29 @@
 import type { SettingsWorkspacesSecurity_WorkspaceFragment } from '~~/lib/common/generated/gql/graphql'
 import { useWorkspaceSso } from '~/lib/workspaces/composables/management'
 import type { SsoFormValues } from '~/lib/workspaces/helpers/types'
+import type { LayoutMenuItem } from '@speckle/ui-components'
+import { HorizontalDirection } from '~~/lib/common/composables/window'
+import { EllipsisHorizontalIcon } from '@heroicons/vue/24/solid'
 
 const props = defineProps<{
   workspace: SettingsWorkspacesSecurity_WorkspaceFragment
 }>()
 
+enum ActionTypes {
+  Delete = 'delete'
+}
+
 const apiOrigin = useApiOrigin()
 const logger = useLogger()
+const menuId = useId()
 const { provider, loading } = useWorkspaceSso({
   workspaceSlug: props.workspace.slug
 })
 
 const isFormVisible = ref(false)
 const isEditing = ref(false)
+const showActionsMenu = ref(false)
+const isDeleteDialogOpen = ref(false)
 
 const scopesAndClaims = ref({
   openid: '-',
@@ -112,12 +140,26 @@ const scopesAndClaims = ref({
   email: 'email'
 })
 
-const handleConfigureClick = () => {
-  isFormVisible.value = true
+const actionsItems = computed<LayoutMenuItem[][]>(() => [
+  [{ title: 'Remove provider...', id: ActionTypes.Delete }]
+])
+
+const onActionChosen = (params: { item: LayoutMenuItem; event: MouseEvent }) => {
+  const { item } = params
+
+  switch (item.id) {
+    case ActionTypes.Delete:
+      isDeleteDialogOpen.value = true
+      break
+  }
 }
 
-const startEditing = () => {
-  isEditing.value = true
+const onButtonClick = () => {
+  showActionsMenu.value = !showActionsMenu.value
+}
+
+const handleConfigureClick = () => {
+  isFormVisible.value = true
 }
 
 const handleFormSubmit = (data: SsoFormValues) => {
