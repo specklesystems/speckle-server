@@ -428,7 +428,9 @@ export default (app: Router) => {
         'Error during upload. Error occurred after {elapsedTimeMs}ms. Objects processed before error: {totalObjectsProcessed}. Error: {error}'
       )
       if (!requestDropped)
-        res.status(400).end('Upload request error. The server logs have more details')
+        res
+          .status(400)
+          .end('{"error": "Upload request error. The server logs have more details."}')
       requestDropped = true
     })
 
