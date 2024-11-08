@@ -181,15 +181,7 @@ const { result: pricingPlansResult } = useQuery(
   })
 )
 const { mutate: cancelCheckoutSession } = useMutation(
-  settingsBillingCancelCheckoutSessionMutation,
-  {
-    variables: {
-      input: {
-        sessionId: String(route.query?.session_id),
-        workspaceId: props.workspaceId
-      }
-    }
-  }
+  settingsBillingCancelCheckoutSessionMutation
 )
 
 const currentPlan = computed(() => workspaceResult.value?.workspace.plan)
@@ -236,12 +228,14 @@ const openCustomerPortal = async () => {
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
   const paymentStatusQuery = route.query?.payment_status
   const sessionIdQuery = route.query?.session_id
 
   if (sessionIdQuery && String(paymentStatusQuery) === WorkspacePlanStatuses.Canceled) {
-    cancelCheckoutSession()
+    await cancelCheckoutSession({
+      input: { sessionId: String(sessionIdQuery), workspaceId: props.workspaceId }
+    })
   }
 })
 </script>
