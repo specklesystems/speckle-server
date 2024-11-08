@@ -458,7 +458,6 @@ export = FF_WORKSPACES_MODULE_ENABLED
             queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({
               getStreams: legacyGetStreamsFactory({ db })
             }),
-            getWorkspaceSsoProviderRecord: getWorkspaceSsoProviderRecordFactory({ db }),
             deleteSsoProvider: deleteSsoProviderFactory({ db })
           })
 

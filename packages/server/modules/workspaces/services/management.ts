@@ -64,10 +64,7 @@ import { userEmailsCompliantWithWorkspaceDomains } from '@/modules/workspaces/do
 import { workspaceRoles as workspaceRoleDefinitions } from '@/modules/workspaces/roles'
 import { blockedDomains } from '@speckle/shared'
 import { DeleteStreamRecord } from '@/modules/core/domain/streams/operations'
-import {
-  DeleteSsoProvider,
-  GetWorkspaceSsoProviderRecord
-} from '@/modules/workspaces/domain/sso/operations'
+import { DeleteSsoProvider } from '@/modules/workspaces/domain/sso/operations'
 
 type WorkspaceCreateArgs = {
   userId: string
@@ -280,20 +277,17 @@ export const deleteWorkspaceFactory =
     deleteProject,
     queryAllWorkspaceProjects,
     deleteAllResourceInvites,
-    getWorkspaceSsoProviderRecord,
     deleteSsoProvider
   }: {
     deleteWorkspace: DeleteWorkspace
     deleteProject: DeleteStreamRecord
     queryAllWorkspaceProjects: QueryAllWorkspaceProjects
     deleteAllResourceInvites: DeleteAllResourceInvites
-    getWorkspaceSsoProviderRecord: GetWorkspaceSsoProviderRecord
     deleteSsoProvider: DeleteSsoProvider
   }) =>
   async ({ workspaceId }: WorkspaceDeleteArgs): Promise<void> => {
     // Delete workspace SSO provider, if present
-    const ssoProvider = await getWorkspaceSsoProviderRecord({ workspaceId })
-    if (ssoProvider?.providerId) await deleteSsoProvider({ workspaceId })
+    await deleteSsoProvider({ workspaceId })
 
     // Cache project ids for post-workspace-delete cleanup
     const projectIds: string[] = []
