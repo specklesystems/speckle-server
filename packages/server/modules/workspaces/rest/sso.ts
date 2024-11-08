@@ -15,11 +15,7 @@ import {
   getProviderAuthorizationUrl,
   initializeIssuerAndClient
 } from '@/modules/workspaces/clients/oidcProvider'
-import {
-  adminOverrideEnabled,
-  getFeatureFlags,
-  isProdEnv
-} from '@/modules/shared/helpers/envHelper'
+import { getFeatureFlags, isProdEnv } from '@/modules/shared/helpers/envHelper'
 import {
   storeOIDCProviderValidationRequestFactory,
   getOIDCProviderValidationRequestFactory,
@@ -37,6 +33,7 @@ import {
 } from '@/modules/workspaces/domain/sso/types'
 import {
   getWorkspaceBySlugFactory,
+  getWorkspaceRolesFactory,
   upsertWorkspaceRoleFactory
 } from '@/modules/workspaces/repositories/workspaces'
 import {
@@ -83,21 +80,16 @@ import { sendEmail } from '@/modules/emails/services/sending'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { createAuthorizationCodeFactory } from '@/modules/auth/repositories/apps'
 import { getDefaultSsoSessionExpirationDate } from '@/modules/workspaces/domain/sso/logic'
-import { GetWorkspaceBySlug } from '@/modules/workspaces/domain/operations'
+import {
+  GetWorkspaceBySlug,
+  GetWorkspaceRoles
+} from '@/modules/workspaces/domain/operations'
 import {
   GetWorkspaceSsoProvider,
   UpsertUserSsoSession
 } from '@/modules/workspaces/domain/sso/operations'
 import { GetUser } from '@/modules/core/domain/users/operations'
 import { FindEmail } from '@/modules/core/domain/userEmails/operations'
-import { AuthorizeResolver } from '@/modules/shared/domain/operations'
-import { authorizeResolverFactory } from '@/modules/shared/services/auth'
-import { getRolesFactory } from '@/modules/shared/repositories/roles'
-import {
-  getUserAclRoleFactory,
-  getUserServerRoleFactory
-} from '@/modules/shared/repositories/acl'
-import { getStreamFactory } from '@/modules/core/repositories/streams'
 import {
   buildAuthRedirectUrl,
   buildErrorUrl,
@@ -115,7 +107,6 @@ import {
   SsoUserEmailUnverifiedError,
   SsoVerificationCodeMissingError
 } from '@/modules/workspaces/errors/sso'
-import { getEventBus } from '@/modules/shared/services/eventBus'
 import { FeatureAccessForbiddenError } from '@/modules/gatekeeper/errors/features'
 import { canWorkspaceUseOidcSsoFactory } from '@/modules/gatekeeper/services/featureAuthorization'
 import { getWorkspacePlanFactory } from '@/modules/gatekeeper/repositories/billing'
@@ -232,14 +223,7 @@ export const getSsoRouter = (): Router => {
     async (req, res, next) => {
       const trx = await db.transaction()
       const handleOidcCallback = handleOidcCallbackFactory({
-        authorizeResolver: authorizeResolverFactory({
-          adminOverrideEnabled,
-          getRoles: getRolesFactory({ db: trx }),
-          getUserServerRole: getUserServerRoleFactory({ db: trx }),
-          getStream: getStreamFactory({ db: trx }),
-          getUserAclRole: getUserAclRoleFactory({ db: trx }),
-          emitWorkspaceEvent: getEventBus().emit
-        }),
+        getWorkspaceRoles: getWorkspaceRolesFactory({ db: trx }),
         getWorkspaceBySlug: getWorkspaceBySlugFactory({ db: trx }),
         createOidcProvider: createOidcProviderFactory({
           getOIDCProviderValidationRequest: getOIDCProviderValidationRequestFactory({
@@ -447,7 +431,7 @@ type WorkspaceSsoOidcCallbackRequestQuery = z.infer<typeof oidcCallbackRequestQu
  */
 const handleOidcCallbackFactory =
   ({
-    authorizeResolver,
+    getWorkspaceRoles,
     getWorkspaceBySlug,
     createOidcProvider,
     getOidcProvider,
@@ -457,7 +441,7 @@ const handleOidcCallbackFactory =
     linkUserWithSsoProvider,
     upsertUserSsoSession
   }: {
-    authorizeResolver: AuthorizeResolver
+    getWorkspaceRoles: GetWorkspaceRoles
     getWorkspaceBySlug: GetWorkspaceBySlug
     createOidcProvider: ReturnType<typeof createOidcProviderFactory>
     getOidcProvider: ReturnType<typeof getOidcProviderFactory>
@@ -511,12 +495,9 @@ const handleOidcCallbackFactory =
     })
 
     // TODO: Implicitly consume invite here, if one exists
-    await authorizeResolver(
-      req.user.id,
-      workspace.id,
-      Roles.Workspace.Member,
-      req.context.resourceAccessRules
-    )
+    const workspaceRoles = await getWorkspaceRoles({ workspaceId: workspace.id })
+    if (!workspaceRoles.some((role) => role.userId === req.user?.id))
+      throw new SsoGenericAuthenticationError()
 
     // BTW there is a bit of an issue with PATs and sso sessions, if the session expires, the PAT fails to work
     await upsertUserSsoSession({
