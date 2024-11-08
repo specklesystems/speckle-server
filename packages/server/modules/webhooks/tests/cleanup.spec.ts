@@ -1,6 +1,4 @@
 import knex, { db } from '@/db/knex'
-import { saveActivityFactory } from '@/modules/activitystream/repositories'
-import { addStreamCreatedActivityFactory } from '@/modules/activitystream/services/streamActivity'
 import { ProjectsEmitter } from '@/modules/core/events/projectsEmitter'
 import { UsersEmitter } from '@/modules/core/events/usersEmitter'
 import {
@@ -47,7 +45,6 @@ import { createAndSendInviteFactory } from '@/modules/serverinvites/services/cre
 import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
 import { inviteUsersToProjectFactory } from '@/modules/serverinvites/services/projectInviteManagement'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import { publish } from '@/modules/shared/utils/subscriptions'
 import { truncateTables } from '@/test/hooks'
 import { expect } from 'chai'
 import crs from 'crypto-random-string'
@@ -63,10 +60,6 @@ const cleanOrphanedWebhookConfigs = cleanOrphanedWebhookConfigsFactory({ db })
 const getServerInfo = getServerInfoFactory({ db })
 const getUsers = getUsersFactory({ db })
 const getUser = getUserFactory({ db })
-const addStreamCreatedActivity = addStreamCreatedActivityFactory({
-  saveActivity: saveActivityFactory({ db }),
-  publish
-})
 const getStream = getStreamFactory({ db })
 const createStream = legacyCreateStreamFactory({
   createStreamReturnRecord: createStreamReturnRecordFactory({
@@ -92,7 +85,6 @@ const createStream = legacyCreateStreamFactory({
     }),
     createStream: createStreamFactory({ db }),
     createBranch: createBranchFactory({ db }),
-    addStreamCreatedActivity,
     projectsEventsEmitter: ProjectsEmitter.emit
   })
 })
