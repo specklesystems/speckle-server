@@ -110,12 +110,13 @@
 <script setup lang="ts">
 import dayjs from 'dayjs'
 import { graphql } from '~/lib/common/generated/gql'
-import { useQuery, useApolloClient } from '@vue/apollo-composable'
+import { useQuery, useApolloClient, useMutation } from '@vue/apollo-composable'
 import {
   settingsWorkspaceBillingQuery,
   settingsWorkspacePricingPlansQuery,
   settingsWorkspaceBillingCustomerPortalQuery
 } from '~/lib/settings/graphql/queries'
+import { settingsBillingCancelCheckoutSessionMutation } from '~/lib/settings/graphql/mutations'
 import { useIsBillingIntegrationEnabled } from '~/composables/globals'
 import {
   WorkspacePlans,
@@ -161,11 +162,35 @@ const seatPrices = ref<SeatPrices>({
   [WorkspacePlans.Unlimited]: { monthly: 0, yearly: 0 }
 })
 
+const route = useRoute()
 const { client: apollo } = useApolloClient()
-const { result: workspaceResult } = useQuery(settingsWorkspaceBillingQuery, () => ({
-  workspaceId: props.workspaceId
-}))
-const { result: pricingPlansResult } = useQuery(settingsWorkspacePricingPlansQuery)
+const { result: workspaceResult } = useQuery(
+  settingsWorkspaceBillingQuery,
+  () => ({
+    workspaceId: props.workspaceId
+  }),
+  () => ({
+    enabled: isBillingIntegrationEnabled
+  })
+)
+const { result: pricingPlansResult } = useQuery(
+  settingsWorkspacePricingPlansQuery,
+  null,
+  () => ({
+    enabled: isBillingIntegrationEnabled
+  })
+)
+const { mutate: cancelCheckoutSession } = useMutation(
+  settingsBillingCancelCheckoutSessionMutation,
+  {
+    variables: {
+      input: {
+        sessionId: String(route.query?.sessions_id),
+        workspaceId: props.workspaceId
+      }
+    }
+  }
+)
 
 const currentPlan = computed(() => workspaceResult.value?.workspace.plan)
 const subscription = computed(() => workspaceResult.value?.workspace.subscription)
@@ -210,4 +235,13 @@ const openCustomerPortal = async () => {
     window.location.href = result.data.workspace.customerPortalUrl
   }
 }
+
+onMounted(() => {
+  const paymentStatusQuery = route.query?.payment_status
+  const sessionIdQuery = route.query?.sessions_id
+
+  if (sessionIdQuery && String(paymentStatusQuery) === WorkspacePlanStatuses.Canceled) {
+    cancelCheckoutSession()
+  }
+})
 </script>
