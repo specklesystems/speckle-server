@@ -6,12 +6,9 @@ import type { Knex } from 'knex'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { BaseError } from '@/modules/shared/errors'
 import { ensureErrorOrWrapAsCause } from '@/modules/shared/errors/ensureError'
-import {
-  getMainDbClient,
-  getRegisteredRegionClients
-} from '@/modules/multiregion/dbSelector'
+import { getDb, getRegisteredRegionClients } from '@/modules/multiregion/dbSelector'
 import { isMultiRegionEnabled } from '@/modules/multiregion/helpers'
-import { join } from 'lodash'
+import { join } from 'lodash-es'
 import { MultiError } from 'verror'
 
 export type ReadinessHandler = () => Promise<{ details: Record<string, string> }>
@@ -85,8 +82,10 @@ export const handleLivenessFactory =
 
     return {
       details: {
-        postgres: 'true',
-        redis: 'true',
+        postgres: Object.fromEntries(
+          Object.entries(allPostgresResults).map(([k, v]) => [k, v.isAlive])
+        ),
+        redis: true,
         percentageFreeConnections: percentageFreeConnections.toFixed(0)
       }
     }
@@ -173,20 +172,17 @@ type MultiDBCheck = () => Promise<Record<string, CheckResponse>>
 export const areAllPostgresAlive: MultiDBCheck = async (): Promise<
   Record<string, CheckResponse>
 > => {
-  let publicAndPrivateClients: Record<string, { public: Knex; private?: Knex }> = {}
-  publicAndPrivateClients['main'] = await getMainDbClient()
+  let clients: Record<string, Knex> = {}
+  clients['main'] = await getDb({ regionKey: null })
   if (isMultiRegionEnabled()) {
     const regionClients = await getRegisteredRegionClients()
-    publicAndPrivateClients = { ...publicAndPrivateClients, ...regionClients }
+    clients = { ...clients, ...regionClients }
   }
 
   const results: Record<string, CheckResponse> = {}
-  for (const [key, publicAndPrivateClient] of Object.entries(publicAndPrivateClients)) {
-    const client = publicAndPrivateClient.private
-      ? publicAndPrivateClient.private
-      : publicAndPrivateClient.public
+  for (const [key, dbClient] of Object.entries(clients)) {
     try {
-      results[key] = await isPostgresAlive({ db: client })
+      results[key] = await isPostgresAlive({ db: dbClient })
     } catch (err) {
       results[key] = {
         isAlive: false,

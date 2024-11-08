@@ -40,11 +40,11 @@ export const getRegionDb: GetRegionDb = async ({ regionKey }) => {
       throw new Error(`RegionKey ${regionKey} not available in config`)
 
     const newRegionConfig = regionConfigs[regionKey]
-    const regionDb = configureKnexClient(newRegionConfig)
+    const regionDb = configureKnexClient(newRegionConfig).public
     regionClients[regionKey] = regionDb
   }
 
-  return regionClients[regionKey].public
+  return regionClients[regionKey]
 }
 
 export const getDb = async ({
@@ -78,18 +78,13 @@ const initializeDbGetter = async (): Promise<GetProjectDb> => {
   })
 }
 
-export const getMainDbClient = async (): Promise<{ public: Knex; private?: Knex }> => {
-  const mainDbConfig = await getMainRegionConfig()
-  return configureKnexClient(mainDbConfig)
-}
-
 // this guy is the star of the show here
 export const getProjectDbClient: GetProjectDb = async ({ projectId }) => {
   if (!getter) getter = await initializeDbGetter()
   return await getter({ projectId })
 }
 
-type RegionClients = Record<string, { public: Knex; private?: Knex }>
+type RegionClients = Record<string, Knex>
 let registeredRegionClients: RegionClients | undefined = undefined
 
 const initializeRegisteredRegionClients = async (): Promise<RegionClients> => {
@@ -102,7 +97,7 @@ const initializeRegisteredRegionClients = async (): Promise<RegionClients> => {
         throw new MisconfiguredEnvironmentError(
           `Missing region config for ${region.key} region`
         )
-      return [region.key, configureKnexClient(regionConfigs[region.key])]
+      return [region.key, configureKnexClient(regionConfigs[region.key]).public]
     })
   )
 }
@@ -132,7 +127,7 @@ export const getRegisteredRegionClients = async (): Promise<RegionClients> => {
 }
 
 export const getRegisteredDbClients = async (): Promise<Knex[]> =>
-  Object.values(await getRegisteredRegionClients()).map((client) => client.public)
+  Object.values(await getRegisteredRegionClients())
 
 export const initializeRegion: InitializeRegion = async ({ regionKey }) => {
   const knownClients = await getRegisteredRegionClients()
@@ -148,7 +143,8 @@ export const initializeRegion: InitializeRegion = async ({ regionKey }) => {
   await regionDb.public.migrate.latest()
   // TODO, set up pub-sub shit
 
-  const mainDb = await getMainDbClient()
+  const mainDbConfig = await getMainRegionConfig()
+  const mainDb = configureKnexClient(mainDbConfig)
 
   const sslmode = newRegionConfig.postgres.publicTlsCertificate ? 'require' : 'disable'
 
@@ -166,7 +162,7 @@ export const initializeRegion: InitializeRegion = async ({ regionKey }) => {
     sslmode
   })
   // pushing to the singleton object here
-  knownClients[regionKey] = regionDb
+  knownClients[regionKey] = regionDb.public
 }
 
 interface ReplicationArgs {
@@ -201,7 +197,7 @@ const setUpUserReplication = async ({
   const rawSqeel = `SELECT * FROM aiven_extras.pg_create_subscription(
     '${subName}',
     'dbname=${fromDbName} host=${fromUrl.hostname} port=${port} sslmode=${sslmode} user=${fromUrl.username} password=${fromUrl.password}',
-    'userspub',
+    'userspub', 
     '${subName}',
     TRUE,
     TRUE
