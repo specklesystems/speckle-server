@@ -24,7 +24,7 @@ import {
   upsertUserSsoSessionFactory,
   getWorkspaceSsoProviderFactory
 } from '@/modules/workspaces/repositories/sso'
-import { getGenericRedis } from '@/modules/core'
+import { getGenericRedis } from '@/modules/shared/redis/redis'
 import { generators, UserinfoResponse } from 'openid-client'
 import { oidcProvider } from '@/modules/workspaces/domain/sso/models'
 import {
