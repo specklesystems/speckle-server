@@ -7,7 +7,7 @@ const chai = require('chai')
 const chaiAsPromised = require('chai-as-promised')
 const chaiHttp = require('chai-http')
 const deepEqualInAnyOrder = require('deep-equal-in-any-order')
-const knex = require(`@/db/knex`)
+const { knex } = require(`@/db/knex`)
 const { init, startHttp, shutdown } = require(`@/app`)
 const { default: graphqlChaiPlugin } = require('@/test/plugins/graphql')
 const { logger } = require('@/logging/logging')
@@ -60,6 +60,7 @@ const initializeTestServer = async (server, app) => {
   return {
     server,
     serverAddress,
+    serverPort: port,
     wsAddress,
     sendRequest(auth, obj) {
       return (

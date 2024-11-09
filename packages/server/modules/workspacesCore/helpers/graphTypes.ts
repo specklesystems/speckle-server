@@ -9,6 +9,10 @@ export type WorkspaceBillingGraphQLReturn = { parent: Workspace }
 export type WorkspaceMutationsGraphQLReturn = MutationsObjectGraphQLReturn
 export type WorkspaceInviteMutationsGraphQLReturn = MutationsObjectGraphQLReturn
 export type WorkspaceProjectMutationsGraphQLReturn = MutationsObjectGraphQLReturn
+export type ProjectRoleGraphQLReturn = {
+  role: string
+  projectId: string
+}
 
 export type PendingWorkspaceCollaboratorGraphQLReturn = {
   id: string

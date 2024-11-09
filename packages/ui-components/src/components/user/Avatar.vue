@@ -12,11 +12,13 @@
     <slot>
       <div
         v-if="user?.avatar"
+        v-tippy="!hideTooltip ? props.user?.name : undefined"
         class="h-full w-full bg-cover bg-center bg-no-repeat"
         :style="{ backgroundImage: `url('${user.avatar}')` }"
       />
       <div
         v-else-if="initials"
+        v-tippy="!hideTooltip ? props.user?.name : undefined"
         class="flex h-full w-full select-none items-center justify-center"
       >
         {{ initials }}
@@ -41,6 +43,7 @@ const props = withDefaults(
     active?: boolean
     noBorder?: boolean
     noBg?: boolean
+    hideTooltip?: boolean
   }>(),
   {
     size: 'base',

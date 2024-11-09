@@ -1,9 +1,9 @@
+import { GetStreamBranchByName } from '@/modules/core/domain/branches/operations'
 import {
   ProjectFileImportUpdatedMessageType,
   ProjectPendingModelsUpdatedMessageType,
   ProjectPendingVersionsUpdatedMessageType
 } from '@/modules/core/graph/generated/graphql'
-import { getStreamBranchByName } from '@/modules/core/repositories/branches'
 import { SaveUploadFile } from '@/modules/fileuploads/domain/operations'
 import { SaveUploadFileInput } from '@/modules/fileuploads/repositories/fileUploads'
 import {
@@ -13,7 +13,7 @@ import {
 
 export const insertNewUploadAndNotifyFactory =
   (deps: {
-    getStreamBranchByName: typeof getStreamBranchByName
+    getStreamBranchByName: GetStreamBranchByName
     saveUploadFile: SaveUploadFile
     publish: PublishSubscription
   }) =>

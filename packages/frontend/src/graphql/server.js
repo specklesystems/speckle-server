@@ -2,7 +2,9 @@ import { gql } from '@apollo/client/core'
 
 export const serverInfoBlobSizeFragment = gql`
   fragment ServerInfoBlobSizeFields on ServerInfo {
-    blobSizeLimitBytes
+    configuration {
+      blobSizeLimitBytes
+    }
   }
 `
 

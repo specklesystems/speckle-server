@@ -5,6 +5,13 @@
         title="Security"
         text="Manage verified workspace domains and associated features."
       />
+      <template v-if="isSsoEnabled">
+        <SettingsWorkspacesSecuritySso
+          v-if="result?.workspace"
+          :workspace="result.workspace"
+        />
+        <hr class="my-6 md:my-8 border-outline-2" />
+      </template>
       <section>
         <SettingsSectionHeader title="Your domains" class="pb-4 md:pb-6" subheading />
         <ul v-if="hasWorkspaceDomains">
@@ -126,6 +133,7 @@ import { settingsWorkspacesSecurityQuery } from '~/lib/settings/graphql/queries'
 import { useAddWorkspaceDomain } from '~/lib/settings/composables/management'
 import { useMixpanel } from '~/lib/core/composables/mp'
 import { blockedDomains } from '@speckle/shared'
+import { useIsWorkspacesSsoEnabled } from '~/composables/globals'
 
 graphql(`
   fragment SettingsWorkspacesSecurity_Workspace on Workspace {
@@ -137,6 +145,7 @@ graphql(`
     }
     domainBasedMembershipProtectionEnabled
     discoverabilityEnabled
+    ...SettingsWorkspacesSecuritySso_Workspace
   }
 
   fragment SettingsWorkspacesSecurity_User on User {
@@ -155,6 +164,7 @@ const props = defineProps<{
 
 const addWorkspaceDomain = useAddWorkspaceDomain()
 const { triggerNotification } = useGlobalToast()
+const isSsoEnabled = useIsWorkspacesSsoEnabled()
 const apollo = useApolloClient().client
 const mixpanel = useMixpanel()
 

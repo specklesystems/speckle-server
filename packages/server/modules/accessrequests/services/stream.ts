@@ -13,11 +13,6 @@ import {
 import { StreamInvalidAccessError } from '@/modules/core/errors/stream'
 import { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
 import { Roles, StreamRoles } from '@/modules/core/helpers/mainConstants'
-import { getStream } from '@/modules/core/repositories/streams'
-import {
-  addOrUpdateStreamCollaborator,
-  validateStreamAccess
-} from '@/modules/core/services/streams/streamAccessService'
 import { ensureError } from '@/modules/shared/helpers/errorHelper'
 import {
   MaybeNullOrUndefined,
@@ -35,6 +30,11 @@ import {
   GetUserStreamAccessRequest,
   RequestProjectAccess
 } from '@/modules/accessrequests/domain/operations'
+import {
+  AddOrUpdateStreamCollaborator,
+  GetStream,
+  ValidateStreamAccess
+} from '@/modules/core/domain/streams/operations'
 
 function buildStreamAccessRequestGraphQLReturn(
   record: ServerAccessRequestRecord<AccessRequestType.Stream, string>
@@ -83,7 +83,7 @@ export const getUserStreamAccessRequestFactory =
 export const requestProjectAccessFactory =
   (deps: {
     getUserStreamAccessRequest: GetUserStreamAccessRequest
-    getStream: typeof getStream
+    getStream: GetStream
     createNewRequest: CreateNewRequest
     accessRequestsEmitter: (typeof AccessRequestsEmitter)['emit']
   }): RequestProjectAccess =>
@@ -165,8 +165,8 @@ export const getPendingStreamRequestsFactory =
 export const processPendingStreamRequestFactory =
   (deps: {
     getPendingAccessRequest: GetPendingAccessRequest
-    validateStreamAccess: typeof validateStreamAccess
-    addOrUpdateStreamCollaborator: typeof addOrUpdateStreamCollaborator
+    validateStreamAccess: ValidateStreamAccess
+    addOrUpdateStreamCollaborator: AddOrUpdateStreamCollaborator
     deleteRequestById: DeleteRequestById
     accessRequestsEmitter: (typeof AccessRequestsEmitter)['emit']
   }) =>

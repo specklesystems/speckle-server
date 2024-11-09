@@ -3,8 +3,9 @@ const { logger: parentLogger } = require('../observability/logging')
 
 const TMP_RESULTS_PATH = '/tmp/import_result.json'
 
-const { parseAndCreateCommit } = require('./index')
+const { parseAndCreateCommitFactory } = require('./index')
 const Observability = require('@speckle/shared/dist/commonjs/observability/index.js')
+const knex = require('../knex')
 
 async function main() {
   const cmdArgs = process.argv.slice(2)
@@ -35,7 +36,7 @@ async function main() {
   }
 
   try {
-    const commitId = await parseAndCreateCommit(ifcInput)
+    const commitId = await parseAndCreateCommitFactory({ db: knex })(ifcInput)
     output = {
       success: true,
       commitId

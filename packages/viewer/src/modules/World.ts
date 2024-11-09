@@ -20,13 +20,16 @@ export class AsyncPause {
   }
 }
 
+const MatBuff0: Matrix4 = new Matrix4()
+const MatBuff1: Matrix4 = new Matrix4()
+const MatBuff2: Matrix4 = new Matrix4()
+
 export class World {
   private readonly boxes: Array<Box3> = new Array<Box3>()
   public readonly worldBox: Box3 = new Box3()
   private readonly VecBuff: Vector3 = new Vector3()
   private readonly BoxBuff0: Box3 = new Box3()
   private readonly BoxBuff1: Box3 = new Box3()
-  private readonly MatBuff: Matrix4 = new Matrix4()
 
   private _worldOrigin: Vector3 = new Vector3()
   public get worldSize() {
@@ -66,8 +69,8 @@ export class World {
   }
 
   public getRelativeOffset(offsetAmount: number = 0.001): number {
-    this.MatBuff.identity()
-    this.MatBuff.makeScale(1 + offsetAmount, 1 + offsetAmount, 1 + offsetAmount)
+    MatBuff0.identity()
+    MatBuff0.makeScale(1 + offsetAmount, 1 + offsetAmount, 1 + offsetAmount)
     const worldSize = this.VecBuff.set(
       this.worldSize.x * 0.5,
       this.worldSize.y * 0.5,
@@ -78,8 +81,21 @@ export class World {
     this.BoxBuff1.min.set(0, 0, 0)
     this.BoxBuff1.max.set(0, 0, 0)
     const sizeBox = this.BoxBuff0.expandByVector(worldSize)
-    const offsetBox = this.BoxBuff1.copy(sizeBox).applyMatrix4(this.MatBuff)
+    const offsetBox = this.BoxBuff1.copy(sizeBox).applyMatrix4(MatBuff0)
     const dist = offsetBox.max.distanceTo(sizeBox.max)
     return dist
+  }
+
+  public getRelativeOffsetBox(box: Box3, offsetAmount: number = 0.001) {
+    const center = box.getCenter(new Vector3())
+    MatBuff1.makeTranslation(center.x, center.y, center.z)
+    MatBuff2.copy(MatBuff1).invert()
+    MatBuff0.identity()
+    MatBuff0.makeScale(1 + offsetAmount, 1 + offsetAmount, 1 + offsetAmount)
+    const offsetBox = new Box3().copy(box)
+    offsetBox.applyMatrix4(MatBuff2)
+    offsetBox.applyMatrix4(MatBuff0)
+    offsetBox.applyMatrix4(MatBuff1)
+    return offsetBox
   }
 }

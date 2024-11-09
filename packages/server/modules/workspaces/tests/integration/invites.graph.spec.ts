@@ -65,7 +65,6 @@ import {
 import type { Express } from 'express'
 import { AllScopes } from '@/modules/core/helpers/mainConstants'
 import { getWorkspaceFactory } from '@/modules/workspaces/repositories/workspaces'
-import { getStream } from '@/modules/core/repositories/streams'
 import {
   createUserEmailFactory,
   deleteUserEmailFactory,
@@ -75,9 +74,25 @@ import {
 } from '@/modules/core/repositories/userEmails'
 import { markUserEmailAsVerifiedFactory } from '@/modules/core/services/users/emailVerification'
 import { createRandomPassword } from '@/modules/core/helpers/testHelpers'
-import { addOrUpdateStreamCollaborator } from '@/modules/core/services/streams/streamAccessService'
 import { WorkspaceProtectedError } from '@/modules/workspaces/errors/workspace'
 import { ForbiddenError } from '@/modules/shared/errors'
+import cryptoRandomString from 'crypto-random-string'
+import {
+  getStreamFactory,
+  grantStreamPermissionsFactory
+} from '@/modules/core/repositories/streams'
+import { saveActivityFactory } from '@/modules/activitystream/repositories'
+import {
+  addOrUpdateStreamCollaboratorFactory,
+  validateStreamAccessFactory
+} from '@/modules/core/services/streams/access'
+import { authorizeResolver } from '@/modules/shared'
+import {
+  addStreamInviteAcceptedActivityFactory,
+  addStreamPermissionsAddedActivityFactory
+} from '@/modules/activitystream/services/streamActivity'
+import { publish } from '@/modules/shared/utils/subscriptions'
+import { getUserFactory } from '@/modules/core/repositories/users'
 
 enum InviteByTarget {
   Email = 'email',
@@ -85,6 +100,25 @@ enum InviteByTarget {
 }
 
 type TestGraphQLOperations = ReturnType<typeof buildGraphqlOperations>
+
+const getStream = getStreamFactory({ db })
+const saveActivity = saveActivityFactory({ db })
+const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
+
+const getUser = getUserFactory({ db })
+const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
+  validateStreamAccess,
+  getUser,
+  grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+  addStreamInviteAcceptedActivity: addStreamInviteAcceptedActivityFactory({
+    saveActivity,
+    publish
+  }),
+  addStreamPermissionsAddedActivity: addStreamPermissionsAddedActivityFactory({
+    saveActivity,
+    publish
+  })
+})
 
 const buildGraphqlOperations = (deps: { apollo: TestApolloServer }) => {
   const { apollo } = deps
@@ -234,6 +268,7 @@ describe('Workspaces Invites GQL', () => {
     name: 'My First Workspace',
     id: '',
     ownerId: '',
+    slug: cryptoRandomString({ length: 10 }),
     domainBasedMembershipProtectionEnabled: false
   }
 
@@ -241,12 +276,14 @@ describe('Workspaces Invites GQL', () => {
     name: 'My Domain protected workspace',
     id: '',
     ownerId: '',
+    slug: cryptoRandomString({ length: 10 }),
     domainBasedMembershipProtectionEnabled: true
   }
 
   const otherGuysWorkspace: BasicTestWorkspace = {
     name: 'Other Guy Workspace',
     id: '',
+    slug: cryptoRandomString({ length: 10 }),
     ownerId: ''
   }
 
@@ -587,6 +624,7 @@ describe('Workspaces Invites GQL', () => {
       const myProjectInviteTargetWorkspace: BasicTestWorkspace = {
         name: 'My Project Invite Target Workspace #1',
         id: '',
+        slug: cryptoRandomString({ length: 10 }),
         ownerId: ''
       }
 
@@ -783,6 +821,7 @@ describe('Workspaces Invites GQL', () => {
       const myAdministrationWorkspace: BasicTestWorkspace = {
         name: 'My Administration Workspace',
         id: '',
+        slug: cryptoRandomString({ length: 10 }),
         ownerId: ''
       }
 
@@ -908,6 +947,7 @@ describe('Workspaces Invites GQL', () => {
       const myInviteTargetWorkspace: BasicTestWorkspace = {
         name: 'My Invite Target Workspace',
         id: '',
+        slug: cryptoRandomString({ length: 10 }),
         ownerId: ''
       }
       const myInviteTargetWorkspaceStream1: BasicTestStream = {
@@ -1084,6 +1124,32 @@ describe('Workspaces Invites GQL', () => {
         expect(res.data!.workspaceInvite?.user!.id).to.equal(otherGuy.id)
       })
 
+      it("can't retrieve it by passing in the slug, not workspace id", async () => {
+        const res = await gqlHelpers.getInvite(
+          {
+            workspaceId: myInviteTargetWorkspace.slug
+          },
+          { context: { userId: otherGuy.id } }
+        )
+
+        expect(res).to.not.haveGraphQLErrors()
+        expect(res.data?.workspaceInvite).to.not.be.ok
+      })
+
+      it('can retrieve it by passing in the slug, not workspace id, if explicit about it', async () => {
+        const res = await gqlHelpers.getInvite(
+          {
+            workspaceId: myInviteTargetWorkspace.slug,
+            options: { useSlug: true }
+          },
+          { context: { userId: otherGuy.id } }
+        )
+
+        expect(res).to.not.haveGraphQLErrors()
+        expect(res.data?.workspaceInvite).to.be.ok
+        expect(res.data!.workspaceInvite?.user!.id).to.equal(otherGuy.id)
+      })
+
       it('cant resend the invite email w/ mismatched workspaceId', async () => {
         const res = await gqlHelpers.resendWorkspaceInvite({
           input: {
@@ -1122,6 +1188,7 @@ describe('Workspaces Invites GQL', () => {
         const brokenWorkspace: BasicTestWorkspace = {
           name: 'Broken Workspace',
           id: 'a',
+          slug: cryptoRandomString({ length: 10 }),
           ownerId: ''
         }
         await createTestWorkspaces([[brokenWorkspace, me]])
@@ -1557,6 +1624,7 @@ describe('Workspaces Invites GQL', () => {
     const otherWorkspace: BasicTestWorkspace = {
       name: 'Other Workspace',
       id: '',
+      slug: cryptoRandomString({ length: 10 }),
       ownerId: ''
     }
 

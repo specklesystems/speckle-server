@@ -14,6 +14,7 @@ import {
   GetUserDiscoverableWorkspaces,
   GetUserIdsWithRoleInWorkspace,
   GetWorkspace,
+  GetWorkspaceBySlug,
   GetWorkspaceCollaborators,
   GetWorkspaceCollaboratorsTotalCount,
   GetWorkspaceDomains,
@@ -28,7 +29,7 @@ import {
 } from '@/modules/workspaces/domain/operations'
 import { Knex } from 'knex'
 import { Roles } from '@speckle/shared'
-import { StreamRecord } from '@/modules/core/helpers/types'
+import { StreamAclRecord, StreamRecord } from '@/modules/core/helpers/types'
 import { WorkspaceInvalidRoleError } from '@/modules/workspaces/errors/workspace'
 import {
   WorkspaceAcl as DbWorkspaceAcl,
@@ -55,6 +56,7 @@ import { WorkspaceTeamMember } from '@/modules/workspaces/domain/types'
 
 const tables = {
   streams: (db: Knex) => db<StreamRecord>('streams'),
+  streamAcl: (db: Knex) => db<StreamAclRecord>('stream_acl'),
   workspaces: (db: Knex) => db<Workspace>('workspaces'),
   workspaceDomains: (db: Knex) => db<WorkspaceDomain>('workspace_domains'),
   workspacesAcl: (db: Knex) => db<WorkspaceAcl>('workspace_acl')
@@ -68,7 +70,14 @@ export const getUserDiscoverableWorkspacesFactory =
     }
     return (await tables
       .workspaces(db)
-      .select('workspaces.id as id', 'name', 'description', 'logo', 'defaultLogoIndex')
+      .select(
+        'workspaces.id as id',
+        'name',
+        'slug',
+        'description',
+        'logo',
+        'defaultLogoIndex'
+      )
       .distinctOn('workspaces.id')
       .join('workspace_domains', 'workspace_domains.workspaceId', 'workspaces.id')
       .leftJoin(
@@ -81,9 +90,35 @@ export const getUserDiscoverableWorkspacesFactory =
       .where('verified', true)
       .where('role', null)) as Pick<
       Workspace,
-      'id' | 'name' | 'description' | 'logo' | 'defaultLogoIndex'
+      'id' | 'name' | 'slug' | 'description' | 'logo' | 'defaultLogoIndex'
     >[]
   }
+
+const workspaceWithRoleBaseQuery = ({
+  db,
+  userId
+}: {
+  db: Knex
+  userId?: string
+}): Knex.QueryBuilder<WorkspaceWithOptionalRole, WorkspaceWithOptionalRole[]> => {
+  let q = db<WorkspaceWithOptionalRole, WorkspaceWithOptionalRole[]>('workspaces')
+  if (userId) {
+    q = q
+      .select([
+        ...Object.values(Workspaces.col),
+        // Getting first role from grouped results
+        knex.raw(`(array_agg("workspace_acl"."role"))[1] as role`)
+      ])
+      .leftJoin(DbWorkspaceAcl.name, function () {
+        this.on(DbWorkspaceAcl.col.workspaceId, Workspaces.col.id).andOnVal(
+          DbWorkspaceAcl.col.userId,
+          userId
+        )
+      })
+      .groupBy(Workspaces.col.id)
+  }
+  return q
+}
 
 export const getWorkspacesFactory =
   ({ db }: { db: Knex }): GetWorkspaces =>
@@ -95,39 +130,28 @@ export const getWorkspacesFactory =
     userId?: string
   }) => {
     const { workspaceIds, userId } = params
-    if (!workspaceIds?.length) return []
 
-    const q = Workspaces.knex<WorkspaceWithOptionalRole[]>(db).whereIn(
-      Workspaces.col.id,
-      workspaceIds
-    )
-
-    if (userId) {
-      q.select([
-        ...Object.values(Workspaces.col),
-        // Getting first role from grouped results
-        knex.raw(`(array_agg("workspace_acl"."role"))[1] as role`)
-      ])
-      q.leftJoin(DbWorkspaceAcl.name, function () {
-        this.on(DbWorkspaceAcl.col.workspaceId, Workspaces.col.id).andOnVal(
-          DbWorkspaceAcl.col.userId,
-          userId
-        )
-      })
-      q.groupBy(Workspaces.col.id)
-    }
-
-    const results = await q
+    const q = workspaceWithRoleBaseQuery({ db, userId })
+    const results = await q.whereIn(Workspaces.col.id, workspaceIds)
     return results
   }
 
 export const getWorkspaceFactory =
   ({ db }: { db: Knex }): GetWorkspace =>
   async ({ workspaceId, userId }) => {
-    const [workspace] = await getWorkspacesFactory({ db })({
-      workspaceIds: [workspaceId],
-      userId
-    })
+    const workspace = await workspaceWithRoleBaseQuery({ db, userId })
+      .where(Workspaces.col.id, workspaceId)
+      .first()
+
+    return workspace || null
+  }
+
+export const getWorkspaceBySlugFactory =
+  ({ db }: { db: Knex }): GetWorkspaceBySlug =>
+  async ({ workspaceSlug, userId }) => {
+    const workspace = await workspaceWithRoleBaseQuery({ db, userId })
+      .where(Workspaces.col.slug, workspaceSlug)
+      .first()
 
     return workspace || null
   }
@@ -142,7 +166,9 @@ export const upsertWorkspaceFactory =
       .merge([
         'description',
         'logo',
+        'slug',
         'defaultLogoIndex',
+        'defaultProjectRole',
         'name',
         'updatedAt',
         'domainBasedMembershipProtectionEnabled',
@@ -237,6 +263,7 @@ export const getWorkspaceCollaboratorsFactory =
       .select<Array<WorkspaceTeamMember & { workspaceRoleCreatedAt: Date }>>(
         ...Users.cols,
         ServerAcl.col.role,
+        DbWorkspaceAcl.col.workspaceId, // this field is necessary for projectRoles field resolver
         DbWorkspaceAcl.colAs('role', 'workspaceRole'),
         DbWorkspaceAcl.colAs('createdAt', 'workspaceRoleCreatedAt')
       )
@@ -245,7 +272,7 @@ export const getWorkspaceCollaboratorsFactory =
       .where(DbWorkspaceAcl.col.workspaceId, workspaceId)
       .orderBy('workspaceRoleCreatedAt', 'desc')
 
-    const { search, role } = filter || {}
+    const { search, roles } = filter || {}
 
     if (search) {
       query.andWhere((builder) => {
@@ -255,8 +282,10 @@ export const getWorkspaceCollaboratorsFactory =
       })
     }
 
-    if (role) {
-      query.andWhere(DbWorkspaceAcl.col.role, role)
+    if (roles) {
+      query.andWhere((builder) => {
+        builder.whereIn(DbWorkspaceAcl.col.role, roles)
+      })
     }
 
     if (cursor) {
@@ -270,6 +299,7 @@ export const getWorkspaceCollaboratorsFactory =
     const items = (await query).map((i) => ({
       ...removePrivateFields(i),
       workspaceRole: i.workspaceRole,
+      workspaceId: i.workspaceId,
       role: i.role,
       createdAt: i.workspaceRoleCreatedAt
     }))

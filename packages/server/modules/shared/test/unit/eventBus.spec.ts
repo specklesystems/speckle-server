@@ -8,12 +8,14 @@ import cryptoRandomString from 'crypto-random-string'
 const createFakeWorkspace = (): Omit<Workspace, 'domains'> => {
   return {
     id: cryptoRandomString({ length: 10 }),
+    slug: cryptoRandomString({ length: 10 }),
     description: cryptoRandomString({ length: 10 }),
     logo: null,
     defaultLogoIndex: 0,
     name: cryptoRandomString({ length: 10 }),
     updatedAt: new Date(),
     createdAt: new Date(),
+    defaultProjectRole: Roles.Stream.Contributor,
     domainBasedMembershipProtectionEnabled: false,
     discoverabilityEnabled: false
   }
@@ -59,22 +61,6 @@ describe('Event Bus', () => {
 
       await testEventBus.emit({ eventName: 'test.string', payload: 'fake event' })
       expect(eventNumbers.sort((a, b) => a - b)).to.deep.equal([1, 1, 2])
-    })
-    it('returns results from listeners to the emitter', async () => {
-      const testEventBus = initializeEventBus()
-
-      testEventBus.listen('test.string', ({ payload }) => ({
-        outcome: payload
-      }))
-
-      const lookWhatHappened = 'echo this back to me'
-      const results = await testEventBus.emit({
-        eventName: 'test.string',
-        payload: lookWhatHappened
-      })
-
-      expect(results.length).to.equal(1)
-      expect(results[0]).to.deep.equal({ outcome: lookWhatHappened })
     })
     it('bubbles up listener exceptions to emitter', async () => {
       const testEventBus = initializeEventBus()
@@ -158,8 +144,6 @@ describe('Event Bus', () => {
           case 'workspace.role-deleted':
             events.push(payload.userId)
             break
-          default:
-            events.push('default')
         }
       })
 
@@ -184,12 +168,7 @@ describe('Event Bus', () => {
         payload: workspaceAcl
       })
 
-      await eventBus.emit({
-        eventName: WorkspaceEvents.RoleUpdated,
-        payload: workspaceAcl
-      })
-
-      expect([workspace.id, workspaceAcl.userId, 'default']).to.deep.equal(events)
+      expect([workspace.id, workspaceAcl.userId]).to.deep.equal(events)
     })
   })
 })

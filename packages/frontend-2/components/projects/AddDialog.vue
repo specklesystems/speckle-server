@@ -1,5 +1,11 @@
 <template>
-  <LayoutDialog v-model:open="open" max-width="sm" :buttons="dialogButtons">
+  <LayoutDialog
+    v-model:open="open"
+    max-width="sm"
+    :buttons="dialogButtons"
+    hide-closer
+    prevent-close-on-click-outside
+  >
     <template #header>Create a new project</template>
     <form class="flex flex-col text-foreground" @submit="onSubmit">
       <div class="flex flex-col gap-y-4 mb-2">
@@ -28,39 +34,38 @@
           <ProjectVisibilitySelect v-model="visibility" mount-menu-on-body />
         </div>
         <template v-if="isWorkspacesEnabled && !workspaceId">
-          <div v-if="!isCreatingWorkspace" class="flex gap-y-2 flex-col">
+          <div class="flex gap-y-2 flex-col">
             <p class="text-body-xs text-foreground font-medium">Workspace</p>
-            <div v-if="hasWorkspaces">
-              <div class="flex gap-x-2 items-center">
-                <ProjectsWorkspaceSelect
-                  v-model="selectedWorkspace"
-                  :items="workspaces"
-                  class="flex-1"
-                />
+            <div class="flex gap-x-2 items-center">
+              <ProjectsWorkspaceSelect
+                v-model="selectedWorkspace"
+                :items="workspaces"
+                :disabled-roles="[Roles.Workspace.Guest]"
+                :disabled="!hasWorkspaces"
+                disabled-item-tooltip="You dont have rights to create projects in this workspace"
+                class="flex-1"
+              />
+              <div v-tippy="'Create workspace'" class="flex">
                 <FormButton
                   :icon-left="PlusIcon"
                   hide-text
                   class="flex"
                   color="outline"
-                  @click="isCreatingWorkspace = true"
+                  @click="navigateToWorkspaceExplainer"
                 />
               </div>
             </div>
-            <FormButton v-else color="outline" @click="isCreatingWorkspace = true">
-              New workspace
-            </FormButton>
             <p class="text-foreground-2 text-body-2xs">
-              Workspace offers better project management and higher data security.
+              Workspaces offer better project management and higher data security.
             </p>
           </div>
-          <ProjectsAddDialogNewWorkspace
-            v-if="isCreatingWorkspace"
-            @cancel="isCreatingWorkspace = false"
-            @workspace-created="onWorkspaceCreated"
-          />
         </template>
       </div>
     </form>
+    <CommonConfirmDialog
+      v-model:open="showConfirmDialog"
+      @confirm="handleConfirmAction"
+    />
   </LayoutDialog>
 </template>
 <script setup lang="ts">
@@ -76,14 +81,14 @@ import type { ProjectsAddDialog_WorkspaceFragment } from '~/lib/common/generated
 import { graphql } from '~~/lib/common/generated/gql'
 import { projectWorkspaceSelectQuery } from '~/lib/projects/graphql/queries'
 import { useQuery } from '@vue/apollo-composable'
+import { Roles } from '@speckle/shared'
+import { workspacesRoute } from '~/lib/common/helpers/route'
 
 graphql(`
   fragment ProjectsAddDialog_Workspace on Workspace {
     id
-    role
-    name
-    defaultLogoIndex
-    logo
+    ...ProjectsWorkspaceSelect_Workspace
+    ...ProjectsNewWorkspace_Workspace
   }
 `)
 
@@ -112,23 +117,20 @@ const emit = defineEmits<{
 
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
 const createProject = useCreateProject()
-const { handleSubmit } = useForm<FormValues>()
+const router = useRouter()
+const { handleSubmit, meta } = useForm<FormValues>()
 const { result: workspaceResult } = useQuery(projectWorkspaceSelectQuery, null, () => ({
   enabled: isWorkspacesEnabled.value
 }))
 
 const visibility = ref(ProjectVisibility.Unlisted)
 const selectedWorkspace = ref<ProjectsAddDialog_WorkspaceFragment>()
-const isCreatingWorkspace = ref<boolean>(false)
+const showConfirmDialog = ref(false)
+const confirmActionType = ref<'navigate' | 'close' | null>(null)
 
 const open = defineModel<boolean>('open', { required: true })
 
 const mp = useMixpanel()
-
-const onWorkspaceCreated = (workspace: ProjectsAddDialog_WorkspaceFragment) => {
-  isCreatingWorkspace.value = false
-  selectedWorkspace.value = workspace
-}
 
 const onSubmit = handleSubmit(async (values) => {
   await createProject({
@@ -151,20 +153,57 @@ const workspaces = computed(
   () => workspaceResult.value?.activeUser?.workspaces.items ?? []
 )
 const hasWorkspaces = computed(() => workspaces.value.length > 0)
-const dialogButtons = computed((): LayoutDialogButton[] => [
-  {
-    text: 'Cancel',
-    props: { color: 'outline' },
-    onClick: () => {
-      open.value = false
-    }
-  },
-  {
-    text: 'Create',
-    props: {
-      submit: true
+const dialogButtons = computed((): LayoutDialogButton[] => {
+  return [
+    {
+      text: 'Cancel',
+      props: { color: 'outline' },
+      onClick: confirmCancel
     },
-    onClick: onSubmit
+    {
+      text: 'Create',
+      props: {
+        submit: true
+      },
+      onClick: onSubmit
+    }
+  ]
+})
+
+const formIsDirty = computed(() => {
+  return meta.value.dirty
+})
+
+const navigateToWorkspaceExplainer = () => {
+  if (formIsDirty.value) {
+    confirmActionType.value = 'navigate'
+    showConfirmDialog.value = true
+  } else {
+    router.push(workspacesRoute)
   }
-])
+}
+
+const confirmCancel = () => {
+  if (formIsDirty.value) {
+    confirmActionType.value = 'close'
+    showConfirmDialog.value = true
+  } else {
+    open.value = false
+  }
+}
+
+const handleConfirmAction = () => {
+  if (confirmActionType.value === 'navigate') {
+    router.push(workspacesRoute)
+  } else if (confirmActionType.value === 'close') {
+    open.value = false
+  }
+  confirmActionType.value = null
+}
+
+watch(open, (newVal, oldVal) => {
+  if (newVal && !oldVal) {
+    selectedWorkspace.value = undefined
+  }
+})
 </script>

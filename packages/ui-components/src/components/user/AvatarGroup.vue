@@ -11,6 +11,7 @@
         :key="user.id || i"
         :user="user"
         :size="size"
+        :hide-tooltip="hideTooltips"
       />
     </div>
     <UserAvatar v-if="finalHiddenItemCount" :size="size">
@@ -32,12 +33,14 @@ const props = withDefaults(
     overlap?: boolean
     size?: UserAvatarSize
     maxCount?: number
+    hideTooltips?: boolean
   }>(),
   {
     users: () => [],
     overlap: true,
     size: 'base',
-    maxCount: undefined
+    maxCount: undefined,
+    hideTooltips: false
   }
 )
 

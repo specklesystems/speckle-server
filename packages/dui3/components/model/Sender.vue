@@ -140,6 +140,10 @@ const saveFilter = async () => {
     name: 'Publish Card Filter Change',
     filter: newFilter.typeDiscriminator
   })
+
+  // do not reset idmap while creating a new one because it is managed by host app
+  newFilter.idMap = props.modelCard.sendFilter?.idMap
+
   await store.patchModel(props.modelCard.modelCardId, {
     sendFilter: newFilter,
     expired: true

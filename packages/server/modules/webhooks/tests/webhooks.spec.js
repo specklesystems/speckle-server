@@ -8,31 +8,173 @@ const {
   truncateTables
 } = require('@/test/hooks')
 const { noErrors } = require('@/test/helpers')
-const { createPersonalAccessToken } = require('../../core/services/tokens')
-const { getLastWebhookEvents, dispatchStreamEvent } = require('../services/webhooks')
-const { createUser } = require('../../core/services/users')
-const { createStream, grantPermissionsStream } = require('../../core/services/streams')
 const { Scopes, Roles } = require('@speckle/shared')
 const {
-  createWebhookFactory,
+  createWebhookConfigFactory,
   countWebhooksByStreamIdFactory,
   getWebhookByIdFactory,
-  updateWebhookFactory,
-  deleteWebhookFactory,
-  getStreamWebhooksFactory
+  updateWebhookConfigFactory,
+  deleteWebhookConfigFactory,
+  getStreamWebhooksFactory,
+  createWebhookEventFactory,
+  getLastWebhookEventsFactory
 } = require('@/modules/webhooks/repositories/webhooks')
 const { db } = require('@/db/knex')
 const {
-  createWebhook,
-  updateWebhook: updateWebhookService,
-  deleteWebhook
-} = require('@/modules/webhooks/services/webhooks-new')
+  createWebhookFactory,
+  updateWebhookFactory,
+  deleteWebhookFactory,
+  dispatchStreamEventFactory
+} = require('@/modules/webhooks/services/webhooks')
 const { Users, Streams } = require('@/modules/core/dbSchema')
+const {
+  getStreamFactory,
+  createStreamFactory,
+  grantStreamPermissionsFactory
+} = require('@/modules/core/repositories/streams')
+const {
+  legacyCreateStreamFactory,
+  createStreamReturnRecordFactory
+} = require('@/modules/core/services/streams/management')
+const {
+  inviteUsersToProjectFactory
+} = require('@/modules/serverinvites/services/projectInviteManagement')
+const {
+  createAndSendInviteFactory
+} = require('@/modules/serverinvites/services/creation')
+const {
+  findUserByTargetFactory,
+  insertInviteAndDeleteOldFactory,
+  deleteServerOnlyInvitesFactory,
+  updateAllInviteTargetsFactory
+} = require('@/modules/serverinvites/repositories/serverInvites')
+const {
+  collectAndValidateCoreTargetsFactory
+} = require('@/modules/serverinvites/services/coreResourceCollection')
+const {
+  buildCoreInviteEmailContentsFactory
+} = require('@/modules/serverinvites/services/coreEmailContents')
+const { getEventBus } = require('@/modules/shared/services/eventBus')
+const { createBranchFactory } = require('@/modules/core/repositories/branches')
+const { ProjectsEmitter } = require('@/modules/core/events/projectsEmitter')
+const {
+  addStreamCreatedActivityFactory
+} = require('@/modules/activitystream/services/streamActivity')
+const { saveActivityFactory } = require('@/modules/activitystream/repositories')
+const { publish } = require('@/modules/shared/utils/subscriptions')
+const {
+  getUserFactory,
+  getUsersFactory,
+  storeUserFactory,
+  countAdminUsersFactory,
+  storeUserAclFactory
+} = require('@/modules/core/repositories/users')
+const {
+  findEmailFactory,
+  createUserEmailFactory,
+  ensureNoPrimaryEmailForUserFactory
+} = require('@/modules/core/repositories/userEmails')
+const {
+  requestNewEmailVerificationFactory
+} = require('@/modules/emails/services/verification/request')
+const {
+  deleteOldAndInsertNewVerificationFactory
+} = require('@/modules/emails/repositories')
+const { renderEmail } = require('@/modules/emails/services/emailRendering')
+const { sendEmail } = require('@/modules/emails/services/sending')
+const { createUserFactory } = require('@/modules/core/services/users/management')
+const {
+  validateAndCreateUserEmailFactory
+} = require('@/modules/core/services/userEmails')
+const {
+  finalizeInvitedServerRegistrationFactory
+} = require('@/modules/serverinvites/services/processing')
+const { UsersEmitter } = require('@/modules/core/events/usersEmitter')
+const { createPersonalAccessTokenFactory } = require('@/modules/core/services/tokens')
+const {
+  storeApiTokenFactory,
+  storeTokenScopesFactory,
+  storeTokenResourceAccessDefinitionsFactory,
+  storePersonalApiTokenFactory
+} = require('@/modules/core/repositories/tokens')
+const { getServerInfoFactory } = require('@/modules/core/repositories/server')
 
-const updateWebhook = updateWebhookService({
-  updateWebhookConfig: updateWebhookFactory({ db })
+const getServerInfo = getServerInfoFactory({ db })
+const getUser = getUserFactory({ db })
+const getUsers = getUsersFactory({ db })
+const addStreamCreatedActivity = addStreamCreatedActivityFactory({
+  saveActivity: saveActivityFactory({ db }),
+  publish
+})
+const getStream = getStreamFactory({ db })
+const updateWebhook = updateWebhookFactory({
+  updateWebhookConfig: updateWebhookConfigFactory({ db })
 })
 const getStreamWebhooks = getStreamWebhooksFactory({ db })
+const createStream = legacyCreateStreamFactory({
+  createStreamReturnRecord: createStreamReturnRecordFactory({
+    inviteUsersToProject: inviteUsersToProjectFactory({
+      createAndSendInvite: createAndSendInviteFactory({
+        findUserByTarget: findUserByTargetFactory({ db }),
+        insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
+        collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
+          getStream
+        }),
+        buildInviteEmailContents: buildCoreInviteEmailContentsFactory({
+          getStream
+        }),
+        emitEvent: ({ eventName, payload }) =>
+          getEventBus().emit({
+            eventName,
+            payload
+          }),
+        getUser,
+        getServerInfo
+      }),
+      getUsers
+    }),
+    createStream: createStreamFactory({ db }),
+    createBranch: createBranchFactory({ db }),
+    addStreamCreatedActivity,
+    projectsEventsEmitter: ProjectsEmitter.emit
+  })
+})
+const grantPermissionsStream = grantStreamPermissionsFactory({ db })
+const findEmail = findEmailFactory({ db })
+const requestNewEmailVerification = requestNewEmailVerificationFactory({
+  findEmail,
+  getUser: getUserFactory({ db }),
+  getServerInfo,
+  deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db }),
+  renderEmail,
+  sendEmail
+})
+const createUser = createUserFactory({
+  getServerInfo,
+  findEmail,
+  storeUser: storeUserFactory({ db }),
+  countAdminUsers: countAdminUsersFactory({ db }),
+  storeUserAcl: storeUserAclFactory({ db }),
+  validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
+    createUserEmail: createUserEmailFactory({ db }),
+    ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
+    findEmail,
+    updateEmailInvites: finalizeInvitedServerRegistrationFactory({
+      deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
+      updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
+    }),
+    requestNewEmailVerification
+  }),
+  usersEventsEmitter: UsersEmitter.emit
+})
+const createPersonalAccessToken = createPersonalAccessTokenFactory({
+  storeApiToken: storeApiTokenFactory({ db }),
+  storeTokenScopes: storeTokenScopesFactory({ db }),
+  storeTokenResourceAccessDefinitions: storeTokenResourceAccessDefinitionsFactory({
+    db
+  }),
+  storePersonalApiToken: storePersonalApiTokenFactory({ db })
+})
 
 describe('Webhooks @webhooks', () => {
   const getWebhook = getWebhookByIdFactory({ db })
@@ -82,8 +224,8 @@ describe('Webhooks @webhooks', () => {
 
   describe('Create, Read, Update, Delete Webhooks', () => {
     it('Should create a webhook', async () => {
-      webhookOne.id = await createWebhook({
-        createWebhookConfig: createWebhookFactory({ db }),
+      webhookOne.id = await createWebhookFactory({
+        createWebhookConfig: createWebhookConfigFactory({ db }),
         countWebhooksByStreamId: countWebhooksByStreamIdFactory({ db })
       })(webhookOne)
       expect(webhookOne).to.have.property('id')
@@ -98,8 +240,8 @@ describe('Webhooks @webhooks', () => {
     })
 
     it('Should update a webhook', async () => {
-      const webhookId = await createWebhook({
-        createWebhookConfig: createWebhookFactory({ db }),
+      const webhookId = await createWebhookFactory({
+        createWebhookConfig: createWebhookConfigFactory({ db }),
         countWebhooksByStreamId: countWebhooksByStreamIdFactory({ db })
       })(webhookOne)
 
@@ -127,12 +269,12 @@ describe('Webhooks @webhooks', () => {
         enabled: true,
         triggers: ['commit_create', 'commit_update']
       }
-      webhook.id = await createWebhook({
-        createWebhookConfig: createWebhookFactory({ db }),
+      webhook.id = await createWebhookFactory({
+        createWebhookConfig: createWebhookConfigFactory({ db }),
         countWebhooksByStreamId: countWebhooksByStreamIdFactory({ db })
       })(webhook)
-      await deleteWebhook({
-        deleteWebhookConfig: deleteWebhookFactory({ db }),
+      await deleteWebhookFactory({
+        deleteWebhookConfig: deleteWebhookConfigFactory({ db }),
         getWebhookById: getWebhookByIdFactory({ db })
       })(webhook)
       const webhookDeleted = await getWebhookByIdFactory({ db })({ id: webhook.id })
@@ -158,8 +300,8 @@ describe('Webhooks @webhooks', () => {
         enabled: true,
         triggers: ['commit_create', 'commit_update']
       }
-      await createWebhook({
-        createWebhookConfig: createWebhookFactory({ db }),
+      await createWebhookFactory({
+        createWebhookConfig: createWebhookConfigFactory({ db }),
         countWebhooksByStreamId: countWebhooksByStreamIdFactory({ db })
       })(webhook)
       streamWebhooks = await getStreamWebhooks({ streamId })
@@ -187,16 +329,22 @@ describe('Webhooks @webhooks', () => {
         enabled: true,
         triggers: ['commit_create', 'commit_update']
       }
-      const webhookId = await createWebhook({
-        createWebhookConfig: createWebhookFactory({ db }),
+      const webhookId = await createWebhookFactory({
+        createWebhookConfig: createWebhookConfigFactory({ db }),
         countWebhooksByStreamId: countWebhooksByStreamIdFactory({ db })
       })(webhook)
-      await dispatchStreamEvent({
+      await dispatchStreamEventFactory({
+        db,
+        getServerInfo,
+        getStream,
+        createWebhookEvent: createWebhookEventFactory({ db }),
+        getUser
+      })({
         streamId,
         event: 'commit_create',
         eventPayload: { test: 'payload123' }
       })
-      const lastEvents = await getLastWebhookEvents({ webhookId })
+      const lastEvents = await getLastWebhookEventsFactory({ db })({ webhookId })
       expect(lastEvents).to.have.lengthOf(1)
       expect(JSON.parse(lastEvents[0].payload).test).to.equal('payload123')
     })
@@ -259,7 +407,13 @@ describe('Webhooks @webhooks', () => {
     })
 
     it('Should get stream webhooks and the previous events', async () => {
-      await dispatchStreamEvent({
+      await dispatchStreamEventFactory({
+        db,
+        getServerInfo,
+        getStream,
+        createWebhookEvent: createWebhookEventFactory({ db }),
+        getUser
+      })({
         streamId: streamTwo.id,
         event: 'commit_create',
         eventPayload: { test: 'payload321' }
@@ -334,8 +488,8 @@ describe('Webhooks @webhooks', () => {
         enabled: true,
         triggers: ['commit_create', 'commit_update']
       }
-      webhook.id = await createWebhook({
-        createWebhookConfig: createWebhookFactory({ db }),
+      webhook.id = await createWebhookFactory({
+        createWebhookConfig: createWebhookConfigFactory({ db }),
         countWebhooksByStreamId: countWebhooksByStreamIdFactory({ db })
       })(webhook)
       const res = await sendRequest(userOne.token, {
@@ -384,15 +538,15 @@ describe('Webhooks @webhooks', () => {
         triggers: ['commit_create', 'commit_update']
       }
       for (let i = 0; i < limit; i++) {
-        await createWebhook({
-          createWebhookConfig: createWebhookFactory({ db }),
+        await createWebhookFactory({
+          createWebhookConfig: createWebhookConfigFactory({ db }),
           countWebhooksByStreamId: countWebhooksByStreamIdFactory({ db })
         })(webhook)
       }
 
       try {
-        await createWebhook({
-          createWebhookConfig: createWebhookFactory({ db }),
+        await createWebhookFactory({
+          createWebhookConfig: createWebhookConfigFactory({ db }),
           countWebhooksByStreamId: countWebhooksByStreamIdFactory({ db })
         })(webhook)
       } catch (err) {

@@ -16,21 +16,21 @@ export type SpeckleConverterNodeDelegate =
  * Warning: HIC SVNT DRACONES.
  */
 export default class SpeckleConverter {
-  private objectLoader: ObjectLoader
-  private activePromises: number
-  private maxChildrenPromises: number
-  private spoofIDs = false
-  private tree: WorldTree
-  private subtree: TreeNode
-  private typeLookupTable: { [type: string]: string } = {}
-  private instanceDefinitionLookupTable: { [id: string]: TreeNode } = {}
-  private instancedObjectsLookupTable: { [id: string]: SpeckleObject } = {}
-  private instanceProxies: { [id: string]: TreeNode } = {}
-  private renderMaterialMap: { [id: string]: SpeckleObject } = {}
-  private colorMap: { [id: string]: SpeckleObject } = {}
-  private instanceCounter = 0
+  protected objectLoader: ObjectLoader
+  protected activePromises: number
+  protected maxChildrenPromises: number
+  protected spoofIDs = false
+  protected tree: WorldTree
+  protected subtree: TreeNode
+  protected typeLookupTable: { [type: string]: string } = {}
+  protected instanceDefinitionLookupTable: { [id: string]: TreeNode } = {}
+  protected instancedObjectsLookupTable: { [id: string]: SpeckleObject } = {}
+  protected instanceProxies: { [id: string]: TreeNode } = {}
+  protected renderMaterialMap: { [id: string]: SpeckleObject } = {}
+  protected colorMap: { [id: string]: SpeckleObject } = {}
+  protected instanceCounter = 0
 
-  private readonly NodeConverterMapping: {
+  protected readonly NodeConverterMapping: {
     [name: string]: SpeckleConverterNodeDelegate
   } = {
     View3D: this.View3DToNode.bind(this),
@@ -57,7 +57,7 @@ export default class SpeckleConverter {
     Parameter: null
   }
 
-  private readonly IgnoreNodes = ['Parameter']
+  protected readonly IgnoreNodes = ['Parameter']
 
   constructor(objectLoader: ObjectLoader, tree: WorldTree) {
     if (!objectLoader) {
@@ -176,8 +176,8 @@ export default class SpeckleConverter {
             atomic: false,
             children: []
           })
-          await this.convertToNode(displayValue, nestedNode)
           this.tree.addNode(nestedNode, childNode)
+          await this.convertToNode(displayValue, nestedNode)
           await callback()
         } catch (e) {
           Logger.warn(
@@ -196,8 +196,8 @@ export default class SpeckleConverter {
             atomic: false,
             children: []
           })
-          await this.convertToNode(val, nestedNode)
           this.tree.addNode(nestedNode, childNode)
+          await this.convertToNode(val, nestedNode)
           await callback()
         }
       }

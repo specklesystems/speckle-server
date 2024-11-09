@@ -4,7 +4,15 @@ import {
 } from '@/modules/core/domain/tokens/types'
 import { TokenCreateError } from '@/modules/core/errors/user'
 import { TokenResourceAccessRecord } from '@/modules/core/helpers/types'
-import { MaybeNullOrUndefined, Nullable, Optional, Scopes } from '@speckle/shared'
+import { UserRole } from '@/modules/shared/domain/rolesAndScopes/types'
+import {
+  AllScopes,
+  MaybeNullOrUndefined,
+  Nullable,
+  Optional,
+  Scopes,
+  ServerScope
+} from '@speckle/shared'
 import { differenceBy } from 'lodash'
 
 export enum RoleResourceTargets {
@@ -25,7 +33,7 @@ export const resourceAccessRuleToIdentifier = (
 }
 
 export const roleResourceTypeToTokenResourceType = (
-  type: RoleResourceTargets
+  type: RoleResourceTargets | UserRole['resourceTarget']
 ): Nullable<TokenResourceIdentifierType> => {
   switch (type) {
     case RoleResourceTargets.Streams:
@@ -149,3 +157,6 @@ export const canCreateAppToken = (params: {
 
   return canCreateToken(params)
 }
+
+export const isValidScope = (scope: string): scope is ServerScope =>
+  (AllScopes as string[]).includes(scope)

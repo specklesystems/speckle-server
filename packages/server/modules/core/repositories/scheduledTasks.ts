@@ -1,15 +1,31 @@
 import { ScheduledTasks } from '@/modules/core/dbSchema'
-import { ScheduledTaskRecord } from '@/modules/core/helpers/types'
+import {
+  AcquireTaskLock,
+  ReleaseTaskLock
+} from '@/modules/core/domain/scheduledTasks/operations'
+import { ScheduledTask } from '@/modules/core/domain/scheduledTasks/types'
+import { Knex } from 'knex'
 
-export async function acquireTaskLock(
-  scheduledTask: ScheduledTaskRecord
-): Promise<ScheduledTaskRecord | null> {
-  const now = new Date()
-  const [lock] = await ScheduledTasks.knex<ScheduledTaskRecord>()
-    .insert(scheduledTask)
-    .onConflict(ScheduledTasks.withoutTablePrefix.col.taskName)
-    .merge()
-    .where(ScheduledTasks.col.lockExpiresAt, '<', now)
-    .returning('*')
-  return (lock as ScheduledTaskRecord) ?? null
+const tables = {
+  scheduledTasks: (db: Knex) => db<ScheduledTask>(ScheduledTasks.name)
 }
+
+export const acquireTaskLockFactory =
+  ({ db }: { db: Knex }): AcquireTaskLock =>
+  async (scheduledTask) => {
+    const now = new Date()
+    const [lock] = await tables
+      .scheduledTasks(db)
+      .insert(scheduledTask)
+      .onConflict(ScheduledTasks.withoutTablePrefix.col.taskName)
+      .merge()
+      .where(ScheduledTasks.col.lockExpiresAt, '<', now)
+      .returning('*')
+    return lock ?? null
+  }
+
+export const releaseTaskLockFactory =
+  ({ db }: { db: Knex }): ReleaseTaskLock =>
+  async ({ taskName }) => {
+    await tables.scheduledTasks(db).where({ taskName }).delete()
+  }

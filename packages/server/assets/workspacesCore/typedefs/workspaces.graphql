@@ -3,6 +3,10 @@ extend type Query {
     @hasServerRole(role: SERVER_GUEST)
     @hasScope(scope: "workspace:read")
 
+  workspaceBySlug(slug: String!): Workspace!
+    @hasServerRole(role: SERVER_GUEST)
+    @hasScope(scope: "workspace:read")
+
   """
   Look for an invitation to a workspace, for the current user (authed or not).
 
@@ -10,11 +14,27 @@ extend type Query {
 
   Either token or workspaceId must be specified, or both
   """
-  workspaceInvite(workspaceId: String, token: String): PendingWorkspaceCollaborator
+  workspaceInvite(
+    workspaceId: String
+    token: String
+    options: WorkspaceInviteLookupOptions
+  ): PendingWorkspaceCollaborator
+  """
+  Validates the slug, to make sure it contains only valid characters and its not taken.
+  """
+  validateWorkspaceSlug(slug: String!): Boolean!
+}
+
+input WorkspaceInviteLookupOptions {
+  """
+  If true, the query will assume workspaceId is actually the workspace slug, and do the lookup by slug
+  """
+  useSlug: Boolean
 }
 
 input WorkspaceCreateInput {
   name: String!
+  slug: String
   description: String
   defaultLogoIndex: Int
   """
@@ -26,12 +46,14 @@ input WorkspaceCreateInput {
 input WorkspaceUpdateInput {
   id: String!
   name: String
+  slug: String
   description: String
   """
   Logo image as base64-encoded string
   """
   logo: String
   defaultLogoIndex: Int
+  defaultProjectRole: String
   domainBasedMembershipProtectionEnabled: Boolean
   discoverabilityEnabled: Boolean
 }
@@ -121,14 +143,14 @@ type WorkspaceMutations {
   deleteDomain(input: WorkspaceDomainDeleteInput!): Workspace!
     @hasScope(scope: "workspace:update")
   invites: WorkspaceInviteMutations!
-  projects: WorkspaceProjectMutations!
+  projects: WorkspaceProjectMutations! @hasServerRole(role: SERVER_USER)
 }
 
 type WorkspaceProjectMutations {
   updateRole(input: ProjectUpdateRoleInput!): Project!
-    @hasServerRole(role: SERVER_USER)
     @hasStreamRole(role: STREAM_OWNER)
     @hasWorkspaceRole(role: MEMBER)
+  moveToWorkspace(projectId: String!, workspaceId: String!): Project!
 }
 
 input WorkspaceDomainDeleteInput {
@@ -247,6 +269,7 @@ type WorkspaceBilling {
 type Workspace {
   id: ID!
   name: String!
+  slug: String!
   description: String
   createdAt: DateTime!
   updatedAt: DateTime!
@@ -258,6 +281,10 @@ type Workspace {
   Selected fallback when `logo` not set
   """
   defaultLogoIndex: Int!
+  """
+  The default role workspace members will receive for workspace projects.
+  """
+  defaultProjectRole: String!
   """
   Verified workspace domains
   """
@@ -296,11 +323,33 @@ type Workspace {
   discoverabilityEnabled: Boolean!
 }
 
-type DiscoverableWorkspace {
+"""
+Workspace metadata visible to non-workspace members.
+"""
+type LimitedWorkspace {
+  """
+  Workspace id
+  """
   id: ID!
+  """
+  Workspace name
+  """
   name: String!
+  """
+  Unique workspace short id. Used for navigation.
+  """
+  slug: String!
+  """
+  Workspace description
+  """
   description: String
+  """
+  Optional base64 encoded workspace logo image
+  """
   logo: String
+  """
+  Index of fallback workspace logo to use
+  """
   defaultLogoIndex: Int!
 }
 
@@ -318,9 +367,9 @@ input WorkspaceProjectsFilter {
 
 input WorkspaceTeamFilter {
   """
-  Limit team members to provided role
+  Limit team members to provided role(s)
   """
-  role: String
+  roles: [String!]
   """
   Search for team members by name or email
   """
@@ -333,6 +382,11 @@ type WorkspaceCollaboratorCollection {
   items: [WorkspaceCollaborator!]!
 }
 
+type ProjectRole {
+  role: String!
+  project: Project!
+}
+
 """
 Overridden by `WorkspaceCollaboratorGraphQLReturn`
 """
@@ -340,6 +394,7 @@ type WorkspaceCollaborator {
   id: ID!
   role: String!
   user: LimitedUser!
+  projectRoles: [ProjectRole!]!
 }
 
 type PendingWorkspaceCollaborator {
@@ -348,6 +403,7 @@ type PendingWorkspaceCollaborator {
   inviteId: String!
   workspaceId: String!
   workspaceName: String!
+  workspaceSlug: String!
   """
   E-mail address if target is unregistered or primary e-mail of target registered user
   if token was specified to retrieve this invite
@@ -383,7 +439,7 @@ extend type User {
   """
   Get discoverable workspaces with verified domains that match the active user's
   """
-  discoverableWorkspaces: [DiscoverableWorkspace!]!
+  discoverableWorkspaces: [LimitedWorkspace!]!
 
   """
   Get the workspaces for the user

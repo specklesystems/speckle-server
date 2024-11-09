@@ -3,19 +3,18 @@ import {
   AutomationUpdateError
 } from '@/modules/automate/errors/management'
 import {
-  getAutomation,
-  updateAutomation as updateDbAutomation
+  getAutomationFactory,
+  updateAutomationFactory
 } from '@/modules/automate/repositories/automations'
-import { updateAutomation } from '@/modules/automate/services/automationManagement'
+import { validateAndUpdateAutomationFactory } from '@/modules/automate/services/automationManagement'
 import {
   AuthCodePayloadAction,
-  createStoredAuthCode
+  createStoredAuthCodeFactory
 } from '@/modules/automate/services/authCode'
 import { getGenericRedis } from '@/modules/core'
 import { ProjectAutomationRevisionCreateInput } from '@/modules/core/graph/generated/graphql'
 import { BranchRecord } from '@/modules/core/helpers/types'
-import { getLatestStreamBranch } from '@/modules/core/repositories/branches'
-import { addOrUpdateStreamCollaborator } from '@/modules/core/services/streams/streamAccessService'
+import { getLatestStreamBranchFactory } from '@/modules/core/repositories/branches'
 import { expectToThrow } from '@/test/assertionHelper'
 import { BasicTestUser, createTestUsers } from '@/test/authHelper'
 import {
@@ -42,6 +41,21 @@ import { Automate, Roles } from '@speckle/shared'
 import { expect } from 'chai'
 import { times } from 'lodash'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
+import { db } from '@/db/knex'
+import { AutomationsEmitter } from '@/modules/automate/events/automations'
+import {
+  addOrUpdateStreamCollaboratorFactory,
+  validateStreamAccessFactory
+} from '@/modules/core/services/streams/access'
+import { authorizeResolver } from '@/modules/shared'
+import { grantStreamPermissionsFactory } from '@/modules/core/repositories/streams'
+import {
+  addStreamInviteAcceptedActivityFactory,
+  addStreamPermissionsAddedActivityFactory
+} from '@/modules/activitystream/services/streamActivity'
+import { saveActivityFactory } from '@/modules/activitystream/repositories'
+import { publish } from '@/modules/shared/utils/subscriptions'
+import { getUserFactory } from '@/modules/core/repositories/users'
 
 /**
  * TODO: Extra test ideas
@@ -51,10 +65,31 @@ import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 
 const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
 
+const getUser = getUserFactory({ db })
+const saveActivity = saveActivityFactory({ db })
+const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
+const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
+  validateStreamAccess,
+  getUser,
+  grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+  addStreamInviteAcceptedActivity: addStreamInviteAcceptedActivityFactory({
+    saveActivity,
+    publish
+  }),
+  addStreamPermissionsAddedActivity: addStreamPermissionsAddedActivityFactory({
+    saveActivity,
+    publish
+  })
+})
+
 const buildAutomationUpdate = () => {
-  const update = updateAutomation({
+  const getAutomation = getAutomationFactory({ db })
+  const updateDbAutomation = updateAutomationFactory({ db })
+  const update = validateAndUpdateAutomationFactory({
     getAutomation,
-    updateAutomation: updateDbAutomation
+    updateAutomation: updateDbAutomation,
+    validateStreamAccess,
+    automationsEventsEmit: AutomationsEmitter.emit
   })
 
   return update
@@ -300,7 +335,7 @@ const buildAutomationUpdate = () => {
           projectId: myStream.id,
           userId: me.id
         })
-        projectModel = await getLatestStreamBranch(myStream.id)
+        projectModel = await getLatestStreamBranchFactory({ db })(myStream.id)
       })
 
       it('works successfully', async () => {
@@ -497,7 +532,7 @@ const buildAutomationUpdate = () => {
       })
 
       it('succeeds with valid code', async () => {
-        const storeCode = createStoredAuthCode({
+        const storeCode = createStoredAuthCodeFactory({
           redis: getGenericRedis()
         })
         const code = await storeCode({

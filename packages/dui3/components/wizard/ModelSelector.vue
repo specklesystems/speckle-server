@@ -2,7 +2,7 @@
   <div class="space-y-2">
     <div class="space-y-2">
       <div
-        class="flex items-center space-x-2 justify-between sticky top-4 bg-foundation z-10 py-4 border-b"
+        class="flex items-center space-x-2 justify-between sticky top-4 bg-foundation z-10 py-2 border-b"
       >
         <FormTextInput
           v-model="searchText"
@@ -14,6 +14,7 @@
           :show-clear="!!searchText"
           full-width
           size="lg"
+          color="foundation"
         />
         <FormButton
           v-if="showNewModel"

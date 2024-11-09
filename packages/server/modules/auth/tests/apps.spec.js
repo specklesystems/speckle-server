@@ -1,25 +1,159 @@
 /* istanbul ignore file */
 const expect = require('chai').expect
 
-const { createUser } = require(`@/modules/core/services/users`)
-const { validateToken } = require(`@/modules/core/services/tokens`)
-const { beforeEachContext } = require(`@/test/hooks`)
 const {
-  getApp,
-  getAllPublicApps,
-  createApp,
-  updateApp,
-  deleteApp,
-  createAuthorizationCode,
-  createAppTokenFromAccessCode,
-  refreshAppToken,
-  revokeExistingAppCredentialsForUser
-} = require('../services/apps')
+  createBareToken,
+  createAppTokenFactory,
+  validateTokenFactory
+} = require(`@/modules/core/services/tokens`)
+const { beforeEachContext } = require(`@/test/hooks`)
 
 const { Scopes } = require('@/modules/core/helpers/mainConstants')
-const { updateDefaultApp } = require('@/modules/auth/manageDefaultApps')
-const knex = require('@/db/knex')
+const { knex } = require('@/db/knex')
 const cryptoRandomString = require('crypto-random-string')
+const {
+  getAppFactory,
+  updateDefaultAppFactory,
+  getAllPublicAppsFactory,
+  createAppFactory,
+  updateAppFactory,
+  deleteAppFactory,
+  revokeExistingAppCredentialsForUserFactory,
+  createAuthorizationCodeFactory,
+  getAuthorizationCodeFactory,
+  deleteAuthorizationCodeFactory,
+  createRefreshTokenFactory,
+  getRefreshTokenFactory,
+  revokeRefreshTokenFactory,
+  getTokenAppInfoFactory
+} = require('@/modules/auth/repositories/apps')
+const {
+  createAppTokenFromAccessCodeFactory,
+  refreshAppTokenFactory
+} = require('@/modules/auth/services/serverApps')
+const {
+  findEmailFactory,
+  createUserEmailFactory,
+  ensureNoPrimaryEmailForUserFactory
+} = require('@/modules/core/repositories/userEmails')
+const {
+  requestNewEmailVerificationFactory
+} = require('@/modules/emails/services/verification/request')
+const {
+  getUserFactory,
+  storeUserFactory,
+  countAdminUsersFactory,
+  storeUserAclFactory,
+  getUserRoleFactory
+} = require('@/modules/core/repositories/users')
+const {
+  deleteOldAndInsertNewVerificationFactory
+} = require('@/modules/emails/repositories')
+const { renderEmail } = require('@/modules/emails/services/emailRendering')
+const { sendEmail } = require('@/modules/emails/services/sending')
+const { createUserFactory } = require('@/modules/core/services/users/management')
+const {
+  validateAndCreateUserEmailFactory
+} = require('@/modules/core/services/userEmails')
+const {
+  finalizeInvitedServerRegistrationFactory
+} = require('@/modules/serverinvites/services/processing')
+const {
+  deleteServerOnlyInvitesFactory,
+  updateAllInviteTargetsFactory
+} = require('@/modules/serverinvites/repositories/serverInvites')
+const { UsersEmitter } = require('@/modules/core/events/usersEmitter')
+const {
+  storeApiTokenFactory,
+  storeTokenScopesFactory,
+  storeTokenResourceAccessDefinitionsFactory,
+  storeUserServerAppTokenFactory,
+  revokeUserTokenByIdFactory,
+  getApiTokenByIdFactory,
+  getTokenScopesByIdFactory,
+  getTokenResourceAccessDefinitionsByIdFactory,
+  updateApiTokenFactory
+} = require('@/modules/core/repositories/tokens')
+const { getServerInfoFactory } = require('@/modules/core/repositories/server')
+
+const db = knex
+const getApp = getAppFactory({ db: knex })
+const updateDefaultApp = updateDefaultAppFactory({ db: knex })
+const getAllPublicApps = getAllPublicAppsFactory({ db: knex })
+const createApp = createAppFactory({ db: knex })
+const updateApp = updateAppFactory({ db: knex })
+const deleteApp = deleteAppFactory({ db: knex })
+const revokeExistingAppCredentialsForUser = revokeExistingAppCredentialsForUserFactory({
+  db: knex
+})
+const createAuthorizationCode = createAuthorizationCodeFactory({ db: knex })
+
+const createAppToken = createAppTokenFactory({
+  storeApiToken: storeApiTokenFactory({ db }),
+  storeTokenScopes: storeTokenScopesFactory({ db }),
+  storeTokenResourceAccessDefinitions: storeTokenResourceAccessDefinitionsFactory({
+    db
+  }),
+  storeUserServerAppToken: storeUserServerAppTokenFactory({ db })
+})
+const createRefreshToken = createRefreshTokenFactory({ db: knex })
+const createAppTokenFromAccessCode = createAppTokenFromAccessCodeFactory({
+  getAuthorizationCode: getAuthorizationCodeFactory({ db: knex }),
+  deleteAuthorizationCode: deleteAuthorizationCodeFactory({ db: knex }),
+  getApp,
+  createRefreshToken,
+  createAppToken,
+  createBareToken
+})
+
+const refreshAppToken = refreshAppTokenFactory({
+  getRefreshToken: getRefreshTokenFactory({ db: knex }),
+  revokeRefreshToken: revokeRefreshTokenFactory({ db: knex }),
+  createRefreshToken,
+  getApp,
+  createAppToken,
+  createBareToken
+})
+
+const getServerInfo = getServerInfoFactory({ db })
+const findEmail = findEmailFactory({ db })
+const requestNewEmailVerification = requestNewEmailVerificationFactory({
+  findEmail,
+  getUser: getUserFactory({ db }),
+  getServerInfo,
+  deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db }),
+  renderEmail,
+  sendEmail
+})
+const createUser = createUserFactory({
+  getServerInfo,
+  findEmail,
+  storeUser: storeUserFactory({ db }),
+  countAdminUsers: countAdminUsersFactory({ db }),
+  storeUserAcl: storeUserAclFactory({ db }),
+  validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
+    createUserEmail: createUserEmailFactory({ db }),
+    ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
+    findEmail,
+    updateEmailInvites: finalizeInvitedServerRegistrationFactory({
+      deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
+      updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
+    }),
+    requestNewEmailVerification
+  }),
+  usersEventsEmitter: UsersEmitter.emit
+})
+const validateToken = validateTokenFactory({
+  revokeUserTokenById: revokeUserTokenByIdFactory({ db }),
+  getApiTokenById: getApiTokenByIdFactory({ db }),
+  getTokenAppInfo: getTokenAppInfoFactory({ db }),
+  getTokenScopesById: getTokenScopesByIdFactory({ db }),
+  getUserRole: getUserRoleFactory({ db }),
+  getTokenResourceAccessDefinitionsById: getTokenResourceAccessDefinitionsByIdFactory({
+    db
+  }),
+  updateApiToken: updateApiTokenFactory({ db })
+})
 
 describe('Services @apps-services', () => {
   const actor = {

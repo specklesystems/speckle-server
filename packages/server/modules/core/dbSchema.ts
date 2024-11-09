@@ -610,4 +610,13 @@ export const UserEmails = buildTableHelper('user_emails', [
   'updatedAt'
 ])
 
+export const UserRoles = buildTableHelper('user_roles', [
+  'name',
+  'description',
+  'resourceTarget',
+  'aclTableName',
+  'weight',
+  'public'
+])
+
 export { knex }

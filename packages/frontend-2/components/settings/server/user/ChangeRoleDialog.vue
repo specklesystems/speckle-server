@@ -6,6 +6,7 @@
         v-model="selectedRole"
         :allow-guest="isGuestMode"
         allow-admin
+        show-label
         allow-archived
         :disabled="isCurrentUser"
       />
