@@ -13,16 +13,15 @@ import {
   GetRegionDb
 } from '@/modules/multiregion/services/projectRegion'
 import { getGenericRedis } from '@/modules/core'
-import knex, { Knex } from 'knex'
+import { Knex } from 'knex'
 import { getRegionFactory, getRegionsFactory } from '@/modules/multiregion/repositories'
 import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
-import { createKnexConfig } from '@/knexfile'
+import { configureClient } from '@/knexfile'
 import { InitializeRegion } from '@/modules/multiregion/domain/operations'
 import {
   getAvailableRegionConfig,
   getMainRegionConfig
 } from '@/modules/multiregion/regionConfig'
-import { RegionServerConfig } from '@/modules/multiregion/domain/types'
 import { MaybeNullOrUndefined } from '@speckle/shared'
 
 let getter: GetProjectDb | undefined = undefined
@@ -40,7 +39,7 @@ export const getRegionDb: GetRegionDb = async ({ regionKey }) => {
       throw new Error(`RegionKey ${regionKey} not available in config`)
 
     const newRegionConfig = regionConfigs[regionKey]
-    const regionDb = configureKnexClient(newRegionConfig).public
+    const regionDb = configureClient(newRegionConfig).public
     regionClients[regionKey] = regionDb
   }
 
@@ -97,27 +96,9 @@ const initializeRegisteredRegionClients = async (): Promise<RegionClients> => {
         throw new MisconfiguredEnvironmentError(
           `Missing region config for ${region.key} region`
         )
-      return [region.key, configureKnexClient(regionConfigs[region.key]).public]
+      return [region.key, configureClient(regionConfigs[region.key]).public]
     })
   )
-}
-
-const configureKnexClient = (
-  config: RegionServerConfig
-): { public: Knex; private?: Knex } => {
-  const knexConfig = createKnexConfig({
-    connectionString: config.postgres.connectionUri,
-    caCertificate: config.postgres.publicTlsCertificate
-  })
-  const privateConfig = config.postgres.privateConnectionUri
-    ? knex(
-        createKnexConfig({
-          connectionString: config.postgres.privateConnectionUri,
-          caCertificate: config.postgres.publicTlsCertificate
-        })
-      )
-    : undefined
-  return { public: knex(knexConfig), private: privateConfig }
 }
 
 export const getRegisteredRegionClients = async (): Promise<RegionClients> => {
@@ -139,12 +120,12 @@ export const initializeRegion: InitializeRegion = async ({ regionKey }) => {
     throw new Error(`RegionKey ${regionKey} not available in config`)
 
   const newRegionConfig = regionConfigs[regionKey]
-  const regionDb = configureKnexClient(newRegionConfig)
+  const regionDb = configureClient(newRegionConfig)
   await regionDb.public.migrate.latest()
   // TODO, set up pub-sub shit
 
   const mainDbConfig = await getMainRegionConfig()
-  const mainDb = configureKnexClient(mainDbConfig)
+  const mainDb = configureClient(mainDbConfig)
 
   const sslmode = newRegionConfig.postgres.publicTlsCertificate ? 'require' : 'disable'
 

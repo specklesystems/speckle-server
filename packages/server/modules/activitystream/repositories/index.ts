@@ -27,6 +27,7 @@ import { Knex } from 'knex'
 import { getStreamFactory } from '@/modules/core/repositories/streams'
 import { getUserFactory } from '@/modules/core/repositories/users'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
+import { getProjectDbClient } from '@/modules/multiregion/dbSelector'
 
 const tables = {
   streamActivity: <T extends object = StreamActivityRecord>(db: Knex) =>
@@ -253,11 +254,13 @@ export const saveActivityFactory =
         }
       }
 
+      const projectDb = await getProjectDbClient({ projectId: streamId })
+
       await dispatchStreamEventFactory({
-        getStreamWebhooks: getStreamWebhooksFactory({ db }),
+        getStreamWebhooks: getStreamWebhooksFactory({ db: projectDb }),
         getServerInfo: getServerInfoFactory({ db }),
-        getStream: getStreamFactory({ db }),
-        createWebhookEvent: createWebhookEventFactory({ db }),
+        getStream: getStreamFactory({ db: projectDb }),
+        createWebhookEvent: createWebhookEventFactory({ db: projectDb }),
         getUser: getUserFactory({ db })
       })({
         streamId,

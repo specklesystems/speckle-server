@@ -17147,6 +17147,7 @@ __metadata:
     zod: "npm:^3.22.4"
   peerDependencies:
     "@tiptap/core": ^2.0.0-beta.176
+    knex: "*"
     mixpanel: ^0.17.0
     pino: ^8.7.0
     pino-http: ^8.0.0

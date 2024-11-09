@@ -1,6 +1,6 @@
 import {
-  MultiRegionConfig,
   ProjectRegion,
+  DataRegionsConfig,
   RegionKey,
   ServerRegion
 } from '@/modules/multiregion/domain/types'
@@ -18,7 +18,7 @@ export type UpdateRegion = (params: {
   region: Partial<ServerRegion>
 }) => Promise<ServerRegion>
 
-export type GetAvailableRegionConfig = () => Promise<MultiRegionConfig>
+export type GetAvailableRegionConfig = () => Promise<DataRegionsConfig>
 export type GetAvailableRegionKeys = () => Promise<string[]>
 
 export type GetFreeRegionKeys = () => Promise<string[]>

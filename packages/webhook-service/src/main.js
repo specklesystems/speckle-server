@@ -1,7 +1,7 @@
 'use strict'
 
 const crypto = require('crypto')
-const knex = require('./knex')
+const getDbClients = require('./knex')
 const fs = require('fs')
 const metrics = require('./observability/prometheusMetrics')
 const { logger } = require('./observability/logging')
@@ -122,37 +122,40 @@ const doTaskFactory =
     }
   }
 
-const tickFactory =
-  ({ doTask, startTask, tick }) =>
-  async () => {
-    if (shouldExit) {
-      process.exit(0)
+const doStuff = async (dbClients) => {
+  while (!shouldExit) {
+    const tasks = (
+      await Promise.all(
+        dbClients.map(async (db) => {
+          fs.writeFile(HEALTHCHECK_FILE_PATH, '' + Date.now(), () => {})
+          const task = await startTaskFactory({ db })()
+          if (!task) return
+          return [db, task]
+        })
+      )
+    ).filter((t) => t)
+    if (!tasks.length) {
+      await new Promise((r) => setTimeout(r, 1000))
+      continue
     }
 
-    try {
-      const task = await startTask()
+    await Promise.all(
+      tasks.map(async ([db, task]) => {
+        try {
+          const metricDurationEnd = metrics.metricDuration.startTimer()
 
-      fs.writeFile(HEALTHCHECK_FILE_PATH, '' + Date.now(), () => {})
+          await doTaskFactory({ db })(task)
 
-      if (!task) {
-        setTimeout(tick, 1000)
-        return
-      }
-
-      const metricDurationEnd = metrics.metricDuration.startTimer()
-
-      await doTask(task)
-
-      metricDurationEnd({ op: 'webhook' })
-
-      // Check for another task very soon
-      setTimeout(tick, 10)
-    } catch (err) {
-      metrics.metricOperationErrors.labels('main_loop').inc()
-      logger.error(err, 'Error executing task')
-      setTimeout(tick, 5000)
-    }
+          metricDurationEnd({ op: 'webhook' })
+        } catch (err) {
+          metrics.metricOperationErrors.labels('main_loop').inc()
+          logger.error(err, 'Error executing task')
+        }
+      })
+    )
   }
+  process.exit(0)
+}
 
 async function main() {
   logger.info('Starting Webhook Service...')
@@ -161,14 +164,11 @@ async function main() {
     shouldExit = true
     logger.info('Shutting down...')
   })
-  metrics.initPrometheusMetrics()
+  await metrics.initPrometheusMetrics()
 
-  const tick = tickFactory({
-    doTask: doTaskFactory({ db: knex }),
-    startTask: startTaskFactory({ db: knex }),
-    tick: (...args) => tick(...args)
-  })
-  tick()
+  const dbClients = Object.values(await getDbClients()).map((client) => client.public)
+
+  await doStuff(dbClients)
 }
 
 main()
