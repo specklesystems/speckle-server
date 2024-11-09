@@ -60,6 +60,7 @@ export type DownloadProject = (
      * The author needs to be member of the workspace
      */
     workspaceId?: string
+    regionKey?: string
   },
   options?: Partial<{
     logger: Logger
