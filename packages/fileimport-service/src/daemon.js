@@ -6,8 +6,7 @@ const {
   metricInputFileSize,
   metricOperationErrors
 } = require('./prometheusMetrics')
-const knex = require('../knex')
-const FileUploads = () => knex('file_uploads')
+const getDbClients = require('../knex')
 
 const { downloadFile } = require('./filesApi')
 const fs = require('fs')
@@ -31,7 +30,7 @@ let TIME_LIMIT = 10 * 60 * 1000
 const providedTimeLimit = parseInt(process.env.FILE_IMPORT_TIME_LIMIT_MIN)
 if (providedTimeLimit) TIME_LIMIT = providedTimeLimit * 60 * 1000
 
-async function startTask() {
+async function startTask(knex) {
   const { rows } = await knex.raw(`
     UPDATE file_uploads
     SET
@@ -49,7 +48,7 @@ async function startTask() {
   return rows[0]
 }
 
-async function doTask(task) {
+async function doTask(knex, task) {
   const taskId = task.id
 
   // Mark task as started
@@ -67,7 +66,7 @@ async function doTask(task) {
 
   try {
     taskLogger.info("Doing task '{taskId}'.")
-    const info = await FileUploads().where({ id: taskId }).first()
+    const info = await knex('file_uploads').where({ id: taskId }).first()
     if (!info) {
       throw new Error('Internal error: DB inconsistent')
     }
@@ -305,42 +304,51 @@ function wrapLogLine(line, isErr, logger) {
   logger.info({ parserLogLine: line }, 'ParserLog: {parserLogLine}')
 }
 
-async function tick() {
-  if (shouldExit) {
-    process.exit(0)
-  }
-
-  try {
-    const task = await startTask()
-
-    fs.writeFile(HEALTHCHECK_FILE_PATH, '' + Date.now(), () => {})
-
-    if (!task) {
-      setTimeout(tick, 1000)
-      return
+const doStuff = async () => {
+  const dbClients = Object.values(await getDbClients())
+  const dbClientsIterator = infiniteDbClientsIterator(dbClients)
+  while (!shouldExit) {
+    const db = dbClientsIterator.next()
+    try {
+      const task = await startTask(db)
+      fs.writeFile(HEALTHCHECK_FILE_PATH, '' + Date.now(), () => {})
+      if (!task) {
+        await new Promise((r) => setTimeout(r, 1000))
+        continue
+      }
+      await doTask(db, task)
+      await new Promise((r) => setTimeout(r, 10))
+    } catch (err) {
+      metricOperationErrors.labels('main_loop').inc()
+      logger.error(err, 'Error executing task')
+      await new Promise((r) => setTimeout(r, 5000))
     }
-
-    await doTask(task)
-
-    // Check for another task very soon
-    setTimeout(tick, 10)
-  } catch (err) {
-    metricOperationErrors.labels('main_loop').inc()
-    logger.error(err, 'Error executing task')
-    setTimeout(tick, 5000)
   }
 }
 
 async function main() {
   logger.info('Starting FileUploads Service...')
-  initPrometheusMetrics()
+  await initPrometheusMetrics()
 
   process.on('SIGTERM', () => {
     shouldExit = true
     logger.info('Shutting down...')
   })
 
-  tick()
+  await doStuff()
+  process.exit(0)
+}
+
+function* infiniteDbClientsIterator(dbClients) {
+  let index = 0
+  const clientCount = dbClients.length
+  while (true) {
+    // reset index
+    if (index === clientCount) index = 0
+    const client = dbClients[index]
+    index++
+    yield client
+  }
 }
 
 main()
