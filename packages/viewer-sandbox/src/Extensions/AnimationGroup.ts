@@ -20,14 +20,19 @@ export class AnimationGroup {
   /** We'll store our animations here */
   public animations: Animation[] = []
   /** Animation params */
-  public animTimeScale: number = 0.25
-  private reverse = false
+  public animTimeScale: number = 1
+  private _isReverse = false
   private _isAnimating = false
 
+  public onStart: (() => void) | null = null
   public onComplete: (() => void) | null = null
 
   public get isAnimating(): boolean {
     return this._isAnimating
+  }
+
+  public set animationDuration(value: number) {
+    this.animTimeScale = 1 / value
   }
 
   public update(deltaTime: number): number {
@@ -42,7 +47,7 @@ export class AnimationGroup {
       /** Compute the next animation time value */
       const t =
         this.animations[k].time +
-        (this.reverse
+        (this._isReverse
           ? -(deltaTime * this.animTimeScale)
           : deltaTime * this.animTimeScale)
 
@@ -72,21 +77,23 @@ export class AnimationGroup {
     for (let k = 0; k < this.animations.length; k++) {
       this.animations[k].time = ZERO
     }
-    this.reverse = false
+    this._isReverse = false
     this._isAnimating = true
+    if (this.onStart) this.onStart()
   }
 
-  public playReverse() {
+  public reverse() {
     for (let k = 0; k < this.animations.length; k++) {
       this.animations[k].time = ONE
     }
-    this.reverse = true
+    this._isReverse = true
     this._isAnimating = true
+    if (this.onStart) this.onStart()
   }
 
   public clear() {
     this.animations = []
-    this.reverse = false
+    this._isReverse = false
     this._isAnimating = false
   }
 }

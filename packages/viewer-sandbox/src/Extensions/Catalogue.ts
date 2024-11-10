@@ -10,11 +10,15 @@ import {
 import potpack from 'potpack'
 import { Color, Matrix4, Vector3, Box3, DoubleSide, Group, Mesh } from 'three'
 import gsap from 'gsap'
+import { AnimationGroup } from './AnimationGroup'
+
+const vec3: Vector3 = new Vector3()
 
 export interface AnimationData {
   target: BatchObject
   end: Vector3
   current: Vector3
+  time: number
 }
 
 interface Box {
@@ -33,17 +37,24 @@ interface CategoryBox extends Box {
   boxes: Array<ObjectBox>
 }
 
+export interface AnimationOptions {
+  origin: Vector3
+  duration: number
+}
+
 export class Catalogue extends Extension {
-  private timeline: gsap.core.Timeline | null = null
+  private timeline: gsap.core.Timeline | AnimationGroup | null = null
   private textGroup: Group = new Group()
 
   /** We're tying in to the viewer core's frame event */
   public onEarlyUpdate(deltaTime: number) {
-    // const animCount = this.animationGroup.update(deltaTime)
-    // /** If any animations updated, request a render */
-    // if (animCount) {
-    // this.viewer.requestRender()
-    // }
+    if (!this.timeline || !(this.timeline instanceof AnimationGroup)) return
+
+    const animCount = this.timeline.update(deltaTime)
+    /** If any animations updated, request a render */
+    if (animCount) {
+      this.viewer.requestRender()
+    }
   }
 
   public animate(reverse: boolean = false) {
@@ -58,17 +69,20 @@ export class Catalogue extends Extension {
   ) {
     if (this.timeline) return
 
+    /** Padding between objects of the same category in meters */
     const padding = 0.5
+    /** Padding between categories in meters */
     const categoryPadding = 10
-    const origin = new Vector3(0, 0, 0)
 
+    /** Map of every object's box */
     const objectBoxes: { [id: string]: ObjectBox } = {}
+    /** Map of every category */
     const categories: { [categoryName: string]: CategoryBox } = {}
 
-    for (const cat of input) {
-      const boxes: ObjectBox[] = []
-      for (let k = 0; k < cat.ids.length; k++) {
-        const nodes = this.viewer.getWorldTree().findId(cat.ids[k])
+    for (const category of input) {
+      const categoryBoxes: ObjectBox[] = []
+      for (let k = 0; k < category.ids.length; k++) {
+        const nodes = this.viewer.getWorldTree().findId(category.ids[k])
         if (!nodes) continue
 
         /** Just get the first node */
@@ -79,77 +93,125 @@ export class Catalogue extends Extension {
           .getRenderTree()
           .getRenderViewsForNode(node)
 
-        const objects: BatchObject[] = rvs
+        rvs
           .map((rv: NodeRenderView) => {
             return this.viewer.getRenderer().getObject(rv)
           })
           .filter((value: BatchObject | null) => {
             return value && !objectBoxes[value.renderView.renderData.id]
-          }) as BatchObject[]
+          })
+          .forEach((object: BatchObject | null) => {
+            if (!object) return
+            const aabbSize = object.aabb.getSize(vec3)
+            const box = {
+              object,
+              w: aabbSize.x + padding,
+              h: aabbSize.y + padding,
+              x: 0,
+              y: 0
+            } as ObjectBox
+            objectBoxes[object.renderView.renderData.id] = box
+            categoryBoxes.push(box)
+          })
 
-        objects.forEach((object: BatchObject) => {
-          if (!object) return
-          const aabbSize = object?.aabb.getSize(new Vector3())
-          const box = {
-            object,
-            w: aabbSize.x + padding,
-            h: aabbSize.y + padding,
-            x: 0,
-            y: 0
-          }
-          objectBoxes[object.renderView.renderData.id] = box
-          boxes.push(box)
-        })
+        /** No displayable objects in category */
+        if (!categoryBoxes.length) continue
 
-        if (!objects.length) continue
+        /** Run bin packing on all object boxes from the category.
+         *  Will compute and fill out x,y for each object box
+         */
+        const { w, h } = potpack(categoryBoxes)
 
-        const { w, h } = potpack(boxes)
-        categories[cat.value] = {
-          category: cat.value,
-          boxes,
+        /** Create category box */
+        categories[category.value] = {
+          category: category.value,
+          boxes: categoryBoxes,
           w: w + categoryPadding,
           h: h + categoryPadding,
           x: 0,
           y: 0
         }
       }
+      /** Run bin packing on all categery boxes
+       *  Will compute and fill out x,y for each category box
+       */
+
       potpack(Object.values(categories))
       console.log(categories)
     }
 
-    this.makeAnimations(categories, origin)
-    annotations && (await this.makeAnnotations(categories, origin))
+    this.makeAnimationsGSAP(categories, { origin: new Vector3(0, 0, 0), duration: 2 })
+    annotations && (await this.makeAnnotations(categories, new Vector3(0, 0, 0)))
   }
 
   private makeAnimations(
     categories: { [categoryName: string]: CategoryBox },
-    origin: Vector3
+    options: AnimationOptions
+  ) {
+    this.timeline = new AnimationGroup()
+    this.timeline.animationDuration = options.duration
+    this.timeline.onStart = () => {
+      this.animationStart()
+    }
+    this.timeline.onComplete = () => {
+      this.animationEnd()
+    }
+
+    for (const k in categories) {
+      for (let i = 0; i < categories[k].boxes.length; i++) {
+        const objectBox = categories[k].boxes[i]
+        const box3 = new Box3(
+          new Vector3(
+            objectBox.x + options.origin.x,
+            objectBox.y + options.origin.y,
+            0
+          ),
+          new Vector3(
+            objectBox.x + options.origin.x + objectBox.w,
+            objectBox.y + options.origin.y + objectBox.h,
+            0
+          )
+        ).applyMatrix4(
+          new Matrix4().makeTranslation(categories[k].x, categories[k].y, 0)
+        )
+
+        const bObj = objectBox.object
+        const boxCenter = box3.getCenter(new Vector3())
+        const aabbCenter = bObj.aabb.getCenter(new Vector3())
+        const aabbSize = bObj.aabb.getSize(new Vector3())
+        const finalPos = new Vector3()
+          .copy(boxCenter)
+          .sub(aabbCenter.sub(new Vector3(0, 0, aabbSize.z * 0.5)))
+
+        const data = {
+          target: bObj,
+          end: finalPos,
+          current: new Vector3(),
+          time: 0
+        }
+
+        this.timeline?.animations.push(data)
+      }
+    }
+  }
+
+  private makeAnimationsGSAP(
+    categories: { [categoryName: string]: CategoryBox },
+    options: AnimationOptions
   ) {
     this.timeline = new gsap.core.Timeline({
       onStart: () => {
-        if (this.viewer.getRenderer().pipeline instanceof ProgressivePipeline) {
-          ;(this.viewer.getRenderer().pipeline as ProgressivePipeline).onStationaryEnd()
-        }
+        this.animationStart()
       },
       onUpdate: () => {
         this.viewer.requestRender()
       },
 
       onComplete: () => {
-        if (this.viewer.getRenderer().pipeline instanceof ProgressivePipeline) {
-          ;(
-            this.viewer.getRenderer().pipeline as ProgressivePipeline
-          ).onStationaryBegin()
-          this.viewer.getRenderer().resetPipeline()
-        }
+        this.animationEnd()
       },
       onReverseComplete: () => {
-        if (this.viewer.getRenderer().pipeline instanceof ProgressivePipeline) {
-          ;(
-            this.viewer.getRenderer().pipeline as ProgressivePipeline
-          ).onStationaryBegin()
-          this.viewer.getRenderer().resetPipeline()
-        }
+        this.animationEnd()
       }
     })
     let delay = 0
@@ -157,10 +219,14 @@ export class Catalogue extends Extension {
       for (let i = 0; i < categories[k].boxes.length; i++) {
         const objectBox = categories[k].boxes[i]
         const box3 = new Box3(
-          new Vector3(objectBox.x + origin.x, objectBox.y + origin.y, 0),
           new Vector3(
-            objectBox.x + origin.x + objectBox.w,
-            objectBox.y + origin.y + objectBox.h,
+            objectBox.x + options.origin.x,
+            objectBox.y + options.origin.y,
+            0
+          ),
+          new Vector3(
+            objectBox.x + options.origin.x + objectBox.w,
+            objectBox.y + options.origin.y + objectBox.h,
             0
           )
         ).applyMatrix4(
@@ -186,7 +252,7 @@ export class Catalogue extends Extension {
             x: finalPos.x,
             y: finalPos.y,
             z: finalPos.z,
-            duration: 2,
+            duration: options.duration,
             onUpdate: () => {
               data.target.transformTRS(data.current, undefined, undefined, undefined)
             }
@@ -197,6 +263,19 @@ export class Catalogue extends Extension {
         this.timeline.pause()
       }
       delay += 0.01
+    }
+  }
+
+  private animationStart() {
+    if (this.viewer.getRenderer().pipeline instanceof ProgressivePipeline) {
+      ;(this.viewer.getRenderer().pipeline as ProgressivePipeline).onStationaryEnd()
+    }
+  }
+
+  private animationEnd() {
+    if (this.viewer.getRenderer().pipeline instanceof ProgressivePipeline) {
+      ;(this.viewer.getRenderer().pipeline as ProgressivePipeline).onStationaryBegin()
+      this.viewer.getRenderer().resetPipeline()
     }
   }
 
