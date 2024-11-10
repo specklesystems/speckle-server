@@ -47,6 +47,27 @@
           </div>
         </div>
 
+        <AutomateResultDialog
+          v-if="automationsRuns"
+          :model-card="modelCard"
+          :automation-runs="automationsRuns"
+          :project-id="modelCard.projectId"
+          :model-id="modelCard.modelId"
+        >
+          <template #activator="{ toggle }">
+            <button
+              v-tippy="summary.summary.value.longSummary"
+              class="action action-normal"
+              @click.stop="toggle()"
+            >
+              <AutomateRunsTriggerStatusIcon
+                :summary="summary.summary.value"
+                class="h-5 w-5 md:h-6 md:w-6"
+              />
+            </button>
+          </template>
+        </AutomateResultDialog>
+
         <ModelActionsDialog
           :model-card="modelCard"
           :model-name="modelData.displayName"
@@ -162,6 +183,7 @@
 <script setup lang="ts">
 import { useQuery, useSubscription } from '@vue/apollo-composable'
 import {
+  automateStatusQuery,
   modelCommentCreatedSubscription,
   modelDetailsQuery,
   modelViewingSubscription
@@ -176,7 +198,11 @@ import { useAccountStore } from '~/store/accounts'
 import type { IReceiverModelCard } from '~/lib/models/card/receiver'
 import { useMixpanel } from '~/lib/core/composables/mixpanel'
 import { useIntervalFn, useTimeoutFn } from '@vueuse/core'
-import type { ProjectCommentsUpdatedMessage } from 'lib/common/generated/gql/graphql'
+import type {
+  AutomationRunItemFragment,
+  ProjectCommentsUpdatedMessage
+} from '~/lib/common/generated/gql/graphql'
+import { useFunctionRunsStatusSummary } from '~/lib/automate/runStatus'
 
 const app = useNuxtApp()
 const store = useHostAppStore()
@@ -193,6 +219,10 @@ const props = withDefaults(
     readonly: false
   }
 )
+
+const isSender = computed(() => {
+  return props.modelCard.typeDiscriminator.includes('SenderModelCard')
+})
 
 defineEmits<{
   (e: 'manual-publish-or-load'): void
@@ -231,11 +261,28 @@ const folderPath = computed(() => {
   return withoutLast.join('/')
 })
 
-provide<IModelCard>('cardBase', props.modelCard)
+const { result: automateResult } = useQuery(
+  automateStatusQuery,
+  () => ({
+    projectId: props.project.projectId,
+    modelId: props.modelCard.modelId
+  }),
+  () => ({ clientId })
+)
 
-const isSender = computed(() => {
-  return props.modelCard.typeDiscriminator.includes('SenderModelCard')
+const automationsRuns = ref<AutomationRunItemFragment[] | undefined>(undefined)
+const summary = computed(() =>
+  useFunctionRunsStatusSummary({
+    runs: automationsRuns.value as AutomationRunItemFragment[]
+  })
+)
+
+// at first we can't get result directly?
+watch(automateResult, (newValue) => {
+  automationsRuns.value = newValue?.project.model.automationsStatus?.automationRuns
 })
+
+provide<IModelCard>('cardBase', props.modelCard)
 
 const highlightModel = () => {
   if (!modelData.value) return

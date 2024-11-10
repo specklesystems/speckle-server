@@ -87,6 +87,51 @@ export const createAutomationMutation = graphql(`
   }
 `)
 
+export const automateFunctionRunItemFragment = graphql(`
+  fragment AutomateFunctionRunItem on AutomateFunctionRun {
+    id
+    status
+    statusMessage
+    results
+    contextView
+    function {
+      id
+      name
+      logo
+    }
+  }
+`)
+
+export const automationRunItemFragment = graphql(`
+  fragment AutomationRunItem on AutomateRun {
+    id
+    status
+    automation {
+      id
+      name
+    }
+    functionRuns {
+      ...AutomateFunctionRunItem
+    }
+  }
+`)
+
+export const automateStatusQuery = graphql(`
+  query AutomationStatus($projectId: String!, $modelId: String!) {
+    project(id: $projectId) {
+      model(id: $modelId) {
+        automationsStatus {
+          id
+          status
+          automationRuns {
+            ...AutomationRunItem
+          }
+        }
+      }
+    }
+  }
+`)
+
 export const workspacesListQuery = graphql(`
   query WorkspaceListQuery(
     $limit: Int!
@@ -307,6 +352,9 @@ export const modelDetailsQuery = graphql(`
         name
         versions {
           totalCount
+          items {
+            id
+          }
         }
         author {
           id
