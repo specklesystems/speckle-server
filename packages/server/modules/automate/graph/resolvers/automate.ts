@@ -200,6 +200,7 @@ export = (FF_AUTOMATE_MODULE_ENABLED
           return ctx.loaders.streams.getStream.load(parent.projectId)
         },
         async model(parent, _args, ctx) {
+          // this has parent.projectId
           return ctx.loaders.branches.getById.load(parent.modelId)
         },
         async version(parent, _args, ctx) {

@@ -42,7 +42,6 @@ import {
   fullyDeleteBlobFactory
 } from '@/modules/blobstorage/services/management'
 import { getRolesFactory } from '@/modules/shared/repositories/roles'
-import { getAutomationProjectFactory } from '@/modules/automate/repositories/automations'
 import { adminOverrideEnabled } from '@/modules/shared/helpers/envHelper'
 import { getStreamFactory } from '@/modules/core/repositories/streams'
 import { Request, Response } from 'express'
@@ -92,15 +91,13 @@ export const init: SpeckleModule['init'] = async (app) => {
   const createStreamWritePermissions = ({ projectDb }: { projectDb: Knex }) =>
     streamWritePermissionsPipelineFactory({
       getRoles: getRolesFactory({ db }),
-      getStream: getStreamFactory({ db: projectDb }),
-      getAutomationProject: getAutomationProjectFactory({ db: projectDb })
+      getStream: getStreamFactory({ db: projectDb })
     })
   const createStreamReadPermissions = ({ projectDb }: { projectDb: Knex }) =>
     streamReadPermissionsPipelineFactory({
       adminOverrideEnabled,
       getRoles: getRolesFactory({ db }),
-      getStream: getStreamFactory({ db: projectDb }),
-      getAutomationProject: getAutomationProjectFactory({ db: projectDb })
+      getStream: getStreamFactory({ db: projectDb })
     })
 
   app.post(

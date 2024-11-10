@@ -17,7 +17,6 @@ import { publish } from '@/modules/shared/utils/subscriptions'
 import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import { streamWritePermissionsPipelineFactory } from '@/modules/shared/authz'
 import { getRolesFactory } from '@/modules/shared/repositories/roles'
-import { getAutomationProjectFactory } from '@/modules/automate/repositories/automations'
 import { getStreamBranchByNameFactory } from '@/modules/core/repositories/branches'
 import { getStreamFactory } from '@/modules/core/repositories/streams'
 import { addBranchCreatedActivityFactory } from '@/modules/activitystream/services/branchActivity'
@@ -41,8 +40,7 @@ export const init: SpeckleModule['init'] = async (app, isInitial) => {
       await authMiddlewareCreator(
         streamWritePermissionsPipelineFactory({
           getRoles: getRolesFactory({ db }),
-          getStream: getStreamFactory({ db: projectDb }),
-          getAutomationProject: getAutomationProjectFactory({ db: projectDb })
+          getStream: getStreamFactory({ db: projectDb })
         })
       )(req, res, next)
     },

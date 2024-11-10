@@ -19,7 +19,6 @@ import {
 import { isResourceAllowed } from '@/modules/core/helpers/token'
 import { UserRoleData } from '@/modules/shared/domain/rolesAndScopes/types'
 import db from '@/db/knex'
-import { GetAutomationProject } from '@/modules/automate/domain/operations'
 import {
   AuthContext,
   AuthParams,
@@ -209,7 +208,6 @@ type StreamGetter = (params: {
 
 type ValidateRequiredStreamDeps = {
   getStream: StreamGetter
-  getAutomationProject: GetAutomationProject
 }
 
 // this doesn't do any checks  on the scopes, its sole responsibility is to add the
@@ -219,12 +217,13 @@ export const validateRequiredStreamFactory =
   // stream getter is an async func over { streamId, userId } returning a stream object
   // IoC baby...
   async ({ context, authResult, params }) => {
-    const { getStream, getAutomationProject } = deps
+    const { getStream } = deps
 
-    if (!params?.streamId && !params?.automationId)
+    const streamId = params?.streamId || params?.projectId
+    if (!streamId)
       return authFailed(
         context,
-        new ContextError("The context doesn't have a streamId or automationId")
+        new ContextError("The context doesn't have a streamId or projectId")
       )
     // because we're assigning to the context, it would raise if it would be null
     // its probably?? safer than returning a new context
@@ -234,15 +233,10 @@ export const validateRequiredStreamFactory =
     // cause stream getter could throw, its not a safe function if we want to
     // keep the pipeline rolling
     try {
-      const stream = params.streamId
-        ? await getStream({
-            streamId: params.streamId,
-            userId: context?.userId
-          })
-        : await getAutomationProject({
-            automationId: params.automationId!,
-            userId: context?.userId
-          })
+      const stream = await getStream({
+        streamId,
+        userId: context?.userId
+      })
 
       if (!stream)
         return authFailed(

@@ -27,7 +27,8 @@ export interface AuthResult {
 
 export interface AuthParams {
   streamId?: string
-  automationId?: string
+  // for a while, we'll be in this transition period
+  projectId?: string
 }
 
 export interface AuthData {

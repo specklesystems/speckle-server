@@ -1,7 +1,6 @@
 import {
   GetActiveTriggerDefinitions,
   GetAutomation,
-  GetAutomationProject,
   GetAutomationProjects,
   GetAutomationRevision,
   GetAutomationRevisions,
@@ -912,18 +911,6 @@ export const getAutomationProjectsFactory =
     const res = await q
 
     return keyBy(res, (r) => r.automationId)
-  }
-
-export const getAutomationProjectFactory =
-  (deps: { db: Knex }): GetAutomationProject =>
-  async (params: { automationId: string; userId?: string }) => {
-    const { automationId, userId } = params
-    const projects = await getAutomationProjectsFactory(deps)({
-      automationIds: [automationId],
-      userId
-    })
-
-    return (projects[automationId] || null) as Nullable<(typeof projects)[0]>
   }
 
 export const getAutomationRunWithTokenFactory =
