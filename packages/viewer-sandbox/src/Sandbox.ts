@@ -16,6 +16,7 @@ import {
   SectionTool,
   SpeckleRenderer,
   SpeckleStandardMaterial,
+  StringPropertyInfo,
   TAAPipeline,
   TreeNode
 } from '@speckle/viewer'
@@ -504,9 +505,7 @@ export default class Sandbox {
       const by = 'category'
       const data = this.properties.find((value) => {
         return value.key === by
-      }) as PropertyInfo
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      //@ts-ignore
+      }) as StringPropertyInfo
       await this.viewer.getExtension(Catalogue).categorize(data.valueGroups)
       this.viewer.getExtension(Catalogue).animate(reverse)
       reverse = !reverse

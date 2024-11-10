@@ -23,6 +23,7 @@
   },
   "dependencies": {
     "@speckle/viewer": "workspace:^",
+    "gsap": "3.12.5",
     "potpack": "2.0.0",
     "tweakpane": "^3.0.8"
   },

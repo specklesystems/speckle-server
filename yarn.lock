@@ -17267,6 +17267,7 @@ __metadata:
     "@typescript-eslint/parser": "npm:^7.12.0"
     eslint: "npm:^9.4.0"
     eslint-config-prettier: "npm:^9.1.0"
+    gsap: "npm:3.12.5"
     potpack: "npm:2.0.0"
     tweakpane: "npm:^3.0.8"
     typescript: "npm:^4.5.4"
@@ -33646,6 +33647,13 @@ __metadata:
   version: 15.9.0
   resolution: "graphql@npm:15.9.0"
   checksum: 10/ce1f50672bcb369395d07a47048bcbb429ed1ce06dbcafb7a0999df791cb7aa7206be21497907973dbc8a01df3cd7f632f43c583f248538f186f5adfa1a0d1c5
+  languageName: node
+  linkType: hard
+
+"gsap@npm:3.12.5":
+  version: 3.12.5
+  resolution: "gsap@npm:3.12.5"
+  checksum: 10/192e9f6b11e54d8a0d26cff76573278d42748c6a54906fa42c81425390238ea8f6abbba5c0bca75c4bba32e4f2db957f22c2158fab1be7d4a8d71fc2fb24e8c3
   languageName: node
   linkType: hard
 

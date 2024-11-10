@@ -4,11 +4,18 @@ import {
   ObjectLayers,
   SpeckleText,
   SpeckleTextMaterial,
-  Extension
+  Extension,
+  ProgressivePipeline
 } from '@speckle/viewer'
 import potpack from 'potpack'
 import { Color, Matrix4, Vector3, Box3, DoubleSide, Group, Mesh } from 'three'
-import { AnimationGroup } from './AnimationGroup'
+import gsap from 'gsap'
+
+export interface AnimationData {
+  target: BatchObject
+  end: Vector3
+  current: Vector3
+}
 
 interface Box {
   x: number
@@ -27,25 +34,21 @@ interface CategoryBox extends Box {
 }
 
 export class Catalogue extends Extension {
-  private animationGroup: AnimationGroup = new AnimationGroup()
+  private timeline: gsap.core.Timeline | null = null
   private textGroup: Group = new Group()
 
   /** We're tying in to the viewer core's frame event */
   public onEarlyUpdate(deltaTime: number) {
-    const animCount = this.animationGroup.update(deltaTime)
-
-    /** If any animations updated, request a render */
-    if (animCount) {
-      this.viewer.requestRender()
-    }
+    // const animCount = this.animationGroup.update(deltaTime)
+    // /** If any animations updated, request a render */
+    // if (animCount) {
+    // this.viewer.requestRender()
+    // }
   }
 
   public animate(reverse: boolean = false) {
-    reverse ? this.animationGroup.playReverse() : this.animationGroup.play()
-    this.viewer.getRenderer().resetPipeline(true)
-    this.animationGroup.onComplete = () => {
-      this.viewer.getRenderer().resetPipeline()
-    }
+    if (!this.timeline) return
+    reverse ? this.timeline.reverse() : this.timeline.play()
   }
 
   /** Example's main function */
@@ -53,7 +56,7 @@ export class Catalogue extends Extension {
     input: Array<{ ids: Array<string>; value: string }>,
     annotations = false
   ) {
-    if (this.animationGroup.animations.length) return
+    if (this.timeline) return
 
     const padding = 0.5
     const categoryPadding = 10
@@ -122,6 +125,34 @@ export class Catalogue extends Extension {
     categories: { [categoryName: string]: CategoryBox },
     origin: Vector3
   ) {
+    this.timeline = new gsap.core.Timeline({
+      onStart: () => {
+        if (this.viewer.getRenderer().pipeline instanceof ProgressivePipeline) {
+          ;(this.viewer.getRenderer().pipeline as ProgressivePipeline).onStationaryEnd()
+        }
+      },
+      onUpdate: () => {
+        this.viewer.requestRender()
+      },
+
+      onComplete: () => {
+        if (this.viewer.getRenderer().pipeline instanceof ProgressivePipeline) {
+          ;(
+            this.viewer.getRenderer().pipeline as ProgressivePipeline
+          ).onStationaryBegin()
+          this.viewer.getRenderer().resetPipeline()
+        }
+      },
+      onReverseComplete: () => {
+        if (this.viewer.getRenderer().pipeline instanceof ProgressivePipeline) {
+          ;(
+            this.viewer.getRenderer().pipeline as ProgressivePipeline
+          ).onStationaryBegin()
+          this.viewer.getRenderer().resetPipeline()
+        }
+      }
+    })
+    let delay = 0
     for (const k in categories) {
       for (let i = 0; i < categories[k].boxes.length; i++) {
         const objectBox = categories[k].boxes[i]
@@ -144,13 +175,28 @@ export class Catalogue extends Extension {
           .copy(boxCenter)
           .sub(aabbCenter.sub(new Vector3(0, 0, aabbSize.z * 0.5)))
 
-        this.animationGroup.animations.push({
+        const data = {
           target: bObj,
           end: finalPos,
-          current: new Vector3(),
-          time: 0
-        })
+          current: new Vector3()
+        }
+        this.timeline.to(
+          data.current,
+          {
+            x: finalPos.x,
+            y: finalPos.y,
+            z: finalPos.z,
+            duration: 2,
+            onUpdate: () => {
+              data.target.transformTRS(data.current, undefined, undefined, undefined)
+            }
+          },
+          delay
+        )
+
+        this.timeline.pause()
       }
+      delay += 0.01
     }
   }
 
@@ -217,8 +263,10 @@ export class Catalogue extends Extension {
   }
 
   public wipe() {
-    this.animationGroup.clear()
     this.textGroup.clear()
     this.viewer.getRenderer().scene.remove(this.textGroup)
+
+    this.timeline?.clear()
+    this.timeline = null
   }
 }
