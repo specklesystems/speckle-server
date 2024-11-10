@@ -54,7 +54,7 @@ describe('Workspaces Roles GQL', () => {
     await createTestUsers([serverAdminUser, serverMemberUser])
     const token = await createAuthTokenForUser(serverAdminUser.id, AllScopes)
     apollo = await testApolloServer({
-      context: createTestContext({
+      context: await createTestContext({
         auth: true,
         userId: serverAdminUser.id,
         token,
@@ -551,7 +551,7 @@ describe('Workspaces Roles GQL', () => {
     before(async () => {
       const token = await createAuthTokenForUser(serverMemberUser.id, AllScopes)
       workspaceMemberApollo = await testApolloServer({
-        context: createTestContext({
+        context: await createTestContext({
           auth: true,
           userId: serverMemberUser.id,
           token,

@@ -12,7 +12,7 @@ import {
   getProjectRegionKeyFactory,
   GetRegionDb
 } from '@/modules/multiregion/services/projectRegion'
-import { getGenericRedis } from '@/modules/core'
+import { getGenericRedis } from '@/modules/shared/redis/redis'
 import knex, { Knex } from 'knex'
 import { getRegionFactory, getRegionsFactory } from '@/modules/multiregion/repositories'
 import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
@@ -125,6 +125,9 @@ export const getRegisteredRegionClients = async (): Promise<RegionClients> => {
     registeredRegionClients = await initializeRegisteredRegionClients()
   return registeredRegionClients
 }
+
+export const getRegisteredDbClients = async (): Promise<Knex[]> =>
+  Object.values(await getRegisteredRegionClients())
 
 export const initializeRegion: InitializeRegion = async ({ regionKey }) => {
   const knownClients = await getRegisteredRegionClients()

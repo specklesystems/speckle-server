@@ -9,6 +9,7 @@ import {
 import { cleanOrphanedWebhookConfigsFactory } from '@/modules/webhooks/repositories/cleanup'
 import { Knex } from 'knex'
 import { db } from '@/db/knex'
+import { getRegisteredDbClients } from '@/modules/multiregion/dbSelector'
 
 const scheduleWebhookCleanupFactory = ({ db }: { db: Knex }) => {
   const scheduleExecution = scheduleExecutionFactory({
@@ -19,6 +20,12 @@ const scheduleWebhookCleanupFactory = ({ db }: { db: Knex }) => {
   const cronExpression = '0 4 * * 1'
   return scheduleExecution(cronExpression, 'weeklyWebhookCleanup', async () => {
     activitiesLogger.info('Starting weekly webhooks cleanup')
+    const dbClients = await getRegisteredDbClients()
+    await Promise.all(
+      dbClients.map((regionDb) =>
+        cleanOrphanedWebhookConfigsFactory({ db: regionDb })()
+      )
+    )
     await cleanOrphanedWebhookConfigsFactory({ db })()
     activitiesLogger.info('Finished cleanup')
   })

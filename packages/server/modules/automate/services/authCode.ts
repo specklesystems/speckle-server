@@ -33,17 +33,17 @@ const isPayload = (payload: unknown): payload is AuthCodePayload =>
 
 export const createStoredAuthCodeFactory =
   (deps: { redis: Redis }): CreateStoredAuthCode =>
-    async (params: Omit<AuthCodePayload, 'code'>) => {
-      const { redis } = deps
+  async (params: Omit<AuthCodePayload, 'code'>) => {
+    const { redis } = deps
 
-      const payload: AuthCodePayload = {
-        ...params,
-        code: cryptoRandomString({ length: 20 })
-      }
-
-      await redis.set(payload.code, JSON.stringify(payload), 'EX', 60 * 5)
-      return payload
+    const payload: AuthCodePayload = {
+      ...params,
+      code: cryptoRandomString({ length: 20 })
     }
+
+    await redis.set(payload.code, JSON.stringify(payload), 'EX', 60 * 5)
+    return payload
+  }
 
 export const validateStoredAuthCodeFactory =
   (deps: { redis: Redis }) => async (payload: AuthCodePayload) => {
@@ -57,9 +57,9 @@ export const validateStoredAuthCodeFactory =
 
     if (
       !formattedPayload ||
-      formattedPayload.code !== formattedPayload.code ||
-      formattedPayload.userId !== formattedPayload.userId ||
-      formattedPayload.action !== formattedPayload.action
+      formattedPayload.code !== payload.code ||
+      formattedPayload.userId !== payload.userId ||
+      formattedPayload.action !== payload.action
     ) {
       throw new AutomateAuthCodeHandshakeError('Invalid automate auth payload')
     }

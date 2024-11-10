@@ -31,9 +31,6 @@ import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/ser
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { createBranchFactory } from '@/modules/core/repositories/branches'
 import { ProjectsEmitter } from '@/modules/core/events/projectsEmitter'
-import { addStreamCreatedActivityFactory } from '@/modules/activitystream/services/streamActivity'
-import { saveActivityFactory } from '@/modules/activitystream/repositories'
-import { publish } from '@/modules/shared/utils/subscriptions'
 import {
   countAdminUsersFactory,
   getUserFactory,
@@ -65,10 +62,6 @@ import { getServerInfoFactory } from '@/modules/core/repositories/server'
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = getUserFactory({ db })
 const getUsers = getUsersFactory({ db })
-const addStreamCreatedActivity = addStreamCreatedActivityFactory({
-  saveActivity: saveActivityFactory({ db }),
-  publish
-})
 const getStream = getStreamFactory({ db })
 const createStream = legacyCreateStreamFactory({
   createStreamReturnRecord: createStreamReturnRecordFactory({
@@ -94,7 +87,6 @@ const createStream = legacyCreateStreamFactory({
     }),
     createStream: createStreamFactory({ db }),
     createBranch: createBranchFactory({ db }),
-    addStreamCreatedActivity,
     projectsEventsEmitter: ProjectsEmitter.emit
   })
 })

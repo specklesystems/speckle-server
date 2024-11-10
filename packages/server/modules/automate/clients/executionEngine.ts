@@ -443,7 +443,7 @@ type GetUserFunctionsResponse = {
 }
 
 export const getUserFunctions = async (params: {
-  userId: string,
+  userId: string
   query?: {
     query?: string
     cursor?: string
@@ -469,7 +469,7 @@ type GetWorkspaceFunctionsResponse = {
 }
 
 export const getWorkspaceFunctions = async (params: {
-  workspaceId: string,
+  workspaceId: string
   query?: {
     query?: string
     cursor?: string
