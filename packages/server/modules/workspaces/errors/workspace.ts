@@ -113,3 +113,9 @@ export class WorkspaceDomainsInvalidState extends BaseError {
   static code = 'WORKSPACE_NO_VERIFIED_DOMAINS'
   static statusCode = 500
 }
+
+export class WorkspacePaidPlanActiveError extends BaseError {
+  static defaultMessage = 'Workspace has an active paid plan, cancel it first'
+  static code = 'WORKSPACE_PAID_PLAN_ACTIVE'
+  static statusCode = 400
+}

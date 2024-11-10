@@ -130,8 +130,6 @@ const command: CommandModule<
         workspaceId: argv.workspaceId
       })
       regionKey = workspaceDefaultRegion?.key
-      console.log(workspaceDefaultRegion)
-      console.log(regionKey)
       projectDb = await getDb({ regionKey })
     }
     const getStream = getStreamFactory({ db: projectDb })

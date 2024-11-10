@@ -49,6 +49,7 @@ import {
   WorkspaceInvalidRoleError,
   WorkspaceJoinNotAllowedError,
   WorkspaceNotFoundError,
+  WorkspacePaidPlanActiveError,
   WorkspacesNotAuthorizedError,
   WorkspacesNotYetImplementedError
 } from '@/modules/workspaces/errors/workspace'
@@ -106,7 +107,12 @@ import {
   getPaginatedWorkspaceTeamFactory,
   getWorkspacesForUserFactory
 } from '@/modules/workspaces/services/retrieval'
-import { Roles, WorkspaceRoles, removeNullOrUndefinedKeys } from '@speckle/shared'
+import {
+  Roles,
+  WorkspaceRoles,
+  removeNullOrUndefinedKeys,
+  throwUncoveredError
+} from '@speckle/shared'
 import { chunk } from 'lodash'
 import {
   findEmailsByUserIdFactory,
@@ -162,7 +168,7 @@ import {
 } from '@/modules/core/services/ratelimiter'
 import { RateLimitError } from '@/modules/core/errors/ratelimit'
 import { ProjectsEmitter } from '@/modules/core/events/projectsEmitter'
-import { getDb } from '@/modules/multiregion/dbSelector'
+import { getDb, getRegionDb } from '@/modules/multiregion/dbSelector'
 import { createNewProjectFactory } from '@/modules/core/services/projects'
 import {
   deleteProjectFactory,
@@ -183,6 +189,8 @@ import {
 import { getDecryptor } from '@/modules/workspaces/helpers/sso'
 import { getDefaultRegionFactory } from '@/modules/workspaces/repositories/regions'
 import { storeModelFactory } from '@/modules/core/repositories/models'
+import { getWorkspacePlanFactory } from '@/modules/gatekeeper/repositories/billing'
+import { Knex } from 'knex'
 
 const eventBus = getEventBus()
 const getServerInfo = getServerInfoFactory({ db })
@@ -240,7 +248,6 @@ const buildCreateAndSendWorkspaceInvite = () =>
     getUser,
     getServerInfo
   })
-const deleteStream = deleteStreamFactory({ db })
 const saveActivity = saveActivityFactory({ db })
 const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
 const isStreamCollaborator = isStreamCollaboratorFactory({
@@ -447,16 +454,50 @@ export = FF_WORKSPACES_MODULE_ENABLED
             context.resourceAccessRules
           )
 
-          // Delete workspace and associated resources (i.e. invites)
-          const getStreams = legacyGetStreamsFactory({ db })
-          const deleteWorkspace = deleteWorkspaceFactory({
-            deleteWorkspace: repoDeleteWorkspaceFactory({ db }),
-            deleteProject: deleteStream,
-            deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db }),
-            queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({ getStreams })
-          })
+          const workspacePlan = await getWorkspacePlanFactory({ db })({ workspaceId })
+          if (workspacePlan) {
+            switch (workspacePlan.name) {
+              case 'team':
+              case 'pro':
+              case 'business':
+                switch (workspacePlan.status) {
+                  case 'cancelationScheduled':
+                  case 'valid':
+                  case 'paymentFailed':
+                    throw new WorkspacePaidPlanActiveError()
+                  case 'canceled':
+                  case 'trial':
+                  case 'expired':
+                    break
+                  default:
+                    throwUncoveredError(workspacePlan)
+                }
+              case 'unlimited':
+              case 'academia':
+                break
+              default:
+                throwUncoveredError(workspacePlan)
+            }
+          }
 
-          await deleteWorkspace({ workspaceId })
+          const deleteWorkspaceFrom = (db: Knex) =>
+            deleteWorkspaceFactory({
+              deleteWorkspace: repoDeleteWorkspaceFactory({ db }),
+              deleteProject: deleteStreamFactory({ db }),
+              deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db }),
+              queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({
+                getStreams: legacyGetStreamsFactory({ db })
+              })
+            })
+
+          // this should be turned into a get all regions and map over the regions...
+          const region = await getDefaultRegionFactory({ db })({ workspaceId })
+          if (region) {
+            const regionDb = await getRegionDb({ regionKey: region.key })
+            await deleteWorkspaceFrom(regionDb)({ workspaceId })
+          }
+
+          await deleteWorkspaceFrom(db)({ workspaceId })
 
           return true
         },
