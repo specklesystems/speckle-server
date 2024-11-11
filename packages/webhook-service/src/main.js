@@ -1,7 +1,7 @@
 'use strict'
 
 const crypto = require('crypto')
-const knex = require('./knex')
+const getDbClients = require('./knex')
 const fs = require('fs')
 const metrics = require('./observability/prometheusMetrics')
 const { logger } = require('./observability/logging')
@@ -12,10 +12,8 @@ const HEALTHCHECK_FILE_PATH = '/tmp/last_successful_query'
 const { makeNetworkRequest } = require('./webhookCaller')
 const WebhookError = require('./errors')
 
-const startTaskFactory =
-  ({ db }) =>
-  async () => {
-    const { rows } = await db.raw(`
+const startTask = async (db) => {
+  const { rows } = await db.raw(`
     UPDATE webhooks_events
     SET
       "status" = 1,
@@ -29,16 +27,14 @@ const startTaskFactory =
     WHERE webhooks_events."id" = task."id"
     RETURNING webhooks_events."id"
   `)
-    return rows[0]
-  }
+  return rows[0]
+}
 
-const doTaskFactory =
-  ({ db }) =>
-  async (task) => {
-    let boundLogger = logger.child({ taskId: task.id })
-    try {
-      const { rows } = await db.raw(
-        `
+const doTask = async (db, task) => {
+  let boundLogger = logger.child({ taskId: task.id })
+  try {
+    const { rows } = await db.raw(
+      `
       SELECT
         ev.payload as evt,
         cnf.id as wh_id, cnf.url as wh_url, cnf.secret as wh_secret, cnf.enabled as wh_enabled
@@ -47,49 +43,49 @@ const doTaskFactory =
       WHERE ev.id = ?
       LIMIT 1
     `,
-        [task.id]
+      [task.id]
+    )
+    const info = rows[0]
+    if (!info) {
+      throw new Error('Internal error: DB inconsistent')
+    }
+    boundLogger = boundLogger.child({ webhookId: info.wh_id })
+
+    const fullPayload = JSON.parse(info.evt)
+    boundLogger = boundLogger.child({
+      streamId: fullPayload.streamId,
+      eventName: fullPayload.event.event_name
+    })
+
+    const postData = { payload: fullPayload }
+
+    const signature = crypto
+      .createHmac('sha256', info.wh_secret || '')
+      .update(JSON.stringify(postData))
+      .digest('hex')
+    const postHeaders = { 'X-WEBHOOK-SIGNATURE': signature }
+
+    boundLogger.info('Calling webhook.')
+    const result = await makeNetworkRequest({
+      url: info.wh_url,
+      data: postData,
+      headersData: postHeaders,
+      logger: boundLogger
+    })
+
+    boundLogger.info({ result }, `Received response from webhook.`)
+
+    if (!result.success) {
+      throw new WebhookError(
+        result.error,
+        'Calling webhook was unsuccessful.',
+        result.responseCode,
+        result.responseBody
       )
-      const info = rows[0]
-      if (!info) {
-        throw new Error('Internal error: DB inconsistent')
-      }
-      boundLogger = boundLogger.child({ webhookId: info.wh_id })
+    }
 
-      const fullPayload = JSON.parse(info.evt)
-      boundLogger = boundLogger.child({
-        streamId: fullPayload.streamId,
-        eventName: fullPayload.event.event_name
-      })
-
-      const postData = { payload: fullPayload }
-
-      const signature = crypto
-        .createHmac('sha256', info.wh_secret || '')
-        .update(JSON.stringify(postData))
-        .digest('hex')
-      const postHeaders = { 'X-WEBHOOK-SIGNATURE': signature }
-
-      boundLogger.info('Calling webhook.')
-      const result = await makeNetworkRequest({
-        url: info.wh_url,
-        data: postData,
-        headersData: postHeaders,
-        logger: boundLogger
-      })
-
-      boundLogger.info({ result }, `Received response from webhook.`)
-
-      if (!result.success) {
-        throw new WebhookError(
-          result.error,
-          'Calling webhook was unsuccessful.',
-          result.responseCode,
-          result.responseBody
-        )
-      }
-
-      await db.raw(
-        `
+    await db.raw(
+      `
       UPDATE webhooks_events
       SET
         "status" = 2,
@@ -97,18 +93,18 @@ const doTaskFactory =
         "statusInfo" = 'Webhook called'
       WHERE "id" = ?
     `,
-        [task.id]
-      )
-    } catch (err) {
-      switch (err.constructor) {
-        case WebhookError:
-          boundLogger.warn({ err }, 'Failed to trigger webhook event.')
-          break
-        default:
-          boundLogger.error(err, 'Failed to trigger webhook event.')
-      }
-      await db.raw(
-        `
+      [task.id]
+    )
+  } catch (err) {
+    switch (err.constructor) {
+      case WebhookError:
+        boundLogger.warn({ err }, 'Failed to trigger webhook event.')
+        break
+      default:
+        boundLogger.error(err, 'Failed to trigger webhook event.')
+    }
+    await db.raw(
+      `
       UPDATE webhooks_events
       SET
         "status" = 3,
@@ -116,43 +112,46 @@ const doTaskFactory =
         "statusInfo" = ?
       WHERE "id" = ?
     `,
-        [err.toString(), task.id]
+      [err.toString(), task.id]
+    )
+    metrics.metricOperationErrors.labels('webhook').inc()
+  }
+}
+
+const doStuff = async (dbClients) => {
+  while (!shouldExit) {
+    const tasks = (
+      await Promise.all(
+        dbClients.map(async (db) => {
+          fs.writeFile(HEALTHCHECK_FILE_PATH, '' + Date.now(), () => {})
+          const task = await startTask(db)
+          if (!task) return
+          return [db, task]
+        })
       )
-      metrics.metricOperationErrors.labels('webhook').inc()
+    ).filter((t) => t)
+    if (!tasks.length) {
+      await new Promise((r) => setTimeout(r, 1000))
+      continue
     }
+
+    await Promise.all(
+      tasks.map(async ([db, task]) => {
+        try {
+          const metricDurationEnd = metrics.metricDuration.startTimer()
+
+          await doTask(db, task)
+
+          metricDurationEnd({ op: 'webhook' })
+        } catch (err) {
+          metrics.metricOperationErrors.labels('main_loop').inc()
+          logger.error(err, 'Error executing task')
+        }
+      })
+    )
   }
-
-const tickFactory =
-  ({ doTask, startTask, tick }) =>
-  async () => {
-    if (shouldExit) {
-      process.exit(0)
-    }
-
-    try {
-      const task = await startTask()
-
-      fs.writeFile(HEALTHCHECK_FILE_PATH, '' + Date.now(), () => {})
-
-      if (!task) {
-        setTimeout(tick, 1000)
-        return
-      }
-
-      const metricDurationEnd = metrics.metricDuration.startTimer()
-
-      await doTask(task)
-
-      metricDurationEnd({ op: 'webhook' })
-
-      // Check for another task very soon
-      setTimeout(tick, 10)
-    } catch (err) {
-      metrics.metricOperationErrors.labels('main_loop').inc()
-      logger.error(err, 'Error executing task')
-      setTimeout(tick, 5000)
-    }
-  }
+  process.exit(0)
+}
 
 async function main() {
   logger.info('Starting Webhook Service...')
@@ -161,14 +160,11 @@ async function main() {
     shouldExit = true
     logger.info('Shutting down...')
   })
-  metrics.initPrometheusMetrics()
+  await metrics.initPrometheusMetrics()
 
-  const tick = tickFactory({
-    doTask: doTaskFactory({ db: knex }),
-    startTask: startTaskFactory({ db: knex }),
-    tick: (...args) => tick(...args)
-  })
-  tick()
+  const dbClients = Object.values(await getDbClients()).map((client) => client.public)
+
+  await doStuff(dbClients)
 }
 
 main()

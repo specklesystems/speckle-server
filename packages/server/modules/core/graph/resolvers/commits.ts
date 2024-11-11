@@ -11,7 +11,7 @@ import {
   legacyGetPaginatedStreamCommitsFactory
 } from '@/modules/core/services/commit/retrieval'
 import {
-  markCommitReceivedAndNotify,
+  markCommitReceivedAndNotifyFactory,
   deleteCommitAndNotifyFactory,
   createCommitByBranchIdFactory,
   createCommitByBranchNameFactory,
@@ -352,7 +352,10 @@ export = {
         context.resourceAccessRules
       )
 
-      await markCommitReceivedAndNotify({
+      await markCommitReceivedAndNotifyFactory({
+        getCommit: getCommitFactory({ db }),
+        saveActivity: saveActivityFactory({ db })
+      })({
         input: args.input,
         userId: context.userId!
       })
