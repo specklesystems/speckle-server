@@ -38,6 +38,18 @@ export const createProjectMutation = graphql(`
   }
 `)
 
+export const createProjectInWorkspaceMutation = graphql(`
+  mutation CreateProjectInWorkspace($input: WorkspaceProjectCreateInput!) {
+    workspaceMutations {
+      projects {
+        create(input: $input) {
+          ...ProjectListProjectItem
+        }
+      }
+    }
+  }
+`)
+
 export const requestProjectAccess = graphql(`
   mutation StreamAccessRequestCreate($input: String!) {
     streamAccessRequestCreate(streamId: $input) {

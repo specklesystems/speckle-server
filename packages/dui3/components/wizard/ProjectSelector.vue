@@ -122,6 +122,7 @@ import { PlusIcon } from '@heroicons/vue/20/solid'
 import type { DUIAccount } from '~/store/accounts'
 import { useAccountStore } from '~/store/accounts'
 import {
+  createProjectInWorkspaceMutation,
   createProjectMutation,
   projectsListQuery,
   workspacesListQuery
@@ -234,14 +235,14 @@ const createNewProjectInWorkspace = async (name: string) => {
     account.value.accountInfo.id
   )
   const { mutate } = provideApolloClient(account.value.client)(() =>
-    useMutation(createProjectMutation)
+    useMutation(createProjectInWorkspaceMutation)
   )
   const res = await mutate({
-    input: { name, workspaceId: selectedWorkspace.value?.id }
+    input: { name, workspaceId: selectedWorkspace.value?.id as string }
   })
-  if (res?.data?.projectMutations.create) {
+  if (res?.data?.workspaceMutations.projects.create) {
     refetch() // Sorts the list with newly created project otherwise it will put the project at the bottom.
-    emit('next', accountId.value, res?.data?.projectMutations.create)
+    emit('next', accountId.value, res?.data?.workspaceMutations.projects.create)
   } else {
     // TODO: Error out
   }
