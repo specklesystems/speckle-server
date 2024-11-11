@@ -48,9 +48,11 @@
     <div v-if="isAutomateEnabled" class="flex flex-col gap-9">
       <div class="flex gap-2 flex-col sm:flex-row sm:justify-between sm:items-center">
         <h2 class="text-heading-xl">Featured functions</h2>
-        <FormButton color="outline" class="shrink-0" :to="automationFunctionsRoute">
-          Explore all functions
-        </FormButton>
+        <div class="flex items-center gap-2">
+          <FormButton color="outline" class="shrink-0" :to="automationFunctionsRoute">
+            Explore all functions
+          </FormButton>
+        </div>
       </div>
       <AutomateFunctionCardView v-if="functions.length">
         <AutomateFunctionCard
@@ -73,7 +75,7 @@ import type { CreateAutomationSelectableFunction } from '~/lib/automate/helpers/
 
 graphql(`
   fragment ProjectPageAutomationsEmptyState_Query on Query {
-    automateFunctions(limit: 9, filter: { featuredFunctionsOnly: true }) {
+    automateFunctions(limit: 9) {
       items {
         ...AutomationsFunctionsCard_AutomateFunction
         ...AutomateAutomationCreateDialog_AutomateFunction

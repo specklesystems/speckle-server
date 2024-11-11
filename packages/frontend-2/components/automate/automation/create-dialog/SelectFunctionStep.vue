@@ -58,16 +58,16 @@ const searchQuery = graphql(`
         }
       }
     }
-    workspace(id: $workspaceId) {
-      automateFunctions(limit: 20, filter: { search: $search }, cursor: $cursor) {
-        cursor
-        totalCount
-        items {
-          id
-          ...AutomateAutomationCreateDialog_AutomateFunction
-        }
-      }
-    }
+    # workspace(id: $workspaceId) {
+    #   automateFunctions(limit: 20, filter: { search: $search }, cursor: $cursor) {
+    #     cursor
+    #     totalCount
+    #     items {
+    #       id
+    #       ...AutomateAutomationCreateDialog_AutomateFunction
+    #     }
+    #   }
+    # }
   }
 `)
 

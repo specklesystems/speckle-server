@@ -322,7 +322,6 @@ export enum AutomateFunctionTemplateLanguage {
 }
 
 export type AutomateFunctionsFilter = {
-  featuredFunctionsOnly?: InputMaybe<Scalars['Boolean']['input']>;
   /** By default we skip functions without releases. Set this to true to include them. */
   functionsWithoutReleases?: InputMaybe<Scalars['Boolean']['input']>;
   search?: InputMaybe<Scalars['String']['input']>;
