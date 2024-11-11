@@ -354,7 +354,12 @@ export = {
       }))
     },
     async sourceApps(parent, _args, ctx) {
-      return ctx.loaders.streams.getSourceApps.load(parent.id) || []
+      const projectDB = await getProjectDbClient({ projectId: parent.id })
+      return (
+        ctx.loaders
+          .forRegion({ db: projectDB })
+          .streams.getSourceApps.load(parent.id) || []
+      )
     },
 
     async visibility(parent) {

@@ -152,14 +152,6 @@
               </NuxtLink>
             </LayoutSidebarMenuGroup>
           </LayoutSidebarMenu>
-          <template #promo>
-            <LayoutSidebarPromo
-              title="Last chance for SpeckleCon!"
-              text="Grab one of the last spots at the ultimate community event in London on Nov 13-14."
-              button-text="Get tickets"
-              @on-click="onPromoClick"
-            />
-          </template>
         </LayoutSidebar>
       </div>
     </template>
@@ -177,7 +169,6 @@
 import {
   FormButton,
   LayoutSidebar,
-  LayoutSidebarPromo,
   LayoutSidebarMenu,
   LayoutSidebarMenuGroup,
   LayoutSidebarMenuGroupItem
@@ -262,15 +253,6 @@ onWorkspaceResult((result) => {
     }
   }
 })
-
-const onPromoClick = () => {
-  mixpanel.track('Promo Banner Clicked', {
-    source: 'sidebar',
-    campaign: 'specklecon2024'
-  })
-
-  window.open('https://conf.speckle.systems/', '_blank')
-}
 
 const openFeedbackDialog = () => {
   showFeedbackDialog.value = true

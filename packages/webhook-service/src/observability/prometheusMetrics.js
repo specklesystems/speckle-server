@@ -3,7 +3,7 @@
 
 const http = require('http')
 const prometheusClient = require('prom-client')
-const knex = require('../knex')
+const getDbClients = require('../knex')
 
 let metricFree = null
 let metricUsed = null
@@ -24,7 +24,8 @@ prometheusClient.collectDefaultMetrics()
 
 let prometheusInitialized = false
 
-function initKnexPrometheusMetrics() {
+async function initKnexPrometheusMetrics() {
+  const knex = (await getDbClients()).main.public
   metricFree = new prometheusClient.Gauge({
     name: 'speckle_server_knex_free',
     help: 'Number of free DB connections',
@@ -114,11 +115,11 @@ function initKnexPrometheusMetrics() {
 }
 
 module.exports = {
-  initPrometheusMetrics() {
+  async initPrometheusMetrics() {
     if (prometheusInitialized) return
     prometheusInitialized = true
 
-    initKnexPrometheusMetrics()
+    await initKnexPrometheusMetrics()
 
     // Define the HTTP server
     const server = http.createServer(async (req, res) => {

@@ -868,9 +868,6 @@ export = (FF_AUTOMATE_MODULE_ENABLED
       automation: () => {
         throw new AutomateApiDisabledError()
       },
-      automations: () => {
-        throw new AutomateApiDisabledError()
-      }
     },
     AutomateMutations: {
       createFunction: () => {
@@ -906,10 +903,9 @@ export = (FF_AUTOMATE_MODULE_ENABLED
       }
     },
     User: {
-      automateInfo: () => ({
-        hasAutomateGithubApp: false,
-        availableGithubOrgs: []
-      })
+      automateInfo: () => {
+        throw new AutomateApiDisabledError()
+      }
     },
     ServerInfo: {
       automate: () => ({
