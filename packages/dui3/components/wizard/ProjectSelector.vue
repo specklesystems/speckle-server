@@ -89,7 +89,7 @@
             name="Workspaces"
             show-label
             :items="workspaces"
-            :disabled-item-predicate="userCanCreateWorkspace"
+            :disabled-item-predicate="userCantCreateWorkspace"
             :disabled-item-tooltip="'You do not have write access on this workspace.'"
             mount-menu-on-body
           >
@@ -250,8 +250,8 @@ const createNewProjectInWorkspace = async (name: string) => {
   }
 }
 
-const userCanCreateWorkspace = (item: WorkspaceListWorkspaceItemFragment) =>
-  !!item?.role && item.role !== 'workspace:guest'
+const userCantCreateWorkspace = (item: WorkspaceListWorkspaceItemFragment) =>
+  !!item?.role && item.role === 'workspace:guest'
 
 const {
   result: projectsResult,
