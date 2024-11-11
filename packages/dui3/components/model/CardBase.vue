@@ -200,10 +200,7 @@ import { useAccountStore } from '~/store/accounts'
 import type { IReceiverModelCard } from '~/lib/models/card/receiver'
 import { useMixpanel } from '~/lib/core/composables/mixpanel'
 import { useIntervalFn, useTimeoutFn } from '@vueuse/core'
-import type {
-  AutomationRunItemFragment,
-  ProjectCommentsUpdatedMessage
-} from '~/lib/common/generated/gql/graphql'
+import type { ProjectCommentsUpdatedMessage } from '~/lib/common/generated/gql/graphql'
 import { useFunctionRunsStatusSummary } from '~/lib/automate/runStatus'
 
 const app = useNuxtApp()
@@ -263,7 +260,7 @@ const folderPath = computed(() => {
   return withoutLast.join('/')
 })
 
-const { result: automateResult } = useQuery(
+const { result: automateResult, onResult } = useQuery(
   automateStatusQuery,
   () => ({
     projectId: props.project.projectId,
@@ -272,18 +269,25 @@ const { result: automateResult } = useQuery(
   () => ({ clientId })
 )
 
-const summary = computed(() => {
-  // On init, it will use the runs from the query result above. Post factum, it will use the runs set from the subscription in ProjectModelGroup
-  const actualRuns =
-    props.modelCard.automationRuns ??
-    automateResult.value?.project.model.automationsStatus?.automationRuns
+// on model card first load, populate any pre-existing automation runs here
+onResult((res) => {
+  const automationRuns = res.data.project.model.automationsStatus?.automationRuns
+  if (!automationRuns) return
+  void store.patchModel(
+    props.modelCard.modelCardId,
+    {
+      automationRuns
+    },
+    false
+  )
+})
 
-  if (!actualRuns) {
+const summary = computed(() => {
+  if (!props.modelCard.automationRuns) {
     return undefined
   }
   return useFunctionRunsStatusSummary({
-    runs: actualRuns as AutomationRunItemFragment[]
-    // runs: automationsRuns.value as AutomationRunItemFragment[]
+    runs: props.modelCard.automationRuns
   })
 })
 

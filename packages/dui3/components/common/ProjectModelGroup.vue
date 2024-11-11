@@ -279,7 +279,6 @@ const { onResult: onAutomateRunResult } = useSubscription(
 )
 
 onAutomateRunResult((res) => {
-  console.log(res.data?.projectTriggeredAutomationsStatusUpdated)
   if (!res.data?.projectTriggeredAutomationsStatusUpdated) return
 
   const relevantSender = props.project.senders.find(
