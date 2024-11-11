@@ -9,6 +9,7 @@ import {
 } from '@/healthchecks/types'
 import { LivenessError, ReadinessError } from '@/healthchecks/errors'
 import { calculatePercentageFreeConnections } from '@/healthchecks/connectionPool'
+import { getGenericRedis } from '@/modules/shared/redis/redis'
 
 export const handleLivenessFactory =
   (deps: {
@@ -42,10 +43,11 @@ export const handleLivenessFactory =
       )
     }
 
-    const redis = await deps.isRedisAlive()
-    if (!redis.isAlive) {
+    const redisClient = getGenericRedis()
+    const redisCheck = await deps.isRedisAlive({ client: redisClient })
+    if (!redisCheck.isAlive) {
       throw new LivenessError('Liveness health check failed. Redis is not available.', {
-        cause: ensureErrorOrWrapAsCause(redis.err, 'Unknown redis error.')
+        cause: ensureErrorOrWrapAsCause(redisCheck.err, 'Unknown redis error.')
       })
     }
 
@@ -115,11 +117,12 @@ export const handleReadinessFactory = (deps: {
       )
     }
 
-    const redis = await deps.isRedisAlive()
-    if (!redis.isAlive) {
+    const redisClient = getGenericRedis()
+    const redisCheck = await deps.isRedisAlive({ client: redisClient })
+    if (!redisCheck.isAlive) {
       throw new ReadinessError(
         'Readiness health check failed. Redis is not available.',
-        { cause: ensureErrorOrWrapAsCause(redis.err, 'Unknown Redis error.') }
+        { cause: ensureErrorOrWrapAsCause(redisCheck.err, 'Unknown Redis error.') }
       )
     }
 
