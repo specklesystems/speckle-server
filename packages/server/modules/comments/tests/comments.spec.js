@@ -102,9 +102,6 @@ const {
 } = require('@/modules/serverinvites/services/coreEmailContents')
 const { getEventBus } = require('@/modules/shared/services/eventBus')
 const { ProjectsEmitter } = require('@/modules/core/events/projectsEmitter')
-const {
-  addStreamCreatedActivityFactory
-} = require('@/modules/activitystream/services/streamActivity')
 const { saveActivityFactory } = require('@/modules/activitystream/repositories')
 const { publish } = require('@/modules/shared/utils/subscriptions')
 const {
@@ -213,10 +210,6 @@ const createCommitByBranchName = createCommitByBranchNameFactory({
   getBranchById: getBranchByIdFactory({ db })
 })
 
-const addStreamCreatedActivity = addStreamCreatedActivityFactory({
-  saveActivity: saveActivityFactory({ db }),
-  publish
-})
 const createStream = legacyCreateStreamFactory({
   createStreamReturnRecord: createStreamReturnRecordFactory({
     inviteUsersToProject: inviteUsersToProjectFactory({
@@ -241,7 +234,6 @@ const createStream = legacyCreateStreamFactory({
     }),
     createStream: createStreamFactory({ db }),
     createBranch: createBranchFactory({ db }),
-    addStreamCreatedActivity,
     projectsEventsEmitter: ProjectsEmitter.emit
   })
 })
@@ -1255,7 +1247,7 @@ describe('Comments @comments', () => {
       // Init apollo instance w/ authenticated context
       apollo = {
         apollo: await buildApolloServer(),
-        context: createAuthedTestContext(user.id)
+        context: await createAuthedTestContext(user.id)
       }
 
       // Init token for authenticating w/ REST API

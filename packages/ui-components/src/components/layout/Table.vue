@@ -155,9 +155,10 @@ const getHeaderClasses = (
     noPadding: boolean
   }>
 ): string => {
-  const classParts = [
-    column ? props.columns.find((c) => c.id === column)?.classes : '' || ''
-  ]
+  const columnClasses = column
+    ? props.columns.find((c) => c.id === column)?.classes
+    : ''
+  const classParts = [columnClasses || '']
 
   if (!options?.noPadding) {
     if (colIndex === 0) {

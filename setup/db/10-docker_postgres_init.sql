@@ -1,3 +1,6 @@
+-- setup for replication
+ALTER SYSTEM SET wal_level = logical;
+
 CREATE DATABASE speckle2_test
     WITH
     OWNER = speckle

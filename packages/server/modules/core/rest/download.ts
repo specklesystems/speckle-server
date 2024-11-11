@@ -13,10 +13,9 @@ import { validatePermissionsReadStreamFactory } from '@/modules/core/services/st
 import { getStreamFactory } from '@/modules/core/repositories/streams'
 import { validateScopes, authorizeResolver } from '@/modules/shared'
 import type express from 'express'
+import { getProjectDbClient } from '@/modules/multiregion/dbSelector'
 
 export default (app: express.Express) => {
-  const getObject = getFormattedObjectFactory({ db })
-  const getObjectChildrenStream = getObjectChildrenStreamFactory({ db })
   const validatePermissionsReadStream = validatePermissionsReadStreamFactory({
     getStream: getStreamFactory({ db }),
     validateScopes,
@@ -39,6 +38,9 @@ export default (app: express.Express) => {
     if (!hasStreamAccess.result) {
       return res.status(hasStreamAccess.status).end()
     }
+    const projectDb = await getProjectDbClient({ projectId: req.params.streamId })
+    const getObject = getFormattedObjectFactory({ db: projectDb })
+    const getObjectChildrenStream = getObjectChildrenStreamFactory({ db: projectDb })
 
     // Populate first object (the "commit")
     const obj = await getObject({
@@ -105,6 +107,9 @@ export default (app: express.Express) => {
     if (!hasStreamAccess.result) {
       return res.status(hasStreamAccess.status).end()
     }
+
+    const projectDb = await getProjectDbClient({ projectId: req.params.streamId })
+    const getObject = getFormattedObjectFactory({ db: projectDb })
 
     const obj = await getObject({
       streamId: req.params.streamId,

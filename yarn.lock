@@ -12211,6 +12211,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@lifeomic/attempt@npm:^3.1.0":
+  version: 3.1.0
+  resolution: "@lifeomic/attempt@npm:3.1.0"
+  checksum: 10/051502a81c8aa1914d01f87989280fcf7213872851b5e0c673717d6c85ac78e9509bf916056425fafba3937079c1130823a4d95aec7c9f6ae3a22ad1e59b475e
+  languageName: node
+  linkType: hard
+
 "@linaria/core@npm:3.0.0-beta.13":
   version: 3.0.0-beta.13
   resolution: "@linaria/core@npm:3.0.0-beta.13"
@@ -16847,7 +16854,7 @@ __metadata:
     apexcharts: "npm:^3.33.1"
     apollo-upload-client: "npm:^17.0.0"
     babel-plugin-lodash: "npm:^3.3.4"
-    dompurify: "npm:^2.3.6"
+    dompurify: "npm:^2.5.4"
     eslint: "npm:^9.4.0"
     eslint-config-prettier: "npm:^9.1.0"
     eslint-plugin-vue: "npm:^9.26.0"
@@ -17028,6 +17035,7 @@ __metadata:
     "@graphql-codegen/typescript-resolvers": "npm:^4.1.0"
     "@graphql-tools/mock": "npm:^9.0.4"
     "@graphql-tools/schema": "npm:^10.0.6"
+    "@lifeomic/attempt": "npm:^3.1.0"
     "@mailchimp/mailchimp_marketing": "npm:^3.0.80"
     "@opentelemetry/api": "npm:^1.9.0"
     "@opentelemetry/exporter-trace-otlp-proto": "npm:^0.53.0"
@@ -17124,6 +17132,7 @@ __metadata:
     knex: "npm:^2.4.1"
     libsodium-wrappers: "npm:^0.7.13"
     lodash: "npm:^4.17.21"
+    lru-cache: "npm:^11.0.1"
     mixpanel: "npm:^0.17.0"
     mjml: "npm:^4.13.0"
     mjml-bullet-list: "npm:^1.2.2"
@@ -29840,10 +29849,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"dompurify@npm:^2.3.6":
-  version: 2.3.6
-  resolution: "dompurify@npm:2.3.6"
-  checksum: 10/fef2332a096c7cf4eb4ec9b036acfcbd477f19427d71a08f7a2a85fb50d5cb3164169cabd1da334d99735dbbc94e7ae67f862ffdf391213ad6cc21d06d382a93
+"dompurify@npm:^2.5.4":
+  version: 2.5.6
+  resolution: "dompurify@npm:2.5.6"
+  checksum: 10/ef5fdc075ee448246b2b54bf8c7e2608dbaa176d9366137d2ff4e4ed4e580a2e913d5a58f1d3609f63d67871574e5fdcce534b185a1b1efdd8b931cd843b045a
   languageName: node
   linkType: hard
 
@@ -38794,6 +38803,13 @@ __metadata:
   version: 10.4.3
   resolution: "lru-cache@npm:10.4.3"
   checksum: 10/e6e90267360476720fa8e83cc168aa2bf0311f3f2eea20a6ba78b90a885ae72071d9db132f40fda4129c803e7dcec3a6b6a6fbb44ca90b081630b810b5d6a41a
+  languageName: node
+  linkType: hard
+
+"lru-cache@npm:^11.0.1":
+  version: 11.0.1
+  resolution: "lru-cache@npm:11.0.1"
+  checksum: 10/26688a1b2a4d7fb97e9ea1ffb15348f1ab21b7110496814f5ce9190d50258fbba8c1444ae7232876deae1fc54adb230aa63dd1efc5bd47f240620ba8bf218041
   languageName: node
   linkType: hard
 

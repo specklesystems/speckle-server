@@ -23,6 +23,7 @@ import {
 import { Knex } from 'knex'
 import { MaybeNullOrUndefined, Optional } from '@speckle/shared'
 import {
+  CommitWithStreamBranchId,
   CommitWithStreamBranchMetadata,
   LegacyStreamCommit,
   LegacyUserCommit
@@ -251,7 +252,7 @@ export const getCommitsAndTheirBranchIdsFactory =
 
     return await tables
       .commits(deps.db)
-      .select<Array<CommitRecord & { branchId: string }>>([
+      .select<Array<CommitWithStreamBranchId>>([
         ...Commits.cols,
         BranchCommits.col.branchId
       ])
@@ -269,16 +270,19 @@ export const getSpecificBranchCommitsFactory =
 
     const q = tables
       .commits(deps.db)
-      .select<Array<CommitRecord & { branchId: string }>>([
+      .select<Array<CommitWithStreamBranchId>>([
         ...Commits.cols,
-        BranchCommits.col.branchId
+        knex.raw(`(array_agg(??))[1] as "branchId"`, [BranchCommits.col.branchId]),
+        knex.raw(`(array_agg(??))[1] as "streamId"`, [StreamCommits.col.streamId])
       ])
       .innerJoin(BranchCommits.name, BranchCommits.col.commitId, Commits.col.id)
+      .innerJoin(StreamCommits.name, StreamCommits.col.commitId, Commits.col.id)
       .whereIn(Commits.col.id, commitIds)
       .whereIn(BranchCommits.col.branchId, branchIds)
+      .groupBy(Commits.col.id)
 
     const queryResults = await q
-    const results: Array<CommitRecord & { branchId: string }> = []
+    const results: Array<CommitWithStreamBranchId> = []
 
     for (const pair of pairs) {
       const commit = queryResults.find(
@@ -294,13 +298,18 @@ export const getSpecificBranchCommitsFactory =
 
 const getPaginatedBranchCommitsBaseQueryFactory =
   (deps: { db: Knex }) =>
-  <T = CommitRecord[]>(params: PaginatedBranchCommitsBaseParams) => {
+  <T = CommitWithStreamBranchId[]>(params: PaginatedBranchCommitsBaseParams) => {
     const { branchId, filter } = params
 
     const q = tables
       .commits(deps.db)
-      .select<T>(Commits.cols)
+      .select<T>([
+        ...Commits.cols,
+        knex.raw(`(array_agg(??))[1] as "branchId"`, [BranchCommits.col.branchId]),
+        knex.raw(`(array_agg(??))[1] as "streamId"`, [StreamCommits.col.streamId])
+      ])
       .innerJoin(BranchCommits.name, BranchCommits.col.commitId, Commits.col.id)
+      .innerJoin(StreamCommits.name, StreamCommits.col.commitId, Commits.col.id)
       .innerJoin(Branches.name, Branches.col.id, BranchCommits.col.branchId)
       .where(Branches.col.id, branchId)
       .groupBy(Commits.col.id)
@@ -338,7 +347,7 @@ export const getBranchCommitsTotalCountFactory =
   (deps: { db: Knex }): GetBranchCommitsTotalCount =>
   async (params: PaginatedBranchCommitsBaseParams) => {
     const baseQ = getPaginatedBranchCommitsBaseQueryFactory(deps)(params)
-    const q = knex.count<{ count: string }[]>().from(baseQ.as('sq1'))
+    const q = deps.db.count<{ count: string }[]>().from(baseQ.as('sq1'))
 
     const [res] = await q
     return parseInt(res?.count || '0')

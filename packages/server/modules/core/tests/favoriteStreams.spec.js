@@ -42,11 +42,6 @@ const { getEventBus } = require('@/modules/shared/services/eventBus')
 const { createBranchFactory } = require('@/modules/core/repositories/branches')
 const { ProjectsEmitter } = require('@/modules/core/events/projectsEmitter')
 const {
-  addStreamCreatedActivityFactory
-} = require('@/modules/activitystream/services/streamActivity')
-const { saveActivityFactory } = require('@/modules/activitystream/repositories')
-const { publish } = require('@/modules/shared/utils/subscriptions')
-const {
   getUsersFactory,
   getUserFactory,
   storeUserFactory,
@@ -79,10 +74,6 @@ const { getServerInfoFactory } = require('@/modules/core/repositories/server')
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = getUserFactory({ db })
 const getUsers = getUsersFactory({ db })
-const addStreamCreatedActivity = addStreamCreatedActivityFactory({
-  saveActivity: saveActivityFactory({ db }),
-  publish
-})
 const getStream = getStreamFactory({ db })
 const createStream = legacyCreateStreamFactory({
   createStreamReturnRecord: createStreamReturnRecordFactory({
@@ -108,7 +99,6 @@ const createStream = legacyCreateStreamFactory({
     }),
     createStream: createStreamFactory({ db }),
     createBranch: createBranchFactory({ db }),
-    addStreamCreatedActivity,
     projectsEventsEmitter: ProjectsEmitter.emit
   })
 })
@@ -279,7 +269,7 @@ describe('Favorite streams', () => {
     before(async () => {
       apollo = {
         apollo: await buildApolloServer(),
-        context: createAuthedTestContext(me.id)
+        context: await createAuthedTestContext(me.id)
       }
 
       // Drop all favorites to ensure we don't favorite already favorited streams
@@ -448,7 +438,7 @@ describe('Favorite streams', () => {
           // "Log in" with other user
           const apollo = {
             apollo: await buildApolloServer(),
-            context: createAuthedTestContext(otherGuy.id)
+            context: await createAuthedTestContext(otherGuy.id)
           }
 
           const { data, errors } = await executeOperation(
@@ -474,7 +464,7 @@ describe('Favorite streams', () => {
     before(async () => {
       apollo = {
         apollo: await buildApolloServer(),
-        context: createTestContext()
+        context: await createTestContext()
       }
     })
 

@@ -55,9 +55,9 @@ export const validateStoredAuthCodeFactory =
 
     if (
       !formattedPayload ||
-      formattedPayload.code !== formattedPayload.code ||
-      formattedPayload.userId !== formattedPayload.userId ||
-      formattedPayload.action !== formattedPayload.action
+      formattedPayload.code !== payload.code ||
+      formattedPayload.userId !== payload.userId ||
+      formattedPayload.action !== payload.action
     ) {
       throw new AutomateAuthCodeHandshakeError('Invalid automate auth payload')
     }

@@ -62,7 +62,7 @@ describe('API Tokens', () => {
     await createTestUsers([user1])
 
     apollo = await testApolloServer({
-      context: createTestContext({
+      context: await createTestContext({
         auth: true,
         userId: user1.id,
         role: Roles.Server.Admin,
@@ -229,7 +229,7 @@ describe('API Tokens', () => {
       testApp1Token = appToken
 
       apollo = await testApolloServer({
-        context: createTestContext({
+        context: await createTestContext({
           auth: true,
           userId: user1.id,
           role: Roles.Server.Admin,
@@ -380,7 +380,7 @@ describe('API Tokens', () => {
         }
 
         apollo = await testApolloServer({
-          context: createTestContext({
+          context: await createTestContext({
             auth: true,
             userId: user1.id,
             role: Roles.Server.Admin,

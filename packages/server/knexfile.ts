@@ -7,7 +7,8 @@ import path from 'path'
 import {
   isTestEnv,
   ignoreMissingMigrations,
-  postgresMaxConnections
+  postgresMaxConnections,
+  isDevOrTestEnv
 } from '@/modules/shared/helpers/envHelper'
 import { dbLogger as logger } from './logging/logging'
 import { Knex } from 'knex'
@@ -68,63 +69,66 @@ if (env.POSTGRES_USER && env.POSTGRES_PASSWORD) {
 // this is why the new datetime columns are created like this
 // table.specificType('createdAt', 'TIMESTAMPTZ(3)').defaultTo(knex.fn.now())
 
-/** @type {import('knex').Knex.Config} */
-const commonConfig = {
-  client: 'pg',
-  migrations: {
-    extension: 'ts',
-    loadExtensions: isTestEnv() ? ['.js', '.ts'] : ['.js'],
-    directory: migrationDirs
-  },
-  log: {
-    warn(message: unknown) {
-      logger.warn(message)
+export const createKnexConfig = ({
+  connectionString,
+  caCertificate
+}: {
+  connectionString?: string
+  caCertificate?: string | undefined
+}): Knex.Config => {
+  return {
+    client: 'pg',
+    migrations: {
+      extension: 'ts',
+      loadExtensions: isTestEnv() ? ['.js', '.ts'] : ['.js'],
+      directory: migrationDirs
     },
-    error(message: unknown) {
-      logger.error(message)
+    log: {
+      warn(message: unknown) {
+        logger.warn(message)
+      },
+      error(message: unknown) {
+        logger.error(message)
+      },
+      deprecate(message: unknown) {
+        logger.info(message)
+      },
+      debug(message: unknown) {
+        logger.debug(message)
+      }
     },
-    deprecate(message: unknown) {
-      logger.info(message)
+    connection: {
+      connectionString,
+      ssl: caCertificate ? { ca: caCertificate, rejectUnauthorized: true } : undefined,
+      application_name: 'speckle_server'
     },
-    debug(message: unknown) {
-      logger.debug(message)
+    // we wish to avoid leaking sql queries in the logs: https://knexjs.org/guide/#compilesqlonerror
+    compileSqlOnError: isDevOrTestEnv(),
+    asyncStackTraces: isDevOrTestEnv(),
+    pool: {
+      min: 0,
+      max: postgresMaxConnections(),
+      acquireTimeoutMillis: 16000, //allows for 3x creation attempts plus idle time between attempts
+      createTimeoutMillis: 5000
     }
-  },
-  // we wish to avoid leaking sql queries in the logs: https://knexjs.org/guide/#compilesqlonerror
-  compileSqlOnError: false,
-  pool: {
-    min: 0,
-    max: postgresMaxConnections(),
-    acquireTimeoutMillis: 16000, //allows for 3x creation attempts plus idle time between attempts
-    createTimeoutMillis: 5000
   }
 }
 
 const config: Record<string, Knex.Config> = {
   test: {
-    ...commonConfig,
-    connection: {
-      connectionString: connectionUri || 'postgres://127.0.0.1/speckle2_test',
-      application_name: 'speckle_server'
-    },
-    compileSqlOnError: true,
-    asyncStackTraces: true
+    ...createKnexConfig({
+      connectionString: connectionUri || 'postgres://127.0.0.1/speckle2_test'
+    })
   },
   development: {
-    ...commonConfig,
-    connection: {
-      connectionString: connectionUri || 'postgres://127.0.0.1/speckle2_dev',
-      application_name: 'speckle_server'
-    },
-    compileSqlOnError: true,
-    asyncStackTraces: true
+    ...createKnexConfig({
+      connectionString: connectionUri || 'postgres://127.0.0.1/speckle2_dev'
+    })
   },
   production: {
-    ...commonConfig,
-    connection: {
-      connectionString: connectionUri,
-      application_name: 'speckle_server'
-    }
+    ...createKnexConfig({
+      connectionString: connectionUri
+    })
   }
 }
 

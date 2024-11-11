@@ -11,3 +11,11 @@ export const EmailSendingServiceMock = createGlobalMock<
 export const CommentsRepositoryMock = mockRequireModule<
   typeof import('@/modules/comments/repositories/comments')
 >(['@/modules/comments/repositories/comments'])
+
+export const MultiRegionConfigServiceMock = mockRequireModule<
+  typeof import('@/modules/multiregion/services/config')
+>(['@/modules/multiregion/services/config'])
+
+export const MultiRegionDbSelectorMock = mockRequireModule<
+  typeof import('@/modules/multiregion/dbSelector')
+>(['@/modules/multiregion/dbSelector'])

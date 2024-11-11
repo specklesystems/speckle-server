@@ -16,13 +16,15 @@ export type OidcProviderRecord = {
 
 // since storage is encrypted and provider data should be stored as a json string,
 // this record type could be extended to be a union for other provider types too, like SAML
-export type ProviderRecord = OidcProviderRecord
+export type SsoProviderRecord = OidcProviderRecord
 
-export type WorkspaceSsoProvider = {
+export type WorkspaceSsoProviderRecord = {
   workspaceId: string
-  // Equals id in `ProviderRecord` (used for join)
+  // Matches `id` in `SsoProviderRecord`
   providerId: string
-} & ProviderRecord
+}
+
+export type WorkspaceSsoProvider = WorkspaceSsoProviderRecord & SsoProviderRecord
 
 export type UserSsoSessionRecord = {
   userId: string

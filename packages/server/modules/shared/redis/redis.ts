@@ -4,6 +4,7 @@ import {
   EnvironmentResourceError,
   MisconfiguredEnvironmentError
 } from '@/modules/shared/errors'
+import { getRedisUrl } from '@/modules/shared/helpers/envHelper'
 
 export function createRedisClient(redisUrl: string, redisOptions: RedisOptions): Redis {
   let redisClient: Redis
@@ -24,5 +25,12 @@ export function createRedisClient(redisUrl: string, redisOptions: RedisOptions):
     throw new MisconfiguredEnvironmentError('Unable to connect to Redis.') //FIXME backoff and retry?
   }
 
+  return redisClient
+}
+
+let redisClient: Redis | undefined = undefined
+
+export const getGenericRedis = (): Redis => {
+  if (!redisClient) redisClient = createRedisClient(getRedisUrl(), {})
   return redisClient
 }

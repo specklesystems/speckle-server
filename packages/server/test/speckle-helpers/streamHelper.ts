@@ -1,9 +1,6 @@
 import { db } from '@/db/knex'
 import { saveActivityFactory } from '@/modules/activitystream/repositories'
-import {
-  addStreamCreatedActivityFactory,
-  addStreamPermissionsRevokedActivityFactory
-} from '@/modules/activitystream/services/streamActivity'
+import { addStreamPermissionsRevokedActivityFactory } from '@/modules/activitystream/services/streamActivity'
 import { StreamAcl } from '@/modules/core/dbSchema'
 import { ProjectsEmitter } from '@/modules/core/events/projectsEmitter'
 import { StreamAclRecord, StreamRecord } from '@/modules/core/helpers/types'
@@ -43,10 +40,6 @@ import { omit } from 'lodash'
 const getServerInfo = getServerInfoFactory({ db })
 const getUsers = getUsersFactory({ db })
 const getUser = getUserFactory({ db })
-const addStreamCreatedActivity = addStreamCreatedActivityFactory({
-  saveActivity: saveActivityFactory({ db }),
-  publish
-})
 const getStream = getStreamFactory({ db })
 const createStream = legacyCreateStreamFactory({
   createStreamReturnRecord: createStreamReturnRecordFactory({
@@ -72,7 +65,6 @@ const createStream = legacyCreateStreamFactory({
     }),
     createStream: createStreamFactory({ db }),
     createBranch: createBranchFactory({ db }),
-    addStreamCreatedActivity,
     projectsEventsEmitter: ProjectsEmitter.emit
   })
 })

@@ -1,4 +1,5 @@
 import {
+  CommitWithStreamBranchId,
   LegacyStreamCommit,
   LegacyUserCommit
 } from '@/modules/core/domain/commits/types'
@@ -43,7 +44,7 @@ export type ProjectGraphQLReturn = StreamGraphQLReturn
 
 export type ModelGraphQLReturn = BranchRecord
 
-export type VersionGraphQLReturn = CommitRecord
+export type VersionGraphQLReturn = CommitWithStreamBranchId
 
 export type LimitedUserGraphQLReturn = Omit<
   LimitedUser,
@@ -68,15 +69,15 @@ export type ObjectGraphQLReturn = Omit<
 >
 
 /**
- * Return type for top-level mutations groupings like `projectMutations`, `activeUserMutations` etc.
- */
-export type MutationsObjectGraphQLReturn = Record<string, never>
-
-/**
  * Use this to override the generated graphql type, in cases like graphql resolver
  * collection objects
  */
 export type GraphQLEmptyReturn = Record<string, never>
+
+/**
+ * Return type for top-level mutations groupings like `projectMutations`, `activeUserMutations` etc.
+ */
+export type MutationsObjectGraphQLReturn = GraphQLEmptyReturn
 
 /**
  * Map GQL StreamRole enum to the value types we use in the backend

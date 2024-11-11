@@ -1,4 +1,6 @@
 import type { AvailableRoles } from '@speckle/shared'
+import { isObjectLike, has } from 'lodash'
+import type { WorkspacePlans } from '~/lib/common/generated/gql/graphql'
 
 export type SettingsMenuItem = {
   title: string
@@ -23,7 +25,8 @@ export const SettingMenuKeys = Object.freeze(<const>{
     General: 'server/general',
     Projects: 'server/projects',
     ActiveUsers: 'server/active-users',
-    PendingInvitations: 'server/pending-invitations'
+    PendingInvitations: 'server/pending-invitations',
+    Regions: 'server/regions'
   },
   Workspace: {
     General: 'workspace/general',
@@ -46,3 +49,22 @@ export type AvailableSettingsMenuKeys =
   | UserSettingMenuKeys
   | ServerSettingMenuKeys
   | WorkspaceSettingMenuKeys
+
+export type WorkspacePricingPlans = {
+  workspacePricingPlans: {
+    workspacePlanInformation: {
+      [key: string]: {
+        name: WorkspacePlans
+      }
+    }
+  }
+}
+
+export function isWorkspacePricingPlans(
+  pricingPlans: unknown
+): pricingPlans is WorkspacePricingPlans {
+  return (
+    isObjectLike(pricingPlans) &&
+    has(pricingPlans, 'workspacePricingPlans.workspacePlanInformation')
+  )
+}

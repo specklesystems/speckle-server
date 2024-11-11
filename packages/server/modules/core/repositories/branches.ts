@@ -623,7 +623,7 @@ export const getModelTreeItemsFactory =
       options
     )
 
-    const finalQuery = knex.from(query.as('sq1'))
+    const finalQuery = deps.db.from(query.as('sq1'))
     finalQuery.limit(limit)
 
     if (args.cursor) {
