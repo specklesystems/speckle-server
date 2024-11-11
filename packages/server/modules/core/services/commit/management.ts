@@ -1,11 +1,10 @@
-import { db } from '@/db/knex'
 import {
   AddCommitCreatedActivity,
   AddCommitDeletedActivity,
-  AddCommitUpdatedActivity
+  AddCommitUpdatedActivity,
+  SaveActivity
 } from '@/modules/activitystream/domain/operations'
-import { saveActivityFactory } from '@/modules/activitystream/repositories'
-import { addCommitReceivedActivityFactory } from '@/modules/activitystream/services/commitActivity'
+import { ActionTypes, ResourceTypes } from '@/modules/activitystream/helpers/types'
 import {
   GetBranchById,
   GetStreamBranchByName,
@@ -48,42 +47,49 @@ import {
   UpdateVersionInput
 } from '@/modules/core/graph/generated/graphql'
 import { BranchRecord, CommitRecord } from '@/modules/core/helpers/types'
-import { getCommitFactory } from '@/modules/core/repositories/commits'
 import { ensureError, Roles } from '@speckle/shared'
 import { has } from 'lodash'
 
-export async function markCommitReceivedAndNotify(params: {
-  input: MarkReceivedVersionInput | CommitReceivedInput
-  userId: string
-}) {
-  const { input, userId } = params
+export const markCommitReceivedAndNotifyFactory =
+  ({ getCommit, saveActivity }: { getCommit: GetCommit; saveActivity: SaveActivity }) =>
+  async (params: {
+    input: MarkReceivedVersionInput | CommitReceivedInput
+    userId: string
+  }) => {
+    const { input, userId } = params
 
-  const oldInput: CommitReceivedInput =
-    'projectId' in input
-      ? {
-          ...input,
-          streamId: input.projectId,
-          commitId: input.versionId
-        }
-      : input
+    const oldInput: CommitReceivedInput =
+      'projectId' in input
+        ? {
+            ...input,
+            streamId: input.projectId,
+            commitId: input.versionId
+          }
+        : input
 
-  const commit = await getCommitFactory({ db })(oldInput.commitId, {
-    streamId: oldInput.streamId
-  })
-  if (!commit) {
-    throw new CommitReceiveError(
-      `Failed to find commit with id ${oldInput.commitId} in stream ${oldInput.streamId}.`,
-      { info: params }
-    )
-  }
-
-  await addCommitReceivedActivityFactory({ saveActivity: saveActivityFactory({ db }) })(
-    {
-      input: oldInput,
-      userId
+    const commit = await getCommit(oldInput.commitId, {
+      streamId: oldInput.streamId
+    })
+    if (!commit) {
+      throw new CommitReceiveError(
+        `Failed to find commit with id ${oldInput.commitId} in stream ${oldInput.streamId}.`,
+        { info: params }
+      )
     }
-  )
-}
+
+    await saveActivity({
+      streamId: oldInput.streamId,
+      resourceType: ResourceTypes.Commit,
+      resourceId: oldInput.commitId,
+      actionType: ActionTypes.Commit.Receive,
+      userId,
+      info: {
+        sourceApplication: input.sourceApplication,
+        message: input.message
+      },
+      message: `Commit ${oldInput.commitId} was received by user ${userId}`
+    })
+  }
 
 export const createCommitByBranchIdFactory =
   (deps: {

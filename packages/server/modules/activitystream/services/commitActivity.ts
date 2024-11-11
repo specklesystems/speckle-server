@@ -5,7 +5,6 @@ import {
 } from '@/modules/shared/utils/subscriptions'
 import {
   CommitCreateInput,
-  CommitReceivedInput,
   CommitUpdateInput,
   ProjectVersionsUpdatedMessageType,
   UpdateVersionInput
@@ -210,23 +209,4 @@ export const addCommitDeletedActivityFactory =
         }
       })
     ])
-  }
-
-export const addCommitReceivedActivityFactory =
-  ({ saveActivity }: { saveActivity: SaveActivity }) =>
-  async (params: { input: CommitReceivedInput; userId: string }) => {
-    const { input, userId } = params
-
-    await saveActivity({
-      streamId: input.streamId,
-      resourceType: ResourceTypes.Commit,
-      resourceId: input.commitId,
-      actionType: ActionTypes.Commit.Receive,
-      userId,
-      info: {
-        sourceApplication: input.sourceApplication,
-        message: input.message
-      },
-      message: `Commit ${input.commitId} was received by user ${userId}`
-    })
   }
