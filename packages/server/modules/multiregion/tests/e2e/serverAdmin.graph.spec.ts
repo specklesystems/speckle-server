@@ -1,4 +1,4 @@
-import { MultiRegionConfig } from '@/modules/multiregion/domain/types'
+import { DataRegionsConfig } from '@/modules/multiregion/domain/types'
 import { Regions } from '@/modules/multiregion/repositories'
 import { BasicTestUser, createTestUser } from '@/test/authHelper'
 import {
@@ -27,7 +27,7 @@ describe.skip('Multi Region Server Settings', () => {
   const fakeRegionKey1 = 'us-west-1'
   const fakeRegionKey2 = 'eu-east-2'
 
-  const fakeRegionConfig: MultiRegionConfig = {
+  const fakeRegionConfig: DataRegionsConfig = {
     [fakeRegionKey1]: {
       postgres: {
         connectionUri: 'postgres://user:password@uswest1:port/dbname'

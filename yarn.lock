@@ -17134,6 +17134,7 @@ __metadata:
     "@typescript-eslint/parser": "npm:^7.12.0"
     eslint: "npm:^9.4.0"
     eslint-config-prettier: "npm:^9.1.0"
+    knex: "npm:^2.4.1"
     lodash: "npm:^4.17.21"
     lodash-es: "npm:^4.17.21"
     mixpanel: "npm:^0.17.0"
@@ -17147,6 +17148,7 @@ __metadata:
     zod: "npm:^3.22.4"
   peerDependencies:
     "@tiptap/core": ^2.0.0-beta.176
+    knex: "*"
     mixpanel: ^0.17.0
     pino: ^8.7.0
     pino-http: ^8.0.0
