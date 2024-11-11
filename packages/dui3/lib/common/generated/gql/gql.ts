@@ -17,6 +17,7 @@ const documents = {
     "\n  mutation MarkReceivedVersion($input: MarkReceivedVersionInput!) {\n    versionMutations {\n      markReceived(input: $input)\n    }\n  }\n": types.MarkReceivedVersionDocument,
     "\n  mutation CreateModel($input: CreateModelInput!) {\n    modelMutations {\n      create(input: $input) {\n        ...ModelListModelItem\n      }\n    }\n  }\n": types.CreateModelDocument,
     "\n  mutation CreateProject($input: ProjectCreateInput) {\n    projectMutations {\n      create(input: $input) {\n        ...ProjectListProjectItem\n      }\n    }\n  }\n": types.CreateProjectDocument,
+    "\n  mutation CreateProjectInWorkspace($input: WorkspaceProjectCreateInput!) {\n    workspaceMutations {\n      projects {\n        create(input: $input) {\n          ...ProjectListProjectItem\n        }\n      }\n    }\n  }\n": types.CreateProjectInWorkspaceDocument,
     "\n  mutation StreamAccessRequestCreate($input: String!) {\n    streamAccessRequestCreate(streamId: $input) {\n      id\n    }\n  }\n": types.StreamAccessRequestCreateDocument,
     "\n  fragment WorkspaceListWorkspaceItem on Workspace {\n    id\n    name\n    description\n    createdAt\n    updatedAt\n    logo\n    role\n  }\n": types.WorkspaceListWorkspaceItemFragmentDoc,
     "\n  query WorkspaceListQuery(\n    $limit: Int!\n    $filter: UserWorkspacesFilter\n    $cursor: String\n  ) {\n    activeUser {\n      id\n      workspaces(limit: $limit, filter: $filter, cursor: $cursor) {\n        totalCount\n        cursor\n        items {\n          ...WorkspaceListWorkspaceItem\n        }\n      }\n    }\n  }\n": types.WorkspaceListQueryDocument,
@@ -69,6 +70,10 @@ export function graphql(source: "\n  mutation CreateModel($input: CreateModelInp
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  mutation CreateProject($input: ProjectCreateInput) {\n    projectMutations {\n      create(input: $input) {\n        ...ProjectListProjectItem\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation CreateProject($input: ProjectCreateInput) {\n    projectMutations {\n      create(input: $input) {\n        ...ProjectListProjectItem\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  mutation CreateProjectInWorkspace($input: WorkspaceProjectCreateInput!) {\n    workspaceMutations {\n      projects {\n        create(input: $input) {\n          ...ProjectListProjectItem\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation CreateProjectInWorkspace($input: WorkspaceProjectCreateInput!) {\n    workspaceMutations {\n      projects {\n        create(input: $input) {\n          ...ProjectListProjectItem\n        }\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
