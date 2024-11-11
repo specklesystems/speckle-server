@@ -1,4 +1,5 @@
 import {
+  CommitWithStreamBranchId,
   LegacyStreamCommit,
   LegacyUserCommit
 } from '@/modules/core/domain/commits/types'
@@ -43,7 +44,7 @@ export type ProjectGraphQLReturn = StreamGraphQLReturn
 
 export type ModelGraphQLReturn = BranchRecord
 
-export type VersionGraphQLReturn = CommitRecord
+export type VersionGraphQLReturn = CommitWithStreamBranchId
 
 export type LimitedUserGraphQLReturn = Omit<
   LimitedUser,

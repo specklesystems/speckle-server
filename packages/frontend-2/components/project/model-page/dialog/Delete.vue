@@ -53,7 +53,7 @@ const emit = defineEmits<{
 const props = defineProps<{
   versions: ProjectModelPageDialogDeleteVersionFragment[]
   open: boolean
-  projectId?: string
+  projectId: string
   modelId?: string
 }>()
 
@@ -71,10 +71,10 @@ const onDelete = async () => {
   loading.value = true
   const success = await deleteVersions(
     {
+      projectId: props.projectId,
       versionIds: props.versions.map((v) => v.id)
     },
     {
-      projectId: props.projectId,
       modelId: props.modelId
     }
   )
