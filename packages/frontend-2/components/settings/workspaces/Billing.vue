@@ -12,7 +12,7 @@
           <SettingsSectionHeader title="Billing summary" subheading class="pt-4" />
           <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
             <CommonCard class="gap-y-1 bg-foundation">
-              <p class="text-body-xs text-foreground-2 font-medium">
+              <p class="text-body-xs text-foreground-2">
                 {{ isTrialPeriod ? 'Trial plan' : 'Current plan' }}
               </p>
               <h4 class="text-heading-lg text-foreground capitalize">
@@ -188,7 +188,7 @@ const isPaidPlan = computed(
 const isTrialPeriod = computed(
   () =>
     currentPlan.value?.status === WorkspacePlanStatuses.Trial ||
-    !!currentPlan.value?.status
+    !currentPlan.value?.status
 )
 const isActivePlan = computed(
   () =>
