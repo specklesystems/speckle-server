@@ -46,7 +46,6 @@ import {
   markCommentUpdatedFactory,
   markCommentViewedFactory
 } from '@/modules/comments/repositories/comments'
-import { db } from '@/db/knex'
 import { CommentsEmitter } from '@/modules/comments/events/emitter'
 import {
   addCommentCreatedActivityFactory,
@@ -61,6 +60,8 @@ import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import { publish } from '@/modules/shared/utils/subscriptions'
 import { getUserFactory } from '@/modules/core/repositories/users'
 import { createObjectFactory } from '@/modules/core/services/objects/management'
+import { getProjectDbClient } from '@/modules/multiregion/dbSelector'
+import { db } from '@/db/knex'
 
 const command: CommandModule<
   unknown,
@@ -101,34 +102,40 @@ const command: CommandModule<
     }
   },
   handler: async (argv) => {
-    const markCommitStreamUpdated = markCommitStreamUpdatedFactory({ db })
-    const getStream = getStreamFactory({ db })
-    const getObject = getObjectFactory({ db })
-    const getStreamObjects = getStreamObjectsFactory({ db })
-    const markCommentViewed = markCommentViewedFactory({ db })
+    const projectId = argv.targetStreamId
+    // everything should happen in the project db right?
+    const projectDb = await getProjectDbClient({ projectId })
+
+    const markCommitStreamUpdated = markCommitStreamUpdatedFactory({ db: projectDb })
+    const getStream = getStreamFactory({ db: projectDb })
+    const getObject = getObjectFactory({ db: projectDb })
+    const getStreamObjects = getStreamObjectsFactory({ db: projectDb })
+    const markCommentViewed = markCommentViewedFactory({ db: projectDb })
     const validateInputAttachments = validateInputAttachmentsFactory({
-      getBlobs: getBlobsFactory({ db })
+      getBlobs: getBlobsFactory({ db: projectDb })
     })
-    const getBranchLatestCommits = getBranchLatestCommitsFactory({ db })
-    const insertComments = insertCommentsFactory({ db })
-    const insertCommentLinks = insertCommentLinksFactory({ db })
+    const getBranchLatestCommits = getBranchLatestCommitsFactory({ db: projectDb })
+    const insertComments = insertCommentsFactory({ db: projectDb })
+    const insertCommentLinks = insertCommentLinksFactory({ db: projectDb })
     const getViewerResourceItemsUngrouped = getViewerResourceItemsUngroupedFactory({
       getViewerResourceGroups: getViewerResourceGroupsFactory({
         getStreamObjects,
         getBranchLatestCommits,
-        getStreamBranchesByName: getStreamBranchesByNameFactory({ db }),
-        getSpecificBranchCommits: getSpecificBranchCommitsFactory({ db }),
-        getAllBranchCommits: getAllBranchCommitsFactory({ db })
+        getStreamBranchesByName: getStreamBranchesByNameFactory({ db: projectDb }),
+        getSpecificBranchCommits: getSpecificBranchCommitsFactory({ db: projectDb }),
+        getAllBranchCommits: getAllBranchCommitsFactory({ db: projectDb })
       })
     })
     const getViewerResourcesFromLegacyIdentifiers =
       getViewerResourcesFromLegacyIdentifiersFactory({
         getViewerResourcesForComments: getViewerResourcesForCommentsFactory({
-          getCommentsResources: getCommentsResourcesFactory({ db }),
+          getCommentsResources: getCommentsResourcesFactory({ db: projectDb }),
           getViewerResourcesFromLegacyIdentifiers: (...args) =>
             getViewerResourcesFromLegacyIdentifiers(...args) // recursive dep
         }),
-        getCommitsAndTheirBranchIds: getCommitsAndTheirBranchIdsFactory({ db }),
+        getCommitsAndTheirBranchIds: getCommitsAndTheirBranchIdsFactory({
+          db: projectDb
+        }),
         getStreamObjects
       })
     const createCommentThreadAndNotify = createCommentThreadAndNotifyFactory({
@@ -141,52 +148,54 @@ const command: CommandModule<
       addCommentCreatedActivity: addCommentCreatedActivityFactory({
         getViewerResourcesFromLegacyIdentifiers,
         getViewerResourceItemsUngrouped,
-        saveActivity: saveActivityFactory({ db }),
+        saveActivity: saveActivityFactory({ db: projectDb }),
         publish
       })
     })
 
     const createCommentReplyAndNotify = createCommentReplyAndNotifyFactory({
-      getComment: getCommentFactory({ db }),
+      getComment: getCommentFactory({ db: projectDb }),
       validateInputAttachments,
       insertComments,
       insertCommentLinks,
-      markCommentUpdated: markCommentUpdatedFactory({ db }),
+      markCommentUpdated: markCommentUpdatedFactory({ db: projectDb }),
       commentsEventsEmit: CommentsEmitter.emit,
       addReplyAddedActivity: addReplyAddedActivityFactory({
         getViewerResourcesForComment: getViewerResourcesForCommentFactory({
-          getCommentsResources: getCommentsResourcesFactory({ db }),
+          getCommentsResources: getCommentsResourcesFactory({ db: projectDb }),
           getViewerResourcesFromLegacyIdentifiers
         }),
-        saveActivity: saveActivityFactory({ db }),
+        saveActivity: saveActivityFactory({ db: projectDb }),
         publish
       })
     })
 
     const createCommitByBranchId = createCommitByBranchIdFactory({
-      createCommit: createCommitFactory({ db }),
+      createCommit: createCommitFactory({ db: projectDb }),
       getObject,
-      getBranchById: getBranchByIdFactory({ db }),
-      insertStreamCommits: insertStreamCommitsFactory({ db }),
-      insertBranchCommits: insertBranchCommitsFactory({ db }),
+      getBranchById: getBranchByIdFactory({ db: projectDb }),
+      insertStreamCommits: insertStreamCommitsFactory({ db: projectDb }),
+      insertBranchCommits: insertBranchCommitsFactory({ db: projectDb }),
       markCommitStreamUpdated,
-      markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
+      markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db: projectDb }),
       versionsEventEmitter: VersionsEmitter.emit,
       addCommitCreatedActivity: addCommitCreatedActivityFactory({
-        saveActivity: saveActivityFactory({ db }),
+        saveActivity: saveActivityFactory({ db: projectDb }),
         publish
       })
     })
 
     const createObject = createObjectFactory({
-      storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({ db }),
-      storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db })
+      storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({
+        db: projectDb
+      }),
+      storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db: projectDb })
     })
     const getUser = getUserFactory({ db })
     const getStreamCollaborators = getStreamCollaboratorsFactory({ db })
     const downloadCommit = downloadCommitFactory({
       getStream,
-      getStreamBranchByName: getStreamBranchByNameFactory({ db }),
+      getStreamBranchByName: getStreamBranchByNameFactory({ db: projectDb }),
       getStreamCollaborators,
       getUser,
       createCommitByBranchId,

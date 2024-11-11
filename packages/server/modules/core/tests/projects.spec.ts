@@ -108,7 +108,9 @@ describe('Projects', () => {
           BatchDeleteProjectsDocument,
           { ids },
           {
-            context: asAdmin ? { role: Roles.Server.Admin } : undefined
+            context: asAdmin
+              ? { role: Roles.Server.Admin }
+              : { role: Roles.Server.User }
           }
         )
 

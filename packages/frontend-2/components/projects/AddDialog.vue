@@ -133,11 +133,13 @@ const open = defineModel<boolean>('open', { required: true })
 const mp = useMixpanel()
 
 const onSubmit = handleSubmit(async (values) => {
+  const workspaceId = props.workspaceId || selectedWorkspace.value?.id
+
   await createProject({
     name: values.name,
     description: values.description,
     visibility: visibility.value,
-    workspaceId: props.workspaceId || selectedWorkspace.value?.id
+    ...(workspaceId ? { workspaceId } : {})
   })
   emit('created')
   mp.track('Stream Action', {

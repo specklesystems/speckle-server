@@ -67,6 +67,7 @@ import { BaseError, ForbiddenError } from '@/modules/shared/errors'
 import { loggingPlugin } from '@/modules/core/graph/plugins/logging'
 import { shouldLogAsInfoLevel } from '@/logging/graphqlError'
 import { getUserFactory } from '@/modules/core/repositories/users'
+import { initFactory as healthchecksInitFactory } from '@/healthchecks'
 
 const GRAPHQL_PATH = '/graphql'
 
@@ -400,6 +401,9 @@ export async function init() {
 
   // Initialize default modules, including rest api handlers
   await ModulesSetup.init(app)
+
+  // Initialize healthchecks
+  await healthchecksInitFactory()(app, true)
 
   // Init HTTP server & subscription server
   const server = http.createServer(app)

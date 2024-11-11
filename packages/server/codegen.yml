@@ -57,6 +57,7 @@ generates:
         UserAutomateInfo: '@/modules/automate/helpers/graphTypes#UserAutomateInfoGraphQLReturn'
         Workspace: '@/modules/workspacesCore/helpers/graphTypes#WorkspaceGraphQLReturn'
         WorkspaceBilling: '@/modules/workspacesCore/helpers/graphTypes#WorkspaceBillingGraphQLReturn'
+        WorkspaceSso: '@/modules/workspacesCore/helpers/graphTypes#WorkspaceSsoGraphQLReturn'
         WorkspaceMutations: '@/modules/workspacesCore/helpers/graphTypes#WorkspaceMutationsGraphQLReturn'
         WorkspaceInviteMutations: '@/modules/workspacesCore/helpers/graphTypes#WorkspaceInviteMutationsGraphQLReturn'
         WorkspaceProjectMutations: '@/modules/workspacesCore/helpers/graphTypes#WorkspaceProjectMutationsGraphQLReturn'
@@ -74,6 +75,10 @@ generates:
         ServerInfo: '@/modules/core/helpers/graphTypes#ServerInfoGraphQLReturn'
         Branch: '@/modules/core/helpers/graphTypes#BranchGraphQLReturn'
         GendoAIRender: '@/modules/gendo/helpers/types/graphTypes#GendoAIRenderGraphQLReturn'
+        ServerMultiRegionConfiguration: '@/modules/core/helpers/graphTypes#GraphQLEmptyReturn'
+        ServerInfoMutations: '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn'
+        ServerRegionMutations: '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn'
+        ServerRegionItem: '@/modules/multiregion/helpers/graphTypes#ServerRegionItemGraphQLReturn'
   modules/cross-server-sync/graph/generated/graphql.ts:
     plugins:
       - 'typescript'

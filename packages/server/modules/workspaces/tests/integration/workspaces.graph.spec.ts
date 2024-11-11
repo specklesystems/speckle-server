@@ -27,9 +27,9 @@ import {
   CreateObjectDocument,
   CreateProjectVersionDocument,
   GetWorkspaceWithProjectsDocument,
-  CreateProjectDocument,
   AddWorkspaceDomainDocument,
-  DeleteWorkspaceDomainDocument
+  DeleteWorkspaceDomainDocument,
+  CreateWorkspaceProjectDocument
 } from '@/test/graphql/generated/graphql'
 import { beforeEachContext } from '@/test/hooks'
 import { AllScopes } from '@/modules/core/helpers/mainConstants'
@@ -68,17 +68,17 @@ const createProjectWithVersions =
     workspaceId,
     versionsCount
   }: {
-    workspaceId?: string
+    workspaceId: string
     versionsCount: number
   }) => {
-    const resProject1 = await apollo.execute(CreateProjectDocument, {
+    const resProject1 = await apollo.execute(CreateWorkspaceProjectDocument, {
       input: {
         name: createRandomPassword(),
         workspaceId
       }
     })
     expect(resProject1).to.not.haveGraphQLErrors()
-    const project1Id = resProject1.data!.projectMutations.create.id
+    const project1Id = resProject1.data!.workspaceMutations.projects.create.id
 
     const {
       items: [model1]
@@ -129,7 +129,7 @@ describe('Workspaces GQL CRUD', () => {
     await createTestUsers([testAdminUser, testMemberUser])
     const token = await createAuthTokenForUser(testAdminUser.id, AllScopes)
     apollo = await testApolloServer({
-      context: createTestContext({
+      context: await createTestContext({
         auth: true,
         userId: testAdminUser.id,
         token,
@@ -438,25 +438,25 @@ describe('Workspaces GQL CRUD', () => {
           assignToWorkspace(workspace, guest, Roles.Workspace.Guest)
         ])
 
-        const resProject1 = await apollo.execute(CreateProjectDocument, {
+        const resProject1 = await apollo.execute(CreateWorkspaceProjectDocument, {
           input: {
             name: createRandomPassword(),
             workspaceId
           }
         })
         expect(resProject1).to.not.haveGraphQLErrors()
-        const project1Id = resProject1.data!.projectMutations.create.id
-        const project1Name = resProject1.data!.projectMutations.create.name
+        const project1Id = resProject1.data!.workspaceMutations.projects.create.id
+        const project1Name = resProject1.data!.workspaceMutations.projects.create.name
 
-        const resProject2 = await apollo.execute(CreateProjectDocument, {
+        const resProject2 = await apollo.execute(CreateWorkspaceProjectDocument, {
           input: {
             name: createRandomPassword(),
             workspaceId
           }
         })
         expect(resProject2).to.not.haveGraphQLErrors()
-        const project2Id = resProject2.data!.projectMutations.create.id
-        const project2Name = resProject2.data!.projectMutations.create.name
+        const project2Id = resProject2.data!.workspaceMutations.projects.create.id
+        const project2Name = resProject2.data!.workspaceMutations.projects.create.name
 
         await Promise.all([
           grantStreamPermissions({
@@ -627,14 +627,14 @@ describe('Workspaces GQL CRUD', () => {
         await assignToWorkspace(workspace, viewer, Roles.Workspace.Guest)
         await assignToWorkspace(workspace, viewer2, Roles.Workspace.Guest)
 
-        const resProject1 = await apollo.execute(CreateProjectDocument, {
+        const resProject1 = await apollo.execute(CreateWorkspaceProjectDocument, {
           input: {
             name: createRandomPassword(),
             workspaceId
           }
         })
         expect(resProject1).to.not.haveGraphQLErrors()
-        const project1Id = resProject1.data!.projectMutations.create.id
+        const project1Id = resProject1.data!.workspaceMutations.projects.create.id
 
         await Promise.all([
           grantStreamPermissions({
@@ -718,7 +718,7 @@ describe('Workspaces GQL CRUD', () => {
           name: createRandomPassword()
         }
 
-        const resProject1 = await apollo.execute(CreateProjectDocument, {
+        const resProject1 = await apollo.execute(CreateWorkspaceProjectDocument, {
           input: {
             name: createRandomPassword(),
             workspaceId: workspace.id
@@ -834,7 +834,7 @@ describe('Workspaces GQL CRUD', () => {
 
       it('should throw if non-workspace-admin triggers delete', async () => {
         const memberApollo: TestApolloServer = (apollo = await testApolloServer({
-          context: createTestContext({
+          context: await createTestContext({
             auth: true,
             userId: testAdminUser.id,
             token: '',
