@@ -68,7 +68,7 @@
               <FormButton
                 color="outline"
                 :icon-right="ArrowTopRightOnSquareIcon"
-                @click="customerPortalRedirect(workspaceId)"
+                @click="billingPortalRedirect(workspaceId)"
               >
                 Open billing portal
               </FormButton>
@@ -175,7 +175,7 @@ const { result: pricingPlansResult } = useQuery(
     enabled: isBillingIntegrationEnabled
   })
 )
-const { customerPortalRedirect, upgradePlanRedirect, cancelCheckoutSession } =
+const { billingPortalRedirect, upgradePlanRedirect, cancelCheckoutSession } =
   useBillingActions()
 
 const currentPlan = computed(() => workspaceResult.value?.workspace.plan)

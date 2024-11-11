@@ -12,7 +12,7 @@ export const useBillingActions = () => {
     settingsBillingCancelCheckoutSessionMutation
   )
 
-  const customerPortalRedirect = async (workspaceId: string) => {
+  const billingPortalRedirect = async (workspaceId: string) => {
     // We need to fetch this on click because the link expires very quickly
     const result = await apollo.query({
       query: settingsWorkspaceBillingCustomerPortalQuery,
@@ -41,7 +41,7 @@ export const useBillingActions = () => {
   }
 
   return {
-    customerPortalRedirect,
+    billingPortalRedirect,
     upgradePlanRedirect,
     cancelCheckoutSession
   }
