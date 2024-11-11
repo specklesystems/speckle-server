@@ -255,7 +255,9 @@ export const saveActivityFactory =
       }
 
       const projectDb = await getProjectDbClient({ projectId: streamId })
-
+      // yes, we're manually instantiating this thing here, but i do not want to go through all the places,
+      // where we're calling saveActivity!
+      // the whole activity module will need to be refactored to use the eventBus
       await dispatchStreamEventFactory({
         getStreamWebhooks: getStreamWebhooksFactory({ db: projectDb }),
         getServerInfo: getServerInfoFactory({ db }),

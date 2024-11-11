@@ -12,7 +12,7 @@ const HEALTHCHECK_FILE_PATH = '/tmp/last_successful_query'
 const { makeNetworkRequest } = require('./webhookCaller')
 const WebhookError = require('./errors')
 
-const startTask = async ({ db }) => {
+const startTask = async (db) => {
   const { rows } = await db.raw(`
     UPDATE webhooks_events
     SET
@@ -124,7 +124,7 @@ const doStuff = async (dbClients) => {
       await Promise.all(
         dbClients.map(async (db) => {
           fs.writeFile(HEALTHCHECK_FILE_PATH, '' + Date.now(), () => {})
-          const task = await startTask({ db })
+          const task = await startTask(db)
           if (!task) return
           return [db, task]
         })

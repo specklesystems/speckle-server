@@ -160,7 +160,8 @@ type ModelMutations {
 }
 
 input MoveVersionsInput {
-  versionIds: [String!]!
+  projectId: ID!
+  versionIds: [ID!]!
   """
   If the name references a nonexistant model, it will be created
   """
@@ -168,14 +169,16 @@ input MoveVersionsInput {
 }
 
 input DeleteVersionsInput {
-  versionIds: [String!]!
+  projectId: ID!
+  versionIds: [ID!]!
 }
 
 """
 Only non-null values will be updated
 """
 input UpdateVersionInput {
-  versionId: String!
+  projectId: ID!
+  versionId: ID!
   message: String
 }
 

@@ -871,7 +871,8 @@ export type DeleteUserEmailInput = {
 };
 
 export type DeleteVersionsInput = {
-  versionIds: Array<Scalars['String']['input']>;
+  projectId: Scalars['ID']['input'];
+  versionIds: Array<Scalars['ID']['input']>;
 };
 
 export enum DiscoverableStreamsSortType {
@@ -1204,9 +1205,10 @@ export type ModelsTreeItemCollection = {
 };
 
 export type MoveVersionsInput = {
+  projectId: Scalars['ID']['input'];
   /** If the name references a nonexistant model, it will be created */
   targetModelName: Scalars['String']['input'];
-  versionIds: Array<Scalars['String']['input']>;
+  versionIds: Array<Scalars['ID']['input']>;
 };
 
 export type Mutation = {
@@ -3497,7 +3499,8 @@ export type UpdateServerRegionInput = {
 /** Only non-null values will be updated */
 export type UpdateVersionInput = {
   message?: InputMaybe<Scalars['String']['input']>;
-  versionId: Scalars['String']['input'];
+  projectId: Scalars['ID']['input'];
+  versionId: Scalars['ID']['input'];
 };
 
 /**
