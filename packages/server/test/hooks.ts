@@ -28,6 +28,7 @@ import { createAndValidateNewRegionFactory } from '@/modules/multiregion/service
 import {
   getRegionFactory,
   getRegionsFactory,
+  Regions,
   storeRegionFactory
 } from '@/modules/multiregion/repositories'
 import {
@@ -90,6 +91,12 @@ const setupMultiregionMode = async () => {
     const reset = resetSchemaFactory({ db: regionClient })
     await reset()
   }
+
+  // If not in multi region mode, delete region entries
+  // we only needed them to reset schemas
+  if (!shouldRunTestsInMultiregionMode()) {
+    await truncateTables([Regions.name])
+  }
 }
 
 const unlockFactory = (deps: { db: Knex }) => async () => {
@@ -98,6 +105,8 @@ const unlockFactory = (deps: { db: Knex }) => async () => {
     await deps.db('knex_migrations_lock').update('is_locked', '0')
   }
 }
+
+export const getRegionKeys = () => Object.keys(regionClients)
 
 export const resetPubSubFactory = (deps: { db: Knex }) => async () => {
   if (!shouldRunTestsInMultiregionMode()) {
@@ -224,6 +233,10 @@ export const initializeTestServer = async (
 
 export const mochaHooks: mocha.RootHookObject = {
   beforeAll: async () => {
+    if (shouldRunTestsInMultiregionMode()) {
+      console.log('Running tests in multi-region mode...')
+    }
+
     logger.info('running before all')
 
     // Init main db
