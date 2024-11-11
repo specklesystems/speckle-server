@@ -1,3 +1,4 @@
+<!-- NOT WILL BE USED SINCE WE ENABLE AUTOMATION CREATION FROM DUI3 -->
 <template>
   <div class="p-0">
     <slot name="activator" :toggle="toggleDialog"></slot>
