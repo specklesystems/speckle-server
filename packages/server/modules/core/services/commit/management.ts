@@ -1,11 +1,10 @@
-import { db } from '@/db/knex'
 import {
   AddCommitCreatedActivity,
   AddCommitDeletedActivity,
-  AddCommitUpdatedActivity
+  AddCommitUpdatedActivity,
+  SaveActivity
 } from '@/modules/activitystream/domain/operations'
-import { saveActivityFactory } from '@/modules/activitystream/repositories'
-import { addCommitReceivedActivityFactory } from '@/modules/activitystream/services/commitActivity'
+import { ActionTypes, ResourceTypes } from '@/modules/activitystream/helpers/types'
 import {
   GetBranchById,
   GetStreamBranchByName,
@@ -47,43 +46,50 @@ import {
   MarkReceivedVersionInput,
   UpdateVersionInput
 } from '@/modules/core/graph/generated/graphql'
-import { CommitRecord } from '@/modules/core/helpers/types'
-import { getCommitFactory } from '@/modules/core/repositories/commits'
+import { BranchRecord, CommitRecord } from '@/modules/core/helpers/types'
 import { ensureError, Roles } from '@speckle/shared'
 import { has } from 'lodash'
 
-export async function markCommitReceivedAndNotify(params: {
-  input: MarkReceivedVersionInput | CommitReceivedInput
-  userId: string
-}) {
-  const { input, userId } = params
+export const markCommitReceivedAndNotifyFactory =
+  ({ getCommit, saveActivity }: { getCommit: GetCommit; saveActivity: SaveActivity }) =>
+  async (params: {
+    input: MarkReceivedVersionInput | CommitReceivedInput
+    userId: string
+  }) => {
+    const { input, userId } = params
 
-  const oldInput: CommitReceivedInput =
-    'projectId' in input
-      ? {
-          ...input,
-          streamId: input.projectId,
-          commitId: input.versionId
-        }
-      : input
+    const oldInput: CommitReceivedInput =
+      'projectId' in input
+        ? {
+            ...input,
+            streamId: input.projectId,
+            commitId: input.versionId
+          }
+        : input
 
-  const commit = await getCommitFactory({ db })(oldInput.commitId, {
-    streamId: oldInput.streamId
-  })
-  if (!commit) {
-    throw new CommitReceiveError(
-      `Failed to find commit with id ${oldInput.commitId} in stream ${oldInput.streamId}.`,
-      { info: params }
-    )
-  }
-
-  await addCommitReceivedActivityFactory({ saveActivity: saveActivityFactory({ db }) })(
-    {
-      input: oldInput,
-      userId
+    const commit = await getCommit(oldInput.commitId, {
+      streamId: oldInput.streamId
+    })
+    if (!commit) {
+      throw new CommitReceiveError(
+        `Failed to find commit with id ${oldInput.commitId} in stream ${oldInput.streamId}.`,
+        { info: params }
+      )
     }
-  )
-}
+
+    await saveActivity({
+      streamId: oldInput.streamId,
+      resourceType: ResourceTypes.Commit,
+      resourceId: oldInput.commitId,
+      actionType: ActionTypes.Commit.Receive,
+      userId,
+      info: {
+        sourceApplication: input.sourceApplication,
+        message: input.message
+      },
+      message: `Commit ${oldInput.commitId} was received by user ${userId}`
+    })
+  }
 
 export const createCommitByBranchIdFactory =
   (deps: {
@@ -172,7 +178,7 @@ export const createCommitByBranchIdFactory =
         : [])
     ])
 
-    return commit
+    return { ...commit, streamId, branchId }
   }
 
 export const createCommitByBranchNameFactory =
@@ -288,21 +294,20 @@ export const updateCommitAndNotifyFactory =
       )
     }
 
+    let branch: BranchRecord | undefined = await deps.getCommitBranch(commitId)
     if (newBranchName) {
       try {
-        const [newBranch, oldBranch] = await Promise.all([
-          deps.getStreamBranchByName(streamId, newBranchName),
-          deps.getCommitBranch(commitId)
-        ])
+        const newBranch = await deps.getStreamBranchByName(streamId, newBranchName)
 
-        if (!newBranch || !oldBranch) {
+        if (!newBranch || !branch) {
           throw new Error("Couldn't resolve branch")
         }
         if (!commit) {
           throw new Error("Couldn't find commit")
         }
 
-        await deps.switchCommitBranch(commitId, newBranch.id, oldBranch.id)
+        await deps.switchCommitBranch(commitId, newBranch.id, branch.id)
+        branch = newBranch
       } catch (e) {
         throw new CommitUpdateError('Failed to update commit branch', {
           cause: ensureError(e),
@@ -326,13 +331,14 @@ export const updateCommitAndNotifyFactory =
         newCommit
       })
 
-      await Promise.all([
-        deps.markCommitStreamUpdated(commit.id),
-        deps.markCommitBranchUpdated(commit.id)
+      const [updatedBranch] = await Promise.all([
+        deps.markCommitBranchUpdated(commit.id),
+        deps.markCommitStreamUpdated(commit.id)
       ])
+      branch = updatedBranch
     }
 
-    return newCommit
+    return { ...newCommit, streamId: stream.id, branchId: branch!.id }
   }
 
 export const deleteCommitAndNotifyFactory =

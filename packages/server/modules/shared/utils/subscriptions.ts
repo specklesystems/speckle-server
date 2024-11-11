@@ -183,7 +183,7 @@ type SubscriptionTypeMap = {
     payload: {
       projectVersionsUpdated: Merge<
         ProjectVersionsUpdatedMessage,
-        { version: Nullable<VersionGraphQLReturn> }
+        { version: Nullable<Omit<VersionGraphQLReturn, 'branchId'>> }
       >
       projectId: string
     }
