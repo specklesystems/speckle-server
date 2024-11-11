@@ -4,7 +4,6 @@
       <ExclamationCircleIcon v-if="showIcon" class="h-4 w-4 text-danger mt-1" />
       <div class="flex-1 flex gap-x-4 items-center">
         <div class="flex-1">
-          {{ planStatus }}
           <h5 class="text-body-xs font-medium text-foreground">{{ title }}</h5>
           <p class="text-body-xs text-foreground-2">{{ description }}</p>
         </div>
