@@ -89,7 +89,10 @@ import {
   getUsersFactory,
   UserWithOptionalRole
 } from '@/modules/core/repositories/users'
-import { CommitWithStreamBranchMetadata } from '@/modules/core/domain/commits/types'
+import {
+  CommitWithStreamBranchId,
+  CommitWithStreamBranchMetadata
+} from '@/modules/core/domain/commits/types'
 
 declare module '@/modules/core/loaders' {
   interface ModularizedDataLoaders extends ReturnType<typeof dataLoadersDefinition> {}
@@ -369,7 +372,7 @@ const dataLoadersDefinition = defineRequestDataloaders(
         }),
         getBranchCommit: createLoader<
           { branchId: string; commitId: string },
-          Nullable<CommitRecord>,
+          Nullable<CommitWithStreamBranchId>,
           string
         >(
           async (idPairs) => {

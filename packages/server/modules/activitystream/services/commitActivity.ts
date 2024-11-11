@@ -40,7 +40,7 @@ export const addCommitCreatedActivityFactory =
     modelId: string
     commit: CommitRecord
   }) => {
-    const { commitId, input, streamId, userId, branchName, commit } = params
+    const { commitId, input, streamId, userId, branchName, commit, modelId } = params
     await Promise.all([
       saveActivity({
         streamId,
@@ -53,7 +53,7 @@ export const addCommitCreatedActivityFactory =
           commit: {
             ...input,
             projectId: streamId,
-            modelId: params.modelId,
+            modelId,
             versionId: commit.id
           }
         },
@@ -67,7 +67,7 @@ export const addCommitCreatedActivityFactory =
         projectId: streamId,
         projectVersionsUpdated: {
           id: commit.id,
-          version: commit,
+          version: { ...commit, streamId },
           type: ProjectVersionsUpdatedMessageType.Created,
           modelId: null
         }
@@ -123,7 +123,7 @@ export const addCommitUpdatedActivityFactory =
         projectId: streamId,
         projectVersionsUpdated: {
           id: commitId,
-          version: newCommit,
+          version: { ...newCommit, streamId },
           type: ProjectVersionsUpdatedMessageType.Updated,
           modelId: null
         }
@@ -162,7 +162,7 @@ export const addCommitMovedActivityFactory =
         projectId: streamId,
         projectVersionsUpdated: {
           id: commitId,
-          version: commit,
+          version: { ...commit, streamId },
           type: ProjectVersionsUpdatedMessageType.Updated,
           modelId: null
         }

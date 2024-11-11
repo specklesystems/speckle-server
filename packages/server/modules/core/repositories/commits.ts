@@ -23,6 +23,7 @@ import {
 import { Knex } from 'knex'
 import { MaybeNullOrUndefined, Optional } from '@speckle/shared'
 import {
+  CommitWithStreamBranchId,
   CommitWithStreamBranchMetadata,
   LegacyStreamCommit,
   LegacyUserCommit
@@ -251,7 +252,7 @@ export const getCommitsAndTheirBranchIdsFactory =
 
     return await tables
       .commits(deps.db)
-      .select<Array<CommitRecord & { branchId: string }>>([
+      .select<Array<CommitWithStreamBranchId>>([
         ...Commits.cols,
         BranchCommits.col.branchId
       ])
@@ -269,7 +270,7 @@ export const getSpecificBranchCommitsFactory =
 
     const q = tables
       .commits(deps.db)
-      .select<Array<Omit<CommitWithStreamBranchMetadata, 'branchName'>>>([
+      .select<Array<CommitWithStreamBranchId>>([
         ...Commits.cols,
         knex.raw(`(array_agg(??))[1] as "branchId"`, [BranchCommits.col.branchId]),
         knex.raw(`(array_agg(??))[1] as "streamId"`, [StreamCommits.col.streamId])
@@ -281,7 +282,7 @@ export const getSpecificBranchCommitsFactory =
       .groupBy(Commits.col.id)
 
     const queryResults = await q
-    const results: Array<CommitRecord & { branchId: string }> = []
+    const results: Array<CommitWithStreamBranchId> = []
 
     for (const pair of pairs) {
       const commit = queryResults.find(
@@ -297,9 +298,7 @@ export const getSpecificBranchCommitsFactory =
 
 const getPaginatedBranchCommitsBaseQueryFactory =
   (deps: { db: Knex }) =>
-  <T = Omit<CommitWithStreamBranchMetadata, 'branchName'>[]>(
-    params: PaginatedBranchCommitsBaseParams
-  ) => {
+  <T = CommitWithStreamBranchId[]>(params: PaginatedBranchCommitsBaseParams) => {
     const { branchId, filter } = params
 
     const q = tables

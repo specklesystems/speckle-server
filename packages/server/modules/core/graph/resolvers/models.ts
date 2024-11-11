@@ -61,19 +61,34 @@ import {
 } from '@/modules/core/repositories/streams'
 import { ModelsEmitter } from '@/modules/core/events/modelsEmitter'
 import { saveActivityFactory } from '@/modules/activitystream/repositories'
-import { getProjectDbClient } from '@/modules/multiregion/dbSelector'
+import {
+  getProjectDbClient,
+  getRegisteredRegionClients
+} from '@/modules/multiregion/dbSelector'
 
 export = {
   User: {
     async versions(parent, args, ctx) {
       const authoredOnly = args.authoredOnly
+      const regionClients = await getRegisteredRegionClients()
+      const allLoaders = [
+        ctx.loaders,
+        ...Object.values(regionClients).map((db) => ctx.loaders.forRegion({ db }))
+      ]
+      let counts: number[]
+      if (authoredOnly) {
+        counts = await Promise.all(
+          allLoaders.map((loader) =>
+            loader.users.getAuthoredCommitCount.load(parent.id)
+          )
+        )
+      } else {
+        counts = await Promise.all(
+          allLoaders.map((loader) => loader.users.getStreamCommitCount.load(parent.id))
+        )
+      }
       return {
-        totalCount: authoredOnly
-          ? // TODO: make one dataloader for region and sum
-            await ctx.loaders
-              .forRegion({ db: regionDB })
-              .users.getAuthoredCommitCount.load(parent.id)
-          : await ctx.loaders.users.getStreamCommitCount.load(parent.id)
+        totalCount: counts.reduce((acc, curr) => acc + curr, 0)
       }
     }
   },
