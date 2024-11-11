@@ -116,12 +116,14 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
 
   /**
    * Updates a model's provided properties and persists the changes in the host application.
-   * @param modelCardId
-   * @param properties
+   * @param modelCardId The model card id (NOT the model id).
+   * @param properties Properties to update.
+   * @param updateInHostApp Whether to sync the state to the host app. Defaults to true.
    */
   const patchModel = async (
     modelCardId: string,
-    properties: Record<string, unknown>
+    properties: Record<string, unknown>,
+    updateInHostApp: boolean = true
   ) => {
     const modelIndex = documentModelStore.value.models.findIndex(
       (m) => m.modelCardId === modelCardId
@@ -132,6 +134,7 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
       ...properties
     }
 
+    if (!updateInHostApp) return
     await app.$baseBinding.updateModel(documentModelStore.value.models[modelIndex])
   }
 

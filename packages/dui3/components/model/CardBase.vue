@@ -48,9 +48,11 @@
         </div>
 
         <AutomateResultDialog
-          v-if="isSender && automationsRuns"
+          v-if="isSender && summary"
           :model-card="modelCard"
-          :automation-runs="automationsRuns"
+          :automation-runs="
+            automateResult?.project.model.automationsStatus?.automationRuns
+          "
           :project-id="modelCard.projectId"
           :model-id="modelCard.modelId"
         >
@@ -198,10 +200,7 @@ import { useAccountStore } from '~/store/accounts'
 import type { IReceiverModelCard } from '~/lib/models/card/receiver'
 import { useMixpanel } from '~/lib/core/composables/mixpanel'
 import { useIntervalFn, useTimeoutFn } from '@vueuse/core'
-import type {
-  AutomationRunItemFragment,
-  ProjectCommentsUpdatedMessage
-} from '~/lib/common/generated/gql/graphql'
+import type { ProjectCommentsUpdatedMessage } from '~/lib/common/generated/gql/graphql'
 import { useFunctionRunsStatusSummary } from '~/lib/automate/runStatus'
 
 const app = useNuxtApp()
@@ -261,7 +260,7 @@ const folderPath = computed(() => {
   return withoutLast.join('/')
 })
 
-const { result: automateResult } = useQuery(
+const { result: automateResult, onResult } = useQuery(
   automateStatusQuery,
   () => ({
     projectId: props.project.projectId,
@@ -270,16 +269,26 @@ const { result: automateResult } = useQuery(
   () => ({ clientId })
 )
 
-const automationsRuns = ref<AutomationRunItemFragment[] | undefined>(undefined)
-const summary = computed(() =>
-  useFunctionRunsStatusSummary({
-    runs: automationsRuns.value as AutomationRunItemFragment[]
-  })
-)
+// on model card first load, populate any pre-existing automation runs here
+onResult((res) => {
+  const automationRuns = res.data.project.model.automationsStatus?.automationRuns
+  if (!automationRuns) return
+  void store.patchModel(
+    props.modelCard.modelCardId,
+    {
+      automationRuns
+    },
+    false
+  )
+})
 
-// at first we can't get result directly?
-watch(automateResult, (newValue) => {
-  automationsRuns.value = newValue?.project.model.automationsStatus?.automationRuns
+const summary = computed(() => {
+  if (!props.modelCard.automationRuns) {
+    return undefined
+  }
+  return useFunctionRunsStatusSummary({
+    runs: props.modelCard.automationRuns
+  })
 })
 
 provide<IModelCard>('cardBase', props.modelCard)
