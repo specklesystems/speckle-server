@@ -26,5 +26,9 @@ export interface ISendBindingEvents
     versionId: string
     sendConversionResults: ConversionResult[]
   }) => void
-  setIdMap: (args: { modelCardId: string; idMap: Record<string, string> }) => void
+  setIdMap: (args: {
+    modelCardId: string
+    idMap: Record<string, string>
+    newSelectedObjectIds: string[]
+  }) => void
 }

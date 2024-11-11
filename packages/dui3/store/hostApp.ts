@@ -180,20 +180,23 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     () => sendFilters.value?.find((f) => f.name === 'Selection') as ISendFilter
   )
 
-  app.$sendBinding?.on('setIdMap', async ({ modelCardId, idMap }) => {
-    const modelCard = models.value.find(
-      (card) => card.modelCardId === modelCardId
-    ) as ISenderModelCard
-    if (!modelCard) return
+  app.$sendBinding?.on(
+    'setIdMap',
+    async ({ modelCardId, idMap, newSelectedObjectIds }) => {
+      const modelCard = models.value.find(
+        (card) => card.modelCardId === modelCardId
+      ) as ISenderModelCard
+      if (!modelCard) return
 
-    const newFilter = {
-      ...modelCard.sendFilter,
-      selectedObjectIds: Object.values(idMap),
-      idMap
+      const newFilter = {
+        ...modelCard.sendFilter,
+        selectedObjectIds: newSelectedObjectIds,
+        idMap
+      }
+
+      await patchModel(modelCardId, { sendFilter: newFilter })
     }
-
-    await patchModel(modelCardId, { sendFilter: newFilter })
-  })
+  )
 
   app.$selectionBinding?.on('setSelection', (selInfo) => {
     const modelCards = models.value.filter(
