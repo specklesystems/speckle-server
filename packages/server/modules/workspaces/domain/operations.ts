@@ -27,7 +27,7 @@ import { SetOptional } from 'type-fest'
 
 /** Workspace */
 
-type UpsertWorkspaceArgs = {
+export type UpsertWorkspaceArgs = {
   workspace: Omit<
     SetOptional<
       NullableKeysToOptional<Workspace>,

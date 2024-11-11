@@ -207,7 +207,7 @@ export const initializeTestServer = async (
   await startHttp(server, app, 0)
 
   await once(app, 'appStarted')
-  const port = (server.address() as net.AddressInfo).port
+  const port = (server.address() as net.AddressInfo).port + ''
   const serverAddress = `http://127.0.0.1:${port}`
   const wsAddress = `ws://127.0.0.1:${port}`
   return {
