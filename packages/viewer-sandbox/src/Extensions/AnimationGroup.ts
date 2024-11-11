@@ -61,7 +61,7 @@ export class AnimationGroup {
       vec3.set(0, 0, 0)
       const value = vec3.lerp(this.animations[k].end, easedT)
       /** Apply the translation */
-      this.animations[k].target.transformTRS(value, undefined, undefined, undefined)
+      this.animations[k].target.transformTRS(value)
       animCount++
     }
 
