@@ -11,7 +11,7 @@
         <FormButton
           v-if="isPaymentFailed"
           :icon-right="ArrowTopRightOnSquareIcon"
-          @click="openCustomerPortal"
+          @click="customerPortalRedirect"
         >
           Update payment information
         </FormButton>
@@ -51,7 +51,7 @@ const props = defineProps<{
   workspace: BillingAlert_WorkspaceFragment
 }>()
 
-const { openCustomerPortal } = useBillingActions()
+const { customerPortalRedirect } = useBillingActions()
 
 const planStatus = computed(() => props.workspace.plan?.status)
 // If there is no plan status, we assume it's a trial
