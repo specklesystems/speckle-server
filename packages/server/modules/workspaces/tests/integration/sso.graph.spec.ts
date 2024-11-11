@@ -86,7 +86,7 @@ describe('Workspace SSO', () => {
     ])
 
     memberApollo = await testApolloServer({
-      context: createTestContext({
+      context: await createTestContext({
         auth: true,
         userId: workspaceMember.id,
         token: await createAuthTokenForUser(workspaceMember.id),
@@ -95,7 +95,7 @@ describe('Workspace SSO', () => {
       })
     })
     guestApollo = await testApolloServer({
-      context: createTestContext({
+      context: await createTestContext({
         auth: true,
         userId: workspaceGuest.id,
         token: await createAuthTokenForUser(workspaceGuest.id),

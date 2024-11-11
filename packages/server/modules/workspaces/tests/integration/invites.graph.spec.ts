@@ -1667,7 +1667,7 @@ describe('Workspaces Invites GQL', () => {
           }
         },
         {
-          context: createTestContext({
+          context: await createTestContext({
             userId: newUser.id,
             auth: true,
             role: Roles.Server.User,

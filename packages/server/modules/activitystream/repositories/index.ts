@@ -18,7 +18,10 @@ import {
 import { StreamAcl, StreamActivity } from '@/modules/core/dbSchema'
 import { Roles } from '@/modules/core/helpers/mainConstants'
 import { StreamAclRecord } from '@/modules/core/helpers/types'
-import { createWebhookEventFactory } from '@/modules/webhooks/repositories/webhooks'
+import {
+  createWebhookEventFactory,
+  getStreamWebhooksFactory
+} from '@/modules/webhooks/repositories/webhooks'
 import { dispatchStreamEventFactory } from '@/modules/webhooks/services/webhooks'
 import { Knex } from 'knex'
 import { getStreamFactory } from '@/modules/core/repositories/streams'
@@ -251,7 +254,7 @@ export const saveActivityFactory =
       }
 
       await dispatchStreamEventFactory({
-        db,
+        getStreamWebhooks: getStreamWebhooksFactory({ db }),
         getServerInfo: getServerInfoFactory({ db }),
         getStream: getStreamFactory({ db }),
         createWebhookEvent: createWebhookEventFactory({ db }),

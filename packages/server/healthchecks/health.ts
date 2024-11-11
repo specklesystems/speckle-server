@@ -1,85 +1,54 @@
-import * as express from 'express'
 import { createRedisClient } from '@/modules/shared/redis/redis'
-import {
-  getRedisUrl,
-  highFrequencyMetricsCollectionPeriodMs,
-  postgresMaxConnections
-} from '@/modules/shared/helpers/envHelper'
+import { getRedisUrl, postgresMaxConnections } from '@/modules/shared/helpers/envHelper'
 import type { Redis } from 'ioredis'
 import { numberOfFreeConnections } from '@/modules/shared/helpers/dbHelper'
 import { db } from '@/db/knex'
 import type { Knex } from 'knex'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
+import { BaseError } from '@/modules/shared/errors'
+import { ensureErrorOrWrapAsCause } from '@/modules/shared/errors/ensureError'
 
-type FreeConnectionsCalculator = {
+export type ReadinessHandler = () => Promise<{ details: Record<string, string> }>
+
+export type FreeConnectionsCalculator = {
   mean: () => number
 }
 
-export default (app: express.Application) => {
-  const knexFreeDbConnectionSamplerLiveness = knexFreeDbConnectionSamplerFactory({
-    db,
-    collectionPeriod: highFrequencyMetricsCollectionPeriodMs(),
-    sampledDuration: 600000 //number of ms over which to average the database connections, before declaring not alive. 10 minutes.
-  })
-  knexFreeDbConnectionSamplerLiveness.start()
-
-  const knexFreeDbConnectionSamplerReadiness = knexFreeDbConnectionSamplerFactory({
-    db,
-    collectionPeriod: highFrequencyMetricsCollectionPeriodMs(),
-    sampledDuration: 20000 //number of ms over which to average the database connections, before declaring unready. 20 seconds.
-  })
-  knexFreeDbConnectionSamplerReadiness.start()
-
-  app.options('/liveness')
-  app.get(
-    '/liveness',
-    handleLivenessFactory({
-      isRedisAlive,
-      isPostgresAlive,
-      freeConnectionsCalculator: knexFreeDbConnectionSamplerLiveness
-    })
-  )
-  app.options('/readiness')
-  app.get(
-    '/readiness',
-    handleReadinessFactory({
-      isRedisAlive,
-      isPostgresAlive,
-      freeConnectionsCalculator: knexFreeDbConnectionSamplerReadiness
-    })
-  )
+class LivenessError extends BaseError {
+  static defaultMessage = 'The application is not yet alive. Please try again later.'
+  static code = 'LIVENESS_ERROR'
+  static statusCode = 500
 }
 
-const handleLivenessFactory =
+class ReadinessError extends BaseError {
+  static defaultMessage =
+    'The application is not ready to accept requests. Please try again later.'
+  static code = 'READINESS_ERROR'
+  static statusCode = 500
+}
+
+export const handleLivenessFactory =
   (deps: {
     isRedisAlive: RedisCheck
     isPostgresAlive: DBCheck
     freeConnectionsCalculator: FreeConnectionsCalculator
-  }): express.RequestHandler =>
-  async (req, res) => {
+  }) =>
+  async () => {
     const postgres = await deps.isPostgresAlive()
     if (!postgres.isAlive) {
-      req.log.error(
-        postgres.err,
-        'Liveness health check failed. Postgres is not available.'
+      throw new LivenessError(
+        'Liveness health check failed. Postgres is not available.',
+        {
+          cause: ensureErrorOrWrapAsCause(postgres.err, 'Unknown postgres error.')
+        }
       )
-      res.status(500).json({
-        message: 'Postgres is not available',
-        error: postgres.err
-      })
-      res.send()
-      return
     }
 
     const redis = await deps.isRedisAlive()
     if (!redis.isAlive) {
-      req.log.error(redis.err, 'Liveness health check failed. Redis is not available.')
-      res.status(500).json({
-        message: 'Redis is not available.',
-        error: redis.err
+      throw new LivenessError('Liveness health check failed. Redis is not available.', {
+        cause: ensureErrorOrWrapAsCause(redis.err, 'Unknown redis error.')
       })
-      res.send()
-      return
     }
 
     const numFreeConnections = await deps.freeConnectionsCalculator.mean()
@@ -88,49 +57,40 @@ const handleLivenessFactory =
     )
     //unready if less than 10%
     if (percentageFreeConnections < 10) {
-      const message =
+      throw new LivenessError(
         'Liveness health check failed. Insufficient free database connections for a sustained duration.'
-      req.log.error(message)
-      res.status(500).json({
-        message
-      })
-      res.send()
-      return
+      )
     }
 
-    res.status(200)
-    res.send()
+    return {
+      details: {
+        postgres: 'true',
+        redis: 'true',
+        percentageFreeConnections: percentageFreeConnections.toFixed(0)
+      }
+    }
   }
 
-const handleReadinessFactory = (deps: {
+export const handleReadinessFactory = (deps: {
   isRedisAlive: RedisCheck
   isPostgresAlive: DBCheck
   freeConnectionsCalculator: FreeConnectionsCalculator
-}): express.RequestHandler => {
-  return async (req, res) => {
+}): ReadinessHandler => {
+  return async () => {
     const postgres = await deps.isPostgresAlive()
     if (!postgres.isAlive) {
-      req.log.error(
-        postgres.err,
-        'Readiness health check failed. Postgres is not available.'
+      throw new ReadinessError(
+        'Readiness health check failed. Postgres is not available.',
+        { cause: ensureErrorOrWrapAsCause(postgres.err, 'Unknown postgres error.') }
       )
-      res.status(500).json({
-        message: 'Postgres is not available',
-        error: postgres.err
-      })
-      res.send()
-      return
     }
 
     const redis = await deps.isRedisAlive()
     if (!redis.isAlive) {
-      req.log.error(redis.err, 'Readiness health check failed. Redis is not available.')
-      res.status(500).json({
-        message: 'Redis is not available.',
-        error: redis.err
-      })
-      res.send()
-      return
+      throw new ReadinessError(
+        'Readiness health check failed. Redis is not available.',
+        { cause: ensureErrorOrWrapAsCause(redis.err, 'Unknown Redis error.') }
+      )
     }
 
     const numFreeConnections = await deps.freeConnectionsCalculator.mean()
@@ -141,16 +101,16 @@ const handleReadinessFactory = (deps: {
     if (percentageFreeConnections < 10) {
       const message =
         'Readiness health check failed. Insufficient free database connections for a sustained duration.'
-      req.log.error(message)
-      res.status(500).json({
-        message
-      })
-      res.send()
-      return
+      throw new ReadinessError(message)
     }
 
-    res.status(200)
-    res.send()
+    return {
+      details: {
+        postgres: 'true',
+        redis: 'true',
+        percentageFreeConnections: percentageFreeConnections.toFixed(0)
+      }
+    }
   }
 }
 
@@ -158,7 +118,7 @@ type CheckResponse = { isAlive: true } | { isAlive: false; err: unknown }
 
 type DBCheck = () => Promise<CheckResponse>
 
-const isPostgresAlive: DBCheck = async (): Promise<CheckResponse> => {
+export const isPostgresAlive: DBCheck = async (): Promise<CheckResponse> => {
   const getServerInfo = getServerInfoFactory({ db })
 
   try {
@@ -171,7 +131,7 @@ const isPostgresAlive: DBCheck = async (): Promise<CheckResponse> => {
 
 type RedisCheck = () => Promise<CheckResponse>
 
-const isRedisAlive: RedisCheck = async (): Promise<CheckResponse> => {
+export const isRedisAlive: RedisCheck = async (): Promise<CheckResponse> => {
   let client: Redis | undefined = undefined
   let result: CheckResponse = { isAlive: true }
   try {
