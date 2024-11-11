@@ -3,12 +3,11 @@ import { corsMiddleware } from '@/modules/core/configs/cors'
 import { chunk } from 'lodash'
 import type { Application } from 'express'
 import { hasObjectsFactory } from '@/modules/core/repositories/objects'
-import { db } from '@/db/knex'
 import { validatePermissionsWriteStreamFactory } from '@/modules/core/services/streams/auth'
 import { authorizeResolver, validateScopes } from '@/modules/shared'
+import { getProjectDbClient } from '@/modules/multiregion/dbSelector'
 
 export default (app: Application) => {
-  const hasObjects = hasObjectsFactory({ db })
   const validatePermissionsWriteStream = validatePermissionsWriteStreamFactory({
     validateScopes,
     authorizeResolver
@@ -29,6 +28,8 @@ export default (app: Application) => {
       return res.status(hasStreamAccess.status).end()
     }
 
+    const projectDb = await getProjectDbClient({ projectId: req.params.streamId })
+    const hasObjects = hasObjectsFactory({ db: projectDb })
     const objectList = JSON.parse(req.body.objects)
 
     req.log.info({ objectCount: objectList.length }, 'Diffing {objectCount} objects.')
