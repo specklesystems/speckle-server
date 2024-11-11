@@ -276,7 +276,7 @@ const summary = computed(() => {
   // On init, it will use the runs from the query result above. Post factum, it will use the runs set from the subscription in ProjectModelGroup
   const actualRuns =
     props.modelCard.automationRuns ??
-    automateResult.value?.project.model.automationsStatus
+    automateResult.value?.project.model.automationsStatus?.automationRuns
 
   if (!actualRuns) {
     return undefined
