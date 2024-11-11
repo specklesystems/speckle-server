@@ -15,11 +15,11 @@ import {
   TestApolloServer
 } from '@/test/graphqlHelper'
 import { beforeEachContext, truncateTables } from '@/test/hooks'
-import { MultiRegionConfigServiceMock } from '@/test/mocks/global'
+import { MultiRegionConfigMock, MultiRegionDbSelectorMock } from '@/test/mocks/global'
 import { Roles } from '@speckle/shared'
 import { expect } from 'chai'
 
-describe.skip('Multi Region Server Settings', () => {
+describe('Multi Region Server Settings', () => {
   let testAdminUser: BasicTestUser
   let testBasicUser: BasicTestUser
   let apollo: TestApolloServer
@@ -41,14 +41,12 @@ describe.skip('Multi Region Server Settings', () => {
   }
 
   before(async () => {
-    // Have to mock both
-    // MultiRegionConfigServiceMock.mockFunction(
-    //   'getAvailableRegionConfigsFactory',
-    //   () => async () => fakeRegionConfig
-    // )
-    MultiRegionConfigServiceMock.mockFunction(
-      'getAvailableRegionKeysFactory',
-      () => async () => Object.keys(fakeRegionConfig)
+    MultiRegionConfigMock.mockFunction(
+      'getAvailableRegionConfig',
+      async () => fakeRegionConfig
+    )
+    MultiRegionDbSelectorMock.mockFunction('initializeRegion', async () =>
+      Promise.resolve()
     )
 
     await beforeEachContext()
@@ -58,7 +56,8 @@ describe.skip('Multi Region Server Settings', () => {
   })
 
   after(() => {
-    MultiRegionConfigServiceMock.resetMockedFunctions()
+    MultiRegionConfigMock.resetMockedFunctions()
+    MultiRegionDbSelectorMock.resetMockedFunctions()
   })
 
   describe('server config', () => {
@@ -121,11 +120,11 @@ describe.skip('Multi Region Server Settings', () => {
         }
 
         const res = await createRegion(input)
+        expect(res).to.not.haveGraphQLErrors()
         expect(res.data?.serverInfoMutations.multiRegion.create).to.deep.equal({
           ...input,
           id: input.key
         })
-        expect(res).to.not.haveGraphQLErrors()
       })
 
       it("doesn't work with already used up key", async () => {
