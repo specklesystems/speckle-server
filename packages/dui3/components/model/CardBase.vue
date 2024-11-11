@@ -48,9 +48,11 @@
         </div>
 
         <AutomateResultDialog
-          v-if="isSender && automationsRuns"
+          v-if="isSender && summary"
           :model-card="modelCard"
-          :automation-runs="automationsRuns"
+          :automation-runs="
+            automateResult?.project.model.automationsStatus?.automationRuns
+          "
           :project-id="modelCard.projectId"
           :model-id="modelCard.modelId"
         >
@@ -270,16 +272,19 @@ const { result: automateResult } = useQuery(
   () => ({ clientId })
 )
 
-const automationsRuns = ref<AutomationRunItemFragment[] | undefined>(undefined)
-const summary = computed(() =>
-  useFunctionRunsStatusSummary({
-    runs: automationsRuns.value as AutomationRunItemFragment[]
-  })
-)
+const summary = computed(() => {
+  // On init, it will use the runs from the query result above. Post factum, it will use the runs set from the subscription in ProjectModelGroup
+  const actualRuns =
+    props.modelCard.automationRuns ??
+    automateResult.value?.project.model.automationsStatus
 
-// at first we can't get result directly?
-watch(automateResult, (newValue) => {
-  automationsRuns.value = newValue?.project.model.automationsStatus?.automationRuns
+  if (!actualRuns) {
+    return undefined
+  }
+  return useFunctionRunsStatusSummary({
+    runs: actualRuns as AutomationRunItemFragment[]
+    // runs: automationsRuns.value as AutomationRunItemFragment[]
+  })
 })
 
 provide<IModelCard>('cardBase', props.modelCard)

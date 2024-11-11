@@ -133,7 +133,8 @@ import {
   projectDetailsQuery,
   versionCreatedSubscription,
   userProjectsUpdatedSubscription,
-  projectUpdatedSubscription
+  projectUpdatedSubscription,
+  automateRunsSubscription
 } from '~~/lib/graphql/mutationsAndQueries'
 import { useMixpanel } from '~/lib/core/composables/mixpanel'
 import type { ApolloError } from '@apollo/client/errors'
@@ -269,5 +270,15 @@ onResult((res) => {
     hasDismissedUpdateWarning: false,
     displayReceiveComplete: false
   })
+})
+
+const { onResult: onAutomateRunResult } = useSubscription(
+  automateRunsSubscription,
+  () => ({ projectId: props.project.projectId }),
+  () => ({ clientId })
+)
+
+onAutomateRunResult((res) => {
+  console.log(res.data?.projectTriggeredAutomationsStatusUpdated)
 })
 </script>

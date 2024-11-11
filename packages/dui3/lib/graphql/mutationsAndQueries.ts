@@ -422,6 +422,26 @@ export const versionCreatedSubscription = graphql(`
   }
 `)
 
+export const automateRunsSubscription = graphql(`
+  subscription ProjectTriggeredAutomationsStatusUpdated($projectId: String!) {
+    projectTriggeredAutomationsStatusUpdated(projectId: $projectId) {
+      type
+      version {
+        id
+      }
+      model {
+        id
+      }
+      project {
+        id
+      }
+      run {
+        ...AutomationRunItem
+      }
+    }
+  }
+`)
+
 export const userProjectsUpdatedSubscription = graphql(`
   subscription OnUserProjectsUpdated {
     userProjectsUpdated {
