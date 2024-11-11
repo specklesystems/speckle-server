@@ -48,7 +48,7 @@
         </div>
 
         <AutomateResultDialog
-          v-if="automationsRuns"
+          v-if="isSender && automationsRuns"
           :model-card="modelCard"
           :automation-runs="automationsRuns"
           :project-id="modelCard.projectId"

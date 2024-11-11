@@ -47,24 +47,28 @@ const clientId = projectAccount.value.accountInfo.id
 
 const applicationIds = ref<string[]>([])
 
-const { result: objectResult } = useQuery(
-  objectQuery,
-  () => ({
-    projectId: props.modelCard.projectId,
-    objectId: props.result.objectIds[0] // TODO for each!!!
-  }),
-  () => ({ clientId })
-)
-
 type Data = {
   applicationId?: string
 }
 
-watch(objectResult, (newValue) => {
-  const data = newValue?.project.object?.data as Data | undefined
-  if (!applicationIds.value.includes(data?.applicationId as string)) {
-    applicationIds.value.push(data?.applicationId as string)
-  }
+// Loop over each objectId to run the query and collect application IDs
+props.result.objectIds.forEach((objectId) => {
+  const { result: objectResult } = useQuery(
+    objectQuery,
+    () => ({
+      projectId: props.modelCard.projectId,
+      objectId
+    }),
+    () => ({ clientId })
+  )
+
+  watch(objectResult, (newValue) => {
+    const data = newValue?.project.object?.data as Data | undefined
+    const applicationId = data?.applicationId
+    if (applicationId && !applicationIds.value.includes(applicationId)) {
+      applicationIds.value.push(applicationId)
+    }
+  })
 })
 
 const handleClick = async () => {

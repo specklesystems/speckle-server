@@ -12,7 +12,8 @@
       fullscreen="none"
     >
       <div class="-mx-1">
-        <AutomateCreateDialog
+        <!-- TODO: for later, to be able to create automation from DUI3, our accounts need scopes to do it which we don't have yet. -->
+        <!-- <AutomateCreateDialog
           :project-id="props.modelCard.projectId"
           :model-id="props.modelCard.modelId"
         >
@@ -22,7 +23,7 @@
               <div><BoltIcon class="w-5 h-5" /></div>
             </button>
           </template>
-        </AutomateCreateDialog>
+        </AutomateCreateDialog> -->
         <SendSettingsDialog
           v-if="hasSettings"
           :model-card-id="props.modelCard.modelCardId"
@@ -64,8 +65,7 @@ import {
   Cog6ToothIcon,
   ArrowTopRightOnSquareIcon,
   ClockIcon,
-  ArchiveBoxXMarkIcon,
-  BoltIcon
+  ArchiveBoxXMarkIcon
 } from '@heroicons/vue/24/outline'
 import type { IModelCard } from '~/lib/models/card'
 import { useMixpanel } from '~/lib/core/composables/mixpanel'
