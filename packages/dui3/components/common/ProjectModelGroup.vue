@@ -280,5 +280,20 @@ const { onResult: onAutomateRunResult } = useSubscription(
 
 onAutomateRunResult((res) => {
   console.log(res.data?.projectTriggeredAutomationsStatusUpdated)
+  if (!res.data?.projectTriggeredAutomationsStatusUpdated) return
+
+  const relevantSender = props.project.senders.find(
+    (s) => s.modelId === res.data?.projectTriggeredAutomationsStatusUpdated.model.id
+  )
+
+  if (!relevantSender) return
+  hostAppStore.patchModel(
+    relevantSender.modelCardId,
+    {
+      automationRuns:
+        res.data?.projectTriggeredAutomationsStatusUpdated.run.functionRuns
+    },
+    false
+  )
 })
 </script>
