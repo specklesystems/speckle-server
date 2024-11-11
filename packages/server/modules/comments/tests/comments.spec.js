@@ -1298,7 +1298,7 @@ describe('Comments @comments', () => {
 
       before(async () => {
         // Truncate comments
-        truncateTables([Comments.name])
+        await truncateTables([Comments.name])
 
         // Create a single comment with a blob
         const createCommentResult = await createComment({

@@ -12,6 +12,7 @@ import { EventBusPayloads } from '@/modules/shared/services/eventBus'
 import {
   MaybeNullOrUndefined,
   Nullable,
+  NullableKeysToOptional,
   Optional,
   PartialNullable,
   StreamRoles,
@@ -22,11 +23,22 @@ import { WorkspaceTeam } from '@/modules/workspaces/domain/types'
 import { Stream } from '@/modules/core/domain/streams/types'
 import { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
 import { ServerRegion } from '@/modules/multiregion/domain/types'
+import { SetOptional } from 'type-fest'
 
 /** Workspace */
 
 type UpsertWorkspaceArgs = {
-  workspace: Omit<Workspace, 'domains'>
+  workspace: Omit<
+    SetOptional<
+      NullableKeysToOptional<Workspace>,
+      | 'domainBasedMembershipProtectionEnabled'
+      | 'discoverabilityEnabled'
+      | 'defaultLogoIndex'
+      | 'defaultProjectRole'
+      | 'slug'
+    >,
+    'domains'
+  >
 }
 
 export type UpsertWorkspace = (args: UpsertWorkspaceArgs) => Promise<void>

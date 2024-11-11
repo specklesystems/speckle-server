@@ -117,7 +117,7 @@ describe('Workspace SSO', () => {
   })
 
   afterEach(async () => {
-    truncateTables(['user_sso_sessions'])
+    await truncateTables(['user_sso_sessions'])
   })
 
   describe('given a workspace with SSO configured', () => {
