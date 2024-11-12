@@ -11,7 +11,6 @@ export const isRedisAlive: RedisCheck = async (params): Promise<CheckResponse> =
   } catch (err) {
     result = { isAlive: false, err }
   } finally {
-    await client?.quit()
     return result
   }
 }

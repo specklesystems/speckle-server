@@ -35,7 +35,7 @@ export const handleLivenessFactory =
               ensureErrorOrWrapAsCause(
                 //HACK: kv[1] is not typed correctly as the filter does not narrow the type
                 (kv[1] as { isAlive: false; err: unknown }).err,
-                'Unknown postgres error.'
+                'Unknown Postgres error.'
               )
             )
           )
@@ -47,7 +47,7 @@ export const handleLivenessFactory =
     const redisCheck = await deps.isRedisAlive({ client: redisClient })
     if (!redisCheck.isAlive) {
       throw new LivenessError('Liveness health check failed. Redis is not available.', {
-        cause: ensureErrorOrWrapAsCause(redisCheck.err, 'Unknown redis error.')
+        cause: ensureErrorOrWrapAsCause(redisCheck.err, 'Unknown Redis error.')
       })
     }
 
@@ -93,23 +93,23 @@ export const handleReadinessFactory = (deps: {
 }): ReadinessHandler => {
   return async () => {
     const allPostgresResults = await deps.areAllPostgresAlive()
-    const deadPostgres = Object.entries(allPostgresResults).filter(
-      (result) => !result[1].isAlive
-    )
+    const deadPostgresKeys = Object.entries(allPostgresResults)
+      .filter((result) => !result[1].isAlive)
+      .map((result) => result[0])
 
-    if (deadPostgres.length) {
+    if (deadPostgresKeys.length) {
       throw new ReadinessError(
         `Readiness health check failed. Postgres for ${join(
-          deadPostgres.map((result) => result[0]),
+          deadPostgresKeys,
           ', '
         )} is not available.`,
         {
           cause: new MultiError(
-            deadPostgres.map((kv) =>
+            Object.entries(allPostgresResults).map((kv) =>
               ensureErrorOrWrapAsCause(
                 //HACK: kv[1] is not typed correctly as the filter does not narrow the type
                 (kv[1] as { isAlive: false; err: unknown }).err,
-                'Unknown postgres error.'
+                'Unknown Postgres error.'
               )
             )
           )
@@ -122,7 +122,9 @@ export const handleReadinessFactory = (deps: {
     if (!redisCheck.isAlive) {
       throw new ReadinessError(
         'Readiness health check failed. Redis is not available.',
-        { cause: ensureErrorOrWrapAsCause(redisCheck.err, 'Unknown Redis error.') }
+        {
+          cause: ensureErrorOrWrapAsCause(redisCheck.err, 'Unknown Redis error.')
+        }
       )
     }
 
