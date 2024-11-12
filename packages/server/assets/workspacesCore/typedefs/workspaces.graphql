@@ -147,6 +147,7 @@ type WorkspaceMutations {
   # We are, for the moment, doing the check in the resolver
   deleteDomain(input: WorkspaceDomainDeleteInput!): Workspace!
     @hasScope(scope: "workspace:update")
+  deleteSsoProvider(workspaceId: String!): Boolean!
   invites: WorkspaceInviteMutations!
   projects: WorkspaceProjectMutations! @hasServerRole(role: SERVER_USER)
 }

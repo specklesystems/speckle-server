@@ -5,7 +5,6 @@ import {
 } from '@/modules/shared/utils/subscriptions'
 import {
   CommitCreateInput,
-  CommitReceivedInput,
   CommitUpdateInput,
   ProjectVersionsUpdatedMessageType,
   UpdateVersionInput
@@ -40,7 +39,7 @@ export const addCommitCreatedActivityFactory =
     modelId: string
     commit: CommitRecord
   }) => {
-    const { commitId, input, streamId, userId, branchName, commit } = params
+    const { commitId, input, streamId, userId, branchName, commit, modelId } = params
     await Promise.all([
       saveActivity({
         streamId,
@@ -53,7 +52,7 @@ export const addCommitCreatedActivityFactory =
           commit: {
             ...input,
             projectId: streamId,
-            modelId: params.modelId,
+            modelId,
             versionId: commit.id
           }
         },
@@ -67,7 +66,7 @@ export const addCommitCreatedActivityFactory =
         projectId: streamId,
         projectVersionsUpdated: {
           id: commit.id,
-          version: commit,
+          version: { ...commit, streamId },
           type: ProjectVersionsUpdatedMessageType.Created,
           modelId: null
         }
@@ -123,7 +122,7 @@ export const addCommitUpdatedActivityFactory =
         projectId: streamId,
         projectVersionsUpdated: {
           id: commitId,
-          version: newCommit,
+          version: { ...newCommit, streamId },
           type: ProjectVersionsUpdatedMessageType.Updated,
           modelId: null
         }
@@ -162,7 +161,7 @@ export const addCommitMovedActivityFactory =
         projectId: streamId,
         projectVersionsUpdated: {
           id: commitId,
-          version: commit,
+          version: { ...commit, streamId },
           type: ProjectVersionsUpdatedMessageType.Updated,
           modelId: null
         }
@@ -210,23 +209,4 @@ export const addCommitDeletedActivityFactory =
         }
       })
     ])
-  }
-
-export const addCommitReceivedActivityFactory =
-  ({ saveActivity }: { saveActivity: SaveActivity }) =>
-  async (params: { input: CommitReceivedInput; userId: string }) => {
-    const { input, userId } = params
-
-    await saveActivity({
-      streamId: input.streamId,
-      resourceType: ResourceTypes.Commit,
-      resourceId: input.commitId,
-      actionType: ActionTypes.Commit.Receive,
-      userId,
-      info: {
-        sourceApplication: input.sourceApplication,
-        message: input.message
-      },
-      message: `Commit ${input.commitId} was received by user ${userId}`
-    })
   }

@@ -174,6 +174,7 @@ import {
   listWorkspaceSsoMembershipsByUserEmailFactory
 } from '@/modules/workspaces/services/sso'
 import {
+  deleteSsoProviderFactory,
   getUserSsoSessionFactory,
   getWorkspaceSsoProviderFactory,
   getWorkspaceSsoProviderRecordFactory,
@@ -448,12 +449,14 @@ export = FF_WORKSPACES_MODULE_ENABLED
           )
 
           // Delete workspace and associated resources (i.e. invites)
-          const getStreams = legacyGetStreamsFactory({ db })
           const deleteWorkspace = deleteWorkspaceFactory({
             deleteWorkspace: repoDeleteWorkspaceFactory({ db }),
             deleteProject: deleteStream,
             deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db }),
-            queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({ getStreams })
+            queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({
+              getStreams: legacyGetStreamsFactory({ db })
+            }),
+            deleteSsoProvider: deleteSsoProviderFactory({ db })
           })
 
           await deleteWorkspace({ workspaceId })
@@ -584,6 +587,18 @@ export = FF_WORKSPACES_MODULE_ENABLED
             workspaceId: args.input.workspaceId,
             userId: context.userId
           })
+        },
+        deleteSsoProvider: async (_parent, args, context) => {
+          await authorizeResolver(
+            context.userId,
+            args.workspaceId,
+            Roles.Workspace.Admin,
+            context.resourceAccessRules
+          )
+
+          await deleteSsoProviderFactory({ db })({ workspaceId: args.workspaceId })
+
+          return true
         },
         async join(_parent, args, context) {
           if (!context.userId) throw new WorkspaceJoinNotAllowedError()

@@ -203,7 +203,7 @@ type DownloadProjectDeps = {
 export const downloadProjectFactory =
   (deps: DownloadProjectDeps): DownloadProject =>
   async (params, options) => {
-    const { projectUrl, authorId, syncComments, token, workspaceId } = params
+    const { projectUrl, authorId, syncComments, token, workspaceId, regionKey } = params
     const { logger = crossServerSyncLogger } = options || {}
 
     logger.info(`Project download started at: ${new Date().toISOString()}`)
@@ -222,7 +222,8 @@ export const downloadProjectFactory =
     const project = await deps.createNewProject({
       ...projectInfo.projectInfo,
       workspaceId,
-      ownerId: localResources.user.id
+      ownerId: localResources.user.id,
+      regionKey
     })
 
     await importVersionsFactory(deps)({

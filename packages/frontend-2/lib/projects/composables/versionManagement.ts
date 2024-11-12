@@ -350,7 +350,6 @@ export function useDeleteVersions() {
      * Various options for better cache updates, set if possible
      */
     options?: Partial<{
-      projectId: string
       modelId: string
     }>
   ) => {
@@ -372,26 +371,21 @@ export function useDeleteVersions() {
           }
 
           // Update totalCounts in project
-          if (options?.projectId) {
-            modifyObjectFields<ProjectVersionsArgs, Project['versions']>(
-              cache,
-              getCacheId('Project', options.projectId),
-              (_fieldName, _variables, data) => {
-                return {
-                  ...data,
-                  ...(!isUndefined(data.totalCount)
-                    ? {
-                        totalCount: Math.max(
-                          data.totalCount - input.versionIds.length,
-                          0
-                        )
-                      }
-                    : {})
-                }
-              },
-              { fieldNameWhitelist: ['versions'] }
-            )
-          }
+          modifyObjectFields<ProjectVersionsArgs, Project['versions']>(
+            cache,
+            getCacheId('Project', input.projectId),
+            (_fieldName, _variables, data) => {
+              return {
+                ...data,
+                ...(!isUndefined(data.totalCount)
+                  ? {
+                      totalCount: Math.max(data.totalCount - input.versionIds.length, 0)
+                    }
+                  : {})
+              }
+            },
+            { fieldNameWhitelist: ['versions'] }
+          )
 
           // Update totalCounts in model
           if (options?.modelId) {
@@ -458,7 +452,6 @@ export function useMoveVersions() {
     options?: Partial<{
       previousModelId: string
       newModelCreated: boolean
-      projectId: string
     }>
   ) => {
     if (!input.versionIds.length || !input.targetModelName.trim()) return
@@ -551,8 +544,8 @@ export function useMoveVersions() {
             { fieldNameWhitelist: ['versions'] }
           )
 
-          if (options?.newModelCreated && options?.projectId) {
-            evictProjectModels(options.projectId)
+          if (options?.newModelCreated) {
+            evictProjectModels(input.projectId)
           }
         }
       })
