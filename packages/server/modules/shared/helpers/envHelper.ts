@@ -418,3 +418,6 @@ export function getOtelHeaderValue() {
 export function getMultiRegionConfigPath() {
   return getStringFromEnv('MULTI_REGION_CONFIG_PATH')
 }
+
+export const shouldRunTestsInMultiregionMode = () =>
+  getBooleanFromEnv('RUN_TESTS_IN_MULTIREGION_MODE')
