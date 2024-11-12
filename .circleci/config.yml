@@ -32,6 +32,11 @@ workflows:
           requires:
             - docker-publish-postgres-container
 
+      - test-server-multiregion:
+          filters: *filters-allow-all
+          requires:
+            - docker-publish-postgres-container
+
       - test-frontend-2:
           filters: *filters-allow-all
 
@@ -190,6 +195,7 @@ workflows:
             - test-objectsender
             - test-server
             - test-server-no-ff
+            - test-server-multiregion
             - test-preview-service
 
       - docker-publish-frontend:
@@ -205,6 +211,7 @@ workflows:
             - test-objectsender
             - test-server
             - test-server-no-ff
+            - test-server-multiregion
             - test-preview-service
 
       - docker-publish-frontend-2:
@@ -220,6 +227,7 @@ workflows:
             - test-objectsender
             - test-server
             - test-server-no-ff
+            - test-server-multiregion
             - test-preview-service
 
       - docker-publish-webhooks:
@@ -235,6 +243,7 @@ workflows:
             - test-objectsender
             - test-server
             - test-server-no-ff
+            - test-server-multiregion
             - test-preview-service
 
       - docker-publish-file-imports:
@@ -250,6 +259,7 @@ workflows:
             - test-objectsender
             - test-server
             - test-server-no-ff
+            - test-server-multiregion
             - test-preview-service
 
       - docker-publish-previews:
@@ -265,6 +275,7 @@ workflows:
             - test-objectsender
             - test-server
             - test-server-no-ff
+            - test-server-multiregion
             - test-preview-service
 
       - docker-publish-test-container:
@@ -280,6 +291,7 @@ workflows:
             - test-objectsender
             - test-server
             - test-server-no-ff
+            - test-server-multiregion
             - test-preview-service
 
       - docker-publish-postgres-container:
@@ -301,6 +313,7 @@ workflows:
             - test-objectsender
             - test-server
             - test-server-no-ff
+            - test-server-multiregion
             - test-preview-service
 
       - docker-publish-docker-compose-ingress:
@@ -316,6 +329,7 @@ workflows:
             - test-objectsender
             - test-server
             - test-server-no-ff
+            - test-server-multiregion
             - test-preview-service
 
       - publish-helm-chart:
@@ -356,6 +370,7 @@ workflows:
             - get-version
             - test-server
             - test-server-no-ff
+            - test-server-multiregion
             - test-ui-components
             - test-frontend-2
             - test-viewer
