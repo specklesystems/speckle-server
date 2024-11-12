@@ -76,42 +76,20 @@ import { validateStreamAccessFactory } from '@/modules/core/services/streams/acc
 import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { CommitGraphQLReturn } from '@/modules/core/helpers/graphTypes'
+import { getProjectDbClient } from '@/modules/multiregion/dbSelector'
 
-const markCommitStreamUpdated = markCommitStreamUpdatedFactory({ db })
 const getCommitStream = getCommitStreamFactory({ db })
 const getStream = getStreamFactory({ db })
 const getStreams = getStreamsFactory({ db })
 const deleteCommitAndNotify = deleteCommitAndNotifyFactory({
   getCommit: getCommitFactory({ db }),
-  markCommitStreamUpdated,
+  markCommitStreamUpdated: markCommitStreamUpdatedFactory({ db }),
   markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
   deleteCommit: deleteCommitFactory({ db }),
   addCommitDeletedActivity: addCommitDeletedActivityFactory({
     saveActivity: saveActivityFactory({ db }),
     publish
   })
-})
-
-const getObject = getObjectFactory({ db })
-const createCommitByBranchId = createCommitByBranchIdFactory({
-  createCommit: createCommitFactory({ db }),
-  getObject,
-  getBranchById: getBranchByIdFactory({ db }),
-  insertStreamCommits: insertStreamCommitsFactory({ db }),
-  insertBranchCommits: insertBranchCommitsFactory({ db }),
-  markCommitStreamUpdated,
-  markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
-  versionsEventEmitter: VersionsEmitter.emit,
-  addCommitCreatedActivity: addCommitCreatedActivityFactory({
-    saveActivity: saveActivityFactory({ db }),
-    publish
-  })
-})
-
-const createCommitByBranchName = createCommitByBranchNameFactory({
-  createCommitByBranchId,
-  getStreamBranchByName: getStreamBranchByNameFactory({ db }),
-  getBranchById: getBranchByIdFactory({ db })
 })
 
 const updateCommitAndNotify = updateCommitAndNotifyFactory({
@@ -126,7 +104,7 @@ const updateCommitAndNotify = updateCommitAndNotifyFactory({
     saveActivity: saveActivityFactory({ db }),
     publish
   }),
-  markCommitStreamUpdated,
+  markCommitStreamUpdated: markCommitStreamUpdatedFactory({ db }),
   markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db })
 })
 
@@ -311,6 +289,7 @@ export = {
   },
   Mutation: {
     async commitCreate(_parent, args, context) {
+      const projectDb = await getProjectDbClient({ projectId: args.commit.streamId })
       await authorizeResolver(
         context.userId,
         args.commit.streamId,
@@ -322,6 +301,27 @@ export = {
       if (isRateLimitBreached(rateLimitResult)) {
         throw new RateLimitError(rateLimitResult)
       }
+
+      const createCommitByBranchId = createCommitByBranchIdFactory({
+        createCommit: createCommitFactory({ db: projectDb }),
+        getObject: getObjectFactory({ db: projectDb }),
+        getBranchById: getBranchByIdFactory({ db: projectDb }),
+        insertStreamCommits: insertStreamCommitsFactory({ db: projectDb }),
+        insertBranchCommits: insertBranchCommitsFactory({ db: projectDb }),
+        markCommitStreamUpdated: markCommitStreamUpdatedFactory({ db: projectDb }),
+        markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db: projectDb }),
+        versionsEventEmitter: VersionsEmitter.emit,
+        addCommitCreatedActivity: addCommitCreatedActivityFactory({
+          saveActivity: saveActivityFactory({ db }),
+          publish
+        })
+      })
+
+      const createCommitByBranchName = createCommitByBranchNameFactory({
+        createCommitByBranchId,
+        getStreamBranchByName: getStreamBranchByNameFactory({ db: projectDb }),
+        getBranchById: getBranchByIdFactory({ db: projectDb })
+      })
 
       const { id } = await createCommitByBranchName({
         ...args.commit,

@@ -31,48 +31,20 @@ import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { getPaginatedStreamBranchesFactory } from '@/modules/core/services/branch/retrieval'
 import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import { filteredSubscribe, publish } from '@/modules/shared/utils/subscriptions'
-
-const markBranchStreamUpdated = markBranchStreamUpdatedFactory({ db })
-const getStream = getStreamFactory({ db })
-const getBranchById = getBranchByIdFactory({ db })
-const getStreamBranchByName = getStreamBranchByNameFactory({ db })
-const createBranchAndNotify = createBranchAndNotifyFactory({
-  getStreamBranchByName,
-  createBranch: createBranchFactory({ db }),
-  addBranchCreatedActivity: addBranchCreatedActivityFactory({
-    saveActivity: saveActivityFactory({ db }),
-    publish
-  })
-})
-const updateBranchAndNotify = updateBranchAndNotifyFactory({
-  getBranchById,
-  updateBranch: updateBranchFactory({ db }),
-  addBranchUpdatedActivity: addBranchUpdatedActivityFactory({
-    saveActivity: saveActivityFactory({ db }),
-    publish
-  })
-})
-const deleteBranchAndNotify = deleteBranchAndNotifyFactory({
-  getStream,
-  getBranchById: getBranchByIdFactory({ db }),
-  modelsEventsEmitter: ModelsEmitter.emit,
-  markBranchStreamUpdated,
-  addBranchDeletedActivity: addBranchDeletedActivityFactory({
-    saveActivity: saveActivityFactory({ db }),
-    publish
-  }),
-  deleteBranchById: deleteBranchByIdFactory({ db })
-})
-const getUser = legacyGetUserFactory({ db })
-const getPaginatedStreamBranches = getPaginatedStreamBranchesFactory({
-  getPaginatedStreamBranchesPage: getPaginatedStreamBranchesPageFactory({ db }),
-  getStreamBranchCount: getStreamBranchCountFactory({ db })
-})
+import { getProjectDbClient } from '@/modules/multiregion/dbSelector'
 
 export = {
   Query: {},
   Stream: {
     async branches(parent, args) {
+      const projectDb = await getProjectDbClient({ projectId: parent.id })
+
+      const getPaginatedStreamBranches = getPaginatedStreamBranchesFactory({
+        getPaginatedStreamBranchesPage: getPaginatedStreamBranchesPageFactory({
+          db: projectDb
+        }),
+        getStreamBranchCount: getStreamBranchCountFactory({ db: projectDb })
+      })
       return await getPaginatedStreamBranches(parent.id, args)
     },
 
@@ -83,9 +55,13 @@ export = {
       // When getting a branch by name, if not found, we try to do a 'hail mary' attempt
       // and get it by id as well (this would be coming from a FE2 url).
 
+      const projectDb = await getProjectDbClient({ projectId: parent.id })
+
+      const getStreamBranchByName = getStreamBranchByNameFactory({ db: projectDb })
       const branchByName = await getStreamBranchByName(parent.id, args.name)
       if (branchByName) return branchByName
 
+      const getBranchById = getBranchByIdFactory({ db: projectDb })
       const branchByIdRes = await getBranchById(args.name)
       if (!branchByIdRes) return null
 
@@ -96,6 +72,7 @@ export = {
   },
   Branch: {
     async author(parent, _args, context) {
+      const getUser = legacyGetUserFactory({ db })
       if (parent.authorId && context.auth) return await getUser(parent.authorId)
       else return null
     }
@@ -108,6 +85,16 @@ export = {
         Roles.Stream.Contributor,
         context.resourceAccessRules
       )
+
+      const projectDb = await getProjectDbClient({ projectId: args.branch.streamId })
+      const createBranchAndNotify = createBranchAndNotifyFactory({
+        getStreamBranchByName: getStreamBranchByNameFactory({ db: projectDb }),
+        createBranch: createBranchFactory({ db: projectDb }),
+        addBranchCreatedActivity: addBranchCreatedActivityFactory({
+          saveActivity: saveActivityFactory({ db }),
+          publish
+        })
+      })
 
       const { id } = await createBranchAndNotify(args.branch, context.userId!)
 
@@ -122,6 +109,17 @@ export = {
         context.resourceAccessRules
       )
 
+      const projectDb = await getProjectDbClient({ projectId: args.branch.streamId })
+
+      const updateBranchAndNotify = updateBranchAndNotifyFactory({
+        getBranchById: getBranchByIdFactory({ db: projectDb }),
+        updateBranch: updateBranchFactory({ db: projectDb }),
+        addBranchUpdatedActivity: addBranchUpdatedActivityFactory({
+          saveActivity: saveActivityFactory({ db }),
+          publish
+        })
+      })
+
       const newBranch = await updateBranchAndNotify(args.branch, context.userId!)
       return !!newBranch
     },
@@ -133,6 +131,20 @@ export = {
         Roles.Stream.Contributor,
         context.resourceAccessRules
       )
+
+      const projectDb = await getProjectDbClient({ projectId: args.branch.streamId })
+
+      const deleteBranchAndNotify = deleteBranchAndNotifyFactory({
+        getStream: getStreamFactory({ db: projectDb }),
+        getBranchById: getBranchByIdFactory({ db: projectDb }),
+        modelsEventsEmitter: ModelsEmitter.emit,
+        markBranchStreamUpdated: markBranchStreamUpdatedFactory({ db: projectDb }),
+        addBranchDeletedActivity: addBranchDeletedActivityFactory({
+          saveActivity: saveActivityFactory({ db }),
+          publish
+        }),
+        deleteBranchById: deleteBranchByIdFactory({ db: projectDb })
+      })
 
       const deleted = await deleteBranchAndNotify(args.branch, context.userId!)
       return deleted
