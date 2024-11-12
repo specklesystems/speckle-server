@@ -12,6 +12,18 @@
       fullscreen="none"
     >
       <div class="-mx-1">
+        <!-- TODO: for later, to be able to create automation from DUI3, our accounts need scopes to do it which we don't have yet. -->
+        <!-- <AutomateCreateDialog
+          :project-id="props.modelCard.projectId"
+          :model-id="props.modelCard.modelId"
+        >
+          <template #activator="{ toggle }">
+            <button class="action action-normal" @click="toggle()">
+              <div class="truncate max-[275px]:text-xs">Create Automation</div>
+              <div><BoltIcon class="w-5 h-5" /></div>
+            </button>
+          </template>
+        </AutomateCreateDialog> -->
         <SendSettingsDialog
           v-if="hasSettings"
           :model-card-id="props.modelCard.modelCardId"

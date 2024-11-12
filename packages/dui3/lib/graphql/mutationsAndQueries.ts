@@ -70,6 +70,80 @@ export const workspaceListFragment = graphql(`
   }
 `)
 
+export const automateFunctionsListFragment = graphql(`
+  fragment AutomateFunctionItem on AutomateFunction {
+    name
+    isFeatured
+    id
+    creator {
+      name
+    }
+    releases {
+      items {
+        inputSchema
+      }
+    }
+  }
+`)
+
+export const createAutomationMutation = graphql(`
+  mutation CreateAutomation($projectId: ID!, $input: ProjectAutomationCreateInput!) {
+    projectMutations {
+      automationMutations(projectId: $projectId) {
+        create(input: $input) {
+          id
+          name
+        }
+      }
+    }
+  }
+`)
+
+export const automateFunctionRunItemFragment = graphql(`
+  fragment AutomateFunctionRunItem on AutomateFunctionRun {
+    id
+    status
+    statusMessage
+    results
+    contextView
+    function {
+      id
+      name
+      logo
+    }
+  }
+`)
+
+export const automationRunItemFragment = graphql(`
+  fragment AutomationRunItem on AutomateRun {
+    id
+    status
+    automation {
+      id
+      name
+    }
+    functionRuns {
+      ...AutomateFunctionRunItem
+    }
+  }
+`)
+
+export const automateStatusQuery = graphql(`
+  query AutomationStatus($projectId: String!, $modelId: String!) {
+    project(id: $projectId) {
+      model(id: $modelId) {
+        automationsStatus {
+          id
+          status
+          automationRuns {
+            ...AutomationRunItem
+          }
+        }
+      }
+    }
+  }
+`)
+
 export const workspacesListQuery = graphql(`
   query WorkspaceListQuery(
     $limit: Int!
@@ -251,6 +325,34 @@ export const projectDetailsQuery = graphql(`
   }
 `)
 
+export const projectDetailsWithAutomateQuery = graphql(`
+  query ProjectDetails($projectId: String!) {
+    project(id: $projectId) {
+      id
+      role
+      name
+      team {
+        user {
+          avatar
+          id
+          name
+        }
+      }
+      visibility
+    }
+  }
+`)
+
+export const automateFunctionsQuery = graphql(`
+  query AutomateFunctions {
+    automateFunctions {
+      items {
+        ...AutomateFunctionItem
+      }
+    }
+  }
+`)
+
 export const modelDetailsQuery = graphql(`
   query ModelDetails($modelId: String!, $projectId: String!) {
     project(id: $projectId) {
@@ -262,6 +364,9 @@ export const modelDetailsQuery = graphql(`
         name
         versions {
           totalCount
+          items {
+            id
+          }
         }
         author {
           id
@@ -324,6 +429,26 @@ export const versionCreatedSubscription = graphql(`
           name
           displayName
         }
+      }
+    }
+  }
+`)
+
+export const automateRunsSubscription = graphql(`
+  subscription ProjectTriggeredAutomationsStatusUpdated($projectId: String!) {
+    projectTriggeredAutomationsStatusUpdated(projectId: $projectId) {
+      type
+      version {
+        id
+      }
+      model {
+        id
+      }
+      project {
+        id
+      }
+      run {
+        ...AutomationRunItem
       }
     }
   }
