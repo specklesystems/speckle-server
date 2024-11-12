@@ -1,11 +1,14 @@
 import {
+  deleteSsoProviderFactory,
   getUserSsoSessionFactory,
   getWorkspaceSsoProviderFactory,
+  getWorkspaceSsoProviderRecordFactory,
   listUserSsoSessionsFactory,
   listWorkspaceSsoMembershipsFactory,
   upsertUserSsoSessionFactory
 } from '@/modules/workspaces/repositories/sso'
 import {
+  assignToWorkspace,
   BasicTestWorkspace,
   createTestOidcProvider,
   createTestSsoSession,
@@ -22,10 +25,12 @@ import { UserSsoSessionRecord } from '@/modules/workspaces/domain/sso/types'
 import { truncateTables } from '@/test/hooks'
 import { isValidSsoSession } from '@/modules/workspaces/domain/sso/logic'
 
+const deleteSsoProvider = deleteSsoProviderFactory({ db })
 const listUserSsoSessions = listUserSsoSessionsFactory({ db })
 const listWorkspaceSsoMemberships = listWorkspaceSsoMembershipsFactory({ db })
 const upsertUserSsoSession = upsertUserSsoSessionFactory({ db })
 const getUserSsoSession = getUserSsoSessionFactory({ db })
+const getWorkspaceSsoProviderRecord = getWorkspaceSsoProviderRecordFactory({ db })
 
 describe('Workspace SSO repositories', () => {
   const serverAdminUser: BasicTestUser = {
@@ -366,6 +371,86 @@ describe('Workspace SSO repositories', () => {
         workspaceId: testWorkspaceWithSsoA.id
       })
       expect(session).to.be.null
+    })
+  })
+
+  describe('deleteSsoProviderFactory returns a function, that', async () => {
+    const testWorkspaceAdmin: BasicTestUser = {
+      id: '',
+      name: 'John Speckle',
+      email: `${cryptoRandomString({ length: 9 })}@example.org`
+    }
+
+    const testWorkspaceMember: BasicTestUser = {
+      id: '',
+      name: 'Jane Speckle',
+      email: `${cryptoRandomString({ length: 9 })}@example.org`
+    }
+
+    const testWorkspace: BasicTestWorkspace = {
+      id: '',
+      ownerId: '',
+      name: 'Test SSO Workspace',
+      slug: 'test-delete-sso-workspace'
+    }
+
+    before(async () => {
+      await createTestUsers([testWorkspaceAdmin, testWorkspaceMember])
+      await createTestWorkspace(testWorkspace, testWorkspaceAdmin)
+      await assignToWorkspace(testWorkspace, testWorkspaceMember)
+    })
+
+    beforeEach(async () => {
+      await createTestOidcProvider(testWorkspace.id)
+      await Promise.all([
+        createTestSsoSession(testWorkspaceAdmin.id, testWorkspace.id),
+        createTestSsoSession(testWorkspaceMember.id, testWorkspace.id)
+      ])
+    })
+
+    afterEach(async () => {
+      truncateTables(['user_sso_sessions'])
+    })
+
+    describe('when deleting an sso provider that exists', async () => {
+      beforeEach(async () => {
+        await deleteSsoProvider({ workspaceId: testWorkspace.id })
+      })
+
+      it('deletes SSO encrypted provider data for specified workspace', async () => {
+        const provider = await getWorkspaceSsoProviderFactory({
+          db,
+          decrypt: getDecryptor()
+        })({ workspaceId: testWorkspace.id })
+        expect(provider).to.be.null
+      })
+
+      it('deletes all SSO sessions for provider for specified workspace', async () => {
+        const adminSession = await getUserSsoSession({
+          userId: testWorkspaceAdmin.id,
+          workspaceId: testWorkspace.id
+        })
+        const memberSession = await getUserSsoSession({
+          userId: testWorkspaceMember.id,
+          workspaceId: testWorkspace.id
+        })
+
+        expect(adminSession).to.be.null
+        expect(memberSession).to.be.null
+      })
+
+      it('deletes workspace SSO provider record for specified workspaces', async () => {
+        const providerRecord = await getWorkspaceSsoProviderRecord({
+          workspaceId: testWorkspace.id
+        })
+        expect(providerRecord).to.be.null
+      })
+    })
+
+    describe('when deleting an sso provider that does not exist', async () => {
+      it('should noop', async () => {
+        await deleteSsoProvider({ workspaceId: cryptoRandomString({ length: 9 }) })
+      })
     })
   })
 })

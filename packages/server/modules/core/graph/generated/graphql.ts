@@ -4239,6 +4239,7 @@ export type WorkspaceMutations = {
   create: Workspace;
   delete: Scalars['Boolean']['output'];
   deleteDomain: Workspace;
+  deleteSsoProvider: Scalars['Boolean']['output'];
   invites: WorkspaceInviteMutations;
   join: Workspace;
   leave: Scalars['Boolean']['output'];
@@ -4267,6 +4268,11 @@ export type WorkspaceMutationsDeleteArgs = {
 
 export type WorkspaceMutationsDeleteDomainArgs = {
   input: WorkspaceDomainDeleteInput;
+};
+
+
+export type WorkspaceMutationsDeleteSsoProviderArgs = {
+  workspaceId: Scalars['String']['input'];
 };
 
 
@@ -6532,6 +6538,7 @@ export type WorkspaceMutationsResolvers<ContextType = GraphQLContext, ParentType
   create?: Resolver<ResolversTypes['Workspace'], ParentType, ContextType, RequireFields<WorkspaceMutationsCreateArgs, 'input'>>;
   delete?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<WorkspaceMutationsDeleteArgs, 'workspaceId'>>;
   deleteDomain?: Resolver<ResolversTypes['Workspace'], ParentType, ContextType, RequireFields<WorkspaceMutationsDeleteDomainArgs, 'input'>>;
+  deleteSsoProvider?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<WorkspaceMutationsDeleteSsoProviderArgs, 'workspaceId'>>;
   invites?: Resolver<ResolversTypes['WorkspaceInviteMutations'], ParentType, ContextType>;
   join?: Resolver<ResolversTypes['Workspace'], ParentType, ContextType, RequireFields<WorkspaceMutationsJoinArgs, 'input'>>;
   leave?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<WorkspaceMutationsLeaveArgs, 'id'>>;
