@@ -13,8 +13,9 @@ import {
   SetWorkspaceDefaultRegionDocument
 } from '@/test/graphql/generated/graphql'
 import { testApolloServer, TestApolloServer } from '@/test/graphqlHelper'
-import { beforeEachContext } from '@/test/hooks'
+import { beforeEachContext, getRegionKeys } from '@/test/hooks'
 import { MultiRegionDbSelectorMock } from '@/test/mocks/global'
+import { truncateRegionsSafely } from '@/test/speckle-helpers/regions'
 import { Roles } from '@speckle/shared'
 import { expect } from 'chai'
 
@@ -71,8 +72,9 @@ describe('Workspace regions GQL', () => {
     apollo = await testApolloServer({ authUserId: me.id })
   })
 
-  after(() => {
+  after(async () => {
     MultiRegionDbSelectorMock.resetMockedFunctions()
+    await truncateRegionsSafely()
   })
 
   describe('when listing', () => {
@@ -95,7 +97,7 @@ describe('Workspace regions GQL', () => {
       expect(res).to.not.haveGraphQLErrors()
       expect(
         res.data?.workspace.availableRegions.map((r) => r.key)
-      ).to.deep.equalInAnyOrder([region1Key, region2Key])
+      ).to.deep.equalInAnyOrder([region1Key, region2Key, ...getRegionKeys()])
     })
   })
 

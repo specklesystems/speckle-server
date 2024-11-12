@@ -10,8 +10,13 @@ import { createInmemoryRedisClient } from '@/test/redisHelper'
 import { createStreamFactory } from '@/modules/core/repositories/streams'
 import { db } from '@/db/knex'
 import { storeRegionFactory } from '@/modules/multiregion/repositories'
+import { truncateRegionsSafely } from '@/test/speckle-helpers/regions'
 
 describe('projectRegion repositories @multiregion', () => {
+  after(async () => {
+    await truncateRegionsSafely()
+  })
+
   describe('inMemoryKeyStoreFactory creates an object, which', () => {
     const { getRegionKey, writeRegion } = inMemoryRegionKeyStoreFactory()
     it('returns undefined if projectId is not in the cache', () => {
