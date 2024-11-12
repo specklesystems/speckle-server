@@ -56,6 +56,10 @@ const inEachDb = async (fn: (db: Knex) => MaybeAsync<void>) => {
   }
 }
 
+const ensureAivenExtrasFactory = (deps: { db: Knex }) => async () => {
+  await deps.db.raw('CREATE EXTENSION IF NOT EXISTS "aiven_extras";')
+}
+
 const setupMultiregionMode = async () => {
   const db = mainDb
   const getAvailableRegionKeys = getAvailableRegionKeysFactory({
@@ -112,6 +116,9 @@ export const resetPubSubFactory = (deps: { db: Knex }) => async () => {
   if (!shouldRunTestsInMultiregionMode()) {
     return { drop: async () => {}, reenable: async () => {} }
   }
+
+  const ensureAivenExtras = ensureAivenExtrasFactory(deps)
+  await ensureAivenExtras()
 
   const subscriptions = (await deps.db.raw(
     `SELECT subname, subconninfo, subpublications, subslotname FROM aiven_extras.pg_list_all_subscriptions() WHERE subname ILIKE 'test_%';`
