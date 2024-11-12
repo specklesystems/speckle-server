@@ -122,7 +122,6 @@ export const init: SpeckleModule['init'] = async (app, isInitial) => {
         }
       )
 
-      // @ts-expect-error for some reason, buffer types don't fully match
       req.pipe(pipedReq)
     }
   )
