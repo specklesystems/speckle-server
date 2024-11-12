@@ -41,7 +41,7 @@ export const init: SpeckleModule['init'] = async (app, isInitial) => {
       await authMiddlewareCreator(
         streamWritePermissionsPipelineFactory({
           getRoles: getRolesFactory({ db }),
-          getStream: getStreamFactory({ db: projectDb }),
+          getStream: getStreamFactory({ db }),
           getAutomationProject: getAutomationProjectFactory({ db: projectDb })
         })
       )(req, res, next)

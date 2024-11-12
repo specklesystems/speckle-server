@@ -92,14 +92,14 @@ export const init: SpeckleModule['init'] = async (app) => {
   const createStreamWritePermissions = ({ projectDb }: { projectDb: Knex }) =>
     streamWritePermissionsPipelineFactory({
       getRoles: getRolesFactory({ db }),
-      getStream: getStreamFactory({ db: projectDb }),
+      getStream: getStreamFactory({ db }),
       getAutomationProject: getAutomationProjectFactory({ db: projectDb })
     })
   const createStreamReadPermissions = ({ projectDb }: { projectDb: Knex }) =>
     streamReadPermissionsPipelineFactory({
       adminOverrideEnabled,
       getRoles: getRolesFactory({ db }),
-      getStream: getStreamFactory({ db: projectDb }),
+      getStream: getStreamFactory({ db }),
       getAutomationProject: getAutomationProjectFactory({ db: projectDb })
     })
 

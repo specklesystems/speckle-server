@@ -3,10 +3,10 @@
   "private": true,
   "version": "2.5.4",
   "description": "Parse and import files of various types into a stream",
-  "author": "Dimitrie Stefanescu <didimitrie@gmail.com>",
+  "author": "Dimitrie Stefanescu <didimitrie@speckle.systems>",
   "homepage": "https://github.com/specklesystems/speckle-server#readme",
   "license": "SEE LICENSE IN readme.md",
-  "main": "index.js",
+  "main": "daemon.js",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/specklesystems/speckle-server.git"
