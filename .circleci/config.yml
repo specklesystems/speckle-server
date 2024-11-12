@@ -573,6 +573,29 @@ jobs:
       FF_GATEKEEPER_MODULE_ENABLED: 'false'
       FF_BILLING_INTEGRATION_ENABLED: 'false'
 
+  test-server-multiregion:
+    <<: *test-server-job
+    docker:
+      - image: cimg/node:18.19.0
+      - image: cimg/redis:7.2.4
+      - image: 'speckle/speckle-postgres'
+        environment:
+          POSTGRES_DB: speckle2_test
+          POSTGRES_PASSWORD: speckle
+          POSTGRES_USER: speckle
+        command: -c 'max_connections=1000'
+      - image: 'speckle/speckle-postgres'
+        environment:
+          POSTGRES_DB: speckle2_test
+          POSTGRES_PASSWORD: speckle
+          POSTGRES_USER: speckle
+        command: -c 'max_connections=1000 port=5433'
+      - image: 'minio/minio'
+        command: server /data --console-address ":9001"
+    environment:
+      MULTI_REGION_CONFIG_PATH: '../../.circleci/multiregion.test-ci.json'
+      RUN_TESTS_IN_MULTIREGION_MODE: true
+
   test-frontend-2:
     docker: &docker-node-browsers-image
       - image: cimg/node:18.19.0-browsers
