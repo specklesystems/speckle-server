@@ -289,19 +289,9 @@ describe('Server stats api @stats-api', function () {
 
   before(async function () {
     this.timeout(15000)
-    const {
-      app,
-      server: tmpServer,
-      graphqlServer,
-      readinessCheck
-    } = await beforeEachContext()
-    server = tmpServer
-    ;({ sendRequest } = await initializeTestServer({
-      server,
-      app,
-      graphqlServer,
-      readinessCheck
-    }))
+    const ctx = await beforeEachContext()
+    server = ctx.server
+    ;({ sendRequest } = await initializeTestServer(ctx))
 
     adminUser.id = await createUser(adminUser)
     adminUser.goodToken = `Bearer ${await createPersonalAccessToken(

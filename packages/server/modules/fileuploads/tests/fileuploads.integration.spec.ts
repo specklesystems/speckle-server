@@ -147,20 +147,10 @@ describe('FileUploads @fileuploads', () => {
   let serverPort: string
 
   before(async () => {
-    const {
-      app: tmpApp,
-      server: tmpServer,
-      graphqlServer,
-      readinessCheck
-    } = await beforeEachContext()
-    server = tmpServer
-    app = tmpApp
-    ;({ serverAddress, serverPort, sendRequest } = await initializeTestServer({
-      server,
-      app,
-      graphqlServer,
-      readinessCheck
-    }))
+    const ctx = await beforeEachContext()
+    server = ctx.server
+    app = ctx.app
+    ;({ serverAddress, serverPort, sendRequest } = await initializeTestServer(ctx))
 
     //TODO does mocha have a nicer way of temporarily swapping an environment variable, like vitest?
     existingCanonicalUrl = process.env['CANONICAL_URL'] || ''

@@ -192,19 +192,9 @@ describe('Webhooks @webhooks', () => {
   }
 
   before(async () => {
-    const {
-      app,
-      server: tmpServer,
-      graphqlServer,
-      readinessCheck
-    } = await beforeEachContext()
-    server = tmpServer
-    ;({ sendRequest } = await initializeTestServer({
-      server,
-      app,
-      graphqlServer,
-      readinessCheck
-    }))
+    const ctx = await beforeEachContext()
+    server = ctx.server
+    ;({ sendRequest } = await initializeTestServer(ctx))
 
     userOne.id = await createUser(userOne)
     streamOne.ownerId = userOne.id

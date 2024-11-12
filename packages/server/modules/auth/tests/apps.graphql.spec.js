@@ -127,19 +127,9 @@ describe('GraphQL @apps-api', () => {
   let testToken2
 
   before(async () => {
-    const {
-      app,
-      server: tmpServer,
-      graphqlServer,
-      readinessCheck
-    } = await beforeEachContext()
-    server = tmpServer
-    ;({ sendRequest } = await initializeTestServer({
-      server,
-      app,
-      graphqlServer,
-      readinessCheck
-    }))
+    const ctx = await beforeEachContext()
+    server = ctx.server
+    ;({ sendRequest } = await initializeTestServer(ctx))
     testUser = {
       name: 'Dimitrie Stefanescu',
       email: 'didimitrie@gmail.com',

@@ -185,19 +185,9 @@ describe('Activity @activity', () => {
   }
 
   before(async () => {
-    const {
-      server: tmpServer,
-      app,
-      graphqlServer,
-      readinessCheck
-    } = await beforeEachContext()
-    server = tmpServer
-    ;({ sendRequest } = await initializeTestServer({
-      server,
-      app,
-      graphqlServer,
-      readinessCheck
-    }))
+    const ctx = await beforeEachContext()
+    server = ctx.server
+    ;({ sendRequest } = await initializeTestServer(ctx))
 
     const normalScopesList = [
       Scopes.Streams.Read,
