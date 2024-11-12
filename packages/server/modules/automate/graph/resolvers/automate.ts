@@ -855,10 +855,9 @@ export = (FF_AUTOMATE_MODULE_ENABLED
         }
       },
       User: {
-        automateInfo: () => ({
-          hasAutomateGithubApp: false,
-          availableGithubOrgs: []
-        })
+        automateInfo: () => {
+          throw new AutomateApiDisabledError()
+        }
       },
       ServerInfo: {
         automate: () => ({
