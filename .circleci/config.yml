@@ -16,7 +16,7 @@ workflows:
                 - main
                 - hotfix*
 
-      - test-server:
+      - test-server: &test-server-job
           context:
             - speckle-server-licensing
             - stripe-integration
@@ -32,10 +32,7 @@ workflows:
           requires:
             - docker-publish-postgres-container
 
-      - test-server-multiregion:
-          filters: *filters-allow-all
-          requires:
-            - docker-publish-postgres-container
+      - test-server-multiregion: *test-server-job
 
       - test-frontend-2:
           filters: *filters-allow-all
