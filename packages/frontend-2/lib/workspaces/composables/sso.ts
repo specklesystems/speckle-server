@@ -78,18 +78,22 @@ export const useWorkspaceSsoStatus = (params: { workspaceSlug: string }) => {
  */
 export function useWorkspaceSsoValidation(workspaceSlug: string) {
   const logger = useLogger()
-  const ssoError = ref<string | null>(null)
-
   const { hasSsoEnabled, needsSsoLogin, error } = useWorkspaceSsoStatus({
     workspaceSlug
   })
 
-  if (error.value) {
-    logger.error('SSO check failed:', error.value)
-    ssoError.value = 'Failed to check workspace SSO requirements'
-  } else if (hasSsoEnabled.value && needsSsoLogin.value) {
-    ssoError.value = 'You need to sign in with SSO to access this workspace.'
-  }
+  const ssoError = computed(() => {
+    if (error.value) {
+      logger.error('SSO check failed:', error.value)
+      return 'Failed to check workspace SSO requirements'
+    }
+
+    if (hasSsoEnabled.value && needsSsoLogin.value) {
+      return 'You need to sign in with SSO to access this workspace.'
+    }
+
+    return null
+  })
 
   return { ssoError }
 }

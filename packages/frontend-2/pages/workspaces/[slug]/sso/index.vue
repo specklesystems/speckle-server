@@ -1,6 +1,5 @@
 <template>
   <div>
-    <!-- Loading State -->
     <template v-if="loading || isAuthenticating">
       <div class="py-12 flex flex-col items-center gap-2">
         <CommonLoadingIcon />
@@ -22,19 +21,17 @@
           {{ !isSsoAuthenticated ? 'Sign in to' : '' }}
           {{ workspace?.name || 'Workspace' }}
         </h1>
-        <!-- Error Message Banner -->
+
         <div v-if="errorMessage" class="border border-outline-3 rounded p-4 mb-2">
           <p class="text-body-2xs text-foreground">{{ errorMessage }}</p>
         </div>
 
-        <!-- Already Authenticated Message -->
         <div v-if="isSsoAuthenticated" class="border border-outline-3 rounded p-4 mb-2">
           <p class="text-body-xs text-foreground">
             You already have a valid SSO session for this workspace.
           </p>
         </div>
 
-        <!-- SSO Login Button -->
         <div v-else-if="isSsoEnabled" class="flex flex-col gap-4">
           <FormButton
             :disabled="!challenge || !workspace?.ssoProviderName"
@@ -84,20 +81,31 @@ const { result } = useQuery(authRegisterPanelQuery, {
 
 const { workspace, loading, error } = useWorkspacePublicSsoCheck(workspaceSlug.value)
 
-if (error.value) {
-  logger.error('Failed to fetch workspace data:', error.value)
-}
+const errorState = computed(() => {
+  if (error.value) {
+    logger.error('Failed to fetch workspace data:', error.value)
+    return error.value
+  }
+  return null
+})
 
 const serverInfo = computed<ServerTermsOfServicePrivacyPolicyFragmentFragment>(
   () => result.value?.serverInfo || { termsOfService: '' }
 )
 
 const errorMessage = computed(() => {
-  const error = route.query.error as string | undefined
-  if (!error) return null
+  // Check for URL error parameter first
+  const urlError = route.query.error as string | undefined
+  if (urlError) {
+    return decodeURIComponent(urlError).replace(/\+/g, ' ').trim()
+  }
 
-  // Convert URL-friendly error to readable message
-  return decodeURIComponent(error).replace(/\+/g, ' ').trim()
+  // Then check for fetch error
+  if (errorState.value) {
+    return 'Failed to load workspace information'
+  }
+
+  return null
 })
 
 const isAuthenticating = computed(() => {
