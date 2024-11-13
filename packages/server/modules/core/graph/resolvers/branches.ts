@@ -33,8 +33,6 @@ import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import { filteredSubscribe, publish } from '@/modules/shared/utils/subscriptions'
 import { getProjectDbClient } from '@/modules/multiregion/dbSelector'
 
-const getUser = legacyGetUserFactory({ db })
-
 export = {
   Query: {},
   Stream: {
@@ -72,6 +70,7 @@ export = {
   },
   Branch: {
     async author(parent, _args, context) {
+      const getUser = legacyGetUserFactory({ db })
       if (parent.authorId && context.auth) return await getUser(parent.authorId)
       else return null
     }

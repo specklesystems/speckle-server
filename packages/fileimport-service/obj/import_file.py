@@ -159,6 +159,8 @@ if __name__ == "__main__":
         commit_id = import_obj()
         if not commit_id:
             raise Exception("Can't create commit")
+        if isinstance(commit_id, Exception):
+            raise commit_id
         results = {"success": True, "commitId": commit_id}
     except Exception as ex:
         LOG.exception(ex)

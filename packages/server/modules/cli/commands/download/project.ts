@@ -215,7 +215,7 @@ const command: CommandModule<
 
     const createNewProject = createNewProjectFactory({
       storeProject: storeProjectFactory({ db: projectDb }),
-      getProject: getProjectFactory({ db }),
+      getProject: getProjectFactory({ db: projectDb }),
       deleteProject: deleteProjectFactory({ db: projectDb }),
       storeModel: storeModelFactory({ db: projectDb }),
       // THIS MUST GO TO THE MAIN DB
