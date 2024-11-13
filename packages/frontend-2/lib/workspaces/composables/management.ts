@@ -8,7 +8,8 @@ import type {
   WorkspaceCreateInput,
   WorkspaceInviteCreateInput,
   WorkspaceInvitedTeamArgs,
-  WorkspaceInviteUseInput
+  WorkspaceInviteUseInput,
+  WorkspaceRoleUpdateInput
 } from '~/lib/common/generated/gql/graphql'
 import {
   evictObjectFields,
@@ -24,7 +25,9 @@ import { useMixpanel } from '~/lib/core/composables/mp'
 import {
   createWorkspaceMutation,
   inviteToWorkspaceMutation,
-  processWorkspaceInviteMutation
+  processWorkspaceInviteMutation,
+  setDefaultRegionMutation,
+  workspaceUpdateRoleMutation
 } from '~/lib/workspaces/graphql/mutations'
 import { isFunction } from 'lodash-es'
 import type { GraphQLError } from 'graphql'
@@ -410,5 +413,111 @@ export function useCreateWorkspace() {
     }
 
     return res
+  }
+}
+
+export const useWorkspaceUpdateRole = () => {
+  const { mutate } = useMutation(workspaceUpdateRoleMutation)
+  const { triggerNotification } = useGlobalToast()
+  const mixpanel = useMixpanel()
+
+  return async (input: WorkspaceRoleUpdateInput) => {
+    const result = await mutate(
+      { input },
+      {
+        update: (cache) => {
+          if (!input.role) {
+            cache.evict({
+              id: getCacheId('WorkspaceCollaborator', input.userId)
+            })
+
+            modifyObjectField(
+              cache,
+              getCacheId('Workspace', input.workspaceId),
+              'team',
+              ({ helpers: { createUpdatedValue } }) => {
+                return createUpdatedValue(({ update }) => {
+                  update('totalCount', (totalCount) => totalCount - 1)
+                })
+              },
+              {
+                autoEvictFiltered: true
+              }
+            )
+          }
+        }
+      }
+    ).catch(convertThrowIntoFetchResult)
+
+    if (result?.data) {
+      triggerNotification({
+        type: ToastNotificationType.Success,
+        title: input.role ? 'User role updated' : 'User removed',
+        description: input.role
+          ? 'The user role has been updated'
+          : 'The user has been removed from the workspace'
+      })
+
+      if (input.role) {
+        mixpanel.track('Workspace User Role Updated', {
+          newRole: input.role,
+          // eslint-disable-next-line camelcase
+          workspace_id: input.workspaceId
+        })
+      } else {
+        mixpanel.track('Workspace User Removed', {
+          // eslint-disable-next-line camelcase
+          workspace_id: input.workspaceId
+        })
+      }
+    } else {
+      const errorMessage = getFirstErrorMessage(result?.errors)
+      triggerNotification({
+        type: ToastNotificationType.Danger,
+        title: input.role ? 'Failed to update role' : 'Failed to remove user',
+        description: errorMessage
+      })
+    }
+  }
+}
+
+export const copyWorkspaceLink = async (slug: string) => {
+  const { copy } = useClipboard()
+  const { triggerNotification } = useGlobalToast()
+
+  const url = new URL(workspaceRoute(slug), window.location.toString()).toString()
+
+  await copy(url)
+  triggerNotification({
+    type: ToastNotificationType.Success,
+    title: 'Copied workspace link to clipboard'
+  })
+}
+
+export const useSetDefaultWorkspaceRegion = () => {
+  const { mutate } = useMutation(setDefaultRegionMutation)
+  const { triggerNotification } = useGlobalToast()
+
+  return async (params: { workspaceId: string; regionKey: string }) => {
+    const { workspaceId, regionKey } = params
+    const res = await mutate({ workspaceId, regionKey }).catch(
+      convertThrowIntoFetchResult
+    )
+
+    if (res?.data?.workspaceMutations.setDefaultRegion) {
+      triggerNotification({
+        type: ToastNotificationType.Success,
+        title: 'Default region set successfully'
+      })
+    } else {
+      const err = getFirstErrorMessage(res?.errors)
+      triggerNotification({
+        type: ToastNotificationType.Danger,
+        title: 'Failed to set default region',
+        description: err
+      })
+    }
+
+    return res?.data?.workspaceMutations.setDefaultRegion
   }
 }

@@ -16,7 +16,7 @@
 </template>
 
 <script setup lang="ts">
-import { useSsoAuth } from '~/lib/workspaces/composables/management'
+import { useWorkspaceSsoValidation } from '~/lib/workspaces/composables/sso'
 
 definePageMeta({
   middleware: ['requires-workspaces-enabled', 'require-valid-workspace']
@@ -25,7 +25,7 @@ definePageMeta({
 const route = useRoute()
 
 const workspaceSlug = computed(() => route.params.slug as string)
-const { ssoError } = useSsoAuth(workspaceSlug.value)
+const { ssoError } = useWorkspaceSsoValidation(workspaceSlug.value)
 
 const token = computed(() => route.query.token as string | undefined)
 </script>

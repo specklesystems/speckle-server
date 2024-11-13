@@ -1,22 +1,48 @@
-import { useMutation, useQuery } from '@vue/apollo-composable'
-import type {
-  WorkspaceRoleUpdateInput,
-  WorkspaceSsoCheckQuery
-} from '~/lib/common/generated/gql/graphql'
-import { getFirstErrorMessage } from '~/lib/common/helpers/graphql'
-import { workspaceRoute } from '~/lib/common/helpers/route'
+import { useQuery } from '@vue/apollo-composable'
+import type { WorkspaceSsoCheckQuery } from '~/lib/common/generated/gql/graphql'
 import { useMixpanel } from '~/lib/core/composables/mp'
-import {
-  setDefaultRegionMutation,
-  workspaceUpdateRoleMutation
-} from '~/lib/workspaces/graphql/mutations'
 import { workspaceSsoCheckQuery } from '~/lib/workspaces/graphql/queries'
 import type {
   WorkspaceSsoError,
   WorkspaceSsoProviderPublic
 } from '~/lib/workspaces/helpers/types'
 
-export const useWorkspaceSso = (params: { workspaceSlug: string }) => {
+/**
+ * Fetches and provides public SSO workspace information from the rest api.
+ * This is used to determine if a workspace has SSO enabled before authentication
+ */
+export function useWorkspacePublicSsoCheck(workspaceSlug: string) {
+  const apiOrigin = useApiOrigin()
+  const logger = useLogger()
+
+  const {
+    data: workspace,
+    status: loading,
+    error
+  } = useFetch<WorkspaceSsoProviderPublic>(
+    new URL(`/api/v1/workspaces/${workspaceSlug}/sso`, apiOrigin).toString(),
+    {
+      onResponseError: (err) => {
+        logger.error('Failed to fetch workspace SSO provider:', err)
+      }
+    }
+  )
+
+  const hasSsoEnabled = computed(() => !!workspace.value?.ssoProviderName)
+
+  return {
+    workspace,
+    loading,
+    error,
+    hasSsoEnabled
+  }
+}
+
+/**
+ * Checks if a workspace requires SSO authentication and the current user's SSO status.
+ * Used to enforce SSO login requirements for workspace access.
+ */
+export const useWorkspaceSsoStatus = (params: { workspaceSlug: string }) => {
   const { result, loading, error } = useQuery<WorkspaceSsoCheckQuery>(
     workspaceSsoCheckQuery,
     { slug: params.workspaceSlug }
@@ -46,157 +72,15 @@ export const useWorkspaceSso = (params: { workspaceSlug: string }) => {
   }
 }
 
-export function useWorkspaceSsoPublic(workspaceSlug: string) {
-  const apiOrigin = useApiOrigin()
-  const logger = useLogger()
-
-  const workspace = ref<WorkspaceSsoProviderPublic>()
-  const loading = ref(true)
-  const error = ref<Error | null>(null)
-
-  const hasSsoEnabled = computed(() => !!workspace.value?.ssoProviderName)
-
-  onMounted(async () => {
-    try {
-      const res = await fetch(
-        new URL(`/api/v1/workspaces/${workspaceSlug}/sso`, apiOrigin)
-      )
-      if (!res.ok) {
-        const errorData = (await res.json()) as WorkspaceSsoError
-        throw new Error(
-          errorData?.message || `Failed to fetch workspace data: ${res.status}`
-        )
-      }
-
-      const data = (await res.json()) as WorkspaceSsoProviderPublic
-      workspace.value = data
-    } catch (err) {
-      error.value = err instanceof Error ? err : new Error('Unknown error')
-      logger.error('Failed to fetch workspace data:', err)
-    } finally {
-      loading.value = false
-    }
-  })
-
-  return {
-    workspace,
-    loading,
-    error,
-    hasSsoEnabled
-  }
-}
-
-export const useWorkspaceUpdateRole = () => {
-  const { mutate } = useMutation(workspaceUpdateRoleMutation)
-  const { triggerNotification } = useGlobalToast()
-  const mixpanel = useMixpanel()
-
-  return async (input: WorkspaceRoleUpdateInput) => {
-    const result = await mutate(
-      { input },
-      {
-        update: (cache) => {
-          if (!input.role) {
-            cache.evict({
-              id: getCacheId('WorkspaceCollaborator', input.userId)
-            })
-
-            modifyObjectField(
-              cache,
-              getCacheId('Workspace', input.workspaceId),
-              'team',
-              ({ helpers: { createUpdatedValue } }) => {
-                return createUpdatedValue(({ update }) => {
-                  update('totalCount', (totalCount) => totalCount - 1)
-                })
-              },
-              {
-                autoEvictFiltered: true
-              }
-            )
-          }
-        }
-      }
-    ).catch(convertThrowIntoFetchResult)
-
-    if (result?.data) {
-      triggerNotification({
-        type: ToastNotificationType.Success,
-        title: input.role ? 'User role updated' : 'User removed',
-        description: input.role
-          ? 'The user role has been updated'
-          : 'The user has been removed from the workspace'
-      })
-
-      if (input.role) {
-        mixpanel.track('Workspace User Role Updated', {
-          newRole: input.role,
-          // eslint-disable-next-line camelcase
-          workspace_id: input.workspaceId
-        })
-      } else {
-        mixpanel.track('Workspace User Removed', {
-          // eslint-disable-next-line camelcase
-          workspace_id: input.workspaceId
-        })
-      }
-    } else {
-      const errorMessage = getFirstErrorMessage(result?.errors)
-      triggerNotification({
-        type: ToastNotificationType.Danger,
-        title: input.role ? 'Failed to update role' : 'Failed to remove user',
-        description: errorMessage
-      })
-    }
-  }
-}
-
-export const copyWorkspaceLink = async (slug: string) => {
-  const { copy } = useClipboard()
-  const { triggerNotification } = useGlobalToast()
-
-  const url = new URL(workspaceRoute(slug), window.location.toString()).toString()
-
-  await copy(url)
-  triggerNotification({
-    type: ToastNotificationType.Success,
-    title: 'Copied workspace link to clipboard'
-  })
-}
-
-export const useSetDefaultWorkspaceRegion = () => {
-  const { mutate } = useMutation(setDefaultRegionMutation)
-  const { triggerNotification } = useGlobalToast()
-
-  return async (params: { workspaceId: string; regionKey: string }) => {
-    const { workspaceId, regionKey } = params
-    const res = await mutate({ workspaceId, regionKey }).catch(
-      convertThrowIntoFetchResult
-    )
-
-    if (res?.data?.workspaceMutations.setDefaultRegion) {
-      triggerNotification({
-        type: ToastNotificationType.Success,
-        title: 'Default region set successfully'
-      })
-    } else {
-      const err = getFirstErrorMessage(res?.errors)
-      triggerNotification({
-        type: ToastNotificationType.Danger,
-        title: 'Failed to set default region',
-        description: err
-      })
-    }
-
-    return res?.data?.workspaceMutations.setDefaultRegion
-  }
-}
-
-export function useSsoAuth(workspaceSlug: string) {
+/**
+ * Validates SSO authentication requirements for a workspace.
+ * Returns an error message if SSO login is required but not completed.
+ */
+export function useWorkspaceSsoValidation(workspaceSlug: string) {
   const logger = useLogger()
   const ssoError = ref<string | null>(null)
 
-  const { hasSsoEnabled, needsSsoLogin, error } = useWorkspaceSso({
+  const { hasSsoEnabled, needsSsoLogin, error } = useWorkspaceSsoStatus({
     workspaceSlug
   })
 
@@ -210,6 +94,10 @@ export function useSsoAuth(workspaceSlug: string) {
   return { ssoError }
 }
 
+/**
+ * Provides functionality to remove SSO configuration from a workspace.
+ * Only available to workspace administrators.
+ */
 export function useWorkspaceSsoDelete() {
   const apiOrigin = useApiOrigin()
   const { triggerNotification } = useGlobalToast()

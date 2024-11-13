@@ -33,7 +33,7 @@
 
 <script setup lang="ts">
 import { useAuthManager, useLoginOrRegisterUtils } from '~/lib/auth/composables/auth'
-import { useWorkspaceSsoPublic } from '~/lib/workspaces/composables/sso'
+import { useWorkspacePublicSsoCheck } from '~/lib/workspaces/composables/sso'
 import { useMixpanel } from '~/lib/core/composables/mp'
 import { authRegisterPanelQuery } from '~/lib/auth/graphql/queries'
 import { useQuery } from '@vue/apollo-composable'
@@ -50,7 +50,7 @@ const { result } = useQuery(authRegisterPanelQuery)
 
 const serverInfo = computed(() => result.value?.serverInfo)
 const workspaceSlug = computed(() => route.params.slug?.toString() || '')
-const { workspace } = useWorkspaceSsoPublic(workspaceSlug.value)
+const { workspace } = useWorkspacePublicSsoCheck(workspaceSlug.value)
 
 const handleContinue = () => {
   if (!workspaceSlug.value) return

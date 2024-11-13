@@ -97,7 +97,7 @@ import {
   useNavigateToRegistration
 } from '~/lib/common/helpers/route'
 import { useWorkspaceInviteManager } from '~/lib/workspaces/composables/management'
-import { useWorkspaceSsoPublic } from '~/lib/workspaces/composables/sso'
+import { useWorkspacePublicSsoCheck } from '~/lib/workspaces/composables/sso'
 
 graphql(`
   fragment WorkspaceInviteBlock_PendingWorkspaceCollaborator on PendingWorkspaceCollaborator {
@@ -134,7 +134,7 @@ const { loading, accept, decline, token, isCurrentUserTarget, targetUser } =
   })
 
 const workspaceSlug = computed(() => props.invite.workspaceSlug ?? '')
-const { hasSsoEnabled } = useWorkspaceSsoPublic(workspaceSlug.value)
+const { hasSsoEnabled } = useWorkspacePublicSsoCheck(workspaceSlug.value)
 
 const buildPostAuthRedirectUrl = (params: {
   autoAccept?: boolean

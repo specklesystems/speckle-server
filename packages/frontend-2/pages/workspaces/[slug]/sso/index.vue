@@ -56,8 +56,8 @@ import { useQuery } from '@vue/apollo-composable'
 import { authRegisterPanelQuery } from '~/lib/auth/graphql/queries'
 import type { ServerTermsOfServicePrivacyPolicyFragmentFragment } from '~/lib/common/generated/gql/graphql'
 import {
-  useWorkspaceSso,
-  useWorkspaceSsoPublic
+  useWorkspaceSsoStatus,
+  useWorkspacePublicSsoCheck
 } from '~/lib/workspaces/composables/sso'
 import { useMixpanel } from '~/lib/core/composables/mp'
 
@@ -74,13 +74,15 @@ const isSsoEnabled = useIsWorkspacesSsoEnabled()
 const mixpanel = useMixpanel()
 
 const workspaceSlug = computed(() => route.params.slug as string)
-const { isSsoAuthenticated } = useWorkspaceSso({ workspaceSlug: workspaceSlug.value })
+const { isSsoAuthenticated } = useWorkspaceSsoStatus({
+  workspaceSlug: workspaceSlug.value
+})
 
 const { result } = useQuery(authRegisterPanelQuery, {
   token: route.query.token as string
 })
 
-const { workspace, loading, error } = useWorkspaceSsoPublic(workspaceSlug.value)
+const { workspace, loading, error } = useWorkspacePublicSsoCheck(workspaceSlug.value)
 
 if (error.value) {
   logger.error('Failed to fetch workspace data:', error.value)

@@ -107,7 +107,7 @@
 
 <script setup lang="ts">
 import type { SettingsWorkspacesSecurity_WorkspaceFragment } from '~~/lib/common/generated/gql/graphql'
-import { useWorkspaceSso } from '~/lib/workspaces/composables/sso'
+import { useWorkspaceSsoStatus } from '~/lib/workspaces/composables/sso'
 import type { SsoFormValues } from '~/lib/workspaces/helpers/types'
 import type { LayoutMenuItem } from '@speckle/ui-components'
 import { HorizontalDirection } from '~~/lib/common/composables/window'
@@ -124,7 +124,7 @@ enum ActionTypes {
 const apiOrigin = useApiOrigin()
 const logger = useLogger()
 const menuId = useId()
-const { provider, loading } = useWorkspaceSso({
+const { provider, loading } = useWorkspaceSsoStatus({
   workspaceSlug: props.workspace.slug
 })
 

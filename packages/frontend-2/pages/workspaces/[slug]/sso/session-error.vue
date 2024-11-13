@@ -30,7 +30,7 @@
 
 <script setup lang="ts">
 import { CommonLoadingIcon } from '@speckle/ui-components'
-import { useWorkspaceSsoPublic } from '~/lib/workspaces/composables/sso'
+import { useWorkspacePublicSsoCheck } from '~/lib/workspaces/composables/sso'
 import { useMixpanel } from '~/lib/core/composables/mp'
 import { useAuthManager, useLoginOrRegisterUtils } from '~/lib/auth/composables/auth'
 
@@ -41,7 +41,7 @@ const { signInOrSignUpWithSso } = useAuthManager()
 const { challenge } = useLoginOrRegisterUtils()
 
 const workspaceSlug = route.params.slug as string
-const { workspace, loading, error } = useWorkspaceSsoPublic(workspaceSlug)
+const { workspace, loading, error } = useWorkspacePublicSsoCheck(workspaceSlug)
 
 if (error.value) {
   logger.error('Failed to fetch workspace data:', error.value)
