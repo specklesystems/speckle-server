@@ -50,9 +50,7 @@
         <AutomateResultDialog
           v-if="isSender && summary"
           :model-card="modelCard"
-          :automation-runs="
-            automateResult?.project.model.automationsStatus?.automationRuns
-          "
+          :automation-runs="automationRuns"
           :project-id="modelCard.projectId"
           :model-id="modelCard.modelId"
         >
@@ -185,6 +183,7 @@
 <script setup lang="ts">
 import { useQuery, useSubscription } from '@vue/apollo-composable'
 import {
+  automateRunsSubscription,
   automateStatusQuery,
   modelCommentCreatedSubscription,
   modelDetailsQuery,
@@ -260,7 +259,7 @@ const folderPath = computed(() => {
   return withoutLast.join('/')
 })
 
-const { result: automateResult, onResult } = useQuery(
+const { result: automateResult, refetch } = useQuery(
   automateStatusQuery,
   () => ({
     projectId: props.project.projectId,
@@ -269,25 +268,26 @@ const { result: automateResult, onResult } = useQuery(
   () => ({ clientId })
 )
 
-// on model card first load, populate any pre-existing automation runs here
-onResult((res) => {
-  const automationRuns = res.data.project.model.automationsStatus?.automationRuns
-  if (!automationRuns) return
-  void store.patchModel(
-    props.modelCard.modelCardId,
-    {
-      automationRuns
-    },
-    false
-  )
+const automationRuns = computed(
+  () => automateResult.value?.project.model.automationsStatus?.automationRuns
+)
+
+const { onResult: onAutomateRunResult } = useSubscription(
+  automateRunsSubscription,
+  () => ({ projectId: props.project.projectId }),
+  () => ({ clientId })
+)
+
+onAutomateRunResult(() => {
+  refetch()
 })
 
 const summary = computed(() => {
-  if (!props.modelCard.automationRuns) {
+  if (!automationRuns.value) {
     return undefined
   }
   return useFunctionRunsStatusSummary({
-    runs: props.modelCard.automationRuns
+    runs: automationRuns.value
   })
 })
 
