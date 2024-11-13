@@ -1,4 +1,3 @@
-<!-- eslint-disable vue/no-v-html -->
 <template>
   <FormCheckbox
     v-model="newsletterConsent"

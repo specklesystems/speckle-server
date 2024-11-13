@@ -4,7 +4,7 @@
       <h1 class="text-heading-xl text-center mb-8">Speckle SSO login</h1>
 
       <FormTextInput
-        v-model:model-value="email"
+        v-model="email"
         type="email"
         name="email"
         label="Your work email"

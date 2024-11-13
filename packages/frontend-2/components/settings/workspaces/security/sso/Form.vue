@@ -3,7 +3,6 @@
     <div class="flex flex-col gap-4">
       <FormTextInput
         v-model="formData.providerName"
-        :disabled="!!initialData?.clientId"
         label="Provider"
         help="The label on the button displayed on the login screen."
         name="providerName"
@@ -16,7 +15,6 @@
       <hr class="border-outline-3" />
       <FormTextInput
         v-model="formData.clientId"
-        :disabled="!!initialData?.clientId"
         label="Client ID"
         name="clientId"
         color="foundation"
@@ -28,7 +26,6 @@
       <hr class="border-outline-3" />
       <FormTextInput
         v-model="formData.clientSecret"
-        :disabled="!!initialData?.clientId"
         label="Client secret"
         name="clientSecret"
         color="foundation"
@@ -40,7 +37,6 @@
       <hr class="border-outline-3" />
       <FormTextInput
         v-model="formData.issuerUrl"
-        :disabled="!!initialData?.clientId"
         label="Issuer URL"
         name="issuerUrl"
         color="foundation"
@@ -50,12 +46,7 @@
         :rules="[isRequired, isUrl, isStringOfLength({ minLength: 5 })]"
       />
       <div class="flex gap-2 mt-4">
-        <FormButton
-          v-if="!initialData"
-          :disabled="!challenge"
-          color="primary"
-          type="submit"
-        >
+        <FormButton :disabled="!challenge" color="primary" type="submit">
           Add
         </FormButton>
         <FormButton color="outline" @click="$emit('cancel')">Cancel</FormButton>
@@ -73,40 +64,39 @@ import type { SsoFormValues } from '~/lib/workspaces/helpers/types'
 import { useMixpanel } from '~/lib/core/composables/mp'
 
 const props = defineProps<{
-  initialData?: SsoFormValues
   workspaceSlug: string
 }>()
 
 defineEmits<{
   (e: 'cancel'): void
-  (e: 'submit', data: SsoFormValues): void
 }>()
 
-const logger = useLogger()
 const apiOrigin = useApiOrigin()
 const postAuthRedirect = usePostAuthRedirect()
 const { challenge } = useLoginOrRegisterUtils()
 const mixpanel = useMixpanel()
 
 const formData = ref<SsoFormValues>({
-  providerName: props.initialData?.providerName ?? '',
-  clientId: props.initialData?.clientId ?? '',
-  clientSecret: props.initialData?.clientSecret ?? '',
-  issuerUrl: props.initialData?.issuerUrl ?? ''
+  providerName: '',
+  clientId: '',
+  clientSecret: '',
+  issuerUrl: ''
 })
 
 const { handleSubmit } = useForm<SsoFormValues>()
 
-const handleCreate = () => {
-  const baseUrl = `${apiOrigin}/api/v1/workspaces/${props.workspaceSlug}/sso/oidc/validate`
-  const params = [
-    `providerName=${formData.value.providerName}`,
-    `clientId=${formData.value.clientId}`,
-    `clientSecret=${formData.value.clientSecret}`,
-    `issuerUrl=${formData.value.issuerUrl}`,
-    `challenge=${challenge.value}`
-  ]
-  const route = `${baseUrl}?${params.join('&')}`
+const onSubmit = handleSubmit(() => {
+  const url = new URL(
+    `${apiOrigin}/api/v1/workspaces/${props.workspaceSlug}/sso/oidc/validate`
+  )
+
+  url.searchParams.set('providerName', formData.value.providerName)
+  url.searchParams.set('clientId', formData.value.clientId)
+  url.searchParams.set('clientSecret', formData.value.clientSecret)
+  url.searchParams.set('issuerUrl', formData.value.issuerUrl)
+  if (challenge.value) {
+    url.searchParams.set('challenge', challenge.value)
+  }
 
   postAuthRedirect.set(`/workspaces/${props.workspaceSlug}?settings=server/general`)
 
@@ -117,26 +107,8 @@ const handleCreate = () => {
     provider_name: formData.value.providerName
   })
 
-  navigateTo(route, {
+  navigateTo(url.toString(), {
     external: true
   })
-}
-
-const handleEdit = () => {
-  // TODO: API endpoint for editing SSO configuration is pending
-  // Will need:
-  // - Update provider name
-  // - Update client ID
-  // - Optional client secret update
-  // - Update issuer URL
-  logger.warn('Editing SSO configuration is not yet implemented')
-}
-
-const onSubmit = handleSubmit(() => {
-  if (props.initialData) {
-    handleEdit()
-  } else {
-    handleCreate()
-  }
 })
 </script>

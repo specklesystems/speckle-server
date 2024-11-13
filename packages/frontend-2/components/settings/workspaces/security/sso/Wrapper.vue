@@ -49,7 +49,6 @@
 
         <SettingsWorkspacesSecuritySsoForm
           v-else
-          :initial-data="formInitialData"
           :workspace-slug="workspace.slug"
           @cancel="handleCancel"
           @submit="handleFormSubmit"
@@ -175,16 +174,5 @@ const handleCancel = () => {
 
 const redirectUrl = computed(() => {
   return `${apiOrigin}/api/v1/workspaces/${props.workspace.slug}/sso/oidc/callback?validate=true`
-})
-
-const formInitialData = computed(() => {
-  if (!isEditing.value || !provider.value) return undefined
-
-  return {
-    providerName: provider.value.name ?? '',
-    clientId: provider.value.clientId ?? '',
-    clientSecret: '••••••••••••••••••',
-    issuerUrl: provider.value.issuerUrl ?? ''
-  }
 })
 </script>
