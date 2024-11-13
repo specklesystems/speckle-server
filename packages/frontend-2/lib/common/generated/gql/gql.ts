@@ -19,6 +19,7 @@ const documents = {
     "\n  query EmailVerificationBannerState {\n    activeUser {\n      id\n      email\n      verified\n      hasPendingVerification\n    }\n  }\n": types.EmailVerificationBannerStateDocument,
     "\n  mutation RequestVerification {\n    requestVerification\n  }\n": types.RequestVerificationDocument,
     "\n  fragment AuthWorkspaceInviteHeader_PendingWorkspaceCollaborator on PendingWorkspaceCollaborator {\n    id\n    workspaceName\n    email\n    user {\n      id\n      ...LimitedUserAvatar\n    }\n  }\n": types.AuthWorkspaceInviteHeader_PendingWorkspaceCollaboratorFragmentDoc,
+    "\n  fragment SsoWorkspaceSelect_Workspace on LimitedWorkspace {\n    id\n    slug\n    name\n    logo\n    defaultLogoIndex\n  }\n": types.SsoWorkspaceSelect_WorkspaceFragmentDoc,
     "\n  fragment AuthStategiesServerInfoFragment on ServerInfo {\n    authStrategies {\n      id\n      name\n      url\n    }\n    ...AuthThirdPartyLoginButtonOIDC_ServerInfo\n  }\n": types.AuthStategiesServerInfoFragmentFragmentDoc,
     "\n  fragment AuthThirdPartyLoginButtonOIDC_ServerInfo on ServerInfo {\n    authStrategies {\n      id\n      name\n    }\n  }\n": types.AuthThirdPartyLoginButtonOidc_ServerInfoFragmentDoc,
     "\n  fragment AutomateAutomationCreateDialog_AutomateFunction on AutomateFunction {\n    id\n    ...AutomationsFunctionsCard_AutomateFunction\n    ...AutomateAutomationCreateDialogFunctionParametersStep_AutomateFunction\n  }\n": types.AutomateAutomationCreateDialog_AutomateFunctionFragmentDoc,
@@ -336,7 +337,7 @@ const documents = {
     "\n  query WorkspaceInvite(\n    $workspaceId: String\n    $token: String\n    $options: WorkspaceInviteLookupOptions\n  ) {\n    workspaceInvite(workspaceId: $workspaceId, token: $token, options: $options) {\n      ...WorkspaceInviteBanner_PendingWorkspaceCollaborator\n      ...WorkspaceInviteBlock_PendingWorkspaceCollaborator\n    }\n  }\n": types.WorkspaceInviteDocument,
     "\n  query MoveProjectsDialog {\n    activeUser {\n      ...MoveProjectsDialog_User\n    }\n  }\n": types.MoveProjectsDialogDocument,
     "\n  query ValidateWorkspaceSlug($slug: String!) {\n    validateWorkspaceSlug(slug: $slug)\n  }\n": types.ValidateWorkspaceSlugDocument,
-    "\n  query WorkspaceSsoByEmail($email: String!) {\n    workspaceSsoByEmail(email: $email) {\n      id\n      name\n      slug\n      logo\n    }\n  }\n": types.WorkspaceSsoByEmailDocument,
+    "\n  query WorkspaceSsoByEmail($email: String!) {\n    workspaceSsoByEmail(email: $email) {\n      ...SsoWorkspaceSelect_Workspace\n    }\n  }\n": types.WorkspaceSsoByEmailDocument,
     "\n  query WorkspaceSsoCheck($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      id\n      sso {\n        provider {\n          id\n          name\n          clientId\n          issuerUrl\n        }\n      }\n    }\n    activeUser {\n      expiredSsoSessions {\n        id\n        slug\n      }\n    }\n  }\n": types.WorkspaceSsoCheckDocument,
     "\n  query LegacyBranchRedirectMetadata($streamId: String!, $branchName: String!) {\n    project(id: $streamId) {\n      modelByName(name: $branchName) {\n        id\n      }\n    }\n  }\n": types.LegacyBranchRedirectMetadataDocument,
     "\n  query LegacyViewerCommitRedirectMetadata($streamId: String!, $commitId: String!) {\n    project(id: $streamId) {\n      version(id: $commitId) {\n        id\n        model {\n          id\n        }\n      }\n    }\n  }\n": types.LegacyViewerCommitRedirectMetadataDocument,
@@ -390,6 +391,10 @@ export function graphql(source: "\n  mutation RequestVerification {\n    request
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  fragment AuthWorkspaceInviteHeader_PendingWorkspaceCollaborator on PendingWorkspaceCollaborator {\n    id\n    workspaceName\n    email\n    user {\n      id\n      ...LimitedUserAvatar\n    }\n  }\n"): (typeof documents)["\n  fragment AuthWorkspaceInviteHeader_PendingWorkspaceCollaborator on PendingWorkspaceCollaborator {\n    id\n    workspaceName\n    email\n    user {\n      id\n      ...LimitedUserAvatar\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  fragment SsoWorkspaceSelect_Workspace on LimitedWorkspace {\n    id\n    slug\n    name\n    logo\n    defaultLogoIndex\n  }\n"): (typeof documents)["\n  fragment SsoWorkspaceSelect_Workspace on LimitedWorkspace {\n    id\n    slug\n    name\n    logo\n    defaultLogoIndex\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -1661,7 +1666,7 @@ export function graphql(source: "\n  query ValidateWorkspaceSlug($slug: String!)
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query WorkspaceSsoByEmail($email: String!) {\n    workspaceSsoByEmail(email: $email) {\n      id\n      name\n      slug\n      logo\n    }\n  }\n"): (typeof documents)["\n  query WorkspaceSsoByEmail($email: String!) {\n    workspaceSsoByEmail(email: $email) {\n      id\n      name\n      slug\n      logo\n    }\n  }\n"];
+export function graphql(source: "\n  query WorkspaceSsoByEmail($email: String!) {\n    workspaceSsoByEmail(email: $email) {\n      ...SsoWorkspaceSelect_Workspace\n    }\n  }\n"): (typeof documents)["\n  query WorkspaceSsoByEmail($email: String!) {\n    workspaceSsoByEmail(email: $email) {\n      ...SsoWorkspaceSelect_Workspace\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

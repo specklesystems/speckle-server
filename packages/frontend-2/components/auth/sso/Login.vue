@@ -21,32 +21,12 @@
         @update:model-value="onEmailChange"
       />
 
-      <FormSelectBase
+      <AuthSsoWorkspaceSelect
         v-if="shouldShowWorkspaceSelector"
         v-model="selectedWorkspace"
-        name="workspace"
-        :multiple="false"
-        label="Select workspace"
-        button-style="tinted"
         :items="availableWorkspaces"
         :disabled="loading"
-        placeholder="Choose a workspace"
-        help="You may need to authenticate separately for each workspace you want to access."
-        show-label
-      >
-        <template #option="{ item }">
-          <div class="flex items-center gap-2">
-            <NuxtImg v-if="item.logo" :src="item.logo" class="h-6 w-6 rounded-full" />
-            <span>{{ item.name }}</span>
-          </div>
-        </template>
-        <template #something-selected="{ value }">
-          <div v-if="isSingleWorkspace(value)" class="flex items-center gap-2">
-            <NuxtImg v-if="value.logo" :src="value.logo" class="h-6 w-6 rounded-full" />
-            <span>{{ value.name }}</span>
-          </div>
-        </template>
-      </FormSelectBase>
+      />
     </div>
 
     <div class="mt-8 space-y-4">
@@ -74,7 +54,8 @@ import { useQuery } from '@vue/apollo-composable'
 import { workspaceSsoByEmailQuery } from '~/lib/workspaces/graphql/queries'
 import { useAuthManager, useLoginOrRegisterUtils } from '~/lib/auth/composables/auth'
 import { useDebounceFn } from '@vueuse/core'
-import type { WorkspaceSsoByEmailQuery } from '~/lib/common/generated/gql/graphql'
+import type { SsoWorkspaceSelect_WorkspaceFragment } from '~/lib/common/generated/gql/graphql'
+import { graphql } from '~/lib/common/generated/gql/gql'
 
 enum EmailCheckState {
   Idle = 'idle',
@@ -82,7 +63,15 @@ enum EmailCheckState {
   Checked = 'checked'
 }
 
-type Workspace = WorkspaceSsoByEmailQuery['workspaceSsoByEmail'][number]
+graphql(`
+  fragment SsoWorkspaceSelect_Workspace on LimitedWorkspace {
+    id
+    slug
+    name
+    logo
+    defaultLogoIndex
+  }
+`)
 
 const { meta, handleSubmit } = useForm()
 const { challenge } = useLoginOrRegisterUtils()
@@ -93,7 +82,7 @@ const { triggerNotification } = useGlobalToast()
 const loading = ref(false)
 const email = ref('')
 const emailCheckState = ref<EmailCheckState>(EmailCheckState.Idle)
-const selectedWorkspace = ref<Workspace>()
+const selectedWorkspace = ref<SsoWorkspaceSelect_WorkspaceFragment>()
 
 const {
   loading: isChecking,
@@ -154,17 +143,6 @@ const debouncedCheckEmail = useDebounceFn((value: string) => {
   }
   emailCheckState.value = EmailCheckState.Checking
 }, 300)
-
-// Type guard for workspace selection
-function isSingleWorkspace(value: unknown): value is Workspace {
-  return (
-    value !== null &&
-    typeof value === 'object' &&
-    !Array.isArray(value) &&
-    'name' in value &&
-    'slug' in value
-  )
-}
 
 const onEmailChange = (value: string) => {
   email.value = value

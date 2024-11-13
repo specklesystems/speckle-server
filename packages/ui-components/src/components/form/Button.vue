@@ -1,8 +1,8 @@
 <template>
   <Component
     :is="to ? linkComponent : 'button'"
-    :href="to"
-    :to="to"
+    :href="external ? to : undefined"
+    :to="!external ? to : undefined"
     :type="buttonType"
     :external="external"
     :class="buttonClasses"

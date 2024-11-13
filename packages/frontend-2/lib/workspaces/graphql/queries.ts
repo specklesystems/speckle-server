@@ -82,10 +82,7 @@ export const validateWorkspaceSlugQuery = graphql(`
 export const workspaceSsoByEmailQuery = graphql(`
   query WorkspaceSsoByEmail($email: String!) {
     workspaceSsoByEmail(email: $email) {
-      id
-      name
-      slug
-      logo
+      ...SsoWorkspaceSelect_Workspace
     }
   }
 `)
