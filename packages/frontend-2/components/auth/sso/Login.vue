@@ -41,7 +41,7 @@
           </div>
         </template>
         <template #something-selected="{ value }">
-          <div v-if="isWorkspace(value)" class="flex items-center gap-2">
+          <div v-if="isSingleWorkspace(value)" class="flex items-center gap-2">
             <NuxtImg v-if="value.logo" :src="value.logo" class="h-6 w-6 rounded-full" />
             <span>{{ value.name }}</span>
           </div>
@@ -83,6 +83,11 @@ const { challenge } = useLoginOrRegisterUtils()
 const { signInOrSignUpWithSso } = useAuthManager()
 const logger = useLogger()
 
+const loading = ref(false)
+const email = ref('')
+const emailCheckState = ref<'idle' | 'checking' | 'checked'>('idle')
+const selectedWorkspace = ref<Workspace>()
+
 const {
   loading: isChecking,
   result,
@@ -94,11 +99,6 @@ const {
     enabled: emailCheckState.value === 'checking'
   })
 )
-
-const loading = ref(false)
-const email = ref('')
-const emailCheckState = ref<'idle' | 'checking' | 'checked'>('idle')
-const selectedWorkspace = ref<Workspace>()
 
 const helpText = computed(() => {
   if (isChecking.value) return 'Checking SSO availability...'
@@ -147,9 +147,13 @@ const debouncedCheckEmail = useDebounceFn((value: string) => {
 }, 300)
 
 // Type guard for workspace selection
-function isWorkspace(value: unknown): value is Workspace {
+function isSingleWorkspace(value: unknown): value is Workspace {
   return (
-    value !== null && typeof value === 'object' && 'name' in value && 'slug' in value
+    value !== null &&
+    typeof value === 'object' &&
+    !Array.isArray(value) &&
+    'name' in value &&
+    'slug' in value
   )
 }
 
