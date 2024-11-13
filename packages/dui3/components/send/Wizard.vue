@@ -55,6 +55,7 @@
       <WizardModelSelector
         :project="selectedProject"
         :account-id="selectedAccountId"
+        is-sender
         @next="selectModel"
       />
     </div>
