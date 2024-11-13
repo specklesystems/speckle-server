@@ -37,13 +37,12 @@ export = {
   Query: {},
   Stream: {
     async branches(parent, args) {
-      const projectDb = await getProjectDbClient({ projectId: parent.id })
-
+      const projectDB = await getProjectDbClient({ projectId: parent.id })
       const getPaginatedStreamBranches = getPaginatedStreamBranchesFactory({
         getPaginatedStreamBranchesPage: getPaginatedStreamBranchesPageFactory({
-          db: projectDb
+          db: projectDB
         }),
-        getStreamBranchCount: getStreamBranchCountFactory({ db: projectDb })
+        getStreamBranchCount: getStreamBranchCountFactory({ db: projectDB })
       })
       return await getPaginatedStreamBranches(parent.id, args)
     },
@@ -55,13 +54,12 @@ export = {
       // When getting a branch by name, if not found, we try to do a 'hail mary' attempt
       // and get it by id as well (this would be coming from a FE2 url).
 
-      const projectDb = await getProjectDbClient({ projectId: parent.id })
-
-      const getStreamBranchByName = getStreamBranchByNameFactory({ db: projectDb })
+      const projectDB = await getProjectDbClient({ projectId: parent.id })
+      const getStreamBranchByName = getStreamBranchByNameFactory({ db: projectDB })
       const branchByName = await getStreamBranchByName(parent.id, args.name)
       if (branchByName) return branchByName
 
-      const getBranchById = getBranchByIdFactory({ db: projectDb })
+      const getBranchById = getBranchByIdFactory({ db: projectDB })
       const branchByIdRes = await getBranchById(args.name)
       if (!branchByIdRes) return null
 
@@ -86,16 +84,16 @@ export = {
         context.resourceAccessRules
       )
 
-      const projectDb = await getProjectDbClient({ projectId: args.branch.streamId })
+      const projectDB = await getProjectDbClient({ projectId: args.branch.streamId })
+      const getStreamBranchByName = getStreamBranchByNameFactory({ db: projectDB })
       const createBranchAndNotify = createBranchAndNotifyFactory({
-        getStreamBranchByName: getStreamBranchByNameFactory({ db: projectDb }),
-        createBranch: createBranchFactory({ db: projectDb }),
+        getStreamBranchByName,
+        createBranch: createBranchFactory({ db: projectDB }),
         addBranchCreatedActivity: addBranchCreatedActivityFactory({
           saveActivity: saveActivityFactory({ db }),
           publish
         })
       })
-
       const { id } = await createBranchAndNotify(args.branch, context.userId!)
 
       return id
@@ -109,17 +107,16 @@ export = {
         context.resourceAccessRules
       )
 
-      const projectDb = await getProjectDbClient({ projectId: args.branch.streamId })
-
+      const projectDB = await getProjectDbClient({ projectId: args.branch.streamId })
+      const getBranchById = getBranchByIdFactory({ db: projectDB })
       const updateBranchAndNotify = updateBranchAndNotifyFactory({
-        getBranchById: getBranchByIdFactory({ db: projectDb }),
-        updateBranch: updateBranchFactory({ db: projectDb }),
+        getBranchById,
+        updateBranch: updateBranchFactory({ db: projectDB }),
         addBranchUpdatedActivity: addBranchUpdatedActivityFactory({
           saveActivity: saveActivityFactory({ db }),
           publish
         })
       })
-
       const newBranch = await updateBranchAndNotify(args.branch, context.userId!)
       return !!newBranch
     },
@@ -132,20 +129,20 @@ export = {
         context.resourceAccessRules
       )
 
-      const projectDb = await getProjectDbClient({ projectId: args.branch.streamId })
-
+      const projectDB = await getProjectDbClient({ projectId: args.branch.streamId })
+      const markBranchStreamUpdated = markBranchStreamUpdatedFactory({ db: projectDB })
+      const getStream = getStreamFactory({ db: projectDB })
       const deleteBranchAndNotify = deleteBranchAndNotifyFactory({
-        getStream: getStreamFactory({ db: projectDb }),
-        getBranchById: getBranchByIdFactory({ db: projectDb }),
+        getStream,
+        getBranchById: getBranchByIdFactory({ db: projectDB }),
         modelsEventsEmitter: ModelsEmitter.emit,
-        markBranchStreamUpdated: markBranchStreamUpdatedFactory({ db: projectDb }),
+        markBranchStreamUpdated,
         addBranchDeletedActivity: addBranchDeletedActivityFactory({
           saveActivity: saveActivityFactory({ db }),
           publish
         }),
-        deleteBranchById: deleteBranchByIdFactory({ db: projectDb })
+        deleteBranchById: deleteBranchByIdFactory({ db: projectDB })
       })
-
       const deleted = await deleteBranchAndNotify(args.branch, context.userId!)
       return deleted
     }

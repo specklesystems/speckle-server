@@ -142,7 +142,7 @@ describe('FileUploads @fileuploads', () => {
   let existingCanonicalUrl: string
   let existingPort: string
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let sendRequest: (token: string, query: unknown) => Promise<any>
+  let sendRequest: (token: string, query: string | object) => Promise<any>
   let serverAddress: string
   let serverPort: string
 

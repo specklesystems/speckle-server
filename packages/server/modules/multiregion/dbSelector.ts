@@ -23,8 +23,15 @@ import {
   getMainRegionConfig
 } from '@/modules/multiregion/regionConfig'
 import { MaybeNullOrUndefined } from '@speckle/shared'
+import { isTestEnv } from '@/modules/shared/helpers/envHelper'
 
 let getter: GetProjectDb | undefined = undefined
+
+/**
+ * All dbs share the list of pubs/subs, so we need to make sure the test db uses their own.
+ * As long as there's only 1 test db per instance, it should be fine
+ */
+const createPubSubName = (name: string): string => (isTestEnv() ? `test_${name}` : name)
 
 export const getRegionDb: GetRegionDb = async ({ regionKey }) => {
   const getRegion = getRegionFactory({ db })
@@ -86,11 +93,16 @@ export const getProjectDbClient: GetProjectDb = async ({ projectId }) => {
 type RegionClients = Record<string, Knex>
 let registeredRegionClients: RegionClients | undefined = undefined
 
-const initializeRegisteredRegionClients = async (): Promise<RegionClients> => {
+/**
+ * Idempotently initialize registered region (in db) Knex clients
+ */
+export const initializeRegisteredRegionClients = async (): Promise<RegionClients> => {
   const configuredRegions = await getRegionsFactory({ db })()
-  const regionConfigs = await getAvailableRegionConfig()
+  if (!configuredRegions.length) return {}
 
-  return Object.fromEntries(
+  // init knex clients
+  const regionConfigs = await getAvailableRegionConfig()
+  const ret = Object.fromEntries(
     configuredRegions.map((region) => {
       if (!(region.key in regionConfigs))
         throw new MisconfiguredEnvironmentError(
@@ -99,6 +111,17 @@ const initializeRegisteredRegionClients = async (): Promise<RegionClients> => {
       return [region.key, configureClient(regionConfigs[region.key]).public]
     })
   )
+
+  // run migrations
+  await Promise.all(Object.values(ret).map((db) => db.migrate.latest()))
+
+  // (re-)set up pub-sub, if needed
+  await Promise.all(
+    Object.keys(ret).map((regionKey) => initializeRegion({ regionKey }))
+  )
+
+  registeredRegionClients = ret
+  return ret
 }
 
 export const getRegisteredRegionClients = async (): Promise<RegionClients> => {
@@ -110,11 +133,10 @@ export const getRegisteredRegionClients = async (): Promise<RegionClients> => {
 export const getRegisteredDbClients = async (): Promise<Knex[]> =>
   Object.values(await getRegisteredRegionClients())
 
+/**
+ * Idempotently initialize region
+ */
 export const initializeRegion: InitializeRegion = async ({ regionKey }) => {
-  const knownClients = await getRegisteredRegionClients()
-  if (regionKey in knownClients)
-    throw new Error(`Region ${regionKey} is already initialized`)
-
   const regionConfigs = await getAvailableRegionConfig()
   if (!(regionKey in regionConfigs))
     throw new Error(`RegionKey ${regionKey} not available in config`)
@@ -122,7 +144,6 @@ export const initializeRegion: InitializeRegion = async ({ regionKey }) => {
   const newRegionConfig = regionConfigs[regionKey]
   const regionDb = configureClient(newRegionConfig)
   await regionDb.public.migrate.latest()
-  // TODO, set up pub-sub shit
 
   const mainDbConfig = await getMainRegionConfig()
   const mainDb = configureClient(mainDbConfig)
@@ -142,8 +163,12 @@ export const initializeRegion: InitializeRegion = async ({ regionKey }) => {
     regionName: regionKey,
     sslmode
   })
-  // pushing to the singleton object here
-  knownClients[regionKey] = regionDb.public
+
+  // pushing to the singleton object here, its only not available
+  // if this is being triggered from init, and in that case its gonna be set after anyway
+  if (registeredRegionClients) {
+    registeredRegionClients[regionKey] = regionDb.public
+  }
 }
 
 interface ReplicationArgs {
@@ -159,9 +184,11 @@ const setUpUserReplication = async ({
   sslmode,
   regionName
 }: ReplicationArgs): Promise<void> => {
-  // TODO: ensure its created...
+  const subName = createPubSubName(`userssub_${regionName}`)
+  const pubName = createPubSubName('userspub')
+
   try {
-    await from.public.raw('CREATE PUBLICATION userspub FOR TABLE users;')
+    await from.public.raw(`CREATE PUBLICATION ${pubName} FOR TABLE users;`)
   } catch (err) {
     if (!(err instanceof Error)) throw err
     if (!err.message.includes('already exists')) throw err
@@ -174,11 +201,10 @@ const setUpUserReplication = async ({
   )
   const port = fromUrl.port ? fromUrl.port : '5432'
   const fromDbName = fromUrl.pathname.replace('/', '')
-  const subName = `userssub_${regionName}`
   const rawSqeel = `SELECT * FROM aiven_extras.pg_create_subscription(
     '${subName}',
     'dbname=${fromDbName} host=${fromUrl.hostname} port=${port} sslmode=${sslmode} user=${fromUrl.username} password=${fromUrl.password}',
-    'userspub', 
+    '${pubName}', 
     '${subName}',
     TRUE,
     TRUE
@@ -198,9 +224,11 @@ const setUpProjectReplication = async ({
   regionName,
   sslmode
 }: ReplicationArgs): Promise<void> => {
-  // TODO: ensure its created...
+  const subName = createPubSubName(`projectsub_${regionName}`)
+  const pubName = createPubSubName('projectpub')
+
   try {
-    await from.public.raw('CREATE PUBLICATION projectpub FOR TABLE streams;')
+    await from.public.raw(`CREATE PUBLICATION ${pubName} FOR TABLE streams;`)
   } catch (err) {
     if (!(err instanceof Error)) throw err
     if (!err.message.includes('already exists')) throw err
@@ -213,11 +241,10 @@ const setUpProjectReplication = async ({
   )
   const port = fromUrl.port ? fromUrl.port : '5432'
   const fromDbName = fromUrl.pathname.replace('/', '')
-  const subName = `projectsub_${regionName}`
   const rawSqeel = `SELECT * FROM aiven_extras.pg_create_subscription(
     '${subName}',
     'dbname=${fromDbName} host=${fromUrl.hostname} port=${port} sslmode=${sslmode} user=${fromUrl.username} password=${fromUrl.password}',
-    'projectpub', 
+    '${pubName}', 
     '${subName}',
     TRUE,
     TRUE
