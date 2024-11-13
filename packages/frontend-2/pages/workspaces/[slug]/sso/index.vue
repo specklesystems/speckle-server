@@ -58,7 +58,7 @@ import type { ServerTermsOfServicePrivacyPolicyFragmentFragment } from '~/lib/co
 import {
   useWorkspaceSso,
   useWorkspaceSsoPublic
-} from '~/lib/workspaces/composables/management'
+} from '~/lib/workspaces/composables/sso'
 import { useMixpanel } from '~/lib/core/composables/mp'
 
 definePageMeta({

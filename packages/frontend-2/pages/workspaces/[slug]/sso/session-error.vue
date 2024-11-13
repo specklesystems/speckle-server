@@ -30,7 +30,7 @@
 
 <script setup lang="ts">
 import { CommonLoadingIcon } from '@speckle/ui-components'
-import { useWorkspaceSsoPublic } from '~/lib/workspaces/composables/management'
+import { useWorkspaceSsoPublic } from '~/lib/workspaces/composables/sso'
 import { useMixpanel } from '~/lib/core/composables/mp'
 import { useAuthManager, useLoginOrRegisterUtils } from '~/lib/auth/composables/auth'
 

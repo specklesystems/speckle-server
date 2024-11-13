@@ -107,7 +107,7 @@
 
 <script setup lang="ts">
 import type { SettingsWorkspacesSecurity_WorkspaceFragment } from '~~/lib/common/generated/gql/graphql'
-import { useWorkspaceSso } from '~/lib/workspaces/composables/management'
+import { useWorkspaceSso } from '~/lib/workspaces/composables/sso'
 import type { SsoFormValues } from '~/lib/workspaces/helpers/types'
 import type { LayoutMenuItem } from '@speckle/ui-components'
 import { HorizontalDirection } from '~~/lib/common/composables/window'

@@ -19,7 +19,7 @@
 
 <script setup lang="ts">
 import type { LayoutDialogButton } from '@speckle/ui-components'
-import { useWorkspaceSsoDelete } from '~/lib/workspaces/composables/management'
+import { useWorkspaceSsoDelete } from '~/lib/workspaces/composables/sso'
 
 const props = defineProps<{
   providerName: string

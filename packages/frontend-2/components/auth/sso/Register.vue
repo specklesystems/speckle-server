@@ -33,7 +33,7 @@
 
 <script setup lang="ts">
 import { useAuthManager, useLoginOrRegisterUtils } from '~/lib/auth/composables/auth'
-import { useWorkspaceSsoPublic } from '~/lib/workspaces/composables/management'
+import { useWorkspaceSsoPublic } from '~/lib/workspaces/composables/sso'
 import { useMixpanel } from '~/lib/core/composables/mp'
 import { authRegisterPanelQuery } from '~/lib/auth/graphql/queries'
 import { useQuery } from '@vue/apollo-composable'

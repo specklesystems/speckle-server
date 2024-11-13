@@ -96,10 +96,8 @@ import {
   useNavigateToLogin,
   useNavigateToRegistration
 } from '~/lib/common/helpers/route'
-import {
-  useWorkspaceInviteManager,
-  useWorkspaceSsoPublic
-} from '~/lib/workspaces/composables/management'
+import { useWorkspaceInviteManager } from '~/lib/workspaces/composables/management'
+import { useWorkspaceSsoPublic } from '~/lib/workspaces/composables/sso'
 
 graphql(`
   fragment WorkspaceInviteBlock_PendingWorkspaceCollaborator on PendingWorkspaceCollaborator {

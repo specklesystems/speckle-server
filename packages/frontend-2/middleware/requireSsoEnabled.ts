@@ -1,5 +1,5 @@
 import { workspaceRoute } from '~/lib/common/helpers/route'
-import { useWorkspaceSsoPublic } from '~/lib/workspaces/composables/management'
+import { useWorkspaceSsoPublic } from '~/lib/workspaces/composables/sso'
 
 /**
  * Used to validate that the workspace has SSO enabled, redirects to workspace page if not
