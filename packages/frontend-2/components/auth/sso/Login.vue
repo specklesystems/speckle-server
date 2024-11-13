@@ -88,6 +88,7 @@ const { meta, handleSubmit } = useForm()
 const { challenge } = useLoginOrRegisterUtils()
 const { signInOrSignUpWithSso } = useAuthManager()
 const logger = useLogger()
+const { triggerNotification } = useGlobalToast()
 
 const loading = ref(false)
 const email = ref('')
@@ -183,6 +184,12 @@ const onSubmit = handleSubmit(() => {
     })
   } catch (error) {
     logger.error('SSO login failed:', error)
+    triggerNotification({
+      type: ToastNotificationType.Danger,
+      title: 'SSO login failed',
+      description:
+        error instanceof Error ? error.message : 'An unexpected error occurred'
+    })
   } finally {
     loading.value = false
   }
