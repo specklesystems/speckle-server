@@ -48,9 +48,10 @@
             </p>
             <p v-if="existingModelProblem" class="mb-2 text-sm">
               <ExclamationTriangleIcon class="w-4 in inline text-orange-500" />
-              The model you selected
-              <b>already exists in the file.</b>
-              Your existing model will be used for operation.
+              <b>{{ ` ${existingModelName}` }}</b>
+              is already being used to
+              <b>{{ isSender ? 'publish,' : 'load,' }}</b>
+              you could consider using the existing one.
             </p>
             <p class="mb-2 text-sm">Are you sure you want to proceed?</p>
           </div>
@@ -143,8 +144,9 @@ const props = withDefaults(
     project: ProjectListProjectItemFragment
     accountId: string
     showNewModel?: boolean
+    isSender?: boolean
   }>(),
-  { showNewModel: true }
+  { showNewModel: true, isSender: false }
 )
 
 const accountStore = useAccountStore()
@@ -159,9 +161,14 @@ watch(searchText, () => (newModelName.value = searchText.value))
 
 let selectedModel: ModelListModelItemFragment | undefined = undefined
 const existingModelProblem = ref(false)
+const existingModelName = ref<string | undefined>(undefined)
 const hasNonZeroVersionsProblem = ref(false)
 const handleModelSelect = (model: ModelListModelItemFragment) => {
-  existingModelProblem.value = !!hostAppStore.models.find((m) => m.modelId === model.id)
+  const existingModel = hostAppStore.models.find((m) => m.modelId === model.id)
+  existingModelProblem.value = !!existingModel
+  if (existingModelProblem.value) {
+    existingModelName.value = model.name
+  }
   hasNonZeroVersionsProblem.value =
     model.versions.totalCount !== 0 && props.showNewModel // NOTE: we're using the showNewModel prop as a giveaway of whether we're in the send wizard - we do not need this extra check in the receive wizard
 
