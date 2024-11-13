@@ -274,6 +274,7 @@ enum AutomateFunctionTemplateLanguage {
   TYPESCRIPT
   PYTHON
   DOT_NET
+  DEMONSTRATION
 }
 
 type AutomateFunctionTemplate {
