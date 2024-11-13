@@ -78,15 +78,27 @@ import type { WorkspaceSsoByEmailQuery } from '~/lib/common/generated/gql/graphq
 
 type Workspace = WorkspaceSsoByEmailQuery['workspaceSsoByEmail'][number]
 
-const loading = ref(false)
-const email = ref('')
-const emailCheckState = ref<'idle' | 'checking' | 'checked'>('idle')
-const selectedWorkspace = ref<Workspace>()
-
 const { meta, handleSubmit } = useForm()
 const { challenge } = useLoginOrRegisterUtils()
 const { signInOrSignUpWithSso } = useAuthManager()
 const logger = useLogger()
+
+const {
+  loading: isChecking,
+  result,
+  onResult
+} = useQuery(
+  workspaceSsoByEmailQuery,
+  () => ({ email: email.value }),
+  () => ({
+    enabled: emailCheckState.value === 'checking'
+  })
+)
+
+const loading = ref(false)
+const email = ref('')
+const emailCheckState = ref<'idle' | 'checking' | 'checked'>('idle')
+const selectedWorkspace = ref<Workspace>()
 
 const helpText = computed(() => {
   if (isChecking.value) return 'Checking SSO availability...'
@@ -102,26 +114,6 @@ const errorMessage = computed(() => {
   }
   return undefined
 })
-
-const debouncedCheckEmail = useDebounceFn((value: string) => {
-  if (!value || !meta.value.valid) {
-    emailCheckState.value = 'idle'
-    return
-  }
-  emailCheckState.value = 'checking'
-}, 300)
-
-const {
-  loading: isChecking,
-  result,
-  onResult
-} = useQuery(
-  workspaceSsoByEmailQuery,
-  () => ({ email: email.value }),
-  () => ({
-    enabled: emailCheckState.value === 'checking'
-  })
-)
 
 const availableWorkspaces = computed(() => result.value?.workspaceSsoByEmail || [])
 
@@ -145,6 +137,14 @@ const buttonText = computed(() => {
     ? `Sign in to ${selectedWorkspace.value.name}`
     : 'Sign in'
 })
+
+const debouncedCheckEmail = useDebounceFn((value: string) => {
+  if (!value || !meta.value.valid) {
+    emailCheckState.value = 'idle'
+    return
+  }
+  emailCheckState.value = 'checking'
+}, 300)
 
 // Type guard for workspace selection
 function isWorkspace(value: unknown): value is Workspace {
