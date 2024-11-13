@@ -15,7 +15,7 @@ const { spawn } = require('child_process')
 const ServerAPI = require('../ifc/api')
 const objDependencies = require('./objDependencies')
 const { logger } = require('../observability/logging')
-const { Scopes } = require('@speckle/shared')
+const { Scopes, wait } = require('@speckle/shared')
 
 const HEALTHCHECK_FILE_PATH = '/tmp/last_successful_query'
 
@@ -326,15 +326,15 @@ const doStuff = async () => {
       const task = await startTask(taskDb)
       fs.writeFile(HEALTHCHECK_FILE_PATH, '' + Date.now(), () => {})
       if (!task) {
-        await new Promise((r) => setTimeout(r, 1000))
+        await wait(1000)
         continue
       }
       await doTask(mainDb, regionName, taskDb, task)
-      await new Promise((r) => setTimeout(r, 10))
+      await wait(10)
     } catch (err) {
       metricOperationErrors.labels('main_loop').inc()
       logger.error(err, 'Error executing task')
-      await new Promise((r) => setTimeout(r, 5000))
+      await wait(5000)
     }
   }
 }

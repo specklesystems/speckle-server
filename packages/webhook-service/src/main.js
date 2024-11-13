@@ -5,6 +5,7 @@ const getDbClients = require('./knex')
 const fs = require('fs')
 const metrics = require('./observability/prometheusMetrics')
 const { logger } = require('./observability/logging')
+const { wait } = require('@speckle/shared')
 
 let shouldExit = false
 const HEALTHCHECK_FILE_PATH = '/tmp/last_successful_query'
@@ -131,7 +132,7 @@ const doStuff = async (dbClients) => {
       )
     ).filter((t) => t)
     if (!tasks.length) {
-      await new Promise((r) => setTimeout(r, 1000))
+      await wait(1000)
       continue
     }
 

@@ -3,7 +3,7 @@
   "private": true,
   "version": "2.5.4",
   "description": "Parse and import files of various types into a stream",
-  "author": "Dimitrie Stefanescu <didimitrie@speckle.systems>",
+  "author": "Speckle Systems <hello@speckle.systems>",
   "homepage": "https://github.com/specklesystems/speckle-server#readme",
   "license": "SEE LICENSE IN readme.md",
   "main": "daemon.js",
