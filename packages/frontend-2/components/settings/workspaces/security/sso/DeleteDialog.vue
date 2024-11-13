@@ -26,10 +26,6 @@ const props = defineProps<{
   workspaceSlug: string
 }>()
 
-const emit = defineEmits<{
-  (e: 'deleted'): void
-}>()
-
 const isOpen = defineModel<boolean>('open', { required: true })
 const { deleteSsoProvider } = useWorkspaceSsoDelete()
 
@@ -37,7 +33,6 @@ const handleRemove = async () => {
   const success = await deleteSsoProvider(props.workspaceSlug)
   if (success) {
     isOpen.value = false
-    emit('deleted')
   }
 }
 

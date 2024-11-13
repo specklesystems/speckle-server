@@ -9,7 +9,7 @@
     </div>
 
     <h1 class="text-heading-xl text-center">
-      Sign up to access {{ workspace?.name || 'Workspace' }}
+      Sign up to access {{ workspace?.name || 'your Workspace' }}
     </h1>
 
     <div class="w-full max-w-xs">
@@ -57,7 +57,7 @@ const handleContinue = () => {
 
   loading.value = true
   try {
-    mixpanel.track('Workspace SSO Register Attempt', {
+    mixpanel.track('Workspace SSO Register Attempted', {
       // eslint-disable-next-line camelcase
       workspace_slug: workspaceSlug.value
     })
@@ -68,8 +68,16 @@ const handleContinue = () => {
     })
   } catch (error) {
     logger.error('SSO registration failed:', error)
+    mixpanel.track('Workspace SSO Registration Failed', {
+      // eslint-disable-next-line camelcase
+      workspace_slug: workspaceSlug.value
+    })
   } finally {
     loading.value = false
+    mixpanel.track('Workspace SSO Registration Successful', {
+      // eslint-disable-next-line camelcase
+      workspace_slug: workspaceSlug.value
+    })
   }
 }
 </script>

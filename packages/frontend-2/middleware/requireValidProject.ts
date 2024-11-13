@@ -1,4 +1,5 @@
 import { ProjectVisibility } from '~/lib/common/generated/gql/graphql'
+import { WorkspaceSsoErrorCodes } from '~/lib/workspaces/helpers/types'
 import { useApolloClientFromNuxt } from '~~/lib/common/composables/graphql'
 import {
   convertThrowIntoFetchResult,
@@ -34,7 +35,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
   // Check for SSO session error
   const ssoSessionError = (errors || []).find(
-    (e) => e.extensions?.['code'] === 'SSO_SESSION_MISSING_OR_EXPIRED_ERROR'
+    (e) => e.extensions?.['code'] === WorkspaceSsoErrorCodes.SESSION_MISSING_OR_EXPIRED
   )
 
   // If we have an SSO error, the message contains the workspace slug

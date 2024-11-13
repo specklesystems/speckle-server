@@ -49,7 +49,7 @@ export const useWorkspaceSsoStatus = (params: { workspaceSlug: string }) => {
   )
 
   const hasSsoEnabled = computed(() => !!result.value?.workspaceBySlug.sso?.provider)
-  const provider = computed(() => result.value?.workspaceBySlug.sso?.provider ?? null)
+  const provider = computed(() => result.value?.workspaceBySlug.sso?.provider)
 
   const isSsoAuthenticated = computed(() => {
     return hasSsoEnabled.value && !needsSsoLogin.value

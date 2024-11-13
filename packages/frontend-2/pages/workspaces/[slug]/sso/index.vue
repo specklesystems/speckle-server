@@ -113,7 +113,7 @@ const isAuthenticating = computed(() => {
 })
 
 const handleContinue = () => {
-  mixpanel.track('Workspace SSO Login Attempt', {
+  mixpanel.track('Workspace SSO Login Attempted', {
     // eslint-disable-next-line camelcase
     workspace_slug: route.params.slug.toString(),
     // eslint-disable-next-line camelcase

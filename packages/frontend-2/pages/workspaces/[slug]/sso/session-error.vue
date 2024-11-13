@@ -11,7 +11,7 @@
           class="w-full h-full object-contain rounded-full"
         />
       </div>
-      <h1 class="text-heading-xl">SSO Required for {{ workspace?.name }}</h1>
+      <h1 class="text-heading-xl">SSO is required for {{ workspace?.name }}</h1>
       <div
         class="p-4 rounded-lg border border-outline-2 bg-foundation text-body-xs mb-2"
       >
@@ -48,7 +48,7 @@ if (error.value) {
 }
 
 const handleSsoLogin = () => {
-  mixpanel.track('Workspace SSO Session Error Redirect', {
+  mixpanel.track('Workspace SSO Session Error Redirected', {
     // eslint-disable-next-line camelcase
     workspace_slug: workspaceSlug,
     // eslint-disable-next-line camelcase

@@ -4,6 +4,6 @@
 
 <script setup lang="ts">
 useHead({
-  title: 'Log in'
+  title: 'Sign in with SSO'
 })
 </script>
