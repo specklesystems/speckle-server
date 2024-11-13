@@ -19,7 +19,7 @@ const documents = {
     "\n  query EmailVerificationBannerState {\n    activeUser {\n      id\n      email\n      verified\n      hasPendingVerification\n    }\n  }\n": types.EmailVerificationBannerStateDocument,
     "\n  mutation RequestVerification {\n    requestVerification\n  }\n": types.RequestVerificationDocument,
     "\n  fragment AuthWorkspaceInviteHeader_PendingWorkspaceCollaborator on PendingWorkspaceCollaborator {\n    id\n    workspaceName\n    email\n    user {\n      id\n      ...LimitedUserAvatar\n    }\n  }\n": types.AuthWorkspaceInviteHeader_PendingWorkspaceCollaboratorFragmentDoc,
-    "\n  fragment SsoWorkspaceSelect_Workspace on LimitedWorkspace {\n    id\n    slug\n    name\n    logo\n    defaultLogoIndex\n  }\n": types.SsoWorkspaceSelect_WorkspaceFragmentDoc,
+    "\n  fragment AuthSsoLogin_Workspace on LimitedWorkspace {\n    id\n    slug\n    name\n    logo\n    defaultLogoIndex\n  }\n": types.AuthSsoLogin_WorkspaceFragmentDoc,
     "\n  fragment AuthStategiesServerInfoFragment on ServerInfo {\n    authStrategies {\n      id\n      name\n      url\n    }\n    ...AuthThirdPartyLoginButtonOIDC_ServerInfo\n  }\n": types.AuthStategiesServerInfoFragmentFragmentDoc,
     "\n  fragment AuthThirdPartyLoginButtonOIDC_ServerInfo on ServerInfo {\n    authStrategies {\n      id\n      name\n    }\n  }\n": types.AuthThirdPartyLoginButtonOidc_ServerInfoFragmentDoc,
     "\n  fragment AutomateAutomationCreateDialog_AutomateFunction on AutomateFunction {\n    id\n    ...AutomationsFunctionsCard_AutomateFunction\n    ...AutomateAutomationCreateDialogFunctionParametersStep_AutomateFunction\n  }\n": types.AutomateAutomationCreateDialog_AutomateFunctionFragmentDoc,
@@ -326,6 +326,8 @@ const documents = {
     "\n  fragment UseWorkspaceInviteManager_PendingWorkspaceCollaborator on PendingWorkspaceCollaborator {\n    id\n    token\n    workspaceId\n    workspaceSlug\n    user {\n      id\n    }\n  }\n": types.UseWorkspaceInviteManager_PendingWorkspaceCollaboratorFragmentDoc,
     "\n  fragment WorkspaceMixpanelUpdateGroup_WorkspaceCollaborator on WorkspaceCollaborator {\n    id\n    role\n  }\n": types.WorkspaceMixpanelUpdateGroup_WorkspaceCollaboratorFragmentDoc,
     "\n  fragment WorkspaceMixpanelUpdateGroup_Workspace on Workspace {\n    id\n    name\n    description\n    domainBasedMembershipProtectionEnabled\n    discoverabilityEnabled\n    billing {\n      cost {\n        total\n      }\n      versionsCount {\n        current\n        max\n      }\n    }\n    team {\n      totalCount\n      items {\n        ...WorkspaceMixpanelUpdateGroup_WorkspaceCollaborator\n      }\n    }\n  }\n": types.WorkspaceMixpanelUpdateGroup_WorkspaceFragmentDoc,
+    "\n    fragment WorkspaceSsoStatus_Workspace on Workspace {\n      id\n      sso {\n        provider {\n          id\n          name\n          clientId\n          issuerUrl\n        }\n      }\n    }\n  ": types.WorkspaceSsoStatus_WorkspaceFragmentDoc,
+    "\n    fragment WorkspaceSsoStatus_User on User {\n      expiredSsoSessions {\n        id\n        slug\n      }\n    }\n  ": types.WorkspaceSsoStatus_UserFragmentDoc,
     "\n  mutation UpdateRole($input: WorkspaceRoleUpdateInput!) {\n    workspaceMutations {\n      updateRole(input: $input) {\n        team {\n          items {\n            id\n            role\n          }\n        }\n      }\n    }\n  }\n": types.UpdateRoleDocument,
     "\n  mutation InviteToWorkspace(\n    $workspaceId: String!\n    $input: [WorkspaceInviteCreateInput!]!\n  ) {\n    workspaceMutations {\n      invites {\n        batchCreate(workspaceId: $workspaceId, input: $input) {\n          id\n          invitedTeam {\n            ...SettingsWorkspacesMembersInvitesTable_PendingWorkspaceCollaborator\n          }\n        }\n      }\n    }\n  }\n": types.InviteToWorkspaceDocument,
     "\n  mutation CreateWorkspace($input: WorkspaceCreateInput!) {\n    workspaceMutations {\n      create(input: $input) {\n        id\n        ...SettingsDialog_Workspace\n      }\n    }\n  }\n": types.CreateWorkspaceDocument,
@@ -337,8 +339,8 @@ const documents = {
     "\n  query WorkspaceInvite(\n    $workspaceId: String\n    $token: String\n    $options: WorkspaceInviteLookupOptions\n  ) {\n    workspaceInvite(workspaceId: $workspaceId, token: $token, options: $options) {\n      ...WorkspaceInviteBanner_PendingWorkspaceCollaborator\n      ...WorkspaceInviteBlock_PendingWorkspaceCollaborator\n    }\n  }\n": types.WorkspaceInviteDocument,
     "\n  query MoveProjectsDialog {\n    activeUser {\n      ...MoveProjectsDialog_User\n    }\n  }\n": types.MoveProjectsDialogDocument,
     "\n  query ValidateWorkspaceSlug($slug: String!) {\n    validateWorkspaceSlug(slug: $slug)\n  }\n": types.ValidateWorkspaceSlugDocument,
-    "\n  query WorkspaceSsoByEmail($email: String!) {\n    workspaceSsoByEmail(email: $email) {\n      ...SsoWorkspaceSelect_Workspace\n    }\n  }\n": types.WorkspaceSsoByEmailDocument,
-    "\n  query WorkspaceSsoCheck($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      id\n      sso {\n        provider {\n          id\n          name\n          clientId\n          issuerUrl\n        }\n      }\n    }\n    activeUser {\n      expiredSsoSessions {\n        id\n        slug\n      }\n    }\n  }\n": types.WorkspaceSsoCheckDocument,
+    "\n  query WorkspaceSsoByEmail($email: String!) {\n    workspaceSsoByEmail(email: $email) {\n      ...AuthSsoLogin_Workspace\n    }\n  }\n": types.WorkspaceSsoByEmailDocument,
+    "\n  query WorkspaceSsoCheck($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      ...WorkspaceSsoStatus_Workspace\n    }\n    activeUser {\n      ...WorkspaceSsoStatus_User\n    }\n  }\n": types.WorkspaceSsoCheckDocument,
     "\n  query LegacyBranchRedirectMetadata($streamId: String!, $branchName: String!) {\n    project(id: $streamId) {\n      modelByName(name: $branchName) {\n        id\n      }\n    }\n  }\n": types.LegacyBranchRedirectMetadataDocument,
     "\n  query LegacyViewerCommitRedirectMetadata($streamId: String!, $commitId: String!) {\n    project(id: $streamId) {\n      version(id: $commitId) {\n        id\n        model {\n          id\n        }\n      }\n    }\n  }\n": types.LegacyViewerCommitRedirectMetadataDocument,
     "\n  query LegacyViewerStreamRedirectMetadata($streamId: String!) {\n    project(id: $streamId) {\n      id\n      versions(limit: 1) {\n        totalCount\n        items {\n          id\n          model {\n            id\n          }\n        }\n      }\n    }\n  }\n": types.LegacyViewerStreamRedirectMetadataDocument,
@@ -394,7 +396,7 @@ export function graphql(source: "\n  fragment AuthWorkspaceInviteHeader_PendingW
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment SsoWorkspaceSelect_Workspace on LimitedWorkspace {\n    id\n    slug\n    name\n    logo\n    defaultLogoIndex\n  }\n"): (typeof documents)["\n  fragment SsoWorkspaceSelect_Workspace on LimitedWorkspace {\n    id\n    slug\n    name\n    logo\n    defaultLogoIndex\n  }\n"];
+export function graphql(source: "\n  fragment AuthSsoLogin_Workspace on LimitedWorkspace {\n    id\n    slug\n    name\n    logo\n    defaultLogoIndex\n  }\n"): (typeof documents)["\n  fragment AuthSsoLogin_Workspace on LimitedWorkspace {\n    id\n    slug\n    name\n    logo\n    defaultLogoIndex\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -1622,6 +1624,14 @@ export function graphql(source: "\n  fragment WorkspaceMixpanelUpdateGroup_Works
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
+export function graphql(source: "\n    fragment WorkspaceSsoStatus_Workspace on Workspace {\n      id\n      sso {\n        provider {\n          id\n          name\n          clientId\n          issuerUrl\n        }\n      }\n    }\n  "): (typeof documents)["\n    fragment WorkspaceSsoStatus_Workspace on Workspace {\n      id\n      sso {\n        provider {\n          id\n          name\n          clientId\n          issuerUrl\n        }\n      }\n    }\n  "];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n    fragment WorkspaceSsoStatus_User on User {\n      expiredSsoSessions {\n        id\n        slug\n      }\n    }\n  "): (typeof documents)["\n    fragment WorkspaceSsoStatus_User on User {\n      expiredSsoSessions {\n        id\n        slug\n      }\n    }\n  "];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
 export function graphql(source: "\n  mutation UpdateRole($input: WorkspaceRoleUpdateInput!) {\n    workspaceMutations {\n      updateRole(input: $input) {\n        team {\n          items {\n            id\n            role\n          }\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation UpdateRole($input: WorkspaceRoleUpdateInput!) {\n    workspaceMutations {\n      updateRole(input: $input) {\n        team {\n          items {\n            id\n            role\n          }\n        }\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
@@ -1666,11 +1676,11 @@ export function graphql(source: "\n  query ValidateWorkspaceSlug($slug: String!)
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query WorkspaceSsoByEmail($email: String!) {\n    workspaceSsoByEmail(email: $email) {\n      ...SsoWorkspaceSelect_Workspace\n    }\n  }\n"): (typeof documents)["\n  query WorkspaceSsoByEmail($email: String!) {\n    workspaceSsoByEmail(email: $email) {\n      ...SsoWorkspaceSelect_Workspace\n    }\n  }\n"];
+export function graphql(source: "\n  query WorkspaceSsoByEmail($email: String!) {\n    workspaceSsoByEmail(email: $email) {\n      ...AuthSsoLogin_Workspace\n    }\n  }\n"): (typeof documents)["\n  query WorkspaceSsoByEmail($email: String!) {\n    workspaceSsoByEmail(email: $email) {\n      ...AuthSsoLogin_Workspace\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query WorkspaceSsoCheck($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      id\n      sso {\n        provider {\n          id\n          name\n          clientId\n          issuerUrl\n        }\n      }\n    }\n    activeUser {\n      expiredSsoSessions {\n        id\n        slug\n      }\n    }\n  }\n"): (typeof documents)["\n  query WorkspaceSsoCheck($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      id\n      sso {\n        provider {\n          id\n          name\n          clientId\n          issuerUrl\n        }\n      }\n    }\n    activeUser {\n      expiredSsoSessions {\n        id\n        slug\n      }\n    }\n  }\n"];
+export function graphql(source: "\n  query WorkspaceSsoCheck($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      ...WorkspaceSsoStatus_Workspace\n    }\n    activeUser {\n      ...WorkspaceSsoStatus_User\n    }\n  }\n"): (typeof documents)["\n  query WorkspaceSsoCheck($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      ...WorkspaceSsoStatus_Workspace\n    }\n    activeUser {\n      ...WorkspaceSsoStatus_User\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

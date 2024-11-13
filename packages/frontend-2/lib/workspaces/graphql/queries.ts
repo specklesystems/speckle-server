@@ -82,7 +82,7 @@ export const validateWorkspaceSlugQuery = graphql(`
 export const workspaceSsoByEmailQuery = graphql(`
   query WorkspaceSsoByEmail($email: String!) {
     workspaceSsoByEmail(email: $email) {
-      ...SsoWorkspaceSelect_Workspace
+      ...AuthSsoLogin_Workspace
     }
   }
 `)
@@ -90,21 +90,10 @@ export const workspaceSsoByEmailQuery = graphql(`
 export const workspaceSsoCheckQuery = graphql(`
   query WorkspaceSsoCheck($slug: String!) {
     workspaceBySlug(slug: $slug) {
-      id
-      sso {
-        provider {
-          id
-          name
-          clientId
-          issuerUrl
-        }
-      }
+      ...WorkspaceSsoStatus_Workspace
     }
     activeUser {
-      expiredSsoSessions {
-        id
-        slug
-      }
+      ...WorkspaceSsoStatus_User
     }
   }
 `)

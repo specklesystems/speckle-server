@@ -54,7 +54,7 @@ import { useQuery } from '@vue/apollo-composable'
 import { workspaceSsoByEmailQuery } from '~/lib/workspaces/graphql/queries'
 import { useAuthManager, useLoginOrRegisterUtils } from '~/lib/auth/composables/auth'
 import { useDebounceFn } from '@vueuse/core'
-import type { SsoWorkspaceSelect_WorkspaceFragment } from '~/lib/common/generated/gql/graphql'
+import type { AuthSsoLogin_WorkspaceFragment } from '~/lib/common/generated/gql/graphql'
 import { graphql } from '~/lib/common/generated/gql/gql'
 
 enum EmailCheckState {
@@ -64,7 +64,7 @@ enum EmailCheckState {
 }
 
 graphql(`
-  fragment SsoWorkspaceSelect_Workspace on LimitedWorkspace {
+  fragment AuthSsoLogin_Workspace on LimitedWorkspace {
     id
     slug
     name
@@ -82,7 +82,7 @@ const { triggerNotification } = useGlobalToast()
 const loading = ref(false)
 const email = ref('')
 const emailCheckState = ref<EmailCheckState>(EmailCheckState.Idle)
-const selectedWorkspace = ref<SsoWorkspaceSelect_WorkspaceFragment>()
+const selectedWorkspace = ref<AuthSsoLogin_WorkspaceFragment>()
 
 const {
   loading: isChecking,

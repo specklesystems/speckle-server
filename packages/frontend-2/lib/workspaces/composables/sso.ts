@@ -1,4 +1,5 @@
 import { useQuery } from '@vue/apollo-composable'
+import { graphql } from '~/lib/common/generated/gql/gql'
 import type { WorkspaceSsoCheckQuery } from '~/lib/common/generated/gql/graphql'
 import { useMixpanel } from '~/lib/core/composables/mp'
 import { workspaceSsoCheckQuery } from '~/lib/workspaces/graphql/queries'
@@ -43,6 +44,29 @@ export function useWorkspacePublicSsoCheck(workspaceSlug: string) {
  * Used to enforce SSO login requirements for workspace access.
  */
 export const useWorkspaceSsoStatus = (params: { workspaceSlug: string }) => {
+  graphql(`
+    fragment WorkspaceSsoStatus_Workspace on Workspace {
+      id
+      sso {
+        provider {
+          id
+          name
+          clientId
+          issuerUrl
+        }
+      }
+    }
+  `)
+
+  graphql(`
+    fragment WorkspaceSsoStatus_User on User {
+      expiredSsoSessions {
+        id
+        slug
+      }
+    }
+  `)
+
   const { result, loading, error } = useQuery<WorkspaceSsoCheckQuery>(
     workspaceSsoCheckQuery,
     { slug: params.workspaceSlug }
@@ -51,15 +75,15 @@ export const useWorkspaceSsoStatus = (params: { workspaceSlug: string }) => {
   const hasSsoEnabled = computed(() => !!result.value?.workspaceBySlug.sso?.provider)
   const provider = computed(() => result.value?.workspaceBySlug.sso?.provider)
 
-  const isSsoAuthenticated = computed(() => {
-    return hasSsoEnabled.value && !needsSsoLogin.value
-  })
-
   const needsSsoLogin = computed(() => {
     if (!result.value?.activeUser) return false
     return result.value.activeUser.expiredSsoSessions.some(
       (workspace) => workspace.slug === params.workspaceSlug
     )
+  })
+
+  const isSsoAuthenticated = computed(() => {
+    return hasSsoEnabled.value && !needsSsoLogin.value
   })
 
   return {
