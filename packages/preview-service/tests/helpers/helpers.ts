@@ -9,7 +9,10 @@ export const startAndWaitOnServers = async (deps: { db: Knex }) => {
   let metricsServerAddress: string | AddressInfo | null = null
 
   const { db } = deps
-  const { app, server, metricsServer } = startServer({ db, serveOnRandomPort: true })
+  const { app, server, metricsServer } = await startServer({
+    db,
+    serveOnRandomPort: true
+  })
   server.on('listening', () => {
     serverAddress = server.address()
   })
