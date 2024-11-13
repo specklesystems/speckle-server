@@ -1,13 +1,21 @@
 <template>
-  <NuxtLink :to="to">
-    <div
-      class="group inline-flex justify-center items-center text-center select-none whitespace-nowrap outline outline-2 outline-transparent transition duration-200 ease-in-out focus-visible:outline-outline-4 rounded-md border w-full h-10 text-body-sm bg-foundation border-outline-2 text-foreground font-medium hover:bg-primary-muted disabled:hover:bg-foundation focus-visible:border-foundation px-6 py-2"
-    >
+  <FormButton
+    color="outline"
+    size="lg"
+    full-width
+    class="group"
+    :to="to"
+    :link-component="NuxtLink"
+  >
+    <div class="flex items-center justify-center">
       <slot />
     </div>
-  </NuxtLink>
+  </FormButton>
 </template>
+
 <script setup lang="ts">
+const NuxtLink = resolveComponent('NuxtLink')
+
 defineProps<{
   to: string
 }>()
