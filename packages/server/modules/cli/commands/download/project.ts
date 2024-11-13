@@ -118,6 +118,7 @@ const command: CommandModule<
   handler: async (argv) => {
     let projectDb = db
     console.log(argv)
+    let regionKey: string | undefined = undefined
     if (argv.workspaceId) {
       await authorizeResolver(
         argv.authorId,
@@ -128,7 +129,9 @@ const command: CommandModule<
       const workspaceDefaultRegion = await getDefaultRegionFactory({ db })({
         workspaceId: argv.workspaceId
       })
-      const regionKey = workspaceDefaultRegion?.key
+      regionKey = workspaceDefaultRegion?.key
+      console.log(workspaceDefaultRegion)
+      console.log(regionKey)
       projectDb = await getDb({ regionKey })
     }
     const getStream = getStreamFactory({ db: projectDb })
@@ -213,7 +216,7 @@ const command: CommandModule<
 
     const createNewProject = createNewProjectFactory({
       storeProject: storeProjectFactory({ db: projectDb }),
-      getProject: getProjectFactory({ db }),
+      getProject: getProjectFactory({ db: projectDb }),
       deleteProject: deleteProjectFactory({ db: projectDb }),
       storeModel: storeModelFactory({ db: projectDb }),
       // THIS MUST GO TO THE MAIN DB
@@ -253,7 +256,7 @@ const command: CommandModule<
         })
       })
     })
-    await downloadProject(argv, { logger: cliLogger })
+    await downloadProject({ ...argv, regionKey }, { logger: cliLogger })
   }
 }
 
