@@ -76,6 +76,12 @@ import { useAuthManager, useLoginOrRegisterUtils } from '~/lib/auth/composables/
 import { useDebounceFn } from '@vueuse/core'
 import type { WorkspaceSsoByEmailQuery } from '~/lib/common/generated/gql/graphql'
 
+enum EmailCheckState {
+  Idle = 'idle',
+  Checking = 'checking',
+  Checked = 'checked'
+}
+
 type Workspace = WorkspaceSsoByEmailQuery['workspaceSsoByEmail'][number]
 
 const { meta, handleSubmit } = useForm()
@@ -85,7 +91,7 @@ const logger = useLogger()
 
 const loading = ref(false)
 const email = ref('')
-const emailCheckState = ref<'idle' | 'checking' | 'checked'>('idle')
+const emailCheckState = ref<EmailCheckState>(EmailCheckState.Idle)
 const selectedWorkspace = ref<Workspace>()
 
 const {
@@ -119,7 +125,9 @@ const availableWorkspaces = computed(() => result.value?.workspaceSsoByEmail || 
 
 // Show workspace selector only if multiple options exist
 const shouldShowWorkspaceSelector = computed(
-  () => availableWorkspaces.value.length > 1 && emailCheckState.value === 'checked'
+  () =>
+    availableWorkspaces.value.length > 1 &&
+    emailCheckState.value === EmailCheckState.Checked
 )
 
 // Valid when email passes validation and has associated workspaces
@@ -140,10 +148,10 @@ const buttonText = computed(() => {
 
 const debouncedCheckEmail = useDebounceFn((value: string) => {
   if (!value || !meta.value.valid) {
-    emailCheckState.value = 'idle'
+    emailCheckState.value = EmailCheckState.Idle
     return
   }
-  emailCheckState.value = 'checking'
+  emailCheckState.value = EmailCheckState.Checking
 }, 300)
 
 // Type guard for workspace selection
@@ -159,7 +167,7 @@ function isSingleWorkspace(value: unknown): value is Workspace {
 
 const onEmailChange = (value: string) => {
   email.value = value
-  emailCheckState.value = 'idle'
+  emailCheckState.value = EmailCheckState.Idle
   selectedWorkspace.value = undefined
   debouncedCheckEmail(value)
 }
@@ -182,7 +190,7 @@ const onSubmit = handleSubmit(() => {
 
 onResult((res) => {
   if (!res.data) return
-  emailCheckState.value = 'checked'
+  emailCheckState.value = EmailCheckState.Checked
   const workspaces = res.data.workspaceSsoByEmail || []
   if (workspaces.length === 1) {
     selectedWorkspace.value = workspaces[0]
