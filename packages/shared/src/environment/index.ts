@@ -46,7 +46,7 @@ function parseFeatureFlags() {
     // Enables workspaces multi region DB support
     FF_WORKSPACES_MULTI_REGION_ENABLED: {
       schema: z.boolean(),
-      defaults: { production: false, _: false }
+      defaults: { production: false, _: true }
     }
   })
 }
