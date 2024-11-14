@@ -75,3 +75,4 @@ redis-data/
 
 # Server
 multiregion.json
+multiregion.test.json

@@ -41,7 +41,7 @@ export const init: SpeckleModule['init'] = async (app, isInitial) => {
       await authMiddlewareCreator(
         streamWritePermissionsPipelineFactory({
           getRoles: getRolesFactory({ db }),
-          getStream: getStreamFactory({ db: projectDb }),
+          getStream: getStreamFactory({ db }),
           getAutomationProject: getAutomationProjectFactory({ db: projectDb })
         })
       )(req, res, next)
@@ -122,7 +122,6 @@ export const init: SpeckleModule['init'] = async (app, isInitial) => {
         }
       )
 
-      // @ts-expect-error for some reason, buffer types don't fully match
       req.pipe(pipedReq)
     }
   )

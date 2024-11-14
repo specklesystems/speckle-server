@@ -57,6 +57,8 @@ const mapGqlTemplateIdToExecEngineTemplateId = (
       return ExecutionEngineFunctionTemplateId.DotNet
     case AutomateFunctionTemplateLanguage.Typescript:
       return ExecutionEngineFunctionTemplateId.TypeScript
+    case AutomateFunctionTemplateLanguage.Demonstration:
+      return ExecutionEngineFunctionTemplateId.Demonstration
     default:
       throw new Error('Unknown template id')
   }
