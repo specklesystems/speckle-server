@@ -317,6 +317,7 @@ export type AutomateFunctionTemplate = {
 
 export enum AutomateFunctionTemplateLanguage {
   Demonstration = 'DEMONSTRATION',
+  DemonstrationPython = 'DEMONSTRATIONPYTHON',
   DotNet = 'DOT_NET',
   Python = 'PYTHON',
   Typescript = 'TYPESCRIPT'
@@ -5085,7 +5086,7 @@ export type HasWorkspaceRoleDirectiveArgs = {
 
 export type HasWorkspaceRoleDirectiveResolver<Result, Parent, ContextType = GraphQLContext, Args = HasWorkspaceRoleDirectiveArgs> = DirectiveResolverFn<Result, Parent, ContextType, Args>;
 
-export type IsOwnerDirectiveArgs = { };
+export type IsOwnerDirectiveArgs = {};
 
 export type IsOwnerDirectiveResolver<Result, Parent, ContextType = GraphQLContext, Args = IsOwnerDirectiveArgs> = DirectiveResolverFn<Result, Parent, ContextType, Args>;
 
