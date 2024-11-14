@@ -411,7 +411,7 @@ export const getPaginatedCommitCommentsTotalCountFactory =
   (deps: { db: Knex }): GetPaginatedCommitCommentsTotalCount =>
   async (params: Omit<PaginatedCommitCommentsParams, 'limit' | 'cursor'>) => {
     const baseQ = getPaginatedCommitCommentsBaseQueryFactory(deps)(params)
-    const q = knex.count<{ count: string }[]>().from(baseQ.as('sq1'))
+    const q = deps.db.count<{ count: string }[]>().from(baseQ.as('sq1'))
     const [row] = await q
 
     return parseInt(row.count || '0')
@@ -476,7 +476,7 @@ export const getPaginatedBranchCommentsTotalCountFactory =
   (deps: { db: Knex }) =>
   async (params: Omit<PaginatedBranchCommentsParams, 'limit' | 'cursor'>) => {
     const baseQ = getPaginatedBranchCommentsBaseQueryFactory(deps)(params)
-    const q = knex.count<{ count: string }[]>().from(baseQ.as('sq1'))
+    const q = deps.db.count<{ count: string }[]>().from(baseQ.as('sq1'))
     const [row] = await q
 
     return parseInt(row.count || '0')
@@ -673,7 +673,7 @@ export const getPaginatedProjectCommentsTotalCountFactory =
       params,
       options
     )
-    const q = knex.count<{ count: string }[]>().from(baseQuery.as('sq1'))
+    const q = deps.db.count<{ count: string }[]>().from(baseQuery.as('sq1'))
     const [row] = await q
 
     return parseInt(row.count || '0')
