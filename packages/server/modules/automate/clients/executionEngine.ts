@@ -250,7 +250,8 @@ export enum ExecutionEngineFunctionTemplateId {
   Python = 'python',
   DotNet = '.net',
   TypeScript = 'typescript',
-  Demonstration = 'demonstration'
+  Demonstration = 'demonstration',
+  DemonstrationPython = 'demonstrationpython'
 }
 
 export type CreateFunctionBody<AP extends AuthCodePayload = AuthCodePayloadWithOrigin> =

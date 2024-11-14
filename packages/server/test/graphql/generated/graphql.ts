@@ -299,6 +299,7 @@ export type AutomateFunctionTemplate = {
 
 export enum AutomateFunctionTemplateLanguage {
   Demonstration = 'DEMONSTRATION',
+  Demonstrationpython = 'DEMONSTRATIONPYTHON',
   DotNet = 'DOT_NET',
   Python = 'PYTHON',
   Typescript = 'TYPESCRIPT'
