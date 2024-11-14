@@ -55,7 +55,7 @@ export const functionTemplateRepos = <const>[
     logo: '/images/functions/specklecon.svg'
   },
   {
-    id: AutomateFunctionTemplateLanguage.DemonstrationPython,
+    id: AutomateFunctionTemplateLanguage.Demonstrationpython,
     title: 'SpeckleCon 2024 - QAQC',
     url: 'https://github.com/specklesystems/SpeckleConWorkshop-QAQC',
     logo: '/images/functions/specklecon.svg'
