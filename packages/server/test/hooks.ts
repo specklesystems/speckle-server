@@ -58,6 +58,7 @@ const inEachDb = async (fn: (db: Knex) => MaybeAsync<void>) => {
 
 const ensureAivenExtrasFactory = (deps: { db: Knex }) => async () => {
   await deps.db.raw('CREATE EXTENSION IF NOT EXISTS "aiven_extras";')
+  await deps.db.raw('ALTER SYSTEM SET wal_level = logical;')
 }
 
 const setupMultiregionMode = async () => {
