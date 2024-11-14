@@ -444,7 +444,8 @@ const saveNewThreadsFactory =
                   doc: r.text.doc,
                   blobIds: []
                 },
-                threadId: newComment.id
+                threadId: newComment.id,
+                projectId: targetStream.id
               },
               commentAuthor.id
             )

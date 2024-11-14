@@ -866,7 +866,12 @@ export const getCommentsLegacyFactory =
     query.orderBy('createdAt', 'desc')
     query.limit(limit || 1) // need at least 1 row to get totalCount
 
-    const rows = await query
+    const rows = (await query) as Array<
+      CommentRecord & {
+        total_count: string
+        resources: Array<{ resourceId: string; resourceType: string }>
+      }
+    >
     const totalCount = rows && rows.length > 0 ? parseInt(rows[0].total_count) : 0
     const nextCursor = rows && rows.length > 0 ? rows[rows.length - 1].createdAt : null
 

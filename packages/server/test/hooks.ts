@@ -100,6 +100,7 @@ const setupMultiregionMode = async () => {
   // we only needed them to reset schemas
   if (!shouldRunTestsInMultiregionMode()) {
     await truncateTables([Regions.name])
+    regionClients = {}
   }
 }
 
