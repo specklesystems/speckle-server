@@ -283,8 +283,7 @@ export const mochaHooks: mocha.RootHookObject = {
 }
 
 export const buildApp = async () => {
-  const { app, graphqlServer, server } = await init()
-  return { app, graphqlServer, server }
+  return await init()
 }
 
 export const beforeEachContext = async () => {
