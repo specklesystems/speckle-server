@@ -343,7 +343,7 @@ describe('FileUploads @fileuploads', () => {
         .set('Authorization', `Bearer ${userOneToken}`)
         .set('Accept', 'application/json')
         .attach('test.ifc', require.resolve('@/readme.md'), 'test.ifc')
-      expect(response.statusCode).to.equal(500) //FIXME should be 404 (technically a 401, but we don't want to leak existence of stream so 404 is preferrable)
+      expect(response.statusCode).to.equal(404) //FIXME should be 404 (technically a 401, but we don't want to leak existence of stream so 404 is preferrable)
       const gqlResponse = await sendRequest(userOneToken, {
         query: `query ($streamId: String!) {
           stream(id: $streamId) {

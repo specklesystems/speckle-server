@@ -6,7 +6,11 @@ import {
   authHasFailed
 } from '@/modules/shared/authz'
 import { Request, Response, NextFunction, Handler } from 'express'
-import { ForbiddenError, UnauthorizedError } from '@/modules/shared/errors'
+import {
+  ForbiddenError,
+  NotFoundError,
+  UnauthorizedError
+} from '@/modules/shared/errors'
 import { ensureError } from '@/modules/shared/helpers/errorHelper'
 import { TokenValidationResult } from '@/modules/core/helpers/types'
 import { buildRequestLoaders } from '@/modules/core/loaders'
@@ -54,6 +58,7 @@ export const authMiddlewareCreator = (steps: AuthPipelineFunction[]) => {
         message = authResult.error?.message || message
         if (authResult.error instanceof UnauthorizedError) status = 401
         if (authResult.error instanceof ForbiddenError) status = 403
+        if (authResult.error instanceof NotFoundError) status = 404
       }
       return res.status(status).json({ error: message })
     }

@@ -103,7 +103,6 @@ export = {
   },
   VersionMutations: {
     async moveToModel(_parent, args, ctx) {
-      // TODO: how to get streamId here?
       const projectId = args.input.projectId
       const projectDb = await getProjectDbClient({ projectId })
 
@@ -121,7 +120,6 @@ export = {
       return await batchMoveCommits(args.input, ctx.userId!)
     },
     async delete(_parent, args, ctx) {
-      // TODO: how to get streamId here?
       const projectId = args.input.projectId
       const projectDb = await getProjectDbClient({ projectId })
 
@@ -138,7 +136,6 @@ export = {
       return true
     },
     async update(_parent, args, ctx) {
-      // TODO: how to get streamId here?
       const projectId = args.input.projectId
       const projectDb = await getProjectDbClient({ projectId })
       const stream = await ctx.loaders

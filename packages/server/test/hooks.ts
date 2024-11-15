@@ -18,7 +18,6 @@ import type express from 'express'
 import type net from 'net'
 import { MaybeAsync, MaybeNullOrUndefined } from '@speckle/shared'
 import type mocha from 'mocha'
-import { shouldRunTestsInMultiregionMode } from '@/modules/shared/helpers/envHelper'
 import {
   getAvailableRegionKeysFactory,
   getFreeRegionKeysFactory
@@ -36,6 +35,8 @@ import {
   initializeRegion
 } from '@/modules/multiregion/dbSelector'
 import { Knex } from 'knex'
+import { isMultiRegionTestMode } from '@/test/speckle-helpers/regions'
+import { isMultiRegionEnabled } from '@/modules/multiregion/helpers'
 
 // why is server config only created once!????
 // because its done in a migration, to not override existing configs
@@ -98,8 +99,9 @@ const setupMultiregionMode = async () => {
 
   // If not in multi region mode, delete region entries
   // we only needed them to reset schemas
-  if (!shouldRunTestsInMultiregionMode()) {
+  if (!isMultiRegionTestMode()) {
     await truncateTables([Regions.name])
+    regionClients = {}
   }
 }
 
@@ -113,7 +115,8 @@ const unlockFactory = (deps: { db: Knex }) => async () => {
 export const getRegionKeys = () => Object.keys(regionClients)
 
 export const resetPubSubFactory = (deps: { db: Knex }) => async () => {
-  if (!shouldRunTestsInMultiregionMode()) {
+  // We wanna reset even outside of multiregion test mode, as long as multi region is generally enabled
+  if (!isMultiRegionEnabled()) {
     return { drop: async () => {}, reenable: async () => {} }
   }
 
@@ -138,11 +141,16 @@ export const resetPubSubFactory = (deps: { db: Knex }) => async () => {
 
   // Drop all subs
   for (const sub of subscriptions.rows) {
-    await deps.db.raw(`
-          SELECT * FROM aiven_extras.pg_alter_subscription_disable('${sub.subname}');
-          SELECT * FROM aiven_extras.pg_drop_subscription('${sub.subname}');
-          SELECT * FROM aiven_extras.dblink_slot_create_or_drop('${sub.subconninfo}', '${sub.subslotname}', 'drop');
-        `)
+    // Running serially, otherwise some kind of race condition issue can pop up
+    await deps.db.raw(
+      `SELECT * FROM aiven_extras.pg_alter_subscription_disable('${sub.subname}');`
+    )
+    await deps.db.raw(
+      `SELECT * FROM aiven_extras.pg_drop_subscription('${sub.subname}');`
+    )
+    await deps.db.raw(
+      `SELECT * FROM aiven_extras.dblink_slot_create_or_drop('${sub.subconninfo}', '${sub.subslotname}', 'drop');`
+    )
   }
 
   // Drop all pubs
@@ -240,7 +248,7 @@ export const initializeTestServer = async (
 
 export const mochaHooks: mocha.RootHookObject = {
   beforeAll: async () => {
-    if (shouldRunTestsInMultiregionMode()) {
+    if (isMultiRegionTestMode()) {
       console.log('Running tests in multi-region mode...')
     }
 
