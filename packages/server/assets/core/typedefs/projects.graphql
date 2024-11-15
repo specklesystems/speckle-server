@@ -30,7 +30,6 @@ input ProjectCreateInput {
   name: String
   description: String
   visibility: ProjectVisibility
-  workspaceId: String
 }
 
 input ProjectUpdateRoleInput {

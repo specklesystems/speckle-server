@@ -4,6 +4,7 @@ import {
   Workspace,
   WorkspaceAcl,
   WorkspaceDomain,
+  WorkspaceRegionAssignment,
   WorkspaceWithDomains,
   WorkspaceWithOptionalRole
 } from '@/modules/workspacesCore/domain/types'
@@ -11,6 +12,8 @@ import { EventBusPayloads } from '@/modules/shared/services/eventBus'
 import {
   MaybeNullOrUndefined,
   Nullable,
+  NullableKeysToOptional,
+  Optional,
   PartialNullable,
   StreamRoles,
   WorkspaceRoles
@@ -19,11 +22,23 @@ import { WorkspaceRoleToDefaultProjectRoleMapping } from '@/modules/workspaces/d
 import { WorkspaceTeam } from '@/modules/workspaces/domain/types'
 import { Stream } from '@/modules/core/domain/streams/types'
 import { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
+import { ServerRegion } from '@/modules/multiregion/domain/types'
+import { SetOptional } from 'type-fest'
 
 /** Workspace */
 
-type UpsertWorkspaceArgs = {
-  workspace: Omit<Workspace, 'domains'>
+export type UpsertWorkspaceArgs = {
+  workspace: Omit<
+    SetOptional<
+      NullableKeysToOptional<Workspace>,
+      | 'domainBasedMembershipProtectionEnabled'
+      | 'discoverabilityEnabled'
+      | 'defaultLogoIndex'
+      | 'defaultProjectRole'
+      | 'slug'
+    >,
+    'domains'
+  >
 }
 
 export type UpsertWorkspace = (args: UpsertWorkspaceArgs) => Promise<void>
@@ -32,7 +47,10 @@ export type GetUserDiscoverableWorkspaces = (args: {
   domains: string[]
   userId: string
 }) => Promise<
-  Pick<Workspace, 'id' | 'name' | 'description' | 'logo' | 'defaultLogoIndex'>[]
+  Pick<
+    Workspace,
+    'id' | 'name' | 'slug' | 'description' | 'logo' | 'defaultLogoIndex'
+  >[]
 >
 
 export type GetWorkspace = (args: {
@@ -44,6 +62,11 @@ export type GetWorkspaceBySlug = (args: {
   workspaceSlug: string
   userId?: string
 }) => Promise<WorkspaceWithOptionalRole | null>
+
+// Useful for dev purposes (e.g. CLI)
+export type GetWorkspaceBySlugOrId = (args: {
+  workspaceSlugOrId: string
+}) => Promise<Workspace | null>
 
 export type GetWorkspaces = (args: {
   workspaceIds: string[]
@@ -214,7 +237,7 @@ export type UpdateWorkspaceProjectRole = (
 export type EmitWorkspaceEvent = <TEvent extends WorkspaceEvents>(args: {
   eventName: TEvent
   payload: EventBusPayloads[TEvent]
-}) => Promise<unknown[]>
+}) => Promise<void>
 
 export type CountProjectsVersionsByWorkspaceId = (args: {
   workspaceId: string
@@ -244,3 +267,25 @@ export type UpdateWorkspace = ({
   workspaceId,
   workspaceInput
 }: WorkspaceUpdateArgs) => Promise<Workspace>
+
+/**
+ * Workspace regions
+ */
+
+export type GetAvailableRegions = (params: {
+  workspaceId: string
+}) => Promise<ServerRegion[]>
+
+export type AssignRegion = (params: {
+  workspaceId: string
+  regionKey: string
+}) => Promise<void>
+
+export type GetDefaultRegion = (params: {
+  workspaceId: string
+}) => Promise<Optional<ServerRegion>>
+
+export type UpsertRegionAssignment = (params: {
+  workspaceId: string
+  regionKey: string
+}) => Promise<WorkspaceRegionAssignment>

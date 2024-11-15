@@ -1,7 +1,7 @@
 import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 
 import { registerOrUpdateScopeFactory } from '@/modules/shared/repositories/scopes'
-import { moduleLogger } from '@/logging/logging'
+import { authLogger, moduleLogger } from '@/logging/logging'
 import db from '@/db/knex'
 import { initializeDefaultAppsFactory } from '@/modules/auth/services/serverApps'
 import {
@@ -13,13 +13,6 @@ import {
 } from '@/modules/auth/repositories/apps'
 import setupStrategiesFactory from '@/modules/auth/strategies'
 import githubStrategyBuilderFactory from '@/modules/auth/strategies/github'
-import { getServerInfo } from '@/modules/core/services/generic'
-import {
-  getUserByEmail,
-  findOrCreateUser,
-  validatePasssword,
-  createUser
-} from '@/modules/core/services/users'
 import {
   validateServerInviteFactory,
   finalizeInvitedServerRegistrationFactory,
@@ -39,7 +32,67 @@ import localStrategyBuilderFactory from '@/modules/auth/strategies/local'
 import oidcStrategyBuilderFactory from '@/modules/auth/strategies/oidc'
 import { getRateLimitResult } from '@/modules/core/services/ratelimiter'
 import { passportAuthenticateHandlerBuilderFactory } from '@/modules/auth/services/passportService'
-import { legacyGetUserFactory } from '@/modules/core/repositories/users'
+import {
+  countAdminUsersFactory,
+  getUserByEmailFactory,
+  getUserFactory,
+  legacyGetUserByEmailFactory,
+  legacyGetUserFactory,
+  storeUserAclFactory,
+  storeUserFactory
+} from '@/modules/core/repositories/users'
+import {
+  createUserFactory,
+  findOrCreateUserFactory,
+  validateUserPasswordFactory
+} from '@/modules/core/services/users/management'
+import {
+  createUserEmailFactory,
+  ensureNoPrimaryEmailForUserFactory,
+  findEmailFactory,
+  findPrimaryEmailForUserFactory
+} from '@/modules/core/repositories/userEmails'
+import { UsersEmitter } from '@/modules/core/events/usersEmitter'
+import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
+import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
+import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
+import { renderEmail } from '@/modules/emails/services/emailRendering'
+import { sendEmail } from '@/modules/emails/services/sending'
+import { getServerInfoFactory } from '@/modules/core/repositories/server'
+import { initializeEventListenerFactory } from '@/modules/auth/services/postAuth'
+
+const findEmail = findEmailFactory({ db })
+const requestNewEmailVerification = requestNewEmailVerificationFactory({
+  findEmail,
+  getUser: getUserFactory({ db }),
+  getServerInfo: getServerInfoFactory({ db }),
+  deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db }),
+  renderEmail,
+  sendEmail
+})
+const createUser = createUserFactory({
+  getServerInfo: getServerInfoFactory({ db }),
+  findEmail,
+  storeUser: storeUserFactory({ db }),
+  countAdminUsers: countAdminUsersFactory({ db }),
+  storeUserAcl: storeUserAclFactory({ db }),
+  validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
+    createUserEmail: createUserEmailFactory({ db }),
+    ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
+    findEmail,
+    updateEmailInvites: finalizeInvitedServerRegistrationFactory({
+      deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
+      updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
+    }),
+    requestNewEmailVerification
+  }),
+  usersEventsEmitter: UsersEmitter.emit
+})
+
+const findOrCreateUser = findOrCreateUserFactory({
+  createUser,
+  findPrimaryEmailForUser: findPrimaryEmailForUserFactory({ db })
+})
 
 const initializeDefaultApps = initializeDefaultAppsFactory({
   getAllScopes: getAllScopesFactory({ db }),
@@ -58,8 +111,8 @@ const finalizeInvitedServerRegistration = finalizeInvitedServerRegistrationFacto
 const resolveAuthRedirectPath = resolveAuthRedirectPathFactory()
 
 const commonBuilderDeps = {
-  getServerInfo,
-  getUserByEmail,
+  getServerInfo: getServerInfoFactory({ db }),
+  getUserByEmail: legacyGetUserByEmailFactory({ db }),
   findOrCreateUser,
   validateServerInvite,
   finalizeInvitedServerRegistration,
@@ -74,7 +127,9 @@ const setupStrategies = setupStrategiesFactory({
   googleStrategyBuilder: googleStrategyBuilderFactory({ ...commonBuilderDeps }),
   localStrategyBuilder: localStrategyBuilderFactory({
     ...commonBuilderDeps,
-    validatePassword: validatePasssword,
+    validateUserPassword: validateUserPasswordFactory({
+      getUserByEmail: getUserByEmailFactory({ db })
+    }),
     getRateLimitResult,
     createUser
   }),
@@ -85,7 +140,7 @@ const setupStrategies = setupStrategiesFactory({
 
 let authStrategies: AuthStrategyMetadata[]
 
-export const init: SpeckleModule['init'] = async (app) => {
+export const init: SpeckleModule['init'] = async (app, isInitial) => {
   moduleLogger.info('🔑 Init auth module')
 
   // Initialize authn strategies
@@ -98,6 +153,15 @@ export const init: SpeckleModule['init'] = async (app) => {
   const registerFunc = registerOrUpdateScopeFactory({ db })
   for (const scope of authScopes) {
     await registerFunc({ scope })
+  }
+
+  // Listen to event emitters
+  if (isInitial) {
+    const initializeEventListener = initializeEventListenerFactory({
+      usersEventsListener: UsersEmitter.listen,
+      logger: authLogger
+    })
+    initializeEventListener()
   }
 }
 

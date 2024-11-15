@@ -5,21 +5,13 @@ import { createRedisClient } from '@/modules/shared/redis/redis'
 import {
   isSSLServer,
   getRedisUrl,
-  getFrontendOrigin,
-  enableMixpanel,
-  getMailchimpStatus,
-  getMailchimpOnboardingIds,
-  getMailchimpNewsletterIds
+  getFrontendOrigin
 } from '@/modules/shared/helpers/envHelper'
 import { getSessionSecret } from '@/modules/shared/helpers/envHelper'
 import { isString, noop } from 'lodash'
 import { CreateAuthorizationCode } from '@/modules/auth/domain/operations'
-import { mixpanel } from '@/modules/shared/utils/mixpanel'
-import {
-  addToMailchimpAudience,
-  triggerMailchimpCustomerJourney
-} from '@/modules/auth/services/mailchimp'
-import { authLogger, logger } from '@/logging/logging'
+
+import { authLogger } from '@/logging/logging'
 import { ensureError } from '@speckle/shared'
 import { LegacyGetUser } from '@/modules/core/domain/users/operations'
 
@@ -86,9 +78,6 @@ export const finalizeAuthMiddlewareFactory =
         challenge: req.session.challenge!
       })
 
-      let newsletterConsent = false
-      if (req.session.newsletterConsent) newsletterConsent = true // NOTE: it's only set if it's true
-
       if (req.session) req.session.destroy(noop)
 
       // Resolve redirect URL
@@ -97,34 +86,6 @@ export const finalizeAuthMiddlewareFactory =
 
       if (req.user.isNewUser) {
         urlObj.searchParams.set('register', 'true')
-
-        // Send event to MP
-        const userEmail = req.user.email
-        const isInvite = !!req.user.isInvite
-        if (userEmail && enableMixpanel()) {
-          await mixpanel({ userEmail, req }).track('Sign Up', {
-            isInvite
-          })
-        }
-
-        if (getMailchimpStatus()) {
-          try {
-            const user = await deps.getUser(req.user.id)
-            if (!user)
-              throw new Error(
-                'Could not register user for mailchimp lists - no db user record found.'
-              )
-            const onboardingIds = getMailchimpOnboardingIds()
-            await triggerMailchimpCustomerJourney(user, onboardingIds)
-
-            if (newsletterConsent) {
-              const { listId } = getMailchimpNewsletterIds()
-              await addToMailchimpAudience(user, listId)
-            }
-          } catch (error) {
-            logger.warn(error, 'Failed to sign up user to mailchimp lists')
-          }
-        }
       }
 
       const redirectUrl = urlObj.toString()

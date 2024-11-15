@@ -1,5 +1,7 @@
 import {
   ActivitySummary,
+  CommentCreatedActivityInput,
+  ReplyCreatedActivityInput,
   ResourceType,
   StreamActionType
 } from '@/modules/activitystream/domain/types'
@@ -7,14 +9,21 @@ import {
   StreamActivityRecord,
   StreamScopeActivity
 } from '@/modules/activitystream/helpers/types'
+import { CommentRecord } from '@/modules/comments/helpers/types'
 import {
+  BranchDeleteInput,
+  BranchUpdateInput,
   CommitCreateInput,
   CommitUpdateInput,
+  DeleteModelInput,
+  MutationCommentArchiveArgs,
   ProjectUpdateInput,
   StreamUpdateInput,
+  UpdateModelInput,
   UpdateVersionInput
 } from '@/modules/core/graph/generated/graphql'
 import {
+  BranchRecord,
   CommitRecord,
   StreamAclRecord,
   StreamRecord
@@ -222,4 +231,60 @@ export type AddCommitUpdatedActivity = (params: {
   originalCommit: CommitRecord
   update: CommitUpdateInput | UpdateVersionInput
   newCommit: CommitRecord
+}) => Promise<void>
+
+export type AddCommitMovedActivity = (params: {
+  commitId: string
+  streamId: string
+  userId: string
+  originalBranchId: string
+  newBranchId: string
+  commit: CommitRecord
+}) => Promise<void>
+
+export type AddCommitDeletedActivity = (params: {
+  commitId: string
+  streamId: string
+  userId: string
+  commit: CommitRecord
+  branchId: string
+}) => Promise<void>
+
+export type AddCommentCreatedActivity = (params: {
+  streamId: string
+  userId: string
+  input: CommentCreatedActivityInput
+  comment: CommentRecord
+}) => Promise<void>
+
+export type AddCommentArchivedActivity = (params: {
+  streamId: string
+  commentId: string
+  userId: string
+  input: MutationCommentArchiveArgs
+  comment: CommentRecord
+}) => Promise<void>
+
+export type AddReplyAddedActivity = (params: {
+  streamId: string
+  input: ReplyCreatedActivityInput
+  reply: CommentRecord
+  userId: string
+}) => Promise<void>
+
+export type AddBranchCreatedActivity = (params: {
+  branch: BranchRecord
+}) => Promise<void>
+
+export type AddBranchUpdatedActivity = (params: {
+  update: BranchUpdateInput | UpdateModelInput
+  userId: string
+  oldBranch: BranchRecord
+  newBranch: BranchRecord
+}) => Promise<void>
+
+export type AddBranchDeletedActivity = (params: {
+  input: BranchDeleteInput | DeleteModelInput
+  userId: string
+  branchName: string
 }) => Promise<void>

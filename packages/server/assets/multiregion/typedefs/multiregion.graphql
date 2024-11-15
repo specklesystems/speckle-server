@@ -1,0 +1,55 @@
+type ServerRegionItem {
+  id: String!
+  key: String!
+  name: String!
+  description: String
+}
+
+type ServerMultiRegionConfiguration {
+  """
+  Keys of available regions defined in the multi region config file. Used keys will
+  be filtered out from the result.
+  """
+  availableKeys: [String!]!
+  """
+  List of regions that are currently enabled on the server using the available region keys
+  set in the multi region config file.
+  """
+  regions: [ServerRegionItem!]!
+}
+
+extend type ServerInfo {
+  """
+  Available to server admins only
+  """
+  multiRegion: ServerMultiRegionConfiguration!
+    @hasServerRole(role: SERVER_ADMIN)
+    @hasScope(scope: "server:setup")
+}
+
+input CreateServerRegionInput {
+  key: String!
+  name: String!
+  description: String
+}
+
+input UpdateServerRegionInput {
+  key: String!
+  name: String
+  description: String
+}
+
+type ServerRegionMutations {
+  create(input: CreateServerRegionInput!): ServerRegionItem!
+  update(input: UpdateServerRegionInput!): ServerRegionItem!
+}
+
+type ServerInfoMutations {
+  multiRegion: ServerRegionMutations!
+}
+
+extend type Mutation {
+  serverInfoMutations: ServerInfoMutations!
+    @hasServerRole(role: SERVER_ADMIN)
+    @hasScope(scope: "server:setup")
+}

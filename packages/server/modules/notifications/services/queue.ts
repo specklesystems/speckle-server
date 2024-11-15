@@ -17,6 +17,7 @@ import Bull from 'bull'
 import { buildBaseQueueOptions } from '@/modules/shared/helpers/bullHelper'
 import cryptoRandomString from 'crypto-random-string'
 import { logger, notificationsLogger, Observability } from '@/logging/logging'
+import { ensureErrorOrWrapAsCause } from '@/modules/shared/errors/ensureError'
 
 export type NotificationJobResult = {
   status: NotificationJobResultsStatus
@@ -153,8 +154,10 @@ export async function consumeIncomingNotifications() {
       }
     } catch (e: unknown) {
       notificationsLogger.error(e)
-      const err =
-        e instanceof Error ? e : new Error('Unexpected notification consumption error')
+      const err = ensureErrorOrWrapAsCause(
+        e,
+        'Unexpected notification consumption error'
+      )
 
       if (!(err instanceof NotificationValidationError)) {
         throw err

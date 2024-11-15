@@ -31,11 +31,8 @@ import {
 } from '@/modules/core/helpers/types'
 import {
   DiscoverableStreamsSortType,
-  ProjectCreateInput,
   ProjectUpdateInput,
-  ProjectVisibility,
   SortDirection,
-  StreamCreateInput,
   StreamUpdateInput
 } from '@/modules/core/graph/generated/graphql'
 import { Nullable, Optional } from '@/modules/shared/helpers/typeHelper'
@@ -57,7 +54,8 @@ import {
   GetProjectCollaborators,
   UpdateProject,
   GetRolesByUserId,
-  UpsertProjectRole
+  UpsertProjectRole,
+  ProjectVisibility
 } from '@/modules/core/domain/projects/operations'
 import {
   StreamWithCommitId,
@@ -70,7 +68,7 @@ import {
   GetStream,
   GetStreamCollaborators,
   GetStreams,
-  DeleteStreamRecords,
+  DeleteStreamRecord,
   UpdateStreamRecord,
   RevokeStreamPermissions,
   GrantStreamPermissions,
@@ -97,8 +95,10 @@ import {
   GetUserStreamsCount,
   MarkBranchStreamUpdated,
   MarkCommitStreamUpdated,
-  MarkOnboardingBaseStream
+  MarkOnboardingBaseStream,
+  GetUserDeletableStreams
 } from '@/modules/core/domain/streams/operations'
+import { generateProjectName } from '@/modules/core/domain/projects/logic'
 export type { StreamWithOptionalRole, StreamWithCommitId }
 
 const tables = {
@@ -115,46 +115,6 @@ const tables = {
 export const STREAM_WITH_OPTIONAL_ROLE_COLUMNS = [...Streams.cols, StreamAcl.col.role]
 
 export const generateId = () => cryptoRandomString({ length: 10 })
-
-const adjectives = [
-  'Tall',
-  'Curved',
-  'Stacked',
-  'Purple',
-  'Pink',
-  'Rectangular',
-  'Circular',
-  'Oval',
-  'Shiny',
-  'Speckled',
-  'Blue',
-  'Stretched',
-  'Round',
-  'Spherical',
-  'Majestic',
-  'Symmetrical'
-]
-
-const nouns = [
-  'Building',
-  'House',
-  'Treehouse',
-  'Tower',
-  'Tunnel',
-  'Bridge',
-  'Pyramid',
-  'Structure',
-  'Edifice',
-  'Palace',
-  'Castle',
-  'Villa'
-]
-
-const generateStreamName = () => {
-  return `${adjectives[Math.floor(Math.random() * adjectives.length)]} ${
-    nouns[Math.floor(Math.random() * nouns.length)]
-  }`
-}
 
 /**
  * Get multiple streams. If userId is specified, the role will be resolved as well.
@@ -789,43 +749,34 @@ export const getUserStreamsCountFactory =
 
 export const createStreamFactory =
   (deps: { db: Knex }): StoreStream =>
-  async (
-    input: StreamCreateInput | ProjectCreateInput,
-    options?: Partial<{
-      /**
-       * If set, will assign owner permissions to this user
-       */
-      ownerId: string
-      trx: Knex.Transaction
-    }>
-  ) => {
+  async (input, options) => {
     const { name, description } = input
     const { ownerId, trx } = options || {}
 
     let shouldBePublic: boolean, shouldBeDiscoverable: boolean
     if (isProjectCreateInput(input)) {
-      shouldBeDiscoverable = input.visibility === ProjectVisibility.Public
+      shouldBeDiscoverable = input.visibility === 'PUBLIC'
+      const publicVisibilities: ProjectVisibility[] = ['PUBLIC', 'UNLISTED']
       shouldBePublic =
-        !input.visibility ||
-        [ProjectVisibility.Public, ProjectVisibility.Unlisted].includes(
-          input.visibility
-        )
+        !input.visibility || publicVisibilities.includes(input.visibility)
     } else {
       shouldBePublic = input.isPublic !== false
       shouldBeDiscoverable = input.isDiscoverable !== false && shouldBePublic
     }
 
     const workspaceId = 'workspaceId' in input ? input.workspaceId : null
+    const regionKey = 'regionKey' in input ? input.regionKey || null : null
 
     const id = generateId()
     const stream = {
       id,
-      name: name || generateStreamName(),
+      name: name || generateProjectName(),
       description: description || '',
       isPublic: shouldBePublic,
       isDiscoverable: shouldBeDiscoverable,
       updatedAt: knex.fn.now(),
-      workspaceId: workspaceId || null
+      workspaceId: workspaceId || null,
+      regionKey
     }
 
     // Create the stream & set up permissions
@@ -880,7 +831,7 @@ export const getUserStreamCountsFactory =
   }
 
 export const deleteStreamFactory =
-  (deps: { db: Knex }): DeleteStreamRecords =>
+  (deps: { db: Knex }): DeleteStreamRecord =>
   async (streamId: string) => {
     // Delete stream commits (not automatically cascaded)
     await deps.db.raw(
@@ -944,8 +895,8 @@ export const updateStreamFactory =
 
     if (isProjectUpdateInput(update)) {
       if (has(validUpdate, 'visibility')) {
-        validUpdate.isPublic = update.visibility !== ProjectVisibility.Private
-        validUpdate.isDiscoverable = update.visibility === ProjectVisibility.Public
+        validUpdate.isPublic = update.visibility !== 'PRIVATE'
+        validUpdate.isDiscoverable = update.visibility === 'PUBLIC'
         delete validUpdate['visibility'] // cause it's not a real column
       }
     } else {
@@ -1305,4 +1256,32 @@ export const legacyGetStreamsFactory =
       totalCount: count,
       cursorDate: cursorDate as Nullable<Date>
     }
+  }
+
+export const getUserDeletableStreamsFactory =
+  (deps: { db: Knex }): GetUserDeletableStreams =>
+  async (id) => {
+    const streams = (await deps.db.raw(
+      `
+      -- Get the stream ids with only this user as owner
+      SELECT "resourceId" as id
+      FROM (
+        -- Compute (streamId, ownerCount) table for streams on which the user is owner
+        SELECT acl."resourceId", count(*) as cnt
+        FROM stream_acl acl
+        INNER JOIN
+          (
+          -- Get streams ids on which the user is owner
+          SELECT "resourceId" FROM stream_acl
+          WHERE role = '${Roles.Stream.Owner}' AND "userId" = ?
+          ) AS us ON acl."resourceId" = us."resourceId"
+        WHERE acl.role = '${Roles.Stream.Owner}'
+        GROUP BY (acl."resourceId")
+      ) AS soc
+      WHERE cnt = 1
+      `,
+      [id]
+    )) as { rows: { id: string }[] }
+
+    return streams.rows.map((s) => s.id)
   }

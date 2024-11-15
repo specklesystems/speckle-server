@@ -3,31 +3,40 @@ import {
   publish,
   type PublishSubscription
 } from '@/modules/shared/utils/subscriptions'
-import { listenFor, MessageType } from '@/modules/core/utils/dbNotificationListener'
 import {
   ProjectFileImportUpdatedMessageType,
   ProjectPendingModelsUpdatedMessageType,
   ProjectPendingVersionsUpdatedMessageType
 } from '@/modules/core/graph/generated/graphql'
-import { addBranchCreatedActivity } from '@/modules/activitystream/services/branchActivity'
-import { trim } from 'lodash'
 import { GetFileInfo } from '@/modules/fileuploads/domain/operations'
 import { GetStreamBranchByName } from '@/modules/core/domain/branches/operations'
-
-const branchCreatedPayloadRegexp = /^(.+):::(.+):::(.+):::(.+)$/i
+import { AddBranchCreatedActivity } from '@/modules/activitystream/domain/operations'
 
 type OnFileImportProcessedDeps = {
   getFileInfo: GetFileInfo
   getStreamBranchByName: GetStreamBranchByName
   publish: PublishSubscription
+  addBranchCreatedActivity: AddBranchCreatedActivity
 }
 
-const onFileImportProcessedFactory =
-  (deps: OnFileImportProcessedDeps) => async (msg: MessageType) => {
-    const [, uploadId, streamId, branchName, newBranchCreated] =
-      branchCreatedPayloadRegexp.exec(msg.payload) || [null, null, null]
-    const isNewBranch = newBranchCreated === '1'
+type ParsedMessage = {
+  uploadId: string | null
+  streamId: string | null
+  branchName: string | null
+  isNewBranch: boolean
+}
+const branchCreatedPayloadRegexp = /^(.+):::(.+):::(.+):::(.+)$/i
+export const parseMessagePayload = (payload: string): ParsedMessage => {
+  const [, uploadId, streamId, branchName, newBranchCreated] =
+    branchCreatedPayloadRegexp.exec(payload) || [null, null, null]
 
+  const isNewBranch = newBranchCreated === '1'
+  return { uploadId, streamId, branchName, isNewBranch }
+}
+
+export const onFileImportProcessedFactory =
+  (deps: OnFileImportProcessedDeps) =>
+  async ({ uploadId, streamId, branchName, isNewBranch }: ParsedMessage) => {
     if (!uploadId || !streamId || !branchName) return
 
     const [upload, branch] = await Promise.all([
@@ -46,7 +55,7 @@ const onFileImportProcessedFactory =
         projectId: upload.streamId
       })
 
-      if (branch) await addBranchCreatedActivity({ branch })
+      if (branch) await deps.addBranchCreatedActivity({ branch })
     } else {
       await deps.publish(FileImportSubscriptions.ProjectPendingVersionsUpdated, {
         projectPendingVersionsUpdated: {
@@ -74,9 +83,10 @@ type OnFileProcessingDeps = {
   publish: PublishSubscription
 }
 
-const onFileProcessingFactory =
-  (deps: OnFileProcessingDeps) => async (msg: MessageType) => {
-    const uploadId = trim(msg.payload)
+export const onFileProcessingFactory =
+  (deps: OnFileProcessingDeps) =>
+  async ({ uploadId }: ParsedMessage) => {
+    if (!uploadId) return
     const upload = await deps.getFileInfo({ fileId: uploadId })
     if (!upload) return
 
@@ -88,13 +98,4 @@ const onFileProcessingFactory =
       },
       projectId: upload.streamId
     })
-  }
-
-export const listenForImportUpdatesFactory =
-  (deps: OnFileImportProcessedDeps & OnFileProcessingDeps) => () => {
-    const onFileImportProcessed = onFileImportProcessedFactory(deps)
-    const onFileProcessing = onFileProcessingFactory(deps)
-
-    listenFor('file_import_update', onFileImportProcessed)
-    listenFor('file_import_started', onFileProcessing)
   }

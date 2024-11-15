@@ -9,11 +9,12 @@ import {
   ModelsTreeItemCollection,
   ProjectModelsArgs,
   ProjectModelsTreeArgs,
+  StreamBranchesArgs,
   UpdateModelInput
 } from '@/modules/core/graph/generated/graphql'
 import { ModelsTreeItemGraphQLReturn } from '@/modules/core/helpers/graphTypes'
 import { BatchedSelectOptions } from '@/modules/shared/helpers/dbHelper'
-import { Nullable, Optional } from '@speckle/shared'
+import { MaybeNullOrUndefined, Nullable, Optional } from '@speckle/shared'
 import { Knex } from 'knex'
 import { Merge } from 'type-fest'
 
@@ -181,6 +182,15 @@ export type GetStreamBranchCount = (
   }>
 ) => Promise<number>
 
+export type GetPaginatedStreamBranchesPage = (params: {
+  streamId: string
+  limit?: MaybeNullOrUndefined<number>
+  cursor?: MaybeNullOrUndefined<string>
+}) => Promise<{
+  items: Branch[]
+  cursor: string | null
+}>
+
 export type GetBranchCommitCounts = (branchIds: string[]) => Promise<
   {
     count: number
@@ -193,3 +203,12 @@ export type GetBranchCommitCount = (branchId: string) => Promise<number>
 export type MarkCommitBranchUpdated = (commitId: string) => Promise<Branch>
 
 export type GetLatestStreamBranch = (streamId: string) => Promise<Branch>
+
+export type GetPaginatedStreamBranches = (
+  streamId: string,
+  params?: StreamBranchesArgs
+) => Promise<{
+  totalCount: number
+  cursor?: MaybeNullOrUndefined<string>
+  items: Branch[]
+}>

@@ -1,0 +1,16 @@
+{
+  "main": {
+    "postgres": {
+      "connectionUri": "postgresql://speckle:speckle@127.0.0.1:5432/speckle",
+      "privateConnectionUri": "postgresql://speckle:speckle@postgres:5432/speckle"
+    }
+  },
+  "regions": {
+    "region1": {
+      "postgres": {
+        "connectionUri": "postgresql://speckle:speckle@127.0.0.1:5401/speckle",
+        "privateConnectionUri": "postgresql://speckle:speckle@postgres-region1:5432/speckle"
+      }
+    }
+  }
+}

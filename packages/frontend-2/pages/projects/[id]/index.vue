@@ -13,11 +13,6 @@
         <ProjectPageHeader :project="project" />
         <div class="flex gap-x-3 items-center justify-between">
           <div class="flex flex-row gap-x-3">
-            <CommonBadge rounded :color-classes="'text-foreground-2 bg-primary-muted'">
-              {{ project.modelCount.totalCount || 0 }} Model{{
-                project.modelCount.totalCount === 1 ? '' : 's'
-              }}
-            </CommonBadge>
             <CommonBadge
               v-if="project.role"
               rounded
@@ -29,14 +24,16 @@
             </CommonBadge>
           </div>
           <div class="flex flex-row gap-x-3">
-            <UserAvatarGroup :users="teamUsers" class="max-w-[104px]" />
-            <FormButton
-              v-if="canEdit"
-              color="outline"
-              :to="projectCollaboratorsRoute(project.id)"
-            >
-              Manage
-            </FormButton>
+            <div v-tippy="collaboratorsTooltip">
+              <NuxtLink :to="hasRole ? projectCollaboratorsRoute(project.id) : ''">
+                <UserAvatarGroup
+                  :users="teamUsers"
+                  :max-count="2"
+                  class="max-w-[104px]"
+                  hide-tooltips
+                />
+              </NuxtLink>
+            </div>
           </div>
           <LayoutMenu
             v-model:open="showActionsMenu"
@@ -171,13 +168,13 @@ const actionsItems = computed<LayoutMenuItem[][]>(() => {
     ]
   ]
 
-  if (isWorkspacesEnabled.value && !project.value?.workspace?.id) {
+  if (isWorkspacesEnabled.value && !project.value?.workspace?.id && hasRole.value) {
     items.push([
       {
-        title: 'Move...',
+        title: 'Move project...',
         id: ActionTypes.Move,
         disabled: !isOwner.value,
-        disabledTooltip: 'Only project owners can move projects into workspaces'
+        disabledTooltip: 'Only the project owner can move this project into a workspace'
       }
     ])
   }
@@ -235,6 +232,10 @@ const pageTabItems = computed((): LayoutPageTabItem[] => {
 
 const findTabById = (id: string) =>
   pageTabItems.value.find((tab) => tab.id === id) || pageTabItems.value[0]
+
+const collaboratorsTooltip = computed(() =>
+  hasRole.value ? (canEdit.value ? 'Manage collaborators' : 'View collaborators') : null
+)
 
 const activePageTab = computed({
   get: () => {

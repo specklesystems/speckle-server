@@ -154,6 +154,14 @@ export const LabelLeft = mergeStories(Default, {
   }
 })
 
+export const Loading = mergeStories(Default, {
+  args: {
+    name: generateRandomName('loading'),
+    label: 'With loading spinner',
+    loading: true
+  }
+})
+
 export const WithCustomRightSlot = mergeStories(Default, {
   render: (args) => ({
     components: { FormTextInput, FormButton },

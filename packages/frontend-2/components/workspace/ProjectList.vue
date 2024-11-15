@@ -47,7 +47,7 @@
             <FormButton
               v-else
               class="hidden md:block"
-              color="outline"
+              color="subtle"
               @click="showMoveProjectsDialog = true"
             >
               Move projects
@@ -277,6 +277,9 @@ const onShowSettingsDialog = (target: AvailableSettingsMenuKeys) => {
 onResult((queryResult) => {
   if (queryResult.data?.workspaceBySlug) {
     workspaceMixpanelUpdateGroup(queryResult.data.workspaceBySlug)
+    useHeadSafe({
+      title: queryResult.data.workspaceBySlug.name
+    })
   }
 })
 </script>

@@ -3,7 +3,6 @@ import { cliLogger } from '@/logging/logging'
 import { downloadProjectFactory } from '@/modules/cross-server-sync/services/project'
 import { downloadCommitFactory } from '@/modules/cross-server-sync/services/commit'
 import {
-  createStreamFactory,
   getStreamCollaboratorsFactory,
   getStreamFactory,
   markCommitStreamUpdatedFactory
@@ -17,10 +16,11 @@ import {
   markCommitBranchUpdatedFactory
 } from '@/modules/core/repositories/branches'
 import { createCommitByBranchIdFactory } from '@/modules/core/services/commit/management'
-import { createObject } from '@/modules/core/services/objects'
 import {
   getObjectFactory,
-  getStreamObjectsFactory
+  getStreamObjectsFactory,
+  storeClosuresIfNotFoundFactory,
+  storeSingleObjectIfNotFoundFactory
 } from '@/modules/core/repositories/objects'
 import {
   createCommentReplyAndNotifyFactory,
@@ -29,23 +29,28 @@ import {
 import { createBranchAndNotifyFactory } from '@/modules/core/services/branch/management'
 import { CommentsEmitter } from '@/modules/comments/events/emitter'
 import {
-  addCommentCreatedActivity,
-  addReplyAddedActivity
+  addCommentCreatedActivityFactory,
+  addReplyAddedActivityFactory
 } from '@/modules/activitystream/services/commentActivity'
 import {
   createCommitFactory,
   getAllBranchCommitsFactory,
+  getCommitsAndTheirBranchIdsFactory,
   getSpecificBranchCommitsFactory,
   insertBranchCommitsFactory,
   insertStreamCommitsFactory
 } from '@/modules/core/repositories/commits'
 import {
   getViewerResourceGroupsFactory,
-  getViewerResourceItemsUngroupedFactory
+  getViewerResourceItemsUngroupedFactory,
+  getViewerResourcesForCommentFactory,
+  getViewerResourcesForCommentsFactory,
+  getViewerResourcesFromLegacyIdentifiersFactory
 } from '@/modules/core/services/commit/viewerResources'
 import { db } from '@/db/knex'
 import {
   getCommentFactory,
+  getCommentsResourcesFactory,
   insertCommentLinksFactory,
   insertCommentsFactory,
   markCommentUpdatedFactory,
@@ -53,24 +58,26 @@ import {
 } from '@/modules/comments/repositories/comments'
 import { getBlobsFactory } from '@/modules/blobstorage/repositories'
 import { validateInputAttachmentsFactory } from '@/modules/comments/services/commentTextService'
-import { addBranchCreatedActivity } from '@/modules/activitystream/services/branchActivity'
 import { VersionsEmitter } from '@/modules/core/events/versionsEmitter'
-import { createStreamReturnRecordFactory } from '@/modules/core/services/streams/management'
-import { inviteUsersToProjectFactory } from '@/modules/serverinvites/services/projectInviteManagement'
-import { createAndSendInviteFactory } from '@/modules/serverinvites/services/creation'
-import {
-  findUserByTargetFactory,
-  insertInviteAndDeleteOldFactory
-} from '@/modules/serverinvites/repositories/serverInvites'
-import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
-import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
-import { getEventBus } from '@/modules/shared/services/eventBus'
 import { ProjectsEmitter } from '@/modules/core/events/projectsEmitter'
-import { addStreamCreatedActivityFactory } from '@/modules/activitystream/services/streamActivity'
 import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import { publish } from '@/modules/shared/utils/subscriptions'
 import { addCommitCreatedActivityFactory } from '@/modules/activitystream/services/commitActivity'
-import { getUserFactory, getUsersFactory } from '@/modules/core/repositories/users'
+import { getUserFactory } from '@/modules/core/repositories/users'
+import { createObjectFactory } from '@/modules/core/services/objects/management'
+import { addBranchCreatedActivityFactory } from '@/modules/activitystream/services/branchActivity'
+import { authorizeResolver } from '@/modules/shared'
+import { Roles } from '@speckle/shared'
+import { getDefaultRegionFactory } from '@/modules/workspaces/repositories/regions'
+import { getDb } from '@/modules/multiregion/dbSelector'
+import { createNewProjectFactory } from '@/modules/core/services/projects'
+import {
+  deleteProjectFactory,
+  getProjectFactory,
+  storeProjectFactory,
+  storeProjectRoleFactory
+} from '@/modules/core/repositories/projects'
+import { storeModelFactory } from '@/modules/core/repositories/models'
 
 const command: CommandModule<
   unknown,
@@ -79,6 +86,7 @@ const command: CommandModule<
     authorId: string
     syncComments: boolean
     token?: string
+    workspaceId?: string
   }
 > = {
   command: 'project <projectUrl> <authorId> [syncComments]',
@@ -101,29 +109,63 @@ const command: CommandModule<
     token: {
       describe: 'Target server auth token, in case the stream is private',
       type: 'string'
+    },
+    workspaceId: {
+      describe: 'Target workspace id',
+      type: 'string'
     }
   },
   handler: async (argv) => {
-    const getStream = getStreamFactory({ db })
-    const getObject = getObjectFactory({ db })
-    const markCommitStreamUpdated = markCommitStreamUpdatedFactory({ db })
+    let projectDb = db
+    console.log(argv)
+    let regionKey: string | undefined = undefined
+    if (argv.workspaceId) {
+      await authorizeResolver(
+        argv.authorId,
+        argv.workspaceId,
+        Roles.Workspace.Member,
+        null
+      )
+      const workspaceDefaultRegion = await getDefaultRegionFactory({ db })({
+        workspaceId: argv.workspaceId
+      })
+      regionKey = workspaceDefaultRegion?.key
+      console.log(workspaceDefaultRegion)
+      console.log(regionKey)
+      projectDb = await getDb({ regionKey })
+    }
+    const getStream = getStreamFactory({ db: projectDb })
+    const getObject = getObjectFactory({ db: projectDb })
+    const markCommitStreamUpdated = markCommitStreamUpdatedFactory({ db: projectDb })
 
-    const getStreamObjects = getStreamObjectsFactory({ db })
-    const markCommentViewed = markCommentViewedFactory({ db })
+    const getStreamObjects = getStreamObjectsFactory({ db: projectDb })
+    const markCommentViewed = markCommentViewedFactory({ db: projectDb })
     const validateInputAttachments = validateInputAttachmentsFactory({
-      getBlobs: getBlobsFactory({ db })
+      getBlobs: getBlobsFactory({ db: projectDb })
     })
-    const insertComments = insertCommentsFactory({ db })
-    const insertCommentLinks = insertCommentLinksFactory({ db })
+    const insertComments = insertCommentsFactory({ db: projectDb })
+    const insertCommentLinks = insertCommentLinksFactory({ db: projectDb })
     const getViewerResourceItemsUngrouped = getViewerResourceItemsUngroupedFactory({
       getViewerResourceGroups: getViewerResourceGroupsFactory({
         getStreamObjects,
-        getBranchLatestCommits: getBranchLatestCommitsFactory({ db }),
-        getStreamBranchesByName: getStreamBranchesByNameFactory({ db }),
-        getSpecificBranchCommits: getSpecificBranchCommitsFactory({ db }),
-        getAllBranchCommits: getAllBranchCommitsFactory({ db })
+        getBranchLatestCommits: getBranchLatestCommitsFactory({ db: projectDb }),
+        getStreamBranchesByName: getStreamBranchesByNameFactory({ db: projectDb }),
+        getSpecificBranchCommits: getSpecificBranchCommitsFactory({ db: projectDb }),
+        getAllBranchCommits: getAllBranchCommitsFactory({ db: projectDb })
       })
     })
+    const getViewerResourcesFromLegacyIdentifiers =
+      getViewerResourcesFromLegacyIdentifiersFactory({
+        getViewerResourcesForComments: getViewerResourcesForCommentsFactory({
+          getCommentsResources: getCommentsResourcesFactory({ db: projectDb }),
+          getViewerResourcesFromLegacyIdentifiers: (...args) =>
+            getViewerResourcesFromLegacyIdentifiers(...args) // recursive dep
+        }),
+        getCommitsAndTheirBranchIds: getCommitsAndTheirBranchIdsFactory({
+          db: projectDb
+        }),
+        getStreamObjects
+      })
     const createCommentThreadAndNotify = createCommentThreadAndNotifyFactory({
       getViewerResourceItemsUngrouped,
       validateInputAttachments,
@@ -131,66 +173,65 @@ const command: CommandModule<
       insertCommentLinks,
       markCommentViewed,
       commentsEventsEmit: CommentsEmitter.emit,
-      addCommentCreatedActivity
+      addCommentCreatedActivity: addCommentCreatedActivityFactory({
+        getViewerResourcesFromLegacyIdentifiers,
+        getViewerResourceItemsUngrouped,
+        saveActivity: saveActivityFactory({ db: projectDb }),
+        publish
+      })
     })
     const createCommentReplyAndNotify = createCommentReplyAndNotifyFactory({
-      getComment: getCommentFactory({ db }),
+      getComment: getCommentFactory({ db: projectDb }),
       validateInputAttachments,
       insertComments,
       insertCommentLinks,
-      markCommentUpdated: markCommentUpdatedFactory({ db }),
+      markCommentUpdated: markCommentUpdatedFactory({ db: projectDb }),
       commentsEventsEmit: CommentsEmitter.emit,
-      addReplyAddedActivity
+      addReplyAddedActivity: addReplyAddedActivityFactory({
+        getViewerResourcesForComment: getViewerResourcesForCommentFactory({
+          getCommentsResources: getCommentsResourcesFactory({ db: projectDb }),
+          getViewerResourcesFromLegacyIdentifiers
+        }),
+        saveActivity: saveActivityFactory({ db: projectDb }),
+        publish
+      })
     })
 
     const createCommitByBranchId = createCommitByBranchIdFactory({
-      createCommit: createCommitFactory({ db }),
+      createCommit: createCommitFactory({ db: projectDb }),
       getObject,
-      getBranchById: getBranchByIdFactory({ db }),
-      insertStreamCommits: insertStreamCommitsFactory({ db }),
-      insertBranchCommits: insertBranchCommitsFactory({ db }),
+      getBranchById: getBranchByIdFactory({ db: projectDb }),
+      insertStreamCommits: insertStreamCommitsFactory({ db: projectDb }),
+      insertBranchCommits: insertBranchCommitsFactory({ db: projectDb }),
       markCommitStreamUpdated,
-      markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
+      markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db: projectDb }),
       versionsEventEmitter: VersionsEmitter.emit,
       addCommitCreatedActivity: addCommitCreatedActivityFactory({
-        saveActivity: saveActivityFactory({ db }),
+        saveActivity: saveActivityFactory({ db: projectDb }),
         publish
       })
     })
 
     const getUser = getUserFactory({ db })
-    const getUsers = getUsersFactory({ db })
-    const createStreamReturnRecord = createStreamReturnRecordFactory({
-      inviteUsersToProject: inviteUsersToProjectFactory({
-        createAndSendInvite: createAndSendInviteFactory({
-          findUserByTarget: findUserByTargetFactory({ db }),
-          insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
-          collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
-            getStream
-          }),
-          buildInviteEmailContents: buildCoreInviteEmailContentsFactory({
-            getStream
-          }),
-          emitEvent: ({ eventName, payload }) =>
-            getEventBus().emit({
-              eventName,
-              payload
-            }),
-          getUser
-        }),
-        getUsers
-      }),
-      createStream: createStreamFactory({ db }),
-      createBranch: createBranchFactory({ db }),
-      addStreamCreatedActivity: addStreamCreatedActivityFactory({
-        saveActivity: saveActivityFactory({ db }),
-        publish
-      }),
+
+    const createNewProject = createNewProjectFactory({
+      storeProject: storeProjectFactory({ db: projectDb }),
+      getProject: getProjectFactory({ db: projectDb }),
+      deleteProject: deleteProjectFactory({ db: projectDb }),
+      storeModel: storeModelFactory({ db: projectDb }),
+      // THIS MUST GO TO THE MAIN DB
+      storeProjectRole: storeProjectRoleFactory({ db }),
       projectsEventsEmitter: ProjectsEmitter.emit
     })
 
+    const createObject = createObjectFactory({
+      storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({
+        db: projectDb
+      }),
+      storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db: projectDb })
+    })
     const getStreamCollaborators = getStreamCollaboratorsFactory({ db })
-    const getStreamBranchByName = getStreamBranchByNameFactory({ db })
+    const getStreamBranchByName = getStreamBranchByNameFactory({ db: projectDb })
     const downloadProject = downloadProjectFactory({
       downloadCommit: downloadCommitFactory({
         getStream,
@@ -203,16 +244,19 @@ const command: CommandModule<
         createCommentThreadAndNotify,
         createCommentReplyAndNotify
       }),
-      createStreamReturnRecord,
+      createNewProject,
       getUser,
       getStreamBranchByName,
       createBranchAndNotify: createBranchAndNotifyFactory({
         getStreamBranchByName,
-        createBranch: createBranchFactory({ db }),
-        addBranchCreatedActivity
+        createBranch: createBranchFactory({ db: projectDb }),
+        addBranchCreatedActivity: addBranchCreatedActivityFactory({
+          saveActivity: saveActivityFactory({ db: projectDb }),
+          publish
+        })
       })
     })
-    await downloadProject(argv, { logger: cliLogger })
+    await downloadProject({ ...argv, regionKey }, { logger: cliLogger })
   }
 }
 

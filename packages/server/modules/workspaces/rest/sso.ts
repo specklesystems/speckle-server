@@ -1,245 +1,628 @@
+/* eslint-disable camelcase */
+
 import { db } from '@/db/knex'
 import { validateRequest } from 'zod-express'
-import { Router } from 'express'
+import { Request, RequestHandler, Router } from 'express'
 import { z } from 'zod'
 import {
+  createWorkspaceUserFromSsoProfileFactory,
+  linkUserWithSsoProviderFactory,
   saveSsoProviderRegistrationFactory,
-  startOIDCSsoProviderValidationFactory
+  startOidcSsoProviderValidationFactory
 } from '@/modules/workspaces/services/sso'
 import {
   getOIDCProviderAttributes,
   getProviderAuthorizationUrl,
   initializeIssuerAndClient
 } from '@/modules/workspaces/clients/oidcProvider'
-import { getFrontendOrigin, getServerOrigin } from '@/modules/shared/helpers/envHelper'
+import { getFeatureFlags, isProdEnv } from '@/modules/shared/helpers/envHelper'
 import {
   storeOIDCProviderValidationRequestFactory,
-  getOIDCProviderFactory,
+  getOIDCProviderValidationRequestFactory,
   associateSsoProviderWithWorkspaceFactory,
-  storeProviderRecordFactory,
-  storeUserSsoSessionFactory,
+  storeSsoProviderRecordFactory,
+  upsertUserSsoSessionFactory,
   getWorkspaceSsoProviderFactory
 } from '@/modules/workspaces/repositories/sso'
-import { buildDecryptor, buildEncryptor } from '@/modules/shared/utils/libsodium'
-import { getEncryptionKeyPair } from '@/modules/automate/services/encryption'
-import { getGenericRedis } from '@/modules/core'
-import { generators } from 'openid-client'
-import { noop } from 'lodash'
-import { OIDCProvider, oidcProvider } from '@/modules/workspaces/domain/sso'
-import { getWorkspaceBySlugFactory } from '@/modules/workspaces/repositories/workspaces'
-import { WorkspaceNotFoundError } from '@/modules/workspaces/errors/workspace'
+import { getGenericRedis } from '@/modules/shared/redis/redis'
+import { generators, UserinfoResponse } from 'openid-client'
+import { oidcProvider } from '@/modules/workspaces/domain/sso/models'
+import {
+  OidcProvider,
+  WorkspaceSsoProvider
+} from '@/modules/workspaces/domain/sso/types'
+import {
+  getWorkspaceBySlugFactory,
+  getWorkspaceRolesFactory,
+  upsertWorkspaceRoleFactory
+} from '@/modules/workspaces/repositories/workspaces'
+import {
+  WorkspaceNotFoundError,
+  WorkspacesNotAuthorizedError
+} from '@/modules/workspaces/errors/workspace'
 import { authorizeResolver } from '@/modules/shared'
 import { Roles } from '@speckle/shared'
-import { createUserEmailFactory } from '@/modules/core/repositories/userEmails'
+import {
+  createUserEmailFactory,
+  ensureNoPrimaryEmailForUserFactory,
+  findEmailFactory,
+  findEmailsByUserIdFactory,
+  updateUserEmailFactory
+} from '@/modules/core/repositories/userEmails'
+import { withTransaction } from '@/modules/shared/helpers/dbHelper'
+import {
+  countAdminUsersFactory,
+  getUserFactory,
+  legacyGetUserFactory,
+  storeUserAclFactory,
+  storeUserFactory,
+  UserWithOptionalRole
+} from '@/modules/core/repositories/users'
 import {
   finalizeAuthMiddlewareFactory,
+  moveAuthParamsToSessionMiddlewareFactory,
   sessionMiddlewareFactory
 } from '@/modules/auth/middleware'
+import {
+  deleteInviteFactory,
+  deleteServerOnlyInvitesFactory,
+  findInviteFactory,
+  updateAllInviteTargetsFactory
+} from '@/modules/serverinvites/repositories/serverInvites'
+import { createUserFactory } from '@/modules/core/services/users/management'
+import { getServerInfoFactory } from '@/modules/core/repositories/server'
+import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
+import { UsersEmitter } from '@/modules/core/events/usersEmitter'
+import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
+import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
+import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
+import { sendEmail } from '@/modules/emails/services/sending'
+import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { createAuthorizationCodeFactory } from '@/modules/auth/repositories/apps'
-import { legacyGetUserFactory } from '@/modules/core/repositories/users'
+import { getDefaultSsoSessionExpirationDate } from '@/modules/workspaces/domain/sso/logic'
+import {
+  GetWorkspaceBySlug,
+  GetWorkspaceRoles
+} from '@/modules/workspaces/domain/operations'
+import {
+  GetWorkspaceSsoProvider,
+  UpsertUserSsoSession
+} from '@/modules/workspaces/domain/sso/operations'
+import { GetUser } from '@/modules/core/domain/users/operations'
+import { FindEmail } from '@/modules/core/domain/userEmails/operations'
+import {
+  buildAuthRedirectUrl,
+  buildErrorUrl,
+  buildFinalizeUrl,
+  getDecryptor,
+  getEncryptor,
+  parseCodeVerifier
+} from '@/modules/workspaces/helpers/sso'
+import {
+  SsoGenericAuthenticationError,
+  SsoGenericProviderValidationError,
+  SsoProviderMissingError,
+  SsoProviderProfileMissingError,
+  SsoUserClaimedError,
+  SsoUserEmailUnverifiedError,
+  SsoVerificationCodeMissingError
+} from '@/modules/workspaces/errors/sso'
+import { FeatureAccessForbiddenError } from '@/modules/gatekeeper/errors/features'
+import { canWorkspaceUseOidcSsoFactory } from '@/modules/gatekeeper/services/featureAuthorization'
+import { getWorkspacePlanFactory } from '@/modules/gatekeeper/repositories/billing'
 
-const router = Router()
-
+const moveAuthParamsToSessionMiddleware = moveAuthParamsToSessionMiddlewareFactory()
 const sessionMiddleware = sessionMiddlewareFactory()
 const finalizeAuthMiddleware = finalizeAuthMiddlewareFactory({
   createAuthorizationCode: createAuthorizationCodeFactory({ db }),
   getUser: legacyGetUserFactory({ db })
 })
 
-const buildAuthRedirectUrl = (workspaceSlug: string): URL =>
-  new URL(
-    `/api/v1/workspaces/${workspaceSlug}/sso/oidc/callback?validate=true`,
-    getServerOrigin()
-  )
-
-const buildFinalizeUrl = (workspaceSlug: string): URL =>
-  new URL(`workspaces/${workspaceSlug}/?settings=server/general`, getFrontendOrigin())
-
-const ssoVerificationStatusKey = 'ssoVerificationStatus'
-
-const buildErrorUrl = ({
-  err,
-  url,
-  searchParams
-}: {
-  err: unknown
-  url: URL
-  searchParams?: Record<string, string>
-}): URL => {
-  const settingsSearch = url.searchParams.get('settings')
-  url.searchParams.forEach((key) => {
-    url.searchParams.delete(key)
+const moveWorkspaceIdToSessionMiddleware: RequestHandler<
+  WorkspaceSsoAuthRequestParams
+> = async (req, _res, next) => {
+  const workspace = await getWorkspaceBySlugFactory({ db })({
+    workspaceSlug: req.params.workspaceSlug
   })
-  if (settingsSearch) url.searchParams.set('settings', settingsSearch)
-  url.searchParams.set(ssoVerificationStatusKey, 'failed')
-  const errorMessage = err instanceof Error ? err.message : `Unknown error ${err}`
-  url.searchParams.set('ssoVerificationError', errorMessage)
-  if (searchParams) {
-    for (const [name, value] of Object.values(searchParams)) {
-      url.searchParams.set(name, value)
-    }
-  }
-  return url
+  req.session.workspaceId = workspace?.id
+  next()
 }
 
-router.get(
-  '/api/v1/workspaces/:workspaceSlug/sso/oidc/validate',
-  sessionMiddleware,
-  validateRequest({
-    params: z.object({
-      workspaceSlug: z.string().min(1)
+const validateFeatureAccessMiddlewareFactory: RequestHandler<
+  WorkspaceSsoAuthRequestParams
+> = async (req, res, next) => {
+  try {
+    if (!req.session.workspaceId) throw new FeatureAccessForbiddenError()
+
+    const isGatekeeperEnabled =
+      getFeatureFlags().FF_GATEKEEPER_MODULE_ENABLED && isProdEnv()
+    if (!isGatekeeperEnabled) return next()
+
+    const isAllowed = await canWorkspaceUseOidcSsoFactory({
+      getWorkspacePlan: getWorkspacePlanFactory({ db })
+    })({ workspaceId: req.session.workspaceId })
+    if (!isAllowed) throw new FeatureAccessForbiddenError()
+
+    next()
+  } catch (e) {
+    res?.redirect(buildErrorUrl(e, req.params.workspaceSlug))
+  }
+}
+
+export const getSsoRouter = (): Router => {
+  const router = Router()
+
+  router.get(
+    '/api/v1/workspaces/:workspaceSlug/sso',
+    validateRequest({
+      params: z.object({
+        workspaceSlug: z.string().min(1)
+      })
     }),
-    query: oidcProvider
-  }),
-  async ({ session, params, query, res }) => {
-    try {
-      const provider = query
-      const encryptionKeyPair = await getEncryptionKeyPair()
-      const encryptor = await buildEncryptor(encryptionKeyPair.publicKey)
-      const codeVerifier = await startOIDCSsoProviderValidationFactory({
-        getOIDCProviderAttributes,
-        storeOIDCProviderValidationRequest: storeOIDCProviderValidationRequestFactory({
+    handleGetLimitedWorkspaceRequestFactory({
+      getWorkspaceBySlug: getWorkspaceBySlugFactory({ db }),
+      getWorkspaceSsoProvider: getWorkspaceSsoProviderFactory({
+        db,
+        decrypt: getDecryptor()
+      })
+    })
+  )
+
+  router.get(
+    '/api/v1/workspaces/:workspaceSlug/sso/auth',
+    sessionMiddleware,
+    moveAuthParamsToSessionMiddleware,
+    moveWorkspaceIdToSessionMiddleware,
+    validateFeatureAccessMiddlewareFactory,
+    validateRequest({
+      params: z.object({
+        workspaceSlug: z.string().min(1)
+      })
+    }),
+    handleSsoAuthRequestFactory({
+      getWorkspaceSsoProvider: getWorkspaceSsoProviderFactory({
+        db,
+        decrypt: getDecryptor()
+      })
+    })
+  )
+
+  router.get(
+    '/api/v1/workspaces/:workspaceSlug/sso/oidc/validate',
+    sessionMiddleware,
+    moveAuthParamsToSessionMiddleware,
+    moveWorkspaceIdToSessionMiddleware,
+    validateFeatureAccessMiddlewareFactory,
+    validateRequest({
+      params: z.object({
+        workspaceSlug: z.string().min(1)
+      }),
+      query: oidcProvider
+    }),
+    handleSsoValidationRequestFactory({
+      startOidcSsoProviderValidation: startOidcSsoProviderValidationFactory({
+        getOidcProviderAttributes: getOIDCProviderAttributes,
+        storeOidcProviderValidationRequest: storeOIDCProviderValidationRequestFactory({
           redis: getGenericRedis(),
-          encrypt: encryptor.encrypt
+          encrypt: getEncryptor()
         }),
         generateCodeVerifier: generators.codeVerifier
-      })({
-        provider
       })
-      const redirectUrl = buildAuthRedirectUrl(params.workspaceSlug)
+    })
+  )
+
+  router.get(
+    '/api/v1/workspaces/:workspaceSlug/sso/oidc/callback',
+    sessionMiddleware,
+    validateRequest({
+      params: z.object({
+        workspaceSlug: z.string().min(1)
+      }),
+      query: oidcCallbackRequestQuery
+    }),
+    async (req, res, next) => {
+      const trx = await db.transaction()
+      const handleOidcCallback = handleOidcCallbackFactory({
+        getWorkspaceRoles: getWorkspaceRolesFactory({ db: trx }),
+        getWorkspaceBySlug: getWorkspaceBySlugFactory({ db: trx }),
+        createOidcProvider: createOidcProviderFactory({
+          getOIDCProviderValidationRequest: getOIDCProviderValidationRequestFactory({
+            redis: getGenericRedis(),
+            decrypt: getDecryptor()
+          }),
+          saveSsoProviderRegistration: saveSsoProviderRegistrationFactory({
+            getWorkspaceSsoProvider: getWorkspaceSsoProviderFactory({
+              db: trx,
+              decrypt: getDecryptor()
+            }),
+            storeProviderRecord: storeSsoProviderRecordFactory({
+              db: trx,
+              encrypt: getEncryptor()
+            }),
+            associateSsoProviderWithWorkspace: associateSsoProviderWithWorkspaceFactory(
+              {
+                db: trx
+              }
+            )
+          })
+        }),
+        getOidcProvider: getOidcProviderFactory({
+          getWorkspaceSsoProvider: getWorkspaceSsoProviderFactory({
+            db: trx,
+            decrypt: getDecryptor()
+          })
+        }),
+        getOidcProviderUserData: getOidcProviderUserDataFactory(),
+        tryGetSpeckleUserData: tryGetSpeckleUserDataFactory({
+          findEmail: findEmailFactory({ db: trx }),
+          getUser: getUserFactory({ db: trx })
+        }),
+        createWorkspaceUserFromSsoProfile: createWorkspaceUserFromSsoProfileFactory({
+          createUser: createUserFactory({
+            getServerInfo: getServerInfoFactory({ db: trx }),
+            findEmail: findEmailFactory({ db: trx }),
+            storeUser: storeUserFactory({ db: trx }),
+            countAdminUsers: countAdminUsersFactory({ db: trx }),
+            storeUserAcl: storeUserAclFactory({ db: trx }),
+            validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
+              createUserEmail: createUserEmailFactory({ db: trx }),
+              ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({
+                db: trx
+              }),
+              findEmail: findEmailFactory({ db: trx }),
+              updateEmailInvites: finalizeInvitedServerRegistrationFactory({
+                deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db: trx }),
+                updateAllInviteTargets: updateAllInviteTargetsFactory({ db: trx })
+              }),
+              requestNewEmailVerification: requestNewEmailVerificationFactory({
+                findEmail: findEmailFactory({ db: trx }),
+                getUser: getUserFactory({ db: trx }),
+                getServerInfo: getServerInfoFactory({ db: trx }),
+                deleteOldAndInsertNewVerification:
+                  deleteOldAndInsertNewVerificationFactory({ db: trx }),
+                renderEmail,
+                sendEmail
+              })
+            }),
+            usersEventsEmitter: UsersEmitter.emit
+          }),
+          upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db: trx }),
+          findInvite: findInviteFactory({ db: trx }),
+          deleteInvite: deleteInviteFactory({ db: trx })
+        }),
+        linkUserWithSsoProvider: linkUserWithSsoProviderFactory({
+          findEmailsByUserId: findEmailsByUserIdFactory({ db: trx }),
+          createUserEmail: createUserEmailFactory({ db: trx }),
+          updateUserEmail: updateUserEmailFactory({ db: trx })
+        }),
+        upsertUserSsoSession: upsertUserSsoSessionFactory({ db: trx })
+      })
+
+      try {
+        await withTransaction(handleOidcCallback(req, res, next), trx)
+        return next()
+      } catch (e) {
+        res?.redirect(buildErrorUrl(e, req.params.workspaceSlug))
+      }
+    },
+    finalizeAuthMiddleware
+  )
+
+  return router
+}
+
+const workspaceSsoAuthRequestParams = z.object({
+  workspaceSlug: z.string().min(1)
+})
+
+type WorkspaceSsoAuthRequestParams = z.infer<typeof workspaceSsoAuthRequestParams>
+
+/**
+ * Fetch public information about the workspace, including SSO provider metadata
+ */
+const handleGetLimitedWorkspaceRequestFactory =
+  ({
+    getWorkspaceBySlug,
+    getWorkspaceSsoProvider
+  }: {
+    getWorkspaceBySlug: GetWorkspaceBySlug
+    getWorkspaceSsoProvider: GetWorkspaceSsoProvider
+  }): RequestHandler<WorkspaceSsoAuthRequestParams> =>
+  async ({ params, res }) => {
+    const workspace = await getWorkspaceBySlug({ workspaceSlug: params.workspaceSlug })
+    if (!workspace) throw new WorkspaceNotFoundError()
+
+    const ssoProviderData = await getWorkspaceSsoProvider({ workspaceId: workspace.id })
+
+    const limitedWorkspace = {
+      name: workspace.name,
+      logo: workspace.logo,
+      defaultLogoIndex: workspace.defaultLogoIndex,
+      ssoProviderName: ssoProviderData?.provider?.providerName
+    }
+
+    res?.json(limitedWorkspace)
+  }
+
+/**
+ * Start SSO sign-in or sign-up flow
+ */
+const handleSsoAuthRequestFactory =
+  ({
+    getWorkspaceSsoProvider
+  }: {
+    getWorkspaceSsoProvider: GetWorkspaceSsoProvider
+  }): RequestHandler<WorkspaceSsoAuthRequestParams> =>
+  async ({ params, session, res }) => {
+    try {
+      if (!session.workspaceId) throw new WorkspaceNotFoundError()
+
+      const { provider } =
+        (await getWorkspaceSsoProvider({ workspaceId: session.workspaceId })) ?? {}
+      if (!provider) throw new SsoProviderMissingError()
+
+      const codeVerifier = generators.codeVerifier()
+      const redirectUrl = buildAuthRedirectUrl(params.workspaceSlug, false)
       const authorizationUrl = await getProviderAuthorizationUrl({
         provider,
         redirectUrl,
         codeVerifier
       })
-      session.codeVerifier = await encryptor.encrypt(codeVerifier)
 
-      // maybe not needed
-      encryptor.dispose()
+      session.codeVerifier = await getEncryptor()(codeVerifier)
       res?.redirect(authorizationUrl.toString())
-    } catch (err) {
-      session.destroy(noop)
-      const url = buildErrorUrl({
-        err,
-        url: buildFinalizeUrl(params.workspaceSlug),
-        searchParams: query
-      })
-      res?.redirect(url.toString())
+    } catch (e) {
+      res?.redirect(buildErrorUrl(e, params.workspaceSlug))
     }
   }
-)
 
-router.get(
-  '/api/v1/workspaces/:workspaceSlug/sso/oidc/callback',
-  sessionMiddleware,
-  validateRequest({
-    params: z.object({
-      workspaceSlug: z.string().min(1)
-    }),
-    query: z.object({ validate: z.string() })
-  }),
-  async (req) => {
-    // this is the verify flow, login will be different
-    // req.context.userId can be authorized for the workspaceSlug if needed
-    const logger = req.log.child({ workspaceSlug: req.params.workspaceSlug })
+type WorkspaceSsoValidationRequestQuery = z.infer<typeof oidcProvider>
 
-    let provider: OIDCProvider | null = null
+/**
+ * Begin SSO configuration flow
+ */
+const handleSsoValidationRequestFactory =
+  ({
+    startOidcSsoProviderValidation
+  }: {
+    startOidcSsoProviderValidation: ReturnType<
+      typeof startOidcSsoProviderValidationFactory
+    >
+  }): RequestHandler<
+    WorkspaceSsoAuthRequestParams,
+    never,
+    never,
+    WorkspaceSsoValidationRequestQuery
+  > =>
+  async ({ session, params, query: provider, res, context }) => {
+    try {
+      if (!session.workspaceId) throw new WorkspaceNotFoundError()
 
-    if (req.query.validate === 'true') {
-      const workspace = await getWorkspaceBySlugFactory({ db })({
-        workspaceSlug: req.params.workspaceSlug
-      })
-      if (!workspace) throw new WorkspaceNotFoundError()
       await authorizeResolver(
-        req.context.userId,
-        workspace.id,
+        context.userId,
+        session.workspaceId,
         Roles.Workspace.Admin,
-        req.context.resourceAccessRules
+        context.resourceAccessRules
       )
-      // once we're authorized for the ws, we must have a userId
-      const userId = req.context.userId!
 
-      // point to the finalize page if there is one
-      let redirectUrl = buildFinalizeUrl(req.params.workspaceSlug)
-      try {
-        const encryptionKeyPair = await getEncryptionKeyPair()
-        const decryptor = await buildDecryptor(encryptionKeyPair)
+      const codeVerifier = await startOidcSsoProviderValidation({ provider })
 
-        // ===================
-        const encryptedValidationToken = req.session.codeVerifier
-        if (!encryptedValidationToken)
-          throw new Error('cannot find verification token, restart the flow')
+      const redirectUrl = buildAuthRedirectUrl(params.workspaceSlug, true)
+      const authorizationUrl = await getProviderAuthorizationUrl({
+        provider,
+        redirectUrl,
+        codeVerifier
+      })
 
-        const codeVerifier = await decryptor.decrypt(encryptedValidationToken)
+      session.codeVerifier = await getEncryptor()(codeVerifier)
 
-        provider = await getOIDCProviderFactory({
-          redis: getGenericRedis(),
-          decrypt: (await buildDecryptor(encryptionKeyPair)).decrypt
-        })({
-          validationToken: codeVerifier
-        })
-        if (!provider) throw new Error('validation request not found, please retry')
-
-        const { client } = await initializeIssuerAndClient({ provider })
-        const callbackParams = client.callbackParams(req)
-        const tokenSet = await client.callback(
-          buildAuthRedirectUrl(req.params.workspaceSlug).toString(),
-          callbackParams,
-          // eslint-disable-next-line camelcase
-          { code_verifier: codeVerifier }
-        )
-
-        // now that we have the user's email, we should compare it to the active user's email.
-        // Ask if they want to add the email to the oidc as a secondary email, if it doesn't match any of the user's emails
-        const ssoProviderUserInfo = await client.userinfo(tokenSet)
-        if (!ssoProviderUserInfo.email)
-          throw new Error('This should never happen, we are asking for an email claim')
-
-        const encryptor = await buildEncryptor(encryptionKeyPair.publicKey)
-        const trx = await db.transaction()
-
-        await saveSsoProviderRegistrationFactory({
-          getWorkspaceSsoProvider: getWorkspaceSsoProviderFactory({
-            db: trx,
-            decrypt: decryptor.decrypt
-          }),
-          associateSsoProviderWithWorkspace: associateSsoProviderWithWorkspaceFactory({
-            db: trx
-          }),
-          storeProviderRecord: storeProviderRecordFactory({
-            db,
-            encrypt: encryptor.encrypt
-          }),
-          storeUserSsoSession: storeUserSsoSessionFactory({ db: trx }),
-          createUserEmail: createUserEmailFactory({ db: trx })
-        })({
-          provider,
-          userId,
-          workspaceId: workspace.id
-          // ssoProviderUserInfo
-        })
-        await trx.commit()
-        redirectUrl.searchParams.set(ssoVerificationStatusKey, 'success')
-      } catch (err) {
-        logger.warn(
-          { error: err },
-          'Failed to verify OIDC sso provider for workspace {workspaceSlug}'
-        )
-        redirectUrl = buildErrorUrl({
-          err,
-          url: redirectUrl,
-          searchParams: provider || undefined
-        })
-      } finally {
-        req.session.destroy(noop)
-        // redirectUrl.
-        req.res?.redirect(redirectUrl.toString())
-      }
-    } else {
-      // this must be using the generic OIDC login flow somehow
+      res?.redirect(authorizationUrl.toString())
+    } catch (e) {
+      res?.redirect(buildErrorUrl(e, params.workspaceSlug))
     }
-  },
-  finalizeAuthMiddleware
-)
+  }
 
-export default router
+const oidcCallbackRequestQuery = z.object({ validate: z.string().optional() })
+
+type WorkspaceSsoOidcCallbackRequestQuery = z.infer<typeof oidcCallbackRequestQuery>
+
+/**
+ * Finalize SSO flow for all OIDC paths
+ */
+const handleOidcCallbackFactory =
+  ({
+    getWorkspaceRoles,
+    getWorkspaceBySlug,
+    createOidcProvider,
+    getOidcProvider,
+    getOidcProviderUserData,
+    tryGetSpeckleUserData,
+    createWorkspaceUserFromSsoProfile,
+    linkUserWithSsoProvider,
+    upsertUserSsoSession
+  }: {
+    getWorkspaceRoles: GetWorkspaceRoles
+    getWorkspaceBySlug: GetWorkspaceBySlug
+    createOidcProvider: ReturnType<typeof createOidcProviderFactory>
+    getOidcProvider: ReturnType<typeof getOidcProviderFactory>
+    getOidcProviderUserData: ReturnType<typeof getOidcProviderUserDataFactory>
+    tryGetSpeckleUserData: ReturnType<typeof tryGetSpeckleUserDataFactory>
+    createWorkspaceUserFromSsoProfile: ReturnType<
+      typeof createWorkspaceUserFromSsoProfileFactory
+    >
+    linkUserWithSsoProvider: ReturnType<typeof linkUserWithSsoProviderFactory>
+    upsertUserSsoSession: UpsertUserSsoSession
+  }): RequestHandler<
+    WorkspaceSsoAuthRequestParams,
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+    any,
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+    any,
+    WorkspaceSsoOidcCallbackRequestQuery
+  > =>
+  async (req) => {
+    const workspace = await getWorkspaceBySlug({
+      workspaceSlug: req.params.workspaceSlug
+    })
+    if (!workspace) throw new WorkspaceNotFoundError()
+
+    const decryptedOidcProvider: WorkspaceSsoProvider =
+      req.query.validate === 'true'
+        ? await createOidcProvider(req, workspace.id)
+        : await getOidcProvider(workspace.id)
+
+    const oidcProviderUserData = await getOidcProviderUserData(
+      req,
+      decryptedOidcProvider.provider
+    )
+    const speckleUserData = await tryGetSpeckleUserData(req, oidcProviderUserData)
+
+    if (!speckleUserData) {
+      const newSpeckleUser = await createWorkspaceUserFromSsoProfile({
+        ssoProfile: oidcProviderUserData,
+        workspaceId: decryptedOidcProvider.workspaceId
+      })
+      req.user = { id: newSpeckleUser.id, email: newSpeckleUser.email, isNewUser: true }
+    }
+
+    req.user ??= { id: speckleUserData!.id, email: speckleUserData!.email }
+
+    if (!req.user || !req.user.id) throw new SsoGenericAuthenticationError()
+
+    await linkUserWithSsoProvider({
+      userId: req.user.id,
+      ssoProfile: oidcProviderUserData
+    })
+
+    // TODO: Implicitly consume invite here, if one exists
+    const workspaceRoles = await getWorkspaceRoles({ workspaceId: workspace.id })
+    if (!workspaceRoles.some((role) => role.userId === req.user?.id))
+      throw new SsoGenericAuthenticationError()
+
+    // BTW there is a bit of an issue with PATs and sso sessions, if the session expires, the PAT fails to work
+    await upsertUserSsoSession({
+      userSsoSession: {
+        userId: req.user.id,
+        providerId: decryptedOidcProvider.providerId,
+        createdAt: new Date(),
+        validUntil: getDefaultSsoSessionExpirationDate()
+      }
+    })
+
+    req.authRedirectPath = buildFinalizeUrl(req.params.workspaceSlug).toString()
+  }
+
+const createOidcProviderFactory =
+  ({
+    getOIDCProviderValidationRequest,
+    saveSsoProviderRegistration
+  }: {
+    getOIDCProviderValidationRequest: ReturnType<
+      typeof getOIDCProviderValidationRequestFactory
+    >
+    saveSsoProviderRegistration: ReturnType<typeof saveSsoProviderRegistrationFactory>
+  }) =>
+  async (
+    req: Request<WorkspaceSsoAuthRequestParams>,
+    workspaceId: string
+  ): Promise<WorkspaceSsoProvider> => {
+    if (!req.context.userId)
+      throw new WorkspacesNotAuthorizedError('You must be signed in to configure SSO')
+
+    const encryptedCodeVerifier = req.session.codeVerifier
+    if (!encryptedCodeVerifier) throw new SsoVerificationCodeMissingError()
+
+    const codeVerifier = await parseCodeVerifier(req)
+
+    const oidcProvider = await getOIDCProviderValidationRequest({
+      validationToken: codeVerifier
+    })
+    if (!oidcProvider)
+      throw new SsoGenericProviderValidationError(
+        'Validation request not found. Restart flow.'
+      )
+
+    await authorizeResolver(
+      req.context.userId,
+      workspaceId,
+      Roles.Workspace.Admin,
+      req.context.resourceAccessRules
+    )
+
+    const workspaceProviderRecord = await saveSsoProviderRegistration({
+      provider: oidcProvider,
+      workspaceId
+    })
+
+    return {
+      ...workspaceProviderRecord,
+      providerId: workspaceProviderRecord.id,
+      workspaceId
+    }
+  }
+
+const getOidcProviderFactory =
+  ({ getWorkspaceSsoProvider }: { getWorkspaceSsoProvider: GetWorkspaceSsoProvider }) =>
+  async (workspaceId: string): Promise<WorkspaceSsoProvider> => {
+    const provider = await getWorkspaceSsoProvider({ workspaceId })
+    if (!provider) throw new SsoProviderMissingError()
+    return provider
+  }
+
+const getOidcProviderUserDataFactory =
+  () =>
+  async (
+    req: Request<
+      WorkspaceSsoAuthRequestParams,
+      /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+      any,
+      /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+      any,
+      WorkspaceSsoOidcCallbackRequestQuery
+    >,
+    provider: OidcProvider
+  ): Promise<UserinfoResponse<{ email: string }>> => {
+    const codeVerifier = await parseCodeVerifier(req)
+    const { client } = await initializeIssuerAndClient({ provider })
+    const callbackParams = client.callbackParams(req)
+    const tokenSet = await client.callback(
+      buildAuthRedirectUrl(
+        req.params.workspaceSlug,
+        req.query.validate === 'true'
+      ).toString(),
+      callbackParams,
+      { code_verifier: codeVerifier }
+    )
+
+    const oidcProviderUserData = await client.userinfo(tokenSet)
+    if (!oidcProviderUserData || !oidcProviderUserData.email) {
+      throw new SsoProviderProfileMissingError()
+    }
+
+    return oidcProviderUserData as UserinfoResponse<{ email: string }>
+  }
+
+const tryGetSpeckleUserDataFactory =
+  ({ findEmail, getUser }: { findEmail: FindEmail; getUser: GetUser }) =>
+  async (
+    req: Request<WorkspaceSsoAuthRequestParams>,
+    oidcProviderUserData: UserinfoResponse<{ email: string }>
+  ): Promise<UserWithOptionalRole | null> => {
+    // Get currently signed-in user, if available
+    const currentSessionUser = await getUser(req.context.userId ?? '')
+
+    // Get user with email that matches OIDC provider user email, if match exists
+    const userEmail = await findEmail({ email: oidcProviderUserData.email })
+    if (!!userEmail && !userEmail.verified) throw new SsoUserEmailUnverifiedError()
+    const existingSpeckleUser = await getUser(userEmail?.userId ?? '')
+
+    // Confirm existing user matches signed-in user, if both are present
+    if (!!currentSessionUser && !!existingSpeckleUser) {
+      if (currentSessionUser.id !== existingSpeckleUser.id) {
+        throw new SsoUserClaimedError()
+      }
+    }
+
+    // Return target user of sign in flow
+    return currentSessionUser ?? existingSpeckleUser
+  }

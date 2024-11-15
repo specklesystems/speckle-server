@@ -27,7 +27,9 @@ import {
 import { EmailSendingServiceMock } from '@/test/mocks/global'
 import { getStreamFactory } from '@/modules/core/repositories/streams'
 import { getUserFactory } from '@/modules/core/repositories/users'
+import { getServerInfoFactory } from '@/modules/core/repositories/server'
 
+const getServerInfo = getServerInfoFactory({ db })
 const getUser = getUserFactory({ db })
 const getStream = getStreamFactory({ db })
 const createAndSendInvite = createAndSendInviteFactory({
@@ -44,7 +46,8 @@ const createAndSendInvite = createAndSendInviteFactory({
       eventName,
       payload
     }),
-  getUser
+  getUser,
+  getServerInfo
 })
 
 export const createServerInviteDirectly = async (

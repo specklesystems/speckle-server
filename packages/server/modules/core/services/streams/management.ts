@@ -1,10 +1,7 @@
 import { MaybeNullOrUndefined, Roles, wait } from '@speckle/shared'
-import { addStreamCreatedActivityFactory } from '@/modules/activitystream/services/streamActivity'
 import {
-  ProjectCreateInput,
   ProjectUpdateInput,
   ProjectUpdateRoleInput,
-  StreamCreateInput,
   StreamRevokePermissionInput,
   StreamUpdateInput
 } from '@/modules/core/graph/generated/graphql'
@@ -33,7 +30,7 @@ import {
   AddOrUpdateStreamCollaborator,
   CreateStream,
   DeleteStream,
-  DeleteStreamRecords,
+  DeleteStreamRecord,
   GetStream,
   IsStreamCollaborator,
   LegacyCreateStream,
@@ -58,18 +55,10 @@ export const createStreamReturnRecordFactory =
     createStream: StoreStream
     createBranch: StoreBranch
     inviteUsersToProject: ReturnType<typeof inviteUsersToProjectFactory>
-    addStreamCreatedActivity: ReturnType<typeof addStreamCreatedActivityFactory>
     projectsEventsEmitter: ProjectsEventsEmitter
   }): CreateStream =>
-  async (
-    params: (StreamCreateInput | ProjectCreateInput) & {
-      ownerId: string
-      ownerResourceAccessRules?: MaybeNullOrUndefined<TokenResourceIdentifier[]>
-    },
-    options?: Partial<{ createActivity: boolean }>
-  ): Promise<StreamRecord> => {
+  async (params): Promise<StreamRecord> => {
     const { ownerId, ownerResourceAccessRules } = params
-    const { createActivity = true } = options || {}
 
     const canCreateStream = isNewResourceAllowed({
       resourceType: TokenResourceIdentifierType.Project,
@@ -103,16 +92,6 @@ export const createStreamReturnRecordFactory =
       )
     }
 
-    // Save activity
-    if (createActivity) {
-      await deps.addStreamCreatedActivity({
-        streamId,
-        input: params,
-        stream,
-        creatorId: ownerId
-      })
-    }
-
     await deps.projectsEventsEmitter(ProjectEvents.Created, {
       project: stream,
       ownerId
@@ -127,9 +106,7 @@ export const createStreamReturnRecordFactory =
 export const legacyCreateStreamFactory =
   (deps: { createStreamReturnRecord: CreateStream }): LegacyCreateStream =>
   async (params) => {
-    const { id } = await deps.createStreamReturnRecord(params, {
-      createActivity: false
-    })
+    const { id } = await deps.createStreamReturnRecord(params)
     return id
   }
 
@@ -138,7 +115,7 @@ export const legacyCreateStreamFactory =
  */
 export const deleteStreamAndNotifyFactory =
   (deps: {
-    deleteStream: DeleteStreamRecords
+    deleteStream: DeleteStreamRecord
     authorizeResolver: AuthorizeResolver
     addStreamDeletedActivity: AddStreamDeletedActivity
     deleteAllResourceInvites: DeleteAllResourceInvites

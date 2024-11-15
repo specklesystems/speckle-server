@@ -91,9 +91,9 @@ spec:
               secretKeyRef:
                 name: {{ default .Values.secretName .Values.redis.connectionString.secretName }}
                 key: {{ default "redis_url" .Values.redis.connectionString.secretKey }}
-          {{- if .Values.frontend_2.ghostApiKey }}
-          - name: NUXT_PUBLIC_GHOST_API_KEY
-            value: {{ .Values.frontend_2.ghostApiKey | quote }}
+          {{- if .Values.frontend_2.webflowApiToken }}
+          - name: NUXT_WEBFLOW_API_TOKEN
+            value: {{ .Values.frontend_2.webflowApiToken | quote }}
           {{- end }}
           {{- if .Values.analytics.datadog_app_id }}
           - name: NUXT_PUBLIC_DATADOG_APP_ID
@@ -123,6 +123,12 @@ spec:
             value: {{ .Values.featureFlags.workspaceSsoEnabled | quote }}
           - name: NUXT_PUBLIC_FF_MULTIPLE_EMAILS_MODULE_ENABLED
             value: {{ .Values.featureFlags.multipleEmailsModuleEnabled | quote }}
+          - name: NUXT_PUBLIC_FF_GATEKEEPER_MODULE_ENABLED
+            value: {{ .Values.featureFlags.gatekeeperModuleEnabled | quote }}
+          - name: NUXT_PUBLIC_FF_BILLING_INTEGRATION_ENABLED
+            value: {{ .Values.featureFlags.billingIntegrationEnabled | quote }}
+          - name: NUXT_PUBLIC_FF_WORKSPACES_MULTI_REGION_ENABLED
+            value: {{ .Values.featureFlags.workspacesMultiRegionEnabled | quote }}
           {{- if .Values.analytics.survicate_workspace_key }}
           - name: NUXT_PUBLIC_SURVICATE_WORKSPACE_KEY
             value: {{ .Values.analytics.survicate_workspace_key | quote }}

@@ -1,10 +1,8 @@
-'use strict'
 import cors from 'cors'
 import {
-  validateToken,
-  revokeTokenById,
-  createAppToken,
-  createBareToken
+  createBareToken,
+  createAppTokenFactory,
+  validateTokenFactory
 } from '@/modules/core/services/tokens'
 import { validateScopes } from '@/modules/shared'
 import { InvalidAccessCodeRequestError } from '@/modules/auth/errors'
@@ -17,7 +15,8 @@ import {
   getAuthorizationCodeFactory,
   deleteAuthorizationCodeFactory,
   createRefreshTokenFactory,
-  getRefreshTokenFactory
+  getRefreshTokenFactory,
+  getTokenAppInfoFactory
 } from '@/modules/auth/repositories/apps'
 import { db } from '@/db/knex'
 import {
@@ -25,6 +24,19 @@ import {
   refreshAppTokenFactory
 } from '@/modules/auth/services/serverApps'
 import { Express } from 'express'
+import {
+  getApiTokenByIdFactory,
+  getTokenResourceAccessDefinitionsByIdFactory,
+  getTokenScopesByIdFactory,
+  revokeTokenByIdFactory,
+  revokeUserTokenByIdFactory,
+  storeApiTokenFactory,
+  storeTokenResourceAccessDefinitionsFactory,
+  storeTokenScopesFactory,
+  storeUserServerAppTokenFactory,
+  updateApiTokenFactory
+} from '@/modules/core/repositories/tokens'
+import { getUserRoleFactory } from '@/modules/core/repositories/users'
 
 // TODO: Secure these endpoints!
 export default function (app: Express) {
@@ -36,6 +48,16 @@ export default function (app: Express) {
     try {
       const getApp = getAppFactory({ db })
       const createAuthorizationCode = createAuthorizationCodeFactory({ db })
+      const validateToken = validateTokenFactory({
+        revokeUserTokenById: revokeUserTokenByIdFactory({ db }),
+        getApiTokenById: getApiTokenByIdFactory({ db }),
+        getTokenAppInfo: getTokenAppInfoFactory({ db }),
+        getTokenScopesById: getTokenScopesByIdFactory({ db }),
+        getUserRole: getUserRoleFactory({ db }),
+        getTokenResourceAccessDefinitionsById:
+          getTokenResourceAccessDefinitionsByIdFactory({ db }),
+        updateApiToken: updateApiTokenFactory({ db })
+      })
 
       const preventRedirect = !!req.query.preventRedirect
       const appId = req.query.appId as Optional<string>
@@ -92,6 +114,16 @@ export default function (app: Express) {
     try {
       const createRefreshToken = createRefreshTokenFactory({ db })
       const getApp = getAppFactory({ db })
+      const createAppToken = createAppTokenFactory({
+        storeApiToken: storeApiTokenFactory({ db }),
+        storeTokenScopes: storeTokenScopesFactory({ db }),
+        storeTokenResourceAccessDefinitions: storeTokenResourceAccessDefinitionsFactory(
+          {
+            db
+          }
+        ),
+        storeUserServerAppToken: storeUserServerAppTokenFactory({ db })
+      })
       const createAppTokenFromAccessCode = createAppTokenFromAccessCodeFactory({
         getAuthorizationCode: getAuthorizationCodeFactory({ db }),
         deleteAuthorizationCode: deleteAuthorizationCodeFactory({ db }),
@@ -152,6 +184,7 @@ export default function (app: Express) {
   app.post('/auth/logout', async (req, res) => {
     try {
       const revokeRefreshToken = revokeRefreshTokenFactory({ db })
+      const revokeTokenById = revokeTokenByIdFactory({ db })
 
       const token = req.body.token
       const refreshToken = req.body.refreshToken

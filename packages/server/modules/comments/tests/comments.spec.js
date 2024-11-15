@@ -3,9 +3,7 @@ const { packageRoot } = require('@/bootstrap')
 const expect = require('chai').expect
 const crs = require('crypto-random-string')
 const { beforeEachContext, truncateTables } = require('@/test/hooks')
-const { createUser } = require('@/modules/core/services/users')
 
-const { createObject } = require('@/modules/core/services/objects')
 const {
   streamResourceCheckFactory,
   createCommentFactory,
@@ -75,7 +73,11 @@ const {
   createBranchFactory
 } = require('@/modules/core/repositories/branches')
 const { VersionsEmitter } = require('@/modules/core/events/versionsEmitter')
-const { getObjectFactory } = require('@/modules/core/repositories/objects')
+const {
+  getObjectFactory,
+  storeSingleObjectIfNotFoundFactory,
+  storeClosuresIfNotFoundFactory
+} = require('@/modules/core/repositories/objects')
 const {
   legacyCreateStreamFactory,
   createStreamReturnRecordFactory
@@ -88,7 +90,9 @@ const {
 } = require('@/modules/serverinvites/services/creation')
 const {
   findUserByTargetFactory,
-  insertInviteAndDeleteOldFactory
+  insertInviteAndDeleteOldFactory,
+  deleteServerOnlyInvitesFactory,
+  updateAllInviteTargetsFactory
 } = require('@/modules/serverinvites/repositories/serverInvites')
 const {
   collectAndValidateCoreTargetsFactory
@@ -98,16 +102,43 @@ const {
 } = require('@/modules/serverinvites/services/coreEmailContents')
 const { getEventBus } = require('@/modules/shared/services/eventBus')
 const { ProjectsEmitter } = require('@/modules/core/events/projectsEmitter')
-const {
-  addStreamCreatedActivityFactory
-} = require('@/modules/activitystream/services/streamActivity')
 const { saveActivityFactory } = require('@/modules/activitystream/repositories')
 const { publish } = require('@/modules/shared/utils/subscriptions')
 const {
   addCommitCreatedActivityFactory
 } = require('@/modules/activitystream/services/commitActivity')
-const { getUsersFactory, getUserFactory } = require('@/modules/core/repositories/users')
+const {
+  getUsersFactory,
+  getUserFactory,
+  storeUserFactory,
+  countAdminUsersFactory,
+  storeUserAclFactory
+} = require('@/modules/core/repositories/users')
+const {
+  findEmailFactory,
+  createUserEmailFactory,
+  ensureNoPrimaryEmailForUserFactory
+} = require('@/modules/core/repositories/userEmails')
+const {
+  requestNewEmailVerificationFactory
+} = require('@/modules/emails/services/verification/request')
+const {
+  deleteOldAndInsertNewVerificationFactory
+} = require('@/modules/emails/repositories')
+const { renderEmail } = require('@/modules/emails/services/emailRendering')
+const { sendEmail } = require('@/modules/emails/services/sending')
+const { createUserFactory } = require('@/modules/core/services/users/management')
+const {
+  validateAndCreateUserEmailFactory
+} = require('@/modules/core/services/userEmails')
+const {
+  finalizeInvitedServerRegistrationFactory
+} = require('@/modules/serverinvites/services/processing')
+const { UsersEmitter } = require('@/modules/core/events/usersEmitter')
+const { getServerInfoFactory } = require('@/modules/core/repositories/server')
+const { createObjectFactory } = require('@/modules/core/services/objects/management')
 
+const getServerInfo = getServerInfoFactory({ db })
 const getUser = getUserFactory({ db })
 const getUsers = getUsersFactory({ db })
 const getStream = getStreamFactory({ db })
@@ -179,10 +210,6 @@ const createCommitByBranchName = createCommitByBranchNameFactory({
   getBranchById: getBranchByIdFactory({ db })
 })
 
-const addStreamCreatedActivity = addStreamCreatedActivityFactory({
-  saveActivity: saveActivityFactory({ db }),
-  publish
-})
 const createStream = legacyCreateStreamFactory({
   createStreamReturnRecord: createStreamReturnRecordFactory({
     inviteUsersToProject: inviteUsersToProjectFactory({
@@ -200,15 +227,47 @@ const createStream = legacyCreateStreamFactory({
             eventName,
             payload
           }),
-        getUser
+        getUser,
+        getServerInfo
       }),
       getUsers
     }),
     createStream: createStreamFactory({ db }),
     createBranch: createBranchFactory({ db }),
-    addStreamCreatedActivity,
     projectsEventsEmitter: ProjectsEmitter.emit
   })
+})
+
+const findEmail = findEmailFactory({ db })
+const requestNewEmailVerification = requestNewEmailVerificationFactory({
+  findEmail,
+  getUser: getUserFactory({ db }),
+  getServerInfo,
+  deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db }),
+  renderEmail,
+  sendEmail
+})
+const createUser = createUserFactory({
+  getServerInfo,
+  findEmail,
+  storeUser: storeUserFactory({ db }),
+  countAdminUsers: countAdminUsersFactory({ db }),
+  storeUserAcl: storeUserAclFactory({ db }),
+  validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
+    createUserEmail: createUserEmailFactory({ db }),
+    ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
+    findEmail,
+    updateEmailInvites: finalizeInvitedServerRegistrationFactory({
+      deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
+      updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
+    }),
+    requestNewEmailVerification
+  }),
+  usersEventsEmitter: UsersEmitter.emit
+})
+const createObject = createObjectFactory({
+  storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({ db }),
+  storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db })
 })
 
 function buildCommentInputFromString(textString) {
@@ -1188,7 +1247,7 @@ describe('Comments @comments', () => {
       // Init apollo instance w/ authenticated context
       apollo = {
         apollo: await buildApolloServer(),
-        context: createAuthedTestContext(user.id)
+        context: await createAuthedTestContext(user.id)
       }
 
       // Init token for authenticating w/ REST API
@@ -1231,7 +1290,7 @@ describe('Comments @comments', () => {
 
       before(async () => {
         // Truncate comments
-        truncateTables([Comments.name])
+        await truncateTables([Comments.name])
 
         // Create a single comment with a blob
         const createCommentResult = await createComment({

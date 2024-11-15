@@ -4,7 +4,7 @@
       <slot name="icon" />
     </div>
 
-    <div class="flex-1">
+    <div v-if="title || description" class="flex-1">
       <div v-if="title" class="flex items-center gap-2">
         <p class="text-heading-sm text-foreground">{{ title }}</p>
         <CommonBadge v-if="badge" rounded>{{ badge }}</CommonBadge>

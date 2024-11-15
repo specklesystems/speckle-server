@@ -1,0 +1,14 @@
+{
+  "main": {
+    "postgres": {
+      "connectionUri": "postgresql://speckle:speckle@127.0.0.1:5432/speckle2_test"
+    }
+  },
+  "regions": {
+    "region1": {
+      "postgres": {
+        "connectionUri": "postgresql://speckle:speckle@127.0.0.1:5433/speckle2_test"
+      }
+    }
+  }
+}

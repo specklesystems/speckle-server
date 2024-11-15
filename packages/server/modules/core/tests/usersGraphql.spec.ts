@@ -3,7 +3,6 @@ import { BasicTestUser, createTestUsers } from '@/test/authHelper'
 import { getActiveUser, getOtherUser } from '@/test/graphql/users'
 import { beforeEachContext, truncateTables } from '@/test/hooks'
 import { expect } from 'chai'
-import { createUser } from '@/modules/core/services/users'
 import {
   createRandomEmail,
   createRandomPassword
@@ -30,12 +29,20 @@ import {
 } from '@/modules/serverinvites/repositories/serverInvites'
 import { buildApolloServer } from '@/app'
 import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
-import { getServerInfo } from '@/modules/core/services/generic'
 import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
-import { getUserFactory } from '@/modules/core/repositories/users'
+import {
+  countAdminUsersFactory,
+  getUserFactory,
+  storeUserAclFactory,
+  storeUserFactory
+} from '@/modules/core/repositories/users'
+import { UsersEmitter } from '@/modules/core/events/usersEmitter'
+import { createUserFactory } from '@/modules/core/services/users/management'
+import { getServerInfoFactory } from '@/modules/core/repositories/server'
 
+const getServerInfo = getServerInfoFactory({ db })
 const getUser = getUserFactory({ db })
 const requestNewEmailVerification = requestNewEmailVerificationFactory({
   findEmail: findEmailFactory({ db }),
@@ -55,6 +62,17 @@ const createUserEmail = validateAndCreateUserEmailFactory({
     updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
   }),
   requestNewEmailVerification
+})
+
+const findEmail = findEmailFactory({ db })
+const createUser = createUserFactory({
+  getServerInfo,
+  findEmail,
+  storeUser: storeUserFactory({ db }),
+  countAdminUsers: countAdminUsersFactory({ db }),
+  storeUserAcl: storeUserAclFactory({ db }),
+  validateAndCreateUserEmail: createUserEmail,
+  usersEventsEmitter: UsersEmitter.emit
 })
 
 describe('Users (GraphQL)', () => {
@@ -85,7 +103,7 @@ describe('Users (GraphQL)', () => {
     before(async () => {
       apollo = {
         apollo: await buildApolloServer(),
-        context: createTestContext()
+        context: await createTestContext()
       }
     })
 
@@ -112,7 +130,7 @@ describe('Users (GraphQL)', () => {
     before(async () => {
       apollo = {
         apollo: await buildApolloServer(),
-        context: createAuthedTestContext(me.id)
+        context: await createAuthedTestContext(me.id)
       }
     })
 
@@ -147,7 +165,8 @@ describe('Users (GraphQL)', () => {
         const userId = await createUser({
           name: 'emails user',
           email: createRandomEmail(),
-          password: createRandomPassword()
+          password: createRandomPassword(),
+          verified: false
         })
         await createUserEmail({
           userEmail: {

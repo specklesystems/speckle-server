@@ -1,24 +1,106 @@
 const expect = require('chai').expect
 const assert = require('assert')
 
-const {
-  createUser,
-
-  deleteUser,
-  changeUserRole,
-  getUserRole
-} = require('@/modules/core/services/users')
 const { beforeEachContext } = require('@/test/hooks')
 const { Roles } = require('@speckle/shared')
 const cryptoRandomString = require('crypto-random-string')
 const {
   legacyGetPaginatedUsersFactory,
-  legacyGetPaginatedUsersCount
+  legacyGetPaginatedUsersCountFactory,
+  getUserFactory,
+  storeUserFactory,
+  countAdminUsersFactory,
+  storeUserAclFactory,
+  isLastAdminUserFactory,
+  deleteUserRecordFactory,
+  getUserRoleFactory,
+  updateUserServerRoleFactory
 } = require('@/modules/core/repositories/users')
 const { db } = require('@/db/knex')
+const {
+  findEmailFactory,
+  createUserEmailFactory,
+  ensureNoPrimaryEmailForUserFactory
+} = require('@/modules/core/repositories/userEmails')
+const {
+  requestNewEmailVerificationFactory
+} = require('@/modules/emails/services/verification/request')
+const {
+  deleteOldAndInsertNewVerificationFactory
+} = require('@/modules/emails/repositories')
+const { renderEmail } = require('@/modules/emails/services/emailRendering')
+const { sendEmail } = require('@/modules/emails/services/sending')
+const {
+  createUserFactory,
+  deleteUserFactory,
+  changeUserRoleFactory
+} = require('@/modules/core/services/users/management')
+const {
+  validateAndCreateUserEmailFactory
+} = require('@/modules/core/services/userEmails')
+const {
+  finalizeInvitedServerRegistrationFactory
+} = require('@/modules/serverinvites/services/processing')
+const {
+  deleteServerOnlyInvitesFactory,
+  updateAllInviteTargetsFactory,
+  deleteAllUserInvitesFactory
+} = require('@/modules/serverinvites/repositories/serverInvites')
+const { UsersEmitter } = require('@/modules/core/events/usersEmitter')
+const {
+  deleteStreamFactory,
+  getUserDeletableStreamsFactory
+} = require('@/modules/core/repositories/streams')
+const { dbLogger } = require('@/logging/logging')
+const { getServerInfoFactory } = require('@/modules/core/repositories/server')
 
 const getUsers = legacyGetPaginatedUsersFactory({ db })
-const countUsers = legacyGetPaginatedUsersCount({ db })
+const countUsers = legacyGetPaginatedUsersCountFactory({ db })
+
+const getServerInfo = getServerInfoFactory({ db })
+const findEmail = findEmailFactory({ db })
+const requestNewEmailVerification = requestNewEmailVerificationFactory({
+  findEmail,
+  getUser: getUserFactory({ db }),
+  getServerInfo,
+  deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db }),
+  renderEmail,
+  sendEmail
+})
+const createUser = createUserFactory({
+  getServerInfo,
+  findEmail,
+  storeUser: storeUserFactory({ db }),
+  countAdminUsers: countAdminUsersFactory({ db }),
+  storeUserAcl: storeUserAclFactory({ db }),
+  validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
+    createUserEmail: createUserEmailFactory({ db }),
+    ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
+    findEmail,
+    updateEmailInvites: finalizeInvitedServerRegistrationFactory({
+      deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
+      updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
+    }),
+    requestNewEmailVerification
+  }),
+  usersEventsEmitter: UsersEmitter.emit
+})
+const deleteUser = deleteUserFactory({
+  deleteStream: deleteStreamFactory({ db }),
+  logger: dbLogger,
+  isLastAdminUser: isLastAdminUserFactory({ db }),
+  getUserDeletableStreams: getUserDeletableStreamsFactory({ db }),
+  deleteAllUserInvites: deleteAllUserInvitesFactory({ db }),
+  deleteUserRecord: deleteUserRecordFactory({ db })
+})
+const getUserRole = getUserRoleFactory({ db })
+const buildChangeUserRole = (guestModeEnabled = false) =>
+  changeUserRoleFactory({
+    getServerInfo: async () => ({ ...getServerInfo(), guestModeEnabled }),
+    isLastAdminUser: isLastAdminUserFactory({ db }),
+    updateUserServerRole: updateUserServerRoleFactory({ db })
+  })
+const changeUserRole = buildChangeUserRole()
 
 describe('User admin @user-services', () => {
   const myTestActor = {
@@ -55,7 +137,7 @@ describe('User admin @user-services', () => {
 
     expect(await countUsers()).to.equal(2)
 
-    await deleteUser({ deleteAllUserInvites: async () => true })(actorId)
+    await deleteUser(actorId)
     expect(await countUsers()).to.equal(1)
   })
 
@@ -124,10 +206,9 @@ describe('User admin @user-services', () => {
       newRole = await getUserRole(userId)
       expect(newRole).to.equal(Roles.Server.User)
 
-      await changeUserRole({
+      await buildChangeUserRole(true)({
         userId,
-        role: Roles.Server.Guest,
-        guestModeEnabled: true
+        role: Roles.Server.Guest
       })
       newRole = await getUserRole(userId)
       expect(newRole).to.equal(Roles.Server.Guest)

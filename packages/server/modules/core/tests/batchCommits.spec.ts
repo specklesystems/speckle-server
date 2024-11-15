@@ -174,7 +174,7 @@ describe('Batch commits', () => {
     before(async () => {
       apollo = {
         apollo: await buildApolloServer(),
-        context: createAuthedTestContext(me.id)
+        context: await createAuthedTestContext(me.id)
       }
       invokeBatchAction = buildBatchActionInvoker(apollo)
     })
@@ -310,7 +310,7 @@ describe('Batch commits', () => {
     before(async () => {
       apollo = {
         apollo: await buildApolloServer(),
-        context: createTestContext()
+        context: await createTestContext()
       }
       invokeBatchAction = buildBatchActionInvoker(apollo)
     })

@@ -31,6 +31,7 @@ import {
   LegacyGetStreams,
   UpdateStreamRole
 } from '@/modules/core/domain/streams/operations'
+import { ProjectNotFoundError } from '@/modules/core/errors/projects'
 
 export const queryAllWorkspaceProjectsFactory = ({
   getStreams
@@ -130,6 +131,7 @@ export const moveProjectToWorkspaceFactory =
   }: MoveProjectToWorkspaceArgs): Promise<StreamRecord> => {
     const project = await getProject({ projectId })
 
+    if (!project) throw new ProjectNotFoundError()
     if (project.workspaceId?.length) {
       // We do not currently support moving projects between workspaces
       throw new WorkspaceInvalidProjectError(

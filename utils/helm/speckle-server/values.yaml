@@ -47,6 +47,12 @@ featureFlags:
   workspaceSsoEnabled: false
   ## @param featureFlags.multipleEmailsModuleEnabled High level flag fully toggles multiple emails
   multipleEmailsModuleEnabled: false
+  ## @param featureFlags.gatekeeperModuleEnabled High level flag that enables the gatekeeper module
+  gatekeeperModuleEnabled: false
+  ## @param featureFlags.billingIntegrationEnabled High level flag that enables the billing integration
+  billingIntegrationEnabled: false
+  ## @param featureFlags.workspacesMultiRegionEnabled Toggles whether multi-region is available within workspaces. workspaceModuleEnabled must also be enabled.
+  workspacesMultiRegionEnabled: false
 
 analytics:
   ## @param analytics.enabled Enable or disable analytics
@@ -382,6 +388,30 @@ redis:
         ## ref: https://github.com/cilium/cilium/blob/master/pkg/policy/api/service.go
         serviceSelector: {}
 
+## @section openTelemetry
+## @descriptionStart
+## Defines parameters related to opentelemetry exporting of metrics.
+## @descriptionEnd
+##
+openTelemetry:
+  tracing:
+    ## @param openTelemetry.tracing.url Required. The URL to which the opentelemetry traces will be exported.
+    ##
+    url: ''
+    ## @param openTelemetry.tracing.key Required. The key to be used when exporting opentelemetry traces.
+    ##
+    key: ''
+    ## @param openTelemetry.tracing.value Required. The value to be used when exporting opentelemetry traces.
+    ##
+    value: ''
+
+multiRegion:
+  config:
+    ## @param multiRegion.config.secretName If workspacesMultiRegionEnabled is enabled, the server will be deployed in a multi-region configuration based on the values in a secret. This allows the default secret name to be overridden.
+    secretName: 'multi-region-config'
+    ## @param multiRegion.config.secretKey If workspacesMultiRegionEnabled is enabled, the server will be deployed in a multi-region configuration based on the values in a secret. This allows the default secret key and filename to be overridden.
+    secretKey: 'multi-region-config.json'
+
 ## @section Server
 ## @descriptionStart
 ## Defines parameters related to the backend server component of Speckle.
@@ -468,6 +498,57 @@ server:
     ## @param server.licenseTokenSecret.secretKey The key within the Kubernetes Secret holding the Session secret as its value.
     ##
     secretKey: ''
+
+  ## @extra server.billing Values to enable billing integration on the server
+  billing:
+    ## @param server.billing.secretName The name of the Kubernetes Secret containing the Session secret.  This is a unique value (can be generated randomly). This is expected to be provided within the Kubernetes cluster as an opaque Kubernetes Secret. Ref: https://kubernetes.io/docs/concepts/configuration/secret/#opaque-secrets
+    secretName: ''
+
+    stripeApiKey:
+      ## @param server.billing.stripeApiKey.secretKey The key within the Kubernetes Secret holding the stripeApiKey secret as its value.
+      secretKey: 'stripeApiKey'
+    stripeEndpointSigningKey:
+      ## @param server.billing.stripeEndpointSigningKey.secretKey The key within the Kubernetes Secret holding the stripeEndpointSigningKey secret as its value.
+      secretKey: 'stripeEndpointSigningKey'
+    workspaceGuestSeatStripeProductId:
+      ## @param server.billing.workspaceGuestSeatStripeProductId.secretKey The key within the Kubernetes Secret holding the workspaceGuestSeatStripeProductId secret as its value.
+      secretKey: 'workspaceGuestSeatStripeProductId'
+    workspaceMonthlyGuestSeatStripePriceId:
+      ## @param server.billing.workspaceMonthlyGuestSeatStripePriceId.secretKey The key within the Kubernetes Secret holding the workspaceMonthlyGuestSeatStripePriceId secret as its value.
+      secretKey: 'workspaceMonthlyGuestSeatStripePriceId'
+    workspaceYearlyGuestSeatStripePriceId:
+      ## @param server.billing.workspaceYearlyGuestSeatStripePriceId.secretKey The key within the Kubernetes Secret holding the workspaceYearlyGuestSeatStripePriceId secret as its value.
+      secretKey: 'workspaceYearlyGuestSeatStripePriceId'
+
+    workspaceTeamSeatStripeProductId:
+      ## @param server.billing.workspaceTeamSeatStripeProductId.secretKey The key within the Kubernetes Secret holding the workspaceTeamSeatStripeProductId secret as its value.
+      secretKey: 'workspaceTeamSeatStripeProductId'
+    workspaceMonthlyTeamSeatStripePriceId:
+      ## @param server.billing.workspaceMonthlyTeamSeatStripePriceId.secretKey The key within the Kubernetes Secret holding the workspaceMonthlyTeamSeatStripePriceId secret as its value.
+      secretKey: 'workspaceMonthlyTeamSeatStripePriceId'
+    workspaceYearlyTeamSeatStripePriceId:
+      ## @param server.billing.workspaceYearlyTeamSeatStripePriceId.secretKey The key within the Kubernetes Secret holding the workspaceYearlyTeamSeatStripePriceId secret as its value.
+      secretKey: 'workspaceYearlyTeamSeatStripePriceId'
+
+    workspaceProSeatStripeProductId:
+      ## @param server.billing.workspaceProSeatStripeProductId.secretKey The key within the Kubernetes Secret holding the workspaceProSeatStripeProductId secret as its value.
+      secretKey: 'workspaceProSeatStripeProductId'
+    workspaceMonthlyProSeatStripePriceId:
+      ## @param server.billing.workspaceMonthlyProSeatStripePriceId.secretKey The key within the Kubernetes Secret holding the workspaceMonthlyProSeatStripePriceId secret as its value.
+      secretKey: 'workspaceMonthlyProSeatStripePriceId'
+    workspaceYearlyProSeatStripePriceId:
+      ## @param server.billing.workspaceYearlyProSeatStripePriceId.secretKey The key within the Kubernetes Secret holding the workspaceYearlyProSeatStripePriceId secret as its value.
+      secretKey: 'workspaceYearlyProSeatStripePriceId'
+
+    workspaceBusinessSeatStripeProductId:
+      ## @param server.billing.workspaceBusinessSeatStripeProductId.secretKey The key within the Kubernetes Secret holding the workspaceBusinessSeatStripeProductId secret as its value.
+      secretKey: 'workspaceBusinessSeatStripeProductId'
+    workspaceMonthlyBusinessSeatStripePriceId:
+      ## @param server.billing.workspaceMonthlyBusinessSeatStripePriceId.secretKey The key within the Kubernetes Secret holding the workspaceMonthlyBusinessSeatStripePriceId secret as its value.
+      secretKey: 'workspaceMonthlyBusinessSeatStripePriceId'
+    workspaceYearlyBusinessSeatStripePriceId:
+      ## @param server.billing.workspaceYearlyBusinessSeatStripePriceId.secretKey The key within the Kubernetes Secret holding the workspaceYearlyBusinessSeatStripePriceId secret as its value.
+      secretKey: 'workspaceYearlyBusinessSeatStripePriceId'
 
   sessionSecret:
     ## @param server.sessionSecret.secretName The name of the Kubernetes Secret containing the Session secret.  This is a unique value (can be generated randomly). This is expected to be provided within the Kubernetes cluster as an opaque Kubernetes Secret. Ref: https://kubernetes.io/docs/concepts/configuration/secret/#opaque-secrets
@@ -954,9 +1035,9 @@ frontend_2:
   ## @param frontend_2.image The Docker image to be used for the Speckle Frontend 2 component. If blank, defaults to speckle/speckle-frontend-2:{{ .Values.docker_image_tag }}. If provided, this value should be the full path including tag. The docker_image_tag value will be ignored.
   ##
   image: ''
-  ## @param frontend_2.ghostApiKey API Key for Ghost, which provides the blog content for the new web application frontend.
+  ## @param frontend_2.webflowApiToken API Key for Webflow, which provides the blog content for the new web application frontend.
   ##
-  ghostApiKey: ''
+  webflowApiToken: ''
   ## @param frontend_2.logClientApiToken SEQ API token
   ##
   logClientApiToken: ''

@@ -75,10 +75,16 @@ import { buildDecryptor } from '@/modules/shared/utils/libsodium'
 import { mapGqlStatusToDbStatus } from '@/modules/automate/utils/automateFunctionRunStatus'
 import { db } from '@/db/knex'
 import { AutomateRunsEmitter } from '@/modules/automate/events/runs'
-import { createAppToken } from '@/modules/core/services/tokens'
 import { getCommitFactory } from '@/modules/core/repositories/commits'
 import { validateStreamAccessFactory } from '@/modules/core/services/streams/access'
 import { authorizeResolver } from '@/modules/shared'
+import { createAppTokenFactory } from '@/modules/core/services/tokens'
+import {
+  storeApiTokenFactory,
+  storeTokenResourceAccessDefinitionsFactory,
+  storeTokenScopesFactory,
+  storeUserServerAppTokenFactory
+} from '@/modules/core/repositories/tokens'
 
 const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
 
@@ -101,6 +107,14 @@ const updateAutomationRun = updateAutomationRunFactory({ db })
 const getBranchLatestCommits = getBranchLatestCommitsFactory({ db })
 const getCommit = getCommitFactory({ db })
 const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
+const createAppToken = createAppTokenFactory({
+  storeApiToken: storeApiTokenFactory({ db }),
+  storeTokenScopes: storeTokenScopesFactory({ db }),
+  storeTokenResourceAccessDefinitions: storeTokenResourceAccessDefinitionsFactory({
+    db
+  }),
+  storeUserServerAppToken: storeUserServerAppTokenFactory({ db })
+})
 
 ;(FF_AUTOMATE_MODULE_ENABLED ? describe : describe.skip)(
   'Automate triggers @automate',

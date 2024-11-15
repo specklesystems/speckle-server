@@ -11,6 +11,8 @@ import {
   NotFoundError,
   UnauthorizedError
 } from '@/modules/shared/errors'
+import { Optional } from '@speckle/shared'
+import { Knex } from 'knex'
 
 /**
  * Encode cursor to turn it into an opaque & obfuscated value
@@ -41,39 +43,35 @@ export function encodeIsoDateCursor(date: Date | Dayjs): string {
   return encodeCursor(str)
 }
 
-export type RequestDataLoadersBuilder<
-  T extends {
-    [group: string]: {
-      [loader: string]: unknown
-    }
-  }
-> = (params: {
-  ctx: AuthContext
-  createLoader: <K, V, C = K>(
-    batchLoadFn: DataLoader.BatchLoadFn<K, V>,
-    options?: DataLoader.Options<K, V, C>
-  ) => DataLoader<K, V, C>
-}) => T
+/**
+ * All dataloaders must at the very least follow this type
+ */
+export type ModularizedDataLoadersConstraint = {
+  [group: string]: Optional<{
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    [loader: string]: DataLoader<any, any> | { clearAll: () => unknown }
+  }>
+}
 
-export type RequestDataLoaders<
-  T extends {
-    [group: string]: {
-      [loader: string]: unknown
+export type RequestDataLoadersBuilder<T extends ModularizedDataLoadersConstraint> =
+  (params: {
+    ctx: AuthContext
+    createLoader: <K, V, C = K>(
+      batchLoadFn: DataLoader.BatchLoadFn<K, V>,
+      options?: DataLoader.Options<K, V, C>
+    ) => DataLoader<K, V, C>
+    deps: {
+      db: Knex
     }
-  }
-> = ReturnType<RequestDataLoadersBuilder<T>>
+  }) => T
 
-export const defineRequestDataloaders = <
-  T extends {
-    [group: string]: {
-      [loader: string]: unknown
-    }
-  }
->(
+export const defineRequestDataloaders = <T extends ModularizedDataLoadersConstraint>(
   builder: RequestDataLoadersBuilder<T>
 ): RequestDataLoadersBuilder<T> => {
   return builder
 }
+
+export const simpleTupleCacheKey = (key: [string, string]) => `${key[0]}:${key[1]}`
 
 /**
  * Is a lower significance error, caused by user error (and thus - not a bug in our code)

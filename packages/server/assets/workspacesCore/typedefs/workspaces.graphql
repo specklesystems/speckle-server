@@ -8,6 +8,11 @@ extend type Query {
     @hasScope(scope: "workspace:read")
 
   """
+  Find workspaces a given user email can use SSO to sign with
+  """
+  workspaceSsoByEmail(email: String!): [LimitedWorkspace!]!
+
+  """
   Look for an invitation to a workspace, for the current user (authed or not).
 
   If token is specified, it will return the corresponding invite even if it belongs to a different user.
@@ -142,8 +147,16 @@ type WorkspaceMutations {
   # We are, for the moment, doing the check in the resolver
   deleteDomain(input: WorkspaceDomainDeleteInput!): Workspace!
     @hasScope(scope: "workspace:update")
+  deleteSsoProvider(workspaceId: String!): Boolean!
   invites: WorkspaceInviteMutations!
   projects: WorkspaceProjectMutations! @hasServerRole(role: SERVER_USER)
+}
+
+input WorkspaceProjectCreateInput {
+  name: String
+  description: String
+  visibility: ProjectVisibility
+  workspaceId: String!
 }
 
 type WorkspaceProjectMutations {
@@ -151,6 +164,7 @@ type WorkspaceProjectMutations {
     @hasStreamRole(role: STREAM_OWNER)
     @hasWorkspaceRole(role: MEMBER)
   moveToWorkspace(projectId: String!, workspaceId: String!): Project!
+  create(input: WorkspaceProjectCreateInput!): Project!
 }
 
 input WorkspaceDomainDeleteInput {
@@ -314,6 +328,10 @@ type Workspace {
   """
   billing: WorkspaceBilling @hasWorkspaceRole(role: MEMBER)
   """
+  Information about the workspace's SSO configuration and the current user's SSO session, if present
+  """
+  sso: WorkspaceSso
+  """
   Enable/Disable restriction to invite users to workspace as Guests only
   """
   domainBasedMembershipProtectionEnabled: Boolean!
@@ -323,11 +341,53 @@ type Workspace {
   discoverabilityEnabled: Boolean!
 }
 
-type DiscoverableWorkspace {
+type WorkspaceSso {
+  """
+  If null, the workspace does not have SSO configured
+  """
+  provider: WorkspaceSsoProvider
+  session: WorkspaceSsoSession
+}
+
+type WorkspaceSsoProvider {
   id: ID!
   name: String!
+  clientId: String!
+  issuerUrl: String!
+}
+
+type WorkspaceSsoSession {
+  createdAt: DateTime!
+  validUntil: DateTime!
+}
+
+"""
+Workspace metadata visible to non-workspace members.
+"""
+type LimitedWorkspace {
+  """
+  Workspace id
+  """
+  id: ID!
+  """
+  Workspace name
+  """
+  name: String!
+  """
+  Unique workspace short id. Used for navigation.
+  """
+  slug: String!
+  """
+  Workspace description
+  """
   description: String
+  """
+  Optional base64 encoded workspace logo image
+  """
   logo: String
+  """
+  Index of fallback workspace logo to use
+  """
   defaultLogoIndex: Int!
 }
 
@@ -417,7 +477,15 @@ extend type User {
   """
   Get discoverable workspaces with verified domains that match the active user's
   """
-  discoverableWorkspaces: [DiscoverableWorkspace!]!
+  discoverableWorkspaces: [LimitedWorkspace!]!
+
+  """
+  A list of workspaces for the active user where:
+  (1) The user is a member or admin
+  (2) The workspace has SSO provider enabled
+  (3) The user does not have a valid SSO session for the given SSO provider
+  """
+  expiredSsoSessions: [LimitedWorkspace!]!
 
   """
   Get the workspaces for the user

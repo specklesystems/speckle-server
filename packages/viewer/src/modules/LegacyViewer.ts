@@ -1,4 +1,4 @@
-import { Box3, MathUtils, Vector2 } from 'three'
+import { Box3, MathUtils, Vector2, Vector3 } from 'three'
 import {
   FilteringExtension,
   type FilteringState
@@ -43,6 +43,7 @@ import { type PropertyInfo } from './filtering/PropertyManager.js'
 import { BatchObject } from './batching/BatchObject.js'
 import { SpeckleLoader } from './loaders/Speckle/SpeckleLoader.js'
 import Logger from './utils/Logger.js'
+import { ViewModes } from './extensions/ViewModes.js'
 
 class LegacySelectionExtension extends SelectionExtension {
   /** FE2 'manually' selects objects pon it's own, so we're disabling the extension's event handler
@@ -128,6 +129,7 @@ export class LegacyViewer extends Viewer {
     this.explodeExtension = this.createExtension(ExplodeExtension)
     this.diffExtension = this.createExtension(DiffExtension)
     this.highlightExtension = this.createExtension(HighlightExtension)
+    this.createExtension(ViewModes)
   }
 
   public async init(): Promise<void> {
@@ -153,7 +155,13 @@ export class LegacyViewer extends Viewer {
     if (!box) {
       box = this.speckleRenderer.sceneBox
     }
-    this.sections.setBox(box as Box3, offset)
+    this.sections.setBox(
+      new Box3(
+        new Vector3(box.min.x, box.min.y, box.min.z),
+        new Vector3(box.max.x, box.max.y, box.max.z)
+      ),
+      offset
+    )
   }
 
   public getSectionBoxFromObjects(objectIds: string[]) {
