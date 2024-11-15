@@ -2,7 +2,7 @@ version: 2.1
 
 orbs:
   snyk: snyk/snyk@2.0.3
-  # codecov: codecov/codecov@4.1.0
+  codecov: codecov/codecov@5.0.3
 
 workflows:
   test-build:
@@ -20,6 +20,7 @@ workflows:
           context:
             - speckle-server-licensing
             - stripe-integration
+            - speckle-server-codecov
           filters: &filters-allow-all
             tags:
               # run tests for any commit on any branch, including any tags
@@ -534,8 +535,8 @@ jobs:
           command: yarn test:report
           working_directory: 'packages/server'
 
-      # - codecov/upload:
-      #     file: packages/server/coverage/lcov.info
+      - codecov/upload:
+          files: packages/server/coverage/lcov.info
 
       - run:
           name: Introspect GQL schema for subsequent checks
