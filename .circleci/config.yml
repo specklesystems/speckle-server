@@ -595,13 +595,13 @@ jobs:
           POSTGRES_DB: speckle2_test
           POSTGRES_PASSWORD: speckle
           POSTGRES_USER: speckle
-        command: -c 'max_connections=1000'
+        command: -c 'max_connections=1000' -c 'wal_level=logical'
       - image: 'speckle/speckle-postgres'
         environment:
           POSTGRES_DB: speckle2_test
           POSTGRES_PASSWORD: speckle
           POSTGRES_USER: speckle
-        command: -c 'max_connections=1000' -c 'port=5433'
+        command: -c 'max_connections=1000' -c 'port=5433' -c 'wal_level=logical'
       - image: 'minio/minio'
         command: server /data --console-address ":9001"
     environment:
