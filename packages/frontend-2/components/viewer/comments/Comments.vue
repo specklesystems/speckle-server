@@ -62,7 +62,10 @@
       <div v-if="commentThreads.length === 0" class="pb-4">
         <ProjectPageLatestItemsCommentsEmptyState
           small
-          :show-button="canPostComment"
+          :show-button="canPostComment && hasSelectedObjects"
+          :text="
+            hasSelectedObjects ? undefined : 'Select an object to start collaborating'
+          "
           @new-discussion="onNewDiscussion"
         />
       </div>
@@ -88,6 +91,7 @@ import {
 } from '~~/lib/viewer/composables/setup'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useCheckViewerCommentingAccess } from '~~/lib/viewer/composables/commentManagement'
+import { useSelectionUtilities } from '~~/lib/viewer/composables/ui'
 
 defineEmits(['close'])
 
@@ -168,7 +172,12 @@ watch(includeArchived, (newVal) =>
   })
 )
 
+const { objectIds: selectedObjectIds } = useSelectionUtilities()
+
+const hasSelectedObjects = computed(() => selectedObjectIds.value.size > 0)
+
 const onNewDiscussion = () => {
+  if (!hasSelectedObjects.value) return
   newThreadEditor.value = true
 }
 </script>
