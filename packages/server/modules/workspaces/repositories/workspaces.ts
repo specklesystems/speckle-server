@@ -15,6 +15,7 @@ import {
   GetUserIdsWithRoleInWorkspace,
   GetWorkspace,
   GetWorkspaceBySlug,
+  GetWorkspaceBySlugOrId,
   GetWorkspaceCollaborators,
   GetWorkspaceCollaboratorsTotalCount,
   GetWorkspaceDomains,
@@ -141,6 +142,18 @@ export const getWorkspaceFactory =
   async ({ workspaceId, userId }) => {
     const workspace = await workspaceWithRoleBaseQuery({ db, userId })
       .where(Workspaces.col.id, workspaceId)
+      .first()
+
+    return workspace || null
+  }
+
+export const getWorkspaceBySlugOrIdFactory =
+  (deps: { db: Knex }): GetWorkspaceBySlugOrId =>
+  async ({ workspaceSlugOrId }) => {
+    const { db } = deps
+    const workspace = await workspaceWithRoleBaseQuery({ db })
+      .where(Workspaces.col.slug, workspaceSlugOrId)
+      .orWhere(Workspaces.col.id, workspaceSlugOrId)
       .first()
 
     return workspace || null

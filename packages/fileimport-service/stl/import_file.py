@@ -69,6 +69,8 @@ if __name__ == "__main__":
 
     try:
         commit_id = import_stl()
+        if isinstance(commit_id, Exception):
+            raise commit_id
         results = {"success": True, "commitId": commit_id}
     except Exception as ex:
         results = {"success": False, "error": str(ex)}

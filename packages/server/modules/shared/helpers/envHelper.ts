@@ -53,9 +53,18 @@ export function getBooleanFromEnv(envVarKey: string, aDefault = false): boolean 
   return ['1', 'true', true].includes(process.env[envVarKey] || aDefault.toString())
 }
 
-export function getStringFromEnv(envVarKey: string): string {
+export function getStringFromEnv(
+  envVarKey: string,
+  options?: Partial<{
+    /**
+     * If set to true, wont throw if the env var is not set
+     */
+    unsafe: boolean
+  }>
+): string {
   const envVar = process.env[envVarKey]
   if (!envVar) {
+    if (options?.unsafe) return ''
     throw new MisconfiguredEnvironmentError(`${envVarKey} env var not configured`)
   }
   return envVar
@@ -415,9 +424,12 @@ export function getOtelHeaderValue() {
   return getStringFromEnv('OTEL_TRACE_VALUE')
 }
 
-export function getMultiRegionConfigPath() {
-  return getStringFromEnv('MULTI_REGION_CONFIG_PATH')
+export function getMultiRegionConfigPath(options?: Partial<{ unsafe: boolean }>) {
+  return getStringFromEnv('MULTI_REGION_CONFIG_PATH', options)
 }
+
+export const shouldRunTestsInMultiregionMode = () =>
+  getBooleanFromEnv('RUN_TESTS_IN_MULTIREGION_MODE')
 
 export function shutdownTimeoutSeconds() {
   return getIntFromEnv('SHUTDOWN_TIMEOUT_SECONDS', '300')

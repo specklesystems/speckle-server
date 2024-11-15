@@ -3,7 +3,7 @@
 
 const http = require('http')
 const prometheusClient = require('prom-client')
-const knex = require('../knex')
+const getDbClients = require('../knex')
 
 let metricFree = null
 let metricUsed = null
@@ -116,11 +116,13 @@ const initDBPrometheusMetricsFactory =
   }
 
 module.exports = {
-  initPrometheusMetrics() {
+  async initPrometheusMetrics() {
     if (prometheusInitialized) return
     prometheusInitialized = true
 
-    initDBPrometheusMetricsFactory({ db: knex })()
+    const db = (await getDbClients()).main.public
+
+    initDBPrometheusMetricsFactory({ db })()
 
     // Define the HTTP server
     const server = http.createServer(async (req, res) => {

@@ -247,7 +247,7 @@ export const SourceApps: SourceAppDefinition[] = [
   {
     searchKey: 'teklastructures',
     name: 'Tekla Structures',
-    short: 'TEKLAS',
+    short: 'TKL',
     bgColor: '#3a6eff'
   },
   { searchKey: 'openroads', name: 'OpenRoads', short: 'OROAD', bgColor: '#846256' },

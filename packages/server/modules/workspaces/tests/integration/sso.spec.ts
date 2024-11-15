@@ -256,7 +256,7 @@ describe('Workspace SSO repositories', () => {
     })
 
     afterEach(async () => {
-      truncateTables(['user_sso_sessions'])
+      await truncateTables(['user_sso_sessions'])
     })
 
     it('returns an empty array if there are no sessions', async () => {
