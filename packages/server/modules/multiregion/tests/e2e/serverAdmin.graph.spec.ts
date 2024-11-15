@@ -14,7 +14,7 @@ import {
   testApolloServer,
   TestApolloServer
 } from '@/test/graphqlHelper'
-import { beforeEachContext } from '@/test/hooks'
+import { beforeEachContext, getRegionKeys } from '@/test/hooks'
 import { MultiRegionConfigMock, MultiRegionDbSelectorMock } from '@/test/mocks/global'
 import { truncateRegionsSafely } from '@/test/speckle-helpers/regions'
 import { Roles } from '@speckle/shared'
@@ -187,13 +187,17 @@ isEnabled
             const res = await apollo.execute(GetRegionsDocument, {})
 
             expect(res).to.not.haveGraphQLErrors()
-            expect(res.data?.serverInfo.multiRegion.regions).to.have.length(1)
-            expect(res.data?.serverInfo.multiRegion.regions).to.deep.equal([
-              {
-                ...createdRegionInput,
-                id: createdRegionInput.key
-              }
-            ])
+            expect(res.data?.serverInfo.multiRegion.regions).to.have.length(
+              1 + getRegionKeys().length
+            )
+            expect(
+              res.data?.serverInfo.multiRegion.regions.find(
+                (r) => r.id === createdRegionInput.key
+              )
+            ).to.deep.equal({
+              ...createdRegionInput,
+              id: createdRegionInput.key
+            })
           })
 
           it('filters out used region from available keys', async () => {
