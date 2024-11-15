@@ -595,13 +595,13 @@ jobs:
           POSTGRES_DB: speckle2_test
           POSTGRES_PASSWORD: speckle
           POSTGRES_USER: speckle
-        command: -c 'max_connections=1000'
+        command: -c 'max_connections=1000' -c 'wal_level=logical'
       - image: 'speckle/speckle-postgres'
         environment:
           POSTGRES_DB: speckle2_test
           POSTGRES_PASSWORD: speckle
           POSTGRES_USER: speckle
-        command: -c 'max_connections=1000' -c 'port=5433'
+        command: -c 'max_connections=1000' -c 'port=5433' -c 'wal_level=logical'
       - image: 'minio/minio'
         command: server /data --console-address ":9001"
     environment:
@@ -623,8 +623,10 @@ jobs:
       S3_REGION: '' # optional, defaults to 'us-east-1'
       AUTOMATE_ENCRYPTION_KEYS_PATH: 'test/assets/automate/encryptionKeys.json'
       FF_BILLING_INTEGRATION_ENABLED: 'true'
-      # These are the only 2 different env keys:
+      # These are the only different env keys:
       MULTI_REGION_CONFIG_PATH: '../../.circleci/multiregion.test-ci.json'
+      FF_WORKSPACES_MODULE_ENABLED: 'true'
+      FF_WORKSPACES_MULTI_REGION_ENABLED: 'true'
       RUN_TESTS_IN_MULTIREGION_MODE: true
 
   test-frontend-2:
