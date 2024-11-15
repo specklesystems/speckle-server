@@ -23,7 +23,7 @@
     "dev:clean": "yarn build:clean && yarn dev",
     "dev:server:test": "cross-env DISABLE_NOTIFICATIONS_CONSUMPTION=true NODE_ENV=test LOG_LEVEL=silent LOG_PRETTY=true node ./bin/ts-www",
     "test": "cross-env NODE_ENV=test LOG_LEVEL=silent LOG_PRETTY=true mocha",
-    "test:multiregion": "cross-env RUN_TESTS_IN_MULTIREGION_MODE=true yarn test",
+    "test:multiregion": "cross-env RUN_TESTS_IN_MULTIREGION_MODE=true FF_WORKSPACES_MODULE_ENABLED=true FF_WORKSPACES_MULTI_REGION_ENABLED=true yarn test",
     "test:coverage": "cross-env NODE_ENV=test LOG_LEVEL=silent LOG_PRETTY=true nyc --reporter lcov mocha",
     "test:report": "yarn test:coverage -- --reporter mocha-junit-reporter --reporter-options mochaFile=reports/test-results.xml",
     "lint": "yarn lint:tsc && yarn lint:eslint",
