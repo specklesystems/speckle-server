@@ -225,7 +225,7 @@ export const initializeTestServer = async (params: {
   readinessCheck: ReadinessHandler
   customPortOverride?: number
 }) => {
-  await startHttp({ ...params, customPortOverride: 0 })
+  await startHttp({ ...params, customPortOverride: params.customPortOverride ?? 0 })
   const { server, app } = params
 
   await once(app, 'appStarted')
