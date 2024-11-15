@@ -1,4 +1,5 @@
 import { db } from '@/db/knex'
+import { isMultiRegionEnabled } from '@/modules/multiregion/helpers'
 import { storeRegionFactory } from '@/modules/multiregion/repositories'
 import { WorkspaceRegions } from '@/modules/workspaces/repositories/regions'
 import {
@@ -15,15 +16,12 @@ import {
 import { testApolloServer, TestApolloServer } from '@/test/graphqlHelper'
 import { beforeEachContext, getRegionKeys } from '@/test/hooks'
 import { MultiRegionDbSelectorMock } from '@/test/mocks/global'
-import {
-  isMultiRegionTestMode,
-  truncateRegionsSafely
-} from '@/test/speckle-helpers/regions'
+import { truncateRegionsSafely } from '@/test/speckle-helpers/regions'
 import { Roles } from '@speckle/shared'
 import { expect } from 'chai'
 
 const storeRegion = storeRegionFactory({ db })
-const isEnabled = isMultiRegionTestMode()
+const isEnabled = isMultiRegionEnabled()
 
 isEnabled
   ? describe('Workspace regions GQL', () => {
