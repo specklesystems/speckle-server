@@ -552,7 +552,7 @@ export = {
         addCommentCreatedActivity: addCommentCreatedActivityFactory({
           getViewerResourcesFromLegacyIdentifiers,
           getViewerResourceItemsUngrouped,
-          saveActivity: saveActivityFactory({ db: projectDb }),
+          saveActivity: saveActivityFactory({ db: mainDb }),
           publish
         })
       })
@@ -592,7 +592,7 @@ export = {
             getCommentsResources: getCommentsResourcesFactory({ db: projectDb }),
             getViewerResourcesFromLegacyIdentifiers
           }),
-          saveActivity: saveActivityFactory({ db }),
+          saveActivity: saveActivityFactory({ db: mainDb }),
           publish
         })
       })
@@ -657,7 +657,7 @@ export = {
         updateComment,
         addCommentArchivedActivity: addCommentArchivedActivityFactory({
           getViewerResourcesForComment,
-          saveActivity: saveActivityFactory({ db: projectDb }),
+          saveActivity: saveActivityFactory({ db: mainDb }),
           publish
         })
       })
@@ -767,7 +767,7 @@ export = {
       await addCommentCreatedActivityFactory({
         getViewerResourceItemsUngrouped,
         getViewerResourcesFromLegacyIdentifiers,
-        saveActivity: saveActivityFactory({ db }),
+        saveActivity: saveActivityFactory({ db: mainDb }),
         publish
       })({
         streamId: args.input.streamId,
@@ -839,7 +839,7 @@ export = {
       })
       await addCommentArchivedActivityFactory({
         getViewerResourcesForComment,
-        saveActivity: saveActivityFactory({ db: projectDb }),
+        saveActivity: saveActivityFactory({ db: mainDb }),
         publish
       })({
         streamId: args.streamId,
@@ -895,7 +895,7 @@ export = {
           getCommentsResources: getCommentsResourcesFactory({ db: projectDb }),
           getViewerResourcesFromLegacyIdentifiers
         }),
-        saveActivity: saveActivityFactory({ db: projectDb }),
+        saveActivity: saveActivityFactory({ db: mainDb }),
         publish
       })({
         streamId: args.input.streamId,

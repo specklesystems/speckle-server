@@ -36,9 +36,7 @@ function collectMentionedUserIds(comment: CommentRecord): string[] {
 
 type SendNotificationsForUsersDeps = {
   publish: NotificationPublisher
-  addStreamCommentMentionActivityResolver: (params: {
-    streamId: string
-  }) => Promise<AddStreamCommentMentionActivity>
+  addStreamCommentMentionActivity: AddStreamCommentMentionActivity
 }
 
 const sendNotificationsForUsersFactory =
@@ -46,9 +44,6 @@ const sendNotificationsForUsersFactory =
   async (userIds: string[], comment: CommentRecord) => {
     const { id, streamId, authorId, parentComment } = comment
     const threadId = parentComment || id
-
-    const addStreamCommentMentionActivity =
-      await deps.addStreamCommentMentionActivityResolver({ streamId })
 
     await Promise.all(
       flatten(
@@ -65,7 +60,7 @@ const sendNotificationsForUsersFactory =
               }
             }),
             // Create activity item
-            addStreamCommentMentionActivity({
+            deps.addStreamCommentMentionActivity({
               streamId,
               mentionAuthorId: authorId,
               mentionTargetId: uid,
