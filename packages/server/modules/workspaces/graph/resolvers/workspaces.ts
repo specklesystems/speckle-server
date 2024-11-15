@@ -161,7 +161,6 @@ import {
   isRateLimitBreached
 } from '@/modules/core/services/ratelimiter'
 import { RateLimitError } from '@/modules/core/errors/ratelimit'
-import { createBranchFactory } from '@/modules/core/repositories/branches'
 import { ProjectsEmitter } from '@/modules/core/events/projectsEmitter'
 import { getDb } from '@/modules/multiregion/dbSelector'
 import { createNewProjectFactory } from '@/modules/core/services/projects'
@@ -170,13 +169,12 @@ import {
   storeProjectFactory,
   storeProjectRoleFactory
 } from '@/modules/core/repositories/projects'
-import { StoreModel } from '@/modules/core/domain/projects/operations'
-import { Knex } from 'knex'
 import {
   listUserExpiredSsoSessionsFactory,
   listWorkspaceSsoMembershipsByUserEmailFactory
 } from '@/modules/workspaces/services/sso'
 import {
+  deleteSsoProviderFactory,
   getUserSsoSessionFactory,
   getWorkspaceSsoProviderFactory,
   getWorkspaceSsoProviderRecordFactory,
@@ -185,6 +183,7 @@ import {
 } from '@/modules/workspaces/repositories/sso'
 import { getDecryptor } from '@/modules/workspaces/helpers/sso'
 import { getDefaultRegionFactory } from '@/modules/workspaces/repositories/regions'
+import { storeModelFactory } from '@/modules/core/repositories/models'
 
 const eventBus = getEventBus()
 const getServerInfo = getServerInfoFactory({ db })
@@ -450,12 +449,14 @@ export = FF_WORKSPACES_MODULE_ENABLED
           )
 
           // Delete workspace and associated resources (i.e. invites)
-          const getStreams = legacyGetStreamsFactory({ db })
           const deleteWorkspace = deleteWorkspaceFactory({
             deleteWorkspace: repoDeleteWorkspaceFactory({ db }),
             deleteProject: deleteStream,
             deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db }),
-            queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({ getStreams })
+            queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({
+              getStreams: legacyGetStreamsFactory({ db })
+            }),
+            deleteSsoProvider: deleteSsoProviderFactory({ db })
           })
 
           await deleteWorkspace({ workspaceId })
@@ -586,6 +587,18 @@ export = FF_WORKSPACES_MODULE_ENABLED
             workspaceId: args.input.workspaceId,
             userId: context.userId
           })
+        },
+        deleteSsoProvider: async (_parent, args, context) => {
+          await authorizeResolver(
+            context.userId,
+            args.workspaceId,
+            Roles.Workspace.Admin,
+            context.resourceAccessRules
+          )
+
+          await deleteSsoProviderFactory({ db })({ workspaceId: args.workspaceId })
+
+          return true
         },
         async join(_parent, args, context) {
           if (!context.userId) throw new WorkspaceJoinNotAllowedError()
@@ -805,17 +818,6 @@ export = FF_WORKSPACES_MODULE_ENABLED
           const regionKey = workspaceDefaultRegion?.key
 
           const projectDb = await getDb({ regionKey })
-
-          const storeModelFactory =
-            ({ db }: { db: Knex }): StoreModel =>
-            async ({ authorId, projectId, name, description }) => {
-              await createBranchFactory({ db })({
-                authorId,
-                description,
-                name,
-                streamId: projectId
-              })
-            }
 
           // todo, use the command factory here, but for that, we need to migrate to the event bus
           const createNewProject = createNewProjectFactory({

@@ -1,9 +1,5 @@
 <template>
-  <ProjectEmptyState
-    :small="small"
-    title="No discussions, yet."
-    :text="small ? undefined : 'Open a model and start the collaboration today!'"
-  >
+  <ProjectEmptyState :small="small" title="No discussions, yet." :text="text">
     <template #cta>
       <div v-if="showButton" class="mt-3">
         <FormButton :icon-left="PlusIcon" @click="() => $emit('new-discussion')">
@@ -23,5 +19,6 @@ defineEmits<{
 defineProps<{
   small?: boolean
   showButton?: boolean
+  text?: string
 }>()
 </script>

@@ -8,7 +8,6 @@ import {
 import { ObjectHandlingError } from '@/modules/core/errors/object'
 import { estimateStringMegabyteSize } from '@/modules/core/utils/chunking'
 import { toMegabytesWith1DecimalPlace } from '@/modules/core/utils/formatting'
-import { Logger } from 'pino'
 import { Router } from 'express'
 import {
   createObjectsBatchedAndNoClosuresFactory,
@@ -18,31 +17,12 @@ import {
   storeClosuresIfNotFoundFactory,
   storeObjectsIfNotFoundFactory
 } from '@/modules/core/repositories/objects'
-import { db } from '@/db/knex'
-import { RawSpeckleObject } from '@/modules/core/domain/objects/types'
 import { validatePermissionsWriteStreamFactory } from '@/modules/core/services/streams/auth'
 import { authorizeResolver, validateScopes } from '@/modules/shared'
+import { getProjectDbClient } from '@/modules/multiregion/dbSelector'
 
 const MAX_FILE_SIZE = maximumObjectUploadFileSizeMb() * 1024 * 1024
 const { FF_NO_CLOSURE_WRITES } = getFeatureFlags()
-
-const createObjectsBatched = createObjectsBatchedFactory({
-  storeObjectsIfNotFoundFactory: storeObjectsIfNotFoundFactory({ db }),
-  storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db })
-})
-const createObjectsBatchedAndNoClosures = createObjectsBatchedAndNoClosuresFactory({
-  storeObjectsIfNotFoundFactory: storeObjectsIfNotFoundFactory({ db })
-})
-
-let objectInsertionService: (params: {
-  streamId: string
-  objects: RawSpeckleObject[]
-  logger?: Logger
-}) => Promise<boolean | string[]> = createObjectsBatched
-
-if (FF_NO_CLOSURE_WRITES) {
-  objectInsertionService = createObjectsBatchedAndNoClosures
-}
 
 export default (app: Router) => {
   const validatePermissionsWriteStream = validatePermissionsWriteStreamFactory({
@@ -82,6 +62,21 @@ export default (app: Router) => {
     if (!hasStreamAccess.result) {
       return res.status(hasStreamAccess.status).end()
     }
+
+    const projectDb = await getProjectDbClient({ projectId: req.params.streamId })
+
+    const objectInsertionService = FF_NO_CLOSURE_WRITES
+      ? createObjectsBatchedAndNoClosuresFactory({
+          storeObjectsIfNotFoundFactory: storeObjectsIfNotFoundFactory({
+            db: projectDb
+          })
+        })
+      : createObjectsBatchedFactory({
+          storeObjectsIfNotFoundFactory: storeObjectsIfNotFoundFactory({
+            db: projectDb
+          }),
+          storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db: projectDb })
+        })
 
     let busboy
     try {

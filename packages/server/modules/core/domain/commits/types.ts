@@ -14,9 +14,12 @@ export type CommitWithBranchId = Commit & {
 export type CommitWithStreamId = Commit & { streamId: string }
 export type BranchLatestCommit = CommitWithBranchId
 
-export type CommitWithStreamBranchMetadata = Commit & {
+export type CommitWithStreamBranchId = Commit & {
   streamId: string
   branchId: string
+}
+
+export type CommitWithStreamBranchMetadata = CommitWithStreamBranchId & {
   branchName: string
 }
 
@@ -31,6 +34,7 @@ export type LegacyUserCommit = {
   parents: CommitRecord['parents']
   createdAt: CommitRecord['createdAt']
   branchName: BranchRecord['name']
+  branchId: BranchRecord['id']
   streamId: StreamCommitRecord['streamId']
   streamName: StreamRecord['name']
   authorName: UserRecord['name']
@@ -47,6 +51,8 @@ export type LegacyStreamCommit = {
   parents: CommitRecord['parents']
   createdAt: CommitRecord['createdAt']
   branchName: BranchRecord['name']
+  branchId: BranchRecord['id']
+  streamId: StreamCommitRecord['streamId']
   authorName: UserRecord['name']
   authorId: UserRecord['id']
   authorAvatar: UserRecord['avatar']

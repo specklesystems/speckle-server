@@ -29,6 +29,8 @@ export type StoreProviderRecord = (args: {
   providerRecord: SsoProviderRecord
 }) => Promise<void>
 
+export type DeleteSsoProvider = (args: { workspaceId: string }) => Promise<void>
+
 // User session management
 
 /**

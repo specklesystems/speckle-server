@@ -14,9 +14,9 @@ const {
 const {
   ForbiddenError: SFE,
   UnauthorizedError: SUE,
-  BadRequestError,
   UnauthorizedError,
-  ContextError
+  ContextError,
+  NotFoundError
 } = require('@/modules/shared/errors')
 const { Roles } = require('@speckle/shared')
 const {
@@ -380,7 +380,7 @@ describe('AuthZ @shared', () => {
         context: {}
       })
 
-      expectAuthError(new BadRequestError('Stream inputs are malformed'), authResult)
+      expectAuthError(new NotFoundError('Stream inputs are malformed'), authResult)
     })
   })
   describe('Escape hatches', () => {

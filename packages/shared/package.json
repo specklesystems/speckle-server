@@ -38,6 +38,7 @@
   },
   "peerDependencies": {
     "@tiptap/core": "^2.0.0-beta.176",
+    "knex": "*",
     "mixpanel": "^0.17.0",
     "pino": "^8.7.0",
     "pino-http": "^8.0.0",
@@ -55,6 +56,7 @@
     "@typescript-eslint/parser": "^7.12.0",
     "eslint": "^9.4.0",
     "eslint-config-prettier": "^9.1.0",
+    "knex": "^2.4.1",
     "mixpanel": "^0.17.0",
     "pino": "^8.7.0",
     "pino-http": "^8.0.0",

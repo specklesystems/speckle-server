@@ -47,11 +47,6 @@ const { getEventBus } = require('@/modules/shared/services/eventBus')
 const { createBranchFactory } = require('@/modules/core/repositories/branches')
 const { ProjectsEmitter } = require('@/modules/core/events/projectsEmitter')
 const {
-  addStreamCreatedActivityFactory
-} = require('@/modules/activitystream/services/streamActivity')
-const { saveActivityFactory } = require('@/modules/activitystream/repositories')
-const { publish } = require('@/modules/shared/utils/subscriptions')
-const {
   getUsersFactory,
   getUserFactory,
   storeUserFactory,
@@ -84,10 +79,6 @@ const { getServerInfoFactory } = require('@/modules/core/repositories/server')
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = getUserFactory({ db })
 const getUsers = getUsersFactory({ db })
-const addStreamCreatedActivity = addStreamCreatedActivityFactory({
-  saveActivity: saveActivityFactory({ db }),
-  publish
-})
 const getStream = getStreamFactory({ db })
 const createStream = legacyCreateStreamFactory({
   createStreamReturnRecord: createStreamReturnRecordFactory({
@@ -113,7 +104,6 @@ const createStream = legacyCreateStreamFactory({
     }),
     createStream: createStreamFactory({ db }),
     createBranch: createBranchFactory({ db }),
-    addStreamCreatedActivity,
     projectsEventsEmitter: ProjectsEmitter.emit
   })
 })

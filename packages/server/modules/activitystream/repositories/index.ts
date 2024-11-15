@@ -18,12 +18,16 @@ import {
 import { StreamAcl, StreamActivity } from '@/modules/core/dbSchema'
 import { Roles } from '@/modules/core/helpers/mainConstants'
 import { StreamAclRecord } from '@/modules/core/helpers/types'
-import { createWebhookEventFactory } from '@/modules/webhooks/repositories/webhooks'
+import {
+  createWebhookEventFactory,
+  getStreamWebhooksFactory
+} from '@/modules/webhooks/repositories/webhooks'
 import { dispatchStreamEventFactory } from '@/modules/webhooks/services/webhooks'
 import { Knex } from 'knex'
 import { getStreamFactory } from '@/modules/core/repositories/streams'
 import { getUserFactory } from '@/modules/core/repositories/users'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
+import { getProjectDbClient } from '@/modules/multiregion/dbSelector'
 
 const tables = {
   streamActivity: <T extends object = StreamActivityRecord>(db: Knex) =>
@@ -250,11 +254,15 @@ export const saveActivityFactory =
         }
       }
 
+      const projectDb = await getProjectDbClient({ projectId: streamId })
+      // yes, we're manually instantiating this thing here, but i do not want to go through all the places,
+      // where we're calling saveActivity!
+      // the whole activity module will need to be refactored to use the eventBus
       await dispatchStreamEventFactory({
-        db,
+        getStreamWebhooks: getStreamWebhooksFactory({ db: projectDb }),
         getServerInfo: getServerInfoFactory({ db }),
-        getStream: getStreamFactory({ db }),
-        createWebhookEvent: createWebhookEventFactory({ db }),
+        getStream: getStreamFactory({ db: projectDb }),
+        createWebhookEvent: createWebhookEventFactory({ db: projectDb }),
         getUser: getUserFactory({ db })
       })({
         streamId,

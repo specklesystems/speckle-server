@@ -19,6 +19,11 @@ export type PaidWorkspacePlanStatuses =
 
 export type TrialWorkspacePlanStatuses = 'trial' | 'expired'
 
+export type PlanStatuses =
+  | PaidWorkspacePlanStatuses
+  | TrialWorkspacePlanStatuses
+  | UnpaidWorkspacePlanStatuses
+
 type BaseWorkspacePlan = {
   workspaceId: string
 }

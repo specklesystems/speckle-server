@@ -1,4 +1,6 @@
 import {
+  CommitWithStreamBranchId,
+  CommitWithStreamId,
   LegacyStreamCommit,
   LegacyUserCommit
 } from '@/modules/core/domain/commits/types'
@@ -11,7 +13,6 @@ import {
 import { Roles, ServerRoles, StreamRoles } from '@/modules/core/helpers/mainConstants'
 import {
   BranchRecord,
-  CommitRecord,
   ObjectRecord,
   ServerInfo,
   StreamRecord,
@@ -35,7 +36,10 @@ export type StreamGraphQLReturn = StreamRecord & {
   role?: string | null
 }
 
-export type CommitGraphQLReturn = CommitRecord | LegacyStreamCommit | LegacyUserCommit
+export type CommitGraphQLReturn =
+  | CommitWithStreamId
+  | LegacyStreamCommit
+  | LegacyUserCommit
 
 export type BranchGraphQLReturn = BranchRecord
 
@@ -43,7 +47,7 @@ export type ProjectGraphQLReturn = StreamGraphQLReturn
 
 export type ModelGraphQLReturn = BranchRecord
 
-export type VersionGraphQLReturn = CommitRecord
+export type VersionGraphQLReturn = CommitWithStreamBranchId
 
 export type LimitedUserGraphQLReturn = Omit<
   LimitedUser,
