@@ -3,22 +3,28 @@
     <div class="md:max-w-4xl md:mx-auto pb-6 md:pb-0">
       <SettingsSectionHeader title="Billing" text="Your workspace billing details" />
       <template v-if="isBillingIntegrationEnabled">
+        <BillingAlert
+          v-if="workspaceResult && !isValidPlan"
+          :workspace="workspaceResult.workspace"
+          class="mb-4"
+        />
         <div class="flex flex-col gap-y-4 md:gap-y-6">
           <SettingsSectionHeader title="Billing summary" subheading class="pt-4" />
           <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
             <CommonCard class="gap-y-1 bg-foundation">
-              <p class="text-body-xs text-foreground-2 font-medium">
+              <p class="text-body-xs text-foreground-2">
                 {{ isTrialPeriod ? 'Trial plan' : 'Current plan' }}
               </p>
               <h4 class="text-heading-lg text-foreground capitalize">
-                {{ currentPlan?.name }} plan
+                {{ currentPlan?.name ?? WorkspacePlans.Team }} plan
               </h4>
-              <p
-                v-if="currentPlan?.name && subscription?.billingInterval"
-                class="text-body-xs text-foreground-2"
-              >
+              <p class="text-body-xs text-foreground-2">
                 £{{ seatPrice }} per seat/month, billed
-                {{ subscription?.billingInterval }}
+                {{
+                  subscription?.billingInterval === BillingInterval.Yearly
+                    ? 'yearly'
+                    : 'monthly'
+                }}
               </p>
             </CommonCard>
             <CommonCard class="gap-y-1 bg-foundation">
@@ -26,9 +32,9 @@
                 {{
                   isTrialPeriod
                     ? 'Expected bill'
-                    : subscription?.billingInterval === BillingInterval.Monthly
-                    ? 'Monthly bill'
-                    : 'Yearly bill'
+                    : subscription?.billingInterval === BillingInterval.Yearly
+                    ? 'Yearly bill'
+                    : 'Monthly bill'
                 }}
               </p>
               <h4 class="text-heading-lg text-foreground capitalize">Coming soon</h4>
@@ -38,14 +44,16 @@
                 {{ isTrialPeriod ? 'First payment due' : 'Next payment due' }}
               </p>
               <h4 class="text-heading-lg text-foreground capitalize">
-                {{
-                  isPaidPlan
-                    ? dayjs(subscription?.currentBillingCycleEnd).format('MMMM D, YYYY')
-                    : 'Never'
-                }}
+                {{ nextPaymentDue }}
               </h4>
               <p v-if="isPaidPlan" class="text-body-xs text-foreground-2">
-                <span class="capitalize">{{ subscription?.billingInterval }}</span>
+                <span class="capitalize">
+                  {{
+                    subscription?.billingInterval === BillingInterval.Yearly
+                      ? 'Yearly'
+                      : 'Monthly'
+                  }}
+                </span>
                 billing period
               </p>
             </CommonCard>
@@ -60,7 +68,7 @@
               <FormButton
                 color="outline"
                 :icon-right="ArrowTopRightOnSquareIcon"
-                @click="openCustomerPortal"
+                @click="billingPortalRedirect(workspaceId)"
               >
                 Open billing portal
               </FormButton>
@@ -110,11 +118,10 @@
 <script setup lang="ts">
 import dayjs from 'dayjs'
 import { graphql } from '~/lib/common/generated/gql'
-import { useQuery, useApolloClient } from '@vue/apollo-composable'
+import { useQuery } from '@vue/apollo-composable'
 import {
   settingsWorkspaceBillingQuery,
-  settingsWorkspacePricingPlansQuery,
-  settingsWorkspaceBillingCustomerPortalQuery
+  settingsWorkspacePricingPlansQuery
 } from '~/lib/settings/graphql/queries'
 import { useIsBillingIntegrationEnabled } from '~/composables/globals'
 import {
@@ -124,9 +131,13 @@ import {
 } from '~/lib/common/generated/gql/graphql'
 import { ArrowTopRightOnSquareIcon } from '@heroicons/vue/24/outline'
 import { isWorkspacePricingPlans } from '~/lib/settings/helpers/types'
+import { useBillingActions } from '~/lib/billing/composables/actions'
+import type { SeatPrices } from '~/lib/billing/helpers/types'
+import { seatPricesConfig } from '~/lib/billing/helpers/constants'
 
 graphql(`
   fragment SettingsWorkspacesBilling_Workspace on Workspace {
+    ...BillingAlert_Workspace
     id
     plan {
       name
@@ -139,33 +150,33 @@ graphql(`
   }
 `)
 
-type SeatPrices = {
-  [key in WorkspacePlans]: {
-    [BillingInterval.Monthly]: number
-    [BillingInterval.Yearly]: number
-  }
-}
-
 const props = defineProps<{
   workspaceId: string
 }>()
 
 const isBillingIntegrationEnabled = useIsBillingIntegrationEnabled()
 const isYearlyPlan = ref(false)
-// TODO: get these from the backend when available
-const seatPrices = ref<SeatPrices>({
-  [WorkspacePlans.Team]: { monthly: 12, yearly: 10 },
-  [WorkspacePlans.Pro]: { monthly: 40, yearly: 36 },
-  [WorkspacePlans.Business]: { monthly: 79, yearly: 63 },
-  [WorkspacePlans.Academia]: { monthly: 0, yearly: 0 },
-  [WorkspacePlans.Unlimited]: { monthly: 0, yearly: 0 }
-})
+const seatPrices = ref<SeatPrices>(seatPricesConfig)
 
-const { client: apollo } = useApolloClient()
-const { result: workspaceResult } = useQuery(settingsWorkspaceBillingQuery, () => ({
-  workspaceId: props.workspaceId
-}))
-const { result: pricingPlansResult } = useQuery(settingsWorkspacePricingPlansQuery)
+const route = useRoute()
+const { result: workspaceResult } = useQuery(
+  settingsWorkspaceBillingQuery,
+  () => ({
+    workspaceId: props.workspaceId
+  }),
+  () => ({
+    enabled: isBillingIntegrationEnabled
+  })
+)
+const { result: pricingPlansResult } = useQuery(
+  settingsWorkspacePricingPlansQuery,
+  null,
+  () => ({
+    enabled: isBillingIntegrationEnabled
+  })
+)
+const { billingPortalRedirect, upgradePlanRedirect, cancelCheckoutSession } =
+  useBillingActions()
 
 const currentPlan = computed(() => workspaceResult.value?.workspace.plan)
 const subscription = computed(() => workspaceResult.value?.workspace.subscription)
@@ -175,39 +186,50 @@ const isPaidPlan = computed(
     currentPlan.value?.name !== WorkspacePlans.Unlimited
 )
 const isTrialPeriod = computed(
-  () => currentPlan.value?.status === WorkspacePlanStatuses.Trial
+  () =>
+    currentPlan.value?.status === WorkspacePlanStatuses.Trial ||
+    !currentPlan.value?.status
 )
 const isActivePlan = computed(
   () =>
+    currentPlan.value &&
     currentPlan.value?.status !== WorkspacePlanStatuses.Trial &&
     currentPlan.value?.status !== WorkspacePlanStatuses.Canceled
+)
+const isValidPlan = computed(
+  () => currentPlan.value?.status === WorkspacePlanStatuses.Valid
 )
 const seatPrice = computed(() =>
   currentPlan.value && subscription.value
     ? seatPrices.value[currentPlan.value?.name][subscription.value?.billingInterval]
-    : 0
+    : seatPrices.value[WorkspacePlans.Team][BillingInterval.Monthly]
 )
 const pricingPlans = computed(() =>
   isWorkspacePricingPlans(pricingPlansResult.value)
     ? pricingPlansResult.value?.workspacePricingPlans.workspacePlanInformation
     : undefined
 )
-
+const nextPaymentDue = computed(() =>
+  currentPlan.value
+    ? isPaidPlan.value
+      ? dayjs(subscription.value?.currentBillingCycleEnd).format('MMMM D, YYYY')
+      : 'Never'
+    : dayjs().add(30, 'days').format('MMMM D, YYYY')
+)
 const onUpgradePlanClick = (plan: WorkspacePlans) => {
-  const cycle = isYearlyPlan.value ? BillingInterval.Yearly : BillingInterval.Monthly
-  window.location.href = `/api/v1/billing/workspaces/${props.workspaceId}/checkout-session/${plan}/${cycle}`
-}
-
-const openCustomerPortal = async () => {
-  // We need to fetch this on click because the link expires very quickly
-  const result = await apollo.query({
-    query: settingsWorkspaceBillingCustomerPortalQuery,
-    variables: { workspaceId: props.workspaceId },
-    fetchPolicy: 'no-cache'
+  upgradePlanRedirect({
+    plan,
+    cycle: isYearlyPlan.value ? BillingInterval.Yearly : BillingInterval.Monthly,
+    workspaceId: props.workspaceId
   })
-
-  if (result.data?.workspace.customerPortalUrl) {
-    window.location.href = result.data.workspace.customerPortalUrl
-  }
 }
+
+onMounted(() => {
+  const paymentStatusQuery = route.query?.payment_status
+  const sessionIdQuery = route.query?.session_id
+
+  if (sessionIdQuery && String(paymentStatusQuery) === WorkspacePlanStatuses.Canceled) {
+    cancelCheckoutSession(String(sessionIdQuery), props.workspaceId)
+  }
+})
 </script>

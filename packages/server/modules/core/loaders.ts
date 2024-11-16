@@ -94,6 +94,10 @@ export async function buildRequestLoaders(
    * Get dataloaders for specific region
    */
   const forRegion = (deps: { db: Knex }) => {
+    if (deps.db === mainDb) {
+      return mainDbLoaders
+    }
+
     if (!regionLoaders.has(deps.db)) {
       regionLoaders.set(deps.db, createLoadersForRegion(deps))
     }

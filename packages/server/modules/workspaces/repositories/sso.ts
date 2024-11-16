@@ -9,7 +9,8 @@ import {
   ListWorkspaceSsoMemberships,
   GetWorkspaceSsoProviderRecord,
   ListUserSsoSessions,
-  GetUserSsoSession
+  GetUserSsoSession,
+  DeleteSsoProvider
 } from '@/modules/workspaces/domain/sso/operations'
 import {
   SsoProviderRecord,
@@ -98,6 +99,20 @@ export const storeSsoProviderRecordFactory =
     const encryptedProviderData = await encrypt(JSON.stringify(providerRecord.provider))
     const insertModel = { ...omit(providerRecord, 'provider'), encryptedProviderData }
     await tables.ssoProviders(db).insert(insertModel)
+  }
+
+export const deleteSsoProviderFactory =
+  ({ db }: { db: Knex }): DeleteSsoProvider =>
+  async ({ workspaceId }) => {
+    await tables
+      .ssoProviders(db)
+      .join<WorkspaceSsoProviderRecord>(
+        'workspace_sso_providers',
+        'workspace_sso_providers.providerId',
+        'sso_providers.id'
+      )
+      .where({ workspaceId })
+      .delete()
   }
 
 export const associateSsoProviderWithWorkspaceFactory =
