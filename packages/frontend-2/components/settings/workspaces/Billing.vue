@@ -10,72 +10,75 @@
         />
         <div class="flex flex-col gap-y-4 md:gap-y-6">
           <SettingsSectionHeader title="Billing summary" subheading class="pt-4" />
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <CommonCard class="gap-y-1 bg-foundation">
-              <p class="text-body-xs text-foreground-2">
-                {{ isTrialPeriod ? 'Trial plan' : 'Current plan' }}
-              </p>
-              <h4 class="text-heading-lg text-foreground capitalize">
-                {{ currentPlan?.name ?? WorkspacePlans.Team }} plan
-              </h4>
-              <p class="text-body-xs text-foreground-2">
-                £{{ seatPrice }} per seat/month, billed
-                {{
-                  subscription?.billingInterval === BillingInterval.Yearly
-                    ? 'yearly'
-                    : 'monthly'
-                }}
-              </p>
-            </CommonCard>
-            <CommonCard class="gap-y-1 bg-foundation">
-              <p class="text-body-xs text-foreground-2">
-                {{
-                  isTrialPeriod
-                    ? 'Expected bill'
-                    : subscription?.billingInterval === BillingInterval.Yearly
-                    ? 'Yearly bill'
-                    : 'Monthly bill'
-                }}
-              </p>
-              <h4 class="text-heading-lg text-foreground capitalize">Coming soon</h4>
-            </CommonCard>
-            <CommonCard class="gap-y-1 bg-foundation">
-              <p class="text-body-xs text-foreground-2">
-                {{ isTrialPeriod ? 'First payment due' : 'Next payment due' }}
-              </p>
-              <h4 class="text-heading-lg text-foreground capitalize">
-                {{ nextPaymentDue }}
-              </h4>
-              <p v-if="isPaidPlan" class="text-body-xs text-foreground-2">
-                <span class="capitalize">
+          <div class="border border-outline-3 rounded-lg">
+            <div
+              class="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x"
+            >
+              <div class="p-5 pt-4 flex flex-col gap-y-1">
+                <h3 class="text-body-xs text-foreground-2 pb-2">
+                  {{ isTrialPeriod ? 'Trial plan' : 'Current plan' }}
+                </h3>
+                <p class="text-heading-lg text-foreground capitalize">
+                  {{ currentPlan?.name ?? WorkspacePlans.Team }} plan
+                </p>
+                <p class="text-body-xs text-foreground-2">
+                  £{{ seatPrice }} per seat/month, billed
                   {{
                     subscription?.billingInterval === BillingInterval.Yearly
-                      ? 'Yearly'
-                      : 'Monthly'
+                      ? 'yearly'
+                      : 'monthly'
                   }}
-                </span>
-                billing period
-              </p>
-            </CommonCard>
-          </div>
+                </p>
+              </div>
+              <div class="p-5 pt-4 flex flex-col gap-y-1">
+                <h3 class="text-body-xs text-foreground-2 pb-2">
+                  {{
+                    isTrialPeriod
+                      ? 'Expected bill'
+                      : subscription?.billingInterval === BillingInterval.Yearly
+                      ? 'Yearly bill'
+                      : 'Monthly bill'
+                  }}
+                </h3>
+                <p class="text-heading-lg text-foreground capitalize">Coming soon</p>
+              </div>
+              <div class="p-5 pt-4 flex flex-col gap-y-1">
+                <h3 class="text-body-xs text-foreground-2 pb-2">
+                  {{ isTrialPeriod ? 'First payment due' : 'Next payment due' }}
+                </h3>
+                <p class="text-heading-lg text-foreground capitalize">
+                  {{ nextPaymentDue }}
+                </p>
+                <p v-if="isPaidPlan" class="text-body-xs text-foreground-2">
+                  <span class="capitalize">
+                    {{
+                      subscription?.billingInterval === BillingInterval.Yearly
+                        ? 'Yearly'
+                        : 'Monthly'
+                    }}
+                  </span>
+                  billing period
+                </p>
+              </div>
+            </div>
+            <div
+              v-if="isActivePlan"
+              class="flex flex-row gap-x-4 p-5 items-center border-t border-outline-3"
+            >
+              <div class="text-body-xs gap-y-2 flex-1">
+                <p class="font-medium text-foreground">Billing portal</p>
+                <p class="text-foreground-2">
+                  View invoices, edit payment details, and manage your subscription.
+                </p>
+              </div>
 
-          <CommonCard v-if="isActivePlan" class="bg-foundation">
-            <div class="flex flex-row gap-x-4 items-center">
-              <p class="text-body-xs text-foreground-2 flex-1">
-                View invoices, edit payment details, and manage your subscription from
-                the billing portal
-              </p>
-              <FormButton
-                color="outline"
-                :icon-right="ArrowTopRightOnSquareIcon"
-                @click="billingPortalRedirect(workspaceId)"
-              >
+              <FormButton color="outline" @click="billingPortalRedirect(workspaceId)">
                 Open billing portal
               </FormButton>
             </div>
-          </CommonCard>
+          </div>
 
-          <SettingsSectionHeader title="Price plans" subheading class="pt-4" />
+          <SettingsSectionHeader title="Upgrade your plan" subheading class="pt-4" />
           <div class="flex items-center gap-x-4">
             <div class="flex-col pr-6 gap-y-1">
               <p class="text-body-xs font-medium text-foreground">Annual billing</p>
@@ -129,7 +132,6 @@ import {
   WorkspacePlanStatuses,
   BillingInterval
 } from '~/lib/common/generated/gql/graphql'
-import { ArrowTopRightOnSquareIcon } from '@heroicons/vue/24/outline'
 import { isWorkspacePricingPlans } from '~/lib/settings/helpers/types'
 import { useBillingActions } from '~/lib/billing/composables/actions'
 import type { SeatPrices } from '~/lib/billing/helpers/types'
