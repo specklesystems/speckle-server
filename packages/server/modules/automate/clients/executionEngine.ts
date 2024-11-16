@@ -249,9 +249,7 @@ export const triggerAutomationRun = async (params: {
 export enum ExecutionEngineFunctionTemplateId {
   Python = 'python',
   DotNet = '.net',
-  TypeScript = 'typescript',
-  Demonstration = 'demonstration',
-  DemonstrationPython = 'demonstrationpython'
+  TypeScript = 'typescript'
 }
 
 export type CreateFunctionBody<AP extends AuthCodePayload = AuthCodePayloadWithOrigin> =
