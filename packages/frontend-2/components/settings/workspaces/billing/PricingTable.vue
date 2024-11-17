@@ -57,7 +57,10 @@
       </thead>
       <tbody class="w-full flex flex-col">
         <tr v-for="(feature, key, index) in features" :key="key" class="flex">
-          <th class="font-normal text-foreground text-body-xs w-1/4 pr-3" scope="row">
+          <th
+            class="font-normal text-foreground text-body-xs w-1/4 pr-3 pt-1"
+            scope="row"
+          >
             <div class="border-b border-outline-3 min-h-[42px] pl-5 flex items-center">
               {{ feature.name }}
             </div>
@@ -65,7 +68,7 @@
           <td
             v-for="plan in pricingPlans"
             :key="plan.name"
-            class="px-3 w-1/4"
+            class="px-3 w-1/4 pt-1"
             :class="[
               plan.name === WorkspacePlans.Team
                 ? 'border-l border-r border-outline-3 bg-foundation-2'
