@@ -79,7 +79,10 @@
           </div>
 
           <SettingsSectionHeader title="Upgrade your plan" subheading class="pt-4" />
-          <SettingsWorkspacesBillingPricingPlans :workspace-id="workspaceId" />
+          <SettingsWorkspacesBillingPricingPlans
+            :workspace-id="workspaceId"
+            :current-plan="currentPlan"
+          />
         </div>
       </template>
 
@@ -108,6 +111,7 @@ graphql(`
     ...BillingAlert_Workspace
     id
     plan {
+      ...SettingsWorkspacesBillingPricingTable_WorkspacePlan
       name
       status
     }

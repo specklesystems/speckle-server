@@ -24,10 +24,11 @@
             <p class="text-foreground-2 text-body-2xs pt-1">Billed annually</p>
             <FormButton
               :color="plan.name === WorkspacePlans.Team ? 'primary' : 'outline'"
-              class="mt-2"
+              :disabled="!hasTrialPlan && !canUpgradeToPlan(plan.name)"
+              class="mt-3"
               @click="onUpgradePlanClick(plan.name)"
             >
-              Subscribe to&nbsp;
+              {{ hasTrialPlan ? 'Subscribe' : 'Upgrade' }} to&nbsp;
               <span class="capitalize">{{ plan.name }}</span>
             </FormButton>
           </th>
@@ -68,13 +69,28 @@
 </template>
 
 <script setup lang="ts">
-import { WorkspacePlans, BillingInterval } from '~/lib/common/generated/gql/graphql'
+import type { SettingsWorkspacesBillingPricingTable_WorkspacePlanFragment } from '~/lib/common/generated/gql/graphql'
+import {
+  WorkspacePlans,
+  BillingInterval,
+  WorkspacePlanStatuses
+} from '~/lib/common/generated/gql/graphql'
 import { pricingPlansConfig } from '~/lib/billing/helpers/constants'
 import { CheckIcon } from '@heroicons/vue/24/outline'
 import { useBillingActions } from '~/lib/billing/composables/actions'
+import { graphql } from '~/lib/common/generated/gql'
+import type { MaybeNullOrUndefined } from '@speckle/shared'
+
+graphql(`
+  fragment SettingsWorkspacesBillingPricingTable_WorkspacePlan on WorkspacePlan {
+    name
+    status
+  }
+`)
 
 const props = defineProps<{
   workspaceId: string
+  currentPlan: MaybeNullOrUndefined<SettingsWorkspacesBillingPricingTable_WorkspacePlanFragment>
 }>()
 
 const { upgradePlanRedirect } = useBillingActions()
@@ -93,5 +109,23 @@ const onUpgradePlanClick = (plan: WorkspacePlans) => {
     cycle: isYearlyPlan.value ? BillingInterval.Yearly : BillingInterval.Monthly,
     workspaceId: props.workspaceId
   })
+}
+
+const hasTrialPlan = computed(
+  () => props.currentPlan?.status === WorkspacePlanStatuses.Trial || !props.currentPlan
+)
+
+const canUpgradeToPlan = (plan: WorkspacePlans) => {
+  if (!props.currentPlan?.name) return false
+
+  const allowedUpgrades: Record<WorkspacePlans, WorkspacePlans[]> = {
+    [WorkspacePlans.Team]: [WorkspacePlans.Pro, WorkspacePlans.Business],
+    [WorkspacePlans.Pro]: [WorkspacePlans.Business],
+    [WorkspacePlans.Business]: [],
+    [WorkspacePlans.Academia]: [],
+    [WorkspacePlans.Unlimited]: []
+  }
+
+  return allowedUpgrades[props.currentPlan.name]?.includes(plan) ?? false
 }
 </script>
