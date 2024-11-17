@@ -300,6 +300,31 @@ export const createFunction = async ({
   })
 }
 
+type CreateFunctionWithoutVersionBody = {
+  speckleServerAuthenticationPayload: AuthCodePayloadWithOrigin
+  functionName: string
+  functionDescription: string
+}
+
+type CreateFunctionWithoutVersionResponse = {
+  functionId: string
+  functionToken: string
+}
+
+export const createFunctionWithoutVersion = async ({
+  body
+}: {
+  body: CreateFunctionWithoutVersionBody
+}): Promise<CreateFunctionWithoutVersionResponse> => {
+  const url = getApiUrl('/api/v2/functions/new')
+  return await invokeJsonRequest<CreateFunctionWithoutVersionResponse>({
+    url,
+    method: 'post',
+    body,
+    retry: false
+  })
+}
+
 export type UpdateFunctionBody<AP extends AuthCodePayload = AuthCodePayloadWithOrigin> =
   {
     speckleServerAuthenticationPayload: AP

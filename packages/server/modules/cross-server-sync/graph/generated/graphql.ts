@@ -304,6 +304,12 @@ export enum AutomateFunctionTemplateLanguage {
   Typescript = 'TYPESCRIPT'
 }
 
+export type AutomateFunctionToken = {
+  __typename?: 'AutomateFunctionToken';
+  functionId: Scalars['String']['output'];
+  functionToken: Scalars['String']['output'];
+};
+
 export type AutomateFunctionsFilter = {
   /** By default we skip functions without releases. Set this to true to include them. */
   functionsWithoutReleases?: InputMaybe<Scalars['Boolean']['input']>;
@@ -313,12 +319,18 @@ export type AutomateFunctionsFilter = {
 export type AutomateMutations = {
   __typename?: 'AutomateMutations';
   createFunction: AutomateFunction;
+  createFunctionWithoutVersion: AutomateFunctionToken;
   updateFunction: AutomateFunction;
 };
 
 
 export type AutomateMutationsCreateFunctionArgs = {
   input: CreateAutomateFunctionInput;
+};
+
+
+export type AutomateMutationsCreateFunctionWithoutVersionArgs = {
+  input: CreateAutomateFunctionWithoutVersionInput;
 };
 
 
@@ -809,6 +821,11 @@ export type CreateAutomateFunctionInput = {
   supportedSourceApps: Array<Scalars['String']['input']>;
   tags: Array<Scalars['String']['input']>;
   template: AutomateFunctionTemplateLanguage;
+};
+
+export type CreateAutomateFunctionWithoutVersionInput = {
+  description: Scalars['String']['input'];
+  name: Scalars['String']['input'];
 };
 
 export type CreateCommentInput = {

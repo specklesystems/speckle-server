@@ -323,6 +323,12 @@ export enum AutomateFunctionTemplateLanguage {
   Typescript = 'TYPESCRIPT'
 }
 
+export type AutomateFunctionToken = {
+  __typename?: 'AutomateFunctionToken';
+  functionId: Scalars['String']['output'];
+  functionToken: Scalars['String']['output'];
+};
+
 export type AutomateFunctionsFilter = {
   /** By default we skip functions without releases. Set this to true to include them. */
   functionsWithoutReleases?: InputMaybe<Scalars['Boolean']['input']>;
@@ -332,12 +338,18 @@ export type AutomateFunctionsFilter = {
 export type AutomateMutations = {
   __typename?: 'AutomateMutations';
   createFunction: AutomateFunction;
+  createFunctionWithoutVersion: AutomateFunctionToken;
   updateFunction: AutomateFunction;
 };
 
 
 export type AutomateMutationsCreateFunctionArgs = {
   input: CreateAutomateFunctionInput;
+};
+
+
+export type AutomateMutationsCreateFunctionWithoutVersionArgs = {
+  input: CreateAutomateFunctionWithoutVersionInput;
 };
 
 
@@ -828,6 +840,11 @@ export type CreateAutomateFunctionInput = {
   supportedSourceApps: Array<Scalars['String']['input']>;
   tags: Array<Scalars['String']['input']>;
   template: AutomateFunctionTemplateLanguage;
+};
+
+export type CreateAutomateFunctionWithoutVersionInput = {
+  description: Scalars['String']['input'];
+  name: Scalars['String']['input'];
 };
 
 export type CreateCommentInput = {
@@ -4567,6 +4584,7 @@ export type ResolversTypes = {
   AutomateFunctionRunStatusReportInput: AutomateFunctionRunStatusReportInput;
   AutomateFunctionTemplate: ResolverTypeWrapper<AutomateFunctionTemplate>;
   AutomateFunctionTemplateLanguage: AutomateFunctionTemplateLanguage;
+  AutomateFunctionToken: ResolverTypeWrapper<AutomateFunctionToken>;
   AutomateFunctionsFilter: AutomateFunctionsFilter;
   AutomateMutations: ResolverTypeWrapper<MutationsObjectGraphQLReturn>;
   AutomateRun: ResolverTypeWrapper<AutomateRunGraphQLReturn>;
@@ -4615,6 +4633,7 @@ export type ResolversTypes = {
   CommitsMoveInput: CommitsMoveInput;
   CountOnlyCollection: ResolverTypeWrapper<CountOnlyCollection>;
   CreateAutomateFunctionInput: CreateAutomateFunctionInput;
+  CreateAutomateFunctionWithoutVersionInput: CreateAutomateFunctionWithoutVersionInput;
   CreateCommentInput: CreateCommentInput;
   CreateCommentReplyInput: CreateCommentReplyInput;
   CreateModelInput: CreateModelInput;
@@ -4849,6 +4868,7 @@ export type ResolversParentTypes = {
   AutomateFunctionRun: AutomateFunctionRunGraphQLReturn;
   AutomateFunctionRunStatusReportInput: AutomateFunctionRunStatusReportInput;
   AutomateFunctionTemplate: AutomateFunctionTemplate;
+  AutomateFunctionToken: AutomateFunctionToken;
   AutomateFunctionsFilter: AutomateFunctionsFilter;
   AutomateMutations: MutationsObjectGraphQLReturn;
   AutomateRun: AutomateRunGraphQLReturn;
@@ -4894,6 +4914,7 @@ export type ResolversParentTypes = {
   CommitsMoveInput: CommitsMoveInput;
   CountOnlyCollection: CountOnlyCollection;
   CreateAutomateFunctionInput: CreateAutomateFunctionInput;
+  CreateAutomateFunctionWithoutVersionInput: CreateAutomateFunctionWithoutVersionInput;
   CreateCommentInput: CreateCommentInput;
   CreateCommentReplyInput: CreateCommentReplyInput;
   CreateModelInput: CreateModelInput;
@@ -5274,8 +5295,15 @@ export type AutomateFunctionTemplateResolvers<ContextType = GraphQLContext, Pare
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
+export type AutomateFunctionTokenResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['AutomateFunctionToken'] = ResolversParentTypes['AutomateFunctionToken']> = {
+  functionId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  functionToken?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
 export type AutomateMutationsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['AutomateMutations'] = ResolversParentTypes['AutomateMutations']> = {
   createFunction?: Resolver<ResolversTypes['AutomateFunction'], ParentType, ContextType, RequireFields<AutomateMutationsCreateFunctionArgs, 'input'>>;
+  createFunctionWithoutVersion?: Resolver<ResolversTypes['AutomateFunctionToken'], ParentType, ContextType, RequireFields<AutomateMutationsCreateFunctionWithoutVersionArgs, 'input'>>;
   updateFunction?: Resolver<ResolversTypes['AutomateFunction'], ParentType, ContextType, RequireFields<AutomateMutationsUpdateFunctionArgs, 'input'>>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
@@ -6639,6 +6667,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   AutomateFunctionReleaseCollection?: AutomateFunctionReleaseCollectionResolvers<ContextType>;
   AutomateFunctionRun?: AutomateFunctionRunResolvers<ContextType>;
   AutomateFunctionTemplate?: AutomateFunctionTemplateResolvers<ContextType>;
+  AutomateFunctionToken?: AutomateFunctionTokenResolvers<ContextType>;
   AutomateMutations?: AutomateMutationsResolvers<ContextType>;
   AutomateRun?: AutomateRunResolvers<ContextType>;
   AutomateRunCollection?: AutomateRunCollectionResolvers<ContextType>;

@@ -150,6 +150,11 @@ type AutomateFunction {
   creator: LimitedUser
 }
 
+type AutomateFunctionToken {
+  functionId: String!
+  functionToken: String!
+}
+
 type AutomateFunctionRelease {
   id: ID!
   functionId: String!
@@ -245,6 +250,11 @@ input CreateAutomateFunctionInput {
   org: String
 }
 
+input CreateAutomateFunctionWithoutVersionInput {
+  name: String!
+  description: String!
+}
+
 """
 Any null values will be ignored
 """
@@ -318,6 +328,11 @@ extend type ProjectMutations {
 type AutomateMutations {
   createFunction(input: CreateAutomateFunctionInput!): AutomateFunction!
     @hasScope(scope: "automate-functions:write")
+  createFunctionWithoutVersion(
+    input: CreateAutomateFunctionWithoutVersionInput!
+  ): AutomateFunctionToken!
+    @hasScope(scope: "automate-functions:write")
+    @hasServerRole(role: SERVER_ADMIN)
   updateFunction(input: UpdateAutomateFunctionInput!): AutomateFunction!
     @hasScope(scope: "automate-functions:write")
 }
