@@ -3,12 +3,8 @@
     <div class="md:mx-auto pb-6 md:pb-0">
       <SettingsSectionHeader title="Billing" text="Your workspace billing details" />
       <template v-if="isBillingIntegrationEnabled">
-        <BillingAlert
-          v-if="workspaceResult && !isValidPlan"
-          :workspace="workspaceResult.workspace"
-          class="mb-4"
-        />
         <div class="flex flex-col gap-y-4 md:gap-y-6">
+          <BillingAlert v-if="workspaceResult" :workspace="workspaceResult.workspace" />
           <SettingsSectionHeader title="Billing summary" subheading class="pt-4" />
           <div class="border border-outline-3 rounded-lg">
             <div
@@ -84,7 +80,6 @@
           />
         </div>
       </template>
-
       <template v-else>Coming soon</template>
     </div>
   </section>
@@ -160,9 +155,6 @@ const isActivePlan = computed(
     currentPlan.value &&
     currentPlan.value?.status !== WorkspacePlanStatuses.Trial &&
     currentPlan.value?.status !== WorkspacePlanStatuses.Canceled
-)
-const isValidPlan = computed(
-  () => currentPlan.value?.status === WorkspacePlanStatuses.Valid
 )
 const seatPrice = computed(() =>
   currentPlan.value && subscription.value

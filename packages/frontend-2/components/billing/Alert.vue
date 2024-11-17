@@ -1,22 +1,25 @@
 <template>
-  <CommonCard class="bg-foundation py-3 px-4">
-    <div class="flex gap-x-2">
-      <ExclamationCircleIcon v-if="showIcon" class="h-4 w-4 text-danger mt-1" />
-      <div class="flex-1 flex gap-x-4 items-center">
-        <div class="flex-1">
-          <h5 class="text-body-xs font-medium text-foreground">{{ title }}</h5>
-          <p class="text-body-xs text-foreground-2">{{ description }}</p>
+  <div>
+    <CommonCard v-if="!hasValidPlan" class="bg-foundation py-3 px-4">
+      <div class="flex gap-x-2">
+        <ExclamationCircleIcon v-if="showIcon" class="h-4 w-4 text-danger mt-1" />
+        <div class="flex-1 flex gap-x-4 items-center">
+          <div class="flex-1">
+            <h5 class="text-body-xs font-medium text-foreground">{{ title }}</h5>
+            <p class="text-body-xs text-foreground-2">{{ description }}</p>
+          </div>
+          <slot name="actions" />
+          <FormButton
+            v-if="isPaymentFailed"
+            :icon-right="ArrowTopRightOnSquareIcon"
+            @click="billingPortalRedirect(workspace.id)"
+          >
+            Update payment information
+          </FormButton>
         </div>
-        <FormButton
-          v-if="isPaymentFailed"
-          :icon-right="ArrowTopRightOnSquareIcon"
-          @click="billingPortalRedirect(workspace.id)"
-        >
-          Update payment information
-        </FormButton>
       </div>
-    </div>
-  </CommonCard>
+    </CommonCard>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -99,4 +102,5 @@ const description = computed(() => {
 const showIcon = computed(() => {
   return !!planStatus.value && planStatus.value !== WorkspacePlanStatuses.Trial
 })
+const hasValidPlan = computed(() => planStatus.value === WorkspacePlanStatuses.Valid)
 </script>
