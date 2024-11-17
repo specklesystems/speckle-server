@@ -77,9 +77,8 @@
               </FormButton>
             </div>
           </div>
-
-          <SettingsSectionHeader title="Upgrade your plan" subheading class="pt-4" />
-          <SettingsWorkspacesBillingPricingPlans
+          <SettingsWorkspacesBillingPricingTable
+            class="pt-6"
             :workspace-id="workspaceId"
             :current-plan="currentPlan"
           />
@@ -103,9 +102,8 @@ import {
   BillingInterval
 } from '~/lib/common/generated/gql/graphql'
 import { useBillingActions } from '~/lib/billing/composables/actions'
-import type { SeatPrices } from '~/lib/billing/helpers/types'
-import { seatPricesConfig } from '~/lib/billing/helpers/constants'
-
+import { pricingPlansConfig } from '~/lib/billing/helpers/constants'
+import { Roles } from '@speckle/shared'
 graphql(`
   fragment SettingsWorkspacesBilling_Workspace on Workspace {
     ...BillingAlert_Workspace
@@ -127,7 +125,11 @@ const props = defineProps<{
 }>()
 
 const isBillingIntegrationEnabled = useIsBillingIntegrationEnabled()
-const seatPrices = ref<SeatPrices>(seatPricesConfig)
+const seatPrices = ref({
+  [WorkspacePlans.Team]: pricingPlansConfig.plans[WorkspacePlans.Team].cost,
+  [WorkspacePlans.Pro]: pricingPlansConfig.plans[WorkspacePlans.Pro].cost,
+  [WorkspacePlans.Business]: pricingPlansConfig.plans[WorkspacePlans.Business].cost
+})
 
 const route = useRoute()
 const { result: workspaceResult } = useQuery(
@@ -164,8 +166,12 @@ const isValidPlan = computed(
 )
 const seatPrice = computed(() =>
   currentPlan.value && subscription.value
-    ? seatPrices.value[currentPlan.value?.name][subscription.value?.billingInterval]
-    : seatPrices.value[WorkspacePlans.Team][BillingInterval.Monthly]
+    ? seatPrices.value[currentPlan.value.name as keyof typeof seatPrices.value][
+        subscription.value.billingInterval
+      ][Roles.Workspace.Member]
+    : seatPrices.value[WorkspacePlans.Team][BillingInterval.Monthly][
+        Roles.Workspace.Member
+      ]
 )
 const nextPaymentDue = computed(() =>
   currentPlan.value

@@ -293,7 +293,6 @@ const documents = {
     "\n  query SettingsSidebar {\n    activeUser {\n      ...SettingsDialog_User\n    }\n  }\n": types.SettingsSidebarDocument,
     "\n  query SettingsWorkspaceGeneral($id: String!) {\n    workspace(id: $id) {\n      ...SettingsWorkspacesGeneral_Workspace\n    }\n  }\n": types.SettingsWorkspaceGeneralDocument,
     "\n  query SettingsWorkspaceBilling($workspaceId: String!) {\n    workspace(id: $workspaceId) {\n      id\n      ...SettingsWorkspacesBilling_Workspace\n    }\n  }\n": types.SettingsWorkspaceBillingDocument,
-    "\n  query SettingsWorkspacePricingPlans {\n    workspacePricingPlans\n  }\n": types.SettingsWorkspacePricingPlansDocument,
     "\n  query SettingsWorkspaceBillingCustomerPortal($workspaceId: String!) {\n    workspace(id: $workspaceId) {\n      customerPortalUrl\n    }\n  }\n": types.SettingsWorkspaceBillingCustomerPortalDocument,
     "\n  query SettingsWorkspaceRegions($workspaceId: String!) {\n    workspace(id: $workspaceId) {\n      id\n      ...SettingsWorkspacesRegions_Workspace\n    }\n  }\n": types.SettingsWorkspaceRegionsDocument,
     "\n  query SettingsWorkspacesMembers(\n    $workspaceId: String!\n    $invitesFilter: PendingWorkspaceCollaboratorsFilter\n  ) {\n    workspace(id: $workspaceId) {\n      ...SettingsWorkspacesMembers_Workspace\n      ...SettingsWorkspacesMembersMembersTable_Workspace\n      ...SettingsWorkspacesMembersGuestsTable_Workspace\n      ...SettingsWorkspacesMembersInvitesTable_Workspace\n    }\n  }\n": types.SettingsWorkspacesMembersDocument,
@@ -1484,10 +1483,6 @@ export function graphql(source: "\n  query SettingsWorkspaceGeneral($id: String!
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  query SettingsWorkspaceBilling($workspaceId: String!) {\n    workspace(id: $workspaceId) {\n      id\n      ...SettingsWorkspacesBilling_Workspace\n    }\n  }\n"): (typeof documents)["\n  query SettingsWorkspaceBilling($workspaceId: String!) {\n    workspace(id: $workspaceId) {\n      id\n      ...SettingsWorkspacesBilling_Workspace\n    }\n  }\n"];
-/**
- * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function graphql(source: "\n  query SettingsWorkspacePricingPlans {\n    workspacePricingPlans\n  }\n"): (typeof documents)["\n  query SettingsWorkspacePricingPlans {\n    workspacePricingPlans\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
