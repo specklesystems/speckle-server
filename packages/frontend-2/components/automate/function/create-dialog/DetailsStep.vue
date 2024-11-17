@@ -34,8 +34,8 @@
       validate-on-value-update
     />
     <FormSelectBase
-      v-if="workspaces?.length ?? 0 > 0"
-      name="workspaces"
+      v-if="workspaces?.length"
+      name="workspace"
       label="Workspace"
       placeholder="Select a workspace"
       show-label

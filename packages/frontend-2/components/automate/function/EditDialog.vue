@@ -55,8 +55,7 @@ const onSubmit = handleSubmit(async (values) => {
         values.description !== props.model.description ? values.description : null,
       logo: values.image !== props.model.image ? values.image : null,
       tags: difference(values.tags, props.model.tags || []).length ? values.tags : null,
-      workspaceId:
-        values.workspaceId !== props.model.description ? values.workspaceId : null,
+      workspaceIds: values.workspace ? [values.workspace.id] : [],
       supportedSourceApps: differenceBy(
         values.allowedSourceApps,
         props.model.allowedSourceApps || [],

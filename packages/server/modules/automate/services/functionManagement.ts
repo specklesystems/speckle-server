@@ -128,62 +128,62 @@ export type CreateFunctionDeps = {
 
 export const createFunctionFromTemplateFactory =
   (deps: CreateFunctionDeps) =>
-  async (params: { input: CreateAutomateFunctionInput; userId: string }) => {
-    const { input, userId } = params
-    const { createExecutionEngineFn, getUser, createStoredAuthCode } = deps
+    async (params: { input: CreateAutomateFunctionInput; userId: string }) => {
+      const { input, userId } = params
+      const { createExecutionEngineFn, getUser, createStoredAuthCode } = deps
 
-    // Validate user
-    const user = await getUser(userId)
-    if (!user) {
-      throw new AutomateFunctionCreationError('Speckle user not found')
-    }
+      // Validate user
+      const user = await getUser(userId)
+      if (!user) {
+        throw new AutomateFunctionCreationError('Speckle user not found')
+      }
 
-    const authCode = await createStoredAuthCode({
-      userId: user.id,
-      action: AuthCodePayloadAction.CreateFunction
-    })
-    const body: CreateFunctionBody<AuthCodePayload> = {
-      ...input,
-      speckleServerAuthenticationPayload: authCode,
-      functionName: input.name,
-      template: mapGqlTemplateIdToExecEngineTemplateId(input.template),
-      supportedSourceApps: input.supportedSourceApps as SourceAppName[],
-      logo: cleanFunctionLogo(input.logo),
-      org: input.org || null
-    }
+      const authCode = await createStoredAuthCode({
+        userId: user.id,
+        action: AuthCodePayloadAction.CreateFunction
+      })
+      const body: CreateFunctionBody<AuthCodePayload> = {
+        ...input,
+        speckleServerAuthenticationPayload: authCode,
+        functionName: input.name,
+        template: mapGqlTemplateIdToExecEngineTemplateId(input.template),
+        supportedSourceApps: input.supportedSourceApps as SourceAppName[],
+        logo: cleanFunctionLogo(input.logo),
+        org: input.org || null
+      }
 
-    const created = await createExecutionEngineFn({ body })
+      const created = await createExecutionEngineFn({ body })
 
-    if (isDevEnv() && created) {
-      automateLogger.info({ created }, `[dev] Created function #${created.functionId}`)
-    }
+      if (isDevEnv() && created) {
+        automateLogger.info({ created }, `[dev] Created function #${created.functionId}`)
+      }
 
-    // Don't want to pull the function w/ another req, so we'll just return the input
-    const gqlReturn: AutomateFunctionGraphQLReturn = {
-      id: created.functionId,
-      name: body.functionName,
-      repo: {
-        id: created.repo.htmlUrl,
-        url: created.repo.htmlUrl,
-        name: created.repo.name,
-        owner: created.repo.owner
-      },
-      isFeatured: false,
-      description: body.description,
-      logo: body.logo,
-      tags: body.tags,
-      supportedSourceApps: body.supportedSourceApps,
-      functionCreator: {
-        speckleServerOrigin: getServerOrigin(),
-        speckleUserId: user.id
+      // Don't want to pull the function w/ another req, so we'll just return the input
+      const gqlReturn: AutomateFunctionGraphQLReturn = {
+        id: created.functionId,
+        name: body.functionName,
+        repo: {
+          id: created.repo.htmlUrl,
+          url: created.repo.htmlUrl,
+          name: created.repo.name,
+          owner: created.repo.owner
+        },
+        isFeatured: false,
+        description: body.description,
+        logo: body.logo,
+        tags: body.tags,
+        supportedSourceApps: body.supportedSourceApps,
+        functionCreator: {
+          speckleServerOrigin: getServerOrigin(),
+          speckleUserId: user.id
+        }
+      }
+
+      return {
+        createResponse: created,
+        graphqlReturn: gqlReturn
       }
     }
-
-    return {
-      createResponse: created,
-      graphqlReturn: gqlReturn
-    }
-  }
 
 export type UpdateFunctionDeps = {
   updateFunction: typeof updateExecEngineFunction
@@ -193,45 +193,47 @@ export type UpdateFunctionDeps = {
 
 export const updateFunctionFactory =
   (deps: UpdateFunctionDeps) =>
-  async (params: { input: UpdateAutomateFunctionInput; userId: string }) => {
-    const { updateFunction, createStoredAuthCode } = deps
-    const { input, userId } = params
+    async (params: { input: UpdateAutomateFunctionInput; userId: string }) => {
+      const { updateFunction, createStoredAuthCode } = deps
+      const { input, userId } = params
 
-    const existingFn = await getFunction({ functionId: input.id })
-    if (!existingFn) {
-      throw new AutomateFunctionUpdateError('Function not found')
-    }
-
-    // Fix up logo, if any
-    if (input.logo) {
-      input.logo = cleanFunctionLogo(input.logo)
-    }
-
-    // Filter out empty (null) values from input
-    const updates = removeNullOrUndefinedKeys(input)
-
-    // Skip if there's nothing left
-    if (Object.keys(updates).length === 0) {
-      return existingFn
-    }
-
-    const authCode = await createStoredAuthCode({
-      userId,
-      action: AuthCodePayloadAction.UpdateFunction
-    })
-
-    const apiResult = await updateFunction({
-      functionId: updates.id,
-      body: {
-        ...updates,
-        functionName: updates.name,
-        supportedSourceApps: updates.supportedSourceApps as Optional<SourceAppName[]>,
-        speckleServerAuthenticationPayload: authCode
+      const existingFn = await getFunction({ functionId: input.id })
+      if (!existingFn) {
+        throw new AutomateFunctionUpdateError('Function not found')
       }
-    })
 
-    return convertFunctionToGraphQLReturn(apiResult)
-  }
+      // Fix up logo, if any
+      if (input.logo) {
+        input.logo = cleanFunctionLogo(input.logo)
+      }
+
+      // Filter out empty (null) values from input
+      const updates = removeNullOrUndefinedKeys(input)
+
+      // Skip if there's nothing left
+      if (Object.keys(updates).length === 0) {
+        return existingFn
+      }
+
+      const authCode = await createStoredAuthCode({
+        userId,
+        action: AuthCodePayloadAction.UpdateFunction
+      })
+
+      const apiResult = await updateFunction({
+        functionId: updates.id,
+        body: {
+          ...updates,
+          functionName: updates.name,
+          supportedSourceApps: updates.supportedSourceApps as Optional<SourceAppName[]>,
+          speckleServerAuthenticationPayload: authCode
+        }
+      })
+
+      console.log(JSON.stringify(apiResult, null, 2))
+
+      return convertFunctionToGraphQLReturn(apiResult)
+    }
 
 export type StartAutomateFunctionCreatorAuthDeps = {
   createStoredAuthCode: CreateStoredAuthCode
@@ -239,30 +241,30 @@ export type StartAutomateFunctionCreatorAuthDeps = {
 
 export const startAutomateFunctionCreatorAuthFactory =
   (deps: StartAutomateFunctionCreatorAuthDeps) =>
-  async (params: { req: Request; res: Response }) => {
-    const { createStoredAuthCode } = deps
-    const { req, res } = params
+    async (params: { req: Request; res: Response }) => {
+      const { createStoredAuthCode } = deps
+      const { req, res } = params
 
-    const userId = req.context.userId
-    if (!userId) {
-      throw new UnauthorizedError()
+      const userId = req.context.userId
+      if (!userId) {
+        throw new UnauthorizedError()
+      }
+
+      const authCode = await createStoredAuthCode({
+        userId,
+        action: AuthCodePayloadAction.BecomeFunctionAuthor
+      })
+      const redirectUrl = new URL(
+        '/api/v2/functions/auth/githubapp/authorize',
+        speckleAutomateUrl()
+      )
+      redirectUrl.searchParams.set(
+        'speckleServerAuthenticationPayload',
+        JSON.stringify({ ...authCode, origin: getServerOrigin() })
+      )
+
+      return res.redirect(redirectUrl.toString())
     }
-
-    const authCode = await createStoredAuthCode({
-      userId,
-      action: AuthCodePayloadAction.BecomeFunctionAuthor
-    })
-    const redirectUrl = new URL(
-      '/api/v2/functions/auth/githubapp/authorize',
-      speckleAutomateUrl()
-    )
-    redirectUrl.searchParams.set(
-      'speckleServerAuthenticationPayload',
-      JSON.stringify({ ...authCode, origin: getServerOrigin() })
-    )
-
-    return res.redirect(redirectUrl.toString())
-  }
 
 export const handleAutomateFunctionCreatorAuthCallbackFactory =
   () => async (params: { req: Request; res: Response }) => {

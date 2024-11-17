@@ -224,6 +224,7 @@ export type AutomateFunction = {
   /** SourceAppNames values from @speckle/shared. Empty array means - all of them */
   supportedSourceApps: Array<Scalars['String']['output']>;
   tags: Array<Scalars['String']['output']>;
+  workspaceIds?: Maybe<Array<Scalars['String']['output']>>;
 };
 
 
@@ -3498,7 +3499,7 @@ export type UpdateAutomateFunctionInput = {
   /** SourceAppNames values from @speckle/shared */
   supportedSourceApps?: InputMaybe<Array<Scalars['String']['input']>>;
   tags?: InputMaybe<Array<Scalars['String']['input']>>;
-  workspaceId?: InputMaybe<Scalars['String']['input']>;
+  workspaceIds?: InputMaybe<Array<Scalars['String']['input']>>;
 };
 
 export type UpdateModelInput = {

@@ -148,6 +148,7 @@ type AutomateFunction {
   Only returned if user is a part of this speckle server
   """
   creator: LimitedUser
+  workspaceIds: [String!]
 }
 
 type AutomateFunctionToken {
@@ -268,7 +269,7 @@ input UpdateAutomateFunctionInput {
   supportedSourceApps: [String!]
   tags: [String!]
   logo: String
-  workspaceId: String
+  workspaceIds: [String!]
 }
 
 type UserAutomateInfo {
