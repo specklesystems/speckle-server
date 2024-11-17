@@ -1,6 +1,6 @@
 <template>
   <section>
-    <div class="md:max-w-4xl md:mx-auto pb-6 md:pb-0">
+    <div class="md:mx-auto pb-6 md:pb-0">
       <SettingsSectionHeader title="Billing" text="Your workspace billing details" />
       <template v-if="isBillingIntegrationEnabled">
         <BillingAlert
@@ -79,37 +79,7 @@
           </div>
 
           <SettingsSectionHeader title="Upgrade your plan" subheading class="pt-4" />
-          <div class="flex items-center gap-x-4">
-            <div class="flex-col pr-6 gap-y-1">
-              <p class="text-body-xs font-medium text-foreground">Annual billing</p>
-              <p class="text-body-xs text-foreground-2 leading-5 max-w-md">
-                Choose annual billing for a 20% discount
-              </p>
-            </div>
-            <FormSwitch
-              v-model="isYearlyPlan"
-              :show-label="false"
-              name="annual billing"
-            />
-          </div>
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <CommonCard
-              v-for="pricingPlan in pricingPlans"
-              :key="pricingPlan.name"
-              class="gap-y-4"
-            >
-              <h4 class="text-heading text-foreground capitalize">
-                {{ pricingPlan.name }}
-              </h4>
-              <FormButton
-                color="outline"
-                full-width
-                @click="onUpgradePlanClick(pricingPlan.name)"
-              >
-                Upgrade
-              </FormButton>
-            </CommonCard>
-          </div>
+          <SettingsWorkspacesBillingPricingPlans :workspace-id="workspaceId" />
         </div>
       </template>
 
@@ -122,17 +92,13 @@
 import dayjs from 'dayjs'
 import { graphql } from '~/lib/common/generated/gql'
 import { useQuery } from '@vue/apollo-composable'
-import {
-  settingsWorkspaceBillingQuery,
-  settingsWorkspacePricingPlansQuery
-} from '~/lib/settings/graphql/queries'
+import { settingsWorkspaceBillingQuery } from '~/lib/settings/graphql/queries'
 import { useIsBillingIntegrationEnabled } from '~/composables/globals'
 import {
   WorkspacePlans,
   WorkspacePlanStatuses,
   BillingInterval
 } from '~/lib/common/generated/gql/graphql'
-import { isWorkspacePricingPlans } from '~/lib/settings/helpers/types'
 import { useBillingActions } from '~/lib/billing/composables/actions'
 import type { SeatPrices } from '~/lib/billing/helpers/types'
 import { seatPricesConfig } from '~/lib/billing/helpers/constants'
@@ -157,7 +123,6 @@ const props = defineProps<{
 }>()
 
 const isBillingIntegrationEnabled = useIsBillingIntegrationEnabled()
-const isYearlyPlan = ref(false)
 const seatPrices = ref<SeatPrices>(seatPricesConfig)
 
 const route = useRoute()
@@ -170,15 +135,7 @@ const { result: workspaceResult } = useQuery(
     enabled: isBillingIntegrationEnabled
   })
 )
-const { result: pricingPlansResult } = useQuery(
-  settingsWorkspacePricingPlansQuery,
-  null,
-  () => ({
-    enabled: isBillingIntegrationEnabled
-  })
-)
-const { billingPortalRedirect, upgradePlanRedirect, cancelCheckoutSession } =
-  useBillingActions()
+const { billingPortalRedirect, cancelCheckoutSession } = useBillingActions()
 
 const currentPlan = computed(() => workspaceResult.value?.workspace.plan)
 const subscription = computed(() => workspaceResult.value?.workspace.subscription)
@@ -206,11 +163,6 @@ const seatPrice = computed(() =>
     ? seatPrices.value[currentPlan.value?.name][subscription.value?.billingInterval]
     : seatPrices.value[WorkspacePlans.Team][BillingInterval.Monthly]
 )
-const pricingPlans = computed(() =>
-  isWorkspacePricingPlans(pricingPlansResult.value)
-    ? pricingPlansResult.value?.workspacePricingPlans.workspacePlanInformation
-    : undefined
-)
 const nextPaymentDue = computed(() =>
   currentPlan.value
     ? isPaidPlan.value
@@ -218,13 +170,6 @@ const nextPaymentDue = computed(() =>
       : 'Never'
     : dayjs().add(30, 'days').format('MMMM D, YYYY')
 )
-const onUpgradePlanClick = (plan: WorkspacePlans) => {
-  upgradePlanRedirect({
-    plan,
-    cycle: isYearlyPlan.value ? BillingInterval.Yearly : BillingInterval.Monthly,
-    workspaceId: props.workspaceId
-  })
-}
 
 onMounted(() => {
   const paymentStatusQuery = route.query?.payment_status
