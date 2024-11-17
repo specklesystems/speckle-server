@@ -53,6 +53,20 @@ export const workspaceProjectsQuery = graphql(`
   }
 `)
 
+export const workspaceFunctionsQuery = graphql(`
+  query WorkspaceFunctionsQuery($workspaceSlug: String!) {
+    workspaceBySlug(slug: $workspaceSlug) {
+      id
+      automateFunctions {
+        items {
+          id
+          ...AutomationsFunctionsCard_AutomateFunction
+        }
+      }
+    }
+  }
+`)
+
 export const workspaceInviteQuery = graphql(`
   query WorkspaceInvite(
     $workspaceId: String

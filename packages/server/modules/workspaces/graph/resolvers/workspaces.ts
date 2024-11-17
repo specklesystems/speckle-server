@@ -194,6 +194,7 @@ import {
 } from '@/modules/automate/services/authCode'
 import { storeModelFactory } from '@/modules/core/repositories/models'
 import { getGenericRedis } from '@/modules/shared/redis/redis'
+import { convertFunctionToGraphQLReturn } from '@/modules/automate/services/functionManagement'
 
 const eventBus = getEventBus()
 const getServerInfo = getServerInfoFactory({ db })
@@ -986,10 +987,14 @@ export = FF_WORKSPACES_MODULE_ENABLED
               }
             })
 
+            console.log(JSON.stringify(res.functions, null, 2))
+
+            const items = res.functions.map(convertFunctionToGraphQLReturn)
+
             return {
               cursor: undefined,
               totalCount: res.functions.length,
-              items: res.functions
+              items
             }
           } catch (e) {
             const isNotFound =

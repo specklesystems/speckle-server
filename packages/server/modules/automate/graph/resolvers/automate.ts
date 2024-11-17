@@ -692,49 +692,46 @@ export = (FF_AUTOMATE_MODULE_ENABLED
       User: {
         automateInfo: (parent) => ({ userId: parent.id }),
         automateFunctions: async (parent, args, context) => {
-          return {
-            cursor: null,
-            totalCount: 0,
-            items: []
+          try {
+            const authCode = await createStoredAuthCodeFactory({
+              redis: getGenericRedis()
+            })({
+              userId: context.userId!,
+              action: AuthCodePayloadAction.ListUserFunctions
+            })
+
+            const res = await getUserFunctions({
+              userId: context.userId!,
+              query: removeNullOrUndefinedKeys(args),
+              body: {
+                speckleServerAuthenticationPayload: {
+                  ...authCode,
+                  origin: getServerOrigin()
+                }
+              }
+            })
+
+            const items = res.functions.map(convertFunctionToGraphQLReturn)
+
+            return {
+              cursor: undefined,
+              totalCount: res.functions.length,
+              items
+            }
+          } catch (e) {
+            const isNotFound =
+              e instanceof ExecutionEngineFailedResponseError &&
+              e.response.statusMessage === 'FunctionNotFound'
+            if (e instanceof ExecutionEngineNetworkError || isNotFound) {
+              return {
+                cursor: null,
+                totalCount: 0,
+                items: []
+              }
+            }
+
+            throw e
           }
-          // try {
-          //   const authCode = await createStoredAuthCodeFactory({
-          //     redis: getGenericRedis()
-          //   })({
-          //     userId: context.userId!,
-          //     action: AuthCodePayloadAction.ListUserFunctions
-          //   })
-
-          //   const res = await getUserFunctions({
-          //     userId: context.userId!,
-          //     query: removeNullOrUndefinedKeys(args),
-          //     body: {
-          //       speckleServerAuthenticationPayload: {
-          //         ...authCode,
-          //         origin: getServerOrigin()
-          //       }
-          //     }
-          //   })
-
-          //   return {
-          //     cursor: undefined,
-          //     totalCount: res.functions.length,
-          //     items: res.functions
-          //   }
-          // } catch (e) {
-          //   const isNotFound =
-          //     e instanceof ExecutionEngineFailedResponseError &&
-          //     e.response.statusMessage === 'FunctionNotFound'
-          //   if (e instanceof ExecutionEngineNetworkError || isNotFound) {
-          //     return {
-          //       cursor: null,
-          //       totalCount: 0,
-          //       items: []
-          //     }
-          //   }
-
-          //   throw e
-          // }
         }
       },
       UserAutomateInfo: {

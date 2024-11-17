@@ -2,15 +2,15 @@
   <div>
     <Portal to="navigation">
       <HeaderNavLink
-        :to="workspaceFunctionsRoute('')"
-        name="Functions"
+        :to="workspaceFunctionsRoute(workspaceFunctions?.id!)"
+        name="Workspace Functions"
         :separator="false"
       />
     </Portal>
     <div class="flex flex-col gap-4">
       <div class="flex items-center gap-2 mb-2">
         <IconBolt class="h-5 w-5" />
-        <h1 class="text-heading-lg">Workspace functions</h1>
+        <h1 class="text-heading-lg">Workspace Functions</h1>
       </div>
       <AutomateFunctionsPageHeader
         v-model:search="search"
@@ -20,7 +20,18 @@
       />
     </div>
 
+    <AutomateFunctionsPageItems
+      :functions="workspaceFunctions"
+      :search="!!search"
+      :loading="false"
+      @create-automation-from="openCreateNewAutomation"
+      @clear-search="search = ''"
+    />
+
     <CommonLoadingBar :loading="pageQueryLoading" client-only class="mb-2" />
+    <div class="flex items-center gap-2 mt-8 mb-4">
+      <h1 class="text-heading-md">Example functions</h1>
+    </div>
     <AutomateFunctionsPageItems
       :functions="finalResult"
       :search="!!search"
@@ -32,6 +43,7 @@
 
     <AutomateAutomationCreateDialog
       v-model:open="showNewAutomationDialog"
+      :workspace-id="''"
       :preselected-function="newAutomationTargetFn"
     />
   </div>
@@ -54,34 +66,35 @@ import {
   workspaceFunctionsRoute,
   workspaceRoute
 } from '~/lib/common/helpers/route'
+import {
+  workspaceFunctionsQuery,
+  workspacePageQuery
+} from '~/lib/workspaces/graphql/queries'
 
 definePageMeta({
   middleware: ['auth', 'requires-automate-enabled']
 })
 
-const pageQuery = graphql(`
-  query WorkspaceFunctionsPage($workspaceId: String!, $search: String, $cursor: String = null) {
-    workspace(id: $workspaceId) {
-      automateFunctions() {
-        items
-        totalCount
-        cursor
-      }
-    }
-  }
-`)
+const route = useRoute()
+const workspaceSlug = computed(() => route.params.slug as string)
 
-const search = ref('')
 const pageFetchPolicy = usePageQueryStandardFetchPolicy()
-const { result, loading: pageQueryLoading } = useQuery(
-  pageQuery,
+
+const { result: workspaceFunctionsResult, onResult } = useQuery(
+  workspaceFunctionsQuery,
   () => ({
-    search: search.value?.length ? search.value : null
+    workspaceSlug: workspaceSlug.value
   }),
   () => ({
     fetchPolicy: pageFetchPolicy.value
   })
 )
+
+const workspaceFunctions = computed(
+  () => workspaceFunctionsResult.value?.workspaceBySlug
+)
+
+const search = ref('')
 
 const {
   identifier,
