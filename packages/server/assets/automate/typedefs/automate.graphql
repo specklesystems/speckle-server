@@ -350,6 +350,7 @@ extend type Project {
 input AutomateAuthCodePayloadTest {
   code: String!
   userId: String!
+  workspaceId: String
   action: String!
 }
 

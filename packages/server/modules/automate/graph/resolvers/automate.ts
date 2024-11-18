@@ -124,6 +124,7 @@ import {
   storeTokenScopesFactory,
   storeUserServerAppTokenFactory
 } from '@/modules/core/repositories/tokens'
+import { getEventBus } from '@/modules/shared/services/eventBus'
 
 const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
 
@@ -654,10 +655,12 @@ export = (FF_AUTOMATE_MODULE_ENABLED
     Query: {
       async automateValidateAuthCode(_parent, args) {
         const validate = validateStoredAuthCodeFactory({
-          redis: getGenericRedis()
+          redis: getGenericRedis(),
+          emit: getEventBus().emit
         })
+        const payload = removeNullOrUndefinedKeys(args.payload)
         return await validate({
-          ...args.payload,
+          ...payload,
           action: args.payload.action as AuthCodePayloadAction
         })
       },

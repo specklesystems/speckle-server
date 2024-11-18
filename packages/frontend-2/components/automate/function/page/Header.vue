@@ -70,6 +70,7 @@ graphql(`
     releases(limit: 1) {
       totalCount
     }
+    workspaceIds
   }
 `)
 

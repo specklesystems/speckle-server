@@ -121,6 +121,7 @@ const editModel = computed((): Optional<FunctionDetailsFormValues> => {
       func.supportedSourceApps.includes(app.name)
     ),
     tags: func.tags
+    // workspace: [func.workspaceIds]
   }
 })
 
