@@ -98,17 +98,21 @@ import { isClient } from '@vueuse/core'
 import { ArrowLongRightIcon, ArrowLongLeftIcon } from '@heroicons/vue/24/outline'
 import type { Nullable } from '@speckle/shared'
 import { throttle } from '#lodash'
+import { useElementSize } from '@vueuse/core'
 
 const props = defineProps<{
   items: LayoutPageTabItem[]
 }>()
 
 const activeItem = defineModel<LayoutPageTabItem>('activeItem', { required: true })
+
 const buttonContainer = ref(null as Nullable<HTMLDivElement>)
 const scrollContainer = ref<HTMLElement | null>(null)
 const showLeftArrow = ref(false)
 const showRightArrow = ref(false)
 const isInitialSetup = ref(true)
+
+const { width } = useElementSize(buttonContainer)
 
 const buttonClass = computed(() => {
   return (item: LayoutPageTabItem) => {
@@ -148,11 +152,16 @@ const activeItemRef = computed(() => {
 })
 
 const borderStyle = computed<CSSProperties>(() => {
-  const element = activeItemRef.value
-  return {
-    left: `${element?.offsetLeft || 0}px`,
-    width: `${element?.clientWidth || 0}px`
-  }
+  // Using width in calculation to force dependency
+  return width.value
+    ? {
+        left: `${activeItemRef.value?.offsetLeft || 0}px`,
+        width: `${activeItemRef.value?.clientWidth || 0}px`
+      }
+    : {
+        left: '0px',
+        width: '0px'
+      }
 })
 
 const setActiveItem = (item: LayoutPageTabItem) => {
