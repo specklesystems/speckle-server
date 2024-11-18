@@ -74,7 +74,7 @@ const searchQuery = graphql(`
 const props = withDefaults(
   defineProps<{
     functionSource: 'user' | 'workspace'
-    workspaceId: string
+    workspaceId?: string
     preselectedFunction: Optional<CreateAutomationSelectableFunction>
     pageSize?: Optional<number>
     showLabel?: Optional<boolean>
@@ -101,7 +101,7 @@ const {
 } = usePaginatedQuery({
   query: searchQuery,
   baseVariables: computed(() => ({
-    workspaceId: props.workspaceId,
+    workspaceId: props.workspaceId ?? '',
     search: search.value?.length ? search.value : null
   })),
   resolveKey: (vars) => [vars.search || ''],

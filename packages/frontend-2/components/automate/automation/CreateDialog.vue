@@ -74,7 +74,6 @@
           function-source="user"
           :preselected-function="validatedPreselectedFunction"
           :page-size="2"
-          :workspace-id="workspaceId"
         />
       </template>
     </div>
@@ -138,7 +137,7 @@ graphql(`
 `)
 
 const props = defineProps<{
-  workspaceId: string
+  workspaceId?: string
   preselectedFunction?: Optional<CreateAutomationSelectableFunction>
   preselectedProject?: Optional<FormSelectProjects_ProjectFragment>
 }>()

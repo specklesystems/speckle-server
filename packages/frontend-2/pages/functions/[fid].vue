@@ -4,7 +4,7 @@
     <template v-if="!loading && fn">
       <AutomateFunctionPageHeader
         :fn="fn"
-        :is-owner="true"
+        :is-owner="isOwner"
         class="mb-12"
         @create-automation="showNewAutomationDialog = true"
         @edit="showEditDialog = true"
@@ -113,6 +113,8 @@ const editModel = computed((): Optional<FunctionDetailsFormValues> => {
   const func = fn.value
   if (!func) return undefined
 
+  const workspaceId = func.workspaceIds?.at(0)
+
   return {
     name: func.name,
     description: func.description,
@@ -120,8 +122,10 @@ const editModel = computed((): Optional<FunctionDetailsFormValues> => {
     allowedSourceApps: SourceApps.filter((app) =>
       func.supportedSourceApps.includes(app.name)
     ),
-    tags: func.tags
-    // workspace: [func.workspaceIds]
+    tags: func.tags,
+    workspace: activeUserWorkspaces.value.find(
+      (workspace) => workspace.id === workspaceId
+    )
   }
 })
 

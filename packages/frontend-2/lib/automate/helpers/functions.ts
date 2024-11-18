@@ -15,7 +15,7 @@ export type FunctionDetailsFormValues = {
   allowedSourceApps?: SourceAppDefinition[]
   tags?: string[]
   org?: string
-  workspace?: Workspace
+  workspace?: Pick<Workspace, 'id' | 'name'>
 }
 
 export const cleanFunctionLogo = (
