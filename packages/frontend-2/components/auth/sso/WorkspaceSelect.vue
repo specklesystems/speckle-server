@@ -35,26 +35,23 @@
 
 <script setup lang="ts">
 import { useFormSelectChildInternals } from '@speckle/ui-components'
-import type { SsoWorkspaceSelect_WorkspaceFragment } from '~/lib/common/generated/gql/graphql'
+import type { AuthSsoLogin_WorkspaceFragment } from '~/lib/common/generated/gql/graphql'
 
 const props = defineProps<{
-  modelValue?: SsoWorkspaceSelect_WorkspaceFragment
-  items: SsoWorkspaceSelect_WorkspaceFragment[]
+  modelValue?: AuthSsoLogin_WorkspaceFragment
+  items: AuthSsoLogin_WorkspaceFragment[]
   disabled?: boolean
 }>()
 
 const emit = defineEmits<{
   (
     e: 'update:modelValue',
-    v:
-      | SsoWorkspaceSelect_WorkspaceFragment
-      | SsoWorkspaceSelect_WorkspaceFragment[]
-      | undefined
+    v: AuthSsoLogin_WorkspaceFragment | AuthSsoLogin_WorkspaceFragment[] | undefined
   ): void
 }>()
 
 const { selectedValue, isArrayValue } =
-  useFormSelectChildInternals<SsoWorkspaceSelect_WorkspaceFragment>({
+  useFormSelectChildInternals<AuthSsoLogin_WorkspaceFragment>({
     props: toRefs(props),
     emit
   })
