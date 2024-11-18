@@ -24,7 +24,7 @@ import {
   findInviteFactory,
   findUserByTargetFactory,
   insertInviteAndDeleteOldFactory,
-  markInviteUpdatedfactory,
+  markInviteUpdatedFactory,
   queryAllResourceInvitesFactory,
   queryAllUserResourceInvitesFactory,
   updateAllInviteTargetsFactory
@@ -696,7 +696,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
               db,
               filterQuery: workspaceInviteValidityFilter
             }),
-            markInviteUpdated: markInviteUpdatedfactory({ db }),
+            markInviteUpdated: markInviteUpdatedFactory({ db }),
             getUser,
             getServerInfo
           })
