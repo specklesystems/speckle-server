@@ -50,8 +50,14 @@ export const functionTemplateRepos = <const>[
   },
   {
     id: AutomateFunctionTemplateLanguage.Demonstration,
-    title: 'SpeckleCon 2024',
+    title: 'SpeckleCon 2024 - Thermal',
     url: 'https://github.com/specklesystems/Thermal-Resistance-Checker-Template',
+    logo: '/images/functions/specklecon.svg'
+  },
+  {
+    id: AutomateFunctionTemplateLanguage.Demonstrationpython,
+    title: 'SpeckleCon 2024 - QAQC',
+    url: 'https://github.com/specklesystems/SpeckleConWorkshop-QAQC',
     logo: '/images/functions/specklecon.svg'
   }
 ]

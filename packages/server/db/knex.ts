@@ -24,6 +24,7 @@ export default knexInstance
 export {
   knexInstance as db,
   knexInstance as knex,
-  knexInstance as knexInstance,
+  knexInstance as mainDb,
+  knexInstance,
   config
 }
