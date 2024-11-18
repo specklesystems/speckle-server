@@ -173,16 +173,17 @@ export const initializeRegion: InitializeRegion = async ({ regionKey }) => {
     sslmode
   })
 
-  //update liveness and readiness checks
-  //TODO if/when pubsub is implemented, the healthcheck should subscribe
-  //to new region events, and dbSelector should not call healthcheck directly here
-  await updateFreeDbConnectionSamplers()
-
   // pushing to the singleton object here, its only not available
   // if this is being triggered from init, and in that case its gonna be set after anyway
   if (registeredRegionClients) {
     registeredRegionClients[regionKey] = regionDb.public
   }
+
+  //update liveness and readiness checks
+  //NOTE this relies on the registeredRegionClients object already being updated
+  //TODO if/when pubsub is implemented, the healthcheck should subscribe
+  //to new region events, and dbSelector should not call healthcheck directly here
+  await updateFreeDbConnectionSamplers()
 }
 
 interface ReplicationArgs {
