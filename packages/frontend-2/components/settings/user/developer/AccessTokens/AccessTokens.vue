@@ -46,6 +46,7 @@
         { id: 'actions', header: '', classes: 'col-span-1 flex justify-end' }
       ]"
       :items="tokens"
+      :loading="loading"
     >
       <template #name="{ item }">
         {{ item.name }}
@@ -107,9 +108,11 @@ const emit = defineEmits<{
   (e: 'delete', item: TokenItem): void
 }>()
 
-const { result: tokensResult, refetch: refetchTokens } = useQuery(
-  developerSettingsAccessTokensQuery
-)
+const {
+  result: tokensResult,
+  refetch: refetchTokens,
+  loading
+} = useQuery(developerSettingsAccessTokensQuery)
 
 const tokenSuccess = ref('')
 const showCreateTokenDialog = ref(false)
