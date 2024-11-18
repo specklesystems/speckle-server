@@ -41,7 +41,7 @@
               per seat/month
             </p>
             <p class="text-foreground-2 text-body-2xs pt-1">
-              Billed {{ isYearlyPlan ? 'anually' : 'monthly' }}
+              Billed {{ isYearlyPlan ? 'annually' : 'monthly' }}
             </p>
             <FormButton
               :color="plan.name === WorkspacePlans.Team ? 'primary' : 'outline'"
