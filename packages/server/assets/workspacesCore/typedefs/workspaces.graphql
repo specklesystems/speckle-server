@@ -275,11 +275,6 @@ type WorkspaceCost {
   total: Float!
 }
 
-type WorkspaceBilling {
-  versionsCount: WorkspaceVersionsCount!
-  cost: WorkspaceCost!
-}
-
 type Workspace {
   id: ID!
   name: String!
@@ -323,10 +318,6 @@ type Workspace {
     cursor: String
     filter: WorkspaceProjectsFilter
   ): ProjectCollection!
-  """
-  Billing data for Workspaces beta
-  """
-  billing: WorkspaceBilling @hasWorkspaceRole(role: MEMBER)
   """
   Information about the workspace's SSO configuration and the current user's SSO session, if present
   """

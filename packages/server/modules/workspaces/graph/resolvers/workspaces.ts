@@ -69,11 +69,9 @@ import {
   getWorkspaceDomainsFactory,
   getUserDiscoverableWorkspacesFactory,
   getWorkspaceWithDomainsFactory,
-  countProjectsVersionsByWorkspaceIdFactory,
-  countWorkspaceRoleWithOptionalProjectRoleFactory,
-  getUserIdsWithRoleInWorkspaceFactory,
   getWorkspaceRoleForUserFactory,
-  getWorkspaceBySlugFactory
+  getWorkspaceBySlugFactory,
+  countDomainsByWorkspaceIdFactory
 } from '@/modules/workspaces/repositories/workspaces'
 import {
   buildWorkspaceInviteEmailContentsFactory,
@@ -124,11 +122,6 @@ import {
 import { joinWorkspaceFactory } from '@/modules/workspaces/services/join'
 import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
 import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
-import { WORKSPACE_MAX_PROJECTS_VERSIONS } from '@/modules/gatekeeper/domain/constants'
-import {
-  getWorkspaceCostFactory,
-  getWorkspaceCostItemsFactory
-} from '@/modules/workspaces/services/cost'
 import {
   deleteWorkspaceDomainFactory,
   isUserWorkspaceDomainPolicyCompliantFactory
@@ -610,7 +603,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
           )
           await deleteWorkspaceDomainFactory({
             deleteWorkspaceDomain: repoDeleteWorkspaceDomainFactory({ db }),
-            countDomainsByWorkspaceId: countProjectsVersionsByWorkspaceIdFactory({
+            countDomainsByWorkspaceId: countDomainsByWorkspaceIdFactory({
               db
             }),
             updateWorkspace: updateWorkspaceFactory({
@@ -996,33 +989,10 @@ export = FF_WORKSPACES_MODULE_ENABLED
         domains: async (parent) => {
           return await getWorkspaceDomainsFactory({ db })({ workspaceIds: [parent.id] })
         },
-        billing: (parent) => ({ parent }),
         sso: async (parent) => {
           return await getWorkspaceSsoProviderRecordFactory({ db })({
             workspaceId: parent.id
           })
-        }
-      },
-      WorkspaceBilling: {
-        versionsCount: async ({ parent }) => {
-          const workspaceId = parent.id
-          return {
-            current: await countProjectsVersionsByWorkspaceIdFactory({ db })({
-              workspaceId
-            }),
-            max: WORKSPACE_MAX_PROJECTS_VERSIONS
-          }
-        },
-        cost: async ({ parent }) => {
-          const workspaceId = parent.id
-          return getWorkspaceCostFactory({
-            getWorkspaceCostItems: getWorkspaceCostItemsFactory({
-              countRole: countWorkspaceRoleWithOptionalProjectRoleFactory({ db }),
-              getUserIdsWithRoleInWorkspace: getUserIdsWithRoleInWorkspaceFactory({
-                db
-              })
-            })
-          })({ workspaceId })
         }
       },
       WorkspaceSso: {

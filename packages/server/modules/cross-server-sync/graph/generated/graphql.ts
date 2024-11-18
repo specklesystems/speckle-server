@@ -3998,8 +3998,6 @@ export type Workspace = {
   __typename?: 'Workspace';
   /** Regions available to the workspace for project data residency */
   availableRegions: Array<ServerRegionItem>;
-  /** Billing data for Workspaces beta */
-  billing?: Maybe<WorkspaceBilling>;
   createdAt: Scalars['DateTime']['output'];
   customerPortalUrl?: Maybe<Scalars['String']['output']>;
   /** Selected fallback when `logo` not set */
@@ -4053,12 +4051,6 @@ export type WorkspaceTeamArgs = {
   cursor?: InputMaybe<Scalars['String']['input']>;
   filter?: InputMaybe<WorkspaceTeamFilter>;
   limit?: Scalars['Int']['input'];
-};
-
-export type WorkspaceBilling = {
-  __typename?: 'WorkspaceBilling';
-  cost: WorkspaceCost;
-  versionsCount: WorkspaceVersionsCount;
 };
 
 export type WorkspaceBillingMutations = {
