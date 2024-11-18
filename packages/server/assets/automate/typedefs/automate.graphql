@@ -275,6 +275,7 @@ enum AutomateFunctionTemplateLanguage {
   PYTHON
   DOT_NET
   DEMONSTRATION
+  DEMONSTRATIONPYTHON
 }
 
 type AutomateFunctionTemplate {
