@@ -31,7 +31,7 @@ type MetricConfig = {
   prefix?: string
   labels?: Record<string, string>
   buckets?: Record<BucketName, number[]>
-  knex: Knex
+  getDbClients: () => Promise<Record<string, Knex>>
 }
 
 export const knexConnections = (registry: Registry, config: MetricConfig): Metric => {
@@ -40,7 +40,6 @@ export const knexConnections = (registry: Registry, config: MetricConfig): Metri
   const labels = config.labels ?? {}
   const labelNames = Object.keys(labels)
   const buckets = { ...DEFAULT_KNEX_TOTAL_BUCKETS, ...config.buckets }
-  const knex = config.knex
 
   const knexConnectionsFree = new Histogram({
     name: namePrefix + KNEX_CONNECTIONS_FREE,
@@ -92,14 +91,20 @@ export const knexConnections = (registry: Registry, config: MetricConfig): Metri
 
   return {
     collect: () => {
-      const connPool = knex.client.pool
+      for (const [region, knex] of Object.entries(config.getDbClients())) {
+        const labelsAndRegion = { ...labels, region }
+        const connPool = knex.client.pool
 
-      knexConnectionsFree.observe(labels, connPool.numFree())
-      knexConnectionsUsed.observe(labels, connPool.numUsed())
-      knexPendingAcquires.observe(labels, connPool.numPendingAcquires())
-      knexPendingCreates.observe(labels, connPool.numPendingCreates())
-      knexPendingValidations.observe(labels, connPool.numPendingValidations())
-      knexRemainingCapacity.observe(labels, numberOfFreeConnections(knex))
+        knexConnectionsFree.observe(labelsAndRegion, connPool.numFree())
+        knexConnectionsUsed.observe(labelsAndRegion, connPool.numUsed())
+        knexPendingAcquires.observe(labelsAndRegion, connPool.numPendingAcquires())
+        knexPendingCreates.observe(labelsAndRegion, connPool.numPendingCreates())
+        knexPendingValidations.observe(
+          labelsAndRegion,
+          connPool.numPendingValidations()
+        )
+        knexRemainingCapacity.observe(labelsAndRegion, numberOfFreeConnections(knex))
+      }
     }
   }
 }
