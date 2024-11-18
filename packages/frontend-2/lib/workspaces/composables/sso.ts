@@ -18,7 +18,7 @@ export function useWorkspacePublicSsoCheck(workspaceSlug: string) {
 
   const {
     data: workspace,
-    status: loading,
+    status,
     error
   } = useFetch<WorkspaceSsoProviderPublic>(
     new URL(`/api/v1/workspaces/${workspaceSlug}/sso`, apiOrigin).toString(),
@@ -30,6 +30,8 @@ export function useWorkspacePublicSsoCheck(workspaceSlug: string) {
   )
 
   const hasSsoEnabled = computed(() => !!workspace.value?.ssoProviderName)
+
+  const loading = computed(() => status.value === 'pending')
 
   return {
     workspace,
