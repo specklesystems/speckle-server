@@ -1,12 +1,11 @@
 <template>
   <div class="flex flex-col items-center gap-4">
-    <div v-if="workspace?.logo" class="w-16 h-16">
-      <NuxtImg
-        :src="workspace.logo"
-        :alt="workspace?.name"
-        class="w-full h-full object-contain rounded-full"
-      />
-    </div>
+    <WorkspaceAvatar
+      v-if="workspace"
+      :logo="workspace.logo"
+      :default-logo-index="workspace.defaultLogoIndex"
+      size="xl"
+    />
 
     <h1 class="text-heading-xl text-center">
       Sign up to access {{ workspace?.name || 'your Workspace' }}
@@ -64,7 +63,8 @@ const handleContinue = () => {
 
     signInOrSignUpWithSso({
       challenge: challenge.value,
-      workspaceSlug: workspaceSlug.value
+      workspaceSlug: workspaceSlug.value,
+      newsletterConsent: newsletterConsent.value
     })
   } catch (error) {
     logger.error('SSO registration failed:', error)

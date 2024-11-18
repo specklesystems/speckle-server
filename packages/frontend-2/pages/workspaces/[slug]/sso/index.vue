@@ -11,11 +11,11 @@
 
     <template v-else>
       <div class="flex flex-col items-center gap-2 mt-8">
-        <NuxtImg
-          v-if="workspace?.logo"
-          :src="workspace.logo"
-          :alt="workspace?.name"
-          class="w-16 h-16 object-contain rounded-full"
+        <WorkspaceAvatar
+          v-if="workspace"
+          :logo="workspace.logo"
+          :default-logo-index="workspace.defaultLogoIndex"
+          size="xl"
         />
         <h1 class="text-heading-xl mb-2">
           {{ !isSsoAuthenticated ? 'Sign in to' : '' }}

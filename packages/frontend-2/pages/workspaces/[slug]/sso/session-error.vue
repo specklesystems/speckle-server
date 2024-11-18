@@ -4,13 +4,12 @@
       <CommonLoadingIcon />
     </div>
     <template v-else>
-      <div v-if="workspace?.logo" class="w-16 h-16">
-        <img
-          :src="workspace.logo"
-          :alt="workspace?.name"
-          class="w-full h-full object-contain rounded-full"
-        />
-      </div>
+      <WorkspaceAvatar
+        v-if="workspace"
+        :logo="workspace.logo"
+        :default-logo-index="workspace.defaultLogoIndex"
+        size="xl"
+      />
       <h1 class="text-heading-xl">SSO is required for {{ workspace?.name }}</h1>
       <div
         class="p-4 rounded-lg border border-outline-2 bg-foundation text-body-xs mb-2"
