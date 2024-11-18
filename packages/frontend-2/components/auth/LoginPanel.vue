@@ -22,7 +22,13 @@
         :app-id="appId"
         :newsletter-consent="false"
       />
-      <FormButton color="outline" full-width size="lg" :to="ssoLoginRoute">
+      <FormButton
+        v-if="isSsoEnabled"
+        color="outline"
+        full-width
+        size="lg"
+        :to="ssoLoginRoute"
+      >
         Continue with SSO
       </FormButton>
 
@@ -73,6 +79,7 @@ const { isLoggedIn } = useActiveUser()
 const { inviteToken } = useAuthManager()
 const router = useRouter()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
+const isSsoEnabled = useIsWorkspacesSsoEnabled()
 
 const { result } = useQuery(authLoginPanelQuery)
 
