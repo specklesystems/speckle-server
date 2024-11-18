@@ -102,7 +102,7 @@ const {
   query: searchQuery,
   baseVariables: computed(() => ({
     workspaceId: props.workspaceId ?? '',
-    search: search.value?.length ? search.value : null
+    search: search.value?.length ? search.value : ''
   })),
   resolveKey: (vars) => [vars.search || ''],
   resolveCurrentResult: (res) => res?.workspace?.automateFunctions,

@@ -63,7 +63,11 @@ const getApiUrl = (
   if (options?.query) {
     Object.entries(options.query).forEach(([key, val]) => {
       if (isNullOrUndefined(val)) return
-      url.searchParams.append(key, val.toString())
+      try {
+        url.searchParams.append(key, val.toString())
+      } catch (e) {
+        console.log({ val })
+      }
     })
   }
 
@@ -382,8 +386,6 @@ export const getFunction = async (params: {
     method: 'get',
     token
   })
-
-  console.log(JSON.stringify(result, null, 2))
 
   return result
 }

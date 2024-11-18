@@ -711,7 +711,7 @@ export = (FF_AUTOMATE_MODULE_ENABLED
     },
     User: {
       automateInfo: (parent) => ({ userId: parent.id }),
-      automateFunctions: async (parent, args, context) => {
+      automateFunctions: async (_parent, args, context) => {
         try {
           const authCode = await createStoredAuthCodeFactory({
             redis: getGenericRedis()
@@ -722,7 +722,11 @@ export = (FF_AUTOMATE_MODULE_ENABLED
 
           const res = await getUserFunctions({
             userId: context.userId!,
-            query: removeNullOrUndefinedKeys(args),
+            query: {
+              query: args.filter?.search || undefined,
+              cursor: args.cursor || undefined,
+              limit: isNullOrUndefined(args.limit) ? undefined : args.limit,
+            },
             body: {
               speckleServerAuthenticationPayload: {
                 ...authCode,
