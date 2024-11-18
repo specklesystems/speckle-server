@@ -490,7 +490,51 @@ describe('Workspaces GQL CRUD', () => {
 
     describe('query activeUser.workspaces', () => {
       it('should return all workspaces for a user', async () => {
-        const res = await apollo.execute(GetActiveUserWorkspacesDocument, {})
+        const testUser: BasicTestUser = {
+          id: '',
+          name: 'John Speckle',
+          email: 'foobar@example.org',
+          role: Roles.Server.Admin,
+          verified: true
+        }
+
+        await createTestUser(testUser)
+        const testApollo: TestApolloServer = await testApolloServer({
+          context: await createTestContext({
+            auth: true,
+            userId: testUser.id,
+            token: '',
+            role: testUser.role,
+            scopes: AllScopes
+          })
+        })
+
+        const workspace1: BasicTestWorkspace = {
+          id: '',
+          ownerId: '',
+          name: 'Workspace A',
+          slug: cryptoRandomString({ length: 10 })
+        }
+
+        const workspace2: BasicTestWorkspace = {
+          id: '',
+          ownerId: '',
+          name: 'Workspace A',
+          slug: cryptoRandomString({ length: 10 })
+        }
+
+        const workspace3: BasicTestWorkspace = {
+          id: '',
+          ownerId: '',
+          name: 'Workspace A',
+          slug: cryptoRandomString({ length: 10 })
+        }
+
+        await createTestWorkspace(workspace1, testUser)
+        await createTestWorkspace(workspace2, testUser)
+        await createTestWorkspace(workspace3, testUser)
+
+        const res = await testApollo.execute(GetActiveUserWorkspacesDocument, {})
         expect(res).to.not.haveGraphQLErrors()
         // TODO: this test depends on the previous tests
         expect(res.data?.activeUser?.workspaces?.items?.length).to.equal(3)
@@ -580,7 +624,7 @@ describe('Workspaces GQL CRUD', () => {
       }
 
       before(async () => {
-        await createTestWorkspace(workspace, testAdminUser)
+        await createTestWorkspace(workspace, testAdminUser, { addPlan: false })
 
         workspaceProject.workspaceId = workspace.id
 
@@ -614,6 +658,22 @@ describe('Workspaces GQL CRUD', () => {
         })
       })
 
+      it('should fail to delete a paid workspace', async () => {
+        const paidWorkspace = {
+          id: '',
+          name: 'test ws',
+          slug: cryptoRandomString({ length: 10 }),
+          ownerId: ''
+        }
+
+        await createTestWorkspace(paidWorkspace, testAdminUser, { addPlan: true })
+        const deleteRes = await apollo.execute(DeleteWorkspaceDocument, {
+          workspaceId: paidWorkspace.id
+        })
+
+        expect(deleteRes).to.haveGraphQLErrors('Workspace has an active paid plan')
+      })
+
       it('should delete the workspace', async () => {
         const deleteRes = await apollo.execute(DeleteWorkspaceDocument, {
           workspaceId: workspace.id
@@ -627,18 +687,25 @@ describe('Workspaces GQL CRUD', () => {
       })
 
       it('should throw if non-workspace-admin triggers delete', async () => {
-        const memberApollo: TestApolloServer = (apollo = await testApolloServer({
+        const nonPaidWorkspace = {
+          id: '',
+          name: 'test ws',
+          slug: cryptoRandomString({ length: 10 }),
+          ownerId: ''
+        }
+        await createTestWorkspace(nonPaidWorkspace, testAdminUser, { addPlan: false })
+        const memberApollo: TestApolloServer = await testApolloServer({
           context: await createTestContext({
             auth: true,
-            userId: testAdminUser.id,
+            userId: testMemberUser.id,
             token: '',
-            role: testAdminUser.role,
+            role: testMemberUser.role,
             scopes: AllScopes
           })
-        }))
+        })
 
         const res = await memberApollo.execute(DeleteWorkspaceDocument, {
-          workspaceId: workspace.id
+          workspaceId: nonPaidWorkspace.id
         })
 
         expect(res).to.haveGraphQLErrors('not authorized')
