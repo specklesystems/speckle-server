@@ -19,9 +19,10 @@
       :color="plan.name === WorkspacePlans.Team ? 'primary' : 'outline'"
       :disabled="!hasTrialPlan && !canUpgradeToPlan"
       class="mt-3"
+      full-width
       @click="onUpgradePlanClick(plan.name)"
     >
-      {{ hasTrialPlan ? 'Subscribe' : 'Upgrade' }} to
+      {{ hasTrialPlan ? 'Subscribe' : 'Upgrade' }} to&nbsp;
       <span class="capitalize">{{ plan.name }}</span>
     </FormButton>
   </div>
@@ -37,11 +38,11 @@ import {
   BillingInterval
 } from '~/lib/common/generated/gql/graphql'
 import { useBillingActions } from '~/lib/billing/composables/actions'
-
+import type { MaybeNullOrUndefined } from '@speckle/shared'
 const props = defineProps<{
   plan: PricingPlan
   isYearlyPlan: boolean
-  currentPlan: WorkspacePlan
+  currentPlan: MaybeNullOrUndefined<WorkspacePlan>
   workspaceId: string
 }>()
 

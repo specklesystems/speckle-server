@@ -7,7 +7,7 @@
         </th>
         <th
           v-for="plan in plans"
-          :key="plan.name"
+          :key="`desktop-${plan.name}`"
           class="w-1/4 px-6 pt-4 pb-2"
           :class="[
             plan.name === WorkspacePlans.Team
@@ -20,6 +20,7 @@
             :plan="plan"
             :is-yearly-plan="isYearlyPlan"
             :current-plan="currentPlan"
+            :workspace-id="workspaceId"
           />
         </th>
       </tr>
@@ -66,10 +67,11 @@ import { WorkspacePlans } from '~/lib/common/generated/gql/graphql'
 import { pricingPlansConfig } from '~/lib/billing/helpers/constants'
 import type { PlanFeaturesList } from '~/lib/billing/helpers/types'
 import { CheckIcon } from '@heroicons/vue/24/outline'
+import type { MaybeNullOrUndefined } from '@speckle/shared'
 
 defineProps<{
   isYearlyPlan: boolean
-  currentPlan: WorkspacePlan
+  currentPlan: MaybeNullOrUndefined<WorkspacePlan>
   workspaceId: string
 }>()
 

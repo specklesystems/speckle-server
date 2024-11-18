@@ -99,6 +99,7 @@ import {
 import { useBillingActions } from '~/lib/billing/composables/actions'
 import { pricingPlansConfig } from '~/lib/billing/helpers/constants'
 import { Roles } from '@speckle/shared'
+
 graphql(`
   fragment SettingsWorkspacesBilling_Workspace on Workspace {
     ...BillingAlert_Workspace

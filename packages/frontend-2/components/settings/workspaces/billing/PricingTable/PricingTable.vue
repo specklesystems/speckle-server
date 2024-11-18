@@ -1,6 +1,6 @@
 <template>
   <div class="flex flex-col gap-y-6">
-    <div class="flex justify-between">
+    <div class="flex flex-col lg:flex-row justify-between gap-y-4">
       <SettingsSectionHeader
         :title="hasTrialPlan ? 'Start your subscription' : 'Upgrade your plan'"
         subheading
@@ -10,21 +10,24 @@
         <FormSwitch v-model="isYearlyPlan" :show-label="false" name="annual billing" />
       </div>
     </div>
-
-    <SettingsWorkspacesBillingPricingTableDesktop
+    <component
+      :is="isDesktop ? DesktopTable : MobileTable"
+      :workspace-id="workspaceId"
+      :current-plan="currentPlan"
       :is-yearly-plan="isYearlyPlan"
-      :current-plan="props.currentPlan"
-      :workspace-id="props.workspaceId"
     />
   </div>
 </template>
 
 <script setup lang="ts">
+import { useBreakpoints } from '@vueuse/core'
+import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
 import {
   WorkspacePlanStatuses,
   type WorkspacePlan
 } from '~/lib/common/generated/gql/graphql'
 import { graphql } from '~/lib/common/generated/gql'
+import type { MaybeNullOrUndefined } from '@speckle/shared'
 
 graphql(`
   fragment SettingsWorkspacesBillingPricingTable_WorkspacePlan on WorkspacePlan {
@@ -35,9 +38,18 @@ graphql(`
 
 const props = defineProps<{
   workspaceId: string
-  currentPlan: WorkspacePlan
+  currentPlan: MaybeNullOrUndefined<WorkspacePlan>
 }>()
 
+const breakpoints = useBreakpoints(TailwindBreakpoints)
+
+const DesktopTable = defineAsyncComponent(
+  () => import('@/components/settings/workspaces/billing/PricingTable/Desktop.vue')
+)
+const MobileTable = defineAsyncComponent(
+  () => import('@/components/settings/workspaces/billing/PricingTable/Mobile.vue')
+)
+const isDesktop = breakpoints.greaterOrEqual('lg')
 const isYearlyPlan = ref(false)
 
 const hasTrialPlan = computed(
