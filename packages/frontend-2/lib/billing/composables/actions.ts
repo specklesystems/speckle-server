@@ -5,8 +5,12 @@ import type {
   BillingInterval
 } from '~/lib/common/generated/gql/graphql'
 import { settingsBillingCancelCheckoutSessionMutation } from '~/lib/settings/graphql/mutations'
+import { WorkspacePlanStatuses } from '~/lib/common/generated/gql/graphql'
+import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 
 export const useBillingActions = () => {
+  const route = useRoute()
+  const { triggerNotification } = useGlobalToast()
   const { client: apollo } = useApolloClient()
   const { mutate: cancelCheckoutSessionMutation } = useMutation(
     settingsBillingCancelCheckoutSessionMutation
@@ -40,9 +44,25 @@ export const useBillingActions = () => {
     })
   }
 
+  const validateCheckoutSession = (workspaceId: string) => {
+    const sessionIdQuery = route.query?.settings
+    const paymentStatusQuery = route.query?.workspace
+
+    if (sessionIdQuery && paymentStatusQuery) {
+      if (paymentStatusQuery === WorkspacePlanStatuses.Canceled) {
+        cancelCheckoutSession(String(sessionIdQuery), workspaceId)
+        triggerNotification({
+          type: ToastNotificationType.Danger,
+          title: 'Your payment was canceled'
+        })
+      }
+    }
+  }
+
   return {
     billingPortalRedirect,
     upgradePlanRedirect,
-    cancelCheckoutSession
+    cancelCheckoutSession,
+    validateCheckoutSession
   }
 }

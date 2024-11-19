@@ -126,7 +126,6 @@ const seatPrices = ref({
   [WorkspacePlans.Business]: pricingPlansConfig.plans[WorkspacePlans.Business].cost
 })
 
-const route = useRoute()
 const { result: workspaceResult } = useQuery(
   settingsWorkspaceBillingQuery,
   () => ({
@@ -136,7 +135,7 @@ const { result: workspaceResult } = useQuery(
     enabled: isBillingIntegrationEnabled
   })
 )
-const { billingPortalRedirect, cancelCheckoutSession } = useBillingActions()
+const { billingPortalRedirect, validateCheckoutSession } = useBillingActions()
 
 const currentPlan = computed(() => workspaceResult.value?.workspace.plan)
 const subscription = computed(() => workspaceResult.value?.workspace.subscription)
@@ -174,11 +173,6 @@ const nextPaymentDue = computed(() =>
 )
 
 onMounted(() => {
-  const paymentStatusQuery = route.query?.payment_status
-  const sessionIdQuery = route.query?.session_id
-
-  if (sessionIdQuery && String(paymentStatusQuery) === WorkspacePlanStatuses.Canceled) {
-    cancelCheckoutSession(String(sessionIdQuery), props.workspaceId)
-  }
+  validateCheckoutSession(props.workspaceId)
 })
 </script>
