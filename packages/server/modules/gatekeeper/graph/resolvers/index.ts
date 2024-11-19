@@ -22,6 +22,7 @@ import {
   getWorkspaceSubscriptionFactory,
   saveCheckoutSessionFactory
 } from '@/modules/gatekeeper/repositories/billing'
+import { canWorkspaceAccessFeatureFactory } from '@/modules/gatekeeper/services/featureAuthorization'
 
 const { FF_GATEKEEPER_MODULE_ENABLED } = getFeatureFlags()
 
@@ -69,6 +70,21 @@ export = FF_GATEKEEPER_MODULE_ENABLED
             workspaceSlug: workspace.slug,
             customerId: workspaceSubscription.subscriptionData.customerId
           })
+        },
+        hasAccessToFeature: async (parent, args, ctx) => {
+          await authorizeResolver(
+            ctx.userId,
+            parent.id,
+            Roles.Workspace.Member,
+            ctx.resourceAccessRules
+          )
+          const hasAccess = await canWorkspaceAccessFeatureFactory({
+            getWorkspacePlan: getWorkspacePlanFactory({ db })
+          })({
+            workspaceId: parent.id,
+            workspaceFeature: args.featureName
+          })
+          return hasAccess
         }
       },
       WorkspaceMutations: () => ({}),
