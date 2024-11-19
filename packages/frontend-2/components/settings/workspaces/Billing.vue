@@ -135,7 +135,7 @@ const { result: workspaceResult } = useQuery(
     enabled: isBillingIntegrationEnabled
   })
 )
-const { billingPortalRedirect, validateCheckoutSession } = useBillingActions()
+const { billingPortalRedirect } = useBillingActions()
 
 const currentPlan = computed(() => workspaceResult.value?.workspace.plan)
 const subscription = computed(() => workspaceResult.value?.workspace.subscription)
@@ -171,8 +171,4 @@ const nextPaymentDue = computed(() =>
       : 'Never'
     : dayjs().add(30, 'days').format('MMMM D, YYYY')
 )
-
-onMounted(() => {
-  validateCheckoutSession(props.workspaceId)
-})
 </script>

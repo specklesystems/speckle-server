@@ -10,6 +10,7 @@ import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables
 
 export const useBillingActions = () => {
   const route = useRoute()
+  const router = useRouter()
   const { triggerNotification } = useGlobalToast()
   const { client: apollo } = useApolloClient()
   const { mutate: cancelCheckoutSessionMutation } = useMutation(
@@ -45,8 +46,8 @@ export const useBillingActions = () => {
   }
 
   const validateCheckoutSession = (workspaceId: string) => {
-    const sessionIdQuery = route.query?.settings
-    const paymentStatusQuery = route.query?.workspace
+    const sessionIdQuery = route.query?.session_id
+    const paymentStatusQuery = route.query?.payment_status
 
     if (sessionIdQuery && paymentStatusQuery) {
       if (paymentStatusQuery === WorkspacePlanStatuses.Canceled) {
@@ -55,7 +56,17 @@ export const useBillingActions = () => {
           type: ToastNotificationType.Danger,
           title: 'Your payment was canceled'
         })
+      } else {
+        triggerNotification({
+          type: ToastNotificationType.Success,
+          title: 'Your workspace plan was successfully updated'
+        })
       }
+
+      const currentQueryParams = { ...route.query }
+      delete currentQueryParams.session_id
+      delete currentQueryParams.payment_status
+      router.push({ query: currentQueryParams })
     }
   }
 
