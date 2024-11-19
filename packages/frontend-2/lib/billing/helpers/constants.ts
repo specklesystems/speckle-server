@@ -42,8 +42,8 @@ export const pricingPlansConfig: {
       name: PlanFeaturesList.SSO,
       description: ''
     },
-    [PlanFeaturesList.CustomerDataRegion]: {
-      name: PlanFeaturesList.CustomerDataRegion,
+    [PlanFeaturesList.CustomDataRegion]: {
+      name: PlanFeaturesList.CustomDataRegion,
       description: ''
     },
     [PlanFeaturesList.PrioritySupport]: {
@@ -89,7 +89,7 @@ export const pricingPlansConfig: {
       features: [
         ...baseFeatures,
         PlanFeaturesList.SSO,
-        PlanFeaturesList.CustomerDataRegion,
+        PlanFeaturesList.CustomDataRegion,
         PlanFeaturesList.PrioritySupport
       ],
       cost: {
