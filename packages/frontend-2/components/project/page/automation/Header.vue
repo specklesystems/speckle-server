@@ -19,7 +19,7 @@
             v-if="automation.isTestAutomation"
             class="pointer-events-none -translate-x-4 z-10"
           >
-            <CommonBadge>Test Automation</CommonBadge>
+            <CommonBadge rounded>Test Automation</CommonBadge>
           </div>
         </div>
       </div>
