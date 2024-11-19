@@ -8,7 +8,7 @@
           <SettingsSectionHeader title="Billing summary" subheading class="pt-4" />
           <div class="border border-outline-3 rounded-lg">
             <div
-              class="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x"
+              class="grid grid-cols-1 md:grid-cols-3 divide-y divide-outline-3 md:divide-y-0 md:divide-x"
             >
               <div class="p-5 pt-4 flex flex-col gap-y-1">
                 <h3 class="text-body-xs text-foreground-2 pb-2">
