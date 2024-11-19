@@ -151,9 +151,11 @@ export const resetPubSubFactory = (deps: { db: Knex }) => async () => {
     await deps.db.raw(
       `SELECT * FROM aiven_extras.pg_drop_subscription('${sub.subname}');`
     )
-    await deps.db.raw(
-      `SELECT * FROM aiven_extras.dblink_slot_create_or_drop('${sub.subconninfo}', '${sub.subslotname}', 'drop');`
-    )
+
+    // TODO: Causes flaky test breakages, maybe we dont need it? ("error: replication slot "test_userssub_region1" is active for PID 2294")
+    // await deps.db.raw(
+    //   `SELECT * FROM aiven_extras.dblink_slot_create_or_drop('${sub.subconninfo}', '${sub.subslotname}', 'drop');`
+    // )
   }
 
   // Drop all pubs
