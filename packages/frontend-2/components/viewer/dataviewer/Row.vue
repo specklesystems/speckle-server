@@ -1,7 +1,7 @@
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
   <div
-    class="w-full hover:bg-primary/5 rounded pl-1 py-0.5 border-l-2 text-body-3xs"
+    class="w-full hover:bg-blue-500/5 rounded pl-1 py-0.5 border-l-2 text-body-3xs"
     :class="[
       expandable
         ? 'border-primary bg-foundation-page'

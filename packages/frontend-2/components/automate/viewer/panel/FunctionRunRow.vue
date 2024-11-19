@@ -1,6 +1,6 @@
 <template>
   <div
-    :class="`border border-primary/10 rounded-md space-y-2 overflow-hidden ${
+    :class="`border border-blue-500/10 rounded-md space-y-2 overflow-hidden ${
       expanded ? 'shadow' : ''
     }`"
   >
