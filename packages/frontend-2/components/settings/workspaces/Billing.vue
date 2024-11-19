@@ -4,7 +4,13 @@
       <SettingsSectionHeader title="Billing" text="Your workspace billing details" />
       <template v-if="isBillingIntegrationEnabled">
         <div class="flex flex-col gap-y-4 md:gap-y-6">
-          <BillingAlert v-if="workspaceResult" :workspace="workspaceResult.workspace" />
+          <BillingAlert
+            v-if="
+              workspaceResult &&
+              workspaceResult.workspace?.plan?.status !== WorkspacePlanStatuses.Valid
+            "
+            :workspace="workspaceResult.workspace"
+          />
           <SettingsSectionHeader title="Billing summary" subheading class="pt-4" />
           <div class="border border-outline-3 rounded-lg">
             <div
