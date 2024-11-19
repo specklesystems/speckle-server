@@ -24,13 +24,13 @@
         </template>
       </div>
 
-      <CommonTextLink
-        class="font-medium"
+      <FormButton
+        color="outline"
+        size="sm"
         :to="projectAutomationRoute(projectId, automation.id)"
       >
-        View Details
-        <ChevronRightIcon class="ml-2 w-4 h-4" />
-      </CommonTextLink>
+        View details
+      </FormButton>
     </div>
     <div class="flex flex-col mb-6">
       <template v-if="triggerModels.length">
@@ -45,10 +45,10 @@
       </template>
       <div
         v-else
-        class="flex items-center gap-1 truncate text-foreground-2 label-light"
+        class="flex items-center gap-1.5 truncate text-foreground-2 text-body-xs"
       >
-        <ExclamationTriangleIcon class="w-5 h-5" />
-        <span>No valid models attached to this automation</span>
+        <ExclamationTriangleIcon class="w-4 h-4" />
+        <span>No valid models are attached to this automation</span>
       </div>
     </div>
     <AutomateRunsTable
@@ -59,11 +59,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import {
-  ChevronRightIcon,
-  CubeIcon,
-  ExclamationTriangleIcon
-} from '@heroicons/vue/24/outline'
+import { CubeIcon, ExclamationTriangleIcon } from '@heroicons/vue/24/outline'
 import { isNonNullable } from '@speckle/shared'
 import { graphql } from '~/lib/common/generated/gql'
 import { type ProjectPageAutomationsRow_AutomationFragment } from '~/lib/common/generated/gql/graphql'
