@@ -226,55 +226,6 @@ input PendingWorkspaceCollaboratorsFilter {
   search: String
 }
 
-type WorkspaceVersionsCount {
-  """
-  Total number of versions of all projects in the workspace
-  """
-  current: Int!
-  """
-  Maximum number of version of all projects in the workspace with no additional cost
-  """
-  max: Int!
-}
-
-enum Currency {
-  GBP
-  USD
-  EUR
-}
-
-type WorkspaceCostItem {
-  count: Int!
-  name: String!
-  cost: Float!
-  label: String!
-}
-
-type WorkspaceCostDiscount {
-  name: String!
-  amount: Float!
-}
-
-type WorkspaceCost {
-  """
-  Estimated cost of the workspace with no discount applied
-  """
-  subTotal: Float!
-  """
-  Currency of the price
-  """
-  currency: Currency!
-  items: [WorkspaceCostItem!]!
-  """
-  Discount applied to the total
-  """
-  discount: WorkspaceCostDiscount
-  """
-  Total cost with discount applied
-  """
-  total: Float!
-}
-
 type Workspace {
   id: ID!
   name: String!
