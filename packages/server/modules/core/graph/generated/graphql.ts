@@ -8,7 +8,7 @@ import { AutomateFunctionGraphQLReturn, AutomateFunctionReleaseGraphQLReturn, Au
 import { WorkspaceGraphQLReturn, WorkspaceBillingGraphQLReturn, WorkspaceSsoGraphQLReturn, WorkspaceMutationsGraphQLReturn, WorkspaceInviteMutationsGraphQLReturn, WorkspaceProjectMutationsGraphQLReturn, PendingWorkspaceCollaboratorGraphQLReturn, WorkspaceCollaboratorGraphQLReturn, ProjectRoleGraphQLReturn } from '@/modules/workspacesCore/helpers/graphTypes';
 import { WorkspaceBillingMutationsGraphQLReturn } from '@/modules/gatekeeper/helpers/graphTypes';
 import { WebhookGraphQLReturn } from '@/modules/webhooks/helpers/graphTypes';
-import { SmartTextEditorValueSchema } from '@/modules/core/services/richTextEditorService';
+import { SmartTextEditorValueGraphQLReturn } from '@/modules/core/services/richTextEditorService';
 import { BlobStorageItem } from '@/modules/blobstorage/domain/types';
 import { ActivityCollectionGraphQLReturn } from '@/modules/activitystream/helpers/graphTypes';
 import { ServerAppGraphQLReturn, ServerAppListItemGraphQLReturn } from '@/modules/auth/helpers/graphTypes';
@@ -4723,7 +4723,7 @@ export type ResolversTypes = {
   ServerWorkspacesInfo: ResolverTypeWrapper<GraphQLEmptyReturn>;
   SessionPaymentStatus: SessionPaymentStatus;
   SetPrimaryUserEmailInput: SetPrimaryUserEmailInput;
-  SmartTextEditorValue: ResolverTypeWrapper<SmartTextEditorValueSchema>;
+  SmartTextEditorValue: ResolverTypeWrapper<SmartTextEditorValueGraphQLReturn>;
   SortDirection: SortDirection;
   Stream: ResolverTypeWrapper<StreamGraphQLReturn>;
   StreamAccessRequest: ResolverTypeWrapper<StreamAccessRequestGraphQLReturn>;
@@ -4988,7 +4988,7 @@ export type ResolversParentTypes = {
   ServerStats: GraphQLEmptyReturn;
   ServerWorkspacesInfo: GraphQLEmptyReturn;
   SetPrimaryUserEmailInput: SetPrimaryUserEmailInput;
-  SmartTextEditorValue: SmartTextEditorValueSchema;
+  SmartTextEditorValue: SmartTextEditorValueGraphQLReturn;
   Stream: StreamGraphQLReturn;
   StreamAccessRequest: StreamAccessRequestGraphQLReturn;
   StreamCollaborator: StreamCollaboratorGraphQLReturn;
