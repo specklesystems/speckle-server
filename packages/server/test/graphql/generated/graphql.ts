@@ -865,12 +865,6 @@ export type CreateVersionInput = {
   totalChildrenCount?: InputMaybe<Scalars['Int']['input']>;
 };
 
-export enum Currency {
-  Eur = 'EUR',
-  Gbp = 'GBP',
-  Usd = 'USD'
-}
-
 export type DeleteModelInput = {
   id: Scalars['ID']['input'];
   projectId: Scalars['ID']['input'];
@@ -4113,33 +4107,6 @@ export type WorkspaceCollection = {
   totalCount: Scalars['Int']['output'];
 };
 
-export type WorkspaceCost = {
-  __typename?: 'WorkspaceCost';
-  /** Currency of the price */
-  currency: Currency;
-  /** Discount applied to the total */
-  discount?: Maybe<WorkspaceCostDiscount>;
-  items: Array<WorkspaceCostItem>;
-  /** Estimated cost of the workspace with no discount applied */
-  subTotal: Scalars['Float']['output'];
-  /** Total cost with discount applied */
-  total: Scalars['Float']['output'];
-};
-
-export type WorkspaceCostDiscount = {
-  __typename?: 'WorkspaceCostDiscount';
-  amount: Scalars['Float']['output'];
-  name: Scalars['String']['output'];
-};
-
-export type WorkspaceCostItem = {
-  __typename?: 'WorkspaceCostItem';
-  cost: Scalars['Float']['output'];
-  count: Scalars['Int']['output'];
-  label: Scalars['String']['output'];
-  name: Scalars['String']['output'];
-};
-
 export type WorkspaceCreateInput = {
   defaultLogoIndex?: InputMaybe<Scalars['Int']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
@@ -4163,7 +4130,6 @@ export type WorkspaceDomainDeleteInput = {
 export enum WorkspaceFeatureName {
   DomainBasedSecurityPolicies = 'domainBasedSecurityPolicies',
   OidcSso = 'oidcSso',
-  Workspace = 'workspace',
   WorkspaceDataRegionSpecificity = 'workspaceDataRegionSpecificity'
 }
 
@@ -4440,14 +4406,6 @@ export type WorkspaceUpdateInput = {
   logo?: InputMaybe<Scalars['String']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
   slug?: InputMaybe<Scalars['String']['input']>;
-};
-
-export type WorkspaceVersionsCount = {
-  __typename?: 'WorkspaceVersionsCount';
-  /** Total number of versions of all projects in the workspace */
-  current: Scalars['Int']['output'];
-  /** Maximum number of version of all projects in the workspace with no additional cost */
-  max: Scalars['Int']['output'];
 };
 
 export type CreateObjectMutationVariables = Exact<{
