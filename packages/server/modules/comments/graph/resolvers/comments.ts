@@ -223,13 +223,14 @@ export = {
      */
     text(parent) {
       const commentText = parent?.text || ''
-      return ensureCommentSchema(commentText as SmartTextEditorValueSchema)
+      return {
+        ...ensureCommentSchema(commentText),
+        projectId: parent.streamId
+      }
     },
 
     rawText(parent) {
-      const { doc } = ensureCommentSchema(
-        (parent.text as SmartTextEditorValueSchema) || ''
-      )
+      const { doc } = ensureCommentSchema(parent.text || '')
       return documentToBasicString(doc)
     },
     async hasParent(parent) {

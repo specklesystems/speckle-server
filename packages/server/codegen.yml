@@ -65,7 +65,7 @@ generates:
         PendingWorkspaceCollaborator: '@/modules/workspacesCore/helpers/graphTypes#PendingWorkspaceCollaboratorGraphQLReturn'
         WorkspaceCollaborator: '@/modules/workspacesCore/helpers/graphTypes#WorkspaceCollaboratorGraphQLReturn'
         Webhook: '@/modules/webhooks/helpers/graphTypes#WebhookGraphQLReturn'
-        SmartTextEditorValue: '@/modules/core/services/richTextEditorService#SmartTextEditorValueSchema'
+        SmartTextEditorValue: '@/modules/core/services/richTextEditorService#SmartTextEditorValueGraphQLReturn'
         BlobMetadata: '@/modules/blobstorage/domain/types#BlobStorageItem'
         ServerWorkspacesInfo: '@/modules/core/helpers/graphTypes#GraphQLEmptyReturn'
         ActivityCollection: '@/modules/activitystream/helpers/graphTypes#ActivityCollectionGraphQLReturn'
