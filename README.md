@@ -36,7 +36,7 @@ This monorepo is the home of the Speckle v2 web packages:
 
 Make sure to also check and ⭐️ these other Speckle repositories:
 
-- [`speckle-sharp-connectors`](https://github.com/specklesystems/speckle-sharp-connectors): .NET connectors and desktop UI
+- [`speckle-sharp-connectors`](https://github.com/specklesystems/speckle-sharp-connectors): .NET connectors and v2 desktop UI
 - [`speckle-sharp-sdk`](https://github.com/specklesystems/speckle-sharp-sdk): .NET SDK, tests, and Objects
 - [`specklepy`](https://github.com/specklesystems/specklepy): Python SDK 🐍
 - [`speckle-sketchup`](https://github.com/specklesystems/speckle-sketchup): Sketchup connector
