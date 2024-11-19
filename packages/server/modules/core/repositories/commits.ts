@@ -266,6 +266,7 @@ export const getCommitsAndTheirBranchIdsFactory =
       ])
       .innerJoin(BranchCommits.name, BranchCommits.col.commitId, Commits.col.id)
       .innerJoin(StreamCommits.name, StreamCommits.col.commitId, Commits.col.id)
+      .groupBy(Commits.col.id)
       .whereIn(Commits.col.id, commitIds)
   }
 
