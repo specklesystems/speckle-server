@@ -15,6 +15,7 @@
       :workspace-id="workspaceId"
       :current-plan="currentPlan"
       :is-yearly-plan="isYearlyPlan"
+      :is-admin="isAdmin"
     />
   </div>
 </template>
@@ -39,6 +40,7 @@ graphql(`
 const props = defineProps<{
   workspaceId: string
   currentPlan: MaybeNullOrUndefined<WorkspacePlan>
+  isAdmin: boolean
 }>()
 
 const breakpoints = useBreakpoints(TailwindBreakpoints)

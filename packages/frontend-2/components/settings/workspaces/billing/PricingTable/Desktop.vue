@@ -21,6 +21,7 @@
             :is-yearly-plan="isYearlyPlan"
             :current-plan="currentPlan"
             :workspace-id="workspaceId"
+            :is-admin="isAdmin"
           />
         </th>
       </tr>
@@ -73,6 +74,7 @@ defineProps<{
   isYearlyPlan: boolean
   currentPlan: MaybeNullOrUndefined<WorkspacePlan>
   workspaceId: string
+  isAdmin: boolean
 }>()
 
 const plans = ref(pricingPlansConfig.plans)

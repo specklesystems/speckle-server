@@ -10,6 +10,7 @@
         :is-yearly-plan="isYearlyPlan"
         :current-plan="currentPlan"
         :workspace-id="workspaceId"
+        :is-admin="isAdmin"
       />
       <ul class="flex flex-col gap-y-2 mt-6">
         <li
@@ -39,6 +40,7 @@ defineProps<{
   isYearlyPlan: boolean
   currentPlan: MaybeNullOrUndefined<WorkspacePlan>
   workspaceId: string
+  isAdmin: boolean
 }>()
 
 const plans = ref(pricingPlansConfig.plans)

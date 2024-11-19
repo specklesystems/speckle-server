@@ -1,6 +1,6 @@
 <template>
   <section>
-    <div class="md:mx-auto pb-6 md:pb-0">
+    <div class="md:max-w-5xl md:mx-auto pb-6 md:pb-0">
       <SettingsSectionHeader title="Billing" text="Your workspace billing details" />
       <template v-if="isBillingIntegrationEnabled">
         <div class="flex flex-col gap-y-4 md:gap-y-6">
@@ -77,6 +77,7 @@
             class="pt-6"
             :workspace-id="workspaceId"
             :current-plan="currentPlan"
+            :is-admin="isAdmin"
           />
         </div>
       </template>
@@ -104,6 +105,7 @@ graphql(`
   fragment SettingsWorkspacesBilling_Workspace on Workspace {
     ...BillingAlert_Workspace
     id
+    role
     plan {
       ...SettingsWorkspacesBillingPricingTable_WorkspacePlan
       name
@@ -172,6 +174,9 @@ const nextPaymentDue = computed(() =>
       ? dayjs(subscription.value?.currentBillingCycleEnd).format('MMMM D, YYYY')
       : 'Never'
     : dayjs().add(30, 'days').format('MMMM D, YYYY')
+)
+const isAdmin = computed(
+  () => workspaceResult.value?.workspace.role === Roles.Workspace.Admin
 )
 
 onMounted(() => {

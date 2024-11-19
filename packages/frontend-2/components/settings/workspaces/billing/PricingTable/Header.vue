@@ -15,16 +15,19 @@
     <p class="text-foreground-2 text-body-2xs pt-1">
       Billed {{ isYearlyPlan ? 'annually' : 'monthly' }}
     </p>
-    <FormButton
-      :color="plan.name === WorkspacePlans.Team ? 'primary' : 'outline'"
-      :disabled="!hasTrialPlan && !canUpgradeToPlan"
-      class="mt-3"
-      full-width
-      @click="onUpgradePlanClick(plan.name)"
-    >
-      {{ hasTrialPlan ? 'Subscribe' : 'Upgrade' }} to&nbsp;
-      <span class="capitalize">{{ plan.name }}</span>
-    </FormButton>
+    <div class="w-full">
+      <FormButton
+        v-tippy="tooltipText"
+        :color="plan.name === WorkspacePlans.Team ? 'primary' : 'outline'"
+        :disabled="(!hasTrialPlan && !canUpgradeToPlan) || !isAdmin"
+        class="mt-3"
+        full-width
+        @click="onUpgradePlanClick(plan.name)"
+      >
+        {{ hasTrialPlan ? 'Subscribe' : 'Upgrade' }} to&nbsp;
+        <span class="capitalize">{{ plan.name }}</span>
+      </FormButton>
+    </div>
   </div>
 </template>
 
@@ -39,11 +42,13 @@ import {
 } from '~/lib/common/generated/gql/graphql'
 import { useBillingActions } from '~/lib/billing/composables/actions'
 import type { MaybeNullOrUndefined } from '@speckle/shared'
+
 const props = defineProps<{
   plan: PricingPlan
   isYearlyPlan: boolean
   currentPlan: MaybeNullOrUndefined<WorkspacePlan>
   workspaceId: string
+  isAdmin: boolean
 }>()
 
 const { upgradePlanRedirect } = useBillingActions()
@@ -64,6 +69,12 @@ const canUpgradeToPlan = computed(() => {
 const hasTrialPlan = computed(
   () => props.currentPlan?.status === WorkspacePlanStatuses.Trial || !props.currentPlan
 )
+const tooltipText = computed(() => {
+  if (!props.isAdmin) return 'Only admins can manage plans'
+  if (!hasTrialPlan.value && !canUpgradeToPlan.value)
+    return 'You cannot downgrade your plan'
+  return null
+})
 
 const onUpgradePlanClick = (plan: WorkspacePlans) => {
   upgradePlanRedirect({
