@@ -63,6 +63,11 @@ export type GetWorkspaceBySlug = (args: {
   userId?: string
 }) => Promise<WorkspaceWithOptionalRole | null>
 
+// Useful for dev purposes (e.g. CLI)
+export type GetWorkspaceBySlugOrId = (args: {
+  workspaceSlugOrId: string
+}) => Promise<Workspace | null>
+
 export type GetWorkspaces = (args: {
   workspaceIds: string[]
   userId?: string

@@ -81,6 +81,12 @@
                 <LayoutSidebarMenuGroupItem
                   :label="item.label"
                   :active="isActive(item.to)"
+                  :tag="
+                    item.plan?.status === WorkspacePlanStatuses.Trial ||
+                    !item.plan?.status
+                      ? 'Trial'
+                      : undefined
+                  "
                   class="!pl-1"
                 >
                   <template #icon>
@@ -187,6 +193,7 @@ import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { HomeIcon } from '@heroicons/vue/24/outline'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { Roles } from '@speckle/shared'
+import { WorkspacePlanStatuses } from '~/lib/common/generated/gql/graphql'
 
 const { isLoggedIn } = useActiveUser()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
@@ -222,7 +229,10 @@ const workspacesItems = computed(() =>
         id: workspace.id,
         to: workspaceRoute(workspace.slug),
         logo: workspace.logo,
-        defaultLogoIndex: workspace.defaultLogoIndex
+        defaultLogoIndex: workspace.defaultLogoIndex,
+        plan: {
+          status: workspace.plan?.status
+        }
       }))
     : []
 )

@@ -6,8 +6,8 @@ import {
   ForbiddenError,
   UnauthorizedError,
   ContextError,
-  BadRequestError,
-  DatabaseError
+  DatabaseError,
+  NotFoundError
 } from '@/modules/shared/errors'
 import { adminOverrideEnabled } from '@/modules/shared/helpers/envHelper'
 import {
@@ -247,7 +247,12 @@ export const validateRequiredStreamFactory =
       if (!stream)
         return authFailed(
           context,
-          new BadRequestError('Stream inputs are malformed'),
+          new NotFoundError(
+            'Project ID is malformed and cannot be found, or the project does not exist',
+            {
+              info: { projectId: params.streamId }
+            }
+          ),
           true
         )
       context.stream = stream

@@ -4,7 +4,11 @@
       class="pt-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"
     >
       <Portal to="navigation">
-        <HeaderNavLink :to="automationFunctionsRoute" :name="'Automate functions'" />
+        <HeaderNavLink
+          :separator="false"
+          :to="automationFunctionsRoute"
+          :name="'Automate functions'"
+        />
       </Portal>
 
       <h1 class="text-heading-xl">Automate functions</h1>
