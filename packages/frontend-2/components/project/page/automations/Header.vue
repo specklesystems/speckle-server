@@ -21,11 +21,11 @@
       >
         {{ exploreFunctionsMessage }}
       </FormButton>
-      <div v-tippy="disabledCreateBecauseOf" class="shrink-0">
+      <div v-tippy="disableCreateMessage" class="shrink-0">
         <FormButton
           :icon-left="PlusIcon"
           class="shrink-0"
-          :disabled="!!disabledCreateBecauseOf"
+          :disabled="!!disableCreateMessage"
           @click="$emit('new-automation')"
         >
           New
@@ -49,7 +49,7 @@ defineEmits<{
 const props = defineProps<{
   workspaceSlug?: string
   showEmptyState?: boolean
-  disabledCreateBecauseOf?: string
+  disableCreateMessage?: string
 }>()
 
 const exploreFunctionsMessage = computed(() =>

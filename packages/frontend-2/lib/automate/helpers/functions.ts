@@ -3,7 +3,10 @@ import type {
   Nullable,
   SourceAppDefinition
 } from '@speckle/shared'
-import type { AutomateFunctionCreateDialogTemplateStep_AutomateFunctionTemplateFragment, Workspace } from '~/lib/common/generated/gql/graphql'
+import type {
+  AutomateFunctionCreateDialogTemplateStep_AutomateFunctionTemplateFragment,
+  Workspace
+} from '~/lib/common/generated/gql/graphql'
 
 export type CreatableFunctionTemplate =
   AutomateFunctionCreateDialogTemplateStep_AutomateFunctionTemplateFragment

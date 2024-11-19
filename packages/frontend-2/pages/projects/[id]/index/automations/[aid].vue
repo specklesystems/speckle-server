@@ -1,6 +1,10 @@
 <template>
   <div v-if="automation && project" class="flex flex-col gap-8 items-start">
-    <ProjectPageAutomationHeader :automation="automation" :project="project" />
+    <ProjectPageAutomationHeader
+      :automation="automation"
+      :project="project"
+      :is-editable="isEditable"
+    />
 
     <div class="grid grid-cols-1 xl:grid-cols-4 gap-6 w-full">
       <div
@@ -9,6 +13,7 @@
         <ProjectPageAutomationFunctions
           :automation="automation"
           :project-id="projectId"
+          :is-editable="isEditable"
         />
         <ProjectPageAutomationModels :automation="automation" :project="project" />
       </div>
@@ -16,6 +21,7 @@
         class="col-span-1 xl:col-span-3"
         :project-id="projectId"
         :automation="automation"
+        :is-editable="isEditable"
       />
     </div>
   </div>
@@ -23,6 +29,7 @@
   <div v-else />
 </template>
 <script setup lang="ts">
+import { Roles } from '@speckle/shared'
 import { useQuery } from '@vue/apollo-composable'
 import { graphql } from '~/lib/common/generated/gql'
 import { projectAutomationPageQuery } from '~/lib/projects/graphql/queries'
@@ -60,4 +67,8 @@ const { result, loading } = useQuery(
 )
 const automation = computed(() => result.value?.project.automation || null)
 const project = computed(() => result.value?.project)
+const isEditable = computed(() => {
+  const allowedRoles: string[] = [Roles.Stream.Owner, Roles.Stream.Contributor]
+  return allowedRoles.includes(result.value?.project.role ?? '')
+})
 </script>

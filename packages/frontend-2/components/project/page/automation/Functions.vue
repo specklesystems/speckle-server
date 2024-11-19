@@ -7,7 +7,7 @@
         :key="fn.fn.id"
         :fn="fn.fn"
         :is-outdated="isOutdated(fn)"
-        show-edit
+        :show-edit="isEditable"
         @edit="onEdit(fn.fn)"
       />
     </AutomateFunctionCardView>
@@ -65,6 +65,7 @@ graphql(`
 const props = defineProps<{
   projectId: string
   automation: ProjectPageAutomationFunctions_AutomationFragment
+  isEditable: boolean
 }>()
 
 const dialogOpen = ref(false)

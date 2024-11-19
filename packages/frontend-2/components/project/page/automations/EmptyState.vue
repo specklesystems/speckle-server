@@ -23,11 +23,11 @@
         </div>
       </div>
       <div>
-        <div v-if="isAutomateEnabled" v-tippy="disabledCreateBecauseOf">
+        <div v-if="isAutomateEnabled" v-tippy="disableCreateMessage">
           <FormButton
             :icon-left="PlusIcon"
             size="lg"
-            :disabled="!!disabledCreateBecauseOf"
+            :disabled="!!disableCreateMessage"
             @click="$emit('new-automation')"
           >
             New automation
@@ -91,7 +91,7 @@ defineEmits<{
 const props = defineProps<{
   functions?: ProjectPageAutomationsEmptyState_QueryFragment
   isAutomateEnabled: boolean
-  disabledCreateBecauseOf?: string
+  disableCreateMessage?: string
 }>()
 
 const functions = computed(() => props.functions?.automateFunctions.items || [])

@@ -94,7 +94,7 @@ export const createAutomationFactory =
     await validateStreamAccess(
       userId,
       projectId,
-      Roles.Stream.Owner,
+      Roles.Stream.Contributor,
       userResourceAccessRules
     )
 
@@ -280,7 +280,7 @@ export const validateAndUpdateAutomationFactory =
     await validateStreamAccess(
       userId,
       existingAutomation.projectId,
-      Roles.Stream.Owner,
+      Roles.Stream.Contributor,
       userResourceAccessRules
     )
 
@@ -430,7 +430,7 @@ export const createAutomationRevisionFactory =
     await validateStreamAccess(
       userId,
       existingAutomation.projectId,
-      Roles.Stream.Owner,
+      Roles.Stream.Contributor,
       userResourceAccessRules
     )
 

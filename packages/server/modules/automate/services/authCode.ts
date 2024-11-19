@@ -35,23 +35,21 @@ const isPayload = (payload: unknown): payload is AuthCodePayload =>
 
 export const createStoredAuthCodeFactory =
   (deps: { redis: Redis }): CreateStoredAuthCode =>
-    async (params: Omit<AuthCodePayload, 'code'>) => {
-      const { redis } = deps
+  async (params: Omit<AuthCodePayload, 'code'>) => {
+    const { redis } = deps
 
-      const payload: AuthCodePayload = {
-        ...params,
-        code: cryptoRandomString({ length: 20 })
-      }
-
-      await redis.set(payload.code, JSON.stringify(payload), 'EX', 60 * 5)
-      return payload
+    const payload: AuthCodePayload = {
+      ...params,
+      code: cryptoRandomString({ length: 20 })
     }
 
+    await redis.set(payload.code, JSON.stringify(payload), 'EX', 60 * 5)
+    return payload
+  }
+
 export const validateStoredAuthCodeFactory =
-  (deps: {
-    redis: Redis,
-    emit: EventBus['emit']
-  }) => async (payload: AuthCodePayload) => {
+  (deps: { redis: Redis; emit: EventBus['emit'] }) =>
+  async (payload: AuthCodePayload) => {
     const { redis, emit } = deps
 
     const potentialPayloadString = await redis.get(payload.code)
@@ -70,7 +68,10 @@ export const validateStoredAuthCodeFactory =
     }
 
     if (payload.workspaceId) {
-      emit({ eventName: 'workspace.authorized', payload: { userId: payload.userId, workspaceId: payload.workspaceId } })
+      emit({
+        eventName: 'workspace.authorized',
+        payload: { userId: payload.userId, workspaceId: payload.workspaceId }
+      })
     }
 
     try {

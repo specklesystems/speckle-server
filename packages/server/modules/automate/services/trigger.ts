@@ -507,7 +507,7 @@ export const manuallyTriggerAutomationFactory =
     await validateStreamAccess(
       userId,
       automation.projectId,
-      Roles.Stream.Owner,
+      Roles.Stream.Contributor,
       userResourceAccessRules
     )
 
