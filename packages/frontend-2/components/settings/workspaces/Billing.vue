@@ -12,12 +12,14 @@
             >
               <div class="p-5 pt-4 flex flex-col gap-y-1">
                 <h3 class="text-body-xs text-foreground-2 pb-2">
-                  {{ isTrialPeriod ? 'Trial plan' : 'Current plan' }}
+                  {{
+                    isTrialPeriod && isPurchasablePlan ? 'Trial plan' : 'Current plan'
+                  }}
                 </h3>
                 <p class="text-heading-lg text-foreground capitalize">
                   {{ currentPlan?.name ?? WorkspacePlans.Team }} plan
                 </p>
-                <p class="text-body-xs text-foreground-2">
+                <p v-if="isPurchasablePlan" class="text-body-xs text-foreground-2">
                   £{{ seatPrice }} per seat/month, billed
                   {{
                     subscription?.billingInterval === BillingInterval.Yearly
@@ -36,16 +38,22 @@
                       : 'Monthly bill'
                   }}
                 </h3>
-                <p class="text-heading-lg text-foreground capitalize">Coming soon</p>
+                <p class="text-heading-lg text-foreground capitalize">
+                  {{ isPurchasablePlan ? 'Coming soon' : 'Not applicable' }}
+                </p>
               </div>
               <div class="p-5 pt-4 flex flex-col gap-y-1">
                 <h3 class="text-body-xs text-foreground-2 pb-2">
-                  {{ isTrialPeriod ? 'First payment due' : 'Next payment due' }}
+                  {{
+                    isTrialPeriod && isPurchasablePlan
+                      ? 'First payment due'
+                      : 'Next payment due'
+                  }}
                 </h3>
                 <p class="text-heading-lg text-foreground capitalize">
-                  {{ nextPaymentDue }}
+                  {{ isPurchasablePlan ? nextPaymentDue : 'Not applicable' }}
                 </p>
-                <p v-if="isPaidPlan" class="text-body-xs text-foreground-2">
+                <p v-if="isPurchasablePlan" class="text-body-xs text-foreground-2">
                   <span class="capitalize">
                     {{
                       subscription?.billingInterval === BillingInterval.Yearly
@@ -58,7 +66,7 @@
               </div>
             </div>
             <div
-              v-if="isActivePlan"
+              v-if="isActivePlan && isPurchasablePlan"
               class="flex flex-row gap-x-4 p-5 items-center border-t border-outline-3"
             >
               <div class="text-body-xs gap-y-2 flex-1">
@@ -140,11 +148,6 @@ const { billingPortalRedirect, cancelCheckoutSession } = useBillingActions()
 
 const currentPlan = computed(() => workspaceResult.value?.workspace.plan)
 const subscription = computed(() => workspaceResult.value?.workspace.subscription)
-const isPaidPlan = computed(
-  () =>
-    currentPlan.value?.name !== WorkspacePlans.Academia &&
-    currentPlan.value?.name !== WorkspacePlans.Unlimited
-)
 const isTrialPeriod = computed(
   () =>
     currentPlan.value?.status === WorkspacePlanStatuses.Trial ||
@@ -155,6 +158,13 @@ const isActivePlan = computed(
     currentPlan.value &&
     currentPlan.value?.status !== WorkspacePlanStatuses.Trial &&
     currentPlan.value?.status !== WorkspacePlanStatuses.Canceled
+)
+const isPurchasablePlan = computed(
+  () =>
+    currentPlan.value?.name === WorkspacePlans.Team ||
+    currentPlan.value?.name === WorkspacePlans.Pro ||
+    currentPlan.value?.name === WorkspacePlans.Business ||
+    !currentPlan.value?.name // no plan equals pro trial plan
 )
 const seatPrice = computed(() =>
   currentPlan.value && subscription.value
@@ -167,7 +177,7 @@ const seatPrice = computed(() =>
 )
 const nextPaymentDue = computed(() =>
   currentPlan.value
-    ? isPaidPlan.value
+    ? isPurchasablePlan.value
       ? dayjs(subscription.value?.currentBillingCycleEnd).format('MMMM D, YYYY')
       : 'Never'
     : dayjs().add(30, 'days').format('MMMM D, YYYY')
