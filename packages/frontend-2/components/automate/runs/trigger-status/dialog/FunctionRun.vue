@@ -1,7 +1,7 @@
 <template>
   <div>
     <div
-      class="flex flex-col gap-y-2 sm:flex-row sm:gap-y-0 sm:gap-x-2 sm:items-center my-2 py-1 px-2 border border-blue-500/10 rounded-md sm:h-12"
+      class="flex flex-col gap-y-2 sm:flex-row sm:gap-y-0 sm:gap-x-2 sm:items-center my-2 py-1 px-2 border border-primary/10 rounded-md sm:h-12"
     >
       <div class="flex gap-x-2 items-center truncate">
         <div>

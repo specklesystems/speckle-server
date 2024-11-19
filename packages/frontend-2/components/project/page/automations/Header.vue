@@ -21,11 +21,11 @@
       >
         Explore Functions
       </FormButton>
-      <div v-tippy="disabledCreateBecauseOf" class="shrink-0">
+      <div v-tippy="creationDisabledReason" class="shrink-0">
         <FormButton
           :icon-left="PlusIcon"
           class="shrink-0"
-          :disabled="!!disabledCreateBecauseOf"
+          :disabled="!!creationDisabledReason"
           @click="$emit('new-automation')"
         >
           New
@@ -45,7 +45,7 @@ defineEmits<{
 
 defineProps<{
   showEmptyState?: boolean
-  disabledCreateBecauseOf?: string
+  creationDisabledReason?: string
 }>()
 
 const search = defineModel<string>('search')

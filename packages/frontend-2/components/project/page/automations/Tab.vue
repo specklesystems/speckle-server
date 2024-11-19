@@ -1,9 +1,9 @@
 <template>
-  <div class="flex flex-col gap-8">
+  <div class="flex flex-col gap-y-4 md:gap-y-6">
     <ProjectPageAutomationsHeader
       v-model:search="search"
       :show-empty-state="shouldShowEmptyState"
-      :disabled-create-because-of="
+      :creation-disabled-reason="
         allowNewCreation !== true ? allowNewCreation : undefined
       "
       @new-automation="onNewAutomation"
@@ -16,7 +16,7 @@
         v-if="shouldShowEmptyState"
         :functions="result"
         :is-automate-enabled="isAutomateEnabled"
-        :disabled-create-because-of="
+        :creation-disabled-reason="
           allowNewCreation !== true ? allowNewCreation : undefined
         "
         @new-automation="onNewAutomation"
