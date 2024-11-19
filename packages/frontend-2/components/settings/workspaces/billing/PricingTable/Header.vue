@@ -17,7 +17,6 @@
     </p>
     <div class="w-full">
       <FormButton
-        v-tippy="tooltipText"
         :color="plan.name === WorkspacePlans.Team ? 'primary' : 'outline'"
         :disabled="(!hasTrialPlan && !canUpgradeToPlan) || !isAdmin"
         class="mt-3"
@@ -69,12 +68,6 @@ const canUpgradeToPlan = computed(() => {
 const hasTrialPlan = computed(
   () => props.currentPlan?.status === WorkspacePlanStatuses.Trial || !props.currentPlan
 )
-const tooltipText = computed(() => {
-  if (!props.isAdmin) return 'Only admins can manage plans'
-  if (!hasTrialPlan.value && !canUpgradeToPlan.value)
-    return 'You cannot downgrade your plan'
-  return null
-})
 
 const onUpgradePlanClick = (plan: WorkspacePlans) => {
   upgradePlanRedirect({
