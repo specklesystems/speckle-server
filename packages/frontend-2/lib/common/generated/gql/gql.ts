@@ -312,10 +312,10 @@ const documents = {
     "\n  fragment ViewerCommentThread on Comment {\n    ...ViewerCommentsListItem\n    ...ViewerCommentBubblesData\n    ...ViewerCommentsReplyItem\n  }\n": types.ViewerCommentThreadFragmentDoc,
     "\n  fragment ViewerCommentsReplyItem on Comment {\n    id\n    archived\n    rawText\n    text {\n      doc\n    }\n    author {\n      ...LimitedUserAvatar\n    }\n    createdAt\n    ...ThreadCommentAttachment\n  }\n": types.ViewerCommentsReplyItemFragmentDoc,
     "\n  mutation BroadcastViewerUserActivity(\n    $projectId: String!\n    $resourceIdString: String!\n    $message: ViewerUserActivityMessageInput!\n  ) {\n    broadcastViewerUserActivity(\n      projectId: $projectId\n      resourceIdString: $resourceIdString\n      message: $message\n    )\n  }\n": types.BroadcastViewerUserActivityDocument,
-    "\n  mutation MarkCommentViewed($threadId: String!) {\n    commentMutations {\n      markViewed(commentId: $threadId)\n    }\n  }\n": types.MarkCommentViewedDocument,
+    "\n  mutation MarkCommentViewed($input: MarkCommentViewedInput!) {\n    commentMutations {\n      markViewed(input: $input)\n    }\n  }\n": types.MarkCommentViewedDocument,
     "\n  mutation CreateCommentThread($input: CreateCommentInput!) {\n    commentMutations {\n      create(input: $input) {\n        ...ViewerCommentThread\n      }\n    }\n  }\n": types.CreateCommentThreadDocument,
     "\n  mutation CreateCommentReply($input: CreateCommentReplyInput!) {\n    commentMutations {\n      reply(input: $input) {\n        ...ViewerCommentsReplyItem\n      }\n    }\n  }\n": types.CreateCommentReplyDocument,
-    "\n  mutation ArchiveComment($commentId: String!, $archived: Boolean) {\n    commentMutations {\n      archive(commentId: $commentId, archived: $archived)\n    }\n  }\n": types.ArchiveCommentDocument,
+    "\n  mutation ArchiveComment($input: ArchiveCommentInput!) {\n    commentMutations {\n      archive(input: $input)\n    }\n  }\n": types.ArchiveCommentDocument,
     "\n  query ProjectViewerResources($projectId: String!, $resourceUrlString: String!) {\n    project(id: $projectId) {\n      id\n      viewerResources(resourceIdString: $resourceUrlString) {\n        identifier\n        items {\n          modelId\n          versionId\n          objectId\n        }\n      }\n    }\n  }\n": types.ProjectViewerResourcesDocument,
     "\n  query ViewerLoadedResources(\n    $projectId: String!\n    $modelIds: [String!]!\n    $versionIds: [String!]\n  ) {\n    project(id: $projectId) {\n      id\n      role\n      allowPublicComments\n      models(filter: { ids: $modelIds }) {\n        totalCount\n        items {\n          id\n          name\n          updatedAt\n          loadedVersion: versions(\n            filter: { priorityIds: $versionIds, priorityIdsOnly: true }\n          ) {\n            items {\n              ...ViewerModelVersionCardItem\n              automationsStatus {\n                id\n                automationRuns {\n                  ...AutomateViewerPanel_AutomateRun\n                }\n              }\n            }\n          }\n          versions(limit: 5) {\n            totalCount\n            cursor\n            items {\n              ...ViewerModelVersionCardItem\n            }\n          }\n        }\n      }\n      ...ProjectPageLatestItemsModels\n      ...ModelPageProject\n      ...HeaderNavShare_Project\n    }\n  }\n": types.ViewerLoadedResourcesDocument,
     "\n  query ViewerModelVersions(\n    $projectId: String!\n    $modelId: String!\n    $versionsCursor: String\n  ) {\n    project(id: $projectId) {\n      id\n      role\n      model(id: $modelId) {\n        id\n        versions(cursor: $versionsCursor, limit: 5) {\n          totalCount\n          cursor\n          items {\n            ...ViewerModelVersionCardItem\n          }\n        }\n      }\n    }\n  }\n": types.ViewerModelVersionsDocument,
@@ -1562,7 +1562,7 @@ export function graphql(source: "\n  mutation BroadcastViewerUserActivity(\n    
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  mutation MarkCommentViewed($threadId: String!) {\n    commentMutations {\n      markViewed(commentId: $threadId)\n    }\n  }\n"): (typeof documents)["\n  mutation MarkCommentViewed($threadId: String!) {\n    commentMutations {\n      markViewed(commentId: $threadId)\n    }\n  }\n"];
+export function graphql(source: "\n  mutation MarkCommentViewed($input: MarkCommentViewedInput!) {\n    commentMutations {\n      markViewed(input: $input)\n    }\n  }\n"): (typeof documents)["\n  mutation MarkCommentViewed($input: MarkCommentViewedInput!) {\n    commentMutations {\n      markViewed(input: $input)\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -1574,7 +1574,7 @@ export function graphql(source: "\n  mutation CreateCommentReply($input: CreateC
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  mutation ArchiveComment($commentId: String!, $archived: Boolean) {\n    commentMutations {\n      archive(commentId: $commentId, archived: $archived)\n    }\n  }\n"): (typeof documents)["\n  mutation ArchiveComment($commentId: String!, $archived: Boolean) {\n    commentMutations {\n      archive(commentId: $commentId, archived: $archived)\n    }\n  }\n"];
+export function graphql(source: "\n  mutation ArchiveComment($input: ArchiveCommentInput!) {\n    commentMutations {\n      archive(input: $input)\n    }\n  }\n"): (typeof documents)["\n  mutation ArchiveComment($input: ArchiveCommentInput!) {\n    commentMutations {\n      archive(input: $input)\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

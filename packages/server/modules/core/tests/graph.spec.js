@@ -172,8 +172,10 @@ describe('GraphQL API Core @core-api', () => {
 
   // set up app & two basic users to ping pong permissions around
   before(async () => {
-    ;({ app, server } = await beforeEachContext())
-    ;({ sendRequest } = await initializeTestServer(server, app))
+    const ctx = await beforeEachContext()
+    server = ctx.server
+    app = ctx.app
+    ;({ sendRequest } = await initializeTestServer(ctx))
 
     userA.id = await createUser(userA)
     userA.token = `Bearer ${await createPersonalAccessToken(
