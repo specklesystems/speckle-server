@@ -18,9 +18,7 @@
             >
               <div class="p-5 pt-4 flex flex-col gap-y-1">
                 <h3 class="text-body-xs text-foreground-2 pb-2">
-                  {{
-                    isTrialPeriod && isPurchasablePlan ? 'Trial plan' : 'Current plan'
-                  }}
+                  {{ isTrialPeriod ? 'Trial plan' : 'Current plan' }}
                 </h3>
                 <p class="text-heading-lg text-foreground capitalize">
                   {{ currentPlan?.name ?? WorkspacePlans.Team }} plan
