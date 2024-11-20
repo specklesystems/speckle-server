@@ -740,6 +740,9 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 - name: GENDOAI_API_ENDPOINT
   value: {{ .Values.server.gendoAI.apiUrl | quote }}
 
+- name: GENDOAI_CREDIT_LIMIT
+  value: {{ .Values.server.gendoAI.creditLimit | quote }}
+
 - name: RATELIMIT_GENDO_AI_RENDER_REQUEST
   value: {{ .Values.server.gendoai.ratelimiting.renderRequest | quote }}
 

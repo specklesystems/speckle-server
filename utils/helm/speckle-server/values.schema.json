@@ -644,6 +644,11 @@
               "description": "The url of the Gendo AI application, including protocol.",
               "default": "https://api.gendo.ai/external/generate"
             },
+            "creditLimit": {
+              "type": "number",
+              "description": "The number of Gendo AI credit a user gets every month.",
+              "default": 40
+            },
             "key": {
               "type": "object",
               "properties": {

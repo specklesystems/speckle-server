@@ -20,35 +20,54 @@ import {
 import { storeFileStream } from '@/modules/blobstorage/objectStorage'
 import {
   getLatestVersionRenderRequestsFactory,
+  getUserCreditsFactory,
   getVersionRenderRequestFactory,
-  storeRenderFactory
+  storeGenerationProjectIdFactory,
+  storeRenderFactory,
+  upsertUserCreditsFactory
 } from '@/modules/gendo/repositories'
+import { getProjectDbClient } from '@/modules/multiregion/dbSelector'
+import { requestNewImageGenerationFactory } from '@/modules/gendo/clients/gendo'
+import { getGenericRedis } from '@/modules/shared/redis/redis'
+import {
+  getUserGendoAiCreditsFactory,
+  useUserGendoAiCreditsFactory
+} from '@/modules/gendo/services/userCredits'
 import { db } from '@/db/knex'
+import {
+  getGendoAiApiEndpoint,
+  getGendoAIKey,
+  getGendoAICreditLimit,
+  getServerOrigin
+} from '@/modules/shared/helpers/envHelper'
 
-const createRenderRequest = createRenderRequestFactory({
-  uploadFileStream: uploadFileStreamFactory({
-    upsertBlob: upsertBlobFactory({ db }),
-    updateBlob: updateBlobFactory({ db })
-  }),
-  storeFileStream,
-  storeRender: storeRenderFactory({ db }),
-  publish,
-  fetch
+const requestNewImageGeneration = requestNewImageGenerationFactory({
+  endpoint: getGendoAiApiEndpoint(),
+  serverOrigin: getServerOrigin(),
+  token: getGendoAIKey()
 })
-const getLatestVersionRenderRequests = getLatestVersionRenderRequestsFactory({ db })
-const getVersionRenderRequest = getVersionRenderRequestFactory({ db })
+
+const upsertUserCredits = upsertUserCreditsFactory({ db })
+const getUserGendoAiCredits = getUserGendoAiCreditsFactory({
+  getUserCredits: getUserCreditsFactory({ db }),
+  upsertUserCredits
+})
 
 export = {
   Version: {
     async gendoAIRenders(parent) {
-      const items = await getLatestVersionRenderRequests({ versionId: parent.id })
+      const projectDb = await getProjectDbClient({ projectId: parent.streamId })
+      const items = await getLatestVersionRenderRequestsFactory({ db: projectDb })({
+        versionId: parent.id
+      })
       return {
         totalCount: items.length,
         items
       }
     },
     async gendoAIRender(parent, args) {
-      const item = await getVersionRenderRequest({
+      const projectDb = await getProjectDbClient({ projectId: parent.streamId })
+      const item = await getVersionRenderRequestFactory({ db: projectDb })({
         versionId: parent.id,
         id: args.id
       })
@@ -78,12 +97,45 @@ export = {
         throw new RateLimitError(rateLimitResult)
       }
 
+      const userId = ctx.userId!
+
+      const projectDb = await getProjectDbClient({ projectId: args.input.projectId })
+
+      await useUserGendoAiCreditsFactory({
+        getUserGendoAiCredits,
+        upsertUserCredits,
+        maxCredits: getGendoAICreditLimit()
+      })({ userId, credits: 1 })
+
+      const createRenderRequest = createRenderRequestFactory({
+        uploadFileStream: uploadFileStreamFactory({
+          storeFileStream,
+          upsertBlob: upsertBlobFactory({ db: projectDb }),
+          updateBlob: updateBlobFactory({ db: projectDb })
+        }),
+        requestNewImageGeneration,
+        storeGenerationProjectId: storeGenerationProjectIdFactory({
+          redis: getGenericRedis()
+        }),
+        storeRender: storeRenderFactory({ db: projectDb }),
+        publish
+      })
+
       await createRenderRequest({
         ...args.input,
-        userId: ctx.userId!
+        userId
       })
 
       return true
+    }
+  },
+  User: {
+    gendoAICredits: async (_parent, _args, ctx) => {
+      const userCredits = await getUserGendoAiCredits({ userId: ctx.userId! })
+      return {
+        limit: getGendoAICreditLimit(),
+        ...userCredits
+      }
     }
   },
   Subscription: {

@@ -467,6 +467,9 @@ server:
   gendoAI:
     ## @param server.gendoAI.apiUrl The url of the Gendo AI application, including protocol.
     apiUrl: 'https://api.gendo.ai/external/generate'
+
+    ## @param server.gendoAI.creditLimit The number of Gendo AI credit a user gets every month.
+    creditLimit: 40
     key:
       ## @param server.gendoAI.key.secretName The name of the Kubernetes Secret containing the Gendo AI key. If left blank, will default to the `secretName` parameter.
       secretName: ''

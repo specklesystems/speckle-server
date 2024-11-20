@@ -1,17 +1,24 @@
 import { GendoAIRenders } from '@/modules/core/dbSchema'
 import {
+  GetGenerationProjectId,
   GetLatestVersionRenderRequests,
   GetRenderByGenerationId,
+  GetUserCredits,
   GetVersionRenderRequest,
+  StoreGenerationProjectId,
   StoreRender,
-  UpdateRenderRecord
+  UpdateRenderRecord,
+  UpsertUserCredits
 } from '@/modules/gendo/domain/operations'
+import { UserCredits } from '@/modules/gendo/domain/types'
 import { GendoAIRenderRecord } from '@/modules/gendo/helpers/types'
+import Redis from 'ioredis'
 import { Knex } from 'knex'
 import { pick } from 'lodash'
 
 const tables = {
-  gendoAIRenders: (db: Knex) => db<GendoAIRenderRecord>(GendoAIRenders.name)
+  gendoAIRenders: (db: Knex) => db<GendoAIRenderRecord>(GendoAIRenders.name),
+  gendoUserCredits: (db: Knex) => db<UserCredits>('gendo_user_credits')
 }
 
 export const storeRenderFactory =
@@ -67,4 +74,38 @@ export const getVersionRenderRequestFactory =
       .orderBy(GendoAIRenders.col.createdAt, 'desc')
       .first()
     return record
+  }
+
+export const storeGenerationProjectIdFactory =
+  ({ redis }: { redis: Redis }): StoreGenerationProjectId =>
+  async ({ generationId, projectId }) => {
+    await redis.set(generationId, projectId, 'EX', 36_000) // expire this key after a while
+  }
+
+export const getGenerationProjectIdFactory =
+  ({ redis }: { redis: Redis }): GetGenerationProjectId =>
+  async ({ generationId }) => {
+    const projectId = await redis.get(generationId)
+    if (!projectId) return null
+    // cleanup after getting it
+    await redis.del(generationId)
+    return projectId
+  }
+
+export const getUserCreditsFactory =
+  ({ db }: { db: Knex }): GetUserCredits =>
+  async ({ userId }) => {
+    const userCredits = await tables
+      .gendoUserCredits(db)
+      .select()
+      .where({ userId })
+      .first()
+
+    return userCredits || null
+  }
+
+export const upsertUserCreditsFactory =
+  ({ db }: { db: Knex }): UpsertUserCredits =>
+  async ({ userCredits }) => {
+    await tables.gendoUserCredits(db).insert(userCredits).onConflict().merge()
   }

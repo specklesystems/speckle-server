@@ -1,5 +1,5 @@
 import { GendoAiRenderInput } from '@/modules/core/graph/generated/graphql'
-import { GendoAIRender } from '@/modules/gendo/domain/types'
+import { GendoAIRender, UserCredits } from '@/modules/gendo/domain/types'
 import { NullableKeysToOptional, Optional } from '@speckle/shared'
 import { SetOptional } from 'type-fest'
 
@@ -35,3 +35,22 @@ export type UpdateRenderRequest = (input: {
   responseImage: string
   gendoGenerationId: string
 }) => Promise<GendoAIRender>
+
+export type RequestNewImageGeneration = (args: {
+  userId: string
+  baseImage: string
+  projectId: string
+  prompt: string
+}) => Promise<{ status: string; generationId: string }>
+
+export type StoreGenerationProjectId = (args: {
+  generationId: string
+  projectId: string
+}) => Promise<void>
+
+export type GetGenerationProjectId = (args: {
+  generationId: string
+}) => Promise<string | null>
+
+export type GetUserCredits = (args: { userId: string }) => Promise<UserCredits | null>
+export type UpsertUserCredits = (args: { userCredits: UserCredits }) => Promise<void>

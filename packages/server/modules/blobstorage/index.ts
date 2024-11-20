@@ -136,6 +136,7 @@ export const init: SpeckleModule['init'] = async (app) => {
       const getBlobMetadata = getBlobMetadataFactory({ db: projectDb })
 
       const uploadFileStream = uploadFileStreamFactory({
+        storeFileStream,
         upsertBlob: upsertBlobFactory({ db: projectDb }),
         updateBlob
       })
@@ -178,7 +179,6 @@ export const init: SpeckleModule['init'] = async (app) => {
         req.log = req.log.child({ blobId })
 
         uploadOperations[blobId] = uploadFileStream(
-          storeFileStream,
           { streamId, userId: req.context.userId },
           { blobId, fileName, fileType, fileStream: file }
         )
