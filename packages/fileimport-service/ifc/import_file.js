@@ -10,14 +10,22 @@ const getDbClients = require('../knex')
 async function main() {
   const cmdArgs = process.argv.slice(2)
 
-  const [filePath, userId, streamId, branchName, commitMessage, fileId, regionName] =
-    cmdArgs
+  const [
+    filePath,
+    userId,
+    streamId,
+    branchName,
+    commitMessage,
+    fileId,
+    branchId,
+    regionName
+  ] = cmdArgs
   const logger = Observability.extendLoggerComponent(
     parentLogger.child({ streamId, branchName, userId, fileId, filePath }),
     'ifc'
   )
 
-  logger.info('ARGV: ', filePath, userId, streamId, branchName, commitMessage)
+  logger.info('ARGV: ', filePath, userId, streamId, branchName, branchId, commitMessage)
 
   const data = fs.readFileSync(filePath)
 
@@ -27,6 +35,7 @@ async function main() {
     userId,
     message: commitMessage || ' Imported file',
     fileId,
+    branchId,
     logger
   }
   if (branchName) ifcInput.branchName = branchName
