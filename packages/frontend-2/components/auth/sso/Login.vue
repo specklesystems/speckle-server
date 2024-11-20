@@ -149,7 +149,7 @@ const debouncedCheckEmail = useDebounceFn((value: string) => {
 const onEmailChange = (value: string) => {
   email.value = value
   emailCheckState.value = EmailCheckState.Idle
-  setFieldValue('workspace', undefined as FormValues['workspace'])
+  setFieldValue('workspace', undefined)
   debouncedCheckEmail(value)
 }
 
