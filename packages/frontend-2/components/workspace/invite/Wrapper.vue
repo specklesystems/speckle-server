@@ -1,7 +1,8 @@
 <template>
   <div class="flex justify-center">
     <WorkspaceInviteBlock v-if="invite" :invite="invite" />
-    <CommonLoadingIcon v-else />
+    <CommonLoadingIcon v-else-if="loading" />
+    <div v-else>No invite found</div>
   </div>
 </template>
 
@@ -14,7 +15,7 @@ const props = defineProps<{
   token: string
 }>()
 
-const { result } = useQuery(workspaceInviteQuery, {
+const { result, loading } = useQuery(workspaceInviteQuery, {
   workspaceId: props.workspaceSlug,
   token: props.token,
   options: { useSlug: true }
