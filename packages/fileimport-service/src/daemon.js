@@ -155,7 +155,10 @@ async function doTask(mainDb, regionName, taskDb, task) {
           info.userId,
           info.streamId,
           info.branchName,
-          `File upload: ${info.fileName}`
+          `File upload: ${info.fileName}`,
+          info.id,
+          existingBranch?.id,
+          regionName
         ],
         {
           USER_TOKEN: tempUserToken
@@ -180,7 +183,10 @@ async function doTask(mainDb, regionName, taskDb, task) {
           info.userId,
           info.streamId,
           info.branchName,
-          `File upload: ${info.fileName}`
+          `File upload: ${info.fileName}`,
+          info.id,
+          existingBranch?.id,
+          regionName
         ],
         {
           USER_TOKEN: tempUserToken
