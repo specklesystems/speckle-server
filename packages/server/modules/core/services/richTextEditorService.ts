@@ -1,6 +1,6 @@
 import { JSONContent } from '@tiptap/core'
 import { isString, isObjectLike, get, has } from 'lodash'
-import { RichTextEditor } from '@speckle/shared'
+import { MaybeNullOrUndefined, RichTextEditor } from '@speckle/shared'
 
 const { isDocEmpty, documentToBasicString, convertBasicStringToDocument } =
   RichTextEditor
@@ -11,6 +11,13 @@ export type SmartTextEditorValueSchema = {
   type: string
   doc?: JSONContent
   blobIds?: string[]
+}
+
+export type SmartTextEditorValueGraphQLReturn = SmartTextEditorValueSchema & {
+  /**
+   * We need to know the project ID to be able to fetch the blobs
+   */
+  projectId: MaybeNullOrUndefined<string>
 }
 
 export function isTextEditorDoc(value: unknown): value is JSONContent {

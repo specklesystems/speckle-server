@@ -1,13 +1,13 @@
+import { getDbClients } from '@/clients/knex.js'
 import { loggingExpressMiddleware } from '@/observability/expressLogging.js'
 import { metricsRouterFactory } from '@/observability/metricsRoute.js'
 import { initPrometheusMetrics } from '@/observability/prometheusMetrics.js'
 import { errorHandler } from '@/utils/errorHandler.js'
 import express from 'express'
 import createError from 'http-errors'
-import type { Knex } from 'knex'
 
-export const appFactory = (deps: { db: Knex }) => {
-  const { db } = deps
+export const appFactory = async () => {
+  const db = (await getDbClients()).main.public
   initPrometheusMetrics({ db })
   const app = express()
 

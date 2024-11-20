@@ -30,7 +30,7 @@ import {
   deleteInviteFactory as deleteInviteFromDbFactory,
   queryAllUserResourceInvitesFactory,
   queryAllResourceInvitesFactory,
-  markInviteUpdatedfactory,
+  markInviteUpdatedFactory,
   deleteServerOnlyInvitesFactory,
   updateAllInviteTargetsFactory
 } from '@/modules/serverinvites/repositories/serverInvites'
@@ -384,7 +384,7 @@ export = {
         }),
         findUserByTarget: findUserByTargetFactory({ db }),
         findInvite: findInviteFactory({ db }),
-        markInviteUpdated: markInviteUpdatedfactory({ db }),
+        markInviteUpdated: markInviteUpdatedFactory({ db }),
         getUser,
         getServerInfo
       })
