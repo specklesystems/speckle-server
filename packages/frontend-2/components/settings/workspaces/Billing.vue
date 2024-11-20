@@ -1,6 +1,6 @@
 <template>
   <section>
-    <div class="md:mx-auto pb-6 md:pb-0">
+    <div class="md:max-w-5xl md:mx-auto pb-6 md:pb-0">
       <SettingsSectionHeader title="Billing" text="Your workspace billing details" />
       <template v-if="isBillingIntegrationEnabled">
         <div class="flex flex-col gap-y-4 md:gap-y-6">
@@ -14,7 +14,7 @@
           <SettingsSectionHeader title="Billing summary" subheading class="pt-4" />
           <div class="border border-outline-3 rounded-lg">
             <div
-              class="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x"
+              class="grid grid-cols-1 md:grid-cols-3 divide-y divide-outline-3 md:divide-y-0 md:divide-x"
             >
               <div class="p-5 pt-4 flex flex-col gap-y-1">
                 <h3 class="text-body-xs text-foreground-2 pb-2">
@@ -89,6 +89,7 @@
             class="pt-6"
             :workspace-id="workspaceId"
             :current-plan="currentPlan"
+            :is-admin="isAdmin"
           />
         </div>
       </template>
@@ -111,10 +112,12 @@ import {
 import { useBillingActions } from '~/lib/billing/composables/actions'
 import { pricingPlansConfig } from '~/lib/billing/helpers/constants'
 import { Roles } from '@speckle/shared'
+
 graphql(`
   fragment SettingsWorkspacesBilling_Workspace on Workspace {
     ...BillingAlert_Workspace
     id
+    role
     plan {
       ...SettingsWorkspacesBillingPricingTable_WorkspacePlan
       name
@@ -132,12 +135,6 @@ const props = defineProps<{
 }>()
 
 const isBillingIntegrationEnabled = useIsBillingIntegrationEnabled()
-const seatPrices = ref({
-  [WorkspacePlans.Team]: pricingPlansConfig.plans[WorkspacePlans.Team].cost,
-  [WorkspacePlans.Pro]: pricingPlansConfig.plans[WorkspacePlans.Pro].cost,
-  [WorkspacePlans.Business]: pricingPlansConfig.plans[WorkspacePlans.Business].cost
-})
-
 const { result: workspaceResult } = useQuery(
   settingsWorkspaceBillingQuery,
   () => ({
@@ -148,6 +145,12 @@ const { result: workspaceResult } = useQuery(
   })
 )
 const { billingPortalRedirect } = useBillingActions()
+
+const seatPrices = ref({
+  [WorkspacePlans.Team]: pricingPlansConfig.plans[WorkspacePlans.Team].cost,
+  [WorkspacePlans.Pro]: pricingPlansConfig.plans[WorkspacePlans.Pro].cost,
+  [WorkspacePlans.Business]: pricingPlansConfig.plans[WorkspacePlans.Business].cost
+})
 
 const currentPlan = computed(() => workspaceResult.value?.workspace.plan)
 const subscription = computed(() => workspaceResult.value?.workspace.subscription)
@@ -184,5 +187,8 @@ const nextPaymentDue = computed(() =>
       ? dayjs(subscription.value?.currentBillingCycleEnd).format('MMMM D, YYYY')
       : 'Never'
     : dayjs().add(30, 'days').format('MMMM D, YYYY')
+)
+const isAdmin = computed(
+  () => workspaceResult.value?.workspace.role === Roles.Workspace.Admin
 )
 </script>

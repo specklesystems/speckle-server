@@ -1,16 +1,6 @@
 import { WorkspacePlans, BillingInterval } from '~/lib/common/generated/gql/graphql'
 import { Roles } from '@speckle/shared'
-
-enum PlanFeaturesList {
-  Workspaces = 'Workspaces',
-  RoleManagement = 'Role management',
-  GuestUsers = 'Guest users',
-  PrivateAutomateFunctions = 'Private automate functions',
-  DomainSecurity = 'Domain security',
-  SSO = 'Single Sign-On (SSO)',
-  CustomerDataRegion = 'Customer data region',
-  PrioritySupport = 'Priority support'
-}
+import { PlanFeaturesList, type PricingPlan } from '@/lib/billing/helpers/types'
 
 const baseFeatures = [
   PlanFeaturesList.Workspaces,
@@ -20,7 +10,13 @@ const baseFeatures = [
   PlanFeaturesList.DomainSecurity
 ]
 
-export const pricingPlansConfig = {
+export const pricingPlansConfig: {
+  features: Record<PlanFeaturesList, { name: string; description: string }>
+  plans: Record<
+    WorkspacePlans.Team | WorkspacePlans.Pro | WorkspacePlans.Business,
+    PricingPlan
+  >
+} = {
   features: {
     [PlanFeaturesList.Workspaces]: {
       name: PlanFeaturesList.Workspaces,
@@ -46,8 +42,8 @@ export const pricingPlansConfig = {
       name: PlanFeaturesList.SSO,
       description: ''
     },
-    [PlanFeaturesList.CustomerDataRegion]: {
-      name: PlanFeaturesList.CustomerDataRegion,
+    [PlanFeaturesList.CustomDataRegion]: {
+      name: PlanFeaturesList.CustomDataRegion,
       description: ''
     },
     [PlanFeaturesList.PrioritySupport]: {
@@ -93,7 +89,7 @@ export const pricingPlansConfig = {
       features: [
         ...baseFeatures,
         PlanFeaturesList.SSO,
-        PlanFeaturesList.CustomerDataRegion,
+        PlanFeaturesList.CustomDataRegion,
         PlanFeaturesList.PrioritySupport
       ],
       cost: {
