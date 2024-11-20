@@ -52,7 +52,7 @@ import {
   Resolvers,
   AutomateRunTriggerType
 } from '@/modules/core/graph/generated/graphql'
-import { getGenericRedis } from '@/modules/core/index'
+import { getGenericRedis } from '@/modules/shared/redis/redis'
 import { createAutomation as clientCreateAutomation } from '@/modules/automate/clients/executionEngine'
 import { Automate, Roles, isNullOrUndefined, isNonNullable } from '@speckle/shared'
 import { getFeatureFlags, getServerOrigin } from '@/modules/shared/helpers/envHelper'
@@ -855,10 +855,9 @@ export = (FF_AUTOMATE_MODULE_ENABLED
         }
       },
       User: {
-        automateInfo: () => ({
-          hasAutomateGithubApp: false,
-          availableGithubOrgs: []
-        })
+        automateInfo: () => {
+          throw new AutomateApiDisabledError()
+        }
       },
       ServerInfo: {
         automate: () => ({

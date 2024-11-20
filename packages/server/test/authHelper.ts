@@ -32,6 +32,7 @@ import {
   updateAllInviteTargetsFactory
 } from '@/modules/serverinvites/repositories/serverInvites'
 import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
+import { faker } from '@faker-js/faker'
 import { ServerScope } from '@speckle/shared'
 import { kebabCase, omit } from 'lodash'
 
@@ -84,21 +85,42 @@ export type BasicTestUser = {
   role?: ServerRoles
 } & Partial<UserRecord>
 
+const initTestUser = (user: Partial<BasicTestUser>): BasicTestUser => ({
+  name: faker.person.fullName(),
+  email: faker.internet.email(),
+  id: '',
+  ...user
+})
+
 /**
  * Create basic user for tests and on success mutate the input object to have
  * the new ID
  */
-export async function createTestUser(userObj: BasicTestUser) {
-  if (!userObj.password) {
-    userObj.password = 'some-random-password-123456789#!@'
+export async function createTestUser(userObj?: Partial<BasicTestUser>) {
+  const baseUser = initTestUser(userObj || {})
+
+  // Need to set values in both, in case userObj was defined outside of the function and passed in.
+  // If we only set on baseUser, the param obj won't be updated
+  const setVal = <Key extends keyof BasicTestUser>(
+    key: Key,
+    val: BasicTestUser[Key]
+  ) => {
+    baseUser[key] = val
+    if (userObj) userObj[key] = val
   }
 
-  if (!userObj.email) {
-    userObj.email = `${kebabCase(userObj.name)}@someemail.com`
+  if (!baseUser.password) {
+    setVal('password', 'some-random-password-123456789#!@')
   }
 
-  const id = await createUser(omit(userObj, ['id']), { skipPropertyValidation: true })
-  userObj.id = id
+  if (!baseUser.email) {
+    setVal('email', `${kebabCase(baseUser.name)}@someemail.com`)
+  }
+
+  const id = await createUser(omit(baseUser, ['id']), { skipPropertyValidation: true })
+  setVal('id', id)
+
+  return baseUser
 }
 
 /**

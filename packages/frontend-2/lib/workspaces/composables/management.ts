@@ -26,6 +26,7 @@ import {
   createWorkspaceMutation,
   inviteToWorkspaceMutation,
   processWorkspaceInviteMutation,
+  setDefaultRegionMutation,
   workspaceUpdateRoleMutation
 } from '~/lib/workspaces/graphql/mutations'
 import { isFunction } from 'lodash-es'
@@ -419,6 +420,7 @@ export function useCreateWorkspace() {
 export const useWorkspaceUpdateRole = () => {
   const { mutate } = useMutation(workspaceUpdateRoleMutation)
   const { triggerNotification } = useGlobalToast()
+  const mixpanel = useMixpanel()
 
   return async (input: WorkspaceRoleUpdateInput) => {
     const result = await mutate(
@@ -456,6 +458,19 @@ export const useWorkspaceUpdateRole = () => {
           ? 'The user role has been updated'
           : 'The user has been removed from the workspace'
       })
+
+      if (input.role) {
+        mixpanel.track('Workspace User Role Updated', {
+          newRole: input.role,
+          // eslint-disable-next-line camelcase
+          workspace_id: input.workspaceId
+        })
+      } else {
+        mixpanel.track('Workspace User Removed', {
+          // eslint-disable-next-line camelcase
+          workspace_id: input.workspaceId
+        })
+      }
     } else {
       const errorMessage = getFirstErrorMessage(result?.errors)
       triggerNotification({
@@ -478,4 +493,32 @@ export const copyWorkspaceLink = async (slug: string) => {
     type: ToastNotificationType.Success,
     title: 'Copied workspace link to clipboard'
   })
+}
+
+export const useSetDefaultWorkspaceRegion = () => {
+  const { mutate } = useMutation(setDefaultRegionMutation)
+  const { triggerNotification } = useGlobalToast()
+
+  return async (params: { workspaceId: string; regionKey: string }) => {
+    const { workspaceId, regionKey } = params
+    const res = await mutate({ workspaceId, regionKey }).catch(
+      convertThrowIntoFetchResult
+    )
+
+    if (res?.data?.workspaceMutations.setDefaultRegion) {
+      triggerNotification({
+        type: ToastNotificationType.Success,
+        title: 'Default region set successfully'
+      })
+    } else {
+      const err = getFirstErrorMessage(res?.errors)
+      triggerNotification({
+        type: ToastNotificationType.Danger,
+        title: 'Failed to set default region',
+        description: err
+      })
+    }
+
+    return res?.data?.workspaceMutations.setDefaultRegion
+  }
 }

@@ -5,12 +5,15 @@ import {
   SaveCheckoutSession,
   UpdateCheckoutSessionStatus,
   UpsertWorkspacePlan,
-  SaveWorkspaceSubscription,
+  UpsertWorkspaceSubscription,
   WorkspaceSubscription,
   WorkspacePlan,
   UpsertPaidWorkspacePlan,
   DeleteCheckoutSession,
-  GetWorkspaceCheckoutSession
+  GetWorkspaceCheckoutSession,
+  GetWorkspaceSubscription,
+  GetWorkspaceSubscriptionBySubscriptionId,
+  GetWorkspaceSubscriptions
 } from '@/modules/gatekeeper/domain/billing'
 import { Knex } from 'knex'
 
@@ -94,8 +97,45 @@ export const updateCheckoutSessionStatusFactory =
       .update({ paymentStatus, updatedAt: new Date() })
   }
 
-export const saveWorkspaceSubscriptionFactory =
-  ({ db }: { db: Knex }): SaveWorkspaceSubscription =>
+export const upsertWorkspaceSubscriptionFactory =
+  ({ db }: { db: Knex }): UpsertWorkspaceSubscription =>
   async ({ workspaceSubscription }) => {
-    await tables.workspaceSubscriptions(db).insert(workspaceSubscription)
+    await tables
+      .workspaceSubscriptions(db)
+      .insert(workspaceSubscription)
+      .onConflict('workspaceId')
+      .merge()
+  }
+
+export const getWorkspaceSubscriptionFactory =
+  ({ db }: { db: Knex }): GetWorkspaceSubscription =>
+  async ({ workspaceId }) => {
+    const subscription = await tables
+      .workspaceSubscriptions(db)
+      .select()
+      .where({ workspaceId })
+      .first()
+    return subscription || null
+  }
+
+export const getWorkspaceSubscriptionBySubscriptionIdFactory =
+  ({ db }: { db: Knex }): GetWorkspaceSubscriptionBySubscriptionId =>
+  async ({ subscriptionId }) => {
+    const subscription = await tables
+      .workspaceSubscriptions(db)
+      .select()
+      .whereRaw(`"subscriptionData" ->> 'subscriptionId' = ?`, [subscriptionId])
+      .first()
+    return subscription ?? null
+  }
+
+export const getWorkspaceSubscriptionsPastBillingCycleEndFactory =
+  ({ db }: { db: Knex }): GetWorkspaceSubscriptions =>
+  async () => {
+    const cycleEnd = new Date()
+    cycleEnd.setMinutes(cycleEnd.getMinutes() + 5)
+    return await tables
+      .workspaceSubscriptions(db)
+      .select()
+      .where('currentBillingCycleEnd', '<', cycleEnd)
   }

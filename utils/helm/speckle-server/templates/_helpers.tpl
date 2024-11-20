@@ -586,6 +586,8 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 - name: FF_BILLING_INTEGRATION_ENABLED
   value: {{ .Values.featureFlags.billingIntegrationEnabled | quote }}
 
+- name: FF_WORKSPACES_MULTI_REGION_ENABLED
+  value: {{ .Values.featureFlags.workspacesMultiRegionEnabled | quote }}
 
 {{- if .Values.featureFlags.billingIntegrationEnabled }}
 - name: STRIPE_API_KEY
@@ -670,7 +672,6 @@ Generate the environment variables for Speckle server and Speckle objects deploy
   valueFrom:
     secretKeyRef:
       name: "{{ default .Values.secretName .Values.server.billing.secretName }}"
-      
       key: {{ .Values.server.billing.workspaceYearlyBusinessSeatStripePriceId.secretKey }}
 {{- end }}
 
@@ -1047,5 +1048,21 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 {{- if .Values.server.ratelimiting.burst_get_auth }}
 - name: RATELIMIT_BURST_GET_AUTH
   value: "{{ .Values.server.ratelimiting.burst_get_auth }}"
+{{- end }}
+{{- if .Values.openTelemetry.tracing.url }}
+- name: OTEL_TRACE_URL
+  value: {{ .Values.openTelemetry.tracing.url | quote }}
+{{- end }}
+{{- if .Values.openTelemetry.tracing.key }}
+- name: OTEL_TRACE_KEY
+  value: {{ .Values.openTelemetry.tracing.key | quote }}
+{{- end }}
+{{- if .Values.openTelemetry.tracing.value }}
+- name: OTEL_TRACE_VALUE
+  value: {{ .Values.openTelemetry.tracing.value | quote }}
+{{- end }}
+{{- if .Values.featureFlags.workspacesMultiRegionEnabled }}
+- name: MULTI_REGION_CONFIG_PATH
+  value: "/multi-region-config/multi-region-config.json"
 {{- end }}
 {{- end }}

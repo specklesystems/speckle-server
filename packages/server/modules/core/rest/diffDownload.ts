@@ -1,14 +1,21 @@
 import zlib from 'zlib'
 import { corsMiddleware } from '@/modules/core/configs/cors'
 import type { Application } from 'express'
-import { validatePermissionsReadStream } from '@/modules/core/rest/authUtils'
 import { SpeckleObjectsStream } from '@/modules/core/rest/speckleObjectsStream'
 import { pipeline, PassThrough } from 'stream'
 import { getObjectsStreamFactory } from '@/modules/core/repositories/objects'
 import { db } from '@/db/knex'
+import { validatePermissionsReadStreamFactory } from '@/modules/core/services/streams/auth'
+import { getStreamFactory } from '@/modules/core/repositories/streams'
+import { authorizeResolver, validateScopes } from '@/modules/shared'
+import { getProjectDbClient } from '@/modules/multiregion/dbSelector'
 
 export default (app: Application) => {
-  const getObjectsStream = getObjectsStreamFactory({ db })
+  const validatePermissionsReadStream = validatePermissionsReadStreamFactory({
+    getStream: getStreamFactory({ db }),
+    validateScopes,
+    authorizeResolver
+  })
 
   app.options('/api/getobjects/:streamId', corsMiddleware())
 
@@ -25,6 +32,8 @@ export default (app: Application) => {
       return res.status(hasStreamAccess.status).end()
     }
 
+    const projectDb = await getProjectDbClient({ projectId: req.params.streamId })
+    const getObjectsStream = getObjectsStreamFactory({ db: projectDb })
     const childrenList = JSON.parse(req.body.objects)
     const simpleText = req.headers.accept === 'text/plain'
 

@@ -54,6 +54,7 @@ export type StreamRecord = {
   allowPublicComments: boolean
   isDiscoverable: boolean
   workspaceId: Nullable<string>
+  regionKey: Nullable<string>
 }
 
 export type StreamAclRecord = {
@@ -123,11 +124,6 @@ export type BranchRecord = {
   description: Nullable<string>
   createdAt: Date
   updatedAt: Date
-}
-
-export type ScheduledTaskRecord = {
-  taskName: string
-  lockExpiresAt: Date
 }
 
 export type ObjectRecord = {

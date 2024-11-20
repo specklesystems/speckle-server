@@ -7,7 +7,7 @@ const { sleep } = require('@/test/helpers')
 
 const expect = chai.expect
 
-const knex = require('@/db/knex')
+const { knex } = require('@/db/knex')
 
 const {
   updateBranchAndNotifyFactory,
@@ -24,8 +24,8 @@ const {
   getStreamBranchCountFactory
 } = require('@/modules/core/repositories/branches')
 const {
-  addBranchDeletedActivity,
-  addBranchUpdatedActivityFactory
+  addBranchUpdatedActivityFactory,
+  addBranchDeletedActivityFactory
 } = require('@/modules/activitystream/services/branchActivity')
 const {
   getStreamFactory,
@@ -73,9 +73,6 @@ const {
 } = require('@/modules/serverinvites/services/coreEmailContents')
 const { getEventBus } = require('@/modules/shared/services/eventBus')
 const { ProjectsEmitter } = require('@/modules/core/events/projectsEmitter')
-const {
-  addStreamCreatedActivityFactory
-} = require('@/modules/activitystream/services/streamActivity')
 const { saveActivityFactory } = require('@/modules/activitystream/repositories')
 const { publish } = require('@/modules/shared/utils/subscriptions')
 const {
@@ -139,7 +136,10 @@ const deleteBranchAndNotify = deleteBranchAndNotifyFactory({
   getBranchById: getBranchByIdFactory({ db: knex }),
   modelsEventsEmitter: ModelsEmitter.emit,
   markBranchStreamUpdated,
-  addBranchDeletedActivity,
+  addBranchDeletedActivity: addBranchDeletedActivityFactory({
+    saveActivity: saveActivityFactory({ db }),
+    publish
+  }),
   deleteBranchById: deleteBranchByIdFactory({ db: knex })
 })
 
@@ -166,10 +166,6 @@ const createCommitByBranchName = createCommitByBranchNameFactory({
   getBranchById: getBranchByIdFactory({ db })
 })
 
-const addStreamCreatedActivity = addStreamCreatedActivityFactory({
-  saveActivity: saveActivityFactory({ db }),
-  publish
-})
 const createStream = legacyCreateStreamFactory({
   createStreamReturnRecord: createStreamReturnRecordFactory({
     inviteUsersToProject: inviteUsersToProjectFactory({
@@ -194,7 +190,6 @@ const createStream = legacyCreateStreamFactory({
     }),
     createStream: createStreamFactory({ db }),
     createBranch: createBranchFactory({ db }),
-    addStreamCreatedActivity,
     projectsEventsEmitter: ProjectsEmitter.emit
   })
 })

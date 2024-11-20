@@ -12,7 +12,12 @@ import cookieParser from 'cookie-parser'
 
 import { createTerminus } from '@godaddy/terminus'
 import Logging from '@/logging'
-import { startupLogger, shutdownLogger, subscriptionLogger } from '@/logging/logging'
+import {
+  startupLogger,
+  shutdownLogger,
+  subscriptionLogger,
+  graphqlLogger
+} from '@/logging/logging'
 import {
   DetermineRequestIdMiddleware,
   LoggingExpressMiddleware,
@@ -41,13 +46,16 @@ import {
   isTestEnv,
   useNewFrontend,
   isApolloMonitoringEnabled,
-  enableMixpanel
+  enableMixpanel,
+  getPort,
+  getBindAddress,
+  shutdownTimeoutSeconds
 } from '@/modules/shared/helpers/envHelper'
 import * as ModulesSetup from '@/modules'
 import { GraphQLContext, Optional } from '@/modules/shared/helpers/typeHelper'
 import { createRateLimiterMiddleware } from '@/modules/core/services/ratelimiter'
 
-import { get, has, isString, toNumber } from 'lodash'
+import { get, has, isString } from 'lodash'
 import { corsMiddleware } from '@/modules/core/configs/cors'
 import {
   authContextMiddleware,
@@ -65,10 +73,10 @@ import { BaseError, ForbiddenError } from '@/modules/shared/errors'
 import { loggingPlugin } from '@/modules/core/graph/plugins/logging'
 import { shouldLogAsInfoLevel } from '@/logging/graphqlError'
 import { getUserFactory } from '@/modules/core/repositories/users'
+import { initFactory as healthchecksInitFactory } from '@/healthchecks'
+import type { ReadinessHandler } from '@/healthchecks/health'
 
 const GRAPHQL_PATH = '/graphql'
-
-let graphqlServer: ApolloServer<GraphQLContext>
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type SubscriptionResponse = { errors?: GraphQLError[]; data?: any }
@@ -331,7 +339,10 @@ export async function buildApolloServer(options?: {
     persistedQueries: false,
     csrfPrevention: true,
     formatError: buildErrorFormatter({ includeStacktraceInErrorResponses }),
-    includeStacktraceInErrorResponses
+    includeStacktraceInErrorResponses,
+    status400ForVariableCoercionErrors: true,
+    stopOnTerminationSignals: false, // handled by terminus and shutdown function
+    logger: graphqlLogger
   })
   await server.start()
 
@@ -399,12 +410,15 @@ export async function init() {
   // Initialize default modules, including rest api handlers
   await ModulesSetup.init(app)
 
+  // Initialize healthchecks
+  const healthchecks = await healthchecksInitFactory()(app, true)
+
   // Init HTTP server & subscription server
   const server = http.createServer(app)
   const subscriptionServer = buildApolloSubscriptionServer(server)
 
   // Initialize graphql server
-  graphqlServer = await buildApolloServer({
+  const graphqlServer = await buildApolloServer({
     subscriptionServer
   })
   app.use(
@@ -427,10 +441,19 @@ export async function init() {
   // At the very end adding default error handler middleware
   app.use(defaultErrorHandler)
 
-  return { app, graphqlServer, server, subscriptionServer }
+  return {
+    app,
+    graphqlServer,
+    server,
+    subscriptionServer,
+    readinessCheck: healthchecks.isReady
+  }
 }
 
-export async function shutdown(): Promise<void> {
+export async function shutdown(params: {
+  graphqlServer: ApolloServer<GraphQLContext>
+}): Promise<void> {
+  await params.graphqlServer.stop()
   await ModulesSetup.shutdown()
 }
 
@@ -457,13 +480,16 @@ async function createFrontendProxy() {
 /**
  * Starts a http server, hoisting the express app to it.
  */
-export async function startHttp(
-  server: http.Server,
-  app: Express,
+export async function startHttp(params: {
+  server: http.Server
+  app: Express
+  graphqlServer: ApolloServer<GraphQLContext>
+  readinessCheck: ReadinessHandler
   customPortOverride?: number
-) {
-  let bindAddress = process.env.BIND_ADDRESS || '127.0.0.1'
-  let port = process.env.PORT ? toNumber(process.env.PORT) : 3000
+}) {
+  const { server, app, graphqlServer, readinessCheck, customPortOverride } = params
+  let bindAddress = getBindAddress() // defaults to 127.0.0.1
+  let port = getPort() // defaults to 3000
 
   if (customPortOverride || customPortOverride === 0) port = customPortOverride
   if (shouldUseFrontendProxy()) {
@@ -476,7 +502,7 @@ export async function startHttp(
 
   // Production mode
   else {
-    bindAddress = process.env.BIND_ADDRESS || '0.0.0.0'
+    bindAddress = getBindAddress('0.0.0.0')
   }
 
   monitorActiveConnections(server)
@@ -486,16 +512,30 @@ export async function startHttp(
   // large timeout to allow large downloads on slow connections to finish
   createTerminus(server, {
     signals: ['SIGTERM', 'SIGINT'],
-    timeout: 5 * 60 * 1000,
+    timeout: shutdownTimeoutSeconds() * 1000,
     beforeShutdown: async () => {
       shutdownLogger.info('Shutting down (signal received)...')
     },
     onSignal: async () => {
-      await shutdown()
+      await shutdown({ graphqlServer })
     },
     onShutdown: () => {
       shutdownLogger.info('Shutdown completed')
-      process.exit(0)
+      shutdownLogger.flush()
+      return Promise.resolve()
+    },
+    healthChecks: {
+      '/readiness': readinessCheck,
+      // '/liveness' should return true even if in shutdown phase, so app does not get restarted while draining connections
+      // therefore we cannot use terminus to handle liveness checks.
+      verbatim: true
+    },
+    logger: (message, err) => {
+      if (err) {
+        shutdownLogger.error({ err }, message)
+      } else {
+        shutdownLogger.info(message)
+      }
     }
   })
 

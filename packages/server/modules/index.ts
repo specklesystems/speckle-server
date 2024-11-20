@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-var-requires */
+
 import fs from 'fs'
 import path from 'path'
 import { appRoot, packageRoot } from '@/bootstrap'
@@ -22,6 +22,7 @@ import {
 } from '@/modules/core/graph/helpers/directiveHelper'
 import { AppMocksConfig } from '@/modules/mocks'
 import { SpeckleModuleMocksConfig } from '@/modules/shared/helpers/mocks'
+import { LogicError } from '@/modules/shared/errors'
 
 /**
  * Cached speckle module requires
@@ -77,7 +78,8 @@ const getEnabledModuleNames = () => {
     'serverinvites',
     'stats',
     'webhooks',
-    'workspacesCore'
+    'workspacesCore',
+    'multiregion'
   ]
 
   if (FF_AUTOMATE_MODULE_ENABLED) moduleNames.push('automate')
@@ -93,7 +95,13 @@ async function getSpeckleModules() {
   const moduleNames = getEnabledModuleNames()
 
   for (const dir of moduleNames) {
-    loadedModules.push(require(`./${dir}`))
+    const moduleIndex = await import(`./${dir}/index`)
+    const moduleDefinition = 'init' in moduleIndex ? moduleIndex : moduleIndex.default
+    if (!('init' in moduleDefinition)) {
+      throw new LogicError(`Module ${dir} does not have an init function`)
+    }
+
+    loadedModules.push(moduleDefinition)
   }
 
   return loadedModules
@@ -185,7 +193,10 @@ const graphComponents = (): Pick<ApolloServerOptions<any>, 'resolvers'> & {
     // first pass load of resolvers
     const resolversPath = path.join(fullPath, 'graph', 'resolvers')
     if (fs.existsSync(resolversPath)) {
-      resolverObjs = [...resolverObjs, ...values(autoloadFromDirectory(resolversPath))]
+      const newResolverObjs = values(autoloadFromDirectory(resolversPath)).map((o) =>
+        'default' in o ? o.default : o
+      )
+      resolverObjs = [...resolverObjs, ...newResolverObjs]
     }
 
     // load directives

@@ -14,9 +14,9 @@ const {
 const {
   ForbiddenError: SFE,
   UnauthorizedError: SUE,
-  BadRequestError,
   UnauthorizedError,
-  ContextError
+  ContextError,
+  NotFoundError
 } = require('@/modules/shared/errors')
 const { Roles } = require('@speckle/shared')
 const {
@@ -380,7 +380,13 @@ describe('AuthZ @shared', () => {
         context: {}
       })
 
-      expectAuthError(new BadRequestError('Stream inputs are malformed'), authResult)
+      expectAuthError(
+        new NotFoundError(
+          'Project ID is malformed and cannot be found, or the project does not exist',
+          { info: { projectId: 'the need for stream' } }
+        ),
+        authResult
+      )
     })
   })
   describe('Escape hatches', () => {

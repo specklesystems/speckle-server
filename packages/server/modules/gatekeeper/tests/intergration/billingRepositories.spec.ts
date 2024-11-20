@@ -5,11 +5,19 @@ import {
   getWorkspaceCheckoutSessionFactory,
   getWorkspacePlanFactory,
   saveCheckoutSessionFactory,
-  saveWorkspaceSubscriptionFactory,
+  upsertWorkspaceSubscriptionFactory,
   updateCheckoutSessionStatusFactory,
-  upsertPaidWorkspacePlanFactory
+  upsertPaidWorkspacePlanFactory,
+  getWorkspaceSubscriptionFactory,
+  getWorkspaceSubscriptionBySubscriptionIdFactory,
+  getWorkspaceSubscriptionsPastBillingCycleEndFactory
 } from '@/modules/gatekeeper/repositories/billing'
+import {
+  createTestSubscriptionData,
+  createTestWorkspaceSubscription
+} from '@/modules/gatekeeper/tests/helpers'
 import { upsertWorkspaceFactory } from '@/modules/workspaces/repositories/workspaces'
+import { truncateTables } from '@/test/hooks'
 import { createAndStoreTestWorkspaceFactory } from '@/test/speckle-helpers/workspaces'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
@@ -25,7 +33,13 @@ const deleteCheckoutSession = deleteCheckoutSessionFactory({ db })
 const getCheckoutSession = getCheckoutSessionFactory({ db })
 const getWorkspaceCheckoutSession = getWorkspaceCheckoutSessionFactory({ db })
 const updateCheckoutSessionStatus = updateCheckoutSessionStatusFactory({ db })
-const saveWorkspaceSubscription = saveWorkspaceSubscriptionFactory({ db })
+const upsertWorkspaceSubscription = upsertWorkspaceSubscriptionFactory({ db })
+const getWorkspaceSubscription = getWorkspaceSubscriptionFactory({ db })
+const getWorkspaceSubscriptionBySubscriptionId =
+  getWorkspaceSubscriptionBySubscriptionIdFactory({ db })
+
+const getSubscriptionsAboutToEndBillingCycle =
+  getWorkspaceSubscriptionsPastBillingCycleEndFactory({ db })
 
 describe('billing repositories @gatekeeper', () => {
   describe('workspacePlans', () => {
@@ -194,24 +208,90 @@ describe('billing repositories @gatekeeper', () => {
     })
   })
   describe('workspaceSubscriptions', () => {
-    describe('saveWorkspaceSubscription creates a function, that', () => {
-      it('saves the subscription', async () => {
+    describe('upsertWorkspaceSubscription creates a function, that', () => {
+      it('saves and updates the subscription', async () => {
         const workspace = await createAndStoreTestWorkspace()
         const workspaceId = workspace.id
-        await saveWorkspaceSubscription({
-          workspaceSubscription: {
-            billingInterval: 'monthly',
-            createdAt: new Date(),
-            updatedAt: new Date(),
-            currentBillingCycleEnd: new Date(),
-            subscriptionData: {
-              customerId: cryptoRandomString({ length: 10 }),
-              products: [],
-              subscriptionId: cryptoRandomString({ length: 10 })
-            },
-            workspaceId
-          }
+        const subscriptionData = createTestSubscriptionData({
+          products: [
+            {
+              priceId: cryptoRandomString({ length: 10 }),
+              quantity: 10,
+              productId: cryptoRandomString({ length: 10 }),
+              subscriptionItemId: cryptoRandomString({ length: 10 })
+            }
+          ]
         })
+        const workspaceSubscription = createTestWorkspaceSubscription({
+          workspaceId,
+          billingInterval: 'monthly',
+          subscriptionData
+        })
+        await upsertWorkspaceSubscription({ workspaceSubscription })
+        let storedSubscription = await getWorkspaceSubscription({ workspaceId })
+        expect(storedSubscription).deep.equal(workspaceSubscription)
+        workspaceSubscription.billingInterval = 'yearly'
+        workspaceSubscription.subscriptionData.products[0].quantity = 3
+
+        await upsertWorkspaceSubscription({ workspaceSubscription })
+        storedSubscription = await getWorkspaceSubscription({ workspaceId })
+        expect(storedSubscription).deep.equal(workspaceSubscription)
+      })
+    })
+    describe('getWorkspaceSubscriptionFactory creates a function, that', () => {
+      it('returns null if the subscription is not found', async () => {
+        const sub = await getWorkspaceSubscription({
+          workspaceId: cryptoRandomString({ length: 10 })
+        })
+        expect(sub).to.be.null
+      })
+    })
+
+    describe('getWorkspaceSubscriptionBySubscriptionIdFactory creates a function, that', () => {
+      it('returns null if the subscription is not found', async () => {
+        const sub = await getWorkspaceSubscriptionBySubscriptionId({
+          subscriptionId: cryptoRandomString({ length: 10 })
+        })
+        expect(sub).to.be.null
+      })
+      it('returns the sub', async () => {
+        const workspace = await createAndStoreTestWorkspace()
+        const workspaceId = workspace.id
+        const workspaceSubscription = createTestWorkspaceSubscription({ workspaceId })
+        await upsertWorkspaceSubscription({ workspaceSubscription })
+        const storedSubscription = await getWorkspaceSubscriptionBySubscriptionId({
+          subscriptionId: workspaceSubscription.subscriptionData.subscriptionId
+        })
+        expect(storedSubscription).deep.equal(workspaceSubscription)
+      })
+    })
+    describe('getWorkspaceSubscriptionsPastBillingCycleEndFactory', () => {
+      before(async () => {
+        await truncateTables(['workspace_subscriptions'])
+      })
+      it('returns subs, that are about to end their billing cycle', async () => {
+        const workspace1 = await createAndStoreTestWorkspace()
+        const workspace1Id = workspace1.id
+        const workspace1Subscription = createTestWorkspaceSubscription({
+          workspaceId: workspace1Id,
+          currentBillingCycleEnd: new Date(2099, 0, 1)
+        })
+        await upsertWorkspaceSubscription({
+          workspaceSubscription: workspace1Subscription
+        })
+
+        const workspace2 = await createAndStoreTestWorkspace()
+        const workspace2Id = workspace2.id
+        const currentBillingCycleEnd = new Date()
+        currentBillingCycleEnd.setMinutes(currentBillingCycleEnd.getMinutes() + 4)
+        const workspace2Subscription = createTestWorkspaceSubscription({
+          workspaceId: workspace2Id
+        })
+        await upsertWorkspaceSubscription({
+          workspaceSubscription: workspace2Subscription
+        })
+        const subscriptions = await getSubscriptionsAboutToEndBillingCycle()
+        expect(subscriptions).deep.equalInAnyOrder([workspace2Subscription])
       })
     })
   })

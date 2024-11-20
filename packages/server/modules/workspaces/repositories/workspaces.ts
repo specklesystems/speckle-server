@@ -6,7 +6,6 @@ import {
 } from '@/modules/workspacesCore/domain/types'
 import {
   CountDomainsByWorkspaceId,
-  CountProjectsVersionsByWorkspaceId,
   CountWorkspaceRoleWithOptionalProjectRole,
   DeleteWorkspace,
   DeleteWorkspaceDomain,
@@ -15,6 +14,7 @@ import {
   GetUserIdsWithRoleInWorkspace,
   GetWorkspace,
   GetWorkspaceBySlug,
+  GetWorkspaceBySlugOrId,
   GetWorkspaceCollaborators,
   GetWorkspaceCollaboratorsTotalCount,
   GetWorkspaceDomains,
@@ -41,7 +41,6 @@ import {
   ServerAcl,
   ServerInvites,
   StreamAcl,
-  StreamCommits,
   Streams,
   Users
 } from '@/modules/core/dbSchema'
@@ -70,7 +69,14 @@ export const getUserDiscoverableWorkspacesFactory =
     }
     return (await tables
       .workspaces(db)
-      .select('workspaces.id as id', 'name', 'description', 'logo', 'defaultLogoIndex')
+      .select(
+        'workspaces.id as id',
+        'name',
+        'slug',
+        'description',
+        'logo',
+        'defaultLogoIndex'
+      )
       .distinctOn('workspaces.id')
       .join('workspace_domains', 'workspace_domains.workspaceId', 'workspaces.id')
       .leftJoin(
@@ -83,7 +89,7 @@ export const getUserDiscoverableWorkspacesFactory =
       .where('verified', true)
       .where('role', null)) as Pick<
       Workspace,
-      'id' | 'name' | 'description' | 'logo' | 'defaultLogoIndex'
+      'id' | 'name' | 'slug' | 'description' | 'logo' | 'defaultLogoIndex'
     >[]
   }
 
@@ -134,6 +140,18 @@ export const getWorkspaceFactory =
   async ({ workspaceId, userId }) => {
     const workspace = await workspaceWithRoleBaseQuery({ db, userId })
       .where(Workspaces.col.id, workspaceId)
+      .first()
+
+    return workspace || null
+  }
+
+export const getWorkspaceBySlugOrIdFactory =
+  (deps: { db: Knex }): GetWorkspaceBySlugOrId =>
+  async ({ workspaceSlugOrId }) => {
+    const { db } = deps
+    const workspace = await workspaceWithRoleBaseQuery({ db })
+      .where(Workspaces.col.slug, workspaceSlugOrId)
+      .orWhere(Workspaces.col.id, workspaceSlugOrId)
       .first()
 
     return workspace || null
@@ -366,18 +384,6 @@ export const getWorkspaceWithDomainsFactory =
         (domain: WorkspaceDomain | null) => domain !== null
       )
     } as Workspace & { domains: WorkspaceDomain[] }
-  }
-
-export const countProjectsVersionsByWorkspaceIdFactory =
-  ({ db }: { db: Knex }): CountProjectsVersionsByWorkspaceId =>
-  async ({ workspaceId }) => {
-    const [res] = await tables
-      .streams(db)
-      .join(StreamCommits.name, StreamCommits.col.streamId, Streams.col.id)
-      .where({ workspaceId })
-      .count(StreamCommits.col.commitId)
-
-    return parseInt(res.count.toString())
   }
 
 export const getUserIdsWithRoleInWorkspaceFactory =

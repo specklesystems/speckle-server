@@ -31,31 +31,6 @@ export const basicPendingWorkspaceCollaboratorFragment = gql`
   }
 `
 
-export const workspaceBillingFragment = gql`
-  fragment WorkspaceBilling on Workspace {
-    billing {
-      versionsCount {
-        current
-        max
-      }
-      cost {
-        subTotal
-        currency
-        items {
-          count
-          name
-          cost
-          label
-        }
-        discount {
-          name
-          amount
-        }
-        total
-      }
-    }
-  }
-`
 export const workspaceProjectsFragment = gql`
   fragment WorkspaceProjects on ProjectCollection {
     items {
@@ -120,17 +95,6 @@ export const getWorkspaceWithTeamQuery = gql`
 
   ${basicWorkspaceFragment}
   ${basicPendingWorkspaceCollaboratorFragment}
-`
-
-export const getWorkspaceWithBillingQuery = gql`
-  query GetWorkspaceWithBilling($workspaceId: String!) {
-    workspace(id: $workspaceId) {
-      ...BasicWorkspace
-      ...WorkspaceBilling
-    }
-  }
-  ${basicWorkspaceFragment}
-  ${workspaceBillingFragment}
 `
 
 export const getWorkspaceWithProjectsQuery = gql`
@@ -258,6 +222,47 @@ export const deleteWorkspaceDomainMutation = gql`
         }
         domainBasedMembershipProtectionEnabled
         discoverabilityEnabled
+      }
+    }
+  }
+`
+
+export const getWorkspaceAvailableRegionsQuery = gql`
+  query GetWorkspaceAvailableRegions($workspaceId: String!) {
+    workspace(id: $workspaceId) {
+      id
+      availableRegions {
+        id
+        key
+        name
+      }
+    }
+  }
+`
+
+export const getDefaultRegionQuery = gql`
+  query GetWorkspaceDefaultRegion($workspaceId: String!) {
+    workspace(id: $workspaceId) {
+      id
+      defaultRegion {
+        id
+        key
+        name
+      }
+    }
+  }
+`
+
+export const setDefaultRegionMutation = gql`
+  mutation SetWorkspaceDefaultRegion($workspaceId: String!, $regionKey: String!) {
+    workspaceMutations {
+      setDefaultRegion(regionKey: $regionKey, workspaceId: $workspaceId) {
+        id
+        defaultRegion {
+          id
+          key
+          name
+        }
       }
     }
   }

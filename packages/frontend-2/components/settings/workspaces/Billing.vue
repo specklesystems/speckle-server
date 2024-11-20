@@ -1,103 +1,116 @@
 <template>
   <section>
-    <div class="md:max-w-xl md:mx-auto pb-6 md:pb-0">
+    <div class="md:mx-auto pb-6 md:pb-0">
       <SettingsSectionHeader title="Billing" text="Your workspace billing details" />
-      <CommonCard v-if="versionCount" class="text-body-xs bg-foundation">
-        <p class="text-foreground font-medium">Workspaces are free while in beta.</p>
-        <p class="py-6">
-          Once the beta period ends, workspaces are still free up to
-          {{ versionCount.max }} model versions.
-          <br />
-          To store more versions across your projects you will need to upgrade to a paid
-          plan.
-        </p>
-        <CommonProgressBar
-          class="my-3"
-          :current-value="versionCount.current"
-          :max-value="versionCount.max"
-        />
-        <div class="flex flex-row justify-between">
-          <p class="text-foreground-2">
-            Current model versions:
-            <span class="text-foreground">{{ versionCount.current }}</span>
-          </p>
-          <p class="text-foreground-2">
-            Free model versions limit:
-            <span class="text-foreground">{{ versionCount.max }}</span>
-          </p>
-        </div>
-      </CommonCard>
+      <template v-if="isBillingIntegrationEnabled">
+        <div class="flex flex-col gap-y-4 md:gap-y-6">
+          <BillingAlert v-if="workspaceResult" :workspace="workspaceResult.workspace" />
+          <SettingsSectionHeader title="Billing summary" subheading class="pt-4" />
+          <div class="border border-outline-3 rounded-lg">
+            <div
+              class="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x"
+            >
+              <div class="p-5 pt-4 flex flex-col gap-y-1">
+                <h3 class="text-body-xs text-foreground-2 pb-2">
+                  {{ isTrialPeriod ? 'Trial plan' : 'Current plan' }}
+                </h3>
+                <p class="text-heading-lg text-foreground capitalize">
+                  {{ currentPlan?.name ?? WorkspacePlans.Team }} plan
+                </p>
+                <p class="text-body-xs text-foreground-2">
+                  £{{ seatPrice }} per seat/month, billed
+                  {{
+                    subscription?.billingInterval === BillingInterval.Yearly
+                      ? 'yearly'
+                      : 'monthly'
+                  }}
+                </p>
+              </div>
+              <div class="p-5 pt-4 flex flex-col gap-y-1">
+                <h3 class="text-body-xs text-foreground-2 pb-2">
+                  {{
+                    isTrialPeriod
+                      ? 'Expected bill'
+                      : subscription?.billingInterval === BillingInterval.Yearly
+                      ? 'Yearly bill'
+                      : 'Monthly bill'
+                  }}
+                </h3>
+                <p class="text-heading-lg text-foreground capitalize">Coming soon</p>
+              </div>
+              <div class="p-5 pt-4 flex flex-col gap-y-1">
+                <h3 class="text-body-xs text-foreground-2 pb-2">
+                  {{ isTrialPeriod ? 'First payment due' : 'Next payment due' }}
+                </h3>
+                <p class="text-heading-lg text-foreground capitalize">
+                  {{ nextPaymentDue }}
+                </p>
+                <p v-if="isPaidPlan" class="text-body-xs text-foreground-2">
+                  <span class="capitalize">
+                    {{
+                      subscription?.billingInterval === BillingInterval.Yearly
+                        ? 'Yearly'
+                        : 'Monthly'
+                    }}
+                  </span>
+                  billing period
+                </p>
+              </div>
+            </div>
+            <div
+              v-if="isActivePlan"
+              class="flex flex-row gap-x-4 p-5 items-center border-t border-outline-3"
+            >
+              <div class="text-body-xs gap-y-2 flex-1">
+                <p class="font-medium text-foreground">Billing portal</p>
+                <p class="text-foreground-2">
+                  View invoices, edit payment details, and manage your subscription.
+                </p>
+              </div>
 
-      <SettingsSectionHeader
-        title="What your workspace bill on a team plan will look like"
-        class="pt-6 pb-4 md:pt-10 md:pb-6"
-        subheading
-      />
-      <BillingSummary v-if="billing?.cost" :workspace-cost="billing.cost" />
-      <div
-        v-if="discount && billing?.cost?.subTotal"
-        class="flex mt-6 bg-foundation border-dashed border border-success"
-      >
-        <p class="flex-1 p-3">{{ discount.name }}</p>
-        <p class="w-32 md:w-40 ml-4 p-3">
-          £{{ billing.cost.subTotal * discount.amount }} / month
-        </p>
-      </div>
-      <div class="p-3 mt-2 flex flex-col md:flex-row md:items-center">
-        <p class="text-body-xs text-foreground flex-1">
-          To learn more about our pricing plans
-        </p>
-        <div class="pt-4 md:pt-0 md:pl-4 md:w-40">
-          <FormButton
-            :external="true"
-            to="mailto:hello@speckle.systems"
-            color="primary"
-          >
-            Talk to us
-          </FormButton>
-        </div>
-      </div>
-
-      <div v-if="isBillingIntegrationEnabled" class="flex flex-col space-y-10">
-        <SettingsSectionHeader title="Start payment" class="pt-10" subheading />
-        <div class="flex items-center">
-          <div class="flex-1 flex-col pr-6 gap-y-1">
-            <p class="text-body-xs font-medium text-foreground">Billing cycle</p>
-            <p class="text-body-xs text-foreground-2 leading-5 max-w-md">
-              Choose an annual billing cycle for 20% off
-            </p>
+              <FormButton color="outline" @click="billingPortalRedirect(workspaceId)">
+                Open billing portal
+              </FormButton>
+            </div>
           </div>
-          <FormSwitch v-model="isYearlyPlan" :show-label="true" name="annual billing" />
+          <SettingsWorkspacesBillingPricingTable
+            class="pt-6"
+            :workspace-id="workspaceId"
+            :current-plan="currentPlan"
+          />
         </div>
-        <div class="text-lg">Add the pricing table here</div>
-        <div class="flex justify-between">
-          <FormButton @click="teamCheckout">Team plan</FormButton>
-          <FormButton @click="proCheckout">Pro plan</FormButton>
-          <FormButton @click="businessCheckout">Business plan</FormButton>
-        </div>
-      </div>
+      </template>
+      <template v-else>Coming soon</template>
     </div>
   </section>
 </template>
 
 <script setup lang="ts">
+import dayjs from 'dayjs'
 import { graphql } from '~/lib/common/generated/gql'
 import { useQuery } from '@vue/apollo-composable'
 import { settingsWorkspaceBillingQuery } from '~/lib/settings/graphql/queries'
 import { useIsBillingIntegrationEnabled } from '~/composables/globals'
-
+import {
+  WorkspacePlans,
+  WorkspacePlanStatuses,
+  BillingInterval
+} from '~/lib/common/generated/gql/graphql'
+import { useBillingActions } from '~/lib/billing/composables/actions'
+import { pricingPlansConfig } from '~/lib/billing/helpers/constants'
+import { Roles } from '@speckle/shared'
 graphql(`
   fragment SettingsWorkspacesBilling_Workspace on Workspace {
-    billing {
-      cost {
-        subTotal
-        total
-        ...BillingSummary_WorkspaceCost
-      }
-      versionsCount {
-        current
-        max
-      }
+    ...BillingAlert_Workspace
+    id
+    plan {
+      ...SettingsWorkspacesBillingPricingTable_WorkspacePlan
+      name
+      status
+    }
+    subscription {
+      billingInterval
+      currentBillingCycleEnd
     }
   }
 `)
@@ -107,28 +120,65 @@ const props = defineProps<{
 }>()
 
 const isBillingIntegrationEnabled = useIsBillingIntegrationEnabled()
-const isYearlyPlan = ref(false)
+const seatPrices = ref({
+  [WorkspacePlans.Team]: pricingPlansConfig.plans[WorkspacePlans.Team].cost,
+  [WorkspacePlans.Pro]: pricingPlansConfig.plans[WorkspacePlans.Pro].cost,
+  [WorkspacePlans.Business]: pricingPlansConfig.plans[WorkspacePlans.Business].cost
+})
 
-const checkoutUrl = (plan: string) =>
-  `/api/v1/billing/workspaces/${
-    props.workspaceId
-  }/checkout-session/${plan}/${billingCycle()}`
-const billingCycle = () => (isYearlyPlan.value ? 'yearly' : 'monthly')
-const teamCheckout = () => {
-  window.location.href = checkoutUrl('team')
-}
-const proCheckout = () => {
-  window.location.href = checkoutUrl('pro')
-}
-const businessCheckout = () => {
-  window.location.href = checkoutUrl('business')
-}
+const route = useRoute()
+const { result: workspaceResult } = useQuery(
+  settingsWorkspaceBillingQuery,
+  () => ({
+    workspaceId: props.workspaceId
+  }),
+  () => ({
+    enabled: isBillingIntegrationEnabled
+  })
+)
+const { billingPortalRedirect, cancelCheckoutSession } = useBillingActions()
 
-const { result } = useQuery(settingsWorkspaceBillingQuery, () => ({
-  workspaceId: props.workspaceId
-}))
+const currentPlan = computed(() => workspaceResult.value?.workspace.plan)
+const subscription = computed(() => workspaceResult.value?.workspace.subscription)
+const isPaidPlan = computed(
+  () =>
+    currentPlan.value?.name !== WorkspacePlans.Academia &&
+    currentPlan.value?.name !== WorkspacePlans.Unlimited
+)
+const isTrialPeriod = computed(
+  () =>
+    currentPlan.value?.status === WorkspacePlanStatuses.Trial ||
+    !currentPlan.value?.status
+)
+const isActivePlan = computed(
+  () =>
+    currentPlan.value &&
+    currentPlan.value?.status !== WorkspacePlanStatuses.Trial &&
+    currentPlan.value?.status !== WorkspacePlanStatuses.Canceled
+)
+const seatPrice = computed(() =>
+  currentPlan.value && subscription.value
+    ? seatPrices.value[currentPlan.value.name as keyof typeof seatPrices.value][
+        subscription.value.billingInterval
+      ][Roles.Workspace.Member]
+    : seatPrices.value[WorkspacePlans.Team][BillingInterval.Monthly][
+        Roles.Workspace.Member
+      ]
+)
+const nextPaymentDue = computed(() =>
+  currentPlan.value
+    ? isPaidPlan.value
+      ? dayjs(subscription.value?.currentBillingCycleEnd).format('MMMM D, YYYY')
+      : 'Never'
+    : dayjs().add(30, 'days').format('MMMM D, YYYY')
+)
 
-const billing = computed(() => result.value?.workspace.billing)
-const versionCount = computed(() => billing.value?.versionsCount)
-const discount = computed(() => billing.value?.cost?.discount)
+onMounted(() => {
+  const paymentStatusQuery = route.query?.payment_status
+  const sessionIdQuery = route.query?.session_id
+
+  if (sessionIdQuery && String(paymentStatusQuery) === WorkspacePlanStatuses.Canceled) {
+    cancelCheckoutSession(String(sessionIdQuery), props.workspaceId)
+  }
+})
 </script>

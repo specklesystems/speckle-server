@@ -35,12 +35,15 @@ import {
 } from '@/modules/workspaces/errors/workspace'
 import { UserEmail } from '@/modules/core/domain/userEmails/types'
 import { merge, omit } from 'lodash'
-import { GetWorkspaceWithDomains } from '@/modules/workspaces/domain/operations'
+import {
+  GetWorkspaceWithDomains,
+  UpsertWorkspaceArgs
+} from '@/modules/workspaces/domain/operations'
 import { FindVerifiedEmailsByUserId } from '@/modules/core/domain/userEmails/operations'
 import { EventNames } from '@/modules/shared/services/eventBus'
 
 type WorkspaceTestContext = {
-  storedWorkspaces: Omit<Workspace, 'domains'>[]
+  storedWorkspaces: UpsertWorkspaceArgs['workspace'][]
   storedRoles: WorkspaceAcl[]
   eventData: {
     isCalled: boolean
@@ -63,11 +66,7 @@ const buildCreateWorkspaceWithTestContext = (
   }
 
   const deps: Parameters<typeof createWorkspaceFactory>[0] = {
-    upsertWorkspace: async ({
-      workspace
-    }: {
-      workspace: Omit<Workspace, 'domains'>
-    }) => {
+    upsertWorkspace: async ({ workspace }) => {
       context.storedWorkspaces.push(workspace)
     },
     validateSlug: async () => {},
@@ -79,7 +78,6 @@ const buildCreateWorkspaceWithTestContext = (
       context.eventData.isCalled = true
       context.eventData.eventName = eventName
       context.eventData.payload = payload
-      return []
     },
     ...dependencyOverrides
   }
@@ -408,9 +406,7 @@ describe('Workspace services', () => {
       let newWorkspaceName
       await updateWorkspaceFactory({
         getWorkspace: async () => workspace,
-        emitWorkspaceEvent: async () => {
-          return []
-        },
+        emitWorkspaceEvent: async () => {},
         validateSlug: async () => {},
 
         upsertWorkspace: async ({ workspace }) => {
@@ -448,9 +444,7 @@ describe('Workspace services', () => {
 
       await updateWorkspaceFactory({
         getWorkspace: async () => workspace,
-        emitWorkspaceEvent: async () => {
-          return []
-        },
+        emitWorkspaceEvent: async () => {},
         validateSlug: async () => {},
         upsertWorkspace: async ({ workspace }) => {
           updatedWorkspace = workspace
@@ -544,8 +538,6 @@ const buildDeleteWorkspaceRoleAndTestContext = (
           break
         }
       }
-
-      return []
     },
     ...dependencyOverrides
   }
@@ -622,8 +614,6 @@ const buildUpdateWorkspaceRoleAndTestContext = (
           break
         }
       }
-
-      return []
     },
     ...dependencyOverrides
   }
@@ -1169,7 +1159,7 @@ describe('Workspace role services', () => {
         }
 
         let storedDomains: WorkspaceDomain | undefined = undefined
-        let storedWorkspace: Omit<Workspace, 'domains'> | undefined = undefined
+        let storedWorkspace: UpsertWorkspaceArgs['workspace'] | undefined = undefined
         let omittedEventName: EventNames | undefined = undefined
 
         const workspace: Workspace = {
@@ -1205,7 +1195,6 @@ describe('Workspace role services', () => {
           },
           emitWorkspaceEvent: async ({ eventName }) => {
             omittedEventName = eventName
-            return []
           },
           storeWorkspaceDomain: async ({ workspaceDomain }) => {
             storedDomains = workspaceDomain
@@ -1272,9 +1261,7 @@ describe('Workspace role services', () => {
           upsertWorkspace: async ({ workspace }) => {
             workspaceData = { ...workspaceData, ...workspace }
           },
-          emitWorkspaceEvent: async () => {
-            return []
-          },
+          emitWorkspaceEvent: async () => {},
           storeWorkspaceDomain: async ({ workspaceDomain }) => {
             insertedDomains.push(workspaceDomain)
           }

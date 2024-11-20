@@ -1,28 +1,28 @@
 <template>
   <div>
-    <div
-      class="pt-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"
-    >
-      <Portal to="navigation">
-        <HeaderNavLink :to="automationFunctionsRoute" :name="'Automate functions'" />
-      </Portal>
-
+    <Portal to="navigation">
+      <HeaderNavLink
+        :separator="false"
+        :to="automationFunctionsRoute"
+        :name="'Automate functions'"
+      />
+    </Portal>
+    <div class="pt-4 flex flex-col md:flex-row gap-y-2 md:gap-x-4 md:justify-between">
       <h1 class="text-heading-xl">Automate functions</h1>
-      <div class="flex flex-col sm:flex-row gap-2">
-        <FormTextInput
-          name="search"
-          placeholder="Search functions..."
-          show-clear
-          color="foundation"
-          v-bind="bind"
-          v-on="on"
-        />
-        <FormButton
-          v-if="canCreateFunction"
-          :icon-left="PlusIcon"
-          @click="() => (createDialogOpen = true)"
-        >
-          New Function
+      <div class="flex flex-row gap-2">
+        <div class="flex-1">
+          <FormTextInput
+            name="search"
+            placeholder="Search functions..."
+            show-clear
+            color="foundation"
+            class="grow"
+            v-bind="bind"
+            v-on="on"
+          />
+        </div>
+        <FormButton :disabled="!canCreateFunction" @click="createDialogOpen = true">
+          New function
         </FormButton>
       </div>
     </div>
@@ -35,7 +35,6 @@
   </div>
 </template>
 <script setup lang="ts">
-import { PlusIcon } from '@heroicons/vue/24/outline'
 import type { Nullable, Optional } from '@speckle/shared'
 import { useDebouncedTextInput } from '@speckle/ui-components'
 import { graphql } from '~/lib/common/generated/gql'

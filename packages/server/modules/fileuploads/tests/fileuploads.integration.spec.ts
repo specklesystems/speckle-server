@@ -31,9 +31,6 @@ import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/ser
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { createBranchFactory } from '@/modules/core/repositories/branches'
 import { ProjectsEmitter } from '@/modules/core/events/projectsEmitter'
-import { addStreamCreatedActivityFactory } from '@/modules/activitystream/services/streamActivity'
-import { saveActivityFactory } from '@/modules/activitystream/repositories'
-import { publish } from '@/modules/shared/utils/subscriptions'
 import {
   countAdminUsersFactory,
   getUserFactory,
@@ -65,10 +62,6 @@ import { getServerInfoFactory } from '@/modules/core/repositories/server'
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = getUserFactory({ db })
 const getUsers = getUsersFactory({ db })
-const addStreamCreatedActivity = addStreamCreatedActivityFactory({
-  saveActivity: saveActivityFactory({ db }),
-  publish
-})
 const getStream = getStreamFactory({ db })
 const createStream = legacyCreateStreamFactory({
   createStreamReturnRecord: createStreamReturnRecordFactory({
@@ -94,7 +87,6 @@ const createStream = legacyCreateStreamFactory({
     }),
     createStream: createStreamFactory({ db }),
     createBranch: createBranchFactory({ db }),
-    addStreamCreatedActivity,
     projectsEventsEmitter: ProjectsEmitter.emit
   })
 })
@@ -148,17 +140,23 @@ describe('FileUploads @fileuploads', () => {
   let userOneToken: string
   let createdStreamId: string
   let existingCanonicalUrl: string
+  let existingPort: string
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let sendRequest: (token: string, query: unknown) => Promise<any>
+  let sendRequest: (token: string, query: string | object) => Promise<any>
   let serverAddress: string
+  let serverPort: string
 
   before(async () => {
-    ;({ app, server } = await beforeEachContext())
-    ;({ serverAddress, sendRequest } = await initializeTestServer(server, app))
+    const ctx = await beforeEachContext()
+    server = ctx.server
+    app = ctx.app
+    ;({ serverAddress, serverPort, sendRequest } = await initializeTestServer(ctx))
 
     //TODO does mocha have a nicer way of temporarily swapping an environment variable, like vitest?
     existingCanonicalUrl = process.env['CANONICAL_URL'] || ''
+    existingPort = process.env['PORT'] || ''
     process.env['CANONICAL_URL'] = serverAddress
+    process.env['PORT'] = serverPort
 
     userOneId = await createUser(userOne)
   })
@@ -177,6 +175,7 @@ describe('FileUploads @fileuploads', () => {
 
   after(async () => {
     process.env['CANONICAL_URL'] = existingCanonicalUrl
+    process.env['PORT'] = existingPort
     await server?.close()
   })
 
@@ -343,7 +342,7 @@ describe('FileUploads @fileuploads', () => {
         .set('Authorization', `Bearer ${userOneToken}`)
         .set('Accept', 'application/json')
         .attach('test.ifc', require.resolve('@/readme.md'), 'test.ifc')
-      expect(response.statusCode).to.equal(500) //FIXME should be 404 (technically a 401, but we don't want to leak existence of stream so 404 is preferrable)
+      expect(response.statusCode).to.equal(404) //FIXME should be 404 (technically a 401, but we don't want to leak existence of stream so 404 is preferrable)
       const gqlResponse = await sendRequest(userOneToken, {
         query: `query ($streamId: String!) {
           stream(id: $streamId) {

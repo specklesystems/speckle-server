@@ -81,6 +81,12 @@
                 <LayoutSidebarMenuGroupItem
                   :label="item.label"
                   :active="isActive(item.to)"
+                  :tag="
+                    item.plan?.status === WorkspacePlanStatuses.Trial ||
+                    !item.plan?.status
+                      ? 'Trial'
+                      : undefined
+                  "
                   class="!pl-1"
                 >
                   <template #icon>
@@ -152,14 +158,6 @@
               </NuxtLink>
             </LayoutSidebarMenuGroup>
           </LayoutSidebarMenu>
-          <template #promo>
-            <LayoutSidebarPromo
-              title="SpeckleCon 2024"
-              text="Join us in London on Nov 13-14 for the ultimate community event."
-              button-text="Get tickets"
-              @on-click="onPromoClick"
-            />
-          </template>
         </LayoutSidebar>
       </div>
     </template>
@@ -177,7 +175,6 @@
 import {
   FormButton,
   LayoutSidebar,
-  LayoutSidebarPromo,
   LayoutSidebarMenu,
   LayoutSidebarMenuGroup,
   LayoutSidebarMenuGroupItem
@@ -196,6 +193,7 @@ import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { HomeIcon } from '@heroicons/vue/24/outline'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { Roles } from '@speckle/shared'
+import { WorkspacePlanStatuses } from '~/lib/common/generated/gql/graphql'
 
 const { isLoggedIn } = useActiveUser()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
@@ -231,7 +229,10 @@ const workspacesItems = computed(() =>
         id: workspace.id,
         to: workspaceRoute(workspace.slug),
         logo: workspace.logo,
-        defaultLogoIndex: workspace.defaultLogoIndex
+        defaultLogoIndex: workspace.defaultLogoIndex,
+        plan: {
+          status: workspace.plan?.status
+        }
       }))
     : []
 )
@@ -247,15 +248,6 @@ onWorkspaceResult((result) => {
     }
   }
 })
-
-const onPromoClick = () => {
-  mixpanel.track('Promo Banner Clicked', {
-    source: 'sidebar',
-    campaign: 'specklecon2024'
-  })
-
-  window.open('https://conf.speckle.systems/', '_blank')
-}
 
 const openFeedbackDialog = () => {
   showFeedbackDialog.value = true

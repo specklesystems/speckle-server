@@ -501,7 +501,7 @@ export const findInviteByTokenFactory =
     return (await q) || null
   }
 
-export const markInviteUpdatedfactory =
+export const markInviteUpdatedFactory =
   ({ db }: { db: Knex }): MarkInviteUpdated =>
   async ({ inviteId }) => {
     const cols = ServerInvites.with({ withoutTablePrefix: true }).col

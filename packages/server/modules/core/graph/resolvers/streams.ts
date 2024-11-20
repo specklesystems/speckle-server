@@ -66,7 +66,6 @@ import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/ser
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { createBranchFactory } from '@/modules/core/repositories/branches'
 import {
-  addStreamCreatedActivityFactory,
   addStreamDeletedActivityFactory,
   addStreamInviteAcceptedActivityFactory,
   addStreamPermissionsAddedActivityFactory,
@@ -121,10 +120,6 @@ const createStreamReturnRecord = createStreamReturnRecordFactory({
   }),
   createStream: createStreamFactory({ db }),
   createBranch: createBranchFactory({ db }),
-  addStreamCreatedActivity: addStreamCreatedActivityFactory({
-    saveActivity,
-    publish
-  }),
   projectsEventsEmitter: ProjectsEmitter.emit
 })
 const deleteStreamAndNotify = deleteStreamAndNotifyFactory({
@@ -400,14 +395,11 @@ export = {
         throw new RateLimitError(rateLimitResult)
       }
 
-      const { id } = await createStreamReturnRecord(
-        {
-          ...args.stream,
-          ownerId: context.userId!,
-          ownerResourceAccessRules: context.resourceAccessRules
-        },
-        { createActivity: true }
-      )
+      const { id } = await createStreamReturnRecord({
+        ...args.stream,
+        ownerId: context.userId!,
+        ownerResourceAccessRules: context.resourceAccessRules
+      })
 
       return id
     },

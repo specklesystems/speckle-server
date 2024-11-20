@@ -39,7 +39,18 @@ import {
   StreamUpdateInput,
   ProjectUpdateInput,
   SubscriptionStreamUpdatedArgs,
-  SubscriptionStreamDeletedArgs
+  SubscriptionStreamDeletedArgs,
+  SubscriptionBranchCreatedArgs,
+  SubscriptionBranchUpdatedArgs,
+  BranchUpdateInput,
+  UpdateModelInput,
+  SubscriptionBranchDeletedArgs,
+  BranchDeleteInput,
+  DeleteModelInput,
+  SubscriptionCommitCreatedArgs,
+  CommitCreateInput,
+  SubscriptionCommitUpdatedArgs,
+  CommitUpdateInput
 } from '@/modules/core/graph/generated/graphql'
 import { Merge } from 'type-fest'
 import {
@@ -54,6 +65,8 @@ import {
   ProjectAutomationsUpdatedMessageGraphQLReturn
 } from '@/modules/automate/helpers/graphTypes'
 import { CommentRecord } from '@/modules/comments/helpers/types'
+import { CommitRecord } from '@/modules/core/helpers/types'
+import { BranchRecord } from '@/modules/core/helpers/types'
 
 /**
  * GraphQL Subscription PubSub instance
@@ -170,7 +183,7 @@ type SubscriptionTypeMap = {
     payload: {
       projectVersionsUpdated: Merge<
         ProjectVersionsUpdatedMessage,
-        { version: Nullable<VersionGraphQLReturn> }
+        { version: Nullable<Omit<VersionGraphQLReturn, 'branchId'>> }
       >
       projectId: string
     }
@@ -301,6 +314,40 @@ type SubscriptionTypeMap = {
     payload: { streamDeleted: { streamId: string }; streamId: string }
     variables: SubscriptionStreamDeletedArgs
   }
+  [BranchSubscriptions.BranchCreated]: {
+    payload: { branchCreated: BranchRecord; streamId: string }
+    variables: SubscriptionBranchCreatedArgs
+  }
+  [BranchSubscriptions.BranchUpdated]: {
+    payload: {
+      branchUpdated: BranchUpdateInput | UpdateModelInput
+      streamId: string
+      branchId: string
+    }
+    variables: SubscriptionBranchUpdatedArgs
+  }
+  [BranchSubscriptions.BranchDeleted]: {
+    payload: { branchDeleted: BranchDeleteInput | DeleteModelInput; streamId: string }
+    variables: SubscriptionBranchDeletedArgs
+  }
+  [CommitSubscriptions.CommitCreated]: {
+    payload: {
+      commitCreated: CommitCreateInput & { id: string; authorId: string }
+      streamId: string
+    }
+    variables: SubscriptionCommitCreatedArgs
+  }
+  [CommitSubscriptions.CommitUpdated]: {
+    payload: { commitUpdated: CommitUpdateInput; streamId: string; commitId: string }
+    variables: SubscriptionCommitUpdatedArgs
+  }
+  [CommitSubscriptions.CommitDeleted]: {
+    payload: {
+      commitDeleted: CommitRecord & { streamId: string; branchId: string }
+      streamId: string
+    }
+    variables: SubscriptionCommitUpdatedArgs
+  }
 } & { [k in SubscriptionEvent]: { payload: unknown; variables: unknown } }
 
 type SubscriptionEvent =
@@ -311,6 +358,7 @@ type SubscriptionEvent =
   | StreamSubscriptions
   | UserSubscriptions
   | ViewerSubscriptions
+  | BranchSubscriptions
 
 /**
  * Publish a GQL subscription event

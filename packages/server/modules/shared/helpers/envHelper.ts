@@ -19,6 +19,8 @@ export function isDevEnv() {
   return process.env.NODE_ENV === 'development'
 }
 
+export const isDevOrTestEnv = () => isDevEnv() || isTestEnv()
+
 export function isProdEnv() {
   return process.env.NODE_ENV === 'production'
 }
@@ -51,9 +53,18 @@ export function getBooleanFromEnv(envVarKey: string, aDefault = false): boolean 
   return ['1', 'true', true].includes(process.env[envVarKey] || aDefault.toString())
 }
 
-export function getStringFromEnv(envVarKey: string): string {
+export function getStringFromEnv(
+  envVarKey: string,
+  options?: Partial<{
+    /**
+     * If set to true, wont throw if the env var is not set
+     */
+    unsafe: boolean
+  }>
+): string {
   const envVar = process.env[envVarKey]
   if (!envVar) {
+    if (options?.unsafe) return ''
     throw new MisconfiguredEnvironmentError(`${envVarKey} env var not configured`)
   }
   return envVar
@@ -216,6 +227,14 @@ export function getServerOrigin() {
 
     throw err
   }
+}
+
+export function getBindAddress(aDefault: string = '127.0.0.1') {
+  return process.env.BIND_ADDRESS || aDefault
+}
+
+export function getPort() {
+  return getIntFromEnv('PORT', '3000')
 }
 
 /**
@@ -391,4 +410,27 @@ export function getStripeApiKey(): string {
 
 export function getStripeEndpointSigningKey(): string {
   return getStringFromEnv('STRIPE_ENDPOINT_SIGNING_KEY')
+}
+
+export function getOtelTracingUrl() {
+  return getStringFromEnv('OTEL_TRACE_URL')
+}
+
+export function getOtelTraceKey() {
+  return getStringFromEnv('OTEL_TRACE_KEY')
+}
+
+export function getOtelHeaderValue() {
+  return getStringFromEnv('OTEL_TRACE_VALUE')
+}
+
+export function getMultiRegionConfigPath(options?: Partial<{ unsafe: boolean }>) {
+  return getStringFromEnv('MULTI_REGION_CONFIG_PATH', options)
+}
+
+export const shouldRunTestsInMultiregionMode = () =>
+  getBooleanFromEnv('RUN_TESTS_IN_MULTIREGION_MODE')
+
+export function shutdownTimeoutSeconds() {
+  return getIntFromEnv('SHUTDOWN_TIMEOUT_SECONDS', '300')
 }

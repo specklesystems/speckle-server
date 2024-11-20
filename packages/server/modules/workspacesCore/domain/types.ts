@@ -33,6 +33,11 @@ export type Workspace = {
   discoverabilityEnabled: boolean
 }
 
+export type LimitedWorkspace = Pick<
+  Workspace,
+  'id' | 'slug' | 'name' | 'description' | 'logo' | 'defaultLogoIndex'
+>
+
 export type WorkspaceWithDomains = Workspace & { domains: WorkspaceDomain[] }
 
 export type WorkspaceDefaultProjectRole = Exclude<StreamRoles, 'stream:owner'>
@@ -53,5 +58,11 @@ export type WorkspaceAcl = {
   userId: string
   role: WorkspaceRoles
   workspaceId: string
+  createdAt: Date
+}
+
+export type WorkspaceRegionAssignment = {
+  workspaceId: string
+  regionKey: string
   createdAt: Date
 }

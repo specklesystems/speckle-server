@@ -51,7 +51,6 @@ import {
 import { db } from '@/db/knex'
 import { deleteBranchAndNotifyFactory } from '@/modules/core/services/branch/management'
 import { ModelsEmitter } from '@/modules/core/events/modelsEmitter'
-import { addBranchDeletedActivity } from '@/modules/activitystream/services/branchActivity'
 import {
   createCommitByBranchIdFactory,
   createCommitByBranchNameFactory
@@ -84,7 +83,6 @@ import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/ser
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { ProjectsEmitter } from '@/modules/core/events/projectsEmitter'
 import {
-  addStreamCreatedActivityFactory,
   addStreamInviteAcceptedActivityFactory,
   addStreamPermissionsAddedActivityFactory
 } from '@/modules/activitystream/services/streamActivity'
@@ -105,6 +103,7 @@ import {
 import { changeUserRoleFactory } from '@/modules/core/services/users/management'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { createObjectFactory } from '@/modules/core/services/objects/management'
+import { addBranchDeletedActivityFactory } from '@/modules/activitystream/services/branchActivity'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = getUserFactory({ db })
@@ -119,7 +118,10 @@ const deleteBranchAndNotify = deleteBranchAndNotifyFactory({
   getBranchById: getBranchByIdFactory({ db }),
   modelsEventsEmitter: ModelsEmitter.emit,
   markBranchStreamUpdated,
-  addBranchDeletedActivity,
+  addBranchDeletedActivity: addBranchDeletedActivityFactory({
+    saveActivity: saveActivityFactory({ db }),
+    publish
+  }),
   deleteBranchById: deleteBranchByIdFactory({ db })
 })
 
@@ -145,10 +147,6 @@ const createCommitByBranchName = createCommitByBranchNameFactory({
   getBranchById: getBranchByIdFactory({ db })
 })
 
-const addStreamCreatedActivity = addStreamCreatedActivityFactory({
-  saveActivity: saveActivityFactory({ db }),
-  publish
-})
 const createStream = legacyCreateStreamFactory({
   createStreamReturnRecord: createStreamReturnRecordFactory({
     inviteUsersToProject: inviteUsersToProjectFactory({
@@ -173,7 +171,6 @@ const createStream = legacyCreateStreamFactory({
     }),
     createStream: createStreamFactory({ db }),
     createBranch: createBranchFactory({ db }),
-    addStreamCreatedActivity,
     projectsEventsEmitter: ProjectsEmitter.emit
   })
 })
@@ -368,7 +365,7 @@ describe('Streams @core-streams', () => {
 
       const apollo = {
         apollo: await buildApolloServer(),
-        context: createAuthedTestContext(userTwo.id)
+        context: await createAuthedTestContext(userTwo.id)
       }
       const { data, errors } = await leaveStream(apollo, { streamId })
 
@@ -703,7 +700,7 @@ describe('Streams @core-streams', () => {
         activeUserId = userOne.id
         apollo = {
           apollo: await buildApolloServer(),
-          context: createAuthedTestContext(activeUserId)
+          context: await createAuthedTestContext(activeUserId)
         }
       })
 
@@ -732,7 +729,7 @@ describe('Streams @core-streams', () => {
       before(async () => {
         apollo = {
           apollo: await buildApolloServer(),
-          context: createTestContext()
+          context: await createTestContext()
         }
       })
 

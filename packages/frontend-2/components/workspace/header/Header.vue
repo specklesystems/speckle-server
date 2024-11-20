@@ -1,125 +1,121 @@
 <template>
-  <div
-    class="flex flex-col gap-6 justify-between"
-    :class="[
-      isWorkspaceAdmin ? 'xl:flex-row xl:items-center' : 'lg:flex-row lg:items-center'
-    ]"
-  >
-    <div class="flex gap-2 md:mb-3 md:mt-2">
-      <div class="flex items-center mr-2">
-        <WorkspaceAvatar
-          :logo="workspaceInfo.logo"
-          :default-logo-index="workspaceInfo.defaultLogoIndex"
-          size="lg"
-        />
-      </div>
-      <div class="group flex flex-col">
-        <h1 class="text-heading line-clamp-2">{{ workspaceInfo.name }}</h1>
-        <div class="flex">
-          <div
-            ref="descriptionRef"
-            class="text-body-xs text-foreground-2 line-clamp-1 max-w-xs"
-          >
-            {{ workspaceInfo.description || 'No workspace description' }}
+  <div>
+    <BillingAlert :workspace="workspaceInfo" class="mb-4">
+      <template #actions>
+        <FormButton
+          v-if="isWorkspaceAdmin && isInTrial"
+          @click="openSettingsDialog(SettingMenuKeys.Workspace.Billing)"
+        >
+          Upgrade now
+        </FormButton>
+      </template>
+    </BillingAlert>
+    <div
+      class="flex flex-col gap-6 justify-between"
+      :class="[
+        isWorkspaceAdmin ? 'xl:flex-row xl:items-center' : 'lg:flex-row lg:items-center'
+      ]"
+    >
+      <div class="flex gap-2 md:mb-3 md:mt-2">
+        <div class="flex items-center mr-2">
+          <WorkspaceAvatar
+            :logo="workspaceInfo.logo"
+            :default-logo-index="workspaceInfo.defaultLogoIndex"
+            size="lg"
+          />
+        </div>
+        <div class="group flex flex-col">
+          <h1 class="text-heading line-clamp-2">{{ workspaceInfo.name }}</h1>
+          <div class="flex">
+            <div
+              ref="descriptionRef"
+              class="text-body-xs text-foreground-2 line-clamp-1 max-w-xs"
+            >
+              {{ workspaceInfo.description || 'No workspace description' }}
+            </div>
+            <FormButton
+              v-if="hasOverflow"
+              color="subtle"
+              size="sm"
+              class="md:invisible group-hover:visible items-center text-foreground text-body-2xs"
+              @click="showDescriptionDialog"
+            >
+              Read more
+              <IconTriangle class="text-foreground" />
+            </FormButton>
           </div>
-          <FormButton
-            v-if="hasOverflow"
-            color="subtle"
-            size="sm"
-            class="md:invisible group-hover:visible items-center text-foreground text-body-2xs"
-            @click="showDescriptionDialog"
-          >
-            Read more
-            <IconTriangle class="text-foreground" />
-          </FormButton>
         </div>
       </div>
-    </div>
-    <div
-      class="flex justify-between md:items-center gap-x-3 md:flex-row"
-      :class="[isWorkspaceAdmin ? 'flex-col' : 'flex-row items-center']"
-    >
-      <div
-        class="flex items-center gap-x-3 md:mb-0"
-        :class="[isWorkspaceAdmin ? 'mb-3' : ' flex-1']"
-      >
-        <CommonBadge rounded :color-classes="'text-foreground-2 bg-primary-muted'">
-          {{ workspaceInfo.totalProjects.totalCount || 0 }} Project{{
-            workspaceInfo.totalProjects.totalCount === 1 ? '' : 's'
-          }}
-        </CommonBadge>
-        <CommonBadge rounded :color-classes="'text-foreground-2 bg-primary-muted'">
-          <span class="capitalize">
-            {{ workspaceInfo.role?.split(':').reverse()[0] }}
-          </span>
-        </CommonBadge>
-      </div>
-      <div class="flex items-center gap-x-3">
-        <div v-if="workspaceInfo.billing" class="flex-1 md:flex-auto">
-          <button
-            class="block"
-            @click="openSettingsDialog(SettingMenuKeys.Workspace.Billing)"
-          >
-            <WorkspacePageVersionCount
-              :versions-count="workspaceInfo.billing.versionsCount"
-            />
-          </button>
+      <div class="flex justify-between items-center gap-x-3">
+        <div class="flex items-center gap-x-3 md:mb-0 flex-1">
+          <CommonBadge rounded :color-classes="'text-foreground-2 bg-primary-muted'">
+            {{ workspaceInfo.totalProjects.totalCount || 0 }} Project{{
+              workspaceInfo.totalProjects.totalCount === 1 ? '' : 's'
+            }}
+          </CommonBadge>
+          <CommonBadge rounded :color-classes="'text-foreground-2 bg-primary-muted'">
+            <span class="capitalize">
+              {{ workspaceInfo.role?.split(':').reverse()[0] }}
+            </span>
+          </CommonBadge>
         </div>
         <div class="flex items-center gap-x-3">
-          <div
-            v-if="!isWorkspaceGuest"
-            v-tippy="isWorkspaceAdmin ? 'Manage members' : 'View members'"
-          >
-            <button
-              class="block"
-              @click="openSettingsDialog(SettingMenuKeys.Workspace.Members)"
+          <div class="flex items-center gap-x-3">
+            <div
+              v-if="!isWorkspaceGuest"
+              v-tippy="isWorkspaceAdmin ? 'Manage members' : 'View members'"
             >
-              <UserAvatarGroup
-                :users="team.map((teamMember) => teamMember.user)"
-                class="max-w-[104px]"
-                hide-tooltips
-              />
-            </button>
-          </div>
-          <FormButton
-            v-if="isWorkspaceAdmin"
-            class="hidden md:block"
-            color="outline"
-            @click="$emit('show-invite-dialog')"
-          >
-            Invite
-          </FormButton>
-          <FormButton
-            v-if="isWorkspaceAdmin"
-            class="hidden md:block"
-            color="outline"
-            @click="openSettingsDialog(SettingMenuKeys.Workspace.General)"
-          >
-            Settings
-          </FormButton>
-          <LayoutMenu
-            v-model:open="showActionsMenu"
-            :items="actionsItems"
-            :menu-position="HorizontalDirection.Left"
-            :menu-id="menuId"
-            class="md:hidden"
-            @click.stop.prevent
-            @chosen="onActionChosen"
-          >
+              <button
+                class="block"
+                @click="openSettingsDialog(SettingMenuKeys.Workspace.Members)"
+              >
+                <UserAvatarGroup
+                  :users="team.map((teamMember) => teamMember.user)"
+                  class="max-w-[104px]"
+                  hide-tooltips
+                />
+              </button>
+            </div>
             <FormButton
-              color="subtle"
-              hide-text
-              :icon-right="EllipsisHorizontalIcon"
-              @click="showActionsMenu = !showActionsMenu"
-            />
-          </LayoutMenu>
+              v-if="isWorkspaceAdmin"
+              class="hidden md:block"
+              color="outline"
+              @click="$emit('show-invite-dialog')"
+            >
+              Invite
+            </FormButton>
+            <FormButton
+              v-if="isWorkspaceAdmin"
+              class="hidden md:block"
+              color="outline"
+              @click="openSettingsDialog(SettingMenuKeys.Workspace.General)"
+            >
+              Settings
+            </FormButton>
+            <LayoutMenu
+              v-model:open="showActionsMenu"
+              :items="actionsItems"
+              :menu-position="HorizontalDirection.Left"
+              :menu-id="menuId"
+              class="md:hidden"
+              @click.stop.prevent
+              @chosen="onActionChosen"
+            >
+              <FormButton
+                color="subtle"
+                hide-text
+                :icon-right="EllipsisHorizontalIcon"
+                @click="showActionsMenu = !showActionsMenu"
+              />
+            </LayoutMenu>
+          </div>
         </div>
       </div>
+      <DescriptionDialog
+        v-model:open="isDescriptionDialogOpen"
+        :description="workspaceInfo.description || 'No workspace description'"
+      />
     </div>
-    <DescriptionDialog
-      v-model:open="isDescriptionDialogOpen"
-      :description="workspaceInfo.description || 'No workspace description'"
-    />
   </div>
 </template>
 
@@ -138,10 +134,12 @@ import {
 } from '~/lib/settings/helpers/types'
 import DescriptionDialog from './DescriptionDialog.vue'
 import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
+import { WorkspacePlanStatuses } from '~/lib/common/generated/gql/graphql'
 
 graphql(`
   fragment WorkspaceHeader_Workspace on Workspace {
     ...WorkspaceAvatar_Workspace
+    ...BillingAlert_Workspace
     id
     slug
     role
@@ -150,11 +148,6 @@ graphql(`
     description
     totalProjects: projects {
       totalCount
-    }
-    billing {
-      versionsCount {
-        ...WorkspacePageVersionCount_WorkspaceVersionsCount
-      }
     }
     team {
       items {
@@ -193,6 +186,11 @@ const breakpoints = useBreakpoints(TailwindBreakpoints)
 const isMobile = breakpoints.smaller('md')
 const showActionsMenu = ref(false)
 
+const isInTrial = computed(
+  () =>
+    props.workspaceInfo.plan?.status === WorkspacePlanStatuses.Trial ||
+    !props.workspaceInfo.plan
+)
 const team = computed(() => props.workspaceInfo.team.items || [])
 const isWorkspaceAdmin = computed(
   () => props.workspaceInfo.role === Roles.Workspace.Admin

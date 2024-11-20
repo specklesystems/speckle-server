@@ -14,7 +14,7 @@ const {
   deleteServerOnlyInvitesFactory,
   updateAllInviteTargetsFactory
 } = require('@/modules/serverinvites/repositories/serverInvites')
-const db = require('@/db/knex')
+const { db } = require('@/db/knex')
 const {
   legacyCreateStreamFactory,
   createStreamReturnRecordFactory
@@ -38,11 +38,6 @@ const {
 const { getEventBus } = require('@/modules/shared/services/eventBus')
 const { createBranchFactory } = require('@/modules/core/repositories/branches')
 const { ProjectsEmitter } = require('@/modules/core/events/projectsEmitter')
-const {
-  addStreamCreatedActivityFactory
-} = require('@/modules/activitystream/services/streamActivity')
-const { saveActivityFactory } = require('@/modules/activitystream/repositories')
-const { publish } = require('@/modules/shared/utils/subscriptions')
 const {
   getUsersFactory,
   getUserFactory,
@@ -80,10 +75,6 @@ const {
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = getUserFactory({ db })
 const getUsers = getUsersFactory({ db })
-const addStreamCreatedActivity = addStreamCreatedActivityFactory({
-  saveActivity: saveActivityFactory({ db }),
-  publish
-})
 const createInviteDirectly = createStreamInviteDirectly
 const findInvite = findInviteFactory({ db })
 const getStream = getStreamFactory({ db })
@@ -111,7 +102,6 @@ const createStream = legacyCreateStreamFactory({
     }),
     createStream: createStreamFactory({ db }),
     createBranch: createBranchFactory({ db }),
-    addStreamCreatedActivity,
     projectsEventsEmitter: ProjectsEmitter.emit
   })
 })
@@ -171,8 +161,10 @@ describe('Auth @auth', () => {
     }
 
     before(async () => {
-      ;({ app, server } = await beforeEachContext())
-      ;({ sendRequest } = await initializeTestServer(server, app))
+      const ctx = await beforeEachContext()
+      server = ctx.server
+      app = ctx.app
+      ;({ sendRequest } = await initializeTestServer(ctx))
 
       // Register a user for testing login flows
       await createUser(me).then((id) => (me.id = id))

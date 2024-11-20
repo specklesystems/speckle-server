@@ -1,12 +1,12 @@
 import { Branch } from '@/modules/core/domain/branches/types'
 import {
-  CommitWithBranchId,
   CommitWithStreamBranchMetadata,
   Commit,
   CommitBranch,
   CommitWithStreamId,
   LegacyUserCommit,
-  LegacyStreamCommit
+  LegacyStreamCommit,
+  CommitWithStreamBranchId
 } from '@/modules/core/domain/commits/types'
 import {
   CommitsDeleteInput,
@@ -54,7 +54,7 @@ export type GetSpecificBranchCommits = (
     branchId: string
     commitId: string
   }[]
-) => Promise<CommitWithBranchId[]>
+) => Promise<CommitWithStreamBranchId[]>
 
 export type StoreCommit = (
   params: Omit<NullableKeysToOptional<Commit>, 'id' | 'createdAt'>
@@ -74,7 +74,7 @@ export type CreateCommitByBranchId = (
   options?: Partial<{
     notify: boolean
   }>
-) => Promise<Commit>
+) => Promise<CommitWithStreamBranchId>
 
 export type CreateCommitByBranchName = (
   params: NullableKeysToOptional<{
@@ -109,7 +109,7 @@ export type InsertStreamCommits = (
 export type UpdateCommitAndNotify = (
   params: CommitUpdateInput | UpdateVersionInput,
   userId: string
-) => Promise<Commit>
+) => Promise<CommitWithStreamBranchId>
 
 export type GetCommitBranches = (commitIds: string[]) => Promise<CommitBranch[]>
 
@@ -166,7 +166,7 @@ export type GetUserAuthoredCommitCounts = (params: {
 
 export type GetCommitsAndTheirBranchIds = (
   commitIds: string[]
-) => Promise<CommitWithBranchId[]>
+) => Promise<CommitWithStreamBranchId[]>
 
 export type GetBatchedStreamCommits = (
   streamId: string,
@@ -176,7 +176,7 @@ export type GetBatchedStreamCommits = (
 export type GetBatchedBranchCommits = (
   branchIds: string[],
   options?: Partial<BatchedSelectOptions>
-) => AsyncGenerator<BranchCommitRecord[], void, unknown>
+) => AsyncGenerator<(BranchCommitRecord & { streamId: string })[], void, unknown>
 
 export type InsertCommits = (
   commits: Commit[],
@@ -203,7 +203,7 @@ export type PaginatedBranchCommitsParams = PaginatedBranchCommitsBaseParams & {
 export type GetPaginatedBranchCommitsItems = (
   params: PaginatedBranchCommitsParams
 ) => Promise<{
-  commits: Commit[]
+  commits: CommitWithStreamBranchId[]
   cursor: string | null
 }>
 
@@ -217,7 +217,7 @@ export type GetPaginatedBranchCommits = (
   }
 ) => Promise<{
   totalCount: number
-  items: Commit[]
+  items: CommitWithStreamBranchId[]
   cursor: string | null
 }>
 

@@ -172,6 +172,7 @@ export default defineComponent({
         document: MoveCommitsDocument,
         variables: {
           input: {
+            streamId: props.streamId,
             commitIds: props.selectedCommitIds.slice(),
             targetBranch: targetBranch.value!
           }
@@ -187,6 +188,7 @@ export default defineComponent({
         document: DeleteCommitsDocument,
         variables: {
           input: {
+            streamId: props.streamId,
             commitIds: props.selectedCommitIds.slice()
           }
         },

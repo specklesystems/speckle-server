@@ -59,8 +59,8 @@ const updateUserEmail = updateUserEmailFactory({ db })
 const getUserDiscoverableWorkspaces = getUserDiscoverableWorkspacesFactory({ db })
 const upsertProjectRole = upsertProjectRoleFactory({ db })
 const grantStreamPermissions = grantStreamPermissionsFactory({ db })
-
 const upsertWorkspace = upsertWorkspaceFactory({ db })
+
 const createAndStoreTestWorkspace = createAndStoreTestWorkspaceFactory({
   upsertWorkspace
 })
@@ -161,7 +161,7 @@ describe('Workspace repositories', () => {
       })
 
       afterEach(async () => {
-        truncateTables(['workspaces'])
+        await truncateTables(['workspaces'])
       })
 
       it('returns all workspace members', async () => {
@@ -209,7 +209,7 @@ describe('Workspace repositories', () => {
       })
 
       afterEach(async () => {
-        truncateTables(['workspaces'])
+        await truncateTables(['workspaces'])
       })
 
       it('limits search results to specified workspace', async () => {

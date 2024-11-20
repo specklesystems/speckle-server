@@ -6,7 +6,11 @@ import {
   authHasFailed
 } from '@/modules/shared/authz'
 import { Request, Response, NextFunction, Handler } from 'express'
-import { ForbiddenError, UnauthorizedError } from '@/modules/shared/errors'
+import {
+  ForbiddenError,
+  NotFoundError,
+  UnauthorizedError
+} from '@/modules/shared/errors'
 import { ensureError } from '@/modules/shared/helpers/errorHelper'
 import { TokenValidationResult } from '@/modules/core/helpers/types'
 import { buildRequestLoaders } from '@/modules/core/loaders'
@@ -54,6 +58,7 @@ export const authMiddlewareCreator = (steps: AuthPipelineFunction[]) => {
         message = authResult.error?.message || message
         if (authResult.error instanceof UnauthorizedError) status = 401
         if (authResult.error instanceof ForbiddenError) status = 403
+        if (authResult.error instanceof NotFoundError) status = 404
       }
       return res.status(status).json({ error: message })
     }
@@ -160,13 +165,13 @@ export async function authContextMiddleware(
   next()
 }
 
-export function addLoadersToCtx(
+export async function addLoadersToCtx(
   ctx: Merge<Omit<GraphQLContext, 'loaders'>, { log?: Optional<pino.Logger> }>,
   options?: Partial<{ cleanLoadersEarly: boolean }>
-): GraphQLContext {
+): Promise<GraphQLContext> {
   const log =
     ctx.log || Observability.extendLoggerComponent(Observability.getLogger(), 'graphql')
-  const loaders = buildRequestLoaders(ctx, options)
+  const loaders = await buildRequestLoaders(ctx, options)
   return { ...ctx, loaders, log }
 }
 
@@ -212,7 +217,7 @@ export async function buildContext({
   }
 
   // Adding request data loaders
-  return addLoadersToCtx(
+  return await addLoadersToCtx(
     {
       ...ctx,
       log

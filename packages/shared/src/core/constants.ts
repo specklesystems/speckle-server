@@ -123,6 +123,9 @@ export const Scopes = Object.freeze(<const>{
     Read: 'workspace:read',
     Update: 'workspace:update',
     Delete: 'workspace:delete'
+  },
+  Gatekeeper: {
+    WorkspaceBilling: 'workspace:billing'
   }
 })
 
@@ -138,6 +141,8 @@ export type AutomateFunctionScopes =
   (typeof Scopes)['AutomateFunctions'][keyof (typeof Scopes)['AutomateFunctions']]
 export type WorkspaceScopes =
   (typeof Scopes)['Workspaces'][keyof (typeof Scopes)['Workspaces']]
+export type GatekeeperScopes =
+  (typeof Scopes)['Gatekeeper'][keyof (typeof Scopes)['Gatekeeper']]
 
 export type AvailableScopes =
   | StreamScopes
@@ -242,7 +247,7 @@ export const SourceApps: SourceAppDefinition[] = [
   {
     searchKey: 'teklastructures',
     name: 'Tekla Structures',
-    short: 'TEKLAS',
+    short: 'TKL',
     bgColor: '#3a6eff'
   },
   { searchKey: 'openroads', name: 'OpenRoads', short: 'OROAD', bgColor: '#846256' },

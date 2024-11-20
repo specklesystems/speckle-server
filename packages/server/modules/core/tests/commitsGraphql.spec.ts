@@ -129,7 +129,7 @@ describe('Commits (GraphQL)', () => {
     before(async () => {
       apollo = {
         apollo: await buildApolloServer(),
-        context: createAuthedTestContext(me.id)
+        context: await createAuthedTestContext(me.id)
       }
     })
 
