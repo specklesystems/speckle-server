@@ -2,7 +2,6 @@ import { corsMiddleware } from '@/modules/core/configs/cors'
 import { updateRenderRequestFactory } from '@/modules/gendo/services'
 import type express from 'express'
 import {
-  getGenerationProjectIdFactory,
   getRenderByGenerationIdFactory,
   updateRenderRecordFactory
 } from '@/modules/gendo/repositories'
@@ -14,17 +13,13 @@ import {
 } from '@/modules/blobstorage/repositories'
 import { publish } from '@/modules/shared/utils/subscriptions'
 import { getProjectDbClient } from '@/modules/multiregion/dbSelector'
-import { getGenericRedis } from '@/modules/shared/redis/redis'
 
 export default function (app: express.Express) {
   // const responseToken = getGendoAIResponseKey()
-  const getGenerationProjectId = getGenerationProjectIdFactory({
-    redis: getGenericRedis()
-  })
 
   // Gendo api calls hit these endpoints w/ the results
-  app.options('/api/thirdparty/gendo', corsMiddleware())
-  app.post('/api/thirdparty/gendo', corsMiddleware(), async (req, res) => {
+  app.options('/api/thirdparty/gendo/:projectId', corsMiddleware())
+  app.post('/api/thirdparty/gendo/:projectId', corsMiddleware(), async (req, res) => {
     // if (req.headers['x-gendo-authorization'] !== responseToken) {
     //   return res.status(401).send('Speckle says you are not authorized 😠')
     // }
@@ -33,13 +28,7 @@ export default function (app: express.Express) {
     // const status = req.body.status
     const gendoGenerationId = req.body.generationId
 
-    const projectId = await getGenerationProjectId({
-      generationId: gendoGenerationId
-    })
-    if (!projectId)
-      throw new Error(`Cannot find Gendo generation ${gendoGenerationId}'s projectId`)
-
-    const projectDb = await getProjectDbClient({ projectId })
+    const projectDb = await getProjectDbClient({ projectId: req.params.projectId })
 
     const updateRenderRequest = updateRenderRequestFactory({
       getRenderByGenerationId: getRenderByGenerationIdFactory({ db: projectDb }),

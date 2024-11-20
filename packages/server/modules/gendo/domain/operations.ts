@@ -43,14 +43,5 @@ export type RequestNewImageGeneration = (args: {
   prompt: string
 }) => Promise<{ status: string; generationId: string }>
 
-export type StoreGenerationProjectId = (args: {
-  generationId: string
-  projectId: string
-}) => Promise<void>
-
-export type GetGenerationProjectId = (args: {
-  generationId: string
-}) => Promise<string | null>
-
 export type GetUserCredits = (args: { userId: string }) => Promise<UserCredits | null>
 export type UpsertUserCredits = (args: { userCredits: UserCredits }) => Promise<void>

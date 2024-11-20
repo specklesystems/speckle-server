@@ -1,18 +1,15 @@
 import { GendoAIRenders } from '@/modules/core/dbSchema'
 import {
-  GetGenerationProjectId,
   GetLatestVersionRenderRequests,
   GetRenderByGenerationId,
   GetUserCredits,
   GetVersionRenderRequest,
-  StoreGenerationProjectId,
   StoreRender,
   UpdateRenderRecord,
   UpsertUserCredits
 } from '@/modules/gendo/domain/operations'
 import { UserCredits } from '@/modules/gendo/domain/types'
 import { GendoAIRenderRecord } from '@/modules/gendo/helpers/types'
-import Redis from 'ioredis'
 import { Knex } from 'knex'
 import { pick } from 'lodash'
 
@@ -76,22 +73,6 @@ export const getVersionRenderRequestFactory =
     return record
   }
 
-export const storeGenerationProjectIdFactory =
-  ({ redis }: { redis: Redis }): StoreGenerationProjectId =>
-  async ({ generationId, projectId }) => {
-    await redis.set(generationId, projectId, 'EX', 36_000) // expire this key after a while
-  }
-
-export const getGenerationProjectIdFactory =
-  ({ redis }: { redis: Redis }): GetGenerationProjectId =>
-  async ({ generationId }) => {
-    const projectId = await redis.get(generationId)
-    if (!projectId) return null
-    // cleanup after getting it
-    await redis.del(generationId)
-    return projectId
-  }
-
 export const getUserCreditsFactory =
   ({ db }: { db: Knex }): GetUserCredits =>
   async ({ userId }) => {
@@ -107,5 +88,5 @@ export const getUserCreditsFactory =
 export const upsertUserCreditsFactory =
   ({ db }: { db: Knex }): UpsertUserCredits =>
   async ({ userCredits }) => {
-    await tables.gendoUserCredits(db).insert(userCredits).onConflict().merge()
+    await tables.gendoUserCredits(db).insert(userCredits).onConflict('userId').merge()
   }

@@ -8,7 +8,6 @@ import {
   CreateRenderRequest,
   GetRenderByGenerationId,
   RequestNewImageGeneration,
-  StoreGenerationProjectId,
   StoreRender,
   UpdateRenderRecord,
   UpdateRenderRequest
@@ -21,7 +20,6 @@ export const createRenderRequestFactory =
     requestNewImageGeneration: RequestNewImageGeneration
     uploadFileStream: UploadFileStream
     storeRender: StoreRender
-    storeGenerationProjectId: StoreGenerationProjectId
     publish: PublishSubscription
   }): CreateRenderRequest =>
   async (input) => {
@@ -55,12 +53,6 @@ export const createRenderRequestFactory =
       status: imageRequest.status,
       gendoGenerationId: imageRequest.generationId,
       id: crs({ length: 10 })
-    })
-
-    // store generationId, projectId mapping
-    await deps.storeGenerationProjectId({
-      generationId: imageRequest.generationId,
-      projectId: input.projectId
     })
 
     deps.publish(ProjectSubscriptions.ProjectVersionGendoAIRenderCreated, {

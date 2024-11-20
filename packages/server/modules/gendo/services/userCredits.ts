@@ -16,7 +16,7 @@ export const getUserGendoAiCreditsFactory =
   async ({ userId }: { userId: string }) => {
     //
     const userCredits = await getUserCredits({ userId })
-    if (userCredits && userCredits.resetDate.getTime() < new Date().getTime())
+    if (userCredits && userCredits.resetDate.getTime() > new Date().getTime())
       return userCredits
 
     const resetDate = dayjs(userCredits?.resetDate || new Date())

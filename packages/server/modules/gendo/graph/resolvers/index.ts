@@ -22,13 +22,11 @@ import {
   getLatestVersionRenderRequestsFactory,
   getUserCreditsFactory,
   getVersionRenderRequestFactory,
-  storeGenerationProjectIdFactory,
   storeRenderFactory,
   upsertUserCreditsFactory
 } from '@/modules/gendo/repositories'
 import { getProjectDbClient } from '@/modules/multiregion/dbSelector'
 import { requestNewImageGenerationFactory } from '@/modules/gendo/clients/gendo'
-import { getGenericRedis } from '@/modules/shared/redis/redis'
 import {
   getUserGendoAiCreditsFactory,
   useUserGendoAiCreditsFactory
@@ -114,9 +112,6 @@ export = {
           updateBlob: updateBlobFactory({ db: projectDb })
         }),
         requestNewImageGeneration,
-        storeGenerationProjectId: storeGenerationProjectIdFactory({
-          redis: getGenericRedis()
-        }),
         storeRender: storeRenderFactory({ db: projectDb }),
         publish
       })

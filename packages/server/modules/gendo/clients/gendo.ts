@@ -22,7 +22,7 @@ export const requestNewImageGenerationFactory =
     serverOrigin: string
   }): RequestNewImageGeneration =>
   async (input) => {
-    const webhookUrl = `${serverOrigin}/api/thirdparty/gendo`
+    const webhookUrl = `${serverOrigin}/api/thirdparty/gendo/${input.projectId}`
 
     // TODO: Fn handles too many concerns, refactor (e.g. the client fetch call)
     // TODO: Fire off request to gendo api & get generationId, create record in db. Note: use gendo api key from env
