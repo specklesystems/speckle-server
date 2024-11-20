@@ -190,9 +190,6 @@ const toggleSettingsDialog = (target: AvailableSettingsMenuKeys) => {
 const deleteSettingsQuery = (): void => {
   const currentQueryParams = { ...route.query }
   delete currentQueryParams.settings
-  delete currentQueryParams.workspace
-  delete currentQueryParams.error
-
   router.push({ query: currentQueryParams })
 }
 
@@ -202,8 +199,6 @@ const openFeedbackDialog = () => {
 
 onMounted(() => {
   const settingsQuery = route.query?.settings
-  const workspaceQuery = route.query?.workspace
-  const errorQuery = route.query?.error
 
   if (settingsQuery && isString(settingsQuery)) {
     if (settingsQuery.includes('server') && !isAdmin.value) {
@@ -213,22 +208,6 @@ onMounted(() => {
       })
 
       return
-    }
-
-    if (workspaceQuery && isString(workspaceQuery)) {
-      workspaceSettingsDialogTarget.value = workspaceQuery
-
-      if (errorQuery && isString(errorQuery)) {
-        triggerNotification({
-          type: ToastNotificationType.Danger,
-          title: errorQuery
-        })
-      } else {
-        triggerNotification({
-          type: ToastNotificationType.Success,
-          title: 'SSO settings successfully updated'
-        })
-      }
     }
 
     showSettingsDialog.value = true
