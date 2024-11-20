@@ -7,6 +7,7 @@
     show-label
     name="workspace"
     :disabled="disabled"
+    :rules="workspaceRules"
     help="You may need to authenticate separately for each workspace you want to access."
   >
     <template #option="{ item }">
@@ -36,6 +37,7 @@
 <script setup lang="ts">
 import { useFormSelectChildInternals } from '@speckle/ui-components'
 import type { AuthSsoLogin_WorkspaceFragment } from '~/lib/common/generated/gql/graphql'
+import { isRequired } from '~/lib/common/helpers/validation'
 
 const props = defineProps<{
   modelValue?: AuthSsoLogin_WorkspaceFragment
@@ -49,6 +51,8 @@ const emit = defineEmits<{
     v: AuthSsoLogin_WorkspaceFragment | AuthSsoLogin_WorkspaceFragment[] | undefined
   ): void
 }>()
+
+const workspaceRules = [isRequired]
 
 const { selectedValue, isArrayValue } =
   useFormSelectChildInternals<AuthSsoLogin_WorkspaceFragment>({

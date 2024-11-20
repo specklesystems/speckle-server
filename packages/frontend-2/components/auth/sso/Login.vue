@@ -30,13 +30,7 @@
     </div>
 
     <div class="mt-8 space-y-4">
-      <FormButton
-        size="lg"
-        submit
-        full-width
-        :loading="loading"
-        :disabled="!isValid || !selectedWorkspace"
-      >
+      <FormButton size="lg" submit full-width :loading="loading" :disabled="!isValid">
         {{ buttonText }}
       </FormButton>
       <FormButton size="lg" color="subtle" full-width :to="loginRoute">
