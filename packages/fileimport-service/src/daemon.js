@@ -81,7 +81,8 @@ async function doTask(mainDb, regionName, taskDb, task) {
       fileSize: fileSizeForMetric,
       userId: info.userId,
       streamId: info.streamId,
-      branchName: info.branchName
+      branchName: info.branchName,
+      branchId: info.branchId
     })
     fs.mkdirSync(TMP_INPUT_DIR, { recursive: true })
 
@@ -136,6 +137,7 @@ async function doTask(mainDb, regionName, taskDb, task) {
           info.branchName,
           `File upload: ${info.fileName}`,
           info.id,
+          existingBranch?.id,
           regionName
         ],
         {
@@ -153,7 +155,10 @@ async function doTask(mainDb, regionName, taskDb, task) {
           info.userId,
           info.streamId,
           info.branchName,
-          `File upload: ${info.fileName}`
+          `File upload: ${info.fileName}`,
+          info.id,
+          existingBranch?.id,
+          regionName
         ],
         {
           USER_TOKEN: tempUserToken
@@ -178,7 +183,10 @@ async function doTask(mainDb, regionName, taskDb, task) {
           info.userId,
           info.streamId,
           info.branchName,
-          `File upload: ${info.fileName}`
+          `File upload: ${info.fileName}`,
+          info.id,
+          existingBranch?.id,
+          regionName
         ],
         {
           USER_TOKEN: tempUserToken
