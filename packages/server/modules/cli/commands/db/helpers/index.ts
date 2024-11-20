@@ -2,7 +2,6 @@ import { getAllRegisteredDbClients } from '@/modules/multiregion/dbSelector'
 
 export type CommonDbArgs = {
   regionKey?: string
-  beforeAll: boolean
 }
 
 export const getTargettedDbClients = async (params: { regionKey?: string }) => {
