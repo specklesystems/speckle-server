@@ -20,8 +20,8 @@
         >
           <slot name="title-icon"></slot>
         </div>
-        <div class="flex flex-1 items-center justify-between">
-          <h6 class="font-semibold text-foreground-2 truncate text-body-2xs">
+        <div class="flex flex-1 items-center justify-between truncate">
+          <h6 class="font-semibold text-foreground-2 truncate text-body-2xs pr-2">
             {{ title }}
           </h6>
           <CommonBadge v-if="tag" rounded>
@@ -33,8 +33,8 @@
         <div v-if="$slots['title-icon']" class="flex items-center justify-center">
           <slot name="title-icon"></slot>
         </div>
-        <div class="flex flex-1 items-center justify-between">
-          <h6 class="font-semibold text-foreground-2 truncate text-body-2xs">
+        <div class="flex flex-1 items-center justify-between truncate">
+          <h6 class="font-semibold text-foreground-2 truncate text-body-2xs pr-2">
             {{ title }}
           </h6>
           <CommonBadge v-if="tag" rounded>
