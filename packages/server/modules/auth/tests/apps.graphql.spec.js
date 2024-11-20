@@ -64,7 +64,6 @@ const { getServerInfoFactory } = require('@/modules/core/repositories/server')
 
 let sendRequest
 let server
-let app
 
 const createAppToken = createAppTokenFactory({
   storeApiToken: storeApiTokenFactory({ db }),
@@ -128,8 +127,9 @@ describe('GraphQL @apps-api', () => {
   let testToken2
 
   before(async () => {
-    ;({ app, server } = await beforeEachContext())
-    ;({ sendRequest } = await initializeTestServer(server, app))
+    const ctx = await beforeEachContext()
+    server = ctx.server
+    ;({ sendRequest } = await initializeTestServer(ctx))
     testUser = {
       name: 'Dimitrie Stefanescu',
       email: 'didimitrie@gmail.com',

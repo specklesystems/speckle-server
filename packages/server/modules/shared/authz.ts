@@ -247,7 +247,12 @@ export const validateRequiredStreamFactory =
       if (!stream)
         return authFailed(
           context,
-          new NotFoundError('Stream inputs are malformed'),
+          new NotFoundError(
+            'Project ID is malformed and cannot be found, or the project does not exist',
+            {
+              info: { projectId: params.streamId }
+            }
+          ),
           true
         )
       context.stream = stream

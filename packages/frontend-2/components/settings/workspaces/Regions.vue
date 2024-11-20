@@ -45,11 +45,18 @@ const props = defineProps<{
   workspaceId: string
 }>()
 
+const pageFetchPolicy = usePageQueryStandardFetchPolicy()
 const isLoading = useMutationLoading()
 const setDefaultWorkspaceRegion = useSetDefaultWorkspaceRegion()
-const { result } = useQuery(settingsWorkspaceRegionsQuery, () => ({
-  workspaceId: props.workspaceId
-}))
+const { result } = useQuery(
+  settingsWorkspaceRegionsQuery,
+  () => ({
+    workspaceId: props.workspaceId
+  }),
+  () => ({
+    fetchPolicy: pageFetchPolicy.value
+  })
+)
 
 const defaultRegion = ref<SettingsWorkspacesRegionsSelect_ServerRegionItemFragment>()
 const availableRegions = computed(() => result.value?.workspace.availableRegions || [])

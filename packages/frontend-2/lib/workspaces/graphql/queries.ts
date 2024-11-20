@@ -21,7 +21,6 @@ export const workspacePageQuery = graphql(`
       ...MoveProjectsDialog_Workspace
       ...WorkspaceHeader_Workspace
       ...WorkspaceMixpanelUpdateGroup_Workspace
-      ...BillingAlert_Workspace
       projectListProject: projects(filter: $filter, cursor: $cursor, limit: 10) {
         ...WorkspaceProjectList_ProjectCollection
       }
