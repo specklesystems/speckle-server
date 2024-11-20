@@ -4,6 +4,7 @@ import { type Knex } from 'knex'
 import { Logger } from 'pino'
 import { toNDecimalPlaces } from '@/modules/core/utils/formatting'
 import { omit } from 'lodash'
+import { Entries } from 'type-fest'
 
 let metricQueryDuration: prometheusClient.Summary<string>
 let metricQueryErrors: prometheusClient.Counter<string>
@@ -154,19 +155,27 @@ export const updateKnexPrometheusMetrics = async (params: {
     }
   }
 
+  interface QueryEvent extends Knex.Sql {
+    __knexUid: string
+    __knexTxId: string
+    __knexQueryUid: string
+  }
+
   // configure hooks on knex
-  for (const [region, db] of Object.entries(params.getAllDbClients())) {
+  for (const [region, db] of Object.entries(
+    params.getAllDbClients()
+  ) as Entries<Knex>) {
     const queryStartTime: Record<string, number> = {}
     const connectionAcquisitionStartTime: Record<string, number> = {}
     const connectionInUseStartTime: Record<string, number> = {}
 
-    db.on('query', (data) => {
+    db.on('query', (data: QueryEvent) => {
       const queryId = data.__knexQueryUid + ''
       queryStartTime[queryId] = performance.now()
     })
 
-    db.on('query-response', (_data, querySpec) => {
-      const queryId = querySpec.__knexQueryUid + ''
+    db.on('query-response', (_response: unknown, data: QueryEvent) => {
+      const queryId = data.__knexQueryUid + ''
       const durationMs = performance.now() - queryStartTime[queryId]
       const durationSec = toNDecimalPlaces(durationMs / 1000, 2)
       delete queryStartTime[queryId]
@@ -174,25 +183,25 @@ export const updateKnexPrometheusMetrics = async (params: {
         metricQueryDuration
           .labels({
             region,
-            sqlMethod: normalizeSqlMethod(querySpec.method),
-            sqlNumberBindings: querySpec.bindings?.length || -1
+            sqlMethod: normalizeSqlMethod(data.method),
+            sqlNumberBindings: data.bindings?.length || -1
           })
           .observe(durationSec)
       params.logger.debug(
         {
           region,
-          sql: querySpec.sql,
-          sqlMethod: normalizeSqlMethod(querySpec.method),
+          sql: data.sql,
+          sqlMethod: normalizeSqlMethod(data.method),
           sqlQueryId: queryId,
           sqlQueryDurationMs: toNDecimalPlaces(durationMs, 0),
-          sqlNumberBindings: querySpec.bindings?.length || -1
+          sqlNumberBindings: data.bindings?.length || -1
         },
         "DB query successfully completed, for method '{sqlMethod}', after {sqlQueryDurationMs}ms"
       )
     })
 
-    db.on('query-error', (err, querySpec) => {
-      const queryId = querySpec.__knexQueryUid + ''
+    db.on('query-error', (err: unknown, data: QueryEvent) => {
+      const queryId = data.__knexQueryUid + ''
       const durationMs = performance.now() - queryStartTime[queryId]
       const durationSec = toNDecimalPlaces(durationMs / 1000, 2)
       delete queryStartTime[queryId]
@@ -201,20 +210,20 @@ export const updateKnexPrometheusMetrics = async (params: {
         metricQueryDuration
           .labels({
             region,
-            sqlMethod: normalizeSqlMethod(querySpec.method),
-            sqlNumberBindings: querySpec.bindings?.length || -1
+            sqlMethod: normalizeSqlMethod(data.method),
+            sqlNumberBindings: data.bindings?.length || -1
           })
           .observe(durationSec)
       metricQueryErrors.inc()
       params.logger.warn(
         {
-          err: omit(err, 'detail'),
+          err: typeof err === 'object' ? omit(err, 'detail') : err,
           region,
-          sql: querySpec.sql,
-          sqlMethod: normalizeSqlMethod(querySpec.method),
+          sql: data.sql,
+          sqlMethod: normalizeSqlMethod(data.method),
           sqlQueryId: queryId,
           sqlQueryDurationMs: toNDecimalPlaces(durationMs, 0),
-          sqlNumberBindings: querySpec.bindings?.length || -1
+          sqlNumberBindings: data.bindings?.length || -1
         },
         'DB query errored for {sqlMethod} after {sqlQueryDurationMs}ms'
       )
