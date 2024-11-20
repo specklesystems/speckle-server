@@ -12,7 +12,8 @@ export default defineNuxtRouteMiddleware(async (to) => {
     return
   }
 
-  const workspaceSlug = ref(to.params.slug as string)
+  const workspaceSlug = computed(() => to.params.slug as string)
+
   if (!workspaceSlug) return
 
   const { workspace } = useWorkspacePublicSsoCheck(workspaceSlug)

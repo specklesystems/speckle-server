@@ -70,9 +70,13 @@ export const useWorkspaceSsoStatus = (params: { workspaceSlug: Ref<string> }) =>
     }
   `)
 
+  const variables = computed(() => ({
+    slug: params.workspaceSlug.value
+  }))
+
   const { result, loading, error } = useQuery<WorkspaceSsoCheckQuery>(
     workspaceSsoCheckQuery,
-    { slug: params.workspaceSlug }
+    variables
   )
 
   const hasSsoEnabled = computed(() => !!result.value?.workspaceBySlug.sso?.provider)
