@@ -1,7 +1,7 @@
 import { healthCheckLogger } from '@/logging/logging'
 import { highFrequencyMetricsCollectionPeriodMs } from '@/modules/shared/helpers/envHelper'
 import { handleLivenessFactory, handleReadinessFactory } from '@/healthchecks/health'
-import { FreeConnectionsCalculator } from '@/healthchecks/types'
+import { FreeConnectionsCalculator, ReadinessHandler } from '@/healthchecks/types'
 import { isRedisAlive } from '@/healthchecks/redis'
 import { areAllPostgresAlive } from '@/healthchecks/postgres'
 import { Application } from 'express'
@@ -52,7 +52,7 @@ export const updateFreeDbConnectionSamplers = async () => {
 export const initFactory: () => (
   app: Application,
   isInitial: boolean
-) => Promise<void> = () => {
+) => Promise<{ isReady: ReadinessHandler }> = () => {
   return async (app) => {
     healthCheckLogger.info('💓 Init health check')
     await updateFreeDbConnectionSamplers()
@@ -73,9 +73,6 @@ export const initFactory: () => (
       getFreeConnectionsCalculators: getKnexFreeDbConnectionSamplerReadiness
     })
 
-    app.get('/readiness', async (req, res) => {
-      const result = await readinessHandler()
-      res.status(200).json({ status: 'ok', ...result })
-    })
+    return { isReady: readinessHandler }
   }
 }
