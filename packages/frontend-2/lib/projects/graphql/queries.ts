@@ -177,6 +177,7 @@ export const projectInviteQuery = graphql(`
 export const projectModelCheckQuery = graphql(`
   query ProjectModelCheck($projectId: String!, $modelId: String!) {
     project(id: $projectId) {
+      visibility
       model(id: $modelId) {
         id
       }
