@@ -79,7 +79,7 @@ const { result } = useQuery(authRegisterPanelQuery, {
   token: route.query.token as string
 })
 
-const { workspace, loading, error } = useWorkspacePublicSsoCheck(workspaceSlug.value)
+const { workspace, loading, error } = useWorkspacePublicSsoCheck(workspaceSlug)
 
 const errorState = computed(() => {
   if (error.value) {

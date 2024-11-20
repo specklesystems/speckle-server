@@ -39,7 +39,7 @@ const mixpanel = useMixpanel()
 const { signInOrSignUpWithSso } = useAuthManager()
 const { challenge } = useLoginOrRegisterUtils()
 
-const workspaceSlug = route.params.slug as string
+const workspaceSlug = ref(route.params.slug as string)
 const { workspace, loading, error } = useWorkspacePublicSsoCheck(workspaceSlug)
 
 if (error.value) {
@@ -55,7 +55,7 @@ const handleSsoLogin = () => {
   })
 
   signInOrSignUpWithSso({
-    workspaceSlug,
+    workspaceSlug: workspaceSlug.value,
     challenge: challenge.value
   })
 }

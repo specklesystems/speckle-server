@@ -12,8 +12,7 @@ import type {
  * Fetches and provides public SSO workspace information from the rest api.
  * This is used to determine if a workspace has SSO enabled before authentication
  */
-export const useWorkspacePublicSsoCheck = (workspaceSlug: MaybeRef<string>) => {
-  const resolvedSlug = toRef(workspaceSlug)
+export const useWorkspacePublicSsoCheck = (workspaceSlug: Ref<string>) => {
   const apiOrigin = useApiOrigin()
   const logger = useLogger()
 
@@ -23,7 +22,7 @@ export const useWorkspacePublicSsoCheck = (workspaceSlug: MaybeRef<string>) => {
     error
   } = useFetch<WorkspaceSsoProviderPublic>(
     computed(() =>
-      new URL(`/api/v1/workspaces/${resolvedSlug.value}/sso`, apiOrigin).toString()
+      new URL(`/api/v1/workspaces/${workspaceSlug.value}/sso`, apiOrigin).toString()
     ),
     {
       onResponseError: (err) => {
@@ -104,10 +103,10 @@ export const useWorkspaceSsoStatus = (params: { workspaceSlug: Ref<string> }) =>
  * Validates SSO authentication requirements for a workspace.
  * Returns an error message if SSO login is required but not completed.
  */
-export function useWorkspaceSsoValidation(workspaceSlug: MaybeRef<string>) {
+export function useWorkspaceSsoValidation(workspaceSlug: Ref<string>) {
   const logger = useLogger()
   const { hasSsoEnabled, needsSsoLogin, error } = useWorkspaceSsoStatus({
-    workspaceSlug: ref(workspaceSlug)
+    workspaceSlug
   })
 
   const ssoError = computed(() => {

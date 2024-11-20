@@ -25,7 +25,7 @@ definePageMeta({
 const route = useRoute()
 
 const workspaceSlug = computed(() => route.params.slug as string)
-const { ssoError } = useWorkspaceSsoValidation(workspaceSlug.value)
+const { ssoError } = useWorkspaceSsoValidation(workspaceSlug)
 
 const token = computed(() => route.query.token as string | undefined)
 </script>
