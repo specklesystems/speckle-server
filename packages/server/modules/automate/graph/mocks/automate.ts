@@ -159,7 +159,8 @@ const mocks: SpeckleModuleMocksConfig = FF_AUTOMATE_MODULE_ENABLED
               (i): AutomationRevisionTriggerDefinitionGraphQLReturn => ({
                 triggerType: VersionCreationTriggerType,
                 triggeringId: i.model.id,
-                automationRevisionId: parent.id
+                automationRevisionId: parent.id,
+                projectId: (store.get('Project') as any).id
               })
             )
           },

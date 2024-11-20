@@ -68,7 +68,10 @@ export const setupAutomationUpdateSubscriptionsFactory =
               type: ProjectAutomationsUpdatedMessageType.CreatedRevision,
               automationId: automation.id,
               automation,
-              revision
+              revision: {
+                ...revision,
+                projectId: automation.projectId
+              }
             }
           })
         }
@@ -124,7 +127,8 @@ export const setupStatusUpdateSubscriptionsFactory =
                       triggers: run.triggers.map((trigger) => ({
                         ...trigger,
                         automationRunId: run.id
-                      }))
+                      })),
+                      projectId: manifest.projectId
                     },
                     type: ProjectTriggeredAutomationsStatusUpdatedMessageType.RunCreated
                   }
@@ -159,7 +163,8 @@ export const setupStatusUpdateSubscriptionsFactory =
                         ...run,
                         functionRuns: [functionRun],
                         automationId,
-                        triggers: undefined
+                        triggers: undefined,
+                        projectId: trigger.model.streamId
                       },
                       type: ProjectTriggeredAutomationsStatusUpdatedMessageType.RunUpdated
                     }

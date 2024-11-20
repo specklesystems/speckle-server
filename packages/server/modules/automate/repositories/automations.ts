@@ -664,6 +664,7 @@ const getAutomationRunsTotalCountBaseQueryFactory =
         AutomationRevisions.col.id,
         AutomationRuns.col.automationRevisionId
       )
+      .innerJoin(Automations.name, Automations.col.id, args.automationId)
       .where(AutomationRevisions.col.automationId, args.automationId)
 
     if (args.revisionId?.length) {
@@ -696,6 +697,7 @@ export const getAutomationRunsItemsFactory =
 
     // Attach trigger & function runs
     q.select([
+      Automations.col.projectId,
       AutomationRuns.groupArray('runs'),
       AutomationRunTriggers.groupArray('triggers'),
       AutomationFunctionRuns.groupArray('functionRuns'),
@@ -713,7 +715,6 @@ export const getAutomationRunsItemsFactory =
         AutomationFunctionRuns.col.runId,
         AutomationRuns.col.id
       )
-
       .groupBy(AutomationRuns.col.id)
       .orderBy([
         { column: AutomationRuns.col.updatedAt, order: 'desc' },
@@ -730,14 +731,16 @@ export const getAutomationRunsItemsFactory =
       triggers: AutomationRunTriggerRecord[]
       functionRuns: AutomationFunctionRunRecord[]
       automationId: string
+      projectId: string
     }>
 
     const items = res.map(
-      (r): AutomationRunWithTriggersFunctionRuns => ({
+      (r): AutomationRunWithTriggersFunctionRuns & { projectId: string } => ({
         ...formatJsonArrayRecords(r.runs)[0],
         triggers: formatJsonArrayRecords(r.triggers),
         functionRuns: formatJsonArrayRecords(r.functionRuns),
-        automationId: r.automationId
+        automationId: r.automationId,
+        projectId: r.projectId
       })
     )
 
