@@ -1,12 +1,9 @@
 <template>
   <FormSelectBase
+    v-bind="props"
     v-model="selectedValue"
-    :multiple="false"
-    :items="items"
     label="Select workspace"
-    show-label
     name="workspace"
-    :disabled="disabled"
     :rules="workspaceRules"
     help="You may need to authenticate separately for each workspace you want to access."
   >
@@ -42,7 +39,6 @@ import { isRequired } from '~/lib/common/helpers/validation'
 const props = defineProps<{
   modelValue?: AuthSsoLogin_WorkspaceFragment
   items: AuthSsoLogin_WorkspaceFragment[]
-  disabled?: boolean
 }>()
 
 const emit = defineEmits<{
