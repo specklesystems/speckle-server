@@ -5,10 +5,15 @@ import type {
   BillingInterval
 } from '~/lib/common/generated/gql/graphql'
 import { settingsBillingCancelCheckoutSessionMutation } from '~/lib/settings/graphql/mutations'
+import { WorkspacePlanStatuses } from '~/lib/common/generated/gql/graphql'
+import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import { useMixpanel } from '~/lib/core/composables/mp'
 
 export const useBillingActions = () => {
   const mixpanel = useMixpanel()
+  const route = useRoute()
+  const router = useRouter()
+  const { triggerNotification } = useGlobalToast()
   const { client: apollo } = useApolloClient()
   const { mutate: cancelCheckoutSessionMutation } = useMutation(
     settingsBillingCancelCheckoutSessionMutation
@@ -58,9 +63,35 @@ export const useBillingActions = () => {
     })
   }
 
+  const validateCheckoutSession = (workspaceId: string) => {
+    const sessionIdQuery = route.query?.session_id
+    const paymentStatusQuery = route.query?.payment_status
+
+    if (sessionIdQuery && paymentStatusQuery) {
+      if (paymentStatusQuery === WorkspacePlanStatuses.Canceled) {
+        cancelCheckoutSession(String(sessionIdQuery), workspaceId)
+        triggerNotification({
+          type: ToastNotificationType.Danger,
+          title: 'Your payment was canceled'
+        })
+      } else {
+        triggerNotification({
+          type: ToastNotificationType.Success,
+          title: 'Your workspace plan was successfully updated'
+        })
+      }
+
+      const currentQueryParams = { ...route.query }
+      delete currentQueryParams.session_id
+      delete currentQueryParams.payment_status
+      router.push({ query: currentQueryParams })
+    }
+  }
+
   return {
     billingPortalRedirect,
     upgradePlanRedirect,
-    cancelCheckoutSession
+    cancelCheckoutSession,
+    validateCheckoutSession
   }
 }
