@@ -47,6 +47,11 @@ RUN apt-get update && \
 COPY packages/fileimport-service/requirements.txt /speckle-server/
 RUN /venv/bin/pip install --disable-pip-version-check --no-cache-dir --requirement /speckle-server/requirements.txt
 
+FROM mcr.microsoft.com/dotnet/sdk:8.0-noble AS dotnet-build-stage
+WORKDIR /speckle-server/packages/ifc-converter
+COPY . .
+RUN dotnet run --project src/build/build.csproj -- publish
+
 FROM node:18-bookworm-slim@sha256:408f8cbbb7b33a5bb94bdb8862795a94d2b64c2d516856824fd86c4a5594a443 as dependency-stage
 # installing just the production dependencies
 # separate stage to avoid including development dependencies
@@ -67,7 +72,7 @@ RUN yarn workspaces focus --production
 
 FROM gcr.io/distroless/python3-debian12:nonroot@sha256:14c62b8925d3bb30319de2f346bde203fe18103a68898284a62db9d4aa54c794 as python-image
 
-FROM gcr.io/distroless/nodejs18-debian12:nonroot@sha256:afdea027580f7afcaf1f316b2b3806690c297cb3ce6ddc5cf6a15804dc1c790f as distributable-stage
+FROM mcr.microsoft.com/dotnet/runtime:8.0-noble AS distributable-stage
 
 ARG NODE_ENV
 ENV NODE_ENV=${NODE_ENV}
@@ -75,6 +80,8 @@ ARG NODE_BINARY_PATH=/nodejs/bin/node
 ENV NODE_BINARY_PATH=${NODE_BINARY_PATH}
 ARG PYTHON_BINARY_PATH=/venv/bin/python3
 ENV PYTHON_BINARY_PATH=${PYTHON_BINARY_PATH}
+ARG DOTNET_BINARY_PATH=/usr/bin/dotnet
+ENV DOTNET_BINARY_PATH=${DOTNET_BINARY_PATH}
 
 WORKDIR /speckle-server
 
@@ -85,6 +92,7 @@ COPY --from=build-stage /speckle-server/packages/shared ./packages/shared
 COPY --from=build-stage /speckle-server/packages/fileimport-service ./packages/fileimport-service
 COPY --from=build-stage /venv /venv
 COPY --from=dependency-stage /speckle-server/node_modules ./node_modules
+COPY --from=dotnet-build-stage /publish ./packages/ifc-converter
 
 WORKDIR /speckle-server/packages/fileimport-service
 
