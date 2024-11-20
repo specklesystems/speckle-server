@@ -104,7 +104,7 @@ export const useWorkspaceSsoStatus = (params: { workspaceSlug: Ref<string> }) =>
  * Validates SSO authentication requirements for a workspace.
  * Returns an error message if SSO login is required but not completed.
  */
-export function useWorkspaceSsoValidation(workspaceSlug: string) {
+export function useWorkspaceSsoValidation(workspaceSlug: MaybeRef<string>) {
   const logger = useLogger()
   const { hasSsoEnabled, needsSsoLogin, error } = useWorkspaceSsoStatus({
     workspaceSlug: ref(workspaceSlug)
