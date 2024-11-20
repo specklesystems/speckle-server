@@ -176,7 +176,7 @@ export type GetBatchedStreamCommits = (
 export type GetBatchedBranchCommits = (
   branchIds: string[],
   options?: Partial<BatchedSelectOptions>
-) => AsyncGenerator<BranchCommitRecord[], void, unknown>
+) => AsyncGenerator<(BranchCommitRecord & { streamId: string })[], void, unknown>
 
 export type InsertCommits = (
   commits: Commit[],

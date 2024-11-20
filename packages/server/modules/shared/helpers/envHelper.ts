@@ -430,3 +430,7 @@ export function getMultiRegionConfigPath(options?: Partial<{ unsafe: boolean }>)
 
 export const shouldRunTestsInMultiregionMode = () =>
   getBooleanFromEnv('RUN_TESTS_IN_MULTIREGION_MODE')
+
+export function shutdownTimeoutSeconds() {
+  return getIntFromEnv('SHUTDOWN_TIMEOUT_SECONDS', '300')
+}
