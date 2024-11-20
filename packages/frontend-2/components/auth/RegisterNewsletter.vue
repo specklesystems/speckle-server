@@ -8,7 +8,5 @@
 </template>
 
 <script setup lang="ts">
-const newsletterConsent = defineModel<true | undefined>('newsletterConsent', {
-  required: true
-})
+const newsletterConsent = ref<true | undefined>(undefined)
 </script>
