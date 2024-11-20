@@ -81,7 +81,8 @@ async function doTask(mainDb, regionName, taskDb, task) {
       fileSize: fileSizeForMetric,
       userId: info.userId,
       streamId: info.streamId,
-      branchName: info.branchName
+      branchName: info.branchName,
+      branchId: info.branchId
     })
     fs.mkdirSync(TMP_INPUT_DIR, { recursive: true })
 
@@ -126,6 +127,25 @@ async function doTask(mainDb, regionName, taskDb, task) {
     if (info.fileType.toLowerCase() === 'ifc') {
       await runProcessWithTimeout(
         taskLogger,
+        process.env['DOTNET_BINARY_PATH'] || 'dotnet',
+        [
+          '/speckle-server/packages/ifc-converter/ifc-converter.dll',
+          TMP_FILE_PATH,
+          info.userId,
+          info.streamId,
+          info.branchName,
+          `File upload: ${info.fileName}`,
+          info.id,
+          existingBranch?.id,
+          regionName
+        ],
+        {
+          USER_TOKEN: tempUserToken
+        },
+        TIME_LIMIT
+      )
+      /*await runProcessWithTimeout(
+        taskLogger,
         process.env['NODE_BINARY_PATH'] || 'node',
         [
           '--no-experimental-fetch',
@@ -136,13 +156,14 @@ async function doTask(mainDb, regionName, taskDb, task) {
           info.branchName,
           `File upload: ${info.fileName}`,
           info.id,
+          existingBranch?.id,
           regionName
         ],
         {
           USER_TOKEN: tempUserToken
         },
         TIME_LIMIT
-      )
+      )*/
     } else if (info.fileType.toLowerCase() === 'stl') {
       await runProcessWithTimeout(
         taskLogger,
@@ -153,7 +174,10 @@ async function doTask(mainDb, regionName, taskDb, task) {
           info.userId,
           info.streamId,
           info.branchName,
-          `File upload: ${info.fileName}`
+          `File upload: ${info.fileName}`,
+          info.id,
+          existingBranch?.id,
+          regionName
         ],
         {
           USER_TOKEN: tempUserToken
@@ -178,7 +202,10 @@ async function doTask(mainDb, regionName, taskDb, task) {
           info.userId,
           info.streamId,
           info.branchName,
-          `File upload: ${info.fileName}`
+          `File upload: ${info.fileName}`,
+          info.id,
+          existingBranch?.id,
+          regionName
         ],
         {
           USER_TOKEN: tempUserToken
