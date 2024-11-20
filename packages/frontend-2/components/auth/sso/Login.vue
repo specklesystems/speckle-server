@@ -23,7 +23,7 @@
 
       <AuthSsoWorkspaceSelect
         v-if="shouldShowWorkspaceSelector"
-        v-model="selectedWorkspace"
+        v-model="values.workspace"
         :items="availableWorkspaces"
         :disabled="loading"
       />
@@ -51,6 +51,11 @@ import { useDebounceFn } from '@vueuse/core'
 import type { AuthSsoLogin_WorkspaceFragment } from '~/lib/common/generated/gql/graphql'
 import { graphql } from '~/lib/common/generated/gql/gql'
 
+type FormValues = {
+  email: string
+  workspace: AuthSsoLogin_WorkspaceFragment | undefined
+}
+
 enum EmailCheckState {
   Idle = 'idle',
   Checking = 'checking',
@@ -67,7 +72,13 @@ graphql(`
   }
 `)
 
-const { meta, handleSubmit } = useForm()
+const { meta, handleSubmit, setFieldValue, values } = useForm<FormValues>({
+  initialValues: {
+    email: '',
+    workspace: undefined
+  }
+})
+
 const { challenge } = useLoginOrRegisterUtils()
 const { signInOrSignUpWithSso } = useAuthManager()
 const logger = useLogger()
@@ -76,7 +87,6 @@ const { triggerNotification } = useGlobalToast()
 const loading = ref(false)
 const email = ref('')
 const emailCheckState = ref<EmailCheckState>(EmailCheckState.Idle)
-const selectedWorkspace = ref<AuthSsoLogin_WorkspaceFragment>()
 
 const {
   loading: isChecking,
@@ -125,9 +135,7 @@ const isValid = computed(
 const buttonText = computed(() => {
   if (isChecking.value) return 'Checking...'
   if (!isValid.value) return 'Single Sign-On'
-  return selectedWorkspace.value
-    ? `Sign in to ${selectedWorkspace.value.name}`
-    : 'Sign in'
+  return values.workspace?.name ? `Sign in to ${values.workspace.name}` : 'Sign in'
 })
 
 const debouncedCheckEmail = useDebounceFn((value: string) => {
@@ -141,18 +149,19 @@ const debouncedCheckEmail = useDebounceFn((value: string) => {
 const onEmailChange = (value: string) => {
   email.value = value
   emailCheckState.value = EmailCheckState.Idle
-  selectedWorkspace.value = undefined
+  setFieldValue('workspace', undefined as FormValues['workspace'])
   debouncedCheckEmail(value)
 }
 
-const onSubmit = handleSubmit(() => {
-  if (!selectedWorkspace.value?.slug) return
+const onSubmit = handleSubmit((values: FormValues) => {
+  if (!values.workspace) return
+
   loading.value = true
 
   try {
     signInOrSignUpWithSso({
       challenge: challenge.value,
-      workspaceSlug: selectedWorkspace.value.slug
+      workspaceSlug: values.workspace.slug
     })
   } catch (error) {
     logger.error('SSO login failed:', error)
@@ -172,7 +181,7 @@ onResult((res) => {
   emailCheckState.value = EmailCheckState.Checked
   const workspaces = res.data.workspaceSsoByEmail || []
   if (workspaces.length === 1) {
-    selectedWorkspace.value = workspaces[0]
+    setFieldValue('workspace', workspaces[0])
   }
 })
 </script>

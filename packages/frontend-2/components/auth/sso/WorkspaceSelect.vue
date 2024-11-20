@@ -48,7 +48,7 @@ const emit = defineEmits<{
   ): void
 }>()
 
-const workspaceRules = [isRequired]
+const workspaceRules = computed(() => [isRequired])
 
 const { selectedValue, isArrayValue } =
   useFormSelectChildInternals<AuthSsoLogin_WorkspaceFragment>({
