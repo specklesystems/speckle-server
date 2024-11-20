@@ -7,11 +7,9 @@ import previewRouterFactory from '@/server/routes/preview.js'
 import { errorHandler } from '@/utils/errorHandler.js'
 import express from 'express'
 import createError from 'http-errors'
-import type { Knex } from 'knex'
 import path from 'path'
 
-export const appFactory = (deps: { db: Knex }) => {
-  const { db } = deps
+export const appFactory = () => {
   const app = express()
 
   app.use(loggingExpressMiddleware)
@@ -23,8 +21,8 @@ export const appFactory = (deps: { db: Knex }) => {
 
   app.use('/', indexRouterFactory())
   app.use('/preview', previewRouterFactory())
-  app.use('/objects', objectsRouterFactory({ db }))
-  app.use('/api', apiRouterFactory({ db }))
+  app.use('/objects', objectsRouterFactory())
+  app.use('/api', apiRouterFactory())
 
   // catch 404 and forward to error handler
   app.use(function (req, res, next) {

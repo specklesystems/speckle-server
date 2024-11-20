@@ -3,23 +3,21 @@ import { appFactory as metricsAppFactory } from '@/observability/metricsApp.js'
 import { appFactory } from '@/server/app.js'
 import { getAppPort, getHost, getMetricsHost, getMetricsPort } from '@/utils/env.js'
 import http from 'http'
-import type { Knex } from 'knex'
 import { isNaN, isString, toNumber } from 'lodash-es'
 
-export const startServer = (params: { db: Knex; serveOnRandomPort?: boolean }) => {
-  const { db } = params
+export const startServer = async (params?: { serveOnRandomPort?: boolean }) => {
   /**
    * Get port from environment and store in Express.
    */
-  const inputPort = params.serveOnRandomPort ? 0 : normalizePort(getAppPort())
-  const app = appFactory({ db })
+  const inputPort = params?.serveOnRandomPort ? 0 : normalizePort(getAppPort())
+  const app = appFactory()
   app.set('port', inputPort)
 
   // we place the metrics on a separate port as we wish to expose it to external monitoring tools, but do not wish to expose other routes (for now)
-  const inputMetricsPort = params.serveOnRandomPort
+  const inputMetricsPort = params?.serveOnRandomPort
     ? 0
     : normalizePort(getMetricsPort())
-  const metricsApp = metricsAppFactory({ db })
+  const metricsApp = await metricsAppFactory()
   metricsApp.set('port', inputMetricsPort)
 
   /**

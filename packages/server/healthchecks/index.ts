@@ -62,7 +62,6 @@ export const initFactory: () => (
       areAllPostgresAlive,
       getFreeConnectionsCalculators: getKnexFreeDbConnectionSamplerLiveness
     })
-
     app.get('/liveness', async (req, res) => {
       const result = await livenessHandler()
       res.status(200).json({ status: 'ok', ...result })

@@ -1,8 +1,8 @@
 <template>
   <div class="flex flex-col items-start w-full">
     <div class="flex gap-2 flex-col sm:flex-row sm:justify-between w-full">
-      <div class="flex flex-col items-start gap-1">
-        <CommonTextLink :icon-left="ArrowLeftIcon" size="sm" :to="automationsLink">
+      <div class="flex flex-col items-start gap-2">
+        <CommonTextLink :icon-left="ChevronLeftIcon" size="sm" :to="automationsLink">
           Back to Automations
         </CommonTextLink>
         <div class="flex flow-row justify-start items-center z-20">
@@ -19,7 +19,7 @@
             v-if="automation.isTestAutomation"
             class="pointer-events-none -translate-x-4 z-10"
           >
-            <CommonBadge>Test Automation</CommonBadge>
+            <CommonBadge rounded>Test Automation</CommonBadge>
           </div>
         </div>
       </div>
@@ -35,7 +35,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ArrowLeftIcon } from '@heroicons/vue/24/outline'
+import { ChevronLeftIcon } from '@heroicons/vue/24/outline'
 import { FormSwitch } from '@speckle/ui-components'
 import { useMutationLoading } from '@vue/apollo-composable'
 import { graphql } from '~/lib/common/generated/gql'

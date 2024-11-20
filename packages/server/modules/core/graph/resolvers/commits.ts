@@ -78,70 +78,11 @@ import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { CommitGraphQLReturn } from '@/modules/core/helpers/graphTypes'
 import { getProjectDbClient } from '@/modules/multiregion/dbSelector'
 
-const getCommitStream = getCommitStreamFactory({ db })
-const getStream = getStreamFactory({ db })
 const getStreams = getStreamsFactory({ db })
-const deleteCommitAndNotify = deleteCommitAndNotifyFactory({
-  getCommit: getCommitFactory({ db }),
-  markCommitStreamUpdated: markCommitStreamUpdatedFactory({ db }),
-  markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
-  deleteCommit: deleteCommitFactory({ db }),
-  addCommitDeletedActivity: addCommitDeletedActivityFactory({
-    saveActivity: saveActivityFactory({ db }),
-    publish
-  })
-})
 
-const updateCommitAndNotify = updateCommitAndNotifyFactory({
-  getCommit: getCommitFactory({ db }),
-  getStream,
-  getCommitStream,
-  getStreamBranchByName: getStreamBranchByNameFactory({ db }),
-  getCommitBranch: getCommitBranchFactory({ db }),
-  switchCommitBranch: switchCommitBranchFactory({ db }),
-  updateCommit: updateCommitFactory({ db }),
-  addCommitUpdatedActivity: addCommitUpdatedActivityFactory({
-    saveActivity: saveActivityFactory({ db }),
-    publish
-  }),
-  markCommitStreamUpdated: markCommitStreamUpdatedFactory({ db }),
-  markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db })
-})
-
-const getPaginatedBranchCommits = getPaginatedBranchCommitsFactory({
-  getSpecificBranchCommits: getSpecificBranchCommitsFactory({ db }),
-  getPaginatedBranchCommitsItems: getPaginatedBranchCommitsItemsFactory({ db }),
-  getBranchCommitsTotalCount: getBranchCommitsTotalCountFactory({ db })
-})
-
-const batchMoveCommits = batchMoveCommitsFactory({
-  getCommits: getCommitsFactory({ db }),
-  getStreams,
-  getStreamBranchByName: getStreamBranchByNameFactory({ db }),
-  createBranch: createBranchFactory({ db }),
-  moveCommitsToBranch: moveCommitsToBranchFactory({ db }),
-  addCommitMovedActivity: addCommitMovedActivityFactory({
-    saveActivity: saveActivityFactory({ db }),
-    publish
-  })
-})
 const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
 const getCommitsByUserId = legacyGetPaginatedUserCommitsPage({ db })
 const getCommitsTotalCountByUserId = legacyGetPaginatedUserCommitsTotalCount({ db })
-const getCommitsByStreamId = legacyGetPaginatedStreamCommitsPageFactory({ db })
-const getPaginatedStreamCommits = legacyGetPaginatedStreamCommitsFactory({
-  legacyGetPaginatedStreamCommitsPage: getCommitsByStreamId,
-  getStreamCommitCount: getStreamCommitCountFactory({ db })
-})
-const batchDeleteCommits = batchDeleteCommitsFactory({
-  getCommits: getCommitsFactory({ db }),
-  getStreams,
-  deleteCommits: deleteCommitsFactory({ db }),
-  addCommitDeletedActivity: addCommitDeletedActivityFactory({
-    saveActivity: saveActivityFactory({ db }),
-    publish
-  })
-})
 
 const getAuthorId = (commit: CommitGraphQLReturn) => {
   if ('author' in commit) return commit.author
@@ -180,7 +121,10 @@ export = {
     async stream(parent, _args, ctx) {
       const { id: commitId } = parent
 
-      const stream = await ctx.loaders.commits.getCommitStream.load(commitId)
+      const projectDB = await getProjectDbClient({ projectId: parent.streamId })
+      const stream = await ctx.loaders
+        .forRegion({ db: projectDB })
+        .commits.getCommitStream.load(commitId)
       if (!stream) {
         throw new StreamInvalidAccessError('Commit stream not found')
       }
@@ -195,12 +139,18 @@ export = {
     },
     async streamId(parent, _args, ctx) {
       const { id: commitId } = parent
-      const stream = await ctx.loaders.commits.getCommitStream.load(commitId)
+      const projectDB = await getProjectDbClient({ projectId: parent.streamId })
+      const stream = await ctx.loaders
+        .forRegion({ db: projectDB })
+        .commits.getCommitStream.load(commitId)
       return stream?.id || null
     },
     async streamName(parent, _args, ctx) {
       const { id: commitId } = parent
-      const stream = await ctx.loaders.commits.getCommitStream.load(commitId)
+      const projectDB = await getProjectDbClient({ projectId: parent.streamId })
+      const stream = await ctx.loaders
+        .forRegion({ db: projectDB })
+        .commits.getCommitStream.load(commitId)
       return stream?.name || null
     },
     /**
@@ -229,20 +179,42 @@ export = {
     },
     async branchName(parent, _args, ctx) {
       const { id } = parent
-      return (await ctx.loaders.commits.getCommitBranch.load(id))?.name || null
+      const projectDB = await getProjectDbClient({ projectId: parent.streamId })
+      return (
+        (
+          await ctx.loaders
+            .forRegion({ db: projectDB })
+            .commits.getCommitBranch.load(id)
+        )?.name || null
+      )
     },
     async branch(parent, _args, ctx) {
       const { id } = parent
-      return await ctx.loaders.commits.getCommitBranch.load(id)
+      const projectDB = await getProjectDbClient({ projectId: parent.streamId })
+      return await ctx.loaders
+        .forRegion({ db: projectDB })
+        .commits.getCommitBranch.load(id)
     }
   },
   Stream: {
     async commits(parent, args) {
+      const projectDB = await getProjectDbClient({ projectId: parent.id })
+      const getCommitsByStreamId = legacyGetPaginatedStreamCommitsPageFactory({
+        db: projectDB
+      })
+      const getPaginatedStreamCommits = legacyGetPaginatedStreamCommitsFactory({
+        legacyGetPaginatedStreamCommitsPage: getCommitsByStreamId,
+        getStreamCommitCount: getStreamCommitCountFactory({ db: projectDB })
+      })
       return await getPaginatedStreamCommits(parent.id, args)
     },
 
     async commit(parent, args, ctx) {
+      const projectDB = await getProjectDbClient({ projectId: parent.id })
       if (!args.id) {
+        const getCommitsByStreamId = legacyGetPaginatedStreamCommitsPageFactory({
+          db: projectDB
+        })
         const { commits } = await getCommitsByStreamId({
           streamId: parent.id,
           limit: 1
@@ -252,14 +224,16 @@ export = {
           'Cannot retrieve commit (there are no commits in this stream).'
         )
       }
-      const c = await ctx.loaders.streams.getStreamCommit
-        .forStream(parent.id)
+      const c = await ctx.loaders
+        .forRegion({ db: projectDB })
+        .streams.getStreamCommit.forStream(parent.id)
         .load(args.id)
       return c
     }
   },
   LimitedUser: {
     async commits(parent, args, ctx) {
+      // TODO: scan all regions
       return await getUserCommits(
         true,
         parent.id,
@@ -270,6 +244,7 @@ export = {
   },
   User: {
     async commits(parent, args, context) {
+      // TODO: scan all regions
       return await getUserCommits(
         context.userId !== parent.id,
         parent.id,
@@ -280,6 +255,14 @@ export = {
   },
   Branch: {
     async commits(parent, args) {
+      const projectDB = await getProjectDbClient({ projectId: parent.streamId })
+      const getPaginatedBranchCommits = getPaginatedBranchCommitsFactory({
+        getSpecificBranchCommits: getSpecificBranchCommitsFactory({ db: projectDB }),
+        getPaginatedBranchCommitsItems: getPaginatedBranchCommitsItemsFactory({
+          db: projectDB
+        }),
+        getBranchCommitsTotalCount: getBranchCommitsTotalCountFactory({ db: projectDB })
+      })
       return await getPaginatedBranchCommits({
         branchId: parent.id,
         limit: args.limit,
@@ -340,6 +323,22 @@ export = {
         context.resourceAccessRules
       )
 
+      const projectDb = await getProjectDbClient({ projectId: args.commit.streamId })
+      const updateCommitAndNotify = updateCommitAndNotifyFactory({
+        getCommit: getCommitFactory({ db: projectDb }),
+        getStream: getStreamFactory({ db }),
+        getCommitStream: getCommitStreamFactory({ db: projectDb }),
+        getStreamBranchByName: getStreamBranchByNameFactory({ db: projectDb }),
+        getCommitBranch: getCommitBranchFactory({ db: projectDb }),
+        switchCommitBranch: switchCommitBranchFactory({ db: projectDb }),
+        updateCommit: updateCommitFactory({ db: projectDb }),
+        addCommitUpdatedActivity: addCommitUpdatedActivityFactory({
+          saveActivity: saveActivityFactory({ db }),
+          publish
+        }),
+        markCommitStreamUpdated: markCommitStreamUpdatedFactory({ db: projectDb }),
+        markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db: projectDb })
+      })
       await updateCommitAndNotify(args.commit, context.userId!)
       return true
     },
@@ -352,8 +351,9 @@ export = {
         context.resourceAccessRules
       )
 
+      const projectDb = await getProjectDbClient({ projectId: args.input.streamId })
       await markCommitReceivedAndNotifyFactory({
-        getCommit: getCommitFactory({ db }),
+        getCommit: getCommitFactory({ db: projectDb }),
         saveActivity: saveActivityFactory({ db })
       })({
         input: args.input,
@@ -371,6 +371,17 @@ export = {
         context.resourceAccessRules
       )
 
+      const projectDb = await getProjectDbClient({ projectId: args.commit.streamId })
+      const deleteCommitAndNotify = deleteCommitAndNotifyFactory({
+        getCommit: getCommitFactory({ db: projectDb }),
+        markCommitStreamUpdated: markCommitStreamUpdatedFactory({ db: projectDb }),
+        markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db: projectDb }),
+        deleteCommit: deleteCommitFactory({ db: projectDb }),
+        addCommitDeletedActivity: addCommitDeletedActivityFactory({
+          saveActivity: saveActivityFactory({ db }),
+          publish
+        })
+      })
       const deleted = await deleteCommitAndNotify(
         args.commit.id,
         args.commit.streamId,
@@ -379,12 +390,36 @@ export = {
       return deleted
     },
 
+    // Not used by connectors
     async commitsMove(_, args, ctx) {
+      const projectDb = await getProjectDbClient({ projectId: args.input.streamId })
+      const batchMoveCommits = batchMoveCommitsFactory({
+        getCommits: getCommitsFactory({ db: projectDb }),
+        getStreams,
+        getStreamBranchByName: getStreamBranchByNameFactory({ db: projectDb }),
+        createBranch: createBranchFactory({ db: projectDb }),
+        moveCommitsToBranch: moveCommitsToBranchFactory({ db: projectDb }),
+        addCommitMovedActivity: addCommitMovedActivityFactory({
+          saveActivity: saveActivityFactory({ db }),
+          publish
+        })
+      })
       await batchMoveCommits(args.input, ctx.userId!)
       return true
     },
 
+    // Not used by connectors
     async commitsDelete(_, args, ctx) {
+      const projectDb = await getProjectDbClient({ projectId: args.input.streamId })
+      const batchDeleteCommits = batchDeleteCommitsFactory({
+        getCommits: getCommitsFactory({ db: projectDb }),
+        getStreams,
+        deleteCommits: deleteCommitsFactory({ db: projectDb }),
+        addCommitDeletedActivity: addCommitDeletedActivityFactory({
+          saveActivity: saveActivityFactory({ db }),
+          publish
+        })
+      })
       await batchDeleteCommits(args.input, ctx.userId!)
       return true
     }
