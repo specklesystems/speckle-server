@@ -2,9 +2,10 @@
   <form class="flex flex-col gap-2" @submit="onSubmit">
     <div class="flex flex-col gap-4">
       <FormTextInput
-        name="providerName"
+        v-model="formData.providerName"
         label="Provider"
         help="The label on the button displayed on the login screen."
+        name="providerName"
         color="foundation"
         show-label
         label-position="left"
@@ -13,8 +14,9 @@
       />
       <hr class="border-outline-3" />
       <FormTextInput
-        name="clientId"
+        v-model="formData.clientId"
         label="Client ID"
+        name="clientId"
         color="foundation"
         show-label
         label-position="left"
@@ -23,8 +25,9 @@
       />
       <hr class="border-outline-3" />
       <FormTextInput
-        name="clientSecret"
+        v-model="formData.clientSecret"
         label="Client secret"
+        name="clientSecret"
         color="foundation"
         show-label
         label-position="left"
@@ -33,8 +36,9 @@
       />
       <hr class="border-outline-3" />
       <FormTextInput
-        name="issuerUrl"
+        v-model="formData.issuerUrl"
         label="Issuer URL"
+        name="issuerUrl"
         color="foundation"
         show-label
         label-position="left"
@@ -72,17 +76,24 @@ const postAuthRedirect = usePostAuthRedirect()
 const { challenge } = useLoginOrRegisterUtils()
 const mixpanel = useMixpanel()
 
+const formData = ref<SsoFormValues>({
+  providerName: '',
+  clientId: '',
+  clientSecret: '',
+  issuerUrl: ''
+})
+
 const { handleSubmit } = useForm<SsoFormValues>()
 
-const onSubmit = handleSubmit((values) => {
+const onSubmit = handleSubmit(() => {
   const url = new URL(
     `${apiOrigin}/api/v1/workspaces/${props.workspaceSlug}/sso/oidc/validate`
   )
 
-  url.searchParams.set('providerName', values.providerName)
-  url.searchParams.set('clientId', values.clientId)
-  url.searchParams.set('clientSecret', values.clientSecret)
-  url.searchParams.set('issuerUrl', values.issuerUrl)
+  url.searchParams.set('providerName', formData.value.providerName)
+  url.searchParams.set('clientId', formData.value.clientId)
+  url.searchParams.set('clientSecret', formData.value.clientSecret)
+  url.searchParams.set('issuerUrl', formData.value.issuerUrl)
   if (challenge.value) {
     url.searchParams.set('challenge', challenge.value)
   }
@@ -93,7 +104,7 @@ const onSubmit = handleSubmit((values) => {
     // eslint-disable-next-line camelcase
     workspace_slug: props.workspaceSlug,
     // eslint-disable-next-line camelcase
-    provider_name: values.providerName
+    provider_name: formData.value.providerName
   })
 
   navigateTo(url.toString(), {
