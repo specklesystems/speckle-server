@@ -49,7 +49,7 @@
       <span v-else>Load this version</span>
     </div>
     <!-- Warning if obj is coming from the v2 side -->
-    <div v-if="!objectVersion" class="bottom-0 left-0">
+    <!-- <div v-if="!objectVersion" class="bottom-0 left-0">
       <div
         class="text-body-2xs px-2 bg-blue-500/5 py-2 text-foreground-2 flex items-center space-x-1 justify-center"
       >
@@ -80,7 +80,7 @@
           </div>
         </LayoutDialog>
       </div>
-    </div>
+    </div> -->
   </button>
 </template>
 <script setup lang="ts">
@@ -88,8 +88,8 @@ import dayjs from 'dayjs'
 import type { SourceAppName } from '@speckle/shared'
 import { SourceApps } from '@speckle/shared'
 import type { VersionListItemFragment } from '~/lib/common/generated/gql/graphql'
-import { objectQuery } from '~/lib/graphql/mutationsAndQueries'
-import { useQuery } from '@vue/apollo-composable'
+// import { objectQuery } from '~/lib/graphql/mutationsAndQueries'
+// import { useQuery } from '@vue/apollo-composable'
 
 const props = defineProps<{
   version: VersionListItemFragment
@@ -106,19 +106,20 @@ const createdAgo = computed(() => {
   return dayjs(props.version.createdAt).from(dayjs())
 })
 
-const { result: objectQueryResult } = useQuery(
-  objectQuery,
-  () => ({ projectId: props.projectId, objectId: props.referencedObjectId }),
-  () => ({ clientId: props.accountId })
-)
+// NOTE!!!: This logic somehow caused regression on versionList fetchMore, but we do not know exactly why yet.
+// const { result: objectQueryResult } = useQuery(
+//   objectQuery,
+//   () => ({ projectId: props.projectId, objectId: props.referencedObjectId }),
+//   () => ({ clientId: props.accountId })
+// )
 
-type Data = {
-  version?: number
-}
-const objectVersion = computed(() => {
-  const data = objectQueryResult.value?.project?.object?.data as Data | undefined
-  return data?.version
-})
+// type Data = {
+//   version?: number
+// }
+// const objectVersion = computed(() => {
+//   const data = objectQueryResult.value?.project?.object?.data as Data | undefined
+//   return data?.version
+// })
 
-const showCompatWarning = ref(false)
+// const showCompatWarning = ref(false)
 </script>
