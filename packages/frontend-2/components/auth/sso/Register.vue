@@ -49,7 +49,7 @@ const { result } = useQuery(authRegisterPanelQuery)
 
 const serverInfo = computed(() => result.value?.serverInfo)
 const workspaceSlug = computed(() => route.params.slug?.toString() || '')
-const { workspace } = useWorkspacePublicSsoCheck(workspaceSlug.value)
+const { workspace } = useWorkspacePublicSsoCheck(workspaceSlug)
 
 const handleContinue = () => {
   if (!workspaceSlug.value) return
