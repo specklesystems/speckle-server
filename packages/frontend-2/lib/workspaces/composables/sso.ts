@@ -47,7 +47,7 @@ export const useWorkspacePublicSsoCheck = (workspaceSlug: MaybeRef<string>) => {
  * Checks if a workspace requires SSO authentication and the current user's SSO status.
  * Used to enforce SSO login requirements for workspace access.
  */
-export const useWorkspaceSsoStatus = (params: { workspaceSlug: string }) => {
+export const useWorkspaceSsoStatus = (params: { workspaceSlug: Ref<string> }) => {
   graphql(`
     fragment WorkspaceSsoStatus_Workspace on Workspace {
       id
@@ -82,7 +82,7 @@ export const useWorkspaceSsoStatus = (params: { workspaceSlug: string }) => {
   const needsSsoLogin = computed(() => {
     if (!result.value?.activeUser) return false
     return result.value.activeUser.expiredSsoSessions.some(
-      (workspace) => workspace.slug === params.workspaceSlug
+      (workspace) => workspace.slug === params.workspaceSlug.value
     )
   })
 
@@ -107,7 +107,7 @@ export const useWorkspaceSsoStatus = (params: { workspaceSlug: string }) => {
 export function useWorkspaceSsoValidation(workspaceSlug: string) {
   const logger = useLogger()
   const { hasSsoEnabled, needsSsoLogin, error } = useWorkspaceSsoStatus({
-    workspaceSlug
+    workspaceSlug: ref(workspaceSlug)
   })
 
   const ssoError = computed(() => {

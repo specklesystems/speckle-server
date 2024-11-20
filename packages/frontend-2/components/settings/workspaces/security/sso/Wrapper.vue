@@ -141,7 +141,7 @@ const apiOrigin = useApiOrigin()
 const logger = useLogger()
 const menuId = useId()
 const { provider, loading } = useWorkspaceSsoStatus({
-  workspaceSlug: props.workspace.slug
+  workspaceSlug: computed(() => props.workspace.slug)
 })
 
 const isFormVisible = ref(false)
