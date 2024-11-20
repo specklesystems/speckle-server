@@ -15,13 +15,13 @@
             ? 'grayscale opacity-80 hover:grayscale-0 hover:opacity-100'
             : ''
         }
-        ${isExpanded ? 'outline outline-2 outline-primary' : ''}  
+        ${isExpanded ? 'outline outline-2 outline-primary' : ''}
         transition bg-foundation shadow hover:shadow-xl flex -space-x-2 items-center p-[2px] rounded-tr-full rounded-tl-full rounded-br-full`"
           @click="onThreadClick"
         >
-          <!-- 
-            Note: Unsure wether to display just a checkmark for "resolved" threads, or the author list and the checkmark. 
-            Both optinos are viable, see below. Uncomment to test. 
+          <!--
+            Note: Unsure wether to display just a checkmark for "resolved" threads, or the author list and the checkmark.
+            Both optinos are viable, see below. Uncomment to test.
           -->
           <!-- <UserAvatarGroup :users="threadAuthors" /> -->
           <UserAvatarGroup v-if="!modelValue.archived" :users="threadAuthors" />

@@ -13,29 +13,22 @@
         v-bind="bind"
         v-on="on"
       />
-      <FormButton
-        :icon-left="ArrowTopRightOnSquareIcon"
-        color="outline"
-        class="shrink-0"
-        :to="automationFunctionsRoute"
-      >
-        Explore Functions
-      </FormButton>
-      <div v-tippy="disabledCreateBecauseOf" class="shrink-0">
+      <div v-tippy="creationDisabledReason" class="shrink-0">
         <FormButton
-          :icon-left="PlusIcon"
           class="shrink-0"
-          :disabled="!!disabledCreateBecauseOf"
+          :disabled="!!creationDisabledReason"
           @click="$emit('new-automation')"
         >
-          New
+          New automation
         </FormButton>
       </div>
+      <FormButton color="outline" class="shrink-0" :to="automationFunctionsRoute">
+        Explore functions
+      </FormButton>
     </div>
   </div>
 </template>
 <script setup lang="ts">
-import { ArrowTopRightOnSquareIcon, PlusIcon } from '@heroicons/vue/20/solid'
 import { useDebouncedTextInput } from '@speckle/ui-components'
 import { automationFunctionsRoute } from '~/lib/common/helpers/route'
 
@@ -45,7 +38,7 @@ defineEmits<{
 
 defineProps<{
   showEmptyState?: boolean
-  disabledCreateBecauseOf?: string
+  creationDisabledReason?: string
 }>()
 
 const search = defineModel<string>('search')

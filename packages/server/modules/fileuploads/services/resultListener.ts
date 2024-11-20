@@ -28,7 +28,7 @@ type ParsedMessage = {
 const branchCreatedPayloadRegexp = /^(.+):::(.+):::(.+):::(.+)$/i
 export const parseMessagePayload = (payload: string): ParsedMessage => {
   const [, uploadId, streamId, branchName, newBranchCreated] =
-    branchCreatedPayloadRegexp.exec(payload) || [null, null, null]
+    branchCreatedPayloadRegexp.exec(payload) || [null, null, null, null]
 
   const isNewBranch = newBranchCreated === '1'
   return { uploadId, streamId, branchName, isNewBranch }
