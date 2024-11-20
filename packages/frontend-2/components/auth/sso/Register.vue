@@ -39,7 +39,7 @@ import { useQuery } from '@vue/apollo-composable'
 
 const route = useRoute()
 const loading = ref(false)
-const newsletterConsent = ref(false)
+const newsletterConsent = ref<true | undefined>(undefined)
 
 const { challenge } = useLoginOrRegisterUtils()
 const { signInOrSignUpWithSso } = useAuthManager()
@@ -64,7 +64,7 @@ const handleContinue = () => {
     signInOrSignUpWithSso({
       challenge: challenge.value,
       workspaceSlug: workspaceSlug.value,
-      newsletterConsent: newsletterConsent.value
+      newsletterConsent: !!newsletterConsent.value
     })
   } catch (error) {
     logger.error('SSO registration failed:', error)

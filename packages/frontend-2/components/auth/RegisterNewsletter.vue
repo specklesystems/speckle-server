@@ -8,5 +8,7 @@
 </template>
 
 <script setup lang="ts">
-const newsletterConsent = defineModel<boolean>('newsletterConsent', { required: true })
+const newsletterConsent = defineModel<true | undefined>('newsletterConsent', {
+  required: true
+})
 </script>
