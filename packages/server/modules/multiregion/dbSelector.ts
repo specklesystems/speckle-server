@@ -26,6 +26,7 @@ import { MaybeNullOrUndefined } from '@speckle/shared'
 import { isTestEnv } from '@/modules/shared/helpers/envHelper'
 import { updateKnexPrometheusMetrics } from '@/logging/knexMonitoring'
 import { logger } from '@/logging/logging'
+import { migrateDbToLatestFactory } from '@/db/migrations'
 
 let getter: GetProjectDb | undefined = undefined
 
@@ -115,7 +116,11 @@ export const initializeRegisteredRegionClients = async (): Promise<RegionClients
   )
 
   // run migrations
-  await Promise.all(Object.values(ret).map((db) => db.migrate.latest()))
+  await Promise.all(
+    Object.entries(ret).map(([region, db]) =>
+      migrateDbToLatestFactory({ db, region })()
+    )
+  )
 
   // (re-)set up pub-sub, if needed
   await Promise.all(
