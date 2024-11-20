@@ -106,15 +106,31 @@
 </template>
 
 <script setup lang="ts">
-import type { SettingsWorkspacesSecurity_WorkspaceFragment } from '~~/lib/common/generated/gql/graphql'
+import type { SettingsWorkspacesSecuritySsoWrapper_WorkspaceFragment } from '~~/lib/common/generated/gql/graphql'
 import { useWorkspaceSsoStatus } from '~/lib/workspaces/composables/sso'
 import type { SsoFormValues } from '~/lib/workspaces/helpers/types'
 import type { LayoutMenuItem } from '@speckle/ui-components'
 import { HorizontalDirection } from '~~/lib/common/composables/window'
 import { EllipsisHorizontalIcon } from '@heroicons/vue/24/solid'
+import { graphql } from '~/lib/common/generated/gql'
+
+graphql(`
+  fragment SettingsWorkspacesSecuritySsoWrapper_Workspace on Workspace {
+    id
+    slug
+    sso {
+      provider {
+        id
+        name
+        clientId
+        issuerUrl
+      }
+    }
+  }
+`)
 
 const props = defineProps<{
-  workspace: SettingsWorkspacesSecurity_WorkspaceFragment
+  workspace: SettingsWorkspacesSecuritySsoWrapper_WorkspaceFragment
 }>()
 
 enum ActionTypes {

@@ -149,14 +149,7 @@ graphql(`
       domain
       ...SettingsWorkspacesSecurityDomainRemoveDialog_WorkspaceDomain
     }
-    sso {
-      provider {
-        id
-        name
-        clientId
-        issuerUrl
-      }
-    }
+    ...SettingsWorkspacesSecuritySsoWrapper_Workspace
     domainBasedMembershipProtectionEnabled
     discoverabilityEnabled
   }
