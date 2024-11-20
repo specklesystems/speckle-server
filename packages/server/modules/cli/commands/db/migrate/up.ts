@@ -1,8 +1,10 @@
 import knex from '@/db/knex'
 import { logger } from '@/logging/logging'
+import { CommonDbArgs } from '@/modules/cli/commands/db/helpers'
 import { CommandModule } from 'yargs'
 
-const command: CommandModule = {
+// TODO:
+const command: CommandModule<unknown, CommonDbArgs> = {
   command: 'up',
   describe: 'Run next migration that has not yet been run',
   async handler() {
