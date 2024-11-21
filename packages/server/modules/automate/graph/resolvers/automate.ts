@@ -372,11 +372,9 @@ export = (FF_AUTOMATE_MODULE_ENABLED
       },
       AutomateFunctionRun: {
         async function(parent, _args, ctx) {
-          const projectDb = await getProjectDbClient({ projectId: parent.projectId })
-
-          const fn = await ctx.loaders
-            .forRegion({ db: projectDb })
-            .automationsApi.getFunction.load(parent.functionId)
+          const fn = await ctx.loaders.automationsApi.getFunction.load(
+            parent.functionId
+          )
           if (!fn) {
             ctx.log.warn(
               { id: parent.functionId, fnRunId: parent.id, runid: parent.runId },
@@ -888,7 +886,6 @@ export = (FF_AUTOMATE_MODULE_ENABLED
       Mutation: {
         async automateFunctionRunStatusReport(_parent, { input }) {
           const projectDb = await getProjectDbClient({ projectId: input.projectId })
-
           const deps: ReportFunctionRunStatusDeps = {
             getAutomationFunctionRunRecord: getFunctionRunFactory({
               db: projectDb
