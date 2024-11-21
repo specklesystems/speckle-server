@@ -53,7 +53,7 @@ import { graphql } from '~/lib/common/generated/gql/gql'
 
 type FormValues = {
   email: string
-  workspace: AuthSsoLogin_WorkspaceFragment | undefined
+  workspace?: AuthSsoLogin_WorkspaceFragment
 }
 
 enum EmailCheckState {
@@ -153,7 +153,7 @@ const onEmailChange = (value: string) => {
   debouncedCheckEmail(value)
 }
 
-const onSubmit = handleSubmit((values: FormValues) => {
+const onSubmit = handleSubmit((values) => {
   if (!values.workspace) return
 
   loading.value = true
