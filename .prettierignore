@@ -39,3 +39,5 @@ venv
 storybook-static
 .tshy
 .tshy-build
+
+packages/ifc-converter/
