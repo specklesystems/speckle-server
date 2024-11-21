@@ -37,6 +37,9 @@ import {
 import { Knex } from 'knex'
 import { isMultiRegionTestMode } from '@/test/speckle-helpers/regions'
 import { isMultiRegionEnabled } from '@/modules/multiregion/helpers'
+import { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
+import { ApolloServer } from '@apollo/server'
+import { ReadinessHandler } from '@/healthchecks/health'
 
 // why is server config only created once!????
 // because its done in a migration, to not override existing configs
@@ -215,11 +218,15 @@ export const truncateTables = async (tableNames?: string[]) => {
   }
 }
 
-export const initializeTestServer = async (
-  server: http.Server,
+export const initializeTestServer = async (params: {
+  server: http.Server
   app: express.Express
-) => {
-  await startHttp(server, app, 0)
+  graphqlServer: ApolloServer<GraphQLContext>
+  readinessCheck: ReadinessHandler
+  customPortOverride?: number
+}) => {
+  await startHttp({ ...params, customPortOverride: params.customPortOverride ?? 0 })
+  const { server, app } = params
 
   await once(app, 'appStarted')
   const port = (server.address() as net.AddressInfo).port + ''
@@ -246,6 +253,8 @@ export const initializeTestServer = async (
   }
 }
 
+let graphqlServer: ApolloServer<GraphQLContext>
+
 export const mochaHooks: mocha.RootHookObject = {
   beforeAll: async () => {
     if (isMultiRegionTestMode()) {
@@ -262,20 +271,19 @@ export const mochaHooks: mocha.RootHookObject = {
     await setupMultiregionMode()
 
     // Init app
-    await init()
+    ;({ graphqlServer } = await init())
   },
   afterAll: async () => {
     logger.info('running after all')
     await inEachDb(async (db) => {
       await unlockFactory({ db })()
     })
-    await shutdown()
+    await shutdown({ graphqlServer })
   }
 }
 
 export const buildApp = async () => {
-  const { app, graphqlServer, server } = await init()
-  return { app, graphqlServer, server }
+  return await init()
 }
 
 export const beforeEachContext = async () => {

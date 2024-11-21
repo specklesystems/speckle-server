@@ -1,4 +1,4 @@
-import { moduleLogger } from '@/logging/logging'
+import { automateLogger, moduleLogger } from '@/logging/logging'
 import { Optional, SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import { VersionEvents, VersionsEmitter } from '@/modules/core/events/versionsEmitter'
 import {
@@ -15,7 +15,7 @@ import {
   getFullAutomationRunByIdFactory,
   upsertAutomationRunFactory
 } from '@/modules/automate/repositories/automations'
-import { Scopes } from '@speckle/shared'
+import { isNonNullable, Scopes, throwUncoveredError } from '@speckle/shared'
 import { registerOrUpdateScopeFactory } from '@/modules/shared/repositories/scopes'
 import { triggerAutomationRun } from '@/modules/automate/clients/executionEngine'
 import logStreamRest from '@/modules/automate/rest/logStream'
@@ -24,18 +24,17 @@ import {
   getFunctionInputDecryptorFactory
 } from '@/modules/automate/services/encryption'
 import { buildDecryptor } from '@/modules/shared/utils/libsodium'
-import {
-  setupAutomationUpdateSubscriptionsFactory,
-  setupStatusUpdateSubscriptionsFactory
-} from '@/modules/automate/services/subscriptions'
-import { setupRunFinishedTrackingFactory } from '@/modules/automate/services/tracking'
+import { getUserEmailFromAutomationRunFactory } from '@/modules/automate/services/tracking'
 import authGithubAppRest from '@/modules/automate/rest/authGithubApp'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { TokenScopeData } from '@/modules/shared/domain/rolesAndScopes/types'
-import db from '@/db/knex'
-import { AutomationsEmitter } from '@/modules/automate/events/automations'
-import { publish } from '@/modules/shared/utils/subscriptions'
-import { AutomateRunsEmitter } from '@/modules/automate/events/runs'
+import { db as globalDb } from '@/db/knex'
+import {
+  AutomationsEmitter,
+  AutomationsEvents
+} from '@/modules/automate/events/automations'
+import { ProjectSubscriptions, publish } from '@/modules/shared/utils/subscriptions'
+import { AutomateRunsEmitter, AutomateRunsEvents } from '@/modules/automate/events/runs'
 import { getBranchLatestCommitsFactory } from '@/modules/core/repositories/branches'
 import { getCommitFactory } from '@/modules/core/repositories/commits'
 import { legacyGetUserFactory } from '@/modules/core/repositories/users'
@@ -46,6 +45,18 @@ import {
   storeTokenScopesFactory,
   storeUserServerAppTokenFactory
 } from '@/modules/core/repositories/tokens'
+import { getProjectDbClient } from '@/modules/multiregion/dbSelector'
+import {
+  ProjectAutomationsUpdatedMessageType,
+  ProjectTriggeredAutomationsStatusUpdatedMessageType
+} from '@/modules/core/graph/generated/graphql'
+import {
+  isVersionCreatedTriggerManifest,
+  RunTriggerSource,
+  VersionCreationTriggerType
+} from '@/modules/automate/helpers/types'
+import { isFinished } from '@/modules/automate/domain/logic'
+import { mixpanel } from '@/modules/shared/utils/mixpanel'
 
 const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
 let quitListeners: Optional<() => void> = undefined
@@ -69,76 +80,256 @@ async function initScopes() {
     }
   ]
 
-  const registerFunc = registerOrUpdateScopeFactory({ db })
+  const registerFunc = registerOrUpdateScopeFactory({ db: globalDb })
   for (const scope of scopes) {
     await registerFunc({ scope })
   }
 }
 
 const initializeEventListeners = () => {
-  const getAutomationRunFullTriggers = getAutomationRunFullTriggersFactory({ db })
-  const getFullAutomationRevisionMetadata = getFullAutomationRevisionMetadataFactory({
-    db
-  })
-
   const createAppToken = createAppTokenFactory({
-    storeApiToken: storeApiTokenFactory({ db }),
-    storeTokenScopes: storeTokenScopesFactory({ db }),
+    storeApiToken: storeApiTokenFactory({ db: globalDb }),
+    storeTokenScopes: storeTokenScopesFactory({ db: globalDb }),
     storeTokenResourceAccessDefinitions: storeTokenResourceAccessDefinitionsFactory({
-      db
+      db: globalDb
     }),
-    storeUserServerAppToken: storeUserServerAppTokenFactory({ db })
+    storeUserServerAppToken: storeUserServerAppTokenFactory({ db: globalDb })
   })
-  const triggerFn = triggerAutomationRevisionRunFactory({
-    automateRunTrigger: triggerAutomationRun,
-    getEncryptionKeyPairFor,
-    getFunctionInputDecryptor: getFunctionInputDecryptorFactory({
-      buildDecryptor
-    }),
-    createAppToken,
-    automateRunsEmitter: AutomateRunsEmitter.emit,
-    getAutomationToken: getAutomationTokenFactory({ db }),
-    upsertAutomationRun: upsertAutomationRunFactory({ db }),
-    getFullAutomationRevisionMetadata,
-    getBranchLatestCommits: getBranchLatestCommitsFactory({ db }),
-    getCommit: getCommitFactory({ db })
-  })
-  const setupStatusUpdateSubscriptionsInvoke = setupStatusUpdateSubscriptionsFactory({
-    getAutomationRunFullTriggers,
-    publish,
-    automateRunsEventsListener: AutomateRunsEmitter.listen
-  })
-  const setupAutomationUpdateSubscriptionsInvoke =
-    setupAutomationUpdateSubscriptionsFactory({
-      automationsEmitterListen: AutomationsEmitter.listen,
-      publish
-    })
-  const setupRunFinishedTrackingInvoke = setupRunFinishedTrackingFactory({
-    getFullAutomationRevisionMetadata,
-    getUser: legacyGetUserFactory({ db }),
-    getCommit: getCommitFactory({ db }),
-    getFullAutomationRunById: getFullAutomationRunByIdFactory({ db }),
-    automateRunsEventListener: AutomateRunsEmitter.listen
-  })
-  const getAutomation = getAutomationFactory({ db })
-  const getAutomationRevision = getAutomationRevisionFactory({ db })
-  const getActiveTriggerDefinitions = getActiveTriggerDefinitionsFactory({ db })
 
+  // TODO: Use new event bus
   const quitters = [
+    // Automation trigger events
     VersionsEmitter.listen(
       VersionEvents.Created,
       async ({ modelId, version, projectId }) => {
+        const projectDb = await getProjectDbClient({ projectId })
         await onModelVersionCreateFactory({
-          getAutomation,
-          getAutomationRevision,
-          getTriggers: getActiveTriggerDefinitions,
-          triggerFunction: triggerFn
+          getAutomation: getAutomationFactory({ db: projectDb }),
+          getAutomationRevision: getAutomationRevisionFactory({ db: projectDb }),
+          getTriggers: getActiveTriggerDefinitionsFactory({ db: projectDb }),
+          triggerFunction: triggerAutomationRevisionRunFactory({
+            automateRunTrigger: triggerAutomationRun,
+            getEncryptionKeyPairFor,
+            getFunctionInputDecryptor: getFunctionInputDecryptorFactory({
+              buildDecryptor
+            }),
+            createAppToken,
+            automateRunsEmitter: AutomateRunsEmitter.emit,
+            getAutomationToken: getAutomationTokenFactory({ db: projectDb }),
+            upsertAutomationRun: upsertAutomationRunFactory({ db: projectDb }),
+            getFullAutomationRevisionMetadata: getFullAutomationRevisionMetadataFactory(
+              { db: projectDb }
+            ),
+            getBranchLatestCommits: getBranchLatestCommitsFactory({ db: projectDb }),
+            getCommit: getCommitFactory({ db: projectDb })
+          })
         })({ modelId, versionId: version.id, projectId })
       }
     ),
-    setupStatusUpdateSubscriptionsInvoke(),
-    setupAutomationUpdateSubscriptionsInvoke(),
-    setupRunFinishedTrackingInvoke()
+    // Automation management events
+    AutomationsEmitter.listen(AutomationsEvents.Created, async ({ automation }) => {
+      await publish(ProjectSubscriptions.ProjectAutomationsUpdated, {
+        projectId: automation.projectId,
+        projectAutomationsUpdated: {
+          type: ProjectAutomationsUpdatedMessageType.Created,
+          automationId: automation.id,
+          automation,
+          revision: null
+        }
+      })
+    }),
+    AutomationsEmitter.listen(AutomationsEvents.Updated, async ({ automation }) => {
+      await publish(ProjectSubscriptions.ProjectAutomationsUpdated, {
+        projectId: automation.projectId,
+        projectAutomationsUpdated: {
+          type: ProjectAutomationsUpdatedMessageType.Updated,
+          automationId: automation.id,
+          automation,
+          revision: null
+        }
+      })
+    }),
+    AutomationsEmitter.listen(
+      AutomationsEvents.CreatedRevision,
+      async ({ automation, revision }) => {
+        await publish(ProjectSubscriptions.ProjectAutomationsUpdated, {
+          projectId: automation.projectId,
+          projectAutomationsUpdated: {
+            type: ProjectAutomationsUpdatedMessageType.CreatedRevision,
+            automationId: automation.id,
+            automation,
+            revision: {
+              ...revision,
+              projectId: automation.projectId
+            }
+          }
+        })
+      }
+    ),
+    // Automation run lifecycle events
+    AutomateRunsEmitter.listen(
+      AutomateRunsEvents.Created,
+      async ({ manifests, run, automation }) => {
+        const validatedManifests = manifests
+          .map((manifest) => {
+            if (isVersionCreatedTriggerManifest(manifest)) {
+              return manifest
+            } else {
+              automateLogger.error('Unexpected run trigger manifest type', {
+                manifest
+              })
+            }
+
+            return null
+          })
+          .filter(isNonNullable)
+
+        await Promise.all(
+          validatedManifests.map(async (manifest) => {
+            await publish(
+              ProjectSubscriptions.ProjectTriggeredAutomationsStatusUpdated,
+              {
+                projectId: manifest.projectId,
+                projectTriggeredAutomationsStatusUpdated: {
+                  ...manifest,
+                  run: {
+                    ...run,
+                    automationId: automation.id,
+                    functionRuns: run.functionRuns.map((functionRun) => ({
+                      ...functionRun,
+                      runId: run.id
+                    })),
+                    triggers: run.triggers.map((trigger) => ({
+                      ...trigger,
+                      automationRunId: run.id
+                    })),
+                    projectId: manifest.projectId
+                  },
+                  type: ProjectTriggeredAutomationsStatusUpdatedMessageType.RunCreated
+                }
+              }
+            )
+          })
+        )
+      }
+    ),
+    AutomateRunsEmitter.listen(
+      AutomateRunsEvents.StatusUpdated,
+      async ({ run, functionRun, automationId }) => {
+        // TODO: Link run to project id somehow
+        const triggers = await getAutomationRunFullTriggersFactory({ db: globalDb })({
+          automationRunId: run.id
+        })
+
+        if (triggers[VersionCreationTriggerType].length) {
+          const versionCreation = triggers[VersionCreationTriggerType]
+
+          await Promise.all(
+            versionCreation.map(async (trigger) => {
+              await publish(
+                ProjectSubscriptions.ProjectTriggeredAutomationsStatusUpdated,
+                {
+                  projectId: trigger.model.streamId,
+                  projectTriggeredAutomationsStatusUpdated: {
+                    projectId: trigger.model.streamId,
+                    modelId: trigger.model.id,
+                    versionId: trigger.version.id,
+                    run: {
+                      ...run,
+                      functionRuns: [functionRun],
+                      automationId,
+                      triggers: undefined,
+                      projectId: trigger.model.streamId
+                    },
+                    type: ProjectTriggeredAutomationsStatusUpdatedMessageType.RunUpdated
+                  }
+                }
+              )
+            })
+          )
+        }
+      }
+    ),
+    // Mixpanel events
+    AutomateRunsEmitter.listen(
+      AutomateRunsEvents.StatusUpdated,
+      async ({ run, functionRun, automationId }) => {
+        // TODO: Most things not actually global db here
+
+        if (!isFinished(run.status)) return
+
+        const automationWithRevision = await getFullAutomationRevisionMetadataFactory({
+          db: globalDb
+        })(run.automationRevisionId)
+        const fullRun = await getFullAutomationRunByIdFactory({ db: globalDb })(run.id)
+        if (!fullRun) throw new Error('This should never happen')
+
+        if (!automationWithRevision) {
+          automateLogger.error(
+            {
+              run
+            },
+            'Run revision not found unexpectedly'
+          )
+          return
+        }
+
+        const userEmail = await getUserEmailFromAutomationRunFactory({
+          getFullAutomationRevisionMetadata: getFullAutomationRevisionMetadataFactory({
+            db: globalDb
+          }),
+          getFullAutomationRunById: getFullAutomationRunByIdFactory({ db: globalDb }),
+          getCommit: getCommitFactory({ db: globalDb }),
+          getUser: legacyGetUserFactory({ db: globalDb })
+        })(fullRun, automationWithRevision.projectId)
+
+        const mp = mixpanel({ userEmail, req: undefined })
+        await mp.track('Automate Function Run Finished', {
+          automationId,
+          automationRevisionId: automationWithRevision.id,
+          automationName: automationWithRevision.name,
+          runId: run.id,
+          functionRunId: functionRun.id,
+          status: functionRun.status,
+          durationInSeconds: functionRun.elapsed / 1000,
+          durationInMilliseconds: functionRun.elapsed
+        })
+      }
+    ),
+    AutomateRunsEmitter.listen(
+      AutomateRunsEvents.Created,
+      async ({ automation, run: automationRun, source }) => {
+        // TODO: Most things not actually global db here
+        // all triggers, that are automatic result of an action are in a need to be tracked
+        switch (source) {
+          case RunTriggerSource.Automatic: {
+            const userEmail = await getUserEmailFromAutomationRunFactory({
+              getFullAutomationRevisionMetadata:
+                getFullAutomationRevisionMetadataFactory({ db: globalDb }),
+              getFullAutomationRunById: getFullAutomationRunByIdFactory({
+                db: globalDb
+              }),
+              getCommit: getCommitFactory({ db: globalDb }),
+              getUser: legacyGetUserFactory({ db: globalDb })
+            })(automationRun, automation.projectId)
+            const mp = mixpanel({ userEmail, req: undefined })
+            await mp.track('Automation Run Triggered', {
+              automationId: automation.id,
+              automationName: automation.name,
+              automationRunId: automationRun.id,
+              projectId: automation.projectId,
+              source
+            })
+            break
+          }
+          // runs created from a user interaction are tracked in the frontend
+          case RunTriggerSource.Manual:
+            return
+          default:
+            throwUncoveredError(source)
+        }
+      }
+    )
   ]
 
   return () => {

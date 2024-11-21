@@ -33,12 +33,6 @@ export const settingsWorkspaceBillingQuery = graphql(`
   }
 `)
 
-export const settingsWorkspacePricingPlansQuery = graphql(`
-  query SettingsWorkspacePricingPlans {
-    workspacePricingPlans
-  }
-`)
-
 export const settingsWorkspaceBillingCustomerPortalQuery = graphql(`
   query SettingsWorkspaceBillingCustomerPortal($workspaceId: String!) {
     workspace(id: $workspaceId) {

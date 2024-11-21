@@ -573,7 +573,8 @@ export const getAutomationsStatusFactory =
       ...r,
       status: resolveStatusFromFunctionRunStatuses(
         r.functionRuns.map((fr) => fr.status)
-      )
+      ),
+      projectId: params.projectId
     }))
 
     const failedAutomations = runsWithUpdatedStatus.filter(

@@ -40,13 +40,6 @@
             <span>Last published:&nbsp;</span>
             <CommonText class="font-medium" :text="publishedAt" />
           </div>
-          <div>
-            <span>Used by:&nbsp;</span>
-            <CommonText
-              class="font-medium"
-              :text="`${fn.automationCount} automations`"
-            />
-          </div>
           <CommonTextLink
             v-if="latestRelease?.inputSchema"
             :icon-right="ArrowTopRightOnSquareIcon"
@@ -131,7 +124,6 @@ graphql(`
       owner
       name
     }
-    automationCount
     description
     releases(limit: 1) {
       items {

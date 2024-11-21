@@ -1,12 +1,10 @@
 import { db } from '@/db/knex'
 import { getAutomationRunLogs } from '@/modules/automate/clients/executionEngine'
 import { ExecutionEngineFailedResponseError } from '@/modules/automate/errors/executionEngine'
-import {
-  getAutomationProjectFactory,
-  getAutomationRunWithTokenFactory
-} from '@/modules/automate/repositories/automations'
+import { getAutomationRunWithTokenFactory } from '@/modules/automate/repositories/automations'
 import { corsMiddleware } from '@/modules/core/configs/cors'
 import { getStreamFactory } from '@/modules/core/repositories/streams'
+import { getProjectDbClient } from '@/modules/multiregion/dbSelector'
 import {
   validateRequiredStreamFactory,
   validateResourceAccess,
@@ -21,7 +19,7 @@ import { Application } from 'express'
 
 export default (app: Application) => {
   app.get(
-    '/api/automate/automations/:automationId/runs/:runId/logs',
+    '/api/v1/projects/:projectId/automations/:automationId/runs/:runId/logs',
     corsMiddleware(),
     authMiddlewareCreator([
       validateServerRoleBuilderFactory({
@@ -29,8 +27,7 @@ export default (app: Application) => {
       })({ requiredRole: Roles.Server.Guest }),
       validateScope({ requiredScope: Scopes.Streams.Read }),
       validateRequiredStreamFactory({
-        getStream: getStreamFactory({ db }),
-        getAutomationProject: getAutomationProjectFactory({ db })
+        getStream: getStreamFactory({ db })
       }),
       validateStreamRoleBuilderFactory({ getRoles: getRolesFactory({ db }) })({
         requiredRole: Roles.Stream.Owner
@@ -38,10 +35,14 @@ export default (app: Application) => {
       validateResourceAccess
     ]),
     async (req, res) => {
+      // get the projecDb this way
+      const projectDb = await getProjectDbClient({ projectId: req.params.projectId })
       const automationId = req.params.automationId
       const runId = req.params.runId
 
-      const getAutomationRunWithToken = getAutomationRunWithTokenFactory({ db })
+      const getAutomationRunWithToken = getAutomationRunWithTokenFactory({
+        db: projectDb
+      })
       const run = await getAutomationRunWithToken({
         automationId,
         automationRunId: runId

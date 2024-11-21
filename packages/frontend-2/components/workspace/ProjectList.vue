@@ -11,11 +11,6 @@
           :separator="false"
         />
       </Portal>
-      <BillingAlert
-        v-if="initialQueryResult && !hasValidPlan"
-        :workspace="initialQueryResult.workspaceBySlug"
-        class="mb-4"
-      />
       <WorkspaceHeader
         v-if="workspace"
         :icon="Squares2X2Icon"
@@ -132,7 +127,6 @@ import {
   SettingMenuKeys,
   type AvailableSettingsMenuKeys
 } from '~/lib/settings/helpers/types'
-import { WorkspacePlanStatuses } from '~/lib/common/generated/gql/graphql'
 
 graphql(`
   fragment WorkspaceProjectList_ProjectCollection on ProjectCollection {
@@ -211,9 +205,6 @@ const { query, identifier, onInfiniteLoad } = usePaginatedQuery({
 const projects = computed(() => query.result.value?.workspaceBySlug?.projects)
 const workspaceInvite = computed(() => initialQueryResult.value?.workspaceInvite)
 const workspace = computed(() => initialQueryResult.value?.workspaceBySlug)
-const hasValidPlan = computed(
-  () => workspace.value?.plan?.status === WorkspacePlanStatuses.Valid
-)
 const isWorkspaceGuest = computed(() => workspace.value?.role === Roles.Workspace.Guest)
 const isWorkspaceAdmin = computed(() => workspace.value?.role === Roles.Workspace.Admin)
 const showEmptyState = computed(() => {

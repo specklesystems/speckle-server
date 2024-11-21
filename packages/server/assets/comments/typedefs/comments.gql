@@ -311,6 +311,7 @@ input ReplyCreateInput {
 input CreateCommentReplyInput {
   content: CommentContentInput!
   threadId: String!
+  projectId: String!
 }
 
 """
@@ -331,15 +332,27 @@ input CommentEditInput {
 
 input EditCommentInput {
   commentId: String!
+  projectId: String!
   content: CommentContentInput!
 }
 
+input MarkCommentViewedInput {
+  commentId: String!
+  projectId: String!
+}
+
+input ArchiveCommentInput {
+  commentId: String!
+  projectId: String!
+  archived: Boolean!
+}
+
 type CommentMutations {
-  markViewed(commentId: String!): Boolean!
+  markViewed(input: MarkCommentViewedInput!): Boolean!
   create(input: CreateCommentInput!): Comment!
   reply(input: CreateCommentReplyInput!): Comment!
   edit(input: EditCommentInput!): Comment!
-  archive(commentId: String!, archived: Boolean! = true): Boolean!
+  archive(input: ArchiveCommentInput!): Boolean!
 }
 
 extend type Mutation {

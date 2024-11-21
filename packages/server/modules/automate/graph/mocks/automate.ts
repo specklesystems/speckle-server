@@ -157,7 +157,8 @@ const mocks: SpeckleModuleMocksConfig = FF_AUTOMATE_MODULE_ENABLED
               (i): AutomationRevisionTriggerDefinitionGraphQLReturn => ({
                 triggerType: VersionCreationTriggerType,
                 triggeringId: i.model.id,
-                automationRevisionId: parent.id
+                automationRevisionId: parent.id,
+                projectId: (store.get('Project') as any).id
               })
             )
           },
@@ -231,8 +232,7 @@ const mocks: SpeckleModuleMocksConfig = FF_AUTOMATE_MODULE_ENABLED
 
           //   return rand ? (store.get('LimitedUser') as any) : activeUser
           // }
-          releases: () => store.get('AutomateFunctionReleaseCollection') as any,
-          automationCount: () => faker.number.int({ min: 0, max: 99 })
+          releases: () => store.get('AutomateFunctionReleaseCollection') as any
         },
         AutomateFunctionRelease: {
           function: () => store.get('AutomateFunction') as any

@@ -393,7 +393,11 @@ const isThreadResourceLoaded = computed(() => {
 })
 
 const toggleCommentResolvedStatus = async () => {
-  await archiveComment(props.modelValue.id, !props.modelValue.archived)
+  await archiveComment({
+    commentId: props.modelValue.id,
+    projectId: projectId.value,
+    archived: !props.modelValue.archived
+  })
   mp.track('Comment Action', {
     type: 'action',
     name: 'archive',

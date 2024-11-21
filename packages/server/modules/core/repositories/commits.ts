@@ -667,6 +667,7 @@ export const legacyGetPaginatedStreamCommitsPageFactory =
         { authorName: 'users.name' },
         { authorId: 'users.id' },
         { authorAvatar: 'users.avatar' },
+        { streamId: 'stream_commits.streamId' },
         knex.raw(`?? as "author"`, ['users.id'])
       ])
       .select()
