@@ -49,7 +49,7 @@ if (error.value) {
 const handleSsoLogin = () => {
   mixpanel.track('Workspace SSO Session Error Redirected', {
     // eslint-disable-next-line camelcase
-    workspace_slug: workspaceSlug,
+    workspace_slug: workspaceSlug.value,
     // eslint-disable-next-line camelcase
     provider_name: workspace.value?.ssoProviderName
   })
