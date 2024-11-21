@@ -138,7 +138,6 @@ type AutomateFunction {
     limit: Int
     filter: AutomateFunctionReleasesFilter
   ): AutomateFunctionReleaseCollection!
-  automationCount: Int!
   """
   SourceAppNames values from @speckle/shared. Empty array means - all of them
   """

@@ -449,10 +449,6 @@ export = (FF_AUTOMATE_MODULE_ENABLED
         }
       },
       AutomateFunction: {
-        async automationCount(parent, _args, ctx) {
-          // TODO: Count accross all regions (?)
-          return ctx.loaders.automations.getFunctionAutomationCount.load(parent.id)
-        },
         async releases(parent, args) {
           try {
             // TODO: Replace w/ dataloader batch call, when/if possible

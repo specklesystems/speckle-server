@@ -12,7 +12,6 @@ import {
   GetAutomationTriggerDefinitions,
   GetFullAutomationRevisionMetadata,
   GetFullAutomationRunById,
-  GetFunctionAutomationCounts,
   GetFunctionRun,
   GetLatestAutomationRevision,
   GetLatestAutomationRevisions,
@@ -78,7 +77,7 @@ import {
 import { Nullable, StreamRoles, isNullOrUndefined } from '@speckle/shared'
 import cryptoRandomString from 'crypto-random-string'
 import { Knex } from 'knex'
-import _, { clamp, groupBy, keyBy, pick, reduce } from 'lodash'
+import _, { clamp, groupBy, keyBy, pick } from 'lodash'
 import { SetOptional, SetRequired } from 'type-fest'
 
 const tables = {
@@ -614,38 +613,6 @@ export const getRevisionsFunctionsFactory =
       )
 
     return groupBy(await q, (r) => r.automationRevisionId)
-  }
-
-export const getFunctionAutomationCountsFactory =
-  (deps: { db: Knex }): GetFunctionAutomationCounts =>
-  async (params: { functionIds: string[] }) => {
-    const { functionIds } = params
-    if (!functionIds.length) return {}
-
-    const q = tables
-      .automationRevisionFunctions(deps.db)
-      .select<Array<{ functionId: string; count: string }>>([
-        AutomationRevisionFunctions.col.functionId,
-        knex.raw('count(distinct ??) as "count"', [
-          AutomationRevisions.col.automationId
-        ])
-      ])
-      .innerJoin(
-        AutomationRevisions.name,
-        AutomationRevisions.col.id,
-        AutomationRevisionFunctions.col.automationRevisionId
-      )
-      .whereIn(AutomationRevisionFunctions.col.functionId, functionIds)
-      .groupBy(AutomationRevisionFunctions.col.functionId)
-
-    return reduce(
-      await q,
-      (acc, r) => {
-        acc[r.functionId] = parseInt(r.count)
-        return acc
-      },
-      {} as Record<string, number>
-    )
   }
 
 type GetAutomationRunsArgs = AutomationRunsArgs & {
