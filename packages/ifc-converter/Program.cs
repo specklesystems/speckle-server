@@ -26,7 +26,8 @@ rootCommand.SetHandler(
   async (filePath, _, streamId, _, commitMessage, _, modelId, _) =>
   {
     var token = Environment.GetEnvironmentVariable("USER_TOKEN").NotNull("USER_TOKEN is missing");
-    await Import.Ifc(new Uri("asdf").ToString(), filePath, streamId, modelId, commitMessage, token);
+    var url = Environment.GetEnvironmentVariable("SPECKLE_SERVER_URL") ?? "http://127.0.0.1:3000";
+    await Import.Ifc(url, filePath, streamId, modelId, commitMessage, token);
   },
   filePathArgument,
   userIdArgument,
