@@ -1255,7 +1255,8 @@ const createAppToken = createAppTokenFactory({
             status: mapGqlStatusToDbStatus(AutomateRunStatus.Succeeded),
             statusMessage: null,
             results: null,
-            contextView: null
+            contextView: null,
+            projectId: testUserStream.id
           }
 
           await expect(report(params)).to.eventually.be.rejectedWith(
@@ -1272,7 +1273,8 @@ const createAppToken = createAppTokenFactory({
             status: mapGqlStatusToDbStatus(AutomateRunStatus.Pending),
             statusMessage: null,
             results: null,
-            contextView: null
+            contextView: null,
+            projectId: testUserStream.id
           }
 
           await expect(report(params)).to.eventually.be.rejectedWith(
@@ -1314,7 +1316,8 @@ const createAppToken = createAppTokenFactory({
               status: mapGqlStatusToDbStatus(AutomateRunStatus.Succeeded),
               statusMessage: null,
               results: val as unknown as Automate.AutomateTypes.ResultsSchema,
-              contextView: null
+              contextView: null,
+              projectId: testUserStream.id
             }
 
             await expect(report(params)).to.eventually.be.rejectedWith(
@@ -1332,7 +1335,8 @@ const createAppToken = createAppTokenFactory({
             status: mapGqlStatusToDbStatus(AutomateRunStatus.Succeeded),
             statusMessage: null,
             results: null,
-            contextView: 'invalid-url'
+            contextView: 'invalid-url',
+            projectId: testUserStream.id
           }
 
           await expect(report(params)).to.eventually.be.rejectedWith(
@@ -1351,7 +1355,8 @@ const createAppToken = createAppTokenFactory({
             status: mapGqlStatusToDbStatus(AutomateRunStatus.Succeeded),
             statusMessage: null,
             results: null,
-            contextView
+            contextView,
+            projectId: testUserStream.id
           }
 
           await expect(report(params)).to.eventually.be.true
