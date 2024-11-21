@@ -15,6 +15,7 @@ export class HybridCameraController extends CameraController {
   public constructor(viewer: IViewer) {
     super(viewer)
     document.addEventListener('keydown', this.onKeyDown.bind(this))
+    document.addEventListener('keyup', this.onKeyUp.bind(this))
   }
 
   protected onKeyDown(event: KeyboardEvent) {
