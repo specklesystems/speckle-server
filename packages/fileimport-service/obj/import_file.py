@@ -57,7 +57,7 @@ def convert_material(obj_mat):
 
 
 def import_obj():
-    file_path, _, stream_id, branch_name, commit_message = sys.argv[1:]
+    file_path, _, stream_id, branch_name, commit_message, _, _, _ = sys.argv[1:]
     LOG.info("ImportOBJ argv[1:]:%s", sys.argv[1:])
 
     # Parse input
