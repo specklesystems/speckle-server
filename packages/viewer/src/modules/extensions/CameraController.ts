@@ -295,8 +295,8 @@ export class CameraController extends Extension implements SpeckleCamera {
     this.emit(CameraEvent.Dynamic)
   }
 
-  public onEarlyUpdate() {
-    const changed = this._activeControls.update()
+  public onEarlyUpdate(_delta?: number) {
+    const changed = this._activeControls.update(_delta)
     if (changed !== this._lastCameraChanged) {
       this.emit(changed ? CameraEvent.Dynamic : CameraEvent.Stationary)
     }

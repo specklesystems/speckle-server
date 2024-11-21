@@ -204,7 +204,7 @@ export class Viewer extends EventEmitter implements IViewer {
   }
 
   private update() {
-    const delta = this.clock.getDelta()
+    const delta = this.clock.getDelta() * 1000 // turn to miliseconds
     const extensions = Object.values(this.extensions)
     extensions.forEach((ext: Extension) => {
       ext.onEarlyUpdate(delta)
