@@ -7,6 +7,7 @@ RUN dotnet publish ifc-converter.csproj -c Release -o output/
 
 
 FROM mcr.microsoft.com/dotnet/runtime:8.0-noble AS runtime
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 WORKDIR /speckle-server
 
@@ -16,15 +17,15 @@ ENV TINI_VERSION=${TINI_VERSION}
 ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /usr/bin/tini
 RUN chmod +x /usr/bin/tini
 
-RUN apt-get update \
+RUN apt-get update -y \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y \
-    --no-install-recommends \
+     --no-install-recommends \
      curl=8.5.0-2ubuntu10.5 \
     && curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y \
-    --no-install-recommends \
+     --no-install-recommends \
      nodejs=18.20.5-1nodesource1 \
-    && npm install -g yarn \
+    && npm install -g yarn@1.22.22 \
     && DEBIAN_FRONTEND=noninteractive apt-get remove curl -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
@@ -46,9 +47,9 @@ COPY packages/fileimport-service packages/fileimport-service/
 RUN yarn workspaces foreach -W run build
 
 # Install python virtual env and python dependencies
-RUN apt-get update \
+RUN apt-get update -y \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y \
-    --no-install-recommends \
+     --no-install-recommends \
      python3.12=3.12.3-1ubuntu0.3 \
      python3-pip=24.0+dfsg-1ubuntu1.1 \
     && apt-get clean \
