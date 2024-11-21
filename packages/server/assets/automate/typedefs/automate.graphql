@@ -216,6 +216,7 @@ input AutomateFunctionsFilter {
 }
 
 input AutomateFunctionRunStatusReportInput {
+  projectId: String!
   functionRunId: String!
   status: AutomateRunStatus!
   statusMessage: String

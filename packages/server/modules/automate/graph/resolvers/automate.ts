@@ -813,16 +813,17 @@ export = (FF_AUTOMATE_MODULE_ENABLED
       },
       Mutation: {
         async automateFunctionRunStatusReport(_parent, { input }) {
-          // TODO: This is NOT meant to use globalDb, but we don't have a way to find the project id right now.
+          const projectDb = await getProjectDbClient({ projectId: input.projectId })
+
           const deps: ReportFunctionRunStatusDeps = {
             getAutomationFunctionRunRecord: getFunctionRunFactory({
-              db: globalDb
+              db: projectDb
             }),
             upsertAutomationFunctionRunRecord: upsertAutomationFunctionRunFactory({
-              db: globalDb
+              db: projectDb
             }),
             automationRunUpdater: updateAutomationRunFactory({
-              db: globalDb
+              db: projectDb
             }),
             runEventEmit: AutomateRunsEmitter.emit
           }
