@@ -21,8 +21,9 @@ RUN apt-get update \
     --no-install-recommends \
      curl=8.5.0-2ubuntu10.5 \
     && curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
-    && DEBIAN_FRONTEND=noninteractive apt-get install nodejs -y \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y \
     --no-install-recommends \
+     nodejs=18.20.5-1nodesource1 \
     && npm install -g yarn \
     && DEBIAN_FRONTEND=noninteractive apt-get remove curl -y \
     && apt-get clean \
