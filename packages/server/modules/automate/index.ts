@@ -215,9 +215,10 @@ const initializeEventListeners = () => {
     ),
     AutomateRunsEmitter.listen(
       AutomateRunsEvents.StatusUpdated,
-      async ({ run, functionRun, automationId }) => {
-        // TODO: Link run to project id somehow
-        const triggers = await getAutomationRunFullTriggersFactory({ db: globalDb })({
+      async ({ run, functionRun, automationId, projectId }) => {
+        const projectDb = await getProjectDbClient({ projectId })
+
+        const triggers = await getAutomationRunFullTriggersFactory({ db: projectDb })({
           automationRunId: run.id
         })
 
@@ -253,15 +254,15 @@ const initializeEventListeners = () => {
     // Mixpanel events
     AutomateRunsEmitter.listen(
       AutomateRunsEvents.StatusUpdated,
-      async ({ run, functionRun, automationId }) => {
-        // TODO: Most things not actually global db here
+      async ({ run, functionRun, automationId, projectId }) => {
+        const projectDb = await getProjectDbClient({ projectId })
 
         if (!isFinished(run.status)) return
 
         const automationWithRevision = await getFullAutomationRevisionMetadataFactory({
-          db: globalDb
+          db: projectDb
         })(run.automationRevisionId)
-        const fullRun = await getFullAutomationRunByIdFactory({ db: globalDb })(run.id)
+        const fullRun = await getFullAutomationRunByIdFactory({ db: projectDb })(run.id)
         if (!fullRun) throw new Error('This should never happen')
 
         if (!automationWithRevision) {
@@ -276,11 +277,11 @@ const initializeEventListeners = () => {
 
         const userEmail = await getUserEmailFromAutomationRunFactory({
           getFullAutomationRevisionMetadata: getFullAutomationRevisionMetadataFactory({
-            db: globalDb
+            db: projectDb
           }),
-          getFullAutomationRunById: getFullAutomationRunByIdFactory({ db: globalDb }),
-          getCommit: getCommitFactory({ db: globalDb }),
-          getUser: legacyGetUserFactory({ db: globalDb })
+          getFullAutomationRunById: getFullAutomationRunByIdFactory({ db: projectDb }),
+          getCommit: getCommitFactory({ db: projectDb }),
+          getUser: legacyGetUserFactory({ db: projectDb })
         })(fullRun, automationWithRevision.projectId)
 
         const mp = mixpanel({ userEmail, req: undefined })
@@ -298,19 +299,27 @@ const initializeEventListeners = () => {
     ),
     AutomateRunsEmitter.listen(
       AutomateRunsEvents.Created,
-      async ({ automation, run: automationRun, source }) => {
-        // TODO: Most things not actually global db here
+      async ({ automation, run: automationRun, source, manifests }) => {
+        const manifest = manifests.at(0)
+        if (!manifest || !isVersionCreatedTriggerManifest(manifest)) {
+          automateLogger.error('Unexpected run trigger manifest type', {
+            manifest
+          })
+          return
+        }
+        const projectDb = await getProjectDbClient({ projectId: manifest.projectId })
+
         // all triggers, that are automatic result of an action are in a need to be tracked
         switch (source) {
           case RunTriggerSource.Automatic: {
             const userEmail = await getUserEmailFromAutomationRunFactory({
               getFullAutomationRevisionMetadata:
-                getFullAutomationRevisionMetadataFactory({ db: globalDb }),
+                getFullAutomationRevisionMetadataFactory({ db: projectDb }),
               getFullAutomationRunById: getFullAutomationRunByIdFactory({
-                db: globalDb
+                db: projectDb
               }),
-              getCommit: getCommitFactory({ db: globalDb }),
-              getUser: legacyGetUserFactory({ db: globalDb })
+              getCommit: getCommitFactory({ db: projectDb }),
+              getUser: legacyGetUserFactory({ db: projectDb })
             })(automationRun, automation.projectId)
             const mp = mixpanel({ userEmail, req: undefined })
             await mp.track('Automation Run Triggered', {
