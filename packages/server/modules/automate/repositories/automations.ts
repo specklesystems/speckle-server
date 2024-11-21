@@ -631,7 +631,11 @@ const getAutomationRunsTotalCountBaseQueryFactory =
         AutomationRevisions.col.id,
         AutomationRuns.col.automationRevisionId
       )
-      .innerJoin(Automations.name, Automations.col.id, args.automationId)
+      .innerJoin(
+        Automations.name,
+        Automations.col.id,
+        AutomationRevisions.col.automationId
+      )
       .where(AutomationRevisions.col.automationId, args.automationId)
 
     if (args.revisionId?.length) {
@@ -664,7 +668,7 @@ export const getAutomationRunsItemsFactory =
 
     // Attach trigger & function runs
     q.select([
-      Automations.col.projectId,
+      knex.raw(`(array_agg(??))[1] as "projectId"`, [Automations.col.projectId]),
       AutomationRuns.groupArray('runs'),
       AutomationRunTriggers.groupArray('triggers'),
       AutomationFunctionRuns.groupArray('functionRuns'),
