@@ -19,7 +19,8 @@ export default defineNuxtRouteMiddleware(async (to) => {
       variables: { slug: workspaceSlug },
       context: {
         skipLoggingErrors: true
-      }
+      },
+      fetchPolicy: 'network-only'
     })
     .catch(convertThrowIntoFetchResult)
 
@@ -45,7 +46,28 @@ export default defineNuxtRouteMiddleware(async (to) => {
   }
 
   if (errors?.length) {
-    const errMsg = getFirstErrorMessage(errors)
+    // Check for SSO session error
+    const ssoSessionError = errors.find(
+      (e) => e.extensions?.['code'] === 'SSO_SESSION_MISSING_OR_EXPIRED_ERROR'
+    )
+
+    if (ssoSessionError) {
+      // Redirect to the SSO error page
+      return navigateTo(`/workspaces/${workspaceSlug}/sso/session-error`)
+    }
+
+    const firstErrorWithCode = errors.find((e) => e.extensions?.['code'])
+    if (firstErrorWithCode) {
+      const errorCode = firstErrorWithCode.extensions['code']
+      return abortNavigation(
+        createError({
+          statusCode: 401,
+          message: `Error: ${errorCode}. Please check your access or contact support.`
+        })
+      )
+    }
+
+    const errMsg = getFirstErrorMessage(errors) || 'An unexpected error occurred.'
     return abortNavigation(
       createError({
         statusCode: 500,
