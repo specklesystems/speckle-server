@@ -35,12 +35,8 @@
       <!-- Status message -->
       <div class="space-y-1">
         <div class="text-xs font-medium text-foreground-2">Status</div>
-        <div
-          v-for="(fragment, i) in statusMessageFragments"
-          :key="`status-fragment-${i}`"
-          class="text-xs text-foreground-2 italic"
-        >
-          {{ fragment }}
+        <div class="text-xs text-foreground-2 italic whitespace-pre-wrap">
+          {{ statusMessage }}
         </div>
       </div>
 
@@ -160,7 +156,8 @@ const hasValidContextView = computed(() => {
   const currentPath = route.fullPath
   return !doesRouteFitTarget(ctxView, currentPath)
 })
-const statusMessageFragments = computed(() => {
+
+const statusMessage = computed(() => {
   const isFinished = ![
     AutomateRunStatus.Initializing,
     AutomateRunStatus.Running,
@@ -168,7 +165,7 @@ const statusMessageFragments = computed(() => {
   ].includes(props.functionRun.status)
 
   return isFinished
-    ? (props.functionRun.statusMessage ?? 'No status message').split('\n')
-    : [`Function is ${props.functionRun.status.toLowerCase()}.`]
+    ? props.functionRun.statusMessage ?? 'No status message'
+    : `Function is ${props.functionRun.status.toLowerCase()}.`
 })
 </script>
