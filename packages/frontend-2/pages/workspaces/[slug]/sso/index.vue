@@ -72,7 +72,7 @@ const mixpanel = useMixpanel()
 
 const workspaceSlug = computed(() => route.params.slug as string)
 const { isSsoAuthenticated } = useWorkspaceSsoStatus({
-  workspaceSlug: computed(() => workspaceSlug.value)
+  workspaceSlug
 })
 
 const { result } = useQuery(authRegisterPanelQuery, {
