@@ -141,7 +141,7 @@ export function useWorkspaceSsoDelete() {
   const deleteSsoProvider = async (workspaceSlug: string) => {
     try {
       const res = await fetch(
-        new URL(`/api/v1/workspaces/${workspaceSlug}/sso`, apiOrigin),
+        new URL(`/api/v1/workspaces/${workspaceSlug}/sso/oidc`, apiOrigin),
         {
           method: 'DELETE',
           credentials: 'include'
