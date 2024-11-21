@@ -133,11 +133,9 @@ async function doTask(mainDb, regionName, taskDb, task) {
         [
           '/speckle-server/packages/ifc-converter/ifc-converter.dll',
           TMP_FILE_PATH,
-          info.userId,
+          TMP_RESULTS_PATH,
           info.streamId,
-          info.branchName,
           `File upload: ${info.fileName}`,
-          info.id,
           existingBranch?.id,
           regionName
         ],
