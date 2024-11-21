@@ -144,27 +144,6 @@ async function doTask(mainDb, regionName, taskDb, task) {
         },
         TIME_LIMIT
       )
-      /*await runProcessWithTimeout(
-        taskLogger,
-        process.env['NODE_BINARY_PATH'] || 'node',
-        [
-          '--no-experimental-fetch',
-          './ifc/import_file.js',
-          TMP_FILE_PATH,
-          TMP_RESULTS_PATH,
-          info.userId,
-          info.streamId,
-          info.branchName,
-          `File upload: ${info.fileName}`,
-          info.id,
-          existingBranch?.id,
-          regionName
-        ],
-        {
-          USER_TOKEN: tempUserToken
-        },
-        TIME_LIMIT
-      )*/
     } else if (info.fileType.toLowerCase() === 'stl') {
       await runProcessWithTimeout(
         taskLogger,
