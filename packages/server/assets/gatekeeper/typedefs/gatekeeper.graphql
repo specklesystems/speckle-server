@@ -7,8 +7,8 @@ extend type WorkspaceMutations {
 }
 
 enum PaidWorkspacePlans {
-  team
-  pro
+  starter
+  plus
   business
 }
 
