@@ -441,7 +441,8 @@ const createAppToken = createAppTokenFactory({
           manifest: <VersionCreatedTriggerManifest>{
             versionId: version.id,
             modelId: trigger.triggeringId,
-            triggerType: trigger.triggerType
+            triggerType: trigger.triggerType,
+            projectId: project.id
           },
           source: RunTriggerSource.Manual
         })
@@ -541,7 +542,8 @@ const createAppToken = createAppTokenFactory({
           manifest: <VersionCreatedTriggerManifest>{
             versionId: version.id,
             modelId: trigger.triggeringId,
-            triggerType: trigger.triggerType
+            triggerType: trigger.triggerType,
+            projectId: project.id
           },
           source: RunTriggerSource.Manual
         })
