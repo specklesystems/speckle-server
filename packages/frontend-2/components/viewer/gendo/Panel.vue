@@ -29,9 +29,12 @@
             renders.
           </div>
           <FormButton
-            v-if="limits.used < limits.limit"
+            v-if="limits.used < (limits?.limit || 0)"
             :disabled="
-              !prompt || isLoading || timeOutWait || limits.used >= limits.limit
+              !prompt ||
+              isLoading ||
+              timeOutWait ||
+              (limits?.used || 0) >= (limits?.limit || 0)
             "
             @click="enqueMagic()"
           >
@@ -58,7 +61,7 @@
           </CommonTextLink>
         </span>
         <div>
-          <span class="text-foreground-2 text-sm">Learn more about</span>
+          <span class="text-foreground-2 text-sm">More about</span>
           <CommonTextLink
             text
             link
@@ -104,7 +107,7 @@ const timeOutWait = ref(false)
 const { result, refetch } = useQuery(activeUserGendoLimits)
 
 const limits = computed(() => {
-  return result?.value?.activeUser.gendoAICredits
+  return result?.value?.activeUser?.gendoAICredits
 })
 
 const enqueMagic = async () => {

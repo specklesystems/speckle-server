@@ -664,21 +664,6 @@
                 }
               }
             },
-            "keyResponse": {
-              "type": "object",
-              "properties": {
-                "secretName": {
-                  "type": "string",
-                  "description": "The name of the Kubernetes Secret containing the Gendo AI key response. If left blank, will default to the `secretName` parameter.",
-                  "default": ""
-                },
-                "secretKey": {
-                  "type": "string",
-                  "description": "The key within the Kubernetes Secret holding the Gendo AI key response as its value.",
-                  "default": "gendoai_key_response"
-                }
-              }
-            },
             "ratelimiting": {
               "type": "object",
               "properties": {

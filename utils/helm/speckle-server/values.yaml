@@ -475,11 +475,6 @@ server:
       secretName: ''
       ## @param server.gendoAI.key.secretKey The key within the Kubernetes Secret holding the Gendo AI key as its value.
       secretKey: 'gendoai_key'
-    keyResponse:
-      ## @param server.gendoAI.keyResponse.secretName The name of the Kubernetes Secret containing the Gendo AI key response. If left blank, will default to the `secretName` parameter.
-      secretName: ''
-      ## @param server.gendoAI.keyResponse.secretKey The key within the Kubernetes Secret holding the Gendo AI key response as its value.
-      secretKey: 'gendoai_key_response'
     ratelimiting:
       ## @param server.gendoAI.ratelimiting.renderRequest The number of render requests allowed per period
       renderRequest: 1

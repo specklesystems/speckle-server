@@ -13,6 +13,17 @@ import {
 } from '@/modules/blobstorage/repositories'
 import { publish } from '@/modules/shared/utils/subscriptions'
 import { getProjectDbClient } from '@/modules/multiregion/dbSelector'
+import { createHmac, timingSafeEqual } from 'node:crypto'
+import { getGendoAIKey } from '@/modules/shared/helpers/envHelper'
+//Validate payload
+// function validatePayload(req, res, next) {
+//   if (req.get(sigHeaderName)) {
+//     //Extract Signature header
+//
+//   }
+
+//   return next();
+// }
 
 export default function (app: express.Express) {
   // const responseToken = getGendoAIResponseKey()
@@ -20,13 +31,20 @@ export default function (app: express.Express) {
   // Gendo api calls hit these endpoints w/ the results
   app.options('/api/thirdparty/gendo/:projectId', corsMiddleware())
   app.post('/api/thirdparty/gendo/:projectId', corsMiddleware(), async (req, res) => {
-    // if (req.headers['x-gendo-authorization'] !== responseToken) {
-    //   return res.status(401).send('Speckle says you are not authorized 😠')
-    // }
+    const sig = Buffer.from(req.get('x-signature-sha256') || '', 'utf8')
 
-    const responseImage = req.body.imageBase64
-    // const status = req.body.status
-    const gendoGenerationId = req.body.generationId
+    //     //Calculate HMAC
+    const hmac = createHmac('sha256', getGendoAIKey())
+    const digest = Buffer.from(hmac.update(req.body).digest('base64'), 'utf-8')
+
+    //     //Compare HMACs
+    if (sig.length !== digest.length || !timingSafeEqual(digest, sig)) {
+      return res.status(401).send('Speckle says your webhook signature is not valid 😠')
+    }
+    const payload = JSON.parse(req.body)
+    const responseImage = payload.imageBase64
+    const status = payload.status
+    const gendoGenerationId = payload.generationId
 
     const projectDb = await getProjectDbClient({ projectId: req.params.projectId })
 
@@ -43,7 +61,8 @@ export default function (app: express.Express) {
 
     await updateRenderRequest({
       gendoGenerationId,
-      responseImage
+      responseImage,
+      status
     })
 
     res.status(200).send('Speckle says thank you 💖')

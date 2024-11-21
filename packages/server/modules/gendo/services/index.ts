@@ -85,8 +85,6 @@ export const updateRenderRequestFactory =
       )
     }
 
-    let status = 'IN_QUEUE'
-
     if (input.responseImage) {
       const responseImageBuffer = Buffer.from(
         input.responseImage.replace(/^data:image\/\w+;base64,/, ''),
@@ -105,11 +103,10 @@ export const updateRenderRequestFactory =
       )
 
       input.responseImage = blobId
-      status = 'COMPLETED'
     }
 
     const record = await deps.updateRenderRecord({
-      input: { ...input, updatedAt: new Date(), status },
+      input: { ...input, updatedAt: new Date() },
       id: baseRequest.id
     })
     deps.publish(ProjectSubscriptions.ProjectVersionGendoAIRenderUpdated, {

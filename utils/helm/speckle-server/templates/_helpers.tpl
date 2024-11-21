@@ -731,12 +731,6 @@ Generate the environment variables for Speckle server and Speckle objects deploy
       name: {{ default .Values.secretName .Values.server.gendoAI.key.secretName }}
       key: {{ .Values.server.gendoAI.key.secretKey }}
 
-- name: GENDOAI_KEY_RESPONSE
-  valueFrom:
-    secretKeyRef:
-      name: {{ default .Values.secretName .Values.server.gendoAI.keyResponse.secretName }}
-      key: {{ .Values.server.gendoAI.keyResponse.secretKey }}
-
 - name: GENDOAI_API_ENDPOINT
   value: {{ .Values.server.gendoAI.apiUrl | quote }}
 

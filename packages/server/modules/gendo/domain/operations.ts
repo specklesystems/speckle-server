@@ -33,6 +33,7 @@ export type CreateRenderRequest = (
 
 export type UpdateRenderRequest = (input: {
   responseImage: string
+  status: string
   gendoGenerationId: string
 }) => Promise<GendoAIRender>
 

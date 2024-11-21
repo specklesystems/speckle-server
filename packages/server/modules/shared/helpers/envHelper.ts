@@ -354,10 +354,6 @@ export function getGendoAICreditLimit() {
   return getIntFromEnv('GENDOAI_CREDIT_LIMIT')
 }
 
-export function getGendoAIResponseKey() {
-  return getStringFromEnv('GENDOAI_KEY_RESPONSE')
-}
-
 export function getGendoAiApiEndpoint() {
   return getStringFromEnv('GENDOAI_API_ENDPOINT')
 }

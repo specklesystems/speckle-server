@@ -36,14 +36,9 @@ import {
   getGendoAiApiEndpoint,
   getGendoAIKey,
   getGendoAICreditLimit,
-  getServerOrigin
+  getServerOrigin,
+  getFeatureFlags
 } from '@/modules/shared/helpers/envHelper'
-
-const requestNewImageGeneration = requestNewImageGenerationFactory({
-  endpoint: getGendoAiApiEndpoint(),
-  serverOrigin: getServerOrigin(),
-  token: getGendoAIKey()
-})
 
 const upsertUserCredits = upsertUserCreditsFactory({ db })
 const getUserGendoAiCredits = getUserGendoAiCreditsFactory({
@@ -51,130 +46,142 @@ const getUserGendoAiCredits = getUserGendoAiCreditsFactory({
   upsertUserCredits
 })
 
-export = {
-  Version: {
-    async gendoAIRenders(parent) {
-      const projectDb = await getProjectDbClient({ projectId: parent.streamId })
-      const items = await getLatestVersionRenderRequestsFactory({ db: projectDb })({
-        versionId: parent.id
-      })
-      return {
-        totalCount: items.length,
-        items
-      }
-    },
-    async gendoAIRender(parent, args) {
-      const projectDb = await getProjectDbClient({ projectId: parent.streamId })
-      const item = await getVersionRenderRequestFactory({ db: projectDb })({
-        versionId: parent.id,
-        id: args.id
-      })
+const { FF_GENDOAI_MODULE_ENABLED } = getFeatureFlags()
 
-      return item
-    }
-  },
-  GendoAIRender: {
-    async user(parent, __args, ctx) {
-      return await ctx.loaders.users.getUser.load(parent.userId)
-    }
-  },
-  VersionMutations: {
-    async requestGendoAIRender(__parent, args, ctx) {
-      await authorizeResolver(
-        ctx.userId,
-        args.input.projectId,
-        Roles.Stream.Reviewer,
-        ctx.resourceAccessRules
-      )
+export = FF_GENDOAI_MODULE_ENABLED
+  ? ({
+      Version: {
+        async gendoAIRenders(parent) {
+          const projectDb = await getProjectDbClient({ projectId: parent.streamId })
+          const items = await getLatestVersionRenderRequestsFactory({ db: projectDb })({
+            versionId: parent.id
+          })
+          return {
+            totalCount: items.length,
+            items
+          }
+        },
+        async gendoAIRender(parent, args) {
+          const projectDb = await getProjectDbClient({ projectId: parent.streamId })
+          const item = await getVersionRenderRequestFactory({ db: projectDb })({
+            versionId: parent.id,
+            id: args.id
+          })
 
-      const rateLimitResult = await getRateLimitResult(
-        'GENDO_AI_RENDER_REQUEST',
-        ctx.userId as string
-      )
-      if (isRateLimitBreached(rateLimitResult)) {
-        throw new RateLimitError(rateLimitResult)
-      }
-
-      const userId = ctx.userId!
-
-      const projectDb = await getProjectDbClient({ projectId: args.input.projectId })
-
-      await useUserGendoAiCreditsFactory({
-        getUserGendoAiCredits,
-        upsertUserCredits,
-        maxCredits: getGendoAICreditLimit()
-      })({ userId, credits: 1 })
-
-      const createRenderRequest = createRenderRequestFactory({
-        uploadFileStream: uploadFileStreamFactory({
-          storeFileStream,
-          upsertBlob: upsertBlobFactory({ db: projectDb }),
-          updateBlob: updateBlobFactory({ db: projectDb })
-        }),
-        requestNewImageGeneration,
-        storeRender: storeRenderFactory({ db: projectDb }),
-        publish
-      })
-
-      await createRenderRequest({
-        ...args.input,
-        userId
-      })
-
-      return true
-    }
-  },
-  User: {
-    gendoAICredits: async (_parent, _args, ctx) => {
-      const userCredits = await getUserGendoAiCredits({ userId: ctx.userId! })
-      return {
-        limit: getGendoAICreditLimit(),
-        ...userCredits
-      }
-    }
-  },
-  Subscription: {
-    projectVersionGendoAIRenderCreated: {
-      subscribe: filteredSubscribe(
-        ProjectSubscriptions.ProjectVersionGendoAIRenderCreated,
-        async (payload, args, ctx) => {
-          if (
-            args.id !== payload.projectVersionGendoAIRenderCreated.projectId ||
-            args.versionId !== payload.projectVersionGendoAIRenderCreated.versionId
-          )
-            return false
-
+          return item
+        }
+      },
+      GendoAIRender: {
+        async user(parent, __args, ctx) {
+          return await ctx.loaders.users.getUser.load(parent.userId)
+        }
+      },
+      VersionMutations: {
+        async requestGendoAIRender(__parent, args, ctx) {
           await authorizeResolver(
             ctx.userId,
-            args.id,
+            args.input.projectId,
             Roles.Stream.Reviewer,
             ctx.resourceAccessRules
           )
 
+          const rateLimitResult = await getRateLimitResult(
+            'GENDO_AI_RENDER_REQUEST',
+            ctx.userId as string
+          )
+          if (isRateLimitBreached(rateLimitResult)) {
+            throw new RateLimitError(rateLimitResult)
+          }
+
+          const userId = ctx.userId!
+
+          const projectDb = await getProjectDbClient({
+            projectId: args.input.projectId
+          })
+
+          await useUserGendoAiCreditsFactory({
+            getUserGendoAiCredits,
+            upsertUserCredits,
+            maxCredits: getGendoAICreditLimit()
+          })({ userId, credits: 1 })
+
+          const requestNewImageGeneration = requestNewImageGenerationFactory({
+            endpoint: getGendoAiApiEndpoint(),
+            serverOrigin: getServerOrigin(),
+            token: getGendoAIKey()
+          })
+
+          const createRenderRequest = createRenderRequestFactory({
+            uploadFileStream: uploadFileStreamFactory({
+              storeFileStream,
+              upsertBlob: upsertBlobFactory({ db: projectDb }),
+              updateBlob: updateBlobFactory({ db: projectDb })
+            }),
+            requestNewImageGeneration,
+            storeRender: storeRenderFactory({ db: projectDb }),
+            publish
+          })
+
+          await createRenderRequest({
+            ...args.input,
+            userId
+          })
+
           return true
         }
-      )
-    },
-    projectVersionGendoAIRenderUpdated: {
-      subscribe: filteredSubscribe(
-        ProjectSubscriptions.ProjectVersionGendoAIRenderUpdated,
-        async (payload, args, ctx) => {
-          if (
-            args.id !== payload.projectVersionGendoAIRenderUpdated.projectId ||
-            args.versionId !== payload.projectVersionGendoAIRenderUpdated.versionId
-          )
-            return false
-
-          await authorizeResolver(
-            ctx.userId,
-            args.id,
-            Roles.Stream.Reviewer,
-            ctx.resourceAccessRules
-          )
-
-          return true
+      },
+      User: {
+        gendoAICredits: async (_parent, _args, ctx) => {
+          const userCredits = await getUserGendoAiCredits({ userId: ctx.userId! })
+          return {
+            limit: getGendoAICreditLimit(),
+            ...userCredits
+          }
         }
-      )
-    }
-  }
-} as Resolvers
+      },
+      Subscription: {
+        projectVersionGendoAIRenderCreated: {
+          subscribe: filteredSubscribe(
+            ProjectSubscriptions.ProjectVersionGendoAIRenderCreated,
+            async (payload, args, ctx) => {
+              if (
+                args.id !== payload.projectVersionGendoAIRenderCreated.projectId ||
+                args.versionId !== payload.projectVersionGendoAIRenderCreated.versionId
+              )
+                return false
+
+              await authorizeResolver(
+                ctx.userId,
+                args.id,
+                Roles.Stream.Reviewer,
+                ctx.resourceAccessRules
+              )
+
+              return true
+            }
+          )
+        },
+        projectVersionGendoAIRenderUpdated: {
+          subscribe: filteredSubscribe(
+            ProjectSubscriptions.ProjectVersionGendoAIRenderUpdated,
+            async (payload, args, ctx) => {
+              if (
+                args.id !== payload.projectVersionGendoAIRenderUpdated.projectId ||
+                args.versionId !== payload.projectVersionGendoAIRenderUpdated.versionId
+              )
+                return false
+
+              await authorizeResolver(
+                ctx.userId,
+                args.id,
+                Roles.Stream.Reviewer,
+                ctx.resourceAccessRules
+              )
+
+              return true
+            }
+          )
+        }
+      }
+    } as Resolvers)
+  : {}
