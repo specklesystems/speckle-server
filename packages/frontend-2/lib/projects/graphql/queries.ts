@@ -33,7 +33,6 @@ export const projectsDashboardQuery = graphql(`
           ...ProjectDashboardItem
         }
       }
-      ...ProjectsInviteBanners
       ...ProjectsDashboardHeaderProjects_User
     }
   }
