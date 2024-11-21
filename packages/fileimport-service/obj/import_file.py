@@ -37,7 +37,6 @@ structlog.configure(
     cache_logger_on_first_use=True,
 )
 LOG = structlog.get_logger()
-TMP_RESULTS_PATH = "/tmp/import_result.json"
 DEFAULT_BRANCH = "uploads"
 
 
@@ -57,7 +56,17 @@ def convert_material(obj_mat):
 
 
 def import_obj():
-    file_path, _, stream_id, branch_name, commit_message, _, _, _ = sys.argv[1:]
+    (
+        file_path,
+        tmp_results_path,
+        _,
+        stream_id,
+        branch_name,
+        commit_message,
+        _,
+        _,
+        _,
+    ) = sys.argv[1:]
     LOG.info("ImportOBJ argv[1:]:%s", sys.argv[1:])
 
     # Parse input
@@ -149,14 +158,14 @@ def import_obj():
         source_application="OBJ",
     )
 
-    return commit_id
+    return commit_id, tmp_results_path
 
 
 if __name__ == "__main__":
     from pathlib import Path
 
     try:
-        commit_id = import_obj()
+        commit_id, tmp_results_path = import_obj()
         if not commit_id:
             raise Exception("Can't create commit")
         if isinstance(commit_id, Exception):
@@ -166,4 +175,4 @@ if __name__ == "__main__":
         LOG.exception(ex)
         results = {"success": False, "error": str(ex)}
 
-    Path(TMP_RESULTS_PATH).write_text(json.dumps(results))
+    Path(tmp_results_path).write_text(json.dumps(results))

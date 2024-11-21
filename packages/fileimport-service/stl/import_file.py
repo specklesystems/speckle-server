@@ -7,12 +7,21 @@ from specklepy.api import operations
 
 import sys, os
 
-TMP_RESULTS_PATH = "/tmp/import_result.json"
 DEFAULT_BRANCH = "uploads"
 
 
 def import_stl():
-    file_path, _, stream_id, branch_name, commit_message, _, _, _ = sys.argv[1:]
+    (
+        file_path,
+        tmp_results_path,
+        _,
+        stream_id,
+        branch_name,
+        commit_message,
+        _,
+        _,
+        _,
+    ) = sys.argv[1:]
     print(f"ImportSTL argv[1:]: {sys.argv[1:]}")
 
     # Parse input
@@ -61,14 +70,14 @@ def import_stl():
         source_application="STL",
     )
 
-    return commit_id
+    return commit_id, tmp_results_path
 
 
 if __name__ == "__main__":
     from pathlib import Path
 
     try:
-        commit_id = import_stl()
+        commit_id, tmp_results_path = import_stl()
         if isinstance(commit_id, Exception):
             raise commit_id
         results = {"success": True, "commitId": commit_id}
@@ -77,4 +86,4 @@ if __name__ == "__main__":
         print(ex)
 
     print(results)
-    Path(TMP_RESULTS_PATH).write_text(json.dumps(results))
+    Path(tmp_results_path).write_text(json.dumps(results))

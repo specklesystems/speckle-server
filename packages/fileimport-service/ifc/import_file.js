@@ -1,8 +1,6 @@
 const fs = require('fs')
 const { logger: parentLogger } = require('../observability/logging')
 
-const TMP_RESULTS_PATH = '/tmp/import_result.json'
-
 const { parseAndCreateCommitFactory } = require('./index')
 const Observability = require('@speckle/shared/dist/commonjs/observability/index.js')
 const getDbClients = require('../knex')
@@ -12,6 +10,7 @@ async function main() {
 
   const [
     filePath,
+    tmpResultsPath,
     userId,
     streamId,
     branchName,
@@ -61,7 +60,7 @@ async function main() {
     }
   }
 
-  fs.writeFileSync(TMP_RESULTS_PATH, JSON.stringify(output))
+  fs.writeFileSync(tmpResultsPath, JSON.stringify(output))
 
   process.exit(0)
 }
