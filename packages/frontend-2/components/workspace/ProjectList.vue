@@ -127,7 +127,7 @@ import {
   SettingMenuKeys,
   type AvailableSettingsMenuKeys
 } from '~/lib/settings/helpers/types'
-
+import { useBillingActions } from '~/lib/billing/composables/actions'
 graphql(`
   fragment WorkspaceProjectList_ProjectCollection on ProjectCollection {
     totalCount
@@ -138,6 +138,7 @@ graphql(`
   }
 `)
 
+const { validateCheckoutSession } = useBillingActions()
 const { workspaceMixpanelUpdateGroup } = useWorkspacesMixpanel()
 const areQueriesLoading = useQueryLoading()
 const route = useRoute()
@@ -280,6 +281,7 @@ onResult((queryResult) => {
     useHeadSafe({
       title: queryResult.data.workspaceBySlug.name
     })
+    validateCheckoutSession(queryResult.data.workspaceBySlug.id)
   }
 })
 </script>

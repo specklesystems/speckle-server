@@ -11,6 +11,23 @@ export const authLoginPanelQuery = graphql(`
   }
 `)
 
+export const authRegisterPanelQuery = graphql(`
+  query AuthRegisterPanel($token: String) {
+    serverInfo {
+      inviteOnly
+      authStrategies {
+        id
+      }
+      ...AuthStategiesServerInfoFragment
+      ...ServerTermsOfServicePrivacyPolicyFragment
+    }
+    serverInviteByToken(token: $token) {
+      id
+      email
+    }
+  }
+`)
+
 export const authLoginPanelWorkspaceInviteQuery = graphql(`
   query AuthLoginPanelWorkspaceInvite($token: String) {
     workspaceInvite(token: $token) {

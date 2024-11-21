@@ -20,7 +20,7 @@ const logger = useLogger()
 const { data: webflowData, error } = await useAsyncData<{
   items: WebflowItem[]
 }>('webflow-items', () =>
-  $fetch('/api/webflow', {
+  $fetch<{ items: WebflowItem[] }>('/api/webflow', {
     onResponseError({ response }) {
       logger.error('API Response Error:', response.status, response.statusText)
     }
