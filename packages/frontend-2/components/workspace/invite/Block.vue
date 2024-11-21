@@ -134,7 +134,7 @@ const { loading, accept, decline, token, isCurrentUserTarget, targetUser } =
   })
 
 const workspaceSlug = computed(() => props.invite.workspaceSlug ?? '')
-const { hasSsoEnabled } = useWorkspacePublicSsoCheck(workspaceSlug.value)
+const { hasSsoEnabled } = useWorkspacePublicSsoCheck(workspaceSlug)
 
 const buildPostAuthRedirectUrl = (params: {
   autoAccept?: boolean
