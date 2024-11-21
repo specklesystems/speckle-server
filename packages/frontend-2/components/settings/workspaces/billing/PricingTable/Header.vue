@@ -17,7 +17,7 @@
     </p>
     <div class="w-full">
       <FormButton
-        :color="plan.name === WorkspacePlans.Team ? 'primary' : 'outline'"
+        :color="plan.name === WorkspacePlans.Starter ? 'primary' : 'outline'"
         :disabled="(!hasTrialPlan && !canUpgradeToPlan) || !isAdmin"
         class="mt-3"
         full-width
@@ -56,8 +56,8 @@ const canUpgradeToPlan = computed(() => {
   if (!props.currentPlan) return false
 
   const allowedUpgrades: Record<WorkspacePlans, WorkspacePlans[]> = {
-    [WorkspacePlans.Team]: [WorkspacePlans.Pro, WorkspacePlans.Business],
-    [WorkspacePlans.Pro]: [WorkspacePlans.Business],
+    [WorkspacePlans.Starter]: [WorkspacePlans.Plus, WorkspacePlans.Business],
+    [WorkspacePlans.Plus]: [WorkspacePlans.Business],
     [WorkspacePlans.Business]: [],
     [WorkspacePlans.Academia]: [],
     [WorkspacePlans.Unlimited]: []

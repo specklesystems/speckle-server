@@ -49,8 +49,8 @@ type WorkspaceBillingMutations {
 }
 
 enum WorkspacePlans {
-  team
-  pro
+  starter
+  plus
   business
   unlimited
   academia
