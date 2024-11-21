@@ -24,6 +24,9 @@ import {
 } from '@/modules/multiregion/regionConfig'
 import { MaybeNullOrUndefined } from '@speckle/shared'
 import { isTestEnv } from '@/modules/shared/helpers/envHelper'
+import { updateKnexPrometheusMetrics } from '@/logging/knexMonitoring'
+import { logger } from '@/logging/logging'
+import { migrateDbToLatestFactory } from '@/db/migrations'
 
 let getter: GetProjectDb | undefined = undefined
 
@@ -113,7 +116,11 @@ export const initializeRegisteredRegionClients = async (): Promise<RegionClients
   )
 
   // run migrations
-  await Promise.all(Object.values(ret).map((db) => db.migrate.latest()))
+  await Promise.all(
+    Object.entries(ret).map(([region, db]) =>
+      migrateDbToLatestFactory({ db, region })()
+    )
+  )
 
   // (re-)set up pub-sub, if needed
   await Promise.all(
@@ -128,6 +135,14 @@ export const getRegisteredRegionClients = async (): Promise<RegionClients> => {
   if (!registeredRegionClients)
     registeredRegionClients = await initializeRegisteredRegionClients()
   return registeredRegionClients
+}
+
+/**
+ * @description This is the main db + all the region dbs
+ */
+export const getAllClients = async (): Promise<RegionClients> => {
+  const regionClients = await getRegisteredRegionClients()
+  return { main: db, ...regionClients }
 }
 
 export const getRegisteredDbClients = async (): Promise<Knex[]> =>
@@ -169,6 +184,11 @@ export const initializeRegion: InitializeRegion = async ({ regionKey }) => {
   if (registeredRegionClients) {
     registeredRegionClients[regionKey] = regionDb.public
   }
+
+  updateKnexPrometheusMetrics({
+    getAllDbClients: getAllClients,
+    logger
+  })
 }
 
 interface ReplicationArgs {
@@ -204,7 +224,7 @@ const setUpUserReplication = async ({
   const rawSqeel = `SELECT * FROM aiven_extras.pg_create_subscription(
     '${subName}',
     'dbname=${fromDbName} host=${fromUrl.hostname} port=${port} sslmode=${sslmode} user=${fromUrl.username} password=${fromUrl.password}',
-    '${pubName}', 
+    '${pubName}',
     '${subName}',
     TRUE,
     TRUE
