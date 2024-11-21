@@ -13,14 +13,8 @@ WORKDIR /speckle-server
 # install tini
 ARG TINI_VERSION=v0.19.0
 ENV TINI_VERSION=${TINI_VERSION}
-ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini ./tini
-RUN chmod +x ./tini
-
-# install wait
-ARG WAIT_VERSION=2.8.0
-ENV WAIT_VERSION=${WAIT_VERSION}
-ADD https://github.com/ufoscout/docker-compose-wait/releases/download/${WAIT_VERSION}/wait ./wait
-RUN chmod +x ./wait
+ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /usr/bin/tini
+RUN chmod +x /usr/bin/tini
 
 RUN apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y \
@@ -73,4 +67,6 @@ ENV DOTNET_BINARY_PATH=${DOTNET_BINARY_PATH}
 
 COPY --from=dotnet-build-stage /app/output packages/ifc-converter
 
-ENTRYPOINT [ "./tini", "--", "node", "--no-experimental-fetch", "packages/fileimport-service/src/daemon.js"]
+WORKDIR /speckle-server/packages/fileimport-service
+
+ENTRYPOINT [ "tini", "--", "node", "--no-experimental-fetch", "src/daemon.js"]
