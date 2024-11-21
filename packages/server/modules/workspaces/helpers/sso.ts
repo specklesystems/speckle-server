@@ -41,7 +41,14 @@ export const buildFinalizeUrl = (workspaceSlug: string): URL => {
  */
 export const buildErrorUrl = (err: unknown, workspaceSlug: string) => {
   const errorRedirectUrl = buildFinalizeUrl(workspaceSlug)
-  const errorMessage = err instanceof Error ? err.message : `Unknown error: ${err}`
+  let errorMessage: string
+
+  if (err instanceof Error) {
+    errorMessage = `${err.message}`
+  } else {
+    errorMessage = `Unknown error: ${JSON.stringify(err)}`
+  }
+
   errorRedirectUrl.searchParams.set('error', errorMessage)
   return errorRedirectUrl.toString()
 }

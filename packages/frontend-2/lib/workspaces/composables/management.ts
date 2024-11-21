@@ -31,7 +31,6 @@ import {
 } from '~/lib/workspaces/graphql/mutations'
 import { isFunction } from 'lodash-es'
 import type { GraphQLError } from 'graphql'
-import { useClipboard } from '~~/composables/browser'
 
 export const useInviteUserToWorkspace = () => {
   const { activeUser } = useActiveUser()

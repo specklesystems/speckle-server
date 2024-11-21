@@ -134,6 +134,7 @@ async function doTask(mainDb, regionName, taskDb, task) {
           '--no-experimental-fetch',
           './ifc/import_file.js',
           TMP_FILE_PATH,
+          TMP_RESULTS_PATH,
           info.userId,
           info.streamId,
           info.branchName,
@@ -154,6 +155,7 @@ async function doTask(mainDb, regionName, taskDb, task) {
         [
           './stl/import_file.py',
           TMP_FILE_PATH,
+          TMP_RESULTS_PATH,
           info.userId,
           info.streamId,
           info.branchName,
@@ -182,6 +184,7 @@ async function doTask(mainDb, regionName, taskDb, task) {
           '-u',
           './obj/import_file.py',
           TMP_FILE_PATH,
+          TMP_RESULTS_PATH,
           info.userId,
           info.streamId,
           info.branchName,
