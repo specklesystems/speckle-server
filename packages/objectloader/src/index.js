@@ -162,7 +162,7 @@ class ObjectLoader {
 
     for await (const obj of this.getObjectIterator()) {
       if (first) {
-        this.totalChildrenCount = obj.totalChildrenCount
+        this.totalChildrenCount = Object.keys(obj?.__closure || {}).length
         first = false
         this.isLoading = true
       }
