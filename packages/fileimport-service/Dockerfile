@@ -47,9 +47,7 @@ RUN yarn workspaces foreach -W run build
 
 # Install python virtual env and python dependencies
 RUN apt-get update
-RUN apt-get install software-properties-common -y
-RUN add-apt-repository "ppa:deadsnakes/ppa"
-RUN apt-get install python3.12 python3.12-venv pip -y
+RUN apt-get install python3.12 pip -y
 
 COPY packages/fileimport-service/requirements.txt /speckle-server/
 RUN pip install --break-system-packages --disable-pip-version-check --no-cache-dir --requirement /speckle-server/requirements.txt
