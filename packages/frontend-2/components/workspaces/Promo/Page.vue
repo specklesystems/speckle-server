@@ -1,7 +1,6 @@
 <template>
   <div class="flex flex-col gap-12">
     <WorkspacesPromoBanner @create="openWorkspaceCreateDialog" />
-
     <section>
       <div class="flex justify-between mb-2">
         <h4 class="text-foreground-2 text-heading-sm">In a nutshell</h4>
@@ -29,7 +28,6 @@
 
         <CommonCard
           title="SSO"
-          badge="Coming soon"
           description="Ensure compliance and security with workspace based SSO."
         >
           <template #icon>
@@ -39,7 +37,6 @@
 
         <CommonCard
           title="Data residency"
-          badge="Coming soon"
           description="Store your workspace projects in the geographical region of your choice."
         >
           <template #icon>

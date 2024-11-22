@@ -28,7 +28,7 @@ describe('checkout @gatekeeper', () => {
       const err = await expectToThrow(() =>
         startCheckoutSessionFactory({
           getWorkspacePlan: async () => ({
-            name: 'pro',
+            name: 'plus',
             status: 'valid',
             workspaceId
           }),
@@ -61,7 +61,7 @@ describe('checkout @gatekeeper', () => {
       const err = await expectToThrow(() =>
         startCheckoutSessionFactory({
           getWorkspacePlan: async () => ({
-            name: 'pro',
+            name: 'plus',
             status: 'paymentFailed',
             workspaceId
           }),
@@ -94,7 +94,7 @@ describe('checkout @gatekeeper', () => {
       const err = await expectToThrow(() =>
         startCheckoutSessionFactory({
           getWorkspacePlan: async () => ({
-            name: 'team',
+            name: 'starter',
             status: 'trial',
             workspaceId
           }),
@@ -137,7 +137,7 @@ describe('checkout @gatekeeper', () => {
       const err = await expectToThrow(() =>
         startCheckoutSessionFactory({
           getWorkspacePlan: async () => ({
-            name: 'team',
+            name: 'starter',
             status: 'trial',
             workspaceId
           }),
@@ -177,7 +177,7 @@ describe('checkout @gatekeeper', () => {
     })
     it('creates and stores a checkout for workspaces that are not on a plan', async () => {
       const workspaceId = cryptoRandomString({ length: 10 })
-      const workspacePlan: PaidWorkspacePlans = 'pro'
+      const workspacePlan: PaidWorkspacePlans = 'plus'
       const billingInterval: WorkspacePlanBillingIntervals = 'monthly'
       const checkoutSession: CheckoutSession = {
         id: cryptoRandomString({ length: 10 }),
@@ -212,7 +212,7 @@ describe('checkout @gatekeeper', () => {
     })
     it('creates and stores a checkout for workspaces without a plan', async () => {
       const workspaceId = cryptoRandomString({ length: 10 })
-      const workspacePlan: PaidWorkspacePlans = 'pro'
+      const workspacePlan: PaidWorkspacePlans = 'plus'
       const billingInterval: WorkspacePlanBillingIntervals = 'monthly'
       const checkoutSession: CheckoutSession = {
         id: cryptoRandomString({ length: 10 }),
@@ -248,7 +248,7 @@ describe('checkout @gatekeeper', () => {
 
     it('creates and stores a checkout for TRIAL workspaces', async () => {
       const workspaceId = cryptoRandomString({ length: 10 })
-      const workspacePlan: PaidWorkspacePlans = 'pro'
+      const workspacePlan: PaidWorkspacePlans = 'plus'
       const billingInterval: WorkspacePlanBillingIntervals = 'monthly'
       const checkoutSession: CheckoutSession = {
         id: cryptoRandomString({ length: 10 }),
@@ -262,7 +262,11 @@ describe('checkout @gatekeeper', () => {
       }
       let storedCheckoutSession: CheckoutSession | undefined = undefined
       const createdCheckoutSession = await startCheckoutSessionFactory({
-        getWorkspacePlan: async () => ({ workspaceId, name: 'team', status: 'trial' }),
+        getWorkspacePlan: async () => ({
+          workspaceId,
+          name: 'starter',
+          status: 'trial'
+        }),
         getWorkspaceCheckoutSession: async () => null,
         countRole: async () => 1,
         deleteCheckoutSession: () => {
@@ -284,7 +288,7 @@ describe('checkout @gatekeeper', () => {
 
     it('creates and stores a checkout for TRIAL workspaces even if it has an old unpaid checkout session', async () => {
       const workspaceId = cryptoRandomString({ length: 10 })
-      const workspacePlan: PaidWorkspacePlans = 'pro'
+      const workspacePlan: PaidWorkspacePlans = 'plus'
       const billingInterval: WorkspacePlanBillingIntervals = 'monthly'
       const checkoutSession: CheckoutSession = {
         id: cryptoRandomString({ length: 10 }),
@@ -308,7 +312,11 @@ describe('checkout @gatekeeper', () => {
       }
       let storedCheckoutSession: CheckoutSession | undefined = undefined
       const createdCheckoutSession = await startCheckoutSessionFactory({
-        getWorkspacePlan: async () => ({ workspaceId, name: 'team', status: 'trial' }),
+        getWorkspacePlan: async () => ({
+          workspaceId,
+          name: 'starter',
+          status: 'trial'
+        }),
         getWorkspaceCheckoutSession: async () => existingCheckoutSession!,
         countRole: async () => 1,
         deleteCheckoutSession: async () => {
@@ -331,7 +339,7 @@ describe('checkout @gatekeeper', () => {
 
     it('does not allow checkout for TRIAL workspaces if there is a paid checkout session', async () => {
       const workspaceId = cryptoRandomString({ length: 10 })
-      const workspacePlan: PaidWorkspacePlans = 'pro'
+      const workspacePlan: PaidWorkspacePlans = 'plus'
       const billingInterval: WorkspacePlanBillingIntervals = 'monthly'
       let existingCheckoutSession: CheckoutSession | undefined = {
         billingInterval,
@@ -347,7 +355,7 @@ describe('checkout @gatekeeper', () => {
         await startCheckoutSessionFactory({
           getWorkspacePlan: async () => ({
             workspaceId,
-            name: 'team',
+            name: 'starter',
             status: 'trial'
           }),
           getWorkspaceCheckoutSession: async () => existingCheckoutSession!,
@@ -371,7 +379,7 @@ describe('checkout @gatekeeper', () => {
 
     it('does not allow checkout for TRIAL workspaces if there is a paid checkout session', async () => {
       const workspaceId = cryptoRandomString({ length: 10 })
-      const workspacePlan: PaidWorkspacePlans = 'pro'
+      const workspacePlan: PaidWorkspacePlans = 'plus'
       const billingInterval: WorkspacePlanBillingIntervals = 'monthly'
       let existingCheckoutSession: CheckoutSession | undefined = {
         billingInterval,
@@ -387,7 +395,7 @@ describe('checkout @gatekeeper', () => {
         await startCheckoutSessionFactory({
           getWorkspacePlan: async () => ({
             workspaceId,
-            name: 'team',
+            name: 'starter',
             status: 'trial'
           }),
           getWorkspaceCheckoutSession: async () => existingCheckoutSession!,
@@ -413,7 +421,7 @@ describe('checkout @gatekeeper', () => {
 
     it('creates and stores a checkout for CANCELED workspaces', async () => {
       const workspaceId = cryptoRandomString({ length: 10 })
-      const workspacePlan: PaidWorkspacePlans = 'pro'
+      const workspacePlan: PaidWorkspacePlans = 'plus'
       const billingInterval: WorkspacePlanBillingIntervals = 'monthly'
       const checkoutSession: CheckoutSession = {
         id: cryptoRandomString({ length: 10 }),
@@ -438,7 +446,7 @@ describe('checkout @gatekeeper', () => {
       let storedCheckoutSession: CheckoutSession | undefined = undefined
       const createdCheckoutSession = await startCheckoutSessionFactory({
         getWorkspacePlan: async () => ({
-          name: 'pro',
+          name: 'plus',
           workspaceId,
           status: 'canceled'
         }),
