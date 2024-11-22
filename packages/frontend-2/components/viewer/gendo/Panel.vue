@@ -29,7 +29,7 @@
             renders.
           </div>
           <FormButton
-            v-if="limits.used < (limits?.limit || 0)"
+            v-if="(limits?.used || 1) < (limits?.limit || 0)"
             :disabled="
               !prompt ||
               isLoading ||
