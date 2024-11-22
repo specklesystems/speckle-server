@@ -23,12 +23,14 @@ const { cursorFromRows, decodeCursor } = require('@/modules/blobstorage/helpers/
 const { createTestStream } = require('@/test/speckle-helpers/streamHelper')
 const cryptoRandomString = require('crypto-random-string')
 const { createTestUser } = require('@/test/authHelper')
+const { storeFileStream } = require('@/modules/blobstorage/objectStorage')
 const fakeFileStreamStore = (fakeHash) => async () => ({ fileHash: fakeHash })
 const upsertBlob = upsertBlobFactory({ db })
 const updateBlob = updateBlobFactory({ db })
 const uploadFileStream = uploadFileStreamFactory({
   upsertBlob,
-  updateBlob
+  updateBlob,
+  storeFileStream
 })
 const getBlobMetadata = getBlobMetadataFactory({ db })
 const getBlobMetadataCollection = getBlobMetadataCollectionFactory({ db })
@@ -66,7 +68,7 @@ describe('Blob storage @blobstorage', () => {
     data.map(([caseName, streamData, blobData]) =>
       it(`Should throw if ${caseName} id length is incorrect`, async () => {
         try {
-          await uploadFileStream(null, streamData, blobData)
+          await uploadFileStream(streamData, blobData)
         } catch (err) {
           if (!(err instanceof BadRequestError)) throw err
           expect(err.message).to.equal(`The ${caseName} id has to be of length 10`)
@@ -81,8 +83,13 @@ describe('Blob storage @blobstorage', () => {
       const userId = fakeIdGenerator()
       const fileHash = fakeIdGenerator()
 
+      const uploadFileStream = uploadFileStreamFactory({
+        upsertBlob,
+        updateBlob,
+        storeFileStream: fakeFileStreamStore(fileHash)
+      })
+
       const blobData = await uploadFileStream(
-        fakeFileStreamStore(fileHash),
         { streamId, userId },
         { blobId, fileName, fileType: '.something', fileStream: null }
       )
