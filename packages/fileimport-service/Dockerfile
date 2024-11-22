@@ -2,7 +2,7 @@ ARG NODE_ENV=production
 
 FROM mcr.microsoft.com/dotnet/sdk:8.0-noble AS dotnet-build-stage
 WORKDIR /app
-COPY packages/ifc-converter .
+COPY packages/fileimport-service/ifc .
 RUN dotnet publish ifc-converter.csproj -c Release -o output/
 
 
@@ -67,7 +67,7 @@ ENV PYTHON_BINARY_PATH=${PYTHON_BINARY_PATH}
 ARG DOTNET_BINARY_PATH=/usr/bin/dotnet
 ENV DOTNET_BINARY_PATH=${DOTNET_BINARY_PATH}
 
-COPY --from=dotnet-build-stage /app/output packages/ifc-converter
+COPY --from=dotnet-build-stage /app/output packages/fileimport-service/ifc
 
 WORKDIR /speckle-server/packages/fileimport-service
 

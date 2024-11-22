@@ -40,4 +40,6 @@ storybook-static
 .tshy
 .tshy-build
 
-packages/ifc-converter/
+packages/fileimport-service/ifc/
+packages/fileimport-service/stl/
+packages/fileimport-service/obj/

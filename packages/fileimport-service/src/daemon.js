@@ -131,7 +131,7 @@ async function doTask(mainDb, regionName, taskDb, task) {
         taskLogger,
         process.env['DOTNET_BINARY_PATH'] || 'dotnet',
         [
-          '/speckle-server/packages/ifc-converter/ifc-converter.dll',
+          '/speckle-server/packages/fileimport-service/ifc/ifc-converter.dll',
           TMP_FILE_PATH,
           TMP_RESULTS_PATH,
           info.streamId,
