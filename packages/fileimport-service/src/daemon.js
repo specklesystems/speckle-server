@@ -136,7 +136,6 @@ async function doTask(mainDb, regionName, taskDb, task) {
           TMP_RESULTS_PATH,
           info.streamId,
           `File upload: ${info.fileName}`,
-          info.id,
           existingBranch?.id || '',
           regionName
         ],
