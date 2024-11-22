@@ -190,9 +190,9 @@ export = {
       // If limit=0, short-cut full execution and use data loader
       if (args.limit === 0) {
         return {
-          totalCount: await ctx.loaders.streams.getCommitCountWithoutGlobals.load(
-            parent.id
-          ),
+          totalCount: await ctx.loaders
+            .forRegion({ db: projectDB })
+            .streams.getCommitCountWithoutGlobals.load(parent.id),
           items: [],
           cursor: null
         }

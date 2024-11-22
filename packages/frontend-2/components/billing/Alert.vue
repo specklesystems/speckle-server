@@ -66,7 +66,7 @@ const isPaymentFailed = computed(
 const title = computed(() => {
   if (isTrial.value) {
     return `You are currently on a free ${
-      props.workspace.plan?.name ?? WorkspacePlans.Team
+      props.workspace.plan?.name ?? WorkspacePlans.Starter
     } plan trial`
   }
   switch (planStatus.value) {

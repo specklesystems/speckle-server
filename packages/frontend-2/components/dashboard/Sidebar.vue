@@ -63,9 +63,9 @@
             >
               <NuxtLink :to="workspacesRoute" @click="handleIntroducingWorkspacesClick">
                 <LayoutSidebarMenuGroupItem
+                  v-if="!hasWorkspaces || route.path === workspacesRoute"
                   label="Introducing workspaces"
                   :active="isActive(workspacesRoute)"
-                  tag="BETA"
                 >
                   <template #icon>
                     <IconWorkspaces class="size-4 text-foreground-2" />
@@ -221,7 +221,6 @@ const isActive = (...routes: string[]): boolean => {
 const isNotGuest = computed(
   () => Roles.Server.Admin || user.value?.role === Roles.Server.User
 )
-
 const workspacesItems = computed(() =>
   workspaceResult.value?.activeUser
     ? workspaceResult.value.activeUser.workspaces.items.map((workspace) => ({
@@ -236,6 +235,7 @@ const workspacesItems = computed(() =>
       }))
     : []
 )
+const hasWorkspaces = computed(() => workspacesItems.value.length > 0)
 
 onWorkspaceResult((result) => {
   if (result.data?.activeUser) {

@@ -451,8 +451,8 @@ export = FF_WORKSPACES_MODULE_ENABLED
           const workspacePlan = await getWorkspacePlanFactory({ db })({ workspaceId })
           if (workspacePlan) {
             switch (workspacePlan.name) {
-              case 'team':
-              case 'pro':
+              case 'starter':
+              case 'plus':
               case 'business':
                 switch (workspacePlan.status) {
                   case 'cancelationScheduled':
