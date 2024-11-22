@@ -133,6 +133,25 @@ export const getRegisteredRegionClients = async (): Promise<RegionClients> => {
 export const getRegisteredDbClients = async (): Promise<Knex[]> =>
   Object.values(await getRegisteredRegionClients())
 
+export const getAllRegisteredDbClients = async (): Promise<
+  Array<{ client: Knex; isMain: boolean; regionKey: string }>
+> => {
+  const mainDb = db
+  const regionDbs = await getRegisteredRegionClients()
+  return [
+    {
+      client: mainDb,
+      isMain: true,
+      regionKey: 'main'
+    },
+    ...Object.entries(regionDbs).map(([regionKey, client]) => ({
+      client,
+      isMain: false,
+      regionKey
+    }))
+  ]
+}
+
 /**
  * Idempotently initialize region
  */
