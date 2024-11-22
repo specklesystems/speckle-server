@@ -294,9 +294,10 @@ export = (FF_AUTOMATE_MODULE_ENABLED
       Automation: {
         async currentRevision(parent, _args, ctx) {
           const projectDb = await getProjectDbClient({ projectId: parent.projectId })
-          return ctx.loaders
+          const automationRevision = await ctx.loaders
             .forRegion({ db: projectDb })
             .automations.getLatestAutomationRevision.load(parent.id)
+          return { ...automationRevision, projectId: parent.projectId }
         },
         async runs(parent, args) {
           const projectDb = await getProjectDbClient({ projectId: parent.projectId })
@@ -344,7 +345,7 @@ export = (FF_AUTOMATE_MODULE_ENABLED
               .automations.getRunTriggers.load(parent.id))
 
           const trigger = triggers[0]
-          return trigger
+          return { ...trigger, projectId: parent.projectId }
         },
         async functionRuns(parent) {
           return parent.functionRuns
@@ -395,7 +396,10 @@ export = (FF_AUTOMATE_MODULE_ENABLED
             .forRegion({ db: projectDb })
             .automations.getRevisionTriggerDefinitions.load(parent.id)
 
-          return triggers
+          return triggers.map((trigger) => ({
+            ...trigger,
+            projectId: parent.projectId
+          }))
         },
         async functions(parent, _args, ctx) {
           const projectDb = await getProjectDbClient({ projectId: parent.projectId })
