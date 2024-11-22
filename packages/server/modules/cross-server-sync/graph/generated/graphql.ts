@@ -4076,6 +4076,13 @@ export type Workspace = {
 };
 
 
+export type WorkspaceAutomateFunctionsArgs = {
+  cursor?: InputMaybe<Scalars['String']['input']>;
+  filter?: InputMaybe<AutomateFunctionsFilter>;
+  limit?: Scalars['Int']['input'];
+};
+
+
 export type WorkspaceHasAccessToFeatureArgs = {
   featureName: WorkspaceFeatureName;
 };
