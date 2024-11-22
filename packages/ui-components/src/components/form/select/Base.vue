@@ -8,17 +8,32 @@
       :by="by"
       :disabled="isDisabled"
       as="div"
+      :class="{
+        'md:flex md:items-center md:space-x-2 md:justify-between': isLeftLabelPosition
+      }"
     >
-      <ListboxLabel
-        :id="labelId"
-        class="flex text-body-xs text-foreground font-medium pb-1"
-        :class="[{ 'sr-only': !showLabel }, { 'items-center gap-1': showOptional }]"
-        :for="buttonId"
-      >
-        {{ label }}
-        <div v-if="showRequired" class="text-danger text-xs opacity-80">*</div>
-        <div v-else-if="showOptional" class="text-body-2xs font-normal">(optional)</div>
-      </ListboxLabel>
+      <div class="flex flex-col pb-1">
+        <ListboxLabel
+          :id="labelId"
+          class="flex text-body-xs text-foreground font-medium"
+          :class="[{ 'sr-only': !showLabel }, { 'items-center gap-1': showOptional }]"
+          :for="buttonId"
+        >
+          {{ label }}
+          <div v-if="showRequired" class="text-danger text-xs opacity-80">*</div>
+          <div v-else-if="showOptional" class="text-body-2xs font-normal">
+            (optional)
+          </div>
+        </ListboxLabel>
+        <p
+          v-if="helpTipId && isLeftLabelPosition"
+          :id="helpTipId"
+          class="text-xs"
+          :class="helpTipClasses"
+        >
+          {{ helpTip }}
+        </p>
+      </div>
       <div :class="buttonsWrapperClasses">
         <!-- <div class="relative flex"> -->
         <ListboxButton
@@ -186,7 +201,12 @@
         </Transition>
       </div>
     </Listbox>
-    <p v-if="helpTipId" :id="helpTipId" class="mt-2 text-xs" :class="helpTipClasses">
+    <p
+      v-if="helpTipId && !isLeftLabelPosition"
+      :id="helpTipId"
+      class="mt-2 text-xs"
+      :class="helpTipClasses"
+    >
       {{ helpTip }}
     </p>
   </div>
@@ -220,6 +240,7 @@ import type { RuleExpression } from 'vee-validate'
 import { nanoid } from 'nanoid'
 import CommonLoadingBar from '~~/src/components/common/loading/Bar.vue'
 import { useElementBounding, useMounted, useIntersectionObserver } from '@vueuse/core'
+import type { LabelPosition } from '~~/src/composables/form/input'
 
 type ButtonStyle = 'base' | 'simple' | 'tinted'
 type ValueType = SingleItem | SingleItem[] | undefined
@@ -430,6 +451,10 @@ const props = defineProps({
   disabledItemTooltip: {
     required: false,
     type: String
+  },
+  labelPosition: {
+    type: String as PropType<LabelPosition>,
+    default: 'top'
   }
 })
 
@@ -481,6 +506,8 @@ const helpTipClasses = computed((): string =>
   error.value ? 'text-danger' : 'text-foreground-2'
 )
 
+const isLeftLabelPosition = computed(() => props.labelPosition === 'left')
+
 const renderClearButton = computed(
   () => props.buttonStyle !== 'simple' && props.clearable && !props.disabled
 )
@@ -524,6 +551,10 @@ const buttonsWrapperClasses = computed(() => {
     classParts.push('h-8')
   } else if (sizeClasses.value?.length) {
     classParts.push(sizeClasses.value)
+  }
+
+  if (isLeftLabelPosition.value) {
+    classParts.push('md:basis-1/2')
   }
 
   return classParts.join(' ')
