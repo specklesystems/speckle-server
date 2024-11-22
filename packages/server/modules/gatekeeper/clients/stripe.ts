@@ -24,10 +24,7 @@ const getResultUrl = ({
   frontendOrigin: string
   workspaceSlug: string
   workspaceId: string
-}) =>
-  new URL(
-    `${frontendOrigin}/workspaces/${workspaceSlug}?workspace=${workspaceId}&settings=workspace/billing`
-  )
+}) => new URL(`${frontendOrigin}/workspaces/${workspaceSlug}?workspace=${workspaceId}`)
 
 export const createCheckoutSessionFactory =
   ({

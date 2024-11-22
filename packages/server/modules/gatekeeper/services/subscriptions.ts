@@ -69,8 +69,8 @@ export const handleSubscriptionUpdateFactory =
 
     if (status) {
       switch (workspacePlan.name) {
-        case 'team':
-        case 'pro':
+        case 'starter':
+        case 'plus':
         case 'business':
           break
         case 'unlimited':
@@ -119,8 +119,8 @@ export const addWorkspaceSubscriptionSeatIfNeededFactory =
     // if (!workspaceSubscription) throw new WorkspaceSubscriptionNotFoundError()
 
     switch (workspacePlan.name) {
-      case 'team':
-      case 'pro':
+      case 'starter':
+      case 'plus':
       case 'business':
         break
       case 'unlimited':
@@ -249,8 +249,8 @@ export const downscaleWorkspaceSubscriptionFactory =
     if (!workspacePlan) throw new WorkspacePlanNotFoundError()
 
     switch (workspacePlan.name) {
-      case 'team':
-      case 'pro':
+      case 'starter':
+      case 'plus':
       case 'business':
         break
       case 'unlimited':

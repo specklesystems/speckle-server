@@ -8,7 +8,6 @@ import {
   storeClosuresIfNotFoundFactory,
   storeObjectsIfNotFoundFactory
 } from '@/modules/core/repositories/objects'
-import { db } from '@/db/knex'
 import { createObjectsFactory } from '@/modules/core/services/objects/management'
 import { getProjectDbClient } from '@/modules/multiregion/dbSelector'
 
@@ -37,7 +36,7 @@ export = {
       const projectDB = await getProjectDbClient({ projectId: parent.streamId })
       // The simple query branch
       if (!args.query && !args.orderBy) {
-        const getObjectChildren = getObjectChildrenFactory({ db })
+        const getObjectChildren = getObjectChildrenFactory({ db: projectDB })
         const result = await getObjectChildren({
           streamId: parent.streamId,
           objectId: parent.id,

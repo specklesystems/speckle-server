@@ -101,7 +101,11 @@ describe('subscriptions @gatekeeper', () => {
 
       await handleSubscriptionUpdateFactory({
         getWorkspaceSubscriptionBySubscriptionId: async () => workspaceSubscription,
-        getWorkspacePlan: async () => ({ name: 'team', workspaceId, status: 'trial' }),
+        getWorkspacePlan: async () => ({
+          name: 'starter',
+          workspaceId,
+          status: 'trial'
+        }),
         upsertWorkspaceSubscription: async ({ workspaceSubscription }) => {
           updatedSubscription = workspaceSubscription
         },
@@ -137,7 +141,11 @@ describe('subscriptions @gatekeeper', () => {
 
       await handleSubscriptionUpdateFactory({
         getWorkspaceSubscriptionBySubscriptionId: async () => workspaceSubscription,
-        getWorkspacePlan: async () => ({ name: 'team', workspaceId, status: 'trial' }),
+        getWorkspacePlan: async () => ({
+          name: 'starter',
+          workspaceId,
+          status: 'trial'
+        }),
         upsertWorkspaceSubscription: async ({ workspaceSubscription }) => {
           updatedSubscription = workspaceSubscription
         },
@@ -169,7 +177,11 @@ describe('subscriptions @gatekeeper', () => {
 
       await handleSubscriptionUpdateFactory({
         getWorkspaceSubscriptionBySubscriptionId: async () => workspaceSubscription,
-        getWorkspacePlan: async () => ({ name: 'team', workspaceId, status: 'trial' }),
+        getWorkspacePlan: async () => ({
+          name: 'starter',
+          workspaceId,
+          status: 'trial'
+        }),
         upsertWorkspaceSubscription: async ({ workspaceSubscription }) => {
           updatedSubscription = workspaceSubscription
         },
@@ -204,7 +216,11 @@ describe('subscriptions @gatekeeper', () => {
 
       await handleSubscriptionUpdateFactory({
         getWorkspaceSubscriptionBySubscriptionId: async () => workspaceSubscription,
-        getWorkspacePlan: async () => ({ name: 'team', workspaceId, status: 'trial' }),
+        getWorkspacePlan: async () => ({
+          name: 'starter',
+          workspaceId,
+          status: 'trial'
+        }),
         upsertWorkspaceSubscription: async ({ workspaceSubscription }) => {
           updatedSubscription = workspaceSubscription
         },
@@ -237,7 +253,7 @@ describe('subscriptions @gatekeeper', () => {
         await handleSubscriptionUpdateFactory({
           getWorkspaceSubscriptionBySubscriptionId: async () => workspaceSubscription,
           getWorkspacePlan: async () => ({
-            name: 'team',
+            name: 'starter',
             workspaceId,
             status: 'trial'
           }),
@@ -353,7 +369,7 @@ describe('subscriptions @gatekeeper', () => {
       const addWorkspaceSubscriptionSeatIfNeeded =
         addWorkspaceSubscriptionSeatIfNeededFactory({
           getWorkspacePlan: async () => ({
-            name: 'pro',
+            name: 'plus',
             workspaceId,
             status: 'canceled'
           }),
@@ -384,7 +400,7 @@ describe('subscriptions @gatekeeper', () => {
         subscriptionData
       })
       const workspacePlan: WorkspacePlan = {
-        name: 'team',
+        name: 'starter',
         workspaceId,
         status: 'valid'
       }
@@ -410,8 +426,8 @@ describe('subscriptions @gatekeeper', () => {
             if (billingInterval !== workspaceSubscription.billingInterval) expect.fail()
             switch (workspacePlan) {
               case 'business':
-              case 'team':
-              case 'pro':
+              case 'starter':
+              case 'plus':
                 expect.fail()
               case 'guest':
                 return priceId
@@ -445,7 +461,7 @@ describe('subscriptions @gatekeeper', () => {
           subscriptionData
         })
         const workspacePlan: WorkspacePlan = {
-          name: 'team',
+          name: 'starter',
           workspaceId,
           status: 'valid'
         }
@@ -472,10 +488,10 @@ describe('subscriptions @gatekeeper', () => {
                 expect.fail()
               switch (workspacePlan) {
                 case 'business':
-                case 'pro':
+                case 'plus':
                 case 'guest':
                   expect.fail()
-                case 'team':
+                case 'starter':
                   return priceId
                 default:
                   throwUncoveredError(workspacePlan)
@@ -523,7 +539,7 @@ describe('subscriptions @gatekeeper', () => {
         subscriptionData
       })
       const workspacePlan: WorkspacePlan = {
-        name: 'team',
+        name: 'starter',
         workspaceId,
         status: 'valid'
       }
@@ -547,10 +563,10 @@ describe('subscriptions @gatekeeper', () => {
             if (billingInterval !== workspaceSubscription.billingInterval) expect.fail()
             switch (workspacePlan) {
               case 'business':
-              case 'pro':
+              case 'plus':
               case 'guest':
                 expect.fail()
-              case 'team':
+              case 'starter':
                 return priceId
               default:
                 throwUncoveredError(workspacePlan)
@@ -594,7 +610,7 @@ describe('subscriptions @gatekeeper', () => {
         subscriptionData
       })
       const workspacePlan: WorkspacePlan = {
-        name: 'team',
+        name: 'starter',
         workspaceId,
         status: 'valid'
       }
@@ -617,10 +633,10 @@ describe('subscriptions @gatekeeper', () => {
             if (billingInterval !== workspaceSubscription.billingInterval) expect.fail()
             switch (workspacePlan) {
               case 'business':
-              case 'pro':
+              case 'plus':
               case 'guest':
                 expect.fail()
-              case 'team':
+              case 'starter':
                 return priceId
               default:
                 throwUncoveredError(workspacePlan)
@@ -700,7 +716,7 @@ describe('subscriptions @gatekeeper', () => {
       })
       const downscaleSubscription = downscaleWorkspaceSubscriptionFactory({
         getWorkspacePlan: async () => ({
-          name: 'pro',
+          name: 'plus',
           workspaceId,
           status: 'canceled'
         }),
@@ -732,7 +748,7 @@ describe('subscriptions @gatekeeper', () => {
         currentBillingCycleEnd: new Date(2034, 11, 5),
         workspaceId
       })
-      const workspacePlanName = 'pro'
+      const workspacePlanName = 'plus'
       const downscaleSubscription = downscaleWorkspaceSubscriptionFactory({
         getWorkspacePlan: async () => ({
           name: workspacePlanName,
@@ -784,7 +800,7 @@ describe('subscriptions @gatekeeper', () => {
         subscriptionData,
         workspaceId
       })
-      const workspacePlanName = 'pro'
+      const workspacePlanName = 'plus'
 
       let reconciledSub: SubscriptionDataInput | undefined = undefined
       const downscaleSubscription = downscaleWorkspaceSubscriptionFactory({

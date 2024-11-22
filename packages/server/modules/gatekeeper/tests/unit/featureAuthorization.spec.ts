@@ -18,12 +18,12 @@ describe('featureAuthorization @gatekeeper', () => {
     })
     ;(
       [
-        ['team', 'expired', 'oidcSso', false],
-        ['team', 'valid', 'oidcSso', false],
-        ['team', 'valid', 'workspaceDataRegionSpecificity', false],
-        ['pro', 'valid', 'workspaceDataRegionSpecificity', false],
-        ['pro', 'canceled', 'oidcSso', false],
-        ['pro', 'valid', 'oidcSso', true],
+        ['starter', 'expired', 'oidcSso', false],
+        ['starter', 'valid', 'oidcSso', false],
+        ['starter', 'valid', 'workspaceDataRegionSpecificity', false],
+        ['plus', 'valid', 'workspaceDataRegionSpecificity', false],
+        ['plus', 'canceled', 'oidcSso', false],
+        ['plus', 'valid', 'oidcSso', true],
         ['business', 'valid', 'workspaceDataRegionSpecificity', true]
       ] as const
     ).forEach(([plan, status, workspaceFeature, expectedResult]) => {
