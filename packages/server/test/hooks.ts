@@ -16,7 +16,7 @@ import { once } from 'events'
 import type http from 'http'
 import type express from 'express'
 import type net from 'net'
-import { MaybeAsync, MaybeNullOrUndefined } from '@speckle/shared'
+import { MaybeAsync, MaybeNullOrUndefined, wait } from '@speckle/shared'
 import type mocha from 'mocha'
 import {
   getAvailableRegionKeysFactory,
@@ -126,15 +126,17 @@ export const resetPubSubFactory = (deps: { db: Knex }) => async () => {
   const ensureAivenExtras = ensureAivenExtrasFactory(deps)
   await ensureAivenExtras()
 
+  type SubInfo = {
+    subname: string
+    subconninfo: string
+    subpublications: string[]
+    subslotname: string
+  }
+
   const subscriptions = (await deps.db.raw(
     `SELECT subname, subconninfo, subpublications, subslotname FROM aiven_extras.pg_list_all_subscriptions() WHERE subname ILIKE 'test_%';`
   )) as {
-    rows: Array<{
-      subname: string
-      subconninfo: string
-      subpublications: string[]
-      subslotname: string
-    }>
+    rows: Array<SubInfo>
   }
   const publications = (await deps.db.raw(
     `SELECT pubname FROM pg_publication WHERE pubname ILIKE 'test_%';`
@@ -142,19 +144,23 @@ export const resetPubSubFactory = (deps: { db: Knex }) => async () => {
     rows: Array<{ pubname: string }>
   }
 
-  // Drop all subs
-  for (const sub of subscriptions.rows) {
-    // Running serially, otherwise some kind of race condition issue can pop up
+  const dropSubs = async (info: SubInfo) => {
     await deps.db.raw(
-      `SELECT * FROM aiven_extras.pg_alter_subscription_disable('${sub.subname}');`
+      `SELECT * FROM aiven_extras.pg_alter_subscription_disable('${info.subname}');`
     )
+    await wait(500)
     await deps.db.raw(
-      `SELECT * FROM aiven_extras.pg_drop_subscription('${sub.subname}');`
+      `SELECT * FROM aiven_extras.pg_drop_subscription('${info.subname}');`
     )
+    await wait(1000)
     await deps.db.raw(
-      `SELECT * FROM aiven_extras.dblink_slot_create_or_drop('${sub.subconninfo}', '${sub.subslotname}', 'drop');`
+      `SELECT * FROM aiven_extras.dblink_slot_create_or_drop('${info.subconninfo}', '${info.subslotname}', 'drop');`
     )
   }
+
+  // Drop all subs
+  // (concurrently, cause it seems possible and we have those delays there)
+  await Promise.all(subscriptions.rows.map(dropSubs))
 
   // Drop all pubs
   for (const pub of publications.rows) {

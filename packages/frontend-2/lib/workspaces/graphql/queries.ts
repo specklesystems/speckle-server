@@ -92,3 +92,22 @@ export const validateWorkspaceSlugQuery = graphql(`
     validateWorkspaceSlug(slug: $slug)
   }
 `)
+
+export const workspaceSsoByEmailQuery = graphql(`
+  query WorkspaceSsoByEmail($email: String!) {
+    workspaceSsoByEmail(email: $email) {
+      ...AuthSsoLogin_Workspace
+    }
+  }
+`)
+
+export const workspaceSsoCheckQuery = graphql(`
+  query WorkspaceSsoCheck($slug: String!) {
+    workspaceBySlug(slug: $slug) {
+      ...WorkspaceSsoStatus_Workspace
+    }
+    activeUser {
+      ...WorkspaceSsoStatus_User
+    }
+  }
+`)

@@ -1,4 +1,3 @@
-import knex from '@/db/knex'
 import {
   GetActiveUserStreams,
   GetActivityCountByResourceId,
@@ -59,7 +58,7 @@ export const getActiveUserStreamsFactory =
       .select(StreamActivity.col.userId)
       // creates the UserSteams type by aggregating the streamId-s, grouped by userId
       .select(
-        knex.raw(`array_agg(distinct ${StreamActivity.name}."streamId") as "streamIds"`)
+        db.raw(`array_agg(distinct ${StreamActivity.name}."streamId") as "streamIds"`)
       )
       .groupBy(StreamActivity.col.userId)
       .join(

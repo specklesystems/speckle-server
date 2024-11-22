@@ -1,10 +1,10 @@
 <template>
-  <div class="flex flex-col gap-8">
+  <div class="flex flex-col gap-y-4 md:gap-y-6">
     <ProjectPageAutomationsHeader
       v-model:search="search"
       :workspace-slug="workspaceSlug"
       :show-empty-state="shouldShowEmptyState"
-      :disable-create-message="disableCreateMessage"
+      :creation-disabled-reason="disableCreateMessage"
       @new-automation="onNewAutomation"
     />
     <template v-if="loading">
@@ -15,7 +15,7 @@
         v-if="shouldShowEmptyState"
         :functions="result"
         :is-automate-enabled="isAutomateEnabled"
-        :disable-create-message="disableCreateMessage"
+        :creation-disabled-reason="disableCreateMessage"
         @new-automation="onNewAutomation"
       />
       <template v-else>

@@ -6,7 +6,7 @@
       :show-required="showRequired"
       name="search"
       color="foundation"
-      placeholder="Search Functions..."
+      placeholder="Search functions..."
       show-clear
       full-width
       v-bind="bind"

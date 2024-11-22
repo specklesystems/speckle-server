@@ -13,29 +13,22 @@
         v-bind="bind"
         v-on="on"
       />
-      <FormButton
-        :icon-left="ArrowTopRightOnSquareIcon"
-        color="outline"
-        class="shrink-0"
-        :to="exploreFunctionsRoute"
-      >
+      <FormButton color="outline" class="shrink-0" :to="exploreFunctionsRoute">
         {{ exploreFunctionsMessage }}
       </FormButton>
-      <div v-tippy="disableCreateMessage" class="shrink-0">
+      <div v-tippy="creationDisabledMessage" class="shrink-0">
         <FormButton
-          :icon-left="PlusIcon"
           class="shrink-0"
-          :disabled="!!disableCreateMessage"
+          :disabled="!!creationDisabledMessage"
           @click="$emit('new-automation')"
         >
-          New
+          New automation
         </FormButton>
       </div>
     </div>
   </div>
 </template>
 <script setup lang="ts">
-import { ArrowTopRightOnSquareIcon, PlusIcon } from '@heroicons/vue/20/solid'
 import { useDebouncedTextInput } from '@speckle/ui-components'
 import {
   automationFunctionsRoute,
@@ -49,7 +42,7 @@ defineEmits<{
 const props = defineProps<{
   workspaceSlug?: string
   showEmptyState?: boolean
-  disableCreateMessage?: string
+  creationDisabledMessage?: string
 }>()
 
 const exploreFunctionsMessage = computed(() =>

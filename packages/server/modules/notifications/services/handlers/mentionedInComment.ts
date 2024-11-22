@@ -17,6 +17,7 @@ import {
   renderEmail
 } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
+import { getProjectDbClient } from '@/modules/multiregion/dbSelector'
 import { NotificationValidationError } from '@/modules/notifications/errors'
 import {
   NotificationHandler,
@@ -24,6 +25,7 @@ import {
 } from '@/modules/notifications/helpers/types'
 import { getBaseUrl } from '@/modules/shared/helpers/envHelper'
 import { MaybeFalsy, Nullable } from '@/modules/shared/helpers/typeHelper'
+import { Knex } from 'knex'
 
 type ValidatedNotificationState = {
   msg: MentionedInCommentMessage
@@ -168,7 +170,7 @@ const mentionedInCommentHandlerFactory =
   (deps: {
     getUser: GetUser
     getStream: GetStream
-    getComment: GetComment
+    getCommentResolver: (deps: { projectDb: Knex }) => GetComment
     getServerInfo: GetServerInfo
     renderEmail: typeof renderEmail
     sendEmail: typeof sendEmail
@@ -180,14 +182,16 @@ const mentionedInCommentHandlerFactory =
     } = msg
 
     const isCommentAndThreadTheSame = threadId === commentId
+    const projectDb = await getProjectDbClient({ projectId: streamId })
+    const getComment = deps.getCommentResolver({ projectDb })
 
     const [targetUser, author, stream, threadComment, comment, serverInfo] =
       await Promise.all([
         deps.getUser(targetUserId),
         deps.getUser(authorId),
         deps.getStream({ streamId }),
-        deps.getComment({ id: threadId }),
-        isCommentAndThreadTheSame ? null : deps.getComment({ id: commentId }),
+        getComment({ id: threadId }),
+        isCommentAndThreadTheSame ? null : getComment({ id: commentId }),
         deps.getServerInfo()
       ])
 
@@ -225,7 +229,7 @@ const handler: NotificationHandler<MentionedInCommentMessage> = async (...args) 
   const mentionedInCommentHandler = mentionedInCommentHandlerFactory({
     getUser: getUserFactory({ db }),
     getStream: getStreamFactory({ db }),
-    getComment: getCommentFactory({ db }),
+    getCommentResolver: ({ projectDb }) => getCommentFactory({ db: projectDb }),
     getServerInfo: getServerInfoFactory({ db }),
     renderEmail,
     sendEmail
