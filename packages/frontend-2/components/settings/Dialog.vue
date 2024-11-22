@@ -81,11 +81,10 @@
                   :disabled="workspaceMenuItem.disabled"
                   extra-padding
                   @click="
-                    onWorkspaceMenuItemClick(
-                      workspaceItem.id,
-                      `${itemKey}`,
+                    () =>
                       workspaceMenuItem.disabled
-                    )
+                        ? noop
+                        : onWorkspaceMenuItemClick(workspaceItem.id, `${itemKey}`)
                   "
                 />
               </template>
@@ -134,7 +133,7 @@ import { useBreakpoints } from '@vueuse/core'
 import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
 import { PlusIcon } from '@heroicons/vue/24/outline'
 import { useActiveUser } from '~/lib/auth/composables/activeUser'
-import { useSettingsMenu } from '~/lib/settings/composables/menu'
+import { useSettingsMenu, useSetupMenuState } from '~/lib/settings/composables/menu'
 import {
   LayoutSidebar,
   LayoutSidebarMenu,
@@ -210,8 +209,7 @@ const selectedMenuItem = computed((): SettingsMenuItem | null => {
   return null
 })
 
-const onWorkspaceMenuItemClick = (id: string, target: string, disabled?: boolean) => {
-  if (disabled) return
+const onWorkspaceMenuItemClick = (id: string, target: string) => {
   targetWorkspaceId.value = id
   targetMenuItem.value = target
   mixpanel.track('Workspace Settings Menuitem Clicked', {
@@ -229,6 +227,11 @@ const workspaceMenuItemClasses = (
   targetMenuItem.value === itemKey &&
   targetWorkspaceId.value === workspaceId &&
   !disabled
+
+// not ideal, but it works temporarily while this is still a modal
+useSetupMenuState({
+  goToWorkspaceMenuItem: onWorkspaceMenuItemClick
+})
 
 watch(
   () => user.value,
