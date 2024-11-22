@@ -90,6 +90,7 @@ const {
   isDataLoaded: areLogsFullyRead,
   loading: logsLoading
 } = useAutomationRunLogs({
+  projectId: computed(() => props.projectId),
   automationId: computed(() => props.automationId),
   runId: computed(() => props.run?.id)
 })
