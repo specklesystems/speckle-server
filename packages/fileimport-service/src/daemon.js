@@ -12,7 +12,7 @@ const { downloadFile } = require('./filesApi')
 const fs = require('fs')
 const { spawn } = require('child_process')
 
-const ServerAPI = require('../ifc/api')
+const ServerAPI = require('./api')
 const objDependencies = require('./objDependencies')
 const { logger } = require('../observability/logging')
 const { Scopes, wait } = require('@speckle/shared')
