@@ -271,6 +271,7 @@ export = {
       })
       return await updateStreamAndNotify(update, userId!, resourceAccessRules)
     },
+    // This one is only used outside of a workspace, so the project is always created in the main db
     async create(_parent, args, context) {
       const rateLimitResult = await getRateLimitResult('STREAM_CREATE', context.userId!)
       if (isRateLimitBreached(rateLimitResult)) {
