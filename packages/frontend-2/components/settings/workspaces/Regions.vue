@@ -27,9 +27,33 @@
             />
           </div>
         </template>
-        <div v-else class="flex flex-col">
+        <div v-else class="flex flex-col gap-6">
           <div class="text-heading-lg">Current data region</div>
-          <div class="px-6 py-4 border border-outline-3 rounded-lg">Ayy!</div>
+          <div class="px-6 py-4 border border-outline-3 rounded-lg flex flex-col">
+            <div class="text-foreground text-body-xs font-semibold">
+              {{ workspace.defaultRegion.name }}
+            </div>
+            <div
+              v-if="workspace.defaultRegion.description"
+              class="text-foreground-2 text-body-2xs font-normal"
+            >
+              {{ workspace.defaultRegion.description }}
+            </div>
+          </div>
+          <hr class="border-outline-2" />
+          <div class="text-heading-lg">Change data region</div>
+          <div
+            class="p-4 border border-outline-3 rounded-lg flex gap-3 flex-col md:flex-row md:items-center"
+          >
+            <div class="text-body-xs font-normal">
+              Change your default data region and schedule a data residency move.
+            </div>
+            <span v-tippy="'Coming soon'" class="basis-full md:basis-auto">
+              <FormButton color="outline" disabled full-width>
+                Change data region
+              </FormButton>
+            </span>
+          </div>
         </div>
       </template>
       <div
