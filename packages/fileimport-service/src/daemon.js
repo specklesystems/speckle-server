@@ -80,8 +80,8 @@ async function doTask(mainDb, regionName, taskDb, task) {
       fileName: info.fileName,
       fileSize: fileSizeForMetric,
       userId: info.userId,
-      streamId: info.streamId,
-      branchName: info.branchName
+      projectId: info.streamId,
+      modelName: info.branchName
     })
     fs.mkdirSync(TMP_INPUT_DIR, { recursive: true })
 
@@ -107,6 +107,9 @@ async function doTask(mainDb, regionName, taskDb, task) {
     if (!existingBranch) {
       newBranchCreated = true
     }
+    taskLogger = taskLogger.child({
+      modelId: existingBranch?.id
+    })
 
     const { token } = await mainServerApi.createToken({
       userId: info.userId,
@@ -131,11 +134,13 @@ async function doTask(mainDb, regionName, taskDb, task) {
           '--no-experimental-fetch',
           './ifc/import_file.js',
           TMP_FILE_PATH,
+          TMP_RESULTS_PATH,
           info.userId,
           info.streamId,
           info.branchName,
           `File upload: ${info.fileName}`,
           info.id,
+          existingBranch?.id || '',
           regionName
         ],
         {
@@ -150,10 +155,14 @@ async function doTask(mainDb, regionName, taskDb, task) {
         [
           './stl/import_file.py',
           TMP_FILE_PATH,
+          TMP_RESULTS_PATH,
           info.userId,
           info.streamId,
           info.branchName,
-          `File upload: ${info.fileName}`
+          `File upload: ${info.fileName}`,
+          info.id,
+          existingBranch?.id || '',
+          regionName
         ],
         {
           USER_TOKEN: tempUserToken
@@ -175,10 +184,14 @@ async function doTask(mainDb, regionName, taskDb, task) {
           '-u',
           './obj/import_file.py',
           TMP_FILE_PATH,
+          TMP_RESULTS_PATH,
           info.userId,
           info.streamId,
           info.branchName,
-          `File upload: ${info.fileName}`
+          `File upload: ${info.fileName}`,
+          info.id,
+          existingBranch?.id || '',
+          regionName
         ],
         {
           USER_TOKEN: tempUserToken

@@ -21,6 +21,10 @@ graphql(`
     description
     domainBasedMembershipProtectionEnabled
     discoverabilityEnabled
+    plan {
+      status
+      name
+    }
     team {
       totalCount
       items {
@@ -61,7 +65,9 @@ export const useWorkspacesMixpanel = () => {
       teamMemberCount: roleCount[Roles.Workspace.Member],
       teamGuestCount: roleCount[Roles.Workspace.Guest],
       // eslint-disable-next-line camelcase
-      server_id: resolveMixpanelServerId(window.location.hostname)
+      server_id: resolveMixpanelServerId(window.location.hostname),
+      planName: workspace.plan?.name || '',
+      planStatus: workspace.plan?.status || ''
     }
 
     mixpanel.get_group('workspace_id', workspace.id).set(input)

@@ -1,16 +1,6 @@
 import { WorkspacePlans, BillingInterval } from '~/lib/common/generated/gql/graphql'
 import { Roles } from '@speckle/shared'
-
-enum PlanFeaturesList {
-  Workspaces = 'Workspaces',
-  RoleManagement = 'Role management',
-  GuestUsers = 'Guest users',
-  PrivateAutomateFunctions = 'Private automate functions',
-  DomainSecurity = 'Domain security',
-  SSO = 'Single Sign-On (SSO)',
-  CustomerDataRegion = 'Customer data region',
-  PrioritySupport = 'Priority support'
-}
+import { PlanFeaturesList, type PricingPlan } from '@/lib/billing/helpers/types'
 
 const baseFeatures = [
   PlanFeaturesList.Workspaces,
@@ -20,7 +10,13 @@ const baseFeatures = [
   PlanFeaturesList.DomainSecurity
 ]
 
-export const pricingPlansConfig = {
+export const pricingPlansConfig: {
+  features: Record<PlanFeaturesList, { name: string; description: string }>
+  plans: Record<
+    WorkspacePlans.Starter | WorkspacePlans.Plus | WorkspacePlans.Business,
+    PricingPlan
+  >
+} = {
   features: {
     [PlanFeaturesList.Workspaces]: {
       name: PlanFeaturesList.Workspaces,
@@ -46,8 +42,8 @@ export const pricingPlansConfig = {
       name: PlanFeaturesList.SSO,
       description: ''
     },
-    [PlanFeaturesList.CustomerDataRegion]: {
-      name: PlanFeaturesList.CustomerDataRegion,
+    [PlanFeaturesList.CustomDataRegion]: {
+      name: PlanFeaturesList.CustomDataRegion,
       description: ''
     },
     [PlanFeaturesList.PrioritySupport]: {
@@ -56,35 +52,35 @@ export const pricingPlansConfig = {
     }
   },
   plans: {
-    [WorkspacePlans.Team]: {
-      name: WorkspacePlans.Team,
+    [WorkspacePlans.Starter]: {
+      name: WorkspacePlans.Starter,
       features: [...baseFeatures],
       cost: {
         [BillingInterval.Monthly]: {
+          [Roles.Workspace.Guest]: 15,
+          [Roles.Workspace.Member]: 15,
+          [Roles.Workspace.Admin]: 15
+        },
+        [BillingInterval.Yearly]: {
           [Roles.Workspace.Guest]: 12,
           [Roles.Workspace.Member]: 12,
           [Roles.Workspace.Admin]: 12
-        },
-        [BillingInterval.Yearly]: {
-          [Roles.Workspace.Guest]: 10,
-          [Roles.Workspace.Member]: 10,
-          [Roles.Workspace.Admin]: 10
         }
       }
     },
-    [WorkspacePlans.Pro]: {
-      name: WorkspacePlans.Pro,
+    [WorkspacePlans.Plus]: {
+      name: WorkspacePlans.Plus,
       features: [...baseFeatures, PlanFeaturesList.SSO],
       cost: {
         [BillingInterval.Monthly]: {
+          [Roles.Workspace.Guest]: 50,
+          [Roles.Workspace.Member]: 50,
+          [Roles.Workspace.Admin]: 50
+        },
+        [BillingInterval.Yearly]: {
           [Roles.Workspace.Guest]: 40,
           [Roles.Workspace.Member]: 40,
           [Roles.Workspace.Admin]: 40
-        },
-        [BillingInterval.Yearly]: {
-          [Roles.Workspace.Guest]: 36,
-          [Roles.Workspace.Member]: 36,
-          [Roles.Workspace.Admin]: 36
         }
       }
     },
@@ -93,19 +89,19 @@ export const pricingPlansConfig = {
       features: [
         ...baseFeatures,
         PlanFeaturesList.SSO,
-        PlanFeaturesList.CustomerDataRegion,
+        PlanFeaturesList.CustomDataRegion,
         PlanFeaturesList.PrioritySupport
       ],
       cost: {
         [BillingInterval.Monthly]: {
-          [Roles.Workspace.Guest]: 79,
-          [Roles.Workspace.Member]: 79,
-          [Roles.Workspace.Admin]: 79
+          [Roles.Workspace.Guest]: 75,
+          [Roles.Workspace.Member]: 75,
+          [Roles.Workspace.Admin]: 75
         },
         [BillingInterval.Yearly]: {
-          [Roles.Workspace.Guest]: 63,
-          [Roles.Workspace.Member]: 63,
-          [Roles.Workspace.Admin]: 63
+          [Roles.Workspace.Guest]: 60,
+          [Roles.Workspace.Member]: 60,
+          [Roles.Workspace.Admin]: 60
         }
       }
     }

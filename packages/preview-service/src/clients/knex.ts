@@ -59,12 +59,14 @@ export const getProjectDbClient = async ({
   const mainDb = dbClients.main.public
   if (!FF_WORKSPACES_MULTI_REGION_ENABLED) return mainDb
 
-  const projectRegion = await mainDb<{ id: string; regionKey: string }>('streams')
+  const projectRegion = await mainDb<{ id: string; regionKey: string | null }>(
+    'streams'
+  )
     .select('id', 'regionKey')
     .where({ id: projectId })
     .first()
 
-  if (!projectRegion) return mainDb
+  if (!projectRegion?.regionKey) return mainDb
 
   const regionDb = dbClients[projectRegion.regionKey]
   if (!regionDb)

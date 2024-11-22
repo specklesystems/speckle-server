@@ -14,6 +14,7 @@ const parseAndCreateCommitFactory =
     userId,
     message = 'Manual IFC file upload',
     fileId,
+    branchId,
     logger
   }) => {
     if (!logger) {
@@ -45,12 +46,7 @@ const parseAndCreateCommitFactory =
       totalChildrenCount: tCount
     }
 
-    const branch = await serverApi.getBranchByNameAndStreamId({
-      streamId,
-      name: branchName
-    })
-
-    if (!branch) {
+    if (!branchId) {
       logger.info("Branch '{branchName}' not found, creating it.")
       await serverApi.createBranch({
         name: branchName,
