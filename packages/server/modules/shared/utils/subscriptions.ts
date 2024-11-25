@@ -134,6 +134,10 @@ export enum FileImportSubscriptions {
   ProjectFileImportUpdated = 'PROJECT_FILE_IMPORT_UPDATED'
 }
 
+export enum TestSubscriptions {
+  Ping = 'PING'
+}
+
 type NoVariables = Record<string, never>
 
 // Add mappings between expected event constant, its payload and variables
@@ -348,6 +352,10 @@ type SubscriptionTypeMap = {
     }
     variables: SubscriptionCommitUpdatedArgs
   }
+  [TestSubscriptions.Ping]: {
+    payload: { ping: string }
+    variables: NoVariables
+  }
 } & { [k in SubscriptionEvent]: { payload: unknown; variables: unknown } }
 
 type SubscriptionEvent =
@@ -359,6 +367,7 @@ type SubscriptionEvent =
   | UserSubscriptions
   | ViewerSubscriptions
   | BranchSubscriptions
+  | TestSubscriptions
 
 /**
  * Publish a GQL subscription event

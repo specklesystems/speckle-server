@@ -5,3 +5,22 @@ export const createObjectMutation = gql`
     objectCreate(objectInput: $input)
   }
 `
+
+export const pingPongSubscription = gql`
+  subscription PingPong {
+    ping
+  }
+`
+
+export const onUserProjectsUpdatedSubscription = gql`
+  subscription OnUserProjectsUpdated {
+    userProjectsUpdated {
+      id
+      type
+      project {
+        id
+        name
+      }
+    }
+  }
+`
