@@ -68,10 +68,11 @@ import { WorkspacePlans } from '~/lib/common/generated/gql/graphql'
 import { pricingPlansConfig } from '~/lib/billing/helpers/constants'
 import type { PlanFeaturesList } from '~/lib/billing/helpers/types'
 import { CheckIcon } from '@heroicons/vue/24/outline'
+import type { MaybeNullOrUndefined } from '@speckle/shared'
 
 defineProps<{
   isYearlyPlan: boolean
-  currentPlan?: WorkspacePlan
+  currentPlan?: MaybeNullOrUndefined<WorkspacePlan>
   workspaceId?: string
   isAdmin?: boolean
 }>()
