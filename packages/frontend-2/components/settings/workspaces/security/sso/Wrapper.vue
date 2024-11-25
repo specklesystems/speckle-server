@@ -22,7 +22,7 @@
           Configure
         </FormButton>
 
-        <FormButton v-else @click="goToBilling">Upgrade to Business</FormButton>
+        <FormButton v-else @click="goToBilling">Upgrade to Plus</FormButton>
       </div>
 
       <!-- Existing Provider Configuration -->
