@@ -18,13 +18,16 @@ export const buildAuthRedirectUrl = (
   workspaceSlug: string,
   isValidationFlow: boolean
 ): URL => {
-  const urlFragments = [`/api/v1/workspaces/${workspaceSlug}/sso/oidc/callback`]
+  const url = new URL(
+    `/api/v1/workspaces/${workspaceSlug}/sso/oidc/callback`,
+    getServerOrigin()
+  )
 
   if (isValidationFlow) {
-    urlFragments.push('?validate=true')
+    url.searchParams.set('validate', 'true')
   }
 
-  return new URL(urlFragments.join(''), getServerOrigin())
+  return url
 }
 
 /**
@@ -32,16 +35,35 @@ export const buildAuthRedirectUrl = (
  * SSO authorization flow.
  * @remarks Append params to this URL to preserve information about errors
  */
-export const buildFinalizeUrl = (workspaceSlug: string): URL => {
+export const buildFinalizeUrl = (
+  workspaceSlug: string,
+  isValidationFlow: boolean
+): URL => {
+  const url = new URL(`/workspaces/${workspaceSlug}`, getFrontendOrigin())
+
+  if (isValidationFlow) {
+    url.searchParams.set('ssoValidationSuccess', 'true')
+  }
+
+  url.searchParams.set('settings', 'workspaces/security')
+
   return new URL(`workspaces/${workspaceSlug}/sso`, getFrontendOrigin())
 }
 
 /**
  * Generate Speckle URL to redirect users to after an error occurs during SSO.
  */
-export const buildErrorUrl = (err: unknown, workspaceSlug: string) => {
-  const errorRedirectUrl = buildFinalizeUrl(workspaceSlug)
+export const buildErrorUrl = (
+  err: unknown,
+  workspaceSlug: string,
+  isValidationFlow: boolean
+) => {
+  const errorRedirectUrl = buildFinalizeUrl(workspaceSlug, isValidationFlow)
   let errorMessage: string
+
+  if (isValidationFlow) {
+    errorRedirectUrl.searchParams.set('ssoValidationSuccess', 'false')
+  }
 
   if (err instanceof Error) {
     errorMessage = `${err.message}`
@@ -49,7 +71,7 @@ export const buildErrorUrl = (err: unknown, workspaceSlug: string) => {
     errorMessage = `Unknown error: ${JSON.stringify(err)}`
   }
 
-  errorRedirectUrl.searchParams.set('error', errorMessage)
+  errorRedirectUrl.searchParams.set('ssoError', errorMessage)
   return errorRedirectUrl.toString()
 }
 
