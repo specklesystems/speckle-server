@@ -131,7 +131,7 @@ graphql(`
         issuerUrl
       }
     }
-    hasAccessToSSO: hasAccessToFeature(featureName: OidcSso)
+    hasAccessToSSO: hasAccessToFeature(featureName: oidcSso)
   }
 `)
 
