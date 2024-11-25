@@ -19,10 +19,10 @@ import { Application } from 'express'
 
 export default (app: Application) => {
   app.get(
-    '/api/v1/projects/:projectId/automations/:automationId/runs/:runId/logs',
+    '/api/v1/projects/:streamId/automations/:automationId/runs/:runId/logs',
     corsMiddleware(),
     async (req, res, next) => {
-      const projectDb = await getProjectDbClient({ projectId: req.params.projectId })
+      const projectDb = await getProjectDbClient({ projectId: req.params.streamId })
 
       return await authMiddlewareCreator([
         validateServerRoleBuilderFactory({
@@ -39,7 +39,7 @@ export default (app: Application) => {
       ])(req, res, next)
     },
     async (req, res) => {
-      const projectDb = await getProjectDbClient({ projectId: req.params.projectId })
+      const projectDb = await getProjectDbClient({ projectId: req.params.streamId })
       const automationId = req.params.automationId
       const runId = req.params.runId
 
