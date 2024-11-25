@@ -103,7 +103,7 @@ import {
   ExecutionEngineFailedResponseError,
   ExecutionEngineNetworkError
 } from '@/modules/automate/errors/executionEngine'
-import { db as globalDb } from '@/db/knex'
+import { db } from '@/db/knex'
 import { AutomationsEmitter } from '@/modules/automate/events/automations'
 import { AutomateRunsEmitter } from '@/modules/automate/events/runs'
 import { getCommitFactory } from '@/modules/core/repositories/commits'
@@ -122,12 +122,12 @@ const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
 
 const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
 const createAppToken = createAppTokenFactory({
-  storeApiToken: storeApiTokenFactory({ db: globalDb }),
-  storeTokenScopes: storeTokenScopesFactory({ db: globalDb }),
+  storeApiToken: storeApiTokenFactory({ db }),
+  storeTokenScopes: storeTokenScopesFactory({ db }),
   storeTokenResourceAccessDefinitions: storeTokenResourceAccessDefinitionsFactory({
-    db: globalDb
+    db
   }),
-  storeUserServerAppToken: storeUserServerAppTokenFactory({ db: globalDb })
+  storeUserServerAppToken: storeUserServerAppTokenFactory({ db })
 })
 
 export = (FF_AUTOMATE_MODULE_ENABLED
@@ -513,7 +513,7 @@ export = (FF_AUTOMATE_MODULE_ENABLED
         async createFunction(_parent, args, ctx) {
           const create = createFunctionFromTemplateFactory({
             createExecutionEngineFn: createFunction,
-            getUser: getUserFactory({ db: globalDb }),
+            getUser: getUserFactory({ db }),
             createStoredAuthCode: createStoredAuthCodeFactory({
               redis: getGenericRedis()
             })
