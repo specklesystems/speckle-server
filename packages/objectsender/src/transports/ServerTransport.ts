@@ -2,6 +2,19 @@ import { ITransport } from './ITransport'
 import { IDisposable } from '../utils/IDisposable'
 import { retry, timeoutAt } from '@speckle/shared'
 
+type TransportParams = {
+  serverUrl: string
+  projectId: string
+  authToken: string
+  options?: TransportOptions
+}
+
+export type TransportOptions = Partial<{
+  maxSize: number
+  flushRetryCount: number
+  flushTimeout: number
+}>
+
 /**
  * Basic object sender to a speckle server
  */
@@ -15,24 +28,15 @@ export class ServerTransport implements ITransport, IDisposable {
   #flushRetryCount: number
   #flushTimeout: number
 
-  constructor(
-    serverUrl: string,
-    projectId: string,
-    authToken: string,
-    options?: Partial<{
-      maxSize: number
-      flushRetryCount: number
-      flushTimeout: number
-    }>
-  ) {
-    this.#maxSize = options?.maxSize || 200_000
-    this.#flushRetryCount = options?.flushRetryCount || 3
-    this.#flushTimeout = options?.flushTimeout || 2 * 60 * 1000
+  constructor(params: TransportParams) {
+    this.#maxSize = params.options?.maxSize || 200_000
+    this.#flushRetryCount = params.options?.flushRetryCount || 3
+    this.#flushTimeout = params.options?.flushTimeout || 2 * 60 * 1000
 
     this.#currSize = 0
-    this.#serverUrl = serverUrl
-    this.#projectId = projectId
-    this.#authToken = authToken
+    this.#serverUrl = params.serverUrl
+    this.#projectId = params.projectId
+    this.#authToken = params.authToken
     this.#buffer = []
   }
 
