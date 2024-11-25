@@ -221,7 +221,7 @@ export class SketchupBridge extends BaseBridge {
       projectId,
       modelId,
       accountId,
-      objectId: referencedObjectId,
+      referencedObjectId,
       sourceApplication: 'sketchup',
       message: message || 'send from sketchup'
     }
@@ -281,7 +281,7 @@ export class SketchupBridge extends BaseBridge {
       projectId,
       modelId,
       accountId,
-      objectId: sendObject.id,
+      referencedObjectId: sendObject.id,
       sourceApplication: 'sketchup',
       message: message || 'send from sketchup'
     }
@@ -308,7 +308,7 @@ export class SketchupBridge extends BaseBridge {
     const result = await createVersion.mutate({
       input: {
         modelId: args.modelId,
-        objectId: args.objectId,
+        objectId: args.referencedObjectId,
         sourceApplication: 'sketchup',
         projectId: args.projectId
       }

@@ -34,6 +34,7 @@ export type CreateVersionViaBrowserArgs = {
   accountId: string
   message: string
   referencedObjectId: string
+  sourceApplication: string
   sendConversionResults: ConversionResult[]
 }
 
@@ -66,7 +67,7 @@ export type CreateVersionArgs = {
   projectId: string
   modelId: string
   accountId: string
-  objectId: string
+  referencedObjectId: string
   message?: string
   sourceApplication?: string
 }
@@ -218,22 +219,21 @@ export class ServerBridge {
       modelCardId,
       referencedObjectId,
       message,
+      sourceApplication,
       sendConversionResults
     } = eventPayload
-    const args: CreateVersionArgs = {
+    const versionId = await this.createVersion({
       modelCardId,
       projectId,
       modelId,
       accountId,
-      objectId: referencedObjectId,
-      sourceApplication: 'sketchup',
-      message: message || 'send from sketchup'
-    }
-    const versionId = await this.createVersion(args)
+      referencedObjectId,
+      sourceApplication,
+      message
+    })
     const hostAppStore = useHostAppStore()
-    // TODO: Alignment needed
     hostAppStore.setModelSendResult({
-      modelCardId: args.modelCardId,
+      modelCardId,
       versionId: versionId as string,
       sendConversionResults
     })
@@ -297,7 +297,7 @@ export class ServerBridge {
       projectId,
       modelId,
       accountId,
-      objectId: rootCommitObjectId,
+      referencedObjectId: rootCommitObjectId,
       sourceApplication: hostAppStore.hostAppName?.toLowerCase(),
       message: message || `send from ${hostAppStore.hostAppName?.toLowerCase()}`
     }
@@ -325,7 +325,7 @@ export class ServerBridge {
     const result = await createVersion.mutate({
       input: {
         modelId: args.modelId,
-        objectId: args.objectId,
+        objectId: args.referencedObjectId,
         sourceApplication: hostAppStore.hostAppName,
         projectId: args.projectId
       }
