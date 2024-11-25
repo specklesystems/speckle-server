@@ -13,21 +13,16 @@ import { useAccountStore } from '~/store/accounts'
 import { useHostAppStore } from '~/store/hostApp'
 import type { ConversionResult } from '~/lib/conversions/conversionResult'
 import { storeToRefs } from 'pinia'
+import type {
+  SendBatchViaBrowserArgs,
+  CreateVersionViaBrowserArgs,
+  ReceiveViaBrowserArgs,
+  CreateVersionArgs
+} from '~/lib/bridge/server'
 
 declare let sketchup: {
   exec: (data: Record<string, unknown>) => void
   getBindingsMethodNames: (viewId: string) => void
-}
-
-type SendBatchViaBrowserArgs = {
-  modelCardId: string
-  projectId: string
-  token: string
-  serverUrl: string
-  batch: string
-  currentBatch: number
-  totalBatch: number
-  referencedObjectId: string
 }
 
 type SendViaBrowserArgs = {
@@ -44,37 +39,6 @@ type SendViaBrowserArgs = {
     totalChildrenCount: number
     batches: string[]
   }
-}
-
-type createVersionViaBrowserArgs = {
-  modelCardId: string
-  projectId: string
-  modelId: string
-  token: string
-  serverUrl: string
-  accountId: string
-  message: string
-  referencedObjectId: string
-  sendConversionResults: ConversionResult[]
-}
-
-type ReceiveViaBrowserArgs = {
-  modelCardId: string
-  projectId: string
-  modelId: string
-  objectId: string
-  accountId: string
-  selectedVersionId: string
-}
-
-type CreateVersionArgs = {
-  modelCardId: string
-  projectId: string
-  modelId: string
-  accountId: string
-  objectId: string
-  message?: string
-  sourceApplication?: string
 }
 
 /**
@@ -130,7 +94,7 @@ export class SketchupBridge extends BaseBridge {
     else if (eventName === 'sendBatchViaBrowser')
       this.sendBatchViaBrowser(eventPayload as SendBatchViaBrowserArgs)
     else if (eventName === 'createVersionViaBrowser')
-      this.createVersionViaBrowser(eventPayload as createVersionViaBrowserArgs)
+      this.createVersionViaBrowser(eventPayload as CreateVersionViaBrowserArgs)
     else if (eventName === 'receiveViaBrowser')
       this.receiveViaBrowser(eventPayload as ReceiveViaBrowserArgs)
 
@@ -242,7 +206,7 @@ export class SketchupBridge extends BaseBridge {
     }
   }
 
-  private async createVersionViaBrowser(eventPayload: createVersionViaBrowserArgs) {
+  private async createVersionViaBrowser(eventPayload: CreateVersionViaBrowserArgs) {
     const {
       projectId,
       accountId,

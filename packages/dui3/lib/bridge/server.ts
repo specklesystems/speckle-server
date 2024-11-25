@@ -14,6 +14,29 @@ import { useAccountStore } from '~/store/accounts'
 import { useHostAppStore } from '~/store/hostApp'
 import type { Emitter } from 'nanoevents'
 
+export type SendBatchViaBrowserArgs = {
+  modelCardId: string
+  projectId: string
+  token: string
+  serverUrl: string
+  batch: string
+  currentBatch: number
+  totalBatch: number
+  referencedObjectId: string
+}
+
+export type CreateVersionViaBrowserArgs = {
+  modelCardId: string
+  projectId: string
+  modelId: string
+  token: string
+  serverUrl: string
+  accountId: string
+  message: string
+  referencedObjectId: string
+  sendConversionResults: ConversionResult[]
+}
+
 export type SendViaBrowserArgs = {
   modelCardId: string
   projectId: string
@@ -68,6 +91,10 @@ export class ServerBridge {
     if (eventName === 'sendByBrowser')
       this.sendByBrowser(eventPayload as SendViaBrowserArgs)
     // we will switch to https://www.npmjs.com/package/@speckle/objectsender
+    else if (eventName === 'sendBatchViaBrowser')
+      this.sendBatchViaBrowser(eventPayload as SendBatchViaBrowserArgs)
+    else if (eventName === 'createVersionViaBrowser')
+      this.createVersionViaBrowser(eventPayload as CreateVersionViaBrowserArgs)
     else if (eventName === 'receiveByBrowser')
       this.receiveByBrowser(eventPayload as ReceiveViaBrowserArgs)
     // Archicad is not likely to hit here yet!
@@ -139,6 +166,71 @@ export class ServerBridge {
 
     // CONVERSION WILL START AFTER THAT
     await this.runMethod('afterGetObjects', args as unknown as unknown[])
+  }
+
+  /**
+   * Internal sketchup method for sending batch data via the browser.
+   * @param eventPayload
+   */
+  private async sendBatchViaBrowser(eventPayload: SendBatchViaBrowserArgs) {
+    const {
+      serverUrl,
+      token,
+      projectId,
+      modelCardId,
+      batch,
+      totalBatch,
+      currentBatch,
+      referencedObjectId
+    } = eventPayload
+    this.emitter.emit('setModelProgress', {
+      modelCardId,
+      progress: {
+        status: 'Uploading',
+        progress: currentBatch / totalBatch
+      }
+    } as unknown as string)
+    const formData = new FormData()
+    formData.append(`batch-1`, new Blob([batch], { type: 'application/json' }))
+    await fetch(`${serverUrl}/objects/${projectId}`, {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + token },
+      body: formData
+    })
+
+    if (currentBatch === totalBatch) {
+      const args = [eventPayload.modelCardId, referencedObjectId]
+      await this.runMethod('afterSendObjects', args as unknown as unknown[])
+    }
+  }
+
+  private async createVersionViaBrowser(eventPayload: CreateVersionViaBrowserArgs) {
+    const {
+      projectId,
+      accountId,
+      modelId,
+      modelCardId,
+      referencedObjectId,
+      message,
+      sendConversionResults
+    } = eventPayload
+    const args: CreateVersionArgs = {
+      modelCardId,
+      projectId,
+      modelId,
+      accountId,
+      objectId: referencedObjectId,
+      sourceApplication: 'sketchup',
+      message: message || 'send from sketchup'
+    }
+    const versionId = await this.createVersion(args)
+    const hostAppStore = useHostAppStore()
+    // TODO: Alignment needed
+    hostAppStore.setModelSendResult({
+      modelCardId: args.modelCardId,
+      versionId: versionId as string,
+      sendConversionResults
+    })
   }
 
   /**
