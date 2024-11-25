@@ -18,7 +18,7 @@ import { expect } from 'chai'
 import { ApolloServer, GraphQLResponse } from '@apollo/server'
 import { getUserFactory } from '@/modules/core/repositories/users'
 import { db } from '@/db/knex'
-import { pick } from 'lodash'
+import { pick, set } from 'lodash'
 import { isTestEnv } from '@/modules/shared/helpers/envHelper'
 import { publish, TestSubscriptions } from '@/modules/shared/utils/subscriptions'
 import cryptoRandomString from 'crypto-random-string'
@@ -277,7 +277,10 @@ export const startEmittingTestSubs = async () => {
 export const testApolloSubscriptionServer = async () => {
   const serverId = cryptoRandomString({ length: 16, type: 'url-safe' })
   const serverUrl = `ws://${serverId}.fakeWsServer:1234/graphql`
+
   const mockWsServer = new MockSocket.Server(serverUrl)
+  set(mockWsServer, 'removeListener', mockWsServer.off.bind(mockWsServer)) // backwards compat w/ subscriptions-transport-ws
+
   const mockWs = MockSocket.WebSocket as unknown as ws.WebSocket
   const apolloSubServer = buildApolloSubscriptionServer(mockWsServer)
 

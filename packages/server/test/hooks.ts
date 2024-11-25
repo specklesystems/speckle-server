@@ -53,6 +53,25 @@ chai.use(chaiHttp)
 chai.use(deepEqualInAnyOrder)
 chai.use(graphqlChaiPlugin)
 
+export const getMainTestRegionKey = () => {
+  const key = Object.keys(regionClients)[0]
+  if (!key) {
+    throw new Error('No registered region client found')
+  }
+
+  return key
+}
+
+export const getMainTestRegionClient = () => {
+  const key = getMainTestRegionKey()
+  const client = regionClients[key]
+  if (!client) {
+    throw new Error('No registered region client found')
+  }
+
+  return client
+}
+
 const inEachDb = async (fn: (db: Knex) => MaybeAsync<void>) => {
   await fn(mainDb)
   for (const regionClient of Object.values(regionClients)) {

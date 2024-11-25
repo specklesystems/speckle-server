@@ -57,8 +57,23 @@ import { getEncryptor } from '@/modules/workspaces/helpers/sso'
 import { OidcProvider } from '@/modules/workspaces/domain/sso/types'
 import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
 import { getDefaultSsoSessionExpirationDate } from '@/modules/workspaces/domain/sso/logic'
-import { upsertPaidWorkspacePlanFactory } from '@/modules/gatekeeper/repositories/billing'
+import {
+  getWorkspacePlanFactory,
+  upsertPaidWorkspacePlanFactory
+} from '@/modules/gatekeeper/repositories/billing'
 import { SetOptional } from 'type-fest'
+import { isMultiRegionTestMode } from '@/test/speckle-helpers/regions'
+import {
+  assignRegionFactory,
+  getAvailableRegionsFactory
+} from '@/modules/workspaces/services/regions'
+import { getRegionsFactory } from '@/modules/multiregion/repositories'
+import { canWorkspaceUseRegionsFactory } from '@/modules/gatekeeper/services/featureAuthorization'
+import {
+  getDefaultRegionFactory,
+  upsertRegionAssignmentFactory
+} from '@/modules/workspaces/repositories/regions'
+import { getDb } from '@/modules/multiregion/dbSelector'
 
 export type BasicTestWorkspace = {
   /**
@@ -84,9 +99,10 @@ export type BasicTestWorkspace = {
 export const createTestWorkspace = async (
   workspace: SetOptional<BasicTestWorkspace, 'slug'>,
   owner: BasicTestUser,
-  options?: { domain?: string; addPlan?: boolean }
+  options?: { domain?: string; addPlan?: boolean; regionKey?: string }
 ) => {
-  const { domain, addPlan = true } = options || {}
+  const { domain, addPlan = true, regionKey } = options || {}
+  const useRegion = isMultiRegionTestMode() && regionKey
 
   const upsertWorkspacePlan = upsertPaidWorkspacePlanFactory({ db })
   const createWorkspace = createWorkspaceFactory({
@@ -131,13 +147,33 @@ export const createTestWorkspace = async (
     })
   }
 
-  if (addPlan) {
+  if (addPlan || useRegion) {
     await upsertWorkspacePlan({
       workspacePlan: {
         workspaceId: newWorkspace.id,
         name: 'business',
         status: 'valid'
       }
+    })
+  }
+
+  if (useRegion) {
+    const regionDb = await getDb({ regionKey })
+    const assignRegion = assignRegionFactory({
+      getAvailableRegions: getAvailableRegionsFactory({
+        getRegions: getRegionsFactory({ db }),
+        canWorkspaceUseRegions: canWorkspaceUseRegionsFactory({
+          getWorkspacePlan: getWorkspacePlanFactory({ db })
+        })
+      }),
+      upsertRegionAssignment: upsertRegionAssignmentFactory({ db }),
+      getDefaultRegion: getDefaultRegionFactory({ db }),
+      getWorkspace: getWorkspaceFactory({ db }),
+      insertRegionWorkspace: upsertWorkspaceFactory({ db: regionDb })
+    })
+    await assignRegion({
+      workspaceId: newWorkspace.id,
+      regionKey
     })
   }
 
