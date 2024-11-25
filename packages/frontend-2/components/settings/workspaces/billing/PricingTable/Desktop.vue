@@ -1,9 +1,9 @@
 <template>
-  <table class="w-full flex flex-col">
+  <table class="w-full flex flex-col text-left">
     <thead>
       <tr class="w-full flex">
         <th class="w-1/4 flex pl-5 pr-6 pt-4 pb-2 font-medium">
-          <h4>Compare plans</h4>
+          <h4 class="text-body-xs text-foreground">Compare plans</h4>
         </th>
         <th
           v-for="plan in plans"
@@ -68,13 +68,12 @@ import { WorkspacePlans } from '~/lib/common/generated/gql/graphql'
 import { pricingPlansConfig } from '~/lib/billing/helpers/constants'
 import type { PlanFeaturesList } from '~/lib/billing/helpers/types'
 import { CheckIcon } from '@heroicons/vue/24/outline'
-import type { MaybeNullOrUndefined } from '@speckle/shared'
 
 defineProps<{
   isYearlyPlan: boolean
-  currentPlan: MaybeNullOrUndefined<WorkspacePlan>
-  workspaceId: string
-  isAdmin: boolean
+  currentPlan?: WorkspacePlan
+  workspaceId?: string
+  isAdmin?: boolean
 }>()
 
 const plans = ref(pricingPlansConfig.plans)
