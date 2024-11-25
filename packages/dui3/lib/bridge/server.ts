@@ -169,7 +169,9 @@ export class ServerBridge {
   }
 
   /**
-   * Internal sketchup method for sending batch data via the browser.
+   * Internal server method for sending batch data via REST api.
+   * Whenever batches are completed it triggers to host application to notify it is done.
+   * To be able to use this function properly, expected objects in batch must have hashed (speckle ids generated, detached, chucked bla bla) on connector.
    * @param eventPayload
    */
   private async sendBatchViaBrowser(eventPayload: SendBatchViaBrowserArgs) {
@@ -204,6 +206,10 @@ export class ServerBridge {
     }
   }
 
+  /**
+   * Whenever we make sure we sent every object to the server, we can safely call this function from connector to trigger version create and populate conversion reports.
+   * @param eventPayload
+   */
   private async createVersionViaBrowser(eventPayload: CreateVersionViaBrowserArgs) {
     const {
       projectId,
@@ -234,7 +240,7 @@ export class ServerBridge {
   }
 
   /**
-   * Internal server bridge method for sending data via the browser.
+   * Internal server bridge method for sending data via object sender.
    * @param eventPayload
    */
   private async sendByBrowser(eventPayload: SendViaBrowserArgs) {
