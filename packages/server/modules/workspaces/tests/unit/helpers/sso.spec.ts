@@ -18,18 +18,18 @@ describe('buildAuthRedirectUrl', () => {
 
 describe('buildFinalizeUrl', () => {
   it('should include workspace slug provided', () => {
-    const url = buildFinalizeUrl('my-workspace')
+    const url = buildFinalizeUrl('my-workspace', false)
     expect(url.toString().includes('my-workspace')).to.equal(true)
   })
 })
 
 describe('buildErrorUrl', () => {
   it('should include workspace slug provided', () => {
-    const url = buildErrorUrl({}, 'my-workspace')
+    const url = buildErrorUrl({}, 'my-workspace', false)
     expect(url.toString().includes('my-workspace')).to.equal(true)
   })
   it('should include error message provided', () => {
-    const url = buildErrorUrl(new Error('test'), 'my-workspace')
+    const url = buildErrorUrl(new Error('test'), 'my-workspace', false)
     expect(url.toString().includes('error')).to.equal(true)
     expect(url.toString().includes('test')).to.equal(true)
   })

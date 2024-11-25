@@ -145,7 +145,7 @@ const validateFeatureAccessMiddlewareFactory: RequestHandler<
 
     next()
   } catch (e) {
-    res?.redirect(buildErrorUrl(e, req.params.workspaceSlug))
+    res?.redirect(buildErrorUrl(e, req.params.workspaceSlug, true))
   }
 }
 
@@ -173,7 +173,6 @@ export const getSsoRouter = (): Router => {
     sessionMiddleware,
     moveAuthParamsToSessionMiddleware,
     moveWorkspaceIdToSessionMiddleware,
-    validateFeatureAccessMiddlewareFactory,
     validateRequest({
       params: z.object({
         workspaceSlug: z.string().min(1)
@@ -302,7 +301,9 @@ export const getSsoRouter = (): Router => {
         await withTransaction(handleOidcCallback(req, res, next), trx)
         return next()
       } catch (e) {
-        res?.redirect(buildErrorUrl(e, req.params.workspaceSlug))
+        res?.redirect(
+          buildErrorUrl(e, req.params.workspaceSlug, req.query.validate === 'true')
+        )
       }
     },
     finalizeAuthMiddleware
@@ -372,7 +373,7 @@ const handleSsoAuthRequestFactory =
       session.codeVerifier = await getEncryptor()(codeVerifier)
       res?.redirect(authorizationUrl.toString())
     } catch (e) {
-      res?.redirect(buildErrorUrl(e, params.workspaceSlug))
+      res?.redirect(buildErrorUrl(e, params.workspaceSlug, false))
     }
   }
 
@@ -418,7 +419,7 @@ const handleSsoValidationRequestFactory =
 
       res?.redirect(authorizationUrl.toString())
     } catch (e) {
-      res?.redirect(buildErrorUrl(e, params.workspaceSlug))
+      res?.redirect(buildErrorUrl(e, params.workspaceSlug, true))
     }
   }
 
@@ -461,15 +462,16 @@ const handleOidcCallbackFactory =
     WorkspaceSsoOidcCallbackRequestQuery
   > =>
   async (req) => {
+    const isValidationFlow = req.query.validate === 'true'
+
     const workspace = await getWorkspaceBySlug({
       workspaceSlug: req.params.workspaceSlug
     })
     if (!workspace) throw new WorkspaceNotFoundError()
 
-    const decryptedOidcProvider: WorkspaceSsoProvider =
-      req.query.validate === 'true'
-        ? await createOidcProvider(req, workspace.id)
-        : await getOidcProvider(workspace.id)
+    const decryptedOidcProvider: WorkspaceSsoProvider = isValidationFlow
+      ? await createOidcProvider(req, workspace.id)
+      : await getOidcProvider(workspace.id)
 
     const oidcProviderUserData = await getOidcProviderUserData(
       req,
@@ -509,7 +511,10 @@ const handleOidcCallbackFactory =
       }
     })
 
-    req.authRedirectPath = buildFinalizeUrl(req.params.workspaceSlug).toString()
+    req.authRedirectPath = buildFinalizeUrl(
+      req.params.workspaceSlug,
+      isValidationFlow
+    ).toString()
   }
 
 const createOidcProviderFactory =
