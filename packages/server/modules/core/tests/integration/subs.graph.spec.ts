@@ -124,15 +124,15 @@ describe('Core GraphQL Subscriptions (New)', () => {
           name: 'My New Version Project #1',
           id: '',
           ownerId: '',
-          isPublic: true,
-          workspaceId: myMainWorkspace.id
+          isPublic: true
         }
 
         before(async () => {
+          myVersionProj.workspaceId = myMainWorkspace.id
           await createTestStreams([[myVersionProj, me]])
         })
 
-        it(`should notify me of a new version (userProjectVersionsUpdated)`, async () => {
+        it(`should notify me of a new version (projectVersionsUpdated/commitCreated)`, async () => {
           const message = 'ayyyooo'
           const onUserProjectVersionsUpdated = await meSubClient.subscribe(
             OnUserProjectVersionsUpdatedDocument,
