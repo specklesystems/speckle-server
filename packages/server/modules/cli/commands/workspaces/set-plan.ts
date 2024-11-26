@@ -25,7 +25,7 @@ const command: CommandModule<
       describe: 'Plan to set the status for',
       type: 'string',
       default: 'business',
-      choices: ['business', 'team', 'plus']
+      choices: ['business', 'starter', 'pro']
     },
     status: {
       describe: 'Status to set for the workspace plan',
