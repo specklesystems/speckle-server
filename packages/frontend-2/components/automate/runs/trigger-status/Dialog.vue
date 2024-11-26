@@ -3,13 +3,11 @@
     <template #header>
       <div class="flex flex-col">
         <div class="flex items-center space-x-2 max-w-full w-full">
-          <div class="mt-[6px] shrink-0">
-            <AutomateRunsTriggerStatusIcon
-              :summary="summary"
-              class="h-6 w-6 sm:h-10 sm:w-10"
-            />
-          </div>
-          <div class="flex min-w-0 flex-col gap-1">
+          <AutomateRunsTriggerStatusIcon
+            :summary="summary"
+            class="h-6 w-6 sm:h-10 sm:w-10"
+          />
+          <div class="flex min-w-0 flex-col gap-0.5">
             <h4 :class="[`h6 sm:h5 font-medium whitespace-normal`, summary.titleColor]">
               {{ summary.title }}
             </h4>

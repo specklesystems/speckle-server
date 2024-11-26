@@ -15,7 +15,7 @@
     <p class="text-foreground-2 text-body-2xs pt-1">
       Billed {{ isYearlyPlan ? 'annually' : 'monthly' }}
     </p>
-    <div class="w-full">
+    <div v-if="workspaceId" class="w-full">
       <FormButton
         :color="plan.name === WorkspacePlans.Starter ? 'primary' : 'outline'"
         :disabled="(!hasTrialPlan && !canUpgradeToPlan) || !isAdmin"
@@ -46,9 +46,10 @@ import type { MaybeNullOrUndefined } from '@speckle/shared'
 const props = defineProps<{
   plan: PricingPlan
   isYearlyPlan: boolean
-  currentPlan: MaybeNullOrUndefined<WorkspacePlan>
-  workspaceId: string
-  isAdmin: boolean
+  // The following props are optional if the table is for informational purposes
+  currentPlan?: MaybeNullOrUndefined<WorkspacePlan>
+  workspaceId?: string
+  isAdmin?: boolean
 }>()
 
 const { upgradePlanRedirect } = useBillingActions()
@@ -71,7 +72,7 @@ const hasTrialPlan = computed(
 )
 
 const onUpgradePlanClick = (plan: WorkspacePlans) => {
-  if (!isPaidPlan(plan)) return
+  if (!isPaidPlan(plan) || !props.workspaceId) return
   upgradePlanRedirect({
     plan: plan as unknown as PaidWorkspacePlans,
     cycle: props.isYearlyPlan ? BillingInterval.Yearly : BillingInterval.Monthly,

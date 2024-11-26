@@ -3,12 +3,10 @@
     <Portal to="navigation">
       <HeaderNavLink
         :to="automationFunctionsRoute"
-        :name="'Automate functions'"
-      ></HeaderNavLink>
-      <HeaderNavLink
-        :to="automationFunctionRoute(fn.id)"
-        :name="fn.name"
-      ></HeaderNavLink>
+        :separator="false"
+        name="Automate functions"
+      />
+      <HeaderNavLink :to="automationFunctionRoute(fn.id)" :name="fn.name" />
     </Portal>
     <div class="flex items-center gap-4">
       <AutomateFunctionLogo :logo="fn.logo" />
@@ -24,19 +22,17 @@
       class="flex gap-2 shrink-0"
     >
       <FormButton
-        :icon-left="BoltIcon"
         class="shrink-0"
         full-width
         :disabled="!hasReleases"
         @click="$emit('createAutomation')"
       >
-        Use in an automation
+        Use in automation
       </FormButton>
     </div>
   </div>
 </template>
 <script setup lang="ts">
-import { BoltIcon } from '@heroicons/vue/24/outline'
 import { graphql } from '~/lib/common/generated/gql'
 import type { AutomateFunctionPageHeader_FunctionFragment } from '~/lib/common/generated/gql/graphql'
 import {
