@@ -13,7 +13,7 @@ const ignore = [
 
 /** @type {import("mocha").MochaOptions} */
 const config = {
-  spec: ['modules/**/*.spec.js', 'modules/**/*.spec.ts', 'logging/**/*.spec.js'],
+  spec: ['modules/**/*.spec.js', 'modules/**/*.spec.ts', 'logging/**/*.spec.ts'],
   require: ['ts-node/register', 'test/hooks.ts'],
   ...(ignore.length ? { ignore } : {}),
   slow: 0,
