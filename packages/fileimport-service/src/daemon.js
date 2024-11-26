@@ -1,5 +1,6 @@
 'use strict'
 
+const Environment = require('@speckle/shared/dist/commonjs/environment/index.js')
 const {
   initPrometheusMetrics,
   metricDuration,
@@ -16,6 +17,7 @@ const ServerAPI = require('./api')
 const objDependencies = require('./objDependencies')
 const { logger } = require('../observability/logging')
 const { Scopes, wait } = require('@speckle/shared')
+const { FF_FILEIMPORT_IFC_DOTNET_ENABLED } = Environment.getFeatureFlags()
 
 const HEALTHCHECK_FILE_PATH = '/tmp/last_successful_query'
 
@@ -127,23 +129,44 @@ async function doTask(mainDb, regionName, taskDb, task) {
     })
 
     if (info.fileType.toLowerCase() === 'ifc') {
-      await runProcessWithTimeout(
-        taskLogger,
-        process.env['DOTNET_BINARY_PATH'] || 'dotnet',
-        [
-          '/speckle-server/packages/fileimport-service/ifc/ifc-converter.dll',
-          TMP_FILE_PATH,
-          TMP_RESULTS_PATH,
-          info.streamId,
-          `File upload: ${info.fileName}`,
-          existingBranch?.id || '',
-          regionName
-        ],
-        {
-          USER_TOKEN: tempUserToken
-        },
-        TIME_LIMIT
-      )
+      if (FF_FILEIMPORT_IFC_DOTNET_ENABLED) {
+        await runProcessWithTimeout(
+          taskLogger,
+          process.env['DOTNET_BINARY_PATH'] || 'dotnet',
+          [
+            '/speckle-server/packages/fileimport-service/ifc-dotnet/ifc-converter.dll',
+            TMP_FILE_PATH,
+            TMP_RESULTS_PATH,
+            info.streamId,
+            `File upload: ${info.fileName}`,
+            existingBranch?.id || '',
+            regionName
+          ],
+          {
+            USER_TOKEN: tempUserToken
+          },
+          TIME_LIMIT
+        )
+      } else {
+        await runProcessWithTimeout(
+          taskLogger,
+          process.env['NODE_BINARY_PATH'] || 'node',
+          [
+            '--no-experimental-fetch',
+            './ifc/import_file.js',
+            TMP_FILE_PATH,
+            TMP_RESULTS_PATH,
+            info.userId,
+            info.streamId,
+            info.branchName,
+            `File upload: ${info.fileName}`,
+            info.id,
+            existingBranch?.id || '',
+            regionName
+          ],
+          TIME_LIMIT
+        )
+      }
     } else if (info.fileType.toLowerCase() === 'stl') {
       await runProcessWithTimeout(
         taskLogger,
