@@ -79,6 +79,11 @@
           "type": "boolean",
           "description": "Toggles whether multi-region is available within workspaces. workspaceModuleEnabled must also be enabled.",
           "default": false
+        },
+        "fileImportIFCDotNetEnabled": {
+          "type": "boolean",
+          "description": "Toggles whether the experimental .Net IFC importer is used for importing IFC files.",
+          "default": false
         }
       }
     },
