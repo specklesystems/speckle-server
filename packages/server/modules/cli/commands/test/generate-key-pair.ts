@@ -3,7 +3,7 @@ import _sodium from 'libsodium-wrappers'
 import { CommandModule } from 'yargs'
 
 const command: CommandModule = {
-  command: 'generateKeyPair',
+  command: 'generate-key-pair',
   describe: 'Generate a public private key pair for lisodium box encryption',
 
   handler: async () => {

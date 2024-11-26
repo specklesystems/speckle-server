@@ -3,69 +3,33 @@ import {
   ProjectSubscriptions,
   PublishSubscription
 } from '@/modules/shared/utils/subscriptions'
-import { storeFileStream } from '@/modules/blobstorage/objectStorage'
 
 import {
   CreateRenderRequest,
   GetRenderByGenerationId,
+  RequestNewImageGeneration,
   StoreRender,
   UpdateRenderRecord,
   UpdateRenderRequest
 } from '@/modules/gendo/domain/operations'
 import { UploadFileStream } from '@/modules/blobstorage/domain/operations'
-import {
-  getGendoAIAPIEndpoint,
-  getGendoAIKey,
-  getServerOrigin
-} from '@/modules/shared/helpers/envHelper'
-import {
-  GendoRenderRequestError,
-  GendoRenderRequestNotFoundError
-} from '@/modules/gendo/errors/main'
+import { GendoRenderRequestNotFoundError } from '@/modules/gendo/errors/main'
 
 export const createRenderRequestFactory =
   (deps: {
+    requestNewImageGeneration: RequestNewImageGeneration
     uploadFileStream: UploadFileStream
-    storeFileStream: typeof storeFileStream
     storeRender: StoreRender
     publish: PublishSubscription
-    fetch: typeof fetch
   }): CreateRenderRequest =>
   async (input) => {
-    const endpoint = getGendoAIAPIEndpoint()
-    const bearer = getGendoAIKey() as string
-    const webhookUrl = `${getServerOrigin()}/api/thirdparty/gendo`
-
-    // TODO: Fn handles too many concerns, refactor (e.g. the client fetch call)
-    // TODO: Fire off request to gendo api & get generationId, create record in db. Note: use gendo api key from env
-    const gendoRequestBody = {
+    const imageRequest = await deps.requestNewImageGeneration({
       userId: input.userId,
-      depthMap: input.baseImage,
+      baseImage: input.baseImage,
       prompt: input.prompt,
-      webhookUrl
-    }
-
-    const response = await fetch(endpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${bearer}`
-      },
-      body: JSON.stringify(gendoRequestBody)
+      projectId: input.projectId
     })
-
-    const status = response.status
-    if (status !== 200) {
-      const body = await response.json().catch((e) => ({ error: `${e}` }))
-      throw new GendoRenderRequestError('Failed to enqueue gendo render.', {
-        info: { body }
-      })
-    }
-
-    const gendoResponseBody = (await response.json()) as {
-      status: string
-      generationId: string
-    }
+    // ----
     const baseImageBuffer = Buffer.from(
       input.baseImage.replace(/^data:image\/\w+;base64,/, ''),
       'base64'
@@ -73,7 +37,6 @@ export const createRenderRequestFactory =
 
     const blobId = crs({ length: 10 })
     await deps.uploadFileStream(
-      deps.storeFileStream,
       { streamId: input.projectId, userId: input.userId },
       {
         blobId,
@@ -87,8 +50,8 @@ export const createRenderRequestFactory =
 
     const newRecord = await deps.storeRender({
       ...input,
-      status: gendoResponseBody.status,
-      gendoGenerationId: gendoResponseBody.generationId,
+      status: imageRequest.status,
+      gendoGenerationId: imageRequest.generationId,
       id: crs({ length: 10 })
     })
 
@@ -105,7 +68,6 @@ export const updateRenderRequestFactory =
   (deps: {
     getRenderByGenerationId: GetRenderByGenerationId
     uploadFileStream: UploadFileStream
-    storeFileStream: typeof storeFileStream
     updateRenderRecord: UpdateRenderRecord
     publish: PublishSubscription
   }): UpdateRenderRequest =>
@@ -131,7 +93,6 @@ export const updateRenderRequestFactory =
 
       const blobId = crs({ length: 10 })
       await deps.uploadFileStream(
-        deps.storeFileStream,
         { streamId: baseRequest.projectId, userId: baseRequest.userId },
         {
           blobId,

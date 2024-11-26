@@ -14,7 +14,7 @@
       :icon-left="ClipboardDocumentIcon"
       hide-text
       @click="onCopy"
-    ></FormButton>
+    />
   </div>
 </template>
 <script setup lang="ts">

@@ -21,7 +21,7 @@
                   {{ isTrialPeriod ? 'Trial plan' : 'Current plan' }}
                 </h3>
                 <p class="text-heading-lg text-foreground capitalize">
-                  {{ currentPlan?.name ?? WorkspacePlans.Team }} plan
+                  {{ currentPlan?.name ?? WorkspacePlans.Starter }} plan
                 </p>
                 <p v-if="isPurchasablePlan" class="text-body-xs text-foreground-2">
                   £{{ seatPrice }} per seat/month, billed
@@ -90,7 +90,14 @@
             :workspace-id="workspaceId"
             :current-plan="currentPlan"
             :is-admin="isAdmin"
-          />
+          >
+            <template #title>
+              <SettingsSectionHeader
+                :title="isTrialPeriod ? 'Start your subscription' : 'Upgrade your plan'"
+                subheading
+              />
+            </template>
+          </SettingsWorkspacesBillingPricingTable>
         </div>
       </template>
       <template v-else>Coming soon</template>
@@ -147,8 +154,8 @@ const { result: workspaceResult } = useQuery(
 const { billingPortalRedirect } = useBillingActions()
 
 const seatPrices = ref({
-  [WorkspacePlans.Team]: pricingPlansConfig.plans[WorkspacePlans.Team].cost,
-  [WorkspacePlans.Pro]: pricingPlansConfig.plans[WorkspacePlans.Pro].cost,
+  [WorkspacePlans.Starter]: pricingPlansConfig.plans[WorkspacePlans.Starter].cost,
+  [WorkspacePlans.Plus]: pricingPlansConfig.plans[WorkspacePlans.Plus].cost,
   [WorkspacePlans.Business]: pricingPlansConfig.plans[WorkspacePlans.Business].cost
 })
 
@@ -167,8 +174,8 @@ const isActivePlan = computed(
 )
 const isPurchasablePlan = computed(
   () =>
-    currentPlan.value?.name === WorkspacePlans.Team ||
-    currentPlan.value?.name === WorkspacePlans.Pro ||
+    currentPlan.value?.name === WorkspacePlans.Starter ||
+    currentPlan.value?.name === WorkspacePlans.Plus ||
     currentPlan.value?.name === WorkspacePlans.Business ||
     !currentPlan.value?.name // no plan equals pro trial plan
 )
@@ -177,7 +184,7 @@ const seatPrice = computed(() =>
     ? seatPrices.value[currentPlan.value.name as keyof typeof seatPrices.value][
         subscription.value.billingInterval
       ][Roles.Workspace.Member]
-    : seatPrices.value[WorkspacePlans.Team][BillingInterval.Monthly][
+    : seatPrices.value[WorkspacePlans.Starter][BillingInterval.Monthly][
         Roles.Workspace.Member
       ]
 )
