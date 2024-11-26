@@ -118,7 +118,7 @@ spec:
           - name: NUXT_PUBLIC_FF_AUTOMATE_MODULE_ENABLED
             value: {{ .Values.featureFlags.automateModuleEnabled | quote }}
           - name: NUXT_PUBLIC_FF_WORKSPACES_MODULE_ENABLED
-            value: {{ .Values.featureFlags.workspaceModuleEnabled | quote }}
+            value: {{ .Values.featureFlags.workspacesModuleEnabled | quote }}
           - name: NUXT_PUBLIC_FF_WORKSPACES_SSO_ENABLED
             value: {{ .Values.featureFlags.workspaceSsoEnabled | quote }}
           - name: NUXT_PUBLIC_FF_MULTIPLE_EMAILS_MODULE_ENABLED
