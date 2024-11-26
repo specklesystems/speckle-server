@@ -60,7 +60,7 @@ spec:
           - mountPath: /tmp
             name: tmp
           - mountPath: /.config
-            name: dotConfig
+            name: dotconfig
         {{- if .Values.db.useCertificate }}
           - name: postgres-certificate
             mountPath: /postgres-certificate
@@ -136,7 +136,7 @@ spec:
       volumes:
         - name: tmp
           emptyDir: {}
-        - name: dotConfig
+        - name: dotconfig
           emptyDir: {}
       {{- if .Values.db.useCertificate }}
         - name: postgres-certificate
