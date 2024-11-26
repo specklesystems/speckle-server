@@ -4,6 +4,7 @@
       <SettingsSectionHeader title="General" text="Manage your workspace settings" />
       <SettingsSectionHeader title="Workspace details" subheading />
 
+      {{ workspaceId }}
       <div class="pt-6">
         <FormTextInput
           v-model="name"

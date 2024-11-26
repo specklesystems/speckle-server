@@ -166,6 +166,7 @@ const documents = {
     "\n  query FunctionAccessCheck($id: ID!) {\n    automateFunction(id: $id) {\n      id\n    }\n  }\n": types.FunctionAccessCheckDocument,
     "\n  query ProjectAutomationCreationPublicKeys(\n    $projectId: String!\n    $automationId: String!\n  ) {\n    project(id: $projectId) {\n      id\n      automation(id: $automationId) {\n        id\n        creationPublicKeys\n      }\n    }\n  }\n": types.ProjectAutomationCreationPublicKeysDocument,
     "\n  query AutomateFunctionsPagePagination($search: String, $cursor: String) {\n    ...AutomateFunctionsPageItems_Query\n  }\n": types.AutomateFunctionsPagePaginationDocument,
+    "\n  mutation BillingUpgradePlanRedirect($input: CheckoutSessionInput!) {\n    workspaceMutations {\n      billing {\n        createCheckoutSession(input: $input) {\n          url\n          id\n        }\n      }\n    }\n  }\n": types.BillingUpgradePlanRedirectDocument,
     "\n  query MentionsUserSearch($query: String!, $emailOnly: Boolean = false) {\n    userSearch(\n      query: $query\n      limit: 5\n      cursor: null\n      archived: false\n      emailOnly: $emailOnly\n    ) {\n      items {\n        id\n        name\n        company\n      }\n    }\n  }\n": types.MentionsUserSearchDocument,
     "\n  query UserSearch(\n    $query: String!\n    $limit: Int\n    $cursor: String\n    $archived: Boolean\n    $workspaceId: String\n  ) {\n    userSearch(query: $query, limit: $limit, cursor: $cursor, archived: $archived) {\n      cursor\n      items {\n        id\n        name\n        bio\n        company\n        avatar\n        verified\n        role\n        workspaceDomainPolicyCompliant(workspaceId: $workspaceId)\n      }\n    }\n  }\n": types.UserSearchDocument,
     "\n  query ServerInfoBlobSizeLimit {\n    serverInfo {\n      configuration {\n        blobSizeLimitBytes\n      }\n    }\n  }\n": types.ServerInfoBlobSizeLimitDocument,
@@ -980,6 +981,10 @@ export function graphql(source: "\n  query ProjectAutomationCreationPublicKeys(\
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  query AutomateFunctionsPagePagination($search: String, $cursor: String) {\n    ...AutomateFunctionsPageItems_Query\n  }\n"): (typeof documents)["\n  query AutomateFunctionsPagePagination($search: String, $cursor: String) {\n    ...AutomateFunctionsPageItems_Query\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  mutation BillingUpgradePlanRedirect($input: CheckoutSessionInput!) {\n    workspaceMutations {\n      billing {\n        createCheckoutSession(input: $input) {\n          url\n          id\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation BillingUpgradePlanRedirect($input: CheckoutSessionInput!) {\n    workspaceMutations {\n      billing {\n        createCheckoutSession(input: $input) {\n          url\n          id\n        }\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
