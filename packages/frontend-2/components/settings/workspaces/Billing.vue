@@ -90,7 +90,14 @@
             :workspace-id="workspaceId"
             :current-plan="currentPlan"
             :is-admin="isAdmin"
-          />
+          >
+            <template #title>
+              <SettingsSectionHeader
+                :title="isTrialPeriod ? 'Start your subscription' : 'Upgrade your plan'"
+                subheading
+              />
+            </template>
+          </SettingsWorkspacesBillingPricingTable>
         </div>
       </template>
       <template v-else>Coming soon</template>

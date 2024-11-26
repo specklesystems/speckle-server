@@ -3,7 +3,7 @@
     <WorkspacesPromoBanner @create="openWorkspaceCreateDialog" />
     <section>
       <div class="flex justify-between mb-2">
-        <h4 class="text-foreground-2 text-heading-sm">In a nutshell</h4>
+        <h4 class="text-foreground text-heading">In a nutshell</h4>
         <FormButton @click="openWorkspaceCreateDialog">Create workspace</FormButton>
       </div>
 
@@ -54,6 +54,15 @@
         </CommonCard>
       </div>
     </section>
+
+    <section>
+      <SettingsWorkspacesBillingPricingTable>
+        <template #title>
+          <h4 class="text-foreground text-heading">Pricing</h4>
+        </template>
+      </SettingsWorkspacesBillingPricingTable>
+    </section>
+
     <WorkspaceCreateDialog
       v-model:open="showWorkspaceCreateDialog"
       navigate-on-success

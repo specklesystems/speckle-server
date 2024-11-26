@@ -1,10 +1,7 @@
 <template>
   <div class="flex flex-col gap-y-6">
     <div class="flex flex-col lg:flex-row justify-between gap-y-4">
-      <SettingsSectionHeader
-        :title="hasTrialPlan ? 'Start your subscription' : 'Upgrade your plan'"
-        subheading
-      />
+      <slot name="title" />
       <div class="flex items-center gap-x-4">
         <p class="text-foreground-3 text-body-xs">Save 20% with annual billing</p>
         <FormSwitch v-model="isYearlyPlan" :show-label="false" name="annual billing" />
@@ -23,10 +20,7 @@
 <script setup lang="ts">
 import { useBreakpoints } from '@vueuse/core'
 import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
-import {
-  WorkspacePlanStatuses,
-  type WorkspacePlan
-} from '~/lib/common/generated/gql/graphql'
+import { type WorkspacePlan } from '~/lib/common/generated/gql/graphql'
 import { graphql } from '~/lib/common/generated/gql'
 import type { MaybeNullOrUndefined } from '@speckle/shared'
 
@@ -37,10 +31,10 @@ graphql(`
   }
 `)
 
-const props = defineProps<{
-  workspaceId: string
-  currentPlan: MaybeNullOrUndefined<WorkspacePlan>
-  isAdmin: boolean
+defineProps<{
+  workspaceId?: string
+  currentPlan?: MaybeNullOrUndefined<WorkspacePlan>
+  isAdmin?: boolean
 }>()
 
 const breakpoints = useBreakpoints(TailwindBreakpoints)
@@ -53,8 +47,4 @@ const MobileTable = defineAsyncComponent(
 )
 const isDesktop = breakpoints.greaterOrEqual('lg')
 const isYearlyPlan = ref(false)
-
-const hasTrialPlan = computed(
-  () => props.currentPlan?.status === WorkspacePlanStatuses.Trial || !props.currentPlan
-)
 </script>
