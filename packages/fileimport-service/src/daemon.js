@@ -140,7 +140,7 @@ async function doTask(mainDb, regionName, taskDb, task) {
           info.branchName,
           `File upload: ${info.fileName}`,
           info.id,
-          existingBranch?.id,
+          existingBranch?.id || '',
           regionName
         ],
         {
@@ -161,7 +161,7 @@ async function doTask(mainDb, regionName, taskDb, task) {
           info.branchName,
           `File upload: ${info.fileName}`,
           info.id,
-          existingBranch?.id,
+          existingBranch?.id || '',
           regionName
         ],
         {
@@ -190,7 +190,7 @@ async function doTask(mainDb, regionName, taskDb, task) {
           info.branchName,
           `File upload: ${info.fileName}`,
           info.id,
-          existingBranch?.id,
+          existingBranch?.id || '',
           regionName
         ],
         {

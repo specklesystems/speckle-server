@@ -378,9 +378,9 @@ export async function init() {
   app.use(corsMiddleware())
   // there are some paths, that need the raw body
   app.use((req, res, next) => {
-    const rawPaths = ['/api/v1/billing/webhooks']
-    if (rawPaths.includes(req.path)) {
-      express.raw({ type: 'application/json' })(req, res, next)
+    const rawPaths = ['/api/v1/billing/webhooks', '/api/thirdparty/gendo/']
+    if (rawPaths.some((p) => req.path.startsWith(p))) {
+      express.raw({ type: 'application/json', limit: '100mb' })(req, res, next)
     } else {
       express.json({ limit: '100mb' })(req, res, next)
     }

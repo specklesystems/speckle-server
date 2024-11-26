@@ -1,14 +1,13 @@
 <template>
   <div class="flex flex-col gap-6">
     <div class="grid gap-4 grid-cols-1 sm:grid-cols-2">
-      <AutomateFunctionPageInfoBlock :icon="CodeBracketIcon" title="Source">
+      <AutomateFunctionPageInfoBlock title="Source">
         <div class="space-y-1">
           <CommonTextLink
             v-tippy="license"
             external
             :to="repoUrl"
             target="_blank"
-            :icon-right="ArrowTopRightOnSquareIcon"
             class="max-w-full"
           >
             <span class="truncate">{{ repo }}</span>
@@ -19,7 +18,6 @@
               external
               :to="githubDetails.owner.html_url"
               target="_blank"
-              :icon-right="ArrowTopRightOnSquareIcon"
               class="max-w-full"
             >
               <span class="truncate">
@@ -34,36 +32,26 @@
           </div>
         </div>
       </AutomateFunctionPageInfoBlock>
-      <AutomateFunctionPageInfoBlock :icon="InformationCircleIcon" title="Info">
-        <div class="gap-y-2 text-body-sm">
+      <AutomateFunctionPageInfoBlock title="Info">
+        <div class="gap-y-2 text-body-xs">
           <div v-if="latestRelease">
-            <span>Last published:&nbsp;</span>
-            <CommonText class="font-medium" :text="publishedAt" />
+            <span class="font-medium">Last published:&nbsp;</span>
+            <CommonText :text="publishedAt" />
           </div>
           <div>
-            <span>Used by:&nbsp;</span>
-            <CommonText
-              class="font-medium"
-              :text="`${fn.automationCount} automations`"
-            />
+            <span class="font-medium">Used by:&nbsp;</span>
+            <CommonText :text="`${fn.automationCount} automations`" />
           </div>
-          <CommonTextLink
-            v-if="latestRelease?.inputSchema"
-            :icon-right="ArrowTopRightOnSquareIcon"
-            @click="onViewParameters"
-          >
+          <CommonTextLink v-if="latestRelease?.inputSchema" @click="onViewParameters">
             View parameters
           </CommonTextLink>
         </div>
       </AutomateFunctionPageInfoBlock>
     </div>
-    <AutomateFunctionPageInfoBlock
-      title="Description"
-      :icon="ChatBubbleBottomCenterTextIcon"
-    >
+    <AutomateFunctionPageInfoBlock title="Description">
       <CommonProseMarkdownDescription :markdown="description" />
     </AutomateFunctionPageInfoBlock>
-    <AutomateFunctionPageInfoBlock title="Readme" :icon="BookOpenIcon">
+    <AutomateFunctionPageInfoBlock title="Readme">
       <CommonProseGithubReadme
         :readme-markdown="rawReadme || ''"
         :repo="repo || ''"
@@ -86,12 +74,11 @@
         class="shrink-0"
       >
         <FormButton
-          :icon-left="BoltIcon"
           class="shrink-0"
           :disabled="!hasReleases"
           @click="$emit('createAutomation')"
         >
-          Use in an automation
+          Use in automation
         </FormButton>
       </div>
     </div>
@@ -103,14 +90,6 @@
   </div>
 </template>
 <script setup lang="ts">
-import {
-  CodeBracketIcon,
-  InformationCircleIcon,
-  ArrowTopRightOnSquareIcon,
-  BookOpenIcon,
-  BoltIcon,
-  ChatBubbleBottomCenterTextIcon
-} from '@heroicons/vue/24/outline'
 import dayjs from 'dayjs'
 import {
   useGetGithubRepo,

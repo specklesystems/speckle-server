@@ -156,7 +156,8 @@ const updateStream = updateStreamFactory({ db })
 const cloneStream = cloneStreamFactory({
   getStream: getStreamFactory({ db }),
   getUser,
-  db,
+  newProjectDb: db,
+  sourceProjectDb: db,
   createStream: createStreamFactory({ db }),
   insertCommits: insertCommitsFactory({ db }),
   getBatchedStreamCommits: getBatchedStreamCommitsFactory({ db }),
@@ -175,6 +176,7 @@ const cloneStream = cloneStreamFactory({
   })
 })
 
+// We want to read & write from main DB - this isn't occuring in a multi region workspace ctx
 const createOnboardingStream = createOnboardingStreamFactory({
   getOnboardingBaseProject: getOnboardingBaseProjectFactory({
     getOnboardingBaseStream: getOnboardingBaseStreamFactory({ db })
@@ -271,6 +273,7 @@ export = {
       })
       return await updateStreamAndNotify(update, userId!, resourceAccessRules)
     },
+    // This one is only used outside of a workspace, so the project is always created in the main db
     async create(_parent, args, context) {
       const rateLimitResult = await getRateLimitResult('STREAM_CREATE', context.userId!)
       if (isRateLimitBreached(rateLimitResult)) {

@@ -1772,8 +1772,8 @@ export type ObjectCreateInput = {
 
 export enum PaidWorkspacePlans {
   Business = 'business',
-  Pro = 'pro',
-  Team = 'team'
+  Plus = 'plus',
+  Starter = 'starter'
 }
 
 export type PasswordStrengthCheckFeedback = {
@@ -3577,6 +3577,7 @@ export type User = {
    * @deprecated Part of the old API surface and will be removed in the future.
    */
   favoriteStreams: StreamCollection;
+  gendoAICredits: UserGendoAiCredits;
   /** Whether the user has a pending/active email verification token */
   hasPendingVerification?: Maybe<Scalars['Boolean']['output']>;
   id: Scalars['ID']['output'];
@@ -3763,6 +3764,13 @@ export type UserEmailMutationsRequestNewEmailVerificationArgs = {
 
 export type UserEmailMutationsSetPrimaryArgs = {
   input: SetPrimaryUserEmailInput;
+};
+
+export type UserGendoAiCredits = {
+  __typename?: 'UserGendoAICredits';
+  limit: Scalars['Int']['output'];
+  resetDate: Scalars['DateTime']['output'];
+  used: Scalars['Int']['output'];
 };
 
 export type UserProjectsFilter = {
@@ -4306,8 +4314,8 @@ export enum WorkspacePlanStatuses {
 export enum WorkspacePlans {
   Academia = 'academia',
   Business = 'business',
-  Pro = 'pro',
-  Team = 'team',
+  Plus = 'plus',
+  Starter = 'starter',
   Unlimited = 'unlimited'
 }
 
@@ -4717,6 +4725,7 @@ export type ResolversTypes = {
   UserDeleteInput: UserDeleteInput;
   UserEmail: ResolverTypeWrapper<UserEmail>;
   UserEmailMutations: ResolverTypeWrapper<MutationsObjectGraphQLReturn>;
+  UserGendoAICredits: ResolverTypeWrapper<UserGendoAiCredits>;
   UserProjectsFilter: UserProjectsFilter;
   UserProjectsUpdatedMessage: ResolverTypeWrapper<Omit<UserProjectsUpdatedMessage, 'project'> & { project?: Maybe<ResolversTypes['Project']> }>;
   UserProjectsUpdatedMessageType: UserProjectsUpdatedMessageType;
@@ -4975,6 +4984,7 @@ export type ResolversParentTypes = {
   UserDeleteInput: UserDeleteInput;
   UserEmail: UserEmail;
   UserEmailMutations: MutationsObjectGraphQLReturn;
+  UserGendoAICredits: UserGendoAiCredits;
   UserProjectsFilter: UserProjectsFilter;
   UserProjectsUpdatedMessage: Omit<UserProjectsUpdatedMessage, 'project'> & { project?: Maybe<ResolversParentTypes['Project']> };
   UserRoleInput: UserRoleInput;
@@ -6243,6 +6253,7 @@ export type UserResolvers<ContextType = GraphQLContext, ParentType extends Resol
   emails?: Resolver<Array<ResolversTypes['UserEmail']>, ParentType, ContextType>;
   expiredSsoSessions?: Resolver<Array<ResolversTypes['LimitedWorkspace']>, ParentType, ContextType>;
   favoriteStreams?: Resolver<ResolversTypes['StreamCollection'], ParentType, ContextType, RequireFields<UserFavoriteStreamsArgs, 'limit'>>;
+  gendoAICredits?: Resolver<ResolversTypes['UserGendoAICredits'], ParentType, ContextType>;
   hasPendingVerification?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   isOnboardingFinished?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
@@ -6283,6 +6294,13 @@ export type UserEmailMutationsResolvers<ContextType = GraphQLContext, ParentType
   delete?: Resolver<ResolversTypes['User'], ParentType, ContextType, RequireFields<UserEmailMutationsDeleteArgs, 'input'>>;
   requestNewEmailVerification?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType, RequireFields<UserEmailMutationsRequestNewEmailVerificationArgs, 'input'>>;
   setPrimary?: Resolver<ResolversTypes['User'], ParentType, ContextType, RequireFields<UserEmailMutationsSetPrimaryArgs, 'input'>>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type UserGendoAiCreditsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['UserGendoAICredits'] = ResolversParentTypes['UserGendoAICredits']> = {
+  limit?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  resetDate?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
+  used?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -6653,6 +6671,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   UserAutomateInfo?: UserAutomateInfoResolvers<ContextType>;
   UserEmail?: UserEmailResolvers<ContextType>;
   UserEmailMutations?: UserEmailMutationsResolvers<ContextType>;
+  UserGendoAICredits?: UserGendoAiCreditsResolvers<ContextType>;
   UserProjectsUpdatedMessage?: UserProjectsUpdatedMessageResolvers<ContextType>;
   UserSearchResultCollection?: UserSearchResultCollectionResolvers<ContextType>;
   Version?: VersionResolvers<ContextType>;

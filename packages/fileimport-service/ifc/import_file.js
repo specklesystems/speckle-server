@@ -20,11 +20,11 @@ async function main() {
     regionName
   ] = cmdArgs
   const logger = Observability.extendLoggerComponent(
-    parentLogger.child({ streamId, branchName, userId, fileId, filePath }),
+    parentLogger.child({ streamId, branchName, userId, fileId, branchId, filePath }),
     'ifc'
   )
 
-  logger.info('ARGV: ', filePath, userId, streamId, branchName, branchId, commitMessage)
+  logger.info({ commitMessage }, 'IFC parser started.')
 
   const data = fs.readFileSync(filePath)
 
