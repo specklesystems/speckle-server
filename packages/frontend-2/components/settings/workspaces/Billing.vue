@@ -51,7 +51,7 @@
                   }}
                 </h3>
                 <p class="text-heading-lg text-foreground capitalize">
-                  {{ isPurchasablePlan ? 'Coming soon' : 'Not applicable' }}
+                  {{ isPurchasablePlan ? 'Coming soon' : '£0.00' }}
                 </p>
               </div>
               <div class="p-5 pt-4 flex flex-col gap-y-1">
@@ -63,7 +63,7 @@
                   }}
                 </h3>
                 <p class="text-heading-lg text-foreground capitalize">
-                  {{ isPurchasablePlan ? nextPaymentDue : 'Not applicable' }}
+                  {{ isPurchasablePlan ? nextPaymentDue : 'Never' }}
                 </p>
                 <p v-if="isPurchasablePlan" class="text-body-xs text-foreground-2">
                   <span class="capitalize">
