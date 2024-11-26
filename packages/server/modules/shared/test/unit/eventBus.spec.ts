@@ -109,18 +109,20 @@ describe('Event Bus', () => {
       const workspaces: Workspace[] = []
 
       bus1.listen(WorkspaceEvents.Created, ({ payload }) => {
-        workspaces.push(payload)
+        workspaces.push(payload.workspace)
       })
 
       bus2.listen(WorkspaceEvents.Created, ({ payload }) => {
-        workspaces.push(payload)
+        workspaces.push(payload.workspace)
       })
 
       const workspacePayload = {
-        ...createFakeWorkspace(),
-        createdByUserId: cryptoRandomString({ length: 10 }),
-        eventName: WorkspaceEvents.Created,
-        domains: []
+        workspace: {
+          ...createFakeWorkspace(),
+          eventName: WorkspaceEvents.Created,
+          domains: []
+        },
+        createdByUserId: cryptoRandomString({ length: 10 })
       }
 
       await bus1.emit({
@@ -139,7 +141,7 @@ describe('Event Bus', () => {
       eventBus.listen('workspace.*', ({ payload, eventName }) => {
         switch (eventName) {
           case WorkspaceEvents.Created:
-            events.push(payload.id)
+            events.push(payload.workspace.id)
             break
           case WorkspaceEvents.RoleDeleted:
             events.push(payload.userId)
@@ -152,7 +154,7 @@ describe('Event Bus', () => {
       await eventBus.emit({
         eventName: WorkspaceEvents.Created,
         payload: {
-          ...workspace,
+          workspace,
           createdByUserId: cryptoRandomString({ length: 10 })
         }
       })

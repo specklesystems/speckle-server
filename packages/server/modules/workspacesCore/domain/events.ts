@@ -20,7 +20,8 @@ type WorkspaceAuthorizedPayload = {
   userId: string | null
   workspaceId: string
 }
-type WorkspaceCreatedPayload = Workspace & {
+type WorkspaceCreatedPayload = {
+  workspace: Workspace
   createdByUserId: string
 }
 type WorkspaceUpdatedPayload = Workspace

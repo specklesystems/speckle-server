@@ -175,7 +175,7 @@ export const createWorkspaceFactory =
     // emit a workspace created event
     await emitWorkspaceEvent({
       eventName: WorkspaceEvents.Created,
-      payload: { ...workspace, createdByUserId: userId }
+      payload: { workspace, createdByUserId: userId }
     })
 
     return { ...workspace }

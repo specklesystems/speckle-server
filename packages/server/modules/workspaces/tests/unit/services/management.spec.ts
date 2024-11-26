@@ -241,7 +241,7 @@ describe('Workspace services', () => {
       expect(context.eventData.isCalled).to.equal(true)
       expect(context.eventData.eventName).to.equal(WorkspaceEvents.Created)
       expect(context.eventData.payload).to.deep.equal({
-        ...workspace,
+        workspace,
         createdByUserId: userId
       })
     })
