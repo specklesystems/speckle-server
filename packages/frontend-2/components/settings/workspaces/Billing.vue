@@ -20,9 +20,17 @@
                 <h3 class="text-body-xs text-foreground-2 pb-2">
                   {{ isTrialPeriod ? 'Trial plan' : 'Current plan' }}
                 </h3>
-                <p class="text-heading-lg text-foreground capitalize">
-                  {{ currentPlan?.name ?? WorkspacePlans.Starter }} plan
-                </p>
+                <div class="flex gap-x-2">
+                  <p class="text-heading-lg text-foreground">
+                    Workspace
+                    <span class="capitalize">
+                      {{ currentPlan?.name ?? WorkspacePlans.Starter }}
+                    </span>
+                  </p>
+                  <div>
+                    <CommonBadge v-if="isTrialPeriod" rounded>TRIAL</CommonBadge>
+                  </div>
+                </div>
                 <p v-if="isPurchasablePlan" class="text-body-xs text-foreground-2">
                   £{{ seatPrice }} per seat/month, billed
                   {{
