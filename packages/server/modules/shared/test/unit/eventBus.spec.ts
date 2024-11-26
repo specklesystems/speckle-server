@@ -131,7 +131,10 @@ describe('Event Bus', () => {
       })
 
       expect(workspaces.length).to.equal(2)
-      expect(workspaces).to.deep.equal([workspacePayload, workspacePayload])
+      expect(workspaces).to.deep.equal([
+        workspacePayload.workspace,
+        workspacePayload.workspace
+      ])
     })
     it('allows to subscribe to wildcard events', async () => {
       const eventBus = getEventBus()

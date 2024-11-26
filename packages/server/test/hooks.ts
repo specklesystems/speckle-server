@@ -16,7 +16,7 @@ import { once } from 'events'
 import type http from 'http'
 import type express from 'express'
 import type net from 'net'
-import { MaybeAsync, MaybeNullOrUndefined, wait } from '@speckle/shared'
+import { MaybeAsync, MaybeNullOrUndefined, Optional, wait } from '@speckle/shared'
 import type mocha from 'mocha'
 import {
   getAvailableRegionKeysFactory,
@@ -83,8 +83,12 @@ const ensureAivenExtrasFactory = (deps: { db: Knex }) => async () => {
   await deps.db.raw('CREATE EXTENSION IF NOT EXISTS "aiven_extras";')
 }
 
-const setupMultiregionMode = async () => {
+const setupDatabases = async () => {
+  // First reset main db
   const db = mainDb
+  const resetMainDb = resetSchemaFactory({ db })
+  await resetMainDb()
+
   const getAvailableRegionKeys = getAvailableRegionKeysFactory({
     getAvailableRegionConfig
   })
@@ -113,9 +117,9 @@ const setupMultiregionMode = async () => {
   // Store active region clients
   regionClients = await getRegisteredRegionClients()
 
-  // Reset each DB client (re-run all migrations and setup)
-  for (const [, regionClient] of Object.entries(regionClients)) {
-    const reset = resetSchemaFactory({ db: regionClient })
+  // Reset each region DB client (re-run all migrations and setup)
+  for (const client of Object.values(regionClients)) {
+    const reset = resetSchemaFactory({ db: client })
     await reset()
   }
 
@@ -218,9 +222,11 @@ const truncateTablesFactory = (deps: { db: Knex }) => async (tableNames?: string
 
 const resetSchemaFactory = (deps: { db: Knex }) => async () => {
   const resetPubSub = resetPubSubFactory(deps)
+  const truncate = truncateTablesFactory(deps)
 
   await unlockFactory(deps)()
   await resetPubSub()
+  await truncate() // otherwise some rollbacks will fail
 
   // Reset schema
   await deps.db.migrate.rollback()
@@ -278,7 +284,7 @@ export const initializeTestServer = async (params: {
   }
 }
 
-let graphqlServer: ApolloServer<GraphQLContext>
+let graphqlServer: Optional<ApolloServer<GraphQLContext>> = undefined
 
 export const mochaHooks: mocha.RootHookObject = {
   beforeAll: async () => {
@@ -288,12 +294,8 @@ export const mochaHooks: mocha.RootHookObject = {
 
     logger.info('running before all')
 
-    // Init main db
-    const reset = resetSchemaFactory({ db: mainDb })
-    await reset()
-
-    // Init (or cleanup) multi-region mode
-    await setupMultiregionMode()
+    // Init (or cleanup) test databases
+    await setupDatabases()
 
     // Init app
     ;({ graphqlServer } = await init())

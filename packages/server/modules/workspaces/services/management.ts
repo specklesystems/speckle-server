@@ -262,7 +262,10 @@ export const updateWorkspaceFactory =
     }
 
     await upsertWorkspace({ workspace })
-    await emitWorkspaceEvent({ eventName: WorkspaceEvents.Updated, payload: workspace })
+    await emitWorkspaceEvent({
+      eventName: WorkspaceEvents.Updated,
+      payload: { workspace }
+    })
 
     return workspace
   }
@@ -538,6 +541,6 @@ export const addDomainToWorkspaceFactory =
 
     await emitWorkspaceEvent({
       eventName: WorkspaceEvents.Updated,
-      payload: workspace
+      payload: { workspace }
     })
   }

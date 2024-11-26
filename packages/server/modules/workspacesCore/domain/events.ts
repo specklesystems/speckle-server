@@ -24,7 +24,7 @@ type WorkspaceCreatedPayload = {
   workspace: Workspace
   createdByUserId: string
 }
-type WorkspaceUpdatedPayload = Workspace
+type WorkspaceUpdatedPayload = { workspace: Workspace }
 type WorkspaceRoleDeletedPayload = Pick<WorkspaceAcl, 'userId' | 'workspaceId' | 'role'>
 type WorkspaceRoleUpdatedPayload = Pick<
   WorkspaceAcl,
