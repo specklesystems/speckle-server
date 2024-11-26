@@ -37,7 +37,12 @@ export const initializeEventListenersFactory =
       }),
       eventBus.listen(WorkspaceEvents.Created, async ({ payload }) => {
         await upsertTrialWorkspacePlanFactory({ db })({
-          workspacePlan: { name: 'starter', status: 'trial', workspaceId: payload.id }
+          workspacePlan: {
+            name: 'starter',
+            status: 'trial',
+            workspaceId: payload.id,
+            createdAt: new Date()
+          }
         })
       })
     ]
