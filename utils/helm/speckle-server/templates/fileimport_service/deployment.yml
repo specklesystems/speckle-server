@@ -34,7 +34,7 @@ spec:
           periodSeconds: 60
           exec:
             command:
-              - /nodejs/bin/node
+              - /usr/bin/node
               - -e
               - process.exit(Date.now() - require('fs').readFileSync('/tmp/last_successful_query', 'utf8') > 25 * 60 * 1000)
 
