@@ -1,7 +1,8 @@
 import { reconcileWorkspaceSubscriptionFactory } from '@/modules/gatekeeper/clients/stripe'
 import {
   getWorkspacePlanFactory,
-  getWorkspaceSubscriptionFactory
+  getWorkspaceSubscriptionFactory,
+  upsertTrialWorkspacePlanFactory
 } from '@/modules/gatekeeper/repositories/billing'
 import { addWorkspaceSubscriptionSeatIfNeededFactory } from '@/modules/gatekeeper/services/subscriptions'
 import {
@@ -33,6 +34,11 @@ export const initializeEventListenersFactory =
           })
 
         await addWorkspaceSubscriptionSeatIfNeeded(payload)
+      }),
+      eventBus.listen(WorkspaceEvents.Created, async ({ payload }) => {
+        await upsertTrialWorkspacePlanFactory({ db })({
+          workspacePlan: { name: 'starter', status: 'trial', workspaceId: payload.id }
+        })
       })
     ]
 
