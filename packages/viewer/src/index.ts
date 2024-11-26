@@ -119,6 +119,11 @@ import { DepthNormalPass } from './modules/pipeline/Passes/DepthNormalPass.js'
 import { BasitPass } from './modules/pipeline/Passes/BasitPass.js'
 import { ProgressiveAOPass } from './modules/pipeline/Passes/ProgressiveAOPass.js'
 import { TAAPass } from './modules/pipeline/Passes/TAAPass.js'
+import {
+  FilterMaterial,
+  FilterMaterialOptions,
+  FilterMaterialType
+} from './modules/materials/Materials.js'
 
 export {
   Viewer,
@@ -201,7 +206,10 @@ export {
   MRTShadedViewPipeline,
   MRTPenViewPipeline,
   ViewModes,
-  ViewMode
+  ViewMode,
+  FilterMaterial,
+  FilterMaterialType,
+  FilterMaterialOptions
 }
 
 export type {
