@@ -2,7 +2,7 @@ ARG NODE_ENV=production
 
 FROM mcr.microsoft.com/dotnet/sdk:8.0-noble AS dotnet-build-stage
 WORKDIR /app
-COPY packages/fileimport-service/ifc .
+COPY packages/fileimport-service/ifc-dotnet .
 RUN dotnet publish ifc-converter.csproj -c Release -o output/
 
 
@@ -25,7 +25,8 @@ RUN apt-get update -y \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y \
      --no-install-recommends \
      nodejs=18.20.5-1nodesource1 \
-    && npm install -g yarn@1.22.22 \
+    && npm install -g corepack@0.30.0 \
+    && corepack yarn \
     && DEBIAN_FRONTEND=noninteractive apt-get remove curl -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
