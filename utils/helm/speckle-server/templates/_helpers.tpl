@@ -1099,6 +1099,9 @@ Generate the secrets to which the service account should allow access for the Sp
 {{- if .Values.featureFlags.workspacesMultiRegionEnabled }}
   {{- $secretNames := append $secretNames ( default .Values.secretName .Values.multiRegion.config.secretName ) }}
 {{- end }}
+{{- if .Values.featureFlags.gendoAIModuleEnabled }}
+{{- $secretNames := append $secretNames ( default .Values.secretName .Values.server.gendoAI.key.secretName ) }}
+{{- end }}
 {{- range $secretName := uniq $secretNames }}
 - name: {{ $secretName }}
 {{- end }}
