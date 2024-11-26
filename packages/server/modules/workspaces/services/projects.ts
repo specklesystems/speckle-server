@@ -38,13 +38,13 @@ import { getDb } from '@/modules/multiregion/dbSelector'
 import { createNewProjectFactory } from '@/modules/core/services/projects'
 import {
   deleteProjectFactory,
-  getProjectFactory,
   storeProjectFactory,
   storeProjectRoleFactory
 } from '@/modules/core/repositories/projects'
 import { mainDb } from '@/db/knex'
 import { storeModelFactory } from '@/modules/core/repositories/models'
 import { ProjectsEmitter } from '@/modules/core/events/projectsEmitter'
+import { getProjectFactory } from '@/modules/core/repositories/streams'
 
 export const queryAllWorkspaceProjectsFactory = ({
   getStreams
