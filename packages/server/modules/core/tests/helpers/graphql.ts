@@ -24,3 +24,9 @@ export const onUserProjectsUpdatedSubscription = gql`
     }
   }
 `
+
+export const onUserStreamAddedSubscription = gql`
+  subscription OnUserStreamAdded {
+    userStreamAdded
+  }
+`

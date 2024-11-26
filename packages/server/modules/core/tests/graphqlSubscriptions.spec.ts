@@ -5,6 +5,7 @@ import {
 import { BasicTestUser, createTestUser } from '@/test/authHelper'
 import {
   OnUserProjectsUpdatedDocument,
+  OnUserStreamAddedDocument,
   UserProjectsUpdatedMessageType
 } from '@/test/graphql/generated/graphql'
 import {
@@ -65,9 +66,8 @@ describe('Core GraphQL Subscriptions (New)', () => {
       })
 
       describe('Project Subs', () => {
-        it('should notify me of a new project (userProjectsUpdated)', async () => {
-          let notifications = 0
-          const { waitForMessage } = await meSubClient.subscribe(
+        it('should notify me of a new project (userProjectsUpdated/userStreamAdded)', async () => {
+          const onUserProjectsUpdated = await meSubClient.subscribe(
             OnUserProjectsUpdatedDocument,
             {},
             (res) => {
@@ -76,7 +76,14 @@ describe('Core GraphQL Subscriptions (New)', () => {
                 UserProjectsUpdatedMessageType.Added
               )
               expect(res.data?.userProjectsUpdated.project?.name).to.equal(myProj.name)
-              notifications++
+            }
+          )
+          const onUserStreamAdded = await meSubClient.subscribe(
+            OnUserStreamAddedDocument,
+            {},
+            (res) => {
+              expect(res).to.not.haveGraphQLErrors()
+              expect(res.data?.userStreamAdded?.name).to.equal(myProj.name)
             }
           )
           await meSubClient.waitForReadiness()
@@ -99,9 +106,10 @@ describe('Core GraphQL Subscriptions (New)', () => {
             [myProj, me],
             [otherGuysProj, otherGuy]
           ])
-          await waitForMessage()
-
-          expect(notifications).to.equal(1)
+          await Promise.all([
+            onUserProjectsUpdated.waitForMessage(),
+            onUserStreamAdded.waitForMessage()
+          ])
         })
       })
     })
