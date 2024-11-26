@@ -39,7 +39,7 @@ import { isMultiRegionTestMode } from '@/test/speckle-helpers/regions'
 import { isMultiRegionEnabled } from '@/modules/multiregion/helpers'
 import { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
 import { ApolloServer } from '@apollo/server'
-import { ReadinessHandler } from '@/healthchecks/health'
+import { ReadinessHandler } from '@/healthchecks/types'
 
 // why is server config only created once!????
 // because its done in a migration, to not override existing configs

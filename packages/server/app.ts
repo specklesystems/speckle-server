@@ -74,7 +74,7 @@ import { loggingPlugin } from '@/modules/core/graph/plugins/logging'
 import { shouldLogAsInfoLevel } from '@/logging/graphqlError'
 import { getUserFactory } from '@/modules/core/repositories/users'
 import { initFactory as healthchecksInitFactory } from '@/healthchecks'
-import type { ReadinessHandler } from '@/healthchecks/health'
+import type { ReadinessHandler } from '@/healthchecks/types'
 
 const GRAPHQL_PATH = '/graphql'
 
