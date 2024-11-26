@@ -164,6 +164,9 @@ async function doTask(mainDb, regionName, taskDb, task) {
             existingBranch?.id || '',
             regionName
           ],
+          {
+            USER_TOKEN: tempUserToken
+          },
           TIME_LIMIT
         )
       }
