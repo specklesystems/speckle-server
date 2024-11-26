@@ -318,7 +318,8 @@ const addDomain = async () => {
     },
     result.value?.workspace.domains ?? [],
     result.value?.workspace.discoverabilityEnabled,
-    result.value?.workspace.domainBasedMembershipProtectionEnabled
+    result.value?.workspace.domainBasedMembershipProtectionEnabled,
+    result.value?.workspace.hasAccessToSSO
   )
 
   mixpanel.track('Workspace Domain Added', {
