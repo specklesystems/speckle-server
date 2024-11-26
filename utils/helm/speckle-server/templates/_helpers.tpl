@@ -738,16 +738,16 @@ Generate the environment variables for Speckle server and Speckle objects deploy
   value: {{ .Values.server.gendoAI.creditLimit | quote }}
 
 - name: RATELIMIT_GENDO_AI_RENDER_REQUEST
-  value: {{ .Values.server.gendoai.ratelimiting.renderRequest | quote }}
+  value: {{ .Values.server.gendoAI.ratelimiting.renderRequest | quote }}
 
 - name: RATELIMIT_GENDO_AI_RENDER_REQUEST_PERIOD_SECONDS
-  value: {{ .Values.server.gendoai.ratelimiting.renderRequestPeriodSeconds | quote }}
+  value: {{ .Values.server.gendoAI.ratelimiting.renderRequestPeriodSeconds | quote }}
 
 - name: RATELIMIT_BURST_GENDO_AI_RENDER_REQUEST
-  value: {{ .Values.server.gendoai.ratelimiting.burstRenderRequest | quote }}
+  value: {{ .Values.server.gendoAI.ratelimiting.burstRenderRequest | quote }}
 
 - name: RATELIMIT_GENDO_AI_RENDER_REQUEST_BURST_PERIOD_SECONDS
-  value: {{ .Values.server.gendoai.ratelimiting.burstRenderRequestPeriodSeconds | quote }}
+  value: {{ .Values.server.gendoAI.ratelimiting.burstRenderRequestPeriodSeconds | quote }}
 {{- end }}
 
 # *** Redis ***
