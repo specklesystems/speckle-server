@@ -321,13 +321,18 @@ export const testApolloSubscriptionServer = async () => {
       handler: (res: FormattedExecutionResult<R>) => MaybeAsync<void>
     ) => {
       let msgFlaggedPromise: Optional<ManualPromise<void>> = undefined
+      const messages: Array<FormattedExecutionResult<R>> = []
+
       const observable = execute(clientLink, {
         query,
         variables
       })
       const sub = observable.subscribe((eventData) => {
+        const res = eventData as FormattedExecutionResult<R>
+
         // Invoke handler
-        handler(eventData as FormattedExecutionResult<R>)
+        messages.push(res)
+        handler(res)
 
         // Mark msg received
         if (!msgFlaggedPromise) {
@@ -363,7 +368,9 @@ export const testApolloSubscriptionServer = async () => {
         await Promise.race([msgFlaggedPromise.promise, timeoutAt(timeout)])
       }
 
-      return { unsub, waitForMessage }
+      const getMessages = () => messages.slice()
+
+      return { unsub, waitForMessage, getMessages }
     }
 
     /**

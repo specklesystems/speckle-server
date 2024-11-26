@@ -5,7 +5,9 @@ import {
 import { BasicTestUser, createTestUser } from '@/test/authHelper'
 import {
   OnUserProjectsUpdatedDocument,
+  OnUserProjectVersionsUpdatedDocument,
   OnUserStreamAddedDocument,
+  OnUserStreamCommitCreatedDocument,
   UserProjectsUpdatedMessageType
 } from '@/test/graphql/generated/graphql'
 import {
@@ -14,6 +16,7 @@ import {
   TestApolloSubscriptionServer
 } from '@/test/graphqlHelper'
 import { beforeEachContext, getMainTestRegionKey } from '@/test/hooks'
+import { BasicTestCommit, createTestCommit } from '@/test/speckle-helpers/commitHelper'
 import {
   isMultiRegionTestMode,
   waitForRegionUser
@@ -110,6 +113,64 @@ describe('Core GraphQL Subscriptions (New)', () => {
             onUserProjectsUpdated.waitForMessage(),
             onUserStreamAdded.waitForMessage()
           ])
+
+          expect(onUserProjectsUpdated.getMessages()).to.have.length(1)
+          expect(onUserStreamAdded.getMessages()).to.have.length(1)
+        })
+      })
+
+      describe('Version Subs', () => {
+        const myVersionProj: BasicTestStream = {
+          name: 'My New Version Project #1',
+          id: '',
+          ownerId: '',
+          isPublic: true,
+          workspaceId: myMainWorkspace.id
+        }
+
+        before(async () => {
+          await createTestStreams([[myVersionProj, me]])
+        })
+
+        it(`should notify me of a new version (userProjectVersionsUpdated)`, async () => {
+          const message = 'ayyyooo'
+          const onUserProjectVersionsUpdated = await meSubClient.subscribe(
+            OnUserProjectVersionsUpdatedDocument,
+            { projectId: myVersionProj.id },
+            (res) => {
+              expect(res).to.not.haveGraphQLErrors()
+              expect(res.data?.projectVersionsUpdated.version?.message).to.equal(
+                message
+              )
+            }
+          )
+          const onUserStreamCommitCreated = await meSubClient.subscribe(
+            OnUserStreamCommitCreatedDocument,
+            { streamId: myVersionProj.id },
+            (res) => {
+              expect(res).to.not.haveGraphQLErrors()
+              expect(res.data?.commitCreated?.message).to.equal(message)
+            }
+          )
+          await meSubClient.waitForReadiness()
+
+          // Create test commit
+          const commit: BasicTestCommit = {
+            streamId: '',
+            objectId: '',
+            id: '',
+            authorId: '',
+            message
+          }
+          await createTestCommit(commit, { owner: me, stream: myVersionProj })
+
+          await Promise.all([
+            onUserProjectVersionsUpdated.waitForMessage(),
+            onUserStreamCommitCreated.waitForMessage()
+          ])
+
+          expect(onUserProjectVersionsUpdated.getMessages()).to.have.length(1)
+          expect(onUserStreamCommitCreated.getMessages()).to.have.length(1)
         })
       })
     })

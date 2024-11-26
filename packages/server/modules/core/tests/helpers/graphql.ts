@@ -30,3 +30,23 @@ export const onUserStreamAddedSubscription = gql`
     userStreamAdded
   }
 `
+
+export const onUserProjectVersionsUpdatedSubscription = gql`
+  subscription OnUserProjectVersionsUpdated($projectId: String!) {
+    projectVersionsUpdated(id: $projectId) {
+      id
+      type
+      version {
+        id
+        message
+      }
+      modelId
+    }
+  }
+`
+
+export const onUserStreamCommitCreatedSubscription = gql`
+  subscription OnUserStreamCommitCreated($streamId: String!) {
+    commitCreated(streamId: $streamId)
+  }
+`
