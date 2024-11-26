@@ -18,7 +18,7 @@
     <div v-if="workspaceId" class="w-full">
       <FormButton
         :color="plan.name === WorkspacePlans.Starter ? 'primary' : 'outline'"
-        :disabled="(!hasTrialPlan && !canUpgradeToPlan) || !isAdmin"
+        :disabled="buttonDisabled"
         class="mt-3"
         full-width
         @click="onUpgradePlanClick(plan.name)"
@@ -50,6 +50,7 @@ const props = defineProps<{
   currentPlan?: MaybeNullOrUndefined<WorkspacePlan>
   workspaceId?: string
   isAdmin?: boolean
+  activeBillingInterval?: BillingInterval
 }>()
 
 const { upgradePlanRedirect } = useBillingActions()
@@ -69,6 +70,14 @@ const canUpgradeToPlan = computed(() => {
 })
 const hasTrialPlan = computed(
   () => props.currentPlan?.status === WorkspacePlanStatuses.Trial || !props.currentPlan
+)
+const buttonDisabled = computed(
+  () =>
+    !props.isAdmin ||
+    (!hasTrialPlan.value &&
+      (canUpgradeToPlan.value ||
+        (props.activeBillingInterval === BillingInterval.Monthly &&
+          !props.isYearlyPlan)))
 )
 
 const onUpgradePlanClick = (plan: WorkspacePlans) => {

@@ -16,13 +16,7 @@
           ]"
           scope="col"
         >
-          <SettingsWorkspacesBillingPricingTableHeader
-            :plan="plan"
-            :is-yearly-plan="isYearlyPlan"
-            :current-plan="currentPlan"
-            :workspace-id="workspaceId"
-            :is-admin="isAdmin"
-          />
+          <SettingsWorkspacesBillingPricingTableHeader :plan="plan" v-bind="$props" />
         </th>
       </tr>
     </thead>
@@ -63,7 +57,7 @@
 </template>
 
 <script setup lang="ts">
-import type { WorkspacePlan } from '~/lib/common/generated/gql/graphql'
+import type { WorkspacePlan, BillingInterval } from '~/lib/common/generated/gql/graphql'
 import { WorkspacePlans } from '~/lib/common/generated/gql/graphql'
 import { pricingPlansConfig } from '~/lib/billing/helpers/constants'
 import type { PlanFeaturesList } from '~/lib/billing/helpers/types'
@@ -75,6 +69,7 @@ defineProps<{
   currentPlan?: MaybeNullOrUndefined<WorkspacePlan>
   workspaceId?: string
   isAdmin?: boolean
+  activeBillingInterval?: BillingInterval
 }>()
 
 const plans = ref(pricingPlansConfig.plans)

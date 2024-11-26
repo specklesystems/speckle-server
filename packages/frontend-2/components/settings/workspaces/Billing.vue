@@ -97,6 +97,7 @@
             class="pt-6"
             :workspace-id="workspaceId"
             :current-plan="currentPlan"
+            :active-billing-interval="subscription?.billingInterval"
             :is-admin="isAdmin"
           >
             <template #title>
