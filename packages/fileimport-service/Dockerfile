@@ -68,7 +68,7 @@ ENV PYTHON_BINARY_PATH=${PYTHON_BINARY_PATH}
 ARG DOTNET_BINARY_PATH=/usr/bin/dotnet
 ENV DOTNET_BINARY_PATH=${DOTNET_BINARY_PATH}
 
-COPY --from=dotnet-build-stage /app/output packages/fileimport-service/ifc
+COPY --from=dotnet-build-stage /app/output packages/fileimport-service/ifc-dotnet
 
 WORKDIR /speckle-server/packages/fileimport-service
 
