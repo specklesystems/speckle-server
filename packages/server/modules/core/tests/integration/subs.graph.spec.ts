@@ -16,12 +16,8 @@ import {
   TestApolloSubscriptionServer
 } from '@/test/graphqlHelper'
 import { beforeEachContext, getMainTestRegionKey } from '@/test/hooks'
+import { BasicTestCommit, createTestCommits } from '@/test/speckle-helpers/commitHelper'
 import {
-  BasicTestCommit,
-  createTestCommitsFactory
-} from '@/test/speckle-helpers/commitHelper'
-import {
-  getMainTestRegionClient,
   isMultiRegionTestMode,
   waitForRegionUser
 } from '@/test/speckle-helpers/regions'
@@ -166,9 +162,7 @@ describe('Core GraphQL Subscriptions (New)', () => {
             authorId: '',
             message
           }
-          const createTestCommits = createTestCommitsFactory({
-            db: getMainTestRegionClient()
-          })
+
           await createTestCommits([commit], { owner: me, stream: myVersionProj })
 
           await Promise.all([
