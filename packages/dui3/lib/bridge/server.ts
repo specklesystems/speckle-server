@@ -14,6 +14,30 @@ import { useAccountStore } from '~/store/accounts'
 import { useHostAppStore } from '~/store/hostApp'
 import type { Emitter } from 'nanoevents'
 
+export type SendBatchViaBrowserArgs = {
+  modelCardId: string
+  projectId: string
+  token: string
+  serverUrl: string
+  batch: string
+  currentBatch: number
+  totalBatch: number
+  referencedObjectId: string
+}
+
+export type CreateVersionViaBrowserArgs = {
+  modelCardId: string
+  projectId: string
+  modelId: string
+  token: string
+  serverUrl: string
+  accountId: string
+  message: string
+  referencedObjectId: string
+  sourceApplication: string
+  sendConversionResults: ConversionResult[]
+}
+
 export type SendViaBrowserArgs = {
   modelCardId: string
   projectId: string
@@ -43,7 +67,7 @@ export type CreateVersionArgs = {
   projectId: string
   modelId: string
   accountId: string
-  objectId: string
+  referencedObjectId: string
   message?: string
   sourceApplication?: string
 }
@@ -68,6 +92,10 @@ export class ServerBridge {
     if (eventName === 'sendByBrowser')
       this.sendByBrowser(eventPayload as SendViaBrowserArgs)
     // we will switch to https://www.npmjs.com/package/@speckle/objectsender
+    else if (eventName === 'sendBatchViaBrowser')
+      this.sendBatchViaBrowser(eventPayload as SendBatchViaBrowserArgs)
+    else if (eventName === 'createVersionViaBrowser')
+      this.createVersionViaBrowser(eventPayload as CreateVersionViaBrowserArgs)
     else if (eventName === 'receiveByBrowser')
       this.receiveByBrowser(eventPayload as ReceiveViaBrowserArgs)
     // Archicad is not likely to hit here yet!
@@ -142,7 +170,77 @@ export class ServerBridge {
   }
 
   /**
-   * Internal server bridge method for sending data via the browser.
+   * Internal server method for sending batch data via REST api.
+   * Whenever batches are completed it triggers to host application to notify it is done.
+   * To be able to use this function properly, expected objects in batch must have hashed (speckle ids generated, detached, chucked bla bla) on connector.
+   * @param eventPayload
+   */
+  private async sendBatchViaBrowser(eventPayload: SendBatchViaBrowserArgs) {
+    const {
+      serverUrl,
+      token,
+      projectId,
+      modelCardId,
+      batch,
+      totalBatch,
+      currentBatch,
+      referencedObjectId
+    } = eventPayload
+    this.emitter.emit('setModelProgress', {
+      modelCardId,
+      progress: {
+        status: 'Uploading',
+        progress: currentBatch / totalBatch
+      }
+    } as unknown as string)
+    const formData = new FormData()
+    formData.append(`batch-1`, new Blob([batch], { type: 'application/json' }))
+    await fetch(`${serverUrl}/objects/${projectId}`, {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + token },
+      body: formData
+    })
+
+    if (currentBatch === totalBatch) {
+      const args = [eventPayload.modelCardId, referencedObjectId]
+      await this.runMethod('afterSendObjects', args as unknown as unknown[])
+    }
+  }
+
+  /**
+   * Whenever we make sure we sent every object to the server, we can safely call this function from connector to trigger version create and populate conversion reports.
+   * @param eventPayload
+   */
+  private async createVersionViaBrowser(eventPayload: CreateVersionViaBrowserArgs) {
+    const {
+      projectId,
+      accountId,
+      modelId,
+      modelCardId,
+      referencedObjectId,
+      message,
+      sourceApplication,
+      sendConversionResults
+    } = eventPayload
+    const versionId = await this.createVersion({
+      modelCardId,
+      projectId,
+      modelId,
+      accountId,
+      referencedObjectId,
+      sourceApplication,
+      message
+    })
+    const hostAppStore = useHostAppStore()
+    hostAppStore.setModelSendResult({
+      modelCardId,
+      versionId: versionId as string,
+      sendConversionResults
+    })
+  }
+
+  /**
+   * Internal server bridge method for sending data via object sender.
    * @param eventPayload
    */
   private async sendByBrowser(eventPayload: SendViaBrowserArgs) {
@@ -199,7 +297,7 @@ export class ServerBridge {
       projectId,
       modelId,
       accountId,
-      objectId: rootCommitObjectId,
+      referencedObjectId: rootCommitObjectId,
       sourceApplication: hostAppStore.hostAppName?.toLowerCase(),
       message: message || `send from ${hostAppStore.hostAppName?.toLowerCase()}`
     }
@@ -227,7 +325,7 @@ export class ServerBridge {
     const result = await createVersion.mutate({
       input: {
         modelId: args.modelId,
-        objectId: args.objectId,
+        objectId: args.referencedObjectId,
         sourceApplication: hostAppStore.hostAppName,
         projectId: args.projectId
       }

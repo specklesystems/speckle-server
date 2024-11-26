@@ -13,6 +13,12 @@ import { useAccountStore } from '~/store/accounts'
 import { useHostAppStore } from '~/store/hostApp'
 import type { ConversionResult } from '~/lib/conversions/conversionResult'
 import { storeToRefs } from 'pinia'
+import type {
+  SendBatchViaBrowserArgs,
+  CreateVersionViaBrowserArgs,
+  ReceiveViaBrowserArgs,
+  CreateVersionArgs
+} from '~/lib/bridge/server'
 
 declare let sketchup: {
   exec: (data: Record<string, unknown>) => void
@@ -33,25 +39,6 @@ type SendViaBrowserArgs = {
     totalChildrenCount: number
     batches: string[]
   }
-}
-
-type ReceiveViaBrowserArgs = {
-  modelCardId: string
-  projectId: string
-  modelId: string
-  objectId: string
-  accountId: string
-  selectedVersionId: string
-}
-
-type CreateVersionArgs = {
-  modelCardId: string
-  projectId: string
-  modelId: string
-  accountId: string
-  objectId: string
-  message?: string
-  sourceApplication?: string
 }
 
 /**
@@ -104,6 +91,10 @@ export class SketchupBridge extends BaseBridge {
 
     if (eventName === 'sendViaBrowser')
       this.sendViaBrowser(eventPayload as SendViaBrowserArgs)
+    else if (eventName === 'sendBatchViaBrowser')
+      this.sendBatchViaBrowser(eventPayload as SendBatchViaBrowserArgs)
+    else if (eventName === 'createVersionViaBrowser')
+      this.createVersionViaBrowser(eventPayload as CreateVersionViaBrowserArgs)
     else if (eventName === 'receiveViaBrowser')
       this.receiveViaBrowser(eventPayload as ReceiveViaBrowserArgs)
 
@@ -180,8 +171,74 @@ export class SketchupBridge extends BaseBridge {
   }
 
   /**
+   * Internal sketchup method for sending batch data via the browser.
+   * @param eventPayload
+   */
+  private async sendBatchViaBrowser(eventPayload: SendBatchViaBrowserArgs) {
+    const {
+      serverUrl,
+      token,
+      projectId,
+      modelCardId,
+      batch,
+      totalBatch,
+      currentBatch,
+      referencedObjectId
+    } = eventPayload
+    this.emit('setModelProgress', {
+      modelCardId,
+      progress: {
+        status: 'Uploading',
+        progress: currentBatch / totalBatch
+      }
+    } as unknown as string)
+    const formData = new FormData()
+    formData.append(`batch-1`, new Blob([batch], { type: 'application/json' }))
+    await fetch(`${serverUrl}/objects/${projectId}`, {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + token },
+      body: formData
+    })
+
+    if (currentBatch === totalBatch) {
+      const args = [eventPayload.modelCardId, referencedObjectId]
+      await this.runMethod('afterSendObjects', args as unknown as unknown[])
+    }
+  }
+
+  private async createVersionViaBrowser(eventPayload: CreateVersionViaBrowserArgs) {
+    const {
+      projectId,
+      accountId,
+      modelId,
+      modelCardId,
+      referencedObjectId,
+      message,
+      sendConversionResults
+    } = eventPayload
+    const args: CreateVersionArgs = {
+      modelCardId,
+      projectId,
+      modelId,
+      accountId,
+      referencedObjectId,
+      sourceApplication: 'sketchup',
+      message: message || 'send from sketchup'
+    }
+    const versionId = await this.createVersion(args)
+    const hostAppStore = useHostAppStore()
+    // TODO: Alignment needed
+    hostAppStore.setModelSendResult({
+      modelCardId: args.modelCardId,
+      versionId: versionId as string,
+      sendConversionResults
+    })
+  }
+
+  /**
    * Internal sketchup method for sending data via the browser.
    * @param eventPayload
+   * @deprecated replaced with sendBatchViaBrowser. NOTE: remove completely!
    */
   private async sendViaBrowser(eventPayload: SendViaBrowserArgs) {
     const {
@@ -224,7 +281,7 @@ export class SketchupBridge extends BaseBridge {
       projectId,
       modelId,
       accountId,
-      objectId: sendObject.id,
+      referencedObjectId: sendObject.id,
       sourceApplication: 'sketchup',
       message: message || 'send from sketchup'
     }
@@ -251,7 +308,7 @@ export class SketchupBridge extends BaseBridge {
     const result = await createVersion.mutate({
       input: {
         modelId: args.modelId,
-        objectId: args.objectId,
+        objectId: args.referencedObjectId,
         sourceApplication: 'sketchup',
         projectId: args.projectId
       }
