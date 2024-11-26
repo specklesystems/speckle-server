@@ -125,12 +125,10 @@ const createObject = createObjectFactory({
   storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db })
 })
 
+let server
 let sendRequest
 
 describe('Activity @activity', () => {
-  let server
-  let app
-
   const userIz = {
     name: 'Izzy Lyseggen',
     email: 'izzybizzi@speckle.systems',
@@ -187,8 +185,9 @@ describe('Activity @activity', () => {
   }
 
   before(async () => {
-    ;({ server, app } = await beforeEachContext())
-    ;({ sendRequest } = await initializeTestServer(server, app))
+    const ctx = await beforeEachContext()
+    server = ctx.server
+    ;({ sendRequest } = await initializeTestServer(ctx))
 
     const normalScopesList = [
       Scopes.Streams.Read,

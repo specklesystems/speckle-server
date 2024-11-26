@@ -60,7 +60,7 @@ import {
   ArrowDownTrayIcon
 } from '@heroicons/vue/24/outline'
 import { useCameraUtilities } from '~/lib/viewer/composables/ui'
-import type { Vector3 } from 'three'
+import { Vector3 } from 'three'
 
 const props = defineProps<{
   renderRequest: GendoAiRender
@@ -108,10 +108,11 @@ const renderUrl = computed(() => {
 
 const setView = () => {
   const cam = detailedRender.value?.camera as { target: Vector3; position: Vector3 }
+
   setViewInternal(
     {
-      target: cam.target,
-      position: cam.position
+      target: new Vector3(cam.target.x, cam.target.y, cam.target.z),
+      position: new Vector3(cam.position.x, cam.position.y, cam.position.z)
     },
     true
   )

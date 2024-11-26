@@ -51,7 +51,8 @@ const command: CommandModule<
     const cloneStream = cloneStreamFactory({
       getStream: getStreamFactory({ db }),
       getUser,
-      db,
+      newProjectDb: db,
+      sourceProjectDb: db,
       createStream: createStreamFactory({ db }),
       insertCommits: insertCommitsFactory({ db }),
       getBatchedStreamCommits: getBatchedStreamCommitsFactory({ db }),

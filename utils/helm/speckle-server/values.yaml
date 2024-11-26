@@ -41,8 +41,8 @@ featureFlags:
   gendoAIModuleEnabled: false
   ## @param featureFlags.noClosureWrites Toggles whether to stop writing to the closure table
   noClosureWrites: false
-  ## @param featureFlags.workspaceModuleEnabled High level flag fully toggles the workspaces module
-  workspaceModuleEnabled: false
+  ## @param featureFlags.workspacesModuleEnabled High level flag fully toggles the workspaces module
+  workspacesModuleEnabled: false
   ## @param featureFlags.workspaceSsoEnabled High level flag fully toggles the workspaces dynamic sso
   workspaceSsoEnabled: false
   ## @param featureFlags.multipleEmailsModuleEnabled High level flag fully toggles multiple emails
@@ -51,7 +51,7 @@ featureFlags:
   gatekeeperModuleEnabled: false
   ## @param featureFlags.billingIntegrationEnabled High level flag that enables the billing integration
   billingIntegrationEnabled: false
-  ## @param featureFlags.workspacesMultiRegionEnabled Toggles whether multi-region is available within workspaces. workspaceModuleEnabled must also be enabled.
+  ## @param featureFlags.workspacesMultiRegionEnabled Toggles whether multi-region is available within workspaces. workspacesModuleEnabled must also be enabled.
   workspacesMultiRegionEnabled: false
 
 analytics:
@@ -467,16 +467,14 @@ server:
   gendoAI:
     ## @param server.gendoAI.apiUrl The url of the Gendo AI application, including protocol.
     apiUrl: 'https://api.gendo.ai/external/generate'
+
+    ## @param server.gendoAI.creditLimit The number of Gendo AI credit a user gets every month.
+    creditLimit: 40
     key:
       ## @param server.gendoAI.key.secretName The name of the Kubernetes Secret containing the Gendo AI key. If left blank, will default to the `secretName` parameter.
       secretName: ''
       ## @param server.gendoAI.key.secretKey The key within the Kubernetes Secret holding the Gendo AI key as its value.
       secretKey: 'gendoai_key'
-    keyResponse:
-      ## @param server.gendoAI.keyResponse.secretName The name of the Kubernetes Secret containing the Gendo AI key response. If left blank, will default to the `secretName` parameter.
-      secretName: ''
-      ## @param server.gendoAI.keyResponse.secretKey The key within the Kubernetes Secret holding the Gendo AI key response as its value.
-      secretKey: 'gendoai_key_response'
     ratelimiting:
       ## @param server.gendoAI.ratelimiting.renderRequest The number of render requests allowed per period
       renderRequest: 1

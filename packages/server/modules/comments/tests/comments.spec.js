@@ -1337,7 +1337,8 @@ describe('Comments @comments', () => {
               // Legacy
               {
                 id: 'a',
-                text: 'hey dude! welcome to my legacy-type comment!'
+                text: 'hey dude! welcome to my legacy-type comment!',
+                streamId: stream.id
               },
               // New
               {
@@ -1346,14 +1347,16 @@ describe('Comments @comments', () => {
                   buildCommentTextFromInput({
                     doc: buildCommentInputFromString('new comment schema here')
                   })
-                )
+                ),
+                streamId: stream.id
               },
               // New, but for some reason the text object is already deserialized
               {
                 id: 'c',
                 text: buildCommentTextFromInput({
                   doc: buildCommentInputFromString('another new comment schema here')
-                })
+                }),
+                streamId: stream.id
               }
             ],
             cursor: new Date().toISOString(),
@@ -1363,14 +1366,15 @@ describe('Comments @comments', () => {
 
         const { data, errors } = await readComments()
 
-        expect(data?.comments?.items?.length || 0).to.eq(3)
         expect(errors?.length || 0).to.eq(0)
+        expect(data?.comments?.items?.length || 0).to.eq(3)
       })
 
       it('legacy comment with a single link is formatted correctly', async () => {
         const item = {
           id: '1',
-          text: 'https://aaa.com:3000/h3ll0-world/_?a=1&b=2#aaa'
+          text: 'https://aaa.com:3000/h3ll0-world/_?a=1&b=2#aaa',
+          streamId: stream.id
         }
 
         commentRepoMock.enable()
@@ -1409,7 +1413,8 @@ describe('Comments @comments', () => {
 
         const item = {
           id: '1',
-          text: textParts.join('')
+          text: textParts.join(''),
+          streamId: stream.id
         }
 
         commentRepoMock.enable()

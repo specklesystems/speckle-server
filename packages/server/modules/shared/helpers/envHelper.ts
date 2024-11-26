@@ -350,11 +350,11 @@ export function getGendoAIKey() {
   return getStringFromEnv('GENDOAI_KEY')
 }
 
-export function getGendoAIResponseKey() {
-  return getStringFromEnv('GENDOAI_KEY_RESPONSE')
+export function getGendoAICreditLimit() {
+  return getIntFromEnv('GENDOAI_CREDIT_LIMIT')
 }
 
-export function getGendoAIAPIEndpoint() {
+export function getGendoAiApiEndpoint() {
   return getStringFromEnv('GENDOAI_API_ENDPOINT')
 }
 
@@ -430,3 +430,7 @@ export function getMultiRegionConfigPath(options?: Partial<{ unsafe: boolean }>)
 
 export const shouldRunTestsInMultiregionMode = () =>
   getBooleanFromEnv('RUN_TESTS_IN_MULTIREGION_MODE')
+
+export function shutdownTimeoutSeconds() {
+  return getIntFromEnv('SHUTDOWN_TIMEOUT_SECONDS', '300')
+}

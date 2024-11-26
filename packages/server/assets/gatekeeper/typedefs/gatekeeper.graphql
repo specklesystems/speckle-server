@@ -7,8 +7,8 @@ extend type WorkspaceMutations {
 }
 
 enum PaidWorkspacePlans {
-  team
-  pro
+  starter
+  plus
   business
 }
 
@@ -49,8 +49,8 @@ type WorkspaceBillingMutations {
 }
 
 enum WorkspacePlans {
-  team
-  pro
+  starter
+  plus
   business
   unlimited
   academia
@@ -84,4 +84,11 @@ extend type Workspace {
   subscription: WorkspaceSubscription @hasScope(scope: "workspace:billing")
   # this can only be created if there is an active subscription
   customerPortalUrl: String @hasScope(scope: "workspace:billing")
+  hasAccessToFeature(featureName: WorkspaceFeatureName!): Boolean!
+}
+
+enum WorkspaceFeatureName {
+  domainBasedSecurityPolicies
+  oidcSso
+  workspaceDataRegionSpecificity
 }

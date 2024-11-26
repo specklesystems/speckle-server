@@ -6,14 +6,25 @@
         text="Manage verified workspace domains and associated features."
       />
       <template v-if="isSsoEnabled">
-        <SettingsWorkspacesSecuritySso
+        <SettingsWorkspacesSecuritySsoWrapper
           v-if="result?.workspace"
           :workspace="result.workspace"
         />
         <hr class="my-6 md:my-8 border-outline-2" />
       </template>
       <section>
-        <SettingsSectionHeader title="Your domains" class="pb-4 md:pb-6" subheading />
+        <SettingsSectionHeader
+          title="Allowed email domains"
+          class="pb-4 md:pb-6"
+          subheading
+        />
+        <div
+          v-if="result?.workspace.sso?.provider?.id"
+          class="bg-foundation border border-outline-2 rounded-md p-4 text-body-xs mb-4"
+        >
+          With SSO enabled, allowed domains are configured on your identity provider's
+          side.
+        </div>
         <ul v-if="hasWorkspaceDomains">
           <li
             v-for="domain in workspaceDomains"
@@ -24,7 +35,6 @@
             <FormButton
               :disabled="workspaceDomains.length === 1 && isDomainProtectionEnabled"
               color="outline"
-              size="sm"
               @click="openRemoveDialog(domain)"
             >
               Delete
@@ -39,13 +49,11 @@
           No verified domains yet
         </p>
       </section>
-      <hr class="my-6 md:my-8 border-outline-2" />
-      <section>
-        <SettingsSectionHeader title="Add new domain" subheading class="pb-4 md:pb-6" />
+      <section class="mt-8">
         <div class="grid grid-cols-2 gap-x-6 items-center">
           <div class="flex flex-col gap-y-1">
             <p class="text-body-xs font-medium text-foreground">New domain</p>
-            <p class="text-body-xs text-foreground-2 leading-5">
+            <p class="text-body-2xs text-foreground-2 leading-5">
               Add a domain from a list of email domains for your active account.
             </p>
           </div>
@@ -69,17 +77,14 @@
           </div>
         </div>
       </section>
-      <hr class="my-6 md:my-8 border-outline-2" />
-      <section class="flex flex-col space-y-3">
-        <SettingsSectionHeader title="Domain features" subheading class="mb-3" />
+      <section class="flex flex-col space-y-3 mt-8">
         <div class="flex flex-col space-y-8">
           <div class="flex items-center">
             <div class="flex-1 flex-col pr-6 gap-y-1">
               <p class="text-body-xs font-medium text-foreground">Domain protection</p>
-              <p class="text-body-xs text-foreground-2 leading-5 max-w-md">
+              <p class="text-body-2xs text-foreground-2 leading-5 max-w-md">
                 Admins won't be able to add users as members (or admins) to a workspace
-                unless the one of the users email matches one of the workspace's
-                verified email domains.
+                unless they are part of a workspace's email domain.
               </p>
             </div>
             <FormSwitch
@@ -94,9 +99,9 @@
               <p class="text-body-xs font-medium text-foreground">
                 Domain discoverability
               </p>
-              <p class="text-body-xs text-foreground-2 leading-5 max-w-md">
-                Makes your workspace discoverable by users who have a verified email
-                address matching one of the workspace's verified domains.
+              <p class="text-body-2xs text-foreground-2 leading-5 max-w-md">
+                Makes your workspace discoverable by employees who sign up with your
+                company's specified email domain.
               </p>
             </div>
             <FormSwitch
@@ -138,14 +143,15 @@ import { useIsWorkspacesSsoEnabled } from '~/composables/globals'
 graphql(`
   fragment SettingsWorkspacesSecurity_Workspace on Workspace {
     id
+    slug
     domains {
       id
       domain
       ...SettingsWorkspacesSecurityDomainRemoveDialog_WorkspaceDomain
     }
+    ...SettingsWorkspacesSecuritySsoWrapper_Workspace
     domainBasedMembershipProtectionEnabled
     discoverabilityEnabled
-    ...SettingsWorkspacesSecuritySso_Workspace
   }
 
   fragment SettingsWorkspacesSecurity_User on User {
@@ -312,7 +318,8 @@ const addDomain = async () => {
     },
     result.value?.workspace.domains ?? [],
     result.value?.workspace.discoverabilityEnabled,
-    result.value?.workspace.domainBasedMembershipProtectionEnabled
+    result.value?.workspace.domainBasedMembershipProtectionEnabled,
+    result.value?.workspace.hasAccessToSSO
   )
 
   mixpanel.track('Workspace Domain Added', {

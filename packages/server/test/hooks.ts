@@ -16,7 +16,7 @@ import { once } from 'events'
 import type http from 'http'
 import type express from 'express'
 import type net from 'net'
-import { MaybeAsync, MaybeNullOrUndefined } from '@speckle/shared'
+import { MaybeAsync, MaybeNullOrUndefined, wait } from '@speckle/shared'
 import type mocha from 'mocha'
 import {
   getAvailableRegionKeysFactory,
@@ -37,6 +37,9 @@ import {
 import { Knex } from 'knex'
 import { isMultiRegionTestMode } from '@/test/speckle-helpers/regions'
 import { isMultiRegionEnabled } from '@/modules/multiregion/helpers'
+import { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
+import { ApolloServer } from '@apollo/server'
+import { ReadinessHandler } from '@/healthchecks/health'
 
 // why is server config only created once!????
 // because its done in a migration, to not override existing configs
@@ -123,15 +126,17 @@ export const resetPubSubFactory = (deps: { db: Knex }) => async () => {
   const ensureAivenExtras = ensureAivenExtrasFactory(deps)
   await ensureAivenExtras()
 
+  type SubInfo = {
+    subname: string
+    subconninfo: string
+    subpublications: string[]
+    subslotname: string
+  }
+
   const subscriptions = (await deps.db.raw(
     `SELECT subname, subconninfo, subpublications, subslotname FROM aiven_extras.pg_list_all_subscriptions() WHERE subname ILIKE 'test_%';`
   )) as {
-    rows: Array<{
-      subname: string
-      subconninfo: string
-      subpublications: string[]
-      subslotname: string
-    }>
+    rows: Array<SubInfo>
   }
   const publications = (await deps.db.raw(
     `SELECT pubname FROM pg_publication WHERE pubname ILIKE 'test_%';`
@@ -139,19 +144,23 @@ export const resetPubSubFactory = (deps: { db: Knex }) => async () => {
     rows: Array<{ pubname: string }>
   }
 
-  // Drop all subs
-  for (const sub of subscriptions.rows) {
-    // Running serially, otherwise some kind of race condition issue can pop up
+  const dropSubs = async (info: SubInfo) => {
     await deps.db.raw(
-      `SELECT * FROM aiven_extras.pg_alter_subscription_disable('${sub.subname}');`
+      `SELECT * FROM aiven_extras.pg_alter_subscription_disable('${info.subname}');`
     )
+    await wait(500)
     await deps.db.raw(
-      `SELECT * FROM aiven_extras.pg_drop_subscription('${sub.subname}');`
+      `SELECT * FROM aiven_extras.pg_drop_subscription('${info.subname}');`
     )
+    await wait(1000)
     await deps.db.raw(
-      `SELECT * FROM aiven_extras.dblink_slot_create_or_drop('${sub.subconninfo}', '${sub.subslotname}', 'drop');`
+      `SELECT * FROM aiven_extras.dblink_slot_create_or_drop('${info.subconninfo}', '${info.subslotname}', 'drop');`
     )
   }
+
+  // Drop all subs
+  // (concurrently, cause it seems possible and we have those delays there)
+  await Promise.all(subscriptions.rows.map(dropSubs))
 
   // Drop all pubs
   for (const pub of publications.rows) {
@@ -215,11 +224,15 @@ export const truncateTables = async (tableNames?: string[]) => {
   }
 }
 
-export const initializeTestServer = async (
-  server: http.Server,
+export const initializeTestServer = async (params: {
+  server: http.Server
   app: express.Express
-) => {
-  await startHttp(server, app, 0)
+  graphqlServer: ApolloServer<GraphQLContext>
+  readinessCheck: ReadinessHandler
+  customPortOverride?: number
+}) => {
+  await startHttp({ ...params, customPortOverride: params.customPortOverride ?? 0 })
+  const { server, app } = params
 
   await once(app, 'appStarted')
   const port = (server.address() as net.AddressInfo).port + ''
@@ -246,6 +259,8 @@ export const initializeTestServer = async (
   }
 }
 
+let graphqlServer: ApolloServer<GraphQLContext>
+
 export const mochaHooks: mocha.RootHookObject = {
   beforeAll: async () => {
     if (isMultiRegionTestMode()) {
@@ -262,20 +277,19 @@ export const mochaHooks: mocha.RootHookObject = {
     await setupMultiregionMode()
 
     // Init app
-    await init()
+    ;({ graphqlServer } = await init())
   },
   afterAll: async () => {
     logger.info('running after all')
     await inEachDb(async (db) => {
       await unlockFactory({ db })()
     })
-    await shutdown()
+    await shutdown({ graphqlServer })
   }
 }
 
 export const buildApp = async () => {
-  const { app, graphqlServer, server } = await init()
-  return { app, graphqlServer, server }
+  return await init()
 }
 
 export const beforeEachContext = async () => {

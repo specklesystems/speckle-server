@@ -61,7 +61,7 @@ import { publish } from '@/modules/shared/utils/subscriptions'
 import { getUserFactory } from '@/modules/core/repositories/users'
 import { createObjectFactory } from '@/modules/core/services/objects/management'
 import { getProjectDbClient } from '@/modules/multiregion/dbSelector'
-import { db } from '@/db/knex'
+import { db, mainDb } from '@/db/knex'
 
 const command: CommandModule<
   unknown,
@@ -148,7 +148,7 @@ const command: CommandModule<
       addCommentCreatedActivity: addCommentCreatedActivityFactory({
         getViewerResourcesFromLegacyIdentifiers,
         getViewerResourceItemsUngrouped,
-        saveActivity: saveActivityFactory({ db: projectDb }),
+        saveActivity: saveActivityFactory({ db: mainDb }),
         publish
       })
     })
@@ -165,7 +165,7 @@ const command: CommandModule<
           getCommentsResources: getCommentsResourcesFactory({ db: projectDb }),
           getViewerResourcesFromLegacyIdentifiers
         }),
-        saveActivity: saveActivityFactory({ db: projectDb }),
+        saveActivity: saveActivityFactory({ db: mainDb }),
         publish
       })
     })
@@ -180,7 +180,7 @@ const command: CommandModule<
       markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db: projectDb }),
       versionsEventEmitter: VersionsEmitter.emit,
       addCommitCreatedActivity: addCommitCreatedActivityFactory({
-        saveActivity: saveActivityFactory({ db: projectDb }),
+        saveActivity: saveActivityFactory({ db: mainDb }),
         publish
       })
     })

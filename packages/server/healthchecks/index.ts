@@ -7,6 +7,7 @@ import {
   knexFreeDbConnectionSamplerFactory,
   isRedisAlive,
   isPostgresAlive,
+  ReadinessHandler,
   FreeConnectionsCalculator
 } from '@/healthchecks/health'
 import { Application } from 'express'
@@ -14,7 +15,7 @@ import { Application } from 'express'
 export const initFactory: () => (
   app: Application,
   isInitial: boolean
-) => Promise<void> = () => {
+) => Promise<{ isReady: ReadinessHandler }> = () => {
   let knexFreeDbConnectionSamplerLiveness: FreeConnectionsCalculator & {
     start: () => void
   }
@@ -43,19 +44,17 @@ export const initFactory: () => (
       isPostgresAlive,
       freeConnectionsCalculator: knexFreeDbConnectionSamplerLiveness
     })
-
     app.get('/liveness', async (req, res) => {
       const result = await livenessHandler()
       res.status(200).json({ status: 'ok', ...result })
     })
 
-    app.get('/readiness', async (req, res) => {
-      const result = await handleReadinessFactory({
+    return {
+      isReady: handleReadinessFactory({
         isRedisAlive,
         isPostgresAlive,
         freeConnectionsCalculator: knexFreeDbConnectionSamplerReadiness
-      })()
-      res.status(200).json({ status: 'ok', ...result })
-    })
+      })
+    }
   }
 }

@@ -24,7 +24,7 @@ import {
   findInviteFactory,
   findUserByTargetFactory,
   insertInviteAndDeleteOldFactory,
-  markInviteUpdatedfactory,
+  markInviteUpdatedFactory,
   queryAllResourceInvitesFactory,
   queryAllUserResourceInvitesFactory,
   updateAllInviteTargetsFactory
@@ -49,6 +49,7 @@ import {
   WorkspaceInvalidRoleError,
   WorkspaceJoinNotAllowedError,
   WorkspaceNotFoundError,
+  WorkspacePaidPlanActiveError,
   WorkspacesNotAuthorizedError,
   WorkspacesNotYetImplementedError
 } from '@/modules/workspaces/errors/workspace'
@@ -68,11 +69,9 @@ import {
   getWorkspaceDomainsFactory,
   getUserDiscoverableWorkspacesFactory,
   getWorkspaceWithDomainsFactory,
-  countProjectsVersionsByWorkspaceIdFactory,
-  countWorkspaceRoleWithOptionalProjectRoleFactory,
-  getUserIdsWithRoleInWorkspaceFactory,
   getWorkspaceRoleForUserFactory,
-  getWorkspaceBySlugFactory
+  getWorkspaceBySlugFactory,
+  countDomainsByWorkspaceIdFactory
 } from '@/modules/workspaces/repositories/workspaces'
 import {
   buildWorkspaceInviteEmailContentsFactory,
@@ -106,7 +105,12 @@ import {
   getPaginatedWorkspaceTeamFactory,
   getWorkspacesForUserFactory
 } from '@/modules/workspaces/services/retrieval'
-import { Roles, WorkspaceRoles, removeNullOrUndefinedKeys } from '@speckle/shared'
+import {
+  Roles,
+  WorkspaceRoles,
+  removeNullOrUndefinedKeys,
+  throwUncoveredError
+} from '@speckle/shared'
 import { chunk } from 'lodash'
 import {
   findEmailsByUserIdFactory,
@@ -118,11 +122,6 @@ import {
 import { joinWorkspaceFactory } from '@/modules/workspaces/services/join'
 import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
 import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
-import { WORKSPACE_MAX_PROJECTS_VERSIONS } from '@/modules/gatekeeper/domain/constants'
-import {
-  getWorkspaceCostFactory,
-  getWorkspaceCostItemsFactory
-} from '@/modules/workspaces/services/cost'
 import {
   deleteWorkspaceDomainFactory,
   isUserWorkspaceDomainPolicyCompliantFactory
@@ -162,7 +161,7 @@ import {
 } from '@/modules/core/services/ratelimiter'
 import { RateLimitError } from '@/modules/core/errors/ratelimit'
 import { ProjectsEmitter } from '@/modules/core/events/projectsEmitter'
-import { getDb } from '@/modules/multiregion/dbSelector'
+import { getDb, getRegionDb } from '@/modules/multiregion/dbSelector'
 import { createNewProjectFactory } from '@/modules/core/services/projects'
 import {
   deleteProjectFactory,
@@ -184,6 +183,8 @@ import {
 import { getDecryptor } from '@/modules/workspaces/helpers/sso'
 import { getDefaultRegionFactory } from '@/modules/workspaces/repositories/regions'
 import { storeModelFactory } from '@/modules/core/repositories/models'
+import { getWorkspacePlanFactory } from '@/modules/gatekeeper/repositories/billing'
+import { Knex } from 'knex'
 
 const eventBus = getEventBus()
 const getServerInfo = getServerInfoFactory({ db })
@@ -241,7 +242,6 @@ const buildCreateAndSendWorkspaceInvite = () =>
     getUser,
     getServerInfo
   })
-const deleteStream = deleteStreamFactory({ db })
 const saveActivity = saveActivityFactory({ db })
 const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
 const isStreamCollaborator = isStreamCollaboratorFactory({
@@ -448,18 +448,51 @@ export = FF_WORKSPACES_MODULE_ENABLED
             context.resourceAccessRules
           )
 
-          // Delete workspace and associated resources (i.e. invites)
-          const deleteWorkspace = deleteWorkspaceFactory({
-            deleteWorkspace: repoDeleteWorkspaceFactory({ db }),
-            deleteProject: deleteStream,
-            deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db }),
-            queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({
-              getStreams: legacyGetStreamsFactory({ db })
-            }),
-            deleteSsoProvider: deleteSsoProviderFactory({ db })
-          })
+          const workspacePlan = await getWorkspacePlanFactory({ db })({ workspaceId })
+          if (workspacePlan) {
+            switch (workspacePlan.name) {
+              case 'starter':
+              case 'plus':
+              case 'business':
+                switch (workspacePlan.status) {
+                  case 'cancelationScheduled':
+                  case 'valid':
+                  case 'paymentFailed':
+                    throw new WorkspacePaidPlanActiveError()
+                  case 'canceled':
+                  case 'trial':
+                  case 'expired':
+                    break
+                  default:
+                    throwUncoveredError(workspacePlan)
+                }
+              case 'unlimited':
+              case 'academia':
+                break
+              default:
+                throwUncoveredError(workspacePlan)
+            }
+          }
 
-          await deleteWorkspace({ workspaceId })
+          const deleteWorkspaceFrom = (db: Knex) =>
+            deleteWorkspaceFactory({
+              deleteWorkspace: repoDeleteWorkspaceFactory({ db }),
+              deleteProject: deleteStreamFactory({ db }),
+              deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db }),
+              queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({
+                getStreams: legacyGetStreamsFactory({ db })
+              }),
+              deleteSsoProvider: deleteSsoProviderFactory({ db })
+            })
+
+          // this should be turned into a get all regions and map over the regions...
+          const region = await getDefaultRegionFactory({ db })({ workspaceId })
+          if (region) {
+            const regionDb = await getRegionDb({ regionKey: region.key })
+            await deleteWorkspaceFrom(regionDb)({ workspaceId })
+          }
+
+          await deleteWorkspaceFrom(db)({ workspaceId })
 
           return true
         },
@@ -570,7 +603,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
           )
           await deleteWorkspaceDomainFactory({
             deleteWorkspaceDomain: repoDeleteWorkspaceDomainFactory({ db }),
-            countDomainsByWorkspaceId: countProjectsVersionsByWorkspaceIdFactory({
+            countDomainsByWorkspaceId: countDomainsByWorkspaceIdFactory({
               db
             }),
             updateWorkspace: updateWorkspaceFactory({
@@ -656,7 +689,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
               db,
               filterQuery: workspaceInviteValidityFilter
             }),
-            markInviteUpdated: markInviteUpdatedfactory({ db }),
+            markInviteUpdated: markInviteUpdatedFactory({ db }),
             getUser,
             getServerInfo
           })
@@ -956,33 +989,10 @@ export = FF_WORKSPACES_MODULE_ENABLED
         domains: async (parent) => {
           return await getWorkspaceDomainsFactory({ db })({ workspaceIds: [parent.id] })
         },
-        billing: (parent) => ({ parent }),
         sso: async (parent) => {
           return await getWorkspaceSsoProviderRecordFactory({ db })({
             workspaceId: parent.id
           })
-        }
-      },
-      WorkspaceBilling: {
-        versionsCount: async ({ parent }) => {
-          const workspaceId = parent.id
-          return {
-            current: await countProjectsVersionsByWorkspaceIdFactory({ db })({
-              workspaceId
-            }),
-            max: WORKSPACE_MAX_PROJECTS_VERSIONS
-          }
-        },
-        cost: async ({ parent }) => {
-          const workspaceId = parent.id
-          return getWorkspaceCostFactory({
-            getWorkspaceCostItems: getWorkspaceCostItemsFactory({
-              countRole: countWorkspaceRoleWithOptionalProjectRoleFactory({ db }),
-              getUserIdsWithRoleInWorkspace: getUserIdsWithRoleInWorkspaceFactory({
-                db
-              })
-            })
-          })({ workspaceId })
         }
       },
       WorkspaceSso: {

@@ -20,17 +20,27 @@
         >
           <slot name="title-icon"></slot>
         </div>
-        <h6 class="font-semibold text-foreground-2 truncate text-body-2xs">
-          {{ title }}
-        </h6>
+        <div class="flex flex-1 items-center justify-between truncate">
+          <h6 class="font-semibold text-foreground-2 truncate text-body-2xs pr-2">
+            {{ title }}
+          </h6>
+          <CommonBadge v-if="tag" rounded>
+            {{ tag }}
+          </CommonBadge>
+        </div>
       </button>
       <div v-else class="flex space-x-1 items-center w-full p-1 text-foreground-2 pl-2">
         <div v-if="$slots['title-icon']" class="flex items-center justify-center">
           <slot name="title-icon"></slot>
         </div>
-        <h6 class="font-semibold text-xs truncate">
-          {{ title }}
-        </h6>
+        <div class="flex flex-1 items-center justify-between truncate">
+          <h6 class="font-semibold text-foreground-2 truncate text-body-2xs pr-2">
+            {{ title }}
+          </h6>
+          <CommonBadge v-if="tag" rounded>
+            {{ tag }}
+          </CommonBadge>
+        </div>
       </div>
       <button
         v-if="plusClick"
@@ -51,8 +61,10 @@
 <script setup lang="ts">
 import ArrowFilled from '~~/src/components/layout/sidebar/menu/group/ArrowFilled.vue'
 import Plus from '~~/src/components/layout/sidebar/menu/group/Plus.vue'
+import CommonBadge from '~~/src/components/common/Badge.vue'
 
 defineProps<{
+  tag?: string
   title?: string
   collapsible?: boolean
   collapsed?: boolean

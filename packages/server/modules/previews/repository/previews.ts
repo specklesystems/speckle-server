@@ -1,5 +1,4 @@
 /* istanbul ignore file */
-import knex from '@/db/knex'
 import { buildTableHelper } from '@/modules/core/dbSchema'
 import {
   CreateObjectPreview,
@@ -39,7 +38,7 @@ export const getObjectPreviewInfoFactory =
   }
 
 export const createObjectPreviewFactory =
-  (deps: { db: Knex }): CreateObjectPreview =>
+  ({ db }: { db: Knex }): CreateObjectPreview =>
   async ({
     streamId,
     objectId,
@@ -53,10 +52,10 @@ export const createObjectPreviewFactory =
         previewStatus: 0
       }
     const sqlQuery =
-      tables.objectPreview(deps.db).insert(insertionObject).toString() +
+      tables.objectPreview(db).insert(insertionObject).toString() +
       ' on conflict do nothing'
 
-    await knex.raw(sqlQuery)
+    await db.raw(sqlQuery)
   }
 
 export const getPreviewImageFactory =

@@ -9,10 +9,10 @@
           @click="(e) => switchStep(i, e)"
         >
           <div
-            class="flex space-x-3 items-center text-primary-focus normal font-medium leading-5"
+            class="flex space-x-3 items-center text-primary normal font-medium leading-5"
           >
             <div
-              class="shrink-0 h-8 w-8 rounded-full bg-primary-focus text-foreground-on-primary inline-flex items-center justify-center select-none"
+              class="shrink-0 h-8 w-8 rounded-full bg-primary text-foreground-on-primary inline-flex items-center justify-center select-none"
             >
               <CheckIcon class="w-5 h-5" />
             </div>
@@ -32,10 +32,10 @@
           @click="(e) => switchStep(i, e)"
         >
           <div
-            class="flex space-x-3 items-center text-primary-focus normal font-medium leading-5"
+            class="flex space-x-3 items-center text-primary normal font-medium leading-5"
           >
             <div
-              class="shrink-0 h-8 w-8 rounded-full border-2 border-primary-focus inline-flex items-center justify-center select-none"
+              class="shrink-0 h-8 w-8 rounded-full border-2 border-primary inline-flex items-center justify-center select-none"
             >
               {{ getStepDisplayValue(i) }}
             </div>

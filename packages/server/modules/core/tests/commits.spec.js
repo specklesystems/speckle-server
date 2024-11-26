@@ -554,7 +554,15 @@ describe('Commits @core-commits', () => {
 
     const idCommit = await getCommit(commitId3, { streamId: stream.id })
 
-    for (const commit of [userCommit, serverCommit, branchCommit, idCommit]) {
+    expect(userCommit).to.have.property('sourceApplication')
+    expect(userCommit.sourceApplication).to.be.a('string')
+
+    expect(userCommit).to.have.property('totalChildrenCount')
+    expect(userCommit.totalChildrenCount).to.be.a('number')
+
+    expect(userCommit).to.have.property('parents')
+
+    for (const commit of [serverCommit, branchCommit, idCommit]) {
       expect(commit).to.have.property('sourceApplication')
       expect(commit.sourceApplication).to.be.a('string')
 
@@ -562,10 +570,12 @@ describe('Commits @core-commits', () => {
       expect(commit.totalChildrenCount).to.be.a('number')
 
       expect(commit).to.have.property('parents')
+      expect(commit.streamId).to.equal(stream.id)
     }
 
     expect(idCommit.parents).to.be.a('array')
     expect(idCommit.parents.length).to.equal(2)
+    expect(idCommit.streamId).to.equal(stream.id)
   })
 
   it('Should have an array of parents', async () => {

@@ -14,7 +14,7 @@ import {
   S3ClientConfig,
   ServiceOutputTypes
 } from '@aws-sdk/client-s3'
-import { Upload, Options as UploadOptions } from '@aws-sdk/lib-storage'
+import { Upload } from '@aws-sdk/lib-storage'
 import {
   getS3AccessKey,
   getS3SecretKey,
@@ -27,6 +27,7 @@ import { ensureError, Nullable } from '@speckle/shared'
 import { get } from 'lodash'
 import type { Command } from '@aws-sdk/smithy-client'
 import type stream from 'stream'
+import { StoreFileStream } from '@/modules/blobstorage/domain/operations'
 
 let s3Config: Nullable<S3ClientConfig> = null
 
@@ -92,13 +93,7 @@ export const getObjectAttributes = async ({ objectKey }: { objectKey: string }) 
   return { fileSize: data.ContentLength || 0 }
 }
 
-export const storeFileStream = async ({
-  objectKey,
-  fileStream
-}: {
-  objectKey: string
-  fileStream: UploadOptions['params']['Body']
-}) => {
+export const storeFileStream: StoreFileStream = async ({ objectKey, fileStream }) => {
   const { client, Bucket } = getObjectStorage()
   const parallelUploads3 = new Upload({
     client,
@@ -110,10 +105,6 @@ export const storeFileStream = async ({
     partSize: 1024 * 1024 * 5, // optional size of each part, in bytes, at least 5MB
     leavePartsOnError: false // optional manually handle dropped parts
   })
-
-  // parallelUploads3.on('httpUploadProgress', (progress) => {
-  //   logger.debug(progress)
-  // })
 
   const data = await parallelUploads3.done()
   // the ETag is a hash of the object. Could be used to dedupe stuff...
