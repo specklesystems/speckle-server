@@ -51,23 +51,30 @@ export const useBillingActions = () => {
       workspace_id: workspaceId
     })
 
-    const result = await apollo.mutate({
-      mutation: billingUpgradePlanRedirectMutation,
-      variables: {
-        input: {
-          workspaceId,
-          billingInterval: cycle,
-          workspacePlan: plan
-        }
-      },
-      fetchPolicy: 'no-cache'
-    })
+    const result = await apollo
+      .mutate({
+        mutation: billingUpgradePlanRedirectMutation,
+        variables: {
+          input: {
+            workspaceId,
+            billingInterval: cycle,
+            workspacePlan: plan
+          }
+        },
+        fetchPolicy: 'no-cache'
+      })
+      .catch(convertThrowIntoFetchResult)
 
     if (result.data?.workspaceMutations.billing.createCheckoutSession) {
       window.location.href =
         result.data.workspaceMutations.billing.createCheckoutSession.url
+    } else {
+      const errMsg = getFirstGqlErrorMessage(result?.errors)
+      triggerNotification({
+        type: ToastNotificationType.Danger,
+        description: errMsg
+      })
     }
-    // window.location.href = `/api/v1/billing/workspaces/${workspaceId}/checkout-session/${plan}/${cycle}`
   }
 
   const cancelCheckoutSession = async (sessionId: string, workspaceId: string) => {
