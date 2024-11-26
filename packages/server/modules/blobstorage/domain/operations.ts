@@ -33,12 +33,6 @@ export type GetBlobMetadataCollection = (params: {
 }) => Promise<{ blobs: BlobStorageItem[]; cursor: Nullable<string> }>
 
 export type UploadFileStream = (
-  storeFileStream: (params: {
-    objectKey: string
-    fileStream: Readable | Buffer
-  }) => Promise<{
-    fileHash: string
-  }>,
   params1: {
     streamId: string
     userId: string | undefined
@@ -50,3 +44,10 @@ export type UploadFileStream = (
     fileStream: Readable | Buffer
   }
 ) => Promise<{ blobId: string; fileName: string; fileHash: string }>
+
+type FileStream = string | Blob | Readable | Uint8Array | Buffer
+
+export type StoreFileStream = (args: {
+  objectKey: string
+  fileStream: FileStream
+}) => Promise<{ fileHash: string }>
