@@ -40,6 +40,6 @@ storybook-static
 .tshy
 .tshy-build
 
-packages/fileimport-service/ifc/
+packages/fileimport-service/ifc-dotnet/
 packages/fileimport-service/stl/
 packages/fileimport-service/obj/
