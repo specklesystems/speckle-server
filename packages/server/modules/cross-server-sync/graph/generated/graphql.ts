@@ -3314,9 +3314,14 @@ export type Subscription = {
   viewerUserActivityBroadcasted: ViewerUserActivityMessage;
   /**
    * Track newly added or deleted projects in a specific workspace.
-   * Either slug or id must be set
+   * Either slug or id must be set.
    */
   workspaceProjectsUpdated: WorkspaceProjectsUpdatedMessage;
+  /**
+   * Track updates to a specific workspace.
+   * Either slug or id must be set.
+   */
+  workspaceUpdated: WorkspaceUpdatedMessage;
 };
 
 
@@ -3450,6 +3455,12 @@ export type SubscriptionViewerUserActivityBroadcastedArgs = {
 
 
 export type SubscriptionWorkspaceProjectsUpdatedArgs = {
+  workspaceId?: InputMaybe<Scalars['String']['input']>;
+  workspaceSlug?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type SubscriptionWorkspaceUpdatedArgs = {
   workspaceId?: InputMaybe<Scalars['String']['input']>;
   workspaceSlug?: InputMaybe<Scalars['String']['input']>;
 };
@@ -4447,6 +4458,21 @@ export type WorkspaceUpdateInput = {
   name?: InputMaybe<Scalars['String']['input']>;
   slug?: InputMaybe<Scalars['String']['input']>;
 };
+
+export type WorkspaceUpdatedMessage = {
+  __typename?: 'WorkspaceUpdatedMessage';
+  /** Workspace ID */
+  id: Scalars['String']['output'];
+  /** Message type */
+  type: WorkspaceUpdatedMessageType;
+  /** Project entity, null if project was deleted */
+  workspace?: Maybe<Workspace>;
+};
+
+export enum WorkspaceUpdatedMessageType {
+  Deleted = 'DELETED',
+  Updated = 'UPDATED'
+}
 
 export type CrossSyncCommitBranchMetadataQueryVariables = Exact<{
   streamId: Scalars['String']['input'];

@@ -138,10 +138,10 @@ describe('Event Bus', () => {
 
       eventBus.listen('workspace.*', ({ payload, eventName }) => {
         switch (eventName) {
-          case 'workspace.created':
+          case WorkspaceEvents.Created:
             events.push(payload.id)
             break
-          case 'workspace.role-deleted':
+          case WorkspaceEvents.RoleDeleted:
             events.push(payload.userId)
             break
         }

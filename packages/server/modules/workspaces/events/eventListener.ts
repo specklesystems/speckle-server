@@ -317,6 +317,15 @@ export const initializeEventListenersFactory =
         })
         await withTransaction(onWorkspaceRoleUpdated(payload), trx)
       })
+      // // Emit Updated subscription
+      // eventBus.listen('workspace.*', async ({ eventName, payload }) => {
+      //   const eventWhitelist: string[] = [
+      //     WorkspaceEvents.Updated,
+      //     WorkspaceEvents.RoleDeleted,
+      //     WorkspaceEvents.RoleUpdated
+      //   ]
+      //   if (!eventWhitelist.includes(eventName)) return
+      // })
     ]
 
     return () => quitCbs.forEach((quit) => quit())

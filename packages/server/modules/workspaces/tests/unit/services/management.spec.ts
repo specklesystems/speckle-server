@@ -527,9 +527,9 @@ const buildDeleteWorkspaceRoleAndTestContext = (
       context.eventData.payload = payload
 
       switch (eventName) {
-        case 'workspace.role-deleted': {
+        case WorkspaceEvents.RoleDeleted: {
           const { userId } =
-            payload as WorkspaceEventsPayloads['workspace.role-deleted']
+            payload as WorkspaceEventsPayloads[typeof WorkspaceEvents.RoleDeleted]
           for (const project of context.workspaceProjects) {
             context.workspaceProjectRoles = context.workspaceProjectRoles.filter(
               (role) => role.resourceId !== project.id && role.userId !== userId
@@ -573,9 +573,9 @@ const buildUpdateWorkspaceRoleAndTestContext = (
       context.eventData.payload = payload
 
       switch (eventName) {
-        case 'workspace.role-deleted': {
+        case WorkspaceEvents.RoleDeleted: {
           const { userId } =
-            payload as WorkspaceEventsPayloads['workspace.role-deleted']
+            payload as WorkspaceEventsPayloads[typeof WorkspaceEvents.RoleDeleted]
           for (const project of context.workspaceProjects) {
             context.workspaceProjectRoles = context.workspaceProjectRoles.filter(
               (role) => role.resourceId !== project.id && role.userId !== userId
@@ -583,9 +583,9 @@ const buildUpdateWorkspaceRoleAndTestContext = (
           }
           break
         }
-        case 'workspace.role-updated': {
+        case WorkspaceEvents.RoleUpdated: {
           const workspaceRole =
-            payload as WorkspaceEventsPayloads['workspace.role-updated']
+            payload as WorkspaceEventsPayloads[typeof WorkspaceEvents.RoleUpdated]
           const mapping = {
             [Roles.Workspace.Guest]: null,
             [Roles.Workspace.Member]:
@@ -749,7 +749,7 @@ describe('Workspace role services', () => {
 
       const payload = {
         ...(context.eventData
-          .payload as WorkspaceEventsPayloads['workspace.role-updated'])
+          .payload as WorkspaceEventsPayloads[typeof WorkspaceEvents.RoleUpdated])
       }
       delete payload.flags
 

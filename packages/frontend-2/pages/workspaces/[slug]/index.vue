@@ -78,6 +78,7 @@ onWorkspaceProjectsUpdate((res) => {
     )
   } else if (!isNewProject) {
     // Being removed, remove from workspace.projects specifically
+    // (the project may still exist, but in a different workspace)
     modifyObjectField(
       cache,
       getCacheId('Workspace', workspaceId),

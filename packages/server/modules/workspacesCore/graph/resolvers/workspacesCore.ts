@@ -126,6 +126,12 @@ export = !FF_WORKSPACES_MODULE_ENABLED
             WorkspaceSubscriptions.WorkspaceProjectsUpdated,
             () => false
           )
+        },
+        workspaceUpdated: {
+          subscribe: filteredSubscribe(
+            WorkspaceSubscriptions.WorkspaceUpdated,
+            () => false
+          )
         }
       }
     } as Resolvers)

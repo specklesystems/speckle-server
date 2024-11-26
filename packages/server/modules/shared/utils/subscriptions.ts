@@ -52,7 +52,9 @@ import {
   SubscriptionCommitUpdatedArgs,
   CommitUpdateInput,
   SubscriptionWorkspaceProjectsUpdatedArgs,
-  WorkspaceProjectsUpdatedMessage
+  WorkspaceProjectsUpdatedMessage,
+  SubscriptionWorkspaceUpdatedArgs,
+  WorkspaceUpdatedMessage
 } from '@/modules/core/graph/generated/graphql'
 import { Merge } from 'type-fest'
 import {
@@ -69,6 +71,7 @@ import {
 import { CommentRecord } from '@/modules/comments/helpers/types'
 import { CommitRecord } from '@/modules/core/helpers/types'
 import { BranchRecord } from '@/modules/core/helpers/types'
+import { WorkspaceGraphQLReturn } from '@/modules/workspacesCore/helpers/graphTypes'
 
 /**
  * GraphQL Subscription PubSub instance
@@ -141,7 +144,8 @@ export enum TestSubscriptions {
 }
 
 export enum WorkspaceSubscriptions {
-  WorkspaceProjectsUpdated = 'WORKSPACE_PROJECTS_UPDATED'
+  WorkspaceProjectsUpdated = 'WORKSPACE_PROJECTS_UPDATED',
+  WorkspaceUpdated = 'WORKSPACE_UPDATED'
 }
 
 type NoVariables = Record<string, never>
@@ -371,6 +375,15 @@ type SubscriptionTypeMap = {
       workspaceId: string
     }
     variables: SubscriptionWorkspaceProjectsUpdatedArgs
+  }
+  [WorkspaceSubscriptions.WorkspaceUpdated]: {
+    payload: {
+      workspaceUpdated: Merge<
+        WorkspaceUpdatedMessage,
+        { workspace: Nullable<WorkspaceGraphQLReturn> }
+      >
+    }
+    variables: SubscriptionWorkspaceUpdatedArgs
   }
 } & { [k in SubscriptionEvent]: { payload: unknown; variables: unknown } }
 

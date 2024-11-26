@@ -3333,9 +3333,14 @@ export type Subscription = {
   viewerUserActivityBroadcasted: ViewerUserActivityMessage;
   /**
    * Track newly added or deleted projects in a specific workspace.
-   * Either slug or id must be set
+   * Either slug or id must be set.
    */
   workspaceProjectsUpdated: WorkspaceProjectsUpdatedMessage;
+  /**
+   * Track updates to a specific workspace.
+   * Either slug or id must be set.
+   */
+  workspaceUpdated: WorkspaceUpdatedMessage;
 };
 
 
@@ -3469,6 +3474,12 @@ export type SubscriptionViewerUserActivityBroadcastedArgs = {
 
 
 export type SubscriptionWorkspaceProjectsUpdatedArgs = {
+  workspaceId?: InputMaybe<Scalars['String']['input']>;
+  workspaceSlug?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type SubscriptionWorkspaceUpdatedArgs = {
   workspaceId?: InputMaybe<Scalars['String']['input']>;
   workspaceSlug?: InputMaybe<Scalars['String']['input']>;
 };
@@ -4467,6 +4478,21 @@ export type WorkspaceUpdateInput = {
   slug?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type WorkspaceUpdatedMessage = {
+  __typename?: 'WorkspaceUpdatedMessage';
+  /** Workspace ID */
+  id: Scalars['String']['output'];
+  /** Message type */
+  type: WorkspaceUpdatedMessageType;
+  /** Project entity, null if project was deleted */
+  workspace?: Maybe<Workspace>;
+};
+
+export enum WorkspaceUpdatedMessageType {
+  Deleted = 'DELETED',
+  Updated = 'UPDATED'
+}
+
 
 
 export type ResolverTypeWrapper<T> = Promise<T> | T;
@@ -4817,6 +4843,8 @@ export type ResolversTypes = {
   WorkspaceSubscription: ResolverTypeWrapper<WorkspaceSubscription>;
   WorkspaceTeamFilter: WorkspaceTeamFilter;
   WorkspaceUpdateInput: WorkspaceUpdateInput;
+  WorkspaceUpdatedMessage: ResolverTypeWrapper<Omit<WorkspaceUpdatedMessage, 'workspace'> & { workspace?: Maybe<ResolversTypes['Workspace']> }>;
+  WorkspaceUpdatedMessageType: WorkspaceUpdatedMessageType;
 };
 
 /** Mapping between all available schema types and the resolvers parents */
@@ -5071,6 +5099,7 @@ export type ResolversParentTypes = {
   WorkspaceSubscription: WorkspaceSubscription;
   WorkspaceTeamFilter: WorkspaceTeamFilter;
   WorkspaceUpdateInput: WorkspaceUpdateInput;
+  WorkspaceUpdatedMessage: Omit<WorkspaceUpdatedMessage, 'workspace'> & { workspace?: Maybe<ResolversParentTypes['Workspace']> };
 };
 
 export type HasScopeDirectiveArgs = {
@@ -6240,6 +6269,7 @@ export type SubscriptionResolvers<ContextType = GraphQLContext, ParentType exten
   userViewerActivity?: SubscriptionResolver<Maybe<ResolversTypes['JSONObject']>, "userViewerActivity", ParentType, ContextType, RequireFields<SubscriptionUserViewerActivityArgs, 'resourceId' | 'streamId'>>;
   viewerUserActivityBroadcasted?: SubscriptionResolver<ResolversTypes['ViewerUserActivityMessage'], "viewerUserActivityBroadcasted", ParentType, ContextType, RequireFields<SubscriptionViewerUserActivityBroadcastedArgs, 'target'>>;
   workspaceProjectsUpdated?: SubscriptionResolver<ResolversTypes['WorkspaceProjectsUpdatedMessage'], "workspaceProjectsUpdated", ParentType, ContextType, Partial<SubscriptionWorkspaceProjectsUpdatedArgs>>;
+  workspaceUpdated?: SubscriptionResolver<ResolversTypes['WorkspaceUpdatedMessage'], "workspaceUpdated", ParentType, ContextType, Partial<SubscriptionWorkspaceUpdatedArgs>>;
 };
 
 export type TestAutomationRunResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['TestAutomationRun'] = ResolversParentTypes['TestAutomationRun']> = {
@@ -6598,6 +6628,13 @@ export type WorkspaceSubscriptionResolvers<ContextType = GraphQLContext, ParentT
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
+export type WorkspaceUpdatedMessageResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['WorkspaceUpdatedMessage'] = ResolversParentTypes['WorkspaceUpdatedMessage']> = {
+  id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  type?: Resolver<ResolversTypes['WorkspaceUpdatedMessageType'], ParentType, ContextType>;
+  workspace?: Resolver<Maybe<ResolversTypes['Workspace']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
 export type Resolvers<ContextType = GraphQLContext> = {
   ActiveUserMutations?: ActiveUserMutationsResolvers<ContextType>;
   Activity?: ActivityResolvers<ContextType>;
@@ -6747,6 +6784,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   WorkspaceSsoProvider?: WorkspaceSsoProviderResolvers<ContextType>;
   WorkspaceSsoSession?: WorkspaceSsoSessionResolvers<ContextType>;
   WorkspaceSubscription?: WorkspaceSubscriptionResolvers<ContextType>;
+  WorkspaceUpdatedMessage?: WorkspaceUpdatedMessageResolvers<ContextType>;
 };
 
 export type DirectiveResolvers<ContextType = GraphQLContext> = {

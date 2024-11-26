@@ -1209,6 +1209,35 @@ export = FF_WORKSPACES_MODULE_ENABLED
               return true
             }
           )
+        },
+        workspaceUpdated: {
+          subscribe: filteredSubscribe(
+            WorkspaceSubscriptions.WorkspaceUpdated,
+            async (payload, vars, ctx) => {
+              const { workspaceId, workspaceSlug } = vars
+              if (!workspaceId && !workspaceSlug) return false
+
+              const getWorkspaceBySlug = getWorkspaceBySlugFactory({ db })
+              const requestedWorkspaceId =
+                workspaceId ||
+                (
+                  await getWorkspaceBySlug({
+                    workspaceSlug: workspaceSlug!
+                  })
+                )?.id
+              if (!requestedWorkspaceId) return false
+
+              if (payload.workspaceUpdated.id !== requestedWorkspaceId) return false
+              await authorizeResolver(
+                ctx.userId!,
+                payload.workspaceUpdated.id,
+                Roles.Workspace.Guest,
+                ctx.resourceAccessRules
+              )
+
+              return true
+            }
+          )
         }
       }
     } as Resolvers)

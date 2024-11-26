@@ -510,13 +510,39 @@ type WorkspaceProjectsUpdatedMessage {
   project: Project
 }
 
+enum WorkspaceUpdatedMessageType {
+  UPDATED
+  DELETED
+}
+
+type WorkspaceUpdatedMessage {
+  """
+  Message type
+  """
+  type: WorkspaceUpdatedMessageType!
+  """
+  Workspace ID
+  """
+  id: String!
+  """
+  Project entity, null if project was deleted
+  """
+  workspace: Workspace
+}
+
 extend type Subscription {
   """
   Track newly added or deleted projects in a specific workspace.
-  Either slug or id must be set
+  Either slug or id must be set.
   """
   workspaceProjectsUpdated(
     workspaceId: String
     workspaceSlug: String
   ): WorkspaceProjectsUpdatedMessage!
+
+  """
+  Track updates to a specific workspace.
+  Either slug or id must be set.
+  """
+  workspaceUpdated(workspaceId: String, workspaceSlug: String): WorkspaceUpdatedMessage!
 }
