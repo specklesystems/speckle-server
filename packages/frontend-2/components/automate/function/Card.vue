@@ -39,13 +39,8 @@
       </div>
       <div v-if="!noButtons" class="flex flex-col sm:flex-row gap-x-1">
         <template v-if="showEdit">
-          <FormButton
-            :icon-left="PencilIcon"
-            full-width
-            color="outline"
-            @click="$emit('edit')"
-          >
-            Edit Details
+          <FormButton full-width color="outline" @click="$emit('edit')">
+            Edit details
           </FormButton>
         </template>
         <template v-else>
@@ -71,7 +66,7 @@
           class="rounded-bl-md rounded-tr-lg font-medium text-body-3xs px-2 py-1"
           :class="{
             'bg-info-lighter text-outline-4': fn.isFeatured,
-            'bg-warning text-foreground-on-primary': isOutdated
+            'bg-danger-lighter text-danger-darker': isOutdated
           }"
         >
           <template v-if="isOutdated">Outdated</template>
@@ -84,7 +79,7 @@
 <script setup lang="ts">
 import { graphql } from '~/lib/common/generated/gql'
 import type { AutomationsFunctionsCard_AutomateFunctionFragment } from '~/lib/common/generated/gql/graphql'
-import { CheckIcon, PencilIcon } from '@heroicons/vue/24/outline'
+import { CheckIcon } from '@heroicons/vue/24/outline'
 import { automationFunctionRoute } from '~/lib/common/helpers/route'
 import { useMarkdown } from '~/lib/common/composables/markdown'
 
