@@ -1,6 +1,10 @@
 import { WorkspacesModuleDisabledError } from '@/modules/core/errors/workspaces'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
+import {
+  filteredSubscribe,
+  WorkspaceSubscriptions
+} from '@/modules/shared/utils/subscriptions'
 
 const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
 
@@ -115,6 +119,14 @@ export = !FF_WORKSPACES_MODULE_ENABLED
       },
       ServerWorkspacesInfo: {
         workspacesEnabled: () => false
+      },
+      Subscription: {
+        workspaceProjectsUpdated: {
+          subscribe: filteredSubscribe(
+            WorkspaceSubscriptions.WorkspaceProjectsUpdated,
+            () => false
+          )
+        }
       }
     } as Resolvers)
   : {}

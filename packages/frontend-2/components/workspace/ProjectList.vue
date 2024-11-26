@@ -111,7 +111,7 @@
 <script setup lang="ts">
 import { MagnifyingGlassIcon, Squares2X2Icon } from '@heroicons/vue/24/outline'
 import { useQuery, useQueryLoading } from '@vue/apollo-composable'
-import type { Optional, StreamRoles } from '@speckle/shared'
+import type { Nullable, Optional, StreamRoles } from '@speckle/shared'
 import {
   workspacePageQuery,
   workspaceProjectsQuery
@@ -187,7 +187,8 @@ const { query, identifier, onInfiniteLoad } = usePaginatedQuery({
     workspaceSlug: props.workspaceSlug,
     filter: {
       search: (search.value || '').trim() || null
-    }
+    },
+    cursor: null as Nullable<string>
   })),
   resolveKey: (vars: WorkspaceProjectsQueryQueryVariables) => ({
     workspaceSlug: vars.workspaceSlug,

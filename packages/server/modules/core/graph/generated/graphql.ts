@@ -3331,6 +3331,11 @@ export type Subscription = {
   userViewerActivity?: Maybe<Scalars['JSONObject']['output']>;
   /** Track user activities in the viewer relating to the specified resources */
   viewerUserActivityBroadcasted: ViewerUserActivityMessage;
+  /**
+   * Track newly added or deleted projects in a specific workspace.
+   * Either slug or id must be set
+   */
+  workspaceProjectsUpdated: WorkspaceProjectsUpdatedMessage;
 };
 
 
@@ -3460,6 +3465,12 @@ export type SubscriptionUserViewerActivityArgs = {
 export type SubscriptionViewerUserActivityBroadcastedArgs = {
   sessionId?: InputMaybe<Scalars['String']['input']>;
   target: ViewerUpdateTrackingTarget;
+};
+
+
+export type SubscriptionWorkspaceProjectsUpdatedArgs = {
+  workspaceId?: InputMaybe<Scalars['String']['input']>;
+  workspaceSlug?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type TestAutomationRun = {
@@ -4372,6 +4383,23 @@ export type WorkspaceProjectsFilter = {
   search?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type WorkspaceProjectsUpdatedMessage = {
+  __typename?: 'WorkspaceProjectsUpdatedMessage';
+  /** Project entity, null if project was deleted */
+  project?: Maybe<Project>;
+  /** Project ID */
+  projectId: Scalars['String']['output'];
+  /** Message type */
+  type: WorkspaceProjectsUpdatedMessageType;
+  /** Workspace ID */
+  workspaceId: Scalars['String']['output'];
+};
+
+export enum WorkspaceProjectsUpdatedMessageType {
+  Added = 'ADDED',
+  Removed = 'REMOVED'
+}
+
 export enum WorkspaceRole {
   Admin = 'ADMIN',
   Guest = 'GUEST',
@@ -4778,6 +4806,8 @@ export type ResolversTypes = {
   WorkspaceProjectInviteCreateInput: WorkspaceProjectInviteCreateInput;
   WorkspaceProjectMutations: ResolverTypeWrapper<WorkspaceProjectMutationsGraphQLReturn>;
   WorkspaceProjectsFilter: WorkspaceProjectsFilter;
+  WorkspaceProjectsUpdatedMessage: ResolverTypeWrapper<Omit<WorkspaceProjectsUpdatedMessage, 'project'> & { project?: Maybe<ResolversTypes['Project']> }>;
+  WorkspaceProjectsUpdatedMessageType: WorkspaceProjectsUpdatedMessageType;
   WorkspaceRole: WorkspaceRole;
   WorkspaceRoleDeleteInput: WorkspaceRoleDeleteInput;
   WorkspaceRoleUpdateInput: WorkspaceRoleUpdateInput;
@@ -5032,6 +5062,7 @@ export type ResolversParentTypes = {
   WorkspaceProjectInviteCreateInput: WorkspaceProjectInviteCreateInput;
   WorkspaceProjectMutations: WorkspaceProjectMutationsGraphQLReturn;
   WorkspaceProjectsFilter: WorkspaceProjectsFilter;
+  WorkspaceProjectsUpdatedMessage: Omit<WorkspaceProjectsUpdatedMessage, 'project'> & { project?: Maybe<ResolversParentTypes['Project']> };
   WorkspaceRoleDeleteInput: WorkspaceRoleDeleteInput;
   WorkspaceRoleUpdateInput: WorkspaceRoleUpdateInput;
   WorkspaceSso: WorkspaceSsoGraphQLReturn;
@@ -6208,6 +6239,7 @@ export type SubscriptionResolvers<ContextType = GraphQLContext, ParentType exten
   userStreamRemoved?: SubscriptionResolver<Maybe<ResolversTypes['JSONObject']>, "userStreamRemoved", ParentType, ContextType>;
   userViewerActivity?: SubscriptionResolver<Maybe<ResolversTypes['JSONObject']>, "userViewerActivity", ParentType, ContextType, RequireFields<SubscriptionUserViewerActivityArgs, 'resourceId' | 'streamId'>>;
   viewerUserActivityBroadcasted?: SubscriptionResolver<ResolversTypes['ViewerUserActivityMessage'], "viewerUserActivityBroadcasted", ParentType, ContextType, RequireFields<SubscriptionViewerUserActivityBroadcastedArgs, 'target'>>;
+  workspaceProjectsUpdated?: SubscriptionResolver<ResolversTypes['WorkspaceProjectsUpdatedMessage'], "workspaceProjectsUpdated", ParentType, ContextType, Partial<SubscriptionWorkspaceProjectsUpdatedArgs>>;
 };
 
 export type TestAutomationRunResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['TestAutomationRun'] = ResolversParentTypes['TestAutomationRun']> = {
@@ -6530,6 +6562,14 @@ export type WorkspaceProjectMutationsResolvers<ContextType = GraphQLContext, Par
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
+export type WorkspaceProjectsUpdatedMessageResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['WorkspaceProjectsUpdatedMessage'] = ResolversParentTypes['WorkspaceProjectsUpdatedMessage']> = {
+  project?: Resolver<Maybe<ResolversTypes['Project']>, ParentType, ContextType>;
+  projectId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  type?: Resolver<ResolversTypes['WorkspaceProjectsUpdatedMessageType'], ParentType, ContextType>;
+  workspaceId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
 export type WorkspaceSsoResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['WorkspaceSso'] = ResolversParentTypes['WorkspaceSso']> = {
   provider?: Resolver<Maybe<ResolversTypes['WorkspaceSsoProvider']>, ParentType, ContextType>;
   session?: Resolver<Maybe<ResolversTypes['WorkspaceSsoSession']>, ParentType, ContextType>;
@@ -6702,6 +6742,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   WorkspaceMutations?: WorkspaceMutationsResolvers<ContextType>;
   WorkspacePlan?: WorkspacePlanResolvers<ContextType>;
   WorkspaceProjectMutations?: WorkspaceProjectMutationsResolvers<ContextType>;
+  WorkspaceProjectsUpdatedMessage?: WorkspaceProjectsUpdatedMessageResolvers<ContextType>;
   WorkspaceSso?: WorkspaceSsoResolvers<ContextType>;
   WorkspaceSsoProvider?: WorkspaceSsoProviderResolvers<ContextType>;
   WorkspaceSsoSession?: WorkspaceSsoSessionResolvers<ContextType>;

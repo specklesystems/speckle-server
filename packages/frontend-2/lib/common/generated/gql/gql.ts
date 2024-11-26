@@ -356,6 +356,7 @@ const documents = {
     "\n  fragment ProjectPageAutomationPage_Automation on Automation {\n    id\n    ...ProjectPageAutomationHeader_Automation\n    ...ProjectPageAutomationFunctions_Automation\n    ...ProjectPageAutomationRuns_Automation\n  }\n": types.ProjectPageAutomationPage_AutomationFragmentDoc,
     "\n  fragment ProjectPageAutomationPage_Project on Project {\n    id\n    ...ProjectPageAutomationHeader_Project\n  }\n": types.ProjectPageAutomationPage_ProjectFragmentDoc,
     "\n  fragment ProjectPageSettingsTab_Project on Project {\n    id\n    role\n  }\n": types.ProjectPageSettingsTab_ProjectFragmentDoc,
+    "\n    subscription OnWorkspaceProjectsUpdate($slug: String!) {\n      workspaceProjectsUpdated(workspaceId: null, workspaceSlug: $slug) {\n        projectId\n        workspaceId\n        type\n        project {\n          ...ProjectDashboardItem\n        }\n      }\n    }\n  ": types.OnWorkspaceProjectsUpdateDocument,
 };
 
 /**
@@ -1740,6 +1741,10 @@ export function graphql(source: "\n  fragment ProjectPageAutomationPage_Project 
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  fragment ProjectPageSettingsTab_Project on Project {\n    id\n    role\n  }\n"): (typeof documents)["\n  fragment ProjectPageSettingsTab_Project on Project {\n    id\n    role\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n    subscription OnWorkspaceProjectsUpdate($slug: String!) {\n      workspaceProjectsUpdated(workspaceId: null, workspaceSlug: $slug) {\n        projectId\n        workspaceId\n        type\n        project {\n          ...ProjectDashboardItem\n        }\n      }\n    }\n  "): (typeof documents)["\n    subscription OnWorkspaceProjectsUpdate($slug: String!) {\n      workspaceProjectsUpdated(workspaceId: null, workspaceSlug: $slug) {\n        projectId\n        workspaceId\n        type\n        project {\n          ...ProjectDashboardItem\n        }\n      }\n    }\n  "];
 
 export function graphql(source: string) {
   return (documents as any)[source] ?? {};

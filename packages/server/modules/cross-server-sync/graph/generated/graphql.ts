@@ -3312,6 +3312,11 @@ export type Subscription = {
   userViewerActivity?: Maybe<Scalars['JSONObject']['output']>;
   /** Track user activities in the viewer relating to the specified resources */
   viewerUserActivityBroadcasted: ViewerUserActivityMessage;
+  /**
+   * Track newly added or deleted projects in a specific workspace.
+   * Either slug or id must be set
+   */
+  workspaceProjectsUpdated: WorkspaceProjectsUpdatedMessage;
 };
 
 
@@ -3441,6 +3446,12 @@ export type SubscriptionUserViewerActivityArgs = {
 export type SubscriptionViewerUserActivityBroadcastedArgs = {
   sessionId?: InputMaybe<Scalars['String']['input']>;
   target: ViewerUpdateTrackingTarget;
+};
+
+
+export type SubscriptionWorkspaceProjectsUpdatedArgs = {
+  workspaceId?: InputMaybe<Scalars['String']['input']>;
+  workspaceSlug?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type TestAutomationRun = {
@@ -4352,6 +4363,23 @@ export type WorkspaceProjectsFilter = {
   /** Filter out projects by name */
   search?: InputMaybe<Scalars['String']['input']>;
 };
+
+export type WorkspaceProjectsUpdatedMessage = {
+  __typename?: 'WorkspaceProjectsUpdatedMessage';
+  /** Project entity, null if project was deleted */
+  project?: Maybe<Project>;
+  /** Project ID */
+  projectId: Scalars['String']['output'];
+  /** Message type */
+  type: WorkspaceProjectsUpdatedMessageType;
+  /** Workspace ID */
+  workspaceId: Scalars['String']['output'];
+};
+
+export enum WorkspaceProjectsUpdatedMessageType {
+  Added = 'ADDED',
+  Removed = 'REMOVED'
+}
 
 export enum WorkspaceRole {
   Admin = 'ADMIN',

@@ -146,7 +146,11 @@ import {
   addStreamPermissionsAddedActivityFactory,
   addStreamPermissionsRevokedActivityFactory
 } from '@/modules/activitystream/services/streamActivity'
-import { publish } from '@/modules/shared/utils/subscriptions'
+import {
+  filteredSubscribe,
+  publish,
+  WorkspaceSubscriptions
+} from '@/modules/shared/utils/subscriptions'
 import { updateStreamRoleAndNotifyFactory } from '@/modules/core/services/streams/management'
 import {
   getUserByEmailFactory,
@@ -1179,6 +1183,33 @@ export = FF_WORKSPACES_MODULE_ENABLED
       },
       ServerWorkspacesInfo: {
         workspacesEnabled: () => true
+      },
+      Subscription: {
+        workspaceProjectsUpdated: {
+          subscribe: filteredSubscribe(
+            WorkspaceSubscriptions.WorkspaceProjectsUpdated,
+            async (payload, vars, ctx) => {
+              const { workspaceId, workspaceSlug } = vars
+              if (!workspaceId && !workspaceSlug) return false
+
+              const getWorkspaceBySlug = getWorkspaceBySlugFactory({ db })
+              const requestedWorkspaceId =
+                workspaceId ||
+                (await getWorkspaceBySlug({ workspaceSlug: workspaceSlug! }))?.id
+              if (!requestedWorkspaceId) return false
+
+              if (payload.workspaceId !== requestedWorkspaceId) return false
+              await authorizeResolver(
+                ctx.userId!,
+                payload.workspaceId,
+                Roles.Workspace.Guest,
+                ctx.resourceAccessRules
+              )
+
+              return true
+            }
+          )
+        }
       }
     } as Resolvers)
   : {}

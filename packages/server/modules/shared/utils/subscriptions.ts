@@ -50,7 +50,9 @@ import {
   SubscriptionCommitCreatedArgs,
   CommitCreateInput,
   SubscriptionCommitUpdatedArgs,
-  CommitUpdateInput
+  CommitUpdateInput,
+  SubscriptionWorkspaceProjectsUpdatedArgs,
+  WorkspaceProjectsUpdatedMessage
 } from '@/modules/core/graph/generated/graphql'
 import { Merge } from 'type-fest'
 import {
@@ -136,6 +138,10 @@ export enum FileImportSubscriptions {
 
 export enum TestSubscriptions {
   Ping = 'PING'
+}
+
+export enum WorkspaceSubscriptions {
+  WorkspaceProjectsUpdated = 'WORKSPACE_PROJECTS_UPDATED'
 }
 
 type NoVariables = Record<string, never>
@@ -356,6 +362,16 @@ type SubscriptionTypeMap = {
     payload: { ping: string }
     variables: NoVariables
   }
+  [WorkspaceSubscriptions.WorkspaceProjectsUpdated]: {
+    payload: {
+      workspaceProjectsUpdated: Merge<
+        WorkspaceProjectsUpdatedMessage,
+        { project: Nullable<ProjectGraphQLReturn> }
+      >
+      workspaceId: string
+    }
+    variables: SubscriptionWorkspaceProjectsUpdatedArgs
+  }
 } & { [k in SubscriptionEvent]: { payload: unknown; variables: unknown } }
 
 type SubscriptionEvent =
@@ -368,6 +384,7 @@ type SubscriptionEvent =
   | ViewerSubscriptions
   | BranchSubscriptions
   | TestSubscriptions
+  | WorkspaceSubscriptions
 
 /**
  * Publish a GQL subscription event
