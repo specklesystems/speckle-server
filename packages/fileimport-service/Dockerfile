@@ -26,7 +26,7 @@ RUN apt-get update -y \
      --no-install-recommends \
      nodejs=18.20.5-1nodesource1 \
     && npm install -g corepack@0.30.0 \
-    && corepack yarn \
+    && corepack enable \
     && DEBIAN_FRONTEND=noninteractive apt-get remove curl -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
