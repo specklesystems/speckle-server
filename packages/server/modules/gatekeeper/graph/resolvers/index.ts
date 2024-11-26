@@ -87,7 +87,9 @@ export = FF_GATEKEEPER_MODULE_ENABLED
           return hasAccess
         }
       },
-      WorkspaceMutations: () => ({}),
+      WorkspaceMutations: {
+        billing: () => ({})
+      },
       WorkspaceBillingMutations: {
         cancelCheckoutSession: async (parent, args, ctx) => {
           const { workspaceId, sessionId } = args.input

@@ -31,10 +31,11 @@
 </template>
 
 <script setup lang="ts">
-import { type PricingPlan } from '@/lib/billing/helpers/types'
+import { type PricingPlan, isPaidPlan } from '@/lib/billing/helpers/types'
 import { Roles } from '@speckle/shared'
 import {
   type WorkspacePlan,
+  type PaidWorkspacePlans,
   WorkspacePlanStatuses,
   WorkspacePlans,
   BillingInterval
@@ -71,9 +72,9 @@ const hasTrialPlan = computed(
 )
 
 const onUpgradePlanClick = (plan: WorkspacePlans) => {
-  if (!props.workspaceId) return
+  if (!isPaidPlan(plan) || !props.workspaceId) return
   upgradePlanRedirect({
-    plan,
+    plan: plan as unknown as PaidWorkspacePlans,
     cycle: props.isYearlyPlan ? BillingInterval.Yearly : BillingInterval.Monthly,
     workspaceId: props.workspaceId
   })

@@ -78,30 +78,30 @@ export const startCheckoutSessionFactory =
         // it will create a new customer and a new sub though, the reactivation would use the existing customer
         case 'trial':
         case 'expired':
-          // if there is already a checkout session for the workspace, stop, someone else is maybe trying to pay for the workspace
-          const workspaceCheckoutSession = await getWorkspaceCheckoutSession({
-            workspaceId
-          })
-          if (workspaceCheckoutSession) {
-            if (workspaceCheckoutSession.paymentStatus === 'paid')
-              // this is should not be possible, but its better to be checking it here, than double charging the customer
-              throw new WorkspaceAlreadyPaidError()
-            if (
-              new Date().getTime() - workspaceCheckoutSession.createdAt.getTime() >
-              10 * 60 * 1000
-            ) {
-              await deleteCheckoutSession({
-                checkoutSessionId: workspaceCheckoutSession.id
-              })
-            } else {
-              throw new WorkspaceCheckoutSessionInProgressError()
-            }
-          }
-
           // lets go ahead and pay
           break
         default:
           throwUncoveredError(existingWorkspacePlan)
+      }
+    }
+
+    // if there is already a checkout session for the workspace, stop, someone else is maybe trying to pay for the workspace
+    const workspaceCheckoutSession = await getWorkspaceCheckoutSession({
+      workspaceId
+    })
+    if (workspaceCheckoutSession) {
+      if (workspaceCheckoutSession.paymentStatus === 'paid')
+        // this is should not be possible, but its better to be checking it here, than double charging the customer
+        throw new WorkspaceAlreadyPaidError()
+      if (
+        new Date().getTime() - workspaceCheckoutSession.createdAt.getTime() >
+        10 * 60 * 1000
+      ) {
+        await deleteCheckoutSession({
+          checkoutSessionId: workspaceCheckoutSession.id
+        })
+      } else {
+        throw new WorkspaceCheckoutSessionInProgressError()
       }
     }
 
