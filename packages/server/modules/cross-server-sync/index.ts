@@ -85,6 +85,7 @@ const crossServerSyncModule: SpeckleModule = {
   finalize() {
     crossServerSyncLogger.info('⬇️  Ensuring base onboarding stream asynchronously...')
 
+    // Its fine to use main DB here, none of this is executed in a workspace context
     const getUser = getUserFactory({ db })
     const markOnboardingBaseStream = markOnboardingBaseStreamFactory({ db })
     const markCommitStreamUpdated = markCommitStreamUpdatedFactory({ db })
