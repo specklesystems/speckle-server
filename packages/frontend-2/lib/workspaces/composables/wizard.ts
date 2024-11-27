@@ -3,8 +3,8 @@ import WorkspaceWizardStepInvites from '@/components/workspace/wizard/step/Invit
 import WorkspaceWizardStepPricing from '@/components/workspace/wizard/step/Pricing.vue'
 import WorkspaceWizardStepRegion from '@/components/workspace/wizard/step/Region.vue'
 
-import type {
-  BillingInterval,
+import {
+  type BillingInterval,
   PaidWorkspacePlans
 } from '~/lib/common/generated/gql/graphql'
 
@@ -35,8 +35,20 @@ const currentStepComponent = computed(
 )
 
 export const useWorkspacesWizard = () => {
+  const completeWizard = () => {}
+
   const goToNextStep = () => {
     if (currentStepIndex.value === Object.keys(stepComponents.value).length - 1) return
+
+    // Only continue to WorkspaceWizardStepRegion when the plan is Business
+    if (
+      currentStepIndex.value === 2 &&
+      input.value.plan !== PaidWorkspacePlans.Business
+    ) {
+      completeWizard()
+      return
+    }
+
     currentStepIndex.value++
   }
 
