@@ -52,6 +52,7 @@ const command: CommandModule<
 
     await upsertPaidWorkspacePlanFactory({ db })({
       workspacePlan: {
+        createdAt: new Date(),
         workspaceId: workspace.id,
         name: args.plan,
         status: args.status

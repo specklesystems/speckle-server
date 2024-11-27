@@ -52,7 +52,8 @@ describe('billing repositories @gatekeeper', () => {
         const workspacePlan = {
           name: 'business',
           status: 'paymentFailed',
-          workspaceId
+          workspaceId,
+          createdAt: new Date()
         } as const
         await upsertPaidWorkspacePlan({
           workspacePlan
@@ -67,6 +68,7 @@ describe('billing repositories @gatekeeper', () => {
         const workspacePlan = {
           name: 'business',
           status: 'paymentFailed',
+          createdAt: new Date(),
           workspaceId
         } as const
         await upsertPaidWorkspacePlan({
