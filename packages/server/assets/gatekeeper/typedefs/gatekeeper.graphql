@@ -81,10 +81,15 @@ extend type Workspace {
   # for now, this is nullable, cause existing workspaces have not been migrated to plans
   # this doesn't need a special token scope
   plan: WorkspacePlan
-  subscription: WorkspaceSubscription @hasScope(scope: "workspace:billing")
+  subscription: WorkspaceSubscription
+    @hasScope(scope: "workspace:billing")
+    @hasWorkspaceRole(role: ADMIN)
   # this can only be created if there is an active subscription
-  customerPortalUrl: String @hasScope(scope: "workspace:billing")
+  customerPortalUrl: String
+    @hasScope(scope: "workspace:billing")
+    @hasWorkspaceRole(role: ADMIN)
   hasAccessToFeature(featureName: WorkspaceFeatureName!): Boolean!
+    @hasWorkspaceRole(role: GUEST)
 }
 
 enum WorkspaceFeatureName {
