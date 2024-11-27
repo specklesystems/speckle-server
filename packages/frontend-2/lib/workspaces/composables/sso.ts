@@ -57,6 +57,10 @@ export const useWorkspaceSsoStatus = (params: { workspaceSlug: Ref<string> }) =>
           clientId
           issuerUrl
         }
+        session {
+          id
+          validUntil
+        }
       }
     }
   `)
@@ -90,7 +94,11 @@ export const useWorkspaceSsoStatus = (params: { workspaceSlug: Ref<string> }) =>
   })
 
   const isSsoAuthenticated = computed(() => {
-    return hasSsoEnabled.value && !needsSsoLogin.value
+    if (!hasSsoEnabled.value) return false
+    if (needsSsoLogin.value) return false
+
+    const session = result.value?.workspaceBySlug.sso?.session
+    return !!session && new Date(session.validUntil) > new Date()
   })
 
   return {

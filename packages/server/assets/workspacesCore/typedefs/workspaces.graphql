@@ -299,6 +299,7 @@ type WorkspaceSsoProvider {
 }
 
 type WorkspaceSsoSession {
+  id: ID!
   createdAt: DateTime!
   validUntil: DateTime!
 }

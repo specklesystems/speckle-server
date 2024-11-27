@@ -4403,6 +4403,7 @@ export type WorkspaceSsoProvider = {
 export type WorkspaceSsoSession = {
   __typename?: 'WorkspaceSsoSession';
   createdAt: Scalars['DateTime']['output'];
+  id: Scalars['ID']['output'];
   validUntil: Scalars['DateTime']['output'];
 };
 
@@ -6540,6 +6541,7 @@ export type WorkspaceSsoProviderResolvers<ContextType = GraphQLContext, ParentTy
 
 export type WorkspaceSsoSessionResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['WorkspaceSsoSession'] = ResolversParentTypes['WorkspaceSsoSession']> = {
   createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   validUntil?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
