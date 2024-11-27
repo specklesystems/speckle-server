@@ -16,21 +16,21 @@
       <FormButton v-if="isOwner" color="outline" @click="$emit('edit')">
         Edit
       </FormButton>
-    </div>
-    <div
-      v-tippy="
-        hasReleases ? undefined : 'Your function needs to have at least one release'
-      "
-      class="flex gap-2 shrink-0"
-    >
-      <FormButton
-        class="shrink-0"
-        full-width
-        :disabled="!hasReleases"
-        @click="$emit('createAutomation')"
+      <div
+        v-tippy="
+          hasReleases ? undefined : 'Your function needs to have at least one release'
+        "
+        class="flex gap-2 shrink-0"
       >
-        Use in automation
-      </FormButton>
+        <FormButton
+          class="shrink-0"
+          full-width
+          :disabled="!hasReleases"
+          @click="$emit('createAutomation')"
+        >
+          Use in automation
+        </FormButton>
+      </div>
     </div>
   </div>
 </template>

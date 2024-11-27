@@ -19,19 +19,6 @@
         class="mb-6"
       />
     </div>
-
-    <AutomateFunctionsPageItems
-      :functions="activeUserFunctions"
-      :search="!!search"
-      :loading="false"
-      @create-automation-from="openCreateNewAutomation"
-      @clear-search="search = ''"
-    />
-
-    <CommonLoadingBar :loading="pageQueryLoading" client-only class="mb-2" />
-    <div class="flex items-center gap-2 mt-8 mb-4">
-      <h1 class="text-heading-md">Example functions</h1>
-    </div>
     <AutomateFunctionsPageItems
       :functions="finalResult"
       :search="!!search"
@@ -39,8 +26,8 @@
       @create-automation-from="openCreateNewAutomation"
       @clear-search="search = ''"
     />
-    <!-- <InfiniteLoading :settings="{ identifier }" @infinite="onInfiniteLoad" /> -->
-
+    <CommonLoadingBar :loading="pageQueryLoading" client-only class="mb-2" />
+    <InfiniteLoading :settings="{ identifier }" @infinite="onInfiniteLoad" />
     <AutomateAutomationCreateDialog
       v-model:open="showNewAutomationDialog"
       :preselected-function="newAutomationTargetFn"
@@ -50,10 +37,7 @@
 <script setup lang="ts">
 import { CommonLoadingBar } from '@speckle/ui-components'
 import { useQuery } from '@vue/apollo-composable'
-import {
-  activeUserFunctionsQuery,
-  automateFunctionsPagePaginationQuery
-} from '~/lib/automate/graphql/queries'
+import { automateFunctionsPagePaginationQuery } from '~/lib/automate/graphql/queries'
 import type { CreateAutomationSelectableFunction } from '~/lib/automate/helpers/automations'
 import {
   usePageQueryStandardFetchPolicy,
@@ -83,11 +67,6 @@ const { result, loading: pageQueryLoading } = useQuery(
   () => ({
     fetchPolicy: pageFetchPolicy.value
   })
-)
-
-const { result: activeUserFunctionsResult } = useQuery(activeUserFunctionsQuery)
-const activeUserFunctions = computed(
-  () => activeUserFunctionsResult.value?.activeUser ?? undefined
 )
 
 const {
