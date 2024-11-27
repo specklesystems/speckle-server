@@ -41,6 +41,7 @@ import {
 } from '~/lib/common/generated/gql/graphql'
 import { useBillingActions } from '~/lib/billing/composables/actions'
 import type { MaybeNullOrUndefined } from '@speckle/shared'
+import { startCase } from 'lodash'
 
 const props = defineProps<{
   plan: PricingPlan
@@ -88,8 +89,8 @@ const buttonEnabled = computed(() => {
 })
 const buttonText = computed(() => {
   if (props.currentPlan?.name === props.plan.name) return 'Current plan'
-  if (hasTrialPlan.value) return `Subscribe to ${props.plan.name}`
-  if (canUpgradeToPlan.value) return `Upgrade to ${props.plan.name}`
+  if (hasTrialPlan.value) return `Subscribe to ${startCase(props.plan.name)}`
+  if (canUpgradeToPlan.value) return `Upgrade to ${startCase(props.plan.name)}`
   // Current and higherer plans are upgradeable to a yearly billing cycle
   if (
     props.activeBillingInterval === BillingInterval.Monthly &&

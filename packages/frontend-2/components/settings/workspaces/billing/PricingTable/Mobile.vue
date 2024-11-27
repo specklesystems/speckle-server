@@ -17,6 +17,7 @@
             v-if="plan.features.includes(feature.name as PlanFeaturesList)"
             class="w-3 h-3 text-foreground"
           />
+          <XMarkIcon v-else class="w-3 h-3 text-foreground-2" />
         </li>
       </ul>
     </div>
@@ -27,7 +28,7 @@
 import type { WorkspacePlan, BillingInterval } from '~/lib/common/generated/gql/graphql'
 import { pricingPlansConfig } from '~/lib/billing/helpers/constants'
 import type { PlanFeaturesList } from '~/lib/billing/helpers/types'
-import { CheckIcon } from '@heroicons/vue/24/outline'
+import { CheckIcon, XMarkIcon } from '@heroicons/vue/24/outline'
 import type { MaybeNullOrUndefined } from '@speckle/shared'
 
 defineProps<{
