@@ -84,6 +84,7 @@ import { useMutationLoading, useQuery, useQueryLoading } from '@vue/apollo-compo
 import { debounce } from 'lodash-es'
 import { graphql } from '~/lib/common/generated/gql'
 import type { SettingsWorkspacesRegionsSelect_ServerRegionItemFragment } from '~/lib/common/generated/gql/graphql'
+import { useMixpanel } from '~/lib/core/composables/mp'
 import { useMenuState } from '~/lib/settings/composables/menu'
 import { settingsWorkspaceRegionsQuery } from '~/lib/settings/graphql/queries'
 import { SettingMenuKeys } from '~/lib/settings/helpers/types'
@@ -111,6 +112,7 @@ const props = defineProps<{
   workspaceId: string
 }>()
 
+const mp = useMixpanel()
 const { goToWorkspaceMenuItem } = useMenuState()
 const pageFetchPolicy = usePageQueryStandardFetchPolicy()
 const isMutationLoading = useMutationLoading()
@@ -136,10 +138,17 @@ const saveDefaultRegion = async () => {
   if (!regionKey) return
   if (regionKey === result.value?.workspace.defaultRegion?.key) return
 
-  await setDefaultWorkspaceRegion({
+  const res = await setDefaultWorkspaceRegion({
     workspaceId: props.workspaceId,
     regionKey
   })
+  if (res?.defaultRegion?.id) {
+    mp.track('Workspace Default Region Set', {
+      regionKey,
+      // eslint-disable-next-line camelcase
+      workspace_id: props.workspaceId
+    })
+  }
 }
 
 const debouncedSaveDefaultRegion = debounce(saveDefaultRegion, 1000)
