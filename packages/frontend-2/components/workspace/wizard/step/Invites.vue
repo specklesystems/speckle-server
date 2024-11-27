@@ -3,8 +3,8 @@
     title="Invite teammates"
     description="Get the most of your workspace by inviting others."
   >
-    <form class="flex flex-col gap-4 w-full md:w-96 pt-8" @submit="onSubmit">
-      <div class="flex flex-col gap-2 mt-4">
+    <form class="flex flex-col gap-4 w-full md:w-96" @submit="onSubmit">
+      <div class="flex flex-col gap-3 mt-4 w-full">
         <FormButton size="lg" submit full-width>
           {{ nextButtonText }}
         </FormButton>

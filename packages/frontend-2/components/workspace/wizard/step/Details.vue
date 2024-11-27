@@ -3,7 +3,7 @@
     title="Create a workspace"
     description="Fill in some details for your teammates."
   >
-    <form class="flex flex-col gap-4 w-full md:w-96 pt-8" @submit="onSubmit">
+    <form class="flex flex-col gap-4 w-full md:w-96" @submit="onSubmit">
       <FormTextInput
         v-model:model-value="name"
         name="name"
@@ -12,6 +12,7 @@
         :rules="[isRequired, isStringOfLength({ maxLength: 512 })]"
         show-label
         auto-focus
+        size="lg"
         @update:model-value="updateShortId"
       />
       <FormTextInput
@@ -24,6 +25,7 @@
         :rules="isStringOfLength({ maxLength: 50, minLength: 3 })"
         :custom-error-message="error?.graphQLErrors[0]?.message"
         show-label
+        size="lg"
         @update:model-value="onSlugChange"
       />
       <FormButton size="lg" submit full-width class="mt-4">Continue</FormButton>

@@ -26,6 +26,7 @@
               :disabled="
                 !availableRegions?.length || isMutationLoading || !isWorkspaceAdmin
               "
+              label-position="left"
             />
           </div>
         </template>

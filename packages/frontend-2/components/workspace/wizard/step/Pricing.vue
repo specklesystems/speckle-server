@@ -1,12 +1,14 @@
 <template>
   <WorkspaceWizardStep title="Which plan would you like?">
-    <div class="flex flex-col gap-2 mt-4">
-      <FormButton size="lg" full-width @click="onSubmit">
-        {{ nextButtonText }}
-      </FormButton>
-      <FormButton color="subtle" size="lg" full-width @click.stop="goToPreviousStep">
-        Back
-      </FormButton>
+    <div class="max-w-5xl w-full">
+      <div class="flex flex-col gap-3 mt-4 items-center">
+        <FormButton size="lg" @click="onSubmit">
+          {{ nextButtonText }}
+        </FormButton>
+        <FormButton color="subtle" size="lg" @click.stop="goToPreviousStep">
+          Back
+        </FormButton>
+      </div>
     </div>
   </WorkspaceWizardStep>
 </template>
