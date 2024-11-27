@@ -510,24 +510,15 @@ type WorkspaceProjectsUpdatedMessage {
   project: Project
 }
 
-enum WorkspaceUpdatedMessageType {
-  UPDATED
-  DELETED
-}
-
 type WorkspaceUpdatedMessage {
-  """
-  Message type
-  """
-  type: WorkspaceUpdatedMessageType!
   """
   Workspace ID
   """
   id: String!
   """
-  Project entity, null if project was deleted
+  Workspace itself
   """
-  workspace: Workspace
+  workspace: Workspace!
 }
 
 extend type Subscription {

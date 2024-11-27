@@ -4482,16 +4482,9 @@ export type WorkspaceUpdatedMessage = {
   __typename?: 'WorkspaceUpdatedMessage';
   /** Workspace ID */
   id: Scalars['String']['output'];
-  /** Message type */
-  type: WorkspaceUpdatedMessageType;
-  /** Project entity, null if project was deleted */
-  workspace?: Maybe<Workspace>;
+  /** Workspace itself */
+  workspace: Workspace;
 };
-
-export enum WorkspaceUpdatedMessageType {
-  Deleted = 'DELETED',
-  Updated = 'UPDATED'
-}
 
 
 
@@ -4843,8 +4836,7 @@ export type ResolversTypes = {
   WorkspaceSubscription: ResolverTypeWrapper<WorkspaceSubscription>;
   WorkspaceTeamFilter: WorkspaceTeamFilter;
   WorkspaceUpdateInput: WorkspaceUpdateInput;
-  WorkspaceUpdatedMessage: ResolverTypeWrapper<Omit<WorkspaceUpdatedMessage, 'workspace'> & { workspace?: Maybe<ResolversTypes['Workspace']> }>;
-  WorkspaceUpdatedMessageType: WorkspaceUpdatedMessageType;
+  WorkspaceUpdatedMessage: ResolverTypeWrapper<Omit<WorkspaceUpdatedMessage, 'workspace'> & { workspace: ResolversTypes['Workspace'] }>;
 };
 
 /** Mapping between all available schema types and the resolvers parents */
@@ -5099,7 +5091,7 @@ export type ResolversParentTypes = {
   WorkspaceSubscription: WorkspaceSubscription;
   WorkspaceTeamFilter: WorkspaceTeamFilter;
   WorkspaceUpdateInput: WorkspaceUpdateInput;
-  WorkspaceUpdatedMessage: Omit<WorkspaceUpdatedMessage, 'workspace'> & { workspace?: Maybe<ResolversParentTypes['Workspace']> };
+  WorkspaceUpdatedMessage: Omit<WorkspaceUpdatedMessage, 'workspace'> & { workspace: ResolversParentTypes['Workspace'] };
 };
 
 export type HasScopeDirectiveArgs = {
@@ -6630,8 +6622,7 @@ export type WorkspaceSubscriptionResolvers<ContextType = GraphQLContext, ParentT
 
 export type WorkspaceUpdatedMessageResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['WorkspaceUpdatedMessage'] = ResolversParentTypes['WorkspaceUpdatedMessage']> = {
   id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  type?: Resolver<ResolversTypes['WorkspaceUpdatedMessageType'], ParentType, ContextType>;
-  workspace?: Resolver<Maybe<ResolversTypes['Workspace']>, ParentType, ContextType>;
+  workspace?: Resolver<ResolversTypes['Workspace'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 

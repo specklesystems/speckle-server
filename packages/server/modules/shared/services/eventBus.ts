@@ -59,7 +59,7 @@ type EventPayloadsByNamespaceMap = {
   }
 }
 
-type EventPayload<T extends EventSubscriptionKey> = T extends EventWildcard
+export type EventPayload<T extends EventSubscriptionKey> = T extends EventWildcard
   ? // if event key is "*", get all events from the flat object
     EventPayloadsMap[keyof EventPayloadsMap]
   : // else if, the key is a "namespace.*" wildcard

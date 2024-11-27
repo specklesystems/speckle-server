@@ -4463,16 +4463,9 @@ export type WorkspaceUpdatedMessage = {
   __typename?: 'WorkspaceUpdatedMessage';
   /** Workspace ID */
   id: Scalars['String']['output'];
-  /** Message type */
-  type: WorkspaceUpdatedMessageType;
-  /** Project entity, null if project was deleted */
-  workspace?: Maybe<Workspace>;
+  /** Workspace itself */
+  workspace: Workspace;
 };
-
-export enum WorkspaceUpdatedMessageType {
-  Deleted = 'DELETED',
-  Updated = 'UPDATED'
-}
 
 export type CrossSyncCommitBranchMetadataQueryVariables = Exact<{
   streamId: Scalars['String']['input'];
