@@ -1,12 +1,11 @@
-import { useQuery } from '@vue/apollo-composable'
+import { useApolloClient, useMutation, useQuery } from '@vue/apollo-composable'
 import { graphql } from '~/lib/common/generated/gql/gql'
 import type { WorkspaceSsoCheckQuery } from '~/lib/common/generated/gql/graphql'
+import { getFirstErrorMessage } from '~/lib/common/helpers/graphql'
 import { useMixpanel } from '~/lib/core/composables/mp'
+import { deleteWorkspaceSsoProviderMutation } from '~/lib/workspaces/graphql/mutations'
 import { workspaceSsoCheckQuery } from '~/lib/workspaces/graphql/queries'
-import type {
-  WorkspaceSsoError,
-  WorkspaceSsoProviderPublic
-} from '~/lib/workspaces/helpers/types'
+import type { WorkspaceSsoProviderPublic } from '~/lib/workspaces/helpers/types'
 
 /**
  * Fetches and provides public SSO workspace information from the rest api.
@@ -141,26 +140,24 @@ export function useWorkspaceSsoValidation(workspaceSlug: Ref<string>) {
  * Only available to workspace administrators.
  */
 export function useWorkspaceSsoDelete() {
-  const apiOrigin = useApiOrigin()
   const { triggerNotification } = useGlobalToast()
   const mixpanel = useMixpanel()
+  const apollo = useApolloClient().client
 
-  const deleteSsoProvider = async (workspaceSlug: string) => {
-    try {
-      const res = await fetch(
-        new URL(`/api/v1/workspaces/${workspaceSlug}/sso/oidc`, apiOrigin),
-        {
-          method: 'DELETE',
-          credentials: 'include'
-        }
-      )
+  const { mutate: deleteSsoProviderMutation, loading } = useMutation(
+    deleteWorkspaceSsoProviderMutation
+  )
 
-      if (!res.ok) {
-        const errorData = (await res.json()) as WorkspaceSsoError
-        throw new Error(
-          errorData?.message || `Failed to delete SSO provider (${res.status})`
-        )
-      }
+  const deleteSsoProvider = async (workspaceId: string) => {
+    const result = await deleteSsoProviderMutation({
+      workspaceId
+    }).catch(convertThrowIntoFetchResult)
+
+    if (result?.data?.workspaceMutations?.deleteSsoProvider) {
+      // TODO: Better cache updates
+      apollo.cache.evict({
+        id: getCacheId('Workspace', workspaceId)
+      })
 
       triggerNotification({
         type: ToastNotificationType.Success,
@@ -170,22 +167,23 @@ export function useWorkspaceSsoDelete() {
 
       mixpanel.track('Workspace SSO Provider Removed', {
         // eslint-disable-next-line camelcase
-        workspace_slug: workspaceSlug
+        workspace_id: workspaceId
       })
 
       return true
-    } catch (error) {
+    } else {
+      const errorMessage = getFirstErrorMessage(result?.errors)
       triggerNotification({
         type: ToastNotificationType.Danger,
         title: 'Failed to remove SSO provider',
-        description:
-          error instanceof Error ? error.message : 'An unexpected error occurred'
+        description: errorMessage
       })
       return false
     }
   }
 
   return {
-    deleteSsoProvider
+    deleteSsoProvider,
+    loading
   }
 }
