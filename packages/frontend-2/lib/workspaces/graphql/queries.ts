@@ -11,19 +11,11 @@ export const workspaceAccessCheckQuery = graphql(`
 export const workspacePageQuery = graphql(`
   query WorkspacePageQuery(
     $workspaceSlug: String!
-    $filter: WorkspaceProjectsFilter
-    $cursor: String
     $invitesFilter: PendingWorkspaceCollaboratorsFilter
     $token: String
   ) {
     workspaceBySlug(slug: $workspaceSlug) {
-      id
-      ...MoveProjectsDialog_Workspace
-      ...WorkspaceHeader_Workspace
-      ...WorkspaceMixpanelUpdateGroup_Workspace
-      projectListProject: projects(filter: $filter, cursor: $cursor, limit: 10) {
-        ...WorkspaceProjectList_ProjectCollection
-      }
+      ...WorkspaceProjectList_Workspace
     }
     workspaceInvite(
       workspaceId: $workspaceSlug
