@@ -25,12 +25,12 @@
         <FormButton v-else @click="goToBilling">Upgrade to Plus</FormButton>
       </div>
 
-      <div
+      <CommonCard
         v-if="!workspace.hasAccessToSSO && workspace.sso?.provider?.id"
-        class="bg-foundation border border-outline-2 rounded-md p-4 text-body-xs"
+        class="bg-foundation"
       >
         SSO access requires an active Plus or Business subscription.
-      </div>
+      </CommonCard>
 
       <!-- Existing Provider Configuration -->
       <div v-if="provider" class="p-4 border border-outline-3 rounded-lg">
