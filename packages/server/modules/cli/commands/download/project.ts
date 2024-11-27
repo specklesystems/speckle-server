@@ -47,7 +47,7 @@ import {
   getViewerResourcesForCommentsFactory,
   getViewerResourcesFromLegacyIdentifiersFactory
 } from '@/modules/core/services/commit/viewerResources'
-import { db } from '@/db/knex'
+import { db, mainDb } from '@/db/knex'
 import {
   getCommentFactory,
   getCommentsResourcesFactory,
@@ -175,7 +175,7 @@ const command: CommandModule<
       addCommentCreatedActivity: addCommentCreatedActivityFactory({
         getViewerResourcesFromLegacyIdentifiers,
         getViewerResourceItemsUngrouped,
-        saveActivity: saveActivityFactory({ db: projectDb }),
+        saveActivity: saveActivityFactory({ db: mainDb }),
         publish
       })
     })
@@ -191,7 +191,7 @@ const command: CommandModule<
           getCommentsResources: getCommentsResourcesFactory({ db: projectDb }),
           getViewerResourcesFromLegacyIdentifiers
         }),
-        saveActivity: saveActivityFactory({ db: projectDb }),
+        saveActivity: saveActivityFactory({ db: mainDb }),
         publish
       })
     })
@@ -206,7 +206,7 @@ const command: CommandModule<
       markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db: projectDb }),
       versionsEventEmitter: VersionsEmitter.emit,
       addCommitCreatedActivity: addCommitCreatedActivityFactory({
-        saveActivity: saveActivityFactory({ db: projectDb }),
+        saveActivity: saveActivityFactory({ db: mainDb }),
         publish
       })
     })
@@ -250,7 +250,7 @@ const command: CommandModule<
         getStreamBranchByName,
         createBranch: createBranchFactory({ db: projectDb }),
         addBranchCreatedActivity: addBranchCreatedActivityFactory({
-          saveActivity: saveActivityFactory({ db: projectDb }),
+          saveActivity: saveActivityFactory({ db: mainDb }),
           publish
         })
       })

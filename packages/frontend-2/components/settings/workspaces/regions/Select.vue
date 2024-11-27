@@ -5,6 +5,7 @@
     :name="name || 'regions'"
     :allow-unset="false"
     mount-menu-on-body
+    label-position="left"
   >
     <template #option="{ item }">
       <div class="flex flex-col items-start justify-center">

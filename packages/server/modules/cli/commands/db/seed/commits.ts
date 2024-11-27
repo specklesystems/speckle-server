@@ -2,7 +2,11 @@ import { db } from '@/db/knex'
 import { cliLogger } from '@/logging/logging'
 import { getStreamFactory } from '@/modules/core/repositories/streams'
 import { getUserFactory } from '@/modules/core/repositories/users'
-import { BasicTestCommit, createTestCommits } from '@/test/speckle-helpers/commitHelper'
+import { getProjectDbClient } from '@/modules/multiregion/dbSelector'
+import {
+  BasicTestCommit,
+  createTestCommitsFactory
+} from '@/test/speckle-helpers/commitHelper'
 import dayjs from 'dayjs'
 import { times } from 'lodash'
 import { CommandModule } from 'yargs'
@@ -36,6 +40,8 @@ const command: CommandModule<
     const streamId = argv.streamId
     const authorId = argv.authorId
     const date = dayjs().toISOString()
+    const projectDb = await getProjectDbClient({ projectId: streamId })
+    const createTestCommits = createTestCommitsFactory({ db: projectDb })
 
     const user = await getUser(authorId)
     if (!user?.id) {

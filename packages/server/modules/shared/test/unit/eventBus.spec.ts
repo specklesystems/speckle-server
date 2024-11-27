@@ -1,25 +1,6 @@
 import { getEventBus, initializeEventBus } from '@/modules/shared/services/eventBus'
-import { WorkspaceEvents } from '@/modules/workspacesCore/domain/events'
-import { Workspace } from '@/modules/workspacesCore/domain/types'
-import { Roles } from '@speckle/shared'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
-
-const createFakeWorkspace = (): Omit<Workspace, 'domains'> => {
-  return {
-    id: cryptoRandomString({ length: 10 }),
-    slug: cryptoRandomString({ length: 10 }),
-    description: cryptoRandomString({ length: 10 }),
-    logo: null,
-    defaultLogoIndex: 0,
-    name: cryptoRandomString({ length: 10 }),
-    updatedAt: new Date(),
-    createdAt: new Date(),
-    defaultProjectRole: Roles.Stream.Contributor,
-    domainBasedMembershipProtectionEnabled: false,
-    discoverabilityEnabled: false
-  }
-}
 
 describe('Event Bus', () => {
   describe('initializeEventBus creates an event bus instance, that', () => {
@@ -106,69 +87,55 @@ describe('Event Bus', () => {
       const bus1 = getEventBus()
       const bus2 = getEventBus()
 
-      const workspaces: Workspace[] = []
+      const payloads: string[] = []
 
-      bus1.listen(WorkspaceEvents.Created, ({ payload }) => {
-        workspaces.push(payload)
+      bus1.listen('test.string', ({ payload }) => {
+        payloads.push(payload)
       })
 
-      bus2.listen(WorkspaceEvents.Created, ({ payload }) => {
-        workspaces.push(payload)
+      bus2.listen('test.string', ({ payload }) => {
+        payloads.push(payload)
       })
 
-      const workspacePayload = {
-        ...createFakeWorkspace(),
-        createdByUserId: cryptoRandomString({ length: 10 }),
-        eventName: WorkspaceEvents.Created,
-        domains: []
-      }
+      const payload = cryptoRandomString({ length: 1 })
 
       await bus1.emit({
-        eventName: WorkspaceEvents.Created,
-        payload: { ...workspacePayload }
+        eventName: 'test.string',
+        payload
       })
 
-      expect(workspaces.length).to.equal(2)
-      expect(workspaces).to.deep.equal([workspacePayload, workspacePayload])
+      expect(payloads.length).to.equal(2)
+      expect(payloads).to.deep.equal([payload, payload])
     })
     it('allows to subscribe to wildcard events', async () => {
       const eventBus = getEventBus()
 
       const events: string[] = []
 
-      eventBus.listen('workspace.*', ({ payload, eventName }) => {
+      eventBus.listen('test.*', ({ payload, eventName }) => {
         switch (eventName) {
-          case 'workspace.created':
-            events.push(payload.id)
+          case 'test.string':
+            events.push(payload)
             break
-          case 'workspace.role-deleted':
-            events.push(payload.userId)
+          case 'test.number':
+            events.push(`${payload}`)
             break
         }
       })
 
-      const workspace = createFakeWorkspace()
+      const stringPayload = cryptoRandomString({ length: 10 })
 
       await eventBus.emit({
-        eventName: WorkspaceEvents.Created,
-        payload: {
-          ...workspace,
-          createdByUserId: cryptoRandomString({ length: 10 })
-        }
+        eventName: 'test.string',
+        payload: stringPayload
       })
-
-      const workspaceAcl = {
-        userId: cryptoRandomString({ length: 10 }),
-        workspaceId: cryptoRandomString({ length: 10 }),
-        role: Roles.Workspace.Member
-      }
 
       await eventBus.emit({
-        eventName: WorkspaceEvents.RoleDeleted,
-        payload: workspaceAcl
+        eventName: 'test.number',
+        payload: 999
       })
 
-      expect([workspace.id, workspaceAcl.userId]).to.deep.equal(events)
+      expect([stringPayload, `${999}`]).to.deep.equal(events)
     })
   })
 })

@@ -1,6 +1,7 @@
 import {
   DeleteBlob,
   GetBlobMetadata,
+  StoreFileStream,
   UpdateBlob,
   UploadFileStream,
   UpsertBlob
@@ -16,8 +17,12 @@ import { MaybeAsync } from '@speckle/shared'
 export const getFileSizeLimit = () => getFileSizeLimitMB() * 1024 * 1024
 
 export const uploadFileStreamFactory =
-  (deps: { upsertBlob: UpsertBlob; updateBlob: UpdateBlob }): UploadFileStream =>
-  async (storeFileStream, params1, params2) => {
+  (deps: {
+    upsertBlob: UpsertBlob
+    updateBlob: UpdateBlob
+    storeFileStream: StoreFileStream
+  }): UploadFileStream =>
+  async (params1, params2) => {
     const { streamId, userId } = params1
     const { blobId, fileName, fileType, fileStream } = params2
 
@@ -39,7 +44,7 @@ export const uploadFileStreamFactory =
     // even might fire faster, than the db insert, causing missing asset data in the db
     await deps.upsertBlob(dbFile)
 
-    const { fileHash } = await storeFileStream({ objectKey, fileStream })
+    const { fileHash } = await deps.storeFileStream({ objectKey, fileStream })
 
     // here we should also update the blob db record with the fileHash
     await deps.updateBlob({ id: blobId, item: { fileHash } })

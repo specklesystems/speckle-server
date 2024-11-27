@@ -564,12 +564,12 @@ Generate the environment variables for Speckle server and Speckle objects deploy
   value: {{ .Values.featureFlags.automateModuleEnabled | quote }}
 
 - name: FF_WORKSPACES_MODULE_ENABLED
-  value: {{ .Values.featureFlags.workspaceModuleEnabled | quote }}
+  value: {{ .Values.featureFlags.workspacesModuleEnabled | quote }}
 
 - name: FF_WORKSPACES_SSO_ENABLED
   value: {{ .Values.featureFlags.workspaceSsoEnabled | quote }}
 
-{{- if .Values.featureFlags.workspaceModuleEnabled }}
+{{- if .Values.featureFlags.workspacesModuleEnabled }}
 - name: LICENSE_TOKEN
   valueFrom:
     secretKeyRef:
@@ -731,26 +731,23 @@ Generate the environment variables for Speckle server and Speckle objects deploy
       name: {{ default .Values.secretName .Values.server.gendoAI.key.secretName }}
       key: {{ .Values.server.gendoAI.key.secretKey }}
 
-- name: GENDOAI_KEY_RESPONSE
-  valueFrom:
-    secretKeyRef:
-      name: {{ default .Values.secretName .Values.server.gendoAI.keyResponse.secretName }}
-      key: {{ .Values.server.gendoAI.keyResponse.secretKey }}
-
 - name: GENDOAI_API_ENDPOINT
   value: {{ .Values.server.gendoAI.apiUrl | quote }}
 
+- name: GENDOAI_CREDIT_LIMIT
+  value: {{ .Values.server.gendoAI.creditLimit | quote }}
+
 - name: RATELIMIT_GENDO_AI_RENDER_REQUEST
-  value: {{ .Values.server.gendoai.ratelimiting.renderRequest | quote }}
+  value: {{ .Values.server.gendoAI.ratelimiting.renderRequest | quote }}
 
 - name: RATELIMIT_GENDO_AI_RENDER_REQUEST_PERIOD_SECONDS
-  value: {{ .Values.server.gendoai.ratelimiting.renderRequestPeriodSeconds | quote }}
+  value: {{ .Values.server.gendoAI.ratelimiting.renderRequestPeriodSeconds | quote }}
 
 - name: RATELIMIT_BURST_GENDO_AI_RENDER_REQUEST
-  value: {{ .Values.server.gendoai.ratelimiting.burstRenderRequest | quote }}
+  value: {{ .Values.server.gendoAI.ratelimiting.burstRenderRequest | quote }}
 
 - name: RATELIMIT_GENDO_AI_RENDER_REQUEST_BURST_PERIOD_SECONDS
-  value: {{ .Values.server.gendoai.ratelimiting.burstRenderRequestPeriodSeconds | quote }}
+  value: {{ .Values.server.gendoAI.ratelimiting.burstRenderRequestPeriodSeconds | quote }}
 {{- end }}
 
 # *** Redis ***
