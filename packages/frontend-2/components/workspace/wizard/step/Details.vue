@@ -45,7 +45,7 @@ import { useWorkspacesWizard } from '~/lib/workspaces/composables/wizard'
 const { handleSubmit } = useForm<{ name: string; slug: string }>()
 const { input, goToNextStep } = useWorkspacesWizard()
 
-const { name, slug } = toRefs(input.value)
+const { name, slug } = toRefs(input)
 const shortIdManuallyEdited = ref(false)
 
 const { error, loading } = useQuery(

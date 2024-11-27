@@ -3,8 +3,24 @@
     title="Invite teammates"
     description="Get the most of your workspace by inviting others."
   >
-    <form class="flex flex-col gap-4 w-full md:w-96" @submit="onSubmit">
-      <div class="flex flex-col gap-3 mt-4 w-full">
+    <form class="flex flex-col gap-2 w-full md:w-96" @submit="onSubmit">
+      <div v-for="invite in invites" :key="invite.id">
+        <FormTextInput
+          v-model="invite.email"
+          color="foundation"
+          name="email"
+          size="lg"
+          placeholder="Email address"
+          :rules="[isRequired, isStringOfLength({ maxLength: 512 })]"
+        />
+      </div>
+      <div>
+        <FormButton color="subtle" :icon-left="PlusIcon" @click="onAddInvite">
+          Add another
+        </FormButton>
+      </div>
+
+      <div class="flex flex-col gap-3 mt-6 w-full">
         <FormButton size="lg" submit full-width>
           {{ nextButtonText }}
         </FormButton>
@@ -18,12 +34,22 @@
 
 <script setup lang="ts">
 import { useWorkspacesWizard } from '~/lib/workspaces/composables/wizard'
+import { PlusIcon } from '@heroicons/vue/24/outline'
+import { nanoid } from 'nanoid'
+import { isRequired, isStringOfLength } from '~~/lib/common/helpers/validation'
 
 const { input, goToNextStep, goToPreviousStep } = useWorkspacesWizard()
 
-const { invites } = toRefs(input.value)
+const { invites } = toRefs(input)
 
 const nextButtonText = computed(() => (invites.value.length > 0 ? 'Continue' : 'Skip'))
+
+const onAddInvite = () => {
+  invites.value.push({
+    id: nanoid(),
+    email: ''
+  })
+}
 
 const onSubmit = () => {
   goToNextStep()

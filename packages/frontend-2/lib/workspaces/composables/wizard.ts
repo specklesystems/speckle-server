@@ -2,28 +2,33 @@ import WorkspaceWizardStepDetails from '@/components/workspace/wizard/step/Detai
 import WorkspaceWizardStepInvites from '@/components/workspace/wizard/step/Invites.vue'
 import WorkspaceWizardStepPricing from '@/components/workspace/wizard/step/Pricing.vue'
 import WorkspaceWizardStepRegion from '@/components/workspace/wizard/step/Region.vue'
+import { nanoid } from 'nanoid'
 
 import {
   type BillingInterval,
   PaidWorkspacePlans
 } from '~/lib/common/generated/gql/graphql'
 
-const input = ref<{
+const input = reactive<{
   name: string
   slug: string
-  invites: string[]
+  invites: Array<{ id: string; email: string }>
   plan: PaidWorkspacePlans | null
   billingInterval: BillingInterval | null
 }>({
   name: '',
   slug: '',
-  invites: [],
+  invites: [
+    { id: nanoid(), email: '' },
+    { id: nanoid(), email: '' },
+    { id: nanoid(), email: '' }
+  ],
   plan: null,
   billingInterval: null
 })
 
 const currentStepIndex = ref(0)
-const stepComponents = ref<Record<number, Component>>({
+const stepComponents = shallowRef<Record<number, Component>>({
   0: WorkspaceWizardStepDetails,
   1: WorkspaceWizardStepInvites,
   2: WorkspaceWizardStepPricing,
@@ -39,12 +44,8 @@ export const useWorkspacesWizard = () => {
 
   const goToNextStep = () => {
     if (currentStepIndex.value === Object.keys(stepComponents.value).length - 1) return
-
     // Only continue to WorkspaceWizardStepRegion when the plan is Business
-    if (
-      currentStepIndex.value === 2 &&
-      input.value.plan !== PaidWorkspacePlans.Business
-    ) {
+    if (currentStepIndex.value === 2 && input.plan !== PaidWorkspacePlans.Business) {
       completeWizard()
       return
     }
