@@ -222,7 +222,7 @@ export const validateRequiredStreamFactory =
     if (!params?.streamId)
       return authFailed(
         context,
-        new ContextError("The context doesn't have a streamId or automationId")
+        new ContextError("The context doesn't have a streamId")
       )
     // because we're assigning to the context, it would raise if it would be null
     // its probably?? safer than returning a new context

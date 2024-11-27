@@ -3,47 +3,38 @@
     <Portal to="navigation">
       <HeaderNavLink
         :to="automationFunctionsRoute"
-        :name="'Automate functions'"
-      ></HeaderNavLink>
-      <HeaderNavLink
-        :to="automationFunctionRoute(fn.id)"
-        :name="fn.name"
-      ></HeaderNavLink>
+        :separator="false"
+        name="Automate functions"
+      />
+      <HeaderNavLink :to="automationFunctionRoute(fn.id)" :name="fn.name" />
     </Portal>
     <div class="flex items-center gap-4">
       <AutomateFunctionLogo :logo="fn.logo" />
       <h1 class="text-heading-lg">{{ fn.name }}</h1>
     </div>
     <div class="flex items-center align-center gap-2">
-      <FormButton
-        v-if="isOwner"
-        :icon-left="PencilIcon"
-        color="outline"
-        @click="$emit('edit')"
-      >
+      <FormButton v-if="isOwner" color="outline" @click="$emit('edit')">
         Edit
       </FormButton>
-      <div
-        v-tippy="
-          hasReleases ? undefined : 'Your function needs to have at least one release'
-        "
-        class="flex gap-2 shrink-0"
+    </div>
+    <div
+      v-tippy="
+        hasReleases ? undefined : 'Your function needs to have at least one release'
+      "
+      class="flex gap-2 shrink-0"
+    >
+      <FormButton
+        class="shrink-0"
+        full-width
+        :disabled="!hasReleases"
+        @click="$emit('createAutomation')"
       >
-        <FormButton
-          :icon-left="BoltIcon"
-          class="shrink-0"
-          full-width
-          :disabled="!hasReleases"
-          @click="$emit('createAutomation')"
-        >
-          Use in an automation
-        </FormButton>
-      </div>
+        Use in automation
+      </FormButton>
     </div>
   </div>
 </template>
 <script setup lang="ts">
-import { PencilIcon, BoltIcon } from '@heroicons/vue/24/outline'
 import { graphql } from '~/lib/common/generated/gql'
 import type { AutomateFunctionPageHeader_FunctionFragment } from '~/lib/common/generated/gql/graphql'
 import {

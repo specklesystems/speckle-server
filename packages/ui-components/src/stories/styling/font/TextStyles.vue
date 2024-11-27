@@ -5,6 +5,7 @@
     <div class="flex space-x-4">
       <!-- Headings -->
       <div class="flex flex-col space-y-4 text-body-xs bg-foundation p-4">
+        <span class="text-foreground-2">All of these have font-weight: 500</span>
         <div class="rounded flex flex-col">
           <span class="text-heading-2xl">text-heading-2xl</span>
           <span class="italic">
@@ -39,6 +40,7 @@
 
       <!-- Body text styles -->
       <div class="flex flex-col space-y-4 text-body-xs bg-foundation p-4">
+        <span class="text-foreground-2">All of these have font-weight: 400</span>
         <div class="rounded flex flex-col">
           <span class="text-body">text-body</span>
           <span class="italic">

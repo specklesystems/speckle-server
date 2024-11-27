@@ -58,7 +58,7 @@ export const useFunctionRunsStatusSummary = (params: {
       passed: 0,
       inProgress: 0,
       total: allFunctionRuns.length,
-      title: 'All runs passed.',
+      title: 'All runs passed',
       titleColor: 'text-success',
       longSummary: ''
     }
@@ -72,13 +72,13 @@ export const useFunctionRunsStatusSummary = (params: {
         case AutomateRunStatus.Exception:
         case AutomateRunStatus.Timeout:
         case AutomateRunStatus.Canceled:
-          result.title = 'Some runs failed.'
+          result.title = 'Some runs failed'
           result.titleColor = 'text-danger'
           result.failed++
           break
         default:
           if (result.failed === 0) {
-            result.title = 'Some runs are still in progress.'
+            result.title = 'Some runs are still in progress'
             result.titleColor = 'text-warning'
           }
           result.inProgress++
@@ -97,7 +97,7 @@ export const useFunctionRunsStatusSummary = (params: {
     if (result.failed > 0) longSummarySegments.push(`${result.failed} failed`)
 
     result.longSummary = (
-      longSummarySegments.join(', ') + ` run${result.total > 1 ? 's' : ''}.`
+      longSummarySegments.join(', ') + ` run${result.total > 1 ? 's' : ''}`
     ).replace(/,(?=[^,]+$)/, ', and')
 
     return result

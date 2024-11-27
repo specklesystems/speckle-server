@@ -75,11 +75,19 @@ import { shouldLogAsInfoLevel } from '@/logging/graphqlError'
 import { getUserFactory } from '@/modules/core/repositories/users'
 import { initFactory as healthchecksInitFactory } from '@/healthchecks'
 import type { ReadinessHandler } from '@/healthchecks/health'
+import type ws from 'ws'
+import type { Server as MockWsServer } from 'mock-socket'
+import { SetOptional } from 'type-fest'
 
 const GRAPHQL_PATH = '/graphql'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type SubscriptionResponse = { errors?: GraphQLError[]; data?: any }
+
+/**
+ * In mocked Ws connections, request will be undefined
+ */
+type PossiblyMockedConnectionContext = SetOptional<ConnectionContext, 'request'>
 
 function logSubscriptionOperation(params: {
   ctx: GraphQLContext
@@ -118,12 +126,23 @@ function logSubscriptionOperation(params: {
   }
 }
 
+const isWsServer = (server: http.Server | MockWsServer): server is MockWsServer => {
+  return 'on' in server && 'clients' in server
+}
+
 /**
  * TODO: subscriptions-transport-ws is no longer maintained, we should migrate to graphql-ws insted. The problem
  * is that graphql-ws uses an entirely different protocol, so the client-side has to change as well, and so old clients
  * will be unable to use any WebSocket/subscriptions functionality with the updated server
  */
-function buildApolloSubscriptionServer(server: http.Server): SubscriptionServer {
+export function buildApolloSubscriptionServer(
+  server: http.Server | MockWsServer
+): SubscriptionServer {
+  const httpServer = isWsServer(server) ? undefined : server
+  const mockServer = isWsServer(server) ? server : undefined
+
+  // we have to break the type here, cause its a mock
+  const wsServer = mockServer ? (mockServer as unknown as ws.Server) : undefined
   const schema = ModulesSetup.graphSchema()
 
   // Init metrics
@@ -156,6 +175,20 @@ function buildApolloSubscriptionServer(server: http.Server): SubscriptionServer 
     labelNames: ['subscriptionType', 'status'] as const
   })
 
+  const getHeaders = (params: {
+    connContext?: PossiblyMockedConnectionContext
+    connectionParams?: Record<string, unknown>
+  }) => {
+    const { connContext, connectionParams } = params
+    const connCtxHeaders = connContext?.request?.headers || {}
+    const paramsHeaders = connectionParams?.headers || {}
+
+    return {
+      ...connCtxHeaders,
+      ...paramsHeaders
+    } as Record<string, string>
+  }
+
   return SubscriptionServer.create(
     {
       schema,
@@ -164,12 +197,12 @@ function buildApolloSubscriptionServer(server: http.Server): SubscriptionServer 
       onConnect: async (
         connectionParams: Record<string, unknown>,
         webSocket: WebSocket,
-        connContext: ConnectionContext
+        connContext: PossiblyMockedConnectionContext
       ) => {
         metricConnectCounter.inc()
         metricConnectedClients.inc()
 
-        const logger = connContext.request.log || subscriptionLogger
+        const logger = connContext.request?.log || subscriptionLogger
 
         const possiblePaths = [
           'Authorization',
@@ -181,9 +214,10 @@ function buildApolloSubscriptionServer(server: http.Server): SubscriptionServer 
         // Resolve token
         let token: string
         try {
-          const requestId = get(connectionParams, 'headers.x-request-id') as string
+          const headers = getHeaders({ connContext, connectionParams })
+          const requestId = headers['x-request-id'] || ''
           logger.debug(
-            { requestId, headers: sanitizeHeaders(connContext.request.headers) },
+            { requestId, headers: sanitizeHeaders(headers) },
             'New websocket connection'
           )
           let header: Optional<string>
@@ -210,6 +244,7 @@ function buildApolloSubscriptionServer(server: http.Server): SubscriptionServer 
         // Build context (Apollo Server v3 no longer triggers context building automatically
         // for subscriptions)
         try {
+          const headers = getHeaders({ connContext, connectionParams })
           const buildCtx = await buildContext({
             req: null,
             token,
@@ -220,7 +255,7 @@ function buildApolloSubscriptionServer(server: http.Server): SubscriptionServer 
               userId: buildCtx.userId,
               ws_protocol: webSocket.protocol,
               ws_url: webSocket.url,
-              headers: sanitizeHeaders(connContext.request.headers)
+              headers: sanitizeHeaders(headers)
             },
             'Websocket connected and subscription context built.'
           )
@@ -229,13 +264,17 @@ function buildApolloSubscriptionServer(server: http.Server): SubscriptionServer 
           throw new ForbiddenError('Subscription context build failed')
         }
       },
-      onDisconnect: (webSocket: WebSocket, connContext: ConnectionContext) => {
-        const logger = connContext.request.log || subscriptionLogger
+      onDisconnect: (
+        webSocket: WebSocket,
+        connContext: PossiblyMockedConnectionContext
+      ) => {
+        const logger = connContext.request?.log || subscriptionLogger
+        const headers = getHeaders({ connContext })
         logger.debug(
           {
             ws_protocol: webSocket.protocol,
             ws_url: webSocket.url,
-            headers: sanitizeHeaders(connContext.request.headers)
+            headers: sanitizeHeaders(headers)
           },
           'Websocket disconnected.'
         )
@@ -286,8 +325,8 @@ function buildApolloSubscriptionServer(server: http.Server): SubscriptionServer 
       },
       keepAlive: 30000 //milliseconds. Loadbalancers may close the connection after inactivity. e.g. nginx default is 60000ms.
     },
-    {
-      server,
+    wsServer || {
+      server: httpServer!,
       path: GRAPHQL_PATH
     }
   )
@@ -378,9 +417,9 @@ export async function init() {
   app.use(corsMiddleware())
   // there are some paths, that need the raw body
   app.use((req, res, next) => {
-    const rawPaths = ['/api/v1/billing/webhooks']
-    if (rawPaths.includes(req.path)) {
-      express.raw({ type: 'application/json' })(req, res, next)
+    const rawPaths = ['/api/v1/billing/webhooks', '/api/thirdparty/gendo/']
+    if (rawPaths.some((p) => req.path.startsWith(p))) {
+      express.raw({ type: 'application/json', limit: '100mb' })(req, res, next)
     } else {
       express.json({ limit: '100mb' })(req, res, next)
     }
@@ -451,9 +490,9 @@ export async function init() {
 }
 
 export async function shutdown(params: {
-  graphqlServer: ApolloServer<GraphQLContext>
+  graphqlServer: Optional<ApolloServer<GraphQLContext>>
 }): Promise<void> {
-  await params.graphqlServer.stop()
+  await params.graphqlServer?.stop()
   await ModulesSetup.shutdown()
 }
 

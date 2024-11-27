@@ -20,7 +20,7 @@ export type TriggerDefinitionsSchema = {
   definitions: Array<VersionCreatedTriggerDefinition>
 }
 
-export type ObjectResultLevel = 'INFO' | 'WARNING' | 'ERROR'
+export type ObjectResultLevel = 'SUCCESS' | 'INFO' | 'WARNING' | 'ERROR'
 
 export type ResultsSchema = {
   version: number

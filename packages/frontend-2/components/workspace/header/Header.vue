@@ -85,7 +85,6 @@
               Invite
             </FormButton>
             <FormButton
-              v-if="isWorkspaceAdmin"
               class="hidden md:block"
               color="outline"
               @click="openSettingsDialog(SettingMenuKeys.Workspace.General)"

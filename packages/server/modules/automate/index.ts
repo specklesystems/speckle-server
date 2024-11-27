@@ -28,7 +28,7 @@ import { getUserEmailFromAutomationRunFactory } from '@/modules/automate/service
 import authGithubAppRest from '@/modules/automate/rest/authGithubApp'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { TokenScopeData } from '@/modules/shared/domain/rolesAndScopes/types'
-import { db as globalDb } from '@/db/knex'
+import { db } from '@/db/knex'
 import {
   AutomationsEmitter,
   AutomationsEvents
@@ -80,7 +80,7 @@ async function initScopes() {
     }
   ]
 
-  const registerFunc = registerOrUpdateScopeFactory({ db: globalDb })
+  const registerFunc = registerOrUpdateScopeFactory({ db })
   for (const scope of scopes) {
     await registerFunc({ scope })
   }
@@ -88,12 +88,12 @@ async function initScopes() {
 
 const initializeEventListeners = () => {
   const createAppToken = createAppTokenFactory({
-    storeApiToken: storeApiTokenFactory({ db: globalDb }),
-    storeTokenScopes: storeTokenScopesFactory({ db: globalDb }),
+    storeApiToken: storeApiTokenFactory({ db }),
+    storeTokenScopes: storeTokenScopesFactory({ db }),
     storeTokenResourceAccessDefinitions: storeTokenResourceAccessDefinitionsFactory({
-      db: globalDb
+      db
     }),
-    storeUserServerAppToken: storeUserServerAppTokenFactory({ db: globalDb })
+    storeUserServerAppToken: storeUserServerAppTokenFactory({ db })
   })
 
   // TODO: Use new event bus

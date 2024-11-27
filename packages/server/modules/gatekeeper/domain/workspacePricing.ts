@@ -73,13 +73,15 @@ const baseFeatures = {
   workspace: true
 }
 
-export const trialWorkspacePlans = z.literal('team')
+// team
+export const trialWorkspacePlans = z.literal('starter')
 
 export type TrialWorkspacePlans = z.infer<typeof trialWorkspacePlans>
 
 export const paidWorkspacePlans = z.union([
   trialWorkspacePlans,
-  z.literal('pro'),
+  // pro
+  z.literal('plus'),
   z.literal('business')
 ])
 
@@ -109,9 +111,9 @@ export type WorkspacePlanBillingIntervals = z.infer<
   typeof workspacePlanBillingIntervals
 >
 
-const team: WorkspacePlanFeaturesAndLimits = {
+const starter: WorkspacePlanFeaturesAndLimits = {
   ...baseFeatures,
-  name: 'team',
+  name: 'starter',
   description: 'The team plan',
   oidcSso: false,
   workspaceDataRegionSpecificity: false,
@@ -119,9 +121,9 @@ const team: WorkspacePlanFeaturesAndLimits = {
   uploadSize: 500
 }
 
-const pro: WorkspacePlanFeaturesAndLimits = {
+const plus: WorkspacePlanFeaturesAndLimits = {
   ...baseFeatures,
-  name: 'pro',
+  name: 'plus',
   description: 'The pro plan',
   oidcSso: true,
   workspaceDataRegionSpecificity: false,
@@ -163,8 +165,8 @@ const paidWorkspacePlanFeatures: Record<
   PaidWorkspacePlans,
   WorkspacePlanFeaturesAndLimits
 > = {
-  team,
-  pro,
+  starter,
+  plus,
   business
 }
 

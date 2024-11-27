@@ -13,10 +13,12 @@ export default defineNuxtRouteMiddleware(async (to) => {
   }
 
   const workspaceSlug = computed(() => to.params.slug as string)
+  if (!workspaceSlug.value) return
 
-  if (!workspaceSlug) return
+  const { workspace, loading } = useWorkspacePublicSsoCheck(workspaceSlug)
 
-  const { workspace } = useWorkspacePublicSsoCheck(workspaceSlug)
+  if (loading.value) return
+
   if (!workspace.value?.ssoProviderName) {
     return navigateTo(workspaceRoute(workspaceSlug.value))
   }

@@ -19,27 +19,23 @@ import { Application } from 'express'
 
 export default (app: Application) => {
   app.get(
-    '/api/v1/projects/:projectId/automations/:automationId/runs/:runId/logs',
+    '/api/v1/projects/:streamId/automations/:automationId/runs/:runId/logs',
     corsMiddleware(),
-    async (req, res, next) => {
-      const projectDb = await getProjectDbClient({ projectId: req.params.projectId })
-
-      return await authMiddlewareCreator([
-        validateServerRoleBuilderFactory({
-          getRoles: getRolesFactory({ db })
-        })({ requiredRole: Roles.Server.Guest }),
-        validateScope({ requiredScope: Scopes.Streams.Read }),
-        validateRequiredStreamFactory({
-          getStream: getStreamFactory({ db: projectDb })
-        }),
-        validateStreamRoleBuilderFactory({ getRoles: getRolesFactory({ db }) })({
-          requiredRole: Roles.Stream.Owner
-        }),
-        validateResourceAccess
-      ])(req, res, next)
-    },
+    authMiddlewareCreator([
+      validateServerRoleBuilderFactory({
+        getRoles: getRolesFactory({ db })
+      })({ requiredRole: Roles.Server.Guest }),
+      validateScope({ requiredScope: Scopes.Streams.Read }),
+      validateRequiredStreamFactory({
+        getStream: getStreamFactory({ db })
+      }),
+      validateStreamRoleBuilderFactory({ getRoles: getRolesFactory({ db }) })({
+        requiredRole: Roles.Stream.Owner
+      }),
+      validateResourceAccess
+    ]),
     async (req, res) => {
-      const projectDb = await getProjectDbClient({ projectId: req.params.projectId })
+      const projectDb = await getProjectDbClient({ projectId: req.params.streamId })
       const automationId = req.params.automationId
       const runId = req.params.runId
 

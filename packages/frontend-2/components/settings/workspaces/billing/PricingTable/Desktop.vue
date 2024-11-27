@@ -1,16 +1,16 @@
 <template>
-  <table class="w-full flex flex-col">
+  <table class="w-full flex flex-col text-left">
     <thead>
       <tr class="w-full flex">
         <th class="w-1/4 flex pl-5 pr-6 pt-4 pb-2 font-medium">
-          <h4>Compare plans</h4>
+          <h4 class="text-body-xs text-foreground">Compare plans</h4>
         </th>
         <th
           v-for="plan in plans"
           :key="`desktop-${plan.name}`"
           class="w-1/4 px-6 pt-4 pb-2"
           :class="[
-            plan.name === WorkspacePlans.Team
+            plan.name === WorkspacePlans.Starter
               ? 'border border-b-0 border-outline-3 bg-foundation-2 rounded-t-lg'
               : ''
           ]"
@@ -41,10 +41,10 @@
           :key="plan.name"
           class="px-3 w-1/4 pt-1"
           :class="[
-            plan.name === WorkspacePlans.Team
+            plan.name === WorkspacePlans.Starter
               ? 'border-l border-r border-outline-3 bg-foundation-2'
               : '',
-            plan.name === WorkspacePlans.Team &&
+            plan.name === WorkspacePlans.Starter &&
             index === Object.values(features).length - 1
               ? 'pb-6 border-b rounded-b-lg'
               : ''
@@ -72,9 +72,9 @@ import type { MaybeNullOrUndefined } from '@speckle/shared'
 
 defineProps<{
   isYearlyPlan: boolean
-  currentPlan: MaybeNullOrUndefined<WorkspacePlan>
-  workspaceId: string
-  isAdmin: boolean
+  currentPlan?: MaybeNullOrUndefined<WorkspacePlan>
+  workspaceId?: string
+  isAdmin?: boolean
 }>()
 
 const plans = ref(pricingPlansConfig.plans)

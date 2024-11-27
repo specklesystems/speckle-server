@@ -174,6 +174,8 @@ export default class SpeckleMesh extends Mesh {
   }
 
   public updateMaterialTransformsUniform(material: Material) {
+    if (!Materials.isSpeckleMaterial(material)) return
+
     if (!material.defines) material.defines = {}
     material.defines['TRANSFORM_STORAGE'] = this.transformStorage
 

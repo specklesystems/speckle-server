@@ -4,11 +4,10 @@
       <h2 class="h6 font-medium">Runs</h2>
       <FormButton
         v-if="!automation.isTestAutomation && isEditable"
-        :icon-left="ArrowPathIcon"
         :disabled="!automation.enabled"
         @click="onTrigger"
       >
-        Trigger Automation
+        Trigger automation
       </FormButton>
     </div>
     <AutomateRunsTable
@@ -20,7 +19,6 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ArrowPathIcon } from '@heroicons/vue/24/outline'
 import { usePaginatedQuery } from '~/lib/common/composables/graphql'
 import { graphql } from '~/lib/common/generated/gql'
 import type { ProjectPageAutomationRuns_AutomationFragment } from '~/lib/common/generated/gql/graphql'

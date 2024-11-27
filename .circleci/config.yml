@@ -577,13 +577,7 @@ jobs:
       REDIS_URL: 'redis://127.0.0.1:6379'
       S3_REGION: '' # optional, defaults to 'us-east-1'
       AUTOMATE_ENCRYPTION_KEYS_PATH: 'test/assets/automate/encryptionKeys.json'
-      FF_AUTOMATE_MODULE_ENABLED: 'false' # Disable all FFs
-      FF_WORKSPACES_MODULE_ENABLED: 'false'
-      FF_WORKSPACES_SSO_ENABLED: 'false'
-      FF_MULTIPLE_EMAILS_MODULE_ENABLED: 'false'
-      FF_GENDOAI_MODULE_ENABLED: 'false'
-      FF_GATEKEEPER_MODULE_ENABLED: 'false'
-      FF_BILLING_INTEGRATION_ENABLED: 'false'
+      DISABLE_ALL_FFS: 'true'
 
   test-server-multiregion:
     <<: *test-server-job

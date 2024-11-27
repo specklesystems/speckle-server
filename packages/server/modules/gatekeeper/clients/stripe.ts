@@ -24,10 +24,7 @@ const getResultUrl = ({
   frontendOrigin: string
   workspaceSlug: string
   workspaceId: string
-}) =>
-  new URL(
-    `${frontendOrigin}/workspaces/${workspaceSlug}?workspace=${workspaceId}&settings=workspace/billing`
-  )
+}) => new URL(`${frontendOrigin}/workspaces/${workspaceSlug}?workspace=${workspaceId}`)
 
 export const createCheckoutSessionFactory =
   ({
@@ -130,7 +127,7 @@ export const getSubscriptionDataFactory =
 export const parseSubscriptionData = (
   stripeSubscription: Stripe.Subscription
 ): SubscriptionData => {
-  return {
+  const subscriptionData = {
     customerId:
       typeof stripeSubscription.customer === 'string'
         ? stripeSubscription.customer
@@ -138,7 +135,7 @@ export const parseSubscriptionData = (
     subscriptionId: stripeSubscription.id,
     status: stripeSubscription.status,
     cancelAt: stripeSubscription.cancel_at
-      ? new Date(stripeSubscription.cancel_at)
+      ? new Date(stripeSubscription.cancel_at * 1000)
       : null,
     products: stripeSubscription.items.data.map((subscriptionItem) => {
       const productId =
@@ -158,6 +155,7 @@ export const parseSubscriptionData = (
       }
     })
   }
+  return subscriptionData
 }
 
 // this should be a reconcile subscriptions, we keep an accurate state in the DB

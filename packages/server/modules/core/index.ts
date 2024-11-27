@@ -17,6 +17,9 @@ import { getGenericRedis } from '@/modules/shared/redis/redis'
 import { registerOrUpdateScopeFactory } from '@/modules/shared/repositories/scopes'
 import db from '@/db/knex'
 import { registerOrUpdateRole } from '@/modules/shared/repositories/roles'
+import { isTestEnv } from '@/modules/shared/helpers/envHelper'
+
+let stopTestSubs: (() => void) | undefined = undefined
 
 const coreModule: SpeckleModule = {
   async init(app, isInitial) {
@@ -52,13 +55,17 @@ const coreModule: SpeckleModule = {
       // Init mp
       mp.initialize()
 
-      // Generic redis client
+      // Setup test subs
+      if (isTestEnv()) {
+        const { startEmittingTestSubs } = await import('@/test/graphqlHelper')
+        stopTestSubs = await startEmittingTestSubs()
+      }
     }
   },
   async shutdown() {
     await shutdownResultListener()
-
     await getGenericRedis().quit()
+    stopTestSubs?.()
   }
 }
 
