@@ -58,7 +58,6 @@ export const useWorkspaceSsoStatus = (params: { workspaceSlug: Ref<string> }) =>
           issuerUrl
         }
         session {
-          id
           validUntil
         }
       }

@@ -4385,7 +4385,6 @@ export type WorkspaceSsoProvider = {
 export type WorkspaceSsoSession = {
   __typename?: 'WorkspaceSsoSession';
   createdAt: Scalars['DateTime']['output'];
-  id: Scalars['ID']['output'];
   validUntil: Scalars['DateTime']['output'];
 };
 
