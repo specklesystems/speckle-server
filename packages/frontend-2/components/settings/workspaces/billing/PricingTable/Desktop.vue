@@ -45,9 +45,9 @@
           ]"
         >
           <div class="border-b border-outline-3 flex items-center px-3 min-h-[42px]">
-            <CheckIcon
+            <IconCheck
               v-if="plan.features.includes(feature.name as PlanFeaturesList)"
-              class="w-3 h-3 text-foreground"
+              class="w-4 h-4 text-foreground"
             />
           </div>
         </td>
@@ -61,7 +61,6 @@ import type { WorkspacePlan, BillingInterval } from '~/lib/common/generated/gql/
 import { WorkspacePlans } from '~/lib/common/generated/gql/graphql'
 import { pricingPlansConfig } from '~/lib/billing/helpers/constants'
 import type { PlanFeaturesList } from '~/lib/billing/helpers/types'
-import { CheckIcon } from '@heroicons/vue/24/outline'
 import type { MaybeNullOrUndefined } from '@speckle/shared'
 
 defineProps<{

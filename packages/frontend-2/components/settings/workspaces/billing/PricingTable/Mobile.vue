@@ -13,11 +13,11 @@
           class="flex items-center justify-between border-b last:border-b-0 border-outline-3 pb-2"
         >
           {{ feature.name }}
-          <CheckIcon
+          <IconCheck
             v-if="plan.features.includes(feature.name as PlanFeaturesList)"
-            class="w-3 h-3 text-foreground"
+            class="w-4 h-4 text-foreground"
           />
-          <XMarkIcon v-else class="w-3 h-3 text-foreground-2" />
+          <XMarkIcon v-else class="w-4 h-4 text-foreground-2" />
         </li>
       </ul>
     </div>
@@ -28,7 +28,7 @@
 import type { WorkspacePlan, BillingInterval } from '~/lib/common/generated/gql/graphql'
 import { pricingPlansConfig } from '~/lib/billing/helpers/constants'
 import type { PlanFeaturesList } from '~/lib/billing/helpers/types'
-import { CheckIcon, XMarkIcon } from '@heroicons/vue/24/outline'
+import { XMarkIcon } from '@heroicons/vue/24/outline'
 import type { MaybeNullOrUndefined } from '@speckle/shared'
 
 defineProps<{
