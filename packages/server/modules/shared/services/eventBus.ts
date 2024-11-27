@@ -13,14 +13,19 @@ import {
 
 type EventWildcard = '*'
 
-type TestEvents = {
-  ['test.string']: string
-  ['test.number']: number
+export const TestEvents = {
+  String: 'test.string',
+  Number: 'test.number'
+} as const
+
+type TestEventsPayloads = {
+  [TestEvents.String]: string
+  [TestEvents.Number]: number
 }
 
 // we should only ever extend this type, other helper types will be derived from this
 type EventsByNamespace = {
-  test: TestEvents
+  test: TestEventsPayloads
   [workspaceEventNamespace]: WorkspaceEventsPayloads
   [serverinvitesEventNamespace]: ServerInvitesEventsPayloads
 }

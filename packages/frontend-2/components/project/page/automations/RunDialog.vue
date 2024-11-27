@@ -7,14 +7,13 @@
         onClick: () => {
           open = false
         },
-        props: { color: 'outline', fullWidth: true }
+        props: { color: 'outline' }
       },
       ...(run && projectId && run.trigger.model && run.trigger.version
         ? [
             {
-              text: 'View Model Version',
+              text: 'View model version',
               props: {
-                fullWidth: true,
                 to: versionUrl({
                   projectId,
                   modelId: run.trigger.model.id,
@@ -29,13 +28,8 @@
     <template #header>
       <div class="flex flex-col">
         <div class="flex items-center space-x-2 max-w-full w-full">
-          <div class="mt-[6px] shrink-0">
-            <AutomateRunsTriggerStatusIcon
-              :summary="summary"
-              class="h-6 w-6 sm:h-10 sm:w-10"
-            />
-          </div>
-          <div>Run Details</div>
+          <AutomateRunsTriggerStatusIcon :summary="summary" class="h-5 w-5" />
+          <div>Run details</div>
         </div>
       </div>
     </template>

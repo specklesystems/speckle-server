@@ -4,11 +4,12 @@
       <HeaderNavLink
         :separator="false"
         :to="automationFunctionsRoute"
-        :name="'Automate functions'"
+        name="Automate functions"
+        :seperator="false"
       />
     </Portal>
     <div class="pt-4 flex flex-col md:flex-row gap-y-2 md:gap-x-4 md:justify-between">
-      <h1 class="text-heading-xl">Automate functions</h1>
+      <h1 class="text-heading-lg">Automate functions</h1>
       <div class="flex flex-row gap-2">
         <div class="flex-1">
           <FormTextInput

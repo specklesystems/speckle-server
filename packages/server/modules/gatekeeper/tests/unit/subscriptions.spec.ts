@@ -73,7 +73,12 @@ describe('subscriptions @gatekeeper', () => {
                 subscriptionData,
                 workspaceId
               }),
-            getWorkspacePlan: async () => ({ name, workspaceId, status: 'valid' }),
+            getWorkspacePlan: async () => ({
+              name,
+              workspaceId,
+              createdAt: new Date(),
+              status: 'valid'
+            }),
             upsertWorkspaceSubscription: async () => {
               expect.fail()
             },
@@ -104,6 +109,7 @@ describe('subscriptions @gatekeeper', () => {
         getWorkspacePlan: async () => ({
           name: 'starter',
           workspaceId,
+          createdAt: new Date(),
           status: 'trial'
         }),
         upsertWorkspaceSubscription: async ({ workspaceSubscription }) => {
@@ -144,6 +150,7 @@ describe('subscriptions @gatekeeper', () => {
         getWorkspacePlan: async () => ({
           name: 'starter',
           workspaceId,
+          createdAt: new Date(),
           status: 'trial'
         }),
         upsertWorkspaceSubscription: async ({ workspaceSubscription }) => {
@@ -180,6 +187,7 @@ describe('subscriptions @gatekeeper', () => {
         getWorkspacePlan: async () => ({
           name: 'starter',
           workspaceId,
+          createdAt: new Date(),
           status: 'trial'
         }),
         upsertWorkspaceSubscription: async ({ workspaceSubscription }) => {
@@ -219,6 +227,7 @@ describe('subscriptions @gatekeeper', () => {
         getWorkspacePlan: async () => ({
           name: 'starter',
           workspaceId,
+          createdAt: new Date(),
           status: 'trial'
         }),
         upsertWorkspaceSubscription: async ({ workspaceSubscription }) => {
@@ -255,6 +264,7 @@ describe('subscriptions @gatekeeper', () => {
           getWorkspacePlan: async () => ({
             name: 'starter',
             workspaceId,
+            createdAt: new Date(),
             status: 'trial'
           }),
           upsertWorkspaceSubscription: async () => {
@@ -302,6 +312,7 @@ describe('subscriptions @gatekeeper', () => {
           getWorkspacePlan: async () => ({
             name: 'unlimited',
             workspaceId,
+            createdAt: new Date(),
             status: 'valid'
           }),
           getWorkspaceSubscription: async () => null,
@@ -335,6 +346,7 @@ describe('subscriptions @gatekeeper', () => {
           getWorkspacePlan: async () => ({
             name: 'unlimited',
             workspaceId,
+            createdAt: new Date(),
             status: 'valid'
           }),
           getWorkspaceSubscription: async () => workspaceSubscription,
@@ -371,6 +383,7 @@ describe('subscriptions @gatekeeper', () => {
           getWorkspacePlan: async () => ({
             name: 'plus',
             workspaceId,
+            createdAt: new Date(),
             status: 'canceled'
           }),
           getWorkspaceSubscription: async () => workspaceSubscription,
@@ -402,6 +415,7 @@ describe('subscriptions @gatekeeper', () => {
       const workspacePlan: WorkspacePlan = {
         name: 'starter',
         workspaceId,
+        createdAt: new Date(),
         status: 'valid'
       }
       const priceId = cryptoRandomString({ length: 10 })
@@ -463,6 +477,7 @@ describe('subscriptions @gatekeeper', () => {
         const workspacePlan: WorkspacePlan = {
           name: 'starter',
           workspaceId,
+          createdAt: new Date(),
           status: 'valid'
         }
         const priceId = cryptoRandomString({ length: 10 })
@@ -541,6 +556,7 @@ describe('subscriptions @gatekeeper', () => {
       const workspacePlan: WorkspacePlan = {
         name: 'starter',
         workspaceId,
+        createdAt: new Date(),
         status: 'valid'
       }
       const roleCount = 10
@@ -612,6 +628,7 @@ describe('subscriptions @gatekeeper', () => {
       const workspacePlan: WorkspacePlan = {
         name: 'starter',
         workspaceId,
+        createdAt: new Date(),
         status: 'valid'
       }
       const roleCount = 1
@@ -690,6 +707,7 @@ describe('subscriptions @gatekeeper', () => {
         getWorkspacePlan: async () => ({
           name: 'unlimited',
           workspaceId,
+          createdAt: new Date(),
           status: 'valid'
         }),
         countWorkspaceRole: async () => {
@@ -718,6 +736,7 @@ describe('subscriptions @gatekeeper', () => {
         getWorkspacePlan: async () => ({
           name: 'plus',
           workspaceId,
+          createdAt: new Date(),
           status: 'canceled'
         }),
         countWorkspaceRole: async () => {
@@ -753,6 +772,7 @@ describe('subscriptions @gatekeeper', () => {
         getWorkspacePlan: async () => ({
           name: workspacePlanName,
           workspaceId,
+          createdAt: new Date(),
           status: 'valid'
         }),
         countWorkspaceRole: async ({ workspaceRole }) => {
@@ -807,6 +827,7 @@ describe('subscriptions @gatekeeper', () => {
         getWorkspacePlan: async () => ({
           name: workspacePlanName,
           workspaceId,
+          createdAt: new Date(),
           status: 'valid'
         }),
         countWorkspaceRole: async ({ workspaceRole }) => {

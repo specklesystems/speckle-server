@@ -162,6 +162,7 @@ export const createTestWorkspace = async (
   if (addPlan || useRegion) {
     await upsertWorkspacePlan({
       workspacePlan: {
+        createdAt: new Date(),
         workspaceId: newWorkspace.id,
         name: 'business',
         status: 'valid'

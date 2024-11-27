@@ -1,7 +1,8 @@
 import { useApolloClient, useMutation } from '@vue/apollo-composable'
 import { settingsWorkspaceBillingCustomerPortalQuery } from '~/lib/settings/graphql/queries'
+import { billingUpgradePlanRedirectMutation } from '~/lib/billing/graphql/mutations'
 import type {
-  WorkspacePlans,
+  PaidWorkspacePlans,
   BillingInterval
 } from '~/lib/common/generated/gql/graphql'
 import { settingsBillingCancelCheckoutSessionMutation } from '~/lib/settings/graphql/mutations'
@@ -37,8 +38,8 @@ export const useBillingActions = () => {
     }
   }
 
-  const upgradePlanRedirect = (args: {
-    plan: WorkspacePlans
+  const upgradePlanRedirect = async (args: {
+    plan: PaidWorkspacePlans
     cycle: BillingInterval
     workspaceId: string
   }) => {
@@ -49,7 +50,31 @@ export const useBillingActions = () => {
       // eslint-disable-next-line camelcase
       workspace_id: workspaceId
     })
-    window.location.href = `/api/v1/billing/workspaces/${workspaceId}/checkout-session/${plan}/${cycle}`
+
+    const result = await apollo
+      .mutate({
+        mutation: billingUpgradePlanRedirectMutation,
+        variables: {
+          input: {
+            workspaceId,
+            billingInterval: cycle,
+            workspacePlan: plan
+          }
+        },
+        fetchPolicy: 'no-cache'
+      })
+      .catch(convertThrowIntoFetchResult)
+
+    if (result.data?.workspaceMutations.billing.createCheckoutSession) {
+      window.location.href =
+        result.data.workspaceMutations.billing.createCheckoutSession.url
+    } else {
+      const errMsg = getFirstGqlErrorMessage(result?.errors)
+      triggerNotification({
+        type: ToastNotificationType.Danger,
+        description: errMsg
+      })
+    }
   }
 
   const cancelCheckoutSession = async (sessionId: string, workspaceId: string) => {
