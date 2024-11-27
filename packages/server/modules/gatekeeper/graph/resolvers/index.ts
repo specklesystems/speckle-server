@@ -37,24 +37,12 @@ export = FF_GATEKEEPER_MODULE_ENABLED
         plan: async (parent) => {
           return await getWorkspacePlanFactory({ db })({ workspaceId: parent.id })
         },
-        subscription: async (parent, _, ctx) => {
+        subscription: async (parent) => {
           const workspaceId = parent.id
-          await authorizeResolver(
-            ctx.userId,
-            workspaceId,
-            Roles.Workspace.Admin,
-            ctx.resourceAccessRules
-          )
           return await getWorkspaceSubscriptionFactory({ db })({ workspaceId })
         },
-        customerPortalUrl: async (parent, _, ctx) => {
+        customerPortalUrl: async (parent) => {
           const workspaceId = parent.id
-          await authorizeResolver(
-            ctx.userId,
-            workspaceId,
-            Roles.Workspace.Admin,
-            ctx.resourceAccessRules
-          )
           const workspaceSubscription = await getWorkspaceSubscriptionFactory({ db })({
             workspaceId
           })
@@ -71,13 +59,7 @@ export = FF_GATEKEEPER_MODULE_ENABLED
             customerId: workspaceSubscription.subscriptionData.customerId
           })
         },
-        hasAccessToFeature: async (parent, args, ctx) => {
-          await authorizeResolver(
-            ctx.userId,
-            parent.id,
-            Roles.Workspace.Member,
-            ctx.resourceAccessRules
-          )
+        hasAccessToFeature: async (parent, args) => {
           const hasAccess = await canWorkspaceAccessFeatureFactory({
             getWorkspacePlan: getWorkspacePlanFactory({ db })
           })({
