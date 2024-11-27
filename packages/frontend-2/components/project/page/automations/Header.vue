@@ -46,7 +46,7 @@ const props = defineProps<{
 }>()
 
 const exploreFunctionsMessage = computed(() =>
-  props.workspaceSlug ? 'Explore workspace functions' : 'Explore functions'
+  props.workspaceSlug ? 'View functions' : 'Explore functions'
 )
 const exploreFunctionsRoute = computed(() =>
   props.workspaceSlug

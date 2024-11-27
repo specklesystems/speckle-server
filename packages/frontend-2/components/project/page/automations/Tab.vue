@@ -4,7 +4,7 @@
       v-model:search="search"
       :workspace-slug="workspaceSlug"
       :show-empty-state="shouldShowEmptyState"
-      :creation-disabled-reason="disableCreateMessage"
+      :creation-disabled-message="disableCreateMessage"
       @new-automation="onNewAutomation"
     />
     <template v-if="loading">
@@ -15,7 +15,7 @@
         v-if="shouldShowEmptyState"
         :functions="result"
         :is-automate-enabled="isAutomateEnabled"
-        :creation-disabled-reason="disableCreateMessage"
+        :creation-disabled-message="disableCreateMessage"
         @new-automation="onNewAutomation"
       />
       <template v-else>
@@ -118,9 +118,10 @@ const shouldShowEmptyState = computed(() => {
 })
 
 const disableCreateMessage = computed(() => {
-  const allowedRoles: string[] = [Roles.Stream.Owner, Roles.Stream.Contributor]
+  const allowedRoles: string[] = [Roles.Stream.Owner]
+
   if (!allowedRoles.includes(result.value?.project?.role ?? '')) {
-    return 'You must be at least a project contributor to create automations.'
+    return 'You must be a project owner to create automations.'
   }
 
   if ((result.value?.project?.models?.items.length || 0) === 0) {

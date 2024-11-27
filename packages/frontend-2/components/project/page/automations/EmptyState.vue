@@ -9,9 +9,9 @@
           faults, and effortlessly creating delivery artifacts.
         </div>
         <div class="flex gap-x-4">
-          <div v-if="isAutomateEnabled" v-tippy="creationDisabledReason">
+          <div v-if="isAutomateEnabled" v-tippy="creationDisabledMessage">
             <FormButton
-              :disabled="!!creationDisabledReason"
+              :disabled="!!creationDisabledMessage"
               @click="$emit('new-automation')"
             >
               New automation
@@ -79,7 +79,7 @@ defineEmits<{
 const props = defineProps<{
   functions?: ProjectPageAutomationsEmptyState_QueryFragment
   isAutomateEnabled: boolean
-  creationDisabledReason?: string
+  creationDisabledMessage?: string
 }>()
 
 const functions = computed(() => props.functions?.automateFunctions.items || [])

@@ -68,7 +68,7 @@ const { result, loading } = useQuery(
 const automation = computed(() => result.value?.project.automation || null)
 const project = computed(() => result.value?.project)
 const isEditable = computed(() => {
-  const allowedRoles: string[] = [Roles.Stream.Owner, Roles.Stream.Contributor]
+  const allowedRoles: string[] = [Roles.Stream.Owner]
   return allowedRoles.includes(result.value?.project.role ?? '')
 })
 </script>
