@@ -17,14 +17,13 @@
     </p>
     <div v-if="workspaceId" class="w-full">
       <FormButton
-        :color="plan.name === WorkspacePlans.Starter ? 'primary' : 'outline'"
-        :disabled="buttonDisabled"
+        :color="buttonColor"
+        :disabled="!buttonEnabled"
         class="mt-3"
         full-width
         @click="onUpgradePlanClick(plan.name)"
       >
-        {{ hasTrialPlan ? 'Subscribe' : 'Upgrade' }} to&nbsp;
-        <span class="capitalize">{{ plan.name }}</span>
+        {{ buttonText }}
       </FormButton>
     </div>
   </div>
@@ -71,14 +70,35 @@ const canUpgradeToPlan = computed(() => {
 const hasTrialPlan = computed(
   () => props.currentPlan?.status === WorkspacePlanStatuses.Trial || !props.currentPlan
 )
-const buttonDisabled = computed(
-  () =>
-    !props.isAdmin ||
-    (!hasTrialPlan.value &&
-      (canUpgradeToPlan.value ||
-        (props.activeBillingInterval === BillingInterval.Monthly &&
-          !props.isYearlyPlan)))
-)
+const buttonColor = computed(() => {
+  // If on trial plan highlight starter plan
+  if (hasTrialPlan.value) {
+    return props.plan.name === WorkspacePlans.Starter ? 'primary' : 'outline'
+  }
+  // Else highlight current plan
+  return props.currentPlan?.name === props.plan.name ? 'primary' : 'outline'
+})
+const buttonEnabled = computed(() => {
+  if (!props.isAdmin) return false
+  if (hasTrialPlan.value) return true
+  if (canUpgradeToPlan.value) return true
+  if (props.activeBillingInterval === BillingInterval.Monthly && props.isYearlyPlan)
+    return true
+  return false
+})
+const buttonText = computed(() => {
+  if (props.currentPlan?.name === props.plan.name) return 'Current plan'
+  if (hasTrialPlan.value) return `Subscribe to ${props.plan.name}`
+  if (canUpgradeToPlan.value) return `Upgrade to ${props.plan.name}`
+  // Current and higherer plans are upgradeable to a yearly billing cycle
+  if (
+    props.activeBillingInterval === BillingInterval.Monthly &&
+    props.isYearlyPlan &&
+    props.currentPlan?.name === props.plan.name
+  )
+    return `Upgrade to yearly plan`
+  return ''
+})
 
 const onUpgradePlanClick = (plan: WorkspacePlans) => {
   if (!isPaidPlan(plan) || !props.workspaceId) return
