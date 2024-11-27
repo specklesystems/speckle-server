@@ -20,6 +20,7 @@ import { useApolloClient, useSubscription } from '@vue/apollo-composable'
 import { graphql } from '~/lib/common/generated/gql'
 import { WorkspaceProjectsUpdatedMessageType } from '~/lib/common/generated/gql/graphql'
 import { projectRoute } from '~/lib/common/helpers/route'
+import { useOnWorkspaceUpdated } from '~/lib/workspaces/composables/management'
 import { useWorkspaceSsoValidation } from '~/lib/workspaces/composables/sso'
 
 definePageMeta({
@@ -32,6 +33,7 @@ const { triggerNotification } = useGlobalToast()
 
 const workspaceSlug = computed(() => route.params.slug as string)
 const { ssoError } = useWorkspaceSsoValidation(workspaceSlug)
+useOnWorkspaceUpdated({ workspaceSlug })
 const { onResult: onWorkspaceProjectsUpdate } = useSubscription(
   graphql(`
     subscription OnWorkspaceProjectsUpdate($slug: String!) {

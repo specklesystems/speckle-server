@@ -963,7 +963,10 @@ export = FF_WORKSPACES_MODULE_ENABLED
           return {
             items,
             cursor,
-            totalCount: await getUserStreamsCount(filter)
+            totalCount: await getUserStreamsCount({
+              ...filter,
+              searchQuery: filter.search || undefined
+            })
           }
         },
         domains: async (parent) => {

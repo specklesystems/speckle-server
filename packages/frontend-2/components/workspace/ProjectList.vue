@@ -128,6 +128,19 @@ import {
   type AvailableSettingsMenuKeys
 } from '~/lib/settings/helpers/types'
 import { useBillingActions } from '~/lib/billing/composables/actions'
+
+graphql(`
+  fragment WorkspaceProjectList_Workspace on Workspace {
+    id
+    ...MoveProjectsDialog_Workspace
+    ...WorkspaceHeader_Workspace
+    ...WorkspaceMixpanelUpdateGroup_Workspace
+    projects {
+      ...WorkspaceProjectList_ProjectCollection
+    }
+  }
+`)
+
 graphql(`
   fragment WorkspaceProjectList_ProjectCollection on ProjectCollection {
     totalCount
@@ -171,9 +184,6 @@ const { result: initialQueryResult, onResult } = useQuery(
   workspacePageQuery,
   () => ({
     workspaceSlug: props.workspaceSlug,
-    filter: {
-      search: (search.value || '').trim() || null
-    },
     token: token.value || null
   }),
   () => ({
@@ -195,7 +205,7 @@ const { query, identifier, onInfiniteLoad } = usePaginatedQuery({
     search: vars.filter?.search || ''
   }),
   resolveInitialResult: () =>
-    initialQueryResult.value?.workspaceBySlug.projectListProject,
+    !search.value ? initialQueryResult.value?.workspaceBySlug.projects : undefined,
   resolveCurrentResult: (result) => result?.workspaceBySlug?.projects,
   resolveNextPageVariables: (baseVariables, newCursor) => ({
     ...baseVariables,
