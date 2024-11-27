@@ -108,7 +108,8 @@ const {
   filter: {
     search: (search.value || '').trim() || null,
     onlyWithRoles: selectedRoles.value?.length ? selectedRoles.value : null
-  }
+  },
+  cursor: null as Nullable<string>
 }))
 
 const { result: workspacesResult } = useQuery(

@@ -55,14 +55,32 @@ import {
 } from '@/modules/workspaces/repositories/sso'
 import { getEncryptor } from '@/modules/workspaces/helpers/sso'
 import { OidcProvider } from '@/modules/workspaces/domain/sso/types'
-import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
+import { getFeatureFlags, getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
 import { getDefaultSsoSessionExpirationDate } from '@/modules/workspaces/domain/sso/logic'
-import { upsertPaidWorkspacePlanFactory } from '@/modules/gatekeeper/repositories/billing'
+import {
+  getWorkspacePlanFactory,
+  upsertPaidWorkspacePlanFactory
+} from '@/modules/gatekeeper/repositories/billing'
 import { SetOptional } from 'type-fest'
+import { isMultiRegionTestMode } from '@/test/speckle-helpers/regions'
+import {
+  assignRegionFactory,
+  getAvailableRegionsFactory
+} from '@/modules/workspaces/services/regions'
+import { getRegionsFactory } from '@/modules/multiregion/repositories'
+import { canWorkspaceUseRegionsFactory } from '@/modules/gatekeeper/services/featureAuthorization'
+import {
+  getDefaultRegionFactory,
+  upsertRegionAssignmentFactory
+} from '@/modules/workspaces/repositories/regions'
+import { getDb } from '@/modules/multiregion/dbSelector'
+
+const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
 
 export type BasicTestWorkspace = {
   /**
    * Leave empty, will be filled on creation
+   * Note: Will be set to undefined if tests running with workspaces disabled entirely cause workspaces can't be created!
    */
   id: string
   /**
@@ -84,9 +102,19 @@ export type BasicTestWorkspace = {
 export const createTestWorkspace = async (
   workspace: SetOptional<BasicTestWorkspace, 'slug'>,
   owner: BasicTestUser,
-  options?: { domain?: string; addPlan?: boolean }
+  options?: { domain?: string; addPlan?: boolean; regionKey?: string }
 ) => {
-  const { domain, addPlan = true } = options || {}
+  const { domain, addPlan = true, regionKey } = options || {}
+  const useRegion = isMultiRegionTestMode() && regionKey
+
+  if (!FF_WORKSPACES_MODULE_ENABLED) {
+    // Just skip creation and set id to undefined - this allows this to be invoked the same way if FFs are on or off
+    // When BasicTestStream.workspaceId is set to this workspaces id, it will end up just being undefined, making the stream
+    // be created as if it was not assigned to a workspace, allowing tests to still work
+    // (Surely if you explicitly invoke createTestWorkspace with FFs off, you know what you're doing)
+    workspace.id = undefined as unknown as string
+    return
+  }
 
   const upsertWorkspacePlan = upsertPaidWorkspacePlanFactory({ db })
   const createWorkspace = createWorkspaceFactory({
@@ -131,7 +159,7 @@ export const createTestWorkspace = async (
     })
   }
 
-  if (addPlan) {
+  if (addPlan || useRegion) {
     await upsertWorkspacePlan({
       workspacePlan: {
         createdAt: new Date(),
@@ -139,6 +167,26 @@ export const createTestWorkspace = async (
         name: 'business',
         status: 'valid'
       }
+    })
+  }
+
+  if (useRegion) {
+    const regionDb = await getDb({ regionKey })
+    const assignRegion = assignRegionFactory({
+      getAvailableRegions: getAvailableRegionsFactory({
+        getRegions: getRegionsFactory({ db }),
+        canWorkspaceUseRegions: canWorkspaceUseRegionsFactory({
+          getWorkspacePlan: getWorkspacePlanFactory({ db })
+        })
+      }),
+      upsertRegionAssignment: upsertRegionAssignmentFactory({ db }),
+      getDefaultRegion: getDefaultRegionFactory({ db }),
+      getWorkspace: getWorkspaceFactory({ db }),
+      insertRegionWorkspace: upsertWorkspaceFactory({ db: regionDb })
+    })
+    await assignRegion({
+      workspaceId: newWorkspace.id,
+      regionKey
     })
   }
 

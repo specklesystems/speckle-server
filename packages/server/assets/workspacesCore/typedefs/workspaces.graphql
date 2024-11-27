@@ -485,3 +485,55 @@ extend type LimitedUser {
   # if workspaceId is undefined | null, just return undefined
   # this can be implemented by the workspaceCore resolver too, to avoid frontend component duplication
 }
+
+enum WorkspaceProjectsUpdatedMessageType {
+  ADDED
+  REMOVED
+}
+
+type WorkspaceProjectsUpdatedMessage {
+  """
+  Message type
+  """
+  type: WorkspaceProjectsUpdatedMessageType!
+  """
+  Project ID
+  """
+  projectId: String!
+  """
+  Workspace ID
+  """
+  workspaceId: String!
+  """
+  Project entity, null if project was deleted
+  """
+  project: Project
+}
+
+type WorkspaceUpdatedMessage {
+  """
+  Workspace ID
+  """
+  id: String!
+  """
+  Workspace itself
+  """
+  workspace: Workspace!
+}
+
+extend type Subscription {
+  """
+  Track newly added or deleted projects in a specific workspace.
+  Either slug or id must be set.
+  """
+  workspaceProjectsUpdated(
+    workspaceId: String
+    workspaceSlug: String
+  ): WorkspaceProjectsUpdatedMessage!
+
+  """
+  Track updates to a specific workspace.
+  Either slug or id must be set.
+  """
+  workspaceUpdated(workspaceId: String, workspaceSlug: String): WorkspaceUpdatedMessage!
+}
