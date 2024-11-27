@@ -14,13 +14,19 @@
             Allow logins through your OpenID identity provider.
           </p>
         </div>
-        <FormButton
-          v-if="workspace.hasAccessToSSO"
-          :disabled="!isWorkspaceAdmin || isFormVisible || !!provider"
-          @click="handleConfigureClick"
-        >
-          Configure
-        </FormButton>
+        <div v-if="workspace.hasAccessToSSO">
+          <FormButton
+            v-if="isWorkspaceAdmin"
+            :disabled="isFormVisible || !!provider"
+            @click="handleConfigureClick"
+          >
+            Configure
+          </FormButton>
+
+          <div v-else v-tippy="`You must be a workspace admin`">
+            <FormButton disabled>Configure</FormButton>
+          </div>
+        </div>
 
         <FormButton v-else @click="goToBilling">Upgrade to Plus</FormButton>
       </div>
