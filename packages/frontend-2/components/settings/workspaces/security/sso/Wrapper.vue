@@ -7,7 +7,7 @@
     </div>
 
     <template v-else>
-      <div class="flex items-center">
+      <div class="flex items-center mb-4">
         <div class="flex-1 flex-col pr-6 gap-y-1">
           <p class="text-body-xs font-medium text-foreground">Enable SSO</p>
           <p class="text-body-2xs text-foreground-2 leading-5 max-w-md">
@@ -16,7 +16,7 @@
         </div>
         <FormButton
           v-if="workspace.hasAccessToSSO"
-          :disabled="isFormVisible || !!provider"
+          :disabled="!isWorkspaceAdmin || isFormVisible || !!provider"
           @click="handleConfigureClick"
         >
           Configure
@@ -25,22 +25,29 @@
         <FormButton v-else @click="goToBilling">Upgrade to Plus</FormButton>
       </div>
 
+      <div
+        v-if="!workspace.hasAccessToSSO && workspace.sso?.provider?.id"
+        class="bg-foundation border border-outline-2 rounded-md p-4 text-body-xs"
+      >
+        SSO access requires an active Plus or Business subscription.
+      </div>
+
       <!-- Existing Provider Configuration -->
-      <div v-if="provider" class="p-4 border border-outline-3 rounded-lg mt-4">
+      <div v-if="provider" class="p-4 border border-outline-3 rounded-lg">
         <div v-if="!isEditing" class="flex items-center justify-between">
           <div class="flex items-center gap-2">
             <h3 class="text-body-xs font-medium text-foreground">
               {{ provider.name }}
             </h3>
-            <div
-              class="flex items-center gap-1 text-body-2xs text-foreground-2 bg-highlight-3 rounded-full p-1"
+            <CommonBadge
+              dot
+              color-classes="bg-highlight-3 text-foreground-2"
+              :dot-icon-color-classes="
+                isSsoAuthenticated ? 'text-green-500' : 'text-danger'
+              "
             >
-              <div
-                class="h-2 w-2 rounded-full"
-                :class="isSsoAuthenticated ? 'bg-green-500' : 'bg-warning'"
-              />
               {{ isSsoAuthenticated ? 'Authenticated via SSO' : 'SSO login required' }}
-            </div>
+            </CommonBadge>
           </div>
           <LayoutMenu
             v-model:open="showActionsMenu"
@@ -127,10 +134,12 @@ import { EllipsisHorizontalIcon } from '@heroicons/vue/24/solid'
 import { graphql } from '~/lib/common/generated/gql'
 import { useMenuState } from '~/lib/settings/composables/menu'
 import { SettingMenuKeys } from '~/lib/settings/helpers/types'
+import { Roles } from '@speckle/shared'
 
 graphql(`
   fragment SettingsWorkspacesSecuritySsoWrapper_Workspace on Workspace {
     id
+    role
     slug
     sso {
       provider {
@@ -171,8 +180,17 @@ const scopesAndClaims = ref({
   email: 'email'
 })
 
+const isWorkspaceAdmin = computed(() => props.workspace?.role === Roles.Workspace.Admin)
+
 const actionsItems = computed<LayoutMenuItem[][]>(() => [
-  [{ title: 'Remove provider...', id: ActionTypes.Delete }]
+  [
+    {
+      title: 'Remove provider...',
+      id: ActionTypes.Delete,
+      disabled: !isWorkspaceAdmin.value,
+      disabledTooltip: 'You must be a workspace admin'
+    }
+  ]
 ])
 
 const onActionChosen = (params: { item: LayoutMenuItem; event: MouseEvent }) => {
