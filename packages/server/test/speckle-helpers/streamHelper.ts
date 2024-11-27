@@ -33,7 +33,11 @@ import { authorizeResolver } from '@/modules/shared'
 import { Nullable } from '@/modules/shared/helpers/typeHelper'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { publish } from '@/modules/shared/utils/subscriptions'
+import { getDefaultRegionFactory } from '@/modules/workspaces/repositories/regions'
+import { createWorkspaceProjectFactory } from '@/modules/workspaces/services/projects'
 import { BasicTestUser } from '@/test/authHelper'
+import { ProjectVisibility } from '@/test/graphql/generated/graphql'
+import { faker } from '@faker-js/faker'
 import { ensureError } from '@speckle/shared'
 import { omit } from 'lodash'
 
@@ -113,10 +117,30 @@ export async function createTestStream(
   streamObj: BasicTestStream,
   owner: BasicTestUser
 ) {
-  const id = await createStream({
-    ...omit(streamObj, ['id', 'ownerId']),
-    ownerId: owner.id
-  })
+  let id: string
+  if (streamObj.workspaceId) {
+    const createWorkspaceProject = createWorkspaceProjectFactory({
+      getDefaultRegion: getDefaultRegionFactory({ db })
+    })
+    const newProject = await createWorkspaceProject({
+      input: {
+        name: streamObj.name || faker.commerce.productName(),
+        description: streamObj.description,
+        visibility: streamObj.isPublic
+          ? ProjectVisibility.Public
+          : ProjectVisibility.Private,
+        workspaceId: streamObj.workspaceId
+      },
+      ownerId: owner.id
+    })
+    id = newProject.id
+  } else {
+    id = await createStream({
+      ...omit(streamObj, ['id', 'ownerId']),
+      ownerId: owner.id
+    })
+  }
+
   streamObj.id = id
   streamObj.ownerId = owner.id
 }

@@ -49,6 +49,7 @@ import {
   AddStreamDeletedActivity,
   AddStreamUpdatedActivity
 } from '@/modules/activitystream/domain/operations'
+import { LogicError } from '@/modules/shared/errors'
 
 export const createStreamReturnRecordFactory =
   (deps: {
@@ -119,6 +120,7 @@ export const deleteStreamAndNotifyFactory =
     authorizeResolver: AuthorizeResolver
     addStreamDeletedActivity: AddStreamDeletedActivity
     deleteAllResourceInvites: DeleteAllResourceInvites
+    getStream: GetStream
   }): DeleteStream =>
   async (
     streamId: string,
@@ -139,7 +141,15 @@ export const deleteStreamAndNotifyFactory =
       )
     }
 
-    await deps.addStreamDeletedActivity({ streamId, deleterId })
+    const stream = await deps.getStream({ streamId })
+    if (!stream)
+      throw new LogicError('Unexpectedly stream that should exist is not found...')
+
+    await deps.addStreamDeletedActivity({
+      streamId,
+      deleterId,
+      workspaceId: stream.workspaceId
+    })
 
     // TODO: this has been around since before my time, we should get rid of it...
     // delay deletion by a bit so we can do auth checks

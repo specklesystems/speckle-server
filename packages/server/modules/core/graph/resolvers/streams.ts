@@ -130,7 +130,8 @@ const deleteStreamAndNotify = deleteStreamAndNotifyFactory({
     saveActivity: saveActivityFactory({ db }),
     getStreamCollaborators: getStreamCollaboratorsFactory({ db })
   }),
-  deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db })
+  deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db }),
+  getStream
 })
 const updateStreamAndNotify = updateStreamAndNotifyFactory({
   authorizeResolver,

@@ -40,7 +40,7 @@ export const initializeEventListenersFactory =
           workspacePlan: {
             name: 'starter',
             status: 'trial',
-            workspaceId: payload.id,
+            workspaceId: payload.workspace.id,
             createdAt: new Date()
           }
         })
