@@ -3,24 +3,31 @@
     title="Invite teammates"
     description="Get the most of your workspace by inviting others."
   >
-    <form class="flex flex-col gap-2 w-full md:w-96" @submit="onSubmit">
-      <div v-for="invite in invites" :key="invite.id">
+    <form
+      class="flex flex-col gap-4 w-full md:max-w-lg items-center"
+      @submit="onSubmit"
+    >
+      <div class="flex flex-col gap-2 w-full">
         <FormTextInput
+          v-for="invite in invites"
+          :key="invite.id"
           v-model="invite.email"
           color="foundation"
           name="email"
           size="lg"
           placeholder="Email address"
+          show-clear
+          full-width
           :rules="[isRequired, isStringOfLength({ maxLength: 512 })]"
         />
-      </div>
-      <div>
-        <FormButton color="subtle" :icon-left="PlusIcon" @click="onAddInvite">
-          Add another
-        </FormButton>
+        <div>
+          <FormButton color="subtle" :icon-left="PlusIcon" @click="onAddInvite">
+            Add another
+          </FormButton>
+        </div>
       </div>
 
-      <div class="flex flex-col gap-3 mt-6 w-full">
+      <div class="flex flex-col gap-3 mt-4 w-full md:max-w-96">
         <FormButton size="lg" submit full-width>
           {{ nextButtonText }}
         </FormButton>
