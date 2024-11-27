@@ -23,7 +23,9 @@
               show-label
               label="Default region"
               :items="availableRegions || []"
-              :disabled="!availableRegions?.length || isMutationLoading"
+              :disabled="
+                !availableRegions?.length || isMutationLoading || !isWorkspaceAdmin
+              "
             />
           </div>
         </template>
@@ -77,6 +79,7 @@
   </section>
 </template>
 <script setup lang="ts">
+import { Roles } from '@speckle/shared'
 import { useMutationLoading, useQuery, useQueryLoading } from '@vue/apollo-composable'
 import { debounce } from 'lodash-es'
 import { graphql } from '~/lib/common/generated/gql'
@@ -89,6 +92,7 @@ import { useSetDefaultWorkspaceRegion } from '~/lib/workspaces/composables/manag
 graphql(`
   fragment SettingsWorkspacesRegions_Workspace on Workspace {
     id
+    role
     defaultRegion {
       id
       ...SettingsWorkspacesRegionsSelect_ServerRegionItem
@@ -125,6 +129,7 @@ const { result } = useQuery(
 const defaultRegion = ref<SettingsWorkspacesRegionsSelect_ServerRegionItemFragment>()
 const workspace = computed(() => result.value?.workspace)
 const availableRegions = computed(() => workspace.value?.availableRegions || [])
+const isWorkspaceAdmin = computed(() => workspace.value?.role === Roles.Workspace.Admin)
 
 const saveDefaultRegion = async () => {
   const regionKey = defaultRegion.value?.key
