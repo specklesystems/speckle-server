@@ -32,7 +32,7 @@
                   </div>
                 </div>
                 <p v-if="isPurchasablePlan" class="text-body-xs text-foreground-2">
-                  £{{ seatPrice }} per seat/month, billed
+                  £{{ seatPrice[Roles.Workspace.Member] }} per seat/month, billed
                   {{
                     subscription?.billingInterval === BillingInterval.Yearly
                       ? 'yearly'
@@ -50,9 +50,26 @@
                       : 'Monthly bill'
                   }}
                 </h3>
-                <p class="text-heading-lg text-foreground capitalize">
-                  {{ isPurchasablePlan ? 'Coming soon' : '£0.00' }}
-                </p>
+                <template v-if="isTrialPeriod">
+                  <p class="text-heading-lg text-foreground inline-block">
+                    {{ billValue }}
+                  </p>
+                  <p class="text-body-xs text-foreground-2 flex gap-x-1 items-center">
+                    {{ billDescription }}
+                    <InformationCircleIcon
+                      v-tippy="billTooltip"
+                      class="w-4 h-4 text-foreground"
+                    />
+                  </p>
+                </template>
+                <div v-else>
+                  <button
+                    class="text-heading-lg text-foreground"
+                    @click="billingPortalRedirect(workspaceId)"
+                  >
+                    View on Stripe &#8599;
+                  </button>
+                </div>
               </div>
               <div class="p-5 pt-4 flex flex-col gap-y-1">
                 <h3 class="text-body-xs text-foreground-2 pb-2">
@@ -128,6 +145,7 @@ import {
 import { useBillingActions } from '~/lib/billing/composables/actions'
 import { pricingPlansConfig } from '~/lib/billing/helpers/constants'
 import { Roles } from '@speckle/shared'
+import { InformationCircleIcon } from '@heroicons/vue/24/outline'
 
 graphql(`
   fragment SettingsWorkspacesBilling_Workspace on Workspace {
@@ -142,6 +160,12 @@ graphql(`
     subscription {
       billingInterval
       currentBillingCycleEnd
+    }
+    team {
+      items {
+        id
+        role
+      }
     }
   }
 `)
@@ -168,8 +192,9 @@ const seatPrices = ref({
   [WorkspacePlans.Business]: pricingPlansConfig.plans[WorkspacePlans.Business].cost
 })
 
-const currentPlan = computed(() => workspaceResult.value?.workspace.plan)
-const subscription = computed(() => workspaceResult.value?.workspace.subscription)
+const workspace = computed(() => workspaceResult.value?.workspace)
+const currentPlan = computed(() => workspace.value?.plan)
+const subscription = computed(() => workspace.value?.subscription)
 const isTrialPeriod = computed(
   () =>
     currentPlan.value?.status === WorkspacePlanStatuses.Trial ||
@@ -192,10 +217,8 @@ const seatPrice = computed(() =>
   currentPlan.value && subscription.value
     ? seatPrices.value[currentPlan.value.name as keyof typeof seatPrices.value][
         subscription.value.billingInterval
-      ][Roles.Workspace.Member]
-    : seatPrices.value[WorkspacePlans.Starter][BillingInterval.Monthly][
-        Roles.Workspace.Member
       ]
+    : seatPrices.value[WorkspacePlans.Starter][BillingInterval.Monthly]
 )
 const nextPaymentDue = computed(() =>
   currentPlan.value
@@ -204,7 +227,39 @@ const nextPaymentDue = computed(() =>
       : 'Never'
     : dayjs().add(30, 'days').format('MMMM D, YYYY')
 )
-const isAdmin = computed(
-  () => workspaceResult.value?.workspace.role === Roles.Workspace.Admin
+const isAdmin = computed(() => workspace.value?.role === Roles.Workspace.Admin)
+const guestSeatCount = computed(() =>
+  workspace.value
+    ? workspace.value.team.items.filter((user) => user.role === Roles.Workspace.Guest)
+        .length
+    : 0
 )
+const memberSeatCount = computed(() =>
+  workspace.value ? workspace.value.team.items.length - guestSeatCount.value : 0
+)
+const billValue = computed(() => {
+  const guestPrice = seatPrice.value[Roles.Workspace.Guest] * guestSeatCount.value
+  const memberPrice = seatPrice.value[Roles.Workspace.Member] * memberSeatCount.value
+  const totalPrice = guestPrice + memberPrice
+  if (isTrialPeriod.value) return `£${totalPrice}.00`
+  return `£0.00`
+})
+const billDescription = computed(() => {
+  const memberText =
+    memberSeatCount.value > 1 ? `${memberSeatCount.value} members` : '1 member'
+  const guestText =
+    guestSeatCount.value > 1 ? `${guestSeatCount.value} guests` : '1 guest'
+
+  return `${memberText}${guestSeatCount.value > 0 ? `, ${guestText}` : ''}`
+})
+const billTooltip = computed(() => {
+  const memberText = `${memberSeatCount.value} member${
+    memberSeatCount.value === 1 ? '' : 's'
+  } £${seatPrice.value[Roles.Workspace.Member]}`
+  const guestText = `${guestSeatCount.value} guest${
+    guestSeatCount.value === 1 ? '' : 's'
+  } £${seatPrice.value[Roles.Workspace.Guest]}`
+
+  return `${memberText}${guestSeatCount.value > 0 ? `, ${guestText}` : ''}`
+})
 </script>
