@@ -40,7 +40,6 @@
       <AutomateAutomationCreateDialogSelectFunctionStep
         v-if="enumStep === AutomationCreateSteps.SelectFunction"
         v-model:selected-function="selectedFunction"
-        function-source="workspace"
         :show-label="false"
         :show-required="false"
         :preselected-function="validatedPreselectedFunction"
@@ -66,9 +65,9 @@
         <AutomateAutomationCreateDialogSelectFunctionStep
           v-if="isTestAutomation"
           v-model:selected-function="selectedFunction"
-          function-source="user"
           :preselected-function="validatedPreselectedFunction"
           :page-size="2"
+          :workspace-id="workspaceId"
         />
       </template>
     </div>

@@ -48,16 +48,6 @@ const searchQuery = graphql(`
     $search: String
     $cursor: String = null
   ) {
-    activeUser {
-      automateFunctions(limit: 20, filter: { search: $search }, cursor: $cursor) {
-        cursor
-        totalCount
-        items {
-          id
-          ...AutomateAutomationCreateDialog_AutomateFunction
-        }
-      }
-    }
     workspace(id: $workspaceId) {
       automateFunctions(limit: 20, filter: { search: $search }, cursor: $cursor) {
         cursor
@@ -73,7 +63,6 @@ const searchQuery = graphql(`
 
 const props = withDefaults(
   defineProps<{
-    functionSource: 'user' | 'workspace'
     workspaceId?: string
     preselectedFunction: Optional<CreateAutomationSelectableFunction>
     pageSize?: Optional<number>
@@ -114,15 +103,7 @@ const {
 })
 
 const queryItems = computed(() => {
-  switch (props.functionSource) {
-    case 'user': {
-      return result.value?.activeUser?.automateFunctions.items
-    }
-    case 'workspace':
-    default: {
-      return result.value?.workspace?.automateFunctions.items
-    }
-  }
+  return result.value?.workspace?.automateFunctions.items
 })
 const items = computed(() => {
   const baseItems = (queryItems.value || []).slice(0, props.pageSize)
