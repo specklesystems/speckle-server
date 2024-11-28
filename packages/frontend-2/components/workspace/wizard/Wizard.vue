@@ -6,5 +6,10 @@
 <script setup lang="ts">
 import { useWorkspacesWizard } from '~/lib/workspaces/composables/wizard'
 
-const { currentStepComponent } = useWorkspacesWizard()
+const { init, currentStepComponent } = useWorkspacesWizard()
+
+onMounted(() => {
+  // Todo: Fetch workspace data if in progress
+  init()
+})
 </script>

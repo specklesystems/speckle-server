@@ -8,13 +8,15 @@ import {
   PaidWorkspacePlans
 } from '~/lib/common/generated/gql/graphql'
 
-const input = ref<{
+type WorkspaceWizardState = {
   name: string
   slug: string
   invites: { id: string; email: string }[]
   plan: PaidWorkspacePlans | null
   billingInterval: BillingInterval | null
-}>({
+}
+
+const state = ref<WorkspaceWizardState>({
   name: '',
   slug: '',
   invites: [
@@ -39,6 +41,12 @@ const currentStepComponent = computed(
 )
 
 export const useWorkspacesWizard = () => {
+  const init = (initialState?: WorkspaceWizardState) => {
+    if (initialState) {
+      state.value = initialState
+    }
+  }
+
   const completeWizard = () => {}
 
   const goToNextStep = () => {
@@ -50,7 +58,7 @@ export const useWorkspacesWizard = () => {
     // Only continue to WorkspaceWizardStepRegion when the plan is Business
     if (
       currentStepIndex.value === 2 &&
-      input.value.plan !== PaidWorkspacePlans.Business
+      state.value.plan !== PaidWorkspacePlans.Business
     ) {
       completeWizard()
       return
@@ -65,9 +73,10 @@ export const useWorkspacesWizard = () => {
   }
 
   return {
-    input,
+    state,
     currentStepComponent,
     goToNextStep,
-    goToPreviousStep
+    goToPreviousStep,
+    init
   }
 }

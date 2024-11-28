@@ -5,7 +5,7 @@
   >
     <form class="flex flex-col gap-4 w-full md:w-96" @submit="onSubmit">
       <FormTextInput
-        v-model:model-value="input.name"
+        v-model:model-value="state.name"
         name="name"
         label="Workspace name"
         color="foundation"
@@ -16,7 +16,7 @@
         @update:model-value="updateShortId"
       />
       <FormTextInput
-        v-model:model-value="input.slug"
+        v-model:model-value="state.slug"
         name="slug"
         label="Short ID"
         :help="getShortIdHelp"
@@ -43,41 +43,41 @@ import { validateWorkspaceSlugQuery } from '~/lib/workspaces/graphql/queries'
 import { useWorkspacesWizard } from '~/lib/workspaces/composables/wizard'
 
 const { handleSubmit } = useForm<{ name: string; slug: string }>()
-const { input, goToNextStep } = useWorkspacesWizard()
+const { state, goToNextStep } = useWorkspacesWizard()
 const shortIdManuallyEdited = ref(false)
 
 const { error, loading } = useQuery(
   validateWorkspaceSlugQuery,
   () => ({
-    slug: input.value.slug
+    slug: state.value.slug
   }),
   () => ({
-    enabled: !!input.value.slug
+    enabled: !!state.value.slug
   })
 )
 
 const baseUrl = useRuntimeConfig().public.baseUrl
 
 const getShortIdHelp = computed(() =>
-  input.value.slug
-    ? `${baseUrl}/workspaces/${input.value.slug}`
+  state.value.slug
+    ? `${baseUrl}/workspaces/${state.value.slug}`
     : `Used after ${baseUrl}/workspaces/`
 )
 
 const updateShortId = debounce((newName: string) => {
   if (!shortIdManuallyEdited.value) {
     const newSlug = generateSlugFromName({ name: newName })
-    input.value.slug = newSlug
+    state.value.slug = newSlug
     updateDebouncedShortId(newSlug)
   }
 }, 600)
 
 const updateDebouncedShortId = debounce((newSlug: string) => {
-  input.value.slug = newSlug
+  state.value.slug = newSlug
 }, 300)
 
 const onSlugChange = (newSlug: string) => {
-  input.value.slug = newSlug
+  state.value.slug = newSlug
   shortIdManuallyEdited.value = true
   updateDebouncedShortId(newSlug)
 }
