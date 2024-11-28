@@ -177,7 +177,7 @@ export const reconcileWorkspaceSubscriptionFactory =
         // we're moving a product to a new price for ie upgrading to a yearly plan
       } else if (existingProduct.priceId !== product.priceId) {
         items.push({ quantity: product.quantity, price: product.priceId })
-        items.push({ id: product.subscriptionItemId, deleted: true })
+        items.push({ id: existingProduct.subscriptionItemId, deleted: true })
       } else {
         items.push({
           quantity: product.quantity,
