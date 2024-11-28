@@ -79,33 +79,47 @@ const buttonColor = computed(() => {
   // Else highlight current plan
   return props.currentPlan?.name === props.plan.name ? 'primary' : 'outline'
 })
+const isMatchingInterval = computed(
+  () =>
+    props.activeBillingInterval ===
+    (props.isYearlyPlan ? BillingInterval.Yearly : BillingInterval.Monthly)
+)
 const buttonEnabled = computed(() => {
-  if (!props.isAdmin) return false
+  // Always enable buttons during trial
   if (hasTrialPlan.value) return true
-  if (canUpgradeToPlan.value) return true
-  if (props.activeBillingInterval === BillingInterval.Monthly && props.isYearlyPlan)
-    return true
-  return false
+  // Disable if user is already on this plan with same billing interval
+  if (isMatchingInterval.value && props.currentPlan?.name === props.plan.name)
+    return false
+  // Handle billing interval changes
+  if (!isMatchingInterval.value) {
+    const isCurrentPlan = props.currentPlan?.name === props.plan.name
+    const isMonthlyToYearly =
+      props.isYearlyPlan && props.activeBillingInterval === BillingInterval.Monthly
+    // Allow yearly upgrades from monthly plans
+    if (isMonthlyToYearly) return isCurrentPlan || canUpgradeToPlan.value
+    // Never allow switching to monthly if currently on yearly billing
+    if (props.activeBillingInterval === BillingInterval.Yearly) return false
+    // Allow monthly plan changes only for upgrades
+    return canUpgradeToPlan.value
+  }
+  // Allow upgrades to higher tier plans
+  return canUpgradeToPlan.value
 })
 const buttonText = computed(() => {
-  if (props.currentPlan?.name === props.plan.name) return 'Current plan'
-  if (hasTrialPlan.value) return `Subscribe to ${startCase(props.plan.name)}`
-  if (canUpgradeToPlan.value) return `Upgrade to ${startCase(props.plan.name)}`
-  // Current and higherer plans are upgradeable to a yearly billing cycle
-  if (
-    props.activeBillingInterval === BillingInterval.Monthly &&
-    props.isYearlyPlan &&
-    props.currentPlan?.name === props.plan.name
-  )
-    return 'Change to annual plan'
-  // If on yearly plan and downgrade to monthly
-  if (
-    props.activeBillingInterval === BillingInterval.Yearly &&
-    !props.isYearlyPlan &&
-    props.currentPlan?.name === props.plan.name
-  )
-    return 'Change to monthly plan'
-  return ''
+  // Trial plan case
+  if (hasTrialPlan.value) {
+    return `Subscribe to ${startCase(props.plan.name)}`
+  }
+  // Current plan case
+  if (isMatchingInterval.value && props.currentPlan?.name === props.plan.name) {
+    return 'Current plan'
+  }
+  // Billing interval change case
+  if (!isMatchingInterval.value || !canUpgradeToPlan.value) {
+    return props.isYearlyPlan ? 'Change to annual plan' : 'Change to monthly plan'
+  }
+  // Upgrade case
+  return canUpgradeToPlan.value ? `Upgrade to ${startCase(props.plan.name)}` : ''
 })
 
 const onUpgradePlanClick = (plan: WorkspacePlans) => {
