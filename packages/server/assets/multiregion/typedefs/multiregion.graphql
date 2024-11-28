@@ -11,20 +11,19 @@ type ServerMultiRegionConfiguration {
   be filtered out from the result.
   """
   availableKeys: [String!]!
+    @hasServerRole(role: SERVER_ADMIN)
+    @hasScope(scope: "server:setup")
   """
-  List of regions that are currently enabled on the server using the available region keys
-  set in the multi region config file.
+  Regions available for project data residency
   """
-  regions: [ServerRegionItem!]!
+  regions: [ServerRegionItem!]! @hasServerRole(role: SERVER_USER)
 }
 
 extend type ServerInfo {
   """
-  Available to server admins only
+  Info about server regions
   """
   multiRegion: ServerMultiRegionConfiguration!
-    @hasServerRole(role: SERVER_ADMIN)
-    @hasScope(scope: "server:setup")
 }
 
 input CreateServerRegionInput {

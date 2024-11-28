@@ -17,6 +17,7 @@ import {
   GetWorkspaceBySlugOrId,
   GetWorkspaceCollaborators,
   GetWorkspaceCollaboratorsTotalCount,
+  GetWorkspaceCreationState,
   GetWorkspaceDomains,
   GetWorkspaceRoleForUser,
   GetWorkspaceRoles,
@@ -25,6 +26,7 @@ import {
   GetWorkspaces,
   StoreWorkspaceDomain,
   UpsertWorkspace,
+  UpsertWorkspaceCreationState,
   UpsertWorkspaceRole
 } from '@/modules/workspaces/domain/operations'
 import { Knex } from 'knex'
@@ -51,14 +53,19 @@ import {
 } from '@/modules/serverinvites/repositories/serverInvites'
 import { WorkspaceInviteResourceType } from '@/modules/workspaces/domain/constants'
 import { clamp } from 'lodash'
-import { WorkspaceTeamMember } from '@/modules/workspaces/domain/types'
+import {
+  WorkspaceCreationState,
+  WorkspaceTeamMember
+} from '@/modules/workspaces/domain/types'
 
 const tables = {
   streams: (db: Knex) => db<StreamRecord>('streams'),
   streamAcl: (db: Knex) => db<StreamAclRecord>('stream_acl'),
   workspaces: (db: Knex) => db<Workspace>('workspaces'),
   workspaceDomains: (db: Knex) => db<WorkspaceDomain>('workspace_domains'),
-  workspacesAcl: (db: Knex) => db<WorkspaceAcl>('workspace_acl')
+  workspacesAcl: (db: Knex) => db<WorkspaceAcl>('workspace_acl'),
+  workspaceCreationState: (db: Knex) =>
+    db<WorkspaceCreationState>('workspace_creation_state')
 }
 
 export const getUserDiscoverableWorkspacesFactory =
@@ -436,4 +443,25 @@ export const countWorkspaceRoleWithOptionalProjectRoleFactory =
 
     const [res] = await query
     return parseInt(res.count.toString())
+  }
+
+export const getWorkspaceCreationStateFactory =
+  ({ db }: { db: Knex }): GetWorkspaceCreationState =>
+  async ({ workspaceId }) => {
+    const creationState = await tables
+      .workspaceCreationState(db)
+      .select()
+      .where({ workspaceId })
+      .first()
+    return creationState || null
+  }
+
+export const upsertWorkspaceCreationStateFactory =
+  ({ db }: { db: Knex }): UpsertWorkspaceCreationState =>
+  async ({ workspaceCreationState }) => {
+    await tables
+      .workspaceCreationState(db)
+      .insert(workspaceCreationState)
+      .onConflict('workspaceId')
+      .merge()
   }

@@ -9,7 +9,7 @@ import {
 } from '@/modules/workspaces/tests/helpers/creation'
 import { BasicTestUser, createTestUser } from '@/test/authHelper'
 import {
-  GetWorkspaceAvailableRegionsDocument,
+  GetAvailableRegionsDocument,
   GetWorkspaceDefaultRegionDocument,
   SetWorkspaceDefaultRegionDocument
 } from '@/test/graphql/generated/graphql'
@@ -82,13 +82,11 @@ isEnabled
 
       describe('when listing', () => {
         it('can list if workspace admin', async () => {
-          const res = await apollo.execute(GetWorkspaceAvailableRegionsDocument, {
-            workspaceId: myFirstWorkspace.id
-          })
+          const res = await apollo.execute(GetAvailableRegionsDocument, {})
 
           expect(res).to.not.haveGraphQLErrors()
           expect(
-            res.data?.workspace.availableRegions.map((r) => r.key)
+            res.data?.serverInfo.multiRegion.regions.map((r) => r.key)
           ).to.deep.equalInAnyOrder([region1Key, region2Key, ...getRegionKeys()])
         })
       })
