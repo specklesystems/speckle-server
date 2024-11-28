@@ -9,16 +9,16 @@
     >
       <div class="flex flex-col gap-2 w-full">
         <FormTextInput
-          v-for="invite in invites"
-          :key="invite.id"
-          v-model="invite.email"
+          v-for="item in fields"
+          :key="item.value.id"
+          v-model="item.value.email"
           color="foundation"
-          name="email"
+          name="Email"
           size="lg"
           placeholder="Email address"
           show-clear
           full-width
-          :rules="[isRequired, isStringOfLength({ maxLength: 512 })]"
+          :rules="[isEmailOrEmpty]"
         />
         <div>
           <FormButton color="subtle" :icon-left="PlusIcon" @click="onAddInvite">
@@ -42,23 +42,37 @@
 <script setup lang="ts">
 import { useWorkspacesWizard } from '~/lib/workspaces/composables/wizard'
 import { PlusIcon } from '@heroicons/vue/24/outline'
+import { isEmailOrEmpty } from '~~/lib/common/helpers/validation'
+import { useForm, useFieldArray } from 'vee-validate'
 import { nanoid } from 'nanoid'
-import { isRequired, isStringOfLength } from '~~/lib/common/helpers/validation'
+
+interface InviteForm {
+  fields: { id: string; email: string }[]
+}
 
 const { input, goToNextStep, goToPreviousStep } = useWorkspacesWizard()
+const { handleSubmit } = useForm<InviteForm>({
+  initialValues: {
+    fields: input.value.invites
+  }
+})
+const { push, fields } = useFieldArray<{ id: string; email: string }>('fields')
 
-const { invites } = toRefs(input)
-
-const nextButtonText = computed(() => (invites.value.length > 0 ? 'Continue' : 'Skip'))
+const nextButtonText = computed(() =>
+  fields.value.filter((field) => !!field.value.email).length > 0 ? 'Continue' : 'Skip'
+)
 
 const onAddInvite = () => {
-  invites.value.push({
+  push({
     id: nanoid(),
     email: ''
   })
 }
 
-const onSubmit = () => {
+const onSubmit = handleSubmit(() => {
+  const validEmails = fields.value.map((field) => field.value)
+
+  input.value.invites = validEmails
   goToNextStep()
-}
+})
 </script>

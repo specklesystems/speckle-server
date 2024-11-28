@@ -17,6 +17,14 @@ export const VALID_EMAIL = /^[\w-_.+]+@[\w-_.+]+$/
 export const isEmail: GenericValidateFunction<string> = (val) =>
   (val || '').match(VALID_EMAIL) ? true : 'Value should be a valid e-mail address'
 
+/**
+ * Used for placeholders inputs where the user can leave the field empty
+ */
+export const isEmailOrEmpty: GenericValidateFunction<string> = (val) =>
+  (val || '').match(VALID_EMAIL) || !val
+    ? true
+    : 'Value should be a valid e-mail address'
+
 export const isOneOrMultipleEmails: GenericValidateFunction<string> = (val) => {
   const emails = (val || '').split(',').map((i) => i.trim())
   const valid = emails.every((e) => e.match(VALID_EMAIL))

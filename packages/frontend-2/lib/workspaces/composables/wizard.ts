@@ -9,10 +9,10 @@ import {
   PaidWorkspacePlans
 } from '~/lib/common/generated/gql/graphql'
 
-const input = reactive<{
+const input = ref<{
   name: string
   slug: string
-  invites: Array<{ id: string; email: string }>
+  invites: { id: string; email: string }[]
   plan: PaidWorkspacePlans | null
   billingInterval: BillingInterval | null
 }>({
