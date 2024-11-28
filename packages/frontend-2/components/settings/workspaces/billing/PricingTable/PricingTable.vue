@@ -54,10 +54,8 @@ const isYearlyPlan = ref(false)
 
 watch(
   () => props.activeBillingInterval,
-  (newValue) => {
-    if (newValue === BillingInterval.Yearly) {
-      isYearlyPlan.value = true
-    }
+  (newVal) => {
+    isYearlyPlan.value = newVal === BillingInterval.Yearly
   },
   { immediate: true }
 )
