@@ -1,6 +1,5 @@
 <template>
   <div class="text-body-xs space-y-4">
-    <p>To configure Okta SSO:</p>
     <ol class="list-decimal pl-4 space-y-2">
       <li>
         Go to

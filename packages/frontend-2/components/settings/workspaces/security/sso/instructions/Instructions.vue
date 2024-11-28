@@ -1,7 +1,8 @@
 <template>
-  <div class="flex flex-col gap-4">
+  <div class="mt-4">
+    <hr class="border-outline-3 mb-4" />
     <component :is="instructionComponent" :redirect-url="redirectUrl" />
-    <SettingsWorkspacesSecuritySsoInstructionsScopes />
+    <hr class="border-outline-3 my-6" />
   </div>
 </template>
 

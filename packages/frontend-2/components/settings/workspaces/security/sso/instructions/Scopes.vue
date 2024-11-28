@@ -1,6 +1,6 @@
 <template>
   <div>
-    <p class="text-body-xs mb-4">
+    <p class="text-body-xs">
       The application grant type should be set to "authorization_code." Below is a list
       of supported scopes and claims to configure in the application:
     </p>

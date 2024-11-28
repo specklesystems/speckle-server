@@ -32,7 +32,7 @@
 
       <!-- Existing Provider Configuration -->
       <div v-if="provider" class="p-4 border border-outline-3 rounded-lg">
-        <div v-if="!isEditing" class="flex items-center justify-between">
+        <div class="flex items-center justify-between">
           <div class="flex items-center gap-2">
             <h3 class="text-body-xs font-medium text-foreground">
               {{ provider.name }}
@@ -63,13 +63,6 @@
             />
           </LayoutMenu>
         </div>
-
-        <SettingsWorkspacesSecuritySsoForm
-          v-else
-          :workspace-slug="workspace.slug"
-          @cancel="handleCancel"
-          @submit="handleFormSubmit"
-        />
       </div>
 
       <!-- Configuration Instructions -->
@@ -101,6 +94,9 @@
             />
             <SettingsWorkspacesSecuritySsoForm
               :workspace-slug="workspace.slug"
+              :provider-name="selectedProviderValue?.label"
+              :issuer-url="selectedProviderValue?.issuerUrl"
+              :url-suffix="selectedProviderValue?.urlSuffix"
               @cancel="handleCancel"
               @submit="handleFormSubmit"
             />
@@ -132,6 +128,8 @@ import { Roles } from '@speckle/shared'
 type ProviderOption = {
   id: SsoProviderType
   label: string
+  issuerUrl?: string
+  urlSuffix?: string
 }
 
 graphql(`
@@ -214,11 +212,19 @@ const handleCancel = () => {
   isEditing.value = false
 }
 
-const providers = [
-  { id: SsoProviderType.Google, label: 'Google' },
-  { id: SsoProviderType.Okta, label: 'Okta' },
-  { id: SsoProviderType.EntraId, label: 'Microsoft Entra ID' },
-  { id: SsoProviderType.Custom, label: 'Manual Configuration' }
+const providers: ProviderOption[] = [
+  {
+    id: SsoProviderType.Google,
+    label: 'Google',
+    issuerUrl: 'https://accounts.google.com'
+  },
+  { id: SsoProviderType.Okta, label: 'Okta', urlSuffix: '.okta.com' },
+  {
+    id: SsoProviderType.EntraId,
+    label: 'Microsoft Entra ID',
+    urlSuffix: '.microsoft.com/v2.0'
+  },
+  { id: SsoProviderType.Custom, label: 'Custom Configuration' }
 ]
 
 // const goToBilling = () => {
