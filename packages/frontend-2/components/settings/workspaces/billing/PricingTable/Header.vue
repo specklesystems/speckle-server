@@ -97,7 +97,7 @@ const buttonText = computed(() => {
     props.isYearlyPlan &&
     props.currentPlan?.name === props.plan.name
   )
-    return 'Upgrade to yearly plan'
+    return 'Change to annual plan'
   // If on yearly plan and downgrade to monthly
   if (
     props.activeBillingInterval === BillingInterval.Yearly &&
