@@ -34,7 +34,7 @@ spec:
           periodSeconds: 60
           exec:
             command:
-              - /nodejs/bin/node
+              - /usr/bin/node
               - -e
               - process.exit(Date.now() - require('fs').readFileSync('/tmp/last_successful_query', 'utf8') > 25 * 60 * 1000)
 
@@ -59,6 +59,8 @@ spec:
         volumeMounts:
           - mountPath: /tmp
             name: tmp
+          - mountPath: /.config
+            name: dotconfig
         {{- if .Values.db.useCertificate }}
           - name: postgres-certificate
             mountPath: /postgres-certificate
@@ -97,10 +99,12 @@ spec:
           {{- if .Values.featureFlags.workspacesMultiRegionEnabled }}
           - name: FF_WORKSPACES_MULTI_REGION_ENABLED
             value: {{ .Values.featureFlags.workspacesMultiRegionEnabled | quote }}
-          - name: FF_FILEIMPORT_IFC_DOTNET_ENABLED
-            value: {{ .Values.featureFlags.fileImportIFCDotNetEnabled | quote }}
           - name: MULTI_REGION_CONFIG_PATH
             value: "/multi-region-config/multi-region-config.json"
+          {{- end }}
+          {{- if .Values.featureFlags.fileImportIFCDotNetEnabled }}
+          - name: FF_FILEIMPORT_IFC_DOTNET_ENABLED
+            value: {{ .Values.featureFlags.fileImportIFCDotNetEnabled | quote }}
           {{- end }}
       {{- if .Values.fileimport_service.affinity }}
       affinity: {{- include "speckle.renderTpl" (dict "value" .Values.fileimport_service.affinity "context" $) | nindent 8 }}
@@ -131,6 +135,8 @@ spec:
       terminationGracePeriodSeconds: 610
       volumes:
         - name: tmp
+          emptyDir: {}
+        - name: dotconfig
           emptyDir: {}
       {{- if .Values.db.useCertificate }}
         - name: postgres-certificate
