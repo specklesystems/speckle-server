@@ -12,6 +12,7 @@ import {
   MaybeAsync,
   MaybeNullOrUndefined,
   Optional,
+  ServerScope,
   timeoutAt
 } from '@speckle/shared'
 import { expect } from 'chai'
@@ -31,6 +32,7 @@ import { execute } from '@apollo/client/core'
 import { PingPongDocument } from '@/test/graphql/generated/graphql'
 import { BaseError } from '@/modules/shared/errors'
 import EventEmitter from 'eventemitter2'
+import { expectToThrow } from '@/test/assertionHelper'
 
 type TypedGraphqlResponse<R = Record<string, any>> = GraphQLResponse<R>
 
@@ -299,12 +301,19 @@ export const testApolloSubscriptionServer = async () => {
    */
   const buildClient = async (params?: {
     /**
-     * Real user id to auth the connection with. If unset, will be unauthenticated
+     * Real user id to auth the connection with. If unset, will be unauthenticated.
+     * Token will be given all scopes, unless overridden
      */
     authUserId?: string
+    /**
+     * Optionally provide the scopes you want the token to have
+     */
+    scopes?: ServerScope[]
   }) => {
-    const { authUserId } = params || {}
-    const token = authUserId ? await createAuthTokenForUser(authUserId) : undefined
+    const { authUserId, scopes } = params || {}
+    const token = authUserId
+      ? await createAuthTokenForUser(authUserId, scopes)
+      : undefined
     const wsClient = new SubscriptionClient(
       serverUrl,
       {
@@ -446,9 +455,31 @@ export const testApolloSubscriptionServer = async () => {
         }
       }
 
-      const getMessages = () => messages.slice()
+      /**
+       * Wrapper over waitForMessage() that does the inverse and expects a timeout
+       * to happen instead (no message should arrive)
+       */
+      const waitForTimeout = async (...params: Parameters<typeof waitForMessage>) => {
+        const e = await expectToThrow(() => waitForMessage(...params))
+        if (!e.message.includes('timeout')) {
+          throw e
+        }
+      }
 
-      return { unsub, waitForMessage, getMessages }
+      const getMessages = (
+        options?: Partial<{
+          /**
+           * Optionally check for a specific kind of message
+           */
+          predicate: (msg: FormattedExecutionResult<R>) => boolean
+        }>
+      ) => {
+        const { predicate } = options || {}
+        const msgs = messages.slice()
+        return predicate ? msgs.filter(predicate) : msgs
+      }
+
+      return { unsub, waitForMessage, getMessages, waitForTimeout }
     }
 
     /**

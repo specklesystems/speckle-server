@@ -1,22 +1,33 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { db } from '@/db/knex'
 import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import {
   addStreamDeletedActivityFactory,
   addStreamInviteAcceptedActivityFactory,
-  addStreamPermissionsAddedActivityFactory
+  addStreamPermissionsAddedActivityFactory,
+  addStreamPermissionsRevokedActivityFactory,
+  addStreamUpdatedActivityFactory
 } from '@/modules/activitystream/services/streamActivity'
+import { AllScopes } from '@/modules/core/helpers/mainConstants'
 import {
   deleteStreamFactory,
   getStreamCollaboratorsFactory,
   getStreamFactory,
-  grantStreamPermissionsFactory
+  grantStreamPermissionsFactory,
+  revokeStreamPermissionsFactory,
+  updateStreamFactory
 } from '@/modules/core/repositories/streams'
 import { getUserFactory } from '@/modules/core/repositories/users'
 import {
   addOrUpdateStreamCollaboratorFactory,
+  isStreamCollaboratorFactory,
+  removeStreamCollaboratorFactory,
   validateStreamAccessFactory
 } from '@/modules/core/services/streams/access'
-import { deleteStreamAndNotifyFactory } from '@/modules/core/services/streams/management'
+import {
+  deleteStreamAndNotifyFactory,
+  updateStreamAndNotifyFactory
+} from '@/modules/core/services/streams/management'
 import { getProjectDbClient } from '@/modules/multiregion/dbSelector'
 import { deleteAllResourceInvitesFactory } from '@/modules/serverinvites/repositories/serverInvites'
 import { authorizeResolver } from '@/modules/shared'
@@ -25,13 +36,17 @@ import {
   BasicTestWorkspace,
   createTestWorkspace
 } from '@/modules/workspaces/tests/helpers/creation'
+import { itEach } from '@/test/assertionHelper'
 import { BasicTestUser, createTestUser } from '@/test/authHelper'
 import {
+  OnProjectUpdatedDocument,
+  OnStreamUpdatedDocument,
   OnUserProjectsUpdatedDocument,
   OnUserProjectVersionsUpdatedDocument,
   OnUserStreamAddedDocument,
   OnUserStreamCommitCreatedDocument,
   OnUserStreamRemovedDocument,
+  ProjectUpdatedMessageType,
   UserProjectsUpdatedMessageType
 } from '@/test/graphql/generated/graphql'
 import {
@@ -46,10 +61,14 @@ import {
   waitForRegionUser
 } from '@/test/speckle-helpers/regions'
 import { BasicTestStream, createTestStreams } from '@/test/speckle-helpers/streamHelper'
-import { Roles } from '@speckle/shared'
+import { Optional, Roles, Scopes, ServerScope } from '@speckle/shared'
 import { expect } from 'chai'
 
 const saveActivity = saveActivityFactory({ db })
+const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
+const isStreamCollaborator = isStreamCollaboratorFactory({
+  getStream: getStreamFactory({ db })
+})
 
 const buildDeleteProject = async (params: { projectId: string; ownerId: string }) => {
   const { projectId, ownerId } = params
@@ -70,8 +89,23 @@ const buildDeleteProject = async (params: { projectId: string; ownerId: string }
   return async () => deleteStreamAndNotify(projectId, ownerId, null)
 }
 
+const buildUpdateProject = async (params: { projectId: string }) => {
+  const { projectId } = params
+  const projectDB = await getProjectDbClient({ projectId })
+  const updateStreamAndNotify = updateStreamAndNotifyFactory({
+    authorizeResolver,
+    getStream: getStreamFactory({ db: projectDB }),
+    updateStream: updateStreamFactory({ db: projectDB }),
+    addStreamUpdatedActivity: addStreamUpdatedActivityFactory({
+      saveActivity,
+      publish
+    })
+  })
+  return updateStreamAndNotify
+}
+
 const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
-  validateStreamAccess: validateStreamAccessFactory({ authorizeResolver }),
+  validateStreamAccess,
   getUser: getUserFactory({ db }),
   grantStreamPermissions: grantStreamPermissionsFactory({ db }),
   addStreamInviteAcceptedActivity: addStreamInviteAcceptedActivityFactory({
@@ -79,6 +113,16 @@ const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
     publish
   }),
   addStreamPermissionsAddedActivity: addStreamPermissionsAddedActivityFactory({
+    saveActivity,
+    publish
+  })
+})
+
+const removeStreamCollaborator = removeStreamCollaboratorFactory({
+  validateStreamAccess,
+  isStreamCollaborator,
+  revokeStreamPermissions: revokeStreamPermissionsFactory({ db }),
+  addStreamPermissionsRevokedActivity: addStreamPermissionsRevokedActivityFactory({
     saveActivity,
     publish
   })
@@ -129,6 +173,125 @@ describe('Core GraphQL Subscriptions (New)', () => {
       })
 
       describe('Project Subs', () => {
+        describe('scope tests', () => {
+          const randomProject: BasicTestStream = {
+            name: 'Scope test project',
+            id: '',
+            ownerId: '',
+            isPublic: true
+          }
+          let testClient: Optional<TestApolloSubscriptionClient> = undefined
+
+          before(async () => {
+            randomProject.workspaceId = myMainWorkspace.id
+            await createTestStreams([[randomProject, me]])
+          })
+
+          afterEach(async () => {
+            testClient?.quit()
+          })
+
+          type ScopeTest = {
+            title: string
+            withoutScope: ServerScope
+            sub: () => {
+              query: any
+              variables: any
+            }
+            triggerMessage: () => Promise<void>
+          }
+
+          const triggerProjectUpdate = async () => {
+            const projectId = randomProject.id
+            const updateProject = await buildUpdateProject({ projectId })
+            await updateProject(
+              { id: projectId, name: new Date().toISOString() },
+              me.id,
+              null
+            )
+          }
+
+          const scopeTests: ScopeTest[] = [
+            {
+              title: 'streamUpdated()',
+              withoutScope: Scopes.Streams.Read,
+              sub: () => ({
+                query: OnStreamUpdatedDocument,
+                variables: { streamId: randomProject.id }
+              }),
+              triggerMessage: triggerProjectUpdate
+            },
+            {
+              title: 'projectUpdated()',
+              withoutScope: Scopes.Streams.Read,
+              sub: () => ({
+                query: OnProjectUpdatedDocument,
+                variables: { projectId: randomProject.id }
+              }),
+              triggerMessage: triggerProjectUpdate
+            },
+            {
+              title: 'userProjectsUpdated()',
+              withoutScope: Scopes.Profile.Read,
+              sub: () => ({
+                query: OnUserProjectsUpdatedDocument,
+                variables: {}
+              }),
+              triggerMessage: async () => {
+                // Create a new project
+                const newProject: BasicTestStream = {
+                  name: 'New Scope Test Project',
+                  id: '',
+                  ownerId: me.id,
+                  isPublic: true,
+                  workspaceId: myMainWorkspace.id
+                }
+
+                await createTestStreams([[newProject, me]])
+              }
+            }
+          ]
+
+          scopeTests.forEach(({ title, withoutScope, sub, triggerMessage }) => {
+            itEach(
+              [{ allow: false }, { allow: true }],
+              ({ allow }) =>
+                `should ${allow ? '' : 'not '} allow ${title} sub with${
+                  !allow ? 'out' : ''
+                } ${withoutScope} scope`,
+              async ({ allow }) => {
+                testClient = await subServer.buildClient({
+                  authUserId: me.id,
+                  scopes: allow
+                    ? AllScopes
+                    : AllScopes.filter((s) => s !== withoutScope)
+                })
+
+                const { query, variables } = sub()
+                const onMessage = await testClient.subscribe(
+                  query,
+                  variables,
+                  (res) => {
+                    if (allow) {
+                      expect(res).to.not.haveGraphQLErrors()
+                    } else {
+                      expect(res).to.haveGraphQLErrors(
+                        'Your auth token does not have the required scope'
+                      )
+                    }
+                  }
+                )
+                await testClient.waitForReadiness()
+
+                await triggerMessage()
+                await onMessage.waitForMessage()
+
+                expect(onMessage.getMessages()).to.have.length(1)
+              }
+            )
+          })
+        })
+
         it('should notify me of a new project (userProjectsUpdated/userStreamAdded)', async () => {
           const onUserProjectsUpdated = await meSubClient.subscribe(
             OnUserProjectsUpdatedDocument,
@@ -274,6 +437,140 @@ describe('Core GraphQL Subscriptions (New)', () => {
           expect(onUserProjectsUpdated.getMessages()).to.have.length(1)
           expect(onUserStreamRemoved.getMessages()).to.have.length(1)
         })
+
+        it('should notify me of a project ive just been removed from (userProjectsUpdated/userStreamRemoved)', async () => {
+          const otherGuysProj: BasicTestStream = {
+            name: 'Other Guys Project #2',
+            id: '',
+            ownerId: otherGuy.id,
+            isPublic: true,
+            workspaceId: myMainWorkspace.id
+          }
+          await createTestStreams([[otherGuysProj, otherGuy]])
+          await addOrUpdateStreamCollaborator(
+            otherGuysProj.id,
+            me.id,
+            Roles.Stream.Contributor,
+            otherGuy.id
+          )
+
+          const onUserProjectsUpdated = await meSubClient.subscribe(
+            OnUserProjectsUpdatedDocument,
+            {},
+            (res) => {
+              expect(res).to.not.haveGraphQLErrors()
+              expect(res.data?.userProjectsUpdated.type).to.equal(
+                UserProjectsUpdatedMessageType.Removed
+              )
+              expect(res.data?.userProjectsUpdated.id).to.equal(otherGuysProj.id)
+            }
+          )
+          const onUserStreamRemoved = await meSubClient.subscribe(
+            OnUserStreamRemovedDocument,
+            {},
+            (res) => {
+              expect(res).to.not.haveGraphQLErrors()
+              expect(res.data?.userStreamRemoved?.id).to.equal(otherGuysProj.id)
+            }
+          )
+          await meSubClient.waitForReadiness()
+          await removeStreamCollaborator(otherGuysProj.id, me.id, otherGuy.id, null)
+
+          await Promise.all([
+            onUserProjectsUpdated.waitForMessage(),
+            onUserStreamRemoved.waitForMessage()
+          ])
+
+          expect(onUserProjectsUpdated.getMessages()).to.have.length(1)
+          expect(onUserStreamRemoved.getMessages()).to.have.length(1)
+        })
+
+        it('should notify me of a project update (projectUpdated/streamUpdate)', async () => {
+          const myProj: BasicTestStream = {
+            name: 'My New Test3 Project',
+            id: '',
+            ownerId: me.id,
+            isPublic: true,
+            workspaceId: myMainWorkspace.id
+          }
+          await createTestStreams([[myProj, me]])
+          const updateProject = await buildUpdateProject({ projectId: myProj.id })
+
+          const onUserProjectsUpdated = await meSubClient.subscribe(
+            OnProjectUpdatedDocument,
+            { projectId: myProj.id },
+            (res) => {
+              expect(res).to.not.haveGraphQLErrors()
+              expect(res.data?.projectUpdated.type).to.equal(
+                ProjectUpdatedMessageType.Updated
+              )
+              expect(res.data?.projectUpdated.project?.id).to.equal(myProj.id)
+            }
+          )
+          const onStreamUpdated = await meSubClient.subscribe(
+            OnStreamUpdatedDocument,
+            { streamId: myProj.id },
+            (res) => {
+              expect(res).to.not.haveGraphQLErrors()
+              expect(res.data?.streamUpdated?.id).to.equal(myProj.id)
+            }
+          )
+          await meSubClient.waitForReadiness()
+          await updateProject(
+            { id: myProj.id, name: 'Updated Project Name' },
+            me.id,
+            null
+          )
+
+          await Promise.all([
+            onUserProjectsUpdated.waitForMessage(),
+            onStreamUpdated.waitForMessage()
+          ])
+
+          expect(onUserProjectsUpdated.getMessages()).to.have.length(1)
+          expect(onStreamUpdated.getMessages()).to.have.length(1)
+        })
+
+        it('should not notify me of a project update for a different project', async () => {
+          const myProj: BasicTestStream = {
+            name: 'My New Test4 Project',
+            id: '',
+            ownerId: me.id,
+            isPublic: true,
+            workspaceId: myMainWorkspace.id
+          }
+          await createTestStreams([[myProj, me]])
+          const updateProject = await buildUpdateProject({ projectId: myProj.id })
+
+          const onUserProjectsUpdated = await meSubClient.subscribe(
+            OnProjectUpdatedDocument,
+            { projectId: 'aaa' },
+            () => {
+              throw new Error('Message received for wrong project')
+            }
+          )
+          const onStreamUpdated = await meSubClient.subscribe(
+            OnStreamUpdatedDocument,
+            { streamId: 'bbb' },
+            () => {
+              throw new Error('Message received for wrong project')
+            }
+          )
+          await meSubClient.waitForReadiness()
+          await updateProject(
+            { id: myProj.id, name: 'Updated Project Name' },
+            me.id,
+            null
+          )
+
+          await Promise.all([
+            onUserProjectsUpdated.waitForTimeout(),
+            onStreamUpdated.waitForTimeout()
+          ])
+
+          expect(onUserProjectsUpdated.getMessages()).to.have.length(0)
+          expect(onStreamUpdated.getMessages()).to.have.length(0)
+        })
       })
 
       describe('Version Subs', () => {
@@ -329,6 +626,20 @@ describe('Core GraphQL Subscriptions (New)', () => {
 
           expect(onUserProjectVersionsUpdated.getMessages()).to.have.length(1)
           expect(onUserStreamCommitCreated.getMessages()).to.have.length(1)
+        })
+      })
+
+      describe('Model Subs', () => {
+        const myModelProj: BasicTestStream = {
+          name: 'My New Model Project #1',
+          id: '',
+          ownerId: '',
+          isPublic: true
+        }
+
+        before(async () => {
+          myModelProj.workspaceId = myMainWorkspace.id
+          await createTestStreams([[myModelProj, me]])
         })
       })
     })
