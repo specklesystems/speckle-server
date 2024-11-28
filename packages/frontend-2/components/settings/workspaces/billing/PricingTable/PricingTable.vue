@@ -28,6 +28,7 @@ graphql(`
   fragment SettingsWorkspacesBillingPricingTable_WorkspacePlan on WorkspacePlan {
     name
     status
+    createdAt
   }
 `)
 
