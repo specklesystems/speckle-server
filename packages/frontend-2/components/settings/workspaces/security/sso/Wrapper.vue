@@ -89,7 +89,7 @@
         >
           <template #option="{ item }">{{ item.label }}</template>
           <template #something-selected="{ value }">
-            {{ (Array.isArray(value) ? value[0] : value).label }}
+            {{ isArray(value) ? value[0].label : value.label }}
           </template>
         </FormSelectBase>
 
@@ -132,6 +132,7 @@ import { graphql } from '~/lib/common/generated/gql'
 import { useMenuState } from '~/lib/settings/composables/menu'
 import { SettingMenuKeys } from '~/lib/settings/helpers/types'
 import { Roles } from '@speckle/shared'
+import { isArray } from 'lodash-es'
 
 type ProviderOption = {
   id: SsoProviderType
@@ -220,20 +221,27 @@ const handleCancel = () => {
   isEditing.value = false
 }
 
-const providers: ProviderOption[] = [
+const providers = computed<ProviderOption[]>(() => [
   {
     id: SsoProviderType.Google,
     label: 'Google',
     issuerUrl: 'https://accounts.google.com'
   },
-  { id: SsoProviderType.Okta, label: 'Okta', urlSuffix: '.okta.com' },
+  {
+    id: SsoProviderType.Okta,
+    label: 'Okta',
+    urlSuffix: '.okta.com'
+  },
   {
     id: SsoProviderType.EntraId,
     label: 'Microsoft Entra ID',
     urlSuffix: '.microsoft.com/v2.0'
   },
-  { id: SsoProviderType.Custom, label: 'Custom Configuration' }
-]
+  {
+    id: SsoProviderType.Custom,
+    label: 'Custom Configuration'
+  }
+])
 
 const goToBilling = () => {
   goToWorkspaceMenuItem(props.workspace.id, SettingMenuKeys.Workspace.Billing)

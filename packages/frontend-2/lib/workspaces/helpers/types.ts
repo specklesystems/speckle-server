@@ -5,16 +5,6 @@ export enum SsoProviderType {
   Custom = 'custom'
 }
 
-export type SsoProvider = {
-  id: SsoProviderType
-  label: string
-  defaultName: string
-  issuerUrl?: string
-  instructions: string
-  domainLabel?: string
-  domainSuffix?: string
-}
-
 export type SsoFormValues = {
   providerName: string
   clientId: string

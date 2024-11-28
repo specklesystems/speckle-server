@@ -24,7 +24,7 @@ const OktaInstructions = resolveComponent(
 const EntraIdInstructions = resolveComponent(
   'SettingsWorkspacesSecuritySsoInstructionsEntraId'
 )
-const ManualInstructions = resolveComponent(
+const CustomInstructions = resolveComponent(
   'SettingsWorkspacesSecuritySsoInstructionsCustom'
 )
 
@@ -37,7 +37,7 @@ const instructionComponent = computed(() => {
     case SsoProviderType.EntraId:
       return EntraIdInstructions
     default:
-      return ManualInstructions
+      return CustomInstructions
   }
 })
 
