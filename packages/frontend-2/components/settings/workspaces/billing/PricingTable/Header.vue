@@ -53,7 +53,7 @@ const props = defineProps<{
   activeBillingInterval?: BillingInterval
 }>()
 
-const { upgradePlanRedirect } = useBillingActions()
+const { redirectToCheckout, upgradePlan } = useBillingActions()
 
 const canUpgradeToPlan = computed(() => {
   if (!props.currentPlan) return false
@@ -110,10 +110,18 @@ const buttonText = computed(() => {
 
 const onUpgradePlanClick = (plan: WorkspacePlans) => {
   if (!isPaidPlan(plan) || !props.workspaceId) return
-  upgradePlanRedirect({
-    plan: plan as unknown as PaidWorkspacePlans,
-    cycle: props.isYearlyPlan ? BillingInterval.Yearly : BillingInterval.Monthly,
-    workspaceId: props.workspaceId
-  })
+  if (hasTrialPlan.value) {
+    redirectToCheckout({
+      plan: plan as unknown as PaidWorkspacePlans,
+      cycle: props.isYearlyPlan ? BillingInterval.Yearly : BillingInterval.Monthly,
+      workspaceId: props.workspaceId
+    })
+  } else {
+    upgradePlan({
+      plan: plan as unknown as PaidWorkspacePlans,
+      cycle: props.isYearlyPlan ? BillingInterval.Yearly : BillingInterval.Monthly,
+      workspaceId: props.workspaceId
+    })
+  }
 }
 </script>

@@ -1,6 +1,9 @@
 import { useApolloClient, useMutation } from '@vue/apollo-composable'
 import { settingsWorkspaceBillingCustomerPortalQuery } from '~/lib/settings/graphql/queries'
-import { billingUpgradePlanRedirectMutation } from '~/lib/billing/graphql/mutations'
+import {
+  billingCreateCheckoutSessionMutation,
+  billingUpgradePlanMuation
+} from '~/lib/billing/graphql/mutations'
 import type {
   PaidWorkspacePlans,
   BillingInterval
@@ -21,7 +24,7 @@ export const useBillingActions = () => {
   )
 
   const billingPortalRedirect = async (workspaceId: string) => {
-    mixpanel.track('Billing Portal Button Clicked', {
+    mixpanel.track('Workspace Billing Portal Button Clicked', {
       // eslint-disable-next-line camelcase
       workspace_id: workspaceId
     })
@@ -38,13 +41,13 @@ export const useBillingActions = () => {
     }
   }
 
-  const upgradePlanRedirect = async (args: {
+  const redirectToCheckout = async (args: {
     plan: PaidWorkspacePlans
     cycle: BillingInterval
     workspaceId: string
   }) => {
     const { plan, cycle, workspaceId } = args
-    mixpanel.track('Upgrade Button Clicked', {
+    mixpanel.track('Workspace Subscribe Button Clicked', {
       plan,
       cycle,
       // eslint-disable-next-line camelcase
@@ -53,7 +56,7 @@ export const useBillingActions = () => {
 
     const result = await apollo
       .mutate({
-        mutation: billingUpgradePlanRedirectMutation,
+        mutation: billingCreateCheckoutSessionMutation,
         variables: {
           input: {
             workspaceId,
@@ -73,6 +76,54 @@ export const useBillingActions = () => {
       triggerNotification({
         type: ToastNotificationType.Danger,
         description: errMsg
+      })
+    }
+  }
+
+  const upgradePlan = async (args: {
+    plan: PaidWorkspacePlans
+    cycle: BillingInterval
+    workspaceId: string
+  }) => {
+    const { plan, cycle, workspaceId } = args
+    mixpanel.track('Workspace Upgrade Button Clicked', {
+      plan,
+      cycle,
+      // eslint-disable-next-line camelcase
+      workspace_id: workspaceId
+    })
+
+    const result = await apollo
+      .mutate({
+        mutation: billingUpgradePlanMuation,
+        variables: {
+          input: {
+            workspaceId,
+            billingInterval: cycle,
+            workspacePlan: plan
+          }
+        }
+      })
+      .catch(convertThrowIntoFetchResult)
+
+    if (result.data) {
+      mixpanel.track('Workspace Upgraded', {
+        plan,
+        cycle,
+        // eslint-disable-next-line camelcase
+        workspace_id: workspaceId
+      })
+
+      triggerNotification({
+        type: ToastNotificationType.Success,
+        title: 'Workspace plan upgraded',
+        description: `Your workspace is now on a ${cycle}ly ${plan} plan`
+      })
+    } else {
+      const errMsg = getFirstGqlErrorMessage(result?.errors)
+      triggerNotification({
+        type: ToastNotificationType.Danger,
+        title: errMsg
       })
     }
   }
@@ -115,8 +166,9 @@ export const useBillingActions = () => {
 
   return {
     billingPortalRedirect,
-    upgradePlanRedirect,
+    redirectToCheckout,
     cancelCheckoutSession,
-    validateCheckoutSession
+    validateCheckoutSession,
+    upgradePlan
   }
 }
