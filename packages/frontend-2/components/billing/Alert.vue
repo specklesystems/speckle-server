@@ -42,6 +42,7 @@ graphql(`
     plan {
       name
       status
+      createdAt
     }
     subscription {
       billingInterval
@@ -65,8 +66,9 @@ const isPaymentFailed = computed(
   () => planStatus.value === WorkspacePlanStatuses.PaymentFailed
 )
 const trialDaysLeft = computed(() => {
-  const endDate = props.workspace.subscription?.currentBillingCycleEnd
-  const diffDays = dayjs(endDate).diff(dayjs(), 'day')
+  const createdAt = props.workspace.plan?.createdAt
+  const trialEndDate = dayjs(createdAt).add(31, 'days')
+  const diffDays = trialEndDate.diff(dayjs(), 'day')
   return Math.max(0, diffDays)
 })
 const title = computed(() => {

@@ -40,7 +40,7 @@ const documents = {
     "\n  fragment AutomateRunsTriggerStatusDialogRunsRows_AutomateRun on AutomateRun {\n    id\n    functionRuns {\n      id\n      ...AutomateRunsTriggerStatusDialogFunctionRun_AutomateFunctionRun\n    }\n    ...AutomationsStatusOrderedRuns_AutomationRun\n  }\n": types.AutomateRunsTriggerStatusDialogRunsRows_AutomateRunFragmentDoc,
     "\n  fragment AutomateViewerPanel_AutomateRun on AutomateRun {\n    id\n    functionRuns {\n      id\n      ...AutomateViewerPanelFunctionRunRow_AutomateFunctionRun\n    }\n    ...AutomationsStatusOrderedRuns_AutomationRun\n  }\n": types.AutomateViewerPanel_AutomateRunFragmentDoc,
     "\n  fragment AutomateViewerPanelFunctionRunRow_AutomateFunctionRun on AutomateFunctionRun {\n    id\n    results\n    status\n    statusMessage\n    contextView\n    function {\n      id\n      logo\n      name\n    }\n    createdAt\n    updatedAt\n  }\n": types.AutomateViewerPanelFunctionRunRow_AutomateFunctionRunFragmentDoc,
-    "\n  fragment BillingAlert_Workspace on Workspace {\n    id\n    plan {\n      name\n      status\n    }\n    subscription {\n      billingInterval\n      currentBillingCycleEnd\n    }\n  }\n": types.BillingAlert_WorkspaceFragmentDoc,
+    "\n  fragment BillingAlert_Workspace on Workspace {\n    id\n    plan {\n      name\n      status\n      createdAt\n    }\n    subscription {\n      billingInterval\n      currentBillingCycleEnd\n    }\n  }\n": types.BillingAlert_WorkspaceFragmentDoc,
     "\n  fragment CommonModelSelectorModel on Model {\n    id\n    name\n  }\n": types.CommonModelSelectorModelFragmentDoc,
     "\n  fragment DashboardProjectCard_Project on Project {\n    id\n    name\n    role\n    updatedAt\n    models {\n      totalCount\n    }\n    team {\n      user {\n        ...LimitedUserAvatar\n      }\n    }\n    workspace {\n      id\n      slug\n      name\n      ...WorkspaceAvatar_Workspace\n    }\n  }\n": types.DashboardProjectCard_ProjectFragmentDoc,
     "\n  fragment FormSelectModels_Model on Model {\n    id\n    name\n  }\n": types.FormSelectModels_ModelFragmentDoc,
@@ -485,7 +485,7 @@ export function graphql(source: "\n  fragment AutomateViewerPanelFunctionRunRow_
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment BillingAlert_Workspace on Workspace {\n    id\n    plan {\n      name\n      status\n    }\n    subscription {\n      billingInterval\n      currentBillingCycleEnd\n    }\n  }\n"): (typeof documents)["\n  fragment BillingAlert_Workspace on Workspace {\n    id\n    plan {\n      name\n      status\n    }\n    subscription {\n      billingInterval\n      currentBillingCycleEnd\n    }\n  }\n"];
+export function graphql(source: "\n  fragment BillingAlert_Workspace on Workspace {\n    id\n    plan {\n      name\n      status\n      createdAt\n    }\n    subscription {\n      billingInterval\n      currentBillingCycleEnd\n    }\n  }\n"): (typeof documents)["\n  fragment BillingAlert_Workspace on Workspace {\n    id\n    plan {\n      name\n      status\n      createdAt\n    }\n    subscription {\n      billingInterval\n      currentBillingCycleEnd\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
