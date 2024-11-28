@@ -152,11 +152,7 @@ import {
   WorkspaceSubscriptions
 } from '@/modules/shared/utils/subscriptions'
 import { updateStreamRoleAndNotifyFactory } from '@/modules/core/services/streams/management'
-import {
-  getUserByEmailFactory,
-  getUserFactory,
-  getUsersFactory
-} from '@/modules/core/repositories/users'
+import { getUserFactory, getUsersFactory } from '@/modules/core/repositories/users'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { commandFactory } from '@/modules/shared/command'
 import { withTransaction } from '@/modules/shared/helpers/dbHelper'
@@ -312,7 +308,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
         },
         workspaceSsoByEmail: async (_parent, args) => {
           const workspaces = await listWorkspaceSsoMembershipsByUserEmailFactory({
-            getUserByEmail: getUserByEmailFactory({ db }),
+            findEmail: findEmailFactory({ db }),
             listWorkspaceSsoMemberships: listWorkspaceSsoMembershipsFactory({ db })
           })({
             userEmail: args.email
