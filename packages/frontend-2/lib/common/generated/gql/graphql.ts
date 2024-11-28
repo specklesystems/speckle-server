@@ -3536,6 +3536,11 @@ export type UpdateVersionInput = {
   versionId: Scalars['ID']['input'];
 };
 
+export type UpgradePlanInput = {
+  targetPlan: PaidWorkspacePlans;
+  workspaceId: Scalars['ID']['input'];
+};
+
 /**
  * Full user type, should only be used in the context of admin operations or
  * when a user is reading/writing info about himself
@@ -4103,6 +4108,7 @@ export type WorkspaceBillingMutations = {
   __typename?: 'WorkspaceBillingMutations';
   cancelCheckoutSession: Scalars['Boolean']['output'];
   createCheckoutSession: CheckoutSession;
+  upgradePlan: Scalars['Boolean']['output'];
 };
 
 
@@ -4113,6 +4119,11 @@ export type WorkspaceBillingMutationsCancelCheckoutSessionArgs = {
 
 export type WorkspaceBillingMutationsCreateCheckoutSessionArgs = {
   input: CheckoutSessionInput;
+};
+
+
+export type WorkspaceBillingMutationsUpgradePlanArgs = {
+  input: UpgradePlanInput;
 };
 
 /** Overridden by `WorkspaceCollaboratorGraphQLReturn` */
@@ -7755,6 +7766,7 @@ export type WorkspaceFieldArgs = {
 export type WorkspaceBillingMutationsFieldArgs = {
   cancelCheckoutSession: WorkspaceBillingMutationsCancelCheckoutSessionArgs,
   createCheckoutSession: WorkspaceBillingMutationsCreateCheckoutSessionArgs,
+  upgradePlan: WorkspaceBillingMutationsUpgradePlanArgs,
 }
 export type WorkspaceCollaboratorFieldArgs = {
   id: {},
