@@ -14,21 +14,13 @@
             Allow logins through your OpenID identity provider.
           </p>
         </div>
-        <div v-if="workspace.hasAccessToSSO">
-          <FormButton
-            v-if="isWorkspaceAdmin"
-            :disabled="isFormVisible || !!provider"
-            @click="handleConfigureClick"
-          >
-            Configure
-          </FormButton>
+        <FormButton v-if="isWorkspaceAdmin" @click="handleConfigureClick">
+          Configure
+        </FormButton>
 
-          <div v-else v-tippy="`You must be a workspace admin`">
-            <FormButton disabled>Configure</FormButton>
-          </div>
+        <div v-else v-tippy="`You must be a workspace admin`">
+          <FormButton disabled>Configure</FormButton>
         </div>
-
-        <FormButton v-else @click="goToBilling">Upgrade to Plus</FormButton>
       </div>
 
       <CommonCard
@@ -138,8 +130,8 @@ import type { LayoutMenuItem } from '@speckle/ui-components'
 import { HorizontalDirection } from '~~/lib/common/composables/window'
 import { EllipsisHorizontalIcon } from '@heroicons/vue/24/solid'
 import { graphql } from '~/lib/common/generated/gql'
-import { useMenuState } from '~/lib/settings/composables/menu'
-import { SettingMenuKeys } from '~/lib/settings/helpers/types'
+// import { useMenuState } from '~/lib/settings/composables/menu'
+// import { SettingMenuKeys } from '~/lib/settings/helpers/types'
 import { Roles } from '@speckle/shared'
 
 graphql(`
@@ -167,7 +159,7 @@ enum ActionTypes {
   Delete = 'delete'
 }
 
-const { goToWorkspaceMenuItem } = useMenuState()
+// const { goToWorkspaceMenuItem } = useMenuState()
 const apiOrigin = useApiOrigin()
 const logger = useLogger()
 const menuId = useId()
@@ -232,7 +224,7 @@ const redirectUrl = computed(() => {
   return `${apiOrigin}/api/v1/workspaces/${props.workspace.slug}/sso/oidc/callback?validate=true`
 })
 
-const goToBilling = () => {
-  goToWorkspaceMenuItem(props.workspace.id, SettingMenuKeys.Workspace.Billing)
-}
+// const goToBilling = () => {
+//   goToWorkspaceMenuItem(props.workspace.id, SettingMenuKeys.Workspace.Billing)
+// }
 </script>
