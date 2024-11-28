@@ -406,7 +406,7 @@ export const testApolloSubscriptionServer = async () => {
            */
           predicate: (msg: FormattedExecutionResult<R>) => boolean
         }>
-      ) => {
+      ): Promise<FormattedExecutionResult<R>> => {
         const { timeout = 200, allowPreviousMessages = true, predicate } = options || {}
 
         // First check for previous errors
@@ -414,23 +414,29 @@ export const testApolloSubscriptionServer = async () => {
           const firstErr = processingErrors[0]
           processingErrors = []
 
-          throw firstErr
+          throw new TestApolloSubscriptionError(
+            buildLogMsg('waitForMessage() failed'),
+            {
+              cause: ensureError(firstErr)
+            }
+          )
         }
 
         // Then lets check previous messages
         if (allowPreviousMessages) {
           const found = messages.find((msg) => !predicate || predicate(msg))
-          if (found) return // Found it!
+          if (found) return found // Found it!
         }
 
         // Now lets wait for incoming ones
+        const retPromise = buildManualPromise<FormattedExecutionResult<R>>()
         const unlisten = () => {
           eventBus.removeListener('message', onMessage)
           eventBus.removeListener('error', onError)
         }
         const onMessage = async (msg: FormattedExecutionResult<R>) => {
           if (!predicate || predicate(msg)) {
-            retPromise.resolve()
+            retPromise.resolve(msg)
             unlisten()
           }
         }
@@ -439,12 +445,11 @@ export const testApolloSubscriptionServer = async () => {
           unlisten()
         }
 
-        const retPromise = buildManualPromise<void>()
         eventBus.on('message', onMessage)
         eventBus.on('error', onError)
 
         try {
-          await Promise.race([retPromise.promise, timeoutAt(timeout)])
+          return await Promise.race([retPromise.promise, timeoutAt(timeout)])
         } catch (e) {
           throw new TestApolloSubscriptionError(
             buildLogMsg('waitForMessage() failed'),

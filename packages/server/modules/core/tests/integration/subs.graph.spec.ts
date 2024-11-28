@@ -1,7 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { db } from '@/db/knex'
 import { saveActivityFactory } from '@/modules/activitystream/repositories'
-import { addBranchUpdatedActivityFactory } from '@/modules/activitystream/services/branchActivity'
+import {
+  addBranchDeletedActivityFactory,
+  addBranchUpdatedActivityFactory
+} from '@/modules/activitystream/services/branchActivity'
 import {
   addStreamDeletedActivityFactory,
   addStreamInviteAcceptedActivityFactory,
@@ -9,8 +12,10 @@ import {
   addStreamPermissionsRevokedActivityFactory,
   addStreamUpdatedActivityFactory
 } from '@/modules/activitystream/services/streamActivity'
+import { ModelsEmitter } from '@/modules/core/events/modelsEmitter'
 import { AllScopes } from '@/modules/core/helpers/mainConstants'
 import {
+  deleteBranchByIdFactory,
   getBranchByIdFactory,
   updateBranchFactory
 } from '@/modules/core/repositories/branches'
@@ -19,11 +24,15 @@ import {
   getStreamCollaboratorsFactory,
   getStreamFactory,
   grantStreamPermissionsFactory,
+  markBranchStreamUpdatedFactory,
   revokeStreamPermissionsFactory,
   updateStreamFactory
 } from '@/modules/core/repositories/streams'
 import { getUserFactory } from '@/modules/core/repositories/users'
-import { updateBranchAndNotifyFactory } from '@/modules/core/services/branch/management'
+import {
+  deleteBranchAndNotifyFactory,
+  updateBranchAndNotifyFactory
+} from '@/modules/core/services/branch/management'
 import {
   addOrUpdateStreamCollaboratorFactory,
   isStreamCollaboratorFactory,
@@ -46,6 +55,7 @@ import { itEach } from '@/test/assertionHelper'
 import { BasicTestUser, createTestUser } from '@/test/authHelper'
 import {
   OnBranchCreatedDocument,
+  OnBranchDeletedDocument,
   OnBranchUpdatedDocument,
   OnProjectModelsUpdatedDocument,
   OnProjectUpdatedDocument,
@@ -55,6 +65,7 @@ import {
   OnUserStreamAddedDocument,
   OnUserStreamCommitCreatedDocument,
   OnUserStreamRemovedDocument,
+  ProjectModelsUpdatedMessageType,
   ProjectUpdatedMessageType,
   UserProjectsUpdatedMessageType
 } from '@/test/graphql/generated/graphql'
@@ -70,6 +81,7 @@ import {
   createTestBranches
 } from '@/test/speckle-helpers/branchHelper'
 import { BasicTestCommit, createTestCommits } from '@/test/speckle-helpers/commitHelper'
+import { TestError } from '@/test/speckle-helpers/error'
 import {
   isMultiRegionTestMode,
   waitForRegionUser
@@ -133,6 +145,27 @@ const buildUpdateModel = async (params: { projectId: string }) => {
   return updateBranchAndNotify
 }
 
+const buildDeleteModel = async (params: { projectId: string }) => {
+  const { projectId } = params
+  const projectDB = await getProjectDbClient({ projectId })
+  const markBranchStreamUpdated = markBranchStreamUpdatedFactory({
+    db: projectDB
+  })
+  const getStream = getStreamFactory({ db })
+  const deleteBranchAndNotify = deleteBranchAndNotifyFactory({
+    getStream,
+    getBranchById: getBranchByIdFactory({ db: projectDB }),
+    modelsEventsEmitter: ModelsEmitter.emit,
+    markBranchStreamUpdated,
+    addBranchDeletedActivity: addBranchDeletedActivityFactory({
+      saveActivity: saveActivityFactory({ db }),
+      publish
+    }),
+    deleteBranchById: deleteBranchByIdFactory({ db: projectDB })
+  })
+  return deleteBranchAndNotify
+}
+
 const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
   validateStreamAccess,
   getUser: getUserFactory({ db }),
@@ -188,11 +221,23 @@ describe('Core GraphQL Subscriptions (New)', () => {
         slug: '',
         name: 'My Main Workspace'
       }
+      const otherGuysWorkspace: BasicTestWorkspace = {
+        id: '',
+        ownerId: '',
+        slug: '',
+        name: 'Other Guys Workspace'
+      }
 
       before(async () => {
-        await createTestWorkspace(myMainWorkspace, me, {
-          regionKey: isMultiRegion ? getMainTestRegionKey() : undefined
-        })
+        await Promise.all([
+          createTestWorkspace(myMainWorkspace, me, {
+            regionKey: isMultiRegion ? getMainTestRegionKey() : undefined
+          }),
+          createTestWorkspace(otherGuysWorkspace, otherGuy, {
+            regionKey: isMultiRegion ? getMainTestRegionKey() : undefined
+          })
+        ])
+
         if (isMultiRegion) {
           await Promise.all([
             waitForRegionUser({ userId: me.id }),
@@ -355,7 +400,7 @@ describe('Core GraphQL Subscriptions (New)', () => {
             id: '',
             ownerId: otherGuy.id,
             isPublic: true,
-            workspaceId: myMainWorkspace.id
+            workspaceId: otherGuysWorkspace.id
           }
           await createTestStreams([
             [myProj, me],
@@ -376,7 +421,7 @@ describe('Core GraphQL Subscriptions (New)', () => {
             id: '',
             ownerId: otherGuy.id,
             isPublic: true,
-            workspaceId: myMainWorkspace.id
+            workspaceId: otherGuysWorkspace.id
           }
           await createTestStreams([[otherGuysProj, otherGuy]])
 
@@ -473,7 +518,7 @@ describe('Core GraphQL Subscriptions (New)', () => {
             id: '',
             ownerId: otherGuy.id,
             isPublic: true,
-            workspaceId: myMainWorkspace.id
+            workspaceId: otherGuysWorkspace.id
           }
           await createTestStreams([[otherGuysProj, otherGuy]])
           await addOrUpdateStreamCollaborator(
@@ -574,15 +619,19 @@ describe('Core GraphQL Subscriptions (New)', () => {
           const onUserProjectsUpdated = await meSubClient.subscribe(
             OnProjectUpdatedDocument,
             { projectId: 'aaa' },
-            () => {
-              throw new Error('Message received for wrong project')
+            (res) => {
+              throw new TestError('Message received for wrong project', {
+                info: { res }
+              })
             }
           )
           const onStreamUpdated = await meSubClient.subscribe(
             OnStreamUpdatedDocument,
             { streamId: 'bbb' },
-            () => {
-              throw new Error('Message received for wrong project')
+            (res) => {
+              throw new TestError('Message received for wrong project', {
+                info: { res }
+              })
             }
           )
           await meSubClient.waitForReadiness()
@@ -689,6 +738,9 @@ describe('Core GraphQL Subscriptions (New)', () => {
               expect(res.data?.projectModelsUpdated.model?.name).to.equal(
                 newModel.name.toLowerCase()
               )
+              expect(res.data?.projectModelsUpdated.type).to.equal(
+                ProjectModelsUpdatedMessageType.Created
+              )
             }
           )
           const onBranchCreated = await meSubClient.subscribe(
@@ -753,6 +805,9 @@ describe('Core GraphQL Subscriptions (New)', () => {
                 expect([firstModel.id, ...(any ? [secondModel.id] : [])]).to.include(
                   modelId
                 )
+                expect(res.data?.projectModelsUpdated.type).to.equal(
+                  ProjectModelsUpdatedMessageType.Updated
+                )
               }
             )
             const onBranchUpdated = await meSubClient.subscribe(
@@ -800,6 +855,103 @@ describe('Core GraphQL Subscriptions (New)', () => {
             expect(onBranchUpdated.getMessages()).to.have.length(any ? 2 : 1)
           }
         )
+
+        it('should notify me of model delete (projectModelsUpdated/branchDeleted)', async () => {
+          const modelToDelete: BasicTestBranch = {
+            name: 'Model to Delete',
+            streamId: '',
+            authorId: '',
+            id: ''
+          }
+          await createTestBranch({
+            branch: modelToDelete,
+            stream: myModelProj,
+            owner: me
+          })
+          const deleteModel = await buildDeleteModel({ projectId: myModelProj.id })
+
+          const onProjectModelsUpdated = await meSubClient.subscribe(
+            OnProjectModelsUpdatedDocument,
+            { projectId: myModelProj.id },
+            (res) => {
+              expect(res).to.not.haveGraphQLErrors()
+              expect(res.data?.projectModelsUpdated.type).to.equal(
+                ProjectModelsUpdatedMessageType.Deleted
+              )
+              expect(res.data?.projectModelsUpdated.id).to.equal(modelToDelete.id)
+            }
+          )
+          const onBranchDeleted = await meSubClient.subscribe(
+            OnBranchDeletedDocument,
+            { streamId: myModelProj.id },
+            (res) => {
+              expect(res).to.not.haveGraphQLErrors()
+              expect(res.data?.branchDeleted?.id).to.equal(modelToDelete.id)
+            }
+          )
+          await meSubClient.waitForReadiness()
+          await deleteModel({ id: modelToDelete.id, projectId: myModelProj.id }, me.id)
+
+          await Promise.all([
+            onProjectModelsUpdated.waitForMessage(),
+            onBranchDeleted.waitForMessage()
+          ])
+
+          expect(onProjectModelsUpdated.getMessages()).to.have.length(1)
+          expect(onBranchDeleted.getMessages()).to.have.length(1)
+        })
+
+        it('should not notify me when model is created for stream im not authorized for', async () => {
+          const otherGuysProj: BasicTestStream = {
+            name: 'Other Guys Project #3',
+            id: '',
+            ownerId: otherGuy.id,
+            isPublic: false,
+            workspaceId: otherGuysWorkspace.id
+          }
+          await createTestStreams([[otherGuysProj, otherGuy]])
+
+          const newModel: BasicTestBranch = {
+            name: 'Some New Fangled kind of Model',
+            streamId: '',
+            authorId: '',
+            id: ''
+          }
+
+          const onProjectModelsUpdated = await meSubClient.subscribe(
+            OnProjectModelsUpdatedDocument,
+            { projectId: otherGuysProj.id },
+            (res) => {
+              throw new TestError('Message received for wrong project', {
+                info: { res }
+              })
+            }
+          )
+          const onBranchCreated = await meSubClient.subscribe(
+            OnBranchCreatedDocument,
+            { streamId: otherGuysProj.id },
+            (res) => {
+              throw new TestError('Message received for wrong project', {
+                info: { res }
+              })
+            }
+          )
+          await meSubClient.waitForReadiness()
+
+          await createTestBranch({
+            branch: newModel,
+            stream: otherGuysProj,
+            owner: otherGuy
+          })
+
+          await Promise.all([
+            onProjectModelsUpdated.waitForTimeout(),
+            onBranchCreated.waitForTimeout()
+          ])
+
+          expect(onProjectModelsUpdated.getMessages()).to.have.length(0)
+          expect(onBranchCreated.getMessages()).to.have.length(0)
+        })
       })
     })
   })

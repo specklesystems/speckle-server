@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // eslint-disable-next-line no-restricted-imports
 import '../bootstrap'
 
@@ -17,7 +18,7 @@ import type http from 'http'
 import type express from 'express'
 import type net from 'net'
 import { MaybeAsync, MaybeNullOrUndefined, Optional, wait } from '@speckle/shared'
-import type mocha from 'mocha'
+import * as mocha from 'mocha'
 import {
   getAvailableRegionKeysFactory,
   getFreeRegionKeysFactory
@@ -40,6 +41,8 @@ import { isMultiRegionEnabled } from '@/modules/multiregion/helpers'
 import { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
 import { ApolloServer } from '@apollo/server'
 import { ReadinessHandler } from '@/healthchecks/health'
+import { set } from 'lodash'
+import { fixStackTrace } from '@/test/speckle-helpers/error'
 
 // why is server config only created once!????
 // because its done in a migration, to not override existing configs
@@ -52,6 +55,18 @@ chai.use(chaiAsPromised)
 chai.use(chaiHttp)
 chai.use(deepEqualInAnyOrder)
 chai.use(graphqlChaiPlugin)
+
+// Please forgive me god for what I'm about to do, but Mocha's ancient API sucks ass
+// and there's NO OTHER WAY to format errors across all reporters
+const originalMochaRun = mocha.default.prototype.run
+set(mocha.default.prototype, 'run', function (this: any, ...args: any) {
+  const runner = originalMochaRun.apply(this, args)
+  runner.prependListener(mocha.Runner.constants.EVENT_TEST_FAIL, (_test, err) => {
+    fixStackTrace(err)
+  })
+
+  return runner
+})
 
 export const getMainTestRegionKey = () => {
   const key = Object.keys(regionClients)[0]

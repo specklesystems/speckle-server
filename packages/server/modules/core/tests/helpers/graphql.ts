@@ -100,3 +100,9 @@ export const onBranchUpdatedSubscription = gql`
     branchUpdated(streamId: $streamId, branchId: $branchId)
   }
 `
+
+export const onBranchDeletedSubscription = gql`
+  subscription OnBranchDeleted($streamId: String!) {
+    branchDeleted(streamId: $streamId)
+  }
+`

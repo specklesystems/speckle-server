@@ -531,8 +531,7 @@ extend type Subscription {
     workspaceSlug: String
   ): WorkspaceProjectsUpdatedMessage!
     @hasServerRole(role: SERVER_GUEST)
-    @hasScope(scope: "streams:read")
-    @hasScope(scope: "workspace:read")
+    @hasScopes(scopes: ["workspace:read", "streams:read"])
 
   """
   Track updates to a specific workspace.
