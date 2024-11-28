@@ -13,6 +13,7 @@
     <template v-else>
       <ProjectPageAutomationsEmptyState
         v-if="shouldShowEmptyState"
+        :workspace-slug="workspaceSlug"
         :functions="result"
         :is-automate-enabled="isAutomateEnabled"
         :creation-disabled-message="disableCreateMessage"
