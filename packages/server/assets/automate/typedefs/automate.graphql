@@ -138,7 +138,6 @@ type AutomateFunction {
     limit: Int
     filter: AutomateFunctionReleasesFilter
   ): AutomateFunctionReleaseCollection!
-  automationCount: Int!
   """
   SourceAppNames values from @speckle/shared. Empty array means - all of them
   """
@@ -217,6 +216,7 @@ input AutomateFunctionsFilter {
 }
 
 input AutomateFunctionRunStatusReportInput {
+  projectId: String!
   functionRunId: String!
   status: AutomateRunStatus!
   statusMessage: String

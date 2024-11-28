@@ -23,14 +23,14 @@ import { useWorkspaceSsoDelete } from '~/lib/workspaces/composables/sso'
 
 const props = defineProps<{
   providerName: string
-  workspaceSlug: string
+  workspaceId: string
 }>()
 
 const isOpen = defineModel<boolean>('open', { required: true })
 const { deleteSsoProvider } = useWorkspaceSsoDelete()
 
 const handleRemove = async () => {
-  const success = await deleteSsoProvider(props.workspaceSlug)
+  const success = await deleteSsoProvider(props.workspaceId)
   if (success) {
     isOpen.value = false
   }

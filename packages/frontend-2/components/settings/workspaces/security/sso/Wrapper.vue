@@ -125,7 +125,7 @@
       v-if="provider"
       v-model:open="isDeleteDialogOpen"
       :provider-name="provider?.name"
-      :workspace-slug="workspace.slug"
+      :workspace-id="workspace.id"
     />
   </section>
 </template>

@@ -14,8 +14,13 @@ import {
   UpsertWorkspaceSubscription,
   WorkspaceSubscription
 } from '@/modules/gatekeeper/domain/billing'
-import { WorkspacePricingPlans } from '@/modules/gatekeeper/domain/workspacePricing'
 import {
+  PaidWorkspacePlans,
+  WorkspacePricingPlans
+} from '@/modules/gatekeeper/domain/workspacePricing'
+import {
+  WorkspaceNotPaidPlanError,
+  WorkspacePlanDowngradeError,
   WorkspacePlanMismatchError,
   WorkspacePlanNotFoundError,
   WorkspaceSubscriptionNotFoundError
@@ -188,7 +193,7 @@ const mutateSubscriptionDataWithNewValidSeatNumbers = ({
   seatCount: number
   workspacePlan: WorkspacePricingPlans
   getWorkspacePlanProductId: GetWorkspacePlanProductId
-  subscriptionData: SubscriptionData
+  subscriptionData: SubscriptionDataInput
 }): void => {
   const productId = getWorkspacePlanProductId({ workspacePlan })
   const product = subscriptionData.products.find(
@@ -330,4 +335,107 @@ export const manageSubscriptionDownscaleFactory =
       })
       log.info({ updatedWorkspaceSubscription }, 'Updated workspace billing cycle end')
     }
+  }
+
+export const upgradeWorkspaceSubscriptionFactory =
+  ({
+    getWorkspacePlan,
+    getWorkspacePlanProductId,
+    getWorkspacePlanPrice,
+    getWorkspaceSubscription,
+    reconcileSubscriptionData,
+    upsertWorkspacePlan
+  }: {
+    getWorkspacePlan: GetWorkspacePlan
+    getWorkspacePlanProductId: GetWorkspacePlanProductId
+    getWorkspacePlanPrice: GetWorkspacePlanPrice
+    getWorkspaceSubscription: GetWorkspaceSubscription
+    reconcileSubscriptionData: ReconcileSubscriptionData
+    upsertWorkspacePlan: UpsertPaidWorkspacePlan
+  }) =>
+  async ({
+    workspaceId,
+    targetPlan
+  }: {
+    workspaceId: string
+    targetPlan: PaidWorkspacePlans
+  }) => {
+    const workspacePlan = await getWorkspacePlan({ workspaceId })
+
+    if (!workspacePlan) throw new WorkspacePlanNotFoundError()
+    switch (workspacePlan.name) {
+      case 'unlimited':
+      case 'academia':
+        throw new WorkspaceNotPaidPlanError()
+      case 'starter':
+      case 'plus':
+      case 'business':
+        break
+      default:
+        throwUncoveredError(workspacePlan)
+    }
+
+    switch (workspacePlan.status) {
+      case 'canceled':
+      case 'cancelationScheduled':
+      case 'paymentFailed':
+      case 'trial':
+      case 'expired':
+        throw new WorkspaceNotPaidPlanError()
+      case 'valid':
+        break
+      default:
+        throwUncoveredError(workspacePlan)
+    }
+
+    const workspaceSubscription = await getWorkspaceSubscription({ workspaceId })
+    if (!workspaceSubscription) throw new WorkspaceSubscriptionNotFoundError()
+
+    const planOrder: Record<PaidWorkspacePlans, number> = {
+      business: 3,
+      plus: 2,
+      starter: 1
+    }
+
+    if (planOrder[workspacePlan.name] >= planOrder[targetPlan])
+      throw new WorkspacePlanDowngradeError()
+
+    const subscriptionData: SubscriptionDataInput = cloneDeep(
+      workspaceSubscription.subscriptionData
+    )
+    const product = subscriptionData.products.find(
+      (p) =>
+        p.productId === getWorkspacePlanProductId({ workspacePlan: workspacePlan.name })
+    )
+    if (!product) throw new WorkspacePlanMismatchError()
+    const seatCount = product.quantity
+
+    // set current plan seat count to 0
+    mutateSubscriptionDataWithNewValidSeatNumbers({
+      seatCount: 0,
+      getWorkspacePlanProductId,
+      subscriptionData,
+      workspacePlan: workspacePlan.name
+    })
+
+    // set target plan seat count to current seat count
+    subscriptionData.products.push({
+      quantity: seatCount,
+      productId: getWorkspacePlanProductId({ workspacePlan: targetPlan }),
+      priceId: getWorkspacePlanPrice({
+        workspacePlan: targetPlan,
+        billingInterval: workspaceSubscription.billingInterval
+      }),
+      subscriptionItemId: undefined
+    })
+
+    await reconcileSubscriptionData({ subscriptionData, applyProrotation: true })
+    await upsertWorkspacePlan({
+      workspacePlan: {
+        status: workspacePlan.status,
+        workspaceId,
+        name: targetPlan,
+        createdAt: new Date()
+      }
+    })
   }
