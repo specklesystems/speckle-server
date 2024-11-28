@@ -16,6 +16,7 @@ import {
 } from '@/modules/gatekeeper/domain/billing'
 import {
   PaidWorkspacePlans,
+  WorkspacePlanBillingIntervals,
   WorkspacePricingPlans
 } from '@/modules/gatekeeper/domain/workspacePricing'
 import {
@@ -344,6 +345,8 @@ export const upgradeWorkspaceSubscriptionFactory =
     getWorkspacePlanPrice,
     getWorkspaceSubscription,
     reconcileSubscriptionData,
+    updateWorkspaceSubscription,
+    countWorkspaceRole,
     upsertWorkspacePlan
   }: {
     getWorkspacePlan: GetWorkspacePlan
@@ -351,14 +354,18 @@ export const upgradeWorkspaceSubscriptionFactory =
     getWorkspacePlanPrice: GetWorkspacePlanPrice
     getWorkspaceSubscription: GetWorkspaceSubscription
     reconcileSubscriptionData: ReconcileSubscriptionData
+    updateWorkspaceSubscription: UpsertWorkspaceSubscription
+    countWorkspaceRole: CountWorkspaceRoleWithOptionalProjectRole
     upsertWorkspacePlan: UpsertPaidWorkspacePlan
   }) =>
   async ({
     workspaceId,
-    targetPlan
+    targetPlan,
+    billingInterval
   }: {
     workspaceId: string
     targetPlan: PaidWorkspacePlans
+    billingInterval: WorkspacePlanBillingIntervals
   }) => {
     const workspacePlan = await getWorkspacePlan({ workspaceId })
 
@@ -397,18 +404,68 @@ export const upgradeWorkspaceSubscriptionFactory =
       starter: 1
     }
 
-    if (planOrder[workspacePlan.name] >= planOrder[targetPlan])
+    if (
+      planOrder[workspacePlan.name] === planOrder[targetPlan] &&
+      workspaceSubscription.billingInterval === billingInterval
+    )
       throw new WorkspacePlanDowngradeError()
+    if (planOrder[workspacePlan.name] > planOrder[targetPlan])
+      throw new WorkspacePlanDowngradeError()
+
+    switch (billingInterval) {
+      case 'monthly':
+        if (workspaceSubscription.billingInterval === 'yearly')
+          throw new WorkspacePlanDowngradeError()
+      case 'yearly':
+        break
+      default:
+        throwUncoveredError(billingInterval)
+    }
 
     const subscriptionData: SubscriptionDataInput = cloneDeep(
       workspaceSubscription.subscriptionData
     )
+
     const product = subscriptionData.products.find(
       (p) =>
         p.productId === getWorkspacePlanProductId({ workspacePlan: workspacePlan.name })
     )
     if (!product) throw new WorkspacePlanMismatchError()
-    const seatCount = product.quantity
+
+    const [guestCount, memberCount, adminCount] = await Promise.all([
+      countWorkspaceRole({ workspaceId, workspaceRole: 'workspace:guest' }),
+      countWorkspaceRole({ workspaceId, workspaceRole: 'workspace:member' }),
+      countWorkspaceRole({ workspaceId, workspaceRole: 'workspace:admin' })
+    ])
+
+    workspaceSubscription.updatedAt = new Date()
+    if (workspaceSubscription.billingInterval !== billingInterval) {
+      workspaceSubscription.billingInterval = billingInterval
+      workspaceSubscription.currentBillingCycleEnd = calculateNewBillingCycleEnd({
+        workspaceSubscription
+      })
+      const guestProduct = subscriptionData.products.find(
+        (p) => p.productId === getWorkspacePlanProductId({ workspacePlan: 'guest' })
+      )
+      if (guestProduct) {
+        mutateSubscriptionDataWithNewValidSeatNumbers({
+          seatCount: 0,
+          getWorkspacePlanProductId,
+          subscriptionData,
+          workspacePlan: 'guest'
+        })
+
+        subscriptionData.products.push({
+          quantity: guestCount,
+          productId: getWorkspacePlanProductId({ workspacePlan: 'guest' }),
+          priceId: getWorkspacePlanPrice({
+            workspacePlan: 'guest',
+            billingInterval
+          }),
+          subscriptionItemId: undefined
+        })
+      }
+    }
 
     // set current plan seat count to 0
     mutateSubscriptionDataWithNewValidSeatNumbers({
@@ -420,11 +477,11 @@ export const upgradeWorkspaceSubscriptionFactory =
 
     // set target plan seat count to current seat count
     subscriptionData.products.push({
-      quantity: seatCount,
+      quantity: memberCount + adminCount,
       productId: getWorkspacePlanProductId({ workspacePlan: targetPlan }),
       priceId: getWorkspacePlanPrice({
         workspacePlan: targetPlan,
-        billingInterval: workspaceSubscription.billingInterval
+        billingInterval
       }),
       subscriptionItemId: undefined
     })
@@ -438,4 +495,5 @@ export const upgradeWorkspaceSubscriptionFactory =
         createdAt: new Date()
       }
     })
+    await updateWorkspaceSubscription({ workspaceSubscription })
   }
