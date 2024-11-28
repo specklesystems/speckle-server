@@ -10,7 +10,7 @@
 import { workspacesRoute } from '~/lib/common/helpers/route'
 
 definePageMeta({
-  middleware: ['requires-workspaces-enabled']
+  middleware: ['requires-workspaces-enabled', 'auth']
 })
 useHead({
   title: 'Workspaces'

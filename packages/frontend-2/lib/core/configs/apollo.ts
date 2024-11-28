@@ -334,7 +334,7 @@ function createWsClient(params: {
 
 const coreShouldSkipLoggingErrors = (err: ErrorResponse): boolean => {
   // These fields have special auth requirements and will often throw errors that we don't want to log
-  const specialAuthFields = ['invitedTeam', 'billing', 'domains']
+  const specialAuthFields = ['invitedTeam', 'billing', 'domains', 'subscription']
   const specialAuthFieldErrorCodes = ['FORBIDDEN', 'UNAUTHORIZED_ACCESS_ERROR']
 
   return !!(

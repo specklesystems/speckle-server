@@ -9,8 +9,7 @@
             color: 'outline',
             to: 'https://speckle.guide/dev/apps.html',
             target: '_blank',
-            external: true,
-            iconLeft: BookOpenIcon
+            external: true
           },
           label: 'Open docs'
         }
@@ -67,7 +66,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useQuery } from '@vue/apollo-composable'
-import { BookOpenIcon, XMarkIcon } from '@heroicons/vue/24/outline'
+import { XMarkIcon } from '@heroicons/vue/24/outline'
 import { developerSettingsAuthorizedAppsQuery } from '~~/lib/developer-settings/graphql/queries'
 import type { AuthorizedAppItem } from '~~/lib/developer-settings/helpers/types'
 

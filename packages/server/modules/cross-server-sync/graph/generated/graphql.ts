@@ -217,7 +217,6 @@ export type AutomateAuthCodePayloadTest = {
 
 export type AutomateFunction = {
   __typename?: 'AutomateFunction';
-  automationCount: Scalars['Int']['output'];
   /** Only returned if user is a part of this speckle server */
   creator?: Maybe<LimitedUser>;
   description: Scalars['String']['output'];
@@ -288,6 +287,7 @@ export type AutomateFunctionRun = {
 export type AutomateFunctionRunStatusReportInput = {
   contextView?: InputMaybe<Scalars['String']['input']>;
   functionRunId: Scalars['String']['input'];
+  projectId: Scalars['String']['input'];
   /** AutomateTypes.ResultsSchema type from @speckle/shared */
   results?: InputMaybe<Scalars['JSONObject']['input']>;
   status: AutomateRunStatus;
@@ -1753,8 +1753,8 @@ export type ObjectCreateInput = {
 
 export enum PaidWorkspacePlans {
   Business = 'business',
-  Pro = 'pro',
-  Team = 'team'
+  Plus = 'plus',
+  Starter = 'starter'
 }
 
 export type PasswordStrengthCheckFeedback = {
@@ -2821,7 +2821,7 @@ export type ServerInfo = {
   inviteOnly?: Maybe<Scalars['Boolean']['output']>;
   /** Server relocation / migration info */
   migration?: Maybe<ServerMigration>;
-  /** Available to server admins only */
+  /** Info about server regions */
   multiRegion: ServerMultiRegionConfiguration;
   name: Scalars['String']['output'];
   /** @deprecated Use role constants from the @speckle/shared npm package instead */
@@ -2875,10 +2875,7 @@ export type ServerMultiRegionConfiguration = {
    * be filtered out from the result.
    */
   availableKeys: Array<Scalars['String']['output']>;
-  /**
-   * List of regions that are currently enabled on the server using the available region keys
-   * set in the multi region config file.
-   */
+  /** Regions available for project data residency */
   regions: Array<ServerRegionItem>;
 };
 
@@ -3248,6 +3245,11 @@ export type Subscription = {
    * @deprecated Part of the old API surface and will be removed in the future. Use 'projectVersionsUpdated' instead.
    */
   commitUpdated?: Maybe<Scalars['JSONObject']['output']>;
+  /**
+   * Cyclically sends a message to the client, used for testing
+   * Note: Only works in test environment
+   */
+  ping: Scalars['String']['output'];
   /** Subscribe to updates to automations in the project */
   projectAutomationsUpdated: ProjectAutomationsUpdatedMessage;
   /**
@@ -3307,6 +3309,16 @@ export type Subscription = {
   userViewerActivity?: Maybe<Scalars['JSONObject']['output']>;
   /** Track user activities in the viewer relating to the specified resources */
   viewerUserActivityBroadcasted: ViewerUserActivityMessage;
+  /**
+   * Track newly added or deleted projects in a specific workspace.
+   * Either slug or id must be set.
+   */
+  workspaceProjectsUpdated: WorkspaceProjectsUpdatedMessage;
+  /**
+   * Track updates to a specific workspace.
+   * Either slug or id must be set.
+   */
+  workspaceUpdated: WorkspaceUpdatedMessage;
 };
 
 
@@ -3438,6 +3450,18 @@ export type SubscriptionViewerUserActivityBroadcastedArgs = {
   target: ViewerUpdateTrackingTarget;
 };
 
+
+export type SubscriptionWorkspaceProjectsUpdatedArgs = {
+  workspaceId?: InputMaybe<Scalars['String']['input']>;
+  workspaceSlug?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type SubscriptionWorkspaceUpdatedArgs = {
+  workspaceId?: InputMaybe<Scalars['String']['input']>;
+  workspaceSlug?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type TestAutomationRun = {
   __typename?: 'TestAutomationRun';
   automationRunId: Scalars['String']['output'];
@@ -3512,6 +3536,12 @@ export type UpdateVersionInput = {
   versionId: Scalars['ID']['input'];
 };
 
+export type UpgradePlanInput = {
+  billingInterval: BillingInterval;
+  workspaceId: Scalars['ID']['input'];
+  workspacePlan: PaidWorkspacePlans;
+};
+
 /**
  * Full user type, should only be used in the context of admin operations or
  * when a user is reading/writing info about himself
@@ -3558,6 +3588,7 @@ export type User = {
    * @deprecated Part of the old API surface and will be removed in the future.
    */
   favoriteStreams: StreamCollection;
+  gendoAICredits: UserGendoAiCredits;
   /** Whether the user has a pending/active email verification token */
   hasPendingVerification?: Maybe<Scalars['Boolean']['output']>;
   id: Scalars['ID']['output'];
@@ -3744,6 +3775,13 @@ export type UserEmailMutationsRequestNewEmailVerificationArgs = {
 
 export type UserEmailMutationsSetPrimaryArgs = {
   input: SetPrimaryUserEmailInput;
+};
+
+export type UserGendoAiCredits = {
+  __typename?: 'UserGendoAICredits';
+  limit: Scalars['Int']['output'];
+  resetDate: Scalars['DateTime']['output'];
+  used: Scalars['Int']['output'];
 };
 
 export type UserProjectsFilter = {
@@ -4004,9 +4042,9 @@ export type WebhookUpdateInput = {
 
 export type Workspace = {
   __typename?: 'Workspace';
-  /** Regions available to the workspace for project data residency */
-  availableRegions: Array<ServerRegionItem>;
   createdAt: Scalars['DateTime']['output'];
+  /** Info about the workspace creation state */
+  creationState?: Maybe<WorkspaceCreationState>;
   customerPortalUrl?: Maybe<Scalars['String']['output']>;
   /** Selected fallback when `logo` not set */
   defaultLogoIndex: Scalars['Int']['output'];
@@ -4071,6 +4109,7 @@ export type WorkspaceBillingMutations = {
   __typename?: 'WorkspaceBillingMutations';
   cancelCheckoutSession: Scalars['Boolean']['output'];
   createCheckoutSession: CheckoutSession;
+  upgradePlan: Scalars['Boolean']['output'];
 };
 
 
@@ -4081,6 +4120,11 @@ export type WorkspaceBillingMutationsCancelCheckoutSessionArgs = {
 
 export type WorkspaceBillingMutationsCreateCheckoutSessionArgs = {
   input: CheckoutSessionInput;
+};
+
+
+export type WorkspaceBillingMutationsUpgradePlanArgs = {
+  input: UpgradePlanInput;
 };
 
 /** Overridden by `WorkspaceCollaboratorGraphQLReturn` */
@@ -4113,6 +4157,18 @@ export type WorkspaceCreateInput = {
   logo?: InputMaybe<Scalars['String']['input']>;
   name: Scalars['String']['input'];
   slug?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type WorkspaceCreationState = {
+  __typename?: 'WorkspaceCreationState';
+  completed: Scalars['Boolean']['output'];
+  state: Scalars['JSONObject']['output'];
+};
+
+export type WorkspaceCreationStateInput = {
+  completed: Scalars['Boolean']['input'];
+  state: Scalars['JSONObject']['input'];
+  workspaceId: Scalars['ID']['input'];
 };
 
 export type WorkspaceDomain = {
@@ -4215,6 +4271,7 @@ export type WorkspaceMutations = {
   /** Set the default region where project data will be stored. Only available to admins. */
   setDefaultRegion: Workspace;
   update: Workspace;
+  updateCreationState: Scalars['Boolean']['output'];
   updateRole: Workspace;
 };
 
@@ -4265,12 +4322,18 @@ export type WorkspaceMutationsUpdateArgs = {
 };
 
 
+export type WorkspaceMutationsUpdateCreationStateArgs = {
+  input: WorkspaceCreationStateInput;
+};
+
+
 export type WorkspaceMutationsUpdateRoleArgs = {
   input: WorkspaceRoleUpdateInput;
 };
 
 export type WorkspacePlan = {
   __typename?: 'WorkspacePlan';
+  createdAt: Scalars['DateTime']['output'];
   name: WorkspacePlans;
   status: WorkspacePlanStatuses;
 };
@@ -4287,8 +4350,8 @@ export enum WorkspacePlanStatuses {
 export enum WorkspacePlans {
   Academia = 'academia',
   Business = 'business',
-  Pro = 'pro',
-  Team = 'team',
+  Plus = 'plus',
+  Starter = 'starter',
   Unlimited = 'unlimited'
 }
 
@@ -4339,6 +4402,23 @@ export type WorkspaceProjectsFilter = {
   /** Filter out projects by name */
   search?: InputMaybe<Scalars['String']['input']>;
 };
+
+export type WorkspaceProjectsUpdatedMessage = {
+  __typename?: 'WorkspaceProjectsUpdatedMessage';
+  /** Project entity, null if project was deleted */
+  project?: Maybe<Project>;
+  /** Project ID */
+  projectId: Scalars['String']['output'];
+  /** Message type */
+  type: WorkspaceProjectsUpdatedMessageType;
+  /** Workspace ID */
+  workspaceId: Scalars['String']['output'];
+};
+
+export enum WorkspaceProjectsUpdatedMessageType {
+  Added = 'ADDED',
+  Removed = 'REMOVED'
+}
 
 export enum WorkspaceRole {
   Admin = 'ADMIN',
@@ -4405,6 +4485,14 @@ export type WorkspaceUpdateInput = {
   logo?: InputMaybe<Scalars['String']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
   slug?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type WorkspaceUpdatedMessage = {
+  __typename?: 'WorkspaceUpdatedMessage';
+  /** Workspace ID */
+  id: Scalars['String']['output'];
+  /** Workspace itself */
+  workspace: Workspace;
 };
 
 export type CrossSyncCommitBranchMetadataQueryVariables = Exact<{

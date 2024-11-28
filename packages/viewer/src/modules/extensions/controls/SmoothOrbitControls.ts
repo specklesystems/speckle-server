@@ -411,7 +411,6 @@ export class SmoothOrbitControls extends SpeckleControls {
    * such that they progress across their allowed ranges in sync.
    */
   adjustOrbit(deltaTheta: number, deltaPhi: number, deltaZoom: number) {
-    deltaZoom
     this._radiusDelta
     const { theta, phi, radius } = this.goalSpherical
 
@@ -979,13 +978,14 @@ export class SmoothOrbitControls extends SpeckleControls {
 
   protected onWheel = (event: WheelEvent) => {
     const x =
-      ((event.clientX - this._container.clientLeft) / this._container.clientWidth) * 2 -
+      ((event.clientX - this._container.offsetLeft) / this._container.offsetWidth) * 2 -
       1
 
     const y =
-      ((event.clientY - this._container.clientTop) / this._container.clientHeight) *
+      ((event.clientY - this._container.offsetTop) / this._container.offsetHeight) *
         -2 +
       1
+
     this.zoomControlCoord.set(x, y)
 
     const deltaZoom =

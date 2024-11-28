@@ -23,6 +23,7 @@
 </template>
 
 <script setup lang="ts">
+import dayjs from 'dayjs'
 import {
   ExclamationCircleIcon,
   ArrowTopRightOnSquareIcon
@@ -41,6 +42,7 @@ graphql(`
     plan {
       name
       status
+      createdAt
     }
     subscription {
       billingInterval
@@ -63,10 +65,18 @@ const isTrial = computed(
 const isPaymentFailed = computed(
   () => planStatus.value === WorkspacePlanStatuses.PaymentFailed
 )
+const trialDaysLeft = computed(() => {
+  const createdAt = props.workspace.plan?.createdAt
+  const trialEndDate = dayjs(createdAt).add(31, 'days')
+  const diffDays = trialEndDate.diff(dayjs(), 'day')
+  return Math.max(0, diffDays)
+})
 const title = computed(() => {
   if (isTrial.value) {
-    return `You are currently on a free ${
-      props.workspace.plan?.name ?? WorkspacePlans.Team
+    return `You have ${trialDaysLeft.value} day${
+      trialDaysLeft.value !== 1 ? 's' : ''
+    } left on your free ${
+      props.workspace.plan?.name ?? WorkspacePlans.Starter
     } plan trial`
   }
   switch (planStatus.value) {
@@ -84,7 +94,9 @@ const title = computed(() => {
 })
 const description = computed(() => {
   if (isTrial.value) {
-    return 'Upgrade to a paid plan to start your subscription.'
+    return trialDaysLeft.value === 0
+      ? 'Upgrade to a paid plan to continue using your workspace.'
+      : 'Upgrade to a paid plan to start your subscription.'
   }
   switch (planStatus.value) {
     case WorkspacePlanStatuses.CancelationScheduled:

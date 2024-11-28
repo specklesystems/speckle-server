@@ -18,13 +18,13 @@
           class="pb-4 md:pb-6"
           subheading
         />
-        <div
+        <CommonCard
           v-if="result?.workspace.sso?.provider?.id"
-          class="bg-foundation border border-outline-2 rounded-md p-4 text-body-xs mb-4"
+          class="bg-foundation mb-4"
         >
           With SSO enabled, allowed domains are configured on your identity provider's
           side.
-        </div>
+        </CommonCard>
         <ul v-if="hasWorkspaceDomains">
           <li
             v-for="domain in workspaceDomains"
@@ -318,7 +318,8 @@ const addDomain = async () => {
     },
     result.value?.workspace.domains ?? [],
     result.value?.workspace.discoverabilityEnabled,
-    result.value?.workspace.domainBasedMembershipProtectionEnabled
+    result.value?.workspace.domainBasedMembershipProtectionEnabled,
+    result.value?.workspace.hasAccessToSSO
   )
 
   mixpanel.track('Workspace Domain Added', {

@@ -118,7 +118,7 @@ spec:
           - name: NUXT_PUBLIC_FF_AUTOMATE_MODULE_ENABLED
             value: {{ .Values.featureFlags.automateModuleEnabled | quote }}
           - name: NUXT_PUBLIC_FF_WORKSPACES_MODULE_ENABLED
-            value: {{ .Values.featureFlags.workspaceModuleEnabled | quote }}
+            value: {{ .Values.featureFlags.workspacesModuleEnabled | quote }}
           - name: NUXT_PUBLIC_FF_WORKSPACES_SSO_ENABLED
             value: {{ .Values.featureFlags.workspaceSsoEnabled | quote }}
           - name: NUXT_PUBLIC_FF_MULTIPLE_EMAILS_MODULE_ENABLED
@@ -129,6 +129,8 @@ spec:
             value: {{ .Values.featureFlags.billingIntegrationEnabled | quote }}
           - name: NUXT_PUBLIC_FF_WORKSPACES_MULTI_REGION_ENABLED
             value: {{ .Values.featureFlags.workspacesMultiRegionEnabled | quote }}
+          - name: NUXT_PUBLIC_FF_GENDOAI_MODULE_ENABLED
+            value: {{ .Values.featureFlags.gendoAIModuleEnabled | quote }}
           {{- if .Values.analytics.survicate_workspace_key }}
           - name: NUXT_PUBLIC_SURVICATE_WORKSPACE_KEY
             value: {{ .Values.analytics.survicate_workspace_key | quote }}

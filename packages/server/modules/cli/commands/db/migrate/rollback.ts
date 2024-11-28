@@ -1,28 +1,22 @@
-import knex from '@/db/knex'
 import { logger } from '@/logging/logging'
-import { getRegisteredRegionClients } from '@/modules/multiregion/dbSelector'
-import { isTestEnv } from '@/modules/shared/helpers/envHelper'
-import { mochaHooks, resetPubSubFactory } from '@/test/hooks'
+import { CommonDbArgs, getTargettedDbClients } from '@/modules/cli/commands/db/helpers'
+import { resetPubSubFactory } from '@/test/hooks'
 import { CommandModule } from 'yargs'
 
-const command: CommandModule = {
+const command: CommandModule<unknown, CommonDbArgs> = {
   command: 'rollback',
   describe: 'Roll back all migrations',
-  async handler() {
+  async handler(argv) {
+    const { regionKey } = argv
+
     logger.info('Rolling back migrations...')
 
-    if (isTestEnv()) {
-      // Run before hooks, to properly initialize everything first
-      await (mochaHooks.beforeAll as () => Promise<void>)()
-    }
-
-    const regionDbs = await getRegisteredRegionClients()
-    const dbs = [knex, ...Object.values(regionDbs)]
-
+    const dbs = await getTargettedDbClients({ regionKey })
     for (const db of dbs) {
-      const resetPubSub = resetPubSubFactory({ db })
+      logger.info(`Rolling back DB ${db.regionKey}...`)
+      const resetPubSub = resetPubSubFactory({ db: db.client })
       await resetPubSub()
-      await db.migrate.rollback(undefined, true)
+      await db.client.migrate.rollback(undefined, true)
     }
 
     logger.info('Completed rolling back migrations')

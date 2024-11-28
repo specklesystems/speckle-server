@@ -1,10 +1,13 @@
 import { parseEnv } from 'znv'
 import { z } from 'zod'
 
-function parseFeatureFlags() {
+const isDisableAllFFsMode = () =>
+  ['true', '1'].includes(process.env.DISABLE_ALL_FFS || '')
+
+const parseFeatureFlags = () => {
   //INFO
   // As a convention all feature flags should be prefixed with a FF_
-  return parseEnv(process.env, {
+  const res = parseEnv(process.env, {
     // Enables the automate module.
     FF_AUTOMATE_MODULE_ENABLED: {
       schema: z.boolean(),
@@ -49,6 +52,15 @@ function parseFeatureFlags() {
       defaults: { production: false, _: false }
     }
   })
+
+  // Can be used to disable all feature flags for testing purposes
+  if (isDisableAllFFsMode()) {
+    for (const key of Object.keys(res)) {
+      ;(res as Record<string, boolean>)[key] = false
+    }
+  }
+
+  return res
 }
 
 let parsedFlags: ReturnType<typeof parseFeatureFlags> | undefined

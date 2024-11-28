@@ -130,7 +130,8 @@ const deleteStreamAndNotify = deleteStreamAndNotifyFactory({
     saveActivity: saveActivityFactory({ db }),
     getStreamCollaborators: getStreamCollaboratorsFactory({ db })
   }),
-  deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db })
+  deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db }),
+  getStream
 })
 const updateStreamAndNotify = updateStreamAndNotifyFactory({
   authorizeResolver,
@@ -231,7 +232,7 @@ export = {
       return stream
     },
 
-    async streams(parent, args, context) {
+    async streams(_, args, context) {
       const totalCount = await getUserStreamsCount({
         userId: context.userId!,
         searchQuery: args.query || undefined,
@@ -248,14 +249,14 @@ export = {
       return { totalCount, cursor, items: streams }
     },
 
-    async discoverableStreams(parent, args, ctx) {
+    async discoverableStreams(_, args, ctx) {
       return await getDiscoverableStreams(
         args,
         toProjectIdWhitelist(ctx.resourceAccessRules)
       )
     },
 
-    async adminStreams(parent, args, ctx) {
+    async adminStreams(_, args, ctx) {
       if (args.limit && args.limit > 50)
         throw new BadRequestError('Cannot return more than 50 items at a time.')
 
@@ -389,7 +390,7 @@ export = {
     }
   },
   Mutation: {
-    async streamCreate(parent, args, context) {
+    async streamCreate(_, args, context) {
       const rateLimitResult = await getRateLimitResult('STREAM_CREATE', context.userId!)
       if (isRateLimitBreached(rateLimitResult)) {
         throw new RateLimitError(rateLimitResult)
@@ -404,7 +405,7 @@ export = {
       return id
     },
 
-    async streamUpdate(parent, args, context) {
+    async streamUpdate(_, args, context) {
       await updateStreamAndNotify(
         args.stream,
         context.userId!,
@@ -413,7 +414,7 @@ export = {
       return true
     },
 
-    async streamDelete(parent, args, context) {
+    async streamDelete(_, args, context) {
       return await deleteStreamAndNotify(
         args.id,
         context.userId!,
@@ -422,7 +423,7 @@ export = {
       )
     },
 
-    async streamsDelete(parent, args, context) {
+    async streamsDelete(_, args, context) {
       const results = await Promise.all(
         (args.ids || []).map(async (id) => {
           return await deleteStreamAndNotify(
@@ -436,7 +437,7 @@ export = {
       return results.every((res) => res === true)
     },
 
-    async streamUpdatePermission(parent, args, context) {
+    async streamUpdatePermission(_, args, context) {
       const result = await updateStreamRoleAndNotify(
         args.permissionParams,
         context.userId!,
@@ -445,7 +446,7 @@ export = {
       return !!result
     },
 
-    async streamRevokePermission(parent, args, context) {
+    async streamRevokePermission(_, args, context) {
       const result = await updateStreamRoleAndNotify(
         args.permissionParams,
         context.userId!,

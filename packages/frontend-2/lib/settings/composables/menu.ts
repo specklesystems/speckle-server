@@ -17,6 +17,7 @@ import { useIsMultipleEmailsEnabled } from '~/composables/globals'
 import { Roles } from '@speckle/shared'
 import { SettingMenuKeys } from '~/lib/settings/helpers/types'
 import { useIsMultiregionEnabled } from '~/lib/multiregion/composables/main'
+import type { InjectionKey } from 'vue'
 
 export const useSettingsMenu = () => {
   const isMultipleEmailsEnabled = useIsMultipleEmailsEnabled().value
@@ -49,13 +50,12 @@ export const useSettingsMenu = () => {
       permission: [Roles.Workspace.Admin, Roles.Workspace.Member]
     },
     [SettingMenuKeys.Workspace.Regions]: {
-      title: 'Regions',
+      title: 'Data residency',
       component: SettingsWorkspacesRegions,
       permission: [Roles.Workspace.Admin, Roles.Workspace.Member],
       ...(isMultiRegionEnabled
         ? {}
         : {
-            tooltipText: 'Set up regions for custom data residency',
             disabled: true
           })
     }
@@ -112,4 +112,18 @@ export const useSettingsMenu = () => {
     serverMenuItems,
     workspaceMenuItems
   }
+}
+
+type MenuState = {
+  goToWorkspaceMenuItem: (workspaceId: string, menuTarget: string) => void
+}
+const MenuStateKey: InjectionKey<MenuState> = Symbol('menuState')
+
+export const useSetupMenuState = (params: MenuState) => {
+  const state = params
+  provide(MenuStateKey, state)
+}
+
+export const useMenuState = () => {
+  return inject(MenuStateKey)!
 }

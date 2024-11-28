@@ -67,3 +67,11 @@ export const setDefaultRegionMutation = graphql(`
     }
   }
 `)
+
+export const deleteWorkspaceSsoProviderMutation = graphql(`
+  mutation DeleteWorkspaceSsoProvider($workspaceId: String!) {
+    workspaceMutations {
+      deleteSsoProvider(workspaceId: $workspaceId)
+    }
+  }
+`)
