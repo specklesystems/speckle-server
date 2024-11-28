@@ -90,10 +90,13 @@
           in your identity provider's panel, which will contain the necessary settings
           for Speckle. When asked about
           <span class="font-bold">Redirect URL</span>
-          (callback) please use:
+          (callback) please include both:
         </p>
         <div class="mb-4">
-          <CommonClipboardInputWithToast is-multiline :value="redirectUrl" />
+          <CommonClipboardInputWithToast is-multiline :value="redirectUrls[0]" />
+        </div>
+        <div class="mb-4">
+          <CommonClipboardInputWithToast is-multiline :value="redirectUrls[1]" />
         </div>
 
         <p class="text-body-xs mb-4">
@@ -228,8 +231,11 @@ const handleCancel = () => {
   isEditing.value = false
 }
 
-const redirectUrl = computed(() => {
-  return `${apiOrigin}/api/v1/workspaces/${props.workspace.slug}/sso/oidc/callback?validate=true`
+const redirectUrls = computed(() => {
+  return [
+    `${apiOrigin}/api/v1/workspaces/${props.workspace.slug}/sso/oidc/callback`,
+    `${apiOrigin}/api/v1/workspaces/${props.workspace.slug}/sso/oidc/callback?validate=true`
+  ]
 })
 
 const goToBilling = () => {

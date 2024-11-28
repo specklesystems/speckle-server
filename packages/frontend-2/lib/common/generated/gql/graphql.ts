@@ -4314,6 +4314,7 @@ export type WorkspaceMutationsUpdateRoleArgs = {
 
 export type WorkspacePlan = {
   __typename?: 'WorkspacePlan';
+  createdAt: Scalars['DateTime']['output'];
   name: WorkspacePlans;
   status: WorkspacePlanStatuses;
 };
@@ -7811,6 +7812,7 @@ export type WorkspaceMutationsFieldArgs = {
   updateRole: WorkspaceMutationsUpdateRoleArgs,
 }
 export type WorkspacePlanFieldArgs = {
+  createdAt: {},
   name: {},
   status: {},
 }
