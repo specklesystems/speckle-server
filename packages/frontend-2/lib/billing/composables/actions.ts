@@ -4,8 +4,8 @@ import {
   billingCreateCheckoutSessionMutation,
   billingUpgradePlanMuation
 } from '~/lib/billing/graphql/mutations'
-import type {
-  PaidWorkspacePlans,
+import {
+  type PaidWorkspacePlans,
   BillingInterval
 } from '~/lib/common/generated/gql/graphql'
 import { settingsBillingCancelCheckoutSessionMutation } from '~/lib/settings/graphql/mutations'
@@ -117,7 +117,9 @@ export const useBillingActions = () => {
       triggerNotification({
         type: ToastNotificationType.Success,
         title: 'Workspace plan upgraded',
-        description: `Your workspace is now on a ${cycle}ly ${plan} plan`
+        description: `Your workspace is now on a ${
+          cycle === BillingInterval.Yearly ? 'annual' : 'monthly'
+        } ${plan} plan`
       })
     } else {
       const errMsg = getFirstGqlErrorMessage(result?.errors)
