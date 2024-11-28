@@ -76,6 +76,18 @@ export const onUserStreamCommitCreatedSubscription = gql`
   }
 `
 
+export const onUserStreamCommitDeletedSubscription = gql`
+  subscription OnUserStreamCommitDeleted($streamId: String!) {
+    commitDeleted(streamId: $streamId)
+  }
+`
+
+export const onUserStreamCommitUpdatedSubscription = gql`
+  subscription OnUserStreamCommitUpdated($streamId: String!, $commitId: String) {
+    commitUpdated(streamId: $streamId, commitId: $commitId)
+  }
+`
+
 export const onProjectModelsUpdatedSubscription = gql`
   subscription OnProjectModelsUpdated($projectId: String!, $modelIds: [String!]) {
     projectModelsUpdated(id: $projectId, modelIds: $modelIds) {

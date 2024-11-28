@@ -6,6 +6,10 @@ import {
   addBranchUpdatedActivityFactory
 } from '@/modules/activitystream/services/branchActivity'
 import {
+  addCommitDeletedActivityFactory,
+  addCommitUpdatedActivityFactory
+} from '@/modules/activitystream/services/commitActivity'
+import {
   addStreamDeletedActivityFactory,
   addStreamInviteAcceptedActivityFactory,
   addStreamPermissionsAddedActivityFactory,
@@ -17,14 +21,27 @@ import { AllScopes } from '@/modules/core/helpers/mainConstants'
 import {
   deleteBranchByIdFactory,
   getBranchByIdFactory,
+  getStreamBranchByNameFactory,
+  markCommitBranchUpdatedFactory,
   updateBranchFactory
 } from '@/modules/core/repositories/branches'
 import {
+  deleteCommitsFactory,
+  getCommitBranchFactory,
+  getCommitFactory,
+  getCommitsFactory,
+  switchCommitBranchFactory,
+  updateCommitFactory
+} from '@/modules/core/repositories/commits'
+import {
   deleteStreamFactory,
+  getCommitStreamFactory,
   getStreamCollaboratorsFactory,
   getStreamFactory,
+  getStreamsFactory,
   grantStreamPermissionsFactory,
   markBranchStreamUpdatedFactory,
+  markCommitStreamUpdatedFactory,
   revokeStreamPermissionsFactory,
   updateStreamFactory
 } from '@/modules/core/repositories/streams'
@@ -33,6 +50,8 @@ import {
   deleteBranchAndNotifyFactory,
   updateBranchAndNotifyFactory
 } from '@/modules/core/services/branch/management'
+import { batchDeleteCommitsFactory } from '@/modules/core/services/commit/batchCommitActions'
+import { updateCommitAndNotifyFactory } from '@/modules/core/services/commit/management'
 import {
   addOrUpdateStreamCollaboratorFactory,
   isStreamCollaboratorFactory,
@@ -64,9 +83,12 @@ import {
   OnUserProjectVersionsUpdatedDocument,
   OnUserStreamAddedDocument,
   OnUserStreamCommitCreatedDocument,
+  OnUserStreamCommitDeletedDocument,
+  OnUserStreamCommitUpdatedDocument,
   OnUserStreamRemovedDocument,
   ProjectModelsUpdatedMessageType,
   ProjectUpdatedMessageType,
+  ProjectVersionsUpdatedMessageType,
   UserProjectsUpdatedMessageType
 } from '@/test/graphql/generated/graphql'
 import {
@@ -164,6 +186,43 @@ const buildDeleteModel = async (params: { projectId: string }) => {
     deleteBranchById: deleteBranchByIdFactory({ db: projectDB })
   })
   return deleteBranchAndNotify
+}
+
+const buildDeleteVersion = async (params: { projectId: string }) => {
+  const { projectId } = params
+  const projectDb = await getProjectDbClient({ projectId })
+
+  const batchDeleteCommits = batchDeleteCommitsFactory({
+    getCommits: getCommitsFactory({ db: projectDb }),
+    getStreams: getStreamsFactory({ db: projectDb }),
+    deleteCommits: deleteCommitsFactory({ db: projectDb }),
+    addCommitDeletedActivity: addCommitDeletedActivityFactory({
+      saveActivity: saveActivityFactory({ db }),
+      publish
+    })
+  })
+  return batchDeleteCommits
+}
+
+const buildUpdateVersion = async (params: { projectId: string }) => {
+  const { projectId } = params
+  const projectDb = await getProjectDbClient({ projectId })
+  const updateCommitAndNotify = updateCommitAndNotifyFactory({
+    getCommit: getCommitFactory({ db: projectDb }),
+    getStream: getStreamFactory({ db: projectDb }),
+    getCommitStream: getCommitStreamFactory({ db: projectDb }),
+    getStreamBranchByName: getStreamBranchByNameFactory({ db: projectDb }),
+    getCommitBranch: getCommitBranchFactory({ db: projectDb }),
+    switchCommitBranch: switchCommitBranchFactory({ db: projectDb }),
+    updateCommit: updateCommitFactory({ db: projectDb }),
+    addCommitUpdatedActivity: addCommitUpdatedActivityFactory({
+      saveActivity: saveActivityFactory({ db }),
+      publish
+    }),
+    markCommitStreamUpdated: markCommitStreamUpdatedFactory({ db: projectDb }),
+    markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db: projectDb })
+  })
+  return updateCommitAndNotify
 }
 
 const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
@@ -671,6 +730,9 @@ describe('Core GraphQL Subscriptions (New)', () => {
             { projectId: myVersionProj.id },
             (res) => {
               expect(res).to.not.haveGraphQLErrors()
+              expect(res.data?.projectVersionsUpdated.type).to.equal(
+                ProjectVersionsUpdatedMessageType.Created
+              )
               expect(res.data?.projectVersionsUpdated.version?.message).to.equal(
                 message
               )
@@ -704,6 +766,166 @@ describe('Core GraphQL Subscriptions (New)', () => {
 
           expect(onUserProjectVersionsUpdated.getMessages()).to.have.length(1)
           expect(onUserStreamCommitCreated.getMessages()).to.have.length(1)
+        })
+
+        it('should notify me when a version is deleted (projectVersionsUpdated/commitDeleted)', async () => {
+          const commitToDelete: BasicTestCommit = {
+            streamId: '',
+            objectId: '',
+            id: '',
+            authorId: '',
+            message: 'Commit to Delete'
+          }
+          await createTestCommits([commitToDelete], {
+            owner: me,
+            stream: myVersionProj
+          })
+          const deleteVersion = await buildDeleteVersion({
+            projectId: myVersionProj.id
+          })
+
+          const onUserProjectVersionsUpdated = await meSubClient.subscribe(
+            OnUserProjectVersionsUpdatedDocument,
+            { projectId: myVersionProj.id },
+            (res) => {
+              expect(res).to.not.haveGraphQLErrors()
+              expect(res.data?.projectVersionsUpdated.type).to.equal(
+                ProjectVersionsUpdatedMessageType.Deleted
+              )
+              expect(res.data?.projectVersionsUpdated.id).to.equal(commitToDelete.id)
+            }
+          )
+          const onUserStreamCommitDeleted = await meSubClient.subscribe(
+            OnUserStreamCommitDeletedDocument,
+            { streamId: myVersionProj.id },
+            (res) => {
+              expect(res).to.not.haveGraphQLErrors()
+              expect(res.data?.commitDeleted?.id).to.equal(commitToDelete.id)
+            }
+          )
+          await meSubClient.waitForReadiness()
+          await deleteVersion(
+            {
+              versionIds: [commitToDelete.id],
+              projectId: myVersionProj.id
+            },
+            me.id
+          )
+
+          await Promise.all([
+            onUserProjectVersionsUpdated.waitForMessage(),
+            onUserStreamCommitDeleted.waitForMessage()
+          ])
+
+          expect(onUserProjectVersionsUpdated.getMessages()).to.have.length(1)
+          expect(onUserStreamCommitDeleted.getMessages()).to.have.length(1)
+        })
+
+        it('should notify me when a version is updated (projectVersionsUpdated/commitUpdated)', async () => {
+          const commitToUpdate: BasicTestCommit = {
+            streamId: '',
+            objectId: '',
+            id: '',
+            authorId: '',
+            message: 'Commit to Update'
+          }
+          await createTestCommits([commitToUpdate], {
+            owner: me,
+            stream: myVersionProj
+          })
+          const updateVersion = await buildUpdateVersion({
+            projectId: myVersionProj.id
+          })
+
+          const onUserProjectVersionsUpdated = await meSubClient.subscribe(
+            OnUserProjectVersionsUpdatedDocument,
+            { projectId: myVersionProj.id },
+            (res) => {
+              expect(res).to.not.haveGraphQLErrors()
+              expect(res.data?.projectVersionsUpdated.type).to.equal(
+                ProjectVersionsUpdatedMessageType.Updated
+              )
+              expect(res.data?.projectVersionsUpdated.version?.id).to.equal(
+                commitToUpdate.id
+              )
+            }
+          )
+          const onUserStreamCommitCreated = await meSubClient.subscribe(
+            OnUserStreamCommitUpdatedDocument,
+            { streamId: myVersionProj.id },
+            (res) => {
+              expect(res).to.not.haveGraphQLErrors()
+              expect(res.data?.commitUpdated?.id).to.equal(commitToUpdate.id)
+            }
+          )
+          await meSubClient.waitForReadiness()
+          await updateVersion(
+            {
+              versionId: commitToUpdate.id,
+              message: 'Updated Message',
+              projectId: myVersionProj.id
+            },
+            me.id
+          )
+
+          await Promise.all([
+            onUserProjectVersionsUpdated.waitForMessage(),
+            onUserStreamCommitCreated.waitForMessage()
+          ])
+
+          expect(onUserProjectVersionsUpdated.getMessages()).to.have.length(1)
+          expect(onUserStreamCommitCreated.getMessages()).to.have.length(1)
+        })
+
+        it('should not notify me when version is created for stream im not authorized for', async () => {
+          const otherGuysProj: BasicTestStream = {
+            name: 'Other Guys Project #3',
+            id: '',
+            ownerId: otherGuy.id,
+            isPublic: false,
+            workspaceId: otherGuysWorkspace.id
+          }
+          await createTestStreams([[otherGuysProj, otherGuy]])
+
+          const onUserProjectVersionsUpdated = await meSubClient.subscribe(
+            OnUserProjectVersionsUpdatedDocument,
+            { projectId: otherGuysProj.id },
+            (res) => {
+              throw new TestError('Message received for wrong project', {
+                info: { res }
+              })
+            }
+          )
+          const onUserStreamCommitCreated = await meSubClient.subscribe(
+            OnUserStreamCommitCreatedDocument,
+            { streamId: otherGuysProj.id },
+            (res) => {
+              throw new TestError('Message received for wrong project', {
+                info: { res }
+              })
+            }
+          )
+          await meSubClient.waitForReadiness()
+
+          const commit: BasicTestCommit = {
+            streamId: otherGuysProj.id,
+            objectId: '',
+            id: '',
+            authorId: '',
+            message: 'Random Commit'
+          }
+          await createTestCommits([commit], {
+            owner: otherGuy,
+            stream: otherGuysProj
+          })
+
+          await Promise.all([
+            onUserProjectVersionsUpdated.waitForTimeout(),
+            onUserStreamCommitCreated.waitForTimeout()
+          ])
+
+          expect(onUserProjectVersionsUpdated.getMessages()).to.have.length(0)
+          expect(onUserStreamCommitCreated.getMessages()).to.have.length(0)
         })
       })
 
