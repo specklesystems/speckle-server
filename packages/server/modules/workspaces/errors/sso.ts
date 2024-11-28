@@ -34,6 +34,17 @@ export class SsoProviderProfileMissingError extends BaseError {
   static code = 'SSO_PROVIDER_PROFILE_MISSING_ERROR'
 }
 
+export class SsoProviderProfileMissingPropertiesError extends BaseError {
+  static code = 'SSO_PROVIDER_PROFILE_MISSING_PROPERTIES_ERROR'
+  constructor(properties: string[]) {
+    super(
+      `User profile from identity provider missing required properties: ${properties.join(
+        ', '
+      )}`
+    )
+  }
+}
+
 export class SsoProviderProfileInvalidError extends BaseError {
   static defaultMessage = 'SSO provider user profile is invalid.'
   static code = 'SSO_PROVIDER_PROFILE_INVALID_ERROR'
