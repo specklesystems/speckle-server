@@ -3538,8 +3538,8 @@ export type UpdateVersionInput = {
 
 export type UpgradePlanInput = {
   billingInterval: BillingInterval;
-  targetPlan: PaidWorkspacePlans;
   workspaceId: Scalars['ID']['input'];
+  workspacePlan: PaidWorkspacePlans;
 };
 
 /**
