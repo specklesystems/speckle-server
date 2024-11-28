@@ -35,3 +35,15 @@ export class WorkspaceSubscriptionNotFoundError extends BaseError {
   static code = 'WORKSPACE_SUBSCRIPTION_NOT_FOUND'
   static statusCode = 404
 }
+
+export class WorkspaceNotPaidPlanError extends BaseError {
+  static defaultMessage = 'Workspace is not on a paid plan'
+  static code = 'WORKSPACE_NOT_PAID_PLAN'
+  static statusCode = 400
+}
+
+export class WorkspacePlanDowngradeError extends BaseError {
+  static defaultMessage = 'Workspace plan cannot be downgraded to a smaller plan'
+  static code = 'WORKSPACE_PLAN_DOWNGRADE_ERROR'
+  static statusCode = 400
+}
