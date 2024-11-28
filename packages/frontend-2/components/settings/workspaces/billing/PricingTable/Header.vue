@@ -87,9 +87,11 @@ const isMatchingInterval = computed(
 const buttonEnabled = computed(() => {
   // Always enable buttons during trial
   if (hasTrialPlan.value) return true
+
   // Disable if user is already on this plan with same billing interval
   if (isMatchingInterval.value && props.currentPlan?.name === props.plan.name)
     return false
+
   // Handle billing interval changes
   if (!isMatchingInterval.value) {
     const isCurrentPlan = props.currentPlan?.name === props.plan.name
@@ -102,6 +104,7 @@ const buttonEnabled = computed(() => {
     // Allow monthly plan changes only for upgrades
     return canUpgradeToPlan.value
   }
+
   // Allow upgrades to higher tier plans
   return canUpgradeToPlan.value
 })
