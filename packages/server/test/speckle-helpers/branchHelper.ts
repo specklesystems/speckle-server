@@ -1,5 +1,13 @@
 import { db } from '@/db/knex'
-import { createBranchFactory } from '@/modules/core/repositories/branches'
+import { saveActivityFactory } from '@/modules/activitystream/repositories'
+import { addBranchCreatedActivityFactory } from '@/modules/activitystream/services/branchActivity'
+import {
+  createBranchFactory,
+  getStreamBranchByNameFactory
+} from '@/modules/core/repositories/branches'
+import { createBranchAndNotifyFactory } from '@/modules/core/services/branch/management'
+import { getProjectDbClient } from '@/modules/multiregion/dbSelector'
+import { publish } from '@/modules/shared/utils/subscriptions'
 import { BasicTestUser } from '@/test/authHelper'
 import { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
 import { omit } from 'lodash'
@@ -31,12 +39,25 @@ export async function createTestBranch(params: {
   branch.streamId = stream.id
   branch.authorId = owner.id
 
-  const createBranch = createBranchFactory({ db })
-  const id = (
-    await createBranch({
-      ...omit(branch, ['id']),
-      description: branch.description || null
+  const projectDb = await getProjectDbClient({ projectId: stream.id })
+
+  const createBranchAndNotify = createBranchAndNotifyFactory({
+    getStreamBranchByName: getStreamBranchByNameFactory({ db: projectDb }),
+    createBranch: createBranchFactory({ db: projectDb }),
+    addBranchCreatedActivity: addBranchCreatedActivityFactory({
+      saveActivity: saveActivityFactory({ db }),
+      publish
     })
+  })
+
+  const id = (
+    await createBranchAndNotify(
+      {
+        ...omit(branch, ['id']),
+        description: branch.description || null
+      },
+      owner.id
+    )
   ).id
   branch.id = id
 }

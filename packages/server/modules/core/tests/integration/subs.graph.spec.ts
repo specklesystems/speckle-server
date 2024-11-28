@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { db } from '@/db/knex'
 import { saveActivityFactory } from '@/modules/activitystream/repositories'
+import { addBranchUpdatedActivityFactory } from '@/modules/activitystream/services/branchActivity'
 import {
   addStreamDeletedActivityFactory,
   addStreamInviteAcceptedActivityFactory,
@@ -10,6 +11,10 @@ import {
 } from '@/modules/activitystream/services/streamActivity'
 import { AllScopes } from '@/modules/core/helpers/mainConstants'
 import {
+  getBranchByIdFactory,
+  updateBranchFactory
+} from '@/modules/core/repositories/branches'
+import {
   deleteStreamFactory,
   getStreamCollaboratorsFactory,
   getStreamFactory,
@@ -18,6 +23,7 @@ import {
   updateStreamFactory
 } from '@/modules/core/repositories/streams'
 import { getUserFactory } from '@/modules/core/repositories/users'
+import { updateBranchAndNotifyFactory } from '@/modules/core/services/branch/management'
 import {
   addOrUpdateStreamCollaboratorFactory,
   isStreamCollaboratorFactory,
@@ -39,6 +45,9 @@ import {
 import { itEach } from '@/test/assertionHelper'
 import { BasicTestUser, createTestUser } from '@/test/authHelper'
 import {
+  OnBranchCreatedDocument,
+  OnBranchUpdatedDocument,
+  OnProjectModelsUpdatedDocument,
   OnProjectUpdatedDocument,
   OnStreamUpdatedDocument,
   OnUserProjectsUpdatedDocument,
@@ -55,12 +64,18 @@ import {
   TestApolloSubscriptionServer
 } from '@/test/graphqlHelper'
 import { beforeEachContext, getMainTestRegionKey } from '@/test/hooks'
+import {
+  BasicTestBranch,
+  createTestBranch,
+  createTestBranches
+} from '@/test/speckle-helpers/branchHelper'
 import { BasicTestCommit, createTestCommits } from '@/test/speckle-helpers/commitHelper'
 import {
   isMultiRegionTestMode,
   waitForRegionUser
 } from '@/test/speckle-helpers/regions'
 import { BasicTestStream, createTestStreams } from '@/test/speckle-helpers/streamHelper'
+import { faker } from '@faker-js/faker'
 import { Optional, Roles, Scopes, ServerScope } from '@speckle/shared'
 import { expect } from 'chai'
 
@@ -102,6 +117,20 @@ const buildUpdateProject = async (params: { projectId: string }) => {
     })
   })
   return updateStreamAndNotify
+}
+
+const buildUpdateModel = async (params: { projectId: string }) => {
+  const { projectId } = params
+  const projectDB = await getProjectDbClient({ projectId })
+  const updateBranchAndNotify = updateBranchAndNotifyFactory({
+    getBranchById: getBranchByIdFactory({ db: projectDB }),
+    updateBranch: updateBranchFactory({ db: projectDB }),
+    addBranchUpdatedActivity: addBranchUpdatedActivityFactory({
+      saveActivity: saveActivityFactory({ db }),
+      publish
+    })
+  })
+  return updateBranchAndNotify
 }
 
 const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
@@ -641,6 +670,136 @@ describe('Core GraphQL Subscriptions (New)', () => {
           myModelProj.workspaceId = myMainWorkspace.id
           await createTestStreams([[myModelProj, me]])
         })
+
+        it(`should notify me of a new model (projectModelsUpdated/branchCreated)`, async () => {
+          const newModel: BasicTestBranch = {
+            name: 'Some New Fangled kind of Model',
+            streamId: '',
+            authorId: '',
+            id: ''
+          }
+
+          const onProjectModelsUpdated = await meSubClient.subscribe(
+            OnProjectModelsUpdatedDocument,
+            { projectId: myModelProj.id },
+            (res) => {
+              expect(res).to.not.haveGraphQLErrors()
+
+              // name should be lowercaseified
+              expect(res.data?.projectModelsUpdated.model?.name).to.equal(
+                newModel.name.toLowerCase()
+              )
+            }
+          )
+          const onBranchCreated = await meSubClient.subscribe(
+            OnBranchCreatedDocument,
+            { streamId: myModelProj.id },
+            (res) => {
+              expect(res).to.not.haveGraphQLErrors()
+              expect(res.data?.branchCreated?.name).to.equal(
+                newModel.name.toLowerCase()
+              )
+            }
+          )
+          await meSubClient.waitForReadiness()
+
+          await createTestBranch({ branch: newModel, stream: myModelProj, owner: me })
+          await Promise.all([
+            onProjectModelsUpdated.waitForMessage(),
+            onBranchCreated.waitForMessage()
+          ])
+
+          expect(onProjectModelsUpdated.getMessages()).to.have.length(1)
+          expect(onBranchCreated.getMessages()).to.have.length(1)
+        })
+
+        itEach(
+          [{ any: false }, { any: true }],
+          ({ any }) =>
+            `should notify me of ${
+              any ? 'any ' : ''
+            }updated model (projectModelsUpdated/branchUpdated)`,
+          async ({ any }) => {
+            // Create 2 models
+            const firstModel: BasicTestBranch = {
+              name: 'First Model ' + faker.number.int(),
+              streamId: '',
+              authorId: '',
+              id: ''
+            }
+            const secondModel: BasicTestBranch = {
+              name: 'Second Model ' + faker.number.int(),
+              streamId: '',
+              authorId: '',
+              id: ''
+            }
+            await createTestBranches([
+              { branch: firstModel, stream: myModelProj, owner: me },
+              { branch: secondModel, stream: myModelProj, owner: me }
+            ])
+            const updateModel = await buildUpdateModel({ projectId: myModelProj.id })
+
+            // Sub
+            const onProjectModelsUpdated = await meSubClient.subscribe(
+              OnProjectModelsUpdatedDocument,
+              {
+                projectId: myModelProj.id,
+                ...(!any ? { modelIds: [firstModel.id] } : {})
+              },
+              (res) => {
+                expect(res).to.not.haveGraphQLErrors()
+
+                const modelId = res.data?.projectModelsUpdated.model?.id
+                expect([firstModel.id, ...(any ? [secondModel.id] : [])]).to.include(
+                  modelId
+                )
+              }
+            )
+            const onBranchUpdated = await meSubClient.subscribe(
+              OnBranchUpdatedDocument,
+              {
+                streamId: myModelProj.id,
+                branchId: !any ? firstModel.id : undefined
+              },
+              (res) => {
+                expect(res).to.not.haveGraphQLErrors()
+                const modelId = res.data?.branchUpdated?.id
+                expect([firstModel.id, ...(any ? [secondModel.id] : [])]).to.include(
+                  modelId
+                )
+              }
+            )
+            await meSubClient.waitForReadiness()
+
+            // Update both models
+            await Promise.all([
+              updateModel(
+                {
+                  id: firstModel.id,
+                  name: 'First Model New Name' + faker.number.int(),
+                  projectId: myModelProj.id
+                },
+                me.id
+              ),
+              updateModel(
+                {
+                  id: secondModel.id,
+                  name: 'Second Model New Name' + faker.number.int(),
+                  projectId: myModelProj.id
+                },
+                me.id
+              )
+            ])
+
+            await Promise.all([
+              onProjectModelsUpdated.waitForMessage(),
+              onBranchUpdated.waitForMessage()
+            ])
+
+            expect(onProjectModelsUpdated.getMessages()).to.have.length(any ? 2 : 1)
+            expect(onBranchUpdated.getMessages()).to.have.length(any ? 2 : 1)
+          }
+        )
       })
     })
   })

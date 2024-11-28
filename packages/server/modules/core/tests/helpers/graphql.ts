@@ -75,3 +75,28 @@ export const onUserStreamCommitCreatedSubscription = gql`
     commitCreated(streamId: $streamId)
   }
 `
+
+export const onProjectModelsUpdatedSubscription = gql`
+  subscription OnProjectModelsUpdated($projectId: String!, $modelIds: [String!]) {
+    projectModelsUpdated(id: $projectId, modelIds: $modelIds) {
+      id
+      type
+      model {
+        id
+        name
+      }
+    }
+  }
+`
+
+export const onBranchCreatedSubscription = gql`
+  subscription OnBranchCreated($streamId: String!) {
+    branchCreated(streamId: $streamId)
+  }
+`
+
+export const onBranchUpdatedSubscription = gql`
+  subscription OnBranchUpdated($streamId: String!, $branchId: String) {
+    branchUpdated(streamId: $streamId, branchId: $branchId)
+  }
+`
