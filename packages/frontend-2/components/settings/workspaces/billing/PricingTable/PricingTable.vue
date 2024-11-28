@@ -4,7 +4,12 @@
       <slot name="title" />
       <div class="flex items-center gap-x-4">
         <p class="text-foreground-3 text-body-xs">Save 20% with annual billing</p>
-        <FormSwitch v-model="isYearlyPlan" :show-label="false" name="annual billing" />
+        <FormSwitch
+          v-model="isYearlyPlan"
+          :disabled="activeBillingInterval === BillingInterval.Yearly"
+          :show-label="false"
+          name="annual billing"
+        />
       </div>
     </div>
     <component
@@ -18,10 +23,7 @@
 <script setup lang="ts">
 import { useBreakpoints } from '@vueuse/core'
 import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
-import {
-  type WorkspacePlan,
-  type BillingInterval
-} from '~/lib/common/generated/gql/graphql'
+import { type WorkspacePlan, BillingInterval } from '~/lib/common/generated/gql/graphql'
 import { graphql } from '~/lib/common/generated/gql'
 import type { MaybeNullOrUndefined } from '@speckle/shared'
 
@@ -32,7 +34,7 @@ graphql(`
   }
 `)
 
-defineProps<{
+const props = defineProps<{
   workspaceId?: string
   currentPlan?: MaybeNullOrUndefined<WorkspacePlan>
   activeBillingInterval?: BillingInterval
@@ -49,4 +51,12 @@ const MobileTable = defineAsyncComponent(
 )
 const isDesktop = breakpoints.greaterOrEqual('lg')
 const isYearlyPlan = ref(false)
+
+watch(
+  () => props.activeBillingInterval,
+  (newVal) => {
+    isYearlyPlan.value = newVal === BillingInterval.Yearly
+  },
+  { immediate: true }
+)
 </script>
