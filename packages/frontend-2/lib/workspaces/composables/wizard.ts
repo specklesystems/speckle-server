@@ -3,7 +3,6 @@ import WorkspaceWizardStepInvites from '@/components/workspace/wizard/step/Invit
 import WorkspaceWizardStepPricing from '@/components/workspace/wizard/step/Pricing.vue'
 import WorkspaceWizardStepRegion from '@/components/workspace/wizard/step/Region.vue'
 import { nanoid } from 'nanoid'
-
 import {
   type BillingInterval,
   PaidWorkspacePlans
@@ -43,9 +42,16 @@ export const useWorkspacesWizard = () => {
   const completeWizard = () => {}
 
   const goToNextStep = () => {
-    if (currentStepIndex.value === Object.keys(stepComponents.value).length - 1) return
+    // If we're on the last step, complete the wizard
+    if (currentStepIndex.value === Object.keys(stepComponents.value).length - 1) {
+      completeWizard()
+      return
+    }
     // Only continue to WorkspaceWizardStepRegion when the plan is Business
-    if (currentStepIndex.value === 2 && input.plan !== PaidWorkspacePlans.Business) {
+    if (
+      currentStepIndex.value === 2 &&
+      input.value.plan !== PaidWorkspacePlans.Business
+    ) {
       completeWizard()
       return
     }
