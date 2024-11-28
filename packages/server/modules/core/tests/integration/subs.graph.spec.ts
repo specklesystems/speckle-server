@@ -1,3 +1,26 @@
+import { db } from '@/db/knex'
+import { saveActivityFactory } from '@/modules/activitystream/repositories'
+import {
+  addStreamDeletedActivityFactory,
+  addStreamInviteAcceptedActivityFactory,
+  addStreamPermissionsAddedActivityFactory
+} from '@/modules/activitystream/services/streamActivity'
+import {
+  deleteStreamFactory,
+  getStreamCollaboratorsFactory,
+  getStreamFactory,
+  grantStreamPermissionsFactory
+} from '@/modules/core/repositories/streams'
+import { getUserFactory } from '@/modules/core/repositories/users'
+import {
+  addOrUpdateStreamCollaboratorFactory,
+  validateStreamAccessFactory
+} from '@/modules/core/services/streams/access'
+import { deleteStreamAndNotifyFactory } from '@/modules/core/services/streams/management'
+import { getProjectDbClient } from '@/modules/multiregion/dbSelector'
+import { deleteAllResourceInvitesFactory } from '@/modules/serverinvites/repositories/serverInvites'
+import { authorizeResolver } from '@/modules/shared'
+import { publish } from '@/modules/shared/utils/subscriptions'
 import {
   BasicTestWorkspace,
   createTestWorkspace
@@ -8,6 +31,7 @@ import {
   OnUserProjectVersionsUpdatedDocument,
   OnUserStreamAddedDocument,
   OnUserStreamCommitCreatedDocument,
+  OnUserStreamRemovedDocument,
   UserProjectsUpdatedMessageType
 } from '@/test/graphql/generated/graphql'
 import {
@@ -22,7 +46,43 @@ import {
   waitForRegionUser
 } from '@/test/speckle-helpers/regions'
 import { BasicTestStream, createTestStreams } from '@/test/speckle-helpers/streamHelper'
+import { Roles } from '@speckle/shared'
 import { expect } from 'chai'
+
+const saveActivity = saveActivityFactory({ db })
+
+const buildDeleteProject = async (params: { projectId: string; ownerId: string }) => {
+  const { projectId, ownerId } = params
+  const projectDb = await getProjectDbClient({ projectId })
+  const deleteStreamAndNotify = deleteStreamAndNotifyFactory({
+    deleteStream: deleteStreamFactory({
+      db: projectDb
+    }),
+    authorizeResolver,
+    addStreamDeletedActivity: addStreamDeletedActivityFactory({
+      saveActivity,
+      publish,
+      getStreamCollaborators: getStreamCollaboratorsFactory({ db })
+    }),
+    deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db }),
+    getStream: getStreamFactory({ db: projectDb })
+  })
+  return async () => deleteStreamAndNotify(projectId, ownerId, null)
+}
+
+const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
+  validateStreamAccess: validateStreamAccessFactory({ authorizeResolver }),
+  getUser: getUserFactory({ db }),
+  grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+  addStreamInviteAcceptedActivity: addStreamInviteAcceptedActivityFactory({
+    saveActivity,
+    publish
+  }),
+  addStreamPermissionsAddedActivity: addStreamPermissionsAddedActivityFactory({
+    saveActivity,
+    publish
+  })
+})
 
 describe('Core GraphQL Subscriptions (New)', () => {
   let me: BasicTestUser
@@ -116,6 +176,103 @@ describe('Core GraphQL Subscriptions (New)', () => {
 
           expect(onUserProjectsUpdated.getMessages()).to.have.length(1)
           expect(onUserStreamAdded.getMessages()).to.have.length(1)
+        })
+
+        it('should notify me of a project ive just been added to (userProjectsUpdated/userStreamAdded)', async () => {
+          const otherGuysProj: BasicTestStream = {
+            name: 'Other Guys Project #1',
+            id: '',
+            ownerId: otherGuy.id,
+            isPublic: true,
+            workspaceId: myMainWorkspace.id
+          }
+          await createTestStreams([[otherGuysProj, otherGuy]])
+
+          const onUserProjectsUpdated = await meSubClient.subscribe(
+            OnUserProjectsUpdatedDocument,
+            {},
+            (res) => {
+              expect(res).to.not.haveGraphQLErrors()
+              expect(res.data?.userProjectsUpdated.type).to.equal(
+                UserProjectsUpdatedMessageType.Added
+              )
+              expect(res.data?.userProjectsUpdated.project?.id).to.equal(
+                otherGuysProj.id
+              )
+            }
+          )
+          const onUserStreamAdded = await meSubClient.subscribe(
+            OnUserStreamAddedDocument,
+            {},
+            (res) => {
+              expect(res).to.not.haveGraphQLErrors()
+              expect(res.data?.userStreamAdded?.id).to.equal(otherGuysProj.id)
+            }
+          )
+          await meSubClient.waitForReadiness()
+          await meSubClient.waitForReadiness()
+          await meSubClient.waitForReadiness()
+          await meSubClient.waitForReadiness()
+
+          await addOrUpdateStreamCollaborator(
+            otherGuysProj.id,
+            me.id,
+            Roles.Stream.Contributor,
+            otherGuy.id
+          )
+
+          await Promise.all([
+            onUserProjectsUpdated.waitForMessage(),
+            onUserStreamAdded.waitForMessage()
+          ])
+
+          expect(onUserProjectsUpdated.getMessages()).to.have.length(1)
+          expect(onUserStreamAdded.getMessages()).to.have.length(1)
+        })
+
+        it('should notify me of a removed project (userProjectsUpdated/userStreamRemoved)', async () => {
+          const myProj: BasicTestStream = {
+            name: 'My New Test2 Project',
+            id: '',
+            ownerId: me.id,
+            isPublic: true,
+            workspaceId: myMainWorkspace.id
+          }
+          await createTestStreams([[myProj, me]])
+          const deleteProject = await buildDeleteProject({
+            projectId: myProj.id,
+            ownerId: me.id
+          })
+
+          const onUserProjectsUpdated = await meSubClient.subscribe(
+            OnUserProjectsUpdatedDocument,
+            {},
+            (res) => {
+              expect(res).to.not.haveGraphQLErrors()
+              expect(res.data?.userProjectsUpdated.type).to.equal(
+                UserProjectsUpdatedMessageType.Removed
+              )
+              expect(res.data?.userProjectsUpdated.id).to.equal(myProj.id)
+            }
+          )
+          const onUserStreamRemoved = await meSubClient.subscribe(
+            OnUserStreamRemovedDocument,
+            {},
+            (res) => {
+              expect(res).to.not.haveGraphQLErrors()
+              expect(res.data?.userStreamRemoved?.id).to.equal(myProj.id)
+            }
+          )
+          await meSubClient.waitForReadiness()
+          await deleteProject()
+
+          await Promise.all([
+            onUserProjectsUpdated.waitForMessage(),
+            onUserStreamRemoved.waitForMessage()
+          ])
+
+          expect(onUserProjectsUpdated.getMessages()).to.have.length(1)
+          expect(onUserStreamRemoved.getMessages()).to.have.length(1)
         })
       })
 

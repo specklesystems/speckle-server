@@ -31,6 +31,12 @@ export const onUserStreamAddedSubscription = gql`
   }
 `
 
+export const onUserStreamRemovedSubscription = gql`
+  subscription OnUserStreamRemoved {
+    userStreamRemoved
+  }
+`
+
 export const onUserProjectVersionsUpdatedSubscription = gql`
   subscription OnUserProjectVersionsUpdated($projectId: String!) {
     projectVersionsUpdated(id: $projectId) {
