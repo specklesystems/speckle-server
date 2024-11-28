@@ -11,18 +11,25 @@ import { WorkspaceNotFoundError } from '@/modules/workspaces/errors/workspace'
 import { db } from '@/db/knex'
 import {
   createCheckoutSessionFactory,
-  createCustomerPortalUrlFactory
+  createCustomerPortalUrlFactory,
+  reconcileWorkspaceSubscriptionFactory
 } from '@/modules/gatekeeper/clients/stripe'
-import { getWorkspacePlanPrice, getStripeClient } from '@/modules/gatekeeper/stripe'
+import {
+  getWorkspacePlanPrice,
+  getStripeClient,
+  getWorkspacePlanProductId
+} from '@/modules/gatekeeper/stripe'
 import { startCheckoutSessionFactory } from '@/modules/gatekeeper/services/checkout'
 import {
   deleteCheckoutSessionFactory,
   getWorkspaceCheckoutSessionFactory,
   getWorkspacePlanFactory,
   getWorkspaceSubscriptionFactory,
-  saveCheckoutSessionFactory
+  saveCheckoutSessionFactory,
+  upsertPaidWorkspacePlanFactory
 } from '@/modules/gatekeeper/repositories/billing'
 import { canWorkspaceAccessFeatureFactory } from '@/modules/gatekeeper/services/featureAuthorization'
+import { upgradeWorkspaceSubscriptionFactory } from '@/modules/gatekeeper/services/subscriptions'
 
 const { FF_GATEKEEPER_MODULE_ENABLED } = getFeatureFlags()
 
@@ -37,24 +44,12 @@ export = FF_GATEKEEPER_MODULE_ENABLED
         plan: async (parent) => {
           return await getWorkspacePlanFactory({ db })({ workspaceId: parent.id })
         },
-        subscription: async (parent, _, ctx) => {
+        subscription: async (parent) => {
           const workspaceId = parent.id
-          await authorizeResolver(
-            ctx.userId,
-            workspaceId,
-            Roles.Workspace.Admin,
-            ctx.resourceAccessRules
-          )
           return await getWorkspaceSubscriptionFactory({ db })({ workspaceId })
         },
-        customerPortalUrl: async (parent, _, ctx) => {
+        customerPortalUrl: async (parent) => {
           const workspaceId = parent.id
-          await authorizeResolver(
-            ctx.userId,
-            workspaceId,
-            Roles.Workspace.Admin,
-            ctx.resourceAccessRules
-          )
           const workspaceSubscription = await getWorkspaceSubscriptionFactory({ db })({
             workspaceId
           })
@@ -71,13 +66,7 @@ export = FF_GATEKEEPER_MODULE_ENABLED
             customerId: workspaceSubscription.subscriptionData.customerId
           })
         },
-        hasAccessToFeature: async (parent, args, ctx) => {
-          await authorizeResolver(
-            ctx.userId,
-            parent.id,
-            Roles.Workspace.Member,
-            ctx.resourceAccessRules
-          )
+        hasAccessToFeature: async (parent, args) => {
           const hasAccess = await canWorkspaceAccessFeatureFactory({
             getWorkspacePlan: getWorkspacePlanFactory({ db })
           })({
@@ -87,7 +76,9 @@ export = FF_GATEKEEPER_MODULE_ENABLED
           return hasAccess
         }
       },
-      WorkspaceMutations: () => ({}),
+      WorkspaceMutations: {
+        billing: () => ({})
+      },
       WorkspaceBillingMutations: {
         cancelCheckoutSession: async (parent, args, ctx) => {
           const { workspaceId, sessionId } = args.input
@@ -138,6 +129,27 @@ export = FF_GATEKEEPER_MODULE_ENABLED
           })
 
           return session
+        },
+        upgradePlan: async (parent, args, ctx) => {
+          const { workspaceId, targetPlan } = args.input
+          await authorizeResolver(
+            ctx.userId,
+            workspaceId,
+            Roles.Workspace.Admin,
+            ctx.resourceAccessRules
+          )
+          const stripe = getStripeClient()
+          await upgradeWorkspaceSubscriptionFactory({
+            getWorkspacePlan: getWorkspacePlanFactory({ db }),
+            reconcileSubscriptionData: reconcileWorkspaceSubscriptionFactory({
+              stripe
+            }),
+            getWorkspaceSubscription: getWorkspaceSubscriptionFactory({ db }),
+            getWorkspacePlanPrice,
+            getWorkspacePlanProductId,
+            upsertWorkspacePlan: upsertPaidWorkspacePlanFactory({ db })
+          })({ workspaceId, targetPlan })
+          return true
         }
       }
     } as Resolvers)

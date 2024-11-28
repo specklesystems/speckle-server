@@ -1,8 +1,9 @@
 import type { RouteLocationNormalized } from 'vue-router'
 import { waitForever, type MaybeAsync, type Optional } from '@speckle/shared'
-import { useApolloClient, useMutation } from '@vue/apollo-composable'
+import { useApolloClient, useMutation, useSubscription } from '@vue/apollo-composable'
 import { graphql } from '~/lib/common/generated/gql'
 import type {
+  OnWorkspaceUpdatedSubscription,
   UseWorkspaceInviteManager_PendingWorkspaceCollaboratorFragment,
   Workspace,
   WorkspaceCreateInput,
@@ -31,6 +32,10 @@ import {
 } from '~/lib/workspaces/graphql/mutations'
 import { isFunction } from 'lodash-es'
 import type { GraphQLError } from 'graphql'
+import { onWorkspaceUpdatedSubscription } from '~/lib/workspaces/graphql/subscriptions'
+import { useLock } from '~/lib/common/composables/singleton'
+import type { Get } from 'type-fest'
+import type { ApolloCache } from '@apollo/client/core'
 
 export const useInviteUserToWorkspace = () => {
   const { activeUser } = useActiveUser()
@@ -519,5 +524,53 @@ export const useSetDefaultWorkspaceRegion = () => {
     }
 
     return res?.data?.workspaceMutations.setDefaultRegion
+  }
+}
+
+export const useOnWorkspaceUpdated = (params: {
+  workspaceSlug: Ref<string>
+  /**
+   * Optionally do extra work on each message, besides the main cache update
+   */
+  handler?: (
+    data: NonNullable<Get<OnWorkspaceUpdatedSubscription, 'workspaceUpdated'>>,
+    cache: ApolloCache<unknown>
+  ) => void
+}) => {
+  const { workspaceSlug, handler } = params
+
+  const { triggerNotification } = useGlobalToast()
+  const apollo = useApolloClient().client
+  const { hasLock } = useLock(
+    computed(() => `useOnWorkspaceUpdated-${unref(workspaceSlug.value)}`)
+  )
+  const enabled = computed(() => !!(hasLock.value || handler))
+  const { onResult } = useSubscription(
+    onWorkspaceUpdatedSubscription,
+    () => ({
+      workspaceSlug: params.workspaceSlug.value
+    }),
+    () => ({
+      enabled: enabled.value,
+      errorPolicy: 'all'
+    })
+  )
+
+  // Main, locked cache update
+  onResult((result) => {
+    if (!result.data?.workspaceUpdated || !hasLock.value) return
+
+    triggerNotification({
+      type: ToastNotificationType.Info,
+      title: 'Workspace updated'
+    })
+  })
+
+  // Optional handler
+  if (handler) {
+    onResult((result) => {
+      if (!result.data?.workspaceUpdated) return
+      handler(result.data.workspaceUpdated, apollo.cache)
+    })
   }
 }

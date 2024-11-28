@@ -223,9 +223,10 @@ export = {
     async batchDelete(_parent, args, ctx) {
       const results = await Promise.all(
         args.ids.map(async (id) => {
+          const projectDb = await getProjectDbClient({ projectId: id })
           const deleteStreamAndNotify = deleteStreamAndNotifyFactory({
             deleteStream: deleteStreamFactory({
-              db: await getProjectDbClient({ projectId: id })
+              db: projectDb
             }),
             authorizeResolver,
             addStreamDeletedActivity: addStreamDeletedActivityFactory({
@@ -233,7 +234,8 @@ export = {
               publish,
               getStreamCollaborators: getStreamCollaboratorsFactory({ db })
             }),
-            deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db })
+            deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db }),
+            getStream: getStreamFactory({ db: projectDb })
           })
           return deleteStreamAndNotify(id, ctx.userId!, ctx.resourceAccessRules, {
             skipAccessChecks: true
@@ -243,9 +245,10 @@ export = {
       return results.every((res) => res === true)
     },
     async delete(_parent, { id }, { userId, resourceAccessRules }) {
+      const projectDb = await getProjectDbClient({ projectId: id })
       const deleteStreamAndNotify = deleteStreamAndNotifyFactory({
         deleteStream: deleteStreamFactory({
-          db: await getProjectDbClient({ projectId: id })
+          db: projectDb
         }),
         authorizeResolver,
         addStreamDeletedActivity: addStreamDeletedActivityFactory({
@@ -253,7 +256,8 @@ export = {
           publish,
           getStreamCollaborators: getStreamCollaboratorsFactory({ db })
         }),
-        deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db })
+        deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db }),
+        getStream: getStreamFactory({ db: projectDb })
       })
       return await deleteStreamAndNotify(id, userId!, resourceAccessRules)
     },

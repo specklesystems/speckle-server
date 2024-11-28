@@ -78,9 +78,6 @@ const getAdminUsersListCollection = getAdminUsersListCollectionFactory({
 
 export = {
   Query: {
-    async _() {
-      return `Ph'nglui mglw'nafh Cthulhu R'lyeh wgah'nagl fhtagn.`
-    },
     async activeUser(_parent, _args, context) {
       const activeUserId = context.userId
       if (!activeUserId) return null

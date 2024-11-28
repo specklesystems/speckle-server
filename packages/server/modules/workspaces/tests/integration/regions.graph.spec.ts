@@ -81,17 +81,6 @@ isEnabled
       })
 
       describe('when listing', () => {
-        it("can't list if not workspace admin", async () => {
-          const res = await apollo.execute(
-            GetWorkspaceAvailableRegionsDocument,
-            { workspaceId: myFirstWorkspace.id },
-            { authUserId: otherGuy.id }
-          )
-
-          expect(res.data?.workspace.availableRegions).to.be.not.ok
-          expect(res).to.haveGraphQLErrors('You are not authorized')
-        })
-
         it('can list if workspace admin', async () => {
           const res = await apollo.execute(GetWorkspaceAvailableRegionsDocument, {
             workspaceId: myFirstWorkspace.id

@@ -12,7 +12,6 @@ import {
   GetAutomationTriggerDefinitions,
   GetFullAutomationRevisionMetadata,
   GetFullAutomationRunById,
-  GetFunctionAutomationCounts,
   GetFunctionRun,
   GetLatestAutomationRevision,
   GetLatestAutomationRevisions,
@@ -78,7 +77,7 @@ import {
 import { Nullable, StreamRoles, isNullOrUndefined } from '@speckle/shared'
 import cryptoRandomString from 'crypto-random-string'
 import { Knex } from 'knex'
-import _, { clamp, groupBy, keyBy, pick, reduce } from 'lodash'
+import _, { clamp, groupBy, keyBy, pick } from 'lodash'
 import { SetOptional, SetRequired } from 'type-fest'
 
 const tables = {
@@ -616,38 +615,6 @@ export const getRevisionsFunctionsFactory =
     return groupBy(await q, (r) => r.automationRevisionId)
   }
 
-export const getFunctionAutomationCountsFactory =
-  (deps: { db: Knex }): GetFunctionAutomationCounts =>
-  async (params: { functionIds: string[] }) => {
-    const { functionIds } = params
-    if (!functionIds.length) return {}
-
-    const q = tables
-      .automationRevisionFunctions(deps.db)
-      .select<Array<{ functionId: string; count: string }>>([
-        AutomationRevisionFunctions.col.functionId,
-        knex.raw('count(distinct ??) as "count"', [
-          AutomationRevisions.col.automationId
-        ])
-      ])
-      .innerJoin(
-        AutomationRevisions.name,
-        AutomationRevisions.col.id,
-        AutomationRevisionFunctions.col.automationRevisionId
-      )
-      .whereIn(AutomationRevisionFunctions.col.functionId, functionIds)
-      .groupBy(AutomationRevisionFunctions.col.functionId)
-
-    return reduce(
-      await q,
-      (acc, r) => {
-        acc[r.functionId] = parseInt(r.count)
-        return acc
-      },
-      {} as Record<string, number>
-    )
-  }
-
 type GetAutomationRunsArgs = AutomationRunsArgs & {
   automationId: string
   revisionId?: string
@@ -663,6 +630,11 @@ const getAutomationRunsTotalCountBaseQueryFactory =
         AutomationRevisions.name,
         AutomationRevisions.col.id,
         AutomationRuns.col.automationRevisionId
+      )
+      .innerJoin(
+        Automations.name,
+        Automations.col.id,
+        AutomationRevisions.col.automationId
       )
       .where(AutomationRevisions.col.automationId, args.automationId)
 
@@ -696,6 +668,7 @@ export const getAutomationRunsItemsFactory =
 
     // Attach trigger & function runs
     q.select([
+      knex.raw(`(array_agg(??))[1] as "projectId"`, [Automations.col.projectId]),
       AutomationRuns.groupArray('runs'),
       AutomationRunTriggers.groupArray('triggers'),
       AutomationFunctionRuns.groupArray('functionRuns'),
@@ -713,7 +686,6 @@ export const getAutomationRunsItemsFactory =
         AutomationFunctionRuns.col.runId,
         AutomationRuns.col.id
       )
-
       .groupBy(AutomationRuns.col.id)
       .orderBy([
         { column: AutomationRuns.col.updatedAt, order: 'desc' },
@@ -730,14 +702,16 @@ export const getAutomationRunsItemsFactory =
       triggers: AutomationRunTriggerRecord[]
       functionRuns: AutomationFunctionRunRecord[]
       automationId: string
+      projectId: string
     }>
 
     const items = res.map(
-      (r): AutomationRunWithTriggersFunctionRuns => ({
+      (r): AutomationRunWithTriggersFunctionRuns & { projectId: string } => ({
         ...formatJsonArrayRecords(r.runs)[0],
         triggers: formatJsonArrayRecords(r.triggers),
         functionRuns: formatJsonArrayRecords(r.functionRuns),
-        automationId: r.automationId
+        automationId: r.automationId,
+        projectId: r.projectId
       })
     )
 

@@ -111,7 +111,7 @@
 <script setup lang="ts">
 import { MagnifyingGlassIcon, Squares2X2Icon } from '@heroicons/vue/24/outline'
 import { useQuery, useQueryLoading } from '@vue/apollo-composable'
-import type { Optional, StreamRoles } from '@speckle/shared'
+import type { Nullable, Optional, StreamRoles } from '@speckle/shared'
 import {
   workspacePageQuery,
   workspaceProjectsQuery
@@ -128,6 +128,19 @@ import {
   type AvailableSettingsMenuKeys
 } from '~/lib/settings/helpers/types'
 import { useBillingActions } from '~/lib/billing/composables/actions'
+
+graphql(`
+  fragment WorkspaceProjectList_Workspace on Workspace {
+    id
+    ...MoveProjectsDialog_Workspace
+    ...WorkspaceHeader_Workspace
+    ...WorkspaceMixpanelUpdateGroup_Workspace
+    projects {
+      ...WorkspaceProjectList_ProjectCollection
+    }
+  }
+`)
+
 graphql(`
   fragment WorkspaceProjectList_ProjectCollection on ProjectCollection {
     totalCount
@@ -171,9 +184,6 @@ const { result: initialQueryResult, onResult } = useQuery(
   workspacePageQuery,
   () => ({
     workspaceSlug: props.workspaceSlug,
-    filter: {
-      search: (search.value || '').trim() || null
-    },
     token: token.value || null
   }),
   () => ({
@@ -187,14 +197,15 @@ const { query, identifier, onInfiniteLoad } = usePaginatedQuery({
     workspaceSlug: props.workspaceSlug,
     filter: {
       search: (search.value || '').trim() || null
-    }
+    },
+    cursor: null as Nullable<string>
   })),
   resolveKey: (vars: WorkspaceProjectsQueryQueryVariables) => ({
     workspaceSlug: vars.workspaceSlug,
     search: vars.filter?.search || ''
   }),
   resolveInitialResult: () =>
-    initialQueryResult.value?.workspaceBySlug.projectListProject,
+    !search.value ? initialQueryResult.value?.workspaceBySlug.projects : undefined,
   resolveCurrentResult: (result) => result?.workspaceBySlug?.projects,
   resolveNextPageVariables: (baseVariables, newCursor) => ({
     ...baseVariables,

@@ -116,33 +116,10 @@ import {
   storeTokenScopesFactory,
   storeUserServerAppTokenFactory
 } from '@/modules/core/repositories/tokens'
+import { getProjectDbClient } from '@/modules/multiregion/dbSelector'
 
 const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
 
-const getUser = getUserFactory({ db })
-const storeAutomation = storeAutomationFactory({ db })
-const storeAutomationToken = storeAutomationTokenFactory({ db })
-const storeAutomationRevision = storeAutomationRevisionFactory({ db })
-const getAutomation = getAutomationFactory({ db })
-const updateDbAutomation = updateAutomationFactory({ db })
-const getLatestVersionAutomationRuns = getLatestVersionAutomationRunsFactory({ db })
-const getFunctionRun = getFunctionRunFactory({ db })
-const upsertAutomationFunctionRun = upsertAutomationFunctionRunFactory({ db })
-const getFullAutomationRevisionMetadata = getFullAutomationRevisionMetadataFactory({
-  db
-})
-const getAutomationToken = getAutomationTokenFactory({ db })
-const upsertAutomationRun = upsertAutomationRunFactory({ db })
-const getAutomationTriggerDefinitions = getAutomationTriggerDefinitionsFactory({ db })
-const getLatestAutomationRevision = getLatestAutomationRevisionFactory({ db })
-const updateAutomationRun = updateAutomationRunFactory({ db })
-
-const getAutomationRunsTotalCount = getAutomationRunsTotalCountFactory({ db })
-const getAutomationRunsItems = getAutomationRunsItemsFactory({ db })
-
-const getProjectAutomationsItems = getProjectAutomationsItemsFactory({ db })
-const getProjectAutomationsTotalCount = getProjectAutomationsTotalCountFactory({ db })
-const getBranchLatestCommits = getBranchLatestCommitsFactory({ db })
 const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
 const createAppToken = createAppTokenFactory({
   storeApiToken: storeApiTokenFactory({ db }),
@@ -183,34 +160,56 @@ export = (FF_AUTOMATE_MODULE_ENABLED
       VersionCreatedTriggerDefinition: {
         type: () => AutomateRunTriggerType.VersionCreated,
         async model(parent, _args, ctx) {
-          return ctx.loaders.branches.getById.load(parent.triggeringId)
+          const projectDb = await getProjectDbClient({ projectId: parent.projectId })
+          return ctx.loaders
+            .forRegion({ db: projectDb })
+            .branches.getById.load(parent.triggeringId)
         }
       },
       VersionCreatedTrigger: {
         type: () => AutomateRunTriggerType.VersionCreated,
         async version(parent, _args, ctx) {
-          return ctx.loaders.commits.getById.load(parent.triggeringId)
+          const projectDb = await getProjectDbClient({ projectId: parent.projectId })
+          return ctx.loaders
+            .forRegion({ db: projectDb })
+            .commits.getById.load(parent.triggeringId)
         },
         async model(parent, _args, ctx) {
-          return ctx.loaders.commits.getCommitBranch.load(parent.triggeringId)
+          const projectDb = await getProjectDbClient({ projectId: parent.projectId })
+          return ctx.loaders
+            .forRegion({ db: projectDb })
+            .commits.getCommitBranch.load(parent.triggeringId)
         }
       },
       ProjectTriggeredAutomationsStatusUpdatedMessage: {
         async project(parent, _args, ctx) {
-          return ctx.loaders.streams.getStream.load(parent.projectId)
+          const projectDb = await getProjectDbClient({ projectId: parent.projectId })
+          return ctx.loaders
+            .forRegion({ db: projectDb })
+            .streams.getStream.load(parent.projectId)
         },
         async model(parent, _args, ctx) {
-          return ctx.loaders.branches.getById.load(parent.modelId)
+          const projectDb = await getProjectDbClient({ projectId: parent.projectId })
+          return ctx.loaders
+            .forRegion({ db: projectDb })
+            .branches.getById.load(parent.modelId)
         },
         async version(parent, _args, ctx) {
-          return ctx.loaders.commits.getById.load(parent.versionId)
+          const projectDb = await getProjectDbClient({ projectId: parent.projectId })
+          return ctx.loaders
+            .forRegion({ db: projectDb })
+            .commits.getById.load(parent.versionId)
         }
       },
       Project: {
         async automation(parent, args, ctx) {
-          const res = ctx.loaders.streams.getAutomation
-            .forStream(parent.id)
+          const projectDb = await getProjectDbClient({ projectId: parent.id })
+
+          const res = ctx.loaders
+            .forRegion({ db: projectDb })
+            .streams.getAutomation.forStream(parent.id)
             .load(args.id)
+
           if (!res) {
             if (!res) {
               throw new AutomationNotFoundError()
@@ -220,14 +219,16 @@ export = (FF_AUTOMATE_MODULE_ENABLED
           return res
         },
         async automations(parent, args) {
+          const projectDb = await getProjectDbClient({ projectId: parent.id })
+
           const retrievalArgs: GetProjectAutomationsParams = {
             projectId: parent.id,
             args
           }
 
           const [{ items, cursor }, totalCount] = await Promise.all([
-            getProjectAutomationsItems(retrievalArgs),
-            getProjectAutomationsTotalCount(retrievalArgs)
+            getProjectAutomationsItemsFactory({ db: projectDb })(retrievalArgs),
+            getProjectAutomationsTotalCountFactory({ db: projectDb })(retrievalArgs)
           ])
 
           return {
@@ -239,15 +240,21 @@ export = (FF_AUTOMATE_MODULE_ENABLED
       },
       Model: {
         async automationsStatus(parent, _args, ctx) {
+          const projectDb = await getProjectDbClient({ projectId: parent.streamId })
+
+          const getLatestVersionAutomationRuns = getLatestVersionAutomationRunsFactory({
+            db: projectDb
+          })
+
           const getStatus = getAutomationsStatusFactory({
             getLatestVersionAutomationRuns
           })
 
           const modelId = parent.id
           const projectId = parent.streamId
-          const latestCommit = await ctx.loaders.branches.getLatestCommit.load(
-            parent.id
-          )
+          const latestCommit = await ctx.loaders
+            .forRegion({ db: projectDb })
+            .branches.getLatestCommit.load(parent.id)
 
           // if the model has no versions, no automations could have run
           if (!latestCommit) return null
@@ -261,12 +268,18 @@ export = (FF_AUTOMATE_MODULE_ENABLED
       },
       Version: {
         async automationsStatus(parent, _args, ctx) {
+          const projectDb = await getProjectDbClient({ projectId: parent.streamId })
+
           const getStatus = getAutomationsStatusFactory({
-            getLatestVersionAutomationRuns
+            getLatestVersionAutomationRuns: getLatestVersionAutomationRunsFactory({
+              db: projectDb
+            })
           })
 
           const versionId = parent.id
-          const branch = await ctx.loaders.commits.getCommitBranch.load(versionId)
+          const branch = await ctx.loaders
+            .forRegion({ db: projectDb })
+            .commits.getCommitBranch.load(versionId)
           if (!branch) throw Error('Invalid version Id')
 
           const projectId = branch.streamId
@@ -280,19 +293,25 @@ export = (FF_AUTOMATE_MODULE_ENABLED
       },
       Automation: {
         async currentRevision(parent, _args, ctx) {
-          return ctx.loaders.automations.getLatestAutomationRevision.load(parent.id)
+          const projectDb = await getProjectDbClient({ projectId: parent.projectId })
+          const automationRevision = await ctx.loaders
+            .forRegion({ db: projectDb })
+            .automations.getLatestAutomationRevision.load(parent.id)
+          return { ...automationRevision, projectId: parent.projectId }
         },
         async runs(parent, args) {
+          const projectDb = await getProjectDbClient({ projectId: parent.projectId })
+
           const retrievalArgs = {
             automationId: parent.id,
             ...args
           }
 
           const [{ items, cursor }, totalCount] = await Promise.all([
-            getAutomationRunsItems({
+            getAutomationRunsItemsFactory({ db: projectDb })({
               args: retrievalArgs
             }),
-            getAutomationRunsTotalCount({
+            getAutomationRunsTotalCountFactory({ db: projectDb })({
               args: retrievalArgs
             })
           ])
@@ -317,18 +336,26 @@ export = (FF_AUTOMATE_MODULE_ENABLED
       },
       AutomateRun: {
         async trigger(parent, _args, ctx) {
+          const projectDb = await getProjectDbClient({ projectId: parent.projectId })
+
           const triggers =
             parent.triggers ||
-            (await ctx.loaders.automations.getRunTriggers.load(parent.id))
+            (await ctx.loaders
+              .forRegion({ db: projectDb })
+              .automations.getRunTriggers.load(parent.id))
 
           const trigger = triggers[0]
-          return trigger
+          return { ...trigger, projectId: parent.projectId }
         },
         async functionRuns(parent) {
           return parent.functionRuns
         },
         async automation(parent, _args, ctx) {
-          return ctx.loaders.automations.getAutomation.load(parent.automationId)
+          const projectDb = await getProjectDbClient({ projectId: parent.projectId })
+
+          return ctx.loaders
+            .forRegion({ db: projectDb })
+            .automations.getAutomation.load(parent.automationId)
         },
         status: (parent) => mapDbStatusToGqlStatus(parent.status)
       },
@@ -363,24 +390,36 @@ export = (FF_AUTOMATE_MODULE_ENABLED
       },
       AutomationRevision: {
         async triggerDefinitions(parent, _args, ctx) {
-          const triggers =
-            await ctx.loaders.automations.getRevisionTriggerDefinitions.load(parent.id)
+          const projectDb = await getProjectDbClient({ projectId: parent.projectId })
 
-          return triggers
+          const triggers = await ctx.loaders
+            .forRegion({ db: projectDb })
+            .automations.getRevisionTriggerDefinitions.load(parent.id)
+
+          return triggers.map((trigger) => ({
+            ...trigger,
+            projectId: parent.projectId
+          }))
         },
         async functions(parent, _args, ctx) {
+          const projectDb = await getProjectDbClient({ projectId: parent.projectId })
+
           const prepareInputs = getFunctionInputsForFrontendFactory({
             getEncryptionKeyPairFor,
             buildDecryptor,
             redactWriteOnlyInputData
           })
 
-          const fns = await ctx.loaders.automations.getRevisionFunctions.load(parent.id)
+          const fns = await ctx.loaders
+            .forRegion({ db: projectDb })
+            .automations.getRevisionFunctions.load(parent.id)
           const fnsReleases = keyBy(
             (
-              await ctx.loaders.automationsApi.getFunctionRelease.loadMany(
-                fns.map((fn) => [fn.functionId, fn.functionReleaseId])
-              )
+              await ctx.loaders
+                .forRegion({ db: projectDb })
+                .automationsApi.getFunctionRelease.loadMany(
+                  fns.map((fn) => [fn.functionId, fn.functionReleaseId])
+                )
             ).filter(
               (r): r is FunctionReleaseSchemaType => r !== null && !(r instanceof Error)
             ),
@@ -412,9 +451,6 @@ export = (FF_AUTOMATE_MODULE_ENABLED
         }
       },
       AutomateFunction: {
-        async automationCount(parent, _args, ctx) {
-          return ctx.loaders.automations.getFunctionAutomationCount.load(parent.id)
-        },
         async releases(parent, args) {
           try {
             // TODO: Replace w/ dataloader batch call, when/if possible
@@ -481,7 +517,7 @@ export = (FF_AUTOMATE_MODULE_ENABLED
         async createFunction(_parent, args, ctx) {
           const create = createFunctionFromTemplateFactory({
             createExecutionEngineFn: createFunction,
-            getUser,
+            getUser: getUserFactory({ db }),
             createStoredAuthCode: createStoredAuthCodeFactory({
               redis: getGenericRedis()
             })
@@ -503,11 +539,13 @@ export = (FF_AUTOMATE_MODULE_ENABLED
       },
       ProjectAutomationMutations: {
         async create(parent, { input }, ctx) {
+          const projectDb = await getProjectDbClient({ projectId: parent.projectId })
+
           const create = createAutomationFactory({
             createAuthCode: createStoredAuthCodeFactory({ redis: getGenericRedis() }),
             automateCreateAutomation: clientCreateAutomation,
-            storeAutomation,
-            storeAutomationToken,
+            storeAutomation: storeAutomationFactory({ db: projectDb }),
+            storeAutomationToken: storeAutomationTokenFactory({ db: projectDb }),
             validateStreamAccess,
             automationsEventsEmit: AutomationsEmitter.emit
           })
@@ -522,9 +560,11 @@ export = (FF_AUTOMATE_MODULE_ENABLED
           ).automation
         },
         async update(parent, { input }, ctx) {
+          const projectDb = await getProjectDbClient({ projectId: parent.projectId })
+
           const update = validateAndUpdateAutomationFactory({
-            getAutomation,
-            updateAutomation: updateDbAutomation,
+            getAutomation: getAutomationFactory({ db: projectDb }),
+            updateAutomation: updateAutomationFactory({ db: projectDb }),
             validateStreamAccess,
             automationsEventsEmit: AutomationsEmitter.emit
           })
@@ -537,10 +577,12 @@ export = (FF_AUTOMATE_MODULE_ENABLED
           })
         },
         async createRevision(parent, { input }, ctx) {
+          const projectDb = await getProjectDbClient({ projectId: parent.projectId })
+
           const create = createAutomationRevisionFactory({
-            getAutomation,
-            storeAutomationRevision,
-            getBranchesByIds: getBranchesByIdsFactory({ db }),
+            getAutomation: getAutomationFactory({ db: projectDb }),
+            storeAutomationRevision: storeAutomationRevisionFactory({ db: projectDb }),
+            getBranchesByIds: getBranchesByIdsFactory({ db: projectDb }),
             getFunctionRelease,
             getEncryptionKeyPair,
             getFunctionInputDecryptor: getFunctionInputDecryptorFactory({
@@ -559,10 +601,14 @@ export = (FF_AUTOMATE_MODULE_ENABLED
           })
         },
         async trigger(parent, { automationId }, ctx) {
+          const projectDb = await getProjectDbClient({ projectId: parent.projectId })
+
           const trigger = manuallyTriggerAutomationFactory({
-            getAutomationTriggerDefinitions,
-            getAutomation,
-            getBranchLatestCommits,
+            getAutomationTriggerDefinitions: getAutomationTriggerDefinitionsFactory({
+              db: projectDb
+            }),
+            getAutomation: getAutomationFactory({ db: projectDb }),
+            getBranchLatestCommits: getBranchLatestCommitsFactory({ db: projectDb }),
             triggerFunction: triggerAutomationRevisionRunFactory({
               automateRunTrigger: triggerAutomationRun,
               getEncryptionKeyPairFor,
@@ -571,11 +617,12 @@ export = (FF_AUTOMATE_MODULE_ENABLED
               }),
               createAppToken,
               automateRunsEmitter: AutomateRunsEmitter.emit,
-              getAutomationToken,
-              upsertAutomationRun,
-              getFullAutomationRevisionMetadata,
-              getBranchLatestCommits,
-              getCommit: getCommitFactory({ db })
+              getAutomationToken: getAutomationTokenFactory({ db: projectDb }),
+              upsertAutomationRun: upsertAutomationRunFactory({ db: projectDb }),
+              getFullAutomationRevisionMetadata:
+                getFullAutomationRevisionMetadataFactory({ db: projectDb }),
+              getBranchLatestCommits: getBranchLatestCommitsFactory({ db: projectDb }),
+              getCommit: getCommitFactory({ db: projectDb })
             }),
             validateStreamAccess
           })
@@ -590,11 +637,13 @@ export = (FF_AUTOMATE_MODULE_ENABLED
           return automationRunId
         },
         async createTestAutomation(parent, { input }, ctx) {
+          const projectDb = await getProjectDbClient({ projectId: parent.projectId })
+
           const create = createTestAutomationFactory({
             getEncryptionKeyPair,
             getFunction,
-            storeAutomation,
-            storeAutomationRevision,
+            storeAutomation: storeAutomationFactory({ db: projectDb }),
+            storeAutomationRevision: storeAutomationRevisionFactory({ db: projectDb }),
             validateStreamAccess,
             automationsEventsEmit: AutomationsEmitter.emit
           })
@@ -607,16 +656,30 @@ export = (FF_AUTOMATE_MODULE_ENABLED
           })
         },
         async createTestAutomationRun(parent, { automationId }, ctx) {
+          const projectDb = await getProjectDbClient({ projectId: parent.projectId })
+
           const create = createTestAutomationRunFactory({
             getEncryptionKeyPairFor,
             getFunctionInputDecryptor: getFunctionInputDecryptorFactory({
               buildDecryptor
             }),
-            getAutomation,
-            getLatestAutomationRevision,
-            getFullAutomationRevisionMetadata,
-            upsertAutomationRun,
-            getBranchLatestCommits,
+            getAutomation: getAutomationFactory({
+              db: projectDb
+            }),
+            getLatestAutomationRevision: getLatestAutomationRevisionFactory({
+              db: projectDb
+            }),
+            getFullAutomationRevisionMetadata: getFullAutomationRevisionMetadataFactory(
+              {
+                db: projectDb
+              }
+            ),
+            upsertAutomationRun: upsertAutomationRunFactory({
+              db: projectDb
+            }),
+            getBranchLatestCommits: getBranchLatestCommitsFactory({
+              db: projectDb
+            }),
             validateStreamAccess
           })
 
@@ -752,10 +815,17 @@ export = (FF_AUTOMATE_MODULE_ENABLED
       },
       Mutation: {
         async automateFunctionRunStatusReport(_parent, { input }) {
+          const projectDb = await getProjectDbClient({ projectId: input.projectId })
           const deps: ReportFunctionRunStatusDeps = {
-            getAutomationFunctionRunRecord: getFunctionRun,
-            upsertAutomationFunctionRunRecord: upsertAutomationFunctionRun,
-            automationRunUpdater: updateAutomationRun,
+            getAutomationFunctionRunRecord: getFunctionRunFactory({
+              db: projectDb
+            }),
+            upsertAutomationFunctionRunRecord: upsertAutomationFunctionRunFactory({
+              db: projectDb
+            }),
+            automationRunUpdater: updateAutomationRunFactory({
+              db: projectDb
+            }),
             runEventEmit: AutomateRunsEmitter.emit
           }
 

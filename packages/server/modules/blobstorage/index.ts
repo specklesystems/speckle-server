@@ -42,13 +42,11 @@ import {
   fullyDeleteBlobFactory
 } from '@/modules/blobstorage/services/management'
 import { getRolesFactory } from '@/modules/shared/repositories/roles'
-import { getAutomationProjectFactory } from '@/modules/automate/repositories/automations'
 import { adminOverrideEnabled } from '@/modules/shared/helpers/envHelper'
 import { getStreamFactory } from '@/modules/core/repositories/streams'
 import { Request, Response } from 'express'
 import { ensureError } from '@speckle/shared'
 import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
-import { Knex } from 'knex'
 import { getProjectDbClient } from '@/modules/multiregion/dbSelector'
 
 const ensureConditions = async () => {
@@ -89,26 +87,23 @@ const errorHandler: ErrorHandler = async (req, res, callback) => {
 
 export const init: SpeckleModule['init'] = async (app) => {
   await ensureConditions()
-  const createStreamWritePermissions = ({ projectDb }: { projectDb: Knex }) =>
+  const createStreamWritePermissions = () =>
     streamWritePermissionsPipelineFactory({
       getRoles: getRolesFactory({ db }),
-      getStream: getStreamFactory({ db }),
-      getAutomationProject: getAutomationProjectFactory({ db: projectDb })
+      getStream: getStreamFactory({ db })
     })
-  const createStreamReadPermissions = ({ projectDb }: { projectDb: Knex }) =>
+  const createStreamReadPermissions = () =>
     streamReadPermissionsPipelineFactory({
       adminOverrideEnabled,
       getRoles: getRolesFactory({ db }),
-      getStream: getStreamFactory({ db }),
-      getAutomationProject: getAutomationProjectFactory({ db: projectDb })
+      getStream: getStreamFactory({ db })
     })
 
   app.post(
     '/api/stream/:streamId/blob',
     async (req, res, next) => {
-      const projectDb = await getProjectDbClient({ projectId: req.params.streamId })
       await authMiddlewareCreator([
-        ...createStreamWritePermissions({ projectDb }),
+        ...createStreamWritePermissions(),
         // todo should we add public comments upload escape hatch?
         allowForAllRegisteredUsersOnPublicStreamsWithPublicComments
       ])(req, res, next)
@@ -243,9 +238,8 @@ export const init: SpeckleModule['init'] = async (app) => {
   app.post(
     '/api/stream/:streamId/blob/diff',
     async (req, res, next) => {
-      const projectDb = await getProjectDbClient({ projectId: req.params.streamId })
       await authMiddlewareCreator([
-        ...createStreamReadPermissions({ projectDb }),
+        ...createStreamReadPermissions(),
         allowForAllRegisteredUsersOnPublicStreamsWithPublicComments,
         allowForRegisteredUsersOnPublicStreamsEvenWithoutRole,
         allowAnonymousUsersOnPublicStreams
@@ -272,9 +266,8 @@ export const init: SpeckleModule['init'] = async (app) => {
   app.get(
     '/api/stream/:streamId/blob/:blobId',
     async (req, res, next) => {
-      const projectDb = await getProjectDbClient({ projectId: req.params.streamId })
       await authMiddlewareCreator([
-        ...createStreamReadPermissions({ projectDb }),
+        ...createStreamReadPermissions(),
         allowForAllRegisteredUsersOnPublicStreamsWithPublicComments,
         allowForRegisteredUsersOnPublicStreamsEvenWithoutRole,
         allowAnonymousUsersOnPublicStreams
@@ -307,12 +300,7 @@ export const init: SpeckleModule['init'] = async (app) => {
   app.delete(
     '/api/stream/:streamId/blob/:blobId',
     async (req, res, next) => {
-      const projectDb = await getProjectDbClient({ projectId: req.params.streamId })
-      await authMiddlewareCreator(createStreamReadPermissions({ projectDb }))(
-        req,
-        res,
-        next
-      )
+      await authMiddlewareCreator(createStreamReadPermissions())(req, res, next)
     },
     async (req, res) => {
       errorHandler(req, res, async (req, res) => {
@@ -335,12 +323,7 @@ export const init: SpeckleModule['init'] = async (app) => {
   app.get(
     '/api/stream/:streamId/blobs',
     async (req, res, next) => {
-      const projectDb = await getProjectDbClient({ projectId: req.params.streamId })
-      await authMiddlewareCreator(createStreamReadPermissions({ projectDb }))(
-        req,
-        res,
-        next
-      )
+      await authMiddlewareCreator(createStreamReadPermissions())(req, res, next)
     },
     async (req, res) => {
       let fileName = req.query.fileName
