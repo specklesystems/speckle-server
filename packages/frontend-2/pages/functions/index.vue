@@ -94,7 +94,11 @@ const {
 const showNewAutomationDialog = ref(false)
 const newAutomationTargetFn = ref<CreateAutomationSelectableFunction>()
 
-const finalResult = computed(() => paginatedResult.value || result.value)
+const finalResult = computed(
+  () =>
+    paginatedResult.value?.automateFunctions.items ||
+    result.value?.automateFunctions.items
+)
 
 const openCreateNewAutomation = (fn: CreateAutomationSelectableFunction) => {
   newAutomationTargetFn.value = fn

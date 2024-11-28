@@ -549,7 +549,7 @@ export = (FF_AUTOMATE_MODULE_ENABLED
                 origin: getServerOrigin()
               },
               functionName: args.input.name,
-              functionDescription: args.input.description
+              description: args.input.description
             }
           })
         },

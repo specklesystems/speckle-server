@@ -67,7 +67,7 @@ const workspace = computed(() => {
 })
 
 const workspaceFunctions = computed(
-  () => workspaceFunctionsResult.value?.workspaceBySlug
+  () => workspaceFunctionsResult.value?.workspaceBySlug?.automateFunctions?.items ?? []
 )
 
 const search = ref('')

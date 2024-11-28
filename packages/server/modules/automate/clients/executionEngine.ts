@@ -307,7 +307,7 @@ export const createFunction = async ({
 type CreateFunctionWithoutVersionBody = {
   speckleServerAuthenticationPayload: AuthCodePayloadWithOrigin
   functionName: string
-  functionDescription: string
+  description: string
 }
 
 type CreateFunctionWithoutVersionResponse = {
@@ -320,7 +320,7 @@ export const createFunctionWithoutVersion = async ({
 }: {
   body: CreateFunctionWithoutVersionBody
 }): Promise<CreateFunctionWithoutVersionResponse> => {
-  const url = getApiUrl('/api/v2/functions/new')
+  const url = getApiUrl('/api/v2/functions')
   return await invokeJsonRequest<CreateFunctionWithoutVersionResponse>({
     url,
     method: 'post',

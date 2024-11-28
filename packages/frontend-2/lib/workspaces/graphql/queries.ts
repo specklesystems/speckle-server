@@ -54,6 +54,7 @@ export const workspaceFunctionsQuery = graphql(`
         items {
           id
           ...AutomationsFunctionsCard_AutomateFunction
+          ...AutomateAutomationCreateDialog_AutomateFunction
         }
       }
     }

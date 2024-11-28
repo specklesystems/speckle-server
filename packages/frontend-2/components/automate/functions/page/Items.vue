@@ -18,7 +18,10 @@
 </template>
 <script setup lang="ts">
 import { graphql } from '~/lib/common/generated/gql'
-import type { AutomateFunctionsPageItems_QueryFragment } from '~/lib/common/generated/gql/graphql'
+import type {
+  AutomateAutomationCreateDialog_AutomateFunctionFragment,
+  AutomationsFunctionsCard_AutomateFunctionFragment
+} from '~/lib/common/generated/gql/graphql'
 import type { CreateAutomationSelectableFunction } from '~/lib/automate/helpers/automations'
 
 defineEmits<{
@@ -41,10 +44,11 @@ graphql(`
 `)
 
 const props = defineProps<{
-  functions?: AutomateFunctionsPageItems_QueryFragment
+  functions?: (AutomationsFunctionsCard_AutomateFunctionFragment &
+    AutomateAutomationCreateDialog_AutomateFunctionFragment)[]
   search?: boolean
   loading?: boolean
 }>()
 
-const fns = computed(() => props.functions?.automateFunctions.items || [])
+const fns = computed(() => props.functions || [])
 </script>
