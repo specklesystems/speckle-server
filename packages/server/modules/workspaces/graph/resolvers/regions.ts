@@ -21,16 +21,6 @@ import { Roles } from '@speckle/shared'
 
 export default {
   Workspace: {
-    availableRegions: async (parent) => {
-      const getAvailableRegions = getAvailableRegionsFactory({
-        getRegions: getRegionsFactory({ db }),
-        canWorkspaceUseRegions: canWorkspaceUseRegionsFactory({
-          getWorkspacePlan: getWorkspacePlanFactory({ db })
-        })
-      })
-
-      return await getAvailableRegions({ workspaceId: parent.id })
-    },
     defaultRegion: async (parent) => {
       const getDefaultRegion = getDefaultRegionFactory({ db })
       return await getDefaultRegion({ workspaceId: parent.id })

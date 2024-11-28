@@ -25,3 +25,9 @@ export type WorkspaceTeam = WorkspaceTeamMember[]
 export type WorkspaceRoleToDefaultProjectRoleMapping = {
   [key in WorkspaceRoles]: StreamRoles | null
 }
+
+export type WorkspaceCreationState = {
+  workspaceId: string
+  completed: boolean
+  state: Record<string, unknown>
+}

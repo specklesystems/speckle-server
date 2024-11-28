@@ -71,7 +71,9 @@ import {
   getWorkspaceWithDomainsFactory,
   getWorkspaceRoleForUserFactory,
   getWorkspaceBySlugFactory,
-  countDomainsByWorkspaceIdFactory
+  countDomainsByWorkspaceIdFactory,
+  getWorkspaceCreationStateFactory,
+  upsertWorkspaceCreationStateFactory
 } from '@/modules/workspaces/repositories/workspaces'
 import {
   buildWorkspaceInviteEmailContentsFactory,
@@ -660,6 +662,18 @@ export = FF_WORKSPACES_MODULE_ENABLED
           )
           return true
         },
+        updateCreationState: async (_parent, args, context) => {
+          await authorizeResolver(
+            context.userId!,
+            args.input.workspaceId,
+            Roles.Workspace.Admin,
+            context.resourceAccessRules
+          )
+          await upsertWorkspaceCreationStateFactory({ db })({
+            workspaceCreationState: args.input
+          })
+          return true
+        },
         invites: () => ({}),
         projects: () => ({})
       },
@@ -912,6 +926,9 @@ export = FF_WORKSPACES_MODULE_ENABLED
         }
       },
       Workspace: {
+        creationState: async (parent) => {
+          return getWorkspaceCreationStateFactory({ db })({ workspaceId: parent.id })
+        },
         role: async (parent, _args, ctx) => {
           const workspace = await ctx.loaders.workspaces!.getWorkspace.load(parent.id)
           return workspace?.role || null
