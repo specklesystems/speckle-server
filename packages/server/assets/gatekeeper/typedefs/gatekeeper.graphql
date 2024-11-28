@@ -45,7 +45,8 @@ input CancelCheckoutSessionInput {
 
 input UpgradePlanInput {
   workspaceId: ID!
-  targetPlan: PaidWorkspacePlans!
+  workspacePlan: PaidWorkspacePlans!
+  billingInterval: BillingInterval!
 }
 
 type WorkspaceBillingMutations {
