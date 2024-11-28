@@ -1,3 +1,4 @@
+import { until } from '@vueuse/core'
 import { workspaceRoute } from '~/lib/common/helpers/route'
 import { useWorkspacePublicSsoCheck } from '~/lib/workspaces/composables/sso'
 
@@ -13,10 +14,13 @@ export default defineNuxtRouteMiddleware(async (to) => {
   }
 
   const workspaceSlug = computed(() => to.params.slug as string)
+  if (!workspaceSlug.value) return
 
-  if (!workspaceSlug) return
+  const { workspace, loading } = useWorkspacePublicSsoCheck(workspaceSlug)
 
-  const { workspace } = useWorkspacePublicSsoCheck(workspaceSlug)
+  // Wait for loading to complete
+  await until(loading).toBe(false)
+
   if (!workspace.value?.ssoProviderName) {
     return navigateTo(workspaceRoute(workspaceSlug.value))
   }

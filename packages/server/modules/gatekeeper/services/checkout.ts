@@ -167,6 +167,7 @@ export const completeCheckoutSessionFactory =
     // a plan determines the workspace feature set
     await upsertPaidWorkspacePlan({
       workspacePlan: {
+        createdAt: new Date(),
         workspaceId: checkoutSession.workspaceId,
         name: checkoutSession.workspacePlan,
         status: 'valid'

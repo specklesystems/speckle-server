@@ -165,10 +165,11 @@ export const useAutomationRunDetailsFns = () => {
 }
 
 export const useAutomationRunLogs = (params: {
+  projectId: MaybeRef<Optional<string>>
   automationId: MaybeRef<Optional<string>>
   runId: MaybeRef<Optional<string>>
 }) => {
-  const { automationId, runId } = params
+  const { projectId, automationId, runId } = params
   const apiOrigin = useApiOrigin()
 
   const authToken = useAuthCookie()
@@ -178,7 +179,10 @@ export const useAutomationRunLogs = (params: {
   const isStreamFinished = ref(false)
 
   const url = computed(
-    () => `/api/automate/automations/${unref(automationId)}/runs/${unref(runId)}/logs`
+    () =>
+      `/api/v1/projects/${unref(projectId)}/automations/${unref(
+        automationId
+      )}/runs/${unref(runId)}/logs`
   )
   const key = computed(() => {
     if (!unref(automationId) || !unref(runId)) return null

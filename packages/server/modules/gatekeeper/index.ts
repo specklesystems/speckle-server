@@ -62,7 +62,6 @@ const scheduleWorkspaceSubscriptionDownscale = () => {
     'WorkspaceSubscriptionDownscale',
     async () => {
       await manageSubscriptionDownscale()
-      // await cleanOrphanedWebhookConfigs()
     }
   )
 }

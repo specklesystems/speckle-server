@@ -65,7 +65,6 @@ import {
   getAutomationRevisionsFactory,
   getAutomationRunsTriggersFactory,
   getAutomationsFactory,
-  getFunctionAutomationCountsFactory,
   getLatestAutomationRevisionsFactory,
   getRevisionsFunctionsFactory,
   getRevisionsTriggerDefinitionsFactory
@@ -110,7 +109,6 @@ const dataLoadersDefinition = defineRequestDataloaders(
     const getLatestAutomationRevisions = getLatestAutomationRevisionsFactory({ db })
     const getRevisionsTriggerDefinitions = getRevisionsTriggerDefinitionsFactory({ db })
     const getRevisionsFunctions = getRevisionsFunctionsFactory({ db })
-    const getFunctionAutomationCounts = getFunctionAutomationCountsFactory({ db })
     const getStreamCommentCounts = getStreamCommentCountsFactory({ db })
     const getAutomationRunsTriggers = getAutomationRunsTriggersFactory({ db })
     const getCommentsResources = getCommentsResourcesFactory({ db })
@@ -547,14 +545,6 @@ const dataLoadersDefinition = defineRequestDataloaders(
         })
       },
       automations: {
-        getFunctionAutomationCount: createLoader<string, number>(
-          async (functionIds) => {
-            const results = await getFunctionAutomationCounts({
-              functionIds: functionIds.slice()
-            })
-            return functionIds.map((i) => results[i] || 0)
-          }
-        ),
         getAutomation: createLoader<string, Nullable<AutomationRecord>>(async (ids) => {
           const results = keyBy(
             await getAutomations({ automationIds: ids.slice() }),
