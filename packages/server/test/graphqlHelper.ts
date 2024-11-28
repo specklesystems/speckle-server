@@ -19,7 +19,7 @@ import { expect } from 'chai'
 import { ApolloServer, GraphQLResponse } from '@apollo/server'
 import { getUserFactory } from '@/modules/core/repositories/users'
 import { db } from '@/db/knex'
-import { pick, set } from 'lodash'
+import { get, pick, set } from 'lodash'
 import { isTestEnv } from '@/modules/shared/helpers/envHelper'
 import { publish, TestSubscriptions } from '@/modules/shared/utils/subscriptions'
 import cryptoRandomString from 'crypto-random-string'
@@ -542,5 +542,10 @@ export type TestApolloSubscriptionClient = Awaited<
 
 const getOperationName = (query: DocumentNode) => {
   const operation = query.definitions.find((def) => def.kind === 'OperationDefinition')
-  return (operation ? operation.name?.value : undefined) as Optional<string>
+
+  // doing this w/ a get() because of some weird Ts typing issues
+  const name = (
+    operation ? get(operation, 'name.value') : undefined
+  ) as Optional<string>
+  return name
 }
