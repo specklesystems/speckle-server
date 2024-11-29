@@ -1,3 +1,4 @@
+<!-- eslint-disable vuejs-accessibility/heading-has-content -->
 <template>
   <div>
     <CommonCard v-if="!hasValidPlan" class="bg-foundation py-3 px-4">
@@ -5,7 +6,9 @@
         <ExclamationCircleIcon v-if="showIcon" class="h-4 w-4 text-danger mt-1" />
         <div class="flex-1 flex gap-x-4 items-center">
           <div class="flex-1">
-            <h5 class="text-body-xs font-medium text-foreground">{{ title }}</h5>
+            <h5 class="text-body-xs font-medium text-foreground">
+              <CommonText :text="title" />
+            </h5>
             <p class="text-body-xs text-foreground-2">{{ description }}</p>
           </div>
           <slot name="actions" />
