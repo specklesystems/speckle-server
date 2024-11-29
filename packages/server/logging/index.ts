@@ -11,7 +11,7 @@ import { getAllClients } from '@/modules/multiregion/dbSelector'
 
 let prometheusInitialized = false
 
-export default function (app: express.Express) {
+export default async function (app: express.Express) {
   if (!prometheusInitialized) {
     prometheusInitialized = true
     prometheusClient.register.clear()
@@ -29,7 +29,7 @@ export default function (app: express.Express) {
     })
     highfrequencyMonitoring.start()
 
-    initKnexPrometheusMetrics({
+    await initKnexPrometheusMetrics({
       register: prometheusClient.register,
       getAllDbClients: getAllClients,
       logger

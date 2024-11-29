@@ -14,7 +14,7 @@ let metricConnectionInUseDuration: prometheusClient.Histogram<string>
 let metricConnectionPoolReapingDuration: prometheusClient.Histogram<string>
 let alreadyInitialized = false
 
-export const initKnexPrometheusMetrics = (params: {
+export const initKnexPrometheusMetrics = async (params: {
   getAllDbClients: () => Promise<Record<string, Knex>>
   register: Registry
   logger: Logger
@@ -27,8 +27,8 @@ export const initKnexPrometheusMetrics = (params: {
     name: 'speckle_server_knex_free',
     labelNames: ['region'],
     help: 'Number of free DB connections',
-    collect() {
-      for (const [region, db] of Object.entries(params.getAllDbClients())) {
+    async collect() {
+      for (const [region, db] of Object.entries(await params.getAllDbClients())) {
         this.set({ region }, db.client.pool.numFree())
       }
     }
@@ -39,8 +39,8 @@ export const initKnexPrometheusMetrics = (params: {
     name: 'speckle_server_knex_used',
     labelNames: ['region'],
     help: 'Number of used DB connections',
-    collect() {
-      for (const [region, db] of Object.entries(params.getAllDbClients())) {
+    async collect() {
+      for (const [region, db] of Object.entries(await params.getAllDbClients())) {
         this.set({ region }, db.client.pool.numUsed())
       }
     }
@@ -51,8 +51,8 @@ export const initKnexPrometheusMetrics = (params: {
     name: 'speckle_server_knex_pending',
     labelNames: ['region'],
     help: 'Number of pending DB connection aquires',
-    collect() {
-      for (const [region, db] of Object.entries(params.getAllDbClients())) {
+    async collect() {
+      for (const [region, db] of Object.entries(await params.getAllDbClients())) {
         this.set({ region }, db.client.pool.numPendingAcquires())
       }
     }
@@ -63,8 +63,8 @@ export const initKnexPrometheusMetrics = (params: {
     name: 'speckle_server_knex_pending_creates',
     labelNames: ['region'],
     help: 'Number of pending DB connection creates',
-    collect() {
-      for (const [region, db] of Object.entries(params.getAllDbClients())) {
+    async collect() {
+      for (const [region, db] of Object.entries(await params.getAllDbClients())) {
         this.set({ region }, db.client.pool.numPendingCreates())
       }
     }
@@ -75,8 +75,8 @@ export const initKnexPrometheusMetrics = (params: {
     name: 'speckle_server_knex_pending_validations',
     labelNames: ['region'],
     help: 'Number of pending DB connection validations. This is a state between pending acquisition and acquiring a connection.',
-    collect() {
-      for (const [region, db] of Object.entries(params.getAllDbClients())) {
+    async collect() {
+      for (const [region, db] of Object.entries(await params.getAllDbClients())) {
         this.set({ region }, db.client.pool.numPendingValidations())
       }
     }
@@ -87,8 +87,8 @@ export const initKnexPrometheusMetrics = (params: {
     name: 'speckle_server_knex_remaining_capacity',
     labelNames: ['region'],
     help: 'Remaining capacity of the DB connection pool',
-    collect() {
-      for (const [region, db] of Object.entries(params.getAllDbClients())) {
+    async collect() {
+      for (const [region, db] of Object.entries(await params.getAllDbClients())) {
         this.set({ region }, numberOfFreeConnections(db))
       }
     }
@@ -163,7 +163,7 @@ export const updateKnexPrometheusMetrics = async (params: {
 
   // configure hooks on knex
   for (const [region, db] of Object.entries(
-    params.getAllDbClients()
+    await params.getAllDbClients()
   ) as Entries<Knex>) {
     const queryStartTime: Record<string, number> = {}
     const connectionAcquisitionStartTime: Record<string, number> = {}

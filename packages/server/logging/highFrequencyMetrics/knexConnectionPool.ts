@@ -38,7 +38,7 @@ export const knexConnections = (registry: Registry, config: MetricConfig): Metri
   const registers = registry ? [registry] : undefined
   const namePrefix = config.prefix ?? ''
   const labels = config.labels ?? {}
-  const labelNames = Object.keys(labels)
+  const labelNames = [...Object.keys(labels), 'region']
   const buckets = { ...DEFAULT_KNEX_TOTAL_BUCKETS, ...config.buckets }
 
   const knexConnectionsFree = new Histogram({
@@ -90,8 +90,8 @@ export const knexConnections = (registry: Registry, config: MetricConfig): Metri
   })
 
   return {
-    collect: () => {
-      for (const [region, knex] of Object.entries(config.getDbClients())) {
+    collect: async () => {
+      for (const [region, knex] of Object.entries(await config.getDbClients())) {
         const labelsAndRegion = { ...labels, region }
         const connPool = knex.client.pool
 
