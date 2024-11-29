@@ -5,7 +5,9 @@ import { getCacheId, modifyObjectField } from '~/lib/common/helpers/graphql'
 import { ToastNotificationType, useGlobalToast } from '~/lib/common/composables/toast'
 import { projectRoute } from '~/lib/common/helpers/route'
 
-export function useWorkspaceProjectsSubscription(workspaceSlug: ComputedRef<string>) {
+export function useWorkspaceProjectsUpdatedTracking(
+  workspaceSlug: ComputedRef<string>
+) {
   const apollo = useApolloClient().client
   const { triggerNotification } = useGlobalToast()
 

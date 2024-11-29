@@ -20,13 +20,15 @@ import type {
   Project,
   WorkspaceProjectCreateInput,
   CreateWorkspaceProjectMutation,
-  CreateProjectMutation
+  CreateProjectMutation,
+  AdminPanelProjectsListQuery
 } from '~~/lib/common/generated/gql/graphql'
 import {
   convertThrowIntoFetchResult,
   getCacheId,
   getFirstErrorMessage,
-  modifyObjectField
+  modifyObjectField,
+  modifyObjectFields
 } from '~~/lib/common/helpers/graphql'
 import { useNavigateToHome, workspaceRoute } from '~~/lib/common/helpers/route'
 import {
@@ -129,7 +131,30 @@ export function useCreateProject() {
           : {
               mutation: createProjectMutation,
               variables: { input }
-            })
+            }),
+        update: (cache, { data }) => {
+          const typedData = data as
+            | CreateWorkspaceProjectMutation
+            | CreateProjectMutation
+          if (!typedData) return
+
+          modifyObjectFields<undefined, { [key: string]: AdminPanelProjectsListQuery }>(
+            cache,
+            ROOT_QUERY,
+            (_fieldName, _variables, value, details) => {
+              const projectListFields = Object.keys(value).filter(
+                (k) =>
+                  details.revolveFieldNameAndVariables(k).fieldName === 'projectList'
+              )
+              const newVal: typeof value = { ...value }
+              for (const field of projectListFields) {
+                delete newVal[field]
+              }
+              return newVal
+            },
+            { fieldNameWhitelist: ['admin'] }
+          )
+        }
       })
       .catch(convertThrowIntoFetchResult)
 
