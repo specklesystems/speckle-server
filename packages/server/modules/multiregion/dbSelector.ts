@@ -24,9 +24,10 @@ import {
 } from '@/modules/multiregion/regionConfig'
 import { MaybeNullOrUndefined } from '@speckle/shared'
 import { isTestEnv } from '@/modules/shared/helpers/envHelper'
-import { updateKnexPrometheusMetrics } from '@/logging/knexMonitoring'
+import { initKnexPrometheusMetrics } from '@/logging/knexMonitoring'
 import { logger } from '@/logging/logging'
 import { migrateDbToLatestFactory } from '@/db/migrations'
+import prometheusClient from 'prom-client'
 
 let getter: GetProjectDb | undefined = undefined
 
@@ -204,8 +205,9 @@ export const initializeRegion: InitializeRegion = async ({ regionKey }) => {
     registeredRegionClients[regionKey] = regionDb.public
   }
 
-  await updateKnexPrometheusMetrics({
+  await initKnexPrometheusMetrics({
     getAllDbClients: getAllClients,
+    register: prometheusClient.register,
     logger
   })
 }
