@@ -44,16 +44,16 @@ export class SpeckleLoader extends Loader {
       )
     }
 
-    const url = new URL(resource)
+    // const url = new URL(resource)
 
-    const segments = url.pathname.split('/')
-    if (
-      segments.length < 5 ||
-      url.pathname.indexOf('streams') === -1 ||
-      url.pathname.indexOf('objects') === -1
-    ) {
-      throw new Error('Unexpected object url format.')
-    }
+    // const segments = url.pathname.split('/')
+    // if (
+    //   segments.length < 5 ||
+    //   url.pathname.indexOf('streams') === -1 ||
+    //   url.pathname.indexOf('objects') === -1
+    // ) {
+    //   throw new Error('Unexpected object url format.')
+    // }
 
     const serverUrl = 'plm' //url.origin
     const streamId = 'plm' //segments[2]
