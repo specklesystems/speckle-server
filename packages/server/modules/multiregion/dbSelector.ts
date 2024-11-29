@@ -204,7 +204,7 @@ export const initializeRegion: InitializeRegion = async ({ regionKey }) => {
     registeredRegionClients[regionKey] = regionDb.public
   }
 
-  updateKnexPrometheusMetrics({
+  await updateKnexPrometheusMetrics({
     getAllDbClients: getAllClients,
     logger
   })
