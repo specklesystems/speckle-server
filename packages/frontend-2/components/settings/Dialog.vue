@@ -51,7 +51,7 @@
               :tag="
                 workspaceItem.plan?.status === WorkspacePlanStatuses.Trial ||
                 !workspaceItem.plan?.status
-                  ? 'Trial'
+                  ? 'TRIAL'
                   : undefined
               "
               :collapsed="targetWorkspaceId !== workspaceItem.id"

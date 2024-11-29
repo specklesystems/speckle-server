@@ -84,7 +84,7 @@
                   :tag="
                     item.plan?.status === WorkspacePlanStatuses.Trial ||
                     !item.plan?.status
-                      ? 'Trial'
+                      ? 'TRIAL'
                       : undefined
                   "
                   class="!pl-1"
