@@ -289,11 +289,25 @@ export const onWorkspaceProjectsUpdatedSubscription = gql`
 `
 
 export const onWorkspaceUpdatedSubscription = gql`
-  subscription OnWorkspaceUpdated($workspaceId: String!) {
-    workspaceUpdated(workspaceId: $workspaceId) {
+  subscription OnWorkspaceUpdated($workspaceId: String, $workspaceSlug: String) {
+    workspaceUpdated(workspaceId: $workspaceId, workspaceSlug: $workspaceSlug) {
       id
       workspace {
         ...BasicWorkspace
+        team {
+          totalCount
+          items {
+            id
+            role
+            user {
+              id
+              name
+            }
+          }
+        }
+        invitedTeam {
+          ...BasicPendingWorkspaceCollaborator
+        }
       }
     }
   }
