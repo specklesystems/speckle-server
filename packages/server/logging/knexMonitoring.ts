@@ -136,7 +136,7 @@ export const initKnexPrometheusMetrics = async (params: {
     help: 'Summary of the DB connection pool reaping duration, in seconds. Reaping is the process of removing idle connections from the pool.'
   })
 
-  updateKnexPrometheusMetrics({
+  await updateKnexPrometheusMetrics({
     ...params
   })
 }
