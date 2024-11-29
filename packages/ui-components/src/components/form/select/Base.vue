@@ -12,7 +12,7 @@
         'md:flex md:items-center md:space-x-2 md:justify-between': isLeftLabelPosition
       }"
     >
-      <div class="flex flex-col pb-1">
+      <div class="flex flex-col" :class="{ 'pb-1': showLabel }">
         <ListboxLabel
           :id="labelId"
           class="flex text-body-xs text-foreground font-medium"
