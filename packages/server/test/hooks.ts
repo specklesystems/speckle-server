@@ -248,13 +248,26 @@ const resetSchemaFactory = (deps: { db: Knex }) => async () => {
   await deps.db.migrate.latest()
 }
 
-export const truncateTables = async (tableNames?: string[]) => {
+export const truncateTables = async (
+  tableNames?: string[],
+  options?: Partial<{
+    /**
+     * Whether to also reset pubsub before truncate. Pubsub only gets re-initialized on app
+     * init so don't do this if not needed!
+     * Defaults to: false
+     */
+    resetPubSub: boolean
+  }>
+) => {
+  const { resetPubSub = false } = options || {}
   const dbs = [mainDb, ...Object.values(regionClients)]
 
-  // First reset pubsubs
-  for (const db of dbs) {
-    const resetPubSub = resetPubSubFactory({ db })
-    await resetPubSub()
+  // First reset pubsubs, if needed
+  if (resetPubSub) {
+    for (const db of dbs) {
+      const resetPubSub = resetPubSubFactory({ db })
+      await resetPubSub()
+    }
   }
 
   // Now truncate
@@ -329,6 +342,6 @@ export const buildApp = async () => {
 }
 
 export const beforeEachContext = async () => {
-  await truncateTables()
+  await truncateTables(undefined, { resetPubSub: true })
   return await buildApp()
 }

@@ -100,16 +100,16 @@ describe('Workspace GQL Subscriptions', () => {
       }
 
       before(async () => {
-        await createTestWorkspace(myMainWorkspace, me, {
-          regionKey: isMultiRegion ? getMainTestRegionKey() : undefined
-        })
-
         if (isMultiRegion) {
           await Promise.all([
             waitForRegionUser({ userId: me.id }),
             waitForRegionUser({ userId: otherGuy.id })
           ])
         }
+
+        await createTestWorkspace(myMainWorkspace, me, {
+          regionKey: isMultiRegion ? getMainTestRegionKey() : undefined
+        })
       })
 
       itEach(
@@ -354,6 +354,10 @@ describe('Workspace GQL Subscriptions', () => {
                 expect(
                   res.data?.workspaceUpdated.workspace.invitedTeam || []
                 ).to.have.length(0)
+
+                const team = res.data?.workspaceUpdated.workspace.team.items || []
+                const newTeammateAdded = !!team.find((t) => t.user.id === otherGuy.id)
+                expect(newTeammateAdded).to.equal(accept)
               }
             )
             await meSubClient.waitForReadiness()
