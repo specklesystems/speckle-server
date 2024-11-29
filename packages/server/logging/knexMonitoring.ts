@@ -137,192 +137,199 @@ export const initKnexPrometheusMetrics = async (params: {
     })
   }
 
-  const normalizeSqlMethod = (sqlMethod: string) => {
-    if (!sqlMethod) return 'unknown'
-    switch (sqlMethod.toLocaleLowerCase()) {
-      case 'first':
-        return 'select'
-      default:
-        return sqlMethod.toLocaleLowerCase()
-    }
-  }
-
-  interface QueryEvent extends Knex.Sql {
-    __knexUid: string
-    __knexTxId: string
-    __knexQueryUid: string
-  }
-
   // configure hooks on knex
   for (const [region, db] of Object.entries(
     await params.getAllDbClients()
   ) as Entries<Knex>) {
     if (initializedRegions.includes(region)) continue
-
-    const queryStartTime: Record<string, number> = {}
-    const connectionAcquisitionStartTime: Record<string, number> = {}
-    const connectionInUseStartTime: Record<string, number> = {}
-
-    db.on('query', (data: QueryEvent) => {
-      const queryId = data.__knexQueryUid + ''
-      queryStartTime[queryId] = performance.now()
-    })
-
-    db.on('query-response', (_response: unknown, data: QueryEvent) => {
-      const queryId = data.__knexQueryUid + ''
-      const durationMs = performance.now() - queryStartTime[queryId]
-      const durationSec = toNDecimalPlaces(durationMs / 1000, 2)
-      delete queryStartTime[queryId]
-      if (!isNaN(durationSec))
-        metricQueryDuration
-          .labels({
-            region,
-            sqlMethod: normalizeSqlMethod(data.method),
-            sqlNumberBindings: data.bindings?.length || -1
-          })
-          .observe(durationSec)
-      params.logger.debug(
-        {
-          region,
-          sql: data.sql,
-          sqlMethod: normalizeSqlMethod(data.method),
-          sqlQueryId: queryId,
-          sqlQueryDurationMs: toNDecimalPlaces(durationMs, 0),
-          sqlNumberBindings: data.bindings?.length || -1
-        },
-        "DB query successfully completed, for method '{sqlMethod}', after {sqlQueryDurationMs}ms"
-      )
-    })
-
-    db.on('query-error', (err: unknown, data: QueryEvent) => {
-      const queryId = data.__knexQueryUid + ''
-      const durationMs = performance.now() - queryStartTime[queryId]
-      const durationSec = toNDecimalPlaces(durationMs / 1000, 2)
-      delete queryStartTime[queryId]
-
-      if (!isNaN(durationSec))
-        metricQueryDuration
-          .labels({
-            region,
-            sqlMethod: normalizeSqlMethod(data.method),
-            sqlNumberBindings: data.bindings?.length || -1
-          })
-          .observe(durationSec)
-      metricQueryErrors.inc()
-      params.logger.warn(
-        {
-          err: typeof err === 'object' ? omit(err, 'detail') : err,
-          region,
-          sql: data.sql,
-          sqlMethod: normalizeSqlMethod(data.method),
-          sqlQueryId: queryId,
-          sqlQueryDurationMs: toNDecimalPlaces(durationMs, 0),
-          sqlNumberBindings: data.bindings?.length || -1
-        },
-        'DB query errored for {sqlMethod} after {sqlQueryDurationMs}ms'
-      )
-    })
-
-    const pool = db.client.pool
-
-    // configure hooks on knex connection pool
-    pool.on('acquireRequest', (eventId: number) => {
-      connectionAcquisitionStartTime[eventId] = performance.now()
-      // params.logger.debug(
-      //   {
-      //     eventId
-      //   },
-      //   'DB connection acquisition request occurred.'
-      // )
-    })
-    pool.on('acquireSuccess', (eventId: number, resource: unknown) => {
-      const now = performance.now()
-      const durationMs = now - connectionAcquisitionStartTime[eventId]
-      delete connectionAcquisitionStartTime[eventId]
-      if (!isNaN(durationMs))
-        metricConnectionAcquisitionDuration.labels({ region }).observe(durationMs)
-
-      // successful acquisition is the start of usage, so record that start time
-      let knexUid: string | undefined = undefined
-      if (resource && typeof resource === 'object' && '__knexUid' in resource) {
-        const _knexUid = resource['__knexUid']
-        if (_knexUid && typeof _knexUid === 'string') {
-          knexUid = _knexUid
-          connectionInUseStartTime[knexUid] = now
-        }
-      }
-
-      // params.logger.debug(
-      //   {
-      //     eventId,
-      //     knexUid,
-      //     connectionAcquisitionDurationMs: toNDecimalPlaces(durationMs, 0)
-      //   },
-      //   'DB connection (knexUid: {knexUid}) acquired after {connectionAcquisitionDurationMs}ms'
-      // )
-    })
-    pool.on('acquireFail', (eventId: number, err: unknown) => {
-      const now = performance.now()
-      const durationMs = now - connectionAcquisitionStartTime[eventId]
-      delete connectionAcquisitionStartTime[eventId]
-      metricConnectionPoolErrors.inc()
-      params.logger.warn(
-        {
-          err,
-          eventId,
-          connectionAcquisitionDurationMs: toNDecimalPlaces(durationMs, 0)
-        },
-        'DB connection acquisition failed after {connectionAcquisitionDurationMs}ms'
-      )
-    })
-
-    // resource returned to pool
-    pool.on('release', (resource: unknown) => {
-      if (!(resource && typeof resource === 'object' && '__knexUid' in resource)) return
-      const knexUid = resource['__knexUid']
-      if (!knexUid || typeof knexUid !== 'string') return
-
-      const now = performance.now()
-      const durationMs = now - connectionInUseStartTime[knexUid]
-      if (!isNaN(durationMs))
-        metricConnectionInUseDuration.labels({ region }).observe(durationMs)
-      // params.logger.debug(
-      //   {
-      //     knexUid,
-      //     connectionInUseDurationMs: toNDecimalPlaces(durationMs, 0)
-      //   },
-      //   'DB connection (knexUid: {knexUid}) released after {connectionInUseDurationMs}ms'
-      // )
-    })
-
-    // resource was created and added to the pool
-    // pool.on('createRequest', (eventId) => {})
-    // pool.on('createSuccess', (eventId, resource) => {})
-    // pool.on('createFail', (eventId, err) => {})
-
-    // resource is destroyed and evicted from pool
-    // resource may or may not be invalid when destroySuccess / destroyFail is called
-    // pool.on('destroyRequest', (eventId, resource) => {})
-    // pool.on('destroySuccess', (eventId, resource) => {})
-    // pool.on('destroyFail', (eventId, resource, err) => {})
-
-    // when internal reaping event clock is activated / deactivated
-    let reapingStartTime: number | undefined = undefined
-    pool.on('startReaping', () => {
-      reapingStartTime = performance.now()
-    })
-    pool.on('stopReaping', () => {
-      if (!reapingStartTime) return
-      const durationMs = performance.now() - reapingStartTime
-      if (!isNaN(durationMs))
-        metricConnectionPoolReapingDuration.labels({ region }).observe(durationMs)
-      reapingStartTime = undefined
-    })
-
-    // pool is destroyed (after poolDestroySuccess all event handlers are also cleared)
-    // pool.on('poolDestroyRequest', (eventId) => {})
-    // pool.on('poolDestroySuccess', (eventId) => {})
-
+    initKnexPrometheusMetricsForRegionEvents({ logger: params.logger, region, db })
     initializedRegions.push(region)
   }
+}
+
+const normalizeSqlMethod = (sqlMethod: string) => {
+  if (!sqlMethod) return 'unknown'
+  switch (sqlMethod.toLocaleLowerCase()) {
+    case 'first':
+      return 'select'
+    default:
+      return sqlMethod.toLocaleLowerCase()
+  }
+}
+
+interface QueryEvent extends Knex.Sql {
+  __knexUid: string
+  __knexTxId: string
+  __knexQueryUid: string
+}
+
+const initKnexPrometheusMetricsForRegionEvents = async (params: {
+  region: string
+  db: Knex
+  logger: Logger
+}) => {
+  const { region, db } = params
+  const queryStartTime: Record<string, number> = {}
+  const connectionAcquisitionStartTime: Record<string, number> = {}
+  const connectionInUseStartTime: Record<string, number> = {}
+
+  db.on('query', (data: QueryEvent) => {
+    const queryId = data.__knexQueryUid + ''
+    queryStartTime[queryId] = performance.now()
+  })
+
+  db.on('query-response', (_response: unknown, data: QueryEvent) => {
+    const queryId = data.__knexQueryUid + ''
+    const durationMs = performance.now() - queryStartTime[queryId]
+    const durationSec = toNDecimalPlaces(durationMs / 1000, 2)
+    delete queryStartTime[queryId]
+    if (!isNaN(durationSec))
+      metricQueryDuration
+        .labels({
+          region,
+          sqlMethod: normalizeSqlMethod(data.method),
+          sqlNumberBindings: data.bindings?.length || -1
+        })
+        .observe(durationSec)
+    params.logger.debug(
+      {
+        region,
+        sql: data.sql,
+        sqlMethod: normalizeSqlMethod(data.method),
+        sqlQueryId: queryId,
+        sqlQueryDurationMs: toNDecimalPlaces(durationMs, 0),
+        sqlNumberBindings: data.bindings?.length || -1
+      },
+      "DB query successfully completed, for method '{sqlMethod}', after {sqlQueryDurationMs}ms"
+    )
+  })
+
+  db.on('query-error', (err: unknown, data: QueryEvent) => {
+    const queryId = data.__knexQueryUid + ''
+    const durationMs = performance.now() - queryStartTime[queryId]
+    const durationSec = toNDecimalPlaces(durationMs / 1000, 2)
+    delete queryStartTime[queryId]
+
+    if (!isNaN(durationSec))
+      metricQueryDuration
+        .labels({
+          region,
+          sqlMethod: normalizeSqlMethod(data.method),
+          sqlNumberBindings: data.bindings?.length || -1
+        })
+        .observe(durationSec)
+    metricQueryErrors.inc()
+    params.logger.warn(
+      {
+        err: typeof err === 'object' ? omit(err, 'detail') : err,
+        region,
+        sql: data.sql,
+        sqlMethod: normalizeSqlMethod(data.method),
+        sqlQueryId: queryId,
+        sqlQueryDurationMs: toNDecimalPlaces(durationMs, 0),
+        sqlNumberBindings: data.bindings?.length || -1
+      },
+      'DB query errored for {sqlMethod} after {sqlQueryDurationMs}ms'
+    )
+  })
+
+  const pool = db.client.pool
+
+  // configure hooks on knex connection pool
+  pool.on('acquireRequest', (eventId: number) => {
+    connectionAcquisitionStartTime[eventId] = performance.now()
+    // params.logger.debug(
+    //   {
+    //     eventId
+    //   },
+    //   'DB connection acquisition request occurred.'
+    // )
+  })
+  pool.on('acquireSuccess', (eventId: number, resource: unknown) => {
+    const now = performance.now()
+    const durationMs = now - connectionAcquisitionStartTime[eventId]
+    delete connectionAcquisitionStartTime[eventId]
+    if (!isNaN(durationMs))
+      metricConnectionAcquisitionDuration.labels({ region }).observe(durationMs)
+
+    // successful acquisition is the start of usage, so record that start time
+    let knexUid: string | undefined = undefined
+    if (resource && typeof resource === 'object' && '__knexUid' in resource) {
+      const _knexUid = resource['__knexUid']
+      if (_knexUid && typeof _knexUid === 'string') {
+        knexUid = _knexUid
+        connectionInUseStartTime[knexUid] = now
+      }
+    }
+
+    // params.logger.debug(
+    //   {
+    //     eventId,
+    //     knexUid,
+    //     connectionAcquisitionDurationMs: toNDecimalPlaces(durationMs, 0)
+    //   },
+    //   'DB connection (knexUid: {knexUid}) acquired after {connectionAcquisitionDurationMs}ms'
+    // )
+  })
+  pool.on('acquireFail', (eventId: number, err: unknown) => {
+    const now = performance.now()
+    const durationMs = now - connectionAcquisitionStartTime[eventId]
+    delete connectionAcquisitionStartTime[eventId]
+    metricConnectionPoolErrors.inc()
+    params.logger.warn(
+      {
+        err,
+        eventId,
+        connectionAcquisitionDurationMs: toNDecimalPlaces(durationMs, 0)
+      },
+      'DB connection acquisition failed after {connectionAcquisitionDurationMs}ms'
+    )
+  })
+
+  // resource returned to pool
+  pool.on('release', (resource: unknown) => {
+    if (!(resource && typeof resource === 'object' && '__knexUid' in resource)) return
+    const knexUid = resource['__knexUid']
+    if (!knexUid || typeof knexUid !== 'string') return
+
+    const now = performance.now()
+    const durationMs = now - connectionInUseStartTime[knexUid]
+    if (!isNaN(durationMs))
+      metricConnectionInUseDuration.labels({ region }).observe(durationMs)
+    // params.logger.debug(
+    //   {
+    //     knexUid,
+    //     connectionInUseDurationMs: toNDecimalPlaces(durationMs, 0)
+    //   },
+    //   'DB connection (knexUid: {knexUid}) released after {connectionInUseDurationMs}ms'
+    // )
+  })
+
+  // resource was created and added to the pool
+  // pool.on('createRequest', (eventId) => {})
+  // pool.on('createSuccess', (eventId, resource) => {})
+  // pool.on('createFail', (eventId, err) => {})
+
+  // resource is destroyed and evicted from pool
+  // resource may or may not be invalid when destroySuccess / destroyFail is called
+  // pool.on('destroyRequest', (eventId, resource) => {})
+  // pool.on('destroySuccess', (eventId, resource) => {})
+  // pool.on('destroyFail', (eventId, resource, err) => {})
+
+  // when internal reaping event clock is activated / deactivated
+  let reapingStartTime: number | undefined = undefined
+  pool.on('startReaping', () => {
+    reapingStartTime = performance.now()
+  })
+  pool.on('stopReaping', () => {
+    if (!reapingStartTime) return
+    const durationMs = performance.now() - reapingStartTime
+    if (!isNaN(durationMs))
+      metricConnectionPoolReapingDuration.labels({ region }).observe(durationMs)
+    reapingStartTime = undefined
+  })
+
+  // pool is destroyed (after poolDestroySuccess all event handlers are also cleared)
+  // pool.on('poolDestroyRequest', (eventId) => {})
+  // pool.on('poolDestroySuccess', (eventId) => {})
 }
