@@ -117,8 +117,12 @@ const buttonText = computed(() => {
   if (isMatchingInterval.value && props.currentPlan?.name === props.plan.name) {
     return 'Current plan'
   }
-  // Billing interval change case
-  if (!isMatchingInterval.value || !canUpgradeToPlan.value) {
+  // Lower or current plan case
+  if (!canUpgradeToPlan.value && props.currentPlan?.name !== props.plan.name) {
+    return `Downgrade to ${props.plan.name}`
+  }
+  // Billing interval and current plan change case
+  if (!isMatchingInterval.value && props.currentPlan?.name === props.plan.name) {
     return props.isYearlyPlan ? 'Change to annual plan' : 'Change to monthly plan'
   }
   // Upgrade case
