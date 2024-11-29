@@ -242,12 +242,11 @@ export const testApolloServer = async (params?: {
       },
       { contextValue: ctx }
     )) as TypedGraphqlResponse<R>
-
+    const results = getResponseResults(res)
     if (options?.assertNoErrors) {
-      expect(res).to.not.haveGraphQLErrors()
+      expect(results).to.not.haveGraphQLErrors()
     }
 
-    const results = getResponseResults(res)
     return {
       ...results,
       res

@@ -284,6 +284,8 @@ const emitWorkspaceGraphqlSubscriptionsFactory =
         }
         break
       case ServerInvitesEvents.Created:
+      case ServerInvitesEvents.Canceled:
+      case ServerInvitesEvents.Finalized:
         const { invite } = payload
         if (!isWorkspaceResourceTarget(invite.resource)) return
 

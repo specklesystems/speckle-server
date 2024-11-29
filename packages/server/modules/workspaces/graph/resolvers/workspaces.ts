@@ -821,7 +821,8 @@ export = FF_WORKSPACES_MODULE_ENABLED
             deleteInvite: deleteInviteFactory({ db }),
             validateResourceAccess: validateWorkspaceInviteBeforeFinalizationFactory({
               getWorkspace: getWorkspaceFactory({ db })
-            })
+            }),
+            emitEvent: getEventBus().emit
           })
 
           await cancelInvite({

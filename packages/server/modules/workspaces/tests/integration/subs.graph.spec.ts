@@ -36,6 +36,7 @@ import {
   TestApolloSubscriptionServer
 } from '@/test/graphqlHelper'
 import { beforeEachContext, truncateTables } from '@/test/hooks'
+import { captureCreatedInvite } from '@/test/speckle-helpers/inviteHelper'
 import {
   getMainTestRegionKey,
   isMultiRegionTestMode,
@@ -228,6 +229,9 @@ describe('Workspace GQL Subscriptions', () => {
                 expect(res.data?.workspaceUpdated.workspace.slug).to.equal(
                   myMainWorkspace.slug
                 )
+
+                const invite = res.data?.workspaceUpdated.workspace.invitedTeam?.[0]
+                expect(invite?.user?.id).to.equal(otherGuy.id)
               }
             )
             await meSubClient.waitForReadiness()
@@ -241,6 +245,128 @@ describe('Workspace GQL Subscriptions', () => {
                 }
               },
               { assertNoErrors: true }
+            )
+
+            await sub.waitForMessage()
+            expect(sub.getMessages()).to.have.length(1)
+          }
+        )
+
+        itEach(
+          [WorkspaceIdentification.WithId, WorkspaceIdentification.WithSlug],
+          (idType) => `sub ${idType} and notify when a workspace invite is canceled`,
+          async (idType) => {
+            const { id: inviteId } = await captureCreatedInvite(
+              async () =>
+                await invitesHelpers.createInvite(
+                  {
+                    workspaceId: myTeamWorkspace.id,
+                    input: {
+                      userId: otherGuy.id
+                    }
+                  },
+                  { assertNoErrors: true }
+                )
+            )
+
+            const sub = await meSubClient.subscribe(
+              OnWorkspaceUpdatedDocument,
+              {
+                workspaceId:
+                  idType === WorkspaceIdentification.WithId
+                    ? myTeamWorkspace.id
+                    : undefined,
+                workspaceSlug:
+                  idType === WorkspaceIdentification.WithSlug
+                    ? myTeamWorkspace.slug
+                    : undefined
+              },
+              (res) => {
+                expect(res).to.not.haveGraphQLErrors()
+                expect(res.data?.workspaceUpdated.id).to.equal(myTeamWorkspace.id)
+                expect(res.data?.workspaceUpdated.workspace.slug).to.equal(
+                  myTeamWorkspace.slug
+                )
+                expect(
+                  res.data?.workspaceUpdated.workspace.invitedTeam || []
+                ).to.have.length(0)
+              }
+            )
+            await meSubClient.waitForReadiness()
+
+            // Cancel invite
+            await invitesHelpers.cancelInvite(
+              {
+                workspaceId: myTeamWorkspace.id,
+                inviteId
+              },
+              { assertNoErrors: true }
+            )
+
+            await sub.waitForMessage()
+            expect(sub.getMessages()).to.have.length(1)
+          }
+        )
+
+        itEach(
+          [
+            { idType: WorkspaceIdentification.WithId, accept: true },
+            { idType: WorkspaceIdentification.WithSlug, accept: true },
+            { idType: WorkspaceIdentification.WithId, accept: false },
+            { idType: WorkspaceIdentification.WithSlug, accept: false }
+          ],
+          ({ idType, accept }) =>
+            `sub ${idType} and notify when a workspace invite is ${
+              accept ? 'accepted' : 'declined'
+            }`,
+          async ({ idType, accept }) => {
+            const { token } = await captureCreatedInvite(
+              async () =>
+                await invitesHelpers.createInvite(
+                  {
+                    workspaceId: myTeamWorkspace.id,
+                    input: {
+                      userId: otherGuy.id
+                    }
+                  },
+                  { assertNoErrors: true }
+                )
+            )
+
+            const sub = await meSubClient.subscribe(
+              OnWorkspaceUpdatedDocument,
+              {
+                workspaceId:
+                  idType === WorkspaceIdentification.WithId
+                    ? myTeamWorkspace.id
+                    : undefined,
+                workspaceSlug:
+                  idType === WorkspaceIdentification.WithSlug
+                    ? myTeamWorkspace.slug
+                    : undefined
+              },
+              (res) => {
+                expect(res).to.not.haveGraphQLErrors()
+                expect(res.data?.workspaceUpdated.id).to.equal(myTeamWorkspace.id)
+                expect(res.data?.workspaceUpdated.workspace.slug).to.equal(
+                  myTeamWorkspace.slug
+                )
+                expect(
+                  res.data?.workspaceUpdated.workspace.invitedTeam || []
+                ).to.have.length(0)
+              }
+            )
+            await meSubClient.waitForReadiness()
+
+            // Accept invite
+            await invitesHelpers.useInvite(
+              {
+                input: {
+                  token,
+                  accept
+                }
+              },
+              { assertNoErrors: true, authUserId: otherGuy.id }
             )
 
             await sub.waitForMessage()
