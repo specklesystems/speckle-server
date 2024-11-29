@@ -41,7 +41,7 @@
 </template>
 
 <script setup lang="ts">
-import type { Nullable, Optional } from '@speckle/shared'
+import { Roles, type Nullable, type Optional } from '@speckle/shared'
 import { useDebouncedTextInput } from '@speckle/ui-components'
 import { graphql } from '~/lib/common/generated/gql'
 import type {
@@ -54,6 +54,7 @@ graphql(`
   fragment AutomateFunctionsPageHeader_Query on Query {
     activeUser {
       id
+      role
       automateInfo {
         hasAutomateGithubApp
         availableGithubOrgs
@@ -86,9 +87,11 @@ const createDialogOpen = ref(false)
 const availableTemplates = computed(
   () => props.serverInfo?.automate.availableFunctionTemplates || []
 )
-const canCreateFunction = computed(
-  () => !!props.activeUser?.id && !!availableTemplates.value.length
-)
+const canCreateFunction = computed(() => {
+  return props.workspace
+    ? !!props.activeUser?.id && !!availableTemplates.value.length
+    : props.activeUser?.role === Roles.Server.Admin
+})
 
 if (import.meta.client) {
   watch(

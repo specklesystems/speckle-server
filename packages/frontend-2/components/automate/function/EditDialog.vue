@@ -8,7 +8,7 @@
     :on-submit="onSubmit"
     prevent-close-on-click-outside
   >
-    <AutomateFunctionCreateDialogDetailsStep :workspaces="props.workspaces" />
+    <AutomateFunctionCreateDialogDetailsStep />
   </LayoutDialog>
 </template>
 <script setup lang="ts">
