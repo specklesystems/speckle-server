@@ -4,12 +4,17 @@ import { WorkspaceProjectsUpdatedMessageType } from '~/lib/common/generated/gql/
 import { getCacheId, modifyObjectField } from '~/lib/common/helpers/graphql'
 import { ToastNotificationType, useGlobalToast } from '~/lib/common/composables/toast'
 import { projectRoute } from '~/lib/common/helpers/route'
+import { useLock } from '~/lib/common/composables/singleton'
 
 export function useWorkspaceProjectsUpdatedTracking(
   workspaceSlug: ComputedRef<string>
 ) {
   const apollo = useApolloClient().client
   const { triggerNotification } = useGlobalToast()
+  const { hasLock } = useLock(
+    computed(() => `useWorkspaceProjectsUpdatedTracking-${workspaceSlug.value}`)
+  )
+  const isEnabled = computed(() => hasLock.value)
 
   const { onResult: onWorkspaceProjectsUpdate } = useSubscription(
     graphql(`
@@ -24,10 +29,12 @@ export function useWorkspaceProjectsUpdatedTracking(
         }
       }
     `),
-    () => ({ slug: workspaceSlug.value })
+    () => ({ slug: workspaceSlug.value }),
+    { enabled: isEnabled }
   )
 
   onWorkspaceProjectsUpdate((res) => {
+    if (!hasLock.value) return
     const event = res.data?.workspaceProjectsUpdated
     if (!event) return
 
