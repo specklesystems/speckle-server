@@ -150,11 +150,12 @@ extend type User {
     limit: Int! = 25
     cursor: String
     filter: UserProjectsFilter
-  ): ProjectCollection! @isOwner
+  ): UserProjectCollection! @isOwner
 }
 
-type ProjectCollection {
+type UserProjectCollection {
   totalCount: Int!
+  numberOfHidden: Int!
   cursor: String
   items: [Project!]!
 }

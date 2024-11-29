@@ -3605,7 +3605,7 @@ export type User = {
   /** Get all invitations to projects that the active user has */
   projectInvites: Array<PendingStreamCollaborator>;
   /** Get projects that the user participates in */
-  projects: ProjectCollection;
+  projects: UserProjectCollection;
   role?: Maybe<Scalars['String']['output']>;
   /**
    * Returns all streams that the user is a collaborator on. If requested for a user, who isn't the
@@ -3785,6 +3785,14 @@ export type UserGendoAiCredits = {
   limit: Scalars['Int']['output'];
   resetDate: Scalars['DateTime']['output'];
   used: Scalars['Int']['output'];
+};
+
+export type UserProjectCollection = {
+  __typename?: 'UserProjectCollection';
+  cursor?: Maybe<Scalars['String']['output']>;
+  items: Array<Project>;
+  numberOfHidden: Scalars['Int']['output'];
+  totalCount: Scalars['Int']['output'];
 };
 
 export type UserProjectsFilter = {
@@ -5273,7 +5281,7 @@ export type ActiveUserLeaveWorkspaceMutation = { __typename?: 'Mutation', worksp
 export type ActiveUserProjectsWorkspaceQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type ActiveUserProjectsWorkspaceQuery = { __typename?: 'Query', activeUser?: { __typename?: 'User', projects: { __typename?: 'ProjectCollection', items: Array<{ __typename?: 'Project', id: string, workspace?: { __typename?: 'Workspace', id: string, name: string } | null }> } } | null };
+export type ActiveUserProjectsWorkspaceQuery = { __typename?: 'Query', activeUser?: { __typename?: 'User', projects: { __typename?: 'UserProjectCollection', items: Array<{ __typename?: 'Project', id: string, workspace?: { __typename?: 'Workspace', id: string, name: string } | null }> } } | null };
 
 export type ActiveUserExpiredSsoSessionsQueryVariables = Exact<{ [key: string]: never; }>;
 

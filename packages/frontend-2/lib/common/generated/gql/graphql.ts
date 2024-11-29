@@ -3601,7 +3601,7 @@ export type User = {
   /** Get all invitations to projects that the active user has */
   projectInvites: Array<PendingStreamCollaborator>;
   /** Get projects that the user participates in */
-  projects: ProjectCollection;
+  projects: UserProjectCollection;
   role?: Maybe<Scalars['String']['output']>;
   /**
    * Returns all streams that the user is a collaborator on. If requested for a user, who isn't the
@@ -3781,6 +3781,14 @@ export type UserGendoAiCredits = {
   limit: Scalars['Int']['output'];
   resetDate: Scalars['DateTime']['output'];
   used: Scalars['Int']['output'];
+};
+
+export type UserProjectCollection = {
+  __typename?: 'UserProjectCollection';
+  cursor?: Maybe<Scalars['String']['output']>;
+  items: Array<Project>;
+  numberOfHidden: Scalars['Int']['output'];
+  totalCount: Scalars['Int']['output'];
 };
 
 export type UserProjectsFilter = {
@@ -4314,6 +4322,7 @@ export type WorkspaceMutationsUpdateRoleArgs = {
 
 export type WorkspacePlan = {
   __typename?: 'WorkspacePlan';
+  createdAt: Scalars['DateTime']['output'];
   name: WorkspacePlans;
   status: WorkspacePlanStatuses;
 };
@@ -4769,7 +4778,7 @@ export type WorkspaceInviteDialog_WorkspaceFragment = { __typename?: 'Workspace'
 
 export type MoveProjectsDialog_WorkspaceFragment = { __typename?: 'Workspace', id: string, role?: string | null, name: string, defaultLogoIndex: number, logo?: string | null, projects: { __typename?: 'ProjectCollection', items: Array<{ __typename?: 'Project', id: string, modelCount: { __typename?: 'ModelCollection', totalCount: number }, versions: { __typename?: 'VersionCollection', totalCount: number } }> } };
 
-export type MoveProjectsDialog_UserFragment = { __typename?: 'User', projects: { __typename?: 'ProjectCollection', items: Array<{ __typename?: 'Project', role?: string | null, id: string, name: string, workspace?: { __typename?: 'Workspace', id: string } | null, modelCount: { __typename?: 'ModelCollection', totalCount: number }, versions: { __typename?: 'VersionCollection', totalCount: number } }> } };
+export type MoveProjectsDialog_UserFragment = { __typename?: 'User', projects: { __typename?: 'UserProjectCollection', items: Array<{ __typename?: 'Project', role?: string | null, id: string, name: string, workspace?: { __typename?: 'Workspace', id: string } | null, modelCount: { __typename?: 'ModelCollection', totalCount: number }, versions: { __typename?: 'VersionCollection', totalCount: number } }> } };
 
 export type WorkspaceProjectList_WorkspaceFragment = { __typename?: 'Workspace', id: string, slug: string, role?: string | null, name: string, logo?: string | null, description?: string | null, domainBasedMembershipProtectionEnabled: boolean, discoverabilityEnabled: boolean, defaultLogoIndex: number, projects: { __typename?: 'ProjectCollection', totalCount: number, cursor?: string | null, items: Array<{ __typename?: 'Project', id: string, name: string, createdAt: string, updatedAt: string, role?: string | null, visibility: ProjectVisibility, modelCount: { __typename?: 'ModelCollection', totalCount: number }, versions: { __typename?: 'VersionCollection', totalCount: number }, models: { __typename?: 'ModelCollection', totalCount: number, items: Array<{ __typename?: 'Model', id: string, name: string, displayName: string, previewUrl?: string | null, createdAt: string, updatedAt: string, description?: string | null, versionCount: { __typename?: 'VersionCollection', totalCount: number }, commentThreadCount: { __typename?: 'CommentCollection', totalCount: number }, pendingImportedVersions: Array<{ __typename?: 'FileUpload', id: string, projectId: string, modelName: string, convertedStatus: number, convertedMessage?: string | null, uploadDate: string, convertedLastUpdate: string, fileType: string, fileName: string }>, automationsStatus?: { __typename?: 'TriggeredAutomationsStatus', id: string, automationRuns: Array<{ __typename?: 'AutomateRun', id: string, functionRuns: Array<{ __typename?: 'AutomateFunctionRun', id: string, updatedAt: string, status: AutomateRunStatus, results?: {} | null, statusMessage?: string | null, contextView?: string | null, createdAt: string, function?: { __typename?: 'AutomateFunction', id: string, logo?: string | null, name: string } | null }>, automation: { __typename?: 'Automation', id: string, name: string } }> } | null }> }, workspace?: { __typename?: 'Workspace', id: string, slug: string, name: string, logo?: string | null, defaultLogoIndex: number } | null, pendingImportedModels: Array<{ __typename?: 'FileUpload', id: string, projectId: string, modelName: string, convertedStatus: number, convertedMessage?: string | null, uploadDate: string, convertedLastUpdate: string, fileType: string, fileName: string }>, team: Array<{ __typename?: 'ProjectCollaborator', id: string, user: { __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null } }> }> }, totalProjects: { __typename?: 'ProjectCollection', totalCount: number }, team: { __typename?: 'WorkspaceCollaboratorCollection', totalCount: number, items: Array<{ __typename?: 'WorkspaceCollaborator', id: string, role: string, user: { __typename?: 'LimitedUser', role?: string | null, id: string, name: string, avatar?: string | null } }> }, plan?: { __typename?: 'WorkspacePlan', name: WorkspacePlans, status: WorkspacePlanStatuses } | null, subscription?: { __typename?: 'WorkspaceSubscription', billingInterval: BillingInterval, currentBillingCycleEnd: string } | null, domains?: Array<{ __typename?: 'WorkspaceDomain', domain: string, id: string }> | null, invitedTeam?: Array<{ __typename?: 'PendingWorkspaceCollaborator', title: string, user?: { __typename?: 'LimitedUser', id: string } | null }> | null };
 
@@ -4949,7 +4958,7 @@ export type DashboardJoinWorkspaceMutation = { __typename?: 'Mutation', workspac
 export type DashboardProjectsPageQueryQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type DashboardProjectsPageQueryQuery = { __typename?: 'Query', activeUser?: { __typename?: 'User', id: string, projects: { __typename?: 'ProjectCollection', items: Array<{ __typename?: 'Project', id: string, name: string, role?: string | null, updatedAt: string, models: { __typename?: 'ModelCollection', totalCount: number }, team: Array<{ __typename?: 'ProjectCollaborator', user: { __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null } }>, workspace?: { __typename?: 'Workspace', id: string, slug: string, name: string, logo?: string | null, defaultLogoIndex: number } | null }> }, projectInvites: Array<{ __typename?: 'PendingStreamCollaborator', id: string, projectId: string, projectName: string, token?: string | null, invitedBy: { __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null }, user?: { __typename?: 'LimitedUser', id: string } | null }> } | null };
+export type DashboardProjectsPageQueryQuery = { __typename?: 'Query', activeUser?: { __typename?: 'User', id: string, projects: { __typename?: 'UserProjectCollection', items: Array<{ __typename?: 'Project', id: string, name: string, role?: string | null, updatedAt: string, models: { __typename?: 'ModelCollection', totalCount: number }, team: Array<{ __typename?: 'ProjectCollaborator', user: { __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null } }>, workspace?: { __typename?: 'Workspace', id: string, slug: string, name: string, logo?: string | null, defaultLogoIndex: number } | null }> }, projectInvites: Array<{ __typename?: 'PendingStreamCollaborator', id: string, projectId: string, projectName: string, token?: string | null, invitedBy: { __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null }, user?: { __typename?: 'LimitedUser', id: string } | null }> } | null };
 
 export type DashboardProjectsPageWorkspaceQueryQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -5019,7 +5028,7 @@ export type SearchProjectsQueryVariables = Exact<{
 }>;
 
 
-export type SearchProjectsQuery = { __typename?: 'Query', activeUser?: { __typename?: 'User', projects: { __typename?: 'ProjectCollection', totalCount: number, items: Array<{ __typename?: 'Project', id: string, name: string }> } } | null };
+export type SearchProjectsQuery = { __typename?: 'Query', activeUser?: { __typename?: 'User', projects: { __typename?: 'UserProjectCollection', totalCount: number, items: Array<{ __typename?: 'Project', id: string, name: string }> } } | null };
 
 export type SearchProjectModelsQueryVariables = Exact<{
   search?: InputMaybe<Scalars['String']['input']>;
@@ -5319,7 +5328,7 @@ export type ProjectsDashboardQueryQueryVariables = Exact<{
 }>;
 
 
-export type ProjectsDashboardQueryQuery = { __typename?: 'Query', activeUser?: { __typename?: 'User', id: string, projects: { __typename?: 'ProjectCollection', cursor?: string | null, totalCount: number, items: Array<{ __typename?: 'Project', id: string, name: string, createdAt: string, updatedAt: string, role?: string | null, visibility: ProjectVisibility, models: { __typename?: 'ModelCollection', totalCount: number, items: Array<{ __typename?: 'Model', id: string, name: string, displayName: string, previewUrl?: string | null, createdAt: string, updatedAt: string, description?: string | null, versionCount: { __typename?: 'VersionCollection', totalCount: number }, commentThreadCount: { __typename?: 'CommentCollection', totalCount: number }, pendingImportedVersions: Array<{ __typename?: 'FileUpload', id: string, projectId: string, modelName: string, convertedStatus: number, convertedMessage?: string | null, uploadDate: string, convertedLastUpdate: string, fileType: string, fileName: string }>, automationsStatus?: { __typename?: 'TriggeredAutomationsStatus', id: string, automationRuns: Array<{ __typename?: 'AutomateRun', id: string, functionRuns: Array<{ __typename?: 'AutomateFunctionRun', id: string, updatedAt: string, status: AutomateRunStatus, results?: {} | null, statusMessage?: string | null, contextView?: string | null, createdAt: string, function?: { __typename?: 'AutomateFunction', id: string, logo?: string | null, name: string } | null }>, automation: { __typename?: 'Automation', id: string, name: string } }> } | null }> }, workspace?: { __typename?: 'Workspace', id: string, slug: string, name: string, logo?: string | null, defaultLogoIndex: number } | null, pendingImportedModels: Array<{ __typename?: 'FileUpload', id: string, projectId: string, modelName: string, convertedStatus: number, convertedMessage?: string | null, uploadDate: string, convertedLastUpdate: string, fileType: string, fileName: string }>, team: Array<{ __typename?: 'ProjectCollaborator', id: string, user: { __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null } }> }> }, projectInvites: Array<{ __typename?: 'PendingStreamCollaborator', id: string, projectId: string, projectName: string, token?: string | null, invitedBy: { __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null }, user?: { __typename?: 'LimitedUser', id: string } | null }> } | null };
+export type ProjectsDashboardQueryQuery = { __typename?: 'Query', activeUser?: { __typename?: 'User', id: string, projects: { __typename?: 'UserProjectCollection', cursor?: string | null, totalCount: number, items: Array<{ __typename?: 'Project', id: string, name: string, createdAt: string, updatedAt: string, role?: string | null, visibility: ProjectVisibility, models: { __typename?: 'ModelCollection', totalCount: number, items: Array<{ __typename?: 'Model', id: string, name: string, displayName: string, previewUrl?: string | null, createdAt: string, updatedAt: string, description?: string | null, versionCount: { __typename?: 'VersionCollection', totalCount: number }, commentThreadCount: { __typename?: 'CommentCollection', totalCount: number }, pendingImportedVersions: Array<{ __typename?: 'FileUpload', id: string, projectId: string, modelName: string, convertedStatus: number, convertedMessage?: string | null, uploadDate: string, convertedLastUpdate: string, fileType: string, fileName: string }>, automationsStatus?: { __typename?: 'TriggeredAutomationsStatus', id: string, automationRuns: Array<{ __typename?: 'AutomateRun', id: string, functionRuns: Array<{ __typename?: 'AutomateFunctionRun', id: string, updatedAt: string, status: AutomateRunStatus, results?: {} | null, statusMessage?: string | null, contextView?: string | null, createdAt: string, function?: { __typename?: 'AutomateFunction', id: string, logo?: string | null, name: string } | null }>, automation: { __typename?: 'Automation', id: string, name: string } }> } | null }> }, workspace?: { __typename?: 'Workspace', id: string, slug: string, name: string, logo?: string | null, defaultLogoIndex: number } | null, pendingImportedModels: Array<{ __typename?: 'FileUpload', id: string, projectId: string, modelName: string, convertedStatus: number, convertedMessage?: string | null, uploadDate: string, convertedLastUpdate: string, fileType: string, fileName: string }>, team: Array<{ __typename?: 'ProjectCollaborator', id: string, user: { __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null } }> }> }, projectInvites: Array<{ __typename?: 'PendingStreamCollaborator', id: string, projectId: string, projectName: string, token?: string | null, invitedBy: { __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null }, user?: { __typename?: 'LimitedUser', id: string } | null }> } | null };
 
 export type ProjectsDashboardWorkspaceQueryQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -6057,7 +6066,7 @@ export type WorkspaceInviteQuery = { __typename?: 'Query', workspaceInvite?: { _
 export type MoveProjectsDialogQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type MoveProjectsDialogQuery = { __typename?: 'Query', activeUser?: { __typename?: 'User', projects: { __typename?: 'ProjectCollection', items: Array<{ __typename?: 'Project', role?: string | null, id: string, name: string, workspace?: { __typename?: 'Workspace', id: string } | null, modelCount: { __typename?: 'ModelCollection', totalCount: number }, versions: { __typename?: 'VersionCollection', totalCount: number } }> } } | null };
+export type MoveProjectsDialogQuery = { __typename?: 'Query', activeUser?: { __typename?: 'User', projects: { __typename?: 'UserProjectCollection', items: Array<{ __typename?: 'Project', role?: string | null, id: string, name: string, workspace?: { __typename?: 'Workspace', id: string } | null, modelCount: { __typename?: 'ModelCollection', totalCount: number }, versions: { __typename?: 'VersionCollection', totalCount: number } }> } } | null };
 
 export type ValidateWorkspaceSlugQueryVariables = Exact<{
   slug: Scalars['String']['input'];
@@ -6625,6 +6634,7 @@ export type AllObjectTypes = {
   UserEmail: UserEmail,
   UserEmailMutations: UserEmailMutations,
   UserGendoAICredits: UserGendoAiCredits,
+  UserProjectCollection: UserProjectCollection,
   UserProjectsUpdatedMessage: UserProjectsUpdatedMessage,
   UserSearchResultCollection: UserSearchResultCollection,
   Version: Version,
@@ -7646,6 +7656,12 @@ export type UserGendoAiCreditsFieldArgs = {
   resetDate: {},
   used: {},
 }
+export type UserProjectCollectionFieldArgs = {
+  cursor: {},
+  items: {},
+  numberOfHidden: {},
+  totalCount: {},
+}
 export type UserProjectsUpdatedMessageFieldArgs = {
   id: {},
   project: {},
@@ -7811,6 +7827,7 @@ export type WorkspaceMutationsFieldArgs = {
   updateRole: WorkspaceMutationsUpdateRoleArgs,
 }
 export type WorkspacePlanFieldArgs = {
+  createdAt: {},
   name: {},
   status: {},
 }
@@ -7964,6 +7981,7 @@ export type AllObjectFieldArgTypes = {
   UserEmail: UserEmailFieldArgs,
   UserEmailMutations: UserEmailMutationsFieldArgs,
   UserGendoAICredits: UserGendoAiCreditsFieldArgs,
+  UserProjectCollection: UserProjectCollectionFieldArgs,
   UserProjectsUpdatedMessage: UserProjectsUpdatedMessageFieldArgs,
   UserSearchResultCollection: UserSearchResultCollectionFieldArgs,
   Version: VersionFieldArgs,

@@ -3623,7 +3623,7 @@ export type User = {
   /** Get all invitations to projects that the active user has */
   projectInvites: Array<PendingStreamCollaborator>;
   /** Get projects that the user participates in */
-  projects: ProjectCollection;
+  projects: UserProjectCollection;
   role?: Maybe<Scalars['String']['output']>;
   /**
    * Returns all streams that the user is a collaborator on. If requested for a user, who isn't the
@@ -3803,6 +3803,14 @@ export type UserGendoAiCredits = {
   limit: Scalars['Int']['output'];
   resetDate: Scalars['DateTime']['output'];
   used: Scalars['Int']['output'];
+};
+
+export type UserProjectCollection = {
+  __typename?: 'UserProjectCollection';
+  cursor?: Maybe<Scalars['String']['output']>;
+  items: Array<Project>;
+  numberOfHidden: Scalars['Int']['output'];
+  totalCount: Scalars['Int']['output'];
 };
 
 export type UserProjectsFilter = {
@@ -4791,6 +4799,7 @@ export type ResolversTypes = {
   UserEmail: ResolverTypeWrapper<UserEmail>;
   UserEmailMutations: ResolverTypeWrapper<MutationsObjectGraphQLReturn>;
   UserGendoAICredits: ResolverTypeWrapper<UserGendoAiCredits>;
+  UserProjectCollection: ResolverTypeWrapper<Omit<UserProjectCollection, 'items'> & { items: Array<ResolversTypes['Project']> }>;
   UserProjectsFilter: UserProjectsFilter;
   UserProjectsUpdatedMessage: ResolverTypeWrapper<Omit<UserProjectsUpdatedMessage, 'project'> & { project?: Maybe<ResolversTypes['Project']> }>;
   UserProjectsUpdatedMessageType: UserProjectsUpdatedMessageType;
@@ -5054,6 +5063,7 @@ export type ResolversParentTypes = {
   UserEmail: UserEmail;
   UserEmailMutations: MutationsObjectGraphQLReturn;
   UserGendoAICredits: UserGendoAiCredits;
+  UserProjectCollection: Omit<UserProjectCollection, 'items'> & { items: Array<ResolversParentTypes['Project']> };
   UserProjectsFilter: UserProjectsFilter;
   UserProjectsUpdatedMessage: Omit<UserProjectsUpdatedMessage, 'project'> & { project?: Maybe<ResolversParentTypes['Project']> };
   UserRoleInput: UserRoleInput;
@@ -6335,7 +6345,7 @@ export type UserResolvers<ContextType = GraphQLContext, ParentType extends Resol
   profiles?: Resolver<Maybe<ResolversTypes['JSONObject']>, ParentType, ContextType>;
   projectAccessRequest?: Resolver<Maybe<ResolversTypes['ProjectAccessRequest']>, ParentType, ContextType, RequireFields<UserProjectAccessRequestArgs, 'projectId'>>;
   projectInvites?: Resolver<Array<ResolversTypes['PendingStreamCollaborator']>, ParentType, ContextType>;
-  projects?: Resolver<ResolversTypes['ProjectCollection'], ParentType, ContextType, RequireFields<UserProjectsArgs, 'limit'>>;
+  projects?: Resolver<ResolversTypes['UserProjectCollection'], ParentType, ContextType, RequireFields<UserProjectsArgs, 'limit'>>;
   role?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   streams?: Resolver<ResolversTypes['StreamCollection'], ParentType, ContextType, RequireFields<UserStreamsArgs, 'limit'>>;
   timeline?: Resolver<Maybe<ResolversTypes['ActivityCollection']>, ParentType, ContextType, RequireFields<UserTimelineArgs, 'limit'>>;
@@ -6374,6 +6384,14 @@ export type UserGendoAiCreditsResolvers<ContextType = GraphQLContext, ParentType
   limit?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   resetDate?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   used?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type UserProjectCollectionResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['UserProjectCollection'] = ResolversParentTypes['UserProjectCollection']> = {
+  cursor?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  items?: Resolver<Array<ResolversTypes['Project']>, ParentType, ContextType>;
+  numberOfHidden?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  totalCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -6761,6 +6779,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   UserEmail?: UserEmailResolvers<ContextType>;
   UserEmailMutations?: UserEmailMutationsResolvers<ContextType>;
   UserGendoAICredits?: UserGendoAiCreditsResolvers<ContextType>;
+  UserProjectCollection?: UserProjectCollectionResolvers<ContextType>;
   UserProjectsUpdatedMessage?: UserProjectsUpdatedMessageResolvers<ContextType>;
   UserSearchResultCollection?: UserSearchResultCollectionResolvers<ContextType>;
   Version?: VersionResolvers<ContextType>;
