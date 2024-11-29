@@ -85,6 +85,7 @@ import {
 } from '@/modules/core/services/streams/favorite'
 import { getUserFactory, getUsersFactory } from '@/modules/core/repositories/users'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
+import { adminOverrideEnabled } from '@/modules/shared/helpers/envHelper'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUsers = getUsersFactory({ db })
@@ -330,18 +331,18 @@ export = {
 
       const [totalCount, visibleCount, { cursor, streams }] = await Promise.all([
         getUserStreamsCount({
-          userId: ctx.userId!,
+          userId: parent.id,
           forOtherUser,
           streamIdWhitelist: toProjectIdWhitelist(ctx.resourceAccessRules)
         }),
         getUserStreamsCount({
-          userId: ctx.userId!,
+          userId: parent.id,
           forOtherUser,
           streamIdWhitelist: toProjectIdWhitelist(ctx.resourceAccessRules),
           onlyWithActiveSsoSession: true
         }),
         getUserStreams({
-          userId: ctx.userId!,
+          userId: parent.id,
           limit: args.limit,
           cursor: args.cursor || undefined,
           forOtherUser,
@@ -386,24 +387,27 @@ export = {
   LimitedUser: {
     async streams(parent, args, ctx) {
       // a little escape hatch for admins to look into users streams
-
+      // const forOtherUser = parent.id !== ctx.userId
+      const isAdmin = adminOverrideEnabled() && ctx.role === Roles.Server.Admin
+      const forOtherUser = !isAdmin
+      const userId = parent.id
       const [totalCount, visibleCount, { cursor, streams }] = await Promise.all([
         getUserStreamsCount({
-          userId: ctx.userId!,
-          forOtherUser: false,
+          userId,
+          forOtherUser,
           streamIdWhitelist: toProjectIdWhitelist(ctx.resourceAccessRules)
         }),
         getUserStreamsCount({
-          userId: ctx.userId!,
-          forOtherUser: false,
+          userId,
+          forOtherUser,
           streamIdWhitelist: toProjectIdWhitelist(ctx.resourceAccessRules),
           onlyWithActiveSsoSession: true
         }),
         getUserStreams({
-          userId: ctx.userId!,
+          userId,
           limit: args.limit,
           cursor: args.cursor || undefined,
-          forOtherUser: false,
+          forOtherUser,
           streamIdWhitelist: toProjectIdWhitelist(ctx.resourceAccessRules),
           onlyWithActiveSsoSession: true
         })
