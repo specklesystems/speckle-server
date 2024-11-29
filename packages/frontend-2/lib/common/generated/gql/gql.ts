@@ -304,7 +304,7 @@ const documents = {
     "\n  query SettingsWorkspacesMembersSearch(\n    $workspaceId: String!\n    $filter: WorkspaceTeamFilter\n  ) {\n    workspace(id: $workspaceId) {\n      id\n      team(filter: $filter) {\n        items {\n          id\n          ...SettingsWorkspacesMembersMembersTable_WorkspaceCollaborator\n        }\n      }\n    }\n  }\n": types.SettingsWorkspacesMembersSearchDocument,
     "\n  query SettingsWorkspacesInvitesSearch(\n    $workspaceId: String!\n    $invitesFilter: PendingWorkspaceCollaboratorsFilter\n  ) {\n    workspace(id: $workspaceId) {\n      ...SettingsWorkspacesMembersInvitesTable_Workspace\n    }\n  }\n": types.SettingsWorkspacesInvitesSearchDocument,
     "\n  query SettingsUserEmailsQuery {\n    activeUser {\n      ...SettingsUserEmails_User\n    }\n  }\n": types.SettingsUserEmailsQueryDocument,
-    "\n  query SettingsWorkspacesProjects(\n    $workspaceId: String!\n    $limit: Int!\n    $cursor: String\n    $filter: WorkspaceProjectsFilter\n  ) {\n    workspace(id: $workspaceId) {\n      id\n      projects(limit: $limit, cursor: $cursor, filter: $filter) {\n        cursor\n        ...SettingsWorkspacesProjects_ProjectCollection\n      }\n    }\n  }\n": types.SettingsWorkspacesProjectsDocument,
+    "\n  query SettingsWorkspacesProjects(\n    $workspaceId: String!\n    $limit: Int!\n    $cursor: String\n    $filter: WorkspaceProjectsFilter\n  ) {\n    workspace(id: $workspaceId) {\n      id\n      slug\n      projects(limit: $limit, cursor: $cursor, filter: $filter) {\n        cursor\n        ...SettingsWorkspacesProjects_ProjectCollection\n      }\n    }\n  }\n": types.SettingsWorkspacesProjectsDocument,
     "\n  query SettingsWorkspaceSecurity($workspaceId: String!) {\n    workspace(id: $workspaceId) {\n      ...SettingsWorkspacesSecurity_Workspace\n    }\n    activeUser {\n      ...SettingsWorkspacesSecurity_User\n    }\n  }\n": types.SettingsWorkspaceSecurityDocument,
     "\n  fragment AppAuthorAvatar on AppAuthor {\n    id\n    name\n    avatar\n  }\n": types.AppAuthorAvatarFragmentDoc,
     "\n  fragment LimitedUserAvatar on LimitedUser {\n    id\n    name\n    avatar\n  }\n": types.LimitedUserAvatarFragmentDoc,
@@ -333,6 +333,7 @@ const documents = {
     "\n  fragment UseWorkspaceInviteManager_PendingWorkspaceCollaborator on PendingWorkspaceCollaborator {\n    id\n    token\n    workspaceId\n    workspaceSlug\n    user {\n      id\n    }\n  }\n": types.UseWorkspaceInviteManager_PendingWorkspaceCollaboratorFragmentDoc,
     "\n  fragment WorkspaceMixpanelUpdateGroup_WorkspaceCollaborator on WorkspaceCollaborator {\n    id\n    role\n  }\n": types.WorkspaceMixpanelUpdateGroup_WorkspaceCollaboratorFragmentDoc,
     "\n  fragment WorkspaceMixpanelUpdateGroup_Workspace on Workspace {\n    id\n    name\n    description\n    domainBasedMembershipProtectionEnabled\n    discoverabilityEnabled\n    plan {\n      status\n      name\n    }\n    team {\n      totalCount\n      items {\n        ...WorkspaceMixpanelUpdateGroup_WorkspaceCollaborator\n      }\n    }\n  }\n": types.WorkspaceMixpanelUpdateGroup_WorkspaceFragmentDoc,
+    "\n      subscription OnWorkspaceProjectsUpdate($slug: String!) {\n        workspaceProjectsUpdated(workspaceId: null, workspaceSlug: $slug) {\n          projectId\n          workspaceId\n          type\n          project {\n            ...ProjectDashboardItem\n          }\n        }\n      }\n    ": types.OnWorkspaceProjectsUpdateDocument,
     "\n    fragment WorkspaceSsoStatus_Workspace on Workspace {\n      id\n      sso {\n        provider {\n          id\n          name\n          clientId\n          issuerUrl\n        }\n        session {\n          validUntil\n        }\n      }\n    }\n  ": types.WorkspaceSsoStatus_WorkspaceFragmentDoc,
     "\n    fragment WorkspaceSsoStatus_User on User {\n      expiredSsoSessions {\n        id\n        slug\n      }\n    }\n  ": types.WorkspaceSsoStatus_UserFragmentDoc,
     "\n  mutation UpdateRole($input: WorkspaceRoleUpdateInput!) {\n    workspaceMutations {\n      updateRole(input: $input) {\n        team {\n          items {\n            id\n            role\n          }\n        }\n      }\n    }\n  }\n": types.UpdateRoleDocument,
@@ -362,7 +363,6 @@ const documents = {
     "\n  fragment ProjectPageAutomationPage_Automation on Automation {\n    id\n    ...ProjectPageAutomationHeader_Automation\n    ...ProjectPageAutomationFunctions_Automation\n    ...ProjectPageAutomationRuns_Automation\n  }\n": types.ProjectPageAutomationPage_AutomationFragmentDoc,
     "\n  fragment ProjectPageAutomationPage_Project on Project {\n    id\n    ...ProjectPageAutomationHeader_Project\n  }\n": types.ProjectPageAutomationPage_ProjectFragmentDoc,
     "\n  fragment ProjectPageSettingsTab_Project on Project {\n    id\n    role\n  }\n": types.ProjectPageSettingsTab_ProjectFragmentDoc,
-    "\n    subscription OnWorkspaceProjectsUpdate($slug: String!) {\n      workspaceProjectsUpdated(workspaceId: null, workspaceSlug: $slug) {\n        projectId\n        workspaceId\n        type\n        project {\n          ...ProjectDashboardItem\n        }\n      }\n    }\n  ": types.OnWorkspaceProjectsUpdateDocument,
 };
 
 /**
@@ -1542,7 +1542,7 @@ export function graphql(source: "\n  query SettingsUserEmailsQuery {\n    active
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query SettingsWorkspacesProjects(\n    $workspaceId: String!\n    $limit: Int!\n    $cursor: String\n    $filter: WorkspaceProjectsFilter\n  ) {\n    workspace(id: $workspaceId) {\n      id\n      projects(limit: $limit, cursor: $cursor, filter: $filter) {\n        cursor\n        ...SettingsWorkspacesProjects_ProjectCollection\n      }\n    }\n  }\n"): (typeof documents)["\n  query SettingsWorkspacesProjects(\n    $workspaceId: String!\n    $limit: Int!\n    $cursor: String\n    $filter: WorkspaceProjectsFilter\n  ) {\n    workspace(id: $workspaceId) {\n      id\n      projects(limit: $limit, cursor: $cursor, filter: $filter) {\n        cursor\n        ...SettingsWorkspacesProjects_ProjectCollection\n      }\n    }\n  }\n"];
+export function graphql(source: "\n  query SettingsWorkspacesProjects(\n    $workspaceId: String!\n    $limit: Int!\n    $cursor: String\n    $filter: WorkspaceProjectsFilter\n  ) {\n    workspace(id: $workspaceId) {\n      id\n      slug\n      projects(limit: $limit, cursor: $cursor, filter: $filter) {\n        cursor\n        ...SettingsWorkspacesProjects_ProjectCollection\n      }\n    }\n  }\n"): (typeof documents)["\n  query SettingsWorkspacesProjects(\n    $workspaceId: String!\n    $limit: Int!\n    $cursor: String\n    $filter: WorkspaceProjectsFilter\n  ) {\n    workspace(id: $workspaceId) {\n      id\n      slug\n      projects(limit: $limit, cursor: $cursor, filter: $filter) {\n        cursor\n        ...SettingsWorkspacesProjects_ProjectCollection\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -1655,6 +1655,10 @@ export function graphql(source: "\n  fragment WorkspaceMixpanelUpdateGroup_Works
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  fragment WorkspaceMixpanelUpdateGroup_Workspace on Workspace {\n    id\n    name\n    description\n    domainBasedMembershipProtectionEnabled\n    discoverabilityEnabled\n    plan {\n      status\n      name\n    }\n    team {\n      totalCount\n      items {\n        ...WorkspaceMixpanelUpdateGroup_WorkspaceCollaborator\n      }\n    }\n  }\n"): (typeof documents)["\n  fragment WorkspaceMixpanelUpdateGroup_Workspace on Workspace {\n    id\n    name\n    description\n    domainBasedMembershipProtectionEnabled\n    discoverabilityEnabled\n    plan {\n      status\n      name\n    }\n    team {\n      totalCount\n      items {\n        ...WorkspaceMixpanelUpdateGroup_WorkspaceCollaborator\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n      subscription OnWorkspaceProjectsUpdate($slug: String!) {\n        workspaceProjectsUpdated(workspaceId: null, workspaceSlug: $slug) {\n          projectId\n          workspaceId\n          type\n          project {\n            ...ProjectDashboardItem\n          }\n        }\n      }\n    "): (typeof documents)["\n      subscription OnWorkspaceProjectsUpdate($slug: String!) {\n        workspaceProjectsUpdated(workspaceId: null, workspaceSlug: $slug) {\n          projectId\n          workspaceId\n          type\n          project {\n            ...ProjectDashboardItem\n          }\n        }\n      }\n    "];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -1771,10 +1775,6 @@ export function graphql(source: "\n  fragment ProjectPageAutomationPage_Project 
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  fragment ProjectPageSettingsTab_Project on Project {\n    id\n    role\n  }\n"): (typeof documents)["\n  fragment ProjectPageSettingsTab_Project on Project {\n    id\n    role\n  }\n"];
-/**
- * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function graphql(source: "\n    subscription OnWorkspaceProjectsUpdate($slug: String!) {\n      workspaceProjectsUpdated(workspaceId: null, workspaceSlug: $slug) {\n        projectId\n        workspaceId\n        type\n        project {\n          ...ProjectDashboardItem\n        }\n      }\n    }\n  "): (typeof documents)["\n    subscription OnWorkspaceProjectsUpdate($slug: String!) {\n      workspaceProjectsUpdated(workspaceId: null, workspaceSlug: $slug) {\n        projectId\n        workspaceId\n        type\n        project {\n          ...ProjectDashboardItem\n        }\n      }\n    }\n  "];
 
 export function graphql(source: string) {
   return (documents as any)[source] ?? {};
