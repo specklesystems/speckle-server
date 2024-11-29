@@ -227,14 +227,15 @@ export const deleteWorkspaceDomainMutation = gql`
   }
 `
 
-export const getWorkspaceAvailableRegionsQuery = gql`
-  query GetWorkspaceAvailableRegions($workspaceId: String!) {
-    workspace(id: $workspaceId) {
-      id
-      availableRegions {
-        id
-        key
-        name
+export const getAvailableRegionsQuery = gql`
+  query GetAvailableRegions {
+    serverInfo {
+      multiRegion {
+        regions {
+          id
+          key
+          name
+        }
       }
     }
   }

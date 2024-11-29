@@ -26,7 +26,8 @@ import {
   getWorkspacePlanFactory,
   getWorkspaceSubscriptionFactory,
   saveCheckoutSessionFactory,
-  upsertPaidWorkspacePlanFactory
+  upsertPaidWorkspacePlanFactory,
+  upsertWorkspaceSubscriptionFactory
 } from '@/modules/gatekeeper/repositories/billing'
 import { canWorkspaceAccessFeatureFactory } from '@/modules/gatekeeper/services/featureAuthorization'
 import { upgradeWorkspaceSubscriptionFactory } from '@/modules/gatekeeper/services/subscriptions'
@@ -131,7 +132,7 @@ export = FF_GATEKEEPER_MODULE_ENABLED
           return session
         },
         upgradePlan: async (parent, args, ctx) => {
-          const { workspaceId, targetPlan } = args.input
+          const { workspaceId, workspacePlan, billingInterval } = args.input
           await authorizeResolver(
             ctx.userId,
             workspaceId,
@@ -139,16 +140,22 @@ export = FF_GATEKEEPER_MODULE_ENABLED
             ctx.resourceAccessRules
           )
           const stripe = getStripeClient()
+
+          const countWorkspaceRole = countWorkspaceRoleWithOptionalProjectRoleFactory({
+            db
+          })
           await upgradeWorkspaceSubscriptionFactory({
             getWorkspacePlan: getWorkspacePlanFactory({ db }),
             reconcileSubscriptionData: reconcileWorkspaceSubscriptionFactory({
               stripe
             }),
+            countWorkspaceRole,
             getWorkspaceSubscription: getWorkspaceSubscriptionFactory({ db }),
             getWorkspacePlanPrice,
             getWorkspacePlanProductId,
-            upsertWorkspacePlan: upsertPaidWorkspacePlanFactory({ db })
-          })({ workspaceId, targetPlan })
+            upsertWorkspacePlan: upsertPaidWorkspacePlanFactory({ db }),
+            updateWorkspaceSubscription: upsertWorkspaceSubscriptionFactory({ db })
+          })({ workspaceId, targetPlan: workspacePlan, billingInterval })
           return true
         }
       }

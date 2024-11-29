@@ -1,9 +1,5 @@
 extend type Workspace {
   """
-  Regions available to the workspace for project data residency
-  """
-  availableRegions: [ServerRegionItem!]! @hasWorkspaceRole(role: MEMBER)
-  """
   The default region where project data will be stored, if set. If undefined, defaults to main/default
   region.
   """

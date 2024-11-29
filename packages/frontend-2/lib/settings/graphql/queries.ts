@@ -39,6 +39,9 @@ export const settingsWorkspaceRegionsQuery = graphql(`
       id
       ...SettingsWorkspacesRegions_Workspace
     }
+    serverInfo {
+      ...SettingsWorkspacesRegions_ServerInfo
+    }
   }
 `)
 
