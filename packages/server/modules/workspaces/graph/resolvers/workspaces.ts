@@ -71,7 +71,9 @@ import {
   getWorkspaceWithDomainsFactory,
   getWorkspaceRoleForUserFactory,
   getWorkspaceBySlugFactory,
-  countDomainsByWorkspaceIdFactory
+  countDomainsByWorkspaceIdFactory,
+  getWorkspaceCreationStateFactory,
+  upsertWorkspaceCreationStateFactory
 } from '@/modules/workspaces/repositories/workspaces'
 import {
   buildWorkspaceInviteEmailContentsFactory,
@@ -152,11 +154,7 @@ import {
   WorkspaceSubscriptions
 } from '@/modules/shared/utils/subscriptions'
 import { updateStreamRoleAndNotifyFactory } from '@/modules/core/services/streams/management'
-import {
-  getUserByEmailFactory,
-  getUserFactory,
-  getUsersFactory
-} from '@/modules/core/repositories/users'
+import { getUserFactory, getUsersFactory } from '@/modules/core/repositories/users'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { commandFactory } from '@/modules/shared/command'
 import { withTransaction } from '@/modules/shared/helpers/dbHelper'
@@ -312,7 +310,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
         },
         workspaceSsoByEmail: async (_parent, args) => {
           const workspaces = await listWorkspaceSsoMembershipsByUserEmailFactory({
-            getUserByEmail: getUserByEmailFactory({ db }),
+            findEmail: findEmailFactory({ db }),
             listWorkspaceSsoMemberships: listWorkspaceSsoMembershipsFactory({ db })
           })({
             userEmail: args.email
@@ -660,6 +658,18 @@ export = FF_WORKSPACES_MODULE_ENABLED
           )
           return true
         },
+        updateCreationState: async (_parent, args, context) => {
+          await authorizeResolver(
+            context.userId!,
+            args.input.workspaceId,
+            Roles.Workspace.Admin,
+            context.resourceAccessRules
+          )
+          await upsertWorkspaceCreationStateFactory({ db })({
+            workspaceCreationState: args.input
+          })
+          return true
+        },
         invites: () => ({}),
         projects: () => ({})
       },
@@ -912,6 +922,9 @@ export = FF_WORKSPACES_MODULE_ENABLED
         }
       },
       Workspace: {
+        creationState: async (parent) => {
+          return getWorkspaceCreationStateFactory({ db })({ workspaceId: parent.id })
+        },
         role: async (parent, _args, ctx) => {
           const workspace = await ctx.loaders.workspaces!.getWorkspace.load(parent.id)
           return workspace?.role || null

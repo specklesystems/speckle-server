@@ -39,6 +39,9 @@ export const settingsWorkspaceRegionsQuery = graphql(`
       id
       ...SettingsWorkspacesRegions_Workspace
     }
+    serverInfo {
+      ...SettingsWorkspacesRegions_ServerInfo
+    }
   }
 `)
 
@@ -101,6 +104,7 @@ export const settingsWorkspacesProjectsQuery = graphql(`
   ) {
     workspace(id: $workspaceId) {
       id
+      slug
       projects(limit: $limit, cursor: $cursor, filter: $filter) {
         cursor
         ...SettingsWorkspacesProjects_ProjectCollection

@@ -1,7 +1,7 @@
 const { performance } = require('perf_hooks')
 const { fetch } = require('undici')
 const Parser = require('./parser')
-const ServerAPI = require('./api.js')
+const ServerAPI = require('../src/api.js')
 const Observability = require('@speckle/shared/dist/commonjs/observability/index.js')
 const { logger: parentLogger } = require('../observability/logging')
 
