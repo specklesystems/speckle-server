@@ -104,6 +104,7 @@ export const settingsWorkspacesProjectsQuery = graphql(`
   ) {
     workspace(id: $workspaceId) {
       id
+      slug
       projects(limit: $limit, cursor: $cursor, filter: $filter) {
         cursor
         ...SettingsWorkspacesProjects_ProjectCollection
