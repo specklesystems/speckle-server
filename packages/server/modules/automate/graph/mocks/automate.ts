@@ -66,16 +66,14 @@ const mocks: SpeckleModuleMocksConfig = FF_AUTOMATE_MODULE_ENABLED
           version: store.get('Version') as any
         },
         Query: {
-          automateFunctions: (_parent, args) => {
+          automateFunctions: () => {
             const forceZero = false
             const count = forceZero ? 0 : faker.number.int({ min: 0, max: 20 })
-
-            const isFeatured = args.filter?.featuredFunctionsOnly
 
             return {
               cursor: null,
               totalCount: count,
-              items: times(count, () => store.get('AutomateFunction', { isFeatured }))
+              items: times(count, () => store.get('AutomateFunction'))
             } as any
           },
           automateFunction: (_parent, args) => {

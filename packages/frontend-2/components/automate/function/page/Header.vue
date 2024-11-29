@@ -11,23 +11,10 @@
     <div class="flex items-center gap-4">
       <AutomateFunctionLogo :logo="fn.logo" />
       <h1 class="text-heading-lg">{{ fn.name }}</h1>
-      <FormButton v-if="isOwner" size="sm" text class="mt-1" @click="$emit('edit')">
-        Edit
-      </FormButton>
     </div>
-    <div
-      v-tippy="
-        hasReleases ? undefined : 'Your function needs to have at least one release'
-      "
-      class="flex gap-2 shrink-0"
-    >
-      <FormButton
-        class="shrink-0"
-        full-width
-        :disabled="!hasReleases"
-        @click="$emit('createAutomation')"
-      >
-        Use in automation
+    <div class="flex items-center align-center gap-2">
+      <FormButton v-if="isOwner" color="outline" @click="$emit('edit')">
+        Edit
       </FormButton>
     </div>
   </div>
@@ -39,11 +26,6 @@ import {
   automationFunctionRoute,
   automationFunctionsRoute
 } from '~/lib/common/helpers/route'
-
-defineEmits<{
-  createAutomation: []
-  edit: []
-}>()
 
 graphql(`
   fragment AutomateFunctionPageHeader_Function on AutomateFunction {
@@ -59,13 +41,17 @@ graphql(`
     releases(limit: 1) {
       totalCount
     }
+    workspaceIds
   }
 `)
 
-const props = defineProps<{
+defineProps<{
   fn: AutomateFunctionPageHeader_FunctionFragment
   isOwner: boolean
 }>()
 
-const hasReleases = computed(() => props.fn.releases.totalCount > 0)
+defineEmits<{
+  createAutomation: []
+  edit: []
+}>()
 </script>

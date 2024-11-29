@@ -235,6 +235,7 @@ export const projectAutomationsTabQuery = graphql(`
   query ProjectAutomationsTab($projectId: String!) {
     project(id: $projectId) {
       id
+      role
       models(limit: 1) {
         items {
           id
@@ -247,6 +248,10 @@ export const projectAutomationsTabQuery = graphql(`
           ...ProjectPageAutomationsRow_Automation
         }
         cursor
+      }
+      workspace {
+        id
+        slug
       }
       ...FormSelectProjects_Project
     }

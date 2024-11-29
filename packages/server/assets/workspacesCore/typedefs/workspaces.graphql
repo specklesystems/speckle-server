@@ -276,6 +276,11 @@ type Workspace {
     cursor: String
     filter: WorkspaceProjectsFilter
   ): ProjectCollection!
+  automateFunctions(
+    limit: Int! = 25
+    cursor: String
+    filter: AutomateFunctionsFilter
+  ): AutomateFunctionCollection!
   """
   Information about the workspace's SSO configuration and the current user's SSO session, if present
   """

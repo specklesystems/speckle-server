@@ -13,33 +13,46 @@
         v-bind="bind"
         v-on="on"
       />
-      <div v-tippy="creationDisabledReason" class="shrink-0">
+      <FormButton color="outline" class="shrink-0" :to="exploreFunctionsRoute">
+        {{ exploreFunctionsMessage }}
+      </FormButton>
+      <div v-tippy="creationDisabledMessage" class="shrink-0">
         <FormButton
           class="shrink-0"
-          :disabled="!!creationDisabledReason"
+          :disabled="!!creationDisabledMessage"
           @click="$emit('new-automation')"
         >
           New automation
         </FormButton>
       </div>
-      <FormButton color="outline" class="shrink-0" :to="automationFunctionsRoute">
-        Explore functions
-      </FormButton>
     </div>
   </div>
 </template>
 <script setup lang="ts">
 import { useDebouncedTextInput } from '@speckle/ui-components'
-import { automationFunctionsRoute } from '~/lib/common/helpers/route'
+import {
+  automationFunctionsRoute,
+  workspaceFunctionsRoute
+} from '~/lib/common/helpers/route'
 
 defineEmits<{
   'new-automation': []
 }>()
 
-defineProps<{
+const props = defineProps<{
+  workspaceSlug?: string
   showEmptyState?: boolean
-  creationDisabledReason?: string
+  creationDisabledMessage?: string
 }>()
+
+const exploreFunctionsMessage = computed(() =>
+  props.workspaceSlug ? 'View functions' : 'Explore functions'
+)
+const exploreFunctionsRoute = computed(() =>
+  props.workspaceSlug
+    ? workspaceFunctionsRoute(props.workspaceSlug)
+    : automationFunctionsRoute
+)
 
 const search = defineModel<string>('search')
 const { on, bind } = useDebouncedTextInput({ model: search })

@@ -30,7 +30,7 @@ export default (app: Application) => {
         getStream: getStreamFactory({ db })
       }),
       validateStreamRoleBuilderFactory({ getRoles: getRolesFactory({ db }) })({
-        requiredRole: Roles.Stream.Owner
+        requiredRole: Roles.Stream.Reviewer
       }),
       validateResourceAccess
     ]),
