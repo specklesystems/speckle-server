@@ -12,11 +12,18 @@
         />
       </div>
     </div>
-    <component
-      :is="isDesktop ? DesktopTable : MobileTable"
+
+    <SettingsWorkspacesBillingPricingTableDesktop
+      v-if="isDesktop"
       :is-yearly-plan="isYearlyPlan"
       v-bind="$props"
-      @on-cta-click="(v) => $emit('on-cta-click', v)"
+      @on-cta-click="$emit('on-cta-click', $event)"
+    />
+    <SettingsWorkspacesBillingPricingTableMobile
+      v-else
+      :is-yearly-plan="isYearlyPlan"
+      v-bind="$props"
+      @on-cta-click="$emit('on-cta-click', $event)"
     />
   </div>
 </template>
@@ -24,10 +31,11 @@
 <script setup lang="ts">
 import { useBreakpoints } from '@vueuse/core'
 import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
+// eslint-disable-next-line @typescript-eslint/consistent-type-imports
 import {
-  type WorkspacePlan,
-  type WorkspacePlans,
-  BillingInterval
+  BillingInterval,
+  WorkspacePlans,
+  type WorkspacePlan
 } from '~/lib/common/generated/gql/graphql'
 import { graphql } from '~/lib/common/generated/gql'
 import type { MaybeNullOrUndefined } from '@speckle/shared'
@@ -59,12 +67,6 @@ const props = defineProps<{
 
 const breakpoints = useBreakpoints(TailwindBreakpoints)
 
-const DesktopTable = defineAsyncComponent(
-  () => import('@/components/settings/workspaces/billing/PricingTable/Desktop.vue')
-)
-const MobileTable = defineAsyncComponent(
-  () => import('@/components/settings/workspaces/billing/PricingTable/Mobile.vue')
-)
 const isDesktop = breakpoints.greaterOrEqual('lg')
 const isYearlyPlan = ref(false)
 

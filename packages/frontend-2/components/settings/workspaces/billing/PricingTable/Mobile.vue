@@ -8,7 +8,7 @@
       <SettingsWorkspacesBillingPricingTableHeader
         :plan="plan"
         v-bind="$props"
-        @on-cta-click="(v) => $emit('on-cta-click', v)"
+        @on-cta-click="$emit('on-cta-click', $event)"
       />
       <ul class="flex flex-col gap-y-2 mt-6">
         <li
@@ -51,9 +51,9 @@ defineEmits<{
 
 defineProps<{
   isYearlyPlan: boolean
-  currentPlan: MaybeNullOrUndefined<WorkspacePlan>
-  workspaceId: string
-  isAdmin: boolean
+  currentPlan?: MaybeNullOrUndefined<WorkspacePlan>
+  workspaceId?: string
+  isAdmin?: boolean
   activeBillingInterval?: BillingInterval
 }>()
 

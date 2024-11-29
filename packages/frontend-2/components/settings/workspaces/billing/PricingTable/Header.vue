@@ -85,12 +85,10 @@ const hasTrialPlan = computed(
   () => props.currentPlan?.status === WorkspacePlanStatuses.Trial || !props.currentPlan
 )
 const buttonColor = computed(() => {
-  // If on trial plan highlight starter plan
   if (hasTrialPlan.value) {
     return props.plan.name === WorkspacePlans.Starter ? 'primary' : 'outline'
   }
-  // Else highlight current plan
-  return props.currentPlan?.name === props.plan.name ? 'primary' : 'outline'
+  return 'outline'
 })
 const isMatchingInterval = computed(
   () =>

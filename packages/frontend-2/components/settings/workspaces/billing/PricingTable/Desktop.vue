@@ -19,7 +19,7 @@
           <SettingsWorkspacesBillingPricingTableHeader
             :plan="plan"
             v-bind="$props"
-            @on-cta-click="(v) => $emit('on-cta-click', v)"
+            @on-cta-click="$emit('on-cta-click', $event)"
           />
         </th>
       </tr>
