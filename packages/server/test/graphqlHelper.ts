@@ -414,12 +414,7 @@ export const testApolloSubscriptionServer = async () => {
           const firstErr = processingErrors[0]
           processingErrors = []
 
-          throw new TestApolloSubscriptionError(
-            buildLogMsg('waitForMessage() failed'),
-            {
-              cause: ensureError(firstErr)
-            }
-          )
+          throw firstErr
         }
 
         // Then lets check previous messages
@@ -443,6 +438,7 @@ export const testApolloSubscriptionServer = async () => {
         const onError = (e: unknown) => {
           retPromise.reject(e)
           unlisten()
+          processingErrors = []
         }
 
         eventBus.on('message', onMessage)

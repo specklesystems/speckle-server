@@ -267,3 +267,35 @@ export const setDefaultRegionMutation = gql`
     }
   }
 `
+
+export const onWorkspaceProjectsUpdatedSubscription = gql`
+  subscription OnWorkspaceProjectsUpdated(
+    $workspaceId: String
+    $workspaceSlug: String
+  ) {
+    workspaceProjectsUpdated(workspaceId: $workspaceId, workspaceSlug: $workspaceSlug) {
+      type
+      projectId
+      workspaceId
+      project {
+        id
+        name
+      }
+    }
+  }
+
+  ${basicWorkspaceFragment}
+`
+
+export const onWorkspaceUpdatedSubscription = gql`
+  subscription OnWorkspaceUpdated($workspaceId: String!) {
+    workspaceUpdated(workspaceId: $workspaceId) {
+      id
+      workspace {
+        ...BasicWorkspace
+      }
+    }
+  }
+
+  ${basicWorkspaceFragment}
+`
