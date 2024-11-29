@@ -53,6 +53,8 @@ featureFlags:
   billingIntegrationEnabled: false
   ## @param featureFlags.workspacesMultiRegionEnabled Toggles whether multi-region is available within workspaces. workspacesModuleEnabled must also be enabled.
   workspacesMultiRegionEnabled: false
+  ## @param featureFlags.fileImportIFCDotNetEnabled Toggles whether the experimental .Net IFC importer is used for importing IFC files.
+  fileImportIFCDotNetEnabled: false
 
 analytics:
   ## @param analytics.enabled Enable or disable analytics
