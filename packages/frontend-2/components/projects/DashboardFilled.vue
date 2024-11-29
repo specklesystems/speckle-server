@@ -19,7 +19,7 @@ const props = defineProps<{
 }>()
 
 graphql(`
-  fragment ProjectsDashboardFilled on ProjectCollection {
+  fragment ProjectsDashboardFilled on UserProjectCollection {
     items {
       ...ProjectDashboardItem
     }
