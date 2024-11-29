@@ -21,7 +21,14 @@
         :disabled="!buttonEnabled"
         class="mt-3"
         full-width
-        @click="onUpgradePlanClick(plan.name)"
+        @click="
+          emit('on-cta-click', {
+            plan: plan.name,
+            billingInterval: isYearlyPlan
+              ? BillingInterval.Yearly
+              : BillingInterval.Monthly
+          })
+        "
       >
         {{ buttonText }}
       </FormButton>
@@ -30,18 +37,26 @@
 </template>
 
 <script setup lang="ts">
-import { type PricingPlan, isPaidPlan } from '@/lib/billing/helpers/types'
+import { type PricingPlan } from '@/lib/billing/helpers/types'
 import { Roles } from '@speckle/shared'
 import {
   type WorkspacePlan,
-  type PaidWorkspacePlans,
   WorkspacePlanStatuses,
   WorkspacePlans,
   BillingInterval
 } from '~/lib/common/generated/gql/graphql'
-import { useBillingActions } from '~/lib/billing/composables/actions'
 import type { MaybeNullOrUndefined } from '@speckle/shared'
 import { startCase } from 'lodash'
+
+const emit = defineEmits<{
+  (
+    e: 'on-cta-click',
+    v: {
+      plan: WorkspacePlans
+      billingInterval: BillingInterval
+    }
+  ): void
+}>()
 
 const props = defineProps<{
   plan: PricingPlan
@@ -52,8 +67,6 @@ const props = defineProps<{
   isAdmin?: boolean
   activeBillingInterval?: BillingInterval
 }>()
-
-const { redirectToCheckout, upgradePlan } = useBillingActions()
 
 const canUpgradeToPlan = computed(() => {
   if (!props.currentPlan) return false
@@ -128,21 +141,4 @@ const buttonText = computed(() => {
   // Upgrade case
   return canUpgradeToPlan.value ? `Upgrade to ${startCase(props.plan.name)}` : ''
 })
-
-const onUpgradePlanClick = (plan: WorkspacePlans) => {
-  if (!isPaidPlan(plan) || !props.workspaceId) return
-  if (hasTrialPlan.value) {
-    redirectToCheckout({
-      plan: plan as unknown as PaidWorkspacePlans,
-      cycle: props.isYearlyPlan ? BillingInterval.Yearly : BillingInterval.Monthly,
-      workspaceId: props.workspaceId
-    })
-  } else {
-    upgradePlan({
-      plan: plan as unknown as PaidWorkspacePlans,
-      cycle: props.isYearlyPlan ? BillingInterval.Yearly : BillingInterval.Monthly,
-      workspaceId: props.workspaceId
-    })
-  }
-}
 </script>

@@ -16,7 +16,11 @@
           ]"
           scope="col"
         >
-          <SettingsWorkspacesBillingPricingTableHeader :plan="plan" v-bind="$props" />
+          <SettingsWorkspacesBillingPricingTableHeader
+            :plan="plan"
+            v-bind="$props"
+            @on-cta-click="(v) => $emit('on-cta-click', v)"
+          />
         </th>
       </tr>
     </thead>
@@ -62,6 +66,16 @@ import { WorkspacePlans } from '~/lib/common/generated/gql/graphql'
 import { pricingPlansConfig } from '~/lib/billing/helpers/constants'
 import type { PlanFeaturesList } from '~/lib/billing/helpers/types'
 import type { MaybeNullOrUndefined } from '@speckle/shared'
+
+defineEmits<{
+  (
+    e: 'on-cta-click',
+    v: {
+      plan: WorkspacePlans
+      billingInterval: BillingInterval
+    }
+  ): void
+}>()
 
 defineProps<{
   isYearlyPlan: boolean
