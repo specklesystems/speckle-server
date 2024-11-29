@@ -13,6 +13,7 @@ let metricConnectionPoolErrors: prometheusClient.Counter<string>
 let metricConnectionInUseDuration: prometheusClient.Histogram<string>
 let metricConnectionPoolReapingDuration: prometheusClient.Histogram<string>
 let alreadyInitialized = false
+const initializedRegions: string[] = []
 
 export const initKnexPrometheusMetrics = async (params: {
   getAllDbClients: () => Promise<Record<string, Knex>>
@@ -165,6 +166,8 @@ export const updateKnexPrometheusMetrics = async (params: {
   for (const [region, db] of Object.entries(
     await params.getAllDbClients()
   ) as Entries<Knex>) {
+    if (initializedRegions.includes(region)) continue
+
     const queryStartTime: Record<string, number> = {}
     const connectionAcquisitionStartTime: Record<string, number> = {}
     const connectionInUseStartTime: Record<string, number> = {}
@@ -328,5 +331,7 @@ export const updateKnexPrometheusMetrics = async (params: {
     // pool is destroyed (after poolDestroySuccess all event handlers are also cleared)
     // pool.on('poolDestroyRequest', (eventId) => {})
     // pool.on('poolDestroySuccess', (eventId) => {})
+
+    initializedRegions.push(region)
   }
 }
