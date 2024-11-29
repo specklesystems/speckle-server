@@ -150,6 +150,13 @@ type WorkspaceMutations {
   deleteSsoProvider(workspaceId: String!): Boolean!
   invites: WorkspaceInviteMutations!
   projects: WorkspaceProjectMutations! @hasServerRole(role: SERVER_USER)
+  updateCreationState(input: WorkspaceCreationStateInput!): Boolean!
+}
+
+input WorkspaceCreationStateInput {
+  workspaceId: ID!
+  completed: Boolean!
+  state: JSONObject!
 }
 
 input WorkspaceProjectCreateInput {
@@ -286,6 +293,15 @@ type Workspace {
   Enable/Disable discovery of the workspace
   """
   discoverabilityEnabled: Boolean!
+  """
+  Info about the workspace creation state
+  """
+  creationState: WorkspaceCreationState
+}
+
+type WorkspaceCreationState {
+  completed: Boolean!
+  state: JSONObject!
 }
 
 type WorkspaceSso {

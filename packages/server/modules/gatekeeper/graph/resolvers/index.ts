@@ -11,18 +11,26 @@ import { WorkspaceNotFoundError } from '@/modules/workspaces/errors/workspace'
 import { db } from '@/db/knex'
 import {
   createCheckoutSessionFactory,
-  createCustomerPortalUrlFactory
+  createCustomerPortalUrlFactory,
+  reconcileWorkspaceSubscriptionFactory
 } from '@/modules/gatekeeper/clients/stripe'
-import { getWorkspacePlanPrice, getStripeClient } from '@/modules/gatekeeper/stripe'
+import {
+  getWorkspacePlanPrice,
+  getStripeClient,
+  getWorkspacePlanProductId
+} from '@/modules/gatekeeper/stripe'
 import { startCheckoutSessionFactory } from '@/modules/gatekeeper/services/checkout'
 import {
   deleteCheckoutSessionFactory,
   getWorkspaceCheckoutSessionFactory,
   getWorkspacePlanFactory,
   getWorkspaceSubscriptionFactory,
-  saveCheckoutSessionFactory
+  saveCheckoutSessionFactory,
+  upsertPaidWorkspacePlanFactory,
+  upsertWorkspaceSubscriptionFactory
 } from '@/modules/gatekeeper/repositories/billing'
 import { canWorkspaceAccessFeatureFactory } from '@/modules/gatekeeper/services/featureAuthorization'
+import { upgradeWorkspaceSubscriptionFactory } from '@/modules/gatekeeper/services/subscriptions'
 
 const { FF_GATEKEEPER_MODULE_ENABLED } = getFeatureFlags()
 
@@ -122,6 +130,33 @@ export = FF_GATEKEEPER_MODULE_ENABLED
           })
 
           return session
+        },
+        upgradePlan: async (parent, args, ctx) => {
+          const { workspaceId, workspacePlan, billingInterval } = args.input
+          await authorizeResolver(
+            ctx.userId,
+            workspaceId,
+            Roles.Workspace.Admin,
+            ctx.resourceAccessRules
+          )
+          const stripe = getStripeClient()
+
+          const countWorkspaceRole = countWorkspaceRoleWithOptionalProjectRoleFactory({
+            db
+          })
+          await upgradeWorkspaceSubscriptionFactory({
+            getWorkspacePlan: getWorkspacePlanFactory({ db }),
+            reconcileSubscriptionData: reconcileWorkspaceSubscriptionFactory({
+              stripe
+            }),
+            countWorkspaceRole,
+            getWorkspaceSubscription: getWorkspaceSubscriptionFactory({ db }),
+            getWorkspacePlanPrice,
+            getWorkspacePlanProductId,
+            upsertWorkspacePlan: upsertPaidWorkspacePlanFactory({ db }),
+            updateWorkspaceSubscription: upsertWorkspaceSubscriptionFactory({ db })
+          })({ workspaceId, targetPlan: workspacePlan, billingInterval })
+          return true
         }
       }
     } as Resolvers)

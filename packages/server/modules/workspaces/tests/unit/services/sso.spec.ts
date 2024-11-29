@@ -1,7 +1,6 @@
 /* eslint-disable camelcase */
 
 import { UserEmail } from '@/modules/core/domain/userEmails/types'
-import { UserWithOptionalRole } from '@/modules/core/repositories/users'
 import { getDefaultSsoSessionExpirationDate } from '@/modules/workspaces/domain/sso/logic'
 import {
   OidcProvider,
@@ -356,7 +355,7 @@ describe('Workspace SSO services', () => {
     it('returns an empty array if the user does not exist', async () => {
       const listWorkspaceSsoMemberships = listWorkspaceSsoMembershipsByUserEmailFactory(
         {
-          getUserByEmail: async () => null,
+          findEmail: async () => undefined,
           listWorkspaceSsoMemberships: async () => {
             assert.fail()
           }
@@ -369,13 +368,34 @@ describe('Workspace SSO services', () => {
 
       expect(workspaces.length).to.equal(0)
     })
+    it('returns an empty array if the email exists but is not verified', async () => {
+      const listWorkspaceSsoMemberships = listWorkspaceSsoMembershipsByUserEmailFactory(
+        {
+          findEmail: async () =>
+            ({
+              userId: cryptoRandomString({ length: 9 }),
+              verified: false
+            } as UserEmail),
+          listWorkspaceSsoMemberships: async () => {
+            assert.fail()
+          }
+        }
+      )
+
+      const workspaces = await listWorkspaceSsoMemberships({
+        userEmail: 'anything@example.org'
+      })
+
+      expect(workspaces.length).to.equal(0)
+    })
     it('returns sanitized results if any matches are found', async () => {
       const listWorkspaceSsoMemberships = listWorkspaceSsoMembershipsByUserEmailFactory(
         {
-          getUserByEmail: async () =>
+          findEmail: async () =>
             ({
-              id: cryptoRandomString({ length: 9 })
-            } as UserWithOptionalRole),
+              userId: cryptoRandomString({ length: 9 }),
+              verified: true
+            } as UserEmail),
           listWorkspaceSsoMemberships: async () => [
             {
               id: '',

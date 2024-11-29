@@ -98,13 +98,20 @@ graphql(`
       id
       ...SettingsWorkspacesRegionsSelect_ServerRegionItem
     }
-    availableRegions {
-      id
-      ...SettingsWorkspacesRegionsSelect_ServerRegionItem
-    }
     hasAccessToMultiRegion: hasAccessToFeature(
       featureName: workspaceDataRegionSpecificity
     )
+  }
+`)
+
+graphql(`
+  fragment SettingsWorkspacesRegions_ServerInfo on ServerInfo {
+    multiRegion {
+      regions {
+        id
+        ...SettingsWorkspacesRegionsSelect_ServerRegionItem
+      }
+    }
   }
 `)
 
@@ -130,7 +137,9 @@ const { result } = useQuery(
 
 const defaultRegion = ref<SettingsWorkspacesRegionsSelect_ServerRegionItemFragment>()
 const workspace = computed(() => result.value?.workspace)
-const availableRegions = computed(() => workspace.value?.availableRegions || [])
+const availableRegions = computed(
+  () => result.value?.serverInfo.multiRegion.regions || []
+)
 const isWorkspaceAdmin = computed(() => workspace.value?.role === Roles.Workspace.Admin)
 
 const saveDefaultRegion = async () => {
