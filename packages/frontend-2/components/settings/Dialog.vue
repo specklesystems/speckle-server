@@ -77,8 +77,14 @@
                       workspaceMenuItem.disabled
                     )
                   "
-                  :tooltip-text="workspaceMenuItem.tooltipText"
-                  :disabled="workspaceMenuItem.disabled"
+                  :tooltip-text="
+                    needsSsoSession(workspaceItem, itemKey as string)
+                      ? 'Log in with your SSO provider to access this page'
+                      : workspaceMenuItem.tooltipText
+                  "
+                  :disabled="
+                    workspaceMenuItem.disabled || needsSsoSession(workspaceItem, itemKey as string)
+                  "
                   extra-padding
                   @click="
                     () =>
@@ -125,7 +131,7 @@
 
 <script setup lang="ts">
 import { Roles } from '@speckle/shared'
-import type { SettingsMenuItem } from '~/lib/settings/helpers/types'
+import { type SettingsMenuItem, SettingMenuKeys } from '~/lib/settings/helpers/types'
 import { useIsWorkspacesEnabled } from '~/composables/globals'
 import { useQuery } from '@vue/apollo-composable'
 import { settingsSidebarQuery } from '~/lib/settings/graphql/queries'
@@ -143,6 +149,7 @@ import { graphql } from '~~/lib/common/generated/gql'
 import type { WorkspaceRoles } from '@speckle/shared'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { workspacesRoute } from '~/lib/common/helpers/route'
+import type { SettingsMenu_WorkspaceFragment } from '~/lib/common/generated/gql/graphql'
 import { WorkspacePlanStatuses } from '~/lib/common/generated/gql/graphql'
 
 graphql(`
@@ -181,9 +188,7 @@ const isWorkspacesEnabled = useIsWorkspacesEnabled()
 const { result: workspaceResult } = useQuery(settingsSidebarQuery, null, {
   enabled: isWorkspacesEnabled.value
 })
-const { userMenuItems, serverMenuItems, workspaceMenuItems } = useSettingsMenu(
-  computed(() => workspaceResult.value)
-)
+const { userMenuItems, serverMenuItems, workspaceMenuItems } = useSettingsMenu()
 
 const isMobile = breakpoints.smaller('md')
 const showWorkspaceCreateDialog = ref(false)
@@ -231,6 +236,11 @@ const workspaceMenuItemClasses = (
   targetWorkspaceId.value === workspaceId &&
   !disabled
 
+const needsSsoSession = (workspace: SettingsMenu_WorkspaceFragment, key: string) => {
+  return workspace.sso?.provider?.id && key === SettingMenuKeys.Workspace.General
+    ? !workspace.sso?.session?.validUntil
+    : false
+}
 // not ideal, but it works temporarily while this is still a modal
 useSetupMenuState({
   goToWorkspaceMenuItem: onWorkspaceMenuItemClick
