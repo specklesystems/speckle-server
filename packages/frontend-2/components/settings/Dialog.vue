@@ -237,7 +237,7 @@ const workspaceMenuItemClasses = (
   !disabled
 
 const needsSsoSession = (workspace: SettingsMenu_WorkspaceFragment, key: string) => {
-  return workspace.sso?.provider?.id && key === SettingMenuKeys.Workspace.General
+  return workspace.sso?.provider?.id && key !== SettingMenuKeys.Workspace.General
     ? !workspace.sso?.session?.validUntil
     : false
 }
