@@ -7,28 +7,53 @@
     </div>
 
     <template v-else>
-      <div class="flex items-center">
+      <div class="flex items-center mb-4">
         <div class="flex-1 flex-col pr-6 gap-y-1">
           <p class="text-body-xs font-medium text-foreground">Enable SSO</p>
           <p class="text-body-2xs text-foreground-2 leading-5 max-w-md">
             Allow logins through your OpenID identity provider.
           </p>
         </div>
-        <FormButton
-          :disabled="isFormVisible || !!provider"
-          @click="handleConfigureClick"
-        >
-          Configure
-        </FormButton>
+        <div v-if="workspace.hasAccessToSSO">
+          <FormButton
+            v-if="isWorkspaceAdmin"
+            :disabled="isFormVisible || !!provider"
+            @click="handleConfigureClick"
+          >
+            Configure
+          </FormButton>
+
+          <div v-else v-tippy="`You must be a workspace admin`">
+            <FormButton disabled>Configure</FormButton>
+          </div>
+        </div>
+
+        <FormButton v-else @click="goToBilling">Upgrade to Plus</FormButton>
       </div>
 
+      <CommonCard
+        v-if="!workspace.hasAccessToSSO && workspace.sso?.provider?.id"
+        class="bg-foundation"
+      >
+        SSO access requires an active Plus or Business subscription.
+      </CommonCard>
+
       <!-- Existing Provider Configuration -->
-      <div v-if="provider" class="p-4 border border-outline-3 rounded-lg mt-4">
+      <div v-if="provider" class="p-4 border border-outline-3 rounded-lg">
         <div v-if="!isEditing" class="flex items-center justify-between">
-          <div>
+          <div class="flex items-center gap-2">
             <h3 class="text-body-xs font-medium text-foreground">
               {{ provider.name }}
             </h3>
+            <CommonBadge
+              dot
+              color-classes="bg-highlight-3 text-foreground-2"
+              :dot-icon-color-classes="
+                isSsoAuthenticated ? 'text-green-500' : 'text-danger'
+              "
+            >
+              {{ isSsoAuthenticated ? 'Authenticated via SSO' : 'SSO login required' }}
+            </CommonBadge>
           </div>
           <LayoutMenu
             v-model:open="showActionsMenu"
@@ -100,7 +125,7 @@
       v-if="provider"
       v-model:open="isDeleteDialogOpen"
       :provider-name="provider?.name"
-      :workspace-slug="workspace.slug"
+      :workspace-id="workspace.id"
     />
   </section>
 </template>
@@ -113,10 +138,14 @@ import type { LayoutMenuItem } from '@speckle/ui-components'
 import { HorizontalDirection } from '~~/lib/common/composables/window'
 import { EllipsisHorizontalIcon } from '@heroicons/vue/24/solid'
 import { graphql } from '~/lib/common/generated/gql'
+import { useMenuState } from '~/lib/settings/composables/menu'
+import { SettingMenuKeys } from '~/lib/settings/helpers/types'
+import { Roles } from '@speckle/shared'
 
 graphql(`
   fragment SettingsWorkspacesSecuritySsoWrapper_Workspace on Workspace {
     id
+    role
     slug
     sso {
       provider {
@@ -126,6 +155,7 @@ graphql(`
         issuerUrl
       }
     }
+    hasAccessToSSO: hasAccessToFeature(featureName: oidcSso)
   }
 `)
 
@@ -137,10 +167,11 @@ enum ActionTypes {
   Delete = 'delete'
 }
 
+const { goToWorkspaceMenuItem } = useMenuState()
 const apiOrigin = useApiOrigin()
 const logger = useLogger()
 const menuId = useId()
-const { provider, loading } = useWorkspaceSsoStatus({
+const { provider, loading, isSsoAuthenticated } = useWorkspaceSsoStatus({
   workspaceSlug: computed(() => props.workspace.slug)
 })
 
@@ -155,8 +186,17 @@ const scopesAndClaims = ref({
   email: 'email'
 })
 
+const isWorkspaceAdmin = computed(() => props.workspace?.role === Roles.Workspace.Admin)
+
 const actionsItems = computed<LayoutMenuItem[][]>(() => [
-  [{ title: 'Remove provider...', id: ActionTypes.Delete }]
+  [
+    {
+      title: 'Remove provider...',
+      id: ActionTypes.Delete,
+      disabled: !isWorkspaceAdmin.value,
+      disabledTooltip: 'You must be a workspace admin'
+    }
+  ]
 ])
 
 const onActionChosen = (params: { item: LayoutMenuItem; event: MouseEvent }) => {
@@ -191,4 +231,8 @@ const handleCancel = () => {
 const redirectUrl = computed(() => {
   return `${apiOrigin}/api/v1/workspaces/${props.workspace.slug}/sso/oidc/callback?validate=true`
 })
+
+const goToBilling = () => {
+  goToWorkspaceMenuItem(props.workspace.id, SettingMenuKeys.Workspace.Billing)
+}
 </script>

@@ -50,7 +50,7 @@
           "description": "Toggles whether to stop writing to the closure table",
           "default": false
         },
-        "workspaceModuleEnabled": {
+        "workspacesModuleEnabled": {
           "type": "boolean",
           "description": "High level flag fully toggles the workspaces module",
           "default": false
@@ -77,7 +77,12 @@
         },
         "workspacesMultiRegionEnabled": {
           "type": "boolean",
-          "description": "Toggles whether multi-region is available within workspaces. workspaceModuleEnabled must also be enabled.",
+          "description": "Toggles whether multi-region is available within workspaces. workspacesModuleEnabled must also be enabled.",
+          "default": false
+        },
+        "fileImportIFCDotNetEnabled": {
+          "type": "boolean",
+          "description": "Toggles whether the experimental .Net IFC importer is used for importing IFC files.",
           "default": false
         }
       }

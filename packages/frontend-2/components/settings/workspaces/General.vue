@@ -3,7 +3,6 @@
     <div class="md:max-w-xl md:mx-auto pb-6 md:pb-0">
       <SettingsSectionHeader title="General" text="Manage your workspace settings" />
       <SettingsSectionHeader title="Workspace details" subheading />
-
       <div class="pt-6">
         <FormTextInput
           v-model="name"
@@ -106,10 +105,17 @@
             data. We will ask you to type in your email address and press the delete
             button.
           </CommonCard>
-          <div>
-            <FormButton color="primary" @click="showDeleteDialog = true">
-              Delete workspace
-            </FormButton>
+
+          <div class="flex">
+            <div v-tippy="deleteWorkspaceTooltip">
+              <FormButton
+                :disabled="!canDeleteWorkspace"
+                color="primary"
+                @click="showDeleteDialog = true"
+              >
+                Delete workspace
+              </FormButton>
+            </div>
           </div>
         </div>
       </template>
@@ -154,7 +160,8 @@ import { useMixpanel } from '~/lib/core/composables/mp'
 import { Roles, type StreamRoles } from '@speckle/shared'
 import { workspaceRoute } from '~/lib/common/helpers/route'
 import { useRoute } from 'vue-router'
-
+import { WorkspacePlanStatuses } from '~/lib/common/generated/gql/graphql'
+import { isPaidPlan } from '~/lib/billing/helpers/types'
 graphql(`
   fragment SettingsWorkspacesGeneral_Workspace on Workspace {
     ...SettingsWorkspacesGeneralEditAvatar_Workspace
@@ -167,6 +174,10 @@ graphql(`
     logo
     role
     defaultProjectRole
+    plan {
+      status
+      name
+    }
   }
 `)
 
@@ -178,6 +189,7 @@ const props = defineProps<{
 
 const IconEdit = resolveComponent('IconEdit')
 
+const isBillingIntegrationEnabled = useIsBillingIntegrationEnabled()
 const mixpanel = useMixpanel()
 const router = useRouter()
 const route = useRoute()
@@ -203,7 +215,25 @@ const defaultProjectRole = ref<StreamRoles>()
 const isAdmin = computed(
   () => workspaceResult.value?.workspace?.role === Roles.Workspace.Admin
 )
-
+const canDeleteWorkspace = computed(
+  () =>
+    isAdmin.value &&
+    (!isBillingIntegrationEnabled ||
+      !(
+        [
+          WorkspacePlanStatuses.Valid,
+          WorkspacePlanStatuses.PaymentFailed,
+          WorkspacePlanStatuses.CancelationScheduled
+        ].includes(
+          workspaceResult.value?.workspace?.plan?.status as WorkspacePlanStatuses
+        ) && isPaidPlan(workspaceResult.value?.workspace?.plan?.name)
+      ))
+)
+const deleteWorkspaceTooltip = computed(() => {
+  if (!canDeleteWorkspace.value) return 'You cannot delete an active workspace'
+  if (!isAdmin.value) return 'Only admins can delete workspaces'
+  return undefined
+})
 const save = handleSubmit(async () => {
   if (!workspaceResult.value?.workspace) return
 

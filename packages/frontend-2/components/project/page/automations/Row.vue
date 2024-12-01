@@ -33,7 +33,7 @@
     <div class="flex flex-col mb-6">
       <template v-if="triggerModels.length">
         <div class="flex gap-2">
-          <div class="mt-1">{{ triggerLabel }}</div>
+          <p class="mt-1 text-body-xs">{{ triggerLabel }}</p>
           <div v-for="model in triggerModels" :key="model.id" class="truncate">
             <CommonTextLink :icon-left="CubeIcon" :to="finalModelUrl(model.id)">
               {{ model.name }}
@@ -43,7 +43,7 @@
       </template>
       <div
         v-else
-        class="flex items-center gap-1.5 truncate text-foreground-2 text-body-xs"
+        class="flex items-center gap-1.5 truncate text-danger-darker text-body-xs"
       >
         <ExclamationTriangleIcon class="w-4 h-4" />
         <span>No valid models are attached to this automation</span>

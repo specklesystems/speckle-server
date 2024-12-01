@@ -221,16 +221,21 @@ const setUpUserReplication = async ({
   const port = fromUrl.port ? fromUrl.port : '5432'
   const fromDbName = fromUrl.pathname.replace('/', '')
   const rawSqeel = `SELECT * FROM aiven_extras.pg_create_subscription(
-    '${subName}',
-    'dbname=${fromDbName} host=${fromUrl.hostname} port=${port} sslmode=${sslmode} user=${fromUrl.username} password=${fromUrl.password}',
-    '${pubName}', 
-    '${subName}',
+    ?,
+    ?,
+    ?,
+    ?,
     TRUE,
     TRUE
   );`
   try {
     await to.public.raw('CREATE EXTENSION IF NOT EXISTS "aiven_extras"')
-    await to.public.raw(rawSqeel)
+    await to.public.raw(rawSqeel, [
+      subName,
+      `dbname=${fromDbName} host=${fromUrl.hostname} port=${port} sslmode=${sslmode} user=${fromUrl.username} password=${fromUrl.password}`,
+      pubName,
+      subName
+    ])
   } catch (err) {
     if (!(err instanceof Error)) throw err
     if (!err.message.includes('already exists')) throw err
@@ -261,16 +266,21 @@ const setUpProjectReplication = async ({
   const port = fromUrl.port ? fromUrl.port : '5432'
   const fromDbName = fromUrl.pathname.replace('/', '')
   const rawSqeel = `SELECT * FROM aiven_extras.pg_create_subscription(
-    '${subName}',
-    'dbname=${fromDbName} host=${fromUrl.hostname} port=${port} sslmode=${sslmode} user=${fromUrl.username} password=${fromUrl.password}',
-    '${pubName}', 
-    '${subName}',
+    ?,
+    ?,
+    ?,
+    ?,
     TRUE,
     TRUE
   );`
   try {
     await to.public.raw('CREATE EXTENSION IF NOT EXISTS "aiven_extras"')
-    await to.public.raw(rawSqeel)
+    await to.public.raw(rawSqeel, [
+      subName,
+      `dbname=${fromDbName} host=${fromUrl.hostname} port=${port} sslmode=${sslmode} user=${fromUrl.username} password=${fromUrl.password}`,
+      pubName,
+      subName
+    ])
   } catch (err) {
     if (!(err instanceof Error)) throw err
     if (!err.message.includes('already exists')) throw err

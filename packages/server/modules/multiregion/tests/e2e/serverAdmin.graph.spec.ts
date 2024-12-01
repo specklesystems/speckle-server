@@ -169,14 +169,14 @@ isEnabled
             await createRegion(createdRegionInput, { assertNoErrors: true })
           })
 
-          it("can't retrieve regions if non-admin", async () => {
+          it("can't retrieve regions if not a server user", async () => {
             const res = await apollo.execute(
               GetRegionsDocument,
               {},
               {
                 context: {
                   userId: testBasicUser.id,
-                  role: Roles.Server.User
+                  role: Roles.Server.Guest
                 }
               }
             )

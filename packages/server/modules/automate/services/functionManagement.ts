@@ -99,7 +99,8 @@ export const convertFunctionToGraphQLReturn = (
     logo: cleanFunctionLogo(fn.logo),
     tags: fn.tags,
     supportedSourceApps: fn.supportedSourceApps,
-    functionCreator: fn.functionCreator
+    functionCreator: fn.functionCreator,
+    workspaceIds: fn.workspaceIds
   }
 
   return ret
@@ -229,6 +230,8 @@ export const updateFunctionFactory =
         speckleServerAuthenticationPayload: authCode
       }
     })
+
+    console.log(JSON.stringify(apiResult, null, 2))
 
     return convertFunctionToGraphQLReturn(apiResult)
   }

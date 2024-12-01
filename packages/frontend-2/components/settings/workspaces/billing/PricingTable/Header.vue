@@ -15,16 +15,22 @@
     <p class="text-foreground-2 text-body-2xs pt-1">
       Billed {{ isYearlyPlan ? 'annually' : 'monthly' }}
     </p>
-    <div class="w-full">
+    <div v-if="workspaceId" class="w-full">
       <FormButton
-        :color="plan.name === WorkspacePlans.Starter ? 'primary' : 'outline'"
-        :disabled="(!hasTrialPlan && !canUpgradeToPlan) || !isAdmin"
+        :color="buttonColor"
+        :disabled="!buttonEnabled"
         class="mt-3"
         full-width
-        @click="onUpgradePlanClick(plan.name)"
+        @click="
+          emit('on-cta-click', {
+            plan: plan.name,
+            billingInterval: isYearlyPlan
+              ? BillingInterval.Yearly
+              : BillingInterval.Monthly
+          })
+        "
       >
-        {{ hasTrialPlan ? 'Subscribe' : 'Upgrade' }} to&nbsp;
-        <span class="capitalize">{{ plan.name }}</span>
+        {{ buttonText }}
       </FormButton>
     </div>
   </div>
@@ -39,18 +45,28 @@ import {
   WorkspacePlans,
   BillingInterval
 } from '~/lib/common/generated/gql/graphql'
-import { useBillingActions } from '~/lib/billing/composables/actions'
 import type { MaybeNullOrUndefined } from '@speckle/shared'
+import { startCase } from 'lodash'
+
+const emit = defineEmits<{
+  (
+    e: 'on-cta-click',
+    v: {
+      plan: WorkspacePlans
+      billingInterval: BillingInterval
+    }
+  ): void
+}>()
 
 const props = defineProps<{
   plan: PricingPlan
   isYearlyPlan: boolean
-  currentPlan: MaybeNullOrUndefined<WorkspacePlan>
-  workspaceId: string
-  isAdmin: boolean
+  // The following props are optional if the table is for informational purposes
+  currentPlan?: MaybeNullOrUndefined<WorkspacePlan>
+  workspaceId?: string
+  isAdmin?: boolean
+  activeBillingInterval?: BillingInterval
 }>()
-
-const { upgradePlanRedirect } = useBillingActions()
 
 const canUpgradeToPlan = computed(() => {
   if (!props.currentPlan) return false
@@ -68,12 +84,59 @@ const canUpgradeToPlan = computed(() => {
 const hasTrialPlan = computed(
   () => props.currentPlan?.status === WorkspacePlanStatuses.Trial || !props.currentPlan
 )
+const buttonColor = computed(() => {
+  if (hasTrialPlan.value) {
+    return props.plan.name === WorkspacePlans.Starter ? 'primary' : 'outline'
+  }
+  return 'outline'
+})
+const isMatchingInterval = computed(
+  () =>
+    props.activeBillingInterval ===
+    (props.isYearlyPlan ? BillingInterval.Yearly : BillingInterval.Monthly)
+)
+const buttonEnabled = computed(() => {
+  // Always enable buttons during trial
+  if (hasTrialPlan.value) return true
 
-const onUpgradePlanClick = (plan: WorkspacePlans) => {
-  upgradePlanRedirect({
-    plan,
-    cycle: props.isYearlyPlan ? BillingInterval.Yearly : BillingInterval.Monthly,
-    workspaceId: props.workspaceId
-  })
-}
+  // Disable if user is already on this plan with same billing interval
+  if (isMatchingInterval.value && props.currentPlan?.name === props.plan.name)
+    return false
+
+  // Handle billing interval changes
+  if (!isMatchingInterval.value) {
+    const isCurrentPlan = props.currentPlan?.name === props.plan.name
+    const isMonthlyToYearly =
+      props.isYearlyPlan && props.activeBillingInterval === BillingInterval.Monthly
+    // Allow yearly upgrades from monthly plans
+    if (isMonthlyToYearly) return isCurrentPlan || canUpgradeToPlan.value
+    // Never allow switching to monthly if currently on yearly billing
+    if (props.activeBillingInterval === BillingInterval.Yearly) return false
+    // Allow monthly plan changes only for upgrades
+    return canUpgradeToPlan.value
+  }
+
+  // Allow upgrades to higher tier plans
+  return canUpgradeToPlan.value
+})
+const buttonText = computed(() => {
+  // Trial plan case
+  if (hasTrialPlan.value) {
+    return `Subscribe to ${startCase(props.plan.name)}`
+  }
+  // Current plan case
+  if (isMatchingInterval.value && props.currentPlan?.name === props.plan.name) {
+    return 'Current plan'
+  }
+  // Billing interval and lower plan case
+  if (!canUpgradeToPlan.value && props.currentPlan?.name !== props.plan.name) {
+    return `Downgrade to ${props.plan.name}`
+  }
+  // Billing interval change and current plan
+  if (!isMatchingInterval.value && props.currentPlan?.name === props.plan.name) {
+    return props.isYearlyPlan ? 'Change to annual plan' : 'Change to monthly plan'
+  }
+  // Upgrade case
+  return canUpgradeToPlan.value ? `Upgrade to ${startCase(props.plan.name)}` : ''
+})
 </script>

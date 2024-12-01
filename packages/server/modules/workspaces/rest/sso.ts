@@ -103,6 +103,7 @@ import {
   SsoGenericProviderValidationError,
   SsoProviderMissingError,
   SsoProviderProfileMissingError,
+  SsoProviderProfileMissingPropertiesError,
   SsoUserClaimedError,
   SsoUserEmailUnverifiedError,
   SsoVerificationCodeMissingError
@@ -600,8 +601,11 @@ const getOidcProviderUserDataFactory =
     )
 
     const oidcProviderUserData = await client.userinfo(tokenSet)
-    if (!oidcProviderUserData || !oidcProviderUserData.email) {
+    if (!oidcProviderUserData) {
       throw new SsoProviderProfileMissingError()
+    }
+    if (!oidcProviderUserData.email) {
+      throw new SsoProviderProfileMissingPropertiesError(['email'])
     }
 
     return oidcProviderUserData as UserinfoResponse<{ email: string }>

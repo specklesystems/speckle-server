@@ -9,9 +9,9 @@
           faults, and effortlessly creating delivery artifacts.
         </div>
         <div class="flex gap-x-4">
-          <div v-if="isAutomateEnabled" v-tippy="creationDisabledReason">
+          <div v-if="isAutomateEnabled" v-tippy="creationDisabledMessage">
             <FormButton
-              :disabled="!!creationDisabledReason"
+              :disabled="!!creationDisabledMessage"
               @click="$emit('new-automation')"
             >
               New automation
@@ -38,9 +38,9 @@
     </div>
     <div v-if="isAutomateEnabled" class="flex flex-col gap-6">
       <div class="flex gap-2 flex-row justify-between items-center">
-        <h2 class="text-heading-lg text-foreground">Featured functions</h2>
-        <FormButton color="outline" class="shrink-0" :to="automationFunctionsRoute">
-          Explore all
+        <h2 class="text-heading-lg text-foreground">Public functions</h2>
+        <FormButton color="outline" class="shrink-0" :to="functionsGalleryRoute">
+          {{ functionGalleryLabel }}
         </FormButton>
       </div>
       <AutomateFunctionCardView v-if="functions.length">
@@ -58,12 +58,15 @@
 <script setup lang="ts">
 import { graphql } from '~/lib/common/generated/gql'
 import type { ProjectPageAutomationsEmptyState_QueryFragment } from '~/lib/common/generated/gql/graphql'
-import { automationFunctionsRoute } from '~/lib/common/helpers/route'
+import {
+  automationFunctionsRoute,
+  workspaceFunctionsRoute
+} from '~/lib/common/helpers/route'
 import type { CreateAutomationSelectableFunction } from '~/lib/automate/helpers/automations'
 
 graphql(`
   fragment ProjectPageAutomationsEmptyState_Query on Query {
-    automateFunctions(limit: 9, filter: { featuredFunctionsOnly: true }) {
+    automateFunctions(limit: 9) {
       items {
         ...AutomationsFunctionsCard_AutomateFunction
         ...AutomateAutomationCreateDialog_AutomateFunction
@@ -78,9 +81,19 @@ defineEmits<{
 
 const props = defineProps<{
   functions?: ProjectPageAutomationsEmptyState_QueryFragment
+  workspaceSlug?: string
   isAutomateEnabled: boolean
-  creationDisabledReason?: string
+  creationDisabledMessage?: string
 }>()
 
 const functions = computed(() => props.functions?.automateFunctions.items || [])
+
+const functionGalleryLabel = computed(() =>
+  props.workspaceSlug ? 'View workspace functions' : 'Explore all'
+)
+const functionsGalleryRoute = computed(() =>
+  props.workspaceSlug
+    ? workspaceFunctionsRoute(props.workspaceSlug)
+    : automationFunctionsRoute
+)
 </script>

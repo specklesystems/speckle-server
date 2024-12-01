@@ -84,7 +84,7 @@
                   :tag="
                     item.plan?.status === WorkspacePlanStatuses.Trial ||
                     !item.plan?.status
-                      ? 'Trial'
+                      ? 'TRIAL'
                       : undefined
                   "
                   class="!pl-1"
@@ -193,7 +193,22 @@ import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { HomeIcon } from '@heroicons/vue/24/outline'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { Roles } from '@speckle/shared'
+import { graphql } from '~/lib/common/generated/gql'
 import { WorkspacePlanStatuses } from '~/lib/common/generated/gql/graphql'
+
+graphql(`
+  fragment Sidebar_User on User {
+    id
+    automateFunctions {
+      items {
+        id
+        name
+        description
+        logo
+      }
+    }
+  }
+`)
 
 const { isLoggedIn } = useActiveUser()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()

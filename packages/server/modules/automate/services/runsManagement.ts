@@ -100,7 +100,7 @@ export const reportFunctionRunStatusFactory =
     params: Pick<
       AutomationFunctionRunRecord,
       'runId' | 'status' | 'statusMessage' | 'contextView' | 'results'
-    >
+    > & { projectId: string }
   ): Promise<boolean> => {
     const {
       getAutomationFunctionRunRecord,
@@ -108,7 +108,7 @@ export const reportFunctionRunStatusFactory =
       automationRunUpdater,
       runEventEmit
     } = deps
-    const { runId, ...statusReportData } = params
+    const { projectId, runId, ...statusReportData } = params
 
     const currentFunctionRunRecordResult = await getAutomationFunctionRunRecord(runId)
 
@@ -150,7 +150,8 @@ export const reportFunctionRunStatusFactory =
     await runEventEmit(AutomateRunsEmitter.events.StatusUpdated, {
       run: updatedRun,
       functionRun: nextFunctionRunRecord,
-      automationId
+      automationId,
+      projectId
     })
 
     return true

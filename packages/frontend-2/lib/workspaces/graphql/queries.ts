@@ -11,19 +11,11 @@ export const workspaceAccessCheckQuery = graphql(`
 export const workspacePageQuery = graphql(`
   query WorkspacePageQuery(
     $workspaceSlug: String!
-    $filter: WorkspaceProjectsFilter
-    $cursor: String
     $invitesFilter: PendingWorkspaceCollaboratorsFilter
     $token: String
   ) {
     workspaceBySlug(slug: $workspaceSlug) {
-      id
-      ...MoveProjectsDialog_Workspace
-      ...WorkspaceHeader_Workspace
-      ...WorkspaceMixpanelUpdateGroup_Workspace
-      projectListProject: projects(filter: $filter, cursor: $cursor, limit: 10) {
-        ...WorkspaceProjectList_ProjectCollection
-      }
+      ...WorkspaceProjectList_Workspace
     }
     workspaceInvite(
       workspaceId: $workspaceSlug
@@ -47,6 +39,23 @@ export const workspaceProjectsQuery = graphql(`
       id
       projects(filter: $filter, cursor: $cursor, limit: 10) {
         ...WorkspaceProjectList_ProjectCollection
+      }
+    }
+  }
+`)
+
+export const workspaceFunctionsQuery = graphql(`
+  query WorkspaceFunctionsQuery($workspaceSlug: String!) {
+    ...AutomateFunctionsPageHeader_Query
+    workspaceBySlug(slug: $workspaceSlug) {
+      id
+      name
+      automateFunctions {
+        items {
+          id
+          ...AutomationsFunctionsCard_AutomateFunction
+          ...AutomateAutomationCreateDialog_AutomateFunction
+        }
       }
     }
   }

@@ -7,10 +7,8 @@
     >
       <SettingsWorkspacesBillingPricingTableHeader
         :plan="plan"
-        :is-yearly-plan="isYearlyPlan"
-        :current-plan="currentPlan"
-        :workspace-id="workspaceId"
-        :is-admin="isAdmin"
+        v-bind="$props"
+        @on-cta-click="$emit('on-cta-click', $event)"
       />
       <ul class="flex flex-col gap-y-2 mt-6">
         <li
@@ -19,10 +17,11 @@
           class="flex items-center justify-between border-b last:border-b-0 border-outline-3 pb-2"
         >
           {{ feature.name }}
-          <CheckIcon
+          <IconCheck
             v-if="plan.features.includes(feature.name as PlanFeaturesList)"
-            class="w-3 h-3 text-foreground"
+            class="w-4 h-4 text-foreground"
           />
+          <XMarkIcon v-else class="w-4 h-4 text-foreground-2" />
         </li>
       </ul>
     </div>
@@ -30,17 +29,32 @@
 </template>
 
 <script setup lang="ts">
-import type { WorkspacePlan } from '~/lib/common/generated/gql/graphql'
+import type {
+  WorkspacePlan,
+  BillingInterval,
+  WorkspacePlans
+} from '~/lib/common/generated/gql/graphql'
 import { pricingPlansConfig } from '~/lib/billing/helpers/constants'
 import type { PlanFeaturesList } from '~/lib/billing/helpers/types'
-import { CheckIcon } from '@heroicons/vue/24/outline'
+import { XMarkIcon } from '@heroicons/vue/24/outline'
 import type { MaybeNullOrUndefined } from '@speckle/shared'
+
+defineEmits<{
+  (
+    e: 'on-cta-click',
+    v: {
+      plan: WorkspacePlans
+      billingInterval: BillingInterval
+    }
+  ): void
+}>()
 
 defineProps<{
   isYearlyPlan: boolean
-  currentPlan: MaybeNullOrUndefined<WorkspacePlan>
-  workspaceId: string
-  isAdmin: boolean
+  currentPlan?: MaybeNullOrUndefined<WorkspacePlan>
+  workspaceId?: string
+  isAdmin?: boolean
+  activeBillingInterval?: BillingInterval
 }>()
 
 const plans = ref(pricingPlansConfig.plans)

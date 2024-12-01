@@ -20,6 +20,7 @@ import {
   PaidWorkspacePlans,
   WorkspacePlanBillingIntervals
 } from '@/modules/gatekeeper/domain/workspacePricing'
+import { omit } from 'lodash'
 
 describe('checkout @gatekeeper', () => {
   describe('startCheckoutSessionFactory creates a function, that', () => {
@@ -30,6 +31,7 @@ describe('checkout @gatekeeper', () => {
           getWorkspacePlan: async () => ({
             name: 'plus',
             status: 'valid',
+            createdAt: new Date(),
             workspaceId
           }),
           getWorkspaceCheckoutSession: () => {
@@ -63,6 +65,7 @@ describe('checkout @gatekeeper', () => {
           getWorkspacePlan: async () => ({
             name: 'plus',
             status: 'paymentFailed',
+            createdAt: new Date(),
             workspaceId
           }),
           getWorkspaceCheckoutSession: () => {
@@ -96,6 +99,7 @@ describe('checkout @gatekeeper', () => {
           getWorkspacePlan: async () => ({
             name: 'starter',
             status: 'trial',
+            createdAt: new Date(),
             workspaceId
           }),
           getWorkspaceCheckoutSession: async () => ({
@@ -139,6 +143,8 @@ describe('checkout @gatekeeper', () => {
           getWorkspacePlan: async () => ({
             name: 'starter',
             status: 'trial',
+            createdAt: new Date(),
+
             workspaceId
           }),
           getWorkspaceCheckoutSession: async () => ({
@@ -265,6 +271,7 @@ describe('checkout @gatekeeper', () => {
         getWorkspacePlan: async () => ({
           workspaceId,
           name: 'starter',
+          createdAt: new Date(),
           status: 'trial'
         }),
         getWorkspaceCheckoutSession: async () => null,
@@ -315,6 +322,7 @@ describe('checkout @gatekeeper', () => {
         getWorkspacePlan: async () => ({
           workspaceId,
           name: 'starter',
+          createdAt: new Date(),
           status: 'trial'
         }),
         getWorkspaceCheckoutSession: async () => existingCheckoutSession!,
@@ -356,6 +364,7 @@ describe('checkout @gatekeeper', () => {
           getWorkspacePlan: async () => ({
             workspaceId,
             name: 'starter',
+            createdAt: new Date(),
             status: 'trial'
           }),
           getWorkspaceCheckoutSession: async () => existingCheckoutSession!,
@@ -396,6 +405,7 @@ describe('checkout @gatekeeper', () => {
           getWorkspacePlan: async () => ({
             workspaceId,
             name: 'starter',
+            createdAt: new Date(),
             status: 'trial'
           }),
           getWorkspaceCheckoutSession: async () => existingCheckoutSession!,
@@ -448,6 +458,7 @@ describe('checkout @gatekeeper', () => {
         getWorkspacePlan: async () => ({
           name: 'plus',
           workspaceId,
+          createdAt: new Date(),
           status: 'canceled'
         }),
         getWorkspaceCheckoutSession: async () => existingCheckoutSession!,
@@ -578,7 +589,7 @@ describe('checkout @gatekeeper', () => {
           })({ sessionId, subscriptionId })
 
           expect(storedCheckoutSession.paymentStatus).to.equal('paid')
-          expect(storedWorkspacePlan).to.deep.equal({
+          expect(omit(storedWorkspacePlan, 'createdAt')).to.deep.equal({
             workspaceId,
             name: storedCheckoutSession.workspacePlan,
             status: 'valid'

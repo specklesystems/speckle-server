@@ -1,6 +1,5 @@
 import cron from 'node-cron'
 import { InvalidArgumentError } from '@/modules/shared/errors'
-import { ensureError } from '@/modules/shared/helpers/errorHelper'
 import { logger } from '@/logging/logging'
 import {
   AcquireTaskLock,
@@ -23,26 +22,26 @@ export const scheduledCallbackWrapper = async (
 
   // if couldn't acquire it, stop execution
   if (!lock) {
-    boundLogger.warn(`Could not acquire task lock for ${taskName}, stopping execution.`)
+    boundLogger.warn('Could not acquire task lock for {taskName}, stopping execution.')
     return
   }
   try {
     // else continue executing the callback...
-    boundLogger.info(`Executing scheduled function ${taskName} at ${scheduledTime}`)
+    boundLogger.info(
+      { scheduledTime },
+      'Executing scheduled function {taskName} at {scheduledTime}'
+    )
     await callback(scheduledTime)
     // update lock as succeeded
     const finishDate = new Date()
     boundLogger.info(
-      `Finished scheduled function ${taskName} execution in ${
-        (finishDate.getTime() - scheduledTime.getTime()) / 1000
-      } seconds`
+      { durationSeconds: (finishDate.getTime() - scheduledTime.getTime()) / 1000 },
+      'Finished scheduled function {taskName} execution in {durationSeconds} seconds'
     )
   } catch (error) {
     boundLogger.error(
-      error,
-      `The triggered task execution ${taskName} failed at ${scheduledTime}, with error ${
-        ensureError(error, 'unknown reason').message
-      }`
+      { err: error, scheduledTime },
+      'The triggered task execution {taskName} failed at {scheduledTime}'
     )
   } finally {
     releaseTaskLock(lock)
