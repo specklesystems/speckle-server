@@ -107,7 +107,7 @@
         :is="selectedMenuItem.component"
         v-if="selectedMenuItem"
         :class="[
-          'md:bg-foundation md:px-10 md:py-12 md:bg-foundation-page w-full',
+          'md:px-10 md:py-12 md:bg-foundation-page w-full',
           !isMobile && 'simple-scrollbar overflow-y-auto flex-1'
         ]"
         :user="user"
@@ -148,6 +148,7 @@ import { WorkspacePlanStatuses } from '~/lib/common/generated/gql/graphql'
 graphql(`
   fragment SettingsDialog_Workspace on Workspace {
     ...WorkspaceAvatar_Workspace
+    ...SettingsMenu_Workspace
     id
     slug
     role
@@ -174,13 +175,15 @@ const targetMenuItem = defineModel<string | null>('targetMenuItem', { required: 
 const targetWorkspaceId = defineModel<string | null>('targetWorkspaceId')
 
 const { activeUser: user } = useActiveUser()
-const { userMenuItems, serverMenuItems, workspaceMenuItems } = useSettingsMenu()
 const breakpoints = useBreakpoints(TailwindBreakpoints)
 const mixpanel = useMixpanel()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
 const { result: workspaceResult } = useQuery(settingsSidebarQuery, null, {
   enabled: isWorkspacesEnabled.value
 })
+const { userMenuItems, serverMenuItems, workspaceMenuItems } = useSettingsMenu(
+  computed(() => workspaceResult.value)
+)
 
 const isMobile = breakpoints.smaller('md')
 const showWorkspaceCreateDialog = ref(false)

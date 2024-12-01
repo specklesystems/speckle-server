@@ -18,10 +18,34 @@ import { Roles } from '@speckle/shared'
 import { SettingMenuKeys } from '~/lib/settings/helpers/types'
 import { useIsMultiregionEnabled } from '~/lib/multiregion/composables/main'
 import type { InjectionKey } from 'vue'
+import { graphql } from '~/lib/common/generated/gql'
+import type { SettingsMenu_WorkspaceFragment } from '~/lib/common/generated/gql/graphql'
 
-export const useSettingsMenu = () => {
+graphql(`
+  fragment SettingsMenu_Workspace on Workspace {
+    id
+    sso {
+      provider {
+        id
+      }
+      session {
+        validUntil
+      }
+    }
+  }
+`)
+
+export const useSettingsMenu = (
+  workspace?: ComputedRef<SettingsMenu_WorkspaceFragment>
+) => {
   const isMultipleEmailsEnabled = useIsMultipleEmailsEnabled().value
   const isMultiRegionEnabled = useIsMultiregionEnabled()
+
+  const needsSsoAccess = computed(() => {
+    return workspace?.value && workspace.value.sso?.provider?.id
+      ? !workspace.value.sso?.session?.validUntil
+      : false
+  })
 
   const workspaceMenuItems = shallowRef<SettingsMenuItems>({
     [SettingMenuKeys.Workspace.General]: {
@@ -32,31 +56,60 @@ export const useSettingsMenu = () => {
     [SettingMenuKeys.Workspace.Members]: {
       title: 'Members',
       component: SettingsWorkspacesMembers,
-      permission: [Roles.Workspace.Admin, Roles.Workspace.Member]
+      permission: [Roles.Workspace.Admin, Roles.Workspace.Member],
+      ...(needsSsoAccess.value
+        ? {
+            disabled: true,
+            tooltipText: 'Log in with your SSO provider to access this page'
+          }
+        : {})
     },
     [SettingMenuKeys.Workspace.Projects]: {
       title: 'Projects',
       component: SettingsWorkspacesProjects,
-      permission: [Roles.Workspace.Admin, Roles.Workspace.Member]
+      permission: [Roles.Workspace.Admin, Roles.Workspace.Member],
+      ...(needsSsoAccess.value
+        ? {
+            disabled: true,
+            tooltipText: 'Log in with your SSO provider to access this page'
+          }
+        : {})
     },
     [SettingMenuKeys.Workspace.Security]: {
       title: 'Security',
       component: SettingsWorkspacesSecurity,
-      permission: [Roles.Workspace.Admin]
+      permission: [Roles.Workspace.Admin],
+      ...(needsSsoAccess.value
+        ? {
+            disabled: true,
+            tooltipText: 'Log in with your SSO provider to access this page'
+          }
+        : {})
     },
     [SettingMenuKeys.Workspace.Billing]: {
       title: 'Billing',
       component: SettingsWorkspacesBilling,
-      permission: [Roles.Workspace.Admin, Roles.Workspace.Member]
+      permission: [Roles.Workspace.Admin, Roles.Workspace.Member],
+      ...(needsSsoAccess.value
+        ? {
+            disabled: true,
+            tooltipText: 'Log in with your SSO provider to access this page'
+          }
+        : {})
     },
     [SettingMenuKeys.Workspace.Regions]: {
       title: 'Data residency',
       component: SettingsWorkspacesRegions,
       permission: [Roles.Workspace.Admin, Roles.Workspace.Member],
-      ...(isMultiRegionEnabled
-        ? {}
+      ...(!isMultiRegionEnabled || needsSsoAccess.value
+        ? {
+            disabled: true,
+            tooltipText: isMultiRegionEnabled
+              ? 'Data residency management is not enabled on this server'
+              : 'Log in with your SSO provider to access this page'
+          }
         : {
-            disabled: true
+            disabled: false
           })
     }
   })
