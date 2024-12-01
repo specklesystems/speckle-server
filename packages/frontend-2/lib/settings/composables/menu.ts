@@ -41,7 +41,7 @@ export const useSettingsMenu = (
   const isMultipleEmailsEnabled = useIsMultipleEmailsEnabled().value
   const isMultiRegionEnabled = useIsMultiregionEnabled()
 
-  const needsSsoAccess = computed(() => {
+  const needsSsoSession = computed(() => {
     return workspace?.value && workspace.value.sso?.provider?.id
       ? !workspace.value.sso?.session?.validUntil
       : false
@@ -57,7 +57,7 @@ export const useSettingsMenu = (
       title: 'Members',
       component: SettingsWorkspacesMembers,
       permission: [Roles.Workspace.Admin, Roles.Workspace.Member],
-      ...(needsSsoAccess.value
+      ...(needsSsoSession.value
         ? {
             disabled: true,
             tooltipText: 'Log in with your SSO provider to access this page'
@@ -68,7 +68,7 @@ export const useSettingsMenu = (
       title: 'Projects',
       component: SettingsWorkspacesProjects,
       permission: [Roles.Workspace.Admin, Roles.Workspace.Member],
-      ...(needsSsoAccess.value
+      ...(needsSsoSession.value
         ? {
             disabled: true,
             tooltipText: 'Log in with your SSO provider to access this page'
@@ -79,7 +79,7 @@ export const useSettingsMenu = (
       title: 'Security',
       component: SettingsWorkspacesSecurity,
       permission: [Roles.Workspace.Admin],
-      ...(needsSsoAccess.value
+      ...(needsSsoSession.value
         ? {
             disabled: true,
             tooltipText: 'Log in with your SSO provider to access this page'
@@ -90,7 +90,7 @@ export const useSettingsMenu = (
       title: 'Billing',
       component: SettingsWorkspacesBilling,
       permission: [Roles.Workspace.Admin, Roles.Workspace.Member],
-      ...(needsSsoAccess.value
+      ...(needsSsoSession.value
         ? {
             disabled: true,
             tooltipText: 'Log in with your SSO provider to access this page'
@@ -101,7 +101,7 @@ export const useSettingsMenu = (
       title: 'Data residency',
       component: SettingsWorkspacesRegions,
       permission: [Roles.Workspace.Admin, Roles.Workspace.Member],
-      ...(!isMultiRegionEnabled || needsSsoAccess.value
+      ...(!isMultiRegionEnabled || needsSsoSession.value
         ? {
             disabled: true,
             tooltipText: isMultiRegionEnabled
