@@ -95,7 +95,7 @@ const serverInfo = computed<ServerTermsOfServicePrivacyPolicyFragmentFragment>(
 
 const errorMessage = computed(() => {
   // Check for URL error parameter first
-  const urlError = route.query.error as string | undefined
+  const urlError = route.query.ssoError as string | undefined
   if (urlError) {
     return decodeURIComponent(urlError).replace(/\+/g, ' ').trim()
   }

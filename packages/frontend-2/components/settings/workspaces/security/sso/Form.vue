@@ -98,6 +98,7 @@ const onSubmit = handleSubmit(() => {
     url.searchParams.set('challenge', challenge.value)
   }
 
+  // TODO: Where and how?
   postAuthRedirect.set(`/workspaces/${props.workspaceSlug}?settings=server/general`)
 
   mixpanel.track('Workspace SSO Configuration Started', {

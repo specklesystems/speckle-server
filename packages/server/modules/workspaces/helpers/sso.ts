@@ -1,12 +1,15 @@
 import { getEncryptionKeyPair } from '@/modules/automate/services/encryption'
 import { getFrontendOrigin, getServerOrigin } from '@/modules/shared/helpers/envHelper'
 import { buildDecryptor, buildEncryptor } from '@/modules/shared/utils/libsodium'
+import { OidcProvider } from '@/modules/workspaces/domain/sso/types'
 import { SsoVerificationCodeMissingError } from '@/modules/workspaces/errors/sso'
 import { Request } from 'express'
+import { omit } from 'lodash'
 
 declare module 'express-session' {
   interface SessionData {
     workspaceId?: string
+    oidcProvider?: OidcProvider
   }
 }
 
@@ -30,49 +33,46 @@ export const buildAuthRedirectUrl = (
   return url
 }
 
-/**
- * Generate Speckle URL to redirect users to after successfully completing the
- * SSO authorization flow.
- * @remarks Append params to this URL to preserve information about errors
- */
-export const buildFinalizeUrl = (
+export const buildAuthFinalizeRedirectUrl = (
   workspaceSlug: string,
-  isValidationFlow: boolean
-): URL => {
-  const url = new URL(`/workspaces/${workspaceSlug}`, getFrontendOrigin())
-
-  if (isValidationFlow) {
-    url.searchParams.set('ssoValidationSuccess', 'true')
+  searchParams: Record<string, string> = {}
+) => {
+  const url = new URL(`/workspaces/${workspaceSlug}/sso`, getFrontendOrigin())
+  for (const [key, value] of Object.entries(searchParams)) {
+    url.searchParams.set(key, value)
   }
-
-  url.searchParams.set('settings', 'workspaces/security')
-
-  return new URL(`workspaces/${workspaceSlug}/sso`, getFrontendOrigin())
+  return url
 }
 
-/**
- * Generate Speckle URL to redirect users to after an error occurs during SSO.
- */
-export const buildErrorUrl = (
-  err: unknown,
+export const buildAuthErrorRedirectUrl = (workspaceSlug: string, error: string) => {
+  return buildAuthFinalizeRedirectUrl(workspaceSlug, {
+    ssoError: error
+  })
+}
+
+export const buildValidationErrorRedirectUrl = (
   workspaceSlug: string,
-  isValidationFlow: boolean
+  error: string,
+  oidcProvider?: OidcProvider
 ) => {
-  const errorRedirectUrl = buildFinalizeUrl(workspaceSlug, isValidationFlow)
-  let errorMessage: string
+  const url = new URL(`/workspaces/${workspaceSlug}`, getFrontendOrigin())
 
-  if (isValidationFlow) {
-    errorRedirectUrl.searchParams.set('ssoValidationSuccess', 'false')
+  // TODO: Where and how?
+  url.searchParams.set('settings', `workspace/settings`)
+  url.searchParams.set('ssoValidationSuccess', 'false')
+  url.searchParams.set('ssoError', error)
+
+  for (const [key, value] of Object.entries<string>(
+    omit(oidcProvider ?? {}, 'clientSecret')
+  )) {
+    url.searchParams.set(key, value)
   }
 
-  if (err instanceof Error) {
-    errorMessage = `${err.message}`
-  } else {
-    errorMessage = `Unknown error: ${JSON.stringify(err)}`
-  }
+  return url
+}
 
-  errorRedirectUrl.searchParams.set('ssoError', errorMessage)
-  return errorRedirectUrl.toString()
+export const getErrorMessage = (e: unknown): string => {
+  return e instanceof Error ? `${e.message}` : `Unknown error: ${JSON.stringify(e)}`
 }
 
 export const getEncryptor = () => async (data: string) => {

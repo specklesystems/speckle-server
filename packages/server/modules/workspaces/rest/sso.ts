@@ -91,11 +91,16 @@ import {
 import { GetUser } from '@/modules/core/domain/users/operations'
 import { FindEmail } from '@/modules/core/domain/userEmails/operations'
 import {
+  buildAuthErrorRedirectUrl,
+  buildAuthFinalizeRedirectUrl,
   buildAuthRedirectUrl,
-  buildErrorUrl,
-  buildFinalizeUrl,
+  buildValidationErrorRedirectUrl,
+
+  // buildErrorUrl,
+  // buildFinalizeUrl,
   getDecryptor,
   getEncryptor,
+  getErrorMessage,
   parseCodeVerifier
 } from '@/modules/workspaces/helpers/sso'
 import {
@@ -146,7 +151,10 @@ const validateFeatureAccessMiddlewareFactory: RequestHandler<
 
     next()
   } catch (e) {
-    res?.redirect(buildErrorUrl(e, req.params.workspaceSlug, true))
+    const errorMessage = e instanceof Error ? e.message : `${e}`
+    res?.redirect(
+      buildValidationErrorRedirectUrl(req.params.workspaceSlug, errorMessage).toString()
+    )
   }
 }
 
@@ -302,9 +310,20 @@ export const getSsoRouter = (): Router => {
         await withTransaction(handleOidcCallback(req, res, next), trx)
         return next()
       } catch (e) {
-        res?.redirect(
-          buildErrorUrl(e, req.params.workspaceSlug, req.query.validate === 'true')
-        )
+        const errorMessage = e instanceof Error ? e.message : `${e}`
+        if (req.query.validate === 'true') {
+          res?.redirect(
+            buildValidationErrorRedirectUrl(
+              req.params.workspaceSlug,
+              errorMessage,
+              req.session.oidcProvider
+            ).toString()
+          )
+        } else {
+          res?.redirect(
+            buildAuthErrorRedirectUrl(req.params.workspaceSlug, errorMessage).toString()
+          )
+        }
       }
     },
     finalizeAuthMiddleware
@@ -374,7 +393,9 @@ const handleSsoAuthRequestFactory =
       session.codeVerifier = await getEncryptor()(codeVerifier)
       res?.redirect(authorizationUrl.toString())
     } catch (e) {
-      res?.redirect(buildErrorUrl(e, params.workspaceSlug, false))
+      res?.redirect(
+        buildAuthErrorRedirectUrl(params.workspaceSlug, getErrorMessage(e)).toString()
+      )
     }
   }
 
@@ -420,7 +441,13 @@ const handleSsoValidationRequestFactory =
 
       res?.redirect(authorizationUrl.toString())
     } catch (e) {
-      res?.redirect(buildErrorUrl(e, params.workspaceSlug, true))
+      res?.redirect(
+        buildValidationErrorRedirectUrl(
+          params.workspaceSlug,
+          getErrorMessage(e),
+          provider
+        ).toString()
+      )
     }
   }
 
@@ -473,6 +500,7 @@ const handleOidcCallbackFactory =
     const decryptedOidcProvider: WorkspaceSsoProvider = isValidationFlow
       ? await createOidcProvider(req, workspace.id)
       : await getOidcProvider(workspace.id)
+    req.session.oidcProvider = decryptedOidcProvider.provider
 
     const oidcProviderUserData = await getOidcProviderUserData(
       req,
@@ -512,9 +540,13 @@ const handleOidcCallbackFactory =
       }
     })
 
-    req.authRedirectPath = buildFinalizeUrl(
+    const params: Record<string, string> = isValidationFlow
+      ? { ssoValidationSuccess: 'true' }
+      : {}
+
+    req.authRedirectPath = buildAuthFinalizeRedirectUrl(
       req.params.workspaceSlug,
-      isValidationFlow
+      params
     ).toString()
   }
 
