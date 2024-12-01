@@ -116,7 +116,6 @@
             :current-plan="currentPlan"
             :active-billing-interval="subscription?.billingInterval"
             :is-admin="isAdmin"
-            @on-cta-click="onPricePlanCtaClick"
           >
             <template #title>
               <SettingsSectionHeader
@@ -126,14 +125,6 @@
             </template>
           </SettingsWorkspacesBillingPricingTable>
         </div>
-
-        <SettingsWorkspacesBillingUpgradeDialog
-          v-if="currentPlan?.name && subscription?.billingInterval"
-          v-model:open="isUpgradeDialogOpen"
-          :plan="currentPlan.name"
-          :billing-interval="subscription.billingInterval"
-          :workspace-id="workspaceId"
-        />
       </template>
       <template v-else>Coming soon</template>
     </div>
@@ -149,14 +140,12 @@ import { useIsBillingIntegrationEnabled } from '~/composables/globals'
 import {
   WorkspacePlans,
   WorkspacePlanStatuses,
-  BillingInterval,
-  type PaidWorkspacePlans
+  BillingInterval
 } from '~/lib/common/generated/gql/graphql'
 import { useBillingActions } from '~/lib/billing/composables/actions'
 import { pricingPlansConfig } from '~/lib/billing/helpers/constants'
 import { Roles } from '@speckle/shared'
 import { InformationCircleIcon } from '@heroicons/vue/24/outline'
-import { isPaidPlan } from '@/lib/billing/helpers/types'
 
 graphql(`
   fragment SettingsWorkspacesBilling_Workspace on Workspace {
@@ -195,9 +184,8 @@ const { result: workspaceResult } = useQuery(
     enabled: isBillingIntegrationEnabled
   })
 )
-const { billingPortalRedirect, redirectToCheckout } = useBillingActions()
+const { billingPortalRedirect } = useBillingActions()
 
-const isUpgradeDialogOpen = ref(false)
 const seatPrices = ref({
   [WorkspacePlans.Starter]: pricingPlansConfig.plans[WorkspacePlans.Starter].cost,
   [WorkspacePlans.Plus]: pricingPlansConfig.plans[WorkspacePlans.Plus].cost,
@@ -274,23 +262,4 @@ const billTooltip = computed(() => {
 
   return `${memberText}${guestSeatCount.value > 0 ? `, ${guestText}` : ''}`
 })
-
-const onPricePlanCtaClick = (args: {
-  plan: WorkspacePlans
-  billingInterval: BillingInterval
-}) => {
-  const { plan, billingInterval } = args
-  if (!isPaidPlan(plan) || !props.workspaceId) return
-  if (isTrialPeriod.value) {
-    redirectToCheckout({
-      plan: plan as unknown as PaidWorkspacePlans,
-      cycle: billingInterval,
-      workspaceId: props.workspaceId
-    })
-
-    return
-  }
-
-  isUpgradeDialogOpen.value = true
-}
 </script>

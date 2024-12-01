@@ -21,18 +21,21 @@
         :disabled="!buttonEnabled"
         class="mt-3"
         full-width
-        @click="
-          emit('on-cta-click', {
-            plan: plan.name,
-            billingInterval: isYearlyPlan
-              ? BillingInterval.Yearly
-              : BillingInterval.Monthly
-          })
-        "
+        @click="onCtaClick"
       >
         {{ buttonText }}
       </FormButton>
     </div>
+
+    <SettingsWorkspacesBillingUpgradeDialog
+      v-if="currentPlan?.name && workspaceId"
+      v-model:open="isUpgradeDialogOpen"
+      :plan="plan.name"
+      :billing-interval="
+        isYearlyPlan ? BillingInterval.Yearly : BillingInterval.Monthly
+      "
+      :workspace-id="workspaceId"
+    />
   </div>
 </template>
 
@@ -43,21 +46,13 @@ import {
   type WorkspacePlan,
   WorkspacePlanStatuses,
   WorkspacePlans,
-  BillingInterval
+  BillingInterval,
+  type PaidWorkspacePlans
 } from '~/lib/common/generated/gql/graphql'
 import type { MaybeNullOrUndefined } from '@speckle/shared'
 import { startCase } from 'lodash'
-
-const emit = defineEmits<{
-  (
-    e: 'on-cta-click',
-    v: {
-      plan: WorkspacePlans
-      billingInterval: BillingInterval
-    }
-  ): void
-}>()
-
+import { isPaidPlan } from '@/lib/billing/helpers/types'
+import { useBillingActions } from '@/lib/billing/composables/actions'
 const props = defineProps<{
   plan: PricingPlan
   isYearlyPlan: boolean
@@ -67,6 +62,10 @@ const props = defineProps<{
   isAdmin?: boolean
   activeBillingInterval?: BillingInterval
 }>()
+
+const { redirectToCheckout } = useBillingActions()
+
+const isUpgradeDialogOpen = ref(false)
 
 const canUpgradeToPlan = computed(() => {
   if (!props.currentPlan) return false
@@ -139,4 +138,20 @@ const buttonText = computed(() => {
   // Upgrade case
   return canUpgradeToPlan.value ? `Upgrade to ${startCase(props.plan.name)}` : ''
 })
+
+const onCtaClick = () => {
+  isUpgradeDialogOpen.value = true
+
+  if (!isPaidPlan(props.plan.name) || !props.workspaceId) return
+
+  if (hasTrialPlan.value) {
+    redirectToCheckout({
+      plan: props.plan.name as unknown as PaidWorkspacePlans,
+      cycle: props.isYearlyPlan ? BillingInterval.Yearly : BillingInterval.Monthly,
+      workspaceId: props.workspaceId
+    })
+  } else {
+    isUpgradeDialogOpen.value = true
+  }
+}
 </script>

@@ -17,13 +17,11 @@
       v-if="isDesktop"
       :is-yearly-plan="isYearlyPlan"
       v-bind="$props"
-      @on-cta-click="$emit('on-cta-click', $event)"
     />
     <SettingsWorkspacesBillingPricingTableMobile
       v-else
       :is-yearly-plan="isYearlyPlan"
       v-bind="$props"
-      @on-cta-click="$emit('on-cta-click', $event)"
     />
   </div>
 </template>
@@ -31,12 +29,7 @@
 <script setup lang="ts">
 import { useBreakpoints } from '@vueuse/core'
 import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
-// eslint-disable-next-line @typescript-eslint/consistent-type-imports
-import {
-  BillingInterval,
-  WorkspacePlans,
-  type WorkspacePlan
-} from '~/lib/common/generated/gql/graphql'
+import { BillingInterval, type WorkspacePlan } from '~/lib/common/generated/gql/graphql'
 import { graphql } from '~/lib/common/generated/gql'
 import type { MaybeNullOrUndefined } from '@speckle/shared'
 
@@ -47,16 +40,6 @@ graphql(`
     createdAt
   }
 `)
-
-defineEmits<{
-  (
-    e: 'on-cta-click',
-    v: {
-      plan: WorkspacePlans
-      billingInterval: BillingInterval
-    }
-  ): void
-}>()
 
 const props = defineProps<{
   workspaceId?: string
