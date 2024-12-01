@@ -1,19 +1,21 @@
 <template>
-  <div class="flex flex-col gap-y-1 font-normal">
+  <div
+    class="border border-outline-3 bg-foundation rounded-lg p-4 pb-2 flex flex-col gap-y-1 w-full"
+  >
     <h4 class="text-foreground text-body-xs">
       Workspace
       <span class="capitalize">{{ plan.name }}</span>
     </h4>
     <p class="text-foreground text-heading">
       £{{
-        isYearlyPlan
+        yearlyIntervalSelected
           ? plan.cost.yearly[Roles.Workspace.Member]
           : plan.cost.monthly[Roles.Workspace.Member]
       }}
       per seat/month
     </p>
     <p class="text-foreground-2 text-body-2xs pt-1">
-      Billed {{ isYearlyPlan ? 'annually' : 'monthly' }}
+      Billed {{ yearlyIntervalSelected ? 'annually' : 'monthly' }}
     </p>
     <div v-if="workspaceId" class="w-full">
       <FormButton
@@ -27,12 +29,27 @@
       </FormButton>
     </div>
 
+    <ul class="flex flex-col gap-y-2 mt-6">
+      <li
+        v-for="feature in features"
+        :key="feature.name"
+        class="flex items-center justify-between border-b last:border-b-0 border-outline-3 pb-2"
+      >
+        {{ feature.name }}
+        <IconCheck
+          v-if="plan.features.includes(feature.name as PlanFeaturesList)"
+          class="w-4 h-4 text-foreground"
+        />
+        <XMarkIcon v-else class="w-4 h-4 text-foreground-2 lg:hidden" />
+      </li>
+    </ul>
+
     <SettingsWorkspacesBillingUpgradeDialog
       v-if="currentPlan?.name && workspaceId"
       v-model:open="isUpgradeDialogOpen"
       :plan="plan.name"
       :billing-interval="
-        isYearlyPlan ? BillingInterval.Yearly : BillingInterval.Monthly
+        yearlyIntervalSelected ? BillingInterval.Yearly : BillingInterval.Monthly
       "
       :workspace-id="workspaceId"
     />
@@ -53,18 +70,23 @@ import type { MaybeNullOrUndefined } from '@speckle/shared'
 import { startCase } from 'lodash'
 import { isPaidPlan } from '@/lib/billing/helpers/types'
 import { useBillingActions } from '@/lib/billing/composables/actions'
+import { pricingPlansConfig } from '~/lib/billing/helpers/constants'
+import type { PlanFeaturesList } from '~/lib/billing/helpers/types'
+import { XMarkIcon } from '@heroicons/vue/24/outline'
+
 const props = defineProps<{
   plan: PricingPlan
-  isYearlyPlan: boolean
   // The following props are optional if the table is for informational purposes
   currentPlan?: MaybeNullOrUndefined<WorkspacePlan>
   workspaceId?: string
   isAdmin?: boolean
   activeBillingInterval?: BillingInterval
+  yearlyIntervalSelected: boolean
 }>()
 
 const { redirectToCheckout } = useBillingActions()
 
+const features = ref(pricingPlansConfig.features)
 const isUpgradeDialogOpen = ref(false)
 
 const canUpgradeToPlan = computed(() => {
@@ -92,7 +114,7 @@ const buttonColor = computed(() => {
 const isMatchingInterval = computed(
   () =>
     props.activeBillingInterval ===
-    (props.isYearlyPlan ? BillingInterval.Yearly : BillingInterval.Monthly)
+    (props.yearlyIntervalSelected ? BillingInterval.Yearly : BillingInterval.Monthly)
 )
 const buttonEnabled = computed(() => {
   // Always enable buttons during trial
@@ -106,7 +128,8 @@ const buttonEnabled = computed(() => {
   if (!isMatchingInterval.value) {
     const isCurrentPlan = props.currentPlan?.name === props.plan.name
     const isMonthlyToYearly =
-      props.isYearlyPlan && props.activeBillingInterval === BillingInterval.Monthly
+      props.yearlyIntervalSelected &&
+      props.activeBillingInterval === BillingInterval.Monthly
     // Allow yearly upgrades from monthly plans
     if (isMonthlyToYearly) return isCurrentPlan || canUpgradeToPlan.value
     // Never allow switching to monthly if currently on yearly billing
@@ -133,7 +156,9 @@ const buttonText = computed(() => {
   }
   // Billing interval change and current plan
   if (!isMatchingInterval.value && props.currentPlan?.name === props.plan.name) {
-    return props.isYearlyPlan ? 'Change to annual plan' : 'Change to monthly plan'
+    return props.yearlyIntervalSelected
+      ? 'Change to annual plan'
+      : 'Change to monthly plan'
   }
   // Upgrade case
   return canUpgradeToPlan.value ? `Upgrade to ${startCase(props.plan.name)}` : ''
@@ -147,7 +172,9 @@ const onCtaClick = () => {
   if (hasTrialPlan.value) {
     redirectToCheckout({
       plan: props.plan.name as unknown as PaidWorkspacePlans,
-      cycle: props.isYearlyPlan ? BillingInterval.Yearly : BillingInterval.Monthly,
+      cycle: props.yearlyIntervalSelected
+        ? BillingInterval.Yearly
+        : BillingInterval.Monthly,
       workspaceId: props.workspaceId
     })
   } else {
