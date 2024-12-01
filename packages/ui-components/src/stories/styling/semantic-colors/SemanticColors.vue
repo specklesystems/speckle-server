@@ -43,7 +43,12 @@ import CommonTextLink from '~~/src/components/common/text/Link.vue'
 type ColorVariation = string | null
 type ColorDefinition = { description: string; variations: ColorVariation[] }
 
-const lighterDarkerVariations: ColorVariation[] = [null, 'lighter', 'darker']
+const lighterDarkerVariations: ColorVariation[] = [
+  null,
+  'lighter',
+  'lighter-2',
+  'darker'
+]
 
 const colorDefinitions: Ref<Record<string, ColorDefinition>> = ref({
   foundation: {
