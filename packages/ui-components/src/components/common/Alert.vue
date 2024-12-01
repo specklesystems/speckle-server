@@ -5,10 +5,10 @@
         <Component :is="icon" :class="iconClasses" aria-hidden="true" />
       </div>
       <div class="flex-1">
-        <h3 v-if="hasTitle" class="text-sm font-medium">
+        <h3 v-if="hasTitle" class="text-body-xs font-medium">
           <slot name="title">Title</slot>
         </h3>
-        <div v-if="hasDescription" :class="descriptionWrapperClasses">
+        <div v-if="hasDescription" class="text-body-xs">
           <slot name="description">
             Lorem ipsum dolor sit amet consectetur adipisicing elit. Aliquid pariatur,
             ipsum similique veniam.
@@ -153,22 +153,6 @@ const subcontainerClasses = computed(() => {
     case 'default':
     default:
       classParts.push('gap-x-2')
-      break
-  }
-
-  return classParts.join(' ')
-})
-
-const descriptionWrapperClasses = computed(() => {
-  const classParts: string[] = []
-
-  switch (props.size) {
-    case 'xs':
-      classParts.push('text-body-xs')
-      break
-    case 'default':
-    default:
-      classParts.push('text-body-xs sm:text-body-xs')
       break
   }
 
