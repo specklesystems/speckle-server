@@ -18,10 +18,8 @@
         >
           <SettingsWorkspacesBillingPricingTableHeader
             :plan="plan"
-            :is-yearly-plan="isYearlyPlan"
-            :current-plan="currentPlan"
-            :workspace-id="workspaceId"
-            :is-admin="isAdmin"
+            v-bind="$props"
+            @on-cta-click="$emit('on-cta-click', $event)"
           />
         </th>
       </tr>
@@ -51,9 +49,9 @@
           ]"
         >
           <div class="border-b border-outline-3 flex items-center px-3 min-h-[42px]">
-            <CheckIcon
+            <IconCheck
               v-if="plan.features.includes(feature.name as PlanFeaturesList)"
-              class="w-3 h-3 text-foreground"
+              class="w-4 h-4 text-foreground"
             />
           </div>
         </td>
@@ -63,18 +61,28 @@
 </template>
 
 <script setup lang="ts">
-import type { WorkspacePlan } from '~/lib/common/generated/gql/graphql'
+import type { WorkspacePlan, BillingInterval } from '~/lib/common/generated/gql/graphql'
 import { WorkspacePlans } from '~/lib/common/generated/gql/graphql'
 import { pricingPlansConfig } from '~/lib/billing/helpers/constants'
 import type { PlanFeaturesList } from '~/lib/billing/helpers/types'
-import { CheckIcon } from '@heroicons/vue/24/outline'
 import type { MaybeNullOrUndefined } from '@speckle/shared'
+
+defineEmits<{
+  (
+    e: 'on-cta-click',
+    v: {
+      plan: WorkspacePlans
+      billingInterval: BillingInterval
+    }
+  ): void
+}>()
 
 defineProps<{
   isYearlyPlan: boolean
   currentPlan?: MaybeNullOrUndefined<WorkspacePlan>
   workspaceId?: string
   isAdmin?: boolean
+  activeBillingInterval?: BillingInterval
 }>()
 
 const plans = ref(pricingPlansConfig.plans)

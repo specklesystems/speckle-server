@@ -16634,6 +16634,7 @@ __metadata:
     mocha: "npm:^10.1.0"
     mocha-junit-reporter: "npm:^2.0.2"
     mock-require: "npm:^3.0.3"
+    mock-socket: "npm:^9.3.1"
     module-alias: "npm:^2.2.2"
     netmask: "npm:^2.0.2"
     node-cron: "npm:^3.0.2"
@@ -39971,6 +39972,13 @@ __metadata:
     get-caller-file: "npm:^1.0.2"
     normalize-path: "npm:^2.1.1"
   checksum: 10/4ae5bfd19428e47fadbf4d830d22aba28af237dab4d6e76a5bb49cac6415c2c7646acd66fd50cefce277a3470e413146c345a68ce236cf3047b340a06bcdc2b2
+  languageName: node
+  linkType: hard
+
+"mock-socket@npm:^9.3.1":
+  version: 9.3.1
+  resolution: "mock-socket@npm:9.3.1"
+  checksum: 10/c5c07568f2859db6926d79cb61580c07e67958b5cd6b52d1270fdfa17ae066d7f74a18a4208fc4386092eea4e1ee001aa23f015c88a1774265994e4fae34d18e
   languageName: node
   linkType: hard
 

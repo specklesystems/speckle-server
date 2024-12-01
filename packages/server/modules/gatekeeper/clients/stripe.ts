@@ -127,7 +127,7 @@ export const getSubscriptionDataFactory =
 export const parseSubscriptionData = (
   stripeSubscription: Stripe.Subscription
 ): SubscriptionData => {
-  return {
+  const subscriptionData = {
     customerId:
       typeof stripeSubscription.customer === 'string'
         ? stripeSubscription.customer
@@ -135,7 +135,7 @@ export const parseSubscriptionData = (
     subscriptionId: stripeSubscription.id,
     status: stripeSubscription.status,
     cancelAt: stripeSubscription.cancel_at
-      ? new Date(stripeSubscription.cancel_at)
+      ? new Date(stripeSubscription.cancel_at * 1000)
       : null,
     products: stripeSubscription.items.data.map((subscriptionItem) => {
       const productId =
@@ -155,6 +155,7 @@ export const parseSubscriptionData = (
       }
     })
   }
+  return subscriptionData
 }
 
 // this should be a reconcile subscriptions, we keep an accurate state in the DB
@@ -176,7 +177,7 @@ export const reconcileWorkspaceSubscriptionFactory =
         // we're moving a product to a new price for ie upgrading to a yearly plan
       } else if (existingProduct.priceId !== product.priceId) {
         items.push({ quantity: product.quantity, price: product.priceId })
-        items.push({ id: product.subscriptionItemId, deleted: true })
+        items.push({ id: existingProduct.subscriptionItemId, deleted: true })
       } else {
         items.push({
           quantity: product.quantity,

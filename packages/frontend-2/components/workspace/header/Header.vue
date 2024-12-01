@@ -1,9 +1,9 @@
 <template>
   <div>
-    <BillingAlert :workspace="workspaceInfo" class="mb-4">
+    <BillingAlert v-if="!isWorkspaceGuest" :workspace="workspaceInfo" class="mb-4">
       <template #actions>
         <FormButton
-          v-if="isWorkspaceAdmin && isInTrial"
+          v-if="isInTrial"
           @click="openSettingsDialog(SettingMenuKeys.Workspace.Billing)"
         >
           Upgrade now
@@ -85,7 +85,6 @@
               Invite
             </FormButton>
             <FormButton
-              v-if="isWorkspaceAdmin"
               class="hidden md:block"
               color="outline"
               @click="openSettingsDialog(SettingMenuKeys.Workspace.General)"

@@ -80,8 +80,8 @@ export const getUsersFactory =
     userIds = isArray(userIds) ? userIds : [userIds]
 
     const q = tables.users(deps.db).whereIn(Users.col.id, userIds)
-    q.leftJoin(UserEmails.name, UserEmails.col.userId, Users.col.id).where({
-      [UserEmails.col.primary]: true
+    q.leftJoin(UserEmails.name, (j1) => {
+      j1.on(UserEmails.col.userId, Users.col.id).andOnVal(UserEmails.col.primary, true)
     })
 
     const columns: (Knex.Raw<UserRecord> | string)[] = [

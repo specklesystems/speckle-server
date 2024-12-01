@@ -16,16 +16,19 @@
 </template>
 
 <script setup lang="ts">
+import { useOnWorkspaceUpdated } from '~/lib/workspaces/composables/management'
 import { useWorkspaceSsoValidation } from '~/lib/workspaces/composables/sso'
+import { useWorkspaceProjectsUpdatedTracking } from '~/lib/workspaces/composables/projectUpdates'
 
 definePageMeta({
   middleware: ['requires-workspaces-enabled', 'require-valid-workspace']
 })
 
 const route = useRoute()
-
 const workspaceSlug = computed(() => route.params.slug as string)
 const { ssoError } = useWorkspaceSsoValidation(workspaceSlug)
+useOnWorkspaceUpdated({ workspaceSlug })
+useWorkspaceProjectsUpdatedTracking(workspaceSlug)
 
 const token = computed(() => route.query.token as string | undefined)
 </script>

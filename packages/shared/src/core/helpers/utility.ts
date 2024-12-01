@@ -27,6 +27,8 @@ export const buildManualPromise = <T>() => {
   return { promise, resolve: resolveWrapper, reject: rejectWrapper }
 }
 
+export type ManualPromise<T> = ReturnType<typeof buildManualPromise<T>>
+
 export const isNullOrUndefined = (val: unknown): val is null | undefined =>
   isNull(val) || isUndefined(val)
 
