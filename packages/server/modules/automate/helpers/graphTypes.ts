@@ -28,6 +28,7 @@ export type AutomateFunctionGraphQLReturn = Pick<
   | 'logo'
   | 'tags'
   | 'supportedSourceApps'
+  | 'workspaceIds'
 > & {
   functionCreator: Nullable<{
     speckleUserId: string

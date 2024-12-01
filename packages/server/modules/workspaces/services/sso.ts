@@ -18,6 +18,7 @@ import cryptoRandomString from 'crypto-random-string'
 import { UserinfoResponse } from 'openid-client'
 import {
   CreateUserEmail,
+  FindEmail,
   FindEmailsByUserId,
   UpdateUserEmail
 } from '@/modules/core/domain/userEmails/operations'
@@ -25,10 +26,7 @@ import { isWorkspaceRole, toLimitedWorkspace } from '@/modules/workspaces/domain
 import { UserWithOptionalRole } from '@/modules/core/repositories/users'
 import { DeleteInvite, FindInvite } from '@/modules/serverinvites/domain/operations'
 import { UpsertWorkspaceRole } from '@/modules/workspaces/domain/operations'
-import {
-  CreateValidatedUser,
-  GetUserByEmail
-} from '@/modules/core/domain/users/operations'
+import { CreateValidatedUser } from '@/modules/core/domain/users/operations'
 import {
   OidcProviderMissingGrantTypeError,
   SsoProviderExistsError,
@@ -240,17 +238,17 @@ export const linkUserWithSsoProviderFactory =
 
 export const listWorkspaceSsoMembershipsByUserEmailFactory =
   ({
-    getUserByEmail,
+    findEmail,
     listWorkspaceSsoMemberships
   }: {
-    getUserByEmail: GetUserByEmail
+    findEmail: FindEmail
     listWorkspaceSsoMemberships: ListWorkspaceSsoMemberships
   }) =>
   async (args: { userEmail: string }): Promise<LimitedWorkspace[]> => {
-    const user = await getUserByEmail(args.userEmail)
-    if (!user) return []
+    const email = await findEmail({ email: args.userEmail })
+    if (!email || !email.verified) return []
 
-    const workspaces = await listWorkspaceSsoMemberships({ userId: user.id })
+    const workspaces = await listWorkspaceSsoMemberships({ userId: email.userId })
 
     // Return limited workspace version of each workspace
     return workspaces.map(toLimitedWorkspace)

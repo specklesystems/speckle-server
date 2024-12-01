@@ -8,6 +8,14 @@ export const settingsSidebarQuery = graphql(`
   }
 `)
 
+export const settingsSidebarAutomateFunctionsQuery = graphql(`
+  query SettingsSidebarAutomateFunctions {
+    activeUser {
+      ...Sidebar_User
+    }
+  }
+`)
+
 export const settingsWorkspaceGeneralQuery = graphql(`
   query SettingsWorkspaceGeneral($id: String!) {
     workspace(id: $id) {
@@ -104,6 +112,7 @@ export const settingsWorkspacesProjectsQuery = graphql(`
   ) {
     workspace(id: $workspaceId) {
       id
+      slug
       projects(limit: $limit, cursor: $cursor, filter: $filter) {
         cursor
         ...SettingsWorkspacesProjects_ProjectCollection

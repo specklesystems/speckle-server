@@ -2,10 +2,9 @@
   <div class="flex flex-col gap-y-4 md:gap-y-6">
     <ProjectPageAutomationsHeader
       v-model:search="search"
+      :workspace-slug="workspaceSlug"
       :show-empty-state="shouldShowEmptyState"
-      :creation-disabled-reason="
-        allowNewCreation !== true ? allowNewCreation : undefined
-      "
+      :creation-disabled-message="disableCreateMessage"
       @new-automation="onNewAutomation"
     />
     <template v-if="loading">
@@ -14,11 +13,10 @@
     <template v-else>
       <ProjectPageAutomationsEmptyState
         v-if="shouldShowEmptyState"
+        :workspace-slug="workspaceSlug"
         :functions="result"
         :is-automate-enabled="isAutomateEnabled"
-        :creation-disabled-reason="
-          allowNewCreation !== true ? allowNewCreation : undefined
-        "
+        :creation-disabled-message="disableCreateMessage"
         @new-automation="onNewAutomation"
       />
       <template v-else>
@@ -39,7 +37,9 @@
       </template>
     </template>
     <AutomateAutomationCreateDialog
+      v-if="workspaceId"
       v-model:open="showNewAutomationDialog"
+      :workspace-id="workspaceId"
       :preselected-project="project"
       :preselected-function="newAutomationTargetFn"
     />
@@ -53,6 +53,7 @@ import {
 } from '~/lib/projects/graphql/queries'
 import type { CreateAutomationSelectableFunction } from '~/lib/automate/helpers/automations'
 import { usePaginatedQuery } from '~/lib/common/composables/graphql'
+import { Roles } from '@speckle/shared'
 
 const route = useRoute()
 const projectId = computed(() => route.params.id as string)
@@ -73,6 +74,9 @@ const { result, loading } = useQuery(
     fetchPolicy: pageFetchPolicy.value
   })
 )
+
+const workspaceId = computed(() => result.value?.project?.workspace?.id)
+const workspaceSlug = computed(() => result.value?.project?.workspace?.slug)
 
 // Pagination query
 const {
@@ -114,10 +118,18 @@ const shouldShowEmptyState = computed(() => {
   return false
 })
 
-const allowNewCreation = computed(() => {
-  return (result.value?.project?.models?.items.length || 0) > 0
-    ? true
-    : 'Your project should have at least 1 model before you can create an automation.'
+const disableCreateMessage = computed(() => {
+  const allowedRoles: string[] = [Roles.Stream.Owner]
+
+  if (!allowedRoles.includes(result.value?.project?.role ?? '')) {
+    return 'You must be a project owner to create automations.'
+  }
+
+  if ((result.value?.project?.models?.items.length || 0) === 0) {
+    return 'Your project should have at least 1 model before you can create an automation.'
+  }
+
+  return undefined
 })
 
 const onNewAutomation = (fn?: CreateAutomationSelectableFunction) => {

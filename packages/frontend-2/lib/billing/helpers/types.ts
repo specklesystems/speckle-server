@@ -25,5 +25,7 @@ export type PricingPlan = {
 }
 
 // Check if the plan matches PaidWorkspacePlans
-export const isPaidPlan = (plan: WorkspacePlans): boolean =>
-  Object.values(PaidWorkspacePlans).includes(plan as unknown as PaidWorkspacePlans)
+export const isPaidPlan = (plan?: WorkspacePlans): boolean =>
+  plan
+    ? Object.values(PaidWorkspacePlans).includes(plan as unknown as PaidWorkspacePlans)
+    : false

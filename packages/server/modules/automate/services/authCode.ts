@@ -1,6 +1,7 @@
 import { automateLogger } from '@/logging/logging'
 import { CreateStoredAuthCode } from '@/modules/automate/domain/operations'
 import { AutomateAuthCodeHandshakeError } from '@/modules/automate/errors/management'
+import { EventBus } from '@/modules/shared/services/eventBus'
 import cryptoRandomString from 'crypto-random-string'
 import Redis from 'ioredis'
 import { get, has, isObjectLike } from 'lodash'
@@ -8,6 +9,8 @@ import { get, has, isObjectLike } from 'lodash'
 export enum AuthCodePayloadAction {
   CreateAutomation = 'createAutomation',
   CreateFunction = 'createFunction',
+  ListWorkspaceFunctions = 'listWorkspaceFunctions',
+  ListUserFunctions = 'listUserFunctions',
   BecomeFunctionAuthor = 'becomeFunctionAuthor',
   GetAvailableGithubOrganizations = 'getAvailableGithubOrganizations',
   UpdateFunction = 'updateFunction'
@@ -16,6 +19,7 @@ export enum AuthCodePayloadAction {
 export type AuthCodePayload = {
   code: string
   userId: string
+  workspaceId?: string
   action: AuthCodePayloadAction
 }
 
@@ -44,8 +48,9 @@ export const createStoredAuthCodeFactory =
   }
 
 export const validateStoredAuthCodeFactory =
-  (deps: { redis: Redis }) => async (payload: AuthCodePayload) => {
-    const { redis } = deps
+  (deps: { redis: Redis; emit: EventBus['emit'] }) =>
+  async (payload: AuthCodePayload) => {
+    const { redis, emit } = deps
 
     const potentialPayloadString = await redis.get(payload.code)
     const potentialPayload: unknown = potentialPayloadString
@@ -60,6 +65,13 @@ export const validateStoredAuthCodeFactory =
       formattedPayload.action !== payload.action
     ) {
       throw new AutomateAuthCodeHandshakeError('Invalid automate auth payload')
+    }
+
+    if (payload.workspaceId) {
+      emit({
+        eventName: 'workspace.authorized',
+        payload: { userId: payload.userId, workspaceId: payload.workspaceId }
+      })
     }
 
     try {

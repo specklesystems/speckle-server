@@ -18,7 +18,10 @@
 </template>
 <script setup lang="ts">
 import { graphql } from '~/lib/common/generated/gql'
-import type { AutomateFunctionsPageItems_QueryFragment } from '~/lib/common/generated/gql/graphql'
+import type {
+  AutomateAutomationCreateDialog_AutomateFunctionFragment,
+  AutomationsFunctionsCard_AutomateFunctionFragment
+} from '~/lib/common/generated/gql/graphql'
 import type { CreateAutomationSelectableFunction } from '~/lib/automate/helpers/automations'
 
 defineEmits<{
@@ -28,7 +31,7 @@ defineEmits<{
 
 graphql(`
   fragment AutomateFunctionsPageItems_Query on Query {
-    automateFunctions(limit: 20, filter: { search: $search }, cursor: $cursor) {
+    automateFunctions(limit: 6, filter: { search: $search }, cursor: $cursor) {
       totalCount
       items {
         id
@@ -41,10 +44,11 @@ graphql(`
 `)
 
 const props = defineProps<{
-  functions?: AutomateFunctionsPageItems_QueryFragment
+  functions?: (AutomationsFunctionsCard_AutomateFunctionFragment &
+    AutomateAutomationCreateDialog_AutomateFunctionFragment)[]
   search?: boolean
   loading?: boolean
 }>()
 
-const fns = computed(() => props.functions?.automateFunctions.items || [])
+const fns = computed(() => props.functions || [])
 </script>

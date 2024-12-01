@@ -163,6 +163,7 @@ export const onWorkspaceAuthorizedFactory =
 
     // Guests cannot use (and are not restricted by) SSO
     const workspaceRole = await getWorkspaceRoleForUser({ userId, workspaceId })
+    if (!workspaceRole) throw new WorkspacesNotAuthorizedError()
     if (workspaceRole?.role === Roles.Workspace.Guest) return
 
     const provider = await getWorkspaceSsoProviderRecord({ workspaceId })
