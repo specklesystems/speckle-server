@@ -1,11 +1,12 @@
 <template>
-  <div class="flex flex-col lg:flex-row gap-y-2 gap-x-2 w-full">
+  <div class="flex flex-col lg:grid lg:grid-cols-3 gap-y-2 gap-x-2 w-full">
     <SettingsWorkspacesBillingPricingTablePlan
       v-for="plan in plans"
       :key="plan.name"
       :plan="plan"
       :yearly-interval-selected="isYearlySelected"
       v-bind="$props"
+      @on-yearly-interval-selected="onYearlyIntervalSelected"
     />
   </div>
 </template>
@@ -29,6 +30,11 @@ watch(
   () => props.activeBillingInterval,
   (newVal) => {
     isYearlySelected.value = newVal === BillingInterval.Yearly
-  }
+  },
+  { immediate: true }
 )
+
+const onYearlyIntervalSelected = (newValue: boolean) => {
+  isYearlySelected.value = newValue
+}
 </script>

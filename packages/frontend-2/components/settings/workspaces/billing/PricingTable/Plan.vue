@@ -1,47 +1,55 @@
 <template>
   <div
-    class="border border-outline-3 bg-foundation rounded-lg p-4 pb-2 flex flex-col gap-y-1 w-full"
+    class="border border-outline-3 bg-foundation text-foreground rounded-lg p-6 flex flex-col w-full"
   >
-    <h4 class="text-foreground text-body-xs">
+    <h4 class="text-body">
       Workspace
       <span class="capitalize">{{ plan.name }}</span>
     </h4>
-    <p class="text-foreground text-heading">
-      £{{
-        yearlyIntervalSelected
-          ? plan.cost.yearly[Roles.Workspace.Member]
-          : plan.cost.monthly[Roles.Workspace.Member]
-      }}
+    <p class="text-body mt-1">
+      <span class="font-medium">
+        £{{
+          yearlyIntervalSelected
+            ? plan.cost.yearly[Roles.Workspace.Member]
+            : plan.cost.monthly[Roles.Workspace.Member]
+        }}
+      </span>
       per seat/month
     </p>
-    <p class="text-foreground-2 text-body-2xs pt-1">
-      Billed {{ yearlyIntervalSelected ? 'annually' : 'monthly' }}
-    </p>
+    <div class="flex items-center gap-x-2 mt-3 mb-4 px-1">
+      <FormSwitch
+        v-model="isYearlyIntervalSelected"
+        :show-label="false"
+        name="domain-protection"
+        :disabled="!isAdmin"
+        @update:model-value="(newValue) => $emit('onYearlyIntervalSelected', newValue)"
+      />
+      <span class="text-body-2xs">Billed annually</span>
+      <CommonBadge rounded color-classes="text-foreground-2 bg-primary-muted">
+        20% off
+      </CommonBadge>
+    </div>
     <div v-if="workspaceId" class="w-full">
       <FormButton
         :color="buttonColor"
         :disabled="!buttonEnabled"
-        class="mt-3"
         full-width
         @click="onCtaClick"
       >
         {{ buttonText }}
       </FormButton>
     </div>
-
-    <ul class="flex flex-col gap-y-2 mt-6">
-      <li
-        v-for="feature in features"
-        :key="feature.name"
-        class="flex items-center justify-between border-b last:border-b-0 border-outline-3 pb-2"
-      >
-        {{ feature.name }}
-        <IconCheck
+    <ul class="flex flex-col gap-y-2 mt-4 pt-3 border-t border-outline-3">
+      <template v-for="feature in features">
+        <li
           v-if="plan.features.includes(feature.name as PlanFeaturesList)"
-          class="w-4 h-4 text-foreground"
-        />
-        <XMarkIcon v-else class="w-4 h-4 text-foreground-2 lg:hidden" />
-      </li>
+          :key="feature.name"
+          class="flex items-center text-body-xs"
+        >
+          <IconCheck class="w-4 h-4 text-foreground mx-2" />
+          {{ feature.name }}
+        </li>
+      </template>
     </ul>
 
     <SettingsWorkspacesBillingUpgradeDialog
@@ -72,7 +80,10 @@ import { isPaidPlan } from '@/lib/billing/helpers/types'
 import { useBillingActions } from '@/lib/billing/composables/actions'
 import { pricingPlansConfig } from '~/lib/billing/helpers/constants'
 import type { PlanFeaturesList } from '~/lib/billing/helpers/types'
-import { XMarkIcon } from '@heroicons/vue/24/outline'
+
+defineEmits<{
+  (e: 'onYearlyIntervalSelected', value: boolean): void
+}>()
 
 const props = defineProps<{
   plan: PricingPlan
@@ -88,6 +99,7 @@ const { redirectToCheckout } = useBillingActions()
 
 const features = ref(pricingPlansConfig.features)
 const isUpgradeDialogOpen = ref(false)
+const isYearlyIntervalSelected = ref(props.yearlyIntervalSelected)
 
 const canUpgradeToPlan = computed(() => {
   if (!props.currentPlan) return false
@@ -181,4 +193,11 @@ const onCtaClick = () => {
     isUpgradeDialogOpen.value = true
   }
 }
+
+watch(
+  () => props.yearlyIntervalSelected,
+  (newValue) => {
+    isYearlyIntervalSelected.value = newValue
+  }
+)
 </script>
