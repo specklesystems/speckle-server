@@ -11,7 +11,7 @@
       <div class="h-12 w-full shrink-0"></div>
       <main class="w-full h-full overflow-y-auto simple-scrollbar pt-8 pb-16">
         <div class="container mx-auto px-6 md:px-12">
-          <WorkspaceWizard />
+          <WorkspaceWizard :workspace-id="workspaceId" />
         </div>
       </main>
     </div>
