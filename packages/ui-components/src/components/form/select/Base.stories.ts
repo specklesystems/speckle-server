@@ -147,6 +147,15 @@ export const WithLabelAndHelp: StoryType = {
   }
 }
 
+export const WithTooltip: StoryType = {
+  ...Default,
+  args: {
+    ...Default.args,
+    showLabel: true,
+    tooltipText: 'Hi, im a tooltip'
+  }
+}
+
 export const Tinted: StoryType = {
   ...Default,
   args: {

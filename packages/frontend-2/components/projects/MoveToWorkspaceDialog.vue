@@ -3,32 +3,22 @@
     <template #header>Move project to workspace</template>
     <div class="flex flex-col space-y-4">
       <template v-if="!workspace">
-        <template v-if="!isCreatingWorkspace">
-          <ProjectsWorkspaceSelect
-            v-if="hasWorkspaces"
-            v-model="selectedWorkspace"
-            :items="workspaces"
-            :disabled-roles="[Roles.Workspace.Member, Roles.Workspace.Guest]"
-            disabled-item-tooltip="Only workspace admins can move projects into a workspace."
-            label="Select a workspace"
-            help="Once a project is moved to a workspace, it cannot be moved out from it."
-            show-label
-          />
-          <div v-else class="flex flex-col gap-y-2">
-            <FormButton color="outline" @click="isCreatingWorkspace = true">
-              New workspace
-            </FormButton>
-            <p class="text-body-2xs text-foreground-2">
-              Once a project is moved to a workspace, it cannot be moved out from it.
-            </p>
-          </div>
-        </template>
-        <ProjectsNewWorkspace
-          v-else
-          mixpanel-event-source="move-to-workspace-modal"
-          @cancel="isCreatingWorkspace = false"
-          @workspace-created="onWorkspaceCreated"
+        <ProjectsWorkspaceSelect
+          v-if="hasWorkspaces"
+          v-model="selectedWorkspace"
+          :items="workspaces"
+          :disabled-roles="[Roles.Workspace.Member, Roles.Workspace.Guest]"
+          disabled-item-tooltip="Only workspace admins can move projects into a workspace."
+          label="Select a workspace"
+          help="Once a project is moved to a workspace, it cannot be moved out from it."
+          show-label
         />
+        <div v-else class="flex flex-col gap-y-2">
+          <p class="text-body-xs text-foreground font-medium">
+            You're not a member of any workspaces.
+          </p>
+          <FormButton :to="workspacesRoute">Learn about workspaces</FormButton>
+        </div>
       </template>
 
       <div v-if="project && (selectedWorkspace || workspace)" class="text-body-xs">
@@ -72,6 +62,7 @@ import { useQuery } from '@vue/apollo-composable'
 import { type LayoutDialogButton } from '@speckle/ui-components'
 import { useMoveProjectToWorkspace } from '~/lib/projects/composables/projectManagement'
 import { Roles } from '@speckle/shared'
+import { workspacesRoute } from '~/lib/common/helpers/route'
 
 graphql(`
   fragment ProjectsMoveToWorkspaceDialog_Workspace on Workspace {
@@ -120,7 +111,6 @@ const { result } = useQuery(projectWorkspaceSelectQuery, null, () => ({
 const moveProject = useMoveProjectToWorkspace()
 
 const selectedWorkspace = ref<ProjectsMoveToWorkspaceDialog_WorkspaceFragment>()
-const isCreatingWorkspace = ref<boolean>(false)
 
 const workspaces = computed(() => result.value?.activeUser?.workspaces.items ?? [])
 const hasWorkspaces = computed(() => workspaces.value.length > 0)
@@ -131,48 +121,52 @@ const versionsText = computed(() =>
   props.project.versions.totalCount === 1 ? 'version' : 'versions'
 )
 const dialogButtons = computed<LayoutDialogButton[]>(() => {
-  if (isCreatingWorkspace.value) return []
-
-  return [
-    {
-      text: 'Cancel',
-      props: { color: 'outline' },
-      onClick: () => {
-        open.value = false
-      }
-    },
-    {
-      text: 'Move',
-      props: {
-        color: 'primary',
-        disabled: !selectedWorkspace.value && !props.workspace
-      },
-      onClick: () => {
-        if (props.project && (selectedWorkspace.value || props.workspace)) {
-          const workspaceId = (selectedWorkspace.value?.id ||
-            props.workspace?.id) as string
-          const workspaceName =
-            selectedWorkspace.value?.name || (props.workspace?.name as string)
-
-          moveProject({
-            projectId: props.project.id,
-            workspaceId,
-            workspaceName,
-            eventSource: props.eventSource
-          })
-
-          open.value = false
+  return hasWorkspaces.value
+    ? [
+        {
+          text: 'Cancel',
+          props: { color: 'outline' },
+          onClick: () => {
+            open.value = false
+          }
+        },
+        {
+          text: 'Move',
+          props: {
+            color: 'primary',
+            disabled: !selectedWorkspace.value && !props.workspace
+          },
+          onClick: () => onMoveProject()
         }
-      }
-    }
-  ]
+      ]
+    : [
+        {
+          text: 'Close',
+          props: { color: 'outline' },
+          onClick: () => {
+            open.value = false
+          }
+        }
+      ]
 })
 
-const onWorkspaceCreated = (
-  workspace: ProjectsMoveToWorkspaceDialog_WorkspaceFragment
-) => {
-  isCreatingWorkspace.value = false
-  selectedWorkspace.value = workspace
+const onMoveProject = async () => {
+  const workspaceId = selectedWorkspace.value?.id ?? props.workspace?.id
+  const workspaceName = selectedWorkspace.value?.name ?? props.workspace?.name
+
+  if (workspaceId && workspaceName) {
+    try {
+      await moveProject({
+        projectId: props.project.id,
+        workspaceId,
+        workspaceName,
+        eventSource: props.eventSource
+      })
+      open.value = false
+    } catch {
+      // Do nothing on error, composable already shows notification
+    }
+  }
 }
 
 watch(

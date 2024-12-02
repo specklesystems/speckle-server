@@ -551,10 +551,17 @@ extend type Subscription {
     workspaceId: String
     workspaceSlug: String
   ): WorkspaceProjectsUpdatedMessage!
+    @hasServerRole(role: SERVER_GUEST)
+    @hasScopes(scopes: ["workspace:read", "streams:read"])
 
   """
   Track updates to a specific workspace.
   Either slug or id must be set.
   """
-  workspaceUpdated(workspaceId: String, workspaceSlug: String): WorkspaceUpdatedMessage!
+  workspaceUpdated(
+    workspaceId: String
+    workspaceSlug: String
+  ): WorkspaceUpdatedMessage!
+    @hasServerRole(role: SERVER_GUEST)
+    @hasScope(scope: "workspace:read")
 }

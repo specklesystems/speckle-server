@@ -101,7 +101,7 @@ const documents = {
     "\n  fragment ProjectsNewWorkspace_Workspace on Workspace {\n    id\n    name\n    defaultLogoIndex\n    logo\n    description\n  }\n": types.ProjectsNewWorkspace_WorkspaceFragmentDoc,
     "\n  fragment ProjectsWorkspaceSelect_Workspace on Workspace {\n    id\n    role\n    name\n    defaultLogoIndex\n    logo\n  }\n": types.ProjectsWorkspaceSelect_WorkspaceFragmentDoc,
     "\n  fragment ProjectsInviteBanner on PendingStreamCollaborator {\n    id\n    invitedBy {\n      ...LimitedUserAvatar\n    }\n    projectId\n    projectName\n    token\n    user {\n      id\n    }\n  }\n": types.ProjectsInviteBannerFragmentDoc,
-    "\n  fragment SettingsDialog_Workspace on Workspace {\n    ...WorkspaceAvatar_Workspace\n    id\n    slug\n    role\n    name\n    plan {\n      status\n    }\n  }\n": types.SettingsDialog_WorkspaceFragmentDoc,
+    "\n  fragment SettingsDialog_Workspace on Workspace {\n    ...WorkspaceAvatar_Workspace\n    ...SettingsMenu_Workspace\n    id\n    slug\n    role\n    name\n    plan {\n      status\n    }\n  }\n": types.SettingsDialog_WorkspaceFragmentDoc,
     "\n  fragment SettingsDialog_User on User {\n    id\n    workspaces {\n      items {\n        ...SettingsDialog_Workspace\n      }\n    }\n  }\n": types.SettingsDialog_UserFragmentDoc,
     "\n  fragment SettingsServerProjects_ProjectCollection on ProjectCollection {\n    totalCount\n    items {\n      ...SettingsSharedProjects_Project\n    }\n  }\n": types.SettingsServerProjects_ProjectCollectionFragmentDoc,
     "\n  query SettingsServerRegions {\n    serverInfo {\n      multiRegion {\n        regions {\n          id\n          ...SettingsServerRegionsTable_ServerRegionItem\n        }\n        availableKeys\n      }\n    }\n  }\n": types.SettingsServerRegionsDocument,
@@ -116,7 +116,7 @@ const documents = {
     "\n  fragment SettingsUserProfileDeleteAccount_User on User {\n    id\n    email\n  }\n": types.SettingsUserProfileDeleteAccount_UserFragmentDoc,
     "\n  fragment SettingsUserProfileDetails_User on User {\n    id\n    name\n    company\n    ...UserProfileEditDialogAvatar_User\n  }\n": types.SettingsUserProfileDetails_UserFragmentDoc,
     "\n  fragment UserProfileEditDialogAvatar_User on User {\n    id\n    avatar\n    ...ActiveUserAvatar\n  }\n": types.UserProfileEditDialogAvatar_UserFragmentDoc,
-    "\n  fragment SettingsWorkspacesBilling_Workspace on Workspace {\n    ...BillingAlert_Workspace\n    id\n    role\n    plan {\n      ...SettingsWorkspacesBillingPricingTable_WorkspacePlan\n      name\n      status\n    }\n    subscription {\n      billingInterval\n      currentBillingCycleEnd\n    }\n    team {\n      items {\n        id\n        role\n      }\n    }\n  }\n": types.SettingsWorkspacesBilling_WorkspaceFragmentDoc,
+    "\n  fragment SettingsWorkspacesBilling_Workspace on Workspace {\n    ...BillingAlert_Workspace\n    id\n    role\n    plan {\n      name\n      status\n    }\n    subscription {\n      billingInterval\n      currentBillingCycleEnd\n    }\n    team {\n      items {\n        id\n        role\n      }\n    }\n  }\n": types.SettingsWorkspacesBilling_WorkspaceFragmentDoc,
     "\n  fragment SettingsWorkspacesGeneral_Workspace on Workspace {\n    ...SettingsWorkspacesGeneralEditAvatar_Workspace\n    ...SettingsWorkspaceGeneralDeleteDialog_Workspace\n    ...SettingsWorkspacesGeneralEditSlugDialog_Workspace\n    id\n    name\n    slug\n    description\n    logo\n    role\n    defaultProjectRole\n    plan {\n      status\n      name\n    }\n  }\n": types.SettingsWorkspacesGeneral_WorkspaceFragmentDoc,
     "\n  fragment SettingsWorkspaceGeneralDeleteDialog_Workspace on Workspace {\n    id\n    name\n  }\n": types.SettingsWorkspaceGeneralDeleteDialog_WorkspaceFragmentDoc,
     "\n  fragment SettingsWorkspacesGeneralEditAvatar_Workspace on Workspace {\n    id\n    logo\n    name\n    defaultLogoIndex\n  }\n": types.SettingsWorkspacesGeneralEditAvatar_WorkspaceFragmentDoc,
@@ -126,7 +126,6 @@ const documents = {
     "\n  fragment SettingsWorkspacesRegions_Workspace on Workspace {\n    id\n    role\n    defaultRegion {\n      id\n      ...SettingsWorkspacesRegionsSelect_ServerRegionItem\n    }\n    hasAccessToMultiRegion: hasAccessToFeature(\n      featureName: workspaceDataRegionSpecificity\n    )\n  }\n": types.SettingsWorkspacesRegions_WorkspaceFragmentDoc,
     "\n  fragment SettingsWorkspacesRegions_ServerInfo on ServerInfo {\n    multiRegion {\n      regions {\n        id\n        ...SettingsWorkspacesRegionsSelect_ServerRegionItem\n      }\n    }\n  }\n": types.SettingsWorkspacesRegions_ServerInfoFragmentDoc,
     "\n  fragment SettingsWorkspacesSecurity_Workspace on Workspace {\n    id\n    slug\n    domains {\n      id\n      domain\n      ...SettingsWorkspacesSecurityDomainRemoveDialog_WorkspaceDomain\n    }\n    ...SettingsWorkspacesSecuritySsoWrapper_Workspace\n    domainBasedMembershipProtectionEnabled\n    discoverabilityEnabled\n  }\n\n  fragment SettingsWorkspacesSecurity_User on User {\n    id\n    emails {\n      id\n      email\n      verified\n    }\n  }\n": types.SettingsWorkspacesSecurity_WorkspaceFragmentDoc,
-    "\n  fragment SettingsWorkspacesBillingPricingTable_WorkspacePlan on WorkspacePlan {\n    name\n    status\n    createdAt\n  }\n": types.SettingsWorkspacesBillingPricingTable_WorkspacePlanFragmentDoc,
     "\n  fragment SettingsWorkspacesMembersGuestsTable_WorkspaceCollaborator on WorkspaceCollaborator {\n    id\n    role\n    user {\n      id\n      avatar\n      name\n      company\n      verified\n    }\n    projectRoles {\n      role\n      project {\n        id\n        name\n      }\n    }\n  }\n": types.SettingsWorkspacesMembersGuestsTable_WorkspaceCollaboratorFragmentDoc,
     "\n  fragment SettingsWorkspacesMembersGuestsTable_Workspace on Workspace {\n    id\n    ...SettingsWorkspacesMembersTableHeader_Workspace\n    team {\n      items {\n        id\n        ...SettingsWorkspacesMembersGuestsTable_WorkspaceCollaborator\n      }\n    }\n  }\n": types.SettingsWorkspacesMembersGuestsTable_WorkspaceFragmentDoc,
     "\n  fragment SettingsWorkspacesMembersInvitesTable_PendingWorkspaceCollaborator on PendingWorkspaceCollaborator {\n    id\n    inviteId\n    role\n    title\n    updatedAt\n    user {\n      id\n      ...LimitedUserAvatar\n    }\n    invitedBy {\n      id\n      ...LimitedUserAvatar\n    }\n  }\n": types.SettingsWorkspacesMembersInvitesTable_PendingWorkspaceCollaboratorFragmentDoc,
@@ -286,6 +285,7 @@ const documents = {
     "\n  query InvitesCount {\n    admin {\n      inviteList {\n        totalCount\n      }\n    }\n  }\n": types.InvitesCountDocument,
     "\n  mutation InviteServerUser($input: [ServerInviteCreateInput!]!) {\n    serverInviteBatchCreate(input: $input)\n  }\n": types.InviteServerUserDocument,
     "\n                      fragment AddDomainWorkspace on Workspace {\n                        slug\n                      }\n                    ": types.AddDomainWorkspaceFragmentDoc,
+    "\n  fragment SettingsMenu_Workspace on Workspace {\n    id\n    sso {\n      provider {\n        id\n      }\n      session {\n        validUntil\n      }\n    }\n  }\n": types.SettingsMenu_WorkspaceFragmentDoc,
     "\n  mutation SettingsUpdateWorkspace($input: WorkspaceUpdateInput!) {\n    workspaceMutations {\n      update(input: $input) {\n        ...SettingsWorkspacesGeneral_Workspace\n      }\n    }\n  }\n": types.SettingsUpdateWorkspaceDocument,
     "\n  mutation SettingsCreateUserEmail($input: CreateUserEmailInput!) {\n    activeUserMutations {\n      emailMutations {\n        create(input: $input) {\n          ...SettingsUserEmails_User\n        }\n      }\n    }\n  }\n": types.SettingsCreateUserEmailDocument,
     "\n  mutation SettingsDeleteUserEmail($input: DeleteUserEmailInput!) {\n    activeUserMutations {\n      emailMutations {\n        delete(input: $input) {\n          ...SettingsUserEmails_User\n        }\n      }\n    }\n  }\n": types.SettingsDeleteUserEmailDocument,
@@ -736,7 +736,7 @@ export function graphql(source: "\n  fragment ProjectsInviteBanner on PendingStr
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment SettingsDialog_Workspace on Workspace {\n    ...WorkspaceAvatar_Workspace\n    id\n    slug\n    role\n    name\n    plan {\n      status\n    }\n  }\n"): (typeof documents)["\n  fragment SettingsDialog_Workspace on Workspace {\n    ...WorkspaceAvatar_Workspace\n    id\n    slug\n    role\n    name\n    plan {\n      status\n    }\n  }\n"];
+export function graphql(source: "\n  fragment SettingsDialog_Workspace on Workspace {\n    ...WorkspaceAvatar_Workspace\n    ...SettingsMenu_Workspace\n    id\n    slug\n    role\n    name\n    plan {\n      status\n    }\n  }\n"): (typeof documents)["\n  fragment SettingsDialog_Workspace on Workspace {\n    ...WorkspaceAvatar_Workspace\n    ...SettingsMenu_Workspace\n    id\n    slug\n    role\n    name\n    plan {\n      status\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -796,7 +796,7 @@ export function graphql(source: "\n  fragment UserProfileEditDialogAvatar_User o
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment SettingsWorkspacesBilling_Workspace on Workspace {\n    ...BillingAlert_Workspace\n    id\n    role\n    plan {\n      ...SettingsWorkspacesBillingPricingTable_WorkspacePlan\n      name\n      status\n    }\n    subscription {\n      billingInterval\n      currentBillingCycleEnd\n    }\n    team {\n      items {\n        id\n        role\n      }\n    }\n  }\n"): (typeof documents)["\n  fragment SettingsWorkspacesBilling_Workspace on Workspace {\n    ...BillingAlert_Workspace\n    id\n    role\n    plan {\n      ...SettingsWorkspacesBillingPricingTable_WorkspacePlan\n      name\n      status\n    }\n    subscription {\n      billingInterval\n      currentBillingCycleEnd\n    }\n    team {\n      items {\n        id\n        role\n      }\n    }\n  }\n"];
+export function graphql(source: "\n  fragment SettingsWorkspacesBilling_Workspace on Workspace {\n    ...BillingAlert_Workspace\n    id\n    role\n    plan {\n      name\n      status\n    }\n    subscription {\n      billingInterval\n      currentBillingCycleEnd\n    }\n    team {\n      items {\n        id\n        role\n      }\n    }\n  }\n"): (typeof documents)["\n  fragment SettingsWorkspacesBilling_Workspace on Workspace {\n    ...BillingAlert_Workspace\n    id\n    role\n    plan {\n      name\n      status\n    }\n    subscription {\n      billingInterval\n      currentBillingCycleEnd\n    }\n    team {\n      items {\n        id\n        role\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -833,10 +833,6 @@ export function graphql(source: "\n  fragment SettingsWorkspacesRegions_ServerIn
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  fragment SettingsWorkspacesSecurity_Workspace on Workspace {\n    id\n    slug\n    domains {\n      id\n      domain\n      ...SettingsWorkspacesSecurityDomainRemoveDialog_WorkspaceDomain\n    }\n    ...SettingsWorkspacesSecuritySsoWrapper_Workspace\n    domainBasedMembershipProtectionEnabled\n    discoverabilityEnabled\n  }\n\n  fragment SettingsWorkspacesSecurity_User on User {\n    id\n    emails {\n      id\n      email\n      verified\n    }\n  }\n"): (typeof documents)["\n  fragment SettingsWorkspacesSecurity_Workspace on Workspace {\n    id\n    slug\n    domains {\n      id\n      domain\n      ...SettingsWorkspacesSecurityDomainRemoveDialog_WorkspaceDomain\n    }\n    ...SettingsWorkspacesSecuritySsoWrapper_Workspace\n    domainBasedMembershipProtectionEnabled\n    discoverabilityEnabled\n  }\n\n  fragment SettingsWorkspacesSecurity_User on User {\n    id\n    emails {\n      id\n      email\n      verified\n    }\n  }\n"];
-/**
- * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function graphql(source: "\n  fragment SettingsWorkspacesBillingPricingTable_WorkspacePlan on WorkspacePlan {\n    name\n    status\n    createdAt\n  }\n"): (typeof documents)["\n  fragment SettingsWorkspacesBillingPricingTable_WorkspacePlan on WorkspacePlan {\n    name\n    status\n    createdAt\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -1473,6 +1469,10 @@ export function graphql(source: "\n  mutation InviteServerUser($input: [ServerIn
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n                      fragment AddDomainWorkspace on Workspace {\n                        slug\n                      }\n                    "): (typeof documents)["\n                      fragment AddDomainWorkspace on Workspace {\n                        slug\n                      }\n                    "];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  fragment SettingsMenu_Workspace on Workspace {\n    id\n    sso {\n      provider {\n        id\n      }\n      session {\n        validUntil\n      }\n    }\n  }\n"): (typeof documents)["\n  fragment SettingsMenu_Workspace on Workspace {\n    id\n    sso {\n      provider {\n        id\n      }\n      session {\n        validUntil\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
