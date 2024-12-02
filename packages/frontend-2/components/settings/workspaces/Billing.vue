@@ -18,7 +18,7 @@
             >
               <div class="p-5 pt-4 flex flex-col gap-y-1">
                 <h3 class="text-body-xs text-foreground-2 pb-2">
-                  {{ isTrialPeriod ? 'Trial plan' : 'Current plan' }}
+                  {{ statusIsTrial ? 'Trial plan' : 'Current plan' }}
                 </h3>
                 <div class="flex gap-x-2">
                   <p class="text-heading-lg text-foreground">
@@ -28,7 +28,7 @@
                     </span>
                   </p>
                   <div>
-                    <CommonBadge v-if="isTrialPeriod" rounded>TRIAL</CommonBadge>
+                    <CommonBadge v-if="statusIsTrial" rounded>TRIAL</CommonBadge>
                   </div>
                 </div>
                 <p v-if="isPurchasablePlan" class="text-body-xs text-foreground-2">
@@ -43,14 +43,14 @@
               <div class="p-5 pt-4 flex flex-col gap-y-1">
                 <h3 class="text-body-xs text-foreground-2 pb-2">
                   {{
-                    isTrialPeriod
+                    statusIsTrial
                       ? 'Expected bill'
                       : subscription?.billingInterval === BillingInterval.Yearly
                       ? 'Yearly bill'
                       : 'Monthly bill'
                   }}
                 </h3>
-                <template v-if="isTrialPeriod">
+                <template v-if="statusIsTrial">
                   <p class="text-heading-lg text-foreground inline-block">
                     {{ billValue }}
                   </p>
@@ -74,7 +74,7 @@
               <div class="p-5 pt-4 flex flex-col gap-y-1">
                 <h3 class="text-body-xs text-foreground-2 pb-2">
                   {{
-                    isTrialPeriod && isPurchasablePlan
+                    statusIsTrial && isPurchasablePlan
                       ? 'First payment due'
                       : 'Next payment due'
                   }}
@@ -116,8 +116,17 @@
             :current-plan="currentPlan"
             :active-billing-interval="subscription?.billingInterval"
             :is-admin="isAdmin"
+            @on-plan-selected="onPlanSelected"
           />
         </div>
+
+        <SettingsWorkspacesBillingUpgradeDialog
+          v-if="selectedPlanName && selectedPlanCycle && workspaceId"
+          v-model:open="isUpgradeDialogOpen"
+          :plan="selectedPlanName"
+          :billing-interval="selectedPlanCycle"
+          :workspace-id="workspaceId"
+        />
       </template>
       <template v-else>Coming soon</template>
     </div>
@@ -133,12 +142,14 @@ import { useIsBillingIntegrationEnabled } from '~/composables/globals'
 import {
   WorkspacePlans,
   WorkspacePlanStatuses,
-  BillingInterval
+  BillingInterval,
+  type PaidWorkspacePlans
 } from '~/lib/common/generated/gql/graphql'
 import { useBillingActions } from '~/lib/billing/composables/actions'
 import { pricingPlansConfig } from '~/lib/billing/helpers/constants'
 import { Roles } from '@speckle/shared'
 import { InformationCircleIcon } from '@heroicons/vue/24/outline'
+import { isPaidPlan } from '@/lib/billing/helpers/types'
 
 graphql(`
   fragment SettingsWorkspacesBilling_Workspace on Workspace {
@@ -177,18 +188,21 @@ const { result: workspaceResult } = useQuery(
     enabled: isBillingIntegrationEnabled
   })
 )
-const { billingPortalRedirect } = useBillingActions()
+const { billingPortalRedirect, redirectToCheckout } = useBillingActions()
 
 const seatPrices = ref({
   [WorkspacePlans.Starter]: pricingPlansConfig.plans[WorkspacePlans.Starter].cost,
   [WorkspacePlans.Plus]: pricingPlansConfig.plans[WorkspacePlans.Plus].cost,
   [WorkspacePlans.Business]: pricingPlansConfig.plans[WorkspacePlans.Business].cost
 })
+const selectedPlanName = ref<WorkspacePlans>()
+const selectedPlanCycle = ref<BillingInterval>()
+const isUpgradeDialogOpen = ref(false)
 
 const workspace = computed(() => workspaceResult.value?.workspace)
 const currentPlan = computed(() => workspace.value?.plan)
 const subscription = computed(() => workspace.value?.subscription)
-const isTrialPeriod = computed(
+const statusIsTrial = computed(
   () =>
     currentPlan.value?.status === WorkspacePlanStatuses.Trial ||
     !currentPlan.value?.status
@@ -234,7 +248,7 @@ const billValue = computed(() => {
   const guestPrice = seatPrice.value[Roles.Workspace.Guest] * guestSeatCount.value
   const memberPrice = seatPrice.value[Roles.Workspace.Member] * memberSeatCount.value
   const totalPrice = guestPrice + memberPrice
-  if (isTrialPeriod.value) return `£${totalPrice}.00`
+  if (statusIsTrial.value) return `£${totalPrice}.00`
   return `£0.00`
 })
 const billDescription = computed(() => {
@@ -255,4 +269,21 @@ const billTooltip = computed(() => {
 
   return `${memberText}${guestSeatCount.value > 0 ? `, ${guestText}` : ''}`
 })
+
+const onPlanSelected = (plan: { name: WorkspacePlans; cycle: BillingInterval }) => {
+  const { name, cycle } = plan
+  if (!isPaidPlan(name) || !props.workspaceId) return
+
+  if (statusIsTrial.value) {
+    redirectToCheckout({
+      plan: name as unknown as PaidWorkspacePlans,
+      cycle,
+      workspaceId: props.workspaceId
+    })
+  } else {
+    selectedPlanName.value = name
+    selectedPlanCycle.value = cycle
+    isUpgradeDialogOpen.value = true
+  }
+}
 </script>

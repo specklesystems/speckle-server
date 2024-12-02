@@ -7,14 +7,23 @@
       :yearly-interval-selected="isYearlySelected"
       v-bind="$props"
       @on-yearly-interval-selected="onYearlyIntervalSelected"
+      @on-plan-selected="onPlanSelected"
     />
   </div>
 </template>
 
 <script setup lang="ts">
-import { type WorkspacePlan, BillingInterval } from '~/lib/common/generated/gql/graphql'
+import {
+  type WorkspacePlan,
+  BillingInterval,
+  type WorkspacePlans
+} from '~/lib/common/generated/gql/graphql'
 import { pricingPlansConfig } from '~/lib/billing/helpers/constants'
 import type { MaybeNullOrUndefined } from '@speckle/shared'
+
+const emit = defineEmits<{
+  (e: 'onPlanSelected', value: { name: WorkspacePlans; cycle: BillingInterval }): void
+}>()
 
 const props = defineProps<{
   currentPlan?: MaybeNullOrUndefined<WorkspacePlan>
@@ -26,6 +35,17 @@ const props = defineProps<{
 const plans = ref(pricingPlansConfig.plans)
 const isYearlySelected = ref(false)
 
+const onYearlyIntervalSelected = (newValue: boolean) => {
+  isYearlySelected.value = newValue
+}
+
+const onPlanSelected = (value: WorkspacePlans) => {
+  emit('onPlanSelected', {
+    name: value,
+    cycle: isYearlySelected.value ? BillingInterval.Yearly : BillingInterval.Monthly
+  })
+}
+
 watch(
   () => props.activeBillingInterval,
   (newVal) => {
@@ -33,8 +53,4 @@ watch(
   },
   { immediate: true }
 )
-
-const onYearlyIntervalSelected = (newValue: boolean) => {
-  isYearlySelected.value = newValue
-}
 </script>

@@ -21,7 +21,7 @@
         v-model="isYearlyIntervalSelected"
         :show-label="false"
         name="domain-protection"
-        :disabled="!isAdmin"
+        :disabled="!toggleEnabled"
         @update:model-value="(newValue) => $emit('onYearlyIntervalSelected', newValue)"
       />
       <span class="text-body-2xs">Billed annually</span>
@@ -32,7 +32,7 @@
     <div v-if="workspaceId" class="w-full">
       <FormButton
         :color="buttonColor"
-        :disabled="!buttonEnabled"
+        :disabled="!isSelectable"
         full-width
         @click="onCtaClick"
       >
@@ -71,18 +71,16 @@ import {
   type WorkspacePlan,
   WorkspacePlanStatuses,
   WorkspacePlans,
-  BillingInterval,
-  type PaidWorkspacePlans
+  BillingInterval
 } from '~/lib/common/generated/gql/graphql'
 import type { MaybeNullOrUndefined } from '@speckle/shared'
 import { startCase } from 'lodash'
-import { isPaidPlan } from '@/lib/billing/helpers/types'
-import { useBillingActions } from '@/lib/billing/composables/actions'
 import { pricingPlansConfig } from '~/lib/billing/helpers/constants'
 import type { PlanFeaturesList } from '~/lib/billing/helpers/types'
 
-defineEmits<{
+const emit = defineEmits<{
   (e: 'onYearlyIntervalSelected', value: boolean): void
+  (e: 'onPlanSelected', value: WorkspacePlans): void
 }>()
 
 const props = defineProps<{
@@ -94,8 +92,6 @@ const props = defineProps<{
   activeBillingInterval?: BillingInterval
   yearlyIntervalSelected: boolean
 }>()
-
-const { redirectToCheckout } = useBillingActions()
 
 const features = ref(pricingPlansConfig.features)
 const isUpgradeDialogOpen = ref(false)
@@ -114,11 +110,11 @@ const canUpgradeToPlan = computed(() => {
 
   return allowedUpgrades[props.currentPlan.name].includes(props.plan.name)
 })
-const hasTrialPlan = computed(
+const statusIsTrial = computed(
   () => props.currentPlan?.status === WorkspacePlanStatuses.Trial || !props.currentPlan
 )
 const buttonColor = computed(() => {
-  if (hasTrialPlan.value) {
+  if (statusIsTrial.value) {
     return props.plan.name === WorkspacePlans.Starter ? 'primary' : 'outline'
   }
   return 'outline'
@@ -128,9 +124,9 @@ const isMatchingInterval = computed(
     props.activeBillingInterval ===
     (props.yearlyIntervalSelected ? BillingInterval.Yearly : BillingInterval.Monthly)
 )
-const buttonEnabled = computed(() => {
+const isSelectable = computed(() => {
   // Always enable buttons during trial
-  if (hasTrialPlan.value) return true
+  if (statusIsTrial.value) return true
 
   // Disable if user is already on this plan with same billing interval
   if (isMatchingInterval.value && props.currentPlan?.name === props.plan.name)
@@ -153,9 +149,14 @@ const buttonEnabled = computed(() => {
   // Allow upgrades to higher tier plans
   return canUpgradeToPlan.value
 })
+const toggleEnabled = computed(() => {
+  return isSelectable.value && statusIsTrial.value
+    ? true
+    : canUpgradeToPlan.value && props.currentPlan?.name !== props.plan.name
+})
 const buttonText = computed(() => {
   // Trial plan case
-  if (hasTrialPlan.value) {
+  if (statusIsTrial.value) {
     return `Subscribe to ${startCase(props.plan.name)}`
   }
   // Current plan case
@@ -177,21 +178,7 @@ const buttonText = computed(() => {
 })
 
 const onCtaClick = () => {
-  isUpgradeDialogOpen.value = true
-
-  if (!isPaidPlan(props.plan.name) || !props.workspaceId) return
-
-  if (hasTrialPlan.value) {
-    redirectToCheckout({
-      plan: props.plan.name as unknown as PaidWorkspacePlans,
-      cycle: props.yearlyIntervalSelected
-        ? BillingInterval.Yearly
-        : BillingInterval.Monthly,
-      workspaceId: props.workspaceId
-    })
-  } else {
-    isUpgradeDialogOpen.value = true
-  }
+  emit('onPlanSelected', props.plan.name)
 }
 
 watch(
