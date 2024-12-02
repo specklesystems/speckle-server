@@ -69,7 +69,7 @@ const { result, loading } = useQuery(
 )
 const automation = computed(() => result.value?.project.automation || null)
 const project = computed(() => result.value?.project)
-const workspaceId = computed(() => project.value?.workspaceId)
+const workspaceId = computed(() => project.value?.workspaceId ?? undefined)
 const isEditable = computed(() => {
   const allowedRoles: string[] = [Roles.Stream.Owner]
   return allowedRoles.includes(result.value?.project.role ?? '')
