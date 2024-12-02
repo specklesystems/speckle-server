@@ -1,15 +1,23 @@
-import { ExtendedComment, getComment } from '@/modules/comments/repositories/comments'
+import { db } from '@/db/knex'
+import { GetComment } from '@/modules/comments/domain/operations'
+import { ExtendedComment } from '@/modules/comments/domain/types'
+import { getCommentFactory } from '@/modules/comments/repositories/comments'
+import { GetServerInfo } from '@/modules/core/domain/server/operations'
+import { GetStream } from '@/modules/core/domain/streams/operations'
+import { StreamWithOptionalRole } from '@/modules/core/domain/streams/types'
+import { GetUser } from '@/modules/core/domain/users/operations'
 import { Roles } from '@/modules/core/helpers/mainConstants'
 import { getCommentRoute } from '@/modules/core/helpers/routeHelper'
 import { ServerInfo } from '@/modules/core/helpers/types'
-import { getStream, StreamWithOptionalRole } from '@/modules/core/repositories/streams'
-import { getUser, UserWithOptionalRole } from '@/modules/core/repositories/users'
-import { getServerInfo } from '@/modules/core/services/generic'
+import { getServerInfoFactory } from '@/modules/core/repositories/server'
+import { getStreamFactory } from '@/modules/core/repositories/streams'
+import { getUserFactory, UserWithOptionalRole } from '@/modules/core/repositories/users'
 import {
   EmailTemplateParams,
   renderEmail
 } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
+import { getProjectDbClient } from '@/modules/multiregion/dbSelector'
 import { NotificationValidationError } from '@/modules/notifications/errors'
 import {
   NotificationHandler,
@@ -17,6 +25,7 @@ import {
 } from '@/modules/notifications/helpers/types'
 import { getBaseUrl } from '@/modules/shared/helpers/envHelper'
 import { MaybeFalsy, Nullable } from '@/modules/shared/helpers/typeHelper'
+import { Knex } from 'knex'
 
 type ValidatedNotificationState = {
   msg: MentionedInCommentMessage
@@ -159,10 +168,10 @@ function buildEmailTemplateParams(
  */
 const mentionedInCommentHandlerFactory =
   (deps: {
-    getUser: typeof getUser
-    getStream: typeof getStream
-    getComment: typeof getComment
-    getServerInfo: typeof getServerInfo
+    getUser: GetUser
+    getStream: GetStream
+    getCommentResolver: (deps: { projectDb: Knex }) => GetComment
+    getServerInfo: GetServerInfo
     renderEmail: typeof renderEmail
     sendEmail: typeof sendEmail
   }): NotificationHandler<MentionedInCommentMessage> =>
@@ -173,14 +182,16 @@ const mentionedInCommentHandlerFactory =
     } = msg
 
     const isCommentAndThreadTheSame = threadId === commentId
+    const projectDb = await getProjectDbClient({ projectId: streamId })
+    const getComment = deps.getCommentResolver({ projectDb })
 
     const [targetUser, author, stream, threadComment, comment, serverInfo] =
       await Promise.all([
         deps.getUser(targetUserId),
         deps.getUser(authorId),
         deps.getStream({ streamId }),
-        deps.getComment({ id: threadId }),
-        isCommentAndThreadTheSame ? null : deps.getComment({ id: commentId }),
+        getComment({ id: threadId }),
+        isCommentAndThreadTheSame ? null : getComment({ id: commentId }),
         deps.getServerInfo()
       ])
 
@@ -216,10 +227,10 @@ const mentionedInCommentHandlerFactory =
  */
 const handler: NotificationHandler<MentionedInCommentMessage> = async (...args) => {
   const mentionedInCommentHandler = mentionedInCommentHandlerFactory({
-    getUser,
-    getStream,
-    getComment,
-    getServerInfo,
+    getUser: getUserFactory({ db }),
+    getStream: getStreamFactory({ db }),
+    getCommentResolver: ({ projectDb }) => getCommentFactory({ db: projectDb }),
+    getServerInfo: getServerInfoFactory({ db }),
     renderEmail,
     sendEmail
   })

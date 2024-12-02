@@ -1,5 +1,4 @@
 import { crossServerSyncLogger, Logger } from '@/logging/logging'
-import { getUser } from '@/modules/core/repositories/users'
 import { CrossServerProjectSyncError } from '@/modules/cross-server-sync/errors'
 import {
   createApolloClient,
@@ -10,13 +9,16 @@ import {
 import { CrossSyncProjectMetadataQuery } from '@/modules/cross-server-sync/graph/generated/graphql'
 import { omit } from 'lodash'
 import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
-import { createStreamReturnRecord } from '@/modules/core/services/streams/management'
-import { createBranchAndNotify } from '@/modules/core/services/branch/management'
-import { getStreamBranchByName } from '@/modules/core/repositories/branches'
 import {
   DownloadCommit,
   DownloadProject
 } from '@/modules/cross-server-sync/domain/operations'
+import {
+  CreateBranchAndNotify,
+  GetStreamBranchByName
+} from '@/modules/core/domain/branches/operations'
+import { CreateProject } from '@/modules/core/domain/projects/operations'
+import { GetUser } from '@/modules/core/domain/users/operations'
 
 type ProjectMetadata = Awaited<ReturnType<typeof getProjectMetadata>>
 
@@ -46,7 +48,7 @@ const projectMetadataQuery = gql`
 `
 
 type GetLocalResourcesDeps = {
-  getUser: typeof getUser
+  getUser: GetUser
 }
 
 const getLocalResourcesFactory =
@@ -112,8 +114,8 @@ const getProjectMetadata = async (params: {
 }
 
 type EnsureBranchDeps = {
-  getStreamBranchByName: typeof getStreamBranchByName
-  createBranchAndNotify: typeof createBranchAndNotify
+  getStreamBranchByName: GetStreamBranchByName
+  createBranchAndNotify: CreateBranchAndNotify
 }
 
 const ensureBranchFactory =
@@ -191,7 +193,7 @@ const importVersionsFactory =
   }
 
 type DownloadProjectDeps = {
-  createStreamReturnRecord: typeof createStreamReturnRecord
+  createNewProject: CreateProject
 } & GetLocalResourcesDeps &
   ImportVersionsDeps
 
@@ -201,7 +203,7 @@ type DownloadProjectDeps = {
 export const downloadProjectFactory =
   (deps: DownloadProjectDeps): DownloadProject =>
   async (params, options) => {
-    const { projectUrl, authorId, syncComments, token } = params
+    const { projectUrl, authorId, syncComments, token, workspaceId, regionKey } = params
     const { logger = crossServerSyncLogger } = options || {}
 
     logger.info(`Project download started at: ${new Date().toISOString()}`)
@@ -217,9 +219,11 @@ export const downloadProjectFactory =
     })
 
     logger.debug(`Creating project locally...`)
-    const project = await deps.createStreamReturnRecord({
+    const project = await deps.createNewProject({
       ...projectInfo.projectInfo,
-      ownerId: localResources.user.id
+      workspaceId,
+      ownerId: localResources.user.id,
+      regionKey
     })
 
     await importVersionsFactory(deps)({

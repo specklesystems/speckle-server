@@ -3,7 +3,10 @@
     <Portal to="navigation">
       <HeaderNavLink :to="homeRoute" name="Dashboard" hide-chevron :separator="false" />
     </Portal>
-    <PromoBannersWrapper v-if="promoBanners.length" :banners="promoBanners" />
+    <PromoBannersWrapper
+      v-if="promoBanners && promoBanners.length"
+      :banners="promoBanners"
+    />
     <ProjectsDashboardHeader
       :projects-invites="projectsResult?.activeUser || undefined"
       :workspaces-invites="workspacesResult?.activeUser || undefined"
@@ -23,7 +26,16 @@
           </div>
         </section>
         <section>
-          <h2 class="text-heading-sm text-foreground-2">Recently updated projects</h2>
+          <div class="flex items-center justify-between">
+            <h2 class="text-heading-sm text-foreground-2">Recently updated projects</h2>
+            <FormButton
+              color="outline"
+              size="sm"
+              @click.stop="router.push(projectsRoute)"
+            >
+              View all
+            </FormButton>
+          </div>
           <div class="grid grid-cols-1 md:grid-cols-3 gap-3 pt-5">
             <template v-if="hasProjects">
               <DashboardProjectCard
@@ -41,16 +53,7 @@
           </div>
         </section>
       </div>
-      <section>
-        <h2 class="text-heading-sm text-foreground-2">News &amp; tutorials</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 pt-5">
-          <DashboardTutorialCard
-            v-for="tutorial in tutorials"
-            :key="tutorial.id"
-            :tutorial="tutorial"
-          />
-        </div>
-      </section>
+      <DashboardBlogWrapper />
     </div>
 
     <ProjectsAddDialog v-model:open="openNewProject" />
@@ -62,18 +65,19 @@ import {
   dashboardProjectsPageWorkspacesQuery
 } from '~~/lib/dashboard/graphql/queries'
 import type { QuickStartItem } from '~~/lib/dashboard/helpers/types'
-import { getResizedGhostImage } from '~~/lib/dashboard/helpers/utils'
 import { useQuery } from '@vue/apollo-composable'
 import { useMixpanel } from '~~/lib/core/composables/mp'
-import GhostContentAPI from '@tryghost/content-api'
-import { docsPageUrl, forumPageUrl, homeRoute } from '~~/lib/common/helpers/route'
+import {
+  docsPageUrl,
+  forumPageUrl,
+  homeRoute,
+  projectsRoute
+} from '~~/lib/common/helpers/route'
 import type { ManagerExtension } from '~~/lib/common/utils/downloadManager'
 import { downloadManager } from '~~/lib/common/utils/downloadManager'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import type { LayoutDialogButton } from '@speckle/ui-components'
 import type { PromoBanner } from '~/lib/promo-banners/types'
-import submitImage from '~/assets/images/banners/submit.gif'
-import earlybirdImage from '~/assets/images/banners/earlybird.gif'
 
 useHead({ title: 'Dashboard' })
 
@@ -82,7 +86,6 @@ definePageMeta({
   alias: ['/profile', '/dashboard']
 })
 
-const config = useRuntimeConfig()
 const mixpanel = useMixpanel()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
 const { result: projectsResult } = useQuery(dashboardProjectsPageQuery)
@@ -94,18 +97,10 @@ const { result: workspacesResult } = useQuery(
   })
 )
 const { triggerNotification } = useGlobalToast()
-const { data: tutorials } = await useLazyAsyncData('tutorials', fetchTutorials, {
-  server: false
-})
 const { isGuest } = useActiveUser()
+const router = useRouter()
 
 const openNewProject = ref(false)
-
-const ghostContentApi = new GhostContentAPI({
-  url: 'https://v1.speckle.systems',
-  key: config.public.ghostApiKey,
-  version: 'v5.0'
-})
 
 const quickStartItems = shallowRef<QuickStartItem[]>([
   {
@@ -155,24 +150,6 @@ const createProjectButton = shallowRef<LayoutDialogButton[]>([
 const projects = computed(() => projectsResult.value?.activeUser?.projects.items)
 const hasProjects = computed(() => (projects.value ? projects.value.length > 0 : false))
 
-async function fetchTutorials() {
-  const posts = await ghostContentApi.posts.browse({
-    limit: 8,
-    filter: 'visibility:public'
-  })
-
-  return posts
-    .filter((post) => post.url)
-    .map((post) => ({
-      id: post.id,
-      readingTime: post.reading_time,
-      publishedAt: post.published_at,
-      url: post.url,
-      title: post.title,
-      featureImage: getResizedGhostImage({ url: post.feature_image, width: 600 })
-    }))
-}
-
 const onDownloadManager = (extension: ManagerExtension) => {
   try {
     downloadManager(extension)
@@ -188,22 +165,5 @@ const onDownloadManager = (extension: ManagerExtension) => {
   }
 }
 
-const promoBanners = ref<PromoBanner[]>([
-  {
-    primaryText: 'Specklecon - Submit your proposal',
-    url: 'https://conf.speckle.systems/',
-    priority: 1,
-    expiryDate: '2024-09-02',
-    image: submitImage,
-    isBackgroundImage: true
-  },
-  {
-    primaryText: 'Specklecon - Early Bird Tickets',
-    url: 'https://conf.speckle.systems/',
-    priority: 2,
-    expiryDate: '2024-09-15',
-    image: earlybirdImage,
-    isBackgroundImage: true
-  }
-])
+const promoBanners = ref<PromoBanner[]>()
 </script>

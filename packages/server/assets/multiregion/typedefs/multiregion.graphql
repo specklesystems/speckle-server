@@ -1,0 +1,54 @@
+type ServerRegionItem {
+  id: String!
+  key: String!
+  name: String!
+  description: String
+}
+
+type ServerMultiRegionConfiguration {
+  """
+  Keys of available regions defined in the multi region config file. Used keys will
+  be filtered out from the result.
+  """
+  availableKeys: [String!]!
+    @hasServerRole(role: SERVER_ADMIN)
+    @hasScope(scope: "server:setup")
+  """
+  Regions available for project data residency
+  """
+  regions: [ServerRegionItem!]! @hasServerRole(role: SERVER_USER)
+}
+
+extend type ServerInfo {
+  """
+  Info about server regions
+  """
+  multiRegion: ServerMultiRegionConfiguration!
+}
+
+input CreateServerRegionInput {
+  key: String!
+  name: String!
+  description: String
+}
+
+input UpdateServerRegionInput {
+  key: String!
+  name: String
+  description: String
+}
+
+type ServerRegionMutations {
+  create(input: CreateServerRegionInput!): ServerRegionItem!
+  update(input: UpdateServerRegionInput!): ServerRegionItem!
+}
+
+type ServerInfoMutations {
+  multiRegion: ServerRegionMutations!
+}
+
+extend type Mutation {
+  serverInfoMutations: ServerInfoMutations!
+    @hasServerRole(role: SERVER_ADMIN)
+    @hasScope(scope: "server:setup")
+}

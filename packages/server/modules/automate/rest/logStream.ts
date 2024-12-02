@@ -1,42 +1,47 @@
 import { db } from '@/db/knex'
 import { getAutomationRunLogs } from '@/modules/automate/clients/executionEngine'
 import { ExecutionEngineFailedResponseError } from '@/modules/automate/errors/executionEngine'
-import {
-  getAutomationProjectFactory,
-  getAutomationRunWithTokenFactory
-} from '@/modules/automate/repositories/automations'
+import { getAutomationRunWithTokenFactory } from '@/modules/automate/repositories/automations'
 import { corsMiddleware } from '@/modules/core/configs/cors'
-import { getStream } from '@/modules/core/repositories/streams'
+import { getStreamFactory } from '@/modules/core/repositories/streams'
+import { getProjectDbClient } from '@/modules/multiregion/dbSelector'
 import {
-  contextRequiresStream,
+  validateRequiredStreamFactory,
   validateResourceAccess,
   validateScope,
-  validateServerRole,
-  validateStreamRole
+  validateServerRoleBuilderFactory,
+  validateStreamRoleBuilderFactory
 } from '@/modules/shared/authz'
 import { authMiddlewareCreator } from '@/modules/shared/middleware'
+import { getRolesFactory } from '@/modules/shared/repositories/roles'
 import { Roles, Scopes } from '@speckle/shared'
 import { Application } from 'express'
 
 export default (app: Application) => {
   app.get(
-    '/api/automate/automations/:automationId/runs/:runId/logs',
+    '/api/v1/projects/:streamId/automations/:automationId/runs/:runId/logs',
     corsMiddleware(),
     authMiddlewareCreator([
-      validateServerRole({ requiredRole: Roles.Server.Guest }),
+      validateServerRoleBuilderFactory({
+        getRoles: getRolesFactory({ db })
+      })({ requiredRole: Roles.Server.Guest }),
       validateScope({ requiredScope: Scopes.Streams.Read }),
-      contextRequiresStream({
-        getStream,
-        getAutomationProject: getAutomationProjectFactory({ db })
+      validateRequiredStreamFactory({
+        getStream: getStreamFactory({ db })
       }),
-      validateStreamRole({ requiredRole: Roles.Stream.Owner }),
+      validateStreamRoleBuilderFactory({ getRoles: getRolesFactory({ db }) })({
+        requiredRole: Roles.Stream.Reviewer
+      }),
       validateResourceAccess
     ]),
     async (req, res) => {
+      const projectDb = await getProjectDbClient({ projectId: req.params.streamId })
       const automationId = req.params.automationId
       const runId = req.params.runId
 
-      const getAutomationRunWithToken = getAutomationRunWithTokenFactory({ db })
+      const getAutomationRunWithToken = getAutomationRunWithTokenFactory({
+        db: projectDb
+      })
       const run = await getAutomationRunWithToken({
         automationId,
         automationRunId: runId

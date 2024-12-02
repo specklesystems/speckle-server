@@ -266,7 +266,8 @@ export const Streams = buildTableHelper(
     'updatedAt',
     'allowPublicComments',
     'isDiscoverable',
-    'workspaceId'
+    'workspaceId',
+    'regionKey'
   ],
   StreamsMeta
 )
@@ -608,6 +609,15 @@ export const UserEmails = buildTableHelper('user_emails', [
   'userId',
   'createdAt',
   'updatedAt'
+])
+
+export const UserRoles = buildTableHelper('user_roles', [
+  'name',
+  'description',
+  'resourceTarget',
+  'aclTableName',
+  'weight',
+  'public'
 ])
 
 export { knex }

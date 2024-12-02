@@ -14,39 +14,69 @@ import {
 } from '~~/lib/viewer/composables/setup'
 import { useDiffBuilderUtilities } from '~~/lib/viewer/composables/setup/diff'
 import { useTourStageState } from '~~/lib/viewer/composables/tour'
+import { Vector3, Box3 } from 'three'
 
 export function useSectionBoxUtilities() {
   const { instance } = useInjectedViewer()
   const {
     sectionBox,
-    filters: { selectedObjects }
+    sectionBoxContext: { visible, edited },
+    filters: { selectedObjects },
+    threads: {
+      openThread: { thread }
+    }
   } = useInjectedViewerInterfaceState()
 
   const isSectionBoxEnabled = computed(() => !!sectionBox.value)
-  const toggleSectionBox = () => {
-    if (isSectionBoxEnabled.value) {
-      sectionBox.value = null
-      return
-    }
+  const isSectionBoxVisible = computed(() => visible.value)
+  const isSectionBoxEdited = computed(() => edited.value)
 
+  const resolveSectionBoxFromSelection = () => {
     const objectIds = selectedObjects.value.map((o) => o.id).filter(isNonNullable)
     const box = instance.getSectionBoxFromObjects(objectIds)
     sectionBox.value = box
   }
-  const sectionBoxOn = () => {
+
+  const toggleSectionBox = () => {
     if (!isSectionBoxEnabled.value) {
-      toggleSectionBox()
+      resolveSectionBoxFromSelection()
+      return
+    }
+
+    if (isSectionBoxVisible.value) {
+      visible.value = false
+    } else {
+      visible.value = true
     }
   }
-  const sectionBoxOff = () => {
+
+  const resetSectionBox = () => {
+    const serializedSectionBox = thread.value?.viewerState?.ui.sectionBox
     sectionBox.value = null
+
+    if (serializedSectionBox) {
+      // Same logic we have in deserialization
+      sectionBox.value = new Box3(
+        new Vector3(
+          serializedSectionBox.min[0],
+          serializedSectionBox.min[1],
+          serializedSectionBox.min[2]
+        ),
+        new Vector3(
+          serializedSectionBox.max[0],
+          serializedSectionBox.max[1],
+          serializedSectionBox.max[2]
+        )
+      )
+    }
   }
 
   return {
     isSectionBoxEnabled,
+    isSectionBoxVisible,
+    isSectionBoxEdited,
     toggleSectionBox,
-    sectionBoxOn,
-    sectionBoxOff,
+    resetSectionBox,
     sectionBox
   }
 }

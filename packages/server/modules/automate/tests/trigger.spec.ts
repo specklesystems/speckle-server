@@ -52,8 +52,8 @@ import { beforeEachContext, truncateTables } from '@/test/hooks'
 import { Automate } from '@speckle/shared'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import {
-  getBranchLatestCommits,
-  getLatestStreamBranch
+  getBranchLatestCommitsFactory,
+  getLatestStreamBranchFactory
 } from '@/modules/core/repositories/branches'
 import {
   buildAutomationCreate,
@@ -75,8 +75,16 @@ import { buildDecryptor } from '@/modules/shared/utils/libsodium'
 import { mapGqlStatusToDbStatus } from '@/modules/automate/utils/automateFunctionRunStatus'
 import { db } from '@/db/knex'
 import { AutomateRunsEmitter } from '@/modules/automate/events/runs'
-import { createAppToken } from '@/modules/core/services/tokens'
-import { validateStreamAccess } from '@/modules/core/services/streams/streamAccessService'
+import { getCommitFactory } from '@/modules/core/repositories/commits'
+import { validateStreamAccessFactory } from '@/modules/core/services/streams/access'
+import { authorizeResolver } from '@/modules/shared'
+import { createAppTokenFactory } from '@/modules/core/services/tokens'
+import {
+  storeApiTokenFactory,
+  storeTokenResourceAccessDefinitionsFactory,
+  storeTokenScopesFactory,
+  storeUserServerAppTokenFactory
+} from '@/modules/core/repositories/tokens'
 
 const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
 
@@ -96,6 +104,17 @@ const getFullAutomationRevisionMetadata = getFullAutomationRevisionMetadataFacto
 })
 const updateAutomationRevision = updateAutomationRevisionFactory({ db })
 const updateAutomationRun = updateAutomationRunFactory({ db })
+const getBranchLatestCommits = getBranchLatestCommitsFactory({ db })
+const getCommit = getCommitFactory({ db })
+const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
+const createAppToken = createAppTokenFactory({
+  storeApiToken: storeApiTokenFactory({ db }),
+  storeTokenScopes: storeTokenScopesFactory({ db }),
+  storeTokenResourceAccessDefinitions: storeTokenResourceAccessDefinitionsFactory({
+    db
+  }),
+  storeUserServerAppToken: storeUserServerAppTokenFactory({ db })
+})
 
 ;(FF_AUTOMATE_MODULE_ENABLED ? describe : describe.skip)(
   'Automate triggers @automate',
@@ -147,7 +166,7 @@ const updateAutomationRun = updateAutomationRunFactory({ db })
       ])
 
       const [projectModel, newAutomation] = await Promise.all([
-        getLatestStreamBranch(testUserStream.id),
+        getLatestStreamBranchFactory({ db })(testUserStream.id),
         createAutomation({
           userId: testUser.id,
           projectId: testUserStream.id,
@@ -320,7 +339,9 @@ const updateAutomationRun = updateAutomationRunFactory({ db })
             automateRunsEmitter: AutomateRunsEmitter.emit,
             getAutomationToken,
             upsertAutomationRun,
-            getFullAutomationRevisionMetadata
+            getFullAutomationRevisionMetadata,
+            getBranchLatestCommits,
+            getCommit
           })({
             revisionId: cryptoRandomString({ length: 10 }),
             manifest: <VersionCreatedTriggerManifest>{
@@ -412,13 +433,16 @@ const updateAutomationRun = updateAutomationRunFactory({ db })
           automateRunsEmitter: AutomateRunsEmitter.emit,
           getAutomationToken,
           upsertAutomationRun,
-          getFullAutomationRevisionMetadata
+          getFullAutomationRevisionMetadata,
+          getBranchLatestCommits,
+          getCommit
         })({
           revisionId: automationRevisionId,
           manifest: <VersionCreatedTriggerManifest>{
             versionId: version.id,
             modelId: trigger.triggeringId,
-            triggerType: trigger.triggerType
+            triggerType: trigger.triggerType,
+            projectId: project.id
           },
           source: RunTriggerSource.Manual
         })
@@ -510,13 +534,16 @@ const updateAutomationRun = updateAutomationRunFactory({ db })
           automateRunsEmitter: AutomateRunsEmitter.emit,
           getAutomationToken,
           upsertAutomationRun,
-          getFullAutomationRevisionMetadata
+          getFullAutomationRevisionMetadata,
+          getBranchLatestCommits,
+          getCommit
         })({
           revisionId: automationRevisionId,
           manifest: <VersionCreatedTriggerManifest>{
             versionId: version.id,
             modelId: trigger.triggeringId,
-            triggerType: trigger.triggerType
+            triggerType: trigger.triggerType,
+            projectId: project.id
           },
           source: RunTriggerSource.Manual
         })
@@ -992,7 +1019,9 @@ const updateAutomationRun = updateAutomationRunFactory({ db })
             automateRunsEmitter: AutomateRunsEmitter.emit,
             getAutomationToken,
             upsertAutomationRun,
-            getFullAutomationRevisionMetadata
+            getFullAutomationRevisionMetadata,
+            getBranchLatestCommits,
+            getCommit
           }),
           validateStreamAccess,
           ...(overrides || {})
@@ -1228,7 +1257,8 @@ const updateAutomationRun = updateAutomationRunFactory({ db })
             status: mapGqlStatusToDbStatus(AutomateRunStatus.Succeeded),
             statusMessage: null,
             results: null,
-            contextView: null
+            contextView: null,
+            projectId: testUserStream.id
           }
 
           await expect(report(params)).to.eventually.be.rejectedWith(
@@ -1245,7 +1275,8 @@ const updateAutomationRun = updateAutomationRunFactory({ db })
             status: mapGqlStatusToDbStatus(AutomateRunStatus.Pending),
             statusMessage: null,
             results: null,
-            contextView: null
+            contextView: null,
+            projectId: testUserStream.id
           }
 
           await expect(report(params)).to.eventually.be.rejectedWith(
@@ -1287,7 +1318,8 @@ const updateAutomationRun = updateAutomationRunFactory({ db })
               status: mapGqlStatusToDbStatus(AutomateRunStatus.Succeeded),
               statusMessage: null,
               results: val as unknown as Automate.AutomateTypes.ResultsSchema,
-              contextView: null
+              contextView: null,
+              projectId: testUserStream.id
             }
 
             await expect(report(params)).to.eventually.be.rejectedWith(
@@ -1305,7 +1337,8 @@ const updateAutomationRun = updateAutomationRunFactory({ db })
             status: mapGqlStatusToDbStatus(AutomateRunStatus.Succeeded),
             statusMessage: null,
             results: null,
-            contextView: 'invalid-url'
+            contextView: 'invalid-url',
+            projectId: testUserStream.id
           }
 
           await expect(report(params)).to.eventually.be.rejectedWith(
@@ -1324,7 +1357,8 @@ const updateAutomationRun = updateAutomationRunFactory({ db })
             status: mapGqlStatusToDbStatus(AutomateRunStatus.Succeeded),
             statusMessage: null,
             results: null,
-            contextView
+            contextView,
+            projectId: testUserStream.id
           }
 
           await expect(report(params)).to.eventually.be.true

@@ -1,7 +1,6 @@
 <template>
   <div>
     <HeaderNavBar />
-    <PromoBannersWorkspace />
     <div class="h-dvh w-dvh overflow-hidden flex flex-col">
       <!-- Static Spacer to allow for absolutely positioned HeaderNavBar  -->
       <div class="h-12 w-full shrink-0"></div>

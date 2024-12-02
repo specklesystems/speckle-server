@@ -1,8 +1,9 @@
 import type { RouteLocationNormalized } from 'vue-router'
 import { waitForever, type MaybeAsync, type Optional } from '@speckle/shared'
-import { useApolloClient, useMutation } from '@vue/apollo-composable'
+import { useApolloClient, useMutation, useSubscription } from '@vue/apollo-composable'
 import { graphql } from '~/lib/common/generated/gql'
 import type {
+  OnWorkspaceUpdatedSubscription,
   UseWorkspaceInviteManager_PendingWorkspaceCollaboratorFragment,
   Workspace,
   WorkspaceCreateInput,
@@ -26,11 +27,15 @@ import {
   createWorkspaceMutation,
   inviteToWorkspaceMutation,
   processWorkspaceInviteMutation,
+  setDefaultRegionMutation,
   workspaceUpdateRoleMutation
 } from '~/lib/workspaces/graphql/mutations'
 import { isFunction } from 'lodash-es'
 import type { GraphQLError } from 'graphql'
-import { useClipboard } from '~~/composables/browser'
+import { onWorkspaceUpdatedSubscription } from '~/lib/workspaces/graphql/subscriptions'
+import { useLock } from '~/lib/common/composables/singleton'
+import type { Get } from 'type-fest'
+import type { ApolloCache } from '@apollo/client/core'
 
 export const useInviteUserToWorkspace = () => {
   const { activeUser } = useActiveUser()
@@ -221,6 +226,7 @@ graphql(`
     id
     token
     workspaceId
+    workspaceSlug
     user {
       id
     }
@@ -283,6 +289,7 @@ export const useWorkspaceInviteManager = <
     if (!token.value || !invite.value) return false
 
     const workspaceId = invite.value.workspaceId
+    const workspaceSlug = invite.value.workspaceSlug
     const shouldAddNewEmail = canAddNewEmail.value && addNewEmail
 
     loading.value = true
@@ -302,8 +309,8 @@ export const useWorkspaceInviteManager = <
 
           // Redirect
           if (accept) {
-            if (workspaceId) {
-              window.location.href = workspaceRoute(workspaceId)
+            if (workspaceSlug) {
+              window.location.href = workspaceRoute(workspaceSlug)
             } else {
               window.location.reload()
             }
@@ -399,7 +406,7 @@ export function useCreateWorkspace() {
       })
 
       if (options?.navigateOnSuccess === true) {
-        router.push(workspaceRoute(res.data?.workspaceMutations.create.id))
+        router.push(workspaceRoute(res.data?.workspaceMutations.create.slug))
       }
     } else {
       const err = getFirstErrorMessage(res.errors)
@@ -417,6 +424,7 @@ export function useCreateWorkspace() {
 export const useWorkspaceUpdateRole = () => {
   const { mutate } = useMutation(workspaceUpdateRoleMutation)
   const { triggerNotification } = useGlobalToast()
+  const mixpanel = useMixpanel()
 
   return async (input: WorkspaceRoleUpdateInput) => {
     const result = await mutate(
@@ -454,6 +462,19 @@ export const useWorkspaceUpdateRole = () => {
           ? 'The user role has been updated'
           : 'The user has been removed from the workspace'
       })
+
+      if (input.role) {
+        mixpanel.track('Workspace User Role Updated', {
+          newRole: input.role,
+          // eslint-disable-next-line camelcase
+          workspace_id: input.workspaceId
+        })
+      } else {
+        mixpanel.track('Workspace User Removed', {
+          // eslint-disable-next-line camelcase
+          workspace_id: input.workspaceId
+        })
+      }
     } else {
       const errorMessage = getFirstErrorMessage(result?.errors)
       triggerNotification({
@@ -465,15 +486,91 @@ export const useWorkspaceUpdateRole = () => {
   }
 }
 
-export const copyWorkspaceLink = async (id: string) => {
+export const copyWorkspaceLink = async (slug: string) => {
   const { copy } = useClipboard()
   const { triggerNotification } = useGlobalToast()
 
-  const url = new URL(workspaceRoute(id), window.location.toString()).toString()
+  const url = new URL(workspaceRoute(slug), window.location.toString()).toString()
 
   await copy(url)
   triggerNotification({
     type: ToastNotificationType.Success,
     title: 'Copied workspace link to clipboard'
   })
+}
+
+export const useSetDefaultWorkspaceRegion = () => {
+  const { mutate } = useMutation(setDefaultRegionMutation)
+  const { triggerNotification } = useGlobalToast()
+
+  return async (params: { workspaceId: string; regionKey: string }) => {
+    const { workspaceId, regionKey } = params
+    const res = await mutate({ workspaceId, regionKey }).catch(
+      convertThrowIntoFetchResult
+    )
+
+    if (res?.data?.workspaceMutations.setDefaultRegion) {
+      triggerNotification({
+        type: ToastNotificationType.Success,
+        title: 'Default region set successfully'
+      })
+    } else {
+      const err = getFirstErrorMessage(res?.errors)
+      triggerNotification({
+        type: ToastNotificationType.Danger,
+        title: 'Failed to set default region',
+        description: err
+      })
+    }
+
+    return res?.data?.workspaceMutations.setDefaultRegion
+  }
+}
+
+export const useOnWorkspaceUpdated = (params: {
+  workspaceSlug: Ref<string>
+  /**
+   * Optionally do extra work on each message, besides the main cache update
+   */
+  handler?: (
+    data: NonNullable<Get<OnWorkspaceUpdatedSubscription, 'workspaceUpdated'>>,
+    cache: ApolloCache<unknown>
+  ) => void
+}) => {
+  const { workspaceSlug, handler } = params
+
+  const { triggerNotification } = useGlobalToast()
+  const apollo = useApolloClient().client
+  const { hasLock } = useLock(
+    computed(() => `useOnWorkspaceUpdated-${unref(workspaceSlug.value)}`)
+  )
+  const enabled = computed(() => !!(hasLock.value || handler))
+  const { onResult } = useSubscription(
+    onWorkspaceUpdatedSubscription,
+    () => ({
+      workspaceSlug: params.workspaceSlug.value
+    }),
+    () => ({
+      enabled: enabled.value,
+      errorPolicy: 'all'
+    })
+  )
+
+  // Main, locked cache update
+  onResult((result) => {
+    if (!result.data?.workspaceUpdated || !hasLock.value) return
+
+    triggerNotification({
+      type: ToastNotificationType.Info,
+      title: 'Workspace updated'
+    })
+  })
+
+  // Optional handler
+  if (handler) {
+    onResult((result) => {
+      if (!result.data?.workspaceUpdated) return
+      handler(result.data.workspaceUpdated, apollo.cache)
+    })
+  }
 }

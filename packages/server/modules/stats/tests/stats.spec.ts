@@ -1,11 +1,5 @@
 /* istanbul ignore file */
 import { expect } from 'chai'
-import { createUser } from '@/modules/core/services/users'
-import { createPersonalAccessToken } from '@/modules/core/services/tokens'
-import { createStream } from '@/modules/core/services/streams'
-import { createObjects } from '@/modules/core/services/objects'
-import { createCommitByBranchName } from '@/modules/core/services/commits'
-
 import { beforeEachContext, initializeTestServer } from '@/test/hooks'
 import { createManyObjects } from '@/test/helpers'
 
@@ -21,8 +15,174 @@ import {
 } from '@/modules/stats/repositories/index'
 import { Scopes } from '@speckle/shared'
 import { Server } from 'node:http'
-import { Express } from 'express'
 import { db } from '@/db/knex'
+import {
+  createCommitByBranchIdFactory,
+  createCommitByBranchNameFactory
+} from '@/modules/core/services/commit/management'
+import {
+  createCommitFactory,
+  insertBranchCommitsFactory,
+  insertStreamCommitsFactory
+} from '@/modules/core/repositories/commits'
+import {
+  createBranchFactory,
+  getBranchByIdFactory,
+  getStreamBranchByNameFactory,
+  markCommitBranchUpdatedFactory
+} from '@/modules/core/repositories/branches'
+import {
+  createStreamFactory,
+  getStreamFactory,
+  markCommitStreamUpdatedFactory
+} from '@/modules/core/repositories/streams'
+import { VersionsEmitter } from '@/modules/core/events/versionsEmitter'
+import {
+  getObjectFactory,
+  storeClosuresIfNotFoundFactory,
+  storeObjectsIfNotFoundFactory
+} from '@/modules/core/repositories/objects'
+import {
+  createStreamReturnRecordFactory,
+  legacyCreateStreamFactory
+} from '@/modules/core/services/streams/management'
+import { inviteUsersToProjectFactory } from '@/modules/serverinvites/services/projectInviteManagement'
+import { createAndSendInviteFactory } from '@/modules/serverinvites/services/creation'
+import {
+  deleteServerOnlyInvitesFactory,
+  findUserByTargetFactory,
+  insertInviteAndDeleteOldFactory,
+  updateAllInviteTargetsFactory
+} from '@/modules/serverinvites/repositories/serverInvites'
+import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
+import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
+import { getEventBus } from '@/modules/shared/services/eventBus'
+import { ProjectsEmitter } from '@/modules/core/events/projectsEmitter'
+import { saveActivityFactory } from '@/modules/activitystream/repositories'
+import { publish } from '@/modules/shared/utils/subscriptions'
+import { addCommitCreatedActivityFactory } from '@/modules/activitystream/services/commitActivity'
+import {
+  countAdminUsersFactory,
+  getUserFactory,
+  getUsersFactory,
+  storeUserAclFactory,
+  storeUserFactory
+} from '@/modules/core/repositories/users'
+import {
+  createUserEmailFactory,
+  ensureNoPrimaryEmailForUserFactory,
+  findEmailFactory
+} from '@/modules/core/repositories/userEmails'
+import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
+import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
+import { renderEmail } from '@/modules/emails/services/emailRendering'
+import { sendEmail } from '@/modules/emails/services/sending'
+import { createUserFactory } from '@/modules/core/services/users/management'
+import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
+import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
+import { UsersEmitter } from '@/modules/core/events/usersEmitter'
+import { createPersonalAccessTokenFactory } from '@/modules/core/services/tokens'
+import {
+  storeApiTokenFactory,
+  storePersonalApiTokenFactory,
+  storeTokenResourceAccessDefinitionsFactory,
+  storeTokenScopesFactory
+} from '@/modules/core/repositories/tokens'
+import { getServerInfoFactory } from '@/modules/core/repositories/server'
+import { createObjectsFactory } from '@/modules/core/services/objects/management'
+
+const getServerInfo = getServerInfoFactory({ db })
+const getUsers = getUsersFactory({ db })
+const markCommitStreamUpdated = markCommitStreamUpdatedFactory({ db })
+const getObject = getObjectFactory({ db })
+const createCommitByBranchId = createCommitByBranchIdFactory({
+  createCommit: createCommitFactory({ db }),
+  getObject,
+  getBranchById: getBranchByIdFactory({ db }),
+  insertStreamCommits: insertStreamCommitsFactory({ db }),
+  insertBranchCommits: insertBranchCommitsFactory({ db }),
+  markCommitStreamUpdated,
+  markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
+  versionsEventEmitter: VersionsEmitter.emit,
+  addCommitCreatedActivity: addCommitCreatedActivityFactory({
+    saveActivity: saveActivityFactory({ db }),
+    publish
+  })
+})
+
+const createCommitByBranchName = createCommitByBranchNameFactory({
+  createCommitByBranchId,
+  getStreamBranchByName: getStreamBranchByNameFactory({ db }),
+  getBranchById: getBranchByIdFactory({ db })
+})
+
+const getStream = getStreamFactory({ db })
+const createStream = legacyCreateStreamFactory({
+  createStreamReturnRecord: createStreamReturnRecordFactory({
+    inviteUsersToProject: inviteUsersToProjectFactory({
+      createAndSendInvite: createAndSendInviteFactory({
+        findUserByTarget: findUserByTargetFactory({ db }),
+        insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
+        collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
+          getStream
+        }),
+        buildInviteEmailContents: buildCoreInviteEmailContentsFactory({
+          getStream
+        }),
+        emitEvent: ({ eventName, payload }) =>
+          getEventBus().emit({
+            eventName,
+            payload
+          }),
+        getUser: getUserFactory({ db }),
+        getServerInfo
+      }),
+      getUsers
+    }),
+    createStream: createStreamFactory({ db }),
+    createBranch: createBranchFactory({ db }),
+    projectsEventsEmitter: ProjectsEmitter.emit
+  })
+})
+const findEmail = findEmailFactory({ db })
+const requestNewEmailVerification = requestNewEmailVerificationFactory({
+  findEmail,
+  getUser: getUserFactory({ db }),
+  getServerInfo,
+  deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db }),
+  renderEmail,
+  sendEmail
+})
+const createUser = createUserFactory({
+  getServerInfo,
+  findEmail,
+  storeUser: storeUserFactory({ db }),
+  countAdminUsers: countAdminUsersFactory({ db }),
+  storeUserAcl: storeUserAclFactory({ db }),
+  validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
+    createUserEmail: createUserEmailFactory({ db }),
+    ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
+    findEmail,
+    updateEmailInvites: finalizeInvitedServerRegistrationFactory({
+      deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
+      updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
+    }),
+    requestNewEmailVerification
+  }),
+  usersEventsEmitter: UsersEmitter.emit
+})
+const createPersonalAccessToken = createPersonalAccessTokenFactory({
+  storeApiToken: storeApiTokenFactory({ db }),
+  storeTokenScopes: storeTokenScopesFactory({ db }),
+  storeTokenResourceAccessDefinitions: storeTokenResourceAccessDefinitionsFactory({
+    db
+  }),
+  storePersonalApiToken: storePersonalApiTokenFactory({ db })
+})
+const createObjects = createObjectsFactory({
+  storeObjectsIfNotFoundFactory: storeObjectsIfNotFoundFactory({ db }),
+  storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db })
+})
 
 const params = { numUsers: 25, numStreams: 30, numObjects: 100, numCommits: 100 }
 
@@ -92,8 +252,7 @@ describe('Server stats services @stats-services', function () {
 
 describe('Server stats api @stats-api', function () {
   let server: Server,
-    sendRequest: Awaited<ReturnType<typeof initializeTestServer>>['sendRequest'],
-    app: Express
+    sendRequest: Awaited<ReturnType<typeof initializeTestServer>>['sendRequest']
 
   const adminUser = {
     name: 'Dimitrie',
@@ -130,8 +289,9 @@ describe('Server stats api @stats-api', function () {
 
   before(async function () {
     this.timeout(15000)
-    ;({ app, server } = await beforeEachContext())
-    ;({ sendRequest } = await initializeTestServer(server, app))
+    const ctx = await beforeEachContext()
+    server = ctx.server
+    ;({ sendRequest } = await initializeTestServer(ctx))
 
     adminUser.id = await createUser(adminUser)
     adminUser.goodToken = `Bearer ${await createPersonalAccessToken(

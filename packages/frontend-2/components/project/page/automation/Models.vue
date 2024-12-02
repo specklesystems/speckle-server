@@ -44,7 +44,7 @@ graphql(`
 `)
 
 graphql(`
-  fragment ProjectPageAutomationHeader_Project on Project {
+  fragment ProjectPageAutomationModels_Project on Project {
     id
     ...ProjectPageModelsCardProject
   }

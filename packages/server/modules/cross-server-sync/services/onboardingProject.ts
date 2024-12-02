@@ -1,9 +1,9 @@
 import { crossServerSyncLogger } from '@/logging/logging'
 import {
-  getOnboardingBaseStream,
-  markOnboardingBaseStream
-} from '@/modules/core/repositories/streams'
-import { getFirstAdmin } from '@/modules/core/repositories/users'
+  GetOnboardingBaseStream,
+  MarkOnboardingBaseStream
+} from '@/modules/core/domain/streams/operations'
+import { GetFirstAdmin } from '@/modules/core/domain/users/operations'
 import {
   DownloadProject,
   EnsureOnboardingProject,
@@ -25,7 +25,7 @@ const getMetadata = () => {
 
 export const getOnboardingBaseProjectFactory =
   (deps: {
-    getOnboardingBaseStream: typeof getOnboardingBaseStream
+    getOnboardingBaseStream: GetOnboardingBaseStream
   }): GetOnboardingBaseProject =>
   async () => {
     const metadata = getMetadata()
@@ -38,10 +38,10 @@ export const getOnboardingBaseProjectFactory =
 
 export const ensureOnboardingProjectFactory =
   (deps: {
-    getOnboardingBaseStream: typeof getOnboardingBaseStream
-    getFirstAdmin: typeof getFirstAdmin
+    getOnboardingBaseStream: GetOnboardingBaseStream
+    getFirstAdmin: GetFirstAdmin
     downloadProject: DownloadProject
-    markOnboardingBaseStream: typeof markOnboardingBaseStream
+    markOnboardingBaseStream: MarkOnboardingBaseStream
   }): EnsureOnboardingProject =>
   async () => {
     const logger = crossServerSyncLogger

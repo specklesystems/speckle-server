@@ -1,16 +1,10 @@
 import {
-  createUser,
-  validatePasssword,
-  getUserByEmail
-} from '@/modules/core/services/users'
-import { getServerInfo } from '@/modules/core/services/generic'
-import {
   sendRateLimitResponse,
   getRateLimitResult,
   isRateLimitBreached
 } from '@/modules/core/services/ratelimiter'
 import { getIpFromRequest } from '@/modules/shared/utils/ip'
-import { NoInviteFoundError } from '@/modules/serverinvites/errors'
+import { InviteNotFoundError } from '@/modules/serverinvites/errors'
 import { UserInputError, PasswordTooShortError } from '@/modules/core/errors/userinput'
 
 import { ServerInviteResourceType } from '@/modules/serverinvites/domain/constants'
@@ -23,15 +17,21 @@ import {
   ResolveAuthRedirectPath,
   ValidateServerInvite
 } from '@/modules/serverinvites/services/operations'
+import {
+  CreateValidatedUser,
+  LegacyGetUserByEmail,
+  ValidateUserPassword
+} from '@/modules/core/domain/users/operations'
+import { GetServerInfo } from '@/modules/core/domain/server/operations'
 
 const localStrategyBuilderFactory =
   (deps: {
-    validatePassword: typeof validatePasssword
-    getUserByEmail: typeof getUserByEmail
-    getServerInfo: typeof getServerInfo
+    validateUserPassword: ValidateUserPassword
+    getUserByEmail: LegacyGetUserByEmail
+    getServerInfo: GetServerInfo
     getRateLimitResult: typeof getRateLimitResult
     validateServerInvite: ValidateServerInvite
-    createUser: typeof createUser
+    createUser: CreateValidatedUser
     finalizeInvitedServerRegistration: FinalizeInvitedServerRegistration
     resolveAuthRedirectPath: ResolveAuthRedirectPath
   }): AuthStrategyBuilder =>
@@ -56,7 +56,7 @@ const localStrategyBuilderFactory =
       moveAuthParamsToSessionMiddleware,
       async (req, res, next) => {
         try {
-          const valid = await deps.validatePassword({
+          const valid = await deps.validateUserPassword({
             email: req.body.email,
             password: req.body.password
           })
@@ -117,7 +117,12 @@ const localStrategyBuilderFactory =
             role: invite
               ? getResourceTypeRole(invite.resource, ServerInviteResourceType)
               : undefined,
-            verified: !!invite
+            verified: !!invite,
+            signUpContext: {
+              req,
+              isInvite: !!invite,
+              newsletterConsent: !!req.session.newsletterConsent
+            }
           })
           req.user = {
             id: userId,
@@ -139,7 +144,7 @@ const localStrategyBuilderFactory =
           switch (e.constructor) {
             case PasswordTooShortError:
             case UserInputError:
-            case NoInviteFoundError:
+            case InviteNotFoundError:
               req.log.info({ err }, 'Error while registering.')
               return res.status(400).send({ err: e.message })
             default:

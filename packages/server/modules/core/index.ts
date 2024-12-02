@@ -4,37 +4,29 @@ import {
   shutdownResultListener
 } from '@/modules/core/utils/dbNotificationListener'
 import * as mp from '@/modules/shared/utils/mixpanel'
-import { Optional, SpeckleModule } from '@/modules/shared/helpers/typeHelper'
+import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 
 import staticRest from '@/modules/core/rest/static'
 import uploadRest from '@/modules/core/rest/upload'
 import downloadRest from '@/modules/core/rest/download'
 import diffUpload from '@/modules/core/rest/diffUpload'
 import diffDownload from '@/modules/core/rest/diffDownload'
-import healthRest from '@/modules/core/rest/health'
 import scopes from '@/modules/core/scopes'
 import roles from '@/modules/core/roles'
-import Redis from 'ioredis'
-import { createRedisClient } from '@/modules/shared/redis/redis'
-import { getRedisUrl } from '@/modules/shared/helpers/envHelper'
-import { UninitializedResourceAccessError } from '@/modules/shared/errors'
+import { getGenericRedis } from '@/modules/shared/redis/redis'
 import { registerOrUpdateScopeFactory } from '@/modules/shared/repositories/scopes'
 import db from '@/db/knex'
 import { registerOrUpdateRole } from '@/modules/shared/repositories/roles'
+import { isTestEnv } from '@/modules/shared/helpers/envHelper'
 
-let genericRedisClient: Optional<Redis> = undefined
+let stopTestSubs: (() => void) | undefined = undefined
 
-const coreModule: SpeckleModule<{
-  getGenericRedis: () => Redis
-}> = {
+const coreModule: SpeckleModule = {
   async init(app, isInitial) {
     moduleLogger.info('💥 Init core module')
 
     // Initialize the static route
     staticRest(app)
-
-    // Initialize the health check route
-    healthRest(app)
 
     // Initialises the two main bulk upload/download endpoints
     uploadRest(app)
@@ -63,25 +55,17 @@ const coreModule: SpeckleModule<{
       // Init mp
       mp.initialize()
 
-      // Generic redis client
-      genericRedisClient = createRedisClient(getRedisUrl(), {})
+      // Setup test subs
+      if (isTestEnv()) {
+        const { startEmittingTestSubs } = await import('@/test/graphqlHelper')
+        stopTestSubs = await startEmittingTestSubs()
+      }
     }
   },
   async shutdown() {
     await shutdownResultListener()
-
-    if (genericRedisClient) {
-      await genericRedisClient.quit()
-    }
-  },
-  /**
-   * A general purpose redis client that can be used after safely all modules are initialized
-   */
-  getGenericRedis() {
-    if (!genericRedisClient) {
-      throw new UninitializedResourceAccessError('Generic redis client not initialized')
-    }
-    return genericRedisClient
+    await getGenericRedis().quit()
+    stopTestSubs?.()
   }
 }
 

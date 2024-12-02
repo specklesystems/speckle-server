@@ -2,7 +2,6 @@ import type { ApolloCache } from '@apollo/client/core'
 import type { Optional } from '@speckle/shared'
 import { useApolloClient, useSubscription } from '@vue/apollo-composable'
 import type { MaybeRef } from '@vueuse/core'
-import { isUndefined } from 'lodash-es'
 import type { Get } from 'type-fest'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { useLock } from '~~/lib/common/composables/singleton'
@@ -16,21 +15,22 @@ import type {
   ProjectUpdateInput,
   ProjectUpdateRoleInput,
   UpdateProjectMetadataMutation,
-  AdminPanelProjectsListQuery,
-  WorkspaceProjectsArgs,
-  Workspace,
   WorkspaceProjectInviteCreateInput,
   InviteProjectUserMutation,
-  Project
+  Project,
+  WorkspaceProjectCreateInput,
+  CreateWorkspaceProjectMutation,
+  CreateProjectMutation,
+  AdminPanelProjectsListQuery
 } from '~~/lib/common/generated/gql/graphql'
 import {
-  ROOT_QUERY,
   convertThrowIntoFetchResult,
   getCacheId,
   getFirstErrorMessage,
+  modifyObjectField,
   modifyObjectFields
 } from '~~/lib/common/helpers/graphql'
-import { useNavigateToHome } from '~~/lib/common/helpers/route'
+import { useNavigateToHome, workspaceRoute } from '~~/lib/common/helpers/route'
 import {
   cancelProjectInviteMutation,
   createProjectMutation,
@@ -42,11 +42,13 @@ import {
   updateProjectRoleMutation,
   updateWorkspaceProjectRoleMutation,
   useProjectInviteMutation,
-  useMoveProjectToWorkspaceMutation
+  useMoveProjectToWorkspaceMutation,
+  createWorkspaceProjectMutation
 } from '~~/lib/projects/graphql/mutations'
 import { onProjectUpdatedSubscription } from '~~/lib/projects/graphql/subscriptions'
 import { projectRoute } from '~/lib/common/helpers/route'
 import { useMixpanel } from '~/lib/core/composables/mp'
+import { useRouter } from 'vue-router'
 
 export function useProjectUpdateTracking(
   projectId: MaybeRef<string>,
@@ -115,71 +117,59 @@ export function useCreateProject() {
   const { triggerNotification } = useGlobalToast()
   const { activeUser } = useActiveUser()
 
-  return async (input: ProjectCreateInput) => {
+  return async (input: ProjectCreateInput | WorkspaceProjectCreateInput) => {
     const userId = activeUser.value?.id
     if (!userId) return
 
     const res = await apollo
       .mutate({
-        mutation: createProjectMutation,
-        variables: { input },
-        update: (cache, { data }) => {
-          const newProject = data?.projectMutations.create
-
-          if (newProject?.id) {
-            // Existing cache update for projects
-            modifyObjectFields<
-              undefined,
-              { [key: string]: AdminPanelProjectsListQuery }
-            >(
-              cache,
-              ROOT_QUERY,
-              (fieldName, _variables, value, details) => {
-                const projectListFields = Object.keys(value).filter(
-                  (k) =>
-                    details.revolveFieldNameAndVariables(k).fieldName === 'projectList'
-                )
-                const newVal: typeof value = { ...value }
-                for (const field of projectListFields) {
-                  delete newVal[field]
-                }
-                return newVal
-              },
-              { fieldNameWhitelist: ['admin'] }
-            )
-
-            if (input.workspaceId) {
-              const workspaceCacheId = getCacheId('Workspace', input.workspaceId)
-
-              modifyObjectFields<WorkspaceProjectsArgs, Workspace['projects']>(
-                cache,
-                workspaceCacheId,
-                (_fieldName, variables, value, details) => {
-                  const newItems = isUndefined(value?.items)
-                    ? undefined
-                    : [details.ref('Project', newProject.id), ...value.items]
-
-                  const newTotalCount = isUndefined(value?.totalCount)
-                    ? undefined
-                    : (value.totalCount || 0) + 1
-
-                  return {
-                    ...value,
-                    ...(isUndefined(newItems) ? {} : { items: newItems }),
-                    ...(isUndefined(newTotalCount) ? {} : { totalCount: newTotalCount })
-                  }
-                },
-                {
-                  fieldNameWhitelist: ['projects']
-                }
-              )
+        ...('workspaceId' in input
+          ? {
+              mutation: createWorkspaceProjectMutation,
+              variables: { input }
             }
-          }
+          : {
+              mutation: createProjectMutation,
+              variables: { input }
+            }),
+        update: (cache, { data }) => {
+          const typedData = data as
+            | CreateWorkspaceProjectMutation
+            | CreateProjectMutation
+          if (!typedData) return
+
+          modifyObjectFields<undefined, { [key: string]: AdminPanelProjectsListQuery }>(
+            cache,
+            ROOT_QUERY,
+            (_fieldName, _variables, value, details) => {
+              const projectListFields = Object.keys(value).filter(
+                (k) =>
+                  details.revolveFieldNameAndVariables(k).fieldName === 'projectList'
+              )
+              const newVal: typeof value = { ...value }
+              for (const field of projectListFields) {
+                delete newVal[field]
+              }
+              return newVal
+            },
+            { fieldNameWhitelist: ['admin'] }
+          )
         }
       })
       .catch(convertThrowIntoFetchResult)
 
-    if (!res.data?.projectMutations.create.id) {
+    // not sure why this isn't happening automatically
+    const typedData = res.data as Optional<
+      CreateWorkspaceProjectMutation | CreateProjectMutation
+    >
+
+    const newProject = typedData
+      ? 'projectMutations' in typedData
+        ? typedData.projectMutations.create
+        : typedData.workspaceMutations.projects.create
+      : undefined
+
+    if (!newProject?.id) {
       const err = getFirstErrorMessage(res.errors)
       triggerNotification({
         type: ToastNotificationType.Danger,
@@ -193,7 +183,7 @@ export function useCreateProject() {
       })
     }
 
-    return res
+    return newProject
   }
 }
 
@@ -240,7 +230,13 @@ export function useUpdateUserRole(
     const { data, errors } = await apollo
       .mutate({
         mutation: updateWorkspaceProjectRoleMutation,
-        variables: { input }
+        variables: { input },
+        update: (cache) => {
+          cache.evict({ id: getCacheId('Project', input.projectId) })
+          cache.evict({
+            id: getCacheId('WorkspaceCollaborator', input.userId)
+          })
+        }
       })
       .catch(convertThrowIntoFetchResult)
 
@@ -407,10 +403,14 @@ export function useDeleteProject() {
   const { activeUser } = useActiveUser()
   const { triggerNotification } = useGlobalToast()
   const navigateHome = useNavigateToHome()
+  const router = useRouter()
 
-  return async (id: string, options?: Partial<{ goHome: boolean }>) => {
+  return async (
+    id: string,
+    options?: Partial<{ goHome: boolean; workspaceSlug?: string }>
+  ) => {
     if (!activeUser.value) return
-    const { goHome } = options || {}
+    const { goHome, workspaceSlug } = options || {}
 
     const result = await apollo
       .mutate({
@@ -428,7 +428,11 @@ export function useDeleteProject() {
       })
 
       if (goHome) {
-        navigateHome()
+        if (workspaceSlug) {
+          router.push(workspaceRoute(workspaceSlug))
+        } else {
+          navigateHome()
+        }
       }
 
       // evict project from cache
@@ -545,11 +549,33 @@ export function useMoveProjectToWorkspace() {
   const { triggerNotification } = useGlobalToast()
   const mixpanel = useMixpanel()
 
-  return async (projectId: string, workspaceId: string, workspaceName: string) => {
+  return async (params: {
+    projectId: string
+    workspaceId: string
+    workspaceName: string
+    eventSource?: string
+  }) => {
+    const { projectId, workspaceId, workspaceName, eventSource } = params
+
     const { data, errors } = await apollo
       .mutate({
         mutation: useMoveProjectToWorkspaceMutation,
-        variables: { projectId, workspaceId }
+        variables: { projectId, workspaceId },
+        update: (cache, { data }) => {
+          if (!data?.workspaceMutations.projects.moveToWorkspace) return
+          if (!workspaceId) return
+
+          modifyObjectField(
+            cache,
+            getCacheId('Workspace', workspaceId),
+            'projects',
+            ({ helpers: { createUpdatedValue, ref } }) => {
+              return createUpdatedValue(({ update }) => {
+                update('items', (items) => [ref('Project', projectId), ...items])
+              })
+            }
+          )
+        }
       })
       .catch(convertThrowIntoFetchResult)
 
@@ -562,7 +588,8 @@ export function useMoveProjectToWorkspace() {
       mixpanel.track('Project Moved To Workspace', {
         projectId,
         // eslint-disable-next-line camelcase
-        workspace_id: workspaceId
+        workspace_id: workspaceId,
+        source: eventSource
       })
     } else {
       const errMsg = getFirstErrorMessage(errors)

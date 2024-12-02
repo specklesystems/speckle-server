@@ -3,7 +3,6 @@
     <div class="md:max-w-xl md:mx-auto pb-6 md:pb-0">
       <SettingsSectionHeader title="General" text="Manage your workspace settings" />
       <SettingsSectionHeader title="Workspace details" subheading />
-
       <div class="pt-6">
         <FormTextInput
           v-model="name"
@@ -17,6 +16,21 @@
           :rules="[isRequired, isStringOfLength({ maxLength: 512 })]"
           validate-on-value-update
           @change="save()"
+        />
+        <hr class="my-4 border-outline-3" />
+        <FormTextInput
+          v-model="slug"
+          color="foundation"
+          label="Short ID"
+          name="shortId"
+          :help="slugHelp"
+          :disabled="!isAdmin"
+          show-label
+          label-position="left"
+          read-only
+          :right-icon="isAdmin ? IconEdit : undefined"
+          right-icon-title="Edit short ID"
+          @right-icon-click="openSlugEditDialog"
         />
         <hr class="my-4 border-outline-3" />
         <FormTextInput
@@ -65,6 +79,7 @@
             label="Project role"
             size="md"
             :disabled-items="[Roles.Stream.Owner]"
+            :disabled="!isAdmin"
             @update:model-value="save()"
           />
         </div>
@@ -90,10 +105,17 @@
             data. We will ask you to type in your email address and press the delete
             button.
           </CommonCard>
-          <div>
-            <FormButton color="primary" @click="showDeleteDialog = true">
-              Delete workspace
-            </FormButton>
+
+          <div class="flex">
+            <div v-tippy="deleteWorkspaceTooltip">
+              <FormButton
+                :disabled="!canDeleteWorkspace"
+                color="primary"
+                @click="showDeleteDialog = true"
+              >
+                Delete workspace
+              </FormButton>
+            </div>
           </div>
         </div>
       </template>
@@ -109,6 +131,14 @@
       v-if="workspaceResult && isAdmin"
       v-model:open="showDeleteDialog"
       :workspace="workspaceResult.workspace"
+    />
+
+    <SettingsWorkspacesGeneralEditSlugDialog
+      v-if="workspaceResult && isAdmin"
+      v-model:open="showEditSlugDialog"
+      :base-url="baseUrl"
+      :workspace="workspaceResult.workspace"
+      @update:slug="updateWorkspaceSlug"
     />
   </section>
 </template>
@@ -128,17 +158,26 @@ import {
 import { isRequired, isStringOfLength } from '~~/lib/common/helpers/validation'
 import { useMixpanel } from '~/lib/core/composables/mp'
 import { Roles, type StreamRoles } from '@speckle/shared'
-
+import { workspaceRoute } from '~/lib/common/helpers/route'
+import { useRoute } from 'vue-router'
+import { WorkspacePlanStatuses } from '~/lib/common/generated/gql/graphql'
+import { isPaidPlan } from '~/lib/billing/helpers/types'
 graphql(`
   fragment SettingsWorkspacesGeneral_Workspace on Workspace {
     ...SettingsWorkspacesGeneralEditAvatar_Workspace
     ...SettingsWorkspaceGeneralDeleteDialog_Workspace
+    ...SettingsWorkspacesGeneralEditSlugDialog_Workspace
     id
     name
+    slug
     description
     logo
     role
     defaultProjectRole
+    plan {
+      status
+      name
+    }
   }
 `)
 
@@ -148,7 +187,12 @@ const props = defineProps<{
   workspaceId: string
 }>()
 
+const IconEdit = resolveComponent('IconEdit')
+
+const isBillingIntegrationEnabled = useIsBillingIntegrationEnabled()
 const mixpanel = useMixpanel()
+const router = useRouter()
+const route = useRoute()
 const { handleSubmit } = useForm<FormValues>()
 const { triggerNotification } = useGlobalToast()
 const { mutate: updateMutation } = useMutation(settingsUpdateWorkspaceMutation)
@@ -158,17 +202,38 @@ const { result: workspaceResult, onResult } = useQuery(
     id: props.workspaceId
   })
 )
+const config = useRuntimeConfig()
 
 const name = ref('')
+const slug = ref('')
 const description = ref('')
 const showDeleteDialog = ref(false)
+const showEditSlugDialog = ref(false)
 const showLeaveDialog = ref(false)
 const defaultProjectRole = ref<StreamRoles>()
 
 const isAdmin = computed(
   () => workspaceResult.value?.workspace?.role === Roles.Workspace.Admin
 )
-
+const canDeleteWorkspace = computed(
+  () =>
+    isAdmin.value &&
+    (!isBillingIntegrationEnabled ||
+      !(
+        [
+          WorkspacePlanStatuses.Valid,
+          WorkspacePlanStatuses.PaymentFailed,
+          WorkspacePlanStatuses.CancelationScheduled
+        ].includes(
+          workspaceResult.value?.workspace?.plan?.status as WorkspacePlanStatuses
+        ) && isPaidPlan(workspaceResult.value?.workspace?.plan?.name)
+      ))
+)
+const deleteWorkspaceTooltip = computed(() => {
+  if (!canDeleteWorkspace.value) return 'You cannot delete an active workspace'
+  if (!isAdmin.value) return 'Only admins can delete workspaces'
+  return undefined
+})
 const save = handleSubmit(async () => {
   if (!workspaceResult.value?.workspace) return
 
@@ -213,6 +278,7 @@ watch(
     if (workspaceResult.value?.workspace) {
       name.value = workspaceResult.value.workspace.name
       description.value = workspaceResult.value.workspace.description ?? ''
+      slug.value = workspaceResult.value.workspace.slug ?? ''
     }
   },
   { deep: true, immediate: true }
@@ -223,4 +289,51 @@ onResult((res) => {
     defaultProjectRole.value = res.data.workspace.defaultProjectRole as StreamRoles
   }
 })
+
+const baseUrl = config.public.baseUrl
+
+const slugHelp = computed(() => {
+  return `Used after ${baseUrl}/workspaces/`
+})
+
+const openSlugEditDialog = () => {
+  showEditSlugDialog.value = true
+}
+
+const updateWorkspaceSlug = async (newSlug: string) => {
+  if (!workspaceResult.value?.workspace) {
+    return
+  }
+
+  const oldSlug = slug.value
+
+  const result = await updateMutation({
+    input: {
+      id: workspaceResult.value.workspace.id,
+      slug: newSlug
+    }
+  })
+
+  if (result && result.data) {
+    triggerNotification({
+      type: ToastNotificationType.Success,
+      title: 'Workspace short ID updated'
+    })
+
+    showEditSlugDialog.value = false
+
+    slug.value = newSlug
+
+    if (route.params.slug === oldSlug) {
+      router.replace(workspaceRoute(newSlug))
+    }
+  } else {
+    const errorMessage = getFirstErrorMessage(result && result.errors)
+    triggerNotification({
+      type: ToastNotificationType.Danger,
+      title: 'Failed to update workspace slug',
+      description: errorMessage
+    })
+  }
+}
 </script>

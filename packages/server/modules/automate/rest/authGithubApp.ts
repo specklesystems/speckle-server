@@ -1,12 +1,14 @@
+import { db } from '@/db/knex'
 import { createStoredAuthCodeFactory } from '@/modules/automate/services/authCode'
 import {
   handleAutomateFunctionCreatorAuthCallbackFactory,
   startAutomateFunctionCreatorAuthFactory
 } from '@/modules/automate/services/functionManagement'
-import { getGenericRedis } from '@/modules/core'
+import { getGenericRedis } from '@/modules/shared/redis/redis'
 import { corsMiddleware } from '@/modules/core/configs/cors'
-import { validateScope, validateServerRole } from '@/modules/shared/authz'
+import { validateScope, validateServerRoleBuilderFactory } from '@/modules/shared/authz'
 import { authMiddlewareCreator } from '@/modules/shared/middleware'
+import { getRolesFactory } from '@/modules/shared/repositories/roles'
 import { Roles, Scopes } from '@speckle/shared'
 import { Application } from 'express'
 
@@ -15,7 +17,9 @@ export default (app: Application) => {
     '/api/automate/auth/githubapp',
     corsMiddleware(),
     authMiddlewareCreator([
-      validateServerRole({ requiredRole: Roles.Server.Guest }),
+      validateServerRoleBuilderFactory({
+        getRoles: getRolesFactory({ db })
+      })({ requiredRole: Roles.Server.Guest }),
       validateScope({ requiredScope: Scopes.AutomateFunctions.Write })
     ]),
     async (req, res) => {
@@ -32,7 +36,9 @@ export default (app: Application) => {
     '/api/automate/ghAuthComplete',
     corsMiddleware(),
     authMiddlewareCreator([
-      validateServerRole({ requiredRole: Roles.Server.Guest }),
+      validateServerRoleBuilderFactory({
+        getRoles: getRolesFactory({ db })
+      })({ requiredRole: Roles.Server.Guest }),
       validateScope({ requiredScope: Scopes.AutomateFunctions.Write })
     ]),
     async (req, res) => {

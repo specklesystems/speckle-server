@@ -101,6 +101,7 @@ export class PointBatch extends PrimitiveBatch {
   }
 
   public resetDrawRanges() {
+    super.resetDrawRanges()
     this.primitive.material = [this.batchMaterial]
   }
 

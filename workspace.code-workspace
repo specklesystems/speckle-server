@@ -90,7 +90,19 @@
     },
     "files.eol": "\n",
     "volar.vueserver.maxOldSpaceSize": 4000,
-    "cSpell.words": ["Automations", "Bursty", "discoverability", "Insertable", "mjml"],
+    "cSpell.words": [
+      "Automations",
+      "Bursty",
+      "discoverability",
+      "Encryptor",
+      "Gendo",
+      "GENDOAI",
+      "Insertable",
+      "mjml",
+      "multiregion",
+      "OIDC",
+      "Prorotation"
+    ],
     "tailwindCSS.experimental.configFile": {
       "packages/frontend-2/tailwind.config.mjs": "packages/frontend-2/**"
     },

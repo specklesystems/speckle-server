@@ -1,11 +1,17 @@
 import { UserEmail } from '@/modules/core/domain/userEmails/types'
 import {
   anyEmailCompliantWithWorkspaceDomains,
+  isWorkspaceRole,
   userEmailsCompliantWithWorkspaceDomains
 } from '@/modules/workspaces/domain/logic'
+import {
+  getDefaultSsoSessionExpirationDate,
+  isValidSsoSession
+} from '@/modules/workspaces/domain/sso/logic'
 import { WorkspaceDomainsInvalidState } from '@/modules/workspaces/errors/workspace'
 import { WorkspaceDomain } from '@/modules/workspacesCore/domain/types'
 import { expectToThrow } from '@/test/assertionHelper'
+import { Roles } from '@speckle/shared'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
 import { merge } from 'lodash'
@@ -101,6 +107,39 @@ describe('workspace domain logic', () => {
         workspaceDomains: [createTestDomain({ verified: true, domain })]
       })
       expect(isCompliant).to.be.true
+    })
+  })
+  describe('isWorkspaceRole', () => {
+    it('returns false for non-role values', () => {
+      expect(isWorkspaceRole('not-a-role')).to.equal(false)
+    })
+    it('returns false for non-workspace roles', () => {
+      expect(isWorkspaceRole(Roles.Server.Admin)).to.equal(false)
+    })
+    it('returns true for workspace roles', () => {
+      expect(isWorkspaceRole(Roles.Workspace.Admin)).to.equal(true)
+    })
+  })
+  describe('isValidSsoSession', () => {
+    it('returns true for sessions that have not yet expired', () => {
+      expect(
+        isValidSsoSession({
+          userId: '',
+          providerId: '',
+          createdAt: new Date(),
+          validUntil: getDefaultSsoSessionExpirationDate()
+        })
+      ).to.be.true
+    })
+    it('returns false for sessions that have expired', () => {
+      expect(
+        isValidSsoSession({
+          userId: '',
+          providerId: '',
+          createdAt: new Date(),
+          validUntil: new Date()
+        })
+      ).to.be.false
     })
   })
 })

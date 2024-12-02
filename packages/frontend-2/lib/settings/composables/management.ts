@@ -14,6 +14,7 @@ import type {
   AddDomainToWorkspaceInput
 } from '~~/lib/common/generated/gql/graphql'
 import type { WorkspaceDomain, Workspace } from '~/lib/common/generated/gql/graphql'
+import { gql } from '@apollo/client'
 
 export function useUpdateWorkspace() {
   const { mutate, loading } = useMutation(settingsUpdateWorkspaceMutation)
@@ -52,7 +53,8 @@ export function useAddWorkspaceDomain() {
       input: AddDomainToWorkspaceInput,
       domains: WorkspaceDomain[],
       discoverabilityEnabled: boolean,
-      domainBasedMembershipProtectionEnabled: boolean
+      domainBasedMembershipProtectionEnabled: boolean,
+      hasAccessToSSO: boolean
     ) => {
       const result = await apollo
         .mutate({
@@ -68,6 +70,16 @@ export function useAddWorkspaceDomain() {
               addDomain: {
                 __typename: 'Workspace',
                 id: input.workspaceId,
+                slug: (
+                  apollo.readFragment({
+                    id: getCacheId('Workspace', input.workspaceId),
+                    fragment: gql`
+                      fragment AddDomainWorkspace on Workspace {
+                        slug
+                      }
+                    `
+                  }) as Workspace
+                ).slug,
                 domains: [
                   ...domains,
                   {
@@ -78,7 +90,8 @@ export function useAddWorkspaceDomain() {
                 ],
                 discoverabilityEnabled:
                   domains.length === 0 ? true : discoverabilityEnabled,
-                domainBasedMembershipProtectionEnabled
+                domainBasedMembershipProtectionEnabled,
+                hasAccessToSSO
               }
             }
           },

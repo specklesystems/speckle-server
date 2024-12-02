@@ -31,31 +31,6 @@ export const basicPendingWorkspaceCollaboratorFragment = gql`
   }
 `
 
-export const workspaceBillingFragment = gql`
-  fragment WorkspaceBilling on Workspace {
-    billing {
-      versionsCount {
-        current
-        max
-      }
-      cost {
-        subTotal
-        currency
-        items {
-          count
-          name
-          cost
-          label
-        }
-        discount {
-          name
-          amount
-        }
-        total
-      }
-    }
-  }
-`
 export const workspaceProjectsFragment = gql`
   fragment WorkspaceProjects on ProjectCollection {
     items {
@@ -122,17 +97,6 @@ export const getWorkspaceWithTeamQuery = gql`
   ${basicPendingWorkspaceCollaboratorFragment}
 `
 
-export const getWorkspaceWithBillingQuery = gql`
-  query GetWorkspaceWithBilling($workspaceId: String!) {
-    workspace(id: $workspaceId) {
-      ...BasicWorkspace
-      ...WorkspaceBilling
-    }
-  }
-  ${basicWorkspaceFragment}
-  ${workspaceBillingFragment}
-`
-
 export const getWorkspaceWithProjectsQuery = gql`
   query GetWorkspaceWithProjects($workspaceId: String!) {
     workspace(id: $workspaceId) {
@@ -175,8 +139,12 @@ export const useInviteMutation = gql`
 `
 
 export const getWorkspaceInviteQuery = gql`
-  query GetWorkspaceInvite($workspaceId: String!, $token: String) {
-    workspaceInvite(workspaceId: $workspaceId, token: $token) {
+  query GetWorkspaceInvite(
+    $workspaceId: String!
+    $token: String
+    $options: WorkspaceInviteLookupOptions = null
+  ) {
+    workspaceInvite(workspaceId: $workspaceId, token: $token, options: $options) {
       ...BasicPendingWorkspaceCollaborator
     }
   }
@@ -254,6 +222,48 @@ export const deleteWorkspaceDomainMutation = gql`
         }
         domainBasedMembershipProtectionEnabled
         discoverabilityEnabled
+      }
+    }
+  }
+`
+
+export const getAvailableRegionsQuery = gql`
+  query GetAvailableRegions {
+    serverInfo {
+      multiRegion {
+        regions {
+          id
+          key
+          name
+        }
+      }
+    }
+  }
+`
+
+export const getDefaultRegionQuery = gql`
+  query GetWorkspaceDefaultRegion($workspaceId: String!) {
+    workspace(id: $workspaceId) {
+      id
+      defaultRegion {
+        id
+        key
+        name
+      }
+    }
+  }
+`
+
+export const setDefaultRegionMutation = gql`
+  mutation SetWorkspaceDefaultRegion($workspaceId: String!, $regionKey: String!) {
+    workspaceMutations {
+      setDefaultRegion(regionKey: $regionKey, workspaceId: $workspaceId) {
+        id
+        defaultRegion {
+          id
+          key
+          name
+        }
       }
     }
   }

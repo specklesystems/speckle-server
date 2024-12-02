@@ -48,6 +48,12 @@
               :title="workspaceItem.name"
               collapsible
               class="workspace-item"
+              :tag="
+                workspaceItem.plan?.status === WorkspacePlanStatuses.Trial ||
+                !workspaceItem.plan?.status
+                  ? 'TRIAL'
+                  : undefined
+              "
               :collapsed="targetWorkspaceId !== workspaceItem.id"
             >
               <template #title-icon>
@@ -73,27 +79,27 @@
                   "
                   :tooltip-text="workspaceMenuItem.tooltipText"
                   :disabled="workspaceMenuItem.disabled"
-                  :tag="workspaceMenuItem.disabled ? 'Coming soon' : undefined"
                   extra-padding
                   @click="
-                    onWorkspaceMenuItemClick(
-                      workspaceItem.id,
-                      `${itemKey}`,
+                    () =>
                       workspaceMenuItem.disabled
-                    )
+                        ? noop
+                        : onWorkspaceMenuItemClick(workspaceItem.id, `${itemKey}`)
                   "
                 />
               </template>
             </LayoutSidebarMenuGroup>
-            <LayoutSidebarMenuGroupItem
+            <NuxtLink
               v-if="canCreateWorkspace"
-              label="Add workspace"
-              @click="openWorkspaceCreateDialog"
+              :to="workspacesRoute"
+              @click="isOpen = false"
             >
-              <template #icon>
-                <PlusIcon class="h-4 w-4 text-foreground-2" />
-              </template>
-            </LayoutSidebarMenuGroupItem>
+              <LayoutSidebarMenuGroupItem label="Create workspace">
+                <template #icon>
+                  <PlusIcon class="h-4 w-4 text-foreground-2" />
+                </template>
+              </LayoutSidebarMenuGroupItem>
+            </NuxtLink>
           </LayoutSidebarMenuGroup>
         </LayoutSidebarMenu>
       </LayoutSidebar>
@@ -127,7 +133,7 @@ import { useBreakpoints } from '@vueuse/core'
 import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
 import { PlusIcon } from '@heroicons/vue/24/outline'
 import { useActiveUser } from '~/lib/auth/composables/activeUser'
-import { useSettingsMenu } from '~/lib/settings/composables/menu'
+import { useSettingsMenu, useSetupMenuState } from '~/lib/settings/composables/menu'
 import {
   LayoutSidebar,
   LayoutSidebarMenu,
@@ -136,13 +142,19 @@ import {
 import { graphql } from '~~/lib/common/generated/gql'
 import type { WorkspaceRoles } from '@speckle/shared'
 import { useMixpanel } from '~~/lib/core/composables/mp'
+import { workspacesRoute } from '~/lib/common/helpers/route'
+import { WorkspacePlanStatuses } from '~/lib/common/generated/gql/graphql'
 
 graphql(`
   fragment SettingsDialog_Workspace on Workspace {
     ...WorkspaceAvatar_Workspace
     id
+    slug
     role
     name
+    plan {
+      status
+    }
   }
 `)
 
@@ -197,21 +209,13 @@ const selectedMenuItem = computed((): SettingsMenuItem | null => {
   return null
 })
 
-const onWorkspaceMenuItemClick = (id: string, target: string, disabled?: boolean) => {
-  if (disabled) return
+const onWorkspaceMenuItemClick = (id: string, target: string) => {
   targetWorkspaceId.value = id
   targetMenuItem.value = target
   mixpanel.track('Workspace Settings Menuitem Clicked', {
     // eslint-disable-next-line camelcase
     workspace_id: id,
     item: target
-  })
-}
-
-const openWorkspaceCreateDialog = () => {
-  showWorkspaceCreateDialog.value = true
-  mixpanel.track('Create Workspace Button Clicked', {
-    source: 'settings'
   })
 }
 
@@ -223,6 +227,11 @@ const workspaceMenuItemClasses = (
   targetMenuItem.value === itemKey &&
   targetWorkspaceId.value === workspaceId &&
   !disabled
+
+// not ideal, but it works temporarily while this is still a modal
+useSetupMenuState({
+  goToWorkspaceMenuItem: onWorkspaceMenuItemClick
+})
 
 watch(
   () => user.value,

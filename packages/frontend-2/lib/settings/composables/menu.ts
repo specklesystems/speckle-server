@@ -4,6 +4,7 @@ import SettingsUserNotifications from '~/components/settings/user/Notifications.
 import SettingsUserDeveloper from '~/components/settings/user/developer/Developer.vue'
 import SettingsUserEmails from '~/components/settings/user/Emails.vue'
 import SettingsServerGeneral from '~/components/settings/server/General.vue'
+import SettingsServerRegions from '~/components/settings/server/Regions.vue'
 import SettingsServerProjects from '~/components/settings/server/Projects.vue'
 import SettingsServerMembers from '~/components/settings/server/Members.vue'
 import SettingsWorkspaceGeneral from '~/components/settings/workspaces/General.vue'
@@ -11,11 +12,17 @@ import SettingsWorkspacesMembers from '~/components/settings/workspaces/Members.
 import SettingsWorkspacesSecurity from '~/components/settings/workspaces/Security.vue'
 import SettingsWorkspacesProjects from '~/components/settings/workspaces/Projects.vue'
 import SettingsWorkspacesBilling from '~/components/settings/workspaces/Billing.vue'
+import SettingsWorkspacesRegions from '~/components/settings/workspaces/Regions.vue'
 import { useIsMultipleEmailsEnabled } from '~/composables/globals'
 import { Roles } from '@speckle/shared'
 import { SettingMenuKeys } from '~/lib/settings/helpers/types'
+import { useIsMultiregionEnabled } from '~/lib/multiregion/composables/main'
+import type { InjectionKey } from 'vue'
 
 export const useSettingsMenu = () => {
+  const isMultipleEmailsEnabled = useIsMultipleEmailsEnabled().value
+  const isMultiRegionEnabled = useIsMultiregionEnabled()
+
   const workspaceMenuItems = shallowRef<SettingsMenuItems>({
     [SettingMenuKeys.Workspace.General]: {
       title: 'General',
@@ -40,33 +47,33 @@ export const useSettingsMenu = () => {
     [SettingMenuKeys.Workspace.Billing]: {
       title: 'Billing',
       component: SettingsWorkspacesBilling,
-      permission: [Roles.Workspace.Admin]
+      permission: [Roles.Workspace.Admin, Roles.Workspace.Member]
     },
     [SettingMenuKeys.Workspace.Regions]: {
-      title: 'Regions',
-      disabled: true,
-      tooltipText: 'Set up regions for custom data residency',
-      permission: [Roles.Workspace.Admin]
+      title: 'Data residency',
+      component: SettingsWorkspacesRegions,
+      permission: [Roles.Workspace.Admin, Roles.Workspace.Member],
+      ...(isMultiRegionEnabled
+        ? {}
+        : {
+            disabled: true
+          })
     }
   })
 
-  const multipleEmailsEnabled = useIsMultipleEmailsEnabled().value
-
-  const userMenuItemValues: SettingsMenuItems = {
+  const userMenuItems = shallowRef<SettingsMenuItems>({
     [SettingMenuKeys.User.Profile]: {
       title: 'User profile',
       component: SettingsUserProfile
-    }
-  }
-
-  if (multipleEmailsEnabled) {
-    userMenuItemValues[SettingMenuKeys.User.Emails] = {
-      title: 'Emails',
-      component: SettingsUserEmails
-    }
-  }
-
-  Object.assign(userMenuItemValues, {
+    },
+    ...(isMultipleEmailsEnabled
+      ? {
+          [SettingMenuKeys.User.Emails]: {
+            title: 'Emails',
+            component: SettingsUserEmails
+          }
+        }
+      : {}),
     [SettingMenuKeys.User.Notifications]: {
       title: 'Notifications',
       component: SettingsUserNotifications
@@ -76,8 +83,6 @@ export const useSettingsMenu = () => {
       component: SettingsUserDeveloper
     }
   })
-
-  const userMenuItems = shallowRef<SettingsMenuItems>(userMenuItemValues)
 
   const serverMenuItems = shallowRef<SettingsMenuItems>({
     [SettingMenuKeys.Server.General]: {
@@ -91,7 +96,15 @@ export const useSettingsMenu = () => {
     [SettingMenuKeys.Server.Projects]: {
       title: 'Projects',
       component: SettingsServerProjects
-    }
+    },
+    ...(isMultiRegionEnabled
+      ? {
+          [SettingMenuKeys.Server.Regions]: {
+            title: 'Regions',
+            component: SettingsServerRegions
+          }
+        }
+      : {})
   })
 
   return {
@@ -99,4 +112,18 @@ export const useSettingsMenu = () => {
     serverMenuItems,
     workspaceMenuItems
   }
+}
+
+type MenuState = {
+  goToWorkspaceMenuItem: (workspaceId: string, menuTarget: string) => void
+}
+const MenuStateKey: InjectionKey<MenuState> = Symbol('menuState')
+
+export const useSetupMenuState = (params: MenuState) => {
+  const state = params
+  provide(MenuStateKey, state)
+}
+
+export const useMenuState = () => {
+  return inject(MenuStateKey)!
 }

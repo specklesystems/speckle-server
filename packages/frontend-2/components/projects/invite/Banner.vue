@@ -7,7 +7,7 @@
   >
     <template #message>
       <span class="font-medium">{{ invite.invitedBy.name }}</span>
-      has invited you to be part of the team in
+      has invited you to join
       <template v-if="showProjectName">
         the project
         <span class="font-medium">{{ invite.projectName }}</span>

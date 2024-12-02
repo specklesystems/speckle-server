@@ -103,6 +103,7 @@ describe('Event handlers', () => {
       const projectRole = Roles.Stream.Reviewer
 
       const storedRoles: { userId: string; role: StreamRoles; projectId: string }[] = []
+      let trackProjectUpdate: boolean | undefined = false
       await onWorkspaceRoleUpdatedFactory({
         getWorkspaceRoleToDefaultProjectRoleMapping: async () => ({
           [Roles.Workspace.Admin]: Roles.Stream.Owner,
@@ -117,8 +118,9 @@ describe('Event handlers', () => {
         deleteProjectRole: async () => {
           expect.fail()
         },
-        upsertProjectRole: async (args) => {
+        upsertProjectRole: async (args, options) => {
           storedRoles.push(args)
+          trackProjectUpdate = trackProjectUpdate || options?.trackProjectUpdate
           return {} as StreamRecord
         }
       })({
@@ -129,6 +131,7 @@ describe('Event handlers', () => {
       expect(storedRoles).deep.equals(
         projectIds.map((projectId) => ({ projectId, role: projectRole, userId }))
       )
+      expect(trackProjectUpdate).to.not.be.true
     })
   })
 })

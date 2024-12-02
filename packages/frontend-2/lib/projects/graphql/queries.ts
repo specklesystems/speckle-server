@@ -4,6 +4,11 @@ export const projectAccessCheckQuery = graphql(`
   query ProjectAccessCheck($id: String!) {
     project(id: $id) {
       id
+      visibility
+      workspace {
+        id
+        slug
+      }
     }
   }
 `)
@@ -28,7 +33,6 @@ export const projectsDashboardQuery = graphql(`
           ...ProjectDashboardItem
         }
       }
-      ...ProjectsInviteBanners
       ...ProjectsDashboardHeaderProjects_User
     }
   }
@@ -172,6 +176,7 @@ export const projectInviteQuery = graphql(`
 export const projectModelCheckQuery = graphql(`
   query ProjectModelCheck($projectId: String!, $modelId: String!) {
     project(id: $projectId) {
+      visibility
       model(id: $modelId) {
         id
       }
@@ -230,6 +235,7 @@ export const projectAutomationsTabQuery = graphql(`
   query ProjectAutomationsTab($projectId: String!) {
     project(id: $projectId) {
       id
+      role
       models(limit: 1) {
         items {
           id
@@ -242,6 +248,10 @@ export const projectAutomationsTabQuery = graphql(`
           ...ProjectPageAutomationsRow_Automation
         }
         cursor
+      }
+      workspace {
+        id
+        slug
       }
       ...FormSelectProjects_Project
     }

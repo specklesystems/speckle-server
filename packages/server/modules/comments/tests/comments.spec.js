@@ -1,37 +1,23 @@
-// Hooking up comments/services/index.js mock
-const { mockRequireModule } = require('@/test/mockHelper')
-const commentsServiceMock = mockRequireModule(
-  ['@/modules/comments/services/index', require.resolve('../services/index')],
-  ['@/modules/comments/graph/resolvers/comments']
-)
-
 const path = require('path')
 const { packageRoot } = require('@/bootstrap')
 const expect = require('chai').expect
 const crs = require('crypto-random-string')
 const { beforeEachContext, truncateTables } = require('@/test/hooks')
-const { createUser } = require('@/modules/core/services/users')
-const { createStream } = require('@/modules/core/services/streams')
-const { createCommitByBranchName } = require('@/modules/core/services/commits')
 
-const { createObject } = require('@/modules/core/services/objects')
 const {
-  createComment,
-  getComments,
-  getComment,
-  editComment,
-  viewComment,
-  createCommentReply,
-  archiveComment,
-  getResourceCommentCount,
-  getStreamCommentCount
-} = require('../services/index')
+  streamResourceCheckFactory,
+  createCommentFactory,
+  createCommentReplyFactory,
+  editCommentFactory,
+  archiveCommentFactory
+} = require('@/modules/comments/services/index')
 const {
   convertBasicStringToDocument
 } = require('@/modules/core/services/richTextEditorService')
 const {
   ensureCommentSchema,
-  buildCommentTextFromInput
+  buildCommentTextFromInput,
+  validateInputAttachmentsFactory
 } = require('@/modules/comments/services/commentTextService')
 const { range } = require('lodash')
 const { buildApolloServer } = require('@/app')
@@ -45,8 +31,244 @@ const {
   purgeNotifications
 } = require('@/test/notificationsHelper')
 const { NotificationType } = require('@/modules/notifications/helpers/types')
-const { EmailSendingServiceMock } = require('@/test/mocks/global')
+const {
+  EmailSendingServiceMock,
+  CommentsRepositoryMock
+} = require('@/test/mocks/global')
 const { createAuthedTestContext } = require('@/test/graphqlHelper')
+const {
+  checkStreamResourceAccessFactory,
+  markCommentViewedFactory,
+  insertCommentsFactory,
+  insertCommentLinksFactory,
+  deleteCommentFactory,
+  markCommentUpdatedFactory,
+  getCommentFactory,
+  updateCommentFactory,
+  getCommentsLegacyFactory,
+  getResourceCommentCountFactory,
+  getStreamCommentCountFactory
+} = require('@/modules/comments/repositories/comments')
+const { db } = require('@/db/knex')
+const { getBlobsFactory } = require('@/modules/blobstorage/repositories')
+const { CommentsEmitter } = require('@/modules/comments/events/emitter')
+const {
+  getStreamFactory,
+  createStreamFactory,
+  markCommitStreamUpdatedFactory
+} = require('@/modules/core/repositories/streams')
+const {
+  createCommitByBranchIdFactory,
+  createCommitByBranchNameFactory
+} = require('@/modules/core/services/commit/management')
+const {
+  createCommitFactory,
+  insertStreamCommitsFactory,
+  insertBranchCommitsFactory
+} = require('@/modules/core/repositories/commits')
+const {
+  getBranchByIdFactory,
+  markCommitBranchUpdatedFactory,
+  getStreamBranchByNameFactory,
+  createBranchFactory
+} = require('@/modules/core/repositories/branches')
+const { VersionsEmitter } = require('@/modules/core/events/versionsEmitter')
+const {
+  getObjectFactory,
+  storeSingleObjectIfNotFoundFactory,
+  storeClosuresIfNotFoundFactory
+} = require('@/modules/core/repositories/objects')
+const {
+  legacyCreateStreamFactory,
+  createStreamReturnRecordFactory
+} = require('@/modules/core/services/streams/management')
+const {
+  inviteUsersToProjectFactory
+} = require('@/modules/serverinvites/services/projectInviteManagement')
+const {
+  createAndSendInviteFactory
+} = require('@/modules/serverinvites/services/creation')
+const {
+  findUserByTargetFactory,
+  insertInviteAndDeleteOldFactory,
+  deleteServerOnlyInvitesFactory,
+  updateAllInviteTargetsFactory
+} = require('@/modules/serverinvites/repositories/serverInvites')
+const {
+  collectAndValidateCoreTargetsFactory
+} = require('@/modules/serverinvites/services/coreResourceCollection')
+const {
+  buildCoreInviteEmailContentsFactory
+} = require('@/modules/serverinvites/services/coreEmailContents')
+const { getEventBus } = require('@/modules/shared/services/eventBus')
+const { ProjectsEmitter } = require('@/modules/core/events/projectsEmitter')
+const { saveActivityFactory } = require('@/modules/activitystream/repositories')
+const { publish } = require('@/modules/shared/utils/subscriptions')
+const {
+  addCommitCreatedActivityFactory
+} = require('@/modules/activitystream/services/commitActivity')
+const {
+  getUsersFactory,
+  getUserFactory,
+  storeUserFactory,
+  countAdminUsersFactory,
+  storeUserAclFactory
+} = require('@/modules/core/repositories/users')
+const {
+  findEmailFactory,
+  createUserEmailFactory,
+  ensureNoPrimaryEmailForUserFactory
+} = require('@/modules/core/repositories/userEmails')
+const {
+  requestNewEmailVerificationFactory
+} = require('@/modules/emails/services/verification/request')
+const {
+  deleteOldAndInsertNewVerificationFactory
+} = require('@/modules/emails/repositories')
+const { renderEmail } = require('@/modules/emails/services/emailRendering')
+const { sendEmail } = require('@/modules/emails/services/sending')
+const { createUserFactory } = require('@/modules/core/services/users/management')
+const {
+  validateAndCreateUserEmailFactory
+} = require('@/modules/core/services/userEmails')
+const {
+  finalizeInvitedServerRegistrationFactory
+} = require('@/modules/serverinvites/services/processing')
+const { UsersEmitter } = require('@/modules/core/events/usersEmitter')
+const { getServerInfoFactory } = require('@/modules/core/repositories/server')
+const { createObjectFactory } = require('@/modules/core/services/objects/management')
+
+const getServerInfo = getServerInfoFactory({ db })
+const getUser = getUserFactory({ db })
+const getUsers = getUsersFactory({ db })
+const getStream = getStreamFactory({ db })
+const streamResourceCheck = streamResourceCheckFactory({
+  checkStreamResourceAccess: checkStreamResourceAccessFactory({ db })
+})
+const markCommentViewed = markCommentViewedFactory({ db })
+const validateInputAttachments = validateInputAttachmentsFactory({
+  getBlobs: getBlobsFactory({ db })
+})
+const insertComments = insertCommentsFactory({ db })
+const insertCommentLinks = insertCommentLinksFactory({ db })
+const deleteComment = deleteCommentFactory({ db })
+const createComment = createCommentFactory({
+  checkStreamResourcesAccess: streamResourceCheck,
+  validateInputAttachments,
+  insertComments,
+  insertCommentLinks,
+  deleteComment,
+  markCommentViewed,
+  commentsEventsEmit: CommentsEmitter.emit
+})
+const createCommentReply = createCommentReplyFactory({
+  validateInputAttachments,
+  insertComments,
+  insertCommentLinks,
+  checkStreamResourcesAccess: streamResourceCheck,
+  deleteComment,
+  markCommentUpdated: markCommentUpdatedFactory({ db }),
+  commentsEventsEmit: CommentsEmitter.emit
+})
+const getComment = getCommentFactory({ db })
+const updateComment = updateCommentFactory({ db })
+const editComment = editCommentFactory({
+  getComment,
+  validateInputAttachments,
+  updateComment: updateCommentFactory({ db }),
+  commentsEventsEmit: CommentsEmitter.emit
+})
+const archiveComment = archiveCommentFactory({
+  getComment,
+  getStream,
+  updateComment
+})
+const getComments = getCommentsLegacyFactory({ db })
+const getResourceCommentCount = getResourceCommentCountFactory({ db })
+const getStreamCommentCount = getStreamCommentCountFactory({ db })
+
+const markCommitStreamUpdated = markCommitStreamUpdatedFactory({ db })
+const getObject = getObjectFactory({ db })
+const createCommitByBranchId = createCommitByBranchIdFactory({
+  createCommit: createCommitFactory({ db }),
+  getObject,
+  getBranchById: getBranchByIdFactory({ db }),
+  insertStreamCommits: insertStreamCommitsFactory({ db }),
+  insertBranchCommits: insertBranchCommitsFactory({ db }),
+  markCommitStreamUpdated,
+  markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
+  versionsEventEmitter: VersionsEmitter.emit,
+  addCommitCreatedActivity: addCommitCreatedActivityFactory({
+    saveActivity: saveActivityFactory({ db }),
+    publish
+  })
+})
+
+const createCommitByBranchName = createCommitByBranchNameFactory({
+  createCommitByBranchId,
+  getStreamBranchByName: getStreamBranchByNameFactory({ db }),
+  getBranchById: getBranchByIdFactory({ db })
+})
+
+const createStream = legacyCreateStreamFactory({
+  createStreamReturnRecord: createStreamReturnRecordFactory({
+    inviteUsersToProject: inviteUsersToProjectFactory({
+      createAndSendInvite: createAndSendInviteFactory({
+        findUserByTarget: findUserByTargetFactory({ db }),
+        insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
+        collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
+          getStream
+        }),
+        buildInviteEmailContents: buildCoreInviteEmailContentsFactory({
+          getStream
+        }),
+        emitEvent: ({ eventName, payload }) =>
+          getEventBus().emit({
+            eventName,
+            payload
+          }),
+        getUser,
+        getServerInfo
+      }),
+      getUsers
+    }),
+    createStream: createStreamFactory({ db }),
+    createBranch: createBranchFactory({ db }),
+    projectsEventsEmitter: ProjectsEmitter.emit
+  })
+})
+
+const findEmail = findEmailFactory({ db })
+const requestNewEmailVerification = requestNewEmailVerificationFactory({
+  findEmail,
+  getUser: getUserFactory({ db }),
+  getServerInfo,
+  deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db }),
+  renderEmail,
+  sendEmail
+})
+const createUser = createUserFactory({
+  getServerInfo,
+  findEmail,
+  storeUser: storeUserFactory({ db }),
+  countAdminUsers: countAdminUsersFactory({ db }),
+  storeUserAcl: storeUserAclFactory({ db }),
+  validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
+    createUserEmail: createUserEmailFactory({ db }),
+    ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
+    findEmail,
+    updateEmailInvites: finalizeInvitedServerRegistrationFactory({
+      deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
+      updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
+    }),
+    requestNewEmailVerification
+  }),
+  usersEventsEmitter: UsersEmitter.emit
+})
+const createObject = createObjectFactory({
+  storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({ db }),
+  storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db })
+})
 
 function buildCommentInputFromString(textString) {
   return convertBasicStringToDocument(textString)
@@ -57,6 +279,7 @@ function generateRandomCommentText() {
 }
 
 const mailerMock = EmailSendingServiceMock
+const commentRepoMock = CommentsRepositoryMock
 
 describe('Comments @comments', () => {
   /** @type {import('express').Express} */
@@ -108,32 +331,36 @@ describe('Comments @comments', () => {
     testObject1.id = await createObject({ streamId: stream.id, object: testObject1 })
     testObject2.id = await createObject({ streamId: stream.id, object: testObject2 })
 
-    commitId1 = await createCommitByBranchName({
-      streamId: stream.id,
-      branchName: 'main',
-      message: 'first commit',
-      sourceApplication: 'tests',
-      objectId: testObject1.id,
-      authorId: user.id
-    })
-    commitId2 = await createCommitByBranchName({
-      streamId: stream.id,
-      branchName: 'main',
-      message: 'first commit',
-      sourceApplication: 'tests',
-      objectId: testObject2.id,
-      authorId: user.id
-    })
+    commitId1 = (
+      await createCommitByBranchName({
+        streamId: stream.id,
+        branchName: 'main',
+        message: 'first commit',
+        sourceApplication: 'tests',
+        objectId: testObject1.id,
+        authorId: user.id
+      })
+    ).id
+    commitId2 = (
+      await createCommitByBranchName({
+        streamId: stream.id,
+        branchName: 'main',
+        message: 'first commit',
+        sourceApplication: 'tests',
+        objectId: testObject2.id,
+        authorId: user.id
+      })
+    ).id
   })
 
   after(() => {
     notificationsState.destroy()
-    commentsServiceMock.destroy()
+    commentRepoMock.destroy()
   })
 
   afterEach(() => {
-    commentsServiceMock.disable()
-    commentsServiceMock.resetMockedFunctions()
+    commentRepoMock.disable()
+    commentRepoMock.resetMockedFunctions()
   })
 
   it('Should not be allowed to comment without specifying at least one target resource', async () => {
@@ -165,13 +392,15 @@ describe('Comments @comments', () => {
     const objA = { foo: 'bar' }
     objA.id = await createObject({ streamId: streamA.id, object: objA })
     const commA = {}
-    commA.id = await createCommitByBranchName({
-      streamId: streamA.id,
-      branchName: 'main',
-      message: 'baz',
-      objectId: objA.id,
-      authorId: user.id
-    })
+    commA.id = (
+      await createCommitByBranchName({
+        streamId: streamA.id,
+        branchName: 'main',
+        message: 'baz',
+        objectId: objA.id,
+        authorId: user.id
+      })
+    ).id
 
     // Stream B belongs to otherUser
     const streamB = { name: 'Stream B' }
@@ -179,13 +408,15 @@ describe('Comments @comments', () => {
     const objB = { qux: 'mux' }
     objB.id = await createObject({ streamId: streamB.id, object: objB })
     const commB = {}
-    commB.id = await createCommitByBranchName({
-      streamId: streamB.id,
-      branchName: 'main',
-      message: 'baz',
-      objectId: objB.id,
-      authorId: otherUser.id
-    })
+    commB.id = (
+      await createCommitByBranchName({
+        streamId: streamB.id,
+        branchName: 'main',
+        message: 'baz',
+        objectId: objB.id,
+        authorId: otherUser.id
+      })
+    ).id
 
     // create a comment on streamA but objectB
     await createComment({
@@ -269,13 +500,15 @@ describe('Comments @comments', () => {
     const obj = { foo: 'bar' }
     obj.id = await createObject({ streamId: stream.id, object: obj })
     const commit = {}
-    commit.id = await createCommitByBranchName({
-      streamId: stream.id,
-      branchName: 'main',
-      message: 'baz',
-      objectId: obj.id,
-      authorId: user.id
-    })
+    commit.id = (
+      await createCommitByBranchName({
+        streamId: stream.id,
+        branchName: 'main',
+        message: 'baz',
+        objectId: obj.id,
+        authorId: user.id
+      })
+    ).id
 
     const commCount = 10
     const commentIds = []
@@ -346,7 +579,7 @@ describe('Comments @comments', () => {
       archived: true
     })
 
-    const count = await getStreamCommentCount({ streamId: stream.id }) // should be 30
+    const count = await getStreamCommentCount(stream.id, { threadsOnly: true }) // should be 30
     expect(count).to.equal(commCount * 3 - 1)
 
     const objCount = await getResourceCommentCount({ resourceId: obj.id })
@@ -360,15 +593,19 @@ describe('Comments @comments', () => {
     const objOther = { 'are you bored': 'yes' }
     objOther.id = await createObject({ streamId: streamOther.id, object: objOther })
     const commitOther = {}
-    commitOther.id = await createCommitByBranchName({
-      streamId: streamOther.id,
-      branchName: 'main',
-      message: 'baz',
-      objectId: objOther.id,
-      authorId: user.id
-    })
+    commitOther.id = (
+      await createCommitByBranchName({
+        streamId: streamOther.id,
+        branchName: 'main',
+        message: 'baz',
+        objectId: objOther.id,
+        authorId: user.id
+      })
+    ).id
 
-    const countOther = await getStreamCommentCount({ streamId: streamOther.id })
+    const countOther = await getStreamCommentCount(streamOther.id, {
+      threadsOnly: true
+    })
     expect(countOther).to.equal(0)
 
     const objCountOther = await getResourceCommentCount({
@@ -410,7 +647,7 @@ describe('Comments @comments', () => {
     const commentOtherUser = await getComment({ id, userId: otherUser.id })
     expect(commentOtherUser.viewedAt).to.be.null
 
-    await viewComment({ userId: user.id, commentId: id })
+    await markCommentViewed(id, user.id)
 
     const viewedCommentOtherUser = await getComment({ id, userId: otherUser.id })
     expect(viewedCommentOtherUser).to.haveOwnProperty('viewedAt')
@@ -1010,7 +1247,7 @@ describe('Comments @comments', () => {
       // Init apollo instance w/ authenticated context
       apollo = {
         apollo: await buildApolloServer(),
-        context: createAuthedTestContext(user.id)
+        context: await createAuthedTestContext(user.id)
       }
 
       // Init token for authenticating w/ REST API
@@ -1053,7 +1290,7 @@ describe('Comments @comments', () => {
 
       before(async () => {
         // Truncate comments
-        truncateTables([Comments.name])
+        await truncateTables([Comments.name])
 
         // Create a single comment with a blob
         const createCommentResult = await createComment({
@@ -1093,14 +1330,15 @@ describe('Comments @comments', () => {
         })
 
       it('both legacy (string) comments and new (ProseMirror) documents are formatted as SmartTextEditorValue values', async () => {
-        commentsServiceMock.enable()
-        commentsServiceMock.mockFunction('getComments', () => {
-          return {
+        commentRepoMock.enable()
+        commentRepoMock.mockFunction('getCommentsLegacyFactory', () => {
+          return () => ({
             items: [
               // Legacy
               {
                 id: 'a',
-                text: 'hey dude! welcome to my legacy-type comment!'
+                text: 'hey dude! welcome to my legacy-type comment!',
+                streamId: stream.id
               },
               // New
               {
@@ -1109,35 +1347,38 @@ describe('Comments @comments', () => {
                   buildCommentTextFromInput({
                     doc: buildCommentInputFromString('new comment schema here')
                   })
-                )
+                ),
+                streamId: stream.id
               },
               // New, but for some reason the text object is already deserialized
               {
                 id: 'c',
                 text: buildCommentTextFromInput({
                   doc: buildCommentInputFromString('another new comment schema here')
-                })
+                }),
+                streamId: stream.id
               }
             ],
             cursor: new Date().toISOString(),
             totalCount: 3
-          }
+          })
         })
 
         const { data, errors } = await readComments()
 
-        expect(data?.comments?.items?.length || 0).to.eq(3)
         expect(errors?.length || 0).to.eq(0)
+        expect(data?.comments?.items?.length || 0).to.eq(3)
       })
 
       it('legacy comment with a single link is formatted correctly', async () => {
         const item = {
           id: '1',
-          text: 'https://aaa.com:3000/h3ll0-world/_?a=1&b=2#aaa'
+          text: 'https://aaa.com:3000/h3ll0-world/_?a=1&b=2#aaa',
+          streamId: stream.id
         }
 
-        commentsServiceMock.enable()
-        commentsServiceMock.mockFunction('getComments', () => ({
+        commentRepoMock.enable()
+        commentRepoMock.mockFunction('getCommentsLegacyFactory', () => () => ({
           items: [item],
           cursor: new Date().toISOString(),
           totalCount: 1
@@ -1172,11 +1413,12 @@ describe('Comments @comments', () => {
 
         const item = {
           id: '1',
-          text: textParts.join('')
+          text: textParts.join(''),
+          streamId: stream.id
         }
 
-        commentsServiceMock.enable()
-        commentsServiceMock.mockFunction('getComments', () => ({
+        commentRepoMock.enable()
+        commentRepoMock.mockFunction('getCommentsLegacyFactory', () => () => ({
           items: [item],
           cursor: new Date().toISOString(),
           totalCount: 1
@@ -1294,8 +1536,8 @@ describe('Comments @comments', () => {
             text: value
           }
 
-          commentsServiceMock.enable()
-          commentsServiceMock.mockFunction('getComments', () => ({
+          commentRepoMock.enable()
+          commentRepoMock.mockFunction('getCommentsLegacyFactory', () => () => ({
             items: [item],
             cursor: new Date().toISOString(),
             totalCount: 1

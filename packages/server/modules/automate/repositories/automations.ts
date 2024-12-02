@@ -12,7 +12,6 @@ import {
   GetAutomationTriggerDefinitions,
   GetFullAutomationRevisionMetadata,
   GetFullAutomationRunById,
-  GetFunctionAutomationCounts,
   GetFunctionRun,
   GetLatestAutomationRevision,
   GetLatestAutomationRevisions,
@@ -78,7 +77,7 @@ import {
 import { Nullable, StreamRoles, isNullOrUndefined } from '@speckle/shared'
 import cryptoRandomString from 'crypto-random-string'
 import { Knex } from 'knex'
-import _, { clamp, groupBy, keyBy, pick, reduce } from 'lodash'
+import _, { clamp, groupBy, keyBy, pick } from 'lodash'
 import { SetOptional, SetRequired } from 'type-fest'
 
 const tables = {
@@ -616,191 +615,165 @@ export const getRevisionsFunctionsFactory =
     return groupBy(await q, (r) => r.automationRevisionId)
   }
 
-export const getFunctionAutomationCountsFactory =
-  (deps: { db: Knex }): GetFunctionAutomationCounts =>
-  async (params: { functionIds: string[] }) => {
-    const { functionIds } = params
-    if (!functionIds.length) return {}
-
-    const q = tables
-      .automationRevisionFunctions(deps.db)
-      .select<Array<{ functionId: string; count: string }>>([
-        AutomationRevisionFunctions.col.functionId,
-        knex.raw('count(distinct ??) as "count"', [
-          AutomationRevisions.col.automationId
-        ])
-      ])
-      .innerJoin(
-        AutomationRevisions.name,
-        AutomationRevisions.col.id,
-        AutomationRevisionFunctions.col.automationRevisionId
-      )
-      .whereIn(AutomationRevisionFunctions.col.functionId, functionIds)
-      .groupBy(AutomationRevisionFunctions.col.functionId)
-
-    return reduce(
-      await q,
-      (acc, r) => {
-        acc[r.functionId] = parseInt(r.count)
-        return acc
-      },
-      {} as Record<string, number>
-    )
-  }
-
 type GetAutomationRunsArgs = AutomationRunsArgs & {
   automationId: string
   revisionId?: string
 }
 
-const getAutomationRunsTotalCountBaseQuery = <Q>(params: {
-  args: Pick<GetAutomationRunsArgs, 'automationId' | 'revisionId'>
-}) => {
-  const { args } = params
-  const q = AutomationRuns.knex<Q>()
-    .innerJoin(
-      AutomationRevisions.name,
-      AutomationRevisions.col.id,
-      AutomationRuns.col.automationRevisionId
-    )
-    .where(AutomationRevisions.col.automationId, args.automationId)
+const getAutomationRunsTotalCountBaseQueryFactory =
+  (deps: { db: Knex }) =>
+  (params: { args: Pick<GetAutomationRunsArgs, 'automationId' | 'revisionId'> }) => {
+    const { args } = params
+    const q = tables
+      .automationRuns(deps.db)
+      .innerJoin(
+        AutomationRevisions.name,
+        AutomationRevisions.col.id,
+        AutomationRuns.col.automationRevisionId
+      )
+      .innerJoin(
+        Automations.name,
+        Automations.col.id,
+        AutomationRevisions.col.automationId
+      )
+      .where(AutomationRevisions.col.automationId, args.automationId)
 
-  if (args.revisionId?.length) {
-    q.andWhere(AutomationRuns.col.automationRevisionId, args.revisionId)
+    if (args.revisionId?.length) {
+      q.andWhere(AutomationRuns.col.automationRevisionId, args.revisionId)
+    }
+
+    return q
   }
 
-  return q
-}
+export const getAutomationRunsTotalCountFactory =
+  (deps: { db: Knex }) => async (params: { args: GetAutomationRunsArgs }) => {
+    const q = getAutomationRunsTotalCountBaseQueryFactory(deps)(params).count<
+      [{ count: string }]
+    >(AutomationRuns.col.id)
 
-export async function getAutomationRunsTotalCount(params: {
-  args: GetAutomationRunsArgs
-}) {
-  const q = getAutomationRunsTotalCountBaseQuery(params).count<[{ count: string }]>(
-    AutomationRuns.col.id
-  )
+    const [ret] = await q
 
-  const [ret] = await q
+    return parseInt(ret.count)
+  }
 
-  return parseInt(ret.count)
-}
+export const getAutomationRunsItemsFactory =
+  (deps: { db: Knex }) => async (params: { args: GetAutomationRunsArgs }) => {
+    const { args } = params
+    if (args.limit === 0) return { items: [], cursor: null }
 
-export async function getAutomationRunsItems(params: { args: GetAutomationRunsArgs }) {
-  const { args } = params
-  if (args.limit === 0) return { items: [], cursor: null }
+    const q = getAutomationRunsTotalCountBaseQueryFactory(deps)(params)
 
-  const q = getAutomationRunsTotalCountBaseQuery<
-    Array<{
+    const limit = clamp(isNullOrUndefined(args.limit) ? 10 : args.limit, 0, 25)
+    const cursor = args.cursor ? decodeIsoDateCursor(args.cursor) : null
+
+    // Attach trigger & function runs
+    q.select([
+      knex.raw(`(array_agg(??))[1] as "projectId"`, [Automations.col.projectId]),
+      AutomationRuns.groupArray('runs'),
+      AutomationRunTriggers.groupArray('triggers'),
+      AutomationFunctionRuns.groupArray('functionRuns'),
+      knex.raw(`(array_agg(??))[1] as "automationId"`, [
+        AutomationRevisions.col.automationId
+      ])
+    ])
+      .innerJoin(
+        AutomationRunTriggers.name,
+        AutomationRunTriggers.col.automationRunId,
+        AutomationRuns.col.id
+      )
+      .innerJoin(
+        AutomationFunctionRuns.name,
+        AutomationFunctionRuns.col.runId,
+        AutomationRuns.col.id
+      )
+      .groupBy(AutomationRuns.col.id)
+      .orderBy([
+        { column: AutomationRuns.col.updatedAt, order: 'desc' },
+        { column: AutomationRuns.col.updatedAt, order: 'desc' }
+      ])
+      .limit(limit)
+
+    if (cursor?.length) {
+      q.andWhere(AutomationRuns.col.updatedAt, '<', cursor)
+    }
+
+    const res = (await q) as Array<{
       runs: AutomationRunRecord[]
       triggers: AutomationRunTriggerRecord[]
       functionRuns: AutomationFunctionRunRecord[]
       automationId: string
+      projectId: string
     }>
-  >(params)
 
-  const limit = clamp(isNullOrUndefined(args.limit) ? 10 : args.limit, 0, 25)
-  const cursor = args.cursor ? decodeIsoDateCursor(args.cursor) : null
-
-  // Attach trigger & function runs
-  q.select([
-    AutomationRuns.groupArray('runs'),
-    AutomationRunTriggers.groupArray('triggers'),
-    AutomationFunctionRuns.groupArray('functionRuns'),
-    knex.raw(`(array_agg(??))[1] as "automationId"`, [
-      AutomationRevisions.col.automationId
-    ])
-  ])
-    .innerJoin(
-      AutomationRunTriggers.name,
-      AutomationRunTriggers.col.automationRunId,
-      AutomationRuns.col.id
-    )
-    .innerJoin(
-      AutomationFunctionRuns.name,
-      AutomationFunctionRuns.col.runId,
-      AutomationRuns.col.id
+    const items = res.map(
+      (r): AutomationRunWithTriggersFunctionRuns & { projectId: string } => ({
+        ...formatJsonArrayRecords(r.runs)[0],
+        triggers: formatJsonArrayRecords(r.triggers),
+        functionRuns: formatJsonArrayRecords(r.functionRuns),
+        automationId: r.automationId,
+        projectId: r.projectId
+      })
     )
 
-    .groupBy(AutomationRuns.col.id)
-    .orderBy([
-      { column: AutomationRuns.col.updatedAt, order: 'desc' },
-      { column: AutomationRuns.col.updatedAt, order: 'desc' }
-    ])
-    .limit(limit)
-
-  if (cursor?.length) {
-    q.andWhere(AutomationRuns.col.updatedAt, '<', cursor)
+    return {
+      items,
+      cursor: items.length
+        ? encodeIsoDateCursor(items[items.length - 1].updatedAt)
+        : null
+    }
   }
-
-  const res = await q
-  const items = res.map(
-    (r): AutomationRunWithTriggersFunctionRuns => ({
-      ...formatJsonArrayRecords(r.runs)[0],
-      triggers: formatJsonArrayRecords(r.triggers),
-      functionRuns: formatJsonArrayRecords(r.functionRuns),
-      automationId: r.automationId
-    })
-  )
-
-  return {
-    items,
-    cursor: items.length ? encodeIsoDateCursor(items[items.length - 1].updatedAt) : null
-  }
-}
 
 export type GetProjectAutomationsParams = {
   projectId: string
   args: ProjectAutomationsArgs
 }
 
-export const getProjectAutomationsBaseQuery = <Q = AutomationRecord[]>(
-  params: GetProjectAutomationsParams
-) => {
-  const { projectId, args } = params
+const getProjectAutomationsBaseQueryFactory =
+  (deps: { db: Knex }) => (params: GetProjectAutomationsParams) => {
+    const { projectId, args } = params
 
-  const q = Automations.knex<Q>().where(Automations.col.projectId, projectId)
+    const q = tables.automations(deps.db).where(Automations.col.projectId, projectId)
 
-  if (args.filter?.length) {
-    q.andWhere(Automations.col.name, 'ilike', `%${args.filter}%`)
+    if (args.filter?.length) {
+      q.andWhere(Automations.col.name, 'ilike', `%${args.filter}%`)
+    }
+
+    return q
   }
 
-  return q
-}
+export const getProjectAutomationsTotalCountFactory =
+  (deps: { db: Knex }) => async (params: GetProjectAutomationsParams) => {
+    const q = getProjectAutomationsBaseQueryFactory(deps)(params).count<
+      [{ count: string }]
+    >(Automations.col.id)
 
-export const getProjectAutomationsTotalCount = async (
-  params: GetProjectAutomationsParams
-) => {
-  const q = getProjectAutomationsBaseQuery(params).count<[{ count: string }]>(
-    Automations.col.id
-  )
+    const [ret] = await q
 
-  const [ret] = await q
-
-  return parseInt(ret.count)
-}
-
-export const getProjectAutomationsItems = async (
-  params: GetProjectAutomationsParams
-) => {
-  const { args } = params
-  if (args.limit === 0) return { items: [], cursor: null }
-
-  const cursor = args.cursor ? decodeCursor(args.cursor) : null
-
-  const q = getProjectAutomationsBaseQuery(params)
-    .limit(clamp(isNullOrUndefined(args.limit) ? 10 : args.limit, 0, 25))
-    .orderBy(Automations.col.updatedAt, 'desc')
-
-  if (cursor?.length) {
-    q.andWhere(Automations.col.updatedAt, '<', cursor)
+    return parseInt(ret.count)
   }
 
-  const res = await q
+export const getProjectAutomationsItemsFactory =
+  (deps: { db: Knex }) => async (params: GetProjectAutomationsParams) => {
+    const { args } = params
+    if (args.limit === 0) return { items: [], cursor: null }
 
-  return {
-    items: res,
-    cursor: res.length ? encodeIsoDateCursor(res[res.length - 1].updatedAt) : null
+    const cursor = args.cursor ? decodeCursor(args.cursor) : null
+
+    const q = getProjectAutomationsBaseQueryFactory(deps)(params)
+      .limit(clamp(isNullOrUndefined(args.limit) ? 10 : args.limit, 0, 25))
+      .orderBy(Automations.col.updatedAt, 'desc')
+
+    if (cursor?.length) {
+      q.andWhere(Automations.col.updatedAt, '<', cursor)
+    }
+
+    const res = await q
+
+    return {
+      items: res,
+      cursor: res.length ? encodeIsoDateCursor(res[res.length - 1].updatedAt) : null
+    }
   }
-}
 
 export const getLatestVersionAutomationRunsFactory =
   (deps: { db: Knex }): GetLatestVersionAutomationRuns =>
@@ -969,19 +942,17 @@ export const getAutomationRunWithTokenFactory =
     return await q
   }
 
-export async function getAutomationRunsTriggers(params: {
-  automationRunIds: string[]
-}) {
-  const { automationRunIds } = params
-  if (!automationRunIds.length) return {}
+export const getAutomationRunsTriggersFactory =
+  (deps: { db: Knex }) => async (params: { automationRunIds: string[] }) => {
+    const { automationRunIds } = params
+    if (!automationRunIds.length) return {}
 
-  const q = AutomationRunTriggers.knex<AutomationRunTriggerRecord[]>().whereIn(
-    AutomationRunTriggers.col.automationRunId,
-    automationRunIds
-  )
-  const items = await q
-  return groupBy(items, (i) => i.automationRunId)
-}
+    const q = tables
+      .automationRunTriggers(deps.db)
+      .whereIn(AutomationRunTriggers.col.automationRunId, automationRunIds)
+    const items = await q
+    return groupBy(items, (i) => i.automationRunId)
+  }
 
 export const getAutomationRunFullTriggersFactory =
   (deps: { db: Knex }): GetAutomationRunFullTriggers =>

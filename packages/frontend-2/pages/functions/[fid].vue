@@ -21,6 +21,7 @@
         v-if="editModel"
         v-model:open="showEditDialog"
         :model="editModel"
+        :workspaces="activeUserWorkspaces"
         :fn-id="fn.id"
       />
     </template>
@@ -57,6 +58,13 @@ const pageQuery = graphql(`
     automateFunction(id: $functionId) {
       ...AutomateFunctionPage_AutomateFunction
     }
+    activeUser {
+      workspaces {
+        items {
+          ...AutomateFunctionCreateDialog_Workspace
+        }
+      }
+    }
   }
 `)
 
@@ -92,6 +100,9 @@ const isOwner = computed(
       activeUser.value.id === fn.value.creator.id
     )
 )
+const activeUserWorkspaces = computed(
+  () => result.value?.activeUser?.workspaces.items ?? []
+)
 
 const { html: plaintextDescription } = useMarkdown(
   computed(() => fn.value?.description || ''),
@@ -102,6 +113,8 @@ const editModel = computed((): Optional<FunctionDetailsFormValues> => {
   const func = fn.value
   if (!func) return undefined
 
+  const workspaceId = func.workspaceIds?.at(0)
+
   return {
     name: func.name,
     description: func.description,
@@ -109,7 +122,10 @@ const editModel = computed((): Optional<FunctionDetailsFormValues> => {
     allowedSourceApps: SourceApps.filter((app) =>
       func.supportedSourceApps.includes(app.name)
     ),
-    tags: func.tags
+    tags: func.tags,
+    workspace: activeUserWorkspaces.value.find(
+      (workspace) => workspace.id === workspaceId
+    )
   }
 })
 

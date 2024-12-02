@@ -10,11 +10,11 @@ export const projectsRoute = '/projects'
 export const workspacesRoute = '/workspaces'
 export const loginRoute = '/authn/login'
 export const registerRoute = '/authn/register'
+export const ssoLoginRoute = '/authn/sso'
 export const forgottenPasswordRoute = '/authn/forgotten-password'
 export const onboardingRoute = '/onboarding'
-export const downloadManagerRoute = '/download-manager'
 export const serverManagementRoute = '/server-management'
-export const connectorsPageUrl = 'https://speckle.systems/features/connectors/'
+export const downloadManagerUrl = 'https://speckle.systems/download'
 export const docsPageUrl = 'https://speckle.guide/'
 export const forumPageUrl = 'https://speckle.community/'
 
@@ -69,7 +69,9 @@ export const automationFunctionsRoute = '/functions'
 export const automationFunctionRoute = (functionId: string) =>
   `${automationFunctionsRoute}/${functionId}`
 
-export const workspaceRoute = (id: string) => `/workspaces/${id}`
+export const workspaceRoute = (slug: string) => `/workspaces/${slug}`
+
+export const workspaceFunctionsRoute = (slug: string) => `/workspaces/${slug}/functions`
 
 const buildNavigationComposable = (route: string) => () => {
   const router = useRouter()

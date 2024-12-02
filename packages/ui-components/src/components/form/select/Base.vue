@@ -8,17 +8,32 @@
       :by="by"
       :disabled="isDisabled"
       as="div"
+      :class="{
+        'md:flex md:items-center md:space-x-2 md:justify-between': isLeftLabelPosition
+      }"
     >
-      <ListboxLabel
-        :id="labelId"
-        class="flex text-body-xs text-foreground font-medium pb-1"
-        :class="[{ 'sr-only': !showLabel }, { 'items-center gap-1': showOptional }]"
-        :for="buttonId"
-      >
-        {{ label }}
-        <div v-if="showRequired" class="text-danger text-xs opacity-80">*</div>
-        <div v-else-if="showOptional" class="text-body-2xs font-normal">(optional)</div>
-      </ListboxLabel>
+      <div class="flex flex-col" :class="{ 'pb-1': showLabel }">
+        <ListboxLabel
+          :id="labelId"
+          class="flex text-body-xs text-foreground font-medium"
+          :class="[{ 'sr-only': !showLabel }, { 'items-center gap-1': showOptional }]"
+          :for="buttonId"
+        >
+          {{ label }}
+          <div v-if="showRequired" class="text-danger text-xs opacity-80">*</div>
+          <div v-else-if="showOptional" class="text-body-2xs font-normal">
+            (optional)
+          </div>
+        </ListboxLabel>
+        <p
+          v-if="helpTipId && isLeftLabelPosition"
+          :id="helpTipId"
+          class="text-xs"
+          :class="helpTipClasses"
+        >
+          {{ helpTip }}
+        </p>
+      </div>
       <div :class="buttonsWrapperClasses">
         <!-- <div class="relative flex"> -->
         <ListboxButton
@@ -113,10 +128,7 @@
                   />
                 </div>
               </label>
-              <div
-                class="overflow-auto simple-scrollbar"
-                :class="[hasSearch ? 'max-h-52' : 'max-h-40']"
-              >
+              <div class="overflow-auto simple-scrollbar max-h-60">
                 <div v-if="isAsyncSearchMode && isAsyncLoading" class="px-1">
                   <CommonLoadingBar :loading="true" />
                 </div>
@@ -136,7 +148,7 @@
                       active: boolean,
                       selected: boolean
                     }"
-                    :value="item"
+                    :value="(item as SingleItem)"
                     :disabled="disabledItemPredicate?.(item) || false"
                   >
                     <li
@@ -150,9 +162,19 @@
                         })
                       "
                     >
-                      <span :class="['block truncate']">
+                      <span
+                        class="block px-2 py-1.5 rounded-md"
+                        :class="[
+                          selected ? 'bg-highlight-3' : '',
+                          !hideCheckmarks ? 'pr-8' : 'pr-2',
+                          !disabledItemPredicate?.(item) && !selected
+                            ? 'hover:bg-highlight-1'
+                            : ''
+                        ]"
+                      >
                         <slot
                           name="option"
+                          class="truncate"
                           :item="item"
                           :active="active"
                           :selected="selected"
@@ -160,16 +182,15 @@
                         >
                           {{ simpleDisplayText(item) }}
                         </slot>
-                      </span>
 
-                      <span
-                        v-if="!hideCheckmarks && selected"
-                        :class="[
-                          active ? 'text-primary' : 'text-foreground',
-                          'absolute top-0 bottom-0 right-0 flex items-center pr-4'
-                        ]"
-                      >
-                        <CheckIcon class="h-5 w-5" aria-hidden="true" />
+                        <span
+                          v-if="!hideCheckmarks && selected"
+                          :class="[
+                            'absolute top-0 bottom-0 right-0 text-foreground flex items-center pr-4'
+                          ]"
+                        >
+                          <CheckIcon class="h-4 w-4" aria-hidden="true" />
+                        </span>
                       </span>
                     </li>
                   </ListboxOption>
@@ -180,7 +201,12 @@
         </Transition>
       </div>
     </Listbox>
-    <p v-if="helpTipId" :id="helpTipId" class="mt-2 text-xs" :class="helpTipClasses">
+    <p
+      v-if="helpTipId && !isLeftLabelPosition"
+      :id="helpTipId"
+      class="mt-2 text-xs"
+      :class="helpTipClasses"
+    >
       {{ helpTip }}
     </p>
   </div>
@@ -214,6 +240,7 @@ import type { RuleExpression } from 'vee-validate'
 import { nanoid } from 'nanoid'
 import CommonLoadingBar from '~~/src/components/common/loading/Bar.vue'
 import { useElementBounding, useMounted, useIntersectionObserver } from '@vueuse/core'
+import type { LabelPosition } from '~~/src/composables/form/input'
 
 type ButtonStyle = 'base' | 'simple' | 'tinted'
 type ValueType = SingleItem | SingleItem[] | undefined
@@ -338,7 +365,9 @@ const props = defineProps({
    * Validation stuff
    */
   rules: {
-    type: [String, Object, Function, Array] as PropType<RuleExpression<ValueType>>,
+    type: [String, Object, Function, Array] as PropType<
+      Optional<RuleExpression<ValueType>>
+    >,
     default: undefined
   },
   /**
@@ -422,6 +451,10 @@ const props = defineProps({
   disabledItemTooltip: {
     required: false,
     type: String
+  },
+  labelPosition: {
+    type: String as PropType<LabelPosition>,
+    default: 'top'
   }
 })
 
@@ -473,6 +506,8 @@ const helpTipClasses = computed((): string =>
   error.value ? 'text-danger' : 'text-foreground-2'
 )
 
+const isLeftLabelPosition = computed(() => props.labelPosition === 'left')
+
 const renderClearButton = computed(
   () => props.buttonStyle !== 'simple' && props.clearable && !props.disabled
 )
@@ -516,6 +551,10 @@ const buttonsWrapperClasses = computed(() => {
     classParts.push('h-8')
   } else if (sizeClasses.value?.length) {
     classParts.push(sizeClasses.value)
+  }
+
+  if (isLeftLabelPosition.value) {
+    classParts.push('md:basis-1/2')
   }
 
   return classParts.join(' ')
@@ -716,18 +755,14 @@ const triggerSearch = async () => {
 const debouncedSearch = debounce(triggerSearch, 1000)
 
 const listboxOptionClasses = (params: { active: boolean; disabled: boolean }) => {
-  const { active, disabled } = params || {}
-  const { hideCheckmarks } = props
+  const { disabled } = params || {}
 
-  const classParts = [
-    'relative transition select-none py-1.5 pl-3',
-    !hideCheckmarks ? 'pr-9' : ''
-  ]
+  const classParts = ['relative transition select-none py-1 px-2']
 
   if (disabled) {
     classParts.push('opacity-50 cursor-not-allowed')
   } else {
-    classParts.push(active ? 'text-primary' : 'text-foreground', 'cursor-pointer')
+    classParts.push('text-foreground cursor-pointer')
   }
 
   return classParts.join(' ')

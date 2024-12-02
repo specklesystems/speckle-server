@@ -21,14 +21,9 @@ graphql(`
     description
     domainBasedMembershipProtectionEnabled
     discoverabilityEnabled
-    billing {
-      cost {
-        total
-      }
-      versionsCount {
-        current
-        max
-      }
+    plan {
+      status
+      name
     }
     team {
       totalCount
@@ -45,7 +40,7 @@ export const useWorkspacesMixpanel = () => {
   const workspaceMixpanelUpdateGroup = (
     workspace: WorkspaceMixpanelUpdateGroup_WorkspaceFragment
   ) => {
-    if (!workspace.id) return
+    if (!workspace.id || !import.meta.client) return
     const roleCount = {
       [Roles.Workspace.Admin]: 0,
       [Roles.Workspace.Member]: 0,
@@ -69,15 +64,10 @@ export const useWorkspacesMixpanel = () => {
       teamAdminCount: roleCount[Roles.Workspace.Admin],
       teamMemberCount: roleCount[Roles.Workspace.Member],
       teamGuestCount: roleCount[Roles.Workspace.Guest],
-      ...(import.meta.client && {
-        // eslint-disable-next-line camelcase
-        server_id: resolveMixpanelServerId(window.location.hostname)
-      }),
-      ...(workspace.billing && {
-        costTotal: workspace.billing.cost.total,
-        versionsCountCurrent: workspace.billing.versionsCount.current,
-        versionsCountMax: workspace.billing.versionsCount.max
-      })
+      // eslint-disable-next-line camelcase
+      server_id: resolveMixpanelServerId(window.location.hostname),
+      planName: workspace.plan?.name || '',
+      planStatus: workspace.plan?.status || ''
     }
 
     mixpanel.get_group('workspace_id', workspace.id).set(input)

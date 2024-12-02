@@ -72,3 +72,10 @@ postgres-data/
 redis-data/
 
 .tshy-build
+obj/
+bin/
+
+
+# Server
+multiregion.json
+multiregion.test.json

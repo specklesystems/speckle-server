@@ -7,7 +7,7 @@
           <ViewerScope :state="state">
             <template v-if="project?.workspace && isWorkspacesEnabled">
               <HeaderNavLink
-                :to="workspaceRoute(project?.workspace.id)"
+                :to="workspaceRoute(project?.workspace.slug)"
                 :name="project?.workspace.name"
                 :separator="false"
               ></HeaderNavLink>
@@ -32,7 +32,7 @@
             v-if="showTour"
             class="fixed w-full h-[100dvh] flex justify-center items-center pointer-events-none z-[100]"
           >
-            <TourOnboarding />
+            <TourOnboarding @complete="showTour = false" />
           </div>
           <!-- Viewer host -->
           <div
@@ -160,6 +160,7 @@ graphql(`
     visibility
     workspace {
       id
+      slug
       name
     }
   }

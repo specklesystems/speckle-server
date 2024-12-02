@@ -1,15 +1,6 @@
 import {
-  getStream,
-  getStreams,
-  getStreamUsers,
-  favoriteStream,
-  getFavoriteStreamsCollection,
-  getActiveUserStreamFavoriteDate,
-  getStreamFavoritesCount,
-  getOwnedFavoritesCount
-} from '@/modules/core/services/streams'
-import {
   filteredSubscribe,
+  publish,
   StreamSubscriptions
 } from '@/modules/shared/utils/subscriptions'
 import { authorizeResolver, validateScopes } from '@/modules/shared'
@@ -17,20 +8,36 @@ import {
   getRateLimitResult,
   isRateLimitBreached
 } from '@/modules/core/services/ratelimiter'
-import { getPendingProjectCollaboratorsFactory } from '@/modules/serverinvites/services/projectInviteManagement'
+import {
+  getPendingProjectCollaboratorsFactory,
+  inviteUsersToProjectFactory
+} from '@/modules/serverinvites/services/projectInviteManagement'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
-import { removeStreamCollaborator } from '@/modules/core/services/streams/streamAccessService'
-import { getDiscoverableStreams } from '@/modules/core/services/streams/discoverableStreams'
 import { get } from 'lodash'
 import {
-  getUserStreamsCount,
-  getUserStreams
+  getStreamFactory,
+  createStreamFactory,
+  deleteStreamFactory,
+  updateStreamFactory,
+  revokeStreamPermissionsFactory,
+  grantStreamPermissionsFactory,
+  getDiscoverableStreamsPageFactory,
+  countDiscoverableStreamsFactory,
+  legacyGetStreamsFactory,
+  getFavoritedStreamsCountFactory,
+  getFavoritedStreamsPageFactory,
+  getStreamCollaboratorsFactory,
+  canUserFavoriteStreamFactory,
+  setStreamFavoritedFactory,
+  legacyGetStreamUsersFactory,
+  getUserStreamsPageFactory,
+  getUserStreamsCountFactory
 } from '@/modules/core/repositories/streams'
 import {
-  deleteStreamAndNotify,
-  updateStreamAndNotify,
-  createStreamReturnRecord,
-  updateStreamRoleAndNotify
+  createStreamReturnRecordFactory,
+  deleteStreamAndNotifyFactory,
+  updateStreamAndNotifyFactory,
+  updateStreamRoleAndNotifyFactory
 } from '@/modules/core/services/streams/management'
 import { adminOverrideEnabled } from '@/modules/shared/helpers/envHelper'
 import { Roles, Scopes } from '@speckle/shared'
@@ -44,11 +51,137 @@ import {
   TokenResourceIdentifierType,
   UserStreamsArgs
 } from '@/modules/core/graph/generated/graphql'
-import { queryAllResourceInvitesFactory } from '@/modules/serverinvites/repositories/serverInvites'
+import {
+  deleteAllResourceInvitesFactory,
+  findUserByTargetFactory,
+  insertInviteAndDeleteOldFactory,
+  queryAllResourceInvitesFactory
+} from '@/modules/serverinvites/repositories/serverInvites'
 import db from '@/db/knex'
 import { getInvitationTargetUsersFactory } from '@/modules/serverinvites/services/retrieval'
-import { getUsers } from '@/modules/core/repositories/users'
-import { BadRequestError } from '@/modules/shared/errors'
+import { BadRequestError, InvalidArgumentError } from '@/modules/shared/errors'
+import { createAndSendInviteFactory } from '@/modules/serverinvites/services/creation'
+import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
+import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
+import { getEventBus } from '@/modules/shared/services/eventBus'
+import { createBranchFactory } from '@/modules/core/repositories/branches'
+import {
+  addStreamDeletedActivityFactory,
+  addStreamInviteAcceptedActivityFactory,
+  addStreamPermissionsAddedActivityFactory,
+  addStreamPermissionsRevokedActivityFactory,
+  addStreamUpdatedActivityFactory
+} from '@/modules/activitystream/services/streamActivity'
+import { saveActivityFactory } from '@/modules/activitystream/repositories'
+import { ProjectsEmitter } from '@/modules/core/events/projectsEmitter'
+import {
+  addOrUpdateStreamCollaboratorFactory,
+  isStreamCollaboratorFactory,
+  removeStreamCollaboratorFactory,
+  validateStreamAccessFactory
+} from '@/modules/core/services/streams/access'
+import { getDiscoverableStreamsFactory } from '@/modules/core/services/streams/discoverableStreams'
+import {
+  favoriteStreamFactory,
+  getFavoriteStreamsCollectionFactory
+} from '@/modules/core/services/streams/favorite'
+import { getUserFactory, getUsersFactory } from '@/modules/core/repositories/users'
+import { getServerInfoFactory } from '@/modules/core/repositories/server'
+
+const getServerInfo = getServerInfoFactory({ db })
+const getUsers = getUsersFactory({ db })
+const getUser = getUserFactory({ db })
+const getFavoriteStreamsCollection = getFavoriteStreamsCollectionFactory({
+  getFavoritedStreamsCount: getFavoritedStreamsCountFactory({ db }),
+  getFavoritedStreamsPage: getFavoritedStreamsPageFactory({ db })
+})
+const saveActivity = saveActivityFactory({ db })
+const getStream = getStreamFactory({ db })
+const createStreamReturnRecord = createStreamReturnRecordFactory({
+  inviteUsersToProject: inviteUsersToProjectFactory({
+    createAndSendInvite: createAndSendInviteFactory({
+      findUserByTarget: findUserByTargetFactory({ db }),
+      insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
+      collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
+        getStream
+      }),
+      buildInviteEmailContents: buildCoreInviteEmailContentsFactory({
+        getStream
+      }),
+      emitEvent: ({ eventName, payload }) =>
+        getEventBus().emit({
+          eventName,
+          payload
+        }),
+      getUser,
+      getServerInfo
+    }),
+    getUsers
+  }),
+  createStream: createStreamFactory({ db }),
+  createBranch: createBranchFactory({ db }),
+  projectsEventsEmitter: ProjectsEmitter.emit
+})
+const deleteStreamAndNotify = deleteStreamAndNotifyFactory({
+  deleteStream: deleteStreamFactory({ db }),
+  authorizeResolver,
+  addStreamDeletedActivity: addStreamDeletedActivityFactory({
+    publish,
+    saveActivity: saveActivityFactory({ db }),
+    getStreamCollaborators: getStreamCollaboratorsFactory({ db })
+  }),
+  deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db }),
+  getStream
+})
+const updateStreamAndNotify = updateStreamAndNotifyFactory({
+  authorizeResolver,
+  getStream,
+  updateStream: updateStreamFactory({ db }),
+  addStreamUpdatedActivity: addStreamUpdatedActivityFactory({ publish, saveActivity })
+})
+const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
+const isStreamCollaborator = isStreamCollaboratorFactory({
+  getStream
+})
+const removeStreamCollaborator = removeStreamCollaboratorFactory({
+  validateStreamAccess,
+  isStreamCollaborator,
+  revokeStreamPermissions: revokeStreamPermissionsFactory({ db }),
+  addStreamPermissionsRevokedActivity: addStreamPermissionsRevokedActivityFactory({
+    saveActivity,
+    publish
+  })
+})
+const updateStreamRoleAndNotify = updateStreamRoleAndNotifyFactory({
+  isStreamCollaborator,
+  addOrUpdateStreamCollaborator: addOrUpdateStreamCollaboratorFactory({
+    validateStreamAccess,
+    getUser,
+    grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+    addStreamInviteAcceptedActivity: addStreamInviteAcceptedActivityFactory({
+      saveActivity,
+      publish
+    }),
+    addStreamPermissionsAddedActivity: addStreamPermissionsAddedActivityFactory({
+      saveActivity,
+      publish
+    })
+  }),
+  removeStreamCollaborator
+})
+const getDiscoverableStreams = getDiscoverableStreamsFactory({
+  getDiscoverableStreamsPage: getDiscoverableStreamsPageFactory({ db }),
+  countDiscoverableStreams: countDiscoverableStreamsFactory({ db })
+})
+const getStreams = legacyGetStreamsFactory({ db })
+const favoriteStream = favoriteStreamFactory({
+  canUserFavoriteStream: canUserFavoriteStreamFactory({ db }),
+  setStreamFavorited: setStreamFavoritedFactory({ db }),
+  getStream
+})
+const getStreamUsers = legacyGetStreamUsersFactory({ db })
+const getUserStreams = getUserStreamsPageFactory({ db })
+const getUserStreamsCount = getUserStreamsCountFactory({ db })
 
 const getUserStreamsCore = async (
   forOtherUser: boolean,
@@ -99,7 +232,7 @@ export = {
       return stream
     },
 
-    async streams(parent, args, context) {
+    async streams(_, args, context) {
       const totalCount = await getUserStreamsCount({
         userId: context.userId!,
         searchQuery: args.query || undefined,
@@ -116,14 +249,14 @@ export = {
       return { totalCount, cursor, items: streams }
     },
 
-    async discoverableStreams(parent, args, ctx) {
+    async discoverableStreams(_, args, ctx) {
       return await getDiscoverableStreams(
         args,
         toProjectIdWhitelist(ctx.resourceAccessRules)
       )
     },
 
-    async adminStreams(parent, args, ctx) {
+    async adminStreams(_, args, ctx) {
       if (args.limit && args.limit > 50)
         throw new BadRequestError('Cannot return more than 50 items at a time.')
 
@@ -157,13 +290,29 @@ export = {
 
     async favoritedDate(parent, _args, ctx) {
       const { id: streamId } = parent
-      return await getActiveUserStreamFavoriteDate({ ctx, streamId })
+
+      if (!ctx.userId) {
+        return null
+      }
+
+      if (!streamId) {
+        throw new InvalidArgumentError('Invalid stream ID')
+      }
+
+      return (
+        (await ctx.loaders.streams.getUserFavoriteData.load(streamId))?.createdAt ||
+        null
+      )
     },
 
     async favoritesCount(parent, _args, ctx) {
       const { id: streamId } = parent
 
-      return await getStreamFavoritesCount({ ctx, streamId })
+      if (!streamId) {
+        throw new InvalidArgumentError('Invalid stream ID')
+      }
+
+      return (await ctx.loaders.streams.getFavoritesCount.load(streamId)) || 0
     },
 
     async isDiscoverable(parent) {
@@ -212,7 +361,11 @@ export = {
 
     async totalOwnedStreamsFavorites(parent, _args, ctx) {
       const { id: userId } = parent
-      return await getOwnedFavoritesCount({ ctx, userId })
+      if (!userId) {
+        throw new InvalidArgumentError('Invalid user ID')
+      }
+
+      return (await ctx.loaders.streams.getOwnedFavoritesCount.load(userId)) || 0
     }
   },
   LimitedUser: {
@@ -229,29 +382,30 @@ export = {
     },
     async totalOwnedStreamsFavorites(parent, _args, ctx) {
       const { id: userId } = parent
-      return await getOwnedFavoritesCount({ ctx, userId })
+      if (!userId) {
+        throw new InvalidArgumentError('Invalid user ID')
+      }
+
+      return (await ctx.loaders.streams.getOwnedFavoritesCount.load(userId)) || 0
     }
   },
   Mutation: {
-    async streamCreate(parent, args, context) {
+    async streamCreate(_, args, context) {
       const rateLimitResult = await getRateLimitResult('STREAM_CREATE', context.userId!)
       if (isRateLimitBreached(rateLimitResult)) {
         throw new RateLimitError(rateLimitResult)
       }
 
-      const { id } = await createStreamReturnRecord(
-        {
-          ...args.stream,
-          ownerId: context.userId!,
-          ownerResourceAccessRules: context.resourceAccessRules
-        },
-        { createActivity: true }
-      )
+      const { id } = await createStreamReturnRecord({
+        ...args.stream,
+        ownerId: context.userId!,
+        ownerResourceAccessRules: context.resourceAccessRules
+      })
 
       return id
     },
 
-    async streamUpdate(parent, args, context) {
+    async streamUpdate(_, args, context) {
       await updateStreamAndNotify(
         args.stream,
         context.userId!,
@@ -260,7 +414,7 @@ export = {
       return true
     },
 
-    async streamDelete(parent, args, context) {
+    async streamDelete(_, args, context) {
       return await deleteStreamAndNotify(
         args.id,
         context.userId!,
@@ -269,7 +423,7 @@ export = {
       )
     },
 
-    async streamsDelete(parent, args, context) {
+    async streamsDelete(_, args, context) {
       const results = await Promise.all(
         (args.ids || []).map(async (id) => {
           return await deleteStreamAndNotify(
@@ -283,7 +437,7 @@ export = {
       return results.every((res) => res === true)
     },
 
-    async streamUpdatePermission(parent, args, context) {
+    async streamUpdatePermission(_, args, context) {
       const result = await updateStreamRoleAndNotify(
         args.permissionParams,
         context.userId!,
@@ -292,7 +446,7 @@ export = {
       return !!result
     },
 
-    async streamRevokePermission(parent, args, context) {
+    async streamRevokePermission(_, args, context) {
       const result = await updateStreamRoleAndNotify(
         args.permissionParams,
         context.userId!,

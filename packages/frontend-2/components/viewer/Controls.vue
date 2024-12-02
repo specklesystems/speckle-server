@@ -118,7 +118,7 @@
               v-tippy="isSmallerOrEqualSm ? undefined : sectionBoxShortcut"
               flat
               secondary
-              :active="isSectionBoxEnabled"
+              :active="isSectionBoxVisible"
               @click="toggleSectionBox()"
             >
               <ScissorsIcon class="h-4 w-4 md:h-5 md:w-5" />
@@ -238,6 +238,9 @@
         </div>
       </div>
     </div>
+    <Portal v-if="isSectionBoxEnabled && isSectionBoxEdited" to="pocket-actions">
+      <FormButton @click="resetSectionBox()">Reset section box</FormButton>
+    </Portal>
   </div>
   <div v-else />
 </template>
@@ -268,7 +271,6 @@ import {
   useInjectedViewerState
 } from '~~/lib/viewer/composables/setup'
 import { useMixpanel } from '~~/lib/core/composables/mp'
-
 import { useIsSmallerOrEqualThanBreakpoint } from '~~/composables/browser'
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 import { useViewerTour } from '~/lib/viewer/composables/tour'
@@ -346,7 +348,13 @@ type ActiveControl =
   | 'gendo'
 
 const { resourceItems, modelsAndVersionIds } = useInjectedViewerLoadedResources()
-const { toggleSectionBox, isSectionBoxEnabled } = useSectionBoxUtilities()
+const {
+  resetSectionBox,
+  isSectionBoxEnabled,
+  isSectionBoxVisible,
+  toggleSectionBox,
+  isSectionBoxEdited
+} = useSectionBoxUtilities()
 const { getActiveMeasurement, removeMeasurement, enableMeasurements } =
   useMeasurementUtilities()
 const { showNavbar, showControls } = useViewerTour()
@@ -388,12 +396,12 @@ const {
 } = useInjectedViewerInterfaceState()
 
 const map: Record<ViewerKeyboardActions, [ModifierKeys[], string]> = {
-  [ViewerKeyboardActions.ToggleModels]: [[ModifierKeys.Shift], 'm'],
-  [ViewerKeyboardActions.ToggleExplorer]: [[ModifierKeys.Shift], 'e'],
-  [ViewerKeyboardActions.ToggleDiscussions]: [[ModifierKeys.Shift], 't'],
-  [ViewerKeyboardActions.ToggleMeasurements]: [[ModifierKeys.Shift], 'r'],
-  [ViewerKeyboardActions.ToggleProjection]: [[ModifierKeys.Shift], 'p'],
-  [ViewerKeyboardActions.ToggleSectionBox]: [[ModifierKeys.Shift], 'b'],
+  [ViewerKeyboardActions.ToggleModels]: [[ModifierKeys.Shift], 'M'],
+  [ViewerKeyboardActions.ToggleExplorer]: [[ModifierKeys.Shift], 'E'],
+  [ViewerKeyboardActions.ToggleDiscussions]: [[ModifierKeys.Shift], 'T'],
+  [ViewerKeyboardActions.ToggleMeasurements]: [[ModifierKeys.Shift], 'R'],
+  [ViewerKeyboardActions.ToggleProjection]: [[ModifierKeys.Shift], 'P'],
+  [ViewerKeyboardActions.ToggleSectionBox]: [[ModifierKeys.Shift], 'B'],
   [ViewerKeyboardActions.ZoomExtentsOrSelection]: [[ModifierKeys.Shift], 'space']
 }
 
@@ -491,14 +499,6 @@ const trackAndtoggleProjection = () => {
   })
 }
 
-watch(isSectionBoxEnabled, (val) => {
-  mp.track('Viewer Action', {
-    type: 'action',
-    name: 'section-box',
-    status: val
-  })
-})
-
 const scrollControlsToBottom = () => {
   // TODO: Currently this will scroll to the very bottom, which doesn't make sense when there are multiple models loaded
   // if (scrollableControlsContainer.value)
@@ -515,10 +515,6 @@ onMounted(() => {
   activeControl.value = isSmallerOrEqualSm.value ? 'none' : 'models'
 })
 
-watch(isSmallerOrEqualSm, (newVal) => {
-  activeControl.value = newVal ? 'none' : 'models'
-})
-
 onKeyStroke('Escape', () => {
   const isActiveMeasurement = getActiveMeasurement()
 
@@ -530,5 +526,25 @@ onKeyStroke('Escape', () => {
     }
     activeControl.value = 'none'
   }
+})
+
+watch(isSmallerOrEqualSm, (newVal) => {
+  activeControl.value = newVal ? 'none' : 'models'
+})
+
+watch(isSectionBoxEnabled, (val) => {
+  mp.track('Viewer Action', {
+    type: 'action',
+    name: 'section-box',
+    status: val
+  })
+})
+
+watch(isSectionBoxVisible, (val) => {
+  mp.track('Viewer Action', {
+    type: 'action',
+    name: 'section-box-visibility',
+    status: val
+  })
 })
 </script>

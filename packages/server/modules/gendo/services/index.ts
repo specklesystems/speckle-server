@@ -1,123 +1,117 @@
 import crs from 'crypto-random-string'
-import { GendoAIRenders, knex } from '@/modules/core/dbSchema'
-import { GendoAiRenderInput } from '@/modules/core/graph/generated/graphql'
-import { GendoAIRenderRecord } from '@/modules/gendo/helpers/types'
-import { ProjectSubscriptions, publish } from '@/modules/shared/utils/subscriptions'
-import { Merge } from 'type-fest'
-import { storeFileStream } from '@/modules/blobstorage/objectStorage'
-import { uploadFileStreamFactory } from '@/modules/blobstorage/services/management'
 import {
-  updateBlobFactory,
-  upsertBlobFactory
-} from '@/modules/blobstorage/repositories'
-import { db } from '@/db/knex'
+  ProjectSubscriptions,
+  PublishSubscription
+} from '@/modules/shared/utils/subscriptions'
 
-const uploadFileStream = uploadFileStreamFactory({
-  upsertBlob: upsertBlobFactory({ db }),
-  updateBlob: updateBlobFactory({ db })
-})
+import {
+  CreateRenderRequest,
+  GetRenderByGenerationId,
+  RequestNewImageGeneration,
+  StoreRender,
+  UpdateRenderRecord,
+  UpdateRenderRequest
+} from '@/modules/gendo/domain/operations'
+import { UploadFileStream } from '@/modules/blobstorage/domain/operations'
+import { GendoRenderRequestNotFoundError } from '@/modules/gendo/errors/main'
 
-export async function createGendoAIRenderRequest(
-  input: GendoAiRenderInput & {
-    userId: string
-    status: string
-    id: string
-    gendoGenerationId?: string
-  }
-) {
-  const baseImageBuffer = Buffer.from(
-    input.baseImage.replace(/^data:image\/\w+;base64,/, ''),
-    'base64'
-  )
-
-  const blobId = crs({ length: 10 })
-  await uploadFileStream(
-    storeFileStream,
-    { streamId: input.projectId, userId: input.userId },
-    {
-      blobId,
-      fileName: `gendo_base_image_${blobId}.png`,
-      fileType: 'png',
-      fileStream: baseImageBuffer
-    }
-  )
-
-  input.baseImage = blobId
-
-  const [newRecord] = await GendoAIRenders.knex().insert(input, '*')
-
-  publish(ProjectSubscriptions.ProjectVersionGendoAIRenderCreated, {
-    projectVersionGendoAIRenderCreated: newRecord
-  })
-
-  // TODO: Schedule a timeout fail after x minutes
-
-  return newRecord as GendoAIRenderRecord
-}
-
-export async function updateGendoAIRenderRequest(
-  input: Partial<{ status: string; responseImage: string }> & {
-    gendoGenerationId: string
-  }
-) {
-  if (input.responseImage) {
-    const [baseRequest] = await GendoAIRenders.knex()
-      .select<GendoAIRenderRecord[]>()
-      .where('gendoGenerationId', input.gendoGenerationId)
-    const responseImageBuffer = Buffer.from(
-      input.responseImage.replace(/^data:image\/\w+;base64,/, ''),
+export const createRenderRequestFactory =
+  (deps: {
+    requestNewImageGeneration: RequestNewImageGeneration
+    uploadFileStream: UploadFileStream
+    storeRender: StoreRender
+    publish: PublishSubscription
+  }): CreateRenderRequest =>
+  async (input) => {
+    const imageRequest = await deps.requestNewImageGeneration({
+      userId: input.userId,
+      baseImage: input.baseImage,
+      prompt: input.prompt,
+      projectId: input.projectId
+    })
+    // ----
+    const baseImageBuffer = Buffer.from(
+      input.baseImage.replace(/^data:image\/\w+;base64,/, ''),
       'base64'
     )
 
     const blobId = crs({ length: 10 })
-    await uploadFileStream(
-      storeFileStream,
-      { streamId: baseRequest.projectId, userId: baseRequest.userId },
+    await deps.uploadFileStream(
+      { streamId: input.projectId, userId: input.userId },
       {
         blobId,
-        fileName: `gendo_speckle_render_${blobId}.png`,
+        fileName: `gendo_base_image_${blobId}.png`,
         fileType: 'png',
-        fileStream: responseImageBuffer
+        fileStream: baseImageBuffer
       }
     )
 
-    input.responseImage = blobId
+    input.baseImage = blobId
+
+    const newRecord = await deps.storeRender({
+      ...input,
+      status: imageRequest.status,
+      gendoGenerationId: imageRequest.generationId,
+      id: crs({ length: 10 })
+    })
+
+    deps.publish(ProjectSubscriptions.ProjectVersionGendoAIRenderCreated, {
+      projectVersionGendoAIRenderCreated: newRecord
+    })
+
+    // TODO: Schedule a timeout fail after x minutes
+
+    return newRecord
   }
 
-  const [record] = (await GendoAIRenders.knex()
-    .where('gendoGenerationId', input.gendoGenerationId)
-    .update({ ...input, updatedAt: knex.fn.now() }, '*')) as GendoAIRenderRecord[]
+export const updateRenderRequestFactory =
+  (deps: {
+    getRenderByGenerationId: GetRenderByGenerationId
+    uploadFileStream: UploadFileStream
+    updateRenderRecord: UpdateRenderRecord
+    publish: PublishSubscription
+  }): UpdateRenderRequest =>
+  async (input) => {
+    const gendoGenerationId = input.gendoGenerationId
+    const baseRequest = await deps.getRenderByGenerationId({ gendoGenerationId })
+    if (!baseRequest) {
+      throw new GendoRenderRequestNotFoundError(
+        'Request #{gendoGenerationId} not found',
+        {
+          info: {
+            gendoGenerationId
+          }
+        }
+      )
+    }
 
-  publish(ProjectSubscriptions.ProjectVersionGendoAIRenderUpdated, {
-    projectVersionGendoAIRenderUpdated: record
-  })
+    if (input.responseImage) {
+      const responseImageBuffer = Buffer.from(
+        input.responseImage.replace(/^data:image\/\w+;base64,/, ''),
+        'base64'
+      )
 
-  return record
-}
+      const blobId = crs({ length: 10 })
+      await deps.uploadFileStream(
+        { streamId: baseRequest.projectId, userId: baseRequest.userId },
+        {
+          blobId,
+          fileName: `gendo_speckle_render_${blobId}.png`,
+          fileType: 'png',
+          fileStream: responseImageBuffer
+        }
+      )
 
-export async function getGendoAIRenderRequests(versionId: string) {
-  return await GendoAIRenders.knex()
-    .select<GendoAIRenderRecord[]>()
-    .where('versionId', versionId)
-    .orderBy('createdAt', 'desc')
-}
+      input.responseImage = blobId
+    }
 
-export async function getGendoAIRenderRequest(versionId: string, requestId: string) {
-  const [record] = await GendoAIRenders.knex()
-    .select<
-      Merge<
-        GendoAIRenderRecord,
-        { userName: string; userId: string; userAvatar: string }
-      >[]
-    >(
-      ...GendoAIRenders.cols,
-      'users.name as userName',
-      'users.id as userId',
-      'users.avatar as userAvatar'
-    )
-    .where('gendo_ai_renders.id', requestId)
-    .andWhere('versionId', versionId)
-    .join('users', 'users.id', '=', 'gendo_ai_renders.userId')
-    .orderBy('createdAt', 'desc')
-  return record
-}
+    const record = await deps.updateRenderRecord({
+      input: { ...input, updatedAt: new Date() },
+      id: baseRequest.id
+    })
+    deps.publish(ProjectSubscriptions.ProjectVersionGendoAIRenderUpdated, {
+      projectVersionGendoAIRenderUpdated: record
+    })
+
+    return record
+  }
