@@ -111,7 +111,11 @@
             </div>
           </div>
 
-          <SettingsSectionHeader title="Upgrade your plan" subheading class="pt-4" />
+          <SettingsSectionHeader
+            :title="statusIsTrial ? 'Start your subscription' : 'Upgrade your plan'"
+            subheading
+            class="pt-4"
+          />
           <SettingsWorkspacesBillingPricingTable
             :workspace-id="workspaceId"
             :current-plan="currentPlan"
