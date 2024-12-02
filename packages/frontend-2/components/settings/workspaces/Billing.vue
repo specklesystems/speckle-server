@@ -252,8 +252,8 @@ const billValue = computed(() => {
   const guestPrice = seatPrice.value[Roles.Workspace.Guest] * guestSeatCount.value
   const memberPrice = seatPrice.value[Roles.Workspace.Member] * memberSeatCount.value
   const totalPrice = guestPrice + memberPrice
-  if (statusIsTrial.value) return `£${totalPrice}.00`
-  return `£0.00`
+  if (statusIsTrial.value) return `£${totalPrice}`
+  return `£0`
 })
 const billDescription = computed(() => {
   const memberText =
