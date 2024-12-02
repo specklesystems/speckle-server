@@ -62,7 +62,7 @@ const { loading, onResult } = useQuery(
 
 onResult((result) => {
   if (!result.data?.workspace.creationState?.completed) {
-    if (route.query.workspaceId as string) {
+    if ((route.query.workspaceId as string) && route.query.source === 'checkout') {
       goToStep(WizardSteps.Pricing)
       showPaymentError.value = true
     }
