@@ -5,7 +5,10 @@
       class="my-10 justify-self-center"
     />
     <template v-else>
-      <WorkspaceWizardStepDetails v-if="currentStep === WizardSteps.Details" />
+      <WorkspaceWizardStepDetails
+        v-if="currentStep === WizardSteps.Details"
+        :disable-slug-edit="!!workspaceId"
+      />
       <WorkspaceWizardStepInvites v-else-if="currentStep === WizardSteps.Invites" />
       <WorkspaceWizardStepPricing v-else-if="currentStep === WizardSteps.Pricing" />
       <WorkspaceWizardStepRegion v-else-if="currentStep === WizardSteps.Region" />
@@ -47,7 +50,7 @@ const { loading, onResult } = useQuery(
 )
 
 onResult((result) => {
-  if (result.data?.workspace.creationState?.completed === false) {
+  if (!result.data?.workspace.creationState?.completed) {
     setState({
       name: result.data.workspace.name,
       slug: result.data.workspace.slug,

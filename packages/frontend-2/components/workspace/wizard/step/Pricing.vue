@@ -23,7 +23,7 @@
               {{
                 plan.name === WorkspacePlans.Starter && !isYearlySelected
                   ? 'Start free trial'
-                  : 'Subscribe to ' + plan.name
+                  : `Subscribe to ${plan.name}`
               }}
             </FormButton>
           </template>

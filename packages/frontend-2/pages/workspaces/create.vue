@@ -1,5 +1,10 @@
 <template>
-  <WorkspaceCreatePage />
+  <div>
+    <WorkspaceCreatePage :workspace-id="workspaceId" />
+    <div>
+      {{ workspaceId }}
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -10,4 +15,7 @@ definePageMeta({
 useHead({
   title: 'Create a workspace'
 })
+
+const route = useRoute()
+const workspaceId = computed(() => route.query.workspaceId as string)
 </script>

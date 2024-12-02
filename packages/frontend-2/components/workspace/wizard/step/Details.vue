@@ -26,6 +26,7 @@
         :custom-error-message="error?.graphQLErrors[0]?.message"
         show-label
         size="lg"
+        :disabled="disableSlugEdit"
         @update:model-value="onSlugChange"
       />
       <FormButton size="lg" submit full-width class="mt-4" :disabled="disableNextStep">
@@ -44,6 +45,10 @@ import { useQuery } from '@vue/apollo-composable'
 import { validateWorkspaceSlugQuery } from '~/lib/workspaces/graphql/queries'
 import { useWorkspacesWizard } from '~/lib/workspaces/composables/wizard'
 
+const props = defineProps<{
+  disableSlugEdit: boolean
+}>()
+
 const { handleSubmit } = useForm<{ name: string; slug: string }>()
 const { state, goToNextStep } = useWorkspacesWizard()
 const shortIdManuallyEdited = ref(false)
@@ -54,7 +59,7 @@ const { error, loading } = useQuery(
     slug: state.value.slug
   }),
   () => ({
-    enabled: !!state.value.slug
+    enabled: !!state.value.slug && !props.disableSlugEdit
   })
 )
 
