@@ -1,5 +1,5 @@
 <template>
-  <div class="bg-gradient-to-b from-white to-purple-50">
+  <div class="bg-foundation-page">
     <nav
       class="fixed top-0 h-14 bg-foundation w-full shadow flex items-center justify-between px-2"
     >

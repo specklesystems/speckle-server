@@ -28,7 +28,9 @@
         size="lg"
         @update:model-value="onSlugChange"
       />
-      <FormButton size="lg" submit full-width class="mt-4">Continue</FormButton>
+      <FormButton size="lg" submit full-width class="mt-4" :disabled="disableNextStep">
+        Continue
+      </FormButton>
     </form>
   </WorkspaceWizardStep>
 </template>
@@ -62,6 +64,10 @@ const getShortIdHelp = computed(() =>
   state.value.slug
     ? `${baseUrl}/workspaces/${state.value.slug}`
     : `Used after ${baseUrl}/workspaces/`
+)
+
+const disableNextStep = computed(
+  () => !state.value.name.trim() || !state.value.slug.trim() || error.value !== null
 )
 
 const updateShortId = debounce((newName: string) => {

@@ -1,20 +1,6 @@
-import WorkspaceWizardStepDetails from '@/components/workspace/wizard/step/Details.vue'
-import WorkspaceWizardStepInvites from '@/components/workspace/wizard/step/Invites.vue'
-import WorkspaceWizardStepPricing from '@/components/workspace/wizard/step/Pricing.vue'
-import WorkspaceWizardStepRegion from '@/components/workspace/wizard/step/Region.vue'
 import { nanoid } from 'nanoid'
-import {
-  type BillingInterval,
-  PaidWorkspacePlans
-} from '~/lib/common/generated/gql/graphql'
-
-type WorkspaceWizardState = {
-  name: string
-  slug: string
-  invites: { id: string; email: string }[]
-  plan: PaidWorkspacePlans | null
-  billingInterval: BillingInterval | null
-}
+import { PaidWorkspacePlans } from '~/lib/common/generated/gql/graphql'
+import { type WorkspaceWizardState, WizardSteps } from '~/lib/workspaces/helpers/types'
 
 const state = ref<WorkspaceWizardState>({
   name: '',
@@ -29,16 +15,14 @@ const state = ref<WorkspaceWizardState>({
 })
 
 const currentStepIndex = ref(0)
-const stepComponents = shallowRef<Record<number, Component>>({
-  0: WorkspaceWizardStepDetails,
-  1: WorkspaceWizardStepInvites,
-  2: WorkspaceWizardStepPricing,
-  3: WorkspaceWizardStepRegion
+const stepComponents = shallowRef<Record<number, WizardSteps>>({
+  0: WizardSteps.Details,
+  1: WizardSteps.Invites,
+  2: WizardSteps.Pricing,
+  3: WizardSteps.Region
 })
 
-const currentStepComponent = computed(
-  () => stepComponents.value[currentStepIndex.value]
-)
+const currentStep = computed(() => stepComponents.value[currentStepIndex.value])
 
 export const useWorkspacesWizard = () => {
   const init = (initialState?: WorkspaceWizardState) => {
@@ -47,24 +31,21 @@ export const useWorkspacesWizard = () => {
     }
   }
 
-  const completeWizard = () => {}
+  const completeWizard = () => {
+    // console.log('completeWizard')
+  }
 
   const goToNextStep = () => {
-    // If we're on the last step, complete the wizard
-    if (currentStepIndex.value === Object.keys(stepComponents.value).length - 1) {
+    if (currentStep.value === WizardSteps.Region) {
       completeWizard()
-      return
-    }
-    // Only continue to WorkspaceWizardStepRegion when the plan is Business
-    if (
-      currentStepIndex.value === 2 &&
+    } else if (
+      currentStep.value === WizardSteps.Pricing &&
       state.value.plan !== PaidWorkspacePlans.Business
     ) {
       completeWizard()
-      return
+    } else {
+      currentStepIndex.value++
     }
-
-    currentStepIndex.value++
   }
 
   const goToPreviousStep = () => {
@@ -74,7 +55,7 @@ export const useWorkspacesWizard = () => {
 
   return {
     state,
-    currentStepComponent,
+    currentStep,
     goToNextStep,
     goToPreviousStep,
     init

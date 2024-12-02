@@ -50,10 +50,10 @@ interface InviteForm {
   fields: { id: string; email: string }[]
 }
 
-const { input, goToNextStep, goToPreviousStep } = useWorkspacesWizard()
+const { state, goToNextStep, goToPreviousStep } = useWorkspacesWizard()
 const { handleSubmit } = useForm<InviteForm>({
   initialValues: {
-    fields: input.value.invites
+    fields: state.value.invites
   }
 })
 const { push, fields } = useFieldArray<{ id: string; email: string }>('fields')
@@ -72,7 +72,7 @@ const onAddInvite = () => {
 const onSubmit = handleSubmit(() => {
   const validEmails = fields.value.map((field) => field.value)
 
-  input.value.invites = validEmails
+  state.value.invites = validEmails
   goToNextStep()
 })
 </script>
