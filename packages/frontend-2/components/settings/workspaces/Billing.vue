@@ -266,10 +266,10 @@ const billDescription = computed(() => {
 const billTooltip = computed(() => {
   const memberText = `${memberSeatCount.value} member${
     memberSeatCount.value === 1 ? '' : 's'
-  } £${seatPrice.value[Roles.Workspace.Member]}`
+  } at £${seatPrice.value[Roles.Workspace.Member]}/month`
   const guestText = `${guestSeatCount.value} guest${
     guestSeatCount.value === 1 ? '' : 's'
-  } £${seatPrice.value[Roles.Workspace.Guest]}`
+  } at £${seatPrice.value[Roles.Workspace.Guest]}/month`
 
   return `${memberText}${guestSeatCount.value > 0 ? `, ${guestText}` : ''}`
 })
