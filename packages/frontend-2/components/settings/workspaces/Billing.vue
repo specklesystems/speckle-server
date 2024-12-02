@@ -18,7 +18,7 @@
             >
               <div class="p-5 pt-4 flex flex-col gap-y-1">
                 <h3 class="text-body-xs text-foreground-2 pb-2">
-                  {{ isTrialPeriod ? 'Trial plan' : 'Current plan' }}
+                  {{ statusIsTrial ? 'Trial plan' : 'Current plan' }}
                 </h3>
                 <div class="flex gap-x-2">
                   <p class="text-heading-lg text-foreground">
@@ -28,7 +28,7 @@
                     </span>
                   </p>
                   <div>
-                    <CommonBadge v-if="isTrialPeriod" rounded>TRIAL</CommonBadge>
+                    <CommonBadge v-if="statusIsTrial" rounded>TRIAL</CommonBadge>
                   </div>
                 </div>
                 <p v-if="isPurchasablePlan" class="text-body-xs text-foreground-2">
@@ -43,14 +43,14 @@
               <div class="p-5 pt-4 flex flex-col gap-y-1">
                 <h3 class="text-body-xs text-foreground-2 pb-2">
                   {{
-                    isTrialPeriod
+                    statusIsTrial
                       ? 'Expected bill'
                       : subscription?.billingInterval === BillingInterval.Yearly
                       ? 'Yearly bill'
                       : 'Monthly bill'
                   }}
                 </h3>
-                <template v-if="isTrialPeriod">
+                <template v-if="statusIsTrial">
                   <p class="text-heading-lg text-foreground inline-block">
                     {{ billValue }}
                   </p>
@@ -74,7 +74,7 @@
               <div class="p-5 pt-4 flex flex-col gap-y-1">
                 <h3 class="text-body-xs text-foreground-2 pb-2">
                   {{
-                    isTrialPeriod && isPurchasablePlan
+                    statusIsTrial && isPurchasablePlan
                       ? 'First payment due'
                       : 'Next payment due'
                   }}
@@ -110,28 +110,26 @@
               </FormButton>
             </div>
           </div>
+
+          <SettingsSectionHeader
+            :title="statusIsTrial ? 'Start your subscription' : 'Upgrade your plan'"
+            subheading
+            class="pt-4"
+          />
           <SettingsWorkspacesBillingPricingTable
-            class="pt-6"
             :workspace-id="workspaceId"
             :current-plan="currentPlan"
             :active-billing-interval="subscription?.billingInterval"
             :is-admin="isAdmin"
-            @on-cta-click="onPricePlanCtaClick"
-          >
-            <template #title>
-              <SettingsSectionHeader
-                :title="isTrialPeriod ? 'Start your subscription' : 'Upgrade your plan'"
-                subheading
-              />
-            </template>
-          </SettingsWorkspacesBillingPricingTable>
+            @on-plan-selected="onPlanSelected"
+          />
         </div>
 
         <SettingsWorkspacesBillingUpgradeDialog
-          v-if="currentPlan?.name && subscription?.billingInterval"
+          v-if="selectedPlanName && selectedPlanCycle && workspaceId"
           v-model:open="isUpgradeDialogOpen"
-          :plan="currentPlan.name"
-          :billing-interval="subscription.billingInterval"
+          :plan="selectedPlanName"
+          :billing-interval="selectedPlanCycle"
           :workspace-id="workspaceId"
         />
       </template>
@@ -197,17 +195,19 @@ const { result: workspaceResult } = useQuery(
 )
 const { billingPortalRedirect, redirectToCheckout } = useBillingActions()
 
-const isUpgradeDialogOpen = ref(false)
 const seatPrices = ref({
   [WorkspacePlans.Starter]: pricingPlansConfig.plans[WorkspacePlans.Starter].cost,
   [WorkspacePlans.Plus]: pricingPlansConfig.plans[WorkspacePlans.Plus].cost,
   [WorkspacePlans.Business]: pricingPlansConfig.plans[WorkspacePlans.Business].cost
 })
+const selectedPlanName = ref<WorkspacePlans>()
+const selectedPlanCycle = ref<BillingInterval>()
+const isUpgradeDialogOpen = ref(false)
 
 const workspace = computed(() => workspaceResult.value?.workspace)
 const currentPlan = computed(() => workspace.value?.plan)
 const subscription = computed(() => workspace.value?.subscription)
-const isTrialPeriod = computed(
+const statusIsTrial = computed(
   () =>
     currentPlan.value?.status === WorkspacePlanStatuses.Trial ||
     !currentPlan.value?.status
@@ -253,7 +253,7 @@ const billValue = computed(() => {
   const guestPrice = seatPrice.value[Roles.Workspace.Guest] * guestSeatCount.value
   const memberPrice = seatPrice.value[Roles.Workspace.Member] * memberSeatCount.value
   const totalPrice = guestPrice + memberPrice
-  if (isTrialPeriod.value) return `£${totalPrice}.00`
+  if (statusIsTrial.value) return `£${totalPrice}.00`
   return `£0.00`
 })
 const billDescription = computed(() => {
@@ -275,22 +275,20 @@ const billTooltip = computed(() => {
   return `${memberText}${guestSeatCount.value > 0 ? `, ${guestText}` : ''}`
 })
 
-const onPricePlanCtaClick = (args: {
-  plan: WorkspacePlans
-  billingInterval: BillingInterval
-}) => {
-  const { plan, billingInterval } = args
-  if (!isPaidPlan(plan) || !props.workspaceId) return
-  if (isTrialPeriod.value) {
+const onPlanSelected = (plan: { name: WorkspacePlans; cycle: BillingInterval }) => {
+  const { name, cycle } = plan
+  if (!isPaidPlan(name) || !props.workspaceId) return
+
+  if (statusIsTrial.value) {
     redirectToCheckout({
-      plan: plan as unknown as PaidWorkspacePlans,
-      cycle: billingInterval,
+      plan: name as unknown as PaidWorkspacePlans,
+      cycle,
       workspaceId: props.workspaceId
     })
-
-    return
+  } else {
+    selectedPlanName.value = name
+    selectedPlanCycle.value = cycle
+    isUpgradeDialogOpen.value = true
   }
-
-  isUpgradeDialogOpen.value = true
 }
 </script>

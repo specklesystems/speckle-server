@@ -102,6 +102,27 @@ export const useBillingActions = () => {
             billingInterval: cycle,
             workspacePlan: plan
           }
+        },
+        update: (cache, res) => {
+          const { data } = res
+          if (!data?.workspaceMutations) return
+
+          cache.modify({
+            id: getCacheId('Workspace', workspaceId),
+            fields: {
+              plan: () => {
+                return {
+                  name: plan,
+                  status: WorkspacePlanStatuses.Valid
+                }
+              },
+              subscription: () => {
+                return {
+                  billingInterval: cycle
+                }
+              }
+            }
+          })
         }
       })
       .catch(convertThrowIntoFetchResult)
