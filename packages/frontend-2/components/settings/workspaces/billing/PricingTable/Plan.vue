@@ -55,7 +55,7 @@
           v-if="plan.features.includes(feature.name as PlanFeaturesList)"
           class="w-4 h-4 text-foreground mx-2"
         />
-        <XMarkIcon v-else class="w-4 h-4 mx-2 text-foreground-2" />
+        <XMarkIcon v-else class="w-4 h-4 mx-2 text-danger" />
         <span
           :class="{
             'text-foreground-2': !plan.features.includes(feature.name as PlanFeaturesList)
