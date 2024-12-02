@@ -162,7 +162,6 @@ const onMoveProject = async () => {
         workspaceName,
         eventSource: props.eventSource
       })
-
       open.value = false
     } catch {
       // Do nothing on error, composable already shows notification
