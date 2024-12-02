@@ -34,14 +34,7 @@
         class="flex"
         :class="[hasDescription ? 'items-start' : 'items-center']"
       >
-        <FormButton
-          type="button"
-          class="inline-flex rounded-md focus:outline-none focus:ring-2"
-          :class="buttonClasses"
-          color="subtle"
-          size="sm"
-          @click="$emit('dismiss')"
-        >
+        <FormButton type="button" color="subtle" size="sm" @click="$emit('dismiss')">
           Dismiss
         </FormButton>
       </div>
@@ -104,7 +97,7 @@ const icon = computed(() => {
 })
 
 const containerClasses = computed(() => {
-  const classParts: string[] = ['rounded-md text-foreground']
+  const classParts: string[] = ['rounded-md text-foreground border border-outline-2']
 
   switch (props.size) {
     case 'xs':
@@ -118,24 +111,19 @@ const containerClasses = computed(() => {
 
   switch (props.color) {
     case 'success':
-      classParts.push(
-        `bg-success-lightest ${!props.hideIcon && 'border border-success-darker'}`
-      )
+      classParts.push('bg-success-lightest')
       break
     case 'info':
-      classParts.push(
-        `bg-info-lightest ${!props.hideIcon && 'border border-info-darker'}`
-      )
+      classParts.push('bg-info-lightest')
       break
     case 'danger':
-      classParts.push(
-        `bg-danger-lightest ${!props.hideIcon && 'border border-danger-darker'}`
-      )
+      classParts.push('bg-danger-lightest')
       break
     case 'warning':
-      classParts.push(
-        `bg-warning-lightest ${!props.hideIcon && 'border border-warning-darker'}`
-      )
+      classParts.push('bg-warning-lightest')
+      break
+    case 'neutral':
+      classParts.push('bg-foundation')
       break
   }
 
@@ -185,26 +173,8 @@ const iconClasses = computed(() => {
     case 'warning':
       classParts.push('text-warning-darker')
       break
-  }
-
-  return classParts.join(' ')
-})
-
-const buttonClasses = computed(() => {
-  const classParts: string[] = []
-
-  switch (props.color) {
-    case 'success':
-      classParts.push('bg-success-lighter ring-success')
-      break
-    case 'info':
-      classParts.push('bg-info-lighter ring-info')
-      break
-    case 'danger':
-      classParts.push('bg-danger-lighter ring-danger')
-      break
-    case 'warning':
-      classParts.push('bg-warning-lighter ring-warning')
+    case 'neutral':
+      classParts.push('text-foreground-2')
       break
   }
 

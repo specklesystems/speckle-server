@@ -101,13 +101,13 @@ const description = computed(() => {
 const alertColor = computed<AlertColor>(() => {
   switch (planStatus.value) {
     case WorkspacePlanStatuses.PaymentFailed:
+    case WorkspacePlanStatuses.Canceled:
       return 'danger'
     case WorkspacePlanStatuses.CancelationScheduled:
-    case WorkspacePlanStatuses.Canceled:
     case WorkspacePlanStatuses.Expired:
       return 'warning'
     default:
-      return 'info'
+      return 'neutral'
   }
 })
 const actions = computed((): AlertAction[] => {
