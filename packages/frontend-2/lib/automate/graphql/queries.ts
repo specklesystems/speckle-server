@@ -48,3 +48,16 @@ export const automateFunctionsPagePaginationQuery = graphql(`
     ...AutomateFunctionsPageItems_Query
   }
 `)
+
+export const activeUserFunctionsQuery = graphql(`
+  query ActiveUserFunctions {
+    activeUser {
+      automateFunctions(limit: 2) {
+        items {
+          id
+          ...AutomationsFunctionsCard_AutomateFunction
+        }
+      }
+    }
+  }
+`)

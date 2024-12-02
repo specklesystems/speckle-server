@@ -72,6 +72,8 @@ export const automationFunctionRoute = (functionId: string) =>
 export const workspaceRoute = (slug: string) => `/workspaces/${slug}`
 export const workspaceSsoRoute = (slug: string) => `/workspaces/${slug}/sso`
 
+export const workspaceFunctionsRoute = (slug: string) => `/workspaces/${slug}/functions`
+
 const buildNavigationComposable = (route: string) => () => {
   const router = useRouter()
   return (params?: { query?: LocationQueryRaw }) => {

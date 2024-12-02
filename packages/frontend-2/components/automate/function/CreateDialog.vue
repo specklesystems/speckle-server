@@ -56,7 +56,10 @@ import {
 } from '~/lib/common/helpers/route'
 import { useEnumSteps, useEnumStepsWidgetSetup } from '~/lib/form/composables/steps'
 import { useForm } from 'vee-validate'
-import { useCreateAutomateFunction } from '~/lib/automate/composables/management'
+import {
+  useCreateAutomateFunction,
+  useUpdateAutomateFunction
+} from '~/lib/automate/composables/management'
 import { useMutationLoading } from '@vue/apollo-composable'
 import type { AutomateFunctionCreateDialogDoneStep_AutomateFunctionFragment } from '~~/lib/common/generated/gql/graphql'
 import { useMixpanel } from '~/lib/core/composables/mp'
@@ -74,6 +77,7 @@ const props = defineProps<{
   isAuthorized: boolean
   templates: CreatableFunctionTemplate[]
   githubOrgs: string[]
+  workspaceId?: string
 }>()
 const open = defineModel<boolean>('open', { required: true })
 
@@ -81,6 +85,7 @@ const mixpanel = useMixpanel()
 const logger = useLogger()
 const mutationLoading = useMutationLoading()
 const createFunction = useCreateAutomateFunction()
+const updateFunction = useUpdateAutomateFunction()
 const { handleSubmit: handleDetailsSubmit } = useForm<DetailsFormValues>()
 const onDetailsSubmit = handleDetailsSubmit(async (values) => {
   if (!selectedTemplate.value) {
@@ -99,15 +104,29 @@ const onDetailsSubmit = handleDetailsSubmit(async (values) => {
     }
   })
 
-  if (res?.id) {
-    mixpanel.track('Automate Function Created', {
-      functionId: res.id,
-      templateId: selectedTemplate.value.id,
-      name: values.name
-    })
-    createdFunction.value = res
-    step.value++
+  if (!res?.id) {
+    // TODO: Error toast with butter
+    return
   }
+
+  mixpanel.track('Automate Function Created', {
+    functionId: res.id,
+    templateId: selectedTemplate.value.id,
+    name: values.name
+  })
+  createdFunction.value = res
+  step.value++
+
+  if (!props.workspaceId) {
+    return
+  }
+
+  await updateFunction({
+    input: {
+      id: res.id,
+      workspaceIds: [props.workspaceId]
+    }
+  })
 })
 
 const onSubmit = computed(() => {

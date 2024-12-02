@@ -18,10 +18,12 @@ import { difference, differenceBy } from 'lodash-es'
 import { useForm } from 'vee-validate'
 import { useUpdateAutomateFunction } from '~/lib/automate/composables/management'
 import type { FunctionDetailsFormValues } from '~/lib/automate/helpers/functions'
+import type { Workspace } from '~/lib/common/generated/gql/graphql'
 
 const props = defineProps<{
   model: FunctionDetailsFormValues
   fnId: string
+  workspaces?: Pick<Workspace, 'id' | 'name'>[]
 }>()
 const open = defineModel<boolean>('open', { required: true })
 const { handleSubmit, setValues } = useForm<FunctionDetailsFormValues>()
@@ -53,6 +55,7 @@ const onSubmit = handleSubmit(async (values) => {
         values.description !== props.model.description ? values.description : null,
       logo: values.image !== props.model.image ? values.image : null,
       tags: difference(values.tags, props.model.tags || []).length ? values.tags : null,
+      workspaceIds: values.workspace ? [values.workspace.id] : [],
       supportedSourceApps: differenceBy(
         values.allowedSourceApps,
         props.model.allowedSourceApps || [],
