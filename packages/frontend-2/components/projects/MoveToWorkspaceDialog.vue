@@ -14,7 +14,7 @@
           show-label
         />
         <div v-else class="flex flex-col gap-y-2">
-          <p class="text-body-xs text-foreground">
+          <p class="text-body-xs text-foreground font-medium">
             You're not a member of any workspaces.
           </p>
           <FormButton :to="workspacesRoute">Learn about workspaces</FormButton>
