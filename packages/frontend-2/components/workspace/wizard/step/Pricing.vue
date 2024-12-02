@@ -8,7 +8,9 @@
           :plan="plan"
           :yearly-interval-selected="isYearlySelected"
           :badge-text="
-            plan.name === WorkspacePlans.Starter ? '30-day free trial' : undefined
+            plan.name === WorkspacePlans.Starter && !isYearlySelected
+              ? '30-day free trial'
+              : undefined
           "
           @on-yearly-interval-selected="onYearlyIntervalSelected"
         >
@@ -18,7 +20,11 @@
               full-width
               @click="onCtaClick(plan.name)"
             >
-              Continue with {{ plan.name }}
+              {{
+                plan.name === WorkspacePlans.Starter && !isYearlySelected
+                  ? 'Start free trial'
+                  : 'Subscribe to ' + plan.name
+              }}
             </FormButton>
           </template>
         </SettingsWorkspacesBillingPricingTablePlan>
