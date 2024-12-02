@@ -12,6 +12,7 @@
           placeholder="Workspace name"
           show-label
           :disabled="!isAdmin || needsSsoLogin"
+          :tooltip-text="disabledTooltipText"
           label-position="left"
           :rules="[isRequired, isStringOfLength({ maxLength: 512 })]"
           validate-on-value-update
@@ -28,6 +29,7 @@
           :disabled="!isAdmin || needsSsoLogin"
           show-label
           label-position="left"
+          :tooltip-text="disabledTooltipText"
           read-only
           :right-icon="isAdmin || needsSsoLogin ? IconEdit : undefined"
           right-icon-title="Edit short ID"
@@ -40,6 +42,7 @@
           label="Description"
           name="description"
           placeholder="Workspace description"
+          :tooltip-text="disabledTooltipText"
           show-label
           label-position="left"
           :disabled="!isAdmin || needsSsoLogin"
@@ -54,12 +57,14 @@
               Upload your logo image or use one from our set of workspace icons.
             </span>
           </div>
-          <SettingsWorkspacesGeneralEditAvatar
-            v-if="workspaceResult?.workspace"
-            :workspace="workspaceResult?.workspace"
-            :disabled="!isAdmin || needsSsoLogin"
-            size="xxl"
-          />
+          <div v-tippy="disabledTooltipText">
+            <SettingsWorkspacesGeneralEditAvatar
+              v-if="workspaceResult?.workspace"
+              :workspace="workspaceResult?.workspace"
+              :disabled="!isAdmin || needsSsoLogin"
+              size="xxl"
+            />
+          </div>
         </div>
       </div>
       <hr class="my-6 border-outline-2" />
@@ -303,6 +308,15 @@ const baseUrl = config.public.baseUrl
 
 const slugHelp = computed(() => {
   return `Used after ${baseUrl}/workspaces/`
+})
+
+// Using toRef to fix reactivity bug around tooltips
+const adminRef = toRef(isAdmin)
+
+const disabledTooltipText = computed(() => {
+  if (!adminRef.value) return 'Only admins can edit this field'
+  if (needsSsoLogin.value) return 'Log in with your SSO provider to edit this field'
+  return undefined
 })
 
 const openSlugEditDialog = () => {
