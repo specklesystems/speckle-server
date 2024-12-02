@@ -151,11 +151,11 @@ const dialogButtons = computed<LayoutDialogButton[]>(() => {
 })
 
 const onMoveProject = () => {
-  if (props.project && (selectedWorkspace.value || props.workspace)) {
-    const workspaceId = (selectedWorkspace.value?.id || props.workspace?.id) as string
-    const workspaceName =
-      selectedWorkspace.value?.name || (props.workspace?.name as string)
+  const workspaceId = selectedWorkspace.value?.id ?? props.workspace?.id
+  const workspaceName =
+    selectedWorkspace.value?.name ?? (props.workspace?.name as string)
 
+  if (props.project && workspaceId && workspaceName) {
     moveProject({
       projectId: props.project.id,
       workspaceId,
