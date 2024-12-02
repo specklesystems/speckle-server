@@ -106,3 +106,11 @@ export const workspaceSsoCheckQuery = graphql(`
     }
   }
 `)
+
+export const workspaceWizardRegionQuery = graphql(`
+  query WorkspaceWizardRegion {
+    serverInfo {
+      ...WorkspaceWizardStepRegion_ServerInfo
+    }
+  }
+`)
