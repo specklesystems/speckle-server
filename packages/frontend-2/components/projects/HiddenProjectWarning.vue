@@ -2,13 +2,11 @@
   <CommonCard class="mb-4 bg-foundation text-body-xs !py-4">
     <p class="text-foreground">
       <span class="font-medium">
-        {{ hiddenItemCount }} project{{ hiddenItemCount === 1 ? ' is' : 's are' }}
-        hidden
+        {{ hiddenItemCount }} project{{ hiddenItemCount === 1 ? '' : 's' }}
+        {{ hiddenItemCount === 1 ? 'is' : 'are' }} hidden
       </span>
-      as {{ hiddenItemCount === 1 ? 'it is' : 'they are' }} part of
-      {{ user.expiredSsoSessions.length > 1 ? 'workspaces' : 'a workspace' }}
-      that {{ user.expiredSsoSessions.length > 1 ? 'require' : 'requires' }} SSO. To
-      view {{ hiddenItemCount === 1 ? 'it' : 'them' }}, please authenticate with:
+      in SSO-protected workspaces. To view {{ hiddenItemCount === 1 ? 'it' : 'them' }},
+      authenticate with:
     </p>
     <div class="flex gap-2 mt-2">
       <FormButton
