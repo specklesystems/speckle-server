@@ -23,6 +23,7 @@
           size="sm"
           :to="action.url"
           :external="action.externalUrl || false"
+          :disabled="action.disabled || false"
           @click="action.onClick || noop"
         >
           {{ action.title }}
@@ -58,6 +59,7 @@ import { noop } from 'lodash'
 import { computed, useSlots } from 'vue'
 import FormButton from '~~/src/components/form/Button.vue'
 import type { PropAnyComponent } from '~~/src/helpers/common/components'
+import type { AlertAction } from '~~/src/helpers/layout/components'
 
 type AlertColor = 'success' | 'danger' | 'warning' | 'info'
 type Size = 'default' | 'xs'
@@ -68,12 +70,7 @@ const props = withDefaults(
   defineProps<{
     color?: AlertColor
     withDismiss?: boolean
-    actions?: Array<{
-      title: string
-      url?: string
-      onClick?: () => void
-      externalUrl?: boolean
-    }>
+    actions?: Array<AlertAction>
     customIcon?: PropAnyComponent
     hideIcon?: boolean
     size?: Size

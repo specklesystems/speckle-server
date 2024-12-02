@@ -47,4 +47,12 @@ export type LayoutDialogButton = {
   id?: string
 }
 
+export type AlertAction = {
+  title: string
+  url?: string
+  onClick?: () => void
+  externalUrl?: boolean
+  disabled?: boolean
+}
+
 export type LayoutTableColours = 'primary' | 'outline' | 'subtle' | 'danger'

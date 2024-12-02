@@ -1,36 +1,18 @@
-<!-- eslint-disable vuejs-accessibility/heading-has-content -->
 <template>
   <div>
-    <CommonCard v-if="!hasValidPlan" class="bg-foundation py-3 px-4">
-      <div class="flex gap-x-2">
-        <ExclamationCircleIcon v-if="showIcon" class="h-4 w-4 text-danger mt-1" />
-        <div class="flex-1 flex gap-x-4 items-center">
-          <div class="flex-1">
-            <h5 class="text-body-xs font-medium text-foreground">
-              <CommonText :text="title" />
-            </h5>
-            <p class="text-body-xs text-foreground-2">{{ description }}</p>
-          </div>
-          <slot name="actions" />
-          <FormButton
-            v-if="isPaymentFailed"
-            :icon-right="ArrowTopRightOnSquareIcon"
-            @click="billingPortalRedirect(workspace.id)"
-          >
-            Update payment information
-          </FormButton>
-        </div>
-      </div>
-    </CommonCard>
+    <CommonAlert v-if="!hasValidPlan" :color="alertColor" :actions="actions">
+      <template #title>
+        {{ title }}
+      </template>
+      <template #description>
+        {{ description }}
+      </template>
+    </CommonAlert>
   </div>
 </template>
 
 <script setup lang="ts">
 import dayjs from 'dayjs'
-import {
-  ExclamationCircleIcon,
-  ArrowTopRightOnSquareIcon
-} from '@heroicons/vue/24/outline'
 import { graphql } from '~/lib/common/generated/gql'
 import {
   type BillingAlert_WorkspaceFragment,
@@ -38,6 +20,14 @@ import {
   WorkspacePlans
 } from '~/lib/common/generated/gql/graphql'
 import { useBillingActions } from '~/lib/billing/composables/actions'
+import type { AlertAction } from '@speckle/ui-components'
+
+enum AlertColor {
+  Success = 'success',
+  Danger = 'danger',
+  Warning = 'warning',
+  Info = 'info'
+}
 
 graphql(`
   fragment BillingAlert_Workspace on Workspace {
@@ -56,6 +46,7 @@ graphql(`
 
 const props = defineProps<{
   workspace: BillingAlert_WorkspaceFragment
+  actions?: Array<AlertAction>
 }>()
 
 const { billingPortalRedirect } = useBillingActions()
@@ -114,8 +105,30 @@ const description = computed(() => {
       return ''
   }
 })
-const showIcon = computed(() => {
-  return !!planStatus.value && planStatus.value !== WorkspacePlanStatuses.Trial
+const alertColor = computed(() => {
+  switch (planStatus.value) {
+    case WorkspacePlanStatuses.PaymentFailed:
+      return AlertColor.Danger
+    case WorkspacePlanStatuses.CancelationScheduled:
+    case WorkspacePlanStatuses.Canceled:
+    case WorkspacePlanStatuses.Expired:
+      return AlertColor.Warning
+    default:
+      return AlertColor.Info
+  }
+})
+const actions = computed((): AlertAction[] => {
+  const actions: Array<AlertAction> = props.actions ?? []
+
+  if (isPaymentFailed.value) {
+    actions.push({
+      title: 'Update payment information',
+      onClick: () => billingPortalRedirect(props.workspace.id),
+      disabled: !props.workspace.id
+    })
+  }
+
+  return actions
 })
 const hasValidPlan = computed(() => planStatus.value === WorkspacePlanStatuses.Valid)
 </script>
