@@ -38,6 +38,7 @@ import { workspaceSsoRoute } from '~/lib/common/helpers/route'
 
 graphql(`
   fragment ProjectsHiddenProjectWarning_User on User {
+    id
     expiredSsoSessions {
       id
       slug
