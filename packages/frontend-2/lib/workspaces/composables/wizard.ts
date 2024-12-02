@@ -55,6 +55,13 @@ export const useWorkspacesWizard = () => {
     currentStepIndex.value--
   }
 
+  const goToStep = (step: WizardSteps) => {
+    const index = +Object.keys(stepComponents.value).find(
+      (key) => stepComponents.value[key] === step
+    )!
+    if (!isNaN(index)) currentStepIndex.value = index
+  }
+
   /**
    * This will complete the wizard and create the workspace.
    * We have to do a few things here:
@@ -86,7 +93,8 @@ export const useWorkspacesWizard = () => {
       // Add workspace ID to URL, in case the user comes back from Stripe
       router.replace({
         query: {
-          workspaceId: newWorkspace.data.workspaceMutations.create.id
+          workspaceId: newWorkspace.data.workspaceMutations.create.id,
+          stage: 'checkout'
         }
       })
 
@@ -104,6 +112,7 @@ export const useWorkspacesWizard = () => {
     currentStep,
     goToNextStep,
     goToPreviousStep,
+    goToStep,
     setState
   }
 }

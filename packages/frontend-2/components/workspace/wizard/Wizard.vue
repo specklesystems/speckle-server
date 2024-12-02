@@ -5,6 +5,11 @@
       class="my-10 justify-self-center"
     />
     <template v-else>
+      <CommonAlert color="danger">
+        <template #title>
+          Something went wrong with your payment. Please try again.
+        </template>
+      </CommonAlert>
       <WorkspaceWizardStepDetails
         v-if="currentStep === WizardSteps.Details"
         :disable-slug-edit="!!workspaceId"
@@ -37,7 +42,8 @@ const props = defineProps<{
   workspaceId?: string
 }>()
 
-const { setState, currentStep } = useWorkspacesWizard()
+const { setState, currentStep, goToStep } = useWorkspacesWizard()
+const route = useRoute()
 
 const { loading, onResult } = useQuery(
   workspaceWizardQuery,
@@ -51,6 +57,10 @@ const { loading, onResult } = useQuery(
 
 onResult((result) => {
   if (!result.data?.workspace.creationState?.completed) {
+    if (route.query.workspaceId as string) {
+      goToStep(WizardSteps.Pricing)
+    }
+
     setState({
       name: result.data.workspace.name,
       slug: result.data.workspace.slug,
