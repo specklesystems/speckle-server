@@ -29,6 +29,7 @@
         label="Client secret"
         name="clientSecret"
         color="foundation"
+        autocomplete="off"
         show-label
         label-position="left"
         type="text"
