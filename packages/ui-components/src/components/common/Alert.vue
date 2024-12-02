@@ -139,7 +139,7 @@ const subcontainerClasses = computed(() => {
       break
     case 'default':
     default:
-      classParts.push('gap-x-2')
+      classParts.push('gap-x-3')
       break
   }
 
