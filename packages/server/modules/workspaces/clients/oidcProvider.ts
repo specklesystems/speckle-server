@@ -13,11 +13,13 @@ import { generators, Issuer, type Client } from 'openid-client'
 export const getProviderAuthorizationUrl = async ({
   provider,
   redirectUrl,
-  codeVerifier
+  codeVerifier,
+  state
 }: {
   provider: OidcProvider
   redirectUrl: URL
   codeVerifier: string
+  state: string
 }): Promise<URL> => {
   const { client } = await initializeIssuerAndClient({ provider, redirectUrl })
   const code_challenge = generators.codeChallenge(codeVerifier)
@@ -26,7 +28,8 @@ export const getProviderAuthorizationUrl = async ({
       scope: 'openid email profile',
       redirect_uri: redirectUrl.toString(),
       code_challenge,
-      code_challenge_method: 'S256'
+      code_challenge_method: 'S256',
+      state
     })
   )
 }
