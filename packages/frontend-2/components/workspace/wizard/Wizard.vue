@@ -17,6 +17,19 @@ import { useWorkspacesWizard } from '~/lib/workspaces/composables/wizard'
 import { WizardSteps } from '~/lib/workspaces/helpers/types'
 import { workspaceWizardQuery } from '~/lib/workspaces/graphql/queries'
 import { useQuery } from '@vue/apollo-composable'
+import { graphql } from '~~/lib/common/generated/gql'
+
+graphql(`
+  fragment WorkspaceWizard_Workspace on Workspace {
+    creationState {
+      completed
+      state
+    }
+    name
+    slug
+  }
+`)
+
 const props = defineProps<{
   workspaceId?: string
 }>()
@@ -35,7 +48,13 @@ const { loading, onResult } = useQuery(
 
 onResult((result) => {
   if (result.data?.workspace.creationState?.completed === false) {
-    setState()
+    setState({
+      name: result.data.workspace.name,
+      slug: result.data.workspace.slug,
+      invites: [],
+      plan: null,
+      billingInterval: null
+    })
   }
 })
 </script>

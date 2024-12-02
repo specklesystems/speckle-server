@@ -1,16 +1,6 @@
 import { nanoid } from 'nanoid'
 import { PaidWorkspacePlans } from '~/lib/common/generated/gql/graphql'
 import { type WorkspaceWizardState, WizardSteps } from '~/lib/workspaces/helpers/types'
-import { graphql } from '~~/lib/common/generated/gql'
-
-graphql(`
-  fragment WorkspaceWizard_Workspace on Workspace {
-    creationState {
-      completed
-      state
-    }
-  }
-`)
 
 const state = ref<WorkspaceWizardState>({
   name: '',
@@ -35,13 +25,8 @@ const stepComponents = shallowRef<Record<number, WizardSteps>>({
 const currentStep = computed(() => stepComponents.value[currentStepIndex.value])
 
 export const useWorkspacesWizard = () => {
-  const setState = (initialState?: WorkspaceWizardState) => {
-    if (!initialState) return
+  const setState = (initialState: WorkspaceWizardState) => {
     state.value = initialState
-  }
-
-  const completeWizard = () => {
-    // console.log('completeWizard')
   }
 
   const goToNextStep = () => {
@@ -60,6 +45,10 @@ export const useWorkspacesWizard = () => {
   const goToPreviousStep = () => {
     if (currentStepIndex.value === 0) return
     currentStepIndex.value--
+  }
+
+  const completeWizard = () => {
+    // console.log('completeWizard')
   }
 
   return {
