@@ -56,11 +56,8 @@
     </section>
 
     <section>
-      <SettingsWorkspacesBillingPricingTable>
-        <template #title>
-          <h4 class="text-foreground text-heading">Pricing</h4>
-        </template>
-      </SettingsWorkspacesBillingPricingTable>
+      <h4 class="text-foreground text-heading mb-6">Pricing</h4>
+      <SettingsWorkspacesBillingPricingTable />
     </section>
 
     <WorkspaceCreateDialog

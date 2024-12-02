@@ -24,7 +24,7 @@
           access it.
         </p>
       </div>
-      <FormButton size="lg" @click="handleSsoLogin">Sign in with SSO</FormButton>
+      <FormButton @click="handleSsoLogin">Sign in with SSO</FormButton>
     </template>
   </div>
 </template>

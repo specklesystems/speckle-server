@@ -229,7 +229,7 @@ const handleCancel = () => {
 }
 
 const redirectUrl = computed(() => {
-  return `${apiOrigin}/api/v1/workspaces/${props.workspace.slug}/sso/oidc/callback?validate=true`
+  return `${apiOrigin}/api/v1/workspaces/${props.workspace.slug}/sso/oidc/callback`
 })
 
 const goToBilling = () => {
