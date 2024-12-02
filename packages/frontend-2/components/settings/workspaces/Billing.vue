@@ -52,7 +52,7 @@
                 </h3>
                 <template v-if="statusIsTrial">
                   <p class="text-heading-lg text-foreground inline-block">
-                    {{ billValue }}
+                    {{ billValue }} per month
                   </p>
                   <p class="text-body-xs text-foreground-2 flex gap-x-1 items-center">
                     {{ billDescription }}
