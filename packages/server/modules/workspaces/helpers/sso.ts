@@ -8,13 +8,16 @@ import {
   OidcStateMissingError,
   SsoVerificationCodeMissingError
 } from '@/modules/workspaces/errors/sso'
+import { OidcProvider } from '@/modules/workspaces/domain/sso/types'
 import { Request } from 'express'
+import { omit } from 'lodash'
 
 declare module 'express-session' {
   interface SessionData {
     workspaceId?: string
     ssoNonce?: string
-    ssoState?: Record<string, SsoSessionState>
+    ssoState?: SsoSessionState
+    oidcProvider?: OidcProvider
   }
 }
 
@@ -23,35 +26,52 @@ declare module 'express-session' {
  * with the given SSO provider.
  */
 export const buildAuthRedirectUrl = (workspaceSlug: string): URL => {
-  const urlFragments = [`/api/v1/workspaces/${workspaceSlug}/sso/oidc/callback`]
+  const url = new URL(
+    `/api/v1/workspaces/${workspaceSlug}/sso/oidc/callback`,
+    getServerOrigin()
+  )
 
-  return new URL(urlFragments.join(''), getServerOrigin())
+  return url
 }
 
-/**
- * Generate Speckle URL to redirect users to after successfully completing the
- * SSO authorization flow.
- * @remarks Append params to this URL to preserve information about errors
- */
-export const buildFinalizeUrl = (workspaceSlug: string): URL => {
-  return new URL(`workspaces/${workspaceSlug}/sso`, getFrontendOrigin())
+export const buildAuthFinalizeRedirectUrl = (
+  workspaceSlug: string,
+  searchParams: Record<string, string> = {}
+) => {
+  const url = new URL(`/workspaces/${workspaceSlug}/sso`, getFrontendOrigin())
+  for (const [key, value] of Object.entries(searchParams)) {
+    url.searchParams.set(key, value)
+  }
+  return url
 }
 
-/**
- * Generate Speckle URL to redirect users to after an error occurs during SSO.
- */
-export const buildErrorUrl = (err: unknown, workspaceSlug: string) => {
-  const errorRedirectUrl = buildFinalizeUrl(workspaceSlug)
-  let errorMessage: string
+export const buildAuthErrorRedirectUrl = (workspaceSlug: string, error: string) => {
+  return buildAuthFinalizeRedirectUrl(workspaceSlug, {
+    ssoError: error
+  })
+}
 
-  if (err instanceof Error) {
-    errorMessage = `${err.message}`
-  } else {
-    errorMessage = `Unknown error: ${JSON.stringify(err)}`
+export const buildValidationErrorRedirectUrl = (
+  workspaceSlug: string,
+  error: string,
+  oidcProvider?: OidcProvider
+) => {
+  const url = new URL(`/workspaces/${workspaceSlug}`, getFrontendOrigin())
+
+  url.searchParams.set('ssoValidationSuccess', 'false')
+  url.searchParams.set('ssoError', error)
+
+  for (const [key, value] of Object.entries<string>(
+    omit(oidcProvider ?? {}, 'clientSecret')
+  )) {
+    url.searchParams.set(key, value)
   }
 
-  errorRedirectUrl.searchParams.set('error', errorMessage)
-  return errorRedirectUrl.toString()
+  return url
+}
+
+export const getErrorMessage = (e: unknown): string => {
+  return e instanceof Error ? `${e.message}` : `Unknown error: ${JSON.stringify(e)}`
 }
 
 export const getEncryptor = () => async (data: string) => {
@@ -91,7 +111,7 @@ export const getSsoSessionState = (
     throw new OidcStateInvalidError()
   }
 
-  const state = req.session.ssoState?.[requestNonce]
+  const state = req.session.ssoState
 
   if (!state) {
     throw new OidcStateMissingError()

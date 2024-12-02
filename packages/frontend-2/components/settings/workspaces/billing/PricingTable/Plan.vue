@@ -165,9 +165,11 @@ const isSelectable = computed(() => {
   return canUpgradeToPlan.value
 })
 const toggleEnabled = computed(() => {
-  return isSelectable.value && statusIsTrial.value
+  return statusIsTrial.value
     ? true
-    : canUpgradeToPlan.value && props.currentPlan?.name !== props.plan.name
+    : canUpgradeToPlan.value ||
+        (props.currentPlan?.name === props.plan.name &&
+          props.activeBillingInterval === BillingInterval.Monthly)
 })
 const buttonText = computed(() => {
   // Trial plan case

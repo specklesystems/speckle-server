@@ -29,6 +29,7 @@
         label="Client secret"
         name="clientSecret"
         color="foundation"
+        autocomplete="off"
         show-label
         label-position="left"
         type="text"
@@ -98,7 +99,7 @@ const onSubmit = handleSubmit(() => {
     url.searchParams.set('challenge', challenge.value)
   }
 
-  postAuthRedirect.set(`/workspaces/${props.workspaceSlug}?settings=server/general`)
+  postAuthRedirect.set(`/workspaces/${props.workspaceSlug}?ssoValidationSuccess=true`)
 
   mixpanel.track('Workspace SSO Configuration Started', {
     // eslint-disable-next-line camelcase
