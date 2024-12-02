@@ -342,11 +342,16 @@ export const finalizeResourceInviteFactory =
     })
   }
 
+/**
+ * Cancel invite. The difference between this and declining is that this action is invoked
+ * by the invite creator, not by the invitee.
+ */
 export const cancelResourceInviteFactory =
   (deps: {
     findInvite: FindInvite
     validateResourceAccess: ValidateResourceInviteBeforeFinalization
     deleteInvite: DeleteInvite
+    emitEvent: EventBusEmit
   }) =>
   async (params: {
     inviteId: string
@@ -355,7 +360,7 @@ export const cancelResourceInviteFactory =
     cancelerId: string
     cancelerResourceAccessLimits: MaybeNullOrUndefined<TokenResourceIdentifier[]>
   }) => {
-    const { findInvite, validateResourceAccess, deleteInvite } = deps
+    const { findInvite, validateResourceAccess, deleteInvite, emitEvent } = deps
     const {
       inviteId,
       resourceId,
@@ -386,24 +391,41 @@ export const cancelResourceInviteFactory =
       finalizerResourceAccessLimits: cancelerResourceAccessLimits
     })
     await deleteInvite(invite.id)
+    await emitEvent({
+      eventName: ServerInvitesEvents.Canceled,
+      payload: {
+        invite,
+        cancelerUserId: cancelerId
+      }
+    })
   }
 
 /**
  * Delete pending invite - does no access checks!
+ * (Used for admin invite delete currently)
  */
 export const deleteInviteFactory =
   ({
     findInvite,
-    deleteInvite
+    deleteInvite,
+    emitEvent
   }: {
     findInvite: FindInvite
     deleteInvite: DeleteInvite
+    emitEvent: EventBusEmit
   }) =>
-  async (inviteId: string) => {
+  async (inviteId: string, cancelerId: string) => {
     const invite = await findInvite({ inviteId })
     if (!invite) {
       throw new InviteNotFoundError('Attempted to delete a nonexistant invite')
     }
 
     await deleteInvite(invite.id)
+    await emitEvent({
+      eventName: ServerInvitesEvents.Canceled,
+      payload: {
+        invite,
+        cancelerUserId: cancelerId
+      }
+    })
   }

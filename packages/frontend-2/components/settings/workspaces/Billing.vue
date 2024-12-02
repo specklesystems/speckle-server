@@ -162,7 +162,6 @@ graphql(`
     id
     role
     plan {
-      ...SettingsWorkspacesBillingPricingTable_WorkspacePlan
       name
       status
     }
