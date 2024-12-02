@@ -397,7 +397,7 @@ const handleSsoAuthRequestFactory =
   async ({ params, session, res }) => {
     try {
       if (!session.workspaceId) throw new WorkspaceNotFoundError()
-      if (!session.ssoNonce) throw new Error()
+      if (!session.ssoNonce) throw new OidcStateInvalidError()
 
       const { provider } =
         (await getWorkspaceSsoProvider({ workspaceId: session.workspaceId })) ?? {}
@@ -644,7 +644,7 @@ const getOidcProviderUserDataFactory =
     >,
     provider: OidcProvider
   ): Promise<UserinfoResponse<{ email: string }>> => {
-    if (!req.session.ssoNonce) throw new Error()
+    if (!req.session.ssoNonce) throw new OidcStateInvalidError()
 
     const codeVerifier = await parseCodeVerifier(req)
     const { client } = await initializeIssuerAndClient({ provider })
