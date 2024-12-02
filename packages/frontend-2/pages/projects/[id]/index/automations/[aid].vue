@@ -12,6 +12,7 @@
       >
         <ProjectPageAutomationFunctions
           :automation="automation"
+          :workspace-id="workspaceId"
           :project-id="projectId"
           :is-editable="isEditable"
         />
@@ -46,6 +47,7 @@ graphql(`
 graphql(`
   fragment ProjectPageAutomationPage_Project on Project {
     id
+    workspaceId
     ...ProjectPageAutomationHeader_Project
   }
 `)
@@ -67,6 +69,7 @@ const { result, loading } = useQuery(
 )
 const automation = computed(() => result.value?.project.automation || null)
 const project = computed(() => result.value?.project)
+const workspaceId = computed(() => project.value?.workspaceId)
 const isEditable = computed(() => {
   const allowedRoles: string[] = [Roles.Stream.Owner]
   return allowedRoles.includes(result.value?.project.role ?? '')
