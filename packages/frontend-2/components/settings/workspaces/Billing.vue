@@ -110,8 +110,9 @@
               </FormButton>
             </div>
           </div>
+
+          <SettingsSectionHeader title="Upgrade your plan" subheading class="pt-4" />
           <SettingsWorkspacesBillingPricingTable
-            class="pt-6"
             :workspace-id="workspaceId"
             :current-plan="currentPlan"
             :active-billing-interval="subscription?.billingInterval"
