@@ -4,6 +4,7 @@ import {
   PreviewGenerator,
   PreviewResult
 } from '@speckle/shared/dist/esm/previews/interface.js'
+import { Logger } from 'pino'
 
 declare global {
   interface Window extends PreviewGenerator {}
@@ -31,6 +32,7 @@ export const jobPayload = z.object({
 type JobPayload = z.infer<typeof jobPayload>
 
 export const jobProcessor = async (
+  jobLogger: Logger,
   browser: Browser,
   payload: JobPayload
 ): Promise<JobResult> => {
@@ -38,7 +40,7 @@ export const jobProcessor = async (
   try {
     page = await browser.newPage()
     page.on('error', (err) => {
-      console.log('Page crashed', err)
+      jobLogger.error(err, 'Page crashed')
       throw err
     })
     await page.goto('http://127.0.0.1:3010/index.html')
@@ -49,15 +51,9 @@ export const jobProcessor = async (
       return await window.takeScreenshot()
     }, payload)
 
-    // await resultsQueue.add({
-    //   jobId: payload.jobId,
-    //   status: 'success',
-    //   result: evaluationResult,
-    // })
-    console.log('done with job')
     return { jobId: payload.jobId, status: 'success', result: previewResult }
   } catch (err) {
-    console.log(err)
+    jobLogger.error({ err }, 'Failed to process job')
     return {
       jobId: payload.jobId,
       status: 'error',

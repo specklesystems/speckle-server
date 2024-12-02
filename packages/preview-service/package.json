@@ -15,6 +15,8 @@
     "node": "^22.9.0"
   },
   "scripts": {
+    "build:frontend": "yarn workspace @speckle/preview-frontend build",
+    "link:frontend": "rimraf ./public",
     "dev": "tsx --env-file=.env --watch src/main.ts"
   },
   "dependencies": {
@@ -34,6 +36,7 @@
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-vitest": "^0.5.4",
     "prettier": "^2.5.1",
+    "rimraf": "^6.0.1",
     "ts-node": "^10.9.2",
     "tsx": "^4.19.2",
     "typescript": "^4.6.4",
