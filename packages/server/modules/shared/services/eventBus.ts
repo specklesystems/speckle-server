@@ -11,6 +11,7 @@ import {
   ServerInvitesEventsPayloads
 } from '@/modules/serverinvites/domain/events'
 
+type AllEventsWildcard = '**'
 type EventWildcard = '*'
 
 export const TestEvents = {
@@ -39,7 +40,7 @@ type EventNamesByNamespace = {
 
 // generated type for a top level wildcard one level nested wildcards per namespace and each possible event
 type EventSubscriptionKey =
-  | EventWildcard
+  | AllEventsWildcard
   | `${keyof EventNamesByNamespace}.${EventWildcard}`
   | {
       [Namespace in keyof EventNamesByNamespace]: EventNamesByNamespace[Namespace]
@@ -64,7 +65,7 @@ type EventPayloadsByNamespaceMap = {
   }
 }
 
-export type EventPayload<T extends EventSubscriptionKey> = T extends EventWildcard
+export type EventPayload<T extends EventSubscriptionKey> = T extends AllEventsWildcard
   ? // if event key is "*", get all events from the flat object
     EventPayloadsMap[keyof EventPayloadsMap]
   : // else if, the key is a "namespace.*" wildcard

@@ -73,7 +73,7 @@ import {
 import { GetStream } from '@/modules/core/domain/streams/operations'
 import { GetUser } from '@/modules/core/domain/users/operations'
 
-const isWorkspaceResourceTarget = (
+export const isWorkspaceResourceTarget = (
   target: InviteResourceTarget
 ): target is WorkspaceInviteResourceTarget =>
   target.resourceType === WorkspaceInviteResourceType

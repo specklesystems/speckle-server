@@ -380,7 +380,7 @@ type SubscriptionTypeMap = {
     payload: {
       workspaceUpdated: Merge<
         WorkspaceUpdatedMessage,
-        { workspace: Nullable<WorkspaceGraphQLReturn> }
+        { workspace: WorkspaceGraphQLReturn }
       >
     }
     variables: SubscriptionWorkspaceUpdatedArgs
