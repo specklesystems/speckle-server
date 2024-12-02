@@ -5,7 +5,11 @@
       class="my-10 justify-self-center"
     />
     <template v-else>
-      <CommonAlert color="danger">
+      <CommonAlert
+        v-if="showPaymentError"
+        color="danger"
+        class="w-lg mb-6 max-w-lg mx-auto"
+      >
         <template #title>
           Something went wrong with your payment. Please try again.
         </template>
@@ -44,6 +48,7 @@ const props = defineProps<{
 
 const { setState, currentStep, goToStep } = useWorkspacesWizard()
 const route = useRoute()
+const showPaymentError = ref(false)
 
 const { loading, onResult } = useQuery(
   workspaceWizardQuery,
@@ -59,6 +64,7 @@ onResult((result) => {
   if (!result.data?.workspace.creationState?.completed) {
     if (route.query.workspaceId as string) {
       goToStep(WizardSteps.Pricing)
+      showPaymentError.value = true
     }
 
     setState({
