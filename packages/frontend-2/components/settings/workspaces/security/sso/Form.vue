@@ -9,7 +9,7 @@
         color="foundation"
         show-label
         label-position="left"
-        :rules="[isRequired, isStringOfLength({ minLength: 5 })]"
+        :rules="[isRequired, isStringOfLength({ minLength: 3 })]"
         type="text"
       />
       <hr class="border-outline-3" />
@@ -20,7 +20,7 @@
         color="foundation"
         show-label
         label-position="left"
-        :rules="[isRequired, isStringOfLength({ minLength: 5 })]"
+        :rules="[isRequired, isStringOfLength({ minLength: 3 })]"
         type="text"
       />
       <hr class="border-outline-3" />
@@ -39,17 +39,20 @@
         v-model="formData.issuerUrl"
         label="Issuer URL"
         name="issuerUrl"
+        :suffix="urlSuffix"
         color="foundation"
         show-label
         label-position="left"
         type="text"
         :rules="[isRequired, isUrl, isStringOfLength({ minLength: 5 })]"
       />
-      <div class="flex gap-2 mt-4">
-        <FormButton :disabled="!challenge" color="primary" type="submit">
+      <div class="flex justify-end gap-2 mt-4">
+        <FormButton color="outline" size="lg" @click="$emit('cancel')">
+          Cancel
+        </FormButton>
+        <FormButton :disabled="!challenge" color="primary" size="lg" type="submit">
           Add
         </FormButton>
-        <FormButton color="outline" @click="$emit('cancel')">Cancel</FormButton>
       </div>
     </div>
   </form>
@@ -65,6 +68,9 @@ import { useMixpanel } from '~/lib/core/composables/mp'
 
 const props = defineProps<{
   workspaceSlug: string
+  providerName?: string
+  issuerUrl?: string
+  urlSuffix?: string
 }>()
 
 defineEmits<{
@@ -77,10 +83,10 @@ const { challenge } = useLoginOrRegisterUtils()
 const mixpanel = useMixpanel()
 
 const formData = ref<SsoFormValues>({
-  providerName: '',
+  providerName: props.providerName || '',
   clientId: '',
   clientSecret: '',
-  issuerUrl: ''
+  issuerUrl: props.issuerUrl || ''
 })
 
 const { handleSubmit } = useForm<SsoFormValues>()
@@ -111,4 +117,16 @@ const onSubmit = handleSubmit(() => {
     external: true
   })
 })
+
+watch(
+  () => [props.providerName, props.issuerUrl],
+  ([newProviderName, newIssuerUrl]) => {
+    formData.value = {
+      providerName: newProviderName || '',
+      clientId: '',
+      clientSecret: '',
+      issuerUrl: newIssuerUrl || ''
+    }
+  }
+)
 </script>

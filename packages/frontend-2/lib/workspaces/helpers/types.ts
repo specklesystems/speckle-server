@@ -1,3 +1,10 @@
+export enum SsoProviderType {
+  Google = 'google',
+  Okta = 'okta',
+  EntraId = 'entra',
+  Custom = 'custom'
+}
+
 export type SsoFormValues = {
   providerName: string
   clientId: string

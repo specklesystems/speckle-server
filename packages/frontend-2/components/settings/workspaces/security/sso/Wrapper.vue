@@ -40,7 +40,7 @@
 
       <!-- Existing Provider Configuration -->
       <div v-if="provider" class="p-4 border border-outline-3 rounded-lg">
-        <div v-if="!isEditing" class="flex items-center justify-between">
+        <div class="flex items-center justify-between">
           <div class="flex items-center gap-2">
             <h3 class="text-body-xs font-medium text-foreground">
               {{ provider.name }}
@@ -71,13 +71,6 @@
             />
           </LayoutMenu>
         </div>
-
-        <SettingsWorkspacesSecuritySsoForm
-          v-else
-          :workspace-slug="workspace.slug"
-          @cancel="handleCancel"
-          @submit="handleFormSubmit"
-        />
       </div>
 
       <!-- Configuration Instructions -->
@@ -85,40 +78,38 @@
         v-if="isFormVisible && !provider"
         class="py-6 px-8 border border-outline-3 rounded-lg mt-4"
       >
-        <p class="text-body-xs mb-4">
-          To set up SSO, create a new web application using the OpenID Connect protocol
-          in your identity provider's panel, which will contain the necessary settings
-          for Speckle. When asked about
-          <span class="font-bold">Redirect URL</span>
-          (callback) please use:
-        </p>
-        <div class="mb-4">
-          <CommonClipboardInputWithToast is-multiline :value="redirectUrl" />
-        </div>
-
-        <p class="text-body-xs mb-4">
-          The application grant type should be set to "authorization_code." Below is a
-          list of supported scopes and claims to configure in the application:
-        </p>
-        <div
-          class="mb-8 bg-foundation border border-outline-3 rounded-lg p-4 text-body-xs"
+        <FormSelectBase
+          v-model="selectedProviderValue"
+          :items="providers"
+          label="SSO Provider"
+          :multiple="false"
+          name="provider"
+          show-label
+          label-position="left"
         >
-          <div class="grid grid-cols-3 gap-y-1.5">
-            <div class="col-span-1 font-medium">Scope</div>
-            <div class="col-span-2 font-medium">Resultant claims</div>
+          <template #option="{ item }">{{ item.label }}</template>
+          <template #something-selected="{ value }">
+            {{ isArray(value) ? value[0].label : value.label }}
+          </template>
+        </FormSelectBase>
 
-            <template v-for="(claims, scope) in scopesAndClaims" :key="scope">
-              <div class="col-span-1">{{ scope }}</div>
-              <div class="col-span-2">{{ claims }}</div>
-            </template>
+        <!-- Only show instructions and form after provider is selected -->
+        <template v-if="selectedProviderValue">
+          <div class="mt-2">
+            <SettingsWorkspacesSecuritySsoInstructions
+              :selected-provider="selectedProviderValue.id"
+              :workspace-slug="workspace.slug"
+            />
+            <SettingsWorkspacesSecuritySsoForm
+              :workspace-slug="workspace.slug"
+              :provider-name="selectedProviderValue?.label"
+              :issuer-url="selectedProviderValue?.issuerUrl"
+              :url-suffix="selectedProviderValue?.urlSuffix"
+              @cancel="handleCancel"
+              @submit="handleFormSubmit"
+            />
           </div>
-        </div>
-
-        <SettingsWorkspacesSecuritySsoForm
-          :workspace-slug="workspace.slug"
-          @cancel="handleCancel"
-          @submit="handleFormSubmit"
-        />
+        </template>
       </div>
     </template>
     <SettingsWorkspacesSecuritySsoDeleteDialog
@@ -133,7 +124,7 @@
 <script setup lang="ts">
 import type { SettingsWorkspacesSecuritySsoWrapper_WorkspaceFragment } from '~~/lib/common/generated/gql/graphql'
 import { useWorkspaceSsoStatus } from '~/lib/workspaces/composables/sso'
-import type { SsoFormValues } from '~/lib/workspaces/helpers/types'
+import { SsoProviderType, type SsoFormValues } from '~/lib/workspaces/helpers/types'
 import type { LayoutMenuItem } from '@speckle/ui-components'
 import { HorizontalDirection } from '~~/lib/common/composables/window'
 import { EllipsisHorizontalIcon } from '@heroicons/vue/24/solid'
@@ -141,6 +132,14 @@ import { graphql } from '~/lib/common/generated/gql'
 import { useMenuState } from '~/lib/settings/composables/menu'
 import { SettingMenuKeys } from '~/lib/settings/helpers/types'
 import { Roles } from '@speckle/shared'
+import { isArray } from 'lodash-es'
+
+type ProviderOption = {
+  id: SsoProviderType
+  label: string
+  issuerUrl?: string
+  urlSuffix?: string
+}
 
 graphql(`
   fragment SettingsWorkspacesSecuritySsoWrapper_Workspace on Workspace {
@@ -168,7 +167,6 @@ enum ActionTypes {
 }
 
 const { goToWorkspaceMenuItem } = useMenuState()
-const apiOrigin = useApiOrigin()
 const logger = useLogger()
 const menuId = useId()
 const { provider, loading, isSsoAuthenticated } = useWorkspaceSsoStatus({
@@ -179,12 +177,7 @@ const isFormVisible = ref(false)
 const isEditing = ref(false)
 const showActionsMenu = ref(false)
 const isDeleteDialogOpen = ref(false)
-
-const scopesAndClaims = ref({
-  openid: '-',
-  profile: 'name, given_name, family_name',
-  email: 'email'
-})
+const selectedProviderValue = ref<ProviderOption | undefined>()
 
 const isWorkspaceAdmin = computed(() => props.workspace?.role === Roles.Workspace.Admin)
 
@@ -228,9 +221,27 @@ const handleCancel = () => {
   isEditing.value = false
 }
 
-const redirectUrl = computed(() => {
-  return `${apiOrigin}/api/v1/workspaces/${props.workspace.slug}/sso/oidc/callback?validate=true`
-})
+const providers = computed<ProviderOption[]>(() => [
+  {
+    id: SsoProviderType.Google,
+    label: 'Google',
+    issuerUrl: 'https://accounts.google.com'
+  },
+  {
+    id: SsoProviderType.Okta,
+    label: 'Okta',
+    urlSuffix: '.okta.com'
+  },
+  {
+    id: SsoProviderType.EntraId,
+    label: 'Microsoft Entra ID',
+    urlSuffix: '.microsoft.com/v2.0'
+  },
+  {
+    id: SsoProviderType.Custom,
+    label: 'Custom Configuration'
+  }
+])
 
 const goToBilling = () => {
   goToWorkspaceMenuItem(props.workspace.id, SettingMenuKeys.Workspace.Billing)
