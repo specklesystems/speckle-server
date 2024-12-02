@@ -399,7 +399,7 @@ export async function init() {
   const app = express()
   app.disable('x-powered-by')
 
-  Logging(app)
+  await Logging(app)
 
   // Moves things along automatically on restart.
   // Should perhaps be done manually?

@@ -4,14 +4,14 @@ import promBundle from 'express-prom-bundle'
 
 import { initKnexPrometheusMetrics } from '@/logging/knexMonitoring'
 import { initHighFrequencyMonitoring } from '@/logging/highFrequencyMetrics/highfrequencyMonitoring'
-import knex from '@/db/knex'
 import { highFrequencyMetricsCollectionPeriodMs } from '@/modules/shared/helpers/envHelper'
 import { startupLogger as logger } from '@/logging/logging'
 import type express from 'express'
+import { getAllClients } from '@/modules/multiregion/dbSelector'
 
 let prometheusInitialized = false
 
-export default function (app: express.Express) {
+export default async function (app: express.Express) {
   if (!prometheusInitialized) {
     prometheusInitialized = true
     prometheusClient.register.clear()
@@ -24,14 +24,14 @@ export default function (app: express.Express) {
       register: prometheusClient.register,
       collectionPeriodMilliseconds: highFrequencyMetricsCollectionPeriodMs(),
       config: {
-        knex
+        getDbClients: getAllClients
       }
     })
     highfrequencyMonitoring.start()
 
-    initKnexPrometheusMetrics({
+    await initKnexPrometheusMetrics({
       register: prometheusClient.register,
-      db: knex,
+      getAllDbClients: getAllClients,
       logger
     })
     const expressMetricsMiddleware = promBundle({

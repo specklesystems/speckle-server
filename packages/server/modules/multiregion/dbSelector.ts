@@ -25,6 +25,9 @@ import {
 import { MaybeNullOrUndefined } from '@speckle/shared'
 import { isTestEnv } from '@/modules/shared/helpers/envHelper'
 import { migrateDbToLatest } from '@/db/migrations'
+import { initKnexPrometheusMetrics } from '@/logging/knexMonitoring'
+import { logger } from '@/logging/logging'
+import prometheusClient from 'prom-client'
 
 let getter: GetProjectDb | undefined = undefined
 
@@ -133,6 +136,14 @@ export const getRegisteredRegionClients = async (): Promise<RegionClients> => {
   return registeredRegionClients
 }
 
+/**
+ * @description This is the main db + all the region dbs
+ */
+export const getAllClients = async (): Promise<RegionClients> => {
+  const regionClients = await getRegisteredRegionClients()
+  return { main: db, ...regionClients }
+}
+
 export const getRegisteredDbClients = async (): Promise<Knex[]> =>
   Object.values(await getRegisteredRegionClients())
 
@@ -191,6 +202,12 @@ export const initializeRegion: InitializeRegion = async ({ regionKey }) => {
   if (registeredRegionClients) {
     registeredRegionClients[regionKey] = regionDb.public
   }
+
+  await initKnexPrometheusMetrics({
+    getAllDbClients: getAllClients,
+    register: prometheusClient.register,
+    logger
+  })
 }
 
 interface ReplicationArgs {
