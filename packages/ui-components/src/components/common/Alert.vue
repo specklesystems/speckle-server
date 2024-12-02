@@ -97,7 +97,7 @@ const icon = computed(() => {
 })
 
 const containerClasses = computed(() => {
-  const classParts: string[] = ['rounded-md text-foreground border border-outline-2']
+  const classParts: string[] = ['rounded-lg text-foreground border border-outline-2']
 
   switch (props.size) {
     case 'xs':
