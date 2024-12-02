@@ -1,13 +1,15 @@
 import {
   createFunction,
+  createFunctionWithoutVersion,
   triggerAutomationRun,
   updateFunction as execEngineUpdateFunction,
   getFunction,
   getFunctionRelease,
-  getFunctions,
+  getPublicFunctions,
   getFunctionReleases,
   getUserGithubAuthState,
-  getUserGithubOrganizations
+  getUserGithubOrganizations,
+  getUserFunctions
 } from '@/modules/automate/clients/executionEngine'
 import {
   GetProjectAutomationsParams,
@@ -54,7 +56,13 @@ import {
 } from '@/modules/core/graph/generated/graphql'
 import { getGenericRedis } from '@/modules/shared/redis/redis'
 import { createAutomation as clientCreateAutomation } from '@/modules/automate/clients/executionEngine'
-import { Automate, Roles, isNullOrUndefined, isNonNullable } from '@speckle/shared'
+import {
+  Automate,
+  Roles,
+  isNullOrUndefined,
+  isNonNullable,
+  removeNullOrUndefinedKeys
+} from '@speckle/shared'
 import { getFeatureFlags, getServerOrigin } from '@/modules/shared/helpers/envHelper'
 import {
   getBranchesByIdsFactory,
@@ -116,6 +124,7 @@ import {
   storeTokenScopesFactory,
   storeUserServerAppTokenFactory
 } from '@/modules/core/repositories/tokens'
+import { getEventBus } from '@/modules/shared/services/eventBus'
 import { getProjectDbClient } from '@/modules/multiregion/dbSelector'
 
 const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
@@ -326,7 +335,7 @@ export = (FF_AUTOMATE_MODULE_ENABLED
           await authorizeResolver(
             ctx.userId,
             parent.projectId,
-            Roles.Stream.Owner,
+            Roles.Stream.Contributor,
             ctx.resourceAccessRules
           )
 
@@ -526,6 +535,24 @@ export = (FF_AUTOMATE_MODULE_ENABLED
           return (await create({ input: args.input, userId: ctx.userId! }))
             .graphqlReturn
         },
+        async createFunctionWithoutVersion(_parent, args, ctx) {
+          const authCode = await createStoredAuthCodeFactory({
+            redis: getGenericRedis()
+          })({
+            userId: ctx.userId!,
+            action: AuthCodePayloadAction.CreateFunction
+          })
+          return await createFunctionWithoutVersion({
+            body: {
+              speckleServerAuthenticationPayload: {
+                ...authCode,
+                origin: getServerOrigin()
+              },
+              functionName: args.input.name,
+              description: args.input.description
+            }
+          })
+        },
         async updateFunction(_parent, args, ctx) {
           const update = updateFunctionFactory({
             updateFunction: execEngineUpdateFunction,
@@ -693,10 +720,12 @@ export = (FF_AUTOMATE_MODULE_ENABLED
       Query: {
         async automateValidateAuthCode(_parent, args) {
           const validate = validateStoredAuthCodeFactory({
-            redis: getGenericRedis()
+            redis: getGenericRedis(),
+            emit: getEventBus().emit
           })
+          const payload = removeNullOrUndefinedKeys(args.payload)
           return await validate({
-            ...args.payload,
+            ...payload,
             action: args.payload.action as AuthCodePayloadAction
           })
         },
@@ -712,14 +741,13 @@ export = (FF_AUTOMATE_MODULE_ENABLED
         },
         async automateFunctions(_parent, args) {
           try {
-            const res = await getFunctions({
+            const res = await getPublicFunctions({
               query: {
                 query: args.filter?.search || undefined,
                 cursor: args.cursor || undefined,
                 limit: isNullOrUndefined(args.limit) ? undefined : args.limit,
                 functionsWithoutVersions:
-                  args.filter?.functionsWithoutReleases || undefined,
-                featuredFunctionsOnly: args.filter?.featuredFunctionsOnly || undefined
+                  args.filter?.functionsWithoutReleases || undefined
               }
             })
 
@@ -747,7 +775,53 @@ export = (FF_AUTOMATE_MODULE_ENABLED
         }
       },
       User: {
-        automateInfo: (parent) => ({ userId: parent.id })
+        automateInfo: (parent) => ({ userId: parent.id }),
+        automateFunctions: async (_parent, args, context) => {
+          try {
+            const authCode = await createStoredAuthCodeFactory({
+              redis: getGenericRedis()
+            })({
+              userId: context.userId!,
+              action: AuthCodePayloadAction.ListUserFunctions
+            })
+
+            const res = await getUserFunctions({
+              userId: context.userId!,
+              query: {
+                query: args.filter?.search || undefined,
+                cursor: args.cursor || undefined,
+                limit: isNullOrUndefined(args.limit) ? undefined : args.limit
+              },
+              body: {
+                speckleServerAuthenticationPayload: {
+                  ...authCode,
+                  origin: getServerOrigin()
+                }
+              }
+            })
+
+            const items = res.functions.map(convertFunctionToGraphQLReturn)
+
+            return {
+              cursor: undefined,
+              totalCount: res.functions.length,
+              items
+            }
+          } catch (e) {
+            const isNotFound =
+              e instanceof ExecutionEngineFailedResponseError &&
+              e.response.statusMessage === 'FunctionNotFound'
+            if (e instanceof ExecutionEngineNetworkError || isNotFound) {
+              return {
+                cursor: null,
+                totalCount: 0,
+                items: []
+              }
+            }
+
+            throw e
+          }
+        }
       },
       UserAutomateInfo: {
         hasAutomateGithubApp: async (parent, _args, ctx) => {
@@ -807,7 +881,7 @@ export = (FF_AUTOMATE_MODULE_ENABLED
           await validateStreamAccess(
             ctx.userId,
             projectId,
-            Roles.Stream.Owner,
+            Roles.Stream.Contributor,
             ctx.resourceAccessRules
           )
           return { projectId }
@@ -885,9 +959,6 @@ export = (FF_AUTOMATE_MODULE_ENABLED
        */
       Project: {
         automation: () => {
-          throw new AutomateApiDisabledError()
-        },
-        automations: () => {
           throw new AutomateApiDisabledError()
         }
       },

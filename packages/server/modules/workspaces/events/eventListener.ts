@@ -61,6 +61,7 @@ import {
 } from '@/modules/workspaces/repositories/sso'
 import { WorkspacesNotAuthorizedError } from '@/modules/workspaces/errors/workspace'
 import { publish, WorkspaceSubscriptions } from '@/modules/shared/utils/subscriptions'
+import { isWorkspaceResourceTarget } from '@/modules/workspaces/services/invites'
 
 export const onProjectCreatedFactory =
   ({
@@ -163,6 +164,7 @@ export const onWorkspaceAuthorizedFactory =
 
     // Guests cannot use (and are not restricted by) SSO
     const workspaceRole = await getWorkspaceRoleForUser({ userId, workspaceId })
+    if (!workspaceRole) throw new WorkspacesNotAuthorizedError()
     if (workspaceRole?.role === Roles.Workspace.Guest) return
 
     const provider = await getWorkspaceSsoProviderRecord({ workspaceId })
@@ -258,16 +260,8 @@ export const onWorkspaceRoleUpdatedFactory =
   }
 
 const emitWorkspaceGraphqlSubscriptionsFactory =
-  (deps: { getWorkspace: GetWorkspace }) =>
-  async (params: EventPayload<'workspace.*'>) => {
+  (deps: { getWorkspace: GetWorkspace }) => async (params: EventPayload<'**'>) => {
     const { eventName, payload } = params
-    const eventWhitelist: string[] = [
-      WorkspaceEvents.Updated,
-      WorkspaceEvents.RoleDeleted,
-      WorkspaceEvents.RoleUpdated
-    ]
-    if (!eventWhitelist.includes(eventName)) return
-
     switch (eventName) {
       case WorkspaceEvents.Updated:
         await publish(WorkspaceSubscriptions.WorkspaceUpdated, {
@@ -289,6 +283,26 @@ const emitWorkspaceGraphqlSubscriptionsFactory =
             }
           })
         }
+        break
+      case ServerInvitesEvents.Created:
+      case ServerInvitesEvents.Canceled:
+      case ServerInvitesEvents.Finalized:
+        const { invite } = payload
+        if (!isWorkspaceResourceTarget(invite.resource)) return
+
+        const res = invite.resource
+        const newInviteWorkspace = await deps.getWorkspace({
+          workspaceId: res.resourceId
+        })
+        if (newInviteWorkspace) {
+          await publish(WorkspaceSubscriptions.WorkspaceUpdated, {
+            workspaceUpdated: {
+              workspace: newInviteWorkspace,
+              id: newInviteWorkspace.id
+            }
+          })
+        }
+
         break
     }
   }
@@ -359,8 +373,7 @@ export const initializeEventListenersFactory =
         })
         await withTransaction(onWorkspaceRoleUpdated(payload), trx)
       }),
-      // Emit Updated subscription
-      eventBus.listen('workspace.*', emitWorkspaceGraphqlSubscriptions)
+      eventBus.listen('**', emitWorkspaceGraphqlSubscriptions)
     ]
 
     return () => quitCbs.forEach((quit) => quit())

@@ -521,19 +521,16 @@ export const cloneStreamFactory =
       const { newStream } = coreCloneResult
       // Clone comments
       await cloneStreamCommentsFactory(deps)(state, coreCloneResult)
-      // Create activity item
-      await deps.addStreamClonedActivity(
-        {
-          sourceStreamId,
-          newStream,
-          clonerId: userId
-        },
-        { trx: state.trx }
-      )
 
       // Commit transaction
       await state.trx.commit()
 
+      // Create activity item
+      await deps.addStreamClonedActivity({
+        sourceStreamId,
+        newStream,
+        clonerId: userId
+      })
       return coreCloneResult.newStream
     } catch (e) {
       await state.trx.rollback()

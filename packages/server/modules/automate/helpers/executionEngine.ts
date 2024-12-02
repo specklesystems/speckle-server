@@ -20,6 +20,7 @@ export type FunctionSchemaType = {
     speckleUserId: string
     speckleServerOrigin: string
   }>
+  workspaceIds: string[]
 }
 
 export type FunctionReleaseSchemaType = {
@@ -47,18 +48,6 @@ export const functionTemplateRepos = <const>[
     title: '.NET / C#',
     url: 'https://github.com/specklesystems/SpeckleAutomateDotnetExample',
     logo: '/images/functions/dotnet.svg'
-  },
-  {
-    id: AutomateFunctionTemplateLanguage.Demonstration,
-    title: 'SpeckleCon 2024 - Thermal',
-    url: 'https://github.com/specklesystems/Thermal-Resistance-Checker-Template',
-    logo: '/images/functions/specklecon.svg'
-  },
-  {
-    id: AutomateFunctionTemplateLanguage.Demonstrationpython,
-    title: 'SpeckleCon 2024 - QAQC',
-    url: 'https://github.com/specklesystems/SpeckleConWorkshop-QAQC',
-    logo: '/images/functions/specklecon.svg'
   }
 ]
 

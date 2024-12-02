@@ -3,7 +3,7 @@
     <div class="flex items-center justify-between h-6 mb-6">
       <h2 class="h6 font-medium">Runs</h2>
       <FormButton
-        v-if="!automation.isTestAutomation"
+        v-if="!automation.isTestAutomation && isEditable"
         :disabled="!automation.enabled"
         @click="onTrigger"
       >
@@ -47,6 +47,7 @@ graphql(`
 const props = defineProps<{
   automation: ProjectPageAutomationRuns_AutomationFragment
   projectId: string
+  isEditable: boolean
 }>()
 
 const { identifier, onInfiniteLoad } = usePaginatedQuery({

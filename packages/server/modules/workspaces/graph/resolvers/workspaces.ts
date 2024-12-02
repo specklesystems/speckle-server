@@ -42,7 +42,7 @@ import {
 import { createProjectInviteFactory } from '@/modules/serverinvites/services/projectInviteManagement'
 import { getInvitationTargetUsersFactory } from '@/modules/serverinvites/services/retrieval'
 import { authorizeResolver } from '@/modules/shared'
-import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
+import { getFeatureFlags, getServerOrigin } from '@/modules/shared/helpers/envHelper'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { WorkspaceInviteResourceType } from '@/modules/workspaces/domain/constants'
 import {
@@ -177,7 +177,18 @@ import {
   listWorkspaceSsoMembershipsFactory
 } from '@/modules/workspaces/repositories/sso'
 import { getDecryptor } from '@/modules/workspaces/helpers/sso'
+import { getWorkspaceFunctions } from '@/modules/automate/clients/executionEngine'
+import {
+  ExecutionEngineFailedResponseError,
+  ExecutionEngineNetworkError
+} from '@/modules/automate/errors/executionEngine'
 import { getDefaultRegionFactory } from '@/modules/workspaces/repositories/regions'
+import {
+  AuthCodePayloadAction,
+  createStoredAuthCodeFactory
+} from '@/modules/automate/services/authCode'
+import { getGenericRedis } from '@/modules/shared/redis/redis'
+import { convertFunctionToGraphQLReturn } from '@/modules/automate/services/functionManagement'
 import { getWorkspacePlanFactory } from '@/modules/gatekeeper/repositories/billing'
 import { Knex } from 'knex'
 
@@ -561,7 +572,10 @@ export = FF_WORKSPACES_MODULE_ENABLED
             await updateWorkspaceRole({ userId, workspaceId, role })
           }
 
-          return await getWorkspaceFactory({ db })({ workspaceId })
+          return await getWorkspaceFactory({ db })({
+            workspaceId: args.input.workspaceId,
+            userId: context.userId
+          })
         },
         addDomain: async (_parent, args, context) => {
           await authorizeResolver(
@@ -821,7 +835,8 @@ export = FF_WORKSPACES_MODULE_ENABLED
             deleteInvite: deleteInviteFactory({ db }),
             validateResourceAccess: validateWorkspaceInviteBeforeFinalizationFactory({
               getWorkspace: getWorkspaceFactory({ db })
-            })
+            }),
+            emitEvent: getEventBus().emit
           })
 
           await cancelInvite({
@@ -980,6 +995,48 @@ export = FF_WORKSPACES_MODULE_ENABLED
               ...filter,
               searchQuery: filter.search || undefined
             })
+          }
+        },
+        automateFunctions: async (parent, args, context) => {
+          try {
+            const authCode = await createStoredAuthCodeFactory({
+              redis: getGenericRedis()
+            })({
+              userId: context.userId!,
+              action: AuthCodePayloadAction.ListWorkspaceFunctions
+            })
+
+            const res = await getWorkspaceFunctions({
+              workspaceId: parent.id,
+              query: removeNullOrUndefinedKeys(args),
+              body: {
+                speckleServerAuthenticationPayload: {
+                  ...authCode,
+                  origin: getServerOrigin()
+                }
+              }
+            })
+
+            const items = res.functions.map(convertFunctionToGraphQLReturn)
+
+            return {
+              cursor: undefined,
+              totalCount: res.functions.length,
+              items
+            }
+          } catch (e) {
+            const isNotFound =
+              e instanceof ExecutionEngineFailedResponseError &&
+              e.response.statusMessage === 'FunctionNotFound'
+            if (e instanceof ExecutionEngineNetworkError || isNotFound) {
+              return {
+                cursor: null,
+                totalCount: 0,
+                items: []
+              }
+            }
+
+            throw e
           }
         },
         domains: async (parent) => {
