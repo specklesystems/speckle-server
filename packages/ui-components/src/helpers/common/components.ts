@@ -20,3 +20,13 @@ export interface BulletStepType extends StepCoreType {}
 export interface NumberStepType extends BulletStepType {
   description?: string
 }
+
+export type AlertColor = 'success' | 'danger' | 'warning' | 'info' | 'neutral'
+
+export type AlertAction = {
+  title: string
+  url?: string
+  onClick?: () => void
+  externalUrl?: boolean
+  disabled?: boolean
+}

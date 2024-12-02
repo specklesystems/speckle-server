@@ -5,16 +5,14 @@
     :buttons="dialogButtons"
     max-width="md"
   >
-    <p class="text-body-xs text-foreground">
-      You are about to upgrade your workspace to the
-      <span class="font-medium">
+    <div class="text-body-xs text-foreground">
+      <p>You are about to upgrade your workspace to the following plan:</p>
+      <CommonCard class="font-medium bg-foundation !p-3 my-2">
+        Workspace {{ startCase(plan) }} plan,
         {{ billingInterval === BillingInterval.Yearly ? 'anual' : 'monthly' }}
-        {{ plan }}
-      </span>
-      plan.
-      <br />
-      Do you want to proceed?
-    </p>
+      </CommonCard>
+      <p>Do you want to proceed?</p>
+    </div>
   </LayoutDialog>
 </template>
 
@@ -26,6 +24,7 @@ import {
   BillingInterval
 } from '~/lib/common/generated/gql/graphql'
 import { useBillingActions } from '~/lib/billing/composables/actions'
+import { startCase } from 'lodash'
 
 const props = defineProps<{
   plan: WorkspacePlans

@@ -85,6 +85,7 @@ export const useWorkspaceSsoStatus = (params: { workspaceSlug: Ref<string> }) =>
   const provider = computed(() => result.value?.workspaceBySlug.sso?.provider)
 
   const needsSsoLogin = computed(() => {
+    if (!hasSsoEnabled.value) return false
     if (!result.value?.activeUser) return false
     return result.value.activeUser.expiredSsoSessions.some(
       (workspace) => workspace.slug === params.workspaceSlug.value

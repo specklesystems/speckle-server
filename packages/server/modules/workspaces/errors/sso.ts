@@ -82,3 +82,13 @@ export class OidcProviderMissingGrantTypeError extends BaseError {
   static code = 'SSO_OIDC_PROVIDER_MISSING_GRANT_TYPE'
   static statusCode = 400
 }
+
+export class OidcStateInvalidError extends BaseError {
+  static defaultMessage = 'OIDC state information malformed or invalid.'
+  static code = 'SSO_OIDC_STATE_INVALID'
+}
+
+export class OidcStateMissingError extends BaseError {
+  static defaultMessage = 'OIDC state missing for specified session.'
+  static code = 'SSO_OIDC_STATE_MISSING'
+}

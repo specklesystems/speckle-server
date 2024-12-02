@@ -112,7 +112,9 @@ const onDetailsSubmit = handleDetailsSubmit(async (values) => {
   mixpanel.track('Automate Function Created', {
     functionId: res.id,
     templateId: selectedTemplate.value.id,
-    name: values.name
+    name: values.name,
+    /* eslint-disable-next-line camelcase */
+    workspace_id: props.workspaceId
   })
   createdFunction.value = res
   step.value++

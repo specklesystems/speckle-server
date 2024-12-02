@@ -11,12 +11,14 @@
           name="name"
           placeholder="Workspace name"
           show-label
-          :disabled="!isAdmin"
+          :disabled="!isAdmin || needsSsoLogin"
+          :tooltip-text="disabledTooltipText"
           label-position="left"
           :rules="[isRequired, isStringOfLength({ maxLength: 512 })]"
           validate-on-value-update
           @change="save()"
         />
+
         <hr class="my-4 border-outline-3" />
         <FormTextInput
           v-model="slug"
@@ -24,11 +26,12 @@
           label="Short ID"
           name="shortId"
           :help="slugHelp"
-          :disabled="!isAdmin"
+          :disabled="!isAdmin || needsSsoLogin"
           show-label
           label-position="left"
+          :tooltip-text="disabledTooltipText"
           read-only
-          :right-icon="isAdmin ? IconEdit : undefined"
+          :right-icon="isAdmin || needsSsoLogin ? IconEdit : undefined"
           right-icon-title="Edit short ID"
           @right-icon-click="openSlugEditDialog"
         />
@@ -39,9 +42,10 @@
           label="Description"
           name="description"
           placeholder="Workspace description"
+          :tooltip-text="disabledTooltipText"
           show-label
           label-position="left"
-          :disabled="!isAdmin"
+          :disabled="!isAdmin || needsSsoLogin"
           :rules="[isStringOfLength({ maxLength: 512 })]"
           @change="save()"
         />
@@ -53,12 +57,14 @@
               Upload your logo image or use one from our set of workspace icons.
             </span>
           </div>
-          <SettingsWorkspacesGeneralEditAvatar
-            v-if="workspaceResult?.workspace"
-            :workspace="workspaceResult?.workspace"
-            :disabled="!isAdmin"
-            size="xxl"
-          />
+          <div v-tippy="disabledTooltipText">
+            <SettingsWorkspacesGeneralEditAvatar
+              v-if="workspaceResult?.workspace"
+              :workspace="workspaceResult?.workspace"
+              :disabled="!isAdmin || needsSsoLogin"
+              size="xxl"
+            />
+          </div>
         </div>
       </div>
       <hr class="my-6 border-outline-2" />
@@ -79,7 +85,7 @@
             label="Project role"
             size="md"
             :disabled-items="[Roles.Stream.Owner]"
-            :disabled="!isAdmin"
+            :disabled="!isAdmin || needsSsoLogin"
             @update:model-value="save()"
           />
         </div>
@@ -162,6 +168,7 @@ import { workspaceRoute } from '~/lib/common/helpers/route'
 import { useRoute } from 'vue-router'
 import { WorkspacePlanStatuses } from '~/lib/common/generated/gql/graphql'
 import { isPaidPlan } from '~/lib/billing/helpers/types'
+import { useWorkspaceSsoStatus } from '~/lib/workspaces/composables/sso'
 graphql(`
   fragment SettingsWorkspacesGeneral_Workspace on Workspace {
     ...SettingsWorkspacesGeneralEditAvatar_Workspace
@@ -203,6 +210,9 @@ const { result: workspaceResult, onResult } = useQuery(
   })
 )
 const config = useRuntimeConfig()
+const { needsSsoLogin } = useWorkspaceSsoStatus({
+  workspaceSlug: computed(() => workspaceResult.value?.workspace?.slug || '')
+})
 
 const name = ref('')
 const slug = ref('')
@@ -218,6 +228,7 @@ const isAdmin = computed(
 const canDeleteWorkspace = computed(
   () =>
     isAdmin.value &&
+    !needsSsoLogin.value &&
     (!isBillingIntegrationEnabled ||
       !(
         [
@@ -230,10 +241,13 @@ const canDeleteWorkspace = computed(
       ))
 )
 const deleteWorkspaceTooltip = computed(() => {
+  if (needsSsoLogin.value)
+    return 'You cannot delete a workspace that requires SSO without an active session'
   if (!canDeleteWorkspace.value) return 'You cannot delete an active workspace'
   if (!isAdmin.value) return 'Only admins can delete workspaces'
   return undefined
 })
+
 const save = handleSubmit(async () => {
   if (!workspaceResult.value?.workspace) return
 
@@ -294,6 +308,15 @@ const baseUrl = config.public.baseUrl
 
 const slugHelp = computed(() => {
   return `Used after ${baseUrl}/workspaces/`
+})
+
+// Using toRef to fix reactivity bug around tooltips
+const adminRef = toRef(isAdmin)
+
+const disabledTooltipText = computed(() => {
+  if (!adminRef.value) return 'Only admins can edit this field'
+  if (needsSsoLogin.value) return 'Log in with your SSO provider to edit this field'
+  return undefined
 })
 
 const openSlugEditDialog = () => {
