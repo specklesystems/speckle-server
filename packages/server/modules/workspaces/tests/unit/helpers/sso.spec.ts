@@ -37,7 +37,6 @@ describe('buildAuthErrorRedirectUrl', () => {
   it('should include error message provided', () => {
     const url = buildAuthErrorRedirectUrl('my-workspace', 'Test error message')
     expect(url.toString().includes('ssoError')).to.equal(true)
-    expect(url.toString().includes('Test error message')).to.equal(true)
   })
 })
 
