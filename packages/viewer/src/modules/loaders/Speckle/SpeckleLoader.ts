@@ -30,6 +30,29 @@ export class SpeckleLoader extends Loader {
   ) {
     super(resource, resourceData)
     this.tree = targetTree
+    try {
+      this.loader = this.initObjectLoader(
+        resource,
+        authToken,
+        enableCaching,
+        resourceData
+      )
+    } catch (e) {
+      Logger.error(e)
+      return
+    }
+
+    this.converter = new SpeckleConverter(this.loader, this.tree)
+  }
+
+  protected initObjectLoader(
+    resource: string,
+    authToken?: string,
+    enableCaching?: boolean,
+    resourceData?: string | ArrayBuffer
+  ): ObjectLoader {
+    resourceData
+
     let token = undefined
     try {
       token = authToken || (localStorage.getItem('AuthToken') as string | undefined)
@@ -42,15 +65,6 @@ export class SpeckleLoader extends Loader {
         'Viewer: no auth token present. Requests to non-public stream objects will fail.'
       )
     }
-
-    let isValidURL = false
-    try {
-      isValidURL = Boolean(new URL(resource))
-    } catch (e) {
-      isValidURL = false
-    }
-
-    if (!isValidURL) return
 
     const url = new URL(resource)
 
@@ -67,7 +81,7 @@ export class SpeckleLoader extends Loader {
     const streamId = segments[2]
     const objectId = segments[4]
 
-    this.loader = new ObjectLoader({
+    return new ObjectLoader({
       serverUrl,
       token,
       streamId,
@@ -75,8 +89,6 @@ export class SpeckleLoader extends Loader {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       options: { enableCaching, customLogger: (Logger as any).log }
     })
-
-    this.converter = new SpeckleConverter(this.loader, this.tree)
   }
 
   public async load(): Promise<boolean> {
