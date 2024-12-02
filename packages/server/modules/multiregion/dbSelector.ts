@@ -24,7 +24,7 @@ import {
 } from '@/modules/multiregion/regionConfig'
 import { MaybeNullOrUndefined } from '@speckle/shared'
 import { isTestEnv } from '@/modules/shared/helpers/envHelper'
-import { migrateDbToLatestFactory } from '@/db/migrations'
+import { migrateDbToLatest } from '@/db/migrations'
 
 let getter: GetProjectDb | undefined = undefined
 
@@ -115,9 +115,7 @@ export const initializeRegisteredRegionClients = async (): Promise<RegionClients
 
   // run migrations
   await Promise.all(
-    Object.entries(ret).map(([region, db]) =>
-      migrateDbToLatestFactory({ db, region })()
-    )
+    Object.entries(ret).map(([region, db]) => migrateDbToLatest({ db, region }))
   )
 
   // (re-)set up pub-sub, if needed
@@ -167,7 +165,7 @@ export const initializeRegion: InitializeRegion = async ({ regionKey }) => {
 
   const newRegionConfig = regionConfigs[regionKey]
   const regionDb = configureClient(newRegionConfig)
-  await migrateDbToLatestFactory({ db: regionDb.public, region: regionKey })()
+  await migrateDbToLatest({ db: regionDb.public, region: regionKey })
 
   const mainDbConfig = await getMainRegionConfig()
   const mainDb = configureClient(mainDbConfig)
