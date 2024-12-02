@@ -2,10 +2,13 @@
   <div
     class="border border-outline-3 bg-foundation text-foreground rounded-lg p-6 flex flex-col w-full"
   >
-    <h4 class="text-body">
-      Workspace
-      <span class="capitalize">{{ plan.name }}</span>
-    </h4>
+    <div>
+      <h4 class="text-body">
+        Workspace
+        <span class="capitalize">{{ plan.name }}</span>
+      </h4>
+    </div>
+
     <p class="text-body mt-1">
       <span class="font-medium">
         £{{
@@ -40,16 +43,27 @@
       </FormButton>
     </div>
     <ul class="flex flex-col gap-y-2 mt-4 pt-3 border-t border-outline-3">
-      <template v-for="feature in features">
-        <li
+      <li
+        v-for="feature in features"
+        :key="feature.name"
+        class="flex items-center text-body-xs"
+        :class="{
+            'lg:hidden': !plan.features.includes(feature.name as PlanFeaturesList)
+          }"
+      >
+        <IconCheck
           v-if="plan.features.includes(feature.name as PlanFeaturesList)"
-          :key="feature.name"
-          class="flex items-center text-body-xs"
+          class="w-4 h-4 text-foreground mx-2"
+        />
+        <XMarkIcon v-else class="w-4 h-4 mx-2 text-foreground-2" />
+        <span
+          :class="{
+            'text-foreground-2': !plan.features.includes(feature.name as PlanFeaturesList)
+          }"
         >
-          <IconCheck class="w-4 h-4 text-foreground mx-2" />
           {{ feature.name }}
-        </li>
-      </template>
+        </span>
+      </li>
     </ul>
 
     <SettingsWorkspacesBillingUpgradeDialog
@@ -77,6 +91,7 @@ import type { MaybeNullOrUndefined } from '@speckle/shared'
 import { startCase } from 'lodash'
 import { pricingPlansConfig } from '~/lib/billing/helpers/constants'
 import type { PlanFeaturesList } from '~/lib/billing/helpers/types'
+import { XMarkIcon } from '@heroicons/vue/24/outline'
 
 const emit = defineEmits<{
   (e: 'onYearlyIntervalSelected', value: boolean): void
