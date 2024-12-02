@@ -8,17 +8,18 @@ import { Roles } from '@/modules/core/helpers/mainConstants'
 import {
   AllScopes,
   buildManualPromise,
-  ManualPromise,
+  ensureError,
   MaybeAsync,
   MaybeNullOrUndefined,
   Optional,
+  ServerScope,
   timeoutAt
 } from '@speckle/shared'
 import { expect } from 'chai'
 import { ApolloServer, GraphQLResponse } from '@apollo/server'
 import { getUserFactory } from '@/modules/core/repositories/users'
 import { db } from '@/db/knex'
-import { pick, set } from 'lodash'
+import { get, pick, set } from 'lodash'
 import { isTestEnv } from '@/modules/shared/helpers/envHelper'
 import { publish, TestSubscriptions } from '@/modules/shared/utils/subscriptions'
 import cryptoRandomString from 'crypto-random-string'
@@ -29,6 +30,9 @@ import { SubscriptionClient } from 'subscriptions-transport-ws'
 import { WebSocketLink } from '@apollo/client/link/ws'
 import { execute } from '@apollo/client/core'
 import { PingPongDocument } from '@/test/graphql/generated/graphql'
+import { BaseError } from '@/modules/shared/errors'
+import EventEmitter from 'eventemitter2'
+import { expectToThrow } from '@/test/assertionHelper'
 
 type TypedGraphqlResponse<R = Record<string, any>> = GraphQLResponse<R>
 
@@ -238,12 +242,11 @@ export const testApolloServer = async (params?: {
       },
       { contextValue: ctx }
     )) as TypedGraphqlResponse<R>
-
+    const results = getResponseResults(res)
     if (options?.assertNoErrors) {
-      expect(res).to.not.haveGraphQLErrors()
+      expect(results).to.not.haveGraphQLErrors()
     }
 
-    const results = getResponseResults(res)
     return {
       ...results,
       res
@@ -271,6 +274,11 @@ export const startEmittingTestSubs = async () => {
   return () => clearInterval(interval)
 }
 
+export class TestApolloSubscriptionError extends BaseError {
+  static code = 'TEST_APOLLO_SUBSCRIPTION_ERROR'
+  static defaultMessage = 'Unexpected issue occurred during test subscriptions'
+}
+
 /**
  * Utilities for quickly/easily testing GQL subscriptions without having to build real network servers & connections
  */
@@ -292,12 +300,19 @@ export const testApolloSubscriptionServer = async () => {
    */
   const buildClient = async (params?: {
     /**
-     * Real user id to auth the connection with. If unset, will be unauthenticated
+     * Real user id to auth the connection with. If unset, will be unauthenticated.
+     * Token will be given all scopes, unless overridden
      */
     authUserId?: string
+    /**
+     * Optionally provide the scopes you want the token to have
+     */
+    scopes?: ServerScope[]
   }) => {
-    const { authUserId } = params || {}
-    const token = authUserId ? await createAuthTokenForUser(authUserId) : undefined
+    const { authUserId, scopes } = params || {}
+    const token = authUserId
+      ? await createAuthTokenForUser(authUserId, scopes)
+      : undefined
     const wsClient = new SubscriptionClient(
       serverUrl,
       {
@@ -320,31 +335,49 @@ export const testApolloSubscriptionServer = async () => {
       variables: V,
       handler: (res: FormattedExecutionResult<R>) => MaybeAsync<void>
     ) => {
-      let msgFlaggedPromise: Optional<ManualPromise<void>> = undefined
+      const name = getOperationName(query)
+      const buildLogMsg = (msg: string) => (name ? `[${name}] ${msg}` : msg)
+
+      let processingErrors: unknown[] = []
       const messages: Array<FormattedExecutionResult<R>> = []
+
+      const eventBus = new EventEmitter()
+      const errHandler = (e: unknown) => {
+        processingErrors.push(e)
+      }
+      eventBus.on('uncaughtException', errHandler)
+      eventBus.on('error', errHandler)
 
       const observable = execute(clientLink, {
         query,
         variables
       })
-      const sub = observable.subscribe((eventData) => {
+      const sub = observable.subscribe(async (eventData) => {
         const res = eventData as FormattedExecutionResult<R>
+        const asyncHandler = async () => handler(res)
 
         // Invoke handler
-        messages.push(res)
-        handler(res)
+        try {
+          await asyncHandler()
+        } catch (e) {
+          // If we throw here, this will be an unhandled rejection, lets throw in waitForMsg instead
+          eventBus.emit('error', e)
+        }
 
         // Mark msg received
-        if (!msgFlaggedPromise) {
-          msgFlaggedPromise = buildManualPromise<void>()
+        try {
+          messages.push(res)
+          await eventBus.emitAsync('message', res)
+        } catch (e) {
+          eventBus.emit('error', e)
         }
-        msgFlaggedPromise.resolve()
       })
 
       /**
        * Unsubscribe from the subscription
        */
       const unsub = () => {
+        eventBus.removeAllListeners()
         sub.unsubscribe()
       }
 
@@ -355,22 +388,98 @@ export const testApolloSubscriptionServer = async () => {
       const waitForMessage = async (
         options?: Partial<{
           /**
-           * Max time to wait for the messag
+           * Max time to wait for the message
            * Defaults to: 200
            */
           timeout: number
+
+          /**
+           * Whether to consider messages that have already arrived before the invocation of this function.
+           * This is useful cause sometimes the message might arrive before we even start waiting for it.
+           * Defaults to: true
+           */
+          allowPreviousMessages: boolean
+
+          /**
+           * Optionally wait for a specific kind of message
+           */
+          predicate: (msg: FormattedExecutionResult<R>) => boolean
         }>
-      ) => {
-        const { timeout = 200 } = options || {}
-        if (!msgFlaggedPromise) {
-          msgFlaggedPromise = buildManualPromise<void>()
+      ): Promise<FormattedExecutionResult<R>> => {
+        const { timeout = 200, allowPreviousMessages = true, predicate } = options || {}
+
+        // First check for previous errors
+        if (processingErrors.length) {
+          const firstErr = processingErrors[0]
+          processingErrors = []
+
+          throw firstErr
         }
-        await Promise.race([msgFlaggedPromise.promise, timeoutAt(timeout)])
+
+        // Then lets check previous messages
+        if (allowPreviousMessages) {
+          const found = messages.find((msg) => !predicate || predicate(msg))
+          if (found) return found // Found it!
+        }
+
+        // Now lets wait for incoming ones
+        const retPromise = buildManualPromise<FormattedExecutionResult<R>>()
+        const unlisten = () => {
+          eventBus.removeListener('message', onMessage)
+          eventBus.removeListener('error', onError)
+        }
+        const onMessage = async (msg: FormattedExecutionResult<R>) => {
+          if (!predicate || predicate(msg)) {
+            retPromise.resolve(msg)
+            unlisten()
+          }
+        }
+        const onError = (e: unknown) => {
+          retPromise.reject(e)
+          unlisten()
+          processingErrors = []
+        }
+
+        eventBus.on('message', onMessage)
+        eventBus.on('error', onError)
+
+        try {
+          return await Promise.race([retPromise.promise, timeoutAt(timeout)])
+        } catch (e) {
+          throw new TestApolloSubscriptionError(
+            buildLogMsg('waitForMessage() failed'),
+            {
+              cause: ensureError(e)
+            }
+          )
+        }
       }
 
-      const getMessages = () => messages.slice()
+      /**
+       * Wrapper over waitForMessage() that does the inverse and expects a timeout
+       * to happen instead (no message should arrive)
+       */
+      const waitForTimeout = async (...params: Parameters<typeof waitForMessage>) => {
+        const e = await expectToThrow(() => waitForMessage(...params))
+        if (!e.message.includes('timeout')) {
+          throw e
+        }
+      }
 
-      return { unsub, waitForMessage, getMessages }
+      const getMessages = (
+        options?: Partial<{
+          /**
+           * Optionally check for a specific kind of message
+           */
+          predicate: (msg: FormattedExecutionResult<R>) => boolean
+        }>
+      ) => {
+        const { predicate } = options || {}
+        const msgs = messages.slice()
+        return predicate ? msgs.filter(predicate) : msgs
+      }
+
+      return { unsub, waitForMessage, getMessages, waitForTimeout }
     }
 
     /**
@@ -380,14 +489,14 @@ export const testApolloSubscriptionServer = async () => {
       return new Promise<void>(async (resolve, reject) => {
         const { unsub } = await subscribe(PingPongDocument, {}, (res) => {
           if (!res.data?.ping) {
-            return reject(new Error('Unexpected ping error'))
+            return reject(new TestApolloSubscriptionError('Unexpected ping error'))
           }
 
           unsub()
           resolve()
         })
 
-        timeoutAt(5000).catch(reject)
+        timeoutAt(5000, 'waitForReadiness() timed out').catch(reject)
       })
     }
 
@@ -425,3 +534,13 @@ export type TestApolloSubscriptionServer = Awaited<
 export type TestApolloSubscriptionClient = Awaited<
   ReturnType<TestApolloSubscriptionServer['buildClient']>
 >
+
+const getOperationName = (query: DocumentNode) => {
+  const operation = query.definitions.find((def) => def.kind === 'OperationDefinition')
+
+  // doing this w/ a get() because of some weird Ts typing issues
+  const name = (
+    operation ? get(operation, 'name.value') : undefined
+  ) as Optional<string>
+  return name
+}

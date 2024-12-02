@@ -344,12 +344,19 @@ extend type Subscription {
   Subscribe to changes to a project's models. Optionally specify modelIds to track.
   """
   projectModelsUpdated(id: String!, modelIds: [String!]): ProjectModelsUpdatedMessage!
+    @hasServerRole(role: SERVER_GUEST)
+    @hasScope(scope: "streams:read")
+
   """
   Subscribe to changes to a project's versions.
   """
   projectVersionsUpdated(id: String!): ProjectVersionsUpdatedMessage!
+    @hasServerRole(role: SERVER_GUEST)
+    @hasScope(scope: "streams:read")
   """
   Subscribe to when a project's versions get their preview image fully generated.
   """
   projectVersionsPreviewGenerated(id: String!): ProjectVersionsPreviewGeneratedMessage!
+    @hasServerRole(role: SERVER_GUEST)
+    @hasScope(scope: "streams:read")
 }

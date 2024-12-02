@@ -141,6 +141,7 @@ export const createTestWorkspace = async (
     userResourceAccessLimits: null
   })
 
+  workspace.slug = newWorkspace.slug
   workspace.id = newWorkspace.id
   workspace.ownerId = owner.id
 
