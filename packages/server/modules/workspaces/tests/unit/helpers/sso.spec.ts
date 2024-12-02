@@ -7,12 +7,8 @@ import { expect } from 'chai'
 
 describe('buildAuthRedirectUrl', () => {
   it('should include workspace slug provided', () => {
-    const url = buildAuthRedirectUrl('my-workspace', false)
+    const url = buildAuthRedirectUrl('my-workspace')
     expect(url.toString().includes('my-workspace')).to.equal(true)
-  })
-  it('should include validate param if provided', () => {
-    const url = buildAuthRedirectUrl('my-workspace', true)
-    expect(url.searchParams.get('validate')).to.equal('true')
   })
 })
 
