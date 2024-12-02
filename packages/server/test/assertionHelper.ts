@@ -19,9 +19,16 @@ export const expectToThrow = async (fn: () => MaybeAsync<any>) => {
 export const itEach = <T>(
   testCases: Array<T> | ReadonlyArray<T>,
   name: (test: T) => string,
-  testHandler: (test: T) => MaybeAsync<void>
+  testHandler: (test: T) => MaybeAsync<void>,
+  options?: Partial<{
+    /**
+     * Mark tests as sklipped
+     */
+    skip: boolean
+  }>
 ) => {
   testCases.forEach((testCase) => {
-    it(name(testCase), testHandler.bind(null, testCase))
+    const itFn = options?.skip ? it.skip : it
+    itFn(name(testCase), testHandler.bind(null, testCase))
   })
 }

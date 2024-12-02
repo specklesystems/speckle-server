@@ -46,21 +46,25 @@ export const lightThemeVariables = {
   /* success variations */
   '--success': '#34D399',
   '--success-lighter': '#53EDB5',
+  '--success-lightest': '#EEFEF8',
   '--success-darker': '#1CBA80',
 
   /* warning variations */
   '--warning': '#FBBF24',
   '--warning-lighter': '#FFD770',
+  '--warning-lightest': '#FEF9EE',
   '--warning-darker': '#E0AB20',
 
   /* info variations */
   '--info': '#B9B8CC',
   '--info-lighter': '#D2D1E5',
+  '--info-lightest': '#EEEEFE',
   '--info-darker': '#6D6B99',
 
   /* danger variations */
   '--danger': '#C45959',
   '--danger-lighter': '#F78888',
+  '--danger-lightest': '#FEEEEE',
   '--danger-darker': '#913333'
 }
 
@@ -108,21 +112,25 @@ export const darkThemeVariables = {
   /* success variations */
   '--success': '#34D399',
   '--success-lighter': '#53EDB5',
+  '--success-lightest': '#072C1F',
   '--success-darker': '#1CBA80',
 
   /* warning variations */
   '--warning': '#FBBF24',
   '--warning-lighter': '#FFD770',
+  '--warning-lightest': '#302303',
   '--warning-darker': '#E0AB20',
 
   /* info variations */
   '--info': '#B9B8CC',
   '--info-lighter': '#D2D1E5',
+  '--info-lightest': '#030330',
   '--info-darker': '#6D6B99',
 
   /* danger variations */
   '--danger': '#F87171',
   '--danger-lighter': '#FF8F8F',
+  '--danger-lightest': '#300303',
   '--danger-darker': '#AB3E3E'
 }
 
