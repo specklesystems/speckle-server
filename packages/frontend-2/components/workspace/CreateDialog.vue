@@ -73,7 +73,7 @@ const workspaceShortId = ref('')
 const debouncedWorkspaceShortId = ref('')
 const editAvatarMode = ref(false)
 const workspaceLogo = ref<MaybeNullOrUndefined<string>>()
-const defaultLogoIndex = ref(0)
+const defaultLogoIndex = ref(generateDefaultLogoIndex())
 const shortIdManuallyEdited = ref(false)
 
 const { error, loading } = useQuery(
