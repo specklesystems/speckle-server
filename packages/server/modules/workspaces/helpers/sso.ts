@@ -1,12 +1,20 @@
 import { getEncryptionKeyPair } from '@/modules/automate/services/encryption'
+import { base64Decode } from '@/modules/shared/helpers/cryptoHelper'
 import { getFrontendOrigin, getServerOrigin } from '@/modules/shared/helpers/envHelper'
 import { buildDecryptor, buildEncryptor } from '@/modules/shared/utils/libsodium'
-import { SsoVerificationCodeMissingError } from '@/modules/workspaces/errors/sso'
+import { SsoSessionState } from '@/modules/workspaces/domain/sso/types'
+import {
+  OidcStateInvalidError,
+  OidcStateMissingError,
+  SsoVerificationCodeMissingError
+} from '@/modules/workspaces/errors/sso'
 import { Request } from 'express'
 
 declare module 'express-session' {
   interface SessionData {
     workspaceId?: string
+    ssoNonce?: string
+    ssoState?: Record<string, SsoSessionState>
   }
 }
 
@@ -14,15 +22,8 @@ declare module 'express-session' {
  * Generate Speckle URL to redirect users to after they complete authorization
  * with the given SSO provider.
  */
-export const buildAuthRedirectUrl = (
-  workspaceSlug: string,
-  isValidationFlow: boolean
-): URL => {
+export const buildAuthRedirectUrl = (workspaceSlug: string): URL => {
   const urlFragments = [`/api/v1/workspaces/${workspaceSlug}/sso/oidc/callback`]
-
-  if (isValidationFlow) {
-    urlFragments.push('?validate=true')
-  }
 
   return new URL(urlFragments.join(''), getServerOrigin())
 }
@@ -78,4 +79,23 @@ export const parseCodeVerifier = async (req: Request<unknown>): Promise<string> 
   if (!encryptedCodeVerifier) throw new SsoVerificationCodeMissingError()
   const codeVerifier = await getDecryptor()(encryptedCodeVerifier)
   return codeVerifier
+}
+
+export const getSsoSessionState = (
+  req: Request<unknown, unknown, unknown, { state: string }>
+): SsoSessionState => {
+  const sessionNonce = req.session.ssoNonce
+  const requestNonce = base64Decode(req.query.state)
+
+  if (!sessionNonce || !requestNonce || sessionNonce !== requestNonce) {
+    throw new OidcStateInvalidError()
+  }
+
+  const state = req.session.ssoState?.[requestNonce]
+
+  if (!state) {
+    throw new OidcStateMissingError()
+  }
+
+  return state
 }
