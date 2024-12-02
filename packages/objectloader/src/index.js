@@ -107,6 +107,70 @@ class ObjectLoader {
     }
   }
 
+  static createFromJSON(json) {
+    const jsonObj = JSON.parse(json)
+    const rootObject = jsonObj[0]
+    const loader = new (class extends ObjectLoader {
+      constructor() {
+        super({
+          serverUrl: 'dummy',
+          streamId: 'dummy',
+          undefined,
+          objectId: rootObject.id
+        })
+
+        this.objectId = rootObject.id
+      }
+
+      async getRootObject() {
+        return rootObject
+      }
+
+      async getTotalObjectCount() {
+        return Object.keys(rootObject?.__closure || {}).length
+      }
+
+      async *getObjectIterator() {
+        const t0 = Date.now()
+        let count = 0
+        for await (const { id, obj } of this.getRawObjectIterator(jsonObj)) {
+          this.buffer[id] = obj
+          count += 1
+          yield obj
+        }
+        this.logger(`Loaded ${count} objects in: ${(Date.now() - t0) / 1000}`)
+      }
+
+      async *getRawObjectIterator(data) {
+        yield { id: data[0].id, obj: data[0] }
+
+        const rootObj = data[0]
+        if (!rootObj.__closure) return
+
+        // const childrenIds = Object.keys(rootObj.__closure)
+        //   .filter((id) => !id.includes('blob'))
+        //   .sort((a, b) => rootObj.__closure[a] - rootObj.__closure[b])
+
+        // for (const id of childrenIds) {
+        //   const obj = data.find((value) => value.id === id)
+        //   // Sleep 1 ms
+        //   await new Promise((resolve) => {
+        //     setTimeout(resolve, 1)
+        //   })
+        //   yield { id, obj }
+        // }
+        for (const item of data) {
+          // Sleep 1 ms
+          await new Promise((resolve) => {
+            setTimeout(resolve, 1)
+          })
+          yield { id: item.id, obj: item }
+        }
+      }
+    })()
+    return loader
+  }
+
   async asyncPause() {
     // Don't freeze the UI
     // while ( this.existingAsyncPause ) {
@@ -138,6 +202,11 @@ class ObjectLoader {
     const rootObj = JSON.parse(rootObjJson)
     const totalChildrenCount = Object.keys(rootObj?.__closure || {}).length
     return totalChildrenCount
+  }
+
+  async getRootObject() {
+    const rootObjJson = await this.getRawRootObject()
+    return JSON.parse(rootObjJson)
   }
 
   /**

@@ -124,6 +124,7 @@ import {
   FilterMaterialOptions,
   FilterMaterialType
 } from './modules/materials/Materials.js'
+import { SpeckleOfflineLoader } from './modules/loaders/Speckle/SpeckleOfflineLoader.js'
 
 export {
   Viewer,
@@ -209,7 +210,8 @@ export {
   ViewMode,
   FilterMaterial,
   FilterMaterialType,
-  FilterMaterialOptions
+  FilterMaterialOptions,
+  SpeckleOfflineLoader
 }
 
 export type {

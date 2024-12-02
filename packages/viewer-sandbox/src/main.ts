@@ -20,6 +20,7 @@ import {
 import { SectionTool } from '@speckle/viewer'
 import { SectionOutlines } from '@speckle/viewer'
 import { ViewModesKeys } from './Extensions/ViewModesKeys'
+import { obj } from './obj'
 
 const createViewer = async (containerName: string, stream: string) => {
   const container = document.querySelector<HTMLElement>(containerName)
@@ -100,7 +101,8 @@ const createViewer = async (containerName: string, stream: string) => {
   sandbox.makeDiffUI()
   sandbox.makeMeasurementsUI()
 
-  await sandbox.loadUrl(stream)
+  // await sandbox.loadUrl(stream)
+  await sandbox.loadJSON(obj)
 }
 
 const getStream = () => {

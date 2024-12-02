@@ -5,7 +5,6 @@ import { SpeckleGeometryConverter } from './SpeckleGeometryConverter.js'
 import { WorldTree, type SpeckleObject } from '../../../index.js'
 import { AsyncPause } from '../../World.js'
 import Logger from '../../utils/Logger.js'
-import { obj as _obj, base64ToBytes } from './obj.js'
 
 export class SpeckleLoader extends Loader {
   protected loader: ObjectLoader
@@ -44,20 +43,29 @@ export class SpeckleLoader extends Loader {
       )
     }
 
-    // const url = new URL(resource)
+    let isValidURL = false
+    try {
+      isValidURL = Boolean(new URL(resource))
+    } catch (e) {
+      isValidURL = false
+    }
 
-    // const segments = url.pathname.split('/')
-    // if (
-    //   segments.length < 5 ||
-    //   url.pathname.indexOf('streams') === -1 ||
-    //   url.pathname.indexOf('objects') === -1
-    // ) {
-    //   throw new Error('Unexpected object url format.')
-    // }
+    if (!isValidURL) return
 
-    const serverUrl = 'plm' //url.origin
-    const streamId = 'plm' //segments[2]
-    const objectId = 'plm' //segments[4]
+    const url = new URL(resource)
+
+    const segments = url.pathname.split('/')
+    if (
+      segments.length < 5 ||
+      url.pathname.indexOf('streams') === -1 ||
+      url.pathname.indexOf('objects') === -1
+    ) {
+      throw new Error('Unexpected object url format.')
+    }
+
+    const serverUrl = url.origin
+    const streamId = segments[2]
+    const objectId = segments[4]
 
     this.loader = new ObjectLoader({
       serverUrl,
@@ -75,23 +83,22 @@ export class SpeckleLoader extends Loader {
     const start = performance.now()
     let first = true
     let current = 0
-    const total = 10 //await this.loader.getTotalObjectCount()
+    const total = await this.loader.getTotalObjectCount()
     let viewerLoads = 0
     let firstObjectPromise = null
 
-    Logger.warn('Downloading object ', this._resource)
+    Logger.warn('Downloading object ', this.resource)
 
     const pause = new AsyncPause()
-    for await (const obj of this.loader.getObjectIterator2(
-      new TextDecoder().decode(base64ToBytes(_obj))
-    )) {
+
+    for await (const obj of this.loader.getObjectIterator()) {
       if (this.isCancelled) {
-        this.emit(LoaderEvent.LoadCancelled, this._resource)
+        this.emit(LoaderEvent.LoadCancelled, this.resource)
         return Promise.resolve(false)
       }
       if (first) {
         firstObjectPromise = this.converter.traverse(
-          this._resource,
+          this.resource,
           obj as SpeckleObject,
           async () => {
             viewerLoads++
@@ -106,7 +113,7 @@ export class SpeckleLoader extends Loader {
       current++
       this.emit(LoaderEvent.LoadProgress, {
         progress: current / (total + 1),
-        id: this._resource
+        id: this.resource
       })
     }
 
@@ -115,15 +122,15 @@ export class SpeckleLoader extends Loader {
     }
 
     Logger.warn(
-      `Finished converting object ${this._resource} in ${
+      `Finished converting object ${this.resource} in ${
         (performance.now() - start) / 1000
       } seconds. Node count: ${this.tree.nodeCount}`
     )
 
     if (viewerLoads === 0) {
-      Logger.warn(`Viewer: no 3d objects found in object ${this._resource}`)
+      Logger.warn(`Viewer: no 3d objects found in object ${this.resource}`)
       this.emit(LoaderEvent.LoadWarning, {
-        message: `No displayable objects found in object ${this._resource}.`
+        message: `No displayable objects found in object ${this.resource}.`
       })
     }
     if (this.isCancelled) {
@@ -136,7 +143,7 @@ export class SpeckleLoader extends Loader {
     const t0 = performance.now()
     const geometryConverter = new SpeckleGeometryConverter()
 
-    const renderTree = this.tree.getRenderTree(this._resource)
+    const renderTree = this.tree.getRenderTree(this.resource)
     if (!renderTree) return Promise.resolve(false)
     const p = renderTree.buildRenderTree(geometryConverter)
 
