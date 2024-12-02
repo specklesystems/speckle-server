@@ -154,7 +154,7 @@ const onMoveProject = () => {
   const workspaceId = selectedWorkspace.value?.id ?? props.workspace?.id
   const workspaceName = selectedWorkspace.value?.name ?? props.workspace?.name
 
-  if (props.project && workspaceId && workspaceName) {
+  if (workspaceId && workspaceName) {
     moveProject({
       projectId: props.project.id,
       workspaceId,
