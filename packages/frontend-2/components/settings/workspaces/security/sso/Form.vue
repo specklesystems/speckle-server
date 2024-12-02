@@ -66,6 +66,11 @@ import { useMixpanel } from '~/lib/core/composables/mp'
 
 const props = defineProps<{
   workspaceSlug: string
+  providerInfo?: {
+    providerName: string
+    clientId: string
+    issuerUrl: string
+  }
 }>()
 
 defineEmits<{
@@ -78,10 +83,10 @@ const { challenge } = useLoginOrRegisterUtils()
 const mixpanel = useMixpanel()
 
 const formData = ref<SsoFormValues>({
-  providerName: '',
-  clientId: '',
+  providerName: props.providerInfo?.providerName || '',
+  clientId: props.providerInfo?.clientId || '',
   clientSecret: '',
-  issuerUrl: ''
+  issuerUrl: props.providerInfo?.issuerUrl || ''
 })
 
 const { handleSubmit } = useForm<SsoFormValues>()
@@ -100,7 +105,7 @@ const onSubmit = handleSubmit(() => {
   }
 
   // TODO: Where and how?
-  postAuthRedirect.set(`/workspaces/${props.workspaceSlug}?settings=server/general`)
+  postAuthRedirect.set(`/workspaces/${props.workspaceSlug}?ssoValidationSuccess=true`)
 
   mixpanel.track('Workspace SSO Configuration Started', {
     // eslint-disable-next-line camelcase
@@ -113,4 +118,19 @@ const onSubmit = handleSubmit(() => {
     external: true
   })
 })
+
+watch(
+  () => props.providerInfo,
+  (newInfo) => {
+    if (newInfo) {
+      formData.value = {
+        ...formData.value,
+        providerName: newInfo.providerName,
+        clientId: newInfo.clientId,
+        issuerUrl: newInfo.issuerUrl
+      }
+    }
+  },
+  { immediate: true }
+)
 </script>

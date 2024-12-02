@@ -58,7 +58,6 @@ export const buildValidationErrorRedirectUrl = (
   const url = new URL(`/workspaces/${workspaceSlug}`, getFrontendOrigin())
 
   // TODO: Where and how?
-  url.searchParams.set('settings', `workspace/settings`)
   url.searchParams.set('ssoValidationSuccess', 'false')
   url.searchParams.set('ssoError', error)
 
