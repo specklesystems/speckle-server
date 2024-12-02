@@ -11,11 +11,10 @@
           name="name"
           placeholder="Workspace name"
           show-label
-          :disabled="!isAdmin || needsSsoSession"
+          :disabled="!isAdmin || needsSsoLogin"
           label-position="left"
           :rules="[isRequired, isStringOfLength({ maxLength: 512 })]"
           validate-on-value-update
-          :tooltip-text="disabledTooltipText"
           @change="save()"
         />
 
@@ -26,16 +25,13 @@
           label="Short ID"
           name="shortId"
           :help="slugHelp"
-          :disabled="!isAdmin || needsSsoSession"
+          :disabled="!isAdmin || needsSsoLogin"
           show-label
           label-position="left"
           read-only
-          :right-icon="isAdmin ? IconEdit : undefined"
+          :right-icon="isAdmin || needsSsoLogin ? IconEdit : undefined"
           right-icon-title="Edit short ID"
-          :tooltip-text="disabledTooltipText"
-          @right-icon-click="
-            !isAdmin || needsSsoSession ? openSlugEditDialog : undefined
-          "
+          @right-icon-click="openSlugEditDialog"
         />
         <hr class="my-4 border-outline-3" />
         <FormTextInput
@@ -46,8 +42,7 @@
           placeholder="Workspace description"
           show-label
           label-position="left"
-          :disabled="!isAdmin || needsSsoSession"
-          :tooltip-text="disabledTooltipText"
+          :disabled="!isAdmin || needsSsoLogin"
           :rules="[isStringOfLength({ maxLength: 512 })]"
           @change="save()"
         />
@@ -59,14 +54,12 @@
               Upload your logo image or use one from our set of workspace icons.
             </span>
           </div>
-          <div v-tippy="disabledTooltipText">
-            <SettingsWorkspacesGeneralEditAvatar
-              v-if="workspaceResult?.workspace"
-              :workspace="workspaceResult?.workspace"
-              :disabled="!isAdmin || needsSsoSession"
-              size="xxl"
-            />
-          </div>
+          <SettingsWorkspacesGeneralEditAvatar
+            v-if="workspaceResult?.workspace"
+            :workspace="workspaceResult?.workspace"
+            :disabled="!isAdmin || needsSsoLogin"
+            size="xxl"
+          />
         </div>
       </div>
       <hr class="my-6 border-outline-2" />
@@ -87,8 +80,7 @@
             label="Project role"
             size="md"
             :disabled-items="[Roles.Stream.Owner]"
-            :disabled="!isAdmin || needsSsoSession"
-            :tooltip-text="disabledTooltipText"
+            :disabled="!isAdmin || needsSsoLogin"
             @update:model-value="save()"
           />
         </div>
@@ -171,6 +163,7 @@ import { workspaceRoute } from '~/lib/common/helpers/route'
 import { useRoute } from 'vue-router'
 import { WorkspacePlanStatuses } from '~/lib/common/generated/gql/graphql'
 import { isPaidPlan } from '~/lib/billing/helpers/types'
+import { useWorkspaceSsoStatus } from '~/lib/workspaces/composables/sso'
 graphql(`
   fragment SettingsWorkspacesGeneral_Workspace on Workspace {
     ...SettingsWorkspacesGeneralEditAvatar_Workspace
@@ -186,14 +179,6 @@ graphql(`
     plan {
       status
       name
-    }
-    sso {
-      provider {
-        id
-      }
-      session {
-        validUntil
-      }
     }
   }
 `)
@@ -220,6 +205,9 @@ const { result: workspaceResult, onResult } = useQuery(
   })
 )
 const config = useRuntimeConfig()
+const { needsSsoLogin } = useWorkspaceSsoStatus({
+  workspaceSlug: computed(() => workspaceResult.value?.workspace?.slug || '')
+})
 
 const name = ref('')
 const slug = ref('')
@@ -235,7 +223,7 @@ const isAdmin = computed(
 const canDeleteWorkspace = computed(
   () =>
     isAdmin.value &&
-    !needsSsoSession.value &&
+    !needsSsoLogin.value &&
     (!isBillingIntegrationEnabled ||
       !(
         [
@@ -248,20 +236,10 @@ const canDeleteWorkspace = computed(
       ))
 )
 const deleteWorkspaceTooltip = computed(() => {
-  if (needsSsoSession.value)
+  if (needsSsoLogin.value)
     return 'You cannot delete a workspace that requires SSO without an active session'
   if (!canDeleteWorkspace.value) return 'You cannot delete an active workspace'
   if (!isAdmin.value) return 'Only admins can delete workspaces'
-  return undefined
-})
-const needsSsoSession = computed(() => {
-  return workspaceResult?.value && workspaceResult.value.workspace?.sso?.provider?.id
-    ? !workspaceResult.value.workspace?.sso?.session?.validUntil
-    : false
-})
-const disabledTooltipText = computed(() => {
-  if (!isAdmin.value) return 'Only admins can edit this field'
-  if (!needsSsoSession.value) return 'Log in with your SSO provider to edit this field'
   return undefined
 })
 
