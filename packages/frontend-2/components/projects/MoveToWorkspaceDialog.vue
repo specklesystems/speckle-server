@@ -155,14 +155,18 @@ const onMoveProject = async () => {
   const workspaceName = selectedWorkspace.value?.name ?? props.workspace?.name
 
   if (workspaceId && workspaceName) {
-    await moveProject({
-      projectId: props.project.id,
-      workspaceId,
-      workspaceName,
-      eventSource: props.eventSource
-    })
+    try {
+      await moveProject({
+        projectId: props.project.id,
+        workspaceId,
+        workspaceName,
+        eventSource: props.eventSource
+      })
 
-    open.value = false
+      open.value = false
+    } catch {
+      // Do nothing on error, composable already shows notification
+    }
   }
 }
 
