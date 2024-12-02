@@ -11,7 +11,8 @@ export async function up(knex: Knex): Promise<void> {
     createdAt
   }))
 
-  await knex('workspace_plans').insert(workspacePlans).onConflict().ignore()
+  if (workspaceIds.length)
+    await knex('workspace_plans').insert(workspacePlans).onConflict().ignore()
 }
 
 export async function down(): Promise<void> {}
