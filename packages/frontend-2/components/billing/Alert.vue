@@ -20,14 +20,7 @@ import {
   WorkspacePlans
 } from '~/lib/common/generated/gql/graphql'
 import { useBillingActions } from '~/lib/billing/composables/actions'
-import type { AlertAction } from '@speckle/ui-components'
-
-enum AlertColor {
-  Success = 'success',
-  Danger = 'danger',
-  Warning = 'warning',
-  Info = 'info'
-}
+import type { AlertAction, AlertColor } from '@speckle/ui-components'
 
 graphql(`
   fragment BillingAlert_Workspace on Workspace {
@@ -105,16 +98,16 @@ const description = computed(() => {
       return ''
   }
 })
-const alertColor = computed(() => {
+const alertColor = computed<AlertColor>(() => {
   switch (planStatus.value) {
     case WorkspacePlanStatuses.PaymentFailed:
-      return AlertColor.Danger
+      return 'danger'
     case WorkspacePlanStatuses.CancelationScheduled:
     case WorkspacePlanStatuses.Canceled:
     case WorkspacePlanStatuses.Expired:
-      return AlertColor.Warning
+      return 'warning'
     default:
-      return AlertColor.Info
+      return 'info'
   }
 })
 const actions = computed((): AlertAction[] => {

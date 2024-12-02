@@ -58,10 +58,12 @@ import {
 import { noop } from 'lodash'
 import { computed, useSlots } from 'vue'
 import FormButton from '~~/src/components/form/Button.vue'
-import type { PropAnyComponent } from '~~/src/helpers/common/components'
-import type { AlertAction } from '~~/src/helpers/layout/components'
+import type {
+  PropAnyComponent,
+  AlertAction,
+  AlertColor
+} from '~~/src/helpers/common/components'
 
-type AlertColor = 'success' | 'danger' | 'warning' | 'info'
 type Size = 'default' | 'xs'
 
 defineEmits<{ (e: 'dismiss'): void }>()

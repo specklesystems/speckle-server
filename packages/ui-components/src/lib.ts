@@ -11,7 +11,9 @@ import type {
   BulletStepType,
   NumberStepType,
   HorizontalOrVertical,
-  PropAnyComponent
+  PropAnyComponent,
+  AlertColor,
+  AlertAction
 } from '~~/src/helpers/common/components'
 import { TailwindBreakpoints } from '~~/src/helpers/tailwind'
 import CommonStepsNumber from '~~/src/components/common/steps/Number.vue'
@@ -46,8 +48,7 @@ import LayoutDisclosure from '~~/src/components/layout/Disclosure.vue'
 import LayoutGridListToggle from '~~/src/components/layout/GridListToggle.vue'
 import type {
   LayoutPageTabItem,
-  LayoutDialogButton,
-  AlertAction
+  LayoutDialogButton
 } from '~~/src/helpers/layout/components'
 import { GridListToggleValue } from '~~/src/helpers/layout/components'
 import {
@@ -189,5 +190,6 @@ export type {
   AvatarUserWithId,
   LayoutPageTabItem,
   PropAnyComponent,
+  AlertColor,
   AlertAction
 }
