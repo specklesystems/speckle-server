@@ -16,8 +16,7 @@ import dayjs from 'dayjs'
 import { graphql } from '~/lib/common/generated/gql'
 import {
   type BillingAlert_WorkspaceFragment,
-  WorkspacePlanStatuses,
-  WorkspacePlans
+  WorkspacePlanStatuses
 } from '~/lib/common/generated/gql/graphql'
 import { useBillingActions } from '~/lib/billing/composables/actions'
 import type { AlertAction, AlertColor } from '@speckle/ui-components'
@@ -62,15 +61,13 @@ const title = computed(() => {
   if (isTrial.value) {
     return `You have ${trialDaysLeft.value} day${
       trialDaysLeft.value !== 1 ? 's' : ''
-    } left on your free ${
-      props.workspace.plan?.name ?? WorkspacePlans.Starter
-    } plan trial`
+    } left on your free trial`
   }
   switch (planStatus.value) {
     case WorkspacePlanStatuses.CancelationScheduled:
-      return `Your ${props.workspace.plan?.name} plan subscription is scheduled for cancelation`
+      return `Your ${props.workspace.plan?.name} plan subscription is scheduled for cancellation`
     case WorkspacePlanStatuses.Canceled:
-      return `Your ${props.workspace.plan?.name} plan subscription has been canceled`
+      return `Your ${props.workspace.plan?.name} plan subscription has been cancelled`
     case WorkspacePlanStatuses.Expired:
       return `Your free ${props.workspace.plan?.name} plan trial has ended`
     case WorkspacePlanStatuses.PaymentFailed:
@@ -82,14 +79,14 @@ const title = computed(() => {
 const description = computed(() => {
   if (isTrial.value) {
     return trialDaysLeft.value === 0
-      ? 'Upgrade to a paid plan to continue using your workspace.'
-      : 'Upgrade to a paid plan to start your subscription.'
+      ? 'Upgrade to a paid plan to continue using your workspace'
+      : 'Upgrade to a paid plan to start your subscription'
   }
   switch (planStatus.value) {
     case WorkspacePlanStatuses.CancelationScheduled:
-      return 'Your workspace subscription is scheduled for cancelation. After the cancelation, your workspace will be in read-only mode.'
+      return 'Your workspace subscription is scheduled for cancellation. After the cancellation, your workspace will be in read-only mode.'
     case WorkspacePlanStatuses.Canceled:
-      return 'Your workspace has been canceled and is in read-only mode. Upgrade your plan to continue.'
+      return 'Your workspace has been cancelled and is in read-only mode. Upgrade your plan to continue.'
     case WorkspacePlanStatuses.Expired:
       return "The workspace is in a read-only locked state until there's an active subscription. Upgrade your plan to continue."
     case WorkspacePlanStatuses.PaymentFailed:
