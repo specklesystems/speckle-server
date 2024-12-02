@@ -16,7 +16,7 @@
       </span>
       per seat/month
     </p>
-    <div class="flex items-center gap-x-2 mt-3 mb-4 px-1">
+    <div class="flex items-center gap-x-2 mt-3 px-1">
       <FormSwitch
         v-model="isYearlyIntervalSelected"
         :show-label="false"
@@ -29,7 +29,7 @@
         20% off
       </CommonBadge>
     </div>
-    <div v-if="workspaceId" class="w-full">
+    <div v-if="workspaceId" class="w-full mt-4">
       <FormButton
         :color="buttonColor"
         :disabled="!isSelectable"
