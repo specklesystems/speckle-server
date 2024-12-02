@@ -150,12 +150,12 @@ const dialogButtons = computed<LayoutDialogButton[]>(() => {
       ]
 })
 
-const onMoveProject = () => {
+const onMoveProject = async () => {
   const workspaceId = selectedWorkspace.value?.id ?? props.workspace?.id
   const workspaceName = selectedWorkspace.value?.name ?? props.workspace?.name
 
   if (workspaceId && workspaceName) {
-    moveProject({
+    await moveProject({
       projectId: props.project.id,
       workspaceId,
       workspaceName,
