@@ -24,7 +24,7 @@
           :to="action.url"
           :external="action.externalUrl || false"
           :disabled="action.disabled || false"
-          @click="action.onClick || noop"
+          @click="handleActionClick(action)"
         >
           {{ action.title }}
         </FormButton>
@@ -180,4 +180,12 @@ const iconClasses = computed(() => {
 
   return classParts.join(' ')
 })
+
+function handleActionClick(action: AlertAction) {
+  if (action.onClick) {
+    action.onClick()
+  } else {
+    noop()
+  }
+}
 </script>
