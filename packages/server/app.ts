@@ -67,7 +67,7 @@ import { GraphQLError } from 'graphql'
 import { redactSensitiveVariables } from '@/logging/loggingHelper'
 import { buildMocksConfig } from '@/modules/mocks'
 import { defaultErrorHandler } from '@/modules/core/rest/defaultErrorHandler'
-import { migrateDbToLatest } from '@/db/migrations'
+import { migrateDbToLatestFactory } from '@/db/migrations'
 import { statusCodePlugin } from '@/modules/core/graph/plugins/statusCode'
 import { BaseError, ForbiddenError } from '@/modules/shared/errors'
 import { loggingPlugin } from '@/modules/core/graph/plugins/logging'
@@ -403,7 +403,7 @@ export async function init() {
 
   // Moves things along automatically on restart.
   // Should perhaps be done manually?
-  await migrateDbToLatest(knex)()
+  await migrateDbToLatestFactory({ region: 'main', db: knex })()
 
   app.use(cookieParser())
   app.use(DetermineRequestIdMiddleware)
