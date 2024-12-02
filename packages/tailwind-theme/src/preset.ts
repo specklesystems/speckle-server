@@ -67,25 +67,25 @@ const config: Config = {
         success: {
           DEFAULT: 'var(--success)',
           lighter: 'var(--success-lighter)',
-          'lighter-2': 'var(--success-lighter-2)',
+          lightest: 'var(--success-lightest)',
           darker: 'var(--success-darker)'
         },
         warning: {
           DEFAULT: 'var(--warning)',
           lighter: 'var(--warning-lighter)',
-          'lighter-2': 'var(--warning-lighter-2)',
+          lightest: 'var(--warning-lightest)',
           darker: 'var(--warning-darker)'
         },
         info: {
           DEFAULT: 'var(--info)',
           lighter: 'var(--info-lighter)',
-          'lighter-2': 'var(--info-lighter-2)',
+          lightest: 'var(--info-lightest)',
           darker: 'var(--info-darker)'
         },
         danger: {
           DEFAULT: 'var(--danger)',
           lighter: 'var(--danger-lighter)',
-          'lighter-2': 'var(--danger-lighter-2)',
+          lightest: 'var(--danger-lightest)',
           darker: 'var(--danger-darker)'
         }
       },

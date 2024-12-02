@@ -46,7 +46,7 @@ type ColorDefinition = { description: string; variations: ColorVariation[] }
 const lighterDarkerVariations: ColorVariation[] = [
   null,
   'lighter',
-  'lighter-2',
+  'lightest',
   'darker'
 ]
 
