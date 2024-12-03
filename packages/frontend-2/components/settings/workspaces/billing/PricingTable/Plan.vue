@@ -60,8 +60,8 @@
           v-tippy="
             feature.description(
               yearlyIntervalSelected
-                ? plan.cost.yearly[Roles.Workspace.Member]
-                : plan.cost.monthly[Roles.Workspace.Member]
+                ? plan.cost.yearly[Roles.Workspace.Guest]
+                : plan.cost.monthly[Roles.Workspace.Guest]
             )
           "
           class="underline decoration-outline-5 decoration-dashed underline-offset-4 cursor-help"
