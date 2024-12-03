@@ -89,7 +89,8 @@ const dialogButtons = computed((): LayoutDialogButton[] => {
       text: isEditMode.value ? 'Update' : 'Create',
       props: {
         submit: true,
-        disabled: loading.value
+        disabled: loading.value,
+        loading: loading.value
       },
       onClick: noop
     }
