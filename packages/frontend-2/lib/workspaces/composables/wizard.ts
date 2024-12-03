@@ -5,8 +5,9 @@ import { useCreateWorkspace } from '~/lib/workspaces/composables/management'
 import { useWorkspacesAvatar } from '~/lib/workspaces/composables/avatar'
 import { useBillingActions } from '~/lib/billing/composables/actions'
 import { workspaceWizardUpdateWorkspaceMutation } from '~/lib/workspaces/graphql/mutations'
-import { useMutation, useApolloClient } from '@vue/apollo-composable'
+import { useApolloClient } from '@vue/apollo-composable'
 import { workspaceRoute } from '~/lib/common/helpers/route'
+
 const state = ref<WorkspaceWizardState>({
   name: '',
   slug: '',
@@ -35,9 +36,6 @@ export const useWorkspacesWizard = () => {
   const { generateDefaultLogoIndex } = useWorkspacesAvatar()
   const { redirectToCheckout } = useBillingActions()
   const router = useRouter()
-  const { mutate: updateWorkspaceMutation } = useMutation(
-    workspaceWizardUpdateWorkspaceMutation
-  )
   const { client: apollo } = useApolloClient()
 
   const setState = (initialState: WorkspaceWizardState) => {
@@ -105,25 +103,47 @@ export const useWorkspacesWizard = () => {
       }
     }
 
+    // Update the workspace state to completed
+    const updateWorkspaceResult = await apollo
+      .mutate({
+        mutation: workspaceWizardUpdateWorkspaceMutation,
+        variables: {
+          input: {
+            completed: !needsCheckout,
+            state: {
+              ...state.value,
+              // Remove placeholder invites
+              invites: state.value.invites.filter((invite) => !!invite.email)
+            },
+            workspaceId: state.value.id ?? newWorkspaceId
+          }
+        },
+        update: (cache, res) => {
+          if (needsCheckout) return
+
+          const { data } = res
+          if (!data?.workspaceMutations) return
+
+          cache.modify({
+            id: getCacheId('Workspace', state.value.id ?? newWorkspaceId),
+            fields: {
+              creationState: () => {
+                return {
+                  completed: true
+                }
+              }
+            }
+          })
+        }
+      })
+      .catch(convertThrowIntoFetchResult)
+
     if (needsCheckout) {
       // Add workspace ID to URL, in case the user comes back from Stripe
       router.replace({ query: { workspaceId: newWorkspaceId } })
 
-      // Update the workspace state, in case the user comes back from Stripe or drops out of the checkout
-      const updateWorkspaceResult = await updateWorkspaceMutation({
-        input: {
-          completed: false,
-          state: {
-            ...state.value,
-            // Remove placeholder invites
-            invites: state.value.invites.filter((invite) => !!invite.email)
-          },
-          workspaceId: state.value.id ?? newWorkspaceId
-        }
-      }).catch(convertThrowIntoFetchResult)
-
+      // Go to Stripe
       if (updateWorkspaceResult?.data?.workspaceMutations.updateCreationState) {
-        // Go to Stripe
         redirectToCheckout({
           plan: state.value.plan as unknown as PaidWorkspacePlans,
           cycle: state.value.billingInterval,
@@ -131,35 +151,7 @@ export const useWorkspacesWizard = () => {
         })
       }
     } else {
-      // Update the workspace state to completed
-      const updateWorkspaceResult = await apollo
-        .mutate({
-          mutation: workspaceWizardUpdateWorkspaceMutation,
-          variables: {
-            input: {
-              completed: true,
-              state: {},
-              workspaceId: state.value.id ?? newWorkspaceId
-            }
-          },
-          update: (cache, res) => {
-            const { data } = res
-            if (!data?.workspaceMutations) return
-
-            cache.modify({
-              id: getCacheId('Workspace', state.value.id ?? newWorkspaceId),
-              fields: {
-                creationState: () => {
-                  return {
-                    completed: true
-                  }
-                }
-              }
-            })
-          }
-        })
-        .catch(convertThrowIntoFetchResult)
-
+      // Go to workspace dashboard
       if (updateWorkspaceResult?.data?.workspaceMutations.updateCreationState) {
         router.push(workspaceRoute(state.value.slug))
       }
