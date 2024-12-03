@@ -1,4 +1,3 @@
-import { nanoid } from 'nanoid'
 import { BillingInterval, PaidWorkspacePlans } from '~/lib/common/generated/gql/graphql'
 import { type WorkspaceWizardState, WizardSteps } from '~/lib/workspaces/helpers/types'
 import { useCreateWorkspace } from '~/lib/workspaces/composables/management'
@@ -11,11 +10,7 @@ import { workspaceRoute } from '~/lib/common/helpers/route'
 const emptyState = {
   name: '',
   slug: '',
-  invites: [
-    { id: nanoid(), email: '' },
-    { id: nanoid(), email: '' },
-    { id: nanoid(), email: '' }
-  ],
+  invites: ['', '', ''],
   plan: null,
   billingInterval: BillingInterval.Monthly,
   id: '',

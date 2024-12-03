@@ -1,6 +1,6 @@
 <template>
   <div class="py-3 md:py-6">
-    <CommonLoadingIcon v-if="isLoading" class="my-10 justify-self-center" />
+    <CommonLoadingIcon v-if="loading" class="my-10 justify-self-center" />
     <template v-else>
       <CommonAlert
         v-if="showPaymentError"
@@ -64,10 +64,9 @@ const { loading: queryLoading, onResult } = useQuery(
   })
 )
 
-const isLoading = computed(() =>
-  wizardIsLoading || props.workspaceId ? queryLoading.value : false
+const loading = computed(
+  () => wizardIsLoading.value || (props.workspaceId ? queryLoading.value : false)
 )
-
 onResult((result) => {
   // If there is an existing workspace, we need to show the correct state
   const creationState = result.data?.workspace.creationState
@@ -91,13 +90,7 @@ onResult((result) => {
       slug: state.slug,
       // TODO: Can be improved
       // We need to add placeholder invites to the state, so we can show the correct number of invites in the UI
-      invites: [
-        ...(state.invites || []),
-        ...(Array(Math.max(0, 3 - (state.invites?.length || 0))).fill({
-          id: '',
-          email: ''
-        }) as Array<{ id: string; email: string }>)
-      ],
+      invites: [...state.invites],
       region: state.region,
       plan: null, // Force re-select plan
       billingInterval: null // Force re-select billing interval

@@ -5,6 +5,7 @@
   >
     <form class="flex flex-col gap-4 w-full md:w-96" @submit="onSubmit">
       <FormTextInput
+        id="workspace-name"
         v-model:model-value="state.name"
         name="name"
         label="Workspace name"
@@ -16,10 +17,10 @@
         @update:model-value="updateShortId"
       />
       <FormTextInput
+        id="workspace-slug"
         v-model:model-value="state.slug"
         name="slug"
         label="Short ID"
-        :help="getShortIdHelp"
         color="foundation"
         :loading="loading"
         :rules="isStringOfLength({ maxLength: 50, minLength: 3 })"
@@ -29,7 +30,7 @@
         :disabled="disableSlugEdit"
         @update:model-value="onSlugChange"
       />
-      <FormButton size="lg" submit full-width class="mt-4" :disabled="disableNextStep">
+      <FormButton size="lg" :disabled="disableContinue" submit full-width class="mt-4">
         Continue
       </FormButton>
     </form>
@@ -63,16 +64,12 @@ const { error, loading } = useQuery(
   })
 )
 
-const baseUrl = useRuntimeConfig().public.baseUrl
+// const baseUrl = useRuntimeConfig().public.baseUrl
 
-const getShortIdHelp = computed(() =>
-  state.value.slug
-    ? `${baseUrl}/workspaces/${state.value.slug}`
-    : `Used after ${baseUrl}/workspaces/`
-)
+// const getShortIdHelp = computed(() => `Used after ${baseUrl}/workspaces/`)
 
-const disableNextStep = computed(
-  () => !state.value.name.trim() || !state.value.slug.trim() || error.value !== null
+const disableContinue = computed(
+  () => !state.value.name || !state.value.slug || error.value?.graphQLErrors[0]?.message
 )
 
 const updateShortId = debounce((newName: string) => {

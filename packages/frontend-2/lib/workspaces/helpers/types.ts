@@ -34,7 +34,7 @@ export enum WorkspaceSsoErrorCodes {
 export type WorkspaceWizardState = {
   name: string
   slug: string
-  invites: { id: string; email: string }[]
+  invites: string[]
   plan: PaidWorkspacePlans | null
   billingInterval: BillingInterval | null
   id: string
