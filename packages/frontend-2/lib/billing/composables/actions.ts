@@ -45,14 +45,9 @@ export const useBillingActions = () => {
     plan: PaidWorkspacePlans
     cycle: BillingInterval
     workspaceId: string
+    isCreateFlow?: boolean
   }) => {
-    const { plan, cycle, workspaceId } = args
-    mixpanel.track('Workspace Subscribe Button Clicked', {
-      plan,
-      cycle,
-      // eslint-disable-next-line camelcase
-      workspace_id: workspaceId
-    })
+    const { plan, cycle, workspaceId, isCreateFlow } = args
 
     const result = await apollo
       .mutate({
@@ -61,7 +56,8 @@ export const useBillingActions = () => {
           input: {
             workspaceId,
             billingInterval: cycle,
-            workspacePlan: plan
+            workspacePlan: plan,
+            isCreateFlow
           }
         },
         fetchPolicy: 'no-cache'
