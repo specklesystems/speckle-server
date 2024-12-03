@@ -15,14 +15,14 @@ import {
 import { getGenericRedis } from '@/modules/shared/redis/redis'
 import { Knex } from 'knex'
 import { getRegionFactory, getRegionsFactory } from '@/modules/multiregion/repositories'
-import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
+import { DatabaseError, MisconfiguredEnvironmentError } from '@/modules/shared/errors'
 import { configureClient } from '@/knexfile'
 import { InitializeRegion } from '@/modules/multiregion/domain/operations'
 import {
   getAvailableRegionConfig,
   getMainRegionConfig
 } from '@/modules/multiregion/regionConfig'
-import { MaybeNullOrUndefined } from '@speckle/shared'
+import { ensureError, MaybeNullOrUndefined } from '@speckle/shared'
 import { isTestEnv } from '@/modules/shared/helpers/envHelper'
 import { migrateDbToLatest } from '@/db/migrations'
 
@@ -212,7 +212,14 @@ const setUpUserReplication = async ({
   try {
     await from.public.raw(`CREATE PUBLICATION ${pubName} FOR TABLE users;`)
   } catch (err) {
-    if (!(err instanceof Error)) throw err
+    if (!(err instanceof Error))
+      throw new DatabaseError(
+        'Could not create publication {pubName} when setting up user replication for region {regionName}',
+        {
+          cause: ensureError(err, 'Unknown database error when creating publication'),
+          info: { pubName, regionName }
+        }
+      )
     if (!err.message.includes('already exists')) throw err
   }
 
@@ -240,7 +247,14 @@ const setUpUserReplication = async ({
       subName
     ])
   } catch (err) {
-    if (!(err instanceof Error)) throw err
+    if (!(err instanceof Error))
+      throw new DatabaseError(
+        'Could not create subscription {subName} to {pubName} when setting up user replication for region {regionName}',
+        {
+          cause: ensureError(err, 'Unknown database error when creating subscription'),
+          info: { subName, pubName, regionName }
+        }
+      )
     if (!err.message.includes('already exists')) throw err
   }
 }
@@ -257,7 +271,14 @@ const setUpProjectReplication = async ({
   try {
     await from.public.raw(`CREATE PUBLICATION ${pubName} FOR TABLE streams;`)
   } catch (err) {
-    if (!(err instanceof Error)) throw err
+    if (!(err instanceof Error))
+      throw new DatabaseError(
+        'Could not create publication {pubName} when setting up project replication for region {regionName}',
+        {
+          cause: ensureError(err, 'Unknown database error when creating publication'),
+          info: { pubName, regionName }
+        }
+      )
     if (!err.message.includes('already exists')) throw err
   }
 
@@ -285,7 +306,14 @@ const setUpProjectReplication = async ({
       subName
     ])
   } catch (err) {
-    if (!(err instanceof Error)) throw err
+    if (!(err instanceof Error))
+      throw new DatabaseError(
+        'Could not create subscription {subName} to {pubName} when setting up project replication for region {regionName}',
+        {
+          cause: ensureError(err, 'Unknown database error when creating subscription'),
+          info: { subName, pubName, regionName }
+        }
+      )
     if (!err.message.includes('already exists')) throw err
   }
 }
