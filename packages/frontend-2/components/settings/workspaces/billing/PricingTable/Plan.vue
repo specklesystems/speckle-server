@@ -158,6 +158,10 @@ const isDowngrade = computed(() => {
   return !canUpgradeToPlan.value && props.currentPlan?.name !== props.plan.name
 })
 
+const isCurrentPlan = computed(
+  () => isMatchingInterval.value && props.currentPlan?.name === props.plan.name
+)
+
 const isAnnualToMonthly = computed(() => {
   return (
     !isMatchingInterval.value &&
@@ -174,19 +178,12 @@ const isMonthlyToAnnual = computed(() => {
   )
 })
 
-const isCurrentPlan = computed(
-  () => isMatchingInterval.value && props.currentPlan?.name === props.plan.name
-)
-
 const isSelectable = computed(() => {
   // Always enable buttons during trial
   if (statusIsTrial.value) return true
 
   // Disable if current plan
   if (isCurrentPlan.value) return false
-
-  // Never allow annual to monthly changes
-  if (isAnnualToMonthly.value) return false
 
   // Handle billing interval changes
   if (!isMatchingInterval.value) {
