@@ -26,6 +26,12 @@ type ServerStatistics {
   totalPendingInvites: Int!
 }
 
+type ProjectCollection {
+  totalCount: Int!
+  cursor: String
+  items: [Project!]!
+}
+
 type AdminQueries {
   userList(
     limit: Int! = 25
