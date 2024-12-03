@@ -32,7 +32,7 @@
         autocomplete="off"
         show-label
         label-position="left"
-        type="text"
+        type="password"
         :rules="[isRequired, isStringOfLength({ minLength: 5 })]"
       />
       <hr class="border-outline-3" />
