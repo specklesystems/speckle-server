@@ -467,14 +467,12 @@ export const addDomainToWorkspaceFactory =
     findEmailsByUserId,
     storeWorkspaceDomain,
     getWorkspace,
-    upsertWorkspace,
     emitWorkspaceEvent,
     getDomains
   }: {
     findEmailsByUserId: FindEmailsByUserId
     storeWorkspaceDomain: StoreWorkspaceDomain
     getWorkspace: GetWorkspace
-    upsertWorkspace: UpsertWorkspace
     getDomains: GetWorkspaceDomains
     emitWorkspaceEvent: EventBus['emit']
   }) =>
@@ -532,12 +530,6 @@ export const addDomainToWorkspaceFactory =
     }
 
     await storeWorkspaceDomain({ workspaceDomain })
-
-    if (domains.length === 0) {
-      await upsertWorkspace({
-        workspace: { ...workspace, discoverabilityEnabled: true }
-      })
-    }
 
     await emitWorkspaceEvent({
       eventName: WorkspaceEvents.Updated,
