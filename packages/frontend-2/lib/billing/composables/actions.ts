@@ -138,8 +138,8 @@ export const useBillingActions = () => {
       triggerNotification({
         type: ToastNotificationType.Success,
         title: 'Workspace plan upgraded',
-        description: `Your workspace is now on a ${
-          cycle === BillingInterval.Yearly ? 'annual' : 'monthly'
+        description: `Your workspace is now on ${
+          cycle === BillingInterval.Yearly ? 'an annual' : 'a monthly'
         } ${plan} plan`
       })
     } else {
