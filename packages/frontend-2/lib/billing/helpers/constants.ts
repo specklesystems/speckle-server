@@ -11,7 +11,10 @@ const baseFeatures = [
 ]
 
 export const pricingPlansConfig: {
-  features: Record<PlanFeaturesList, { name: string; description: string }>
+  features: Record<
+    PlanFeaturesList,
+    { name: string; description: (price: number) => string }
+  >
   plans: Record<
     WorkspacePlans.Starter | WorkspacePlans.Plus | WorkspacePlans.Business,
     PricingPlan
@@ -20,36 +23,42 @@ export const pricingPlansConfig: {
   features: {
     [PlanFeaturesList.Workspaces]: {
       name: PlanFeaturesList.Workspaces,
-      description: 'A shared space for your team and projects'
+      description: (price: number) =>
+        `A shared space for your team and projects £${price}/month`
     },
     [PlanFeaturesList.RoleManagement]: {
       name: PlanFeaturesList.RoleManagement,
-      description: "Control individual members' access and edit rights"
+      description: (price: number) =>
+        `Control individual members' access and edit rights £${price}/month`
     },
     [PlanFeaturesList.GuestUsers]: {
       name: PlanFeaturesList.GuestUsers,
-      description: 'Give guests access to specific projects from £15/month/guest'
+      description: (price: number) =>
+        `Give guests access to specific projects £${price}/month/guest`
     },
     [PlanFeaturesList.PrivateAutomateFunctions]: {
       name: PlanFeaturesList.PrivateAutomateFunctions,
-      description:
-        'Create and manage private automation functions securely within your workspace'
+      description: (price: number) =>
+        `Create and manage private automation functions securely within your workspace £${price}/month`
     },
     [PlanFeaturesList.DomainSecurity]: {
       name: PlanFeaturesList.DomainSecurity,
-      description: 'Require workspace members to use a verified company email'
+      description: (price: number) =>
+        `Require workspace members to use a verified company email £${price}/month`
     },
     [PlanFeaturesList.SSO]: {
       name: PlanFeaturesList.SSO,
-      description: 'Require workspace members to log in with your SSO provider'
+      description: (price: number) =>
+        `Require workspace members to log in with your SSO provider £${price}/month`
     },
     [PlanFeaturesList.CustomDataRegion]: {
       name: PlanFeaturesList.CustomDataRegion,
-      description: 'Store the workspace data in a custom region of choice'
+      description: (price: number) =>
+        `Store the workspace data in a custom region of choice £${price}/month`
     },
     [PlanFeaturesList.PrioritySupport]: {
       name: PlanFeaturesList.PrioritySupport,
-      description: 'Personal and fast support'
+      description: (price: number) => `Personal and fast support £${price}/month`
     }
   },
   plans: {

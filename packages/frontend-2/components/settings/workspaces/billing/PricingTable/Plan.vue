@@ -57,7 +57,13 @@
         />
         <XMarkIcon v-else class="w-4 h-4 mx-2 text-danger" />
         <span
-          v-tippy="feature.description"
+          v-tippy="
+            feature.description(
+              yearlyIntervalSelected
+                ? plan.cost.yearly[Roles.Workspace.Member]
+                : plan.cost.monthly[Roles.Workspace.Member]
+            )
+          "
           class="underline decoration-outline-5 decoration-dashed underline-offset-4 cursor-help"
           :class="{
             'text-foreground-2': !plan.features.includes(feature.name as PlanFeaturesList)
