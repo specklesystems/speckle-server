@@ -387,9 +387,11 @@ export = {
   LimitedUser: {
     async streams(parent, args, ctx) {
       // a little escape hatch for admins to look into users streams
-      // const forOtherUser = parent.id !== ctx.userId
-      const isAdmin = adminOverrideEnabled() && ctx.role === Roles.Server.Admin
-      const forOtherUser = !isAdmin
+      const isAdminOverride = adminOverrideEnabled() && ctx.role === Roles.Server.Admin
+
+      // if isAdminOverride, then the ctx.user has to be treaded as the parent user
+      // to give the admin full view into the parent user's project streams
+      const forOtherUser = parent.id === ctx.userId ? false : !isAdminOverride
       const userId = parent.id
       const [totalCount, visibleCount, { cursor, streams }] = await Promise.all([
         getUserStreamsCount({
