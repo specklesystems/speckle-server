@@ -271,6 +271,7 @@ describe('Workspace services', () => {
       const err = await expectToThrow(async () => {
         await updateWorkspaceFactory({
           getWorkspace: async () => null,
+          getWorkspaceSsoProviderRecord: async () => null,
           validateSlug: async () => {
             expect.fail()
           },
@@ -292,6 +293,7 @@ describe('Workspace services', () => {
       const err = await expectToThrow(async () => {
         await updateWorkspaceFactory({
           getWorkspace: async () => workspace,
+          getWorkspaceSsoProviderRecord: async () => null,
           emitWorkspaceEvent: async () => {
             expect.fail()
           },
@@ -315,6 +317,7 @@ describe('Workspace services', () => {
       const err = await expectToThrow(async () => {
         await updateWorkspaceFactory({
           getWorkspace: async () => workspace,
+          getWorkspaceSsoProviderRecord: async () => null,
           emitWorkspaceEvent: async () => {
             expect.fail()
           },
@@ -338,6 +341,7 @@ describe('Workspace services', () => {
       const err = await expectToThrow(async () => {
         await updateWorkspaceFactory({
           getWorkspace: async () => workspace,
+          getWorkspaceSsoProviderRecord: async () => null,
           emitWorkspaceEvent: async () => {
             expect.fail()
           },
@@ -361,6 +365,7 @@ describe('Workspace services', () => {
       const err = await expectToThrow(async () => {
         await updateWorkspaceFactory({
           getWorkspace: async () => workspace,
+          getWorkspaceSsoProviderRecord: async () => null,
           emitWorkspaceEvent: async () => {
             expect.fail()
           },
@@ -383,6 +388,7 @@ describe('Workspace services', () => {
       const err = await expectToThrow(async () => {
         await updateWorkspaceFactory({
           getWorkspace: async () => workspace,
+          getWorkspaceSsoProviderRecord: async () => null,
           emitWorkspaceEvent: async () => {
             expect.fail()
           },
@@ -406,6 +412,7 @@ describe('Workspace services', () => {
       let newWorkspaceName
       await updateWorkspaceFactory({
         getWorkspace: async () => workspace,
+        getWorkspaceSsoProviderRecord: async () => null,
         emitWorkspaceEvent: async () => {},
         validateSlug: async () => {},
 
@@ -418,6 +425,36 @@ describe('Workspace services', () => {
       })
       expect(newWorkspaceName).to.be.equal(workspace.name)
     })
+
+    it('does not allow updating the workspace slug if SSO is enabled', async () => {
+      const workspace = createTestWorkspaceWithDomainsData()
+
+      const err = await expectToThrow(async () => {
+        await updateWorkspaceFactory({
+          getWorkspace: async () => workspace,
+          getWorkspaceSsoProviderRecord: async () => ({
+            workspaceId: 'foo',
+            providerId: 'bar'
+          }),
+          emitWorkspaceEvent: async () => {
+            expect.fail()
+          },
+          validateSlug: async () => {},
+          upsertWorkspace: async () => {
+            expect.fail()
+          }
+        })({
+          workspaceId: workspace.id,
+          workspaceInput: {
+            slug: 'new-slug'
+          }
+        })
+      })
+      expect(err.message).to.be.equal(
+        'Cannot update workspace slug if SSO is configured.'
+      )
+    })
+
     it('updates the workspace and emits the correct event payload', async () => {
       const workspaceId = cryptoRandomString({ length: 10 })
       const workspace = createTestWorkspaceWithDomainsData({
@@ -444,6 +481,7 @@ describe('Workspace services', () => {
 
       await updateWorkspaceFactory({
         getWorkspace: async () => workspace,
+        getWorkspaceSsoProviderRecord: async () => null,
         emitWorkspaceEvent: async () => {},
         validateSlug: async () => {},
         upsertWorkspace: async ({ workspace }) => {

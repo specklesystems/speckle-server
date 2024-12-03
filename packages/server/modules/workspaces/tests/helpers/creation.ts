@@ -196,6 +196,7 @@ export const createTestWorkspace = async (
       getWorkspaceBySlug: getWorkspaceBySlugFactory({ db })
     }),
     getWorkspace: getWorkspaceWithDomainsFactory({ db }),
+    getWorkspaceSsoProviderRecord: getWorkspaceSsoProviderRecordFactory({ db }),
     upsertWorkspace: upsertWorkspaceFactory({ db }),
     emitWorkspaceEvent: (...args) => getEventBus().emit(...args)
   })
