@@ -161,6 +161,11 @@ export type BaseUserStreamsQueryParams = {
    */
   streamIdWhitelist?: string[]
   workspaceId?: string
+
+  /**
+   * Only with active sso session
+   */
+  onlyWithActiveSsoSession?: boolean
 }
 
 export type UserStreamsQueryParams = BaseUserStreamsQueryParams & {
