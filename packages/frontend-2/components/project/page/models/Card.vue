@@ -134,6 +134,11 @@ import { canModifyModels } from '~~/lib/projects/helpers/permissions'
 import { isPendingModelFragment } from '~~/lib/projects/helpers/models'
 import type { Nullable, Optional } from '@speckle/shared'
 
+/**
+ * TODO:
+ * - If CardImportFIleArea handles disclaimer, then we dont need any logic here
+ */
+
 graphql(`
   fragment ProjectPageModelsCardProject on Project {
     id

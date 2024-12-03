@@ -51,7 +51,8 @@
     <WorkspaceRegionStaticDataDisclaimer
       v-if="showRegionStaticDataDisclaimer"
       v-model:open="showRegionStaticDataDisclaimer"
-      @confirm="onMoveProject"
+      :variant="RegionStaticDataDisclaimerVariant.MoveProjectIntoWorkspace"
+      @confirm="onConfirmHandler"
     />
   </LayoutDialog>
 </template>
@@ -67,6 +68,10 @@ import { type LayoutDialogButton } from '@speckle/ui-components'
 import { useMoveProjectToWorkspace } from '~/lib/projects/composables/projectManagement'
 import { Roles } from '@speckle/shared'
 import { workspacesRoute } from '~/lib/common/helpers/route'
+import {
+  useWorkspaceCustomDataResidencyDisclaimer,
+  RegionStaticDataDisclaimerVariant
+} from '~/lib/workspaces/composables/region'
 
 graphql(`
   fragment ProjectsMoveToWorkspaceDialog_Workspace on Workspace {
@@ -75,10 +80,7 @@ graphql(`
     name
     defaultLogoIndex
     logo
-    defaultRegion {
-      id
-      name
-    }
+    ...WorkspaceHasCustomDataResidency_Workspace
     ...ProjectsWorkspaceSelect_Workspace
   }
 `)
@@ -121,7 +123,6 @@ const props = defineProps<{
   eventSource?: string // Used for mixpanel tracking
 }>()
 const open = defineModel<boolean>('open', { required: true })
-const showRegionStaticDataDisclaimer = ref(false)
 
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
 const { result } = useQuery(query, null, () => ({
@@ -132,9 +133,6 @@ const moveProject = useMoveProjectToWorkspace()
 
 const selectedWorkspace = ref<ProjectsMoveToWorkspaceDialog_WorkspaceFragment>()
 
-const shouldShowRegionStaticDataDisclaimer = computed(
-  () => !!selectedWorkspace.value?.defaultRegion
-)
 const workspaces = computed(() => result.value?.activeUser?.workspaces.items ?? [])
 const hasWorkspaces = computed(() => workspaces.value.length > 0)
 const modelText = computed(() =>
@@ -159,10 +157,7 @@ const dialogButtons = computed<LayoutDialogButton[]>(() => {
             color: 'primary',
             disabled: (!selectedWorkspace.value && !props.workspace) || loading.value
           },
-          onClick: () =>
-            shouldShowRegionStaticDataDisclaimer.value
-              ? triggerRegionStaticDataDisclaimer()
-              : onMoveProject()
+          onClick: () => triggerAction()
         }
       ]
     : [
@@ -175,10 +170,6 @@ const dialogButtons = computed<LayoutDialogButton[]>(() => {
         }
       ]
 })
-
-const triggerRegionStaticDataDisclaimer = () => {
-  showRegionStaticDataDisclaimer.value = true
-}
 
 const onMoveProject = async () => {
   const workspaceId = selectedWorkspace.value?.id ?? props.workspace?.id
@@ -195,6 +186,12 @@ const onMoveProject = async () => {
     open.value = false
   }
 }
+
+const { showRegionStaticDataDisclaimer, triggerAction, onConfirmHandler } =
+  useWorkspaceCustomDataResidencyDisclaimer({
+    workspace: computed(() => selectedWorkspace.value ?? props.workspace),
+    onConfirmAction: onMoveProject
+  })
 
 watch(
   () => open.value,
