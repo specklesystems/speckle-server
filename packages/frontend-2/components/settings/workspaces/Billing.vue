@@ -72,6 +72,7 @@
                 </div>
               </div>
               <div class="p-5 pt-4 flex flex-col gap-y-1">
+                {{ subscription }}
                 <h3 class="text-body-xs text-foreground-2 pb-2">
                   {{
                     statusIsTrial && isPurchasablePlan
@@ -232,11 +233,11 @@ const seatPrice = computed(() =>
     : seatPrices.value[WorkspacePlans.Starter][BillingInterval.Monthly]
 )
 const nextPaymentDue = computed(() =>
-  currentPlan.value && isActivePlan.value
-    ? isPurchasablePlan.value
+  isPurchasablePlan.value
+    ? subscription.value?.currentBillingCycleEnd
       ? dayjs(subscription.value?.currentBillingCycleEnd).format('MMMM D, YYYY')
-      : 'Never'
-    : dayjs().add(31, 'days').format('MMMM D, YYYY')
+      : dayjs(currentPlan.value?.createdAt).add(31, 'days').format('MMMM D, YYYY')
+    : 'Never'
 )
 const isAdmin = computed(() => workspace.value?.role === Roles.Workspace.Admin)
 const guestSeatCount = computed(() =>
