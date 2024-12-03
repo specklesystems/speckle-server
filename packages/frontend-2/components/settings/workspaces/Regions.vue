@@ -84,7 +84,6 @@
         </FormButton>
       </div>
     </div>
-    <!-- prettier-ignore -->
     <LayoutDialog
       v-if="defaultRegion"
       v-model:open="showDefaultRegionSaveDisclaimer"
@@ -92,19 +91,23 @@
       title="Confirm region change"
       :buttons="saveDisclaimerButtons"
     >
-      Confirm that you want to update your workspace's region to
-      <span class="font-semibold">{{ defaultRegion.name }}</span>.
-      This cannot be undone. 
+      <!-- prettier-ignore -->
+      <span>
+        Confirm that you want to update your workspace's region to
+        <span class="font-semibold">{{ defaultRegion.name }}</span>.
+        This cannot be undone.
+      </span>
       <template v-if="hasProjects">
-        <br/><br/>
-      <CommonAlert color="warning">
-        <template #description>
-          Please note that existing projects in your workspace
-      will not be moved to the new region as we currently do not support moving projects
-      between regions. However, this will be supported soon and we will make sure to
-      move over your projects.
-        </template>
-      </CommonAlert>
+        <br />
+        <br />
+        <CommonAlert color="warning">
+          <template #description>
+            Please note that existing projects in your workspace will not be moved to
+            the new region as we currently do not support moving projects between
+            regions. However, this will be supported soon and we will make sure to move
+            over your projects.
+          </template>
+        </CommonAlert>
       </template>
     </LayoutDialog>
   </section>
