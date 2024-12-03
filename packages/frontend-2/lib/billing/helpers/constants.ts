@@ -45,7 +45,7 @@ export const pricingPlansConfig: {
     },
     [PlanFeaturesList.CustomDataRegion]: {
       name: PlanFeaturesList.CustomDataRegion,
-      description: "Store the workspace's data in a custom region of choice"
+      description: 'Store the workspace data in a custom region of choice'
     },
     [PlanFeaturesList.PrioritySupport]: {
       name: PlanFeaturesList.PrioritySupport,
@@ -74,12 +74,12 @@ export const pricingPlansConfig: {
       features: [...baseFeatures, PlanFeaturesList.SSO],
       cost: {
         [BillingInterval.Monthly]: {
-          [Roles.Workspace.Guest]: 50,
+          [Roles.Workspace.Guest]: 15,
           [Roles.Workspace.Member]: 50,
           [Roles.Workspace.Admin]: 50
         },
         [BillingInterval.Yearly]: {
-          [Roles.Workspace.Guest]: 40,
+          [Roles.Workspace.Guest]: 12,
           [Roles.Workspace.Member]: 40,
           [Roles.Workspace.Admin]: 40
         }
@@ -95,12 +95,12 @@ export const pricingPlansConfig: {
       ],
       cost: {
         [BillingInterval.Monthly]: {
-          [Roles.Workspace.Guest]: 75,
+          [Roles.Workspace.Guest]: 15,
           [Roles.Workspace.Member]: 75,
           [Roles.Workspace.Admin]: 75
         },
         [BillingInterval.Yearly]: {
-          [Roles.Workspace.Guest]: 60,
+          [Roles.Workspace.Guest]: 12,
           [Roles.Workspace.Member]: 60,
           [Roles.Workspace.Admin]: 60
         }
