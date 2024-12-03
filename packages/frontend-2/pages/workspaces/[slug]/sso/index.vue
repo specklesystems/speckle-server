@@ -10,14 +10,14 @@
     </template>
 
     <template v-else>
-      <div class="flex flex-col items-center gap-2 mt-8">
+      <div class="flex flex-col gap-2 mt-8">
         <WorkspaceAvatar
           v-if="workspace"
           :logo="workspace.logo"
           :default-logo-index="workspace.defaultLogoIndex"
           size="xl"
         />
-        <h1 class="text-heading-xl mb-2">
+        <h1 class="text-heading-xl text-center mb-2">
           {{ !isSsoAuthenticated ? 'Sign in to' : '' }}
           {{ workspace?.name || 'Workspace' }}
         </h1>
@@ -32,7 +32,7 @@
           </p>
         </div>
 
-        <div v-else-if="isSsoEnabled" class="flex flex-col gap-4">
+        <div v-else-if="isSsoEnabled" class="flex flex-col gap-4 items-center">
           <FormButton
             :disabled="!challenge || !workspace?.ssoProviderName"
             @click="handleContinue"
@@ -95,7 +95,7 @@ const serverInfo = computed<ServerTermsOfServicePrivacyPolicyFragmentFragment>(
 
 const errorMessage = computed(() => {
   // Check for URL error parameter first
-  const urlError = route.query.error as string | undefined
+  const urlError = route.query.ssoError as string | undefined
   if (urlError) {
     return decodeURIComponent(urlError).replace(/\+/g, ' ').trim()
   }

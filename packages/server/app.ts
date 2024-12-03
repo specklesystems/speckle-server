@@ -403,7 +403,7 @@ export async function init() {
 
   // Moves things along automatically on restart.
   // Should perhaps be done manually?
-  await migrateDbToLatest(knex)()
+  await migrateDbToLatest({ region: 'main', db: knex })
 
   app.use(cookieParser())
   app.use(DetermineRequestIdMiddleware)
