@@ -62,7 +62,7 @@ const onConfirm = async () => {
       workspaceId: props.workspaceId
     }).catch(convertThrowIntoFetchResult)
 
-    // TODO: Move this to the composable
+    // TODO: Move this to the composable, this a copy of the logic in the delete dialog
     if (result?.data) {
       if (activeUser.value) {
         cache.evict({

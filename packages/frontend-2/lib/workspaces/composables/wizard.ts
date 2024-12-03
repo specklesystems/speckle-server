@@ -4,6 +4,8 @@ import { type WorkspaceWizardState, WizardSteps } from '~/lib/workspaces/helpers
 import { useCreateWorkspace } from '~/lib/workspaces/composables/management'
 import { useWorkspacesAvatar } from '~/lib/workspaces/composables/avatar'
 import { useBillingActions } from '~/lib/billing/composables/actions'
+import { workspaceWizardUpdateWorkspaceMutation } from '~/lib/workspaces/graphql/mutations'
+import { useMutation } from '@vue/apollo-composable'
 
 const state = ref<WorkspaceWizardState>({
   name: '',
@@ -32,6 +34,9 @@ export const useWorkspacesWizard = () => {
   const { generateDefaultLogoIndex } = useWorkspacesAvatar()
   const { redirectToCheckout } = useBillingActions()
   const router = useRouter()
+  const { mutate: updateWorkspaceMutation } = useMutation(
+    workspaceWizardUpdateWorkspaceMutation
+  )
 
   const setState = (initialState: WorkspaceWizardState) => {
     state.value = initialState
@@ -75,7 +80,7 @@ export const useWorkspacesWizard = () => {
       state.value.plan !== PaidWorkspacePlans.Starter &&
       state.value.billingInterval === BillingInterval.Monthly
 
-    const newWorkspace = await createWorkspace(
+    const newWorkspaceResult = await createWorkspace(
       {
         name: state.value.name,
         slug: state.value.slug,
@@ -86,24 +91,41 @@ export const useWorkspacesWizard = () => {
     )
 
     if (
-      newWorkspace?.data?.workspaceMutations.create &&
-      !newWorkspace?.errors &&
+      newWorkspaceResult?.data?.workspaceMutations.create &&
+      !newWorkspaceResult?.errors &&
       needsCheckout
     ) {
       // Add workspace ID to URL, in case the user comes back from Stripe
       router.replace({
         query: {
-          workspaceId: newWorkspace.data.workspaceMutations.create.id,
+          workspaceId: newWorkspaceResult.data.workspaceMutations.create.id,
           stage: 'checkout'
         }
       })
 
-      // Go to Stripe
-      redirectToCheckout({
-        plan: state.value.plan as unknown as PaidWorkspacePlans,
-        cycle: state.value.billingInterval,
-        workspaceId: newWorkspace.data.workspaceMutations.create.id
-      })
+      // Update the workspace state, we need this in case the user comes back from Stripe or drops out of the checkout
+      const updateWorkspaceResult = await updateWorkspaceMutation({
+        input: {
+          completed: false,
+          state: {
+            ...state.value,
+            // Remove placeholder invites
+            invites: state.value.invites.filter((invite) => !!invite.email)
+          },
+          workspaceId: newWorkspaceResult.data.workspaceMutations.create.id
+        }
+      }).catch(convertThrowIntoFetchResult)
+
+      if (updateWorkspaceResult?.data) {
+        // Go to Stripe
+        redirectToCheckout({
+          plan: state.value.plan as unknown as PaidWorkspacePlans,
+          cycle: state.value.billingInterval,
+          workspaceId: newWorkspaceResult.data.workspaceMutations.create.id
+        })
+      } else {
+        // TODO: we have nothing here..
+      }
     }
   }
 

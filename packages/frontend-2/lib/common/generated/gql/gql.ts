@@ -348,6 +348,7 @@ const documents = {
     "\n  mutation ProcessWorkspaceInvite($input: WorkspaceInviteUseInput!) {\n    workspaceMutations {\n      invites {\n        use(input: $input)\n      }\n    }\n  }\n": types.ProcessWorkspaceInviteDocument,
     "\n  mutation SetDefaultWorkspaceRegion($workspaceId: String!, $regionKey: String!) {\n    workspaceMutations {\n      setDefaultRegion(workspaceId: $workspaceId, regionKey: $regionKey) {\n        id\n        defaultRegion {\n          id\n          ...SettingsWorkspacesRegionsSelect_ServerRegionItem\n        }\n      }\n    }\n  }\n": types.SetDefaultWorkspaceRegionDocument,
     "\n  mutation DeleteWorkspaceSsoProvider($workspaceId: String!) {\n    workspaceMutations {\n      deleteSsoProvider(workspaceId: $workspaceId)\n    }\n  }\n": types.DeleteWorkspaceSsoProviderDocument,
+    "\n  mutation WorkspaceWizardUpdateWorkspace($input: WorkspaceCreationStateInput!) {\n    workspaceMutations {\n      updateCreationState(input: $input)\n    }\n  }\n": types.WorkspaceWizardUpdateWorkspaceDocument,
     "\n  query WorkspaceAccessCheck($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      id\n    }\n  }\n": types.WorkspaceAccessCheckDocument,
     "\n  query WorkspacePageQuery(\n    $workspaceSlug: String!\n    $invitesFilter: PendingWorkspaceCollaboratorsFilter\n    $token: String\n  ) {\n    workspaceBySlug(slug: $workspaceSlug) {\n      ...WorkspaceProjectList_Workspace\n    }\n    workspaceInvite(\n      workspaceId: $workspaceSlug\n      token: $token\n      options: { useSlug: true }\n    ) {\n      id\n      ...WorkspaceInviteBanner_PendingWorkspaceCollaborator\n      ...WorkspaceInviteBlock_PendingWorkspaceCollaborator\n    }\n  }\n": types.WorkspacePageQueryDocument,
     "\n  query WorkspaceProjectsQuery(\n    $workspaceSlug: String!\n    $filter: WorkspaceProjectsFilter\n    $cursor: String\n  ) {\n    workspaceBySlug(slug: $workspaceSlug) {\n      id\n      projects(filter: $filter, cursor: $cursor, limit: 10) {\n        ...WorkspaceProjectList_ProjectCollection\n      }\n    }\n  }\n": types.WorkspaceProjectsQueryDocument,
@@ -1724,6 +1725,10 @@ export function graphql(source: "\n  mutation SetDefaultWorkspaceRegion($workspa
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  mutation DeleteWorkspaceSsoProvider($workspaceId: String!) {\n    workspaceMutations {\n      deleteSsoProvider(workspaceId: $workspaceId)\n    }\n  }\n"): (typeof documents)["\n  mutation DeleteWorkspaceSsoProvider($workspaceId: String!) {\n    workspaceMutations {\n      deleteSsoProvider(workspaceId: $workspaceId)\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  mutation WorkspaceWizardUpdateWorkspace($input: WorkspaceCreationStateInput!) {\n    workspaceMutations {\n      updateCreationState(input: $input)\n    }\n  }\n"): (typeof documents)["\n  mutation WorkspaceWizardUpdateWorkspace($input: WorkspaceCreationStateInput!) {\n    workspaceMutations {\n      updateCreationState(input: $input)\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
