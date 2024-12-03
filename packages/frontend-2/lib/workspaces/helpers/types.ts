@@ -36,6 +36,7 @@ export type WorkspaceWizardState = {
   invites: { id: string; email: string }[]
   plan: PaidWorkspacePlans | null
   billingInterval: BillingInterval | null
+  id: string | null
 }
 
 export enum WizardSteps {

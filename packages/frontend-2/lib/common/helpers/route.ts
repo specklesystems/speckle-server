@@ -71,6 +71,8 @@ export const automationFunctionRoute = (functionId: string) =>
 
 export const workspaceRoute = (slug: string) => `/workspaces/${slug}`
 
+export const workspaceCreateRoute = (slug: string) => `/workspaces/${slug}/create`
+
 export const workspaceFunctionsRoute = (slug: string) => `/workspaces/${slug}/functions`
 
 const buildNavigationComposable = (route: string) => () => {

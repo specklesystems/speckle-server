@@ -5,8 +5,8 @@ import { useCreateWorkspace } from '~/lib/workspaces/composables/management'
 import { useWorkspacesAvatar } from '~/lib/workspaces/composables/avatar'
 import { useBillingActions } from '~/lib/billing/composables/actions'
 import { workspaceWizardUpdateWorkspaceMutation } from '~/lib/workspaces/graphql/mutations'
-import { useMutation } from '@vue/apollo-composable'
-
+import { useMutation, useApolloClient } from '@vue/apollo-composable'
+import { workspaceRoute } from '~/lib/common/helpers/route'
 const state = ref<WorkspaceWizardState>({
   name: '',
   slug: '',
@@ -16,7 +16,8 @@ const state = ref<WorkspaceWizardState>({
     { id: nanoid(), email: '' }
   ],
   plan: null,
-  billingInterval: BillingInterval.Monthly
+  billingInterval: BillingInterval.Monthly,
+  id: null
 })
 
 const currentStepIndex = ref(0)
@@ -37,6 +38,7 @@ export const useWorkspacesWizard = () => {
   const { mutate: updateWorkspaceMutation } = useMutation(
     workspaceWizardUpdateWorkspaceMutation
   )
+  const { client: apollo } = useApolloClient()
 
   const setState = (initialState: WorkspaceWizardState) => {
     state.value = initialState
@@ -79,31 +81,35 @@ export const useWorkspacesWizard = () => {
     const needsCheckout =
       state.value.plan !== PaidWorkspacePlans.Starter &&
       state.value.billingInterval === BillingInterval.Monthly
+    const isNewWorkspace = !state.value.id
+    let newWorkspaceId = ''
 
-    const newWorkspaceResult = await createWorkspace(
-      {
-        name: state.value.name,
-        slug: state.value.slug,
-        defaultLogoIndex: generateDefaultLogoIndex() // We will get rid of this
-      },
-      { navigateOnSuccess: !needsCheckout, hideNotifications: needsCheckout },
-      { source: 'wizard' }
-    )
+    if (isNewWorkspace) {
+      const newWorkspaceResult = await createWorkspace(
+        {
+          name: state.value.name,
+          slug: state.value.slug,
+          defaultLogoIndex: generateDefaultLogoIndex() // We will get rid of this
+        },
+        { navigateOnSuccess: !needsCheckout, hideNotifications: needsCheckout },
+        { source: 'wizard' }
+      )
 
-    if (
-      newWorkspaceResult?.data?.workspaceMutations.create &&
-      !newWorkspaceResult?.errors &&
-      needsCheckout
-    ) {
+      if (
+        !newWorkspaceResult?.data?.workspaceMutations.create ||
+        newWorkspaceResult?.errors
+      ) {
+        return
+      } else {
+        newWorkspaceId = newWorkspaceResult.data.workspaceMutations.create.id
+      }
+    }
+
+    if (needsCheckout) {
       // Add workspace ID to URL, in case the user comes back from Stripe
-      router.replace({
-        query: {
-          workspaceId: newWorkspaceResult.data.workspaceMutations.create.id,
-          stage: 'checkout'
-        }
-      })
+      router.replace({ query: { workspaceId: newWorkspaceId } })
 
-      // Update the workspace state, we need this in case the user comes back from Stripe or drops out of the checkout
+      // Update the workspace state, in case the user comes back from Stripe or drops out of the checkout
       const updateWorkspaceResult = await updateWorkspaceMutation({
         input: {
           completed: false,
@@ -112,19 +118,50 @@ export const useWorkspacesWizard = () => {
             // Remove placeholder invites
             invites: state.value.invites.filter((invite) => !!invite.email)
           },
-          workspaceId: newWorkspaceResult.data.workspaceMutations.create.id
+          workspaceId: state.value.id ?? newWorkspaceId
         }
       }).catch(convertThrowIntoFetchResult)
 
-      if (updateWorkspaceResult?.data) {
+      if (updateWorkspaceResult?.data?.workspaceMutations.updateCreationState) {
         // Go to Stripe
         redirectToCheckout({
           plan: state.value.plan as unknown as PaidWorkspacePlans,
           cycle: state.value.billingInterval,
-          workspaceId: newWorkspaceResult.data.workspaceMutations.create.id
+          workspaceId: state.value.id ?? newWorkspaceId
         })
-      } else {
-        // TODO: we have nothing here..
+      }
+    } else {
+      // Update the workspace state to completed
+      const updateWorkspaceResult = await apollo
+        .mutate({
+          mutation: workspaceWizardUpdateWorkspaceMutation,
+          variables: {
+            input: {
+              completed: true,
+              state: {},
+              workspaceId: state.value.id ?? newWorkspaceId
+            }
+          },
+          update: (cache, res) => {
+            const { data } = res
+            if (!data?.workspaceMutations) return
+
+            cache.modify({
+              id: getCacheId('Workspace', state.value.id ?? newWorkspaceId),
+              fields: {
+                creationState: () => {
+                  return {
+                    completed: true
+                  }
+                }
+              }
+            })
+          }
+        })
+        .catch(convertThrowIntoFetchResult)
+
+      if (updateWorkspaceResult?.data?.workspaceMutations.updateCreationState) {
+        router.push(workspaceRoute(state.value.slug))
       }
     }
   }

@@ -65,7 +65,8 @@ const { loading, onResult } = useQuery(
 onResult((result) => {
   // If there is an existing workspace, we need to show the correct state
   const creationState = result.data?.workspace.creationState
-  if (!creationState?.completed && creationState?.state) {
+
+  if (creationState?.completed === false && !!creationState?.state) {
     // TODO: Better typeguard
     const state = creationState.state as WorkspaceWizardState
     // If the users comes back from Stripe, we need to go to the last relevant step and show an error
@@ -79,12 +80,13 @@ onResult((result) => {
     }
 
     setState({
+      id: props.workspaceId ?? (route.query.workspaceId as string),
       name: state.name,
       slug: state.slug,
       // TODO: Can be improved
       // We need to add placeholder invites to the state, so we can show the correct number of invites in the UI
       invites: [
-        ...state.invites,
+        ...(state.invites || []),
         ...(Array(Math.max(0, 3 - (state.invites?.length || 0))).fill({
           id: '',
           email: ''

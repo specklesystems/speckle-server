@@ -81,12 +81,7 @@
                 <LayoutSidebarMenuGroupItem
                   :label="item.label"
                   :active="isActive(item.to)"
-                  :tag="
-                    item.plan?.status === WorkspacePlanStatuses.Trial ||
-                    !item.plan?.status
-                      ? 'TRIAL'
-                      : undefined
-                  "
+                  :tag="getTagText(item.plan?.status, item.creationState?.completed)"
                   class="!pl-1"
                 >
                   <template #icon>
@@ -186,6 +181,7 @@ import {
   projectsRoute,
   workspaceRoute,
   workspacesRoute,
+  workspaceCreateRoute,
   downloadManagerUrl
 } from '~/lib/common/helpers/route'
 import { useRoute } from 'vue-router'
@@ -241,11 +237,19 @@ const workspacesItems = computed(() =>
     ? workspaceResult.value.activeUser.workspaces.items.map((workspace) => ({
         label: workspace.name,
         id: workspace.id,
-        to: workspaceRoute(workspace.slug),
+        to:
+          workspace.creationState?.completed === false
+            ? workspaceCreateRoute(workspace.id)
+            : workspaceRoute(workspace.slug),
         logo: workspace.logo,
         defaultLogoIndex: workspace.defaultLogoIndex,
+        slug: workspace.slug,
+        name: workspace.name,
         plan: {
           status: workspace.plan?.status
+        },
+        creationState: {
+          completed: workspace.creationState?.completed
         }
       }))
     : []
@@ -292,5 +296,13 @@ const handleIntroducingWorkspacesClick = () => {
   mixpanel.track('Clicked Link to Workspace Explainer', {
     source: 'sidebar'
   })
+}
+
+const getTagText = (status?: WorkspacePlanStatuses, completed?: boolean) => {
+  return completed === false
+    ? 'IN PROGRESS'
+    : status === WorkspacePlanStatuses.Trial || !status
+    ? 'TRIAL'
+    : undefined
 }
 </script>
