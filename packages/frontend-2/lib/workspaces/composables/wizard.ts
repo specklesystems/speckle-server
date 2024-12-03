@@ -61,9 +61,11 @@ export const useWorkspacesWizard = () => {
   }
 
   const goToStep = (step: WizardSteps) => {
-    const index = +Object.keys(stepComponents.value).find(
-      (key) => stepComponents.value[key] === step
-    )!
+    const index = Number(
+      Object.keys(stepComponents.value).find(
+        (key) => stepComponents.value[Number(key)] === step
+      )
+    )
     if (!isNaN(index)) currentStepIndex.value = index
   }
 
@@ -146,7 +148,7 @@ export const useWorkspacesWizard = () => {
       if (updateWorkspaceResult?.data?.workspaceMutations.updateCreationState) {
         redirectToCheckout({
           plan: state.value.plan as unknown as PaidWorkspacePlans,
-          cycle: state.value.billingInterval,
+          cycle: state.value.billingInterval as BillingInterval,
           workspaceId: state.value.id ?? newWorkspaceId
         })
       }
