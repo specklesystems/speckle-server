@@ -82,14 +82,12 @@
                       ? 'Log in with your SSO provider to access this page'
                       : workspaceMenuItem.tooltipText
                   "
-                  :disabled="
-                    workspaceMenuItem.disabled || needsSsoSession(workspaceItem, itemKey as string)
-                  "
+                  :disabled="!isAdmin && (workspaceMenuItem.disabled || needsSsoSession(workspaceItem, itemKey as string))"
                   extra-padding
                   @click="() => {
-                    if (workspaceMenuItem.disabled || needsSsoSession(workspaceItem, itemKey as string)) return
-                    onWorkspaceMenuItemClick(workspaceItem.id, `${itemKey}`)
-                  }"
+    if (!isAdmin && (workspaceMenuItem.disabled || needsSsoSession(workspaceItem, itemKey as string))) return
+    onWorkspaceMenuItemClick(workspaceItem.id, `${itemKey}`)
+  }"
                 />
               </template>
             </LayoutSidebarMenuGroup>
