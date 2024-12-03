@@ -20,35 +20,36 @@ export const pricingPlansConfig: {
   features: {
     [PlanFeaturesList.Workspaces]: {
       name: PlanFeaturesList.Workspaces,
-      description: ''
+      description: 'A shared space for your team and projects'
     },
     [PlanFeaturesList.RoleManagement]: {
       name: PlanFeaturesList.RoleManagement,
-      description: ''
+      description: "Control individual members' access and edit rights"
     },
     [PlanFeaturesList.GuestUsers]: {
       name: PlanFeaturesList.GuestUsers,
-      description: ''
+      description: 'Give guests access to specific projects from £15/month/guest'
     },
     [PlanFeaturesList.PrivateAutomateFunctions]: {
       name: PlanFeaturesList.PrivateAutomateFunctions,
-      description: ''
+      description:
+        'Create and manage private automation functions securely within your workspace'
     },
     [PlanFeaturesList.DomainSecurity]: {
       name: PlanFeaturesList.DomainSecurity,
-      description: ''
+      description: 'Require workspace members to use a verified company email'
     },
     [PlanFeaturesList.SSO]: {
       name: PlanFeaturesList.SSO,
-      description: ''
+      description: 'Require workspace members to log in with your SSO provider'
     },
     [PlanFeaturesList.CustomDataRegion]: {
       name: PlanFeaturesList.CustomDataRegion,
-      description: ''
+      description: "Store the workspace's data in a custom region of choice"
     },
     [PlanFeaturesList.PrioritySupport]: {
       name: PlanFeaturesList.PrioritySupport,
-      description: ''
+      description: 'Personal and fast support'
     }
   },
   plans: {
