@@ -232,11 +232,11 @@ const seatPrice = computed(() =>
     : seatPrices.value[WorkspacePlans.Starter][BillingInterval.Monthly]
 )
 const nextPaymentDue = computed(() =>
-  currentPlan.value
+  currentPlan.value && isActivePlan.value
     ? isPurchasablePlan.value
       ? dayjs(subscription.value?.currentBillingCycleEnd).format('MMMM D, YYYY')
       : 'Never'
-    : dayjs().add(30, 'days').format('MMMM D, YYYY')
+    : dayjs().add(31, 'days').format('MMMM D, YYYY')
 )
 const isAdmin = computed(() => workspace.value?.role === Roles.Workspace.Admin)
 const guestSeatCount = computed(() =>
