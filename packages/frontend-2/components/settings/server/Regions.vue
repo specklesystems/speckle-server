@@ -8,7 +8,7 @@
       <div class="flex flex-col space-y-6">
         <div class="flex flex-row-reverse">
           <div v-tippy="disabledMessage">
-            <FormButton :disabled="!canCreateRegion" @click="onCreate">
+            <FormButton :disabled="isCreateDisabled" @click="onCreate">
               Create
             </FormButton>
           </div>
@@ -55,10 +55,12 @@ const tableItems = computed(() => result.value?.serverInfo?.multiRegion?.regions
 const availableKeys = computed(
   () => result.value?.serverInfo?.multiRegion?.availableKeys || []
 )
-const canCreateRegion = computed(() => availableKeys.value.length > 0)
-const disabledMessage = computed(() => {
-  if (canCreateRegion.value) return undefined
 
+const canCreateRegion = computed(() => availableKeys.value.length > 0)
+const isCreateDisabled = computed(() => !canCreateRegion.value)
+
+const disabledMessage = computed(() => {
+  if (!isCreateDisabled.value) return undefined
   if (!availableKeys.value.length) return 'No available region keys'
 
   return undefined

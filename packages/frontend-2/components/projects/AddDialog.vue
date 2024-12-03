@@ -88,7 +88,6 @@ graphql(`
   fragment ProjectsAddDialog_Workspace on Workspace {
     id
     ...ProjectsWorkspaceSelect_Workspace
-    ...ProjectsNewWorkspace_Workspace
   }
 `)
 

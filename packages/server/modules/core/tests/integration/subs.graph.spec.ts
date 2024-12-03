@@ -506,9 +506,6 @@ describe('Core GraphQL Subscriptions (New)', () => {
             }
           )
           await meSubClient.waitForReadiness()
-          await meSubClient.waitForReadiness()
-          await meSubClient.waitForReadiness()
-          await meSubClient.waitForReadiness()
 
           await addOrUpdateStreamCollaborator(
             otherGuysProj.id,

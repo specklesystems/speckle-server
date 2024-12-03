@@ -567,7 +567,7 @@ Generate the environment variables for Speckle server and Speckle objects deploy
   value: {{ .Values.featureFlags.workspacesModuleEnabled | quote }}
 
 - name: FF_WORKSPACES_SSO_ENABLED
-  value: {{ .Values.featureFlags.workspaceSsoEnabled | quote }}
+  value: {{ .Values.featureFlags.workspacesSSOEnabled | quote }}
 
 {{- if .Values.featureFlags.workspacesModuleEnabled }}
 - name: LICENSE_TOKEN

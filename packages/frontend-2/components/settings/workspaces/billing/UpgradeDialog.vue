@@ -9,7 +9,7 @@
       <p>You are about to upgrade your workspace to the following plan:</p>
       <CommonCard class="font-medium bg-foundation !p-3 my-2">
         Workspace {{ startCase(plan) }} plan,
-        {{ billingInterval === BillingInterval.Yearly ? 'anual' : 'monthly' }}
+        {{ billingInterval === BillingInterval.Yearly ? 'annual' : 'monthly' }}
       </CommonCard>
       <p>Do you want to proceed?</p>
     </div>

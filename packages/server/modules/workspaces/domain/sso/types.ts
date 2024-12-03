@@ -49,3 +49,7 @@ export type OidcProviderAttributes = {
     grantTypes: string[]
   }
 }
+
+export type SsoSessionState = {
+  isValidationFlow: boolean
+}

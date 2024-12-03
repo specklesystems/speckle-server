@@ -543,8 +543,8 @@ jobs:
           working_directory: 'packages/server'
 
       - run:
-          name: Checking for GQL schema breakages against speckle.xyz
-          command: 'yarn rover graph check Speckle-Server@speckle-xyz --schema ./introspected-schema.graphql'
+          name: Checking for GQL schema breakages against app.speckle.systems
+          command: 'yarn rover graph check Speckle-Server@app-speckle-systems --schema ./introspected-schema.graphql'
           working_directory: 'packages/server'
 
       - run:

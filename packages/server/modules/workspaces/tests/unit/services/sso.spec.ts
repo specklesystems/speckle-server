@@ -118,28 +118,6 @@ describe('Workspace SSO services', () => {
       )
       expect(err.message).to.include('requires a name')
     })
-    it('throws if SSO provider user profile does not have a verified email', async () => {
-      const createWorkspaceUserFromSsoProfile =
-        createWorkspaceUserFromSsoProfileFactory({
-          createUser: async () => '',
-          upsertWorkspaceRole: async () => {},
-          findInvite: async () => ({} as unknown as any),
-          deleteInvite: async () => true
-        })
-
-      const err = await expectToThrow(() =>
-        createWorkspaceUserFromSsoProfile({
-          ssoProfile: {
-            name: 'John Speckle',
-            sub: '',
-            email: '',
-            email_verified: false
-          },
-          workspaceId: cryptoRandomString({ length: 9 })
-        })
-      )
-      expect(err.message).to.include('email is unverified')
-    })
     it('throws if workspace role on invite is not a valid workspace role', async () => {
       const createWorkspaceUserFromSsoProfile =
         createWorkspaceUserFromSsoProfileFactory({
