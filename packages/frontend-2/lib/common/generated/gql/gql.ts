@@ -98,9 +98,10 @@ const documents = {
     "\n  fragment ProjectsDashboardHeaderProjects_User on User {\n    projectInvites {\n      ...ProjectsInviteBanner\n    }\n  }\n": types.ProjectsDashboardHeaderProjects_UserFragmentDoc,
     "\n  fragment ProjectsDashboardHeaderWorkspaces_User on User {\n    discoverableWorkspaces {\n      ...WorkspaceInviteDiscoverableWorkspaceBanner_LimitedWorkspace\n    }\n    workspaceInvites {\n      ...WorkspaceInviteBanner_PendingWorkspaceCollaborator\n    }\n  }\n": types.ProjectsDashboardHeaderWorkspaces_UserFragmentDoc,
     "\n  fragment ProjectsHiddenProjectWarning_User on User {\n    id\n    expiredSsoSessions {\n      id\n      slug\n      name\n      logo\n      defaultLogoIndex\n    }\n  }\n": types.ProjectsHiddenProjectWarning_UserFragmentDoc,
-    "\n  fragment ProjectsMoveToWorkspaceDialog_Workspace on Workspace {\n    id\n    role\n    name\n    defaultLogoIndex\n    logo\n  }\n": types.ProjectsMoveToWorkspaceDialog_WorkspaceFragmentDoc,
+    "\n  fragment ProjectsMoveToWorkspaceDialog_Workspace on Workspace {\n    id\n    role\n    name\n    defaultLogoIndex\n    logo\n    ...WorkspaceHasCustomDataResidency_Workspace\n    ...ProjectsWorkspaceSelect_Workspace\n  }\n": types.ProjectsMoveToWorkspaceDialog_WorkspaceFragmentDoc,
     "\n  fragment ProjectsMoveToWorkspaceDialog_User on User {\n    workspaces {\n      items {\n        ...ProjectsMoveToWorkspaceDialog_Workspace\n      }\n    }\n  }\n": types.ProjectsMoveToWorkspaceDialog_UserFragmentDoc,
     "\n  fragment ProjectsMoveToWorkspaceDialog_Project on Project {\n    id\n    name\n    modelCount: models(limit: 0) {\n      totalCount\n    }\n    versions(limit: 0) {\n      totalCount\n    }\n  }\n": types.ProjectsMoveToWorkspaceDialog_ProjectFragmentDoc,
+    "\n  query ProjectsMoveToWorkspaceDialog {\n    activeUser {\n      id\n      ...ProjectsMoveToWorkspaceDialog_User\n    }\n  }\n": types.ProjectsMoveToWorkspaceDialogDocument,
     "\n  fragment ProjectsWorkspaceSelect_Workspace on Workspace {\n    id\n    role\n    name\n    defaultLogoIndex\n    logo\n  }\n": types.ProjectsWorkspaceSelect_WorkspaceFragmentDoc,
     "\n  fragment ProjectsInviteBanner on PendingStreamCollaborator {\n    id\n    invitedBy {\n      ...LimitedUserAvatar\n    }\n    projectId\n    projectName\n    token\n    user {\n      id\n    }\n  }\n": types.ProjectsInviteBannerFragmentDoc,
     "\n  fragment SettingsDialog_Workspace on Workspace {\n    ...WorkspaceAvatar_Workspace\n    ...SettingsMenu_Workspace\n    id\n    slug\n    role\n    name\n    plan {\n      status\n    }\n  }\n": types.SettingsDialog_WorkspaceFragmentDoc,
@@ -341,6 +342,8 @@ const documents = {
     "\n  fragment WorkspaceMixpanelUpdateGroup_WorkspaceCollaborator on WorkspaceCollaborator {\n    id\n    role\n  }\n": types.WorkspaceMixpanelUpdateGroup_WorkspaceCollaboratorFragmentDoc,
     "\n  fragment WorkspaceMixpanelUpdateGroup_Workspace on Workspace {\n    id\n    name\n    description\n    domainBasedMembershipProtectionEnabled\n    discoverabilityEnabled\n    plan {\n      status\n      name\n    }\n    team {\n      totalCount\n      items {\n        ...WorkspaceMixpanelUpdateGroup_WorkspaceCollaborator\n      }\n    }\n  }\n": types.WorkspaceMixpanelUpdateGroup_WorkspaceFragmentDoc,
     "\n      subscription OnWorkspaceProjectsUpdate($slug: String!) {\n        workspaceProjectsUpdated(workspaceId: null, workspaceSlug: $slug) {\n          projectId\n          workspaceId\n          type\n          project {\n            ...ProjectDashboardItem\n          }\n        }\n      }\n    ": types.OnWorkspaceProjectsUpdateDocument,
+    "\n  fragment WorkspaceHasCustomDataResidency_Workspace on Workspace {\n    id\n    defaultRegion {\n      id\n      name\n    }\n  }\n": types.WorkspaceHasCustomDataResidency_WorkspaceFragmentDoc,
+    "\n  query CheckProjectWorkspaceDataResidency($projectId: String!) {\n    project(id: $projectId) {\n      id\n      workspace {\n        ...WorkspaceHasCustomDataResidency_Workspace\n      }\n    }\n  }\n": types.CheckProjectWorkspaceDataResidencyDocument,
     "\n    fragment WorkspaceSsoStatus_Workspace on Workspace {\n      id\n      sso {\n        provider {\n          id\n          name\n          clientId\n          issuerUrl\n        }\n        session {\n          validUntil\n        }\n      }\n    }\n  ": types.WorkspaceSsoStatus_WorkspaceFragmentDoc,
     "\n    fragment WorkspaceSsoStatus_User on User {\n      expiredSsoSessions {\n        id\n        slug\n      }\n    }\n  ": types.WorkspaceSsoStatus_UserFragmentDoc,
     "\n  mutation UpdateRole($input: WorkspaceRoleUpdateInput!) {\n    workspaceMutations {\n      updateRole(input: $input) {\n        team {\n          items {\n            id\n            role\n          }\n        }\n      }\n    }\n  }\n": types.UpdateRoleDocument,
@@ -726,7 +729,7 @@ export function graphql(source: "\n  fragment ProjectsHiddenProjectWarning_User 
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment ProjectsMoveToWorkspaceDialog_Workspace on Workspace {\n    id\n    role\n    name\n    defaultLogoIndex\n    logo\n  }\n"): (typeof documents)["\n  fragment ProjectsMoveToWorkspaceDialog_Workspace on Workspace {\n    id\n    role\n    name\n    defaultLogoIndex\n    logo\n  }\n"];
+export function graphql(source: "\n  fragment ProjectsMoveToWorkspaceDialog_Workspace on Workspace {\n    id\n    role\n    name\n    defaultLogoIndex\n    logo\n    ...WorkspaceHasCustomDataResidency_Workspace\n    ...ProjectsWorkspaceSelect_Workspace\n  }\n"): (typeof documents)["\n  fragment ProjectsMoveToWorkspaceDialog_Workspace on Workspace {\n    id\n    role\n    name\n    defaultLogoIndex\n    logo\n    ...WorkspaceHasCustomDataResidency_Workspace\n    ...ProjectsWorkspaceSelect_Workspace\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -735,6 +738,10 @@ export function graphql(source: "\n  fragment ProjectsMoveToWorkspaceDialog_User
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  fragment ProjectsMoveToWorkspaceDialog_Project on Project {\n    id\n    name\n    modelCount: models(limit: 0) {\n      totalCount\n    }\n    versions(limit: 0) {\n      totalCount\n    }\n  }\n"): (typeof documents)["\n  fragment ProjectsMoveToWorkspaceDialog_Project on Project {\n    id\n    name\n    modelCount: models(limit: 0) {\n      totalCount\n    }\n    versions(limit: 0) {\n      totalCount\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query ProjectsMoveToWorkspaceDialog {\n    activeUser {\n      id\n      ...ProjectsMoveToWorkspaceDialog_User\n    }\n  }\n"): (typeof documents)["\n  query ProjectsMoveToWorkspaceDialog {\n    activeUser {\n      id\n      ...ProjectsMoveToWorkspaceDialog_User\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -1695,6 +1702,14 @@ export function graphql(source: "\n  fragment WorkspaceMixpanelUpdateGroup_Works
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n      subscription OnWorkspaceProjectsUpdate($slug: String!) {\n        workspaceProjectsUpdated(workspaceId: null, workspaceSlug: $slug) {\n          projectId\n          workspaceId\n          type\n          project {\n            ...ProjectDashboardItem\n          }\n        }\n      }\n    "): (typeof documents)["\n      subscription OnWorkspaceProjectsUpdate($slug: String!) {\n        workspaceProjectsUpdated(workspaceId: null, workspaceSlug: $slug) {\n          projectId\n          workspaceId\n          type\n          project {\n            ...ProjectDashboardItem\n          }\n        }\n      }\n    "];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  fragment WorkspaceHasCustomDataResidency_Workspace on Workspace {\n    id\n    defaultRegion {\n      id\n      name\n    }\n  }\n"): (typeof documents)["\n  fragment WorkspaceHasCustomDataResidency_Workspace on Workspace {\n    id\n    defaultRegion {\n      id\n      name\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query CheckProjectWorkspaceDataResidency($projectId: String!) {\n    project(id: $projectId) {\n      id\n      workspace {\n        ...WorkspaceHasCustomDataResidency_Workspace\n      }\n    }\n  }\n"): (typeof documents)["\n  query CheckProjectWorkspaceDataResidency($projectId: String!) {\n    project(id: $projectId) {\n      id\n      workspace {\n        ...WorkspaceHasCustomDataResidency_Workspace\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
