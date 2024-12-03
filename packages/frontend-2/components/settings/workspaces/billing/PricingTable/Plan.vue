@@ -132,15 +132,11 @@ const canUpgradeToPlan = computed(() => {
 
   return allowedUpgrades[props.currentPlan.name].includes(props.plan.name)
 })
+
 const statusIsTrial = computed(
   () => props.currentPlan?.status === WorkspacePlanStatuses.Trial || !props.currentPlan
 )
-const buttonColor = computed(() => {
-  if (statusIsTrial.value) {
-    return props.plan.name === WorkspacePlans.Starter ? 'primary' : 'outline'
-  }
-  return 'outline'
-})
+
 const isDowngrade = computed(() => {
   return !canUpgradeToPlan.value && props.currentPlan?.name !== props.plan.name
 })
@@ -166,22 +162,27 @@ const isMatchingInterval = computed(
     props.activeBillingInterval ===
     (props.yearlyIntervalSelected ? BillingInterval.Yearly : BillingInterval.Monthly)
 )
+
+const isCurrentPlan = computed(
+  () => isMatchingInterval.value && props.currentPlan?.name === props.plan.name
+)
+
 const isSelectable = computed(() => {
   // Always enable buttons during trial
   if (statusIsTrial.value) return true
 
-  // Disable if user is already on this plan with same billing interval
-  if (isMatchingInterval.value && props.currentPlan?.name === props.plan.name)
-    return false
+  // Disable if current plan
+  if (isCurrentPlan.value) return false
+
+  // Never allow annual to monthly changes
+  if (isAnnualToMonthly.value) return false
 
   // Handle billing interval changes
   if (!isMatchingInterval.value) {
-    const isCurrentPlan = props.currentPlan?.name === props.plan.name
-    const isMonthlyToYearly =
-      props.yearlyIntervalSelected &&
-      props.activeBillingInterval === BillingInterval.Monthly
     // Allow yearly upgrades from monthly plans
-    if (isMonthlyToYearly) return isCurrentPlan || canUpgradeToPlan.value
+    if (isMonthlyToAnnual.value) {
+      return props.currentPlan?.name === props.plan.name || canUpgradeToPlan.value
+    }
     // Never allow switching to monthly if currently on yearly billing
     if (props.activeBillingInterval === BillingInterval.Yearly) return false
     // Allow monthly plan changes only for upgrades
@@ -191,17 +192,25 @@ const isSelectable = computed(() => {
   // Allow upgrades to higher tier plans
   return canUpgradeToPlan.value
 })
+
+const buttonColor = computed(() => {
+  if (statusIsTrial.value) {
+    return props.plan.name === WorkspacePlans.Starter ? 'primary' : 'outline'
+  }
+  return 'outline'
+})
+
 const buttonText = computed(() => {
   // Trial plan case
   if (statusIsTrial.value) {
     return `Subscribe to ${startCase(props.plan.name)}`
   }
   // Current plan case
-  if (isMatchingInterval.value && props.currentPlan?.name === props.plan.name) {
+  if (isCurrentPlan.value) {
     return 'Current plan'
   }
   // Billing interval and lower plan case
-  if (!canUpgradeToPlan.value && props.currentPlan?.name !== props.plan.name) {
+  if (isDowngrade.value) {
     return `Downgrade to ${props.plan.name}`
   }
   // Billing interval change and current plan
