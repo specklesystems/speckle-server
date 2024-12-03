@@ -1,6 +1,7 @@
 import type {
   BillingInterval,
-  PaidWorkspacePlans
+  PaidWorkspacePlans,
+  SettingsWorkspacesRegionsSelect_ServerRegionItemFragment
 } from '~/lib/common/generated/gql/graphql'
 
 export type SsoFormValues = {
@@ -37,6 +38,7 @@ export type WorkspaceWizardState = {
   plan: PaidWorkspacePlans | null
   billingInterval: BillingInterval | null
   id: string | null
+  region: SettingsWorkspacesRegionsSelect_ServerRegionItemFragment | null
 }
 
 export enum WizardSteps {

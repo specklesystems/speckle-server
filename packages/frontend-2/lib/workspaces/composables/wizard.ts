@@ -18,7 +18,8 @@ const state = ref<WorkspaceWizardState>({
   ],
   plan: null,
   billingInterval: BillingInterval.Monthly,
-  id: null
+  id: null,
+  region: null
 })
 
 const currentStepIndex = ref(0)

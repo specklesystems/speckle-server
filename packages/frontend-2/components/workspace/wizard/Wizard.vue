@@ -92,6 +92,7 @@ onResult((result) => {
           email: ''
         }) as Array<{ id: string; email: string }>)
       ],
+      region: state.region,
       plan: null, // Force re-select plan
       billingInterval: null // Force re-select billing interval
     })

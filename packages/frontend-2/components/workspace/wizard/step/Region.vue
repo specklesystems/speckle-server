@@ -15,7 +15,9 @@
           size="lg"
         />
         <div class="flex flex-col gap-3 mt-4 w-full">
-          <FormButton size="lg" full-width submit>Continue</FormButton>
+          <FormButton :disabled="!hasDefaultRegion" size="lg" full-width submit>
+            Continue
+          </FormButton>
           <FormButton
             color="subtle"
             size="lg"
@@ -48,17 +50,21 @@ graphql(`
   }
 `)
 
+// TODO: This is a settings component, we should abstract it
 const defaultRegion = ref<SettingsWorkspacesRegionsSelect_ServerRegionItemFragment>()
 
-const { goToNextStep, goToPreviousStep } = useWorkspacesWizard()
+const { state, goToNextStep, goToPreviousStep } = useWorkspacesWizard()
 const isQueryLoading = useQueryLoading()
 const { result } = useQuery(workspaceWizardRegionQuery)
 
+const hasDefaultRegion = computed(() => !!defaultRegion.value)
 const availableRegions = computed(
   () => result.value?.serverInfo.multiRegion.regions || []
 )
 
 const onSubmit = () => {
+  if (!defaultRegion.value) return
+  state.value.region = defaultRegion.value
   goToNextStep()
 }
 </script>
