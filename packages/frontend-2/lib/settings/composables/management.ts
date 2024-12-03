@@ -88,8 +88,7 @@ export function useAddWorkspaceDomain() {
                     domain: input.domain
                   }
                 ],
-                discoverabilityEnabled:
-                  domains.length === 0 ? true : discoverabilityEnabled,
+                discoverabilityEnabled,
                 domainBasedMembershipProtectionEnabled,
                 hasAccessToSSO
               }
