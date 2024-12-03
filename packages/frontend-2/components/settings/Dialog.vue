@@ -86,12 +86,10 @@
                     workspaceMenuItem.disabled || needsSsoSession(workspaceItem, itemKey as string)
                   "
                   extra-padding
-                  @click="
-                    () =>
-                      workspaceMenuItem.disabled
-                        ? noop
-                        : onWorkspaceMenuItemClick(workspaceItem.id, `${itemKey}`)
-                  "
+                  @click="() => {
+                    if (workspaceMenuItem.disabled || needsSsoSession(workspaceItem, itemKey as string)) return
+                    onWorkspaceMenuItemClick(workspaceItem.id, `${itemKey}`)
+                  }"
                 />
               </template>
             </LayoutSidebarMenuGroup>
