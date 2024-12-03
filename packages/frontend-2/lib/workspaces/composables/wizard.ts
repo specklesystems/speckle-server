@@ -110,7 +110,7 @@ export const useWorkspacesWizard = () => {
     }
 
     const updateCreationStateInput = {
-      completed: !needsCheckout,
+      completed: false,
       state: {
         ...state.value,
         invites: state.value.invites.filter((invite) => !!invite.email)
@@ -176,6 +176,7 @@ export const useWorkspacesWizard = () => {
 
   const resetState = () => {
     state.value = { ...emptyState }
+    currentStepIndex.value = 0
   }
 
   return {

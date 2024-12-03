@@ -28,11 +28,14 @@ import { useMutation, useApolloClient } from '@vue/apollo-composable'
 import { deleteWorkspaceMutation } from '~/lib/settings/graphql/mutations'
 import type { UserWorkspacesArgs, User } from '~/lib/common/generated/gql/graphql'
 import { isUndefined } from 'lodash-es'
+import { useWorkspacesWizard } from '~/lib/workspaces/composables/wizard'
+
 const props = defineProps<{
   workspaceId?: string
 }>()
 const isOpen = defineModel<boolean>('open', { required: true })
 
+const { resetState } = useWorkspacesWizard()
 const { mutate: deleteWorkspace } = useMutation(deleteWorkspaceMutation)
 const { activeUser } = useActiveUser()
 const apollo = useApolloClient().client
@@ -94,6 +97,7 @@ const onConfirm = async () => {
 
   router.push(workspacesRoute)
   isOpen.value = false
+  resetState()
   mixpanel.track('Workspace Creation Canceled', {
     ...(props.workspaceId && {
       // eslint-disable-next-line camelcase

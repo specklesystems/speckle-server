@@ -139,6 +139,10 @@ graphql(`
     projects {
       ...WorkspaceProjectList_ProjectCollection
     }
+    creationState {
+      completed
+      state
+    }
   }
 `)
 
