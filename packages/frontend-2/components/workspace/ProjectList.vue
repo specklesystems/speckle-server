@@ -98,6 +98,7 @@
           v-model:open="showSettingsDialog"
           :target-menu-item="settingsDialogTarget"
           :target-workspace-id="workspace.id"
+          :sso-provider-info="ssoProviderInfo"
         />
         <WorkspaceMoveProjectsDialog
           v-model:open="showMoveProjectsDialog"
@@ -137,6 +138,10 @@ graphql(`
     ...WorkspaceMixpanelUpdateGroup_Workspace
     projects {
       ...WorkspaceProjectList_ProjectCollection
+    }
+    creationState {
+      completed
+      state
     }
   }
 `)
@@ -293,6 +298,21 @@ onResult((queryResult) => {
       title: queryResult.data.workspaceBySlug.name
     })
     validateCheckoutSession(queryResult.data.workspaceBySlug.id)
+  }
+})
+
+const ssoProviderInfo = ref<{
+  providerName: string
+  clientId: string
+  issuerUrl: string
+} | null>(null)
+
+onMounted(() => {
+  const ssoValidationSuccess = route.query?.ssoValidationSuccess
+
+  if (ssoValidationSuccess) {
+    // Open security settings dialog
+    onShowSettingsDialog(SettingMenuKeys.Workspace.Security)
   }
 })
 </script>

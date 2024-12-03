@@ -354,6 +354,7 @@ export function useCreateWorkspace() {
        * Defaults to false.
        */
       navigateOnSuccess: boolean
+      hideNotifications: boolean
     }>,
     eventProperties?: Partial<{
       /**
@@ -400,10 +401,12 @@ export function useCreateWorkspace() {
         workspace_id: res.data?.workspaceMutations.create.id
       })
 
-      triggerNotification({
-        type: ToastNotificationType.Success,
-        title: 'Workspace successfully created'
-      })
+      if (!options?.hideNotifications) {
+        triggerNotification({
+          type: ToastNotificationType.Success,
+          title: 'Workspace successfully created'
+        })
+      }
 
       if (options?.navigateOnSuccess === true) {
         router.push(workspaceRoute(res.data?.workspaceMutations.create.slug))

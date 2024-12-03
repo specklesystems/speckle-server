@@ -121,11 +121,6 @@
         @close="isOpen = false"
       />
     </div>
-
-    <WorkspaceCreateDialog
-      v-model:open="showWorkspaceCreateDialog"
-      event-source="settings"
-    />
   </LayoutDialog>
 </template>
 
@@ -163,6 +158,9 @@ graphql(`
     plan {
       status
     }
+    creationState {
+      completed
+    }
   }
 `)
 
@@ -191,10 +189,12 @@ const { result: workspaceResult } = useQuery(settingsSidebarQuery, null, {
 const { userMenuItems, serverMenuItems, workspaceMenuItems } = useSettingsMenu()
 
 const isMobile = breakpoints.smaller('md')
-const showWorkspaceCreateDialog = ref(false)
 
 const workspaceItems = computed(
-  () => workspaceResult.value?.activeUser?.workspaces.items ?? []
+  () =>
+    workspaceResult.value?.activeUser?.workspaces.items.filter(
+      (item) => item.creationState?.completed !== false // Removed workspaces that are not completely created
+    ) ?? []
 )
 const isAdmin = computed(() => user.value?.role === Roles.Server.Admin)
 const canCreateWorkspace = computed(

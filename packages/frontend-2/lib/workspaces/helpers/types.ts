@@ -1,3 +1,9 @@
+import type {
+  BillingInterval,
+  PaidWorkspacePlans,
+  SettingsWorkspacesRegionsSelect_ServerRegionItemFragment
+} from '~/lib/common/generated/gql/graphql'
+
 export type SsoFormValues = {
   providerName: string
   clientId: string
@@ -23,4 +29,21 @@ export enum WorkspaceSsoErrorCodes {
   PROVIDER_TYPE_NOT_SUPPORTED = 'SSO_PROVIDER_TYPE_NOT_SUPPORTED',
   PROVIDER_EXISTS = 'SSO_PROVIDER_EXISTS_ERROR',
   PROVIDER_MISSING = 'SSO_PROVIDER_MISSING_ERROR'
+}
+
+export type WorkspaceWizardState = {
+  name: string
+  slug: string
+  invites: { id: string; email: string }[]
+  plan: PaidWorkspacePlans | null
+  billingInterval: BillingInterval | null
+  id: string | null
+  region: SettingsWorkspacesRegionsSelect_ServerRegionItemFragment | null
+}
+
+export enum WizardSteps {
+  Details = 'Details',
+  Invites = 'Invites',
+  Pricing = 'Pricing',
+  Region = 'Region'
 }
