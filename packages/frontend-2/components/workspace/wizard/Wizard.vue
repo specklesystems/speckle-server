@@ -1,9 +1,6 @@
 <template>
   <div class="py-3 md:py-6">
-    <CommonLoadingIcon
-      v-if="workspaceId ? loading : false"
-      class="my-10 justify-self-center"
-    />
+    <CommonLoadingIcon v-if="isLoading" class="my-10 justify-self-center" />
     <template v-else>
       <CommonAlert
         v-if="showPaymentError"
@@ -48,11 +45,16 @@ const props = defineProps<{
   workspaceId?: string
 }>()
 
-const { setState, currentStep, goToStep } = useWorkspacesWizard()
+const {
+  setState,
+  currentStep,
+  goToStep,
+  isLoading: wizardIsLoading
+} = useWorkspacesWizard()
 const route = useRoute()
 const showPaymentError = ref(false)
 
-const { loading, onResult } = useQuery(
+const { loading: queryLoading, onResult } = useQuery(
   workspaceWizardQuery,
   () => ({
     workspaceId: props.workspaceId || ''
@@ -60,6 +62,10 @@ const { loading, onResult } = useQuery(
   () => ({
     enabled: !!props.workspaceId
   })
+)
+
+const isLoading = computed(() =>
+  wizardIsLoading || props.workspaceId ? queryLoading.value : false
 )
 
 onResult((result) => {
