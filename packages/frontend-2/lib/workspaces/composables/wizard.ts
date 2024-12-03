@@ -65,12 +65,10 @@ export const useWorkspacesWizard = () => {
   }
 
   const goToStep = (step: WizardSteps) => {
-    const index = Number(
-      Object.keys(stepComponents.value).find(
-        (key) => stepComponents.value[Number(key)] === step
-      )
+    const stepIndex = Object.keys(stepComponents.value).find(
+      (key: string) => stepComponents.value[Number(key)] === step
     )
-    if (!isNaN(index)) currentStepIndex.value = index
+    currentStepIndex.value = Number(stepIndex)
   }
 
   /**
@@ -168,6 +166,7 @@ export const useWorkspacesWizard = () => {
     } else {
       // Go to workspace dashboard
       if (updateWorkspaceResult?.data?.workspaceMutations.updateCreationState) {
+        resetState()
         router.push(workspaceRoute(state.value.slug))
       }
     }

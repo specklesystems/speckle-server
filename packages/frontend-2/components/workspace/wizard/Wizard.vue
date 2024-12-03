@@ -72,15 +72,15 @@ onResult((result) => {
   // If there is an existing workspace, we need to show the correct state
   const creationState = result.data?.workspace.creationState
 
-  if (creationState?.completed === false && !!creationState?.state) {
+  if (!creationState?.completed && !!creationState?.state) {
     // TODO: Better typeguard
     const state = creationState.state as WorkspaceWizardState
     // If the users comes back from Stripe, we need to go to the last relevant step and show an error
-    if ((route.query.workspaceId as string) && route.query.stage === 'checkout') {
+    if (route.query.workspaceId as string) {
       goToStep(
         state.plan === PaidWorkspacePlans.Business
-          ? WizardSteps.Pricing
-          : WizardSteps.Details
+          ? WizardSteps.Region
+          : WizardSteps.Pricing
       )
       showPaymentError.value = true
     }

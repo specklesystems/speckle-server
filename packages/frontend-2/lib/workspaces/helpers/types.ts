@@ -42,8 +42,8 @@ export type WorkspaceWizardState = {
 }
 
 export enum WizardSteps {
-  Details,
-  Invites,
-  Pricing,
-  Region
+  Details = 'Details',
+  Invites = 'Invites',
+  Pricing = 'Pricing',
+  Region = 'Region'
 }
