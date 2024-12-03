@@ -85,7 +85,7 @@ function createCache(): InMemoryCache {
           },
           streams: {
             keyArgs: ['query'],
-            merge: buildAbstractCollectionMergeFunction('StreamCollection', {
+            merge: buildAbstractCollectionMergeFunction('UserStreamCollection', {
               checkIdentity: true
             })
           },

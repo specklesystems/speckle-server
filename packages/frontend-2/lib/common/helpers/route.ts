@@ -70,6 +70,7 @@ export const automationFunctionRoute = (functionId: string) =>
   `${automationFunctionsRoute}/${functionId}`
 
 export const workspaceRoute = (slug: string) => `/workspaces/${slug}`
+export const workspaceSsoRoute = (slug: string) => `/workspaces/${slug}/sso`
 
 export const workspaceFunctionsRoute = (slug: string) => `/workspaces/${slug}/functions`
 

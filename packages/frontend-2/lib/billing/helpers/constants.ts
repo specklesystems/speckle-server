@@ -11,7 +11,10 @@ const baseFeatures = [
 ]
 
 export const pricingPlansConfig: {
-  features: Record<PlanFeaturesList, { name: string; description: string }>
+  features: Record<
+    PlanFeaturesList,
+    { name: string; description: (price?: number) => string }
+  >
   plans: Record<
     WorkspacePlans.Starter | WorkspacePlans.Plus | WorkspacePlans.Business,
     PricingPlan
@@ -20,35 +23,37 @@ export const pricingPlansConfig: {
   features: {
     [PlanFeaturesList.Workspaces]: {
       name: PlanFeaturesList.Workspaces,
-      description: ''
+      description: () => `A shared space for your team and projects`
     },
     [PlanFeaturesList.RoleManagement]: {
       name: PlanFeaturesList.RoleManagement,
-      description: ''
+      description: () => `Control individual members' access and edit rights`
     },
     [PlanFeaturesList.GuestUsers]: {
       name: PlanFeaturesList.GuestUsers,
-      description: ''
+      description: (price?: number) =>
+        `Give guests access to specific projects £${price}/month/guest`
     },
     [PlanFeaturesList.PrivateAutomateFunctions]: {
       name: PlanFeaturesList.PrivateAutomateFunctions,
-      description: ''
+      description: () =>
+        `Create and manage private automation functions securely within your workspace`
     },
     [PlanFeaturesList.DomainSecurity]: {
       name: PlanFeaturesList.DomainSecurity,
-      description: ''
+      description: () => `Require workspace members to use a verified company email`
     },
     [PlanFeaturesList.SSO]: {
       name: PlanFeaturesList.SSO,
-      description: ''
+      description: () => `Require workspace members to log in with your SSO provider`
     },
     [PlanFeaturesList.CustomDataRegion]: {
       name: PlanFeaturesList.CustomDataRegion,
-      description: ''
+      description: () => `Store the workspace data in a custom region of choice`
     },
     [PlanFeaturesList.PrioritySupport]: {
       name: PlanFeaturesList.PrioritySupport,
-      description: ''
+      description: () => `Personal and fast support`
     }
   },
   plans: {
@@ -73,12 +78,12 @@ export const pricingPlansConfig: {
       features: [...baseFeatures, PlanFeaturesList.SSO],
       cost: {
         [BillingInterval.Monthly]: {
-          [Roles.Workspace.Guest]: 50,
+          [Roles.Workspace.Guest]: 15,
           [Roles.Workspace.Member]: 50,
           [Roles.Workspace.Admin]: 50
         },
         [BillingInterval.Yearly]: {
-          [Roles.Workspace.Guest]: 40,
+          [Roles.Workspace.Guest]: 12,
           [Roles.Workspace.Member]: 40,
           [Roles.Workspace.Admin]: 40
         }
@@ -94,12 +99,12 @@ export const pricingPlansConfig: {
       ],
       cost: {
         [BillingInterval.Monthly]: {
-          [Roles.Workspace.Guest]: 75,
+          [Roles.Workspace.Guest]: 15,
           [Roles.Workspace.Member]: 75,
           [Roles.Workspace.Admin]: 75
         },
         [BillingInterval.Yearly]: {
-          [Roles.Workspace.Guest]: 60,
+          [Roles.Workspace.Guest]: 12,
           [Roles.Workspace.Member]: 60,
           [Roles.Workspace.Admin]: 60
         }

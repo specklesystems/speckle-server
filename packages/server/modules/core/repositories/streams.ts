@@ -671,12 +671,41 @@ const getUserStreamsQueryBaseFactory =
     ownedOnly,
     withRoles,
     streamIdWhitelist,
-    workspaceId
+    workspaceId,
+    onlyWithActiveSsoSession
   }: BaseUserStreamsQueryParams) => {
     const query = tables
       .streamAcl(deps.db)
       .where(StreamAcl.col.userId, userId)
       .join(Streams.name, StreamAcl.col.resourceId, Streams.col.id)
+
+    // select * from stream_acl sa
+    // join streams s on s.id = sa."resourceId"
+    // left join workspace_sso_providers wp on wp."workspaceId" = s."workspaceId"
+    // left join user_sso_sessions us on (us."userId" = sa."userId" and us."providerId" = wp."providerId")
+    // where sa."userId" = '7f1f8aa286'
+    // and ((wp."providerId" is not null and us."validUntil" > now()) or wp."providerId" is null)
+
+    if (onlyWithActiveSsoSession) {
+      query
+        .leftJoin(
+          'workspace_sso_providers',
+          'workspace_sso_providers.workspaceId',
+          Streams.col.workspaceId
+        )
+        .leftJoin('user_sso_sessions', function () {
+          this.on('user_sso_sessions.userId', '=', StreamAcl.col.userId).andOn(
+            'workspace_sso_providers.providerId',
+            '=',
+            'user_sso_sessions.providerId'
+          )
+        })
+        .andWhere(function () {
+          this.whereRaw(
+            'workspace_sso_providers."providerId" is not null and user_sso_sessions."validUntil" > now()'
+          ).orWhere('workspace_sso_providers.providerId', 'is', null)
+        })
+    }
 
     if (workspaceId) {
       query.andWhere(Streams.col.workspaceId, workspaceId)
