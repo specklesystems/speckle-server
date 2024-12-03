@@ -35,7 +35,7 @@
                   £{{ seatPrice[Roles.Workspace.Member] }} per seat/month, billed
                   {{
                     subscription?.billingInterval === BillingInterval.Yearly
-                      ? 'yearly'
+                      ? 'annually'
                       : 'monthly'
                   }}
                 </p>
@@ -46,13 +46,13 @@
                     statusIsTrial
                       ? 'Expected bill'
                       : subscription?.billingInterval === BillingInterval.Yearly
-                      ? 'Yearly bill'
+                      ? 'Annual bill'
                       : 'Monthly bill'
                   }}
                 </h3>
                 <template v-if="statusIsTrial">
                   <p class="text-heading-lg text-foreground inline-block">
-                    {{ billValue }}
+                    {{ billValue }} per month
                   </p>
                   <p class="text-body-xs text-foreground-2 flex gap-x-1 items-center">
                     {{ billDescription }}
@@ -86,7 +86,7 @@
                   <span class="capitalize">
                     {{
                       subscription?.billingInterval === BillingInterval.Yearly
-                        ? 'Yearly'
+                        ? 'Annual'
                         : 'Monthly'
                     }}
                   </span>
@@ -232,11 +232,11 @@ const seatPrice = computed(() =>
     : seatPrices.value[WorkspacePlans.Starter][BillingInterval.Monthly]
 )
 const nextPaymentDue = computed(() =>
-  currentPlan.value
-    ? isPurchasablePlan.value
+  isPurchasablePlan.value
+    ? subscription.value?.currentBillingCycleEnd
       ? dayjs(subscription.value?.currentBillingCycleEnd).format('MMMM D, YYYY')
-      : 'Never'
-    : dayjs().add(30, 'days').format('MMMM D, YYYY')
+      : dayjs(currentPlan.value?.createdAt).add(31, 'days').format('MMMM D, YYYY')
+    : 'Never'
 )
 const isAdmin = computed(() => workspace.value?.role === Roles.Workspace.Admin)
 const guestSeatCount = computed(() =>
@@ -252,8 +252,8 @@ const billValue = computed(() => {
   const guestPrice = seatPrice.value[Roles.Workspace.Guest] * guestSeatCount.value
   const memberPrice = seatPrice.value[Roles.Workspace.Member] * memberSeatCount.value
   const totalPrice = guestPrice + memberPrice
-  if (statusIsTrial.value) return `£${totalPrice}.00`
-  return `£0.00`
+  if (statusIsTrial.value) return `£${totalPrice}`
+  return `£0`
 })
 const billDescription = computed(() => {
   const memberText =
@@ -266,10 +266,10 @@ const billDescription = computed(() => {
 const billTooltip = computed(() => {
   const memberText = `${memberSeatCount.value} member${
     memberSeatCount.value === 1 ? '' : 's'
-  } £${seatPrice.value[Roles.Workspace.Member]}`
+  } at £${seatPrice.value[Roles.Workspace.Member]}/month`
   const guestText = `${guestSeatCount.value} guest${
     guestSeatCount.value === 1 ? '' : 's'
-  } £${seatPrice.value[Roles.Workspace.Guest]}`
+  } at £${seatPrice.value[Roles.Workspace.Guest]}/month`
 
   return `${memberText}${guestSeatCount.value > 0 ? `, ${guestText}` : ''}`
 })

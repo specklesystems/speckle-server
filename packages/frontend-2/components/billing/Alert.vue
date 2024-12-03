@@ -51,6 +51,9 @@ const isTrial = computed(
 const isPaymentFailed = computed(
   () => planStatus.value === WorkspacePlanStatuses.PaymentFailed
 )
+const isScheduledForCancelation = computed(
+  () => planStatus.value === WorkspacePlanStatuses.CancelationScheduled
+)
 const trialDaysLeft = computed(() => {
   const createdAt = props.workspace.plan?.createdAt
   const trialEndDate = dayjs(createdAt).add(31, 'days')
@@ -65,11 +68,11 @@ const title = computed(() => {
   }
   switch (planStatus.value) {
     case WorkspacePlanStatuses.CancelationScheduled:
-      return `Your ${props.workspace.plan?.name} plan subscription is scheduled for cancellation`
+      return `Your workspace subscription is scheduled for cancellation`
     case WorkspacePlanStatuses.Canceled:
-      return `Your ${props.workspace.plan?.name} plan subscription has been cancelled`
+      return `Your workspace subscription has been cancelled`
     case WorkspacePlanStatuses.Expired:
-      return `Your free ${props.workspace.plan?.name} plan trial has ended`
+      return `Your free trial has ended`
     case WorkspacePlanStatuses.PaymentFailed:
       return "Your last payment didn't go through"
     default:
@@ -84,11 +87,11 @@ const description = computed(() => {
   }
   switch (planStatus.value) {
     case WorkspacePlanStatuses.CancelationScheduled:
-      return 'Your workspace subscription is scheduled for cancellation. After the cancellation, your workspace will be in read-only mode.'
+      return 'Once the current billing cycle ends your workspace will enter read-only mode. Renew your subscription to undo.'
     case WorkspacePlanStatuses.Canceled:
-      return 'Your workspace has been cancelled and is in read-only mode. Upgrade your plan to continue.'
+      return 'Your workspace has been cancelled and is in read-only mode. Subscribe to a plan to regain full access.'
     case WorkspacePlanStatuses.Expired:
-      return "The workspace is in a read-only locked state until there's an active subscription. Upgrade your plan to continue."
+      return "The workspace is in a read-only locked state until there's an active subscription. Subscribe to a plan to regain full access."
     case WorkspacePlanStatuses.PaymentFailed:
       return "Update your payment information now to ensure your workspace doesn't go into maintenance mode."
     default:
@@ -113,6 +116,12 @@ const actions = computed((): AlertAction[] => {
   if (isPaymentFailed.value) {
     actions.push({
       title: 'Update payment information',
+      onClick: () => billingPortalRedirect(props.workspace.id),
+      disabled: !props.workspace.id
+    })
+  } else if (isScheduledForCancelation.value) {
+    actions.push({
+      title: 'Renew subscription',
       onClick: () => billingPortalRedirect(props.workspace.id),
       disabled: !props.workspace.id
     })

@@ -70,6 +70,7 @@ graphql(`
   fragment ProjectPageAutomationHeader_Project on Project {
     id
     role
+    workspaceId
     ...ProjectPageModelsCardProject
   }
 `)
@@ -148,7 +149,9 @@ const enabled = computed({
         automationId: res.id,
         automationName: res.name,
         projectId: props.project.id,
-        enabled: res.enabled
+        enabled: res.enabled,
+        /* eslint-disable-next-line camelcase */
+        workspace_id: props.project.workspaceId
       })
     }
   }
