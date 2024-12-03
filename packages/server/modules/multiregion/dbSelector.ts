@@ -119,9 +119,11 @@ export const initializeRegisteredRegionClients = async (): Promise<RegionClients
   )
 
   // (re-)set up pub-sub, if needed
-  await Promise.all(
-    Object.keys(ret).map((regionKey) => initializeRegion({ regionKey }))
-  )
+  if (isTestEnv()) {
+    await Promise.all(
+      Object.keys(ret).map((regionKey) => initializeRegion({ regionKey }))
+    )
+  }
 
   registeredRegionClients = ret
   return ret
