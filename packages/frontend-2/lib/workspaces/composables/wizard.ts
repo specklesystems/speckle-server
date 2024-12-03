@@ -1,12 +1,21 @@
+import type { WorkspaceInviteCreateInput } from '~/lib/common/generated/gql/graphql'
 import { BillingInterval, PaidWorkspacePlans } from '~/lib/common/generated/gql/graphql'
 import { type WorkspaceWizardState, WizardSteps } from '~/lib/workspaces/helpers/types'
-import { useCreateWorkspace } from '~/lib/workspaces/composables/management'
+import {
+  useCreateWorkspace,
+  useInviteUserToWorkspace
+} from '~/lib/workspaces/composables/management'
 import { useWorkspacesAvatar } from '~/lib/workspaces/composables/avatar'
 import { useBillingActions } from '~/lib/billing/composables/actions'
-import { workspaceWizardUpdateWorkspaceMutation } from '~/lib/workspaces/graphql/mutations'
+import {
+  setWorkspaceCreationStateMutation,
+  setDefaultRegionMutation
+} from '~/lib/workspaces/graphql/mutations'
 import { useMutation } from '@vue/apollo-composable'
 import { workspaceRoute } from '~/lib/common/helpers/route'
-
+import { mapMainRoleToGqlWorkspaceRole } from '~/lib/workspaces/helpers/roles'
+import { mapServerRoleToGqlServerRole } from '~/lib/common/helpers/roles'
+import { Roles } from '@speckle/shared'
 const emptyState = {
   name: '',
   slug: '',
@@ -35,9 +44,9 @@ export const useWorkspacesWizard = () => {
   const { generateDefaultLogoIndex } = useWorkspacesAvatar()
   const { redirectToCheckout } = useBillingActions()
   const router = useRouter()
-
-  const { mutate: updateWorkspace } = useMutation(
-    workspaceWizardUpdateWorkspaceMutation
+  const { triggerNotification } = useGlobalToast()
+  const { mutate: updateWorkspaceCreationState } = useMutation(
+    setWorkspaceCreationStateMutation
   )
 
   const setState = (initialState: WorkspaceWizardState) => {
@@ -71,8 +80,6 @@ export const useWorkspacesWizard = () => {
 
   // This will complete the wizard and create the workspace.
   const completeWizard = async () => {
-    const { triggerNotification } = useGlobalToast()
-
     // Monthly starter plan doesn't need checkout
     const needsCheckout =
       state.value.plan !== PaidWorkspacePlans.Starter ||
@@ -95,18 +102,18 @@ export const useWorkspacesWizard = () => {
       workspaceId.value = newWorkspaceResult.data.workspaceMutations.create.id
     }
 
-    const updateWorkspaceResult = await updateWorkspace({
+    const updatedWorkspaceResult = await updateWorkspaceCreationState({
       input: {
         completed: false,
         state: {
           ...state.value,
-          invites: state.value.invites.filter((invite) => !!invite.email)
+          invites: state.value.invites.filter((invite) => !!invite)
         },
         workspaceId: workspaceId.value
       }
     }).catch(convertThrowIntoFetchResult)
 
-    if (!updateWorkspaceResult?.data?.workspaceMutations.updateCreationState) {
+    if (!updatedWorkspaceResult?.data?.workspaceMutations.updateCreationState) {
       state.value.id = workspaceId.value
       triggerNotification({
         title: 'Something went wrong, please try again',
@@ -131,6 +138,47 @@ export const useWorkspacesWizard = () => {
     }
   }
 
+  const finalizeWizard = async (
+    newState: WorkspaceWizardState,
+    workspaceId: string
+  ) => {
+    state.value = newState
+
+    const inviteToWorkspace = useInviteUserToWorkspace()
+    const { mutate: updateWorkspaceDefaultRegion } = useMutation(
+      setDefaultRegionMutation
+    )
+
+    if (state.value.region?.key) {
+      await updateWorkspaceDefaultRegion({
+        workspaceId,
+        regionKey: state.value.region.key
+      }).catch(convertThrowIntoFetchResult)
+    }
+
+    if (state.value.invites.length > 0) {
+      const inputs: WorkspaceInviteCreateInput[] = state.value.invites.map((email) => ({
+        role: mapMainRoleToGqlWorkspaceRole(Roles.Workspace.Member),
+        email,
+        serverRole: mapServerRoleToGqlServerRole(Roles.Server.User)
+      }))
+
+      await inviteToWorkspace(workspaceId, inputs)
+    }
+
+    const { mutate: updateWorkspaceCreationState } = useMutation(
+      setWorkspaceCreationStateMutation
+    )
+
+    await updateWorkspaceCreationState({
+      input: {
+        state: {},
+        workspaceId,
+        completed: true
+      }
+    })
+  }
+
   const resetWizardState = () => {
     state.value = { ...emptyState }
     currentStepIndex.value = 0
@@ -144,6 +192,7 @@ export const useWorkspacesWizard = () => {
     goToStep,
     isLoading,
     setState,
-    resetWizardState
+    resetWizardState,
+    finalizeWizard
   }
 }

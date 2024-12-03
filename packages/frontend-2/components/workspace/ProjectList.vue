@@ -21,6 +21,7 @@
       />
       <div class="flex flex-col gap-4 mt-4">
         <div class="flex flex-row gap-2 sm:items-center justify-between">
+          {{ workspace?.creationState?.state }}
           <FormTextInput
             name="modelsearch"
             :show-label="false"
@@ -129,6 +130,8 @@ import {
   type AvailableSettingsMenuKeys
 } from '~/lib/settings/helpers/types'
 import { useBillingActions } from '~/lib/billing/composables/actions'
+import { useWorkspacesWizard } from '~/lib/workspaces/composables/wizard'
+import type { WorkspaceWizardState } from '~/lib/workspaces/helpers/types'
 
 graphql(`
   fragment WorkspaceProjectList_Workspace on Workspace {
@@ -180,6 +183,11 @@ const showSettingsDialog = ref(false)
 const settingsDialogTarget = ref<AvailableSettingsMenuKeys>(
   SettingMenuKeys.Workspace.General
 )
+const ssoProviderInfo = ref<{
+  providerName: string
+  clientId: string
+  issuerUrl: string
+} | null>(null)
 
 const token = computed(() => route.query.token as Optional<string>)
 
@@ -218,6 +226,7 @@ const { query, identifier, onInfiniteLoad } = usePaginatedQuery({
   }),
   resolveCursorFromVariables: (vars) => vars.cursor
 })
+const { finalizeWizard } = useWorkspacesWizard()
 
 const projects = computed(() => query.result.value?.workspaceBySlug?.projects)
 const workspaceInvite = computed(() => initialQueryResult.value?.workspaceInvite)
@@ -292,6 +301,16 @@ const onShowSettingsDialog = (target: AvailableSettingsMenuKeys) => {
 }
 
 onResult((queryResult) => {
+  if (
+    queryResult.data?.workspaceBySlug.creationState?.completed === false &&
+    queryResult.data.workspaceBySlug.creationState.state
+  ) {
+    finalizeWizard(
+      queryResult.data.workspaceBySlug.creationState.state as WorkspaceWizardState,
+      queryResult.data.workspaceBySlug.id
+    )
+  }
+
   if (queryResult.data?.workspaceBySlug) {
     workspaceMixpanelUpdateGroup(queryResult.data.workspaceBySlug)
     useHeadSafe({
@@ -300,12 +319,6 @@ onResult((queryResult) => {
     validateCheckoutSession(queryResult.data.workspaceBySlug.id)
   }
 })
-
-const ssoProviderInfo = ref<{
-  providerName: string
-  clientId: string
-  issuerUrl: string
-} | null>(null)
 
 onMounted(() => {
   const ssoValidationSuccess = route.query?.ssoValidationSuccess

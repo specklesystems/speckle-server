@@ -1,15 +1,13 @@
 <template>
   <LayoutDialog
     v-model:open="isOpen"
-    title="Cancel workspace creation"
+    title="Confirm cancellation"
     :buttons="dialogButtons"
-    max-width="md"
+    max-width="xs"
   >
     <div class="flex flex-col gap-2">
       <p class="text-body-xs text-foreground font-medium">
-        If you cancel, you will lose all progress.
-        <br />
-        Do you want to continue?
+        You have unsaved changes. Are you sure you want to leave?
       </p>
     </div>
   </LayoutDialog>
@@ -51,14 +49,14 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
     }
   },
   {
-    text: 'Confirm',
+    text: 'Continue',
     props: { color: 'primary' },
     onClick: onConfirm
   }
 ])
 
 const onConfirm = async () => {
-  // If we have a in progress workspace ID, we're deleting a workspace
+  // If we have a in progress workspace ID, we're deleting the workspace
   if (props.workspaceId) {
     const cache = apollo.cache
     const result = await deleteWorkspace({
@@ -98,11 +96,6 @@ const onConfirm = async () => {
   router.push(workspacesRoute)
   isOpen.value = false
   resetWizardState()
-  mixpanel.track('Workspace Creation Canceled', {
-    ...(props.workspaceId && {
-      // eslint-disable-next-line camelcase
-      workspace_id: props.workspaceId
-    })
-  })
+  mixpanel.track('Workspace Creation Canceled')
 }
 </script>

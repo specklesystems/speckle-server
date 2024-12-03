@@ -76,8 +76,8 @@ export const deleteWorkspaceSsoProviderMutation = graphql(`
   }
 `)
 
-export const workspaceWizardUpdateWorkspaceMutation = graphql(`
-  mutation WorkspaceWizardUpdateWorkspace($input: WorkspaceCreationStateInput!) {
+export const setWorkspaceCreationStateMutation = graphql(`
+  mutation SetWorkspaceCreationState($input: WorkspaceCreationStateInput!) {
     workspaceMutations {
       updateCreationState(input: $input)
     }
