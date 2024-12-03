@@ -52,7 +52,7 @@
                 <h3 class="text-body-xs text-foreground-2 pb-1">
                   {{
                     statusIsTrial
-                      ? 'First bill'
+                      ? 'Expected bill'
                       : subscription?.billingInterval === BillingInterval.Yearly
                       ? 'Yearly bill'
                       : 'Monthly bill'
