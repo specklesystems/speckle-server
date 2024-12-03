@@ -72,7 +72,6 @@
                 </div>
               </div>
               <div class="p-5 pt-4 flex flex-col gap-y-1">
-                {{ subscription }}
                 <h3 class="text-body-xs text-foreground-2 pb-2">
                   {{
                     statusIsTrial && isPurchasablePlan
