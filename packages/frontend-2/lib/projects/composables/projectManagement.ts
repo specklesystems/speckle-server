@@ -1,6 +1,6 @@
 import type { ApolloCache } from '@apollo/client/core'
 import type { Optional } from '@speckle/shared'
-import { useApolloClient, useSubscription } from '@vue/apollo-composable'
+import { useApolloClient, useMutation, useSubscription } from '@vue/apollo-composable'
 import type { MaybeRef } from '@vueuse/core'
 import type { Get } from 'type-fest'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
@@ -544,10 +544,9 @@ export function useLeaveProject() {
 }
 
 export function useMoveProjectToWorkspace() {
-  const apollo = useApolloClient().client
-
   const { triggerNotification } = useGlobalToast()
   const mixpanel = useMixpanel()
+  const { mutate } = useMutation(useMoveProjectToWorkspaceMutation)
 
   return async (params: {
     projectId: string
@@ -557,10 +556,9 @@ export function useMoveProjectToWorkspace() {
   }) => {
     const { projectId, workspaceId, workspaceName, eventSource } = params
 
-    const { data, errors } = await apollo
-      .mutate({
-        mutation: useMoveProjectToWorkspaceMutation,
-        variables: { projectId, workspaceId },
+    const res = await mutate(
+      { projectId, workspaceId },
+      {
         update: (cache, { data }) => {
           if (!data?.workspaceMutations.projects.moveToWorkspace) return
           if (!workspaceId) return
@@ -576,10 +574,10 @@ export function useMoveProjectToWorkspace() {
             }
           )
         }
-      })
-      .catch(convertThrowIntoFetchResult)
+      }
+    ).catch(convertThrowIntoFetchResult)
 
-    if (data?.workspaceMutations) {
+    if (res?.data?.workspaceMutations.projects.moveToWorkspace.id) {
       triggerNotification({
         type: ToastNotificationType.Success,
         title: `Moved project to ${workspaceName}`
@@ -592,13 +590,15 @@ export function useMoveProjectToWorkspace() {
         source: eventSource
       })
     } else {
-      const errMsg = getFirstErrorMessage(errors)
+      const errMsg = getFirstErrorMessage(res?.errors)
       triggerNotification({
         type: ToastNotificationType.Danger,
         title: "Couldn't move project",
         description: errMsg
       })
     }
+
+    return res?.data?.workspaceMutations.projects.moveToWorkspace
   }
 }
 

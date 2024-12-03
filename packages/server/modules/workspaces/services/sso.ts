@@ -1,5 +1,3 @@
-/* eslint-disable camelcase */
-
 import {
   GetOidcProviderAttributes,
   StoreOidcProviderValidationRequest,
@@ -148,14 +146,10 @@ export const createWorkspaceUserFromSsoProfileFactory =
     }
 
     // Create Speckle user
-    const { name, email, email_verified } = args.ssoProfile
+    const { name, email } = args.ssoProfile
 
     if (!name) {
       throw new SsoProviderProfileInvalidError('SSO provider user requires a name')
-    }
-
-    if (!email_verified) {
-      throw new SsoProviderProfileInvalidError('SSO provider user email is unverified')
     }
 
     const newSpeckleUser = {

@@ -9,20 +9,24 @@
   >
     <template #option="{ item }">
       <div class="flex flex-col items-start justify-center">
-        <span class="truncate">{{ item.name }}</span>
-        <span class="text-foreground-2 truncate">{{ item.description }}</span>
+        <span>{{ item.name }}</span>
+        <span class="text-foreground-2 break-normal">{{ item.description }}</span>
       </div>
     </template>
     <template #nothing-selected>
-      {{ multiple ? 'Select regions' : 'Select a region' }}
+      <span class="min-w-64 block">
+        {{ multiple ? 'Select regions' : 'Select a region' }}
+      </span>
     </template>
     <template #something-selected="{ value }">
-      <template v-if="isArray(value)">
-        {{ value.map((v) => v.name).join(', ') }}
-      </template>
-      <template v-else>
-        {{ value.name }}
-      </template>
+      <span class="min-w-64 block">
+        <template v-if="isArray(value)">
+          {{ value.map((v) => v.name).join(', ') }}
+        </template>
+        <template v-else>
+          {{ value.name }}
+        </template>
+      </span>
     </template>
   </FormSelectBase>
 </template>

@@ -17,7 +17,7 @@
               class="grid grid-cols-1 lg:grid-cols-3 divide-y divide-outline-3 lg:divide-y-0 lg:divide-x"
             >
               <div class="p-5 pt-4 flex flex-col gap-y-1">
-                <h3 class="text-body-xs text-foreground-2 pb-2">
+                <h3 class="text-body-xs text-foreground-2 pb-1">
                   {{ statusIsTrial ? 'Trial plan' : 'Current plan' }}
                 </h3>
                 <div class="flex gap-x-2">
@@ -32,27 +32,35 @@
                   </div>
                 </div>
                 <p v-if="isPurchasablePlan" class="text-body-xs text-foreground-2">
-                  £{{ seatPrice[Roles.Workspace.Member] }} per seat/month, billed
-                  {{
-                    subscription?.billingInterval === BillingInterval.Yearly
-                      ? 'yearly'
-                      : 'monthly'
-                  }}
+                  <span v-if="statusIsTrial">
+                    <span class="line-through mr-1">
+                      £{{ seatPrice[Roles.Workspace.Member] }} per seat/month
+                    </span>
+                    Free
+                  </span>
+                  <span v-else>
+                    £{{ seatPrice[Roles.Workspace.Member] }} per seat/month, billed
+                    {{
+                      subscription?.billingInterval === BillingInterval.Yearly
+                        ? 'annually'
+                        : 'monthly'
+                    }}
+                  </span>
                 </p>
               </div>
               <div class="p-5 pt-4 flex flex-col gap-y-1">
-                <h3 class="text-body-xs text-foreground-2 pb-2">
+                <h3 class="text-body-xs text-foreground-2 pb-1">
                   {{
                     statusIsTrial
                       ? 'Expected bill'
                       : subscription?.billingInterval === BillingInterval.Yearly
-                      ? 'Yearly bill'
+                      ? 'Annual bill'
                       : 'Monthly bill'
                   }}
                 </h3>
                 <template v-if="statusIsTrial">
                   <p class="text-heading-lg text-foreground inline-block">
-                    {{ billValue }}
+                    {{ billValue }} per month
                   </p>
                   <p class="text-body-xs text-foreground-2 flex gap-x-1 items-center">
                     {{ billDescription }}
@@ -72,10 +80,10 @@
                 </div>
               </div>
               <div class="p-5 pt-4 flex flex-col gap-y-1">
-                <h3 class="text-body-xs text-foreground-2 pb-2">
+                <h3 class="text-body-xs text-foreground-2 pb-1">
                   {{
                     statusIsTrial && isPurchasablePlan
-                      ? 'First payment due'
+                      ? 'Trial ends'
                       : 'Next payment due'
                   }}
                 </h3>
@@ -83,14 +91,15 @@
                   {{ isPurchasablePlan ? nextPaymentDue : 'Never' }}
                 </p>
                 <p v-if="isPurchasablePlan" class="text-body-xs text-foreground-2">
-                  <span class="capitalize">
+                  <span v-if="statusIsTrial">Subscribe before this date</span>
+                  <span v-else>
                     {{
                       subscription?.billingInterval === BillingInterval.Yearly
-                        ? 'Yearly'
+                        ? 'Annual'
                         : 'Monthly'
                     }}
+                    billing period
                   </span>
-                  billing period
                 </p>
               </div>
             </div>
@@ -232,11 +241,11 @@ const seatPrice = computed(() =>
     : seatPrices.value[WorkspacePlans.Starter][BillingInterval.Monthly]
 )
 const nextPaymentDue = computed(() =>
-  currentPlan.value
-    ? isPurchasablePlan.value
+  isPurchasablePlan.value
+    ? subscription.value?.currentBillingCycleEnd
       ? dayjs(subscription.value?.currentBillingCycleEnd).format('MMMM D, YYYY')
-      : 'Never'
-    : dayjs().add(30, 'days').format('MMMM D, YYYY')
+      : dayjs(currentPlan.value?.createdAt).add(31, 'days').format('MMMM D, YYYY')
+    : 'Never'
 )
 const isAdmin = computed(() => workspace.value?.role === Roles.Workspace.Admin)
 const guestSeatCount = computed(() =>
@@ -252,8 +261,8 @@ const billValue = computed(() => {
   const guestPrice = seatPrice.value[Roles.Workspace.Guest] * guestSeatCount.value
   const memberPrice = seatPrice.value[Roles.Workspace.Member] * memberSeatCount.value
   const totalPrice = guestPrice + memberPrice
-  if (statusIsTrial.value) return `£${totalPrice}.00`
-  return `£0.00`
+  if (statusIsTrial.value) return `£${totalPrice}`
+  return `£0`
 })
 const billDescription = computed(() => {
   const memberText =
@@ -266,10 +275,10 @@ const billDescription = computed(() => {
 const billTooltip = computed(() => {
   const memberText = `${memberSeatCount.value} member${
     memberSeatCount.value === 1 ? '' : 's'
-  } £${seatPrice.value[Roles.Workspace.Member]}`
+  } at £${seatPrice.value[Roles.Workspace.Member]}/month`
   const guestText = `${guestSeatCount.value} guest${
     guestSeatCount.value === 1 ? '' : 's'
-  } £${seatPrice.value[Roles.Workspace.Guest]}`
+  } at £${seatPrice.value[Roles.Workspace.Guest]}/month`
 
   return `${memberText}${guestSeatCount.value > 0 ? `, ${guestText}` : ''}`
 })

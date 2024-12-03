@@ -9,12 +9,8 @@ import cryptoRandomString from 'crypto-random-string'
 
 describe('buildAuthRedirectUrl', () => {
   it('should include workspace slug provided', () => {
-    const url = buildAuthRedirectUrl('my-workspace', false)
+    const url = buildAuthRedirectUrl('my-workspace')
     expect(url.toString().includes('my-workspace')).to.equal(true)
-  })
-  it('should include validate param if provided', () => {
-    const url = buildAuthRedirectUrl('my-workspace', true)
-    expect(url.searchParams.get('validate')).to.equal('true')
   })
 })
 
@@ -45,7 +41,7 @@ describe('buildValidationErrorRedirectUrl', () => {
     const url = buildValidationErrorRedirectUrl('my-workspace', 'Test error message')
     expect(url.toString().includes('my-workspace')).to.equal(true)
   })
-  it('should flag the Svalidation flow attempt as failed', () => {
+  it('should flag the validation flow attempt as failed', () => {
     const url = buildValidationErrorRedirectUrl('my-workspace', 'Test error message')
     expect(url.toString().includes('ssoValidationSuccess=false')).to.equal(true)
   })

@@ -55,7 +55,7 @@
           "description": "High level flag fully toggles the workspaces module",
           "default": false
         },
-        "workspaceSsoEnabled": {
+        "workspacesSSOEnabled": {
           "type": "boolean",
           "description": "High level flag fully toggles the workspaces dynamic sso",
           "default": false
