@@ -30,6 +30,8 @@ import { WizardSteps } from '~/lib/workspaces/helpers/types'
 import { workspaceWizardQuery } from '~/lib/workspaces/graphql/queries'
 import { useQuery } from '@vue/apollo-composable'
 import { graphql } from '~~/lib/common/generated/gql'
+import type { WorkspaceWizardState } from '~~/lib/workspaces/helpers/types'
+import { PaidWorkspacePlans } from '~/lib/common/generated/gql/graphql'
 
 graphql(`
   fragment WorkspaceWizard_Workspace on Workspace {
@@ -61,18 +63,35 @@ const { loading, onResult } = useQuery(
 )
 
 onResult((result) => {
-  if (!result.data?.workspace.creationState?.completed) {
+  // If there is an existing workspace, we need to show the correct state
+  const creationState = result.data?.workspace.creationState
+  if (!creationState?.completed && creationState?.state) {
+    // TODO: Better typeguard
+    const state = creationState.state as WorkspaceWizardState
+    // If the users comes back from Stripe, we need to go to the last relevant step and show an error
     if ((route.query.workspaceId as string) && route.query.stage === 'checkout') {
-      goToStep(WizardSteps.Pricing)
+      goToStep(
+        state.plan === PaidWorkspacePlans.Business
+          ? WizardSteps.Pricing
+          : WizardSteps.Details
+      )
       showPaymentError.value = true
     }
 
     setState({
-      name: result.data.workspace.name,
-      slug: result.data.workspace.slug,
-      invites: [],
-      plan: null,
-      billingInterval: null
+      name: state.name,
+      slug: state.slug,
+      // TODO:Can be improved
+      // We need to add placeholder invites to the state, so we can show the correct number of invites in the UI
+      invites: [
+        ...state.invites,
+        ...(Array(Math.max(0, 3 - (state.invites?.length || 0))).fill({
+          id: '',
+          email: ''
+        }) as Array<{ id: string; email: string }>)
+      ],
+      plan: null, // Force re-select plan
+      billingInterval: null // Force re-select billing interval
     })
   }
 })
