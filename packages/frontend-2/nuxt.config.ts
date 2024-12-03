@@ -199,9 +199,6 @@ export default defineNuxtConfig({
       redirect: '/?settings=user/developer-settings'
     },
     '/settings/server/general': { redirect: '/?settings=server/general' },
-    '/settings/server/security': {
-      redirect: '/?settings=server/security&workspaceId=xxx&sso_error=balblbalbalb'
-    },
     '/settings/server/projects': { redirect: '/?settings=server/projects' },
     '/settings/server/active-users': { redirect: '/?settings=server/active-users' },
     '/settings/server/pending-invitations': {

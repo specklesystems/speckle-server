@@ -81,7 +81,7 @@ onResult((result) => {
     setState({
       name: state.name,
       slug: state.slug,
-      // TODO:Can be improved
+      // TODO: Can be improved
       // We need to add placeholder invites to the state, so we can show the correct number of invites in the UI
       invites: [
         ...state.invites,
