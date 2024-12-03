@@ -86,7 +86,7 @@ import { useDebouncedTextInput, type InfiniteLoaderState } from '@speckle/ui-com
 import { MagnifyingGlassIcon, Squares2X2Icon } from '@heroicons/vue/24/outline'
 
 graphql(`
-  fragment ProjectsHiddenProjectWarning_UserProjectCollection on UserProjectCollection {
+  fragment ProjectsDashboard_UserProjectCollection on UserProjectCollection {
     numberOfHidden
   }
 `)

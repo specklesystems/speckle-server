@@ -27,7 +27,7 @@ export const projectsDashboardQuery = graphql(`
     activeUser {
       id
       projects(filter: $filter, limit: 6, cursor: $cursor) {
-        ...ProjectsHiddenProjectWarning_UserProjectCollection
+        ...ProjectsDashboard_UserProjectCollection
         cursor
         totalCount
         items {
