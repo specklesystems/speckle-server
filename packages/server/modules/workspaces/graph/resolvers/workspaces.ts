@@ -517,6 +517,10 @@ export = FF_WORKSPACES_MODULE_ENABLED
               getWorkspaceBySlug: getWorkspaceBySlugFactory({ db })
             }),
             getWorkspace: getWorkspaceWithDomainsFactory({ db }),
+            getWorkspaceSsoProviderRecord: getWorkspaceSsoProviderFactory({
+              db,
+              decrypt: getDecryptor()
+            }),
             upsertWorkspace: upsertWorkspaceFactory({ db }),
             emitWorkspaceEvent: getEventBus().emit
           })
@@ -619,6 +623,10 @@ export = FF_WORKSPACES_MODULE_ENABLED
                 getWorkspaceBySlug: getWorkspaceBySlugFactory({ db })
               }),
               getWorkspace: getWorkspaceWithDomainsFactory({ db }),
+              getWorkspaceSsoProviderRecord: getWorkspaceSsoProviderFactory({
+                db,
+                decrypt: getDecryptor()
+              }),
               upsertWorkspace: upsertWorkspaceFactory({ db }),
               emitWorkspaceEvent: getEventBus().emit
             })

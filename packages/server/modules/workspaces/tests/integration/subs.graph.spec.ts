@@ -2,6 +2,7 @@ import { db } from '@/db/knex'
 import { ServerInvites } from '@/modules/core/dbSchema'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { getDefaultRegionFactory } from '@/modules/workspaces/repositories/regions'
+import { getWorkspaceSsoProviderRecordFactory } from '@/modules/workspaces/repositories/sso'
 import {
   getWorkspaceBySlugFactory,
   getWorkspaceWithDomainsFactory,
@@ -59,6 +60,7 @@ const updateWorkspace = updateWorkspaceFactory({
     getWorkspaceBySlug: getWorkspaceBySlugFactory({ db })
   }),
   getWorkspace: getWorkspaceWithDomainsFactory({ db }),
+  getWorkspaceSsoProviderRecord: getWorkspaceSsoProviderRecordFactory({ db }),
   upsertWorkspace: upsertWorkspaceFactory({ db }),
   emitWorkspaceEvent: getEventBus().emit
 })
