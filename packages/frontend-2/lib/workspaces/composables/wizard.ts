@@ -5,7 +5,7 @@ import { useCreateWorkspace } from '~/lib/workspaces/composables/management'
 import { useWorkspacesAvatar } from '~/lib/workspaces/composables/avatar'
 import { useBillingActions } from '~/lib/billing/composables/actions'
 import { workspaceWizardUpdateWorkspaceMutation } from '~/lib/workspaces/graphql/mutations'
-import { useApolloClient } from '@vue/apollo-composable'
+import { useMutation } from '@vue/apollo-composable'
 import { workspaceRoute } from '~/lib/common/helpers/route'
 
 const emptyState = {
@@ -18,7 +18,7 @@ const emptyState = {
   ],
   plan: null,
   billingInterval: BillingInterval.Monthly,
-  id: null,
+  id: '',
   region: null
 }
 
@@ -40,7 +40,10 @@ export const useWorkspacesWizard = () => {
   const { generateDefaultLogoIndex } = useWorkspacesAvatar()
   const { redirectToCheckout } = useBillingActions()
   const router = useRouter()
-  const { client: apollo } = useApolloClient()
+
+  const { mutate: updateWorkspace } = useMutation(
+    workspaceWizardUpdateWorkspaceMutation
+  )
 
   const setState = (initialState: WorkspaceWizardState) => {
     state.value = initialState
@@ -71,42 +74,30 @@ export const useWorkspacesWizard = () => {
     currentStepIndex.value = Number(stepIndex)
   }
 
-  /**
-   * This will complete the wizard and create the workspace.
-   * We have to do a few things here:
-   * - Create the workspace
-   * - Add the ID and a param to the URL, in case the use comes back from Stripe
-   * - Redirect to Stripe if the plan is paid
-   */
+  // This will complete the wizard and create the workspace.
   const completeWizard = async () => {
-    isLoading.value = true
+    const { triggerNotification } = useGlobalToast()
+
     // Monthly starter plan doesn't need checkout
     const needsCheckout =
       state.value.plan !== PaidWorkspacePlans.Starter ||
       state.value.billingInterval === BillingInterval.Yearly
-    const isNewWorkspace = !state.value.id
-    let newWorkspaceId = ''
+    const workspaceId = ref(state.value.id)
+    const isNewWorkspace = !workspaceId.value
 
     if (isNewWorkspace) {
       const newWorkspaceResult = await createWorkspace(
         {
           name: state.value.name,
           slug: state.value.slug,
-          defaultLogoIndex: generateDefaultLogoIndex() // We will get rid of this
+          defaultLogoIndex: generateDefaultLogoIndex()
         },
-        { navigateOnSuccess: !needsCheckout, hideNotifications: needsCheckout },
+        { navigateOnSuccess: false, hideNotifications: true },
         { source: 'wizard' }
       )
 
-      if (
-        !newWorkspaceResult?.data?.workspaceMutations.create ||
-        newWorkspaceResult?.errors
-      ) {
-        isLoading.value = false
-        return
-      } else {
-        newWorkspaceId = newWorkspaceResult.data.workspaceMutations.create.id
-      }
+      if (!newWorkspaceResult?.data?.workspaceMutations.create) return
+      workspaceId.value = newWorkspaceResult.data.workspaceMutations.create.id
     }
 
     const updateCreationStateInput = {
@@ -115,66 +106,40 @@ export const useWorkspacesWizard = () => {
         ...state.value,
         invites: state.value.invites.filter((invite) => !!invite.email)
       },
-      workspaceId: state.value.id ?? newWorkspaceId
+      workspaceId: workspaceId.value
     }
 
-    const updateWorkspaceResult = await apollo
-      .mutate({
-        mutation: workspaceWizardUpdateWorkspaceMutation,
-        variables: {
-          input: {
-            id: state.value.id ?? newWorkspaceId
-          },
-          updateCreationStateInput
-        },
-        update: (cache, res) => {
-          if (
-            needsCheckout &&
-            !res.data?.workspaceMutations.update &&
-            !res.data?.workspaceMutations.updateCreationState
-          )
-            return
+    const updateWorkspaceResult = await updateWorkspace({
+      input: updateCreationStateInput
+    }).catch(convertThrowIntoFetchResult)
 
-          cache.modify({
-            id: getCacheId('Workspace', state.value.id ?? newWorkspaceId),
-            fields: {
-              creationState: () => updateCreationStateInput,
-              plan: () => state.value.plan,
-              subscription: () => {
-                return {
-                  billingInterval: state.value.billingInterval
-                }
-              }
-            }
-          })
-        }
+    if (!updateWorkspaceResult?.data?.workspaceMutations.updateCreationState) {
+      state.value.id = workspaceId.value
+      triggerNotification({
+        title: 'Something went wrong, please try again',
+        type: ToastNotificationType.Danger
       })
-      .catch(convertThrowIntoFetchResult)
+      return
+    }
 
     if (needsCheckout) {
       // Add workspace ID to URL, in case the user comes back from Stripe
-      router.replace({ query: { workspaceId: newWorkspaceId } })
+      router.replace({ query: { workspaceId: workspaceId.value } })
 
       // Go to Stripe
-      if (updateWorkspaceResult?.data?.workspaceMutations.updateCreationState) {
-        redirectToCheckout({
-          plan: state.value.plan as unknown as PaidWorkspacePlans,
-          cycle: state.value.billingInterval as BillingInterval,
-          workspaceId: state.value.id ?? newWorkspaceId
-        })
-      }
+      await redirectToCheckout({
+        plan: state.value.plan as unknown as PaidWorkspacePlans,
+        cycle: state.value.billingInterval as BillingInterval,
+        workspaceId: workspaceId.value
+      })
     } else {
-      // Go to workspace dashboard
-      if (updateWorkspaceResult?.data?.workspaceMutations.updateCreationState) {
-        resetState()
-        router.push(workspaceRoute(state.value.slug))
-      }
+      // Refetch workspaces
+      resetWizardState()
+      router.push(workspaceRoute(state.value.slug))
     }
-
-    isLoading.value = false
   }
 
-  const resetState = () => {
+  const resetWizardState = () => {
     state.value = { ...emptyState }
     currentStepIndex.value = 0
   }
@@ -187,6 +152,6 @@ export const useWorkspacesWizard = () => {
     goToStep,
     isLoading,
     setState,
-    resetState
+    resetWizardState
   }
 }

@@ -37,7 +37,7 @@ export type WorkspaceWizardState = {
   invites: { id: string; email: string }[]
   plan: PaidWorkspacePlans | null
   billingInterval: BillingInterval | null
-  id: string | null
+  id: string
   region: SettingsWorkspacesRegionsSelect_ServerRegionItemFragment | null
 }
 

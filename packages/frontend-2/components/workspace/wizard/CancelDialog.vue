@@ -35,7 +35,7 @@ const props = defineProps<{
 }>()
 const isOpen = defineModel<boolean>('open', { required: true })
 
-const { resetState } = useWorkspacesWizard()
+const { resetWizardState } = useWorkspacesWizard()
 const { mutate: deleteWorkspace } = useMutation(deleteWorkspaceMutation)
 const { activeUser } = useActiveUser()
 const apollo = useApolloClient().client
@@ -97,7 +97,7 @@ const onConfirm = async () => {
 
   router.push(workspacesRoute)
   isOpen.value = false
-  resetState()
+  resetWizardState()
   mixpanel.track('Workspace Creation Canceled', {
     ...(props.workspaceId && {
       // eslint-disable-next-line camelcase
