@@ -17,7 +17,7 @@
               class="grid grid-cols-1 lg:grid-cols-3 divide-y divide-outline-3 lg:divide-y-0 lg:divide-x"
             >
               <div class="p-5 pt-4 flex flex-col gap-y-1">
-                <h3 class="text-body-xs text-foreground-2 pb-2">
+                <h3 class="text-body-xs text-foreground-2 pb-1">
                   {{ statusIsTrial ? 'Trial plan' : 'Current plan' }}
                 </h3>
                 <div class="flex gap-x-2">
@@ -32,16 +32,24 @@
                   </div>
                 </div>
                 <p v-if="isPurchasablePlan" class="text-body-xs text-foreground-2">
-                  £{{ seatPrice[Roles.Workspace.Member] }} per seat/month, billed
-                  {{
-                    subscription?.billingInterval === BillingInterval.Yearly
-                      ? 'annually'
-                      : 'monthly'
-                  }}
+                  <span v-if="statusIsTrial">
+                    <span class="line-through mr-1">
+                      £{{ seatPrice[Roles.Workspace.Member] }} per seat/month
+                    </span>
+                    Free
+                  </span>
+                  <span v-else>
+                    £{{ seatPrice[Roles.Workspace.Member] }} per seat/month, billed
+                    {{
+                      subscription?.billingInterval === BillingInterval.Yearly
+                        ? 'annually'
+                        : 'monthly'
+                    }}
+                  </span>
                 </p>
               </div>
               <div class="p-5 pt-4 flex flex-col gap-y-1">
-                <h3 class="text-body-xs text-foreground-2 pb-2">
+                <h3 class="text-body-xs text-foreground-2 pb-1">
                   {{
                     statusIsTrial
                       ? 'Expected bill'
@@ -72,10 +80,10 @@
                 </div>
               </div>
               <div class="p-5 pt-4 flex flex-col gap-y-1">
-                <h3 class="text-body-xs text-foreground-2 pb-2">
+                <h3 class="text-body-xs text-foreground-2 pb-1">
                   {{
                     statusIsTrial && isPurchasablePlan
-                      ? 'First payment due'
+                      ? 'Trial ends'
                       : 'Next payment due'
                   }}
                 </h3>
@@ -83,14 +91,15 @@
                   {{ isPurchasablePlan ? nextPaymentDue : 'Never' }}
                 </p>
                 <p v-if="isPurchasablePlan" class="text-body-xs text-foreground-2">
-                  <span class="capitalize">
+                  <span v-if="statusIsTrial">Subscribe before this date</span>
+                  <span v-else>
                     {{
                       subscription?.billingInterval === BillingInterval.Yearly
                         ? 'Annual'
                         : 'Monthly'
                     }}
+                    billing period
                   </span>
-                  billing period
                 </p>
               </div>
             </div>
