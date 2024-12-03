@@ -342,8 +342,8 @@ export function delayGraphqlResponsesBy() {
   return getIntFromEnv('DELAY_GQL_RESPONSES_BY', '0')
 }
 
-export function getAutomateEncryptionKeysPath() {
-  return getStringFromEnv('AUTOMATE_ENCRYPTION_KEYS_PATH')
+export function getEncryptionKeysPath() {
+  return getStringFromEnv('ENCRYPTION_KEYS_PATH')
 }
 
 export function getGendoAIKey() {
