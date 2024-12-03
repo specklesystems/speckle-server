@@ -35,7 +35,7 @@
                   £{{ seatPrice[Roles.Workspace.Member] }} per seat/month, billed
                   {{
                     subscription?.billingInterval === BillingInterval.Yearly
-                      ? 'yearly'
+                      ? 'annually'
                       : 'monthly'
                   }}
                 </p>
@@ -46,7 +46,7 @@
                     statusIsTrial
                       ? 'Expected bill'
                       : subscription?.billingInterval === BillingInterval.Yearly
-                      ? 'Yearly bill'
+                      ? 'Annual bill'
                       : 'Monthly bill'
                   }}
                 </h3>
@@ -86,7 +86,7 @@
                   <span class="capitalize">
                     {{
                       subscription?.billingInterval === BillingInterval.Yearly
-                        ? 'Yearly'
+                        ? 'Annual'
                         : 'Monthly'
                     }}
                   </span>
