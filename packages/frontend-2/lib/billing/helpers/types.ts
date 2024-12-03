@@ -12,7 +12,7 @@ export enum PlanFeaturesList {
   PrivateAutomateFunctions = 'Private automate functions',
   DomainSecurity = 'Domain security',
   SSO = 'Single Sign-On (SSO)',
-  CustomDataRegion = 'Custom data region',
+  CustomDataRegion = 'Custom data residency',
   PrioritySupport = 'Priority support'
 }
 

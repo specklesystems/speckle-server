@@ -75,6 +75,7 @@
         <SettingsWorkspacesSecuritySsoForm
           v-else
           :workspace-slug="workspace.slug"
+          :provider-info="errorProviderInfo"
           @cancel="handleCancel"
           @submit="handleFormSubmit"
         />
@@ -116,6 +117,7 @@
 
         <SettingsWorkspacesSecuritySsoForm
           :workspace-slug="workspace.slug"
+          :provider-info="errorProviderInfo"
           @cancel="handleCancel"
           @submit="handleFormSubmit"
         />
@@ -235,4 +237,64 @@ const redirectUrl = computed(() => {
 const goToBilling = () => {
   goToWorkspaceMenuItem(props.workspace.id, SettingMenuKeys.Workspace.Billing)
 }
+const route = useRoute()
+
+const errorProviderInfo = ref<
+  | {
+      providerName: string
+      clientId: string
+      issuerUrl: string
+    }
+  | undefined
+>(undefined)
+
+const router = useRouter()
+const { triggerNotification } = useGlobalToast()
+
+onMounted(() => {
+  const providerName = route.query?.providerName as string
+  const clientId = route.query?.clientId as string
+  const issuerUrl = route.query?.issuerUrl as string
+  const ssoError = route.query?.ssoError as string
+  const ssoValidationSuccess = route.query?.ssoValidationSuccess
+
+  // Handle error notifications
+  if (ssoValidationSuccess === 'true') {
+    triggerNotification({
+      type: ToastNotificationType.Success,
+      title: 'SSO Configuration Successful',
+      description: 'Your SSO settings have been successfully configured.'
+    })
+  } else if (ssoValidationSuccess === 'false' || ssoError) {
+    triggerNotification({
+      type: ToastNotificationType.Danger,
+      title: 'SSO Configuration Error',
+      description: ssoError
+        ? decodeURIComponent(ssoError)
+        : 'SSO settings validation failed'
+    })
+  }
+
+  // Handle provider info if present
+  if (providerName && clientId && issuerUrl) {
+    errorProviderInfo.value = {
+      providerName,
+      clientId,
+      issuerUrl
+    }
+    isFormVisible.value = true
+  }
+
+  // Clean up URL params
+  router.replace({
+    query: {
+      ...route.query,
+      ssoError: undefined,
+      providerName: undefined,
+      clientId: undefined,
+      issuerUrl: undefined,
+      ssoValidationSuccess: undefined
+    }
+  })
+})
 </script>
