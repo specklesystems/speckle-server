@@ -1,6 +1,6 @@
 <template>
   <div
-    class="border border-outline-3 bg-foundation text-foreground rounded-lg p-6 flex flex-col w-full"
+    class="border border-outline-3 bg-foundation text-foreground rounded-lg p-5 flex flex-col w-full"
   >
     <div>
       <h4 class="text-body font-medium">

@@ -35,7 +35,7 @@
                   £{{ seatPrice[Roles.Workspace.Member] }} per seat/month, billed
                   {{
                     subscription?.billingInterval === BillingInterval.Yearly
-                      ? 'yearly'
+                      ? 'annually'
                       : 'monthly'
                   }}
                 </p>
@@ -46,7 +46,7 @@
                     statusIsTrial
                       ? 'Expected bill'
                       : subscription?.billingInterval === BillingInterval.Yearly
-                      ? 'Yearly bill'
+                      ? 'Annual bill'
                       : 'Monthly bill'
                   }}
                 </h3>
@@ -86,7 +86,7 @@
                   <span class="capitalize">
                     {{
                       subscription?.billingInterval === BillingInterval.Yearly
-                        ? 'Yearly'
+                        ? 'Annual'
                         : 'Monthly'
                     }}
                   </span>
@@ -232,11 +232,11 @@ const seatPrice = computed(() =>
     : seatPrices.value[WorkspacePlans.Starter][BillingInterval.Monthly]
 )
 const nextPaymentDue = computed(() =>
-  currentPlan.value
-    ? isPurchasablePlan.value
+  isPurchasablePlan.value
+    ? subscription.value?.currentBillingCycleEnd
       ? dayjs(subscription.value?.currentBillingCycleEnd).format('MMMM D, YYYY')
-      : 'Never'
-    : dayjs().add(30, 'days').format('MMMM D, YYYY')
+      : dayjs(currentPlan.value?.createdAt).add(31, 'days').format('MMMM D, YYYY')
+    : 'Never'
 )
 const isAdmin = computed(() => workspace.value?.role === Roles.Workspace.Admin)
 const guestSeatCount = computed(() =>

@@ -32,7 +32,7 @@ export const pricingPlansConfig: {
     [PlanFeaturesList.GuestUsers]: {
       name: PlanFeaturesList.GuestUsers,
       description: (price?: number) =>
-        `Give guests access to specific projects £${price}/month/guest`
+        `Give guests access to specific projects in the workspace at £${price}/month/guest`
     },
     [PlanFeaturesList.PrivateAutomateFunctions]: {
       name: PlanFeaturesList.PrivateAutomateFunctions,
@@ -49,7 +49,7 @@ export const pricingPlansConfig: {
     },
     [PlanFeaturesList.CustomDataRegion]: {
       name: PlanFeaturesList.CustomDataRegion,
-      description: () => `Store the workspace data in a custom region of choice`
+      description: () => `Store the workspace data in a custom region`
     },
     [PlanFeaturesList.PrioritySupport]: {
       name: PlanFeaturesList.PrioritySupport,

@@ -17,7 +17,7 @@
             a new location. This change will affect only new projects created within
             your workspace.
           </div>
-          <div class="pt-14">
+          <div class="pt-14 flex flex-col space-y-4">
             <SettingsWorkspacesRegionsSelect
               v-model="defaultRegion"
               show-label
@@ -27,6 +27,14 @@
                 !availableRegions?.length || isMutationLoading || !isWorkspaceAdmin
               "
             />
+            <div class="w-full flex justify-end">
+              <FormButton
+                :disabled="!isWorkspaceAdmin || isMutationLoading || !defaultRegion"
+                @click="onDefaultRegionSave"
+              >
+                Save
+              </FormButton>
+            </div>
           </div>
         </template>
         <div v-else class="flex flex-col gap-6">
@@ -76,12 +84,38 @@
         </FormButton>
       </div>
     </div>
+    <LayoutDialog
+      v-if="defaultRegion"
+      v-model:open="showDefaultRegionSaveDisclaimer"
+      max-width="sm"
+      title="Confirm region change"
+      :buttons="saveDisclaimerButtons"
+    >
+      <!-- prettier-ignore -->
+      <span>
+        Confirm that you want to update your workspace's region to
+        <span class="font-semibold">{{ defaultRegion.name }}</span>.
+        This cannot be undone.
+      </span>
+      <template v-if="hasProjects">
+        <br />
+        <br />
+        <CommonAlert color="warning">
+          <template #description>
+            Please note that existing projects in your workspace will not be moved to
+            the new region as we currently do not support moving projects between
+            regions. However, this will be supported soon and we will make sure to move
+            over your projects.
+          </template>
+        </CommonAlert>
+      </template>
+    </LayoutDialog>
   </section>
 </template>
 <script setup lang="ts">
 import { Roles } from '@speckle/shared'
+import type { LayoutDialogButton } from '@speckle/ui-components'
 import { useMutationLoading, useQuery, useQueryLoading } from '@vue/apollo-composable'
-import { debounce } from 'lodash-es'
 import { graphql } from '~/lib/common/generated/gql'
 import type { SettingsWorkspacesRegionsSelect_ServerRegionItemFragment } from '~/lib/common/generated/gql/graphql'
 import { useMixpanel } from '~/lib/core/composables/mp'
@@ -101,6 +135,9 @@ graphql(`
     hasAccessToMultiRegion: hasAccessToFeature(
       featureName: workspaceDataRegionSpecificity
     )
+    hasProjects: projects(limit: 0) {
+      totalCount
+    }
   }
 `)
 
@@ -135,12 +172,31 @@ const { result } = useQuery(
   })
 )
 
+const showDefaultRegionSaveDisclaimer = ref(false)
 const defaultRegion = ref<SettingsWorkspacesRegionsSelect_ServerRegionItemFragment>()
 const workspace = computed(() => result.value?.workspace)
 const availableRegions = computed(
   () => result.value?.serverInfo.multiRegion.regions || []
 )
 const isWorkspaceAdmin = computed(() => workspace.value?.role === Roles.Workspace.Admin)
+const hasProjects = computed(() => (workspace.value?.hasProjects?.totalCount || 0) > 0)
+const saveDisclaimerButtons = computed((): LayoutDialogButton[] => [
+  {
+    text: 'Cancel',
+    props: { color: 'outline' },
+    onClick: () => (showDefaultRegionSaveDisclaimer.value = false)
+  },
+  {
+    text: 'Confirm',
+    onClick: () => {
+      saveDefaultRegion()
+    }
+  }
+])
+
+const onDefaultRegionSave = () => {
+  showDefaultRegionSaveDisclaimer.value = true
+}
 
 const saveDefaultRegion = async () => {
   const regionKey = defaultRegion.value?.key
@@ -157,10 +213,9 @@ const saveDefaultRegion = async () => {
       // eslint-disable-next-line camelcase
       workspace_id: props.workspaceId
     })
+    showDefaultRegionSaveDisclaimer.value = false
   }
 }
-
-const debouncedSaveDefaultRegion = debounce(saveDefaultRegion, 1000)
 
 const goToBilling = () => {
   goToWorkspaceMenuItem(props.workspaceId, SettingMenuKeys.Workspace.Billing)
@@ -173,10 +228,4 @@ watch(
   },
   { immediate: true }
 )
-
-watch(defaultRegion, (newVal, oldVal) => {
-  if (newVal === oldVal) return
-  if (newVal?.id === oldVal?.id) return
-  debouncedSaveDefaultRegion()
-})
 </script>
