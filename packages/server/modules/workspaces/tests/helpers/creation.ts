@@ -150,7 +150,6 @@ export const createTestWorkspace = async (
       findEmailsByUserId: findEmailsByUserIdFactory({ db }),
       storeWorkspaceDomain: storeWorkspaceDomainFactory({ db }),
       getWorkspace: getWorkspaceFactory({ db }),
-      upsertWorkspace: upsertWorkspaceFactory({ db }),
       emitWorkspaceEvent: getEventBus().emit,
       getDomains: getWorkspaceDomainsFactory({ db })
     })({
