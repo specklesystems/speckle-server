@@ -24,7 +24,6 @@
         v-model="isYearlyIntervalSelected"
         :show-label="false"
         name="domain-protection"
-        :disabled="!toggleEnabled"
         @update:model-value="(newValue) => $emit('onYearlyIntervalSelected', newValue)"
       />
       <span class="text-body-2xs">Billed annually</span>
@@ -32,7 +31,7 @@
         20% off
       </CommonBadge>
     </div>
-    <div v-if="workspaceId" class="w-full mt-4">
+    <div v-if="workspaceId" v-tippy="buttonTooltip" class="w-full mt-4">
       <FormButton
         :color="buttonColor"
         :disabled="!isSelectable"
@@ -142,6 +141,26 @@ const buttonColor = computed(() => {
   }
   return 'outline'
 })
+const isDowngrade = computed(() => {
+  return !canUpgradeToPlan.value && props.currentPlan?.name !== props.plan.name
+})
+
+const isAnnualToMonthly = computed(() => {
+  return (
+    !isMatchingInterval.value &&
+    props.currentPlan?.name === props.plan.name &&
+    !props.yearlyIntervalSelected
+  )
+})
+
+const isMonthlyToAnnual = computed(() => {
+  return (
+    !isMatchingInterval.value &&
+    props.currentPlan?.name === props.plan.name &&
+    props.yearlyIntervalSelected
+  )
+})
+
 const isMatchingInterval = computed(
   () =>
     props.activeBillingInterval ===
@@ -172,13 +191,6 @@ const isSelectable = computed(() => {
   // Allow upgrades to higher tier plans
   return canUpgradeToPlan.value
 })
-const toggleEnabled = computed(() => {
-  return statusIsTrial.value
-    ? true
-    : canUpgradeToPlan.value ||
-        (props.currentPlan?.name === props.plan.name &&
-          props.activeBillingInterval === BillingInterval.Monthly)
-})
 const buttonText = computed(() => {
   // Trial plan case
   if (statusIsTrial.value) {
@@ -193,13 +205,26 @@ const buttonText = computed(() => {
     return `Downgrade to ${props.plan.name}`
   }
   // Billing interval change and current plan
-  if (!isMatchingInterval.value && props.currentPlan?.name === props.plan.name) {
-    return props.yearlyIntervalSelected
-      ? 'Change to annual plan'
-      : 'Change to monthly plan'
+  if (isAnnualToMonthly.value) {
+    return 'Change to monthly plan'
+  }
+  if (isMonthlyToAnnual.value) {
+    return 'Change to annual plan'
   }
   // Upgrade case
   return canUpgradeToPlan.value ? `Upgrade to ${startCase(props.plan.name)}` : ''
+})
+
+const buttonTooltip = computed(() => {
+  if (isDowngrade.value) {
+    return 'Downgrading is not supported at the moment. Please contact billing@speckle.systems.'
+  }
+
+  if (isAnnualToMonthly.value) {
+    return 'Changing from an annual to a monthly plan is currently not supported. Please contact billing@speckle.systems.'
+  }
+
+  return undefined
 })
 
 const onCtaClick = () => {
