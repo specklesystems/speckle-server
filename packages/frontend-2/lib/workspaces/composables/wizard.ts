@@ -100,17 +100,15 @@ export const useWorkspacesWizard = () => {
       workspaceId.value = newWorkspaceResult.data.workspaceMutations.create.id
     }
 
-    const updateCreationStateInput = {
-      completed: false,
-      state: {
-        ...state.value,
-        invites: state.value.invites.filter((invite) => !!invite.email)
-      },
-      workspaceId: workspaceId.value
-    }
-
     const updateWorkspaceResult = await updateWorkspace({
-      input: updateCreationStateInput
+      input: {
+        completed: false,
+        state: {
+          ...state.value,
+          invites: state.value.invites.filter((invite) => !!invite.email)
+        },
+        workspaceId: workspaceId.value
+      }
     }).catch(convertThrowIntoFetchResult)
 
     if (!updateWorkspaceResult?.data?.workspaceMutations.updateCreationState) {
@@ -133,7 +131,6 @@ export const useWorkspacesWizard = () => {
         workspaceId: workspaceId.value
       })
     } else {
-      // Refetch workspaces
       resetWizardState()
       router.push(workspaceRoute(state.value.slug))
     }
