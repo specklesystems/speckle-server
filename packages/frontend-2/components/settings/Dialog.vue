@@ -82,15 +82,14 @@
                       ? 'Log in with your SSO provider to access this page'
                       : workspaceMenuItem.tooltipText
                   "
-                  :disabled="
-                    workspaceMenuItem.disabled || needsSsoSession(workspaceItem, itemKey as string)
-                  "
+                  :disabled="!isAdmin && (workspaceMenuItem.disabled || needsSsoSession(workspaceItem, itemKey as string))"
                   extra-padding
                   @click="
-                    () =>
-                      workspaceMenuItem.disabled
-                        ? noop
-                        : onWorkspaceMenuItemClick(workspaceItem.id, `${itemKey}`)
+                    handleMenuItemClick(
+                      workspaceMenuItem,
+                      workspaceItem,
+                      itemKey as string
+                    )
                   "
                 />
               </template>
@@ -241,6 +240,19 @@ const needsSsoSession = (workspace: SettingsMenu_WorkspaceFragment, key: string)
     ? !workspace.sso?.session?.validUntil
     : false
 }
+
+const handleMenuItemClick = (
+  workspaceMenuItem: SettingsMenuItem,
+  workspaceItem: SettingsMenu_WorkspaceFragment,
+  itemKey: string
+) => {
+  const isDisabled =
+    !isAdmin.value &&
+    (workspaceMenuItem.disabled || needsSsoSession(workspaceItem, itemKey))
+  if (isDisabled) return
+  onWorkspaceMenuItemClick(workspaceItem.id, `${itemKey}`)
+}
+
 // not ideal, but it works temporarily while this is still a modal
 useSetupMenuState({
   goToWorkspaceMenuItem: onWorkspaceMenuItemClick

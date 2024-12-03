@@ -589,7 +589,6 @@ export = FF_WORKSPACES_MODULE_ENABLED
             getWorkspace: getWorkspaceFactory({ db }),
             findEmailsByUserId: findEmailsByUserIdFactory({ db }),
             storeWorkspaceDomain: storeWorkspaceDomainFactory({ db }),
-            upsertWorkspace: upsertWorkspaceFactory({ db }),
             getDomains: getWorkspaceDomainsFactory({ db }),
             emitWorkspaceEvent: getEventBus().emit
           })({

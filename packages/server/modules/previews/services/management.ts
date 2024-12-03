@@ -26,6 +26,7 @@ export const getObjectPreviewBufferOrFilepathFactory =
   }): GetObjectPreviewBufferOrFilepath =>
   async ({ streamId, objectId, angle }) => {
     angle = angle || defaultAngle
+    const boundLogger = logger.child({ streamId, objectId, angle })
 
     if (process.env.DISABLE_PREVIEWS) {
       return {
@@ -57,8 +58,8 @@ export const getObjectPreviewBufferOrFilepathFactory =
 
     const previewImgId = previewInfo.preview[angle]
     if (!previewImgId) {
-      logger.warn(
-        `Preview angle '${angle}' not found for object ${streamId}:${objectId}`
+      boundLogger.warn(
+        "Preview angle '{angle}' not found for object {streamId}:{objectId}"
       )
       return {
         type: 'file',
@@ -69,7 +70,10 @@ export const getObjectPreviewBufferOrFilepathFactory =
     }
     const previewImg = await deps.getPreviewImage({ previewId: previewImgId })
     if (!previewImg) {
-      logger.warn(`Preview image not found: ${previewImgId}`)
+      boundLogger.warn(
+        { previewImageId: previewImgId },
+        'Preview image not found: {previewImageId}'
+      )
       return {
         type: 'file',
         file: previewErrorImage,

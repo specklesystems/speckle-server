@@ -1,6 +1,6 @@
 <template>
   <div
-    class="border border-outline-3 bg-foundation text-foreground rounded-lg p-6 flex flex-col w-full"
+    class="border border-outline-3 bg-foundation text-foreground rounded-lg p-5 flex flex-col w-full"
   >
     <div class="flex items-center gap-x-2">
       <h4 class="text-body font-medium">
@@ -61,6 +61,14 @@
         />
         <XMarkIcon v-else class="w-4 h-4 mx-2 text-danger" />
         <span
+          v-tippy="
+            feature.description(
+              yearlyIntervalSelected
+                ? plan.cost.yearly[Roles.Workspace.Guest]
+                : plan.cost.monthly[Roles.Workspace.Guest]
+            )
+          "
+          class="underline decoration-outline-5 decoration-dashed underline-offset-4 cursor-help"
           :class="{
             'text-foreground-2': !plan.features.includes(feature.name as PlanFeaturesList)
           }"
