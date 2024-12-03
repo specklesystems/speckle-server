@@ -79,8 +79,8 @@ export const useWorkspacesWizard = () => {
   const completeWizard = async () => {
     // Monthly starter plan doesn't need checkout
     const needsCheckout =
-      state.value.plan !== PaidWorkspacePlans.Starter &&
-      state.value.billingInterval === BillingInterval.Monthly
+      state.value.plan !== PaidWorkspacePlans.Starter ||
+      state.value.billingInterval === BillingInterval.Yearly
     const isNewWorkspace = !state.value.id
     let newWorkspaceId = ''
 
