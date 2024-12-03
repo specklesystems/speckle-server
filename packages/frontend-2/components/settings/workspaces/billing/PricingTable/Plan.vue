@@ -33,7 +33,7 @@
     </div>
     <div v-if="workspaceId" class="w-full mt-4">
       <FormButton
-        v-if="isMonthlyToAnnual"
+        v-if="isMonthlyToAnnual || canUpgradeToPlan"
         :color="buttonColor"
         :disabled="!isSelectable"
         full-width
