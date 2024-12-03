@@ -42,9 +42,9 @@ export const createCheckoutSessionFactory =
     workspacePlan,
     billingInterval,
     workspaceSlug,
-    workspaceId
+    workspaceId,
+    isCreateFlow
   }) => {
-    //?settings=workspace/security&
     const resultUrl = getResultUrl({ frontendOrigin, workspaceId, workspaceSlug })
     const price = getWorkspacePlanPrice({ billingInterval, workspacePlan })
     const costLineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = [
@@ -59,13 +59,17 @@ export const createCheckoutSessionFactory =
         quantity: guestCount
       })
 
+    const cancel_url = isCreateFlow
+      ? `${frontendOrigin}/workspaces/create?workspaceId=${workspaceId}&payment_status=canceled&session_id={CHECKOUT_SESSION_ID}`
+      : `${resultUrl.toString()}&payment_status=canceled&session_id={CHECKOUT_SESSION_ID}`
+
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',
 
       line_items: costLineItems,
 
       success_url: `${resultUrl.toString()}&payment_status=success&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${resultUrl.toString()}&payment_status=canceled&session_id={CHECKOUT_SESSION_ID}`
+      cancel_url
     })
 
     if (!session.url) throw new Error('Failed to create an active checkout session')

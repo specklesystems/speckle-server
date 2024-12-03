@@ -43,12 +43,14 @@ export const startCheckoutSessionFactory =
     workspaceId,
     workspaceSlug,
     workspacePlan,
-    billingInterval
+    billingInterval,
+    isCreateFlow
   }: {
     workspaceId: string
     workspaceSlug: string
     workspacePlan: PaidWorkspacePlans
     billingInterval: WorkspacePlanBillingIntervals
+    isCreateFlow: boolean
   }): Promise<CheckoutSession> => {
     // get workspace plan, if we're already on a paid plan, do not allow checkout
     // paid plans should use a subscription modification
@@ -118,7 +120,8 @@ export const startCheckoutSessionFactory =
       billingInterval,
       workspacePlan,
       guestCount,
-      seatCount: adminCount + memberCount
+      seatCount: adminCount + memberCount,
+      isCreateFlow
     })
 
     await saveCheckoutSession({ checkoutSession })
