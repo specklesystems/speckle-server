@@ -29,6 +29,7 @@ import { useQuery } from '@vue/apollo-composable'
 import { graphql } from '~~/lib/common/generated/gql'
 import type { WorkspaceWizardState } from '~~/lib/workspaces/helpers/types'
 import { PaidWorkspacePlans } from '~/lib/common/generated/gql/graphql'
+import { useMixpanel } from '~/lib/core/composables/mp'
 
 graphql(`
   fragment WorkspaceWizard_Workspace on Workspace {
@@ -45,15 +46,16 @@ const props = defineProps<{
   workspaceId?: string
 }>()
 
+const showPaymentError = ref(false)
+
+const route = useRoute()
+const mixpanel = useMixpanel()
 const {
   setState,
   currentStep,
   goToStep,
   isLoading: wizardIsLoading
 } = useWorkspacesWizard()
-const route = useRoute()
-const showPaymentError = ref(false)
-
 const { loading: queryLoading, onResult } = useQuery(
   workspaceWizardQuery,
   () => ({
@@ -67,13 +69,23 @@ const { loading: queryLoading, onResult } = useQuery(
 const loading = computed(
   () => wizardIsLoading.value || (props.workspaceId ? queryLoading.value : false)
 )
+
 onResult((result) => {
   // If there is an existing workspace, we need to show the correct state
   const creationState = result.data?.workspace.creationState
 
   if (!creationState?.completed && !!creationState?.state) {
-    // TODO: Better typeguard
+    mixpanel.track('Workspace Creation Checkout Session Cancelled')
+
     const state = creationState.state as WorkspaceWizardState
+
+    setState({
+      ...state,
+      id: props.workspaceId ?? (route.query.workspaceId as string),
+      plan: null, // Force re-select plan
+      billingInterval: null // Force re-select billing interval
+    })
+
     // If the users comes back from Stripe, we need to go to the last relevant step and show an error
     if (route.query.workspaceId as string) {
       goToStep(
@@ -83,18 +95,8 @@ onResult((result) => {
       )
       showPaymentError.value = true
     }
-
-    setState({
-      id: props.workspaceId ?? (route.query.workspaceId as string),
-      name: state.name,
-      slug: state.slug,
-      // TODO: Can be improved
-      // We need to add placeholder invites to the state, so we can show the correct number of invites in the UI
-      invites: [...state.invites],
-      region: state.region,
-      plan: null, // Force re-select plan
-      billingInterval: null // Force re-select billing interval
-    })
+  } else {
+    mixpanel.track('Workspace Creation Started')
   }
 })
 </script>

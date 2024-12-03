@@ -45,15 +45,15 @@ import { debounce } from 'lodash'
 import { useQuery } from '@vue/apollo-composable'
 import { validateWorkspaceSlugQuery } from '~/lib/workspaces/graphql/queries'
 import { useWorkspacesWizard } from '~/lib/workspaces/composables/wizard'
+import { useMixpanel } from '~/lib/core/composables/mp'
 
 const props = defineProps<{
   disableSlugEdit: boolean
 }>()
 
+const mixpanel = useMixpanel()
 const { handleSubmit } = useForm<{ name: string; slug: string }>()
 const { state, goToNextStep } = useWorkspacesWizard()
-const shortIdManuallyEdited = ref(false)
-
 const { error, loading } = useQuery(
   validateWorkspaceSlugQuery,
   () => ({
@@ -63,6 +63,8 @@ const { error, loading } = useQuery(
     enabled: !!state.value.slug && !props.disableSlugEdit
   })
 )
+
+const shortIdManuallyEdited = ref(false)
 
 // const baseUrl = useRuntimeConfig().public.baseUrl
 
@@ -91,6 +93,11 @@ const onSlugChange = (newSlug: string) => {
 }
 
 const onSubmit = handleSubmit(() => {
+  mixpanel.track('Workspace Details Step Completed', {
+    name: state.value.name,
+    slug: state.value.slug
+  })
+
   goToNextStep()
 })
 </script>

@@ -46,8 +46,10 @@ import {
 } from '~/lib/common/generated/gql/graphql'
 import { useWorkspacesWizard } from '~/lib/workspaces/composables/wizard'
 import { pricingPlansConfig } from '~/lib/billing/helpers/constants'
+import { useMixpanel } from '~/lib/core/composables/mp'
 
 const { state, goToNextStep, goToPreviousStep } = useWorkspacesWizard()
+const mixpanel = useMixpanel()
 
 const plans = ref(pricingPlansConfig.plans)
 const isYearlySelected = ref(false)
@@ -57,6 +59,12 @@ const onCtaClick = (plan: WorkspacePlans) => {
   state.value.billingInterval = isYearlySelected.value
     ? BillingInterval.Yearly
     : BillingInterval.Monthly
+
+  mixpanel.track('Workspace Pricing Step Completed', {
+    plan: state.value.plan,
+    billingInterval: state.value.billingInterval
+  })
+
   goToNextStep()
 }
 

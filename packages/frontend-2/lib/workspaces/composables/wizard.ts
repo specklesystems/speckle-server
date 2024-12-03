@@ -16,6 +16,8 @@ import { workspaceRoute } from '~/lib/common/helpers/route'
 import { mapMainRoleToGqlWorkspaceRole } from '~/lib/workspaces/helpers/roles'
 import { mapServerRoleToGqlServerRole } from '~/lib/common/helpers/roles'
 import { Roles } from '@speckle/shared'
+import { useMixpanel } from '~/lib/core/composables/mp'
+
 const emptyState = {
   name: '',
   slug: '',
@@ -45,6 +47,7 @@ export const useWorkspacesWizard = () => {
   const { redirectToCheckout } = useBillingActions()
   const router = useRouter()
   const { triggerNotification } = useGlobalToast()
+  const mixpanel = useMixpanel()
   const { mutate: updateWorkspaceCreationState } = useMutation(
     setWorkspaceCreationStateMutation
   )
@@ -126,6 +129,8 @@ export const useWorkspacesWizard = () => {
       // Add workspace ID to URL, in case the user comes back from Stripe
       router.replace({ query: { workspaceId: workspaceId.value } })
 
+      mixpanel.track('Workspace Creation Checkout Session Started')
+
       // Go to Stripe
       await redirectToCheckout({
         plan: state.value.plan as unknown as PaidWorkspacePlans,
@@ -176,6 +181,13 @@ export const useWorkspacesWizard = () => {
         workspaceId,
         completed: true
       }
+    })
+
+    mixpanel.track('Workspace Created', {
+      plan: state.value.plan,
+      billingInterval: state.value.billingInterval,
+      // eslint-disable-next-line camelcase
+      workspace_id: workspaceId
     })
   }
 

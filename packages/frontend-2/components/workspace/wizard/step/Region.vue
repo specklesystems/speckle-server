@@ -38,6 +38,7 @@ import { graphql } from '~/lib/common/generated/gql'
 import { useQuery, useQueryLoading } from '@vue/apollo-composable'
 import { workspaceWizardRegionQuery } from '~/lib/workspaces/graphql/queries'
 import type { SettingsWorkspacesRegionsSelect_ServerRegionItemFragment } from '~/lib/common/generated/gql/graphql'
+import { useMixpanel } from '~/lib/core/composables/mp'
 
 graphql(`
   fragment WorkspaceWizardStepRegion_ServerInfo on ServerInfo {
@@ -56,6 +57,7 @@ const defaultRegion = ref<SettingsWorkspacesRegionsSelect_ServerRegionItemFragme
 const { state, goToNextStep, goToPreviousStep } = useWorkspacesWizard()
 const isQueryLoading = useQueryLoading()
 const { result } = useQuery(workspaceWizardRegionQuery)
+const mixpanel = useMixpanel()
 
 const hasDefaultRegion = computed(() => !!defaultRegion.value)
 const availableRegions = computed(
@@ -65,6 +67,11 @@ const availableRegions = computed(
 const onSubmit = () => {
   if (!defaultRegion.value) return
   state.value.region = defaultRegion.value
+
+  mixpanel.track('Workspace Region Step Completed', {
+    region: defaultRegion.value.id
+  })
+
   goToNextStep()
 }
 </script>

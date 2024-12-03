@@ -44,13 +44,14 @@ import { useWorkspacesWizard } from '~/lib/workspaces/composables/wizard'
 import { PlusIcon } from '@heroicons/vue/24/outline'
 import { isEmailOrEmpty } from '~~/lib/common/helpers/validation'
 import { useForm, useFieldArray } from 'vee-validate'
+import { useMixpanel } from '~/lib/core/composables/mp'
 
 interface InviteForm {
   fields: string[]
 }
 
 const { state, goToNextStep, goToPreviousStep } = useWorkspacesWizard()
-
+const mixpanel = useMixpanel()
 const { handleSubmit } = useForm<InviteForm>({
   initialValues: {
     fields: state.value.invites
@@ -70,6 +71,10 @@ const onSubmit = handleSubmit(() => {
   state.value.invites = fields.value
     .filter((field) => !!field)
     .map((field) => field.value)
+
+  mixpanel.track('Workspace Invites Step Completed', {
+    inviteCount: state.value.invites.length
+  })
 
   goToNextStep()
 })
