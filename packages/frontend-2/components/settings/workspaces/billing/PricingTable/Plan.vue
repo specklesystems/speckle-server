@@ -31,8 +31,9 @@
         20% off
       </CommonBadge>
     </div>
-    <div v-if="workspaceId" v-tippy="buttonTooltip" class="w-full mt-4">
+    <div v-if="workspaceId" class="w-full mt-4">
       <FormButton
+        v-if="isMonthlyToAnnual"
         :color="buttonColor"
         :disabled="!isSelectable"
         full-width
@@ -40,6 +41,16 @@
       >
         {{ buttonText }}
       </FormButton>
+      <div v-else v-tippy="buttonTooltip">
+        <FormButton
+          :color="buttonColor"
+          :disabled="!isSelectable"
+          full-width
+          @click="onCtaClick"
+        >
+          {{ buttonText }}
+        </FormButton>
+      </div>
     </div>
     <ul class="flex flex-col gap-y-2 mt-4 pt-3 border-t border-outline-3">
       <li
@@ -137,6 +148,12 @@ const statusIsTrial = computed(
   () => props.currentPlan?.status === WorkspacePlanStatuses.Trial || !props.currentPlan
 )
 
+const isMatchingInterval = computed(
+  () =>
+    props.activeBillingInterval ===
+    (props.yearlyIntervalSelected ? BillingInterval.Yearly : BillingInterval.Monthly)
+)
+
 const isDowngrade = computed(() => {
   return !canUpgradeToPlan.value && props.currentPlan?.name !== props.plan.name
 })
@@ -156,12 +173,6 @@ const isMonthlyToAnnual = computed(() => {
     props.yearlyIntervalSelected
   )
 })
-
-const isMatchingInterval = computed(
-  () =>
-    props.activeBillingInterval ===
-    (props.yearlyIntervalSelected ? BillingInterval.Yearly : BillingInterval.Monthly)
-)
 
 const isCurrentPlan = computed(
   () => isMatchingInterval.value && props.currentPlan?.name === props.plan.name
