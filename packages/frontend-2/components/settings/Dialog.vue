@@ -163,6 +163,9 @@ graphql(`
     plan {
       status
     }
+    creationState {
+      completed
+    }
   }
 `)
 
@@ -194,7 +197,10 @@ const isMobile = breakpoints.smaller('md')
 const showWorkspaceCreateDialog = ref(false)
 
 const workspaceItems = computed(
-  () => workspaceResult.value?.activeUser?.workspaces.items ?? []
+  () =>
+    workspaceResult.value?.activeUser?.workspaces.items.filter(
+      (item) => item.creationState?.completed !== false // Removed workspaces that are not completely created
+    ) ?? []
 )
 const isAdmin = computed(() => user.value?.role === Roles.Server.Admin)
 const canCreateWorkspace = computed(
