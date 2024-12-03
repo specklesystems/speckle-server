@@ -121,11 +121,6 @@
         @close="isOpen = false"
       />
     </div>
-
-    <WorkspaceCreateDialog
-      v-model:open="showWorkspaceCreateDialog"
-      event-source="settings"
-    />
   </LayoutDialog>
 </template>
 
@@ -194,7 +189,6 @@ const { result: workspaceResult } = useQuery(settingsSidebarQuery, null, {
 const { userMenuItems, serverMenuItems, workspaceMenuItems } = useSettingsMenu()
 
 const isMobile = breakpoints.smaller('md')
-const showWorkspaceCreateDialog = ref(false)
 
 const workspaceItems = computed(
   () =>

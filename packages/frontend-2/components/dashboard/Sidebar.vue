@@ -158,12 +158,6 @@
     </template>
 
     <FeedbackDialog v-model:open="showFeedbackDialog" />
-
-    <WorkspaceCreateDialog
-      v-model:open="showWorkspaceCreateDialog"
-      navigate-on-success
-      event-source="sidebar"
-    />
   </div>
 </template>
 <script setup lang="ts">
@@ -214,7 +208,6 @@ const { activeUser: user } = useActiveUser()
 const mixpanel = useMixpanel()
 
 const isOpenMobile = ref(false)
-const showWorkspaceCreateDialog = ref(false)
 const showFeedbackDialog = ref(false)
 
 const { result: workspaceResult, onResult: onWorkspaceResult } = useQuery(
@@ -273,16 +266,9 @@ const openFeedbackDialog = () => {
   isOpenMobile.value = false
 }
 
-const openWorkspaceCreateDialog = () => {
-  showWorkspaceCreateDialog.value = true
-  mixpanel.track('Create Workspace Button Clicked', {
-    source: 'sidebar'
-  })
-}
-
 const handlePlusClick = () => {
   if (route.path === workspacesRoute) {
-    openWorkspaceCreateDialog()
+    router.push(workspaceCreateRoute())
   } else {
     mixpanel.track('Clicked Link to Workspace Explainer', {
       source: 'sidebar'
