@@ -13,9 +13,9 @@
       remain in its previous location.
     </template>
     <template v-else-if="variant === RegionStaticDataDisclaimerVariant.UploadModel">
-      The selected workspace has a custom data residency setup. However, we currently do
-      not support custom data residency for file uploads; therefore, the uploaded file
-      will be stored in the default location.
+      The workspace where the project resides has a custom data residency setup.
+      However, we currently do not support custom data residency for file uploads. As a
+      result, the uploaded file will be stored in the default location.
     </template>
   </LayoutDialog>
 </template>
