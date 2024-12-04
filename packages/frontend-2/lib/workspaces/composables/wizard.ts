@@ -88,6 +88,8 @@ export const useWorkspacesWizard = () => {
 
   // This will complete the wizard and create the workspace.
   const completeWizard = async () => {
+    isLoading.value = true
+
     // Monthly starter plan doesn't need checkout
     const needsCheckout =
       state.value.plan !== PaidWorkspacePlans.Starter ||
@@ -106,7 +108,10 @@ export const useWorkspacesWizard = () => {
         { source: 'wizard' }
       )
 
-      if (!newWorkspaceResult?.data?.workspaceMutations.create) return
+      if (!newWorkspaceResult?.data?.workspaceMutations.create) {
+        isLoading.value = false
+        return
+      }
       workspaceId.value = newWorkspaceResult.data.workspaceMutations.create.id
     }
 
@@ -127,6 +132,8 @@ export const useWorkspacesWizard = () => {
         title: 'Something went wrong, please try again',
         type: ToastNotificationType.Danger
       })
+
+      isLoading.value = false
       return
     }
 
@@ -147,23 +154,22 @@ export const useWorkspacesWizard = () => {
       resetWizardState()
       router.push(workspaceRoute(state.value.slug))
     }
+
+    isLoading.value = false
   }
 
-  const finalizeWizard = async (
-    newState: WorkspaceWizardState,
-    workspaceId: string
-  ) => {
-    state.value = newState
+  const finalizeWizard = async (state: WorkspaceWizardState, workspaceId: string) => {
+    isLoading.value = true
 
-    if (state.value.region?.key) {
+    if (state.region?.key) {
       await updateWorkspaceDefaultRegion({
         workspaceId,
-        regionKey: state.value.region.key
+        regionKey: state.region.key
       }).catch(convertThrowIntoFetchResult)
     }
 
-    if (state.value.invites.length > 0) {
-      const inputs: WorkspaceInviteCreateInput[] = state.value.invites.map((email) => ({
+    if (state.invites.length > 0) {
+      const inputs: WorkspaceInviteCreateInput[] = state.invites.map((email) => ({
         role: mapMainRoleToGqlWorkspaceRole(Roles.Workspace.Member),
         email,
         serverRole: mapServerRoleToGqlServerRole(Roles.Server.User)
@@ -182,12 +188,14 @@ export const useWorkspacesWizard = () => {
 
     if (result?.data?.workspaceMutations.updateCreationState) {
       mixpanel.track('Workspace Created', {
-        plan: state.value.plan,
-        billingInterval: state.value.billingInterval,
+        plan: state.plan,
+        billingInterval: state.billingInterval,
         // eslint-disable-next-line camelcase
         workspace_id: workspaceId
       })
     }
+
+    isLoading.value = false
   }
 
   const resetWizardState = () => {
