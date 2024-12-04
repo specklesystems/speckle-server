@@ -7,6 +7,10 @@
         <strong>delete “{{ project.name }}”</strong>
         and all its contents, including
         <strong>{{ project.models.totalCount }} {{ modelText }}</strong>
+        <span v-if="project.automations.totalCount">
+          and
+          <strong>{{ project.automations.totalCount }} {{ automationText }}</strong>
+        </span>
         <span v-if="project.commentThreads.totalCount">
           and
           <strong>{{ project.commentThreads.totalCount }} {{ discussionText }}</strong>
@@ -56,6 +60,9 @@ const modelText = computed(() =>
 )
 const discussionText = computed(() =>
   props.project.commentThreads.totalCount === 1 ? 'discussion' : 'discussions'
+)
+const automationText = computed(() =>
+  props.project.automations.totalCount === 1 ? 'automation' : 'automations'
 )
 
 const dialogButtons = computed<LayoutDialogButton[]>(() => [
