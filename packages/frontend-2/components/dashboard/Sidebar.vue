@@ -164,6 +164,12 @@
     </template>
 
     <FeedbackDialog v-model:open="showFeedbackDialog" />
+
+    <WorkspaceCreateDialog
+      v-model:open="showWorkspaceCreateDialog"
+      navigate-on-success
+      event-source="sidebar"
+    />
   </div>
 </template>
 <script setup lang="ts">
@@ -181,7 +187,6 @@ import {
   projectsRoute,
   workspaceRoute,
   workspacesRoute,
-  workspaceCreateRoute,
   downloadManagerUrl
 } from '~/lib/common/helpers/route'
 import { useRoute } from 'vue-router'
@@ -215,6 +220,7 @@ const mixpanel = useMixpanel()
 
 const isOpenMobile = ref(false)
 const showFeedbackDialog = ref(false)
+const showWorkspaceCreateDialog = ref(false)
 
 const { result: workspaceResult, onResult: onWorkspaceResult } = useQuery(
   settingsSidebarQuery,
@@ -236,14 +242,9 @@ const workspacesItems = computed(() =>
     ? workspaceResult.value.activeUser.workspaces.items.map((workspace) => ({
         label: workspace.name,
         id: workspace.id,
-        to:
-          workspace.creationState?.completed === false
-            ? workspaceCreateRoute(workspace.id)
-            : workspaceRoute(workspace.slug),
+        to: workspaceRoute(workspace.slug),
         logo: workspace.logo,
         defaultLogoIndex: workspace.defaultLogoIndex,
-        slug: workspace.slug,
-        name: workspace.name,
         plan: {
           status: workspace.plan?.status
         },
@@ -272,9 +273,16 @@ const openFeedbackDialog = () => {
   isOpenMobile.value = false
 }
 
+const openWorkspaceCreateDialog = () => {
+  showWorkspaceCreateDialog.value = true
+  mixpanel.track('Create Workspace Button Clicked', {
+    source: 'sidebar'
+  })
+}
+
 const handlePlusClick = () => {
   if (route.path === workspacesRoute) {
-    router.push(workspaceCreateRoute())
+    openWorkspaceCreateDialog()
   } else {
     mixpanel.track('Clicked Link to Workspace Explainer', {
       source: 'sidebar'
