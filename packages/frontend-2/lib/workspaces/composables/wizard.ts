@@ -55,7 +55,10 @@ export const useWorkspacesWizard = () => {
   )
 
   const setState = (initialState: WorkspaceWizardState) => {
-    state.value = initialState
+    state.value = {
+      ...initialState,
+      invites: initialState.invites.length > 0 ? initialState.invites : ['', '', '']
+    }
   }
 
   const goToNextStep = () => {
