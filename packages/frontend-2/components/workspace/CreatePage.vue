@@ -1,9 +1,14 @@
 <template>
   <div class="bg-foundation-page">
     <nav
-      class="fixed top-0 h-14 bg-foundation w-full shadow flex items-center justify-between px-2"
+      class="fixed top-0 h-14 bg-foundation w-full shadow flex items-center justify-between px-2 cursor-pointer"
     >
-      <HeaderLogoBlock :active="false" class="mr-0" no-link />
+      <HeaderLogoBlock
+        :active="false"
+        class="mr-0"
+        no-link
+        @click="isCancelDialogOpen = true"
+      />
       <FormButton color="outline" @click="isCancelDialogOpen = true">Cancel</FormButton>
     </nav>
     <div class="h-dvh w-dvh overflow-hidden flex flex-col">
