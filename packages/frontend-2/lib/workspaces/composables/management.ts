@@ -548,7 +548,6 @@ export const useOnWorkspaceUpdated = (params: {
 }) => {
   const { workspaceSlug, handler } = params
 
-  const { triggerNotification } = useGlobalToast()
   const apollo = useApolloClient().client
   const { hasLock } = useLock(
     computed(() => `useOnWorkspaceUpdated-${unref(workspaceSlug.value)}`)
@@ -568,11 +567,6 @@ export const useOnWorkspaceUpdated = (params: {
   // Main, locked cache update
   onResult((result) => {
     if (!result.data?.workspaceUpdated || !hasLock.value) return
-
-    triggerNotification({
-      type: ToastNotificationType.Info,
-      title: 'Workspace updated'
-    })
   })
 
   // Optional handler
