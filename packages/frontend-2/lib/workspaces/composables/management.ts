@@ -43,7 +43,13 @@ export const useInviteUserToWorkspace = () => {
   const { mutate } = useMutation(inviteToWorkspaceMutation)
   const isWorkspacesEnabled = useIsWorkspacesEnabled()
 
-  return async (workspaceId: string, inputs: WorkspaceInviteCreateInput[]) => {
+  return async (args: {
+    workspaceId: string
+    inputs: WorkspaceInviteCreateInput[]
+    hideNotications?: boolean
+  }) => {
+    const { workspaceId, inputs, hideNotications } = args
+
     const userId = activeUser.value?.id
     if (!userId) return
     if (!isWorkspacesEnabled.value) return
@@ -85,7 +91,7 @@ export const useInviteUserToWorkspace = () => {
         }
       ).catch(convertThrowIntoFetchResult)) || {}
 
-    if (!data?.workspaceMutations.invites.batchCreate.id) {
+    if (!data?.workspaceMutations.invites.batchCreate.id && !hideNotications) {
       const err = getFirstErrorMessage(errors)
       triggerNotification({
         type: ToastNotificationType.Danger,

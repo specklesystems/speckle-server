@@ -153,9 +153,8 @@ export const useWorkspacesWizard = () => {
     } else {
       resetWizardState()
       router.push(workspaceRoute(state.value.slug))
+      isLoading.value = false
     }
-
-    isLoading.value = false
   }
 
   const finalizeWizard = async (state: WorkspaceWizardState, workspaceId: string) => {
@@ -175,7 +174,7 @@ export const useWorkspacesWizard = () => {
         serverRole: mapServerRoleToGqlServerRole(Roles.Server.User)
       }))
 
-      await inviteToWorkspace(workspaceId, inputs)
+      await inviteToWorkspace({ workspaceId, inputs, hideNotications: true })
     }
 
     const result = await updateWorkspaceCreationState({
