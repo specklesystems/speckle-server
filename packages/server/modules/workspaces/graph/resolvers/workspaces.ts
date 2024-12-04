@@ -517,6 +517,10 @@ export = FF_WORKSPACES_MODULE_ENABLED
               getWorkspaceBySlug: getWorkspaceBySlugFactory({ db })
             }),
             getWorkspace: getWorkspaceWithDomainsFactory({ db }),
+            getWorkspaceSsoProviderRecord: getWorkspaceSsoProviderFactory({
+              db,
+              decrypt: getDecryptor()
+            }),
             upsertWorkspace: upsertWorkspaceFactory({ db }),
             emitWorkspaceEvent: getEventBus().emit
           })
@@ -589,7 +593,6 @@ export = FF_WORKSPACES_MODULE_ENABLED
             getWorkspace: getWorkspaceFactory({ db }),
             findEmailsByUserId: findEmailsByUserIdFactory({ db }),
             storeWorkspaceDomain: storeWorkspaceDomainFactory({ db }),
-            upsertWorkspace: upsertWorkspaceFactory({ db }),
             getDomains: getWorkspaceDomainsFactory({ db }),
             emitWorkspaceEvent: getEventBus().emit
           })({
@@ -620,6 +623,10 @@ export = FF_WORKSPACES_MODULE_ENABLED
                 getWorkspaceBySlug: getWorkspaceBySlugFactory({ db })
               }),
               getWorkspace: getWorkspaceWithDomainsFactory({ db }),
+              getWorkspaceSsoProviderRecord: getWorkspaceSsoProviderFactory({
+                db,
+                decrypt: getDecryptor()
+              }),
               upsertWorkspace: upsertWorkspaceFactory({ db }),
               emitWorkspaceEvent: getEventBus().emit
             })

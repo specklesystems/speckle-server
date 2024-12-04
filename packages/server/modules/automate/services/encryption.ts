@@ -1,4 +1,4 @@
-import { getAutomateEncryptionKeysPath } from '@/modules/shared/helpers/envHelper'
+import { getEncryptionKeysPath } from '@/modules/shared/helpers/envHelper'
 import { packageRoot } from '@/bootstrap'
 import path from 'node:path'
 import fs from 'node:fs/promises'
@@ -36,7 +36,7 @@ const isKeysFileContents = (
 const getEncryptionKeys = async () => {
   if (keys) return keys
 
-  const relativePath = getAutomateEncryptionKeysPath()
+  const relativePath = getEncryptionKeysPath()
   const fullPath = path.resolve(packageRoot, relativePath)
   const file = await fs.readFile(fullPath, 'utf-8')
 

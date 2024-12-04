@@ -26,14 +26,14 @@
           label="Short ID"
           name="shortId"
           :help="slugHelp"
-          :disabled="!isAdmin || needsSsoLogin"
+          :disabled="disableSlugInput"
           show-label
           label-position="left"
-          :tooltip-text="disabledTooltipText"
+          :tooltip-text="disabledSlugTooltipText"
           read-only
-          :right-icon="isAdmin || needsSsoLogin ? IconEdit : undefined"
-          right-icon-title="Edit short ID"
-          @right-icon-click="openSlugEditDialog"
+          :right-icon="disableSlugInput ? undefined : IconEdit"
+          :right-icon-title="disableSlugInput ? undefined : 'Edit short ID'"
+          @right-icon-click="disableSlugInput ? undefined : openSlugEditDialog"
         />
         <hr class="my-4 border-outline-3" />
         <FormTextInput
@@ -210,7 +210,7 @@ const { result: workspaceResult, onResult } = useQuery(
   })
 )
 const config = useRuntimeConfig()
-const { needsSsoLogin } = useWorkspaceSsoStatus({
+const { hasSsoEnabled, needsSsoLogin } = useWorkspaceSsoStatus({
   workspaceSlug: computed(() => workspaceResult.value?.workspace?.slug || '')
 })
 
@@ -319,7 +319,16 @@ const disabledTooltipText = computed(() => {
   return undefined
 })
 
+const disableSlugInput = computed(() => !isAdmin.value || hasSsoEnabled.value)
+
+const disabledSlugTooltipText = computed(() => {
+  return hasSsoEnabled.value
+    ? 'Short ID cannot be changed while SSO is enabled.'
+    : disabledTooltipText.value
+})
+
 const openSlugEditDialog = () => {
+  if (hasSsoEnabled.value) return
   showEditSlugDialog.value = true
 }
 

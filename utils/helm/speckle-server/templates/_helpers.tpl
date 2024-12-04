@@ -675,12 +675,14 @@ Generate the environment variables for Speckle server and Speckle objects deploy
       key: {{ .Values.server.billing.workspaceYearlyBusinessSeatStripePriceId.secretKey }}
 {{- end }}
 
+{{- if (or .Values.featureFlags.automateModuleEnabled .Values.featureFlags.workspacesSsoEnabled) }}
+- name: ENCRYPTION_KEYS_PATH
+  value: {{ .Values.server.encryptionKeys.path }}
+{{- end }}
+
 {{- if .Values.featureFlags.automateModuleEnabled }}
 - name: SPECKLE_AUTOMATE_URL
   value: {{ .Values.server.speckleAutomateUrl }}
-
-- name: AUTOMATE_ENCRYPTION_KEYS_PATH
-  value: {{ .Values.server.encryptionKeys.path }}
 {{- end }}
 
 - name: ONBOARDING_STREAM_URL
