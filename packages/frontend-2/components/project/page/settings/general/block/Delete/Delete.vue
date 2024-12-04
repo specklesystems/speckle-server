@@ -39,7 +39,7 @@ graphql(`
     workspace {
       slug
     }
-    automations {
+    automations(limit: 0) {
       totalCount
     }
   }
