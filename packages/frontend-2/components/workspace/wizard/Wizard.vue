@@ -81,9 +81,7 @@ onResult((result) => {
 
     setState({
       ...state,
-      id: props.workspaceId ?? (route.query.workspaceId as string),
-      plan: null, // Force re-select plan
-      billingInterval: null // Force re-select billing interval
+      id: props.workspaceId ?? (route.query.workspaceId as string)
     })
 
     // If the users comes back from Stripe, we need to go to the last relevant step and show an error
