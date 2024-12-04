@@ -272,7 +272,7 @@ export const handleAutomateFunctionCreatorAuthCallbackFactory =
     } = req.query as Record<string, string>
 
     const isSuccess = ghAuth === 'success'
-    const redirectUrl = getFunctionsMarketplaceUrl()
+    const redirectUrl = getFunctionsMarketplaceUrl(req.session.workspaceSlug)
     redirectUrl.searchParams.set('ghAuth', isSuccess ? 'success' : ghAuth)
     redirectUrl.searchParams.set('ghAuthDesc', isSuccess ? '' : ghAuthDesc)
 

@@ -11,6 +11,8 @@ import { authMiddlewareCreator } from '@/modules/shared/middleware'
 import { getRolesFactory } from '@/modules/shared/repositories/roles'
 import { Roles, Scopes } from '@speckle/shared'
 import { Application } from 'express'
+import { validateRequest } from 'zod-express'
+import { z } from 'zod'
 
 export default (app: Application) => {
   app.get(
@@ -22,7 +24,14 @@ export default (app: Application) => {
       })({ requiredRole: Roles.Server.Guest }),
       validateScope({ requiredScope: Scopes.AutomateFunctions.Write })
     ]),
+    validateRequest({
+      query: z.object({
+        workspaceSlug: z.string().optional()
+      })
+    }),
     async (req, res) => {
+      req.session.workspaceSlug = req.query.workspaceSlug
+
       const startAuth = startAutomateFunctionCreatorAuthFactory({
         createStoredAuthCode: createStoredAuthCodeFactory({
           redis: getGenericRedis()

@@ -61,7 +61,10 @@ import {
   useUpdateAutomateFunction
 } from '~/lib/automate/composables/management'
 import { useMutationLoading } from '@vue/apollo-composable'
-import type { AutomateFunctionCreateDialogDoneStep_AutomateFunctionFragment } from '~~/lib/common/generated/gql/graphql'
+import type {
+  AutomateFunctionCreateDialogDoneStep_AutomateFunctionFragment,
+  Workspace
+} from '~~/lib/common/generated/gql/graphql'
 import { useMixpanel } from '~/lib/core/composables/mp'
 
 enum FunctionCreateSteps {
@@ -77,7 +80,7 @@ const props = defineProps<{
   isAuthorized: boolean
   templates: CreatableFunctionTemplate[]
   githubOrgs: string[]
-  workspaceId?: string
+  workspace?: Pick<Workspace, 'id' | 'slug'>
 }>()
 const open = defineModel<boolean>('open', { required: true })
 
@@ -114,19 +117,19 @@ const onDetailsSubmit = handleDetailsSubmit(async (values) => {
     templateId: selectedTemplate.value.id,
     name: values.name,
     /* eslint-disable-next-line camelcase */
-    workspace_id: props.workspaceId
+    workspace_id: props.workspace?.id
   })
   createdFunction.value = res
   step.value++
 
-  if (!props.workspaceId) {
+  if (!props.workspace?.id) {
     return
   }
 
   await updateFunction({
     input: {
       id: res.id,
-      workspaceIds: [props.workspaceId]
+      workspaceIds: [props.workspace.id]
     }
   })
 })
@@ -183,7 +186,10 @@ const title = computed(() => {
 })
 
 const authorizeGithubUrl = computed(() => {
-  const redirectUrl = new URL(automateGithubAppAuthorizationRoute, apiBaseUrl)
+  const redirectUrl = new URL(
+    automateGithubAppAuthorizationRoute(props.workspace?.slug),
+    apiBaseUrl
+  )
   return redirectUrl.toString()
 })
 

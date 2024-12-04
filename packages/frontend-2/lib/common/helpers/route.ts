@@ -62,7 +62,11 @@ export const projectWebhooksRoute = (projectId: string) =>
 export const threadRedirectRoute = (projectId: string, threadId: string) =>
   `/projects/${projectId}/threads/${threadId}`
 
-export const automateGithubAppAuthorizationRoute = '/api/automate/auth/githubapp'
+export const automateGithubAppAuthorizationRoute = (workspaceSlug?: string) => {
+  return `/api/automate/auth/githubapp${
+    workspaceSlug ? `?workspaceSlug=${workspaceSlug}` : ''
+  }`
+}
 
 export const automationFunctionsRoute = '/functions'
 

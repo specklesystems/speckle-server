@@ -35,7 +35,7 @@
       :is-authorized="!!activeUser?.automateInfo.hasAutomateGithubApp"
       :github-orgs="activeUser?.automateInfo.availableGithubOrgs || []"
       :templates="availableTemplates"
-      :workspace-id="workspace?.id"
+      :workspace="workspace"
     />
   </div>
 </template>
