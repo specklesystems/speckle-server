@@ -77,9 +77,9 @@ import {
   PlusIcon
 } from '@heroicons/vue/24/outline'
 
-const showWorkspaceCreateDialog = ref(false)
-
 const mixpanel = useMixpanel()
+
+const showWorkspaceCreateDialog = ref(false)
 
 const openWorkspaceCreateDialog = () => {
   showWorkspaceCreateDialog.value = true

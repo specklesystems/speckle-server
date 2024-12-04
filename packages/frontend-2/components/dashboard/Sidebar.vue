@@ -72,32 +72,33 @@
                   </template>
                 </LayoutSidebarMenuGroupItem>
               </NuxtLink>
-              <NuxtLink
-                v-for="(item, key) in workspacesItems"
-                :key="key"
-                :to="item.to"
-                @click="isOpenMobile = false"
-              >
-                <LayoutSidebarMenuGroupItem
-                  :label="item.label"
-                  :active="isActive(item.to)"
-                  :tag="
-                    item.plan?.status === WorkspacePlanStatuses.Trial ||
-                    !item.plan?.status
-                      ? 'TRIAL'
-                      : undefined
-                  "
-                  class="!pl-1"
+              <template v-for="(item, key) in workspacesItems" :key="key">
+                <NuxtLink
+                  v-if="item.creationState.completed !== false"
+                  :to="item.to"
+                  @click="isOpenMobile = false"
                 >
-                  <template #icon>
-                    <WorkspaceAvatar
-                      :logo="item.logo"
-                      :default-logo-index="item.defaultLogoIndex"
-                      size="sm"
-                    />
-                  </template>
-                </LayoutSidebarMenuGroupItem>
-              </NuxtLink>
+                  <LayoutSidebarMenuGroupItem
+                    :label="item.label"
+                    :active="isActive(item.to)"
+                    :tag="
+                      item.plan.status === WorkspacePlanStatuses.Trial ||
+                      !item.plan.status
+                        ? 'TRIAL'
+                        : undefined
+                    "
+                    class="!pl-1"
+                  >
+                    <template #icon>
+                      <WorkspaceAvatar
+                        :logo="item.logo"
+                        :default-logo-index="item.defaultLogoIndex"
+                        size="sm"
+                      />
+                    </template>
+                  </LayoutSidebarMenuGroupItem>
+                </NuxtLink>
+              </template>
             </LayoutSidebarMenuGroup>
 
             <LayoutSidebarMenuGroup title="Resources" collapsible>
@@ -218,8 +219,8 @@ const { activeUser: user } = useActiveUser()
 const mixpanel = useMixpanel()
 
 const isOpenMobile = ref(false)
-const showWorkspaceCreateDialog = ref(false)
 const showFeedbackDialog = ref(false)
+const showWorkspaceCreateDialog = ref(false)
 
 const { result: workspaceResult, onResult: onWorkspaceResult } = useQuery(
   settingsSidebarQuery,
@@ -246,6 +247,9 @@ const workspacesItems = computed(() =>
         defaultLogoIndex: workspace.defaultLogoIndex,
         plan: {
           status: workspace.plan?.status
+        },
+        creationState: {
+          completed: workspace.creationState?.completed
         }
       }))
     : []

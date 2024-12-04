@@ -94,7 +94,8 @@ export = FF_GATEKEEPER_MODULE_ENABLED
           return true
         },
         createCheckoutSession: async (parent, args, ctx) => {
-          const { workspaceId, workspacePlan, billingInterval } = args.input
+          const { workspaceId, workspacePlan, billingInterval, isCreateFlow } =
+            args.input
           const workspace = await getWorkspaceFactory({ db })({ workspaceId })
 
           if (!workspace) throw new WorkspaceNotFoundError()
@@ -125,7 +126,7 @@ export = FF_GATEKEEPER_MODULE_ENABLED
             workspacePlan,
             workspaceId,
             workspaceSlug: workspace.slug,
-
+            isCreateFlow: isCreateFlow || false,
             billingInterval
           })
 

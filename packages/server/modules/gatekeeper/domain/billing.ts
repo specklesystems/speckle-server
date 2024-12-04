@@ -106,6 +106,7 @@ export type CreateCheckoutSession = (args: {
   guestCount: number
   workspacePlan: PaidWorkspacePlans
   billingInterval: WorkspacePlanBillingIntervals
+  isCreateFlow: boolean
 }) => Promise<CheckoutSession>
 
 export type WorkspaceSubscription = {

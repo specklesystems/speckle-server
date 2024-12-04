@@ -2,13 +2,15 @@
   <div
     class="border border-outline-3 bg-foundation text-foreground rounded-lg p-5 flex flex-col w-full"
   >
-    <div>
+    <div class="flex items-center gap-x-2">
       <h4 class="text-body font-medium">
         Workspace
         <span class="capitalize">{{ plan.name }}</span>
       </h4>
+      <CommonBadge v-if="badgeText" rounded>
+        {{ badgeText }}
+      </CommonBadge>
     </div>
-
     <p class="text-body mt-1">
       <span class="font-medium">
         £{{
@@ -32,8 +34,10 @@
         20% off
       </CommonBadge>
     </div>
-    <div v-if="workspaceId" class="w-full mt-4">
+    <div v-if="workspaceId || hasCta" class="w-full mt-4">
+      <slot name="cta" />
       <FormButton
+        v-if="workspaceId"
         :color="buttonColor"
         :disabled="!isSelectable"
         full-width
@@ -108,18 +112,22 @@ const emit = defineEmits<{
 
 const props = defineProps<{
   plan: PricingPlan
+  yearlyIntervalSelected: boolean
+  badgeText?: string
   // The following props are optional if the table is for informational purposes
   currentPlan?: MaybeNullOrUndefined<WorkspacePlan>
   workspaceId?: string
   isAdmin?: boolean
   activeBillingInterval?: BillingInterval
-  yearlyIntervalSelected: boolean
 }>()
+
+const slots = useSlots()
 
 const features = ref(pricingPlansConfig.features)
 const isUpgradeDialogOpen = ref(false)
 const isYearlyIntervalSelected = ref(props.yearlyIntervalSelected)
 
+const hasCta = computed(() => !!slots.cta)
 const canUpgradeToPlan = computed(() => {
   if (!props.currentPlan) return false
 

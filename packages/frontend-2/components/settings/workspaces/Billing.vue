@@ -164,6 +164,7 @@ import { pricingPlansConfig } from '~/lib/billing/helpers/constants'
 import { Roles } from '@speckle/shared'
 import { InformationCircleIcon } from '@heroicons/vue/24/outline'
 import { isPaidPlan } from '@/lib/billing/helpers/types'
+import { useMixpanel } from '~/lib/core/composables/mp'
 
 graphql(`
   fragment SettingsWorkspacesBilling_Workspace on Workspace {
@@ -202,6 +203,7 @@ const { result: workspaceResult } = useQuery(
   })
 )
 const { billingPortalRedirect, redirectToCheckout } = useBillingActions()
+const mixpanel = useMixpanel()
 
 const seatPrices = ref({
   [WorkspacePlans.Starter]: pricingPlansConfig.plans[WorkspacePlans.Starter].cost,
@@ -288,6 +290,13 @@ const onPlanSelected = (plan: { name: WorkspacePlans; cycle: BillingInterval }) 
   if (!isPaidPlan(name) || !props.workspaceId) return
 
   if (statusIsTrial.value) {
+    mixpanel.track('Workspace Subscribe Button Clicked', {
+      plan,
+      cycle,
+      // eslint-disable-next-line camelcase
+      workspace_id: props.workspaceId
+    })
+
     redirectToCheckout({
       plan: name as unknown as PaidWorkspacePlans,
       cycle,
