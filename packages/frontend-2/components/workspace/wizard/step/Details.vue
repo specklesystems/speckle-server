@@ -16,21 +16,25 @@
         size="lg"
         @update:model-value="updateShortId"
       />
-      <FormTextInput
-        id="workspace-slug"
-        v-model:model-value="state.slug"
-        name="slug"
-        label="Short ID"
-        color="foundation"
-        :loading="loading"
-        :rules="isStringOfLength({ maxLength: 50, minLength: 3 })"
-        :custom-error-message="error?.graphQLErrors[0]?.message"
-        show-label
-        size="lg"
-        :disabled="disableSlugEdit"
-        :help="getShortIdHelp"
-        @update:model-value="onSlugChange"
-      />
+      <div>
+        <FormTextInput
+          id="workspace-slug"
+          v-model:model-value="state.slug"
+          name="slug"
+          label="Short ID"
+          color="foundation"
+          :loading="loading"
+          :rules="isStringOfLength({ maxLength: 50, minLength: 3 })"
+          :custom-error-message="error?.graphQLErrors[0]?.message"
+          show-label
+          size="lg"
+          :disabled="disableSlugEdit"
+          @update:model-value="onSlugChange"
+        />
+        <p class="text-body-2xs mt-1.5 text-foreground-2">
+          {{ getShortIdHelp }}
+        </p>
+      </div>
       <FormButton size="lg" :disabled="disableContinue" submit full-width class="mt-4">
         Continue
       </FormButton>
