@@ -1,6 +1,9 @@
 <template>
   <div class="py-3 md:py-6">
-    <CommonLoadingIcon v-if="loading" class="my-10 justify-self-center" />
+    <CommonLoadingIcon
+      v-if="loading || !isClientReady"
+      class="my-10 justify-self-center"
+    />
     <template v-else>
       <CommonAlert
         v-if="showPaymentError"
@@ -67,6 +70,7 @@ const { loading: queryLoading, onResult } = useQuery(
 )
 
 const showPaymentError = ref(false)
+const isClientReady = ref(false)
 
 const loading = computed(
   () => wizardIsLoading.value || (props.workspaceId ? queryLoading.value : false)
@@ -100,5 +104,9 @@ onResult((result) => {
       mixpanel.track('Workspace Creation Checkout Session Canceled')
     }
   }
+})
+
+onMounted(() => {
+  isClientReady.value = true
 })
 </script>
