@@ -101,8 +101,6 @@ onResult((result) => {
 
       mixpanel.track('Workspace Creation Checkout Session Canceled')
     }
-  } else {
-    mixpanel.track('Workspace Creation Canceled')
   }
 })
 </script>
