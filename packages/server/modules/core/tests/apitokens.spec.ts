@@ -526,8 +526,8 @@ describe('API Tokens', () => {
           .set('Authorization', `Bearer ${limitedToken1}`)
           .send({ fake: 'data' })
 
-        // We sent an invalid payload so 500 is fine, as long as its not a 401
-        expect(resAllowed).to.have.status(500)
+        // We sent an invalid payload so 400 is expected, as long as its not a 401
+        expect(resAllowed).to.have.status(400)
 
         const resDisallowed = await request(app)
           .post(`/api/getobjects/${stream2.id}`)
@@ -542,8 +542,8 @@ describe('API Tokens', () => {
           .set('Authorization', `Bearer ${limitedToken1}`)
           .send({ fake: 'data' })
 
-        // We sent an invalid payload so 500 is fine, as long as its not a 401
-        expect(resAllowed).to.have.status(500)
+        // We sent an invalid payload so 400 is fine, as long as its not a 401
+        expect(resAllowed).to.have.status(400)
 
         const resDisallowed = await request(app)
           .post(`/api/diff/${stream2.id}`)
