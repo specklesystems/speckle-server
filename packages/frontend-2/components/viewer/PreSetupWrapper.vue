@@ -123,6 +123,7 @@ import { useViewerTour } from '~/lib/viewer/composables/tour'
 import { useFilterUtilities } from '~/lib/viewer/composables/ui'
 import { projectsRoute } from '~~/lib/common/helpers/route'
 import { workspaceRoute } from '~/lib/common/helpers/route'
+import { useMixpanel } from '~/lib/core/composables/mp'
 
 const emit = defineEmits<{
   setup: [InjectableViewerState]
@@ -198,4 +199,11 @@ const lastUpdate = computed(() => {
 })
 
 useHead({ title })
+
+const mp = useMixpanel()
+onMounted(() => {
+  if (isEmbedEnabled.value) {
+    mp.track('Embedded Model Load')
+  }
+})
 </script>
