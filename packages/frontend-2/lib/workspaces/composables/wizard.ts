@@ -8,7 +8,7 @@ import {
 import { useWorkspacesAvatar } from '~/lib/workspaces/composables/avatar'
 import { useBillingActions } from '~/lib/billing/composables/actions'
 import {
-  setWorkspaceCreationStateMutation,
+  updateWorkspaceCreationStateMutation,
   setDefaultRegionMutation
 } from '~/lib/workspaces/graphql/mutations'
 import { useMutation } from '@vue/apollo-composable'
@@ -48,8 +48,10 @@ export const useWorkspacesWizard = () => {
   const router = useRouter()
   const { triggerNotification } = useGlobalToast()
   const mixpanel = useMixpanel()
+  const inviteToWorkspace = useInviteUserToWorkspace()
+  const { mutate: updateWorkspaceDefaultRegion } = useMutation(setDefaultRegionMutation)
   const { mutate: updateWorkspaceCreationState } = useMutation(
-    setWorkspaceCreationStateMutation
+    updateWorkspaceCreationStateMutation
   )
 
   const setState = (initialState: WorkspaceWizardState) => {
@@ -135,7 +137,8 @@ export const useWorkspacesWizard = () => {
       await redirectToCheckout({
         plan: state.value.plan as unknown as PaidWorkspacePlans,
         cycle: state.value.billingInterval as BillingInterval,
-        workspaceId: workspaceId.value
+        workspaceId: workspaceId.value,
+        isCreateFlow: true
       })
     } else {
       resetWizardState()
@@ -148,11 +151,6 @@ export const useWorkspacesWizard = () => {
     workspaceId: string
   ) => {
     state.value = newState
-
-    const inviteToWorkspace = useInviteUserToWorkspace()
-    const { mutate: updateWorkspaceDefaultRegion } = useMutation(
-      setDefaultRegionMutation
-    )
 
     if (state.value.region?.key) {
       await updateWorkspaceDefaultRegion({
@@ -171,24 +169,22 @@ export const useWorkspacesWizard = () => {
       await inviteToWorkspace(workspaceId, inputs)
     }
 
-    const { mutate: updateWorkspaceCreationState } = useMutation(
-      setWorkspaceCreationStateMutation
-    )
-
-    await updateWorkspaceCreationState({
+    const result = await updateWorkspaceCreationState({
       input: {
         state: {},
         workspaceId,
         completed: true
       }
-    })
+    }).catch(convertThrowIntoFetchResult)
 
-    mixpanel.track('Workspace Created', {
-      plan: state.value.plan,
-      billingInterval: state.value.billingInterval,
-      // eslint-disable-next-line camelcase
-      workspace_id: workspaceId
-    })
+    if (result?.data?.workspaceMutations.updateCreationState) {
+      mixpanel.track('Workspace Created', {
+        plan: state.value.plan,
+        billingInterval: state.value.billingInterval,
+        // eslint-disable-next-line camelcase
+        workspace_id: workspaceId
+      })
+    }
   }
 
   const resetWizardState = () => {

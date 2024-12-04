@@ -21,7 +21,6 @@
       />
       <div class="flex flex-col gap-4 mt-4">
         <div class="flex flex-row gap-2 sm:items-center justify-between">
-          {{ workspace?.creationState?.state }}
           <FormTextInput
             name="modelsearch"
             :show-label="false"
@@ -305,6 +304,7 @@ onResult((queryResult) => {
     queryResult.data?.workspaceBySlug.creationState?.completed === false &&
     queryResult.data.workspaceBySlug.creationState.state
   ) {
+    if (import.meta.server) return
     finalizeWizard(
       queryResult.data.workspaceBySlug.creationState.state as WorkspaceWizardState,
       queryResult.data.workspaceBySlug.id

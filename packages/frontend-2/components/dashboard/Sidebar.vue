@@ -72,27 +72,33 @@
                   </template>
                 </LayoutSidebarMenuGroupItem>
               </NuxtLink>
-              <NuxtLink
-                v-for="(item, key) in workspacesItems"
-                :key="key"
-                :to="item.to"
-                @click="isOpenMobile = false"
-              >
-                <LayoutSidebarMenuGroupItem
-                  :label="item.label"
-                  :active="isActive(item.to)"
-                  :tag="getTagText(item.plan?.status, item.creationState?.completed)"
-                  class="!pl-1"
+              <template v-for="(item, key) in workspacesItems" :key="key">
+                <NuxtLink
+                  v-if="item.creationState.completed !== false"
+                  :to="item.to"
+                  @click="isOpenMobile = false"
                 >
-                  <template #icon>
-                    <WorkspaceAvatar
-                      :logo="item.logo"
-                      :default-logo-index="item.defaultLogoIndex"
-                      size="sm"
-                    />
-                  </template>
-                </LayoutSidebarMenuGroupItem>
-              </NuxtLink>
+                  <LayoutSidebarMenuGroupItem
+                    :label="item.label"
+                    :active="isActive(item.to)"
+                    :tag="
+                      item.plan.status === WorkspacePlanStatuses.Trial ||
+                      !item.plan.status
+                        ? 'TRIAL'
+                        : undefined
+                    "
+                    class="!pl-1"
+                  >
+                    <template #icon>
+                      <WorkspaceAvatar
+                        :logo="item.logo"
+                        :default-logo-index="item.defaultLogoIndex"
+                        size="sm"
+                      />
+                    </template>
+                  </LayoutSidebarMenuGroupItem>
+                </NuxtLink>
+              </template>
             </LayoutSidebarMenuGroup>
 
             <LayoutSidebarMenuGroup title="Resources" collapsible>
@@ -282,13 +288,5 @@ const handleIntroducingWorkspacesClick = () => {
   mixpanel.track('Clicked Link to Workspace Explainer', {
     source: 'sidebar'
   })
-}
-
-const getTagText = (status?: WorkspacePlanStatuses, completed?: boolean) => {
-  return completed === false
-    ? 'IN PROGRESS'
-    : status === WorkspacePlanStatuses.Trial || !status
-    ? 'TRIAL'
-    : undefined
 }
 </script>
