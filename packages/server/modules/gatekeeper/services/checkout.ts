@@ -95,7 +95,8 @@ export const startCheckoutSessionFactory =
         throw new WorkspaceAlreadyPaidError()
       if (
         new Date().getTime() - workspaceCheckoutSession.createdAt.getTime() >
-        10 * 60 * 1000
+        1000
+        // 10 * 60 * 1000
       ) {
         await deleteCheckoutSession({
           checkoutSessionId: workspaceCheckoutSession.id
