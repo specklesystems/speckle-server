@@ -179,6 +179,18 @@ export const useWorkspacesWizard = () => {
       }))
 
       await inviteToWorkspace({ workspaceId, inputs, hideNotifications: true })
+
+      mixpanel.track('Invite Action', {
+        type: 'workspace invite',
+        name: 'send',
+        multiple: inputs.length !== 1,
+        count: inputs.length,
+        hasProject: true,
+        to: 'email',
+        source: 'wizard',
+        // eslint-disable-next-line camelcase
+        workspace_id: workspaceId
+      })
     }
 
     const result = await updateWorkspaceCreationState({
