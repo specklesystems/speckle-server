@@ -305,6 +305,7 @@ onResult((queryResult) => {
     queryResult.data.workspaceBySlug.creationState.state
   ) {
     if (import.meta.server) return
+    // Avoid running this twice
     finalizeWizard(
       queryResult.data.workspaceBySlug.creationState.state as WorkspaceWizardState,
       queryResult.data.workspaceBySlug.id
