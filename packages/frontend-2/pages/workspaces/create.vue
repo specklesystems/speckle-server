@@ -1,9 +1,6 @@
 <template>
   <div>
     <WorkspaceCreatePage :workspace-id="workspaceId" />
-    <div>
-      {{ workspaceId }}
-    </div>
   </div>
 </template>
 
