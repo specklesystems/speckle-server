@@ -34,7 +34,7 @@ import {
 import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
 import { faker } from '@faker-js/faker'
 import { ServerScope } from '@speckle/shared'
-import { kebabCase, omit } from 'lodash'
+import { isArray, isNumber, kebabCase, omit, times } from 'lodash'
 
 const getServerInfo = getServerInfoFactory({ db })
 const findEmail = findEmailFactory({ db })
@@ -123,11 +123,44 @@ export async function createTestUser(userObj?: Partial<BasicTestUser>) {
   return baseUser
 }
 
+export type CreateTestUsersParams = {
+  /**
+   * Number of users to create. Either this or `users` must be set
+   */
+  count?: number
+  /**
+   * The users to create. Either this or `count` must be set
+   */
+  users?: BasicTestUser[]
+  /**
+   * Optional mapper to run on each user obj before insertion
+   */
+  mapper?: (params: { user: BasicTestUser; idx: number }) => BasicTestUser
+}
+
 /**
  * Create multiple users for tests and update them to include their ID
  */
-export async function createTestUsers(userObjs: BasicTestUser[]) {
-  await Promise.all(userObjs.map((o) => createTestUser(o)))
+export async function createTestUsers(
+  usersOrParams: BasicTestUser[] | CreateTestUsersParams
+) {
+  const params: CreateTestUsersParams = isArray(usersOrParams)
+    ? { users: usersOrParams }
+    : usersOrParams
+  if (!params.users && !isNumber(params.count)) {
+    throw new Error('Either count or users must be set')
+  }
+
+  let finalUsers = params.users
+    ? params.users
+    : times(params.count || 1, () => initTestUser({}))
+
+  const mapper = params.mapper
+  if (mapper) {
+    finalUsers = finalUsers.map((user, idx) => mapper({ user, idx }))
+  }
+
+  return await Promise.all(finalUsers.map((o) => createTestUser(o)))
 }
 
 /**

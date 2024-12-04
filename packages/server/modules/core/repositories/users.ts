@@ -1,4 +1,4 @@
-import { ServerAcl, UserEmails, Users, knex } from '@/modules/core/dbSchema'
+import { ServerAcl, StreamAcl, UserEmails, Users, knex } from '@/modules/core/dbSchema'
 import { ServerAclRecord, UserRecord, UserWithRole } from '@/modules/core/helpers/types'
 import { Nullable } from '@/modules/shared/helpers/typeHelper'
 import { clamp, isArray, omit } from 'lodash'
@@ -25,6 +25,7 @@ import {
   LegacyGetUser,
   LegacyGetUserByEmail,
   ListPaginatedUsersPage,
+  LookupUsers,
   MarkOnboardingComplete,
   MarkUserAsVerified,
   SearchLimitedUsers,
@@ -33,7 +34,7 @@ import {
   UpdateUser,
   UpdateUserServerRole
 } from '@/modules/core/domain/users/operations'
-import { LIMITED_USER_FIELDS } from '@/modules/core/helpers/userHelper'
+import { removePrivateFields } from '@/modules/core/helpers/userHelper'
 export type { UserWithOptionalRole, GetUserParams }
 
 const tables = {
@@ -449,39 +450,76 @@ export const getUserRoleFactory =
   }
 
 /**
- * User search available for normal server users. It's more limited because of the lower access level.
+ * Used for (Limited)User search. No need to convert users to Limited here, because non-limited fields
+ * cannot be leaked out from the GQL API.
  */
-export const searchUsersFactory =
-  (deps: { db: Knex }): SearchLimitedUsers =>
-  async (searchQuery, limit, cursor, archived = false, emailOnly = false) => {
-    const prefixedLimitedUserFields = LIMITED_USER_FIELDS.map(
-      (field) => `users.${field}`
-    )
+export const lookupUsersFactory =
+  (deps: { db: Knex }): LookupUsers =>
+  async (filter) => {
+    const {
+      query: searchQuery,
+      limit = 10,
+      cursor,
+      archived = false,
+      emailOnly = false,
+      projectId
+    } = filter
+
     const query = tables
       .users(deps.db)
-      .join('server_acl', 'users.id', 'server_acl.userId')
+      .join(ServerAcl.name, Users.col.id, ServerAcl.col.userId)
       .leftJoin(UserEmails.name, UserEmails.col.userId, Users.col.id)
       .columns([
-        ...Object.values(omit(Users.col, ['email', 'verified'])).filter((col) =>
-          prefixedLimitedUserFields.includes(col)
-        ),
-        knex.raw(`(array_agg("user_emails"."verified"))[1] as verified`)
+        ...Object.values(omit(Users.col, [Users.col.email, Users.col.verified])),
+        knex.raw(`(array_agg(??))[1] as "verified"`, [UserEmails.col.verified]),
+        knex.raw(`(array_agg(??))[1] as "email"`, [UserEmails.col.email])
       ])
       .groupBy(Users.col.id)
       .where((queryBuilder) => {
         queryBuilder.where({ [UserEmails.col.email]: searchQuery }) //match full email or partial name
-        if (!emailOnly) queryBuilder.orWhere('name', 'ILIKE', `%${searchQuery}%`)
-        if (!archived) queryBuilder.andWhere('role', '!=', Roles.Server.ArchivedUser)
+        if (!emailOnly)
+          queryBuilder.orWhere(Users.col.name, 'ILIKE', `%${searchQuery}%`)
+        if (!archived)
+          queryBuilder.andWhere(ServerAcl.col.role, '!=', Roles.Server.ArchivedUser)
       })
 
-    if (cursor) query.andWhere('users.createdAt', '<', cursor)
+    if (projectId) {
+      query
+        .innerJoin(StreamAcl.name, StreamAcl.col.userId, Users.col.id)
+        .andWhere(StreamAcl.col.resourceId, projectId)
+    }
 
-    const defaultLimit = 25
-    query.orderBy('users.createdAt', 'desc').limit(limit || defaultLimit)
+    if (cursor) query.andWhere(Users.col.createdAt, '<', cursor)
 
-    const rows = await query
+    const finalLimit = clamp(limit || 10, 1, 100)
+    query.orderBy(Users.col.createdAt, 'desc').limit(finalLimit)
+
+    const rows = (await query) as UserRecord[]
     return {
       users: rows,
       cursor: rows.length > 0 ? rows[rows.length - 1].createdAt.toISOString() : null
+    }
+  }
+
+/**
+ * User search available for normal server users. It's more limited because of the lower access level.
+ * @deprecated Use lookupUsers instead
+ */
+export const searchUsersFactory =
+  (deps: { db: Knex }): SearchLimitedUsers =>
+  async (searchQuery, limit, cursor, archived = false, emailOnly = false) => {
+    const lookupUsers = lookupUsersFactory(deps)
+    const defaultLimit = 25
+    const res = await lookupUsers({
+      query: searchQuery,
+      limit: limit || defaultLimit,
+      cursor,
+      archived,
+      emailOnly
+    })
+
+    return {
+      users: res.users.map(removePrivateFields),
+      cursor: res.cursor
     }
   }

@@ -23,7 +23,7 @@ import {
   getMainRegionConfig
 } from '@/modules/multiregion/regionConfig'
 import { ensureError, MaybeNullOrUndefined } from '@speckle/shared'
-import { isTestEnv } from '@/modules/shared/helpers/envHelper'
+import { isDevOrTestEnv, isTestEnv } from '@/modules/shared/helpers/envHelper'
 import { migrateDbToLatest } from '@/db/migrations'
 
 let getter: GetProjectDb | undefined = undefined
@@ -119,7 +119,8 @@ export const initializeRegisteredRegionClients = async (): Promise<RegionClients
   )
 
   // (re-)set up pub-sub, if needed
-  if (isTestEnv()) {
+  // (disabled in prod cause there's too many DBs and connections and the load is too hard to handle)
+  if (isDevOrTestEnv()) {
     await Promise.all(
       Object.keys(ret).map((regionKey) => initializeRegion({ regionKey }))
     )
