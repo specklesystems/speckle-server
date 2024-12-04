@@ -74,4 +74,13 @@ const onSubmit = () => {
 
   goToNextStep()
 }
+
+watch(
+  () => state.value.region,
+  () => {
+    defaultRegion.value = state.value
+      .region as SettingsWorkspacesRegionsSelect_ServerRegionItemFragment
+  },
+  { immediate: true }
+)
 </script>

@@ -28,6 +28,7 @@
         show-label
         size="lg"
         :disabled="disableSlugEdit"
+        :help="getShortIdHelp"
         @update:model-value="onSlugChange"
       />
       <FormButton size="lg" :disabled="disableContinue" submit full-width class="mt-4">
@@ -65,13 +66,12 @@ const { error, loading } = useQuery(
 )
 
 const shortIdManuallyEdited = ref(false)
+const baseUrl = useRuntimeConfig().public.baseUrl
 
-// const baseUrl = useRuntimeConfig().public.baseUrl
-
-// const getShortIdHelp = computed(() => `Used after ${baseUrl}/workspaces/`)
-
+const getShortIdHelp = computed(() => `Used after ${baseUrl}/workspaces/`)
 const disableContinue = computed(
-  () => !state.value.name || !state.value.slug || error.value?.graphQLErrors[0]?.message
+  () =>
+    !state.value.name || !state.value.slug || !!error.value?.graphQLErrors[0]?.message
 )
 
 const updateShortId = debounce((newName: string) => {

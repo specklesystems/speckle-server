@@ -120,7 +120,9 @@ export const useWorkspacesWizard = () => {
         completed: false,
         state: {
           ...state.value,
-          invites: state.value.invites.filter((invite) => !!invite)
+          invites: state.value.invites.filter((invite) => !!invite),
+          region:
+            state.value.plan === PaidWorkspacePlans.Business ? state.value.region : null
         },
         workspaceId: workspaceId.value
       }
