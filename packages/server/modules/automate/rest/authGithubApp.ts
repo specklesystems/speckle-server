@@ -13,10 +13,12 @@ import { Roles, Scopes } from '@speckle/shared'
 import { Application } from 'express'
 import { validateRequest } from 'zod-express'
 import { z } from 'zod'
+import { sessionMiddlewareFactory } from '@/modules/auth/middleware'
 
 export default (app: Application) => {
   app.get(
     '/api/automate/auth/githubapp',
+    sessionMiddlewareFactory(),
     corsMiddleware(),
     authMiddlewareCreator([
       validateServerRoleBuilderFactory({
@@ -43,6 +45,7 @@ export default (app: Application) => {
 
   app.get(
     '/api/automate/ghAuthComplete',
+    sessionMiddlewareFactory(),
     corsMiddleware(),
     authMiddlewareCreator([
       validateServerRoleBuilderFactory({
