@@ -178,7 +178,7 @@ export const useWorkspacesWizard = () => {
         serverRole: mapServerRoleToGqlServerRole(Roles.Server.User)
       }))
 
-      await inviteToWorkspace({ workspaceId, inputs, hideNotications: true })
+      await inviteToWorkspace({ workspaceId, inputs, hideNotifications: true })
     }
 
     const result = await updateWorkspaceCreationState({
@@ -198,10 +198,15 @@ export const useWorkspacesWizard = () => {
       })
     }
 
-    triggerNotification({
-      title: 'Workspace successfully created!',
-      type: ToastNotificationType.Success
-    })
+    if (
+      state.plan === PaidWorkspacePlans.Starter &&
+      state.billingInterval === BillingInterval.Monthly
+    ) {
+      triggerNotification({
+        title: 'Workspace successfully created!',
+        type: ToastNotificationType.Success
+      })
+    }
 
     isLoading.value = false
   }

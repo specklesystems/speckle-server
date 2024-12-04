@@ -304,7 +304,7 @@ onResult((queryResult) => {
     queryResult.data?.workspaceBySlug.creationState?.completed === false &&
     queryResult.data.workspaceBySlug.creationState.state
   ) {
-    if (wizardLoading.value) return
+    if (wizardLoading.value || import.meta.server) return
     finalizeWizard(
       queryResult.data.workspaceBySlug.creationState.state as WorkspaceWizardState,
       queryResult.data.workspaceBySlug.id

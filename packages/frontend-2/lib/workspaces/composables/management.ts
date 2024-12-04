@@ -46,9 +46,9 @@ export const useInviteUserToWorkspace = () => {
   return async (args: {
     workspaceId: string
     inputs: WorkspaceInviteCreateInput[]
-    hideNotications?: boolean
+    hideNotifications?: boolean
   }) => {
-    const { workspaceId, inputs, hideNotications } = args
+    const { workspaceId, inputs, hideNotifications } = args
 
     const userId = activeUser.value?.id
     if (!userId) return
@@ -91,7 +91,7 @@ export const useInviteUserToWorkspace = () => {
         }
       ).catch(convertThrowIntoFetchResult)) || {}
 
-    if (!data?.workspaceMutations.invites.batchCreate.id && !hideNotications) {
+    if (!data?.workspaceMutations.invites.batchCreate.id && !hideNotifications) {
       const err = getFirstErrorMessage(errors)
       triggerNotification({
         type: ToastNotificationType.Danger,
@@ -99,7 +99,7 @@ export const useInviteUserToWorkspace = () => {
         description: err
       })
     } else {
-      if (!hideNotications) {
+      if (!hideNotifications) {
         triggerNotification({
           type: ToastNotificationType.Success,
           title: 'Invite successfully sent'
