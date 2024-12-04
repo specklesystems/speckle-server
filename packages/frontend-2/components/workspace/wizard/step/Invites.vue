@@ -18,6 +18,8 @@
           placeholder="Email address"
           show-clear
           full-width
+          use-label-in-errors
+          label="Email"
           :rules="[isEmailOrEmpty]"
         />
         <div>

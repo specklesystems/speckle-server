@@ -153,9 +153,9 @@ export const useWorkspacesWizard = () => {
         isCreateFlow: true
       })
     } else {
-      resetWizardState()
       router.push(workspaceRoute(state.value.slug))
       isLoading.value = false
+      resetWizardState()
     }
   }
 
