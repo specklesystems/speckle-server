@@ -182,17 +182,21 @@ const isSelectable = computed(() => {
   // Always enable buttons during trial
   if (statusIsTrial.value) return true
 
-  // Disable if current plan
+  // Allow selection if switching from monthly to yearly for the same plan
+  if (isMonthlyToAnnual.value && props.currentPlan?.name === props.plan.name)
+    return true
+
+  // Disable if current plan and intervals match
   if (isCurrentPlan.value) return false
 
   // Handle billing interval changes
   if (!isMatchingInterval.value) {
     // Allow yearly upgrades from monthly plans
-    if (isMonthlyToAnnual.value) {
-      return props.currentPlan?.name === props.plan.name || canUpgradeToPlan.value
-    }
+    if (isMonthlyToAnnual.value) return canUpgradeToPlan.value
+
     // Never allow switching to monthly if currently on yearly billing
     if (props.activeBillingInterval === BillingInterval.Yearly) return false
+
     // Allow monthly plan changes only for upgrades
     return canUpgradeToPlan.value
   }
@@ -233,6 +237,8 @@ const buttonText = computed(() => {
 })
 
 const buttonTooltip = computed(() => {
+  if (statusIsTrial.value || isCurrentPlan.value) return
+
   if (isDowngrade.value) {
     return 'Downgrading is not supported at the moment. Please contact billing@speckle.systems.'
   }
