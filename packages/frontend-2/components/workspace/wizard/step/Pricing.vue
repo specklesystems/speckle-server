@@ -23,7 +23,7 @@
               {{
                 plan.name === WorkspacePlans.Starter && !isYearlySelected
                   ? 'Start free trial'
-                  : `Subscribe to ${plan.name}`
+                  : `Subscribe to ${startCase(plan.name)}`
               }}
             </FormButton>
           </template>
@@ -47,6 +47,7 @@ import {
 import { useWorkspacesWizard } from '~/lib/workspaces/composables/wizard'
 import { pricingPlansConfig } from '~/lib/billing/helpers/constants'
 import { useMixpanel } from '~/lib/core/composables/mp'
+import { startCase } from 'lodash'
 
 const { state, goToNextStep, goToPreviousStep } = useWorkspacesWizard()
 const mixpanel = useMixpanel()
