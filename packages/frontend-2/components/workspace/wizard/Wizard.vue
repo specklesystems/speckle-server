@@ -30,6 +30,7 @@ import { graphql } from '~~/lib/common/generated/gql'
 import type { WorkspaceWizardState } from '~~/lib/workspaces/helpers/types'
 import { PaidWorkspacePlans } from '~/lib/common/generated/gql/graphql'
 import { useMixpanel } from '~/lib/core/composables/mp'
+import { useBillingActions } from '~/lib/billing/composables/actions'
 
 graphql(`
   fragment WorkspaceWizard_Workspace on Workspace {
@@ -46,8 +47,7 @@ const props = defineProps<{
   workspaceId?: string
 }>()
 
-const showPaymentError = ref(false)
-
+const { cancelCheckoutSession } = useBillingActions()
 const route = useRoute()
 const mixpanel = useMixpanel()
 const {
@@ -66,6 +66,8 @@ const { loading: queryLoading, onResult } = useQuery(
   })
 )
 
+const showPaymentError = ref(false)
+
 const loading = computed(
   () => wizardIsLoading.value || (props.workspaceId ? queryLoading.value : false)
 )
@@ -75,8 +77,6 @@ onResult((result) => {
   const creationState = result.data?.workspace.creationState
 
   if (!creationState?.completed && !!creationState?.state) {
-    mixpanel.track('Workspace Creation Checkout Session Cancelled')
-
     const state = creationState.state as WorkspaceWizardState
 
     setState({
@@ -93,7 +93,13 @@ onResult((result) => {
           ? WizardSteps.Region
           : WizardSteps.Pricing
       )
-      showPaymentError.value = true
+
+      if (route.query.payment_status === 'canceled' && props.workspaceId) {
+        showPaymentError.value = true
+        cancelCheckoutSession(route.query.session_id as string, props.workspaceId)
+      }
+
+      mixpanel.track('Workspace Creation Checkout Session Started')
     }
   } else {
     mixpanel.track('Workspace Creation Started')
