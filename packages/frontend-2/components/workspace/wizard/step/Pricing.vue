@@ -1,5 +1,5 @@
 <template>
-  <WorkspaceWizardStep title="Which plan would you like?">
+  <WorkspaceWizardStep title="Choose a plan">
     <div class="flex flex-col max-w-5xl w-full items-center">
       <div class="grid lg:grid-cols-3 gap-y-2 gap-x-2 w-full">
         <SettingsWorkspacesBillingPricingTablePlan
