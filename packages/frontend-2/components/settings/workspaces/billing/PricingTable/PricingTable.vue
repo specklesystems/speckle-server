@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col lg:grid-cols-3 gap-4 w-full">
+  <div class="flex flex-col lg:grid lg:grid-cols-3 gap-4 w-full">
     <SettingsWorkspacesBillingPricingTablePlan
       v-for="plan in plans"
       :key="plan.name"
