@@ -99,10 +99,10 @@ onResult((result) => {
         cancelCheckoutSession(route.query.session_id as string, props.workspaceId)
       }
 
-      mixpanel.track('Workspace Creation Checkout Session Started')
+      mixpanel.track('Workspace Creation Checkout Session Canceled')
     }
   } else {
-    mixpanel.track('Workspace Creation Started')
+    mixpanel.track('Workspace Creation Canceled')
   }
 })
 </script>
