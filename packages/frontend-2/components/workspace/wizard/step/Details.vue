@@ -1,8 +1,5 @@
 <template>
-  <WorkspaceWizardStep
-    title="Create a workspace"
-    description="Fill in some details for your teammates."
-  >
+  <WorkspaceWizardStep title="Create a workspace" description="Start with a good name">
     <form class="flex flex-col gap-4 w-full md:w-96" @submit="onSubmit">
       <FormTextInput
         id="workspace-name"
@@ -72,7 +69,9 @@ const { error, loading } = useQuery(
 const shortIdManuallyEdited = ref(false)
 const baseUrl = useRuntimeConfig().public.baseUrl
 
-const getShortIdHelp = computed(() => `Used after ${baseUrl}/workspaces/`)
+const getShortIdHelp = computed(
+  () => `Preview: ${baseUrl}/workspaces/${state.value.slug}`
+)
 const disableContinue = computed(
   () =>
     !state.value.name || !state.value.slug || !!error.value?.graphQLErrors[0]?.message

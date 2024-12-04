@@ -307,7 +307,7 @@ onResult((res) => {
 const baseUrl = config.public.baseUrl
 
 const slugHelp = computed(() => {
-  return `Used after ${baseUrl}/workspaces/`
+  return `${baseUrl}/workspaces/${slug.value}`
 })
 
 // Using toRef to fix reactivity bug around tooltips

@@ -1,7 +1,7 @@
 <template>
   <WorkspaceWizardStep
-    title="Invite teammates"
-    description="Get the most of your workspace by inviting others."
+    title="Invite your team"
+    description="Workspaces are made for collaboration"
   >
     <form
       class="flex flex-col gap-4 w-full md:max-w-lg items-center"

@@ -1,7 +1,7 @@
 <template>
   <WorkspaceWizardStep
-    title="Set your data location"
-    description="Manage where your new workspace data resides."
+    title="Set a data region"
+    description="Choose where your workspace data is hosted"
   >
     <form class="flex flex-col gap-4 w-full md:w-96" @submit="onSubmit">
       <CommonLoadingIcon v-if="isQueryLoading" class="justify-self-center" />
