@@ -304,8 +304,7 @@ onResult((queryResult) => {
     queryResult.data?.workspaceBySlug.creationState?.completed === false &&
     queryResult.data.workspaceBySlug.creationState.state
   ) {
-    // Avoid running twice or on server
-    if (wizardLoading.value || import.meta.server) return
+    if (wizardLoading.value) return
     finalizeWizard(
       queryResult.data.workspaceBySlug.creationState.state as WorkspaceWizardState,
       queryResult.data.workspaceBySlug.id

@@ -153,7 +153,9 @@ export const useWorkspacesWizard = () => {
         isCreateFlow: true
       })
     } else {
-      router.push(workspaceRoute(state.value.slug))
+      // Keep loading state for a second
+      await new Promise((resolve) => setTimeout(resolve, 1000))
+      await router.push(workspaceRoute(state.value.slug))
       isLoading.value = false
       resetWizardState()
     }
@@ -195,6 +197,11 @@ export const useWorkspacesWizard = () => {
         workspace_id: workspaceId
       })
     }
+
+    triggerNotification({
+      title: 'Workspace successfully created!',
+      type: ToastNotificationType.Success
+    })
 
     isLoading.value = false
   }

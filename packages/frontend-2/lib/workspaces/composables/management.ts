@@ -99,10 +99,12 @@ export const useInviteUserToWorkspace = () => {
         description: err
       })
     } else {
-      triggerNotification({
-        type: ToastNotificationType.Success,
-        title: 'Invite successfully sent'
-      })
+      if (!hideNotications) {
+        triggerNotification({
+          type: ToastNotificationType.Success,
+          title: 'Invite successfully sent'
+        })
+      }
     }
 
     return data?.workspaceMutations.invites.batchCreate
