@@ -134,6 +134,7 @@ const onDetailsSubmit = handleDetailsSubmit(async (values) => {
 const onSubmit = computed(() => {
   switch (enumStep.value) {
     case FunctionCreateSteps.Details:
+      mixpanel.track('Automate Configure Function Details')
       return onDetailsSubmit
     default:
       return noop
@@ -203,6 +204,9 @@ const buttons = computed((): LayoutDialogButton[] => {
         {
           id: 'authorizeAuthorize',
           text: 'Authorize',
+          onClick: () => {
+            mixpanel.track('Automate Start Authorize GitHub App')
+          },
           props: {
             fullWidth: true,
             to: authorizeGithubUrl.value,
@@ -219,7 +223,10 @@ const buttons = computed((): LayoutDialogButton[] => {
             iconRight: ChevronRightIcon,
             disabled: !selectedTemplate.value
           },
-          onClick: () => step.value++
+          onClick: () => {
+            mixpanel.track('Automate Select Function Template')
+            step.value++
+          }
         }
       ]
     case FunctionCreateSteps.Details:

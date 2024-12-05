@@ -106,6 +106,7 @@ if (import.meta.client) {
           type: ToastNotificationType.Success,
           title: 'GitHub authorization successful'
         })
+        mixpanel.track('Automate Finish Authorize GitHub App')
         createDialogOpen.value = true
       } else if (ghAuthVal === 'access_denied') {
         triggerNotification({
