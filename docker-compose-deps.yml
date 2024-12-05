@@ -59,8 +59,8 @@ services:
     volumes:
       - minio-region1-data:/data
     ports:
-      - '127.0.0.1:9000:9010'
-      - '127.0.0.1:9001:9011'
+      - '127.0.0.1:9020:9000'
+      - '127.0.0.1:9021:9001'
 
   # Local OIDC provider for testing
   keycloak:
