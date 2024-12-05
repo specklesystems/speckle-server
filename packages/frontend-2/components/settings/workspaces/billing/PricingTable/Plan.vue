@@ -34,8 +34,10 @@
       </CommonBadge>
     </div>
     <div v-if="workspaceId || hasCta" class="w-full mt-4">
-      <slot name="cta" />
-      <div v-if="!isAdmin" v-tippy="`You must be a workspace admin`">
+      <div v-if="hasCta">
+        <slot name="cta" />
+      </div>
+      <div v-else-if="!isAdmin" v-tippy="`You must be a workspace admin`">
         <FormButton
           :color="buttonColor"
           :disabled="!isSelectable"
