@@ -133,6 +133,7 @@ if (import.meta.client) {
     (isRedirect) => {
       if (!isRedirect?.length) return
       mixpanel.track('Automate Beta Visit Redirected')
+      void router.replace({ query: {} })
     }
   )
 }
