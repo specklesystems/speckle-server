@@ -74,14 +74,9 @@ export type CreateVersionArgs = {
 
 // TODO: Once ruby codebase aligned with it, sketchup will consume this bridge too!
 export class ServerBridge {
-  private runMethod: (methodName: string, args: unknown[]) => Promise<unknown>
   public emitter: Emitter
 
-  constructor(
-    runMethod: (methodName: string, args: unknown[]) => Promise<unknown>,
-    emitter: Emitter
-  ) {
-    this.runMethod = runMethod
+  constructor(emitter: Emitter) {
     this.emitter = emitter
   }
 
@@ -101,12 +96,15 @@ export class ServerBridge {
     else if (eventName === 'createVersionViaBrowser')
       this.createVersionViaBrowser(eventPayload as CreateVersionViaBrowserArgs)
     else if (eventName === 'receiveByBrowser')
-      this.receiveByBrowser(eventPayload as ReceiveViaBrowserArgs)
+      this.receiveByBrowser(eventPayload as ReceiveViaBrowserArgs, runMethod)
     // Archicad is not likely to hit here yet!
     else return this.emitter.emit(eventName, eventPayload)
   }
 
-  private async receiveByBrowser(eventPayload: ReceiveViaBrowserArgs) {
+  private async receiveByBrowser(
+    eventPayload: ReceiveViaBrowserArgs,
+    runMethod: (methodName: string, args: unknown[]) => Promise<unknown>
+  ) {
     const accountStore = useAccountStore()
     const hostAppStore = useHostAppStore()
     const { accounts } = storeToRefs(accountStore)
@@ -170,7 +168,7 @@ export class ServerBridge {
     })
 
     // CONVERSION WILL START AFTER THAT
-    await this.runMethod('afterGetObjects', args as unknown as unknown[])
+    await runMethod('afterGetObjects', args as unknown as unknown[])
   }
 
   /**
@@ -200,8 +198,6 @@ export class ServerBridge {
         progress: currentBatch / totalBatch
       }
     } as unknown as string)
-    // eslint-disable-next-line no-debugger
-    debugger
     const formData = new FormData()
     formData.append(`batch-1`, new Blob([batch], { type: 'application/json' }))
     await fetch(`${serverUrl}/objects/${projectId}`, {
