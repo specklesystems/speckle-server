@@ -16,7 +16,6 @@ import { TextSelection } from '@tiptap/pm/state'
 import { VALID_HTTP_URL } from '~~/lib/common/helpers/validation'
 import type { Nullable } from '@speckle/shared'
 import { getMentionExtension } from '~~/lib/core/tiptap/mentionExtension'
-import { EmailMention } from '~~/lib/core/tiptap/emailMentionExtension'
 
 declare module '@tiptap/core' {
   interface Commands<ReturnType> {
@@ -53,6 +52,11 @@ const InlineDoc = Node.create({
   topNode: true,
   content: 'block'
 })
+
+// export type EditorInstanceStateStorage = {
+//   editorStateMaps: WeakMap<Editor, Map<string, unknown>>
+
+// }
 
 export type EnterKeypressTrackerExtensionStorage = {
   editorCallbacks: WeakMap<Editor, Array<() => void>>
@@ -257,10 +261,7 @@ export function getEditorExtensions(
       // Autolink off cause otherwise it's impossible to end the link
       autolink: false
     }),
-    getMentionExtension(),
-    EmailMention.configure({
-      projectId
-    }),
+    getMentionExtension({ projectId }),
     History,
     ...(placeholder ? [Placeholder.configure({ placeholder })] : [])
   ]

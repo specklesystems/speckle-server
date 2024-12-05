@@ -9,7 +9,7 @@ import type { MentionsUserSearchQuery } from '~~/lib/common/generated/gql/graphq
 import type { Get } from 'type-fest'
 import tippy from 'tippy.js'
 import type { Instance, GetReferenceClientRect } from 'tippy.js'
-import type { Optional } from '@speckle/shared'
+import type { MaybeNullOrUndefined, Optional } from '@speckle/shared'
 
 export type SuggestionOptionsItem = NonNullable<
   Get<MentionsUserSearchQuery, 'userSearch.items[0]'>
@@ -18,19 +18,21 @@ export type SuggestionOptionsItem = NonNullable<
 export type MentionData = { label: string; id: string }
 
 const suggestionOptions: Omit<SuggestionOptions<SuggestionOptionsItem>, 'editor'> = {
-  items: async ({ query }) => {
+  async items({ query }) {
     if (query.length < 3) return []
+    devLog(this)
 
     const { $apollo } = useNuxtApp()
     const apolloClient = ($apollo as { default: ApolloClient<unknown> }).default
     const { data } = await apolloClient.query({
       query: mentionsUserSearchQuery,
       variables: {
-        query
+        query,
+        projectId: ''
       }
     })
 
-    return data.userSearch?.items || []
+    return data.users?.items || []
   },
   render: () => {
     let component: VueRenderer
@@ -95,10 +97,14 @@ const suggestionOptions: Omit<SuggestionOptions<SuggestionOptionsItem>, 'editor'
   }
 }
 
-export const getMentionExtension = () =>
+// TODO:
+export const getMentionExtension = (params: {
+  projectId: MaybeNullOrUndefined<string>
+}) =>
   Mention.configure({
     suggestion: suggestionOptions,
     HTMLAttributes: {
       class: 'editor-mention'
-    }
+    },
+    a: 1
   })
