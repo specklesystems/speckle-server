@@ -228,8 +228,7 @@ export const useWorkspacesWizard = () => {
         fields: Object.keys(state).filter(
           (key) =>
             key !== 'id' &&
-            (key !== 'invites' ||
-              (state.invites && state.invites.some((invite) => invite)))
+            (key !== 'invites' || (state.invites && state.invites.length > 0))
         ) as Array<keyof WorkspaceWizardState>,
         // eslint-disable-next-line camelcase
         workspace_id: workspaceId
