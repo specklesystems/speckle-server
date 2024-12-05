@@ -81,12 +81,16 @@ export const useWorkspacesMixpanel = () => {
       planStatus: workspace.plan?.status || '',
       planCreatedAt: workspace.plan?.createdAt,
       subscriptionBillingInterval: workspace.subscription?.billingInterval,
-      subscriptionCurrentBillingCycleEnd:
-        workspace.subscription?.currentBillingCycleEnd,
-      hasSpeckleMembers: userEmail?.includes('speckle.systems')
+      subscriptionCurrentBillingCycleEnd: workspace.subscription?.currentBillingCycleEnd
     }
 
     mixpanel.get_group('workspace_id', workspace.id).set(input)
+
+    if (userEmail?.includes('speckle.systems')) {
+      mixpanel.get_group('workspace_id', workspace.id).set_once({
+        hasSpeckleMembers: true
+      })
+    }
   }
 
   return {
