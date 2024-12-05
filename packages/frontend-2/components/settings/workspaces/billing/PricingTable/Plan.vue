@@ -35,8 +35,18 @@
     </div>
     <div v-if="workspaceId || hasCta" class="w-full mt-4">
       <slot name="cta" />
+      <div v-if="!isAdmin" v-tippy="`You must be a workspace admin`">
+        <FormButton
+          :color="buttonColor"
+          :disabled="!isSelectable"
+          full-width
+          @click="onCtaClick"
+        >
+          {{ buttonText }}
+        </FormButton>
+      </div>
       <FormButton
-        v-if="workspaceId"
+        v-else-if="isSelectable"
         :color="buttonColor"
         :disabled="!isSelectable"
         full-width
