@@ -77,6 +77,11 @@ export const getMainTestRegionKey = () => {
   return key
 }
 
+export const getMainTestRegionKeyIfMultiRegion = () => {
+  const isMultiRegionMode = isMultiRegionTestMode()
+  return isMultiRegionMode ? getMainTestRegionKey() : undefined
+}
+
 export const getMainTestRegionClient = () => {
   const key = getMainTestRegionKey()
   const client = regionClients[key]

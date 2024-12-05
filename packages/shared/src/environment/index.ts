@@ -51,6 +51,10 @@ const parseFeatureFlags = () => {
       schema: z.boolean(),
       defaults: { production: false, _: false }
     },
+    FF_WORKSPACES_MULTI_REGION_BLOB_STORAGE_ENABLED: {
+      schema: z.boolean(),
+      defaults: { production: false, _: false }
+    },
     // Toggles IFC parsing with experimental .Net parser
     FF_FILEIMPORT_IFC_DOTNET_ENABLED: {
       schema: z.boolean(),
@@ -79,6 +83,7 @@ export function getFeatureFlags(): {
   FF_GATEKEEPER_MODULE_ENABLED: boolean
   FF_BILLING_INTEGRATION_ENABLED: boolean
   FF_WORKSPACES_MULTI_REGION_ENABLED: boolean
+  FF_WORKSPACES_MULTI_REGION_BLOB_STORAGE_ENABLED: boolean
   FF_FILEIMPORT_IFC_DOTNET_ENABLED: boolean
 } {
   if (!parsedFlags) parsedFlags = parseFeatureFlags()

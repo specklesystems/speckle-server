@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { range } from '#lodash'
 
 /**
@@ -28,7 +29,7 @@ export async function batchAsyncOperations<Params = unknown, Res = unknown>(
     /**
      * Optionally override the logger with a custom one
      */
-    logger: (...args: unknown[]) => void
+    logger: (...args: any[]) => void
 
     /**
      * If set to true, the function won't collect all of the returns of each operation in an effort to reduce

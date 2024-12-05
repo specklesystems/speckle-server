@@ -33,6 +33,7 @@
           read-only
           :right-icon="disableSlugInput ? undefined : IconEdit"
           :right-icon-title="disableSlugInput ? undefined : 'Edit short ID'"
+          custom-help-class="!break-all"
           @right-icon-click="openSlugEditDialog"
         />
         <hr class="my-4 border-outline-3" />

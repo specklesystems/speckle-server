@@ -602,7 +602,9 @@ export const getDiscoverableStreamsPageFactory =
  */
 export const getStreamCollaboratorsFactory =
   (deps: { db: Knex }): GetStreamCollaborators =>
-  async (streamId: string, type?: StreamRoles) => {
+  async (streamId: string, type?: StreamRoles, options?) => {
+    const { limit } = options || {}
+
     const q = tables
       .streamAcl(deps.db)
       .select<Array<UserWithRole & { streamRole: StreamRoles }>>([
@@ -617,6 +619,10 @@ export const getStreamCollaboratorsFactory =
 
     if (type) {
       q.andWhere(StreamAcl.col.role, type)
+    }
+
+    if (limit) {
+      q.limit(limit)
     }
 
     const items = (await q).map((i) => ({
