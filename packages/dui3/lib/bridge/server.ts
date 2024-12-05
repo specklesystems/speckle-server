@@ -87,6 +87,8 @@ export class ServerBridge {
 
   // NOTE: Overriden emit as we do not need to parse the data back - the Server bridge already parses it for us.
   emit(eventName: string, payload: Record<string, unknown>): void {
+    // eslint-disable-next-line no-debugger
+    debugger
     const eventPayload = payload as unknown as Record<string, unknown>
 
     if (eventName === 'sendByBrowser')
