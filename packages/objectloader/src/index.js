@@ -108,7 +108,10 @@ class ObjectLoader {
   }
 
   static createFromJSON(json) {
+    const start = performance.now()
     const jsonObj = JSON.parse(json)
+    console.warn('JSON Parse Time -> ', performance.now() - start)
+
     const rootObject = jsonObj[0]
     const loader = new (class extends ObjectLoader {
       constructor() {
@@ -160,10 +163,6 @@ class ObjectLoader {
         //   yield { id, obj }
         // }
         for (const item of data) {
-          // Sleep 1 ms
-          await new Promise((resolve) => {
-            setTimeout(resolve, 1)
-          })
           yield { id: item.id, obj: item }
         }
       }
