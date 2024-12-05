@@ -33,7 +33,7 @@ import {
 } from '@/modules/serverinvites/repositories/serverInvites'
 import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
 import { faker } from '@faker-js/faker'
-import { ServerScope } from '@speckle/shared'
+import { ServerScope, wait } from '@speckle/shared'
 import { isArray, isNumber, kebabCase, omit, times } from 'lodash'
 
 const getServerInfo = getServerInfoFactory({ db })
@@ -136,6 +136,11 @@ export type CreateTestUsersParams = {
    * Optional mapper to run on each user obj before insertion
    */
   mapper?: (params: { user: BasicTestUser; idx: number }) => BasicTestUser
+  /**
+   * For pagination purposes it might be imperative that users are serially created to ensure different timestamps
+   * and avoid flaky pagination bugs
+   */
+  serial?: boolean
 }
 
 /**
@@ -160,7 +165,16 @@ export async function createTestUsers(
     finalUsers = finalUsers.map((user, idx) => mapper({ user, idx }))
   }
 
-  return await Promise.all(finalUsers.map((o) => createTestUser(o)))
+  if (params.serial) {
+    const results: BasicTestUser[] = []
+    for (const finalUser of finalUsers) {
+      results.push(await createTestUser(finalUser))
+      await wait(1)
+    }
+    return results
+  } else {
+    return await Promise.all(finalUsers.map((o) => createTestUser(o)))
+  }
 }
 
 /**

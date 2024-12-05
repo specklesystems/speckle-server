@@ -42,7 +42,7 @@ describe('Users @graphql', () => {
   })
 
   describe('search', () => {
-    const RANDOMIZED_USER_COUNT = 40
+    const RANDOMIZED_USER_COUNT = 20
     const BASIC_COLLABORATOR_PROJECT_USER_COUNT = Math.floor(RANDOMIZED_USER_COUNT / 2)
     const WORKSPACE_COLLABORATOR_USER_COUNT =
       RANDOMIZED_USER_COUNT - BASIC_COLLABORATOR_PROJECT_USER_COUNT
@@ -121,11 +121,15 @@ describe('Users @graphql', () => {
                 : 'Workspace ' + (isWorkspaceGuest ? 'Guest' : 'Member')
             } User #${idx + 1}`
           }
-        }
+        },
+        serial: true
       })
 
       // Seed in specific users
-      await createTestUsers([firstSpecificUser, secondSpecificUser])
+      await createTestUsers({
+        users: [firstSpecificUser, secondSpecificUser],
+        serial: true
+      })
 
       // Assign to projects & workspaces
       const basicProjectCollaborators = [
