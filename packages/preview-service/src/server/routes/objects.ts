@@ -64,9 +64,8 @@ const objectsRouterFactory = () => {
             boundLogger.error(err, 'Error downloading object from stream')
           } else {
             boundLogger.info(
-              `Downloaded object from stream (size: ${
-                gzipStream.bytesWritten / 1000000
-              } MB)`
+              { megaBytesWritten: gzipStream.bytesWritten / 1000000 },
+              'Downloaded object from stream (size: {megaBytesWritten} MB)'
             )
           }
         }

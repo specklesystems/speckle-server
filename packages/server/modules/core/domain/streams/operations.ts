@@ -64,7 +64,10 @@ export type GetCommitStream = (params: {
 
 export type GetStreamCollaborators = (
   streamId: string,
-  type?: StreamRoles
+  type?: StreamRoles,
+  options?: Partial<{
+    limit: number
+  }>
 ) => Promise<Array<LimitedUserWithStreamRole>>
 
 export type GetUserDeletableStreams = (userId: string) => Promise<Array<string>>
