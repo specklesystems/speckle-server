@@ -205,9 +205,13 @@ export class ServerBridge {
       body: formData
     })
 
+    console.log('after post')
+
     if (currentBatch === totalBatch) {
       const args = [eventPayload.modelCardId, referencedObjectId]
-      await this.runMethod('afterSendObjects', args as unknown as unknown[])
+      console.log(args)
+
+      // await this.runMethod('afterSendObjects', args as unknown as unknown[])
     }
   }
 
