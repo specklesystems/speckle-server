@@ -192,6 +192,8 @@ export class SketchupBridge extends BaseBridge {
         progress: currentBatch / totalBatch
       }
     } as unknown as string)
+    // eslint-disable-next-line no-debugger
+    debugger
     const formData = new FormData()
     formData.append(`batch-1`, new Blob([batch], { type: 'application/json' }))
     await fetch(`${serverUrl}/objects/${projectId}`, {

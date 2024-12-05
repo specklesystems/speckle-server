@@ -86,16 +86,18 @@ export class ServerBridge {
   }
 
   // NOTE: Overriden emit as we do not need to parse the data back - the Server bridge already parses it for us.
-  emit(eventName: string, payload: Record<string, unknown>): void {
-    // eslint-disable-next-line no-debugger
-    debugger
+  emit(
+    eventName: string,
+    payload: Record<string, unknown>,
+    runMethod: (methodName: string, args: unknown[]) => Promise<unknown>
+  ): void {
     const eventPayload = payload as unknown as Record<string, unknown>
 
     if (eventName === 'sendByBrowser')
       this.sendByBrowser(eventPayload as SendViaBrowserArgs)
     // we will switch to https://www.npmjs.com/package/@speckle/objectsender
     else if (eventName === 'sendBatchViaBrowser')
-      this.sendBatchViaBrowser(eventPayload as SendBatchViaBrowserArgs)
+      this.sendBatchViaBrowser(eventPayload as SendBatchViaBrowserArgs, runMethod)
     else if (eventName === 'createVersionViaBrowser')
       this.createVersionViaBrowser(eventPayload as CreateVersionViaBrowserArgs)
     else if (eventName === 'receiveByBrowser')
@@ -177,7 +179,10 @@ export class ServerBridge {
    * To be able to use this function properly, expected objects in batch must have hashed (speckle ids generated, detached, chucked bla bla) on connector.
    * @param eventPayload
    */
-  private async sendBatchViaBrowser(eventPayload: SendBatchViaBrowserArgs) {
+  private async sendBatchViaBrowser(
+    eventPayload: SendBatchViaBrowserArgs,
+    runMethod: (methodName: string, args: unknown[]) => Promise<unknown>
+  ) {
     const {
       serverUrl,
       token,
@@ -195,9 +200,9 @@ export class ServerBridge {
         progress: currentBatch / totalBatch
       }
     } as unknown as string)
+    // eslint-disable-next-line no-debugger
+    debugger
     const formData = new FormData()
-    console.log(eventPayload, 'eventPayload')
-
     formData.append(`batch-1`, new Blob([batch], { type: 'application/json' }))
     await fetch(`${serverUrl}/objects/${projectId}`, {
       method: 'POST',
@@ -205,13 +210,9 @@ export class ServerBridge {
       body: formData
     })
 
-    console.log('after post')
-
     if (currentBatch === totalBatch) {
       const args = [eventPayload.modelCardId, referencedObjectId]
-      console.log(args)
-
-      // await this.runMethod('afterSendObjects', args as unknown as unknown[])
+      await runMethod('afterSendObjects', args as unknown as unknown[])
     }
   }
 
