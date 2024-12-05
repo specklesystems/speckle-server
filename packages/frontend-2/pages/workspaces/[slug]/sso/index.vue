@@ -10,7 +10,7 @@
     </template>
 
     <template v-else>
-      <div class="flex flex-col gap-2 mt-8">
+      <div class="flex flex-col items-center gap-2 mt-8">
         <WorkspaceAvatar
           v-if="workspace"
           :logo="workspace.logo"
