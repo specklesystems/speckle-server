@@ -19,7 +19,7 @@ export type SendBatchViaBrowserArgs = {
   projectId: string
   token: string
   serverUrl: string
-  batch: string
+  batch: object
   currentBatch: number
   totalBatch: number
   referencedObjectId: string
@@ -194,7 +194,10 @@ export class ServerBridge {
       }
     } as unknown as string)
     const formData = new FormData()
-    formData.append(`batch-1`, new Blob([batch], { type: 'application/json' }))
+    formData.append(
+      `batch-1`,
+      new Blob([JSON.stringify(batch)], { type: 'application/json' })
+    )
     await fetch(`${serverUrl}/objects/${projectId}`, {
       method: 'POST',
       headers: { Authorization: 'Bearer ' + token },
