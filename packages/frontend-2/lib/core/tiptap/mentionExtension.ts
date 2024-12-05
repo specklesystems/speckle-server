@@ -9,18 +9,21 @@ import type { MentionsUserSearchQuery } from '~~/lib/common/generated/gql/graphq
 import type { Get } from 'type-fest'
 import tippy from 'tippy.js'
 import type { Instance, GetReferenceClientRect } from 'tippy.js'
-import type { MaybeNullOrUndefined, Optional } from '@speckle/shared'
+import type { Optional } from '@speckle/shared'
+import type { EditorInstanceStateStorage } from '~/lib/core/tiptap/editorStateExtension'
 
 export type SuggestionOptionsItem = NonNullable<
-  Get<MentionsUserSearchQuery, 'userSearch.items[0]'>
+  Get<MentionsUserSearchQuery, 'users.items[0]'>
 >
 
 export type MentionData = { label: string; id: string }
 
 const suggestionOptions: Omit<SuggestionOptions<SuggestionOptionsItem>, 'editor'> = {
-  async items({ query }) {
+  async items({ query, editor }) {
     if (query.length < 3) return []
-    devLog(this)
+
+    const state = editor.storage.editorInstanceState as EditorInstanceStateStorage
+    const projectId = state.state.projectId
 
     const { $apollo } = useNuxtApp()
     const apolloClient = ($apollo as { default: ApolloClient<unknown> }).default
@@ -28,7 +31,7 @@ const suggestionOptions: Omit<SuggestionOptions<SuggestionOptionsItem>, 'editor'
       query: mentionsUserSearchQuery,
       variables: {
         query,
-        projectId: ''
+        projectId
       }
     })
 
@@ -52,7 +55,7 @@ const suggestionOptions: Omit<SuggestionOptions<SuggestionOptionsItem>, 'editor'
         popup = tippy('body', {
           getReferenceClientRect: props.clientRect as null | GetReferenceClientRect,
           appendTo: () => document.body,
-          content: component.element,
+          content: component.element!,
           showOnCreate: true,
           interactive: true,
           trigger: 'manual',
@@ -91,20 +94,16 @@ const suggestionOptions: Omit<SuggestionOptions<SuggestionOptionsItem>, 'editor'
       onExit() {
         popup[0].destroy()
         component.destroy()
-        component.element.remove()
+        component.element?.remove()
       }
     }
   }
 }
 
-// TODO:
-export const getMentionExtension = (params: {
-  projectId: MaybeNullOrUndefined<string>
-}) =>
+export const getMentionExtension = () =>
   Mention.configure({
     suggestion: suggestionOptions,
     HTMLAttributes: {
       class: 'editor-mention'
-    },
-    a: 1
+    }
   })
