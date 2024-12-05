@@ -6,12 +6,14 @@ import {
   isTestEnv,
   shouldRunTestsInMultiregionMode
 } from '@/modules/shared/helpers/envHelper'
+import { BasicTestUser } from '@/test/authHelper'
 import {
   getRegionKeys,
   getMainTestRegionClient,
   getMainTestRegionKey
 } from '@/test/hooks'
 import { wait } from '@speckle/shared'
+import { isString } from 'lodash'
 
 /**
  * Delete all regions entries that are not part of the main multi region mode
@@ -44,17 +46,24 @@ const waitForPredicate = async (params: {
 /**
  * Wait for user to exist in region db
  */
-export const waitForRegionUser = async (params: { userId: string }) => {
+export const waitForRegionUser = async (userOrId: string | BasicTestUser) => {
+  if (!isMultiRegionTestMode()) return
+
+  const userId = isString(userOrId) ? userOrId : userOrId.id
   const client = getMainTestRegionClient()
   const getUser = getUserFactory({ db: client })
 
   await waitForPredicate({
     predicate: async () => {
-      const user = await getUser(params.userId)
+      const user = await getUser(userId)
       return !!user
     },
-    errMsg: `User ${params.userId} not found in region db`
+    errMsg: `User ${userId} not found in region db`
   })
+}
+
+export const waitForRegionUsers = async (userOrIds: Array<string | BasicTestUser>) => {
+  await Promise.all(userOrIds.map((userOrId) => waitForRegionUser(userOrId)))
 }
 
 export { getMainTestRegionClient, getMainTestRegionKey }
