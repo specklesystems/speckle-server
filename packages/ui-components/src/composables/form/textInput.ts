@@ -30,6 +30,7 @@ export function useTextInputCore<V extends string | string[] = string>(params: {
     hideErrorMessage?: boolean
     color?: InputColor
     labelPosition?: LabelPosition
+    customHelpClass?: string
   }>
   emit: {
     (e: 'change', val: { event?: Event; value: V }): void
@@ -122,12 +123,16 @@ export function useTextInputCore<V extends string | string[] = string>(params: {
   )
   const helpTip = computed(() => errorMessage.value || unref(props.help))
   const hasHelpTip = computed(() => !!helpTip.value)
+  const customHelpTipClass = computed(() => unref(props.customHelpClass))
   const helpTipId = computed(() =>
     hasHelpTip.value ? `${unref(props.name)}-${internalHelpTipId.value}` : undefined
   )
   const helpTipClasses = computed((): string => {
     const classParts = ['text-body-2xs break-words']
     classParts.push(hasError.value ? 'text-danger' : 'text-foreground-2')
+    if (customHelpTipClass.value) {
+      classParts.push(customHelpTipClass.value)
+    }
     return classParts.join(' ')
   })
   const shouldShowClear = computed(() => {

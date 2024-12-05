@@ -174,6 +174,7 @@ graphql(`
     plan {
       name
       status
+      createdAt
     }
     subscription {
       billingInterval

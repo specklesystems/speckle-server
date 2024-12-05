@@ -1,4 +1,7 @@
-import type { WorkspaceInviteCreateInput } from '~/lib/common/generated/gql/graphql'
+import type {
+  WorkspaceInviteCreateInput,
+  Workspace
+} from '~/lib/common/generated/gql/graphql'
 import { BillingInterval, PaidWorkspacePlans } from '~/lib/common/generated/gql/graphql'
 import { type WorkspaceWizardState, WizardSteps } from '~/lib/workspaces/helpers/types'
 import {
@@ -104,8 +107,7 @@ export const useWorkspacesWizard = () => {
           slug: state.value.slug,
           defaultLogoIndex: generateDefaultLogoIndex()
         },
-        { navigateOnSuccess: false, hideNotifications: true },
-        { source: 'wizard' }
+        { navigateOnSuccess: false, hideNotifications: true }
       )
 
       if (!newWorkspaceResult?.data?.workspaceMutations.create) {
@@ -179,20 +181,55 @@ export const useWorkspacesWizard = () => {
       }))
 
       await inviteToWorkspace({ workspaceId, inputs, hideNotifications: true })
+
+      mixpanel.track('Invite Action', {
+        type: 'workspace invite',
+        name: 'send',
+        multiple: inputs.length !== 1,
+        count: inputs.length,
+        hasProject: true,
+        to: 'email',
+        source: 'wizard',
+        // eslint-disable-next-line camelcase
+        workspace_id: workspaceId
+      })
     }
 
-    const result = await updateWorkspaceCreationState({
-      input: {
-        state: {},
-        workspaceId,
-        completed: true
+    const result = await updateWorkspaceCreationState(
+      {
+        input: {
+          state: {},
+          workspaceId,
+          completed: true
+        }
+      },
+      {
+        update: (cache, res) => {
+          if (!res.data?.workspaceMutations) return
+
+          cache.modify<Workspace>({
+            id: getCacheId('Workspace', workspaceId),
+            fields: {
+              creationState: () => ({
+                completed: true,
+                state: {}
+              })
+            }
+          })
+        }
       }
-    }).catch(convertThrowIntoFetchResult)
+    ).catch(convertThrowIntoFetchResult)
 
     if (result?.data?.workspaceMutations.updateCreationState) {
       mixpanel.track('Workspace Created', {
         plan: state.plan,
         billingInterval: state.billingInterval,
+        source: 'wizard',
+        fields: Object.keys(state).filter(
+          (key) =>
+            key !== 'id' &&
+            (key !== 'invites' || (state.invites && state.invites.length > 0))
+        ) as Array<keyof WorkspaceWizardState>,
         // eslint-disable-next-line camelcase
         workspace_id: workspaceId
       })

@@ -302,6 +302,10 @@ const props = defineProps({
   tooltipText: {
     type: String,
     default: undefined
+  },
+  customHelpClass: {
+    type: String,
+    default: undefined
   }
 })
 

@@ -49,6 +49,7 @@ import type {
   Workspace
 } from '~/lib/common/generated/gql/graphql'
 import { workspaceFunctionsRoute, workspaceRoute } from '~/lib/common/helpers/route'
+import { useMixpanel } from '~/lib/core/composables/mp'
 
 graphql(`
   fragment AutomateFunctionsPageHeader_Query on Query {
@@ -81,6 +82,7 @@ const { on, bind } = useDebouncedTextInput({ model: search })
 const { triggerNotification } = useGlobalToast()
 const route = useRoute()
 const router = useRouter()
+const mixpanel = useMixpanel()
 
 const createDialogOpen = ref(false)
 
@@ -123,6 +125,16 @@ if (import.meta.client) {
       }
 
       void router.replace({ query: {} })
+    },
+    { immediate: true }
+  )
+  watch(
+    () => route.query['automateBetaRedirect'] as Nullable<string>,
+    (isRedirect) => {
+      if (!isRedirect?.length) return
+      mixpanel.track('Automate Beta Visit Redirected')
+      const { automateBetaRedirect, ...query } = route.query
+      void router.replace({ query })
     },
     { immediate: true }
   )

@@ -168,15 +168,6 @@ export function getMailchimpNewsletterIds() {
 }
 
 /**
- * Get app base url / canonical url / origin
- * TODO: Go over all getBaseUrl() usages and move them to getXOrigin() instead
- * @deprecated Since the new FE both apps (Server & FE) have different base urls, so use `getFrontendOrigin()` or `getServerOrigin()` instead
- */
-export function getBaseUrl() {
-  return getServerOrigin()
-}
-
-/**
  * Whether notification job consumption & handling should be disabled
  */
 export function shouldDisableNotificationsConsumption() {
@@ -241,7 +232,7 @@ export function getPort() {
  * Check whether we're running an SSL server
  */
 export function isSSLServer() {
-  return /^https:\/\//.test(getBaseUrl())
+  return /^https:\/\//.test(getServerOrigin())
 }
 
 function parseUrlVar(value: string, name: string) {

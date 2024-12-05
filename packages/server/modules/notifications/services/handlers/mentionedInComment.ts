@@ -23,7 +23,7 @@ import {
   NotificationHandler,
   MentionedInCommentMessage
 } from '@/modules/notifications/helpers/types'
-import { getBaseUrl } from '@/modules/shared/helpers/envHelper'
+import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
 import { MaybeFalsy, Nullable } from '@/modules/shared/helpers/typeHelper'
 import { Knex } from 'knex'
 
@@ -151,7 +151,7 @@ function buildEmailTemplateParams(
     objectId,
     commitId
   })
-  const url = new URL(commentRoute, getBaseUrl()).toString()
+  const url = new URL(commentRoute, getFrontendOrigin()).toString()
 
   return {
     mjml: buildEmailTemplateMjml(state),

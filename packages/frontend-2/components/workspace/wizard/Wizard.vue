@@ -1,6 +1,6 @@
 <template>
   <div class="py-3 md:py-6">
-    <CommonLoadingIcon v-if="loading" class="my-10 justify-self-center" />
+    <CommonLoadingIcon v-if="loading || !isClientReady" class="my-10 mx-auto" />
     <template v-else>
       <CommonAlert
         v-if="showPaymentError"
@@ -67,6 +67,7 @@ const { loading: queryLoading, onResult } = useQuery(
 )
 
 const showPaymentError = ref(false)
+const isClientReady = ref(false)
 
 const loading = computed(
   () => wizardIsLoading.value || (props.workspaceId ? queryLoading.value : false)
@@ -81,9 +82,7 @@ onResult((result) => {
 
     setState({
       ...state,
-      id: props.workspaceId ?? (route.query.workspaceId as string),
-      plan: null, // Force re-select plan
-      billingInterval: null // Force re-select billing interval
+      id: props.workspaceId ?? (route.query.workspaceId as string)
     })
 
     // If the users comes back from Stripe, we need to go to the last relevant step and show an error
@@ -99,10 +98,12 @@ onResult((result) => {
         cancelCheckoutSession(route.query.session_id as string, props.workspaceId)
       }
 
-      mixpanel.track('Workspace Creation Checkout Session Started')
+      mixpanel.track('Workspace Creation Checkout Session Canceled')
     }
-  } else {
-    mixpanel.track('Workspace Creation Started')
   }
+})
+
+onMounted(() => {
+  isClientReady.value = true
 })
 </script>
