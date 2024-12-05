@@ -150,7 +150,6 @@ export const createTestWorkspace = async (
       findEmailsByUserId: findEmailsByUserIdFactory({ db }),
       storeWorkspaceDomain: storeWorkspaceDomainFactory({ db }),
       getWorkspace: getWorkspaceFactory({ db }),
-      upsertWorkspace: upsertWorkspaceFactory({ db }),
       emitWorkspaceEvent: getEventBus().emit,
       getDomains: getWorkspaceDomainsFactory({ db })
     })({
@@ -196,6 +195,7 @@ export const createTestWorkspace = async (
       getWorkspaceBySlug: getWorkspaceBySlugFactory({ db })
     }),
     getWorkspace: getWorkspaceWithDomainsFactory({ db }),
+    getWorkspaceSsoProviderRecord: getWorkspaceSsoProviderRecordFactory({ db }),
     upsertWorkspace: upsertWorkspaceFactory({ db }),
     emitWorkspaceEvent: (...args) => getEventBus().emit(...args)
   })
@@ -234,6 +234,10 @@ export const assignToWorkspace = async (
   user: BasicTestUser,
   role?: WorkspaceRoles
 ) => {
+  if (!FF_WORKSPACES_MODULE_ENABLED) {
+    return // Just skip
+  }
+
   const updateWorkspaceRole = updateWorkspaceRoleFactory({
     getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db }),
     findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({ db }),
@@ -253,6 +257,10 @@ export const unassignFromWorkspace = async (
   workspace: BasicTestWorkspace,
   user: BasicTestUser
 ) => {
+  if (!FF_WORKSPACES_MODULE_ENABLED) {
+    return // Just skip
+  }
+
   const deleteWorkspaceRole = deleteWorkspaceRoleFactory({
     getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
     deleteWorkspaceRole: dbDeleteWorkspaceRoleFactory({ db }),
@@ -274,7 +282,11 @@ export const unassignFromWorkspaces = async (
 export const assignToWorkspaces = async (
   pairs: [BasicTestWorkspace, BasicTestUser, MaybeNullOrUndefined<WorkspaceRoles>][]
 ) => {
-  await Promise.all(pairs.map((p) => assignToWorkspace(p[0], p[1], p[2] || undefined)))
+  // Serial execution is somehow faster with bigger batch sizes, assignToWorkspace
+  // may be quite heavy on the DB
+  for (const [workspace, user, role] of pairs) {
+    await assignToWorkspace(workspace, user, role || undefined)
+  }
 }
 
 export const createTestWorkspaces = async (

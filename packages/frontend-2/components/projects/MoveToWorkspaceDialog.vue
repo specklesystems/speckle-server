@@ -48,6 +48,12 @@
         </div>
       </div>
     </div>
+    <WorkspaceRegionStaticDataDisclaimer
+      v-if="showRegionStaticDataDisclaimer"
+      v-model:open="showRegionStaticDataDisclaimer"
+      :variant="RegionStaticDataDisclaimerVariant.MoveProjectIntoWorkspace"
+      @confirm="onConfirmHandler"
+    />
   </LayoutDialog>
 </template>
 
@@ -57,12 +63,15 @@ import type {
   ProjectsMoveToWorkspaceDialog_WorkspaceFragment,
   ProjectsMoveToWorkspaceDialog_ProjectFragment
 } from '~~/lib/common/generated/gql/graphql'
-import { projectWorkspaceSelectQuery } from '~/lib/projects/graphql/queries'
-import { useQuery } from '@vue/apollo-composable'
+import { useMutationLoading, useQuery } from '@vue/apollo-composable'
 import { type LayoutDialogButton } from '@speckle/ui-components'
 import { useMoveProjectToWorkspace } from '~/lib/projects/composables/projectManagement'
 import { Roles } from '@speckle/shared'
 import { workspacesRoute } from '~/lib/common/helpers/route'
+import {
+  useWorkspaceCustomDataResidencyDisclaimer,
+  RegionStaticDataDisclaimerVariant
+} from '~/lib/workspaces/composables/region'
 
 graphql(`
   fragment ProjectsMoveToWorkspaceDialog_Workspace on Workspace {
@@ -71,6 +80,8 @@ graphql(`
     name
     defaultLogoIndex
     logo
+    ...WorkspaceHasCustomDataResidency_Workspace
+    ...ProjectsWorkspaceSelect_Workspace
   }
 `)
 
@@ -97,6 +108,15 @@ graphql(`
   }
 `)
 
+const query = graphql(`
+  query ProjectsMoveToWorkspaceDialog {
+    activeUser {
+      id
+      ...ProjectsMoveToWorkspaceDialog_User
+    }
+  }
+`)
+
 const props = defineProps<{
   project: ProjectsMoveToWorkspaceDialog_ProjectFragment
   workspace?: ProjectsMoveToWorkspaceDialog_WorkspaceFragment
@@ -105,9 +125,10 @@ const props = defineProps<{
 const open = defineModel<boolean>('open', { required: true })
 
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
-const { result } = useQuery(projectWorkspaceSelectQuery, null, () => ({
+const { result } = useQuery(query, null, () => ({
   enabled: isWorkspacesEnabled.value
 }))
+const loading = useMutationLoading()
 const moveProject = useMoveProjectToWorkspace()
 
 const selectedWorkspace = ref<ProjectsMoveToWorkspaceDialog_WorkspaceFragment>()
@@ -134,9 +155,9 @@ const dialogButtons = computed<LayoutDialogButton[]>(() => {
           text: 'Move',
           props: {
             color: 'primary',
-            disabled: !selectedWorkspace.value && !props.workspace
+            disabled: (!selectedWorkspace.value && !props.workspace) || loading.value
           },
-          onClick: () => onMoveProject()
+          onClick: () => triggerAction()
         }
       ]
     : [
@@ -153,27 +174,31 @@ const dialogButtons = computed<LayoutDialogButton[]>(() => {
 const onMoveProject = async () => {
   const workspaceId = selectedWorkspace.value?.id ?? props.workspace?.id
   const workspaceName = selectedWorkspace.value?.name ?? props.workspace?.name
+  if (!workspaceId || !workspaceName) return
 
-  if (workspaceId && workspaceName) {
-    try {
-      await moveProject({
-        projectId: props.project.id,
-        workspaceId,
-        workspaceName,
-        eventSource: props.eventSource
-      })
-      open.value = false
-    } catch {
-      // Do nothing on error, composable already shows notification
-    }
+  const res = await moveProject({
+    projectId: props.project.id,
+    workspaceId,
+    workspaceName,
+    eventSource: props.eventSource
+  })
+  if (res?.id) {
+    open.value = false
   }
 }
+
+const { showRegionStaticDataDisclaimer, triggerAction, onConfirmHandler } =
+  useWorkspaceCustomDataResidencyDisclaimer({
+    workspace: computed(() => selectedWorkspace.value ?? props.workspace),
+    onConfirmAction: onMoveProject
+  })
 
 watch(
   () => open.value,
   (isOpen, oldIsOpen) => {
     if (isOpen && isOpen !== oldIsOpen) {
       selectedWorkspace.value = undefined
+      showRegionStaticDataDisclaimer.value = false
     }
   }
 )

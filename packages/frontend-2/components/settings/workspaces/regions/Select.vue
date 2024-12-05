@@ -5,24 +5,27 @@
     :name="name || 'regions'"
     :allow-unset="false"
     mount-menu-on-body
-    label-position="left"
   >
     <template #option="{ item }">
       <div class="flex flex-col items-start justify-center">
-        <span class="truncate">{{ item.name }}</span>
-        <span class="text-foreground-2 truncate">{{ item.description }}</span>
+        <span>{{ item.name }}</span>
+        <span class="text-foreground-2 break-normal">{{ item.description }}</span>
       </div>
     </template>
     <template #nothing-selected>
-      {{ multiple ? 'Select regions' : 'Select a region' }}
+      <span class="min-w-64 block">
+        {{ multiple ? 'Select regions' : 'Select a region' }}
+      </span>
     </template>
     <template #something-selected="{ value }">
-      <template v-if="isArray(value)">
-        {{ value.map((v) => v.name).join(', ') }}
-      </template>
-      <template v-else>
-        {{ value.name }}
-      </template>
+      <span class="min-w-64 block">
+        <template v-if="isArray(value)">
+          {{ value.map((v) => v.name).join(', ') }}
+        </template>
+        <template v-else>
+          {{ value.name }}
+        </template>
+      </span>
     </template>
   </FormSelectBase>
 </template>
@@ -49,21 +52,29 @@ const emit = defineEmits<{
   (e: 'update:modelValue', v: ValueType): void
 }>()
 
-const props = defineProps<{
-  modelValue?: ValueType
-  label: string
-  items: ItemType[]
-  multiple?: boolean
-  name?: string
-  showOptional?: boolean
-  showRequired?: boolean
-  showLabel?: boolean
-  labelId?: string
-  buttonId?: string
-  help?: string
-  disabled?: boolean
-  rules?: RuleExpression<ItemType | ItemType[] | undefined>
-}>()
+const props = withDefaults(
+  defineProps<{
+    modelValue?: ValueType
+    label: string
+    items: ItemType[]
+    multiple?: boolean
+    name?: string
+    showOptional?: boolean
+    showRequired?: boolean
+    showLabel?: boolean
+    labelId?: string
+    buttonId?: string
+    help?: string
+    disabled?: boolean
+    rules?: RuleExpression<ItemType | ItemType[] | undefined>
+    labelPosition?: 'left' | 'top'
+    size?: 'sm' | 'base' | 'lg' | 'xl'
+  }>(),
+  {
+    labelPosition: 'left',
+    size: 'base'
+  }
+)
 
 const { selectedValue } = useFormSelectChildInternals<ItemType>({
   props: toRefs(props),

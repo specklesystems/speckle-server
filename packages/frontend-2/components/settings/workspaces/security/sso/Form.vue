@@ -32,7 +32,7 @@
         autocomplete="off"
         show-label
         label-position="left"
-        type="text"
+        type="password"
         :rules="[isRequired, isStringOfLength({ minLength: 5 })]"
       />
       <hr class="border-outline-3" />
@@ -66,6 +66,11 @@ import { useMixpanel } from '~/lib/core/composables/mp'
 
 const props = defineProps<{
   workspaceSlug: string
+  providerInfo?: {
+    providerName: string
+    clientId: string
+    issuerUrl: string
+  }
 }>()
 
 defineEmits<{
@@ -78,10 +83,10 @@ const { challenge } = useLoginOrRegisterUtils()
 const mixpanel = useMixpanel()
 
 const formData = ref<SsoFormValues>({
-  providerName: '',
-  clientId: '',
+  providerName: props.providerInfo?.providerName || '',
+  clientId: props.providerInfo?.clientId || '',
   clientSecret: '',
-  issuerUrl: ''
+  issuerUrl: props.providerInfo?.issuerUrl || ''
 })
 
 const { handleSubmit } = useForm<SsoFormValues>()
@@ -112,4 +117,19 @@ const onSubmit = handleSubmit(() => {
     external: true
   })
 })
+
+watch(
+  () => props.providerInfo,
+  (newInfo) => {
+    if (newInfo) {
+      formData.value = {
+        ...formData.value,
+        providerName: newInfo.providerName,
+        clientId: newInfo.clientId,
+        issuerUrl: newInfo.issuerUrl
+      }
+    }
+  },
+  { immediate: true }
+)
 </script>

@@ -98,6 +98,7 @@
           v-model:open="showSettingsDialog"
           :target-menu-item="settingsDialogTarget"
           :target-workspace-id="workspace.id"
+          :sso-provider-info="ssoProviderInfo"
         />
         <WorkspaceMoveProjectsDialog
           v-model:open="showMoveProjectsDialog"
@@ -128,6 +129,8 @@ import {
   type AvailableSettingsMenuKeys
 } from '~/lib/settings/helpers/types'
 import { useBillingActions } from '~/lib/billing/composables/actions'
+import { useWorkspacesWizard } from '~/lib/workspaces/composables/wizard'
+import type { WorkspaceWizardState } from '~/lib/workspaces/helpers/types'
 
 graphql(`
   fragment WorkspaceProjectList_Workspace on Workspace {
@@ -137,6 +140,10 @@ graphql(`
     ...WorkspaceMixpanelUpdateGroup_Workspace
     projects {
       ...WorkspaceProjectList_ProjectCollection
+    }
+    creationState {
+      completed
+      state
     }
   }
 `)
@@ -175,6 +182,11 @@ const showSettingsDialog = ref(false)
 const settingsDialogTarget = ref<AvailableSettingsMenuKeys>(
   SettingMenuKeys.Workspace.General
 )
+const ssoProviderInfo = ref<{
+  providerName: string
+  clientId: string
+  issuerUrl: string
+} | null>(null)
 
 const token = computed(() => route.query.token as Optional<string>)
 
@@ -213,6 +225,7 @@ const { query, identifier, onInfiniteLoad } = usePaginatedQuery({
   }),
   resolveCursorFromVariables: (vars) => vars.cursor
 })
+const { finalizeWizard, isLoading: wizardLoading } = useWorkspacesWizard()
 
 const projects = computed(() => query.result.value?.workspaceBySlug?.projects)
 const workspaceInvite = computed(() => initialQueryResult.value?.workspaceInvite)
@@ -287,12 +300,32 @@ const onShowSettingsDialog = (target: AvailableSettingsMenuKeys) => {
 }
 
 onResult((queryResult) => {
+  if (
+    queryResult.data?.workspaceBySlug.creationState?.completed === false &&
+    queryResult.data.workspaceBySlug.creationState.state
+  ) {
+    if (wizardLoading.value || import.meta.server) return
+    finalizeWizard(
+      queryResult.data.workspaceBySlug.creationState.state as WorkspaceWizardState,
+      queryResult.data.workspaceBySlug.id
+    )
+  }
+
   if (queryResult.data?.workspaceBySlug) {
     workspaceMixpanelUpdateGroup(queryResult.data.workspaceBySlug)
     useHeadSafe({
       title: queryResult.data.workspaceBySlug.name
     })
     validateCheckoutSession(queryResult.data.workspaceBySlug.id)
+  }
+})
+
+onMounted(() => {
+  const ssoValidationSuccess = route.query?.ssoValidationSuccess
+
+  if (ssoValidationSuccess) {
+    // Open security settings dialog
+    onShowSettingsDialog(SettingMenuKeys.Workspace.Security)
   }
 })
 </script>

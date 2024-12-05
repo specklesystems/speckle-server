@@ -22,7 +22,7 @@ export const useCreateRegion = () => {
         const newRegion = data?.serverInfoMutations.multiRegion.create
         if (!newRegion) return
 
-        // Add to admin region list
+        // Add to admin region list + remove from available keys
         modifyObjectField(
           cache,
           ROOT_QUERY,
@@ -33,6 +33,9 @@ export const useCreateRegion = () => {
                 ref('ServerRegionItem', newRegion.id),
                 ...regions
               ])
+              update('multiRegion.availableKeys', (keys) =>
+                keys.filter((key) => key !== newRegion.key)
+              )
             })
         )
       }

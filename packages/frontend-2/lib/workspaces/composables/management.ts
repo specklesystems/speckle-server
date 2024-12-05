@@ -43,7 +43,13 @@ export const useInviteUserToWorkspace = () => {
   const { mutate } = useMutation(inviteToWorkspaceMutation)
   const isWorkspacesEnabled = useIsWorkspacesEnabled()
 
-  return async (workspaceId: string, inputs: WorkspaceInviteCreateInput[]) => {
+  return async (args: {
+    workspaceId: string
+    inputs: WorkspaceInviteCreateInput[]
+    hideNotifications?: boolean
+  }) => {
+    const { workspaceId, inputs, hideNotifications } = args
+
     const userId = activeUser.value?.id
     if (!userId) return
     if (!isWorkspacesEnabled.value) return
@@ -85,7 +91,7 @@ export const useInviteUserToWorkspace = () => {
         }
       ).catch(convertThrowIntoFetchResult)) || {}
 
-    if (!data?.workspaceMutations.invites.batchCreate.id) {
+    if (!data?.workspaceMutations.invites.batchCreate.id && !hideNotifications) {
       const err = getFirstErrorMessage(errors)
       triggerNotification({
         type: ToastNotificationType.Danger,
@@ -93,10 +99,12 @@ export const useInviteUserToWorkspace = () => {
         description: err
       })
     } else {
-      triggerNotification({
-        type: ToastNotificationType.Success,
-        title: 'Invite successfully sent'
-      })
+      if (!hideNotifications) {
+        triggerNotification({
+          type: ToastNotificationType.Success,
+          title: 'Invite successfully sent'
+        })
+      }
     }
 
     return data?.workspaceMutations.invites.batchCreate
@@ -354,6 +362,7 @@ export function useCreateWorkspace() {
        * Defaults to false.
        */
       navigateOnSuccess: boolean
+      hideNotifications: boolean
     }>,
     eventProperties?: Partial<{
       /**
@@ -400,10 +409,12 @@ export function useCreateWorkspace() {
         workspace_id: res.data?.workspaceMutations.create.id
       })
 
-      triggerNotification({
-        type: ToastNotificationType.Success,
-        title: 'Workspace successfully created'
-      })
+      if (!options?.hideNotifications) {
+        triggerNotification({
+          type: ToastNotificationType.Success,
+          title: 'Workspace successfully created'
+        })
+      }
 
       if (options?.navigateOnSuccess === true) {
         router.push(workspaceRoute(res.data?.workspaceMutations.create.slug))
@@ -539,7 +550,6 @@ export const useOnWorkspaceUpdated = (params: {
 }) => {
   const { workspaceSlug, handler } = params
 
-  const { triggerNotification } = useGlobalToast()
   const apollo = useApolloClient().client
   const { hasLock } = useLock(
     computed(() => `useOnWorkspaceUpdated-${unref(workspaceSlug.value)}`)
@@ -559,11 +569,6 @@ export const useOnWorkspaceUpdated = (params: {
   // Main, locked cache update
   onResult((result) => {
     if (!result.data?.workspaceUpdated || !hasLock.value) return
-
-    triggerNotification({
-      type: ToastNotificationType.Info,
-      title: 'Workspace updated'
-    })
   })
 
   // Optional handler

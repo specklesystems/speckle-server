@@ -1,14 +1,16 @@
 <template>
   <div
-    class="border border-outline-3 bg-foundation text-foreground rounded-lg p-6 flex flex-col w-full"
+    class="border border-outline-3 bg-foundation text-foreground rounded-lg p-5 flex flex-col w-full"
   >
-    <div>
+    <div class="flex items-center gap-x-2">
       <h4 class="text-body font-medium">
         Workspace
         <span class="capitalize">{{ plan.name }}</span>
       </h4>
+      <CommonBadge v-if="badgeText" rounded>
+        {{ badgeText }}
+      </CommonBadge>
     </div>
-
     <p class="text-body mt-1">
       <span class="font-medium">
         £{{
@@ -32,8 +34,10 @@
         20% off
       </CommonBadge>
     </div>
-    <div v-if="workspaceId" class="w-full mt-4">
+    <div v-if="workspaceId || hasCta" class="w-full mt-4">
+      <slot name="cta" />
       <FormButton
+        v-if="workspaceId"
         :color="buttonColor"
         :disabled="!isSelectable"
         full-width
@@ -57,6 +61,14 @@
         />
         <XMarkIcon v-else class="w-4 h-4 mx-2 text-danger" />
         <span
+          v-tippy="
+            feature.description(
+              yearlyIntervalSelected
+                ? plan.cost.yearly[Roles.Workspace.Guest]
+                : plan.cost.monthly[Roles.Workspace.Guest]
+            )
+          "
+          class="underline decoration-outline-5 decoration-dashed underline-offset-4 cursor-help"
           :class="{
             'text-foreground-2': !plan.features.includes(feature.name as PlanFeaturesList)
           }"
@@ -100,18 +112,22 @@ const emit = defineEmits<{
 
 const props = defineProps<{
   plan: PricingPlan
+  yearlyIntervalSelected: boolean
+  badgeText?: string
   // The following props are optional if the table is for informational purposes
   currentPlan?: MaybeNullOrUndefined<WorkspacePlan>
   workspaceId?: string
   isAdmin?: boolean
   activeBillingInterval?: BillingInterval
-  yearlyIntervalSelected: boolean
 }>()
+
+const slots = useSlots()
 
 const features = ref(pricingPlansConfig.features)
 const isUpgradeDialogOpen = ref(false)
 const isYearlyIntervalSelected = ref(props.yearlyIntervalSelected)
 
+const hasCta = computed(() => !!slots.cta)
 const canUpgradeToPlan = computed(() => {
   if (!props.currentPlan) return false
 
@@ -140,6 +156,7 @@ const isMatchingInterval = computed(
     (props.yearlyIntervalSelected ? BillingInterval.Yearly : BillingInterval.Monthly)
 )
 const isSelectable = computed(() => {
+  if (!props.isAdmin) return false
   // Always enable buttons during trial
   if (statusIsTrial.value) return true
 

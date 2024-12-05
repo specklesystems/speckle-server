@@ -43,12 +43,14 @@ export const startCheckoutSessionFactory =
     workspaceId,
     workspaceSlug,
     workspacePlan,
-    billingInterval
+    billingInterval,
+    isCreateFlow
   }: {
     workspaceId: string
     workspaceSlug: string
     workspacePlan: PaidWorkspacePlans
     billingInterval: WorkspacePlanBillingIntervals
+    isCreateFlow: boolean
   }): Promise<CheckoutSession> => {
     // get workspace plan, if we're already on a paid plan, do not allow checkout
     // paid plans should use a subscription modification
@@ -95,7 +97,8 @@ export const startCheckoutSessionFactory =
         throw new WorkspaceAlreadyPaidError()
       if (
         new Date().getTime() - workspaceCheckoutSession.createdAt.getTime() >
-        10 * 60 * 1000
+        1000
+        // 10 * 60 * 1000
       ) {
         await deleteCheckoutSession({
           checkoutSessionId: workspaceCheckoutSession.id
@@ -118,7 +121,8 @@ export const startCheckoutSessionFactory =
       billingInterval,
       workspacePlan,
       guestCount,
-      seatCount: adminCount + memberCount
+      seatCount: adminCount + memberCount,
+      isCreateFlow
     })
 
     await saveCheckoutSession({ checkoutSession })
