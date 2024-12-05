@@ -62,6 +62,7 @@ const pageQuery = graphql(`
       workspaces {
         items {
           ...AutomateFunctionCreateDialog_Workspace
+          ...AutomateFunctionEditDialog_Workspace
         }
       }
     }
