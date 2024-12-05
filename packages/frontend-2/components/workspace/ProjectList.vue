@@ -191,7 +191,6 @@ const ssoProviderInfo = ref<{
 const token = computed(() => route.query.token as Optional<string>)
 
 const pageFetchPolicy = usePageQueryStandardFetchPolicy()
-
 const { result: initialQueryResult, onResult } = useQuery(
   workspacePageQuery,
   () => ({

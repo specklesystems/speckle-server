@@ -107,8 +107,7 @@ export const useWorkspacesWizard = () => {
           slug: state.value.slug,
           defaultLogoIndex: generateDefaultLogoIndex()
         },
-        { navigateOnSuccess: false, hideNotifications: true },
-        { source: 'wizard' }
+        { navigateOnSuccess: false, hideNotifications: true }
       )
 
       if (!newWorkspaceResult?.data?.workspaceMutations.create) {
@@ -225,6 +224,13 @@ export const useWorkspacesWizard = () => {
       mixpanel.track('Workspace Created', {
         plan: state.plan,
         billingInterval: state.billingInterval,
+        source: 'wizard',
+        fields: Object.keys(state).filter(
+          (key) =>
+            key !== 'id' &&
+            (key !== 'invites' ||
+              (state.invites && state.invites.some((invite) => invite)))
+        ) as Array<keyof WorkspaceWizardState>,
         // eslint-disable-next-line camelcase
         workspace_id: workspaceId
       })
