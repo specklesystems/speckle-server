@@ -156,6 +156,7 @@ const isMatchingInterval = computed(
     (props.yearlyIntervalSelected ? BillingInterval.Yearly : BillingInterval.Monthly)
 )
 const isSelectable = computed(() => {
+  if (!props.isAdmin) return false
   // Always enable buttons during trial
   if (statusIsTrial.value) return true
 

@@ -3,13 +3,8 @@
     <nav
       class="fixed top-0 h-14 bg-foundation w-full shadow flex items-center justify-between px-2 cursor-pointer"
     >
-      <HeaderLogoBlock
-        :active="false"
-        class="mr-0"
-        no-link
-        @click="isCancelDialogOpen = true"
-      />
-      <FormButton color="outline" @click="isCancelDialogOpen = true">Cancel</FormButton>
+      <HeaderLogoBlock :active="false" class="mr-0" no-link @click="onCancelClick" />
+      <FormButton color="outline" @click="onCancelClick">Cancel</FormButton>
     </nav>
     <div class="h-dvh w-dvh overflow-hidden flex flex-col">
       <!-- Static Spacer to allow for absolutely positioned HeaderNavBar  -->
@@ -29,9 +24,25 @@
 </template>
 
 <script setup lang="ts">
+import { workspacesRoute } from '~~/lib/common/helpers/route'
+import { WizardSteps } from '~/lib/workspaces/helpers/types'
+import { useWorkspacesWizard } from '~/lib/workspaces/composables/wizard'
+
 defineProps<{
   workspaceId?: string
 }>()
 
+const { currentStep } = useWorkspacesWizard()
+
 const isCancelDialogOpen = ref(false)
+
+const isFirstStep = computed(() => currentStep.value === WizardSteps.Details)
+
+const onCancelClick = () => {
+  if (isFirstStep.value) {
+    navigateTo(workspacesRoute)
+  } else {
+    isCancelDialogOpen.value = true
+  }
+}
 </script>
