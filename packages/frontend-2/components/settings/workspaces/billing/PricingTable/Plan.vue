@@ -26,7 +26,6 @@
         v-model="isYearlyIntervalSelected"
         :show-label="false"
         name="domain-protection"
-        :disabled="!toggleEnabled"
         @update:model-value="(newValue) => $emit('onYearlyIntervalSelected', newValue)"
       />
       <span class="text-body-2xs">Billed annually</span>
@@ -35,9 +34,22 @@
       </CommonBadge>
     </div>
     <div v-if="workspaceId || hasCta" class="w-full mt-4">
-      <slot name="cta" />
+      <!-- Have to do the weird v-if v-else-if to avoid the tippy reactivity bug -->
+      <div v-if="hasCta">
+        <slot name="cta" />
+      </div>
+      <div v-else-if="!isAdmin" v-tippy="`You must be a workspace admin`">
+        <FormButton
+          :color="buttonColor"
+          :disabled="!isSelectable"
+          full-width
+          @click="onCtaClick"
+        >
+          {{ buttonText }}
+        </FormButton>
+      </div>
       <FormButton
-        v-if="workspaceId"
+        v-else-if="isSelectable"
         :color="buttonColor"
         :disabled="!isSelectable"
         full-width
@@ -45,6 +57,16 @@
       >
         {{ buttonText }}
       </FormButton>
+      <div v-else v-tippy="buttonTooltip">
+        <FormButton
+          :color="buttonColor"
+          :disabled="!isSelectable"
+          full-width
+          @click="onCtaClick"
+        >
+          {{ buttonText }}
+        </FormButton>
+      </div>
     </div>
     <ul class="flex flex-col gap-y-2 mt-4 pt-3 border-t border-outline-3">
       <li
@@ -141,39 +163,61 @@ const canUpgradeToPlan = computed(() => {
 
   return allowedUpgrades[props.currentPlan.name].includes(props.plan.name)
 })
+
 const statusIsTrial = computed(
   () => props.currentPlan?.status === WorkspacePlanStatuses.Trial || !props.currentPlan
 )
-const buttonColor = computed(() => {
-  if (statusIsTrial.value) {
-    return props.plan.name === WorkspacePlans.Starter ? 'primary' : 'outline'
-  }
-  return 'outline'
-})
+
 const isMatchingInterval = computed(
   () =>
     props.activeBillingInterval ===
     (props.yearlyIntervalSelected ? BillingInterval.Yearly : BillingInterval.Monthly)
 )
+
+const isDowngrade = computed(() => {
+  return !canUpgradeToPlan.value && props.currentPlan?.name !== props.plan.name
+})
+
+const isCurrentPlan = computed(
+  () => isMatchingInterval.value && props.currentPlan?.name === props.plan.name
+)
+
+const isAnnualToMonthly = computed(() => {
+  return (
+    !isMatchingInterval.value &&
+    props.currentPlan?.name === props.plan.name &&
+    !props.yearlyIntervalSelected
+  )
+})
+
+const isMonthlyToAnnual = computed(() => {
+  return (
+    !isMatchingInterval.value &&
+    props.currentPlan?.name === props.plan.name &&
+    props.yearlyIntervalSelected
+  )
+})
+
 const isSelectable = computed(() => {
   if (!props.isAdmin) return false
   // Always enable buttons during trial
   if (statusIsTrial.value) return true
 
-  // Disable if user is already on this plan with same billing interval
-  if (isMatchingInterval.value && props.currentPlan?.name === props.plan.name)
-    return false
+  // Allow selection if switching from monthly to yearly for the same plan
+  if (isMonthlyToAnnual.value && props.currentPlan?.name === props.plan.name)
+    return true
+
+  // Disable if current plan and intervals match
+  if (isCurrentPlan.value) return false
 
   // Handle billing interval changes
   if (!isMatchingInterval.value) {
-    const isCurrentPlan = props.currentPlan?.name === props.plan.name
-    const isMonthlyToYearly =
-      props.yearlyIntervalSelected &&
-      props.activeBillingInterval === BillingInterval.Monthly
     // Allow yearly upgrades from monthly plans
-    if (isMonthlyToYearly) return isCurrentPlan || canUpgradeToPlan.value
+    if (isMonthlyToAnnual.value) return canUpgradeToPlan.value
+
     // Never allow switching to monthly if currently on yearly billing
     if (props.activeBillingInterval === BillingInterval.Yearly) return false
+
     // Allow monthly plan changes only for upgrades
     return canUpgradeToPlan.value
   }
@@ -181,34 +225,50 @@ const isSelectable = computed(() => {
   // Allow upgrades to higher tier plans
   return canUpgradeToPlan.value
 })
-const toggleEnabled = computed(() => {
-  return statusIsTrial.value
-    ? true
-    : canUpgradeToPlan.value ||
-        (props.currentPlan?.name === props.plan.name &&
-          props.activeBillingInterval === BillingInterval.Monthly)
+
+const buttonColor = computed(() => {
+  if (statusIsTrial.value) {
+    return props.plan.name === WorkspacePlans.Starter ? 'primary' : 'outline'
+  }
+  return 'outline'
 })
+
 const buttonText = computed(() => {
   // Trial plan case
   if (statusIsTrial.value) {
     return `Subscribe to ${startCase(props.plan.name)}`
   }
   // Current plan case
-  if (isMatchingInterval.value && props.currentPlan?.name === props.plan.name) {
+  if (isCurrentPlan.value) {
     return 'Current plan'
   }
   // Billing interval and lower plan case
-  if (!canUpgradeToPlan.value && props.currentPlan?.name !== props.plan.name) {
+  if (isDowngrade.value) {
     return `Downgrade to ${props.plan.name}`
   }
   // Billing interval change and current plan
-  if (!isMatchingInterval.value && props.currentPlan?.name === props.plan.name) {
-    return props.yearlyIntervalSelected
-      ? 'Change to annual plan'
-      : 'Change to monthly plan'
+  if (isAnnualToMonthly.value) {
+    return 'Change to monthly plan'
+  }
+  if (isMonthlyToAnnual.value) {
+    return 'Change to annual plan'
   }
   // Upgrade case
   return canUpgradeToPlan.value ? `Upgrade to ${startCase(props.plan.name)}` : ''
+})
+
+const buttonTooltip = computed(() => {
+  if (statusIsTrial.value || isCurrentPlan.value) return
+
+  if (isDowngrade.value) {
+    return 'Downgrading is not supported at the moment. Please contact billing@speckle.systems.'
+  }
+
+  if (isAnnualToMonthly.value) {
+    return 'Changing from an annual to a monthly plan is currently not supported. Please contact billing@speckle.systems.'
+  }
+
+  return undefined
 })
 
 const onCtaClick = () => {
