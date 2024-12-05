@@ -1,6 +1,10 @@
 import { db } from '@/db/knex'
 import { saveActivityFactory } from '@/modules/activitystream/repositories'
-import { addStreamPermissionsRevokedActivityFactory } from '@/modules/activitystream/services/streamActivity'
+import {
+  addStreamInviteAcceptedActivityFactory,
+  addStreamPermissionsAddedActivityFactory,
+  addStreamPermissionsRevokedActivityFactory
+} from '@/modules/activitystream/services/streamActivity'
 import { StreamAcl } from '@/modules/core/dbSchema'
 import { ProjectsEmitter } from '@/modules/core/events/projectsEmitter'
 import { StreamAclRecord, StreamRecord } from '@/modules/core/helpers/types'
@@ -8,11 +12,14 @@ import { createBranchFactory } from '@/modules/core/repositories/branches'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import {
   createStreamFactory,
+  getStreamCollaboratorsFactory,
   getStreamFactory,
+  grantStreamPermissionsFactory,
   revokeStreamPermissionsFactory
 } from '@/modules/core/repositories/streams'
 import { getUserFactory, getUsersFactory } from '@/modules/core/repositories/users'
 import {
+  addOrUpdateStreamCollaboratorFactory,
   isStreamCollaboratorFactory,
   removeStreamCollaboratorFactory,
   validateStreamAccessFactory
@@ -38,7 +45,7 @@ import { createWorkspaceProjectFactory } from '@/modules/workspaces/services/pro
 import { BasicTestUser } from '@/test/authHelper'
 import { ProjectVisibility } from '@/test/graphql/generated/graphql'
 import { faker } from '@faker-js/faker'
-import { ensureError } from '@speckle/shared'
+import { ensureError, Roles, StreamRoles } from '@speckle/shared'
 import { omit } from 'lodash'
 
 const getServerInfo = getServerInfoFactory({ db })
@@ -83,6 +90,20 @@ const removeStreamCollaborator = removeStreamCollaboratorFactory({
   isStreamCollaborator,
   revokeStreamPermissions: revokeStreamPermissionsFactory({ db }),
   addStreamPermissionsRevokedActivity: addStreamPermissionsRevokedActivityFactory({
+    saveActivity,
+    publish
+  })
+})
+
+const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
+  validateStreamAccess,
+  getUser,
+  grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+  addStreamInviteAcceptedActivity: addStreamInviteAcceptedActivityFactory({
+    saveActivity,
+    publish
+  }),
+  addStreamPermissionsAddedActivity: addStreamPermissionsAddedActivityFactory({
     saveActivity,
     publish
   })
@@ -153,6 +174,68 @@ export async function leaveStream(streamObj: BasicTestStream, user: BasicTestUse
 
     throw e
   })
+}
+
+export async function addToStream(
+  streamObj: BasicTestStream,
+  user: BasicTestUser,
+  role: StreamRoles,
+  options?: Partial<{
+    owner: BasicTestUser
+  }>
+) {
+  const { owner } = options || {}
+  let ownerId = owner?.id
+  if (!ownerId) {
+    const getStreamCollaborators = getStreamCollaboratorsFactory({ db })
+    const collaborators = await getStreamCollaborators(
+      streamObj.id,
+      Roles.Stream.Owner,
+      {
+        limit: 1
+      }
+    )
+    ownerId = collaborators[0]?.id
+  }
+  if (!ownerId) {
+    throw new Error('Attempted to add a collaborator to a stream without an owner')
+  }
+
+  await addOrUpdateStreamCollaborator(streamObj.id, user.id, role, ownerId, null)
+}
+
+export async function addAllToStream(
+  streamObj: BasicTestStream,
+  users: BasicTestUser[] | { user: BasicTestUser; role: StreamRoles }[],
+  options?: Partial<{
+    owner: BasicTestUser
+  }>
+) {
+  const { owner } = options || {}
+  let ownerId = owner?.id
+  if (!ownerId) {
+    const getStreamCollaborators = getStreamCollaboratorsFactory({ db })
+    const collaborators = await getStreamCollaborators(
+      streamObj.id,
+      Roles.Stream.Owner,
+      {
+        limit: 1
+      }
+    )
+    ownerId = collaborators[0]?.id
+  }
+  if (!ownerId) {
+    throw new Error('Attempted to add a collaborator to a stream without an owner')
+  }
+
+  const usersWithRoles = users.map((u) =>
+    'user' in u ? u : { user: u, role: Roles.Stream.Contributor }
+  )
+  await Promise.all(
+    usersWithRoles.map(({ user, role }) =>
+      addOrUpdateStreamCollaborator(streamObj.id, user.id, role, ownerId!, null)
+    )
+  )
 }
 
 /**
