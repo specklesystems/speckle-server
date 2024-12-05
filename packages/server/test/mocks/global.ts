@@ -13,8 +13,8 @@ export const CommentsRepositoryMock = mockRequireModule<
 >(['@/modules/comments/repositories/comments'])
 
 export const MultiRegionDbSelectorMock = mockRequireModule<
-  typeof import('@/modules/multiregion/dbSelector')
->(['@/modules/multiregion/dbSelector'])
+  typeof import('@/modules/multiregion/utils/dbSelector')
+>(['@/modules/multiregion/utils/dbSelector'])
 
 export const MultiRegionConfigMock = mockRequireModule<
   typeof import('@/modules/multiregion/regionConfig')
