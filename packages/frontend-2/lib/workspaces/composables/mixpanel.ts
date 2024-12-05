@@ -4,7 +4,7 @@ import type {
   WorkspaceMixpanelUpdateGroup_WorkspaceFragment,
   WorkspaceMixpanelUpdateGroup_WorkspaceCollaboratorFragment
 } from '~/lib/common/generated/gql/graphql'
-import { Roles, type WorkspaceRoles } from '@speckle/shared'
+import { type MaybeNullOrUndefined, Roles, type WorkspaceRoles } from '@speckle/shared'
 import { resolveMixpanelServerId } from '@speckle/shared'
 
 graphql(`
@@ -46,7 +46,8 @@ export const useWorkspacesMixpanel = () => {
   const mixpanel = useMixpanel()
 
   const workspaceMixpanelUpdateGroup = (
-    workspace: WorkspaceMixpanelUpdateGroup_WorkspaceFragment
+    workspace: WorkspaceMixpanelUpdateGroup_WorkspaceFragment,
+    userEmail: MaybeNullOrUndefined<string>
   ) => {
     if (!workspace.id || !import.meta.client) return
     const roleCount = {
@@ -80,7 +81,9 @@ export const useWorkspacesMixpanel = () => {
       planStatus: workspace.plan?.status || '',
       planCreatedAt: workspace.plan?.createdAt,
       subscriptionBillingInterval: workspace.subscription?.billingInterval,
-      subscriptionCurrentBillingCycleEnd: workspace.subscription?.currentBillingCycleEnd
+      subscriptionCurrentBillingCycleEnd:
+        workspace.subscription?.currentBillingCycleEnd,
+      hasSpeckleMembers: userEmail?.includes('speckle.systems')
     }
 
     mixpanel.get_group('workspace_id', workspace.id).set(input)

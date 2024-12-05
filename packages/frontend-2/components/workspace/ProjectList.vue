@@ -131,6 +131,7 @@ import {
 import { useBillingActions } from '~/lib/billing/composables/actions'
 import { useWorkspacesWizard } from '~/lib/workspaces/composables/wizard'
 import type { WorkspaceWizardState } from '~/lib/workspaces/helpers/types'
+import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 
 graphql(`
   fragment WorkspaceProjectList_Workspace on Workspace {
@@ -158,6 +159,7 @@ graphql(`
   }
 `)
 
+const { activeUser } = useActiveUser()
 const { validateCheckoutSession } = useBillingActions()
 const { workspaceMixpanelUpdateGroup } = useWorkspacesMixpanel()
 const areQueriesLoading = useQueryLoading()
@@ -311,7 +313,10 @@ onResult((queryResult) => {
   }
 
   if (queryResult.data?.workspaceBySlug) {
-    workspaceMixpanelUpdateGroup(queryResult.data.workspaceBySlug)
+    workspaceMixpanelUpdateGroup(
+      queryResult.data.workspaceBySlug,
+      activeUser.value?.email
+    )
     useHeadSafe({
       title: queryResult.data.workspaceBySlug.name
     })
