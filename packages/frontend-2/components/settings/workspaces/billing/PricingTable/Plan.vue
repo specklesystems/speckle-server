@@ -268,6 +268,16 @@ const buttonTooltip = computed(() => {
     return 'Changing from an annual to a monthly plan is currently not supported. Please contact billing@speckle.systems.'
   }
 
+  // Starter and Plus annual to monthly upgrades
+  if (
+    isAnnualToMonthly.value ||
+    (props.activeBillingInterval === BillingInterval.Yearly &&
+      !props.yearlyIntervalSelected &&
+      canUpgradeToPlan.value)
+  ) {
+    return 'Upgrading from an annual plan to a monthly plan is not supported. Please contact billing@speckle.systems.'
+  }
+
   return undefined
 })
 
