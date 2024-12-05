@@ -470,7 +470,13 @@ export const lookupUsersFactory =
       .join(ServerAcl.name, Users.col.id, ServerAcl.col.userId)
       .leftJoin(UserEmails.name, UserEmails.col.userId, Users.col.id)
       .columns([
-        ...Object.values(omit(Users.col, [Users.col.email, Users.col.verified])),
+        ...Object.values(
+          omit(Users.col, [
+            Users.col.email,
+            Users.col.verified,
+            Users.col.passwordDigest
+          ])
+        ),
         knex.raw(`(array_agg(??))[1] as "verified"`, [UserEmails.col.verified]),
         knex.raw(`(array_agg(??))[1] as "email"`, [UserEmails.col.email])
       ])
@@ -495,9 +501,11 @@ export const lookupUsersFactory =
     query.orderBy(Users.col.createdAt, 'desc').limit(finalLimit)
 
     const rows = (await query) as UserRecord[]
+    const users = rows.map((u) => sanitizeUserRecord(u)) // pw shouldnt be there, but just making sure
+
     return {
-      users: rows,
-      cursor: rows.length > 0 ? rows[rows.length - 1].createdAt.toISOString() : null
+      users,
+      cursor: users.length > 0 ? users[users.length - 1].createdAt.toISOString() : null
     }
   }
 
