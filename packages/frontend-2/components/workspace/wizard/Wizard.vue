@@ -1,9 +1,6 @@
 <template>
   <div class="py-3 md:py-6">
-    <CommonLoadingIcon
-      v-if="loading || !isClientReady"
-      class="my-10 justify-self-center"
-    />
+    <CommonLoadingIcon v-if="loading || !isClientReady" class="my-10 mx-auto" />
     <template v-else>
       <CommonAlert
         v-if="showPaymentError"

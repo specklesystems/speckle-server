@@ -1,13 +1,13 @@
 <template>
   <LayoutDialog
     v-model:open="isOpen"
-    title="Confirm cancellation"
+    title="Discard new workspace?"
     :buttons="dialogButtons"
     max-width="xs"
   >
     <div class="flex flex-col gap-2">
       <p class="text-body-xs text-foreground font-medium">
-        You have unsaved changes. Are you sure you want to leave?
+        You'll loose all the information entered for this workspace.
       </p>
     </div>
   </LayoutDialog>
@@ -49,7 +49,7 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
     }
   },
   {
-    text: 'Continue',
+    text: 'Discard',
     props: { color: 'primary' },
     onClick: onConfirm
   }

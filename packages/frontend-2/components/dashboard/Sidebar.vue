@@ -164,12 +164,6 @@
     </template>
 
     <FeedbackDialog v-model:open="showFeedbackDialog" />
-
-    <WorkspaceCreateDialog
-      v-model:open="showWorkspaceCreateDialog"
-      navigate-on-success
-      event-source="sidebar"
-    />
   </div>
 </template>
 <script setup lang="ts">
@@ -187,7 +181,8 @@ import {
   projectsRoute,
   workspaceRoute,
   workspacesRoute,
-  downloadManagerUrl
+  downloadManagerUrl,
+  workspaceCreateRoute
 } from '~/lib/common/helpers/route'
 import { useRoute } from 'vue-router'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
@@ -220,7 +215,6 @@ const mixpanel = useMixpanel()
 
 const isOpenMobile = ref(false)
 const showFeedbackDialog = ref(false)
-const showWorkspaceCreateDialog = ref(false)
 
 const { result: workspaceResult, onResult: onWorkspaceResult } = useQuery(
   settingsSidebarQuery,
@@ -274,7 +268,7 @@ const openFeedbackDialog = () => {
 }
 
 const openWorkspaceCreateDialog = () => {
-  showWorkspaceCreateDialog.value = true
+  navigateTo(workspaceCreateRoute())
   mixpanel.track('Create Workspace Button Clicked', {
     source: 'sidebar'
   })
