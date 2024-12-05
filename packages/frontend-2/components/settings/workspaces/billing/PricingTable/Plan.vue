@@ -34,38 +34,24 @@
       </CommonBadge>
     </div>
     <div v-if="workspaceId || hasCta" class="w-full mt-4">
-      <!-- Have to do the weird v-if v-else-if to avoid the tippy reactivity bug -->
       <div v-if="hasCta">
         <slot name="cta" />
       </div>
-      <div v-else-if="!isAdmin" v-tippy="`You must be a workspace admin`">
-        <FormButton
-          :color="buttonColor"
-          :disabled="!isSelectable"
-          full-width
-          @click="onCtaClick"
+      <div v-else>
+        <!-- Key to fix tippy reactivity -->
+        <div
+          :key="`tooltip-${yearlyIntervalSelected}-${plan.name}-${currentPlan?.name}`"
+          v-tippy="buttonTooltip"
         >
-          {{ buttonText }}
-        </FormButton>
-      </div>
-      <FormButton
-        v-else-if="isSelectable"
-        :color="buttonColor"
-        :disabled="!isSelectable"
-        full-width
-        @click="onCtaClick"
-      >
-        {{ buttonText }}
-      </FormButton>
-      <div v-else v-tippy="buttonTooltip">
-        <FormButton
-          :color="buttonColor"
-          :disabled="!isSelectable"
-          full-width
-          @click="onCtaClick"
-        >
-          {{ buttonText }}
-        </FormButton>
+          <FormButton
+            :color="buttonColor"
+            :disabled="!isSelectable"
+            full-width
+            @click="onCtaClick"
+          >
+            {{ buttonText }}
+          </FormButton>
+        </div>
       </div>
     </div>
     <ul class="flex flex-col gap-y-2 mt-4 pt-3 border-t border-outline-3">
@@ -258,6 +244,10 @@ const buttonText = computed(() => {
 })
 
 const buttonTooltip = computed(() => {
+  if (!props.isAdmin) {
+    return 'You must be a workspace admin.'
+  }
+
   if (statusIsTrial.value || isCurrentPlan.value) return
 
   if (isDowngrade.value) {
@@ -266,6 +256,14 @@ const buttonTooltip = computed(() => {
 
   if (isAnnualToMonthly.value) {
     return 'Changing from an annual to a monthly plan is currently not supported. Please contact billing@speckle.systems.'
+  }
+
+  if (
+    props.activeBillingInterval === BillingInterval.Yearly &&
+    !props.yearlyIntervalSelected &&
+    canUpgradeToPlan.value
+  ) {
+    return 'Upgrading from an annual plan to a monthly plan is not supported. Please contact billing@speckle.systems.'
   }
 
   return undefined
