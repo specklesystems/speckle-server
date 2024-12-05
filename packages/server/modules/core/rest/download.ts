@@ -85,7 +85,8 @@ export default (app: express.Express) => {
           boundLogger.error(err, 'Error downloading object.')
         } else {
           boundLogger.info(
-            `Downloaded object (size: ${gzipStream.bytesWritten / 1000000} MB)`
+            { megaBytesWritten: gzipStream.bytesWritten / 1000000 },
+            'Downloaded object (size: {megaBytesWritten} MB)'
           )
         }
       }
