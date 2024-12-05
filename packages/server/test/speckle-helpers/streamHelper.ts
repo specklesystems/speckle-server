@@ -233,7 +233,7 @@ export async function addAllToStream(
   )
   await Promise.all(
     usersWithRoles.map(({ user, role }) =>
-      addOrUpdateStreamCollaborator(streamObj.id, user.id, role, ownerId, null)
+      addOrUpdateStreamCollaborator(streamObj.id, user.id, role, ownerId!, null)
     )
   )
 }
