@@ -1,4 +1,7 @@
-import type { WorkspaceInviteCreateInput } from '~/lib/common/generated/gql/graphql'
+import type {
+  WorkspaceInviteCreateInput,
+  Workspace
+} from '~/lib/common/generated/gql/graphql'
 import { BillingInterval, PaidWorkspacePlans } from '~/lib/common/generated/gql/graphql'
 import { type WorkspaceWizardState, WizardSteps } from '~/lib/workspaces/helpers/types'
 import {
@@ -193,13 +196,30 @@ export const useWorkspacesWizard = () => {
       })
     }
 
-    const result = await updateWorkspaceCreationState({
-      input: {
-        state: {},
-        workspaceId,
-        completed: true
+    const result = await updateWorkspaceCreationState(
+      {
+        input: {
+          state: {},
+          workspaceId,
+          completed: true
+        }
+      },
+      {
+        update: (cache, res) => {
+          if (!res.data?.workspaceMutations) return
+
+          cache.modify<Workspace>({
+            id: getCacheId('Workspace', workspaceId),
+            fields: {
+              creationState: () => ({
+                completed: true,
+                state: {}
+              })
+            }
+          })
+        }
       }
-    }).catch(convertThrowIntoFetchResult)
+    ).catch(convertThrowIntoFetchResult)
 
     if (result?.data?.workspaceMutations.updateCreationState) {
       mixpanel.track('Workspace Created', {
