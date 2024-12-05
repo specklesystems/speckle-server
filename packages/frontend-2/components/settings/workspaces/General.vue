@@ -33,7 +33,7 @@
           read-only
           :right-icon="disableSlugInput ? undefined : IconEdit"
           :right-icon-title="disableSlugInput ? undefined : 'Edit short ID'"
-          @right-icon-click="disableSlugInput ? undefined : openSlugEditDialog"
+          @right-icon-click="openSlugEditDialog"
         />
         <hr class="my-4 border-outline-3" />
         <FormTextInput
@@ -307,7 +307,7 @@ onResult((res) => {
 const baseUrl = config.public.baseUrl
 
 const slugHelp = computed(() => {
-  return `Used after ${baseUrl}/workspaces/`
+  return `${baseUrl}/workspaces/${slug.value}`
 })
 
 // Using toRef to fix reactivity bug around tooltips
