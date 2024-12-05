@@ -2,7 +2,7 @@
   <div class="flex flex-col gap-y-4 md:gap-y-6">
     <ProjectPageAutomationsHeader
       v-model:search="search"
-      :workspace-slug="workspaceSlug"
+      :workspace-slug="workspace?.slug"
       :show-empty-state="shouldShowEmptyState"
       :creation-disabled-message="disableCreateAutomationMessage"
       @new-automation="onNewAutomation"
@@ -13,7 +13,7 @@
     <template v-else>
       <ProjectPageAutomationsEmptyState
         v-if="shouldShowEmptyState"
-        :workspace-slug="workspaceSlug"
+        :workspace-slug="workspace?.slug"
         :hidden-actions="hiddenActions"
         :disabled-actions="disabledActions"
         @new-automation="onNewAutomation"
@@ -37,15 +37,15 @@
       </template>
     </template>
     <AutomateAutomationCreateDialog
-      v-if="workspaceId"
+      v-if="workspace?.id"
       v-model:open="showNewAutomationDialog"
-      :workspace-id="workspaceId"
+      :workspace-id="workspace?.id"
       :preselected-project="project"
       :preselected-function="newAutomationTargetFn"
     />
     <AutomateFunctionCreateDialog
       v-model:open="showNewFunctionDialog"
-      :workspace-id="workspaceId"
+      :workspace="workspace"
       :is-authorized="isGithubAppConfigured"
       :github-orgs="githubOrgs"
       :templates="availableFunctionTemplates"
@@ -83,8 +83,7 @@ const { result, loading } = useQuery(
   })
 )
 
-const workspaceId = computed(() => result.value?.project?.workspace?.id)
-const workspaceSlug = computed(() => result.value?.project?.workspace?.slug)
+const workspace = computed(() => result.value?.project?.workspace ?? undefined)
 
 const workspaceFunctionCount = computed(
   () => result.value?.project.workspace?.automateFunctions.totalCount ?? 0
