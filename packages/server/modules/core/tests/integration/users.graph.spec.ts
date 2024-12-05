@@ -199,11 +199,11 @@ describe('Users @graphql', () => {
       ])
     })
 
-    it('doesnt work with less than 3 characters', async () => {
+    it('doesnt work with less than 1 character', async () => {
       const res = await search({
-        query: 'fi'
+        query: ''
       })
-      expect(res).to.haveGraphQLErrors('Search query must be at least 3 characters')
+      expect(res).to.haveGraphQLErrors('Search query must be at least 1 character')
     })
 
     it('doesnt work with more than 100 items', async () => {
