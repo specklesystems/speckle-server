@@ -45,8 +45,8 @@ import { Roles, type Nullable, type Optional } from '@speckle/shared'
 import { useDebouncedTextInput } from '@speckle/ui-components'
 import { graphql } from '~/lib/common/generated/gql'
 import type {
-  AutomateFunctionsPageHeader_QueryFragment,
-  Workspace
+  AutomateFunctionCreateDialog_WorkspaceFragment,
+  AutomateFunctionsPageHeader_QueryFragment
 } from '~/lib/common/generated/gql/graphql'
 import { workspaceFunctionsRoute, workspaceRoute } from '~/lib/common/helpers/route'
 import { useMixpanel } from '~/lib/core/composables/mp'
@@ -74,7 +74,7 @@ graphql(`
 const props = defineProps<{
   activeUser: Optional<AutomateFunctionsPageHeader_QueryFragment['activeUser']>
   serverInfo: Optional<AutomateFunctionsPageHeader_QueryFragment['serverInfo']>
-  workspace?: Pick<Workspace, 'id' | 'slug' | 'name'>
+  workspace?: AutomateFunctionCreateDialog_WorkspaceFragment
 }>()
 const search = defineModel<string>('search')
 

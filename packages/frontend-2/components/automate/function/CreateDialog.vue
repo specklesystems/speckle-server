@@ -63,9 +63,10 @@ import {
 import { useMutationLoading } from '@vue/apollo-composable'
 import type {
   AutomateFunctionCreateDialogDoneStep_AutomateFunctionFragment,
-  Workspace
+  AutomateFunctionCreateDialog_WorkspaceFragment
 } from '~~/lib/common/generated/gql/graphql'
 import { useMixpanel } from '~/lib/core/composables/mp'
+import { graphql } from '~/lib/common/generated/gql'
 
 enum FunctionCreateSteps {
   Authorize,
@@ -76,11 +77,19 @@ enum FunctionCreateSteps {
 
 type DetailsFormValues = FunctionDetailsFormValues
 
+graphql(`
+  fragment AutomateFunctionCreateDialog_Workspace on Workspace {
+    id
+    name
+    slug
+  }
+`)
+
 const props = defineProps<{
   isAuthorized: boolean
   templates: CreatableFunctionTemplate[]
   githubOrgs: string[]
-  workspace?: Pick<Workspace, 'id' | 'slug'>
+  workspace?: AutomateFunctionCreateDialog_WorkspaceFragment
 }>()
 const open = defineModel<boolean>('open', { required: true })
 

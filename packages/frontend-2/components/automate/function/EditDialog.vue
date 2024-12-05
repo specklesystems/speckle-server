@@ -18,12 +18,20 @@ import { difference, differenceBy } from 'lodash-es'
 import { useForm } from 'vee-validate'
 import { useUpdateAutomateFunction } from '~/lib/automate/composables/management'
 import type { FunctionDetailsFormValues } from '~/lib/automate/helpers/functions'
-import type { Workspace } from '~/lib/common/generated/gql/graphql'
+import { graphql } from '~/lib/common/generated/gql'
+import type { AutomateFunctionEditDialog_WorkspaceFragment } from '~/lib/common/generated/gql/graphql'
+
+graphql(`
+  fragment AutomateFunctionEditDialog_Workspace on Workspace {
+    id
+    name
+  }
+`)
 
 const props = defineProps<{
   model: FunctionDetailsFormValues
   fnId: string
-  workspaces?: Pick<Workspace, 'id' | 'name'>[]
+  workspaces?: AutomateFunctionEditDialog_WorkspaceFragment[]
 }>()
 const open = defineModel<boolean>('open', { required: true })
 const { handleSubmit, setValues } = useForm<FunctionDetailsFormValues>()
