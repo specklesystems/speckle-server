@@ -34,6 +34,7 @@
       </CommonBadge>
     </div>
     <div v-if="workspaceId || hasCta" class="w-full mt-4">
+      <!-- Have to do the weird v-if v-else-if to avoid the tippy reactivity bug -->
       <div v-if="hasCta">
         <slot name="cta" />
       </div>
