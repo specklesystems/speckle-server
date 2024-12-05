@@ -64,7 +64,7 @@ export class GenericBridge extends BaseBridge {
       }
 
       if (this.serverBridge) {
-        this.serverBridge.emit(eventName, parsedData, this.runMethod)
+        this.serverBridge.emit(eventName, parsedData, this.runMethod.bind(this))
       } else {
         this.emitter.emit(eventName, parsedData)
       }
