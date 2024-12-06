@@ -139,8 +139,8 @@ export = {
     },
 
     async users(_parent, args) {
-      if (args.input.query.length < 3)
-        throw new BadRequestError('Search query must be at least 3 characters.')
+      if (args.input.query.length < 1)
+        throw new BadRequestError('Search query must be at least 1 character.')
 
       if ((args.input.limit || 0) > 100)
         throw new BadRequestError(
