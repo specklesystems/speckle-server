@@ -20,6 +20,7 @@ import { defaultZapierWebhookUrl } from '~/lib/common/helpers/route'
 graphql(`
   fragment BillingActions_Workspace on Workspace {
     id
+    name
     invitedTeam(filter: $invitesFilter) {
       id
     }
@@ -207,6 +208,7 @@ export const useBillingActions = () => {
         if (import.meta.server) {
           await sendWebhook(defaultZapierWebhookUrl, {
             workspaceId: workspace.id,
+            workspaceName: workspace.name,
             plan: workspace.plan?.name ?? '',
             cycle: workspace.subscription?.billingInterval ?? '',
             status: WorkspacePlanStatuses.Valid,
