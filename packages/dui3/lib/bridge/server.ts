@@ -171,6 +171,8 @@ export class ServerBridge {
     await runMethod('afterGetObjects', args as unknown as unknown[])
   }
 
+  private queuedPromises = {} as Record<string, Promise<Response>[]>
+
   /**
    * Internal server method for sending batch data via REST api.
    * Whenever batches are completed it triggers to host application to notify it is done.
@@ -191,22 +193,38 @@ export class ServerBridge {
       currentBatch,
       referencedObjectId
     } = eventPayload
-    this.emitter.emit('setModelProgress', {
-      modelCardId,
-      progress: {
-        status: 'Uploading',
-        progress: currentBatch / totalBatch
-      }
-    } as unknown as string)
+    console.log(this.queuedPromises)
+
+    if (!this.queuedPromises[modelCardId]) {
+      this.queuedPromises[modelCardId] = []
+    }
     const formData = new FormData()
     formData.append(`batch-1`, new Blob([batch], { type: 'application/json' }))
-    await fetch(`${serverUrl}/objects/${projectId}`, {
-      method: 'POST',
-      headers: { Authorization: 'Bearer ' + token },
-      body: formData
-    })
+    this.queuedPromises[modelCardId].push(
+      fetch(`${serverUrl}/objects/${projectId}`, {
+        method: 'POST',
+        headers: { Authorization: 'Bearer ' + token },
+        body: formData
+      })
+    )
 
+    // 🚀 ready to send!!!!
     if (currentBatch === totalBatch) {
+      const start = performance.now()
+      for (let i = 0; i < this.queuedPromises[modelCardId].length; i++) {
+        const isLast = i === this.queuedPromises[modelCardId].length - 1
+        // Emit progress update for each resolved promise
+        this.emitter.emit('setModelProgress', {
+          modelCardId,
+          progress: {
+            status: 'Uploading',
+            progress: isLast ? 0 : (i + 1) / this.queuedPromises[modelCardId].length
+          }
+        } as unknown as string)
+        await this.queuedPromises[modelCardId][i] // Wait for the current promise to resolve
+      }
+      this.queuedPromises[modelCardId] = []
+      console.log(`🚀 Upload is completed in ${(performance.now() - start) / 1000} s!`)
       const args = [eventPayload.modelCardId, referencedObjectId]
       await runMethod('afterSendObjects', args as unknown as unknown[])
     }
