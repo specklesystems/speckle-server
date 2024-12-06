@@ -19,7 +19,7 @@
     >
       <div
         v-if="open"
-        class="absolute translate-x-0 w-56 left-10 sm:left-12 -top-0 sm:-top-2 bg-foundation max-h-64 simple-scrollbar overflow-y-auto outline outline-2 outline-primary-muted rounded-lg shadow-lg overflow-hidden flex flex-col p-2"
+        class="absolute translate-x-0 w-56 left-10 sm:left-12 -top-0 sm:-top-2 bg-foundation max-h-64 simple-scrollbar overflow-y-auto rounded-lg shadow-md flex flex-col p-1.5"
       >
         <div v-for="shortcut in viewModeShortcuts" :key="shortcut.name">
           <button
