@@ -38,7 +38,7 @@ const regionConfigSchema = regionConfigSchemaV1.extend({
 })
 
 const multiRegionConfigV1Schema = z.object({
-  main: regionConfigSchema,
+  main: regionConfigSchemaV1,
   regions: z.record(z.string(), regionConfigSchemaV1)
 })
 
