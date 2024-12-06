@@ -148,7 +148,7 @@ export const createKnexConfig = ({
 }
 
 export const configureKnexClient = (
-  config: RegionServerConfig,
+  config: Pick<RegionServerConfig, 'postgres'>,
   configArgs: KnexConfigArgs
 ): { public: Knex; private?: Knex } => {
   const knexConfig = createKnexConfig({
