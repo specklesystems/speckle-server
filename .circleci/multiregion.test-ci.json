@@ -9,7 +9,7 @@
       "bucket": "speckle-server",
       "createBucketIfNotExists": true,
       "endpoint": "http://127.0.0.1:9000",
-      "s3Region": ""
+      "s3Region": "us-east-1"
     }
   },
   "regions": {
@@ -23,7 +23,7 @@
         "bucket": "speckle-server",
         "createBucketIfNotExists": true,
         "endpoint": "http://127.0.0.1:9020",
-        "s3Region": ""
+        "s3Region": "us-east-1"
       }
     }
   }
