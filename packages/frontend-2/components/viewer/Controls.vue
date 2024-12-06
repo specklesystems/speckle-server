@@ -13,7 +13,7 @@
     >
       <!-- Models -->
       <ViewerControlsButtonToggle
-        v-tippy="isSmallerOrEqualSm ? undefined : modelsShortcut"
+        v-tippy="getShortcutDisplayText(shortcuts.ToggleModels)"
         :active="activeControl === 'models'"
         @click="toggleActiveControl('models')"
       >
@@ -22,7 +22,7 @@
 
       <!-- Explorer -->
       <ViewerControlsButtonToggle
-        v-tippy="isSmallerOrEqualSm ? undefined : explorerShortcut"
+        v-tippy="getShortcutDisplayText(shortcuts.ToggleExplorer)"
         :active="activeControl === 'explorer'"
         @click="toggleActiveControl('explorer')"
       >
@@ -31,7 +31,7 @@
 
       <!-- Comment threads -->
       <ViewerControlsButtonToggle
-        v-tippy="isSmallerOrEqualSm ? undefined : discussionsShortcut"
+        v-tippy="getShortcutDisplayText(shortcuts.ToggleDiscussions)"
         :active="activeControl === 'discussions'"
         @click="toggleActiveControl('discussions')"
       >
@@ -58,7 +58,7 @@
 
       <!-- Measurements -->
       <ViewerControlsButtonToggle
-        v-tippy="isSmallerOrEqualSm ? undefined : measureShortcut"
+        v-tippy="getShortcutDisplayText(shortcuts.ToggleMeasurements)"
         :active="activeControl === 'measurements'"
         @click="toggleMeasurements"
       >
@@ -83,11 +83,13 @@
           ]"
         >
           <ViewerControlsButtonGroup>
+            <!-- View Modes -->
+            <ViewerViewModesMenu />
             <!-- Views -->
-            <ViewerViewsMenu v-tippy="isSmallerOrEqualSm ? undefined : 'Views'" />
+            <ViewerViewsMenu v-tippy="`Views`" />
             <!-- Zoom extents -->
             <ViewerControlsButtonToggle
-              v-tippy="isSmallerOrEqualSm ? undefined : zoomExtentsShortcut"
+              v-tippy="getShortcutDisplayText(shortcuts.ZoomExtentsOrSelection)"
               flat
               @click="trackAndzoomExtentsOrSelection()"
             >
@@ -103,7 +105,7 @@
             <!-- Projection type -->
             <!-- TODO (Question for fabs): How to persist state between page navigation? e.g., swap to iso mode, move out, move back, iso mode is still on in viewer but not in ui -->
             <ViewerControlsButtonToggle
-              v-tippy="isSmallerOrEqualSm ? undefined : projectionShortcut"
+              v-tippy="getShortcutDisplayText(shortcuts.ToggleProjection)"
               flat
               secondary
               :active="isOrthoProjection"
@@ -115,7 +117,7 @@
 
             <!-- Section Box -->
             <ViewerControlsButtonToggle
-              v-tippy="isSmallerOrEqualSm ? undefined : sectionBoxShortcut"
+              v-tippy="getShortcutDisplayText(shortcuts.ToggleSectionBox)"
               flat
               secondary
               :active="isSectionBoxVisible"
@@ -258,17 +260,12 @@ import { isNonNullable, type Nullable } from '@speckle/shared'
 import {
   useCameraUtilities,
   useSectionBoxUtilities,
-  useMeasurementUtilities
+  useMeasurementUtilities,
+  useViewerShortcuts
 } from '~~/lib/viewer/composables/ui'
 import {
-  onKeyboardShortcut,
-  ModifierKeys,
-  getKeyboardShortcutTitle
-} from '@speckle/ui-components'
-import {
   useInjectedViewerLoadedResources,
-  useInjectedViewerInterfaceState,
-  useInjectedViewerState
+  useInjectedViewerInterfaceState
 } from '~~/lib/viewer/composables/setup'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useIsSmallerOrEqualThanBreakpoint } from '~~/composables/browser'
@@ -284,16 +281,6 @@ import { useFunctionRunsStatusSummary } from '~/lib/automate/composables/runStat
 import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
 
 const isGendoEnabled = useIsGendoModuleEnabled()
-
-enum ViewerKeyboardActions {
-  ToggleModels = 'ToggleModels',
-  ToggleExplorer = 'ToggleExplorer',
-  ToggleDiscussions = 'ToggleDiscussions',
-  ToggleMeasurements = 'ToggleMeasurements',
-  ToggleProjection = 'ToggleProjection',
-  ToggleSectionBox = 'ToggleSectionBox',
-  ZoomExtentsOrSelection = 'ZoomExtentsOrSelection'
-}
 
 const width = ref(360)
 const scrollableControlsContainer = ref(null as Nullable<HTMLDivElement>)
@@ -346,6 +333,8 @@ type ActiveControl =
   | 'measurements'
   | 'mobileOverflow'
   | 'gendo'
+  | 'views'
+  | 'viewModes'
 
 const { resourceItems, modelsAndVersionIds } = useInjectedViewerLoadedResources()
 const {
@@ -364,8 +353,11 @@ const {
   toggleProjection,
   camera: { isOrthoProjection }
 } = useCameraUtilities()
+const { registerShortcuts, getShortcutDisplayText, shortcuts } = useViewerShortcuts()
 
-const { ui } = useInjectedViewerState()
+const {
+  diff: { enabled }
+} = useInjectedViewerInterfaceState()
 
 const breakpoints = useBreakpoints(TailwindBreakpoints)
 const isMobile = breakpoints.smaller('sm')
@@ -391,83 +383,16 @@ const openAddModel = ref(false)
 
 const activeControl = ref<ActiveControl>('models')
 
-const {
-  diff: { enabled }
-} = useInjectedViewerInterfaceState()
-
-const map: Record<ViewerKeyboardActions, [ModifierKeys[], string]> = {
-  [ViewerKeyboardActions.ToggleModels]: [[ModifierKeys.Shift], 'M'],
-  [ViewerKeyboardActions.ToggleExplorer]: [[ModifierKeys.Shift], 'E'],
-  [ViewerKeyboardActions.ToggleDiscussions]: [[ModifierKeys.Shift], 'T'],
-  [ViewerKeyboardActions.ToggleMeasurements]: [[ModifierKeys.Shift], 'R'],
-  [ViewerKeyboardActions.ToggleProjection]: [[ModifierKeys.Shift], 'P'],
-  [ViewerKeyboardActions.ToggleSectionBox]: [[ModifierKeys.Shift], 'B'],
-  [ViewerKeyboardActions.ZoomExtentsOrSelection]: [[ModifierKeys.Shift], 'space']
-}
-
-const getShortcutTitle = (action: ViewerKeyboardActions) =>
-  `(${getKeyboardShortcutTitle([...map[action][0], map[action][1]])})`
-
-const modelsShortcut = ref(
-  `Models ${getShortcutTitle(ViewerKeyboardActions.ToggleModels)}`
-)
-const explorerShortcut = ref(
-  `Scene explorer ${getShortcutTitle(ViewerKeyboardActions.ToggleExplorer)}`
-)
-const discussionsShortcut = ref(
-  `Discussions ${getShortcutTitle(ViewerKeyboardActions.ToggleDiscussions)}`
-)
-const zoomExtentsShortcut = ref(
-  `Fit to screen ${getShortcutTitle(ViewerKeyboardActions.ZoomExtentsOrSelection)}`
-)
-const projectionShortcut = ref(
-  `Projection ${getShortcutTitle(ViewerKeyboardActions.ToggleProjection)}`
-)
-const sectionBoxShortcut = ref(
-  `Section box ${getShortcutTitle(ViewerKeyboardActions.ToggleSectionBox)}`
-)
-const measureShortcut = ref(
-  `Measure mode ${getShortcutTitle(ViewerKeyboardActions.ToggleMeasurements)}`
-)
-
-const isTypingComment = computed(() => {
-  const isNewThreadEditorOpen = ui.threads.openThread.newThreadEditor.value
-  const isExistingThreadEditorOpen = !!ui.threads.openThread.thread.value
-  return isNewThreadEditorOpen || isExistingThreadEditorOpen
-})
-
-const handleKeyboardAction = (action: ViewerKeyboardActions) => {
-  if (isTypingComment.value) {
-    return
-  }
-  switch (action) {
-    case ViewerKeyboardActions.ToggleModels:
-      toggleActiveControl('models')
-      break
-    case ViewerKeyboardActions.ToggleExplorer:
-      toggleActiveControl('explorer')
-      break
-    case ViewerKeyboardActions.ToggleDiscussions:
-      toggleActiveControl('discussions')
-      break
-    case ViewerKeyboardActions.ToggleMeasurements:
-      toggleMeasurements()
-      break
-    case ViewerKeyboardActions.ToggleProjection:
-      trackAndtoggleProjection()
-      break
-    case ViewerKeyboardActions.ToggleSectionBox:
-      toggleSectionBox()
-      break
-    case ViewerKeyboardActions.ZoomExtentsOrSelection:
-      trackAndzoomExtentsOrSelection()
-      break
-  }
-}
-
-Object.entries(map).forEach(([actionKey, [modifiers, key]]) => {
-  const action = actionKey as ViewerKeyboardActions
-  onKeyboardShortcut(modifiers, key, () => handleKeyboardAction(action))
+registerShortcuts({
+  ToggleModels: () => toggleActiveControl('models'),
+  ToggleExplorer: () => toggleActiveControl('explorer'),
+  ToggleDiscussions: () => toggleActiveControl('discussions'),
+  ToggleMeasurements: () => toggleMeasurements(),
+  ToggleProjection: () => trackAndtoggleProjection(),
+  ToggleSectionBox: () => toggleSectionBox(),
+  ZoomExtentsOrSelection: () => trackAndzoomExtentsOrSelection(),
+  ToggleViews: () => toggleActiveControl('views'),
+  ToggleViewModes: () => toggleActiveControl('viewModes')
 })
 
 const { isSmallerOrEqualSm } = useIsSmallerOrEqualThanBreakpoint()

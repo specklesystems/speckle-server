@@ -1,6 +1,11 @@
 import { SpeckleViewer, timeoutAt } from '@speckle/shared'
-import type { TreeNode, MeasurementOptions, PropertyInfo } from '@speckle/viewer'
-import { MeasurementsExtension } from '@speckle/viewer'
+import {
+  ViewMode,
+  type TreeNode,
+  type MeasurementOptions,
+  type PropertyInfo
+} from '@speckle/viewer'
+import { MeasurementsExtension, ViewModes } from '@speckle/viewer'
 import { until } from '@vueuse/shared'
 import { difference, isString, uniq } from 'lodash-es'
 import { useEmbedState } from '~/lib/viewer/composables/setup/embed'
@@ -15,6 +20,12 @@ import {
 import { useDiffBuilderUtilities } from '~~/lib/viewer/composables/setup/diff'
 import { useTourStageState } from '~~/lib/viewer/composables/tour'
 import { Vector3, Box3 } from 'three'
+import { onKeyboardShortcut } from '@speckle/ui-components'
+import { ViewerShortcuts } from '~/lib/viewer/helpers/shortcuts/shortcuts'
+import type {
+  ViewerShortcut,
+  ViewerShortcutAction
+} from '~/lib/viewer/helpers/shortcuts/types'
 
 export function useSectionBoxUtilities() {
   const { instance } = useInjectedViewer()
@@ -473,5 +484,68 @@ export function useHighlightedObjectsUtilities() {
     highlightObjects,
     unhighlightObjects,
     clearHighlightedObjects
+  }
+}
+
+export function useViewModeUtilities() {
+  const { instance } = useInjectedViewer()
+
+  // Track the current view mode
+  const currentViewMode = ref<ViewMode>(ViewMode.DEFAULT)
+
+  const setViewMode = (mode: ViewMode) => {
+    const viewModes = instance.getExtension(ViewModes)
+    if (viewModes) {
+      viewModes.setViewMode(mode)
+      currentViewMode.value = mode
+    }
+  }
+
+  return {
+    currentViewMode,
+    setViewMode
+  }
+}
+
+export function useViewerShortcuts() {
+  const { ui } = useInjectedViewerState()
+  const { isSmallerOrEqualSm } = useIsSmallerOrEqualThanBreakpoint()
+
+  const isTypingComment = computed(() => {
+    const isNewThreadEditorOpen = ui.threads.openThread.newThreadEditor.value
+    const isExistingThreadEditorOpen = !!ui.threads.openThread.thread.value
+    return isNewThreadEditorOpen || isExistingThreadEditorOpen
+  })
+
+  const formatKey = (key: string) => {
+    if (key.startsWith('Digit')) {
+      return key.slice(5)
+    }
+    return key
+  }
+
+  const getShortcutDisplayText = (shortcut: ViewerShortcut) => {
+    if (isSmallerOrEqualSm.value) return undefined
+    const modifierText = shortcut.modifiers.join('+')
+    return `${modifierText}+${formatKey(shortcut.key)}`
+  }
+
+  const registerShortcuts = (
+    handlers: Partial<Record<ViewerShortcutAction, () => void>>
+  ) => {
+    Object.values(ViewerShortcuts).forEach((shortcut) => {
+      const handler = handlers[shortcut.action as ViewerShortcutAction]
+      if (handler) {
+        onKeyboardShortcut([...shortcut.modifiers], shortcut.key, () => {
+          if (!isTypingComment.value) handler()
+        })
+      }
+    })
+  }
+
+  return {
+    shortcuts: ViewerShortcuts,
+    registerShortcuts,
+    getShortcutDisplayText
   }
 }
