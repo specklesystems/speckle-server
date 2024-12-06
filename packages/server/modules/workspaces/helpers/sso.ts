@@ -15,6 +15,7 @@ import { omit } from 'lodash'
 declare module 'express-session' {
   interface SessionData {
     workspaceId?: string
+    workspaceSlug?: string
     ssoNonce?: string
     ssoState?: SsoSessionState
     oidcProvider?: OidcProvider

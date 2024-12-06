@@ -20,7 +20,7 @@ export type MentionData = { label: string; id: string }
 
 const suggestionOptions: Omit<SuggestionOptions<SuggestionOptionsItem>, 'editor'> = {
   async items({ query, editor }) {
-    if (query.length < 3) return []
+    if (query.length < 1) return []
 
     const state = editor.storage.editorInstanceState as EditorInstanceStateStorage
     const projectId = state.state.projectId
