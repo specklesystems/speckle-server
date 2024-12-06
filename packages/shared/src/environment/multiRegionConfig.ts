@@ -32,7 +32,7 @@ const regionConfigSchema = regionConfigSchemaV1.extend({
     accessKey: z.string(),
     secretKey: z.string(),
     bucket: z.string(),
-    createBucketIfNotExists: z.boolean(),
+    createBucketIfNotExists: z.coerce.boolean(),
     s3Region: z.string()
   })
 })
