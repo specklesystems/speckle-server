@@ -598,6 +598,8 @@ jobs:
         command: -c 'max_connections=1000' -c 'port=5433' -c 'wal_level=logical'
       - image: 'minio/minio'
         command: server /data --console-address ":9001"
+      - image: 'minio/minio'
+        command: server /data --console-address ":9002"
     environment:
       # Same as test-server:
       NODE_ENV: test

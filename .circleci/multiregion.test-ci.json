@@ -2,12 +2,28 @@
   "main": {
     "postgres": {
       "connectionUri": "postgresql://speckle:speckle@127.0.0.1:5432/speckle2_test"
+    },
+    "blobStorage": {
+      "accessKey": "minioadmin",
+      "secretKey": "minioadmin",
+      "bucket": "speckle-server",
+      "createBucketIfNotExists": true,
+      "endpoint": "http://127.0.0.1:9000",
+      "s3Region": ""
     }
   },
   "regions": {
     "region1": {
       "postgres": {
         "connectionUri": "postgresql://speckle:speckle@127.0.0.1:5433/speckle2_test"
+      },
+      "blobStorage": {
+        "accessKey": "minioadmin",
+        "secretKey": "minioadmin",
+        "bucket": "speckle-server",
+        "createBucketIfNotExists": true,
+        "endpoint": "http://127.0.0.1:9001",
+        "s3Region": ""
       }
     }
   }
