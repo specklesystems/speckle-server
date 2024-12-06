@@ -136,6 +136,7 @@ import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 graphql(`
   fragment WorkspaceProjectList_Workspace on Workspace {
     id
+    ...BillingActions_Workspace
     ...MoveProjectsDialog_Workspace
     ...WorkspaceHeader_Workspace
     ...WorkspaceMixpanelUpdateGroup_Workspace
@@ -320,7 +321,7 @@ onResult((queryResult) => {
     useHeadSafe({
       title: queryResult.data.workspaceBySlug.name
     })
-    validateCheckoutSession(queryResult.data.workspaceBySlug.id)
+    validateCheckoutSession(queryResult.data.workspaceBySlug)
   }
 })
 
