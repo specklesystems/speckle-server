@@ -84,9 +84,9 @@
         >
           <ViewerControlsButtonGroup>
             <!-- Views -->
-            <ViewerViewsMenu v-tippy="getShortcutDisplayText('ToggleViews')" />
+            <ViewerViewsMenu v-tippy="`Views`" />
             <!-- View Modes -->
-            <ViewerViewModesMenu v-tippy="getShortcutDisplayText('ToggleViewModes')" />
+            <ViewerViewModesMenu v-tippy="`View modes`" />
             <!-- Zoom extents -->
             <ViewerControlsButtonToggle
               v-tippy="getShortcutDisplayText('ZoomExtentsOrSelection')"
@@ -279,6 +279,7 @@ import {
 } from '@vueuse/core'
 import { useFunctionRunsStatusSummary } from '~/lib/automate/composables/runStatus'
 import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
+import { ViewMode } from '@speckle/viewer'
 
 const isGendoEnabled = useIsGendoModuleEnabled()
 
@@ -355,6 +356,11 @@ const {
 } = useCameraUtilities()
 const { registerShortcuts, getShortcutDisplayText } = useViewerShortcuts()
 
+const {
+  diff: { enabled }
+} = useInjectedViewerInterfaceState()
+const { setViewMode } = useCameraUtilities()
+
 const breakpoints = useBreakpoints(TailwindBreakpoints)
 const isMobile = breakpoints.smaller('sm')
 
@@ -379,10 +385,6 @@ const openAddModel = ref(false)
 
 const activeControl = ref<ActiveControl>('models')
 
-const {
-  diff: { enabled }
-} = useInjectedViewerInterfaceState()
-
 registerShortcuts({
   ToggleModels: () => toggleActiveControl('models'),
   ToggleExplorer: () => toggleActiveControl('explorer'),
@@ -392,7 +394,12 @@ registerShortcuts({
   ToggleSectionBox: () => toggleSectionBox(),
   ZoomExtentsOrSelection: () => trackAndzoomExtentsOrSelection(),
   ToggleViews: () => toggleActiveControl('views'),
-  ToggleViewModes: () => toggleActiveControl('viewModes')
+  ToggleViewModes: () => toggleActiveControl('viewModes'),
+  SetViewModeDefault: () => setViewMode(ViewMode.DEFAULT),
+  SetViewModeDefaultEdges: () => setViewMode(ViewMode.DEFAULT_EDGES),
+  SetViewModeShaded: () => setViewMode(ViewMode.SHADED),
+  SetViewModePen: () => setViewMode(ViewMode.PEN),
+  SetViewModeArctic: () => setViewMode(ViewMode.ARCTIC)
 })
 
 const { isSmallerOrEqualSm } = useIsSmallerOrEqualThanBreakpoint()

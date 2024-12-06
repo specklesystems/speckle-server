@@ -21,7 +21,10 @@ import { useDiffBuilderUtilities } from '~~/lib/viewer/composables/setup/diff'
 import { useTourStageState } from '~~/lib/viewer/composables/tour'
 import { Vector3, Box3 } from 'three'
 import { onKeyboardShortcut } from '@speckle/ui-components'
-import { ViewerShortcuts, type ViewerShortcutAction } from '~/lib/viewer/helpers/types'
+import {
+  ViewerShortcuts,
+  type ViewerShortcutAction
+} from '~/lib/viewer/helpers/shortcuts'
 
 export function useSectionBoxUtilities() {
   const { instance } = useInjectedViewer()

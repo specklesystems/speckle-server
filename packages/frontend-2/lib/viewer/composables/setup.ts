@@ -66,7 +66,6 @@ import {
 import { useSynchronizedCookie } from '~~/lib/common/composables/reactiveCookie'
 import { buildManualPromise } from '@speckle/ui-components'
 import { PassReader } from '../extensions/PassReader'
-import { ViewModesKeys } from '../extensions/ViewModesKeys'
 
 export type LoadedModel = NonNullable<
   Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>
@@ -338,7 +337,6 @@ function createViewerDataBuilder(params: { viewerDebug: boolean }) {
       verbose: !!(import.meta.client && params.viewerDebug)
     })
     viewer.createExtension(PassReader)
-    viewer.createExtension(ViewModesKeys)
     const initPromise = viewer.init()
 
     return {

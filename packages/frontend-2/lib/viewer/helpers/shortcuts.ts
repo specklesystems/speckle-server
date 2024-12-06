@@ -19,7 +19,7 @@ export const ViewerShortcuts = {
     name: 'Discussions',
     description: 'Toggle discussions panel',
     modifiers: [ModifierKeys.Shift],
-    key: 'T',
+    key: 'D',
     action: 'toggleDiscussions'
   },
   ToggleMeasurements: {
@@ -61,8 +61,43 @@ export const ViewerShortcuts = {
     name: 'View modes',
     description: 'Toggle view modes panel',
     modifiers: [ModifierKeys.Shift],
-    key: 'D',
+    key: 'C',
     action: 'toggleViewModes'
+  },
+  SetViewModeDefault: {
+    name: 'Default View Mode',
+    description: 'Set view mode to Default',
+    modifiers: [ModifierKeys.Shift],
+    key: 'Digit1',
+    action: 'setViewModeDefault'
+  },
+  SetViewModeDefaultEdges: {
+    name: 'Default + Edges View Mode',
+    description: 'Set view mode to Default + Edges',
+    modifiers: [ModifierKeys.Shift],
+    key: 'Digit2',
+    action: 'setViewModeDefaultEdges'
+  },
+  SetViewModeShaded: {
+    name: 'Shaded View Mode',
+    description: 'Set view mode to Shaded',
+    modifiers: [ModifierKeys.Shift],
+    key: 'Digit3',
+    action: 'setViewModeShaded'
+  },
+  SetViewModePen: {
+    name: 'Pen View Mode',
+    description: 'Set view mode to Pen',
+    modifiers: [ModifierKeys.Shift],
+    key: 'Digit4',
+    action: 'setViewModePen'
+  },
+  SetViewModeArctic: {
+    name: 'Arctic View Mode',
+    description: 'Set view mode to Arctic',
+    modifiers: [ModifierKeys.Shift],
+    key: 'Digit5',
+    action: 'setViewModeArctic'
   }
 } as const
 
