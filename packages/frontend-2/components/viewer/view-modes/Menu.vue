@@ -1,7 +1,13 @@
 <template>
   <div ref="menuWrapper" class="relative z-30">
-    <ViewerControlsButtonToggle flat secondary :active="open" @click="open = !open">
-      icon
+    <ViewerControlsButtonToggle
+      v-tippy="`View modes`"
+      flat
+      secondary
+      :active="open"
+      @click="open = !open"
+    >
+      <IconViewModes class="h-5 w-5" />
     </ViewerControlsButtonToggle>
     <Transition
       enter-active-class="transform ease-out duration-300 transition"
@@ -13,16 +19,21 @@
     >
       <div
         v-if="open"
-        class="absolute translate-x-0 w-32 left-10 sm:left-12 -top-0 sm:-top-2 bg-foundation max-h-64 simple-scrollbar overflow-y-auto outline outline-2 outline-primary-muted rounded-lg shadow-lg overflow-hidden flex flex-col"
+        class="absolute translate-x-0 w-56 left-10 sm:left-12 -top-0 sm:-top-2 bg-foundation max-h-64 simple-scrollbar overflow-y-auto outline outline-2 outline-primary-muted rounded-lg shadow-lg overflow-hidden flex flex-col p-2"
       >
-        <!-- View modes -->
-        <div v-for="mode in viewModesList" :key="mode.name">
+        <div v-for="shortcut in viewModeShortcuts" :key="shortcut.name">
           <button
-            class="hover:bg-primary-muted text-foreground w-full h-full text-body-xs py-1 transition"
-            :class="{ 'bg-primary-muted': isActiveMode(mode.mode) }"
-            @click="setViewMode(mode.mode)"
+            class="flex items-center justify-between hover:bg-highlight-1 text-foreground w-full h-full text-body-xs py-1 px-2 transition rounded-md"
+            :class="{ 'bg-highlight-1': isActiveMode(shortcut.viewMode) }"
+            @click="handleViewModeChange(shortcut.viewMode)"
           >
-            {{ mode.name }}
+            <div class="w-5 shrink-0">
+              <CheckIcon v-if="isActiveMode(shortcut.viewMode)" class="h-3 w-3" />
+            </div>
+            <div class="flex-1 text-left">{{ shortcut.name }}</div>
+            <span class="text-body-2xs text-foreground-2">
+              {{ getShortcutDisplayText(shortcut) }}
+            </span>
           </button>
         </div>
       </div>
@@ -33,28 +44,33 @@
 <script setup lang="ts">
 import { ViewMode } from '@speckle/viewer'
 import { useMixpanel } from '~~/lib/core/composables/mp'
-import { useCameraUtilities } from '~~/lib/viewer/composables/ui'
+import { useViewerShortcuts, useViewModeUtilities } from '~~/lib/viewer/composables/ui'
 import { onClickOutside } from '@vueuse/core'
+import { ViewModeShortcuts } from '~/lib/viewer/helpers/shortcuts/shortcuts'
+import { CheckIcon } from '@heroicons/vue/24/solid'
 
-const { setViewMode: setViewModeRaw, currentViewMode } = useCameraUtilities()
+const { setViewMode, currentViewMode } = useViewModeUtilities()
+const { getShortcutDisplayText, registerShortcuts } = useViewerShortcuts()
 const mp = useMixpanel()
+
+registerShortcuts({
+  SetViewModeDefault: () => handleViewModeChange(ViewMode.DEFAULT),
+  SetViewModeDefaultEdges: () => handleViewModeChange(ViewMode.DEFAULT_EDGES),
+  SetViewModeShaded: () => handleViewModeChange(ViewMode.SHADED),
+  SetViewModePen: () => handleViewModeChange(ViewMode.PEN),
+  SetViewModeArctic: () => handleViewModeChange(ViewMode.ARCTIC)
+})
 
 const open = ref(false)
 const menuWrapper = ref(null)
 
-const viewModesList = [
-  { name: 'Default', mode: ViewMode.DEFAULT },
-  { name: 'Default + Edges', mode: ViewMode.DEFAULT_EDGES },
-  { name: 'Shaded', mode: ViewMode.SHADED },
-  { name: 'Pen', mode: ViewMode.PEN },
-  { name: 'Arctic', mode: ViewMode.ARCTIC }
-]
+const isActiveMode = (mode: ViewMode) => mode === currentViewMode.value
 
-const isActiveMode = (mode: ViewMode) => currentViewMode.value === mode
+const viewModeShortcuts = Object.values(ViewModeShortcuts)
 
-const setViewMode = (mode: ViewMode) => {
-  setViewModeRaw(mode)
-  open.value = false
+const handleViewModeChange = (mode: ViewMode) => {
+  setViewMode(mode)
+  open.value = true
   mp.track('Viewer Action', {
     type: 'action',
     name: 'set-view-mode',

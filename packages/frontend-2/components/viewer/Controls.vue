@@ -13,7 +13,7 @@
     >
       <!-- Models -->
       <ViewerControlsButtonToggle
-        v-tippy="getShortcutDisplayText('ToggleModels')"
+        v-tippy="getShortcutDisplayText(shortcuts.ToggleModels)"
         :active="activeControl === 'models'"
         @click="toggleActiveControl('models')"
       >
@@ -22,7 +22,7 @@
 
       <!-- Explorer -->
       <ViewerControlsButtonToggle
-        v-tippy="getShortcutDisplayText('ToggleExplorer')"
+        v-tippy="getShortcutDisplayText(shortcuts.ToggleExplorer)"
         :active="activeControl === 'explorer'"
         @click="toggleActiveControl('explorer')"
       >
@@ -31,7 +31,7 @@
 
       <!-- Comment threads -->
       <ViewerControlsButtonToggle
-        v-tippy="getShortcutDisplayText('ToggleDiscussions')"
+        v-tippy="getShortcutDisplayText(shortcuts.ToggleDiscussions)"
         :active="activeControl === 'discussions'"
         @click="toggleActiveControl('discussions')"
       >
@@ -58,7 +58,7 @@
 
       <!-- Measurements -->
       <ViewerControlsButtonToggle
-        v-tippy="getShortcutDisplayText('ToggleMeasurements')"
+        v-tippy="getShortcutDisplayText(shortcuts.ToggleMeasurements)"
         :active="activeControl === 'measurements'"
         @click="toggleMeasurements"
       >
@@ -83,13 +83,13 @@
           ]"
         >
           <ViewerControlsButtonGroup>
+            <!-- View Modes -->
+            <ViewerViewModesMenu />
             <!-- Views -->
             <ViewerViewsMenu v-tippy="`Views`" />
-            <!-- View Modes -->
-            <ViewerViewModesMenu v-tippy="`View modes`" />
             <!-- Zoom extents -->
             <ViewerControlsButtonToggle
-              v-tippy="getShortcutDisplayText('ZoomExtentsOrSelection')"
+              v-tippy="getShortcutDisplayText(shortcuts.ZoomExtentsOrSelection)"
               flat
               @click="trackAndzoomExtentsOrSelection()"
             >
@@ -105,7 +105,7 @@
             <!-- Projection type -->
             <!-- TODO (Question for fabs): How to persist state between page navigation? e.g., swap to iso mode, move out, move back, iso mode is still on in viewer but not in ui -->
             <ViewerControlsButtonToggle
-              v-tippy="getShortcutDisplayText('ToggleProjection')"
+              v-tippy="getShortcutDisplayText(shortcuts.ToggleProjection)"
               flat
               secondary
               :active="isOrthoProjection"
@@ -117,7 +117,7 @@
 
             <!-- Section Box -->
             <ViewerControlsButtonToggle
-              v-tippy="getShortcutDisplayText('ToggleSectionBox')"
+              v-tippy="getShortcutDisplayText(shortcuts.ToggleSectionBox)"
               flat
               secondary
               :active="isSectionBoxVisible"
@@ -279,7 +279,6 @@ import {
 } from '@vueuse/core'
 import { useFunctionRunsStatusSummary } from '~/lib/automate/composables/runStatus'
 import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
-import { ViewMode } from '@speckle/viewer'
 
 const isGendoEnabled = useIsGendoModuleEnabled()
 
@@ -354,12 +353,11 @@ const {
   toggleProjection,
   camera: { isOrthoProjection }
 } = useCameraUtilities()
-const { registerShortcuts, getShortcutDisplayText } = useViewerShortcuts()
+const { registerShortcuts, getShortcutDisplayText, shortcuts } = useViewerShortcuts()
 
 const {
   diff: { enabled }
 } = useInjectedViewerInterfaceState()
-const { setViewMode } = useCameraUtilities()
 
 const breakpoints = useBreakpoints(TailwindBreakpoints)
 const isMobile = breakpoints.smaller('sm')
@@ -394,12 +392,7 @@ registerShortcuts({
   ToggleSectionBox: () => toggleSectionBox(),
   ZoomExtentsOrSelection: () => trackAndzoomExtentsOrSelection(),
   ToggleViews: () => toggleActiveControl('views'),
-  ToggleViewModes: () => toggleActiveControl('viewModes'),
-  SetViewModeDefault: () => setViewMode(ViewMode.DEFAULT),
-  SetViewModeDefaultEdges: () => setViewMode(ViewMode.DEFAULT_EDGES),
-  SetViewModeShaded: () => setViewMode(ViewMode.SHADED),
-  SetViewModePen: () => setViewMode(ViewMode.PEN),
-  SetViewModeArctic: () => setViewMode(ViewMode.ARCTIC)
+  ToggleViewModes: () => toggleActiveControl('viewModes')
 })
 
 const { isSmallerOrEqualSm } = useIsSmallerOrEqualThanBreakpoint()

@@ -1,9 +1,9 @@
 import { SpeckleViewer, timeoutAt } from '@speckle/shared'
 import {
+  ViewMode,
   type TreeNode,
   type MeasurementOptions,
-  type PropertyInfo,
-  ViewMode
+  type PropertyInfo
 } from '@speckle/viewer'
 import { MeasurementsExtension, ViewModes } from '@speckle/viewer'
 import { until } from '@vueuse/shared'
@@ -21,10 +21,11 @@ import { useDiffBuilderUtilities } from '~~/lib/viewer/composables/setup/diff'
 import { useTourStageState } from '~~/lib/viewer/composables/tour'
 import { Vector3, Box3 } from 'three'
 import { onKeyboardShortcut } from '@speckle/ui-components'
-import {
-  ViewerShortcuts,
-  type ViewerShortcutAction
-} from '~/lib/viewer/helpers/shortcuts'
+import { ViewerShortcuts } from '~/lib/viewer/helpers/shortcuts/shortcuts'
+import type {
+  ViewerShortcut,
+  ViewerShortcutAction
+} from '~/lib/viewer/helpers/shortcuts/types'
 
 export function useSectionBoxUtilities() {
   const { instance } = useInjectedViewer()
@@ -98,20 +99,10 @@ export function useCameraUtilities() {
     camera
   } = useInjectedViewerInterfaceState()
 
-  const currentViewMode = ref<ViewMode>(ViewMode.DEFAULT)
-
   const zoom = (...args: Parameters<typeof instance.zoom>) => instance.zoom(...args)
 
   const setView = (...args: Parameters<typeof instance.setView>) => {
     instance.setView(...args)
-  }
-
-  const setViewMode = (mode: ViewMode) => {
-    const viewModes = instance.getExtension(ViewModes)
-    if (viewModes) {
-      viewModes.setViewMode(mode)
-      currentViewMode.value = mode
-    }
   }
 
   const zoomExtentsOrSelection = () => {
@@ -144,8 +135,6 @@ export function useCameraUtilities() {
     toggleProjection,
     camera,
     setView,
-    setViewMode,
-    currentViewMode,
     zoom,
     forceViewToViewerSync
   }
@@ -498,6 +487,26 @@ export function useHighlightedObjectsUtilities() {
   }
 }
 
+export function useViewModeUtilities() {
+  const { instance } = useInjectedViewer()
+
+  // Track the current view mode
+  const currentViewMode = ref<ViewMode>(ViewMode.DEFAULT)
+
+  const setViewMode = (mode: ViewMode) => {
+    const viewModes = instance.getExtension(ViewModes)
+    if (viewModes) {
+      viewModes.setViewMode(mode)
+      currentViewMode.value = mode
+    }
+  }
+
+  return {
+    currentViewMode,
+    setViewMode
+  }
+}
+
 export function useViewerShortcuts() {
   const { ui } = useInjectedViewerState()
   const { isSmallerOrEqualSm } = useIsSmallerOrEqualThanBreakpoint()
@@ -508,17 +517,24 @@ export function useViewerShortcuts() {
     return isNewThreadEditorOpen || isExistingThreadEditorOpen
   })
 
-  const getShortcutDisplayText = (action: ViewerShortcutAction) => {
-    if (isSmallerOrEqualSm.value) return undefined
-
-    const shortcut = ViewerShortcuts[action]
-    const modifierText = shortcut.modifiers.join('+')
-    return `${shortcut.name} (${modifierText}+${shortcut.key})`
+  const formatKey = (key: string) => {
+    if (key.startsWith('Digit')) {
+      return key.slice(5)
+    }
+    return key
   }
 
-  const registerShortcuts = (handlers: Record<ViewerShortcutAction, () => void>) => {
-    Object.entries(ViewerShortcuts).forEach(([key, shortcut]) => {
-      const handler = handlers[key as ViewerShortcutAction]
+  const getShortcutDisplayText = (shortcut: ViewerShortcut) => {
+    if (isSmallerOrEqualSm.value) return undefined
+    const modifierText = shortcut.modifiers.join('+')
+    return `${modifierText}+${formatKey(shortcut.key)}`
+  }
+
+  const registerShortcuts = (
+    handlers: Partial<Record<ViewerShortcutAction, () => void>>
+  ) => {
+    Object.values(ViewerShortcuts).forEach((shortcut) => {
+      const handler = handlers[shortcut.action as ViewerShortcutAction]
       if (handler) {
         onKeyboardShortcut([...shortcut.modifiers], shortcut.key, () => {
           if (!isTypingComment.value) handler()
