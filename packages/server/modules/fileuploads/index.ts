@@ -115,6 +115,7 @@ export const init: SpeckleModule['init'] = async (app, isInitial) => {
               'Error while uploading file.'
             )
           }
+          res.contentType('application/json')
           res.status(response.statusCode).send(body)
         }
       )
