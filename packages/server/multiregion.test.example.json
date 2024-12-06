@@ -8,8 +8,9 @@
       "accessKey": "minioadmin",
       "secretKey": "minioadmin",
       "bucket": "speckle-server",
-      "createBucketIfNotExists": "true",
-      "endpoint": "http://127.0.0.1:9000"
+      "createBucketIfNotExists": true,
+      "endpoint": "http://127.0.0.1:9000",
+      "s3Region": "us-east-1"
     }
   },
   "regions": {
@@ -21,9 +22,10 @@
       "blobStorage": {
         "accessKey": "minioadmin",
         "secretKey": "minioadmin",
-        "bucket": "speckle-server",
-        "createBucketIfNotExists": "true",
-        "endpoint": "http://127.0.0.1:9020"
+        "bucket": "test-speckle-server",
+        "createBucketIfNotExists": true,
+        "endpoint": "http://127.0.0.1:9020",
+        "s3Region": "us-east-1"
       }
     }
   }

@@ -23,7 +23,7 @@ import {
   createCommitByBranchNameFactory
 } from '@/modules/core/services/commit/management'
 import { createObjectFactory } from '@/modules/core/services/objects/management'
-import { getProjectDbClient } from '@/modules/multiregion/dbSelector'
+import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { publish } from '@/modules/shared/utils/subscriptions'
 import { BasicTestUser } from '@/test/authHelper'
 import { BasicTestStream } from '@/test/speckle-helpers/streamHelper'

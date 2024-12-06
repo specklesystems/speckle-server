@@ -90,10 +90,10 @@ For non-authenticated api exploration, you can use the Graphql Playground which 
 To run all tests, simply run `yarn test`.
 The recommended extensions for the workspace include a test explorer, that can run individual tests.
 
-If you really want to run specific tests from a terminal, use the `mocha --grep @subset` syntax. For example:
+If you really want to run specific tests from a terminal, use the `yarn test --grep @subset` syntax. For example:
 
-- `mocha --grep @auth --watch` to run tests pertaning to the auth module only in watch mode.
-- `mocha --grep @core-streams --watch` to run tests pertaining to stream related services.
+- `yarn test --grep="@auth" --watch` to run tests pertaning to the auth module only in watch mode.
+- `yarn test --grep="@core-streams" --watch` to run tests pertaining to stream related services.
 
 It's suggested to just run tests from the VSCode test explorer, however.
 

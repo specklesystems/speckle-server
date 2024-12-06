@@ -99,6 +99,14 @@ EMAIL_PORT="1025"
 
 The web portal is available at `localhost:1080` and it's listening for mail on port `1025`.
 
+### Minio (S3 storage)
+
+Default credentials are: `minioadmin:minioadmin`
+Main storage Web UI: [http://localhost:9001/](http://localhost:9001/)
+Region1 storage Web UI: [http://localhost:9021/](http://localhost:9021/)
+
+You can use the web UI to validate uploaded blobs
+
 # Contributing
 
 Please make sure you read the [contribution guidelines](https://github.com/specklesystems/speckle-server/blob/main/CONTRIBUTING.md) for an overview of the best practices we try to follow.

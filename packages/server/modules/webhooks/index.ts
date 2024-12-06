@@ -9,7 +9,7 @@ import {
 import { cleanOrphanedWebhookConfigsFactory } from '@/modules/webhooks/repositories/cleanup'
 import { Knex } from 'knex'
 import { db } from '@/db/knex'
-import { getRegisteredDbClients } from '@/modules/multiregion/dbSelector'
+import { getRegisteredDbClients } from '@/modules/multiregion/utils/dbSelector'
 
 const scheduleWebhookCleanupFactory = ({ db }: { db: Knex }) => {
   const scheduleExecution = scheduleExecutionFactory({

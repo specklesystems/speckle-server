@@ -11,7 +11,7 @@ import {
   FileImportSubscriptions,
   filteredSubscribe
 } from '@/modules/shared/utils/subscriptions'
-import { getProjectDbClient } from '@/modules/multiregion/dbSelector'
+import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 
 export = {
   Stream: {

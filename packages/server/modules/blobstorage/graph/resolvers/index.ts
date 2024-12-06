@@ -12,7 +12,7 @@ import {
   StreamBlobsArgs
 } from '@/modules/core/graph/generated/graphql'
 import { StreamGraphQLReturn } from '@/modules/core/helpers/graphTypes'
-import { getProjectDbClient } from '@/modules/multiregion/dbSelector'
+import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import {
   BadRequestError,
   NotFoundError,

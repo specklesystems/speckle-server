@@ -27,7 +27,7 @@ import { getStreamFactory } from '@/modules/core/repositories/streams'
 import { getPaginatedBranchCommitsItemsByNameFactory } from '@/modules/core/services/commit/retrieval'
 import { getStreamBranchByNameFactory } from '@/modules/core/repositories/branches'
 import { getFormattedObjectFactory } from '@/modules/core/repositories/objects'
-import { getProjectDbClient } from '@/modules/multiregion/dbSelector'
+import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { listenFor } from '@/modules/core/utils/dbNotificationListener'
 
 const httpErrorImage = (httpErrorCode: number) =>
