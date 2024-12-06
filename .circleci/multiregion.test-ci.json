@@ -22,7 +22,7 @@
         "secretKey": "minioadmin",
         "bucket": "speckle-server",
         "createBucketIfNotExists": true,
-        "endpoint": "http://127.0.0.1:9001",
+        "endpoint": "http://127.0.0.1:9020",
         "s3Region": ""
       }
     }

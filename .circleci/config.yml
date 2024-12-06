@@ -599,7 +599,7 @@ jobs:
       - image: 'minio/minio'
         command: server /data --console-address ":9001" --address "0.0.0.0:9000"
       - image: 'minio/minio'
-        command: server /data --console-address ":9002" --address "0.0.0.0:9001"
+        command: server /data --console-address ":9021" --address "0.0.0.0:9020"
     environment:
       # Same as test-server:
       NODE_ENV: test
