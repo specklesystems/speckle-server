@@ -25,6 +25,7 @@ import {
 import { ensureError, MaybeNullOrUndefined } from '@speckle/shared'
 import { isDevOrTestEnv, isTestEnv } from '@/modules/shared/helpers/envHelper'
 import { migrateDbToLatest } from '@/db/migrations'
+import { get } from 'lodash'
 
 let getter: GetProjectDb | undefined = undefined
 
@@ -203,6 +204,12 @@ interface ReplicationArgs {
   regionName: string
 }
 
+const sanitizeError = (err: unknown): unknown => {
+  if (!err) return err
+  if (get(err, 'where').includes('password='))
+    return { ...err, where: '[REDACTED AS IT CONTAINS CONNECTION STRING]' }
+}
+
 const setUpUserReplication = async ({
   from,
   to,
@@ -219,11 +226,18 @@ const setUpUserReplication = async ({
       throw new DatabaseError(
         'Could not create publication {pubName} when setting up user replication for region {regionName}',
         {
-          cause: ensureError(err, 'Unknown database error when creating publication'),
+          cause: ensureError(
+            sanitizeError(err),
+            'Unknown database error when creating publication'
+          ),
           info: { pubName, regionName }
         }
       )
-    if (!err.message.includes('already exists')) throw err
+    if (
+      !err.message.includes('already exists') &&
+      !err.message.includes('duplicate key value violates unique constraint')
+    )
+      throw sanitizeError(err)
   }
 
   const fromUrl = new URL(
@@ -254,11 +268,18 @@ const setUpUserReplication = async ({
       throw new DatabaseError(
         'Could not create subscription {subName} to {pubName} when setting up user replication for region {regionName}',
         {
-          cause: ensureError(err, 'Unknown database error when creating subscription'),
+          cause: ensureError(
+            sanitizeError(err),
+            'Unknown database error when creating subscription'
+          ),
           info: { subName, pubName, regionName }
         }
       )
-    if (!err.message.includes('already exists')) throw err
+    if (
+      !err.message.includes('already exists') &&
+      !err.message.includes('duplicate key value violates unique constraint')
+    )
+      throw sanitizeError(err)
   }
 }
 
@@ -278,11 +299,18 @@ const setUpProjectReplication = async ({
       throw new DatabaseError(
         'Could not create publication {pubName} when setting up project replication for region {regionName}',
         {
-          cause: ensureError(err, 'Unknown database error when creating publication'),
+          cause: ensureError(
+            sanitizeError(err),
+            'Unknown database error when creating publication'
+          ),
           info: { pubName, regionName }
         }
       )
-    if (!err.message.includes('already exists')) throw err
+    if (
+      !err.message.includes('already exists') &&
+      !err.message.includes('duplicate key value violates unique constraint')
+    )
+      throw sanitizeError(err)
   }
 
   const fromUrl = new URL(
@@ -313,10 +341,17 @@ const setUpProjectReplication = async ({
       throw new DatabaseError(
         'Could not create subscription {subName} to {pubName} when setting up project replication for region {regionName}',
         {
-          cause: ensureError(err, 'Unknown database error when creating subscription'),
+          cause: ensureError(
+            sanitizeError(err),
+            'Unknown database error when creating subscription'
+          ),
           info: { subName, pubName, regionName }
         }
       )
-    if (!err.message.includes('already exists')) throw err
+    if (
+      !err.message.includes('already exists') &&
+      !err.message.includes('duplicate key value violates unique constraint')
+    )
+      throw sanitizeError(err)
   }
 }
