@@ -86,6 +86,7 @@ import {
   activeUserGendoLimits
 } from '~~/lib/gendo/graphql/queriesAndMutations'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
+import { useMixpanel } from '~/lib/core/composables/mp'
 
 const {
   projectId,
@@ -132,6 +133,8 @@ const enqueMagic = async () => {
 const apollo = useApolloClient().client
 const { triggerNotification } = useGlobalToast()
 
+const mixpanel = useMixpanel()
+
 const lodgeRequest = async (screenshot: string) => {
   const modelId = resourceItems.value[0].modelId as string
   const versionId = resourceItems.value[0].versionId as string
@@ -155,6 +158,12 @@ const lodgeRequest = async (screenshot: string) => {
       }
     })
     .catch(convertThrowIntoFetchResult)
+
+  mixpanel.track('Gendo Render Triggered', {
+    status: res.data ? 'Success' : 'Error',
+    prompt: prompt.value,
+    remainingRenders: (limits.value?.limit || 0) - (limits.value?.used || 0)
+  })
 
   if (!res.data) {
     const err = getFirstErrorMessage(res.errors)
