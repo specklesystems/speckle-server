@@ -122,6 +122,9 @@ const onDelete = async () => {
       workspace_id: props.workspace.id,
       feedback: feedback.value
     })
+    mixpanel.get_group('workspace_id', props.workspace.id).set_once({
+      isDeleted: true
+    })
 
     if (!import.meta.dev) {
       await sendWebhook(defaultZapierWebhookUrl, {
