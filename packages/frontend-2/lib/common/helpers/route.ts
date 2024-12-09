@@ -17,6 +17,8 @@ export const serverManagementRoute = '/server-management'
 export const downloadManagerUrl = 'https://speckle.systems/download'
 export const docsPageUrl = 'https://speckle.guide/'
 export const forumPageUrl = 'https://speckle.community/'
+export const defaultZapierWebhookUrl =
+  'https://hooks.zapier.com/hooks/catch/12120532/2m4okri/'
 
 export const projectRoute = (
   id: string,
