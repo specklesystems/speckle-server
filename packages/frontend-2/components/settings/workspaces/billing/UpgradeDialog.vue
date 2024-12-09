@@ -22,16 +22,18 @@
 <script setup lang="ts">
 import type { LayoutDialogButton } from '@speckle/ui-components'
 import {
-  type PaidWorkspacePlans,
-  BillingInterval
+  type WorkspacePlans,
+  BillingInterval,
+  type PaidWorkspacePlans
 } from '~/lib/common/generated/gql/graphql'
 import { useBillingActions } from '~/lib/billing/composables/actions'
 import { startCase } from 'lodash'
 import { pricingPlansConfig } from '~/lib/billing/helpers/constants'
 import { Roles } from '@speckle/shared'
+import { isPaidPlan } from '~/lib/billing/helpers/types'
 
 const props = defineProps<{
-  plan: PaidWorkspacePlans
+  plan: WorkspacePlans
   billingInterval: BillingInterval
   workspaceId: string
 }>()
@@ -39,11 +41,15 @@ const isOpen = defineModel<boolean>('open', { required: true })
 
 const { upgradePlan } = useBillingActions()
 
-const planConfig = ref(pricingPlansConfig.plans[props.plan])
+const seatPrice = computed(() => {
+  if (isPaidPlan(props.plan)) {
+    const planConfig =
+      pricingPlansConfig.plans[props.plan as unknown as PaidWorkspacePlans]
+    return planConfig.cost[props.billingInterval][Roles.Workspace.Member]
+  }
 
-const seatPrice = computed(
-  () => planConfig.value.cost[props.billingInterval][Roles.Workspace.Member]
-)
+  return 0
+})
 const dialogButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Cancel',
