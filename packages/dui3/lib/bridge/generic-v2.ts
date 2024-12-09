@@ -25,7 +25,7 @@ export class GenericBridge extends BaseBridge {
     super()
     this.bridge = object
     if (isServerBridge) {
-      this.serverBridge = new ServerBridge(this.runMethod, this.emitter)
+      this.serverBridge = new ServerBridge(this.emitter)
     }
   }
 
@@ -64,7 +64,7 @@ export class GenericBridge extends BaseBridge {
       }
 
       if (this.serverBridge) {
-        this.serverBridge.emit(eventName, parsedData)
+        this.serverBridge.emit(eventName, parsedData, this.runMethod.bind(this))
       } else {
         this.emitter.emit(eventName, parsedData)
       }
