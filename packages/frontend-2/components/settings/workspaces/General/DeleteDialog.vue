@@ -55,7 +55,7 @@ import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { isUndefined } from 'lodash-es'
 import { useMixpanel } from '~/lib/core/composables/mp'
-import { homeRoute } from '~/lib/common/helpers/route'
+import { homeRoute, defaultZapierWebhookUrl } from '~/lib/common/helpers/route'
 import { useZapier } from '~/lib/core/composables/zapier'
 import { useForm } from 'vee-validate'
 
@@ -122,10 +122,12 @@ const onDelete = async () => {
       workspace_id: props.workspace.id,
       feedback: feedback.value
     })
+    mixpanel.get_group('workspace_id', props.workspace.id).set_once({
+      isDeleted: true
+    })
 
-    // Only send zapier-discord webhook if not in dev environment
     if (!import.meta.dev) {
-      await sendWebhook('https://hooks.zapier.com/hooks/catch/12120532/2m4okri/', {
+      await sendWebhook(defaultZapierWebhookUrl, {
         userId: activeUser.value?.id ?? '',
         feedback: feedback.value
           ? `Action: Workspace Deleted(${props.workspace.name}) Feedback: ${feedback.value}`

@@ -1,5 +1,17 @@
+import { useServerInfo } from '~/lib/core/composables/server'
+
 export function useZapier() {
-  const sendWebhook = async (webhookUrl: string, data: Record<string, string>) => {
+  const sendWebhook = async (
+    webhookUrl: string,
+    data: Record<string, string | number>
+  ) => {
+    const { serverInfo } = useServerInfo()
+    const isLatest = serverInfo.value?.canonicalUrl?.includes(
+      'https://latest.speckle.systems/'
+    )
+
+    if (import.meta.dev || isLatest) return
+
     const response = await fetch(webhookUrl, {
       method: 'POST',
       headers: {
