@@ -129,6 +129,8 @@ import {
   FilterMaterialOptions,
   FilterMaterialType
 } from './modules/materials/Materials.js'
+import { AccelerationStructure } from './modules/objects/AccelerationStructure.js'
+import { TopLevelAccelerationStructure } from './modules/objects/TopLevelAccelerationStructure.js'
 
 export {
   Viewer,
@@ -170,6 +172,8 @@ export {
   LineBatch,
   PointBatch,
   TextBatch,
+  AccelerationStructure,
+  TopLevelAccelerationStructure,
   SpeckleStandardMaterial,
   SpeckleBasicMaterial,
   SpeckleTextMaterial,
