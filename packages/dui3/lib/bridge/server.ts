@@ -193,8 +193,6 @@ export class ServerBridge {
       currentBatch,
       referencedObjectId
     } = eventPayload
-    console.log(this.queuedPromises)
-
     if (!this.queuedPromises[modelCardId]) {
       this.queuedPromises[modelCardId] = []
     }
