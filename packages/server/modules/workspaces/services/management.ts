@@ -68,7 +68,6 @@ import {
   DeleteSsoProvider,
   GetWorkspaceSsoProviderRecord
 } from '@/modules/workspaces/domain/sso/operations'
-import { getClient } from '@/modules/shared/utils/mixpanel'
 
 type WorkspaceCreateArgs = {
   userId: string
@@ -330,13 +329,6 @@ export const deleteWorkspaceFactory =
     for (const projectIdsChunk of chunk(projectIds, 25)) {
       await Promise.all(projectIdsChunk.map((projectId) => deleteProject(projectId)))
     }
-
-    await new Promise<void>((resolve) => {
-      const mp = getClient()
-      mp?.groups.set_once('workspace_id', workspaceId, 'isDeleted', 'true', () => {
-        resolve()
-      })
-    })
   }
 
 type WorkspaceRoleDeleteArgs = {
