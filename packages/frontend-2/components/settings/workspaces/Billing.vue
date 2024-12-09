@@ -84,6 +84,8 @@
                   {{
                     statusIsTrial && isPurchasablePlan
                       ? 'Trial ends'
+                      : statusIsCanceled
+                      ? 'Cancels'
                       : 'Next payment due'
                   }}
                 </h3>
@@ -222,6 +224,9 @@ const statusIsTrial = computed(
   () =>
     currentPlan.value?.status === WorkspacePlanStatuses.Trial ||
     !currentPlan.value?.status
+)
+const statusIsCanceled = computed(
+  () => currentPlan.value?.status === WorkspacePlanStatuses.Canceled
 )
 const isActivePlan = computed(
   () =>
