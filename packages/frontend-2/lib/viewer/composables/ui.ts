@@ -524,10 +524,20 @@ export function useViewerShortcuts() {
     return key
   }
 
-  const getShortcutDisplayText = (shortcut: ViewerShortcut) => {
+  const getShortcutDisplayText = (
+    shortcut: ViewerShortcut,
+    options?: { hideName?: boolean }
+  ) => {
     if (isSmallerOrEqualSm.value) return undefined
+
     const modifierText = shortcut.modifiers.join('+')
-    return `${modifierText}+${formatKey(shortcut.key)}`
+    const shortcutText = `${modifierText}+${formatKey(shortcut.key)}`
+
+    if (!options?.hideName) {
+      return `${shortcut.name} (${shortcutText})`
+    }
+
+    return shortcutText
   }
 
   const registerShortcuts = (

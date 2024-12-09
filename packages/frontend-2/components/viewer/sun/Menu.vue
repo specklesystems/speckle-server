@@ -17,12 +17,21 @@
         <PopoverPanel
           class="absolute translate-x-0 left-10 sm:left-12 top-2 bg-foundation max-h-64 simple-scrollbar overflow-y-auto outline outline-2 outline-primary-muted rounded-lg shadow-lg overflow-hidden flex flex-col space-y-2"
         >
+          <!-- Message for unsupported view modes -->
+          <div
+            v-if="!isLightingSupported"
+            class="px-2 pt-2 text-body-xs text-foreground-2"
+          >
+            Light controls are only available in Default and Default with Edges view
+            modes
+          </div>
           <div class="p-2 border-b border-outline flex gap-2 items-center">
             <div class="scale-90">
               <FormSwitch
                 v-model="sunlightShadows"
                 name="sunShadows"
                 :show-label="false"
+                :disabled="!isLightingSupported"
               />
             </div>
             <span class="text-foreground text-body-sm">Sun shadows</span>
@@ -37,6 +46,7 @@
               min="1"
               max="10"
               step="0.05"
+              :disabled="!isLightingSupported"
             />
             <label class="text-body-xs text-foreground-2" for="intensity">
               Intensity
@@ -52,6 +62,7 @@
               min="0"
               :max="Math.PI"
               step="0.05"
+              :disabled="!isLightingSupported"
             />
             <label class="text-body-xs text-foreground-2" for="elevation">
               Elevation
@@ -67,6 +78,7 @@
               :min="-Math.PI * 0.5"
               :max="Math.PI * 0.5"
               step="0.05"
+              :disabled="!isLightingSupported"
             />
             <label class="text-body-xs text-foreground-2" for="azimuth">Azimuth</label>
           </div>
@@ -80,6 +92,7 @@
               min="0"
               max="5"
               step="0.05"
+              :disabled="!isLightingSupported"
             />
             <label class="text-body-xs text-foreground-2" for="indirect">
               Indirect
@@ -92,12 +105,13 @@
 </template>
 <script setup lang="ts">
 import { Popover, PopoverButton, PopoverPanel } from '@headlessui/vue'
-import type { SunLightConfiguration } from '@speckle/viewer'
+import { ViewMode, type SunLightConfiguration } from '@speckle/viewer'
 import { SunIcon } from '@heroicons/vue/24/outline'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { debounce } from 'lodash-es'
 import { FormSwitch } from '@speckle/ui-components'
+import { useViewModeUtilities } from '~/lib/viewer/composables/ui'
 
 const mp = useMixpanel()
 const debounceTrackLightConfigChange = debounce(() => {
@@ -123,9 +137,18 @@ const {
   ui: { lightConfig }
 } = useInjectedViewerState()
 
+const { currentViewMode } = useViewModeUtilities()
+
 const intensity = createLightConfigComputed('intensity')
 const elevation = createLightConfigComputed('elevation')
 const azimuth = createLightConfigComputed('azimuth')
 const indirectLightIntensity = createLightConfigComputed('indirectLightIntensity')
 const sunlightShadows = createLightConfigComputed('castShadow')
+
+const isLightingSupported = computed(() => {
+  return (
+    currentViewMode.value === ViewMode.DEFAULT ||
+    currentViewMode.value === ViewMode.DEFAULT_EDGES
+  )
+})
 </script>

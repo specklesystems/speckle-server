@@ -1,3 +1,4 @@
+<!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
   <div ref="menuWrapper" class="relative z-30">
     <ViewerControlsButtonToggle
@@ -19,7 +20,10 @@
     >
       <div
         v-if="open"
+        v-keyboard-clickable
         class="absolute translate-x-0 w-56 left-10 sm:left-12 -top-0 sm:-top-2 bg-foundation max-h-64 simple-scrollbar overflow-y-auto rounded-lg shadow-md flex flex-col p-1.5"
+        @mouseenter="cancelCloseTimer"
+        @focusin="cancelCloseTimer"
       >
         <div v-for="shortcut in viewModeShortcuts" :key="shortcut.name">
           <button
@@ -28,11 +32,14 @@
             @click="handleViewModeChange(shortcut.viewMode)"
           >
             <div class="w-5 shrink-0">
-              <CheckIcon v-if="isActiveMode(shortcut.viewMode)" class="h-3 w-3" />
+              <IconCheck
+                v-if="isActiveMode(shortcut.viewMode)"
+                class="h-4 w-4 text-foreground-2"
+              />
             </div>
             <div class="flex-1 text-left">{{ shortcut.name }}</div>
             <span class="text-body-2xs text-foreground-2">
-              {{ getShortcutDisplayText(shortcut) }}
+              {{ getShortcutDisplayText(shortcut, { hideName: true }) }}
             </span>
           </button>
         </div>
@@ -47,30 +54,38 @@ import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useViewerShortcuts, useViewModeUtilities } from '~~/lib/viewer/composables/ui'
 import { onClickOutside } from '@vueuse/core'
 import { ViewModeShortcuts } from '~/lib/viewer/helpers/shortcuts/shortcuts'
-import { CheckIcon } from '@heroicons/vue/24/solid'
+
+const open = defineModel<boolean>('open', { required: true })
 
 const { setViewMode, currentViewMode } = useViewModeUtilities()
 const { getShortcutDisplayText, registerShortcuts } = useViewerShortcuts()
 const mp = useMixpanel()
 
 registerShortcuts({
-  SetViewModeDefault: () => handleViewModeChange(ViewMode.DEFAULT),
-  SetViewModeDefaultEdges: () => handleViewModeChange(ViewMode.DEFAULT_EDGES),
-  SetViewModeShaded: () => handleViewModeChange(ViewMode.SHADED),
-  SetViewModePen: () => handleViewModeChange(ViewMode.PEN),
-  SetViewModeArctic: () => handleViewModeChange(ViewMode.ARCTIC)
+  SetViewModeDefault: () => handleViewModeChange(ViewMode.DEFAULT, true),
+  SetViewModeDefaultEdges: () => handleViewModeChange(ViewMode.DEFAULT_EDGES, true),
+  SetViewModeShaded: () => handleViewModeChange(ViewMode.SHADED, true),
+  SetViewModePen: () => handleViewModeChange(ViewMode.PEN, true),
+  SetViewModeArctic: () => handleViewModeChange(ViewMode.ARCTIC, true)
 })
 
-const open = ref(false)
 const menuWrapper = ref(null)
+const isManuallyOpened = ref(false)
+const closeTimer = ref<NodeJS.Timeout | null>(null)
 
 const isActiveMode = (mode: ViewMode) => mode === currentViewMode.value
 
 const viewModeShortcuts = Object.values(ViewModeShortcuts)
 
-const handleViewModeChange = (mode: ViewMode) => {
+const handleViewModeChange = (mode: ViewMode, isShortcut = false) => {
   setViewMode(mode)
-  open.value = true
+  if (isShortcut) {
+    open.value = true
+    startCloseTimer()
+  } else {
+    isManuallyOpened.value = true
+    cancelCloseTimer()
+  }
   mp.track('Viewer Action', {
     type: 'action',
     name: 'set-view-mode',
@@ -78,7 +93,27 @@ const handleViewModeChange = (mode: ViewMode) => {
   })
 }
 
+const cancelCloseTimer = () => {
+  if (closeTimer.value) {
+    clearTimeout(closeTimer.value)
+    closeTimer.value = null
+  }
+}
+
+const startCloseTimer = () => {
+  if (!isManuallyOpened.value) {
+    closeTimer.value = setTimeout(() => {
+      open.value = false
+    }, 3000)
+  }
+}
+
 onClickOutside(menuWrapper, () => {
   open.value = false
+  isManuallyOpened.value = false
+})
+
+onUnmounted(() => {
+  cancelCloseTimer()
 })
 </script>

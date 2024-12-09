@@ -14,8 +14,8 @@
       <!-- Models -->
       <ViewerControlsButtonToggle
         v-tippy="getShortcutDisplayText(shortcuts.ToggleModels)"
-        :active="activeControl === 'models'"
-        @click="toggleActiveControl('models')"
+        :active="activePanel === 'models'"
+        @click="toggleActivePanel('models')"
       >
         <CubeIcon class="h-4 w-4 md:h-5 md:w-5" />
       </ViewerControlsButtonToggle>
@@ -23,8 +23,8 @@
       <!-- Explorer -->
       <ViewerControlsButtonToggle
         v-tippy="getShortcutDisplayText(shortcuts.ToggleExplorer)"
-        :active="activeControl === 'explorer'"
-        @click="toggleActiveControl('explorer')"
+        :active="activePanel === 'explorer'"
+        @click="toggleActivePanel('explorer')"
       >
         <IconFileExplorer class="h-4 w-4 md:h-5 md:w-5" />
       </ViewerControlsButtonToggle>
@@ -32,8 +32,8 @@
       <!-- Comment threads -->
       <ViewerControlsButtonToggle
         v-tippy="getShortcutDisplayText(shortcuts.ToggleDiscussions)"
-        :active="activeControl === 'discussions'"
-        @click="toggleActiveControl('discussions')"
+        :active="activePanel === 'discussions'"
+        @click="toggleActivePanel('discussions')"
       >
         <ChatBubbleLeftRightIcon class="h-4 w-4 md:h-5 md:w-5" />
       </ViewerControlsButtonToggle>
@@ -42,8 +42,8 @@
       <ViewerControlsButtonToggle
         v-if="allAutomationRuns.length !== 0"
         v-tippy="isSmallerOrEqualSm ? undefined : summary.longSummary"
-        :active="activeControl === 'automate'"
-        @click="toggleActiveControl('automate')"
+        :active="activePanel === 'automate'"
+        @click="toggleActivePanel('automate')"
       >
         <!-- <PlayCircleIcon class="h-5 w-5" /> -->
         <!-- {{allAutomationRuns.length}} -->
@@ -59,7 +59,7 @@
       <!-- Measurements -->
       <ViewerControlsButtonToggle
         v-tippy="getShortcutDisplayText(shortcuts.ToggleMeasurements)"
-        :active="activeControl === 'measurements'"
+        :active="activePanel === 'measurements'"
         @click="toggleMeasurements"
       >
         <IconMeasurements class="h-4 w-4 md:h-5 md:w-5" />
@@ -84,7 +84,10 @@
         >
           <ViewerControlsButtonGroup>
             <!-- View Modes -->
-            <ViewerViewModesMenu />
+            <ViewerViewModesMenu
+              :open="activeControl === 'viewModes'"
+              @update:open="(value: boolean) => toggleActiveControl(value ? 'viewModes' : 'none')"
+            />
             <!-- Views -->
             <ViewerViewsMenu v-tippy="`Views`" />
             <!-- Zoom extents -->
@@ -137,9 +140,9 @@
           <ViewerControlsButtonToggle
             v-show="isGendoEnabled"
             v-tippy="'Real time AI rendering powered by Gendo'"
-            :active="activeControl === 'gendo'"
+            :active="activePanel === 'gendo'"
             class="hover:hue-rotate-30 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-amber-200 via-violet-600 to-sky-900"
-            @click="toggleActiveControl('gendo')"
+            @click="toggleActivePanel('gendo')"
           >
             <img
               src="~/assets/images/gendo/logo.svg"
@@ -172,18 +175,18 @@
     <div
       ref="scrollableControlsContainer"
       :class="`simple-scrollbar absolute z-10 pl-12 pr-2 md:pr-0 md:pl-14 mb-4 max-h-[calc(100dvh-4.5rem)] overflow-y-auto px-[2px] py-[2px] transition ${
-        activeControl !== 'none'
+        activePanel !== 'none'
           ? 'translate-x-0 opacity-100'
           : '-translate-x-[100%] opacity-0'
       } ${isEmbedEnabled ? 'mt-1.5' : 'mt-[3.7rem]'}`"
       :style="`width: ${isMobile ? '100%' : `${width + 4}px`};`"
     >
-      <div v-if="activeControl.length !== 0 && activeControl === 'measurements'">
+      <div v-if="activeControl.length !== 0 && activePanel === 'measurements'">
         <KeepAlive>
           <div><ViewerMeasurementsOptions @close="toggleMeasurements" /></div>
         </KeepAlive>
       </div>
-      <div v-show="resourceItems.length !== 0 && activeControl === 'models'">
+      <div v-show="resourceItems.length !== 0 && activePanel === 'models'">
         <KeepAlive>
           <div>
             <ViewerResourcesList
@@ -192,32 +195,32 @@
               @loaded-more="scrollControlsToBottom"
               @close="activeControl = 'none'"
             />
-            <ViewerCompareChangesPanel v-else @close="activeControl = 'none'" />
+            <ViewerCompareChangesPanel v-else @close="activePanel = 'none'" />
           </div>
         </KeepAlive>
       </div>
 
-      <div v-show="resourceItems.length !== 0 && activeControl === 'explorer'">
+      <div v-show="resourceItems.length !== 0 && activePanel === 'explorer'">
         <KeepAlive>
-          <ViewerExplorer class="pointer-events-auto" @close="activeControl = 'none'" />
+          <ViewerExplorer class="pointer-events-auto" @close="activePanel = 'none'" />
         </KeepAlive>
       </div>
 
       <ViewerComments
-        v-if="resourceItems.length !== 0 && activeControl === 'discussions'"
+        v-if="resourceItems.length !== 0 && activePanel === 'discussions'"
         class="pointer-events-auto"
-        @close="activeControl = 'none'"
+        @close="activePanel = 'none'"
       />
 
-      <div v-show="resourceItems.length !== 0 && activeControl === 'automate'">
+      <div v-show="resourceItems.length !== 0 && activePanel === 'automate'">
         <AutomateViewerPanel
           :automation-runs="allAutomationRuns"
           :summary="summary"
-          @close="activeControl = 'none'"
+          @close="activePanel = 'none'"
         />
       </div>
       <div
-        v-if="resourceItems.length !== 0 && activeControl === 'gendo' && isGendoEnabled"
+        v-if="resourceItems.length !== 0 && activePanel === 'gendo' && isGendoEnabled"
       >
         <ViewerGendoPanel @close="activeControl = 'none'" />
       </div>
@@ -280,6 +283,26 @@ import {
 import { useFunctionRunsStatusSummary } from '~/lib/automate/composables/runStatus'
 import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
 
+type ActivePanel =
+  | 'none'
+  | 'models'
+  | 'explorer'
+  | 'discussions'
+  | 'automate'
+  | 'measurements'
+  | 'gendo'
+
+type ActiveControl =
+  | 'none'
+  | 'viewModes'
+  | 'views'
+  | 'sun'
+  | 'projection'
+  | 'sectionBox'
+  | 'explode'
+  | 'settings'
+  | 'mobileOverflow'
+
 const isGendoEnabled = useIsGendoModuleEnabled()
 
 const width = ref(360)
@@ -322,19 +345,6 @@ if (import.meta.client) {
     }
   })
 }
-
-type ActiveControl =
-  | 'none'
-  | 'models'
-  | 'explorer'
-  | 'filters'
-  | 'discussions'
-  | 'automate'
-  | 'measurements'
-  | 'mobileOverflow'
-  | 'gendo'
-  | 'views'
-  | 'viewModes'
 
 const { resourceItems, modelsAndVersionIds } = useInjectedViewerLoadedResources()
 const {
@@ -381,33 +391,40 @@ const { summary } = useFunctionRunsStatusSummary({
 
 const openAddModel = ref(false)
 
-const activeControl = ref<ActiveControl>('models')
-
-registerShortcuts({
-  ToggleModels: () => toggleActiveControl('models'),
-  ToggleExplorer: () => toggleActiveControl('explorer'),
-  ToggleDiscussions: () => toggleActiveControl('discussions'),
-  ToggleMeasurements: () => toggleMeasurements(),
-  ToggleProjection: () => trackAndtoggleProjection(),
-  ToggleSectionBox: () => toggleSectionBox(),
-  ZoomExtentsOrSelection: () => trackAndzoomExtentsOrSelection(),
-  ToggleViews: () => toggleActiveControl('views'),
-  ToggleViewModes: () => toggleActiveControl('viewModes')
-})
+const activeControl = ref<ActiveControl>('none')
+const activePanel = ref<ActivePanel>('none')
 
 const { isSmallerOrEqualSm } = useIsSmallerOrEqualThanBreakpoint()
 
-const toggleActiveControl = (control: ActiveControl) => {
-  const isMeasurementsActive = activeControl.value === 'measurements'
-  if (isMeasurementsActive && control !== 'measurements') {
+const toggleActivePanel = (panel: ActivePanel) => {
+  const isMeasurementsActive = activePanel.value === 'measurements'
+  if (isMeasurementsActive && panel !== 'measurements') {
     enableMeasurements(false)
   }
+  activePanel.value = activePanel.value === panel ? 'none' : panel
+}
+
+const toggleActiveControl = (control: ActiveControl) => {
   activeControl.value = activeControl.value === control ? 'none' : control
 }
 
+registerShortcuts({
+  ToggleModels: () => toggleActivePanel('models'),
+  ToggleExplorer: () => toggleActivePanel('explorer'),
+  ToggleDiscussions: () => toggleActivePanel('discussions'),
+  ToggleMeasurements: () => toggleMeasurements(),
+  ToggleProjection: () => trackAndtoggleProjection(),
+  ToggleSectionBox: () => toggleSectionBox(),
+  ZoomExtentsOrSelection: () => trackAndzoomExtentsOrSelection()
+})
+
 const mp = useMixpanel()
 watch(activeControl, (newVal) => {
-  mp.track('Viewer Action', { type: 'action', name: 'controls-toggle', action: newVal })
+  mp.track('Viewer Action', {
+    type: 'action',
+    name: 'controls-toggle',
+    action: newVal
+  })
 })
 
 const trackAndzoomExtentsOrSelection = () => {
@@ -431,14 +448,10 @@ const scrollControlsToBottom = () => {
 }
 
 const toggleMeasurements = () => {
-  const isMeasurementsActive = activeControl.value === 'measurements'
+  const isMeasurementsActive = activePanel.value === 'measurements'
   enableMeasurements(!isMeasurementsActive)
-  activeControl.value = isMeasurementsActive ? 'none' : 'measurements'
+  activePanel.value = isMeasurementsActive ? 'none' : 'measurements'
 }
-
-onMounted(() => {
-  activeControl.value = isSmallerOrEqualSm.value ? 'none' : 'models'
-})
 
 onKeyStroke('Escape', () => {
   const isActiveMeasurement = getActiveMeasurement()
@@ -446,15 +459,20 @@ onKeyStroke('Escape', () => {
   if (isActiveMeasurement) {
     removeMeasurement()
   } else {
-    if (activeControl.value === 'measurements') {
+    if (activePanel.value === 'measurements') {
       toggleMeasurements()
     }
     activeControl.value = 'none'
   }
 })
 
+onMounted(() => {
+  // Set initial panel state after component is mounted
+  activePanel.value = isSmallerOrEqualSm.value ? 'none' : 'models'
+})
+
 watch(isSmallerOrEqualSm, (newVal) => {
-  activeControl.value = newVal ? 'none' : 'models'
+  activePanel.value = newVal ? 'none' : 'models'
 })
 
 watch(isSectionBoxEnabled, (val) => {

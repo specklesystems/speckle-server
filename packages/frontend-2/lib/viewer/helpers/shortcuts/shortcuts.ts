@@ -65,20 +65,6 @@ export const PanelShortcuts = {
     modifiers: [ModifierKeys.Shift],
     key: 'D',
     action: 'ToggleDiscussions'
-  },
-  ToggleViews: {
-    name: 'Views',
-    description: 'Toggle views panel',
-    modifiers: [ModifierKeys.Shift],
-    key: 'V',
-    action: 'ToggleViews'
-  },
-  ToggleViewModes: {
-    name: 'View modes',
-    description: 'Toggle view modes panel',
-    modifiers: [ModifierKeys.Shift],
-    key: 'C',
-    action: 'ToggleViewModes'
   }
 } as const
 
@@ -103,10 +89,7 @@ export const ToolShortcuts = {
     modifiers: [ModifierKeys.Shift],
     key: 'B',
     action: 'ToggleSectionBox'
-  }
-} as const
-
-export const NavigationShortcuts = {
+  },
   ZoomExtentsOrSelection: {
     name: 'Fit',
     description: 'Zoom to fit selection or entire model',
@@ -119,6 +102,5 @@ export const NavigationShortcuts = {
 export const ViewerShortcuts = {
   ...ViewModeShortcuts,
   ...PanelShortcuts,
-  ...ToolShortcuts,
-  ...NavigationShortcuts
+  ...ToolShortcuts
 } as const
