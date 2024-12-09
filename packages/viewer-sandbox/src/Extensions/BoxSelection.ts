@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
-import { CONTAINED, InputEvent, ShapecastIntersection } from '@speckle/viewer'
+import { CONTAINED, InputEvent } from '@speckle/viewer'
 import { ObjectLayers } from '@speckle/viewer'
 import { SelectionExtension } from '@speckle/viewer'
 import { BatchObject } from '@speckle/viewer'
@@ -148,7 +148,7 @@ export class BoxSelection extends Extension {
           /** We continue traversion only if the selection box intersects an internal node */
           const ndcBox = this.worldBoxToNDC(box, clipMatrix)
           if (selectionBox.containsBox(ndcBox)) {
-            return ShapecastIntersection.CONTAINED
+            return CONTAINED
           }
           const ret = selectionBox.intersectsBox(ndcBox)
           return ret

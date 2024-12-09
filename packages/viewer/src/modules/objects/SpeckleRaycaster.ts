@@ -7,18 +7,15 @@ import {
   RaycasterParameters,
   Face
 } from 'three'
-import { ExtendedTriangle } from 'three-mesh-bvh'
+import { ExtendedTriangle, ShapecastIntersection } from 'three-mesh-bvh'
 import { BatchObject } from '../batching/BatchObject.js'
 import { ObjectLayers } from '../../IViewer.js'
 import SpeckleMesh from './SpeckleMesh.js'
 import SpeckleInstancedMesh from './SpeckleInstancedMesh.js'
 
-export enum ShapecastIntersection {
-  NOT_INTERSECTED = 0,
-  INTERSECTED = 1,
-  CONTAINED = 2
-}
-
+export const NOT_INTERSECTED: ShapecastIntersection = 0
+export const INTERSECTED: ShapecastIntersection = 1
+export const CONTAINED: ShapecastIntersection = 2
 export type ExtendedShapeCastCallbacks = {
   intersectsTAS?: (
     box: Box3,

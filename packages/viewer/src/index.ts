@@ -78,7 +78,9 @@ import SpeckleTextMaterial from './modules/materials/SpeckleTextMaterial.js'
 import { SpeckleText } from './modules/objects/SpeckleText.js'
 import { NodeRenderView } from './modules/tree/NodeRenderView.js'
 import {
-  ShapecastIntersection,
+  CONTAINED,
+  INTERSECTED,
+  NOT_INTERSECTED,
   type ExtendedIntersection
 } from './modules/objects/SpeckleRaycaster.js'
 import { SpeckleGeometryConverter } from './modules/loaders/Speckle/SpeckleGeometryConverter.js'
@@ -213,7 +215,9 @@ export {
   FilterMaterial,
   FilterMaterialType,
   FilterMaterialOptions,
-  ShapecastIntersection
+  NOT_INTERSECTED,
+  INTERSECTED,
+  CONTAINED
 }
 
 export type {
