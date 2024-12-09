@@ -9,7 +9,7 @@ import {
   Side,
   Vector3
 } from 'three'
-import { MeshBVHVisualizer } from 'three-mesh-bvh'
+import { MeshBVHVisualizer, ShapecastIntersection } from 'three-mesh-bvh'
 import { BatchObject } from '../batching/BatchObject.js'
 import { ExtendedTriangle, HitPointInfo } from 'three-mesh-bvh'
 import type {
@@ -294,28 +294,47 @@ export class TopLevelAccelerationStructure {
     }
 
     let ret = false
+    /** We only call intersectTASRange once for each batch object. */
+    const visitedObjects: { [id: string]: boolean | ShapecastIntersection } = {}
     this.accelerationStructure.shapecast({
       intersectsBounds: (box, isLeaf, score, depth, nodeIndex) => {
-        if (callbacks.intersectsTAS)
+        if (callbacks.intersectsTAS) {
           return callbacks.intersectsTAS(box, isLeaf, score, depth, nodeIndex)
+        }
         return false
       },
-      intersectsRange: (triangleOffset: number) => {
+      intersectsRange: (triangleOffset: number, triangleCount: number) => {
         /** The index buffer for the bvh's geometry will *never* be undefined as it uses indexed geometry */
-        const indexBufferAttribute: BufferAttribute = this.accelerationStructure
-          .geometry.index as BufferAttribute
-        const vertIndex = indexBufferAttribute.array[triangleOffset * 3]
-        const batchObjectIndex = Math.trunc(
-          vertIndex / TopLevelAccelerationStructure.CUBE_VERTS
-        )
-        if (callbacks.intersectTASRange) {
-          const ret = callbacks.intersectTASRange(this.batchObjects[batchObjectIndex])
-          if (!ret) return false
-        }
-        ret ||= this.batchObjects[batchObjectIndex].accelerationStructure.shapecast(
-          wrapCallbacks(this.batchObjects[batchObjectIndex])
-        )
+        const batchObjects = new Set<BatchObject>()
+        for (let k = 0; k < triangleCount; k++) {
+          const indexBufferAttribute: BufferAttribute = this.accelerationStructure
+            .geometry.index as BufferAttribute
+          const vertIndex = indexBufferAttribute.array[triangleOffset * 3 + k * 3]
+          const batchObjectIndex = Math.trunc(
+            vertIndex / TopLevelAccelerationStructure.CUBE_VERTS
+          )
+          const batchObject = this.batchObjects[batchObjectIndex]
+          if (callbacks.intersectTASRange) {
+            if (visitedObjects[batchObject.renderView.renderData.id] !== undefined)
+              continue
 
+            const ret = callbacks.intersectTASRange(batchObject)
+            visitedObjects[batchObject.renderView.renderData.id] = ret
+            if (ret) batchObjects.add(batchObject)
+          } else {
+            batchObjects.add(batchObject)
+          }
+        }
+        /** No batch object selected, stop here */
+        if (!batchObjects.size) return false
+
+        for (const batchObject of batchObjects) {
+          ret ||= batchObject.accelerationStructure.shapecast(
+            wrapCallbacks(batchObject)
+          )
+        }
+
+        /** We never test agains the TAS triangles because there is no point. Traversal stops here */
         return false
       }
     })

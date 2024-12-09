@@ -13,6 +13,9 @@ import { ObjectLayers } from '../../IViewer.js'
 import SpeckleMesh from './SpeckleMesh.js'
 import SpeckleInstancedMesh from './SpeckleInstancedMesh.js'
 
+export const NOT_INTERSECTED: ShapecastIntersection = 0
+export const INTERSECTED: ShapecastIntersection = 1
+export const CONTAINED: ShapecastIntersection = 2
 export type ExtendedShapeCastCallbacks = {
   intersectsTAS?: (
     box: Box3,
@@ -21,7 +24,7 @@ export type ExtendedShapeCastCallbacks = {
     depth: number,
     nodeIndex: number
   ) => ShapecastIntersection | boolean
-  intersectTASRange?: (batchObject: BatchObject) => ShapecastIntersection | boolean
+  intersectTASRange?: (batchObjects: BatchObject) => ShapecastIntersection | boolean
   intersectsBounds: (
     box: Box3,
     isLeaf: boolean,

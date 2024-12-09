@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
-import { InputEvent } from '@speckle/viewer'
+import { CONTAINED, InputEvent } from '@speckle/viewer'
 import { ObjectLayers } from '@speckle/viewer'
-import { NodeRenderView } from '@speckle/viewer'
 import { SelectionExtension } from '@speckle/viewer'
 import { BatchObject } from '@speckle/viewer'
 import { Extension, IViewer, GeometryType, CameraController } from '@speckle/viewer'
@@ -27,14 +26,19 @@ export class BoxSelection extends Extension {
 
   private dragging = false
   private frameLock = false
+  private _realTimeSelection = true
 
-  private idsToSelect: Array<string> | null = []
+  private idsToSelect: Set<string> | null = new Set()
 
   get enabled(): boolean {
     return this._enabled
   }
   set enabled(value: boolean) {
     this._enabled = value
+  }
+
+  set realtimeSelection(value: boolean) {
+    this._realTimeSelection = value
   }
 
   public constructor(viewer: IViewer, private cameraController: CameraController) {
@@ -53,10 +57,10 @@ export class BoxSelection extends Extension {
   }
 
   public onEarlyUpdate() {
-    if (this.idsToSelect) {
+    if (this.idsToSelect?.size) {
       /** Send the ids to the selection extension to be selected */
       this.selectionExtension.clearSelection()
-      this.selectionExtension.selectObjects(this.idsToSelect, true)
+      this.selectionExtension.selectObjects(Array.from(this.idsToSelect), true)
       this.idsToSelect = null
       this.viewer.requestRender()
     }
@@ -72,7 +76,7 @@ export class BoxSelection extends Extension {
     }
   }
 
-  private onPointerUp() {
+  private onPointerUp(e: Vector2 & { event: PointerEvent }) {
     /** Re-enable the camera controller */
     this.cameraController.enabled = true
     /** Hide the selection box */
@@ -80,6 +84,14 @@ export class BoxSelection extends Extension {
     this.dragBoxMaterial.needsUpdate = true
 
     this.dragging = false
+
+    if (!this._realTimeSelection && e.event.altKey) {
+      /** Get the ids of objects that fall withing the selection box */
+      this.idsToSelect = this.getSelectionIds(this.ndcBox)
+    }
+
+    this.ndcBox.makeEmpty()
+
     this.viewer.requestRender()
   }
 
@@ -101,9 +113,13 @@ export class BoxSelection extends Extension {
     this.ndcBox.max.set(1, 1, 0)
     this.ndcBox.applyMatrix4(ndcTransform)
 
-    /** Get the ids of objects that fall withing the selection box */
-    this.idsToSelect = this.getSelectionIds(this.ndcBox)
+    if (this._realTimeSelection) {
+      /** Get the ids of objects that fall withing the selection box */
+      this.idsToSelect = this.getSelectionIds(this.ndcBox)
+    }
+
     this.frameLock = true
+    this.viewer.requestRender()
   }
 
   /** Gets the object ids that fall withing the provided selection box */
@@ -124,13 +140,16 @@ export class BoxSelection extends Extension {
     /** We're using three-mesh-bvh library for out BVH
      *  Go over each batch and test it against the TAS only.
      **/
-    const selectionRvs: Array<NodeRenderView> = []
+    const selection: Set<string> = new Set()
     for (let b = 0; b < batches.length; b++) {
       batches[b].mesh.TAS.shapecast({
         /** This is the callback from the TAS's bounds internal nodes */
         intersectsTAS: (box: Box3) => {
           /** We continue traversion only if the selection box intersects an internal node */
           const ndcBox = this.worldBoxToNDC(box, clipMatrix)
+          if (selectionBox.containsBox(ndcBox)) {
+            return CONTAINED
+          }
           const ret = selectionBox.intersectsBox(ndcBox)
           return ret
         },
@@ -140,7 +159,8 @@ export class BoxSelection extends Extension {
           const ndcBox = this.worldBoxToNDC(objectBox, clipMatrix)
           /** We consider an object selected only it's NDC AABB is contained in the selection box */
           if (selectionBox.containsBox(ndcBox))
-            selectionRvs.push(batchObject.renderView)
+            selection.add(batchObject.renderView.renderData.id)
+          /** We always return false here because we don't want to continue intersecting batch object triangles. */
           return false
         },
         /** This is the callback from the BAS bounds internal nodes */
@@ -153,7 +173,7 @@ export class BoxSelection extends Extension {
         }
       })
     }
-    return selectionRvs.map((rv: NodeRenderView) => rv.renderData.id)
+    return selection
   }
 
   /** Buffers for reading/writing */
