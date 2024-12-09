@@ -22,6 +22,10 @@ kindV1Alpha4Cluster:
           containerPath: /postgres-volume
         - hostPath: ./minio-data #FIXME the relative paths are liable to break
           containerPath: /minio-volume
+        - hostPath: ./postgres-region1-data #FIXME the relative paths are liable to break
+          containerPath: /postgres-region1-volume
+        - hostPath: ./minio-region1-data #FIXME the relative paths are liable to break
+          containerPath: /minio-region1-volume
       extraPortMappings:
         - containerPort: 80
           hostPort: 80 # Docker requires privileged ports binding permissions https://docs.docker.com/desktop/mac/permission-requirements/#binding-privileged-ports

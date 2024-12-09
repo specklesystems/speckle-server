@@ -966,6 +966,16 @@ jobs:
               echo "🔐 We need 'sudo' to set permissions on postgres-data directory to 775"
               sudo chmod 775 "./postgres-data"
             fi
+            mkdir -p "./minio-region1-data"
+            if [ "$(stat -f "%A" "./minio-region1-data")" != "775" ]; then
+              echo "🔐 We need 'sudo' to set permissions on minio-region1-data directory to 775"
+              sudo chmod 775 "./minio-region1-data"
+            fi
+            mkdir -p "./postgres-region1-data"
+            if [ "$(stat -f "%A" "./postgres-region1-data")" != "775" ]; then
+              echo "🔐 We need 'sudo' to set permissions on postgres-data directory to 775"
+              sudo chmod 775 "./postgres-region1-data"
+            fi
 
       - run:
           name: Deploy Kubernetes (kind) cluster
@@ -975,10 +985,17 @@ jobs:
             ./.circleci/deployment/helm-chart-shell.nix
 
       - run:
-          name: Deploy Kubernetes resources to cluster
+          name: Deploy Kubernetes resources to cluster (single-region)
           command: |
             nix-shell \
             --run "LOAD_DOCKER='true' tilt ci --file ./.circleci/deployment/Tiltfile.helm --context kind-speckle-server --timeout 10m" \
+            ./.circleci/deployment/helm-chart-shell.nix
+
+      - run:
+          name: Deploy Kubernetes resources to cluster (single-region)
+          command: |
+            nix-shell \
+            --run "ENABLE_MULTI_REGION='true' LOAD_DOCKER='true' tilt ci --file ./.circleci/deployment/Tiltfile.helm --context kind-speckle-server --timeout 10m" \
             ./.circleci/deployment/helm-chart-shell.nix
 
   docker-build: &build-job
