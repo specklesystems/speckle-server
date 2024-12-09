@@ -121,8 +121,15 @@ const emptyStateItems = computed(() => {
     {
       title: 'Learn more',
       description:
-        'Find out how Automate can be customised to support virtually any of your custom workflows.',
+        "Let's chat! Find out how Automate can be customised to support and improve virtually any of your custom workflows.",
       buttons: [
+        {
+          text: 'Book a demo',
+          props: {
+            to: 'https://calendar.app.google/kH2EzSSMQktJ6bTZ7',
+            external: true
+          }
+        },
         {
           text: 'View docs',
           props: {
