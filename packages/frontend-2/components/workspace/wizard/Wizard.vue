@@ -22,7 +22,10 @@
   </div>
 </template>
 <script setup lang="ts">
-import { useWorkspacesWizard } from '~/lib/workspaces/composables/wizard'
+import {
+  useWorkspacesWizard,
+  useWorkspaceWizardState
+} from '~/lib/workspaces/composables/wizard'
 import { WizardSteps } from '~/lib/workspaces/helpers/types'
 import { workspaceWizardQuery } from '~/lib/workspaces/graphql/queries'
 import { useQuery } from '@vue/apollo-composable'
@@ -50,12 +53,9 @@ const props = defineProps<{
 const { cancelCheckoutSession } = useBillingActions()
 const route = useRoute()
 const mixpanel = useMixpanel()
-const {
-  setState,
-  currentStep,
-  goToStep,
-  isLoading: wizardIsLoading
-} = useWorkspacesWizard()
+const { goToStep } = useWorkspacesWizard()
+const wizardState = useWorkspaceWizardState()
+
 const { loading: queryLoading, onResult } = useQuery(
   workspaceWizardQuery,
   () => ({
@@ -70,7 +70,7 @@ const showPaymentError = ref(false)
 const isClientReady = ref(false)
 
 const loading = computed(
-  () => wizardIsLoading.value || (props.workspaceId ? queryLoading.value : false)
+  () => wizardState.value.isLoading || (props.workspaceId ? queryLoading.value : false)
 )
 
 onResult((result) => {
@@ -80,10 +80,10 @@ onResult((result) => {
   if (!creationState?.completed && !!creationState?.state) {
     const state = creationState.state as WorkspaceWizardState
 
-    setState({
+    wizardState.value.state = {
       ...state,
       id: props.workspaceId ?? (route.query.workspaceId as string)
-    })
+    }
 
     // If the users comes back from Stripe, we need to go to the last relevant step and show an error
     if (route.query.workspaceId as string) {

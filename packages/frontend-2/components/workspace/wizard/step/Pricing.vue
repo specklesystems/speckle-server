@@ -44,26 +44,30 @@ import {
   BillingInterval,
   WorkspacePlans
 } from '~/lib/common/generated/gql/graphql'
-import { useWorkspacesWizard } from '~/lib/workspaces/composables/wizard'
+import {
+  useWorkspacesWizard,
+  useWorkspaceWizardState
+} from '~/lib/workspaces/composables/wizard'
 import { pricingPlansConfig } from '~/lib/billing/helpers/constants'
 import { useMixpanel } from '~/lib/core/composables/mp'
 import { startCase } from 'lodash'
 
-const { state, goToNextStep, goToPreviousStep } = useWorkspacesWizard()
+const { goToNextStep, goToPreviousStep } = useWorkspacesWizard()
+const wizardState = useWorkspaceWizardState()
 const mixpanel = useMixpanel()
 
 const plans = ref(pricingPlansConfig.plans)
 const isYearlySelected = ref(false)
 
 const onCtaClick = (plan: WorkspacePlans) => {
-  state.value.plan = plan as unknown as PaidWorkspacePlans
-  state.value.billingInterval = isYearlySelected.value
+  wizardState.value.state.plan = plan as unknown as PaidWorkspacePlans
+  wizardState.value.state.billingInterval = isYearlySelected.value
     ? BillingInterval.Yearly
     : BillingInterval.Monthly
 
   mixpanel.track('Workspace Pricing Step Completed', {
-    plan: state.value.plan,
-    billingInterval: state.value.billingInterval
+    plan: wizardState.value.state.plan,
+    billingInterval: wizardState.value.state.billingInterval
   })
 
   goToNextStep()
@@ -74,9 +78,10 @@ const onYearlyIntervalSelected = (newValue: boolean) => {
 }
 
 watch(
-  () => state.value.billingInterval,
+  () => wizardState.value.state.billingInterval,
   () => {
-    isYearlySelected.value = state.value.billingInterval === BillingInterval.Yearly
+    isYearlySelected.value =
+      wizardState.value.state.billingInterval === BillingInterval.Yearly
   },
   { immediate: true }
 )
