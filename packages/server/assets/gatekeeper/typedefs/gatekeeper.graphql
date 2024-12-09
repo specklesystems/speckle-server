@@ -99,6 +99,10 @@ extend type Workspace {
     @hasWorkspaceRole(role: ADMIN)
   hasAccessToFeature(featureName: WorkspaceFeatureName!): Boolean!
     @hasWorkspaceRole(role: GUEST)
+  """
+  A Workspace is marked as readOnly if its trial period is finished or a paid plan is subscribed but payment has failed
+  """
+  readOnly: Boolean!
 }
 
 enum WorkspaceFeatureName {
