@@ -2,7 +2,7 @@ import { ProjectSubscriptions } from '@/modules/shared/utils/subscriptions'
 import { MessageType } from '@/modules/core/utils/dbNotificationListener'
 import { getObjectCommitsWithStreamIdsFactory } from '@/modules/core/repositories/commits'
 import { publish } from '@/modules/shared/utils/subscriptions'
-import { getProjectDbClient } from '@/modules/multiregion/dbSelector'
+import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 
 const payloadRegexp = /^([\w\d]+):([\w\d]+):([\w\d]+)$/i
 

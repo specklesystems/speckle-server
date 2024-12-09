@@ -8,7 +8,7 @@ import { db } from '@/db/knex'
 import { validatePermissionsReadStreamFactory } from '@/modules/core/services/streams/auth'
 import { getStreamFactory } from '@/modules/core/repositories/streams'
 import { authorizeResolver, validateScopes } from '@/modules/shared'
-import { getProjectDbClient } from '@/modules/multiregion/dbSelector'
+import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 
 export default (app: Application) => {
   const validatePermissionsReadStream = validatePermissionsReadStreamFactory({

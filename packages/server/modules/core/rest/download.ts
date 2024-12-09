@@ -13,7 +13,7 @@ import { validatePermissionsReadStreamFactory } from '@/modules/core/services/st
 import { getStreamFactory } from '@/modules/core/repositories/streams'
 import { validateScopes, authorizeResolver } from '@/modules/shared'
 import type express from 'express'
-import { getProjectDbClient } from '@/modules/multiregion/dbSelector'
+import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 
 export default (app: express.Express) => {
   const validatePermissionsReadStream = validatePermissionsReadStreamFactory({

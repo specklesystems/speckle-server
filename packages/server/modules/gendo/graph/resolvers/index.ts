@@ -17,7 +17,6 @@ import {
   updateBlobFactory,
   upsertBlobFactory
 } from '@/modules/blobstorage/repositories'
-import { storeFileStream } from '@/modules/blobstorage/objectStorage'
 import {
   getLatestVersionRenderRequestsFactory,
   getUserCreditsFactory,
@@ -25,7 +24,7 @@ import {
   storeRenderFactory,
   upsertUserCreditsFactory
 } from '@/modules/gendo/repositories'
-import { getProjectDbClient } from '@/modules/multiregion/dbSelector'
+import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { requestNewImageGenerationFactory } from '@/modules/gendo/clients/gendo'
 import {
   getUserGendoAiCreditsFactory,
@@ -39,6 +38,8 @@ import {
   getServerOrigin,
   getFeatureFlags
 } from '@/modules/shared/helpers/envHelper'
+import { getProjectObjectStorage } from '@/modules/multiregion/utils/blobStorageSelector'
+import { storeFileStreamFactory } from '@/modules/blobstorage/repositories/blobs'
 
 const upsertUserCredits = upsertUserCreditsFactory({ db })
 const getUserGendoAiCredits = getUserGendoAiCreditsFactory({
@@ -95,9 +96,13 @@ export = FF_GENDOAI_MODULE_ENABLED
 
           const userId = ctx.userId!
 
-          const projectDb = await getProjectDbClient({
-            projectId: args.input.projectId
-          })
+          const projectId = args.input.projectId
+          const [projectDb, projectStorage] = await Promise.all([
+            getProjectDbClient({
+              projectId
+            }),
+            getProjectObjectStorage({ projectId })
+          ])
 
           await useUserGendoAiCreditsFactory({
             getUserGendoAiCredits,
@@ -111,6 +116,7 @@ export = FF_GENDOAI_MODULE_ENABLED
             token: getGendoAIKey()
           })
 
+          const storeFileStream = storeFileStreamFactory({ storage: projectStorage })
           const createRenderRequest = createRenderRequestFactory({
             uploadFileStream: uploadFileStreamFactory({
               storeFileStream,

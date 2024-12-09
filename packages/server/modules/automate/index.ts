@@ -45,7 +45,7 @@ import {
   storeTokenScopesFactory,
   storeUserServerAppTokenFactory
 } from '@/modules/core/repositories/tokens'
-import { getProjectDbClient } from '@/modules/multiregion/dbSelector'
+import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import {
   ProjectAutomationsUpdatedMessageType,
   ProjectTriggeredAutomationsStatusUpdatedMessageType

@@ -68,3 +68,15 @@ export const updateAndValidateRegionFactory =
 
     return await deps.updateRegion({ regionKey: input.key, region: update })
   }
+
+export const initializeRegionClients =
+  (deps: {
+    initializeDb: InitializeRegion
+    initializeBlobStorage: InitializeRegion
+  }): InitializeRegion =>
+  async ({ regionKey }) => {
+    await Promise.all([
+      deps.initializeDb({ regionKey }),
+      deps.initializeBlobStorage({ regionKey })
+    ])
+  }

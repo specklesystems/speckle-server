@@ -6,7 +6,7 @@ import {
   getStreamBranchByNameFactory
 } from '@/modules/core/repositories/branches'
 import { createBranchAndNotifyFactory } from '@/modules/core/services/branch/management'
-import { getProjectDbClient } from '@/modules/multiregion/dbSelector'
+import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { publish } from '@/modules/shared/utils/subscriptions'
 import { BasicTestUser } from '@/test/authHelper'
 import { BasicTestStream } from '@/test/speckle-helpers/streamHelper'

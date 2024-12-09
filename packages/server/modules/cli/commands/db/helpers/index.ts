@@ -1,4 +1,4 @@
-import { getAllRegisteredDbClients } from '@/modules/multiregion/dbSelector'
+import { getAllRegisteredDbClients } from '@/modules/multiregion/utils/dbSelector'
 
 export type CommonDbArgs = {
   regionKey?: string

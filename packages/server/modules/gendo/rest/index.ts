@@ -6,24 +6,16 @@ import {
   updateRenderRecordFactory
 } from '@/modules/gendo/repositories'
 import { uploadFileStreamFactory } from '@/modules/blobstorage/services/management'
-import { storeFileStream } from '@/modules/blobstorage/objectStorage'
 import {
   updateBlobFactory,
   upsertBlobFactory
 } from '@/modules/blobstorage/repositories'
 import { publish } from '@/modules/shared/utils/subscriptions'
-import { getProjectDbClient } from '@/modules/multiregion/dbSelector'
+import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { createHmac, timingSafeEqual } from 'node:crypto'
 import { getGendoAIKey } from '@/modules/shared/helpers/envHelper'
-//Validate payload
-// function validatePayload(req, res, next) {
-//   if (req.get(sigHeaderName)) {
-//     //Extract Signature header
-//
-//   }
-
-//   return next();
-// }
+import { getProjectObjectStorage } from '@/modules/multiregion/utils/blobStorageSelector'
+import { storeFileStreamFactory } from '@/modules/blobstorage/repositories/blobs'
 
 export default function (app: express.Express) {
   // const responseToken = getGendoAIResponseKey()
@@ -46,8 +38,13 @@ export default function (app: express.Express) {
     const status = payload.status
     const gendoGenerationId = payload.generationId
 
-    const projectDb = await getProjectDbClient({ projectId: req.params.projectId })
+    const projectId = req.params.projectId
+    const [projectDb, projectStorage] = await Promise.all([
+      getProjectDbClient({ projectId }),
+      getProjectObjectStorage({ projectId })
+    ])
 
+    const storeFileStream = storeFileStreamFactory({ storage: projectStorage })
     const updateRenderRequest = updateRenderRequestFactory({
       getRenderByGenerationId: getRenderByGenerationIdFactory({ db: projectDb }),
       uploadFileStream: uploadFileStreamFactory({

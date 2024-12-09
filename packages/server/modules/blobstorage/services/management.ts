@@ -22,9 +22,9 @@ export const uploadFileStreamFactory =
     updateBlob: UpdateBlob
     storeFileStream: StoreFileStream
   }): UploadFileStream =>
-  async (params1, params2) => {
-    const { streamId, userId } = params1
-    const { blobId, fileName, fileType, fileStream } = params2
+  async (streamData, blobData) => {
+    const { streamId, userId } = streamData
+    const { blobId, fileName, fileType, fileStream } = blobData
 
     if (streamId.length !== 10)
       throw new BadRequestError('The stream id has to be of length 10')
