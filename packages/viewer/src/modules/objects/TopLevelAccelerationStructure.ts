@@ -296,26 +296,38 @@ export class TopLevelAccelerationStructure {
     let ret = false
     this.accelerationStructure.shapecast({
       intersectsBounds: (box, isLeaf, score, depth, nodeIndex) => {
-        if (callbacks.intersectsTAS)
+        if (callbacks.intersectsTAS) {
           return callbacks.intersectsTAS(box, isLeaf, score, depth, nodeIndex)
+        }
         return false
       },
-      intersectsRange: (triangleOffset: number) => {
+      intersectsRange: (triangleOffset: number, triangleCount: number) => {
         /** The index buffer for the bvh's geometry will *never* be undefined as it uses indexed geometry */
-        const indexBufferAttribute: BufferAttribute = this.accelerationStructure
-          .geometry.index as BufferAttribute
-        const vertIndex = indexBufferAttribute.array[triangleOffset * 3]
-        const batchObjectIndex = Math.trunc(
-          vertIndex / TopLevelAccelerationStructure.CUBE_VERTS
-        )
-        if (callbacks.intersectTASRange) {
-          const ret = callbacks.intersectTASRange(this.batchObjects[batchObjectIndex])
-          if (!ret) return false
+        const batchObjects = new Set<BatchObject>()
+        for (let k = 0; k < triangleCount; k++) {
+          const indexBufferAttribute: BufferAttribute = this.accelerationStructure
+            .geometry.index as BufferAttribute
+          const vertIndex = indexBufferAttribute.array[triangleOffset * 3 + k * 3]
+          const batchObjectIndex = Math.trunc(
+            vertIndex / TopLevelAccelerationStructure.CUBE_VERTS
+          )
+          if (callbacks.intersectTASRange) {
+            const ret = callbacks.intersectTASRange(this.batchObjects[batchObjectIndex])
+            if (ret) batchObjects.add(this.batchObjects[batchObjectIndex])
+          } else {
+            batchObjects.add(this.batchObjects[batchObjectIndex])
+          }
         }
-        ret ||= this.batchObjects[batchObjectIndex].accelerationStructure.shapecast(
-          wrapCallbacks(this.batchObjects[batchObjectIndex])
-        )
+        /** No batch object selected, stop here */
+        if (!batchObjects.size) return false
 
+        for (const batchObject of batchObjects) {
+          ret ||= batchObject.accelerationStructure.shapecast(
+            wrapCallbacks(batchObject)
+          )
+        }
+
+        /** We never test agains the TAS triangles because there is no point. Traversal stops here */
         return false
       }
     })
