@@ -8,6 +8,7 @@ export const basicWorkspaceFragment = gql`
     updatedAt
     createdAt
     role
+    readOnly
   }
 `
 
