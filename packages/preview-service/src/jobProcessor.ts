@@ -10,14 +10,16 @@ declare global {
   interface Window extends PreviewGenerator {}
 }
 
-type JobSuccess = {
+type Job = {
   jobId: string
+}
+
+type JobSuccess = Job & {
   status: 'success'
   result: PreviewResult
 }
 
-type JobError = {
-  jobId: string
+type JobError = Job & {
   status: 'error'
   reason: Error
 }
@@ -31,31 +33,56 @@ export const jobPayload = z.object({
 })
 type JobPayload = z.infer<typeof jobPayload>
 
-export const jobProcessor = async (
-  jobLogger: Logger,
-  browser: Browser,
-  payload: JobPayload
-): Promise<JobResult> => {
+export const jobProcessor = async ({
+  logger,
+  browser,
+  payload
+}: {
+  logger: Logger
+  browser: Browser
+  payload: any
+}): Promise<JobResult> => {
+  const parseResult = jobPayload.safeParse(payload)
+  if (!parseResult.success) {
+    const jobId =
+      'jobId' in payload && typeof payload['jobId'] === 'string'
+        ? payload['jobId']
+        : 'unknown'
+    logger.error({ payload }, 'Failed to parse job payload')
+    return { jobId, status: 'error', reason: parseResult.error }
+  }
+  const job = parseResult.data
+  const jobId = job.jobId
+  const jobLogger = logger.child({ jobId })
+  const start = new Date()
+  jobLogger.info({ start }, 'Picking up job {jobId}')
+
   let page: Page | undefined = undefined
   try {
     page = await browser.newPage()
-    page.on('error', (err) => {
-      jobLogger.error(err, 'Page crashed')
-      throw err
-    })
-    await page.goto('http://127.0.0.1:3010/index.html')
-    // page.setDefaultTimeout(deps.timeoutMilliseconds)
-
-    const previewResult = await page.evaluate(async (payload: JobPayload) => {
-      await window.load(payload)
-      return await window.takeScreenshot()
-    }, payload)
-
-    return { jobId: payload.jobId, status: 'success', result: previewResult }
+    const a = await Promise.race([
+      pageFunction({ page, job, jobLogger }),
+      new Promise((resolve, reject) => {
+        setTimeout(resolve, 500, 'one')
+        return
+      })
+    ])
+    const doJob = async () => {}
+    const result = await pageFunction({ page, job, jobLogger })
+    const elapsed = (new Date().getTime() - start.getTime()) / 1000
+    jobLogger.info(
+      { status: result.status, elapsed },
+      'Processes job {jobId} with result {status}. It took {elapsed} seconds.'
+    )
+    return result
   } catch (err) {
-    jobLogger.error({ err }, 'Failed to process job')
+    const elapsed = (new Date().getTime() - start.getTime()) / 1000
+    jobLogger.error(
+      { err, elapsed },
+      'Failed to process {jobId} job. It took {elapsed} seconds'
+    )
     return {
-      jobId: payload.jobId,
+      jobId: job.jobId,
       status: 'error',
       reason:
         err instanceof Error
@@ -67,4 +94,28 @@ export const jobProcessor = async (
   } finally {
     await page?.close()
   }
+}
+
+const pageFunction = async ({
+  page,
+  job,
+  jobLogger
+}: {
+  page: Page
+  job: JobPayload
+  jobLogger: Logger
+}): Promise<JobSuccess> => {
+  page.on('error', (err) => {
+    jobLogger.error({ err }, 'Page crashed')
+    throw err
+  })
+  await page.goto('http://127.0.0.1:3010/index.html')
+  // page.setDefaultTimeout(deps.timeoutMilliseconds)
+
+  const previewResult = await page.evaluate(async (job: JobPayload) => {
+    await window.load(job)
+    return await window.takeScreenshot()
+  }, job)
+
+  return { jobId: job.jobId, status: 'success', result: previewResult }
 }

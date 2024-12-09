@@ -16,7 +16,7 @@
   },
   "scripts": {
     "build:frontend": "yarn workspace @speckle/preview-frontend build",
-    "link:frontend": "rimraf ./public",
+    "link:frontend": "yarn build:frontend && rimraf ./public && ln -s ../preview-frontend/dist ./public",
     "dev": "tsx --env-file=.env --watch src/main.ts"
   },
   "dependencies": {
