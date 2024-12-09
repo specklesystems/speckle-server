@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
-import { InputEvent } from '@speckle/viewer'
+import { CONTAINED, InputEvent, ShapecastIntersection } from '@speckle/viewer'
 import { ObjectLayers } from '@speckle/viewer'
-import { NodeRenderView } from '@speckle/viewer'
 import { SelectionExtension } from '@speckle/viewer'
 import { BatchObject } from '@speckle/viewer'
 import { Extension, IViewer, GeometryType, CameraController } from '@speckle/viewer'
@@ -77,7 +76,7 @@ export class BoxSelection extends Extension {
     }
   }
 
-  private onPointerUp() {
+  private onPointerUp(e: Vector2 & { event: PointerEvent }) {
     /** Re-enable the camera controller */
     this.cameraController.enabled = true
     /** Hide the selection box */
@@ -86,7 +85,7 @@ export class BoxSelection extends Extension {
 
     this.dragging = false
 
-    if (!this._realTimeSelection) {
+    if (!this._realTimeSelection && e.event.altKey) {
       /** Get the ids of objects that fall withing the selection box */
       this.idsToSelect = this.getSelectionIds(this.ndcBox)
     }
@@ -148,6 +147,9 @@ export class BoxSelection extends Extension {
         intersectsTAS: (box: Box3) => {
           /** We continue traversion only if the selection box intersects an internal node */
           const ndcBox = this.worldBoxToNDC(box, clipMatrix)
+          if (selectionBox.containsBox(ndcBox)) {
+            return ShapecastIntersection.CONTAINED
+          }
           const ret = selectionBox.intersectsBox(ndcBox)
           return ret
         },
