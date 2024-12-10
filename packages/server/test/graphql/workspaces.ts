@@ -9,6 +9,7 @@ export const workspaceFragment = gql`
     createdAt
     updatedAt
     logo
+    readOnly
   }
 `
 
