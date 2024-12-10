@@ -20,7 +20,7 @@ import {
 import { useDiffBuilderUtilities } from '~~/lib/viewer/composables/setup/diff'
 import { useTourStageState } from '~~/lib/viewer/composables/tour'
 import { Vector3, Box3 } from 'three'
-import { onKeyboardShortcut } from '@speckle/ui-components'
+import { getKeyboardShortcutTitle, onKeyboardShortcut } from '@speckle/ui-components'
 import { ViewerShortcuts } from '~/lib/viewer/helpers/shortcuts/shortcuts'
 import type {
   ViewerShortcut,
@@ -530,8 +530,10 @@ export function useViewerShortcuts() {
   ) => {
     if (isSmallerOrEqualSm.value) return undefined
 
-    const modifierText = shortcut.modifiers.join('+')
-    const shortcutText = `${modifierText}+${formatKey(shortcut.key)}`
+    const shortcutText = getKeyboardShortcutTitle([
+      ...shortcut.modifiers,
+      formatKey(shortcut.key)
+    ])
 
     if (!options?.hideName) {
       return `${shortcut.name} (${shortcutText})`

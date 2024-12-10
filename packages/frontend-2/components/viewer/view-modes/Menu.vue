@@ -11,22 +11,12 @@
       @focusout="isManuallyOpened ? undefined : startCloseTimer"
     >
       <div v-for="shortcut in viewModeShortcuts" :key="shortcut.name">
-        <button
-          class="flex items-center justify-between hover:bg-highlight-1 text-foreground w-full h-full text-body-xs py-1 px-2 transition rounded-md"
-          :class="{ 'bg-highlight-1': isActiveMode(shortcut.viewMode) }"
+        <ViewerMenuItem
+          :label="shortcut.name"
+          :active="isActiveMode(shortcut.viewMode)"
+          :shortcut="getShortcutDisplayText(shortcut, { hideName: true })"
           @click="handleViewModeChange(shortcut.viewMode)"
-        >
-          <div class="w-5 shrink-0">
-            <IconCheck
-              v-if="isActiveMode(shortcut.viewMode)"
-              class="h-4 w-4 text-foreground-2"
-            />
-          </div>
-          <div class="flex-1 text-left">{{ shortcut.name }}</div>
-          <span class="text-body-2xs text-foreground-2">
-            {{ getShortcutDisplayText(shortcut, { hideName: true }) }}
-          </span>
-        </button>
+        />
       </div>
     </div>
   </ViewerMenu>
@@ -38,6 +28,10 @@ import { ViewMode } from '@speckle/viewer'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useViewerShortcuts, useViewModeUtilities } from '~~/lib/viewer/composables/ui'
 import { ViewModeShortcuts } from '~/lib/viewer/helpers/shortcuts/shortcuts'
+
+const emit = defineEmits<{
+  'shortcut-open': []
+}>()
 
 const open = defineModel<boolean>('open', { required: true })
 
@@ -73,11 +67,12 @@ const handleViewModeChange = (mode: ViewMode, isShortcut = false) => {
 
   if (isShortcut) {
     isManuallyOpened.value = false
-    if (!open.value) {
-      open.value = true
-    }
+    emit('shortcut-open')
     cancelCloseTimer()
     startCloseTimer()
+  } else {
+    isManuallyOpened.value = true
+    cancelCloseTimer()
   }
 
   mp.track('Viewer Action', {

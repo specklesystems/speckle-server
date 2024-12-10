@@ -86,7 +86,7 @@
             <!-- View Modes -->
             <ViewerViewModesMenu
               :open="activeControl === 'viewModes'"
-              @update:open="(value: boolean) => toggleActiveControl(value ? 'viewModes' : 'none')"
+              @shortcut-open="() => (activeControl = 'viewModes')"
             />
             <!-- Views -->
             <ViewerViewsMenu v-tippy="`Views`" />
@@ -101,7 +101,8 @@
 
             <!-- Sun and lights -->
             <ViewerSunMenu
-              v-tippy="isSmallerOrEqualSm ? undefined : 'Light controls'"
+              :open="activeControl === 'sun'"
+              @update:open="(value: boolean) => toggleActiveControl(value ? 'sun' : 'none')"
             />
           </ViewerControlsButtonGroup>
           <ViewerControlsButtonGroup>
