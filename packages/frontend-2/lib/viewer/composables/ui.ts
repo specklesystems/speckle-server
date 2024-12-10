@@ -8,7 +8,7 @@ import {
 import { MeasurementsExtension, ViewModes } from '@speckle/viewer'
 import { until } from '@vueuse/shared'
 import { difference, isString, uniq } from 'lodash-es'
-import { useEmbedState } from '~/lib/viewer/composables/setup/embed'
+import { useEmbedState, useEmbed } from '~/lib/viewer/composables/setup/embed'
 import type { SpeckleObject } from '~/lib/viewer/helpers/sceneExplorer'
 import { isNonNullable } from '~~/lib/common/helpers/utils'
 import {
@@ -510,11 +510,22 @@ export function useViewModeUtilities() {
 export function useViewerShortcuts() {
   const { ui } = useInjectedViewerState()
   const { isSmallerOrEqualSm } = useIsSmallerOrEqualThanBreakpoint()
+  const { isEnabled: isEmbedEnabled } = useEmbed()
 
   const isTypingComment = computed(() => {
+    // Check if any input-like element is focused
+    const activeElement = document.activeElement
+    const isInputFocused =
+      activeElement instanceof HTMLElement &&
+      (activeElement.tagName === 'INPUT' ||
+        activeElement.tagName === 'TEXTAREA' ||
+        activeElement.contentEditable === 'true')
+
+    // Check thread editor states
     const isNewThreadEditorOpen = ui.threads.openThread.newThreadEditor.value
     const isExistingThreadEditorOpen = !!ui.threads.openThread.thread.value
-    return isNewThreadEditorOpen || isExistingThreadEditorOpen
+
+    return isInputFocused || isNewThreadEditorOpen || isExistingThreadEditorOpen
   })
 
   const formatKey = (key: string) => {
@@ -529,6 +540,7 @@ export function useViewerShortcuts() {
     options?: { hideName?: boolean }
   ) => {
     if (isSmallerOrEqualSm.value) return undefined
+    if (isEmbedEnabled.value) return undefined
 
     const shortcutText = getKeyboardShortcutTitle([
       ...shortcut.modifiers,
@@ -542,15 +554,22 @@ export function useViewerShortcuts() {
     return shortcutText
   }
 
+  const disableShortcuts = computed(() => isTypingComment.value || isEmbedEnabled.value)
+
   const registerShortcuts = (
     handlers: Partial<Record<ViewerShortcutAction, () => void>>
   ) => {
     Object.values(ViewerShortcuts).forEach((shortcut) => {
       const handler = handlers[shortcut.action as ViewerShortcutAction]
       if (handler) {
-        onKeyboardShortcut([...shortcut.modifiers], shortcut.key, () => {
-          if (!isTypingComment.value) handler()
-        })
+        onKeyboardShortcut(
+          [...shortcut.modifiers],
+          shortcut.key,
+          () => {
+            if (!disableShortcuts.value) handler()
+          },
+          { disabled: disableShortcuts }
+        )
       }
     })
   }
