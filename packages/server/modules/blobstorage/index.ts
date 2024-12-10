@@ -6,13 +6,6 @@ import {
   streamWritePermissionsPipelineFactory,
   streamReadPermissionsPipelineFactory
 } from '@/modules/shared/authz'
-import {
-  ensureStorageAccess,
-  storeFileStream,
-  getObjectStream,
-  deleteObject,
-  getObjectAttributes
-} from '@/modules/blobstorage/objectStorage'
 import crs from 'crypto-random-string'
 import { authMiddlewareCreator } from '@/modules/shared/middleware'
 import { isArray } from 'lodash'
@@ -42,12 +35,24 @@ import {
   fullyDeleteBlobFactory
 } from '@/modules/blobstorage/services/management'
 import { getRolesFactory } from '@/modules/shared/repositories/roles'
-import { adminOverrideEnabled } from '@/modules/shared/helpers/envHelper'
+import {
+  adminOverrideEnabled,
+  createS3Bucket
+} from '@/modules/shared/helpers/envHelper'
 import { getStreamFactory } from '@/modules/core/repositories/streams'
 import { Request, Response } from 'express'
 import { ensureError } from '@speckle/shared'
 import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
-import { getProjectDbClient } from '@/modules/multiregion/dbSelector'
+import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
+import {
+  deleteObjectFactory,
+  ensureStorageAccessFactory,
+  getObjectAttributesFactory,
+  getObjectStreamFactory,
+  storeFileStreamFactory
+} from '@/modules/blobstorage/repositories/blobs'
+import { getMainObjectStorage } from '@/modules/blobstorage/clients/objectStorage'
+import { getProjectObjectStorage } from '@/modules/multiregion/utils/blobStorageSelector'
 
 const ensureConditions = async () => {
   if (process.env.DISABLE_FILE_UPLOADS) {
@@ -55,7 +60,11 @@ const ensureConditions = async () => {
     return
   } else {
     moduleLogger.info('📦 Init BlobStorage module')
-    await ensureStorageAccess()
+    const storage = getMainObjectStorage()
+    const ensureStorageAccess = ensureStorageAccessFactory({ storage })
+    await ensureStorageAccess({
+      createBucketIfNotExists: createS3Bucket()
+    })
   }
 
   if (!process.env.S3_BUCKET) {
@@ -125,8 +134,12 @@ export const init: SpeckleModule['init'] = async (app) => {
         limits: { fileSize: getFileSizeLimit() }
       })
 
-      const projectDb = await getProjectDbClient({ projectId: streamId })
+      const [projectDb, projectStorage] = await Promise.all([
+        getProjectDbClient({ projectId: streamId }),
+        getProjectObjectStorage({ projectId: streamId })
+      ])
 
+      const storeFileStream = storeFileStreamFactory({ storage: projectStorage })
       const updateBlob = updateBlobFactory({ db: projectDb })
       const getBlobMetadata = getBlobMetadataFactory({ db: projectDb })
 
@@ -145,6 +158,11 @@ export const init: SpeckleModule['init'] = async (app) => {
         getBlobMetadata,
         updateBlob
       })
+
+      const getObjectAttributes = getObjectAttributesFactory({
+        storage: projectStorage
+      })
+      const deleteObject = deleteObjectFactory({ storage: projectStorage })
 
       busboy.on('file', (formKey, file, info) => {
         const { filename: fileName } = info
@@ -275,9 +293,15 @@ export const init: SpeckleModule['init'] = async (app) => {
     },
     async (req, res) => {
       errorHandler(req, res, async (req, res) => {
-        const projectDb = await getProjectDbClient({ projectId: req.params.streamId })
+        const streamId = req.params.streamId
+        const [projectDb, projectStorage] = await Promise.all([
+          getProjectDbClient({ projectId: streamId }),
+          getProjectObjectStorage({ projectId: streamId })
+        ])
+
         const getBlobMetadata = getBlobMetadataFactory({ db: projectDb })
         const getFileStream = getFileStreamFactory({ getBlobMetadata })
+        const getObjectStream = getObjectStreamFactory({ storage: projectStorage })
 
         const { fileName } = await getBlobMetadata({
           streamId: req.params.streamId,
@@ -304,12 +328,19 @@ export const init: SpeckleModule['init'] = async (app) => {
     },
     async (req, res) => {
       errorHandler(req, res, async (req, res) => {
-        const projectDb = await getProjectDbClient({ projectId: req.params.streamId })
+        const streamId = req.params.streamId
+        const [projectDb, projectStorage] = await Promise.all([
+          getProjectDbClient({ projectId: streamId }),
+          getProjectObjectStorage({ projectId: streamId })
+        ])
+
         const getBlobMetadata = getBlobMetadataFactory({ db: projectDb })
         const deleteBlob = fullyDeleteBlobFactory({
           getBlobMetadata,
           deleteBlob: deleteBlobFactory({ db: projectDb })
         })
+        const deleteObject = deleteObjectFactory({ storage: projectStorage })
+
         await deleteBlob({
           streamId: req.params.streamId,
           blobId: req.params.blobId,

@@ -45,7 +45,7 @@ import {
   storeTokenScopesFactory,
   storeUserServerAppTokenFactory
 } from '@/modules/core/repositories/tokens'
-import { getProjectDbClient } from '@/modules/multiregion/dbSelector'
+import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import {
   ProjectAutomationsUpdatedMessageType,
   ProjectTriggeredAutomationsStatusUpdatedMessageType
@@ -57,6 +57,7 @@ import {
 } from '@/modules/automate/helpers/types'
 import { isFinished } from '@/modules/automate/domain/logic'
 import { mixpanel } from '@/modules/shared/utils/mixpanel'
+import { getProjectFactory } from '@/modules/core/repositories/projects'
 
 const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
 let quitListeners: Optional<() => void> = undefined
@@ -255,9 +256,10 @@ const initializeEventListeners = () => {
     AutomateRunsEmitter.listen(
       AutomateRunsEvents.StatusUpdated,
       async ({ run, functionRun, automationId, projectId }) => {
-        const projectDb = await getProjectDbClient({ projectId })
-
         if (!isFinished(run.status)) return
+
+        const projectDb = await getProjectDbClient({ projectId })
+        const project = await getProjectFactory({ db: projectDb })({ projectId })
 
         const automationWithRevision = await getFullAutomationRevisionMetadataFactory({
           db: projectDb
@@ -293,7 +295,9 @@ const initializeEventListeners = () => {
           functionRunId: functionRun.id,
           status: functionRun.status,
           durationInSeconds: functionRun.elapsed / 1000,
-          durationInMilliseconds: functionRun.elapsed
+          durationInMilliseconds: functionRun.elapsed,
+          /* eslint-disable-next-line camelcase */
+          workspace_id: project?.workspaceId
         })
       }
     ),
@@ -308,6 +312,9 @@ const initializeEventListeners = () => {
           return
         }
         const projectDb = await getProjectDbClient({ projectId: manifest.projectId })
+        const project = await getProjectFactory({ db: projectDb })({
+          projectId: manifest.projectId
+        })
 
         // all triggers, that are automatic result of an action are in a need to be tracked
         switch (source) {
@@ -327,7 +334,9 @@ const initializeEventListeners = () => {
               automationName: automation.name,
               automationRunId: automationRun.id,
               projectId: automation.projectId,
-              source
+              source,
+              /* eslint-disable-next-line camelcase */
+              workspace_id: project?.workspaceId
             })
             break
           }

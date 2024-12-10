@@ -497,7 +497,7 @@ export async function shutdown(params: {
 }
 
 const shouldUseFrontendProxy = () =>
-  process.env.NODE_ENV === 'development' && process.env.USE_FRONTEND_2 !== 'true'
+  process.env.NODE_ENV === 'development' && process.env.USE_FRONTEND_PROXY === 'true'
 
 async function createFrontendProxy() {
   const frontendHost = process.env.FRONTEND_HOST || '127.0.0.1'
@@ -535,7 +535,7 @@ export async function startHttp(params: {
     // app.use('/', frontendProxy)
     app.use(await createFrontendProxy())
 
-    startupLogger.info('✨ Proxying frontend-1 (dev mode):')
+    startupLogger.info('✨ Proxying frontend (dev mode):')
     startupLogger.info(`👉 main application: http://127.0.0.1:${port}/`)
   }
 

@@ -82,15 +82,14 @@
                       ? 'Log in with your SSO provider to access this page'
                       : workspaceMenuItem.tooltipText
                   "
-                  :disabled="
-                    workspaceMenuItem.disabled || needsSsoSession(workspaceItem, itemKey as string)
-                  "
+                  :disabled="!isAdmin && (workspaceMenuItem.disabled || needsSsoSession(workspaceItem, itemKey as string))"
                   extra-padding
                   @click="
-                    () =>
-                      workspaceMenuItem.disabled
-                        ? noop
-                        : onWorkspaceMenuItemClick(workspaceItem.id, `${itemKey}`)
+                    handleMenuItemClick(
+                      workspaceMenuItem,
+                      workspaceItem,
+                      itemKey as string
+                    )
                   "
                 />
               </template>
@@ -121,11 +120,6 @@
         @close="isOpen = false"
       />
     </div>
-
-    <WorkspaceCreateDialog
-      v-model:open="showWorkspaceCreateDialog"
-      event-source="settings"
-    />
   </LayoutDialog>
 </template>
 
@@ -163,6 +157,9 @@ graphql(`
     plan {
       status
     }
+    creationState {
+      completed
+    }
   }
 `)
 
@@ -191,10 +188,12 @@ const { result: workspaceResult } = useQuery(settingsSidebarQuery, null, {
 const { userMenuItems, serverMenuItems, workspaceMenuItems } = useSettingsMenu()
 
 const isMobile = breakpoints.smaller('md')
-const showWorkspaceCreateDialog = ref(false)
 
 const workspaceItems = computed(
-  () => workspaceResult.value?.activeUser?.workspaces.items ?? []
+  () =>
+    workspaceResult.value?.activeUser?.workspaces.items.filter(
+      (item) => item.creationState?.completed !== false // Removed workspaces that are not completely created
+    ) ?? []
 )
 const isAdmin = computed(() => user.value?.role === Roles.Server.Admin)
 const canCreateWorkspace = computed(
@@ -241,6 +240,19 @@ const needsSsoSession = (workspace: SettingsMenu_WorkspaceFragment, key: string)
     ? !workspace.sso?.session?.validUntil
     : false
 }
+
+const handleMenuItemClick = (
+  workspaceMenuItem: SettingsMenuItem,
+  workspaceItem: SettingsMenu_WorkspaceFragment,
+  itemKey: string
+) => {
+  const isDisabled =
+    !isAdmin.value &&
+    (workspaceMenuItem.disabled || needsSsoSession(workspaceItem, itemKey))
+  if (isDisabled) return
+  onWorkspaceMenuItemClick(workspaceItem.id, `${itemKey}`)
+}
+
 // not ideal, but it works temporarily while this is still a modal
 useSetupMenuState({
   goToWorkspaceMenuItem: onWorkspaceMenuItemClick

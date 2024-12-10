@@ -125,8 +125,7 @@ const handleCreateWorkspace = handleSubmit(async () => {
       defaultLogoIndex: defaultLogoIndex.value,
       logo: workspaceLogo.value
     },
-    { navigateOnSuccess: props.navigateOnSuccess === true },
-    { source: props.eventSource }
+    { navigateOnSuccess: props.navigateOnSuccess === true }
   )
 
   if (newWorkspace && !newWorkspace?.errors) {

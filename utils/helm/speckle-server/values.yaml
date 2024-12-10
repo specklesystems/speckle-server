@@ -43,8 +43,8 @@ featureFlags:
   noClosureWrites: false
   ## @param featureFlags.workspacesModuleEnabled High level flag fully toggles the workspaces module
   workspacesModuleEnabled: false
-  ## @param featureFlags.workspaceSsoEnabled High level flag fully toggles the workspaces dynamic sso
-  workspaceSsoEnabled: false
+  ## @param featureFlags.workspacesSSOEnabled High level flag fully toggles the workspaces dynamic sso
+  workspacesSSOEnabled: false
   ## @param featureFlags.multipleEmailsModuleEnabled High level flag fully toggles multiple emails
   multipleEmailsModuleEnabled: false
   ## @param featureFlags.gatekeeperModuleEnabled High level flag that enables the gatekeeper module
@@ -53,6 +53,8 @@ featureFlags:
   billingIntegrationEnabled: false
   ## @param featureFlags.workspacesMultiRegionEnabled Toggles whether multi-region is available within workspaces. workspacesModuleEnabled must also be enabled.
   workspacesMultiRegionEnabled: false
+  ## @param featureFlags.workspacesMultiRegionBlobStorageEnabled Toggles whether multi-region blob storage is available within workspaces. workspacesMultiRegionEnabled must also be enabled.
+  workspacesMultiRegionBlobStorageEnabled: false
   ## @param featureFlags.fileImportIFCDotNetEnabled Toggles whether the experimental .Net IFC importer is used for importing IFC files.
   fileImportIFCDotNetEnabled: false
 

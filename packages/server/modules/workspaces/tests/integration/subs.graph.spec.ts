@@ -2,6 +2,7 @@ import { db } from '@/db/knex'
 import { ServerInvites } from '@/modules/core/dbSchema'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { getDefaultRegionFactory } from '@/modules/workspaces/repositories/regions'
+import { getWorkspaceSsoProviderRecordFactory } from '@/modules/workspaces/repositories/sso'
 import {
   getWorkspaceBySlugFactory,
   getWorkspaceWithDomainsFactory,
@@ -40,7 +41,7 @@ import { captureCreatedInvite } from '@/test/speckle-helpers/inviteHelper'
 import {
   getMainTestRegionKey,
   isMultiRegionTestMode,
-  waitForRegionUser
+  waitForRegionUsers
 } from '@/test/speckle-helpers/regions'
 import { faker } from '@faker-js/faker'
 import { expect } from 'chai'
@@ -59,6 +60,7 @@ const updateWorkspace = updateWorkspaceFactory({
     getWorkspaceBySlug: getWorkspaceBySlugFactory({ db })
   }),
   getWorkspace: getWorkspaceWithDomainsFactory({ db }),
+  getWorkspaceSsoProviderRecord: getWorkspaceSsoProviderRecordFactory({ db }),
   upsertWorkspace: upsertWorkspaceFactory({ db }),
   emitWorkspaceEvent: getEventBus().emit
 })
@@ -100,13 +102,7 @@ describe('Workspace GQL Subscriptions', () => {
       }
 
       before(async () => {
-        if (isMultiRegion) {
-          await Promise.all([
-            waitForRegionUser({ userId: me.id }),
-            waitForRegionUser({ userId: otherGuy.id })
-          ])
-        }
-
+        await waitForRegionUsers([me, otherGuy])
         await createTestWorkspace(myMainWorkspace, me, {
           regionKey: isMultiRegion ? getMainTestRegionKey() : undefined
         })

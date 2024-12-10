@@ -9,22 +9,35 @@
     </div>
   </div>
 </template>
+
 <script setup lang="ts">
 import { graphql } from '~~/lib/common/generated/gql'
-import type { ProjectsDashboardFilledFragment } from '~~/lib/common/generated/gql/graphql'
+import type {
+  ProjectDashboardItemFragment,
+  ProjectsDashboardFilledProjectFragment,
+  ProjectsDashboardFilledUserFragment
+} from '~~/lib/common/generated/gql/graphql'
 
 const props = defineProps<{
-  projects: ProjectsDashboardFilledFragment
+  projects: ProjectsDashboardFilledProjectFragment | ProjectsDashboardFilledUserFragment
   showWorkspaceLink?: boolean
 }>()
 
 graphql(`
-  fragment ProjectsDashboardFilled on ProjectCollection {
+  fragment ProjectsDashboardFilledProject on ProjectCollection {
     items {
       ...ProjectDashboardItem
     }
   }
 `)
 
-const items = computed(() => props.projects.items)
+graphql(`
+  fragment ProjectsDashboardFilledUser on UserProjectCollection {
+    items {
+      ...ProjectDashboardItem
+    }
+  }
+`)
+
+const items = computed((): ProjectDashboardItemFragment[] => props.projects.items)
 </script>

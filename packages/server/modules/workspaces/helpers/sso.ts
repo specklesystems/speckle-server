@@ -1,14 +1,23 @@
 import { getEncryptionKeyPair } from '@/modules/automate/services/encryption'
+import { base64Decode } from '@/modules/shared/helpers/cryptoHelper'
 import { getFrontendOrigin, getServerOrigin } from '@/modules/shared/helpers/envHelper'
 import { buildDecryptor, buildEncryptor } from '@/modules/shared/utils/libsodium'
+import { SsoSessionState } from '@/modules/workspaces/domain/sso/types'
+import {
+  OidcStateInvalidError,
+  OidcStateMissingError,
+  SsoVerificationCodeMissingError
+} from '@/modules/workspaces/errors/sso'
 import { OidcProvider } from '@/modules/workspaces/domain/sso/types'
-import { SsoVerificationCodeMissingError } from '@/modules/workspaces/errors/sso'
 import { Request } from 'express'
 import { omit } from 'lodash'
 
 declare module 'express-session' {
   interface SessionData {
     workspaceId?: string
+    workspaceSlug?: string
+    ssoNonce?: string
+    ssoState?: SsoSessionState
     oidcProvider?: OidcProvider
   }
 }
@@ -17,18 +26,11 @@ declare module 'express-session' {
  * Generate Speckle URL to redirect users to after they complete authorization
  * with the given SSO provider.
  */
-export const buildAuthRedirectUrl = (
-  workspaceSlug: string,
-  isValidationFlow: boolean
-): URL => {
+export const buildAuthRedirectUrl = (workspaceSlug: string): URL => {
   const url = new URL(
     `/api/v1/workspaces/${workspaceSlug}/sso/oidc/callback`,
     getServerOrigin()
   )
-
-  if (isValidationFlow) {
-    url.searchParams.set('validate', 'true')
-  }
 
   return url
 }
@@ -57,8 +59,6 @@ export const buildValidationErrorRedirectUrl = (
 ) => {
   const url = new URL(`/workspaces/${workspaceSlug}`, getFrontendOrigin())
 
-  // TODO: Where and how?
-  url.searchParams.set('settings', `workspace/settings`)
   url.searchParams.set('ssoValidationSuccess', 'false')
   url.searchParams.set('ssoError', error)
 
@@ -100,4 +100,23 @@ export const parseCodeVerifier = async (req: Request<unknown>): Promise<string> 
   if (!encryptedCodeVerifier) throw new SsoVerificationCodeMissingError()
   const codeVerifier = await getDecryptor()(encryptedCodeVerifier)
   return codeVerifier
+}
+
+export const getSsoSessionState = (
+  req: Request<unknown, unknown, unknown, { state: string }>
+): SsoSessionState => {
+  const sessionNonce = req.session.ssoNonce
+  const requestNonce = base64Decode(req.query.state)
+
+  if (!sessionNonce || !requestNonce || sessionNonce !== requestNonce) {
+    throw new OidcStateInvalidError()
+  }
+
+  const state = req.session.ssoState
+
+  if (!state) {
+    throw new OidcStateMissingError()
+  }
+
+  return state
 }

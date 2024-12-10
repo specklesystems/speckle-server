@@ -69,7 +69,7 @@ import {
 } from '@/modules/core/services/streams/management'
 import { createOnboardingStreamFactory } from '@/modules/core/services/streams/onboarding'
 import { getOnboardingBaseProjectFactory } from '@/modules/cross-server-sync/services/onboardingProject'
-import { getProjectDbClient } from '@/modules/multiregion/dbSelector'
+import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import {
   deleteAllResourceInvitesFactory,
   findUserByTargetFactory,
@@ -324,25 +324,40 @@ export = {
         }
       }
 
-      const totalCount = await getUserStreamsCount({
-        userId: ctx.userId!,
-        forOtherUser: false,
-        searchQuery: args.filter?.search || undefined,
-        withRoles: (args.filter?.onlyWithRoles || []) as StreamRoles[],
-        streamIdWhitelist: toProjectIdWhitelist(ctx.resourceAccessRules)
-      })
+      const [totalCount, visibleCount, { cursor, streams }] = await Promise.all([
+        getUserStreamsCount({
+          userId: ctx.userId!,
+          forOtherUser: false,
+          searchQuery: args.filter?.search || undefined,
+          withRoles: (args.filter?.onlyWithRoles || []) as StreamRoles[],
+          streamIdWhitelist: toProjectIdWhitelist(ctx.resourceAccessRules)
+        }),
+        getUserStreamsCount({
+          userId: ctx.userId!,
+          forOtherUser: false,
+          searchQuery: args.filter?.search || undefined,
+          withRoles: (args.filter?.onlyWithRoles || []) as StreamRoles[],
+          streamIdWhitelist: toProjectIdWhitelist(ctx.resourceAccessRules),
+          onlyWithActiveSsoSession: true
+        }),
+        getUserStreams({
+          userId: ctx.userId!,
+          limit: args.limit,
+          cursor: args.cursor || undefined,
+          searchQuery: args.filter?.search || undefined,
+          forOtherUser: false,
+          withRoles: (args.filter?.onlyWithRoles || []) as StreamRoles[],
+          streamIdWhitelist: toProjectIdWhitelist(ctx.resourceAccessRules),
+          onlyWithActiveSsoSession: true
+        })
+      ])
 
-      const { cursor, streams } = await getUserStreams({
-        userId: ctx.userId!,
-        limit: args.limit,
-        cursor: args.cursor || undefined,
-        searchQuery: args.filter?.search || undefined,
-        forOtherUser: false,
-        withRoles: (args.filter?.onlyWithRoles || []) as StreamRoles[],
-        streamIdWhitelist: toProjectIdWhitelist(ctx.resourceAccessRules)
-      })
-
-      return { totalCount, cursor, items: streams }
+      return {
+        totalCount,
+        numberOfHidden: totalCount - visibleCount,
+        cursor,
+        items: streams
+      }
     }
   },
   Project: {
