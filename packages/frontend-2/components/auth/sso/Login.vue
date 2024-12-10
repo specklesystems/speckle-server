@@ -68,7 +68,6 @@ graphql(`
     slug
     name
     logo
-    defaultLogoIndex
   }
 `)
 

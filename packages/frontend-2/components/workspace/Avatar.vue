@@ -1,37 +1,30 @@
 <template>
   <div
     :class="[
-      'text-foreground-on-primary flex shrink-0 items-center justify-center overflow-hidden rounded-full uppercase transition',
+      'flex shrink-0 overflow-hidden rounded-md border border-outline-2 bg-foundation-2',
       sizeClasses
     ]"
   >
     <div
-      class="h-full w-full bg-cover bg-center bg-no-repeat"
-      :style="{ backgroundImage: `url('${avatar}')` }"
-    />
+      class="h-full w-full bg-cover bg-center bg-no-repeat flex items-center justify-center"
+      :style="{ backgroundImage: `url('${logo}')` }"
+    >
+      <span class="text-foreground-3 uppercase leading-none">
+        {{ name[0] }}
+      </span>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { graphql } from '~~/lib/common/generated/gql'
 import type { MaybeNullOrUndefined } from '@speckle/shared'
-import type { UserAvatarSize } from '@speckle/ui-components'
-import { useAvatarSizeClasses } from '@speckle/ui-components'
-import { useWorkspacesAvatar } from '~/lib/workspaces/composables/avatar'
-
-graphql(`
-  fragment WorkspaceAvatar_Workspace on Workspace {
-    id
-    logo
-    defaultLogoIndex
-  }
-`)
+import { type UserAvatarSize, useAvatarSizeClasses } from '@speckle/ui-components'
 
 const props = withDefaults(
   defineProps<{
     size?: UserAvatarSize
-    logo?: MaybeNullOrUndefined<string>
-    defaultLogoIndex: number
+    logo: MaybeNullOrUndefined<string>
+    name: string
   }>(),
   {
     size: 'base'
@@ -39,9 +32,4 @@ const props = withDefaults(
 )
 
 const { sizeClasses } = useAvatarSizeClasses({ props: toRefs(props) })
-const { getDefaultAvatar } = useWorkspacesAvatar()
-
-const avatar = computed(() =>
-  props.logo ? props.logo : getDefaultAvatar(props.defaultLogoIndex)
-)
 </script>

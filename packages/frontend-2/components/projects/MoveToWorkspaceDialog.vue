@@ -78,7 +78,6 @@ graphql(`
     id
     role
     name
-    defaultLogoIndex
     logo
     ...WorkspaceHasCustomDataResidency_Workspace
     ...ProjectsWorkspaceSelect_Workspace

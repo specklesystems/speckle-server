@@ -15,8 +15,8 @@
       <div class="flex gap-2 md:mb-3 md:mt-2">
         <div class="flex items-center mr-2">
           <WorkspaceAvatar
+            :name="workspaceInfo.name"
             :logo="workspaceInfo.logo"
-            :default-logo-index="workspaceInfo.defaultLogoIndex"
             size="lg"
           />
         </div>
@@ -134,7 +134,6 @@ import type { AlertAction } from '@speckle/ui-components'
 
 graphql(`
   fragment WorkspaceHeader_Workspace on Workspace {
-    ...WorkspaceAvatar_Workspace
     ...BillingAlert_Workspace
     id
     slug

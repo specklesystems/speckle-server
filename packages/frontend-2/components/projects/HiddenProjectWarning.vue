@@ -17,11 +17,7 @@
         color="outline"
       >
         <div class="flex items-center gap-1">
-          <WorkspaceAvatar
-            size="2xs"
-            :default-logo-index="session.defaultLogoIndex"
-            :logo="session.logo"
-          />
+          <WorkspaceAvatar size="2xs" :name="session.name" :logo="session.logo" />
           {{ session.name }}
         </div>
       </FormButton>
@@ -42,7 +38,6 @@ graphql(`
       slug
       name
       logo
-      defaultLogoIndex
     }
   }
 `)

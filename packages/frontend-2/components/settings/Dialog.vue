@@ -59,7 +59,7 @@
               <template #title-icon>
                 <WorkspaceAvatar
                   :logo="workspaceItem.logo"
-                  :default-logo-index="workspaceItem.defaultLogoIndex"
+                  :name="workspaceItem.name"
                   size="sm"
                 />
               </template>
@@ -148,12 +148,12 @@ import { WorkspacePlanStatuses } from '~/lib/common/generated/gql/graphql'
 
 graphql(`
   fragment SettingsDialog_Workspace on Workspace {
-    ...WorkspaceAvatar_Workspace
     ...SettingsMenu_Workspace
     id
     slug
     role
     name
+    logo
     plan {
       status
     }

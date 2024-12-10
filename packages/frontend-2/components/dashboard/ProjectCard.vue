@@ -28,7 +28,7 @@
       >
         <WorkspaceAvatar
           :logo="project.workspace.logo"
-          :default-logo-index="project.workspace.defaultLogoIndex"
+          :name="project.workspace.name"
           size="sm"
         />
         <p class="text-body-2xs text-foreground ml-2">
@@ -77,7 +77,7 @@ graphql(`
       id
       slug
       name
-      ...WorkspaceAvatar_Workspace
+      logo
     }
   }
 `)
