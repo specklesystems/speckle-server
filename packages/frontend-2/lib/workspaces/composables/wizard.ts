@@ -192,7 +192,7 @@ export const useWorkspacesWizard = () => {
   const finalizeWizard = async (state: WorkspaceWizardState, workspaceId: string) => {
     isLoading.value = true
 
-    if (state.region?.key) {
+    if (state.region?.key && state.plan === PaidWorkspacePlans.Business) {
       await updateWorkspaceDefaultRegion({
         workspaceId,
         regionKey: state.region.key

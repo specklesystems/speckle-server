@@ -226,7 +226,7 @@ const { query, identifier, onInfiniteLoad } = usePaginatedQuery({
   }),
   resolveCursorFromVariables: (vars) => vars.cursor
 })
-const { finalizeWizard, isLoading: wizardLoading } = useWorkspacesWizard()
+const { finalizeWizard } = useWorkspacesWizard()
 
 const projects = computed(() => query.result.value?.workspaceBySlug?.projects)
 const workspaceInvite = computed(() => initialQueryResult.value?.workspaceInvite)
@@ -305,7 +305,7 @@ onResult((queryResult) => {
     queryResult.data?.workspaceBySlug.creationState?.completed === false &&
     queryResult.data.workspaceBySlug.creationState.state
   ) {
-    if (wizardLoading.value || import.meta.server) return
+    if (import.meta.server) return
     finalizeWizard(
       queryResult.data.workspaceBySlug.creationState.state as WorkspaceWizardState,
       queryResult.data.workspaceBySlug.id

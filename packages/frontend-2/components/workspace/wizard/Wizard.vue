@@ -96,4 +96,10 @@ onResult((result) => {
     }
   }
 })
+
+watch(currentStep, (newStep, oldStep) => {
+  if (newStep !== oldStep && showPaymentError.value) {
+    showPaymentError.value = false
+  }
+})
 </script>
