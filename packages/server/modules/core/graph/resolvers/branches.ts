@@ -31,7 +31,7 @@ import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { getPaginatedStreamBranchesFactory } from '@/modules/core/services/branch/retrieval'
 import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import { filteredSubscribe, publish } from '@/modules/shared/utils/subscriptions'
-import { getProjectDbClient } from '@/modules/multiregion/dbSelector'
+import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 
 export = {
   Query: {},

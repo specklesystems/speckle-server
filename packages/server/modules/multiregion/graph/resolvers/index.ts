@@ -1,6 +1,6 @@
 import { db } from '@/db/knex'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
-import { initializeRegion } from '@/modules/multiregion/dbSelector'
+import { initializeRegion as initializeDb } from '@/modules/multiregion/utils/dbSelector'
 import { getAvailableRegionConfig } from '@/modules/multiregion/regionConfig'
 import {
   getRegionFactory,
@@ -14,8 +14,10 @@ import {
 } from '@/modules/multiregion/services/config'
 import {
   createAndValidateNewRegionFactory,
+  initializeRegionClients,
   updateAndValidateRegionFactory
 } from '@/modules/multiregion/services/management'
+import { initializeRegion as initializeBlobStorage } from '@/modules/multiregion/utils/blobStorageSelector'
 
 export default {
   ServerMultiRegionConfiguration: {
@@ -44,7 +46,10 @@ export default {
         }),
         getRegion: getRegionFactory({ db }),
         storeRegion: storeRegionFactory({ db }),
-        initializeRegion
+        initializeRegion: initializeRegionClients({
+          initializeDb,
+          initializeBlobStorage
+        })
       })
       return await createAndValidateNewRegion({ region: args.input })
     },
