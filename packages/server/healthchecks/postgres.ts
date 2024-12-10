@@ -1,6 +1,9 @@
 import type { Knex } from 'knex'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
-import { getDb, getRegisteredRegionClients } from '@/modules/multiregion/dbSelector'
+import {
+  getDb,
+  getRegisteredRegionClients
+} from '@/modules/multiregion/utils/dbSelector'
 import { isMultiRegionEnabled } from '@/modules/multiregion/helpers'
 import type { CheckResponse, MultiDBCheck } from '@/healthchecks/types'
 import { ensureErrorOrWrapAsCause } from '@/modules/shared/errors/ensureError'

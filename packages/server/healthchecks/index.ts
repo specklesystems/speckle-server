@@ -6,7 +6,7 @@ import { isRedisAlive } from '@/healthchecks/redis'
 import { areAllPostgresAlive } from '@/healthchecks/postgres'
 import { Application } from 'express'
 import { knexFreeDbConnectionSamplerFactory } from '@/healthchecks/connectionPool'
-import { getAllClients } from '@/modules/multiregion/dbSelector'
+import { getAllRegisteredDbClients } from '@/modules/multiregion/utils/dbSelector'
 
 const knexFreeDbConnectionSamplerLiveness: Record<
   string,
@@ -27,24 +27,26 @@ export const getKnexFreeDbConnectionSamplerReadiness = () =>
   knexFreeDbConnectionSamplerReadiness
 
 export const updateFreeDbConnectionSamplers = async () => {
-  const allClients = await getAllClients()
-  for (const [key, client] of Object.entries(allClients)) {
-    if (!(key in knexFreeDbConnectionSamplerLiveness)) {
-      knexFreeDbConnectionSamplerLiveness[key] = knexFreeDbConnectionSamplerFactory({
-        db: client,
-        collectionPeriod: highFrequencyMetricsCollectionPeriodMs(),
-        sampledDuration: 600_000 //number of ms over which to average the database connections, before declaring not alive. 10 minutes.
-      })
-      knexFreeDbConnectionSamplerLiveness[key].start()
+  const allClients = await getAllRegisteredDbClients()
+  for (const dbClient of allClients) {
+    if (!(dbClient.regionKey in knexFreeDbConnectionSamplerLiveness)) {
+      knexFreeDbConnectionSamplerLiveness[dbClient.regionKey] =
+        knexFreeDbConnectionSamplerFactory({
+          db: dbClient.client,
+          collectionPeriod: highFrequencyMetricsCollectionPeriodMs(),
+          sampledDuration: 600_000 //number of ms over which to average the database connections, before declaring not alive. 10 minutes.
+        })
+      knexFreeDbConnectionSamplerLiveness[dbClient.regionKey].start()
     }
 
-    if (!(key in knexFreeDbConnectionSamplerReadiness)) {
-      knexFreeDbConnectionSamplerReadiness[key] = knexFreeDbConnectionSamplerFactory({
-        db: client,
-        collectionPeriod: highFrequencyMetricsCollectionPeriodMs(),
-        sampledDuration: 20_000 //number of ms over which to average the database connections, before declaring unready. 20 seconds.
-      })
-      knexFreeDbConnectionSamplerReadiness[key].start()
+    if (!(dbClient.regionKey in knexFreeDbConnectionSamplerReadiness)) {
+      knexFreeDbConnectionSamplerReadiness[dbClient.regionKey] =
+        knexFreeDbConnectionSamplerFactory({
+          db: dbClient.client,
+          collectionPeriod: highFrequencyMetricsCollectionPeriodMs(),
+          sampledDuration: 20_000 //number of ms over which to average the database connections, before declaring unready. 20 seconds.
+        })
+      knexFreeDbConnectionSamplerReadiness[dbClient.regionKey].start()
     }
   }
 }
