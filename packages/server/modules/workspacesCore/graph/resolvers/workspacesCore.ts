@@ -93,6 +93,9 @@ export = !FF_WORKSPACES_MODULE_ENABLED
         discoverableWorkspaces: async () => {
           throw new WorkspacesModuleDisabledError()
         },
+        expiredSsoSessions: async () => {
+          return []
+        },
         workspaces: async () => {
           throw new WorkspacesModuleDisabledError()
         },
