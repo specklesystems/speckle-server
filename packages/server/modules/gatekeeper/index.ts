@@ -19,12 +19,15 @@ import {
   manageSubscriptionDownscaleFactory
 } from '@/modules/gatekeeper/services/subscriptions'
 import {
+  changeExpiredTrialWorkspacePlanStatusesFactory,
   getWorkspacePlanFactory,
   getWorkspaceSubscriptionsPastBillingCycleEndFactory,
   upsertWorkspaceSubscriptionFactory
 } from '@/modules/gatekeeper/repositories/billing'
 import { countWorkspaceRoleWithOptionalProjectRoleFactory } from '@/modules/workspaces/repositories/workspaces'
 import { reconcileWorkspaceSubscriptionFactory } from '@/modules/gatekeeper/clients/stripe'
+import { ScheduleExecution } from '@/modules/core/domain/scheduledTasks/operations'
+import { EventBusEmit, getEventBus } from '@/modules/shared/services/eventBus'
 
 const { FF_GATEKEEPER_MODULE_ENABLED, FF_BILLING_INTEGRATION_ENABLED } =
   getFeatureFlags()
@@ -34,12 +37,11 @@ const initScopes = async () => {
   await Promise.all(gatekeeperScopes.map((scope) => registerFunc({ scope })))
 }
 
-const scheduleWorkspaceSubscriptionDownscale = () => {
-  const scheduleExecution = scheduleExecutionFactory({
-    acquireTaskLock: acquireTaskLockFactory({ db }),
-    releaseTaskLock: releaseTaskLockFactory({ db })
-  })
-
+const scheduleWorkspaceSubscriptionDownscale = ({
+  scheduleExecution
+}: {
+  scheduleExecution: ScheduleExecution
+}) => {
   const stripe = getStripeClient()
 
   const manageSubscriptionDownscale = manageSubscriptionDownscaleFactory({
@@ -66,7 +68,48 @@ const scheduleWorkspaceSubscriptionDownscale = () => {
   )
 }
 
-let scheduledTask: cron.ScheduledTask | undefined = undefined
+const scheduleWorkspaceTrialEmails = ({
+  scheduleExecution
+}: {
+  scheduleExecution: ScheduleExecution
+}) => {
+  // TODO: make this a daily thing
+  const cronExpression = '*/5 * * * *'
+  return scheduleExecution(cronExpression, 'WorkspaceTrialEmails', async () => {
+    // await manageSubscriptionDownscale()
+  })
+}
+
+const scheduleWorkspaceTrialExpiry = ({
+  scheduleExecution,
+  emit
+}: {
+  scheduleExecution: ScheduleExecution
+  emit: EventBusEmit
+}) => {
+  const changeExpiredStatuses = changeExpiredTrialWorkspacePlanStatusesFactory({ db })
+  const cronExpression = '*/5 * * * *'
+  return scheduleExecution(cronExpression, 'WorkspaceTrialExpiry', async () => {
+    const expiredWorkspacePlans = await changeExpiredStatuses({ numberOfDays: 31 })
+
+    if (expiredWorkspacePlans.length) {
+      logger.info(
+        { workspaceIds: expiredWorkspacePlans.map((p) => p.workspaceId) },
+        'Workspace trial expired for {workspaceIds}.'
+      )
+      await Promise.all(
+        expiredWorkspacePlans.map(async (plan) => {
+          emit({
+            eventName: 'gatekeeper.workspace-trial-expired',
+            payload: { workspaceId: plan.workspaceId }
+          })
+        })
+      )
+    }
+  })
+}
+
+let scheduledTasks: cron.ScheduledTask[] = []
 let quitListeners: (() => void) | undefined = undefined
 
 const gatekeeperModule: SpeckleModule = {
@@ -89,7 +132,18 @@ const gatekeeperModule: SpeckleModule = {
       if (FF_BILLING_INTEGRATION_ENABLED) {
         app.use(getBillingRouter())
 
-        scheduledTask = scheduleWorkspaceSubscriptionDownscale()
+        const eventBus = getEventBus()
+
+        const scheduleExecution = scheduleExecutionFactory({
+          acquireTaskLock: acquireTaskLockFactory({ db }),
+          releaseTaskLock: releaseTaskLockFactory({ db })
+        })
+
+        scheduledTasks = [
+          scheduleWorkspaceSubscriptionDownscale({ scheduleExecution }),
+          scheduleWorkspaceTrialEmails({ scheduleExecution }),
+          scheduleWorkspaceTrialExpiry({ scheduleExecution, emit: eventBus.emit })
+        ]
 
         quitListeners = initializeEventListenersFactory({
           db,
@@ -109,7 +163,9 @@ const gatekeeperModule: SpeckleModule = {
   },
   async shutdown() {
     if (quitListeners) quitListeners()
-    if (scheduledTask) scheduledTask.stop()
+    scheduledTasks.forEach((task) => {
+      task.stop()
+    })
   }
 }
 export = gatekeeperModule

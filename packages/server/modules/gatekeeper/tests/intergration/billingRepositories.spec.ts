@@ -10,7 +10,9 @@ import {
   upsertPaidWorkspacePlanFactory,
   getWorkspaceSubscriptionFactory,
   getWorkspaceSubscriptionBySubscriptionIdFactory,
-  getWorkspaceSubscriptionsPastBillingCycleEndFactory
+  getWorkspaceSubscriptionsPastBillingCycleEndFactory,
+  changeExpiredTrialWorkspacePlanStatusesFactory,
+  upsertTrialWorkspacePlanFactory
 } from '@/modules/gatekeeper/repositories/billing'
 import {
   createTestSubscriptionData,
@@ -28,6 +30,7 @@ const createAndStoreTestWorkspace = createAndStoreTestWorkspaceFactory({
 })
 const getWorkspacePlan = getWorkspacePlanFactory({ db })
 const upsertPaidWorkspacePlan = upsertPaidWorkspacePlanFactory({ db })
+const upsertTrialWorkspacePlan = upsertTrialWorkspacePlanFactory({ db })
 const saveCheckoutSession = saveCheckoutSessionFactory({ db })
 const deleteCheckoutSession = deleteCheckoutSessionFactory({ db })
 const getCheckoutSession = getCheckoutSessionFactory({ db })
@@ -40,6 +43,9 @@ const getWorkspaceSubscriptionBySubscriptionId =
 
 const getSubscriptionsAboutToEndBillingCycle =
   getWorkspaceSubscriptionsPastBillingCycleEndFactory({ db })
+
+const changeExpiredTrialWorkspacePlanStatuses =
+  changeExpiredTrialWorkspacePlanStatusesFactory({ db })
 
 describe('billing repositories @gatekeeper', () => {
   describe('workspacePlans', () => {
@@ -83,6 +89,90 @@ describe('billing repositories @gatekeeper', () => {
 
         storedWorkspacePlan = await getWorkspacePlan({ workspaceId })
         expect(storedWorkspacePlan).deep.equal(planUpdate)
+      })
+    })
+    describe('changeExpiredTrialWorkspacePlanStatusesFactory creates a function, that', () => {
+      it('ignores non trial plans', async () => {
+        const workspace = await createAndStoreTestWorkspace()
+        await upsertPaidWorkspacePlan({
+          workspacePlan: {
+            name: 'business',
+            status: 'cancelationScheduled',
+            workspaceId: workspace.id,
+            createdAt: new Date(2023, 0, 1)
+          }
+        })
+
+        const expiredPlans = await changeExpiredTrialWorkspacePlanStatuses({
+          numberOfDays: 1
+        })
+        expect(expiredPlans.map((p) => p.workspaceId).includes(workspace.id)).to.be
+          .false
+      })
+      it('ignores non expired trial plans', async () => {
+        const workspace = await createAndStoreTestWorkspace()
+        await upsertTrialWorkspacePlan({
+          workspacePlan: {
+            name: 'starter',
+            status: 'trial',
+            workspaceId: workspace.id,
+            createdAt: new Date()
+          }
+        })
+
+        const expiredPlans = await changeExpiredTrialWorkspacePlanStatuses({
+          numberOfDays: 1
+        })
+        expect(expiredPlans.map((p) => p.workspaceId).includes(workspace.id)).to.be
+          .false
+      })
+      it('changes status to expired for expired trial plans', async () => {
+        const workspace1 = await createAndStoreTestWorkspace()
+        await upsertTrialWorkspacePlan({
+          workspacePlan: {
+            name: 'starter',
+            status: 'trial',
+            workspaceId: workspace1.id,
+            createdAt: new Date(2023, 0, 1)
+          }
+        })
+
+        const workspace2 = await createAndStoreTestWorkspace()
+        await upsertTrialWorkspacePlan({
+          workspacePlan: {
+            name: 'starter',
+            status: 'trial',
+            workspaceId: workspace2.id,
+            createdAt: new Date(2023, 0, 1)
+          }
+        })
+
+        const workspace3 = await createAndStoreTestWorkspace()
+        const workspace3Plan = {
+          name: 'starter',
+          status: 'trial',
+          workspaceId: workspace3.id,
+          createdAt: new Date()
+        } as const
+        await upsertTrialWorkspacePlan({
+          workspacePlan: workspace3Plan
+        })
+
+        const expiredPlans = await changeExpiredTrialWorkspacePlanStatuses({
+          numberOfDays: 1
+        })
+        const expiredWorkspaceIds = expiredPlans.map((p) => p.workspaceId)
+        expect(expiredWorkspaceIds.includes(workspace1.id)).to.be.true
+        expect(expiredWorkspaceIds.includes(workspace2.id)).to.be.true
+        expect(expiredWorkspaceIds.includes(workspace3.id)).to.be.false
+        expiredPlans.forEach((expiredPlan) => {
+          expect(expiredPlan.status).to.equal('expired')
+        })
+
+        const storedWorkspacePlan = await getWorkspacePlan({
+          workspaceId: workspace3.id
+        })
+        expect(storedWorkspacePlan).deep.equal(workspace3Plan)
       })
     })
   })

@@ -16,6 +16,7 @@ import {
   GetWorkspaceSubscriptions,
   UpsertTrialWorkspacePlan
 } from '@/modules/gatekeeper/domain/billing'
+import { ChangeExpiredTrialWorkspacePlanStatuses } from '@/modules/gatekeeper/domain/operations'
 import { Knex } from 'knex'
 
 const tables = {
@@ -60,6 +61,17 @@ export const upsertTrialWorkspacePlanFactory = ({
 }: {
   db: Knex
 }): UpsertTrialWorkspacePlan => upsertWorkspacePlanFactory({ db })
+
+export const changeExpiredTrialWorkspacePlanStatusesFactory =
+  ({ db }: { db: Knex }): ChangeExpiredTrialWorkspacePlanStatuses =>
+  async ({ numberOfDays }) => {
+    return await tables
+      .workspacePlans(db)
+      .where({ status: 'trial' })
+      .andWhereRaw(`"createdAt" + make_interval(days => ${numberOfDays}) < now()`)
+      .update({ status: 'expired' })
+      .returning('*')
+  }
 
 export const saveCheckoutSessionFactory =
   ({ db }: { db: Knex }): SaveCheckoutSession =>
