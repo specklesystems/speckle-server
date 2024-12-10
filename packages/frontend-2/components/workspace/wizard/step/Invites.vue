@@ -52,7 +52,7 @@ interface InviteForm {
   fields: string[]
 }
 
-const { state, goToNextStep, goToPreviousStep } = useWorkspacesWizard()
+const { goToNextStep, goToPreviousStep, state } = useWorkspacesWizard()
 const mixpanel = useMixpanel()
 const { handleSubmit } = useForm<InviteForm>({
   initialValues: {

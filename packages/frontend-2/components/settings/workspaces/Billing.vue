@@ -136,6 +136,34 @@
           />
         </div>
 
+        <div class="mt-8 text-center text-foreground-2">
+          Need help?
+          <NuxtLink
+            class="text-foreground"
+            :to="guideBillingUrl"
+            target="_blank"
+            @click="
+              mixpanel.track('Workspace Docs Link Clicked', {
+                workspace_id: props.workspaceId
+              })
+            "
+          >
+            <span class="hover:underline">Read the docs</span>
+          </NuxtLink>
+          or
+          <a
+            class="text-foreground hover:underline"
+            href="mailto:billing@speckle.systems"
+            @click="
+              mixpanel.track('Workspace Support Link Clicked', {
+                workspace_id: props.workspaceId
+              })
+            "
+          >
+            contact support
+          </a>
+        </div>
+
         <SettingsWorkspacesBillingUpgradeDialog
           v-if="selectedPlanName && selectedPlanCycle && workspaceId"
           v-model:open="isUpgradeDialogOpen"
@@ -167,6 +195,7 @@ import { Roles } from '@speckle/shared'
 import { InformationCircleIcon } from '@heroicons/vue/24/outline'
 import { isPaidPlan } from '@/lib/billing/helpers/types'
 import { useMixpanel } from '~/lib/core/composables/mp'
+import { guideBillingUrl } from '~/lib/common/helpers/route'
 
 graphql(`
   fragment SettingsWorkspacesBilling_Workspace on Workspace {
