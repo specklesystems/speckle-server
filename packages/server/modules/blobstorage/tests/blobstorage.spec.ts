@@ -1,37 +1,62 @@
-const expect = require('chai').expect
-const { beforeEachContext } = require('@/test/hooks')
-const { NotFoundError, BadRequestError } = require('@/modules/shared/errors')
-const { range } = require('lodash')
-const { fakeIdGenerator, createBlobs } = require('@/modules/blobstorage/tests/helpers')
-const {
+import { beforeEachContext } from '@/test/hooks'
+import { NotFoundError, BadRequestError } from '@/modules/shared/errors'
+import { range } from 'lodash'
+import { fakeIdGenerator, createBlobs } from '@/modules/blobstorage/tests/helpers'
+import {
   uploadFileStreamFactory,
   getFileStreamFactory,
   markUploadSuccessFactory,
   markUploadOverFileSizeLimitFactory,
   fullyDeleteBlobFactory
-} = require('@/modules/blobstorage/services/management')
-const {
+} from '@/modules/blobstorage/services/management'
+import {
   upsertBlobFactory,
   updateBlobFactory,
   getBlobMetadataFactory,
   getBlobMetadataCollectionFactory,
   blobCollectionSummaryFactory,
   deleteBlobFactory
-} = require('@/modules/blobstorage/repositories')
-const { db } = require('@/db/knex')
-const { cursorFromRows, decodeCursor } = require('@/modules/blobstorage/helpers/db')
-const { createTestStream } = require('@/test/speckle-helpers/streamHelper')
-const cryptoRandomString = require('crypto-random-string')
-const { createTestUser } = require('@/test/authHelper')
-const { storeFileStream } = require('@/modules/blobstorage/objectStorage')
-const fakeFileStreamStore = (fakeHash) => async () => ({ fileHash: fakeHash })
+} from '@/modules/blobstorage/repositories'
+import { db } from '@/db/knex'
+import { cursorFromRows, decodeCursor } from '@/modules/blobstorage/helpers/db'
+import { BasicTestStream, createTestStream } from '@/test/speckle-helpers/streamHelper'
+import cryptoRandomString from 'crypto-random-string'
+import { BasicTestUser, createTestUser } from '@/test/authHelper'
+import { storeFileStreamFactory } from '@/modules/blobstorage/repositories/blobs'
+import { getMainObjectStorage } from '@/modules/blobstorage/clients/objectStorage'
+import { expect } from 'chai'
+import { UploadFileStream } from '@/modules/blobstorage/domain/operations'
+import { BlobStorageItem } from '@/modules/blobstorage/domain/types'
+import {
+  BasicTestWorkspace,
+  createTestWorkspace
+} from '@/modules/workspaces/tests/helpers/creation'
+import { waitForRegionUser } from '@/test/speckle-helpers/regions'
+import { getProjectObjectStorage } from '@/modules/multiregion/utils/blobStorageSelector'
+
+type UploadFileStreamStreamData = Parameters<UploadFileStream>[0]
+type UploadFileStreamBlobData = Parameters<UploadFileStream>[1]
+
+const buildUploadFileStream = async (params: { streamId: string | null }) => {
+  const { streamId } = params
+
+  const storage = streamId
+    ? await getProjectObjectStorage({ projectId: streamId })
+    : getMainObjectStorage()
+  const storeFileStream = storeFileStreamFactory({ storage })
+  const uploadFileStream = uploadFileStreamFactory({
+    upsertBlob,
+    updateBlob,
+    storeFileStream
+  })
+
+  return uploadFileStream
+}
+
+const fakeFileStreamStore = (fakeHash: string) => async () => ({ fileHash: fakeHash })
 const upsertBlob = upsertBlobFactory({ db })
 const updateBlob = updateBlobFactory({ db })
-const uploadFileStream = uploadFileStreamFactory({
-  upsertBlob,
-  updateBlob,
-  storeFileStream
-})
+
 const getBlobMetadata = getBlobMetadataFactory({ db })
 const getBlobMetadataCollection = getBlobMetadataCollectionFactory({ db })
 const blobCollectionSummary = blobCollectionSummaryFactory({ db })
@@ -52,21 +77,29 @@ describe('Blob storage @blobstorage', () => {
   })
 
   describe('Upload file stream', () => {
-    const data = [
+    const invalidData: Array<
+      [
+        caseName: string,
+        streamData: UploadFileStreamStreamData,
+        blobData: UploadFileStreamBlobData
+      ]
+    > = [
       [
         'stream',
         { streamId: 'a'.padStart(1, 'a'), userId: 'a'.padStart(10, 'b') },
-        { blobId: 'a'.padStart(10, 'c') }
+        { blobId: 'a'.padStart(10, 'c') } as UploadFileStreamBlobData
       ],
       [
         'user',
         { streamId: 'a'.padStart(10, 'a'), userId: 'a'.padStart(1, 'b') },
-        { blobId: 'a'.padStart(10, 'c') }
+        { blobId: 'a'.padStart(10, 'c') } as UploadFileStreamBlobData
       ]
     ]
 
-    data.map(([caseName, streamData, blobData]) =>
+    invalidData.map(([caseName, streamData, blobData]) =>
       it(`Should throw if ${caseName} id length is incorrect`, async () => {
+        const uploadFileStream = await buildUploadFileStream({ streamId: null })
+
         try {
           await uploadFileStream(streamData, blobData)
         } catch (err) {
@@ -91,34 +124,42 @@ describe('Blob storage @blobstorage', () => {
 
       const blobData = await uploadFileStream(
         { streamId, userId },
-        { blobId, fileName, fileType: '.something', fileStream: null }
+        { blobId, fileName, fileType: '.something', fileStream: Buffer.from('') }
       )
       expect(blobData).to.deep.equal({ blobId, fileName, fileHash })
     })
   })
 
   describe('Get blob metadata', () => {
-    const testUser1 = {
+    const testUser1: BasicTestUser = {
       name: 'Blob Test User #1',
       email: 'testUser1@gmailll.com',
       id: ''
     }
 
-    const testStream1 = {
+    const testStream1: BasicTestStream = {
       name: 'Blob Test Stream #1',
       isPublic: false,
       ownerId: '',
       id: ''
     }
 
-    /**
-     * @type {import('@/modules/blobstorage/domain/types').BlobStorageItem}
-     */
-    let testStreamBlob1
+    const testWorkspace1: BasicTestWorkspace = {
+      name: 'Blob Test Workspace #1',
+      ownerId: '',
+      id: '',
+      slug: ''
+    }
+
+    let testStreamBlob1: BlobStorageItem
 
     before(async () => {
       // Insert blob
       await createTestUser(testUser1)
+      await waitForRegionUser(testUser1)
+      await createTestWorkspace(testWorkspace1, testUser1)
+
+      testStream1.workspaceId = testWorkspace1.id
       await createTestStream(testStream1, testUser1)
       testStreamBlob1 = await upsertBlob({
         id: cryptoRandomString({ length: 10 }),
@@ -140,7 +181,7 @@ describe('Blob storage @blobstorage', () => {
     })
     it('when no streamId throws ResourceMismatch', async () => {
       try {
-        await getBlobMetadata({ streamId: null, blobId: 'bar' })
+        await getBlobMetadata({ streamId: null as unknown as string, blobId: 'bar' })
         throw new Error('This should have failed')
       } catch (err) {
         if (!(err instanceof BadRequestError)) throw err
@@ -162,10 +203,10 @@ describe('Blob storage @blobstorage', () => {
     describe('cursorFromRows', () => {
       it('returns base64 encoded date ISO string', () => {
         const cursorTarget = 'foo'
-        const rowItem = {}
+        const rowItem: Record<string, Date> = {}
         const cursorValue = new Date()
         rowItem[cursorTarget] = cursorValue
-        const createdCursor = cursorFromRows([rowItem], cursorTarget)
+        const createdCursor = cursorFromRows([rowItem], cursorTarget)!
 
         expect(Buffer.from(createdCursor, 'base64').toString()).to.equal(
           cursorValue.toISOString()
@@ -173,11 +214,11 @@ describe('Blob storage @blobstorage', () => {
       })
       it('return null if rows is null or empty array', () => {
         expect(cursorFromRows([], 'cursorTarget')).to.be.null
-        expect(cursorFromRows(null, 'cursorTarget')).to.be.null
+        expect(cursorFromRows(null as unknown as [], 'cursorTarget')).to.be.null
       })
       it("throws if the cursor target doesn't find a date object", () => {
         try {
-          cursorFromRows([{}], 'cursorTarget')
+          cursorFromRows([{}], 'cursorTarget' as never)
           throw new Error('This should have thrown')
         } catch (err) {
           if (!(err instanceof BadRequestError)) throw err

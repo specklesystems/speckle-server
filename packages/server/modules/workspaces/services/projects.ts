@@ -34,7 +34,7 @@ import {
 } from '@/modules/core/domain/streams/operations'
 import { ProjectNotFoundError } from '@/modules/core/errors/projects'
 import { WorkspaceProjectCreateInput } from '@/test/graphql/generated/graphql'
-import { getDb } from '@/modules/multiregion/dbSelector'
+import { getDb } from '@/modules/multiregion/utils/dbSelector'
 import { createNewProjectFactory } from '@/modules/core/services/projects'
 import {
   deleteProjectFactory,
