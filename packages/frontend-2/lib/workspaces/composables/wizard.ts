@@ -80,9 +80,9 @@ export const useWorkspacesWizard = () => {
     set: (newVal) =>
       (wizardState.value.state = {
         ...newVal,
-        invites: [...newVal.invites, '', '', ''].slice(
+        invites: [...(newVal.invites || []), '', '', ''].slice(
           0,
-          Math.max(3, newVal.invites.length)
+          Math.max(3, newVal.invites?.length || 0)
         )
       })
   })
