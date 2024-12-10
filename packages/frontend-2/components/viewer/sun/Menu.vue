@@ -9,8 +9,12 @@
       <SunIcon class="w-5 h-5" :class="{ 'text-foreground-3': !isLightingSupported }" />
     </template>
     <div class="flex flex-col gap-1.5">
-      <div v-if="!isLightingSupported" class="px-2 pt-2 text-body-xs text-foreground-2">
-        Light controls are only available in Default and Default with Edges view modes
+      <div v-if="!isLightingSupported" class="-mb-1 p-2 pb-0">
+        <CommonAlert size="xs" color="info">
+          <template #title>
+            <span class="block text-body-2xs">Not available in current view mode.</span>
+          </template>
+        </CommonAlert>
       </div>
       <div class="px-2 py-1 border-b border-outline flex gap-2 items-center">
         <FormSwitch
