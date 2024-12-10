@@ -26,19 +26,17 @@
 <script setup lang="ts">
 import { workspacesRoute } from '~~/lib/common/helpers/route'
 import { WizardSteps } from '~/lib/workspaces/helpers/types'
-import { useWorkspaceWizardState } from '~/lib/workspaces/composables/wizard'
+import { useWorkspacesWizard } from '~/lib/workspaces/composables/wizard'
 
 defineProps<{
   workspaceId?: string
 }>()
 
-const wizardState = useWorkspaceWizardState()
+const { currentStep } = useWorkspacesWizard()
 
 const isCancelDialogOpen = ref(false)
 
-const isFirstStep = computed(
-  () => wizardState.currentStep.value === WizardSteps.Details
-)
+const isFirstStep = computed(() => currentStep.value === WizardSteps.Details)
 
 const onCancelClick = () => {
   if (isFirstStep.value) {

@@ -42,10 +42,7 @@
 </template>
 
 <script setup lang="ts">
-import {
-  useWorkspacesWizard,
-  useWorkspaceWizardState
-} from '~/lib/workspaces/composables/wizard'
+import { useWorkspacesWizard } from '~/lib/workspaces/composables/wizard'
 import { PlusIcon } from '@heroicons/vue/24/outline'
 import { isEmailOrEmpty } from '~~/lib/common/helpers/validation'
 import { useForm, useFieldArray } from 'vee-validate'
@@ -55,12 +52,11 @@ interface InviteForm {
   fields: string[]
 }
 
-const { goToNextStep, goToPreviousStep } = useWorkspacesWizard()
-const wizardState = useWorkspaceWizardState()
+const { goToNextStep, goToPreviousStep, state } = useWorkspacesWizard()
 const mixpanel = useMixpanel()
 const { handleSubmit } = useForm<InviteForm>({
   initialValues: {
-    fields: wizardState.value.state.invites
+    fields: state.value.invites
   }
 })
 const { fields, push } = useFieldArray<string>('fields')
@@ -74,12 +70,12 @@ const onAddInvite = () => {
 }
 
 const onSubmit = handleSubmit(() => {
-  wizardState.value.state.invites = fields.value
+  state.value.invites = fields.value
     .filter((field) => !!field)
     .map((field) => field.value)
 
   mixpanel.track('Workspace Invites Step Completed', {
-    inviteCount: wizardState.value.state.invites.length
+    inviteCount: state.value.invites.length
   })
 
   goToNextStep()

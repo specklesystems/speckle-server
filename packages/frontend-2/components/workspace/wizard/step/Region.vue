@@ -33,10 +33,7 @@
 </template>
 
 <script setup lang="ts">
-import {
-  useWorkspacesWizard,
-  useWorkspaceWizardState
-} from '~/lib/workspaces/composables/wizard'
+import { useWorkspacesWizard } from '~/lib/workspaces/composables/wizard'
 import { graphql } from '~/lib/common/generated/gql'
 import { useQuery, useQueryLoading } from '@vue/apollo-composable'
 import { workspaceWizardRegionQuery } from '~/lib/workspaces/graphql/queries'
@@ -57,8 +54,7 @@ graphql(`
 // TODO: This is a settings component, we should abstract it
 const defaultRegion = ref<SettingsWorkspacesRegionsSelect_ServerRegionItemFragment>()
 
-const { goToNextStep, goToPreviousStep } = useWorkspacesWizard()
-const wizardState = useWorkspaceWizardState()
+const { goToNextStep, goToPreviousStep, state } = useWorkspacesWizard()
 const isQueryLoading = useQueryLoading()
 const { result } = useQuery(workspaceWizardRegionQuery)
 const mixpanel = useMixpanel()
@@ -70,7 +66,7 @@ const availableRegions = computed(
 
 const onSubmit = () => {
   if (!defaultRegion.value) return
-  wizardState.value.state.region = defaultRegion.value
+  state.value.region = defaultRegion.value
 
   mixpanel.track('Workspace Region Step Completed', {
     region: defaultRegion.value.id
@@ -80,9 +76,9 @@ const onSubmit = () => {
 }
 
 watch(
-  () => wizardState.value.state.region,
+  () => state.value.region,
   () => {
-    defaultRegion.value = wizardState.value.state
+    defaultRegion.value = state.value
       .region as SettingsWorkspacesRegionsSelect_ServerRegionItemFragment
   },
   { immediate: true }

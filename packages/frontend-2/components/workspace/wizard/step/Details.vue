@@ -46,10 +46,7 @@ import { generateSlugFromName } from '@speckle/shared'
 import { debounce } from 'lodash'
 import { useQuery } from '@vue/apollo-composable'
 import { validateWorkspaceSlugQuery } from '~/lib/workspaces/graphql/queries'
-import {
-  useWorkspacesWizard,
-  useWorkspaceWizardState
-} from '~/lib/workspaces/composables/wizard'
+import { useWorkspacesWizard } from '~/lib/workspaces/composables/wizard'
 import { useMixpanel } from '~/lib/core/composables/mp'
 
 const props = defineProps<{
@@ -58,16 +55,15 @@ const props = defineProps<{
 
 const mixpanel = useMixpanel()
 const { handleSubmit } = useForm<{ name: string; slug: string }>()
-const { goToNextStep } = useWorkspacesWizard()
-const wizardState = useWorkspaceWizardState()
+const { goToNextStep, state } = useWorkspacesWizard()
 
 const { error, loading } = useQuery(
   validateWorkspaceSlugQuery,
   () => ({
-    slug: wizardState.value.state.slug
+    slug: state.value.slug
   }),
   () => ({
-    enabled: !!wizardState.value.state.slug && !props.disableSlugEdit
+    enabled: !!state.value.slug && !props.disableSlugEdit
   })
 )
 
@@ -75,37 +71,35 @@ const shortIdManuallyEdited = ref(false)
 const baseUrl = useRuntimeConfig().public.baseUrl
 
 const getShortIdHelp = computed(
-  () => `Preview: ${baseUrl}/workspaces/${wizardState.value.state.slug}`
+  () => `Preview: ${baseUrl}/workspaces/${state.value.slug}`
 )
 const disableContinue = computed(
   () =>
-    !wizardState.value.state.name ||
-    !wizardState.value.state.slug ||
-    !!error.value?.graphQLErrors[0]?.message
+    !state.value.name || !state.value.slug || !!error.value?.graphQLErrors[0]?.message
 )
 
 const updateShortId = debounce((newName: string) => {
   if (!shortIdManuallyEdited.value) {
     const newSlug = generateSlugFromName({ name: newName })
-    wizardState.value.state.slug = newSlug
+    state.value.slug = newSlug
     updateDebouncedShortId(newSlug)
   }
 }, 600)
 
 const updateDebouncedShortId = debounce((newSlug: string) => {
-  wizardState.value.state.slug = newSlug
+  state.value.slug = newSlug
 }, 300)
 
 const onSlugChange = (newSlug: string) => {
-  wizardState.value.state.slug = newSlug
+  state.value.slug = newSlug
   shortIdManuallyEdited.value = true
   updateDebouncedShortId(newSlug)
 }
 
 const onSubmit = handleSubmit(() => {
   mixpanel.track('Workspace Details Step Completed', {
-    name: wizardState.value.state.name,
-    slug: wizardState.value.state.slug
+    name: state.value.name,
+    slug: state.value.slug
   })
 
   goToNextStep()

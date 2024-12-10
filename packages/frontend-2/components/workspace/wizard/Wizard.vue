@@ -1,6 +1,6 @@
 <template>
   <div class="py-3 md:py-6">
-    <CommonLoadingIcon v-if="loading || !isClientReady" class="my-10 mx-auto" />
+    <CommonLoadingIcon v-if="loading" class="my-10 mx-auto" />
     <template v-else>
       <CommonAlert
         v-if="showPaymentError"
@@ -22,10 +22,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import {
-  useWorkspacesWizard,
-  useWorkspaceWizardState
-} from '~/lib/workspaces/composables/wizard'
+import { useWorkspacesWizard } from '~/lib/workspaces/composables/wizard'
 import { WizardSteps } from '~/lib/workspaces/helpers/types'
 import { workspaceWizardQuery } from '~/lib/workspaces/graphql/queries'
 import { useQuery } from '@vue/apollo-composable'
@@ -53,8 +50,7 @@ const props = defineProps<{
 const { cancelCheckoutSession } = useBillingActions()
 const route = useRoute()
 const mixpanel = useMixpanel()
-const { goToStep } = useWorkspacesWizard()
-const wizardState = useWorkspaceWizardState()
+const { goToStep, currentStep, isLoading, state } = useWorkspacesWizard()
 
 const { loading: queryLoading, onResult } = useQuery(
   workspaceWizardQuery,
@@ -67,28 +63,26 @@ const { loading: queryLoading, onResult } = useQuery(
 )
 
 const showPaymentError = ref(false)
-const isClientReady = ref(false)
 
 const loading = computed(
-  () => wizardState.value.isLoading || (props.workspaceId ? queryLoading.value : false)
+  () => isLoading.value || (props.workspaceId ? queryLoading.value : false)
 )
-
 onResult((result) => {
   // If there is an existing workspace, we need to show the correct state
   const creationState = result.data?.workspace.creationState
 
   if (!creationState?.completed && !!creationState?.state) {
-    const state = creationState.state as WorkspaceWizardState
+    const newState = creationState.state as WorkspaceWizardState
 
-    wizardState.value.state = {
-      ...state,
+    state.value = {
+      ...newState,
       id: props.workspaceId ?? (route.query.workspaceId as string)
     }
 
     // If the users comes back from Stripe, we need to go to the last relevant step and show an error
     if (route.query.workspaceId as string) {
       goToStep(
-        state.plan === PaidWorkspacePlans.Business
+        newState.plan === PaidWorkspacePlans.Business
           ? WizardSteps.Region
           : WizardSteps.Pricing
       )
@@ -101,9 +95,5 @@ onResult((result) => {
       mixpanel.track('Workspace Creation Checkout Session Canceled')
     }
   }
-})
-
-onMounted(() => {
-  isClientReady.value = true
 })
 </script>
