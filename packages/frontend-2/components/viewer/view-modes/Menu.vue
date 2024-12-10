@@ -5,6 +5,7 @@
       <IconViewModes class="h-5 w-5" />
     </template>
     <div
+      class="p-1.5"
       @mouseenter="cancelCloseTimer"
       @mouseleave="isManuallyOpened ? undefined : startCloseTimer"
       @focusin="cancelCloseTimer"
@@ -29,13 +30,18 @@ import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useViewerShortcuts, useViewModeUtilities } from '~~/lib/viewer/composables/ui'
 import { ViewModeShortcuts } from '~/lib/viewer/helpers/shortcuts/shortcuts'
 
+const props = defineProps<{
+  currentViewMode: ViewMode
+}>()
+
 const emit = defineEmits<{
   'shortcut-open': []
+  'view-mode-change': [mode: ViewMode]
 }>()
 
 const open = defineModel<boolean>('open', { required: true })
 
-const { setViewMode, currentViewMode } = useViewModeUtilities()
+const { setViewMode } = useViewModeUtilities()
 const { getShortcutDisplayText, registerShortcuts } = useViewerShortcuts()
 const mp = useMixpanel()
 
@@ -59,11 +65,12 @@ registerShortcuts({
   SetViewModeArctic: () => handleViewModeChange(ViewMode.ARCTIC, true)
 })
 
-const isActiveMode = (mode: ViewMode) => mode === currentViewMode.value
+const isActiveMode = (mode: ViewMode) => mode === props.currentViewMode
 const viewModeShortcuts = Object.values(ViewModeShortcuts)
 
 const handleViewModeChange = (mode: ViewMode, isShortcut = false) => {
   setViewMode(mode)
+  emit('view-mode-change', mode)
 
   if (isShortcut) {
     isManuallyOpened.value = false

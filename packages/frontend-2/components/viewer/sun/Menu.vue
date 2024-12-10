@@ -82,13 +82,16 @@
 </template>
 
 <script setup lang="ts">
-import { ViewMode, type SunLightConfiguration } from '@speckle/viewer'
+import { type SunLightConfiguration } from '@speckle/viewer'
 import { SunIcon } from '@heroicons/vue/24/outline'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { debounce } from 'lodash-es'
 import { FormSwitch } from '@speckle/ui-components'
-import { useViewModeUtilities } from '~/lib/viewer/composables/ui'
+
+defineProps<{
+  isLightingSupported?: boolean
+}>()
 
 const open = defineModel<boolean>('open', { required: true })
 
@@ -116,31 +119,9 @@ const {
   ui: { lightConfig }
 } = useInjectedViewerState()
 
-const { currentViewMode } = useViewModeUtilities()
-
 const intensity = createLightConfigComputed('intensity')
 const elevation = createLightConfigComputed('elevation')
 const azimuth = createLightConfigComputed('azimuth')
 const indirectLightIntensity = createLightConfigComputed('indirectLightIntensity')
 const sunlightShadows = createLightConfigComputed('castShadow')
-
-const isLightingSupported = computed(() => {
-  return (
-    currentViewMode.value === ViewMode.DEFAULT ||
-    currentViewMode.value === ViewMode.DEFAULT_EDGES
-  )
-})
-
-watch(
-  () => currentViewMode.value,
-  () => {
-    if (!isLightingSupported.value) {
-      lightConfig.value = {
-        ...lightConfig.value,
-        castShadow: false
-      }
-    }
-  },
-  { immediate: true }
-)
 </script>

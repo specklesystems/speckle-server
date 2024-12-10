@@ -86,7 +86,9 @@
             <!-- View Modes -->
             <ViewerViewModesMenu
               :open="activeControl === 'viewModes'"
+              :current-view-mode="currentViewMode"
               @shortcut-open="() => (activeControl = 'viewModes')"
+              @view-mode-change="handleViewModeChange"
             />
             <!-- Views -->
             <ViewerViewsMenu v-tippy="`Views`" />
@@ -102,6 +104,7 @@
             <!-- Sun and lights -->
             <ViewerSunMenu
               :open="activeControl === 'sun'"
+              :is-lighting-supported="isLightingSupported"
               @update:open="(value: boolean) => toggleActiveControl(value ? 'sun' : 'none')"
             />
           </ViewerControlsButtonGroup>
@@ -265,7 +268,8 @@ import {
   useCameraUtilities,
   useSectionBoxUtilities,
   useMeasurementUtilities,
-  useViewerShortcuts
+  useViewerShortcuts,
+  useViewModeUtilities
 } from '~~/lib/viewer/composables/ui'
 import {
   useInjectedViewerLoadedResources,
@@ -283,6 +287,7 @@ import {
 } from '@vueuse/core'
 import { useFunctionRunsStatusSummary } from '~/lib/automate/composables/runStatus'
 import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
+import { ViewMode } from '@speckle/viewer'
 
 type ActivePanel =
   | 'none'
@@ -305,6 +310,12 @@ type ActiveControl =
   | 'mobileOverflow'
 
 const isGendoEnabled = useIsGendoModuleEnabled()
+
+const { currentViewMode } = useViewModeUtilities()
+
+const handleViewModeChange = (mode: ViewMode) => {
+  currentViewMode.value = mode
+}
 
 const width = ref(360)
 const scrollableControlsContainer = ref(null as Nullable<HTMLDivElement>)
@@ -408,6 +419,13 @@ const toggleActivePanel = (panel: ActivePanel) => {
 const toggleActiveControl = (control: ActiveControl) => {
   activeControl.value = activeControl.value === control ? 'none' : control
 }
+
+const isLightingSupported = computed(() => {
+  return (
+    currentViewMode.value === ViewMode.DEFAULT ||
+    currentViewMode.value === ViewMode.DEFAULT_EDGES
+  )
+})
 
 registerShortcuts({
   ToggleModels: () => toggleActivePanel('models'),
