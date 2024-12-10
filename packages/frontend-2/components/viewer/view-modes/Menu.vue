@@ -35,11 +35,10 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  'shortcut-open': []
   'view-mode-change': [mode: ViewMode]
 }>()
 
-const open = defineModel<boolean>('open', { required: true })
+const open = ref(false)
 
 const { setViewMode } = useViewModeUtilities()
 const { getShortcutDisplayText, registerShortcuts } = useViewerShortcuts()
@@ -49,9 +48,7 @@ const isManuallyOpened = ref(false)
 
 const { start: startCloseTimer, stop: cancelCloseTimer } = useTimeoutFn(
   () => {
-    if (!isManuallyOpened.value) {
-      open.value = false
-    }
+    open.value = false
   },
   3000,
   { immediate: false }
@@ -71,15 +68,11 @@ const viewModeShortcuts = Object.values(ViewModeShortcuts)
 const handleViewModeChange = (mode: ViewMode, isShortcut = false) => {
   setViewMode(mode)
   emit('view-mode-change', mode)
+  cancelCloseTimer()
 
   if (isShortcut) {
-    isManuallyOpened.value = false
-    emit('shortcut-open')
-    cancelCloseTimer()
+    open.value = true
     startCloseTimer()
-  } else {
-    isManuallyOpened.value = true
-    cancelCloseTimer()
   }
 
   mp.track('Viewer Action', {

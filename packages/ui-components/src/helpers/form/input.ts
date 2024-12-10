@@ -10,7 +10,7 @@ export const clientOs = getClientOperatingSystem()
 
 export const ModifierKeyTitles: Record<ModifierKeys, string> = {
   [ModifierKeys.CtrlOrCmd]: clientOs === OperatingSystem.Mac ? '⌘' : '⌃',
-  [ModifierKeys.AltOrOpt]: clientOs === OperatingSystem.Mac ? '⌥' : '⌥',
+  [ModifierKeys.AltOrOpt]: clientOs === OperatingSystem.Mac ? '⌥' : 'Alt',
   [ModifierKeys.Shift]: '⇧'
 }
 

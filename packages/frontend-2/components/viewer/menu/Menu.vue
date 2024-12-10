@@ -5,7 +5,7 @@
       flat
       secondary
       :active="open"
-      @click="open = !open"
+      @click="$emit('update:open', !open)"
     >
       <slot name="trigger-icon" />
     </ViewerControlsButtonToggle>
@@ -33,13 +33,16 @@ import { onClickOutside } from '@vueuse/core'
 
 defineProps<{
   tooltip?: string
+  open: boolean
 }>()
 
-const open = defineModel<boolean>('open', { required: true })
+const emit = defineEmits<{
+  'update:open': [value: boolean]
+}>()
 
 const menuWrapper = ref(null)
 
 onClickOutside(menuWrapper, () => {
-  open.value = false
+  emit('update:open', false)
 })
 </script>

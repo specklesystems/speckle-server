@@ -85,9 +85,7 @@
           <ViewerControlsButtonGroup>
             <!-- View Modes -->
             <ViewerViewModesMenu
-              :open="activeControl === 'viewModes'"
               :current-view-mode="currentViewMode"
-              @shortcut-open="() => (activeControl = 'viewModes')"
               @view-mode-change="handleViewModeChange"
             />
             <!-- Views -->
@@ -314,6 +312,7 @@ const isGendoEnabled = useIsGendoModuleEnabled()
 const { currentViewMode } = useViewModeUtilities()
 
 const handleViewModeChange = (mode: ViewMode) => {
+  activeControl.value = 'viewModes'
   currentViewMode.value = mode
 }
 
