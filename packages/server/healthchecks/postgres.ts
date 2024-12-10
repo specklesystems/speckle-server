@@ -1,10 +1,6 @@
 import type { Knex } from 'knex'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
-import {
-  getDb,
-  getRegisteredRegionClients
-} from '@/modules/multiregion/utils/dbSelector'
-import { isMultiRegionEnabled } from '@/modules/multiregion/helpers'
+import { getAllRegisteredDbClients } from '@/modules/multiregion/utils/dbSelector'
 import type { CheckResponse, MultiDBCheck } from '@/healthchecks/types'
 import { ensureErrorOrWrapAsCause } from '@/modules/shared/errors/ensureError'
 
@@ -25,19 +21,14 @@ export const isPostgresAlive: DBCheck = async (params) => {
 export const areAllPostgresAlive: MultiDBCheck = async (): Promise<
   Record<string, CheckResponse>
 > => {
-  let clients: Record<string, Knex> = {}
-  clients['main'] = await getDb({ regionKey: null })
-  if (isMultiRegionEnabled()) {
-    const regionClients = await getRegisteredRegionClients()
-    clients = { ...clients, ...regionClients }
-  }
+  const clients = await getAllRegisteredDbClients()
 
   const results: Record<string, CheckResponse> = {}
-  for (const [key, dbClient] of Object.entries(clients)) {
+  for (const dbClient of clients) {
     try {
-      results[key] = await isPostgresAlive({ db: dbClient })
+      results[dbClient.regionKey] = await isPostgresAlive({ db: dbClient.client })
     } catch (err) {
-      results[key] = {
+      results[dbClient.regionKey] = {
         isAlive: false,
         err: ensureErrorOrWrapAsCause(err, 'Unknown postgres error.')
       }
