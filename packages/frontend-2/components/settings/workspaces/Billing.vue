@@ -140,9 +140,13 @@
           Need help?
           <NuxtLink
             class="text-foreground"
-            to="https://speckle.guide/workspaces/billing.html"
-            external
-            @click="() => mixpanel.track('Workspace Docs Link Clicked')"
+            :to="guideBillingUrl"
+            target="_blank"
+            @click="
+              mixpanel.track('Workspace Docs Link Clicked', {
+                workspace_id: props.workspaceId
+              })
+            "
           >
             <span class="hover:underline">Read the docs</span>
           </NuxtLink>
@@ -150,7 +154,11 @@
           <a
             class="text-foreground hover:underline"
             href="mailto:billing@speckle.systems"
-            @click="() => mixpanel.track('Workspace Support Link Clicked')"
+            @click="
+              mixpanel.track('Workspace Support Link Clicked', {
+                workspace_id: props.workspaceId
+              })
+            "
           >
             contact support
           </a>
@@ -187,6 +195,7 @@ import { Roles } from '@speckle/shared'
 import { InformationCircleIcon } from '@heroicons/vue/24/outline'
 import { isPaidPlan } from '@/lib/billing/helpers/types'
 import { useMixpanel } from '~/lib/core/composables/mp'
+import { guideBillingUrl } from '~/lib/common/helpers/route'
 
 graphql(`
   fragment SettingsWorkspacesBilling_Workspace on Workspace {
