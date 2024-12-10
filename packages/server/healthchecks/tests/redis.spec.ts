@@ -20,7 +20,6 @@ describe('Healthchecks @healthchecks', () => {
             quit: () => {}
           } as unknown as Redis
         })
-        //TODO temporarily skip this test until we have a way to simulate a redis connection failure (toxiproxy or passing Redis connection details to an invalid server)
         if (result.isAlive) {
           expect(result.isAlive).to.be.false
           throw new Error('Unexpected condition') // HACK to force correct typing

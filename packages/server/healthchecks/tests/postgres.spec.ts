@@ -12,7 +12,6 @@ describe('Healthchecks @healthchecks', () => {
         expect(result.isAlive).to.be.true
       })
       it('should return false if the database is not alive', async () => {
-        // Test implementation
         const knexClient = knex({
           client: 'pg',
           connection: {
@@ -34,7 +33,8 @@ describe('Healthchecks @healthchecks', () => {
         expect(Object.values(result).every((r) => r.isAlive)).to.be.true
       })
       it.skip('should return false if any database is not alive', async () => {
-        // Test implementation
+        //TODO implementation of this test requires a little refactoring of the code
+        //to allow for a database to be temporarily unavailable, probably via dependency injection of the clients
       })
     })
   })

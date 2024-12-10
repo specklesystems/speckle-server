@@ -3,6 +3,7 @@ import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { getAllRegisteredDbClients } from '@/modules/multiregion/utils/dbSelector'
 import type { CheckResponse, MultiDBCheck } from '@/healthchecks/types'
 import { ensureErrorOrWrapAsCause } from '@/modules/shared/errors/ensureError'
+import { ensureError } from '@speckle/shared'
 
 type DBCheck = (params: { db: Knex }) => Promise<CheckResponse>
 
@@ -13,7 +14,7 @@ export const isPostgresAlive: DBCheck = async (params) => {
   try {
     await getServerInfo()
   } catch (err) {
-    return { isAlive: false, err }
+    return { isAlive: false, err: ensureError(err, 'Unknown Postgres error.') }
   }
   return { isAlive: true }
 }
