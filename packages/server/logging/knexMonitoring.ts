@@ -4,7 +4,6 @@ import { type Knex } from 'knex'
 import { Logger } from 'pino'
 import { toNDecimalPlaces } from '@/modules/core/utils/formatting'
 import { omit } from 'lodash'
-import { Entries } from 'type-fest'
 
 let metricQueryDuration: prometheusClient.Summary<string>
 let metricQueryErrors: prometheusClient.Counter<string>
@@ -16,7 +15,9 @@ const initializedRegions: string[] = []
 let initializedPollingMetrics = false
 
 export const initKnexPrometheusMetrics = async (params: {
-  getAllDbClients: () => Promise<Record<string, Knex>>
+  getAllDbClients: () => Promise<
+    Array<{ client: Knex; isMain: boolean; regionKey: string }>
+  >
   register: Registry
   logger: Logger
 }) => {
@@ -28,8 +29,11 @@ export const initKnexPrometheusMetrics = async (params: {
       labelNames: ['region'],
       help: 'Number of free DB connections',
       async collect() {
-        for (const [region, db] of Object.entries(await params.getAllDbClients())) {
-          this.set({ region }, db.client.pool.numFree())
+        for (const dbClient of await params.getAllDbClients()) {
+          this.set(
+            { region: dbClient.regionKey },
+            dbClient.client.client.pool.numFree()
+          )
         }
       }
     })
@@ -40,8 +44,11 @@ export const initKnexPrometheusMetrics = async (params: {
       labelNames: ['region'],
       help: 'Number of used DB connections',
       async collect() {
-        for (const [region, db] of Object.entries(await params.getAllDbClients())) {
-          this.set({ region }, db.client.pool.numUsed())
+        for (const dbClient of await params.getAllDbClients()) {
+          this.set(
+            { region: dbClient.regionKey },
+            dbClient.client.client.pool.numUsed()
+          )
         }
       }
     })
@@ -52,8 +59,11 @@ export const initKnexPrometheusMetrics = async (params: {
       labelNames: ['region'],
       help: 'Number of pending DB connection aquires',
       async collect() {
-        for (const [region, db] of Object.entries(await params.getAllDbClients())) {
-          this.set({ region }, db.client.pool.numPendingAcquires())
+        for (const dbClient of await params.getAllDbClients()) {
+          this.set(
+            { region: dbClient.regionKey },
+            dbClient.client.client.pool.numPendingAcquires()
+          )
         }
       }
     })
@@ -64,8 +74,11 @@ export const initKnexPrometheusMetrics = async (params: {
       labelNames: ['region'],
       help: 'Number of pending DB connection creates',
       async collect() {
-        for (const [region, db] of Object.entries(await params.getAllDbClients())) {
-          this.set({ region }, db.client.pool.numPendingCreates())
+        for (const dbClient of await params.getAllDbClients()) {
+          this.set(
+            { region: dbClient.regionKey },
+            dbClient.client.client.pool.numPendingCreates()
+          )
         }
       }
     })
@@ -76,8 +89,11 @@ export const initKnexPrometheusMetrics = async (params: {
       labelNames: ['region'],
       help: 'Number of pending DB connection validations. This is a state between pending acquisition and acquiring a connection.',
       async collect() {
-        for (const [region, db] of Object.entries(await params.getAllDbClients())) {
-          this.set({ region }, db.client.pool.numPendingValidations())
+        for (const dbClient of await params.getAllDbClients()) {
+          this.set(
+            { region: dbClient.regionKey },
+            dbClient.client.client.pool.numPendingValidations()
+          )
         }
       }
     })
@@ -88,8 +104,11 @@ export const initKnexPrometheusMetrics = async (params: {
       labelNames: ['region'],
       help: 'Remaining capacity of the DB connection pool',
       async collect() {
-        for (const [region, db] of Object.entries(await params.getAllDbClients())) {
-          this.set({ region }, numberOfFreeConnections(db))
+        for (const dbClient of await params.getAllDbClients()) {
+          this.set(
+            { region: dbClient.regionKey },
+            numberOfFreeConnections(dbClient.client)
+          )
         }
       }
     })
@@ -138,12 +157,14 @@ export const initKnexPrometheusMetrics = async (params: {
   }
 
   // configure hooks on knex
-  for (const [region, db] of Object.entries(
-    await params.getAllDbClients()
-  ) as Entries<Knex>) {
-    if (initializedRegions.includes(region)) continue
-    initKnexPrometheusMetricsForRegionEvents({ logger: params.logger, region, db })
-    initializedRegions.push(region)
+  for (const dbClient of await params.getAllDbClients()) {
+    if (initializedRegions.includes(dbClient.regionKey)) continue
+    initKnexPrometheusMetricsForRegionEvents({
+      logger: params.logger,
+      region: dbClient.regionKey,
+      db: dbClient.client
+    })
+    initializedRegions.push(dbClient.regionKey)
   }
 }
 

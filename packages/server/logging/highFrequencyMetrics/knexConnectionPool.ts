@@ -31,7 +31,9 @@ type MetricConfig = {
   prefix?: string
   labels?: Record<string, string>
   buckets?: Record<BucketName, number[]>
-  getDbClients: () => Promise<Record<string, Knex>>
+  getDbClients: () => Promise<
+    Array<{ client: Knex; isMain: boolean; regionKey: string }>
+  >
 }
 
 export const knexConnections = (registry: Registry, config: MetricConfig): Metric => {
@@ -91,9 +93,9 @@ export const knexConnections = (registry: Registry, config: MetricConfig): Metri
 
   return {
     collect: async () => {
-      for (const [region, knex] of Object.entries(await config.getDbClients())) {
-        const labelsAndRegion = { ...labels, region }
-        const connPool = knex.client.pool
+      for (const dbClient of await config.getDbClients()) {
+        const labelsAndRegion = { ...labels, region: dbClient.regionKey }
+        const connPool = dbClient.client.client.pool
 
         knexConnectionsFree.observe(labelsAndRegion, connPool.numFree())
         knexConnectionsUsed.observe(labelsAndRegion, connPool.numUsed())
@@ -103,7 +105,10 @@ export const knexConnections = (registry: Registry, config: MetricConfig): Metri
           labelsAndRegion,
           connPool.numPendingValidations()
         )
-        knexRemainingCapacity.observe(labelsAndRegion, numberOfFreeConnections(knex))
+        knexRemainingCapacity.observe(
+          labelsAndRegion,
+          numberOfFreeConnections(dbClient.client)
+        )
       }
     }
   }

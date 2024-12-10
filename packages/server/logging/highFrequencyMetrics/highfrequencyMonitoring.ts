@@ -14,7 +14,9 @@ type MetricConfig = {
   prefix?: string
   labels?: Record<string, string>
   buckets?: Record<string, number[]>
-  getDbClients: () => Promise<Record<string, Knex>>
+  getDbClients: () => Promise<
+    Array<{ client: Knex; isMain: boolean; regionKey: string }>
+  >
 }
 
 type HighFrequencyMonitor = {
