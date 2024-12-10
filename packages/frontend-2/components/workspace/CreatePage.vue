@@ -1,25 +1,24 @@
 <template>
   <div class="bg-foundation-page">
-    <nav
-      class="fixed top-0 h-14 bg-foundation w-full shadow flex items-center justify-between px-2 cursor-pointer"
-    >
-      <HeaderLogoBlock :active="false" class="mr-0" no-link @click="onCancelClick" />
-      <FormButton color="outline" @click="onCancelClick">Cancel</FormButton>
+    <nav class="fixed z-40 top-0 h-12 bg-foundation border-b border-outline-2">
+      <div class="flex items-center justify-between h-full w-screen py-4 px-3 sm:px-4">
+        <HeaderLogoBlock :active="false" to="/" class="min-w-40" />
+        <FormButton size="sm" color="outline" @click="onCancelClick">Cancel</FormButton>
+      </div>
     </nav>
     <div class="h-dvh w-dvh overflow-hidden flex flex-col">
-      <!-- Static Spacer to allow for absolutely positioned HeaderNavBar  -->
       <div class="h-12 w-full shrink-0" />
       <main class="w-full h-full overflow-y-auto simple-scrollbar pt-8 pb-16">
         <div class="container mx-auto px-6 md:px-12">
           <WorkspaceWizard :workspace-id="workspaceId" />
+
+          <WorkspaceWizardCancelDialog
+            v-model:open="isCancelDialogOpen"
+            :workspace-id="workspaceId"
+          />
         </div>
       </main>
     </div>
-
-    <WorkspaceWizardCancelDialog
-      v-model:open="isCancelDialogOpen"
-      :workspace-id="workspaceId"
-    />
   </div>
 </template>
 
