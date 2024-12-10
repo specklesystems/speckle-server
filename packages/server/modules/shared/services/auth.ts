@@ -14,6 +14,7 @@ import { GetRoles } from '@/modules/shared/domain/rolesAndScopes/operations'
 import { ForbiddenError } from '@/modules/shared/errors'
 import { adminOverrideEnabled } from '@/modules/shared/helpers/envHelper'
 import { EventBusEmit } from '@/modules/shared/services/eventBus'
+import { WorkspaceEvents } from '@/modules/workspacesCore/domain/events'
 import { isNullOrUndefined, Roles } from '@speckle/shared'
 
 /**
@@ -111,7 +112,7 @@ export const authorizeResolverFactory =
 
     if (!isNullOrUndefined(targetWorkspaceId)) {
       await deps.emitWorkspaceEvent({
-        eventName: 'workspace.authorized',
+        eventName: WorkspaceEvents.Authorized,
         payload: {
           workspaceId: targetWorkspaceId,
           userId

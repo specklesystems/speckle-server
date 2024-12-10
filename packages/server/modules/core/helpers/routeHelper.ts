@@ -60,6 +60,7 @@ export function buildAbsoluteFrontendUrlFromPath(route: string): string {
   return new URL(route, getFrontendOrigin()).toString()
 }
 
-export function getFunctionsMarketplaceUrl() {
-  return new URL('/functions', getFrontendOrigin())
+export function getFunctionsMarketplaceUrl(workspaceSlug?: string) {
+  const path = workspaceSlug ? `/workspaces/${workspaceSlug}/functions` : '/functions'
+  return new URL(path, getFrontendOrigin())
 }

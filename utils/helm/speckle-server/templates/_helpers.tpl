@@ -567,7 +567,7 @@ Generate the environment variables for Speckle server and Speckle objects deploy
   value: {{ .Values.featureFlags.workspacesModuleEnabled | quote }}
 
 - name: FF_WORKSPACES_SSO_ENABLED
-  value: {{ .Values.featureFlags.workspaceSsoEnabled | quote }}
+  value: {{ .Values.featureFlags.workspacesSSOEnabled | quote }}
 
 {{- if .Values.featureFlags.workspacesModuleEnabled }}
 - name: LICENSE_TOKEN
@@ -588,6 +588,9 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 
 - name: FF_WORKSPACES_MULTI_REGION_ENABLED
   value: {{ .Values.featureFlags.workspacesMultiRegionEnabled | quote }}
+
+- name: FF_WORKSPACES_MULTI_REGION_BLOB_STORAGE_ENABLED
+  value: {{ .Values.featureFlags.workspacesMultiRegionBlobStorageEnabled | quote }}
 
 {{- if .Values.featureFlags.billingIntegrationEnabled }}
 - name: STRIPE_API_KEY
@@ -675,12 +678,14 @@ Generate the environment variables for Speckle server and Speckle objects deploy
       key: {{ .Values.server.billing.workspaceYearlyBusinessSeatStripePriceId.secretKey }}
 {{- end }}
 
+{{- if (or .Values.featureFlags.automateModuleEnabled .Values.featureFlags.workspacesSsoEnabled) }}
+- name: ENCRYPTION_KEYS_PATH
+  value: {{ .Values.server.encryptionKeys.path }}
+{{- end }}
+
 {{- if .Values.featureFlags.automateModuleEnabled }}
 - name: SPECKLE_AUTOMATE_URL
   value: {{ .Values.server.speckleAutomateUrl }}
-
-- name: AUTOMATE_ENCRYPTION_KEYS_PATH
-  value: {{ .Values.server.encryptionKeys.path }}
 {{- end }}
 
 - name: ONBOARDING_STREAM_URL
@@ -738,16 +743,16 @@ Generate the environment variables for Speckle server and Speckle objects deploy
   value: {{ .Values.server.gendoAI.creditLimit | quote }}
 
 - name: RATELIMIT_GENDO_AI_RENDER_REQUEST
-  value: {{ .Values.server.gendoai.ratelimiting.renderRequest | quote }}
+  value: {{ .Values.server.gendoAI.ratelimiting.renderRequest | quote }}
 
 - name: RATELIMIT_GENDO_AI_RENDER_REQUEST_PERIOD_SECONDS
-  value: {{ .Values.server.gendoai.ratelimiting.renderRequestPeriodSeconds | quote }}
+  value: {{ .Values.server.gendoAI.ratelimiting.renderRequestPeriodSeconds | quote }}
 
 - name: RATELIMIT_BURST_GENDO_AI_RENDER_REQUEST
-  value: {{ .Values.server.gendoai.ratelimiting.burstRenderRequest | quote }}
+  value: {{ .Values.server.gendoAI.ratelimiting.burstRenderRequest | quote }}
 
 - name: RATELIMIT_GENDO_AI_RENDER_REQUEST_BURST_PERIOD_SECONDS
-  value: {{ .Values.server.gendoai.ratelimiting.burstRenderRequestPeriodSeconds | quote }}
+  value: {{ .Values.server.gendoAI.ratelimiting.burstRenderRequestPeriodSeconds | quote }}
 {{- end }}
 
 # *** Redis ***

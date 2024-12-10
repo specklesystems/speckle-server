@@ -44,25 +44,27 @@
         <CommonLoadingIcon />
       </div>
 
-      <input
-        :id="name"
-        ref="inputElement"
-        v-model="value"
-        :type="type"
-        :name="name"
-        :class="[coreClasses, iconClasses, sizeClasses, inputClasses || '']"
-        :placeholder="placeholder"
-        :disabled="disabled"
-        :aria-invalid="errorMessage ? 'true' : 'false'"
-        :aria-describedby="helpTipId"
-        :readonly="readOnly"
-        role="textbox"
-        v-bind="$attrs"
-        @change="$emit('change', { event: $event, value })"
-        @input="$emit('input', { event: $event, value })"
-        @focus="$emit('focus')"
-        @blur="$emit('blur')"
-      />
+      <div v-tippy="tooltipText">
+        <input
+          :id="name"
+          ref="inputElement"
+          v-model="value"
+          :type="type"
+          :name="name"
+          :class="[coreClasses, iconClasses, sizeClasses, inputClasses || '']"
+          :placeholder="placeholder"
+          :disabled="disabled"
+          :aria-invalid="errorMessage ? 'true' : 'false'"
+          :aria-describedby="helpTipId"
+          :readonly="readOnly"
+          role="textbox"
+          v-bind="$attrs"
+          @change="$emit('change', { event: $event, value })"
+          @input="$emit('input', { event: $event, value })"
+          @focus="$emit('focus')"
+          @blur="$emit('blur')"
+        />
+      </div>
       <slot name="input-right">
         <a
           v-if="rightIcon"
@@ -123,6 +125,7 @@ import type { PropAnyComponent } from '~~/src/helpers/common/components'
 import type { InputColor } from '~~/src/composables/form/textInput'
 import type { LabelPosition } from '~~/src/composables/form/input'
 import { CommonLoadingIcon } from '~~/src/lib'
+import { directive as vTippy } from 'vue-tippy'
 
 type InputType = 'text' | 'email' | 'password' | 'url' | 'search' | 'number' | string
 type InputSize = 'sm' | 'base' | 'lg' | 'xl'
@@ -293,6 +296,14 @@ const props = defineProps({
     default: undefined
   },
   rightIconTitle: {
+    type: String,
+    default: undefined
+  },
+  tooltipText: {
+    type: String,
+    default: undefined
+  },
+  customHelpClass: {
     type: String,
     default: undefined
   }

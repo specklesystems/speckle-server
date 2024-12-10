@@ -1,3 +1,4 @@
+import { ObjectStorage } from '@/modules/blobstorage/clients/objectStorage'
 import { DataRegionsConfig } from '@/modules/multiregion/domain/types'
 import { isMultiRegionEnabled } from '@/modules/multiregion/helpers'
 import { BasicTestUser, createTestUser } from '@/test/authHelper'
@@ -15,7 +16,11 @@ import {
   TestApolloServer
 } from '@/test/graphqlHelper'
 import { beforeEachContext, getRegionKeys } from '@/test/hooks'
-import { MultiRegionConfigMock, MultiRegionDbSelectorMock } from '@/test/mocks/global'
+import {
+  MultiRegionBlobStorageSelectorMock,
+  MultiRegionConfigMock,
+  MultiRegionDbSelectorMock
+} from '@/test/mocks/global'
 import { truncateRegionsSafely } from '@/test/speckle-helpers/regions'
 import { Roles } from '@speckle/shared'
 import { expect } from 'chai'
@@ -35,11 +40,27 @@ isEnabled
         [fakeRegionKey1]: {
           postgres: {
             connectionUri: 'postgres://user:password@uswest1:port/dbname'
+          },
+          blobStorage: {
+            accessKey: '',
+            secretKey: '',
+            s3Region: '',
+            bucket: '',
+            endpoint: '',
+            createBucketIfNotExists: false
           }
         },
         [fakeRegionKey2]: {
           postgres: {
             connectionUri: 'postgres://user:password@eueast3:port/dbname'
+          },
+          blobStorage: {
+            accessKey: '',
+            secretKey: '',
+            s3Region: '',
+            bucket: '',
+            endpoint: '',
+            createBucketIfNotExists: false
           }
         }
       }
@@ -52,6 +73,9 @@ isEnabled
         MultiRegionDbSelectorMock.mockFunction('initializeRegion', async () =>
           Promise.resolve()
         )
+        MultiRegionBlobStorageSelectorMock.mockFunction('initializeRegion', async () =>
+          Promise.resolve(undefined as unknown as ObjectStorage)
+        )
 
         await beforeEachContext()
         testAdminUser = await createTestUser({ role: Roles.Server.Admin })
@@ -62,6 +86,7 @@ isEnabled
       after(() => {
         MultiRegionConfigMock.resetMockedFunctions()
         MultiRegionDbSelectorMock.resetMockedFunctions()
+        MultiRegionBlobStorageSelectorMock.resetMockedFunctions()
       })
 
       describe('server config', () => {
@@ -169,14 +194,14 @@ isEnabled
             await createRegion(createdRegionInput, { assertNoErrors: true })
           })
 
-          it("can't retrieve regions if non-admin", async () => {
+          it("can't retrieve regions if not a server user", async () => {
             const res = await apollo.execute(
               GetRegionsDocument,
               {},
               {
                 context: {
                   userId: testBasicUser.id,
-                  role: Roles.Server.User
+                  role: Roles.Server.Guest
                 }
               }
             )

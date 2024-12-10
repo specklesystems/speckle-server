@@ -22,7 +22,6 @@ export const automateFunctionFragment = gql`
         commitId
       }
     }
-    automationCount
     supportedSourceApps
     tags
   }

@@ -55,7 +55,7 @@
           "description": "High level flag fully toggles the workspaces module",
           "default": false
         },
-        "workspaceSsoEnabled": {
+        "workspacesSSOEnabled": {
           "type": "boolean",
           "description": "High level flag fully toggles the workspaces dynamic sso",
           "default": false
@@ -78,6 +78,16 @@
         "workspacesMultiRegionEnabled": {
           "type": "boolean",
           "description": "Toggles whether multi-region is available within workspaces. workspacesModuleEnabled must also be enabled.",
+          "default": false
+        },
+        "workspacesMultiRegionBlobStorageEnabled": {
+          "type": "boolean",
+          "description": "Toggles whether multi-region blob storage is available within workspaces. workspacesMultiRegionEnabled must also be enabled.",
+          "default": false
+        },
+        "fileImportIFCDotNetEnabled": {
+          "type": "boolean",
+          "description": "Toggles whether the experimental .Net IFC importer is used for importing IFC files.",
           "default": false
         }
       }

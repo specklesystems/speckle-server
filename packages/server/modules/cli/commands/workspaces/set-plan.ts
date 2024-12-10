@@ -25,7 +25,7 @@ const command: CommandModule<
       describe: 'Plan to set the status for',
       type: 'string',
       default: 'business',
-      choices: ['business', 'starter', 'pro']
+      choices: ['business', 'starter', 'plus']
     },
     status: {
       describe: 'Status to set for the workspace plan',
@@ -52,6 +52,7 @@ const command: CommandModule<
 
     await upsertPaidWorkspacePlanFactory({ db })({
       workspacePlan: {
+        createdAt: new Date(),
         workspaceId: workspace.id,
         name: args.plan,
         status: args.status

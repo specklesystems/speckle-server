@@ -50,7 +50,11 @@ import {
   SubscriptionCommitCreatedArgs,
   CommitCreateInput,
   SubscriptionCommitUpdatedArgs,
-  CommitUpdateInput
+  CommitUpdateInput,
+  SubscriptionWorkspaceProjectsUpdatedArgs,
+  WorkspaceProjectsUpdatedMessage,
+  SubscriptionWorkspaceUpdatedArgs,
+  WorkspaceUpdatedMessage
 } from '@/modules/core/graph/generated/graphql'
 import { Merge } from 'type-fest'
 import {
@@ -67,6 +71,7 @@ import {
 import { CommentRecord } from '@/modules/comments/helpers/types'
 import { CommitRecord } from '@/modules/core/helpers/types'
 import { BranchRecord } from '@/modules/core/helpers/types'
+import { WorkspaceGraphQLReturn } from '@/modules/workspacesCore/helpers/graphTypes'
 
 /**
  * GraphQL Subscription PubSub instance
@@ -132,6 +137,15 @@ export enum FileImportSubscriptions {
   ProjectPendingModelsUpdated = 'PROJECT_PENDING_MODELS_UPDATED',
   ProjectPendingVersionsUpdated = 'PROJECT_PENDING_VERSIONS_UPDATED',
   ProjectFileImportUpdated = 'PROJECT_FILE_IMPORT_UPDATED'
+}
+
+export enum TestSubscriptions {
+  Ping = 'PING'
+}
+
+export enum WorkspaceSubscriptions {
+  WorkspaceProjectsUpdated = 'WORKSPACE_PROJECTS_UPDATED',
+  WorkspaceUpdated = 'WORKSPACE_UPDATED'
 }
 
 type NoVariables = Record<string, never>
@@ -348,6 +362,29 @@ type SubscriptionTypeMap = {
     }
     variables: SubscriptionCommitUpdatedArgs
   }
+  [TestSubscriptions.Ping]: {
+    payload: { ping: string }
+    variables: NoVariables
+  }
+  [WorkspaceSubscriptions.WorkspaceProjectsUpdated]: {
+    payload: {
+      workspaceProjectsUpdated: Merge<
+        WorkspaceProjectsUpdatedMessage,
+        { project: Nullable<ProjectGraphQLReturn> }
+      >
+      workspaceId: string
+    }
+    variables: SubscriptionWorkspaceProjectsUpdatedArgs
+  }
+  [WorkspaceSubscriptions.WorkspaceUpdated]: {
+    payload: {
+      workspaceUpdated: Merge<
+        WorkspaceUpdatedMessage,
+        { workspace: WorkspaceGraphQLReturn }
+      >
+    }
+    variables: SubscriptionWorkspaceUpdatedArgs
+  }
 } & { [k in SubscriptionEvent]: { payload: unknown; variables: unknown } }
 
 type SubscriptionEvent =
@@ -359,6 +396,8 @@ type SubscriptionEvent =
   | UserSubscriptions
   | ViewerSubscriptions
   | BranchSubscriptions
+  | TestSubscriptions
+  | WorkspaceSubscriptions
 
 /**
  * Publish a GQL subscription event

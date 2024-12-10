@@ -11,16 +11,22 @@ import {
   ServerInvitesEventsPayloads
 } from '@/modules/serverinvites/domain/events'
 
+type AllEventsWildcard = '**'
 type EventWildcard = '*'
 
-type TestEvents = {
-  ['test.string']: string
-  ['test.number']: number
+export const TestEvents = {
+  String: 'test.string',
+  Number: 'test.number'
+} as const
+
+type TestEventsPayloads = {
+  [TestEvents.String]: string
+  [TestEvents.Number]: number
 }
 
 // we should only ever extend this type, other helper types will be derived from this
 type EventsByNamespace = {
-  test: TestEvents
+  test: TestEventsPayloads
   [workspaceEventNamespace]: WorkspaceEventsPayloads
   [serverinvitesEventNamespace]: ServerInvitesEventsPayloads
 }
@@ -34,7 +40,7 @@ type EventNamesByNamespace = {
 
 // generated type for a top level wildcard one level nested wildcards per namespace and each possible event
 type EventSubscriptionKey =
-  | EventWildcard
+  | AllEventsWildcard
   | `${keyof EventNamesByNamespace}.${EventWildcard}`
   | {
       [Namespace in keyof EventNamesByNamespace]: EventNamesByNamespace[Namespace]
@@ -59,7 +65,7 @@ type EventPayloadsByNamespaceMap = {
   }
 }
 
-type EventPayload<T extends EventSubscriptionKey> = T extends EventWildcard
+export type EventPayload<T extends EventSubscriptionKey> = T extends AllEventsWildcard
   ? // if event key is "*", get all events from the flat object
     EventPayloadsMap[keyof EventPayloadsMap]
   : // else if, the key is a "namespace.*" wildcard

@@ -1,11 +1,5 @@
 <template>
   <div>
-    <div v-if="ssoError">
-      {{ ssoError }}
-      <a :href="`/workspaces/${workspaceSlug}/sso?redirect=${$route.fullPath}`">
-        Sign in with SSO
-      </a>
-    </div>
     <WorkspaceInviteWrapper
       v-if="token"
       :workspace-slug="workspaceSlug"
@@ -16,16 +10,17 @@
 </template>
 
 <script setup lang="ts">
-import { useWorkspaceSsoValidation } from '~/lib/workspaces/composables/sso'
+import { useOnWorkspaceUpdated } from '~/lib/workspaces/composables/management'
+import { useWorkspaceProjectsUpdatedTracking } from '~/lib/workspaces/composables/projectUpdates'
 
 definePageMeta({
   middleware: ['requires-workspaces-enabled', 'require-valid-workspace']
 })
 
 const route = useRoute()
-
 const workspaceSlug = computed(() => route.params.slug as string)
-const { ssoError } = useWorkspaceSsoValidation(workspaceSlug)
+useOnWorkspaceUpdated({ workspaceSlug })
+useWorkspaceProjectsUpdatedTracking(workspaceSlug)
 
 const token = computed(() => route.query.token as string | undefined)
 </script>
