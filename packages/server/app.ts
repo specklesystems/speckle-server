@@ -399,11 +399,12 @@ export async function init() {
   const app = express()
   app.disable('x-powered-by')
 
-  await Logging(app)
-
   // Moves things along automatically on restart.
   // Should perhaps be done manually?
   await migrateDbToLatest({ region: 'main', db: knex })
+
+  // Logging relies on 'regions' table in the database, so much be initialized after migrations
+  await Logging(app)
 
   app.use(cookieParser())
   app.use(DetermineRequestIdMiddleware)
