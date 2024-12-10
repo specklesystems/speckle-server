@@ -44,7 +44,7 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
     }
   },
   {
-    text: 'I Understand',
+    text: 'I understand',
     onClick: () => {
       open.value = false
       emit('confirm')
