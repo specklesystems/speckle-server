@@ -136,6 +136,26 @@
           />
         </div>
 
+        <div class="mt-8 text-center text-foreground-2">
+          Need help?
+          <NuxtLink
+            class="text-foreground"
+            to="https://speckle.guide/workspaces/billing.html"
+            external
+            @click="() => mixpanel.track('Workspace Docs Link Clicked')"
+          >
+            <span class="hover:underline">Read the docs</span>
+          </NuxtLink>
+          or
+          <a
+            class="text-foreground hover:underline"
+            href="mailto:billing@speckle.systems"
+            @click="() => mixpanel.track('Workspace Support Link Clicked')"
+          >
+            contact support
+          </a>
+        </div>
+
         <SettingsWorkspacesBillingUpgradeDialog
           v-if="selectedPlanName && selectedPlanCycle && workspaceId"
           v-model:open="isUpgradeDialogOpen"
