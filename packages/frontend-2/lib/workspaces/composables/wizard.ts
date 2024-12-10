@@ -21,7 +21,7 @@ import { mapServerRoleToGqlServerRole } from '~/lib/common/helpers/roles'
 import { Roles } from '@speckle/shared'
 import { useMixpanel } from '~/lib/core/composables/mp'
 
-const emptyState = {
+const emptyState: WorkspaceWizardState = {
   name: '',
   slug: '',
   invites: ['', '', ''],
@@ -31,20 +31,28 @@ const emptyState = {
   region: null
 }
 
-const state = ref<WorkspaceWizardState>({ ...emptyState })
+const steps: readonly WizardSteps[] = [
+  WizardSteps.Details,
+  WizardSteps.Invites,
+  WizardSteps.Pricing,
+  WizardSteps.Region
+] as const
 
-const isLoading = ref(false)
-const currentStepIndex = ref(0)
-const stepComponents = shallowRef<Record<number, WizardSteps>>({
-  0: WizardSteps.Details,
-  1: WizardSteps.Invites,
-  2: WizardSteps.Pricing,
-  3: WizardSteps.Region
-})
-
-const currentStep = computed(() => stepComponents.value[currentStepIndex.value])
+export const useWorkspaceWizardState = () =>
+  useState<{
+    isLoading: boolean
+    currentStepIndex: number
+    currentStep: WizardSteps
+    state: WorkspaceWizardState
+  }>('workspace-wizard-state', () => ({
+    isLoading: false,
+    currentStepIndex: 0,
+    currentStep: steps[0],
+    state: { ...emptyState }
+  }))
 
 export const useWorkspacesWizard = () => {
+  const wizardState = useWorkspaceWizardState()
   const createWorkspace = useCreateWorkspace()
   const { generateDefaultLogoIndex } = useWorkspacesAvatar()
   const { redirectToCheckout } = useBillingActions()
@@ -57,54 +65,70 @@ export const useWorkspacesWizard = () => {
     updateWorkspaceCreationStateMutation
   )
 
-  const setState = (initialState: WorkspaceWizardState) => {
-    state.value = {
-      ...initialState,
-      invites: [...(initialState.invites || []), '', '', ''].slice(0, 3)
-    }
-  }
+  const isLoading = computed({
+    get: () => wizardState.value.isLoading,
+    set: (newVal) => (wizardState.value.isLoading = newVal)
+  })
+
+  const currentStep = computed({
+    get: () => wizardState.value.currentStep,
+    set: (newVal) => (wizardState.value.currentStep = newVal)
+  })
+
+  const state = computed({
+    get: () => wizardState.value.state,
+    set: (newVal) =>
+      (wizardState.value.state = {
+        ...newVal,
+        invites: [...(newVal.invites || []), '', '', ''].slice(
+          0,
+          Math.max(3, newVal.invites?.length || 0)
+        )
+      })
+  })
 
   const goToNextStep = () => {
-    if (currentStep.value === WizardSteps.Region) {
-      completeWizard()
-    } else if (
-      currentStep.value === WizardSteps.Pricing &&
-      state.value.plan !== PaidWorkspacePlans.Business
-    ) {
-      completeWizard()
-    } else {
-      currentStepIndex.value++
+    const shouldComplete =
+      wizardState.value.currentStepIndex === steps.length - 1 ||
+      (wizardState.value.currentStep === WizardSteps.Pricing &&
+        wizardState.value.state.plan !== PaidWorkspacePlans.Business)
+
+    if (!shouldComplete) {
+      wizardState.value.currentStepIndex++
+      wizardState.value.currentStep = steps[wizardState.value.currentStepIndex]
     }
+    return shouldComplete ? completeWizard() : undefined
   }
 
   const goToPreviousStep = () => {
-    if (currentStepIndex.value === 0) return
-    currentStepIndex.value--
+    if (wizardState.value.currentStepIndex > 0) {
+      wizardState.value.currentStepIndex--
+      wizardState.value.currentStep = steps[wizardState.value.currentStepIndex]
+    }
   }
 
   const goToStep = (step: WizardSteps) => {
-    const stepIndex = Object.keys(stepComponents.value).find(
-      (key: string) => stepComponents.value[Number(key)] === step
-    )
-    currentStepIndex.value = Number(stepIndex)
+    const stepIndex = steps.indexOf(step)
+    if (stepIndex !== -1) {
+      wizardState.value.currentStepIndex = stepIndex
+      wizardState.value.currentStep = steps[stepIndex]
+    }
   }
 
-  // This will complete the wizard and create the workspace.
   const completeWizard = async () => {
-    isLoading.value = true
+    wizardState.value.isLoading = true
 
-    // Monthly starter plan doesn't need checkout
     const needsCheckout =
-      state.value.plan !== PaidWorkspacePlans.Starter ||
-      state.value.billingInterval === BillingInterval.Yearly
-    const workspaceId = ref(state.value.id)
+      wizardState.value.state.plan !== PaidWorkspacePlans.Starter ||
+      wizardState.value.state.billingInterval === BillingInterval.Yearly
+    const workspaceId = ref(wizardState.value.state.id)
     const isNewWorkspace = !workspaceId.value
 
     if (isNewWorkspace) {
       const newWorkspaceResult = await createWorkspace(
         {
-          name: state.value.name,
-          slug: state.value.slug,
+          name: wizardState.value.state.name,
+          slug: wizardState.value.state.slug,
           defaultLogoIndex: generateDefaultLogoIndex()
         },
         { navigateOnSuccess: false, hideNotifications: true }
@@ -121,17 +145,19 @@ export const useWorkspacesWizard = () => {
       input: {
         completed: false,
         state: {
-          ...state.value,
-          invites: state.value.invites.filter((invite) => !!invite),
+          ...wizardState.value.state,
+          invites: wizardState.value.state.invites.filter((invite) => !!invite),
           region:
-            state.value.plan === PaidWorkspacePlans.Business ? state.value.region : null
+            wizardState.value.state.plan === PaidWorkspacePlans.Business
+              ? wizardState.value.state.region
+              : null
         },
         workspaceId: workspaceId.value
       }
     }).catch(convertThrowIntoFetchResult)
 
     if (!updatedWorkspaceResult?.data?.workspaceMutations.updateCreationState) {
-      state.value.id = workspaceId.value
+      wizardState.value.state.id = workspaceId.value
       triggerNotification({
         title: 'Something went wrong, please try again',
         type: ToastNotificationType.Danger
@@ -144,20 +170,20 @@ export const useWorkspacesWizard = () => {
     if (needsCheckout) {
       // Add workspace ID to URL, in case the user comes back from Stripe
       router.replace({ query: { workspaceId: workspaceId.value } })
-
       mixpanel.track('Workspace Creation Checkout Session Started')
 
       // Go to Stripe
       await redirectToCheckout({
-        plan: state.value.plan as unknown as PaidWorkspacePlans,
-        cycle: state.value.billingInterval as BillingInterval,
+        plan: wizardState.value.state.plan as unknown as PaidWorkspacePlans,
+        cycle: wizardState.value.state.billingInterval as BillingInterval,
         workspaceId: workspaceId.value,
         isCreateFlow: true
       })
     } else {
       // Keep loading state for a second
       await new Promise((resolve) => setTimeout(resolve, 1000))
-      await router.push(workspaceRoute(state.value.slug))
+      await router.push(workspaceRoute(wizardState.value.state.slug))
+      await new Promise((resolve) => setTimeout(resolve, 1000))
       isLoading.value = false
       resetWizardState()
     }
@@ -166,7 +192,7 @@ export const useWorkspacesWizard = () => {
   const finalizeWizard = async (state: WorkspaceWizardState, workspaceId: string) => {
     isLoading.value = true
 
-    if (state.region?.key) {
+    if (state.region?.key && state.plan === PaidWorkspacePlans.Business) {
       await updateWorkspaceDefaultRegion({
         workspaceId,
         regionKey: state.region.key
@@ -250,18 +276,18 @@ export const useWorkspacesWizard = () => {
 
   const resetWizardState = () => {
     state.value = { ...emptyState }
-    currentStepIndex.value = 0
+    wizardState.value.currentStepIndex = 0
+    currentStep.value = steps[0]
   }
 
   return {
-    state,
-    currentStep,
     goToNextStep,
     goToPreviousStep,
     goToStep,
-    isLoading,
-    setState,
     resetWizardState,
-    finalizeWizard
+    finalizeWizard,
+    state,
+    isLoading,
+    currentStep
   }
 }
