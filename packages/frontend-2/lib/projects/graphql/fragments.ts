@@ -33,7 +33,7 @@ export const projectDashboardItemFragment = graphql(`
       id
       slug
       name
-      ...WorkspaceAvatar_Workspace
+      logo
     }
     pendingImportedModels(limit: 4) {
       ...PendingFileUpload

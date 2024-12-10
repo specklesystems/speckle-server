@@ -32,7 +32,6 @@ graphql(`
     slug
     description
     logo
-    defaultLogoIndex
   }
   fragment WorkspaceInviteDiscoverableWorkspaceBanner_Workspace on Workspace {
     id
@@ -41,7 +40,6 @@ graphql(`
     createdAt
     updatedAt
     logo
-    defaultLogoIndex
     domainBasedMembershipProtectionEnabled
     discoverabilityEnabled
   }
@@ -67,7 +65,7 @@ const invite = computed(() => ({
   workspace: {
     id: props.workspace.id,
     logo: props.workspace.logo || undefined,
-    defaultLogoIndex: props.workspace.defaultLogoIndex
+    name: props.workspace.name
   }
 }))
 
