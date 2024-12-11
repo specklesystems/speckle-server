@@ -55,8 +55,6 @@ export function useGlobalToastManager() {
       if (!newVal) return
       currentNotifications.value = newVal
 
-      if (import.meta.server) return
-
       // Create timeout for the new notification
       const index = currentNotifications.value.length - 1
       const lastNotification = newVal[index]
