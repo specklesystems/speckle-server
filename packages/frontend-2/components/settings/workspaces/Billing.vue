@@ -58,9 +58,13 @@
                       : 'Monthly bill'
                   }}
                 </h3>
-
                 <p class="text-heading-lg text-foreground inline-block">
-                  {{ billValue }} per month
+                  {{ billValue }} per
+                  {{
+                    subscription?.billingInterval === BillingInterval.Yearly
+                      ? 'year'
+                      : 'month'
+                  }}
                 </p>
                 <p class="text-body-xs text-foreground-2 flex gap-x-1 items-center">
                   {{ billDescription }}
