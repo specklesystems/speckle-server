@@ -30,7 +30,7 @@ import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useViewerShortcuts, useViewModeUtilities } from '~~/lib/viewer/composables/ui'
 import { ViewModeShortcuts } from '~/lib/viewer/helpers/shortcuts/shortcuts'
 
-const open = ref(false)
+const open = defineModel<boolean>('open', { default: false })
 
 const { setViewMode, currentViewMode } = useViewModeUtilities()
 const { getShortcutDisplayText, registerShortcuts } = useViewerShortcuts()
