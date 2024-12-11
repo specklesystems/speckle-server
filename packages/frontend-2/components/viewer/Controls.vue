@@ -84,7 +84,7 @@
         >
           <ViewerControlsButtonGroup>
             <!-- View Modes -->
-            <ViewerViewModesMenu v-model:open="viewModesOpen" />
+            <ViewerViewModesMenu :open="viewModesOpen" />
             <!-- Views -->
             <ViewerViewsMenu v-tippy="`Views`" />
             <!-- Zoom extents -->
