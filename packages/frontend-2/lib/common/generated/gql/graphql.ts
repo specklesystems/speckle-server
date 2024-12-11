@@ -68,6 +68,16 @@ export type AdminInviteList = {
   totalCount: Scalars['Int']['output'];
 };
 
+export type AdminMutations = {
+  __typename?: 'AdminMutations';
+  updateWorkspacePlan: Scalars['Boolean']['output'];
+};
+
+
+export type AdminMutationsUpdateWorkspacePlanArgs = {
+  input: AdminUpdateWorkspacePlanInput;
+};
+
 export type AdminQueries = {
   __typename?: 'AdminQueries';
   inviteList: AdminInviteList;
@@ -106,6 +116,12 @@ export type AdminQueriesWorkspaceListArgs = {
   cursor?: InputMaybe<Scalars['String']['input']>;
   limit?: Scalars['Int']['input'];
   query?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type AdminUpdateWorkspacePlanInput = {
+  plan: WorkspacePlans;
+  status: WorkspacePlanStatuses;
+  workspaceId: Scalars['ID']['input'];
 };
 
 export type AdminUserList = {
@@ -1240,6 +1256,7 @@ export type Mutation = {
   _?: Maybe<Scalars['String']['output']>;
   /** Various Active User oriented mutations */
   activeUserMutations: ActiveUserMutations;
+  admin: AdminMutations;
   adminDeleteUser: Scalars['Boolean']['output'];
   /** Creates an personal api token. */
   apiTokenCreate: Scalars['String']['output'];
@@ -6701,6 +6718,7 @@ export type AllObjectTypes = {
   Activity: Activity,
   ActivityCollection: ActivityCollection,
   AdminInviteList: AdminInviteList,
+  AdminMutations: AdminMutations,
   AdminQueries: AdminQueries,
   AdminUserList: AdminUserList,
   AdminUserListItem: AdminUserListItem,
@@ -6871,6 +6889,9 @@ export type AdminInviteListFieldArgs = {
   cursor: {},
   items: {},
   totalCount: {},
+}
+export type AdminMutationsFieldArgs = {
+  updateWorkspacePlan: AdminMutationsUpdateWorkspacePlanArgs,
 }
 export type AdminQueriesFieldArgs = {
   inviteList: AdminQueriesInviteListArgs,
@@ -7262,6 +7283,7 @@ export type ModelsTreeItemCollectionFieldArgs = {
 export type MutationFieldArgs = {
   _: {},
   activeUserMutations: {},
+  admin: {},
   adminDeleteUser: MutationAdminDeleteUserArgs,
   apiTokenCreate: MutationApiTokenCreateArgs,
   apiTokenRevoke: MutationApiTokenRevokeArgs,
@@ -8071,6 +8093,7 @@ export type AllObjectFieldArgTypes = {
   Activity: ActivityFieldArgs,
   ActivityCollection: ActivityCollectionFieldArgs,
   AdminInviteList: AdminInviteListFieldArgs,
+  AdminMutations: AdminMutationsFieldArgs,
   AdminQueries: AdminQueriesFieldArgs,
   AdminUserList: AdminUserListFieldArgs,
   AdminUserListItem: AdminUserListItemFieldArgs,

@@ -85,6 +85,16 @@ export type AdminInviteList = {
   totalCount: Scalars['Int']['output'];
 };
 
+export type AdminMutations = {
+  __typename?: 'AdminMutations';
+  updateWorkspacePlan: Scalars['Boolean']['output'];
+};
+
+
+export type AdminMutationsUpdateWorkspacePlanArgs = {
+  input: AdminUpdateWorkspacePlanInput;
+};
+
 export type AdminQueries = {
   __typename?: 'AdminQueries';
   inviteList: AdminInviteList;
@@ -123,6 +133,12 @@ export type AdminQueriesWorkspaceListArgs = {
   cursor?: InputMaybe<Scalars['String']['input']>;
   limit?: Scalars['Int']['input'];
   query?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type AdminUpdateWorkspacePlanInput = {
+  plan: WorkspacePlans;
+  status: WorkspacePlanStatuses;
+  workspaceId: Scalars['ID']['input'];
 };
 
 export type AdminUserList = {
@@ -1262,6 +1278,7 @@ export type Mutation = {
   _?: Maybe<Scalars['String']['output']>;
   /** Various Active User oriented mutations */
   activeUserMutations: ActiveUserMutations;
+  admin: AdminMutations;
   adminDeleteUser: Scalars['Boolean']['output'];
   /** Creates an personal api token. */
   apiTokenCreate: Scalars['String']['output'];
@@ -4664,7 +4681,9 @@ export type ResolversTypes = {
   ActivityCollection: ResolverTypeWrapper<ActivityCollectionGraphQLReturn>;
   AddDomainToWorkspaceInput: AddDomainToWorkspaceInput;
   AdminInviteList: ResolverTypeWrapper<Omit<AdminInviteList, 'items'> & { items: Array<ResolversTypes['ServerInvite']> }>;
+  AdminMutations: ResolverTypeWrapper<MutationsObjectGraphQLReturn>;
   AdminQueries: ResolverTypeWrapper<GraphQLEmptyReturn>;
+  AdminUpdateWorkspacePlanInput: AdminUpdateWorkspacePlanInput;
   AdminUserList: ResolverTypeWrapper<AdminUserList>;
   AdminUserListItem: ResolverTypeWrapper<AdminUserListItem>;
   AdminUsersListCollection: ResolverTypeWrapper<Omit<AdminUsersListCollection, 'items'> & { items: Array<ResolversTypes['AdminUsersListItem']> }>;
@@ -4956,7 +4975,9 @@ export type ResolversParentTypes = {
   ActivityCollection: ActivityCollectionGraphQLReturn;
   AddDomainToWorkspaceInput: AddDomainToWorkspaceInput;
   AdminInviteList: Omit<AdminInviteList, 'items'> & { items: Array<ResolversParentTypes['ServerInvite']> };
+  AdminMutations: MutationsObjectGraphQLReturn;
   AdminQueries: GraphQLEmptyReturn;
+  AdminUpdateWorkspacePlanInput: AdminUpdateWorkspacePlanInput;
   AdminUserList: AdminUserList;
   AdminUserListItem: AdminUserListItem;
   AdminUsersListCollection: Omit<AdminUsersListCollection, 'items'> & { items: Array<ResolversParentTypes['AdminUsersListItem']> };
@@ -5277,6 +5298,11 @@ export type AdminInviteListResolvers<ContextType = GraphQLContext, ParentType ex
   cursor?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   items?: Resolver<Array<ResolversTypes['ServerInvite']>, ParentType, ContextType>;
   totalCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type AdminMutationsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['AdminMutations'] = ResolversParentTypes['AdminMutations']> = {
+  updateWorkspacePlan?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<AdminMutationsUpdateWorkspacePlanArgs, 'input'>>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -5788,6 +5814,7 @@ export type ModelsTreeItemCollectionResolvers<ContextType = GraphQLContext, Pare
 export type MutationResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Mutation'] = ResolversParentTypes['Mutation']> = {
   _?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   activeUserMutations?: Resolver<ResolversTypes['ActiveUserMutations'], ParentType, ContextType>;
+  admin?: Resolver<ResolversTypes['AdminMutations'], ParentType, ContextType>;
   adminDeleteUser?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationAdminDeleteUserArgs, 'userConfirmation'>>;
   apiTokenCreate?: Resolver<ResolversTypes['String'], ParentType, ContextType, RequireFields<MutationApiTokenCreateArgs, 'token'>>;
   apiTokenRevoke?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationApiTokenRevokeArgs, 'token'>>;
@@ -6784,6 +6811,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   Activity?: ActivityResolvers<ContextType>;
   ActivityCollection?: ActivityCollectionResolvers<ContextType>;
   AdminInviteList?: AdminInviteListResolvers<ContextType>;
+  AdminMutations?: AdminMutationsResolvers<ContextType>;
   AdminQueries?: AdminQueriesResolvers<ContextType>;
   AdminUserList?: AdminUserListResolvers<ContextType>;
   AdminUserListItem?: AdminUserListItemResolvers<ContextType>;

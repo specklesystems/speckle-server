@@ -7,6 +7,7 @@ import {
 import {
   CountDomainsByWorkspaceId,
   CountWorkspaceRoleWithOptionalProjectRole,
+  CountWorkspaces,
   DeleteWorkspace,
   DeleteWorkspaceDomain,
   DeleteWorkspaceRole,
@@ -24,6 +25,7 @@ import {
   GetWorkspaceRolesForUser,
   GetWorkspaceWithDomains,
   GetWorkspaces,
+  QueryWorkspaces,
   StoreWorkspaceDomain,
   UpsertWorkspace,
   UpsertWorkspaceCreationState,
@@ -172,6 +174,43 @@ export const getWorkspaceBySlugFactory =
       .first()
 
     return workspace || null
+  }
+
+const buildWorkspacesQuery = ({ db, search }: { db: Knex; search?: string }) => {
+  const query = tables.workspaces(db)
+
+  if (search) {
+    query.andWhere((builder) => {
+      builder
+        .where('name', 'ILIKE', `%${search}%`)
+        .orWhere('slug', 'ILIKE', `%${search}%`)
+    })
+  }
+  return query
+}
+
+export const queryWorkspacesFactory =
+  ({ db }: { db: Knex }): QueryWorkspaces =>
+  async ({ limit, cursor, filter }) => {
+    const query = buildWorkspacesQuery({ db, search: filter?.search })
+      .select()
+      .orderBy('createdAt', 'desc')
+      .limit(limit)
+
+    if (cursor) {
+      query.andWhere('createdAt', '<', cursor)
+    }
+    return await query
+  }
+
+export const countWorkspacesFactory =
+  ({ db }: { db: Knex }): CountWorkspaces =>
+  async ({ filter }) => {
+    const query = buildWorkspacesQuery({ db, search: filter?.search })
+
+    const [res] = await query.count()
+    const count = parseInt(res.count.toString())
+    return count
   }
 
 export const upsertWorkspaceFactory =
