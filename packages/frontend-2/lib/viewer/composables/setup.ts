@@ -1080,7 +1080,7 @@ export function useInjectedViewerInterfaceState(): InjectableViewerState['ui'] {
 
 export function useResetUiState() {
   const {
-    ui: { camera, sectionBox, highlightedObjectIds, lightConfig }
+    ui: { camera, sectionBox, highlightedObjectIds, lightConfig, viewMode }
   } = useInjectedViewerState()
   const { resetFilters } = useFilterUtilities()
   const { endDiff } = useDiffUtilities()
@@ -1090,6 +1090,7 @@ export function useResetUiState() {
     sectionBox.value = null
     highlightedObjectIds.value = []
     lightConfig.value = { ...DefaultLightConfiguration }
+    viewMode.value = ViewMode.DEFAULT
     resetFilters()
     endDiff()
   }

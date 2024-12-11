@@ -1,8 +1,9 @@
 import { difference, flatten, isEqual, uniq } from 'lodash-es'
-import type {
-  PropertyInfo,
-  StringPropertyInfo,
-  SunLightConfiguration
+import {
+  ViewMode,
+  type PropertyInfo,
+  type StringPropertyInfo,
+  type SunLightConfiguration
 } from '@speckle/viewer'
 import {
   ViewerEvent,
@@ -13,8 +14,7 @@ import {
   SectionToolEvent,
   SectionTool,
   ViewModes,
-  ViewModeEvent,
-  ViewMode
+  ViewModeEvent
 } from '@speckle/viewer'
 import { useAuthCookie } from '~~/lib/auth/composables/auth'
 import type {
@@ -658,10 +658,14 @@ function useViewerViewModeIntegration() {
   })
 
   onBeforeUnmount(() => {
+    // Reset view mode to default
+    viewModes.setViewMode(ViewMode.DEFAULT)
+    viewMode.value = ViewMode.DEFAULT
+
+    // Clean up event listener
     viewModes.removeListener(ViewModeEvent.Changed, onViewModeChanged)
   })
 
-  // Sync state -> viewer
   watch(
     () => viewMode.value,
     (newMode) => {
