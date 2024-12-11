@@ -12,7 +12,6 @@
                   v-model="item.value.email"
                   :name="`email-${item.key}`"
                   color="foundation"
-                  size="lg"
                   placeholder="Email address"
                   show-clear
                   full-width
