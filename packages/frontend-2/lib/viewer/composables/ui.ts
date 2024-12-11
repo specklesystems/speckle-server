@@ -1,9 +1,9 @@
 import { SpeckleViewer, timeoutAt } from '@speckle/shared'
-import {
-  ViewMode,
-  type TreeNode,
-  type MeasurementOptions,
-  type PropertyInfo
+import type {
+  TreeNode,
+  MeasurementOptions,
+  PropertyInfo,
+  ViewMode
 } from '@speckle/viewer'
 import { MeasurementsExtension, ViewModes } from '@speckle/viewer'
 import { until } from '@vueuse/shared'
@@ -489,15 +489,14 @@ export function useHighlightedObjectsUtilities() {
 
 export function useViewModeUtilities() {
   const { instance } = useInjectedViewer()
+  const { viewMode } = useInjectedViewerInterfaceState()
 
-  // Track the current view mode
-  const currentViewMode = ref<ViewMode>(ViewMode.DEFAULT)
+  const currentViewMode = computed(() => viewMode.value)
 
   const setViewMode = (mode: ViewMode) => {
     const viewModes = instance.getExtension(ViewModes)
     if (viewModes) {
       viewModes.setViewMode(mode)
-      currentViewMode.value = mode
     }
   }
 
@@ -562,14 +561,9 @@ export function useViewerShortcuts() {
     Object.values(ViewerShortcuts).forEach((shortcut) => {
       const handler = handlers[shortcut.action as ViewerShortcutAction]
       if (handler) {
-        onKeyboardShortcut(
-          [...shortcut.modifiers],
-          shortcut.key,
-          () => {
-            if (!disableShortcuts.value) handler()
-          },
-          { disabled: disableShortcuts }
-        )
+        onKeyboardShortcut([...shortcut.modifiers], shortcut.key, () => {
+          if (!disableShortcuts.value) handler()
+        })
       }
     })
   }

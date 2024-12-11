@@ -105,6 +105,7 @@ export function useStateSerialization() {
           isOrthoProjection: state.ui.camera.isOrthoProjection.value,
           zoom: (get(camControls, '_zoom') as number) || 1 // kinda hacky, _zoom is a protected prop
         },
+        viewMode: state.ui.viewMode.value,
         sectionBox: state.ui.sectionBox.value
           ? {
               min: box.min.toArray(),

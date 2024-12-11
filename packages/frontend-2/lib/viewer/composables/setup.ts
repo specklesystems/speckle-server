@@ -6,16 +6,17 @@ import {
   MeasurementType,
   FilteringExtension
 } from '@speckle/viewer'
-import type {
-  FilteringState,
-  PropertyInfo,
-  SunLightConfiguration,
-  SpeckleView,
-  MeasurementOptions,
-  DiffResult,
-  Viewer,
-  WorldTree,
-  VisualDiffMode
+import {
+  type FilteringState,
+  type PropertyInfo,
+  type SunLightConfiguration,
+  type SpeckleView,
+  type MeasurementOptions,
+  type DiffResult,
+  type Viewer,
+  type WorldTree,
+  type VisualDiffMode,
+  ViewMode
 } from '@speckle/viewer'
 import type { MaybeRef } from '@vueuse/shared'
 import { inject, ref, provide } from 'vue'
@@ -258,6 +259,7 @@ export type InjectableViewerState = Readonly<{
       target: Ref<Vector3>
       isOrthoProjection: Ref<boolean>
     }
+    viewMode: Ref<ViewMode>
     diff: {
       newVersion: ComputedRef<ViewerModelVersionCardItemFragment | undefined>
       oldVersion: ComputedRef<ViewerModelVersionCardItemFragment | undefined>
@@ -929,6 +931,7 @@ function setupInterfaceState(
     if (explodeFactor.value !== 0) return true
     return false
   })
+  const viewMode = ref<ViewMode>(ViewMode.DEFAULT)
 
   const highlightedObjectIds = ref([] as string[])
   const spotlightUserSessionId = ref(null as Nullable<string>)
@@ -991,6 +994,7 @@ function setupInterfaceState(
         target,
         isOrthoProjection
       },
+      viewMode,
       sectionBox: ref(null as Nullable<Box3>),
       sectionBoxContext: {
         visible: ref(false),

@@ -86,20 +86,26 @@
 </template>
 
 <script setup lang="ts">
-import { type SunLightConfiguration } from '@speckle/viewer'
+import { ViewMode, type SunLightConfiguration } from '@speckle/viewer'
 import { SunIcon } from '@heroicons/vue/24/outline'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { debounce } from 'lodash-es'
 import { FormSwitch } from '@speckle/ui-components'
-
-defineProps<{
-  isLightingSupported?: boolean
-}>()
+import { useViewModeUtilities } from '~/lib/viewer/composables/ui'
 
 const open = defineModel<boolean>('open', { required: true })
 
 const mp = useMixpanel()
+const { currentViewMode } = useViewModeUtilities()
+
+const isLightingSupported = computed(() => {
+  const supported =
+    currentViewMode.value === ViewMode.DEFAULT ||
+    currentViewMode.value === ViewMode.DEFAULT_EDGES
+  return supported
+})
+
 const debounceTrackLightConfigChange = debounce(() => {
   mp.track('Viewer Action', {
     type: 'action',

@@ -17,7 +17,22 @@ export enum ViewMode {
   ARCTIC
 }
 
+export enum ViewModeEvent {
+  Changed = 'view-mode-changed'
+}
+
+export interface ViewModeEventPayload {
+  [ViewModeEvent.Changed]: ViewMode
+}
+
 export class ViewModes extends Extension {
+  public on<T extends ViewModeEvent>(
+    eventType: T,
+    listener: (arg: ViewModeEventPayload[T]) => void
+  ): void {
+    super.on(eventType, listener)
+  }
+
   public setViewMode(viewMode: ViewMode) {
     const renderer = this.viewer.getRenderer()
     const isMRTCapable =
@@ -48,5 +63,7 @@ export class ViewModes extends Extension {
         break
     }
     this.viewer.requestRender(UpdateFlags.RENDER_RESET)
+
+    this.emit(ViewModeEvent.Changed, viewMode)
   }
 }

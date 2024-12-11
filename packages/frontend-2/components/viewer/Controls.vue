@@ -84,10 +84,7 @@
         >
           <ViewerControlsButtonGroup>
             <!-- View Modes -->
-            <ViewerViewModesMenu
-              :current-view-mode="currentViewMode"
-              @view-mode-change="handleViewModeChange"
-            />
+            <ViewerViewModesMenu @view-mode-change="activeControl = 'viewModes'" />
             <!-- Views -->
             <ViewerViewsMenu v-tippy="`Views`" />
             <!-- Zoom extents -->
@@ -102,7 +99,6 @@
             <!-- Sun and lights -->
             <ViewerSunMenu
               :open="activeControl === 'sun'"
-              :is-lighting-supported="isLightingSupported"
               @update:open="(value: boolean) => toggleActiveControl(value ? 'sun' : 'none')"
             />
           </ViewerControlsButtonGroup>
@@ -266,8 +262,7 @@ import {
   useCameraUtilities,
   useSectionBoxUtilities,
   useMeasurementUtilities,
-  useViewerShortcuts,
-  useViewModeUtilities
+  useViewerShortcuts
 } from '~~/lib/viewer/composables/ui'
 import {
   useInjectedViewerLoadedResources,
@@ -285,7 +280,6 @@ import {
 } from '@vueuse/core'
 import { useFunctionRunsStatusSummary } from '~/lib/automate/composables/runStatus'
 import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
-import { ViewMode } from '@speckle/viewer'
 
 type ActivePanel =
   | 'none'
@@ -308,13 +302,6 @@ type ActiveControl =
   | 'mobileOverflow'
 
 const isGendoEnabled = useIsGendoModuleEnabled()
-
-const { currentViewMode } = useViewModeUtilities()
-
-const handleViewModeChange = (mode: ViewMode) => {
-  activeControl.value = 'viewModes'
-  currentViewMode.value = mode
-}
 
 const width = ref(360)
 const scrollableControlsContainer = ref(null as Nullable<HTMLDivElement>)
@@ -418,13 +405,6 @@ const toggleActivePanel = (panel: ActivePanel) => {
 const toggleActiveControl = (control: ActiveControl) => {
   activeControl.value = activeControl.value === control ? 'none' : control
 }
-
-const isLightingSupported = computed(() => {
-  return (
-    currentViewMode.value === ViewMode.DEFAULT ||
-    currentViewMode.value === ViewMode.DEFAULT_EDGES
-  )
-})
 
 registerShortcuts({
   ToggleModels: () => toggleActivePanel('models'),

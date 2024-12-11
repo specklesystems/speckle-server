@@ -131,6 +131,7 @@ import {
 } from './modules/materials/Materials.js'
 import { AccelerationStructure } from './modules/objects/AccelerationStructure.js'
 import { TopLevelAccelerationStructure } from './modules/objects/TopLevelAccelerationStructure.js'
+import { ViewModeEvent, ViewModeEventPayload } from './modules/extensions/ViewModes.js'
 
 export {
   Viewer,
@@ -221,7 +222,8 @@ export {
   FilterMaterialOptions,
   NOT_INTERSECTED,
   INTERSECTED,
-  CONTAINED
+  CONTAINED,
+  ViewModeEvent
 }
 
 export type {
@@ -255,7 +257,8 @@ export type {
   SectionToolEventPayload,
   CameraEventPayload,
   SelectionExtensionOptions,
-  DefaultSelectionExtensionOptions
+  DefaultSelectionExtensionOptions,
+  ViewModeEventPayload
 }
 
 export * as UrlHelper from './modules/UrlHelper.js'

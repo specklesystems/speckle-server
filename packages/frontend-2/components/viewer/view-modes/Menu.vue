@@ -30,17 +30,9 @@ import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useViewerShortcuts, useViewModeUtilities } from '~~/lib/viewer/composables/ui'
 import { ViewModeShortcuts } from '~/lib/viewer/helpers/shortcuts/shortcuts'
 
-const props = defineProps<{
-  currentViewMode: ViewMode
-}>()
-
-const emit = defineEmits<{
-  'view-mode-change': [mode: ViewMode]
-}>()
-
 const open = ref(false)
 
-const { setViewMode } = useViewModeUtilities()
+const { setViewMode, currentViewMode } = useViewModeUtilities()
 const { getShortcutDisplayText, registerShortcuts } = useViewerShortcuts()
 const mp = useMixpanel()
 
@@ -62,12 +54,12 @@ registerShortcuts({
   SetViewModeArctic: () => handleViewModeChange(ViewMode.ARCTIC, true)
 })
 
-const isActiveMode = (mode: ViewMode) => mode === props.currentViewMode
+const isActiveMode = (mode: ViewMode) => mode === currentViewMode.value
+
 const viewModeShortcuts = Object.values(ViewModeShortcuts)
 
 const handleViewModeChange = (mode: ViewMode, isShortcut = false) => {
   setViewMode(mode)
-  emit('view-mode-change', mode)
   cancelCloseTimer()
 
   if (isShortcut) {

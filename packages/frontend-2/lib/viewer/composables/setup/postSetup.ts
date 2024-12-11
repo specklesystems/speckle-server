@@ -1,4 +1,9 @@
 import { difference, flatten, isEqual, uniq } from 'lodash-es'
+import type {
+  PropertyInfo,
+  StringPropertyInfo,
+  SunLightConfiguration
+} from '@speckle/viewer'
 import {
   ViewerEvent,
   VisualDiffMode,
@@ -6,12 +11,10 @@ import {
   UpdateFlags,
   SectionOutlines,
   SectionToolEvent,
-  SectionTool
-} from '@speckle/viewer'
-import type {
-  PropertyInfo,
-  StringPropertyInfo,
-  SunLightConfiguration
+  SectionTool,
+  ViewModes,
+  ViewModeEvent,
+  ViewMode
 } from '@speckle/viewer'
 import { useAuthCookie } from '~~/lib/auth/composables/auth'
 import type {
@@ -636,6 +639,40 @@ function useViewerFiltersIntegration() {
   )
 }
 
+function useViewerViewModeIntegration() {
+  const {
+    ui: { viewMode },
+    viewer: { instance }
+  } = useInjectedViewerState()
+
+  const viewModes = instance.getExtension(ViewModes)
+  const onViewModeChanged = (mode: ViewMode) => {
+    viewMode.value = mode
+  }
+
+  onMounted(() => {
+    if (!viewMode.value) {
+      viewMode.value = ViewMode.DEFAULT
+    }
+    viewModes.on(ViewModeEvent.Changed, onViewModeChanged)
+  })
+
+  onBeforeUnmount(() => {
+    viewModes.removeListener(ViewModeEvent.Changed, onViewModeChanged)
+  })
+
+  // Sync state -> viewer
+  watch(
+    () => viewMode.value,
+    (newMode) => {
+      if (viewModes && newMode) {
+        viewModes.setViewMode(newMode)
+      }
+    },
+    { immediate: true }
+  )
+}
+
 function useLightConfigIntegration() {
   const {
     ui: { lightConfig },
@@ -874,6 +911,7 @@ export function useViewerPostSetup() {
   useViewerSectionBoxIntegration()
   useViewerCameraIntegration()
   useViewerFiltersIntegration()
+  useViewerViewModeIntegration()
   useLightConfigIntegration()
   useExplodeFactorIntegration()
   useDiffingIntegration()
