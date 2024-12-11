@@ -105,7 +105,6 @@ import {
 } from '@/modules/workspaces/services/projects'
 import {
   getDiscoverableWorkspacesForUserFactory,
-  getPaginatedWorkspaceTeamFactory,
   getWorkspacesForUserFactory
 } from '@/modules/workspaces/services/retrieval'
 import {
@@ -191,6 +190,7 @@ import { getGenericRedis } from '@/modules/shared/redis/redis'
 import { convertFunctionToGraphQLReturn } from '@/modules/automate/services/functionManagement'
 import { getWorkspacePlanFactory } from '@/modules/gatekeeper/repositories/billing'
 import { Knex } from 'knex'
+import { getPaginatedItemsFactory } from '@/modules/shared/services/paginatedItems'
 
 const eventBus = getEventBus()
 const getServerInfo = getServerInfoFactory({ db })
@@ -952,10 +952,9 @@ export = FF_WORKSPACES_MODULE_ENABLED
           return workspace?.role || null
         },
         team: async (parent, args) => {
-          const team = await getPaginatedWorkspaceTeamFactory({
-            getWorkspaceCollaborators: getWorkspaceCollaboratorsFactory({ db }),
-            getWorkspaceCollaboratorsTotalCount:
-              getWorkspaceCollaboratorsTotalCountFactory({ db })
+          const team = await getPaginatedItemsFactory({
+            getItems: getWorkspaceCollaboratorsFactory({ db }),
+            getTotalCount: getWorkspaceCollaboratorsTotalCountFactory({ db })
           })({
             workspaceId: parent.id,
             filter: removeNullOrUndefinedKeys(args?.filter || {}),
