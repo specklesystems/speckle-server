@@ -8,7 +8,6 @@ import {
   useCreateWorkspace,
   useInviteUserToWorkspace
 } from '~/lib/workspaces/composables/management'
-import { useWorkspacesAvatar } from '~/lib/workspaces/composables/avatar'
 import { useBillingActions } from '~/lib/billing/composables/actions'
 import {
   updateWorkspaceCreationStateMutation,
@@ -54,7 +53,6 @@ export const useWorkspaceWizardState = () =>
 export const useWorkspacesWizard = () => {
   const wizardState = useWorkspaceWizardState()
   const createWorkspace = useCreateWorkspace()
-  const { generateDefaultLogoIndex } = useWorkspacesAvatar()
   const { redirectToCheckout } = useBillingActions()
   const router = useRouter()
   const { triggerNotification } = useGlobalToast()
@@ -128,8 +126,7 @@ export const useWorkspacesWizard = () => {
       const newWorkspaceResult = await createWorkspace(
         {
           name: wizardState.value.state.name,
-          slug: wizardState.value.state.slug,
-          defaultLogoIndex: generateDefaultLogoIndex()
+          slug: wizardState.value.state.slug
         },
         { navigateOnSuccess: false, hideNotifications: true }
       )
