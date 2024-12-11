@@ -2,6 +2,10 @@ import {
   WorkspaceEventsPayloads,
   workspaceEventNamespace
 } from '@/modules/workspacesCore/domain/events'
+import {
+  gatekeeperEventNamespace,
+  GatekeeperEventPayloads
+} from '@/modules/gatekeeperCore/domain/events'
 import { MaybeAsync } from '@speckle/shared'
 import { UnionToIntersection } from 'type-fest'
 
@@ -28,6 +32,7 @@ type TestEventsPayloads = {
 type EventsByNamespace = {
   test: TestEventsPayloads
   [workspaceEventNamespace]: WorkspaceEventsPayloads
+  [gatekeeperEventNamespace]: GatekeeperEventPayloads
   [serverinvitesEventNamespace]: ServerInvitesEventsPayloads
 }
 
