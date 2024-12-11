@@ -5,7 +5,7 @@
       flat
       secondary
       :active="open"
-      @click="open = !open"
+      @click="toggleMenu"
     >
       <slot name="trigger-icon" />
     </ViewerControlsButtonToggle>
@@ -27,4 +27,8 @@ defineProps<{
 }>()
 
 const menuWrapper = ref(null)
+
+const toggleMenu = () => {
+  open.value = !open.value
+}
 </script>

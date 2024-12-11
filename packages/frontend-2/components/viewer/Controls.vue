@@ -87,6 +87,7 @@
             <ViewerViewModesMenu
               :open="viewModesOpen"
               @force-close-others="activeControl = 'none'"
+              @update:open="(value: boolean) => toggleActiveControl(value ? 'viewModes' : 'none')"
             />
             <!-- Views -->
             <ViewerViewsMenu v-tippy="`Views`" />
