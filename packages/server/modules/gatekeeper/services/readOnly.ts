@@ -1,17 +1,6 @@
 import { GetWorkspacePlan } from '@/modules/gatekeeper/domain/billing'
 import { Workspace } from '@/modules/workspacesCore/domain/types'
-import { z } from 'zod'
-import {
-  workspacePlanStatusCanceled,
-  workspacePlanStatusExpired,
-  workspacePlanStatusPaymentFailed
-} from '@/modules/gatekeeper/domain/constants'
-
-const readOnlyWorkspacePlanStatuses = z.union([
-  workspacePlanStatusPaymentFailed,
-  workspacePlanStatusCanceled,
-  workspacePlanStatusExpired
-])
+import { throwUncoveredError } from '@speckle/shared'
 
 export const isWorkspaceReadOnlyFactory =
   ({ getWorkspacePlan }: { getWorkspacePlan: GetWorkspacePlan }) =>
@@ -20,9 +9,16 @@ export const isWorkspaceReadOnlyFactory =
     // Should never happen
     if (!workspacePlan) return true
 
-    const { success: workspaceReadOnly } = readOnlyWorkspacePlanStatuses.safeParse(
-      workspacePlan.status
-    )
-
-    return workspaceReadOnly
+    switch (workspacePlan.status) {
+      case 'cancelationScheduled':
+      case 'valid':
+      case 'trial':
+      case 'paymentFailed':
+        return false
+      case 'expired':
+      case 'canceled':
+        return true
+      default:
+        throwUncoveredError(workspacePlan)
+    }
   }
