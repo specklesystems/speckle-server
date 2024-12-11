@@ -73,7 +73,7 @@ export type CreateVersionArgs = {
 }
 
 // TODO: Once ruby codebase aligned with it, sketchup will consume this bridge too!
-export class ServerBridge {
+export class ArchicadBridge {
   public emitter: Emitter
 
   constructor(emitter: Emitter) {
@@ -291,25 +291,7 @@ export class ServerBridge {
         projectId,
         token
       }
-    ) // NOTE to dim
-
-    // BEFORE as below
-    // TODO: More of a question: why are we not sending multiple batches at once?
-    // What's in a batch? etc. To look at optmizing this and not blocking the
-    // main thread.
-    // const promises = [] as Promise<Response>[]
-    // sendObject.batches.forEach((batch) => {
-    //   const formData = new FormData()
-    //   formData.append(`batch-1`, new Blob([batch], { type: 'application/json' }))
-    //   promises.push(
-    //     fetch(`${serverUrl}/objects/${projectId}`, {
-    //       method: 'POST',
-    //       headers: { Authorization: 'Bearer ' + token },
-    //       body: formData
-    //     })
-    //   )
-    // })
-    // await Promise.all(promises)
+    )
 
     const hostAppStore = useHostAppStore()
 

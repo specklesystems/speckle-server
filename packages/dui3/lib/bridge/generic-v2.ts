@@ -1,4 +1,4 @@
-import { ServerBridge } from '~/lib/bridge/server'
+import { ArchicadBridge } from '~/lib/bridge/server'
 import { BaseBridge } from '~/lib/bridge/base'
 import type { IRawBridge } from '~/lib/bridge/definitions'
 
@@ -7,7 +7,7 @@ import type { IRawBridge } from '~/lib/bridge/definitions'
  */
 export class GenericBridge extends BaseBridge {
   private bridge: IRawBridge
-  private serverBridge: ServerBridge | undefined
+  private archicadBridge: ArchicadBridge | undefined
   private requests = {} as Record<
     string,
     {
@@ -21,11 +21,11 @@ export class GenericBridge extends BaseBridge {
   // An example is the send or receive operations: they can take fucking long :D
   private TIMEOUT_MS = 1000 * 60 // 60 sec
 
-  constructor(object: IRawBridge, isServerBridge: boolean = false) {
+  constructor(object: IRawBridge, isArchicadBridge: boolean = false) {
     super()
     this.bridge = object
-    if (isServerBridge) {
-      this.serverBridge = new ServerBridge(this.emitter)
+    if (isArchicadBridge) {
+      this.archicadBridge = new ArchicadBridge(this.emitter)
     }
   }
 
@@ -63,8 +63,8 @@ export class GenericBridge extends BaseBridge {
         throw new Error(`Data is not parsed successfuly on ${eventName}`)
       }
 
-      if (this.serverBridge) {
-        this.serverBridge.emit(eventName, parsedData, this.runMethod.bind(this))
+      if (this.archicadBridge) {
+        this.archicadBridge.emit(eventName, parsedData, this.runMethod.bind(this))
       } else {
         this.emitter.emit(eventName, parsedData)
       }
