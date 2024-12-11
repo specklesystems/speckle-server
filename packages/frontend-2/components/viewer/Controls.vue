@@ -84,7 +84,7 @@
         >
           <ViewerControlsButtonGroup>
             <!-- View Modes -->
-            <ViewerViewModesMenu :open="activeControl === 'viewModes'" />
+            <ViewerViewModesMenu v-model:open="viewModesOpen" />
             <!-- Views -->
             <ViewerViewsMenu v-tippy="`Views`" />
             <!-- Zoom extents -->
@@ -487,5 +487,12 @@ watch(isSectionBoxVisible, (val) => {
     name: 'section-box-visibility',
     status: val
   })
+})
+
+const viewModesOpen = computed({
+  get: () => activeControl.value === 'viewModes',
+  set: (value) => {
+    activeControl.value = value ? 'viewModes' : 'none'
+  }
 })
 </script>

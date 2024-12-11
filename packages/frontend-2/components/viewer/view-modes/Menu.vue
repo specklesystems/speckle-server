@@ -5,6 +5,7 @@
       <IconViewModes class="h-5 w-5" />
     </template>
     <div
+      ref="menuContent"
       class="p-1.5"
       @mouseenter="cancelCloseTimer"
       @mouseleave="isManuallyOpened ? undefined : startCloseTimer"
@@ -24,7 +25,7 @@
 </template>
 
 <script setup lang="ts">
-import { useTimeoutFn } from '@vueuse/core'
+import { onClickOutside, useTimeoutFn } from '@vueuse/core'
 import { ViewMode } from '@speckle/viewer'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useViewerShortcuts, useViewModeUtilities } from '~~/lib/viewer/composables/ui'
@@ -37,6 +38,7 @@ const { getShortcutDisplayText, registerShortcuts } = useViewerShortcuts()
 const mp = useMixpanel()
 
 const isManuallyOpened = ref(false)
+const menuContent = ref(null)
 
 const { start: startCloseTimer, stop: cancelCloseTimer } = useTimeoutFn(
   () => {
@@ -76,5 +78,9 @@ const handleViewModeChange = (mode: ViewMode, isShortcut = false) => {
 
 onUnmounted(() => {
   cancelCloseTimer()
+})
+
+onClickOutside(menuContent, () => {
+  open.value = false
 })
 </script>
