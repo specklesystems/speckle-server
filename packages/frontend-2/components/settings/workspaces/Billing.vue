@@ -58,26 +58,21 @@
                       : 'Monthly bill'
                   }}
                 </h3>
-                <template v-if="statusIsTrial">
-                  <p class="text-heading-lg text-foreground inline-block">
-                    {{ billValue }} per month
-                  </p>
-                  <p class="text-body-xs text-foreground-2 flex gap-x-1 items-center">
-                    {{ billDescription }}
-                    <InformationCircleIcon
-                      v-tippy="billTooltip"
-                      class="w-4 h-4 text-foreground cursor-pointer"
-                    />
-                  </p>
-                </template>
-                <div v-else>
-                  <button
-                    class="text-heading-lg text-foreground"
-                    @click="billingPortalRedirect(workspaceId)"
-                  >
-                    View on Stripe &#8599;
-                  </button>
-                </div>
+                <p class="text-heading-lg text-foreground inline-block">
+                  {{ billValue }} per
+                  {{
+                    subscription?.billingInterval === BillingInterval.Yearly
+                      ? 'year'
+                      : 'month'
+                  }}
+                </p>
+                <p class="text-body-xs text-foreground-2 flex gap-x-1 items-center">
+                  {{ billDescription }}
+                  <InformationCircleIcon
+                    v-tippy="billTooltip"
+                    class="w-4 h-4 text-foreground cursor-pointer"
+                  />
+                </p>
               </div>
               <div class="p-5 pt-4 flex flex-col gap-y-1">
                 <h3 class="text-body-xs text-foreground-2 pb-1">
@@ -210,6 +205,10 @@ graphql(`
     subscription {
       billingInterval
       currentBillingCycleEnd
+      seats {
+        guest
+        plan
+      }
     }
     team {
       items {
@@ -263,13 +262,7 @@ const isActivePlan = computed(
     currentPlan.value?.status !== WorkspacePlanStatuses.Trial &&
     currentPlan.value?.status !== WorkspacePlanStatuses.Canceled
 )
-const isPurchasablePlan = computed(
-  () =>
-    currentPlan.value?.name === WorkspacePlans.Starter ||
-    currentPlan.value?.name === WorkspacePlans.Plus ||
-    currentPlan.value?.name === WorkspacePlans.Business ||
-    !currentPlan.value?.name // no plan equals pro trial plan
-)
+const isPurchasablePlan = computed(() => isPaidPlan(currentPlan.value?.name))
 const seatPrice = computed(() =>
   currentPlan.value && subscription.value
     ? seatPrices.value[currentPlan.value.name as keyof typeof seatPrices.value][
@@ -286,19 +279,23 @@ const nextPaymentDue = computed(() =>
 )
 const isAdmin = computed(() => workspace.value?.role === Roles.Workspace.Admin)
 const guestSeatCount = computed(() =>
-  workspace.value
-    ? workspace.value.team.items.filter((user) => user.role === Roles.Workspace.Guest)
-        .length
-    : 0
+  isActivePlan.value
+    ? workspace.value?.subscription?.seats.guest ?? 0
+    : workspace.value?.team.items.filter((user) => user.role === Roles.Workspace.Guest)
+        .length ?? 0
 )
 const memberSeatCount = computed(() =>
-  workspace.value ? workspace.value.team.items.length - guestSeatCount.value : 0
+  isActivePlan.value
+    ? workspace.value?.subscription?.seats.plan ?? 0
+    : workspace.value
+    ? workspace.value.team.items.length - guestSeatCount.value
+    : 0
 )
 const billValue = computed(() => {
   const guestPrice = seatPrice.value[Roles.Workspace.Guest] * guestSeatCount.value
   const memberPrice = seatPrice.value[Roles.Workspace.Member] * memberSeatCount.value
   const totalPrice = guestPrice + memberPrice
-  if (statusIsTrial.value) return `£${totalPrice}`
+  if (isPurchasablePlan.value) return `£${totalPrice}`
   return `£0`
 })
 const billDescription = computed(() => {
