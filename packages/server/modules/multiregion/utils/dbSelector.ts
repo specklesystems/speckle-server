@@ -21,6 +21,7 @@ import {
   getRegisteredRegionConfigs
 } from '@/modules/multiregion/utils/regionSelector'
 import { mapValues } from 'lodash'
+import { isMultiRegionEnabled } from '@/modules/multiregion/helpers'
 
 let getter: GetProjectDb | undefined = undefined
 
@@ -112,7 +113,9 @@ export const getAllRegisteredDbClients = async (): Promise<
   Array<{ client: Knex; isMain: boolean; regionKey: string }>
 > => {
   const mainDb = db
-  const regionDbs = await getRegisteredRegionClients()
+  const regionDbs: RegionClients = isMultiRegionEnabled()
+    ? await getRegisteredRegionClients()
+    : {}
   return [
     {
       client: mainDb,
