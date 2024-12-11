@@ -84,7 +84,10 @@
         >
           <ViewerControlsButtonGroup>
             <!-- View Modes -->
-            <ViewerViewModesMenu :open="viewModesOpen" />
+            <ViewerViewModesMenu
+              :open="viewModesOpen"
+              @force-close-others="activeControl = 'none'"
+            />
             <!-- Views -->
             <ViewerViewsMenu v-tippy="`Views`" />
             <!-- Zoom extents -->
@@ -460,6 +463,7 @@ onKeyStroke('Escape', () => {
     if (activePanel.value === 'measurements') {
       toggleMeasurements()
     }
+    activePanel.value = 'none'
     activeControl.value = 'none'
   }
 })

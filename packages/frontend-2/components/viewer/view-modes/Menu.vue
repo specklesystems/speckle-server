@@ -60,11 +60,16 @@ const isActiveMode = (mode: ViewMode) => mode === currentViewMode.value
 
 const viewModeShortcuts = Object.values(ViewModeShortcuts)
 
+const emit = defineEmits<{
+  (e: 'force-close-others'): void
+}>()
+
 const handleViewModeChange = (mode: ViewMode, isShortcut = false) => {
   setViewMode(mode)
   cancelCloseTimer()
 
   if (isShortcut) {
+    emit('force-close-others')
     open.value = true
     startCloseTimer()
   }
