@@ -109,19 +109,11 @@
 <script setup lang="ts">
 import { ValidationHelpers } from '@speckle/ui-components'
 import { isArray } from 'lodash-es'
-import { graphql } from '~/lib/common/generated/gql'
-import type { Workspace } from '~/lib/common/generated/gql/graphql'
-
-graphql(`
-  fragment AutomateFunctionCreateDialog_Workspace on Workspace {
-    id
-    name
-  }
-`)
+import type { AutomateFunctionCreateDialog_WorkspaceFragment } from '~/lib/common/generated/gql/graphql'
 
 defineProps<{
   githubOrgs?: string[]
-  workspaces?: Pick<Workspace, 'id' | 'name'>[]
+  workspaces?: AutomateFunctionCreateDialog_WorkspaceFragment[]
 }>()
 
 const avatarEditMode = ref(false)

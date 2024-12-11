@@ -31,6 +31,7 @@ export const crossServerSyncLogger = extendLoggerComponent(logger, 'cross-server
 export const automateLogger = extendLoggerComponent(logger, 'automate')
 export const subscriptionLogger = extendLoggerComponent(logger, 'subscription')
 export const healthCheckLogger = extendLoggerComponent(logger, 'healthcheck')
+export const testLogger = extendLoggerComponent(logger, 'test')
 
 export type Logger = typeof logger
 export { extendLoggerComponent, Observability }

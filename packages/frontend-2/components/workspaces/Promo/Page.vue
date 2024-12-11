@@ -56,18 +56,9 @@
     </section>
 
     <section>
-      <SettingsWorkspacesBillingPricingTable>
-        <template #title>
-          <h4 class="text-foreground text-heading">Pricing</h4>
-        </template>
-      </SettingsWorkspacesBillingPricingTable>
+      <h4 class="text-foreground text-heading mb-6">Pricing</h4>
+      <SettingsWorkspacesBillingPricingTable />
     </section>
-
-    <WorkspaceCreateDialog
-      v-model:open="showWorkspaceCreateDialog"
-      navigate-on-success
-      event-source="promo-page"
-    />
   </div>
 </template>
 <script setup lang="ts">
@@ -79,13 +70,12 @@ import {
   GlobeAltIcon,
   PlusIcon
 } from '@heroicons/vue/24/outline'
-
-const showWorkspaceCreateDialog = ref(false)
+import { workspaceCreateRoute } from '~~/lib/common/helpers/route'
 
 const mixpanel = useMixpanel()
 
 const openWorkspaceCreateDialog = () => {
-  showWorkspaceCreateDialog.value = true
+  navigateTo(workspaceCreateRoute())
   mixpanel.track('Create Workspace Button Clicked', {
     source: 'promo-page'
   })

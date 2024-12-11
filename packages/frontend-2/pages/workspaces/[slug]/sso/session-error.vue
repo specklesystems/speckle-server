@@ -7,7 +7,7 @@
       <WorkspaceAvatar
         v-if="workspace"
         :logo="workspace.logo"
-        :default-logo-index="workspace.defaultLogoIndex"
+        :name="workspace.name"
         size="xl"
       />
       <h1 class="text-heading-xl text-center">
@@ -24,7 +24,7 @@
           access it.
         </p>
       </div>
-      <FormButton size="lg" @click="handleSsoLogin">Sign in with SSO</FormButton>
+      <FormButton @click="handleSsoLogin">Sign in with SSO</FormButton>
     </template>
   </div>
 </template>

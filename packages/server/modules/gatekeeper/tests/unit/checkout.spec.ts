@@ -53,7 +53,8 @@ describe('checkout @gatekeeper', () => {
           workspaceId,
           billingInterval: 'monthly',
           workspacePlan: 'business',
-          workspaceSlug: cryptoRandomString({ length: 10 })
+          workspaceSlug: cryptoRandomString({ length: 10 }),
+          isCreateFlow: false
         })
       )
       expect(err.message).to.be.equal(new WorkspaceAlreadyPaidError().message)
@@ -87,7 +88,8 @@ describe('checkout @gatekeeper', () => {
           workspaceId,
           billingInterval: 'monthly',
           workspacePlan: 'business',
-          workspaceSlug: cryptoRandomString({ length: 10 })
+          workspaceSlug: cryptoRandomString({ length: 10 }),
+          isCreateFlow: false
         })
       )
       expect(err.message).to.be.equal(new WorkspaceAlreadyPaidError().message)
@@ -129,7 +131,8 @@ describe('checkout @gatekeeper', () => {
           workspaceId,
           billingInterval: 'monthly',
           workspacePlan: 'business',
-          workspaceSlug: cryptoRandomString({ length: 10 })
+          workspaceSlug: cryptoRandomString({ length: 10 }),
+          isCreateFlow: false
         })
       )
       expect(err.message).to.be.equal(
@@ -174,7 +177,8 @@ describe('checkout @gatekeeper', () => {
           workspaceId,
           billingInterval: 'monthly',
           workspacePlan: 'business',
-          workspaceSlug: cryptoRandomString({ length: 10 })
+          workspaceSlug: cryptoRandomString({ length: 10 }),
+          isCreateFlow: false
         })
       )
       expect(err.message).to.be.equal(
@@ -211,7 +215,8 @@ describe('checkout @gatekeeper', () => {
         workspaceId,
         billingInterval,
         workspacePlan,
-        workspaceSlug: cryptoRandomString({ length: 10 })
+        workspaceSlug: cryptoRandomString({ length: 10 }),
+        isCreateFlow: false
       })
       expect(checkoutSession).deep.equal(storedCheckoutSession)
       expect(checkoutSession).deep.equal(createdCheckoutSession)
@@ -246,7 +251,8 @@ describe('checkout @gatekeeper', () => {
         workspaceId,
         billingInterval,
         workspacePlan,
-        workspaceSlug: cryptoRandomString({ length: 10 })
+        workspaceSlug: cryptoRandomString({ length: 10 }),
+        isCreateFlow: false
       })
       expect(checkoutSession).deep.equal(storedCheckoutSession)
       expect(checkoutSession).deep.equal(createdCheckoutSession)
@@ -287,7 +293,8 @@ describe('checkout @gatekeeper', () => {
         workspaceId,
         billingInterval,
         workspacePlan,
-        workspaceSlug: cryptoRandomString({ length: 10 })
+        workspaceSlug: cryptoRandomString({ length: 10 }),
+        isCreateFlow: false
       })
       expect(checkoutSession).deep.equal(storedCheckoutSession)
       expect(checkoutSession).deep.equal(createdCheckoutSession)
@@ -338,7 +345,8 @@ describe('checkout @gatekeeper', () => {
         workspaceId,
         billingInterval,
         workspacePlan,
-        workspaceSlug: cryptoRandomString({ length: 10 })
+        workspaceSlug: cryptoRandomString({ length: 10 }),
+        isCreateFlow: false
       })
       expect(existingCheckoutSession).to.be.undefined
       expect(checkoutSession).deep.equal(storedCheckoutSession)
@@ -380,7 +388,8 @@ describe('checkout @gatekeeper', () => {
           workspaceId,
           billingInterval,
           workspacePlan,
-          workspaceSlug: cryptoRandomString({ length: 10 })
+          workspaceSlug: cryptoRandomString({ length: 10 }),
+          isCreateFlow: false
         })
       })
       expect(err.message).to.equal(new WorkspaceAlreadyPaidError().message)
@@ -421,7 +430,8 @@ describe('checkout @gatekeeper', () => {
           workspaceId,
           billingInterval,
           workspacePlan,
-          workspaceSlug: cryptoRandomString({ length: 10 })
+          workspaceSlug: cryptoRandomString({ length: 10 }),
+          isCreateFlow: false
         })
       })
       expect(err.message).to.equal(
@@ -474,7 +484,8 @@ describe('checkout @gatekeeper', () => {
         workspaceId,
         billingInterval,
         workspacePlan,
-        workspaceSlug: cryptoRandomString({ length: 10 })
+        workspaceSlug: cryptoRandomString({ length: 10 }),
+        isCreateFlow: false
       })
       expect(existingCheckoutSession).to.be.undefined
       expect(checkoutSession).deep.equal(storedCheckoutSession)

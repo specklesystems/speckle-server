@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // eslint-disable-next-line no-restricted-imports
 import '../bootstrap'
 
@@ -16,8 +17,15 @@ import { once } from 'events'
 import type http from 'http'
 import type express from 'express'
 import type net from 'net'
-import { MaybeAsync, MaybeNullOrUndefined, Optional, wait } from '@speckle/shared'
-import type mocha from 'mocha'
+import {
+  ensureError,
+  MaybeAsync,
+  MaybeNullOrUndefined,
+  Nullable,
+  Optional,
+  wait
+} from '@speckle/shared'
+import * as mocha from 'mocha'
 import {
   getAvailableRegionKeysFactory,
   getFreeRegionKeysFactory
@@ -33,13 +41,16 @@ import {
 import {
   getRegisteredRegionClients,
   initializeRegion
-} from '@/modules/multiregion/dbSelector'
+} from '@/modules/multiregion/utils/dbSelector'
 import { Knex } from 'knex'
 import { isMultiRegionTestMode } from '@/test/speckle-helpers/regions'
 import { isMultiRegionEnabled } from '@/modules/multiregion/helpers'
 import { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
 import { ApolloServer } from '@apollo/server'
-import { ReadinessHandler } from '@/healthchecks/health'
+import { ReadinessHandler } from '@/healthchecks/types'
+import { set } from 'lodash'
+import { fixStackTrace } from '@/test/speckle-helpers/error'
+import { EnvironmentResourceError } from '@/modules/shared/errors'
 
 // why is server config only created once!????
 // because its done in a migration, to not override existing configs
@@ -53,6 +64,18 @@ chai.use(chaiHttp)
 chai.use(deepEqualInAnyOrder)
 chai.use(graphqlChaiPlugin)
 
+// Please forgive me god for what I'm about to do, but Mocha's ancient API sucks ass
+// and there's NO OTHER WAY to format errors across all reporters
+const originalMochaRun = mocha.default.prototype.run
+set(mocha.default.prototype, 'run', function (this: any, ...args: any) {
+  const runner = originalMochaRun.apply(this, args)
+  runner.prependListener(mocha.Runner.constants.EVENT_TEST_FAIL, (_test, err) => {
+    fixStackTrace(err)
+  })
+
+  return runner
+})
+
 export const getMainTestRegionKey = () => {
   const key = Object.keys(regionClients)[0]
   if (!key) {
@@ -60,6 +83,11 @@ export const getMainTestRegionKey = () => {
   }
 
   return key
+}
+
+export const getMainTestRegionKeyIfMultiRegion = () => {
+  const isMultiRegionMode = isMultiRegionTestMode()
+  return isMultiRegionMode ? getMainTestRegionKey() : undefined
 }
 
 export const getMainTestRegionClient = () => {
@@ -86,7 +114,7 @@ const ensureAivenExtrasFactory = (deps: { db: Knex }) => async () => {
 const setupDatabases = async () => {
   // First reset main db
   const db = mainDb
-  const resetMainDb = resetSchemaFactory({ db })
+  const resetMainDb = resetSchemaFactory({ db, regionKey: null })
   await resetMainDb()
 
   const getAvailableRegionKeys = getAvailableRegionKeysFactory({
@@ -118,8 +146,8 @@ const setupDatabases = async () => {
   regionClients = await getRegisteredRegionClients()
 
   // Reset each region DB client (re-run all migrations and setup)
-  for (const client of Object.values(regionClients)) {
-    const reset = resetSchemaFactory({ db: client })
+  for (const [regionKey, db] of Object.entries(regionClients)) {
+    const reset = resetSchemaFactory({ db, regionKey })
     await reset()
   }
 
@@ -220,26 +248,53 @@ const truncateTablesFactory = (deps: { db: Knex }) => async (tableNames?: string
   }
 }
 
-const resetSchemaFactory = (deps: { db: Knex }) => async () => {
-  const resetPubSub = resetPubSubFactory(deps)
-  const truncate = truncateTablesFactory(deps)
+const resetSchemaFactory =
+  (deps: { db: Knex; regionKey: Nullable<string> }) => async () => {
+    const { regionKey } = deps
 
-  await unlockFactory(deps)()
-  await resetPubSub()
-  await truncate() // otherwise some rollbacks will fail
+    const resetPubSub = resetPubSubFactory(deps)
+    const truncate = truncateTablesFactory(deps)
 
-  // Reset schema
-  await deps.db.migrate.rollback()
-  await deps.db.migrate.latest()
-}
+    await unlockFactory(deps)()
+    await resetPubSub()
+    await truncate() // otherwise some rollbacks will fail
 
-export const truncateTables = async (tableNames?: string[]) => {
+    // Reset schema
+    try {
+      await deps.db.migrate.rollback()
+      await deps.db.migrate.latest()
+    } catch (e) {
+      throw new EnvironmentResourceError(
+        `Failed to reset schema for ${
+          regionKey ? 'region ' + regionKey + ' ' : 'main DB'
+        }`,
+        {
+          cause: ensureError(e)
+        }
+      )
+    }
+  }
+
+export const truncateTables = async (
+  tableNames?: string[],
+  options?: Partial<{
+    /**
+     * Whether to also reset pubsub before truncate. Pubsub only gets re-initialized on app
+     * init so don't do this if not needed!
+     * Defaults to: false
+     */
+    resetPubSub: boolean
+  }>
+) => {
+  const { resetPubSub = false } = options || {}
   const dbs = [mainDb, ...Object.values(regionClients)]
 
-  // First reset pubsubs
-  for (const db of dbs) {
-    const resetPubSub = resetPubSubFactory({ db })
-    await resetPubSub()
+  // First reset pubsubs, if needed
+  if (resetPubSub) {
+    for (const db of dbs) {
+      const resetPubSub = resetPubSubFactory({ db })
+      await resetPubSub()
+    }
   }
 
   // Now truncate
@@ -314,6 +369,6 @@ export const buildApp = async () => {
 }
 
 export const beforeEachContext = async () => {
-  await truncateTables()
+  await truncateTables(undefined, { resetPubSub: true })
   return await buildApp()
 }

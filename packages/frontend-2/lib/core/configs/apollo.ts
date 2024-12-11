@@ -85,7 +85,7 @@ function createCache(): InMemoryCache {
           },
           streams: {
             keyArgs: ['query'],
-            merge: buildAbstractCollectionMergeFunction('StreamCollection', {
+            merge: buildAbstractCollectionMergeFunction('UserStreamCollection', {
               checkIdentity: true
             })
           },
@@ -295,6 +295,9 @@ function createCache(): InMemoryCache {
           },
           team: {
             merge: (_existing, incoming) => incoming
+          },
+          plan: {
+            merge: incomingOverwritesExistingMergeFunction
           },
           projects: {
             keyArgs: ['filter', 'limit'],

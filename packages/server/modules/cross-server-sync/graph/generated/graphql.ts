@@ -66,6 +66,16 @@ export type AdminInviteList = {
   totalCount: Scalars['Int']['output'];
 };
 
+export type AdminMutations = {
+  __typename?: 'AdminMutations';
+  updateWorkspacePlan: Scalars['Boolean']['output'];
+};
+
+
+export type AdminMutationsUpdateWorkspacePlanArgs = {
+  input: AdminUpdateWorkspacePlanInput;
+};
+
 export type AdminQueries = {
   __typename?: 'AdminQueries';
   inviteList: AdminInviteList;
@@ -104,6 +114,12 @@ export type AdminQueriesWorkspaceListArgs = {
   cursor?: InputMaybe<Scalars['String']['input']>;
   limit?: Scalars['Int']['input'];
   query?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type AdminUpdateWorkspacePlanInput = {
+  plan: WorkspacePlans;
+  status: WorkspacePlanStatuses;
+  workspaceId: Scalars['ID']['input'];
 };
 
 export type AdminUserList = {
@@ -305,8 +321,6 @@ export type AutomateFunctionTemplate = {
 };
 
 export enum AutomateFunctionTemplateLanguage {
-  Demonstration = 'DEMONSTRATION',
-  Demonstrationpython = 'DEMONSTRATIONPYTHON',
   DotNet = 'DOT_NET',
   Python = 'PYTHON',
   Typescript = 'TYPESCRIPT'
@@ -540,6 +554,7 @@ export type CheckoutSession = {
 
 export type CheckoutSessionInput = {
   billingInterval: BillingInterval;
+  isCreateFlow?: InputMaybe<Scalars['Boolean']['input']>;
   workspaceId: Scalars['ID']['input'];
   workspacePlan: PaidWorkspacePlans;
 };
@@ -1027,7 +1042,7 @@ export type LimitedUser = {
    * Returns all discoverable streams that the user is a collaborator on
    * @deprecated Part of the old API surface and will be removed in the future.
    */
-  streams: StreamCollection;
+  streams: UserStreamCollection;
   /**
    * The user's timeline in chronological order
    * @deprecated Part of the old API surface and will be removed in the future.
@@ -1244,6 +1259,7 @@ export type Mutation = {
   _?: Maybe<Scalars['String']['output']>;
   /** Various Active User oriented mutations */
   activeUserMutations: ActiveUserMutations;
+  admin: AdminMutations;
   adminDeleteUser: Scalars['Boolean']['output'];
   /** Creates an personal api token. */
   apiTokenCreate: Scalars['String']['output'];
@@ -2546,7 +2562,7 @@ export type Query = {
    * Pass in the `query` parameter to search by name, description or ID.
    * @deprecated Part of the old API surface and will be removed in the future. Use User.projects instead.
    */
-  streams?: Maybe<StreamCollection>;
+  streams?: Maybe<UserStreamCollection>;
   /**
    * Gets the profile of a user. If no id argument is provided, will return the current authenticated user's profile (as extracted from the authorization header).
    * @deprecated To be removed in the near future! Use 'activeUser' to get info about the active user or 'otherUser' to get info about another user.
@@ -2560,8 +2576,11 @@ export type Query = {
   /**
    * Search for users and return limited metadata about them, if you have the server:user role.
    * The query looks for matches in name & email
+   * @deprecated Use users() instead.
    */
   userSearch: UserSearchResultCollection;
+  /** Look up server users */
+  users: UserSearchResultCollection;
   /** Validates the slug, to make sure it contains only valid characters and its not taken. */
   validateWorkspaceSlug: Scalars['Boolean']['output'];
   workspace: Workspace;
@@ -2700,6 +2719,11 @@ export type QueryUserSearchArgs = {
   emailOnly?: InputMaybe<Scalars['Boolean']['input']>;
   limit?: Scalars['Int']['input'];
   query: Scalars['String']['input'];
+};
+
+
+export type QueryUsersArgs = {
+  input: UsersRetrievalInput;
 };
 
 
@@ -3622,14 +3646,14 @@ export type User = {
   /** Get all invitations to projects that the active user has */
   projectInvites: Array<PendingStreamCollaborator>;
   /** Get projects that the user participates in */
-  projects: ProjectCollection;
+  projects: UserProjectCollection;
   role?: Maybe<Scalars['String']['output']>;
   /**
    * Returns all streams that the user is a collaborator on. If requested for a user, who isn't the
    * authenticated user, then this will only return discoverable streams.
    * @deprecated Part of the old API surface and will be removed in the future. Use User.projects instead.
    */
-  streams: StreamCollection;
+  streams: UserStreamCollection;
   /**
    * The user's timeline in chronological order
    * @deprecated Part of the old API surface and will be removed in the future.
@@ -3815,6 +3839,14 @@ export type UserGendoAiCredits = {
   used: Scalars['Int']['output'];
 };
 
+export type UserProjectCollection = {
+  __typename?: 'UserProjectCollection';
+  cursor?: Maybe<Scalars['String']['output']>;
+  items: Array<Project>;
+  numberOfHidden: Scalars['Int']['output'];
+  totalCount: Scalars['Int']['output'];
+};
+
 export type UserProjectsFilter = {
   /** Only include projects where user has the specified roles */
   onlyWithRoles?: InputMaybe<Array<Scalars['String']['input']>>;
@@ -3848,6 +3880,14 @@ export type UserSearchResultCollection = {
   items: Array<LimitedUser>;
 };
 
+export type UserStreamCollection = {
+  __typename?: 'UserStreamCollection';
+  cursor?: Maybe<Scalars['String']['output']>;
+  items?: Maybe<Array<Stream>>;
+  numberOfHidden: Scalars['Int']['output'];
+  totalCount: Scalars['Int']['output'];
+};
+
 export type UserUpdateInput = {
   avatar?: InputMaybe<Scalars['String']['input']>;
   bio?: InputMaybe<Scalars['String']['input']>;
@@ -3857,6 +3897,18 @@ export type UserUpdateInput = {
 
 export type UserWorkspacesFilter = {
   search?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type UsersRetrievalInput = {
+  cursor?: InputMaybe<Scalars['String']['input']>;
+  /** Only find users with directly matching emails */
+  emailOnly?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Limit defaults to 10 */
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  /** Only find users that are collaborators of the specified project */
+  projectId?: InputMaybe<Scalars['String']['input']>;
+  /** The query looks for matches in user name & email */
+  query: Scalars['String']['input'];
 };
 
 export type Version = {
@@ -4503,7 +4555,14 @@ export type WorkspaceSubscription = {
   billingInterval: BillingInterval;
   createdAt: Scalars['DateTime']['output'];
   currentBillingCycleEnd: Scalars['DateTime']['output'];
+  seats: WorkspaceSubscriptionSeats;
   updatedAt: Scalars['DateTime']['output'];
+};
+
+export type WorkspaceSubscriptionSeats = {
+  __typename?: 'WorkspaceSubscriptionSeats';
+  guest: Scalars['Int']['output'];
+  plan: Scalars['Int']['output'];
 };
 
 export type WorkspaceTeamFilter = {

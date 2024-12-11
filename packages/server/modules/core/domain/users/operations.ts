@@ -8,6 +8,7 @@ import { UserUpdateInput } from '@/modules/core/graph/generated/graphql'
 import { ServerInviteGraphQLReturnType } from '@/modules/core/helpers/graphTypes'
 import { ServerAclRecord, UserWithRole } from '@/modules/core/helpers/types'
 import {
+  MaybeNullOrUndefined,
   Nullable,
   NullableKeysToOptional,
   Optional,
@@ -170,6 +171,27 @@ export type SearchLimitedUsers = (
   emailOnly?: boolean
 ) => Promise<{
   users: LimitedUser[]
+  cursor: Nullable<string>
+}>
+
+export type LookupUsers = (filter: {
+  query: string
+  /**
+   * Only find user with directly matching email
+   */
+  emailOnly?: MaybeNullOrUndefined<boolean>
+  /**
+   * Only find users that are collaborators of the specified project
+   */
+  projectId?: MaybeNullOrUndefined<string>
+  /**
+   * Defaults to 10
+   */
+  limit?: MaybeNullOrUndefined<number>
+  cursor?: MaybeNullOrUndefined<string>
+  archived?: MaybeNullOrUndefined<boolean>
+}) => Promise<{
+  users: User[]
   cursor: Nullable<string>
 }>
 

@@ -179,7 +179,7 @@ const onInviteUser = async (
 
   disabled.value = true
 
-  await inviteToWorkspace(props.workspaceId, inputs)
+  await inviteToWorkspace({ workspaceId: props.workspaceId, inputs })
 
   const isEmail = !!inputs.find((u) => !!u.email)
   mp.track('Invite Action', {

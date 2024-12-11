@@ -1,29 +1,27 @@
 import { db } from '@/db/knex'
-import { isMultiRegionEnabled } from '@/modules/multiregion/helpers'
-import {
-  getRegionKeyFromCacheFactory,
-  getRegionKeyFromStorageFactory,
-  inMemoryRegionKeyStoreFactory,
-  writeRegionKeyToCacheFactory
-} from '@/modules/multiregion/repositories/projectRegion'
 import {
   GetProjectDb,
   getProjectDbClientFactory,
-  getProjectRegionKeyFactory,
   GetRegionDb
 } from '@/modules/multiregion/services/projectRegion'
-import { getGenericRedis } from '@/modules/shared/redis/redis'
 import { Knex } from 'knex'
-import { getRegionFactory, getRegionsFactory } from '@/modules/multiregion/repositories'
-import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
+import { getRegionFactory } from '@/modules/multiregion/repositories'
+import { DatabaseError } from '@/modules/shared/errors'
 import { configureClient } from '@/knexfile'
 import { InitializeRegion } from '@/modules/multiregion/domain/operations'
 import {
   getAvailableRegionConfig,
   getMainRegionConfig
 } from '@/modules/multiregion/regionConfig'
-import { MaybeNullOrUndefined } from '@speckle/shared'
-import { isTestEnv } from '@/modules/shared/helpers/envHelper'
+import { ensureError, MaybeNullOrUndefined } from '@speckle/shared'
+import { isDevOrTestEnv, isTestEnv } from '@/modules/shared/helpers/envHelper'
+import { migrateDbToLatest } from '@/db/migrations'
+import {
+  getProjectRegionKey,
+  getRegisteredRegionConfigs
+} from '@/modules/multiregion/utils/regionSelector'
+import { mapValues } from 'lodash'
+import { isMultiRegionEnabled } from '@/modules/multiregion/helpers'
 
 let getter: GetProjectDb | undefined = undefined
 
@@ -61,22 +59,6 @@ export const getDb = async ({
 
 const initializeDbGetter = async (): Promise<GetProjectDb> => {
   const getDefaultDb = () => db
-
-  // if multi region is not enabled, lets fall back to the main Db ALWAYS
-  if (!isMultiRegionEnabled()) return async () => getDefaultDb()
-
-  const { getRegionKey, writeRegion } = inMemoryRegionKeyStoreFactory()
-
-  const redis = getGenericRedis()
-
-  const getProjectRegionKey = getProjectRegionKeyFactory({
-    getRegionKeyFromMemory: getRegionKey,
-    writeRegionToMemory: writeRegion,
-    getRegionKeyFromCache: getRegionKeyFromCacheFactory({ redis }),
-    writeRegionKeyToCache: writeRegionKeyToCacheFactory({ redis }),
-    getRegionKeyFromStorage: getRegionKeyFromStorageFactory({ db })
-  })
-
   return getProjectDbClientFactory({
     getDefaultDb,
     getRegionDb,
@@ -97,28 +79,22 @@ let registeredRegionClients: RegionClients | undefined = undefined
  * Idempotently initialize registered region (in db) Knex clients
  */
 export const initializeRegisteredRegionClients = async (): Promise<RegionClients> => {
-  const configuredRegions = await getRegionsFactory({ db })()
-  if (!configuredRegions.length) return {}
-
   // init knex clients
-  const regionConfigs = await getAvailableRegionConfig()
-  const ret = Object.fromEntries(
-    configuredRegions.map((region) => {
-      if (!(region.key in regionConfigs))
-        throw new MisconfiguredEnvironmentError(
-          `Missing region config for ${region.key} region`
-        )
-      return [region.key, configureClient(regionConfigs[region.key]).public]
-    })
-  )
+  const configs = await getRegisteredRegionConfigs()
+  const ret = mapValues(configs, (config) => configureClient(config).public)
 
   // run migrations
-  await Promise.all(Object.values(ret).map((db) => db.migrate.latest()))
+  await Promise.all(
+    Object.entries(ret).map(([region, db]) => migrateDbToLatest({ db, region }))
+  )
 
   // (re-)set up pub-sub, if needed
-  await Promise.all(
-    Object.keys(ret).map((regionKey) => initializeRegion({ regionKey }))
-  )
+  // (disabled in prod cause there's too many DBs and connections and the load is too hard to handle)
+  if (isDevOrTestEnv()) {
+    await Promise.all(
+      Object.keys(ret).map((regionKey) => initializeRegion({ regionKey }))
+    )
+  }
 
   registeredRegionClients = ret
   return ret
@@ -137,7 +113,9 @@ export const getAllRegisteredDbClients = async (): Promise<
   Array<{ client: Knex; isMain: boolean; regionKey: string }>
 > => {
   const mainDb = db
-  const regionDbs = await getRegisteredRegionClients()
+  const regionDbs: RegionClients = isMultiRegionEnabled()
+    ? await getRegisteredRegionClients()
+    : {}
   return [
     {
       client: mainDb,
@@ -153,7 +131,7 @@ export const getAllRegisteredDbClients = async (): Promise<
 }
 
 /**
- * Idempotently initialize region
+ * Idempotently initialize region db
  */
 export const initializeRegion: InitializeRegion = async ({ regionKey }) => {
   const regionConfigs = await getAvailableRegionConfig()
@@ -162,7 +140,7 @@ export const initializeRegion: InitializeRegion = async ({ regionKey }) => {
 
   const newRegionConfig = regionConfigs[regionKey]
   const regionDb = configureClient(newRegionConfig)
-  await regionDb.public.migrate.latest()
+  await migrateDbToLatest({ db: regionDb.public, region: regionKey })
 
   const mainDbConfig = await getMainRegionConfig()
   const mainDb = configureClient(mainDbConfig)
@@ -183,8 +161,8 @@ export const initializeRegion: InitializeRegion = async ({ regionKey }) => {
     sslmode
   })
 
-  // pushing to the singleton object here, its only not available
-  // if this is being triggered from init, and in that case its gonna be set after anyway
+  // pushing to the singleton object here, only if its not available
+  // if this is being triggered from init, its gonna be set after anyway
   if (registeredRegionClients) {
     registeredRegionClients[regionKey] = regionDb.public
   }
@@ -209,7 +187,14 @@ const setUpUserReplication = async ({
   try {
     await from.public.raw(`CREATE PUBLICATION ${pubName} FOR TABLE users;`)
   } catch (err) {
-    if (!(err instanceof Error)) throw err
+    if (!(err instanceof Error))
+      throw new DatabaseError(
+        'Could not create publication {pubName} when setting up user replication for region {regionName}',
+        {
+          cause: ensureError(err, 'Unknown database error when creating publication'),
+          info: { pubName, regionName }
+        }
+      )
     if (!err.message.includes('already exists')) throw err
   }
 
@@ -237,7 +222,14 @@ const setUpUserReplication = async ({
       subName
     ])
   } catch (err) {
-    if (!(err instanceof Error)) throw err
+    if (!(err instanceof Error))
+      throw new DatabaseError(
+        'Could not create subscription {subName} to {pubName} when setting up user replication for region {regionName}',
+        {
+          cause: ensureError(err, 'Unknown database error when creating subscription'),
+          info: { subName, pubName, regionName }
+        }
+      )
     if (!err.message.includes('already exists')) throw err
   }
 }
@@ -254,7 +246,14 @@ const setUpProjectReplication = async ({
   try {
     await from.public.raw(`CREATE PUBLICATION ${pubName} FOR TABLE streams;`)
   } catch (err) {
-    if (!(err instanceof Error)) throw err
+    if (!(err instanceof Error))
+      throw new DatabaseError(
+        'Could not create publication {pubName} when setting up project replication for region {regionName}',
+        {
+          cause: ensureError(err, 'Unknown database error when creating publication'),
+          info: { pubName, regionName }
+        }
+      )
     if (!err.message.includes('already exists')) throw err
   }
 
@@ -282,7 +281,14 @@ const setUpProjectReplication = async ({
       subName
     ])
   } catch (err) {
-    if (!(err instanceof Error)) throw err
+    if (!(err instanceof Error))
+      throw new DatabaseError(
+        'Could not create subscription {subName} to {pubName} when setting up project replication for region {regionName}',
+        {
+          cause: ensureError(err, 'Unknown database error when creating subscription'),
+          info: { subName, pubName, regionName }
+        }
+      )
     if (!err.message.includes('already exists')) throw err
   }
 }

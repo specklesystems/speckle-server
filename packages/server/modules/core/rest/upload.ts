@@ -19,7 +19,7 @@ import {
 } from '@/modules/core/repositories/objects'
 import { validatePermissionsWriteStreamFactory } from '@/modules/core/services/streams/auth'
 import { authorizeResolver, validateScopes } from '@/modules/shared'
-import { getProjectDbClient } from '@/modules/multiregion/dbSelector'
+import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 
 const MAX_FILE_SIZE = maximumObjectUploadFileSizeMb() * 1024 * 1024
 const { FF_NO_CLOSURE_WRITES } = getFeatureFlags()

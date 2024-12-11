@@ -1,4 +1,4 @@
-import { Roles, isNullOrUndefined } from '@speckle/shared'
+import { Roles, ensureError, isNullOrUndefined } from '@speckle/shared'
 import {
   BranchCreateError,
   BranchDeleteError,
@@ -95,7 +95,21 @@ export const updateBranchAndNotifyFactory =
       throw new BranchUpdateError('Please specify a property to update')
     }
 
-    const newBranch = await deps.updateBranch(input.id, updates)
+    let newBranch: BranchRecord
+    try {
+      newBranch = await deps.updateBranch(input.id, updates)
+    } catch (e) {
+      if (ensureError(e).message.includes('branches_streamid_name_unique')) {
+        throw new BranchUpdateError(
+          'A branch with this name already exists in the parent stream',
+          {
+            info: { ...input, userId }
+          }
+        )
+      } else {
+        throw e
+      }
+    }
 
     if (newBranch) {
       await deps.addBranchUpdatedActivity({

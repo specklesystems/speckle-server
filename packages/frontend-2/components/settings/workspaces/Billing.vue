@@ -17,8 +17,8 @@
               class="grid grid-cols-1 lg:grid-cols-3 divide-y divide-outline-3 lg:divide-y-0 lg:divide-x"
             >
               <div class="p-5 pt-4 flex flex-col gap-y-1">
-                <h3 class="text-body-xs text-foreground-2 pb-2">
-                  {{ isTrialPeriod ? 'Trial plan' : 'Current plan' }}
+                <h3 class="text-body-xs text-foreground-2 pb-1">
+                  {{ statusIsTrial ? 'Trial plan' : 'Current plan' }}
                 </h3>
                 <div class="flex gap-x-2">
                   <p class="text-heading-lg text-foreground">
@@ -28,54 +28,59 @@
                     </span>
                   </p>
                   <div>
-                    <CommonBadge v-if="isTrialPeriod" rounded>TRIAL</CommonBadge>
+                    <CommonBadge v-if="statusIsTrial" rounded>TRIAL</CommonBadge>
                   </div>
                 </div>
                 <p v-if="isPurchasablePlan" class="text-body-xs text-foreground-2">
-                  £{{ seatPrice[Roles.Workspace.Member] }} per seat/month, billed
-                  {{
-                    subscription?.billingInterval === BillingInterval.Yearly
-                      ? 'yearly'
-                      : 'monthly'
-                  }}
+                  <span v-if="statusIsTrial">
+                    <span class="line-through mr-1">
+                      £{{ seatPrice[Roles.Workspace.Member] }} per seat/month
+                    </span>
+                    Free
+                  </span>
+                  <span v-else>
+                    £{{ seatPrice[Roles.Workspace.Member] }} per seat/month, billed
+                    {{
+                      subscription?.billingInterval === BillingInterval.Yearly
+                        ? 'annually'
+                        : 'monthly'
+                    }}
+                  </span>
                 </p>
               </div>
               <div class="p-5 pt-4 flex flex-col gap-y-1">
-                <h3 class="text-body-xs text-foreground-2 pb-2">
+                <h3 class="text-body-xs text-foreground-2 pb-1">
                   {{
-                    isTrialPeriod
+                    statusIsTrial
                       ? 'Expected bill'
                       : subscription?.billingInterval === BillingInterval.Yearly
-                      ? 'Yearly bill'
+                      ? 'Annual bill'
                       : 'Monthly bill'
                   }}
                 </h3>
-                <template v-if="isTrialPeriod">
-                  <p class="text-heading-lg text-foreground inline-block">
-                    {{ billValue }}
-                  </p>
-                  <p class="text-body-xs text-foreground-2 flex gap-x-1 items-center">
-                    {{ billDescription }}
-                    <InformationCircleIcon
-                      v-tippy="billTooltip"
-                      class="w-4 h-4 text-foreground cursor-pointer"
-                    />
-                  </p>
-                </template>
-                <div v-else>
-                  <button
-                    class="text-heading-lg text-foreground"
-                    @click="billingPortalRedirect(workspaceId)"
-                  >
-                    View on Stripe &#8599;
-                  </button>
-                </div>
+                <p class="text-heading-lg text-foreground inline-block">
+                  {{ billValue }} per
+                  {{
+                    subscription?.billingInterval === BillingInterval.Yearly
+                      ? 'year'
+                      : 'month'
+                  }}
+                </p>
+                <p class="text-body-xs text-foreground-2 flex gap-x-1 items-center">
+                  {{ billDescription }}
+                  <InformationCircleIcon
+                    v-tippy="billTooltip"
+                    class="w-4 h-4 text-foreground cursor-pointer"
+                  />
+                </p>
               </div>
               <div class="p-5 pt-4 flex flex-col gap-y-1">
-                <h3 class="text-body-xs text-foreground-2 pb-2">
+                <h3 class="text-body-xs text-foreground-2 pb-1">
                   {{
-                    isTrialPeriod && isPurchasablePlan
-                      ? 'First payment due'
+                    statusIsTrial && isPurchasablePlan
+                      ? 'Trial ends'
+                      : statusIsCanceled
+                      ? 'Cancels'
                       : 'Next payment due'
                   }}
                 </h3>
@@ -83,14 +88,15 @@
                   {{ isPurchasablePlan ? nextPaymentDue : 'Never' }}
                 </p>
                 <p v-if="isPurchasablePlan" class="text-body-xs text-foreground-2">
-                  <span class="capitalize">
+                  <span v-if="statusIsTrial">Subscribe before this date</span>
+                  <span v-else>
                     {{
                       subscription?.billingInterval === BillingInterval.Yearly
-                        ? 'Yearly'
+                        ? 'Annual'
                         : 'Monthly'
                     }}
+                    billing period
                   </span>
-                  billing period
                 </p>
               </div>
             </div>
@@ -110,28 +116,54 @@
               </FormButton>
             </div>
           </div>
+
+          <SettingsSectionHeader
+            :title="statusIsTrial ? 'Start your subscription' : 'Upgrade your plan'"
+            subheading
+            class="pt-4"
+          />
           <SettingsWorkspacesBillingPricingTable
-            class="pt-6"
             :workspace-id="workspaceId"
             :current-plan="currentPlan"
             :active-billing-interval="subscription?.billingInterval"
             :is-admin="isAdmin"
-            @on-cta-click="onPricePlanCtaClick"
+            @on-plan-selected="onPlanSelected"
+          />
+        </div>
+
+        <div class="mt-8 text-center text-foreground-2">
+          Need help?
+          <NuxtLink
+            class="text-foreground"
+            :to="guideBillingUrl"
+            target="_blank"
+            @click="
+              mixpanel.track('Workspace Docs Link Clicked', {
+                workspace_id: props.workspaceId
+              })
+            "
           >
-            <template #title>
-              <SettingsSectionHeader
-                :title="isTrialPeriod ? 'Start your subscription' : 'Upgrade your plan'"
-                subheading
-              />
-            </template>
-          </SettingsWorkspacesBillingPricingTable>
+            <span class="hover:underline">Read the docs</span>
+          </NuxtLink>
+          or
+          <a
+            class="text-foreground hover:underline"
+            href="mailto:billing@speckle.systems"
+            @click="
+              mixpanel.track('Workspace Support Link Clicked', {
+                workspace_id: props.workspaceId
+              })
+            "
+          >
+            contact support
+          </a>
         </div>
 
         <SettingsWorkspacesBillingUpgradeDialog
-          v-if="currentPlan?.name && subscription?.billingInterval"
+          v-if="selectedPlanName && selectedPlanCycle && workspaceId"
           v-model:open="isUpgradeDialogOpen"
-          :plan="currentPlan.name"
-          :billing-interval="subscription.billingInterval"
+          :plan="selectedPlanName"
+          :billing-interval="selectedPlanCycle"
           :workspace-id="workspaceId"
         />
       </template>
@@ -157,6 +189,8 @@ import { pricingPlansConfig } from '~/lib/billing/helpers/constants'
 import { Roles } from '@speckle/shared'
 import { InformationCircleIcon } from '@heroicons/vue/24/outline'
 import { isPaidPlan } from '@/lib/billing/helpers/types'
+import { useMixpanel } from '~/lib/core/composables/mp'
+import { guideBillingUrl } from '~/lib/common/helpers/route'
 
 graphql(`
   fragment SettingsWorkspacesBilling_Workspace on Workspace {
@@ -164,13 +198,17 @@ graphql(`
     id
     role
     plan {
-      ...SettingsWorkspacesBillingPricingTable_WorkspacePlan
       name
       status
+      createdAt
     }
     subscription {
       billingInterval
       currentBillingCycleEnd
+      seats {
+        guest
+        plan
+      }
     }
     team {
       items {
@@ -196,21 +234,27 @@ const { result: workspaceResult } = useQuery(
   })
 )
 const { billingPortalRedirect, redirectToCheckout } = useBillingActions()
+const mixpanel = useMixpanel()
 
-const isUpgradeDialogOpen = ref(false)
 const seatPrices = ref({
   [WorkspacePlans.Starter]: pricingPlansConfig.plans[WorkspacePlans.Starter].cost,
   [WorkspacePlans.Plus]: pricingPlansConfig.plans[WorkspacePlans.Plus].cost,
   [WorkspacePlans.Business]: pricingPlansConfig.plans[WorkspacePlans.Business].cost
 })
+const selectedPlanName = ref<WorkspacePlans>()
+const selectedPlanCycle = ref<BillingInterval>()
+const isUpgradeDialogOpen = ref(false)
 
 const workspace = computed(() => workspaceResult.value?.workspace)
 const currentPlan = computed(() => workspace.value?.plan)
 const subscription = computed(() => workspace.value?.subscription)
-const isTrialPeriod = computed(
+const statusIsTrial = computed(
   () =>
     currentPlan.value?.status === WorkspacePlanStatuses.Trial ||
     !currentPlan.value?.status
+)
+const statusIsCanceled = computed(
+  () => currentPlan.value?.status === WorkspacePlanStatuses.Canceled
 )
 const isActivePlan = computed(
   () =>
@@ -218,13 +262,7 @@ const isActivePlan = computed(
     currentPlan.value?.status !== WorkspacePlanStatuses.Trial &&
     currentPlan.value?.status !== WorkspacePlanStatuses.Canceled
 )
-const isPurchasablePlan = computed(
-  () =>
-    currentPlan.value?.name === WorkspacePlans.Starter ||
-    currentPlan.value?.name === WorkspacePlans.Plus ||
-    currentPlan.value?.name === WorkspacePlans.Business ||
-    !currentPlan.value?.name // no plan equals pro trial plan
-)
+const isPurchasablePlan = computed(() => isPaidPlan(currentPlan.value?.name))
 const seatPrice = computed(() =>
   currentPlan.value && subscription.value
     ? seatPrices.value[currentPlan.value.name as keyof typeof seatPrices.value][
@@ -233,28 +271,32 @@ const seatPrice = computed(() =>
     : seatPrices.value[WorkspacePlans.Starter][BillingInterval.Monthly]
 )
 const nextPaymentDue = computed(() =>
-  currentPlan.value
-    ? isPurchasablePlan.value
+  isPurchasablePlan.value
+    ? subscription.value?.currentBillingCycleEnd
       ? dayjs(subscription.value?.currentBillingCycleEnd).format('MMMM D, YYYY')
-      : 'Never'
-    : dayjs().add(30, 'days').format('MMMM D, YYYY')
+      : dayjs(currentPlan.value?.createdAt).add(31, 'days').format('MMMM D, YYYY')
+    : 'Never'
 )
 const isAdmin = computed(() => workspace.value?.role === Roles.Workspace.Admin)
 const guestSeatCount = computed(() =>
-  workspace.value
-    ? workspace.value.team.items.filter((user) => user.role === Roles.Workspace.Guest)
-        .length
-    : 0
+  isActivePlan.value
+    ? workspace.value?.subscription?.seats.guest ?? 0
+    : workspace.value?.team.items.filter((user) => user.role === Roles.Workspace.Guest)
+        .length ?? 0
 )
 const memberSeatCount = computed(() =>
-  workspace.value ? workspace.value.team.items.length - guestSeatCount.value : 0
+  isActivePlan.value
+    ? workspace.value?.subscription?.seats.plan ?? 0
+    : workspace.value
+    ? workspace.value.team.items.length - guestSeatCount.value
+    : 0
 )
 const billValue = computed(() => {
   const guestPrice = seatPrice.value[Roles.Workspace.Guest] * guestSeatCount.value
   const memberPrice = seatPrice.value[Roles.Workspace.Member] * memberSeatCount.value
   const totalPrice = guestPrice + memberPrice
-  if (isTrialPeriod.value) return `£${totalPrice}.00`
-  return `£0.00`
+  if (isPurchasablePlan.value) return `£${totalPrice}`
+  return `£0`
 })
 const billDescription = computed(() => {
   const memberText =
@@ -267,30 +309,35 @@ const billDescription = computed(() => {
 const billTooltip = computed(() => {
   const memberText = `${memberSeatCount.value} member${
     memberSeatCount.value === 1 ? '' : 's'
-  } £${seatPrice.value[Roles.Workspace.Member]}`
+  } at £${seatPrice.value[Roles.Workspace.Member]}/month`
   const guestText = `${guestSeatCount.value} guest${
     guestSeatCount.value === 1 ? '' : 's'
-  } £${seatPrice.value[Roles.Workspace.Guest]}`
+  } at £${seatPrice.value[Roles.Workspace.Guest]}/month`
 
   return `${memberText}${guestSeatCount.value > 0 ? `, ${guestText}` : ''}`
 })
 
-const onPricePlanCtaClick = (args: {
-  plan: WorkspacePlans
-  billingInterval: BillingInterval
-}) => {
-  const { plan, billingInterval } = args
-  if (!isPaidPlan(plan) || !props.workspaceId) return
-  if (isTrialPeriod.value) {
-    redirectToCheckout({
-      plan: plan as unknown as PaidWorkspacePlans,
-      cycle: billingInterval,
-      workspaceId: props.workspaceId
+const onPlanSelected = (plan: { name: WorkspacePlans; cycle: BillingInterval }) => {
+  const { name, cycle } = plan
+  if (!isPaidPlan(name) || !props.workspaceId) return
+
+  if (statusIsTrial.value) {
+    mixpanel.track('Workspace Subscribe Button Clicked', {
+      plan,
+      cycle,
+      // eslint-disable-next-line camelcase
+      workspace_id: props.workspaceId
     })
 
-    return
+    redirectToCheckout({
+      plan: name as unknown as PaidWorkspacePlans,
+      cycle,
+      workspaceId: props.workspaceId
+    })
+  } else {
+    selectedPlanName.value = name
+    selectedPlanCycle.value = cycle
+    isUpgradeDialogOpen.value = true
   }
-
-  isUpgradeDialogOpen.value = true
 }
 </script>
