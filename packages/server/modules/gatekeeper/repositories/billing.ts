@@ -14,7 +14,8 @@ import {
   GetWorkspaceSubscription,
   GetWorkspaceSubscriptionBySubscriptionId,
   GetWorkspaceSubscriptions,
-  UpsertTrialWorkspacePlan
+  UpsertTrialWorkspacePlan,
+  UpsertUnpaidWorkspacePlan
 } from '@/modules/gatekeeper/domain/billing'
 import { ChangeExpiredTrialWorkspacePlanStatuses } from '@/modules/gatekeeper/domain/operations'
 import { Knex } from 'knex'
@@ -61,6 +62,12 @@ export const upsertTrialWorkspacePlanFactory = ({
 }: {
   db: Knex
 }): UpsertTrialWorkspacePlan => upsertWorkspacePlanFactory({ db })
+
+export const upsertUnpaidWorkspacePlanFactory = ({
+  db
+}: {
+  db: Knex
+}): UpsertUnpaidWorkspacePlan => upsertWorkspacePlanFactory({ db })
 
 export const changeExpiredTrialWorkspacePlanStatusesFactory =
   ({ db }: { db: Knex }): ChangeExpiredTrialWorkspacePlanStatuses =>

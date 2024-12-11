@@ -1,5 +1,9 @@
 import { db } from '@/db/knex'
-import { Resolvers } from '@/modules/core/graph/generated/graphql'
+import {
+  Resolvers,
+  WorkspacePlans,
+  WorkspacePlanStatuses
+} from '@/modules/core/graph/generated/graphql'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
 import {
   getProjectCollaboratorsFactory,
@@ -50,8 +54,7 @@ import {
   WorkspaceJoinNotAllowedError,
   WorkspaceNotFoundError,
   WorkspacePaidPlanActiveError,
-  WorkspacesNotAuthorizedError,
-  WorkspacesNotYetImplementedError
+  WorkspacesNotAuthorizedError
 } from '@/modules/workspaces/errors/workspace'
 import {
   deleteWorkspaceFactory as repoDeleteWorkspaceFactory,
@@ -73,7 +76,9 @@ import {
   getWorkspaceBySlugFactory,
   countDomainsByWorkspaceIdFactory,
   getWorkspaceCreationStateFactory,
-  upsertWorkspaceCreationStateFactory
+  upsertWorkspaceCreationStateFactory,
+  queryWorkspacesFactory,
+  countWorkspacesFactory
 } from '@/modules/workspaces/repositories/workspaces'
 import {
   buildWorkspaceInviteEmailContentsFactory,
@@ -105,7 +110,6 @@ import {
 } from '@/modules/workspaces/services/projects'
 import {
   getDiscoverableWorkspacesForUserFactory,
-  getPaginatedWorkspaceTeamFactory,
   getWorkspacesForUserFactory
 } from '@/modules/workspaces/services/retrieval'
 import {
@@ -189,8 +193,15 @@ import {
 } from '@/modules/automate/services/authCode'
 import { getGenericRedis } from '@/modules/shared/redis/redis'
 import { convertFunctionToGraphQLReturn } from '@/modules/automate/services/functionManagement'
-import { getWorkspacePlanFactory } from '@/modules/gatekeeper/repositories/billing'
+import {
+  getWorkspacePlanFactory,
+  upsertPaidWorkspacePlanFactory,
+  upsertTrialWorkspacePlanFactory,
+  upsertUnpaidWorkspacePlanFactory
+} from '@/modules/gatekeeper/repositories/billing'
 import { Knex } from 'knex'
+import { getPaginatedItemsFactory } from '@/modules/shared/services/paginatedItems'
+import { InvalidWorkspacePlanStatus } from '@/modules/gatekeeper/errors/billing'
 
 const eventBus = getEventBus()
 const getServerInfo = getServerInfoFactory({ db })
@@ -357,7 +368,8 @@ export = FF_WORKSPACES_MODULE_ENABLED
         }
       },
       Mutation: {
-        workspaceMutations: () => ({})
+        workspaceMutations: () => ({}),
+        admin: () => ({})
       },
       ProjectInviteMutations: {
         async createForWorkspace(_parent, args, ctx) {
@@ -412,6 +424,73 @@ export = FF_WORKSPACES_MODULE_ENABLED
             )
           }
           return ctx.loaders.streams.getStream.load(args.projectId)
+        }
+      },
+      AdminMutations: {
+        updateWorkspacePlan: async (_parent, { input }) => {
+          const { workspaceId, plan: name, status } = input
+          const workspace = await getWorkspaceFactory({ db })({
+            workspaceId
+          })
+          const createdAt = new Date()
+          if (!workspace) throw new WorkspaceNotFoundError()
+          switch (name) {
+            case WorkspacePlans.Starter:
+              switch (status) {
+                case WorkspacePlanStatuses.Trial:
+                case WorkspacePlanStatuses.Expired:
+                  await upsertTrialWorkspacePlanFactory({ db })({
+                    workspacePlan: { workspaceId, status, name, createdAt }
+                  })
+                  return true
+                case WorkspacePlanStatuses.Valid:
+                case WorkspacePlanStatuses.CancelationScheduled:
+                case WorkspacePlanStatuses.Canceled:
+                case WorkspacePlanStatuses.PaymentFailed:
+                  await upsertPaidWorkspacePlanFactory({ db })({
+                    workspacePlan: { workspaceId, status, name, createdAt }
+                  })
+                  return true
+                default:
+                  throwUncoveredError(status)
+              }
+            case WorkspacePlans.Business:
+            case WorkspacePlans.Plus:
+              switch (status) {
+                case WorkspacePlanStatuses.Trial:
+                case WorkspacePlanStatuses.Expired:
+                  throw new InvalidWorkspacePlanStatus()
+                case WorkspacePlanStatuses.Valid:
+                case WorkspacePlanStatuses.CancelationScheduled:
+                case WorkspacePlanStatuses.Canceled:
+                case WorkspacePlanStatuses.PaymentFailed:
+                  await upsertPaidWorkspacePlanFactory({ db })({
+                    workspacePlan: { workspaceId, status, name, createdAt }
+                  })
+                  return true
+                default:
+                  throwUncoveredError(status)
+              }
+
+            case WorkspacePlans.Academia:
+            case WorkspacePlans.Unlimited:
+              switch (status) {
+                case WorkspacePlanStatuses.Valid:
+                  await upsertUnpaidWorkspacePlanFactory({ db })({
+                    workspacePlan: { workspaceId, status, name, createdAt }
+                  })
+                case WorkspacePlanStatuses.CancelationScheduled:
+                case WorkspacePlanStatuses.Canceled:
+                case WorkspacePlanStatuses.Expired:
+                case WorkspacePlanStatuses.PaymentFailed:
+                case WorkspacePlanStatuses.Trial:
+                  throw new InvalidWorkspacePlanStatus()
+                default:
+                  throwUncoveredError(status)
+              }
+            default:
+              throwUncoveredError(name)
+          }
         }
       },
       WorkspaceMutations: {
@@ -952,10 +1031,9 @@ export = FF_WORKSPACES_MODULE_ENABLED
           return workspace?.role || null
         },
         team: async (parent, args) => {
-          const team = await getPaginatedWorkspaceTeamFactory({
-            getWorkspaceCollaborators: getWorkspaceCollaboratorsFactory({ db }),
-            getWorkspaceCollaboratorsTotalCount:
-              getWorkspaceCollaboratorsTotalCountFactory({ db })
+          const team = await getPaginatedItemsFactory({
+            getItems: getWorkspaceCollaboratorsFactory({ db }),
+            getTotalCount: getWorkspaceCollaboratorsTotalCountFactory({ db })
           })({
             workspaceId: parent.id,
             filter: removeNullOrUndefinedKeys(args?.filter || {}),
@@ -1241,8 +1319,15 @@ export = FF_WORKSPACES_MODULE_ENABLED
         }
       },
       AdminQueries: {
-        workspaceList: async () => {
-          throw new WorkspacesNotYetImplementedError()
+        workspaceList: async (_parent, args) => {
+          return await getPaginatedItemsFactory({
+            getItems: queryWorkspacesFactory({ db }),
+            getTotalCount: countWorkspacesFactory({ db })
+          })({
+            limit: args.limit,
+            cursor: args.cursor,
+            filter: { search: args.query ?? undefined }
+          })
         }
       },
       LimitedUser: {

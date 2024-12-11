@@ -58,6 +58,10 @@ export type UpsertPaidWorkspacePlan = (args: {
   workspacePlan: PaidWorkspacePlan
 }) => Promise<void>
 
+export type UpsertUnpaidWorkspacePlan = (args: {
+  workspacePlan: UnpaidWorkspacePlan
+}) => Promise<void>
+
 export type UpsertWorkspacePlan = (args: {
   workspacePlan: WorkspacePlan
 }) => Promise<void>
