@@ -4574,7 +4574,14 @@ export type WorkspaceSubscription = {
   billingInterval: BillingInterval;
   createdAt: Scalars['DateTime']['output'];
   currentBillingCycleEnd: Scalars['DateTime']['output'];
+  seats: WorkspaceSubscriptionSeats;
   updatedAt: Scalars['DateTime']['output'];
+};
+
+export type WorkspaceSubscriptionSeats = {
+  __typename?: 'WorkspaceSubscriptionSeats';
+  guest: Scalars['Int']['output'];
+  plan: Scalars['Int']['output'];
 };
 
 export type WorkspaceTeamFilter = {
@@ -4963,6 +4970,7 @@ export type ResolversTypes = {
   WorkspaceSsoProvider: ResolverTypeWrapper<WorkspaceSsoProvider>;
   WorkspaceSsoSession: ResolverTypeWrapper<WorkspaceSsoSession>;
   WorkspaceSubscription: ResolverTypeWrapper<WorkspaceSubscription>;
+  WorkspaceSubscriptionSeats: ResolverTypeWrapper<WorkspaceSubscriptionSeats>;
   WorkspaceTeamFilter: WorkspaceTeamFilter;
   WorkspaceUpdateInput: WorkspaceUpdateInput;
   WorkspaceUpdatedMessage: ResolverTypeWrapper<Omit<WorkspaceUpdatedMessage, 'workspace'> & { workspace: ResolversTypes['Workspace'] }>;
@@ -5228,6 +5236,7 @@ export type ResolversParentTypes = {
   WorkspaceSsoProvider: WorkspaceSsoProvider;
   WorkspaceSsoSession: WorkspaceSsoSession;
   WorkspaceSubscription: WorkspaceSubscription;
+  WorkspaceSubscriptionSeats: WorkspaceSubscriptionSeats;
   WorkspaceTeamFilter: WorkspaceTeamFilter;
   WorkspaceUpdateInput: WorkspaceUpdateInput;
   WorkspaceUpdatedMessage: Omit<WorkspaceUpdatedMessage, 'workspace'> & { workspace: ResolversParentTypes['Workspace'] };
@@ -6796,7 +6805,14 @@ export type WorkspaceSubscriptionResolvers<ContextType = GraphQLContext, ParentT
   billingInterval?: Resolver<ResolversTypes['BillingInterval'], ParentType, ContextType>;
   createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   currentBillingCycleEnd?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
+  seats?: Resolver<ResolversTypes['WorkspaceSubscriptionSeats'], ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type WorkspaceSubscriptionSeatsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['WorkspaceSubscriptionSeats'] = ResolversParentTypes['WorkspaceSubscriptionSeats']> = {
+  guest?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  plan?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -6960,6 +6976,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   WorkspaceSsoProvider?: WorkspaceSsoProviderResolvers<ContextType>;
   WorkspaceSsoSession?: WorkspaceSsoSessionResolvers<ContextType>;
   WorkspaceSubscription?: WorkspaceSubscriptionResolvers<ContextType>;
+  WorkspaceSubscriptionSeats?: WorkspaceSubscriptionSeatsResolvers<ContextType>;
   WorkspaceUpdatedMessage?: WorkspaceUpdatedMessageResolvers<ContextType>;
 };
 

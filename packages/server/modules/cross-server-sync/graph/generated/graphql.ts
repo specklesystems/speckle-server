@@ -4555,7 +4555,14 @@ export type WorkspaceSubscription = {
   billingInterval: BillingInterval;
   createdAt: Scalars['DateTime']['output'];
   currentBillingCycleEnd: Scalars['DateTime']['output'];
+  seats: WorkspaceSubscriptionSeats;
   updatedAt: Scalars['DateTime']['output'];
+};
+
+export type WorkspaceSubscriptionSeats = {
+  __typename?: 'WorkspaceSubscriptionSeats';
+  guest: Scalars['Int']['output'];
+  plan: Scalars['Int']['output'];
 };
 
 export type WorkspaceTeamFilter = {
