@@ -25,6 +25,7 @@ import {
 } from '@/modules/gatekeeper/repositories/billing'
 import { countWorkspaceRoleWithOptionalProjectRoleFactory } from '@/modules/workspaces/repositories/workspaces'
 import { reconcileWorkspaceSubscriptionFactory } from '@/modules/gatekeeper/clients/stripe'
+import { registerProjectReadOnlyHook } from '@/modules/core/hooks'
 
 const { FF_GATEKEEPER_MODULE_ENABLED, FF_BILLING_INTEGRATION_ENABLED } =
   getFeatureFlags()
@@ -104,6 +105,10 @@ const gatekeeperModule: SpeckleModule = {
             'The the billing module needs a valid license to run, contact Speckle to get one.'
           )
         // TODO: create a cron job, that removes unused seats from the subscription at the beginning of each workspace plan's billing cycle
+
+        registerProjectReadOnlyHook(async () => {
+          return false
+        })
       }
     }
   },
