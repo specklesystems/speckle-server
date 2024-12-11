@@ -73,36 +73,38 @@ export type CreateVersionArgs = {
 }
 
 // TODO: Once ruby codebase aligned with it, sketchup will consume this bridge too!
-export class ServerBridge {
-  private runMethod: (methodName: string, args: unknown[]) => Promise<unknown>
+export class ArchicadBridge {
   public emitter: Emitter
 
-  constructor(
-    runMethod: (methodName: string, args: unknown[]) => Promise<unknown>,
-    emitter: Emitter
-  ) {
-    this.runMethod = runMethod
+  constructor(emitter: Emitter) {
     this.emitter = emitter
   }
 
   // NOTE: Overriden emit as we do not need to parse the data back - the Server bridge already parses it for us.
-  emit(eventName: string, payload: Record<string, unknown>): void {
+  emit(
+    eventName: string,
+    payload: Record<string, unknown>,
+    runMethod: (methodName: string, args: unknown[]) => Promise<unknown>
+  ): void {
     const eventPayload = payload as unknown as Record<string, unknown>
 
     if (eventName === 'sendByBrowser')
       this.sendByBrowser(eventPayload as SendViaBrowserArgs)
     // we will switch to https://www.npmjs.com/package/@speckle/objectsender
     else if (eventName === 'sendBatchViaBrowser')
-      this.sendBatchViaBrowser(eventPayload as SendBatchViaBrowserArgs)
+      this.sendBatchViaBrowser(eventPayload as SendBatchViaBrowserArgs, runMethod)
     else if (eventName === 'createVersionViaBrowser')
       this.createVersionViaBrowser(eventPayload as CreateVersionViaBrowserArgs)
     else if (eventName === 'receiveByBrowser')
-      this.receiveByBrowser(eventPayload as ReceiveViaBrowserArgs)
+      this.receiveByBrowser(eventPayload as ReceiveViaBrowserArgs, runMethod)
     // Archicad is not likely to hit here yet!
     else return this.emitter.emit(eventName, eventPayload)
   }
 
-  private async receiveByBrowser(eventPayload: ReceiveViaBrowserArgs) {
+  private async receiveByBrowser(
+    eventPayload: ReceiveViaBrowserArgs,
+    runMethod: (methodName: string, args: unknown[]) => Promise<unknown>
+  ) {
     const accountStore = useAccountStore()
     const hostAppStore = useHostAppStore()
     const { accounts } = storeToRefs(accountStore)
@@ -166,8 +168,10 @@ export class ServerBridge {
     })
 
     // CONVERSION WILL START AFTER THAT
-    await this.runMethod('afterGetObjects', args as unknown as unknown[])
+    await runMethod('afterGetObjects', args as unknown as unknown[])
   }
+
+  private queuedPromises = {} as Record<string, Promise<Response>[]>
 
   /**
    * Internal server method for sending batch data via REST api.
@@ -175,7 +179,10 @@ export class ServerBridge {
    * To be able to use this function properly, expected objects in batch must have hashed (speckle ids generated, detached, chucked bla bla) on connector.
    * @param eventPayload
    */
-  private async sendBatchViaBrowser(eventPayload: SendBatchViaBrowserArgs) {
+  private async sendBatchViaBrowser(
+    eventPayload: SendBatchViaBrowserArgs,
+    runMethod: (methodName: string, args: unknown[]) => Promise<unknown>
+  ) {
     const {
       serverUrl,
       token,
@@ -186,24 +193,38 @@ export class ServerBridge {
       currentBatch,
       referencedObjectId
     } = eventPayload
-    this.emitter.emit('setModelProgress', {
-      modelCardId,
-      progress: {
-        status: 'Uploading',
-        progress: currentBatch / totalBatch
-      }
-    } as unknown as string)
+    if (!this.queuedPromises[modelCardId]) {
+      this.queuedPromises[modelCardId] = []
+    }
     const formData = new FormData()
     formData.append(`batch-1`, new Blob([batch], { type: 'application/json' }))
-    await fetch(`${serverUrl}/objects/${projectId}`, {
-      method: 'POST',
-      headers: { Authorization: 'Bearer ' + token },
-      body: formData
-    })
+    this.queuedPromises[modelCardId].push(
+      fetch(`${serverUrl}/objects/${projectId}`, {
+        method: 'POST',
+        headers: { Authorization: 'Bearer ' + token },
+        body: formData
+      })
+    )
 
+    // 🚀 ready to send!!!!
     if (currentBatch === totalBatch) {
+      const start = performance.now()
+      for (let i = 0; i < this.queuedPromises[modelCardId].length; i++) {
+        const isLast = i === this.queuedPromises[modelCardId].length - 1
+        // Emit progress update for each resolved promise
+        this.emitter.emit('setModelProgress', {
+          modelCardId,
+          progress: {
+            status: 'Uploading',
+            progress: isLast ? 0 : (i + 1) / this.queuedPromises[modelCardId].length
+          }
+        } as unknown as string)
+        await this.queuedPromises[modelCardId][i] // Wait for the current promise to resolve
+      }
+      this.queuedPromises[modelCardId] = []
+      console.log(`🚀 Upload is completed in ${(performance.now() - start) / 1000} s!`)
       const args = [eventPayload.modelCardId, referencedObjectId]
-      await this.runMethod('afterSendObjects', args as unknown as unknown[])
+      await runMethod('afterSendObjects', args as unknown as unknown[])
     }
   }
 
@@ -270,25 +291,7 @@ export class ServerBridge {
         projectId,
         token
       }
-    ) // NOTE to dim
-
-    // BEFORE as below
-    // TODO: More of a question: why are we not sending multiple batches at once?
-    // What's in a batch? etc. To look at optmizing this and not blocking the
-    // main thread.
-    // const promises = [] as Promise<Response>[]
-    // sendObject.batches.forEach((batch) => {
-    //   const formData = new FormData()
-    //   formData.append(`batch-1`, new Blob([batch], { type: 'application/json' }))
-    //   promises.push(
-    //     fetch(`${serverUrl}/objects/${projectId}`, {
-    //       method: 'POST',
-    //       headers: { Authorization: 'Bearer ' + token },
-    //       body: formData
-    //     })
-    //   )
-    // })
-    // await Promise.all(promises)
+    )
 
     const hostAppStore = useHostAppStore()
 
