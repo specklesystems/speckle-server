@@ -133,7 +133,9 @@ const removeInviteItem = (index: number) => {
 }
 
 const onSubmit = handleSubmit(() => {
-  fields.value.forEach(async (invite) => {
+  const invites = fields.value.filter((invite) => invite.value.email)
+
+  invites.forEach(async (invite) => {
     invite.value.project
       ? await inviteUserToProject(invite.value.project.id, [
           {
