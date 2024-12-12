@@ -479,6 +479,8 @@ export = FF_WORKSPACES_MODULE_ENABLED
                   await upsertUnpaidWorkspacePlanFactory({ db })({
                     workspacePlan: { workspaceId, status, name, createdAt }
                   })
+
+                  return true
                 case WorkspacePlanStatuses.CancelationScheduled:
                 case WorkspacePlanStatuses.Canceled:
                 case WorkspacePlanStatuses.Expired:
