@@ -51,7 +51,8 @@ registerShortcuts({
   SetViewModeDefaultEdges: () => handleViewModeChange(ViewMode.DEFAULT_EDGES, true),
   SetViewModeShaded: () => handleViewModeChange(ViewMode.SHADED, true),
   SetViewModePen: () => handleViewModeChange(ViewMode.PEN, true),
-  SetViewModeArctic: () => handleViewModeChange(ViewMode.ARCTIC, true)
+  SetViewModeArctic: () => handleViewModeChange(ViewMode.ARCTIC, true),
+  SetViewModeColors: () => handleViewModeChange(ViewMode.COLORS, true)
 })
 
 const isActiveMode = (mode: ViewMode) => mode === currentViewMode.value
