@@ -9,7 +9,7 @@ import {
   storeObjectsIfNotFoundFactory
 } from '@/modules/core/repositories/objects'
 import { createObjectsFactory } from '@/modules/core/services/objects/management'
-import { getProjectDbClient } from '@/modules/multiregion/dbSelector'
+import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 
 type GetObjectChildrenQueryParams = Parameters<
   ReturnType<typeof getObjectChildrenQueryFactory>

@@ -77,7 +77,12 @@ import SpeckleStandardMaterial from './modules/materials/SpeckleStandardMaterial
 import SpeckleTextMaterial from './modules/materials/SpeckleTextMaterial.js'
 import { SpeckleText } from './modules/objects/SpeckleText.js'
 import { NodeRenderView } from './modules/tree/NodeRenderView.js'
-import { type ExtendedIntersection } from './modules/objects/SpeckleRaycaster.js'
+import {
+  CONTAINED,
+  INTERSECTED,
+  NOT_INTERSECTED,
+  type ExtendedIntersection
+} from './modules/objects/SpeckleRaycaster.js'
 import { SpeckleGeometryConverter } from './modules/loaders/Speckle/SpeckleGeometryConverter.js'
 import { Assets } from './modules/Assets.js'
 import { InstancedBatchObject } from './modules/batching/InstancedBatchObject.js'
@@ -124,6 +129,8 @@ import {
   FilterMaterialOptions,
   FilterMaterialType
 } from './modules/materials/Materials.js'
+import { AccelerationStructure } from './modules/objects/AccelerationStructure.js'
+import { TopLevelAccelerationStructure } from './modules/objects/TopLevelAccelerationStructure.js'
 
 export {
   Viewer,
@@ -165,6 +172,8 @@ export {
   LineBatch,
   PointBatch,
   TextBatch,
+  AccelerationStructure,
+  TopLevelAccelerationStructure,
   SpeckleStandardMaterial,
   SpeckleBasicMaterial,
   SpeckleTextMaterial,
@@ -209,7 +218,10 @@ export {
   ViewMode,
   FilterMaterial,
   FilterMaterialType,
-  FilterMaterialOptions
+  FilterMaterialOptions,
+  NOT_INTERSECTED,
+  INTERSECTED,
+  CONTAINED
 }
 
 export type {

@@ -62,7 +62,7 @@ import {
   deleteStreamAndNotifyFactory,
   updateStreamAndNotifyFactory
 } from '@/modules/core/services/streams/management'
-import { getProjectDbClient } from '@/modules/multiregion/dbSelector'
+import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { deleteAllResourceInvitesFactory } from '@/modules/serverinvites/repositories/serverInvites'
 import { authorizeResolver } from '@/modules/shared'
 import { publish } from '@/modules/shared/utils/subscriptions'

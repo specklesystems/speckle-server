@@ -125,7 +125,7 @@ import {
   storeUserServerAppTokenFactory
 } from '@/modules/core/repositories/tokens'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import { getProjectDbClient } from '@/modules/multiregion/dbSelector'
+import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 
 const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
 

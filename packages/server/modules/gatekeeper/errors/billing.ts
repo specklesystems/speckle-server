@@ -12,6 +12,12 @@ export class WorkspacePlanMismatchError extends BaseError {
   static statusCode = 500
 }
 
+export class InvalidWorkspacePlanStatus extends BaseError {
+  static defaultMessage = 'Workspace plan cannot be in the specified status'
+  static code = 'INVALID_WORKSPACE_PLAN_STATUS'
+  static statusCode = 400
+}
+
 export class WorkspaceCheckoutSessionInProgressError extends BaseError {
   static defaultMessage = 'Workspace already has a checkout session in progress'
   static code = 'WORKSPACE_CHECKOUT_SESSION_IN_PROGRESS_ERROR'
