@@ -18,7 +18,7 @@ describe('@gatekeeper readOnly', () => {
 
       const isWorkspaceReadOnly = isWorkspaceReadOnlyFactory({ getWorkspacePlan })
 
-      expect(await isWorkspaceReadOnly({ workspaceId: '' })).to.be.true
+      expect(await isWorkspaceReadOnly({ workspaceId: '' })).to.be.false
     })
     it('returns true if workspace plan status is canceled', async () => {
       const getWorkspacePlan: GetWorkspacePlan = () =>
