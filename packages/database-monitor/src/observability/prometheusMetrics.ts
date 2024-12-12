@@ -1,6 +1,6 @@
 import { DbClients, getDbClients } from '@/clients/knex.js'
 import { logger } from '@/observability/logging.js'
-import { databaseMonitorCollectionPeriodSeconds } from '@/utils/env.js'
+import { databaseMonitorCollectionPeriodSeconds, isDevOrTestEnv } from '@/utils/env.js'
 import { get, join } from 'lodash-es'
 import { Histogram, Registry } from 'prom-client'
 import prometheusClient from 'prom-client'
@@ -98,7 +98,7 @@ function initMonitoringMetrics(params: {
     const dbClientsRecord = await getDbClients()
     const dbClients = [
       ...Object.entries(dbClientsRecord).map(([regionKey, client]) => ({
-        client: client.private, //this has to be the private client, as we need to get the database name from the connection string. The public client, if via a connection pool, does not has the connection pool name not the database name.
+        client: isDevOrTestEnv() ? client.public : client.private, //this has to be the private client in production, as we need to get the database name from the connection string. The public client, if via a connection pool, does not has the connection pool name not the database name.
         isMain: regionKey === 'main',
         regionKey
       }))

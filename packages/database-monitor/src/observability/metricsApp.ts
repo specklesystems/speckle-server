@@ -1,6 +1,7 @@
 import { loggingExpressMiddleware } from '@/observability/expressLogging.js'
 import { metricsRouterFactory } from '@/observability/metricsRoute.js'
 import { initPrometheusMetrics } from '@/observability/prometheusMetrics.js'
+import indexRouterFactory from '@/server/routes/index.js'
 import { errorHandler } from '@/utils/errorHandler.js'
 import express from 'express'
 import createError from 'http-errors'
@@ -13,6 +14,7 @@ export const appFactory = () => {
   app.use(express.json({ limit: '100mb' }))
   app.use(express.urlencoded({ limit: '100mb', extended: false }))
 
+  app.use('/', indexRouterFactory())
   app.use('/metrics', metricsRouterFactory())
 
   // catch 404 and forward to error handler
