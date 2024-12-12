@@ -1,6 +1,6 @@
 <template>
   <LayoutDialog v-model:open="isOpen" max-width="md" :buttons="dialogButtons">
-    <template #header>Invite to server</template>
+    <template #header>Invite to Speckle</template>
     <form @submit="onSubmit">
       <div class="flex flex-col gap-y-5 text-foreground">
         <div v-for="(item, index) in fields" :key="item.key" class="flex gap-x-3">
