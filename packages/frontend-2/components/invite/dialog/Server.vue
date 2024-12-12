@@ -6,7 +6,7 @@
         <div v-for="(item, index) in fields" :key="item.key" class="flex gap-x-3">
           <div class="flex flex-col gap-y-3 flex-1">
             <hr v-if="index !== 0" class="border-outline-3" />
-            <div class="flex flex-row gap-x-3">
+            <div class="flex flex-row gap-x-3 items-center">
               <div class="flex-1">
                 <FormTextInput
                   v-model="item.value.email"
