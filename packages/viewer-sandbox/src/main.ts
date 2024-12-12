@@ -11,7 +11,6 @@ import {
 import './style.css'
 import Sandbox from './Sandbox'
 import {
-  SelectionExtension,
   MeasurementsExtension,
   ExplodeExtension,
   DiffExtension,
@@ -456,7 +455,12 @@ const getStream = () => {
     // 'https://app.speckle.systems/projects/344f803f81/models/5582ab673e'
 
     // 'https://speckle.xyz/streams/27e89d0ad6/commits/5ed4b74252'
-    'https://app.speckle.systems/projects/e89b61b65c/models/2a0995f124'
+
+    // DUI3 Mesh Colors
+    'https://app.speckle.systems/projects/93200a735d/models/cbacd3eaeb@344a397239'
+
+    // Instance toilets
+    // 'https://app.speckle.systems/projects/e89b61b65c/models/2a0995f124'
   )
 }
 

@@ -1,5 +1,6 @@
 import { UpdateFlags } from '../../IViewer.js'
 import { ArcticViewPipeline } from '../pipeline/Pipelines/ArcticViewPipeline.js'
+import { BasitPipeline } from '../pipeline/Pipelines/BasitViewPipeline.js'
 import { DefaultPipeline } from '../pipeline/Pipelines/DefaultPipeline.js'
 import { EdgesPipeline } from '../pipeline/Pipelines/EdgesPipeline.js'
 import { MRTEdgesPipeline } from '../pipeline/Pipelines/MRT/MRTEdgesPipeline.js'
@@ -14,7 +15,8 @@ export enum ViewMode {
   DEFAULT_EDGES,
   SHADED,
   PEN,
-  ARCTIC
+  ARCTIC,
+  COLORS
 }
 
 export class ViewModes extends Extension {
@@ -45,6 +47,9 @@ export class ViewModes extends Extension {
         break
       case ViewMode.ARCTIC:
         renderer.pipeline = new ArcticViewPipeline(renderer)
+        break
+      case ViewMode.COLORS:
+        renderer.pipeline = new BasitPipeline(renderer, this.viewer.getWorldTree())
         break
     }
     this.viewer.requestRender(UpdateFlags.RENDER_RESET)
