@@ -16,7 +16,7 @@ export enum ViewMode {
   SHADED,
   PEN,
   ARCTIC,
-  BASIT
+  COLORS
 }
 
 export class ViewModes extends Extension {
@@ -48,7 +48,7 @@ export class ViewModes extends Extension {
       case ViewMode.ARCTIC:
         renderer.pipeline = new ArcticViewPipeline(renderer)
         break
-      case ViewMode.BASIT:
+      case ViewMode.COLORS:
         renderer.pipeline = new BasitPipeline(renderer, this.viewer.getWorldTree())
         break
     }

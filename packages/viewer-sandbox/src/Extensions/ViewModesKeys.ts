@@ -32,7 +32,7 @@ export class ViewModesKeys extends Extension {
           viewModes.setViewMode(ViewMode.ARCTIC)
           break
         case '6':
-          viewModes.setViewMode(ViewMode.BASIT)
+          viewModes.setViewMode(ViewMode.COLORS)
           break
       }
     })

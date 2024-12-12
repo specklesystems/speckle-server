@@ -11,7 +11,6 @@ import {
 import './style.css'
 import Sandbox from './Sandbox'
 import {
-  SelectionExtension,
   MeasurementsExtension,
   ExplodeExtension,
   DiffExtension,
