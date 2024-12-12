@@ -26,6 +26,7 @@ import type {
   ViewerShortcut,
   ViewerShortcutAction
 } from '~/lib/viewer/helpers/shortcuts/types'
+import { useActiveElement } from '@vueuse/core'
 
 export function useSectionBoxUtilities() {
   const { instance } = useInjectedViewer()
@@ -510,21 +511,23 @@ export function useViewerShortcuts() {
   const { ui } = useInjectedViewerState()
   const { isSmallerOrEqualSm } = useIsSmallerOrEqualThanBreakpoint()
   const { isEnabled: isEmbedEnabled } = useEmbed()
+  const activeElement = useActiveElement()
 
   const isTypingComment = computed(() => {
-    // Check if any input-like element is focused
-    const activeElement = document.activeElement
-    const isInputFocused =
-      activeElement instanceof HTMLElement &&
-      (activeElement.tagName === 'INPUT' ||
-        activeElement.tagName === 'TEXTAREA' ||
-        activeElement.contentEditable === 'true')
+    if (
+      activeElement.value &&
+      (activeElement.value.tagName.toLowerCase() === 'input' ||
+        activeElement.value.tagName.toLowerCase() === 'textarea' ||
+        activeElement.value.getAttribute('contenteditable') === 'true')
+    ) {
+      return true
+    }
 
     // Check thread editor states
     const isNewThreadEditorOpen = ui.threads.openThread.newThreadEditor.value
     const isExistingThreadEditorOpen = !!ui.threads.openThread.thread.value
 
-    return isInputFocused || isNewThreadEditorOpen || isExistingThreadEditorOpen
+    return isNewThreadEditorOpen || isExistingThreadEditorOpen
   })
 
   const formatKey = (key: string) => {
