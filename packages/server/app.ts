@@ -74,7 +74,7 @@ import { loggingPlugin } from '@/modules/core/graph/plugins/logging'
 import { shouldLogAsInfoLevel } from '@/logging/graphqlError'
 import { getUserFactory } from '@/modules/core/repositories/users'
 import { initFactory as healthchecksInitFactory } from '@/healthchecks'
-import type { ReadinessHandler } from '@/healthchecks/health'
+import type { ReadinessHandler } from '@/healthchecks/types'
 import type ws from 'ws'
 import type { Server as MockWsServer } from 'mock-socket'
 import { SetOptional } from 'type-fest'
@@ -399,11 +399,12 @@ export async function init() {
   const app = express()
   app.disable('x-powered-by')
 
-  Logging(app)
-
   // Moves things along automatically on restart.
   // Should perhaps be done manually?
   await migrateDbToLatest({ region: 'main', db: knex })
+
+  // Logging relies on 'regions' table in the database, so much be initialized after migrations
+  await Logging(app)
 
   app.use(cookieParser())
   app.use(DetermineRequestIdMiddleware)

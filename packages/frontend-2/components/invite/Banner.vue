@@ -5,7 +5,7 @@
       <WorkspaceAvatar
         v-if="invite.workspace"
         :logo="invite.workspace.logo"
-        :default-logo-index="invite.workspace.defaultLogoIndex"
+        :name="invite.workspace.name"
       />
       <div class="text-foreground">
         <slot name="message" />
@@ -69,7 +69,7 @@ type GenericInviteItem = {
   workspace?: {
     id: string
     logo?: string
-    defaultLogoIndex: number
+    name: string
   }
   user?: MaybeNullOrUndefined<{
     id: string

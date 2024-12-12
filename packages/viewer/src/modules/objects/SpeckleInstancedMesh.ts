@@ -11,6 +11,7 @@ import {
   Object3D,
   Ray,
   Raycaster,
+  RGBADepthPacking,
   SkinnedMesh,
   Sphere,
   Triangle,
@@ -29,6 +30,7 @@ import {
 } from '../batching/Batch.js'
 import { SpeckleRaycaster } from './SpeckleRaycaster.js'
 import Logger from '../utils/Logger.js'
+import SpeckleDepthMaterial from '../materials/SpeckleDepthMaterial.js'
 
 const _inverseMatrix = new Matrix4()
 const _ray = new Ray()
@@ -183,6 +185,7 @@ export default class SpeckleInstancedMesh extends Group {
   public updateDrawGroups(transformBuffer: Float32Array, gradientBuffer: Float32Array) {
     this.instances.forEach((value: InstancedMesh) => {
       this.remove(value)
+      value.customDepthMaterial?.dispose()
       value.dispose()
     })
     this.instances.length = 0
@@ -218,6 +221,14 @@ export default class SpeckleInstancedMesh extends Group {
       group.instanceMatrix.needsUpdate = true
       group.layers.set(ObjectLayers.STREAM_CONTENT_MESH)
       group.frustumCulled = false
+      group.customDepthMaterial = new SpeckleDepthMaterial(
+        {
+          depthPacking: RGBADepthPacking
+        },
+        ['USE_RTE', 'ALPHATEST_REJECTION']
+      )
+      group.castShadow = !material.transparent
+      group.receiveShadow = !material.transparent
 
       this.instances.push(group)
       this.add(group)

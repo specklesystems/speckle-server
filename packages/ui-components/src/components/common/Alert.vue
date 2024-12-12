@@ -91,8 +91,9 @@ const icon = computed(() => {
     case 'danger':
       return XCircleIcon
     case 'success':
-    default:
       return CheckCircleIcon
+    default:
+      return InformationCircleIcon
   }
 })
 

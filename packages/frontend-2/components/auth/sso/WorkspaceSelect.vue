@@ -9,22 +9,14 @@
   >
     <template #option="{ item }">
       <div class="flex items-center gap-2">
-        <WorkspaceAvatar
-          :logo="item.logo"
-          :default-logo-index="item.defaultLogoIndex"
-          size="xs"
-        />
+        <WorkspaceAvatar :name="item.name" :logo="item.logo" size="xs" />
         <span>{{ item.name }}</span>
       </div>
     </template>
     <template #nothing-selected>Select a workspace</template>
     <template #something-selected="{ value }">
       <div v-if="!isArrayValue(value)" class="flex items-center gap-2">
-        <WorkspaceAvatar
-          :logo="value.logo"
-          :default-logo-index="value.defaultLogoIndex"
-          size="xs"
-        />
+        <WorkspaceAvatar :logo="value.logo" :name="value.name" size="xs" />
         <span>{{ value.name }}</span>
       </div>
     </template>
