@@ -199,10 +199,22 @@ export const useBillingActions = () => {
           type: ToastNotificationType.Danger,
           title: 'Your payment was canceled'
         })
+
+        mixpanel.track('Workspace Upgraded Cancelled', {
+          // eslint-disable-next-line camelcase
+          workspace_id: workspace.id
+        })
       } else {
         triggerNotification({
           type: ToastNotificationType.Success,
           title: 'Your workspace plan was successfully updated'
+        })
+
+        mixpanel.track('Workspace Upgraded', {
+          plan: workspace.plan?.name,
+          cycle: workspace.subscription?.billingInterval,
+          // eslint-disable-next-line camelcase
+          workspace_id: workspace.id
         })
 
         if (import.meta.server) {
