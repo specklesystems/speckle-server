@@ -1049,8 +1049,7 @@ jobs:
   docker-build-monitor-container:
     <<: *build-job
     environment:
-      FOLDER: utils
-      SPECKLE_SERVER_PACKAGE: monitor-deployment
+      SPECKLE_SERVER_PACKAGE: database-monitor
 
   docker-build-docker-compose-ingress:
     <<: *build-job

@@ -9,6 +9,7 @@ import { processCpuTotal } from '@/logging/highFrequencyMetrics/processCPUTotal'
 import { heapSizeAndUsed } from '@/logging/highFrequencyMetrics/heapSizeAndUsed'
 import { knexConnections } from '@/logging/highFrequencyMetrics/knexConnectionPool'
 import { type Knex } from 'knex'
+import { join } from 'lodash'
 
 type MetricConfig = {
   prefix?: string
@@ -28,8 +29,7 @@ export const initHighFrequencyMonitoring = (params: {
   collectionPeriodMilliseconds: number
   config: MetricConfig
 }): HighFrequencyMonitor => {
-  const { register, collectionPeriodMilliseconds } = params
-  const config = params.config
+  const { register, collectionPeriodMilliseconds, config } = params
   const registers = register ? [register] : undefined
   const namePrefix = config.prefix ?? ''
   const labels = config.labels ?? {}
@@ -42,7 +42,7 @@ export const initHighFrequencyMonitoring = (params: {
   ]
 
   const selfMonitor = new Histogram({
-    name: namePrefix + 'self_monitor_time_high_frequency',
+    name: join([namePrefix, 'self_monitor_time_high_frequency'], '_'),
     help: 'The time taken to collect all of the high frequency metrics, seconds.',
     registers,
     buckets: [0, 0.001, 0.01, 0.025, 0.05, 0.1, 0.2],

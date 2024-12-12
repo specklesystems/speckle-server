@@ -24,7 +24,8 @@ export default async function (app: express.Express) {
       register: prometheusClient.register,
       collectionPeriodMilliseconds: highFrequencyMetricsCollectionPeriodMs(),
       config: {
-        getDbClients: getAllRegisteredDbClients
+        getDbClients: getAllRegisteredDbClients,
+        prefix: 'speckle'
       }
     })
     highfrequencyMonitoring.start()
