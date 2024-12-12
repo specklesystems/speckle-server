@@ -5,7 +5,7 @@
       <IconViews class="w-5 h-5" />
     </template>
     <div
-      class="w-40 max-h-64 simple-scrollbar overflow-y-auto flex flex-col p-1.5"
+      class="w-32 sm:w-40 max-h-64 simple-scrollbar overflow-y-auto flex flex-col p-1.5"
       @mouseenter="cancelCloseTimer"
       @mouseleave="isManuallyOpened ? undefined : startCloseTimer"
       @focusin="cancelCloseTimer"
@@ -14,7 +14,7 @@
       <div v-for="shortcut in viewShortcuts" :key="shortcut.name">
         <ViewerMenuItem
           :label="shortcut.name"
-          disable-active-tick
+          hide-active-tick
           :active="activeView === shortcut.name.toLowerCase()"
           :shortcut="getShortcutDisplayText(shortcut, { hideName: true })"
           @click="handleViewChange(shortcut.name.toLowerCase() as CanonicalView)"
@@ -26,7 +26,7 @@
       <ViewerMenuItem
         v-for="view in views"
         :key="view.id"
-        disable-active
+        hide-active-tick
         :active="activeView === view.id"
         :label="view.name ? view.name : view.id"
         @click="handleViewChange(view)"
@@ -42,6 +42,7 @@ import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { useCameraUtilities, useViewerShortcuts } from '~~/lib/viewer/composables/ui'
 import { ViewShortcuts } from '~/lib/viewer/helpers/shortcuts/shortcuts'
+import { useViewerCameraControlEndTracker } from '~~/lib/viewer/composables/viewer'
 
 const {
   viewer: {
@@ -56,10 +57,14 @@ const open = defineModel<boolean>('open', { default: false })
 const isManuallyOpened = ref(false)
 const activeView = ref<string | null>(null)
 
+// Clear active view when camera control ends
+useViewerCameraControlEndTracker(() => {
+  activeView.value = null
+})
+
 const { start: startCloseTimer, stop: cancelCloseTimer } = useTimeoutFn(
   () => {
     open.value = false
-    activeView.value = null
   },
   3000,
   { immediate: false }
@@ -68,10 +73,9 @@ const { start: startCloseTimer, stop: cancelCloseTimer } = useTimeoutFn(
 const handleViewChange = (v: CanonicalView | SpeckleView, isShortcut = false) => {
   setViewRaw(v)
   cancelCloseTimer()
+  activeView.value = typeof v === 'string' ? v : v.id
 
   if (isShortcut) {
-    // Set active view and start timer
-    activeView.value = typeof v === 'string' ? v : v.id
     emit('force-close-others')
     open.value = true
     startCloseTimer()

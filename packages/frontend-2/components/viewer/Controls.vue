@@ -67,19 +67,19 @@
       <div class="w-8 flex gap-2">
         <div class="md:hidden">
           <ViewerControlsButtonToggle
-            :active="activeControl === 'mobileOverflow'"
-            @click="toggleActiveControl('mobileOverflow')"
+            :active="activePanel === 'mobileOverflow'"
+            @click="toggleActivePanel('mobileOverflow')"
           >
             <ChevronDoubleRightIcon
               class="h-4 w-4 md:h-5 md:w-5 transition"
-              :class="activeControl === 'mobileOverflow' ? 'rotate-180' : ''"
+              :class="activePanel === 'mobileOverflow' ? 'rotate-180' : ''"
             />
           </ViewerControlsButtonToggle>
         </div>
         <div
           class="-mt-28 md:mt-0 bg-foundation md:bg-transparent md:gap-2 shadow-md md:shadow-none flex flex-col rounded-lg transition-all *:shadow-none *:py-0 *:md:shadow-md *:md:py-2"
           :class="[
-            activeControl === 'mobileOverflow' ? '' : '-translate-x-24 md:translate-x-0'
+            activePanel === 'mobileOverflow' ? '' : '-translate-x-24 md:translate-x-0'
           ]"
         >
           <ViewerControlsButtonGroup>
@@ -300,6 +300,7 @@ type ActivePanel =
   | 'automate'
   | 'measurements'
   | 'gendo'
+  | 'mobileOverflow'
 
 type ActiveControl =
   | 'none'
@@ -310,7 +311,6 @@ type ActiveControl =
   | 'sectionBox'
   | 'explode'
   | 'settings'
-  | 'mobileOverflow'
 
 const isGendoEnabled = useIsGendoModuleEnabled()
 
@@ -410,7 +410,14 @@ const toggleActivePanel = (panel: ActivePanel) => {
   if (isMeasurementsActive && panel !== 'measurements') {
     enableMeasurements(false)
   }
-  activePanel.value = activePanel.value === panel ? 'none' : panel
+
+  // Special handling for mobile overflow
+  if (isSmallerOrEqualSm.value && panel === 'mobileOverflow') {
+    activePanel.value =
+      activePanel.value === 'mobileOverflow' ? 'none' : 'mobileOverflow'
+  } else {
+    activePanel.value = activePanel.value === panel ? 'none' : panel
+  }
 }
 
 const toggleActiveControl = (control: ActiveControl) => {
