@@ -31,6 +31,7 @@ generates:
         VersionMutations: '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn'
         CommentMutations: '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn'
         AutomateMutations: '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn'
+        AdminMutations: '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn'
         AdminQueries: '@/modules/core/helpers/graphTypes#GraphQLEmptyReturn'
         ServerStatistics: '@/modules/core/helpers/graphTypes#GraphQLEmptyReturn'
         ServerStats: '@/modules/core/helpers/graphTypes#GraphQLEmptyReturn'
