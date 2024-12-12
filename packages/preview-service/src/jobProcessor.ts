@@ -48,7 +48,7 @@ export const jobProcessor = async ({
       'jobId' in payload && typeof payload['jobId'] === 'string'
         ? payload['jobId']
         : 'unknown'
-    logger.error({ payload }, 'Failed to parse job payload')
+    logger.error({ parseError: parseResult.error }, 'Failed to parse job payload')
     return { jobId, status: 'error', reason: parseResult.error }
   }
   const job = parseResult.data

@@ -25,6 +25,7 @@ const launchBrowser = async (): Promise<Browser> => {
 const browser = await launchBrowser()
 logger.debug('Starting message queues')
 const jobQueue = new Bull('preview-service-jobs', REDIS_URL)
+// TODO: this should be a dynamic result queue based on an input from the job
 const resultsQueue = new Bull('preview-service-results', REDIS_URL)
 
 jobQueue.process(async (payload, done) => {
