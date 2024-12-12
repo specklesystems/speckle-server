@@ -5,7 +5,7 @@
       <IconViewModes class="h-5 w-5" />
     </template>
     <div
-      class="p-1.5"
+      class="w-56 p-1.5"
       @mouseenter="cancelCloseTimer"
       @mouseleave="isManuallyOpened ? undefined : startCloseTimer"
       @focusin="cancelCloseTimer"

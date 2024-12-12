@@ -90,7 +90,11 @@
               @update:open="(value: boolean) => toggleActiveControl(value ? 'viewModes' : 'none')"
             />
             <!-- Views -->
-            <ViewerViewsMenu v-tippy="`Views`" />
+            <ViewerViewsMenu
+              :open="viewsOpen"
+              @force-close-others="activeControl = 'none'"
+              @update:open="(value: boolean) => toggleActiveControl(value ? 'views' : 'none')"
+            />
             <!-- Zoom extents -->
             <ViewerControlsButtonToggle
               v-tippy="getShortcutDisplayText(shortcuts.ZoomExtentsOrSelection)"
@@ -498,6 +502,13 @@ const viewModesOpen = computed({
   get: () => activeControl.value === 'viewModes',
   set: (value) => {
     activeControl.value = value ? 'viewModes' : 'none'
+  }
+})
+
+const viewsOpen = computed({
+  get: () => activeControl.value === 'views',
+  set: (value) => {
+    activeControl.value = value ? 'views' : 'none'
   }
 })
 </script>

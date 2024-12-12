@@ -1,52 +1,47 @@
+<!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
-  <div ref="menuWrapper" class="relative z-30">
-    <ViewerControlsButtonToggle flat secondary :active="open" @click="open = !open">
+  <ViewerMenu v-model:open="open" tooltip="Views">
+    <template #trigger-icon>
       <IconViews class="w-5 h-5" />
-    </ViewerControlsButtonToggle>
-    <Transition
-      enter-active-class="transform ease-out duration-300 transition"
-      enter-from-class="translate-y-2 opacity-0 sm:translate-y-0 sm:translate-x-2"
-      enter-to-class="translate-y-0 opacity-100 sm:translate-x-0"
-      leave-active-class="transition ease-in duration-100"
-      leave-from-class="opacity-100"
-      leave-to-class="opacity-0"
+    </template>
+    <div
+      class="w-40 max-h-64 simple-scrollbar overflow-y-auto flex flex-col p-1.5"
+      @mouseenter="cancelCloseTimer"
+      @mouseleave="isManuallyOpened ? undefined : startCloseTimer"
+      @focusin="cancelCloseTimer"
+      @focusout="isManuallyOpened ? undefined : startCloseTimer"
     >
-      <div
-        v-if="open"
-        class="absolute translate-x-0 w-32 left-10 sm:left-12 -top-0 sm:-top-2 bg-foundation max-h-64 simple-scrollbar overflow-y-auto outline outline-2 outline-primary-muted rounded-lg shadow-lg overflow-hidden flex flex-col"
-      >
-        <!-- Canonical views first -->
-        <div v-for="view in canonicalViews" :key="view.name">
-          <button
-            class="hover:bg-primary-muted text-foreground w-full h-full text-body-xs py-1"
-            @click="setView(view.name.toLowerCase() as CanonicalView)"
-          >
-            {{ view.name }}
-          </button>
-        </div>
-        <div v-if="views.length !== 0" class="w-full border-b"></div>
-        <!-- Any model other views -->
-        <div v-for="view in views" :key="view.id">
-          <button
-            class="hover:bg-primary-muted text-foreground w-full h-full text-body-xs py-1 transition"
-            :title="view.name"
-            @click="setView(view)"
-          >
-            <span class="block truncate max-w-28 mx-auto">
-              {{ view.name ? view.name : view.id }}
-            </span>
-          </button>
-        </div>
+      <div v-for="shortcut in viewShortcuts" :key="shortcut.name">
+        <ViewerMenuItem
+          :label="shortcut.name"
+          disable-active-tick
+          :active="activeView === shortcut.name.toLowerCase()"
+          :shortcut="getShortcutDisplayText(shortcut, { hideName: true })"
+          @click="handleViewChange(shortcut.name.toLowerCase() as CanonicalView)"
+        />
       </div>
-    </Transition>
-  </div>
+
+      <div v-if="views.length !== 0" class="w-full border-b my-1"></div>
+
+      <ViewerMenuItem
+        v-for="view in views"
+        :key="view.id"
+        disable-active
+        :active="activeView === view.id"
+        :label="view.name ? view.name : view.id"
+        @click="handleViewChange(view)"
+      />
+    </div>
+  </ViewerMenu>
 </template>
+
 <script setup lang="ts">
-import type { CanonicalView, SpeckleView } from '~~/../viewer/dist'
+import { useTimeoutFn } from '@vueuse/core'
+import type { CanonicalView, SpeckleView } from '@speckle/viewer'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
-import { useCameraUtilities } from '~~/lib/viewer/composables/ui'
-import { onClickOutside } from '@vueuse/core'
+import { useCameraUtilities, useViewerShortcuts } from '~~/lib/viewer/composables/ui'
+import { ViewShortcuts } from '~/lib/viewer/helpers/shortcuts/shortcuts'
 
 const {
   viewer: {
@@ -54,14 +49,34 @@ const {
   }
 } = useInjectedViewerState()
 const { setView: setViewRaw } = useCameraUtilities()
+const { getShortcutDisplayText, registerShortcuts } = useViewerShortcuts()
 const mp = useMixpanel()
 
-const open = ref(false)
+const open = defineModel<boolean>('open', { default: false })
+const isManuallyOpened = ref(false)
+const activeView = ref<string | null>(null)
 
-const menuWrapper = ref(null)
+const { start: startCloseTimer, stop: cancelCloseTimer } = useTimeoutFn(
+  () => {
+    open.value = false
+    activeView.value = null
+  },
+  3000,
+  { immediate: false }
+)
 
-const setView = (v: CanonicalView | SpeckleView) => {
+const handleViewChange = (v: CanonicalView | SpeckleView, isShortcut = false) => {
   setViewRaw(v)
+  cancelCloseTimer()
+
+  if (isShortcut) {
+    // Set active view and start timer
+    activeView.value = typeof v === 'string' ? v : v.id
+    emit('force-close-others')
+    open.value = true
+    startCloseTimer()
+  }
+
   mp.track('Viewer Action', {
     type: 'action',
     name: 'set-view',
@@ -69,15 +84,21 @@ const setView = (v: CanonicalView | SpeckleView) => {
   })
 }
 
-const canonicalViews = [
-  { name: 'Top' },
-  { name: 'Front' },
-  { name: 'Left' },
-  { name: 'Back' },
-  { name: 'Right' }
-]
+registerShortcuts({
+  SetViewTop: () => handleViewChange('top', true),
+  SetViewFront: () => handleViewChange('front', true),
+  SetViewLeft: () => handleViewChange('left', true),
+  SetViewBack: () => handleViewChange('back', true),
+  SetViewRight: () => handleViewChange('right', true)
+})
 
-onClickOutside(menuWrapper, () => {
-  open.value = false
+const viewShortcuts = Object.values(ViewShortcuts)
+
+const emit = defineEmits<{
+  (e: 'force-close-others'): void
+}>()
+
+onUnmounted(() => {
+  cancelCloseTimer()
 })
 </script>

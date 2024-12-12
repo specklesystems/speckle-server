@@ -99,8 +99,47 @@ export const ToolShortcuts = {
   }
 } as const
 
+export const ViewShortcuts = {
+  SetViewTop: {
+    name: 'Top',
+    description: 'Set view to Top',
+    modifiers: [ModifierKeys.AltOrOpt],
+    key: 'Digit1',
+    action: 'SetViewTop'
+  },
+  SetViewFront: {
+    name: 'Front',
+    description: 'Set view to Front',
+    modifiers: [ModifierKeys.AltOrOpt],
+    key: 'Digit2',
+    action: 'SetViewFront'
+  },
+  SetViewLeft: {
+    name: 'Left',
+    description: 'Set view to Left',
+    modifiers: [ModifierKeys.AltOrOpt],
+    key: 'Digit3',
+    action: 'SetViewLeft'
+  },
+  SetViewBack: {
+    name: 'Back',
+    description: 'Set view to Back',
+    modifiers: [ModifierKeys.AltOrOpt],
+    key: 'Digit4',
+    action: 'SetViewBack'
+  },
+  SetViewRight: {
+    name: 'Right',
+    description: 'Set view to Right',
+    modifiers: [ModifierKeys.AltOrOpt],
+    key: 'Digit5',
+    action: 'SetViewRight'
+  }
+} as const
+
 export const ViewerShortcuts = {
   ...ViewModeShortcuts,
   ...PanelShortcuts,
-  ...ToolShortcuts
+  ...ToolShortcuts,
+  ...ViewShortcuts
 } as const

@@ -3,7 +3,7 @@
     class="flex items-center justify-between hover:bg-highlight-1 text-foreground w-full h-full text-body-xs py-1 px-2 transition rounded-md"
     :class="{ 'bg-highlight-1': active }"
   >
-    <div class="w-5 shrink-0">
+    <div v-if="!disableActiveTick" class="w-5 shrink-0">
       <IconCheck v-if="active" class="h-4 w-4 text-foreground-2" />
     </div>
     <div class="flex-1 text-left">{{ label }}</div>
@@ -16,7 +16,8 @@
 <script setup lang="ts">
 defineProps<{
   label: string
-  active: boolean
+  active?: boolean
+  disableActiveTick?: boolean
   shortcut?: string
 }>()
 </script>

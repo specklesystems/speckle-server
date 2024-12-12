@@ -12,7 +12,7 @@
     <div
       v-if="open"
       v-keyboard-clickable
-      class="absolute translate-x-0 w-56 left-10 sm:left-12 -top-0 sm:-top-2 bg-foundation max-h-64 simple-scrollbar overflow-y-auto rounded-lg shadow-md flex flex-col"
+      class="absolute translate-x-0 left-10 sm:left-12 -top-0 sm:-top-2 bg-foundation max-h-64 simple-scrollbar overflow-y-auto rounded-lg shadow-md flex flex-col"
     >
       <slot />
     </div>
