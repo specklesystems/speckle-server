@@ -27,6 +27,8 @@ export const speckleStandardVert = /* glsl */ `
 #endif
 
 varying vec3 vViewPosition;
+varying vec3 vWorldPosition;
+varying vec3 vWorldNormal;
 
 #ifdef USE_TRANSMISSION
 
@@ -202,6 +204,9 @@ void main() {
     #include <clipping_planes_vertex>
 
     vViewPosition = - mvPosition.xyz;
+    vWorldPosition = position;
+    vWorldNormal = normal;
+    vUv = fract(sin(dot(vWorldPosition.xy ,vec2(12.9898,78.233))) * 43758.5453) * vWorldPosition.zy;
 
     #include <worldpos_vertex>
     // #include <shadowmap_vertex> COMMENTED CHUNK!!!

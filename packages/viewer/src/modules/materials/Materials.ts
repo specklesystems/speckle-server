@@ -1,4 +1,12 @@
-import { Color, DoubleSide, FrontSide, Material, Texture, Vector2 } from 'three'
+import {
+  Color,
+  DoubleSide,
+  FrontSide,
+  Material,
+  RepeatWrapping,
+  Texture,
+  Vector2
+} from 'three'
 import { GeometryType } from '../batching/Batch.js'
 import { type TreeNode } from '../tree/WorldTree.js'
 import { NodeRenderView } from '../tree/NodeRenderView.js'
@@ -14,6 +22,7 @@ import SpeckleTextMaterial from './SpeckleTextMaterial.js'
 import { SpeckleMaterial } from './SpeckleMaterial.js'
 import SpecklePointColouredMaterial from './SpecklePointColouredMaterial.js'
 import { type Asset, AssetType, type MaterialOptions } from '../../IViewer.js'
+import snowTex from '../../assets/snow.png'
 
 const defaultGradient: Asset = {
   id: 'defaultGradient',
@@ -114,6 +123,7 @@ export default class Materials {
   private static readonly NullRenderMaterialInstancedVertexColorHash = this.hashCode(
     GeometryType.MESH.toString() + 'vertexColors' + 'instanced'
   )
+  snowTexture: Texture
 
   public static renderMaterialFromNode(
     materialNode: TreeNode | null,
@@ -699,6 +709,13 @@ export default class Materials {
     await this.createDefaultTextMaterials()
     await this.createDefaultNullMaterials()
     this.defaultGradientTextureData = await Assets.getTextureData(defaultGradient)
+    this.snowTexture = await Assets.getTexture({
+      id: 'snow',
+      src: snowTex,
+      type: AssetType.TEXTURE_8BPP
+    })
+    this.snowTexture.wrapS = RepeatWrapping
+    this.snowTexture.wrapT = RepeatWrapping
   }
 
   private makeMeshMaterial(materialData: RenderMaterial): Material {
@@ -709,7 +726,8 @@ export default class Materials {
         roughness: materialData.roughness,
         metalness: materialData.metalness,
         opacity: materialData.opacity,
-        side: DoubleSide
+        side: DoubleSide,
+        normalMap: this.snowTexture
       },
       ['USE_RTE']
     )
