@@ -1,21 +1,12 @@
 import { db } from '@/db/knex'
-import { isMultiRegionEnabled } from '@/modules/multiregion/helpers'
-import {
-  getRegionKeyFromCacheFactory,
-  getRegionKeyFromStorageFactory,
-  inMemoryRegionKeyStoreFactory,
-  writeRegionKeyToCacheFactory
-} from '@/modules/multiregion/repositories/projectRegion'
 import {
   GetProjectDb,
   getProjectDbClientFactory,
-  getProjectRegionKeyFactory,
   GetRegionDb
 } from '@/modules/multiregion/services/projectRegion'
-import { getGenericRedis } from '@/modules/shared/redis/redis'
 import { Knex } from 'knex'
-import { getRegionFactory, getRegionsFactory } from '@/modules/multiregion/repositories'
-import { DatabaseError, MisconfiguredEnvironmentError } from '@/modules/shared/errors'
+import { getRegionFactory } from '@/modules/multiregion/repositories'
+import { DatabaseError } from '@/modules/shared/errors'
 import { configureClient } from '@/knexfile'
 import { InitializeRegion } from '@/modules/multiregion/domain/operations'
 import {
@@ -25,6 +16,12 @@ import {
 import { ensureError, MaybeNullOrUndefined } from '@speckle/shared'
 import { isDevOrTestEnv, isTestEnv } from '@/modules/shared/helpers/envHelper'
 import { migrateDbToLatest } from '@/db/migrations'
+import {
+  getProjectRegionKey,
+  getRegisteredRegionConfigs
+} from '@/modules/multiregion/utils/regionSelector'
+import { mapValues } from 'lodash'
+import { isMultiRegionEnabled } from '@/modules/multiregion/helpers'
 
 let getter: GetProjectDb | undefined = undefined
 
@@ -62,22 +59,6 @@ export const getDb = async ({
 
 const initializeDbGetter = async (): Promise<GetProjectDb> => {
   const getDefaultDb = () => db
-
-  // if multi region is not enabled, lets fall back to the main Db ALWAYS
-  if (!isMultiRegionEnabled()) return async () => getDefaultDb()
-
-  const { getRegionKey, writeRegion } = inMemoryRegionKeyStoreFactory()
-
-  const redis = getGenericRedis()
-
-  const getProjectRegionKey = getProjectRegionKeyFactory({
-    getRegionKeyFromMemory: getRegionKey,
-    writeRegionToMemory: writeRegion,
-    getRegionKeyFromCache: getRegionKeyFromCacheFactory({ redis }),
-    writeRegionKeyToCache: writeRegionKeyToCacheFactory({ redis }),
-    getRegionKeyFromStorage: getRegionKeyFromStorageFactory({ db })
-  })
-
   return getProjectDbClientFactory({
     getDefaultDb,
     getRegionDb,
@@ -98,20 +79,9 @@ let registeredRegionClients: RegionClients | undefined = undefined
  * Idempotently initialize registered region (in db) Knex clients
  */
 export const initializeRegisteredRegionClients = async (): Promise<RegionClients> => {
-  const configuredRegions = await getRegionsFactory({ db })()
-  if (!configuredRegions.length) return {}
-
   // init knex clients
-  const regionConfigs = await getAvailableRegionConfig()
-  const ret = Object.fromEntries(
-    configuredRegions.map((region) => {
-      if (!(region.key in regionConfigs))
-        throw new MisconfiguredEnvironmentError(
-          `Missing region config for ${region.key} region`
-        )
-      return [region.key, configureClient(regionConfigs[region.key]).public]
-    })
-  )
+  const configs = await getRegisteredRegionConfigs()
+  const ret = mapValues(configs, (config) => configureClient(config).public)
 
   // run migrations
   await Promise.all(
@@ -143,7 +113,9 @@ export const getAllRegisteredDbClients = async (): Promise<
   Array<{ client: Knex; isMain: boolean; regionKey: string }>
 > => {
   const mainDb = db
-  const regionDbs = await getRegisteredRegionClients()
+  const regionDbs: RegionClients = isMultiRegionEnabled()
+    ? await getRegisteredRegionClients()
+    : {}
   return [
     {
       client: mainDb,
@@ -159,7 +131,7 @@ export const getAllRegisteredDbClients = async (): Promise<
 }
 
 /**
- * Idempotently initialize region
+ * Idempotently initialize region db
  */
 export const initializeRegion: InitializeRegion = async ({ regionKey }) => {
   const regionConfigs = await getAvailableRegionConfig()
@@ -189,8 +161,8 @@ export const initializeRegion: InitializeRegion = async ({ regionKey }) => {
     sslmode
   })
 
-  // pushing to the singleton object here, its only not available
-  // if this is being triggered from init, and in that case its gonna be set after anyway
+  // pushing to the singleton object here, only if its not available
+  // if this is being triggered from init, its gonna be set after anyway
   if (registeredRegionClients) {
     registeredRegionClients[regionKey] = regionDb.public
   }

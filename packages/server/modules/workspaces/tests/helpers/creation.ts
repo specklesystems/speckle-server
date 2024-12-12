@@ -73,7 +73,7 @@ import {
   getDefaultRegionFactory,
   upsertRegionAssignmentFactory
 } from '@/modules/workspaces/repositories/regions'
-import { getDb } from '@/modules/multiregion/dbSelector'
+import { getDb } from '@/modules/multiregion/utils/dbSelector'
 import { WorkspacePlan } from '@/modules/gatekeeper/domain/billing'
 
 const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()

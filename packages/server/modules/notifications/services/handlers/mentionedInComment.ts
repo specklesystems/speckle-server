@@ -17,7 +17,7 @@ import {
   renderEmail
 } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
-import { getProjectDbClient } from '@/modules/multiregion/dbSelector'
+import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { NotificationValidationError } from '@/modules/notifications/errors'
 import {
   NotificationHandler,

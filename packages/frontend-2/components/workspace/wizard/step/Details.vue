@@ -55,7 +55,8 @@ const props = defineProps<{
 
 const mixpanel = useMixpanel()
 const { handleSubmit } = useForm<{ name: string; slug: string }>()
-const { state, goToNextStep } = useWorkspacesWizard()
+const { goToNextStep, state } = useWorkspacesWizard()
+
 const { error, loading } = useQuery(
   validateWorkspaceSlugQuery,
   () => ({

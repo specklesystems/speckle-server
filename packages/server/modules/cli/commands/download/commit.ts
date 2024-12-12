@@ -60,7 +60,7 @@ import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import { publish } from '@/modules/shared/utils/subscriptions'
 import { getUserFactory } from '@/modules/core/repositories/users'
 import { createObjectFactory } from '@/modules/core/services/objects/management'
-import { getProjectDbClient } from '@/modules/multiregion/dbSelector'
+import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { db, mainDb } from '@/db/knex'
 
 const command: CommandModule<

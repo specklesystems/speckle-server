@@ -67,7 +67,7 @@
           v-if="plan.features.includes(feature.name as PlanFeaturesList)"
           class="w-4 h-4 text-foreground mx-2"
         />
-        <XMarkIcon v-else class="w-4 h-4 mx-2 text-danger" />
+        <XMarkIcon v-else class="w-4 h-4 mx-2 text-foreground-3" />
         <span
           v-tippy="
             feature.description(

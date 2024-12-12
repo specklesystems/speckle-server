@@ -32,6 +32,7 @@ import {
 import { canWorkspaceAccessFeatureFactory } from '@/modules/gatekeeper/services/featureAuthorization'
 import { upgradeWorkspaceSubscriptionFactory } from '@/modules/gatekeeper/services/subscriptions'
 import { isWorkspaceReadOnlyFactory } from '@/modules/gatekeeper/services/readOnly'
+import { calculateSubscriptionSeats } from '@/modules/gatekeeper/domain/billing'
 
 const { FF_GATEKEEPER_MODULE_ENABLED } = getFeatureFlags()
 
@@ -50,7 +51,15 @@ export = FF_GATEKEEPER_MODULE_ENABLED
         },
         subscription: async (parent) => {
           const workspaceId = parent.id
-          return await getWorkspaceSubscriptionFactory({ db })({ workspaceId })
+          const subscription = await getWorkspaceSubscriptionFactory({ db })({
+            workspaceId
+          })
+          if (!subscription) return subscription
+          const seats = calculateSubscriptionSeats({
+            subscriptionData: subscription.subscriptionData,
+            guestSeatProductId: getWorkspacePlanProductId({ workspacePlan: 'guest' })
+          })
+          return { ...subscription, seats }
         },
         customerPortalUrl: async (parent) => {
           const workspaceId = parent.id

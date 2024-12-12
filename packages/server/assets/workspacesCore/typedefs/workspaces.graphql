@@ -565,3 +565,17 @@ extend type Subscription {
     @hasServerRole(role: SERVER_GUEST)
     @hasScope(scope: "workspace:read")
 }
+
+extend type Mutation {
+  admin: AdminMutations! @hasServerRole(role: SERVER_ADMIN)
+}
+
+input AdminUpdateWorkspacePlanInput {
+  workspaceId: ID!
+  plan: WorkspacePlans!
+  status: WorkspacePlanStatuses!
+}
+
+type AdminMutations {
+  updateWorkspacePlan(input: AdminUpdateWorkspacePlanInput!): Boolean!
+}
