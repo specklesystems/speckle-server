@@ -136,8 +136,11 @@
             </ViewerControlsButtonToggle>
 
             <!-- Explosion -->
-            <ViewerExplodeMenu v-tippy="isSmallerOrEqualSm ? undefined : 'Explode'" />
-
+            <ViewerExplodeMenu
+              :open="explodeOpen"
+              @force-close-others="activeControl = 'none'"
+              @update:open="(value: boolean) => toggleActiveControl(value ? 'explode' : 'none')"
+            />
             <!-- Settings -->
             <ViewerSettingsMenu />
           </ViewerControlsButtonGroup>
@@ -509,6 +512,13 @@ const viewsOpen = computed({
   get: () => activeControl.value === 'views',
   set: (value) => {
     activeControl.value = value ? 'views' : 'none'
+  }
+})
+
+const explodeOpen = computed({
+  get: () => activeControl.value === 'explode',
+  set: (value) => {
+    activeControl.value = value ? 'explode' : 'none'
   }
 })
 </script>
