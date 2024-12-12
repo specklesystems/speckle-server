@@ -25,6 +25,7 @@
                 v-if="allowServerRoleSelect"
                 v-model="item.value.serverRole"
                 label="Select role"
+                :name="`role-${item.key}`"
                 class="sm:w-48"
                 show-label
                 :disabled="anyMutationsLoading"
