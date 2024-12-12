@@ -195,7 +195,7 @@
               v-if="!enabled"
               class="pointer-events-auto"
               @loaded-more="scrollControlsToBottom"
-              @close="activeControl = 'none'"
+              @close="activePanel = 'none'"
             />
             <ViewerCompareChangesPanel v-else @close="activePanel = 'none'" />
           </div>
