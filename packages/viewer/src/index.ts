@@ -132,6 +132,7 @@ import {
 import { AccelerationStructure } from './modules/objects/AccelerationStructure.js'
 import { TopLevelAccelerationStructure } from './modules/objects/TopLevelAccelerationStructure.js'
 import { ViewModeEvent, ViewModeEventPayload } from './modules/extensions/ViewModes.js'
+import { BasitPipeline } from './modules/pipeline/Pipelines/BasitViewPipeline.js'
 
 export {
   Viewer,
@@ -215,6 +216,7 @@ export {
   MRTEdgesPipeline,
   MRTShadedViewPipeline,
   MRTPenViewPipeline,
+  BasitPipeline,
   ViewModes,
   ViewMode,
   FilterMaterial,
