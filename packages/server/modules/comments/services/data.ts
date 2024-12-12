@@ -5,7 +5,6 @@ import {
 import { LegacyCommentViewerData } from '@/modules/core/graph/generated/graphql'
 import { viewerResourcesToString } from '@/modules/core/services/commit/viewerResources'
 import { Nullable, SpeckleViewer } from '@speckle/shared'
-import { ViewMode } from '@speckle/viewer'
 import { has, get, intersection, isObjectLike } from 'lodash'
 
 type SerializedViewerState = SpeckleViewer.ViewerState.SerializedViewerState
@@ -157,7 +156,7 @@ export const convertLegacyDataToStateFactory =
           isOrthoProjection: !!data.camPos?.[6],
           zoom: data.camPos?.[7] || 1
         },
-        viewMode: ViewMode.DEFAULT,
+        viewMode: 0,
         sectionBox: sectionBox
           ? {
               min: (sectionBox.min as number[]) || [0, 0, 0],
