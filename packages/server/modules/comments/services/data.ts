@@ -156,6 +156,7 @@ export const convertLegacyDataToStateFactory =
           isOrthoProjection: !!data.camPos?.[6],
           zoom: data.camPos?.[7] || 1
         },
+        viewMode: 0,
         sectionBox: sectionBox
           ? {
               min: (sectionBox.min as number[]) || [0, 0, 0],
