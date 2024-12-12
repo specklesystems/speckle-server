@@ -2,10 +2,14 @@ import { useMixpanel } from '~/lib/core/composables/mp'
 import { graphql } from '~~/lib/common/generated/gql'
 import type {
   WorkspaceMixpanelUpdateGroup_WorkspaceFragment,
-  WorkspaceMixpanelUpdateGroup_WorkspaceCollaboratorFragment
+  WorkspaceMixpanelUpdateGroup_WorkspaceCollaboratorFragment,
+  PaidWorkspacePlans
 } from '~/lib/common/generated/gql/graphql'
 import { type MaybeNullOrUndefined, Roles, type WorkspaceRoles } from '@speckle/shared'
 import { resolveMixpanelServerId } from '@speckle/shared'
+import { WorkspacePlanStatuses } from '~/lib/common/generated/gql/graphql'
+import { isPaidPlan } from '@/lib/billing/helpers/types'
+import { pricingPlansConfig } from '~/lib/billing/helpers/constants'
 
 graphql(`
   fragment WorkspaceMixpanelUpdateGroup_WorkspaceCollaborator on WorkspaceCollaborator {
@@ -29,6 +33,10 @@ graphql(`
     subscription {
       billingInterval
       currentBillingCycleEnd
+      seats {
+        guest
+        plan
+      }
     }
     team {
       totalCount
@@ -50,6 +58,27 @@ export const useWorkspacesMixpanel = () => {
     userEmail: MaybeNullOrUndefined<string>
   ) => {
     if (!workspace.id || !import.meta.client) return
+
+    const getEstimatedBill = () => {
+      if (
+        !isPaidPlan(workspace.plan?.name) ||
+        workspace.plan?.status !== WorkspacePlanStatuses.Valid ||
+        !workspace.subscription?.billingInterval
+      )
+        return 0
+
+      const planConfig =
+        pricingPlansConfig.plans[workspace.plan.name as unknown as PaidWorkspacePlans]
+      const cost = planConfig.cost[workspace.subscription.billingInterval]
+
+      const memberPrice = cost[Roles.Workspace.Member]
+      const guestPrice = cost[Roles.Workspace.Guest]
+      const memberCount = workspace.subscription?.seats?.plan || 0
+      const guestCount = workspace.subscription?.seats?.guest || 0
+
+      return memberPrice * memberCount + guestPrice * guestCount
+    }
+
     const roleCount = {
       [Roles.Workspace.Admin]: 0,
       [Roles.Workspace.Member]: 0,
@@ -74,14 +103,17 @@ export const useWorkspacesMixpanel = () => {
       teamMemberCount: roleCount[Roles.Workspace.Member],
       teamGuestCount: roleCount[Roles.Workspace.Guest],
       defaultRegionKey: workspace.defaultRegion?.key,
-
-      // eslint-disable-next-line camelcase
-      server_id: resolveMixpanelServerId(window.location.hostname),
       planName: workspace.plan?.name || '',
       planStatus: workspace.plan?.status || '',
       planCreatedAt: workspace.plan?.createdAt,
       subscriptionBillingInterval: workspace.subscription?.billingInterval,
-      subscriptionCurrentBillingCycleEnd: workspace.subscription?.currentBillingCycleEnd
+      subscriptionCurrentBillingCycleEnd:
+        workspace.subscription?.currentBillingCycleEnd,
+      seats: workspace.subscription?.seats?.plan || 0,
+      seatsGuest: workspace.subscription?.seats?.guest || 0,
+      estimatedBill: getEstimatedBill(),
+      // eslint-disable-next-line camelcase
+      server_id: resolveMixpanelServerId(window.location.hostname)
     }
 
     mixpanel.get_group('workspace_id', workspace.id).set(input)
