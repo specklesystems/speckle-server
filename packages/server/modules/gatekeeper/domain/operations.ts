@@ -1,3 +1,4 @@
+import { WorkspacePlan } from '@/modules/gatekeeper/domain/billing'
 import { WorkspaceFeatureName } from '@/modules/gatekeeper/domain/workspacePricing'
 
 export type CanWorkspaceAccessFeature = (args: {
@@ -8,3 +9,7 @@ export type CanWorkspaceAccessFeature = (args: {
 export type WorkspaceFeatureAccessFunction = (args: {
   workspaceId: string
 }) => Promise<boolean>
+
+export type ChangeExpiredTrialWorkspacePlanStatuses = (args: {
+  numberOfDays: number
+}) => Promise<WorkspacePlan[]>
