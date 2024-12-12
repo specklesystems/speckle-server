@@ -2,7 +2,7 @@
   <LayoutDialog v-model:open="isOpen" max-width="md" :buttons="dialogButtons">
     <template #header>Invite to server</template>
     <form @submit="onSubmit">
-      <div class="flex flex-col gap-y-5 text-foreground mb-4">
+      <div class="flex flex-col gap-y-5 text-foreground">
         <div v-for="(item, index) in fields" :key="item.key" class="flex gap-x-3">
           <div class="flex flex-col gap-y-3 flex-1">
             <hr v-if="index !== 0" class="border-outline-3" />
