@@ -200,7 +200,7 @@ export const useBillingActions = () => {
           title: 'Your payment was canceled'
         })
 
-        mixpanel.track('Workspace Upgraded Cancelled', {
+        mixpanel.track('Workspace Upgrade Cancelled', {
           // eslint-disable-next-line camelcase
           workspace_id: workspace.id
         })
