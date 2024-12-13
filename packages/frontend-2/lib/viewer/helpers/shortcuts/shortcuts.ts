@@ -58,24 +58,24 @@ export const ToolShortcuts = {
 
 export const ViewModeShortcuts = {
   SetViewModeDefault: {
-    name: 'Default',
-    description: 'Set view mode to Default',
+    name: 'Rendered',
+    description: 'Set view mode to Rendered',
     modifiers: [ModifierKeys.Shift],
     key: 'Digit1',
     action: 'SetViewModeDefault',
     viewMode: ViewMode.DEFAULT
   },
   SetViewModeDefaultEdges: {
-    name: 'Default + Edges',
-    description: 'Set view mode to Default + Edges',
+    name: 'Rendered + Edges',
+    description: 'Set view mode to Rendered + Edges',
     modifiers: [ModifierKeys.Shift],
     key: 'Digit2',
     action: 'SetViewModeDefaultEdges',
     viewMode: ViewMode.DEFAULT_EDGES
   },
   SetViewModeShaded: {
-    name: 'Shaded',
-    description: 'Set view mode to Shaded',
+    name: 'Solid',
+    description: 'Set view mode to Solid',
     modifiers: [ModifierKeys.Shift],
     key: 'Digit3',
     action: 'SetViewModeShaded',
@@ -98,8 +98,8 @@ export const ViewModeShortcuts = {
     viewMode: ViewMode.ARCTIC
   },
   SetViewModeColors: {
-    name: 'Colors',
-    description: 'Set view mode to Colors',
+    name: 'Shaded',
+    description: 'Set view mode to Shaded',
     modifiers: [ModifierKeys.Shift],
     key: 'Digit6',
     action: 'SetViewModeColors',
