@@ -65,6 +65,8 @@ spec:
                 key: {{ default "postgres_url" .Values.db.connectionString.secretKey }}
           - name: POSTGRES_MAX_CONNECTIONS
             value: {{ .Values.monitoring.maximumPostgresConnections | quote }}
+          - name: METRICS_HOST
+            value: '0.0.0.0' # bind to all interfaces, not just localhost. Required to allow prometheus to scrape metrics, and healthchecks to work.
           - name: PROMETHEUS_METRICS_PORT
             value: {{ .Values.monitoring.port | quote }}
           - name: METRICS_COLLECTION_PERIOD_SECONDS

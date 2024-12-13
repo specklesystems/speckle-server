@@ -192,7 +192,7 @@ function initMonitoringMetrics(params: {
   filesize.triggerCollect = async (params) => {
     const { mainDbClient } = params
     const fileSizeResults = await mainDbClient.raw<{
-      rows: [{ fileType: string; fileSize: number }]
+      rows: [{ fileType: string; fileSize: string }]
     }>(
       `
       SELECT LOWER("fileType") AS fileType, SUM("fileSize") AS fileSize
@@ -201,7 +201,7 @@ function initMonitoringMetrics(params: {
       `
     )
     for (const row of fileSizeResults.rows) {
-      filesize.set({ ...labels, filetype: row.fileType }, row.fileSize)
+      filesize.set({ ...labels, filetype: row.fileType }, parseInt(row.fileSize))
     }
   }
 
