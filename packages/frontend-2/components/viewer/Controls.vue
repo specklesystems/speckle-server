@@ -231,7 +231,7 @@
       <div
         v-if="resourceItems.length !== 0 && activePanel === 'gendo' && isGendoEnabled"
       >
-        <ViewerGendoPanel @close="activeControl = 'none'" />
+        <ViewerGendoPanel @close="activePanel = 'none'" />
       </div>
 
       <!-- Empty state -->
