@@ -8,6 +8,7 @@ export const getMetricsPort = () => process.env.PROMETHEUS_METRICS_PORT || '9092
 export const getNodeEnv = () => process.env.NODE_ENV || 'production'
 export const getPostgresConnectionString = () =>
   process.env.PG_CONNECTION_STRING || 'postgres://speckle:speckle@127.0.0.1/speckle'
+export const getPostgresCACertificate = () => process.env.POSTGRES_CA_CERTIFICATE
 export const getPostgresMaxConnections = () =>
   parseInt(process.env.POSTGRES_MAX_CONNECTIONS || '2')
 export function databaseMonitorCollectionPeriodSeconds() {

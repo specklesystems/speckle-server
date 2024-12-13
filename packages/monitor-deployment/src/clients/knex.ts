@@ -1,6 +1,7 @@
 import { knexLogger as logger } from '@/observability/logging.js'
 import {
   getDatabaseName,
+  getPostgresCACertificate,
   getPostgresConnectionString,
   getPostgresMaxConnections,
   isDevOrTestEnv,
@@ -41,7 +42,8 @@ export const getDbClients = async () => {
     const mainClient = configureKnexClient(
       {
         postgres: {
-          connectionUri: getPostgresConnectionString()
+          connectionUri: getPostgresConnectionString(),
+          publicTlsCertificate: getPostgresCACertificate()
         }
       },
       configArgs

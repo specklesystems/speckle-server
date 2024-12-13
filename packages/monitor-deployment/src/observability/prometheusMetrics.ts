@@ -169,9 +169,11 @@ function initMonitoringMetrics(params: {
 
     // now set the counts for the file types and statuses that are in the database
     for (const row of importedFiles.rows) {
-      remainingConvertedStatusAndFileTypes.delete({
-        fileType: row.fileType,
-        status: row.convertedStatus
+      // objects are stored by reference, so we have to search for the original item in the set
+      remainingConvertedStatusAndFileTypes.forEach((item) => {
+        if (item.fileType === row.fileType && item.status === row.convertedStatus) {
+          remainingConvertedStatusAndFileTypes.delete(item)
+        }
       })
       fileimports.set(
         { ...labels, filetype: row.fileType, status: row.convertedStatus.toString() },
@@ -192,7 +194,7 @@ function initMonitoringMetrics(params: {
   filesize.triggerCollect = async (params) => {
     const { mainDbClient } = params
     const fileSizeResults = await mainDbClient.raw<{
-      rows: [{ fileType: string; fileSize: string }]
+      rows: [{ filetype: string; filesize: string }]
     }>(
       `
       SELECT LOWER("fileType") AS fileType, SUM("fileSize") AS fileSize
@@ -201,7 +203,7 @@ function initMonitoringMetrics(params: {
       `
     )
     for (const row of fileSizeResults.rows) {
-      filesize.set({ ...labels, filetype: row.fileType }, parseInt(row.fileSize))
+      filesize.set({ ...labels, filetype: row.filetype }, parseInt(row.filesize))
     }
   }
 
