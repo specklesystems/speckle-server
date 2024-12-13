@@ -25,9 +25,6 @@ export const loggingExpressMiddleware = pinoHttp({
   // and we don't really care about 3xx stuff
   // all the user related 4xx responses are treated as info
   customLogLevel: (req, res, error) => {
-    const path = getRequestPath(req)
-    const shouldBeDebug = ['/metrics'].includes(path || '') ?? false
-
     if (res.statusCode >= 400 && res.statusCode < 500) {
       return 'info'
     } else if (res.statusCode >= 500 || error) {
@@ -36,7 +33,7 @@ export const loggingExpressMiddleware = pinoHttp({
       return 'silent'
     }
 
-    return shouldBeDebug ? 'debug' : 'info'
+    return 'debug'
   },
 
   // we need to redact any potential sensitive data from being logged.
