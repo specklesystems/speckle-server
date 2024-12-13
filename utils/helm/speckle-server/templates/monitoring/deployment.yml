@@ -70,6 +70,11 @@ spec:
           - name: METRICS_COLLECTION_PERIOD_SECONDS
             value: {{ .Values.monitoring.metricsCollectionPeriodSeconds | quote }}
 
+          {{- if .Values.db.databaseName }}
+          - name: POSTGRES_DATABASE
+            value: {{ .Values.db.databaseName | quote }}
+          {{- end }}
+
           {{- if .Values.db.useCertificate }}
           - name: NODE_EXTRA_CA_CERTS
             value: "/postgres-certificate/ca-certificate.crt"
@@ -100,30 +105,30 @@ spec:
         seccompProfile:
           type: RuntimeDefault
 
-        startupProbe:
-          periodSeconds: 10
-          failureThreshold: 60 # 10*60 = 600s; allows for long-running db migrations
-          timeoutSeconds: 3
-          httpGet:
-            path: /
-            port: {{ .Values.monitoring.port }}
+      startupProbe:
+        periodSeconds: 10
+        failureThreshold: 60 # 10*60 = 600s; allows for long-running db migrations
+        timeoutSeconds: 3
+        httpGet:
+          path: /
+          port: {{ .Values.monitoring.port }}
 
-        livenessProbe:
-          periodSeconds: 60
-          timeoutSeconds: 3
-          failureThreshold: 3
-          httpGet:
-            path: /
-            port: {{ .Values.monitoring.port }}
+      livenessProbe:
+        periodSeconds: 60
+        timeoutSeconds: 3
+        failureThreshold: 3
+        httpGet:
+          path: /
+          port: {{ .Values.monitoring.port }}
 
-        readinessProbe:
-          initialDelaySeconds: 5
-          periodSeconds: 30
-          timeoutSeconds: 10
-          failureThreshold: 3
-          httpGet:
-            path: /metrics
-            port: {{ .Values.monitoring.port }}
+      readinessProbe:
+        initialDelaySeconds: 5
+        periodSeconds: 30
+        timeoutSeconds: 10
+        failureThreshold: 3
+        httpGet:
+          path: /metrics
+          port: {{ .Values.monitoring.port }}
 
       volumes:
       {{- if .Values.db.useCertificate }}

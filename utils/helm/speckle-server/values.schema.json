@@ -236,6 +236,11 @@
           "description": "This defines the level of security used when connecting to the Postgres database",
           "default": "require"
         },
+        "databaseName": {
+          "type": "string",
+          "description": "(Optional) The name of the Postgres database to which Speckle will connect. Only required for the Database Monitoring utility when the connection string is to a database connection pool and multi-region is disabled, otherwise this value is ignored.",
+          "default": ""
+        },
         "connectionString": {
           "type": "object",
           "properties": {

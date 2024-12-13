@@ -13,6 +13,7 @@ export const getPostgresMaxConnections = () =>
 export function databaseMonitorCollectionPeriodSeconds() {
   return getIntFromEnv('METRICS_COLLECTION_PERIOD_SECONDS', '120')
 }
+export const getDatabaseName = () => process.env.POSTGRES_DATABASE
 
 export const isDevelopment = () =>
   getNodeEnv() === 'development' || getNodeEnv() === 'dev'

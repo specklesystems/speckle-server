@@ -1,5 +1,6 @@
 import { knexLogger as logger } from '@/observability/logging.js'
 import {
+  getDatabaseName,
   getPostgresConnectionString,
   getPostgresMaxConnections,
   isDevOrTestEnv,
@@ -45,9 +46,10 @@ export const getDbClients = async () => {
       },
       configArgs
     )
-    const databaseName = new URL(getPostgresConnectionString()).pathname
-      .split('/')
-      .pop()
+    const databaseName =
+      // try to get the database name from the environment variable, if not default to parsing the connection string
+      getDatabaseName() ||
+      new URL(getPostgresConnectionString()).pathname.split('/').pop()
     dbClients = [
       { client: mainClient.public, regionKey: 'main', isMain: true, databaseName }
     ]
