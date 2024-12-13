@@ -90,8 +90,8 @@ const scheduleWorkspaceTrialEmails = ({
     renderEmail
   })
   // TODO: make this a daily thing
-  const cronExpression = '*/5 * * * * *'
-  // const cronExpression = '0 0 12 * * ?'
+  // const cronExpression = '*/5 * * * * *'
+  const cronExpression = '0 0 12 * * ?'
   return scheduleExecution(cronExpression, 'WorkspaceTrialEmails', async () => {
     const getWorkspacesByPlanAge = getWorkspacesByPlanAgeFactory({ db })
     const trialValidForDays = 31
