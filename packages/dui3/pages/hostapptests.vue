@@ -1,56 +1,45 @@
 <template>
-  <div>
-    <div class="flex flex-col space-y-2 px-4">
-      <div :key="loadedModel" class="text-xs">
-        {{ loadedModel }}
-      </div>
-    </div>
-    <div class="flex flex-col space-y-2 px-4">
-      <div v-for="test in modelTests" :key="test.name" class="space-y-2">
-        <div class="text-xs">
-          <pre>{{ test.status }} - {{ test.name }}</pre>
+  <div class="max-w-full px-2">
+    <div class="flex flex-col space-y-2 px-4 mb-4">
+      <div
+        v-for="test in modelTests"
+        :key="test.name"
+        class="bg-foundation shadow p-2 rounded text-foreground"
+      >
+        <div class="flex min-w-0 space-x-2">
+          <div class="rounded-md p-1 text-xs bg-blue-500/20 text-xs font-semibold w-24">
+            {{ test.status }}
+          </div>
+          <div class="truncate">{{ test.name }}</div>
+        </div>
+        <div
+          v-if="test.result"
+          class="text-xs text-foreground-2 max-w-full overflow-hidden"
+        >
+          ran at {{ test.result?.timeStamp }}
         </div>
       </div>
-    </div>
-    <div v-if="modelTests.length > 0" class="flex flex-col space-y-2 px-4">
-      <FormButton full-width color="outline" @click="invokeTests()">Run All</FormButton>
-    </div>
-    <div class="flex flex-col space-y-2 px-4">
-      <div v-for="result in modelResultsTests" :key="result.name" class="space-y-2">
-        <div class="text-xs">
-          <pre>{{ result.status }} - {{ result.name }} - {{ result.timeStamp }}</pre>
-        </div>
-      </div>
+      <FormButton full-width @click="invokeTests()">Run All</FormButton>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import type {
-  ModelTest,
-  ModelTestResult
-} from 'lib/bindings/definitions/IHostAppTestBinding'
+import type { ModelTest } from 'lib/bindings/definitions/IHostAppTestBinding'
 
 const app = useNuxtApp()
 
 const hostAppTestBinding = app.$hostAppTestBiding
-let loadedModel = await hostAppTestBinding.getLoadedModel()
-let tests: ModelTest[] = []
-if (loadedModel?.length > 0) {
-  tests = await hostAppTestBinding.getTests()
-} else {
-  loadedModel = '<No Loaded File>'
-}
-const modelTests = ref<ModelTest[]>(tests)
+const modelTests = ref<ModelTest[]>([])
+modelTests.value = await hostAppTestBinding.getTests()
 
-let resultsTests: ModelTestResult[] = []
 const invokeTests = async () => {
-  resultsTests = await hostAppTestBinding.getTestsResults()
+  const testResults = await hostAppTestBinding.getTestsResults()
+  for (const res of testResults) {
+    const myTest = modelTests.value.find((t) => t.name === res.name)
+    if (!myTest) continue
+    myTest.result = res
+    myTest.status = res.status
+  }
 }
-const modelResultsTests = ref<ModelTestResult[]>(resultsTests)
-
-hostAppTestBinding.on('setTestResult', (result) => {
-  console.log(result)
-  // TODO: place it in the right place
-})
 </script>

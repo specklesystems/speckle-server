@@ -20,6 +20,7 @@ export interface IHostAppTestBindingEvents extends IBindingSharedEvents {
 export type ModelTest = {
   name: string
   status: string
+  result?: ModelTestResult
 }
 
 export type ModelTestResult = {
