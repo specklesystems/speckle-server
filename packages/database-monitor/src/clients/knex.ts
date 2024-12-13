@@ -10,13 +10,16 @@ import {
   loadMultiRegionsConfig,
   configureKnexClient
 } from '@speckle/shared/dist/commonjs/environment/multiRegionConfig.js'
+import { Knex } from 'knex'
 
 const { FF_WORKSPACES_MULTI_REGION_ENABLED } = Environment.getFeatureFlags()
 
-type ConfiguredKnexClient = ReturnType<typeof configureKnexClient>
-export type DbClients = Record<'main', ConfiguredKnexClient> &
-  Record<string, ConfiguredKnexClient>
-let dbClients: DbClients
+let dbClients: {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  client: Knex<any, any[]> | undefined
+  isMain: boolean
+  regionKey: string
+}[]
 
 export const getDbClients = async () => {
   if (dbClients) return dbClients
@@ -39,15 +42,24 @@ export const getDbClients = async () => {
       },
       configArgs
     )
-    dbClients = { main: mainClient }
+    dbClients = [{ client: mainClient.private, regionKey: 'main', isMain: true }]
   } else {
     const configPath = process.env.MULTI_REGION_CONFIG_PATH || 'multiregion.json'
     const config = await loadMultiRegionsConfig({ path: configPath })
-    const clients = [['main', configureKnexClient(config.main, configArgs)]]
+    const clients: [string, { public: Knex; private?: Knex }][] = [
+      ['main', configureKnexClient(config.main, configArgs)]
+    ]
     Object.entries(config.regions).map(([key, config]) => {
       clients.push([key, configureKnexClient(config, configArgs)])
     })
-    dbClients = Object.fromEntries(clients) as DbClients
+
+    dbClients = [
+      ...clients.map(([regionKey, c]) => ({
+        client: isDevOrTestEnv() ? c.public : c.private, //this has to be the private client in production, as we need to get the database name from the connection string. The public client, if via a connection pool, does not has the connection pool name not the database name.
+        isMain: regionKey === 'main',
+        regionKey
+      }))
+    ]
   }
   return dbClients
 }

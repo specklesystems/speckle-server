@@ -1,6 +1,6 @@
-import { DbClients, getDbClients } from '@/clients/knex.js'
+import { getDbClients } from '@/clients/knex.js'
 import { logger } from '@/observability/logging.js'
-import { databaseMonitorCollectionPeriodSeconds, isDevOrTestEnv } from '@/utils/env.js'
+import { databaseMonitorCollectionPeriodSeconds } from '@/utils/env.js'
 import { Knex } from 'knex'
 import { get, join } from 'lodash-es'
 import { Gauge, Histogram, Registry } from 'prom-client'
@@ -16,7 +16,14 @@ type MetricConfig = {
   prefix?: string
   labels?: Record<string, string>
   buckets?: Record<string, number[]>
-  getDbClients: () => Promise<DbClients>
+  getDbClients: () => Promise<
+    {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      client: Knex<any, any[]> | undefined
+      isMain: boolean
+      regionKey: string
+    }[]
+  >
 }
 
 type MetricsMonitor = {
@@ -98,7 +105,7 @@ function initMonitoringMetrics(params: {
     const objectsEstimate = await mainDbClient.raw<{ rows: [{ estimate: number }] }>(
       "SELECT reltuples AS estimate FROM pg_class WHERE relname = 'objects' LIMIT 1;"
     )
-    objects.set({ ...labels }, objectsEstimate.rows[0].estimate)
+    objects.set({ ...labels }, Math.max(objectsEstimate.rows[0].estimate, 0))
   }
 
   const streams: WithOnDemandCollector<Gauge<string>> = new prometheusClient.Gauge({
@@ -111,7 +118,7 @@ function initMonitoringMetrics(params: {
     const streamsEstimate = await mainDbClient.raw<{ rows: [{ estimate: number }] }>(
       "SELECT reltuples AS estimate FROM pg_class WHERE relname = 'streams' LIMIT 1;"
     )
-    streams.set({ ...labels }, streamsEstimate.rows[0].estimate)
+    streams.set({ ...labels }, Math.max(streamsEstimate.rows[0].estimate))
   }
 
   const commits: WithOnDemandCollector<Gauge<string>> = new prometheusClient.Gauge({
@@ -124,7 +131,7 @@ function initMonitoringMetrics(params: {
     const commitsEstimate = await mainDbClient.raw<{ rows: [{ estimate: number }] }>(
       "SELECT reltuples AS estimate FROM pg_class WHERE relname = 'commits' LIMIT 1;"
     )
-    commits.set({ ...labels }, commitsEstimate.rows[0].estimate)
+    commits.set({ ...labels }, Math.max(commitsEstimate.rows[0].estimate))
   }
 
   const users: WithOnDemandCollector<Gauge<string>> = new prometheusClient.Gauge({
@@ -137,7 +144,7 @@ function initMonitoringMetrics(params: {
     const usersEstimate = await mainDbClient.raw<{ rows: [{ estimate: number }] }>(
       "SELECT reltuples AS estimate FROM pg_class WHERE relname = 'users' LIMIT 1;"
     )
-    users.set({ ...labels }, usersEstimate.rows[0].estimate)
+    users.set({ ...labels }, Math.max(usersEstimate.rows[0].estimate))
   }
 
   const fileimports: WithOnDemandCollector<Gauge<string>> = new prometheusClient.Gauge({
@@ -358,14 +365,7 @@ function initMonitoringMetrics(params: {
   })
 
   const collect = async () => {
-    const dbClientsRecord = await getDbClients()
-    const dbClients = [
-      ...Object.entries(dbClientsRecord).map(([regionKey, client]) => ({
-        client: isDevOrTestEnv() ? client.public : client.private, //this has to be the private client in production, as we need to get the database name from the connection string. The public client, if via a connection pool, does not has the connection pool name not the database name.
-        isMain: regionKey === 'main',
-        regionKey
-      }))
-    ]
+    const dbClients = await getDbClients()
 
     const mainDbClient = dbClients.find((c) => c.isMain)?.client
     if (!mainDbClient) {

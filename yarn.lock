@@ -16647,6 +16647,8 @@ __metadata:
     typescript: "npm:^4.6.4"
     typescript-eslint: "npm:^7.12.0"
     vitest: "npm:^1.6.0"
+    znv: "npm:^0.4.0"
+    zod: "npm:^3.24.1"
   languageName: unknown
   linkType: soft
 
@@ -54909,6 +54911,13 @@ __metadata:
   version: 3.22.4
   resolution: "zod@npm:3.22.4"
   checksum: 10/73622ca36a916f785cf528fe612a884b3e0f183dbe6b33365a7d0fc92abdbedf7804c5e2bd8df0a278e1472106d46674281397a3dd800fa9031dc3429758c6ac
+  languageName: node
+  linkType: hard
+
+"zod@npm:^3.24.1":
+  version: 3.24.1
+  resolution: "zod@npm:3.24.1"
+  checksum: 10/54e25956495dec22acb9399c168c6ba657ff279801a7fcd0530c414d867f1dcca279335e160af9b138dd70c332e17d548be4bc4d2f7eaf627dead50d914fec27
   languageName: node
   linkType: hard
 
