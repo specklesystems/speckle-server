@@ -131,6 +131,8 @@ import {
 } from './modules/materials/Materials.js'
 import { AccelerationStructure } from './modules/objects/AccelerationStructure.js'
 import { TopLevelAccelerationStructure } from './modules/objects/TopLevelAccelerationStructure.js'
+import { ViewModeEvent, ViewModeEventPayload } from './modules/extensions/ViewModes.js'
+import { BasitPipeline } from './modules/pipeline/Pipelines/BasitViewPipeline.js'
 
 export {
   Viewer,
@@ -214,6 +216,7 @@ export {
   MRTEdgesPipeline,
   MRTShadedViewPipeline,
   MRTPenViewPipeline,
+  BasitPipeline,
   ViewModes,
   ViewMode,
   FilterMaterial,
@@ -221,7 +224,8 @@ export {
   FilterMaterialOptions,
   NOT_INTERSECTED,
   INTERSECTED,
-  CONTAINED
+  CONTAINED,
+  ViewModeEvent
 }
 
 export type {
@@ -255,7 +259,8 @@ export type {
   SectionToolEventPayload,
   CameraEventPayload,
   SelectionExtensionOptions,
-  DefaultSelectionExtensionOptions
+  DefaultSelectionExtensionOptions,
+  ViewModeEventPayload
 }
 
 export * as UrlHelper from './modules/UrlHelper.js'

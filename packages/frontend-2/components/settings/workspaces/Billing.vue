@@ -49,30 +49,38 @@
                 </p>
               </div>
               <div class="p-5 pt-4 flex flex-col gap-y-1">
-                <h3 class="text-body-xs text-foreground-2 pb-1">
-                  {{
-                    statusIsTrial
-                      ? 'Expected bill'
-                      : subscription?.billingInterval === BillingInterval.Yearly
-                      ? 'Annual bill'
-                      : 'Monthly bill'
-                  }}
-                </h3>
-                <p class="text-heading-lg text-foreground inline-block">
-                  {{ billValue }} per
-                  {{
-                    subscription?.billingInterval === BillingInterval.Yearly
-                      ? 'year'
-                      : 'month'
-                  }}
-                </p>
-                <p class="text-body-xs text-foreground-2 flex gap-x-1 items-center">
-                  {{ billDescription }}
-                  <InformationCircleIcon
-                    v-tippy="billTooltip"
-                    class="w-4 h-4 text-foreground cursor-pointer"
-                  />
-                </p>
+                <template v-if="isPurchasablePlan || statusIsTrial">
+                  <h3 class="text-body-xs text-foreground-2 pb-1">
+                    {{
+                      statusIsTrial
+                        ? 'Expected bill'
+                        : subscription?.billingInterval === BillingInterval.Yearly
+                        ? 'Annual bill'
+                        : 'Monthly bill'
+                    }}
+                  </h3>
+                  <p class="text-heading-lg text-foreground inline-block">
+                    {{ billValue }} per
+                    {{
+                      subscription?.billingInterval === BillingInterval.Yearly
+                        ? 'year'
+                        : 'month'
+                    }}
+                  </p>
+                  <p class="text-body-xs text-foreground-2 flex gap-x-1 items-center">
+                    {{ billDescription }}
+                    <InformationCircleIcon
+                      v-tippy="billTooltip"
+                      class="w-4 h-4 text-foreground cursor-pointer"
+                    />
+                  </p>
+                </template>
+                <template v-else>
+                  <h3 class="text-body-xs text-foreground-2 pb-1">Expected bill</h3>
+                  <p class="text-heading-lg text-foreground inline-block">
+                    {{ isAcademiaPlan ? 'Free' : 'Not applicable' }}
+                  </p>
+                </template>
               </div>
               <div class="p-5 pt-4 flex flex-col gap-y-1">
                 <h3 class="text-body-xs text-foreground-2 pb-1">
@@ -123,6 +131,7 @@
             class="pt-4"
           />
           <SettingsWorkspacesBillingPricingTable
+            v-if="isPurchasablePlan || statusIsTrial"
             :workspace-id="workspaceId"
             :current-plan="currentPlan"
             :active-billing-interval="subscription?.billingInterval"
@@ -261,6 +270,9 @@ const isActivePlan = computed(
     currentPlan.value &&
     currentPlan.value?.status !== WorkspacePlanStatuses.Trial &&
     currentPlan.value?.status !== WorkspacePlanStatuses.Canceled
+)
+const isAcademiaPlan = computed(
+  () => currentPlan.value?.name === WorkspacePlans.Academia
 )
 const isPurchasablePlan = computed(() => isPaidPlan(currentPlan.value?.name))
 const seatPrice = computed(() =>
