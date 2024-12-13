@@ -6,17 +6,19 @@
         :key="test.name"
         class="bg-foundation shadow p-2 rounded text-foreground"
       >
-        <div class="flex min-w-0 space-x-2">
-          <div class="rounded-md p-1 text-xs bg-blue-500/20 text-xs font-semibold w-24">
+        <div class="flex min-w-0 space-x-2 align-center">
+          <div class="rounded-md text-xs bg-blue-500/20 text-xs font-semibold w-24 p-2">
             {{ test.status }}
           </div>
-          <div class="truncate">{{ test.name }}</div>
-        </div>
-        <div
-          v-if="test.result"
-          class="text-xs text-foreground-2 max-w-full overflow-hidden"
-        >
-          ran at {{ test.result?.timeStamp }}
+          <div class="min-w-0">
+            <div class="truncate">{{ test.name }}</div>
+            <div
+              v-if="test.result"
+              class="text-xs text-foreground-2 max-w-full overflow-hidden"
+            >
+              ran at {{ test.result?.timeStamp }}
+            </div>
+          </div>
         </div>
       </div>
       <FormButton full-width @click="invokeTests()">Run All</FormButton>
