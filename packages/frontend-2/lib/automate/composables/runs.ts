@@ -94,19 +94,19 @@ export const useAutomationRunDetailsFns = () => {
     switch (status) {
       case AutomateRunStatus.Pending:
       case AutomateRunStatus.Initializing:
-        classParts.push('bg-warning-lightest')
+        classParts.push('bg-warning-lighter')
         break
       case AutomateRunStatus.Running:
-        classParts.push('bg-info-lightest')
+        classParts.push('bg-info-lighter')
         break
       case AutomateRunStatus.Failed:
       case AutomateRunStatus.Exception:
       case AutomateRunStatus.Canceled:
       case AutomateRunStatus.Timeout:
-        classParts.push('bg-danger-lightest')
+        classParts.push('bg-danger-lighter')
         break
       case AutomateRunStatus.Succeeded:
-        classParts.push('bg-success-lightest')
+        classParts.push('bg-success-lighter')
         break
     }
 
