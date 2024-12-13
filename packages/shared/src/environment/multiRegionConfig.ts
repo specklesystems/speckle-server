@@ -13,6 +13,12 @@ const regionConfigSchemaV1 = z.object({
       .describe(
         'Full Postgres connection URI (e.g. "postgres://user:password@host:port/dbname")'
       ),
+    databaseName: z
+      .string()
+      .describe(
+        'Name of the database to connect to. Used where the connection string is to a connection pool, and does not include the database name.'
+      )
+      .optional(),
     privateConnectionUri: z
       .string()
       .describe(

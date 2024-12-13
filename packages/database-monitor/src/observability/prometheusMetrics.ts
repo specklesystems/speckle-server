@@ -1,8 +1,8 @@
-import { getDbClients } from '@/clients/knex.js'
+import { DbClient, getDbClients } from '@/clients/knex.js'
 import { logger } from '@/observability/logging.js'
 import { databaseMonitorCollectionPeriodSeconds } from '@/utils/env.js'
 import { Knex } from 'knex'
-import { get, join } from 'lodash-es'
+import { join } from 'lodash-es'
 import { Gauge, Histogram, Registry } from 'prom-client'
 import prometheusClient from 'prom-client'
 
@@ -16,14 +16,7 @@ type MetricConfig = {
   prefix?: string
   labels?: Record<string, string>
   buckets?: Record<string, number[]>
-  getDbClients: () => Promise<
-    {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      client: Knex<any, any[]> | undefined
-      isMain: boolean
-      regionKey: string
-    }[]
-  >
+  getDbClients: () => Promise<DbClient[]>
 }
 
 type MetricsMonitor = {
@@ -32,12 +25,7 @@ type MetricsMonitor = {
 
 type WithOnDemandCollector<T> = T & {
   triggerCollect?: (params: {
-    dbClients: {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      client: Knex<any, any[]> | undefined
-      isMain: boolean
-      regionKey: string
-    }[]
+    dbClients: DbClient[]
     mainDbClient: Knex
   }) => Promise<void>
 }
@@ -63,33 +51,27 @@ function initMonitoringMetrics(params: {
   dbSize.triggerCollect = async (params) => {
     const { dbClients } = params
     await Promise.all(
-      dbClients.map(async ({ client, regionKey }) => {
-        if (!client) {
-          logger.error({ regionKey }, 'Could not get private client for region')
+      dbClients.map(async ({ client, regionKey, databaseName }) => {
+        if (!databaseName) {
+          logger.warn(
+            { region: regionKey },
+            "Could not get database name from client config for region '{region}'"
+          )
           return
         }
-        logger.info({ regionKey }, 'Collecting monitoring metrics for region')
-        const connectionString: string = String(
-          get(client.client, ['config', 'connection', 'connectionString'], '')
+
+        logger.info(
+          { region: regionKey, databaseName },
+          "Collecting database size for region '{region}' from database '{databaseName}'"
         )
-        if (!connectionString) {
-          logger.warn(
-            { regionKey },
-            'Could not get connection string from client config'
-          )
-        }
-        const databaseName = new URL(connectionString).pathname?.split('/').pop()
-        if (databaseName) {
-          const dbSizeResult = await client.raw<{
-            rows: [{ pg_database_size: string }] //bigints are returned as strings
-          }>('SELECT pg_database_size(?) LIMIT 1', [databaseName])
-          dbSize.set(
-            { ...labels, region: regionKey },
-            parseInt(dbSizeResult.rows[0].pg_database_size) //FIXME risk this bigint being too big for JS, but that would be a very large database!
-          )
-        } else {
-          logger.warn({ regionKey }, 'Could not get database name from client config')
-        }
+
+        const dbSizeResult = await client.raw<{
+          rows: [{ pg_database_size: string }] //bigints are returned as strings
+        }>('SELECT pg_database_size(?) LIMIT 1', [databaseName])
+        dbSize.set(
+          { ...labels, region: regionKey },
+          parseInt(dbSizeResult.rows[0].pg_database_size) //NOTE risk this bigint being too big for JS, but that would be a very large database!
+        )
       })
     )
   }
@@ -285,33 +267,6 @@ function initMonitoringMetrics(params: {
     const { dbClients } = params
     await Promise.all(
       dbClients.map(async ({ client, regionKey }) => {
-        if (!client) {
-          logger.error({ regionKey }, 'Could not get private client for region')
-          return
-        }
-        logger.info({ regionKey }, 'Collecting monitoring metrics for region')
-        const connectionString: string = String(
-          get(client.client, ['config', 'connection', 'connectionString'], '')
-        )
-        if (!connectionString) {
-          logger.warn(
-            { regionKey },
-            'Could not get connection string from client config'
-          )
-        }
-        const databaseName = new URL(connectionString).pathname?.split('/').pop()
-        if (databaseName) {
-          const dbSizeResult = await client.raw<{
-            rows: [{ pg_database_size: string }] //bigints are returned as strings
-          }>('SELECT pg_database_size(?) LIMIT 1', [databaseName])
-          dbSize.set(
-            { ...labels, region: regionKey },
-            parseInt(dbSizeResult.rows[0].pg_database_size) //FIXME risk this bigint being too big for JS, but that would be a very large database!
-          )
-        } else {
-          logger.warn({ regionKey }, 'Could not get database name from client config')
-        }
-
         const tableSizeResults = await client.raw<{
           rows: [{ table_name: string; table_size: string }] //bigints are returned as strings
         }>(
@@ -336,7 +291,7 @@ function initMonitoringMetrics(params: {
         for (const row of tableSizeResults.rows) {
           tablesize.set(
             { ...labels, table: row.table_name, region: regionKey },
-            parseInt(row.table_size) //FIXME risk this bigint being too big for JS
+            parseInt(row.table_size) //NOTE risk this bigint being too big for JS, but that would be a very large table!
           )
         }
       })

@@ -14,12 +14,15 @@ import { Knex } from 'knex'
 
 const { FF_WORKSPACES_MULTI_REGION_ENABLED } = Environment.getFeatureFlags()
 
-let dbClients: {
+export type DbClient = {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  client: Knex<any, any[]> | undefined
+  client: Knex<any, any[]>
   isMain: boolean
   regionKey: string
-}[]
+  databaseName?: string
+}
+
+let dbClients: DbClient[]
 
 export const getDbClients = async () => {
   if (dbClients) return dbClients
@@ -42,22 +45,41 @@ export const getDbClients = async () => {
       },
       configArgs
     )
-    dbClients = [{ client: mainClient.private, regionKey: 'main', isMain: true }]
+    const databaseName = new URL(getPostgresConnectionString()).pathname
+      .split('/')
+      .pop()
+    dbClients = [
+      { client: mainClient.public, regionKey: 'main', isMain: true, databaseName }
+    ]
   } else {
     const configPath = process.env.MULTI_REGION_CONFIG_PATH || 'multiregion.json'
     const config = await loadMultiRegionsConfig({ path: configPath })
-    const clients: [string, { public: Knex; private?: Knex }][] = [
-      ['main', configureKnexClient(config.main, configArgs)]
-    ]
+    const clients: [string, { databaseName?: string; public: Knex; private?: Knex }][] =
+      [
+        [
+          'main',
+          {
+            ...configureKnexClient(config.main, configArgs),
+            databaseName: config.main.postgres.databaseName
+          }
+        ]
+      ]
     Object.entries(config.regions).map(([key, config]) => {
-      clients.push([key, configureKnexClient(config, configArgs)])
+      clients.push([
+        key,
+        {
+          ...configureKnexClient(config, configArgs),
+          databaseName: config.postgres.databaseName
+        }
+      ])
     })
 
     dbClients = [
       ...clients.map(([regionKey, c]) => ({
-        client: isDevOrTestEnv() ? c.public : c.private, //this has to be the private client in production, as we need to get the database name from the connection string. The public client, if via a connection pool, does not has the connection pool name not the database name.
+        client: c.public,
         isMain: regionKey === 'main',
-        regionKey
+        regionKey,
+        databaseName: c.databaseName
       }))
     ]
   }
