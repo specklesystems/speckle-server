@@ -1356,6 +1356,17 @@ monitoring:
   ##
   logPretty: false
 
+  ## @param monitoring.port The port on which the Monitoring Service will run.
+  ##
+  port: 9092
+
+  ## @param monitoring.maximumPostgresConnections The maximum number of connections that the Monitoring Service will allow to the Postgres database. A connection pool exists to manage access to the connections.
+  ##
+  maximumPostgresConnections: 2
+
+  ## @param monitoring.metricsCollectionPeriodSeconds The period in seconds at which the Monitoring Service will query the Postgres database for metrics. Unlike typical Prometheus metrics, the data from the database is not collected in real-time when /metrics is accessed, and is instead done out-of-band on a timed interval.
+  metricsCollectionPeriodSeconds: 120
+
   ## @param monitoring.image The Docker image to be used for the Speckle Monitoring component. If blank, defaults to speckle/speckle-monitoring-deployment:{{ .Values.docker_image_tag }}. If provided, this value should be the full path including tag. The docker_image_tag value will be ignored.
   ##
   image: ''

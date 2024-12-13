@@ -137,7 +137,7 @@ function initMonitoringMetrics(params: {
   fileimports.triggerCollect = async (params) => {
     const { mainDbClient } = params
     const importedFiles = await mainDbClient.raw<{
-      rows: [{ fileType: string; convertedStatus: number; count: number }]
+      rows: [{ fileType: string; convertedStatus: number; count: string }]
     }>(
       `
         SELECT LOWER("fileType") AS "fileType", "convertedStatus", count(*)
@@ -175,7 +175,7 @@ function initMonitoringMetrics(params: {
       })
       fileimports.set(
         { ...labels, filetype: row.fileType, status: row.convertedStatus.toString() },
-        row.count
+        parseInt(row.count)
       )
     }
     // zero-values for all remaining file types and statuses
@@ -213,7 +213,7 @@ function initMonitoringMetrics(params: {
   webhooks.triggerCollect = async (params) => {
     const { mainDbClient } = params
     const webhookResults = await mainDbClient.raw<{
-      rows: [{ status: number; count: number }]
+      rows: [{ status: number; count: string }]
     }>(
       `
         SELECT status, count(*)
@@ -224,7 +224,10 @@ function initMonitoringMetrics(params: {
     const remainingWebhookStatus = new Set(Array(4).keys())
     for (const row of webhookResults.rows) {
       remainingWebhookStatus.delete(row.status)
-      webhooks.set({ ...labels, status: row.status.toString() }, row.count)
+      webhooks.set(
+        { ...labels, status: row.status.toString() },
+        parseInt(row.count) //NOTE risk this bigint being too big for JS, but that would be a very large number of webhooks
+      )
     }
     // zero-values for all remaining webhook statuses
     remainingWebhookStatus.forEach((status) => {
@@ -240,7 +243,7 @@ function initMonitoringMetrics(params: {
   previews.triggerCollect = async (params) => {
     const { mainDbClient } = params
     const previewStatusResults = await mainDbClient.raw<{
-      rows: [{ previewStatus: number; count: number }]
+      rows: [{ previewStatus: number; count: string }]
     }>(`
         SELECT "previewStatus", count(*)
         FROM object_preview
@@ -250,7 +253,10 @@ function initMonitoringMetrics(params: {
     const remainingPreviewStatus = new Set(Array(4).keys())
     for (const row of previewStatusResults.rows) {
       remainingPreviewStatus.delete(row.previewStatus)
-      previews.set({ ...labels, status: row.previewStatus.toString() }, row.count)
+      previews.set(
+        { ...labels, status: row.previewStatus.toString() },
+        parseInt(row.count)
+      )
     }
     // zero-values for all remaining preview statuses
     remainingPreviewStatus.forEach((status) => {
