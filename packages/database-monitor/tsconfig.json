@@ -29,8 +29,7 @@
     "moduleResolution": "node16" /* Specify how TypeScript looks up a file from a given module specifier. */,
     "baseUrl": "./" /* Specify the base directory to resolve non-relative module names. */,
     "paths": {
-      "@/*": ["./src/*"],
-      "#/*": ["./tests/*"]
+      "@/*": ["./src/*"]
     },
     // "rootDirs": [],                                   /* Allow multiple folders to be treated as one when resolving modules. */
     // "typeRoots": [],                                  /* Specify multiple folders that act like `./node_modules/@types`. */
@@ -104,6 +103,6 @@
   "ts-node": {
     "swc": true
   },
-  "include": ["src/**/*", "tests/**/*", "vitest.config.ts"],
+  "include": ["src/**/*", "vitest.config.ts"],
   "exclude": ["node_modules", "coverage", "reports"]
 }
