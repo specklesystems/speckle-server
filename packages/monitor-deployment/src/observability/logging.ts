@@ -7,7 +7,7 @@ export const extendLoggerComponent = elc
 
 export const logger = extendLoggerComponent(
   getLogger(getLogLevel(), isLogPretty()),
-  'database-monitor'
+  'monitor-deployment'
 )
 export const serverLogger = extendLoggerComponent(logger, 'server')
 export const testLogger = getLogger(getLogLevel(), isLogPretty())

@@ -365,7 +365,7 @@ export function initPrometheusMetrics() {
   prometheusClient.register.clear()
   prometheusClient.register.setDefaultLabels({
     project: 'speckle-server',
-    app: 'database-monitor'
+    app: 'monitor-deployment'
   })
 
   try {
