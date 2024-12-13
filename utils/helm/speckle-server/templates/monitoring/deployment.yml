@@ -91,6 +91,31 @@ spec:
           - name: LOG_PRETTY
             value: {{ .Values.monitoring.logPretty | quote }}
 
+        startupProbe:
+          periodSeconds: 10
+          failureThreshold: 60 # 10*60 = 600s; allows for long-running db migrations
+          timeoutSeconds: 3
+          httpGet:
+            path: /
+            port: {{ .Values.monitoring.port }}
+
+        livenessProbe:
+          periodSeconds: 60
+          timeoutSeconds: 3
+          failureThreshold: 3
+          httpGet:
+            path: /
+            port: {{ .Values.monitoring.port }}
+
+        readinessProbe:
+          initialDelaySeconds: 5
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
+          httpGet:
+            path: /metrics
+            port: {{ .Values.monitoring.port }}
+
       priorityClassName: low-priority
       {{- if .Values.monitoring.serviceAccount.create }}
       serviceAccountName: {{ include "monitoring.name" $ }}
@@ -104,31 +129,6 @@ spec:
         runAsGroup: 30000
         seccompProfile:
           type: RuntimeDefault
-
-      startupProbe:
-        periodSeconds: 10
-        failureThreshold: 60 # 10*60 = 600s; allows for long-running db migrations
-        timeoutSeconds: 3
-        httpGet:
-          path: /
-          port: {{ .Values.monitoring.port }}
-
-      livenessProbe:
-        periodSeconds: 60
-        timeoutSeconds: 3
-        failureThreshold: 3
-        httpGet:
-          path: /
-          port: {{ .Values.monitoring.port }}
-
-      readinessProbe:
-        initialDelaySeconds: 5
-        periodSeconds: 30
-        timeoutSeconds: 10
-        failureThreshold: 3
-        httpGet:
-          path: /metrics
-          port: {{ .Values.monitoring.port }}
 
       volumes:
       {{- if .Values.db.useCertificate }}
