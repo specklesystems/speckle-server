@@ -11,6 +11,7 @@
     </ViewerControlsButtonToggle>
     <div
       v-if="open"
+      ref="menuContent"
       v-keyboard-clickable
       class="absolute left-10 sm:left-12 -top-0 bg-foundation max-h-64 simple-scrollbar overflow-y-auto rounded-lg shadow-md flex flex-col"
     >
@@ -20,15 +21,28 @@
 </template>
 
 <script setup lang="ts">
-const open = defineModel<boolean>('open', { default: false })
+import { onClickOutside } from '@vueuse/core'
 
 defineProps<{
   tooltip?: string
 }>()
 
-const menuWrapper = ref(null)
+const open = defineModel<boolean>('open', { default: false })
+
+const menuContent = ref<HTMLElement | null>(null)
+const menuWrapper = ref<HTMLElement | null>(null)
 
 const toggleMenu = () => {
   open.value = !open.value
 }
+
+onClickOutside(
+  menuContent,
+  (event) => {
+    if (!menuWrapper.value?.contains(event.target as Node)) {
+      open.value = false
+    }
+  },
+  { ignore: [menuWrapper] }
+)
 </script>
