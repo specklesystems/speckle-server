@@ -1118,8 +1118,7 @@ jobs:
   docker-publish-monitor-container:
     <<: *publish-job
     environment:
-      FOLDER: utils
-      SPECKLE_SERVER_PACKAGE: monitor-deployment
+      SPECKLE_SERVER_PACKAGE: database-monitor
 
   docker-publish-docker-compose-ingress:
     <<: *publish-job
