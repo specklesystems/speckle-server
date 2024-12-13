@@ -306,6 +306,49 @@ function initMonitoringMetrics(params: {
     )
   }
 
+  const connections: WithOnDemandCollector<Gauge<string>> = new prometheusClient.Gauge({
+    name: join([namePrefix, 'db_used_connections'], '_'),
+    help: 'Number of active (used) database connections',
+    labelNames: ['region', ...labelNames]
+  })
+  connections.triggerCollect = async (params) => {
+    const { dbClients } = params
+    await Promise.all(
+      dbClients.map(async ({ client, regionKey }) => {
+        const connectionResults = await client.raw<{
+          rows: [{ used_connections: string }]
+        }>(`SELECT COUNT(*) AS used_connections FROM pg_stat_activity;`)
+        connections.set(
+          { ...labels, region: regionKey },
+          parseInt(connectionResults.rows[0].used_connections)
+        )
+      })
+    )
+  }
+
+  const totalConnections: WithOnDemandCollector<Gauge<string>> =
+    new prometheusClient.Gauge({
+      name: join([namePrefix, 'db_total_connections'], '_'),
+      help: 'Total number of database connections',
+      labelNames: ['region', ...labelNames]
+    })
+  totalConnections.triggerCollect = async (params) => {
+    const { dbClients } = params
+    await Promise.all(
+      dbClients.map(async ({ client, regionKey }) => {
+        const connectionResults = await client.raw<{
+          rows: [{ maximum_connections: number }]
+        }>(
+          `SELECT setting::int AS maximum_connections FROM pg_settings WHERE name=$$max_connections$$;`
+        )
+        totalConnections.set(
+          { ...labels, region: regionKey },
+          connectionResults.rows[0].maximum_connections
+        )
+      })
+    )
+  }
+
   const metricsToCollect = [
     dbSize,
     tablesize,
