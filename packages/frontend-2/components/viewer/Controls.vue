@@ -164,7 +164,7 @@
       </div>
     </div>
     <div
-      v-if="activeControl !== 'none'"
+      v-if="activePanel !== 'none'"
       ref="resizeHandle"
       class="absolute z-10 max-h-[calc(100dvh-4rem)] w-7 mt-[3.9rem] hidden sm:flex group overflow-hidden items-center rounded-r cursor-ew-resize z-30"
       :style="`left:${width - 2}px; height:${height ? height - 10 : 0}px`"
@@ -190,12 +190,12 @@
       } ${isEmbedEnabled ? 'mt-1.5' : 'mt-[3.7rem]'}`"
       :style="`width: ${isMobile ? '100%' : `${width + 4}px`};`"
     >
-      <div v-if="activeControl.length !== 0 && activePanel === 'measurements'">
+      <div v-if="activePanel === 'measurements'">
         <KeepAlive>
           <div><ViewerMeasurementsOptions @close="toggleMeasurements" /></div>
         </KeepAlive>
       </div>
-      <div v-show="resourceItems.length !== 0 && activePanel === 'models'">
+      <div v-show="activePanel === 'models'">
         <KeepAlive>
           <div>
             <ViewerResourcesList
