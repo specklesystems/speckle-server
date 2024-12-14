@@ -68,6 +68,13 @@ function initMonitoringMetrics(params: {
         const dbSizeResult = await client.raw<{
           rows: [{ pg_database_size: string }] //bigints are returned as strings
         }>('SELECT pg_database_size(?) LIMIT 1', [databaseName])
+        if (!dbSizeResult.rows.length) {
+          logger.error(
+            { region: regionKey },
+            "No database size found for region '{region}'. This is odd."
+          )
+          return
+        }
         dbSize.set(
           { ...labels, region: regionKey },
           parseInt(dbSizeResult.rows[0].pg_database_size) //NOTE risk this bigint being too big for JS, but that would be a very large database!
@@ -79,15 +86,32 @@ function initMonitoringMetrics(params: {
   const objects: WithOnDemandCollector<Gauge<string>> = new prometheusClient.Gauge({
     name: join([namePrefix, 'db_objects'], '_'),
     help: 'Number of objects',
-    labelNames
+    labelNames: [...labelNames, 'region']
   })
   objects.triggerCollect = async (params) => {
-    const { mainDbClient } = params
-
-    const objectsEstimate = await mainDbClient.raw<{ rows: [{ estimate: number }] }>(
-      "SELECT reltuples AS estimate FROM pg_class WHERE relname = 'objects' LIMIT 1;"
+    const { dbClients } = params
+    await Promise.all(
+      dbClients.map(async ({ client, regionKey }) => {
+        try {
+          const objectsEstimate = await client.raw<{
+            rows: [{ estimate: number }]
+          }>(
+            "SELECT reltuples AS estimate FROM pg_class WHERE relname = 'objects' LIMIT 1;"
+          )
+          if (objectsEstimate.rows.length) {
+            objects.set(
+              { ...labels, region: regionKey },
+              Math.max(objectsEstimate.rows[0]?.estimate, 0)
+            )
+          }
+        } catch (err) {
+          logger.warn(
+            { err, region: regionKey },
+            "Failed to collect objects from region '{region}'. This may be because the region is not yet registered and has no 'objects' table."
+          )
+        }
+      })
     )
-    objects.set({ ...labels }, Math.max(objectsEstimate.rows[0].estimate, 0))
   }
 
   const streams: WithOnDemandCollector<Gauge<string>> = new prometheusClient.Gauge({
@@ -97,23 +121,50 @@ function initMonitoringMetrics(params: {
   })
   streams.triggerCollect = async (params) => {
     const { mainDbClient } = params
-    const streamsEstimate = await mainDbClient.raw<{ rows: [{ estimate: number }] }>(
-      "SELECT reltuples AS estimate FROM pg_class WHERE relname = 'streams' LIMIT 1;"
-    )
-    streams.set({ ...labels }, Math.max(streamsEstimate.rows[0].estimate))
+    try {
+      const streamsEstimate = await mainDbClient.raw<{ rows: [{ estimate: number }] }>(
+        "SELECT reltuples AS estimate FROM pg_class WHERE relname = 'streams' LIMIT 1;"
+      )
+      if (streamsEstimate.rows.length) {
+        streams.set({ ...labels }, Math.max(streamsEstimate.rows[0]?.estimate))
+      }
+    } catch (err) {
+      logger.warn(
+        err,
+        'Failed to collect streams metrics. This may be because the main database is not yet migrated.'
+      )
+    }
   }
 
   const commits: WithOnDemandCollector<Gauge<string>> = new prometheusClient.Gauge({
     name: join([namePrefix, 'db_commits'], '_'),
     help: 'Number of commits/versions',
-    labelNames
+    labelNames: [...labelNames, 'region']
   })
   commits.triggerCollect = async (params) => {
-    const { mainDbClient } = params
-    const commitsEstimate = await mainDbClient.raw<{ rows: [{ estimate: number }] }>(
-      "SELECT reltuples AS estimate FROM pg_class WHERE relname = 'commits' LIMIT 1;"
+    const { dbClients } = params
+    await Promise.all(
+      dbClients.map(async ({ client, regionKey }) => {
+        try {
+          const commitsEstimate = await client.raw<{
+            rows: [{ estimate: number }]
+          }>(
+            "SELECT reltuples AS estimate FROM pg_class WHERE relname = 'commits' LIMIT 1;"
+          )
+          if (commitsEstimate.rows.length) {
+            commits.set(
+              { ...labels, region: regionKey },
+              Math.max(commitsEstimate.rows[0]?.estimate)
+            )
+          }
+        } catch (err) {
+          logger.warn(
+            { err, region: regionKey },
+            "Failed to collect commits metrics from region '{region}'. This may be because the region is not yet registered and has no 'commits' table."
+          )
+        }
+      })
     )
-    commits.set({ ...labels }, Math.max(commitsEstimate.rows[0].estimate))
   }
 
   const users: WithOnDemandCollector<Gauge<string>> = new prometheusClient.Gauge({
@@ -123,147 +174,219 @@ function initMonitoringMetrics(params: {
   })
   users.triggerCollect = async (params) => {
     const { mainDbClient } = params
-    const usersEstimate = await mainDbClient.raw<{ rows: [{ estimate: number }] }>(
-      "SELECT reltuples AS estimate FROM pg_class WHERE relname = 'users' LIMIT 1;"
-    )
-    users.set({ ...labels }, Math.max(usersEstimate.rows[0].estimate))
+    try {
+      const usersEstimate = await mainDbClient.raw<{ rows: [{ estimate: number }] }>(
+        "SELECT reltuples AS estimate FROM pg_class WHERE relname = 'users' LIMIT 1;"
+      )
+      if (usersEstimate.rows.length) {
+        users.set({ ...labels }, Math.max(usersEstimate.rows[0]?.estimate))
+      }
+    } catch (err) {
+      logger.warn(
+        err,
+        "Failed to collect users metrics. This may be because the migrations have not yet occcurred and has no 'users' table."
+      )
+    }
   }
 
   const fileimports: WithOnDemandCollector<Gauge<string>> = new prometheusClient.Gauge({
     name: join([namePrefix, 'db_fileimports'], '_'),
     help: 'Number of imported files, by type and status',
-    labelNames: ['filetype', 'status', ...labelNames]
+    labelNames: ['filetype', 'status', 'region', ...labelNames]
   })
   fileimports.triggerCollect = async (params) => {
-    const { mainDbClient } = params
-    const importedFiles = await mainDbClient.raw<{
-      rows: [{ fileType: string; convertedStatus: number; count: string }]
-    }>(
-      `
+    const { dbClients } = params
+    await Promise.all(
+      dbClients.map(async ({ client, regionKey }) => {
+        try {
+          const importedFiles = await client.raw<{
+            rows: [{ fileType: string; convertedStatus: number; count: string }]
+          }>(
+            `
         SELECT LOWER("fileType") AS "fileType", "convertedStatus", count(*)
           FROM file_uploads
           GROUP BY (LOWER("fileType"), "convertedStatus");
       `
-    )
+          )
 
-    // Get the set of all unique file types and converted statuses in the database
-    const allFileImportConvertedStatusAndFileTypes = importedFiles.rows.reduce(
-      (acc, row) => {
-        acc.convertedStatus.add(row.convertedStatus)
-        acc.fileType.add(row.fileType)
-        return acc
-      },
-      { convertedStatus: new Set<number>(), fileType: new Set<string>() }
-    )
+          // Get the set of all unique file types and converted statuses in the database
+          const allFileImportConvertedStatusAndFileTypes = importedFiles.rows.reduce(
+            (acc, row) => {
+              acc.convertedStatus.add(row.convertedStatus)
+              acc.fileType.add(row.fileType)
+              return acc
+            },
+            { convertedStatus: new Set<number>(), fileType: new Set<string>() }
+          )
 
-    // now calculate the combinatorial set of all possible file types and statuses
-    const remainingConvertedStatusAndFileTypes = new Set<{
-      fileType: string
-      status: number
-    }>()
-    allFileImportConvertedStatusAndFileTypes.convertedStatus.forEach((status) => {
-      allFileImportConvertedStatusAndFileTypes.fileType.forEach((fileType) => {
-        remainingConvertedStatusAndFileTypes.add({ fileType, status })
-      })
-    })
+          // now calculate the combinatorial set of all possible file types and statuses
+          const remainingConvertedStatusAndFileTypes = new Set<{
+            fileType: string
+            status: number
+          }>()
+          allFileImportConvertedStatusAndFileTypes.convertedStatus.forEach((status) => {
+            allFileImportConvertedStatusAndFileTypes.fileType.forEach((fileType) => {
+              remainingConvertedStatusAndFileTypes.add({ fileType, status })
+            })
+          })
 
-    // now set the counts for the file types and statuses that are in the database
-    for (const row of importedFiles.rows) {
-      // objects are stored by reference, so we have to search for the original item in the set
-      remainingConvertedStatusAndFileTypes.forEach((item) => {
-        if (item.fileType === row.fileType && item.status === row.convertedStatus) {
-          remainingConvertedStatusAndFileTypes.delete(item)
+          // now set the counts for the file types and statuses that are in the database
+          for (const row of importedFiles.rows) {
+            // objects are stored by reference, so we have to search for the original item in the set
+            remainingConvertedStatusAndFileTypes.forEach((item) => {
+              if (
+                item.fileType === row.fileType &&
+                item.status === row.convertedStatus
+              ) {
+                remainingConvertedStatusAndFileTypes.delete(item)
+              }
+            })
+            fileimports.set(
+              {
+                ...labels,
+                filetype: row.fileType,
+                status: row.convertedStatus.toString(),
+                region: regionKey
+              },
+              parseInt(row.count)
+            )
+          }
+          // zero-values for all remaining file types and statuses
+          remainingConvertedStatusAndFileTypes.forEach(({ fileType, status }) => {
+            fileimports.set(
+              {
+                ...labels,
+                filetype: fileType,
+                status: status.toString(),
+                region: regionKey
+              },
+              0
+            )
+          })
+        } catch (err) {
+          logger.warn(
+            { err, region: regionKey },
+            "Failed to collect file import status metrics from region '{region}'. This may be because the region is not yet registered and has no file_uploads table."
+          )
         }
       })
-      fileimports.set(
-        { ...labels, filetype: row.fileType, status: row.convertedStatus.toString() },
-        parseInt(row.count)
-      )
-    }
-    // zero-values for all remaining file types and statuses
-    remainingConvertedStatusAndFileTypes.forEach(({ fileType, status }) => {
-      fileimports.set({ ...labels, filetype: fileType, status: status.toString() }, 0)
-    })
+    )
   }
 
   const filesize: WithOnDemandCollector<Gauge<string>> = new prometheusClient.Gauge({
     name: join([namePrefix, 'db_filesize'], '_'),
     help: 'Size of imported files, by type (in bytes)',
-    labelNames: ['filetype', ...labelNames]
+    labelNames: ['filetype', 'region', ...labelNames]
   })
   filesize.triggerCollect = async (params) => {
-    const { mainDbClient } = params
-    const fileSizeResults = await mainDbClient.raw<{
-      rows: [{ filetype: string; filesize: string }]
-    }>(
-      `
+    const { dbClients } = params
+    await Promise.all(
+      dbClients.map(async ({ client, regionKey }) => {
+        try {
+          const fileSizeResults = await client.raw<{
+            rows: [{ filetype: string; filesize: string }]
+          }>(
+            `
       SELECT LOWER("fileType") AS fileType, SUM("fileSize") AS fileSize
             FROM file_uploads
             GROUP BY LOWER("fileType");
       `
+          )
+          for (const row of fileSizeResults.rows) {
+            filesize.set(
+              { ...labels, filetype: row.filetype, region: regionKey },
+              parseInt(row.filesize)
+            )
+          }
+        } catch (err) {
+          logger.warn(
+            { err, region: regionKey },
+            "Failed to collect file upload metrics from region '{region}'. This may be because the region is not yet registered and has no 'file_uploads' table."
+          )
+        }
+      })
     )
-    for (const row of fileSizeResults.rows) {
-      filesize.set({ ...labels, filetype: row.filetype }, parseInt(row.filesize))
-    }
   }
 
   const webhooks: WithOnDemandCollector<Gauge<string>> = new prometheusClient.Gauge({
     name: join([namePrefix, 'db_webhooks'], '_'),
     help: 'Number of webhook calls, by status',
-    labelNames: ['status', ...labelNames]
+    labelNames: ['status', 'region', ...labelNames]
   })
   webhooks.triggerCollect = async (params) => {
-    const { mainDbClient } = params
-    const webhookResults = await mainDbClient.raw<{
-      rows: [{ status: number; count: string }]
-    }>(
-      `
+    const { dbClients } = params
+    await Promise.all(
+      dbClients.map(async ({ client, regionKey }) => {
+        try {
+          const webhookResults = await client.raw<{
+            rows: [{ status: number; count: string }]
+          }>(
+            `
         SELECT status, count(*)
         FROM webhooks_events
         GROUP BY status;
       `
+          )
+          const remainingWebhookStatus = new Set(Array(4).keys())
+          for (const row of webhookResults.rows) {
+            remainingWebhookStatus.delete(row.status)
+            webhooks.set(
+              { ...labels, status: row.status.toString(), region: regionKey },
+              parseInt(row.count) //NOTE risk this bigint being too big for JS, but that would be a very large number of webhooks
+            )
+          }
+          // zero-values for all remaining webhook statuses
+          remainingWebhookStatus.forEach((status) => {
+            webhooks.set({ ...labels, status: status.toString(), region: regionKey }, 0)
+          })
+        } catch (err) {
+          logger.warn(
+            { err, region: regionKey },
+            "Failed to collect webhook metrics from region '{region}'. This may be because the region is not yet registered and has no webhooks_events table."
+          )
+        }
+      })
     )
-    const remainingWebhookStatus = new Set(Array(4).keys())
-    for (const row of webhookResults.rows) {
-      remainingWebhookStatus.delete(row.status)
-      webhooks.set(
-        { ...labels, status: row.status.toString() },
-        parseInt(row.count) //NOTE risk this bigint being too big for JS, but that would be a very large number of webhooks
-      )
-    }
-    // zero-values for all remaining webhook statuses
-    remainingWebhookStatus.forEach((status) => {
-      webhooks.set({ ...labels, status: status.toString() }, 0)
-    })
   }
 
   const previews: WithOnDemandCollector<Gauge<string>> = new prometheusClient.Gauge({
     name: join([namePrefix, 'db_previews'], '_'),
     help: 'Number of previews, by status',
-    labelNames: ['status', ...labelNames]
+    labelNames: ['status', 'region', ...labelNames]
   })
   previews.triggerCollect = async (params) => {
-    const { mainDbClient } = params
-    const previewStatusResults = await mainDbClient.raw<{
-      rows: [{ previewStatus: number; count: string }]
-    }>(`
+    const { dbClients } = params
+    await Promise.all(
+      dbClients.map(async ({ client, regionKey }) => {
+        try {
+          const previewStatusResults = await client.raw<{
+            rows: [{ previewStatus: number; count: string }]
+          }>(`
         SELECT "previewStatus", count(*)
         FROM object_preview
         GROUP BY "previewStatus";
         `)
 
-    const remainingPreviewStatus = new Set(Array(4).keys())
-    for (const row of previewStatusResults.rows) {
-      remainingPreviewStatus.delete(row.previewStatus)
-      previews.set(
-        { ...labels, status: row.previewStatus.toString() },
-        parseInt(row.count)
-      )
-    }
-    // zero-values for all remaining preview statuses
-    remainingPreviewStatus.forEach((status) => {
-      previews.set({ ...labels, status: status.toString() }, 0)
-    })
+          const remainingPreviewStatus = new Set(Array(4).keys())
+          for (const row of previewStatusResults.rows) {
+            remainingPreviewStatus.delete(row.previewStatus)
+            previews.set(
+              { ...labels, region: regionKey, status: row.previewStatus.toString() },
+              parseInt(row.count)
+            )
+          }
+          // zero-values for all remaining preview statuses
+          remainingPreviewStatus.forEach((status) => {
+            previews.set({ ...labels, region: regionKey, status: status.toString() }, 0)
+          })
+        } catch (err) {
+          logger.warn(
+            { err, region: regionKey },
+            "Failed to collect private status metrics from region '{region}'. This may be because the region is not yet registered and has no 'object_preview' table."
+          )
+        }
+      })
+    )
   }
 
   const tablesize: WithOnDemandCollector<Gauge<string>> = new prometheusClient.Gauge({
@@ -318,6 +441,13 @@ function initMonitoringMetrics(params: {
         const connectionResults = await client.raw<{
           rows: [{ used_connections: string }]
         }>(`SELECT COUNT(*) AS used_connections FROM pg_stat_activity;`)
+        if (!connectionResults.rows.length) {
+          logger.error(
+            { region: regionKey },
+            "No active connections found for region '{region}'. This is odd."
+          )
+          return
+        }
         connections.set(
           { ...labels, region: regionKey },
           parseInt(connectionResults.rows[0].used_connections)
@@ -341,6 +471,13 @@ function initMonitoringMetrics(params: {
         }>(
           `SELECT setting::int AS maximum_connections FROM pg_settings WHERE name=$$max_connections$$;`
         )
+        if (!connectionResults.rows.length) {
+          logger.error(
+            { region: regionKey },
+            "No maximum connections found for region '{region}'. This is odd."
+          )
+          return
+        }
         totalConnections.set(
           { ...labels, region: regionKey },
           connectionResults.rows[0].maximum_connections
