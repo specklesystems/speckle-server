@@ -4,7 +4,7 @@ import {
   type Info
 } from '@/modules/shared/errors/base'
 import type { Knex } from 'knex'
-import { numberOfFreeConnections } from '@/modules/shared/helpers/dbHelper'
+import { retrieveMetadataFromDatabaseClient } from '@/modules/shared/errors/databaseMetadata'
 
 /**
  * Use this to throw when the request has auth credentials, but they are not sufficient
@@ -122,40 +122,7 @@ export class DatabaseError<I extends Info = Info> extends EnvironmentResourceErr
     dbClient?: Knex | undefined,
     options: ExtendedOptions<I> | Error | undefined = undefined
   ) {
-    const additionalInfo: Record<string, unknown> = {}
-    if (dbClient) {
-      const dbClientClient = dbClient.client
-      try {
-        // get more info about the connection string (without exposing the password!)
-        const connectionURL = new URL(
-          dbClientClient.config?.connection?.connectionString
-        )
-        additionalInfo.databaseHost = connectionURL.hostname
-        additionalInfo.databasePort = connectionURL.port
-        additionalInfo.databaseUser = connectionURL.username
-        additionalInfo.databaseOrConnectionPoolName = connectionURL.pathname
-          .split('/')
-          .pop()
-      } catch {
-        // ignore problems if we can't get additional info and log whatever we have
-      }
-      try {
-        // get more info about the state of the connection pool
-        const connPool = dbClientClient?.pool
-        additionalInfo.databasePoolConnectionsFree = connPool.numFree()
-        additionalInfo.databasePoolConnectionsUsed = connPool.numUsed()
-        additionalInfo.databasePoolConnectionsPendingAcquires =
-          connPool.numPendingAcquires()
-        additionalInfo.databasePoolConnectionsPendingCreates =
-          connPool.numPendingCreates()
-        additionalInfo.databasePoolConnectionsPendingValidations =
-          connPool.numPendingValidations()
-        additionalInfo.databasePoolConnectionsRemainingCapacity =
-          numberOfFreeConnections(dbClient.client)
-      } catch {
-        // ignore problems if we can't get additional info and log whatever we have
-      }
-    }
+    const additionalInfo = retrieveMetadataFromDatabaseClient(dbClient)
 
     super(message, {
       ...options,
