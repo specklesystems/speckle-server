@@ -4,9 +4,9 @@ import type { MetricInitializer } from '@/observability/types.js'
 
 export const init: MetricInitializer = (config) => {
   const { labelNames, namePrefix, logger } = config
-  const totalConnections = new prometheusClient.Gauge({
-    name: join([namePrefix, 'db_total_connections'], '_'),
-    help: 'Total number of database connections',
+  const connections = new prometheusClient.Gauge({
+    name: join([namePrefix, 'db_inactive_replication_slots'], '_'),
+    help: 'Number of inactive database replication slots',
     labelNames: ['region', ...labelNames]
   })
   return async (params) => {
@@ -14,20 +14,20 @@ export const init: MetricInitializer = (config) => {
     await Promise.all(
       dbClients.map(async ({ client, regionKey }) => {
         const connectionResults = await client.raw<{
-          rows: [{ maximum_connections: number }]
+          rows: [{ inactive_replication_slots: string }]
         }>(
-          `SELECT setting::int AS maximum_connections FROM pg_settings WHERE name=$$max_connections$$;`
+          `SELECT count(*) AS inactive_replication_slots FROM pg_replication_slots WHERE NOT active;`
         )
         if (!connectionResults.rows.length) {
           logger.error(
             { region: regionKey },
-            "No maximum connections found for region '{region}'. This is odd."
+            "No data related to replication slots found for region '{region}'. This is odd."
           )
           return
         }
-        totalConnections.set(
+        connections.set(
           { ...labels, region: regionKey },
-          connectionResults.rows[0].maximum_connections
+          parseInt(connectionResults.rows[0].inactive_replication_slots)
         )
       })
     )

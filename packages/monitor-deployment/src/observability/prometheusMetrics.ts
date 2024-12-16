@@ -5,13 +5,17 @@ import { join } from 'lodash-es'
 import { Histogram, Registry } from 'prom-client'
 import prometheusClient from 'prom-client'
 import { init as commits } from '@/observability/metrics/commits.js'
-import { init as connections } from '@/observability/metrics/connections.js'
-import { init as connectionsTotal } from '@/observability/metrics/connectionsTotal.js'
 import { init as dbSize } from '@/observability/metrics/dbSize.js'
+import { init as dbWorkers } from '@/observability/metrics/dbWorkers.js'
+import { init as dbWorkersAwaitingLocks } from '@/observability/metrics/dbWorkersAwaitingLocks.js'
 import { init as fileImports } from '@/observability/metrics/fileImports.js'
 import { init as fileSize } from '@/observability/metrics/fileSize.js'
+import { init as inactiveReplicationSlots } from '@/observability/metrics/inactiveReplicationSlots.js'
+import { init as maxConnections } from '@/observability/metrics/maxConnections.js'
 import { init as objects } from '@/observability/metrics/objects.js'
 import { init as previews } from '@/observability/metrics/previews.js'
+import { init as replicationSlotLag } from '@/observability/metrics/replicationSlotLag.js'
+import { init as replicationWorkerLag } from '@/observability/metrics/replicationWorkerLag.js'
 import { init as streams } from '@/observability/metrics/streams.js'
 import { init as tablesize } from '@/observability/metrics/tableSize.js'
 import { init as users } from '@/observability/metrics/users.js'
@@ -49,13 +53,17 @@ function initMonitoringMetrics(params: {
 
   const metricsToInitialize = [
     commits,
-    connections,
-    connectionsTotal,
+    dbWorkers,
+    dbWorkersAwaitingLocks,
     dbSize,
     fileImports,
     fileSize,
+    inactiveReplicationSlots,
+    maxConnections,
     objects,
     previews,
+    replicationSlotLag,
+    replicationWorkerLag,
     streams,
     tablesize,
     users,
