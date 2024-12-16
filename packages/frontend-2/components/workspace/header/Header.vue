@@ -7,8 +7,16 @@
             :name="workspaceInfo.name"
             :logo="workspaceInfo.logo"
             size="lg"
+            class="hidden md:block"
           />
-          <h1 class="text-heading line-clamp-2">{{ workspaceInfo.name }}</h1>
+          <WorkspaceAvatar
+            class="md:hidden"
+            :name="workspaceInfo.name"
+            :logo="workspaceInfo.logo"
+          />
+          <h1 class="text-heading-sm md:text-heading line-clamp-2">
+            {{ workspaceInfo.name }}
+          </h1>
           <LayoutMenu
             v-model:open="showActionsMenu"
             :items="actionsItems"
@@ -26,7 +34,7 @@
           </LayoutMenu>
         </div>
 
-        <div class="flex items-center gap-2">
+        <div class="flex gap-1.5 md:gap-2">
           <LayoutMenu
             v-model:open="showAddNewProjectMenu"
             :items="addNewProjectItems"
@@ -37,12 +45,22 @@
           >
             <FormButton
               color="outline"
+              class="hidden md:block"
               @click="showAddNewProjectMenu = !showAddNewProjectMenu"
             >
               <div class="flex items-center gap-1">
                 Add project
                 <ChevronDownIcon class="h-3 w-3" />
               </div>
+            </FormButton>
+            <FormButton
+              color="outline"
+              class="md:hidden"
+              hide-text
+              :icon-left="PlusIcon"
+              @click="showAddNewProjectMenu = !showAddNewProjectMenu"
+            >
+              Add project
             </FormButton>
           </LayoutMenu>
 
@@ -54,6 +72,9 @@
           >
             Settings
           </FormButton>
+          <ClientOnly>
+            <PortalTarget name="workspace-sidebar-toggle"></PortalTarget>
+          </ClientOnly>
         </div>
       </div>
     </div>
@@ -67,7 +88,8 @@ import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
 import {
   EllipsisHorizontalIcon,
   Cog8ToothIcon,
-  ChevronDownIcon
+  ChevronDownIcon,
+  PlusIcon
 } from '@heroicons/vue/24/outline'
 import { copyWorkspaceLink } from '~/lib/workspaces/composables/management'
 import { HorizontalDirection } from '~~/lib/common/composables/window'
