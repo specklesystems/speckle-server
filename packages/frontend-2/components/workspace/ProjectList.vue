@@ -89,7 +89,7 @@
       <ProjectsAddDialog v-model:open="openNewProject" :workspace-id="workspace?.id" />
 
       <template v-if="workspace">
-        <WorkspaceInviteDialog
+        <InviteDialogWorkspace
           v-model:open="showInviteDialog"
           :workspace-id="workspace.id"
           :workspace="workspace"
@@ -140,6 +140,7 @@ graphql(`
     ...MoveProjectsDialog_Workspace
     ...WorkspaceHeader_Workspace
     ...WorkspaceMixpanelUpdateGroup_Workspace
+    ...InviteDialogWorkspace_Workspace
     projects {
       ...WorkspaceProjectList_ProjectCollection
     }
