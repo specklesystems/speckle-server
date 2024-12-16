@@ -70,8 +70,9 @@ async function initKnexPrometheusMetrics() {
     name: 'speckle_server_knex_remaining_capacity',
     help: 'Remaining capacity of the DB connection pool',
     collect() {
-      const postgresMaxConnections =
-        parseInt(process.env.POSTGRES_MAX_CONNECTIONS_WEBHOOK_SERVICE) || 1
+      const postgresMaxConnections = parseInt(
+        process.env.POSTGRES_MAX_CONNECTIONS_WEBHOOK_SERVICE || '1'
+      )
       const demand =
         knex.client.pool.numUsed() +
         knex.client.pool.numPendingCreates() +
