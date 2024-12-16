@@ -44,8 +44,10 @@
           <LayoutSidebarMenuGroup
             title="About"
             collapsible
-            :plus-click="() => openSettingsDialog(SettingMenuKeys.Workspace.General)"
-            plus-text="Edit description"
+            :icon-click="() => openSettingsDialog(SettingMenuKeys.Workspace.General)"
+            :icon-text="
+              workspaceInfo.description ? 'Edit description' : 'Add description'
+            "
           >
             <div
               class="flex flex-col gap-2 text-body-2xs text-foreground-2 mt-1 px-4 pb-4"
@@ -66,8 +68,9 @@
           <LayoutSidebarMenuGroup
             title="Members"
             collapsible
-            :plus-click="() => openSettingsDialog(SettingMenuKeys.Workspace.Members)"
-            plus-text="Edit team"
+            icon="edit"
+            :icon-click="() => openSettingsDialog(SettingMenuKeys.Workspace.Members)"
+            icon-text="Edit team"
             :tag="workspaceInfo.team.totalCount.toString() || undefined"
           >
             <div v-if="!isWorkspaceGuest" class="mt-2 flex flex-col gap-2 px-4 pb-4">
@@ -98,11 +101,12 @@
           <LayoutSidebarMenuGroup
             title="Security"
             collapsible
-            :plus-click="() => openSettingsDialog(SettingMenuKeys.Workspace.Security)"
-            plus-text="Edit security"
+            :icon="hasDomains ? 'edit' : 'add'"
+            :icon-click="() => openSettingsDialog(SettingMenuKeys.Workspace.Security)"
+            :icon-text="hasDomains ? 'Edit domains' : 'Add domain'"
           >
             <div class="text-body-2xs text-foreground-2 mt-2 px-4 pb-4">
-              <template v-if="workspaceInfo.domains?.length">
+              <template v-if="hasDomains">
                 <div
                   v-for="domain in workspaceInfo.domains"
                   :key="domain.id"
@@ -202,6 +206,8 @@ const isWorkspaceGuest = computed(
 const isWorkspaceAdmin = computed(
   () => props.workspaceInfo.role === Roles.Workspace.Admin
 )
+
+const hasDomains = computed(() => props.workspaceInfo.domains?.length)
 
 const isInTrial = computed(
   () =>

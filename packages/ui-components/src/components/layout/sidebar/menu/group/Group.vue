@@ -47,12 +47,13 @@
         </div>
       </div>
       <button
-        v-if="plusClick"
-        v-tippy="plusText ? plusText : undefined"
+        v-if="iconClick"
+        v-tippy="iconText ? iconText : undefined"
         class="hidden group-hover:flex p-[3px] shrink-0 hover:bg-primary-muted rounded mr-2 text-foreground-2"
-        @click="plusClick"
+        @click="iconClick"
       >
-        <Plus class="h-4 w-4" />
+        <PencilIcon v-if="icon === 'edit'" class="h-3 w-3" />
+        <Plus v-else class="h-4 w-4" />
       </button>
     </div>
 
@@ -66,14 +67,16 @@
 import ArrowFilled from '~~/src/components/layout/sidebar/menu/group/ArrowFilled.vue'
 import Plus from '~~/src/components/layout/sidebar/menu/group/Plus.vue'
 import CommonBadge from '~~/src/components/common/Badge.vue'
+import { PencilIcon } from '@heroicons/vue/20/solid'
 
 defineProps<{
   tag?: string
   title?: string
   collapsible?: boolean
   collapsed?: boolean
-  plusText?: string
-  plusClick?: () => void
+  icon?: 'add' | 'edit'
+  iconText?: string
+  iconClick?: () => void
 }>()
 
 const isCollapsed = defineModel<boolean>('collapsed')
