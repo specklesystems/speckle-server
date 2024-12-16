@@ -27,16 +27,14 @@ export const retrieveMetadataFromDatabaseClient = (
   // attempt to get more info about the state of the connection pool
   try {
     const connPool = dbClientClient?.pool
-    additionalInfo.databasePoolConnectionsFree = connPool.numFree()
     additionalInfo.databasePoolConnectionsUsed = connPool.numUsed()
     additionalInfo.databasePoolConnectionsPendingAcquires =
       connPool.numPendingAcquires()
     additionalInfo.databasePoolConnectionsPendingCreates = connPool.numPendingCreates()
     additionalInfo.databasePoolConnectionsPendingValidations =
       connPool.numPendingValidations()
-    additionalInfo.databasePoolConnectionsRemainingCapacity = numberOfFreeConnections(
-      dbClient.client
-    )
+    additionalInfo.databasePoolConnectionsRemainingCapacity =
+      numberOfFreeConnections(dbClient)
   } catch {
     // ignore problems and move on
   }
