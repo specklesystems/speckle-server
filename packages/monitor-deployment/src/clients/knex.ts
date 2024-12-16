@@ -1,5 +1,7 @@
 import { knexLogger as logger } from '@/observability/logging.js'
 import {
+  getConnectionAcquireTimeoutMillis,
+  getConnectionCreateTimeoutMillis,
   getDatabaseName,
   getPostgresCACertificate,
   getPostgresConnectionString,
@@ -36,7 +38,9 @@ export const getDbClients = async () => {
     isDevOrTestEnv: isDevOrTestEnv(),
     logger,
     maxConnections,
-    applicationName: 'speckle_database_monitor'
+    applicationName: 'speckle_database_monitor',
+    connectionAcquireTimeoutMillis: getConnectionAcquireTimeoutMillis(),
+    connectionCreateTimeoutMillis: getConnectionCreateTimeoutMillis()
   }
   if (!FF_WORKSPACES_MULTI_REGION_ENABLED) {
     const mainClient = configureKnexClient(
