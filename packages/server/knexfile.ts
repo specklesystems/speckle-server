@@ -8,8 +8,8 @@ import {
   ignoreMissingMigrations,
   postgresMaxConnections,
   isDevOrTestEnv,
-  postgresConnectionAcquisitionTimeoutMillis,
-  postgresConnectionCreationTimeoutMillis
+  postgresConnectionAcquireTimeoutMillis,
+  postgresConnectionCreateTimeoutMillis
 } from '@/modules/shared/helpers/envHelper'
 import { dbLogger as logger } from '@/logging/logging'
 import { Knex } from 'knex'
@@ -83,8 +83,8 @@ const configArgs: KnexConfigArgs = {
   applicationName: 'speckle_server',
   logger,
   maxConnections: postgresMaxConnections(),
-  connectionAcquisitionTimeoutMillis: postgresConnectionAcquisitionTimeoutMillis(),
-  connectionCreateTimeoutMillis: postgresConnectionCreationTimeoutMillis()
+  connectionAcquireTimeoutMillis: postgresConnectionAcquireTimeoutMillis(),
+  connectionCreateTimeoutMillis: postgresConnectionCreateTimeoutMillis()
 }
 
 const config: Record<string, Knex.Config> = {

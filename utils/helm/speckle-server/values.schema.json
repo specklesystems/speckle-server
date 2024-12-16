@@ -1891,6 +1891,11 @@
             }
           }
         },
+        "postgresMaxConnections": {
+          "type": "number",
+          "description": "The maximum number of connections that the Preview Service postgres client will make to the Postgres database.",
+          "default": 2
+        },
         "puppeteer": {
           "type": "object",
           "properties": {
@@ -2003,6 +2008,11 @@
           "description": "The Docker image to be used for the Speckle Webhook Service component. If blank, defaults to speckle/speckle-webhook-service:{{ .Values.docker_image_tag }}. If provided, this value should be the full path including tag. The docker_image_tag value will be ignored.",
           "default": ""
         },
+        "postgresMaxConnections": {
+          "type": "number",
+          "description": "The maximum number of connections that the Webhook Service postgres client will make to the Postgres database.",
+          "default": 1
+        },
         "requests": {
           "type": "object",
           "properties": {
@@ -2099,6 +2109,11 @@
           "type": "string",
           "description": "The Docker image to be used for the Speckle FileImport Service component. If blank, defaults to speckle/speckle-fileimport-service:{{ .Values.docker_image_tag }}. If provided, this value should be the full path including tag. The docker_image_tag value will be ignored.",
           "default": ""
+        },
+        "postgresMaxConnections": {
+          "type": "number",
+          "description": "The maximum number of connections that the File Import Service postgres client will make to the Postgres database.",
+          "default": 1
         },
         "requests": {
           "type": "object",

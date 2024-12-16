@@ -770,10 +770,10 @@ Generate the environment variables for Speckle server and Speckle objects deploy
       key: {{ default "postgres_url" .Values.db.connectionString.secretKey }}
 - name: POSTGRES_MAX_CONNECTIONS_SERVER
   value: {{ .Values.db.maxConnectionsServer | quote }}
-- name: POSTGRES_CONNECTION_CREATION_TIMEOUT_MILLIS
-  value: {{ .Values.db.connectionCreationTimeoutMillis | quote }}
-- name: POSTGRES_CONNECTION_ACQUISITION_TIMEOUT_MILLIS
-  value: {{ .Values.db.connectionAcquisitionTimeoutMillis | quote }}
+- name: POSTGRES_CONNECTION_CREATE_TIMEOUT_MILLIS
+  value: {{ .Values.db.connectionCreateTimeoutMillis | quote }}
+- name: POSTGRES_CONNECTION_ACQUIRE_TIMEOUT_MILLIS
+  value: {{ .Values.db.connectionAcquireTimeoutMillis | quote }}
 
 - name: PGSSLMODE
   value: "{{ .Values.db.PGSSLMODE }}"

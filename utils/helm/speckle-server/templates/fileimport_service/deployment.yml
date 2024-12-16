@@ -80,6 +80,14 @@ spec:
               secretKeyRef:
                 name: {{ default .Values.secretName .Values.db.connectionString.secretName }}
                 key: {{ default "postgres_url" .Values.db.connectionString.secretKey }}
+          {{- if .Values.fileimport_service.postgresMaxConnections }}
+          - name: POSTGRES_MAX_CONNECTIONS_FILE_IMPORT_SERVICE
+            value: {{ .Values.fileimport_service.postgresMaxConnections | quote }}
+          {{- end }}
+          - name: POSTGRES_CONNECTION_CREATE_TIMEOUT_MILLIS
+            value: {{ .Values.db.connectionCreateTimeoutMillis | quote }}
+          - name: POSTGRES_CONNECTION_ACQUIRE_TIMEOUT_MILLIS
+            value: {{ .Values.db.connectionAcquireTimeoutMillis | quote }}
 
           - name: LOG_LEVEL
             value: {{ .Values.fileimport_service.logLevel | quote }}

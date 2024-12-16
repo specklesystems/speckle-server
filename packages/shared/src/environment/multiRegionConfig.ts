@@ -94,7 +94,7 @@ export type KnexConfigArgs = {
   logger: Logger
   maxConnections: number
   applicationName: string
-  connectionAcquisitionTimeoutMillis: number
+  connectionAcquireTimeoutMillis: number
   connectionCreateTimeoutMillis: number
 }
 
@@ -106,7 +106,7 @@ export const createKnexConfig = ({
   logger,
   maxConnections,
   caCertificate,
-  connectionAcquisitionTimeoutMillis,
+  connectionAcquireTimeoutMillis,
   connectionCreateTimeoutMillis
 }: {
   connectionString?: string | undefined
@@ -145,7 +145,7 @@ export const createKnexConfig = ({
     pool: {
       min: 0,
       max: maxConnections,
-      acquireTimeoutMillis: connectionAcquisitionTimeoutMillis, // If the maximum number of connections is reached, it wait for 16 seconds trying to acquire an existing connection before throwing a timeout error.
+      acquireTimeoutMillis: connectionAcquireTimeoutMillis, // If the maximum number of connections is reached, it wait for 16 seconds trying to acquire an existing connection before throwing a timeout error.
       createTimeoutMillis: connectionCreateTimeoutMillis // If no existing connection is available and the maximum number of connections is not yet reached, the pool will try to create a new connection for 5 seconds before throwing a timeout error.
       // createRetryIntervalMillis: 200, // Irrelevant & ignored because propogateCreateError is true.
       // propagateCreateError: true // The propagateCreateError is set to true by default in Knex and throws a TimeoutError if the first create connection to the database fails. Knex recommends that this value is NOT set to false, despite what 'helpful' people on Stackoverflow tell you: https://github.com/knex/knex/issues/3455#issuecomment-535554401

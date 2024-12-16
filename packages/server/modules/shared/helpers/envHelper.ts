@@ -363,12 +363,12 @@ export function postgresMaxConnections() {
   return getIntFromEnv('POSTGRES_MAX_CONNECTIONS_SERVER', '4')
 }
 
-export function postgresConnectionAcquisitionTimeoutMillis() {
-  return getIntFromEnv('POSTGRES_CONNECTION_ACQUISITION_TIMEOUT_MILLIS', '16000')
+export function postgresConnectionAcquireTimeoutMillis() {
+  return getIntFromEnv('POSTGRES_CONNECTION_ACQUIRE_TIMEOUT_MILLIS', '16000')
 }
 
-export function postgresConnectionCreationTimeoutMillis() {
-  return getIntFromEnv('POSTGRES_CONNECTION_CREATION_TIMEOUT_MILLIS', '5000')
+export function postgresConnectionCreateTimeoutMillis() {
+  return getIntFromEnv('POSTGRES_CONNECTION_CREATE_TIMEOUT_MILLIS', '5000')
 }
 
 export function highFrequencyMetricsCollectionPeriodMs() {
