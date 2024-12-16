@@ -1,4 +1,4 @@
-import { MathUtils } from 'three'
+import { Float32BufferAttribute, Int32BufferAttribute, MathUtils, Mesh } from 'three'
 import LineBatch from './LineBatch.js'
 import Materials, {
   FilterMaterialType,
@@ -26,6 +26,7 @@ import { MeshBatch } from './MeshBatch.js'
 import { PointBatch } from './PointBatch.js'
 import Logger from '../utils/Logger.js'
 import { ObjectVisibility } from '../pipeline/Passes/GPass.js'
+import { BufferGeometry } from 'three/webgpu'
 
 type BatchTypeMap = {
   [GeometryType.MESH]: MeshBatch
@@ -52,6 +53,47 @@ export default class Batcher {
     this.floatTextures = floatTextures
     this.materials = new Materials()
     void this.materials.createDefaultMaterials()
+  }
+
+  public async *makeUnBatches(renderTree: RenderTree, speckleType: SpeckleType[]) {
+    const renderViews = renderTree
+      .getRenderableNodes(...speckleType)
+      .flatMap((node: TreeNode) => {
+        if (node.model.renderView) {
+          if (node.model.renderView.renderData.geometry.instanced) {
+            if (node.model.renderView.speckleType !== SpeckleType.Mesh) {
+              return [node.model.renderView]
+            }
+            return []
+          }
+          return [node.model.renderView]
+        } else return []
+      })
+    for (let k = 0; k < renderViews.length; k++) {
+      const rv: NodeRenderView = renderViews[k]
+      const geometry = new BufferGeometry()
+      geometry.setAttribute(
+        'position',
+        new Float32BufferAttribute(rv.renderData.geometry.attributes?.POSITION as [], 3)
+      )
+      geometry.setAttribute(
+        'normal',
+        new Float32BufferAttribute(rv.renderData.geometry.attributes?.NORMAL as [], 3)
+      )
+      geometry.setIndex(
+        new Int32BufferAttribute(rv.renderData.geometry.attributes?.INDEX as [], 1)
+      )
+
+      const mesh = new Mesh(
+        geometry,
+        this.materials.getMaterial(
+          rv.renderMaterialHash,
+          rv.renderData.renderMaterial,
+          GeometryType.MESH
+        )
+      )
+      yield mesh
+    }
   }
 
   public async *makeBatches(

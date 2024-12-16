@@ -17414,7 +17414,7 @@ __metadata:
     "@types/babel__core": "npm:^7.20.1"
     "@types/flat": "npm:^5.0.2"
     "@types/lodash-es": "npm:4.17.12"
-    "@types/three": "npm:^0.140.0"
+    "@types/three": "npm:^0.170.0"
     "@typescript-eslint/eslint-plugin": "npm:^7.12.0"
     "@typescript-eslint/parser": "npm:^7.12.0"
     "@vitest/ui": "npm:^1.4.0"
@@ -17432,7 +17432,7 @@ __metadata:
     rollup-plugin-terser: "npm:^7.0.2"
     rollup-plugin-typescript2: "npm:^0.36.0"
     string-to-color: "npm:^2.2.2"
-    three: "npm:^0.140.0"
+    three: "npm:^0.171.0"
     three-mesh-bvh: "npm:0.5.17"
     tree-model: "npm:1.0.7"
     troika-three-text: "npm:0.47.2"
@@ -19428,6 +19428,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@tweenjs/tween.js@npm:~23.1.3":
+  version: 23.1.3
+  resolution: "@tweenjs/tween.js@npm:23.1.3"
+  checksum: 10/10ecaf311c975162459bd016ef7eb1f3118a257050c4886de9737dee823fc829100a0887f3fc298f7a5577140eac054f9609b823eb0748ca7b653ec85ffba75e
+  languageName: node
+  linkType: hard
+
 "@types/apollo-upload-client@npm:^17.0.1":
   version: 17.0.1
   resolution: "@types/apollo-upload-client@npm:17.0.1"
@@ -20804,6 +20811,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/stats.js@npm:*":
+  version: 0.17.3
+  resolution: "@types/stats.js@npm:0.17.3"
+  checksum: 10/4f84a012f630532877f62959b6335d3fa081ccaac15ce3f1f916741db265bda22b9c927d7efc9cc3389ffd60919a370673cb0b4e7221d580c571031e94b689fd
+  languageName: node
+  linkType: hard
+
 "@types/string-pixel-width@npm:^1.10.3":
   version: 1.10.3
   resolution: "@types/string-pixel-width@npm:1.10.3"
@@ -20840,10 +20854,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/three@npm:^0.140.0":
-  version: 0.140.0
-  resolution: "@types/three@npm:0.140.0"
-  checksum: 10/dd9d77a8534c00d7e28f68db890529cd47726a1dc50f579917e9895b909bf8a51a4f7bd39ba79a7da9cec4951472802c30159d1e9c2079dae52ae7b1d30777a5
+"@types/three@npm:^0.170.0":
+  version: 0.170.0
+  resolution: "@types/three@npm:0.170.0"
+  dependencies:
+    "@tweenjs/tween.js": "npm:~23.1.3"
+    "@types/stats.js": "npm:*"
+    "@types/webxr": "npm:*"
+    "@webgpu/types": "npm:*"
+    fflate: "npm:~0.8.2"
+    meshoptimizer: "npm:~0.18.1"
+  checksum: 10/51751fed7f86897fde0929511d26a4d24bc059e52b77cd1462389a90c6c757ca743bef4f4776f04a5e8effdac712b4b9bf946ca173b7de1132410c5691275c1b
   languageName: node
   linkType: hard
 
@@ -20937,6 +20958,13 @@ __metadata:
   version: 1.18.0
   resolution: "@types/webpack-env@npm:1.18.0"
   checksum: 10/dce226f63157a8792a5e0f01c86655489ac228c7082578a38b5fa230ba13ab6b1c31fb333368c739c0d359ca5bc58586e5116a468ea91a099c59e965d09c6d74
+  languageName: node
+  linkType: hard
+
+"@types/webxr@npm:*":
+  version: 0.5.20
+  resolution: "@types/webxr@npm:0.5.20"
+  checksum: 10/913dad1426e198f60aaa31d52bcefa69cddb620b5bb5ab201ccaf42867b55f1af3f3fcc8a0cb85ab8f92c2260adc503cb2cbf1a3cd217d16707bfa4fd12e1aea
   languageName: node
   linkType: hard
 
@@ -23626,6 +23654,13 @@ __metadata:
     "@webassemblyjs/ast": "npm:1.11.1"
     "@xtuc/long": "npm:4.2.2"
   checksum: 10/bd1cf7a0630bf2d003d9df004fca97f53026b39560d0629dc8019aed7e7cc38000d1cb78f7e70ea52fc0561a822bcc7683d48f839363a9d0cf16574f9cbd8c32
+  languageName: node
+  linkType: hard
+
+"@webgpu/types@npm:*":
+  version: 0.1.51
+  resolution: "@webgpu/types@npm:0.1.51"
+  checksum: 10/bc96807da8d92a0c10256191f6ab791cb8bc1682616bbbe04d65d3d4757687b095fc96766d9cfa59108ffec5bae11e39a8f6887a01eca0d839cb2d9a817f36d6
   languageName: node
   linkType: hard
 
@@ -32049,7 +32084,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"fflate@npm:^0.8.1":
+"fflate@npm:^0.8.1, fflate@npm:~0.8.2":
   version: 0.8.2
   resolution: "fflate@npm:0.8.2"
   checksum: 10/2bd26ba6d235d428de793c6a0cd1aaa96a06269ebd4e21b46c8fd1bd136abc631acf27e188d47c3936db090bf3e1ede11d15ce9eae9bffdc4bfe1b9dc66ca9cb
@@ -39055,6 +39090,13 @@ __metadata:
     "@types/node":
       optional: true
   checksum: 10/1893d226866058a32161ab069294a1a16975c765416a2b05165dfafba07cd958ca12503e35c621ffe736c62d935ccb1ce60cb723e2a9e0b85e02bb3236722ef6
+  languageName: node
+  linkType: hard
+
+"meshoptimizer@npm:~0.18.1":
+  version: 0.18.1
+  resolution: "meshoptimizer@npm:0.18.1"
+  checksum: 10/5cfef6918562b8363a51e92b6eafe81a684fe7b9e31de1c19a6e2068ca8edab745b3e8ef2f0190ecbcc2065134b5dc1de97e4514eb2157914762356c07f93b9f
   languageName: node
   linkType: hard
 
@@ -50172,6 +50214,13 @@ __metadata:
   version: 0.140.2
   resolution: "three@npm:0.140.2"
   checksum: 10/353f9289623ba93df24cf18eb5ec1eba85df3fe6e9e804a5eefc67ef0b1458a77d1ec118b0abdb85b123af569cf4cd7b3ea2a654eaec07e4f550415c77abb927
+  languageName: node
+  linkType: hard
+
+"three@npm:^0.171.0":
+  version: 0.171.0
+  resolution: "three@npm:0.171.0"
+  checksum: 10/ca66784004375cc6a476a40b4af3436510bec6037876195792a4edd70167105684fa3db066ac0c7ed4970d05cb0d4a64a4ac34e0f4b6bdd1bd79fa4728a09ce9
   languageName: node
   linkType: hard
 

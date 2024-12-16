@@ -29,6 +29,7 @@ import { type Constructor } from 'type-fest'
 import { RenderTree } from './tree/RenderTree.js'
 import Logger from './utils/Logger.js'
 import Stats from './three/stats.js'
+import SpeckleWebGPURenderer from './SpeckleWebGPURenderer.js'
 
 export class Viewer extends EventEmitter implements IViewer {
   /** Container and optional stats element */
@@ -42,7 +43,7 @@ export class Viewer extends EventEmitter implements IViewer {
   protected tree: WorldTree = new WorldTree()
   protected world: World = new World()
   public static readonly theAssets: Assets = new Assets()
-  public speckleRenderer: SpeckleRenderer
+  public speckleRenderer: SpeckleWebGPURenderer | SpeckleRenderer
   protected propertyManager: PropertyManager
 
   /** Misc members */
@@ -153,7 +154,7 @@ export class Viewer extends EventEmitter implements IViewer {
     this.clock = new Clock()
     this.inProgressOperations = 0
 
-    this.speckleRenderer = new SpeckleRenderer(this.tree, this)
+    this.speckleRenderer = new SpeckleWebGPURenderer(this.tree, this)
     this.speckleRenderer.create(this.container)
     window.addEventListener('resize', this.resize.bind(this), false)
 
@@ -184,15 +185,12 @@ export class Viewer extends EventEmitter implements IViewer {
     if (flags & UpdateFlags.RENDER) {
       this.speckleRenderer.needsRender = true
     }
-    if (flags & UpdateFlags.SHADOWS) {
-      this.speckleRenderer.shadowMapNeedsUpdate = true
-    }
+
     if (flags & UpdateFlags.CLIPPING_PLANES) {
       this.speckleRenderer.updateClippingPlanes()
     }
     if (flags & UpdateFlags.RENDER_RESET) {
       this.speckleRenderer.needsRender = true
-      this.speckleRenderer.resetPipeline()
     }
   }
 
@@ -224,10 +222,7 @@ export class Viewer extends EventEmitter implements IViewer {
 
   public async init(): Promise<void> {
     if (this.startupParams.environmentSrc) {
-      Assets.getEnvironment(
-        this.startupParams.environmentSrc,
-        this.speckleRenderer.renderer
-      )
+      Assets.getEnvironment(this.startupParams.environmentSrc)
         .then((value: Texture) => {
           this.speckleRenderer.indirectIBL = value
         })
@@ -262,11 +257,9 @@ export class Viewer extends EventEmitter implements IViewer {
 
   public query<T extends Query>(query: T): QueryArgsResultMap[T['operation']] | null {
     if (Queries.isPointQuery(query)) {
-      Queries.DefaultPointQuerySolver.setContext(this.speckleRenderer)
       return Queries.DefaultPointQuerySolver.solve(query)
     }
     if (Queries.isIntersectionQuery(query)) {
-      Queries.DefaultIntersectionQuerySolver.setContext(this.speckleRenderer)
       return Queries.DefaultIntersectionQuerySolver.solve(query)
     }
 
@@ -328,11 +321,9 @@ export class Viewer extends EventEmitter implements IViewer {
           const extension = this.getExtension(CameraController)
           if (extension) {
             extension.setCameraView([], false)
-            this.speckleRenderer.pipeline.render()
           }
         }
       }
-      Logger.log(this.getRenderer().renderingStats)
       Logger.log('ASYNC batch build time -> ', performance.now() - t0)
       this.requestRender(UpdateFlags.RENDER_RESET | UpdateFlags.SHADOWS)
       this.emit(ViewerEvent.LoadComplete, loader.resource)

@@ -7,43 +7,35 @@ import {
   DirectionalLight,
   DirectionalLightHelper,
   Group,
-  type Intersection,
   Material,
-  Mesh,
   Object3D,
   Plane,
-  RGBADepthPacking,
   Scene,
   Sphere,
   Spherical,
   // sRGBEncoding,
   Texture,
   Vector3,
-  VSMShadowMap,
   Vector2,
   PerspectiveCamera,
-  OrthographicCamera
+  OrthographicCamera,
+  Camera,
+  MeshStandardMaterial,
+  Mesh
 } from 'three'
 import { type Batch, type BatchUpdateRange, GeometryType } from './batching/Batch.js'
 import Batcher from './batching/Batcher.js'
-import { Geometry } from './converter/Geometry.js'
-import Input, { InputEvent } from './input/Input.js'
+import Input from './input/Input.js'
 import { Intersections } from './Intersections.js'
-import SpeckleDepthMaterial from './materials/SpeckleDepthMaterial.js'
-import SpeckleStandardMaterial from './materials/SpeckleStandardMaterial.js'
 import { NodeRenderView } from './tree/NodeRenderView.js'
 import { Viewer } from './Viewer.js'
 import { WorldTree, type TreeNode } from './tree/WorldTree.js'
 import {
   DefaultLightConfiguration,
   ObjectLayers,
-  type SelectionEvent,
   type SunLightConfiguration,
   ViewerEvent
 } from '../IViewer.js'
-import { Shadowcatcher } from './Shadowcatcher.js'
-import SpeckleMesh from './objects/SpeckleMesh.js'
-import { type ExtendedIntersection } from './objects/SpeckleRaycaster.js'
 import { BatchObject } from './batching/BatchObject.js'
 import { CameraEvent, type SpeckleCamera } from './objects/SpeckleCamera.js'
 import Materials, {
@@ -54,67 +46,20 @@ import Materials, {
 } from './materials/Materials.js'
 import { type MaterialOptions } from './materials/MaterialOptions.js'
 import { SpeckleMaterial } from './materials/SpeckleMaterial.js'
-import { SpeckleWebGLRenderer } from './objects/SpeckleWebGLRenderer.js'
 import { SpeckleTypeAllRenderables } from './loaders/GeometryConverter.js'
-import SpeckleInstancedMesh from './objects/SpeckleInstancedMesh.js'
 import { MeshBatch } from './batching/MeshBatch.js'
 import { RenderTree } from './tree/RenderTree.js'
-import { Pipeline } from './pipeline/Pipelines/Pipeline.js'
-import { DefaultPipeline } from './pipeline/Pipelines/DefaultPipeline.js'
-import { ProgressivePipeline } from './pipeline/Pipelines/ProgressivePipeline.js'
-import { BaseGPass, GPass } from './pipeline/Passes/GPass.js'
+import { WebGPURenderer } from 'three/webgpu'
 
-export class RenderingStats {
-  private renderTimeAcc = 0
-  private renderTimeSamples = 0
-  private readonly renderTimeMaxSamples = 500
-  private renderTimeStart = 0
-  public renderTime = 0
-
-  public objects: number = 0
-  public batchCount: number = 0
-  public drawCalls: number = 0
-  public trisCount: number = 0
-  public vertCount: number = 0
-
-  public batchDetails!: Array<{
-    drawCalls: number
-    minDrawCalls: number
-    tris: number
-    verts: number
-  }>
-
-  public frameStart() {
-    this.renderTimeStart = performance.now()
-  }
-  public frameEnd() {
-    this.renderTimeAcc += performance.now() - this.renderTimeStart
-    this.renderTimeSamples++
-    if (this.renderTimeSamples % this.renderTimeMaxSamples === 0) {
-      this.renderTime = this.renderTimeAcc / this.renderTimeSamples
-      this.renderTimeSamples = 0
-      this.renderTimeAcc = 0
-      // Logger.log(this.renderTime)
-    }
-  }
-}
-
-export default class SpeckleRenderer {
-  protected readonly SHOW_HELPERS = false
-  protected readonly IGNORE_ZERO_OPACITY_OBJECTS = true
-  public SHOW_BVH = false
-
-  protected _renderer: SpeckleWebGLRenderer
-  protected _renderinStats: RenderingStats
+export default class SpeckleWebGPURenderer {
+  protected _renderer: WebGPURenderer
   protected _scene: Scene
   protected _needsRender: boolean
   protected _intersections: Intersections
-  protected _shadowcatcher: Shadowcatcher
   protected _speckleCamera: SpeckleCamera | null = null
 
   protected container: HTMLElement
   protected rootGroup: Group
-  protected _pipeline: Pipeline
 
   protected sun: DirectionalLight
   protected sunConfiguration: SunLightConfiguration = DefaultLightConfiguration
@@ -134,7 +79,7 @@ export default class SpeckleRenderer {
 
   /********************************
    * Renderer and rendering flags */
-  public get renderer(): SpeckleWebGLRenderer {
+  public get renderer(): WebGPURenderer {
     return this._renderer
   }
 
@@ -142,18 +87,11 @@ export default class SpeckleRenderer {
     this._needsRender ||= value
   }
 
-  public set shadowMapNeedsUpdate(value: boolean) {
-    this._renderer.shadowMap.needsUpdate = value
-  }
-
   /**********************
    * Bounds and volumes */
   public get sceneBox(): Box3 {
     const bounds: Box3 = new Box3()
-    const batches = this.batcher.getBatches()
-    for (let k = 0; k < batches.length; k++) {
-      bounds.union(batches[k].bounds)
-    }
+    bounds.setFromObject(this.scene)
     return bounds
   }
 
@@ -184,9 +122,7 @@ export default class SpeckleRenderer {
   public set clippingPlanes(value: Plane[]) {
     this._clippingPlanes = value.map((value: Plane) => new Plane().copy(value))
     this.updateClippingPlanes()
-    this.renderer.shadowMap.needsUpdate = true
     this.needsRender = true
-    this.resetPipeline()
   }
 
   /****************
@@ -212,15 +148,10 @@ export default class SpeckleRenderer {
   }
 
   public set indirectIBLIntensity(value: number) {
-    /** Update envMap intensity for mesh geometry types only */
-    const batches = this.batcher.getBatches(undefined, GeometryType.MESH)
-    for (let k = 0; k < batches.length; k++) {
-      const materials: SpeckleStandardMaterial[] = batches[k]
-        .materials as SpeckleStandardMaterial[]
-      for (let k = 0; k < materials.length; k++) {
-        materials[k].envMapIntensity = value
-      }
-    }
+    this.rootGroup.traverse((obj: Object3D) => {
+      if (!(obj instanceof Mesh)) return
+      ;(obj.material as MeshStandardMaterial).envMapIntensity = value
+    })
   }
 
   /********
@@ -233,12 +164,9 @@ export default class SpeckleRenderer {
     this._speckleCamera = value
     this._speckleCamera.on(CameraEvent.Dynamic, () => {
       this._needsRender = true
-      this._pipeline instanceof ProgressivePipeline && this._pipeline.onStationaryEnd()
     })
     this._speckleCamera.on(CameraEvent.Stationary, () => {
       this._needsRender = true
-      this._pipeline instanceof ProgressivePipeline &&
-        this._pipeline.onStationaryBegin()
     })
     this._speckleCamera.on(CameraEvent.FrameUpdate, (needsUpdate: boolean) => {
       this.needsRender = needsUpdate
@@ -250,67 +178,14 @@ export default class SpeckleRenderer {
     return this._speckleCamera.renderingCamera
   }
 
-  /**********
-   * Pipeline */
-  public set pipeline(value: Pipeline) {
-    this._pipeline = value
-    this._pipeline.setClippingPlanes(this._clippingPlanes)
-    this._pipeline.reset()
-    this.resize()
-  }
-
-  public get pipeline(): Pipeline {
-    return this._pipeline
-  }
-
-  public get shadowcatcher(): Shadowcatcher | null {
-    return this._shadowcatcher
-  }
-
   /**************
    * Intersections */
   public get intersections(): Intersections {
     return this._intersections
   }
 
-  /*****************
-   * Rendering Stats */
-  public get renderingStats(): RenderingStats {
-    const batches = Object.values(this.batcher.batches)
-
-    this._renderinStats.objects = batches.reduce(
-      (a: number, c: Batch) => a + c.renderViews.length,
-      0
-    )
-    this._renderinStats.batchCount = batches.length
-    ;(this._renderinStats.drawCalls = batches.reduce(
-      (a: number, c: Batch) => a + c.drawCalls,
-      0
-    )),
-      (this._renderinStats.trisCount = batches.reduce(
-        (a: number, c: Batch) => a + c.triCount,
-        0
-      )),
-      (this._renderinStats.vertCount = batches.reduce(
-        (a: number, c: Batch) => a + c.vertCount,
-        0
-      )),
-      (this._renderinStats.batchDetails = batches.map((batch: Batch) => {
-        return {
-          type: batch.constructor.name,
-          objCount: batch.renderViews.length,
-          drawCalls: batch.drawCalls,
-          minDrawCalls: batch.minDrawCalls,
-          tris: batch.triCount,
-          verts: batch.vertCount
-        }
-      }))
-    return this._renderinStats
-  }
-
   public constructor(tree: WorldTree, viewer: Viewer /** TEMPORARY */) {
     this.tree = tree
-    this._renderinStats = new RenderingStats()
     this._scene = new Scene()
     this.rootGroup = new Group()
     this.rootGroup.name = 'ContentGroup'
@@ -322,87 +197,48 @@ export default class SpeckleRenderer {
   }
 
   public create(container: HTMLElement) {
-    this._renderer = new SpeckleWebGLRenderer({
-      antialias: true,
-      alpha: true,
-      preserveDrawingBuffer: true,
-      stencil: true
-    })
-    this._renderer.setClearColor(0xffffff, 0)
+    this._renderer = new WebGPURenderer({ antialias: true })
     this._renderer.setPixelRatio(window.devicePixelRatio)
-    // this._renderer.outputEncoding = sRGBEncoding
     this._renderer.toneMapping = ACESFilmicToneMapping
-    this._renderer.toneMappingExposure = 0.5
-    this._renderer.shadowMap.enabled = true
-    this._renderer.shadowMap.type = VSMShadowMap
-    this._renderer.shadowMap.autoUpdate = false
-    this._renderer.shadowMap.needsUpdate = true
-    // this._renderer.physicallyCorrectLights = true
+    this._renderer.toneMappingExposure = 1
+    // this._renderer.setAnimationLoop(this.render.bind(this))
 
     /** No autoclear. We're clearing ourselves */
-    this._renderer.autoClear = false
-    this._renderer.autoClearColor = false
-    this._renderer.autoClearDepth = false
-    this._renderer.autoClearStencil = false
+    // this._renderer.autoClear = false
+    // this._renderer.autoClearColor = false
+    // this._renderer.autoClearDepth = false
+    // this._renderer.autoClearStencil = false
 
     this.container = container
     this._renderer.setSize(container.offsetWidth, container.offsetHeight)
     container.appendChild(this._renderer.domElement)
 
     this.batcher = new Batcher(
-      this.renderer.capabilities.maxVertexUniforms,
-      this.renderer.capabilities.vertexTextures
+      1024, //this.renderer.capabilities.maxVertexUniforms,
+      true //this.renderer.capabilities.vertexTextures
     )
 
-    this._pipeline = new DefaultPipeline(this)
-
     this.input = new Input(this._renderer.domElement)
-    this.input.on(InputEvent.Click, this.onClick.bind(this))
-    this.input.on(InputEvent.DoubleClick, this.onDoubleClick.bind(this))
 
     this.addDirectLights()
-    if (this.SHOW_HELPERS) {
-      const helpers = new Group()
-      helpers.name = 'Helpers'
-      this._scene.add(helpers)
+    const helpers = new Group()
+    helpers.name = 'Helpers'
+    // this._scene.add(helpers)
 
-      const sceneBoxHelper = new Box3Helper(this.clippingVolume, new Color(0xff00ff))
-      sceneBoxHelper.name = 'SceneBoxHelper'
-      sceneBoxHelper.layers.set(ObjectLayers.PROPS)
-      helpers.add(sceneBoxHelper)
+    const sceneBoxHelper = new Box3Helper(this.clippingVolume, new Color(0xff00ff))
+    sceneBoxHelper.name = 'SceneBoxHelper'
+    sceneBoxHelper.layers.set(ObjectLayers.PROPS)
+    helpers.add(sceneBoxHelper)
 
-      const dirLightHelper = new DirectionalLightHelper(this.sun, 50, 0xff0000)
-      dirLightHelper.name = 'DirLightHelper'
-      dirLightHelper.layers.set(ObjectLayers.PROPS)
-      helpers.add(dirLightHelper)
+    const dirLightHelper = new DirectionalLightHelper(this.sun, 50, 0xff0000)
+    dirLightHelper.name = 'DirLightHelper'
+    dirLightHelper.layers.set(ObjectLayers.PROPS)
+    helpers.add(dirLightHelper)
 
-      const camHelper = new CameraHelper(this.sun.shadow.camera)
-      camHelper.name = 'CamHelper'
-      camHelper.layers.set(ObjectLayers.PROPS)
-      helpers.add(camHelper)
-    }
-
-    this._shadowcatcher = new Shadowcatcher(ObjectLayers.SHADOWCATCHER, [
-      ObjectLayers.STREAM_CONTENT_MESH
-    ])
-    let restoreVisibility: Record<string, BatchUpdateRange>
-    let opaque: Record<string, BatchUpdateRange>
-
-    this._shadowcatcher.shadowcatcherPass.onBeforeRender = () => {
-      restoreVisibility = this.batcher.saveVisiblity()
-      opaque = this.batcher.getOpaque()
-      this.batcher.applyVisibility(opaque)
-      this.batcher.overrideMaterial(
-        opaque,
-        this._shadowcatcher.shadowcatcherPass.drawDepthMaterial
-      )
-    }
-    this._shadowcatcher.shadowcatcherPass.onAfterRender = () => {
-      this.batcher.applyVisibility(restoreVisibility)
-      this.batcher.restoreMaterial(opaque)
-    }
-
-    this._scene.add(this._shadowcatcher.shadowcatcherMesh)
+    const camHelper = new CameraHelper(this.sun.shadow.camera)
+    camHelper.name = 'CamHelper'
+    camHelper.layers.set(ObjectLayers.PROPS)
+    helpers.add(camHelper)
   }
 
   public update(deltaTime: number) {
@@ -410,141 +246,14 @@ export default class SpeckleRenderer {
     this.batcher.update(deltaTime)
 
     this.renderingCamera.updateMatrixWorld(true)
-    this._renderer.updateRTEViewModel(this.renderingCamera)
-    this.updateRTEShadows()
-
-    this.updateTransforms()
-
-    this._pipeline.update(this.renderingCamera)
-
-    if (this.sunConfiguration.shadowcatcher && this._shadowcatcher) {
-      this._shadowcatcher.update(this._scene)
-    }
-  }
-
-  private updateRTEShadowBuffers(): boolean {
-    if (!this._renderer.shadowMap.needsUpdate) return false
-
-    this._renderer.RTEBuffers.shadowViewer.set(
-      this.sun.shadow.camera.matrixWorld.elements[12],
-      this.sun.shadow.camera.matrixWorld.elements[13],
-      this.sun.shadow.camera.matrixWorld.elements[14]
-    )
-    Geometry.DoubleToHighLowVector(
-      this._renderer.RTEBuffers.shadowViewer,
-      this._renderer.RTEBuffers.shadowViewerLow,
-      this._renderer.RTEBuffers.shadowViewerHigh
-    )
-
-    this._renderer.RTEBuffers.rteShadowViewModelMatrix.copy(
-      this.sun.shadow.camera.matrixWorldInverse
-    )
-    this._renderer.RTEBuffers.rteShadowViewModelMatrix.elements[12] = 0
-    this._renderer.RTEBuffers.rteShadowViewModelMatrix.elements[13] = 0
-    this._renderer.RTEBuffers.rteShadowViewModelMatrix.elements[14] = 0
-
-    // Lovely
-    this._renderer.RTEBuffers.rteShadowMatrix.set(
-      0.5,
-      0.0,
-      0.0,
-      0.5,
-      0.0,
-      0.5,
-      0.0,
-      0.5,
-      0.0,
-      0.0,
-      0.5,
-      0.5,
-      0.0,
-      0.0,
-      0.0,
-      1.0
-    )
-
-    this._renderer.RTEBuffers.rteShadowMatrix.multiply(
-      this.sun.shadow.camera.projectionMatrix
-    )
-    this._renderer.RTEBuffers.rteShadowMatrix.multiply(
-      this._renderer.RTEBuffers.rteShadowViewModelMatrix
-    )
-    return true
-  }
-
-  private updateRTEShadows() {
-    if (!this.updateRTEShadowBuffers()) return
-
-    const meshBatches: MeshBatch[] = this.batcher.getBatches(
-      undefined,
-      GeometryType.MESH
-    )
-    for (let k = 0; k < meshBatches.length; k++) {
-      const speckleMesh: SpeckleMesh | SpeckleInstancedMesh = meshBatches[k].mesh
-
-      /** Shadowmap depth material does not go thorugh the normal flow.
-       * It's onBeforeRender is not getting called That's why we're updating
-       * the RTE related uniforms manually here
-       */
-      speckleMesh.traverse((obj: Object3D) => {
-        const depthMaterial: SpeckleDepthMaterial =
-          obj.customDepthMaterial as SpeckleDepthMaterial
-        if (depthMaterial) {
-          depthMaterial.userData.uViewer_low.value.copy(
-            this._renderer.RTEBuffers.shadowViewerLow
-          )
-          depthMaterial.userData.uViewer_high.value.copy(
-            this._renderer.RTEBuffers.shadowViewerHigh
-          )
-          depthMaterial.userData.rteModelViewMatrix.value.copy(
-            this._renderer.RTEBuffers.rteShadowViewModelMatrix
-          )
-          depthMaterial.needsUpdate = true
-        }
-      })
-    }
-  }
-
-  private updateTransforms() {
-    const meshBatches: MeshBatch[] = this.batcher.getBatches(
-      undefined,
-      GeometryType.MESH
-    )
-    for (let k = 0; k < meshBatches.length; k++) {
-      const meshBatch: SpeckleMesh | SpeckleInstancedMesh = meshBatches[k].mesh
-      meshBatch.updateTransformsUniform()
-      meshBatch.traverse((obj: Object3D) => {
-        const depthMaterial: SpeckleDepthMaterial =
-          obj.customDepthMaterial as SpeckleDepthMaterial
-        if (depthMaterial) {
-          meshBatch.updateMaterialTransformsUniform(depthMaterial)
-        }
-      })
-    }
-  }
-
-  public resetPipeline() {
-    this._needsRender = true
-    this._pipeline.reset()
   }
 
   public render(): void {
-    if (this._renderOverride) {
-      this._renderOverride()
-      return
-    }
-
     if (!this._speckleCamera) return
 
     if (this._needsRender) {
-      this._renderinStats.frameStart()
-      this.batcher.render(this.renderer)
-      this._needsRender = this._pipeline.render()
-      this._renderinStats.frameEnd()
-
-      if (this.sunConfiguration.shadowcatcher && this._shadowcatcher) {
-        this._shadowcatcher.render(this._renderer)
-      }
+      void this.renderer.render(this.scene, this.renderingCamera as Camera)
+      this._needsRender = true
     }
   }
 
@@ -557,9 +266,6 @@ export default class SpeckleRenderer {
     width = Math.floor(width)
     height = Math.floor(height)
     this.renderer.setSize(width, height)
-    const dpr = this._renderer.getPixelRatio()
-    this._pipeline.resize(width * dpr, height * dpr)
-    this._pipeline.reset()
     this._needsRender = true
   }
 
@@ -570,16 +276,12 @@ export default class SpeckleRenderer {
     subtreeGroup.layers.set(ObjectLayers.STREAM_CONTENT)
     this.rootGroup.add(subtreeGroup)
 
-    const generator = this.batcher.makeBatches(
-      this.tree,
-      renderTree,
-      SpeckleTypeAllRenderables
-    )
+    const generator = this.batcher.makeUnBatches(renderTree, SpeckleTypeAllRenderables)
     let currentBatchCount = 0
     let lastBatchCount = -1
     this._renderOverride = () => {
       if (currentBatchCount > lastBatchCount) {
-        this._pipeline.render()
+        void this.renderer.render(this.scene, this.renderingCamera as Camera)
         lastBatchCount = currentBatchCount
       }
     }
@@ -587,10 +289,10 @@ export default class SpeckleRenderer {
     for await (const batch of generator) {
       if (!batch) continue
 
-      this.addBatch(batch, subtreeGroup)
-      if (batch.geometryType === GeometryType.MESH) {
-        this.updateDirectLights()
-      }
+      subtreeGroup.add(batch)
+      batch.geometry.computeBoundingBox()
+      this.viewer.World.expandWorld(batch.geometry.boundingBox || new Box3())
+      this.updateDirectLights()
 
       if (this.cancel[renderTree.id]) {
         void generator.return()
@@ -605,44 +307,13 @@ export default class SpeckleRenderer {
     this._renderOverride = null
     this.updateHelpers()
 
-    /** We'll just update the shadowcatcher after all batches are loaded */
-    this.updateShadowCatcher()
     this.updateClippingPlanes()
     if (this._speckleCamera) this._speckleCamera.updateCameraPlanes(this.sceneBox)
     delete this.cancel[renderTree.id]
   }
 
-  private addBatch(batch: Batch, parent: Object3D) {
-    const batchRenderable = batch.renderObject
-    parent.add(batchRenderable)
-    if (
-      batchRenderable instanceof SpeckleMesh ||
-      batchRenderable instanceof SpeckleInstancedMesh
-    ) {
-      if (batchRenderable.TAS.bvhHelper) parent.add(batchRenderable.TAS.bvhHelper)
-    }
-    if (batch.geometryType === GeometryType.MESH) {
-      batchRenderable.traverse((obj: Object3D) => {
-        if (obj instanceof Mesh) {
-          const material = Array.isArray(obj.material) ? obj.material[0] : obj.material
-
-          obj.castShadow = !material.transparent
-          obj.receiveShadow = !material.transparent
-          obj.customDepthMaterial = new SpeckleDepthMaterial(
-            {
-              depthPacking: RGBADepthPacking
-            },
-            ['USE_RTE', 'ALPHATEST_REJECTION']
-          )
-        }
-      })
-    }
-    this.viewer.World.expandWorld(batch.bounds)
-  }
-
   public removeRenderTree(subtreeId: string) {
     this.rootGroup.remove(this.rootGroup.getObjectByName(subtreeId) as Object3D)
-    this.updateShadowCatcher()
 
     const batches = this.batcher.getBatches(subtreeId)
     batches.forEach((value) => {
@@ -841,21 +512,6 @@ export default class SpeckleRenderer {
         }
       }
     })
-    this._pipeline.setClippingPlanes(planes)
-    this._shadowcatcher?.updateClippingPlanes(planes)
-  }
-
-  public updateShadowCatcher() {
-    if (this.sunConfiguration.shadowcatcher !== undefined)
-      this._shadowcatcher.shadowcatcherMesh.visible =
-        this.sunConfiguration.shadowcatcher
-    if (this.sunConfiguration.shadowcatcher) {
-      this._shadowcatcher.bake(
-        this.clippingVolume,
-        this._renderer.capabilities.maxTextureSize
-      )
-      this.needsRender = true
-    }
   }
 
   private addDirectLights() {
@@ -948,7 +604,6 @@ export default class SpeckleRenderer {
     this.sun.shadow.camera.near = Math.abs(lightSpaceBox.max.z)
     this.sun.shadow.camera.far = Math.abs(lightSpaceBox.min.z)
     this.sun.shadow.camera.updateProjectionMatrix()
-    this.renderer.shadowMap.needsUpdate = true
     this.updateHelpers()
   }
 
@@ -958,196 +613,10 @@ export default class SpeckleRenderer {
       this.indirectIBLIntensity = config.indirectLightIntensity
     }
     this.updateDirectLights()
-    this.updateShadowCatcher()
     this.viewer.emit(ViewerEvent.LightConfigUpdated, { ...config })
   }
 
-  private updateHelpers() {
-    if (this.SHOW_HELPERS) {
-      ;(this._scene.getObjectByName('CamHelper') as CameraHelper).update()
-      // Thank you prettier, this looks so much better
-      ;(this._scene.getObjectByName('SceneBoxHelper') as Box3Helper).box.copy(
-        this.clippingVolume
-      )
-      ;(
-        this._scene.getObjectByName('DirLightHelper') as DirectionalLightHelper
-      ).update()
-    }
-  }
-
-  public queryHits(
-    results: Array<ExtendedIntersection>
-  ): Array<{ node: TreeNode; point: Vector3 }> | null {
-    const rvs = []
-    const points = []
-    for (let k = 0; k < results.length; k++) {
-      const rv = this.renderViewFromIntersection(results[k])
-      if (rv) {
-        rvs.push(rv)
-        points.push(results[k].point)
-      }
-    }
-
-    /** Batch rejected picking. This only happens with hidden lines */
-    if (rvs.length === 0) {
-      return null
-    }
-
-    const queryResult = []
-    for (let k = 0; k < rvs.length; k++) {
-      const hitId = rvs[k].renderData.id
-      const subtreeId = rvs[k].renderData.subtreeId
-      const hitNodes = this.tree.findId(hitId, subtreeId)
-      if (!hitNodes) continue
-
-      const hitNode = hitNodes[0]
-      let parentNode = hitNode
-      while (!parentNode.model.atomic && parentNode.parent) {
-        parentNode = parentNode.parent
-      }
-      queryResult.push({ node: parentNode, point: points[k] })
-    }
-    return queryResult
-  }
-
-  public queryHitIds(
-    results: Array<ExtendedIntersection>
-  ): Array<{ nodeId: string; point: Vector3 }> | null {
-    const queryResult = []
-    for (let k = 0; k < results.length; k++) {
-      let rv: NodeRenderView | null = results[k].batchObject
-        ?.renderView as NodeRenderView
-      if (!rv) {
-        const index: number | undefined | null =
-          results[k].faceIndex !== undefined ? results[k].faceIndex : results[k].index
-        if (index) rv = this.batcher.getRenderView(results[k].object.uuid, index)
-      }
-      if (rv) {
-        queryResult.push({ nodeId: rv.renderData.id, point: results[k].point })
-      }
-    }
-
-    /** Batch rejected picking. This only happens with hidden lines */
-    if (queryResult.length === 0) {
-      return null
-    }
-
-    return queryResult
-  }
-
-  // TO DO: Maybe need a better way
-  public renderViewFromIntersection(
-    intersection: ExtendedIntersection
-  ): NodeRenderView | null {
-    let rv = null
-    if (intersection.batchObject) {
-      rv = intersection.batchObject.renderView
-      const material = (intersection.object as SpeckleMesh).getBatchObjectMaterial(
-        intersection.batchObject
-      )
-      if (material && material.opacity === 0 && this.IGNORE_ZERO_OPACITY_OBJECTS)
-        return null
-    } else {
-      const index =
-        intersection.faceIndex !== undefined && intersection.faceIndex !== null
-          ? intersection.faceIndex
-          : intersection.index !== undefined && intersection.index !== null
-          ? intersection.index
-          : undefined
-      if (index !== undefined) {
-        rv = this.batcher.getRenderView(intersection.object.uuid, index)
-        if (rv) {
-          const material = this.batcher.getRenderViewMaterial(
-            intersection.object.uuid,
-            index
-          )
-          if (material && material.opacity === 0 && this.IGNORE_ZERO_OPACITY_OBJECTS)
-            return null
-        }
-      }
-    }
-
-    return rv
-  }
-
-  private onClick(e: Vector2 & { multiSelect: boolean; event: PointerEvent }) {
-    if (!this.renderingCamera) return
-
-    const results: Array<Intersection> | null = this._intersections.intersect(
-      this._scene,
-      this.renderingCamera,
-      e,
-      undefined,
-      true,
-      this.clippingVolume
-    )
-
-    if (!results) {
-      this.viewer.emit(ViewerEvent.ObjectClicked, null)
-      return
-    }
-
-    let multiSelect = false
-    if (e.multiSelect) multiSelect = true
-    const queryResults = this.queryHits(results)
-    if (!queryResults) {
-      this.viewer.emit(
-        ViewerEvent.ObjectClicked,
-        !multiSelect ? null : { multiple: true, event: e.event }
-      )
-      return
-    }
-
-    const selectionInfo = {
-      multiple: multiSelect,
-      event: e.event,
-      hits: queryResults.map((value) => {
-        return {
-          node: value.node,
-          point: value.point
-        }
-      })
-    } as SelectionEvent
-    this.viewer.emit(ViewerEvent.ObjectClicked, selectionInfo)
-  }
-
-  private onDoubleClick(e: Vector2 & { multiSelect: boolean; event: PointerEvent }) {
-    if (!this.renderingCamera) return
-
-    const results: Array<Intersection> | null = this._intersections.intersect(
-      this._scene,
-      this.renderingCamera,
-      e,
-      undefined,
-      true,
-      this.clippingVolume
-    )
-    if (!results) {
-      this.viewer.emit(ViewerEvent.ObjectDoubleClicked, null)
-      return
-    }
-
-    let multiSelect = false
-    if (e.multiSelect) multiSelect = true
-
-    const queryResults = this.queryHits(results)
-    if (!queryResults) {
-      this.viewer.emit(ViewerEvent.ObjectDoubleClicked, null)
-      return
-    }
-
-    const selectionInfo = {
-      multiple: multiSelect,
-      hits: queryResults.map((value) => {
-        return {
-          node: value.node,
-          point: value.point
-        }
-      })
-    } as SelectionEvent
-
-    this.viewer.emit(ViewerEvent.ObjectDoubleClicked, selectionInfo)
-  }
+  private updateHelpers() {}
 
   public boxFromObjects(objectIds: string[]): Box3 {
     let box = new Box3()
@@ -1268,11 +737,7 @@ export default class SpeckleRenderer {
   }
 
   public enableLayers(layers: ObjectLayers[], value: boolean) {
-    this._pipeline.passes.forEach((pass: GPass) => {
-      if (!(pass instanceof BaseGPass)) return
-      layers.forEach((layer: ObjectLayers) => {
-        pass.enableLayer(layer, value)
-      })
-    })
+    layers
+    value
   }
 }

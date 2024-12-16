@@ -45,26 +45,26 @@ const createViewer = async (containerName: string, stream: string) => {
   await viewer.init()
 
   const cameraController = viewer.createExtension(CameraController)
-  const selection = viewer.createExtension(ExtendedSelection)
-  selection.init()
-  const sections = viewer.createExtension(SectionTool)
-  viewer.createExtension(SectionOutlines)
-  const measurements = viewer.createExtension(MeasurementsExtension)
-  const filtering = viewer.createExtension(FilteringExtension)
-  const explode = viewer.createExtension(ExplodeExtension)
-  const diff = viewer.createExtension(DiffExtension)
-  viewer.createExtension(ViewModes)
-  viewer.createExtension(ViewModesKeys)
-  const boxSelect = viewer.createExtension(BoxSelection)
-  boxSelect.realtimeSelection = false
+  // const selection = viewer.createExtension(ExtendedSelection)
+  // selection.init()
+  // const sections = viewer.createExtension(SectionTool)
+  // viewer.createExtension(SectionOutlines)
+  // const measurements = viewer.createExtension(MeasurementsExtension)
+  // const filtering = viewer.createExtension(FilteringExtension)
+  // const explode = viewer.createExtension(ExplodeExtension)
+  // const diff = viewer.createExtension(DiffExtension)
+  // viewer.createExtension(ViewModes)
+  // viewer.createExtension(ViewModesKeys)
+  // const boxSelect = viewer.createExtension(BoxSelection)
+  // boxSelect.realtimeSelection = false
   // const rotateCamera = viewer.createExtension(RotateCamera)
-  cameraController // use it
-  selection // use it
-  sections // use it
-  measurements // use it
-  filtering // use it
-  explode // use it
-  diff // use it
+  // cameraController // use it
+  // selection // use it
+  // sections // use it
+  // measurements // use it
+  // filtering // use it
+  // explode // use it
+  // diff // use it
   // rotateCamera // use it
   // boxSelect // use it
 
@@ -79,7 +79,6 @@ const createViewer = async (containerName: string, stream: string) => {
   })
 
   viewer.on(ViewerEvent.LoadComplete, async () => {
-    console.warn(viewer.getRenderer().renderingStats)
     Object.assign(sandbox.sceneParams.worldSize, viewer.World.worldSize)
     Object.assign(sandbox.sceneParams.worldOrigin, viewer.World.worldOrigin)
     sandbox.refresh()
@@ -111,7 +110,7 @@ const getStream = () => {
     // prettier-ignore
     // 'https://app.speckle.systems/streams/da9e320dad/commits/5388ef24b8?c=%5B-7.66134,10.82932,6.41935,-0.07739,-13.88552,1.8697,0,1%5D'
     // Revit sample house (good for bim-like stuff with many display meshes)
-    // 'https://app.speckle.systems/streams/da9e320dad/commits/5388ef24b8'
+    'https://app.speckle.systems/streams/da9e320dad/commits/5388ef24b8'
     // 'https://latest.speckle.systems/streams/c1faab5c62/commits/ab1a1ab2b6'
     // 'https://app.speckle.systems/streams/da9e320dad/commits/5388ef24b8'
     // 'https://latest.speckle.systems/streams/58b5648c4d/commits/60371ecb2d'
@@ -457,7 +456,7 @@ const getStream = () => {
     // 'https://speckle.xyz/streams/27e89d0ad6/commits/5ed4b74252'
 
     // DUI3 Mesh Colors
-    'https://app.speckle.systems/projects/93200a735d/models/cbacd3eaeb@344a397239'
+    // 'https://app.speckle.systems/projects/93200a735d/models/cbacd3eaeb@344a397239'
 
     // Instance toilets
     // 'https://app.speckle.systems/projects/e89b61b65c/models/2a0995f124'

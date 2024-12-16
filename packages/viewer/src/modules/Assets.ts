@@ -1,18 +1,8 @@
-import {
-  Texture,
-  WebGLRenderer,
-  TextureLoader,
-  Color,
-  DataTexture,
-  DataTextureLoader,
-  Matrix4,
-  Euler
-} from 'three'
+import { Texture, TextureLoader, Color, DataTexture, DataTextureLoader } from 'three'
 import { EXRLoader } from 'three/examples/jsm/loaders/EXRLoader.js'
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js'
 import { FontLoader, Font } from 'three/examples/jsm/loaders/FontLoader.js'
 import { type Asset, AssetType } from '../IViewer.js'
-import { RotatablePMREMGenerator } from './objects/RotatablePMREMGenerator.js'
 import Logger from './utils/Logger.js'
 
 export class Assets {
@@ -39,25 +29,9 @@ export class Assets {
     }
   }
 
-  private static hdriToPMREM(renderer: WebGLRenderer, hdriTex: Texture): Texture {
-    const generator = new RotatablePMREMGenerator(renderer)
-    const mat = new Matrix4().makeRotationFromEuler(
-      new Euler(-Math.PI * 0.5, 0, -Math.PI * 0.5)
-    )
-    generator.compileProperEquirectShader(mat)
-    const pmremRT = generator.fromEquirectangular(hdriTex)
-    generator.dispose()
-    return pmremRT.texture
-  }
-
-  public static getEnvironment(
-    asset: Asset,
-    renderer: WebGLRenderer
-  ): Promise<Texture> {
+  public static getEnvironment(asset: Asset): Promise<Texture> {
     if (this._cache[asset.id]) {
-      return Promise.resolve(
-        Assets.hdriToPMREM(renderer, this._cache[asset.id] as Texture)
-      )
+      return Promise.resolve(this._cache[asset.id] as Texture)
     }
 
     return new Promise<Texture>((resolve, reject) => {
@@ -67,11 +41,11 @@ export class Assets {
           asset.src,
           (texture) => {
             this._cache[asset.id] = texture
-            resolve(Assets.hdriToPMREM(renderer, texture))
+            resolve(this._cache[asset.id] as Texture)
           },
           undefined,
-          (error: ErrorEvent) => {
-            reject(`Loading asset ${asset.id} failed ${error.message}`)
+          (error: unknown) => {
+            reject(`Loading asset ${asset.id} failed ${error}`)
           }
         )
       } else {
@@ -109,8 +83,8 @@ export class Assets {
               resolve(this._cache[asset.id] as Texture)
             },
             undefined,
-            (error: ErrorEvent) => {
-              reject(`Loading asset ${asset.id} failed ${error.message}`)
+            (error: unknown) => {
+              reject(`Loading asset ${asset.id} failed ${error}`)
             }
           )
         } else {
@@ -139,8 +113,8 @@ export class Assets {
           resolve(font)
         },
         undefined,
-        (error: ErrorEvent) => {
-          reject(`Loading asset ${srcUrl} failed ${error.message}`)
+        (error: unknown) => {
+          reject(`Loading asset ${srcUrl} failed ${error}`)
         }
       )
     })

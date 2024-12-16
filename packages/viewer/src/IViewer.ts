@@ -11,6 +11,7 @@ import { Loader } from './modules/loaders/Loader.js'
 import { type Constructor } from 'type-fest'
 import type { Vector3Like } from './modules/batching/BatchObject.js'
 import type { FilteringState } from './modules/extensions/FilteringExtension.js'
+import SpeckleWebGPURenderer from './modules/SpeckleWebGPURenderer.js'
 
 export type SpeckleReference = {
   referencedId: string
@@ -198,7 +199,7 @@ export interface IViewer {
   getWorldTree(): WorldTree
   query<T extends Query>(query: T): QueryArgsResultMap[T['operation']] | null
 
-  getRenderer(): SpeckleRenderer
+  getRenderer(): SpeckleRenderer | SpeckleWebGPURenderer
   getContainer(): HTMLElement
 
   createExtension<T extends Extension>(type: Constructor<T>): T

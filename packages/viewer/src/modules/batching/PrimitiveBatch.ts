@@ -397,11 +397,15 @@ export abstract class PrimitiveBatch implements Batch {
   ): { minIndex: number; maxIndex: number }
 
   protected updateGradientIndexBuffer(rangeMin?: number, rangeMax?: number): void {
-    this.gradientIndexBuffer.updateRange = {
-      offset: rangeMin !== undefined ? rangeMin : 0,
-      count:
-        rangeMin !== undefined && rangeMax !== undefined ? rangeMax - rangeMin + 1 : -1
-    }
+    this.gradientIndexBuffer.updateRanges = [
+      {
+        start: rangeMin !== undefined ? rangeMin : 0,
+        count:
+          rangeMin !== undefined && rangeMax !== undefined
+            ? rangeMax - rangeMin + 1
+            : -1
+      }
+    ]
     this.gradientIndexBuffer.needsUpdate = true
     this.primitive.geometry.attributes['gradientIndex'].needsUpdate = true
   }

@@ -1,4 +1,12 @@
-import { Color, DoubleSide, FrontSide, Material, Texture, Vector2 } from 'three'
+import {
+  Color,
+  DoubleSide,
+  FrontSide,
+  Material,
+  MeshStandardMaterial,
+  Texture,
+  Vector2
+} from 'three'
 import { GeometryType } from '../batching/Batch.js'
 import { type TreeNode } from '../tree/WorldTree.js'
 import { NodeRenderView } from '../tree/NodeRenderView.js'
@@ -556,36 +564,30 @@ export default class Materials {
   }
 
   private async createDefaultNullMaterials() {
-    this.materialMap[Materials.NullRenderMaterialHash] = new SpeckleStandardMaterial(
-      {
-        color: 0x7f7f7f,
-        emissive: 0x0,
-        roughness: 1,
-        metalness: 0,
-        side: DoubleSide
-      },
-      ['USE_RTE']
-    )
+    this.materialMap[Materials.NullRenderMaterialHash] = new MeshStandardMaterial({
+      color: 0x7f7f7f,
+      emissive: 0x0,
+      roughness: 1,
+      metalness: 0,
+      side: DoubleSide
+    })
     ;(
-      this.materialMap[Materials.NullRenderMaterialHash] as SpeckleStandardMaterial
+      this.materialMap[Materials.NullRenderMaterialHash] as MeshStandardMaterial
     ).color.convertSRGBToLinear()
 
     this.materialMap[Materials.NullRenderMaterialVertexColorsHash] =
-      new SpeckleStandardMaterial(
-        {
-          color: 0xffffff,
-          emissive: 0x0,
-          roughness: 1,
-          metalness: 0,
-          side: DoubleSide,
-          vertexColors: true
-        },
-        ['USE_RTE']
-      )
+      new MeshStandardMaterial({
+        color: 0xffffff,
+        emissive: 0x0,
+        roughness: 1,
+        metalness: 0,
+        side: DoubleSide,
+        vertexColors: true
+      })
     ;(
       this.materialMap[
         Materials.NullRenderMaterialVertexColorsHash
-      ] as SpeckleStandardMaterial
+      ] as MeshStandardMaterial
     ).color.convertSRGBToLinear()
 
     const hash = Materials.NullDisplayStyleHash // So prettier doesn't fuck up everything
@@ -702,24 +704,20 @@ export default class Materials {
   }
 
   private makeMeshMaterial(materialData: RenderMaterial): Material {
-    const mat: SpeckleStandardMaterial = new SpeckleStandardMaterial(
-      {
-        color: materialData.color,
-        emissive: 0x0, // materialData.emissive. Disabling this for now
-        roughness: materialData.roughness,
-        metalness: materialData.metalness,
-        opacity: materialData.opacity,
-        side: DoubleSide
-      },
-      ['USE_RTE']
-    )
+    const mat: MeshStandardMaterial = new MeshStandardMaterial({
+      color: materialData.color,
+      emissive: 0x0, // materialData.emissive. Disabling this for now
+      roughness: materialData.roughness,
+      metalness: materialData.metalness,
+      opacity: materialData.opacity,
+      side: DoubleSide
+    })
     mat.vertexColors = materialData.vertexColors
     mat.transparent = mat.opacity < 1 ? true : false
     mat.depthWrite = mat.transparent ? false : true
     mat.clipShadows = true
     mat.color.convertSRGBToLinear()
     mat.emissive.convertSRGBToLinear()
-    mat.updateArtificialRoughness(Materials.DEFAULT_ARTIFICIAL_ROUGHNESS)
     return mat
   }
 
