@@ -1,5 +1,12 @@
 <template>
   <div>
+    <Portal to="right-sidebar">
+      <WorkspaceSidebar
+        v-if="workspace"
+        :workspace-info="workspace"
+        @show-settings-dialog="onShowSettingsDialog"
+      />
+    </Portal>
     <div v-if="workspaceInvite" class="flex justify-center">
       <WorkspaceInviteBlock :invite="workspaceInvite" />
     </div>
@@ -15,16 +22,16 @@
         v-if="workspace"
         :icon="Squares2X2Icon"
         :workspace-info="workspace"
-        @show-invite-dialog="showInviteDialog = true"
         @show-settings-dialog="onShowSettingsDialog"
         @show-move-projects-dialog="showMoveProjectsDialog = true"
+        @show-new-project-dialog="openNewProject = true"
       />
       <div class="flex flex-col gap-4 mt-4">
         <div class="flex flex-row gap-2 sm:items-center justify-between">
           <FormTextInput
             name="modelsearch"
             :show-label="false"
-            placeholder="Search..."
+            :placeholder="searchPlaceholder"
             :custom-icon="MagnifyingGlassIcon"
             color="foundation"
             wrapper-classes="grow md:grow-0 md:w-60"
@@ -32,30 +39,6 @@
             v-bind="bind"
             v-on="on"
           />
-          <div class="flex gap-2">
-            <!--- Conditionally apply tooltip only for non-admins and avoid v-tippy reactivity bug -->
-            <div v-if="!isWorkspaceAdmin" v-tippy="'You must be a workspace admin'">
-              <FormButton
-                :disabled="!isWorkspaceAdmin"
-                class="hidden md:block"
-                color="outline"
-                @click="showMoveProjectsDialog = true"
-              >
-                Move projects
-              </FormButton>
-            </div>
-            <FormButton
-              v-else
-              class="hidden md:block"
-              color="subtle"
-              @click="showMoveProjectsDialog = true"
-            >
-              Move projects
-            </FormButton>
-            <FormButton v-if="!isWorkspaceGuest" @click="openNewProject = true">
-              New project
-            </FormButton>
-          </div>
         </div>
       </div>
 
@@ -139,6 +122,7 @@ graphql(`
     ...BillingActions_Workspace
     ...MoveProjectsDialog_Workspace
     ...WorkspaceHeader_Workspace
+    ...WorkspaceSidebar_Workspace
     ...WorkspaceMixpanelUpdateGroup_Workspace
     projects {
       ...WorkspaceProjectList_ProjectCollection
@@ -238,6 +222,11 @@ const showEmptyState = computed(() => {
   if (search.value) return false
 
   return projects.value && !projects.value?.items?.length
+})
+
+const searchPlaceholder = computed(() => {
+  const count = projects.value?.totalCount || 0
+  return count > 0 ? `Search in ${count} projects...` : 'Search...'
 })
 
 const showLoadingBar = computed(() => {

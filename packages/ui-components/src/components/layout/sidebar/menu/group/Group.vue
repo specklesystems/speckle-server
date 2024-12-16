@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col">
+  <div class="flex flex-col group">
     <div
       v-if="title"
       class="h-8 flex items-center justify-between select-none rounded-md"
@@ -20,7 +20,7 @@
         >
           <slot name="title-icon"></slot>
         </div>
-        <div class="flex flex-1 items-center justify-between truncate">
+        <div class="flex flex-1 items-center truncate">
           <h6 class="font-semibold text-foreground-2 truncate text-body-2xs pr-2">
             {{ title }}
           </h6>
