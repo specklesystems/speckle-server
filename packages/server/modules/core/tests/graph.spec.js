@@ -363,7 +363,10 @@ describe('GraphQL API Core @core-api', () => {
         const res = await sendRequest(userA.token, {
           query: 'mutation($user:UserUpdateInput!) { userUpdate( user: $user) } ',
           variables: {
-            user: { name: 'Miticå', bio: 'He never really knows what he is doing.' }
+            user: {
+              name: 'test user updated',
+              bio: 'He never really knows what he is doing.'
+            }
           }
         })
         expect(res).to.be.json
@@ -1215,7 +1218,7 @@ describe('GraphQL API Core @core-api', () => {
         expect(res).to.be.json
         expect(res.body.errors).to.not.exist
         expect(res.body.data).to.have.property('user')
-        expect(res.body.data.user.name).to.equal('Miticå')
+        expect(res.body.data.user.name).to.equal('test user updated')
         expect(res.body.data.user.email).to.equal('d.1@speckle.systems')
         expect(res.body.data.user.role).to.equal(Roles.Server.Admin)
       })

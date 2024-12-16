@@ -10,6 +10,7 @@ import {
 } from '@/modules/core/repositories/objects'
 import { createObjectsFactory } from '@/modules/core/services/objects/management'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
+import coreModule from '@/modules/core'
 
 type GetObjectChildrenQueryParams = Parameters<
   ReturnType<typeof getObjectChildrenQueryFactory>
@@ -99,6 +100,10 @@ export = {
         Roles.Stream.Contributor,
         context.resourceAccessRules
       )
+
+      await coreModule.executeHooks?.('onCreateObjectRequest', {
+        projectId: args.objectInput.streamId
+      })
 
       const projectDB = await getProjectDbClient({
         projectId: args.objectInput.streamId

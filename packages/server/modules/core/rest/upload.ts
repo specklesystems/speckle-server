@@ -20,11 +20,12 @@ import {
 import { validatePermissionsWriteStreamFactory } from '@/modules/core/services/streams/auth'
 import { authorizeResolver, validateScopes } from '@/modules/shared'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
+import { ExecuteHooks } from '@/modules/core/hooks'
 
 const MAX_FILE_SIZE = maximumObjectUploadFileSizeMb() * 1024 * 1024
 const { FF_NO_CLOSURE_WRITES } = getFeatureFlags()
 
-export default (app: Router) => {
+export default (app: Router, { executeHooks }: { executeHooks: ExecuteHooks }) => {
   const validatePermissionsWriteStream = validatePermissionsWriteStreamFactory({
     validateScopes,
     authorizeResolver
@@ -62,6 +63,10 @@ export default (app: Router) => {
     if (!hasStreamAccess.result) {
       return res.status(hasStreamAccess.status).end()
     }
+
+    await executeHooks('onCreateObjectRequest', {
+      projectId: req.params.streamId
+    })
 
     const projectDb = await getProjectDbClient({ projectId: req.params.streamId })
 
