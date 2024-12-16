@@ -2,7 +2,7 @@ import { DbClient, getDbClients } from '@/clients/knex.js'
 import { logger } from '@/observability/logging.js'
 import { databaseMonitorCollectionPeriodSeconds } from '@/utils/env.js'
 import { join } from 'lodash-es'
-import { Histogram, Registry } from 'prom-client'
+import { Counter, Histogram, Registry } from 'prom-client'
 import prometheusClient from 'prom-client'
 import { init as commits } from '@/observability/metrics/commits.js'
 import { init as dbSize } from '@/observability/metrics/dbSize.js'
@@ -84,6 +84,13 @@ function initMonitoringMetrics(params: {
     labelNames
   })
 
+  const selfMonitorErrors = new Counter({
+    name: join([namePrefix, 'self_monitor_errors_monitoring_metrics'], '_'),
+    help: 'The number of errors encountered while collecting monitoring metrics.',
+    registers,
+    labelNames
+  })
+
   const collect = async () => {
     const dbClients = await getDbClients()
 
@@ -98,6 +105,7 @@ function initMonitoringMetrics(params: {
         try {
           await collectMetric({ dbClients, mainDbClient, labels })
         } catch (err) {
+          selfMonitorErrors.inc(labels)
           logger.error({ err }, 'Failed to collect a metric')
           // Continue collecting other metrics
         }
