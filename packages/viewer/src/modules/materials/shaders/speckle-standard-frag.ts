@@ -138,14 +138,16 @@ varying vec3 vWorldNormal;
 #include <logdepthbuf_pars_fragment>
 #include <clipping_planes_pars_fragment>
 
-const float TERR_HEIGHT = 26.0;
+uniform float height;
+uniform float minSnow;
+uniform float maxSnow;
 const vec3 COLOR_SNOW = vec3(1.0,1.0,1.1) * 2.2;
 const vec3 COLOR_ROCK = vec3(0.0,0.0,0.1);
 
-vec3 terr_color(in vec3 p, in vec3 n, in vec3 underColor) {
+vec3 terr_color(in vec3 p, in vec3 n, in vec3 underColor, in float _min, in float _max, in vec3 snowColor) {
     float slope = 1.0-dot(n,vec3(0.,0.,1.));     
-    vec3 ret = mix(COLOR_SNOW,underColor,smoothstep(0.0,0.2,slope*slope));
-    ret = mix(ret,COLOR_SNOW,saturate(smoothstep(0.6,0.8,slope+(p.z-TERR_HEIGHT*0.5)*0.05)));
+    vec3 ret = mix(snowColor,underColor,smoothstep(_min,_max,slope*slope));
+    ret = mix(ret,snowColor,saturate(smoothstep(0.1,0.2,slope+(p.z-height*0.5)*0.05)));
     return ret;
 }
 
@@ -160,7 +162,6 @@ void main() {
     #ifdef OBJECTSPACE_NORMALMAP
 
         normal = texture2D( normalMap, vUv ).xyz * 2.0 - 1.0; // overrides both flatShading and attribute normals
-
         #ifdef FLIP_SIDED
 
             normal = - normal;
@@ -195,9 +196,10 @@ void main() {
         normal = perturbNormalArb( - vViewPosition, normal, dHdxy_fwd(), faceDirection );
 
     #endif
-    vec3 snowColor = terr_color(vWorldPosition, inverseTransformDirection(normal, viewMatrix), diffuseColor.rgb);
+    vec3 snowColor = terr_color(vWorldPosition, inverseTransformDirection(normal, viewMatrix), diffuseColor.rgb, minSnow, maxSnow, COLOR_SNOW);
+
     float snowAmount = step(0.9, snowColor.x);
-    normal = mix(normal, vec3(0.5,0.5,1), snowAmount);
+    normal = mix(normalize(vNormal), normal, snowAmount);
     diffuseColor.rgb = snowColor;
 
     #include <logdepthbuf_fragment>
@@ -207,6 +209,10 @@ void main() {
     #include <alphatest_fragment>
     #include <roughnessmap_fragment>
     #include <metalnessmap_fragment>
+
+    
+    // roughnessFactor = mix(roughnessFactor, snowAmount, snowAmount);
+    // metalnessFactor = step(0.4, 1. - roughnessFactor);
     // #include <normal_fragment_begin>
     // #include <normal_fragment_maps>
     
@@ -261,7 +267,7 @@ void main() {
         diffuseColor.a *= transmissionAlpha + 0.1;
     #endif
 
-    gl_FragColor = vec4( normal, diffuseColor.a );
+    gl_FragColor = vec4( outgoingLight, diffuseColor.a );
     // #include <tonemapping_fragment> // COMMENTED OUT
     #ifdef TONE_MAPPING
 		#ifdef CUSTOM_TONEMAPPING

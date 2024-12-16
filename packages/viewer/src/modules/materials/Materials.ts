@@ -3,6 +3,7 @@ import {
   DoubleSide,
   FrontSide,
   Material,
+  NearestFilter,
   RepeatWrapping,
   Texture,
   Vector2
@@ -716,6 +717,8 @@ export default class Materials {
     })
     this.snowTexture.wrapS = RepeatWrapping
     this.snowTexture.wrapT = RepeatWrapping
+    this.snowTexture.minFilter = NearestFilter
+    this.snowTexture.magFilter = NearestFilter
   }
 
   private makeMeshMaterial(materialData: RenderMaterial): Material {
