@@ -1,5 +1,12 @@
 import { knexLogger as logger } from '@/observability/logging.js'
-import { getPostgresConnectionString, getPostgresMaxConnections } from '@/utils/env.js'
+import {
+  getConnectionAcquireTimeoutMillis,
+  getConnectionCreateTimeoutMillis,
+  getPostgresConnectionString,
+  getPostgresMaxConnections,
+  isDevOrTestEnv,
+  isTest
+} from '@/utils/env.js'
 import Environment from '@speckle/shared/dist/commonjs/environment/index.js'
 import {
   loadMultiRegionsConfig,
@@ -14,19 +21,21 @@ export type DbClients = Record<'main', ConfiguredKnexClient> &
   Record<string, ConfiguredKnexClient>
 let dbClients: DbClients
 
-const isDevEnv = process.env.NODE_ENV === 'development'
-
 export const getDbClients = async () => {
   if (dbClients) return dbClients
   const maxConnections = getPostgresMaxConnections()
+  const connectionAcquireTimeoutMillis = getConnectionAcquireTimeoutMillis()
+  const connectionCreateTimeoutMillis = getConnectionCreateTimeoutMillis()
 
   const configArgs = {
     migrationDirs: [],
-    isTestEnv: isDevEnv,
-    isDevOrTestEnv: isDevEnv,
+    isTestEnv: isTest(),
+    isDevOrTestEnv: isDevOrTestEnv(),
     logger,
     maxConnections,
-    applicationName: 'speckle_fileimport_service'
+    applicationName: 'speckle_fileimport_service',
+    connectionAcquireTimeoutMillis,
+    connectionCreateTimeoutMillis
   }
   if (!FF_WORKSPACES_MULTI_REGION_ENABLED) {
     const mainClient = configureKnexClient(

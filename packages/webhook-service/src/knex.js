@@ -13,8 +13,15 @@ const isDevEnv = process.env.NODE_ENV !== 'production'
 let dbClients
 const getDbClients = async () => {
   if (dbClients) return dbClients
-  const maxConnections =
-    parseInt(process.env.POSTGRES_MAX_CONNECTIONS_WEBHOOK_SERVICE) || 1
+  const maxConnections = parseInt(
+    process.env.POSTGRES_MAX_CONNECTIONS_WEBHOOK_SERVICE || '1'
+  )
+  const connectionAcquireTimeoutMillis = parseInt(
+    process.env['POSTGRES_CONNECTION_ACQUIRE_TIMEOUT_MILLIS'] || '16000'
+  )
+  const connectionCreateTimeoutMillis = parseInt(
+    process.env['POSTGRES_CONNECTION_CREATE_TIMEOUT_MILLIS'] || '5000'
+  )
 
   const configArgs = {
     migrationDirs: [],
@@ -22,7 +29,9 @@ const getDbClients = async () => {
     isDevOrTestEnv: isDevEnv,
     logger,
     maxConnections,
-    applicationName: 'speckle_webhook_service'
+    applicationName: 'speckle_webhook_service',
+    connectionAcquireTimeoutMillis,
+    connectionCreateTimeoutMillis
   }
   if (!FF_WORKSPACES_MULTI_REGION_ENABLED) {
     const mainClient = configureKnexClient(
