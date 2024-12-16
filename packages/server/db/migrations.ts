@@ -7,7 +7,7 @@ export const migrateDbToLatest = async (params: { db: Knex; region: string }) =>
   try {
     await db.migrate.latest()
   } catch (err: unknown) {
-    throw new DatabaseError('Error migrating db to latest for region "{region}".', {
+    throw new DatabaseError('Error migrating db to latest for region "{region}".', db, {
       cause: ensureError(err, 'Unknown postgres error'),
       info: { region }
     })
