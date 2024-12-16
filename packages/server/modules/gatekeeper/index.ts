@@ -172,17 +172,18 @@ const gatekeeperModule: SpeckleModule = {
     })
   },
   async finalize() {
-    coreModule.addHook(
-      'onCreateObjectRequest',
-      async function isProjectReadOnly({ projectId }) {
-        const readOnly = await isProjectReadOnlyFactory({
-          getWorkspacePlanByProjectId: getWorkspacePlanByProjectIdFactory({
-            db
-          })
-        })({ projectId })
-        if (readOnly) throw new WorkspaceReadOnlyError()
-      }
-    )
+    coreModule.addHook('onCreateObjectRequest', isProjectReadOnly)
+    coreModule.addHook('onCreateVersionRequest', isProjectReadOnly)
   }
 }
+
+async function isProjectReadOnly({ projectId }: { projectId: string }) {
+  const readOnly = await isProjectReadOnlyFactory({
+    getWorkspacePlanByProjectId: getWorkspacePlanByProjectIdFactory({
+      db
+    })
+  })({ projectId })
+  if (readOnly) throw new WorkspaceReadOnlyError()
+}
+
 export = gatekeeperModule
