@@ -17,6 +17,7 @@ import { init as previews } from '@/observability/metrics/previews.js'
 import { init as replicationSlotLag } from '@/observability/metrics/replicationSlotLag.js'
 import { init as replicationWorkerLag } from '@/observability/metrics/replicationWorkerLag.js'
 import { init as streams } from '@/observability/metrics/streams.js'
+import { init as subscriptionsEnabled } from '@/observability/metrics/subscriptionsEnabled.js'
 import { init as tablesize } from '@/observability/metrics/tableSize.js'
 import { init as users } from '@/observability/metrics/users.js'
 import { init as webhooks } from '@/observability/metrics/webhooks.js'
@@ -65,6 +66,7 @@ function initMonitoringMetrics(params: {
     replicationSlotLag,
     replicationWorkerLag,
     streams,
+    subscriptionsEnabled,
     tablesize,
     users,
     webhooks
@@ -92,8 +94,13 @@ function initMonitoringMetrics(params: {
     }
 
     await Promise.all(
-      metricsToCollect.map(async (metric) => {
-        await metric({ dbClients, mainDbClient, labels })
+      metricsToCollect.map(async (collectMetric) => {
+        try {
+          await collectMetric({ dbClients, mainDbClient, labels })
+        } catch (err) {
+          logger.error({ err }, 'Failed to collect a metric')
+          // Continue collecting other metrics
+        }
       })
     )
   }

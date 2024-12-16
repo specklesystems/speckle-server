@@ -1,23 +1,31 @@
 import prometheusClient from 'prom-client'
 import { join } from 'lodash-es'
 import type { MetricInitializer } from '@/observability/types.js'
+import Environment from '@speckle/shared/dist/commonjs/environment/index.js'
+
+const { FF_WORKSPACES_MULTI_REGION_ENABLED } = Environment.getFeatureFlags()
 
 export const init: MetricInitializer = (config) => {
+  if (!FF_WORKSPACES_MULTI_REGION_ENABLED) {
+    return async () => {
+      // Do nothing
+    }
+  }
+
   const { labelNames, namePrefix, logger } = config
   const promMetric = new prometheusClient.Gauge({
-    name: join([namePrefix, 'db_replication_slot_lag'], '_'),
-    help: 'Lag of replication slots in bytes',
-    labelNames: ['region', 'slotname', ...labelNames]
+    name: join([namePrefix, 'db_subscriptions_enabled'], '_'),
+    help: 'Enabled subscriptions to other databases',
+    labelNames: ['region', 'subscriptionname', ...labelNames]
   })
   return async (params) => {
     const { dbClients, labels } = params
     await Promise.all(
       dbClients.map(async ({ client, regionKey }) => {
         const queryResults = await client.raw<{
-          rows: [{ slot_name: string; slot_lag_bytes: string }]
+          rows: [{ subname: string; subenabled: boolean }]
         }>(`
-            SELECT slot_name, pg_current_wal_lsn() - confirmed_flush_lsn AS slot_lag_bytes
-              FROM pg_replication_slots WHERE slot_type='logical';
+            SELECT subname, subenabled FROM aiven_extras.pg_list_all_subscriptions();
           `)
         if (!queryResults.rows.length) {
           logger.error(
@@ -28,8 +36,8 @@ export const init: MetricInitializer = (config) => {
         }
         for (const row of queryResults.rows) {
           promMetric.set(
-            { ...labels, region: regionKey, slotname: row.slot_name },
-            parseInt(row.slot_lag_bytes)
+            { ...labels, region: regionKey, subscriptionname: row.subname },
+            row.subenabled ? 1 : 0
           )
         }
       })
