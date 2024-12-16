@@ -3,6 +3,10 @@ import { join } from 'lodash-es'
 import type { MetricInitializer } from '@/observability/types.js'
 import Environment from '@speckle/shared/dist/commonjs/environment/index.js'
 
+type QueryResponseSchema = {
+  rows: [{ subname: string; subenabled: boolean }]
+}
+
 const { FF_WORKSPACES_MULTI_REGION_ENABLED } = Environment.getFeatureFlags()
 
 export const init: MetricInitializer = (config) => {
@@ -22,12 +26,27 @@ export const init: MetricInitializer = (config) => {
     const { dbClients, labels } = params
     await Promise.all(
       dbClients.map(async ({ client, regionKey }) => {
-        const queryResults = await client.raw<{
-          rows: [{ subname: string; subenabled: boolean }]
-        }>(`
+        let queryResults: QueryResponseSchema | undefined = undefined
+        try {
+          queryResults = await client.raw<QueryResponseSchema>(`
             SELECT subname, subenabled FROM aiven_extras.pg_list_all_subscriptions();
           `)
-        if (!queryResults.rows.length) {
+        } catch (err) {
+          if (
+            err instanceof Error &&
+            err.message.includes('schema "aiven_extras" does not exist')
+          ) {
+            logger.warn(
+              { err, region: regionKey },
+              "'aiven_extras' extension is not yet enabled for region '{region}'."
+            )
+            return // continue to next region
+          }
+
+          //else rethrow
+          throw err
+        }
+        if (!queryResults?.rows.length) {
           logger.error(
             { region: regionKey },
             "No database replication slots found for region '{region}'. This is odd."

@@ -106,7 +106,7 @@ function initMonitoringMetrics(params: {
           await collectMetric({ dbClients, mainDbClient, labels })
         } catch (err) {
           selfMonitorErrors.inc(labels)
-          logger.error({ err }, 'Failed to collect a metric')
+          logger.error({ err }, 'Error encountered while collecting a metric')
           // Continue collecting other metrics
         }
       })
