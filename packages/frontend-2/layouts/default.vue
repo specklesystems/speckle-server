@@ -5,15 +5,22 @@
       <!-- Static Spacer to allow for absolutely positioned HeaderNavBar  -->
       <div class="h-12 w-full shrink-0"></div>
 
-      <!-- Sidebar -->
       <div class="relative flex h-[calc(100dvh-3rem)]">
-        <DashboardSidebar />
+        <!-- Left Sidebar Slot -->
+        <template v-if="$slots.leftSidebar">
+          <slot name="leftSidebar" />
+        </template>
 
         <main class="w-full h-full overflow-y-auto simple-scrollbar pt-8 pb-16">
           <div class="container mx-auto px-6 md:px-12">
             <slot />
           </div>
         </main>
+
+        <!-- Right Sidebar Slot -->
+        <template v-if="$slots.rightSidebar">
+          <slot name="rightSidebar" />
+        </template>
       </div>
     </div>
   </div>

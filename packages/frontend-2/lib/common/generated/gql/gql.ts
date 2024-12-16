@@ -44,8 +44,8 @@ const documents = {
     "\n  fragment AutomateViewerPanelFunctionRunRow_AutomateFunctionRun on AutomateFunctionRun {\n    id\n    results\n    status\n    statusMessage\n    contextView\n    function {\n      id\n      logo\n      name\n    }\n    createdAt\n    updatedAt\n  }\n": types.AutomateViewerPanelFunctionRunRow_AutomateFunctionRunFragmentDoc,
     "\n  fragment BillingAlert_Workspace on Workspace {\n    id\n    plan {\n      name\n      status\n      createdAt\n    }\n    subscription {\n      billingInterval\n      currentBillingCycleEnd\n    }\n  }\n": types.BillingAlert_WorkspaceFragmentDoc,
     "\n  fragment CommonModelSelectorModel on Model {\n    id\n    name\n  }\n": types.CommonModelSelectorModelFragmentDoc,
-    "\n  fragment DashboardProjectCard_Project on Project {\n    id\n    name\n    role\n    updatedAt\n    models {\n      totalCount\n    }\n    team {\n      user {\n        ...LimitedUserAvatar\n      }\n    }\n    workspace {\n      id\n      slug\n      name\n      logo\n    }\n  }\n": types.DashboardProjectCard_ProjectFragmentDoc,
     "\n  fragment Sidebar_User on User {\n    id\n    automateFunctions {\n      items {\n        id\n        name\n        description\n        logo\n      }\n    }\n  }\n": types.Sidebar_UserFragmentDoc,
+    "\n  fragment DashboardProjectCard_Project on Project {\n    id\n    name\n    role\n    updatedAt\n    models {\n      totalCount\n    }\n    team {\n      user {\n        ...LimitedUserAvatar\n      }\n    }\n    workspace {\n      id\n      slug\n      name\n      logo\n    }\n  }\n": types.DashboardProjectCard_ProjectFragmentDoc,
     "\n  fragment FormSelectModels_Model on Model {\n    id\n    name\n  }\n": types.FormSelectModels_ModelFragmentDoc,
     "\n  fragment FormSelectProjects_Project on Project {\n    id\n    name\n  }\n": types.FormSelectProjects_ProjectFragmentDoc,
     "\n  fragment FormUsersSelectItem on LimitedUser {\n    id\n    name\n    avatar\n  }\n": types.FormUsersSelectItemFragmentDoc,
@@ -518,11 +518,11 @@ export function graphql(source: "\n  fragment CommonModelSelectorModel on Model 
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment DashboardProjectCard_Project on Project {\n    id\n    name\n    role\n    updatedAt\n    models {\n      totalCount\n    }\n    team {\n      user {\n        ...LimitedUserAvatar\n      }\n    }\n    workspace {\n      id\n      slug\n      name\n      logo\n    }\n  }\n"): (typeof documents)["\n  fragment DashboardProjectCard_Project on Project {\n    id\n    name\n    role\n    updatedAt\n    models {\n      totalCount\n    }\n    team {\n      user {\n        ...LimitedUserAvatar\n      }\n    }\n    workspace {\n      id\n      slug\n      name\n      logo\n    }\n  }\n"];
+export function graphql(source: "\n  fragment Sidebar_User on User {\n    id\n    automateFunctions {\n      items {\n        id\n        name\n        description\n        logo\n      }\n    }\n  }\n"): (typeof documents)["\n  fragment Sidebar_User on User {\n    id\n    automateFunctions {\n      items {\n        id\n        name\n        description\n        logo\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment Sidebar_User on User {\n    id\n    automateFunctions {\n      items {\n        id\n        name\n        description\n        logo\n      }\n    }\n  }\n"): (typeof documents)["\n  fragment Sidebar_User on User {\n    id\n    automateFunctions {\n      items {\n        id\n        name\n        description\n        logo\n      }\n    }\n  }\n"];
+export function graphql(source: "\n  fragment DashboardProjectCard_Project on Project {\n    id\n    name\n    role\n    updatedAt\n    models {\n      totalCount\n    }\n    team {\n      user {\n        ...LimitedUserAvatar\n      }\n    }\n    workspace {\n      id\n      slug\n      name\n      logo\n    }\n  }\n"): (typeof documents)["\n  fragment DashboardProjectCard_Project on Project {\n    id\n    name\n    role\n    updatedAt\n    models {\n      totalCount\n    }\n    team {\n      user {\n        ...LimitedUserAvatar\n      }\n    }\n    workspace {\n      id\n      slug\n      name\n      logo\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

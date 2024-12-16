@@ -1,63 +1,76 @@
 <template>
-  <div>
-    <Portal to="navigation">
-      <HeaderNavLink :to="homeRoute" name="Dashboard" hide-chevron :separator="false" />
-    </Portal>
-    <PromoBannersWrapper
-      v-if="promoBanners && promoBanners.length"
-      :banners="promoBanners"
-    />
-    <ProjectsDashboardHeader
-      :projects-invites="projectsResult?.activeUser || undefined"
-      :workspaces-invites="workspacesResult?.activeUser || undefined"
-    />
-    <div class="flex flex-col gap-y-12">
-      <div class="flex flex-col-reverse lg:flex-col gap-y-12">
-        <section>
-          <h2 class="text-heading-sm text-foreground-2">Quickstart</h2>
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 pt-5">
-            <CommonCard
-              v-for="quickStartItem in quickStartItems"
-              :key="quickStartItem.title"
-              :title="quickStartItem.title"
-              :description="quickStartItem.description"
-              :buttons="quickStartItem.buttons"
-            />
-          </div>
-        </section>
-        <section>
-          <div class="flex items-center justify-between">
-            <h2 class="text-heading-sm text-foreground-2">Recently updated projects</h2>
-            <FormButton
-              color="outline"
-              size="sm"
-              @click.stop="router.push(projectsRoute)"
-            >
-              View all
-            </FormButton>
-          </div>
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-3 pt-5">
-            <template v-if="hasProjects">
-              <DashboardProjectCard
-                v-for="project in projects"
-                :key="project.id"
-                :project="project"
-              />
-            </template>
-            <CommonCard
-              v-else
-              title="Create your first project"
-              description="Projects are the place where your models and their versions live."
-              :buttons="createProjectButton"
-            />
-          </div>
-        </section>
-      </div>
-      <DashboardBlogWrapper />
-    </div>
+  <NuxtLayout name="default">
+    <template #leftSidebar>
+      <DashboardLeftSidebar />
+    </template>
+    <div>
+      <Portal to="navigation">
+        <HeaderNavLink
+          :to="homeRoute"
+          name="Dashboard"
+          hide-chevron
+          :separator="false"
+        />
+      </Portal>
 
-    <ProjectsAddDialog v-model:open="openNewProject" />
-  </div>
+      <PromoBannersWrapper
+        v-if="promoBanners && promoBanners.length"
+        :banners="promoBanners"
+      />
+      <ProjectsDashboardHeader
+        :projects-invites="projectsResult?.activeUser || undefined"
+        :workspaces-invites="workspacesResult?.activeUser || undefined"
+      />
+      <div class="flex flex-col gap-y-12">
+        <div class="flex flex-col-reverse lg:flex-col gap-y-12">
+          <section>
+            <h2 class="text-heading-sm text-foreground-2">Quickstart</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 pt-5">
+              <CommonCard
+                v-for="quickStartItem in quickStartItems"
+                :key="quickStartItem.title"
+                :title="quickStartItem.title"
+                :description="quickStartItem.description"
+                :buttons="quickStartItem.buttons"
+              />
+            </div>
+          </section>
+          <section>
+            <div class="flex items-center justify-between">
+              <h2 class="text-heading-sm text-foreground-2">
+                Recently updated projects
+              </h2>
+              <FormButton
+                color="outline"
+                size="sm"
+                @click.stop="router.push(projectsRoute)"
+              >
+                View all
+              </FormButton>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 pt-5">
+              <template v-if="hasProjects">
+                <DashboardProjectCard
+                  v-for="project in projects"
+                  :key="project.id"
+                  :project="project"
+                />
+              </template>
+              <CommonCard
+                v-else
+                title="Create your first project"
+                description="Projects are the place where your models and their versions live."
+                :buttons="createProjectButton"
+              />
+            </div>
+          </section>
+        </div>
+        <DashboardBlogWrapper />
+      </div>
+
+      <ProjectsAddDialog v-model:open="openNewProject" />
+    </div>
+  </NuxtLayout>
 </template>
 <script setup lang="ts">
 import {
@@ -83,7 +96,8 @@ useHead({ title: 'Dashboard' })
 
 definePageMeta({
   middleware: ['auth'],
-  alias: ['/profile', '/dashboard']
+  alias: ['/profile', '/dashboard'],
+  layout: false // Setting layout: false to avoid recursive layout rendering when using named slots within NuxtLayout component
 })
 
 const mixpanel = useMixpanel()
