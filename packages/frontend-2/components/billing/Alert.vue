@@ -1,6 +1,22 @@
 <template>
   <div>
-    <CommonAlert v-if="!hasValidPlan" :color="alertColor" :actions="actions">
+    <div
+      v-if="condensed"
+      class="flex items-center justify-between rounded-md p-2 text-body-3xs font-medium"
+      :class="condensedClasses"
+    >
+      {{ title }}
+      <FormButton
+        v-if="actions.length > 0"
+        size="sm"
+        :color="buttonColor"
+        :disabled="actions[0].disabled"
+        @click="actions[0].onClick"
+      >
+        {{ actions[0].title }}
+      </FormButton>
+    </div>
+    <CommonAlert v-else :color="alertColor" :actions="actions">
       <template #title>
         {{ title }}
       </template>
@@ -39,6 +55,7 @@ graphql(`
 const props = defineProps<{
   workspace: BillingAlert_WorkspaceFragment
   actions?: Array<AlertAction>
+  condensed?: boolean
 }>()
 
 const { billingPortalRedirect } = useBillingActions()
@@ -62,9 +79,14 @@ const trialDaysLeft = computed(() => {
 })
 const title = computed(() => {
   if (isTrial.value) {
-    return `You have ${trialDaysLeft.value} day${
-      trialDaysLeft.value !== 1 ? 's' : ''
-    } left on your free trial`
+    if (props.condensed) {
+      return `${trialDaysLeft.value} day${
+        trialDaysLeft.value !== 1 ? 's' : ''
+      } left in trial.`
+    } else
+      return `You have ${trialDaysLeft.value} day${
+        trialDaysLeft.value !== 1 ? 's' : ''
+      } left on your free trial`
   }
   switch (planStatus.value) {
     case WorkspacePlanStatuses.CancelationScheduled:
@@ -98,6 +120,7 @@ const description = computed(() => {
       return ''
   }
 })
+
 const alertColor = computed<AlertColor>(() => {
   switch (planStatus.value) {
     case WorkspacePlanStatuses.PaymentFailed:
@@ -110,6 +133,20 @@ const alertColor = computed<AlertColor>(() => {
       return 'neutral'
   }
 })
+
+const condensedClasses = computed(() => {
+  switch (planStatus.value) {
+    case WorkspacePlanStatuses.PaymentFailed:
+    case WorkspacePlanStatuses.Canceled:
+      return 'bg-danger'
+    case WorkspacePlanStatuses.CancelationScheduled:
+    case WorkspacePlanStatuses.Expired:
+      return 'bg-warning'
+    default:
+      return 'bg-[#E0ECFF] text-primary-focus'
+  }
+})
+
 const actions = computed((): AlertAction[] => {
   const actions: Array<AlertAction> = props.actions ?? []
 
@@ -129,5 +166,19 @@ const actions = computed((): AlertAction[] => {
 
   return actions
 })
-const hasValidPlan = computed(() => planStatus.value === WorkspacePlanStatuses.Valid)
+
+const buttonColor = computed(() => {
+  switch (planStatus.value) {
+    case WorkspacePlanStatuses.PaymentFailed:
+    case WorkspacePlanStatuses.Canceled:
+      return 'danger'
+    case WorkspacePlanStatuses.CancelationScheduled:
+    case WorkspacePlanStatuses.Expired:
+      return 'subtle'
+    case WorkspacePlanStatuses.Trial:
+      return 'primary'
+    default:
+      return 'primary'
+  }
+})
 </script>

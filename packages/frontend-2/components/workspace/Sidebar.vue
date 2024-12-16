@@ -36,6 +36,7 @@
               v-if="!isWorkspaceGuest"
               :workspace="workspaceInfo"
               :actions="billingAlertAction"
+              condensed
             />
           </div>
 
@@ -46,8 +47,18 @@
             :plus-click="() => openSettingsDialog(SettingMenuKeys.Workspace.General)"
             plus-text="Edit description"
           >
-            <div class="text-body-2xs text-foreground-2 mt-1 px-4 pb-4">
+            <div
+              class="flex flex-col gap-2 text-body-2xs text-foreground-2 mt-1 px-4 pb-4"
+            >
               {{ workspaceInfo.description || 'No workspace description' }}
+              <FormButton
+                v-if="!workspaceInfo.description"
+                color="outline"
+                size="sm"
+                @click="openSettingsDialog(SettingMenuKeys.Workspace.General)"
+              >
+                Add description
+              </FormButton>
             </div>
           </LayoutSidebarMenuGroup>
 
@@ -59,7 +70,7 @@
             plus-text="Edit team"
             :tag="workspaceInfo.team.totalCount.toString() || undefined"
           >
-            <div v-if="!isWorkspaceGuest" class="mt-1 flex flex-col gap-2 px-4 pb-4">
+            <div v-if="!isWorkspaceGuest" class="mt-2 flex flex-col gap-2 px-4 pb-4">
               <div class="flex items-center gap-1">
                 <UserAvatarGroup
                   :users="team.map((teamMember) => teamMember.user)"
@@ -90,7 +101,7 @@
             :plus-click="() => openSettingsDialog(SettingMenuKeys.Workspace.Security)"
             plus-text="Edit security"
           >
-            <div class="text-body-2xs text-foreground-2 mt-1 px-4 pb-4">
+            <div class="text-body-2xs text-foreground-2 mt-2 px-4 pb-4">
               <template v-if="workspaceInfo.domains?.length">
                 <div
                   v-for="domain in workspaceInfo.domains"
@@ -178,6 +189,8 @@ const emit = defineEmits<{
   (e: 'show-move-projects-dialog'): void
 }>()
 
+const isOpenMobile = ref(false)
+
 const team = computed(() => props.workspaceInfo.team.items || [])
 
 const invitedTeamCount = computed(() => props.workspaceInfo?.invitedTeam?.length ?? 0)
@@ -200,7 +213,7 @@ const billingAlertAction = computed<Array<AlertAction>>(() => {
   if (isInTrial.value && isWorkspaceAdmin.value) {
     return [
       {
-        title: 'Upgrade now',
+        title: 'Subscribe',
         onClick: () => openSettingsDialog(SettingMenuKeys.Workspace.Billing)
       }
     ]
@@ -211,7 +224,4 @@ const billingAlertAction = computed<Array<AlertAction>>(() => {
 const openSettingsDialog = (target: AvailableSettingsMenuKeys) => {
   emit('show-settings-dialog', target)
 }
-
-// Add mobile state
-const isOpenMobile = ref(false)
 </script>

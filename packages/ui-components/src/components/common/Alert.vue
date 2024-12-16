@@ -8,7 +8,7 @@
         <h3 v-if="hasTitle" class="text-body-xs font-medium">
           <slot name="title">Title</slot>
         </h3>
-        <div v-if="hasDescription" class="text-body-xs">
+        <div v-if="size !== 'xs' && hasDescription" class="text-body-xs">
           <slot name="description">
             Lorem ipsum dolor sit amet consectetur adipisicing elit. Aliquid pariatur,
             ipsum similique veniam.

@@ -167,7 +167,7 @@ const onAddNewProjectActionChosen = (params: {
 
   switch (item.id) {
     case AddNewProjectActionTypes.NewProject:
-      emit('show-move-projects-dialog')
+      emit('show-new-project-dialog')
       break
     case AddNewProjectActionTypes.MoveProject:
       emit('show-move-projects-dialog')

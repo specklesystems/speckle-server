@@ -24,7 +24,11 @@
           <h6 class="font-semibold text-foreground-2 truncate text-body-2xs pr-2">
             {{ title }}
           </h6>
-          <CommonBadge v-if="tag" rounded>
+          <CommonBadge
+            v-if="tag"
+            rounded
+            color-classes="bg-foundation-2 text-foreground-2"
+          >
             {{ tag }}
           </CommonBadge>
         </div>
