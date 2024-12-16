@@ -21,6 +21,10 @@ import { IReceiveBindingKey } from '~/lib/bindings/definitions/IReceiveBinding'
 
 import type { ISelectionBinding } from '~/lib/bindings/definitions/ISelectionBinding'
 import { ISelectionBindingKey } from '~/lib/bindings/definitions/ISelectionBinding'
+
+import type { IHostAppTestBinding } from '~/lib/bindings/definitions/IHostAppTestBinding'
+import { IHostAppTestBindingKey } from '~/lib/bindings/definitions/IHostAppTestBinding'
+
 import type { ITopLevelExpectionHandlerBinding } from '~/lib/bindings/definitions/ITopLevelExceptionHandlerBinding'
 import { ITopLevelExpectionHandlerBindingKey } from '~/lib/bindings/definitions/ITopLevelExceptionHandlerBinding'
 
@@ -61,6 +65,10 @@ export default defineNuxtPlugin(async () => {
     ISelectionBindingKey
   )
 
+  const hostAppTestBiding = await tryHoistBinding<IHostAppTestBinding>(
+    IHostAppTestBindingKey
+  )
+
   const topLevelExceptionHandlerBinding =
     await tryHoistBinding<ITopLevelExpectionHandlerBinding>(
       ITopLevelExpectionHandlerBindingKey
@@ -87,6 +95,7 @@ export default defineNuxtPlugin(async () => {
       receiveBinding,
       selectionBinding,
       topLevelExceptionHandlerBinding,
+      hostAppTestBiding,
       showDevTools,
       openUrl
     }
