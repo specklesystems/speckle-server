@@ -10,7 +10,7 @@ import {
   useFilterUtilities,
   useSelectionUtilities
 } from '~~/lib/viewer/composables/ui'
-import { CameraController } from '@speckle/viewer'
+import { CameraController, ViewMode } from '@speckle/viewer'
 import type { NumericPropertyInfo } from '@speckle/viewer'
 
 type SerializedViewerState = SpeckleViewer.ViewerState.SerializedViewerState
@@ -105,6 +105,7 @@ export function useStateSerialization() {
           isOrthoProjection: state.ui.camera.isOrthoProjection.value,
           zoom: (get(camControls, '_zoom') as number) || 1 // kinda hacky, _zoom is a protected prop
         },
+        viewMode: state.ui.viewMode.value,
         sectionBox: state.ui.sectionBox.value
           ? {
               min: box.min.toArray(),
@@ -141,7 +142,8 @@ export function useApplySerializedState() {
       highlightedObjectIds,
       explodeFactor,
       lightConfig,
-      diff
+      diff,
+      viewMode
     },
     resources: {
       request: { resourceIdString }
@@ -280,6 +282,13 @@ export function useApplySerializedState() {
       )
     } else if (!activeDiffEnabled || mode === StateApplyMode.Spotlight) {
       await endDiff()
+    }
+
+    // Restore view mode
+    if (state.ui.viewMode) {
+      viewMode.value = state.ui.viewMode
+    } else {
+      viewMode.value = ViewMode.DEFAULT
     }
 
     explodeFactor.value = state.ui.explodeFactor

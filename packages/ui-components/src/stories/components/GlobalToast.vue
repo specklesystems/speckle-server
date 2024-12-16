@@ -1,18 +1,18 @@
 <template>
-  <ToastRenderer v-model:notification="notification" />
+  <ToastRenderer v-model:notifications="notifications" @dismiss="dismiss" />
 </template>
 <script setup lang="ts">
 import { computed } from 'vue'
 import ToastRenderer from '~~/src/components/global/ToastRenderer.vue'
 import { useGlobalToastManager } from '~~/src/stories/composables/toast'
 
-const { currentNotification, dismiss } = useGlobalToastManager()
+const { currentNotifications, dismissAll, dismiss } = useGlobalToastManager()
 
-const notification = computed({
-  get: () => currentNotification.value,
+const notifications = computed({
+  get: () => currentNotifications.value,
   set: (newVal) => {
     if (!newVal) {
-      dismiss()
+      dismissAll()
     }
   }
 })

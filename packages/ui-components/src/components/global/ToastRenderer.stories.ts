@@ -7,7 +7,7 @@ import { ToastNotificationType } from '~~/src/helpers/global/toast'
 import type { ToastNotification } from '~~/src/helpers/global/toast'
 import { useGlobalToast } from '~~/src/stories/composables/toast'
 
-type StoryType = StoryObj<{ notification: ToastNotification }>
+type StoryType = StoryObj<{ notifications: ToastNotification[] }>
 
 export default {
   component: ToastRenderer,
@@ -20,12 +20,11 @@ export default {
     }
   },
   argTypes: {
-    notification: {
-      description: 'ToastNotification type object, nullable'
+    notifications: {
+      description: 'ToastNotification array, nullable'
     },
-    'update:notification': {
-      description:
-        "Notification prop update event. Enables two-way binding through 'v-model:notification'"
+    dismiss: {
+      description: 'Dismiss event for a notification'
     }
   }
 } as Meta
@@ -35,11 +34,11 @@ export const Default: StoryType = {
     components: { ToastRenderer, FormButton },
     setup() {
       const { triggerNotification } = useGlobalToast()
-      const notification = ref(null as Nullable<ToastNotification>)
+      const notifications = ref(null as Nullable<ToastNotification[]>)
       const onClick = () => {
-        triggerNotification(args.notification)
+        triggerNotification(args.notifications[0])
       }
-      return { args, onClick, notification }
+      return { args, onClick, notifications }
     },
     template: `
       <div>
@@ -50,30 +49,34 @@ export const Default: StoryType = {
   parameters: {
     docs: {
       source: {
-        code: '<GlobalToastRenderer v-model:notification="notification"/>'
+        code: '<GlobalToastRenderer v-model:notifications="notifications" />'
       }
     }
   },
   args: {
-    notification: {
-      type: ToastNotificationType.Info,
-      title: 'Title',
-      description: 'Description',
+    notifications: [
+      {
+        type: ToastNotificationType.Info,
+        title: 'Title',
+        description: 'Description',
 
-      cta: {
-        title: 'CTA'
+        cta: {
+          title: 'CTA'
+        }
       }
-    }
+    ]
   }
 }
 
 export const WithManualClose: StoryType = {
   ...Default,
   args: {
-    notification: {
-      ...Default.args!.notification!,
-      autoClose: false
-    }
+    notifications: [
+      {
+        ...Default.args!.notifications![0],
+        autoClose: false
+      }
+    ]
   }
 }
 
@@ -81,23 +84,20 @@ export const NoCtaOrDescription: StoryObj = {
   render: (args) => ({
     components: { ToastRenderer, FormButton },
     setup() {
-      const notification = ref(null as Nullable<ToastNotification>)
+      const { triggerNotification } = useGlobalToast()
+      const notifications = ref(null as Nullable<ToastNotification[]>)
       const onClick = () => {
-        // Update notification without cta or description
-        notification.value = {
+        triggerNotification({
           type: ToastNotificationType.Info,
           title: 'Displays a toast notification'
-        }
-
-        // Clear after 2s
-        setTimeout(() => (notification.value = null), 2000)
+        })
       }
-      return { args, onClick, notification }
+      return { args, onClick, notifications }
     },
     template: `
       <div>
         <FormButton @click="onClick">Trigger Title Only</FormButton>
-        <ToastRenderer v-model:notification="notification"/>
+        <ToastRenderer v-model:notifications="notifications" />
       </div>
     `
   }),
@@ -108,8 +108,8 @@ export const NoCtaOrDescription: StoryObj = {
       },
       source: {
         code: `
-<FormButton @click="onClick">Trigger Title Only</FormButton>
-<ToastRenderer v-model:notification="notification"/>
+          <FormButton @click="onClick">Trigger Title Only</FormButton>
+          <ToastRenderer v-model:notifications="notifications" />
         `
       }
     }

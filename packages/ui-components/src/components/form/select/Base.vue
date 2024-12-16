@@ -127,7 +127,7 @@
                       ref="searchInput"
                       v-model="searchValue"
                       type="text"
-                      class="py-1 pl-7 w-full bg-foundation placeholder:font-normal normal placeholder:text-foreground-2 text-[13px]"
+                      class="py-1 pl-7 w-full bg-foundation placeholder:font-normal normal placeholder:text-foreground-2 text-[13px] focus-visible:[box-shadow:none] rounded-md hover:border-outline-5 focus-visible:border-outline-4"
                       :placeholder="searchPlaceholder"
                       @keydown.stop
                     />

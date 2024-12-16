@@ -7,7 +7,7 @@
     :disabled-item-tooltip="
       !allowGuest ? 'The Guest role isn\'t enabled on the server' : ''
     "
-    name="serverRoles"
+    :name="name ?? 'serverRoles'"
     label="Role"
     :show-label="showLabel"
     class="min-w-[110px]"
@@ -75,7 +75,8 @@ const props = defineProps({
   allowAdmin: Boolean,
   allowArchived: Boolean,
   fullyControlValue: Boolean,
-  showLabel: Boolean
+  showLabel: Boolean,
+  name: String
 })
 
 const elementToWatchForChanges = ref(null as Nullable<HTMLElement>)

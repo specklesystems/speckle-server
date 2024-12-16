@@ -308,13 +308,19 @@ export function useInviteUserToProject() {
     if (err) {
       triggerNotification({
         type: ToastNotificationType.Danger,
-        title: 'Invitation failed',
+        title:
+          input.length > 1
+            ? "Couldn't send invites"
+            : `Coudldn't send invite to ${input[0].email}`,
         description: err
       })
     } else {
       triggerNotification({
         type: ToastNotificationType.Success,
-        title: 'Invite successfully sent'
+        title:
+          input.length > 1
+            ? 'Invites successfully send'
+            : `Invite successfully sent to ${input[0].email}`
       })
     }
 
