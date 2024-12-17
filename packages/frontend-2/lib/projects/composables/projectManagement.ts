@@ -98,8 +98,7 @@ export function useProjectUpdateTracking(
       if (redirectOnDeletion || notifyOnUpdate) {
         triggerNotification({
           type: ToastNotificationType.Info,
-          title: isDeleted ? 'Project deleted' : 'Project updated',
-          description: isDeleted ? 'Redirecting to home' : undefined
+          title: isDeleted ? 'Project deleted' : 'Project updated'
         })
       }
     }
