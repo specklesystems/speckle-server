@@ -43,17 +43,20 @@ import { LayoutDialog, type LayoutDialogButton } from '@speckle/ui-components'
 import type { ProjectItem } from '~~/lib/server-management/helpers/types'
 import { useDeleteProject } from '~~/lib/projects/composables/projectManagement'
 import { useMixpanel } from '~~/lib/core/composables/mp'
+import type { MaybeNullOrUndefined } from '@speckle/shared'
 
 const props = defineProps<{
   open: boolean
   project: ProjectItem
+  workspaceId?: MaybeNullOrUndefined<string>
 }>()
 
 const isOpen = defineModel<boolean>('open', { required: true })
 
-const projectNameInput = ref('')
 const deleteProject = useDeleteProject()
 const mp = useMixpanel()
+
+const projectNameInput = ref('')
 
 const dialogButtons = computed<LayoutDialogButton[]>(() => [
   {
@@ -74,7 +77,12 @@ const dialogButtons = computed<LayoutDialogButton[]>(() => [
     onClick: async () => {
       await deleteProject(props.project.id)
       isOpen.value = false
-      mp.track('Stream Action', { type: 'action', name: 'delete' })
+      mp.track('Stream Action', {
+        type: 'action',
+        name: 'delete',
+        // eslint-disable-next-line camelcase
+        workspace_id: props.workspaceId
+      })
     }
   }
 ])

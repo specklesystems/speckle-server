@@ -93,6 +93,7 @@
       v-if="projectToModify"
       v-model:open="showProjectDeleteDialog"
       :project="projectToModify"
+      :workspace-id="workspaceId"
     />
 
     <ProjectsAddDialog v-model:open="openNewProject" :workspace-id="workspaceId" />
