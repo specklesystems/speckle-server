@@ -3,15 +3,16 @@
     <div
       v-if="title"
       class="h-8 flex items-center justify-between select-none rounded-md"
-      :class="[collapsible && 'hover:bg-highlight-1']"
+      :class="[collapsible && !noHover && 'hover:bg-highlight-1']"
     >
       <button
         v-if="collapsible"
-        class="group flex items-center w-full rounded-md py-0.5 px-2"
+        class="group flex items-center w-full rounded-md"
+        :class="noHover ? '' : 'py-0.5 px-2'"
         @click="isCollapsed = !isCollapsed"
       >
         <ArrowFilled
-          :class="[isCollapsed ? '-rotate-90' : '']"
+          :class="[isCollapsed ? '-rotate-90' : '', noHover ? '-ml-0.5' : '']"
           class="text-foreground-2 shrink-0"
         />
         <div
@@ -77,6 +78,7 @@ defineProps<{
   icon?: 'add' | 'edit'
   iconText?: string
   iconClick?: () => void
+  noHover?: boolean
 }>()
 
 const isCollapsed = defineModel<boolean>('collapsed')

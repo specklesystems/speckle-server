@@ -6,8 +6,9 @@
     :icon-click="() => openSettingsDialog(SettingMenuKeys.Workspace.Members)"
     icon-text="Edit team"
     :tag="workspaceInfo.team.totalCount.toString() || undefined"
+    no-hover
   >
-    <div v-if="!isWorkspaceGuest" class="mt-2 flex flex-col gap-2 px-4 pb-4">
+    <div v-if="!isWorkspaceGuest" class="flex flex-col gap-2 pb-4 mt-1">
       <div class="flex items-center gap-1">
         <UserAvatarGroup
           :users="team.map((teamMember) => teamMember.user)"
@@ -15,7 +16,7 @@
         />
         <button
           v-if="invitedTeamCount"
-          class="text-body-3xs p-2 rounded-full border border-dashed border-outline-2 hover:bg-foundation"
+          class="flex items-center justify-center text-body-3xs px-2 h-8 rounded-full border border-dashed border-outline-2 hover:bg-foundation"
           @click="openSettingsDialog(SettingMenuKeys.Workspace.Members)"
         >
           + {{ invitedTeamCount }} pending
@@ -41,17 +42,7 @@ import type { WorkspaceSidebar_WorkspaceFragment } from '~/lib/common/generated/
 
 graphql(`
   fragment WorkspaceSidebarMembers_Workspace on Workspace {
-    team {
-      totalCount
-      items {
-        id
-        user {
-          id
-          name
-          ...LimitedUserAvatar
-        }
-      }
-    }
+    ...WorkspaceTeam_Workspace
   }
 `)
 

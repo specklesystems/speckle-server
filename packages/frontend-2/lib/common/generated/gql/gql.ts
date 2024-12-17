@@ -155,7 +155,7 @@ const documents = {
     "\n  fragment WorkspaceInviteBlock_PendingWorkspaceCollaborator on PendingWorkspaceCollaborator {\n    id\n    workspaceId\n    workspaceName\n    token\n    user {\n      id\n      name\n      ...LimitedUserAvatar\n    }\n    title\n    email\n    ...UseWorkspaceInviteManager_PendingWorkspaceCollaborator\n  }\n": types.WorkspaceInviteBlock_PendingWorkspaceCollaboratorFragmentDoc,
     "\n  fragment WorkspaceInviteDiscoverableWorkspaceBanner_LimitedWorkspace on LimitedWorkspace {\n    id\n    name\n    slug\n    description\n    logo\n  }\n  fragment WorkspaceInviteDiscoverableWorkspaceBanner_Workspace on Workspace {\n    id\n    name\n    description\n    createdAt\n    updatedAt\n    logo\n    domainBasedMembershipProtectionEnabled\n    discoverabilityEnabled\n  }\n": types.WorkspaceInviteDiscoverableWorkspaceBanner_LimitedWorkspaceFragmentDoc,
     "\n  fragment WorkspaceSidebarAbout_Workspace on Workspace {\n    description\n  }\n": types.WorkspaceSidebarAbout_WorkspaceFragmentDoc,
-    "\n  fragment WorkspaceSidebarMembers_Workspace on Workspace {\n    team {\n      totalCount\n      items {\n        id\n        user {\n          id\n          name\n          ...LimitedUserAvatar\n        }\n      }\n    }\n  }\n": types.WorkspaceSidebarMembers_WorkspaceFragmentDoc,
+    "\n  fragment WorkspaceSidebarMembers_Workspace on Workspace {\n    ...WorkspaceTeam_Workspace\n  }\n": types.WorkspaceSidebarMembers_WorkspaceFragmentDoc,
     "\n  fragment WorkspaceSidebarSecurity_Workspace on Workspace {\n    domains {\n      id\n      domain\n    }\n  }\n": types.WorkspaceSidebarSecurity_WorkspaceFragmentDoc,
     "\n  fragment WorkspaceSidebar_Workspace on Workspace {\n    id\n    role\n    ...BillingAlert_Workspace\n    ...WorkspaceSidebarAbout_Workspace\n    ...WorkspaceSidebarMembers_Workspace\n    ...WorkspaceSidebarSecurity_Workspace\n    ...WorkspaceInviteDialog_Workspace\n  }\n": types.WorkspaceSidebar_WorkspaceFragmentDoc,
     "\n  fragment WorkspaceWizard_Workspace on Workspace {\n    creationState {\n      completed\n      state\n    }\n    name\n    slug\n  }\n": types.WorkspaceWizard_WorkspaceFragmentDoc,
@@ -353,6 +353,10 @@ const documents = {
     "\n  query CheckProjectWorkspaceDataResidency($projectId: String!) {\n    project(id: $projectId) {\n      id\n      workspace {\n        ...WorkspaceHasCustomDataResidency_Workspace\n      }\n    }\n  }\n": types.CheckProjectWorkspaceDataResidencyDocument,
     "\n    fragment WorkspaceSsoStatus_Workspace on Workspace {\n      id\n      sso {\n        provider {\n          id\n          name\n          clientId\n          issuerUrl\n        }\n        session {\n          validUntil\n        }\n      }\n    }\n  ": types.WorkspaceSsoStatus_WorkspaceFragmentDoc,
     "\n    fragment WorkspaceSsoStatus_User on User {\n      expiredSsoSessions {\n        id\n        slug\n      }\n    }\n  ": types.WorkspaceSsoStatus_UserFragmentDoc,
+    "\n  fragment WorkspaceBase_Workspace on Workspace {\n    id\n    name\n    slug\n    role\n    logo\n    description\n    plan {\n      status\n      createdAt\n    }\n  }\n": types.WorkspaceBase_WorkspaceFragmentDoc,
+    "\n  fragment WorkspaceTeam_Workspace on Workspace {\n    id\n    team {\n      totalCount\n      items {\n        id\n        user {\n          id\n          name\n          ...LimitedUserAvatar\n        }\n      }\n    }\n  }\n": types.WorkspaceTeam_WorkspaceFragmentDoc,
+    "\n  fragment WorkspaceSecurity_Workspace on Workspace {\n    id\n    domains {\n      id\n      domain\n    }\n  }\n": types.WorkspaceSecurity_WorkspaceFragmentDoc,
+    "\n  fragment WorkspaceAbout_Workspace on Workspace {\n    id\n    description\n  }\n": types.WorkspaceAbout_WorkspaceFragmentDoc,
     "\n  mutation UpdateRole($input: WorkspaceRoleUpdateInput!) {\n    workspaceMutations {\n      updateRole(input: $input) {\n        team {\n          items {\n            id\n            role\n          }\n        }\n      }\n    }\n  }\n": types.UpdateRoleDocument,
     "\n  mutation InviteToWorkspace(\n    $workspaceId: String!\n    $input: [WorkspaceInviteCreateInput!]!\n  ) {\n    workspaceMutations {\n      invites {\n        batchCreate(workspaceId: $workspaceId, input: $input) {\n          id\n          invitedTeam {\n            ...SettingsWorkspacesMembersInvitesTable_PendingWorkspaceCollaborator\n          }\n        }\n      }\n    }\n  }\n": types.InviteToWorkspaceDocument,
     "\n  mutation CreateWorkspace($input: WorkspaceCreateInput!) {\n    workspaceMutations {\n      create(input: $input) {\n        id\n        ...SettingsDialog_Workspace\n      }\n    }\n  }\n": types.CreateWorkspaceDocument,
@@ -967,7 +971,7 @@ export function graphql(source: "\n  fragment WorkspaceSidebarAbout_Workspace on
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment WorkspaceSidebarMembers_Workspace on Workspace {\n    team {\n      totalCount\n      items {\n        id\n        user {\n          id\n          name\n          ...LimitedUserAvatar\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  fragment WorkspaceSidebarMembers_Workspace on Workspace {\n    team {\n      totalCount\n      items {\n        id\n        user {\n          id\n          name\n          ...LimitedUserAvatar\n        }\n      }\n    }\n  }\n"];
+export function graphql(source: "\n  fragment WorkspaceSidebarMembers_Workspace on Workspace {\n    ...WorkspaceTeam_Workspace\n  }\n"): (typeof documents)["\n  fragment WorkspaceSidebarMembers_Workspace on Workspace {\n    ...WorkspaceTeam_Workspace\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -1756,6 +1760,22 @@ export function graphql(source: "\n    fragment WorkspaceSsoStatus_Workspace on 
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n    fragment WorkspaceSsoStatus_User on User {\n      expiredSsoSessions {\n        id\n        slug\n      }\n    }\n  "): (typeof documents)["\n    fragment WorkspaceSsoStatus_User on User {\n      expiredSsoSessions {\n        id\n        slug\n      }\n    }\n  "];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  fragment WorkspaceBase_Workspace on Workspace {\n    id\n    name\n    slug\n    role\n    logo\n    description\n    plan {\n      status\n      createdAt\n    }\n  }\n"): (typeof documents)["\n  fragment WorkspaceBase_Workspace on Workspace {\n    id\n    name\n    slug\n    role\n    logo\n    description\n    plan {\n      status\n      createdAt\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  fragment WorkspaceTeam_Workspace on Workspace {\n    id\n    team {\n      totalCount\n      items {\n        id\n        user {\n          id\n          name\n          ...LimitedUserAvatar\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  fragment WorkspaceTeam_Workspace on Workspace {\n    id\n    team {\n      totalCount\n      items {\n        id\n        user {\n          id\n          name\n          ...LimitedUserAvatar\n        }\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  fragment WorkspaceSecurity_Workspace on Workspace {\n    id\n    domains {\n      id\n      domain\n    }\n  }\n"): (typeof documents)["\n  fragment WorkspaceSecurity_Workspace on Workspace {\n    id\n    domains {\n      id\n      domain\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  fragment WorkspaceAbout_Workspace on Workspace {\n    id\n    description\n  }\n"): (typeof documents)["\n  fragment WorkspaceAbout_Workspace on Workspace {\n    id\n    description\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

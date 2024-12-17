@@ -40,24 +40,29 @@
             />
           </div>
 
-          <!-- About -->
-          <WorkspaceSidebarAbout
-            :workspace-info="workspaceInfo"
-            @show-settings-dialog="openSettingsDialog"
-          />
+          <div class="px-4">
+            <WorkspaceSidebarAbout
+              :workspace-info="workspaceInfo"
+              @show-settings-dialog="openSettingsDialog"
+            />
+          </div>
 
           <!-- Members -->
-          <WorkspaceSidebarMembers
-            :workspace-info="workspaceInfo"
-            :is-workspace-guest="isWorkspaceGuest"
-            @show-settings-dialog="openSettingsDialog"
-          />
+          <div class="px-4">
+            <WorkspaceSidebarMembers
+              :workspace-info="workspaceInfo"
+              :is-workspace-guest="isWorkspaceGuest"
+              @show-settings-dialog="openSettingsDialog"
+            />
+          </div>
 
           <!-- Security -->
-          <WorkspaceSidebarSecurity
-            :workspace-info="workspaceInfo"
-            @show-settings-dialog="openSettingsDialog"
-          />
+          <div class="px-4">
+            <WorkspaceSidebarSecurity
+              :workspace-info="workspaceInfo"
+              @show-settings-dialog="openSettingsDialog"
+            />
+          </div>
         </div>
       </LayoutSidebar>
     </div>

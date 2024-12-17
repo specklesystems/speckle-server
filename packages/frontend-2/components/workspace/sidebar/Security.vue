@@ -5,8 +5,9 @@
     :icon="hasDomains ? 'edit' : 'add'"
     :icon-click="() => openSettingsDialog(SettingMenuKeys.Workspace.Security)"
     :icon-text="hasDomains ? 'Edit domains' : 'Add domain'"
+    no-hover
   >
-    <div class="text-body-2xs text-foreground-2 mt-2 px-4 pb-4">
+    <div class="text-body-2xs text-foreground-2 pb-4 mt-1">
       <template v-if="hasDomains">
         <div
           v-for="domain in workspaceInfo.domains"
