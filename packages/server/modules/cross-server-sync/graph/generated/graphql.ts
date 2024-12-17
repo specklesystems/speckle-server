@@ -536,6 +536,12 @@ export type BranchUpdateInput = {
   streamId: Scalars['String']['input'];
 };
 
+export type BulkUsersRetrievalInput = {
+  cursor?: InputMaybe<Scalars['String']['input']>;
+  emails: Array<Scalars['String']['input']>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+};
+
 export type CancelCheckoutSessionInput = {
   sessionId: Scalars['ID']['input'];
   workspaceId: Scalars['ID']['input'];
@@ -2581,6 +2587,8 @@ export type Query = {
   userSearch: UserSearchResultCollection;
   /** Look up server users */
   users: UserSearchResultCollection;
+  /** Look up server users with a collection of emails */
+  usersByEmail: UserSearchResultCollection;
   /** Validates the slug, to make sure it contains only valid characters and its not taken. */
   validateWorkspaceSlug: Scalars['Boolean']['output'];
   workspace: Workspace;
@@ -2724,6 +2732,11 @@ export type QueryUserSearchArgs = {
 
 export type QueryUsersArgs = {
   input: UsersRetrievalInput;
+};
+
+
+export type QueryUsersByEmailArgs = {
+  input: BulkUsersRetrievalInput;
 };
 
 

@@ -195,6 +195,18 @@ export type LookupUsers = (filter: {
   cursor: Nullable<string>
 }>
 
+export type BulkLookupUsers = (filter: {
+  emails: string[]
+  /**
+   * Defaults to 10
+   */
+  limit?: MaybeNullOrUndefined<number>
+  cursor?: MaybeNullOrUndefined<string>
+}) => Promise<{
+  users: User[]
+  cursor: Nullable<string>
+}>
+
 type AdminUserListArgs = {
   cursor: string | null
   query: string | null

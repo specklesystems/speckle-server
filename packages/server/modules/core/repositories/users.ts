@@ -10,6 +10,7 @@ import { updateUserEmailFactory } from '@/modules/core/repositories/userEmails'
 import { markUserEmailAsVerifiedFactory } from '@/modules/core/services/users/emailVerification'
 import { UserWithOptionalRole } from '@/modules/core/domain/users/types'
 import {
+  BulkLookupUsers,
   CountAdminUsers,
   CountUsers,
   DeleteUserRecord,
@@ -449,6 +450,36 @@ export const getUserRoleFactory =
     return role as Nullable<ServerRoles>
   }
 
+type LookupUsersBaseQueryFilter = {
+  cursor?: string | null
+  limit?: number | null
+}
+
+export const lookupUsersBaseQuery = (
+  db: Knex,
+  filter: LookupUsersBaseQueryFilter = {}
+) => {
+  const query = tables
+    .users(db)
+    .join(ServerAcl.name, Users.col.id, ServerAcl.col.userId)
+    .leftJoin(UserEmails.name, UserEmails.col.userId, Users.col.id)
+    .columns([
+      ...Object.values(
+        omit(Users.col, [Users.col.email, Users.col.verified, Users.col.passwordDigest])
+      ),
+      knex.raw(`(array_agg(??))[1] as "verified"`, [UserEmails.col.verified]),
+      knex.raw(`(array_agg(??))[1] as "email"`, [UserEmails.col.email])
+    ])
+    .groupBy(Users.col.id)
+
+  if (filter.cursor) query.andWhere(Users.col.createdAt, '<', filter.cursor)
+
+  const finalLimit = clamp(filter.limit || 10, 1, 100)
+  query.orderBy(Users.col.createdAt, 'desc').limit(finalLimit)
+
+  return query
+}
+
 /**
  * Used for (Limited)User search. No need to convert users to Limited here, because non-limited fields
  * cannot be leaked out from the GQL API.
@@ -465,43 +496,44 @@ export const lookupUsersFactory =
       projectId
     } = filter
 
-    const query = tables
-      .users(deps.db)
-      .join(ServerAcl.name, Users.col.id, ServerAcl.col.userId)
-      .leftJoin(UserEmails.name, UserEmails.col.userId, Users.col.id)
-      .columns([
-        ...Object.values(
-          omit(Users.col, [
-            Users.col.email,
-            Users.col.verified,
-            Users.col.passwordDigest
-          ])
-        ),
-        knex.raw(`(array_agg(??))[1] as "verified"`, [UserEmails.col.verified]),
-        knex.raw(`(array_agg(??))[1] as "email"`, [UserEmails.col.email])
-      ])
-      .groupBy(Users.col.id)
-      .where((queryBuilder) => {
-        queryBuilder.where({ [UserEmails.col.email]: searchQuery }) //match full email or partial name
-        if (!emailOnly)
-          queryBuilder.orWhere(Users.col.name, 'ILIKE', `%${searchQuery}%`)
-        if (!archived)
-          queryBuilder.andWhere(ServerAcl.col.role, '!=', Roles.Server.ArchivedUser)
-      })
+    const query = lookupUsersBaseQuery(deps.db, { limit, cursor })
 
+    // match full email or partial name
+    query.where((queryBuilder) => {
+      queryBuilder.where({ [UserEmails.col.email]: searchQuery })
+      if (!emailOnly) queryBuilder.orWhere(Users.col.name, 'ILIKE', `%${searchQuery}%`)
+      if (!archived)
+        queryBuilder.andWhere(ServerAcl.col.role, '!=', Roles.Server.ArchivedUser)
+    })
+
+    // limit to given project
     if (projectId) {
       query
         .innerJoin(StreamAcl.name, StreamAcl.col.userId, Users.col.id)
         .andWhere(StreamAcl.col.resourceId, projectId)
     }
 
-    if (cursor) query.andWhere(Users.col.createdAt, '<', cursor)
-
-    const finalLimit = clamp(limit || 10, 1, 100)
-    query.orderBy(Users.col.createdAt, 'desc').limit(finalLimit)
-
     const rows = (await query) as UserRecord[]
     const users = rows.map((u) => sanitizeUserRecord(u)) // pw shouldnt be there, but just making sure
+
+    return {
+      users,
+      cursor: users.length > 0 ? users[users.length - 1].createdAt.toISOString() : null
+    }
+  }
+
+export const bulkLookupUsersFactory =
+  (deps: { db: Knex }): BulkLookupUsers =>
+  async (filter) => {
+    const { emails, limit, cursor } = filter
+
+    const query = lookupUsersBaseQuery(deps.db, { limit, cursor })
+
+    // limit to exact matches on provided emails
+    query.whereIn(UserEmails.col.email, emails)
+
+    const rows = (await query) as UserRecord[]
+    const users = rows.map((u) => sanitizeUserRecord(u))
 
     return {
       users,
