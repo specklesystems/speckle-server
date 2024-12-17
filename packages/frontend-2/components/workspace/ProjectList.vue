@@ -26,7 +26,7 @@
         @show-move-projects-dialog="showMoveProjectsDialog = true"
         @show-new-project-dialog="openNewProject = true"
       />
-      <div class="flex flex-col gap-4 mt-4">
+      <div class="flex flex-col gap-4 mt-3 lg:mt-4">
         <div class="flex flex-row gap-2 sm:items-center justify-between">
           <FormTextInput
             name="modelsearch"

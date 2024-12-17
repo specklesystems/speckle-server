@@ -1,8 +1,8 @@
 <template>
   <div>
-    <div class="flex flex-col gap-4">
+    <div class="flex flex-col gap-3 lg:gap-4">
       <div class="flex items-center justify-between">
-        <div class="flex items-center gap-4">
+        <div class="flex items-center gap-3 lg:gap-4">
           <WorkspaceAvatar
             :name="workspaceInfo.name"
             :logo="workspaceInfo.logo"
@@ -22,6 +22,7 @@
             :items="actionsItems"
             :menu-position="HorizontalDirection.Right"
             :menu-id="addNewProjectMenuId"
+            class="hidden lg:block"
             @click.stop.prevent
             @chosen="onActionChosen"
           >
@@ -77,13 +78,38 @@
           </ClientOnly>
         </div>
       </div>
+
+      <!-- Mobile header elements -->
+      <div class="lg:hidden">
+        <BillingAlert
+          v-if="!isWorkspaceGuest"
+          :workspace="workspaceInfo"
+          :actions="billingAlertAction"
+          condensed
+        />
+        <div
+          v-if="workspaceInfo.description"
+          class="text-body-2xs text-foreground-2 mt-3 lg:mt-4"
+        >
+          {{ workspaceInfo.description }}
+        </div>
+        <div
+          v-if="workspaceInfo.description"
+          class="text-body-2xs text-foreground-2 mt-3 lg:mt-4"
+        >
+          {{ workspaceInfo.description }}
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { graphql } from '~~/lib/common/generated/gql'
-import type { WorkspaceHeader_WorkspaceFragment } from '~~/lib/common/generated/gql/graphql'
+import {
+  WorkspacePlanStatuses,
+  type WorkspaceHeader_WorkspaceFragment
+} from '~~/lib/common/generated/gql/graphql'
 import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
 import {
   EllipsisHorizontalIcon,
@@ -97,7 +123,8 @@ import {
   SettingMenuKeys,
   type AvailableSettingsMenuKeys
 } from '~/lib/settings/helpers/types'
-import { LayoutMenu } from '@speckle/ui-components'
+import { LayoutMenu, type AlertAction } from '@speckle/ui-components'
+import { Roles } from '@speckle/shared'
 
 graphql(`
   fragment WorkspaceHeader_Workspace on Workspace {
@@ -105,7 +132,12 @@ graphql(`
     slug
     role
     name
+    description
     logo
+    plan {
+      status
+      createdAt
+    }
   }
 `)
 
@@ -144,6 +176,32 @@ const addNewProjectItems = computed<LayoutMenuItem[][]>(() => [
     { title: 'Move project', id: AddNewProjectActionTypes.MoveProject }
   ]
 ])
+
+const isWorkspaceAdmin = computed(
+  () => props.workspaceInfo.role === Roles.Workspace.Admin
+)
+
+const isInTrial = computed(
+  () =>
+    props.workspaceInfo.plan?.status === WorkspacePlanStatuses.Trial ||
+    !props.workspaceInfo.plan
+)
+
+const isWorkspaceGuest = computed(
+  () => props.workspaceInfo.role === Roles.Workspace.Guest
+)
+
+const billingAlertAction = computed<Array<AlertAction>>(() => {
+  if (isInTrial.value && isWorkspaceAdmin.value) {
+    return [
+      {
+        title: 'Subscribe',
+        onClick: () => openSettingsDialog(SettingMenuKeys.Workspace.Billing)
+      }
+    ]
+  }
+  return []
+})
 
 const openSettingsDialog = (target: AvailableSettingsMenuKeys) => {
   emit('show-settings-dialog', target)
