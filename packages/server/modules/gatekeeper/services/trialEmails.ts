@@ -28,18 +28,23 @@ const buildMjmlBody = ({
 }: TrialExpiresArgsWithAdmin) => {
   const expireMessage =
     expiresInDays === 0
-      ? `<strong>today</strong>!`
-      : `in <strong>${expiresInDays} days</strong>!`
+      ? `<strong>today</strong>`
+      : `in <strong>${expiresInDays} days</strong>`
   const bodyStart = `<mj-text>
-Hello ${workspaceAdmin.name}!
+Hi ${workspaceAdmin.name}!
 <br/>
 <br/>
-Your trial for your Speckle Workspace: <span style="font-variant: small-caps; font-weight: bold;">${workspace.name}</span> is about to expire ${expireMessage} 
-<br/>To keep using your workspace you have to upgrade to a paid plan.
+The trial for your workspace <span style="font-variant: small-caps; font-weight: bold;">${workspace.name}</span> expires ${expireMessage}.
+<br/>
+<br/>
+Upgrade to a paid plan before the trial expires to keep using your workspace. You can compare plans and get an overview of your estimated billing from your workspace's billing settings.
+<br/>
+<br/>
+
 </mj-text>
   `
   const bodyEnd = `<mj-text>
-If you have any feedback/questions <a href="mailto:hello@speckle.systems" target="_blank">send us an email!</a>
+<span style="font-weight: bold;">Have questions or feedback?</span> Please write us at <a href="mailto:hello@speckle.systems" target="_blank">hello@speckle.systems</a> and we'd be more than happy to talk.
   </mj-text>`
   return { bodyStart, bodyEnd }
 }
@@ -57,7 +62,7 @@ const buildEmailTemplateParams = (
     mjml: buildMjmlBody(args),
     text: buildTextBody(),
     cta: {
-      title: 'Upgrade your workspace!',
+      title: 'Upgrade your workspace',
       url
     }
   }
@@ -94,7 +99,10 @@ export const sendWorkspaceTrialExpiresEmailFactory =
           workspaceAdmin: admin
         })
         const { html, text } = await renderEmail(emailTemplateParams, serverInfo, null)
-        const subject = 'Speckle Workspace trial expiry'
+        const subject =
+          args.expiresInDays === 0
+            ? 'Your workspace trial expires today'
+            : `Your workspace trial expires in ${args.expiresInDays} days`
         const sendEmailParams: SendEmailParams = {
           html,
           text,
