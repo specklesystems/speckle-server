@@ -70,12 +70,14 @@ const onAddInvite = () => {
 }
 
 const onSubmit = handleSubmit(() => {
-  state.value.invites = fields.value
+  const validInvites = fields.value
     .filter((field) => !!field)
     .map((field) => field.value)
 
+  state.value.invites = validInvites
+
   mixpanel.track('Workspace Invites Step Completed', {
-    inviteCount: state.value.invites.length
+    inviteCount: validInvites
   })
 
   goToNextStep()
