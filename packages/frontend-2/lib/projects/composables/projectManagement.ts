@@ -176,11 +176,6 @@ export function useCreateProject() {
         title: 'Project creation failed',
         description: err
       })
-    } else {
-      triggerNotification({
-        type: ToastNotificationType.Success,
-        title: 'Project successfully created'
-      })
     }
 
     return newProject

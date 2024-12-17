@@ -1049,7 +1049,6 @@ jobs:
   docker-build-monitor-container:
     <<: *build-job
     environment:
-      FOLDER: utils
       SPECKLE_SERVER_PACKAGE: monitor-deployment
 
   docker-build-docker-compose-ingress:
@@ -1119,7 +1118,6 @@ jobs:
   docker-publish-monitor-container:
     <<: *publish-job
     environment:
-      FOLDER: utils
       SPECKLE_SERVER_PACKAGE: monitor-deployment
 
   docker-publish-docker-compose-ingress:

@@ -16,6 +16,7 @@ import type { Optional } from '@speckle/shared'
 import type { WorkspaceInviteBanner_PendingWorkspaceCollaboratorFragment } from '~/lib/common/generated/gql/graphql'
 import { useWorkspaceInviteManager } from '~/lib/workspaces/composables/management'
 import { graphql } from '~~/lib/common/generated/gql'
+import { useMixpanel } from '~~/lib/core/composables/mp'
 
 graphql(`
   fragment WorkspaceInviteBanner_PendingWorkspaceCollaborator on PendingWorkspaceCollaborator {
@@ -51,11 +52,19 @@ const { loading, accept, decline } = useWorkspaceInviteManager(
   }
 )
 
+const mixpanel = useMixpanel()
+
 const processInvite = async (shouldAccept: boolean, token: Optional<string>) => {
   if (!token) return
 
   if (shouldAccept) {
     await accept()
+
+    mixpanel.track('Workspace Joined', {
+      location: 'invite banner',
+      // eslint-disable-next-line camelcase
+      workspace_id: props.invite.workspaceId
+    })
   } else {
     await decline()
   }
