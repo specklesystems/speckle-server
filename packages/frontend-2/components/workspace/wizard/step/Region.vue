@@ -83,4 +83,8 @@ watch(
   },
   { immediate: true }
 )
+
+onMounted(() => {
+  mixpanel.track('Workspace Region Step Viewed')
+})
 </script>
