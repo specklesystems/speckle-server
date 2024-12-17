@@ -149,7 +149,6 @@ const onDeclineClick = (token?: string) => {
     mixpanel.track('Invite Action', {
       accepted: false,
       type: 'workspace invite',
-      location: 'invite banner',
       // eslint-disable-next-line camelcase
       workspace_id: props.invite.workspace.id
     })
@@ -159,12 +158,6 @@ const onDeclineClick = (token?: string) => {
 const onAcceptClick = (token?: string) => {
   emit('processed', true, token)
   if (props.invite.workspace) {
-    mixpanel.track('Workspace Joined', {
-      location: 'invite banner',
-      // eslint-disable-next-line camelcase
-      workspace_id: props.invite.workspace.id
-    })
-
     mixpanel.track('Invite Action', {
       accepted: true,
       type: 'workspace invite',
