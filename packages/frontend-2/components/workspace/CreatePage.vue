@@ -2,7 +2,12 @@
   <div class="bg-foundation-page">
     <nav class="fixed z-40 top-0 h-12 bg-foundation border-b border-outline-2">
       <div class="flex items-center justify-between h-full w-screen py-4 px-3 sm:px-4">
-        <HeaderLogoBlock :active="false" class="min-w-40" @click="onCancelClick" />
+        <HeaderLogoBlock
+          :active="false"
+          class="min-w-40 cursor-pointer"
+          no-link
+          @click="onCancelClick"
+        />
         <FormButton size="sm" color="outline" @click="onCancelClick">Cancel</FormButton>
       </div>
     </nav>
@@ -31,7 +36,7 @@ defineProps<{
   workspaceId?: string
 }>()
 
-const { currentStep } = useWorkspacesWizard()
+const { currentStep, resetWizardState } = useWorkspacesWizard()
 
 const isCancelDialogOpen = ref(false)
 
@@ -40,6 +45,7 @@ const isFirstStep = computed(() => currentStep.value === WizardSteps.Details)
 const onCancelClick = () => {
   if (isFirstStep.value) {
     navigateTo(workspacesRoute)
+    resetWizardState()
   } else {
     isCancelDialogOpen.value = true
   }
