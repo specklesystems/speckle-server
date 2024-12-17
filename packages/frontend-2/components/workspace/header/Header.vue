@@ -128,16 +128,9 @@ import { Roles } from '@speckle/shared'
 
 graphql(`
   fragment WorkspaceHeader_Workspace on Workspace {
-    id
-    slug
-    role
-    name
-    description
-    logo
-    plan {
-      status
-      createdAt
-    }
+    ...WorkspaceBase_Workspace
+    ...WorkspaceTeam_Workspace
+    ...BillingAlert_Workspace
   }
 `)
 

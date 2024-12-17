@@ -32,7 +32,6 @@ import dayjs from 'dayjs'
 import { graphql } from '~/lib/common/generated/gql'
 import {
   type BillingAlert_WorkspaceFragment,
-  type WorkspaceHeader_WorkspaceFragment,
   WorkspacePlanStatuses
 } from '~/lib/common/generated/gql/graphql'
 import { useBillingActions } from '~/lib/billing/composables/actions'
@@ -54,7 +53,7 @@ graphql(`
 `)
 
 const props = defineProps<{
-  workspace: BillingAlert_WorkspaceFragment | WorkspaceHeader_WorkspaceFragment
+  workspace: BillingAlert_WorkspaceFragment
   actions?: Array<AlertAction>
   condensed?: boolean
 }>()

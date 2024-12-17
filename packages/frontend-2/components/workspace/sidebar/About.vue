@@ -31,7 +31,7 @@ import type { WorkspaceSidebar_WorkspaceFragment } from '~/lib/common/generated/
 
 graphql(`
   fragment WorkspaceSidebarAbout_Workspace on Workspace {
-    description
+    ...WorkspaceAbout_Workspace
   }
 `)
 

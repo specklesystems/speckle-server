@@ -57,7 +57,7 @@
           </div>
 
           <!-- Security -->
-          <div class="px-4">
+          <div v-if="!hasDomains" class="px-4">
             <WorkspaceSidebarSecurity
               :workspace-info="workspaceInfo"
               @show-settings-dialog="openSettingsDialog"
@@ -73,7 +73,7 @@ import { Roles } from '@speckle/shared'
 import { LayoutSidebar, type AlertAction } from '@speckle/ui-components'
 import {
   WorkspacePlanStatuses,
-  type WorkspaceSidebar_WorkspaceFragment
+  type WorkspaceProjectList_WorkspaceFragment
 } from '~/lib/common/generated/gql/graphql'
 import {
   SettingMenuKeys,
@@ -83,18 +83,17 @@ import { graphql } from '~~/lib/common/generated/gql'
 
 graphql(`
   fragment WorkspaceSidebar_Workspace on Workspace {
-    id
-    role
-    ...BillingAlert_Workspace
-    ...WorkspaceSidebarAbout_Workspace
-    ...WorkspaceSidebarMembers_Workspace
-    ...WorkspaceSidebarSecurity_Workspace
-    ...WorkspaceInviteDialog_Workspace
+    ...WorkspaceAbout_Workspace
+    ...WorkspaceTeam_Workspace
+    ...WorkspaceSecurity_Workspace
+    plan {
+      status
+    }
   }
 `)
 
 const props = defineProps<{
-  workspaceInfo: WorkspaceSidebar_WorkspaceFragment
+  workspaceInfo: WorkspaceProjectList_WorkspaceFragment
 }>()
 
 const emit = defineEmits<{
@@ -118,6 +117,8 @@ const isInTrial = computed(
     props.workspaceInfo.plan?.status === WorkspacePlanStatuses.Trial ||
     !props.workspaceInfo.plan
 )
+
+const hasDomains = computed(() => props.workspaceInfo.domains?.length)
 
 const billingAlertAction = computed<Array<AlertAction>>(() => {
   if (isInTrial.value && isWorkspaceAdmin.value) {

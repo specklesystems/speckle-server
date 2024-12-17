@@ -119,11 +119,13 @@ import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 graphql(`
   fragment WorkspaceProjectList_Workspace on Workspace {
     id
-    ...BillingActions_Workspace
-    ...MoveProjectsDialog_Workspace
-    ...WorkspaceHeader_Workspace
-    ...WorkspaceSidebar_Workspace
+    ...WorkspaceBase_Workspace
+    ...WorkspaceTeam_Workspace
+    ...WorkspaceSecurity_Workspace
+    ...BillingAlert_Workspace
     ...WorkspaceMixpanelUpdateGroup_Workspace
+    ...WorkspaceInviteDialog_Workspace
+    ...MoveProjectsDialog_Workspace
     projects {
       ...WorkspaceProjectList_ProjectCollection
     }

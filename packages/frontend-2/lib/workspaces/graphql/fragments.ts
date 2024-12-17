@@ -1,16 +1,36 @@
 import { graphql } from '~~/lib/common/generated/gql'
 
+// Base workspace fragment
 export const workspaceBaseFragment = graphql(`
   fragment WorkspaceBase_Workspace on Workspace {
     id
     name
     slug
     role
-    logo
     description
+    logo
     plan {
       status
       createdAt
+    }
+  }
+`)
+
+export const workspaceAboutFragment = graphql(`
+  fragment WorkspaceAbout_Workspace on Workspace {
+    id
+    name
+    description
+  }
+`)
+
+export const workspaceInvitedTeamFragment = graphql(`
+  fragment WorkspaceInvitedTeam_Workspace on Workspace {
+    id
+    invitedTeam(filter: $invitesFilter) {
+      id
+      role
+      email
     }
   }
 `)
@@ -29,6 +49,7 @@ export const workspaceTeamFragment = graphql(`
         }
       }
     }
+    ...WorkspaceInvitedTeam_Workspace
   }
 `)
 
@@ -39,12 +60,5 @@ export const workspaceSecurityFragment = graphql(`
       id
       domain
     }
-  }
-`)
-
-export const workspaceAboutFragment = graphql(`
-  fragment WorkspaceAbout_Workspace on Workspace {
-    id
-    description
   }
 `)

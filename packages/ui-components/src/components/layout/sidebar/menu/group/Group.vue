@@ -12,7 +12,7 @@
         @click="isCollapsed = !isCollapsed"
       >
         <ArrowFilled
-          :class="[isCollapsed ? '-rotate-90' : '', noHover ? '-ml-0.5' : '']"
+          :class="[isCollapsed ? '-rotate-90' : '', noHover ? '-ml-1' : '']"
           class="text-foreground-2 shrink-0"
         />
         <div
@@ -50,7 +50,8 @@
       <button
         v-if="iconClick"
         v-tippy="iconText ? iconText : undefined"
-        class="hidden group-hover:flex p-[3px] shrink-0 hover:bg-primary-muted rounded mr-2 text-foreground-2"
+        class="hidden group-hover:flex p-[3px] shrink-0 hover:bg-primary-muted rounded text-foreground-2"
+        :class="noHover ? '' : 'mr-2'"
         @click="iconClick"
       >
         <PencilIcon v-if="icon === 'edit'" class="h-3 w-3" />

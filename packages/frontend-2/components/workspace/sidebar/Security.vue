@@ -2,33 +2,22 @@
   <LayoutSidebarMenuGroup
     title="Security"
     collapsible
-    :icon="hasDomains ? 'edit' : 'add'"
+    icon="add"
     :icon-click="() => openSettingsDialog(SettingMenuKeys.Workspace.Security)"
-    :icon-text="hasDomains ? 'Edit domains' : 'Add domain'"
+    icon-text="Add domain"
     no-hover
   >
     <div class="text-body-2xs text-foreground-2 pb-4 mt-1">
-      <template v-if="hasDomains">
-        <div
-          v-for="domain in workspaceInfo.domains"
-          :key="domain.id"
-          class="py-1 px-2 rounded-full border border-outline-3 max-w-max"
+      <div class="flex flex-col gap-2">
+        Verified domains not set.
+        <FormButton
+          color="outline"
+          size="sm"
+          @click="openSettingsDialog(SettingMenuKeys.Workspace.Security)"
         >
-          {{ domain.domain }}
-        </div>
-      </template>
-      <template v-else>
-        <div class="flex flex-col gap-2">
-          Verified domains not set.
-          <FormButton
-            color="outline"
-            size="sm"
-            @click="openSettingsDialog(SettingMenuKeys.Workspace.Security)"
-          >
-            Improve security
-          </FormButton>
-        </div>
-      </template>
+          Improve security
+        </FormButton>
+      </div>
     </div>
   </LayoutSidebarMenuGroup>
 </template>
@@ -42,14 +31,11 @@ import type { WorkspaceSidebar_WorkspaceFragment } from '~/lib/common/generated/
 
 graphql(`
   fragment WorkspaceSidebarSecurity_Workspace on Workspace {
-    domains {
-      id
-      domain
-    }
+    ...WorkspaceSecurity_Workspace
   }
 `)
 
-const props = defineProps<{
+defineProps<{
   workspaceInfo: WorkspaceSidebar_WorkspaceFragment
 }>()
 
@@ -60,6 +46,4 @@ const emit = defineEmits<{
 const openSettingsDialog = (target: AvailableSettingsMenuKeys) => {
   emit('show-settings-dialog', target)
 }
-
-const hasDomains = computed(() => props.workspaceInfo.domains?.length)
 </script>
