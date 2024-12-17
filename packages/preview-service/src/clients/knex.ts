@@ -33,7 +33,7 @@ export const getDbClients = async () => {
     isDevOrTestEnv: isDevOrTestEnv(),
     logger,
     maxConnections,
-    applicationName: 'speckle_fileimport_service',
+    applicationName: 'speckle_preview_service',
     connectionAcquireTimeoutMillis,
     connectionCreateTimeoutMillis
   }
