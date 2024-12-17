@@ -2,7 +2,7 @@
   <div class="bg-foundation-page">
     <nav class="fixed z-40 top-0 h-12 bg-foundation border-b border-outline-2">
       <div class="flex items-center justify-between h-full w-screen py-4 px-3 sm:px-4">
-        <HeaderLogoBlock :active="false" to="/" class="min-w-40" />
+        <HeaderLogoBlock :active="false" class="min-w-40" @click="onCancelClick" />
         <FormButton size="sm" color="outline" @click="onCancelClick">Cancel</FormButton>
       </div>
     </nav>
