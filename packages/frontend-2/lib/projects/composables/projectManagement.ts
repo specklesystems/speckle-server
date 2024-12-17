@@ -428,11 +428,6 @@ export function useDeleteProject() {
       .catch(convertThrowIntoFetchResult)
 
     if (result?.data?.projectMutations.delete) {
-      triggerNotification({
-        type: ToastNotificationType.Info,
-        title: 'Project deleted'
-      })
-
       if (goHome) {
         if (workspaceSlug) {
           router.push(workspaceRoute(workspaceSlug))

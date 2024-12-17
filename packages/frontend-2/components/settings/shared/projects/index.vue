@@ -90,6 +90,7 @@
     </LayoutTable>
 
     <SettingsSharedProjectsDeleteDialog
+      v-if="projectToModify"
       v-model:open="showProjectDeleteDialog"
       :project="projectToModify"
     />
@@ -170,7 +171,7 @@ const handleProjectClick = (item: ItemType) => {
 enum ActionTypes {
   ViewProject = 'view-project',
   EditMembers = 'edit-members',
-  RemoveProject = 'remove-project'
+  DeleteProject = 'delete-project'
 }
 
 const showActionsMenu = ref<Record<string, boolean>>({})
@@ -179,7 +180,7 @@ const actionItems: LayoutMenuItem[][] = [
   [
     { title: 'View project', id: ActionTypes.ViewProject },
     { title: 'Edit members', id: ActionTypes.EditMembers },
-    { title: 'Remove project...', id: ActionTypes.RemoveProject }
+    { title: 'Delete project...', id: ActionTypes.DeleteProject }
   ]
 ]
 
@@ -189,7 +190,7 @@ const onActionChosen = (actionItem: LayoutMenuItem, project: ProjectItem) => {
     emit('close')
   } else if (actionItem.id === ActionTypes.ViewProject) {
     handleProjectClick(project)
-  } else if (actionItem.id === ActionTypes.RemoveProject) {
+  } else if (actionItem.id === ActionTypes.DeleteProject) {
     openProjectDeleteDialog(project)
   }
 }

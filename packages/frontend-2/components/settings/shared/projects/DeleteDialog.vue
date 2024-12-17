@@ -14,7 +14,7 @@
         <p class="font-medium">{{ project.name }}</p>
         <p>
           {{ project.models.totalCount }} models,
-          {{ project.versions.totalCount }} versions,
+          {{ project.versions.totalCount }} versions
         </p>
       </div>
       <p>
@@ -22,116 +22,60 @@
         <span class="font-medium">cannot</span>
         be undone.
       </p>
+      <p>To confirm deletion, type the project name below.</p>
+      <FormTextInput
+        v-model="projectNameInput"
+        name="projectNameConfirm"
+        label="Project name"
+        size="lg"
+        placeholder="Type the project name here..."
+        full-width
+        hide-error-message
+        class="text-sm"
+        color="foundation"
+      />
     </div>
   </LayoutDialog>
 </template>
 
 <script setup lang="ts">
-import { useMutation } from '@vue/apollo-composable'
 import { LayoutDialog, type LayoutDialogButton } from '@speckle/ui-components'
 import type { ProjectItem } from '~~/lib/server-management/helpers/types'
-import { adminDeleteProjectMutation } from '~~/lib/server-management/graphql/mutations'
-import { useGlobalToast, ToastNotificationType } from '~~/lib/common/composables/toast'
-import {
-  ROOT_QUERY,
-  convertThrowIntoFetchResult,
-  getCacheId,
-  getFirstErrorMessage,
-  modifyObjectFields
-} from '~~/lib/common/helpers/graphql'
-import type { ProjectCollection } from '~~/lib/common/generated/gql/graphql'
+import { useDeleteProject } from '~~/lib/projects/composables/projectManagement'
+import { useMixpanel } from '~~/lib/core/composables/mp'
 
 const props = defineProps<{
   open: boolean
-  project: ProjectItem | null
+  project: ProjectItem
 }>()
-
-const { triggerNotification } = useGlobalToast()
-const { mutate: adminDeleteMutation } = useMutation(adminDeleteProjectMutation)
 
 const isOpen = defineModel<boolean>('open', { required: true })
 
-const deleteConfirmed = async () => {
-  const projectId = props.project?.id
-  if (!projectId) {
-    return
-  }
+const projectNameInput = ref('')
+const deleteProject = useDeleteProject()
+const mp = useMixpanel()
 
-  const result = await adminDeleteMutation(
-    {
-      ids: [projectId]
-    },
-    {
-      update: (cache, { data }) => {
-        if (data?.projectMutations.batchDelete) {
-          // Remove project from cache
-          const cacheId = getCacheId('Project', projectId)
-          cache.evict({
-            id: cacheId
-          })
-
-          // Modify 'admin' field of ROOT_QUERY so that we can modify all `projectList` instances
-          modifyObjectFields<undefined, { [key: string]: ProjectCollection }>(
-            cache,
-            ROOT_QUERY,
-            (_fieldName, _variables, value, details) => {
-              // Find all `projectList` fields (there can be multiple due to differing variables)
-              const projectListFields = Object.keys(value).filter(
-                (k) =>
-                  details.revolveFieldNameAndVariables(k).fieldName === 'projectList'
-              )
-
-              // Being careful not to mutate original `value`
-              const newVal: typeof value = { ...value }
-
-              // Iterate over each and adjust `items` and `totalCount`
-              for (const field of projectListFields) {
-                const oldItems = value[field]?.items || []
-                const newItems = oldItems.filter((i) => i.__ref !== cacheId)
-
-                newVal[field] = {
-                  ...value[field],
-                  ...(value[field]?.items ? { items: newItems } : {}),
-                  totalCount: Math.max(0, (value[field]?.totalCount || 0) - 1)
-                }
-              }
-
-              return newVal
-            },
-            { fieldNameWhitelist: ['admin'] }
-          )
-        }
-      }
-    }
-  ).catch(convertThrowIntoFetchResult)
-
-  if (result?.data?.projectMutations.batchDelete) {
-    triggerNotification({
-      type: ToastNotificationType.Success,
-      title: 'Project deleted',
-      description: 'The project has been successfully deleted'
-    })
-    isOpen.value = false
-  } else {
-    const errorMessage = getFirstErrorMessage(result?.errors)
-    triggerNotification({
-      type: ToastNotificationType.Danger,
-      title: 'Failed to delete project',
-      description: errorMessage
-    })
-  }
-}
-
-const dialogButtons: LayoutDialogButton[] = [
+const dialogButtons = computed<LayoutDialogButton[]>(() => [
   {
     text: 'Cancel',
     props: { color: 'outline' },
-    onClick: () => (isOpen.value = false)
+    onClick: () => {
+      isOpen.value = false
+      projectNameInput.value = ''
+    }
   },
   {
     text: 'Delete',
-    props: { color: 'danger' },
-    onClick: deleteConfirmed
+    props: {
+      color: 'danger',
+
+      disabled: projectNameInput.value !== props.project.name
+    },
+    onClick: async () => {
+      await deleteProject(props.project.id)
+      isOpen.value = false
+      mp.track('Stream Action', { type: 'action', name: 'delete' })
+    }
   }
-]
+])
 </script>
