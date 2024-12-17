@@ -16910,6 +16910,45 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@speckle/monitor-deployment@workspace:packages/monitor-deployment":
+  version: 0.0.0-use.local
+  resolution: "@speckle/monitor-deployment@workspace:packages/monitor-deployment"
+  dependencies:
+    "@speckle/shared": "workspace:^"
+    "@types/express": "npm:^4.17.13"
+    "@types/http-errors": "npm:^2.0.4"
+    "@types/lodash-es": "npm:^4.17.6"
+    "@types/node": "npm:^18.19.38"
+    "@vitest/coverage-istanbul": "npm:^1.6.0"
+    concurrently: "npm:^8.2.2"
+    crypto: "npm:^1.0.1"
+    crypto-random-string: "npm:^5.0.0"
+    dotenv: "npm:^16.4.5"
+    eslint: "npm:^9.4.0"
+    eslint-config-prettier: "npm:^9.1.0"
+    eslint-plugin-vitest: "npm:^0.5.4"
+    esm-module-alias: "npm:^2.2.0"
+    express: "npm:^4.19.2"
+    http-errors: "npm:~1.6.3"
+    knex: "npm:^2.4.1"
+    lodash: "npm:^4.17.21"
+    lodash-es: "npm:^4.17.21"
+    nodemon: "npm:^2.0.20"
+    pg: "npm:^8.7.3"
+    pino: "npm:^8.7.0"
+    pino-http: "npm:^8.2.1"
+    pino-pretty: "npm:^9.1.1"
+    prettier: "npm:^2.5.1"
+    prom-client: "npm:^14.0.1"
+    rimraf: "npm:^5.0.7"
+    typescript: "npm:^4.6.4"
+    typescript-eslint: "npm:^7.12.0"
+    vitest: "npm:^1.6.0"
+    znv: "npm:^0.4.0"
+    zod: "npm:^3.24.1"
+  languageName: unknown
+  linkType: soft
+
 "@speckle/objectloader@npm:^2.17.8":
   version: 2.17.9
   resolution: "@speckle/objectloader@npm:2.17.9"
@@ -19961,7 +20000,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/http-errors@npm:*":
+"@types/http-errors@npm:*, @types/http-errors@npm:^2.0.4":
   version: 2.0.4
   resolution: "@types/http-errors@npm:2.0.4"
   checksum: 10/1f3d7c3b32c7524811a45690881736b3ef741bf9849ae03d32ad1ab7062608454b150a4e7f1351f83d26a418b2d65af9bdc06198f1c079d75578282884c4e8e3
@@ -54872,6 +54911,13 @@ __metadata:
   version: 3.22.4
   resolution: "zod@npm:3.22.4"
   checksum: 10/73622ca36a916f785cf528fe612a884b3e0f183dbe6b33365a7d0fc92abdbedf7804c5e2bd8df0a278e1472106d46674281397a3dd800fa9031dc3429758c6ac
+  languageName: node
+  linkType: hard
+
+"zod@npm:^3.24.1":
+  version: 3.24.1
+  resolution: "zod@npm:3.24.1"
+  checksum: 10/54e25956495dec22acb9399c168c6ba657ff279801a7fcd0530c414d867f1dcca279335e160af9b138dd70c332e17d548be4bc4d2f7eaf627dead50d914fec27
   languageName: node
   linkType: hard
 

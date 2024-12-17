@@ -74,7 +74,9 @@ redis-data/
 .tshy-build
 obj/
 bin/
-
+!packages/monitor-deployment/bin
+!packages/preview-service/bin
+!packages/server/bin
 
 # Server
 multiregion.json

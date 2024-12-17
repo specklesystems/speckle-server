@@ -197,6 +197,9 @@ db:
   ##
   connectionCreationTimeoutMillis: 5000
 
+  ## @param db.databaseName (Optional) The name of the Postgres database to which Speckle will connect. Only required for the Database Monitoring utility when the connection string is to a database connection pool and multi-region is disabled, otherwise this value is ignored.
+  databaseName: ''
+
   connectionString:
     ## @param db.connectionString.secretName Required. A secret containing the full connection string to the Postgres database (e.g. in format of `protocol://username:password@host:port/database`) stored within the Kubernetes cluster as an opaque Kubernetes Secret. Ref: https://kubernetes.io/docs/concepts/configuration/secret/#opaque-secrets
     ##
@@ -1373,6 +1376,17 @@ monitoring:
   ## @param monitoring.logPretty If enabled, will output logs in a human-readable format. Otherwise, logs will be output in JSON format.
   ##
   logPretty: false
+
+  ## @param monitoring.port The port on which the Monitoring Service will run.
+  ##
+  port: 9092
+
+  ## @param monitoring.maximumPostgresConnections The maximum number of connections that the Monitoring Service will allow to the Postgres database. A connection pool exists to manage access to the connections.
+  ##
+  maximumPostgresConnections: 2
+
+  ## @param monitoring.metricsCollectionPeriodSeconds The period in seconds at which the Monitoring Service will query the Postgres database for metrics. Unlike typical Prometheus metrics, the data from the database is not collected in real-time when /metrics is accessed, and is instead done out-of-band on a timed interval.
+  metricsCollectionPeriodSeconds: 120
 
   ## @param monitoring.image The Docker image to be used for the Speckle Monitoring component. If blank, defaults to speckle/speckle-monitoring-deployment:{{ .Values.docker_image_tag }}. If provided, this value should be the full path including tag. The docker_image_tag value will be ignored.
   ##
