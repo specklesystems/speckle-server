@@ -82,4 +82,8 @@ const onSubmit = handleSubmit(() => {
 
   goToNextStep()
 })
+
+onMounted(() => {
+  mixpanel.track('Workspace Invites Step Viewed')
+})
 </script>
