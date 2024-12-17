@@ -20,7 +20,7 @@ RUN chmod +x /usr/bin/tini
 RUN apt-get update -y \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y \
      --no-install-recommends \
-     curl=8.5.0-2ubuntu10.5 \
+     curl=8.5.0-2ubuntu10.6 \
     && curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y \
      --no-install-recommends \
