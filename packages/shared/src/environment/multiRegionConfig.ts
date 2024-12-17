@@ -13,6 +13,12 @@ const regionConfigSchemaV1 = z.object({
       .describe(
         'Full Postgres connection URI (e.g. "postgres://user:password@host:port/dbname")'
       ),
+    databaseName: z
+      .string()
+      .describe(
+        'Name of the database to connect to. Used where the connection string is to a connection pool, and does not include the database name.'
+      )
+      .optional(),
     privateConnectionUri: z
       .string()
       .describe(
@@ -94,6 +100,8 @@ export type KnexConfigArgs = {
   logger: Logger
   maxConnections: number
   applicationName: string
+  connectionAcquireTimeoutMillis: number
+  connectionCreateTimeoutMillis: number
 }
 
 export const createKnexConfig = ({
@@ -103,7 +111,9 @@ export const createKnexConfig = ({
   isDevOrTestEnv,
   logger,
   maxConnections,
-  caCertificate
+  caCertificate,
+  connectionAcquireTimeoutMillis,
+  connectionCreateTimeoutMillis
 }: {
   connectionString?: string | undefined
   caCertificate?: string | undefined
@@ -141,8 +151,10 @@ export const createKnexConfig = ({
     pool: {
       min: 0,
       max: maxConnections,
-      acquireTimeoutMillis: 16000, //allows for 3x creation attempts plus idle time between attempts
-      createTimeoutMillis: 5000
+      acquireTimeoutMillis: connectionAcquireTimeoutMillis, // If the maximum number of connections is reached, it wait for 16 seconds trying to acquire an existing connection before throwing a timeout error.
+      createTimeoutMillis: connectionCreateTimeoutMillis // If no existing connection is available and the maximum number of connections is not yet reached, the pool will try to create a new connection for 5 seconds before throwing a timeout error.
+      // createRetryIntervalMillis: 200, // Irrelevant & ignored because propogateCreateError is true.
+      // propagateCreateError: true // The propagateCreateError is set to true by default in Knex and throws a TimeoutError if the first create connection to the database fails. Knex recommends that this value is NOT set to false, despite what 'helpful' people on Stackoverflow tell you: https://github.com/knex/knex/issues/3455#issuecomment-535554401
     }
   }
 }
