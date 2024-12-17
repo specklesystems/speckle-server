@@ -163,7 +163,7 @@ export type BaseUserStreamsQueryParams = {
    * Only allow streams with the specified IDs to be returned
    */
   streamIdWhitelist?: string[]
-  workspaceId?: string
+  workspaceId?: string | null
 
   /**
    * Only with active sso session
