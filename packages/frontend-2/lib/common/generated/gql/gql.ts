@@ -83,7 +83,7 @@ const documents = {
     "\n  query ProjectPageSettingsCollaboratorsWorkspace($workspaceId: String!) {\n    workspace(id: $workspaceId) {\n      ...ProjectPageTeamInternals_Workspace\n    }\n  }\n": types.ProjectPageSettingsCollaboratorsWorkspaceDocument,
     "\n  query ProjectPageSettingsGeneral($projectId: String!) {\n    project(id: $projectId) {\n      id\n      role\n      ...ProjectPageSettingsGeneralBlockProjectInfo_Project\n      ...ProjectPageSettingsGeneralBlockAccess_Project\n      ...ProjectPageSettingsGeneralBlockDiscussions_Project\n      ...ProjectPageSettingsGeneralBlockLeave_Project\n      ...ProjectPageSettingsGeneralBlockDelete_Project\n      ...ProjectPageTeamInternals_Project\n    }\n  }\n": types.ProjectPageSettingsGeneralDocument,
     "\n  fragment ProjectPageSettingsGeneralBlockAccess_Project on Project {\n    id\n    visibility\n  }\n": types.ProjectPageSettingsGeneralBlockAccess_ProjectFragmentDoc,
-    "\n  fragment ProjectPageSettingsGeneralBlockDelete_Project on Project {\n    id\n    name\n    role\n    models(limit: 0) {\n      totalCount\n    }\n    commentThreads(limit: 0) {\n      totalCount\n    }\n    workspace {\n      slug\n    }\n  }\n": types.ProjectPageSettingsGeneralBlockDelete_ProjectFragmentDoc,
+    "\n  fragment ProjectPageSettingsGeneralBlockDelete_Project on Project {\n    ...ProjectsDeleteDialog_Project\n  }\n": types.ProjectPageSettingsGeneralBlockDelete_ProjectFragmentDoc,
     "\n  fragment ProjectPageSettingsGeneralBlockDiscussions_Project on Project {\n    id\n    visibility\n    allowPublicComments\n  }\n": types.ProjectPageSettingsGeneralBlockDiscussions_ProjectFragmentDoc,
     "\n  fragment ProjectPageSettingsGeneralBlockLeave_Project on Project {\n    id\n    name\n    role\n    team {\n      role\n      user {\n        ...LimitedUserAvatar\n        role\n      }\n    }\n    workspace {\n      id\n    }\n  }\n": types.ProjectPageSettingsGeneralBlockLeave_ProjectFragmentDoc,
     "\n  fragment ProjectPageSettingsGeneralBlockProjectInfo_Project on Project {\n    id\n    role\n    name\n    description\n  }\n": types.ProjectPageSettingsGeneralBlockProjectInfo_ProjectFragmentDoc,
@@ -97,6 +97,7 @@ const documents = {
     "\n  fragment ProjectsDashboardFilledUser on UserProjectCollection {\n    items {\n      ...ProjectDashboardItem\n    }\n  }\n": types.ProjectsDashboardFilledUserFragmentDoc,
     "\n  fragment ProjectsDashboardHeaderProjects_User on User {\n    projectInvites {\n      ...ProjectsInviteBanner\n    }\n  }\n": types.ProjectsDashboardHeaderProjects_UserFragmentDoc,
     "\n  fragment ProjectsDashboardHeaderWorkspaces_User on User {\n    discoverableWorkspaces {\n      ...WorkspaceInviteDiscoverableWorkspaceBanner_LimitedWorkspace\n    }\n    workspaceInvites {\n      ...WorkspaceInviteBanner_PendingWorkspaceCollaborator\n    }\n  }\n": types.ProjectsDashboardHeaderWorkspaces_UserFragmentDoc,
+    "\n  fragment ProjectsDeleteDialog_Project on Project {\n    id\n    name\n    role\n    models(limit: 0) {\n      totalCount\n    }\n    commentThreads(limit: 0) {\n      totalCount\n    }\n    workspace {\n      slug\n      id\n    }\n    versions(limit: 0) {\n      totalCount\n    }\n  }\n": types.ProjectsDeleteDialog_ProjectFragmentDoc,
     "\n  fragment ProjectsHiddenProjectWarning_User on User {\n    id\n    expiredSsoSessions {\n      id\n      slug\n      name\n      logo\n    }\n  }\n": types.ProjectsHiddenProjectWarning_UserFragmentDoc,
     "\n  fragment ProjectsMoveToWorkspaceDialog_Workspace on Workspace {\n    id\n    role\n    name\n    logo\n    ...WorkspaceHasCustomDataResidency_Workspace\n    ...ProjectsWorkspaceSelect_Workspace\n  }\n": types.ProjectsMoveToWorkspaceDialog_WorkspaceFragmentDoc,
     "\n  fragment ProjectsMoveToWorkspaceDialog_User on User {\n    workspaces {\n      items {\n        ...ProjectsMoveToWorkspaceDialog_Workspace\n      }\n    }\n  }\n": types.ProjectsMoveToWorkspaceDialog_UserFragmentDoc,
@@ -110,7 +111,7 @@ const documents = {
     "\n  query SettingsServerRegions {\n    serverInfo {\n      multiRegion {\n        regions {\n          id\n          ...SettingsServerRegionsTable_ServerRegionItem\n        }\n        availableKeys\n      }\n    }\n  }\n": types.SettingsServerRegionsDocument,
     "\n  fragment SettingsServerRegionsAddEditDialog_ServerRegionItem on ServerRegionItem {\n    id\n    name\n    description\n    key\n  }\n": types.SettingsServerRegionsAddEditDialog_ServerRegionItemFragmentDoc,
     "\n  fragment SettingsServerRegionsTable_ServerRegionItem on ServerRegionItem {\n    id\n    name\n    key\n    description\n  }\n": types.SettingsServerRegionsTable_ServerRegionItemFragmentDoc,
-    "\n  fragment SettingsSharedProjects_Project on Project {\n    id\n    name\n    visibility\n    createdAt\n    updatedAt\n    models {\n      totalCount\n    }\n    versions {\n      totalCount\n    }\n    team {\n      id\n      user {\n        name\n        id\n        avatar\n      }\n    }\n  }\n": types.SettingsSharedProjects_ProjectFragmentDoc,
+    "\n  fragment SettingsSharedProjects_Project on Project {\n    ...ProjectsDeleteDialog_Project\n    id\n    name\n    visibility\n    createdAt\n    updatedAt\n    models(limit: 0) {\n      totalCount\n    }\n    versions(limit: 0) {\n      totalCount\n    }\n    team {\n      id\n      user {\n        name\n        id\n        avatar\n      }\n    }\n  }\n": types.SettingsSharedProjects_ProjectFragmentDoc,
     "\n  fragment SettingsUserEmails_User on User {\n    id\n    emails {\n      ...SettingsUserEmailCards_UserEmail\n    }\n  }\n": types.SettingsUserEmails_UserFragmentDoc,
     "\n  fragment SettingsUserNotifications_User on User {\n    id\n    notificationPreferences\n  }\n": types.SettingsUserNotifications_UserFragmentDoc,
     "\n  fragment SettingsUserProfile_User on User {\n    ...SettingsUserProfileChangePassword_User\n    ...SettingsUserProfileDeleteAccount_User\n    ...SettingsUserProfileDetails_User\n  }\n": types.SettingsUserProfile_UserFragmentDoc,
@@ -674,7 +675,7 @@ export function graphql(source: "\n  fragment ProjectPageSettingsGeneralBlockAcc
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment ProjectPageSettingsGeneralBlockDelete_Project on Project {\n    id\n    name\n    role\n    models(limit: 0) {\n      totalCount\n    }\n    commentThreads(limit: 0) {\n      totalCount\n    }\n    workspace {\n      slug\n    }\n  }\n"): (typeof documents)["\n  fragment ProjectPageSettingsGeneralBlockDelete_Project on Project {\n    id\n    name\n    role\n    models(limit: 0) {\n      totalCount\n    }\n    commentThreads(limit: 0) {\n      totalCount\n    }\n    workspace {\n      slug\n    }\n  }\n"];
+export function graphql(source: "\n  fragment ProjectPageSettingsGeneralBlockDelete_Project on Project {\n    ...ProjectsDeleteDialog_Project\n  }\n"): (typeof documents)["\n  fragment ProjectPageSettingsGeneralBlockDelete_Project on Project {\n    ...ProjectsDeleteDialog_Project\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -730,6 +731,10 @@ export function graphql(source: "\n  fragment ProjectsDashboardHeaderWorkspaces_
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
+export function graphql(source: "\n  fragment ProjectsDeleteDialog_Project on Project {\n    id\n    name\n    role\n    models(limit: 0) {\n      totalCount\n    }\n    commentThreads(limit: 0) {\n      totalCount\n    }\n    workspace {\n      slug\n      id\n    }\n    versions(limit: 0) {\n      totalCount\n    }\n  }\n"): (typeof documents)["\n  fragment ProjectsDeleteDialog_Project on Project {\n    id\n    name\n    role\n    models(limit: 0) {\n      totalCount\n    }\n    commentThreads(limit: 0) {\n      totalCount\n    }\n    workspace {\n      slug\n      id\n    }\n    versions(limit: 0) {\n      totalCount\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
 export function graphql(source: "\n  fragment ProjectsHiddenProjectWarning_User on User {\n    id\n    expiredSsoSessions {\n      id\n      slug\n      name\n      logo\n    }\n  }\n"): (typeof documents)["\n  fragment ProjectsHiddenProjectWarning_User on User {\n    id\n    expiredSsoSessions {\n      id\n      slug\n      name\n      logo\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
@@ -782,7 +787,7 @@ export function graphql(source: "\n  fragment SettingsServerRegionsTable_ServerR
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment SettingsSharedProjects_Project on Project {\n    id\n    name\n    visibility\n    createdAt\n    updatedAt\n    models {\n      totalCount\n    }\n    versions {\n      totalCount\n    }\n    team {\n      id\n      user {\n        name\n        id\n        avatar\n      }\n    }\n  }\n"): (typeof documents)["\n  fragment SettingsSharedProjects_Project on Project {\n    id\n    name\n    visibility\n    createdAt\n    updatedAt\n    models {\n      totalCount\n    }\n    versions {\n      totalCount\n    }\n    team {\n      id\n      user {\n        name\n        id\n        avatar\n      }\n    }\n  }\n"];
+export function graphql(source: "\n  fragment SettingsSharedProjects_Project on Project {\n    ...ProjectsDeleteDialog_Project\n    id\n    name\n    visibility\n    createdAt\n    updatedAt\n    models(limit: 0) {\n      totalCount\n    }\n    versions(limit: 0) {\n      totalCount\n    }\n    team {\n      id\n      user {\n        name\n        id\n        avatar\n      }\n    }\n  }\n"): (typeof documents)["\n  fragment SettingsSharedProjects_Project on Project {\n    ...ProjectsDeleteDialog_Project\n    id\n    name\n    visibility\n    createdAt\n    updatedAt\n    models(limit: 0) {\n      totalCount\n    }\n    versions(limit: 0) {\n      totalCount\n    }\n    team {\n      id\n      user {\n        name\n        id\n        avatar\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
