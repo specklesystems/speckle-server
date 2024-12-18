@@ -27,7 +27,7 @@ import {
   type AvailableSettingsMenuKeys,
   SettingMenuKeys
 } from '~/lib/settings/helpers/types'
-import type { WorkspaceSidebar_WorkspaceFragment } from '~/lib/common/generated/gql/graphql'
+import type { WorkspaceSidebarAbout_WorkspaceFragment } from '~/lib/common/generated/gql/graphql'
 
 graphql(`
   fragment WorkspaceSidebarAbout_Workspace on Workspace {
@@ -36,7 +36,7 @@ graphql(`
 `)
 
 defineProps<{
-  workspaceInfo: WorkspaceSidebar_WorkspaceFragment
+  workspaceInfo: WorkspaceSidebarAbout_WorkspaceFragment
   collapsible?: boolean
 }>()
 
