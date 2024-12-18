@@ -64,14 +64,9 @@ const maxCountHiddenItemCount = computed(() => {
 })
 
 const visibleUsers = computed(() => {
-  let result = props.users
-  if (props.maxCount) {
-    result = result.slice(0, props.maxCount)
-  }
-  if (props.maxAvatars) {
-    result = result.slice(0, props.maxAvatars)
-  }
-  return result
+  const result = props.users
+  const limit = Math.min(props.maxCount ?? Infinity, props.maxAvatars ?? Infinity)
+  return result.slice(0, limit)
 })
 
 const maxAvatarsHiddenCount = computed(() => {
