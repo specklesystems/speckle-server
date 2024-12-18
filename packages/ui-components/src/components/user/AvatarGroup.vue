@@ -14,7 +14,7 @@
         :hide-tooltip="hideTooltips"
       />
     </div>
-    <UserAvatar v-if="totalHiddenCount" :size="size">
+    <UserAvatar v-if="totalHiddenCount" :size="size" class="select-none">
       +{{ totalHiddenCount }}
     </UserAvatar>
   </div>
