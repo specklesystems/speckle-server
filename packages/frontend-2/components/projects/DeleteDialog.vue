@@ -141,4 +141,13 @@ const dialogButtons = computed<LayoutDialogButton[]>(() => [
     }
   }
 ])
+
+watch(
+  () => isOpen.value,
+  (newVal, oldVal) => {
+    if (newVal && !oldVal) {
+      projectNameInput.value = ''
+    }
+  }
+)
 </script>
