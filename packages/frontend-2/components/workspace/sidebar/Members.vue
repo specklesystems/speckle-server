@@ -14,12 +14,13 @@
     >
       <div class="flex items-center gap-1">
         <UserAvatarGroup
+          :overlap="false"
           :users="team.map((teamMember) => teamMember.user)"
-          class="max-w-[104px]"
+          :max-avatars="3"
         />
         <button
           v-if="invitedTeamCount"
-          class="flex items-center justify-center text-body-3xs px-2 h-8 rounded-full border border-dashed border-outline-2 hover:bg-foundation"
+          class="flex items-center shrink-0 justify-center text-body-3xs px-2 h-8 rounded-full border border-dashed border-outline-2 hover:bg-foundation select-none"
           @click="openSettingsDialog(SettingMenuKeys.Workspace.Members)"
         >
           + {{ invitedTeamCount }} pending
