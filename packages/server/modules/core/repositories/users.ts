@@ -500,7 +500,7 @@ export const lookupUsersFactory =
 
     // match full email or partial name
     query.where((queryBuilder) => {
-      queryBuilder.where({ [UserEmails.col.email]: searchQuery })
+      queryBuilder.where({ [UserEmails.col.email]: searchQuery.toLowerCase() })
       if (!emailOnly) queryBuilder.orWhere(Users.col.name, 'ILIKE', `%${searchQuery}%`)
       if (!archived)
         queryBuilder.andWhere(ServerAcl.col.role, '!=', Roles.Server.ArchivedUser)
@@ -522,6 +522,11 @@ export const lookupUsersFactory =
     }
   }
 
+/**
+ * Used for (Limited)User search when multiple potential emails are known
+ * @param deps
+ * @returns
+ */
 export const bulkLookupUsersFactory =
   (deps: { db: Knex }): BulkLookupUsers =>
   async (filter) => {
@@ -530,7 +535,10 @@ export const bulkLookupUsersFactory =
     const query = lookupUsersBaseQuery(deps.db, { limit, cursor })
 
     // limit to exact matches on provided emails
-    query.whereIn(UserEmails.col.email, emails)
+    query.whereIn(
+      UserEmails.col.email,
+      emails.map((email) => email.toLowerCase())
+    )
 
     const rows = (await query) as UserRecord[]
     const users = rows.map((u) => sanitizeUserRecord(u))
