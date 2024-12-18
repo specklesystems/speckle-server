@@ -30,7 +30,6 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
 import { ChevronDownIcon, PlusIcon } from '@heroicons/vue/24/outline'
 import { HorizontalDirection } from '~~/lib/common/composables/window'
 import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
@@ -45,8 +44,9 @@ const emit = defineEmits<{
   (e: 'move-project'): void
 }>()
 
-defineProps<{
+const props = defineProps<{
   mobileShorten?: boolean
+  isWorkspaceAdmin: boolean
 }>()
 
 const menuId = useId()
@@ -55,7 +55,12 @@ const showMenu = ref(false)
 const menuItems = computed<LayoutMenuItem[][]>(() => [
   [
     { title: 'New project...', id: AddNewProjectActionTypes.NewProject },
-    { title: 'Move project...', id: AddNewProjectActionTypes.MoveProject }
+    {
+      title: 'Move project...',
+      id: AddNewProjectActionTypes.MoveProject,
+      disabled: !props.isWorkspaceAdmin,
+      disabledTooltip: 'You must be a workspace admin.'
+    }
   ]
 ])
 

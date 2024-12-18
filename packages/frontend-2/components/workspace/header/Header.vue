@@ -28,6 +28,8 @@
 
       <div class="flex gap-1.5 md:gap-2">
         <WorkspaceHeaderAddProjectMenu
+          v-if="!isWorkspaceGuest"
+          :is-workspace-admin="isWorkspaceAdmin"
           mobile-shorten
           @new-project="$emit('show-new-project-dialog')"
           @move-project="$emit('show-move-projects-dialog')"

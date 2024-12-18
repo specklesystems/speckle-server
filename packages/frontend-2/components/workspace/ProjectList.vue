@@ -52,6 +52,8 @@
           You have 0 projects
         </span>
         <WorkspaceHeaderAddProjectMenu
+          v-if="!isWorkspaceGuest"
+          :is-workspace-admin="isWorkspaceAdmin"
           @new-project="openNewProject = true"
           @move-project="showMoveProjectsDialog = true"
         />
@@ -90,7 +92,7 @@
 <script setup lang="ts">
 import { MagnifyingGlassIcon, Squares2X2Icon } from '@heroicons/vue/24/outline'
 import { useQuery, useQueryLoading } from '@vue/apollo-composable'
-import type { Nullable, Optional, StreamRoles } from '@speckle/shared'
+import { Roles, type Nullable, type Optional, type StreamRoles } from '@speckle/shared'
 import {
   workspacePageQuery,
   workspaceProjectsQuery
@@ -222,6 +224,9 @@ const searchPlaceholder = computed(() => {
   const count = projects.value?.totalCount || 0
   return count > 0 ? `Search in ${count} projects...` : 'Search...'
 })
+
+const isWorkspaceGuest = computed(() => workspace.value?.role === Roles.Workspace.Guest)
+const isWorkspaceAdmin = computed(() => workspace.value?.role === Roles.Workspace.Admin)
 
 const showLoadingBar = computed(() => {
   const isLoading =
