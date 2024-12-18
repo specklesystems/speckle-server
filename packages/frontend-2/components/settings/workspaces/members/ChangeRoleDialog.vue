@@ -33,10 +33,7 @@
           {{ message }}
         </p>
       </CommonCard>
-      <div
-        v-if="newRole && showBillingInfo"
-        class="text-body-2xs text-foreground-2 leading-5"
-      >
+      <div v-if="showBillingInfo" class="text-body-2xs text-foreground-2 leading-5">
         <p class="mb-2">
           Your workspace is currently billed for {{ memberSeatText
           }}{{ hasGuestSeats ? ` and ${guestSeatText}` : '' }}.
@@ -145,7 +142,7 @@ const nextBillingCycleEnd = computed(() => {
   )
 })
 const showBillingInfo = computed(() => {
-  if (!props.workspace?.plan) return false
+  if (!props.workspace?.plan || !newRole.value) return false
   return (
     isPaidPlan(props.workspace.plan.name as unknown as WorkspacePlans) &&
     props.workspace.plan.status === WorkspacePlanStatuses.Valid
