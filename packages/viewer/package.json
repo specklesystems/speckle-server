@@ -1,6 +1,6 @@
 {
   "name": "@speckle/viewer",
-  "version": "2.20.0-alpha4",
+  "version": "2.23.4-alpha",
   "description": "A 3d viewer for Speckle, based on threejs.",
   "homepage": "https://speckle.systems",
   "repository": {
