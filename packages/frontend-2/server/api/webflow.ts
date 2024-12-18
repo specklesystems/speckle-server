@@ -71,7 +71,7 @@ export default defineEventHandler(async (): Promise<{ items: WebflowItem[] }> =>
           createdOn: item.createdOn,
           lastPublished: item.lastPublished,
           featureImageUrl: item.fieldData['feature-image']?.url,
-          url: `https://speckle.systems/blog/${item.fieldData.slug}`
+          url: `https://speckle.systems/tutorials/${item.fieldData.slug}`
         })
       )
     }
