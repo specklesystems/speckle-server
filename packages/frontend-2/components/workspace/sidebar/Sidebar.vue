@@ -12,13 +12,13 @@
 
     <!-- Sidebar Content -->
     <div
-      class="absolute right-0 z-40 lg:static h-full flex w-[17rem] shrink-0 transition-all"
+      class="transition-all pt-2"
       :class="isOpenMobile ? '' : 'translate-x-[17rem] lg:translate-x-0'"
     >
-      <LayoutSidebar class="border-l border-outline-3 bg-foundation-page">
+      <LayoutSidebar>
         <div class="flex flex-col divide-y divide-outline-3">
           <!-- Subscription Reminder -->
-          <div v-if="!isWorkspaceGuest && isInTrial" class="p-4">
+          <div v-if="!isWorkspaceGuest && isInTrial" class="p-4 pt-2">
             <BillingAlert
               :workspace="workspaceInfo"
               :actions="billingAlertAction"

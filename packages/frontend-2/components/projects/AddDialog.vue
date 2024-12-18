@@ -1,11 +1,5 @@
 <template>
-  <LayoutDialog
-    v-model:open="open"
-    max-width="sm"
-    :buttons="dialogButtons"
-    hide-closer
-    prevent-close-on-click-outside
-  >
+  <LayoutDialog v-model:open="open" max-width="sm" :buttons="dialogButtons">
     <template #header>Create a new project</template>
     <form class="flex flex-col text-foreground" @submit="onSubmit">
       <div class="flex flex-col gap-y-4 mb-2">
