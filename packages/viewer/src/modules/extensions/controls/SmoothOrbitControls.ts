@@ -40,7 +40,6 @@ import { Intersections } from '../../Intersections.js'
 import { lerp } from 'three/src/math/MathUtils.js'
 import { computeOrthographicSize } from '../CameraController.js'
 import { ObjectLayers } from '../../../IViewer.js'
-import { multiply } from 'lodash-es'
 
 /**
  * @param {Number} value
@@ -651,147 +650,110 @@ export class SmoothOrbitControls extends SpeckleControls {
   protected lastPivot = new Vector3()
   protected relativeCamPos = new Vector3()
   protected lastInitialPosition = new Vector3()
-  protected lastQuat = new Quaternion()
+  protected lastQuat: Quaternion = new Quaternion()
   protected lastDelta = new Vector3()
 
-  protected getPivotTransform(pivot: Vector3, quaternion: Quaternion) {
-    const translateToOrigin = new Matrix4().makeTranslation(
-      -pivot.x,
-      -pivot.y,
-      -pivot.z
+  protected polarFromPivotal() {
+    const quaternion = this.quaternionFromSpherical(this.spherical)
+    const dir = new Vector3().setFromMatrixColumn(
+      new Matrix4().makeRotationFromQuaternion(quaternion),
+      2
     )
-    const translateBack = new Matrix4().makeTranslation(pivot.x, pivot.y, pivot.z)
-
-    // Rotation matrix from quaternion
-    const rotationMatrix = new Matrix4().makeRotationFromQuaternion(quaternion)
-
-    // Combine the matrices
-    return new Matrix4()
-      .multiply(translateBack) // Translate back to the pivot
-      .multiply(rotationMatrix) // Apply rotation
-      .multiply(translateToOrigin) // Translate pivot to origin
-    // .multiply(new Matrix4().makeScale(1, 1, this.spherical.radius))
-  }
-
-  protected change = false
-  protected moveCamera() {
-    const pivotPoint = new Vector3()
-      .copy(this.pivotPoint)
-      .applyMatrix4(this._basisTransformInv)
-    const prevPivotPoint = new Vector3()
-      .copy(this.lastPivot)
-      .applyMatrix4(this._basisTransformInv)
     const camPos = new Vector3()
       .copy(this._targetCamera.position)
       .applyMatrix4(this._basisTransformInv)
-    // const position = new Vector3(0, 50, this.spherical.radius)
-    // const quaternion = new Quaternion().setFromEuler(
-    //   new Euler(0, this.spherical.theta, 0)
-    // )
 
-    // position.sub(pivotPoint)
-    // position.applyQuaternion(quaternion)
-    // position.add(pivotPoint)
+    const pivotPoint = new Vector3()
+      .copy(this.pivotPoint)
+      .applyMatrix4(this._basisTransformInv)
 
-    // this._targetCamera.position.copy(position)
-    // this._targetCamera.quaternion.copy(quaternion)
+    const cameraPivotDist = camPos.distanceTo(pivotPoint)
+    const cameraPivotDir = new Vector3().copy(camPos).sub(pivotPoint)
+    cameraPivotDir.normalize()
 
-    // this._targetCamera.position.set(0, 50, this.spherical.radius)
-    // this._targetCamera.quaternion.identity()
-    // this._targetCamera.updateMatrixWorld(true)
+    const dot = Math.min(Math.max(dir.dot(cameraPivotDir), -1), 1)
+    const angle = Math.acos(dot)
+    const polarRadius = cameraPivotDist //cameraPivotDist * Math.cos(angle)
+    const polarOrigin = new Vector3().copy(dir).multiplyScalar(polarRadius)
+    this.setTarget(polarOrigin.x, polarOrigin.y, polarOrigin.z)
+    this.setRadius(polarRadius)
+    this.jumpToGoal()
+  }
 
-    // this.rotateAboutPoint(
-    //   this._targetCamera,
-    //   pivotPoint,
-    //   new Vector3(0, 1, 0),
-    //   this.spherical.theta
-    // )
+  protected positionFromPivotal(origin: Vector3, quaternion: Quaternion) {
+    const pivotPoint = new Vector3()
+      .copy(this.pivotPoint)
+      .applyMatrix4(this._basisTransformInv)
 
-    // // Step 1: Calculate the camera's position relative to the pivot using spherical coordinates
-    // const cameraOffset = new Vector3(0, 50, this.spherical.radius) // Camera offset (distance and height)
-    // const rotationMatrix = new Matrix4().makeRotationFromEuler(
-    //   new Euler(0, this.spherical.theta, 0)
-    // ) // Apply yaw rotation
-
-    // cameraOffset.sub(pivotPoint)
-    // cameraOffset.applyMatrix4(rotationMatrix) // Apply the rotation
-    // cameraOffset.add(pivotPoint)
-    // this._targetCamera.position.copy(cameraOffset) // Set the camera position relative to the pivot
-
-    // // Step 2: Update the camera orientation so it faces away from the pivot point
-    // const direction = new Vector3()
-    //   .subVectors(this._targetCamera.position, pivotPoint)
-    //   .normalize() // Camera direction from pivot
-    // const up = new Vector3(0, 1, 0) // Keep the 'up' vector stable
-    // const right = new Vector3().crossVectors(up, direction).normalize() // Right vector (cross product of up and direction)
-    // const newUp = new Vector3().crossVectors(direction, right).normalize() // Recompute up vector based on new direction
-
-    // // Step 3: Create a new quaternion based on the updated right, up, and direction vectors
-    // const rotationMatrixFinal = new Matrix4().makeBasis(right, newUp, direction)
-    // this._targetCamera.quaternion.setFromRotationMatrix(rotationMatrixFinal)
-
-    // this._targetCamera.position.applyMatrix4(this._basisTransform)
-    // this._targetCamera.quaternion.premultiply(
-    //   new Quaternion().setFromRotationMatrix(this._basisTransform)
-    // )
-
-    // Derive the new camera position from the updated spherical:
-    this.spherical.makeSafe()
-
-    // // Compute direction vector: from camera to target (origin)
-    // const pos = new Vector3().copy(this._targetCamera.position)
-    // const direction = new Vector3().subVectors(pos, new Vector3(0, 0, 0)).normalize()
-
-    // // Compute a "right" vector using cross product with world up (0, 1, 0)
-    // const worldUp = new Vector3(0, 1, 0)
-    // const right = new Vector3().crossVectors(worldUp, direction).normalize()
-
-    // // Recompute the up vector to ensure orthogonality
-    // const up = new Vector3().crossVectors(direction, right).normalize()
-
-    // // Construct the rotation matrix using the orthogonal basis vectors
-    // const rotationMatrix = new Matrix4().makeBasis(right, up, direction.negate())
-
-    // // Extract the quaternion from the rotation matrix
-    // const fakeQuaternion = new Quaternion().setFromRotationMatrix(rotationMatrix)
-    // // const sphericalPosition = this.positionFromSpherical(this.spherical, this.origin)
-
-    const quaternion = this.quaternionFromSpherical(this.spherical)
-
-    const position = new Vector3()
-    const tPivot = this.getPivotTransform(pivotPoint, quaternion)
-    const invTPivot = new Matrix4().copy(tPivot).invert()
-
-    const deltaPivot = new Vector3().copy(prevPivotPoint).sub(pivotPoint)
-    // console.log('Pivot -> ', pivotPoint)
-    // const tPrevPivot = this.getPivotTransform(prevPivotPoint, quaternion)
-    // const tPrevPointInv = new Matrix4().copy(tPrevPivot).invert()
-    // const objectToPrevPiot = new Vector3().copy(camPos).sub(prevPivotPoint)
-    // const objectToNewPivot = new Vector3().copy(camPos).sub(pivotPoint)
-    // const offset = new Vector3().copy(objectToPrevPiot).sub(objectToNewPivot)
     const dir = new Vector3().setFromMatrixColumn(
       new Matrix4().makeRotationFromQuaternion(quaternion),
       2
     )
     dir.multiplyScalar(this.spherical.radius)
 
-    if (deltaPivot.length() > 0) {
-      this.lastDelta.copy(pivotPoint)
-      this.lastDelta.add(
-        new Vector3()
-          .copy(pivotPoint)
-          .negate()
-          .applyQuaternion(new Quaternion().copy(quaternion).invert())
-      )
-      this.lastInitialPosition.copy(this.lastDelta)
-    }
+    const position = new Vector3()
+    position.copy(origin)
 
-    console.warn(this.lastInitialPosition)
-    position.copy(this.lastInitialPosition)
     position.sub(pivotPoint)
     position.applyQuaternion(quaternion)
     position.add(pivotPoint)
     position.add(dir)
+
+    return position
+  }
+
+  protected isPivotal = false
+  protected pivotalOrigin: Vector3 = new Vector3()
+
+  protected change = false
+  protected moveCamera() {
+    this.spherical.makeSafe()
+
+    const pivotPoint = new Vector3()
+      .copy(this.pivotPoint)
+      .applyMatrix4(this._basisTransformInv)
+    const prevPivotPoint = new Vector3()
+      .copy(this.lastPivot)
+      .applyMatrix4(this._basisTransformInv)
+
+    const quaternion = this.quaternionFromSpherical(this.spherical)
+
+    const prevQuaternion = new Quaternion()
+      .copy(this.lastQuat)
+      .premultiply(new Quaternion().setFromRotationMatrix(this._basisTransformInv))
+    const deltaPivot = prevPivotPoint.sub(pivotPoint)
+    let deltaQuat = prevQuaternion.angleTo(quaternion)
+
+    if (deltaQuat === 2.3948158271083724) deltaQuat = 0
+
+    if (deltaPivot.length() > 0) {
+      const camPos = new Vector3()
+        .copy(this._targetCamera.position)
+        .applyMatrix4(this._basisTransformInv)
+      const dir = new Vector3().setFromMatrixColumn(
+        new Matrix4().makeRotationFromQuaternion(quaternion),
+        2
+      )
+      dir.multiplyScalar(this.spherical.radius)
+
+      camPos.sub(dir)
+      camPos.sub(pivotPoint)
+      camPos.applyQuaternion(new Quaternion().copy(quaternion).invert())
+      camPos.add(pivotPoint)
+      this.pivotalOrigin.copy(camPos)
+    }
+
+    if (deltaQuat > 0.00001) {
+      // pivotalOrigin.add(pivotPoint)
+      // pivotalOrigin.add(
+      //   new Vector3()
+      //     .copy(pivotPoint)
+      //     .negate()
+      //     .applyQuaternion(new Quaternion().copy(quaternion).invert())
+      // )
+    }
+
+    const position = this.positionFromPivotal(this.pivotalOrigin, quaternion)
 
     position.applyQuaternion(
       new Quaternion().setFromRotationMatrix(this._basisTransform)
@@ -834,6 +796,7 @@ export class SmoothOrbitControls extends SpeckleControls {
     }
 
     this.lastPivot.copy(this.pivotPoint)
+    this.lastQuat.copy(quaternion)
   }
 
   /* Ortho height to distance functions
@@ -1043,9 +1006,7 @@ export class SmoothOrbitControls extends SpeckleControls {
       new Vector2(x, y),
       ObjectLayers.STREAM_CONTENT_MESH,
       true,
-      this.world.worldBox,
-      true,
-      false
+      this.world.worldBox
     )
     if (res) {
       this.lastPivot.copy(this.pivotPoint)
@@ -1061,6 +1022,7 @@ export class SmoothOrbitControls extends SpeckleControls {
         .applyMatrix4(this._basisTransformInv)
       this.forceUpdate = true
       this.change = true
+      this.isPivotal = true
     }
 
     if (this.pointers.length > 2) {
@@ -1157,6 +1119,10 @@ export class SmoothOrbitControls extends SpeckleControls {
     if (this.isUserPointing) {
       this.emit(PointerChangeEvent.PointerChangeEnd)
     }
+    // this.polarFromPivotal()
+    // this.isPivotal = false
+    // console.log('Pivotal -> ', this.positionFromPivotal())
+    // console.log('Polar -> ', this.positionFromSpherical(this.spherical, this.origin))
   }
 
   protected onTouchChange(event: PointerEvent) {
