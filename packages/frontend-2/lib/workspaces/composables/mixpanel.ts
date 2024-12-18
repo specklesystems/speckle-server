@@ -1,9 +1,10 @@
 import { useMixpanel } from '~/lib/core/composables/mp'
 import { graphql } from '~~/lib/common/generated/gql'
-import type {
-  WorkspaceMixpanelUpdateGroup_WorkspaceFragment,
-  WorkspaceMixpanelUpdateGroup_WorkspaceCollaboratorFragment,
-  PaidWorkspacePlans
+import {
+  type WorkspaceMixpanelUpdateGroup_WorkspaceFragment,
+  type WorkspaceMixpanelUpdateGroup_WorkspaceCollaboratorFragment,
+  type PaidWorkspacePlans,
+  BillingInterval
 } from '~/lib/common/generated/gql/graphql'
 import { type MaybeNullOrUndefined, Roles, type WorkspaceRoles } from '@speckle/shared'
 import { resolveMixpanelServerId } from '@speckle/shared'
@@ -52,6 +53,7 @@ graphql(`
 
 export const useWorkspacesMixpanel = () => {
   const mixpanel = useMixpanel()
+  const isBillingIntegrationEnabled = useIsBillingIntegrationEnabled()
 
   const workspaceMixpanelUpdateGroup = (
     workspace: WorkspaceMixpanelUpdateGroup_WorkspaceFragment,
@@ -61,22 +63,24 @@ export const useWorkspacesMixpanel = () => {
 
     const getEstimatedBill = () => {
       if (
+        !isBillingIntegrationEnabled.value ||
         !isPaidPlan(workspace.plan?.name) ||
         workspace.plan?.status !== WorkspacePlanStatuses.Valid ||
         !workspace.subscription?.billingInterval
       )
-        return 0
+        return null
 
       const planConfig =
         pricingPlansConfig.plans[workspace.plan.name as unknown as PaidWorkspacePlans]
       const cost = planConfig.cost[workspace.subscription.billingInterval]
-
       const memberPrice = cost[Roles.Workspace.Member]
       const guestPrice = cost[Roles.Workspace.Guest]
       const memberCount = workspace.subscription?.seats?.plan || 0
       const guestCount = workspace.subscription?.seats?.guest || 0
-
-      return memberPrice * memberCount + guestPrice * guestCount
+      const totalPrice = memberPrice * memberCount + guestPrice * guestCount
+      return workspace.subscription.billingInterval === BillingInterval.Yearly
+        ? totalPrice * 12
+        : totalPrice
     }
 
     const roleCount = {
