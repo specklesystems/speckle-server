@@ -27,34 +27,11 @@
       </div>
 
       <div class="flex gap-1.5 md:gap-2">
-        <LayoutMenu
-          v-model:open="showAddNewProjectMenu"
-          :items="addNewProjectItems"
-          :menu-position="HorizontalDirection.Left"
-          :menu-id="menuId"
-          @click.stop.prevent
-          @chosen="onAddNewProjectActionChosen"
-        >
-          <FormButton
-            color="outline"
-            class="hidden md:block"
-            @click="showAddNewProjectMenu = !showAddNewProjectMenu"
-          >
-            <div class="flex items-center gap-1">
-              Add project
-              <ChevronDownIcon class="h-3 w-3" />
-            </div>
-          </FormButton>
-          <FormButton
-            color="outline"
-            class="md:hidden"
-            hide-text
-            :icon-left="PlusIcon"
-            @click="showAddNewProjectMenu = !showAddNewProjectMenu"
-          >
-            Add project
-          </FormButton>
-        </LayoutMenu>
+        <WorkspaceHeaderAddProjectMenu
+          mobile-shorten
+          @new-project="$emit('show-new-project-dialog')"
+          @move-project="$emit('show-move-projects-dialog')"
+        />
 
         <FormButton
           color="outline"
@@ -101,14 +78,12 @@ import {
   WorkspacePlanStatuses,
   type WorkspaceHeader_WorkspaceFragment
 } from '~~/lib/common/generated/gql/graphql'
-import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
-import { Cog8ToothIcon, ChevronDownIcon, PlusIcon } from '@heroicons/vue/24/outline'
-import { HorizontalDirection } from '~~/lib/common/composables/window'
+import { Cog8ToothIcon } from '@heroicons/vue/24/outline'
 import {
   SettingMenuKeys,
   type AvailableSettingsMenuKeys
 } from '~/lib/settings/helpers/types'
-import { LayoutMenu, type AlertAction } from '@speckle/ui-components'
+import { type AlertAction } from '@speckle/ui-components'
 import { Roles } from '@speckle/shared'
 
 graphql(`
@@ -118,11 +93,6 @@ graphql(`
     ...BillingAlert_Workspace
   }
 `)
-
-enum AddNewProjectActionTypes {
-  NewProject = 'new-project',
-  MoveProject = 'move-project'
-}
 
 const emit = defineEmits<{
   (e: 'show-settings-dialog', v: AvailableSettingsMenuKeys): void
@@ -135,16 +105,6 @@ const props = defineProps<{
   workspaceInfo: WorkspaceHeader_WorkspaceFragment
 }>()
 
-const menuId = useId()
-
-const showAddNewProjectMenu = ref(false)
-
-const addNewProjectItems = computed<LayoutMenuItem[][]>(() => [
-  [
-    { title: 'New project...', id: AddNewProjectActionTypes.NewProject },
-    { title: 'Move project...', id: AddNewProjectActionTypes.MoveProject }
-  ]
-])
 const isWorkspaceAdmin = computed(
   () => props.workspaceInfo.role === Roles.Workspace.Admin
 )
@@ -173,21 +133,5 @@ const billingAlertAction = computed<Array<AlertAction>>(() => {
 
 const openSettingsDialog = (target: AvailableSettingsMenuKeys) => {
   emit('show-settings-dialog', target)
-}
-
-const onAddNewProjectActionChosen = (params: {
-  item: LayoutMenuItem
-  event: MouseEvent
-}) => {
-  const { item } = params
-
-  switch (item.id) {
-    case AddNewProjectActionTypes.NewProject:
-      emit('show-new-project-dialog')
-      break
-    case AddNewProjectActionTypes.MoveProject:
-      emit('show-move-projects-dialog')
-      break
-  }
 }
 </script>
