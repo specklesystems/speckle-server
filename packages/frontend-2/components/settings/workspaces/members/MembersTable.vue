@@ -88,10 +88,8 @@
     />
     <SettingsSharedDeleteUserDialog
       v-model:open="showDeleteUserRoleDialog"
-      :title="
-        userToModify?.role === Roles.Workspace.Guest ? 'Remove guest' : 'Remove user'
-      "
       :name="userToModify?.name ?? ''"
+      :workspace="workspace"
       @remove-user="onRemoveUser"
     />
     <SettingsWorkspacesGeneralLeaveDialog
@@ -139,6 +137,7 @@ graphql(`
   fragment SettingsWorkspacesMembersMembersTable_Workspace on Workspace {
     id
     name
+    ...SettingsSharedDeleteUserDialog_Workspace
     ...SettingsWorkspacesMembersTableHeader_Workspace
     team {
       items {
