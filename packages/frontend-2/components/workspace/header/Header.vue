@@ -1,6 +1,6 @@
 <template>
   <div class="flex flex-col gap-3 lg:gap-4">
-    <div v-if="!isWorkspaceGuest && !isInTrial">
+    <div v-if="!isWorkspaceGuest && !isInTrial && !hasValidPlan">
       <BillingAlert :workspace="workspaceInfo" :actions="billingAlertAction" />
     </div>
     <div class="flex items-center justify-between gap-4">
@@ -143,21 +143,20 @@ const addNewProjectItems = computed<LayoutMenuItem[][]>(() => [
     { title: 'Move project...', id: AddNewProjectActionTypes.MoveProject }
   ]
 ])
-
 const isWorkspaceAdmin = computed(
   () => props.workspaceInfo.role === Roles.Workspace.Admin
 )
-
 const isInTrial = computed(
   () =>
     props.workspaceInfo.plan?.status === WorkspacePlanStatuses.Trial ||
     !props.workspaceInfo.plan
 )
-
+const hasValidPlan = computed(
+  () => props.workspaceInfo.plan?.status === WorkspacePlanStatuses.Valid
+)
 const isWorkspaceGuest = computed(
   () => props.workspaceInfo.role === Roles.Workspace.Guest
 )
-
 const billingAlertAction = computed<Array<AlertAction>>(() => {
   if (isInTrial.value && isWorkspaceAdmin.value) {
     return [

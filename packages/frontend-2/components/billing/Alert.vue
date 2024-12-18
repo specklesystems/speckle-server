@@ -1,27 +1,29 @@
 <template>
   <div>
-    <div
-      v-if="condensed"
-      class="flex items-center justify-between rounded-md p-2 text-body-3xs font-medium bg-[#E0ECFF] text-primary-focus"
-    >
-      {{ title }}
-      <FormButton
-        v-if="actions.length > 0"
-        size="sm"
-        :disabled="actions[0].disabled"
-        @click="actions[0].onClick"
+    <template v-if="!hasValidPlan">
+      <div
+        v-if="condensed"
+        class="flex items-center justify-between rounded-md p-2 text-body-3xs font-medium bg-[#E0ECFF] text-primary-focus"
       >
-        {{ actions[0].title }}
-      </FormButton>
-    </div>
-    <CommonAlert v-else :color="alertColor" :actions="actions">
-      <template #title>
         {{ title }}
-      </template>
-      <template #description>
-        {{ description }}
-      </template>
-    </CommonAlert>
+        <FormButton
+          v-if="actions.length > 0"
+          size="sm"
+          :disabled="actions[0].disabled"
+          @click="actions[0].onClick"
+        >
+          {{ actions[0].title }}
+        </FormButton>
+      </div>
+      <CommonAlert v-else :color="alertColor" :actions="actions">
+        <template #title>
+          {{ title }}
+        </template>
+        <template #description>
+          {{ description }}
+        </template>
+      </CommonAlert>
+    </template>
   </div>
 </template>
 
@@ -118,6 +120,7 @@ const description = computed(() => {
       return ''
   }
 })
+const hasValidPlan = computed(() => planStatus.value === WorkspacePlanStatuses.Valid)
 
 const alertColor = computed<AlertColor>(() => {
   switch (planStatus.value) {
