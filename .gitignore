@@ -69,6 +69,8 @@ introspected-schema.graphql
 kubeconfig
 minio-data/
 postgres-data/
+minio-region1-data/
+postgres-region1-data/
 redis-data/
 
 .tshy-build
