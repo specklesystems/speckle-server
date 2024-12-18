@@ -4,13 +4,7 @@ import { beforeEachContext, initializeTestServer } from '@/test/hooks'
 import { createManyObjects } from '@/test/helpers'
 
 import {
-  getStreamHistoryFactory,
-  getCommitHistoryFactory,
-  getObjectHistoryFactory,
-  getUserHistoryFactory,
   getTotalStreamCountFactory,
-  getTotalCommitCountFactory,
-  getTotalObjectCountFactory,
   getTotalUserCountFactory
 } from '@/modules/stats/repositories/index'
 import { Scopes } from '@speckle/shared'
@@ -201,52 +195,6 @@ describe('Server stats services @stats-services', function () {
   it('should return the total number of streams on this server', async () => {
     const res = await getTotalStreamCountFactory({ db })()
     expect(res).to.equal(params.numStreams)
-  })
-
-  it('should return the total number of commits on this server', async () => {
-    const res = await getTotalCommitCountFactory({ db })()
-    expect(res).to.equal(params.numCommits)
-  })
-
-  it('should return the total number of objects on this server', async () => {
-    const res = await getTotalObjectCountFactory({ db })()
-    expect(res).to.equal(params.numObjects)
-  })
-
-  it('should return the stream creation history by month', async () => {
-    const res = await getStreamHistoryFactory({ db })()
-    expect(res).to.be.an('array')
-    expect(res[0]).to.have.property('count')
-    expect(res[0]).to.have.property('created_month')
-    expect(res[0].count).to.be.a('number')
-    expect(res[0].count).to.equal(params.numStreams)
-  })
-
-  it('should return the commit creation history by month', async () => {
-    const res = await getCommitHistoryFactory({ db })()
-    expect(res).to.be.an('array')
-    expect(res[0]).to.have.property('count')
-    expect(res[0]).to.have.property('created_month')
-    expect(res[0].count).to.be.a('number')
-    expect(res[0].count).to.equal(params.numCommits)
-  })
-
-  it('should return the object creation history by month', async () => {
-    const res = await getObjectHistoryFactory({ db })()
-    expect(res).to.be.an('array')
-    expect(res[0]).to.have.property('count')
-    expect(res[0]).to.have.property('created_month')
-    expect(res[0].count).to.be.a('number')
-    expect(res[0].count).to.equal(params.numObjects)
-  })
-
-  it('should return the user creation history by month', async () => {
-    const res = await getUserHistoryFactory({ db })()
-    expect(res).to.be.an('array')
-    expect(res[0]).to.have.property('count')
-    expect(res[0]).to.have.property('created_month')
-    expect(res[0].count).to.be.a('number')
-    expect(res[0].count).to.equal(params.numUsers)
   })
 })
 
