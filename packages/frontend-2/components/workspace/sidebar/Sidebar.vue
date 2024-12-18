@@ -43,6 +43,7 @@
           <div class="px-4">
             <WorkspaceSidebarAbout
               :workspace-info="workspaceInfo"
+              collapsible
               @show-settings-dialog="openSettingsDialog"
             />
           </div>
@@ -52,6 +53,7 @@
             <WorkspaceSidebarMembers
               :workspace-info="workspaceInfo"
               :is-workspace-guest="isWorkspaceGuest"
+              collapsible
               @show-settings-dialog="openSettingsDialog"
             />
           </div>

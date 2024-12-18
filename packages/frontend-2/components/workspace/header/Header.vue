@@ -17,22 +17,6 @@
           <h1 class="text-heading-sm md:text-heading line-clamp-2">
             {{ workspaceInfo.name }}
           </h1>
-          <LayoutMenu
-            v-model:open="showActionsMenu"
-            :items="actionsItems"
-            :menu-position="HorizontalDirection.Right"
-            :menu-id="addNewProjectMenuId"
-            class="hidden lg:block"
-            @click.stop.prevent
-            @chosen="onActionChosen"
-          >
-            <FormButton
-              :color="showActionsMenu ? 'outline' : 'subtle'"
-              hide-text
-              :icon-right="EllipsisHorizontalIcon"
-              @click="showActionsMenu = !showActionsMenu"
-            />
-          </LayoutMenu>
         </div>
 
         <div class="flex gap-1.5 md:gap-2">
@@ -80,25 +64,23 @@
       </div>
 
       <!-- Mobile header elements -->
-      <div class="lg:hidden">
+      <div class="flex flex-col gap-2 lg:hidden mb-2">
         <BillingAlert
           v-if="!isWorkspaceGuest"
           :workspace="workspaceInfo"
           :actions="billingAlertAction"
           condensed
         />
-        <div
+        <WorkspaceSidebarAbout
           v-if="workspaceInfo.description"
-          class="text-body-2xs text-foreground-2 mt-3 lg:mt-4"
-        >
-          {{ workspaceInfo.description }}
-        </div>
-        <div
-          v-if="workspaceInfo.description"
-          class="text-body-2xs text-foreground-2 mt-3 lg:mt-4"
-        >
-          {{ workspaceInfo.description }}
-        </div>
+          :workspace-info="workspaceInfo"
+          @show-settings-dialog="openSettingsDialog"
+        />
+        <WorkspaceSidebarMembers
+          :workspace-info="workspaceInfo"
+          :is-workspace-guest="isWorkspaceGuest"
+          @show-settings-dialog="openSettingsDialog"
+        />
       </div>
     </div>
   </div>
@@ -111,13 +93,7 @@ import {
   type WorkspaceHeader_WorkspaceFragment
 } from '~~/lib/common/generated/gql/graphql'
 import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
-import {
-  EllipsisHorizontalIcon,
-  Cog8ToothIcon,
-  ChevronDownIcon,
-  PlusIcon
-} from '@heroicons/vue/24/outline'
-import { copyWorkspaceLink } from '~/lib/workspaces/composables/management'
+import { Cog8ToothIcon, ChevronDownIcon, PlusIcon } from '@heroicons/vue/24/outline'
 import { HorizontalDirection } from '~~/lib/common/composables/window'
 import {
   SettingMenuKeys,
@@ -133,10 +109,6 @@ graphql(`
     ...BillingAlert_Workspace
   }
 `)
-
-enum ActionTypes {
-  CopyLink = 'copy-link'
-}
 
 enum AddNewProjectActionTypes {
   NewProject = 'new-project',
@@ -154,19 +126,13 @@ const props = defineProps<{
 }>()
 
 const menuId = useId()
-const addNewProjectMenuId = useId()
 
-const showActionsMenu = ref(false)
 const showAddNewProjectMenu = ref(false)
-
-const actionsItems = computed<LayoutMenuItem[][]>(() => [
-  [{ title: 'Copy Link', id: ActionTypes.CopyLink }]
-])
 
 const addNewProjectItems = computed<LayoutMenuItem[][]>(() => [
   [
-    { title: 'New project', id: AddNewProjectActionTypes.NewProject },
-    { title: 'Move project', id: AddNewProjectActionTypes.MoveProject }
+    { title: 'New project...', id: AddNewProjectActionTypes.NewProject },
+    { title: 'Move project...', id: AddNewProjectActionTypes.MoveProject }
   ]
 ])
 
@@ -198,16 +164,6 @@ const billingAlertAction = computed<Array<AlertAction>>(() => {
 
 const openSettingsDialog = (target: AvailableSettingsMenuKeys) => {
   emit('show-settings-dialog', target)
-}
-
-const onActionChosen = (params: { item: LayoutMenuItem; event: MouseEvent }) => {
-  const { item } = params
-
-  switch (item.id) {
-    case ActionTypes.CopyLink:
-      copyWorkspaceLink(props.workspaceInfo.slug)
-      break
-  }
 }
 
 const onAddNewProjectActionChosen = (params: {

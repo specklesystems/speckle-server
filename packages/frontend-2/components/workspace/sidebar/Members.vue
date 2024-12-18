@@ -1,14 +1,17 @@
 <template>
   <LayoutSidebarMenuGroup
-    title="Members"
-    collapsible
+    :title="collapsible ? 'Members' : undefined"
+    :collapsible="collapsible"
     icon="edit"
     :icon-click="() => openSettingsDialog(SettingMenuKeys.Workspace.Members)"
     icon-text="Edit team"
     :tag="workspaceInfo.team.totalCount.toString() || undefined"
     no-hover
   >
-    <div v-if="!isWorkspaceGuest" class="flex flex-col gap-2 pb-4 mt-1">
+    <div
+      v-if="!isWorkspaceGuest"
+      class="flex lg:flex-col items-center lg:items-start justify-between lg:justify-start gap-2 pb-0 lg:pb-4 mt-1"
+    >
       <div class="flex items-center gap-1">
         <UserAvatarGroup
           :users="team.map((teamMember) => teamMember.user)"
@@ -49,6 +52,7 @@ graphql(`
 const props = defineProps<{
   workspaceInfo: WorkspaceSidebar_WorkspaceFragment
   isWorkspaceGuest: boolean
+  collapsible?: boolean
 }>()
 
 const emit = defineEmits<{

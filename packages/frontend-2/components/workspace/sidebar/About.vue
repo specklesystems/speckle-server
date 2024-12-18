@@ -1,13 +1,13 @@
 <template>
   <LayoutSidebarMenuGroup
-    title="About"
-    collapsible
+    :title="collapsible ? 'About' : undefined"
+    :collapsible="collapsible"
     :icon="workspaceInfo.description ? 'edit' : 'add'"
     :icon-click="() => openSettingsDialog(SettingMenuKeys.Workspace.General)"
     :icon-text="workspaceInfo.description ? 'Edit description' : 'Add description'"
     no-hover
   >
-    <div class="flex flex-col gap-2 text-body-2xs text-foreground-2 pb-4 mt-1">
+    <div class="flex flex-col gap-2 text-body-2xs text-foreground-2 pb-0 lg:pb-4 mt-1">
       {{ workspaceInfo.description || 'No workspace description' }}
       <FormButton
         v-if="!workspaceInfo.description"
@@ -37,6 +37,7 @@ graphql(`
 
 defineProps<{
   workspaceInfo: WorkspaceSidebar_WorkspaceFragment
+  collapsible?: boolean
 }>()
 
 const emit = defineEmits<{

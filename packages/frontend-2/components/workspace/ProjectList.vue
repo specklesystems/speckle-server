@@ -26,20 +26,18 @@
         @show-move-projects-dialog="showMoveProjectsDialog = true"
         @show-new-project-dialog="openNewProject = true"
       />
-      <div class="flex flex-col gap-4 mt-3 lg:mt-4">
-        <div class="flex flex-row gap-2 sm:items-center justify-between">
-          <FormTextInput
-            name="modelsearch"
-            :show-label="false"
-            :placeholder="searchPlaceholder"
-            :custom-icon="MagnifyingGlassIcon"
-            color="foundation"
-            wrapper-classes="grow md:grow-0 md:w-60"
-            show-clear
-            v-bind="bind"
-            v-on="on"
-          />
-        </div>
+      <div class="mt-2 lg:mt-4">
+        <FormTextInput
+          name="modelsearch"
+          :show-label="false"
+          :placeholder="searchPlaceholder"
+          :custom-icon="MagnifyingGlassIcon"
+          color="foundation"
+          wrapper-classes="w-full lg:w-60"
+          show-clear
+          v-bind="bind"
+          v-on="on"
+        />
       </div>
 
       <CommonLoadingBar :loading="showLoadingBar" class="my-2" />
