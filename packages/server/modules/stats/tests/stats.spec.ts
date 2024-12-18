@@ -305,10 +305,10 @@ describe('Server stats api @stats-api', function () {
     expect(res.body.data.serverStats).to.have.property('commitHistory')
     expect(res.body.data.serverStats).to.have.property('userHistory')
 
-    expect(res.body.data.serverStats.totalStreamCount).to.equal(params.numStreams)
+    expect(res.body.data.serverStats.totalStreamCount).to.equal(0) // the endpoint is deprecated and we're now returning 0
     expect(res.body.data.serverStats.totalCommitCount).to.equal(0) // the endpoint is deprecated and we're now returning 0
     expect(res.body.data.serverStats.totalObjectCount).to.equal(0) // the endpoint is deprecated and we're now returning 0
-    expect(res.body.data.serverStats.totalUserCount).to.equal(params.numUsers + 2) // we're registering two extra users in the before hook
+    expect(res.body.data.serverStats.totalUserCount).to.equal(0) // the endpoint is deprecated and we're now returning 0
 
     expect(res.body.data.serverStats.streamHistory).to.be.an('array')
     expect(res.body.data.serverStats.commitHistory).to.be.an('array')
