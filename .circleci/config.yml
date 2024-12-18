@@ -623,7 +623,6 @@ jobs:
       MULTI_REGION_CONFIG_PATH: '../../.circleci/multiregion.test-ci.json'
       FF_WORKSPACES_MODULE_ENABLED: 'true'
       FF_WORKSPACES_MULTI_REGION_ENABLED: 'true'
-      FF_WORKSPACES_MULTI_REGION_BLOB_STORAGE_ENABLED: 'true'
       RUN_TESTS_IN_MULTIREGION_MODE: true
 
   test-frontend-2:

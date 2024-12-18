@@ -5,7 +5,13 @@ import { join } from 'lodash-es'
 import { Counter, Histogram, Registry } from 'prom-client'
 import prometheusClient from 'prom-client'
 import { init as commits } from '@/observability/metrics/commits.js'
+import { init as dbMaxLogicalReplicationWorkers } from '@/observability/metrics/dbMaxLogicalReplicationWorkers.js'
+import { init as dbMaxReplicationSlots } from '@/observability/metrics/dbMaxReplicationSlots.js'
+import { init as dbMaxSyncWorkersPerSubscription } from '@/observability/metrics/dbMaxSyncWorkersPerSubscription.js'
+import { init as dbMaxWalSenders } from '@/observability/metrics/dbMaxWalSenders.js'
+import { init as dbMaxWorkerProcesses } from '@/observability/metrics/dbMaxWorkerProcesses.js'
 import { init as dbSize } from '@/observability/metrics/dbSize.js'
+import { init as dbWalLevel } from '@/observability/metrics/dbWalLevel.js'
 import { init as dbWorkers } from '@/observability/metrics/dbWorkers.js'
 import { init as dbWorkersAwaitingLocks } from '@/observability/metrics/dbWorkersAwaitingLocks.js'
 import { init as fileImports } from '@/observability/metrics/fileImports.js'
@@ -54,9 +60,15 @@ function initMonitoringMetrics(params: {
 
   const metricsToInitialize = [
     commits,
+    dbMaxLogicalReplicationWorkers,
+    dbMaxReplicationSlots,
+    dbMaxSyncWorkersPerSubscription,
+    dbMaxWalSenders,
+    dbMaxWorkerProcesses,
+    dbWalLevel,
+    dbSize,
     dbWorkers,
     dbWorkersAwaitingLocks,
-    dbSize,
     fileImports,
     fileSize,
     inactiveReplicationSlots,
