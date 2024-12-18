@@ -77,7 +77,12 @@ import SpeckleStandardMaterial from './modules/materials/SpeckleStandardMaterial
 import SpeckleTextMaterial from './modules/materials/SpeckleTextMaterial.js'
 import { SpeckleText } from './modules/objects/SpeckleText.js'
 import { NodeRenderView } from './modules/tree/NodeRenderView.js'
-import { type ExtendedIntersection } from './modules/objects/SpeckleRaycaster.js'
+import {
+  CONTAINED,
+  INTERSECTED,
+  NOT_INTERSECTED,
+  type ExtendedIntersection
+} from './modules/objects/SpeckleRaycaster.js'
 import { SpeckleGeometryConverter } from './modules/loaders/Speckle/SpeckleGeometryConverter.js'
 import { Assets } from './modules/Assets.js'
 import { InstancedBatchObject } from './modules/batching/InstancedBatchObject.js'
@@ -125,6 +130,10 @@ import {
   FilterMaterialType
 } from './modules/materials/Materials.js'
 import { SpeckleOfflineLoader } from './modules/loaders/Speckle/SpeckleOfflineLoader.js'
+import { AccelerationStructure } from './modules/objects/AccelerationStructure.js'
+import { TopLevelAccelerationStructure } from './modules/objects/TopLevelAccelerationStructure.js'
+import { ViewModeEvent, ViewModeEventPayload } from './modules/extensions/ViewModes.js'
+import { BasitPipeline } from './modules/pipeline/Pipelines/BasitViewPipeline.js'
 
 export {
   Viewer,
@@ -166,6 +175,8 @@ export {
   LineBatch,
   PointBatch,
   TextBatch,
+  AccelerationStructure,
+  TopLevelAccelerationStructure,
   SpeckleStandardMaterial,
   SpeckleBasicMaterial,
   SpeckleTextMaterial,
@@ -206,12 +217,17 @@ export {
   MRTEdgesPipeline,
   MRTShadedViewPipeline,
   MRTPenViewPipeline,
+  BasitPipeline,
   ViewModes,
   ViewMode,
   FilterMaterial,
   FilterMaterialType,
   FilterMaterialOptions,
-  SpeckleOfflineLoader
+  SpeckleOfflineLoader,
+  NOT_INTERSECTED,
+  INTERSECTED,
+  CONTAINED,
+  ViewModeEvent
 }
 
 export type {
@@ -245,7 +261,8 @@ export type {
   SectionToolEventPayload,
   CameraEventPayload,
   SelectionExtensionOptions,
-  DefaultSelectionExtensionOptions
+  DefaultSelectionExtensionOptions,
+  ViewModeEventPayload
 }
 
 export * as UrlHelper from './modules/UrlHelper.js'

@@ -54,7 +54,7 @@ graphql(`
 // TODO: This is a settings component, we should abstract it
 const defaultRegion = ref<SettingsWorkspacesRegionsSelect_ServerRegionItemFragment>()
 
-const { state, goToNextStep, goToPreviousStep } = useWorkspacesWizard()
+const { goToNextStep, goToPreviousStep, state } = useWorkspacesWizard()
 const isQueryLoading = useQueryLoading()
 const { result } = useQuery(workspaceWizardRegionQuery)
 const mixpanel = useMixpanel()
@@ -83,4 +83,8 @@ watch(
   },
   { immediate: true }
 )
+
+onMounted(() => {
+  mixpanel.track('Workspace Region Step Viewed')
+})
 </script>

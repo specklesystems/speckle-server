@@ -98,8 +98,7 @@ export function useProjectUpdateTracking(
       if (redirectOnDeletion || notifyOnUpdate) {
         triggerNotification({
           type: ToastNotificationType.Info,
-          title: isDeleted ? 'Project deleted' : 'Project updated',
-          description: isDeleted ? 'Redirecting to home' : undefined
+          title: isDeleted ? 'Project deleted' : 'Project updated'
         })
       }
     }
@@ -175,11 +174,6 @@ export function useCreateProject() {
         type: ToastNotificationType.Danger,
         title: 'Project creation failed',
         description: err
-      })
-    } else {
-      triggerNotification({
-        type: ToastNotificationType.Success,
-        title: 'Project successfully created'
       })
     }
 
@@ -308,13 +302,19 @@ export function useInviteUserToProject() {
     if (err) {
       triggerNotification({
         type: ToastNotificationType.Danger,
-        title: 'Invitation failed',
+        title:
+          input.length > 1
+            ? "Couldn't send invites"
+            : `Coudldn't send invite to ${input[0].email}`,
         description: err
       })
     } else {
       triggerNotification({
         type: ToastNotificationType.Success,
-        title: 'Invite successfully sent'
+        title:
+          input.length > 1
+            ? 'Invites successfully send'
+            : `Invite successfully sent to ${input[0].email}`
       })
     }
 
@@ -422,11 +422,6 @@ export function useDeleteProject() {
       .catch(convertThrowIntoFetchResult)
 
     if (result?.data?.projectMutations.delete) {
-      triggerNotification({
-        type: ToastNotificationType.Info,
-        title: 'Project deleted'
-      })
-
       if (goHome) {
         if (workspaceSlug) {
           router.push(workspaceRoute(workspaceSlug))

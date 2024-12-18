@@ -35,7 +35,7 @@
       :is-authorized="!!activeUser?.automateInfo.hasAutomateGithubApp"
       :github-orgs="activeUser?.automateInfo.availableGithubOrgs || []"
       :templates="availableTemplates"
-      :workspace-id="workspace?.id"
+      :workspace="workspace"
     />
   </div>
 </template>
@@ -45,10 +45,11 @@ import { Roles, type Nullable, type Optional } from '@speckle/shared'
 import { useDebouncedTextInput } from '@speckle/ui-components'
 import { graphql } from '~/lib/common/generated/gql'
 import type {
-  AutomateFunctionsPageHeader_QueryFragment,
-  Workspace
+  AutomateFunctionCreateDialog_WorkspaceFragment,
+  AutomateFunctionsPageHeader_QueryFragment
 } from '~/lib/common/generated/gql/graphql'
 import { workspaceFunctionsRoute, workspaceRoute } from '~/lib/common/helpers/route'
+import { useMixpanel } from '~/lib/core/composables/mp'
 
 graphql(`
   fragment AutomateFunctionsPageHeader_Query on Query {
@@ -73,7 +74,7 @@ graphql(`
 const props = defineProps<{
   activeUser: Optional<AutomateFunctionsPageHeader_QueryFragment['activeUser']>
   serverInfo: Optional<AutomateFunctionsPageHeader_QueryFragment['serverInfo']>
-  workspace?: Pick<Workspace, 'id' | 'slug' | 'name'>
+  workspace?: AutomateFunctionCreateDialog_WorkspaceFragment
 }>()
 const search = defineModel<string>('search')
 
@@ -81,6 +82,7 @@ const { on, bind } = useDebouncedTextInput({ model: search })
 const { triggerNotification } = useGlobalToast()
 const route = useRoute()
 const router = useRouter()
+const mixpanel = useMixpanel()
 
 const createDialogOpen = ref(false)
 
@@ -104,6 +106,7 @@ if (import.meta.client) {
           type: ToastNotificationType.Success,
           title: 'GitHub authorization successful'
         })
+        mixpanel.track('Automate Finish Authorize GitHub App')
         createDialogOpen.value = true
       } else if (ghAuthVal === 'access_denied') {
         triggerNotification({
@@ -123,6 +126,16 @@ if (import.meta.client) {
       }
 
       void router.replace({ query: {} })
+    },
+    { immediate: true }
+  )
+  watch(
+    () => route.query['automateBetaRedirect'] as Nullable<string>,
+    (isRedirect) => {
+      if (!isRedirect?.length) return
+      mixpanel.track('Automate Beta Visit Redirected')
+      const { automateBetaRedirect, ...query } = route.query
+      void router.replace({ query })
     },
     { immediate: true }
   )

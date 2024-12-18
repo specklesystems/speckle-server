@@ -80,18 +80,17 @@
         <div v-else />
       </template>
     </LayoutTable>
-    <SettingsSharedChangeRoleDialog
+    <SettingsWorkspacesMembersChangeRoleDialog
       v-model:open="showChangeUserRoleDialog"
       :workspace-domain-policy-compliant="userToModify?.workspaceDomainPolicyCompliant"
       :current-role="currentUserRole"
+      :workspace="workspace"
       @update-role="onUpdateRole"
     />
     <SettingsSharedDeleteUserDialog
       v-model:open="showDeleteUserRoleDialog"
-      :title="
-        userToModify?.role === Roles.Workspace.Guest ? 'Remove guest' : 'Remove user'
-      "
       :name="userToModify?.name ?? ''"
+      :workspace="workspace"
       @remove-user="onRemoveUser"
     />
     <SettingsWorkspacesGeneralLeaveDialog
@@ -139,7 +138,9 @@ graphql(`
   fragment SettingsWorkspacesMembersMembersTable_Workspace on Workspace {
     id
     name
+    ...SettingsSharedDeleteUserDialog_Workspace
     ...SettingsWorkspacesMembersTableHeader_Workspace
+    ...SettingsWorkspacesMembersChangeRoleDialog_Workspace
     team {
       items {
         id
@@ -228,7 +229,7 @@ const filteredActionsItems = (user: UserItem) => {
 
   // Allow role change if the active user is an admin
   if (isWorkspaceAdmin.value && !isActiveUserCurrentUser.value(user)) {
-    baseItems.push([{ title: 'Update role...', id: ActionTypes.ChangeRole }])
+    baseItems.push([{ title: 'Change role...', id: ActionTypes.ChangeRole }])
   }
 
   // Allow the current user to leave the workspace

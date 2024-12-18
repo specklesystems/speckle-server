@@ -1,5 +1,5 @@
 /* istanbul ignore file */
-import { ReadinessHandler } from '@/healthchecks/health'
+import { ReadinessHandler } from '@/healthchecks/types'
 import { beforeEachContext } from '@/test/hooks'
 import { expect } from 'chai'
 import request from 'supertest'

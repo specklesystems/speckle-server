@@ -222,6 +222,7 @@ const buttons = computed((): LayoutDialogButton[] => {
             disabled: !selectedFunction.value
           },
           onClick: () => {
+            mixpanel.track('Automate Select Function')
             step.value++
           }
         }
@@ -239,6 +240,9 @@ const buttons = computed((): LayoutDialogButton[] => {
         {
           id: 'fnParamsNext',
           text: 'Next',
+          onClick: () => {
+            mixpanel.track('Automate Set Function Parameters ')
+          },
           props: {
             disabled: hasParameterErrors.value
           },
@@ -258,6 +262,9 @@ const buttons = computed((): LayoutDialogButton[] => {
         {
           id: 'detailsCreate',
           text: 'Create',
+          onClick: () => {
+            mixpanel.track('Automate Set Automation Details')
+          },
           submit: true,
           disabled: creationLoading.value
         }
@@ -431,7 +438,7 @@ const onDetailsSubmit = handleDetailsSubmit(async () => {
       return
     }
 
-    mixpanel.track('Automation created', {
+    mixpanel.track('Automate Automation Created', {
       automationId: aId,
       name,
       projectId: project.id,

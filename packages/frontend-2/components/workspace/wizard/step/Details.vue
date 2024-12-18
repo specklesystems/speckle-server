@@ -55,7 +55,8 @@ const props = defineProps<{
 
 const mixpanel = useMixpanel()
 const { handleSubmit } = useForm<{ name: string; slug: string }>()
-const { state, goToNextStep } = useWorkspacesWizard()
+const { goToNextStep, state } = useWorkspacesWizard()
+
 const { error, loading } = useQuery(
   validateWorkspaceSlugQuery,
   () => ({
@@ -102,5 +103,9 @@ const onSubmit = handleSubmit(() => {
   })
 
   goToNextStep()
+})
+
+onMounted(() => {
+  mixpanel.track('Workspace Details Step Viewed')
 })
 </script>

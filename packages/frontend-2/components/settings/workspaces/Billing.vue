@@ -49,18 +49,23 @@
                 </p>
               </div>
               <div class="p-5 pt-4 flex flex-col gap-y-1">
-                <h3 class="text-body-xs text-foreground-2 pb-1">
-                  {{
-                    statusIsTrial
-                      ? 'Expected bill'
-                      : subscription?.billingInterval === BillingInterval.Yearly
-                      ? 'Annual bill'
-                      : 'Monthly bill'
-                  }}
-                </h3>
-                <template v-if="statusIsTrial">
+                <template v-if="isPurchasablePlan || statusIsTrial">
+                  <h3 class="text-body-xs text-foreground-2 pb-1">
+                    {{
+                      statusIsTrial
+                        ? 'Expected bill'
+                        : subscription?.billingInterval === BillingInterval.Yearly
+                        ? 'Annual bill'
+                        : 'Monthly bill'
+                    }}
+                  </h3>
                   <p class="text-heading-lg text-foreground inline-block">
-                    {{ billValue }} per month
+                    {{ billValue }} per
+                    {{
+                      subscription?.billingInterval === BillingInterval.Yearly
+                        ? 'year'
+                        : 'month'
+                    }}
                   </p>
                   <p class="text-body-xs text-foreground-2 flex gap-x-1 items-center">
                     {{ billDescription }}
@@ -70,20 +75,20 @@
                     />
                   </p>
                 </template>
-                <div v-else>
-                  <button
-                    class="text-heading-lg text-foreground"
-                    @click="billingPortalRedirect(workspaceId)"
-                  >
-                    View on Stripe &#8599;
-                  </button>
-                </div>
+                <template v-else>
+                  <h3 class="text-body-xs text-foreground-2 pb-1">Expected bill</h3>
+                  <p class="text-heading-lg text-foreground inline-block">
+                    {{ isAcademiaPlan ? 'Free' : 'Not applicable' }}
+                  </p>
+                </template>
               </div>
               <div class="p-5 pt-4 flex flex-col gap-y-1">
                 <h3 class="text-body-xs text-foreground-2 pb-1">
                   {{
                     statusIsTrial && isPurchasablePlan
                       ? 'Trial ends'
+                      : statusIsCanceled
+                      ? 'Cancels'
                       : 'Next payment due'
                   }}
                 </h3>
@@ -126,12 +131,41 @@
             class="pt-4"
           />
           <SettingsWorkspacesBillingPricingTable
+            v-if="isPurchasablePlan || statusIsTrial"
             :workspace-id="workspaceId"
             :current-plan="currentPlan"
             :active-billing-interval="subscription?.billingInterval"
             :is-admin="isAdmin"
             @on-plan-selected="onPlanSelected"
           />
+        </div>
+
+        <div class="mt-8 text-center text-foreground-2">
+          Need help?
+          <NuxtLink
+            class="text-foreground"
+            :to="guideBillingUrl"
+            target="_blank"
+            @click="
+              mixpanel.track('Workspace Docs Link Clicked', {
+                workspace_id: props.workspaceId
+              })
+            "
+          >
+            <span class="hover:underline">Read the docs</span>
+          </NuxtLink>
+          or
+          <a
+            class="text-foreground hover:underline"
+            href="mailto:billing@speckle.systems"
+            @click="
+              mixpanel.track('Workspace Support Link Clicked', {
+                workspace_id: props.workspaceId
+              })
+            "
+          >
+            contact support
+          </a>
         </div>
 
         <SettingsWorkspacesBillingUpgradeDialog
@@ -165,6 +199,7 @@ import { Roles } from '@speckle/shared'
 import { InformationCircleIcon } from '@heroicons/vue/24/outline'
 import { isPaidPlan } from '@/lib/billing/helpers/types'
 import { useMixpanel } from '~/lib/core/composables/mp'
+import { guideBillingUrl } from '~/lib/common/helpers/route'
 
 graphql(`
   fragment SettingsWorkspacesBilling_Workspace on Workspace {
@@ -174,10 +209,15 @@ graphql(`
     plan {
       name
       status
+      createdAt
     }
     subscription {
       billingInterval
       currentBillingCycleEnd
+      seats {
+        guest
+        plan
+      }
     }
     team {
       items {
@@ -222,19 +262,19 @@ const statusIsTrial = computed(
     currentPlan.value?.status === WorkspacePlanStatuses.Trial ||
     !currentPlan.value?.status
 )
+const statusIsCanceled = computed(
+  () => currentPlan.value?.status === WorkspacePlanStatuses.Canceled
+)
 const isActivePlan = computed(
   () =>
     currentPlan.value &&
     currentPlan.value?.status !== WorkspacePlanStatuses.Trial &&
     currentPlan.value?.status !== WorkspacePlanStatuses.Canceled
 )
-const isPurchasablePlan = computed(
-  () =>
-    currentPlan.value?.name === WorkspacePlans.Starter ||
-    currentPlan.value?.name === WorkspacePlans.Plus ||
-    currentPlan.value?.name === WorkspacePlans.Business ||
-    !currentPlan.value?.name // no plan equals pro trial plan
+const isAcademiaPlan = computed(
+  () => currentPlan.value?.name === WorkspacePlans.Academia
 )
+const isPurchasablePlan = computed(() => isPaidPlan(currentPlan.value?.name))
 const seatPrice = computed(() =>
   currentPlan.value && subscription.value
     ? seatPrices.value[currentPlan.value.name as keyof typeof seatPrices.value][
@@ -251,20 +291,24 @@ const nextPaymentDue = computed(() =>
 )
 const isAdmin = computed(() => workspace.value?.role === Roles.Workspace.Admin)
 const guestSeatCount = computed(() =>
-  workspace.value
-    ? workspace.value.team.items.filter((user) => user.role === Roles.Workspace.Guest)
-        .length
-    : 0
+  isActivePlan.value
+    ? workspace.value?.subscription?.seats.guest ?? 0
+    : workspace.value?.team.items.filter((user) => user.role === Roles.Workspace.Guest)
+        .length ?? 0
 )
 const memberSeatCount = computed(() =>
-  workspace.value ? workspace.value.team.items.length - guestSeatCount.value : 0
+  isActivePlan.value
+    ? workspace.value?.subscription?.seats.plan ?? 0
+    : workspace.value
+    ? workspace.value.team.items.length - guestSeatCount.value
+    : 0
 )
 const billValue = computed(() => {
   const guestPrice = seatPrice.value[Roles.Workspace.Guest] * guestSeatCount.value
   const memberPrice = seatPrice.value[Roles.Workspace.Member] * memberSeatCount.value
   const totalPrice = guestPrice + memberPrice
-  if (statusIsTrial.value) return `£${totalPrice}`
-  return `£0`
+  const isAnnual = subscription.value?.billingInterval === BillingInterval.Yearly
+  return isPurchasablePlan.value ? `£${isAnnual ? totalPrice * 12 : totalPrice}` : '£0'
 })
 const billDescription = computed(() => {
   const memberText =

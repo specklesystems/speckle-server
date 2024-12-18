@@ -69,7 +69,7 @@ import { addBranchCreatedActivityFactory } from '@/modules/activitystream/servic
 import { authorizeResolver } from '@/modules/shared'
 import { Roles } from '@speckle/shared'
 import { getDefaultRegionFactory } from '@/modules/workspaces/repositories/regions'
-import { getDb } from '@/modules/multiregion/dbSelector'
+import { getDb } from '@/modules/multiregion/utils/dbSelector'
 import { createNewProjectFactory } from '@/modules/core/services/projects'
 import {
   deleteProjectFactory,

@@ -4,7 +4,7 @@ import { ExecutionEngineFailedResponseError } from '@/modules/automate/errors/ex
 import { getAutomationRunWithTokenFactory } from '@/modules/automate/repositories/automations'
 import { corsMiddleware } from '@/modules/core/configs/cors'
 import { getStreamFactory } from '@/modules/core/repositories/streams'
-import { getProjectDbClient } from '@/modules/multiregion/dbSelector'
+import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import {
   validateRequiredStreamFactory,
   validateResourceAccess,

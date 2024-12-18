@@ -90,11 +90,7 @@
                     class="!pl-1"
                   >
                     <template #icon>
-                      <WorkspaceAvatar
-                        :logo="item.logo"
-                        :default-logo-index="item.defaultLogoIndex"
-                        size="sm"
-                      />
+                      <WorkspaceAvatar :name="item.name" :logo="item.logo" size="sm" />
                     </template>
                   </LayoutSidebarMenuGroupItem>
                 </NuxtLink>
@@ -235,10 +231,10 @@ const workspacesItems = computed(() =>
   workspaceResult.value?.activeUser
     ? workspaceResult.value.activeUser.workspaces.items.map((workspace) => ({
         label: workspace.name,
+        name: workspace.name,
         id: workspace.id,
         to: workspaceRoute(workspace.slug),
         logo: workspace.logo,
-        defaultLogoIndex: workspace.defaultLogoIndex,
         plan: {
           status: workspace.plan?.status
         },

@@ -37,6 +37,7 @@ import { useZapier } from '~/lib/core/composables/zapier'
 import { useGlobalToast, ToastNotificationType } from '~~/lib/common/composables/toast'
 import { isRequired } from '~/lib/common/helpers/validation'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
+import { defaultZapierWebhookUrl } from '~/lib/common/helpers/route'
 
 type FormValues = { feedback: string }
 
@@ -73,7 +74,7 @@ const onSubmit = handleSubmit(async () => {
     message: feedback.value
   })
 
-  await sendWebhook('https://hooks.zapier.com/hooks/catch/12120532/2m4okri/', {
+  await sendWebhook(defaultZapierWebhookUrl, {
     userId: user.value?.id ?? '',
     feedback: feedback.value
   })

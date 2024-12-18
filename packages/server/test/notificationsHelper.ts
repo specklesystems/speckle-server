@@ -57,7 +57,7 @@ export function buildNotificationsStateTracker() {
      * Wait for an acknowledgement of a specific msg
      */
     waitForMsgAck: async (msgId: JobId, timeout = 2000) => {
-      let timeoutRef: NodeJS.Timer
+      let timeoutRef: NodeJS.Timeout
       let eventEmitterHandler: (e: AckEvent) => void
       return new Promise<AckEvent>((resolve, reject) => {
         // Set ack cb for notifications event handler
@@ -89,7 +89,7 @@ export function buildNotificationsStateTracker() {
      * otherwise it might get processed so fast that you miss it
      */
     waitForAck: async (predicate?: (e: AckEvent) => boolean, timeout = 3000) => {
-      let timeoutRef: NodeJS.Timer
+      let timeoutRef: NodeJS.Timeout
       let promiseAckTracker: (e: AckEvent) => void
 
       // We start tracking even before promise is created so that we can't possibly miss it

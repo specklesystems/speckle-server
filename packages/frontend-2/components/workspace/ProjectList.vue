@@ -131,10 +131,12 @@ import {
 import { useBillingActions } from '~/lib/billing/composables/actions'
 import { useWorkspacesWizard } from '~/lib/workspaces/composables/wizard'
 import type { WorkspaceWizardState } from '~/lib/workspaces/helpers/types'
+import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 
 graphql(`
   fragment WorkspaceProjectList_Workspace on Workspace {
     id
+    ...BillingActions_Workspace
     ...MoveProjectsDialog_Workspace
     ...WorkspaceHeader_Workspace
     ...WorkspaceMixpanelUpdateGroup_Workspace
@@ -158,6 +160,7 @@ graphql(`
   }
 `)
 
+const { activeUser } = useActiveUser()
 const { validateCheckoutSession } = useBillingActions()
 const { workspaceMixpanelUpdateGroup } = useWorkspacesMixpanel()
 const areQueriesLoading = useQueryLoading()
@@ -191,7 +194,6 @@ const ssoProviderInfo = ref<{
 const token = computed(() => route.query.token as Optional<string>)
 
 const pageFetchPolicy = usePageQueryStandardFetchPolicy()
-
 const { result: initialQueryResult, onResult } = useQuery(
   workspacePageQuery,
   () => ({
@@ -225,7 +227,7 @@ const { query, identifier, onInfiniteLoad } = usePaginatedQuery({
   }),
   resolveCursorFromVariables: (vars) => vars.cursor
 })
-const { finalizeWizard, isLoading: wizardLoading } = useWorkspacesWizard()
+const { finalizeWizard } = useWorkspacesWizard()
 
 const projects = computed(() => query.result.value?.workspaceBySlug?.projects)
 const workspaceInvite = computed(() => initialQueryResult.value?.workspaceInvite)
@@ -304,7 +306,7 @@ onResult((queryResult) => {
     queryResult.data?.workspaceBySlug.creationState?.completed === false &&
     queryResult.data.workspaceBySlug.creationState.state
   ) {
-    if (wizardLoading.value || import.meta.server) return
+    if (import.meta.server) return
     finalizeWizard(
       queryResult.data.workspaceBySlug.creationState.state as WorkspaceWizardState,
       queryResult.data.workspaceBySlug.id
@@ -312,11 +314,14 @@ onResult((queryResult) => {
   }
 
   if (queryResult.data?.workspaceBySlug) {
-    workspaceMixpanelUpdateGroup(queryResult.data.workspaceBySlug)
+    workspaceMixpanelUpdateGroup(
+      queryResult.data.workspaceBySlug,
+      activeUser.value?.email
+    )
     useHeadSafe({
       title: queryResult.data.workspaceBySlug.name
     })
-    validateCheckoutSession(queryResult.data.workspaceBySlug.id)
+    validateCheckoutSession(queryResult.data.workspaceBySlug)
   }
 })
 

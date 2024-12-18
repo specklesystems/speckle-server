@@ -18,7 +18,7 @@ import {
 } from '@/modules/webhooks/repositories/webhooks'
 import { ForbiddenError } from '@/modules/shared/errors'
 import { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
-import { getProjectDbClient } from '@/modules/multiregion/dbSelector'
+import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 
 const streamWebhooksResolver = async (
   parent: { id: string },
