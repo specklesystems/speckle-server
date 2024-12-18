@@ -19,7 +19,7 @@ import {
 import { SectionTool } from '@speckle/viewer'
 import { SectionOutlines } from '@speckle/viewer'
 import { ViewModesKeys } from './Extensions/ViewModesKeys'
-import { obj } from './obj'
+import { JSONSpeckleStream } from '../assets/JSONSpeckleStream'
 import { BoxSelection } from './Extensions/BoxSelection'
 import { ExtendedSelection } from './Extensions/ExtendedSelection'
 
@@ -104,8 +104,8 @@ const createViewer = async (containerName: string, stream: string) => {
   sandbox.makeDiffUI()
   sandbox.makeMeasurementsUI()
 
-  await sandbox.loadUrl(stream)
-  // await sandbox.loadJSON(obj)
+  // await sandbox.loadUrl(stream)
+  await sandbox.loadJSON(JSONSpeckleStream)
 }
 
 const getStream = () => {
