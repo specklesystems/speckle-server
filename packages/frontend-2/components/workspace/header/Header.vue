@@ -1,87 +1,88 @@
 <template>
-  <div>
-    <div class="flex flex-col gap-3 lg:gap-4">
-      <div class="flex items-center justify-between">
-        <div class="flex items-center gap-3 lg:gap-4">
-          <WorkspaceAvatar
-            :name="workspaceInfo.name"
-            :logo="workspaceInfo.logo"
-            size="lg"
-            class="hidden md:block"
-          />
-          <WorkspaceAvatar
-            class="md:hidden"
-            :name="workspaceInfo.name"
-            :logo="workspaceInfo.logo"
-          />
-          <h1 class="text-heading-sm md:text-heading line-clamp-2">
-            {{ workspaceInfo.name }}
-          </h1>
-        </div>
+  <div class="flex flex-col gap-3 lg:gap-4">
+    <div v-if="!isWorkspaceGuest && !isInTrial">
+      <BillingAlert :workspace="workspaceInfo" :actions="billingAlertAction" />
+    </div>
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-3 lg:gap-4">
+        <WorkspaceAvatar
+          :name="workspaceInfo.name"
+          :logo="workspaceInfo.logo"
+          size="lg"
+          class="hidden md:block"
+        />
+        <WorkspaceAvatar
+          class="md:hidden"
+          :name="workspaceInfo.name"
+          :logo="workspaceInfo.logo"
+        />
+        <h1 class="text-heading-sm md:text-heading line-clamp-2">
+          {{ workspaceInfo.name }}
+        </h1>
+      </div>
 
-        <div class="flex gap-1.5 md:gap-2">
-          <LayoutMenu
-            v-model:open="showAddNewProjectMenu"
-            :items="addNewProjectItems"
-            :menu-position="HorizontalDirection.Left"
-            :menu-id="menuId"
-            @click.stop.prevent
-            @chosen="onAddNewProjectActionChosen"
-          >
-            <FormButton
-              color="outline"
-              class="hidden md:block"
-              @click="showAddNewProjectMenu = !showAddNewProjectMenu"
-            >
-              <div class="flex items-center gap-1">
-                Add project
-                <ChevronDownIcon class="h-3 w-3" />
-              </div>
-            </FormButton>
-            <FormButton
-              color="outline"
-              class="md:hidden"
-              hide-text
-              :icon-left="PlusIcon"
-              @click="showAddNewProjectMenu = !showAddNewProjectMenu"
-            >
-              Add project
-            </FormButton>
-          </LayoutMenu>
-
+      <div class="flex gap-1.5 md:gap-2">
+        <LayoutMenu
+          v-model:open="showAddNewProjectMenu"
+          :items="addNewProjectItems"
+          :menu-position="HorizontalDirection.Left"
+          :menu-id="menuId"
+          @click.stop.prevent
+          @chosen="onAddNewProjectActionChosen"
+        >
           <FormButton
             color="outline"
-            :icon-left="Cog8ToothIcon"
-            hide-text
-            @click="openSettingsDialog(SettingMenuKeys.Workspace.General)"
+            class="hidden md:block"
+            @click="showAddNewProjectMenu = !showAddNewProjectMenu"
           >
-            Settings
+            <div class="flex items-center gap-1">
+              Add project
+              <ChevronDownIcon class="h-3 w-3" />
+            </div>
           </FormButton>
-          <ClientOnly>
-            <PortalTarget name="workspace-sidebar-toggle"></PortalTarget>
-          </ClientOnly>
-        </div>
-      </div>
+          <FormButton
+            color="outline"
+            class="md:hidden"
+            hide-text
+            :icon-left="PlusIcon"
+            @click="showAddNewProjectMenu = !showAddNewProjectMenu"
+          >
+            Add project
+          </FormButton>
+        </LayoutMenu>
 
-      <!-- Mobile header elements -->
-      <div class="flex flex-col gap-2 lg:hidden mb-2">
-        <BillingAlert
-          v-if="!isWorkspaceGuest"
-          :workspace="workspaceInfo"
-          :actions="billingAlertAction"
-          condensed
-        />
-        <WorkspaceSidebarAbout
-          v-if="workspaceInfo.description"
-          :workspace-info="workspaceInfo"
-          @show-settings-dialog="openSettingsDialog"
-        />
-        <WorkspaceSidebarMembers
-          :workspace-info="workspaceInfo"
-          :is-workspace-guest="isWorkspaceGuest"
-          @show-settings-dialog="openSettingsDialog"
-        />
+        <FormButton
+          color="outline"
+          :icon-left="Cog8ToothIcon"
+          hide-text
+          @click="openSettingsDialog(SettingMenuKeys.Workspace.General)"
+        >
+          Settings
+        </FormButton>
+        <ClientOnly>
+          <PortalTarget name="workspace-sidebar-toggle"></PortalTarget>
+        </ClientOnly>
       </div>
+    </div>
+
+    <!-- Mobile header elements -->
+    <div class="flex flex-col gap-2 lg:hidden mb-2">
+      <BillingAlert
+        v-if="!isWorkspaceGuest && isInTrial"
+        :workspace="workspaceInfo"
+        :actions="billingAlertAction"
+        condensed
+      />
+      <WorkspaceSidebarAbout
+        v-if="workspaceInfo.description"
+        :workspace-info="workspaceInfo"
+        @show-settings-dialog="openSettingsDialog"
+      />
+      <WorkspaceSidebarMembers
+        :workspace-info="workspaceInfo"
+        :is-workspace-guest="isWorkspaceGuest"
+        @show-settings-dialog="openSettingsDialog"
+      />
     </div>
   </div>
 </template>

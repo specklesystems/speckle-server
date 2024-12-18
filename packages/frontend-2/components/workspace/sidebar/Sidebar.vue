@@ -31,9 +31,8 @@
       <LayoutSidebar class="border-l border-outline-3 bg-foundation-page">
         <div class="flex flex-col divide-y divide-outline-3">
           <!-- Subscription Reminder -->
-          <div class="p-4">
+          <div v-if="!isWorkspaceGuest && isInTrial" class="p-4">
             <BillingAlert
-              v-if="!isWorkspaceGuest"
               :workspace="workspaceInfo"
               :actions="billingAlertAction"
               condensed
