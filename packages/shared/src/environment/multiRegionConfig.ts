@@ -2,11 +2,8 @@ import { z } from 'zod'
 import fs from 'node:fs/promises'
 import { Knex, knex } from 'knex'
 import { Logger } from 'pino'
-import { getFeatureFlags } from './index.js'
 
-const useV1Config = !getFeatureFlags().FF_WORKSPACES_MULTI_REGION_BLOB_STORAGE_ENABLED
-
-const regionConfigSchemaV1 = z.object({
+const regionConfigSchema = z.object({
   postgres: z.object({
     connectionUri: z
       .string()
@@ -29,23 +26,17 @@ const regionConfigSchemaV1 = z.object({
       .string()
       .describe('Public TLS ("CA") certificate for the Postgres server')
       .optional()
-  })
-})
-
-const regionConfigSchema = regionConfigSchemaV1.extend({
+  }),
   blobStorage: z.object({
-    endpoint: z.string().url(),
-    accessKey: z.string(),
-    secretKey: z.string(),
-    bucket: z.string(),
-    createBucketIfNotExists: z.boolean(),
-    s3Region: z.string()
+    endpoint: z.string().url().describe('URL of the S3-compatible storage endpoint'),
+    accessKey: z.string().describe('Access key for the S3-compatible storage endpoint'),
+    secretKey: z.string().describe('Secret key for the S3-compatible storage endpoint'),
+    bucket: z.string().describe('Name of the S3-compatible storage bucket'),
+    createBucketIfNotExists: z
+      .boolean()
+      .describe('Whether to create the bucket if it does not exist'),
+    s3Region: z.string().describe('Region of the S3-compatible storage endpoint')
   })
-})
-
-const multiRegionConfigV1Schema = z.object({
-  main: regionConfigSchemaV1,
-  regions: z.record(z.string(), regionConfigSchemaV1)
 })
 
 const multiRegionConfigSchema = z.object({
@@ -81,16 +72,14 @@ export const loadMultiRegionsConfig = async ({
     throw new Error(`Multi-region config file at path '${path}' is not valid JSON`)
   }
 
-  const schema = useV1Config ? multiRegionConfigV1Schema : multiRegionConfigSchema
+  const schema = multiRegionConfigSchema
   const multiRegionConfigFileResult = schema.safeParse(parsedJson) // This will throw if the config is invalid
   if (!multiRegionConfigFileResult.success)
     throw new Error(
       `Multi-region config file at path '${path}' does not fit the schema: ${multiRegionConfigFileResult.error}`
     )
 
-  // Type assertion should be fine cause the FF should be temporary AND v1 logic should not even
-  // try to access the extra blobStorage fields anyway
-  return multiRegionConfigFileResult.data as MultiRegionConfig
+  return multiRegionConfigFileResult.data
 }
 
 export type KnexConfigArgs = {
