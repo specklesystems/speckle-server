@@ -81,6 +81,7 @@ const isOpen = defineModel<boolean>('open', { required: true })
 
 const deleteProject = useDeleteProject()
 const mixpanel = useMixpanel()
+const { isAdmin } = useActiveUser()
 
 const projectNameInput = ref('')
 
@@ -121,7 +122,7 @@ const dialogButtons = computed<LayoutDialogButton[]>(() => [
     onClick: async () => {
       if (
         projectNameInput.value === props.project.name &&
-        props.project.role === Roles.Stream.Owner
+        (props.project.role === Roles.Stream.Owner || isAdmin.value)
       ) {
         const options = {
           goHome: props.redirectOnComplete,
