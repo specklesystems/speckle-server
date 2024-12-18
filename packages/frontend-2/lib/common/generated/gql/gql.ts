@@ -147,8 +147,7 @@ const documents = {
     "\n  fragment ThreadCommentAttachment on Comment {\n    text {\n      attachments {\n        id\n        fileName\n        fileType\n        fileSize\n      }\n    }\n  }\n": types.ThreadCommentAttachmentFragmentDoc,
     "\n  fragment ViewerCommentsListItem on Comment {\n    id\n    rawText\n    archived\n    author {\n      ...LimitedUserAvatar\n    }\n    createdAt\n    viewedAt\n    replies {\n      totalCount\n      cursor\n      items {\n        ...ViewerCommentsReplyItem\n      }\n    }\n    replyAuthors(limit: 4) {\n      totalCount\n      items {\n        ...FormUsersSelectItem\n      }\n    }\n    resources {\n      resourceId\n      resourceType\n    }\n  }\n": types.ViewerCommentsListItemFragmentDoc,
     "\n  fragment ViewerModelVersionCardItem on Version {\n    id\n    message\n    referencedObject\n    sourceApplication\n    createdAt\n    previewUrl\n    authorUser {\n      ...LimitedUserAvatar\n    }\n  }\n": types.ViewerModelVersionCardItemFragmentDoc,
-    "\n  fragment WorkspaceInviteDialog_InvitedTeam on Workspace {\n    invitedTeam(filter: $invitesFilter) {\n      title\n      user {\n        id\n      }\n    }\n  }\n": types.WorkspaceInviteDialog_InvitedTeamFragmentDoc,
-    "\n  fragment WorkspaceInviteDialog_Workspace on Workspace {\n    domainBasedMembershipProtectionEnabled\n    domains {\n      domain\n      id\n    }\n    id\n    team {\n      items {\n        id\n        user {\n          id\n          role\n        }\n      }\n    }\n    ...WorkspaceInviteDialog_InvitedTeam\n  }\n": types.WorkspaceInviteDialog_WorkspaceFragmentDoc,
+    "\n  fragment WorkspaceInviteDialog_Workspace on Workspace {\n    domainBasedMembershipProtectionEnabled\n    domains {\n      domain\n      id\n    }\n    id\n    team {\n      items {\n        id\n        user {\n          id\n          role\n        }\n      }\n    }\n    invitedTeam(filter: $invitesFilter) {\n      title\n      user {\n        id\n      }\n    }\n  }\n": types.WorkspaceInviteDialog_WorkspaceFragmentDoc,
     "\n  fragment MoveProjectsDialog_Workspace on Workspace {\n    id\n    ...ProjectsMoveToWorkspaceDialog_Workspace\n    projects {\n      items {\n        id\n        modelCount: models(limit: 0) {\n          totalCount\n        }\n        versions(limit: 0) {\n          totalCount\n        }\n      }\n    }\n  }\n": types.MoveProjectsDialog_WorkspaceFragmentDoc,
     "\n  fragment MoveProjectsDialog_User on User {\n    projects {\n      items {\n        ...ProjectsMoveToWorkspaceDialog_Project\n        role\n        workspace {\n          id\n        }\n      }\n    }\n  }\n": types.MoveProjectsDialog_UserFragmentDoc,
     "\n  fragment WorkspaceProjectList_Workspace on Workspace {\n    id\n    ...WorkspaceBase_Workspace\n    ...WorkspaceTeam_Workspace\n    ...WorkspaceSecurity_Workspace\n    ...BillingAlert_Workspace\n    ...WorkspaceMixpanelUpdateGroup_Workspace\n    ...WorkspaceInviteDialog_Workspace\n    ...MoveProjectsDialog_Workspace\n    projects {\n      ...WorkspaceProjectList_ProjectCollection\n    }\n    creationState {\n      completed\n      state\n    }\n  }\n": types.WorkspaceProjectList_WorkspaceFragmentDoc,
@@ -157,10 +156,10 @@ const documents = {
     "\n  fragment WorkspaceInviteBanner_PendingWorkspaceCollaborator on PendingWorkspaceCollaborator {\n    id\n    invitedBy {\n      id\n      ...LimitedUserAvatar\n    }\n    workspaceId\n    workspaceName\n    token\n    user {\n      id\n    }\n    ...UseWorkspaceInviteManager_PendingWorkspaceCollaborator\n  }\n": types.WorkspaceInviteBanner_PendingWorkspaceCollaboratorFragmentDoc,
     "\n  fragment WorkspaceInviteBlock_PendingWorkspaceCollaborator on PendingWorkspaceCollaborator {\n    id\n    workspaceId\n    workspaceName\n    token\n    user {\n      id\n      name\n      ...LimitedUserAvatar\n    }\n    title\n    email\n    ...UseWorkspaceInviteManager_PendingWorkspaceCollaborator\n  }\n": types.WorkspaceInviteBlock_PendingWorkspaceCollaboratorFragmentDoc,
     "\n  fragment WorkspaceInviteDiscoverableWorkspaceBanner_LimitedWorkspace on LimitedWorkspace {\n    id\n    name\n    slug\n    description\n    logo\n  }\n  fragment WorkspaceInviteDiscoverableWorkspaceBanner_Workspace on Workspace {\n    id\n    name\n    description\n    createdAt\n    updatedAt\n    logo\n    domainBasedMembershipProtectionEnabled\n    discoverabilityEnabled\n  }\n": types.WorkspaceInviteDiscoverableWorkspaceBanner_LimitedWorkspaceFragmentDoc,
-    "\n  fragment WorkspaceSidebarAbout_Workspace on Workspace {\n    ...WorkspaceAbout_Workspace\n  }\n": types.WorkspaceSidebarAbout_WorkspaceFragmentDoc,
+    "\n  fragment WorkspaceSidebarAbout_Workspace on Workspace {\n    ...WorkspaceDashboardAbout_Workspace\n  }\n": types.WorkspaceSidebarAbout_WorkspaceFragmentDoc,
     "\n  fragment WorkspaceSidebarMembers_Workspace on Workspace {\n    ...WorkspaceTeam_Workspace\n  }\n": types.WorkspaceSidebarMembers_WorkspaceFragmentDoc,
     "\n  fragment WorkspaceSidebarSecurity_Workspace on Workspace {\n    ...WorkspaceSecurity_Workspace\n  }\n": types.WorkspaceSidebarSecurity_WorkspaceFragmentDoc,
-    "\n  fragment WorkspaceSidebar_Workspace on Workspace {\n    ...WorkspaceAbout_Workspace\n    ...WorkspaceTeam_Workspace\n    ...WorkspaceSecurity_Workspace\n    plan {\n      status\n    }\n  }\n": types.WorkspaceSidebar_WorkspaceFragmentDoc,
+    "\n  fragment WorkspaceSidebar_Workspace on Workspace {\n    ...WorkspaceDashboardAbout_Workspace\n    ...WorkspaceTeam_Workspace\n    ...WorkspaceSecurity_Workspace\n    plan {\n      status\n    }\n  }\n": types.WorkspaceSidebar_WorkspaceFragmentDoc,
     "\n  fragment WorkspaceWizard_Workspace on Workspace {\n    creationState {\n      completed\n      state\n    }\n    name\n    slug\n  }\n": types.WorkspaceWizard_WorkspaceFragmentDoc,
     "\n  fragment WorkspaceWizardStepRegion_ServerInfo on ServerInfo {\n    multiRegion {\n      regions {\n        id\n        ...SettingsWorkspacesRegionsSelect_ServerRegionItem\n      }\n    }\n  }\n": types.WorkspaceWizardStepRegion_ServerInfoFragmentDoc,
     "\n  query ActiveUserMainMetadata {\n    activeUser {\n      id\n      email\n      company\n      bio\n      name\n      role\n      avatar\n      isOnboardingFinished\n      createdAt\n      verified\n      notificationPreferences\n      versions(limit: 0) {\n        totalCount\n      }\n    }\n  }\n": types.ActiveUserMainMetadataDocument,
@@ -357,7 +356,7 @@ const documents = {
     "\n    fragment WorkspaceSsoStatus_Workspace on Workspace {\n      id\n      sso {\n        provider {\n          id\n          name\n          clientId\n          issuerUrl\n        }\n        session {\n          validUntil\n        }\n      }\n    }\n  ": types.WorkspaceSsoStatus_WorkspaceFragmentDoc,
     "\n    fragment WorkspaceSsoStatus_User on User {\n      expiredSsoSessions {\n        id\n        slug\n      }\n    }\n  ": types.WorkspaceSsoStatus_UserFragmentDoc,
     "\n  fragment WorkspaceBase_Workspace on Workspace {\n    id\n    name\n    slug\n    role\n    description\n    logo\n    plan {\n      status\n      createdAt\n    }\n  }\n": types.WorkspaceBase_WorkspaceFragmentDoc,
-    "\n  fragment WorkspaceAbout_Workspace on Workspace {\n    id\n    name\n    description\n  }\n": types.WorkspaceAbout_WorkspaceFragmentDoc,
+    "\n  fragment WorkspaceDashboardAbout_Workspace on Workspace {\n    id\n    name\n    description\n  }\n": types.WorkspaceDashboardAbout_WorkspaceFragmentDoc,
     "\n  fragment WorkspaceInvitedTeam_Workspace on Workspace {\n    id\n    invitedTeam(filter: $invitesFilter) {\n      id\n      role\n      email\n    }\n  }\n": types.WorkspaceInvitedTeam_WorkspaceFragmentDoc,
     "\n  fragment WorkspaceTeam_Workspace on Workspace {\n    id\n    team {\n      totalCount\n      items {\n        id\n        user {\n          id\n          name\n          ...LimitedUserAvatar\n        }\n      }\n    }\n    ...WorkspaceInvitedTeam_Workspace\n  }\n": types.WorkspaceTeam_WorkspaceFragmentDoc,
     "\n  fragment WorkspaceSecurity_Workspace on Workspace {\n    id\n    domains {\n      id\n      domain\n    }\n  }\n": types.WorkspaceSecurity_WorkspaceFragmentDoc,
@@ -943,11 +942,7 @@ export function graphql(source: "\n  fragment ViewerModelVersionCardItem on Vers
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment WorkspaceInviteDialog_InvitedTeam on Workspace {\n    invitedTeam(filter: $invitesFilter) {\n      title\n      user {\n        id\n      }\n    }\n  }\n"): (typeof documents)["\n  fragment WorkspaceInviteDialog_InvitedTeam on Workspace {\n    invitedTeam(filter: $invitesFilter) {\n      title\n      user {\n        id\n      }\n    }\n  }\n"];
-/**
- * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function graphql(source: "\n  fragment WorkspaceInviteDialog_Workspace on Workspace {\n    domainBasedMembershipProtectionEnabled\n    domains {\n      domain\n      id\n    }\n    id\n    team {\n      items {\n        id\n        user {\n          id\n          role\n        }\n      }\n    }\n    ...WorkspaceInviteDialog_InvitedTeam\n  }\n"): (typeof documents)["\n  fragment WorkspaceInviteDialog_Workspace on Workspace {\n    domainBasedMembershipProtectionEnabled\n    domains {\n      domain\n      id\n    }\n    id\n    team {\n      items {\n        id\n        user {\n          id\n          role\n        }\n      }\n    }\n    ...WorkspaceInviteDialog_InvitedTeam\n  }\n"];
+export function graphql(source: "\n  fragment WorkspaceInviteDialog_Workspace on Workspace {\n    domainBasedMembershipProtectionEnabled\n    domains {\n      domain\n      id\n    }\n    id\n    team {\n      items {\n        id\n        user {\n          id\n          role\n        }\n      }\n    }\n    invitedTeam(filter: $invitesFilter) {\n      title\n      user {\n        id\n      }\n    }\n  }\n"): (typeof documents)["\n  fragment WorkspaceInviteDialog_Workspace on Workspace {\n    domainBasedMembershipProtectionEnabled\n    domains {\n      domain\n      id\n    }\n    id\n    team {\n      items {\n        id\n        user {\n          id\n          role\n        }\n      }\n    }\n    invitedTeam(filter: $invitesFilter) {\n      title\n      user {\n        id\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -983,7 +978,7 @@ export function graphql(source: "\n  fragment WorkspaceInviteDiscoverableWorkspa
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment WorkspaceSidebarAbout_Workspace on Workspace {\n    ...WorkspaceAbout_Workspace\n  }\n"): (typeof documents)["\n  fragment WorkspaceSidebarAbout_Workspace on Workspace {\n    ...WorkspaceAbout_Workspace\n  }\n"];
+export function graphql(source: "\n  fragment WorkspaceSidebarAbout_Workspace on Workspace {\n    ...WorkspaceDashboardAbout_Workspace\n  }\n"): (typeof documents)["\n  fragment WorkspaceSidebarAbout_Workspace on Workspace {\n    ...WorkspaceDashboardAbout_Workspace\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -995,7 +990,7 @@ export function graphql(source: "\n  fragment WorkspaceSidebarSecurity_Workspace
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment WorkspaceSidebar_Workspace on Workspace {\n    ...WorkspaceAbout_Workspace\n    ...WorkspaceTeam_Workspace\n    ...WorkspaceSecurity_Workspace\n    plan {\n      status\n    }\n  }\n"): (typeof documents)["\n  fragment WorkspaceSidebar_Workspace on Workspace {\n    ...WorkspaceAbout_Workspace\n    ...WorkspaceTeam_Workspace\n    ...WorkspaceSecurity_Workspace\n    plan {\n      status\n    }\n  }\n"];
+export function graphql(source: "\n  fragment WorkspaceSidebar_Workspace on Workspace {\n    ...WorkspaceDashboardAbout_Workspace\n    ...WorkspaceTeam_Workspace\n    ...WorkspaceSecurity_Workspace\n    plan {\n      status\n    }\n  }\n"): (typeof documents)["\n  fragment WorkspaceSidebar_Workspace on Workspace {\n    ...WorkspaceDashboardAbout_Workspace\n    ...WorkspaceTeam_Workspace\n    ...WorkspaceSecurity_Workspace\n    plan {\n      status\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -1783,7 +1778,7 @@ export function graphql(source: "\n  fragment WorkspaceBase_Workspace on Workspa
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment WorkspaceAbout_Workspace on Workspace {\n    id\n    name\n    description\n  }\n"): (typeof documents)["\n  fragment WorkspaceAbout_Workspace on Workspace {\n    id\n    name\n    description\n  }\n"];
+export function graphql(source: "\n  fragment WorkspaceDashboardAbout_Workspace on Workspace {\n    id\n    name\n    description\n  }\n"): (typeof documents)["\n  fragment WorkspaceDashboardAbout_Workspace on Workspace {\n    id\n    name\n    description\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

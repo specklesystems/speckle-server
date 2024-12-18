@@ -1,20 +1,9 @@
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <!-- eslint-disable vuejs-accessibility/click-events-have-key-events -->
 <template>
-  <div>
-    <!-- Mobile Backdrop -->
-    <div
-      v-keyboard-clickable
-      class="lg:hidden absolute inset-0 backdrop-blur-sm z-40 transition-all"
-      :class="isOpenMobile ? 'opacity-100' : 'opacity-0 pointer-events-none'"
-      @click="isOpenMobile = false"
-    />
-
+  <div class="w-full">
     <!-- Sidebar Content -->
-    <div
-      class="transition-all pt-2"
-      :class="isOpenMobile ? '' : 'translate-x-[17rem] lg:translate-x-0'"
-    >
+    <div class="pt-2 w-full">
       <LayoutSidebar>
         <div class="flex flex-col divide-y divide-outline-3">
           <!-- Subscription Reminder -->
@@ -30,15 +19,16 @@
             <WorkspaceSidebarAbout
               :workspace-info="workspaceInfo"
               collapsible
+              :is-workspace-admin="isWorkspaceAdmin"
               @show-settings-dialog="openSettingsDialog"
             />
           </div>
 
           <!-- Members -->
-          <div class="px-4">
+          <div v-if="!isWorkspaceGuest" class="px-4">
             <WorkspaceSidebarMembers
               :workspace-info="workspaceInfo"
-              :is-workspace-guest="isWorkspaceGuest"
+              :is-workspace-admin="isWorkspaceAdmin"
               collapsible
               @show-settings-dialog="openSettingsDialog"
               @show-invite-dialog="$emit('show-invite-dialog')"
@@ -46,7 +36,7 @@
           </div>
 
           <!-- Security -->
-          <div v-if="!hasDomains" class="px-4">
+          <div v-if="isWorkspaceAdmin && !hasDomains" class="px-4">
             <WorkspaceSidebarSecurity
               :workspace-info="workspaceInfo"
               @show-settings-dialog="openSettingsDialog"
@@ -72,7 +62,7 @@ import { graphql } from '~~/lib/common/generated/gql'
 
 graphql(`
   fragment WorkspaceSidebar_Workspace on Workspace {
-    ...WorkspaceAbout_Workspace
+    ...WorkspaceDashboardAbout_Workspace
     ...WorkspaceTeam_Workspace
     ...WorkspaceSecurity_Workspace
     plan {
@@ -90,8 +80,6 @@ const emit = defineEmits<{
   (e: 'show-settings-dialog', v: AvailableSettingsMenuKeys): void
   (e: 'show-move-projects-dialog'): void
 }>()
-
-const isOpenMobile = ref(false)
 
 const isWorkspaceGuest = computed(
   () => props.workspaceInfo.role === Roles.Workspace.Guest

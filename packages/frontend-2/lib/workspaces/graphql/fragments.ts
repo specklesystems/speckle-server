@@ -16,8 +16,8 @@ export const workspaceBaseFragment = graphql(`
   }
 `)
 
-export const workspaceAboutFragment = graphql(`
-  fragment WorkspaceAbout_Workspace on Workspace {
+export const workspaceDashboardAboutFragment = graphql(`
+  fragment WorkspaceDashboardAbout_Workspace on Workspace {
     id
     name
     description

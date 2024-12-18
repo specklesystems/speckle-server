@@ -82,17 +82,6 @@ import {
 import { mapMainRoleToGqlWorkspaceRole } from '~/lib/workspaces/helpers/roles'
 
 graphql(`
-  fragment WorkspaceInviteDialog_InvitedTeam on Workspace {
-    invitedTeam(filter: $invitesFilter) {
-      title
-      user {
-        id
-      }
-    }
-  }
-`)
-
-graphql(`
   fragment WorkspaceInviteDialog_Workspace on Workspace {
     domainBasedMembershipProtectionEnabled
     domains {
@@ -109,7 +98,12 @@ graphql(`
         }
       }
     }
-    ...WorkspaceInviteDialog_InvitedTeam
+    invitedTeam(filter: $invitesFilter) {
+      title
+      user {
+        id
+      }
+    }
   }
 `)
 

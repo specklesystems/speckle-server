@@ -81,11 +81,13 @@
       <WorkspaceSidebarAbout
         v-if="workspaceInfo.description"
         :workspace-info="workspaceInfo"
+        :is-workspace-admin="isWorkspaceAdmin"
         @show-settings-dialog="openSettingsDialog"
       />
       <WorkspaceSidebarMembers
+        v-if="!isWorkspaceGuest"
         :workspace-info="workspaceInfo"
-        :is-workspace-guest="isWorkspaceGuest"
+        :is-workspace-admin="isWorkspaceAdmin"
         @show-settings-dialog="openSettingsDialog"
         @show-invite-dialog="$emit('show-invite-dialog')"
       />

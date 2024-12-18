@@ -54,8 +54,8 @@
         :class="noHover ? '' : 'mr-2'"
         @click="iconClick"
       >
-        <EditIcon v-if="icon === 'edit'" class="h-3 w-3" />
-        <PlusIcon v-else class="h-4 w-4" />
+        <Edit v-if="icon === 'edit'" class="h-3 w-3" />
+        <Plus v-else class="h-4 w-4" />
       </button>
     </div>
 
@@ -66,9 +66,9 @@
 </template>
 
 <script setup lang="ts">
-import ArrowFilled from '~~/src/components/layout/sidebar/menu/group/ArrowFilled.vue'
-import PlusIcon from '~~/src/components/layout/sidebar/menu/group/PlusIcon.vue'
-import EditIcon from '~~/src/components/layout/sidebar/menu/group/EditIcon.vue'
+import Plus from '~~/src/components/global/icon/Plus.vue'
+import Edit from '~~/src/components/global/icon/Edit.vue'
+import ArrowFilled from '~~/src/components/global/icon/ArrowFilled.vue'
 import CommonBadge from '~~/src/components/common/Badge.vue'
 
 defineProps<{
