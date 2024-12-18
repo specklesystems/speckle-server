@@ -1343,6 +1343,17 @@ export = FF_WORKSPACES_MODULE_ENABLED
             findEmailsByUserId: findEmailsByUserIdFactory({ db }),
             getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db })
           })({ workspaceId, userId })
+        },
+        workspaceRole: async (parent, args) => {
+          const workspaceId = args.workspaceId
+          if (!workspaceId) return null
+
+          const userId = parent.id
+
+          return await getWorkspaceRoleForUserFactory({ db })({
+            userId,
+            workspaceId
+          })
         }
       },
       ServerInfo: {

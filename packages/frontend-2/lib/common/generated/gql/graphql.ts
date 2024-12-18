@@ -1052,6 +1052,7 @@ export type LimitedUser = {
   totalOwnedStreamsFavorites: Scalars['Int']['output'];
   verified?: Maybe<Scalars['Boolean']['output']>;
   workspaceDomainPolicyCompliant?: Maybe<Scalars['Boolean']['output']>;
+  workspaceRole?: Maybe<Scalars['String']['output']>;
 };
 
 
@@ -1105,6 +1106,15 @@ export type LimitedUserTimelineArgs = {
  * to another user
  */
 export type LimitedUserWorkspaceDomainPolicyCompliantArgs = {
+  workspaceId?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+/**
+ * Limited user type, for showing public info about a user
+ * to another user
+ */
+export type LimitedUserWorkspaceRoleArgs = {
   workspaceId?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -4152,6 +4162,8 @@ export type Workspace = {
   name: Scalars['String']['output'];
   plan?: Maybe<WorkspacePlan>;
   projects: ProjectCollection;
+  /** A Workspace is marked as readOnly if its trial period is finished or a paid plan is subscribed but payment has failed */
+  readOnly: Scalars['Boolean']['output'];
   /** Active user's role for this workspace. `null` if request is not authenticated, or the workspace is not explicitly shared with you. */
   role?: Maybe<Scalars['String']['output']>;
   slug: Scalars['String']['output'];
@@ -7245,6 +7257,7 @@ export type LimitedUserFieldArgs = {
   totalOwnedStreamsFavorites: {},
   verified: {},
   workspaceDomainPolicyCompliant: LimitedUserWorkspaceDomainPolicyCompliantArgs,
+  workspaceRole: LimitedUserWorkspaceRoleArgs,
 }
 export type LimitedWorkspaceFieldArgs = {
   defaultLogoIndex: {},
@@ -8003,6 +8016,7 @@ export type WorkspaceFieldArgs = {
   name: {},
   plan: {},
   projects: WorkspaceProjectsArgs,
+  readOnly: {},
   role: {},
   slug: {},
   sso: {},
