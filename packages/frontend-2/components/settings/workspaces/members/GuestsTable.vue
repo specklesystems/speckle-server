@@ -75,6 +75,7 @@
       v-model:open="showDeleteUserRoleDialog"
       title="Remove guest"
       :name="userToModify?.user.name ?? ''"
+      :workspace="workspace"
       @remove-user="onRemoveUser"
     />
 
@@ -85,12 +86,13 @@
       :workspace-id="workspaceId"
     />
 
-    <SettingsSharedChangeRoleDialog
+    <SettingsWorkspacesMembersChangeRoleDialog
       v-model:open="showChangeUserRoleDialog"
       :workspace-domain-policy-compliant="
         userToModify?.user.workspaceDomainPolicyCompliant
       "
       :current-role="Roles.Workspace.Guest"
+      :workspace="workspace"
       @update-role="onUpdateRole"
     />
   </div>
@@ -135,6 +137,8 @@ graphql(`
   fragment SettingsWorkspacesMembersGuestsTable_Workspace on Workspace {
     id
     ...SettingsWorkspacesMembersTableHeader_Workspace
+    ...SettingsSharedDeleteUserDialog_Workspace
+    ...SettingsWorkspacesMembersChangeRoleDialog_Workspace
     team {
       items {
         id
@@ -200,7 +204,7 @@ const actionItems = computed(() => {
   ]
 
   if (isWorkspaceAdmin.value) {
-    items.unshift([{ title: 'Update role...', id: ActionTypes.ChangeRole }])
+    items.unshift([{ title: 'Change role...', id: ActionTypes.ChangeRole }])
   }
 
   if (guests.value.find((guest) => guest.projectRoles.length)) {
