@@ -25,11 +25,7 @@
           + {{ invitedTeamCount }} pending
         </button>
       </div>
-      <FormButton
-        color="outline"
-        size="sm"
-        @click="openSettingsDialog(SettingMenuKeys.Workspace.Security)"
-      >
+      <FormButton color="outline" size="sm" @click="$emit('show-invite-dialog')">
         Invite your team
       </FormButton>
     </div>

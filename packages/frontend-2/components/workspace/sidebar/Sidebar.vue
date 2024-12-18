@@ -54,6 +54,7 @@
               :is-workspace-guest="isWorkspaceGuest"
               collapsible
               @show-settings-dialog="openSettingsDialog"
+              @show-invite-dialog="$emit('show-invite-dialog')"
             />
           </div>
 

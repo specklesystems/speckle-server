@@ -87,6 +87,7 @@
         :workspace-info="workspaceInfo"
         :is-workspace-guest="isWorkspaceGuest"
         @show-settings-dialog="openSettingsDialog"
+        @show-invite-dialog="$emit('show-invite-dialog')"
       />
     </div>
   </div>
@@ -125,6 +126,7 @@ const emit = defineEmits<{
   (e: 'show-settings-dialog', v: AvailableSettingsMenuKeys): void
   (e: 'show-move-projects-dialog'): void
   (e: 'show-new-project-dialog'): void
+  (e: 'show-invite-dialog'): void
 }>()
 
 const props = defineProps<{

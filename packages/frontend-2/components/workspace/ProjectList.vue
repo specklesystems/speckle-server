@@ -5,6 +5,7 @@
         v-if="workspace"
         :workspace-info="workspace"
         @show-settings-dialog="onShowSettingsDialog"
+        @show-invite-dialog="showInviteDialog = true"
       />
     </Portal>
     <div v-if="workspaceInvite" class="flex justify-center">
@@ -25,6 +26,7 @@
         @show-settings-dialog="onShowSettingsDialog"
         @show-move-projects-dialog="showMoveProjectsDialog = true"
         @show-new-project-dialog="openNewProject = true"
+        @show-invite-dialog="showInviteDialog = true"
       />
       <div class="mt-2 lg:mt-4">
         <FormTextInput
