@@ -11,7 +11,7 @@ export class SpeckleOfflineLoader extends SpeckleLoader {
   protected initObjectLoader(
     _resource: string,
     _authToken?: string,
-    _closureenableCaching?: boolean,
+    _enableCaching?: boolean,
     resourceData?: string | ArrayBuffer
   ): ObjectLoader {
     return ObjectLoader.createFromJSON(resourceData as string)
