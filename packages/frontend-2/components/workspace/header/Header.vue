@@ -3,7 +3,7 @@
     <div v-if="!isWorkspaceGuest && !isInTrial">
       <BillingAlert :workspace="workspaceInfo" :actions="billingAlertAction" />
     </div>
-    <div class="flex items-center justify-between">
+    <div class="flex items-center justify-between gap-4">
       <div class="flex items-center gap-3 lg:gap-4">
         <WorkspaceAvatar
           :name="workspaceInfo.name"
@@ -19,6 +19,11 @@
         <h1 class="text-heading-sm md:text-heading line-clamp-2">
           {{ workspaceInfo.name }}
         </h1>
+        <CommonBadge rounded color-classes="bg-highlight-3 text-foreground-2">
+          <span class="capitalize">
+            {{ workspaceInfo.role?.split(':').reverse()[0] }}
+          </span>
+        </CommonBadge>
       </div>
 
       <div class="flex gap-1.5 md:gap-2">
