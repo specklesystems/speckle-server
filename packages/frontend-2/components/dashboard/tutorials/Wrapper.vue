@@ -1,8 +1,8 @@
 <template>
   <section v-if="!error">
-    <h2 class="text-heading-sm text-foreground-2 mb-4">Blog</h2>
+    <h2 class="text-heading-sm text-foreground-2 mb-4">Tutorials</h2>
     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-      <DashboardBlogCard
+      <DashboardTutorialsCard
         v-for="webflowItem in webflowItems"
         :key="webflowItem.id"
         :webflow-item="webflowItem"

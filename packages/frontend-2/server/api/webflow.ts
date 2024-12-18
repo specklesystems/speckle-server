@@ -17,12 +17,6 @@ type WebflowApiResponse = {
   }>
 }
 
-const calculateReadTime = (content: string): number => {
-  const wordsPerMinute = 280
-  const wordCount = content.trim().split(/\s+/).length
-  return Math.ceil(wordCount / wordsPerMinute)
-}
-
 // Used to filter to last 6 months' articles to prevent old,
 // recently edited posts from appearing at the top
 const getSixMonthsAgo = (): Date => {
@@ -41,7 +35,7 @@ export default defineEventHandler(async (): Promise<{ items: WebflowItem[] }> =>
   }
 
   const url =
-    'https://api.webflow.com/v2/collections/66d822d3199be6f73a6c3c2c/items?limit=16&sortBy=lastPublished&sortOrder=desc'
+    'https://api.webflow.com/v2/collections/66d79d1c9cdda972d5c718b4/items?limit=16&sortBy=lastPublished&sortOrder=desc'
 
   try {
     const response = await fetch(url, {
@@ -77,10 +71,7 @@ export default defineEventHandler(async (): Promise<{ items: WebflowItem[] }> =>
           createdOn: item.createdOn,
           lastPublished: item.lastPublished,
           featureImageUrl: item.fieldData['feature-image']?.url,
-          url: `https://speckle.systems/blog/${item.fieldData.slug}`,
-          readTime: item.fieldData.html
-            ? calculateReadTime(item.fieldData.html)
-            : undefined
+          url: `https://speckle.systems/blog/${item.fieldData.slug}`
         })
       )
     }

@@ -21,15 +21,6 @@
         <h3 class="text-body-2xs text-foreground truncate">
           {{ webflowItem.title }}
         </h3>
-        <p class="text-body-3xs text-foreground-2 mt-2">
-          <span v-tippy="createdOn.full">
-            {{ createdOn.relative }}
-          </span>
-          <template v-if="webflowItem.readTime">
-            <span class="pl-1 pr-2">•</span>
-            {{ webflowItem.readTime }}m read
-          </template>
-        </p>
       </div>
     </div>
   </NuxtLink>
@@ -38,12 +29,7 @@
 <script lang="ts" setup>
 import type { WebflowItem } from '~/lib/dashboard/helpers/types'
 
-const props = defineProps<{
+defineProps<{
   webflowItem: WebflowItem
 }>()
-
-const createdOn = computed(() => ({
-  full: formattedFullDate(props.webflowItem.createdOn),
-  relative: formattedRelativeDate(props.webflowItem.createdOn, { capitalize: true })
-}))
 </script>
