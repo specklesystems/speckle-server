@@ -104,7 +104,7 @@ const createViewer = async (containerName: string, _stream: string) => {
   sandbox.makeDiffUI()
   sandbox.makeMeasurementsUI()
 
-  // await sandbox.loadUrl(stream)
+  // await sandbox.loadUrl(_stream)
   await sandbox.loadJSON(JSONSpeckleStream)
 }
 
