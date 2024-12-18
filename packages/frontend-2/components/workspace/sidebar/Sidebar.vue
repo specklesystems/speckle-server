@@ -2,19 +2,6 @@
 <!-- eslint-disable vuejs-accessibility/click-events-have-key-events -->
 <template>
   <div>
-    <!-- Mobile Toggle Button - currently not needed, but it will be -->
-    <!-- <Portal to="workspace-sidebar-toggle">
-      <div class="lg:hidden">
-        <FormButton color="outline" @click="isOpenMobile = !isOpenMobile">
-          <IconSidebar
-            v-if="!isOpenMobile"
-            class="h-3.5 w-3.5 -ml-2 -mr-2 text-foreground-2"
-          />
-          <IconSidebarClose v-else class="h-4 w-4 -ml-1 -mr-1" />
-        </FormButton>
-      </div>
-    </Portal> -->
-
     <!-- Mobile Backdrop -->
     <div
       v-keyboard-clickable

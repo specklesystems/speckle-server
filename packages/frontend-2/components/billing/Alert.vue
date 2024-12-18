@@ -2,14 +2,12 @@
   <div>
     <div
       v-if="condensed"
-      class="flex items-center justify-between rounded-md p-2 text-body-3xs font-medium"
-      :class="condensedClasses"
+      class="flex items-center justify-between rounded-md p-2 text-body-3xs font-medium bg-[#E0ECFF] text-primary-focus"
     >
       {{ title }}
       <FormButton
         v-if="actions.length > 0"
         size="sm"
-        :color="buttonColor"
         :disabled="actions[0].disabled"
         @click="actions[0].onClick"
       >
@@ -134,19 +132,6 @@ const alertColor = computed<AlertColor>(() => {
   }
 })
 
-const condensedClasses = computed(() => {
-  switch (planStatus.value) {
-    case WorkspacePlanStatuses.PaymentFailed:
-    case WorkspacePlanStatuses.Canceled:
-      return 'bg-danger'
-    case WorkspacePlanStatuses.CancelationScheduled:
-    case WorkspacePlanStatuses.Expired:
-      return 'bg-warning'
-    default:
-      return 'bg-[#E0ECFF] text-primary-focus'
-  }
-})
-
 const actions = computed((): AlertAction[] => {
   const actions: Array<AlertAction> = props.actions ?? []
 
@@ -165,20 +150,5 @@ const actions = computed((): AlertAction[] => {
   }
 
   return actions
-})
-
-const buttonColor = computed(() => {
-  switch (planStatus.value) {
-    case WorkspacePlanStatuses.PaymentFailed:
-    case WorkspacePlanStatuses.Canceled:
-      return 'danger'
-    case WorkspacePlanStatuses.CancelationScheduled:
-    case WorkspacePlanStatuses.Expired:
-      return 'subtle'
-    case WorkspacePlanStatuses.Trial:
-      return 'primary'
-    default:
-      return 'primary'
-  }
 })
 </script>
