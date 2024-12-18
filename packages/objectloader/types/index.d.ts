@@ -49,7 +49,6 @@ class ObjectLoader {
   ): SpeckleObject | SpeckleObject[]
 
   async *getObjectIterator(): Generator<SpeckleObject, SpeckleObject>
-  async *getObjectIterator2(input: string): Generator<SpeckleObject, SpeckleObject>
   async getObject(id: string): Promise<Record<string, unknown>>
   dispose(): void
 }

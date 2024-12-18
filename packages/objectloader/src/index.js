@@ -375,18 +375,6 @@ class ObjectLoader {
     this.logger(`Loaded ${count} objects in: ${(Date.now() - t0) / 1000}`)
   }
 
-  async *getObjectIterator2(input) {
-    const data = JSON.parse(input)
-    const t0 = Date.now()
-    let count = 0
-    for await (const { id, obj } of this.getRawObjectIterator2(data)) {
-      this.buffer[id] = obj
-      count += 1
-      yield obj
-    }
-    this.logger(`Loaded ${count} objects in: ${(Date.now() - t0) / 1000}`)
-  }
-
   processLine(chunk) {
     const pieces = chunk.split('\t')
     const [id, unparsedObj] = pieces
@@ -417,38 +405,6 @@ class ObjectLoader {
     idbOpenRequest.onupgradeneeded = () =>
       idbOpenRequest.result.createObjectStore('objects')
     this.cacheDB = await this.promisifyIdbRequest(idbOpenRequest)
-  }
-
-  async *getRawObjectIterator2(data) {
-    await this.setupCacheDb()
-
-    // const rootObjJson = await this.getRawRootObject()
-    // // this.logger("Root in: ", Date.now() - tSTART)
-
-    yield { id: data[0].id, obj: data[0] }
-
-    const rootObj = data[0]
-    if (!rootObj.__closure) return
-
-    // const childrenIds = Object.keys(rootObj.__closure)
-    //   .filter((id) => !id.includes('blob'))
-    //   .sort((a, b) => rootObj.__closure[a] - rootObj.__closure[b])
-
-    // for (const id of childrenIds) {
-    //   const obj = data.find((value) => value.id === id)
-    //   // Sleep 1 ms
-    //   await new Promise((resolve) => {
-    //     setTimeout(resolve, 1)
-    //   })
-    //   yield { id, obj }
-    // }
-    for (const item of data) {
-      // Sleep 1 ms
-      await new Promise((resolve) => {
-        setTimeout(resolve, 1)
-      })
-      yield { id: item.id, obj: item }
-    }
   }
 
   async *getRawObjectIterator() {
