@@ -307,8 +307,8 @@ const billValue = computed(() => {
   const guestPrice = seatPrice.value[Roles.Workspace.Guest] * guestSeatCount.value
   const memberPrice = seatPrice.value[Roles.Workspace.Member] * memberSeatCount.value
   const totalPrice = guestPrice + memberPrice
-  if (isPurchasablePlan.value) return `£${totalPrice}`
-  return `£0`
+  const isAnnual = subscription.value?.billingInterval === BillingInterval.Yearly
+  return isPurchasablePlan.value ? `£${isAnnual ? totalPrice * 12 : totalPrice}` : '£0'
 })
 const billDescription = computed(() => {
   const memberText =

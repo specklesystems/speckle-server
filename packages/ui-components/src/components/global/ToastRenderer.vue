@@ -56,15 +56,14 @@
                 {{ notification.description }}
               </p>
               <div v-if="notification.cta">
-                <FormButton
-                  class="mt-1"
-                  color="subtle"
+                <TextLink
+                  class="mt-1 color-primary"
                   :to="notification.cta.url"
                   size="sm"
                   @click="(e: MouseEvent) => onCtaClick(notification, e)"
                 >
                   {{ notification.cta.title }}
-                </FormButton>
+                </TextLink>
               </div>
             </div>
             <div class="ml-2 flex-shrink-0 mt-0.5">
@@ -84,7 +83,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import FormButton from '~~/src/components/common/text/Link.vue'
+import TextLink from '~~/src/components/common/text/Link.vue'
 import {
   CheckCircleIcon,
   XCircleIcon,

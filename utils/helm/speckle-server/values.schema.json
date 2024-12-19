@@ -80,11 +80,6 @@
           "description": "Toggles whether multi-region is available within workspaces. workspacesModuleEnabled must also be enabled.",
           "default": false
         },
-        "workspacesMultiRegionBlobStorageEnabled": {
-          "type": "boolean",
-          "description": "Toggles whether multi-region blob storage is available within workspaces. workspacesMultiRegionEnabled must also be enabled.",
-          "default": false
-        },
         "fileImportIFCDotNetEnabled": {
           "type": "boolean",
           "description": "Toggles whether the experimental .Net IFC importer is used for importing IFC files.",
@@ -235,6 +230,21 @@
           "type": "string",
           "description": "This defines the level of security used when connecting to the Postgres database",
           "default": "require"
+        },
+        "connectionAcquisitionTimeoutMillis": {
+          "type": "number",
+          "description": "The maximum time in milliseconds to wait for a connection to be acquired from the connection pool.",
+          "default": 15000
+        },
+        "connectionCreationTimeoutMillis": {
+          "type": "number",
+          "description": "The maximum time in milliseconds to wait for a new connection to be created in the connection pool. Should be less than the acquisition timeout, as a new connection may need to be created then acquired.",
+          "default": 5000
+        },
+        "databaseName": {
+          "type": "string",
+          "description": "(Optional) The name of the Postgres database to which Speckle will connect. Only required for the Database Monitoring utility when the connection string is to a database connection pool and multi-region is disabled, otherwise this value is ignored.",
+          "default": ""
         },
         "connectionString": {
           "type": "object",
@@ -1881,6 +1891,11 @@
             }
           }
         },
+        "postgresMaxConnections": {
+          "type": "number",
+          "description": "The maximum number of connections that the Preview Service postgres client will make to the Postgres database.",
+          "default": 2
+        },
         "puppeteer": {
           "type": "object",
           "properties": {
@@ -1993,6 +2008,11 @@
           "description": "The Docker image to be used for the Speckle Webhook Service component. If blank, defaults to speckle/speckle-webhook-service:{{ .Values.docker_image_tag }}. If provided, this value should be the full path including tag. The docker_image_tag value will be ignored.",
           "default": ""
         },
+        "postgresMaxConnections": {
+          "type": "number",
+          "description": "The maximum number of connections that the Webhook Service postgres client will make to the Postgres database.",
+          "default": 1
+        },
         "requests": {
           "type": "object",
           "properties": {
@@ -2090,6 +2110,11 @@
           "description": "The Docker image to be used for the Speckle FileImport Service component. If blank, defaults to speckle/speckle-fileimport-service:{{ .Values.docker_image_tag }}. If provided, this value should be the full path including tag. The docker_image_tag value will be ignored.",
           "default": ""
         },
+        "postgresMaxConnections": {
+          "type": "number",
+          "description": "The maximum number of connections that the File Import Service postgres client will make to the Postgres database.",
+          "default": 1
+        },
         "requests": {
           "type": "object",
           "properties": {
@@ -2186,6 +2211,21 @@
           "type": "boolean",
           "description": "If enabled, will output logs in a human-readable format. Otherwise, logs will be output in JSON format.",
           "default": false
+        },
+        "port": {
+          "type": "number",
+          "description": "The port on which the Monitoring Service will run.",
+          "default": 9092
+        },
+        "maximumPostgresConnections": {
+          "type": "number",
+          "description": "The maximum number of connections that the Monitoring Service will allow to the Postgres database. A connection pool exists to manage access to the connections.",
+          "default": 2
+        },
+        "metricsCollectionPeriodSeconds": {
+          "type": "number",
+          "description": "The period in seconds at which the Monitoring Service will query the Postgres database for metrics. Unlike typical Prometheus metrics, the data from the database is not collected in real-time when /metrics is accessed, and is instead done out-of-band on a timed interval.",
+          "default": 120
         },
         "image": {
           "type": "string",
