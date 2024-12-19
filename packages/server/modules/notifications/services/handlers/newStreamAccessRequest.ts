@@ -13,10 +13,7 @@ import {
   getStreamCollaboratorsRoute
 } from '@/modules/core/helpers/routeHelper'
 import { sendEmail } from '@/modules/emails/services/sending'
-import {
-  EmailTemplateParams,
-  renderEmail
-} from '@/modules/emails/services/emailRendering'
+import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { db } from '@/db/knex'
 import { GetPendingAccessRequest } from '@/modules/accessrequests/domain/operations'
 import { GetStream } from '@/modules/core/domain/streams/operations'
@@ -25,6 +22,7 @@ import { GetUser } from '@/modules/core/domain/users/operations'
 import { getUserFactory } from '@/modules/core/repositories/users'
 import { GetServerInfo } from '@/modules/core/domain/server/operations'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
+import { EmailTemplateParams } from '@/modules/emails/domain/operations'
 
 type ValidateMessageDeps = {
   getPendingAccessRequest: GetPendingAccessRequest
