@@ -52,6 +52,16 @@ services:
       - '127.0.0.1:9000:9000'
       - '127.0.0.1:9001:9001'
 
+  minio-region1:
+    image: 'minio/minio'
+    command: server /data --console-address ":9001"
+    restart: always
+    volumes:
+      - minio-region1-data:/data
+    ports:
+      - '127.0.0.1:9020:9000'
+      - '127.0.0.1:9021:9001'
+
   # Local OIDC provider for testing
   keycloak:
     image: quay.io/keycloak/keycloak:25.0
@@ -127,3 +137,4 @@ volumes:
   pgadmin-data:
   redis_insight-data:
   minio-data:
+  minio-region1-data:

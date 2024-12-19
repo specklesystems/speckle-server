@@ -32,13 +32,14 @@ export class BasitPass extends BaseGPass {
     super()
     this.tree = tree
     this.speckleRenderer = renderer
+    this.buildMaterials()
   }
 
   public get displayName(): string {
     return 'BASIT'
   }
 
-  onBeforeRender = () => {
+  protected buildMaterials() {
     const batches: MeshBatch[] = this.speckleRenderer.batcher.getBatches(
       undefined,
       GeometryType.MESH
@@ -112,14 +113,14 @@ export class BasitPass extends BaseGPass {
   protected overrideMaterials() {
     for (const k in this.materialMap) {
       const tuple = this.materialMap[k]
-      ;(tuple[0].renderObject as SpeckleMesh).setOverrideMaterial(tuple[2])
+      ;(tuple[0].renderObject as SpeckleMesh).setOverrideBatchMaterial(tuple[2])
     }
   }
 
   protected restoreMaterials() {
     for (const k in this.materialMap) {
       const tuple = this.materialMap[k]
-      ;(tuple[0].renderObject as SpeckleMesh).restoreMaterial()
+      ;(tuple[0].renderObject as SpeckleMesh).restoreBatchMaterial()
     }
   }
 

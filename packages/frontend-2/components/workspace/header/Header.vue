@@ -1,15 +1,11 @@
 <template>
   <div>
-    <BillingAlert :workspace="workspaceInfo" class="mb-4">
-      <template #actions>
-        <FormButton
-          v-if="isWorkspaceAdmin && isInTrial"
-          @click="openSettingsDialog(SettingMenuKeys.Workspace.Billing)"
-        >
-          Upgrade now
-        </FormButton>
-      </template>
-    </BillingAlert>
+    <BillingAlert
+      v-if="!isWorkspaceGuest"
+      :workspace="workspaceInfo"
+      :actions="billingAlertAction"
+      class="mb-4"
+    />
     <div
       class="flex flex-col gap-6 justify-between"
       :class="[
@@ -19,8 +15,8 @@
       <div class="flex gap-2 md:mb-3 md:mt-2">
         <div class="flex items-center mr-2">
           <WorkspaceAvatar
+            :name="workspaceInfo.name"
             :logo="workspaceInfo.logo"
-            :default-logo-index="workspaceInfo.defaultLogoIndex"
             size="lg"
           />
         </div>
@@ -85,7 +81,6 @@
               Invite
             </FormButton>
             <FormButton
-              v-if="isWorkspaceAdmin"
               class="hidden md:block"
               color="outline"
               @click="openSettingsDialog(SettingMenuKeys.Workspace.General)"
@@ -135,10 +130,10 @@ import {
 import DescriptionDialog from './DescriptionDialog.vue'
 import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
 import { WorkspacePlanStatuses } from '~/lib/common/generated/gql/graphql'
+import type { AlertAction } from '@speckle/ui-components'
 
 graphql(`
   fragment WorkspaceHeader_Workspace on Workspace {
-    ...WorkspaceAvatar_Workspace
     ...BillingAlert_Workspace
     id
     slug
@@ -159,7 +154,6 @@ graphql(`
         }
       }
     }
-    ...WorkspaceInviteDialog_Workspace
   }
 `)
 
@@ -214,6 +208,17 @@ const actionsItems = computed<LayoutMenuItem[][]>(() => [
       : [])
   ]
 ])
+const billingAlertAction = computed<Array<AlertAction>>(() => {
+  if (isInTrial.value && isWorkspaceAdmin.value) {
+    return [
+      {
+        title: 'Upgrade now',
+        onClick: () => openSettingsDialog(SettingMenuKeys.Workspace.Billing)
+      }
+    ]
+  }
+  return []
+})
 
 const openSettingsDialog = (target: AvailableSettingsMenuKeys) => {
   emit('show-settings-dialog', target)

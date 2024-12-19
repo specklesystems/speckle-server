@@ -1,39 +1,25 @@
 <template>
   <div>
-    <CommonCard v-if="!hasValidPlan" class="bg-foundation py-3 px-4">
-      <div class="flex gap-x-2">
-        <ExclamationCircleIcon v-if="showIcon" class="h-4 w-4 text-danger mt-1" />
-        <div class="flex-1 flex gap-x-4 items-center">
-          <div class="flex-1">
-            <h5 class="text-body-xs font-medium text-foreground">{{ title }}</h5>
-            <p class="text-body-xs text-foreground-2">{{ description }}</p>
-          </div>
-          <slot name="actions" />
-          <FormButton
-            v-if="isPaymentFailed"
-            :icon-right="ArrowTopRightOnSquareIcon"
-            @click="billingPortalRedirect(workspace.id)"
-          >
-            Update payment information
-          </FormButton>
-        </div>
-      </div>
-    </CommonCard>
+    <CommonAlert v-if="!hasValidPlan" :color="alertColor" :actions="actions">
+      <template #title>
+        {{ title }}
+      </template>
+      <template #description>
+        {{ description }}
+      </template>
+    </CommonAlert>
   </div>
 </template>
 
 <script setup lang="ts">
-import {
-  ExclamationCircleIcon,
-  ArrowTopRightOnSquareIcon
-} from '@heroicons/vue/24/outline'
+import dayjs from 'dayjs'
 import { graphql } from '~/lib/common/generated/gql'
 import {
   type BillingAlert_WorkspaceFragment,
-  WorkspacePlanStatuses,
-  WorkspacePlans
+  WorkspacePlanStatuses
 } from '~/lib/common/generated/gql/graphql'
 import { useBillingActions } from '~/lib/billing/composables/actions'
+import type { AlertAction, AlertColor } from '@speckle/ui-components'
 
 graphql(`
   fragment BillingAlert_Workspace on Workspace {
@@ -41,6 +27,7 @@ graphql(`
     plan {
       name
       status
+      createdAt
     }
     subscription {
       billingInterval
@@ -51,6 +38,7 @@ graphql(`
 
 const props = defineProps<{
   workspace: BillingAlert_WorkspaceFragment
+  actions?: Array<AlertAction>
 }>()
 
 const { billingPortalRedirect } = useBillingActions()
@@ -63,19 +51,28 @@ const isTrial = computed(
 const isPaymentFailed = computed(
   () => planStatus.value === WorkspacePlanStatuses.PaymentFailed
 )
+const isScheduledForCancelation = computed(
+  () => planStatus.value === WorkspacePlanStatuses.CancelationScheduled
+)
+const trialDaysLeft = computed(() => {
+  const createdAt = props.workspace.plan?.createdAt
+  const trialEndDate = dayjs(createdAt).add(31, 'days')
+  const diffDays = trialEndDate.diff(dayjs(), 'day')
+  return Math.max(0, diffDays)
+})
 const title = computed(() => {
   if (isTrial.value) {
-    return `You are currently on a free ${
-      props.workspace.plan?.name ?? WorkspacePlans.Starter
-    } plan trial`
+    return `You have ${trialDaysLeft.value} day${
+      trialDaysLeft.value !== 1 ? 's' : ''
+    } left on your free trial`
   }
   switch (planStatus.value) {
     case WorkspacePlanStatuses.CancelationScheduled:
-      return `Your ${props.workspace.plan?.name} plan subscription is scheduled for cancelation`
+      return `Your workspace subscription is scheduled for cancellation`
     case WorkspacePlanStatuses.Canceled:
-      return `Your ${props.workspace.plan?.name} plan subscription has been canceled`
+      return `Your workspace subscription has been cancelled`
     case WorkspacePlanStatuses.Expired:
-      return `Your free ${props.workspace.plan?.name} plan trial has ended`
+      return `Your free trial has ended`
     case WorkspacePlanStatuses.PaymentFailed:
       return "Your last payment didn't go through"
     default:
@@ -84,23 +81,53 @@ const title = computed(() => {
 })
 const description = computed(() => {
   if (isTrial.value) {
-    return 'Upgrade to a paid plan to start your subscription.'
+    return trialDaysLeft.value === 0
+      ? 'Upgrade to a paid plan to continue using your workspace'
+      : 'Upgrade to a paid plan to start your subscription'
   }
   switch (planStatus.value) {
     case WorkspacePlanStatuses.CancelationScheduled:
-      return 'Your workspace subscription is scheduled for cancelation. After the cancelation, your workspace will be in read-only mode.'
+      return 'Once the current billing cycle ends your workspace will enter read-only mode. Renew your subscription to undo.'
     case WorkspacePlanStatuses.Canceled:
-      return 'Your workspace has been canceled and is in read-only mode. Upgrade your plan to continue.'
+      return 'Your workspace has been cancelled and is in read-only mode. Subscribe to a plan to regain full access.'
     case WorkspacePlanStatuses.Expired:
-      return "The workspace is in a read-only locked state until there's an active subscription. Upgrade your plan to continue."
+      return "The workspace is in a read-only locked state until there's an active subscription. Subscribe to a plan to regain full access."
     case WorkspacePlanStatuses.PaymentFailed:
       return "Update your payment information now to ensure your workspace doesn't go into maintenance mode."
     default:
       return ''
   }
 })
-const showIcon = computed(() => {
-  return !!planStatus.value && planStatus.value !== WorkspacePlanStatuses.Trial
+const alertColor = computed<AlertColor>(() => {
+  switch (planStatus.value) {
+    case WorkspacePlanStatuses.PaymentFailed:
+    case WorkspacePlanStatuses.Canceled:
+      return 'danger'
+    case WorkspacePlanStatuses.CancelationScheduled:
+    case WorkspacePlanStatuses.Expired:
+      return 'warning'
+    default:
+      return 'neutral'
+  }
+})
+const actions = computed((): AlertAction[] => {
+  const actions: Array<AlertAction> = props.actions ?? []
+
+  if (isPaymentFailed.value) {
+    actions.push({
+      title: 'Update payment information',
+      onClick: () => billingPortalRedirect(props.workspace.id),
+      disabled: !props.workspace.id
+    })
+  } else if (isScheduledForCancelation.value) {
+    actions.push({
+      title: 'Renew subscription',
+      onClick: () => billingPortalRedirect(props.workspace.id),
+      disabled: !props.workspace.id
+    })
+  }
+
+  return actions
 })
 const hasValidPlan = computed(() => planStatus.value === WorkspacePlanStatuses.Valid)
 </script>

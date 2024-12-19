@@ -64,7 +64,7 @@ import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import {
   getProjectDbClient,
   getRegisteredRegionClients
-} from '@/modules/multiregion/dbSelector'
+} from '@/modules/multiregion/utils/dbSelector'
 
 export = {
   User: {

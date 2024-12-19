@@ -142,6 +142,7 @@ const emit = defineEmits<{
 
 const props = defineProps<{
   projectId: string
+  workspaceId?: string
   automationId: string
   revisionFn: MaybeNullOrUndefined<AutomationRevisionFunction>
   revision: MaybeNullOrUndefined<AutomationRevision>
@@ -258,7 +259,9 @@ const onSave = async () => {
         projectId: props.projectId,
         functionId: fId,
         functionReleaseId: rId,
-        modelId: model.id
+        modelId: model.id,
+        /* eslint-disable-next-line camelcase */
+        workspace_id: props.workspaceId
       })
     }
   } finally {

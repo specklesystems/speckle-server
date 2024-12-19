@@ -567,7 +567,7 @@ Generate the environment variables for Speckle server and Speckle objects deploy
   value: {{ .Values.featureFlags.workspacesModuleEnabled | quote }}
 
 - name: FF_WORKSPACES_SSO_ENABLED
-  value: {{ .Values.featureFlags.workspaceSsoEnabled | quote }}
+  value: {{ .Values.featureFlags.workspacesSSOEnabled | quote }}
 
 {{- if .Values.featureFlags.workspacesModuleEnabled }}
 - name: LICENSE_TOKEN
@@ -675,12 +675,14 @@ Generate the environment variables for Speckle server and Speckle objects deploy
       key: {{ .Values.server.billing.workspaceYearlyBusinessSeatStripePriceId.secretKey }}
 {{- end }}
 
+{{- if (or .Values.featureFlags.automateModuleEnabled .Values.featureFlags.workspacesSsoEnabled) }}
+- name: ENCRYPTION_KEYS_PATH
+  value: {{ .Values.server.encryptionKeys.path }}
+{{- end }}
+
 {{- if .Values.featureFlags.automateModuleEnabled }}
 - name: SPECKLE_AUTOMATE_URL
   value: {{ .Values.server.speckleAutomateUrl }}
-
-- name: AUTOMATE_ENCRYPTION_KEYS_PATH
-  value: {{ .Values.server.encryptionKeys.path }}
 {{- end }}
 
 - name: ONBOARDING_STREAM_URL
@@ -765,6 +767,10 @@ Generate the environment variables for Speckle server and Speckle objects deploy
       key: {{ default "postgres_url" .Values.db.connectionString.secretKey }}
 - name: POSTGRES_MAX_CONNECTIONS_SERVER
   value: {{ .Values.db.maxConnectionsServer | quote }}
+- name: POSTGRES_CONNECTION_CREATE_TIMEOUT_MILLIS
+  value: {{ .Values.db.connectionCreateTimeoutMillis | quote }}
+- name: POSTGRES_CONNECTION_ACQUIRE_TIMEOUT_MILLIS
+  value: {{ .Values.db.connectionAcquireTimeoutMillis | quote }}
 
 - name: PGSSLMODE
   value: "{{ .Values.db.PGSSLMODE }}"

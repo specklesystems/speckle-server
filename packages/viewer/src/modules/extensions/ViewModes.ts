@@ -1,5 +1,6 @@
 import { UpdateFlags } from '../../IViewer.js'
 import { ArcticViewPipeline } from '../pipeline/Pipelines/ArcticViewPipeline.js'
+import { BasitPipeline } from '../pipeline/Pipelines/BasitViewPipeline.js'
 import { DefaultPipeline } from '../pipeline/Pipelines/DefaultPipeline.js'
 import { EdgesPipeline } from '../pipeline/Pipelines/EdgesPipeline.js'
 import { MRTEdgesPipeline } from '../pipeline/Pipelines/MRT/MRTEdgesPipeline.js'
@@ -14,10 +15,26 @@ export enum ViewMode {
   DEFAULT_EDGES,
   SHADED,
   PEN,
-  ARCTIC
+  ARCTIC,
+  COLORS
+}
+
+export enum ViewModeEvent {
+  Changed = 'view-mode-changed'
+}
+
+export interface ViewModeEventPayload {
+  [ViewModeEvent.Changed]: ViewMode
 }
 
 export class ViewModes extends Extension {
+  public on<T extends ViewModeEvent>(
+    eventType: T,
+    listener: (arg: ViewModeEventPayload[T]) => void
+  ): void {
+    super.on(eventType, listener)
+  }
+
   public setViewMode(viewMode: ViewMode) {
     const renderer = this.viewer.getRenderer()
     const isMRTCapable =
@@ -46,7 +63,12 @@ export class ViewModes extends Extension {
       case ViewMode.ARCTIC:
         renderer.pipeline = new ArcticViewPipeline(renderer)
         break
+      case ViewMode.COLORS:
+        renderer.pipeline = new BasitPipeline(renderer, this.viewer.getWorldTree())
+        break
     }
     this.viewer.requestRender(UpdateFlags.RENDER_RESET)
+
+    this.emit(ViewModeEvent.Changed, viewMode)
   }
 }

@@ -18,7 +18,10 @@ import {
   StreamRoles,
   WorkspaceRoles
 } from '@speckle/shared'
-import { WorkspaceRoleToDefaultProjectRoleMapping } from '@/modules/workspaces/domain/types'
+import {
+  WorkspaceCreationState,
+  WorkspaceRoleToDefaultProjectRoleMapping
+} from '@/modules/workspaces/domain/types'
 import { WorkspaceTeam } from '@/modules/workspaces/domain/types'
 import { Stream } from '@/modules/core/domain/streams/types'
 import { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
@@ -101,6 +104,18 @@ export type GetWorkspaceWithDomains = (args: {
 }) => Promise<WorkspaceWithDomains | null>
 
 export type DeleteWorkspace = (args: DeleteWorkspaceArgs) => Promise<void>
+
+type CountWorkspacesArgs = {
+  filter?: {
+    search?: string
+  }
+}
+export type QueryWorkspacesArgs = CountWorkspacesArgs & {
+  limit: number
+  cursor?: string
+}
+export type QueryWorkspaces = (args: QueryWorkspacesArgs) => Promise<Workspace[]>
+export type CountWorkspaces = (args: CountWorkspacesArgs) => Promise<number>
 
 /** Workspace Roles */
 
@@ -285,3 +300,11 @@ export type UpsertRegionAssignment = (params: {
   workspaceId: string
   regionKey: string
 }) => Promise<WorkspaceRegionAssignment>
+
+export type GetWorkspaceCreationState = (params: {
+  workspaceId: string
+}) => Promise<WorkspaceCreationState | null>
+
+export type UpsertWorkspaceCreationState = (params: {
+  workspaceCreationState: WorkspaceCreationState
+}) => Promise<void>

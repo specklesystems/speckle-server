@@ -17,7 +17,21 @@ import {
 let multiRegionConfig: Optional<MultiRegionConfig> = undefined
 
 const getMultiRegionConfig = async (): Promise<MultiRegionConfig> => {
-  const emptyReturn = () => ({ main: { postgres: { connectionUri: '' } }, regions: {} })
+  // Only for non region enabled dev envs
+  const emptyReturn = (): MultiRegionConfig => ({
+    main: {
+      postgres: { connectionUri: '' },
+      blobStorage: {
+        accessKey: '',
+        secretKey: '',
+        endpoint: '',
+        s3Region: '',
+        bucket: '',
+        createBucketIfNotExists: true
+      }
+    },
+    regions: {}
+  })
 
   if (isDevOrTestEnv() && !isMultiRegionEnabled()) {
     return emptyReturn()

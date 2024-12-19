@@ -12,7 +12,7 @@ export enum PlanFeaturesList {
   PrivateAutomateFunctions = 'Private automate functions',
   DomainSecurity = 'Domain security',
   SSO = 'Single Sign-On (SSO)',
-  CustomDataRegion = 'Custom data region',
+  CustomDataRegion = 'Custom data residency',
   PrioritySupport = 'Priority support'
 }
 
@@ -25,5 +25,7 @@ export type PricingPlan = {
 }
 
 // Check if the plan matches PaidWorkspacePlans
-export const isPaidPlan = (plan: WorkspacePlans): boolean =>
-  Object.values(PaidWorkspacePlans).includes(plan as unknown as PaidWorkspacePlans)
+export const isPaidPlan = (plan?: WorkspacePlans): boolean =>
+  plan
+    ? Object.values(PaidWorkspacePlans).includes(plan as unknown as PaidWorkspacePlans)
+    : false

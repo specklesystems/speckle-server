@@ -1,4 +1,4 @@
-import { mainDb } from '@/db/knex'
+import { db } from '@/db/knex'
 import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import { addCommitCreatedActivityFactory } from '@/modules/activitystream/services/commitActivity'
 import { VersionsEmitter } from '@/modules/core/events/versionsEmitter'
@@ -23,10 +23,10 @@ import {
   createCommitByBranchNameFactory
 } from '@/modules/core/services/commit/management'
 import { createObjectFactory } from '@/modules/core/services/objects/management'
+import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { publish } from '@/modules/shared/utils/subscriptions'
 import { BasicTestUser } from '@/test/authHelper'
 import { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
-import { Knex } from 'knex'
 
 export type BasicTestCommit = {
   /**
@@ -61,10 +61,12 @@ export type BasicTestCommit = {
 }
 
 export async function createTestObject(params: { projectId: string }) {
-  const db = mainDb
+  const projectDb = await getProjectDbClient(params)
   const createObject = createObjectFactory({
-    storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({ db }),
-    storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db })
+    storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({
+      db: projectDb
+    }),
+    storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db: projectDb })
   })
 
   return await createObject({
@@ -73,84 +75,83 @@ export async function createTestObject(params: { projectId: string }) {
   })
 }
 
-const ensureObjectsFactory =
-  (deps: { db: Knex }) => async (commits: BasicTestCommit[]) => {
-    const { db } = deps
-    const createObject = createObjectFactory({
-      storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({ db }),
-      storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db })
-    })
-
-    const commitsWithoutObjects = commits.filter((c) => !c.objectId)
-    await Promise.all(
-      commitsWithoutObjects.map((c) =>
-        createObject({
-          streamId: c.streamId,
-          object: { foo: 'bar' }
-        }).then((oid) => (c.objectId = oid))
-      )
-    )
-  }
-
 /**
- * Create test commits
+ * Ensure all commits have objectId set
  */
-export const createTestCommitsFactory =
-  (deps: { db: Knex }) =>
-  async (
-    commits: BasicTestCommit[],
-    options?: Partial<{ owner: BasicTestUser; stream: BasicTestStream }>
-  ) => {
-    const { db } = deps
-    const { owner, stream } = options || {}
-
-    const createCommitByBranchId = createCommitByBranchIdFactory({
-      createCommit: createCommitFactory({ db }),
-      getObject: getObjectFactory({ db }),
-      getBranchById: getBranchByIdFactory({ db }),
-      insertStreamCommits: insertStreamCommitsFactory({ db }),
-      insertBranchCommits: insertBranchCommitsFactory({ db }),
-      markCommitStreamUpdated: markCommitStreamUpdatedFactory({ db }),
-      markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
-      versionsEventEmitter: VersionsEmitter.emit,
-      addCommitCreatedActivity: addCommitCreatedActivityFactory({
-        saveActivity: saveActivityFactory({ db: mainDb }),
-        publish
+async function ensureObjects(commits: BasicTestCommit[]) {
+  const commitsWithoutObjects = commits.filter((c) => !c.objectId)
+  await Promise.all(
+    commitsWithoutObjects.map(async (c) => {
+      const projectDb = await getProjectDbClient({ projectId: c.streamId })
+      const createObject = createObjectFactory({
+        storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({
+          db: projectDb
+        }),
+        storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db: projectDb })
       })
-    })
 
-    const createCommitByBranchName = createCommitByBranchNameFactory({
-      createCommitByBranchId,
-      getStreamBranchByName: getStreamBranchByNameFactory({ db }),
-      getBranchById: getBranchByIdFactory({ db })
+      return createObject({
+        streamId: c.streamId,
+        object: { foo: 'bar' }
+      }).then((oid) => (c.objectId = oid))
     })
-
-    commits.forEach((c) => {
-      if (owner) c.authorId = owner.id
-      if (stream) c.streamId = stream.id
-    })
-
-    await ensureObjectsFactory(deps)(commits)
-    await Promise.all(
-      commits.map((c) =>
-        createCommitByBranchName({
-          streamId: c.streamId,
-          branchName: c.branchName || 'main',
-          message: c.message || 'this message is auto generated',
-          sourceApplication: 'tests',
-          objectId: c.objectId,
-          authorId: c.authorId,
-          totalChildrenCount: 0,
-          parents: c.parents || []
-        }).then((newCommit) => (c.id = newCommit.id))
-      )
-    )
-  }
+  )
+}
 
 /**
  * Create test commits
  */
-export const createTestCommits = createTestCommitsFactory({ db: mainDb })
+export async function createTestCommits(
+  commits: BasicTestCommit[],
+  options?: Partial<{ owner: BasicTestUser; stream: BasicTestStream }>
+) {
+  const { owner, stream } = options || {}
+
+  commits.forEach((c) => {
+    if (owner) c.authorId = owner.id
+    if (stream) c.streamId = stream.id
+  })
+
+  await ensureObjects(commits)
+  await Promise.all(
+    commits.map(async (c) => {
+      const projectDb = await getProjectDbClient({ projectId: c.streamId })
+      const markCommitStreamUpdated = markCommitStreamUpdatedFactory({ db: projectDb })
+      const getObject = getObjectFactory({ db: projectDb })
+      const createCommitByBranchId = createCommitByBranchIdFactory({
+        createCommit: createCommitFactory({ db: projectDb }),
+        getObject,
+        getBranchById: getBranchByIdFactory({ db: projectDb }),
+        insertStreamCommits: insertStreamCommitsFactory({ db: projectDb }),
+        insertBranchCommits: insertBranchCommitsFactory({ db: projectDb }),
+        markCommitStreamUpdated,
+        markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db: projectDb }),
+        versionsEventEmitter: VersionsEmitter.emit,
+        addCommitCreatedActivity: addCommitCreatedActivityFactory({
+          saveActivity: saveActivityFactory({ db }),
+          publish
+        })
+      })
+
+      const createCommitByBranchName = createCommitByBranchNameFactory({
+        createCommitByBranchId,
+        getStreamBranchByName: getStreamBranchByNameFactory({ db: projectDb }),
+        getBranchById: getBranchByIdFactory({ db: projectDb })
+      })
+
+      return createCommitByBranchName({
+        streamId: c.streamId,
+        branchName: c.branchName || 'main',
+        message: c.message || 'this message is auto generated',
+        sourceApplication: 'tests',
+        objectId: c.objectId,
+        authorId: c.authorId,
+        totalChildrenCount: 0,
+        parents: c.parents || []
+      }).then((newCommit) => (c.id = newCommit.id))
+    })
+  )
+}
 
 export async function createTestCommit(
   commit: BasicTestCommit,

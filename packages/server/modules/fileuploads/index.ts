@@ -17,13 +17,12 @@ import { publish } from '@/modules/shared/utils/subscriptions'
 import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import { streamWritePermissionsPipelineFactory } from '@/modules/shared/authz'
 import { getRolesFactory } from '@/modules/shared/repositories/roles'
-import { getAutomationProjectFactory } from '@/modules/automate/repositories/automations'
 import { getStreamBranchByNameFactory } from '@/modules/core/repositories/branches'
 import { getStreamFactory } from '@/modules/core/repositories/streams'
 import { addBranchCreatedActivityFactory } from '@/modules/activitystream/services/branchActivity'
 import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import { getPort } from '@/modules/shared/helpers/envHelper'
-import { getProjectDbClient } from '@/modules/multiregion/dbSelector'
+import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { listenFor } from '@/modules/core/utils/dbNotificationListener'
 
 export const init: SpeckleModule['init'] = async (app, isInitial) => {
@@ -37,12 +36,10 @@ export const init: SpeckleModule['init'] = async (app, isInitial) => {
   app.post(
     '/api/file/:fileType/:streamId/:branchName?',
     async (req, res, next) => {
-      const projectDb = await getProjectDbClient({ projectId: req.params.streamId })
       await authMiddlewareCreator(
         streamWritePermissionsPipelineFactory({
           getRoles: getRolesFactory({ db }),
-          getStream: getStreamFactory({ db }),
-          getAutomationProject: getAutomationProjectFactory({ db: projectDb })
+          getStream: getStreamFactory({ db })
         })
       )(req, res, next)
     },

@@ -18,6 +18,21 @@ import { Roles } from '@speckle/shared'
 import { SettingMenuKeys } from '~/lib/settings/helpers/types'
 import { useIsMultiregionEnabled } from '~/lib/multiregion/composables/main'
 import type { InjectionKey } from 'vue'
+import { graphql } from '~/lib/common/generated/gql'
+
+graphql(`
+  fragment SettingsMenu_Workspace on Workspace {
+    id
+    sso {
+      provider {
+        id
+      }
+      session {
+        validUntil
+      }
+    }
+  }
+`)
 
 export const useSettingsMenu = () => {
   const isMultipleEmailsEnabled = useIsMultipleEmailsEnabled().value
@@ -53,10 +68,13 @@ export const useSettingsMenu = () => {
       title: 'Data residency',
       component: SettingsWorkspacesRegions,
       permission: [Roles.Workspace.Admin, Roles.Workspace.Member],
-      ...(isMultiRegionEnabled
-        ? {}
+      ...(!isMultiRegionEnabled
+        ? {
+            disabled: true,
+            tooltipText: 'Data residency management is not enabled on this server'
+          }
         : {
-            disabled: true
+            disabled: false
           })
     }
   })

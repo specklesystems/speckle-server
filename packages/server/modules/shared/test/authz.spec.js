@@ -316,7 +316,7 @@ describe('AuthZ @shared', () => {
       })
       const { authResult } = await step({ params: {} })
       expectAuthError(
-        new ContextError("The context doesn't have a streamId or automationId"),
+        new ContextError("The context doesn't have a streamId"),
         authResult
       )
     })
@@ -327,7 +327,7 @@ describe('AuthZ @shared', () => {
       })
       const { authResult } = await step({})
       expectAuthError(
-        new ContextError("The context doesn't have a streamId or automationId"),
+        new ContextError("The context doesn't have a streamId"),
         authResult
       )
     })

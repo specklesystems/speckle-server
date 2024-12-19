@@ -66,16 +66,14 @@ const mocks: SpeckleModuleMocksConfig = FF_AUTOMATE_MODULE_ENABLED
           version: store.get('Version') as any
         },
         Query: {
-          automateFunctions: (_parent, args) => {
+          automateFunctions: () => {
             const forceZero = false
             const count = forceZero ? 0 : faker.number.int({ min: 0, max: 20 })
-
-            const isFeatured = args.filter?.featuredFunctionsOnly
 
             return {
               cursor: null,
               totalCount: count,
-              items: times(count, () => store.get('AutomateFunction', { isFeatured }))
+              items: times(count, () => store.get('AutomateFunction'))
             } as any
           },
           automateFunction: (_parent, args) => {
@@ -159,7 +157,8 @@ const mocks: SpeckleModuleMocksConfig = FF_AUTOMATE_MODULE_ENABLED
               (i): AutomationRevisionTriggerDefinitionGraphQLReturn => ({
                 triggerType: VersionCreationTriggerType,
                 triggeringId: i.model.id,
-                automationRevisionId: parent.id
+                automationRevisionId: parent.id,
+                projectId: (store.get('Project') as any).id
               })
             )
           },
@@ -233,8 +232,7 @@ const mocks: SpeckleModuleMocksConfig = FF_AUTOMATE_MODULE_ENABLED
 
           //   return rand ? (store.get('LimitedUser') as any) : activeUser
           // }
-          releases: () => store.get('AutomateFunctionReleaseCollection') as any,
-          automationCount: () => faker.number.int({ min: 0, max: 99 })
+          releases: () => store.get('AutomateFunctionReleaseCollection') as any
         },
         AutomateFunctionRelease: {
           function: () => store.get('AutomateFunction') as any

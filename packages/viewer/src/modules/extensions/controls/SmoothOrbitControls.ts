@@ -226,14 +226,14 @@ export class SmoothOrbitControls extends SpeckleControls {
       new MeshBasicMaterial({ color: 0xff00000 })
     )
     this.orbitSphere.layers.set(ObjectLayers.OVERLAY)
-    this.scene.add(this.orbitSphere)
+    // this.scene.add(this.orbitSphere)
 
     this.originSphere = new Mesh(
       new SphereGeometry(0.5, 32, 16),
       new MeshBasicMaterial({ color: 0x00ff00 })
     )
     this.originSphere.layers.set(ObjectLayers.OVERLAY)
-    this.scene.add(this.originSphere)
+    // this.scene.add(this.originSphere)
   }
 
   /**
@@ -973,7 +973,7 @@ export class SmoothOrbitControls extends SpeckleControls {
       new Vector2(x, y),
       ObjectLayers.STREAM_CONTENT_MESH,
       true,
-      this.world.worldBox
+      this.world.worldBox // TO DO: This does not account for transformed objects
     )
     if (res) {
       this.lastPivot.copy(this.pivotPoint)

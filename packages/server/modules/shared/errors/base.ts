@@ -1,7 +1,10 @@
 import { Merge } from 'type-fest'
 import { VError, Options, Info } from 'verror'
 
-type ExtendedOptions<I extends Info = Info> = Merge<Options, { info?: Partial<I> }> & {
+export type ExtendedOptions<I extends Info = Info> = Merge<
+  Options,
+  { info?: Partial<I> }
+> & {
   statusCode?: number
 }
 

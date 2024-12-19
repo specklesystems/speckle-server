@@ -732,14 +732,19 @@ describe('Workspaces GQL CRUD', () => {
     })
 
     describe('mutation workspaceMutations.update', () => {
-      const workspace = {
+      const workspace: BasicTestWorkspace = {
         id: '',
+        slug: '',
         ownerId: '',
         name: cryptoRandomString({ length: 6 }),
         description: cryptoRandomString({ length: 12 })
       }
 
       beforeEach(async () => {
+        // we want a new workspace for each test
+        workspace.id = ''
+        workspace.slug = ''
+
         await createTestWorkspace(workspace, testAdminUser)
       })
 

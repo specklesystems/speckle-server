@@ -72,32 +72,29 @@
                   </template>
                 </LayoutSidebarMenuGroupItem>
               </NuxtLink>
-              <NuxtLink
-                v-for="(item, key) in workspacesItems"
-                :key="key"
-                :to="item.to"
-                @click="isOpenMobile = false"
-              >
-                <LayoutSidebarMenuGroupItem
-                  :label="item.label"
-                  :active="isActive(item.to)"
-                  :tag="
-                    item.plan?.status === WorkspacePlanStatuses.Trial ||
-                    !item.plan?.status
-                      ? 'Trial'
-                      : undefined
-                  "
-                  class="!pl-1"
+              <template v-for="(item, key) in workspacesItems" :key="key">
+                <NuxtLink
+                  v-if="item.creationState.completed !== false"
+                  :to="item.to"
+                  @click="isOpenMobile = false"
                 >
-                  <template #icon>
-                    <WorkspaceAvatar
-                      :logo="item.logo"
-                      :default-logo-index="item.defaultLogoIndex"
-                      size="sm"
-                    />
-                  </template>
-                </LayoutSidebarMenuGroupItem>
-              </NuxtLink>
+                  <LayoutSidebarMenuGroupItem
+                    :label="item.label"
+                    :active="isActive(item.to)"
+                    :tag="
+                      item.plan.status === WorkspacePlanStatuses.Trial ||
+                      !item.plan.status
+                        ? 'TRIAL'
+                        : undefined
+                    "
+                    class="!pl-1"
+                  >
+                    <template #icon>
+                      <WorkspaceAvatar :name="item.name" :logo="item.logo" size="sm" />
+                    </template>
+                  </LayoutSidebarMenuGroupItem>
+                </NuxtLink>
+              </template>
             </LayoutSidebarMenuGroup>
 
             <LayoutSidebarMenuGroup title="Resources" collapsible>
@@ -163,12 +160,6 @@
     </template>
 
     <FeedbackDialog v-model:open="showFeedbackDialog" />
-
-    <WorkspaceCreateDialog
-      v-model:open="showWorkspaceCreateDialog"
-      navigate-on-success
-      event-source="sidebar"
-    />
   </div>
 </template>
 <script setup lang="ts">
@@ -186,14 +177,30 @@ import {
   projectsRoute,
   workspaceRoute,
   workspacesRoute,
-  downloadManagerUrl
+  downloadManagerUrl,
+  workspaceCreateRoute
 } from '~/lib/common/helpers/route'
 import { useRoute } from 'vue-router'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { HomeIcon } from '@heroicons/vue/24/outline'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { Roles } from '@speckle/shared'
+import { graphql } from '~/lib/common/generated/gql'
 import { WorkspacePlanStatuses } from '~/lib/common/generated/gql/graphql'
+
+graphql(`
+  fragment Sidebar_User on User {
+    id
+    automateFunctions {
+      items {
+        id
+        name
+        description
+        logo
+      }
+    }
+  }
+`)
 
 const { isLoggedIn } = useActiveUser()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
@@ -203,7 +210,6 @@ const { activeUser: user } = useActiveUser()
 const mixpanel = useMixpanel()
 
 const isOpenMobile = ref(false)
-const showWorkspaceCreateDialog = ref(false)
 const showFeedbackDialog = ref(false)
 
 const { result: workspaceResult, onResult: onWorkspaceResult } = useQuery(
@@ -225,12 +231,15 @@ const workspacesItems = computed(() =>
   workspaceResult.value?.activeUser
     ? workspaceResult.value.activeUser.workspaces.items.map((workspace) => ({
         label: workspace.name,
+        name: workspace.name,
         id: workspace.id,
         to: workspaceRoute(workspace.slug),
         logo: workspace.logo,
-        defaultLogoIndex: workspace.defaultLogoIndex,
         plan: {
           status: workspace.plan?.status
+        },
+        creationState: {
+          completed: workspace.creationState?.completed
         }
       }))
     : []
@@ -255,7 +264,7 @@ const openFeedbackDialog = () => {
 }
 
 const openWorkspaceCreateDialog = () => {
-  showWorkspaceCreateDialog.value = true
+  navigateTo(workspaceCreateRoute())
   mixpanel.track('Create Workspace Button Clicked', {
     source: 'sidebar'
   })
