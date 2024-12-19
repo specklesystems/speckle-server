@@ -71,6 +71,7 @@ const onSelectUsersSubmit = async (updatedInvites: InviteGenericItem[]) => {
   if (!inputs.length) return
 
   await inviteToWorkspace({ workspaceId: props.workspace.id, inputs })
+  isOpen.value = false
   mixpanel.track('Invite Action', {
     type: 'workspace invite',
     name: 'send',
@@ -85,6 +86,13 @@ const onSelectUsersSubmit = async (updatedInvites: InviteGenericItem[]) => {
 watch(isOpen, (newVal) => {
   if (newVal) {
     isSelectUsersOpen.value = true
+    invites.value = [
+      {
+        ...emptyInviteGenericItem,
+        workspaceRole: Roles.Workspace.Member,
+        serverRole: Roles.Server.User
+      }
+    ]
   }
 })
 </script>
