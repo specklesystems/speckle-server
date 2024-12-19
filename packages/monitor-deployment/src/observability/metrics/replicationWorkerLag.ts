@@ -11,7 +11,7 @@ type QueryResponseSchema = {
       write_lag: string
       flush_lag: string
       replay_lag: string
-      application_name: string
+      subscription_name: string
     }
   ]
 }
@@ -27,7 +27,7 @@ export const init: MetricInitializer = (config) => {
   const promMetric = new prometheusClient.Gauge({
     name: join([namePrefix, 'db_replication_worker_lag'], '_'),
     help: 'Lag of replication workers, by type of lag',
-    labelNames: ['region', 'lagtype', 'name', ...labelNames]
+    labelNames: ['region', 'lagtype', 'subscriptionname', ...labelNames]
   })
   return async (params) => {
     const { dbClients, labels } = params
@@ -35,11 +35,15 @@ export const init: MetricInitializer = (config) => {
       dbClients.map(async ({ client, regionKey }) => {
         let queryResults: QueryResponseSchema | undefined = undefined
         try {
+          // sent_lsn is the data that has been received by the worker
+          // write_lsn is the data that has been written to the WAL, but it may be cached and not yet flushed to disk
+          // flush_lsn is the data that has been flushed to disk
+          // replay_lsn is the data that is visible to the user (may differ from flush_lsn if there is a replication conflict)
           queryResults = await client.raw<QueryResponseSchema>(`
-          SELECT write_lsn - sent_lsn AS write_lag,
-            flush_lsn - write_lsn AS flush_lag,
-            replay_lsn - flush_lsn AS replay_lag,
-            application_name
+          SELECT sent_lsn - write_lsn  AS write_lag,
+            write_lsn - flush_lsn AS flush_lag,
+            flush_lsn - replay_lsn AS replay_lag,
+            application_name AS subscription_name
             FROM aiven_extras.pg_stat_replication_list();
           `)
         } catch (err) {
@@ -73,7 +77,7 @@ export const init: MetricInitializer = (config) => {
                 ...labels,
                 region: regionKey,
                 lagtype: 'write',
-                name: row.application_name
+                subscriptionname: row.subscription_name
               },
               parseInt(row.write_lag)
             )
@@ -85,7 +89,7 @@ export const init: MetricInitializer = (config) => {
                 ...labels,
                 region: regionKey,
                 lagtype: 'flush',
-                name: row.application_name
+                subscriptionname: row.subscription_name
               },
               parseInt(row.flush_lag)
             )
@@ -97,7 +101,7 @@ export const init: MetricInitializer = (config) => {
                 ...labels,
                 region: regionKey,
                 lagtype: 'replay',
-                name: row.application_name
+                subscriptionname: row.subscription_name
               },
               parseInt(row.replay_lag)
             )
