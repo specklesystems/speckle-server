@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 /* @license
  * Licensed under the Apache License, Version 2.0 (the 'License');
  * you may not use this file except in compliance with the License.
@@ -28,8 +27,7 @@ import {
   Scene,
   Mesh,
   MeshBasicMaterial,
-  SphereGeometry,
-  Object3D
+  SphereGeometry
 } from 'three'
 
 import { Damper, SETTLING_TIME } from '../../utils/Damper.js'
@@ -99,6 +97,8 @@ export interface SmoothOrbitControlsOptions {
   infiniteZoom?: boolean
   // Zoom to cursor
   zoomToCursor?: boolean
+  // Orbit around cursor
+  orbitAroundCursor?: boolean
   // Dampening
   damperDecay?: number
 }
@@ -143,6 +143,7 @@ export class SmoothOrbitControls extends SpeckleControls {
   public spherical = new Spherical()
   private goalSpherical = new Spherical()
   private origin = new Vector3()
+  private pivotalOrigin: Vector3 = new Vector3()
   private goalOrigin = new Vector3()
   private targetDamperX = new Damper()
   private targetDamperY = new Damper()
@@ -176,7 +177,7 @@ export class SmoothOrbitControls extends SpeckleControls {
   private orbitSphere: Mesh
   private originSphere: Mesh
   private pivotPoint: Vector3 = new Vector3()
-  private lastCameraPos: Vector3
+  private lastPivot: Vector3 = new Vector3()
 
   private forceUpdate = false
 
@@ -294,7 +295,9 @@ export class SmoothOrbitControls extends SpeckleControls {
    * Gets the current goal position
    */
   public getPosition(): Vector3 {
-    return this.positionFromSpherical(this.goalSpherical, this.goalOrigin)
+    return this.positionFromSpherical(this.goalSpherical, this.goalOrigin).applyMatrix4(
+      this._basisTransform
+    )
   }
 
   /**
@@ -626,33 +629,6 @@ export class SmoothOrbitControls extends SpeckleControls {
     return true
   }
 
-  protected transformTo(outParentToTarget: Matrix4, parent: Matrix4, target: Matrix4) {
-    outParentToTarget.copy(parent)
-    outParentToTarget.invert()
-    outParentToTarget.multiply(target)
-  }
-
-  protected rotateAboutPoint(
-    obj: Object3D,
-    point: Vector3,
-    axis: Vector3,
-    theta: number
-  ) {
-    obj.position.sub(point) // remove the offset
-    obj.position.applyAxisAngle(axis, theta) // rotate the POSITION
-    obj.position.add(point) // re-add the offset
-
-    obj.rotateOnAxis(axis, theta) // rotate the OBJECT
-  }
-
-  protected hereToThere = new Vector3()
-  protected hereToThereMat = new Matrix4()
-  protected lastPivot = new Vector3()
-  protected relativeCamPos = new Vector3()
-  protected lastInitialPosition = new Vector3()
-  protected lastQuat: Quaternion = new Quaternion()
-  protected lastDelta = new Vector3()
-
   protected polarFromPivotal() {
     const quaternion = this.quaternionFromSpherical(this.spherical)
     const dir = new Vector3().setFromMatrixColumn(
@@ -671,25 +647,27 @@ export class SmoothOrbitControls extends SpeckleControls {
     const cameraPivotDir = new Vector3().copy(camPos).sub(pivotPoint)
     cameraPivotDir.normalize()
 
-    const dot = Math.min(Math.max(dir.dot(cameraPivotDir), -1), 1)
-    const angle = Math.acos(dot)
-    const polarRadius = cameraPivotDist //cameraPivotDist * Math.cos(angle)
-    const polarOrigin = new Vector3().copy(dir).multiplyScalar(polarRadius)
-    this.setTarget(polarOrigin.x, polarOrigin.y, polarOrigin.z)
-    this.setRadius(polarRadius)
-    this.jumpToGoal()
+    // const dot = Math.min(Math.max(dir.dot(cameraPivotDir), -1), 1)
+    // const angle = Math.acos(dot)
+    // console.log('Angle -> ', angle)
+    const polarRadius = cameraPivotDist // * Math.cos(angle)
+    const polarOrigin = camPos.sub(new Vector3().copy(dir).multiplyScalar(polarRadius))
+
+    this.goalOrigin.copy(polarOrigin)
+    this.origin.copy(polarOrigin)
+    this.goalSpherical.radius = polarRadius
+    this.spherical.radius = polarRadius
+
+    this.originSphere.position.copy(polarOrigin)
+    // console.log('Origin -> ', polarOrigin)
+    // console.log('Dist -> ', cameraPivotDist, ' Radius -> ', polarRadius)
   }
 
+  /** Function expects the origin in a CS where Y is up */
   protected positionFromPivotal(origin: Vector3, quaternion: Quaternion) {
     const pivotPoint = new Vector3()
       .copy(this.pivotPoint)
       .applyMatrix4(this._basisTransformInv)
-
-    const dir = new Vector3().setFromMatrixColumn(
-      new Matrix4().makeRotationFromQuaternion(quaternion),
-      2
-    )
-    dir.multiplyScalar(this.spherical.radius)
 
     const position = new Vector3()
     position.copy(origin)
@@ -697,15 +675,24 @@ export class SmoothOrbitControls extends SpeckleControls {
     position.sub(pivotPoint)
     position.applyQuaternion(quaternion)
     position.add(pivotPoint)
-    position.add(dir)
 
     return position
   }
 
-  protected isPivotal = false
-  protected pivotalOrigin: Vector3 = new Vector3()
+  /** Function expects the pivotPoint in a CS where Y is up */
+  protected getPivotalOrigin(pivotPoint: Vector3, quaternion: Quaternion) {
+    const pivotalOrigin = new Vector3()
+      .copy(this._targetCamera.position)
+      .applyMatrix4(this._basisTransformInv)
 
-  protected change = false
+    pivotalOrigin.sub(pivotPoint)
+    pivotalOrigin.applyQuaternion(new Quaternion().copy(quaternion).invert())
+    pivotalOrigin.add(pivotPoint)
+
+    return pivotalOrigin
+  }
+
+  protected usePivotal = false
   protected moveCamera() {
     this.spherical.makeSafe()
 
@@ -716,44 +703,24 @@ export class SmoothOrbitControls extends SpeckleControls {
       .copy(this.lastPivot)
       .applyMatrix4(this._basisTransformInv)
 
+    const deltaPivot = prevPivotPoint.sub(pivotPoint)
     const quaternion = this.quaternionFromSpherical(this.spherical)
 
-    const prevQuaternion = new Quaternion()
-      .copy(this.lastQuat)
-      .premultiply(new Quaternion().setFromRotationMatrix(this._basisTransformInv))
-    const deltaPivot = prevPivotPoint.sub(pivotPoint)
-    let deltaQuat = prevQuaternion.angleTo(quaternion)
-
-    if (deltaQuat === 2.3948158271083724) deltaQuat = 0
-
     if (deltaPivot.length() > 0) {
-      const camPos = new Vector3()
-        .copy(this._targetCamera.position)
-        .applyMatrix4(this._basisTransformInv)
-      const dir = new Vector3().setFromMatrixColumn(
-        new Matrix4().makeRotationFromQuaternion(quaternion),
-        2
-      )
-      dir.multiplyScalar(this.spherical.radius)
-
-      camPos.sub(dir)
-      camPos.sub(pivotPoint)
-      camPos.applyQuaternion(new Quaternion().copy(quaternion).invert())
-      camPos.add(pivotPoint)
-      this.pivotalOrigin.copy(camPos)
+      this.pivotalOrigin.copy(this.getPivotalOrigin(pivotPoint, quaternion))
     }
 
-    if (deltaQuat > 0.00001) {
-      // pivotalOrigin.add(pivotPoint)
-      // pivotalOrigin.add(
-      //   new Vector3()
-      //     .copy(pivotPoint)
-      //     .negate()
-      //     .applyQuaternion(new Quaternion().copy(quaternion).invert())
+    let position
+    if (this.usePivotal) {
+      position = this.positionFromPivotal(this.pivotalOrigin, quaternion)
+      this.polarFromPivotal()
+      // position = this.positionFromSpherical(this.spherical, this.origin)
+      // console.log(
+      //   'Pivotal -> ',
+      //   this.positionFromPivotal(this.pivotalOrigin, quaternion)
       // )
-    }
-
-    const position = this.positionFromPivotal(this.pivotalOrigin, quaternion)
+      // console.log('Polar -> ', this.positionFromSpherical(this.spherical, this.origin))
+    } else position = this.positionFromSpherical(this.spherical, this.origin)
 
     position.applyQuaternion(
       new Quaternion().setFromRotationMatrix(this._basisTransform)
@@ -796,7 +763,6 @@ export class SmoothOrbitControls extends SpeckleControls {
     }
 
     this.lastPivot.copy(this.pivotPoint)
-    this.lastQuat.copy(quaternion)
   }
 
   /* Ortho height to distance functions
@@ -989,6 +955,7 @@ export class SmoothOrbitControls extends SpeckleControls {
     const target = this.getTarget().applyMatrix4(this._basisTransformInv)
     target.add(dxy.applyMatrix3(this.panProjection))
     this.setTarget(target.x, target.y, target.z)
+    this.usePivotal = false
   }
 
   protected onPointerDown = (event: PointerEvent) => {
@@ -1011,18 +978,10 @@ export class SmoothOrbitControls extends SpeckleControls {
     if (res) {
       this.lastPivot.copy(this.pivotPoint)
       this.pivotPoint.copy(res[0].point)
+      this.polarFromPivotal()
       this.orbitSphere.position.copy(res[0].point)
-      // console.log('Radius -> ', this.spherical.radius)
-      // console.log('Distance -> ', this._targetCamera.position.distanceTo(res[0].point))
-      // this.goalSpherical.radius +=
-      //   this.goalSpherical.radius - this._targetCamera.position.distanceTo(res[0].point)
-
-      this.hereToThere
-        .copy(this._targetCamera.position)
-        .applyMatrix4(this._basisTransformInv)
       this.forceUpdate = true
-      this.change = true
-      this.isPivotal = true
+      this.usePivotal = this._options.orbitAroundCursor && true
     }
 
     if (this.pointers.length > 2) {
@@ -1119,10 +1078,7 @@ export class SmoothOrbitControls extends SpeckleControls {
     if (this.isUserPointing) {
       this.emit(PointerChangeEvent.PointerChangeEnd)
     }
-    // this.polarFromPivotal()
-    // this.isPivotal = false
-    // console.log('Pivotal -> ', this.positionFromPivotal())
-    // console.log('Polar -> ', this.positionFromSpherical(this.spherical, this.origin))
+    this.usePivotal = false
   }
 
   protected onTouchChange(event: PointerEvent) {
