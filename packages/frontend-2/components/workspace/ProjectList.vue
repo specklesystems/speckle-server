@@ -89,11 +89,7 @@
       <ProjectsAddDialog v-model:open="openNewProject" :workspace-id="workspace?.id" />
 
       <template v-if="workspace">
-        <InviteDialogWorkspace
-          v-model:open="showInviteDialog"
-          :workspace-id="workspace.id"
-          :workspace="workspace"
-        />
+        <InviteDialogWorkspace v-model:open="showInviteDialog" :workspace="workspace" />
         <SettingsDialog
           v-model:open="showSettingsDialog"
           :target-menu-item="settingsDialogTarget"
