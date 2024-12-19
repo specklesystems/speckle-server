@@ -141,9 +141,6 @@
                     <div class="text-foreground-2 text-center">
                       <slot name="nothing-found">Nothing found</slot>
                     </div>
-                    <div v-if="!searchValue">
-                      <slot name="no-search-value" />
-                    </div>
                   </div>
                   <template v-if="!isAsyncSearchMode || !isAsyncLoading">
                     <ListboxOption
