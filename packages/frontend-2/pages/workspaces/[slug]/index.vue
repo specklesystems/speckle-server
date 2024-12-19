@@ -14,7 +14,8 @@ import { useOnWorkspaceUpdated } from '~/lib/workspaces/composables/management'
 import { useWorkspaceProjectsUpdatedTracking } from '~/lib/workspaces/composables/projectUpdates'
 
 definePageMeta({
-  middleware: ['requires-workspaces-enabled', 'require-valid-workspace']
+  middleware: ['requires-workspaces-enabled', 'require-valid-workspace'],
+  layout: 'with-right-sidebar'
 })
 
 const route = useRoute()
