@@ -127,7 +127,7 @@ export type GetWorkspaceCollaboratorsArgs = {
     /**
      * Optionally filter by workspace role(s)
      */
-    roles?: string[]
+    roles?: WorkspaceRoles[]
     /**
      * Optionally filter by user name or email
      */

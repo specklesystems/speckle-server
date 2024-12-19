@@ -4,46 +4,11 @@ import path from 'path'
 import mjml2html from 'mjml'
 import * as ejs from 'ejs'
 import sanitizeHtml from 'sanitize-html'
-
-export type EmailTemplateServerInfo = {
-  name: string
-  canonicalUrl: string
-  company: string
-  adminContact: string
-}
-
-export type EmailCta = {
-  title: string
-  url: string
-}
-
-export type EmailBody = {
-  text: string
-  mjml: string
-}
-
-export type EmailTemplateParams = {
-  mjml: { bodyStart: string; bodyEnd?: string }
-  text: { bodyStart: string; bodyEnd?: string }
-  cta?: {
-    url: string
-    title: string
-    altTitle?: string
-  }
-}
-
-export type EmailInput = {
-  from?: string
-  to: string
-  subject: string
-  text: string
-  html: string
-}
-
-export type EmailContent = {
-  text: string
-  html: string
-}
+import {
+  EmailContent,
+  EmailTemplateParams,
+  EmailTemplateServerInfo
+} from '@/modules/emails/domain/operations'
 
 export const renderEmail = async (
   templateParams: EmailTemplateParams,
