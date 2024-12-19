@@ -96,6 +96,11 @@ const props = defineProps({
   hideDescription: {
     required: false,
     type: Boolean
+  },
+  allowUnset: {
+    required: false,
+    type: Boolean,
+    default: true
   }
 })
 

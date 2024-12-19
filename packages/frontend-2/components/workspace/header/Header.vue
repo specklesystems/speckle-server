@@ -154,7 +154,6 @@ graphql(`
         }
       }
     }
-    ...WorkspaceInviteDialog_Workspace
   }
 `)
 
