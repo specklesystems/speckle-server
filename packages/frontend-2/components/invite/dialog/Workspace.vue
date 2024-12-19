@@ -8,14 +8,24 @@
       invite-target="workspace"
       @on-submit="onSelectUsersSubmit"
       @on-cancel="isOpen = false"
-    />
+    >
+      <div v-if="showBillingInfo" class="text-body-2xs text-foreground-2 leading-5">
+        <p>
+          Inviting users may add seats to your current billing cycle. If there are
+          available seats, they will be used first. Your workspace is currently billed
+          for {{ memberSeatText }}{{ hasGuestSeats ? ` and ${guestSeatText}` : '' }}.
+        </p>
+      </div>
+    </InviteDialogSharedSelectUsers>
   </div>
 </template>
 <script setup lang="ts">
 import { graphql } from '~/lib/common/generated/gql'
-import type {
-  InviteDialogWorkspace_WorkspaceFragment,
-  WorkspaceInviteCreateInput
+import {
+  type InviteDialogWorkspace_WorkspaceFragment,
+  type WorkspaceInviteCreateInput,
+  type WorkspacePlans,
+  WorkspacePlanStatuses
 } from '~/lib/common/generated/gql/graphql'
 import type { InviteGenericItem } from '~~/lib/invites/helpers/types'
 import { emptyInviteGenericItem } from '~~/lib/invites/helpers/constants'
@@ -24,6 +34,7 @@ import { useMixpanel } from '~/lib/core/composables/mp'
 import { mapMainRoleToGqlWorkspaceRole } from '~/lib/workspaces/helpers/roles'
 import { mapServerRoleToGqlServerRole } from '~/lib/common/helpers/roles'
 import { useInviteUserToWorkspace } from '~/lib/workspaces/composables/management'
+import { isPaidPlan } from '~/lib/billing/helpers/types'
 
 graphql(`
   fragment InviteDialogWorkspace_Workspace on Workspace {
@@ -32,6 +43,16 @@ graphql(`
     domains {
       domain
       id
+    }
+    plan {
+      status
+      name
+    }
+    subscription {
+      seats {
+        guest
+        plan
+      }
     }
   }
 `)
@@ -58,14 +79,42 @@ const allowedDomains = computed(() =>
     ? props.workspace.domains?.map((d) => d.domain)
     : null
 )
-
+const memberSeatText = computed(() => {
+  if (!props.workspace?.subscription) return ''
+  return `${props.workspace.subscription.seats.plan} member ${
+    props.workspace.subscription.seats.plan === 1 ? 'seat' : 'seats'
+  }`
+})
+const guestSeatText = computed(() => {
+  if (!props.workspace?.subscription) return ''
+  return `${props.workspace.subscription.seats.guest} guest ${
+    props.workspace.subscription.seats.guest === 1 ? 'seat' : 'seats'
+  }`
+})
+const hasGuestSeats = computed(() => {
+  return (
+    props.workspace?.subscription?.seats.guest &&
+    props.workspace.subscription.seats.guest > 0
+  )
+})
+const showBillingInfo = computed(() => {
+  if (!props.workspace?.plan) return false
+  return (
+    isPaidPlan(props.workspace.plan.name as unknown as WorkspacePlans) &&
+    props.workspace.plan.status === WorkspacePlanStatuses.Valid
+  )
+})
 const onSelectUsersSubmit = async (updatedInvites: InviteGenericItem[]) => {
   invites.value = updatedInvites
 
   const inputs: WorkspaceInviteCreateInput[] = invites.value.map((invite) => ({
-    role: mapMainRoleToGqlWorkspaceRole(invite.workspaceRole),
+    role: invite.workspaceRole
+      ? mapMainRoleToGqlWorkspaceRole(invite.workspaceRole)
+      : undefined,
     email: invite.email,
-    serverRole: mapServerRoleToGqlServerRole(invite.serverRole)
+    serverRole: invite.serverRole
+      ? mapServerRoleToGqlServerRole(invite.serverRole)
+      : undefined
   }))
 
   if (!inputs.length) return

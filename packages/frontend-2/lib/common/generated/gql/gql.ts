@@ -50,7 +50,7 @@ const documents = {
     "\n  fragment FormSelectProjects_Project on Project {\n    id\n    name\n  }\n": types.FormSelectProjects_ProjectFragmentDoc,
     "\n  fragment FormUsersSelectItem on LimitedUser {\n    id\n    name\n    avatar\n  }\n": types.FormUsersSelectItemFragmentDoc,
     "\n  fragment HeaderNavShare_Project on Project {\n    id\n    visibility\n    ...ProjectsModelPageEmbed_Project\n  }\n": types.HeaderNavShare_ProjectFragmentDoc,
-    "\n  fragment InviteDialogWorkspace_Workspace on Workspace {\n    id\n    domainBasedMembershipProtectionEnabled\n    domains {\n      domain\n      id\n    }\n  }\n": types.InviteDialogWorkspace_WorkspaceFragmentDoc,
+    "\n  fragment InviteDialogWorkspace_Workspace on Workspace {\n    id\n    domainBasedMembershipProtectionEnabled\n    domains {\n      domain\n      id\n    }\n    plan {\n      status\n      name\n    }\n    subscription {\n      seats {\n        guest\n        plan\n      }\n    }\n  }\n": types.InviteDialogWorkspace_WorkspaceFragmentDoc,
     "\n  fragment ProjectModelPageHeaderProject on Project {\n    id\n    name\n    model(id: $modelId) {\n      id\n      name\n      description\n    }\n    workspace {\n      id\n      slug\n      name\n    }\n  }\n": types.ProjectModelPageHeaderProjectFragmentDoc,
     "\n  fragment ProjectModelPageVersionsPagination on Project {\n    id\n    visibility\n    model(id: $modelId) {\n      id\n      versions(limit: 16, cursor: $versionsCursor) {\n        cursor\n        totalCount\n        items {\n          ...ProjectModelPageVersionsCardVersion\n        }\n      }\n    }\n    ...ProjectsModelPageEmbed_Project\n  }\n": types.ProjectModelPageVersionsPaginationFragmentDoc,
     "\n  fragment ProjectModelPageVersionsProject on Project {\n    ...ProjectPageProjectHeader\n    model(id: $modelId) {\n      id\n      name\n      pendingImportedVersions {\n        ...PendingFileUpload\n      }\n    }\n    ...ProjectModelPageVersionsPagination\n    ...ProjectsModelPageEmbed_Project\n  }\n": types.ProjectModelPageVersionsProjectFragmentDoc,
@@ -547,7 +547,7 @@ export function graphql(source: "\n  fragment HeaderNavShare_Project on Project 
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment InviteDialogWorkspace_Workspace on Workspace {\n    id\n    domainBasedMembershipProtectionEnabled\n    domains {\n      domain\n      id\n    }\n  }\n"): (typeof documents)["\n  fragment InviteDialogWorkspace_Workspace on Workspace {\n    id\n    domainBasedMembershipProtectionEnabled\n    domains {\n      domain\n      id\n    }\n  }\n"];
+export function graphql(source: "\n  fragment InviteDialogWorkspace_Workspace on Workspace {\n    id\n    domainBasedMembershipProtectionEnabled\n    domains {\n      domain\n      id\n    }\n    plan {\n      status\n      name\n    }\n    subscription {\n      seats {\n        guest\n        plan\n      }\n    }\n  }\n"): (typeof documents)["\n  fragment InviteDialogWorkspace_Workspace on Workspace {\n    id\n    domainBasedMembershipProtectionEnabled\n    domains {\n      domain\n      id\n    }\n    plan {\n      status\n      name\n    }\n    subscription {\n      seats {\n        guest\n        plan\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

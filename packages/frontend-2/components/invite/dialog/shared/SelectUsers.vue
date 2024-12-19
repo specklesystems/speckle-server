@@ -64,6 +64,8 @@
         <FormButton color="subtle" :icon-left="PlusIcon" @click="addInviteItem">
           Add another user
         </FormButton>
+
+        <slot />
       </div>
     </form>
   </LayoutDialog>
@@ -138,10 +140,11 @@ const removeInviteItem = (index: number) => {
   removeInvite(index)
 }
 
-const getDisabledWorkspaceItems = (email: string): WorkspaceRoles[] =>
-  !matchesDomainPolicy(email, props.allowedDomains)
+const getDisabledWorkspaceItems = (email: string): WorkspaceRoles[] => {
+  return !matchesDomainPolicy(email, props.allowedDomains)
     ? [Roles.Workspace.Admin, Roles.Workspace.Member]
     : []
+}
 
 const onSubmit = handleSubmit(() => {
   const invites = fields.value
