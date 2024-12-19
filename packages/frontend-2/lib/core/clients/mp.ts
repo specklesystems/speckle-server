@@ -101,7 +101,8 @@ export const useClientsideMixpanelClientBuilder = () => {
     // Init
     mixpanel.init(mixpanelTokenId, {
       api_host: mixpanelApiHost,
-      debug: !!import.meta.dev && logCsrEmitProps
+      debug: !!import.meta.dev && logCsrEmitProps,
+      record_sessions_percent: 100
     })
     const utmParams = collectUtmTags()
 
