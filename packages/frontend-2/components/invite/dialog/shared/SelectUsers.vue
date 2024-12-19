@@ -44,6 +44,7 @@
                 :name="`project-role-${item.key}`"
                 class="sm:w-44"
                 mount-menu-on-body
+                :allow-unset="false"
                 :show-label="index === 0"
                 :disabled-items="getDisabledWorkspaceItems(item.value.email)"
                 disabled-item-tooltip="This email does not match the set domain policy, and can only be invited as a guest"
