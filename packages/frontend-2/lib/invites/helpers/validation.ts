@@ -15,6 +15,7 @@ export const matchesDomainPolicy = (
   val: string,
   allowedDomains: MaybeNullOrUndefined<string[]>
 ) => {
+  if (!allowedDomains || allowedDomains.length === 0) return true
   return allowedDomains && val ? allowedDomains.includes(val.split('@')[1]) : true
 }
 

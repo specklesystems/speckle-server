@@ -138,15 +138,10 @@ const removeInviteItem = (index: number) => {
   removeInvite(index)
 }
 
-const getDisabledWorkspaceItems = (email: string): WorkspaceRoles[] => {
-  const items: WorkspaceRoles[] = []
-
-  if (!matchesDomainPolicy(email, props.allowedDomains)) {
-    items.push(Roles.Workspace.Admin, Roles.Workspace.Member)
-  }
-
-  return items
-}
+const getDisabledWorkspaceItems = (email: string): WorkspaceRoles[] =>
+  !matchesDomainPolicy(email, props.allowedDomains)
+    ? [Roles.Workspace.Admin, Roles.Workspace.Member]
+    : []
 
 const onSubmit = handleSubmit(() => {
   const invites = fields.value
