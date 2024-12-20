@@ -20,10 +20,8 @@ import {
 import { SectionTool } from '@speckle/viewer'
 import { SectionOutlines } from '@speckle/viewer'
 import { ViewModesKeys } from './Extensions/ViewModesKeys'
-import { JSONSpeckleStream } from './JSONSpeckleStream'
 import { BoxSelection } from './Extensions/BoxSelection'
 import { SnowPipeline } from './Pipelines/Snow/SnowPipeline'
-import { ExtendedSelection } from './Extensions/ExtendedSelection'
 
 const createViewer = async (containerName: string, _stream: string) => {
   const container = document.querySelector<HTMLElement>(containerName)

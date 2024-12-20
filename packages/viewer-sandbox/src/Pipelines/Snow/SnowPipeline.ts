@@ -11,7 +11,6 @@ import {
   StencilPass,
   StencilMaskPass,
   MeshBatch,
-  InstancedMeshBatch,
   GeometryType,
   SpeckleStandardMaterial,
   Assets,

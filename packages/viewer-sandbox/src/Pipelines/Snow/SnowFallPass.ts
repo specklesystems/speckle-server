@@ -1,15 +1,9 @@
-import { BaseGPass, Pipeline } from '@speckle/viewer'
+import { BaseGPass } from '@speckle/viewer'
 import {
   AdditiveBlending,
-  LinearFilter,
-  Matrix4,
-  MultiplyBlending,
-  NormalBlending,
   OrthographicCamera,
   PerspectiveCamera,
   ShaderMaterial,
-  SubtractiveBlending,
-  Texture,
   Vector2,
   WebGLRenderer
 } from 'three'
@@ -45,7 +39,7 @@ export class SnowFallPass extends BaseGPass {
     return 'SNOWFALL'
   }
 
-  public update(camera: PerspectiveCamera | OrthographicCamera) {
+  public update(_camera: PerspectiveCamera | OrthographicCamera) {
     if (this.lastFrameTime === 0) {
       this.lastFrameTime = performance.now()
       return
