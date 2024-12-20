@@ -8,18 +8,17 @@
     :tag="workspaceInfo.team.totalCount.toString() || undefined"
     no-hover
   >
-    <div
-      class="flex lg:flex-col items-center lg:items-start justify-between lg:justify-start gap-4 pb-0 lg:pb-4 mt-1"
-    >
+    <div class="flex lg:flex-col items-center lg:items-start gap-4 pb-0 lg:pb-4 mt-1">
       <div class="flex items-center gap-1">
         <UserAvatarGroup
           :overlap="false"
           :users="team.map((teamMember) => teamMember.user)"
           :max-avatars="3"
+          class="shrink-0"
         />
         <button
           v-if="invitedTeamCount && isWorkspaceAdmin"
-          class="flex items-center shrink-0 justify-center text-body-3xs px-2 h-8 rounded-full border border-dashed border-outline-2 hover:bg-foundation select-none"
+          class="hidden md:flex items-center shrink-0 justify-center text-body-3xs px-2 h-8 rounded-full border border-dashed border-outline-2 hover:bg-foundation select-none"
           @click="openSettingsDialog(SettingMenuKeys.Workspace.Members)"
         >
           + {{ invitedTeamCount }} pending

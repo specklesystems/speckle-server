@@ -3,6 +3,13 @@
     <div v-if="!isWorkspaceGuest && !isInTrial && !hasValidPlan">
       <BillingAlert :workspace="workspaceInfo" :actions="billingAlertAction" />
     </div>
+    <div v-if="!isWorkspaceGuest && isInTrial" class="lg:hidden">
+      <BillingAlert
+        :workspace="workspaceInfo"
+        :actions="billingAlertAction"
+        condensed
+      />
+    </div>
     <div class="flex items-center justify-between gap-4">
       <div class="flex items-center gap-3 lg:gap-4">
         <WorkspaceAvatar
@@ -49,20 +56,7 @@
       </div>
     </div>
 
-    <!-- Mobile header elements -->
-    <div class="flex flex-col gap-2 lg:hidden mb-2">
-      <BillingAlert
-        v-if="!isWorkspaceGuest && isInTrial"
-        :workspace="workspaceInfo"
-        :actions="billingAlertAction"
-        condensed
-      />
-      <WorkspaceSidebarAbout
-        v-if="workspaceInfo.description"
-        :workspace-info="workspaceInfo"
-        :is-workspace-admin="isWorkspaceAdmin"
-        @show-settings-dialog="openSettingsDialog"
-      />
+    <div class="lg:hidden mb-2">
       <WorkspaceSidebarMembers
         v-if="!isWorkspaceGuest"
         :workspace-info="workspaceInfo"

@@ -7,7 +7,7 @@
       <LayoutSidebar>
         <div class="flex flex-col divide-y divide-outline-3">
           <!-- Subscription Reminder -->
-          <div v-if="!isWorkspaceGuest && isInTrial" class="p-4 pt-2">
+          <div v-if="!isWorkspaceGuest && isInTrial" class="p-4">
             <BillingAlert
               :workspace="workspaceInfo"
               :actions="billingAlertAction"
