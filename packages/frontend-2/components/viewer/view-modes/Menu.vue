@@ -91,7 +91,7 @@ const handleViewModeChange = (mode: ViewMode, isShortcut = false) => {
 }
 
 const onSnowModeClick = () => {
-  snowingEnabled.value = !snowingEnabled.value
+  snowingEnabled.value = true
   letItSnow()
 }
 
