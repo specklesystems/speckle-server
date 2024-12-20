@@ -1,4 +1,4 @@
-export const speckleStandardFrag = /* glsl */ `
+export const objectSnowFrag = /* glsl */ `
 #define STANDARD
 
 #ifdef PHYSICAL
@@ -48,6 +48,8 @@ uniform float opacity;
 #endif
 
 varying vec3 vViewPosition;
+varying vec3 vWorldPosition;
+varying vec3 vWorldNormal;
 /** We're disabling color grading for now until we want to properly offer it to the users */
 //#define CUSTOM_TONEMAPPING 
 
@@ -136,13 +138,69 @@ varying vec3 vViewPosition;
 #include <logdepthbuf_pars_fragment>
 #include <clipping_planes_pars_fragment>
 
+uniform float height;
+uniform float minSnow;
+uniform float maxSnow;
+const vec3 COLOR_SNOW = vec3(1.0,1.0,1.1) * 2.2;
+const vec3 COLOR_ROCK = vec3(0.0,0.0,0.1);
+
+vec3 terr_color(in vec3 p, in vec3 n, in vec3 underColor, in float _min, in float _max, in vec3 snowColor) {
+    float slope = 1.0-dot(n,vec3(0.,0.,1.));     
+    vec3 ret = mix(snowColor,underColor,smoothstep(_min,_max,slope*slope));
+    ret = mix(ret,snowColor,saturate(smoothstep(0.1,0.2,slope+(p.z-height*0.5)*0.05)));
+    return ret;
+}
+
 void main() {
 
     #include <clipping_planes_fragment>
-
     vec4 diffuseColor = vec4( diffuse, opacity );
     ReflectedLight reflectedLight = ReflectedLight( vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ) );
     vec3 totalEmissiveRadiance = emissive;
+
+    #include <normal_fragment_begin>
+    #ifdef OBJECTSPACE_NORMALMAP
+
+        normal = texture2D( normalMap, vUv ).xyz * 2.0 - 1.0; // overrides both flatShading and attribute normals
+        #ifdef FLIP_SIDED
+
+            normal = - normal;
+
+        #endif
+
+        #ifdef DOUBLE_SIDED
+
+            normal = normal * faceDirection;
+
+        #endif
+
+        normal = normalize( normalMatrix * normal );
+
+    #elif defined( TANGENTSPACE_NORMALMAP )
+
+        vec3 mapN = texture2D( normalMap, vUv ).xyz * 2.0 - 1.0;
+        mapN.xy *= normalScale;
+
+        #ifdef USE_TANGENT
+
+            normal = normalize( vTBN * mapN );
+
+        #else
+
+            normal = perturbNormal2Arb( - vViewPosition, normal, mapN, faceDirection );
+
+        #endif
+
+    #elif defined( USE_BUMPMAP )
+
+        normal = perturbNormalArb( - vViewPosition, normal, dHdxy_fwd(), faceDirection );
+
+    #endif
+    vec3 snowColor = terr_color(vWorldPosition, inverseTransformDirection(normal, viewMatrix), diffuseColor.rgb, minSnow, maxSnow, COLOR_SNOW);
+
+    float snowAmount = step(0.9, snowColor.x);
+    normal = mix(normalize(vNormal), normal, snowAmount);
+    diffuseColor.rgb = snowColor;
 
     #include <logdepthbuf_fragment>
     #include <map_fragment>
@@ -151,12 +209,18 @@ void main() {
     #include <alphatest_fragment>
     #include <roughnessmap_fragment>
     #include <metalnessmap_fragment>
-    #include <normal_fragment_begin>
-    #include <normal_fragment_maps>
+
+    
+    // roughnessFactor = mix(roughnessFactor, snowAmount, snowAmount);
+    // metalnessFactor = step(0.4, 1. - roughnessFactor);
+    // #include <normal_fragment_begin>
+    // #include <normal_fragment_maps>
+    
     #include <clearcoat_normal_fragment_begin>
     #include <clearcoat_normal_fragment_maps>
     #include <emissivemap_fragment>
 
+    
     // accumulation
     #include <lights_physical_fragment>
     #include <lights_fragment_begin>

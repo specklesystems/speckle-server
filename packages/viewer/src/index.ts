@@ -131,10 +131,15 @@ import {
 } from './modules/materials/Materials.js'
 import { AccelerationStructure } from './modules/objects/AccelerationStructure.js'
 import { TopLevelAccelerationStructure } from './modules/objects/TopLevelAccelerationStructure.js'
+import { StencilPass } from './modules/pipeline/Passes/StencilPass.js'
+import { StencilMaskPass } from './modules/pipeline/Passes/StencilMaskPass.js'
+import { SpeckleWebGLRenderer } from './modules/objects/SpeckleWebGLRenderer.js'
+import { InstancedMeshBatch } from './modules/batching/InstancedMeshBatch.js'
 
 export {
   Viewer,
   LegacyViewer,
+  SpeckleWebGLRenderer,
   DefaultViewerParams,
   ViewerEvent,
   DefaultLightConfiguration,
@@ -169,6 +174,7 @@ export {
   ObjectLayers,
   GeometryType,
   MeshBatch,
+  InstancedMeshBatch,
   LineBatch,
   PointBatch,
   TextBatch,
@@ -199,6 +205,8 @@ export {
   BasitPass,
   ProgressiveAOPass,
   TAAPass,
+  StencilPass,
+  StencilMaskPass,
   PassOptions,
   ClearFlags,
   ObjectVisibility,
