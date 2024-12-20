@@ -3,7 +3,7 @@
 <template>
   <div class="w-full">
     <!-- Sidebar Content -->
-    <div class="pt-2 w-full">
+    <div class="w-full">
       <LayoutSidebar>
         <div class="flex flex-col divide-y divide-outline-3">
           <!-- Subscription Reminder -->
@@ -15,7 +15,7 @@
             />
           </div>
 
-          <div class="px-4">
+          <div class="px-4 py-2">
             <WorkspaceSidebarAbout
               :workspace-info="workspaceInfo"
               collapsible
@@ -25,7 +25,7 @@
           </div>
 
           <!-- Members -->
-          <div v-if="!isWorkspaceGuest" class="px-4">
+          <div v-if="!isWorkspaceGuest" class="px-4 py-2">
             <WorkspaceSidebarMembers
               :workspace-info="workspaceInfo"
               :is-workspace-admin="isWorkspaceAdmin"
@@ -36,7 +36,7 @@
           </div>
 
           <!-- Security -->
-          <div v-if="isWorkspaceAdmin && !hasDomains" class="px-4">
+          <div v-if="isWorkspaceAdmin && !hasDomains" class="px-4 py-2">
             <WorkspaceSidebarSecurity
               :workspace-info="workspaceInfo"
               @show-settings-dialog="openSettingsDialog"

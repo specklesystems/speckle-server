@@ -9,7 +9,7 @@
     no-hover
   >
     <div
-      class="flex lg:flex-col items-center lg:items-start justify-between lg:justify-start gap-2 pb-0 lg:pb-4 mt-1"
+      class="flex lg:flex-col items-center lg:items-start justify-between lg:justify-start gap-4 pb-0 lg:pb-4 mt-1"
     >
       <div class="flex items-center gap-1">
         <UserAvatarGroup

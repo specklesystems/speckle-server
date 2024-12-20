@@ -8,7 +8,7 @@
     no-hover
   >
     <div class="text-body-2xs text-foreground-2 pb-4 mt-1">
-      <div class="flex flex-col gap-2">
+      <div class="flex flex-col gap-4">
         Verified domains not set.
         <FormButton
           color="outline"
