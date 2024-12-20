@@ -23,7 +23,9 @@
         label="Let it snow"
         :active="snowingEnabled"
         @click="onSnowModeClick"
-      />
+      >
+        🎅
+      </ViewerMenuItem>
     </div>
   </ViewerMenu>
 </template>
@@ -71,6 +73,7 @@ const emit = defineEmits<{
 }>()
 
 const handleViewModeChange = (mode: ViewMode, isShortcut = false) => {
+  snowingEnabled.value = false
   setViewMode(mode)
   cancelCloseTimer()
 
