@@ -83,9 +83,9 @@ const createViewer = async (containerName: string, _stream: string) => {
     Object.assign(sandbox.sceneParams.worldSize, viewer.World.worldSize)
     Object.assign(sandbox.sceneParams.worldOrigin, viewer.World.worldOrigin)
     sandbox.refresh()
-    const snowPipeline = new SnowPipeline(viewer.getRenderer())
-    viewer.getRenderer().pipeline = snowPipeline
-    void snowPipeline.start()
+    // const snowPipeline = new SnowPipeline(viewer.getRenderer())
+    // viewer.getRenderer().pipeline = snowPipeline
+    // void snowPipeline.start()
   })
 
   viewer.on(ViewerEvent.UnloadComplete, () => {
