@@ -78,7 +78,7 @@ const iconClick = computed(() => {
 
 const iconText = computed(() => {
   if (!props.isWorkspaceAdmin) return undefined
-  return 'Edit team'
+  return 'Manage members'
 })
 
 const invitedTeamCount = computed(() => props.workspaceInfo?.invitedTeam?.length ?? 0)

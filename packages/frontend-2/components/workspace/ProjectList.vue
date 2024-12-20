@@ -32,7 +32,9 @@
         <FormTextInput
           name="modelsearch"
           :show-label="false"
-          :placeholder="`Search in ${projects?.totalCount} projects...`"
+          :placeholder="`Search ${projects?.totalCount} ${
+            projects?.totalCount === 1 ? 'project' : 'projects'
+          }...`"
           :custom-icon="MagnifyingGlassIcon"
           color="foundation"
           wrapper-classes="w-full lg:w-60"
@@ -46,7 +48,7 @@
 
       <section
         v-if="showEmptyState"
-        class="bg-foundation border border-outline-2 rounded-md h-96 flex flex-col items-center justify-center gap-3"
+        class="bg-foundation border border-outline-2 rounded-md h-96 flex flex-col items-center justify-center gap-4"
       >
         <span class="text-body-2xs text-foreground-2 text-center">
           Workspace is empty
