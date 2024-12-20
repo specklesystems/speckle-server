@@ -132,12 +132,17 @@ import {
 import { SpeckleOfflineLoader } from './modules/loaders/Speckle/SpeckleOfflineLoader.js'
 import { AccelerationStructure } from './modules/objects/AccelerationStructure.js'
 import { TopLevelAccelerationStructure } from './modules/objects/TopLevelAccelerationStructure.js'
+import { StencilPass } from './modules/pipeline/Passes/StencilPass.js'
+import { StencilMaskPass } from './modules/pipeline/Passes/StencilMaskPass.js'
+import { SpeckleWebGLRenderer } from './modules/objects/SpeckleWebGLRenderer.js'
+import { InstancedMeshBatch } from './modules/batching/InstancedMeshBatch.js'
 import { ViewModeEvent, ViewModeEventPayload } from './modules/extensions/ViewModes.js'
 import { BasitPipeline } from './modules/pipeline/Pipelines/BasitViewPipeline.js'
 
 export {
   Viewer,
   LegacyViewer,
+  SpeckleWebGLRenderer,
   DefaultViewerParams,
   ViewerEvent,
   DefaultLightConfiguration,
@@ -172,6 +177,7 @@ export {
   ObjectLayers,
   GeometryType,
   MeshBatch,
+  InstancedMeshBatch,
   LineBatch,
   PointBatch,
   TextBatch,
@@ -202,6 +208,8 @@ export {
   BasitPass,
   ProgressiveAOPass,
   TAAPass,
+  StencilPass,
+  StencilMaskPass,
   PassOptions,
   ClearFlags,
   ObjectVisibility,
