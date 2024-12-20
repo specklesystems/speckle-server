@@ -80,4 +80,8 @@ watch(
   },
   { immediate: true }
 )
+
+onMounted(() => {
+  mixpanel.track('Workspace Pricing Step Viewed')
+})
 </script>

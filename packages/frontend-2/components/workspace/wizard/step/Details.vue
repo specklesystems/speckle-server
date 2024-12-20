@@ -104,4 +104,8 @@ const onSubmit = handleSubmit(() => {
 
   goToNextStep()
 })
+
+onMounted(() => {
+  mixpanel.track('Workspace Details Step Viewed')
+})
 </script>

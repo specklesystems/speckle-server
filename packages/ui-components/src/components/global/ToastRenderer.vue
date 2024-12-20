@@ -5,7 +5,7 @@
   >
     <div class="flex w-full flex-col items-center space-y-4 sm:items-end">
       <!-- Notification panel, dynamically insert this into the live region when it needs to be displayed -->
-      <Transition
+      <TransitionGroup
         enter-active-class="transform ease-out duration-300 transition"
         enter-from-class="translate-y-2 opacity-0 sm:translate-y-0 sm:translate-x-2"
         enter-to-class="translate-y-0 opacity-100 sm:translate-x-0"
@@ -14,9 +14,10 @@
         leave-to-class="opacity-0"
       >
         <div
-          v-if="notification"
+          v-for="(notification, index) in notifications"
+          :key="`toast-${index}`"
           class="pointer-events-auto w-full max-w-[20rem] overflow-hidden rounded bg-foundation text-foreground shadow-lg border border-outline-2 p-3"
-          :class="{ 'pb-2': isTitleOnly }"
+          :class="{ 'pb-2': !notification?.description && !notification?.cta }"
         >
           <div class="flex space-x-2">
             <div class="flex-shrink-0 mt-1">
@@ -55,22 +56,21 @@
                 {{ notification.description }}
               </p>
               <div v-if="notification.cta">
-                <FormButton
-                  class="mt-1"
-                  color="subtle"
+                <TextLink
+                  class="mt-1 color-primary"
                   :to="notification.cta.url"
                   size="sm"
-                  @click="onCtaClick"
+                  @click="(e: MouseEvent) => onCtaClick(notification, e)"
                 >
                   {{ notification.cta.title }}
-                </FormButton>
+                </TextLink>
               </div>
             </div>
             <div class="ml-2 flex-shrink-0 mt-0.5">
               <button
                 type="button"
                 class="inline-flex rounded-md bg-foundation text-foreground-2 hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
-                @click="dismiss"
+                @click="dismiss(notification)"
               >
                 <span class="sr-only">Close</span>
                 <XMarkIcon class="h-5 w-5" aria-hidden="true" />
@@ -78,12 +78,12 @@
             </div>
           </div>
         </div>
-      </Transition>
+      </TransitionGroup>
     </div>
   </div>
 </template>
 <script setup lang="ts">
-import FormButton from '~~/src/components/common/text/Link.vue'
+import TextLink from '~~/src/components/common/text/Link.vue'
 import {
   CheckCircleIcon,
   XCircleIcon,
@@ -91,29 +91,24 @@ import {
   InformationCircleIcon,
   XMarkIcon
 } from '@heroicons/vue/20/solid'
-import { computed } from 'vue'
 import type { MaybeNullOrUndefined } from '@speckle/shared'
 import { ToastNotificationType } from '~~/src/helpers/global/toast'
 import type { ToastNotification } from '~~/src/helpers/global/toast'
 
 const emit = defineEmits<{
-  (e: 'update:notification', val: MaybeNullOrUndefined<ToastNotification>): void
+  (e: 'dismiss', val: ToastNotification): void
 }>()
 
-const props = defineProps<{
-  notification: MaybeNullOrUndefined<ToastNotification>
+defineProps<{
+  notifications: MaybeNullOrUndefined<ToastNotification[]>
 }>()
 
-const isTitleOnly = computed(
-  () => !props.notification?.description && !props.notification?.cta
-)
-
-const dismiss = () => {
-  emit('update:notification', null)
+const dismiss = (notification: ToastNotification) => {
+  emit('dismiss', notification)
 }
 
-const onCtaClick = (e: MouseEvent) => {
-  props.notification?.cta?.onClick?.(e)
-  dismiss()
+const onCtaClick = (notification: ToastNotification, e: MouseEvent) => {
+  notification.cta?.onClick?.(e)
+  dismiss(notification)
 }
 </script>

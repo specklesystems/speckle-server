@@ -21,6 +21,7 @@ import {
   getRegisteredRegionConfigs
 } from '@/modules/multiregion/utils/regionSelector'
 import { mapValues } from 'lodash'
+import { isMultiRegionEnabled } from '@/modules/multiregion/helpers'
 
 let getter: GetProjectDb | undefined = undefined
 
@@ -112,7 +113,9 @@ export const getAllRegisteredDbClients = async (): Promise<
   Array<{ client: Knex; isMain: boolean; regionKey: string }>
 > => {
   const mainDb = db
-  const regionDbs = await getRegisteredRegionClients()
+  const regionDbs: RegionClients = isMultiRegionEnabled()
+    ? await getRegisteredRegionClients()
+    : {}
   return [
     {
       client: mainDb,
@@ -187,6 +190,7 @@ const setUpUserReplication = async ({
     if (!(err instanceof Error))
       throw new DatabaseError(
         'Could not create publication {pubName} when setting up user replication for region {regionName}',
+        from.public,
         {
           cause: ensureError(err, 'Unknown database error when creating publication'),
           info: { pubName, regionName }
@@ -222,6 +226,7 @@ const setUpUserReplication = async ({
     if (!(err instanceof Error))
       throw new DatabaseError(
         'Could not create subscription {subName} to {pubName} when setting up user replication for region {regionName}',
+        to.public,
         {
           cause: ensureError(err, 'Unknown database error when creating subscription'),
           info: { subName, pubName, regionName }
@@ -246,6 +251,7 @@ const setUpProjectReplication = async ({
     if (!(err instanceof Error))
       throw new DatabaseError(
         'Could not create publication {pubName} when setting up project replication for region {regionName}',
+        from.public,
         {
           cause: ensureError(err, 'Unknown database error when creating publication'),
           info: { pubName, regionName }
@@ -281,6 +287,7 @@ const setUpProjectReplication = async ({
     if (!(err instanceof Error))
       throw new DatabaseError(
         'Could not create subscription {subName} to {pubName} when setting up project replication for region {regionName}',
+        to.public,
         {
           cause: ensureError(err, 'Unknown database error when creating subscription'),
           info: { subName, pubName, regionName }

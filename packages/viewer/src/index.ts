@@ -129,12 +129,15 @@ import {
   FilterMaterialOptions,
   FilterMaterialType
 } from './modules/materials/Materials.js'
+import { SpeckleOfflineLoader } from './modules/loaders/Speckle/SpeckleOfflineLoader.js'
 import { AccelerationStructure } from './modules/objects/AccelerationStructure.js'
 import { TopLevelAccelerationStructure } from './modules/objects/TopLevelAccelerationStructure.js'
 import { StencilPass } from './modules/pipeline/Passes/StencilPass.js'
 import { StencilMaskPass } from './modules/pipeline/Passes/StencilMaskPass.js'
 import { SpeckleWebGLRenderer } from './modules/objects/SpeckleWebGLRenderer.js'
 import { InstancedMeshBatch } from './modules/batching/InstancedMeshBatch.js'
+import { ViewModeEvent, ViewModeEventPayload } from './modules/extensions/ViewModes.js'
+import { BasitPipeline } from './modules/pipeline/Pipelines/BasitViewPipeline.js'
 
 export {
   Viewer,
@@ -222,14 +225,17 @@ export {
   MRTEdgesPipeline,
   MRTShadedViewPipeline,
   MRTPenViewPipeline,
+  BasitPipeline,
   ViewModes,
   ViewMode,
   FilterMaterial,
   FilterMaterialType,
   FilterMaterialOptions,
+  SpeckleOfflineLoader,
   NOT_INTERSECTED,
   INTERSECTED,
-  CONTAINED
+  CONTAINED,
+  ViewModeEvent
 }
 
 export type {
@@ -263,7 +269,8 @@ export type {
   SectionToolEventPayload,
   CameraEventPayload,
   SelectionExtensionOptions,
-  DefaultSelectionExtensionOptions
+  DefaultSelectionExtensionOptions,
+  ViewModeEventPayload
 }
 
 export * as UrlHelper from './modules/UrlHelper.js'

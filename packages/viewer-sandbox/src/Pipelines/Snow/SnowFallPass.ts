@@ -62,7 +62,7 @@ export class SnowFallPass extends BaseGPass {
 
     this.fsQuad.render(renderer)
     if (this.onAfterRender) this.onAfterRender()
-    return false
+    return true
   }
 
   public setSize(width: number, height: number) {

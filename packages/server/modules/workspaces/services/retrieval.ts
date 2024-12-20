@@ -1,17 +1,9 @@
 import { FindEmailsByUserId } from '@/modules/core/domain/userEmails/operations'
 import {
-  decodeIsoDateCursor,
-  encodeIsoDateCursor
-} from '@/modules/shared/helpers/graphqlHelper'
-import {
   GetUserDiscoverableWorkspaces,
   GetWorkspace,
-  GetWorkspaceCollaborators,
-  GetWorkspaceCollaboratorsArgs,
-  GetWorkspaceCollaboratorsTotalCount,
   GetWorkspaceRolesForUser
 } from '@/modules/workspaces/domain/operations'
-import { WorkspaceTeam } from '@/modules/workspaces/domain/types'
 import { Workspace } from '@/modules/workspacesCore/domain/types'
 import { chunk, isNull } from 'lodash'
 
@@ -77,39 +69,4 @@ export const getWorkspacesForUserFactory =
     }
 
     return workspaces
-  }
-
-type WorkspaceTeamCollection = {
-  items: WorkspaceTeam
-  cursor: string | null
-  totalCount: number
-}
-
-export const getPaginatedWorkspaceTeamFactory =
-  ({
-    getWorkspaceCollaborators,
-    getWorkspaceCollaboratorsTotalCount
-  }: {
-    getWorkspaceCollaborators: GetWorkspaceCollaborators
-    getWorkspaceCollaboratorsTotalCount: GetWorkspaceCollaboratorsTotalCount
-  }) =>
-  async (args: GetWorkspaceCollaboratorsArgs): Promise<WorkspaceTeamCollection> => {
-    const maybeDecodedCursor = args.cursor ? decodeIsoDateCursor(args.cursor) : null
-    const items = await getWorkspaceCollaborators({
-      ...args,
-      cursor: maybeDecodedCursor ?? undefined
-    })
-    const totalCount = await getWorkspaceCollaboratorsTotalCount(args)
-
-    let cursor = null
-    if (items.length === args.limit) {
-      const lastItem = items.at(-1)
-      cursor = lastItem ? encodeIsoDateCursor(lastItem.createdAt) : null
-    }
-
-    return {
-      items,
-      cursor,
-      totalCount
-    }
   }

@@ -22,7 +22,7 @@
       <div class="flex items-center gap-x-2">
         <WorkspaceAvatar
           :logo="(value as ProjectsWorkspaceSelect_WorkspaceFragment).logo"
-          :default-logo-index="(value as ProjectsWorkspaceSelect_WorkspaceFragment).defaultLogoIndex"
+          :name="(value as ProjectsWorkspaceSelect_WorkspaceFragment).name"
           size="2xs"
         />
         <span class="truncate text-foreground">
@@ -32,11 +32,7 @@
     </template>
     <template #option="{ item }">
       <div class="flex items-center gap-x-2">
-        <WorkspaceAvatar
-          :logo="item.logo"
-          :default-logo-index="item.defaultLogoIndex"
-          size="2xs"
-        />
+        <WorkspaceAvatar :logo="item.logo" :name="item.name" size="2xs" />
         <span class="truncate text-foreground">{{ item.name }}</span>
       </div>
     </template>
@@ -54,7 +50,6 @@ graphql(`
     id
     role
     name
-    defaultLogoIndex
     logo
   }
 `)

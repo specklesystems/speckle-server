@@ -105,6 +105,18 @@ export type GetWorkspaceWithDomains = (args: {
 
 export type DeleteWorkspace = (args: DeleteWorkspaceArgs) => Promise<void>
 
+type CountWorkspacesArgs = {
+  filter?: {
+    search?: string
+  }
+}
+export type QueryWorkspacesArgs = CountWorkspacesArgs & {
+  limit: number
+  cursor?: string
+}
+export type QueryWorkspaces = (args: QueryWorkspacesArgs) => Promise<Workspace[]>
+export type CountWorkspaces = (args: CountWorkspacesArgs) => Promise<number>
+
 /** Workspace Roles */
 
 export type GetWorkspaceCollaboratorsArgs = {

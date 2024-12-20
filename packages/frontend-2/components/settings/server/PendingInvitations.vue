@@ -70,7 +70,7 @@
       @infinite="onInfiniteLoad"
     />
 
-    <SettingsServerUserInviteDialog v-model:open="showInviteDialog" />
+    <InviteDialogServer v-model:open="showInviteDialog" />
   </div>
 </template>
 

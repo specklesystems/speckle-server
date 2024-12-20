@@ -14,7 +14,6 @@ export type SsoFormValues = {
 export type WorkspaceSsoProviderPublic = {
   name: string
   logo?: string | null
-  defaultLogoIndex: number
   ssoProviderName?: string | null
 }
 

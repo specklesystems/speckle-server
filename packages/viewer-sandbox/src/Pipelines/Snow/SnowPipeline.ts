@@ -84,6 +84,7 @@ export class SnowPipeline extends ProgressivePipeline {
     ])
 
     const snowfallPass = new SnowFallPass()
+    snowfallPass.setClearColor(0x000000, 1)
 
     this.dynamicStage.push(
       stencilPass,

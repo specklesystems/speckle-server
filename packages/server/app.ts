@@ -11,7 +11,7 @@ import compression from 'compression'
 import cookieParser from 'cookie-parser'
 
 import { createTerminus } from '@godaddy/terminus'
-import Logging from '@/logging'
+import Metrics from '@/logging'
 import {
   startupLogger,
   shutdownLogger,
@@ -74,7 +74,7 @@ import { loggingPlugin } from '@/modules/core/graph/plugins/logging'
 import { shouldLogAsInfoLevel } from '@/logging/graphqlError'
 import { getUserFactory } from '@/modules/core/repositories/users'
 import { initFactory as healthchecksInitFactory } from '@/healthchecks'
-import type { ReadinessHandler } from '@/healthchecks/health'
+import type { ReadinessHandler } from '@/healthchecks/types'
 import type ws from 'ws'
 import type { Server as MockWsServer } from 'mock-socket'
 import { SetOptional } from 'type-fest'
@@ -399,8 +399,6 @@ export async function init() {
   const app = express()
   app.disable('x-powered-by')
 
-  Logging(app)
-
   // Moves things along automatically on restart.
   // Should perhaps be done manually?
   await migrateDbToLatest({ region: 'main', db: knex })
@@ -451,6 +449,11 @@ export async function init() {
 
   // Initialize healthchecks
   const healthchecks = await healthchecksInitFactory()(app, true)
+
+  // Metrics relies on 'regions' table in the database, so much be initialized after migrations in the main database ("migrateDbToLatest({ region: 'main'," etc..)
+  // It also relies on the regional knex clients, which will initialize and run migrations in the respective regions.
+  // It must be initialized after the multiregion module is initialized in ModulesSetup.init
+  await Metrics(app)
 
   // Init HTTP server & subscription server
   const server = http.createServer(app)

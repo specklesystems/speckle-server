@@ -41,6 +41,8 @@ class ObjectLoader {
     }>
   })
 
+  static createFromJSON(input: string): ObjectLoader
+  async getRootObject(): Promise<SpeckleObject>
   async getTotalObjectCount(): Promise<number>
   async getAndConstructObject(
     onProgress: (e: { stage: ProgressStage; current: number; total: number }) => void

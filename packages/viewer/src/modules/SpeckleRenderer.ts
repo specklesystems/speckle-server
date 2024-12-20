@@ -535,7 +535,7 @@ export default class SpeckleRenderer {
 
     if (!this._speckleCamera) return
 
-    if (this._needsRender || true) {
+    if (this._needsRender) {
       this._renderinStats.frameStart()
       this.batcher.render(this.renderer)
       this._needsRender = this._pipeline.render()
