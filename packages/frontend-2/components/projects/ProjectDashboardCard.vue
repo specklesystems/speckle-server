@@ -52,9 +52,7 @@
           </FormButton>
         </div>
       </div>
-      <div
-        class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2 flex-grow col-span-4 xl:col-span-3 w-full sm:[&>*:nth-child(2)]:hidden xl:[&>*:nth-child(2)]:block"
-      >
+      <div :class="gridClasses">
         <ProjectPageModelsCard
           v-for="pendingModel in pendingModels"
           :key="pendingModel.id"
@@ -130,4 +128,29 @@ const hasNoModels = computed(() => !models.value.length && !pendingModels.value.
 const modelItemTotalCount = computed(
   () => props.project.models.totalCount + pendingModels.value.length
 )
+
+const gridClasses = computed(() => [
+  // Base classes
+  'grid',
+  'gap-2',
+  'flex-grow',
+  'col-span-4',
+  'xl:col-span-3',
+  'w-full',
+
+  // Grid columns
+  'grid-cols-1',
+  'sm:grid-cols-2',
+  'lg:grid-cols-1',
+  'xl:grid-cols-2',
+  '2xl:grid-cols-3',
+
+  // Visibility rules
+  'sm:[&>*:nth-child(n+3)]:hidden',
+  'lg:[&>*:nth-child(n+2)]:hidden',
+  'xl:[&>*:nth-child(n+2)]:block',
+  'xl:[&>*:nth-child(n+3)]:hidden',
+  '2xl:[&>*:nth-child(n+2)]:block',
+  '2xl:[&>*:nth-child(n+3)]:block'
+])
 </script>
