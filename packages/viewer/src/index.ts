@@ -138,6 +138,8 @@ import { SpeckleWebGLRenderer } from './modules/objects/SpeckleWebGLRenderer.js'
 import { InstancedMeshBatch } from './modules/batching/InstancedMeshBatch.js'
 import { ViewModeEvent, ViewModeEventPayload } from './modules/extensions/ViewModes.js'
 import { BasitPipeline } from './modules/pipeline/Pipelines/BasitViewPipeline.js'
+import SpeckleMesh from './modules/objects/SpeckleMesh.js'
+import SpeckleInstancedMesh from './modules/objects/SpeckleInstancedMesh.js'
 
 export {
   Viewer,
@@ -235,7 +237,9 @@ export {
   NOT_INTERSECTED,
   INTERSECTED,
   CONTAINED,
-  ViewModeEvent
+  ViewModeEvent,
+  SpeckleMesh,
+  SpeckleInstancedMesh
 }
 
 export type {
