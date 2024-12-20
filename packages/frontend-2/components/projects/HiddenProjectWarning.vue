@@ -8,7 +8,7 @@
       in SSO-protected workspaces. To view {{ hiddenItemCount === 1 ? 'it' : 'them' }},
       authenticate with:
     </p>
-    <div class="flex gap-2 mt-2">
+    <div class="flex flex-wrap gap-2 mt-2">
       <FormButton
         v-for="session in user.expiredSsoSessions"
         :key="session.id"
