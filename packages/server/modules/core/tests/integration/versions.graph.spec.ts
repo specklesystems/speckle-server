@@ -38,6 +38,7 @@ import { UsersEmitter } from '@/modules/core/events/usersEmitter'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { WorkspaceReadOnlyError } from '@/modules/gatekeeper/errors/billing'
 import { CreateVersionInput } from '@/modules/core/graph/generated/graphql'
+import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = legacyGetUserFactory({ db })
@@ -72,51 +73,56 @@ const createUser = createUserFactory({
   usersEventsEmitter: UsersEmitter.emit
 })
 
+const { FF_BILLING_INTEGRATION_ENABLED } = getFeatureFlags()
+
 describe('Versions graphql @core', () => {
   before(async () => {
     await beforeEachContext()
   })
 
   describe('Create version mutation', () => {
-    it('should return error if project is read-only', async () => {
-      const userId = await createUser({
-        name: 'emails user',
-        email: createRandomEmail(),
-        password: createRandomPassword()
-      })
+    ;(FF_BILLING_INTEGRATION_ENABLED ? it : it.skip)(
+      'should return error if project is read-only',
+      async () => {
+        const userId = await createUser({
+          name: 'emails user',
+          email: createRandomEmail(),
+          password: createRandomPassword()
+        })
 
-      const apollo = await testApolloServer({ authUserId: userId })
+        const apollo = await testApolloServer({ authUserId: userId })
 
-      const workspaceCreateRes = await apollo.execute(CreateWorkspaceDocument, {
-        input: { name: 'test ws' }
-      })
-      expect(workspaceCreateRes).to.not.haveGraphQLErrors()
+        const workspaceCreateRes = await apollo.execute(CreateWorkspaceDocument, {
+          input: { name: 'test ws' }
+        })
+        expect(workspaceCreateRes).to.not.haveGraphQLErrors()
 
-      const workspace = workspaceCreateRes.data?.workspaceMutations.create
+        const workspace = workspaceCreateRes.data?.workspaceMutations.create
 
-      const projectCreateRes = await apollo.execute(CreateWorkspaceProjectDocument, {
-        input: { workspaceId: workspace!.id, name: 'test project' }
-      })
-      expect(projectCreateRes).to.not.haveGraphQLErrors()
-      const project = projectCreateRes.data?.workspaceMutations.projects.create
+        const projectCreateRes = await apollo.execute(CreateWorkspaceProjectDocument, {
+          input: { workspaceId: workspace!.id, name: 'test project' }
+        })
+        expect(projectCreateRes).to.not.haveGraphQLErrors()
+        const project = projectCreateRes.data?.workspaceMutations.projects.create
 
-      // Make the project read-only
-      await db('workspace_plans')
-        .update({ status: 'canceled' })
-        .where({ workspaceId: workspace!.id })
+        // Make the project read-only
+        await db('workspace_plans')
+          .update({ status: 'canceled' })
+          .where({ workspaceId: workspace!.id })
 
-      const versionCreateRes = await apollo.execute(CreateProjectVersionDocument, {
-        input: {
-          projectId: project!.id,
-          modelId: 'modelid',
-          objectId: 'objectid'
-        } as unknown as CreateVersionInput
-      })
-      expect(versionCreateRes).to.haveGraphQLErrors()
-      expect(versionCreateRes.errors).to.have.length(1)
-      expect(versionCreateRes.errors![0].message).to.eq(
-        new WorkspaceReadOnlyError().message
-      )
-    })
+        const versionCreateRes = await apollo.execute(CreateProjectVersionDocument, {
+          input: {
+            projectId: project!.id,
+            modelId: 'modelid',
+            objectId: 'objectid'
+          } as unknown as CreateVersionInput
+        })
+        expect(versionCreateRes).to.haveGraphQLErrors()
+        expect(versionCreateRes.errors).to.have.length(1)
+        expect(versionCreateRes.errors![0].message).to.eq(
+          new WorkspaceReadOnlyError().message
+        )
+      }
+    )
   })
 })
