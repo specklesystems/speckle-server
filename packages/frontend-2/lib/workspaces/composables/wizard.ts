@@ -115,6 +115,7 @@ export const useWorkspacesWizard = () => {
 
   const completeWizard = async () => {
     wizardState.value.isLoading = true
+    mixpanel.stop_session_recording()
 
     const needsCheckout =
       wizardState.value.state.plan !== PaidWorkspacePlans.Starter ||
