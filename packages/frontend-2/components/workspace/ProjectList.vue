@@ -28,11 +28,11 @@
         @show-new-project-dialog="openNewProject = true"
         @show-invite-dialog="showInviteDialog = true"
       />
-      <div class="mt-2 lg:mt-4">
+      <div v-if="projects?.totalCount" class="mt-2 lg:mt-4">
         <FormTextInput
           name="modelsearch"
           :show-label="false"
-          :placeholder="searchPlaceholder"
+          :placeholder="`Search in ${projects?.totalCount} projects...`"
           :custom-icon="MagnifyingGlassIcon"
           color="foundation"
           wrapper-classes="w-full lg:w-60"
@@ -46,14 +46,15 @@
 
       <section
         v-if="showEmptyState"
-        class="bg-foundation-page border border-outline-2 rounded-md h-96 flex flex-col items-center justify-center gap-2"
+        class="bg-foundation border border-outline-2 rounded-md h-96 flex flex-col items-center justify-center gap-3"
       >
-        <span class="text-body-2xs text-foreground text-center">
-          You have 0 projects
+        <span class="text-body-2xs text-foreground-2 text-center">
+          Workspace is empty
         </span>
         <WorkspaceHeaderAddProjectMenu
           v-if="!isWorkspaceGuest"
           :is-workspace-admin="isWorkspaceAdmin"
+          is-first
           @new-project="openNewProject = true"
           @move-project="showMoveProjectsDialog = true"
         />
@@ -214,11 +215,6 @@ const showEmptyState = computed(() => {
   if (search.value) return false
 
   return projects.value && !projects.value?.items?.length
-})
-
-const searchPlaceholder = computed(() => {
-  const count = projects.value?.totalCount || 0
-  return count > 0 ? `Search in ${count} projects...` : 'Search...'
 })
 
 const isWorkspaceGuest = computed(() => workspace.value?.role === Roles.Workspace.Guest)

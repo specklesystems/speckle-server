@@ -13,7 +13,7 @@
       @click="showMenu = !showMenu"
     >
       <div class="flex items-center gap-1">
-        Add project
+        Add {{ isFirst ? 'your first' : '' }} project
         <ChevronDownIcon class="h-3 w-3" />
       </div>
     </FormButton>
@@ -47,6 +47,7 @@ const emit = defineEmits<{
 const props = defineProps<{
   mobileShorten?: boolean
   isWorkspaceAdmin: boolean
+  isFirst?: boolean
 }>()
 
 const menuId = useId()
@@ -54,9 +55,9 @@ const showMenu = ref(false)
 
 const menuItems = computed<LayoutMenuItem[][]>(() => [
   [
-    { title: 'New project...', id: AddNewProjectActionTypes.NewProject },
+    { title: 'Create new project...', id: AddNewProjectActionTypes.NewProject },
     {
-      title: 'Move project...',
+      title: 'Move existing project...',
       id: AddNewProjectActionTypes.MoveProject,
       disabled: !props.isWorkspaceAdmin,
       disabledTooltip: 'You must be a workspace admin.'
