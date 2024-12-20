@@ -96,19 +96,6 @@ const scheduleWorkspaceTrialEmails = ({
   return scheduleExecution(cronExpression, 'WorkspaceTrialEmails', async () => {
     const getWorkspacesByPlanAge = getWorkspacesByPlanAgeFactory({ db })
     const trialValidForDays = 31
-    const trialWorkspacesExpireIn14Days = await getWorkspacesByPlanAge({
-      daysTillExpiry: 14,
-      planValidFor: trialValidForDays,
-      plan: 'starter',
-      status: 'trial'
-    })
-    if (trialWorkspacesExpireIn14Days.length) {
-      await Promise.all(
-        trialWorkspacesExpireIn14Days.map((workspace) =>
-          sendWorkspaceTrialEmail({ workspace, expiresInDays: 14 })
-        )
-      )
-    }
     const trialWorkspacesExpireIn3Days = await getWorkspacesByPlanAge({
       daysTillExpiry: 3,
       planValidFor: trialValidForDays,

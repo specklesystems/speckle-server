@@ -24,6 +24,7 @@ import { truncateTables } from '@/test/hooks'
 import { createAndStoreTestWorkspaceFactory } from '@/test/speckle-helpers/workspaces'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
+import { beforeEach } from 'mocha'
 
 const upsertWorkspace = upsertWorkspaceFactory({ db })
 const createAndStoreTestWorkspace = createAndStoreTestWorkspaceFactory({
@@ -51,6 +52,9 @@ const getWorkspacesByPlanAge = getWorkspacesByPlanAgeFactory({ db })
 
 describe('billing repositories @gatekeeper', () => {
   describe('workspacePlans', () => {
+    beforeEach(async () => {
+      await truncateTables(['workspace_plans'])
+    })
     describe('upsertPaidWorkspacePlanFactory creates a function, that', () => {
       it('creates a workspacePlan if it does not exist', async () => {
         const workspace = await createAndStoreTestWorkspace()
