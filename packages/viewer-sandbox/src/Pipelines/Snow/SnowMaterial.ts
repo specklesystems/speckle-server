@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { SpeckleStandardMaterial, SpeckleWebGLRenderer } from '@speckle/viewer'
 import {
-  MeshStandardMaterialParameters,
+  type MeshStandardMaterialParameters,
   Scene,
   Camera,
   BufferGeometry,
