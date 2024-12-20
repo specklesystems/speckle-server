@@ -13,8 +13,15 @@ import {
   MeshBatch,
   InstancedMeshBatch,
   GeometryType,
-  SpeckleStandardMaterial
+  SpeckleStandardMaterial,
+  Assets,
+  AssetType
 } from '@speckle/viewer'
+import SnowMaterial from './SnowMaterial'
+import SpeckleMesh from '@speckle/viewer/dist/modules/objects/SpeckleMesh'
+import { RepeatWrapping, NearestFilter } from 'three'
+import snowTex from '../../../assets/snow.png'
+import { SnowFallPass } from './SnowFallPass'
 
 export class SnowPipeline extends ProgressivePipeline {
   constructor(speckleRenderer: SpeckleRenderer) {
@@ -76,12 +83,15 @@ export class SnowPipeline extends ProgressivePipeline {
       ObjectLayers.MEASUREMENTS
     ])
 
+    const snowfallPass = new SnowFallPass()
+
     this.dynamicStage.push(
       stencilPass,
       opaqueColorPass,
       transparentColorPass,
       stencilMaskPass,
-      overlayPass
+      overlayPass,
+      snowfallPass
     )
     this.progressiveStage.push(
       depthPass,
@@ -91,7 +101,8 @@ export class SnowPipeline extends ProgressivePipeline {
       stencilMaskPass,
       progressiveAOPass,
       blendPass,
-      overlayPass
+      overlayPass,
+      snowfallPass
     )
     this.passthroughStage.push(
       stencilPass,
@@ -99,20 +110,37 @@ export class SnowPipeline extends ProgressivePipeline {
       transparentColorPass,
       stencilMaskPass,
       blendPass,
-      overlayPass
+      overlayPass,
+      snowfallPass
     )
 
     this.passList = this.dynamicStage
   }
 
-  public start() {
+  public async start() {
+    const snowTexture = await Assets.getTexture({
+      id: 'snow',
+      src: snowTex,
+      type: AssetType.TEXTURE_8BPP
+    })
+    snowTexture.wrapS = RepeatWrapping
+    snowTexture.wrapT = RepeatWrapping
+    snowTexture.minFilter = NearestFilter
+    snowTexture.magFilter = NearestFilter
+
     const batches: MeshBatch[] = this.speckleRenderer.batcher.getBatches(
       undefined,
       GeometryType.MESH
     )
 
     for (let k = 0; k < batches.length; k++) {
+      const batchRenderable: SpeckleMesh = batches[k].renderObject as SpeckleMesh
       const batchMaterial: SpeckleStandardMaterial = batches[k]
+        .batchMaterial as SpeckleStandardMaterial
+      const snowMaterial = new SnowMaterial({}, ['USE_RTE'])
+      snowMaterial.copy(batchMaterial)
+      snowMaterial.normalMap = snowTexture
+      batchRenderable.setOverrideBatchMaterial(snowMaterial)
     }
   }
 }
