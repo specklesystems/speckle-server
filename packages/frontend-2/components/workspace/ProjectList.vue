@@ -61,7 +61,7 @@
       </section>
 
       <template v-else-if="projects?.items?.length">
-        <ProjectsDashboardFilled :projects="projects" />
+        <ProjectsDashboardFilled :projects="projects" workspace-page />
         <InfiniteLoading :settings="{ identifier }" @infinite="onInfiniteLoad" />
       </template>
 

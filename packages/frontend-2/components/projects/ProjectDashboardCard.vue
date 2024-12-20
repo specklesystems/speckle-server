@@ -98,6 +98,7 @@ import { workspaceRoute } from '~/lib/common/helpers/route'
 const props = defineProps<{
   project: ProjectDashboardItemFragment
   showWorkspaceLink?: boolean
+  workspacePage?: boolean
 }>()
 
 const router = useRouter()
@@ -141,16 +142,16 @@ const gridClasses = computed(() => [
   // Grid columns
   'grid-cols-1',
   'sm:grid-cols-2',
-  'lg:grid-cols-1',
-  'xl:grid-cols-2',
-  '2xl:grid-cols-3',
+  props.workspacePage && 'lg:grid-cols-1',
+  props.workspacePage ? 'xl:grid-cols-2' : 'xl:grid-cols-3',
+  props.workspacePage && '2xl:grid-cols-3',
 
   // Visibility rules
   'sm:[&>*:nth-child(n+3)]:hidden',
-  'lg:[&>*:nth-child(n+2)]:hidden',
-  'xl:[&>*:nth-child(n+2)]:block',
-  'xl:[&>*:nth-child(n+3)]:hidden',
-  '2xl:[&>*:nth-child(n+2)]:block',
+  props.workspacePage && 'lg:[&>*:nth-child(n+2)]:hidden',
+  props.workspacePage && 'xl:[&>*:nth-child(n+2)]:block',
+  !props.workspacePage && 'xl:[&>*:nth-child(n+3)]:block',
+  props.workspacePage && '2xl:[&>*:nth-child(n+2)]:block',
   '2xl:[&>*:nth-child(n+3)]:block'
 ])
 </script>
