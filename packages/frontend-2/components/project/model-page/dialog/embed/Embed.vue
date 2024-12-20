@@ -188,7 +188,7 @@ const isPrivate = computed(() => {
 
 const discoverableButtons = computed((): LayoutDialogButton[] => [
   {
-    text: 'Cancel',
+    text: 'Close',
     props: { color: 'outline' },
     onClick: () => {
       isOpen.value = false
