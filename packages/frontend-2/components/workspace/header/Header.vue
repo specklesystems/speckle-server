@@ -37,7 +37,7 @@
         <WorkspaceHeaderAddProjectMenu
           v-if="!isWorkspaceGuest"
           :is-workspace-admin="isWorkspaceAdmin"
-          mobile-shorten
+          hide-text-on-mobile
           @new-project="$emit('show-new-project-dialog')"
           @move-project="$emit('show-move-projects-dialog')"
         />

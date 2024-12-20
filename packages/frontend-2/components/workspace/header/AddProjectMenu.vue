@@ -9,17 +9,17 @@
   >
     <FormButton
       color="outline"
-      :class="mobileShorten ? 'hidden md:block' : ''"
+      :class="hideTextOnMobile ? 'hidden md:block' : ''"
       @click="showMenu = !showMenu"
     >
       <div class="flex items-center gap-1">
-        Add {{ isFirst ? 'your first' : '' }} project
+        {{ buttonCopy || 'Add project' }}
         <ChevronDownIcon class="h-3 w-3" />
       </div>
     </FormButton>
     <FormButton
       color="outline"
-      :class="mobileShorten ? 'md:hidden' : 'hidden'"
+      :class="hideTextOnMobile ? 'md:hidden' : 'hidden'"
       hide-text
       :icon-left="PlusIcon"
       @click="showMenu = !showMenu"
@@ -45,9 +45,9 @@ const emit = defineEmits<{
 }>()
 
 const props = defineProps<{
-  mobileShorten?: boolean
+  hideTextOnMobile?: boolean
   isWorkspaceAdmin: boolean
-  isFirst?: boolean
+  buttonCopy?: string
 }>()
 
 const menuId = useId()

@@ -54,7 +54,7 @@
         <WorkspaceHeaderAddProjectMenu
           v-if="!isWorkspaceGuest"
           :is-workspace-admin="isWorkspaceAdmin"
-          is-first
+          button-copy="Add your first project"
           @new-project="openNewProject = true"
           @move-project="showMoveProjectsDialog = true"
         />
