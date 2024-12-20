@@ -3,7 +3,7 @@
     <template v-if="!hasValidPlan">
       <div
         v-if="condensed"
-        class="flex items-center justify-between rounded-md p-2 text-body-3xs font-medium bg-[#E0ECFF] text-primary-focus"
+        class="flex items-center justify-between rounded-md p-2 text-body-3xs font-medium bg-info-lighter text-primary-focus"
       >
         {{ title }}
         <FormButton
