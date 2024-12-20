@@ -37,19 +37,22 @@
           :disabled="item.disabled"
           @click="setActiveItem(item)"
         >
-          <div
-            v-tippy="
-              item.disabled && item.disabledMessage ? item.disabledMessage : undefined
-            "
-            class="absolute top-0 right-0 left-0 bottom-0"
-          ></div>
           <div class="flex space-x-2 items-center">
             <component
               :is="item.icon"
               v-if="item.icon"
               class="shrink-0 h-4 w-4 stroke-[2px]"
-            ></component>
-            <span class="min-w-6">{{ item.title }}</span>
+            />
+
+            <div class="min-w-6">
+              <span
+                v-if="item.disabled && item.disabledMessage"
+                v-tippy="item.disabledMessage"
+              >
+                {{ item.title }}
+              </span>
+              <span v-else>{{ item.title }}</span>
+            </div>
             <div
               v-if="item.count"
               class="rounded-full px-2 text-body-3xs transition-all min-w-6"
