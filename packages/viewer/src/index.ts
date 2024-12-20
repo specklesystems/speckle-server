@@ -129,6 +129,7 @@ import {
   FilterMaterialOptions,
   FilterMaterialType
 } from './modules/materials/Materials.js'
+import { SpeckleOfflineLoader } from './modules/loaders/Speckle/SpeckleOfflineLoader.js'
 import { AccelerationStructure } from './modules/objects/AccelerationStructure.js'
 import { TopLevelAccelerationStructure } from './modules/objects/TopLevelAccelerationStructure.js'
 import { ViewModeEvent, ViewModeEventPayload } from './modules/extensions/ViewModes.js'
@@ -222,6 +223,7 @@ export {
   FilterMaterial,
   FilterMaterialType,
   FilterMaterialOptions,
+  SpeckleOfflineLoader,
   NOT_INTERSECTED,
   INTERSECTED,
   CONTAINED,

@@ -190,6 +190,7 @@ const setUpUserReplication = async ({
     if (!(err instanceof Error))
       throw new DatabaseError(
         'Could not create publication {pubName} when setting up user replication for region {regionName}',
+        from.public,
         {
           cause: ensureError(err, 'Unknown database error when creating publication'),
           info: { pubName, regionName }
@@ -225,6 +226,7 @@ const setUpUserReplication = async ({
     if (!(err instanceof Error))
       throw new DatabaseError(
         'Could not create subscription {subName} to {pubName} when setting up user replication for region {regionName}',
+        to.public,
         {
           cause: ensureError(err, 'Unknown database error when creating subscription'),
           info: { subName, pubName, regionName }
@@ -249,6 +251,7 @@ const setUpProjectReplication = async ({
     if (!(err instanceof Error))
       throw new DatabaseError(
         'Could not create publication {pubName} when setting up project replication for region {regionName}',
+        from.public,
         {
           cause: ensureError(err, 'Unknown database error when creating publication'),
           info: { pubName, regionName }
@@ -284,6 +287,7 @@ const setUpProjectReplication = async ({
     if (!(err instanceof Error))
       throw new DatabaseError(
         'Could not create subscription {subName} to {pubName} when setting up project replication for region {regionName}',
+        to.public,
         {
           cause: ensureError(err, 'Unknown database error when creating subscription'),
           info: { subName, pubName, regionName }
