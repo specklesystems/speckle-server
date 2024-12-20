@@ -17,10 +17,15 @@ import {
   UpsertTrialWorkspacePlan,
   UpsertUnpaidWorkspacePlan
 } from '@/modules/gatekeeper/domain/billing'
-import { ChangeExpiredTrialWorkspacePlanStatuses } from '@/modules/gatekeeper/domain/operations'
+import {
+  ChangeExpiredTrialWorkspacePlanStatuses,
+  GetWorkspacesByPlanDaysTillExpiry
+} from '@/modules/gatekeeper/domain/operations'
+import { Workspace } from '@/modules/workspacesCore/domain/types'
 import { Knex } from 'knex'
 
 const tables = {
+  workspaces: (db: Knex) => db<Workspace>('workspaces'),
   workspacePlans: (db: Knex) => db<WorkspacePlan>('workspace_plans'),
   workspaceCheckoutSessions: (db: Knex) =>
     db<CheckoutSession>('workspace_checkout_sessions'),
@@ -78,6 +83,21 @@ export const changeExpiredTrialWorkspacePlanStatusesFactory =
       .andWhereRaw(`"createdAt" + make_interval(days => ${numberOfDays}) < now()`)
       .update({ status: 'expired' })
       .returning('*')
+  }
+
+export const getWorkspacesByPlanAgeFactory =
+  ({ db }: { db: Knex }): GetWorkspacesByPlanDaysTillExpiry =>
+  async ({ daysTillExpiry, planValidFor, plan, status }) => {
+    return await tables
+      .workspaces(db)
+      .select('workspaces.*')
+      .join('workspace_plans', 'workspaces.id', 'workspace_plans.workspaceId')
+      .where('workspace_plans.status', status)
+      .andWhere('workspace_plans.name', plan)
+      .andWhereRaw('? - extract(day from now () - workspace_plans."createdAt") = ?', [
+        planValidFor,
+        daysTillExpiry
+      ])
   }
 
 export const saveCheckoutSessionFactory =

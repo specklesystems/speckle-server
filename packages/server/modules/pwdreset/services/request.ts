@@ -1,10 +1,8 @@
 import { GetServerInfo } from '@/modules/core/domain/server/operations'
 import { GetUserByEmail } from '@/modules/core/domain/users/operations'
 import { getPasswordResetFinalizationRoute } from '@/modules/core/helpers/routeHelper'
-import {
-  EmailTemplateParams,
-  renderEmail
-} from '@/modules/emails/services/emailRendering'
+import { EmailTemplateParams } from '@/modules/emails/domain/operations'
+import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
 import { CreateToken, GetPendingToken } from '@/modules/pwdreset/domain/operations'
 import { InvalidPasswordRecoveryRequestError } from '@/modules/pwdreset/errors'
