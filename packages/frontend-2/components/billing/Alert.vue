@@ -82,7 +82,7 @@ const title = computed(() => {
     if (props.condensed) {
       return `${trialDaysLeft.value} day${
         trialDaysLeft.value !== 1 ? 's' : ''
-      } left in trial.`
+      } left in trial`
     } else
       return `You have ${trialDaysLeft.value} day${
         trialDaysLeft.value !== 1 ? 's' : ''
