@@ -223,10 +223,11 @@ export class SmoothOrbitControls extends SpeckleControls {
 
     this.orbitSphere = new Mesh(
       new SphereGeometry(0.5, 32, 16),
-      new MeshBasicMaterial({ color: 0xff00000 })
+      new MeshBasicMaterial({ color: 0x43af11 })
     )
     this.orbitSphere.layers.set(ObjectLayers.OVERLAY)
-    // this.scene.add(this.orbitSphere)
+    this.orbitSphere.visible = false
+    this.scene.add(this.orbitSphere)
 
     this.originSphere = new Mesh(
       new SphereGeometry(0.5, 32, 16),
@@ -982,6 +983,7 @@ export class SmoothOrbitControls extends SpeckleControls {
       this.orbitSphere.position.copy(res[0].point)
       this.forceUpdate = true
       this.usePivotal = this._options.orbitAroundCursor && true
+      this.orbitSphere.visible = true
     }
 
     if (this.pointers.length > 2) {
@@ -1079,6 +1081,7 @@ export class SmoothOrbitControls extends SpeckleControls {
       this.emit(PointerChangeEvent.PointerChangeEnd)
     }
     this.usePivotal = false
+    this.orbitSphere.visible = false
   }
 
   protected onTouchChange(event: PointerEvent) {
