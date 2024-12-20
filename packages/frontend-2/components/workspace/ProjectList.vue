@@ -28,7 +28,7 @@
         @show-new-project-dialog="openNewProject = true"
         @show-invite-dialog="showInviteDialog = true"
       />
-      <div v-if="projects?.totalCount" class="mt-2 lg:mt-4">
+      <div v-if="showSearchBar" class="mt-2 lg:mt-4">
         <FormTextInput
           name="modelsearch"
           :show-label="false"
@@ -221,10 +221,13 @@ const isWorkspaceGuest = computed(() => workspace.value?.role === Roles.Workspac
 const isWorkspaceAdmin = computed(() => workspace.value?.role === Roles.Workspace.Admin)
 
 const showLoadingBar = computed(() => {
-  const isLoading =
-    areQueriesLoading.value || (!!search.value && !projects.value?.items?.length)
+  const isLoading = areQueriesLoading.value || (!!search.value && query.loading.value)
 
   return isLoading
+})
+
+const showSearchBar = computed(() => {
+  return projects?.value?.totalCount || search.value
 })
 
 const clearSearch = () => {
