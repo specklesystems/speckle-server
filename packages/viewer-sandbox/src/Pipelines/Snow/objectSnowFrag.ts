@@ -144,6 +144,7 @@ uniform float maxSnow;
 const vec3 COLOR_SNOW = vec3(1.0,1.0,1.1) * 2.2;
 const vec3 COLOR_ROCK = vec3(0.0,0.0,0.1);
 
+// Source: https://www.shadertoy.com/view/llK3WR
 vec3 terr_color(in vec3 p, in vec3 n, in vec3 underColor, in float _min, in float _max, in vec3 snowColor) {
     float slope = 1.0-dot(n,vec3(0.,0.,1.));     
     vec3 ret = mix(snowColor,underColor,smoothstep(_min,_max,slope*slope));

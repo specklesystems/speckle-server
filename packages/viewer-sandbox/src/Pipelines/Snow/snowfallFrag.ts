@@ -3,6 +3,8 @@ varying vec2 vUv;
 uniform vec2 iResolution;
 uniform float iTime;
 
+// Source: https://www.shadertoy.com/view/Mdt3Df
+
 void main() {
 	float snow = 0.0;
     float gradient = (1.0-float(gl_FragCoord.y / iResolution.x))*0.4;
