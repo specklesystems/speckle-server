@@ -27,6 +27,7 @@ import type {
   ViewerShortcutAction
 } from '~/lib/viewer/helpers/shortcuts/types'
 import { useActiveElement } from '@vueuse/core'
+import { SnowPipeline } from './../../../../viewer-sandbox/src/Pipelines/Snow/SnowPipeline'
 
 export function useSectionBoxUtilities() {
   const { instance } = useInjectedViewer()
@@ -501,9 +502,16 @@ export function useViewModeUtilities() {
     }
   }
 
+  const letItSnow = () => {
+    const snowPipeline = new SnowPipeline(instance.getRenderer())
+    instance.getRenderer().pipeline = snowPipeline
+    void snowPipeline.start()
+  }
+
   return {
     currentViewMode,
-    setViewMode
+    setViewMode,
+    letItSnow
   }
 }
 
