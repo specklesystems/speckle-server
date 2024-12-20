@@ -32,7 +32,9 @@
         <FormTextInput
           name="modelsearch"
           :show-label="false"
-          :placeholder="`Search in ${projects?.totalCount} projects...`"
+          :placeholder="`Search ${projects?.totalCount} ${
+            projects?.totalCount === 1 ? 'project' : 'projects'
+          }...`"
           :custom-icon="MagnifyingGlassIcon"
           color="foundation"
           wrapper-classes="w-full lg:w-60"
