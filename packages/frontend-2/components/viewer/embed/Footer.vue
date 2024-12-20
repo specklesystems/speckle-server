@@ -2,8 +2,7 @@
   <ClientOnly>
     <div
       v-if="isEmbedEnabled"
-      class="select-none fixed bottom-0 left-0 w-full z-20 flex gap-3 px-4 h-14 items-center"
-      :class="isTransparent ? 'bg-transparent' : 'bg-foundation'"
+      class="select-none fixed bottom-0 left-0 w-full z-20 flex gap-3 px-4 h-14 items-center bg-foundation"
     >
       <HeaderLogoBlock
         large-icon
@@ -40,5 +39,5 @@ defineProps<{
   url?: string
 }>()
 
-const { isEmbedEnabled, isTransparent } = useEmbed()
+const { isEmbedEnabled } = useEmbed()
 </script>

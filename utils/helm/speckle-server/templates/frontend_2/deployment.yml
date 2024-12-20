@@ -129,8 +129,6 @@ spec:
             value: {{ .Values.featureFlags.billingIntegrationEnabled | quote }}
           - name: NUXT_PUBLIC_FF_WORKSPACES_MULTI_REGION_ENABLED
             value: {{ .Values.featureFlags.workspacesMultiRegionEnabled | quote }}
-          - name: NUXT_PUBLIC_FF_WORKSPACES_MULTI_REGION_BLOB_STORAGE_ENABLED
-            value: {{ .Values.featureFlags.workspacesMultiRegionBlobStorageEnabled | quote }}
           - name: NUXT_PUBLIC_FF_GENDOAI_MODULE_ENABLED
             value: {{ .Values.featureFlags.gendoAIModuleEnabled | quote }}
           {{- if .Values.analytics.survicate_workspace_key }}

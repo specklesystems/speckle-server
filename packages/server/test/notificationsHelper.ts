@@ -89,7 +89,7 @@ export function buildNotificationsStateTracker() {
      * otherwise it might get processed so fast that you miss it
      */
     waitForAck: async (predicate?: (e: AckEvent) => boolean, timeout = 3000) => {
-      let timeoutRef: NodeJS.Timer
+      let timeoutRef: NodeJS.Timeout
       let promiseAckTracker: (e: AckEvent) => void
 
       // We start tracking even before promise is created so that we can't possibly miss it

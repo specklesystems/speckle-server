@@ -16,6 +16,7 @@ import {
   OutputPass,
   Pipeline,
   SectionTool,
+  SpeckleOfflineLoader,
   SpeckleRenderer,
   SpeckleStandardMaterial,
   TAAPipeline,
@@ -1291,5 +1292,17 @@ export default class Sandbox {
       void this.viewer.loadObject(loader, true)
     }
     localStorage.setItem('last-load-url', url)
+  }
+
+  public async loadJSON(json: string) {
+    const loader = new SpeckleOfflineLoader(this.viewer.getWorldTree(), json)
+    loader.on(LoaderEvent.LoadCancelled, (resource: string) => {
+      console.warn(`Resource ${resource} loading was canceled`)
+    })
+    loader.on(LoaderEvent.LoadWarning, (arg: { message: string }) => {
+      console.error(`Loader warning: ${arg.message}`)
+    })
+
+    void this.viewer.loadObject(loader, true)
   }
 }

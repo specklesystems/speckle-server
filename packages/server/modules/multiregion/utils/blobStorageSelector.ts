@@ -26,7 +26,7 @@ type RegionStorageClients = {
 let initializedClients: Optional<RegionStorageClients> = undefined
 
 export const isMultiRegionBlobStorageEnabled = () =>
-  !!getFeatureFlags().FF_WORKSPACES_MULTI_REGION_BLOB_STORAGE_ENABLED
+  !!getFeatureFlags().FF_WORKSPACES_MULTI_REGION_ENABLED
 
 export const initializeRegion = async (params: {
   regionKey: string
