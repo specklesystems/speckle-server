@@ -15,8 +15,9 @@
         :class="[
           coreClasses,
           iconClasses,
+          sizeClasses,
           textareaClasses || '',
-          'min-h-[6rem] sm:min-h-[3rem] simple-scrollbar text-body-xs'
+          'min-h-[6rem] sm:min-h-[3rem] simple-scrollbar'
         ]"
         :placeholder="placeholder"
         :disabled="disabled"
@@ -66,6 +67,8 @@ import { computed, ref, toRefs } from 'vue'
 import type { InputColor } from '~~/src/composables/form/textInput'
 import { useTextInputCore } from '~~/src/composables/form/textInput'
 
+type InputSize = 'sm' | 'base' | 'lg' | 'xl'
+
 const emit = defineEmits<{
   (e: 'update:modelValue', val: string): void
   (e: 'change', val: { event?: Event; value: string }): void
@@ -96,6 +99,7 @@ const props = withDefaults(
     showOptional?: boolean
     color?: InputColor
     textareaClasses?: string
+    size?: InputSize
   }>(),
   {
     useLabelInErrors: true,
@@ -134,6 +138,20 @@ const iconClasses = computed(() => {
   }
 
   return classParts.join(' ')
+})
+
+const sizeClasses = computed((): string => {
+  switch (props.size) {
+    case 'sm':
+      return 'text-2xs !leading-tight'
+    case 'lg':
+      return 'text-sm'
+    case 'xl':
+      return 'text-base'
+    case 'base':
+    default:
+      return 'text-body-xs'
+  }
 })
 
 defineExpose({ focus })
