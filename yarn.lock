@@ -16735,6 +16735,7 @@ __metadata:
     "@speckle/ui-components": "workspace:^"
     "@speckle/ui-components-nuxt": "workspace:^"
     "@speckle/viewer": "workspace:^"
+    "@speckle/viewer-sandbox": "workspace:^"
     "@survicate/survicate-web-surveys-wrapper": "npm:^1.2.1"
     "@tailwindcss/forms": "npm:^0.5.3"
     "@tailwindcss/line-clamp": "npm:^0.4.2"
@@ -17406,7 +17407,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@speckle/viewer-sandbox@workspace:packages/viewer-sandbox":
+"@speckle/viewer-sandbox@workspace:^, @speckle/viewer-sandbox@workspace:packages/viewer-sandbox":
   version: 0.0.0-use.local
   resolution: "@speckle/viewer-sandbox@workspace:packages/viewer-sandbox"
   dependencies:
