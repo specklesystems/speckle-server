@@ -202,7 +202,10 @@ useHead({ title })
 
 const mp = useMixpanel()
 onMounted(() => {
-  if (isEmbedEnabled.value) {
+  const referrer = document.referrer
+  const shouldTrackEvent = !referrer?.includes('speckle.systems') || import.meta.dev
+
+  if (isEmbedEnabled.value && !shouldTrackEvent) {
     mp.track('Embedded Model Load')
   }
 })
