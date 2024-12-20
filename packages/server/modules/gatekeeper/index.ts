@@ -20,6 +20,7 @@ import {
 } from '@/modules/gatekeeper/services/subscriptions'
 import {
   changeExpiredTrialWorkspacePlanStatusesFactory,
+  getWorkspacePlanByProjectIdFactory,
   getWorkspacePlanFactory,
   getWorkspaceSubscriptionsPastBillingCycleEndFactory,
   upsertWorkspaceSubscriptionFactory
@@ -28,6 +29,9 @@ import { countWorkspaceRoleWithOptionalProjectRoleFactory } from '@/modules/work
 import { reconcileWorkspaceSubscriptionFactory } from '@/modules/gatekeeper/clients/stripe'
 import { ScheduleExecution } from '@/modules/core/domain/scheduledTasks/operations'
 import { EventBusEmit, getEventBus } from '@/modules/shared/services/eventBus'
+import coreModule from '@/modules/core/index'
+import { isProjectReadOnlyFactory } from '@/modules/gatekeeper/services/readOnly'
+import { WorkspaceReadOnlyError } from '@/modules/gatekeeper/errors/billing'
 
 const { FF_GATEKEEPER_MODULE_ENABLED, FF_BILLING_INTEGRATION_ENABLED } =
   getFeatureFlags()
@@ -166,6 +170,19 @@ const gatekeeperModule: SpeckleModule = {
     scheduledTasks.forEach((task) => {
       task.stop()
     })
+  },
+  async finalize() {
+    coreModule.addHook(
+      'onCreateObjectRequest',
+      async function isProjectReadOnly({ projectId }) {
+        const readOnly = await isProjectReadOnlyFactory({
+          getWorkspacePlanByProjectId: getWorkspacePlanByProjectIdFactory({
+            db
+          })
+        })({ projectId })
+        if (readOnly) throw new WorkspaceReadOnlyError()
+      }
+    )
   }
 }
 export = gatekeeperModule
