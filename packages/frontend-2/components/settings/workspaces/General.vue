@@ -273,9 +273,9 @@ const save = handleSubmit(async () => {
       fields: (Object.keys(input) as Array<keyof WorkspaceUpdateInput>).filter(
         (key) => key !== 'id'
       ),
-
       // eslint-disable-next-line camelcase
-      workspace_id: props.workspaceId
+      workspace_id: props.workspaceId,
+      source: 'settings'
     })
   } else {
     const errorMessage = getFirstErrorMessage(result?.errors)

@@ -7,7 +7,6 @@ export type WebflowItem = {
   lastPublished: string
   featureImageUrl?: string
   url: string
-  readTime?: number
 }
 
 export type QuickStartItem = {

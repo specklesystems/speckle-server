@@ -18,10 +18,24 @@ import { registerOrUpdateScopeFactory } from '@/modules/shared/repositories/scop
 import db from '@/db/knex'
 import { registerOrUpdateRole } from '@/modules/shared/repositories/roles'
 import { isTestEnv } from '@/modules/shared/helpers/envHelper'
+import { HooksConfig, Hook, ExecuteHooks } from '@/modules/core/hooks'
 
 let stopTestSubs: (() => void) | undefined = undefined
 
-const coreModule: SpeckleModule = {
+const coreModule: SpeckleModule<{
+  hooks: HooksConfig
+  addHook: (key: keyof HooksConfig, hook: Hook) => void
+  executeHooks: ExecuteHooks
+}> = {
+  hooks: {
+    onCreateObjectRequest: []
+  },
+  addHook(key: keyof HooksConfig, callback: Hook) {
+    this.hooks[key].push(callback)
+  },
+  async executeHooks(key: keyof HooksConfig, { projectId }: { projectId: string }) {
+    return await Promise.all(this.hooks[key].map(async (cb) => await cb({ projectId })))
+  },
   async init(app, isInitial) {
     moduleLogger.info('💥 Init core module')
 
@@ -29,7 +43,7 @@ const coreModule: SpeckleModule = {
     staticRest(app)
 
     // Initialises the two main bulk upload/download endpoints
-    uploadRest(app)
+    uploadRest(app, { executeHooks: this.executeHooks.bind(this) })
     downloadRest(app)
 
     // Initialises the two diff-based upload/download endpoints

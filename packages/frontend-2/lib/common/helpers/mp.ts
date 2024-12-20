@@ -14,6 +14,8 @@ export type MixpanelClient = Merge<
     | 'add_group'
     | 'get_group'
     | 'alias'
+    | 'start_session_recording'
+    | 'stop_session_recording'
   >,
   {
     people: Pick<OverridedMixpanel['people'], 'set' | 'set_once'>
@@ -35,5 +37,7 @@ export const fakeMixpanelClient = (): MixpanelClient => ({
   },
   add_group: noop,
   get_group: noop as MixpanelClient['get_group'],
-  alias: noop
+  alias: noop,
+  start_session_recording: noop,
+  stop_session_recording: noop
 })

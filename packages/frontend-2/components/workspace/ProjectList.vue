@@ -1,5 +1,13 @@
 <template>
   <div>
+    <Portal to="right-sidebar">
+      <WorkspaceSidebar
+        v-if="workspace"
+        :workspace-info="workspace"
+        @show-settings-dialog="onShowSettingsDialog"
+        @show-invite-dialog="showInviteDialog = true"
+      />
+    </Portal>
     <div v-if="workspaceInvite" class="flex justify-center">
       <WorkspaceInviteBlock :invite="workspaceInvite" />
     </div>
@@ -15,72 +23,47 @@
         v-if="workspace"
         :icon="Squares2X2Icon"
         :workspace-info="workspace"
-        @show-invite-dialog="showInviteDialog = true"
         @show-settings-dialog="onShowSettingsDialog"
         @show-move-projects-dialog="showMoveProjectsDialog = true"
+        @show-new-project-dialog="openNewProject = true"
+        @show-invite-dialog="showInviteDialog = true"
       />
-      <div class="flex flex-col gap-4 mt-4">
-        <div class="flex flex-row gap-2 sm:items-center justify-between">
-          <FormTextInput
-            name="modelsearch"
-            :show-label="false"
-            placeholder="Search..."
-            :custom-icon="MagnifyingGlassIcon"
-            color="foundation"
-            wrapper-classes="grow md:grow-0 md:w-60"
-            show-clear
-            v-bind="bind"
-            v-on="on"
-          />
-          <div class="flex gap-2">
-            <!--- Conditionally apply tooltip only for non-admins and avoid v-tippy reactivity bug -->
-            <div v-if="!isWorkspaceAdmin" v-tippy="'You must be a workspace admin'">
-              <FormButton
-                :disabled="!isWorkspaceAdmin"
-                class="hidden md:block"
-                color="outline"
-                @click="showMoveProjectsDialog = true"
-              >
-                Move projects
-              </FormButton>
-            </div>
-            <FormButton
-              v-else
-              class="hidden md:block"
-              color="subtle"
-              @click="showMoveProjectsDialog = true"
-            >
-              Move projects
-            </FormButton>
-            <FormButton v-if="!isWorkspaceGuest" @click="openNewProject = true">
-              New project
-            </FormButton>
-          </div>
-        </div>
+      <div v-if="showSearchBar" class="mt-2 lg:mt-4">
+        <FormTextInput
+          name="modelsearch"
+          :show-label="false"
+          :placeholder="`Search ${projects?.totalCount} ${
+            projects?.totalCount === 1 ? 'project' : 'projects'
+          }...`"
+          :custom-icon="MagnifyingGlassIcon"
+          color="foundation"
+          wrapper-classes="w-full lg:w-60"
+          show-clear
+          v-bind="bind"
+          v-on="on"
+        />
       </div>
 
       <CommonLoadingBar :loading="showLoadingBar" class="my-2" />
 
       <section
         v-if="showEmptyState"
-        class="flex flex-col items-center justify-center py-8 md:py-16"
+        class="bg-foundation border border-outline-2 rounded-md h-96 flex flex-col items-center justify-center gap-4"
       >
-        <h3 class="text-heading-lg text-foreground">
-          Welcome to your new workspace. Let's set it up for a success...
-        </h3>
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-3 pt-5 mt-4 max-w-5xl">
-          <CommonCard
-            v-for="emptyStateItem in emptyStateItems"
-            :key="emptyStateItem.title"
-            :title="emptyStateItem.title"
-            :description="emptyStateItem.description"
-            :buttons="emptyStateItem.buttons"
-          />
-        </div>
+        <span class="text-body-2xs text-foreground-2 text-center">
+          Workspace is empty
+        </span>
+        <WorkspaceHeaderAddProjectMenu
+          v-if="!isWorkspaceGuest"
+          :is-workspace-admin="isWorkspaceAdmin"
+          button-copy="Add your first project"
+          @new-project="openNewProject = true"
+          @move-project="showMoveProjectsDialog = true"
+        />
       </section>
 
       <template v-else-if="projects?.items?.length">
-        <ProjectsDashboardFilled :projects="projects" />
+        <ProjectsDashboardFilled :projects="projects" workspace-page />
         <InfiniteLoading :settings="{ identifier }" @infinite="onInfiniteLoad" />
       </template>
 
@@ -89,11 +72,7 @@
       <ProjectsAddDialog v-model:open="openNewProject" :workspace-id="workspace?.id" />
 
       <template v-if="workspace">
-        <WorkspaceInviteDialog
-          v-model:open="showInviteDialog"
-          :workspace-id="workspace.id"
-          :workspace="workspace"
-        />
+        <InviteDialogWorkspace v-model:open="showInviteDialog" :workspace="workspace" />
         <SettingsDialog
           v-model:open="showSettingsDialog"
           :target-menu-item="settingsDialogTarget"
@@ -112,7 +91,7 @@
 <script setup lang="ts">
 import { MagnifyingGlassIcon, Squares2X2Icon } from '@heroicons/vue/24/outline'
 import { useQuery, useQueryLoading } from '@vue/apollo-composable'
-import type { Nullable, Optional, StreamRoles } from '@speckle/shared'
+import { Roles, type Nullable, type Optional, type StreamRoles } from '@speckle/shared'
 import {
   workspacePageQuery,
   workspaceProjectsQuery
@@ -122,7 +101,6 @@ import { usePaginatedQuery } from '~/lib/common/composables/graphql'
 import { graphql } from '~~/lib/common/generated/gql'
 import type { WorkspaceProjectsQueryQueryVariables } from '~~/lib/common/generated/gql/graphql'
 import { workspaceRoute } from '~/lib/common/helpers/route'
-import { Roles } from '@speckle/shared'
 import { useWorkspacesMixpanel } from '~/lib/workspaces/composables/mixpanel'
 import {
   SettingMenuKeys,
@@ -136,10 +114,13 @@ import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 graphql(`
   fragment WorkspaceProjectList_Workspace on Workspace {
     id
-    ...BillingActions_Workspace
-    ...MoveProjectsDialog_Workspace
-    ...WorkspaceHeader_Workspace
+    ...WorkspaceBase_Workspace
+    ...WorkspaceTeam_Workspace
+    ...WorkspaceSecurity_Workspace
+    ...BillingAlert_Workspace
     ...WorkspaceMixpanelUpdateGroup_Workspace
+    ...MoveProjectsDialog_Workspace
+    ...InviteDialogWorkspace_Workspace
     projects {
       ...WorkspaceProjectList_ProjectCollection
     }
@@ -232,64 +213,24 @@ const { finalizeWizard } = useWorkspacesWizard()
 const projects = computed(() => query.result.value?.workspaceBySlug?.projects)
 const workspaceInvite = computed(() => initialQueryResult.value?.workspaceInvite)
 const workspace = computed(() => initialQueryResult.value?.workspaceBySlug)
-const isWorkspaceGuest = computed(() => workspace.value?.role === Roles.Workspace.Guest)
-const isWorkspaceAdmin = computed(() => workspace.value?.role === Roles.Workspace.Admin)
 const showEmptyState = computed(() => {
   if (search.value) return false
 
   return projects.value && !projects.value?.items?.length
 })
 
+const isWorkspaceGuest = computed(() => workspace.value?.role === Roles.Workspace.Guest)
+const isWorkspaceAdmin = computed(() => workspace.value?.role === Roles.Workspace.Admin)
+
 const showLoadingBar = computed(() => {
-  const isLoading =
-    areQueriesLoading.value || (!!search.value && !projects.value?.items?.length)
+  const isLoading = areQueriesLoading.value || (!!search.value && query.loading.value)
 
   return isLoading
 })
 
-const emptyStateItems = computed(() => [
-  {
-    title: 'Set up verified domains',
-    description:
-      'Manage your team and allow them to join your workspace automatically based on email domain policies.',
-    buttons: [
-      {
-        text: 'Manage domains',
-        onClick: () => onShowSettingsDialog(SettingMenuKeys.Workspace.Security),
-        disabled: workspace.value?.role !== Roles.Workspace.Admin
-      }
-    ]
-  },
-  {
-    title: 'Make it a space for your entire team',
-    description:
-      'Nothing great is made alone. Safely collaborate with your entire team and manage guests.',
-    buttons: [
-      {
-        text: 'Invite members & guests',
-        onClick: () => (showInviteDialog.value = true),
-        disabled: isWorkspaceGuest.value
-      }
-    ]
-  },
-  {
-    title: 'Add your first project',
-    description:
-      'Projects are the place where your models and their versions live. Add one and start creating.',
-    buttons: [
-      {
-        text: 'Move project',
-        onClick: () => (showMoveProjectsDialog.value = true),
-        disabled: !isWorkspaceAdmin.value
-      },
-      {
-        text: 'New project',
-        onClick: () => (openNewProject.value = true),
-        disabled: isWorkspaceGuest.value
-      }
-    ]
-  }
-])
+const showSearchBar = computed(() => {
+  return projects?.value?.totalCount || search.value
+})
 
 const clearSearch = () => {
   search.value = ''

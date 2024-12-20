@@ -4156,6 +4156,8 @@ export type Workspace = {
   name: Scalars['String']['output'];
   plan?: Maybe<WorkspacePlan>;
   projects: ProjectCollection;
+  /** A Workspace is marked as readOnly if its trial period is finished or a paid plan is subscribed but payment has failed */
+  readOnly: Scalars['Boolean']['output'];
   /** Active user's role for this workspace. `null` if request is not authenticated, or the workspace is not explicitly shared with you. */
   role?: Maybe<Scalars['String']['output']>;
   slug: Scalars['String']['output'];
