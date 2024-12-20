@@ -1,7 +1,8 @@
 import type {
   SpeckleRenderer,
   MeshBatch,
-  SpeckleStandardMaterial
+  SpeckleStandardMaterial,
+  SpeckleMesh
 } from '@speckle/viewer'
 import {
   ProgressivePipeline,
@@ -19,12 +20,13 @@ import {
   AssetType
 } from '@speckle/viewer'
 import SnowMaterial from './SnowMaterial'
-import type SpeckleMesh from '@speckle/viewer/dist/modules/objects/SpeckleMesh'
 import { RepeatWrapping, NearestFilter } from 'three'
 import snowTex from './snow.png'
 import { SnowFallPass } from './SnowFallPass'
 
 export class SnowPipeline extends ProgressivePipeline {
+  private batchSnowMaterials: { [id: string]: SnowMaterial } = {}
+
   constructor(speckleRenderer: SpeckleRenderer) {
     super(speckleRenderer)
 
@@ -135,14 +137,26 @@ export class SnowPipeline extends ProgressivePipeline {
       GeometryType.MESH
     )
 
-    for (let k = 0; k < batches.length; k++) {
-      const batchRenderable: SpeckleMesh = batches[k].renderObject as SpeckleMesh
-      const batchMaterial: SpeckleStandardMaterial = batches[k]
-        .batchMaterial as SpeckleStandardMaterial
-      const snowMaterial = new SnowMaterial({}, ['USE_RTE'])
-      snowMaterial.copy(batchMaterial)
-      snowMaterial.normalMap = snowTexture
-      batchRenderable.setOverrideBatchMaterial(snowMaterial)
+    this.onBeforePipelineRender = () => {
+      for (let k = 0; k < batches.length; k++) {
+        const batchRenderable: SpeckleMesh = batches[k].renderObject as SpeckleMesh
+        const batchMaterial: SpeckleStandardMaterial = batches[k]
+          .batchMaterial as SpeckleStandardMaterial
+        if (!this.batchSnowMaterials[batches[k].id]) {
+          const snowMaterial = new SnowMaterial({}, ['USE_RTE'])
+          snowMaterial.copy(batchMaterial)
+          snowMaterial.normalMap = snowTexture
+          this.batchSnowMaterials[batches[k].id] = snowMaterial
+        }
+        batchRenderable.setOverrideBatchMaterial(this.batchSnowMaterials[batches[k].id])
+      }
+    }
+
+    this.onAfterPipelineRender = () => {
+      for (let k = 0; k < batches.length; k++) {
+        const batchRenderable: SpeckleMesh = batches[k].renderObject as SpeckleMesh
+        batchRenderable.restoreBatchMaterial()
+      }
     }
   }
 }
