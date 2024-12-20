@@ -494,7 +494,7 @@ jobs:
       S3_CREATE_BUCKET: 'true'
       REDIS_URL: 'redis://127.0.0.1:6379'
       S3_REGION: '' # optional, defaults to 'us-east-1'
-      AUTOMATE_ENCRYPTION_KEYS_PATH: 'test/assets/automate/encryptionKeys.json'
+      ENCRYPTION_KEYS_PATH: 'test/assets/automate/encryptionKeys.json'
       FF_BILLING_INTEGRATION_ENABLED: 'true'
     steps:
       - checkout
@@ -576,7 +576,7 @@ jobs:
       S3_CREATE_BUCKET: 'true'
       REDIS_URL: 'redis://127.0.0.1:6379'
       S3_REGION: '' # optional, defaults to 'us-east-1'
-      AUTOMATE_ENCRYPTION_KEYS_PATH: 'test/assets/automate/encryptionKeys.json'
+      ENCRYPTION_KEYS_PATH: 'test/assets/automate/encryptionKeys.json'
       DISABLE_ALL_FFS: 'true'
 
   test-server-multiregion:
@@ -597,7 +597,9 @@ jobs:
           POSTGRES_USER: speckle
         command: -c 'max_connections=1000' -c 'port=5433' -c 'wal_level=logical'
       - image: 'minio/minio'
-        command: server /data --console-address ":9001"
+        command: server /data --console-address ":9001" --address "0.0.0.0:9000"
+      - image: 'minio/minio'
+        command: server /data --console-address ":9021" --address "0.0.0.0:9020"
     environment:
       # Same as test-server:
       NODE_ENV: test
@@ -615,7 +617,7 @@ jobs:
       S3_CREATE_BUCKET: 'true'
       REDIS_URL: 'redis://127.0.0.1:6379'
       S3_REGION: '' # optional, defaults to 'us-east-1'
-      AUTOMATE_ENCRYPTION_KEYS_PATH: 'test/assets/automate/encryptionKeys.json'
+      ENCRYPTION_KEYS_PATH: 'test/assets/automate/encryptionKeys.json'
       FF_BILLING_INTEGRATION_ENABLED: 'true'
       # These are the only different env keys:
       MULTI_REGION_CONFIG_PATH: '../../.circleci/multiregion.test-ci.json'
@@ -1046,7 +1048,6 @@ jobs:
   docker-build-monitor-container:
     <<: *build-job
     environment:
-      FOLDER: utils
       SPECKLE_SERVER_PACKAGE: monitor-deployment
 
   docker-build-docker-compose-ingress:
@@ -1116,7 +1117,6 @@ jobs:
   docker-publish-monitor-container:
     <<: *publish-job
     environment:
-      FOLDER: utils
       SPECKLE_SERVER_PACKAGE: monitor-deployment
 
   docker-publish-docker-compose-ingress:

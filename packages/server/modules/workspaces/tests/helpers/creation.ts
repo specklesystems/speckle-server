@@ -73,7 +73,8 @@ import {
   getDefaultRegionFactory,
   upsertRegionAssignmentFactory
 } from '@/modules/workspaces/repositories/regions'
-import { getDb } from '@/modules/multiregion/dbSelector'
+import { getDb } from '@/modules/multiregion/utils/dbSelector'
+import { WorkspacePlan } from '@/modules/gatekeeper/domain/billing'
 
 const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
 
@@ -102,7 +103,11 @@ export type BasicTestWorkspace = {
 export const createTestWorkspace = async (
   workspace: SetOptional<BasicTestWorkspace, 'slug'>,
   owner: BasicTestUser,
-  options?: { domain?: string; addPlan?: boolean; regionKey?: string }
+  options?: {
+    domain?: string
+    addPlan?: Pick<WorkspacePlan, 'name' | 'status'> | boolean
+    regionKey?: string
+  }
 ) => {
   const { domain, addPlan = true, regionKey } = options || {}
   const useRegion = isMultiRegionTestMode() && regionKey
@@ -164,8 +169,16 @@ export const createTestWorkspace = async (
       workspacePlan: {
         createdAt: new Date(),
         workspaceId: newWorkspace.id,
-        name: 'business',
-        status: 'valid'
+        name:
+          typeof addPlan === 'object' && Object.hasOwn(addPlan, 'name')
+            ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              (addPlan.name as any)
+            : 'business',
+        status:
+          typeof addPlan === 'object' && Object.hasOwn(addPlan, 'status')
+            ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              (addPlan.status as any)
+            : 'valid'
       }
     })
   }
@@ -234,6 +247,10 @@ export const assignToWorkspace = async (
   user: BasicTestUser,
   role?: WorkspaceRoles
 ) => {
+  if (!FF_WORKSPACES_MODULE_ENABLED) {
+    return // Just skip
+  }
+
   const updateWorkspaceRole = updateWorkspaceRoleFactory({
     getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db }),
     findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({ db }),
@@ -253,6 +270,10 @@ export const unassignFromWorkspace = async (
   workspace: BasicTestWorkspace,
   user: BasicTestUser
 ) => {
+  if (!FF_WORKSPACES_MODULE_ENABLED) {
+    return // Just skip
+  }
+
   const deleteWorkspaceRole = deleteWorkspaceRoleFactory({
     getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
     deleteWorkspaceRole: dbDeleteWorkspaceRoleFactory({ db }),
@@ -274,7 +295,11 @@ export const unassignFromWorkspaces = async (
 export const assignToWorkspaces = async (
   pairs: [BasicTestWorkspace, BasicTestUser, MaybeNullOrUndefined<WorkspaceRoles>][]
 ) => {
-  await Promise.all(pairs.map((p) => assignToWorkspace(p[0], p[1], p[2] || undefined)))
+  // Serial execution is somehow faster with bigger batch sizes, assignToWorkspace
+  // may be quite heavy on the DB
+  for (const [workspace, user, role] of pairs) {
+    await assignToWorkspace(workspace, user, role || undefined)
+  }
 }
 
 export const createTestWorkspaces = async (

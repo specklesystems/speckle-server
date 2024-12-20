@@ -253,11 +253,14 @@ export const projectAutomationsTabQuery = graphql(`
       }
       workspace {
         id
-        slug
+        automateFunctions(limit: 0) {
+          totalCount
+        }
+        ...AutomateFunctionCreateDialog_Workspace
       }
       ...FormSelectProjects_Project
     }
-    ...ProjectPageAutomationsEmptyState_Query
+    ...AutomateFunctionsPageHeader_Query
   }
 `)
 

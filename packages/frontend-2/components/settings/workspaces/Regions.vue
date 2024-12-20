@@ -26,6 +26,7 @@
               :disabled="
                 !availableRegions?.length || isMutationLoading || !isWorkspaceAdmin
               "
+              label-position="left"
             />
             <div class="w-full flex justify-end">
               <FormButton

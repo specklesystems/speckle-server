@@ -89,11 +89,7 @@
       <ProjectsAddDialog v-model:open="openNewProject" :workspace-id="workspace?.id" />
 
       <template v-if="workspace">
-        <WorkspaceInviteDialog
-          v-model:open="showInviteDialog"
-          :workspace-id="workspace.id"
-          :workspace="workspace"
-        />
+        <InviteDialogWorkspace v-model:open="showInviteDialog" :workspace="workspace" />
         <SettingsDialog
           v-model:open="showSettingsDialog"
           :target-menu-item="settingsDialogTarget"
@@ -129,15 +125,24 @@ import {
   type AvailableSettingsMenuKeys
 } from '~/lib/settings/helpers/types'
 import { useBillingActions } from '~/lib/billing/composables/actions'
+import { useWorkspacesWizard } from '~/lib/workspaces/composables/wizard'
+import type { WorkspaceWizardState } from '~/lib/workspaces/helpers/types'
+import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 
 graphql(`
   fragment WorkspaceProjectList_Workspace on Workspace {
     id
+    ...BillingActions_Workspace
     ...MoveProjectsDialog_Workspace
     ...WorkspaceHeader_Workspace
     ...WorkspaceMixpanelUpdateGroup_Workspace
+    ...InviteDialogWorkspace_Workspace
     projects {
       ...WorkspaceProjectList_ProjectCollection
+    }
+    creationState {
+      completed
+      state
     }
   }
 `)
@@ -152,6 +157,7 @@ graphql(`
   }
 `)
 
+const { activeUser } = useActiveUser()
 const { validateCheckoutSession } = useBillingActions()
 const { workspaceMixpanelUpdateGroup } = useWorkspacesMixpanel()
 const areQueriesLoading = useQueryLoading()
@@ -176,11 +182,15 @@ const showSettingsDialog = ref(false)
 const settingsDialogTarget = ref<AvailableSettingsMenuKeys>(
   SettingMenuKeys.Workspace.General
 )
+const ssoProviderInfo = ref<{
+  providerName: string
+  clientId: string
+  issuerUrl: string
+} | null>(null)
 
 const token = computed(() => route.query.token as Optional<string>)
 
 const pageFetchPolicy = usePageQueryStandardFetchPolicy()
-
 const { result: initialQueryResult, onResult } = useQuery(
   workspacePageQuery,
   () => ({
@@ -214,6 +224,7 @@ const { query, identifier, onInfiniteLoad } = usePaginatedQuery({
   }),
   resolveCursorFromVariables: (vars) => vars.cursor
 })
+const { finalizeWizard } = useWorkspacesWizard()
 
 const projects = computed(() => query.result.value?.workspaceBySlug?.projects)
 const workspaceInvite = computed(() => initialQueryResult.value?.workspaceInvite)
@@ -288,20 +299,28 @@ const onShowSettingsDialog = (target: AvailableSettingsMenuKeys) => {
 }
 
 onResult((queryResult) => {
+  if (
+    queryResult.data?.workspaceBySlug.creationState?.completed === false &&
+    queryResult.data.workspaceBySlug.creationState.state
+  ) {
+    if (import.meta.server) return
+    finalizeWizard(
+      queryResult.data.workspaceBySlug.creationState.state as WorkspaceWizardState,
+      queryResult.data.workspaceBySlug.id
+    )
+  }
+
   if (queryResult.data?.workspaceBySlug) {
-    workspaceMixpanelUpdateGroup(queryResult.data.workspaceBySlug)
+    workspaceMixpanelUpdateGroup(
+      queryResult.data.workspaceBySlug,
+      activeUser.value?.email
+    )
     useHeadSafe({
       title: queryResult.data.workspaceBySlug.name
     })
-    validateCheckoutSession(queryResult.data.workspaceBySlug.id)
+    validateCheckoutSession(queryResult.data.workspaceBySlug)
   }
 })
-
-const ssoProviderInfo = ref<{
-  providerName: string
-  clientId: string
-  issuerUrl: string
-} | null>(null)
 
 onMounted(() => {
   const ssoValidationSuccess = route.query?.ssoValidationSuccess

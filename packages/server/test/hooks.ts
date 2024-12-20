@@ -17,7 +17,14 @@ import { once } from 'events'
 import type http from 'http'
 import type express from 'express'
 import type net from 'net'
-import { MaybeAsync, MaybeNullOrUndefined, Optional, wait } from '@speckle/shared'
+import {
+  ensureError,
+  MaybeAsync,
+  MaybeNullOrUndefined,
+  Nullable,
+  Optional,
+  wait
+} from '@speckle/shared'
 import * as mocha from 'mocha'
 import {
   getAvailableRegionKeysFactory,
@@ -34,15 +41,16 @@ import {
 import {
   getRegisteredRegionClients,
   initializeRegion
-} from '@/modules/multiregion/dbSelector'
+} from '@/modules/multiregion/utils/dbSelector'
 import { Knex } from 'knex'
 import { isMultiRegionTestMode } from '@/test/speckle-helpers/regions'
 import { isMultiRegionEnabled } from '@/modules/multiregion/helpers'
 import { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
 import { ApolloServer } from '@apollo/server'
-import { ReadinessHandler } from '@/healthchecks/health'
+import { ReadinessHandler } from '@/healthchecks/types'
 import { set } from 'lodash'
 import { fixStackTrace } from '@/test/speckle-helpers/error'
+import { EnvironmentResourceError } from '@/modules/shared/errors'
 
 // why is server config only created once!????
 // because its done in a migration, to not override existing configs
@@ -77,6 +85,11 @@ export const getMainTestRegionKey = () => {
   return key
 }
 
+export const getMainTestRegionKeyIfMultiRegion = () => {
+  const isMultiRegionMode = isMultiRegionTestMode()
+  return isMultiRegionMode ? getMainTestRegionKey() : undefined
+}
+
 export const getMainTestRegionClient = () => {
   const key = getMainTestRegionKey()
   const client = regionClients[key]
@@ -101,7 +114,7 @@ const ensureAivenExtrasFactory = (deps: { db: Knex }) => async () => {
 const setupDatabases = async () => {
   // First reset main db
   const db = mainDb
-  const resetMainDb = resetSchemaFactory({ db })
+  const resetMainDb = resetSchemaFactory({ db, regionKey: null })
   await resetMainDb()
 
   const getAvailableRegionKeys = getAvailableRegionKeysFactory({
@@ -133,8 +146,8 @@ const setupDatabases = async () => {
   regionClients = await getRegisteredRegionClients()
 
   // Reset each region DB client (re-run all migrations and setup)
-  for (const client of Object.values(regionClients)) {
-    const reset = resetSchemaFactory({ db: client })
+  for (const [regionKey, db] of Object.entries(regionClients)) {
+    const reset = resetSchemaFactory({ db, regionKey })
     await reset()
   }
 
@@ -235,18 +248,32 @@ const truncateTablesFactory = (deps: { db: Knex }) => async (tableNames?: string
   }
 }
 
-const resetSchemaFactory = (deps: { db: Knex }) => async () => {
-  const resetPubSub = resetPubSubFactory(deps)
-  const truncate = truncateTablesFactory(deps)
+const resetSchemaFactory =
+  (deps: { db: Knex; regionKey: Nullable<string> }) => async () => {
+    const { regionKey } = deps
 
-  await unlockFactory(deps)()
-  await resetPubSub()
-  await truncate() // otherwise some rollbacks will fail
+    const resetPubSub = resetPubSubFactory(deps)
+    const truncate = truncateTablesFactory(deps)
 
-  // Reset schema
-  await deps.db.migrate.rollback()
-  await deps.db.migrate.latest()
-}
+    await unlockFactory(deps)()
+    await resetPubSub()
+    await truncate() // otherwise some rollbacks will fail
+
+    // Reset schema
+    try {
+      await deps.db.migrate.rollback()
+      await deps.db.migrate.latest()
+    } catch (e) {
+      throw new EnvironmentResourceError(
+        `Failed to reset schema for ${
+          regionKey ? 'region ' + regionKey + ' ' : 'main DB'
+        }`,
+        {
+          cause: ensureError(e)
+        }
+      )
+    }
+  }
 
 export const truncateTables = async (
   tableNames?: string[],

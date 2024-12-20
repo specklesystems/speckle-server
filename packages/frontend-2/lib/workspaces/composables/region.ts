@@ -39,6 +39,8 @@ export const useWorkspaceCustomDataResidencyDisclaimer = <
   onConfirmAction: (...args: ConfirmArgs) => MaybeAsync<void>
 }) => {
   const { onConfirmAction, workspace } = params
+  const isWorkspacesMultiRegionBlobStorageEnabled =
+    useIsWorkspacesMultiRegionBlobStorageEnabled()
   const showRegionStaticDataDisclaimer = ref(false)
   const storedArgs = shallowRef<ConfirmArgs>()
 
@@ -50,7 +52,7 @@ export const useWorkspaceCustomDataResidencyDisclaimer = <
    * Trigger the actual action that requires the user to confirm the data residency disclaimer
    */
   const triggerAction = (...args: ConfirmArgs) => {
-    if (!hasCustomDataResidency.value) {
+    if (!hasCustomDataResidency.value || isWorkspacesMultiRegionBlobStorageEnabled) {
       onConfirmAction(...args)
     } else {
       storedArgs.value = args

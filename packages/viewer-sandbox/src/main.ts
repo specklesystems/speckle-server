@@ -11,7 +11,6 @@ import {
 import './style.css'
 import Sandbox from './Sandbox'
 import {
-  SelectionExtension,
   MeasurementsExtension,
   ExplodeExtension,
   DiffExtension,
@@ -20,8 +19,11 @@ import {
 import { SectionTool } from '@speckle/viewer'
 import { SectionOutlines } from '@speckle/viewer'
 import { ViewModesKeys } from './Extensions/ViewModesKeys'
+import { JSONSpeckleStream } from './JSONSpeckleStream'
+import { BoxSelection } from './Extensions/BoxSelection'
+import { ExtendedSelection } from './Extensions/ExtendedSelection'
 
-const createViewer = async (containerName: string, stream: string) => {
+const createViewer = async (containerName: string, _stream: string) => {
   const container = document.querySelector<HTMLElement>(containerName)
 
   const controlsContainer = document.querySelector<HTMLElement>(
@@ -44,7 +46,8 @@ const createViewer = async (containerName: string, stream: string) => {
   await viewer.init()
 
   const cameraController = viewer.createExtension(CameraController)
-  const selection = viewer.createExtension(SelectionExtension)
+  const selection = viewer.createExtension(ExtendedSelection)
+  selection.init()
   const sections = viewer.createExtension(SectionTool)
   viewer.createExtension(SectionOutlines)
   const measurements = viewer.createExtension(MeasurementsExtension)
@@ -53,7 +56,8 @@ const createViewer = async (containerName: string, stream: string) => {
   const diff = viewer.createExtension(DiffExtension)
   viewer.createExtension(ViewModes)
   viewer.createExtension(ViewModesKeys)
-  // const boxSelect = viewer.createExtension(BoxSelection)
+  const boxSelect = viewer.createExtension(BoxSelection)
+  boxSelect.realtimeSelection = false
   // const rotateCamera = viewer.createExtension(RotateCamera)
   cameraController // use it
   selection // use it
@@ -100,7 +104,8 @@ const createViewer = async (containerName: string, stream: string) => {
   sandbox.makeDiffUI()
   sandbox.makeMeasurementsUI()
 
-  await sandbox.loadUrl(stream)
+  // await sandbox.loadUrl(_stream)
+  await sandbox.loadJSON(JSONSpeckleStream)
 }
 
 const getStream = () => {
@@ -448,8 +453,18 @@ const getStream = () => {
     // Far away house section tool
     // 'https://app.speckle.systems/projects/817c4e8daa/models/f0601ef5f9@80db5ff26a'
 
+    // 'https://app.speckle.systems/projects/00a5c443d6/models/de56edf901'
+    // 'https://latest.speckle.systems/projects/126cd4b7bb/models/49874f87a2ddd370bd2bf46b68c3660d'
     // Perfectly flat
     // 'https://app.speckle.systems/projects/344f803f81/models/5582ab673e'
+
+    // 'https://speckle.xyz/streams/27e89d0ad6/commits/5ed4b74252'
+
+    // DUI3 Mesh Colors
+    // 'https://app.speckle.systems/projects/93200a735d/models/cbacd3eaeb@344a397239'
+
+    // Instance toilets
+    // 'https://app.speckle.systems/projects/e89b61b65c/models/2a0995f124'
   )
 }
 

@@ -59,7 +59,7 @@
               <template #title-icon>
                 <WorkspaceAvatar
                   :logo="workspaceItem.logo"
-                  :default-logo-index="workspaceItem.defaultLogoIndex"
+                  :name="workspaceItem.name"
                   size="sm"
                 />
               </template>
@@ -120,11 +120,6 @@
         @close="isOpen = false"
       />
     </div>
-
-    <WorkspaceCreateDialog
-      v-model:open="showWorkspaceCreateDialog"
-      event-source="settings"
-    />
   </LayoutDialog>
 </template>
 
@@ -153,14 +148,17 @@ import { WorkspacePlanStatuses } from '~/lib/common/generated/gql/graphql'
 
 graphql(`
   fragment SettingsDialog_Workspace on Workspace {
-    ...WorkspaceAvatar_Workspace
     ...SettingsMenu_Workspace
     id
     slug
     role
     name
+    logo
     plan {
       status
+    }
+    creationState {
+      completed
     }
   }
 `)
@@ -190,10 +188,12 @@ const { result: workspaceResult } = useQuery(settingsSidebarQuery, null, {
 const { userMenuItems, serverMenuItems, workspaceMenuItems } = useSettingsMenu()
 
 const isMobile = breakpoints.smaller('md')
-const showWorkspaceCreateDialog = ref(false)
 
 const workspaceItems = computed(
-  () => workspaceResult.value?.activeUser?.workspaces.items ?? []
+  () =>
+    workspaceResult.value?.activeUser?.workspaces.items.filter(
+      (item) => item.creationState?.completed !== false // Removed workspaces that are not completely created
+    ) ?? []
 )
 const isAdmin = computed(() => user.value?.role === Roles.Server.Admin)
 const canCreateWorkspace = computed(

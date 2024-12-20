@@ -10,11 +10,11 @@
     </template>
 
     <template v-else>
-      <div class="flex flex-col gap-2 mt-8">
+      <div class="flex flex-col items-center gap-2 mt-8">
         <WorkspaceAvatar
           v-if="workspace"
           :logo="workspace.logo"
-          :default-logo-index="workspace.defaultLogoIndex"
+          :name="workspace.name"
           size="xl"
         />
         <h1 class="text-heading-xl text-center mb-2">

@@ -1,4 +1,10 @@
-import { BaseError, Info } from '@/modules/shared/errors/base'
+import {
+  BaseError,
+  type ExtendedOptions,
+  type Info
+} from '@/modules/shared/errors/base'
+import type { Knex } from 'knex'
+import { retrieveMetadataFromDatabaseClient } from '@/modules/shared/errors/databaseMetadata'
 
 /**
  * Use this to throw when the request has auth credentials, but they are not sufficient
@@ -106,10 +112,26 @@ export class EnvironmentResourceError extends BaseError {
   static statusCode = 502
 }
 
-export class DatabaseError extends EnvironmentResourceError {
+export class DatabaseError<I extends Info = Info> extends EnvironmentResourceError {
   static code = 'DATABASE_ERROR'
   static defaultMessage = 'An error occurred while trying to access the database.'
   static statusCode = 502
+
+  constructor(
+    message?: string | null | undefined,
+    dbClient?: Knex | undefined,
+    options: ExtendedOptions<I> | Error | undefined = undefined
+  ) {
+    const additionalInfo = retrieveMetadataFromDatabaseClient(dbClient)
+
+    super(message, {
+      ...options,
+      info:
+        options && 'info' in options
+          ? { ...options?.info, ...additionalInfo }
+          : additionalInfo
+    })
+  }
 }
 
 export { BaseError }

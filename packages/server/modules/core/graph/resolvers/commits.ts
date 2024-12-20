@@ -80,7 +80,7 @@ import { CommitGraphQLReturn } from '@/modules/core/helpers/graphTypes'
 import {
   getProjectDbClient,
   getRegisteredDbClients
-} from '@/modules/multiregion/dbSelector'
+} from '@/modules/multiregion/utils/dbSelector'
 import { LegacyUserCommit } from '@/modules/core/domain/commits/types'
 
 const getStreams = getStreamsFactory({ db })

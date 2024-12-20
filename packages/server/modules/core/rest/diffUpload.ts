@@ -5,7 +5,7 @@ import type { Application } from 'express'
 import { hasObjectsFactory } from '@/modules/core/repositories/objects'
 import { validatePermissionsWriteStreamFactory } from '@/modules/core/services/streams/auth'
 import { authorizeResolver, validateScopes } from '@/modules/shared'
-import { getProjectDbClient } from '@/modules/multiregion/dbSelector'
+import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 
 export default (app: Application) => {
   const validatePermissionsWriteStream = validatePermissionsWriteStreamFactory({

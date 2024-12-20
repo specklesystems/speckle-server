@@ -41,7 +41,7 @@ import { captureCreatedInvite } from '@/test/speckle-helpers/inviteHelper'
 import {
   getMainTestRegionKey,
   isMultiRegionTestMode,
-  waitForRegionUser
+  waitForRegionUsers
 } from '@/test/speckle-helpers/regions'
 import { faker } from '@faker-js/faker'
 import { expect } from 'chai'
@@ -102,13 +102,7 @@ describe('Workspace GQL Subscriptions', () => {
       }
 
       before(async () => {
-        if (isMultiRegion) {
-          await Promise.all([
-            waitForRegionUser({ userId: me.id }),
-            waitForRegionUser({ userId: otherGuy.id })
-          ])
-        }
-
+        await waitForRegionUsers([me, otherGuy])
         await createTestWorkspace(myMainWorkspace, me, {
           regionKey: isMultiRegion ? getMainTestRegionKey() : undefined
         })

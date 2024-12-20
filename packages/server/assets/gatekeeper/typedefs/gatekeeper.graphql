@@ -26,6 +26,7 @@ input CheckoutSessionInput {
   workspaceId: ID!
   workspacePlan: PaidWorkspacePlans!
   billingInterval: BillingInterval!
+  isCreateFlow: Boolean
 }
 
 type CheckoutSession {
@@ -78,11 +79,17 @@ type WorkspacePlan {
   createdAt: DateTime!
 }
 
+type WorkspaceSubscriptionSeats {
+  plan: Int!
+  guest: Int!
+}
+
 type WorkspaceSubscription {
   createdAt: DateTime!
   updatedAt: DateTime!
   currentBillingCycleEnd: DateTime!
   billingInterval: BillingInterval!
+  seats: WorkspaceSubscriptionSeats!
 }
 
 extend type Workspace {
@@ -98,6 +105,10 @@ extend type Workspace {
     @hasWorkspaceRole(role: ADMIN)
   hasAccessToFeature(featureName: WorkspaceFeatureName!): Boolean!
     @hasWorkspaceRole(role: GUEST)
+  """
+  A Workspace is marked as readOnly if its trial period is finished or a paid plan is subscribed but payment has failed
+  """
+  readOnly: Boolean!
 }
 
 enum WorkspaceFeatureName {

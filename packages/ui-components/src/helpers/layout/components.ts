@@ -38,6 +38,7 @@ export type LayoutDialogButton = {
   props?: Record<string, unknown> & FormButtonProps
   onClick?: (e: MouseEvent) => void
   disabled?: boolean
+  disabledMessage?: string
   submit?: boolean
   /**
    * This should uniquely identify the button within the form. Even if you have different sets

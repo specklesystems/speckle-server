@@ -62,7 +62,7 @@ import {
   deleteStreamAndNotifyFactory,
   updateStreamAndNotifyFactory
 } from '@/modules/core/services/streams/management'
-import { getProjectDbClient } from '@/modules/multiregion/dbSelector'
+import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { deleteAllResourceInvitesFactory } from '@/modules/serverinvites/repositories/serverInvites'
 import { authorizeResolver } from '@/modules/shared'
 import { publish } from '@/modules/shared/utils/subscriptions'
@@ -106,7 +106,7 @@ import { BasicTestCommit, createTestCommits } from '@/test/speckle-helpers/commi
 import { TestError } from '@/test/speckle-helpers/error'
 import {
   isMultiRegionTestMode,
-  waitForRegionUser
+  waitForRegionUsers
 } from '@/test/speckle-helpers/regions'
 import { BasicTestStream, createTestStreams } from '@/test/speckle-helpers/streamHelper'
 import { faker } from '@faker-js/faker'
@@ -297,12 +297,7 @@ describe('Core GraphQL Subscriptions (New)', () => {
           })
         ])
 
-        if (isMultiRegion) {
-          await Promise.all([
-            waitForRegionUser({ userId: me.id }),
-            waitForRegionUser({ userId: otherGuy.id })
-          ])
-        }
+        await waitForRegionUsers([me, otherGuy])
       })
 
       describe('Project Subs', () => {

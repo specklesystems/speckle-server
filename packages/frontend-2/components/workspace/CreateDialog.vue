@@ -33,7 +33,6 @@
         v-model:edit-mode="editAvatarMode"
         :model-value="workspaceLogo"
         :placeholder="workspaceName"
-        :default-img="defaultAvatar"
         name="edit-avatar"
         size="xxl"
         @save="onLogoSave"
@@ -47,7 +46,6 @@ import { useForm } from 'vee-validate'
 import type { MaybeNullOrUndefined } from '@speckle/shared'
 import type { LayoutDialogButton } from '@speckle/ui-components'
 import { useCreateWorkspace } from '~/lib/workspaces/composables/management'
-import { useWorkspacesAvatar } from '~/lib/workspaces/composables/avatar'
 import { isRequired, isStringOfLength } from '~~/lib/common/helpers/validation'
 import { generateSlugFromName } from '@speckle/shared'
 import { debounce } from 'lodash'
@@ -65,7 +63,6 @@ const props = defineProps<{
 const isOpen = defineModel<boolean>('open', { required: true })
 
 const createWorkspace = useCreateWorkspace()
-const { generateDefaultLogoIndex, getDefaultAvatar } = useWorkspacesAvatar()
 const { handleSubmit, resetForm } = useForm<{ name: string; slug: string }>()
 
 const workspaceName = ref('')
@@ -73,7 +70,6 @@ const workspaceShortId = ref('')
 const debouncedWorkspaceShortId = ref('')
 const editAvatarMode = ref(false)
 const workspaceLogo = ref<MaybeNullOrUndefined<string>>()
-const defaultLogoIndex = ref(generateDefaultLogoIndex())
 const shortIdManuallyEdited = ref(false)
 
 const { error, loading } = useQuery(
@@ -87,8 +83,6 @@ const { error, loading } = useQuery(
 )
 
 const baseUrl = useRuntimeConfig().public.baseUrl
-
-const defaultAvatar = computed(() => getDefaultAvatar(defaultLogoIndex.value))
 
 const getShortIdHelp = computed(() =>
   workspaceShortId.value
@@ -122,11 +116,9 @@ const handleCreateWorkspace = handleSubmit(async () => {
     {
       name: workspaceName.value,
       slug: workspaceShortId.value,
-      defaultLogoIndex: defaultLogoIndex.value,
       logo: workspaceLogo.value
     },
-    { navigateOnSuccess: props.navigateOnSuccess === true },
-    { source: props.eventSource }
+    { navigateOnSuccess: props.navigateOnSuccess === true }
   )
 
   if (newWorkspace && !newWorkspace?.errors) {
@@ -141,7 +133,6 @@ const onLogoSave = (newVal: MaybeNullOrUndefined<string>) => {
 }
 
 const reset = () => {
-  defaultLogoIndex.value = generateDefaultLogoIndex()
   debouncedWorkspaceShortId.value = ''
   workspaceLogo.value = null
   editAvatarMode.value = false
