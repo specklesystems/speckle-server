@@ -27,7 +27,7 @@ import type {
   ViewerShortcutAction
 } from '~/lib/viewer/helpers/shortcuts/types'
 import { useActiveElement } from '@vueuse/core'
-import { SnowPipeline } from '@speckle/viewer-sandbox/src/Pipelines/Snow/SnowPipeline'
+import { SnowPipeline } from '~/lib/viewer/pipelines/snow/SnowPipeline'
 
 export function useSectionBoxUtilities() {
   const { instance } = useInjectedViewer()
