@@ -1,9 +1,9 @@
 import express from 'express'
 import puppeteer, { Browser } from 'puppeteer'
-import { REDIS_URL, PORT, CHROMIUM_EXECUTABLE_PATH, PREVIEWS_HEADED } from './config'
+import { REDIS_URL, PORT, CHROMIUM_EXECUTABLE_PATH, PREVIEWS_HEADED } from './config.js'
 import Bull from 'bull'
-import { logger } from './logging'
-import { jobProcessor } from './jobProcessor'
+import { logger } from './logging.js'
+import { jobProcessor } from './jobProcessor.js'
 
 const app = express()
 const port = PORT

@@ -17,12 +17,16 @@
   "scripts": {
     "build:frontend": "yarn workspace @speckle/preview-frontend build",
     "link:frontend": "yarn build:frontend && rimraf ./public && ln -s ../preview-frontend/dist ./public",
-    "dev": "tsx --env-file=.env --watch src/main.ts"
+    "dev": "tsx --env-file=.env --watch src/main.ts",
+    "build": "tsc -p ./tsconfig.build.json"
   },
   "dependencies": {
     "@speckle/shared": "workspace:^",
     "bull": "^4.16.4",
     "express": "^4.19.2",
+    "pino": "^8.7.0",
+    "pino-http": "^8.6.1",
+    "pino-pretty": "^9.1.1",
     "puppeteer": "^23.9.0",
     "znv": "^0.4.0",
     "zod": "^3.23.8"
