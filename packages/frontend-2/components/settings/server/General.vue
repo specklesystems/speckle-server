@@ -18,7 +18,7 @@
               type="text"
             />
             <hr class="border-outline-3" />
-            <FormTextInput
+            <FormTextArea
               v-model="description"
               color="foundation"
               label="Description"

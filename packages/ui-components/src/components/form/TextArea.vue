@@ -1,12 +1,23 @@
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
-  <div :class="[fullWidth ? 'w-full' : '']">
-    <label :for="name" :class="labelClasses">
-      <span>{{ title }}</span>
-      <div v-if="showRequired" class="text-danger text-body-xs opacity-80">*</div>
-      <div v-else-if="showOptional" class="text-body-2xs font-normal">(optional)</div>
-    </label>
-    <div class="relative">
+  <div :class="computedWrapperClasses">
+    <div
+      :class="
+        labelPosition === 'left'
+          ? 'w-full md:w-6/12 flex flex-col justify-center'
+          : 'w-full'
+      "
+    >
+      <label :for="name" :class="labelClasses">
+        <span>{{ title }}</span>
+        <div v-if="showRequired" class="text-danger text-body-xs opacity-80">*</div>
+        <div v-else-if="showOptional" class="text-body-2xs font-normal">(optional)</div>
+      </label>
+    </div>
+    <div
+      class="relative"
+      :class="labelPosition === 'left' ? 'w-full md:w-6/12' : 'w-full'"
+    >
       <textarea
         :id="name"
         ref="inputElement"
@@ -54,7 +65,11 @@
         *
       </div>
     </div>
-    <p v-if="helpTipId" :id="helpTipId" :class="helpTipClasses">
+    <p
+      v-if="labelPosition === 'top' && helpTipId"
+      :id="helpTipId"
+      :class="['mt-1.5', helpTipClasses]"
+    >
       {{ helpTip }}
     </p>
   </div>
@@ -64,6 +79,7 @@ import { ExclamationCircleIcon, XMarkIcon } from '@heroicons/vue/20/solid'
 import type { Nullable } from '@speckle/shared'
 import type { RuleExpression } from 'vee-validate'
 import { computed, ref, toRefs } from 'vue'
+import type { LabelPosition } from '~~/src/composables/form/input'
 import type { InputColor } from '~~/src/composables/form/textInput'
 import { useTextInputCore } from '~~/src/composables/form/textInput'
 
@@ -100,11 +116,15 @@ const props = withDefaults(
     color?: InputColor
     textareaClasses?: string
     size?: InputSize
+    labelPosition?: LabelPosition
+    wrapperClasses?: string
   }>(),
   {
     useLabelInErrors: true,
     modelValue: '',
-    color: 'page'
+    color: 'page',
+    labelPosition: 'top',
+    wrapperClasses: ''
   }
 )
 
@@ -152,6 +172,23 @@ const sizeClasses = computed((): string => {
     default:
       return 'text-body-xs'
   }
+})
+
+const computedWrapperClasses = computed(() => {
+  const classes = ['flex', props.wrapperClasses]
+  if (props.fullWidth) {
+    classes.push('w-full')
+  }
+
+  if (props.labelPosition === 'top') {
+    classes.push('flex-col')
+  }
+  if (props.labelPosition === 'left') {
+    classes.push(
+      'w-full space-y-1 sm:space-y-0 sm:space-x-8 flex-col sm:flex-row items-start'
+    )
+  }
+  return classes.join(' ')
 })
 
 defineExpose({ focus })

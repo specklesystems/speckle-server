@@ -37,7 +37,7 @@
           @right-icon-click="openSlugEditDialog"
         />
         <hr class="my-4 border-outline-3" />
-        <FormTextInput
+        <FormTextArea
           v-model="description"
           color="foundation"
           label="Description"
