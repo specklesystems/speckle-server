@@ -24,34 +24,25 @@ type JobError = Job & {
   reason: Error
 }
 
-type JobResult = JobSuccess | JobError
+type JobStatus = JobSuccess | JobError
 
 export const jobPayload = z.object({
   jobId: z.string(),
   url: z.string(),
-  token: z.string()
+  token: z.string(),
+  responseQueue: z.string()
 })
 type JobPayload = z.infer<typeof jobPayload>
 
 export const jobProcessor = async ({
   logger,
   browser,
-  payload
+  job
 }: {
   logger: Logger
   browser: Browser
-  payload: any
-}): Promise<JobResult> => {
-  const parseResult = jobPayload.safeParse(payload)
-  if (!parseResult.success) {
-    const jobId =
-      'jobId' in payload && typeof payload['jobId'] === 'string'
-        ? payload['jobId']
-        : 'unknown'
-    logger.error({ parseError: parseResult.error }, 'Failed to parse job payload')
-    return { jobId, status: 'error', reason: parseResult.error }
-  }
-  const job = parseResult.data
+  job: JobPayload
+}): Promise<JobStatus> => {
   const jobId = job.jobId
   const jobLogger = logger.child({ jobId })
   const start = new Date()
@@ -60,14 +51,13 @@ export const jobProcessor = async ({
   let page: Page | undefined = undefined
   try {
     page = await browser.newPage()
-    const a = await Promise.race([
-      pageFunction({ page, job, jobLogger }),
-      new Promise((resolve, reject) => {
-        setTimeout(resolve, 500, 'one')
-        return
-      })
-    ])
-    const doJob = async () => {}
+    // const a = await Promise.race([
+    //   pageFunction({ page, job, jobLogger }),
+    //   new Promise((resolve, reject) => {
+    //     setTimeout(resolve, 500, 'one')
+    //     return
+    //   })
+    // ])
     const result = await pageFunction({ page, job, jobLogger })
     const elapsed = (new Date().getTime() - start.getTime()) / 1000
     jobLogger.info(
@@ -109,7 +99,7 @@ const pageFunction = async ({
     jobLogger.error({ err }, 'Page crashed')
     throw err
   })
-  await page.goto('http://127.0.0.1:3010/index.html')
+  await page.goto('http://127.0.0.1:3001/index.html')
   // page.setDefaultTimeout(deps.timeoutMilliseconds)
 
   const previewResult = await page.evaluate(async (job: JobPayload) => {
