@@ -6,7 +6,7 @@
       'flex shrink-0 overflow-hidden rounded-md border border-outline-2 bg-foundation-2',
       sizeClasses
     ]"
-    @click="logo ? undefined : openSettingsDialog(SettingMenuKeys.Workspace.Members)"
+    @click="logo ? undefined : openSettingsDialog(SettingMenuKeys.Workspace.General)"
   >
     <div
       class="h-full w-full bg-cover bg-center bg-no-repeat flex items-center justify-center"
