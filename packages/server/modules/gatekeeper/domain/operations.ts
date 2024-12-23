@@ -24,3 +24,8 @@ export type GetWorkspacesByPlanDaysTillExpiry = (args: {
   plan: WorkspacePlans
   status: PlanStatuses
 }) => Promise<Workspace[]>
+export type GetWorkspacePlanByProjectId = ({
+  projectId
+}: {
+  projectId: string
+}) => Promise<WorkspacePlan | null>

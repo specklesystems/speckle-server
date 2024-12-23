@@ -1,3 +1,4 @@
+import { Streams } from '@/modules/core/dbSchema'
 import {
   CheckoutSession,
   GetCheckoutSession,
@@ -19,9 +20,11 @@ import {
 } from '@/modules/gatekeeper/domain/billing'
 import {
   ChangeExpiredTrialWorkspacePlanStatuses,
-  GetWorkspacesByPlanDaysTillExpiry
+  GetWorkspacesByPlanDaysTillExpiry,
+  GetWorkspacePlanByProjectId
 } from '@/modules/gatekeeper/domain/operations'
 import { Workspace } from '@/modules/workspacesCore/domain/types'
+import { Workspaces } from '@/modules/workspacesCore/helpers/db'
 import { Knex } from 'knex'
 
 const tables = {
@@ -184,4 +187,21 @@ export const getWorkspaceSubscriptionsPastBillingCycleEndFactory =
       .workspaceSubscriptions(db)
       .select()
       .where('currentBillingCycleEnd', '<', cycleEnd)
+  }
+
+export const getWorkspacePlanByProjectIdFactory =
+  ({ db }: { db: Knex }): GetWorkspacePlanByProjectId =>
+  async ({ projectId }) => {
+    return await tables
+      .workspacePlans(db)
+      .select([
+        'workspace_plans.workspaceId',
+        'workspace_plans.status',
+        'workspace_plans.name',
+        'workspace_plans.createdAt'
+      ])
+      .innerJoin(Workspaces.name, Workspaces.col.id, 'workspace_plans.workspaceId')
+      .innerJoin(Streams.name, Streams.col.workspaceId, Workspaces.col.id)
+      .where({ [Streams.col.id]: projectId })
+      .first<WorkspacePlan | null>()
   }
