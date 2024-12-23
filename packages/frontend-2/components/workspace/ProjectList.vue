@@ -57,7 +57,7 @@
           v-if="!isWorkspaceGuest"
           button-copy="Add your first project"
           :is-workspace-admin="isWorkspaceAdmin"
-          :disabled="!workspace?.readOnly"
+          :disabled="workspace?.readOnly"
           @new-project="openNewProject = true"
           @move-project="showMoveProjectsDialog = true"
         />
