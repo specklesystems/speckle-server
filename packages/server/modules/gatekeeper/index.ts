@@ -22,13 +22,22 @@ import {
   changeExpiredTrialWorkspacePlanStatusesFactory,
   getWorkspacePlanByProjectIdFactory,
   getWorkspacePlanFactory,
+  getWorkspacesByPlanAgeFactory,
   getWorkspaceSubscriptionsPastBillingCycleEndFactory,
   upsertWorkspaceSubscriptionFactory
 } from '@/modules/gatekeeper/repositories/billing'
-import { countWorkspaceRoleWithOptionalProjectRoleFactory } from '@/modules/workspaces/repositories/workspaces'
+import {
+  countWorkspaceRoleWithOptionalProjectRoleFactory,
+  getWorkspaceCollaboratorsFactory
+} from '@/modules/workspaces/repositories/workspaces'
 import { reconcileWorkspaceSubscriptionFactory } from '@/modules/gatekeeper/clients/stripe'
 import { ScheduleExecution } from '@/modules/core/domain/scheduledTasks/operations'
 import { EventBusEmit, getEventBus } from '@/modules/shared/services/eventBus'
+import { sendWorkspaceTrialExpiresEmailFactory } from '@/modules/gatekeeper/services/trialEmails'
+import { getServerInfoFactory } from '@/modules/core/repositories/server'
+import { findEmailsByUserIdFactory } from '@/modules/core/repositories/userEmails'
+import { sendEmail } from '@/modules/emails/services/sending'
+import { renderEmail } from '@/modules/emails/services/emailRendering'
 import coreModule from '@/modules/core/index'
 import { isProjectReadOnlyFactory } from '@/modules/gatekeeper/services/readOnly'
 import { WorkspaceReadOnlyError } from '@/modules/gatekeeper/errors/billing'
@@ -77,10 +86,46 @@ const scheduleWorkspaceTrialEmails = ({
 }: {
   scheduleExecution: ScheduleExecution
 }) => {
+  const sendWorkspaceTrialEmail = sendWorkspaceTrialExpiresEmailFactory({
+    getServerInfo: getServerInfoFactory({ db }),
+    getUserEmails: findEmailsByUserIdFactory({ db }),
+    getWorkspaceCollaborators: getWorkspaceCollaboratorsFactory({ db }),
+    sendEmail,
+    renderEmail
+  })
   // TODO: make this a daily thing
-  const cronExpression = '*/5 * * * *'
+  // const cronExpression = '*/5 * * * * *'
+  // every day at noon
+  const cronExpression = '0 12 * * *'
   return scheduleExecution(cronExpression, 'WorkspaceTrialEmails', async () => {
-    // await manageSubscriptionDownscale()
+    const getWorkspacesByPlanAge = getWorkspacesByPlanAgeFactory({ db })
+    const trialValidForDays = 31
+    const trialWorkspacesExpireIn3Days = await getWorkspacesByPlanAge({
+      daysTillExpiry: 3,
+      planValidFor: trialValidForDays,
+      plan: 'starter',
+      status: 'trial'
+    })
+    if (trialWorkspacesExpireIn3Days.length) {
+      await Promise.all(
+        trialWorkspacesExpireIn3Days.map((workspace) =>
+          sendWorkspaceTrialEmail({ workspace, expiresInDays: 3 })
+        )
+      )
+    }
+    const trialWorkspacesExpireToday = await getWorkspacesByPlanAge({
+      daysTillExpiry: 0,
+      planValidFor: trialValidForDays,
+      plan: 'starter',
+      status: 'trial'
+    })
+    if (trialWorkspacesExpireToday.length) {
+      await Promise.all(
+        trialWorkspacesExpireToday.map((workspace) =>
+          sendWorkspaceTrialEmail({ workspace, expiresInDays: 0 })
+        )
+      )
+    }
   })
 }
 
