@@ -10,6 +10,7 @@
     <FormButton
       color="outline"
       :class="hideTextOnMobile ? 'hidden md:block' : ''"
+      :disabled="disabled"
       @click="showMenu = !showMenu"
     >
       <div class="flex items-center gap-1">
@@ -48,6 +49,7 @@ const props = defineProps<{
   hideTextOnMobile?: boolean
   isWorkspaceAdmin: boolean
   buttonCopy?: string
+  disabled?: boolean
 }>()
 
 const menuId = useId()

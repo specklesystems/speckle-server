@@ -55,8 +55,9 @@
         </span>
         <WorkspaceHeaderAddProjectMenu
           v-if="!isWorkspaceGuest"
-          :is-workspace-admin="isWorkspaceAdmin"
           button-copy="Add your first project"
+          :is-workspace-admin="isWorkspaceAdmin"
+          :disabled="workspace?.readOnly"
           @new-project="openNewProject = true"
           @move-project="showMoveProjectsDialog = true"
         />
@@ -128,6 +129,7 @@ graphql(`
       completed
       state
     }
+    readOnly
   }
 `)
 

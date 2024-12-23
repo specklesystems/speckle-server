@@ -46,6 +46,7 @@
           v-if="!isWorkspaceGuest"
           :is-workspace-admin="isWorkspaceAdmin"
           hide-text-on-mobile
+          :disabled="workspaceInfo.readOnly"
           @new-project="$emit('show-new-project-dialog')"
           @move-project="$emit('show-move-projects-dialog')"
         />
@@ -95,6 +96,7 @@ graphql(`
     ...WorkspaceBase_Workspace
     ...WorkspaceTeam_Workspace
     ...BillingAlert_Workspace
+    readOnly
   }
 `)
 

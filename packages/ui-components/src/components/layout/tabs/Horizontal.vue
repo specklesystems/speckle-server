@@ -64,12 +64,9 @@
             >
               <span>{{ item.count }}</span>
             </div>
-            <div
-              v-if="item.tag"
-              class="text-body-3xs font-medium py-0.5 px-1.5 bg-info-lighter uppercase text-outline-4 rounded"
-            >
+            <CommonBadge v-if="item.tag">
               {{ item.tag }}
-            </div>
+            </CommonBadge>
           </div>
         </button>
       </div>
@@ -102,6 +99,7 @@ import { ArrowLongRightIcon, ArrowLongLeftIcon } from '@heroicons/vue/24/outline
 import type { Nullable } from '@speckle/shared'
 import { throttle } from '#lodash'
 import { useElementSize } from '@vueuse/core'
+import CommonBadge from '~~/src/components/common/Badge.vue'
 
 const props = defineProps<{
   items: LayoutPageTabItem[]
