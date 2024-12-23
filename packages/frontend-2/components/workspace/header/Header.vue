@@ -17,6 +17,7 @@
           :logo="workspaceInfo.logo"
           size="lg"
           class="hidden md:block"
+          @show-settings-dialog="openSettingsDialog(SettingMenuKeys.Workspace.General)"
         />
         <WorkspaceAvatar
           class="md:hidden"
