@@ -77,6 +77,7 @@
         <ProjectCardImportFileArea
           v-if="hasNoModels"
           :project-id="project.id"
+          :disabled="project?.workspace?.readOnly"
           class="h-28 col-span-4"
         />
       </div>
