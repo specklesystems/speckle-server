@@ -13,11 +13,18 @@
     <div class="flex items-center justify-between gap-4">
       <div class="flex items-center gap-3 lg:gap-4">
         <WorkspaceAvatar
+          v-tippy="workspaceInfo.logo ? undefined : 'Add a workspace icon'"
           :name="workspaceInfo.name"
           :logo="workspaceInfo.logo"
           size="lg"
           class="hidden md:block"
-          @show-settings-dialog="openSettingsDialog(SettingMenuKeys.Workspace.General)"
+          :class="{ 'cursor-pointer': !workspaceInfo.logo }"
+          is-button
+          @click="
+            workspaceInfo.logo
+              ? undefined
+              : openSettingsDialog(SettingMenuKeys.Workspace.General)
+          "
         />
         <WorkspaceAvatar
           class="md:hidden"
@@ -39,6 +46,7 @@
           v-if="!isWorkspaceGuest"
           :is-workspace-admin="isWorkspaceAdmin"
           hide-text-on-mobile
+          :disabled="workspaceInfo.readOnly"
           @new-project="$emit('show-new-project-dialog')"
           @move-project="$emit('show-move-projects-dialog')"
         />
@@ -88,6 +96,7 @@ graphql(`
     ...WorkspaceBase_Workspace
     ...WorkspaceTeam_Workspace
     ...BillingAlert_Workspace
+    readOnly
   }
 `)
 

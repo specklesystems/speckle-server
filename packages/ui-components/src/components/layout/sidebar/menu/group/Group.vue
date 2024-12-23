@@ -21,15 +21,11 @@
         >
           <slot name="title-icon"></slot>
         </div>
-        <div class="flex flex-1 items-center truncate">
+        <div class="flex flex-1 items-center truncate justify-between">
           <h6 class="font-semibold text-foreground-2 truncate text-body-2xs pr-2">
             {{ title }}
           </h6>
-          <CommonBadge
-            v-if="tag"
-            rounded
-            color-classes="bg-foundation-2 text-foreground-2"
-          >
+          <CommonBadge v-if="tag" rounded>
             {{ tag }}
           </CommonBadge>
         </div>
