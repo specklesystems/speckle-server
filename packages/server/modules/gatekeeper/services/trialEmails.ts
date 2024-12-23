@@ -49,9 +49,23 @@ Upgrade to a paid plan before the trial expires to keep using your workspace. Yo
   return { bodyStart, bodyEnd }
 }
 
-const buildTextBody = () => {
-  const bodyStart = ''
-  return { bodyStart }
+const buildTextBody = ({
+  workspace,
+  expiresInDays,
+  workspaceAdmin
+}: TrialExpiresArgsWithAdmin) => {
+  const expireMessage = expiresInDays === 0 ? `today` : `in ${expiresInDays} days`
+  const bodyStart = `
+
+Hi ${workspaceAdmin.name}!
+\r\n\r\n
+The trial for your workspace ${workspace.name} expires ${expireMessage}.
+\r\n\r\n
+Upgrade to a paid plan before the trial expires to keep using your workspace. You can compare plans and get an overview of your estimated billing from your workspace's billing settings.
+\r\n\r\n
+    `
+  const bodyEnd = `Have questions or feedback? Please write us at hello@speckle.systems and we'd be more than happy to talk.`
+  return { bodyStart, bodyEnd }
 }
 
 const buildEmailTemplateParams = (
@@ -60,7 +74,7 @@ const buildEmailTemplateParams = (
   const url = new URL(`workspaces/${args.workspace.slug}`, getServerOrigin()).toString()
   return {
     mjml: buildMjmlBody(args),
-    text: buildTextBody(),
+    text: buildTextBody(args),
     cta: {
       title: 'Upgrade your workspace',
       url
