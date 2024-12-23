@@ -28,7 +28,8 @@ const coreModule: SpeckleModule<{
   executeHooks: ExecuteHooks
 }> = {
   hooks: {
-    onCreateObjectRequest: []
+    onCreateObjectRequest: [],
+    onCreateVersionRequest: []
   },
   addHook(key: keyof HooksConfig, callback: Hook) {
     this.hooks[key].push(callback)
