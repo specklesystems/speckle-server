@@ -57,6 +57,7 @@ import {
 import { getObjectFactory } from '@/modules/core/repositories/objects'
 import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
+import coreModule from '@/modules/core'
 
 export = {
   Project: {
@@ -176,6 +177,10 @@ export = {
         Roles.Stream.Contributor,
         ctx.resourceAccessRules
       )
+
+      await coreModule.executeHooks('onCreateVersionRequest', {
+        projectId: args.input.projectId
+      })
 
       const rateLimitResult = await getRateLimitResult('COMMIT_CREATE', ctx.userId!)
       if (isRateLimitBreached(rateLimitResult)) {

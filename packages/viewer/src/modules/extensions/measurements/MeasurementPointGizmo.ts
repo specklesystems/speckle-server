@@ -27,6 +27,7 @@ import { SpeckleText } from '../../objects/SpeckleText.js'
 import SpeckleTextMaterial from '../../materials/SpeckleTextMaterial.js'
 import SpeckleBasicMaterial from '../../materials/SpeckleBasicMaterial.js'
 import { ObjectLayers } from '../../../IViewer.js'
+import Logger from '../../utils/Logger.js'
 
 export interface MeasurementPointGizmoStyle {
   fixedSize?: number | boolean
@@ -325,8 +326,8 @@ export class MeasurementPointGizmo extends Group {
     position?: Vector3,
     quaternion?: Quaternion,
     scale?: Vector3
-  ) {
-    void this.text
+  ): Promise<void> {
+    return this.text
       .update({
         textValue: value,
         height: 1,
@@ -342,6 +343,9 @@ export class MeasurementPointGizmo extends Group {
         this.text.setTransform(position, quaternion, scale)
         if (this.text.backgroundMesh) this.text.backgroundMesh.renderOrder = 3
         this.text.textMesh.renderOrder = 4
+      })
+      .catch((reason) => {
+        Logger.log(`Could not update text: ${reason}`)
       })
   }
 
