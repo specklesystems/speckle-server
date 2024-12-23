@@ -119,13 +119,15 @@ export const onBranchDeletedSubscription = gql`
   }
 `
 
-export const usersRetrievalQuery = gql`
-  query UsersRetrieval($input: UsersRetrievalInput!) {
-    users(input: $input) {
-      cursor
-      items {
-        id
-        name
+export const activeUserProjectsQuery = gql`
+  query ActiveUserProjects($filter: UserProjectsFilter!) {
+    activeUser {
+      projects(filter: $filter) {
+        cursor
+        items {
+          id
+          name
+        }
       }
     }
   }
