@@ -50,23 +50,21 @@
 </template>
 <script setup lang="ts">
 import { capitalize, cloneDeep } from 'lodash-es'
-import { graphql } from '~~/lib/common/generated/gql'
 import { useUpdateNotificationPreferences } from '~~/lib/user/composables/management'
 import type { NotificationPreferences } from '~~/lib/user/helpers/components'
-import type { SettingsUserNotifications_UserFragment } from '~~/lib/common/generated/gql/graphql'
+import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 
-graphql(`
-  fragment SettingsUserNotifications_User on User {
-    id
-    notificationPreferences
-  }
-`)
+definePageMeta({
+  middleware: ['auth'],
+  layout: 'settings'
+})
 
-const props = defineProps<{
-  user: SettingsUserNotifications_UserFragment
-}>()
+useHead({
+  title: 'Settings - Notifications'
+})
 
 const { mutate, loading } = useUpdateNotificationPreferences()
+const { activeUser: user } = useActiveUser()
 
 const notificationTypeMapping = ref({
   activityDigest: 'Weekly activity digest',
@@ -78,9 +76,8 @@ const notificationTypeMapping = ref({
 const localPreferences = ref({} as NotificationPreferences)
 
 const notificationPreferences = computed(
-  () => props.user.notificationPreferences as NotificationPreferences
+  () => user.value?.notificationPreferences || ({} as NotificationPreferences)
 )
-
 const notificationChannels = computed(() => {
   const firstTypeSettings = Object.values(notificationPreferences.value)[0] || {}
   return Object.keys(firstTypeSettings)

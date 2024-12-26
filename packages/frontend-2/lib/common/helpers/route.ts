@@ -21,6 +21,29 @@ export const defaultZapierWebhookUrl =
   'https://hooks.zapier.com/hooks/catch/12120532/2m4okri/'
 export const guideBillingUrl = 'https://speckle.guide/workspaces/billing.html'
 
+export const settingsRoutes = Object.freeze(<const>{
+  user: {
+    profile: '/settings/user/profile',
+    notifications: '/settings/user/notifications',
+    developerSettings: '/settings/user/developer',
+    emails: '/settings/user/emails'
+  },
+  server: {
+    general: '/settings/server/general',
+    projects: '/settings/server/projects',
+    members: '/settings/server/members',
+    regions: '/settings/server/regions'
+  },
+  workspace: {
+    general: '/settings/workspace/general',
+    members: '/settings/workspace/members',
+    projects: '/settings/workspace/projects',
+    security: '/settings/workspace/security',
+    billing: '/settings/workspace/billing',
+    regions: '/settings/workspace/regions'
+  }
+})
+
 export const projectRoute = (
   id: string,
   tab?: 'models' | 'discussions' | 'automations' | 'settings'

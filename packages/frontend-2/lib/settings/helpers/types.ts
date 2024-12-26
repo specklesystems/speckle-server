@@ -4,10 +4,10 @@ import type { WorkspacePlans } from '~/lib/common/generated/gql/graphql'
 
 export type SettingsMenuItem = {
   title: string
-  component?: ReturnType<typeof defineComponent>
   disabled?: boolean
   tooltipText?: string
   permission?: AvailableRoles[]
+  to: string
 }
 
 export type SettingsMenuItems = {

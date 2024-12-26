@@ -183,27 +183,27 @@ export default defineNuxtConfig({
         to: '/?settings=server/general',
         statusCode: 301
       }
-    },
-    '/profile': {
-      redirect: {
-        to: '/?settings=user/profile',
-        statusCode: 301
-      }
-    },
+    }
+    // '/profile': {
+    //   redirect: {
+    //     to: '/?settings=user/profile',
+    //     statusCode: 301
+    //   }
+    // },
 
     // Redirect settings 'route' to homepage with added query
-    '/settings': { redirect: '/?settings=user/profile' },
-    '/settings/user/profile': { redirect: '/?settings=user/profile' },
-    '/settings/user/notifications': { redirect: '/?settings=user/notifications' },
-    '/settings/user/developer-settings': {
-      redirect: '/?settings=user/developer-settings'
-    },
-    '/settings/server/general': { redirect: '/?settings=server/general' },
-    '/settings/server/projects': { redirect: '/?settings=server/projects' },
-    '/settings/server/active-users': { redirect: '/?settings=server/active-users' },
-    '/settings/server/pending-invitations': {
-      redirect: '/?settings=server/pending-invitations'
-    }
+    // '/settings': { redirect: '/?settings=user/profile' },
+    // '/settings/user/profile': { redirect: '/?settings=user/profile' },
+    // '/settings/user/notifications': { redirect: '/?settings=user/notifications' },
+    // '/settings/user/developer-settings': {
+    //   redirect: '/?settings=user/developer-settings'
+    // },
+    // '/settings/server/general': { redirect: '/?settings=server/general' },
+    // '/settings/server/projects': { redirect: '/?settings=server/projects' },
+    // '/settings/server/active-users': { redirect: '/?settings=server/active-users' },
+    // '/settings/server/pending-invitations': {
+    //   redirect: '/?settings=server/pending-invitations'
+    // }
   },
 
   nitro: {

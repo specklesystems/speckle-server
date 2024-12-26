@@ -74,12 +74,12 @@
 
       <template v-if="workspace">
         <InviteDialogWorkspace v-model:open="showInviteDialog" :workspace="workspace" />
-        <SettingsDialog
+        <!-- <SettingsDialog
           v-model:open="showSettingsDialog"
           :target-menu-item="settingsDialogTarget"
           :target-workspace-id="workspace.id"
           :sso-provider-info="ssoProviderInfo"
-        />
+        /> -->
         <WorkspaceMoveProjectsDialog
           v-model:open="showMoveProjectsDialog"
           :workspace="workspace"
@@ -168,11 +168,11 @@ const showSettingsDialog = ref(false)
 const settingsDialogTarget = ref<AvailableSettingsMenuKeys>(
   SettingMenuKeys.Workspace.General
 )
-const ssoProviderInfo = ref<{
-  providerName: string
-  clientId: string
-  issuerUrl: string
-} | null>(null)
+// const ssoProviderInfo = ref<{
+//   providerName: string
+//   clientId: string
+//   issuerUrl: string
+// } | null>(null)
 
 const token = computed(() => route.query.token as Optional<string>)
 

@@ -40,7 +40,6 @@
                 active ? 'bg-highlight-1' : '',
                 'text-body-xs flex px-2 py-1 text-foreground cursor-pointer transition mx-1 rounded'
               ]"
-              @click="toggleSettingsDialog(SettingMenuKeys.User.Profile)"
             >
               Settings
             </NuxtLink>
@@ -51,7 +50,6 @@
                 active ? 'bg-highlight-1' : '',
                 'text-body-xs flex px-2 py-1 text-foreground cursor-pointer transition mx-1 rounded'
               ]"
-              @click="toggleSettingsDialog(SettingMenuKeys.Server.General)"
             >
               Server settings
             </NuxtLink>
@@ -125,52 +123,31 @@
       </Transition>
     </Menu>
     <InviteDialogServer v-model:open="showInviteDialog" />
-    <SettingsDialog
-      v-model:open="showSettingsDialog"
-      v-model:target-menu-item="settingsDialogTarget"
-      v-model:target-workspace-id="workspaceSettingsDialogTarget"
-    />
     <FeedbackDialog v-model:open="showFeedbackDialog" />
   </div>
 </template>
 <script setup lang="ts">
-import { isString } from 'lodash'
-import { useBreakpoints } from '@vueuse/core'
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
 import { ChevronDownIcon } from '@heroicons/vue/24/outline'
 import { Roles } from '@speckle/shared'
-import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { useAuthManager } from '~~/lib/auth/composables/auth'
 import { useTheme } from '~~/lib/core/composables/theme'
 import { downloadManagerUrl } from '~/lib/common/helpers/route'
 import type { RouteLocationRaw } from 'vue-router'
-import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import { useServerInfo } from '~/lib/core/composables/server'
-import {
-  SettingMenuKeys,
-  type AvailableSettingsMenuKeys
-} from '~/lib/settings/helpers/types'
 
 defineProps<{
   loginUrl?: RouteLocationRaw
 }>()
 
-const route = useRoute()
 const { logout } = useAuthManager()
 const { activeUser, isGuest } = useActiveUser()
 const { isDarkTheme, toggleTheme } = useTheme()
-const router = useRouter()
-const { triggerNotification } = useGlobalToast()
 const { serverInfo } = useServerInfo()
-const breakpoints = useBreakpoints(TailwindBreakpoints)
+const menuButtonId = useId()
 
 const showInviteDialog = ref(false)
-const showSettingsDialog = ref(false)
-const settingsDialogTarget = ref<string | null>(null)
-const workspaceSettingsDialogTarget = ref<string | null>(null)
-const menuButtonId = useId()
-const isMobile = breakpoints.smaller('md')
 const showFeedbackDialog = ref(false)
 
 const version = computed(() => serverInfo.value?.version)
@@ -180,39 +157,7 @@ const toggleInviteDialog = () => {
   showInviteDialog.value = true
 }
 
-const toggleSettingsDialog = (target: AvailableSettingsMenuKeys) => {
-  showSettingsDialog.value = true
-
-  // On mobile open the modal but dont set the target
-  settingsDialogTarget.value = !isMobile.value ? target : null
-}
-
-const deleteSettingsQuery = (): void => {
-  const currentQueryParams = { ...route.query }
-  delete currentQueryParams.settings
-  router.push({ query: currentQueryParams })
-}
-
 const openFeedbackDialog = () => {
   showFeedbackDialog.value = true
 }
-
-onMounted(() => {
-  const settingsQuery = route.query?.settings
-
-  if (settingsQuery && isString(settingsQuery)) {
-    if (settingsQuery.includes('server') && !isAdmin.value) {
-      triggerNotification({
-        type: ToastNotificationType.Danger,
-        title: "You don't have access to server settings"
-      })
-
-      return
-    }
-
-    showSettingsDialog.value = true
-    settingsDialogTarget.value = settingsQuery
-    deleteSettingsQuery()
-  }
-})
 </script>
