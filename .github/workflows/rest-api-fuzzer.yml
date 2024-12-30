@@ -24,12 +24,12 @@ jobs:
     name: Build Restler Fuzzer
     runs-on: ubuntu-latest
     permissions:
-      packages: write # publishing container to GitHub registry
+      contents: read
     steps:
       - uses: actions/checkout@v4
         with:
           repository: microsoft/restler-fuzzer
-          ref: ${{ env.RESTLER_VERSION }}
+          ref: v${{ env.RESTLER_VERSION }}
           path: 'restler-fuzzer' # The path to clone the repository under {{ github.workspace }}
       - name: Print environment variables
         run: printenv
@@ -40,7 +40,7 @@ jobs:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
       - name: Restore NuGet packages
-        run: dotnet restore src/Restler.sln
+        run: dotnet restore ${{ github.workspace }}/restler-fuzzer/src/Restler.sln
 
       - name: Set up Python ${{ env.PYTHON_VERSION }}
         uses: actions/setup-python@v4
@@ -49,11 +49,11 @@ jobs:
 
       - name: Install engine (Python) dependencies
         run: |
-          pip install -r ./restler/requirements.txt
+          pip install -r ${{ github.workspace }}/restler-fuzzer/restler/requirements.txt
 
       - name: Build RESTler drop
         run: |
-          python ./build-restler.py --dest_dir ${{ github.workspace }}/restler/restler
+          python ${{ github.workspace }}/restler-fuzzer/build-restler.py --dest_dir ${{ github.workspace }}/bin/restler
       # - name: Set up Docker Buildx
       #   uses: docker/setup-buildx-action@v3
       # - name: Log in to the Container registry
@@ -87,12 +87,14 @@ jobs:
 
     # steps:
       - uses: actions/checkout@v4
+        with:
+          path: 'speckle-server'
       - name: Compile from OpenAPI
         # run: docker run --volume ${{ github.workspace }}/restlerConfig:/RESTler/restler/restlerConfig ${{ needs.build-restler-fuzzer.outputs.tags }} compile --api_spec utils/specifications/speckle-server.openapi.json
         run: |
-          ${{ github.workspace }}/restler/restler compile --api_spec utils/specifications/speckle-server.openapi.json
+          ${{ github.workspace }}/bin/restler compile --api_spec ${{ github.workspace }}/speckle-server/utils/specifications/speckle-server.openapi.json
       - name: Print the results
-        run: ls -lat ${{ github.workspace }}/restler/restler/restlerConfig
+        run: ls -lat ${{ github.workspace }}/restlerConfig
 
   # fuzz-rest-api-lite:
   #   runs-on: ubuntu-latest
