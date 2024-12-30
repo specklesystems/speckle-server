@@ -1,9 +1,7 @@
 import { db } from '@/db/knex'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
-import {
-  EmailTemplateServerInfo,
-  renderEmail
-} from '@/modules/emails/services/emailRendering'
+import { EmailTemplateServerInfo } from '@/modules/emails/domain/operations'
+import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { expect } from 'chai'
 import sanitize from 'sanitize-html'
 
