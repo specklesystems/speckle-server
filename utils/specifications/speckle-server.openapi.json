@@ -1,0 +1,345 @@
+{
+  "swagger": "2.0",
+  "basePath": "/",
+  "info": { "title": "Speckle.", "version": "dev" },
+  "definitions": {},
+  "paths": {
+    "/explorer": {
+      "get": {
+        "summary": "GraphQL API Explorer",
+        "description": "GraphQL API Explorer",
+        "responses": {
+          "default": { "description": "Returns the GraphQL API Explorer" }
+        }
+      }
+    },
+    "/auth/local/login": {
+      "post": {
+        "description": "Login with email and password",
+        "responses": {
+          "200": { "description": "User logged in successfully" },
+          "401": { "description": "Invalid credentials" }
+        }
+      }
+    },
+    "/auth/local/register": {
+      "post": {
+        "description": "Register with email and password",
+        "responses": {
+          "200": { "description": "User registered successfully" },
+          "400": { "description": "Invalid input" },
+          "500": { "description": "Server error" }
+        }
+      }
+    },
+    "/auth/accesscode": {
+      "get": {
+        "description": "Generates an access code for an app.",
+        "responses": {
+          "200": { "description": "Returns an access code in the body" },
+          "302": { "description": "Redirects with access code in url query" },
+          "400": { "description": "Invalid access code" },
+          "500": { "description": "Internal error" }
+        }
+      },
+      "options": {
+        "description": "Generates a new API token",
+        "responses": {
+          "default": { "description": "Options for generating a new API token" }
+        }
+      }
+    },
+    "/auth/token": {
+      "post": {
+        "description": "Generates a new API token",
+        "responses": { "200": { "description": "Generates a new API token" } }
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "description": "Logs a user out by invalidating token and refresh token",
+        "responses": {
+          "200": { "description": "Successfully logged out" },
+          "400": { "description": "Error while logging out" }
+        }
+      }
+    },
+    "/api/stream/{streamId}/blob": {
+      "post": {
+        "description": "Upload a new blob to a project (stream)",
+        "parameters": [{ "in": "path", "name": "streamId", "required": true }],
+        "responses": {
+          "200": {
+            "description": "Successfully uploaded a blob to the project"
+          }
+        }
+      }
+    },
+    "/api/stream/{streamId}/diff": {
+      "post": {
+        "description": "Determine the difference (diff) between the provided array of blob Ids and those stored on the server",
+        "parameters": [{ "in": "path", "name": "streamId", "required": true }],
+        "responses": {
+          "200": {
+            "description": "The difference between the list of blob Ids provided in the body of the request and those stored on the server"
+          }
+        }
+      }
+    },
+    "/api/stream/{streamId}/blob/{blobId}": {
+      "get": {
+        "description": "Gets a blob from a project (stream)",
+        "parameters": [
+          { "in": "path", "name": "streamId", "required": true },
+          { "in": "path", "name": "blobId", "required": true }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved a blob from the project"
+          }
+        }
+      },
+      "delete": {
+        "description": "Deletes a blob from a project (stream)",
+        "parameters": [
+          { "in": "path", "name": "streamId", "required": true },
+          { "in": "path", "name": "blobId", "required": true }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successfully deleted a blob from the project"
+          }
+        }
+      }
+    },
+    "/api/stream/{streamId}/blobs": {
+      "get": {
+        "description": "Gets all the blobs of a project (stream)",
+        "parameters": [{ "in": "path", "name": "streamId", "required": true }],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved all the blobs from the project"
+          }
+        }
+      },
+      "delete": {
+        "description": "Deletes all the blobs from a project (stream)",
+        "parameters": [{ "in": "path", "name": "streamId", "required": true }],
+        "responses": { "501": { "description": "Not implemented." } }
+      }
+    },
+    "/static": {
+      "get": {
+        "description": "Static assets",
+        "responses": { "200": { "description": "An asset was retrieved." } }
+      }
+    },
+    "/liveness": {
+      "options": {
+        "description": "Liveness options",
+        "responses": {
+          "200": { "description": "Options for liveness endpoint." }
+        }
+      },
+      "get": {
+        "description": "Indicates whether the application is alive.",
+        "responses": { "200": { "description": "The application is alive." } }
+      }
+    },
+    "/readiness": {
+      "options": {
+        "description": "Readiness endpoint options",
+        "responses": { "200": { "description": "Options were retrieved." } }
+      },
+      "get": {
+        "description": "Indicates whether the application is ready to accept traffic",
+        "responses": { "200": { "description": "The application is ready." } }
+      }
+    },
+    "/objects/{streamId}": {
+      "options": {
+        "description": "The options for this endpoint",
+        "responses": { "200": { "description": "Options were retrieved." } }
+      },
+      "post": {
+        "description": "Upload objects to the project (stream)",
+        "responses": {
+          "200": { "description": "Objects were successfully uploaded." }
+        }
+      }
+    },
+    "/objects/{streamId}/{objectId}": {
+      "options": {
+        "description": "Options for downloading an object from a project (stream)",
+        "responses": { "200": { "description": "Options were retrieved." } }
+      },
+      "get": {
+        "description": "Download objects from a project (stream)",
+        "responses": { "200": { "description": "Objects were downloaded." } }
+      }
+    },
+    "/objects/{streamId}/{objectId}/single": {
+      "options": {
+        "description": "Options for downloading a single object from a project (stream)",
+        "responses": { "200": { "description": "Options were retrieved." } }
+      },
+      "get": {
+        "description": "Options for downloading a single object from a project (stream)",
+        "responses": { "200": { "description": "An object was retrieved." } }
+      }
+    },
+    "/api/diff/{streamId}": {
+      "options": {
+        "description": "Options for the endpoint",
+        "responses": { "200": { "description": "Options were retrieved." } }
+      },
+      "post": {
+        "description": "Options for getting the diff of objects for a project (stream)",
+        "responses": {
+          "200": { "description": "A diff was successfully computed." }
+        }
+      }
+    },
+    "/api/getobjects/{streamId}": {
+      "options": {
+        "description": "Options for the endpoint",
+        "responses": { "200": { "description": "Options were retrieved." } }
+      },
+      "post": {
+        "description": "Get all objects for a project (stream)",
+        "responses": {
+          "200": { "description": "All objects were successfully retrieved." }
+        }
+      }
+    },
+    "/auth/verifyemail": {
+      "get": {
+        "summary": "Verify email",
+        "description": "Verifies an email address",
+        "responses": { "302": { "description": "Redirects to the home page." } }
+      }
+    },
+    "/api/file/{fileType}/{streamId}/{branchName}": {
+      "post": {
+        "description": "Uploads a file to a project (stream)",
+        "responses": {
+          "200": {
+            "description": "file successfully uploaded to the project (stream)"
+          }
+        }
+      }
+    },
+    "/metrics": {
+      "get": {
+        "summary": "Metrics",
+        "description": "Returns Prometheus metrics",
+        "responses": { "200": { "description": "Returns Prometheus metrics" } }
+      }
+    },
+    "/openapi/html": {
+      "get": {
+        "summary": "OpenAPI HTML",
+        "description": "Returns the OpenAPI documentation in HTML format",
+        "responses": {
+          "200": {
+            "description": "Returns the OpenAPI documentation in HTML format"
+          }
+        }
+      }
+    },
+    "/openapi/json": {
+      "get": {
+        "summary": "OpenAPI JSON",
+        "description": "Returns the OpenAPI documentation in JSON format",
+        "responses": {
+          "200": {
+            "description": "Returns the OpenAPI documentation in JSON format"
+          }
+        }
+      }
+    },
+    "/preview/{streamId}/{angle}": {
+      "options": {
+        "description": "Options for the endpoint",
+        "responses": {
+          "200": { "description": "Options successfully retrieved." }
+        }
+      },
+      "get": {
+        "description": "Retrieve a preview for the project (stream), at an optional angle",
+        "responses": {
+          "200": { "description": "A preview was successfully retrieved." }
+        }
+      }
+    },
+    "/preview/{streamId}/branches/{branchName}/{angle}": {
+      "options": {
+        "description": "Options for the endpoint",
+        "responses": {
+          "200": { "description": "Options successfully retrieved." }
+        }
+      }
+    },
+    "/preview/{streamId}/branches/{branchname}/{angle}": {
+      "get": {
+        "description": "Retrieve a preview for the project (stream) and model (branch), at an optional angle",
+        "responses": {
+          "200": { "description": "A preview was successfully retrieved." }
+        }
+      }
+    },
+    "/preview/{streamId}/commits/{commitId}/{angle}": {
+      "options": {
+        "description": "Options for the endpoint",
+        "responses": {
+          "200": { "description": "Options successfully retrieved." }
+        }
+      },
+      "get": {
+        "description": "Retrieve a preview for the project (stream) and version (commit), at an optional angle",
+        "responses": {
+          "200": { "description": "A preview was successfully retrieved." }
+        }
+      }
+    },
+    "/preview/{streamId}/objects/{objectId}/{angle}": {
+      "options": {
+        "description": "Options for the endpoint",
+        "responses": {
+          "200": { "description": "Options successfully retrieved." }
+        }
+      },
+      "get": {
+        "description": "Retrieve a preview for the project (stream) and object, at an optional angle",
+        "responses": {
+          "200": { "description": "A preview was successfully retrieved." }
+        }
+      }
+    },
+    "/auth/pwdreset/request": {
+      "post": {
+        "description": "Reset a password",
+        "responses": {
+          "200": {
+            "description": "The password reset workflow was successfully started."
+          }
+        }
+      }
+    },
+    "/auth/pwdreset/finalize": {
+      "get": {
+        "description": "Finish resetting a password",
+        "responses": {
+          "200": { "description": "The password was successfully reset." }
+        }
+      }
+    },
+    "/graphql": {
+      "post": {
+        "summary": "GraphQL",
+        "description": "GraphQL endpoint",
+        "responses": { "default": { "description": "GraphQL endpoint" } }
+      }
+    }
+  }
+}
