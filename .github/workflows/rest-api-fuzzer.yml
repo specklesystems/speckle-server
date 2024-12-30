@@ -129,17 +129,21 @@ jobs:
         working-directory: ${{ github.workspace }}/speckle-server/packages/server
         run: |
           yarn start &
-          sleep 20
+          until curl --output /dev/null --silent --head --fail http://127.0.0.1:3000/readiness; do
+            echo "Waiting a further 3 seconds for speckle-server to start..."
+            sleep 3
+          done
 
       - name: Run RESTler coverage test
         run: |
+          curl --head --fail http://127.0.0.1:3000/readiness
           ${{ github.workspace }}/bin/restler/Restler test \
-            --grammar_file ${{ github.workspace }}/Compile/grammar.py \
-            --dictionary_file ${{ github.workspace }}/Compile/dict.json \
-            --settings ${{ github.workspace }}/speckle-server/setup/fuzzer/settings.restler.json \
+            --grammar_file "${{ github.workspace }}/Compile/grammar.py" \
+            --dictionary_file "${{ github.workspace }}/Compile/dict.json" \
+            --settings "${{ github.workspace }}/speckle-server/setup/fuzzer/settings.restler.json" \
             --no_ssl \
-            --target_ip 127.0.0.1 \
-            --target_port 3000
+            --target_ip "127.0.0.1" \
+            --target_port "3000"
 
       - name: Print the results
         if: always()
@@ -150,43 +154,43 @@ jobs:
           echo "#            Engine stderr                 #"
           echo "############################################"
           echo ""
-          cat ${{ github.workspace }}/Test/EngineStdErr.txt
+          cat ${{ github.workspace }}/Test/EngineStdErr.txt || true
           echo ""
           echo "############################################"
           echo "#     Engine stdout                        #"
           echo "############################################"
           echo ""
-          cat ${{ github.workspace }}/Test/EngineStdOut.txt
+          cat ${{ github.workspace }}/Test/EngineStdOut.txt || true
           echo ""
           echo "############################################"
           echo "#     Results analyzer stderr              #"
           echo "############################################"
           echo ""
-          cat ${{ github.workspace }}/Test/ResultsAnalyzerStdErr.txt
+          cat ${{ github.workspace }}/Test/ResultsAnalyzerStdErr.txt || true
           echo ""
           echo "############################################"
           echo "#         Results analyzer stdout          #"
           echo "############################################"
           echo ""
-          cat ${{ github.workspace }}/Test/ResultsAnalyzerStdOut.txt
+          cat ${{ github.workspace }}/Test/ResultsAnalyzerStdOut.txt || true
           echo ""
           echo "############################################"
           echo "#    Coverage failures to investigate      #"
           echo "############################################"
           echo ""
-          cat ${{ github.workspace }}/Test/coverage_failures_to_investigate.txt
+          cat ${{ github.workspace }}/Test/coverage_failures_to_investigate.txt || true
           echo ""
           echo "############################################"
           echo "#              Restler logs                #"
           echo "############################################"
           echo ""
-          cat ${{ github.workspace }}/Test/restler-*.log
+          cat ${{ github.workspace }}/Test/restler-*.log || true
           echo ""
           echo "############################################"
           echo "#            Coverage report               #"
           echo "############################################"
           echo ""
-          cat "$(find ${{ github.workspace }}/Test -type f -name "speccov.json")"
+          cat "$(find ${{ github.workspace }}/Test -type f -name "speccov.json")" || true
 
       - name: Print Docker Compose logs
         if: always()
