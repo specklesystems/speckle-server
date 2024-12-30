@@ -56,7 +56,7 @@ jobs:
       - name: Debug the built output
         run: |
           ls -la ${{ github.workspace }}/bin/restler
-          ls -la ${{ github.workspace }}/bin/restler/restler
+          ls -la ${{ github.workspace }}/bin/restler/Restler
 
       - uses: actions/checkout@v4
         name: Checkout speckle-server
@@ -65,7 +65,7 @@ jobs:
 
       - name: Compile RESTler grammar from OpenAPI specification
         run: |
-          ${{ github.workspace }}/bin/restler/restler compile --api_spec ${{ github.workspace }}/speckle-server/utils/specifications/speckle-server.openapi.json
+          ${{ github.workspace }}/bin/restler/Restler compile --api_spec ${{ github.workspace }}/speckle-server/utils/specifications/speckle-server.openapi.json
       - name: Print the results
         run: ls -lat ${{ github.workspace }}/restlerConfig
 
