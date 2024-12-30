@@ -92,7 +92,7 @@ jobs:
       - name: Compile from OpenAPI
         # run: docker run --volume ${{ github.workspace }}/restlerConfig:/RESTler/restler/restlerConfig ${{ needs.build-restler-fuzzer.outputs.tags }} compile --api_spec utils/specifications/speckle-server.openapi.json
         run: |
-          ${{ github.workspace }}/bin/restler compile --api_spec ${{ github.workspace }}/speckle-server/utils/specifications/speckle-server.openapi.json
+          ${{ github.workspace }}/bin/restler/compiler compile --api_spec ${{ github.workspace }}/speckle-server/utils/specifications/speckle-server.openapi.json
       - name: Print the results
         run: ls -lat ${{ github.workspace }}/restlerConfig
 
