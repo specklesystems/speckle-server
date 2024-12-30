@@ -15,7 +15,7 @@ export type InsertableSpeckleObject = NullableKeysToOptional<
   // data & totalChildrenCountByDepth are inserted as strings, which differs from the original type (because of preemptive serialization)
   OverrideProperties<
     // Both createdAt & speckleType have defaults upon insertion
-    SetOptional<SpeckleObject, 'createdAt' | 'speckleType'>,
+    SetOptional<SpeckleObject, 'createdAt' | 'speckleType' | 'sizeBytes'>,
     {
       data: string
       totalChildrenCountByDepth: Nullable<string>

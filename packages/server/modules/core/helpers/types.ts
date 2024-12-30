@@ -133,6 +133,7 @@ export type ObjectRecord = {
   totalChildrenCountByDepth: Nullable<Record<string, unknown>>
   createdAt: Date
   data: Nullable<Record<string, unknown>>
+  sizeBytes: Nullable<number>
   streamId: string
 }
 

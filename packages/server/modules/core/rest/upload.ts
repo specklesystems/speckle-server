@@ -39,13 +39,15 @@ export default (app: Router, { executeHooks }: { executeHooks: ExecuteHooks }) =
       start: number
       batchStartTime: number
       totalObjectsProcessed: number
+      totalBufferSize: number
     }) => {
       return {
         batchSizeMb: params.batchSizeMb,
         maxFileSizeMb: toMegabytesWith1DecimalPlace(MAX_FILE_SIZE),
         elapsedTimeMs: Date.now() - params.start,
         batchElapsedTimeMs: Date.now() - params.batchStartTime,
-        totalObjectsProcessed: params.totalObjectsProcessed
+        totalObjectsProcessed: params.totalObjectsProcessed,
+        totalBufferSize: toMegabytesWith1DecimalPlace(params.totalBufferSize)
       }
     }
 
@@ -98,6 +100,7 @@ export default (app: Router, { executeHooks }: { executeHooks: ExecuteHooks }) =
         )
     }
     let totalObjectsProcessed = 0
+    let totalBufferSize = 0
 
     const promises: Promise<boolean | void | string[]>[] = []
     let requestDropped = false
@@ -129,9 +132,10 @@ export default (app: Router, { executeHooks }: { executeHooks: ExecuteHooks }) =
                 batchSizeMb: toMegabytesWith1DecimalPlace(gzippedBuffer.length),
                 start,
                 batchStartTime,
-                totalObjectsProcessed
+                totalObjectsProcessed,
+                totalBufferSize
               }),
-              'Upload error: Batch size too large ({batchSizeMb} > {maxFileSizeMb}). Error occurred after {elapsedTimeMs}ms. This batch took {batchElapsedTimeMs}ms. Objects processed before error: {totalObjectsProcessed}.'
+              'Upload error: Batch size too large ({batchSizeMb} > {maxFileSizeMb}). Error occurred after {elapsedTimeMs}ms. This batch took {batchElapsedTimeMs}ms. Objects processed before error: {totalObjectsProcessed} ({totalBufferSize}Mb).'
             )
             if (!requestDropped)
               res
@@ -151,9 +155,10 @@ export default (app: Router, { executeHooks }: { executeHooks: ExecuteHooks }) =
                 batchSizeMb: gunzippedBufferMegabyteSize,
                 start,
                 batchStartTime,
-                totalObjectsProcessed
+                totalObjectsProcessed,
+                totalBufferSize
               }),
-              'Upload error: batch size too large ({batchSizeMb} > {maxFileSizeMb}). Error occurred after {elapsedTimeMs}ms. This batch took {batchElapsedTimeMs}ms. Total objects processed before error: {totalObjectsProcessed}.'
+              'Upload error: batch size too large ({batchSizeMb} > {maxFileSizeMb}). Error occurred after {elapsedTimeMs}ms. This batch took {batchElapsedTimeMs}ms. Total objects processed before error: {totalObjectsProcessed} ({totalBufferSize}Mb).'
             )
             if (!requestDropped)
               res
@@ -172,16 +177,17 @@ export default (app: Router, { executeHooks }: { executeHooks: ExecuteHooks }) =
                 batchSizeMb: gunzippedBufferMegabyteSize,
                 start,
                 batchStartTime,
-                totalObjectsProcessed
+                totalObjectsProcessed,
+                totalBufferSize
               }),
-              'Upload error: Batch not in JSON format. Error occurred after {elapsedTimeMs}ms. This batch of objects took {batchElapsedTimeMs}ms. Objects processed before error: {totalObjectsProcessed}.'
+              'Upload error: Batch not in JSON format. Error occurred after {elapsedTimeMs}ms. This batch of objects took {batchElapsedTimeMs}ms. Objects processed before error: {totalObjectsProcessed}  ({totalBufferSize}Mb).'
             )
             if (!requestDropped) res.status(400).send('Failed to parse data.')
             requestDropped = true
           }
 
-          // last = objs[objs.length - 1]
           totalObjectsProcessed += objs.length
+          totalBufferSize += gunzippedBuffer.length
 
           let previouslyAwaitedPromises = 0
           while (previouslyAwaitedPromises !== promises.length) {
@@ -200,12 +206,13 @@ export default (app: Router, { executeHooks }: { executeHooks: ExecuteHooks }) =
                   batchSizeMb: gunzippedBufferMegabyteSize,
                   start,
                   batchStartTime,
-                  totalObjectsProcessed
+                  totalObjectsProcessed,
+                  totalBufferSize
                 }),
                 objectCount: objs.length,
                 err: e
               },
-              `Upload error when inserting objects into database. Number of objects: {objectCount}. This batch took {batchElapsedTimeMs}ms. Error occurred after {elapsedTimeMs}ms. Total objects processed before error: {totalObjectsProcessed}.`
+              `Upload error when inserting objects into database. Number of objects: {objectCount}. This batch took {batchElapsedTimeMs}ms. Error occurred after {elapsedTimeMs}ms. Total objects processed before error: {totalObjectsProcessed} ({totalBufferSize}Mb).`
             )
             if (!requestDropped) {
               switch (e.constructor) {
@@ -236,9 +243,10 @@ export default (app: Router, { executeHooks }: { executeHooks: ExecuteHooks }) =
               crtMemUsageMB: process.memoryUsage().heapUsed / 1024 / 1024,
               uploadedSizeMB: toMegabytesWith1DecimalPlace(gunzippedBuffer.length),
               requestDropped,
-              totalObjectsProcessed
+              totalObjectsProcessed,
+              totalBufferSize: toMegabytesWith1DecimalPlace(totalBufferSize)
             },
-            'Uploaded batch of {objectCount} objects in {batchElapsedTimeMs}ms. Total objects processed so far: {totalObjectsProcessed} in a total of {elapsedTimeMs}ms.'
+            'Uploaded batch of {objectCount} objects in {batchElapsedTimeMs}ms. Total objects processed so far: {totalObjectsProcessed} ({totalBufferSize}Mb) in a total of {elapsedTimeMs}ms.'
           )
         })
       } else if (
@@ -262,9 +270,10 @@ export default (app: Router, { executeHooks }: { executeHooks: ExecuteHooks }) =
                 batchSizeMb: toMegabytesWith1DecimalPlace(buffer.length),
                 start,
                 batchStartTime,
-                totalObjectsProcessed
+                totalObjectsProcessed,
+                totalBufferSize
               }),
-              'Upload error: Batch size too large ({batchSizeMb} > {maxFileSizeMb}). Error occurred after {elapsedTimeMs}ms. This batch took {batchElapsedTimeMs}ms. Objects processed before error: {totalObjectsProcessed}.'
+              'Upload error: Batch size too large ({batchSizeMb} > {maxFileSizeMb}). Error occurred after {elapsedTimeMs}ms. This batch took {batchElapsedTimeMs}ms. Objects processed before error: {totalObjectsProcessed} ({totalBufferSize}Mb).'
             )
             if (!requestDropped)
               res
@@ -281,9 +290,10 @@ export default (app: Router, { executeHooks }: { executeHooks: ExecuteHooks }) =
                 batchSizeMb: toMegabytesWith1DecimalPlace(buffer.length),
                 start,
                 batchStartTime,
-                totalObjectsProcessed
+                totalObjectsProcessed,
+                totalBufferSize
               }),
-              'Upload error: Batch not in JSON format. Error occurred after {elapsedTimeMs}ms. This batch failed after {batchElapsedTimeMs}ms. Objects processed before error: {totalObjectsProcessed}.'
+              'Upload error: Batch not in JSON format. Error occurred after {elapsedTimeMs}ms. This batch failed after {batchElapsedTimeMs}ms. Objects processed before error: {totalObjectsProcessed} ({totalBufferSize}Mb).'
             )
             if (!requestDropped)
               res.status(400).send('Failed to parse data. Batch is not in JSON format.')
@@ -295,9 +305,10 @@ export default (app: Router, { executeHooks }: { executeHooks: ExecuteHooks }) =
                 batchSizeMb: toMegabytesWith1DecimalPlace(buffer.length),
                 start,
                 batchStartTime,
-                totalObjectsProcessed
+                totalObjectsProcessed,
+                totalBufferSize
               }),
-              'Upload error: Batch not an array. Error occurred after {elapsedTimeMs}ms. This batch failed after {batchElapsedTimeMs}ms. Objects processed before error: {totalObjectsProcessed}.'
+              'Upload error: Batch not an array. Error occurred after {elapsedTimeMs}ms. This batch failed after {batchElapsedTimeMs}ms. Objects processed before error: {totalObjectsProcessed} ({totalBufferSize}Mb).'
             )
             if (!requestDropped)
               res
@@ -310,17 +321,20 @@ export default (app: Router, { executeHooks }: { executeHooks: ExecuteHooks }) =
           //FIXME should we exit here if requestDropped is true
 
           totalObjectsProcessed += objs.length
+          totalBufferSize += buffer.length
+
           req.log.debug(
             {
               ...calculateLogMetadata({
                 batchSizeMb: toMegabytesWith1DecimalPlace(buffer.length),
                 start,
                 batchStartTime,
-                totalObjectsProcessed
+                totalObjectsProcessed,
+                totalBufferSize
               }),
               objectCount: objs.length
             },
-            'Total objects, including current pending batch of {objectCount} objects, processed so far is {totalObjectsProcessed}. This batch has taken {batchElapsedTimeMs}ms. Total time elapsed is {elapsedTimeMs}ms.'
+            'Total objects, including current pending batch of {objectCount} objects, processed so far is {totalObjectsProcessed} ({totalBufferSize}Mb). This batch has taken {batchElapsedTimeMs}ms. Total time elapsed is {elapsedTimeMs}ms.'
           )
           let previouslyAwaitedPromises = 0
           while (previouslyAwaitedPromises !== promises.length) {
@@ -339,11 +353,12 @@ export default (app: Router, { executeHooks }: { executeHooks: ExecuteHooks }) =
                   batchSizeMb: toMegabytesWith1DecimalPlace(buffer.length),
                   start,
                   batchStartTime,
-                  totalObjectsProcessed
+                  totalObjectsProcessed,
+                  totalBufferSize
                 }),
                 err: e
               },
-              `Upload error when inserting objects into database. Number of objects: {objectCount}. This batch took {batchElapsedTimeMs}ms. Error occurred after {elapsedTimeMs}ms. Total objects processed before error: {totalObjectsProcessed}.`
+              `Upload error when inserting objects into database. Number of objects: {objectCount}. This batch took {batchElapsedTimeMs}ms. Error occurred after {elapsedTimeMs}ms. Total objects processed before error: {totalObjectsProcessed} ({totalBufferSize}Mb).`
             )
             if (!requestDropped)
               switch (e.constructor) {
@@ -370,21 +385,23 @@ export default (app: Router, { executeHooks }: { executeHooks: ExecuteHooks }) =
                 batchSizeMb: estimateStringMegabyteSize(buffer),
                 start,
                 batchStartTime,
-                totalObjectsProcessed
+                totalObjectsProcessed,
+                totalBufferSize
               }),
               objectCount: objs.length,
               crtMemUsageMB: process.memoryUsage().heapUsed / 1024 / 1024
             },
-            'Uploaded batch of {objectCount} objects. Total number of objects processed is {totalObjectsProcessed}. This batch took {batchElapsedTimeMs}ms.'
+            'Uploaded batch of {objectCount} objects. Total number of objects processed is {totalObjectsProcessed} ({totalBufferSize}Mb). This batch took {batchElapsedTimeMs}ms.'
           )
         })
       } else {
         req.log.info(
           {
             mimeType,
-            totalObjectsProcessed
+            totalObjectsProcessed,
+            totalBufferSize: toMegabytesWith1DecimalPlace(totalBufferSize)
           },
-          'Invalid ContentType header: {mimeType}. Total number of objects processed so far: {totalObjectsProcessed}.'
+          'Invalid ContentType header: {mimeType}. Total number of objects processed so far: {totalObjectsProcessed} ({totalBufferSize}Mb).'
         )
         if (!requestDropped)
           res
@@ -402,10 +419,11 @@ export default (app: Router, { executeHooks }: { executeHooks: ExecuteHooks }) =
       req.log.info(
         {
           totalObjectsProcessed,
+          totalBufferSize: toMegabytesWith1DecimalPlace(totalBufferSize),
           crtMemUsageMB: process.memoryUsage().heapUsed / 1024 / 1024,
           elapsedTimeMs: Date.now() - start
         },
-        'Upload finished: {totalObjectsProcessed} objects processed in {elapsedTimeMs}ms'
+        'Upload finished: {totalObjectsProcessed} ({totalBufferSize}Mb) objects processed in {elapsedTimeMs}ms'
       )
 
       let previouslyAwaitedPromises = 0
@@ -422,10 +440,11 @@ export default (app: Router, { executeHooks }: { executeHooks: ExecuteHooks }) =
         {
           err,
           totalObjectsProcessed,
+          totalBufferSize: toMegabytesWith1DecimalPlace(totalBufferSize),
           elapsedTimeMs: Date.now() - start,
           crtMemUsageMB: process.memoryUsage().heapUsed / 1024 / 1024
         },
-        'Error during upload. Error occurred after {elapsedTimeMs}ms. Objects processed before error: {totalObjectsProcessed}. Error: {error}'
+        'Error during upload. Error occurred after {elapsedTimeMs}ms. Objects processed before error: {totalObjectsProcessed} ({totalBufferSize}Mb). Error: {error}'
       )
       if (!requestDropped)
         res.status(400).end('Upload request error. The server logs have more details')

@@ -52,7 +52,8 @@ const prepInsertionObject = (
     id: obj.id,
     // YEAH, this has been broken forever...
     // speckleType: obj.speckleType
-    speckleType: obj.speckle_type
+    speckleType: obj.speckle_type,
+    sizeBytes: stringifiedObj.length
   }
 }
 

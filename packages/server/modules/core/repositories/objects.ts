@@ -1,13 +1,11 @@
-import { Optional } from '@speckle/shared'
+import type { Optional } from '@speckle/shared'
 import { buildTableHelper, knex, Objects } from '@/modules/core/dbSchema'
-import { ObjectChildrenClosureRecord, ObjectRecord } from '@/modules/core/helpers/types'
-import {
-  BatchedSelectOptions,
-  executeBatchedSelect
-} from '@/modules/shared/helpers/dbHelper'
-import { Knex } from 'knex'
-import {
-  GetBatchedStreamObjects,
+import type {
+  ObjectChildrenClosureRecord,
+  ObjectRecord
+} from '@/modules/core/helpers/types'
+import type { Knex } from 'knex'
+import type {
   GetFormattedObject,
   GetObject,
   GetObjectChildren,
@@ -17,12 +15,11 @@ import {
   GetStreamObjects,
   HasObjects,
   StoreClosuresIfNotFound,
-  StoreObjects,
   StoreObjectsIfNotFound,
   StoreSingleObjectIfNotFound
 } from '@/modules/core/domain/objects/operations'
-import { SpeckleObject } from '@/modules/core/domain/objects/types'
-import { SetOptional } from 'type-fest'
+import type { SpeckleObject } from '@/modules/core/domain/objects/types'
+import type { SetOptional } from 'type-fest'
 import { get, set, toNumber } from 'lodash'
 
 const ObjectChildrenClosure = buildTableHelper('object_children_closure', [
@@ -77,26 +74,6 @@ export const getFormattedObjectFactory =
     delete finalRes.streamId // backwards compatibility
 
     return finalRes
-  }
-
-export const getBatchedStreamObjectsFactory =
-  (deps: { db: Knex }): GetBatchedStreamObjects =>
-  (streamId: string, options?: Partial<BatchedSelectOptions>) => {
-    const baseQuery = tables
-      .objects(deps.db)
-      .select<ObjectRecord[]>('*')
-      .where(Objects.col.streamId, streamId)
-      .orderBy(Objects.col.id)
-
-    return executeBatchedSelect(baseQuery, options)
-  }
-
-export const insertObjectsFactory =
-  (deps: { db: Knex }): StoreObjects =>
-  async (objects: ObjectRecord[], options?: Partial<{ trx: Knex.Transaction }>) => {
-    const q = tables.objects(deps.db).insert(objects)
-    if (options?.trx) q.transacting(options.trx)
-    return await q
   }
 
 export const storeSingleObjectIfNotFoundFactory =

@@ -1,4 +1,4 @@
-## Migrations, and how to create them
+# Migrations, and how to create them
 
 First, make a new migration file in the appropriate migrations folder. To do this use `./bin/cli`.
 
