@@ -111,6 +111,7 @@ jobs:
         with:
           node-version: 22
           cache: 'yarn'
+          cache-dependency-path: ${{ github.workspace }}/speckle-server/yarn.lock
       - name: Install dependencies
         working-directory: ${{ github.workspace }}/speckle-server/packages/server
         run: yarn install
