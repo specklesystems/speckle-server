@@ -169,7 +169,7 @@ jobs:
       - name: Configure speckle-server
         working-directory: ${{ github.workspace }}/speckle-server/packages/server
         run: |
-          cp .env-example .env
+          cp ${{ github.workspace }}/speckle-server/setup/fuzzer/.env.fuzzer-example .env
       - name: Run speckle-server
         working-directory: ${{ github.workspace }}/speckle-server/packages/server
         run: yarn start &
