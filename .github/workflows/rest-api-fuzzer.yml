@@ -67,7 +67,14 @@ jobs:
         run: |
           ${{ github.workspace }}/bin/restler/Restler compile --api_spec ${{ github.workspace }}/speckle-server/utils/specifications/speckle-server.openapi.json
       - name: Print the results
-        run: ls -lat ${{ github.workspace }}/Compile
+        run: |
+          ls -lat ${{ github.workspace }}/Compile
+          echo "Engine settings:"
+          cat ${{ github.workspace }}/Compile/engine_settings.json
+          echo "Config:"
+          cat ${{ github.workspace }}/Compile/config.json
+          echo "Dictionary:"
+          cat ${{ github.workspace }}/Compile/dict.json
 
   # fuzz-rest-api-lite:
   #   runs-on: ubuntu-latest
