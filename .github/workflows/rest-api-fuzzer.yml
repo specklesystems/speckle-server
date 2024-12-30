@@ -19,12 +19,42 @@ env:
   DOTNET_VERSION: '6.0.x'
 
 jobs:
-
   build-restler-fuzzer:
     name: Fuzz test speckle-server REST API
     runs-on: ubuntu-latest
     permissions:
       contents: read
+
+    services:
+      postgres:
+        # Docker Hub image
+        image: postgres:16.4-bookworm@sha256:91f464e7ba0ad91a106c94cff079fb4384139291b8c0502fd36989cf2c788bbb
+        env:
+          POSTGRES_DB: fuzz_test
+          POSTGRES_PASSWORD: fuzz_test
+          POSTGRES_USER: fuzz_test
+        # Set health checks to wait until postgres has started
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7-alpine@sha256:c1e88455c85225310bbea54816e9c3f4b5295815e6dbf80c34d40afc6df28275
+        ports:
+          - 6379:6379
+
+      minio:
+        image: minio/minio@sha256:1dce27c494a16bae114774f1cec295493f3613142713130c2d22dd5696be6ad3
+        options: >-
+          --console-address ":9001"
+        ports:
+          - 9000:9000
+          - 9001:9001
+
     steps:
       - uses: actions/checkout@v4
         name: Checkout RESTler Fuzzer
@@ -68,50 +98,40 @@ jobs:
           ${{ github.workspace }}/bin/restler/Restler compile --api_spec ${{ github.workspace }}/speckle-server/utils/specifications/speckle-server.openapi.json
       - name: Print the results
         run: |
-          ls -lat ${{ github.workspace }}/Compile
+          ls -la ${{ github.workspace }}/Compile
+          echo ""
           echo "Engine settings:"
           cat ${{ github.workspace }}/Compile/engine_settings.json
+          echo ""
           echo "Config:"
           cat ${{ github.workspace }}/Compile/config.json
+          echo ""
           echo "Dictionary:"
           cat ${{ github.workspace }}/Compile/dict.json
 
-  # fuzz-rest-api-lite:
-  #   runs-on: ubuntu-latest
-  #   needs:
-  #     - compile-fuzzer-syntax
-  #     timeout-minutes: 15
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'yarn'
+      - name: Install dependencies
+        working-directory: packages/server
+        run: yarn install
+      - name: Build public packages
+        working-directory: packages/server
+        run: yarn build:public
+      - name: Build speckle-server
+        working-directory: packages/server
+        run: yarn build
+      - name: Run speckle-server
+        working-directory: packages/server
+        run: yarn start &
 
-  #   services:
-  #     postgres:
-  #       # Docker Hub image
-  #       image: postgres:16.4-bookworm@sha256:91f464e7ba0ad91a106c94cff079fb4384139291b8c0502fd36989cf2c788bbb
-  #       env:
-  #         POSTGRES_DB: fuzz_test
-  #         POSTGRES_PASSWORD: fuzz_test
-  #         POSTGRES_USER: fuzz_test
-  #       # Set health checks to wait until postgres has started
-  #       options: >-
-  #         --health-cmd pg_isready
-  #         --health-interval 10s
-  #         --health-timeout 5s
-  #         --health-retries 5
-  #       ports:
-  #         - 5432:5432
-  # # 4. Run the fuzzer in lite mode
-      # steps:
-      # - name: Compile from OpenAPI
-      #   run: docker run ${{ needs.build-restler-fuzzer.outputs.tags }} compile --api_spec <full path to API specification>
-  # # 5. Print the results
+      - name: Run RESTler fuzz test
+        run: |
+          ${{ github.workspace }}/bin/restler/Restler test --grammar_file ${{ github.workspace }}/Compile/grammar.py --dictionary_file ${{ github.workspace }}/Compile/dict.json --settings ${{ github.workspace }}/Compile/engine_settings.json --no_ssl
 
-
-
-  # fuzz-rest-api-full:
-  #   runs-on: ubuntu-latest
-  #   needs:
-  #     - compile-fuzzer-syntax
-  #   timeout-minutes: 45
-  #   steps:
-  #     - name: Run RESTler Fuzzer
-  #       run: docker run /RESTler/restler/restler.exe fuzz --api_spec <full path to API specification> --fuzz_mode full
-  #     # 7. Print the results
+      - name: Print the results
+        run: |
+          ls -la ${{ github.workspace }}/Test
+          find ${{ github.workspace }}/Test -type f -name "speccov.json"
