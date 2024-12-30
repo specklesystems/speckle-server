@@ -181,4 +181,24 @@ jobs:
       - name: Print the results
         run: |
           ls -la ${{ github.workspace }}/Test
-          find ${{ github.workspace }}/Test -type f -name "speccov.json"
+          echo ""
+          echo "Engine stderr:"
+          cat ${{ github.workspace }}/Test/EngineStdErr.txt
+          echo ""
+          echo "Engine stdout:"
+          cat ${{ github.workspace }}/Test/EngineStdOut.txt
+          echo ""
+          echo "Results analyzer stderr:"
+          cat ${{ github.workspace }}/Test/ResultsAnalyzerStdErr.txt
+          echo ""
+          echo "Results analyzer stdout:"
+          cat ${{ github.workspace }}/Test/ResultsAnalyzerStdOut.txt
+          echo ""
+          echo "Coverage failures to investigate:"
+          cat ${{ github.workspace }}/Test/coverage_failures_to_investigate.txt
+          echo ""
+          echo "Restler logs:"
+          cat ${{ github.workspace }}/Test/restler-*.log
+          echo ""
+          echo "Coverage report:"
+          cat "$(find ${{ github.workspace }}/Test -type f -name "speccov.json")"
