@@ -25,28 +25,6 @@ jobs:
     permissions:
       contents: read
 
-    services:
-      postgres:
-        # Docker Hub image
-        image: postgres:16.4-bookworm@sha256:91f464e7ba0ad91a106c94cff079fb4384139291b8c0502fd36989cf2c788bbb
-        env:
-          POSTGRES_DB: fuzz_test
-          POSTGRES_PASSWORD: fuzz_test
-          POSTGRES_USER: fuzz_test
-        # Set health checks to wait until postgres has started
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
-
-      redis:
-        image: redis:7-alpine@sha256:c1e88455c85225310bbea54816e9c3f4b5295815e6dbf80c34d40afc6df28275
-        ports:
-          - 6379:6379
-
     steps:
       - uses: actions/checkout@v4
         name: Checkout RESTler Fuzzer
@@ -124,10 +102,9 @@ jobs:
             ${{ github.workspace }}/Compile
           key: ${{ steps.cache-grammar-restore.outputs.cache-primary-key }}
 
-      - name: Minio
-        # Minio requires a command to be passed to the container, and github action services do not allow commands to be passed to containers. So we create the container manually.
+      - name: Docker Compose up
         run: |
-          docker create --name minio -p 9000:9000 minio/minio@sha256:1dce27c494a16bae114774f1cec295493f3613142713130c2d22dd5696be6ad3 server
+          docker compose --file ${{ github.workspace }}/speckle-server/docker-compose-deps.yml up --detach
 
       - name: Install Node.js
         uses: actions/setup-node@v4
@@ -208,7 +185,7 @@ jobs:
           echo ""
           cat "$(find ${{ github.workspace }}/Test -type f -name "speccov.json")"
 
-      - name: Print Minio logs
+      - name: Print Docker Compose logs
         if: always()
         run: |
-          docker logs minio
+          docker compose logs
