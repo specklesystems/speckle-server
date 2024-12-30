@@ -127,7 +127,7 @@ jobs:
       - name: Minio
         # Minio requires a command to be passed to the container, and github action services do not allow commands to be passed to containers. So we create the container manually.
         run: |
-          docker create --name minio -p 9000:9000 --network-alias minio minio/minio@sha256:1dce27c494a16bae114774f1cec295493f3613142713130c2d22dd5696be6ad3 server
+          docker create --name minio -p 9000:9000 minio/minio@sha256:1dce27c494a16bae114774f1cec295493f3613142713130c2d22dd5696be6ad3 server
 
       - name: Install Node.js
         uses: actions/setup-node@v4
