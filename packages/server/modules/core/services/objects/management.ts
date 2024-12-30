@@ -23,6 +23,18 @@ import {
 import { chunk } from 'lodash'
 
 /**
+ * Estimates the size of a stringified object in bytes
+ * Note that this is an estimate, as it does not take into account utf-8 encoding
+ * @param obj
+ * @returns
+ */
+export const estimateStringifiedObjectSize = (obj: string): number => {
+  // assumes 1 char = 1 byte, which is invalid for utf-8, but we're just estimating
+  // this is very simple, but should be good enough for our purposes. We're placing it in a method so that we can easily change it in the future.
+  return obj.length
+}
+
+/**
  * Note: we're generating the hash here, rather than on the db side, as there are
  * limitations when doing upserts - ignored fields are not always returned, hence
  * we cannot provide a full response back including all object hashes.
@@ -53,7 +65,7 @@ const prepInsertionObject = (
     // YEAH, this has been broken forever...
     // speckleType: obj.speckleType
     speckleType: obj.speckle_type,
-    sizeBytes: stringifiedObj.length
+    sizeBytes: estimateStringifiedObjectSize(stringifiedObj)
   }
 }
 
