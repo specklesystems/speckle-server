@@ -49,6 +49,8 @@ jobs:
 
       minio:
         image: minio/minio@sha256:1dce27c494a16bae114774f1cec295493f3613142713130c2d22dd5696be6ad3
+        options: >-
+          --entrypoint "/usr/bin/docker-entrypoint.sh server"
         ports:
           - 9000:9000
 
@@ -170,7 +172,7 @@ jobs:
         working-directory: ${{ github.workspace }}/speckle-server/packages/server
         run: yarn start &
 
-      - name: Run RESTler fuzz test
+      - name: Run RESTler coverage test
         run: |
           ${{ github.workspace }}/bin/restler/Restler test --grammar_file ${{ github.workspace }}/Compile/grammar.py --dictionary_file ${{ github.workspace }}/Compile/dict.json --settings ${{ github.workspace }}/speckle-server/setup/fuzzer/settings.restler.json --no_ssl
 
