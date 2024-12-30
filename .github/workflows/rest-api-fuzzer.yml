@@ -21,18 +21,17 @@ env:
 jobs:
 
   build-restler-fuzzer:
-    name: Build Restler Fuzzer
+    name: Fuzz test speckle-server REST API
     runs-on: ubuntu-latest
     permissions:
       contents: read
     steps:
       - uses: actions/checkout@v4
+        name: Checkout RESTler Fuzzer
         with:
           repository: microsoft/restler-fuzzer
           ref: v${{ env.RESTLER_VERSION }}
           path: 'restler-fuzzer' # The path to clone the repository under {{ github.workspace }}
-      - name: Print environment variables
-        run: printenv
 
       - name: Setup .NET ${{ env.DOTNET_VERSION }}
         uses: actions/setup-dotnet@v4
@@ -51,48 +50,17 @@ jobs:
         run: |
           pip install -r ${{ github.workspace }}/restler-fuzzer/restler/requirements.txt
 
-      - name: Build RESTler drop
+      - name: Build RESTler
         run: |
           python ${{ github.workspace }}/restler-fuzzer/build-restler.py --dest_dir ${{ github.workspace }}/bin/restler
-      # - name: Set up Docker Buildx
-      #   uses: docker/setup-buildx-action@v3
-      # - name: Log in to the Container registry
-      #   uses: docker/login-action@v3.3.0
-      #   with:
-      #     registry: ${{ env.REGISTRY }}
-      #     username: ${{ github.actor }}
-      #     password: ${{ secrets.GITHUB_TOKEN }}
-      # - name: Extract metadata (tags, labels) for Docker
-      #   id: meta
-      #   uses: docker/metadata-action@v5.5.1
-      #   with:
-      #     tags: type=sha,format=long
-      #     images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-      # - name: Build and load preview-service Docker image
-      #   uses: docker/build-push-action@v6
-      #   with:
-      #     context: ${{ github.workspace }}/restler-fuzzer
-      #     file: ${{ github.workspace }}/restler-fuzzer/Dockerfile # The Dockerfile for the restler-fuzzer
-      #     push: true
-      #     tags: ${{ steps.meta.outputs.tags }}
-      #     cache-from: type=gha
-      #     cache-to: type=gha,mode=max
-    # outputs:
-    #   tags: ${{ steps.meta.outputs.tags }}
 
-  # compile-fuzzer-syntax:
-  #   name: Compile Fuzzer Syntax
-  #   runs-on: ubuntu-latest
-  #   needs: build-restler-fuzzer
-
-    # steps:
       - uses: actions/checkout@v4
+        name: Checkout speckle-server
         with:
           path: 'speckle-server'
-      - name: Compile from OpenAPI
-        # run: docker run --volume ${{ github.workspace }}/restlerConfig:/RESTler/restler/restlerConfig ${{ needs.build-restler-fuzzer.outputs.tags }} compile --api_spec utils/specifications/speckle-server.openapi.json
+      - name: Compile RESTler grammar from OpenAPI specification
         run: |
-          ${{ github.workspace }}/bin/restler/compiler compile --api_spec ${{ github.workspace }}/speckle-server/utils/specifications/speckle-server.openapi.json
+          ${{ github.workspace }}/bin/restler/restler compile --api_spec ${{ github.workspace }}/speckle-server/utils/specifications/speckle-server.openapi.json
       - name: Print the results
         run: ls -lat ${{ github.workspace }}/restlerConfig
 
