@@ -30,9 +30,9 @@ jobs:
         # Docker Hub image
         image: postgres:16.4-bookworm@sha256:91f464e7ba0ad91a106c94cff079fb4384139291b8c0502fd36989cf2c788bbb
         env:
-          POSTGRES_DB: speckle
-          POSTGRES_PASSWORD: speckle
-          POSTGRES_USER: speckle
+          POSTGRES_DB: fuzz_test
+          POSTGRES_PASSWORD: fuzz_test
+          POSTGRES_USER: fuzz_test
         # Set health checks to wait until postgres has started
         options: >-
           --health-cmd pg_isready
@@ -53,6 +53,13 @@ jobs:
           - 9000:9000
 
     steps:
+      - uses: actions/checkout@v4
+        name: Checkout RESTler Fuzzer
+        with:
+          repository: microsoft/restler-fuzzer
+          ref: v${{ env.RESTLER_VERSION }}
+          path: 'restler-fuzzer' # The path to clone the repository within the {{ github.workspace }} directory
+
       - name: Restore cached Restler
         id: cache-restler-restore
         uses: actions/cache/restore@v4
@@ -61,16 +68,7 @@ jobs:
             ${{ github.workspace }}/bin/restler
           key: restler-fuzzer-${{ env.RESTLER_VERSION }}
 
-      - uses: actions/checkout@v4
-        if: steps.cache-restler-restore.outputs.cache-hit != 'true'
-        name: Checkout RESTler Fuzzer
-        with:
-          repository: microsoft/restler-fuzzer
-          ref: v${{ env.RESTLER_VERSION }}
-          path: 'restler-fuzzer' # The path to clone the repository under {{ github.workspace }}
-
       - name: Setup .NET ${{ env.DOTNET_VERSION }}
-        if: steps.cache-restler-restore.outputs.cache-hit != 'true'
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
@@ -78,11 +76,9 @@ jobs:
           cache-dependency-path: ${{ github.workspace }}/restler-fuzzer/src/Restler.sln
 
       - name: Restore NuGet packages
-        if: steps.cache-restler-restore.outputs.cache-hit != 'true'
         run: dotnet restore ${{ github.workspace }}/restler-fuzzer/src/Restler.sln
 
       - name: Set up Python ${{ env.PYTHON_VERSION }}
-        if: steps.cache-restler-restore.outputs.cache-hit != 'true'
         uses: actions/setup-python@v4
         with:
           python-version: ${{ env.PYTHON_VERSION }}
@@ -90,7 +86,6 @@ jobs:
           cache-dependency-path: ${{ github.workspace }}/restler-fuzzer/restler/requirements.txt
 
       - name: Install engine (Python) dependencies
-        if: steps.cache-restler-restore.outputs.cache-hit != 'true'
         run: |
           pip install -r ${{ github.workspace }}/restler-fuzzer/restler/requirements.txt
 
@@ -105,6 +100,7 @@ jobs:
           ls -la ${{ github.workspace }}/bin/restler/Restler
 
       - name: Save Restler
+        if: steps.cache-restler-restore.outputs.cache-hit != 'true'
         id: cache-restler-save
         uses: actions/cache/save@v4
         with:
@@ -169,14 +165,14 @@ jobs:
       - name: Configure speckle-server
         working-directory: ${{ github.workspace }}/speckle-server/packages/server
         run: |
-          cp ${{ github.workspace }}/speckle-server/setup/fuzzer/.env.fuzzer-example .env
+          cp ${{ github.workspace }}/speckle-server/setup/fuzzer/.env.fuzz-test-example .env
       - name: Run speckle-server
         working-directory: ${{ github.workspace }}/speckle-server/packages/server
         run: yarn start &
 
       - name: Run RESTler fuzz test
         run: |
-          ${{ github.workspace }}/bin/restler/Restler test --grammar_file ${{ github.workspace }}/Compile/grammar.py --dictionary_file ${{ github.workspace }}/Compile/dict.json --settings ${{ github.workspace }}/Compile/engine_settings.json --no_ssl
+          ${{ github.workspace }}/bin/restler/Restler test --grammar_file ${{ github.workspace }}/Compile/grammar.py --dictionary_file ${{ github.workspace }}/Compile/dict.json --settings ${{ github.workspace }}/speckle-server/setup/fuzzer/settings.restler.json --no_ssl
 
       - name: Print the results
         run: |
