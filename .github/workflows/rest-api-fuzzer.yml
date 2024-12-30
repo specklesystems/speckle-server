@@ -109,19 +109,19 @@ jobs:
       - name: Install Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: 'yarn'
       - name: Install dependencies
-        working-directory: packages/server
+        working-directory: ${{ github.workspace }}/speckle-server/packages/server
         run: yarn install
       - name: Build public packages
-        working-directory: packages/server
+        working-directory: ${{ github.workspace }}/speckle-server/packages/server
         run: yarn build:public
       - name: Build speckle-server
-        working-directory: packages/server
+        working-directory: ${{ github.workspace }}/speckle-server/packages/server
         run: yarn build
       - name: Run speckle-server
-        working-directory: packages/server
+        working-directory: ${{ github.workspace }}/speckle-server/packages/server
         run: yarn start &
 
       - name: Run RESTler fuzz test
