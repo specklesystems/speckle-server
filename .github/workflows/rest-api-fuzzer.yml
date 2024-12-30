@@ -154,7 +154,13 @@ jobs:
 
       - name: Run RESTler coverage test
         run: |
-          ${{ github.workspace }}/bin/restler/Restler test --grammar_file ${{ github.workspace }}/Compile/grammar.py --dictionary_file ${{ github.workspace }}/Compile/dict.json --settings ${{ github.workspace }}/speckle-server/setup/fuzzer/settings.restler.json --no_ssl
+          ${{ github.workspace }}/bin/restler/Restler test \
+            --grammar_file ${{ github.workspace }}/Compile/grammar.py \
+            --dictionary_file ${{ github.workspace }}/Compile/dict.json \
+            --settings ${{ github.workspace }}/speckle-server/setup/fuzzer/settings.restler.json \
+            --no_ssl \
+            --target_ip 127.0.0.1 \
+            --target_port 3000
 
       - name: Print the results
         run: |
@@ -201,3 +207,8 @@ jobs:
           echo "############################################"
           echo ""
           cat "$(find ${{ github.workspace }}/Test -type f -name "speccov.json")"
+
+      - name: Print Minio logs
+        if: always()
+        run: |
+          docker logs minio
