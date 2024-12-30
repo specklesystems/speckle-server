@@ -47,7 +47,7 @@ describe('Projects GraphQL @core', () => {
     })
   })
 
-  describe.only('query user.projects', () => {
+  describe('query user.projects', () => {
     it('should return projects with workspaceId=null', async () => {
       const workspace = {
         id: '',
