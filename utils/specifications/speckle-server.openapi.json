@@ -1,8 +1,11 @@
 {
-  "swagger": "2.0",
+  "swagger": "3.1.1",
   "basePath": "/",
   "info": { "title": "Speckle.", "version": "dev" },
   "definitions": {},
+  "servers": [
+    { "url": "http://localhost:3000", "description": "Development and Testing server" }
+  ],
   "paths": {
     "/explorer": {
       "get": {
