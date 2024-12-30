@@ -52,7 +52,7 @@ jobs:
 
       - name: Build RESTler
         run: |
-          python ${{ github.workspace }}/restler-fuzzer/build-restler.py --dest_dir ${{ github.workspace }}/bin/restler
+          python ${{ github.workspace }}/restler-fuzzer/build-restler.py --dest_dir ${{ github.workspace }}/bin
 
       - uses: actions/checkout@v4
         name: Checkout speckle-server
