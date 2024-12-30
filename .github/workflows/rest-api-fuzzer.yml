@@ -127,6 +127,7 @@ jobs:
           cp ${{ github.workspace }}/speckle-server/setup/fuzzer/.env.fuzz-test-example .env
       - name: Run speckle-server
         working-directory: ${{ github.workspace }}/speckle-server/packages/server
+        timeout-minutes: 1
         run: |
           yarn start &
           until curl --output /dev/null --silent --head --fail http://127.0.0.1:3000/readiness; do
@@ -191,6 +192,12 @@ jobs:
           echo "############################################"
           echo ""
           cat "$(find ${{ github.workspace }}/Test -type f -name "speccov.json")" || true
+                    echo ""
+          echo "############################################"
+          echo "#          Network testing logs            #"
+          echo "############################################"
+          echo ""
+          cat "$(find ${{ github.workspace }}/Test -type f -name "network.testing.*.txt")" || true
 
       - name: Print Docker Compose logs
         if: always()

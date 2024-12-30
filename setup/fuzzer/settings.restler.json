@@ -2,5 +2,6 @@
   "per_resource_settings": {},
   "max_combinations": 20,
   "target_ip": "127.0.0.1",
-  "target_port": 3000
+  "target_port": 3000,
+  "ignore_decoding_failures": true
 }
