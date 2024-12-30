@@ -49,11 +49,8 @@ jobs:
 
       minio:
         image: minio/minio@sha256:1dce27c494a16bae114774f1cec295493f3613142713130c2d22dd5696be6ad3
-        options: >-
-          --console-address ":9001"
         ports:
           - 9000:9000
-          - 9001:9001
 
     steps:
       - uses: actions/checkout@v4
