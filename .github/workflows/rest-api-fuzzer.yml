@@ -53,11 +53,16 @@ jobs:
       - name: Build RESTler
         run: |
           python ${{ github.workspace }}/restler-fuzzer/build-restler.py --dest_dir ${{ github.workspace }}/bin
+      - name: Debug the built output
+        run: |
+          ls -la ${{ github.workspace }}/bin/restler
+          ls -la ${{ github.workspace }}/bin/restler/restler
 
       - uses: actions/checkout@v4
         name: Checkout speckle-server
         with:
           path: 'speckle-server'
+
       - name: Compile RESTler grammar from OpenAPI specification
         run: |
           ${{ github.workspace }}/bin/restler/restler compile --api_spec ${{ github.workspace }}/speckle-server/utils/specifications/speckle-server.openapi.json
