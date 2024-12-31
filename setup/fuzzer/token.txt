@@ -1,2 +1,2 @@
 {u'app1': {}}
-ApiTokenTag: d725857cc3a13391d2ac209f24e4177606bdb58a5a
+ApiTokenTag: 314504c3d01038e2013fb5b1f5d0344422168b1a70

@@ -160,34 +160,15 @@ jobs:
           sudo apt-get install --yes --no-install-recommends postgresql-client
           PGPASSWORD=speckle psql -h 127.0.0.1 -U speckle -d speckle -p 5432 -w < ${{ github.workspace }}/speckle-server/setup/fuzzer/speckle.backup.sql
 
-      - name: Install Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: 'yarn'
-          cache-dependency-path: ${{ github.workspace }}/speckle-server/yarn.lock
-      - name: Install dependencies
-        working-directory: ${{ github.workspace }}/speckle-server/packages/server
-        run: yarn install
-      - name: Build public packages
-        working-directory: ${{ github.workspace }}/speckle-server/packages/server
-        run: yarn build:public
-      - name: Build speckle-server
-        working-directory: ${{ github.workspace }}/speckle-server/packages/server
-        run: yarn build
       - name: Configure speckle-server
-        working-directory: ${{ github.workspace }}/speckle-server/packages/server
+        working-directory: ${{ github.workspace }}
         run: |
           cp ${{ github.workspace }}/speckle-server/setup/fuzzer/.env.fuzz-test-example .env
       - name: Run speckle-server
-        working-directory: ${{ github.workspace }}/speckle-server/packages/server
+        working-directory: ${{ github.workspace }}
         timeout-minutes: 1
         run: |
-          yarn start &
-          until curl --output /dev/null --silent --head --fail http://127.0.0.1:3000/readiness; do
-            echo "Waiting a further 3 seconds for speckle-server to start..."
-            sleep 3
-          done
+          docker compose --file ${{ github.workspace }}/speckle-server/setup/fuzzer/docker-compose-speckle.yml up --detach
 
       - name: Run RESTler coverage test
         run: |
@@ -259,3 +240,4 @@ jobs:
         if: always()
         run: |
           docker compose --file ${{ github.workspace }}/speckle-server/docker-compose-deps.yml logs
+          docker compose --file ${{ github.workspace }}/speckle-server/setup/fuzzer/docker-compose-speckle.yml logs
