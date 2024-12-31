@@ -29,5 +29,7 @@ secret:
       name: setup/keycloak/speckle-realm.json - secret for dev keycloak
     - match: 2e1b3675a4049cd39fe6db081735f747730969071528270800f00fa98720d198
       name: setup/keycloak/speckle-realm.json - algorithm name
+    - match: 164797a0ebc32f504e2dbaf48bec77969456bc301829039b34dc6787a1f5b0f3
+      name: setup/fuzzer/token.txt - fuzz test token
 
 version: 2
