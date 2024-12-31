@@ -150,7 +150,7 @@ jobs:
             ${{ github.workspace }}/Compile
           key: ${{ steps.cache-grammar-restore.outputs.cache-primary-key }}
 
-      - name: Docker Compose up
+      - name: Deploy dependencies (docker compose)
         run: |
           docker compose --file ${{ github.workspace }}/speckle-server/docker-compose-deps.yml up --detach
 
@@ -160,11 +160,7 @@ jobs:
           sudo apt-get install --yes --no-install-recommends postgresql-client
           PGPASSWORD=speckle psql -h 127.0.0.1 -U speckle -d speckle -p 5432 -w < ${{ github.workspace }}/speckle-server/setup/fuzzer/speckle.backup.sql
 
-      - name: Configure speckle-server
-        working-directory: ${{ github.workspace }}
-        run: |
-          cp ${{ github.workspace }}/speckle-server/setup/fuzzer/.env.fuzz-test-example .env
-      - name: Run speckle-server
+      - name: Deploy speckle-server (docker compose)
         working-directory: ${{ github.workspace }}
         timeout-minutes: 1
         run: |
