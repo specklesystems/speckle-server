@@ -3,13 +3,12 @@
 --
 
 -- Dumped from database version 14.5
--- Dumped by pg_dump version 16.4
-
--- Started on 2024-12-31 15:27:50 GMT
+-- Dumped by pg_dump version 17.2
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
 SET idle_in_transaction_session_timeout = 0;
+SET transaction_timeout = 0;
 SET client_encoding = 'UTF8';
 SET standard_conforming_strings = on;
 SELECT pg_catalog.set_config('search_path', '', false);
@@ -19,8 +18,6 @@ SET client_min_messages = warning;
 SET row_security = off;
 
 --
--- TOC entry 3878 (class 0 OID 16464)
--- Dependencies: 215
 -- Data for Name: users; Type: TABLE DATA; Schema: public; Owner: speckle
 --
 
@@ -30,8 +27,6 @@ bd195995fe	541d6d57-7726-444f-a5ab-baea78144b9d	2024-12-31 15:25:51.318+00	Fuzz 
 
 
 --
--- TOC entry 3881 (class 0 OID 16500)
--- Dependencies: 218
 -- Data for Name: api_tokens; Type: TABLE DATA; Schema: public; Owner: speckle
 --
 
@@ -42,8 +37,6 @@ d725857cc3	$2b$10$ZkJ9R8//SXclnt/3ZFQNG.c5qRJYjwM/6EbwVRSCU37PVpTa/Nt.G	bd195995
 
 
 --
--- TOC entry 3893 (class 0 OID 16814)
--- Dependencies: 230
 -- Data for Name: server_apps; Type: TABLE DATA; Schema: public; Owner: speckle
 --
 
@@ -59,8 +52,6 @@ spklautoma	spklautoma	Speckle Automate	Our automation platform	\N	\N	t	t	\N	2024
 
 
 --
--- TOC entry 3895 (class 0 OID 16879)
--- Dependencies: 232
 -- Data for Name: authorization_codes; Type: TABLE DATA; Schema: public; Owner: speckle
 --
 
@@ -69,8 +60,6 @@ COPY public.authorization_codes (id, "appId", "userId", challenge, "createdAt", 
 
 
 --
--- TOC entry 3929 (class 0 OID 18615)
--- Dependencies: 266
 -- Data for Name: workspaces; Type: TABLE DATA; Schema: public; Owner: speckle
 --
 
@@ -79,8 +68,6 @@ COPY public.workspaces (id, name, description, "createdAt", "updatedAt", logo, "
 
 
 --
--- TOC entry 3885 (class 0 OID 16558)
--- Dependencies: 222
 -- Data for Name: streams; Type: TABLE DATA; Schema: public; Owner: speckle
 --
 
@@ -90,8 +77,6 @@ bddc34ce4b	Fuzz's First Project	Welcome to Speckle! This is your sample project,
 
 
 --
--- TOC entry 3920 (class 0 OID 18259)
--- Dependencies: 257
 -- Data for Name: automations; Type: TABLE DATA; Schema: public; Owner: speckle
 --
 
@@ -100,8 +85,6 @@ COPY public.automations (id, name, "projectId", enabled, "createdAt", "updatedAt
 
 
 --
--- TOC entry 3921 (class 0 OID 18275)
--- Dependencies: 258
 -- Data for Name: automation_revisions; Type: TABLE DATA; Schema: public; Owner: speckle
 --
 
@@ -110,8 +93,6 @@ COPY public.automation_revisions (id, "automationId", "createdAt", active, "user
 
 
 --
--- TOC entry 3923 (class 0 OID 18309)
--- Dependencies: 260
 -- Data for Name: automation_runs; Type: TABLE DATA; Schema: public; Owner: speckle
 --
 
@@ -120,8 +101,6 @@ COPY public.automation_runs (id, "automationRevisionId", "createdAt", "updatedAt
 
 
 --
--- TOC entry 3925 (class 0 OID 18375)
--- Dependencies: 262
 -- Data for Name: automation_function_runs; Type: TABLE DATA; Schema: public; Owner: speckle
 --
 
@@ -130,8 +109,6 @@ COPY public.automation_function_runs (id, "runId", "functionId", "functionReleas
 
 
 --
--- TOC entry 3922 (class 0 OID 18293)
--- Dependencies: 259
 -- Data for Name: automation_revision_functions; Type: TABLE DATA; Schema: public; Owner: speckle
 --
 
@@ -140,8 +117,6 @@ COPY public.automation_revision_functions ("automationRevisionId", "functionId",
 
 
 --
--- TOC entry 3927 (class 0 OID 18472)
--- Dependencies: 264
 -- Data for Name: automation_run_triggers; Type: TABLE DATA; Schema: public; Owner: speckle
 --
 
@@ -150,8 +125,6 @@ COPY public.automation_run_triggers ("automationRunId", "triggeringId", "trigger
 
 
 --
--- TOC entry 3926 (class 0 OID 18417)
--- Dependencies: 263
 -- Data for Name: automation_tokens; Type: TABLE DATA; Schema: public; Owner: speckle
 --
 
@@ -160,8 +133,6 @@ COPY public.automation_tokens ("automationId", "automateToken") FROM stdin;
 
 
 --
--- TOC entry 3924 (class 0 OID 18351)
--- Dependencies: 261
 -- Data for Name: automation_triggers; Type: TABLE DATA; Schema: public; Owner: speckle
 --
 
@@ -170,8 +141,6 @@ COPY public.automation_triggers ("automationRevisionId", "triggerType", "trigger
 
 
 --
--- TOC entry 3913 (class 0 OID 17577)
--- Dependencies: 250
 -- Data for Name: blob_storage; Type: TABLE DATA; Schema: public; Owner: speckle
 --
 
@@ -180,8 +149,6 @@ COPY public.blob_storage (id, "streamId", "userId", "objectKey", "fileName", "fi
 
 
 --
--- TOC entry 3890 (class 0 OID 16720)
--- Dependencies: 227
 -- Data for Name: branches; Type: TABLE DATA; Schema: public; Owner: speckle
 --
 
@@ -192,8 +159,6 @@ cc21a58628	bddc34ce4b	bd195995fe	main	default branch	2024-12-31 15:25:52.277+00	
 
 
 --
--- TOC entry 3889 (class 0 OID 16647)
--- Dependencies: 226
 -- Data for Name: commits; Type: TABLE DATA; Schema: public; Owner: speckle
 --
 
@@ -202,8 +167,6 @@ COPY public.commits (id, "referencedObject", author, message, "createdAt", "sour
 
 
 --
--- TOC entry 3891 (class 0 OID 16761)
--- Dependencies: 228
 -- Data for Name: branch_commits; Type: TABLE DATA; Schema: public; Owner: speckle
 --
 
@@ -212,8 +175,6 @@ COPY public.branch_commits ("branchId", "commitId") FROM stdin;
 
 
 --
--- TOC entry 3907 (class 0 OID 17422)
--- Dependencies: 244
 -- Data for Name: comments; Type: TABLE DATA; Schema: public; Owner: speckle
 --
 
@@ -222,8 +183,6 @@ COPY public.comments (id, "streamId", "authorId", "createdAt", "updatedAt", text
 
 
 --
--- TOC entry 3908 (class 0 OID 17483)
--- Dependencies: 245
 -- Data for Name: comment_links; Type: TABLE DATA; Schema: public; Owner: speckle
 --
 
@@ -232,8 +191,6 @@ COPY public.comment_links ("commentId", "resourceId", "resourceType") FROM stdin
 
 
 --
--- TOC entry 3909 (class 0 OID 17494)
--- Dependencies: 246
 -- Data for Name: comment_views; Type: TABLE DATA; Schema: public; Owner: speckle
 --
 
@@ -242,8 +199,6 @@ COPY public.comment_views ("commentId", "userId", "viewedAt") FROM stdin;
 
 
 --
--- TOC entry 3906 (class 0 OID 17380)
--- Dependencies: 243
 -- Data for Name: email_verifications; Type: TABLE DATA; Schema: public; Owner: speckle
 --
 
@@ -253,8 +208,6 @@ COPY public.email_verifications (id, email, "createdAt") FROM stdin;
 
 
 --
--- TOC entry 3905 (class 0 OID 17352)
--- Dependencies: 242
 -- Data for Name: file_uploads; Type: TABLE DATA; Schema: public; Owner: speckle
 --
 
@@ -263,8 +216,6 @@ COPY public.file_uploads (id, "streamId", "branchName", "userId", "fileName", "f
 
 
 --
--- TOC entry 3928 (class 0 OID 18532)
--- Dependencies: 265
 -- Data for Name: gendo_ai_renders; Type: TABLE DATA; Schema: public; Owner: speckle
 --
 
@@ -273,8 +224,6 @@ COPY public.gendo_ai_renders (id, "userId", "projectId", "modelId", "versionId",
 
 
 --
--- TOC entry 3941 (class 0 OID 18948)
--- Dependencies: 278
 -- Data for Name: gendo_user_credits; Type: TABLE DATA; Schema: public; Owner: speckle
 --
 
@@ -283,8 +232,6 @@ COPY public.gendo_user_credits ("userId", "resetDate", used) FROM stdin;
 
 
 --
--- TOC entry 3874 (class 0 OID 16396)
--- Dependencies: 211
 -- Data for Name: knex_migrations; Type: TABLE DATA; Schema: public; Owner: speckle
 --
 
@@ -392,8 +339,6 @@ COPY public.knex_migrations (id, name, batch, migration_time) FROM stdin;
 
 
 --
--- TOC entry 3876 (class 0 OID 16403)
--- Dependencies: 213
 -- Data for Name: knex_migrations_lock; Type: TABLE DATA; Schema: public; Owner: speckle
 --
 
@@ -403,8 +348,6 @@ COPY public.knex_migrations_lock (index, is_locked) FROM stdin;
 
 
 --
--- TOC entry 3888 (class 0 OID 16605)
--- Dependencies: 225
 -- Data for Name: object_children_closure; Type: TABLE DATA; Schema: public; Owner: speckle
 --
 
@@ -413,8 +356,6 @@ COPY public.object_children_closure (parent, child, "minDepth", "streamId") FROM
 
 
 --
--- TOC entry 3900 (class 0 OID 17202)
--- Dependencies: 237
 -- Data for Name: object_preview; Type: TABLE DATA; Schema: public; Owner: speckle
 --
 
@@ -423,8 +364,6 @@ COPY public.object_preview ("streamId", "objectId", "previewStatus", priority, "
 
 
 --
--- TOC entry 3887 (class 0 OID 16596)
--- Dependencies: 224
 -- Data for Name: objects; Type: TABLE DATA; Schema: public; Owner: speckle
 --
 
@@ -433,8 +372,6 @@ COPY public.objects (id, "speckleType", "totalChildrenCount", "totalChildrenCoun
 
 
 --
--- TOC entry 3882 (class 0 OID 16518)
--- Dependencies: 219
 -- Data for Name: personal_api_tokens; Type: TABLE DATA; Schema: public; Owner: speckle
 --
 
@@ -444,8 +381,6 @@ d725857cc3	bd195995fe
 
 
 --
--- TOC entry 3901 (class 0 OID 17231)
--- Dependencies: 238
 -- Data for Name: previews; Type: TABLE DATA; Schema: public; Owner: speckle
 --
 
@@ -454,8 +389,6 @@ COPY public.previews (id, data) FROM stdin;
 
 
 --
--- TOC entry 3899 (class 0 OID 17000)
--- Dependencies: 236
 -- Data for Name: pwdreset_tokens; Type: TABLE DATA; Schema: public; Owner: speckle
 --
 
@@ -464,8 +397,6 @@ COPY public.pwdreset_tokens (id, email, "createdAt") FROM stdin;
 
 
 --
--- TOC entry 3910 (class 0 OID 17518)
--- Dependencies: 247
 -- Data for Name: ratelimit_actions; Type: TABLE DATA; Schema: public; Owner: speckle
 --
 
@@ -474,8 +405,6 @@ COPY public.ratelimit_actions ("timestamp", action, source) FROM stdin;
 
 
 --
--- TOC entry 3896 (class 0 OID 16904)
--- Dependencies: 233
 -- Data for Name: refresh_tokens; Type: TABLE DATA; Schema: public; Owner: speckle
 --
 
@@ -485,8 +414,6 @@ ce9fc7efef	$2b$10$pAAsDpjNndfRi4fs0uvCh.p5k.WVPXWfZklUgwbBtBIm6PFU0bFrS	spklweba
 
 
 --
--- TOC entry 3939 (class 0 OID 18884)
--- Dependencies: 276
 -- Data for Name: regions; Type: TABLE DATA; Schema: public; Owner: speckle
 --
 
@@ -495,8 +422,6 @@ COPY public.regions (key, name, description, "createdAt", "updatedAt") FROM stdi
 
 
 --
--- TOC entry 3916 (class 0 OID 17800)
--- Dependencies: 253
 -- Data for Name: scheduled_tasks; Type: TABLE DATA; Schema: public; Owner: speckle
 --
 
@@ -505,8 +430,6 @@ COPY public.scheduled_tasks ("taskName", "lockExpiresAt") FROM stdin;
 
 
 --
--- TOC entry 3883 (class 0 OID 16533)
--- Dependencies: 220
 -- Data for Name: scopes; Type: TABLE DATA; Schema: public; Owner: speckle
 --
 
@@ -534,8 +457,6 @@ workspace:billing	Scope for managing workspace billing	f
 
 
 --
--- TOC entry 3915 (class 0 OID 17765)
--- Dependencies: 252
 -- Data for Name: server_access_requests; Type: TABLE DATA; Schema: public; Owner: speckle
 --
 
@@ -544,8 +465,6 @@ COPY public.server_access_requests (id, "requesterId", "resourceType", "resource
 
 
 --
--- TOC entry 3879 (class 0 OID 16477)
--- Dependencies: 216
 -- Data for Name: user_roles; Type: TABLE DATA; Schema: public; Owner: speckle
 --
 
@@ -564,8 +483,6 @@ workspace:member	A regular member of the workspace	workspaces	workspace_acl	100	
 
 
 --
--- TOC entry 3880 (class 0 OID 16485)
--- Dependencies: 217
 -- Data for Name: server_acl; Type: TABLE DATA; Schema: public; Owner: speckle
 --
 
@@ -575,8 +492,6 @@ bd195995fe	server:admin
 
 
 --
--- TOC entry 3894 (class 0 OID 16850)
--- Dependencies: 231
 -- Data for Name: server_apps_scopes; Type: TABLE DATA; Schema: public; Owner: speckle
 --
 
@@ -652,8 +567,6 @@ spklautoma	streams:write
 
 
 --
--- TOC entry 3877 (class 0 OID 16451)
--- Dependencies: 214
 -- Data for Name: server_config; Type: TABLE DATA; Schema: public; Owner: speckle
 --
 
@@ -663,8 +576,6 @@ COPY public.server_config (id, name, company, description, "adminContact", "term
 
 
 --
--- TOC entry 3898 (class 0 OID 16982)
--- Dependencies: 235
 -- Data for Name: server_invites; Type: TABLE DATA; Schema: public; Owner: speckle
 --
 
@@ -673,8 +584,6 @@ COPY public.server_invites (id, target, "inviterId", "createdAt", message, token
 
 
 --
--- TOC entry 3933 (class 0 OID 18777)
--- Dependencies: 270
 -- Data for Name: sso_providers; Type: TABLE DATA; Schema: public; Owner: speckle
 --
 
@@ -683,8 +592,6 @@ COPY public.sso_providers (id, "providerType", "encryptedProviderData", "created
 
 
 --
--- TOC entry 3886 (class 0 OID 16574)
--- Dependencies: 223
 -- Data for Name: stream_acl; Type: TABLE DATA; Schema: public; Owner: speckle
 --
 
@@ -694,8 +601,6 @@ bd195995fe	bddc34ce4b	stream:owner
 
 
 --
--- TOC entry 3902 (class 0 OID 17265)
--- Dependencies: 239
 -- Data for Name: stream_activity; Type: TABLE DATA; Schema: public; Owner: speckle
 --
 
@@ -707,8 +612,6 @@ bddc34ce4b	2024-12-31 15:26:00.404984+00	branch	833dcf6df1	branch_create	bd19599
 
 
 --
--- TOC entry 3892 (class 0 OID 16779)
--- Dependencies: 229
 -- Data for Name: stream_commits; Type: TABLE DATA; Schema: public; Owner: speckle
 --
 
@@ -717,8 +620,6 @@ COPY public.stream_commits ("streamId", "commitId") FROM stdin;
 
 
 --
--- TOC entry 3911 (class 0 OID 17536)
--- Dependencies: 248
 -- Data for Name: stream_favorites; Type: TABLE DATA; Schema: public; Owner: speckle
 --
 
@@ -727,8 +628,6 @@ COPY public.stream_favorites ("streamId", "userId", "createdAt", cursor) FROM st
 
 
 --
--- TOC entry 3918 (class 0 OID 17989)
--- Dependencies: 255
 -- Data for Name: streams_meta; Type: TABLE DATA; Schema: public; Owner: speckle
 --
 
@@ -737,8 +636,6 @@ COPY public.streams_meta ("streamId", key, value, "createdAt", "updatedAt") FROM
 
 
 --
--- TOC entry 3919 (class 0 OID 18247)
--- Dependencies: 256
 -- Data for Name: token_resource_access; Type: TABLE DATA; Schema: public; Owner: speckle
 --
 
@@ -747,8 +644,6 @@ COPY public.token_resource_access ("tokenId", "resourceId", "resourceType") FROM
 
 
 --
--- TOC entry 3884 (class 0 OID 16540)
--- Dependencies: 221
 -- Data for Name: token_scopes; Type: TABLE DATA; Schema: public; Owner: speckle
 --
 
@@ -786,8 +681,6 @@ d725857cc3	workspace:delete
 
 
 --
--- TOC entry 3931 (class 0 OID 18679)
--- Dependencies: 268
 -- Data for Name: user_emails; Type: TABLE DATA; Schema: public; Owner: speckle
 --
 
@@ -797,8 +690,6 @@ c6c27a75d3	fuzztest@example.org	t	f	bd195995fe	2024-12-31 15:25:51.332+00	2024-1
 
 
 --
--- TOC entry 3914 (class 0 OID 17746)
--- Dependencies: 251
 -- Data for Name: user_notification_preferences; Type: TABLE DATA; Schema: public; Owner: speckle
 --
 
@@ -807,8 +698,6 @@ COPY public.user_notification_preferences ("userId", preferences) FROM stdin;
 
 
 --
--- TOC entry 3897 (class 0 OID 16931)
--- Dependencies: 234
 -- Data for Name: user_server_app_tokens; Type: TABLE DATA; Schema: public; Owner: speckle
 --
 
@@ -818,8 +707,6 @@ spklwebapp	bd195995fe	6d4a0f4aea
 
 
 --
--- TOC entry 3934 (class 0 OID 18784)
--- Dependencies: 271
 -- Data for Name: user_sso_sessions; Type: TABLE DATA; Schema: public; Owner: speckle
 --
 
@@ -828,8 +715,6 @@ COPY public.user_sso_sessions ("userId", "providerId", "createdAt", "validUntil"
 
 
 --
--- TOC entry 3917 (class 0 OID 17914)
--- Dependencies: 254
 -- Data for Name: users_meta; Type: TABLE DATA; Schema: public; Owner: speckle
 --
 
@@ -839,8 +724,6 @@ bd195995fe	isOnboardingFinished	true	2024-12-31 15:25:52.382+00	2024-12-31 15:25
 
 
 --
--- TOC entry 3903 (class 0 OID 17279)
--- Dependencies: 240
 -- Data for Name: webhooks_config; Type: TABLE DATA; Schema: public; Owner: speckle
 --
 
@@ -849,8 +732,6 @@ COPY public.webhooks_config (id, "streamId", url, description, triggers, secret,
 
 
 --
--- TOC entry 3904 (class 0 OID 17304)
--- Dependencies: 241
 -- Data for Name: webhooks_events; Type: TABLE DATA; Schema: public; Owner: speckle
 --
 
@@ -859,8 +740,6 @@ COPY public.webhooks_events (id, "webhookId", status, "statusInfo", "lastUpdate"
 
 
 --
--- TOC entry 3930 (class 0 OID 18640)
--- Dependencies: 267
 -- Data for Name: workspace_acl; Type: TABLE DATA; Schema: public; Owner: speckle
 --
 
@@ -869,8 +748,6 @@ COPY public.workspace_acl ("userId", "workspaceId", role, "createdAt") FROM stdi
 
 
 --
--- TOC entry 3937 (class 0 OID 18851)
--- Dependencies: 274
 -- Data for Name: workspace_checkout_sessions; Type: TABLE DATA; Schema: public; Owner: speckle
 --
 
@@ -879,8 +756,6 @@ COPY public.workspace_checkout_sessions ("workspaceId", id, url, "workspacePlan"
 
 
 --
--- TOC entry 3942 (class 0 OID 18964)
--- Dependencies: 279
 -- Data for Name: workspace_creation_state; Type: TABLE DATA; Schema: public; Owner: speckle
 --
 
@@ -889,8 +764,6 @@ COPY public.workspace_creation_state ("workspaceId", completed, state) FROM stdi
 
 
 --
--- TOC entry 3932 (class 0 OID 18727)
--- Dependencies: 269
 -- Data for Name: workspace_domains; Type: TABLE DATA; Schema: public; Owner: speckle
 --
 
@@ -899,8 +772,6 @@ COPY public.workspace_domains (id, domain, verified, "createdAt", "updatedAt", "
 
 
 --
--- TOC entry 3936 (class 0 OID 18836)
--- Dependencies: 273
 -- Data for Name: workspace_plans; Type: TABLE DATA; Schema: public; Owner: speckle
 --
 
@@ -909,8 +780,6 @@ COPY public.workspace_plans ("workspaceId", name, status, "createdAt") FROM stdi
 
 
 --
--- TOC entry 3940 (class 0 OID 18903)
--- Dependencies: 277
 -- Data for Name: workspace_regions; Type: TABLE DATA; Schema: public; Owner: speckle
 --
 
@@ -919,8 +788,6 @@ COPY public.workspace_regions ("workspaceId", "regionKey", "createdAt") FROM std
 
 
 --
--- TOC entry 3935 (class 0 OID 18808)
--- Dependencies: 272
 -- Data for Name: workspace_sso_providers; Type: TABLE DATA; Schema: public; Owner: speckle
 --
 
@@ -929,8 +796,6 @@ COPY public.workspace_sso_providers ("workspaceId", "providerId") FROM stdin;
 
 
 --
--- TOC entry 3938 (class 0 OID 18868)
--- Dependencies: 275
 -- Data for Name: workspace_subscriptions; Type: TABLE DATA; Schema: public; Owner: speckle
 --
 
@@ -939,8 +804,6 @@ COPY public.workspace_subscriptions ("workspaceId", "createdAt", "updatedAt", "c
 
 
 --
--- TOC entry 3948 (class 0 OID 0)
--- Dependencies: 210
 -- Name: knex_migrations_id_seq; Type: SEQUENCE SET; Schema: public; Owner: speckle
 --
 
@@ -948,8 +811,6 @@ SELECT pg_catalog.setval('public.knex_migrations_id_seq', 99, true);
 
 
 --
--- TOC entry 3949 (class 0 OID 0)
--- Dependencies: 212
 -- Name: knex_migrations_lock_index_seq; Type: SEQUENCE SET; Schema: public; Owner: speckle
 --
 
@@ -957,15 +818,11 @@ SELECT pg_catalog.setval('public.knex_migrations_lock_index_seq', 1, true);
 
 
 --
--- TOC entry 3950 (class 0 OID 0)
--- Dependencies: 249
 -- Name: stream_favorites_cursor_seq; Type: SEQUENCE SET; Schema: public; Owner: speckle
 --
 
 SELECT pg_catalog.setval('public.stream_favorites_cursor_seq', 1, false);
 
-
--- Completed on 2024-12-31 15:27:50 GMT
 
 --
 -- PostgreSQL database dump complete
