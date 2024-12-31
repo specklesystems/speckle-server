@@ -168,7 +168,11 @@ jobs:
 
       - name: Run RESTler coverage test
         run: |
-          curl --head --fail http://127.0.0.1:3000/readiness
+          until curl --output /dev/null --silent --head --fail http://127.0.0.1:3000/readiness; do
+            echo "Waiting a further 3 seconds for speckle-server to start..."
+            sleep 3
+          done
+
           ${{ github.workspace }}/bin/restler/Restler test \
             --grammar_file "${{ github.workspace }}/Compile/grammar.py" \
             --dictionary_file "${{ github.workspace }}/speckle-server/setup/fuzzer/dictionary.restler.json" \
