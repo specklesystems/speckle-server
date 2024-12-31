@@ -66,7 +66,7 @@
         "responses": {
           "200": { "description": "Returns an access code in the body" },
           "302": { "description": "Redirects with access code in url query" },
-          "400": { "description": "Invalid access code" },
+          "400": { "description": "Invalid access code, or the app does not exist" },
           "500": { "description": "Internal error" }
         }
       },

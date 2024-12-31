@@ -9,5 +9,11 @@
       "endpoint": "/api/stream/{streamId}/blobs",
       "methods": ["DELETE"]
     }
-  ]
+  ],
+  "authentication": {
+    "token": {
+      "location": "/home/runner/work/speckle-server/speckle-server/speckle-server/setup/fuzzer/token.txt",
+      "token_refresh_interval": 300
+    }
+  }
 }

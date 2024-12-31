@@ -154,6 +154,12 @@ jobs:
         run: |
           docker compose --file ${{ github.workspace }}/speckle-server/docker-compose-deps.yml up --detach
 
+      - name: Seed the database
+        run: |
+          apt-get update
+          apt-get install --yes --no-install-recommends postgresql-client
+          PGPASSWORD=speckle psql -h 127.0.0.1 -U speckle -d speckle -p 5432 -w -f ${{ github.workspace }}/speckle-server/setup/fuzzer/speckle.backup.sql
+
       - name: Install Node.js
         uses: actions/setup-node@v4
         with:
@@ -198,6 +204,8 @@ jobs:
         if: always()
         run: |
           ls -la ${{ github.workspace }}/Test
+          ls -la ${{ github.workspace }}/Test/RestlerResults || true
+          ls -la ${{ github.workspace }}/Test/ResponseBuckets || true
           echo ""
           echo "############################################"
           echo "#            Engine stderr                 #"
