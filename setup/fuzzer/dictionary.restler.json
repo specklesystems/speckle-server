@@ -11,7 +11,9 @@
   "restler_fuzzable_number": ["1.23"],
   "restler_fuzzable_bool": ["true"],
   "restler_fuzzable_object": ["{ \"fuzz\": false }"],
-  "restler_custom_payload": {},
+  "restler_custom_payload": {
+    "/graphql/post/Content-Type": ["application/json"]
+  },
   "restler_custom_payload_unquoted": {},
   "restler_custom_payload_uuid4_suffix": {},
   "restler_custom_payload_header": {},
