@@ -1,9 +1,11 @@
 {
   "SwaggerSpecFilePath": [
-    "/home/runner/work/speckle-server/speckle-server/speckle-server/utils/specifications/speckle-server.openapi.json"
+    "/home/runner/work/speckle-server/speckle-server/speckle-server/setup/fuzzer/speckle-server.openapi.json"
   ],
   "GrammarOutputDirectoryPath": "/home/runner/work/speckle-server/speckle-server/Compile",
-  "CustomDictionaryFilePath": "/home/runner/work/speckle-server/speckle-server/Compile/defaultDict.json",
+  "CustomDictionaryFilePath": "/home/runner/work/speckle-server/speckle-server/speckle-server/setup/fuzzer/dictionary.restler.json",
+  "EngineSettingsFilePath": "/home/runner/work/speckle-server/speckle-server/speckle-server/setup/fuzzer/settings.restler.json",
+  "AnnotationFilePath": "/home/runner/work/speckle-server/speckle-server/speckle-server/setup/fuzzer/annotations.restler.json",
   "IncludeOptionalParameters": true,
   "UseHeaderExamples": true,
   "UsePathExamples": false,
