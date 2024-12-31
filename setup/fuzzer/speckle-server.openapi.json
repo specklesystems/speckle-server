@@ -239,28 +239,6 @@
         "responses": { "200": { "description": "Returns Prometheus metrics" } }
       }
     },
-    "/openapi/html": {
-      "get": {
-        "summary": "OpenAPI HTML",
-        "description": "Returns the OpenAPI documentation in HTML format",
-        "responses": {
-          "200": {
-            "description": "Returns the OpenAPI documentation in HTML format"
-          }
-        }
-      }
-    },
-    "/openapi/json": {
-      "get": {
-        "summary": "OpenAPI JSON",
-        "description": "Returns the OpenAPI documentation in JSON format",
-        "responses": {
-          "200": {
-            "description": "Returns the OpenAPI documentation in JSON format"
-          }
-        }
-      }
-    },
     "/preview/{streamId}/{angle}": {
       "options": {
         "description": "Options for the endpoint",
@@ -271,7 +249,14 @@
       "get": {
         "description": "Retrieve a preview for the project (stream), at an optional angle",
         "responses": {
-          "200": { "description": "A preview was successfully retrieved." }
+          "200": {
+            "description": "A preview was successfully retrieved.",
+            "content": {
+              "image/png": {
+                "schema": { "type": "string", "format": "binary" }
+              }
+            }
+          }
         }
       }
     },
@@ -287,7 +272,14 @@
       "get": {
         "description": "Retrieve a preview for the project (stream) and model (branch), at an optional angle",
         "responses": {
-          "200": { "description": "A preview was successfully retrieved." }
+          "200": {
+            "description": "A preview was successfully retrieved.",
+            "content": {
+              "image/png": {
+                "schema": { "type": "string", "format": "binary" }
+              }
+            }
+          }
         }
       }
     },
@@ -301,7 +293,14 @@
       "get": {
         "description": "Retrieve a preview for the project (stream) and version (commit), at an optional angle",
         "responses": {
-          "200": { "description": "A preview was successfully retrieved." }
+          "200": {
+            "description": "A preview was successfully retrieved.",
+            "content": {
+              "image/png": {
+                "schema": { "type": "string", "format": "binary" }
+              }
+            }
+          }
         }
       }
     },
@@ -315,7 +314,14 @@
       "get": {
         "description": "Retrieve a preview for the project (stream) and object, at an optional angle",
         "responses": {
-          "200": { "description": "A preview was successfully retrieved." }
+          "200": {
+            "description": "A preview was successfully retrieved.",
+            "content": {
+              "image/png": {
+                "schema": { "type": "string", "format": "binary" }
+              }
+            }
+          }
         }
       }
     },

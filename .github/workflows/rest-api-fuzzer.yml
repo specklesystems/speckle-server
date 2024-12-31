@@ -2,14 +2,12 @@ name: REST API Fuzz Test
 
 on:
   workflow_dispatch:
-  pull_request: # Pushing a new commit to the HEAD ref of a pull request will trigger the “synchronize” event
+  # schedule:
+  #   - cron: "15 4 3 * *" # Run at 4:15am on the 3rd of every month
+  pull_request:
     paths:
-      - .yarnrc.yml .
-      - .yarn
-      - package.json
       - '.github/workflows/rest-api-fuzzer.yml'
-      - 'packages/server/**/*'
-      - 'packages/shared/**/*'
+      - 'setup/fuzzer/**/*'
 
 env:
   BUILD_CONFIGURATION: Release
@@ -68,31 +66,81 @@ jobs:
         with:
           path: 'speckle-server'
 
-      - name: Restore cached Grammar
+      - name: Restore cached Restler configuration
+        id: cache-config-restore
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            ${{ github.workspace }}/restlerConfig
+          key: restler-config-${{ hashFiles('speckle-server/setup/fuzzer/speckle-server.openapi.json') }}
+
+      - name: Generate RESTler config from OpenAPI specification
+        if: steps.cache-config-restore.outputs.cache-hit != 'true'
+        run: |
+          ${{ github.workspace }}/bin/restler/Restler generate_config --specs ${{ github.workspace }}/speckle-server/setup/fuzzer/speckle-server.openapi.json
+
+      - name: Print the Restler configuration
+        run: |
+          ls -la ${{ github.workspace }}
+          ls -la ${{ github.workspace }}/restlerConfig
+          echo ""
+          echo "############################################"
+          echo "# Engine settings                          #"
+          echo "# To customize, copy and save this file to #"
+          echo "# setup/fuzzer/settings.restler.json       #"
+          echo "############################################"
+          echo ""
+          cat ${{ github.workspace }}/restlerConfig/engine_settings.json
+          echo ""
+          echo "############################################"
+          echo "# Config                                   #"
+          echo "# To customize, copy and save this file to #"
+          echo "# setup/fuzzer/config.restler.json         #"
+          echo "############################################"
+          echo ""
+          cat ${{ github.workspace }}/restlerConfig/config.json
+          echo ""
+          echo "############################################"
+          echo "# Dictionary                               #"
+          echo "# To customize, copy and save this file to #"
+          echo "# setup/fuzzer/dictionary.restler.json     #"
+          echo "############################################"
+          echo ""
+          cat ${{ github.workspace }}/restlerConfig/dict.json
+          echo ""
+          echo "############################################"
+          echo "# Annotations                              #"
+          echo "# To customize, copy and save this file to #"
+          echo "# setup/fuzzer/annotations.restler.json    #"
+          echo "############################################"
+          echo ""
+          cat ${{ github.workspace }}/restlerConfig/annotations.json
+
+      - name: Save Restler Config
+        id: cache-config-save
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            ${{ github.workspace }}/restlerConfig
+          key: ${{ steps.cache-config-restore.outputs.cache-primary-key }}
+
+      - name: Restore cached Restler grammar
         id: cache-grammar-restore
         uses: actions/cache/restore@v4
         with:
           path: |
             ${{ github.workspace }}/Compile
-          key: restler-grammar-${{ hashFiles('speckle-server/utils/specifications/speckle-server.openapi.json') }}
+          key: restler-grammar-${{ hashFiles('speckle-server/setup/fuzzer/*.json') }}
 
-      - name: Compile RESTler grammar from OpenAPI specification
+      - name: Generate RESTler grammar from Restler config
         if: steps.cache-grammar-restore.outputs.cache-hit != 'true'
         run: |
-          ${{ github.workspace }}/bin/restler/Restler compile --api_spec ${{ github.workspace }}/speckle-server/utils/specifications/speckle-server.openapi.json
+          ${{ github.workspace }}/bin/restler/Restler compile ${{ github.workspace }}/speckle-server/setup/fuzzer/config.restler.json
 
-      - name: Print the Restler configuration
+      - name: Print the contents of the Restler compile directory
         run: |
+          ls -la ${{ github.workspace }}
           ls -la ${{ github.workspace }}/Compile
-          echo ""
-          echo "Engine settings:"
-          cat ${{ github.workspace }}/Compile/engine_settings.json
-          echo ""
-          echo "Config:"
-          cat ${{ github.workspace }}/Compile/config.json
-          echo ""
-          echo "Dictionary:"
-          cat ${{ github.workspace }}/Compile/dict.json
 
       - name: Save Grammar
         id: cache-grammar-save
@@ -140,7 +188,7 @@ jobs:
           curl --head --fail http://127.0.0.1:3000/readiness
           ${{ github.workspace }}/bin/restler/Restler test \
             --grammar_file "${{ github.workspace }}/Compile/grammar.py" \
-            --dictionary_file "${{ github.workspace }}/Compile/dict.json" \
+            --dictionary_file "${{ github.workspace }}/speckle-server/setup/fuzzer/dictionary.restler.json" \
             --settings "${{ github.workspace }}/speckle-server/setup/fuzzer/settings.restler.json" \
             --no_ssl \
             --target_ip "127.0.0.1" \
