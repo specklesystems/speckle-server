@@ -116,9 +116,16 @@
       }
     },
     "/api/stream/{streamId}/blobs": {
+      "parameters": [
+        {
+          "in": "path",
+          "name": "streamId",
+          "required": true,
+          "schema": { "type": "string" }
+        }
+      ],
       "get": {
         "description": "Gets all the blobs of a project (stream)",
-        "parameters": [{ "in": "path", "name": "streamId", "required": true }],
         "responses": {
           "200": {
             "description": "Successfully retrieved all the blobs from the project"
@@ -127,7 +134,6 @@
       },
       "delete": {
         "description": "Deletes all the blobs from a project (stream)",
-        "parameters": [{ "in": "path", "name": "streamId", "required": true }],
         "responses": { "501": { "description": "Not implemented." } }
       }
     },
@@ -160,6 +166,14 @@
       }
     },
     "/objects/{streamId}": {
+      "parameters": [
+        {
+          "in": "path",
+          "name": "streamId",
+          "required": true,
+          "schema": { "type": "string" }
+        }
+      ],
       "options": {
         "description": "The options for this endpoint",
         "responses": { "200": { "description": "Options were retrieved." } }
@@ -172,6 +186,20 @@
       }
     },
     "/objects/{streamId}/{objectId}": {
+      "parameters": [
+        {
+          "in": "path",
+          "name": "streamId",
+          "required": true,
+          "schema": { "type": "string" }
+        },
+        {
+          "in": "path",
+          "name": "objectId",
+          "required": true,
+          "schema": { "type": "string" }
+        }
+      ],
       "options": {
         "description": "Options for downloading an object from a project (stream)",
         "responses": { "200": { "description": "Options were retrieved." } }
@@ -182,6 +210,20 @@
       }
     },
     "/objects/{streamId}/{objectId}/single": {
+      "parameters": [
+        {
+          "in": "path",
+          "name": "streamId",
+          "required": true,
+          "schema": { "type": "string" }
+        },
+        {
+          "in": "path",
+          "name": "objectId",
+          "required": true,
+          "schema": { "type": "string" }
+        }
+      ],
       "options": {
         "description": "Options for downloading a single object from a project (stream)",
         "responses": { "200": { "description": "Options were retrieved." } }
@@ -192,6 +234,14 @@
       }
     },
     "/api/diff/{streamId}": {
+      "parameters": [
+        {
+          "in": "path",
+          "name": "streamId",
+          "required": true,
+          "schema": { "type": "string" }
+        }
+      ],
       "options": {
         "description": "Options for the endpoint",
         "responses": { "200": { "description": "Options were retrieved." } }
@@ -204,6 +254,14 @@
       }
     },
     "/api/getobjects/{streamId}": {
+      "parameters": [
+        {
+          "in": "path",
+          "name": "streamId",
+          "required": true,
+          "schema": { "type": "string" }
+        }
+      ],
       "options": {
         "description": "Options for the endpoint",
         "responses": { "200": { "description": "Options were retrieved." } }
@@ -223,6 +281,26 @@
       }
     },
     "/api/file/{fileType}/{streamId}/{branchName}": {
+      "parameters": [
+        {
+          "in": "path",
+          "name": "fileType",
+          "required": true,
+          "schema": { "type": "string" }
+        },
+        {
+          "in": "path",
+          "name": "streamId",
+          "required": true,
+          "schema": { "type": "string" }
+        },
+        {
+          "in": "path",
+          "name": "branchName",
+          "required": true,
+          "schema": { "type": "string" }
+        }
+      ],
       "post": {
         "description": "Uploads a file to a project (stream)",
         "responses": {
@@ -240,6 +318,25 @@
       }
     },
     "/preview/{streamId}/{angle}": {
+      "parameters": [
+        {
+          "in": "path",
+          "name": "streamId",
+          "required": true,
+          "schema": { "type": "string" }
+        },
+        {
+          "in": "path",
+          "name": "angle",
+          "required": true,
+          "schema": {
+            "oneOf": [
+              { "type": "integer", "minimum": 0 },
+              { "type": "string", "enum": ["all"] }
+            ]
+          }
+        }
+      ],
       "options": {
         "description": "Options for the endpoint",
         "responses": {
@@ -261,14 +358,37 @@
       }
     },
     "/preview/{streamId}/branches/{branchName}/{angle}": {
+      "parameters": [
+        {
+          "in": "path",
+          "name": "streamId",
+          "required": true,
+          "schema": { "type": "string" }
+        },
+        {
+          "in": "path",
+          "name": "branchName",
+          "required": true,
+          "schema": { "type": "string" }
+        },
+        {
+          "in": "path",
+          "name": "angle",
+          "required": true,
+          "schema": {
+            "oneOf": [
+              { "type": "integer", "minimum": 0 },
+              { "type": "string", "enum": ["all"] }
+            ]
+          }
+        }
+      ],
       "options": {
         "description": "Options for the endpoint",
         "responses": {
           "200": { "description": "Options successfully retrieved." }
         }
-      }
-    },
-    "/preview/{streamId}/branches/{branchname}/{angle}": {
+      },
       "get": {
         "description": "Retrieve a preview for the project (stream) and model (branch), at an optional angle",
         "responses": {
@@ -284,6 +404,31 @@
       }
     },
     "/preview/{streamId}/commits/{commitId}/{angle}": {
+      "parameters": [
+        {
+          "in": "path",
+          "name": "streamId",
+          "required": true,
+          "schema": { "type": "string" }
+        },
+        {
+          "in": "path",
+          "name": "commitId",
+          "required": true,
+          "schema": { "type": "string" }
+        },
+        {
+          "in": "path",
+          "name": "angle",
+          "required": true,
+          "schema": {
+            "oneOf": [
+              { "type": "integer", "minimum": 0 },
+              { "type": "string", "enum": ["all"] }
+            ]
+          }
+        }
+      ],
       "options": {
         "description": "Options for the endpoint",
         "responses": {
@@ -305,6 +450,31 @@
       }
     },
     "/preview/{streamId}/objects/{objectId}/{angle}": {
+      "parameters": [
+        {
+          "in": "path",
+          "name": "streamId",
+          "required": true,
+          "schema": { "type": "string" }
+        },
+        {
+          "in": "path",
+          "name": "objectId",
+          "required": true,
+          "schema": { "type": "string" }
+        },
+        {
+          "in": "path",
+          "name": "angle",
+          "required": true,
+          "schema": {
+            "oneOf": [
+              { "type": "integer", "minimum": 0 },
+              { "type": "string", "enum": ["all"] }
+            ]
+          }
+        }
+      ],
       "options": {
         "description": "Options for the endpoint",
         "responses": {
@@ -345,6 +515,11 @@
     },
     "/graphql": {
       "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {}
+          }
+        },
         "summary": "GraphQL",
         "description": "GraphQL endpoint",
         "responses": { "default": { "description": "GraphQL endpoint" } }
