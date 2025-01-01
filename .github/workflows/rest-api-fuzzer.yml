@@ -138,9 +138,10 @@ jobs:
           ${{ github.workspace }}/bin/restler/Restler compile ${{ github.workspace }}/speckle-server/setup/fuzzer/config.restler.json
 
       - name: Print the contents of the Restler compile directory
+        if: always()
         run: |
-          ls -la ${{ github.workspace }}
-          ls -la ${{ github.workspace }}/Compile
+          ls -la ${{ github.workspace }} || true
+          ls -la ${{ github.workspace }}/Compile || true
 
       - name: Save Grammar
         id: cache-grammar-save
