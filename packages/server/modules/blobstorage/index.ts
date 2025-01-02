@@ -244,9 +244,12 @@ export const init: SpeckleModule['init'] = async (app) => {
           )
         )
 
-        const status = 400
-        const response = 'Upload request error. The server logs may have more details.'
-        res.status(status).end(response)
+        res.contentType('application/json')
+        res
+          .status(400)
+          .end(
+            '{ "error": "Upload request error. The server logs may have more details." }'
+          )
       })
 
       req.pipe(busboy)
