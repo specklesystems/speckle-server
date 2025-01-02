@@ -21,10 +21,11 @@
     <LayoutTable
       class="mt-6"
       :columns="[
-        { id: 'name', header: 'Name', classes: 'col-span-3 truncate' },
+        { id: 'name', header: 'Name', classes: 'col-span-2 truncate' },
+        { id: 'id', header: 'ID', classes: 'col-span-2 truncate' },
         { id: 'email', header: 'Email', classes: 'col-span-3 truncate' },
         { id: 'company', header: 'Company', classes: 'col-span-2 truncate' },
-        { id: 'role', header: 'Role', classes: 'col-span-2' },
+        { id: 'role', header: 'Role', classes: 'col-span-1' },
         { id: 'emailState', header: 'Email state', classes: 'col-span-2' },
         { id: 'actions', header: '', classes: 'absolute right-2 top-0.5' }
       ]"
@@ -37,6 +38,10 @@
             {{ isUser(item) ? item.name : '' }}
           </span>
         </div>
+      </template>
+
+      <template #id="{ item }">
+        {{ item.id }}
       </template>
 
       <template #email="{ item }">

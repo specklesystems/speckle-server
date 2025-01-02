@@ -19,6 +19,13 @@
           @click="handleViewModeChange(shortcut.viewMode)"
         />
       </div>
+      <ViewerMenuItem
+        label="Let it snow"
+        :active="snowingEnabled"
+        @click="onSnowModeClick"
+      >
+        ❄️
+      </ViewerMenuItem>
     </div>
   </ViewerMenu>
 </template>
@@ -32,7 +39,7 @@ import { ViewModeShortcuts } from '~/lib/viewer/helpers/shortcuts/shortcuts'
 
 const open = defineModel<boolean>('open', { default: false })
 
-const { setViewMode, currentViewMode } = useViewModeUtilities()
+const { setViewMode, currentViewMode, letItSnow } = useViewModeUtilities()
 const { getShortcutDisplayText, registerShortcuts } = useViewerShortcuts()
 const mp = useMixpanel()
 
@@ -55,15 +62,18 @@ registerShortcuts({
   SetViewModeColors: () => handleViewModeChange(ViewMode.COLORS, true)
 })
 
-const isActiveMode = (mode: ViewMode) => mode === currentViewMode.value
+const isActiveMode = (mode: ViewMode) =>
+  snowingEnabled.value ? false : mode === currentViewMode.value
 
 const viewModeShortcuts = Object.values(ViewModeShortcuts)
+const snowingEnabled = ref(false)
 
 const emit = defineEmits<{
   (e: 'force-close-others'): void
 }>()
 
 const handleViewModeChange = (mode: ViewMode, isShortcut = false) => {
+  snowingEnabled.value = false
   setViewMode(mode)
   cancelCloseTimer()
 
@@ -78,6 +88,11 @@ const handleViewModeChange = (mode: ViewMode, isShortcut = false) => {
     name: 'set-view-mode',
     mode
   })
+}
+
+const onSnowModeClick = () => {
+  snowingEnabled.value = true
+  letItSnow()
 }
 
 onUnmounted(() => {

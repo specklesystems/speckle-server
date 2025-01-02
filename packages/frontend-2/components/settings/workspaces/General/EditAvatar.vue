@@ -6,6 +6,8 @@
     name="edit-avatar"
     :disabled="loading || disabled"
     :size="size"
+    :rounded="false"
+    light-style
     @save="onSave"
   />
 </template>

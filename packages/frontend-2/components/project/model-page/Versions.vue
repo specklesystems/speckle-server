@@ -60,6 +60,7 @@
         ref="importArea"
         :project-id="project.id"
         :model-name="project.model.name"
+        :disabled="project.workspace?.readOnly"
         class="h-full w-full"
       />
     </div>
@@ -140,6 +141,10 @@ graphql(`
     }
     ...ProjectModelPageVersionsPagination
     ...ProjectsModelPageEmbed_Project
+    workspace {
+      id
+      readOnly
+    }
   }
 `)
 

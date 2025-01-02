@@ -63,7 +63,7 @@ export class MeasurementsExtension extends Extension {
     this._enabled = value
     if (this._activeMeasurement) {
       this._activeMeasurement.isVisible = value
-      this._activeMeasurement.update()
+      void this._activeMeasurement.update()
       if (!value) this.cancelMeasurement()
     }
     this.viewer.requestRender()
@@ -180,9 +180,10 @@ export class MeasurementsExtension extends Extension {
       this._activeMeasurement.endPoint.copy(this.pointBuff)
       this._activeMeasurement.endNormal.copy(this.normalBuff)
     }
-    this._activeMeasurement.update()
+    void this._activeMeasurement.update().then(() => {
+      this.viewer.requestRender()
+    })
 
-    this.viewer.requestRender()
     this._frameLock = true
     this._sceneHit = true
     // console.log('Time -> ', performance.now() - start)
@@ -282,8 +283,9 @@ export class MeasurementsExtension extends Extension {
     this._activeMeasurement.endPoint.copy(perpResult[0].point)
     this._activeMeasurement.endNormal.copy(perpResult[0].face.normal)
     this._activeMeasurement.state = MeasurementState.DANGLING_END
-    this._activeMeasurement.update()
-    this.finishMeasurement()
+    void this._activeMeasurement.update().then(() => {
+      this.finishMeasurement()
+    })
   }
 
   protected startMeasurement(): Measurement {
@@ -295,12 +297,21 @@ export class MeasurementsExtension extends Extension {
     else throw new Error('Unsupported measurement type!')
 
     measurement.state = MeasurementState.DANGLING_START
+    measurement.units =
+      this._options.units !== undefined
+        ? this._options.units
+        : DefaultMeasurementsOptions.units
+    measurement.precision =
+      this._options.precision !== undefined
+        ? this._options.precision
+        : DefaultMeasurementsOptions.precision
     measurement.frameUpdate(
       this.renderer.renderingCamera,
       this.screenBuff0,
       this.renderer.sceneBox
     )
     this.renderer.scene.add(measurement)
+
     return measurement
   }
 
@@ -314,7 +325,7 @@ export class MeasurementsExtension extends Extension {
     if (!this._activeMeasurement) return
 
     this._activeMeasurement.state = MeasurementState.COMPLETE
-    this._activeMeasurement.update()
+    void this._activeMeasurement.update()
     if (this._activeMeasurement.value > 0) {
       this.measurements.push(this._activeMeasurement)
     } else {
@@ -421,6 +432,7 @@ export class MeasurementsExtension extends Extension {
 
   protected applyOptions() {
     const all = [this._activeMeasurement, ...this.measurements]
+    const updatePromises: Promise<void>[] = []
     all.forEach((value) => {
       if (value) {
         value.units =
@@ -431,7 +443,7 @@ export class MeasurementsExtension extends Extension {
           this._options.precision !== undefined
             ? this._options.precision
             : DefaultMeasurementsOptions.precision
-        value.update()
+        updatePromises.push(value.update())
       }
     })
     this.viewer
@@ -440,18 +452,19 @@ export class MeasurementsExtension extends Extension {
 
     if (this._options.visible) this.raycaster.layers.enable(ObjectLayers.MEASUREMENTS)
     else this.raycaster.layers.disable(ObjectLayers.MEASUREMENTS)
-
-    this.viewer.requestRender()
+    void Promise.all(updatePromises).then(() => {
+      this.viewer.requestRender()
+    })
   }
 
-  public fromMeasurementData(startPoint: Vector3, endPoint: Vector3) {
+  public async fromMeasurementData(startPoint: Vector3, endPoint: Vector3) {
     const measurement = new PointToPointMeasurement()
     measurement.startPoint.copy(startPoint)
     measurement.endPoint.copy(endPoint)
     measurement.state = MeasurementState.DANGLING_END
-    measurement.update()
+    await measurement.update()
     measurement.state = MeasurementState.COMPLETE
-    measurement.update()
+    await measurement.update()
     this.measurements.push(measurement)
   }
 }

@@ -37,7 +37,7 @@
           @right-icon-click="openSlugEditDialog"
         />
         <hr class="my-4 border-outline-3" />
-        <FormTextInput
+        <FormTextArea
           v-model="description"
           color="foundation"
           label="Description"
@@ -53,12 +53,12 @@
         <hr class="my-4 border-outline-3" />
         <div class="grid grid-cols-2 gap-4">
           <div class="flex flex-col">
-            <span class="text-body-xs font-medium text-foreground">Workspace logo</span>
+            <span class="text-body-xs font-medium text-foreground">Workspace icon</span>
             <span class="text-body-2xs text-foreground-2 max-w-[230px]">
-              Upload your logo image or use one from our set of workspace icons.
+              Upload your icon image
             </span>
           </div>
-          <div v-tippy="disabledTooltipText">
+          <div :key="String(isAdmin)" v-tippy="disabledTooltipText">
             <SettingsWorkspacesGeneralEditAvatar
               v-if="workspaceResult?.workspace"
               :workspace="workspaceResult?.workspace"
@@ -76,7 +76,7 @@
           </span>
           <span class="text-body-2xs text-foreground-2">
             Role workspace members get when added to the workspace and in newly created
-            projects.
+            projects
           </span>
         </div>
         <div class="w-full sm:w-6/12">
@@ -273,9 +273,9 @@ const save = handleSubmit(async () => {
       fields: (Object.keys(input) as Array<keyof WorkspaceUpdateInput>).filter(
         (key) => key !== 'id'
       ),
-
       // eslint-disable-next-line camelcase
-      workspace_id: props.workspaceId
+      workspace_id: props.workspaceId,
+      source: 'settings'
     })
   } else {
     const errorMessage = getFirstErrorMessage(result?.errors)

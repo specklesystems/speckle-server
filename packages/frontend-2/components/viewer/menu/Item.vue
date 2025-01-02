@@ -10,6 +10,7 @@
     <span v-if="shortcut" class="text-body-2xs text-foreground-2">
       {{ shortcut }}
     </span>
+    <slot />
   </button>
 </template>
 

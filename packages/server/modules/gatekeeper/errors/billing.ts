@@ -53,3 +53,9 @@ export class WorkspacePlanDowngradeError extends BaseError {
   static code = 'WORKSPACE_PLAN_DOWNGRADE_ERROR'
   static statusCode = 400
 }
+
+export class WorkspaceReadOnlyError extends BaseError {
+  static defaultMessage = 'Workspace is read-only'
+  static code = 'WORKSPACE_READ_ONLY_ERROR'
+  static statusCode = 403
+}

@@ -51,6 +51,7 @@
           ref="importArea"
           :project-id="project.id"
           :model-name="item.fullName"
+          :disabled="project?.workspace?.readOnly"
           class="hidden"
         />
         <div
@@ -70,6 +71,7 @@
             v-else
             :project-id="project.id"
             :model-name="item.fullName"
+            :disabled="project?.workspace?.readOnly"
             class="h-full w-full"
           />
         </div>
@@ -247,6 +249,10 @@ enum StructureItemType {
 graphql(`
   fragment ProjectPageModelsStructureItem_Project on Project {
     id
+    workspace {
+      id
+      readOnly
+    }
     ...ProjectPageModelsActions_Project
   }
 `)

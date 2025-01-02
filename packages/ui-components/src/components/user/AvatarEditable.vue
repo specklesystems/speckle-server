@@ -5,6 +5,7 @@
       :user="modelAsUser"
       :disabled="disabled"
       :size="size"
+      :rounded="rounded"
       @cancel="editMode = false"
       @save="onSave"
     />
@@ -15,7 +16,14 @@
         :alt="modelAsUser.name"
         :class="sizeClasses"
       />
-      <UserAvatar v-else :user="modelAsUser" :size="size" />
+      <UserAvatar
+        v-else
+        hide-tooltip
+        :user="modelAsUser"
+        :size="size"
+        :light-style="lightStyle"
+        :rounded="rounded"
+      />
       <div
         class="opacity-0 transition-all absolute group-hover:opacity-100 top-0 right-0 left-0 bottom-0 flex items-end justify-center bottom-4"
       >
@@ -58,23 +66,31 @@ const emit = defineEmits<{
   (e: 'update:modelValue', value: ModelType): void
 }>()
 
-const props = defineProps<{
-  modelValue?: ModelType
-  /**
-   * Placeholder name that will be used to generate and show initials if no avatar is present
-   */
-  placeholder: string
-  /**
-   * Name of the field. Used for validation & form submits
-   */
-  name: string
-  rules?: RuleExpression<ModelType>
-  validateOnMount?: boolean
-  validateOnValueUpdate?: boolean
-  disabled?: boolean
-  size?: UserAvatarSize
-  defaultImg?: string
-}>()
+const props = withDefaults(
+  defineProps<{
+    modelValue?: ModelType
+    /**
+     * Placeholder name that will be used to generate and show initials if no avatar is present
+     */
+    placeholder: string
+    /**
+     * Name of the field. Used for validation & form submits
+     */
+    name: string
+    rules?: RuleExpression<ModelType>
+    validateOnMount?: boolean
+    validateOnValueUpdate?: boolean
+    disabled?: boolean
+    size?: UserAvatarSize
+    defaultImg?: string
+    rounded?: boolean
+    lightStyle?: boolean
+  }>(),
+  {
+    rounded: true,
+    lightStyle: false
+  }
+)
 
 const { value, errorMessage } = useField<ModelType>(props.name, props.rules, {
   validateOnMount: props.validateOnMount,

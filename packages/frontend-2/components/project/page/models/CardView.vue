@@ -23,7 +23,11 @@
         @clear-search="() => $emit('clear-search')"
       />
       <div v-else>
-        <ProjectCardImportFileArea :project-id="projectId" class="h-36 col-span-4" />
+        <ProjectCardImportFileArea
+          :disabled="project?.workspace?.readOnly"
+          :project-id="projectId"
+          class="h-36 col-span-4"
+        />
       </div>
     </template>
     <InfiniteLoading

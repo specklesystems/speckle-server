@@ -64,6 +64,7 @@
                 "
                 :user="user.user"
                 hover-effect
+                hide-tooltip
                 :active="user.sessionId === spotlightUserSessionId"
               />
             </button>

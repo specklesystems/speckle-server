@@ -41,7 +41,7 @@
           Changing a user's role may add a seat to your current billing cycle.
         </p>
         <p>
-          Released seats will be adjusted at the start of your next billing cycle:
+          Unused seats will be adjusted at the start of your next billing cycle:
           <br />
           {{ nextBillingCycleEnd }}
         </p>

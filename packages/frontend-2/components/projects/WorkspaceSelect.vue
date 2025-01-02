@@ -13,7 +13,6 @@
     clearable
     :disabled-item-predicate="disabledItemPredicate"
     :help="help"
-    :disabled-item-tooltip="disabledItemTooltip"
   >
     <template #nothing-selected>
       {{ items && items.length > 0 ? 'Select workspace' : 'No workspaces' }}
@@ -31,7 +30,7 @@
       </div>
     </template>
     <template #option="{ item }">
-      <div class="flex items-center gap-x-2">
+      <div v-tippy="tooltipText(item)" class="flex items-center gap-x-2">
         <WorkspaceAvatar :logo="item.logo" :name="item.name" size="2xs" />
         <span class="truncate text-foreground">{{ item.name }}</span>
       </div>
@@ -51,6 +50,8 @@ graphql(`
     role
     name
     logo
+    readOnly
+    slug
   }
 `)
 
@@ -94,6 +95,12 @@ const { selectedValue } =
 
 const disabledItemPredicate = (item: ProjectsWorkspaceSelect_WorkspaceFragment) =>
   props.disabledRoles
-    ? props.disabledRoles.includes(item.role as WorkspaceRoles)
+    ? props.disabledRoles.includes(item.role as WorkspaceRoles) || item.readOnly
     : false
+const tooltipText = (item: ProjectsWorkspaceSelect_WorkspaceFragment) =>
+  item.readOnly
+    ? 'Workspace is read-only'
+    : props.disabledRoles?.includes(item.role as WorkspaceRoles)
+    ? props.disabledItemTooltip
+    : ''
 </script>

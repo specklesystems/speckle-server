@@ -364,7 +364,7 @@ describe('GraphQL API Core @core-api', () => {
           query: 'mutation($user:UserUpdateInput!) { userUpdate( user: $user) } ',
           variables: {
             user: {
-              name: 'test user name',
+              name: 'test user updated',
               bio: 'He never really knows what he is doing.'
             }
           }
@@ -1218,7 +1218,7 @@ describe('GraphQL API Core @core-api', () => {
         expect(res).to.be.json
         expect(res.body.errors).to.not.exist
         expect(res.body.data).to.have.property('user')
-        expect(res.body.data.user.name).to.equal('test user name')
+        expect(res.body.data.user.name).to.equal('test user updated')
         expect(res.body.data.user.email).to.equal('d.1@speckle.systems')
         expect(res.body.data.user.role).to.equal(Roles.Server.Admin)
       })

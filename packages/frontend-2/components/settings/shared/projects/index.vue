@@ -12,7 +12,9 @@
           v-on="on"
         />
       </div>
-      <FormButton @click="openNewProject = true">Create</FormButton>
+      <FormButton :disabled="disableCreate" @click="openNewProject = true">
+        Create
+      </FormButton>
     </div>
 
     <LayoutTable
@@ -144,6 +146,7 @@ graphql(`
 defineProps<{
   projects?: SettingsSharedProjects_ProjectFragment[]
   workspaceId?: string
+  disableCreate?: boolean
 }>()
 
 const emit = defineEmits<{

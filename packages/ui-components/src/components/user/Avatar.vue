@@ -1,7 +1,8 @@
 <template>
   <div
     :class="[
-      'text-foreground-on-primary flex shrink-0 items-center justify-center overflow-hidden rounded-full uppercase transition',
+      'text-foreground-on-primary flex shrink-0 items-center justify-center overflow-hidden uppercase transition',
+      rounded ? 'rounded-full' : 'rounded-md',
       sizeClasses,
       bgClasses,
       borderClasses,
@@ -19,6 +20,7 @@
       <div
         v-else-if="initials"
         v-tippy="!hideTooltip ? props.user?.name : undefined"
+        :class="textClasses"
         class="flex h-full w-full select-none items-center justify-center"
       >
         {{ initials }}
@@ -44,11 +46,15 @@ const props = withDefaults(
     noBorder?: boolean
     noBg?: boolean
     hideTooltip?: boolean
+    rounded?: boolean
+    lightStyle?: boolean
   }>(),
   {
     size: 'base',
     hoverEffect: false,
-    user: null
+    user: null,
+    rounded: true,
+    lightStyle: false
   }
 )
 
@@ -66,11 +72,13 @@ const initials = computed(() => {
 
 const borderClasses = computed(() => {
   if (props.noBorder) return ''
+  if (props.lightStyle) return 'border border-outline-2'
   return 'border-2 border-foundation'
 })
 
 const bgClasses = computed(() => {
   if (props.noBg) return ''
+  if (props.lightStyle) return 'bg-foundation-2'
   return 'bg-info-darker'
 })
 
@@ -82,6 +90,11 @@ const hoverClasses = computed(() => {
 
 const activeClasses = computed(() => {
   if (props.active) return 'border-primary'
+  return ''
+})
+
+const textClasses = computed(() => {
+  if (props.lightStyle) return 'text-foreground-3'
   return ''
 })
 </script>

@@ -5,6 +5,7 @@
         :key="project.id"
         :project="project"
         :show-workspace-link="showWorkspaceLink"
+        :workspace-page="workspacePage"
       />
     </div>
   </div>
@@ -21,6 +22,7 @@ import type {
 const props = defineProps<{
   projects: ProjectsDashboardFilledProjectFragment | ProjectsDashboardFilledUserFragment
   showWorkspaceLink?: boolean
+  workspacePage?: boolean
 }>()
 
 graphql(`
