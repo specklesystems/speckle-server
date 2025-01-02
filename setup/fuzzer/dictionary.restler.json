@@ -12,7 +12,16 @@
   "restler_fuzzable_bool": ["true"],
   "restler_fuzzable_object": ["{ \"fuzz\": false }"],
   "restler_custom_payload": {
-    "streamId": ["815704124b"]
+    "streamId": ["815704124b"],
+    "appId": [
+      "spklwebapp",
+      "spklpwerbi",
+      "spklexcel",
+      "sca",
+      "sdm",
+      "spklautoma",
+      "explorer"
+    ]
   },
   "restler_custom_payload_unquoted": {},
   "restler_custom_payload_uuid4_suffix": {},

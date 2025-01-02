@@ -104,7 +104,14 @@
           }
         },
         "responses": {
-          "200": { "description": "User registered successfully" },
+          "302": {
+            "description": "User registered successfully",
+            "headers": {
+              "Location": {
+                "schema": { "type": "string", "format": "uri" }
+              }
+            }
+          },
           "400": {
             "description": "Invalid input",
             "content": {
@@ -135,8 +142,14 @@
         "security": [],
         "operationId": "getAuthAccesscode",
         "responses": {
-          "200": { "description": "Returns an access code in the body" },
-          "302": { "description": "Redirects with access code in url query" },
+          "302": {
+            "description": "Redirects with access code in url query",
+            "headers": {
+              "Location": {
+                "schema": { "type": "string", "format": "uri" }
+              }
+            }
+          },
           "400": {
             "description": "Invalid access code, or the app does not exist",
             "content": {
@@ -146,8 +159,7 @@
                 }
               }
             }
-          },
-          "500": { "description": "Internal error" }
+          }
         }
       },
       "options": {
@@ -264,6 +276,25 @@
           "200": {
             "description": "Successfully uploaded a blob to the project"
           },
+          "400": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "message": { "type": "string" },
+                        "code": { "type": "string" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
           "404": {
             "description": "Stream could not be found",
             "content": {
@@ -351,7 +382,17 @@
             "description": "Successfully retrieved a blob from the project"
           },
           "401": { "description": "Unauthorized" },
-          "404": { "description": "Stream or blob could not be found." }
+          "404": {
+            "description": "Stream or blob could not be found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": { "error": { "type": "string" } }
+                }
+              }
+            }
+          }
         }
       },
       "delete": {
@@ -515,6 +556,10 @@
         },
         "responses": {
           "200": { "description": "Objects were successfully uploaded." },
+          "400": {
+            "description": "Invalid input",
+            "content": { "text/html": { "schema": { "type": "string" } } }
+          },
           "401": { "description": "Unauthorized" }
         }
       }
@@ -540,7 +585,9 @@
         "operationId": "optionsObject",
         "responses": {
           "200": { "description": "Options were retrieved." },
-          "404": { "description": "Not found" }
+          "404": {
+            "description": "Not found"
+          }
         }
       },
       "get": {
@@ -550,7 +597,10 @@
         "responses": {
           "200": { "description": "Objects were downloaded." },
           "401": { "description": "Unauthorized" },
-          "404": { "description": "Stream or Object was not found." }
+          "404": {
+            "description": "Stream or Object was not found.",
+            "content": { "text/html": { "schema": { "type": "string" } } }
+          }
         }
       }
     },
@@ -629,6 +679,25 @@
         },
         "responses": {
           "200": { "description": "A diff was successfully computed." },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "message": { "type": "string" },
+                        "code": { "type": "string" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
           "401": {
             "description": "Unauthorized",
             "headers": {
@@ -664,6 +733,25 @@
         "operationId": "postGetobjects",
         "responses": {
           "200": { "description": "All objects were successfully retrieved." },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "message": { "type": "string" },
+                        "code": { "type": "string" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
           "401": { "description": "Unauthorized" },
           "404": {
             "description": "Stream was not found.",
@@ -750,6 +838,25 @@
         "responses": {
           "200": {
             "description": "file successfully uploaded to the project (stream)"
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "message": { "type": "string" },
+                        "code": { "type": "string" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
           },
           "404": {
             "description": "Stream or branch could not be found.",
@@ -1070,6 +1177,12 @@
                         "type": "object",
                         "properties": {
                           "message": { "type": "string" },
+                          "locations": {
+                            "type": "array",
+                            "items": {
+                              "type": "object"
+                            }
+                          },
                           "extensions": {
                             "type": "object",
                             "properties": {
