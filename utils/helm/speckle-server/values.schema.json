@@ -1211,6 +1211,11 @@
         "ratelimiting": {
           "type": "object",
           "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "If enabled, rate limiting will be applied to the Speckle server.",
+              "default": true
+            },
             "all_requests": {
               "type": "number",
               "description": "The maximum number of requests that can be made to the Speckle server in a moving one second window.",
