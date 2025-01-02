@@ -57,16 +57,17 @@ jobs:
         run: |
           pip install -r ${{ github.workspace }}/restler-fuzzer/restler/requirements.txt
 
-      - name: Restore cached Restler binaries
-        id: cache-restler-bin-restore
-        uses: actions/cache/restore@v4
-        with:
-          path: |
-            ${{ github.workspace }}/bin/restler
-          key: restler-binaries-${{ env.RESTLER_VERSION }}-${{ hashFiles('speckle-server/.github/workflows/rest-api-fuzzer.yml') }}
+      # This doesn't currently work as it cannot find path to compiler
+      # - name: Restore cached Restler binaries
+      #   id: cache-restler-bin-restore
+      #   uses: actions/cache/restore@v4
+      #   with:
+      #     path: |
+      #       ${{ github.workspace }}/bin/restler
+      #     key: restler-binaries-${{ env.RESTLER_VERSION }}-${{ hashFiles('speckle-server/.github/workflows/rest-api-fuzzer.yml') }}
 
       - name: Build RESTler
-        if: steps.cache-restler-bin-restore.outputs.cache-hit != 'true'
+        # if: steps.cache-restler-bin-restore.outputs.cache-hit != 'true'
         run: |
           python ${{ github.workspace }}/restler-fuzzer/build-restler.py --dest_dir ${{ github.workspace }}/bin
           python -m compileall -b ${{ github.workspace }}/bin/restler
@@ -76,14 +77,14 @@ jobs:
           ls -la ${{ github.workspace }}/bin/restler
           ls -la ${{ github.workspace }}/bin/restler/Restler
 
-      - name: Save Restler binaries to cache
-        if: steps.cache-restler-bin-restore.outputs.cache-hit != 'true'
-        id: cache-restler-bin-save
-        uses: actions/cache/save@v4
-        with:
-          path: |
-            ${{ github.workspace }}/bin/restler
-          key: ${{ steps.cache-restler-bin-restore.outputs.cache-primary-key }}
+      # - name: Save Restler binaries to cache
+      #   if: steps.cache-restler-bin-restore.outputs.cache-hit != 'true'
+      #   id: cache-restler-bin-save
+      #   uses: actions/cache/save@v4
+      #   with:
+      #     path: |
+      #       ${{ github.workspace }}/bin/restler
+      #     key: ${{ steps.cache-restler-bin-restore.outputs.cache-primary-key }}
 
       - name: Restore cached Restler configuration
         id: cache-config-restore
