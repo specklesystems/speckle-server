@@ -41,6 +41,20 @@
             "schema": { "type": "string" }
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": { "type": "string", "format": "email" },
+                  "password": { "type": "string" }
+                },
+                "required": ["email", "password"]
+              }
+            }
+          }
+        },
         "responses": {
           "200": { "description": "User logged in successfully" },
           "400": { "description": "Invalid input" },
@@ -231,6 +245,21 @@
             "schema": { "type": "string" }
           }
         ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Successfully uploaded a blob to the project"
@@ -470,14 +499,14 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "property_name_irrelevant": {
+                  "file": {
                     "type": "string",
                     "format": "binary"
                   }
                 }
               },
               "encoding": {
-                "property_name_irrelevant": {
+                "file": {
                   "contentType": "application/gzip, text/plain, application/json, application/octet-stream"
                 }
               }
@@ -588,7 +617,10 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "objects": { "type": "array", "items": { "type": "string" } }
+                  "objects": {
+                    "type": "string",
+                    "description": "A JSON-stringified array of object Ids. NOTE this is a string!"
+                  }
                 },
                 "required": ["objects"]
               }
@@ -700,6 +732,21 @@
         "summary": "Uploads a file to a project (stream)",
         "security": [{ "BearerAuth": [] }],
         "operationId": "postFileBranch",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "file successfully uploaded to the project (stream)"
