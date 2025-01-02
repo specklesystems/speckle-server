@@ -52,14 +52,33 @@ jobs:
         run: |
           pip install -r ${{ github.workspace }}/restler-fuzzer/restler/requirements.txt
 
+      - name: Restore cached Restler binaries
+        id: cache-restler-bin-restore
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            ${{ github.workspace }}/bin/restler
+          key: restler-binaries-${{ env.RESTLER_VERSION }}
+
       - name: Build RESTler
+        if: steps.cache-restler-bin-restore.outputs.cache-hit != 'true'
         run: |
           python ${{ github.workspace }}/restler-fuzzer/build-restler.py --dest_dir ${{ github.workspace }}/bin
+          python -m compileall -b /bin/restler
 
       - name: Debug the built output
         run: |
           ls -la ${{ github.workspace }}/bin/restler
           ls -la ${{ github.workspace }}/bin/restler/Restler
+
+      - name: Save Restler binaries to cache
+        if: steps.cache-restler-bin-restore.outputs.cache-hit != 'true'
+        id: cache-restler-bin-save
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            ${{ github.workspace }}/bin/restler
+          key: ${{ steps.cache-restler-bin-restore.outputs.cache-primary-key }}
 
       - uses: actions/checkout@v4
         name: Checkout speckle-server
@@ -117,6 +136,7 @@ jobs:
           cat ${{ github.workspace }}/restlerConfig/annotations.json
 
       - name: Save Restler Config
+        if: steps.cache-config-restore.outputs.cache-hit != 'true'
         id: cache-config-save
         uses: actions/cache/save@v4
         with:
@@ -145,6 +165,7 @@ jobs:
           cat $(find ${{ github.workspace }}/Compile -type f -name "*.log") || true
 
       - name: Save Grammar
+        if: steps.cache-grammar-restore.outputs.cache-hit != 'true'
         id: cache-grammar-save
         uses: actions/cache/save@v4
         with:
