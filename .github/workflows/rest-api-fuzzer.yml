@@ -237,6 +237,16 @@ jobs:
           echo ""
           cat "$(find ${{ github.workspace }}/Test -type f -name "network.testing.*.txt")" || true
 
+      - uses: actions/upload-artifact@v4
+        name: Store the Test output
+        if: always()
+        with:
+          name: fuzz-test-rest-api-output
+          path: ${{ github.workspace }}/Test
+          if-no-files-found: error
+          retention-days: 5
+          overwrite: true
+
       - name: Print Docker Compose logs
         if: always()
         run: |
