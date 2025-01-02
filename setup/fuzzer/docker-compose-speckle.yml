@@ -44,6 +44,7 @@ services:
 
       DISABLE_NOTIFICATIONS_CONSUMPTION: true
       STRATEGY_LOCAL: true
+      RATELIMITER_ENABLED: false
     networks:
       - speckle-server_default
 
