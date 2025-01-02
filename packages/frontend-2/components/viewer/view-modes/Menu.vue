@@ -24,7 +24,7 @@
         :active="snowingEnabled"
         @click="onSnowModeClick"
       >
-        🎅
+        ❄️
       </ViewerMenuItem>
     </div>
   </ViewerMenu>
