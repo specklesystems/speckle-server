@@ -64,7 +64,7 @@ jobs:
         if: steps.cache-restler-bin-restore.outputs.cache-hit != 'true'
         run: |
           python ${{ github.workspace }}/restler-fuzzer/build-restler.py --dest_dir ${{ github.workspace }}/bin
-          python -m compileall -b /bin/restler
+          python -m compileall -b ${{ github.workspace }}/bin/restler
 
       - name: Debug the built output
         run: |
