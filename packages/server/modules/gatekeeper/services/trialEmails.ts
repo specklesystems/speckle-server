@@ -131,6 +131,8 @@ export const sendWorkspaceTrialExpiresEmailFactory =
     await Promise.all(sendEmailParams.map((params) => sendEmail(params)))
     await mp.track('Workspace Trial Expiration Email Sent', {
       workspaceId: args.workspace.id,
+      // eslint-disable-next-line camelcase
+      workspace_id: args.workspace.id,
       expiresInDays: args.expiresInDays
     })
   }
