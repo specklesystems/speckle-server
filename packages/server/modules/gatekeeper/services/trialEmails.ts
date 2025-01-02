@@ -7,6 +7,7 @@ import {
   SendEmailParams
 } from '@/modules/emails/domain/operations'
 import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
+import { mixpanel } from '@/modules/shared/utils/mixpanel'
 import { GetWorkspaceCollaborators } from '@/modules/workspaces/domain/operations'
 import { WorkspaceTeamMember } from '@/modules/workspaces/domain/types'
 import { Workspace } from '@/modules/workspacesCore/domain/types'
@@ -97,6 +98,7 @@ export const sendWorkspaceTrialExpiresEmailFactory =
     getUserEmails: FindEmailsByUserId
   }) =>
   async (args: TrialExpiresArgs) => {
+    const mp = mixpanel({ userEmail: undefined, req: undefined })
     const [serverInfo, workspaceAdmins] = await Promise.all([
       getServerInfo(),
       getWorkspaceCollaborators({
@@ -127,4 +129,8 @@ export const sendWorkspaceTrialExpiresEmailFactory =
       })
     )
     await Promise.all(sendEmailParams.map((params) => sendEmail(params)))
+    await mp.track('Workspace Trial Expiration Email Sent', {
+      workspaceId: args.workspace.id,
+      expiresInDays: args.expiresInDays
+    })
   }
