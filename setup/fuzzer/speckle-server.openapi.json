@@ -63,9 +63,10 @@
                 "type": "object",
                 "properties": {
                   "email": { "type": "string", "format": "email" },
-                  "password": { "type": "string" }
+                  "password": { "type": "string" },
+                  "name": { "type": "string" }
                 },
-                "required": ["email", "password"]
+                "required": ["email", "password", "name"]
               }
             }
           }

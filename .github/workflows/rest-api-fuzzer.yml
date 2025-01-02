@@ -224,18 +224,6 @@ jobs:
           echo "############################################"
           echo ""
           cat ${{ github.workspace }}/Test/restler-*.log || true
-          echo ""
-          echo "############################################"
-          echo "#            Coverage report               #"
-          echo "############################################"
-          echo ""
-          cat "$(find ${{ github.workspace }}/Test -type f -name "speccov.json")" || true
-                    echo ""
-          echo "############################################"
-          echo "#          Network testing logs            #"
-          echo "############################################"
-          echo ""
-          cat "$(find ${{ github.workspace }}/Test -type f -name "network.testing.*.txt")" || true
 
       - uses: actions/upload-artifact@v4
         name: Store the Test output

@@ -12,7 +12,8 @@
   "restler_fuzzable_bool": ["true"],
   "restler_fuzzable_object": ["{ \"fuzz\": false }"],
   "restler_custom_payload": {
-    "/graphql/post/Content-Type": ["application/json"]
+    "/graphql/post/Content-Type": "application/json",
+    "streamId": "815704124b"
   },
   "restler_custom_payload_unquoted": {},
   "restler_custom_payload_uuid4_suffix": {},
