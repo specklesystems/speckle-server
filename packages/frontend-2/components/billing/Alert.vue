@@ -79,6 +79,9 @@ const trialDaysLeft = computed(() => {
 })
 const title = computed(() => {
   if (isTrial.value) {
+    if (trialDaysLeft.value === 0) {
+      return 'Final day of free trial'
+    }
     if (props.condensed) {
       return `${trialDaysLeft.value} day${
         trialDaysLeft.value !== 1 ? 's' : ''
