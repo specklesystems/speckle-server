@@ -287,6 +287,35 @@ describe('FileUploads @fileuploads', () => {
       ).to.have.lengthOf(0)
     })
 
+    it('Returns 400 for missing headers', async () => {
+      const response = await request(app)
+        .post(`/api/file/autodetect/${createdStreamId}/main`)
+        .set('Authorization', `Bearer ${userOneToken}`)
+      // .set('Content-type', 'multipart/form-data; boundary=XXX') // purposely missing content type
+
+      expect(response.status).to.equal(400)
+      expect(response.headers['content-type']).to.contain('application/json;')
+      expect(response.body.error.message).to.contain('Missing Content-Type')
+      const gqlResponse = await sendRequest(userOneToken, {
+        query: `query ($streamId: String!) {
+          stream(id: $streamId) {
+            id
+            fileUploads {
+              id
+              fileName
+              convertedStatus
+            }
+          }
+        }`,
+        variables: { streamId: createdStreamId }
+      })
+      expect(noErrors(gqlResponse))
+      expect(
+        gqlResponse.body.data.stream.fileUploads,
+        JSON.stringify(gqlResponse.body.data)
+      ).to.have.lengthOf(0)
+    })
+
     it('Returns OK but describes errors for too big files', async () => {
       const response = await request(app)
         .post(`/api/file/autodetect/${createdStreamId}/main`)
