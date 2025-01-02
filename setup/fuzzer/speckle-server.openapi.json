@@ -191,6 +191,20 @@
         "summary": "Logs a user out by invalidating token and refresh token",
         "security": [],
         "operationId": "postAuthLogout",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "token": { "type": "string" },
+                  "refreshToken": { "type": "string" }
+                },
+                "required": ["token", "refreshToken"]
+              }
+            }
+          }
+        },
         "responses": {
           "200": { "description": "Successfully logged out" },
           "400": {
@@ -450,6 +464,26 @@
         "summary": "Upload objects to the project (stream)",
         "security": [{ "BearerAuth": [] }],
         "operationId": "postObjects",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "property_name_irrelevant": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              },
+              "encoding": {
+                "property_name_irrelevant": {
+                  "contentType": "application/gzip, text/plain, application/json, application/octet-stream"
+                }
+              }
+            }
+          }
+        },
         "responses": {
           "200": { "description": "Objects were successfully uploaded." },
           "401": { "description": "Unauthorized" }
@@ -963,7 +997,15 @@
         "operationId": "postGraphql",
         "requestBody": {
           "content": {
-            "application/json": {}
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "query": { "type": "string" }
+                },
+                "required": ["query"]
+              }
+            }
           }
         },
         "responses": {
@@ -974,6 +1016,7 @@
                 "schema": {
                   "type": "object",
                   "properties": {
+                    "data": { "type": "object" },
                     "errors": {
                       "type": "array",
                       "items": {
