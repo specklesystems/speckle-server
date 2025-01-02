@@ -142,6 +142,7 @@ jobs:
         run: |
           ls -la ${{ github.workspace }} || true
           ls -la ${{ github.workspace }}/Compile || true
+          cat $(find ${{ github.workspace }}/Compile -type f -name "*.log") || true
 
       - name: Save Grammar
         id: cache-grammar-save
