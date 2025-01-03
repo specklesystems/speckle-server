@@ -1,93 +1,60 @@
+import { useTimeoutFn } from '@vueuse/core'
 import type { Optional } from '@speckle/shared'
 import type { ToastNotification } from '@speckle/ui-components'
-import { useTimeoutFn } from '@vueuse/core'
 import { ToastNotificationType } from '@speckle/ui-components'
 import { useSynchronizedCookie } from '~/lib/common/composables/reactiveCookie'
-import { nanoid } from 'nanoid'
 
 /**
  * Persisting toast state between reqs and between CSR & SSR loads so that we can trigger
  * toasts anywhere and anytime
  */
 const useGlobalToastState = () =>
-  useSynchronizedCookie<Optional<ToastNotification[]>>('global-toast-state')
+  useSynchronizedCookie<Optional<ToastNotification>>('global-toast-state')
 
 /**
  * Set up a new global toast manager/renderer (don't use this in multiple components that live at the same time)
  */
 export function useGlobalToastManager() {
-  type Timeout = {
-    id: string
-    stop: () => void
-  }
-
   const stateNotification = useGlobalToastState()
 
-  const timeouts = ref<Timeout[]>([])
-  const currentNotifications = ref<ToastNotification[]>(
-    Array.isArray(stateNotification.value) ? stateNotification.value : []
-  )
-  const readOnlyNotification = computed(() => currentNotifications.value)
+  const currentNotification = ref(stateNotification.value)
+  const readOnlyNotification = computed(() => currentNotification.value)
 
-  // Remove a specific notification from the state
-  const removeNotification = (id: string) => {
-    const index = currentNotifications.value.findIndex((n) => n.id === id)
-    if (index !== -1) {
-      currentNotifications.value.splice(index, 1)
-      // Clean up timeout
-      timeouts.value = timeouts.value.filter((t) => t.id !== id)
-    }
+  const dismiss = () => {
+    currentNotification.value = undefined
+    stateNotification.value = undefined
   }
 
-  // Create a timeout for a notification
-  const createTimeout = (notification: ToastNotification) => {
-    const { stop } = useTimeoutFn(() => {
-      if (notification.id) {
-        removeNotification(notification.id)
-      }
-    }, 4000)
-    return stop
-  }
+  const { start, stop } = useTimeoutFn(() => {
+    dismiss()
+  }, 4000)
 
   watch(
     stateNotification,
     (newVal) => {
       if (!newVal) return
-      currentNotifications.value = newVal
-
-      // Create timeout for the new notification
-      const index = currentNotifications.value.length - 1
-      const lastNotification = newVal[index]
-
-      if (lastNotification && !lastNotification.autoClose) {
-        timeouts.value.push({
-          id: lastNotification.id as string,
-          stop: createTimeout(lastNotification)
-        })
+      if (import.meta.server) {
+        currentNotification.value = newVal
+        return
       }
+
+      // First dismiss old notification, then set a new one on next tick
+      // this is so that the old one actually disappears from the screen for the user,
+      // instead of just having its contents replaced
+      dismiss()
+
+      nextTick(() => {
+        currentNotification.value = newVal
+
+        // (re-)init timeout
+        stop()
+        if (newVal.autoClose !== false) start()
+      })
     },
     { deep: true, immediate: true }
   )
 
-  // Function to dismiss a specific notification
-  const dismiss = (notification: ToastNotification) => {
-    if (!notification.id) return
-
-    const targetTimeout = timeouts.value.find((t) => t.id === notification.id)
-    if (targetTimeout) {
-      targetTimeout.stop()
-    }
-    removeNotification(notification.id as string)
-  }
-
-  // Dismiss all notifications
-  const dismissAll = () => {
-    timeouts.value.forEach((timeout) => timeout.stop())
-    timeouts.value = []
-    currentNotifications.value = []
-  }
-
-  return { currentNotifications: readOnlyNotification, dismiss, dismissAll }
+  return { currentNotification: readOnlyNotification, dismiss }
 }
 
 /**
@@ -101,11 +68,7 @@ export function useGlobalToast() {
    * Trigger a new toast notification
    */
   const triggerNotification = (notification: ToastNotification) => {
-    const newNotification = { ...notification, id: nanoid() }
-
-    stateNotification.value
-      ? stateNotification.value.push(newNotification)
-      : (stateNotification.value = [newNotification])
+    stateNotification.value = notification
 
     if (import.meta.server) {
       logger.info('Queued SSR toast notification', notification)
