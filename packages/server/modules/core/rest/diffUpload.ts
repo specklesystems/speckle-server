@@ -6,6 +6,8 @@ import { hasObjectsFactory } from '@/modules/core/repositories/objects'
 import { validatePermissionsWriteStreamFactory } from '@/modules/core/services/streams/auth'
 import { authorizeResolver, validateScopes } from '@/modules/shared'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
+import { UserInputError } from '@/modules/core/errors/userinput'
+import { ensureError } from '@speckle/shared'
 
 export default (app: Application) => {
   const validatePermissionsWriteStream = validatePermissionsWriteStreamFactory({
@@ -30,7 +32,15 @@ export default (app: Application) => {
 
     const projectDb = await getProjectDbClient({ projectId: req.params.streamId })
     const hasObjects = hasObjectsFactory({ db: projectDb })
-    const objectList = JSON.parse(req.body.objects)
+    let objectList: string[]
+    try {
+      objectList = JSON.parse(req.body.objects)
+    } catch (err) {
+      throw new UserInputError(
+        'Invalid body. Please provide a JSON object containing the property "objects" of type string. The value must be a JSON string representation of an array of object IDs.',
+        ensureError(err, 'Unknown JSON parsing issue')
+      )
+    }
 
     req.log.info({ objectCount: objectList.length }, 'Diffing {objectCount} objects.')
 
