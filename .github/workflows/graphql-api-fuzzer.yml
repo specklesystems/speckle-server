@@ -38,6 +38,9 @@ jobs:
           ref: V${{ env.GRAPHQLER_VERSION }}
           path: 'graphqler-fuzzer' # The path to clone the repository within the {{ github.workspace }} directory
 
+      - name: Install poetry
+        run: pipx install poetry
+
       - name: Set up Python ${{ env.PYTHON_VERSION }}
         uses: actions/setup-python@v4
         with:
