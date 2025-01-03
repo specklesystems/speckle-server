@@ -503,6 +503,15 @@ describe('Upload/Download Routes @api-rest', () => {
       })
   })
 
+  it('Should return status code 400 when getting the list of objects and if it is not parseable', async () => {
+    const response = await request(app)
+      .post(`/api/getobjects/${testStream.id}`)
+      .set('Authorization', userA.token)
+      .send({ objects: ['lolz', 'thisIsBroken', 'shouldHaveBeenJSONStringified'] })
+
+    expect(response).to.have.status(400)
+  })
+
   it('Should properly check if the server has a list of objects', (done) => {
     const objectIds = []
     for (let i = 0; i < objBatches[0].length; i++) {
@@ -555,5 +564,14 @@ describe('Upload/Download Routes @api-rest', () => {
           done(err)
         }
       })
+  })
+
+  it('Should return status code 400 if the list of objects is not parseable', async () => {
+    const response = await request(app)
+      .post(`/api/diff/${testStream.id}`)
+      .set('Authorization', userA.token)
+      .send({ objects: ['lolz', 'thisIsBroken', 'shouldHaveBeenJSONStringified'] })
+
+    expect(response).to.have.status(400)
   })
 })
