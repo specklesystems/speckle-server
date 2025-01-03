@@ -5,7 +5,7 @@
   >
     <div class="flex w-full flex-col items-center space-y-4 sm:items-end">
       <!-- Notification panel, dynamically insert this into the live region when it needs to be displayed -->
-      <TransitionGroup
+      <Transition
         enter-active-class="transform ease-out duration-300 transition"
         enter-from-class="translate-y-2 opacity-0 sm:translate-y-0 sm:translate-x-2"
         enter-to-class="translate-y-0 opacity-100 sm:translate-x-0"
@@ -14,10 +14,9 @@
         leave-to-class="opacity-0"
       >
         <div
-          v-for="(notification, index) in notifications"
-          :key="`toast-${index}`"
+          v-if="notification"
           class="pointer-events-auto w-full max-w-[20rem] overflow-hidden rounded bg-foundation text-foreground shadow-lg border border-outline-2 p-3"
-          :class="{ 'pb-2': !notification?.description && !notification?.cta }"
+          :class="{ 'pb-2': isTitleOnly }"
         >
           <div class="flex space-x-2">
             <div class="flex-shrink-0 mt-1">
@@ -60,7 +59,7 @@
                   class="mt-1 color-primary"
                   :to="notification.cta.url"
                   size="sm"
-                  @click="(e: MouseEvent) => onCtaClick(notification, e)"
+                  @click="onCtaClick"
                 >
                   {{ notification.cta.title }}
                 </TextLink>
@@ -70,7 +69,7 @@
               <button
                 type="button"
                 class="inline-flex rounded-md bg-foundation text-foreground-2 hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
-                @click="dismiss(notification)"
+                @click="dismiss"
               >
                 <span class="sr-only">Close</span>
                 <XMarkIcon class="h-5 w-5" aria-hidden="true" />
@@ -78,7 +77,7 @@
             </div>
           </div>
         </div>
-      </TransitionGroup>
+      </Transition>
     </div>
   </div>
 </template>
@@ -91,24 +90,29 @@ import {
   InformationCircleIcon,
   XMarkIcon
 } from '@heroicons/vue/20/solid'
+import { computed } from 'vue'
 import type { MaybeNullOrUndefined } from '@speckle/shared'
 import { ToastNotificationType } from '~~/src/helpers/global/toast'
 import type { ToastNotification } from '~~/src/helpers/global/toast'
 
 const emit = defineEmits<{
-  (e: 'dismiss', val: ToastNotification): void
+  (e: 'update:notification', val: MaybeNullOrUndefined<ToastNotification>): void
 }>()
 
-defineProps<{
-  notifications: MaybeNullOrUndefined<ToastNotification[]>
+const props = defineProps<{
+  notification: MaybeNullOrUndefined<ToastNotification>
 }>()
 
-const dismiss = (notification: ToastNotification) => {
-  emit('dismiss', notification)
+const isTitleOnly = computed(
+  () => !props.notification?.description && !props.notification?.cta
+)
+
+const dismiss = () => {
+  emit('update:notification', null)
 }
 
-const onCtaClick = (notification: ToastNotification, e: MouseEvent) => {
-  notification.cta?.onClick?.(e)
-  dismiss(notification)
+const onCtaClick = (e: MouseEvent) => {
+  props.notification?.cta?.onClick?.(e)
+  dismiss()
 }
 </script>
