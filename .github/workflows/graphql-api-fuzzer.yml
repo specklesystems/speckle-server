@@ -48,7 +48,6 @@ jobs:
       - name: Install dependencies with Poetry
         working-directory: ${{ github.workspace }}/graphqler-fuzzer
         run: |
-          poetry shell
           poetry install
 
       - name: Deploy dependencies (docker compose)
