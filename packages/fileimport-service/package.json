@@ -26,7 +26,7 @@
     "@speckle/shared": "workspace:^",
     "bcrypt": "^5.0.1",
     "crypto-random-string": "^3.3.1",
-    "knex": "^2.4.1",
+    "knex": "^2.5.1",
     "pg": "^8.7.3",
     "pino": "^8.7.0",
     "pino-http": "^8.0.0",
