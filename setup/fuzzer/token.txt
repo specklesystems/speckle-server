@@ -1,2 +1,0 @@
-{u'app1': {}}
-Authorization: Bearer 103b2cf86168ec87fc6ec88978455667feb0f08d12
