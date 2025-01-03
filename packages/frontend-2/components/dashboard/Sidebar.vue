@@ -83,6 +83,7 @@
                     :active="isActive(item.to)"
                     :tag="
                       item.plan.status === WorkspacePlanStatuses.Trial ||
+                      item.plan.status === WorkspacePlanStatuses.Expired ||
                       !item.plan.status
                         ? 'TRIAL'
                         : undefined
