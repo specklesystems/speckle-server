@@ -35,7 +35,7 @@ jobs:
         name: Checkout Graphqler Fuzzer
         with:
           repository: omar2535/GraphQLer
-          ref: v${{ env.GRAPHQLER_VERSION }}
+          ref: V${{ env.GRAPHQLER_VERSION }}
           path: 'graphqler-fuzzer' # The path to clone the repository within the {{ github.workspace }} directory
 
       - name: Set up Python ${{ env.PYTHON_VERSION }}
