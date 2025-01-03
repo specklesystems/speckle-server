@@ -103,7 +103,7 @@ jobs:
             ${{ github.workspace }}/graphqlerOutput
           key: ${{ steps.cache-config-restore.outputs.cache-primary-key }}
 
-      - name: Run Graphqler coverage test
+      - name: Run Graphqler fuzz test
         working-directory: ${{ github.workspace }}/graphqler-fuzzer
         run: |
           until curl --output /dev/null --silent --head --fail http://127.0.0.1:3000/readiness; do
@@ -111,7 +111,7 @@ jobs:
             sleep 3
           done
 
-          poetry run python ./graphqler  --mode fuzz --url http://127.0.0.1:3000/graphql --path ${{ github.workspace }}/graphqlerOutput --auth 'Bearer 103b2cf86168ec87fc6ec88978455667feb0f08d12'
+          poetry run python ./graphqler --mode fuzz --url http://127.0.0.1:3000/graphql --path ${{ github.workspace }}/graphqlerOutput --auth 'Bearer 103b2cf86168ec87fc6ec88978455667feb0f08d12' --config ${{ github.workspace }}/speckle-server/setup/fuzzer/config.graphqler.toml
 
       - name: Print the results
         if: always()
