@@ -1,0 +1,23 @@
+{
+  "max_combinations": 20,
+  "target_ip": "127.0.0.1",
+  "target_port": 3000,
+  "ignore_decoding_failures": true,
+  "exclude_requests": [
+    {
+      "endpoint": "/api/stream/{streamId}/blobs",
+      "methods": ["DELETE"]
+    }
+  ],
+  "authentication": {
+    "token": {
+      "location": "/home/runner/work/speckle-server/speckle-server/speckle-server/setup/fuzzer/token.txt",
+      "token_refresh_interval": 300
+    }
+  },
+  "per_resource_settings": {
+    "/auth/local/register": {
+      "create_once": 1
+    }
+  }
+}

@@ -1,0 +1,1276 @@
+{
+  "openapi": "3.1.1",
+  "info": {
+    "title": "Speckle.",
+    "version": "dev",
+    "license": {
+      "name": "Apache 2.0",
+      "url": "https://github.com/specklesystems/speckle-server?tab=License-1-ov-file#readme"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://app.speckle.systems"
+    }
+  ],
+  "paths": {
+    "/explorer": {
+      "get": {
+        "operationId": "getExplorer",
+        "security": [],
+        "summary": "GraphQL API Explorer",
+        "description": "GraphQL API Explorer",
+        "responses": {
+          "200": {
+            "description": "Returns the GraphQL API Explorer",
+            "content": { "text/html": { "schema": { "type": "string" } } }
+          }
+        }
+      }
+    },
+    "/auth/local/login": {
+      "post": {
+        "summary": "Login with email and password",
+        "operationId": "postAuthLocalLogin",
+        "security": [],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "challenge",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": { "type": "string", "format": "email" },
+                  "password": { "type": "string" }
+                },
+                "required": ["email", "password"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "User logged in successfully" },
+          "400": { "description": "Invalid input" },
+          "401": {
+            "description": "Invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "err": { "type": "boolean" },
+                    "message": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/local/register": {
+      "post": {
+        "summary": "Register with email and password",
+        "security": [],
+        "operationId": "postAuthLocalRegister",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "challenge",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": { "type": "string", "format": "email" },
+                  "password": { "type": "string" },
+                  "name": { "type": "string" }
+                },
+                "required": ["email", "password", "name"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "302": {
+            "description": "User registered successfully",
+            "headers": {
+              "Location": {
+                "schema": { "type": "string", "format": "uri" }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "err": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/accesscode": {
+      "get": {
+        "parameters": [
+          {
+            "in": "query",
+            "name": "appId",
+            "required": true,
+            "schema": { "type": "string" }
+          },
+          {
+            "in": "query",
+            "name": "challenge",
+            "required": true,
+            "schema": { "type": "string" }
+          },
+          {
+            "in": "query",
+            "name": "token",
+            "required": true,
+            "schema": { "type": "string" }
+          },
+          {
+            "in": "query",
+            "name": "preventRedirect",
+            "required": false,
+            "schema": { "type": "boolean" }
+          }
+        ],
+        "summary": "Generates an access code for an app.",
+        "security": [],
+        "operationId": "getAuthAccesscode",
+        "responses": {
+          "200": {
+            "description": "Access code generated successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "redirectUrl": { "type": "string", "format": "uri" }
+                  }
+                }
+              }
+            }
+          },
+          "302": {
+            "description": "Redirects with access code in url query",
+            "headers": {
+              "Location": {
+                "schema": { "type": "string", "format": "uri" }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid access code, or the app does not exist",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "options": {
+        "summary": "Generates a new API token",
+        "security": [],
+        "operationId": "optionsAuthAccesscode",
+        "responses": {
+          "200": { "description": "Options for generating a new API token" },
+          "404": { "description": "Not found" }
+        }
+      }
+    },
+    "/auth/token": {
+      "post": {
+        "summary": "Generates a new API token",
+        "security": [],
+        "operationId": "postAuthToken",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "appId": { "type": "string" },
+                  "appSecret": { "type": "string" },
+                  "accessCode": { "type": "string" },
+                  "challenge": { "type": "string" },
+                  "refreshToken": { "type": "string" }
+                },
+                "required": ["appId", "appSecret"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Generates a new API token" },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "err": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "summary": "Logs a user out by invalidating token and refresh token",
+        "security": [],
+        "operationId": "postAuthLogout",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "token": { "type": "string" },
+                  "refreshToken": { "type": "string" }
+                },
+                "required": ["token", "refreshToken"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Successfully logged out" },
+          "400": {
+            "description": "Error while logging out",
+            "content": {
+              "text/html": {
+                "schema": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/stream/{streamId}/blob": {
+      "post": {
+        "summary": "Upload a new blob to a project (stream)",
+        "security": [{ "BearerAuth": [] }],
+        "operationId": "postStreamBlobNew",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "streamId",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              },
+              "encoding": {
+                "file": {
+                  "contentType": "text/plain, application/json, application/octet-stream"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successfully uploaded a blob to the project"
+          },
+          "400": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "message": { "type": "string" },
+                        "code": { "type": "string" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Stream could not be found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/stream/{streamId}/blob/diff": {
+      "post": {
+        "summary": "Determine the difference (diff) between the provided array of blob Ids and those stored on the server",
+        "security": [{ "BearerAuth": [] }],
+        "operationId": "postStreamBlobDiff",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "streamId",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": { "type": "string" }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The difference between the list of blob Ids provided in the body of the request and those stored on the server"
+          },
+          "404": {
+            "description": "Stream could not be found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/stream/{streamId}/blob/{blobId}": {
+      "parameters": [
+        {
+          "in": "path",
+          "name": "streamId",
+          "required": true,
+          "schema": { "type": "string" }
+        },
+        {
+          "in": "path",
+          "name": "blobId",
+          "required": true,
+          "schema": { "type": "string" }
+        }
+      ],
+      "get": {
+        "summary": "Gets a blob from a project (stream)",
+        "security": [{ "BearerAuth": [] }],
+        "operationId": "getStreamBlob",
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved a blob from the project"
+          },
+          "401": { "description": "Unauthorized" },
+          "404": {
+            "description": "Stream or blob could not be found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": { "error": { "type": "string" } }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Deletes a blob from a project (stream)",
+        "operationId": "deleteStreamBlob",
+        "security": [{ "BearerAuth": [] }],
+        "responses": {
+          "204": {
+            "description": "Successfully deleted a blob from the project"
+          },
+          "404": {
+            "description": "Stream or blob could not be found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/stream/{streamId}/blobs": {
+      "parameters": [
+        {
+          "in": "path",
+          "name": "streamId",
+          "required": true,
+          "schema": { "type": "string" }
+        }
+      ],
+      "get": {
+        "summary": "Gets all the blobs of a project (stream)",
+        "operationId": "getStreamBlobs",
+        "security": [{ "BearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved all the blobs from the project"
+          },
+          "401": { "description": "Unauthorized" },
+          "404": {
+            "description": "Stream could not be found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": { "error": { "type": "string" } }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Deletes all the blobs from a project (stream)",
+        "operationId": "deleteStreamBlobs",
+        "security": [{ "BearerAuth": [] }],
+        "responses": { "501": { "description": "Not implemented." } }
+      }
+    },
+    "/static": {
+      "get": {
+        "summary": "Static assets",
+        "security": [],
+        "operationId": "getStatic",
+        "responses": {
+          "200": { "description": "An asset was retrieved." },
+          "301": {
+            "description": "Redirects to the home page.",
+            "headers": {
+              "Location": {
+                "schema": { "type": "string", "format": "uri" }
+              }
+            },
+            "content": {
+              "text/html": {
+                "schema": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/liveness": {
+      "options": {
+        "summary": "Liveness options",
+        "security": [],
+        "operationId": "optionsLiveness",
+        "responses": {
+          "200": { "description": "Options for liveness endpoint." }
+        }
+      },
+      "get": {
+        "summary": "Indicates whether the application is alive.",
+        "security": [],
+        "operationId": "getLiveness",
+        "responses": { "200": { "description": "The application is alive." } }
+      }
+    },
+    "/readiness": {
+      "options": {
+        "summary": "Readiness endpoint options",
+        "security": [],
+        "operationId": "optionsReadiness",
+        "responses": { "200": { "description": "Options were retrieved." } }
+      },
+      "get": {
+        "summary": "Indicates whether the application is ready to accept traffic",
+        "security": [],
+        "operationId": "getReadiness",
+        "responses": { "200": { "description": "The application is ready." } }
+      }
+    },
+    "/objects/{streamId}": {
+      "parameters": [
+        {
+          "in": "path",
+          "name": "streamId",
+          "required": true,
+          "schema": { "type": "string" }
+        }
+      ],
+      "options": {
+        "summary": "The options for this endpoint",
+        "security": [],
+        "operationId": "optionsObjects",
+        "responses": {
+          "200": { "description": "Options were retrieved." },
+          "404": { "description": "Not found" }
+        }
+      },
+      "post": {
+        "summary": "Upload objects to the project (stream)",
+        "security": [{ "BearerAuth": [] }],
+        "operationId": "postObjects",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              },
+              "encoding": {
+                "file": {
+                  "contentType": "application/gzip, text/plain, application/json, application/octet-stream"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Objects were successfully uploaded." },
+          "400": {
+            "description": "Invalid input",
+            "content": { "text/html": { "schema": { "type": "string" } } }
+          },
+          "401": { "description": "Unauthorized" }
+        }
+      }
+    },
+    "/objects/{streamId}/{objectId}": {
+      "parameters": [
+        {
+          "in": "path",
+          "name": "streamId",
+          "required": true,
+          "schema": { "type": "string" }
+        },
+        {
+          "in": "path",
+          "name": "objectId",
+          "required": true,
+          "schema": { "type": "string" }
+        }
+      ],
+      "options": {
+        "summary": "Options for downloading an object from a project (stream)",
+        "security": [],
+        "operationId": "optionsObject",
+        "responses": {
+          "200": { "description": "Options were retrieved." },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      },
+      "get": {
+        "summary": "Download objects from a project (stream)",
+        "security": [{ "BearerAuth": [] }],
+        "operationId": "getObject",
+        "responses": {
+          "200": { "description": "Objects were downloaded." },
+          "401": { "description": "Unauthorized" },
+          "404": {
+            "description": "Stream or Object was not found.",
+            "content": { "text/html": { "schema": { "type": "string" } } }
+          }
+        }
+      }
+    },
+    "/objects/{streamId}/{objectId}/single": {
+      "parameters": [
+        {
+          "in": "path",
+          "name": "streamId",
+          "required": true,
+          "schema": { "type": "string" }
+        },
+        {
+          "in": "path",
+          "name": "objectId",
+          "required": true,
+          "schema": { "type": "string" }
+        }
+      ],
+      "options": {
+        "summary": "Options for downloading a single object from a project (stream)",
+        "security": [],
+        "operationId": "optionsObjectSingle",
+        "responses": {
+          "200": { "description": "Options were retrieved." },
+          "404": { "description": "Not found" }
+        }
+      },
+      "get": {
+        "summary": "Options for downloading a single object from a project (stream)",
+        "security": [{ "BearerAuth": [] }],
+        "operationId": "getObjectSingle",
+        "responses": {
+          "200": { "description": "An object was retrieved." },
+          "401": { "description": "Unauthorized" },
+          "404": { "description": "Stream or Object was not found" }
+        }
+      }
+    },
+    "/api/diff/{streamId}": {
+      "parameters": [
+        {
+          "in": "path",
+          "name": "streamId",
+          "required": true,
+          "schema": { "type": "string" }
+        }
+      ],
+      "options": {
+        "summary": "Options for the endpoint",
+        "security": [],
+        "operationId": "optionsDiff",
+        "responses": {
+          "200": { "description": "Options were retrieved." },
+          "404": { "description": "Not found" }
+        }
+      },
+      "post": {
+        "summary": "Options for getting the diff of objects for a project (stream)",
+        "security": [{ "BearerAuth": [] }],
+        "operationId": "postDiff",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "objects": {
+                    "type": "string",
+                    "description": "A JSON-stringified array of object Ids. NOTE this is a string!"
+                  }
+                },
+                "required": ["objects"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "A diff was successfully computed." },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "message": { "type": "string" },
+                        "code": { "type": "string" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "headers": {
+              "X-RateLimit-Remaining": {
+                "schema": { "type": "integer" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/getobjects/{streamId}": {
+      "parameters": [
+        {
+          "in": "path",
+          "name": "streamId",
+          "required": true,
+          "schema": { "type": "string" }
+        }
+      ],
+      "options": {
+        "summary": "Options for the endpoint",
+        "security": [],
+        "operationId": "optionsGetobjects",
+        "responses": {
+          "200": { "description": "Options were retrieved." },
+          "404": { "description": "Not found" }
+        }
+      },
+      "post": {
+        "summary": "Get all objects for a project (stream)",
+        "security": [{ "BearerAuth": [] }],
+        "operationId": "postGetobjects",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "objects": {
+                    "type": "string",
+                    "description": "A JSON-stringified array of object Ids. NOTE this is a string!"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "All objects were successfully retrieved.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "type": "string" }
+                }
+              },
+              "text/plain": {
+                "schema": { "type": "string" }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "message": { "type": "string" },
+                        "code": { "type": "string" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "description": "Unauthorized" },
+          "404": {
+            "description": "Stream was not found.",
+            "headers": {
+              "X-RateLimit-Remaining": {
+                "schema": { "type": "integer" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/verifyemail": {
+      "get": {
+        "summary": "Verify email",
+        "security": [],
+        "operationId": "getAuthVerifyemail",
+        "description": "Verifies an email address",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "t",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "302": {
+            "description": "Redirects to the home page.",
+            "headers": {
+              "Location": {
+                "schema": { "type": "string", "format": "uri" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/file/{fileType}/{streamId}/{branchName}": {
+      "parameters": [
+        {
+          "in": "path",
+          "name": "fileType",
+          "required": true,
+          "schema": {
+            "oneOf": [
+              { "type": "string" },
+              { "type": "string", "enum": ["autodetect"] }
+            ]
+          }
+        },
+        {
+          "in": "path",
+          "name": "streamId",
+          "required": true,
+          "schema": { "type": "string" }
+        },
+        {
+          "in": "path",
+          "name": "branchName",
+          "required": true,
+          "schema": { "type": "string" }
+        }
+      ],
+      "post": {
+        "summary": "Uploads a file to a project (stream)",
+        "security": [{ "BearerAuth": [] }],
+        "operationId": "postFileBranch",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "file successfully uploaded to the project (stream)"
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "message": { "type": "string" },
+                        "code": { "type": "string" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Stream or branch could not be found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/metrics": {
+      "get": {
+        "summary": "Metrics",
+        "security": [],
+        "operationId": "getMetrics",
+        "description": "Returns Prometheus metrics",
+        "responses": { "200": { "description": "Returns Prometheus metrics" } }
+      }
+    },
+    "/preview/{streamId}/{angle}": {
+      "parameters": [
+        {
+          "in": "path",
+          "name": "streamId",
+          "required": true,
+          "schema": { "type": "string" }
+        },
+        {
+          "in": "path",
+          "name": "angle",
+          "required": true,
+          "schema": {
+            "oneOf": [
+              { "type": "integer", "minimum": 0 },
+              { "type": "string", "enum": ["all"] }
+            ]
+          }
+        }
+      ],
+      "options": {
+        "summary": "Options for the endpoint",
+        "security": [],
+        "operationId": "optionsPreviewAngle",
+        "responses": {
+          "200": { "description": "Options successfully retrieved." }
+        }
+      },
+      "get": {
+        "summary": "Retrieve a preview for the project (stream), at an optional angle",
+        "security": [{ "BearerAuth": [] }],
+        "operationId": "getPreviewAngle",
+        "responses": {
+          "200": {
+            "description": "A preview was successfully retrieved.",
+            "content": {
+              "image/png": {
+                "schema": { "type": "string", "format": "binary" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/preview/{streamId}/branches/{branchName}/{angle}": {
+      "parameters": [
+        {
+          "in": "path",
+          "name": "streamId",
+          "required": true,
+          "schema": { "type": "string" }
+        },
+        {
+          "in": "path",
+          "name": "branchName",
+          "required": true,
+          "schema": { "type": "string" }
+        },
+        {
+          "in": "path",
+          "name": "angle",
+          "required": true,
+          "schema": {
+            "oneOf": [
+              { "type": "integer", "minimum": 0 },
+              { "type": "string", "enum": ["all"] }
+            ]
+          }
+        }
+      ],
+      "options": {
+        "summary": "Options for the endpoint",
+        "security": [],
+        "operationId": "optionsPreviewBranchAngle",
+        "responses": {
+          "200": { "description": "Options successfully retrieved." }
+        }
+      },
+      "get": {
+        "summary": "Retrieve a preview for the project (stream) and model (branch), at an optional angle",
+        "security": [{ "BearerAuth": [] }],
+        "operationId": "getPreviewBranchAngle",
+        "responses": {
+          "200": {
+            "description": "A preview was successfully retrieved.",
+            "content": {
+              "image/png": {
+                "schema": { "type": "string", "format": "binary" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/preview/{streamId}/commits/{commitId}/{angle}": {
+      "parameters": [
+        {
+          "in": "path",
+          "name": "streamId",
+          "required": true,
+          "schema": { "type": "string" }
+        },
+        {
+          "in": "path",
+          "name": "commitId",
+          "required": true,
+          "schema": { "type": "string" }
+        },
+        {
+          "in": "path",
+          "name": "angle",
+          "required": true,
+          "schema": {
+            "oneOf": [
+              { "type": "integer", "minimum": 0 },
+              { "type": "string", "enum": ["all"] }
+            ]
+          }
+        }
+      ],
+      "options": {
+        "summary": "Options for the endpoint",
+        "security": [],
+        "operationId": "optionsPreviewCommitAngle",
+        "responses": {
+          "200": { "description": "Options successfully retrieved." }
+        }
+      },
+      "get": {
+        "summary": "Retrieve a preview for the project (stream) and version (commit), at an optional angle",
+        "security": [{ "BearerAuth": [] }],
+        "operationId": "getPreviewCommitAngle",
+        "responses": {
+          "200": {
+            "description": "A preview was successfully retrieved.",
+            "content": {
+              "image/png": {
+                "schema": { "type": "string", "format": "binary" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/preview/{streamId}/objects/{objectId}/{angle}": {
+      "parameters": [
+        {
+          "in": "path",
+          "name": "streamId",
+          "required": true,
+          "schema": { "type": "string" }
+        },
+        {
+          "in": "path",
+          "name": "objectId",
+          "required": true,
+          "schema": { "type": "string" }
+        },
+        {
+          "in": "path",
+          "name": "angle",
+          "schema": {
+            "oneOf": [
+              { "type": "integer", "minimum": 0, "maximum": 360 },
+              { "type": "string", "enum": ["all"] }
+            ]
+          }
+        }
+      ],
+      "options": {
+        "summary": "Options for the endpoint",
+        "security": [],
+        "operationId": "optionsPreviewObjectAngle",
+        "responses": {
+          "200": { "description": "Options successfully retrieved." }
+        }
+      },
+      "get": {
+        "summary": "Retrieve a preview for the project (stream) and object, at an optional angle",
+        "security": [{ "BearerAuth": [] }],
+        "operationId": "getPreviewObjectAngle",
+        "responses": {
+          "200": {
+            "description": "A preview was successfully retrieved.",
+            "content": {
+              "image/png": {
+                "schema": { "type": "string", "format": "binary" }
+              }
+            }
+          },
+          "403": { "description": "Forbidden" }
+        }
+      }
+    },
+    "/auth/pwdreset/request": {
+      "post": {
+        "summary": "Reset a password",
+        "security": [],
+        "operationId": "postAuthPasswordresetRequest",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": { "type": "string", "format": "email" }
+                },
+                "required": ["email"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The password reset workflow was successfully started."
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "text/html": {
+                "schema": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/pwdreset/finalize": {
+      "post": {
+        "summary": "Finish resetting a password",
+        "security": [],
+        "operationId": "postAuthPasswordresetFinalize",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "tokenId": { "type": "string" },
+                  "password": { "type": "string" }
+                },
+                "required": ["tokenId", "password"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "The password was successfully reset." },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "text/html": {
+                "schema": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/graphql": {
+      "post": {
+        "summary": "GraphQL",
+        "security": [{ "BearerAuth": [] }],
+        "operationId": "postGraphql",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "query": { "type": "string" }
+                },
+                "required": ["query"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": { "type": "object" },
+                    "errors": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "message": { "type": "string" },
+                          "locations": {
+                            "type": "array",
+                            "items": {
+                              "type": "object"
+                            }
+                          },
+                          "extensions": {
+                            "type": "object",
+                            "properties": {
+                              "code": { "type": "string" }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    }
+  }
+}
