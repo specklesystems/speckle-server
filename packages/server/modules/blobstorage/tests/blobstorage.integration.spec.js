@@ -235,7 +235,6 @@ describe('Blobs integration @blobstorage', () => {
       .set('Authorization', `Bearer ${token}`)
     // .set('Content-type', 'multipart/form-data; boundary=XXX') // purposefully missing content-type header
 
-    console.log(response.text)
     expect(response.status).to.equal(400)
   })
 })
