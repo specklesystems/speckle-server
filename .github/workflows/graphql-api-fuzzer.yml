@@ -12,10 +12,7 @@ on:
       - 'setup/fuzzer/speckle.backup.sql'
 
 env:
-  BUILD_CONFIGURATION: Release
-  BUILD_PLATFORM: 'Any CPU'
-  PYTHON_VERSION: '3.8'
-  DOTNET_VERSION: '6.0.x'
+  PYTHON_VERSION: '3.12'
   GRAPHQLER_VERSION: '2.3.6'
 
 jobs:
