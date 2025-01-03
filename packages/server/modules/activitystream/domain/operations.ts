@@ -233,6 +233,7 @@ export type AddCommitUpdatedActivity = (params: {
   originalCommit: CommitRecord
   update: CommitUpdateInput | UpdateVersionInput
   newCommit: CommitRecord
+  branchId: string
 }) => Promise<void>
 
 export type AddCommitMovedActivity = (params: {

@@ -68,7 +68,7 @@ export const addCommitCreatedActivityFactory =
           id: commit.id,
           version: { ...commit, streamId },
           type: ProjectVersionsUpdatedMessageType.Created,
-          modelId: null
+          modelId
         }
       })
     ])
@@ -93,8 +93,10 @@ export const addCommitUpdatedActivityFactory =
     originalCommit: CommitRecord
     update: CommitUpdateInput | UpdateVersionInput
     newCommit: CommitRecord
+    branchId: string
   }) => {
-    const { commitId, streamId, userId, originalCommit, update, newCommit } = params
+    const { commitId, streamId, userId, originalCommit, update, newCommit, branchId } =
+      params
     const legacyUpdateStruct: CommitUpdateInput = isOldVersionUpdateInput(update)
       ? update
       : {
@@ -124,7 +126,7 @@ export const addCommitUpdatedActivityFactory =
           id: commitId,
           version: { ...newCommit, streamId },
           type: ProjectVersionsUpdatedMessageType.Updated,
-          modelId: null
+          modelId: branchId
         }
       })
     ])
@@ -163,7 +165,7 @@ export const addCommitMovedActivityFactory =
           id: commitId,
           version: { ...commit, streamId },
           type: ProjectVersionsUpdatedMessageType.Updated,
-          modelId: null
+          modelId: newBranchId
         }
       })
     ])
