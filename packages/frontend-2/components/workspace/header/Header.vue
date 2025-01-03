@@ -126,7 +126,10 @@ const isWorkspaceGuest = computed(
   () => props.workspaceInfo.role === Roles.Workspace.Guest
 )
 const billingAlertAction = computed<Array<AlertAction>>(() => {
-  if (isInTrial.value && isWorkspaceAdmin.value) {
+  if (
+    (isInTrial.value && isWorkspaceAdmin.value) ||
+    props.workspaceInfo.plan?.status === WorkspacePlanStatuses.Expired
+  ) {
     return [
       {
         title: 'Subscribe',
@@ -134,6 +137,7 @@ const billingAlertAction = computed<Array<AlertAction>>(() => {
       }
     ]
   }
+
   return []
 })
 
