@@ -115,7 +115,8 @@ export = !FF_WORKSPACES_MODULE_ENABLED
         }
       },
       LimitedUser: {
-        workspaceDomainPolicyCompliant: async () => null
+        workspaceDomainPolicyCompliant: async () => null,
+        workspaceRole: async () => null
       },
       ServerInfo: {
         workspaces: () => ({})
