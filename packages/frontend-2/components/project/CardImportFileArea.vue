@@ -6,7 +6,7 @@
     :size-limit="maxSizeInBytes"
     :accept="accept"
     class="flex items-center h-full"
-    @files-selected="triggerAction"
+    @files-selected="onFilesSelected"
   >
     <div
       class="w-full h-full border-dashed border rounded-md p-4 flex items-center justify-center text-sm"
@@ -42,12 +42,6 @@
         file here.
       </span>
     </div>
-    <WorkspaceRegionStaticDataDisclaimer
-      v-if="showRegionStaticDataDisclaimer"
-      v-model:open="showRegionStaticDataDisclaimer"
-      :variant="RegionStaticDataDisclaimerVariant.UploadModel"
-      @confirm="onConfirmHandler"
-    />
   </FormFileUploadZone>
 </template>
 <script setup lang="ts">
@@ -56,10 +50,6 @@ import { useFileUploadProgressCore } from '~~/lib/form/composables/fileUpload'
 import { ExclamationTriangleIcon } from '@heroicons/vue/24/solid'
 import { downloadManagerUrl } from '~/lib/common/helpers/route'
 import type { Nullable } from '@speckle/shared'
-import {
-  useWorkspaceCustomDataResidencyDisclaimerQuery,
-  RegionStaticDataDisclaimerVariant
-} from '~/lib/workspaces/composables/region'
 
 const props = defineProps<{
   projectId: string
@@ -69,17 +59,11 @@ const props = defineProps<{
 
 const {
   maxSizeInBytes,
-  onFilesSelected: onFilesSelectedInternal,
+  onFilesSelected,
   accept,
   upload: fileUpload,
   isUploading
 } = useFileImport(toRefs(props))
-
-const { showRegionStaticDataDisclaimer, triggerAction, onConfirmHandler } =
-  useWorkspaceCustomDataResidencyDisclaimerQuery({
-    projectId: computed(() => props.projectId),
-    onConfirmAction: onFilesSelectedInternal
-  })
 
 const { errorMessage, progressBarClasses, progressBarStyle } =
   useFileUploadProgressCore({
