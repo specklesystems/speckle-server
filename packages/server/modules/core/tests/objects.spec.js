@@ -694,16 +694,18 @@ describe('Objects @core-objects', () => {
   })
 
   it('should backfill null object dataSizes', async () => {
+    const streamId = await createStream({
+      ...stream,
+      isPublic: false,
+      ownerId: userOne.id
+    })
     await createObjects({
-      streamId: stream.id,
+      streamId,
       objects: createManyObjects(10000 - 1)
     })
-    await db('objects').update({ sizeBytes: null }).where({ streamId: stream.id })
+    await db('objects').update({ sizeBytes: null }).where({ streamId })
     const getObjectsWithDataSize = async () =>
-      db('objects')
-        .select('sizeBytes')
-        .where({ streamId: stream.id })
-        .whereNotNull('sizeBytes')
+      db('objects').select('sizeBytes').where({ streamId }).whereNotNull('sizeBytes')
     let result = await getObjectsWithDataSize()
     expect(result.length).to.equal(0)
 
