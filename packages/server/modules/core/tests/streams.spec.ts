@@ -50,7 +50,6 @@ import {
 } from '@/modules/core/repositories/branches'
 import { db } from '@/db/knex'
 import { deleteBranchAndNotifyFactory } from '@/modules/core/services/branch/management'
-import { ModelsEmitter } from '@/modules/core/events/modelsEmitter'
 import {
   createCommitByBranchIdFactory,
   createCommitByBranchNameFactory
@@ -116,7 +115,7 @@ const createBranch = createBranchFactory({ db })
 const deleteBranchAndNotify = deleteBranchAndNotifyFactory({
   getStream,
   getBranchById: getBranchByIdFactory({ db }),
-  modelsEventsEmitter: ModelsEmitter.emit,
+  emitEvent: getEventBus().emit,
   markBranchStreamUpdated,
   addBranchDeletedActivity: addBranchDeletedActivityFactory({
     saveActivity: saveActivityFactory({ db }),

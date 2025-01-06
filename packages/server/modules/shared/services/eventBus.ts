@@ -14,6 +14,10 @@ import {
   serverinvitesEventNamespace,
   ServerInvitesEventsPayloads
 } from '@/modules/serverinvites/domain/events'
+import {
+  modelEventsNamespace,
+  ModelEventsPayloads
+} from '@/modules/core/domain/branches/events'
 
 type AllEventsWildcard = '**'
 type EventWildcard = '*'
@@ -34,6 +38,7 @@ type EventsByNamespace = {
   [workspaceEventNamespace]: WorkspaceEventsPayloads
   [gatekeeperEventNamespace]: GatekeeperEventPayloads
   [serverinvitesEventNamespace]: ServerInvitesEventsPayloads
+  [modelEventsNamespace]: ModelEventsPayloads
 }
 
 type EventTypes = UnionToIntersection<EventsByNamespace[keyof EventsByNamespace]>
@@ -71,7 +76,7 @@ type EventPayloadsByNamespaceMap = {
 }
 
 export type EventPayload<T extends EventSubscriptionKey> = T extends AllEventsWildcard
-  ? // if event key is "*", get all events from the flat object
+  ? // if event key is "**", get all events from the flat object
     EventPayloadsMap[keyof EventPayloadsMap]
   : // else if, the key is a "namespace.*" wildcard
   T extends `${infer Namespace}.${EventWildcard}`
