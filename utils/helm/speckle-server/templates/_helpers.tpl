@@ -589,9 +589,6 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 - name: FF_WORKSPACES_MULTI_REGION_ENABLED
   value: {{ .Values.featureFlags.workspacesMultiRegionEnabled | quote }}
 
-- name: FF_WORKSPACES_MULTI_REGION_BLOB_STORAGE_ENABLED
-  value: {{ .Values.featureFlags.workspacesMultiRegionBlobStorageEnabled | quote }}
-
 {{- if .Values.featureFlags.billingIntegrationEnabled }}
 - name: STRIPE_API_KEY
   valueFrom:
@@ -967,6 +964,10 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 {{- end }}
 
 # Rate Limiting
+
+- name: RATELIMITER_ENABLED
+  value: "{{ .Values.server.ratelimiting.enabled }}"
+
 {{- if .Values.server.ratelimiting.all_requests }}
 - name: RATELIMIT_ALL_REQUESTS
   value: "{{ .Values.server.ratelimiting.all_requests }}"

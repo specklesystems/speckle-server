@@ -1,13 +1,29 @@
 <template>
   <div>
-    <CommonAlert v-if="!hasValidPlan" :color="alertColor" :actions="actions">
-      <template #title>
+    <template v-if="!hasValidPlan">
+      <div
+        v-if="condensed"
+        class="flex items-center justify-between rounded-md p-2 pl-3 text-body-3xs font-medium bg-info-lighter text-primary-focus gap-x-2"
+      >
         {{ title }}
-      </template>
-      <template #description>
-        {{ description }}
-      </template>
-    </CommonAlert>
+        <FormButton
+          v-if="actions.length > 0"
+          size="sm"
+          :disabled="actions[0].disabled"
+          @click="actions[0].onClick"
+        >
+          {{ actions[0].title }}
+        </FormButton>
+      </div>
+      <CommonAlert v-else :color="alertColor" :actions="actions">
+        <template #title>
+          {{ title }}
+        </template>
+        <template #description>
+          {{ description }}
+        </template>
+      </CommonAlert>
+    </template>
   </div>
 </template>
 
@@ -39,6 +55,7 @@ graphql(`
 const props = defineProps<{
   workspace: BillingAlert_WorkspaceFragment
   actions?: Array<AlertAction>
+  condensed?: boolean
 }>()
 
 const { billingPortalRedirect } = useBillingActions()
@@ -62,9 +79,17 @@ const trialDaysLeft = computed(() => {
 })
 const title = computed(() => {
   if (isTrial.value) {
-    return `You have ${trialDaysLeft.value} day${
-      trialDaysLeft.value !== 1 ? 's' : ''
-    } left on your free trial`
+    if (trialDaysLeft.value === 0) {
+      return 'Final day of free trial'
+    }
+    if (props.condensed) {
+      return `${trialDaysLeft.value} day${
+        trialDaysLeft.value !== 1 ? 's' : ''
+      } left in trial`
+    } else
+      return `You have ${trialDaysLeft.value} day${
+        trialDaysLeft.value !== 1 ? 's' : ''
+      } left on your free trial`
   }
   switch (planStatus.value) {
     case WorkspacePlanStatuses.CancelationScheduled:
@@ -98,6 +123,8 @@ const description = computed(() => {
       return ''
   }
 })
+const hasValidPlan = computed(() => planStatus.value === WorkspacePlanStatuses.Valid)
+
 const alertColor = computed<AlertColor>(() => {
   switch (planStatus.value) {
     case WorkspacePlanStatuses.PaymentFailed:
@@ -110,6 +137,7 @@ const alertColor = computed<AlertColor>(() => {
       return 'neutral'
   }
 })
+
 const actions = computed((): AlertAction[] => {
   const actions: Array<AlertAction> = props.actions ?? []
 
@@ -129,5 +157,4 @@ const actions = computed((): AlertAction[] => {
 
   return actions
 })
-const hasValidPlan = computed(() => planStatus.value === WorkspacePlanStatuses.Valid)
 </script>

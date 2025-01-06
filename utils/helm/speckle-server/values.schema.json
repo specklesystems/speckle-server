@@ -80,11 +80,6 @@
           "description": "Toggles whether multi-region is available within workspaces. workspacesModuleEnabled must also be enabled.",
           "default": false
         },
-        "workspacesMultiRegionBlobStorageEnabled": {
-          "type": "boolean",
-          "description": "Toggles whether multi-region blob storage is available within workspaces. workspacesMultiRegionEnabled must also be enabled.",
-          "default": false
-        },
         "fileImportIFCDotNetEnabled": {
           "type": "boolean",
           "description": "Toggles whether the experimental .Net IFC importer is used for importing IFC files.",
@@ -1216,6 +1211,11 @@
         "ratelimiting": {
           "type": "object",
           "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "If enabled, rate limiting will be applied to the Speckle server.",
+              "default": true
+            },
             "all_requests": {
               "type": "number",
               "description": "The maximum number of requests that can be made to the Speckle server in a moving one second window.",

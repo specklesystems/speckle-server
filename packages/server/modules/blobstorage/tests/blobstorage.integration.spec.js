@@ -227,4 +227,14 @@ describe('Blobs integration @blobstorage', () => {
 
     expect(response.status).to.equal(400)
   })
+
+  it('Returns 400 for missing content-type', async () => {
+    const streamId = await createStreamForTest()
+    const response = await request(app)
+      .post(`/api/stream/${streamId}/blob`)
+      .set('Authorization', `Bearer ${token}`)
+    // .set('Content-type', 'multipart/form-data; boundary=XXX') // purposefully missing content-type header
+
+    expect(response.status).to.equal(400)
+  })
 })
