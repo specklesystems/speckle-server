@@ -1,4 +1,4 @@
-import type { Preview } from '@/domain/domain.js'
+import type { Preview } from '../domain/domain.js'
 import type { Knex } from 'knex'
 
 export type PreviewRow = { id: string; data: Buffer }

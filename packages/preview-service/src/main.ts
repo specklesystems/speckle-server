@@ -9,10 +9,9 @@ import {
 } from './config.js'
 import Bull from 'bull'
 import { logger } from './logging.js'
-import { jobPayload, jobProcessor } from './jobProcessor.js'
-import { createBullBoard } from 'bull-board'
-import { BullMQAdapter } from 'bull-board/bullMQAdapter.js'
+import { jobProcessor } from './jobProcessor.js'
 import { Redis, RedisOptions } from 'ioredis'
+import { jobPayload } from '@speckle/shared/dist/esm/previews/job.js'
 
 const app = express()
 const port = PORT
@@ -71,10 +70,6 @@ const opts = {
   }
 }
 const jobQueue = new Bull('preview-service-jobs', opts)
-const router = createBullBoard([new BullMQAdapter(jobQueue)]).router
-
-app.use('/jobs', router)
-// TODO: this should be a dynamic result queue based on an input from the job
 
 jobQueue.process(async (payload, done) => {
   const parseResult = jobPayload.safeParse(payload.data)

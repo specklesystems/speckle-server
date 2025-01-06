@@ -12,7 +12,7 @@ import {
   notifyUpdateFactory,
   updatePreviewMetadataFactory
 } from '@/repositories/objectPreview.js'
-import { insertPreviewFactory } from '@/repositories/previews.js'
+import { insertPreviewFactory } from '../repositories/previews.js'
 import { generateAndStore360PreviewFactory } from '@/services/360preview.js'
 import { pollForAndCreatePreviewFactory } from '@/services/pollForPreview.js'
 import { throwUncoveredError, wait } from '@speckle/shared'

@@ -1,38 +1,15 @@
 import { Page, Browser } from 'puppeteer'
-import z from 'zod'
+import { PreviewGenerator } from '@speckle/shared/dist/esm/previews/interface.js'
 import {
-  PreviewGenerator,
-  PreviewResult
-} from '@speckle/shared/dist/esm/previews/interface.js'
+  JobPayload,
+  PreviewResultPayload,
+  PreviewSuccessPayload
+} from '@speckle/shared/dist/esm/previews/job.js'
 import { Logger } from 'pino'
 
 declare global {
   interface Window extends PreviewGenerator {}
 }
-
-type Job = {
-  jobId: string
-}
-
-type JobSuccess = Job & {
-  status: 'success'
-  result: PreviewResult
-}
-
-type JobError = Job & {
-  status: 'error'
-  reason: Error
-}
-
-type JobStatus = JobSuccess | JobError
-
-export const jobPayload = z.object({
-  jobId: z.string(),
-  url: z.string(),
-  token: z.string(),
-  responseQueue: z.string()
-})
-type JobPayload = z.infer<typeof jobPayload>
 
 export const jobProcessor = async ({
   logger,
@@ -42,7 +19,7 @@ export const jobProcessor = async ({
   logger: Logger
   browser: Browser
   job: JobPayload
-}): Promise<JobStatus> => {
+}): Promise<PreviewResultPayload> => {
   const jobId = job.jobId
   const jobLogger = logger.child({ jobId })
   const start = new Date()
@@ -71,15 +48,17 @@ export const jobProcessor = async ({
       { err, elapsed },
       'Failed to process {jobId} job. It took {elapsed} seconds'
     )
+    const reason =
+      err instanceof Error
+        ? err.stack ?? err.toString()
+        : err instanceof Object
+        ? err.toString()
+        : 'unknown error'
+
     return {
       jobId: job.jobId,
       status: 'error',
-      reason:
-        err instanceof Error
-          ? err
-          : err instanceof Object
-          ? new Error(err.toString())
-          : new Error('unknown error')
+      reason
     }
   } finally {
     await page?.close()
@@ -94,7 +73,7 @@ const pageFunction = async ({
   page: Page
   job: JobPayload
   jobLogger: Logger
-}): Promise<JobSuccess> => {
+}): Promise<PreviewSuccessPayload> => {
   page.on('error', (err) => {
     jobLogger.error({ err }, 'Page crashed')
     throw err

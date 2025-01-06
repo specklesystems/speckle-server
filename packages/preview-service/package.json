@@ -24,7 +24,6 @@
   "dependencies": {
     "@speckle/shared": "workspace:^",
     "bull": "^4.16.4",
-    "bull-board": "^2.1.3",
     "express": "^4.19.2",
     "pino": "^8.7.0",
     "pino-http": "^8.6.1",
