@@ -174,7 +174,7 @@ const onSubmit = handleSubmit(async () => {
     isOpen.value = false
   } catch {
     triggerNotification({
-      type: ToastNotificationType.Success,
+      type: ToastNotificationType.Danger,
       title:
         invites.length > 1
           ? 'One or more invites failed to send'
