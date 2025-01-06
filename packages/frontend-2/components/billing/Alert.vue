@@ -3,7 +3,7 @@
     <template v-if="!hasValidPlan">
       <div
         v-if="condensed"
-        class="flex items-center justify-between rounded-md p-2 pl-3 text-body-3xs font-medium bg-info-lighter text-primary-focus"
+        class="flex items-center justify-between rounded-md p-2 pl-3 text-body-3xs font-medium bg-info-lighter text-primary-focus gap-x-2"
       >
         {{ title }}
         <FormButton
@@ -79,6 +79,9 @@ const trialDaysLeft = computed(() => {
 })
 const title = computed(() => {
   if (isTrial.value) {
+    if (trialDaysLeft.value === 0) {
+      return 'Final day of free trial'
+    }
     if (props.condensed) {
       return `${trialDaysLeft.value} day${
         trialDaysLeft.value !== 1 ? 's' : ''

@@ -22,7 +22,7 @@
   },
   "dependencies": {
     "@speckle/shared": "workspace:^",
-    "knex": "^2.4.1",
+    "knex": "^2.5.1",
     "node-fetch": "^2.6.1",
     "pg": "^8.7.3",
     "pino": "^8.7.0",
