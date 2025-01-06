@@ -12,7 +12,7 @@ export const backfillDataSizeProperty = async (params: {
   //shortcut if there are no objects to update. Prevents looping over the table if unnecessary.
   const anythingToUpdate = await db('objects').whereNull('sizeBytes').limit(1)
   if (!anythingToUpdate.length) {
-    logger.info('No objects to update')
+    logger.debug('No objects to update')
     return
   }
 
@@ -21,7 +21,8 @@ export const backfillDataSizeProperty = async (params: {
   const objectsCount = parseInt(countQuery.count.toString())
   const maxLoops = objectsCount / batchSize
 
-  logger.info(`Number of loops estimated: ${maxLoops}`)
+  logger.debug(`Number of loops estimated: ${maxLoops}`)
+  const start = new Date()
 
   const tableName = 'objects'
 
@@ -35,11 +36,10 @@ export const backfillDataSizeProperty = async (params: {
     if (offset > failsafeLimit) {
       throw new Error('Never ending loop')
     }
-    logger.info(`Starting iteration ${currentIteration}`)
-
-    const rows = await db(tableName).limit(batchSize).whereNull('sizeBytes')
+    logger.debug(`Starting iteration ${currentIteration}`)
+    const rows = await db(tableName).limit(batchSize).whereNull('sizeBytes') // only fetch rows that have not been updated yet. We do not need an offset, as the rows we previously fetched are since updated and will not be fetched again.
     currentRowsLength = rows.length
-    logger.info(`Fetched ${rows.length} rows to update with sizeBytes`)
+    logger.debug(`Fetched ${rows.length} rows to update with sizeBytes`)
 
     if (!currentRowsLength) {
       continue
@@ -67,6 +67,11 @@ export const backfillDataSizeProperty = async (params: {
       }
     })
 
-    logger.info(`Completed iteration ${currentIteration}`)
+    logger.debug(`Completed iteration ${currentIteration}`)
   } while (currentRowsLength > 0)
+
+  const duration = new Date().getTime() - start.getTime()
+  logger.debug(
+    `Finished updating all objects in ${currentIteration} iterations, taking ${duration}ms`
+  )
 }
