@@ -81,6 +81,7 @@ import { PlusIcon, TrashIcon } from '@heroicons/vue/24/outline'
 import type { InviteServerForm, InviteServerItem } from '~~/lib/invites/helpers/types'
 import { emptyInviteServerItem } from '~~/lib/invites/helpers/constants'
 import { isEmail } from '~~/lib/common/helpers/validation'
+import { useGlobalToast } from '~~/lib/common/composables/toast'
 
 const isOpen = defineModel<boolean>('open', { required: true })
 
@@ -105,6 +106,7 @@ const anyMutationsLoading = useMutationLoading()
 const { isAdmin } = useActiveUser()
 const { isGuestMode } = useServerInfo()
 const mixpanel = useMixpanel()
+const { triggerNotification } = useGlobalToast()
 
 const allowServerRoleSelect = computed(() => isAdmin.value || isGuestMode.value)
 const dialogButtons = computed((): LayoutDialogButton[] => [
@@ -138,18 +140,33 @@ const onSubmit = handleSubmit(() => {
 
   invites.forEach(async (invite) => {
     invite.value.project
-      ? await inviteUserToProject(invite.value.project.id, [
-          {
-            email: invite.value.email,
-            serverRole: invite.value.serverRole
-          }
-        ])
-      : await inviteUserToServer([
-          {
-            email: invite.value.email,
-            serverRole: invite.value.serverRole
-          }
-        ])
+      ? await inviteUserToProject(
+          invite.value.project.id,
+          [
+            {
+              email: invite.value.email,
+              serverRole: invite.value.serverRole
+            }
+          ],
+          { hideToasts: true }
+        )
+      : await inviteUserToServer(
+          [
+            {
+              email: invite.value.email,
+              serverRole: invite.value.serverRole
+            }
+          ],
+          { hideToasts: true }
+        )
+  })
+
+  triggerNotification({
+    type: ToastNotificationType.Success,
+    title:
+      invites.length > 1
+        ? 'Invites successfully send'
+        : `Invite successfully sent to ${invites[0].value.email}`
   })
 
   mixpanel.track('Invite Action', {
