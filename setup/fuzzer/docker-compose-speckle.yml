@@ -1,0 +1,53 @@
+version: '2.4'
+services:
+  speckle-server:
+    platform: linux/amd64
+    image: speckle/speckle-server:latest
+    restart: always
+    ports:
+      - '0.0.0.0:3000:3000'
+    healthcheck:
+      test:
+        - CMD
+        - /nodejs/bin/node
+        - -e
+        - "try { require('node:http').request({headers: {'Content-Type': 'application/json'}, port:3000, hostname:'127.0.0.1', path:'/readiness', method: 'GET', timeout: 2000 }, (res) => { body = ''; res.on('data', (chunk) => {body += chunk;}); res.on('end', () => {process.exit(res.statusCode != 200 || body.toLowerCase().includes('error'));}); }).end(); } catch { process.exit(1); }"
+      interval: 10s
+      timeout: 10s
+      retries: 3
+      start_period: 90s
+    environment:
+      PORT: 3000
+
+      CANONICAL_URL: 'http://127.0.0.1:3000'
+      SESSION_SECRET: '-> FILL IN <-'
+
+      REDIS_URL: 'redis://redis:6379'
+
+      USE_FRONTEND_2: true
+      FRONTEND_ORIGIN: 'http://127.0.0.1:8081'
+
+      ENABLE_FE2_MESSAGING: false
+
+      POSTGRES_URL: 'postgres'
+      POSTGRES_USER: 'speckle'
+      POSTGRES_PASSWORD: 'speckle'
+      POSTGRES_DB: 'speckle'
+
+      S3_ENDPOINT: 'http://minio:9000'
+      S3_ACCESS_KEY: 'minioadmin'
+      S3_SECRET_KEY: 'minioadmin'
+      S3_BUCKET: 'speckle-server'
+      S3_CREATE_BUCKET: 'true'
+
+      EMAIL: false
+
+      DISABLE_NOTIFICATIONS_CONSUMPTION: true
+      STRATEGY_LOCAL: true
+      RATELIMITER_ENABLED: false
+    networks:
+      - speckle-server_default
+
+networks:
+  speckle-server_default:
+    external: true
