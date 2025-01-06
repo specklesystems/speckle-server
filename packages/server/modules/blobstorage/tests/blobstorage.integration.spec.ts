@@ -234,7 +234,7 @@ describe('Blobs integration @blobstorage', () => {
   })
 
   it('Returns 400 for missing content-type', async () => {
-    const streamId = await createStreamForTest()
+    const streamId = await createStreamForTest(user)
     const response = await request(app)
       .post(`/api/stream/${streamId}/blob`)
       .set('Authorization', `Bearer ${token}`)
