@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   WorkspaceEventsPayloads,
   workspaceEventNamespace
@@ -18,6 +19,10 @@ import {
   modelEventsNamespace,
   ModelEventsPayloads
 } from '@/modules/core/domain/branches/events'
+import {
+  projectEventsNamespace,
+  ProjectEventsPayloads
+} from '@/modules/core/domain/projects/events'
 
 type AllEventsWildcard = '**'
 type EventWildcard = '*'
@@ -39,6 +44,7 @@ type EventsByNamespace = {
   [gatekeeperEventNamespace]: GatekeeperEventPayloads
   [serverinvitesEventNamespace]: ServerInvitesEventsPayloads
   [modelEventsNamespace]: ModelEventsPayloads
+  [projectEventsNamespace]: ProjectEventsPayloads
 }
 
 type EventTypes = UnionToIntersection<EventsByNamespace[keyof EventsByNamespace]>
@@ -147,4 +153,11 @@ let eventBus: EventBus
 export function getEventBus(): EventBus {
   if (!eventBus) eventBus = initializeEventBus()
   return eventBus
+}
+
+export const isSpecificEventPayload = <EventName extends EventNames>(
+  payload: EventPayload<any>,
+  eventKey: EventName
+): payload is EventPayload<EventName> => {
+  return payload.eventName === eventKey
 }

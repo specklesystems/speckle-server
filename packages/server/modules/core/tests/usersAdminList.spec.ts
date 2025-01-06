@@ -30,7 +30,6 @@ import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/se
 import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { createBranchFactory } from '@/modules/core/repositories/branches'
-import { ProjectsEmitter } from '@/modules/core/events/projectsEmitter'
 import {
   countAdminUsersFactory,
   getUserFactory,
@@ -84,7 +83,7 @@ const createStream = legacyCreateStreamFactory({
     }),
     createStream: createStreamFactory({ db }),
     createBranch: createBranchFactory({ db }),
-    projectsEventsEmitter: ProjectsEmitter.emit
+    emitEvent: getEventBus().emit
   })
 })
 const createInviteDirectly = createStreamInviteDirectly

@@ -1,5 +1,4 @@
 import knex, { db } from '@/db/knex'
-import { ProjectsEmitter } from '@/modules/core/events/projectsEmitter'
 import { UsersEmitter } from '@/modules/core/events/usersEmitter'
 import {
   createRandomEmail,
@@ -85,7 +84,7 @@ const createStream = legacyCreateStreamFactory({
     }),
     createStream: createStreamFactory({ db }),
     createBranch: createBranchFactory({ db }),
-    projectsEventsEmitter: ProjectsEmitter.emit
+    emitEvent: getEventBus().emit
   })
 })
 const findEmail = findEmailFactory({ db })

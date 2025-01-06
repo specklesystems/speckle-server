@@ -1,8 +1,9 @@
+import { ProjectEvents } from '@/modules/core/domain/projects/events'
 import { Project } from '@/modules/core/domain/streams/types'
 import { RegionalProjectCreationError } from '@/modules/core/errors/projects'
 import { StreamNotFoundError } from '@/modules/core/errors/stream'
-import { ProjectEvents } from '@/modules/core/events/projectsEmitter'
 import { createNewProjectFactory } from '@/modules/core/services/projects'
+import { isSpecificEventPayload } from '@/modules/shared/services/eventBus'
 import { expectToThrow } from '@/test/assertionHelper'
 import { Roles, StreamRoles } from '@speckle/shared'
 import { expect } from 'chai'
@@ -25,7 +26,7 @@ describe('project services @core', () => {
         },
         storeProjectRole: async () => {},
         storeModel: async () => {},
-        projectsEventsEmitter: async () => []
+        emitEvent: async () => {}
       })
       const project = await createNewProject({ ownerId })
 
@@ -52,7 +53,7 @@ describe('project services @core', () => {
         },
         storeProjectRole: async () => {},
         storeModel: async () => {},
-        projectsEventsEmitter: async () => []
+        emitEvent: async () => {}
       })
 
       const project = await createNewProject({ ownerId, visibility })
@@ -80,7 +81,7 @@ describe('project services @core', () => {
         },
         storeProjectRole: async () => {},
         storeModel: async () => {},
-        projectsEventsEmitter: async () => []
+        emitEvent: async () => {}
       })
 
       const project = await createNewProject({ ownerId, visibility })
@@ -106,7 +107,7 @@ describe('project services @core', () => {
         },
         storeProjectRole: async () => {},
         storeModel: async () => {},
-        projectsEventsEmitter: async () => []
+        emitEvent: async () => {}
       })
       const project = await createNewProject({ ownerId, visibility: 'PRIVATE' })
 
@@ -136,7 +137,7 @@ describe('project services @core', () => {
         storeModel: async () => {
           expect.fail()
         },
-        projectsEventsEmitter: async () => {
+        emitEvent: async () => {
           expect.fail()
         }
       })
@@ -168,7 +169,7 @@ describe('project services @core', () => {
         storeModel: async () => {
           expect.fail()
         },
-        projectsEventsEmitter: async () => {
+        emitEvent: async () => {
           expect.fail()
         }
       })
@@ -223,10 +224,11 @@ describe('project services @core', () => {
         storeModel: async (args) => {
           storedModel = args
         },
-        projectsEventsEmitter: async (eventName, payload) => {
-          emitedEvent = eventName
-          eventPayload = payload
-          return []
+        emitEvent: async (payload) => {
+          if (isSpecificEventPayload(payload, ProjectEvents.Created)) {
+            emitedEvent = payload.eventName
+            eventPayload = payload.payload
+          }
         }
       })
       const project = await createNewProject({
@@ -286,10 +288,11 @@ describe('project services @core', () => {
         storeModel: async (args) => {
           storedModel = args
         },
-        projectsEventsEmitter: async (eventName, payload) => {
-          emitedEvent = eventName
-          eventPayload = payload
-          return []
+        emitEvent: async (payload) => {
+          if (isSpecificEventPayload(payload, ProjectEvents.Created)) {
+            emitedEvent = payload.eventName
+            eventPayload = payload.payload
+          }
         }
       })
       const project = await createNewProject({ ownerId })
