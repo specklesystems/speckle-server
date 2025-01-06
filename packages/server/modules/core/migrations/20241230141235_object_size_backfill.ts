@@ -4,12 +4,12 @@ import { estimateStringifiedObjectSize } from '@/modules/core/services/objects/m
 import type { ObjectRecord } from '@/modules/core/helpers/types'
 
 export async function up(knex: Knex): Promise<void> {
-  coreLogger.debug('Migration object_size_backfill started')
+  coreLogger.info('Migration object_size_backfill started')
 
   //shortcut if there are no objects to update. Prevents looping over the table if unnecessary.
   const anythingToUpdate = await knex('objects').whereNull('sizeBytes').limit(1)
   if (!anythingToUpdate.length) {
-    coreLogger.debug('No objects to update')
+    coreLogger.info('No objects to update')
     return
   }
 
@@ -18,7 +18,7 @@ export async function up(knex: Knex): Promise<void> {
   const objectsCount = parseInt(countQuery.count.toString())
   const maxLoops = objectsCount / batchSize
 
-  coreLogger.debug(`Number of loops estimated: ${maxLoops}`)
+  coreLogger.info(`Number of loops estimated: ${maxLoops}`)
 
   const tableName = 'objects'
 
@@ -32,13 +32,13 @@ export async function up(knex: Knex): Promise<void> {
     if (offset > failsafeLimit) {
       throw new Error('Never ending loop')
     }
-    coreLogger.debug(`Starting iteration ${currentIteration}`)
+    coreLogger.info(`Starting iteration ${currentIteration}`)
     const rows = await knex(tableName)
       .limit(batchSize)
       .offset(offset)
       .whereNull('sizeBytes')
     currentRowsLength = rows.length
-    coreLogger.debug(`Fetched ${rows.length} rows to update with sizeBytes`)
+    coreLogger.info(`Fetched ${rows.length} rows to update with sizeBytes`)
 
     if (!currentRowsLength) {
       continue
@@ -66,10 +66,10 @@ export async function up(knex: Knex): Promise<void> {
       }
     })
 
-    coreLogger.debug(`Completed iteration ${currentIteration}`)
+    coreLogger.info(`Completed iteration ${currentIteration}`)
   } while (currentRowsLength > 0)
 
-  coreLogger.debug('Migration object_size_backfill completed')
+  coreLogger.info('Migration object_size_backfill completed')
 }
 
 export async function down(): Promise<void> {
