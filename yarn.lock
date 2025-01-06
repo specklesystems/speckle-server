@@ -16925,7 +16925,7 @@ __metadata:
     mitt: "npm:^3.0.0"
     mixpanel: "npm:^0.18.0"
     mixpanel-browser: "npm:^2.58.0"
-    nanoid: "npm:^3.0.0"
+    nanoid: "npm:^3.3.8"
     nuxt: "npm:^3.15.0"
     pino: "npm:^8.14.1"
     pino-http: "npm:^8.3.3"
@@ -17512,7 +17512,7 @@ __metadata:
     eslint-plugin-vuejs-accessibility: "npm:^2.3.0"
     lodash: "npm:^4.0.0"
     lodash-es: "npm:^4.0.0"
-    nanoid: "npm:^3.0.0"
+    nanoid: "npm:^3.3.8"
     postcss: "npm:^8.4.31"
     postcss-nesting: "npm:^10.2.0"
     prettier: "npm:^2.7.1"
@@ -40751,7 +40751,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"nanoid@npm:^3.0.0, nanoid@npm:^3.3.6":
+"nanoid@npm:^3.3.3, nanoid@npm:^3.3.7":
+  version: 3.3.7
+  resolution: "nanoid@npm:3.3.7"
+  bin:
+    nanoid: bin/nanoid.cjs
+  checksum: 10/ac1eb60f615b272bccb0e2b9cd933720dad30bf9708424f691b8113826bb91aca7e9d14ef5d9415a6ba15c266b37817256f58d8ce980c82b0ba3185352565679
+  languageName: node
+  linkType: hard
+
+"nanoid@npm:^3.3.6":
   version: 3.3.6
   resolution: "nanoid@npm:3.3.6"
   bin:
@@ -40760,12 +40769,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"nanoid@npm:^3.3.3, nanoid@npm:^3.3.7":
-  version: 3.3.7
-  resolution: "nanoid@npm:3.3.7"
+"nanoid@npm:^3.3.8":
+  version: 3.3.8
+  resolution: "nanoid@npm:3.3.8"
   bin:
     nanoid: bin/nanoid.cjs
-  checksum: 10/ac1eb60f615b272bccb0e2b9cd933720dad30bf9708424f691b8113826bb91aca7e9d14ef5d9415a6ba15c266b37817256f58d8ce980c82b0ba3185352565679
+  checksum: 10/2d1766606cf0d6f47b6f0fdab91761bb81609b2e3d367027aff45e6ee7006f660fb7e7781f4a34799fe6734f1268eeed2e37a5fdee809ade0c2d4eb11b0f9c40
   languageName: node
   linkType: hard
 
