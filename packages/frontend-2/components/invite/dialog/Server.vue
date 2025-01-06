@@ -135,50 +135,52 @@ const removeInviteItem = (index: number) => {
   removeInvite(index)
 }
 
-const onSubmit = handleSubmit(() => {
+const onSubmit = handleSubmit(async () => {
   const invites = fields.value.filter((invite) => invite.value.email)
 
-  invites.forEach(async (invite) => {
-    invite.value.project
-      ? await inviteUserToProject(
-          invite.value.project.id,
-          [
-            {
-              email: invite.value.email,
-              serverRole: invite.value.serverRole
-            }
-          ],
-          { hideToasts: true }
-        )
-      : await inviteUserToServer(
-          [
-            {
-              email: invite.value.email,
-              serverRole: invite.value.serverRole
-            }
-          ],
-          { hideToasts: true }
-        )
-  })
+  try {
+    await Promise.all(
+      invites.map((invite) =>
+        invite.value.project
+          ? inviteUserToProject(
+              invite.value.project.id,
+              [{ email: invite.value.email, serverRole: invite.value.serverRole }],
+              { hideToasts: true }
+            )
+          : inviteUserToServer(
+              [{ email: invite.value.email, serverRole: invite.value.serverRole }],
+              { hideToasts: true }
+            )
+      )
+    )
 
-  triggerNotification({
-    type: ToastNotificationType.Success,
-    title:
-      invites.length > 1
-        ? 'Invites successfully send'
-        : `Invite successfully sent to ${invites[0].value.email}`
-  })
+    triggerNotification({
+      type: ToastNotificationType.Success,
+      title:
+        invites.length > 1
+          ? 'Invites successfully send'
+          : `Invite successfully sent to ${invites[0].value.email}`
+    })
 
-  mixpanel.track('Invite Action', {
-    type: 'server invite',
-    name: 'send',
-    multiple: fields.value.length !== 1,
-    count: fields.value.length,
-    hasProject: !!fields.value.some((invite) => invite.value.project),
-    to: 'email'
-  })
+    mixpanel.track('Invite Action', {
+      type: 'server invite',
+      name: 'send',
+      multiple: fields.value.length !== 1,
+      count: fields.value.length,
+      hasProject: !!fields.value.some((invite) => invite.value.project),
+      to: 'email'
+    })
 
-  isOpen.value = false
+    isOpen.value = false
+  } catch {
+    triggerNotification({
+      type: ToastNotificationType.Success,
+      title:
+        invites.length > 1
+          ? 'One or more invites failed to send'
+          : `Failed to send invite to ${invites[0].value.email}`
+    })
+  }
 })
 
 watch(isOpen, (newVal, oldVal) => {
