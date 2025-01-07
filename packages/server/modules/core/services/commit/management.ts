@@ -328,7 +328,8 @@ export const updateCommitAndNotifyFactory =
         userId,
         originalCommit: commit,
         update: params,
-        newCommit
+        newCommit,
+        branchId: branch!.id
       })
 
       const [updatedBranch] = await Promise.all([

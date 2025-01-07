@@ -61,7 +61,7 @@ export abstract class Measurement extends Object3D {
     this.renderingSize.copy(size)
   }
 
-  public abstract update(): void
+  public abstract update(): Promise<void>
   public abstract raycast(_raycaster: Raycaster, _intersects: Array<Intersection>): void
   public abstract highlight(_value: boolean): void
   public abstract updateClippingPlanes(_planes: Plane[]): void

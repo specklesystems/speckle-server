@@ -97,5 +97,6 @@ const onConfirm = async () => {
   isOpen.value = false
   resetWizardState()
   mixpanel.track('Workspace Creation Canceled')
+  mixpanel.stop_session_recording()
 }
 </script>

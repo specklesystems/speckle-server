@@ -95,6 +95,8 @@ describe('Rate Limiting', () => {
     })
   })
 
+  //FIXME the tests in this describe block cannot be run in parallel
+  //      with other tests as it modifies process.env
   describe('rateLimiterMiddleware', () => {
     it('should set header with remaining points if not rate limited', async () => {
       const request = httpMocks.createRequest({
@@ -121,7 +123,7 @@ describe('Rate Limiting', () => {
 
       const SUT = createRateLimiterMiddleware(testMappings)
 
-      await temporarilyDisableTestEnv(async () => {
+      await temporarilyEnableRateLimiter(async () => {
         await SUT(request, response, next)
       })
 
@@ -145,7 +147,7 @@ describe('Rate Limiting', () => {
       const SUT = createRateLimiterMiddleware(createTestRateLimiterMappings())
       response = httpMocks.createResponse()
 
-      await temporarilyDisableTestEnv(async () => {
+      await temporarilyEnableRateLimiter(async () => {
         await SUT(request, response, next)
       })
 
@@ -156,11 +158,11 @@ describe('Rate Limiting', () => {
 })
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const temporarilyDisableTestEnv = async (callback: () => Promise<any>) => {
-  const oldNodeEnv = process.env.NODE_ENV
-  process.env.NODE_ENV = 'temporarily-disabled-test'
+const temporarilyEnableRateLimiter = async (callback: () => Promise<any>) => {
+  const oldRateLimiterEnabledFlag = process.env.RATELIMITER_ENABLED
+  process.env.RATELIMITER_ENABLED = 'true'
   await callback()
-  process.env.NODE_ENV = oldNodeEnv
+  process.env.RATELIMITER_ENABLED = oldRateLimiterEnabledFlag
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

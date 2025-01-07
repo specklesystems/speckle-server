@@ -31,9 +31,12 @@ import {
 } from '@/modules/gatekeeper/repositories/billing'
 import { canWorkspaceAccessFeatureFactory } from '@/modules/gatekeeper/services/featureAuthorization'
 import { upgradeWorkspaceSubscriptionFactory } from '@/modules/gatekeeper/services/subscriptions'
+import { isWorkspaceReadOnlyFactory } from '@/modules/gatekeeper/services/readOnly'
 import { calculateSubscriptionSeats } from '@/modules/gatekeeper/domain/billing'
 
 const { FF_GATEKEEPER_MODULE_ENABLED } = getFeatureFlags()
+
+const getWorkspacePlan = getWorkspacePlanFactory({ db })
 
 export = FF_GATEKEEPER_MODULE_ENABLED
   ? ({
@@ -84,6 +87,11 @@ export = FF_GATEKEEPER_MODULE_ENABLED
             workspaceFeature: args.featureName
           })
           return hasAccess
+        },
+        readOnly: async (parent) => {
+          return await isWorkspaceReadOnlyFactory({ getWorkspacePlan })({
+            workspaceId: parent.id
+          })
         }
       },
       WorkspaceMutations: {

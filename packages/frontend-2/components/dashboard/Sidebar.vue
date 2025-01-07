@@ -58,8 +58,8 @@
               v-if="isWorkspacesEnabled"
               collapsible
               title="Workspaces"
-              :plus-click="isNotGuest ? handlePlusClick : undefined"
-              plus-text="Create workspace"
+              :icon-click="isNotGuest ? handlePlusClick : undefined"
+              icon-text="Create workspace"
             >
               <NuxtLink :to="workspacesRoute" @click="handleIntroducingWorkspacesClick">
                 <LayoutSidebarMenuGroupItem
@@ -83,6 +83,7 @@
                     :active="isActive(item.to)"
                     :tag="
                       item.plan.status === WorkspacePlanStatuses.Trial ||
+                      item.plan.status === WorkspacePlanStatuses.Expired ||
                       !item.plan.status
                         ? 'TRIAL'
                         : undefined

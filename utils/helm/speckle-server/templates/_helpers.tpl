@@ -589,9 +589,6 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 - name: FF_WORKSPACES_MULTI_REGION_ENABLED
   value: {{ .Values.featureFlags.workspacesMultiRegionEnabled | quote }}
 
-- name: FF_WORKSPACES_MULTI_REGION_BLOB_STORAGE_ENABLED
-  value: {{ .Values.featureFlags.workspacesMultiRegionBlobStorageEnabled | quote }}
-
 {{- if .Values.featureFlags.billingIntegrationEnabled }}
 - name: STRIPE_API_KEY
   valueFrom:
@@ -770,6 +767,10 @@ Generate the environment variables for Speckle server and Speckle objects deploy
       key: {{ default "postgres_url" .Values.db.connectionString.secretKey }}
 - name: POSTGRES_MAX_CONNECTIONS_SERVER
   value: {{ .Values.db.maxConnectionsServer | quote }}
+- name: POSTGRES_CONNECTION_CREATE_TIMEOUT_MILLIS
+  value: {{ .Values.db.connectionCreateTimeoutMillis | quote }}
+- name: POSTGRES_CONNECTION_ACQUIRE_TIMEOUT_MILLIS
+  value: {{ .Values.db.connectionAcquireTimeoutMillis | quote }}
 
 - name: PGSSLMODE
   value: "{{ .Values.db.PGSSLMODE }}"
@@ -963,6 +964,10 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 {{- end }}
 
 # Rate Limiting
+
+- name: RATELIMITER_ENABLED
+  value: "{{ .Values.server.ratelimiting.enabled }}"
+
 {{- if .Values.server.ratelimiting.all_requests }}
 - name: RATELIMIT_ALL_REQUESTS
   value: "{{ .Values.server.ratelimiting.all_requests }}"

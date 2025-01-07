@@ -12,11 +12,6 @@
       support moving projects between data regions, so the projects you move in to the
       workspace will remain in their previous location.
     </template>
-    <template v-else-if="variant === RegionStaticDataDisclaimerVariant.UploadModel">
-      The workspace where the project resides has custom data residency set up. However,
-      we currently do not support custom data residency for file uploads. As a result,
-      the uploaded file will be stored in the default location.
-    </template>
   </LayoutDialog>
 </template>
 <script lang="ts" setup>

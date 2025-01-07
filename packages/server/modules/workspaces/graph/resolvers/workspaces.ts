@@ -202,6 +202,7 @@ import {
 import { Knex } from 'knex'
 import { getPaginatedItemsFactory } from '@/modules/shared/services/paginatedItems'
 import { InvalidWorkspacePlanStatus } from '@/modules/gatekeeper/errors/billing'
+import { BadRequestError } from '@/modules/shared/errors'
 
 const eventBus = getEventBus()
 const getServerInfo = getServerInfoFactory({ db })
@@ -479,6 +480,8 @@ export = FF_WORKSPACES_MODULE_ENABLED
                   await upsertUnpaidWorkspacePlanFactory({ db })({
                     workspacePlan: { workspaceId, status, name, createdAt }
                   })
+
+                  return true
                 case WorkspacePlanStatuses.CancelationScheduled:
                 case WorkspacePlanStatuses.Canceled:
                 case WorkspacePlanStatuses.Expired:
@@ -1031,12 +1034,25 @@ export = FF_WORKSPACES_MODULE_ENABLED
           return workspace?.role || null
         },
         team: async (parent, args) => {
+          const roles = args.filter?.roles?.map((r) => {
+            const role = r as WorkspaceRoles
+            if (!Object.values(Roles.Workspace).includes(role)) {
+              throw new BadRequestError(
+                `The filter role ${role} is not a valid workspace role`
+              )
+            }
+            return role
+          })
+          const filter = removeNullOrUndefinedKeys({
+            ...args?.filter,
+            roles
+          })
           const team = await getPaginatedItemsFactory({
             getItems: getWorkspaceCollaboratorsFactory({ db }),
             getTotalCount: getWorkspaceCollaboratorsTotalCountFactory({ db })
           })({
             workspaceId: parent.id,
-            filter: removeNullOrUndefinedKeys(args?.filter || {}),
+            filter,
             limit: args.limit,
             cursor: args.cursor ?? undefined
           })

@@ -18,7 +18,7 @@
             >
               <div class="p-5 pt-4 flex flex-col gap-y-1">
                 <h3 class="text-body-xs text-foreground-2 pb-1">
-                  {{ statusIsTrial ? 'Trial plan' : 'Current plan' }}
+                  {{ summaryPlanHeading }}
                 </h3>
                 <div class="flex gap-x-2">
                   <p class="text-heading-lg text-foreground">
@@ -28,7 +28,7 @@
                     </span>
                   </p>
                   <div>
-                    <CommonBadge v-if="statusIsTrial" rounded>TRIAL</CommonBadge>
+                    <CommonBadge v-if="showStatusBadge" rounded>TRIAL</CommonBadge>
                   </div>
                 </div>
                 <p v-if="isPurchasablePlan" class="text-body-xs text-foreground-2">
@@ -37,6 +37,11 @@
                       £{{ seatPrice[Roles.Workspace.Member] }} per seat/month
                     </span>
                     Free
+                  </span>
+                  <span
+                    v-else-if="currentPlan?.status === WorkspacePlanStatuses.Expired"
+                  >
+                    £{{ seatPrice[Roles.Workspace.Member] }} per seat/month
                   </span>
                   <span v-else>
                     £{{ seatPrice[Roles.Workspace.Member] }} per seat/month, billed
@@ -49,45 +54,44 @@
                 </p>
               </div>
               <div class="p-5 pt-4 flex flex-col gap-y-1">
-                <h3 class="text-body-xs text-foreground-2 pb-1">
-                  {{
-                    statusIsTrial
-                      ? 'Expected bill'
-                      : subscription?.billingInterval === BillingInterval.Yearly
-                      ? 'Annual bill'
-                      : 'Monthly bill'
-                  }}
-                </h3>
-                <p class="text-heading-lg text-foreground inline-block">
-                  {{ billValue }} per
-                  {{
-                    subscription?.billingInterval === BillingInterval.Yearly
-                      ? 'year'
-                      : 'month'
-                  }}
-                </p>
-                <p class="text-body-xs text-foreground-2 flex gap-x-1 items-center">
-                  {{ billDescription }}
-                  <InformationCircleIcon
-                    v-tippy="billTooltip"
-                    class="w-4 h-4 text-foreground cursor-pointer"
-                  />
-                </p>
+                <template v-if="isPurchasablePlan || statusIsTrial">
+                  <h3 class="text-body-xs text-foreground-2 pb-1">
+                    {{ summaryBillHeading }}
+                  </h3>
+                  <p class="text-heading-lg text-foreground inline-block">
+                    {{ summaryBillValue }} per
+                    {{
+                      subscription?.billingInterval === BillingInterval.Yearly
+                        ? 'year'
+                        : 'month'
+                    }}
+                  </p>
+                  <p class="text-body-xs text-foreground-2 flex gap-x-1 items-center">
+                    {{ summaryBillDescription }}
+                    <InformationCircleIcon
+                      v-tippy="billTooltip"
+                      class="w-4 h-4 text-foreground cursor-pointer"
+                    />
+                  </p>
+                </template>
+                <template v-else>
+                  <h3 class="text-body-xs text-foreground-2 pb-1">Expected bill</h3>
+                  <p class="text-heading-lg text-foreground inline-block">
+                    {{ isAcademiaPlan ? 'Free' : 'Not applicable' }}
+                  </p>
+                </template>
               </div>
               <div class="p-5 pt-4 flex flex-col gap-y-1">
                 <h3 class="text-body-xs text-foreground-2 pb-1">
-                  {{
-                    statusIsTrial && isPurchasablePlan
-                      ? 'Trial ends'
-                      : statusIsCanceled
-                      ? 'Cancels'
-                      : 'Next payment due'
-                  }}
+                  {{ summaryDateHeading }}
                 </h3>
                 <p class="text-heading-lg text-foreground capitalize">
                   {{ isPurchasablePlan ? nextPaymentDue : 'Never' }}
                 </p>
-                <p v-if="isPurchasablePlan" class="text-body-xs text-foreground-2">
+                <p
+                  v-if="showSummaryDateDescription"
+                  class="text-body-xs text-foreground-2"
+                >
                   <span v-if="statusIsTrial">Subscribe before this date</span>
                   <span v-else>
                     {{
@@ -117,12 +121,9 @@
             </div>
           </div>
 
-          <SettingsSectionHeader
-            :title="statusIsTrial ? 'Start your subscription' : 'Upgrade your plan'"
-            subheading
-            class="pt-4"
-          />
+          <SettingsSectionHeader :title="pricingTableHeading" subheading class="pt-4" />
           <SettingsWorkspacesBillingPricingTable
+            v-if="isPurchasablePlan || statusIsTrial"
             :workspace-id="workspaceId"
             :current-plan="currentPlan"
             :active-billing-interval="subscription?.billingInterval"
@@ -253,14 +254,16 @@ const statusIsTrial = computed(
     currentPlan.value?.status === WorkspacePlanStatuses.Trial ||
     !currentPlan.value?.status
 )
-const statusIsCanceled = computed(
-  () => currentPlan.value?.status === WorkspacePlanStatuses.Canceled
-)
 const isActivePlan = computed(
   () =>
     currentPlan.value &&
     currentPlan.value?.status !== WorkspacePlanStatuses.Trial &&
-    currentPlan.value?.status !== WorkspacePlanStatuses.Canceled
+    currentPlan.value?.status !== WorkspacePlanStatuses.Canceled &&
+    currentPlan.value?.status !== WorkspacePlanStatuses.Expired
+)
+
+const isAcademiaPlan = computed(
+  () => currentPlan.value?.name === WorkspacePlans.Academia
 )
 const isPurchasablePlan = computed(() => isPaidPlan(currentPlan.value?.name))
 const seatPrice = computed(() =>
@@ -291,14 +294,14 @@ const memberSeatCount = computed(() =>
     ? workspace.value.team.items.length - guestSeatCount.value
     : 0
 )
-const billValue = computed(() => {
+const summaryBillValue = computed(() => {
   const guestPrice = seatPrice.value[Roles.Workspace.Guest] * guestSeatCount.value
   const memberPrice = seatPrice.value[Roles.Workspace.Member] * memberSeatCount.value
   const totalPrice = guestPrice + memberPrice
-  if (isPurchasablePlan.value) return `£${totalPrice}`
-  return `£0`
+  const isAnnual = subscription.value?.billingInterval === BillingInterval.Yearly
+  return isPurchasablePlan.value ? `£${isAnnual ? totalPrice * 12 : totalPrice}` : '£0'
 })
-const billDescription = computed(() => {
+const summaryBillDescription = computed(() => {
   const memberText =
     memberSeatCount.value > 1 ? `${memberSeatCount.value} members` : '1 member'
   const guestText =
@@ -316,12 +319,72 @@ const billTooltip = computed(() => {
 
   return `${memberText}${guestSeatCount.value > 0 ? `, ${guestText}` : ''}`
 })
+const summaryPlanHeading = computed(() => {
+  switch (currentPlan.value?.status) {
+    case WorkspacePlanStatuses.Trial:
+      return 'Trial plan'
+    case WorkspacePlanStatuses.Expired:
+    case WorkspacePlanStatuses.Canceled:
+      return 'Plan'
+    default:
+      return 'Current plan'
+  }
+})
+const summaryBillHeading = computed(() => {
+  switch (currentPlan.value?.status) {
+    case WorkspacePlanStatuses.Trial:
+    case WorkspacePlanStatuses.Expired:
+    case WorkspacePlanStatuses.Canceled:
+      return 'Expected bill'
+    default:
+      return subscription.value?.billingInterval === BillingInterval.Yearly
+        ? 'Annual bill'
+        : 'Monthly bill'
+  }
+})
+const summaryDateHeading = computed(() => {
+  if (statusIsTrial.value && isPurchasablePlan.value) {
+    return 'Trial ends'
+  } else if (currentPlan.value?.status === WorkspacePlanStatuses.Expired) {
+    return 'Trial expired at'
+  } else if (currentPlan.value?.status === WorkspacePlanStatuses.Canceled) {
+    return 'Cancels'
+  } else {
+    return 'Next payment due'
+  }
+})
+const showSummaryDateDescription = computed(() => {
+  return statusIsTrial.value && isPurchasablePlan.value
+})
+
+const pricingTableHeading = computed(() => {
+  switch (currentPlan.value?.status) {
+    case WorkspacePlanStatuses.Trial:
+    case WorkspacePlanStatuses.Expired:
+      return 'Start your subscription'
+    case WorkspacePlanStatuses.Canceled:
+      return 'Restart your subscription'
+    default:
+      return 'Upgrade your plan'
+  }
+})
+const showStatusBadge = computed(() => {
+  return (
+    (statusIsTrial.value ||
+      currentPlan.value?.status === WorkspacePlanStatuses.Expired) &&
+    isPurchasablePlan.value
+  )
+})
 
 const onPlanSelected = (plan: { name: WorkspacePlans; cycle: BillingInterval }) => {
   const { name, cycle } = plan
   if (!isPaidPlan(name) || !props.workspaceId) return
 
-  if (statusIsTrial.value) {
+  if (
+    statusIsTrial.value ||
+    currentPlan.value?.status === WorkspacePlanStatuses.Expired ||
+    currentPlan.value?.status === WorkspacePlanStatuses.Canceled
+  ) {
     mixpanel.track('Workspace Subscribe Button Clicked', {
       plan,
       cycle,

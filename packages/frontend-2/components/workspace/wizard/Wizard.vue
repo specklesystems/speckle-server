@@ -97,6 +97,10 @@ onResult((result) => {
   }
 })
 
+onMounted(() => {
+  mixpanel.start_session_recording()
+})
+
 watch(currentStep, (newStep, oldStep) => {
   if (newStep !== oldStep && showPaymentError.value) {
     showPaymentError.value = false
