@@ -964,6 +964,10 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 {{- end }}
 
 # Rate Limiting
+
+- name: RATELIMITER_ENABLED
+  value: "{{ .Values.server.ratelimiting.enabled }}"
+
 {{- if .Values.server.ratelimiting.all_requests }}
 - name: RATELIMIT_ALL_REQUESTS
   value: "{{ .Values.server.ratelimiting.all_requests }}"
