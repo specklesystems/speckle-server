@@ -1358,9 +1358,16 @@ export = FF_WORKSPACES_MODULE_ENABLED
             getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db })
           })({ workspaceId, userId })
         },
-        workspaceRole: async (parent, args) => {
+        workspaceRole: async (parent, args, context) => {
           const workspaceId = args.workspaceId
           if (!workspaceId) return null
+
+          await authorizeResolver(
+            context.userId,
+            workspaceId,
+            Roles.Workspace.Member,
+            context.resourceAccessRules
+          )
 
           const userId = parent.id
 
