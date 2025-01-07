@@ -1,19 +1,23 @@
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
 
 import { validateScopes } from '@/modules/shared'
-import {
-  getStreamHistoryFactory,
-  getCommitHistoryFactory,
-  getObjectHistoryFactory,
-  getUserHistoryFactory,
-  getTotalStreamCountFactory,
-  getTotalCommitCountFactory,
-  getTotalObjectCountFactory,
-  getTotalUserCountFactory
-} from '@/modules/stats/repositories/index'
 import { Roles, Scopes } from '@speckle/shared'
 import { throwForNotHavingServerRole } from '@/modules/shared/authz'
-import { db } from '@/db/knex'
+
+const dummyHistory = [
+  { '0': 0 },
+  { '1': 0 },
+  { '2': 0 },
+  { '3': 0 },
+  { '4': 0 },
+  { '5': 0 },
+  { '6': 0 },
+  { '7': 0 },
+  { '8': 0 },
+  { '9': 0 },
+  { '10': 0 },
+  { '11': 0 }
+]
 
 export = {
   Query: {
@@ -29,35 +33,35 @@ export = {
 
   ServerStats: {
     async totalStreamCount() {
-      return await getTotalStreamCountFactory({ db })()
+      return 0 //deprecated, returning static value
     },
 
     async totalCommitCount() {
-      return await getTotalCommitCountFactory({ db })()
+      return 0 //deprecated, returning static value
     },
 
     async totalObjectCount() {
-      return await getTotalObjectCountFactory({ db })()
+      return 0 //deprecated, returning static value
     },
 
     async totalUserCount() {
-      return await getTotalUserCountFactory({ db })()
+      return 0 //deprecated, returning static value
     },
 
     async streamHistory() {
-      return await getStreamHistoryFactory({ db })()
+      return dummyHistory //deprecated, returning static value
     },
 
     async commitHistory() {
-      return await getCommitHistoryFactory({ db })()
+      return dummyHistory //deprecated, returning static value
     },
 
     async objectHistory() {
-      return await getObjectHistoryFactory({ db })()
+      return dummyHistory //deprecated, returning static value
     },
 
     async userHistory() {
-      return await getUserHistoryFactory({ db })()
+      return dummyHistory //deprecated, returning static value
     }
   }
 } as Resolvers

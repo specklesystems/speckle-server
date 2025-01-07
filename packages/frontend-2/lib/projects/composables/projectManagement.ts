@@ -264,9 +264,11 @@ export function useInviteUserToProject() {
 
   return async (
     projectId: string,
-    input: ProjectInviteCreateInput[] | WorkspaceProjectInviteCreateInput[]
+    input: ProjectInviteCreateInput[] | WorkspaceProjectInviteCreateInput[],
+    options?: { hideToasts?: boolean }
   ) => {
     const userId = activeUser.value?.id
+    const { hideToasts } = options || {}
     if (!userId) return
 
     const isWorkspaceInput = (
@@ -299,7 +301,7 @@ export function useInviteUserToProject() {
       err = !res?.id ? getFirstErrorMessage(errors) : undefined
     }
 
-    if (err) {
+    if (err && !hideToasts) {
       triggerNotification({
         type: ToastNotificationType.Danger,
         title:
@@ -309,13 +311,15 @@ export function useInviteUserToProject() {
         description: err
       })
     } else {
-      triggerNotification({
-        type: ToastNotificationType.Success,
-        title:
-          input.length > 1
-            ? 'Invites successfully send'
-            : `Invite successfully sent to ${input[0].email}`
-      })
+      if (!hideToasts) {
+        triggerNotification({
+          type: ToastNotificationType.Success,
+          title:
+            input.length > 1
+              ? 'Invites successfully send'
+              : `Invite successfully sent to ${input[0].email}`
+        })
+      }
     }
 
     return res

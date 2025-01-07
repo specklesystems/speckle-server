@@ -2464,8 +2464,8 @@ export type ProjectVersionsUpdatedMessage = {
   __typename?: 'ProjectVersionsUpdatedMessage';
   /** Version ID */
   id: Scalars['String']['output'];
-  /** Only set if version was deleted, in other scenarios can be queried from 'version' */
-  modelId?: Maybe<Scalars['String']['output']>;
+  /** Version's model ID */
+  modelId: Scalars['String']['output'];
   type: ProjectVersionsUpdatedMessageType;
   /** Null if version was deleted */
   version?: Maybe<Version>;
@@ -4652,7 +4652,7 @@ export type OnUserProjectVersionsUpdatedSubscriptionVariables = Exact<{
 }>;
 
 
-export type OnUserProjectVersionsUpdatedSubscription = { __typename?: 'Subscription', projectVersionsUpdated: { __typename?: 'ProjectVersionsUpdatedMessage', id: string, type: ProjectVersionsUpdatedMessageType, modelId?: string | null, version?: { __typename?: 'Version', id: string, message?: string | null } | null } };
+export type OnUserProjectVersionsUpdatedSubscription = { __typename?: 'Subscription', projectVersionsUpdated: { __typename?: 'ProjectVersionsUpdatedMessage', id: string, type: ProjectVersionsUpdatedMessageType, modelId: string, version?: { __typename?: 'Version', id: string, message?: string | null } | null } };
 
 export type OnUserStreamCommitCreatedSubscriptionVariables = Exact<{
   streamId: Scalars['String']['input'];

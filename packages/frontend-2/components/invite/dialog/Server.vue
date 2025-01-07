@@ -81,6 +81,7 @@ import { PlusIcon, TrashIcon } from '@heroicons/vue/24/outline'
 import type { InviteServerForm, InviteServerItem } from '~~/lib/invites/helpers/types'
 import { emptyInviteServerItem } from '~~/lib/invites/helpers/constants'
 import { isEmail } from '~~/lib/common/helpers/validation'
+import { useGlobalToast } from '~~/lib/common/composables/toast'
 
 const isOpen = defineModel<boolean>('open', { required: true })
 
@@ -105,6 +106,7 @@ const anyMutationsLoading = useMutationLoading()
 const { isAdmin } = useActiveUser()
 const { isGuestMode } = useServerInfo()
 const mixpanel = useMixpanel()
+const { triggerNotification } = useGlobalToast()
 
 const allowServerRoleSelect = computed(() => isAdmin.value || isGuestMode.value)
 const dialogButtons = computed((): LayoutDialogButton[] => [
@@ -133,35 +135,52 @@ const removeInviteItem = (index: number) => {
   removeInvite(index)
 }
 
-const onSubmit = handleSubmit(() => {
+const onSubmit = handleSubmit(async () => {
   const invites = fields.value.filter((invite) => invite.value.email)
 
-  invites.forEach(async (invite) => {
-    invite.value.project
-      ? await inviteUserToProject(invite.value.project.id, [
-          {
-            email: invite.value.email,
-            serverRole: invite.value.serverRole
-          }
-        ])
-      : await inviteUserToServer([
-          {
-            email: invite.value.email,
-            serverRole: invite.value.serverRole
-          }
-        ])
-  })
+  try {
+    await Promise.all(
+      invites.map((invite) =>
+        invite.value.project
+          ? inviteUserToProject(
+              invite.value.project.id,
+              [{ email: invite.value.email, serverRole: invite.value.serverRole }],
+              { hideToasts: true }
+            )
+          : inviteUserToServer(
+              [{ email: invite.value.email, serverRole: invite.value.serverRole }],
+              { hideToasts: true }
+            )
+      )
+    )
 
-  mixpanel.track('Invite Action', {
-    type: 'server invite',
-    name: 'send',
-    multiple: fields.value.length !== 1,
-    count: fields.value.length,
-    hasProject: !!fields.value.some((invite) => invite.value.project),
-    to: 'email'
-  })
+    triggerNotification({
+      type: ToastNotificationType.Success,
+      title:
+        invites.length > 1
+          ? 'Invites successfully send'
+          : `Invite successfully sent to ${invites[0].value.email}`
+    })
 
-  isOpen.value = false
+    mixpanel.track('Invite Action', {
+      type: 'server invite',
+      name: 'send',
+      multiple: fields.value.length !== 1,
+      count: fields.value.length,
+      hasProject: !!fields.value.some((invite) => invite.value.project),
+      to: 'email'
+    })
+
+    isOpen.value = false
+  } catch {
+    triggerNotification({
+      type: ToastNotificationType.Danger,
+      title:
+        invites.length > 1
+          ? 'One or more invites failed to send'
+          : `Failed to send invite to ${invites[0].value.email}`
+    })
+  }
 })
 
 watch(isOpen, (newVal, oldVal) => {

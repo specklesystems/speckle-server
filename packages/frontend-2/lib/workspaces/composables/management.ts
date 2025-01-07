@@ -484,14 +484,11 @@ export const useWorkspaceUpdateRole = () => {
 
 export const copyWorkspaceLink = async (slug: string) => {
   const { copy } = useClipboard()
-  const { triggerNotification } = useGlobalToast()
 
   const url = new URL(workspaceRoute(slug), window.location.toString()).toString()
 
-  await copy(url)
-  triggerNotification({
-    type: ToastNotificationType.Success,
-    title: 'Copied workspace link to clipboard'
+  await copy(url, {
+    successMessage: 'Copied workspace link to clipboard'
   })
 }
 

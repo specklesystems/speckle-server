@@ -50,6 +50,7 @@
               class="workspace-item"
               :tag="
                 workspaceItem.plan?.status === WorkspacePlanStatuses.Trial ||
+                workspaceItem.plan?.status === WorkspacePlanStatuses.Expired ||
                 !workspaceItem.plan?.status
                   ? 'TRIAL'
                   : undefined

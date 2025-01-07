@@ -64,6 +64,12 @@
         @click="showActionsMenu = !showActionsMenu"
       />
     </LayoutMenu>
+
+    <InviteDialogCancelInvite
+      v-model:open="showCancelInviteDialog"
+      :email="collaborator.title"
+      @on-cancel-invite="cancelInvite"
+    />
   </div>
 </template>
 
@@ -100,6 +106,7 @@ const { activeUser } = useActiveUser()
 
 const showActionsMenu = ref(false)
 const menuId = useId()
+const showCancelInviteDialog = ref(false)
 
 const actionsItems = computed<LayoutMenuItem[][]>(() => [
   [
@@ -136,11 +143,17 @@ const onActionChosen = (
   switch (item.id) {
     case ActionTypes.Remove:
       if (collaborator.inviteId) {
-        emit('cancelInvite', collaborator.inviteId)
+        showCancelInviteDialog.value = true
       } else {
         emit('changeRole', collaborator, null)
       }
       break
+  }
+}
+
+const cancelInvite = () => {
+  if (props.collaborator.inviteId) {
+    emit('cancelInvite', props.collaborator.inviteId)
   }
 }
 </script>

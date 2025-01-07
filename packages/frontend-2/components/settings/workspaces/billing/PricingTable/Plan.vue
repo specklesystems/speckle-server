@@ -186,8 +186,13 @@ const isMonthlyToAnnual = computed(() => {
 
 const isSelectable = computed(() => {
   if (!props.isAdmin) return false
-  // Always enable buttons during trial
-  if (statusIsTrial.value) return true
+  // Always enable buttons during trial, expired or canceled state
+  if (
+    statusIsTrial.value ||
+    props.currentPlan?.status === WorkspacePlanStatuses.Expired ||
+    props.currentPlan?.status === WorkspacePlanStatuses.Canceled
+  )
+    return true
 
   // Allow selection if switching from monthly to yearly for the same plan
   if (isMonthlyToAnnual.value && props.currentPlan?.name === props.plan.name)
@@ -213,15 +218,22 @@ const isSelectable = computed(() => {
 })
 
 const buttonColor = computed(() => {
-  if (statusIsTrial.value) {
+  if (
+    statusIsTrial.value ||
+    props.currentPlan?.status === WorkspacePlanStatuses.Expired
+  ) {
     return props.plan.name === WorkspacePlans.Starter ? 'primary' : 'outline'
   }
   return 'outline'
 })
 
 const buttonText = computed(() => {
-  // Trial plan case
-  if (statusIsTrial.value) {
+  // Allow selection during trial, expired or canceled state
+  if (
+    statusIsTrial.value ||
+    props.currentPlan?.status === WorkspacePlanStatuses.Expired ||
+    props.currentPlan?.status === WorkspacePlanStatuses.Canceled
+  ) {
     return `Subscribe to ${startCase(props.plan.name)}`
   }
   // Current plan case
@@ -248,7 +260,13 @@ const buttonTooltip = computed(() => {
     return 'You must be a workspace admin.'
   }
 
-  if (statusIsTrial.value || isCurrentPlan.value) return
+  if (
+    statusIsTrial.value ||
+    isCurrentPlan.value ||
+    props.currentPlan?.status === WorkspacePlanStatuses.Expired ||
+    props.currentPlan?.status === WorkspacePlanStatuses.Canceled
+  )
+    return undefined
 
   if (isDowngrade.value) {
     return 'Downgrading is not supported at the moment. Please contact billing@speckle.systems.'

@@ -16,7 +16,9 @@
           </FormButton>
           <FormButton
             v-if="canContribute"
+            v-tippy="project?.workspace?.readOnly ? 'Workspace is read-only' : ''"
             class="grow inline-flex sm:grow-0 lg:hidden"
+            :disabled="project?.workspace?.readOnly"
             @click="showNewDialog = true"
           >
             New model
@@ -75,7 +77,9 @@
           </FormButton>
           <FormButton
             v-if="canContribute"
+            v-tippy="project?.workspace?.readOnly ? 'Workspace is read-only' : ''"
             class="hidden lg:inline-flex shrink-0"
+            :disabled="project?.workspace?.readOnly"
             @click="showNewDialog = true"
           >
             New model
@@ -121,6 +125,10 @@ graphql(`
       user {
         ...FormUsersSelectItem
       }
+    }
+    workspace {
+      id
+      readOnly
     }
   }
 `)
