@@ -1,8 +1,5 @@
 import { Logger } from '@/logging/logging'
-import {
-  AccessRequestsEvents,
-  AccessRequestsEventsPayloads
-} from '@/modules/accessrequests/events/emitter'
+import { AccessRequestEvents } from '@/modules/accessrequests/domain/events'
 import {
   AccessRequestType,
   isStreamAccessRequest
@@ -47,11 +44,11 @@ export const onServerAccessRequestCreatedFactory =
   }: {
     addStreamAccessRequestedActivity: AddStreamAccessRequestedActivity
   }) =>
-  async (payload: AccessRequestsEventsPayloads[AccessRequestsEvents.Created]) => {
+  async (payload: EventPayload<typeof AccessRequestEvents.Created>) => {
     const {
       request: { resourceId, requesterId }
-    } = payload
-    if (!isStreamAccessRequest(payload.request)) return
+    } = payload.payload
+    if (!isStreamAccessRequest(payload.payload.request)) return
     if (!resourceId) return
 
     await addStreamAccessRequestedActivity({
@@ -66,12 +63,12 @@ export const onServerAccessRequestFinalizedFactory =
   }: {
     addStreamAccessRequestDeclinedActivity: AddStreamAccessRequestDeclinedActivity
   }) =>
-  async (payload: AccessRequestsEventsPayloads[AccessRequestsEvents.Finalized]) => {
+  async (payload: EventPayload<typeof AccessRequestEvents.Finalized>) => {
     const {
       approved,
       finalizedBy,
       request: { resourceId, resourceType, requesterId }
-    } = payload
+    } = payload.payload
     if (!resourceId) return
 
     if (resourceType === AccessRequestType.Stream) {
