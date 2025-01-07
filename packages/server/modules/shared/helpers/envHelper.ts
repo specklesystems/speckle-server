@@ -433,3 +433,7 @@ export const shouldRunTestsInMultiregionMode = () =>
 export function shutdownTimeoutSeconds() {
   return getIntFromEnv('SHUTDOWN_TIMEOUT_SECONDS', '300')
 }
+
+export function getGlobalKnexSelectTimeout() {
+  return getIntFromEnv('GLOBAL_KNEX_SELECT_TIMEOUT', '0')
+}
