@@ -9,6 +9,8 @@ import { validatePermissionsReadStreamFactory } from '@/modules/core/services/st
 import { getStreamFactory } from '@/modules/core/repositories/streams'
 import { authorizeResolver, validateScopes } from '@/modules/shared'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
+import { UserInputError } from '@/modules/core/errors/userinput'
+import { ensureError } from '@speckle/shared'
 
 export default (app: Application) => {
   const validatePermissionsReadStream = validatePermissionsReadStreamFactory({
@@ -34,7 +36,15 @@ export default (app: Application) => {
 
     const projectDb = await getProjectDbClient({ projectId: req.params.streamId })
     const getObjectsStream = getObjectsStreamFactory({ db: projectDb })
-    const childrenList = JSON.parse(req.body.objects)
+    let childrenList: string[]
+    try {
+      childrenList = JSON.parse(req.body.objects)
+    } catch (err) {
+      throw new UserInputError(
+        'Invalid body. Please provide a JSON object containing the property "objects" of type string. The value must be a JSON string representation of an array of object IDs.',
+        ensureError(err, 'Unknown JSON parsing issue')
+      )
+    }
     const simpleText = req.headers.accept === 'text/plain'
 
     res.writeHead(200, {

@@ -5,8 +5,7 @@ import { graphql } from '~/lib/common/generated/gql'
 import type { WorkspaceHasCustomDataResidency_WorkspaceFragment } from '~/lib/common/generated/gql/graphql'
 
 export enum RegionStaticDataDisclaimerVariant {
-  MoveProjectIntoWorkspace = 'MoveProjectIntoWorkspace',
-  UploadModel = 'UploadModel'
+  MoveProjectIntoWorkspace = 'MoveProjectIntoWorkspace'
 }
 
 graphql(`
