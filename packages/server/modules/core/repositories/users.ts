@@ -540,13 +540,12 @@ export const bulkLookupUsersFactory =
       emails.map((email) => email.toLowerCase())
     )
 
-    const rows = (await query) as UserRecord[]
-    const users = rows.map((u) => sanitizeUserRecord(u))
+    const matches = (await query) as UserRecord[]
+    const result = emails.map((email) =>
+      matches.find((user) => user.email === email.toLowerCase())
+    )
 
-    return {
-      users,
-      cursor: users.length > 0 ? users[users.length - 1].createdAt.toISOString() : null
-    }
+    return result.map((user) => (user ? sanitizeUserRecord(user) : null))
   }
 
 /**

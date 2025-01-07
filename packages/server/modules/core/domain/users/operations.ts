@@ -195,6 +195,9 @@ export type LookupUsers = (filter: {
   cursor: Nullable<string>
 }>
 
+/**
+ * @returns An array of matches in order provided, or null for positions where no match found for email.
+ */
 export type BulkLookupUsers = (filter: {
   emails: string[]
   /**
@@ -202,10 +205,7 @@ export type BulkLookupUsers = (filter: {
    */
   limit?: MaybeNullOrUndefined<number>
   cursor?: MaybeNullOrUndefined<string>
-}) => Promise<{
-  users: User[]
-  cursor: Nullable<string>
-}>
+}) => Promise<(User | null)[]>
 
 type AdminUserListArgs = {
   cursor: string | null

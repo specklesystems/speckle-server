@@ -247,11 +247,30 @@ describe('Find users @core', () => {
       await createTestUser(userA)
       await createTestUser(userB)
 
-      const { users } = await bulkLookupUsers({ emails: [userA.email, userB.email] })
+      const users = await bulkLookupUsers({ emails: [userA.email, userB.email] })
 
       expect(users.length).to.equal(2)
-      expect(users.some((user) => user.id === userA.id)).to.equal(true)
-      expect(users.some((user) => user.id === userB.id)).to.equal(true)
+      expect(users.some((user) => user?.id === userA.id)).to.equal(true)
+      expect(users.some((user) => user?.id === userB.id)).to.equal(true)
+    })
+    it('should return matches in the same order they were provided', async () => {
+      const userA: BasicTestUser = {
+        id: '',
+        email: createRandomEmail(),
+        name: 'Barald'
+      }
+      const userB: BasicTestUser = {
+        id: '',
+        email: createRandomEmail(),
+        name: 'Heatrice'
+      }
+      await createTestUser(userA)
+      await createTestUser(userB)
+
+      const users = await bulkLookupUsers({ emails: [userB.email, userA.email] })
+
+      expect(users[0]?.id).to.equal(userB.id)
+      expect(users[1]?.id).to.equal(userA.id)
     })
     it('should find matches for all emails provided, case insensitive', async () => {
       const testUser: BasicTestUser = {
@@ -261,10 +280,28 @@ describe('Find users @core', () => {
       }
       await createTestUser(testUser)
 
-      const { users } = await bulkLookupUsers({ emails: ['BARbaz@example.org'] })
+      const users = await bulkLookupUsers({ emails: ['BARbaz@example.org'] })
 
       expect(users.length).to.equal(1)
-      expect(users.some((user) => user.id === testUser.id)).to.equal(true)
+      expect(users.some((user) => user?.id === testUser.id)).to.equal(true)
+    })
+    it('should return null for positions where email matched no user', async () => {
+      const testEmail = createRandomEmail()
+      const testUser: BasicTestUser = {
+        id: '',
+        email: testEmail,
+        name: 'MICHAEL'
+      }
+      await createTestUser(testUser)
+
+      const users = await bulkLookupUsers({
+        emails: [createRandomEmail(), testEmail, createRandomEmail()]
+      })
+
+      expect(users.length).to.equal(3)
+      expect(users[0]).to.equal(null)
+      expect(users[1]?.id).to.equal(testUser.id)
+      expect(users[2]).to.equal(null)
     })
   })
 })

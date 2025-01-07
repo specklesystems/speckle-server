@@ -54,7 +54,7 @@ extend type Query {
   """
   Look up server users with a collection of emails
   """
-  usersByEmail(input: BulkUsersRetrievalInput!): UserSearchResultCollection!
+  usersByEmail(input: BulkUsersRetrievalInput!): [LimitedUser]!
     @hasServerRole(role: SERVER_GUEST)
     @hasScopes(scopes: ["users:read", "profile:read"])
 

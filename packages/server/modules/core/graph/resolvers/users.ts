@@ -156,13 +156,12 @@ export = {
       if (args.input.emails.length < 1)
         throw new BadRequestError('Must provide at least one email to search for.')
 
-      if ((args.input.limit || 0) > 100)
+      if ((args.input.limit || 0) > 20)
         throw new BadRequestError(
-          'Cannot return more than 100 items, please use pagination.'
+          'Cannot return more than 20 items, please use a shorter list.'
         )
 
-      const { cursor, users } = await bulkLookupUsers(args.input)
-      return { cursor, items: users }
+      return await bulkLookupUsers(args.input)
     },
     async userPwdStrength(_parent, args) {
       const res = zxcvbn(args.pwd)
