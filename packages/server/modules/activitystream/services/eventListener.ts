@@ -14,7 +14,7 @@ import {
   SaveActivity
 } from '@/modules/activitystream/domain/operations'
 import { GetStream } from '@/modules/core/domain/streams/operations'
-import { UsersEvents, UsersEventsPayloads } from '@/modules/core/events/usersEmitter'
+import { UserEvents } from '@/modules/core/domain/users/events'
 import {
   ServerInvitesEvents,
   ServerInvitesEventsPayloads
@@ -23,11 +23,12 @@ import {
   isProjectResourceTarget,
   resolveTarget
 } from '@/modules/serverinvites/helpers/core'
+import { EventPayload } from '@/modules/shared/services/eventBus'
 
 export const onUserCreatedFactory =
   ({ saveActivity }: { saveActivity: SaveActivity }) =>
-  async (payload: UsersEventsPayloads[UsersEvents.Created]) => {
-    const { user } = payload
+  async (payload: EventPayload<typeof UserEvents.Created>) => {
+    const { user } = payload.payload
 
     await saveActivity({
       streamId: null,

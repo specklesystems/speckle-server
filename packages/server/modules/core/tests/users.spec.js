@@ -119,7 +119,6 @@ const {
 const {
   finalizeInvitedServerRegistrationFactory
 } = require('@/modules/serverinvites/services/processing')
-const { UsersEmitter } = require('@/modules/core/events/usersEmitter')
 const {
   addUserUpdatedActivityFactory
 } = require('@/modules/activitystream/services/userActivity')
@@ -230,7 +229,7 @@ const createUser = createUserFactory({
     }),
     requestNewEmailVerification
   }),
-  usersEventsEmitter: UsersEmitter.emit
+  emitEvent: getEventBus().emit
 })
 const findOrCreateUser = findOrCreateUserFactory({
   createUser,

@@ -48,7 +48,6 @@ import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { createUserFactory } from '@/modules/core/services/users/management'
 import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
 import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
-import { UsersEmitter } from '@/modules/core/events/usersEmitter'
 import { sendEmail } from '@/modules/emails/services/sending'
 import { createTokenFactory } from '@/modules/core/services/tokens'
 import {
@@ -115,7 +114,7 @@ const createUser = createUserFactory({
     }),
     requestNewEmailVerification
   }),
-  usersEventsEmitter: UsersEmitter.emit
+  emitEvent: getEventBus().emit
 })
 const createToken = createTokenFactory({
   storeApiToken: storeApiTokenFactory({ db }),

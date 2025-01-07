@@ -24,7 +24,6 @@ import {
   acquireTaskLockFactory,
   releaseTaskLockFactory
 } from '@/modules/core/repositories/scheduledTasks'
-import { UsersEmitter, UsersEvents } from '@/modules/core/events/usersEmitter'
 import { Knex } from 'knex'
 import {
   onServerAccessRequestCreatedFactory,
@@ -41,6 +40,7 @@ import { publish } from '@/modules/shared/utils/subscriptions'
 import { isStreamAccessRequest } from '@/modules/accessrequests/repositories'
 import { ServerInvitesEvents } from '@/modules/serverinvites/domain/events'
 import { ProjectEvents } from '@/modules/core/domain/projects/events'
+import { UserEvents } from '@/modules/core/domain/users/events'
 
 let scheduledTask: ReturnType<ScheduleExecution> | null = null
 let quitEventListeners: Optional<() => void> = undefined
@@ -57,8 +57,8 @@ const initializeEventListeners = ({
   db: Knex
 }) => {
   const quitCbs = [
-    UsersEmitter.listen(
-      UsersEvents.Created,
+    eventBus.listen(
+      UserEvents.Created,
       // this activity will always go in the main DB
       onUserCreatedFactory({ saveActivity: saveActivityFactory({ db }) })
     ),

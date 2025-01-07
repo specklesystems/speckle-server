@@ -65,7 +65,6 @@ const {
 const {
   finalizeInvitedServerRegistrationFactory
 } = require('@/modules/serverinvites/services/processing')
-const { UsersEmitter } = require('@/modules/core/events/usersEmitter')
 const {
   getServerInfoFactory,
   updateServerInfoFactory
@@ -130,7 +129,7 @@ const createUser = createUserFactory({
     }),
     requestNewEmailVerification
   }),
-  usersEventsEmitter: UsersEmitter.emit
+  emitEvent: getEventBus().emit
 })
 const getUserByEmail = legacyGetUserByEmailFactory({ db })
 const updateServerInfo = updateServerInfoFactory({ db })

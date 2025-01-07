@@ -104,7 +104,6 @@ const {
 const {
   finalizeInvitedServerRegistrationFactory
 } = require('@/modules/serverinvites/services/processing')
-const { UsersEmitter } = require('@/modules/core/events/usersEmitter')
 const { getServerInfoFactory } = require('@/modules/core/repositories/server')
 const {
   getBranchCommitsTotalCountByNameFactory,
@@ -234,7 +233,7 @@ const createUser = createUserFactory({
     }),
     requestNewEmailVerification
   }),
-  usersEventsEmitter: UsersEmitter.emit
+  emitEvent: getEventBus().emit
 })
 const getCommitsByUserId = legacyGetPaginatedUserCommitsPage({ db })
 const getCommitsByStreamId = legacyGetPaginatedStreamCommitsPageFactory({ db })

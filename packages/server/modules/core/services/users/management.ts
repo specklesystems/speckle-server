@@ -36,7 +36,6 @@ import {
   FindPrimaryEmailForUser,
   ValidateAndCreateUserEmail
 } from '@/modules/core/domain/userEmails/operations'
-import { UsersEvents, UsersEventsEmitter } from '@/modules/core/events/usersEmitter'
 import {
   DeleteStreamRecord,
   GetUserDeletableStreams
@@ -44,6 +43,8 @@ import {
 import { Logger } from '@/logging/logging'
 import { DeleteAllUserInvites } from '@/modules/serverinvites/domain/operations'
 import { GetServerInfo } from '@/modules/core/domain/server/operations'
+import { EventBusEmit } from '@/modules/shared/services/eventBus'
+import { UserEvents } from '@/modules/core/domain/users/events'
 
 export const MINIMUM_PASSWORD_LENGTH = 8
 
@@ -138,7 +139,7 @@ export const createUserFactory =
     countAdminUsers: CountAdminUsers
     storeUserAcl: StoreUserAcl
     validateAndCreateUserEmail: ValidateAndCreateUserEmail
-    usersEventsEmitter: UsersEventsEmitter
+    emitEvent: EventBusEmit
   }): CreateValidatedUser =>
   async (user, options = undefined) => {
     // ONLY ALLOW SKIPPING WHEN CREATING USERS FOR TESTS, IT'S UNSAFE OTHERWISE
@@ -223,7 +224,10 @@ export const createUserFactory =
       }
     })
 
-    await deps.usersEventsEmitter(UsersEvents.Created, { user: newUser, signUpCtx })
+    await deps.emitEvent({
+      eventName: UserEvents.Created,
+      payload: { user: newUser, signUpCtx }
+    })
 
     return newUser.id
   }

@@ -52,7 +52,6 @@ import {
   findEmailFactory,
   findPrimaryEmailForUserFactory
 } from '@/modules/core/repositories/userEmails'
-import { UsersEmitter } from '@/modules/core/events/usersEmitter'
 import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
 import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
 import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
@@ -60,6 +59,7 @@ import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { initializeEventListenerFactory } from '@/modules/auth/services/postAuth'
+import { getEventBus } from '@/modules/shared/services/eventBus'
 
 const findEmail = findEmailFactory({ db })
 const requestNewEmailVerification = requestNewEmailVerificationFactory({
@@ -86,7 +86,7 @@ const createUser = createUserFactory({
     }),
     requestNewEmailVerification
   }),
-  usersEventsEmitter: UsersEmitter.emit
+  emitEvent: getEventBus().emit
 })
 
 const findOrCreateUser = findOrCreateUserFactory({
@@ -158,7 +158,7 @@ export const init: SpeckleModule['init'] = async (app, isInitial) => {
   // Listen to event emitters
   if (isInitial) {
     const initializeEventListener = initializeEventListenerFactory({
-      usersEventsListener: UsersEmitter.listen,
+      eventBus: getEventBus(),
       logger: authLogger
     })
     initializeEventListener()

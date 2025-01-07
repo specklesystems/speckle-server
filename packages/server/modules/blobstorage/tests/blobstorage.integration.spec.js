@@ -35,7 +35,6 @@ const {
 const {
   finalizeInvitedServerRegistrationFactory
 } = require('@/modules/serverinvites/services/processing')
-const { UsersEmitter } = require('@/modules/core/events/usersEmitter')
 const { createTokenFactory } = require('@/modules/core/services/tokens')
 const {
   storeApiTokenFactory,
@@ -47,6 +46,7 @@ const { createTestStream } = require('@/test/speckle-helpers/streamHelper')
 const { waitForRegionUser } = require('@/test/speckle-helpers/regions')
 const { createTestWorkspace } = require('@/modules/workspaces/tests/helpers/creation')
 const { faker } = require('@faker-js/faker')
+const { getEventBus } = require('@/modules/shared/services/eventBus')
 
 const getServerInfo = getServerInfoFactory({ db })
 
@@ -75,7 +75,7 @@ const createUser = createUserFactory({
     }),
     requestNewEmailVerification
   }),
-  usersEventsEmitter: UsersEmitter.emit
+  emitEvent: getEventBus().emit
 })
 const createToken = createTokenFactory({
   storeApiToken: storeApiTokenFactory({ db }),

@@ -1,5 +1,4 @@
 import knex, { db } from '@/db/knex'
-import { UsersEmitter } from '@/modules/core/events/usersEmitter'
 import {
   createRandomEmail,
   createRandomPassword
@@ -112,7 +111,7 @@ const createUser = createUserFactory({
     }),
     requestNewEmailVerification
   }),
-  usersEventsEmitter: UsersEmitter.emit
+  emitEvent: getEventBus().emit
 })
 
 const countWebhooks = async () => {
