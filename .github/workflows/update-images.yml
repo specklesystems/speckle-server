@@ -15,7 +15,6 @@ jobs:
       contents: write # to push the updates
       pull-requests: write # to open Pull requests
       id-token: write # used to sign the commits using gitsign
-      actions: write # we have at least one image referenced in another workflow, so need permissions to update actions & workflows
 
     steps:
       - uses: actions/checkout@v4
