@@ -2,7 +2,7 @@ import express from 'express'
 import {
   getRedisUrl,
   getIntFromEnv,
-  isTestEnv
+  getBooleanFromEnv
 } from '@/modules/shared/helpers/envHelper'
 import {
   BurstyRateLimiter,
@@ -54,6 +54,10 @@ export type RateLimiterMapping = {
 }
 
 export type RateLimitAction = keyof typeof LIMITS
+
+export const isRateLimiterEnabled = (): boolean => {
+  return getBooleanFromEnv('RATELIMITER_ENABLED', true)
+}
 
 export const LIMITS = <const>{
   ALL_REQUESTS: {
@@ -307,7 +311,7 @@ export const createRateLimiterMiddleware = (
     res: express.Response,
     next: express.NextFunction
   ) => {
-    if (isTestEnv()) return next()
+    if (!isRateLimiterEnabled()) return next()
     const path = getRequestPath(req) || ''
     const action = getActionForPath(path, req.method)
     const source = getSourceFromRequest(req)

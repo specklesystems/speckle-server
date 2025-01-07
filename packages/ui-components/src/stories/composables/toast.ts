@@ -1,94 +1,57 @@
-import type { ToastNotification } from '~~/src/helpers/global/toast'
-import type { Optional } from '@speckle/shared'
 import { useTimeoutFn, createGlobalState } from '@vueuse/core'
-import { computed, watch } from 'vue'
+import type { Nullable } from '@speckle/shared'
+import { computed, nextTick, watch } from 'vue'
 import { ref } from 'vue'
-import { nanoid } from 'nanoid'
+import type { ToastNotification } from '~~/src/helpers/global/toast'
 
 /**
  * Development-only version of the toast notification state. Do not export this out from the library as it can't work in SSR!
  */
 
 const useGlobalToastState = createGlobalState(() =>
-  ref([] as Optional<ToastNotification[]>)
+  ref(null as Nullable<ToastNotification>)
 )
 
 /**
  * Set up a new global toast manager/renderer (don't use this in multiple components that live at the same time)
  */
 export function useGlobalToastManager() {
-  type Timeout = {
-    id: string
-    stop: () => void
-  }
-
   const stateNotification = useGlobalToastState()
 
-  const timeouts = ref<Timeout[]>([])
-  const currentNotifications = ref<ToastNotification[]>(
-    Array.isArray(stateNotification.value) ? stateNotification.value : []
-  )
-  const readOnlyNotification = computed(() => currentNotifications.value)
+  const currentNotification = ref(stateNotification.value)
+  const readOnlyNotification = computed(() => currentNotification.value)
 
-  // Remove a specific notification from the state
-  const removeNotification = (id: string) => {
-    const index = currentNotifications.value.findIndex((n) => n.id === id)
-    if (index !== -1) {
-      currentNotifications.value.splice(index, 1)
-      // Clean up timeout
-      timeouts.value = timeouts.value.filter((t) => t.id !== id)
-    }
-  }
-
-  // Create a timeout for a notification
-  const createTimeout = (notification: ToastNotification) => {
-    const { stop } = useTimeoutFn(() => {
-      if (notification.id) {
-        removeNotification(notification.id)
-      }
-    }, 4000)
-    return stop
-  }
+  const { start, stop } = useTimeoutFn(() => {
+    dismiss()
+  }, 4000)
 
   watch(
     stateNotification,
-    (newVal) => {
+    async (newVal) => {
       if (!newVal) return
-      currentNotifications.value = newVal
 
-      // Create timeout for the new notification
-      const index = currentNotifications.value.length - 1
-      const lastNotification = newVal[index]
+      // First dismiss old notification, then set a new one on next tick
+      // this is so that the old one actually disappears from the screen for the user,
+      // instead of just having its contents replaced
+      dismiss()
 
-      if (lastNotification && !lastNotification.autoClose) {
-        timeouts.value.push({
-          id: lastNotification.id as string,
-          stop: createTimeout(lastNotification)
-        })
-      }
+      await nextTick(() => {
+        currentNotification.value = newVal
+
+        // (re-)init timeout
+        stop()
+        if (newVal.autoClose !== false) start()
+      })
     },
-    { deep: true, immediate: true }
+    { deep: true }
   )
 
-  // Function to dismiss a specific notification
-  const dismiss = (notification: ToastNotification) => {
-    if (!notification.id) return
-
-    const targetTimeout = timeouts.value.find((t) => t.id === notification.id)
-    if (targetTimeout) {
-      targetTimeout.stop()
-    }
-    removeNotification(notification.id)
+  const dismiss = () => {
+    currentNotification.value = null
+    stateNotification.value = null
   }
 
-  // Dismiss all notifications
-  const dismissAll = () => {
-    timeouts.value.forEach((timeout) => timeout.stop())
-    timeouts.value = []
-    currentNotifications.value = []
-  }
-
-  return { currentNotifications: readOnlyNotification, dismiss, dismissAll }
+  return { currentNotification: readOnlyNotification, dismiss }
 }
 
 /**
@@ -101,11 +64,7 @@ export function useGlobalToast() {
    * Trigger a new toast notification
    */
   const triggerNotification = (notification: ToastNotification) => {
-    const newNotification = { ...notification, id: nanoid() }
-
-    stateNotification.value
-      ? stateNotification.value.push(newNotification)
-      : (stateNotification.value = [newNotification])
+    stateNotification.value = notification
   }
 
   return { triggerNotification }

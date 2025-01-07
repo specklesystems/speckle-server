@@ -9,6 +9,7 @@
         v-model:search="search"
         :projects="projects"
         :workspace-id="workspaceId"
+        :disable-create="result?.workspace.readOnly"
         @close="$emit('close')"
       />
       <InfiniteLoading

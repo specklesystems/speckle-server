@@ -29,7 +29,7 @@
           <li
             v-for="domain in workspaceDomains"
             :key="domain.id"
-            class="border-x border-b first:border-t first:rounded-t-lg last:rounded-b-lg p-6 py-4 flex items-center"
+            class="border-x border-b first:border-t first:rounded-t-lg border-outline-2 last:rounded-b-lg p-6 py-4 flex items-center"
           >
             <p class="text-body-xs font-medium flex-1">@{{ domain.domain }}</p>
             <FormButton

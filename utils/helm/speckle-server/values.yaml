@@ -746,6 +746,8 @@ server:
     ##
     memory: 3Gi
   ratelimiting:
+    ## @param server.ratelimiting.enabled If enabled, rate limiting will be applied to the Speckle server.
+    enabled: true
     ## @param server.ratelimiting.all_requests The maximum number of requests that can be made to the Speckle server in a moving one second window.
     all_requests: 500
     ## @param server.ratelimiting.burst_all_requests If the regular limit is exceeded, the limit is increased to the burst limit. This is the maximum number of requests that can be made to the Speckle server in a moving one minute window.
