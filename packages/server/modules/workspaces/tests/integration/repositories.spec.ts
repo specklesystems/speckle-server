@@ -773,11 +773,20 @@ describe('Workspace repositories', () => {
       expect(workspaces.length).to.equal(1)
     })
 
-    it('should not return discoverable workspaces with existing requests for the user', async () => {
+    it.only('should not return discoverable workspaces with existing requests for the user', async () => {
       const user = await createAndStoreTestUser()
       await updateUserEmail({
         query: {
           email: user.email
+        },
+        update: {
+          verified: true
+        }
+      })
+      const otherUser = await createAndStoreTestUser()
+      await updateUserEmail({
+        query: {
+          email: otherUser.email
         },
         update: {
           verified: true
@@ -797,6 +806,13 @@ describe('Workspace repositories', () => {
           updatedAt: new Date(),
           createdByUserId: user.id
         }
+      })
+      // existing request for other user
+      await db(WorkspaceJoinRequests.name).insert({
+        workspaceId: workspace.id,
+        userId: otherUser.id,
+        createdAt: new Date(),
+        status: 'pending'
       })
       const workspaceWithExistingRequest = await createAndStoreTestWorkspace({
         discoverabilityEnabled: true

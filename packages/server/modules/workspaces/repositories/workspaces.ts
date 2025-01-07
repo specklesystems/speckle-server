@@ -2,6 +2,7 @@ import {
   Workspace,
   WorkspaceAcl,
   WorkspaceDomain,
+  WorkspaceJoinRequest,
   WorkspaceWithOptionalRole
 } from '@/modules/workspacesCore/domain/types'
 import {
@@ -38,7 +39,6 @@ import { WorkspaceInvalidRoleError } from '@/modules/workspaces/errors/workspace
 import {
   WorkspaceAcl as DbWorkspaceAcl,
   WorkspaceDomains,
-  WorkspaceJoinRequests,
   Workspaces
 } from '@/modules/workspaces/helpers/db'
 import {
@@ -68,7 +68,9 @@ const tables = {
   workspaceDomains: (db: Knex) => db<WorkspaceDomain>('workspace_domains'),
   workspacesAcl: (db: Knex) => db<WorkspaceAcl>('workspace_acl'),
   workspaceCreationState: (db: Knex) =>
-    db<WorkspaceCreationState>('workspace_creation_state')
+    db<WorkspaceCreationState>('workspace_creation_state'),
+  workspaceJoinRequests: (db: Knex) =>
+    db<WorkspaceJoinRequest>('workspace_join_requests')
 }
 
 export const getUserDiscoverableWorkspacesFactory =
@@ -95,11 +97,15 @@ export const getUserDiscoverableWorkspacesFactory =
         'workspaces.id'
       )
       .leftJoin(
-        WorkspaceJoinRequests.name,
-        WorkspaceJoinRequests.col.workspaceId,
-        Workspaces.col.id
+        tables
+          .workspaceJoinRequests(db)
+          .select('*')
+          .where({ userId })
+          .as('joinRequest'),
+        'joinRequest.workspaceId',
+        'workspaces.id'
       )
-      .whereNull(WorkspaceJoinRequests.col.workspaceId)
+      .whereNull('joinRequest.workspaceId')
       .whereIn('domain', domains)
       .where('discoverabilityEnabled', true)
       .where('verified', true)
