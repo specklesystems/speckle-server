@@ -1,5 +1,5 @@
 <template>
-  <div class="space-y-4 mt-4">
+  <div class="flex flex-col gap-y-4">
     <ViewerGendoItem
       v-for="render in renders"
       :key="render?.id"

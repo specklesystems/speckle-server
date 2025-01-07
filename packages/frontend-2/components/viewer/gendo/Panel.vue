@@ -1,77 +1,99 @@
 <template>
   <ViewerLayoutPanel move-actions-to-bottom @close="$emit('close')">
     <template #title>
-      <span class="text-foreground">AI Render by</span>
-      <CommonTextLink
-        text
-        link
-        class="ml-1"
-        to="https://gendo.ai?utm=speckle"
+      <div class="flex gap-1 items-center">
+        <span class="text-foreground border-b border-transparent">AI Render by</span>
+        <NuxtLink
+          class="flex gap-1 items-center border-b border-outline-3 hover:border-outline-5 pb-px leading-none mt-0.5"
+          to="https://gendo.ai?utm=speckle"
+          target="_blank"
+        >
+          Gendo
+        </NuxtLink>
+        <CommonBadge color-classes="bg-highlight-3 text-foreground-2 scale-90">
+          BETA
+        </CommonBadge>
+      </div>
+    </template>
+    <div class="py-2 px-3">
+      <CommonAlert v-if="!limits" color="danger">
+        <template #title>No credits available</template>
+      </CommonAlert>
+      <CommonAlert
+        v-else-if="isNearingLimit || isOutOfCredits"
+        :color="alertColor"
+        size="xs"
+      >
+        <template #title>
+          {{ limits.used }}/{{ limits.limit }} free renders used this month
+        </template>
+        <template #description>
+          <FormButton
+            to="https://gendo.ai?utm=speckle"
+            target="_blank"
+            size="sm"
+            :icon-right="ArrowTopRightOnSquareIcon"
+            color="outline"
+          >
+            Get more credits
+          </FormButton>
+        </template>
+      </CommonAlert>
+      <FormButton
+        v-else
+        color="outline"
+        size="sm"
+        external
+        to="https://www.gendo.ai/terms-of-service"
         target="_blank"
       >
-        Gendo
-      </CommonTextLink>
-
-      <span class="text-foreground-2">&nbsp;(Beta)</span>
-    </template>
-    <div class="p-2">
-      <div class="space-y-2 flex flex-col mt-2">
+        <div class="flex items-center gap-1 text-foreground-2 font-normal">
+          <span class="text-body-2xs font-semibold text-foreground">Forum:</span>
+          <span>Writing effective prompts</span>
+          <ArrowTopRightOnSquareIcon class="h-3 w-3" />
+        </div>
+      </FormButton>
+      <div class="flex flex-col gap-y-2 mt-2">
         <FormTextArea
           v-model="prompt"
           name="prompt"
-          label=""
           size="lg"
-          placeholder="Your prompt"
+          :placeholder="randomPlaceholder"
+          color="foundation"
+          :disabled="isLoading || timeOutWait || isOutOfCredits"
+          textarea-classes="sm:!min-h-24"
         />
-        <div class="flex justify-end space-x-2 items-center">
-          <div v-if="limits" class="text-xs text-foreground-2">
-            You have used {{ limits.used }} out of {{ limits.limit }} monthly free
-            renders.
-          </div>
+        <div class="flex justify-end gap-2 items-center text-foreground-2">
+          <span
+            v-if="limits && !isOutOfCredits && !isNearingLimit"
+            class="text-body-2xs text-right"
+          >
+            {{ limits.used }}/{{ limits.limit }} free renders used this month
+          </span>
           <FormButton
-            v-if="(limits?.used || 1) < (limits?.limit || 0)"
-            :disabled="
-              !prompt ||
-              isLoading ||
-              timeOutWait ||
-              (limits?.used || 0) >= (limits?.limit || 0)
-            "
+            :disabled="!prompt || isLoading || timeOutWait || isOutOfCredits"
             @click="enqueMagic()"
           >
             Render
-          </FormButton>
-          <FormButton v-else to="https://gendo.ai?utm=speckle" target="_blank">
-            Visit Gendo
           </FormButton>
         </div>
       </div>
       <ViewerGendoList />
     </div>
     <template #actions>
-      <div class="flex grow items-center justify-between">
-        <span class="text-foreground-2 text-sm">
-          <CommonTextLink
-            text
-            link
-            class="mr-2"
-            to="https://www.gendo.ai/terms-of-service"
-            target="_blank"
-          >
-            Terms and conditions
-          </CommonTextLink>
-        </span>
-        <div>
-          <span class="text-foreground-2 text-sm">More about</span>
-          <CommonTextLink
-            text
-            link
-            class="ml-1"
-            to="https://gendo.ai?utm=speckle"
-            target="_blank"
-          >
-            Gendo
-          </CommonTextLink>
-        </div>
+      <div class="flex w-full items-center justify-end">
+        <FormButton
+          color="subtle"
+          size="sm"
+          external
+          to="https://www.gendo.ai/terms-of-service"
+          target="_blank"
+        >
+          <div class="flex items-center gap-1 text-foreground-2 font-normal">
+            <span>Terms</span>
+            <ArrowTopRightOnSquareIcon class="h-3 w-3" />
+          </div>
+        </FormButton>
       </div>
     </template>
   </ViewerLayoutPanel>
@@ -87,6 +109,8 @@ import {
 } from '~~/lib/gendo/graphql/queriesAndMutations'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { useMixpanel } from '~/lib/core/composables/mp'
+import { CommonAlert, CommonBadge } from '@speckle/ui-components'
+import { ArrowTopRightOnSquareIcon } from '@heroicons/vue/24/outline'
 
 const {
   projectId,
@@ -105,10 +129,39 @@ const prompt = ref<string>()
 const isLoading = ref(false)
 const timeOutWait = ref(false)
 
+const suggestedPrompts = ref<string[]>([
+  'Example: Minimalist Scandinavian interior with warm natural lighting',
+  'Luxury penthouse with floor-to-ceiling windows and city views',
+  'Cozy industrial loft with exposed brick and steel elements',
+  'Modern office space with biophilic design elements',
+  'High-end retail space with dramatic lighting'
+])
+
 const { result, refetch } = useQuery(activeUserGendoLimits)
 
 const limits = computed(() => {
   return result?.value?.activeUser?.gendoAICredits
+})
+
+const randomPlaceholder = computed(() => {
+  const randomIndex = Math.floor(Math.random() * suggestedPrompts.value.length)
+  return suggestedPrompts.value[randomIndex]
+})
+
+const isOutOfCredits = computed(() => {
+  return (limits.value?.used || 0) >= (limits.value?.limit || 0)
+})
+
+const isNearingLimit = computed(() => {
+  if (!limits.value) return
+  const usagePercent = (limits.value?.used / limits.value?.limit) * 100
+  return usagePercent >= 80
+})
+
+const alertColor = computed(() => {
+  if (isOutOfCredits.value) return 'danger'
+  if (isNearingLimit.value) return 'warning'
+  return 'neutral'
 })
 
 const enqueMagic = async () => {
