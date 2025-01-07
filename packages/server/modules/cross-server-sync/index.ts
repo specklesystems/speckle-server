@@ -22,7 +22,6 @@ import {
   createCommentReplyAndNotifyFactory,
   createCommentThreadAndNotifyFactory
 } from '@/modules/comments/services/management'
-import { VersionsEmitter } from '@/modules/core/events/versionsEmitter'
 import {
   createBranchFactory,
   getBranchByIdFactory,
@@ -156,7 +155,7 @@ const crossServerSyncModule: SpeckleModule = {
       insertBranchCommits: insertBranchCommitsFactory({ db }),
       markCommitStreamUpdated,
       markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
-      versionsEventEmitter: VersionsEmitter.emit,
+      emitEvent: getEventBus().emit,
       addCommitCreatedActivity: addCommitCreatedActivityFactory({
         saveActivity: saveActivityFactory({ db }),
         publish

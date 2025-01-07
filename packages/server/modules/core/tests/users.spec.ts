@@ -39,7 +39,6 @@ import {
   deleteStreamFactory,
   getUserDeletableStreamsFactory
 } from '@/modules/core/repositories/streams'
-import { VersionsEmitter } from '@/modules/core/events/versionsEmitter'
 import {
   getObjectFactory,
   storeSingleObjectIfNotFoundFactory,
@@ -138,7 +137,7 @@ const createCommitByBranchId = createCommitByBranchIdFactory({
   insertBranchCommits: insertBranchCommitsFactory({ db }),
   markCommitStreamUpdated,
   markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
-  versionsEventEmitter: VersionsEmitter.emit,
+  emitEvent: getEventBus().emit,
   addCommitCreatedActivity: addCommitCreatedActivityFactory({
     saveActivity: saveActivityFactory({ db }),
     publish
