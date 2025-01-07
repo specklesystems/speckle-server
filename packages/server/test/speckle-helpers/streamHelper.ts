@@ -131,10 +131,10 @@ export async function createTestStreams(
 }
 
 /**
- * Create basic stream for testing and update streamObj to have a real ID
+ * Create basic stream for testing and update streamObj in-place, via reference, to have a real ID
  */
 export async function createTestStream(
-  streamObj: BasicTestStream,
+  streamObj: Partial<BasicTestStream>,
   owner: BasicTestUser
 ) {
   let id: string

@@ -1,52 +1,47 @@
-const { Buffer } = require('node:buffer')
-const request = require('supertest')
-const expect = require('chai').expect
-const { beforeEachContext, getMainTestRegionKeyIfMultiRegion } = require('@/test/hooks')
-const { Scopes } = require('@/modules/core/helpers/mainConstants')
-const { db } = require('@/db/knex')
-const {
+import { Buffer } from 'node:buffer'
+import request from 'supertest'
+import { expect } from 'chai'
+import { beforeEachContext, getMainTestRegionKeyIfMultiRegion } from '@/test/hooks'
+import { Scopes } from '@/modules/core/helpers/mainConstants'
+import { db } from '@/db/knex'
+import {
   deleteServerOnlyInvitesFactory,
   updateAllInviteTargetsFactory
-} = require('@/modules/serverinvites/repositories/serverInvites')
+} from '@/modules/serverinvites/repositories/serverInvites'
 
-const {
+import {
   getUserFactory,
   storeUserFactory,
   countAdminUsersFactory,
   storeUserAclFactory
-} = require('@/modules/core/repositories/users')
-const {
+} from '@/modules/core/repositories/users'
+import {
   findEmailFactory,
   createUserEmailFactory,
   ensureNoPrimaryEmailForUserFactory
-} = require('@/modules/core/repositories/userEmails')
-const {
-  requestNewEmailVerificationFactory
-} = require('@/modules/emails/services/verification/request')
-const {
-  deleteOldAndInsertNewVerificationFactory
-} = require('@/modules/emails/repositories')
-const { renderEmail } = require('@/modules/emails/services/emailRendering')
-const { sendEmail } = require('@/modules/emails/services/sending')
-const { createUserFactory } = require('@/modules/core/services/users/management')
-const {
-  validateAndCreateUserEmailFactory
-} = require('@/modules/core/services/userEmails')
-const {
-  finalizeInvitedServerRegistrationFactory
-} = require('@/modules/serverinvites/services/processing')
-const { createTokenFactory } = require('@/modules/core/services/tokens')
-const {
+} from '@/modules/core/repositories/userEmails'
+import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
+import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
+import { renderEmail } from '@/modules/emails/services/emailRendering'
+import { sendEmail } from '@/modules/emails/services/sending'
+import { createUserFactory } from '@/modules/core/services/users/management'
+import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
+import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
+import { createTokenFactory } from '@/modules/core/services/tokens'
+import {
   storeApiTokenFactory,
   storeTokenScopesFactory,
   storeTokenResourceAccessDefinitionsFactory
-} = require('@/modules/core/repositories/tokens')
-const { getServerInfoFactory } = require('@/modules/core/repositories/server')
-const { createTestStream } = require('@/test/speckle-helpers/streamHelper')
-const { waitForRegionUser } = require('@/test/speckle-helpers/regions')
-const { createTestWorkspace } = require('@/modules/workspaces/tests/helpers/creation')
-const { faker } = require('@faker-js/faker')
-const { getEventBus } = require('@/modules/shared/services/eventBus')
+} from '@/modules/core/repositories/tokens'
+import { getServerInfoFactory } from '@/modules/core/repositories/server'
+import { BasicTestStream, createTestStream } from '@/test/speckle-helpers/streamHelper'
+import { waitForRegionUser } from '@/test/speckle-helpers/regions'
+import { createTestWorkspace } from '@/modules/workspaces/tests/helpers/creation'
+import { faker } from '@faker-js/faker'
+import { BasicTestUser } from '@/test/authHelper'
+import cryptoRandomString from 'crypto-random-string'
+import type { BlobStorageItem } from '@/modules/blobstorage/domain/types'
+import { getEventBus } from '@/modules/shared/services/eventBus'
 
 const getServerInfo = getServerInfoFactory({ db })
 
@@ -77,6 +72,18 @@ const createUser = createUserFactory({
   }),
   emitEvent: getEventBus().emit
 })
+
+const createRandomUser = async (): Promise<BasicTestUser> => {
+  const userDetails = {
+    name: cryptoRandomString({ length: 10 }),
+    email: `${cryptoRandomString({ length: 10, type: 'url-safe' })}@example.org`,
+    password: cryptoRandomString({ length: 12 })
+  }
+  return {
+    ...userDetails,
+    id: await createUser(userDetails)
+  }
+}
 const createToken = createTokenFactory({
   storeApiToken: storeApiTokenFactory({ db }),
   storeTokenScopes: storeTokenScopesFactory({ db }),
@@ -86,13 +93,9 @@ const createToken = createTokenFactory({
 })
 
 describe('Blobs integration @blobstorage', () => {
-  let app
-  let token
-  const user = {
-    name: 'Baron Von Blubba',
-    email: 'barron@bubble.bobble',
-    password: 'bubblesAreMyBlobs'
-  }
+  let app: Express.Application
+  let token: string
+  let user: BasicTestUser
   const workspace = {
     name: 'Anutha Blob Test Workspace #1',
     ownerId: '',
@@ -100,19 +103,19 @@ describe('Blobs integration @blobstorage', () => {
     slug: ''
   }
 
-  const createStreamForTest = async () => {
-    const stream = {
+  const createStreamForTest = async (streamOwner: BasicTestUser) => {
+    const stream: Partial<BasicTestStream> = {
       name: faker.company.name(),
       isPublic: false,
       workspaceId: workspace.id
     }
-    await createTestStream(stream, user)
+    await createTestStream(stream, streamOwner)
     return stream.id
   }
 
   before(async () => {
     ;({ app } = await beforeEachContext())
-    user.id = await createUser(user)
+    user = await createRandomUser()
     await waitForRegionUser(user.id)
     await createTestWorkspace(workspace, user, {
       regionKey: getMainTestRegionKeyIfMultiRegion()
@@ -124,7 +127,7 @@ describe('Blobs integration @blobstorage', () => {
     }))
   })
   it('Uploads from multipart upload', async () => {
-    const streamId = await createStreamForTest()
+    const streamId = await createStreamForTest(user)
     const response = await request(app)
       .post(`/api/stream/${streamId}/blob`)
       .set('Authorization', `Bearer ${token}`)
@@ -134,11 +137,13 @@ describe('Blobs integration @blobstorage', () => {
     expect(response.body.uploadResults).to.exist
     const uploadResults = response.body.uploadResults
     expect(uploadResults).to.have.lengthOf(2)
-    expect(uploadResults.map((r) => r.uploadStatus)).to.have.members([1, 1])
+    expect(uploadResults.map((r: BlobStorageItem) => r.uploadStatus)).to.have.members([
+      1, 1
+    ])
   })
 
   it('Errors for too big files, file is deleted', async () => {
-    const streamId = await createStreamForTest()
+    const streamId = await createStreamForTest(user)
     const response = await request(app)
       .post(`/api/stream/${streamId}/blob`)
       .set('Authorization', `Bearer ${token}`)
@@ -154,7 +159,7 @@ describe('Blobs integration @blobstorage', () => {
   })
 
   it('Gets blob metadata', async () => {
-    const streamId = await createStreamForTest()
+    const streamId = await createStreamForTest(user)
     const response = await request(app)
       .post(`/api/stream/${streamId}/blob`)
       .set('Authorization', `Bearer ${token}`)
@@ -172,7 +177,7 @@ describe('Blobs integration @blobstorage', () => {
   })
 
   it('Deletes blob and object metadata', async () => {
-    const streamId = await createStreamForTest()
+    const streamId = await createStreamForTest(user)
     const response = await request(app)
       .post(`/api/stream/${streamId}/blob`)
       .set('Authorization', `Bearer ${token}`)
@@ -198,7 +203,7 @@ describe('Blobs integration @blobstorage', () => {
   })
 
   it('Gets uploaded blob data', async () => {
-    const streamId = await createStreamForTest()
+    const streamId = await createStreamForTest(user)
     const response = await request(app)
       .post(`/api/stream/${streamId}/blob`)
       .set('Authorization', `Bearer ${token}`)
@@ -217,7 +222,7 @@ describe('Blobs integration @blobstorage', () => {
   })
 
   it('Returns 400 for bad form data', async () => {
-    const streamId = await createStreamForTest()
+    const streamId = await createStreamForTest(user)
     const response = await request(app)
       .post(`/api/stream/${streamId}/blob`)
       .set('Authorization', `Bearer ${token}`)
@@ -229,7 +234,7 @@ describe('Blobs integration @blobstorage', () => {
   })
 
   it('Returns 400 for missing content-type', async () => {
-    const streamId = await createStreamForTest()
+    const streamId = await createStreamForTest(user)
     const response = await request(app)
       .post(`/api/stream/${streamId}/blob`)
       .set('Authorization', `Bearer ${token}`)
