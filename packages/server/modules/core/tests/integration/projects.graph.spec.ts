@@ -52,7 +52,7 @@ describe('Projects GraphQL @core', () => {
 
   describe('query user.projects', () => {
     ;(FF_WORKSPACES_MODULE_ENABLED ? it : it.skip)(
-      'should return projects with workspaceId=null',
+      'should return projects not in a workspace',
       async () => {
         const workspace = {
           id: '',
@@ -88,10 +88,10 @@ describe('Projects GraphQL @core', () => {
         })
         expect(userProjectsRes).to.not.haveGraphQLErrors()
 
-        const nonWorkspaceProjects = userProjectsRes.data!.activeUser!.projects.items
+        const projects = userProjectsRes.data!.activeUser!.projects.items
 
-        expect(nonWorkspaceProjects).to.have.length(1)
-        expect(nonWorkspaceProjects[0].id).to.eq(projectNonInWorkspace.id)
+        expect(projects).to.have.length(1)
+        expect(projects[0].id).to.eq(projectNonInWorkspace.id)
       }
     )
     ;(FF_WORKSPACES_MODULE_ENABLED ? it : it.skip)(
@@ -131,10 +131,10 @@ describe('Projects GraphQL @core', () => {
         })
         expect(userProjectsRes).to.not.haveGraphQLErrors()
 
-        const nonWorkspaceProjects = userProjectsRes.data!.activeUser!.projects.items
+        const projects = userProjectsRes.data!.activeUser!.projects.items
 
-        expect(nonWorkspaceProjects).to.have.length(1)
-        expect(nonWorkspaceProjects[0].id).to.eq(projectInWorkspace.id)
+        expect(projects).to.have.length(1)
+        expect(projects[0].id).to.eq(projectInWorkspace.id)
       }
     )
     ;(FF_WORKSPACES_MODULE_ENABLED ? it : it.skip)(
@@ -172,9 +172,9 @@ describe('Projects GraphQL @core', () => {
         })
         expect(userProjectsRes).to.not.haveGraphQLErrors()
 
-        const nonWorkspaceProjects = userProjectsRes.data!.activeUser!.projects.items
+        const projects = userProjectsRes.data!.activeUser!.projects.items
 
-        expect(nonWorkspaceProjects).to.have.length(2)
+        expect(projects).to.have.length(2)
       }
     )
   })
