@@ -44,7 +44,7 @@
     "file-type": "^16.5.4",
     "http-errors": "~1.6.3",
     "join-images": "^1.1.3",
-    "knex": "^2.5.1",
+    "knex": "^2.4.1",
     "lodash": "^4.17.21",
     "lodash-es": "^4.17.21",
     "node-fetch": "^2.6.1",
