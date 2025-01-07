@@ -134,7 +134,7 @@ export async function createTestStreams(
 /**
  * Create basic stream for testing and update streamObj in-place, via reference, to have a real ID
  */
-export async function createTestStream( //FIXME this function has side-effects, and amends the object in-place
+export async function createTestStream(
   streamObj: Partial<BasicTestStream>,
   owner: BasicTestUser
 ) {
