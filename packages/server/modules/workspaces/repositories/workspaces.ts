@@ -38,6 +38,7 @@ import { WorkspaceInvalidRoleError } from '@/modules/workspaces/errors/workspace
 import {
   WorkspaceAcl as DbWorkspaceAcl,
   WorkspaceDomains,
+  WorkspaceJoinRequests,
   Workspaces
 } from '@/modules/workspaces/helpers/db'
 import {
@@ -93,6 +94,12 @@ export const getUserDiscoverableWorkspacesFactory =
         'acl.workspaceId',
         'workspaces.id'
       )
+      .leftJoin(
+        WorkspaceJoinRequests.name,
+        WorkspaceJoinRequests.col.workspaceId,
+        Workspaces.col.id
+      )
+      .whereNull(WorkspaceJoinRequests.col.workspaceId)
       .whereIn('domain', domains)
       .where('discoverabilityEnabled', true)
       .where('verified', true)
