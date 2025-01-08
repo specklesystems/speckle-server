@@ -67,7 +67,7 @@ export const workspaceListFragment = graphql(`
     updatedAt
     logo
     role
-    readonly
+    readOnly
   }
 `)
 

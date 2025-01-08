@@ -20,7 +20,7 @@ const documents = {
     "\n  mutation CreateProject($input: ProjectCreateInput) {\n    projectMutations {\n      create(input: $input) {\n        ...ProjectListProjectItem\n      }\n    }\n  }\n": types.CreateProjectDocument,
     "\n  mutation CreateProjectInWorkspace($input: WorkspaceProjectCreateInput!) {\n    workspaceMutations {\n      projects {\n        create(input: $input) {\n          ...ProjectListProjectItem\n        }\n      }\n    }\n  }\n": types.CreateProjectInWorkspaceDocument,
     "\n  mutation StreamAccessRequestCreate($input: String!) {\n    streamAccessRequestCreate(streamId: $input) {\n      id\n    }\n  }\n": types.StreamAccessRequestCreateDocument,
-    "\n  fragment WorkspaceListWorkspaceItem on Workspace {\n    id\n    name\n    description\n    createdAt\n    updatedAt\n    logo\n    role\n  }\n": types.WorkspaceListWorkspaceItemFragmentDoc,
+    "\n  fragment WorkspaceListWorkspaceItem on Workspace {\n    id\n    name\n    description\n    createdAt\n    updatedAt\n    logo\n    role\n    readOnly\n  }\n": types.WorkspaceListWorkspaceItemFragmentDoc,
     "\n  fragment AutomateFunctionItem on AutomateFunction {\n    name\n    isFeatured\n    id\n    creator {\n      name\n    }\n    releases {\n      items {\n        inputSchema\n      }\n    }\n  }\n": types.AutomateFunctionItemFragmentDoc,
     "\n  mutation CreateAutomation($projectId: ID!, $input: ProjectAutomationCreateInput!) {\n    projectMutations {\n      automationMutations(projectId: $projectId) {\n        create(input: $input) {\n          id\n          name\n        }\n      }\n    }\n  }\n": types.CreateAutomationDocument,
     "\n  fragment AutomateFunctionRunItem on AutomateFunctionRun {\n    id\n    status\n    statusMessage\n    results\n    contextView\n    function {\n      id\n      name\n      logo\n    }\n  }\n": types.AutomateFunctionRunItemFragmentDoc,
@@ -89,7 +89,7 @@ export function graphql(source: "\n  mutation StreamAccessRequestCreate($input: 
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment WorkspaceListWorkspaceItem on Workspace {\n    id\n    name\n    description\n    createdAt\n    updatedAt\n    logo\n    role\n  }\n"): (typeof documents)["\n  fragment WorkspaceListWorkspaceItem on Workspace {\n    id\n    name\n    description\n    createdAt\n    updatedAt\n    logo\n    role\n  }\n"];
+export function graphql(source: "\n  fragment WorkspaceListWorkspaceItem on Workspace {\n    id\n    name\n    description\n    createdAt\n    updatedAt\n    logo\n    role\n    readOnly\n  }\n"): (typeof documents)["\n  fragment WorkspaceListWorkspaceItem on Workspace {\n    id\n    name\n    description\n    createdAt\n    updatedAt\n    logo\n    role\n    readOnly\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

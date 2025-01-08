@@ -251,7 +251,7 @@ const createNewProjectInWorkspace = async (name: string) => {
 }
 
 const userCantCreateWorkspace = (item: WorkspaceListWorkspaceItemFragment) =>
-  !!item?.role && item.role === 'workspace:guest'
+  (!!item?.role && item.role === 'workspace:guest') || item.readOnly
 
 const {
   result: projectsResult,
