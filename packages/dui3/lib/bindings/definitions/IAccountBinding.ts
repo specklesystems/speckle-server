@@ -1,4 +1,7 @@
-import type { IBinding, IBindingSharedEvents } from 'lib/bindings/definitions/IBinding'
+import type {
+  IBinding,
+  IBindingSharedEvents
+} from '~/lib/bindings/definitions/IBinding'
 
 export const IAccountBindingKey = 'accountsBinding'
 

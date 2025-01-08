@@ -5,7 +5,7 @@ import type {
 } from '~~/lib/bindings/definitions/IBinding'
 import type { CardSetting } from '~/lib/models/card/setting'
 import type { IModelCardSharedEvents } from '~/lib/models/card'
-import type { ConversionResult } from 'lib/conversions/conversionResult'
+import type { ConversionResult } from '~/lib/conversions/conversionResult'
 
 export const ISendBindingKey = 'sendBinding'
 

@@ -1,4 +1,4 @@
-import type { ConversionResult } from 'lib/conversions/conversionResult'
+import type { ConversionResult } from '~/lib/conversions/conversionResult'
 import type { IModelCardSharedEvents } from '~/lib/models/card'
 import type { CardSetting } from '~/lib/models/card/setting'
 import type {

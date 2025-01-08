@@ -68,7 +68,7 @@ import type {
   IDirectSelectionSendFilter,
   RevitViewsSendFilter,
   RevitCategoriesSendFilter
-} from 'lib/models/card/send'
+} from '~/lib/models/card/send'
 import { useHostAppStore } from '~~/store/hostApp'
 import { storeToRefs } from 'pinia'
 

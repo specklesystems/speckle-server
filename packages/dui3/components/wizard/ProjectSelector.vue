@@ -133,7 +133,7 @@ import { useMutation, useQuery, provideApolloClient } from '@vue/apollo-composab
 import type {
   ProjectListProjectItemFragment,
   WorkspaceListWorkspaceItemFragment
-} from 'lib/common/generated/gql/graphql'
+} from '~/lib/common/generated/gql/graphql'
 import { useForm } from 'vee-validate'
 import { ValidationHelpers } from '@speckle/ui-components'
 import { useMixpanel } from '~/lib/core/composables/mixpanel'

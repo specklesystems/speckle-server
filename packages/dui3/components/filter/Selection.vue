@@ -8,7 +8,7 @@
 </template>
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
-import type { IDirectSelectionSendFilter, ISendFilter } from 'lib/models/card/send'
+import type { IDirectSelectionSendFilter, ISendFilter } from '~/lib/models/card/send'
 import { useHostAppStore } from '~~/store/hostApp'
 import { useSelectionStore } from '~~/store/selection'
 

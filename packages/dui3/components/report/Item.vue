@@ -75,7 +75,7 @@ import {
 } from '@heroicons/vue/24/solid'
 import type { ConversionResult } from '~/lib/conversions/conversionResult'
 import { useAccountStore } from '~/store/accounts'
-import type { IModelCard } from 'lib/models/card'
+import type { IModelCard } from '~/lib/models/card'
 import { useHostAppStore } from '~/store/hostApp'
 
 const app = useNuxtApp()

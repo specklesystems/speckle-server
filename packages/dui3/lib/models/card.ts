@@ -1,7 +1,7 @@
 import crs from 'crypto-random-string'
-import type { AutomationRunItemFragment } from 'lib/common/generated/gql/graphql'
-import type { ConversionResult } from 'lib/conversions/conversionResult'
-import type { CardSetting } from 'lib/models/card/setting'
+import type { AutomationRunItemFragment } from '~/lib/common/generated/gql/graphql'
+import type { ConversionResult } from '~/lib/conversions/conversionResult'
+import type { CardSetting } from '~/lib/models/card/setting'
 import type { IDiscriminatedObject } from '~~/lib/bindings/definitions/common'
 import { DiscriminatedObject } from '~~/lib/bindings/definitions/common'
 

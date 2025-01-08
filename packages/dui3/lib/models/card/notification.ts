@@ -1,4 +1,4 @@
-import type { ConversionResult } from 'lib/conversions/conversionResult'
+import type { ConversionResult } from '~/lib/conversions/conversionResult'
 
 export type ModelCardNotification = {
   modelCardId: string

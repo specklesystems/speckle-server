@@ -2,7 +2,7 @@ import type {
   DocumentInfo,
   DocumentModelStore
 } from '~/lib/bindings/definitions/IBasicConnectorBinding'
-import type { IModelCard, ModelCardProgress } from 'lib/models/card'
+import type { IModelCard, ModelCardProgress } from '~/lib/models/card'
 import { useMixpanel } from '~/lib/core/composables/mixpanel'
 import type { IReceiverModelCard } from '~/lib/models/card/receiver'
 import type {
@@ -10,11 +10,11 @@ import type {
   ISendFilter,
   ISenderModelCard,
   RevitViewsSendFilter
-} from 'lib/models/card/send'
+} from '~/lib/models/card/send'
 import type { ToastNotification } from '@speckle/ui-components'
 import type { Nullable } from '@speckle/shared'
 import type { HostAppError } from '~/lib/bridge/errorHandler'
-import type { ConversionResult } from 'lib/conversions/conversionResult'
+import type { ConversionResult } from '~/lib/conversions/conversionResult'
 import { defineStore } from 'pinia'
 import type { CardSetting } from '~/lib/models/card/setting'
 import { useAccountStore } from '~/store/accounts'
