@@ -43,8 +43,7 @@ import { Knex } from 'knex'
 import { isProjectCreateInput } from '@/modules/core/helpers/stream'
 import {
   StreamAccessUpdateError,
-  StreamNotFoundError,
-  StreamUpdateError
+  StreamNotFoundError
 } from '@/modules/core/errors/stream'
 import { metaHelpers } from '@/modules/core/helpers/meta'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
@@ -1168,7 +1167,9 @@ export const markOnboardingBaseStreamFactory =
   async (streamId: string, version: string) => {
     const stream = await getStreamFactory(deps)({ streamId })
     if (!stream) {
-      throw new Error(`Stream ${streamId} not found`)
+      throw new StreamNotFoundError('Stream {streamId} not found', {
+        info: { streamId }
+      })
     }
     await updateStreamFactory(deps)({
       id: streamId,

@@ -126,6 +126,7 @@ import {
 } from '@/modules/core/repositories/tokens'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
+import { BranchNotFoundError } from '@/modules/core/errors/branch'
 
 const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
 
@@ -289,7 +290,7 @@ export = (FF_AUTOMATE_MODULE_ENABLED
           const branch = await ctx.loaders
             .forRegion({ db: projectDb })
             .commits.getCommitBranch.load(versionId)
-          if (!branch) throw Error('Invalid version Id')
+          if (!branch) throw new BranchNotFoundError('Invalid version Id')
 
           const projectId = branch.streamId
           const modelId = branch.id

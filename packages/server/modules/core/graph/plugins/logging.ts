@@ -2,9 +2,9 @@
 import prometheusClient from 'prom-client'
 import { graphqlLogger } from '@/logging/logging'
 import { redactSensitiveVariables } from '@/logging/loggingHelper'
-import { FieldNode, SelectionNode } from 'graphql'
-import { ApolloServerPlugin } from '@apollo/server'
-import { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
+import type { FieldNode, SelectionNode } from 'graphql'
+import type { ApolloServerPlugin } from '@apollo/server'
+import type { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
 import { shouldLogAsInfoLevel } from '@/logging/graphqlError'
 
 type ApolloLoggingPluginTransaction = {

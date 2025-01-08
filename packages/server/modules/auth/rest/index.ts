@@ -7,7 +7,7 @@ import {
 import { validateScopes } from '@/modules/shared'
 import { InvalidAccessCodeRequestError } from '@/modules/auth/errors'
 import { ensureError, Optional, Scopes } from '@speckle/shared'
-import { ForbiddenError } from '@/modules/shared/errors'
+import { BadRequestError, ForbiddenError } from '@/modules/shared/errors'
 import {
   getAppFactory,
   revokeRefreshTokenFactory,
@@ -144,7 +144,7 @@ export default function (app: Express) {
       // Token refresh
       if (req.body.refreshToken) {
         if (!req.body.appId || !req.body.appSecret)
-          throw new Error('Invalid request - App Id and Secret are required.')
+          throw new BadRequestError('Invalid request - App Id and Secret are required.')
 
         const authResponse = await refreshAppToken({
           refreshToken: req.body.refreshToken,
@@ -161,7 +161,7 @@ export default function (app: Express) {
         !req.body.accessCode ||
         !req.body.challenge
       )
-        throw new Error(
+        throw new BadRequestError(
           `Invalid request, insufficient information provided in the request. App Id, Secret, Access Code, and Challenge are required.`
         )
 
@@ -189,7 +189,7 @@ export default function (app: Express) {
       const token = req.body.token
       const refreshToken = req.body.refreshToken
 
-      if (!token) throw new Error('Invalid request. No token provided.')
+      if (!token) throw new BadRequestError('Invalid request. No token provided.')
       await revokeTokenById(token)
 
       if (refreshToken) await revokeRefreshToken({ tokenId: refreshToken })

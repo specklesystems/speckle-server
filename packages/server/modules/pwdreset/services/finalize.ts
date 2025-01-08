@@ -5,6 +5,7 @@ import {
 } from '@/modules/core/domain/users/operations'
 import { DeleteTokens, GetPendingToken } from '@/modules/pwdreset/domain/operations'
 import { PasswordRecoveryFinalizationError } from '@/modules/pwdreset/errors'
+import { UserNotFoundError } from '@/modules/core/errors/user'
 
 type InitializeStateDeps = {
   getUserByEmail: GetUserByEmail
@@ -26,7 +27,7 @@ const initializeStateFactory =
 
     const user = await deps.getUserByEmail(token.email)
     if (!user) {
-      throw new PasswordRecoveryFinalizationError('Invalid finalization request')
+      throw new UserNotFoundError('Invalid finalization request')
     }
 
     return { tokenId, password, token, user }

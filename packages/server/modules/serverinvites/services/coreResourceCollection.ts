@@ -13,6 +13,7 @@ import { authorizeResolver } from '@/modules/shared'
 import { Roles } from '@speckle/shared'
 import { flatten } from 'lodash'
 import { GetStream } from '@/modules/core/domain/streams/operations'
+import { StreamNotFoundError } from '@/modules/core/errors/stream'
 
 const collectAndValidateServerTargetFactory =
   (): CollectAndValidateResourceTargets => (params) => {
@@ -121,9 +122,7 @@ const collectAndValidateProjectTargetFactory =
       userId: targetUser?.id
     })
     if (!project) {
-      throw new InviteCreateValidationError(
-        'Attempting to invite into a non-existant project'
-      )
+      throw new StreamNotFoundError('Attempting to invite into a non-existant project')
     }
     if (project.role) {
       throw new InviteCreateValidationError(

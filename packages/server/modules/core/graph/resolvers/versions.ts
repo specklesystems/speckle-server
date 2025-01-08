@@ -11,7 +11,7 @@ import {
   batchDeleteCommitsFactory,
   batchMoveCommitsFactory
 } from '@/modules/core/services/commit/batchCommitActions'
-import { CommitNotFoundError, CommitUpdateError } from '@/modules/core/errors/commit'
+import { CommitNotFoundError } from '@/modules/core/errors/commit'
 import {
   createCommitByBranchIdFactory,
   markCommitReceivedAndNotifyFactory,
@@ -58,6 +58,7 @@ import { getObjectFactory } from '@/modules/core/repositories/objects'
 import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import coreModule from '@/modules/core'
+import { StreamNotFoundError } from '@/modules/core/errors/stream'
 
 export = {
   Project: {
@@ -143,7 +144,7 @@ export = {
         .forRegion({ db: projectDb })
         .commits.getCommitStream.load(args.input.versionId)
       if (!stream) {
-        throw new CommitUpdateError('Commit stream not found')
+        throw new StreamNotFoundError('Commit stream not found')
       }
 
       await authorizeResolver(

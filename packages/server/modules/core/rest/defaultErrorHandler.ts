@@ -1,6 +1,7 @@
 import { BaseError } from '@/modules/shared/errors'
 import { isDevEnv } from '@/modules/shared/helpers/envHelper'
 import { getCause } from '@/modules/shared/helpers/errorHelper'
+import { prettifyMessage } from '@/modules/shared/utils/messageTemplate'
 import { Optional, ensureError } from '@speckle/shared'
 import { ErrorRequestHandler } from 'express'
 import { get, isNumber } from 'lodash'
@@ -21,10 +22,11 @@ const resolveStatusCode = (e: Error): number => {
 
 const resolveErrorInfo = (e: Error): Record<string, unknown> => {
   const cause = getCause(e)
-  const message = e.message
+  let message = e.message
   let info = undefined
   if (e instanceof BaseError) {
     info = e.info()
+    message = prettifyMessage(info, e.message)
   }
 
   return {

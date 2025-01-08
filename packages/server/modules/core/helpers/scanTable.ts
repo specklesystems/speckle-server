@@ -1,3 +1,4 @@
+import { LogicError } from '@/modules/shared/errors'
 import { Knex } from 'knex'
 
 export const scanTableFactory = <TRecord extends object>({
@@ -19,7 +20,7 @@ export const scanTableFactory = <TRecord extends object>({
       offset += batchSize
 
       if (offset > failsafeLimit) {
-        throw new Error('Never ending loop')
+        throw new LogicError('Never ending loop')
       }
     } while (rows.length > 0)
   }

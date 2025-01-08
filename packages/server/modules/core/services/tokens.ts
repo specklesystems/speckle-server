@@ -23,6 +23,7 @@ import {
 } from '@/modules/core/domain/tokens/operations'
 import { GetTokenAppInfo } from '@/modules/auth/domain/operations'
 import { GetUserRole } from '@/modules/core/domain/users/operations'
+import { TokenCreateError } from '@/modules/core/errors/user'
 
 /*
   Tokens
@@ -50,7 +51,7 @@ export const createTokenFactory =
   async ({ userId, name, scopes, lifespan, limitResources }) => {
     const { tokenId, tokenString, tokenHash, lastChars } = await createBareToken()
 
-    if (scopes.length === 0) throw new Error('No scopes provided')
+    if (scopes.length === 0) throw new TokenCreateError('No scopes provided')
 
     const token = {
       id: tokenId,

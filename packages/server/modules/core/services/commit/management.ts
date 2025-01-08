@@ -30,12 +30,7 @@ import {
   GetStream,
   MarkCommitStreamUpdated
 } from '@/modules/core/domain/streams/operations'
-import {
-  CommitCreateError,
-  CommitDeleteError,
-  CommitReceiveError,
-  CommitUpdateError
-} from '@/modules/core/errors/commit'
+import { CommitNotFoundError, CommitUpdateError } from '@/modules/core/errors/commit'
 import {
   VersionEvents,
   VersionsEventEmitter
@@ -49,6 +44,11 @@ import {
 import { BranchRecord, CommitRecord } from '@/modules/core/helpers/types'
 import { ensureError, Roles } from '@speckle/shared'
 import { has } from 'lodash'
+import { BranchNotFoundError } from '@/modules/core/errors/branch'
+import { ObjectNotFoundError } from '@/modules/core/errors/object'
+import { ForbiddenError } from '@/modules/shared/errors'
+import { StreamNotFoundError } from '@/modules/core/errors/stream'
+import { UserInputError } from '@/modules/core/errors/userinput'
 
 export const markCommitReceivedAndNotifyFactory =
   ({ getCommit, saveActivity }: { getCommit: GetCommit; saveActivity: SaveActivity }) =>
@@ -71,7 +71,7 @@ export const markCommitReceivedAndNotifyFactory =
       streamId: oldInput.streamId
     })
     if (!commit) {
-      throw new CommitReceiveError(
+      throw new CommitNotFoundError(
         `Failed to find commit with id ${oldInput.commitId} in stream ${oldInput.streamId}.`,
         { info: params }
       )
@@ -121,14 +121,14 @@ export const createCommitByBranchIdFactory =
     if (!totalChildrenCount) {
       const obj = await deps.getObject(objectId, streamId)
       if (!obj)
-        throw new CommitCreateError("Couldn't find commit object", { info: params })
+        throw new ObjectNotFoundError("Couldn't find commit object", { info: params })
 
       totalChildrenCount = obj.totalChildrenCount || 1
     }
 
     const branch = await deps.getBranchById(branchId, { streamId })
     if (!branch) {
-      throw new CommitCreateError(`Failed to find branch with id ${branchId}.`, {
+      throw new BranchNotFoundError(`Failed to find branch with id ${branchId}.`, {
         info: params
       })
     }
@@ -206,7 +206,7 @@ export const createCommitByBranchNameFactory =
       myBranch = (await deps.getBranchById(branchName)) || null
     }
     if (!myBranch) {
-      throw new CommitCreateError(
+      throw new BranchNotFoundError(
         `Failed to find branch with name or id ${branchName}.`,
         {
           info: params
@@ -264,7 +264,7 @@ export const updateCommitAndNotifyFactory =
         }
 
     if (!message && !newBranchName) {
-      throw new CommitUpdateError('Nothing to update', {
+      throw new UserInputError('Nothing to update', {
         info: { ...params, userId }
       })
     }
@@ -276,17 +276,17 @@ export const updateCommitAndNotifyFactory =
         : deps.getCommitStream({ commitId, userId })
     ])
     if (!commit) {
-      throw new CommitUpdateError("Can't update nonexistant commit", {
+      throw new CommitNotFoundError("Can't update nonexistant commit", {
         info: { ...params, userId }
       })
     }
     if (!stream) {
-      throw new CommitUpdateError("Can't resolve commit stream", {
+      throw new StreamNotFoundError("Can't resolve commit stream", {
         info: { ...params, userId }
       })
     }
     if (commit.author !== userId && stream.role !== Roles.Stream.Owner) {
-      throw new CommitUpdateError(
+      throw new ForbiddenError(
         'Only the author of a commit or a stream owner may update it',
         {
           info: { ...params, userId, streamRole: stream.role }
@@ -300,10 +300,10 @@ export const updateCommitAndNotifyFactory =
         const newBranch = await deps.getStreamBranchByName(streamId, newBranchName)
 
         if (!newBranch || !branch) {
-          throw new Error("Couldn't resolve branch")
+          throw new BranchNotFoundError("Couldn't resolve branch")
         }
         if (!commit) {
-          throw new Error("Couldn't find commit")
+          throw new CommitNotFoundError("Couldn't find commit")
         }
 
         await deps.switchCommitBranch(commitId, newBranch.id, branch.id)
@@ -353,13 +353,13 @@ export const deleteCommitAndNotifyFactory =
   async (commitId: string, streamId: string, userId: string) => {
     const commit = await deps.getCommit(commitId)
     if (!commit) {
-      throw new CommitDeleteError("Couldn't delete nonexistant commit", {
+      throw new CommitNotFoundError("Couldn't delete nonexistant commit", {
         info: { commitId, streamId, userId }
       })
     }
 
     if (commit.author !== userId) {
-      throw new CommitDeleteError('Only the author of a commit may delete it', {
+      throw new ForbiddenError('Only the author of a commit may delete it', {
         info: { commitId, streamId, userId }
       })
     }

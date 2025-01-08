@@ -1,4 +1,4 @@
-import { StreamCloneError } from '@/modules/core/errors/stream'
+import { StreamCloneError, StreamNotFoundError } from '@/modules/core/errors/stream'
 import {
   BranchCommitRecord,
   StreamCommitRecord,
@@ -92,7 +92,7 @@ const prepareStateFactory =
   async (userId: string, sourceStreamId: string): Promise<CloneStreamInitialState> => {
     const targetStream = await deps.getStream({ streamId: sourceStreamId })
     if (!targetStream) {
-      throw new StreamCloneError('Clonable source stream not found', {
+      throw new StreamNotFoundError('Clonable source stream not found', {
         info: { sourceStreamId }
       })
     }
@@ -104,7 +104,7 @@ const prepareStateFactory =
 
     const user = await deps.getUser(userId)
     if (!user) {
-      throw new StreamCloneError('Clone target user not found')
+      throw new UserNotFoundError('Clone target user not found')
     }
 
     const trx = await deps.newProjectDb.transaction()
@@ -311,7 +311,7 @@ const createBranchCommitReferencesFactory =
         const newBranchId = branchIdMap.get(bc.branchId)
         const newCommitId = commitIdMap.get(bc.commitId)
         if (!newBranchId || !newCommitId) {
-          throw new StreamCloneError('Unexpected missing branch or commit mapping', {
+          throw new BranchNotFoundError('Unexpected missing branch or commit mapping', {
             info: {
               oldBranchId: bc.branchId,
               newBranchId,
@@ -395,7 +395,7 @@ const cloneCommentsFactory =
           if (c.parentComment) {
             const newParentComment = commentIdMap.get(c.parentComment)
             if (!newParentComment) {
-              throw new StreamCloneError('Unexpected missing comment mapping', {
+              throw new CommentNotFoundError('Unexpected missing comment mapping', {
                 info: {
                   newStreamId: coreResult.newStreamId,
                   oldStreamId: state.targetStream.id,

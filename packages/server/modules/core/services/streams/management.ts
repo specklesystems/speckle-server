@@ -8,6 +8,7 @@ import {
 import { StreamRecord } from '@/modules/core/helpers/types'
 import {
   StreamInvalidAccessError,
+  StreamNotFoundError,
   StreamUpdateError
 } from '@/modules/core/errors/stream'
 import { isProjectCreateInput } from '@/modules/core/helpers/stream'
@@ -191,7 +192,7 @@ export const updateStreamAndNotifyFactory =
 
     const oldStream = await deps.getStream({ streamId: update.id, userId: updaterId })
     if (!oldStream) {
-      throw new StreamUpdateError('Stream not found', {
+      throw new StreamNotFoundError('Stream not found', {
         info: { updaterId, streamId: update.id }
       })
     }

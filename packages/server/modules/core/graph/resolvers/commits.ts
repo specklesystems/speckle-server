@@ -28,7 +28,7 @@ import {
   batchDeleteCommitsFactory,
   batchMoveCommitsFactory
 } from '@/modules/core/services/commit/batchCommitActions'
-import { StreamInvalidAccessError } from '@/modules/core/errors/stream'
+import { StreamNotFoundError } from '@/modules/core/errors/stream'
 import { isNonNullable, MaybeNullOrUndefined, Roles } from '@speckle/shared'
 import { toProjectIdWhitelist } from '@/modules/core/helpers/token'
 import { BadRequestError } from '@/modules/shared/errors'
@@ -134,7 +134,7 @@ export = {
         .forRegion({ db: projectDB })
         .commits.getCommitStream.load(commitId)
       if (!stream) {
-        throw new StreamInvalidAccessError('Commit stream not found')
+        throw new StreamNotFoundError('Commit stream not found')
       }
 
       await validateStreamAccess(

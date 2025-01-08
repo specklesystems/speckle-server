@@ -16,7 +16,9 @@ import {
 import { GetStreams } from '@/modules/core/domain/streams/operations'
 import {
   CommitInvalidAccessError,
-  CommitBatchUpdateError
+  CommitBatchUpdateError,
+  CommitBatchUpdateInternalError,
+  CommitNotFoundError
 } from '@/modules/core/errors/commit'
 import {
   CommitsDeleteInput,
@@ -27,6 +29,7 @@ import {
 import { Roles } from '@/modules/core/helpers/mainConstants'
 import { ensureError } from '@/modules/shared/helpers/errorHelper'
 import { difference, groupBy, has, keyBy } from 'lodash'
+import { StreamNotFoundError } from '@/modules/core/errors/stream'
 
 type OldBatchInput = CommitsMoveInput | CommitsDeleteInput
 type CommitBatchInput = OldBatchInput | MoveVersionsInput | DeleteVersionsInput
@@ -49,7 +52,7 @@ const validateBatchBaseRulesFactory =
 
     if (!userId) {
       throw new CommitInvalidAccessError(
-        'User must be authenticate to operate with commits'
+        'User must be authenticated to operate with commits'
       )
     }
     if (!commitIds?.length) {
@@ -62,7 +65,7 @@ const validateBatchBaseRulesFactory =
       commitIds.length !== foundCommitIds.length ||
       difference(commitIds, foundCommitIds).length > 0
     ) {
-      throw new CommitBatchUpdateError('At least one of the commits does not exist')
+      throw new CommitNotFoundError('At least one of the commits does not exist')
     }
 
     const streamGroups = groupBy(commits, (c) => c.streamId)
@@ -76,7 +79,7 @@ const validateBatchBaseRulesFactory =
         streams.map((s) => s.id)
       ).length > 0
     ) {
-      throw new CommitBatchUpdateError("At least one commit stream wasn't found")
+      throw new StreamNotFoundError("At least one commit stream wasn't found")
     }
 
     const streamsById = keyBy(streams, (s) => s.id)
@@ -191,7 +194,9 @@ export const batchMoveCommitsFactory =
       return finalBranch
     } catch (e) {
       const err = ensureError(e)
-      throw new CommitBatchUpdateError('Batch commit move failed', { cause: err })
+      throw new CommitBatchUpdateInternalError('Batch commit move failed', {
+        cause: err
+      })
     }
   }
 
@@ -228,6 +233,8 @@ export const batchDeleteCommitsFactory =
       )
     } catch (e) {
       const err = ensureError(e)
-      throw new CommitBatchUpdateError('Batch commit delete failed', { cause: err })
+      throw new CommitBatchUpdateInternalError('Batch commit delete failed', {
+        cause: err
+      })
     }
   }

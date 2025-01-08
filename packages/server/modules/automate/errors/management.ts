@@ -12,6 +12,12 @@ export class AutomationNotFoundError extends BaseError {
   static statusCode = 404
 }
 
+export class AutomationRevisionNotFoundError extends BaseError {
+  static defaultMessage = 'Automation revision not found'
+  static code = 'AUTOMATION__REVISION_NOT_FOUND'
+  static statusCode = 404
+}
+
 export class AutomationCreationError extends BaseError {
   static defaultMessage = 'Error creating automation'
   static code = 'AUTOMATION_CREATION_ERROR'
@@ -40,18 +46,6 @@ export class AutomateInvalidTriggerError extends BaseError {
   static defaultMessage = 'Invalid automation trigger'
   static code = 'AUTOMATE_INVALID_TRIGGER'
   static statusCode = 422
-}
-
-export class AutomateFunctionCreationError extends BaseError {
-  static defaultMessage = 'Error creating function'
-  static code = 'AUTOMATE_FUNCTION_CREATION_ERROR'
-  static statusCode = 400
-}
-
-export class AutomateFunctionUpdateError extends BaseError {
-  static defaultMessage = 'Error updating function'
-  static code = 'AUTOMATE_FUNCTION_UPDATE_ERROR'
-  static statusCode = 400
 }
 
 export class AutomateFunctionReleaseNotFoundError extends BaseError {

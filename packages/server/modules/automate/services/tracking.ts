@@ -3,6 +3,7 @@ import {
   GetFullAutomationRunById
 } from '@/modules/automate/domain/operations'
 import { InsertableAutomationRun } from '@/modules/automate/repositories/automations'
+import { CommitNotFoundError } from '@/modules/core/errors/commit'
 import { GetCommit } from '@/modules/core/domain/commits/operations'
 import { LegacyGetUser } from '@/modules/core/domain/users/operations'
 import { throwUncoveredError } from '@speckle/shared'
@@ -27,7 +28,7 @@ export const getUserEmailFromAutomationRunFactory =
         const version = await deps.getCommit(trigger.triggeringId, {
           streamId: projectId
         })
-        if (!version) throw new Error("Version doesn't exist any more")
+        if (!version) throw new CommitNotFoundError("Version doesn't exist any more")
         const userId = version.author
         if (userId) {
           const user = await deps.getUser(userId)

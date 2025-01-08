@@ -103,7 +103,7 @@ export const processFinalizedProjectInviteFactory =
     }
 
     if (!project) {
-      throw new InviteFinalizingError(
+      throw new StreamNotFoundError(
         'Attempting to finalize invite to a non-existant project'
       )
     }

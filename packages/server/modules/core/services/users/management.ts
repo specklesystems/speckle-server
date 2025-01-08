@@ -60,7 +60,7 @@ export const updateUserAndNotifyFactory =
   async (userId: string, update: UserUpdateInput) => {
     const existingUser = await deps.getUser(userId)
     if (!existingUser) {
-      throw new UserUpdateError('Attempting to update a non-existant user')
+      throw new UserNotFoundError('Attempting to update a non-existant user')
     }
 
     const filteredUpdate: Partial<UserRecord> = {}
@@ -113,7 +113,7 @@ export const changePasswordFactory =
     const { newPassword, id: userId } = params
     const user = await deps.getUser(userId, { skipClean: true })
     if (!user) {
-      throw new UserUpdateError('Could not find the user with the specified id')
+      throw new UserNotFoundError('Could not find the user with the specified id')
     }
 
     if (newPassword.length < MINIMUM_PASSWORD_LENGTH) {

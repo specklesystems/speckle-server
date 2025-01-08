@@ -6,12 +6,6 @@ export class BranchNameError extends BaseError {
   static statusCode = 400
 }
 
-export class BranchCreateError extends BaseError {
-  static defaultMessage = 'An issue occurred while creating a branch'
-  static code = 'BRANCH_CREATE_ERROR'
-  static statusCode = 400
-}
-
 export class BranchUpdateError extends BaseError {
   static defaultMessage = 'An issue occured while updating a branch'
   static code = 'BRANCH_UPDATE_ERROR'
