@@ -70,7 +70,7 @@ import { defaultErrorHandler } from '@/modules/core/rest/defaultErrorHandler'
 import { migrateDbToLatest } from '@/db/migrations'
 import { statusCodePlugin } from '@/modules/core/graph/plugins/statusCode'
 import { BaseError, ForbiddenError } from '@/modules/shared/errors'
-import { loggingPlugin } from '@/modules/core/graph/plugins/logging'
+import { loggingPluginFactory } from '@/modules/core/graph/plugins/logging'
 import { shouldLogAsInfoLevel } from '@/logging/graphqlError'
 import { getUserFactory } from '@/modules/core/repositories/users'
 import { initFactory as healthchecksInitFactory } from '@/healthchecks'
@@ -346,7 +346,7 @@ export async function buildApolloServer(options?: {
     schema,
     plugins: [
       statusCodePlugin,
-      loggingPlugin,
+      loggingPluginFactory({ register: prometheusClient.register }),
       ApolloServerPluginLandingPageLocalDefault({
         embed: true,
         includeCookies: true
