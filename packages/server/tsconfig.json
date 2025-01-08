@@ -114,7 +114,7 @@
     "type-augmentations/**/*",
     "test/**/*",
     "app.ts",
-    "otel.ts",
+    // "otel.ts",
     "bootstrap.ts",
     "knexfile.ts",
     "bootstrap.js",
