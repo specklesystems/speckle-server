@@ -96,7 +96,7 @@
         modelCard.progress ? 'h-10 opacity-100' : 'h-0 opacity-0 py-0'
       } overflow-hidden bg-blue-500/10`"
     >
-      <CommonLoadingProgressBar
+      <CommonLoadingBar
         :loading="!!modelCard.progress"
         :progress="modelCard.progress ? modelCard.progress.progress : undefined"
       />
@@ -189,7 +189,7 @@ import {
   modelDetailsQuery,
   modelViewingSubscription
 } from '~/lib/graphql/mutationsAndQueries'
-import { CommonLoadingProgressBar } from '@speckle/ui-components'
+import { CommonLoadingBar } from '@speckle/ui-components'
 import { ArrowTopRightOnSquareIcon, XCircleIcon } from '@heroicons/vue/20/solid'
 import { ArrowUpCircleIcon, ArrowDownCircleIcon } from '@heroicons/vue/24/solid'
 import type { ProjectModelGroup } from '~~/store/hostApp'
