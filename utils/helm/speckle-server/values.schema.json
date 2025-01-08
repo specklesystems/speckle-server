@@ -241,6 +241,11 @@
           "description": "The maximum time in milliseconds to wait for a new connection to be created in the connection pool. Should be less than the acquisition timeout, as a new connection may need to be created then acquired.",
           "default": 5000
         },
+        "globalKnexSelectTimeout": {
+          "type": "number",
+          "description": "The maximum time in milliseconds to wait for a .select() query to be executed. 0 means disabled",
+          "default": 0
+        },
         "databaseName": {
           "type": "string",
           "description": "(Optional) The name of the Postgres database to which Speckle will connect. Only required for the Database Monitoring utility when the connection string is to a database connection pool and multi-region is disabled, otherwise this value is ignored.",

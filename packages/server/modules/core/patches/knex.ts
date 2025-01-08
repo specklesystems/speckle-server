@@ -14,7 +14,10 @@ export const patchKnex = () => {
   // Add .timeout() to all .select() calls
   if (DEFAULT_QUERY_TIMEOUT_MS) {
     const originalSelect = knexPgQueryBuilder.prototype.select
-    knexPgQueryBuilder.prototype.select = function (...args: any) {
+    const newSelect: typeof originalSelect = function (
+      this: typeof knexPgQueryBuilder.prototype,
+      ...args: any
+    ) {
       let ret = originalSelect.apply(this, args)
       if (!this._timeout) {
         ret = ret.timeout(DEFAULT_QUERY_TIMEOUT_MS, { cancel: true })
@@ -22,5 +25,9 @@ export const patchKnex = () => {
 
       return ret
     }
+
+    // .columns and .select are the same function, they're just aliases
+    knexPgQueryBuilder.prototype.select = newSelect
+    knexPgQueryBuilder.prototype.columns = newSelect
   }
 }
