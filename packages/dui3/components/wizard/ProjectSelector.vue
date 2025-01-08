@@ -90,14 +90,23 @@
             show-label
             :items="workspaces"
             :disabled-item-predicate="userCantCreateWorkspace"
-            :disabled-item-tooltip="'You do not have write access on this workspace.'"
             mount-menu-on-body
           >
             <template #something-selected="{ value }">
               <span>{{ value.name }}</span>
             </template>
             <template #option="{ item }">
-              <div class="flex items-center">
+              <div
+                v-tippy="{
+                  content: item.readOnly
+                    ? 'This workspace is read-only.'
+                    : item.role === 'workspace:guest'
+                    ? 'You do not have write access on this workspace.'
+                    : undefined,
+                  disabled: !(item.readOnly || item.role === 'workspace:guest')
+                }"
+                class="flex items-center"
+              >
                 <span class="truncate">{{ item.name }}</span>
               </div>
             </template>
@@ -251,7 +260,7 @@ const createNewProjectInWorkspace = async (name: string) => {
 }
 
 const userCantCreateWorkspace = (item: WorkspaceListWorkspaceItemFragment) =>
-  (!!item?.role && item.role === 'workspace:guest') || item.readOnly
+  (!!item?.role && item.role === 'workspace:guest') || !!item.readOnly
 
 const {
   result: projectsResult,
