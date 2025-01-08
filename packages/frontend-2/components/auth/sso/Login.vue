@@ -23,7 +23,6 @@
 
       <AuthSsoWorkspaceSelect
         v-if="shouldShowWorkspaceSelector"
-        v-model="values.workspace"
         :items="availableWorkspaces"
         :disabled="loading"
       />
