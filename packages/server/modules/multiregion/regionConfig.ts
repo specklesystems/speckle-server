@@ -20,6 +20,7 @@ const getMultiRegionConfig = async (): Promise<MultiRegionConfig> => {
   // Only for non region enabled dev envs
   const emptyReturn = (): MultiRegionConfig => ({
     main: {
+      isDefaultProjectStore: true,
       postgres: { connectionUri: '' },
       blobStorage: {
         accessKey: '',

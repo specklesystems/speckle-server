@@ -62,6 +62,7 @@ import {
 } from '@/modules/core/services/streams/access'
 import { cloneStreamFactory } from '@/modules/core/services/streams/clone'
 import {
+  createStreamInDefaultRegionFactory,
   createStreamReturnRecordFactory,
   deleteStreamAndNotifyFactory,
   updateStreamAndNotifyFactory,
@@ -117,7 +118,10 @@ const createStreamReturnRecord = createStreamReturnRecordFactory({
     }),
     getUsers
   }),
-  createStream: createStreamFactory({ db }),
+  createStream: await createStreamInDefaultRegionFactory({
+    //FIXME this is a promise
+    createStreamFactory
+  }),
   createBranch: createBranchFactory({ db }),
   projectsEventsEmitter: ProjectsEmitter.emit
 })
@@ -158,7 +162,10 @@ const cloneStream = cloneStreamFactory({
   getUser,
   newProjectDb: db,
   sourceProjectDb: db,
-  createStream: createStreamFactory({ db }),
+  createStream: await createStreamInDefaultRegionFactory({
+    //FIXME this is a promise
+    createStreamFactory
+  }),
   insertCommits: insertCommitsFactory({ db }),
   getBatchedStreamCommits: getBatchedStreamCommitsFactory({ db }),
   insertStreamCommits: insertStreamCommitsFactory({ db }),
@@ -277,7 +284,6 @@ export = {
       })
       return await updateStreamAndNotify(update, userId!, resourceAccessRules)
     },
-    // This one is only used outside of a workspace, so the project is always created in the main db
     async create(_parent, args, context) {
       const rateLimitResult = await getRateLimitResult('STREAM_CREATE', context.userId!)
       if (isRateLimitBreached(rateLimitResult)) {

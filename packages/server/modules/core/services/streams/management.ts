@@ -50,6 +50,22 @@ import {
   AddStreamUpdatedActivity
 } from '@/modules/activitystream/domain/operations'
 import { LogicError } from '@/modules/shared/errors'
+import { Knex } from 'knex'
+import { getDb } from '@/modules/multiregion/utils/dbSelector'
+import { isMultiRegionEnabled } from '@/modules/multiregion/helpers'
+import { getDefaultProjectRegionKey } from '@/modules/multiregion/utils/regionSelector'
+
+export const createStreamInDefaultRegionFactory = async (deps: {
+  createStreamFactory: (deps: { db: Knex }) => StoreStream
+}): Promise<StoreStream> => {
+  let regionKey = null
+  if (isMultiRegionEnabled()) {
+    //FIXME is adding this check here the correct location?
+    regionKey = await getDefaultProjectRegionKey()
+  }
+  const db = await getDb({ regionKey }) //FIXME does this work if multi-region disabled?
+  return deps.createStreamFactory({ db })
+}
 
 export const createStreamReturnRecordFactory =
   (deps: {

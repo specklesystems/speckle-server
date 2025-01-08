@@ -4,6 +4,13 @@ import { Knex, knex } from 'knex'
 import { Logger } from 'pino'
 
 const regionConfigSchema = z.object({
+  isDefaultProjectStore: z
+    .boolean()
+    .describe(
+      'Indicates that this is the default region in which projects should be created.'
+    )
+    .optional()
+    .default(false),
   postgres: z.object({
     connectionUri: z
       .string()
@@ -39,10 +46,19 @@ const regionConfigSchema = z.object({
   })
 })
 
-const multiRegionConfigSchema = z.object({
-  main: regionConfigSchema,
-  regions: z.record(z.string(), regionConfigSchema)
-})
+const multiRegionConfigSchema = z
+  .object({
+    main: regionConfigSchema,
+    regions: z.record(z.string(), regionConfigSchema)
+  })
+  .refine(
+    (input) =>
+      Object.values(input.regions).filter((region) => region.isDefaultProjectStore)
+        .length +
+        (input.main.isDefaultProjectStore ? 1 : 0) ===
+      1,
+    'Only one region can be the default project store'
+  )
 
 export type MultiRegionConfig = z.infer<typeof multiRegionConfigSchema>
 export type MainRegionConfig = MultiRegionConfig['main']

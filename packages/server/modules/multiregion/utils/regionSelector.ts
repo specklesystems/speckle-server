@@ -72,3 +72,21 @@ export const getProjectRegionKey: GetProjectRegionKey = async ({ projectId }) =>
 
   return await cachedProjectRegionKeyResolver({ projectId })
 }
+
+export const getDefaultProjectRegionKey = async () => {
+  const registeredRegionConfigs = await getRegisteredRegionConfigs()
+  if (!registeredRegionConfigs) {
+    return null
+  }
+  const defaultProjectStoreRegion = Object.entries(registeredRegionConfigs)
+    .filter(
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      ([_, config]) => config.isDefaultProjectStore
+    )
+    .pop()
+  if (!defaultProjectStoreRegion) {
+    return null
+  }
+
+  return defaultProjectStoreRegion[0]
+}
