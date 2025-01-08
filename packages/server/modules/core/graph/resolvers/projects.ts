@@ -69,7 +69,7 @@ import {
 } from '@/modules/core/services/streams/management'
 import { createOnboardingStreamFactory } from '@/modules/core/services/streams/onboarding'
 import { getOnboardingBaseProjectFactory } from '@/modules/cross-server-sync/services/onboardingProject'
-import { getProjectDbClient } from '@/modules/multiregion/dbSelector'
+import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import {
   deleteAllResourceInvitesFactory,
   findUserByTargetFactory,
@@ -156,7 +156,8 @@ const updateStream = updateStreamFactory({ db })
 const cloneStream = cloneStreamFactory({
   getStream: getStreamFactory({ db }),
   getUser,
-  db,
+  newProjectDb: db,
+  sourceProjectDb: db,
   createStream: createStreamFactory({ db }),
   insertCommits: insertCommitsFactory({ db }),
   getBatchedStreamCommits: getBatchedStreamCommitsFactory({ db }),
@@ -175,6 +176,7 @@ const cloneStream = cloneStreamFactory({
   })
 })
 
+// We want to read & write from main DB - this isn't occuring in a multi region workspace ctx
 const createOnboardingStream = createOnboardingStreamFactory({
   getOnboardingBaseProject: getOnboardingBaseProjectFactory({
     getOnboardingBaseStream: getOnboardingBaseStreamFactory({ db })
@@ -221,9 +223,10 @@ export = {
     async batchDelete(_parent, args, ctx) {
       const results = await Promise.all(
         args.ids.map(async (id) => {
+          const projectDb = await getProjectDbClient({ projectId: id })
           const deleteStreamAndNotify = deleteStreamAndNotifyFactory({
             deleteStream: deleteStreamFactory({
-              db: await getProjectDbClient({ projectId: id })
+              db: projectDb
             }),
             authorizeResolver,
             addStreamDeletedActivity: addStreamDeletedActivityFactory({
@@ -231,7 +234,8 @@ export = {
               publish,
               getStreamCollaborators: getStreamCollaboratorsFactory({ db })
             }),
-            deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db })
+            deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db }),
+            getStream: getStreamFactory({ db: projectDb })
           })
           return deleteStreamAndNotify(id, ctx.userId!, ctx.resourceAccessRules, {
             skipAccessChecks: true
@@ -241,9 +245,10 @@ export = {
       return results.every((res) => res === true)
     },
     async delete(_parent, { id }, { userId, resourceAccessRules }) {
+      const projectDb = await getProjectDbClient({ projectId: id })
       const deleteStreamAndNotify = deleteStreamAndNotifyFactory({
         deleteStream: deleteStreamFactory({
-          db: await getProjectDbClient({ projectId: id })
+          db: projectDb
         }),
         authorizeResolver,
         addStreamDeletedActivity: addStreamDeletedActivityFactory({
@@ -251,7 +256,8 @@ export = {
           publish,
           getStreamCollaborators: getStreamCollaboratorsFactory({ db })
         }),
-        deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db })
+        deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db }),
+        getStream: getStreamFactory({ db: projectDb })
       })
       return await deleteStreamAndNotify(id, userId!, resourceAccessRules)
     },
@@ -271,6 +277,7 @@ export = {
       })
       return await updateStreamAndNotify(update, userId!, resourceAccessRules)
     },
+    // This one is only used outside of a workspace, so the project is always created in the main db
     async create(_parent, args, context) {
       const rateLimitResult = await getRateLimitResult('STREAM_CREATE', context.userId!)
       if (isRateLimitBreached(rateLimitResult)) {
@@ -317,25 +324,40 @@ export = {
         }
       }
 
-      const totalCount = await getUserStreamsCount({
-        userId: ctx.userId!,
-        forOtherUser: false,
-        searchQuery: args.filter?.search || undefined,
-        withRoles: (args.filter?.onlyWithRoles || []) as StreamRoles[],
-        streamIdWhitelist: toProjectIdWhitelist(ctx.resourceAccessRules)
-      })
+      const [totalCount, visibleCount, { cursor, streams }] = await Promise.all([
+        getUserStreamsCount({
+          userId: ctx.userId!,
+          forOtherUser: false,
+          searchQuery: args.filter?.search || undefined,
+          withRoles: (args.filter?.onlyWithRoles || []) as StreamRoles[],
+          streamIdWhitelist: toProjectIdWhitelist(ctx.resourceAccessRules)
+        }),
+        getUserStreamsCount({
+          userId: ctx.userId!,
+          forOtherUser: false,
+          searchQuery: args.filter?.search || undefined,
+          withRoles: (args.filter?.onlyWithRoles || []) as StreamRoles[],
+          streamIdWhitelist: toProjectIdWhitelist(ctx.resourceAccessRules),
+          onlyWithActiveSsoSession: true
+        }),
+        getUserStreams({
+          userId: ctx.userId!,
+          limit: args.limit,
+          cursor: args.cursor || undefined,
+          searchQuery: args.filter?.search || undefined,
+          forOtherUser: false,
+          withRoles: (args.filter?.onlyWithRoles || []) as StreamRoles[],
+          streamIdWhitelist: toProjectIdWhitelist(ctx.resourceAccessRules),
+          onlyWithActiveSsoSession: true
+        })
+      ])
 
-      const { cursor, streams } = await getUserStreams({
-        userId: ctx.userId!,
-        limit: args.limit,
-        cursor: args.cursor || undefined,
-        searchQuery: args.filter?.search || undefined,
-        forOtherUser: false,
-        withRoles: (args.filter?.onlyWithRoles || []) as StreamRoles[],
-        streamIdWhitelist: toProjectIdWhitelist(ctx.resourceAccessRules)
-      })
-
-      return { totalCount, cursor, items: streams }
+      return {
+        totalCount,
+        numberOfHidden: totalCount - visibleCount,
+        cursor,
+        items: streams
+      }
     }
   },
   Project: {

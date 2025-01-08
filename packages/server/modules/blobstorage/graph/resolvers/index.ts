@@ -1,4 +1,3 @@
-import { db } from '@/db/knex'
 import {
   blobCollectionSummaryFactory,
   getBlobMetadataCollectionFactory,
@@ -13,19 +12,24 @@ import {
   StreamBlobsArgs
 } from '@/modules/core/graph/generated/graphql'
 import { StreamGraphQLReturn } from '@/modules/core/helpers/graphTypes'
+import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import {
   BadRequestError,
   NotFoundError,
   ResourceMismatch
 } from '@/modules/shared/errors'
 
-const getBlobMetadata = getBlobMetadataFactory({ db })
-const getBlobMetadataCollection = getBlobMetadataCollectionFactory({ db })
-const blobCollectionSummary = blobCollectionSummaryFactory({ db })
-
 const streamBlobResolvers = {
   async blobs(parent: StreamGraphQLReturn, args: StreamBlobsArgs | ProjectBlobsArgs) {
     const streamId = parent.id
+
+    const projectDb = await getProjectDbClient({ projectId: parent.id })
+
+    const blobCollectionSummary = blobCollectionSummaryFactory({ db: projectDb })
+    const getBlobMetadataCollection = getBlobMetadataCollectionFactory({
+      db: projectDb
+    })
+
     const [summary, blobs] = await Promise.all([
       blobCollectionSummary({
         streamId,
@@ -46,6 +50,8 @@ const streamBlobResolvers = {
     }
   },
   async blob(parent: StreamGraphQLReturn, args: StreamBlobArgs | ProjectBlobArgs) {
+    const projectDb = await getProjectDbClient({ projectId: parent.id })
+    const getBlobMetadata = getBlobMetadataFactory({ db: projectDb })
     try {
       return await getBlobMetadata({
         streamId: parent.id,

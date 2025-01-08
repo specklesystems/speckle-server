@@ -4,18 +4,11 @@ import { beforeEachContext, initializeTestServer } from '@/test/hooks'
 import { createManyObjects } from '@/test/helpers'
 
 import {
-  getStreamHistoryFactory,
-  getCommitHistoryFactory,
-  getObjectHistoryFactory,
-  getUserHistoryFactory,
   getTotalStreamCountFactory,
-  getTotalCommitCountFactory,
-  getTotalObjectCountFactory,
   getTotalUserCountFactory
 } from '@/modules/stats/repositories/index'
 import { Scopes } from '@speckle/shared'
 import { Server } from 'node:http'
-import { Express } from 'express'
 import { db } from '@/db/knex'
 import {
   createCommitByBranchIdFactory,
@@ -203,58 +196,11 @@ describe('Server stats services @stats-services', function () {
     const res = await getTotalStreamCountFactory({ db })()
     expect(res).to.equal(params.numStreams)
   })
-
-  it('should return the total number of commits on this server', async () => {
-    const res = await getTotalCommitCountFactory({ db })()
-    expect(res).to.equal(params.numCommits)
-  })
-
-  it('should return the total number of objects on this server', async () => {
-    const res = await getTotalObjectCountFactory({ db })()
-    expect(res).to.equal(params.numObjects)
-  })
-
-  it('should return the stream creation history by month', async () => {
-    const res = await getStreamHistoryFactory({ db })()
-    expect(res).to.be.an('array')
-    expect(res[0]).to.have.property('count')
-    expect(res[0]).to.have.property('created_month')
-    expect(res[0].count).to.be.a('number')
-    expect(res[0].count).to.equal(params.numStreams)
-  })
-
-  it('should return the commit creation history by month', async () => {
-    const res = await getCommitHistoryFactory({ db })()
-    expect(res).to.be.an('array')
-    expect(res[0]).to.have.property('count')
-    expect(res[0]).to.have.property('created_month')
-    expect(res[0].count).to.be.a('number')
-    expect(res[0].count).to.equal(params.numCommits)
-  })
-
-  it('should return the object creation history by month', async () => {
-    const res = await getObjectHistoryFactory({ db })()
-    expect(res).to.be.an('array')
-    expect(res[0]).to.have.property('count')
-    expect(res[0]).to.have.property('created_month')
-    expect(res[0].count).to.be.a('number')
-    expect(res[0].count).to.equal(params.numObjects)
-  })
-
-  it('should return the user creation history by month', async () => {
-    const res = await getUserHistoryFactory({ db })()
-    expect(res).to.be.an('array')
-    expect(res[0]).to.have.property('count')
-    expect(res[0]).to.have.property('created_month')
-    expect(res[0].count).to.be.a('number')
-    expect(res[0].count).to.equal(params.numUsers)
-  })
 })
 
 describe('Server stats api @stats-api', function () {
   let server: Server,
-    sendRequest: Awaited<ReturnType<typeof initializeTestServer>>['sendRequest'],
-    app: Express
+    sendRequest: Awaited<ReturnType<typeof initializeTestServer>>['sendRequest']
 
   const adminUser = {
     name: 'Dimitrie',
@@ -291,8 +237,9 @@ describe('Server stats api @stats-api', function () {
 
   before(async function () {
     this.timeout(15000)
-    ;({ app, server } = await beforeEachContext())
-    ;({ sendRequest } = await initializeTestServer(server, app))
+    const ctx = await beforeEachContext()
+    server = ctx.server
+    ;({ sendRequest } = await initializeTestServer(ctx))
 
     adminUser.id = await createUser(adminUser)
     adminUser.goodToken = `Bearer ${await createPersonalAccessToken(
@@ -358,10 +305,10 @@ describe('Server stats api @stats-api', function () {
     expect(res.body.data.serverStats).to.have.property('commitHistory')
     expect(res.body.data.serverStats).to.have.property('userHistory')
 
-    expect(res.body.data.serverStats.totalStreamCount).to.equal(params.numStreams)
-    expect(res.body.data.serverStats.totalCommitCount).to.equal(params.numCommits)
-    expect(res.body.data.serverStats.totalObjectCount).to.equal(params.numObjects)
-    expect(res.body.data.serverStats.totalUserCount).to.equal(params.numUsers + 2) // we're registering two extra users in the before hook
+    expect(res.body.data.serverStats.totalStreamCount).to.equal(0) // the endpoint is deprecated and we're now returning 0
+    expect(res.body.data.serverStats.totalCommitCount).to.equal(0) // the endpoint is deprecated and we're now returning 0
+    expect(res.body.data.serverStats.totalObjectCount).to.equal(0) // the endpoint is deprecated and we're now returning 0
+    expect(res.body.data.serverStats.totalUserCount).to.equal(0) // the endpoint is deprecated and we're now returning 0
 
     expect(res.body.data.serverStats.streamHistory).to.be.an('array')
     expect(res.body.data.serverStats.commitHistory).to.be.an('array')

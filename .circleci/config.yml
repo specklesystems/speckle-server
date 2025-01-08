@@ -16,7 +16,7 @@ workflows:
                 - main
                 - hotfix*
 
-      - test-server:
+      - test-server: &test-server-job-definition
           context:
             - speckle-server-licensing
             - stripe-integration
@@ -31,6 +31,8 @@ workflows:
           filters: *filters-allow-all
           requires:
             - docker-publish-postgres-container
+
+      - test-server-multiregion: *test-server-job-definition
 
       - test-frontend-2:
           filters: *filters-allow-all
@@ -190,6 +192,7 @@ workflows:
             - test-objectsender
             - test-server
             - test-server-no-ff
+            - test-server-multiregion
             - test-preview-service
 
       - docker-publish-frontend:
@@ -205,6 +208,7 @@ workflows:
             - test-objectsender
             - test-server
             - test-server-no-ff
+            - test-server-multiregion
             - test-preview-service
 
       - docker-publish-frontend-2:
@@ -220,6 +224,7 @@ workflows:
             - test-objectsender
             - test-server
             - test-server-no-ff
+            - test-server-multiregion
             - test-preview-service
 
       - docker-publish-webhooks:
@@ -235,6 +240,7 @@ workflows:
             - test-objectsender
             - test-server
             - test-server-no-ff
+            - test-server-multiregion
             - test-preview-service
 
       - docker-publish-file-imports:
@@ -250,6 +256,7 @@ workflows:
             - test-objectsender
             - test-server
             - test-server-no-ff
+            - test-server-multiregion
             - test-preview-service
 
       - docker-publish-previews:
@@ -265,6 +272,7 @@ workflows:
             - test-objectsender
             - test-server
             - test-server-no-ff
+            - test-server-multiregion
             - test-preview-service
 
       - docker-publish-test-container:
@@ -280,6 +288,7 @@ workflows:
             - test-objectsender
             - test-server
             - test-server-no-ff
+            - test-server-multiregion
             - test-preview-service
 
       - docker-publish-postgres-container:
@@ -301,6 +310,7 @@ workflows:
             - test-objectsender
             - test-server
             - test-server-no-ff
+            - test-server-multiregion
             - test-preview-service
 
       - docker-publish-docker-compose-ingress:
@@ -316,6 +326,7 @@ workflows:
             - test-objectsender
             - test-server
             - test-server-no-ff
+            - test-server-multiregion
             - test-preview-service
 
       - publish-helm-chart:
@@ -356,6 +367,7 @@ workflows:
             - get-version
             - test-server
             - test-server-no-ff
+            - test-server-multiregion
             - test-ui-components
             - test-frontend-2
             - test-viewer
@@ -482,8 +494,9 @@ jobs:
       S3_CREATE_BUCKET: 'true'
       REDIS_URL: 'redis://127.0.0.1:6379'
       S3_REGION: '' # optional, defaults to 'us-east-1'
-      AUTOMATE_ENCRYPTION_KEYS_PATH: 'test/assets/automate/encryptionKeys.json'
+      ENCRYPTION_KEYS_PATH: 'test/assets/automate/encryptionKeys.json'
       FF_BILLING_INTEGRATION_ENABLED: 'true'
+      RATELIMITER_ENABLED: 'false'
     steps:
       - checkout
       - restore_cache:
@@ -531,8 +544,8 @@ jobs:
           working_directory: 'packages/server'
 
       - run:
-          name: Checking for GQL schema breakages against speckle.xyz
-          command: 'yarn rover graph check Speckle-Server@speckle-xyz --schema ./introspected-schema.graphql'
+          name: Checking for GQL schema breakages against app.speckle.systems
+          command: 'yarn rover graph check Speckle-Server@app-speckle-systems --schema ./introspected-schema.graphql'
           working_directory: 'packages/server'
 
       - run:
@@ -564,14 +577,56 @@ jobs:
       S3_CREATE_BUCKET: 'true'
       REDIS_URL: 'redis://127.0.0.1:6379'
       S3_REGION: '' # optional, defaults to 'us-east-1'
-      AUTOMATE_ENCRYPTION_KEYS_PATH: 'test/assets/automate/encryptionKeys.json'
-      FF_AUTOMATE_MODULE_ENABLED: 'false' # Disable all FFs
-      FF_WORKSPACES_MODULE_ENABLED: 'false'
-      FF_WORKSPACES_SSO_ENABLED: 'false'
-      FF_MULTIPLE_EMAILS_MODULE_ENABLED: 'false'
-      FF_GENDOAI_MODULE_ENABLED: 'false'
-      FF_GATEKEEPER_MODULE_ENABLED: 'false'
-      FF_BILLING_INTEGRATION_ENABLED: 'false'
+      ENCRYPTION_KEYS_PATH: 'test/assets/automate/encryptionKeys.json'
+      DISABLE_ALL_FFS: 'true'
+      RATELIMITER_ENABLED: 'false'
+
+  test-server-multiregion:
+    <<: *test-server-job
+    docker:
+      - image: cimg/node:18.19.0
+      - image: cimg/redis:7.2.4
+      - image: 'speckle/speckle-postgres'
+        environment:
+          POSTGRES_DB: speckle2_test
+          POSTGRES_PASSWORD: speckle
+          POSTGRES_USER: speckle
+        command: -c 'max_connections=1000' -c 'wal_level=logical'
+      - image: 'speckle/speckle-postgres'
+        environment:
+          POSTGRES_DB: speckle2_test
+          POSTGRES_PASSWORD: speckle
+          POSTGRES_USER: speckle
+        command: -c 'max_connections=1000' -c 'port=5433' -c 'wal_level=logical'
+      - image: 'minio/minio'
+        command: server /data --console-address ":9001" --address "0.0.0.0:9000"
+      - image: 'minio/minio'
+        command: server /data --console-address ":9021" --address "0.0.0.0:9020"
+    environment:
+      # Same as test-server:
+      NODE_ENV: test
+      DATABASE_URL: 'postgres://speckle:speckle@127.0.0.1:5432/speckle2_test'
+      PGDATABASE: speckle2_test
+      POSTGRES_MAX_CONNECTIONS_SERVER: 20
+      PGUSER: speckle
+      SESSION_SECRET: 'keyboard cat'
+      STRATEGY_LOCAL: 'true'
+      CANONICAL_URL: 'http://127.0.0.1:3000'
+      S3_ENDPOINT: 'http://127.0.0.1:9000'
+      S3_ACCESS_KEY: 'minioadmin'
+      S3_SECRET_KEY: 'minioadmin'
+      S3_BUCKET: 'speckle-server'
+      S3_CREATE_BUCKET: 'true'
+      REDIS_URL: 'redis://127.0.0.1:6379'
+      S3_REGION: '' # optional, defaults to 'us-east-1'
+      ENCRYPTION_KEYS_PATH: 'test/assets/automate/encryptionKeys.json'
+      FF_BILLING_INTEGRATION_ENABLED: 'true'
+      # These are the only different env keys:
+      MULTI_REGION_CONFIG_PATH: '../../.circleci/multiregion.test-ci.json'
+      FF_WORKSPACES_MODULE_ENABLED: 'true'
+      FF_WORKSPACES_MULTI_REGION_ENABLED: 'true'
+      RUN_TESTS_IN_MULTIREGION_MODE: true
+      RATELIMITER_ENABLED: 'false'
 
   test-frontend-2:
     docker: &docker-node-browsers-image
@@ -996,7 +1051,6 @@ jobs:
   docker-build-monitor-container:
     <<: *build-job
     environment:
-      FOLDER: utils
       SPECKLE_SERVER_PACKAGE: monitor-deployment
 
   docker-build-docker-compose-ingress:
@@ -1066,7 +1120,6 @@ jobs:
   docker-publish-monitor-container:
     <<: *publish-job
     environment:
-      FOLDER: utils
       SPECKLE_SERVER_PACKAGE: monitor-deployment
 
   docker-publish-docker-compose-ingress:

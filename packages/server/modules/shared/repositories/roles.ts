@@ -20,6 +20,7 @@ export const getRolesFactory =
       if (e instanceof Error)
         throw new DatabaseError(
           'Database error occurred while attempting to get Roles',
+          db,
           { cause: e }
         )
       throw e

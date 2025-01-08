@@ -9,15 +9,13 @@
             color: 'outline',
             to: 'https://speckle.guide/dev/apps.html',
             target: '_blank',
-            external: true,
-            iconLeft: BookOpenIcon
+            external: true
           },
           label: 'Open docs'
         },
         {
           props: {
-            onClick: openCreateApplicationDialog,
-            iconLeft: PlusIcon
+            onClick: openCreateApplicationDialog
           },
           label: 'New application'
         }
@@ -91,12 +89,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useQuery } from '@vue/apollo-composable'
-import {
-  PlusIcon,
-  BookOpenIcon,
-  EllipsisHorizontalIcon,
-  XMarkIcon
-} from '@heroicons/vue/24/outline'
+import { EllipsisHorizontalIcon, XMarkIcon } from '@heroicons/vue/24/outline'
 import { developerSettingsApplicationsQuery } from '~~/lib/developer-settings/graphql/queries'
 import type { ApplicationItem } from '~~/lib/developer-settings/helpers/types'
 import { HorizontalDirection } from '~~/lib/common/composables/window'

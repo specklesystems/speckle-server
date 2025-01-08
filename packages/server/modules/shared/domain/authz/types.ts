@@ -27,7 +27,6 @@ export interface AuthResult {
 
 export interface AuthParams {
   streamId?: string
-  automationId?: string
 }
 
 export interface AuthData {

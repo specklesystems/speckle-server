@@ -22,7 +22,7 @@
   },
   "dependencies": {
     "@speckle/shared": "workspace:^",
-    "knex": "^2.4.1",
+    "knex": "^2.5.1",
     "node-fetch": "^2.6.1",
     "pg": "^8.7.3",
     "pino": "^8.7.0",
@@ -30,7 +30,9 @@
     "pino-pretty": "^9.1.1",
     "private-ip": "^2.3.3",
     "prom-client": "^14.0.1",
-    "verror": "^1.10.1"
+    "verror": "^1.10.1",
+    "znv": "^0.4.0",
+    "zod": "^3.22.4"
   },
   "devDependencies": {
     "cross-env": "^7.0.3",

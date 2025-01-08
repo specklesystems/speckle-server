@@ -177,10 +177,6 @@ export type GetRevisionsFunctions = (params: {
   automationRevisionIds: string[]
 }) => Promise<{ [automationRevisionId: string]: AutomateRevisionFunctionRecord[] }>
 
-export type GetFunctionAutomationCounts = (params: {
-  functionIds: string[]
-}) => Promise<{ [functionId: string]: number }>
-
 export type CreateStoredAuthCode = (
   params: Omit<AuthCodePayload, 'code'>
 ) => Promise<AuthCodePayload>

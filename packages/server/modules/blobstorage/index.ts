@@ -6,13 +6,6 @@ import {
   streamWritePermissionsPipelineFactory,
   streamReadPermissionsPipelineFactory
 } from '@/modules/shared/authz'
-import {
-  ensureStorageAccess,
-  storeFileStream,
-  getObjectStream,
-  deleteObject,
-  getObjectAttributes
-} from '@/modules/blobstorage/objectStorage'
 import crs from 'crypto-random-string'
 import { authMiddlewareCreator } from '@/modules/shared/middleware'
 import { isArray } from 'lodash'
@@ -42,33 +35,24 @@ import {
   fullyDeleteBlobFactory
 } from '@/modules/blobstorage/services/management'
 import { getRolesFactory } from '@/modules/shared/repositories/roles'
-import { getAutomationProjectFactory } from '@/modules/automate/repositories/automations'
-import { adminOverrideEnabled } from '@/modules/shared/helpers/envHelper'
+import {
+  adminOverrideEnabled,
+  createS3Bucket
+} from '@/modules/shared/helpers/envHelper'
 import { getStreamFactory } from '@/modules/core/repositories/streams'
 import { Request, Response } from 'express'
 import { ensureError } from '@speckle/shared'
 import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
-
-const getStream = getStreamFactory({ db })
-const getAllStreamBlobIds = getAllStreamBlobIdsFactory({ db })
-const updateBlob = updateBlobFactory({ db })
-const uploadFileStream = uploadFileStreamFactory({
-  upsertBlob: upsertBlobFactory({ db }),
-  updateBlob
-})
-const getBlobMetadata = getBlobMetadataFactory({ db })
-const getBlobMetadataCollection = getBlobMetadataCollectionFactory({ db })
-const getFileStream = getFileStreamFactory({ getBlobMetadata })
-const markUploadSuccess = markUploadSuccessFactory({ getBlobMetadata, updateBlob })
-const markUploadError = markUploadErrorFactory({ getBlobMetadata, updateBlob })
-const markUploadOverFileSizeLimit = markUploadOverFileSizeLimitFactory({
-  getBlobMetadata,
-  updateBlob
-})
-const deleteBlob = fullyDeleteBlobFactory({
-  getBlobMetadata,
-  deleteBlob: deleteBlobFactory({ db })
-})
+import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
+import {
+  deleteObjectFactory,
+  ensureStorageAccessFactory,
+  getObjectAttributesFactory,
+  getObjectStreamFactory,
+  storeFileStreamFactory
+} from '@/modules/blobstorage/repositories/blobs'
+import { getMainObjectStorage } from '@/modules/blobstorage/clients/objectStorage'
+import { getProjectObjectStorage } from '@/modules/multiregion/utils/blobStorageSelector'
 
 const ensureConditions = async () => {
   if (process.env.DISABLE_FILE_UPLOADS) {
@@ -76,7 +60,11 @@ const ensureConditions = async () => {
     return
   } else {
     moduleLogger.info('📦 Init BlobStorage module')
-    await ensureStorageAccess()
+    const storage = getMainObjectStorage()
+    const ensureStorageAccess = ensureStorageAccessFactory({ storage })
+    await ensureStorageAccess({
+      createBucketIfNotExists: createS3Bucket()
+    })
   }
 
   if (!process.env.S3_BUCKET) {
@@ -108,25 +96,27 @@ const errorHandler: ErrorHandler = async (req, res, callback) => {
 
 export const init: SpeckleModule['init'] = async (app) => {
   await ensureConditions()
-  const streamWritePermissions = streamWritePermissionsPipelineFactory({
-    getRoles: getRolesFactory({ db }),
-    getStream,
-    getAutomationProject: getAutomationProjectFactory({ db })
-  })
-  const streamReadPermissions = streamReadPermissionsPipelineFactory({
-    adminOverrideEnabled,
-    getRoles: getRolesFactory({ db }),
-    getStream,
-    getAutomationProject: getAutomationProjectFactory({ db })
-  })
+  const createStreamWritePermissions = () =>
+    streamWritePermissionsPipelineFactory({
+      getRoles: getRolesFactory({ db }),
+      getStream: getStreamFactory({ db })
+    })
+  const createStreamReadPermissions = () =>
+    streamReadPermissionsPipelineFactory({
+      adminOverrideEnabled,
+      getRoles: getRolesFactory({ db }),
+      getStream: getStreamFactory({ db })
+    })
 
   app.post(
     '/api/stream/:streamId/blob',
-    authMiddlewareCreator([
-      ...streamWritePermissions,
-      // todo should we add public comments upload escape hatch?
-      allowForAllRegisteredUsersOnPublicStreamsWithPublicComments
-    ]),
+    async (req, res, next) => {
+      await authMiddlewareCreator([
+        ...createStreamWritePermissions(),
+        // todo should we add public comments upload escape hatch?
+        allowForAllRegisteredUsersOnPublicStreamsWithPublicComments
+      ])(req, res, next)
+    },
     async (req, res) => {
       const streamId = req.params.streamId
       req.log = req.log.child({ streamId, userId: req.context.userId })
@@ -139,10 +129,49 @@ export const init: SpeckleModule['init'] = async (app) => {
         uploadError?: Error | null | string
         formKey: string
       }>[] = []
-      const busboy = Busboy({
-        headers: req.headers,
-        limits: { fileSize: getFileSizeLimit() }
+      let busboy: Busboy.Busboy
+      try {
+        // Busboy does some validation of user input (headers) on creation
+        busboy = Busboy({
+          headers: req.headers,
+          limits: { fileSize: getFileSizeLimit() }
+        })
+      } catch (err) {
+        throw new BadRequestError(
+          err instanceof Error ? err.message : 'Error while uploading blob',
+          ensureError(err, 'Unknown error while uploading blob')
+        )
+      }
+
+      const [projectDb, projectStorage] = await Promise.all([
+        getProjectDbClient({ projectId: streamId }),
+        getProjectObjectStorage({ projectId: streamId })
+      ])
+
+      const storeFileStream = storeFileStreamFactory({ storage: projectStorage })
+      const updateBlob = updateBlobFactory({ db: projectDb })
+      const getBlobMetadata = getBlobMetadataFactory({ db: projectDb })
+
+      const uploadFileStream = uploadFileStreamFactory({
+        storeFileStream,
+        upsertBlob: upsertBlobFactory({ db: projectDb }),
+        updateBlob
       })
+
+      const markUploadSuccess = markUploadSuccessFactory({
+        getBlobMetadata,
+        updateBlob
+      })
+      const markUploadError = markUploadErrorFactory({ getBlobMetadata, updateBlob })
+      const markUploadOverFileSizeLimit = markUploadOverFileSizeLimitFactory({
+        getBlobMetadata,
+        updateBlob
+      })
+
+      const getObjectAttributes = getObjectAttributesFactory({
+        storage: projectStorage
+      })
+      const deleteObject = deleteObjectFactory({ storage: projectStorage })
 
       busboy.on('file', (formKey, file, info) => {
         const { filename: fileName } = info
@@ -172,7 +201,6 @@ export const init: SpeckleModule['init'] = async (app) => {
         req.log = req.log.child({ blobId })
 
         uploadOperations[blobId] = uploadFileStream(
-          storeFileStream,
           { streamId, userId: req.context.userId },
           { blobId, fileName, fileType, fileStream: file }
         )
@@ -225,9 +253,12 @@ export const init: SpeckleModule['init'] = async (app) => {
           )
         )
 
-        const status = 400
-        const response = 'Upload request error. The server logs may have more details.'
-        res.status(status).end(response)
+        res.contentType('application/json')
+        res
+          .status(400)
+          .end(
+            '{ "error": "Upload request error. The server logs may have more details." }'
+          )
       })
 
       req.pipe(busboy)
@@ -236,12 +267,14 @@ export const init: SpeckleModule['init'] = async (app) => {
 
   app.post(
     '/api/stream/:streamId/blob/diff',
-    authMiddlewareCreator([
-      ...streamReadPermissions,
-      allowForAllRegisteredUsersOnPublicStreamsWithPublicComments,
-      allowForRegisteredUsersOnPublicStreamsEvenWithoutRole,
-      allowAnonymousUsersOnPublicStreams
-    ]),
+    async (req, res, next) => {
+      await authMiddlewareCreator([
+        ...createStreamReadPermissions(),
+        allowForAllRegisteredUsersOnPublicStreamsWithPublicComments,
+        allowForRegisteredUsersOnPublicStreamsEvenWithoutRole,
+        allowAnonymousUsersOnPublicStreams
+      ])(req, res, next)
+    },
     async (req, res) => {
       if (!isArray(req.body)) {
         return res
@@ -249,6 +282,9 @@ export const init: SpeckleModule['init'] = async (app) => {
           .json({ error: 'An array of blob IDs expected in the body.' })
       }
 
+      const projectDb = await getProjectDbClient({ projectId: req.params.streamId })
+
+      const getAllStreamBlobIds = getAllStreamBlobIdsFactory({ db: projectDb })
       const bq = await getAllStreamBlobIds({ streamId: req.params.streamId })
       const unknownBlobIds = [...req.body].filter(
         (id) => bq.findIndex((bInfo) => bInfo.id === id) === -1
@@ -259,14 +295,26 @@ export const init: SpeckleModule['init'] = async (app) => {
 
   app.get(
     '/api/stream/:streamId/blob/:blobId',
-    authMiddlewareCreator([
-      ...streamReadPermissions,
-      allowForAllRegisteredUsersOnPublicStreamsWithPublicComments,
-      allowForRegisteredUsersOnPublicStreamsEvenWithoutRole,
-      allowAnonymousUsersOnPublicStreams
-    ]),
+    async (req, res, next) => {
+      await authMiddlewareCreator([
+        ...createStreamReadPermissions(),
+        allowForAllRegisteredUsersOnPublicStreamsWithPublicComments,
+        allowForRegisteredUsersOnPublicStreamsEvenWithoutRole,
+        allowAnonymousUsersOnPublicStreams
+      ])(req, res, next)
+    },
     async (req, res) => {
       errorHandler(req, res, async (req, res) => {
+        const streamId = req.params.streamId
+        const [projectDb, projectStorage] = await Promise.all([
+          getProjectDbClient({ projectId: streamId }),
+          getProjectObjectStorage({ projectId: streamId })
+        ])
+
+        const getBlobMetadata = getBlobMetadataFactory({ db: projectDb })
+        const getFileStream = getFileStreamFactory({ getBlobMetadata })
+        const getObjectStream = getObjectStreamFactory({ storage: projectStorage })
+
         const { fileName } = await getBlobMetadata({
           streamId: req.params.streamId,
           blobId: req.params.blobId
@@ -287,9 +335,24 @@ export const init: SpeckleModule['init'] = async (app) => {
 
   app.delete(
     '/api/stream/:streamId/blob/:blobId',
-    authMiddlewareCreator(streamWritePermissions),
+    async (req, res, next) => {
+      await authMiddlewareCreator(createStreamReadPermissions())(req, res, next)
+    },
     async (req, res) => {
       errorHandler(req, res, async (req, res) => {
+        const streamId = req.params.streamId
+        const [projectDb, projectStorage] = await Promise.all([
+          getProjectDbClient({ projectId: streamId }),
+          getProjectObjectStorage({ projectId: streamId })
+        ])
+
+        const getBlobMetadata = getBlobMetadataFactory({ db: projectDb })
+        const deleteBlob = fullyDeleteBlobFactory({
+          getBlobMetadata,
+          deleteBlob: deleteBlobFactory({ db: projectDb })
+        })
+        const deleteObject = deleteObjectFactory({ storage: projectStorage })
+
         await deleteBlob({
           streamId: req.params.streamId,
           blobId: req.params.blobId,
@@ -302,13 +365,19 @@ export const init: SpeckleModule['init'] = async (app) => {
 
   app.get(
     '/api/stream/:streamId/blobs',
-    authMiddlewareCreator(streamWritePermissions),
+    async (req, res, next) => {
+      await authMiddlewareCreator(createStreamReadPermissions())(req, res, next)
+    },
     async (req, res) => {
       let fileName = req.query.fileName
       if (isArray(fileName)) {
         fileName = fileName[0]
       }
 
+      const projectDb = await getProjectDbClient({ projectId: req.params.streamId })
+      const getBlobMetadataCollection = getBlobMetadataCollectionFactory({
+        db: projectDb
+      })
       errorHandler(req, res, async (req, res) => {
         const blobMetadataCollection = await getBlobMetadataCollection({
           streamId: req.params.streamId,

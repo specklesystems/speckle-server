@@ -36,7 +36,11 @@ export type StreamGraphQLReturn = StreamRecord & {
   role?: string | null
 }
 
-export type CommitGraphQLReturn = CommitRecord | LegacyStreamCommit | LegacyUserCommit
+export type CommitGraphQLReturn = (
+  | CommitRecord
+  | LegacyStreamCommit
+  | LegacyUserCommit
+) & { streamId: string }
 
 export type BranchGraphQLReturn = BranchRecord
 

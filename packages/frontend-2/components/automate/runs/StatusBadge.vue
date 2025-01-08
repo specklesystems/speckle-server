@@ -1,5 +1,9 @@
 <template>
-  <CommonBadge :color-classes="[runStatusClasses(run), 'shrink-0 grow-0'].join(' ')">
+  <CommonBadge
+    :color-classes="
+      [runStatusClasses(run), 'shrink-0 grow-0 text-foreground'].join(' ')
+    "
+  >
     {{ run.status.toUpperCase() }}
   </CommonBadge>
 </template>

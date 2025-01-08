@@ -1,22 +1,30 @@
 const fs = require('fs')
 const { logger: parentLogger } = require('../observability/logging')
 
-const TMP_RESULTS_PATH = '/tmp/import_result.json'
-
 const { parseAndCreateCommitFactory } = require('./index')
 const Observability = require('@speckle/shared/dist/commonjs/observability/index.js')
-const knex = require('../knex')
+const getDbClients = require('../knex')
 
 async function main() {
   const cmdArgs = process.argv.slice(2)
 
-  const [filePath, userId, streamId, branchName, commitMessage, fileId] = cmdArgs
+  const [
+    filePath,
+    tmpResultsPath,
+    userId,
+    streamId,
+    branchName,
+    commitMessage,
+    fileId,
+    branchId,
+    regionName
+  ] = cmdArgs
   const logger = Observability.extendLoggerComponent(
-    parentLogger.child({ streamId, branchName, userId, fileId, filePath }),
+    parentLogger.child({ streamId, branchName, userId, fileId, branchId, filePath }),
     'ifc'
   )
 
-  logger.info('ARGV: ', filePath, userId, streamId, branchName, commitMessage)
+  logger.info({ commitMessage }, 'IFC parser started.')
 
   const data = fs.readFileSync(filePath)
 
@@ -26,6 +34,7 @@ async function main() {
     userId,
     message: commitMessage || ' Imported file',
     fileId,
+    branchId,
     logger
   }
   if (branchName) ifcInput.branchName = branchName
@@ -35,6 +44,8 @@ async function main() {
     error: 'Unknown error'
   }
 
+  const dbClients = await getDbClients()
+  const knex = dbClients[regionName].public
   try {
     const commitId = await parseAndCreateCommitFactory({ db: knex })(ifcInput)
     output = {
@@ -49,7 +60,7 @@ async function main() {
     }
   }
 
-  fs.writeFileSync(TMP_RESULTS_PATH, JSON.stringify(output))
+  fs.writeFileSync(tmpResultsPath, JSON.stringify(output))
 
   process.exit(0)
 }

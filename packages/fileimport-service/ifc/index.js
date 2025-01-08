@@ -1,7 +1,7 @@
 const { performance } = require('perf_hooks')
 const { fetch } = require('undici')
 const Parser = require('./parser')
-const ServerAPI = require('./api.js')
+const ServerAPI = require('../src/api.js')
 const Observability = require('@speckle/shared/dist/commonjs/observability/index.js')
 const { logger: parentLogger } = require('../observability/logging')
 
@@ -14,6 +14,7 @@ const parseAndCreateCommitFactory =
     userId,
     message = 'Manual IFC file upload',
     fileId,
+    branchId,
     logger
   }) => {
     if (!logger) {
@@ -45,12 +46,7 @@ const parseAndCreateCommitFactory =
       totalChildrenCount: tCount
     }
 
-    const branch = await serverApi.getBranchByNameAndStreamId({
-      streamId,
-      name: branchName
-    })
-
-    if (!branch) {
+    if (!branchId) {
       logger.info("Branch '{branchName}' not found, creating it.")
       await serverApi.createBranch({
         name: branchName,

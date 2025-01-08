@@ -34,6 +34,7 @@
 <script setup lang="ts">
 import { PaperAirplaneIcon, PaperClipIcon } from '@heroicons/vue/24/solid'
 import type { Nullable } from '@speckle/shared'
+import { useInjectedViewerState } from '~/lib/viewer/composables/setup'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useIsTypingUpdateEmitter } from '~~/lib/viewer/composables/commentBubbles'
 import type { CommentBubbleModel } from '~~/lib/viewer/composables/commentBubbles'
@@ -54,6 +55,7 @@ const emit = defineEmits<{
 
 const createReply = useSubmitReply()
 const { onKeyDownHandler, updateIsTyping } = useIsTypingUpdateEmitter()
+const { projectId } = useInjectedViewerState()
 
 const loading = ref(false)
 const editor = ref(null as Nullable<{ openFilePicker: () => void }>)
@@ -73,22 +75,26 @@ const onSubmit = async () => {
   if (!isValidCommentContentInput(content)) return
 
   loading.value = true
-  await createReply({
-    content,
-    threadId: threadId.value
-  })
-  updateIsTyping(false)
+  try {
+    await createReply({
+      content,
+      threadId: threadId.value,
+      projectId: projectId.value
+    })
+    updateIsTyping(false)
 
-  // Mark all attachments as in use to prevent cleanup
-  commentValue.value.attachments?.forEach((a) => {
-    a.inUse = true
-  })
+    // Mark all attachments as in use to prevent cleanup
+    commentValue.value.attachments?.forEach((a) => {
+      a.inUse = true
+    })
 
-  commentValue.value = {
-    doc: undefined,
-    attachments: undefined
+    commentValue.value = {
+      doc: undefined,
+      attachments: undefined
+    }
+    emit('submit')
+  } finally {
+    loading.value = false
   }
-  loading.value = false
-  emit('submit')
 }
 </script>

@@ -1,12 +1,13 @@
 import {
-  MultiRegionConfig,
   ProjectRegion,
+  DataRegionsConfig,
   RegionKey,
   ServerRegion
 } from '@/modules/multiregion/domain/types'
 import { UpdateServerRegionInput } from '@/modules/core/graph/generated/graphql'
 import { InsertableRegionRecord } from '@/modules/multiregion/helpers/types'
 import { Optional } from '@speckle/shared'
+import { ObjectStorage } from '@/modules/blobstorage/clients/objectStorage'
 
 export type GetRegions = () => Promise<ServerRegion[]>
 export type GetRegion = (params: { key: string }) => Promise<Optional<ServerRegion>>
@@ -18,11 +19,11 @@ export type UpdateRegion = (params: {
   region: Partial<ServerRegion>
 }) => Promise<ServerRegion>
 
-export type GetAvailableRegionConfig = () => Promise<MultiRegionConfig>
+export type GetAvailableRegionConfig = () => Promise<DataRegionsConfig>
 export type GetAvailableRegionKeys = () => Promise<string[]>
 
 export type GetFreeRegionKeys = () => Promise<string[]>
-export type InitializeRegion = (args: { regionKey: string }) => Promise<void>
+export type InitializeRegion = (args: { regionKey: string }) => Promise<unknown>
 
 export type CreateAndValidateNewRegion = (params: {
   region: InsertableRegionRecord
@@ -54,3 +55,11 @@ export type AsyncRegionKeyStore = (args: RegionKeyStoreArgs) => Promise<void>
 export type UpdateAndValidateRegion = (params: {
   input: UpdateServerRegionInput
 }) => Promise<ServerRegion>
+
+export type GetProjectObjectStorage = (args: {
+  projectId: string
+}) => Promise<ObjectStorage>
+
+export type GetRegionObjectStorage = (args: {
+  regionKey: string
+}) => Promise<ObjectStorage>

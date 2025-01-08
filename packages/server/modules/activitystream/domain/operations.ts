@@ -28,6 +28,7 @@ import {
   StreamAclRecord,
   StreamRecord
 } from '@/modules/core/helpers/types'
+import { Nullable } from '@speckle/shared'
 
 export type GetActivity = (
   streamId: string,
@@ -193,6 +194,7 @@ export type AddStreamInviteSentOutActivity = (params: {
 export type AddStreamDeletedActivity = (params: {
   streamId: string
   deleterId: string
+  workspaceId: Nullable<string>
 }) => Promise<void>
 
 export type AddStreamUpdatedActivity = (params: {
@@ -231,6 +233,7 @@ export type AddCommitUpdatedActivity = (params: {
   originalCommit: CommitRecord
   update: CommitUpdateInput | UpdateVersionInput
   newCommit: CommitRecord
+  branchId: string
 }) => Promise<void>
 
 export type AddCommitMovedActivity = (params: {

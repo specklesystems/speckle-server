@@ -63,7 +63,11 @@ const getApiUrl = (
   if (options?.query) {
     Object.entries(options.query).forEach(([key, val]) => {
       if (isNullOrUndefined(val)) return
-      url.searchParams.append(key, val.toString())
+      try {
+        url.searchParams.append(key, val.toString())
+      } catch (e) {
+        console.log({ val })
+      }
     })
   }
 
@@ -249,7 +253,9 @@ export const triggerAutomationRun = async (params: {
 export enum ExecutionEngineFunctionTemplateId {
   Python = 'python',
   DotNet = '.net',
-  TypeScript = 'typescript'
+  TypeScript = 'typescript',
+  Demonstration = 'demonstration',
+  DemonstrationPython = 'demonstrationpython'
 }
 
 export type CreateFunctionBody<AP extends AuthCodePayload = AuthCodePayloadWithOrigin> =
@@ -294,6 +300,31 @@ export const createFunction = async ({
     url,
     method: 'post',
     body: formattedBody,
+    retry: false
+  })
+}
+
+type CreateFunctionWithoutVersionBody = {
+  speckleServerAuthenticationPayload: AuthCodePayloadWithOrigin
+  functionName: string
+  description: string
+}
+
+type CreateFunctionWithoutVersionResponse = {
+  functionId: string
+  functionToken: string
+}
+
+export const createFunctionWithoutVersion = async ({
+  body
+}: {
+  body: CreateFunctionWithoutVersionBody
+}): Promise<CreateFunctionWithoutVersionResponse> => {
+  const url = getApiUrl('/api/v2/functions')
+  return await invokeJsonRequest<CreateFunctionWithoutVersionResponse>({
+    url,
+    method: 'post',
+    body,
     retry: false
   })
 }
@@ -415,24 +446,79 @@ export type GetFunctionsResponse = {
   items: FunctionWithVersionsSchemaType[]
 }
 
-export const getFunctions = async (params: {
+export const getPublicFunctions = async (params: {
   query?: {
     query?: string
     cursor?: string
     limit?: number
     functionsWithoutVersions?: boolean
-    featuredFunctionsOnly?: boolean
   }
 }) => {
   const { query } = params
-  const url = getApiUrl(`/api/v1/functions`, { query })
-
+  const url = getApiUrl(`/api/v1/functions`, {
+    query: {
+      ...query,
+      featuredFunctionsOnly: true
+    }
+  })
   const result = await invokeJsonRequest<GetFunctionsResponse>({
     url,
     method: 'get'
   })
 
   return result
+}
+
+type GetUserFunctionsResponse = {
+  functions: FunctionWithVersionsSchemaType[]
+}
+
+export const getUserFunctions = async (params: {
+  userId: string
+  query?: {
+    query?: string
+    cursor?: string
+    limit?: number
+  }
+  body: {
+    speckleServerAuthenticationPayload: AuthCodePayloadWithOrigin
+  }
+}): Promise<GetUserFunctionsResponse> => {
+  const { userId, query, body } = params
+  const url = getApiUrl(`/api/v2/users/${userId}/functions`, { query })
+
+  return await invokeJsonRequest({
+    url,
+    method: 'POST',
+    body,
+    retry: false
+  })
+}
+
+type GetWorkspaceFunctionsResponse = {
+  functions: FunctionWithVersionsSchemaType[]
+}
+
+export const getWorkspaceFunctions = async (params: {
+  workspaceId: string
+  query?: {
+    query?: string
+    cursor?: string
+    limit?: number
+  }
+  body: {
+    speckleServerAuthenticationPayload: AuthCodePayloadWithOrigin
+  }
+}): Promise<GetWorkspaceFunctionsResponse> => {
+  const { workspaceId, query, body } = params
+  const url = getApiUrl(`/api/v2/workspaces/${workspaceId}/functions`, { query })
+
+  return await invokeJsonRequest({
+    url,
+    method: 'POST',
+    body,
+    retry: false
+  })
 }
 
 type UserGithubAuthStateResponse = {

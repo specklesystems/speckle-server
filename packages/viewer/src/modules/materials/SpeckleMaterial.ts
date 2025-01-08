@@ -28,7 +28,7 @@ class SpeckleUserData {
 export type Uniforms = Record<string, any>
 
 export class SpeckleMaterial {
-  protected _internalUniforms!: Shader
+  protected _internalUniforms: Shader
   protected _stencilOutline: StencilOutlineType = StencilOutlineType.NONE
   public needsCopy: boolean = false
 

@@ -1,7 +1,11 @@
 import { moduleLogger } from '@/logging/logging'
-import { getRegisteredRegionClients } from '@/modules/multiregion/dbSelector'
+import { initializeRegisteredRegionClients as initDb } from '@/modules/multiregion/utils/dbSelector'
 import { isMultiRegionEnabled } from '@/modules/multiregion/helpers'
 import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
+import {
+  initializeRegisteredRegionClients as initBlobs,
+  isMultiRegionBlobStorageEnabled
+} from '@/modules/multiregion/utils/blobStorageSelector'
 
 const multiRegion: SpeckleModule = {
   async init() {
@@ -11,12 +15,15 @@ const multiRegion: SpeckleModule = {
     }
 
     moduleLogger.info('🌍 Init multiRegion module')
-    // this should have all the builtin checks to make sure all regions are working
-    // and no regions are missing
-    const regionClients = await getRegisteredRegionClients()
-    moduleLogger.info('Migrating region databases')
-    await Promise.all(Object.values(regionClients).map((db) => db.migrate.latest()))
-    moduleLogger.info('Migrations done')
+
+    // Init registered region clients
+    await initDb()
+
+    const isBlobStorageEnabled = isMultiRegionBlobStorageEnabled()
+    if (isBlobStorageEnabled) {
+      moduleLogger.info('🌍 Init multiRegion blob storage')
+      await initBlobs()
+    }
   }
 }
 
