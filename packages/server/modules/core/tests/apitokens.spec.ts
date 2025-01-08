@@ -1,5 +1,4 @@
 import { TokenResourceIdentifierType } from '@/modules/core/graph/generated/graphql'
-import { createAppToken } from '@/modules/core/services/tokens'
 import { BasicTestUser, createTestUsers } from '@/test/authHelper'
 import {
   AdminProjectListDocument,
@@ -26,8 +25,23 @@ import type { Express } from 'express'
 import request from 'supertest'
 import { createAppFactory } from '@/modules/auth/repositories/apps'
 import { db } from '@/db/knex'
+import { createAppTokenFactory } from '@/modules/core/services/tokens'
+import {
+  storeApiTokenFactory,
+  storeTokenResourceAccessDefinitionsFactory,
+  storeTokenScopesFactory,
+  storeUserServerAppTokenFactory
+} from '@/modules/core/repositories/tokens'
 
 const createApp = createAppFactory({ db })
+const createAppToken = createAppTokenFactory({
+  storeApiToken: storeApiTokenFactory({ db }),
+  storeTokenScopes: storeTokenScopesFactory({ db }),
+  storeTokenResourceAccessDefinitions: storeTokenResourceAccessDefinitionsFactory({
+    db
+  }),
+  storeUserServerAppToken: storeUserServerAppTokenFactory({ db })
+})
 
 /**
  * Older API token test cases can be found in `graph.spec.js`
@@ -48,7 +62,7 @@ describe('API Tokens', () => {
     await createTestUsers([user1])
 
     apollo = await testApolloServer({
-      context: createTestContext({
+      context: await createTestContext({
         auth: true,
         userId: user1.id,
         role: Roles.Server.Admin,
@@ -215,7 +229,7 @@ describe('API Tokens', () => {
       testApp1Token = appToken
 
       apollo = await testApolloServer({
-        context: createTestContext({
+        context: await createTestContext({
           auth: true,
           userId: user1.id,
           role: Roles.Server.Admin,
@@ -366,7 +380,7 @@ describe('API Tokens', () => {
         }
 
         apollo = await testApolloServer({
-          context: createTestContext({
+          context: await createTestContext({
             auth: true,
             userId: user1.id,
             role: Roles.Server.Admin,
@@ -512,8 +526,9 @@ describe('API Tokens', () => {
           .set('Authorization', `Bearer ${limitedToken1}`)
           .send({ fake: 'data' })
 
-        // We sent an invalid payload so 500 is fine, as long as its not a 401
-        expect(resAllowed).to.have.status(500)
+        // We sent an invalid payload so any 4XX or 5XX is fine, as long as its not a 401
+        expect(resAllowed.status).to.be.greaterThan(399)
+        expect(resAllowed.status).to.not.be.equal(401)
 
         const resDisallowed = await request(app)
           .post(`/api/getobjects/${stream2.id}`)
@@ -528,8 +543,9 @@ describe('API Tokens', () => {
           .set('Authorization', `Bearer ${limitedToken1}`)
           .send({ fake: 'data' })
 
-        // We sent an invalid payload so 500 is fine, as long as its not a 401
-        expect(resAllowed).to.have.status(500)
+        // We sent an invalid payload so 4XX or 5XX is fine, as long as its not a 401
+        expect(resAllowed.status).to.be.greaterThan(399)
+        expect(resAllowed.status).to.not.be.equal(401)
 
         const resDisallowed = await request(app)
           .post(`/api/diff/${stream2.id}`)
@@ -544,8 +560,9 @@ describe('API Tokens', () => {
           .set('Authorization', `Bearer ${limitedToken1}`)
           .send({ fake: 'data' })
 
-        // We sent an invalid payload so 500 is fine, as long as its not a 403
-        expect(resAllowed).to.have.status(500)
+        // We sent an invalid payload so 400 is fine, as long as its not a 403
+        expect(resAllowed.status).to.be.greaterThan(399)
+        expect(resAllowed.status).not.to.be.equal(403)
 
         const resDisallowed = await request(app)
           .post(`/api/stream/${stream2.id}/blob`)

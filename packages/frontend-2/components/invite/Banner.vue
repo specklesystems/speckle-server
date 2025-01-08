@@ -5,7 +5,7 @@
       <WorkspaceAvatar
         v-if="invite.workspace"
         :logo="invite.workspace.logo"
-        :default-logo-index="invite.workspace.defaultLogoIndex"
+        :name="invite.workspace.name"
       />
       <div class="text-foreground">
         <slot name="message" />
@@ -69,7 +69,7 @@ type GenericInviteItem = {
   workspace?: {
     id: string
     logo?: string
-    defaultLogoIndex: number
+    name: string
   }
   user?: MaybeNullOrUndefined<{
     id: string
@@ -98,7 +98,7 @@ const token = computed(
 )
 const mainClasses = computed(() => {
   const classParts = [
-    'flex flex-col space-y-4 px-4 py-5 transition border-x border-b border-outline-2 first:border-t first:rounded-t-lg last:rounded-b-lg'
+    'flex flex-col space-y-4 px-4 py-5 transition bg-foundation border-x border-b border-outline-2 first:border-t first:rounded-t-lg last:rounded-b-lg'
   ]
 
   if (props.block) {
@@ -149,7 +149,6 @@ const onDeclineClick = (token?: string) => {
     mixpanel.track('Invite Action', {
       accepted: false,
       type: 'workspace invite',
-      location: 'invite banner',
       // eslint-disable-next-line camelcase
       workspace_id: props.invite.workspace.id
     })
@@ -159,12 +158,6 @@ const onDeclineClick = (token?: string) => {
 const onAcceptClick = (token?: string) => {
   emit('processed', true, token)
   if (props.invite.workspace) {
-    mixpanel.track('Workspace Joined', {
-      location: 'invite banner',
-      // eslint-disable-next-line camelcase
-      workspace_id: props.invite.workspace.id
-    })
-
     mixpanel.track('Invite Action', {
       accepted: true,
       type: 'workspace invite',

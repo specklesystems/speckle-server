@@ -8,6 +8,14 @@ export const settingsSidebarQuery = graphql(`
   }
 `)
 
+export const settingsSidebarAutomateFunctionsQuery = graphql(`
+  query SettingsSidebarAutomateFunctions {
+    activeUser {
+      ...Sidebar_User
+    }
+  }
+`)
+
 export const settingsWorkspaceGeneralQuery = graphql(`
   query SettingsWorkspaceGeneral($id: String!) {
     workspace(id: $id) {
@@ -21,6 +29,26 @@ export const settingsWorkspaceBillingQuery = graphql(`
     workspace(id: $workspaceId) {
       id
       ...SettingsWorkspacesBilling_Workspace
+    }
+  }
+`)
+
+export const settingsWorkspaceBillingCustomerPortalQuery = graphql(`
+  query SettingsWorkspaceBillingCustomerPortal($workspaceId: String!) {
+    workspace(id: $workspaceId) {
+      customerPortalUrl
+    }
+  }
+`)
+
+export const settingsWorkspaceRegionsQuery = graphql(`
+  query SettingsWorkspaceRegions($workspaceId: String!) {
+    workspace(id: $workspaceId) {
+      id
+      ...SettingsWorkspacesRegions_Workspace
+    }
+    serverInfo {
+      ...SettingsWorkspacesRegions_ServerInfo
     }
   }
 `)
@@ -84,6 +112,8 @@ export const settingsWorkspacesProjectsQuery = graphql(`
   ) {
     workspace(id: $workspaceId) {
       id
+      slug
+      readOnly
       projects(limit: $limit, cursor: $cursor, filter: $filter) {
         cursor
         ...SettingsWorkspacesProjects_ProjectCollection

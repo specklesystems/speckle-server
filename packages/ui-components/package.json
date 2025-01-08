@@ -3,8 +3,9 @@
   "description": "Speckle theme UI components built with Vue 3 & Tailwind",
   "version": "0.0.1",
   "scripts": {
-    "dev": "vite",
-    "build": "vue-tsc && vite build",
+    "dev:vite": "vite",
+    "dev": "yarn storybook",
+    "build": "echo \"Building ui-components...\" && vue-tsc && vite build && echo \"Done building ui-components!\"",
     "preview": "vite preview",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",

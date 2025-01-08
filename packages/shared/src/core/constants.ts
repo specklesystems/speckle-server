@@ -28,40 +28,47 @@ export const RoleInfo = Object.freeze(<const>{
   Stream: {
     [Roles.Stream.Owner]: {
       title: 'Owner',
-      description:
-        'Owners have full access, including deletion rights & access control.'
+      description: 'Can edit project, including settings, collaborators and all models'
     },
     [Roles.Stream.Contributor]: {
       title: 'Contributor',
-      description:
-        'Contributors can create new branches and commits, but they cannot edit stream details or manage collaborators.'
+      description: 'Can create models, publish model versions, and comment'
     },
     [Roles.Stream.Reviewer]: {
       title: 'Reviewer',
-      description: 'Reviewers can only view (read) the data from this stream.'
+      description: 'Can view models, load model data, and comment'
     }
   },
   Server: {
-    [Roles.Server.Admin]: 'Admin',
-    [Roles.Server.User]: 'User',
-    [Roles.Server.Guest]: 'Guest',
-    [Roles.Server.ArchivedUser]: 'Archived'
+    [Roles.Server.Admin]: {
+      title: 'Admin',
+      description: 'Can edit server, including settings, users and all projects'
+    },
+    [Roles.Server.User]: {
+      title: 'User',
+      description: 'Can create and own projects'
+    },
+    [Roles.Server.Guest]: {
+      title: 'Guest',
+      description: "Can contribute to projects they're invited to"
+    },
+    [Roles.Server.ArchivedUser]: {
+      title: 'Archived',
+      description: 'Can no longer access server'
+    }
   },
   Workspace: {
     [Roles.Workspace.Admin]: {
       title: 'Admin',
-      description:
-        'A role assigned workspace administrators. They have full control over the workspace.'
+      description: 'Can edit workspace, including settings, members and all projects'
     },
     [Roles.Workspace.Member]: {
       title: 'Member',
-      description:
-        'A role assigned workspace members. They have access to resources in the workspace.'
+      description: 'Can create and own projects'
     },
     [Roles.Workspace.Guest]: {
       title: 'Guest',
-      description:
-        'A role assigned workspace guests. Their access to resources in the workspace is limited to resources they have explicit roles on.'
+      description: "Can contribute to projects they're invited to"
     }
   }
 })
@@ -116,6 +123,9 @@ export const Scopes = Object.freeze(<const>{
     Read: 'workspace:read',
     Update: 'workspace:update',
     Delete: 'workspace:delete'
+  },
+  Gatekeeper: {
+    WorkspaceBilling: 'workspace:billing'
   }
 })
 
@@ -131,6 +141,8 @@ export type AutomateFunctionScopes =
   (typeof Scopes)['AutomateFunctions'][keyof (typeof Scopes)['AutomateFunctions']]
 export type WorkspaceScopes =
   (typeof Scopes)['Workspaces'][keyof (typeof Scopes)['Workspaces']]
+export type GatekeeperScopes =
+  (typeof Scopes)['Gatekeeper'][keyof (typeof Scopes)['Gatekeeper']]
 
 export type AvailableScopes =
   | StreamScopes
@@ -235,7 +247,7 @@ export const SourceApps: SourceAppDefinition[] = [
   {
     searchKey: 'teklastructures',
     name: 'Tekla Structures',
-    short: 'TEKLAS',
+    short: 'TKL',
     bgColor: '#3a6eff'
   },
   { searchKey: 'openroads', name: 'OpenRoads', short: 'OROAD', bgColor: '#846256' },

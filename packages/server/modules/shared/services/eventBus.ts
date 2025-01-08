@@ -2,6 +2,10 @@ import {
   WorkspaceEventsPayloads,
   workspaceEventNamespace
 } from '@/modules/workspacesCore/domain/events'
+import {
+  gatekeeperEventNamespace,
+  GatekeeperEventPayloads
+} from '@/modules/gatekeeperCore/domain/events'
 import { MaybeAsync } from '@speckle/shared'
 import { UnionToIntersection } from 'type-fest'
 
@@ -11,17 +15,24 @@ import {
   ServerInvitesEventsPayloads
 } from '@/modules/serverinvites/domain/events'
 
+type AllEventsWildcard = '**'
 type EventWildcard = '*'
 
-type TestEvents = {
-  ['test.string']: string
-  ['test.number']: number
+export const TestEvents = {
+  String: 'test.string',
+  Number: 'test.number'
+} as const
+
+type TestEventsPayloads = {
+  [TestEvents.String]: string
+  [TestEvents.Number]: number
 }
 
 // we should only ever extend this type, other helper types will be derived from this
 type EventsByNamespace = {
-  test: TestEvents
+  test: TestEventsPayloads
   [workspaceEventNamespace]: WorkspaceEventsPayloads
+  [gatekeeperEventNamespace]: GatekeeperEventPayloads
   [serverinvitesEventNamespace]: ServerInvitesEventsPayloads
 }
 
@@ -34,7 +45,7 @@ type EventNamesByNamespace = {
 
 // generated type for a top level wildcard one level nested wildcards per namespace and each possible event
 type EventSubscriptionKey =
-  | EventWildcard
+  | AllEventsWildcard
   | `${keyof EventNamesByNamespace}.${EventWildcard}`
   | {
       [Namespace in keyof EventNamesByNamespace]: EventNamesByNamespace[Namespace]
@@ -59,7 +70,7 @@ type EventPayloadsByNamespaceMap = {
   }
 }
 
-type EventPayload<T extends EventSubscriptionKey> = T extends EventWildcard
+export type EventPayload<T extends EventSubscriptionKey> = T extends AllEventsWildcard
   ? // if event key is "*", get all events from the flat object
     EventPayloadsMap[keyof EventPayloadsMap]
   : // else if, the key is a "namespace.*" wildcard
@@ -86,9 +97,9 @@ export function initializeEventBus() {
     emit: async <EventName extends EventNames>(args: {
       eventName: EventName
       payload: EventTypes[EventName]
-    }): Promise<unknown[]> => {
+    }): Promise<void> => {
       // curate the proper payload here and eventName object here, before emitting
-      return emitter.emitAsync(args.eventName, args)
+      await emitter.emitAsync(args.eventName, args)
     },
 
     /**
@@ -124,6 +135,7 @@ export function initializeEventBus() {
 export type EventBus = ReturnType<typeof initializeEventBus>
 export type EventBusPayloads = EventTypes
 export type EventBusEmit = EventBus['emit']
+export type EmitArg = Parameters<EventBusEmit>[0]
 
 let eventBus: EventBus
 

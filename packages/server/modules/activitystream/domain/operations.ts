@@ -1,5 +1,7 @@
 import {
   ActivitySummary,
+  CommentCreatedActivityInput,
+  ReplyCreatedActivityInput,
   ResourceType,
   StreamActionType
 } from '@/modules/activitystream/domain/types'
@@ -7,7 +9,26 @@ import {
   StreamActivityRecord,
   StreamScopeActivity
 } from '@/modules/activitystream/helpers/types'
-import { StreamAclRecord, StreamRecord } from '@/modules/core/helpers/types'
+import { CommentRecord } from '@/modules/comments/helpers/types'
+import {
+  BranchDeleteInput,
+  BranchUpdateInput,
+  CommitCreateInput,
+  CommitUpdateInput,
+  DeleteModelInput,
+  MutationCommentArchiveArgs,
+  ProjectUpdateInput,
+  StreamUpdateInput,
+  UpdateModelInput,
+  UpdateVersionInput
+} from '@/modules/core/graph/generated/graphql'
+import {
+  BranchRecord,
+  CommitRecord,
+  StreamAclRecord,
+  StreamRecord
+} from '@/modules/core/helpers/types'
+import { Nullable } from '@speckle/shared'
 
 export type GetActivity = (
   streamId: string,
@@ -160,4 +181,113 @@ export type AddStreamInviteDeclinedActivity = (params: {
   inviteTargetId: string
   inviterId: string
   stream: StreamRecord
+}) => Promise<void>
+
+export type AddStreamInviteSentOutActivity = (params: {
+  streamId: string
+  inviteTargetId: string | null
+  inviterId: string
+  inviteTargetEmail: string | null
+  stream: StreamRecord
+}) => Promise<void>
+
+export type AddStreamDeletedActivity = (params: {
+  streamId: string
+  deleterId: string
+  workspaceId: Nullable<string>
+}) => Promise<void>
+
+export type AddStreamUpdatedActivity = (params: {
+  streamId: string
+  updaterId: string
+  oldStream: StreamRecord
+  newStream: StreamRecord
+  update: ProjectUpdateInput | StreamUpdateInput
+}) => Promise<void>
+
+export type AddStreamAccessRequestedActivity = (params: {
+  streamId: string
+  requesterId: string
+}) => Promise<void>
+
+export type AddStreamAccessRequestDeclinedActivity = (params: {
+  streamId: string
+  requesterId: string
+  declinerId: string
+}) => Promise<void>
+
+export type AddCommitCreatedActivity = (params: {
+  commitId: string
+  streamId: string
+  userId: string
+  input: CommitCreateInput
+  branchName: string
+  modelId: string
+  commit: CommitRecord
+}) => Promise<void>
+
+export type AddCommitUpdatedActivity = (params: {
+  commitId: string
+  streamId: string
+  userId: string
+  originalCommit: CommitRecord
+  update: CommitUpdateInput | UpdateVersionInput
+  newCommit: CommitRecord
+  branchId: string
+}) => Promise<void>
+
+export type AddCommitMovedActivity = (params: {
+  commitId: string
+  streamId: string
+  userId: string
+  originalBranchId: string
+  newBranchId: string
+  commit: CommitRecord
+}) => Promise<void>
+
+export type AddCommitDeletedActivity = (params: {
+  commitId: string
+  streamId: string
+  userId: string
+  commit: CommitRecord
+  branchId: string
+}) => Promise<void>
+
+export type AddCommentCreatedActivity = (params: {
+  streamId: string
+  userId: string
+  input: CommentCreatedActivityInput
+  comment: CommentRecord
+}) => Promise<void>
+
+export type AddCommentArchivedActivity = (params: {
+  streamId: string
+  commentId: string
+  userId: string
+  input: MutationCommentArchiveArgs
+  comment: CommentRecord
+}) => Promise<void>
+
+export type AddReplyAddedActivity = (params: {
+  streamId: string
+  input: ReplyCreatedActivityInput
+  reply: CommentRecord
+  userId: string
+}) => Promise<void>
+
+export type AddBranchCreatedActivity = (params: {
+  branch: BranchRecord
+}) => Promise<void>
+
+export type AddBranchUpdatedActivity = (params: {
+  update: BranchUpdateInput | UpdateModelInput
+  userId: string
+  oldBranch: BranchRecord
+  newBranch: BranchRecord
+}) => Promise<void>
+
+export type AddBranchDeletedActivity = (params: {
+  input: BranchDeleteInput | DeleteModelInput
+  userId: string
+  branchName: string
 }) => Promise<void>

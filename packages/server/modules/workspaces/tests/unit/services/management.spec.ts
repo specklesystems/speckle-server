@@ -35,12 +35,14 @@ import {
 } from '@/modules/workspaces/errors/workspace'
 import { UserEmail } from '@/modules/core/domain/userEmails/types'
 import { merge, omit } from 'lodash'
-import { GetWorkspaceWithDomains } from '@/modules/workspaces/domain/operations'
+import {
+  GetWorkspaceWithDomains,
+  UpsertWorkspaceArgs
+} from '@/modules/workspaces/domain/operations'
 import { FindVerifiedEmailsByUserId } from '@/modules/core/domain/userEmails/operations'
-import { EventNames } from '@/modules/shared/services/eventBus'
 
 type WorkspaceTestContext = {
-  storedWorkspaces: Omit<Workspace, 'domains'>[]
+  storedWorkspaces: UpsertWorkspaceArgs['workspace'][]
   storedRoles: WorkspaceAcl[]
   eventData: {
     isCalled: boolean
@@ -63,11 +65,7 @@ const buildCreateWorkspaceWithTestContext = (
   }
 
   const deps: Parameters<typeof createWorkspaceFactory>[0] = {
-    upsertWorkspace: async ({
-      workspace
-    }: {
-      workspace: Omit<Workspace, 'domains'>
-    }) => {
+    upsertWorkspace: async ({ workspace }) => {
       context.storedWorkspaces.push(workspace)
     },
     validateSlug: async () => {},
@@ -79,7 +77,6 @@ const buildCreateWorkspaceWithTestContext = (
       context.eventData.isCalled = true
       context.eventData.eventName = eventName
       context.eventData.payload = payload
-      return []
     },
     ...dependencyOverrides
   }
@@ -243,7 +240,7 @@ describe('Workspace services', () => {
       expect(context.eventData.isCalled).to.equal(true)
       expect(context.eventData.eventName).to.equal(WorkspaceEvents.Created)
       expect(context.eventData.payload).to.deep.equal({
-        ...workspace,
+        workspace,
         createdByUserId: userId
       })
     })
@@ -273,6 +270,7 @@ describe('Workspace services', () => {
       const err = await expectToThrow(async () => {
         await updateWorkspaceFactory({
           getWorkspace: async () => null,
+          getWorkspaceSsoProviderRecord: async () => null,
           validateSlug: async () => {
             expect.fail()
           },
@@ -294,6 +292,7 @@ describe('Workspace services', () => {
       const err = await expectToThrow(async () => {
         await updateWorkspaceFactory({
           getWorkspace: async () => workspace,
+          getWorkspaceSsoProviderRecord: async () => null,
           emitWorkspaceEvent: async () => {
             expect.fail()
           },
@@ -317,6 +316,7 @@ describe('Workspace services', () => {
       const err = await expectToThrow(async () => {
         await updateWorkspaceFactory({
           getWorkspace: async () => workspace,
+          getWorkspaceSsoProviderRecord: async () => null,
           emitWorkspaceEvent: async () => {
             expect.fail()
           },
@@ -340,6 +340,7 @@ describe('Workspace services', () => {
       const err = await expectToThrow(async () => {
         await updateWorkspaceFactory({
           getWorkspace: async () => workspace,
+          getWorkspaceSsoProviderRecord: async () => null,
           emitWorkspaceEvent: async () => {
             expect.fail()
           },
@@ -363,6 +364,7 @@ describe('Workspace services', () => {
       const err = await expectToThrow(async () => {
         await updateWorkspaceFactory({
           getWorkspace: async () => workspace,
+          getWorkspaceSsoProviderRecord: async () => null,
           emitWorkspaceEvent: async () => {
             expect.fail()
           },
@@ -385,6 +387,7 @@ describe('Workspace services', () => {
       const err = await expectToThrow(async () => {
         await updateWorkspaceFactory({
           getWorkspace: async () => workspace,
+          getWorkspaceSsoProviderRecord: async () => null,
           emitWorkspaceEvent: async () => {
             expect.fail()
           },
@@ -408,9 +411,8 @@ describe('Workspace services', () => {
       let newWorkspaceName
       await updateWorkspaceFactory({
         getWorkspace: async () => workspace,
-        emitWorkspaceEvent: async () => {
-          return []
-        },
+        getWorkspaceSsoProviderRecord: async () => null,
+        emitWorkspaceEvent: async () => {},
         validateSlug: async () => {},
 
         upsertWorkspace: async ({ workspace }) => {
@@ -422,6 +424,36 @@ describe('Workspace services', () => {
       })
       expect(newWorkspaceName).to.be.equal(workspace.name)
     })
+
+    it('does not allow updating the workspace slug if SSO is enabled', async () => {
+      const workspace = createTestWorkspaceWithDomainsData()
+
+      const err = await expectToThrow(async () => {
+        await updateWorkspaceFactory({
+          getWorkspace: async () => workspace,
+          getWorkspaceSsoProviderRecord: async () => ({
+            workspaceId: 'foo',
+            providerId: 'bar'
+          }),
+          emitWorkspaceEvent: async () => {
+            expect.fail()
+          },
+          validateSlug: async () => {},
+          upsertWorkspace: async () => {
+            expect.fail()
+          }
+        })({
+          workspaceId: workspace.id,
+          workspaceInput: {
+            slug: 'new-slug'
+          }
+        })
+      })
+      expect(err.message).to.be.equal(
+        'Cannot update workspace slug if SSO is configured.'
+      )
+    })
+
     it('updates the workspace and emits the correct event payload', async () => {
       const workspaceId = cryptoRandomString({ length: 10 })
       const workspace = createTestWorkspaceWithDomainsData({
@@ -448,9 +480,8 @@ describe('Workspace services', () => {
 
       await updateWorkspaceFactory({
         getWorkspace: async () => workspace,
-        emitWorkspaceEvent: async () => {
-          return []
-        },
+        getWorkspaceSsoProviderRecord: async () => null,
+        emitWorkspaceEvent: async () => {},
         validateSlug: async () => {},
         upsertWorkspace: async ({ workspace }) => {
           updatedWorkspace = workspace
@@ -533,9 +564,9 @@ const buildDeleteWorkspaceRoleAndTestContext = (
       context.eventData.payload = payload
 
       switch (eventName) {
-        case 'workspace.role-deleted': {
+        case WorkspaceEvents.RoleDeleted: {
           const { userId } =
-            payload as WorkspaceEventsPayloads['workspace.role-deleted']
+            payload as WorkspaceEventsPayloads[typeof WorkspaceEvents.RoleDeleted]
           for (const project of context.workspaceProjects) {
             context.workspaceProjectRoles = context.workspaceProjectRoles.filter(
               (role) => role.resourceId !== project.id && role.userId !== userId
@@ -544,8 +575,6 @@ const buildDeleteWorkspaceRoleAndTestContext = (
           break
         }
       }
-
-      return []
     },
     ...dependencyOverrides
   }
@@ -581,9 +610,9 @@ const buildUpdateWorkspaceRoleAndTestContext = (
       context.eventData.payload = payload
 
       switch (eventName) {
-        case 'workspace.role-deleted': {
+        case WorkspaceEvents.RoleDeleted: {
           const { userId } =
-            payload as WorkspaceEventsPayloads['workspace.role-deleted']
+            payload as WorkspaceEventsPayloads[typeof WorkspaceEvents.RoleDeleted]
           for (const project of context.workspaceProjects) {
             context.workspaceProjectRoles = context.workspaceProjectRoles.filter(
               (role) => role.resourceId !== project.id && role.userId !== userId
@@ -591,9 +620,9 @@ const buildUpdateWorkspaceRoleAndTestContext = (
           }
           break
         }
-        case 'workspace.role-updated': {
+        case WorkspaceEvents.RoleUpdated: {
           const workspaceRole =
-            payload as WorkspaceEventsPayloads['workspace.role-updated']
+            payload as WorkspaceEventsPayloads[typeof WorkspaceEvents.RoleUpdated]
           const mapping = {
             [Roles.Workspace.Guest]: null,
             [Roles.Workspace.Member]:
@@ -622,8 +651,6 @@ const buildUpdateWorkspaceRoleAndTestContext = (
           break
         }
       }
-
-      return []
     },
     ...dependencyOverrides
   }
@@ -759,7 +786,7 @@ describe('Workspace role services', () => {
 
       const payload = {
         ...(context.eventData
-          .payload as WorkspaceEventsPayloads['workspace.role-updated'])
+          .payload as WorkspaceEventsPayloads[typeof WorkspaceEvents.RoleUpdated])
       }
       delete payload.flags
 
@@ -929,9 +956,6 @@ describe('Workspace role services', () => {
               storeWorkspaceDomain: async () => {
                 return
               },
-              upsertWorkspace: async () => {
-                expect.fail()
-              },
               emitWorkspaceEvent: async () => {
                 expect.fail()
               }
@@ -957,9 +981,6 @@ describe('Workspace role services', () => {
               },
               storeWorkspaceDomain: async () => {
                 return
-              },
-              upsertWorkspace: async () => {
-                expect.fail()
               },
               emitWorkspaceEvent: async () => {
                 expect.fail()
@@ -988,9 +1009,6 @@ describe('Workspace role services', () => {
               storeWorkspaceDomain: async () => {
                 return
               },
-              upsertWorkspace: async () => {
-                expect.fail()
-              },
               emitWorkspaceEvent: async () => {
                 expect.fail()
               }
@@ -1018,9 +1036,6 @@ describe('Workspace role services', () => {
               storeWorkspaceDomain: async () => {
                 return
               },
-              upsertWorkspace: async () => {
-                expect.fail()
-              },
               emitWorkspaceEvent: async () => {
                 expect.fail()
               }
@@ -1047,9 +1062,6 @@ describe('Workspace role services', () => {
               },
               storeWorkspaceDomain: async () => {
                 return
-              },
-              upsertWorkspace: async () => {
-                expect.fail()
               },
               emitWorkspaceEvent: async () => {
                 expect.fail()
@@ -1091,9 +1103,6 @@ describe('Workspace role services', () => {
               },
               storeWorkspaceDomain: async () => {
                 return
-              },
-              upsertWorkspace: async () => {
-                expect.fail()
               },
               emitWorkspaceEvent: async () => {
                 expect.fail()
@@ -1144,9 +1153,6 @@ describe('Workspace role services', () => {
           getDomains: async () => {
             return [{ domain }] as WorkspaceDomain[]
           },
-          upsertWorkspace: async () => {
-            expect.fail()
-          },
           emitWorkspaceEvent: async () => {
             expect.fail()
           },
@@ -1156,142 +1162,6 @@ describe('Workspace role services', () => {
         })(domainRequest)
 
         expect(storedDomains).to.be.undefined
-      })
-      it('stores the verified workspace domain, toggles workspace discoverability for first domain, emits update event', async () => {
-        const userId = createRandomPassword()
-        const workspaceId = createRandomPassword()
-        const domain = 'example.org'
-
-        const domainRequest = {
-          userId,
-          workspaceId,
-          domain
-        }
-
-        let storedDomains: WorkspaceDomain | undefined = undefined
-        let storedWorkspace: Omit<Workspace, 'domains'> | undefined = undefined
-        let omittedEventName: EventNames | undefined = undefined
-
-        const workspace: Workspace = {
-          id: workspaceId,
-          name: cryptoRandomString({ length: 10 }),
-          slug: cryptoRandomString({ length: 10 }),
-          logo: null,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          description: null,
-          discoverabilityEnabled: false,
-          domainBasedMembershipProtectionEnabled: false,
-          defaultProjectRole: 'stream:contributor',
-          defaultLogoIndex: 0
-        }
-
-        await addDomainToWorkspaceFactory({
-          findEmailsByUserId: async () =>
-            [{ email: `foo@${domain}`, verified: true }] as UserEmail[],
-          getWorkspace: async () => {
-            return {
-              role: Roles.Workspace.Admin,
-              userId,
-              ...workspace
-            }
-          },
-
-          getDomains: async () => {
-            return []
-          },
-          upsertWorkspace: async ({ workspace }) => {
-            storedWorkspace = workspace
-          },
-          emitWorkspaceEvent: async ({ eventName }) => {
-            omittedEventName = eventName
-            return []
-          },
-          storeWorkspaceDomain: async ({ workspaceDomain }) => {
-            storedDomains = workspaceDomain
-          }
-        })(domainRequest)
-
-        expect(storedDomains).to.not.be.undefined
-        expect(storedDomains!.createdByUserId).to.be.equal(userId)
-        expect(storedDomains!.domain).to.be.equal(domain)
-        expect(storedDomains!.workspaceId).to.be.equal(workspaceId)
-        expect(storedDomains!.verified).to.be.true
-
-        expect(storedWorkspace!.discoverabilityEnabled).to.be.true
-
-        expect(omittedEventName).to.be.equal(WorkspaceEvents.Updated)
-      })
-      it('stores the second verified domain, does NOT toggle workspace discoverability for subsequent domains', async () => {
-        const userId = createRandomPassword()
-        const workspaceId = createRandomPassword()
-        const domain = 'example.org'
-        const domain2 = 'example2.org'
-
-        const domainRequest = {
-          userId,
-          workspaceId,
-          domain
-        }
-
-        const workspaceWithoutDomains = {
-          id: workspaceId,
-          name: cryptoRandomString({ length: 10 }),
-          slug: cryptoRandomString({ length: 10 }),
-          logo: null,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          description: null,
-          discoverabilityEnabled: false,
-          domainBasedMembershipProtectionEnabled: false,
-          domains: [],
-          defaultProjectRole: Roles.Stream.Contributor,
-          defaultLogoIndex: 0
-        }
-
-        let workspaceData: Workspace = {
-          ...workspaceWithoutDomains
-        }
-        const insertedDomains: WorkspaceDomain[] = []
-        let storedDomains: WorkspaceDomain[] = []
-
-        const addDomainToWorkspace = addDomainToWorkspaceFactory({
-          findEmailsByUserId: async () =>
-            [
-              { email: `foo@${domain}`, verified: true },
-              { email: `foo@${domain2}`, verified: true }
-            ] as UserEmail[],
-          getWorkspace: async () => {
-            return {
-              role: Roles.Workspace.Admin,
-              userId,
-              ...workspaceData
-            }
-          },
-          getDomains: async () => storedDomains,
-          upsertWorkspace: async ({ workspace }) => {
-            workspaceData = { ...workspaceData, ...workspace }
-          },
-          emitWorkspaceEvent: async () => {
-            return []
-          },
-          storeWorkspaceDomain: async ({ workspaceDomain }) => {
-            insertedDomains.push(workspaceDomain)
-          }
-        })
-        await addDomainToWorkspace(domainRequest)
-
-        expect(insertedDomains).to.have.lengthOf(1)
-        expect(workspaceData.discoverabilityEnabled).to.be.true
-
-        // dirty hack, im post fact storing the domain on the test object
-        storedDomains = insertedDomains
-
-        //faking user interaction disabling discoverability
-        workspaceData.discoverabilityEnabled = false
-        await addDomainToWorkspace({ ...domainRequest, domain: domain2 })
-
-        expect(workspaceData.discoverabilityEnabled).to.be.false
       })
     })
   })

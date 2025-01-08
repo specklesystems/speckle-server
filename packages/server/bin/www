@@ -5,7 +5,9 @@ const { logger } = require('../dist/logging/logging')
 const { init, startHttp } = require('../dist/app')
 
 init()
-  .then(({ app, server }) => startHttp(server, app))
+  .then(({ app, graphqlServer, server, readinessCheck }) =>
+    startHttp({ app, graphqlServer, server, readinessCheck })
+  )
   .catch((err) => {
     logger.error(err, 'Failed to start server. Exiting with non-zero exit code...')
 

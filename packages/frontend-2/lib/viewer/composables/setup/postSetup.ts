@@ -1,9 +1,20 @@
 import { difference, flatten, isEqual, uniq } from 'lodash-es'
-import { ViewerEvent, VisualDiffMode, CameraController } from '@speckle/viewer'
-import type {
-  PropertyInfo,
-  StringPropertyInfo,
-  SunLightConfiguration
+import {
+  ViewMode,
+  type PropertyInfo,
+  type StringPropertyInfo,
+  type SunLightConfiguration
+} from '@speckle/viewer'
+import {
+  ViewerEvent,
+  VisualDiffMode,
+  CameraController,
+  UpdateFlags,
+  SectionOutlines,
+  SectionToolEvent,
+  SectionTool,
+  ViewModes,
+  ViewModeEvent
 } from '@speckle/viewer'
 import { useAuthCookie } from '~~/lib/auth/composables/auth'
 import type {
@@ -52,6 +63,7 @@ import { setupDebugMode } from '~~/lib/viewer/composables/setup/dev'
 import type { Reference } from '@apollo/client'
 import type { Modifier } from '@apollo/client/cache'
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
+import { useMixpanel } from '~~/lib/core/composables/mp'
 
 function useViewerIsBusyEventHandler() {
   const state = useInjectedViewerState()
@@ -151,6 +163,35 @@ function useViewerObjectAutoLoading() {
 
   onBeforeUnmount(async () => {
     await viewer.unloadAll()
+  })
+}
+
+/**
+ * Here we make the viewer pretend it's a connector and send out receive events. Note, this is important for us to track to be able to get a picture of how much data is consumed
+ * in our viewer.
+ */
+function useViewerReceiveTracking() {
+  //
+  const {
+    resources: {
+      response: { modelsAndVersionIds }
+    }
+  } = useInjectedViewerState()
+  const mixpanel = useMixpanel()
+  const { userId } = useActiveUser()
+  const receivedVersions = new Set<string>()
+  watch(modelsAndVersionIds, (newVal) => {
+    for (const { model, versionId } of newVal) {
+      if (receivedVersions.has(versionId)) {
+        continue
+      }
+      receivedVersions.add(versionId)
+      mixpanel.track('Receive', {
+        hostApp: 'viewer',
+        sourceHostApp: model.loadedVersion.items[0].sourceApplication,
+        isMultiplayer: model.loadedVersion.items[0].authorUser?.id !== userId.value
+      })
+    }
   })
 }
 
@@ -263,9 +304,19 @@ function useViewerSubscriptionEventTracker() {
 
 function useViewerSectionBoxIntegration() {
   const {
-    ui: { sectionBox },
+    ui: {
+      sectionBox,
+      sectionBoxContext: { visible, edited }
+    },
     viewer: { instance }
   } = useInjectedViewerState()
+
+  // Change edited=true when user starts changing the section box by dragging it
+  const sectionTool = instance.getExtension(SectionTool)
+  const onDragStart = () => {
+    edited.value = true
+  }
+  sectionTool.on(SectionToolEvent.DragStart, onDragStart)
 
   // No two-way sync for section boxes, because once you set a Box3 into the viewer
   // the viewer transforms it into something else causing the updates going into an infinite loop
@@ -278,24 +329,50 @@ function useViewerSectionBoxIntegration() {
       if (!newVal && !oldVal) return
 
       if (oldVal && !newVal) {
+        visible.value = false
+        edited.value = false
+
         instance.sectionBoxOff()
-        instance.requestRender()
+        instance.requestRender(UpdateFlags.RENDER_RESET)
         return
       }
 
       if (newVal && (!oldVal || !newVal.equals(oldVal))) {
+        visible.value = true
+        edited.value = false
+
         instance.setSectionBox({
           min: newVal.min,
           max: newVal.max
         })
         instance.sectionBoxOn()
-        instance.requestRender()
+        const outlines = instance.getExtension(SectionOutlines)
+        if (outlines) outlines.requestUpdate()
+        instance.requestRender(UpdateFlags.RENDER_RESET)
       }
     },
     { immediate: true, deep: true, flush: 'sync' }
   )
+
+  watch(
+    visible,
+    (newVal, oldVal) => {
+      if (newVal && oldVal) return
+      if (!newVal && !oldVal) return
+
+      if (newVal) {
+        sectionTool.visible = true
+      } else {
+        sectionTool.visible = false
+      }
+      instance.requestRender()
+    },
+    { immediate: true, deep: true, flush: 'sync' }
+  )
+
   onBeforeUnmount(() => {
     instance.sectionBoxOff()
+    sectionTool.removeListener(SectionToolEvent.DragStart, onDragStart)
   })
 }
 
@@ -562,6 +639,44 @@ function useViewerFiltersIntegration() {
   )
 }
 
+function useViewerViewModeIntegration() {
+  const {
+    ui: { viewMode },
+    viewer: { instance }
+  } = useInjectedViewerState()
+
+  const viewModes = instance.getExtension(ViewModes)
+  const onViewModeChanged = (mode: ViewMode) => {
+    viewMode.value = mode
+  }
+
+  onMounted(() => {
+    if (!viewMode.value) {
+      viewMode.value = ViewMode.DEFAULT
+    }
+    viewModes.on(ViewModeEvent.Changed, onViewModeChanged)
+  })
+
+  onBeforeUnmount(() => {
+    // Reset view mode to default
+    viewModes.setViewMode(ViewMode.DEFAULT)
+    viewMode.value = ViewMode.DEFAULT
+
+    // Clean up event listener
+    viewModes.removeListener(ViewModeEvent.Changed, onViewModeChanged)
+  })
+
+  watch(
+    () => viewMode.value,
+    (newMode) => {
+      if (viewModes && newMode) {
+        viewModes.setViewMode(newMode)
+      }
+    },
+    { immediate: true }
+  )
+}
+
 function useLightConfigIntegration() {
   const {
     ui: { lightConfig },
@@ -791,6 +906,7 @@ function useDisableZoomOnEmbed() {
 export function useViewerPostSetup() {
   if (import.meta.server) return
   useViewerObjectAutoLoading()
+  useViewerReceiveTracking()
   useViewerSelectionEventHandler()
   useViewerIsBusyEventHandler()
   useViewerSubscriptionEventTracker()
@@ -799,6 +915,7 @@ export function useViewerPostSetup() {
   useViewerSectionBoxIntegration()
   useViewerCameraIntegration()
   useViewerFiltersIntegration()
+  useViewerViewModeIntegration()
   useLightConfigIntegration()
   useExplodeFactorIntegration()
   useDiffingIntegration()

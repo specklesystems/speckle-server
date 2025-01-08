@@ -23,18 +23,16 @@
         label="Short ID"
         :help="getShortIdHelp"
         color="foundation"
-        :rules="[
-          isStringOfLength({ maxLength: 50, minLength: 3 }),
-          isValidWorkspaceSlug
-        ]"
+        :loading="loading"
+        :rules="isStringOfLength({ maxLength: 50, minLength: 3 })"
+        :custom-error-message="error?.graphQLErrors[0]?.message"
         show-label
-        @update:model-value="shortIdManuallyEdited = true"
+        @update:model-value="onSlugChange"
       />
       <UserAvatarEditable
         v-model:edit-mode="editAvatarMode"
         :model-value="workspaceLogo"
         :placeholder="workspaceName"
-        :default-img="defaultAvatar"
         name="edit-avatar"
         size="xxl"
         @save="onLogoSave"
@@ -48,14 +46,11 @@ import { useForm } from 'vee-validate'
 import type { MaybeNullOrUndefined } from '@speckle/shared'
 import type { LayoutDialogButton } from '@speckle/ui-components'
 import { useCreateWorkspace } from '~/lib/workspaces/composables/management'
-import { useWorkspacesAvatar } from '~/lib/workspaces/composables/avatar'
-import {
-  isRequired,
-  isStringOfLength,
-  isValidWorkspaceSlug
-} from '~~/lib/common/helpers/validation'
+import { isRequired, isStringOfLength } from '~~/lib/common/helpers/validation'
 import { generateSlugFromName } from '@speckle/shared'
 import { debounce } from 'lodash'
+import { useQuery } from '@vue/apollo-composable'
+import { validateWorkspaceSlugQuery } from '~/lib/workspaces/graphql/queries'
 
 const emit = defineEmits<(e: 'created') => void>()
 
@@ -68,20 +63,26 @@ const props = defineProps<{
 const isOpen = defineModel<boolean>('open', { required: true })
 
 const createWorkspace = useCreateWorkspace()
-const { generateDefaultLogoIndex, getDefaultAvatar } = useWorkspacesAvatar()
-const { handleSubmit } = useForm<{ name: string; slug: string }>()
+const { handleSubmit, resetForm } = useForm<{ name: string; slug: string }>()
 
 const workspaceName = ref('')
 const workspaceShortId = ref('')
+const debouncedWorkspaceShortId = ref('')
 const editAvatarMode = ref(false)
 const workspaceLogo = ref<MaybeNullOrUndefined<string>>()
-const defaultLogoIndex = ref(0)
 const shortIdManuallyEdited = ref(false)
-const customShortIdError = ref('')
+
+const { error, loading } = useQuery(
+  validateWorkspaceSlugQuery,
+  () => ({
+    slug: debouncedWorkspaceShortId.value
+  }),
+  () => ({
+    enabled: !!debouncedWorkspaceShortId.value
+  })
+)
 
 const baseUrl = useRuntimeConfig().public.baseUrl
-
-const defaultAvatar = computed(() => getDefaultAvatar(defaultLogoIndex.value))
 
 const getShortIdHelp = computed(() =>
   workspaceShortId.value
@@ -105,7 +106,7 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
       disabled:
         !workspaceName.value.trim() ||
         !workspaceShortId.value.trim() ||
-        !!customShortIdError.value
+        error.value !== null
     }
   }
 ])
@@ -115,14 +116,12 @@ const handleCreateWorkspace = handleSubmit(async () => {
     {
       name: workspaceName.value,
       slug: workspaceShortId.value,
-      defaultLogoIndex: defaultLogoIndex.value,
       logo: workspaceLogo.value
     },
-    { navigateOnSuccess: props.navigateOnSuccess === true },
-    { source: props.eventSource }
+    { navigateOnSuccess: props.navigateOnSuccess === true }
   )
 
-  if (newWorkspace) {
+  if (newWorkspace && !newWorkspace?.errors) {
     emit('created')
     isOpen.value = false
   }
@@ -134,22 +133,36 @@ const onLogoSave = (newVal: MaybeNullOrUndefined<string>) => {
 }
 
 const reset = () => {
-  defaultLogoIndex.value = generateDefaultLogoIndex()
-  workspaceName.value = ''
-  workspaceShortId.value = ''
+  debouncedWorkspaceShortId.value = ''
   workspaceLogo.value = null
   editAvatarMode.value = false
   shortIdManuallyEdited.value = false
-  customShortIdError.value = ''
+  error.value = null
 }
 
 const updateShortId = debounce((newName: string) => {
   if (!shortIdManuallyEdited.value) {
-    workspaceShortId.value = generateSlugFromName({ name: newName })
+    const newSlug = generateSlugFromName({ name: newName })
+    workspaceShortId.value = newSlug
+    updateDebouncedShortId(newSlug)
   }
 }, 600)
 
+const updateDebouncedShortId = debounce((newSlug: string) => {
+  debouncedWorkspaceShortId.value = newSlug
+}, 300)
+
+const onSlugChange = (newSlug: string) => {
+  workspaceShortId.value = newSlug
+  shortIdManuallyEdited.value = true
+  updateDebouncedShortId(newSlug)
+}
+
+// Seperate resets to avoid a temporary invalid state on submission
 watch(isOpen, (newVal) => {
-  if (newVal) reset()
+  if (!newVal) {
+    reset()
+    resetForm()
+  }
 })
 </script>

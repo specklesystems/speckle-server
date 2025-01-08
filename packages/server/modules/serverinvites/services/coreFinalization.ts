@@ -1,8 +1,10 @@
 import { AddStreamInviteDeclinedActivity } from '@/modules/activitystream/domain/operations'
+import {
+  AddOrUpdateStreamCollaborator,
+  GetStream
+} from '@/modules/core/domain/streams/operations'
 import { StreamInvalidAccessError } from '@/modules/core/errors/stream'
 import { isResourceAllowed } from '@/modules/core/helpers/token'
-import { getStream } from '@/modules/core/repositories/streams'
-import { addOrUpdateStreamCollaborator } from '@/modules/core/services/streams/streamAccessService'
 import { ProjectInviteResourceType } from '@/modules/serverinvites/domain/constants'
 import { InviteFinalizingError } from '@/modules/serverinvites/errors'
 import {
@@ -13,7 +15,7 @@ import {
 import { Roles } from '@speckle/shared'
 
 type ValidateProjectInviteBeforeFinalizationFactoryDeps = {
-  getProject: typeof getStream
+  getProject: GetStream
 }
 
 export const validateProjectInviteBeforeFinalizationFactory =
@@ -74,9 +76,9 @@ export const validateProjectInviteBeforeFinalizationFactory =
   }
 
 type ProcessFinalizedProjectInviteFactoryDeps = {
-  getProject: typeof getStream
+  getProject: GetStream
   addInviteDeclinedActivity: AddStreamInviteDeclinedActivity
-  addProjectRole: typeof addOrUpdateStreamCollaborator
+  addProjectRole: AddOrUpdateStreamCollaborator
 }
 
 export const processFinalizedProjectInviteFactory =

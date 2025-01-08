@@ -26,7 +26,9 @@
         class="absolute z-40 lg:static h-full flex w-[17rem] shrink-0 transition-all"
         :class="isOpenMobile ? '' : '-translate-x-[17rem] lg:translate-x-0'"
       >
-        <LayoutSidebar class="border-r border-outline-3 px-2 py-3 bg-foundation-page">
+        <LayoutSidebar
+          class="border-r border-outline-3 px-2 pt-3 pb-2 bg-foundation-page"
+        >
           <LayoutSidebarMenu>
             <LayoutSidebarMenuGroup>
               <NuxtLink :to="homeRoute" @click="isOpenMobile = false">
@@ -56,51 +58,49 @@
               v-if="isWorkspacesEnabled"
               collapsible
               title="Workspaces"
-              :plus-click="
-                isNotGuest
-                  ? () => {
-                      openWorkspaceCreateDialog()
-                    }
-                  : undefined
-              "
-              plus-text="Create workspace"
+              :icon-click="isNotGuest ? handlePlusClick : undefined"
+              icon-text="Create workspace"
             >
-              <NuxtLink :to="workspacesRoute" @click="isOpenMobile = false">
+              <NuxtLink :to="workspacesRoute" @click="handleIntroducingWorkspacesClick">
                 <LayoutSidebarMenuGroupItem
+                  v-if="!hasWorkspaces || route.path === workspacesRoute"
                   label="Introducing workspaces"
                   :active="isActive(workspacesRoute)"
-                  tag="BETA"
                 >
                   <template #icon>
                     <IconWorkspaces class="size-4 text-foreground-2" />
                   </template>
                 </LayoutSidebarMenuGroupItem>
               </NuxtLink>
-              <NuxtLink
-                v-for="(item, key) in workspacesItems"
-                :key="key"
-                :to="item.to"
-                @click="isOpenMobile = false"
-              >
-                <LayoutSidebarMenuGroupItem
-                  :label="item.label"
-                  :active="isActive(item.to)"
-                  class="!pl-1"
+              <template v-for="(item, key) in workspacesItems" :key="key">
+                <NuxtLink
+                  v-if="item.creationState.completed !== false"
+                  :to="item.to"
+                  @click="isOpenMobile = false"
                 >
-                  <template #icon>
-                    <WorkspaceAvatar
-                      :logo="item.logo"
-                      :default-logo-index="item.defaultLogoIndex"
-                      size="sm"
-                    />
-                  </template>
-                </LayoutSidebarMenuGroupItem>
-              </NuxtLink>
+                  <LayoutSidebarMenuGroupItem
+                    :label="item.label"
+                    :active="isActive(item.to)"
+                    :tag="
+                      item.plan.status === WorkspacePlanStatuses.Trial ||
+                      item.plan.status === WorkspacePlanStatuses.Expired ||
+                      !item.plan.status
+                        ? 'TRIAL'
+                        : undefined
+                    "
+                    class="!pl-1"
+                  >
+                    <template #icon>
+                      <WorkspaceAvatar :name="item.name" :logo="item.logo" size="sm" />
+                    </template>
+                  </LayoutSidebarMenuGroupItem>
+                </NuxtLink>
+              </template>
             </LayoutSidebarMenuGroup>
 
             <LayoutSidebarMenuGroup title="Resources" collapsible>
               <NuxtLink
-                :to="connectorsPageUrl"
+                :to="downloadManagerUrl"
                 target="_blank"
                 @click="isOpenMobile = false"
               >
@@ -123,17 +123,13 @@
                 </LayoutSidebarMenuGroupItem>
               </NuxtLink>
 
-              <NuxtLink
-                to="https://docs.google.com/forms/d/e/1FAIpQLSeTOU8i0KwpgBG7ONimsh4YMqvLKZfSRhWEOz4W0MyjQ1lfAQ/viewform"
-                target="_blank"
-                @click="isOpenMobile = false"
-              >
-                <LayoutSidebarMenuGroupItem label="Give us feedback" external>
+              <div @click="openFeedbackDialog">
+                <LayoutSidebarMenuGroupItem label="Give us feedback">
                   <template #icon>
                     <IconFeedback class="size-4 text-foreground-2" />
                   </template>
                 </LayoutSidebarMenuGroupItem>
-              </NuxtLink>
+              </div>
 
               <NuxtLink
                 to="https://speckle.guide/"
@@ -164,11 +160,7 @@
       </div>
     </template>
 
-    <WorkspaceCreateDialog
-      v-model:open="showWorkspaceCreateDialog"
-      navigate-on-success
-      event-source="sidebar"
-    />
+    <FeedbackDialog v-model:open="showFeedbackDialog" />
   </div>
 </template>
 <script setup lang="ts">
@@ -186,22 +178,40 @@ import {
   projectsRoute,
   workspaceRoute,
   workspacesRoute,
-  connectorsPageUrl
+  downloadManagerUrl,
+  workspaceCreateRoute
 } from '~/lib/common/helpers/route'
 import { useRoute } from 'vue-router'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { HomeIcon } from '@heroicons/vue/24/outline'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { Roles } from '@speckle/shared'
+import { graphql } from '~/lib/common/generated/gql'
+import { WorkspacePlanStatuses } from '~/lib/common/generated/gql/graphql'
+
+graphql(`
+  fragment Sidebar_User on User {
+    id
+    automateFunctions {
+      items {
+        id
+        name
+        description
+        logo
+      }
+    }
+  }
+`)
 
 const { isLoggedIn } = useActiveUser()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
 const route = useRoute()
+const router = useRouter()
 const { activeUser: user } = useActiveUser()
 const mixpanel = useMixpanel()
 
 const isOpenMobile = ref(false)
-const showWorkspaceCreateDialog = ref(false)
+const showFeedbackDialog = ref(false)
 
 const { result: workspaceResult, onResult: onWorkspaceResult } = useQuery(
   settingsSidebarQuery,
@@ -218,25 +228,24 @@ const isActive = (...routes: string[]): boolean => {
 const isNotGuest = computed(
   () => Roles.Server.Admin || user.value?.role === Roles.Server.User
 )
-
 const workspacesItems = computed(() =>
   workspaceResult.value?.activeUser
     ? workspaceResult.value.activeUser.workspaces.items.map((workspace) => ({
         label: workspace.name,
+        name: workspace.name,
         id: workspace.id,
         to: workspaceRoute(workspace.slug),
         logo: workspace.logo,
-        defaultLogoIndex: workspace.defaultLogoIndex
+        plan: {
+          status: workspace.plan?.status
+        },
+        creationState: {
+          completed: workspace.creationState?.completed
+        }
       }))
     : []
 )
-
-const openWorkspaceCreateDialog = () => {
-  showWorkspaceCreateDialog.value = true
-  mixpanel.track('Create Workspace Button Clicked', {
-    source: 'sidebar'
-  })
-}
+const hasWorkspaces = computed(() => workspacesItems.value.length > 0)
 
 onWorkspaceResult((result) => {
   if (result.data?.activeUser) {
@@ -249,4 +258,34 @@ onWorkspaceResult((result) => {
     }
   }
 })
+
+const openFeedbackDialog = () => {
+  showFeedbackDialog.value = true
+  isOpenMobile.value = false
+}
+
+const openWorkspaceCreateDialog = () => {
+  navigateTo(workspaceCreateRoute())
+  mixpanel.track('Create Workspace Button Clicked', {
+    source: 'sidebar'
+  })
+}
+
+const handlePlusClick = () => {
+  if (route.path === workspacesRoute) {
+    openWorkspaceCreateDialog()
+  } else {
+    mixpanel.track('Clicked Link to Workspace Explainer', {
+      source: 'sidebar'
+    })
+    router.push(workspacesRoute)
+  }
+}
+
+const handleIntroducingWorkspacesClick = () => {
+  isOpenMobile.value = false
+  mixpanel.track('Clicked Link to Workspace Explainer', {
+    source: 'sidebar'
+  })
+}
 </script>

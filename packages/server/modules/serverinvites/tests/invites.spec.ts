@@ -40,9 +40,9 @@ import {
   StreamInviteCreateInput,
   UseStreamInviteDocument
 } from '@/test/graphql/generated/graphql'
-import { grantStreamPermissions } from '@/modules/core/repositories/streams'
 import { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
 import { reduce } from 'lodash'
+import { grantStreamPermissionsFactory } from '@/modules/core/repositories/streams'
 
 async function cleanup() {
   await truncateTables([ServerInvites.name, Streams.name, Users.name])
@@ -50,6 +50,7 @@ async function cleanup() {
 
 const findInvite = findInviteFactory({ db })
 const createInviteDirectly = createStreamInviteDirectly
+const grantStreamPermissions = grantStreamPermissionsFactory({ db })
 
 const mailerMock = EmailSendingServiceMock
 
@@ -477,7 +478,7 @@ describe('[Stream & Server Invites]', () => {
 
       before(async () => {
         apollo = await testApolloServer({
-          context: createTestContext({
+          context: await createTestContext({
             auth: true,
             userId: me.id,
             role: Roles.Server.Admin, // Marking the user as an admin

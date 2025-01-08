@@ -1,96 +1,145 @@
 <template>
-  <div class="flex flex-col gap-12">
-    <div class="p-4 flex flex-col gap-6 rounded-lg max-w-2xl mx-auto items-center">
-      <ProjectPageAutomationsScaleImpactImage />
-      <div class="gap-2 flex flex-col text-center">
-        <div class="text-heading-2xl text-fancy-gradient">
-          Scale your digital impact
-        </div>
-        <div class="text-foreground text-body-sm">
-          Speckle Automate empowers you to continuously monitor your published models,
-          automatically ensuring project data standards, identifying potential design
-          faults, and effortlessly creating delivery artifacts.
-          <FormButton
-            :icon-right="ArrowTopRightOnSquareIcon"
-            target="_blank"
-            external
-            color="outline"
-            class="mx-auto my-2"
-            to="https://speckle.systems/blog/automate-with-speckle/"
-          >
-            Learn more
-          </FormButton>
-        </div>
-      </div>
-      <div>
-        <div v-if="isAutomateEnabled" v-tippy="disabledCreateBecauseOf">
-          <FormButton
-            :icon-left="PlusIcon"
-            size="lg"
-            :disabled="!!disabledCreateBecauseOf"
-            @click="$emit('new-automation')"
-          >
-            New automation
-          </FormButton>
-        </div>
-        <FormButton
-          v-else
-          :icon-left="PlusIcon"
-          size="lg"
-          external
-          target="_blank"
-          to="https://docs.google.com/forms/d/e/1FAIpQLSc5e4q0gyG8VkGqA3gRzN71c4TDu0P9W0PXeVarFu_8po3qRA/viewform"
-        >
-          Sign up for beta
-        </FormButton>
-      </div>
+  <section class="flex flex-col items-center justify-center py-8 md:py-16">
+    <h3 class="text-heading-lg text-foreground">
+      Scale your digital impact with Automate. Let's get you started...
+    </h3>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-3 pt-5 mt-4 max-w-5xl">
+      <CommonCard
+        v-for="emptyStateItem in emptyStateItems"
+        :key="emptyStateItem.title"
+        :title="emptyStateItem.title"
+        :description="emptyStateItem.description"
+        :buttons="emptyStateItem.buttons"
+      />
     </div>
-    <div v-if="isAutomateEnabled" class="flex flex-col gap-9">
-      <div class="flex gap-2 flex-col sm:flex-row sm:justify-between sm:items-center">
-        <h2 class="text-heading-xl">Featured functions</h2>
-        <FormButton color="outline" class="shrink-0" :to="automationFunctionsRoute">
-          Explore all functions
-        </FormButton>
-      </div>
-      <AutomateFunctionCardView v-if="functions.length">
-        <AutomateFunctionCard
-          v-for="fn in functions"
-          :key="fn.id"
-          :fn="fn"
-          no-buttons
-        />
-      </AutomateFunctionCardView>
-      <CommonGenericEmptyState v-else />
-    </div>
-  </div>
+  </section>
 </template>
 <script setup lang="ts">
-import { ArrowTopRightOnSquareIcon, PlusIcon } from '@heroicons/vue/24/outline'
-import { graphql } from '~/lib/common/generated/gql'
-import type { ProjectPageAutomationsEmptyState_QueryFragment } from '~/lib/common/generated/gql/graphql'
-import { automationFunctionsRoute } from '~/lib/common/helpers/route'
+import {
+  automationFunctionsRoute,
+  workspaceFunctionsRoute
+} from '~/lib/common/helpers/route'
 import type { CreateAutomationSelectableFunction } from '~/lib/automate/helpers/automations'
+import type { LayoutDialogButton } from '@speckle/ui-components'
+import { useMixpanel } from '~/lib/core/composables/mp'
 
-graphql(`
-  fragment ProjectPageAutomationsEmptyState_Query on Query {
-    automateFunctions(limit: 9, filter: { featuredFunctionsOnly: true }) {
-      items {
-        ...AutomationsFunctionsCard_AutomateFunction
-        ...AutomateAutomationCreateDialog_AutomateFunction
-      }
-    }
-  }
-`)
-
-defineEmits<{
+const emit = defineEmits<{
   'new-automation': [fn?: CreateAutomationSelectableFunction]
+  'new-function': []
 }>()
 
-const props = defineProps<{
-  functions?: ProjectPageAutomationsEmptyState_QueryFragment
-  isAutomateEnabled: boolean
-  disabledCreateBecauseOf?: string
-}>()
+export type AutomateOnboardingAction =
+  | 'create-function'
+  | 'view-functions'
+  | 'create-automation'
 
-const functions = computed(() => props.functions?.automateFunctions.items || [])
+const props = withDefaults(
+  defineProps<{
+    workspaceSlug?: string
+    hiddenActions?: AutomateOnboardingAction[]
+    disabledActions?: {
+      action: AutomateOnboardingAction
+      reason: string
+    }[]
+  }>(),
+  {
+    hiddenActions: () => [],
+    disabledActions: () => []
+  }
+)
+
+const router = useRouter()
+const mixpanel = useMixpanel()
+
+onMounted(() => {
+  mixpanel.track('Automate Onboarding Start')
+})
+
+const functionsGalleryRoute = computed(() =>
+  props.workspaceSlug
+    ? workspaceFunctionsRoute(props.workspaceSlug)
+    : automationFunctionsRoute
+)
+
+const isVisibleAction = (action: LayoutDialogButton): boolean => {
+  return !props.hiddenActions.includes(action.id as AutomateOnboardingAction)
+}
+
+const isDisabledAction = (action: AutomateOnboardingAction): boolean => {
+  return props.disabledActions.some((entry) => entry.action === action)
+}
+
+const getDisabledMessage = (action: AutomateOnboardingAction): string | undefined => {
+  return props.disabledActions.find((entry) => entry.action === action)?.reason
+}
+
+const emptyStateItems = computed(() => {
+  const items: {
+    title: string
+    description: string
+    buttons: LayoutDialogButton[]
+  }[] = [
+    {
+      title: "Capture your team's knowledge",
+      description:
+        'Turn tacit knowledge and monotonous process into code. Use private functions across projects in your workspace.',
+      buttons: [
+        {
+          id: 'create-function',
+          text: 'Create function',
+          onClick: () => {
+            mixpanel.track('Automate Onboarding Start Create Function')
+            emit('new-function')
+          },
+          disabled: isDisabledAction('create-function')
+        },
+        {
+          id: 'view-functions',
+          text: 'View functions',
+          onClick: () => {
+            router.push(functionsGalleryRoute.value)
+          }
+        }
+      ].filter(isVisibleAction)
+    },
+    {
+      title: 'Automate your workflows',
+      description:
+        'Continuously ensure project data standards, generate delivery artifacts, and more!',
+      buttons: [
+        {
+          text: 'Create automation',
+          onClick: () => {
+            mixpanel.track('Automate Onboarding Start Create Automation')
+            emit('new-automation')
+          },
+          disabled: isDisabledAction('create-automation'),
+          disabledMessage: getDisabledMessage('create-automation')
+        }
+      ]
+    },
+    {
+      title: 'Learn more',
+      description:
+        "Let's chat! Find out how Automate can be customised to support and improve virtually any of your custom workflows.",
+      buttons: [
+        {
+          text: 'Book a demo',
+          props: {
+            to: 'https://calendar.app.google/kH2EzSSMQktJ6bTZ7',
+            external: true
+          }
+        },
+        {
+          text: 'View docs',
+          props: {
+            to: 'https://speckle.guide/automate/',
+            external: true
+          }
+        }
+      ]
+    }
+  ]
+  return items
+})
 </script>

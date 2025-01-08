@@ -11,7 +11,6 @@ import {
   getFunctionRelease,
   getFunctionReleases
 } from '@/modules/automate/clients/executionEngine'
-import { validateStreamAccess } from '@/modules/core/services/streams/streamAccessService'
 import { Automate, Roles, removeNullOrUndefinedKeys } from '@speckle/shared'
 import { AuthCodePayloadAction } from '@/modules/automate/services/authCode'
 import {
@@ -56,13 +55,14 @@ import {
   UpdateAutomation
 } from '@/modules/automate/domain/operations'
 import { GetBranchesByIds } from '@/modules/core/domain/branches/operations'
+import { ValidateStreamAccess } from '@/modules/core/domain/streams/operations'
 
 export type CreateAutomationDeps = {
   createAuthCode: CreateStoredAuthCode
   automateCreateAutomation: typeof clientCreateAutomation
   storeAutomation: StoreAutomation
   storeAutomationToken: StoreAutomationToken
-  validateStreamAccess: typeof validateStreamAccess
+  validateStreamAccess: ValidateStreamAccess
   automationsEventsEmit: AutomationsEventsEmit
 }
 
@@ -141,7 +141,7 @@ export type CreateTestAutomationDeps = {
   getFunction: typeof getFunction
   storeAutomation: StoreAutomation
   storeAutomationRevision: StoreAutomationRevision
-  validateStreamAccess: typeof validateStreamAccess
+  validateStreamAccess: ValidateStreamAccess
   automationsEventsEmit: AutomationsEventsEmit
 }
 
@@ -246,7 +246,7 @@ export const createTestAutomationFactory =
 export type ValidateAndUpdateAutomationDeps = {
   getAutomation: GetAutomation
   updateAutomation: UpdateAutomation
-  validateStreamAccess: typeof validateStreamAccess
+  validateStreamAccess: ValidateStreamAccess
   automationsEventsEmit: AutomationsEventsEmit
 }
 
@@ -395,7 +395,7 @@ export type CreateAutomationRevisionDeps = {
   getEncryptionKeyPair: GetEncryptionKeyPair
   getFunctionInputDecryptor: FunctionInputDecryptor
   getFunctionReleases: typeof getFunctionReleases
-  validateStreamAccess: typeof validateStreamAccess
+  validateStreamAccess: ValidateStreamAccess
   automationsEventsEmit: AutomationsEventsEmit
 } & ValidateNewTriggerDefinitionsDeps &
   ValidateNewRevisionFunctionsDeps
@@ -573,7 +573,8 @@ export const getAutomationsStatusFactory =
       ...r,
       status: resolveStatusFromFunctionRunStatuses(
         r.functionRuns.map((fr) => fr.status)
-      )
+      ),
+      projectId: params.projectId
     }))
 
     const failedAutomations = runsWithUpdatedStatus.filter(

@@ -1,11 +1,20 @@
 import zlib from 'zlib'
 import { corsMiddleware } from '@/modules/core/configs/cors'
-import { validatePermissionsWriteStream } from '@/modules/core/rest/authUtils'
-import { hasObjects } from '@/modules/core/services/objects'
 import { chunk } from 'lodash'
 import type { Application } from 'express'
+import { hasObjectsFactory } from '@/modules/core/repositories/objects'
+import { validatePermissionsWriteStreamFactory } from '@/modules/core/services/streams/auth'
+import { authorizeResolver, validateScopes } from '@/modules/shared'
+import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
+import { UserInputError } from '@/modules/core/errors/userinput'
+import { ensureError } from '@speckle/shared'
 
 export default (app: Application) => {
+  const validatePermissionsWriteStream = validatePermissionsWriteStreamFactory({
+    validateScopes,
+    authorizeResolver
+  })
+
   app.options('/api/diff/:streamId', corsMiddleware())
 
   app.post('/api/diff/:streamId', corsMiddleware(), async (req, res) => {
@@ -21,7 +30,17 @@ export default (app: Application) => {
       return res.status(hasStreamAccess.status).end()
     }
 
-    const objectList = JSON.parse(req.body.objects)
+    const projectDb = await getProjectDbClient({ projectId: req.params.streamId })
+    const hasObjects = hasObjectsFactory({ db: projectDb })
+    let objectList: string[]
+    try {
+      objectList = JSON.parse(req.body.objects)
+    } catch (err) {
+      throw new UserInputError(
+        'Invalid body. Please provide a JSON object containing the property "objects" of type string. The value must be a JSON string representation of an array of object IDs.',
+        ensureError(err, 'Unknown JSON parsing issue')
+      )
+    }
 
     req.log.info({ objectCount: objectList.length }, 'Diffing {objectCount} objects.')
 
@@ -31,7 +50,7 @@ export default (app: Application) => {
       objectListChunks.map((objectListChunk) =>
         hasObjects({
           streamId: req.params.streamId,
-          objectIds: objectListChunk
+          objectIds: objectListChunk as string[]
         })
       )
     )

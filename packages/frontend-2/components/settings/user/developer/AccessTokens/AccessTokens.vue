@@ -8,7 +8,6 @@
           props: {
             color: 'outline',
             to: 'https://speckle.guide/dev/tokens.html',
-            iconLeft: BookOpenIcon,
             target: '_blank',
             external: true
           },
@@ -16,7 +15,6 @@
         },
         {
           props: {
-            iconLeft: PlusIcon,
             onClick: openCreateTokenDialog
           },
           label: 'New token'
@@ -46,6 +44,7 @@
         { id: 'actions', header: '', classes: 'col-span-1 flex justify-end' }
       ]"
       :items="tokens"
+      :loading="loading"
     >
       <template #name="{ item }">
         {{ item.name }}
@@ -92,12 +91,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useQuery } from '@vue/apollo-composable'
-import {
-  PlusIcon,
-  BookOpenIcon,
-  EllipsisHorizontalIcon,
-  XMarkIcon
-} from '@heroicons/vue/24/outline'
+import { EllipsisHorizontalIcon, XMarkIcon } from '@heroicons/vue/24/outline'
 import { developerSettingsAccessTokensQuery } from '~~/lib/developer-settings/graphql/queries'
 import type { TokenItem } from '~~/lib/developer-settings/helpers/types'
 import { HorizontalDirection } from '~~/lib/common/composables/window'
@@ -107,9 +101,11 @@ const emit = defineEmits<{
   (e: 'delete', item: TokenItem): void
 }>()
 
-const { result: tokensResult, refetch: refetchTokens } = useQuery(
-  developerSettingsAccessTokensQuery
-)
+const {
+  result: tokensResult,
+  refetch: refetchTokens,
+  loading
+} = useQuery(developerSettingsAccessTokensQuery)
 
 const tokenSuccess = ref('')
 const showCreateTokenDialog = ref(false)

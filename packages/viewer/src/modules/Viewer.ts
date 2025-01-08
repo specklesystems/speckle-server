@@ -79,11 +79,9 @@ export class Viewer extends EventEmitter implements IViewer {
     const cs = []
     let pt = obj
     do {
-      if ((pt = Object.getPrototypeOf(pt))) cs.push(pt.constructor || null)
+      if ((pt = Object.getPrototypeOf(pt))) cs.push(pt.constructor.name || null)
     } while (pt !== null)
-    return cs.map(function (c) {
-      return c ? c.toString().split(/\s|\(/)[1] : null
-    })
+    return cs
   }
 
   public createExtension<T extends Extension>(type: Constructor<T>): T {
@@ -235,7 +233,7 @@ export class Viewer extends EventEmitter implements IViewer {
         })
         .catch((reason) => {
           Logger.error(reason)
-          Logger.error('Fallback to null environment!')
+          Logger.error('Environment failed to load!')
         })
     }
   }

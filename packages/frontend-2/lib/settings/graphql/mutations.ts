@@ -117,10 +117,21 @@ export const settingsDeleteWorkspaceDomainMutation = graphql(`
     }
   }
 `)
+
 export const settingsLeaveWorkspaceMutation = graphql(`
   mutation SettingsLeaveWorkspace($leaveId: ID!) {
     workspaceMutations {
       leave(id: $leaveId)
+    }
+  }
+`)
+
+export const settingsBillingCancelCheckoutSessionMutation = graphql(`
+  mutation SettingsBillingCancelCheckoutSession($input: CancelCheckoutSessionInput!) {
+    workspaceMutations {
+      billing {
+        cancelCheckoutSession(input: $input)
+      }
     }
   }
 `)

@@ -1,5 +1,5 @@
 import { db } from '@/db/knex'
-import { getStream } from '@/modules/core/repositories/streams'
+import { getStreamFactory } from '@/modules/core/repositories/streams'
 import { adminOverrideEnabled } from '@/modules/shared/helpers/envHelper'
 import {
   getUserAclRoleFactory,
@@ -10,6 +10,7 @@ import {
   authorizeResolverFactory,
   validateScopesFactory
 } from '@/modules/shared/services/auth'
+import { getEventBus } from '@/modules/shared/services/eventBus'
 import {
   pubsub,
   StreamSubscriptions,
@@ -29,6 +30,7 @@ export const authorizeResolver = authorizeResolverFactory({
   getRoles: getRolesFactory({ db }),
   adminOverrideEnabled,
   getUserServerRole: getUserServerRoleFactory({ db }),
-  getStream,
-  getUserAclRole: getUserAclRoleFactory({ db })
+  getStream: getStreamFactory({ db }),
+  getUserAclRole: getUserAclRoleFactory({ db }),
+  emitWorkspaceEvent: getEventBus().emit
 })

@@ -21,6 +21,19 @@ export const createProjectMutation = graphql(`
   }
 `)
 
+export const createWorkspaceProjectMutation = graphql(`
+  mutation CreateWorkspaceProject($input: WorkspaceProjectCreateInput!) {
+    workspaceMutations {
+      projects {
+        create(input: $input) {
+          ...ProjectPageProject
+          ...ProjectDashboardItem
+        }
+      }
+    }
+  }
+`)
+
 export const updateModelMutation = graphql(`
   mutation UpdateModel($input: UpdateModelInput!) {
     modelMutations {
@@ -271,7 +284,13 @@ export const useMoveProjectToWorkspaceMutation = graphql(`
           id
           workspace {
             id
+            projects {
+              items {
+                id
+              }
+            }
             ...ProjectsMoveToWorkspaceDialog_Workspace
+            ...MoveProjectsDialog_Workspace
           }
         }
       }

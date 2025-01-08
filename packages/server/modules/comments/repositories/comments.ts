@@ -22,10 +22,7 @@ import {
 import { Optional } from '@/modules/shared/helpers/typeHelper'
 import { clamp, keyBy, reduce } from 'lodash'
 import crs from 'crypto-random-string'
-import {
-  BatchedSelectOptions,
-  executeBatchedSelect
-} from '@/modules/shared/helpers/dbHelper'
+import { executeBatchedSelect } from '@/modules/shared/helpers/dbHelper'
 import { Knex } from 'knex'
 import { decodeCursor, encodeCursor } from '@/modules/shared/helpers/graphqlHelper'
 import { isNullOrUndefined, SpeckleViewer } from '@speckle/shared'
@@ -34,6 +31,7 @@ import { Merge } from 'type-fest'
 import {
   CheckStreamResourceAccess,
   DeleteComment,
+  GetBatchedStreamComments,
   GetBranchCommentCounts,
   GetComment,
   GetCommentParents,
@@ -144,53 +142,38 @@ export const getCommentsViewedAtFactory =
     return await q
   }
 
-type GetBatchedStreamCommentsOptions = BatchedSelectOptions & {
-  /**
-   * Filter out comments with parent comment references
-   * Defaults to: false
-   */
-  withoutParentCommentOnly: boolean
+export const getBatchedStreamCommentsFactory =
+  (deps: { db: Knex }): GetBatchedStreamComments =>
+  (streamId, options) => {
+    const { withoutParentCommentOnly = false, withParentCommentOnly = false } =
+      options || {}
 
-  /**
-   * Filter out comments without parent comment references
-   * Defaults to: false
-   */
-  withParentCommentOnly: boolean
-}
+    const baseQuery = tables
+      .comments(deps.db)
+      .select<CommentRecord[]>('*')
+      .where(Comments.col.streamId, streamId)
+      .orderBy(Comments.col.id)
 
-export function getBatchedStreamComments(
-  streamId: string,
-  options?: Partial<GetBatchedStreamCommentsOptions>
-) {
-  const { withoutParentCommentOnly = false, withParentCommentOnly = false } =
-    options || {}
+    if (withoutParentCommentOnly) {
+      baseQuery.andWhere(Comments.col.parentComment, null)
+    } else if (withParentCommentOnly) {
+      baseQuery.andWhereNot(Comments.col.parentComment, null)
+    }
 
-  const baseQuery = Comments.knex<CommentRecord[]>()
-    .where(Comments.col.streamId, streamId)
-    .orderBy(Comments.col.id)
-
-  if (withoutParentCommentOnly) {
-    baseQuery.andWhere(Comments.col.parentComment, null)
-  } else if (withParentCommentOnly) {
-    baseQuery.andWhereNot(Comments.col.parentComment, null)
+    return executeBatchedSelect(baseQuery, options)
   }
 
-  return executeBatchedSelect(baseQuery, options)
-}
+export const getCommentLinksFactory =
+  (deps: { db: Knex }) =>
+  async (commentIds: string[], options?: Partial<{ trx: Knex.Transaction }>) => {
+    const q = tables
+      .commentLinks(deps.db)
+      .whereIn(CommentLinks.col.commentId, commentIds)
 
-export async function getCommentLinks(
-  commentIds: string[],
-  options?: Partial<{ trx: Knex.Transaction }>
-) {
-  const q = CommentLinks.knex<CommentLinkRecord[]>().whereIn(
-    CommentLinks.col.commentId,
-    commentIds
-  )
+    if (options?.trx) q.transacting(options.trx)
 
-  if (options?.trx) q.transacting(options.trx)
-
-  return await q
-}
+    return await q
+  }
 
 export const insertCommentsFactory =
   (deps: { db: Knex }): InsertComments =>
@@ -432,7 +415,7 @@ export const getPaginatedCommitCommentsTotalCountFactory =
   (deps: { db: Knex }): GetPaginatedCommitCommentsTotalCount =>
   async (params: Omit<PaginatedCommitCommentsParams, 'limit' | 'cursor'>) => {
     const baseQ = getPaginatedCommitCommentsBaseQueryFactory(deps)(params)
-    const q = knex.count<{ count: string }[]>().from(baseQ.as('sq1'))
+    const q = deps.db.count<{ count: string }[]>().from(baseQ.as('sq1'))
     const [row] = await q
 
     return parseInt(row.count || '0')
@@ -497,7 +480,7 @@ export const getPaginatedBranchCommentsTotalCountFactory =
   (deps: { db: Knex }) =>
   async (params: Omit<PaginatedBranchCommentsParams, 'limit' | 'cursor'>) => {
     const baseQ = getPaginatedBranchCommentsBaseQueryFactory(deps)(params)
-    const q = knex.count<{ count: string }[]>().from(baseQ.as('sq1'))
+    const q = deps.db.count<{ count: string }[]>().from(baseQ.as('sq1'))
     const [row] = await q
 
     return parseInt(row.count || '0')
@@ -694,7 +677,7 @@ export const getPaginatedProjectCommentsTotalCountFactory =
       params,
       options
     )
-    const q = knex.count<{ count: string }[]>().from(baseQuery.as('sq1'))
+    const q = deps.db.count<{ count: string }[]>().from(baseQuery.as('sq1'))
     const [row] = await q
 
     return parseInt(row.count || '0')
@@ -888,7 +871,12 @@ export const getCommentsLegacyFactory =
     query.orderBy('createdAt', 'desc')
     query.limit(limit || 1) // need at least 1 row to get totalCount
 
-    const rows = await query
+    const rows = (await query) as Array<
+      CommentRecord & {
+        total_count: string
+        resources: Array<{ resourceId: string; resourceType: string }>
+      }
+    >
     const totalCount = rows && rows.length > 0 ? parseInt(rows[0].total_count) : 0
     const nextCursor = rows && rows.length > 0 ? rows[rows.length - 1].createdAt : null
 

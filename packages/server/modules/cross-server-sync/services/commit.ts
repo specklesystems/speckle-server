@@ -2,15 +2,10 @@ import fetch from 'cross-fetch'
 import { ApolloClient, NormalizedCacheObject, gql } from '@apollo/client/core'
 import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
 import { CreateCommentInput } from '@/test/graphql/generated/graphql'
-import { getStream, getStreamCollaborators } from '@/modules/core/repositories/streams'
 import { Roles, timeoutAt } from '@speckle/shared'
-import { createObject } from '@/modules/core/services/objects'
-import { getObject } from '@/modules/core/repositories/objects'
 import ObjectLoader from '@speckle/objectloader'
 import { noop } from 'lodash'
 import { crossServerSyncLogger } from '@/logging/logging'
-import { createCommitByBranchId } from '@/modules/core/services/commit/management'
-import { getUser } from '@/modules/core/repositories/users'
 import type { SpeckleViewer } from '@speckle/shared'
 import { retry } from '@speckle/shared'
 import {
@@ -34,6 +29,13 @@ import { GetStreamBranchByName } from '@/modules/core/domain/branches/operations
 import { StreamNotFoundError } from '@/modules/core/errors/stream'
 import { UserInputError } from '@/modules/core/errors/userinput'
 import { BranchNotFoundError } from '@/modules/core/errors/branch'
+import { CreateCommitByBranchId } from '@/modules/core/domain/commits/operations'
+import { CreateObject, GetObject } from '@/modules/core/domain/objects/operations'
+import {
+  GetStream,
+  GetStreamCollaborators
+} from '@/modules/core/domain/streams/operations'
+import { GetUser } from '@/modules/core/domain/users/operations'
 
 type LocalResources = Awaited<ReturnType<ReturnType<typeof getLocalResourcesFactory>>>
 type LocalResourcesWithCommit = LocalResources & { newCommitId: string }
@@ -43,6 +45,7 @@ type ObjectLoaderObject = Record<string, unknown> & {
   id: string
   speckle_type: string
   totalChildrenCount: number
+  __closure: Record<string, number> | null
 }
 
 type CommitMetadata = Awaited<ReturnType<typeof getCommitMetadata>>
@@ -221,10 +224,10 @@ const parseIncomingUrl = async (url: string, token?: string) => {
 }
 
 type GetLocalResourcesDeps = {
-  getStream: typeof getStream
+  getStream: GetStream
   getStreamBranchByName: GetStreamBranchByName
-  getStreamCollaborators: typeof getStreamCollaborators
-  getUser: typeof getUser
+  getStreamCollaborators: GetStreamCollaborators
+  getUser: GetUser
 }
 
 const getLocalResourcesFactory =
@@ -444,7 +447,8 @@ const saveNewThreadsFactory =
                   doc: r.text.doc,
                   blobIds: []
                 },
-                threadId: newComment.id
+                threadId: newComment.id,
+                projectId: targetStream.id
               },
               commentAuthor.id
             )
@@ -455,7 +459,7 @@ const saveNewThreadsFactory =
   }
 
 type SaveNewCommitDeps = {
-  createCommitByBranchId: typeof createCommitByBranchId
+  createCommitByBranchId: CreateCommitByBranchId
 }
 
 const saveNewCommitFactory =
@@ -491,8 +495,8 @@ const saveNewCommitFactory =
   }
 
 type CreateNewObjectDeps = {
-  createObject: typeof createObject
-  getObject: typeof getObject
+  createObject: CreateObject
+  getObject: GetObject
 }
 
 const createNewObjectFactory =

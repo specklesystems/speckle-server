@@ -1,10 +1,4 @@
 import {
-  createUser,
-  validatePasssword,
-  getUserByEmail
-} from '@/modules/core/services/users'
-import { getServerInfo } from '@/modules/core/services/generic'
-import {
   sendRateLimitResponse,
   getRateLimitResult,
   isRateLimitBreached
@@ -22,17 +16,23 @@ import {
   ResolveAuthRedirectPath,
   ValidateServerInvite
 } from '@/modules/serverinvites/services/operations'
+import {
+  CreateValidatedUser,
+  LegacyGetUserByEmail,
+  ValidateUserPassword
+} from '@/modules/core/domain/users/operations'
+import { GetServerInfo } from '@/modules/core/domain/server/operations'
 import { UnauthorizedError } from '@/modules/shared/errors'
 import { InviteNotFoundError } from '@/modules/serverinvites/errors'
 
 const localStrategyBuilderFactory =
   (deps: {
-    validatePassword: typeof validatePasssword
-    getUserByEmail: typeof getUserByEmail
-    getServerInfo: typeof getServerInfo
+    validateUserPassword: ValidateUserPassword
+    getUserByEmail: LegacyGetUserByEmail
+    getServerInfo: GetServerInfo
     getRateLimitResult: typeof getRateLimitResult
     validateServerInvite: ValidateServerInvite
-    createUser: typeof createUser
+    createUser: CreateValidatedUser
     finalizeInvitedServerRegistration: FinalizeInvitedServerRegistration
     resolveAuthRedirectPath: ResolveAuthRedirectPath
   }): AuthStrategyBuilder =>
@@ -57,7 +57,7 @@ const localStrategyBuilderFactory =
       moveAuthParamsToSessionMiddleware,
       async (req, res, next) => {
         try {
-          const valid = await deps.validatePassword({
+          const valid = await deps.validateUserPassword({
             email: req.body.email,
             password: req.body.password
           })
@@ -118,7 +118,12 @@ const localStrategyBuilderFactory =
             role: invite
               ? getResourceTypeRole(invite.resource, ServerInviteResourceType)
               : undefined,
-            verified: !!invite
+            verified: !!invite,
+            signUpContext: {
+              req,
+              isInvite: !!invite,
+              newsletterConsent: !!req.session.newsletterConsent
+            }
           })
           req.user = {
             id: userId,

@@ -1,11 +1,9 @@
+import { GetServerInfo } from '@/modules/core/domain/server/operations'
+import { GetUserByEmail } from '@/modules/core/domain/users/operations'
 import { UserNotFoundError } from '@/modules/core/errors/user'
 import { getPasswordResetFinalizationRoute } from '@/modules/core/helpers/routeHelper'
-import { getUserByEmail } from '@/modules/core/repositories/users'
-import { getServerInfo } from '@/modules/core/services/generic'
-import {
-  EmailTemplateParams,
-  renderEmail
-} from '@/modules/emails/services/emailRendering'
+import { EmailTemplateParams } from '@/modules/emails/domain/operations'
+import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
 import { CreateToken, GetPendingToken } from '@/modules/pwdreset/domain/operations'
 import { InvalidPasswordRecoveryRequestError } from '@/modules/pwdreset/errors'
@@ -15,10 +13,10 @@ import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
 const EMAIL_SUBJECT = 'Speckle Account Password Reset'
 
 type InitializeNewTokenDeps = {
-  getUserByEmail: typeof getUserByEmail
+  getUserByEmail: GetUserByEmail
   getPendingToken: GetPendingToken
   createToken: CreateToken
-  getServerInfo: typeof getServerInfo
+  getServerInfo: GetServerInfo
 }
 
 /**

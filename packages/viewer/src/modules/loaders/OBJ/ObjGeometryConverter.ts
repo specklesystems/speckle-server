@@ -33,7 +33,7 @@ export class ObjGeometryConverter extends GeometryConverter {
   }
 
   /** BLOCK INSTANCE */
-  private BlockInstanceToGeometryData(node: NodeData): GeometryData {
+  protected BlockInstanceToGeometryData(node: NodeData): GeometryData {
     const conversionFactor = 1
     const matrix = new Matrix4().copy(node.raw.matrixWorld)
     const transform: Matrix4 = new Matrix4()
@@ -57,7 +57,7 @@ export class ObjGeometryConverter extends GeometryConverter {
   /**
    * MESH
    */
-  private MeshToGeometryData(node: NodeData): GeometryData | null {
+  protected MeshToGeometryData(node: NodeData): GeometryData | null {
     if (!node.raw) return null
 
     const conversionFactor = 1

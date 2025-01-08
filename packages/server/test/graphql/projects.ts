@@ -52,6 +52,16 @@ export const getProjectObjectQuery = gql`
   }
 `
 
+export const getProjectQuery = gql`
+  query GetProject($id: String!) {
+    project(id: $id) {
+      id
+      name
+      workspaceId
+    }
+  }
+`
+
 export const createProjectMutation = gql`
   mutation CreateProject($input: ProjectCreateInput!) {
     projectMutations {

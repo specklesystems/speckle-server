@@ -33,6 +33,30 @@
       :rules="descriptionRules"
       validate-on-value-update
     />
+    <FormSelectBase
+      v-if="workspaces?.length"
+      name="workspace"
+      label="Workspace"
+      placeholder="Select a workspace"
+      show-label
+      allow-unset
+      clearable
+      help="Allow automations in one of your workspaces to use this function."
+      :items="workspaces"
+    >
+      <template #something-selected="{ value }">
+        <div class="label label--light">
+          {{ isArray(value) ? value[0].name : value.name }}
+        </div>
+      </template>
+      <template #option="{ item, selected }">
+        <div class="flex flex-col">
+          <div :class="['label label--light', selected ? 'text-primary' : '']">
+            {{ item.name }}
+          </div>
+        </div>
+      </template>
+    </FormSelectBase>
     <FormSelectSourceApps
       name="allowedSourceApps"
       label="Supported source apps"
@@ -85,9 +109,11 @@
 <script setup lang="ts">
 import { ValidationHelpers } from '@speckle/ui-components'
 import { isArray } from 'lodash-es'
+import type { AutomateFunctionCreateDialog_WorkspaceFragment } from '~/lib/common/generated/gql/graphql'
 
 defineProps<{
   githubOrgs?: string[]
+  workspaces?: AutomateFunctionCreateDialog_WorkspaceFragment[]
 }>()
 
 const avatarEditMode = ref(false)

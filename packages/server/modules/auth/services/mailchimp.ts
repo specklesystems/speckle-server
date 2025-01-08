@@ -2,7 +2,6 @@
 import mailchimp from '@mailchimp/mailchimp_marketing'
 import { md5 } from '@/modules/shared/helpers/cryptoHelper'
 import { getMailchimpConfig } from '@/modules/shared/helpers/envHelper'
-// import { getUserById } from '@/modules/core/services/users'
 import { UserRecord } from '@/modules/core/helpers/types'
 import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
 

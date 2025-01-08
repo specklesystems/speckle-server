@@ -61,7 +61,7 @@ varying vec3 vViewPosition;
                 pivotHigh = vec4(v2.xyz, 1.);
                 translation = vec4(v3.xyz, 1.);
                 scale = vec4(v1.w, v2.w, v3.w, 1.);
-            #elif
+            #else
                 float size = objCount * TRANSFORM_STRIDE;
                 vec2 cUv = vec2(0.5/size, 0.5);
                 vec2 dUv = vec2(1./size, 0.);
@@ -225,6 +225,10 @@ void main() {
         #ifdef TRANSFORM_STORAGE
             vec4 rtePivotShadow = computeRelativePositionSeparate(tPivotLow.xyz, tPivotHigh.xyz, uShadowViewer_low, uShadowViewer_high);
             shadowPosition.xyz = rotate_vertex_position((shadowPosition - rtePivotShadow).xyz, tQuaternion) * tScale.xyz + rtePivotShadow.xyz + tTranslation.xyz;
+        #endif
+        #ifdef USE_INSTANCING
+            vec4 rtePivotShadow = computeRelativePositionSeparate(ZERO3, ZERO3, uShadowViewer_low, uShadowViewer_high);
+            shadowPosition.xyz = (mat3(instanceMatrix) * (shadowPosition - rtePivotShadow).xyz) + rtePivotShadow.xyz + instanceMatrix[3].xyz;
         #endif
         shadowWorldPosition = modelMatrix * shadowPosition + vec4( shadowWorldNormal * directionalLightShadows[ i ].shadowNormalBias, 0 );
         vDirectionalShadowCoord[ i ] = shadowMatrix * shadowWorldPosition;

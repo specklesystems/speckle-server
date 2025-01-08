@@ -269,10 +269,12 @@ input CommitDeleteInput {
 }
 
 input CommitsMoveInput {
+  streamId: ID!
   targetBranch: String!
   commitIds: [String!]!
 }
 
 input CommitsDeleteInput {
+  streamId: ID!
   commitIds: [String!]!
 }

@@ -28,7 +28,7 @@
       >
         <WorkspaceAvatar
           :logo="project.workspace.logo"
-          :default-logo-index="project.workspace.defaultLogoIndex"
+          :name="project.workspace.name"
           size="sm"
           class="mt-0.5"
         />
@@ -59,14 +59,14 @@ graphql(`
       id
       slug
       name
-      ...WorkspaceAvatar_Workspace
+      logo
     }
   }
 `)
 
-const isWorkspacesEnabled = useIsWorkspacesEnabled()
-
 defineProps<{
   project: ProjectPageProjectHeaderFragment
 }>()
+
+const isWorkspacesEnabled = useIsWorkspacesEnabled()
 </script>

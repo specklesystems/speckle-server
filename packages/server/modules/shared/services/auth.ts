@@ -1,9 +1,9 @@
+import { GetStream } from '@/modules/core/domain/streams/operations'
 import {
   isResourceAllowed,
   RoleResourceTargets,
   roleResourceTypeToTokenResourceType
 } from '@/modules/core/helpers/token'
-import { getStream } from '@/modules/core/repositories/streams'
 import {
   AuthorizeResolver,
   GetUserAclRole,
@@ -13,7 +13,9 @@ import {
 import { GetRoles } from '@/modules/shared/domain/rolesAndScopes/operations'
 import { ForbiddenError } from '@/modules/shared/errors'
 import { adminOverrideEnabled } from '@/modules/shared/helpers/envHelper'
-import { Roles } from '@speckle/shared'
+import { EventBusEmit } from '@/modules/shared/services/eventBus'
+import { WorkspaceEvents } from '@/modules/workspacesCore/domain/events'
+import { isNullOrUndefined, Roles } from '@speckle/shared'
 
 /**
  * Validates the scope against a list of scopes of the current session.
@@ -36,8 +38,9 @@ export const authorizeResolverFactory =
     getRoles: GetRoles
     adminOverrideEnabled: typeof adminOverrideEnabled
     getUserServerRole: GetUserServerRole
-    getStream: typeof getStream
+    getStream: GetStream
     getUserAclRole: GetUserAclRole
+    emitWorkspaceEvent: EventBusEmit
   }): AuthorizeResolver =>
   async (userId, resourceId, requiredRole, userResourceAccessLimits) => {
     userId = userId || null
@@ -65,19 +68,28 @@ export const authorizeResolverFactory =
       if (serverRole === Roles.Server.Admin) return
     }
 
+    let targetWorkspaceId: string | null = null
+
     if (role.resourceTarget === RoleResourceTargets.Streams) {
       const stream = await deps.getStream({
         userId: userId || undefined,
         streamId: resourceId
       })
+
       if (!stream) {
         throw new ForbiddenError(
           `Resource of type ${role.resourceTarget} with ${resourceId} not found`
         )
       }
 
+      targetWorkspaceId = stream.workspaceId
+
       const isPublic = !!stream?.isPublic
       if (isPublic && role.weight < 200) return
+    }
+
+    if (role.resourceTarget === RoleResourceTargets.Workspaces) {
+      targetWorkspaceId = resourceId
     }
 
     const userAclRole = userId
@@ -94,6 +106,17 @@ export const authorizeResolverFactory =
 
     const fullRole = roles.find((r) => r.name === userAclRole)
 
-    if (fullRole && fullRole.weight >= role.weight) return
-    throw new ForbiddenError('You are not authorized.')
+    if (fullRole && fullRole.weight < role.weight) {
+      throw new ForbiddenError('You are not authorized.')
+    }
+
+    if (!isNullOrUndefined(targetWorkspaceId)) {
+      await deps.emitWorkspaceEvent({
+        eventName: WorkspaceEvents.Authorized,
+        payload: {
+          workspaceId: targetWorkspaceId,
+          userId
+        }
+      })
+    }
   }

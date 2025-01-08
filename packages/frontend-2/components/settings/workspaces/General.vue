@@ -3,7 +3,6 @@
     <div class="md:max-w-xl md:mx-auto pb-6 md:pb-0">
       <SettingsSectionHeader title="General" text="Manage your workspace settings" />
       <SettingsSectionHeader title="Workspace details" subheading />
-
       <div class="pt-6">
         <FormTextInput
           v-model="name"
@@ -12,12 +11,14 @@
           name="name"
           placeholder="Workspace name"
           show-label
-          :disabled="!isAdmin"
+          :disabled="!isAdmin || needsSsoLogin"
+          :tooltip-text="disabledTooltipText"
           label-position="left"
           :rules="[isRequired, isStringOfLength({ maxLength: 512 })]"
           validate-on-value-update
           @change="save()"
         />
+
         <hr class="my-4 border-outline-3" />
         <FormTextInput
           v-model="slug"
@@ -25,41 +26,46 @@
           label="Short ID"
           name="shortId"
           :help="slugHelp"
-          :disabled="!isAdmin"
+          :disabled="disableSlugInput"
           show-label
           label-position="left"
+          :tooltip-text="disabledSlugTooltipText"
           read-only
-          :right-icon="isAdmin ? IconEdit : undefined"
-          right-icon-title="Edit short ID"
+          :right-icon="disableSlugInput ? undefined : IconEdit"
+          :right-icon-title="disableSlugInput ? undefined : 'Edit short ID'"
+          custom-help-class="!break-all"
           @right-icon-click="openSlugEditDialog"
         />
         <hr class="my-4 border-outline-3" />
-        <FormTextInput
+        <FormTextArea
           v-model="description"
           color="foundation"
           label="Description"
           name="description"
           placeholder="Workspace description"
+          :tooltip-text="disabledTooltipText"
           show-label
           label-position="left"
-          :disabled="!isAdmin"
+          :disabled="!isAdmin || needsSsoLogin"
           :rules="[isStringOfLength({ maxLength: 512 })]"
           @change="save()"
         />
         <hr class="my-4 border-outline-3" />
         <div class="grid grid-cols-2 gap-4">
           <div class="flex flex-col">
-            <span class="text-body-xs font-medium text-foreground">Workspace logo</span>
+            <span class="text-body-xs font-medium text-foreground">Workspace icon</span>
             <span class="text-body-2xs text-foreground-2 max-w-[230px]">
-              Upload your logo image or use one from our set of workspace icons.
+              Upload your icon image
             </span>
           </div>
-          <SettingsWorkspacesGeneralEditAvatar
-            v-if="workspaceResult?.workspace"
-            :workspace="workspaceResult?.workspace"
-            :disabled="!isAdmin"
-            size="xxl"
-          />
+          <div :key="String(isAdmin)" v-tippy="disabledTooltipText">
+            <SettingsWorkspacesGeneralEditAvatar
+              v-if="workspaceResult?.workspace"
+              :workspace="workspaceResult?.workspace"
+              :disabled="!isAdmin || needsSsoLogin"
+              size="xxl"
+            />
+          </div>
         </div>
       </div>
       <hr class="my-6 border-outline-2" />
@@ -70,7 +76,7 @@
           </span>
           <span class="text-body-2xs text-foreground-2">
             Role workspace members get when added to the workspace and in newly created
-            projects.
+            projects
           </span>
         </div>
         <div class="w-full sm:w-6/12">
@@ -80,7 +86,7 @@
             label="Project role"
             size="md"
             :disabled-items="[Roles.Stream.Owner]"
-            :disabled="!isAdmin"
+            :disabled="!isAdmin || needsSsoLogin"
             @update:model-value="save()"
           />
         </div>
@@ -106,10 +112,17 @@
             data. We will ask you to type in your email address and press the delete
             button.
           </CommonCard>
-          <div>
-            <FormButton color="primary" @click="showDeleteDialog = true">
-              Delete workspace
-            </FormButton>
+
+          <div class="flex">
+            <div v-tippy="deleteWorkspaceTooltip">
+              <FormButton
+                :disabled="!canDeleteWorkspace"
+                color="primary"
+                @click="showDeleteDialog = true"
+              >
+                Delete workspace
+              </FormButton>
+            </div>
           </div>
         </div>
       </template>
@@ -154,7 +167,9 @@ import { useMixpanel } from '~/lib/core/composables/mp'
 import { Roles, type StreamRoles } from '@speckle/shared'
 import { workspaceRoute } from '~/lib/common/helpers/route'
 import { useRoute } from 'vue-router'
-
+import { WorkspacePlanStatuses } from '~/lib/common/generated/gql/graphql'
+import { isPaidPlan } from '~/lib/billing/helpers/types'
+import { useWorkspaceSsoStatus } from '~/lib/workspaces/composables/sso'
 graphql(`
   fragment SettingsWorkspacesGeneral_Workspace on Workspace {
     ...SettingsWorkspacesGeneralEditAvatar_Workspace
@@ -167,6 +182,10 @@ graphql(`
     logo
     role
     defaultProjectRole
+    plan {
+      status
+      name
+    }
   }
 `)
 
@@ -178,6 +197,7 @@ const props = defineProps<{
 
 const IconEdit = resolveComponent('IconEdit')
 
+const isBillingIntegrationEnabled = useIsBillingIntegrationEnabled()
 const mixpanel = useMixpanel()
 const router = useRouter()
 const route = useRoute()
@@ -191,6 +211,9 @@ const { result: workspaceResult, onResult } = useQuery(
   })
 )
 const config = useRuntimeConfig()
+const { hasSsoEnabled, needsSsoLogin } = useWorkspaceSsoStatus({
+  workspaceSlug: computed(() => workspaceResult.value?.workspace?.slug || '')
+})
 
 const name = ref('')
 const slug = ref('')
@@ -203,6 +226,28 @@ const defaultProjectRole = ref<StreamRoles>()
 const isAdmin = computed(
   () => workspaceResult.value?.workspace?.role === Roles.Workspace.Admin
 )
+const canDeleteWorkspace = computed(
+  () =>
+    isAdmin.value &&
+    !needsSsoLogin.value &&
+    (!isBillingIntegrationEnabled ||
+      !(
+        [
+          WorkspacePlanStatuses.Valid,
+          WorkspacePlanStatuses.PaymentFailed,
+          WorkspacePlanStatuses.CancelationScheduled
+        ].includes(
+          workspaceResult.value?.workspace?.plan?.status as WorkspacePlanStatuses
+        ) && isPaidPlan(workspaceResult.value?.workspace?.plan?.name)
+      ))
+)
+const deleteWorkspaceTooltip = computed(() => {
+  if (needsSsoLogin.value)
+    return 'You cannot delete a workspace that requires SSO without an active session'
+  if (!canDeleteWorkspace.value) return 'You cannot delete an active workspace'
+  if (!isAdmin.value) return 'Only admins can delete workspaces'
+  return undefined
+})
 
 const save = handleSubmit(async () => {
   if (!workspaceResult.value?.workspace) return
@@ -228,9 +273,9 @@ const save = handleSubmit(async () => {
       fields: (Object.keys(input) as Array<keyof WorkspaceUpdateInput>).filter(
         (key) => key !== 'id'
       ),
-
       // eslint-disable-next-line camelcase
-      workspace_id: props.workspaceId
+      workspace_id: props.workspaceId,
+      source: 'settings'
     })
   } else {
     const errorMessage = getFirstErrorMessage(result?.errors)
@@ -263,10 +308,28 @@ onResult((res) => {
 const baseUrl = config.public.baseUrl
 
 const slugHelp = computed(() => {
-  return `Used after ${baseUrl}/workspaces/`
+  return `${baseUrl}/workspaces/${slug.value}`
+})
+
+// Using toRef to fix reactivity bug around tooltips
+const adminRef = toRef(isAdmin)
+
+const disabledTooltipText = computed(() => {
+  if (!adminRef.value) return 'Only admins can edit this field'
+  if (needsSsoLogin.value) return 'Log in with your SSO provider to edit this field'
+  return undefined
+})
+
+const disableSlugInput = computed(() => !isAdmin.value || hasSsoEnabled.value)
+
+const disabledSlugTooltipText = computed(() => {
+  return hasSsoEnabled.value
+    ? 'Short ID cannot be changed while SSO is enabled.'
+    : disabledTooltipText.value
 })
 
 const openSlugEditDialog = () => {
+  if (hasSsoEnabled.value) return
   showEditSlugDialog.value = true
 }
 
@@ -287,8 +350,10 @@ const updateWorkspaceSlug = async (newSlug: string) => {
   if (result && result.data) {
     triggerNotification({
       type: ToastNotificationType.Success,
-      title: 'Workspace slug updated'
+      title: 'Workspace short ID updated'
     })
+
+    showEditSlugDialog.value = false
 
     slug.value = newSlug
 

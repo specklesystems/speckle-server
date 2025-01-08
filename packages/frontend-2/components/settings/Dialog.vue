@@ -48,12 +48,19 @@
               :title="workspaceItem.name"
               collapsible
               class="workspace-item"
+              :tag="
+                workspaceItem.plan?.status === WorkspacePlanStatuses.Trial ||
+                workspaceItem.plan?.status === WorkspacePlanStatuses.Expired ||
+                !workspaceItem.plan?.status
+                  ? 'TRIAL'
+                  : undefined
+              "
               :collapsed="targetWorkspaceId !== workspaceItem.id"
             >
               <template #title-icon>
                 <WorkspaceAvatar
                   :logo="workspaceItem.logo"
-                  :default-logo-index="workspaceItem.defaultLogoIndex"
+                  :name="workspaceItem.name"
                   size="sm"
                 />
               </template>
@@ -71,29 +78,34 @@
                       workspaceMenuItem.disabled
                     )
                   "
-                  :tooltip-text="workspaceMenuItem.tooltipText"
-                  :disabled="workspaceMenuItem.disabled"
-                  :tag="workspaceMenuItem.disabled ? 'Coming soon' : undefined"
+                  :tooltip-text="
+                    needsSsoSession(workspaceItem, itemKey as string)
+                      ? 'Log in with your SSO provider to access this page'
+                      : workspaceMenuItem.tooltipText
+                  "
+                  :disabled="!isAdmin && (workspaceMenuItem.disabled || needsSsoSession(workspaceItem, itemKey as string))"
                   extra-padding
                   @click="
-                    onWorkspaceMenuItemClick(
-                      workspaceItem.id,
-                      `${itemKey}`,
-                      workspaceMenuItem.disabled
+                    handleMenuItemClick(
+                      workspaceMenuItem,
+                      workspaceItem,
+                      itemKey as string
                     )
                   "
                 />
               </template>
             </LayoutSidebarMenuGroup>
-            <LayoutSidebarMenuGroupItem
+            <NuxtLink
               v-if="canCreateWorkspace"
-              label="Add workspace"
-              @click="openWorkspaceCreateDialog"
+              :to="workspacesRoute"
+              @click="isOpen = false"
             >
-              <template #icon>
-                <PlusIcon class="h-4 w-4 text-foreground-2" />
-              </template>
-            </LayoutSidebarMenuGroupItem>
+              <LayoutSidebarMenuGroupItem label="Create workspace">
+                <template #icon>
+                  <PlusIcon class="h-4 w-4 text-foreground-2" />
+                </template>
+              </LayoutSidebarMenuGroupItem>
+            </NuxtLink>
           </LayoutSidebarMenuGroup>
         </LayoutSidebarMenu>
       </LayoutSidebar>
@@ -101,7 +113,7 @@
         :is="selectedMenuItem.component"
         v-if="selectedMenuItem"
         :class="[
-          'md:bg-foundation md:px-10 md:py-12 md:bg-foundation-page w-full',
+          'md:px-10 md:py-12 md:bg-foundation-page w-full',
           !isMobile && 'simple-scrollbar overflow-y-auto flex-1'
         ]"
         :user="user"
@@ -109,17 +121,12 @@
         @close="isOpen = false"
       />
     </div>
-
-    <WorkspaceCreateDialog
-      v-model:open="showWorkspaceCreateDialog"
-      event-source="settings"
-    />
   </LayoutDialog>
 </template>
 
 <script setup lang="ts">
 import { Roles } from '@speckle/shared'
-import type { SettingsMenuItem } from '~/lib/settings/helpers/types'
+import { type SettingsMenuItem, SettingMenuKeys } from '~/lib/settings/helpers/types'
 import { useIsWorkspacesEnabled } from '~/composables/globals'
 import { useQuery } from '@vue/apollo-composable'
 import { settingsSidebarQuery } from '~/lib/settings/graphql/queries'
@@ -127,7 +134,7 @@ import { useBreakpoints } from '@vueuse/core'
 import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
 import { PlusIcon } from '@heroicons/vue/24/outline'
 import { useActiveUser } from '~/lib/auth/composables/activeUser'
-import { useSettingsMenu } from '~/lib/settings/composables/menu'
+import { useSettingsMenu, useSetupMenuState } from '~/lib/settings/composables/menu'
 import {
   LayoutSidebar,
   LayoutSidebarMenu,
@@ -136,14 +143,24 @@ import {
 import { graphql } from '~~/lib/common/generated/gql'
 import type { WorkspaceRoles } from '@speckle/shared'
 import { useMixpanel } from '~~/lib/core/composables/mp'
+import { workspacesRoute } from '~/lib/common/helpers/route'
+import type { SettingsMenu_WorkspaceFragment } from '~/lib/common/generated/gql/graphql'
+import { WorkspacePlanStatuses } from '~/lib/common/generated/gql/graphql'
 
 graphql(`
   fragment SettingsDialog_Workspace on Workspace {
-    ...WorkspaceAvatar_Workspace
+    ...SettingsMenu_Workspace
     id
     slug
     role
     name
+    logo
+    plan {
+      status
+    }
+    creationState {
+      completed
+    }
   }
 `)
 
@@ -163,19 +180,21 @@ const targetMenuItem = defineModel<string | null>('targetMenuItem', { required: 
 const targetWorkspaceId = defineModel<string | null>('targetWorkspaceId')
 
 const { activeUser: user } = useActiveUser()
-const { userMenuItems, serverMenuItems, workspaceMenuItems } = useSettingsMenu()
 const breakpoints = useBreakpoints(TailwindBreakpoints)
 const mixpanel = useMixpanel()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
 const { result: workspaceResult } = useQuery(settingsSidebarQuery, null, {
   enabled: isWorkspacesEnabled.value
 })
+const { userMenuItems, serverMenuItems, workspaceMenuItems } = useSettingsMenu()
 
 const isMobile = breakpoints.smaller('md')
-const showWorkspaceCreateDialog = ref(false)
 
 const workspaceItems = computed(
-  () => workspaceResult.value?.activeUser?.workspaces.items ?? []
+  () =>
+    workspaceResult.value?.activeUser?.workspaces.items.filter(
+      (item) => item.creationState?.completed !== false // Removed workspaces that are not completely created
+    ) ?? []
 )
 const isAdmin = computed(() => user.value?.role === Roles.Server.Admin)
 const canCreateWorkspace = computed(
@@ -198,21 +217,13 @@ const selectedMenuItem = computed((): SettingsMenuItem | null => {
   return null
 })
 
-const onWorkspaceMenuItemClick = (id: string, target: string, disabled?: boolean) => {
-  if (disabled) return
+const onWorkspaceMenuItemClick = (id: string, target: string) => {
   targetWorkspaceId.value = id
   targetMenuItem.value = target
   mixpanel.track('Workspace Settings Menuitem Clicked', {
     // eslint-disable-next-line camelcase
     workspace_id: id,
     item: target
-  })
-}
-
-const openWorkspaceCreateDialog = () => {
-  showWorkspaceCreateDialog.value = true
-  mixpanel.track('Create Workspace Button Clicked', {
-    source: 'settings'
   })
 }
 
@@ -224,6 +235,29 @@ const workspaceMenuItemClasses = (
   targetMenuItem.value === itemKey &&
   targetWorkspaceId.value === workspaceId &&
   !disabled
+
+const needsSsoSession = (workspace: SettingsMenu_WorkspaceFragment, key: string) => {
+  return workspace.sso?.provider?.id && key !== SettingMenuKeys.Workspace.General
+    ? !workspace.sso?.session?.validUntil
+    : false
+}
+
+const handleMenuItemClick = (
+  workspaceMenuItem: SettingsMenuItem,
+  workspaceItem: SettingsMenu_WorkspaceFragment,
+  itemKey: string
+) => {
+  const isDisabled =
+    !isAdmin.value &&
+    (workspaceMenuItem.disabled || needsSsoSession(workspaceItem, itemKey))
+  if (isDisabled) return
+  onWorkspaceMenuItemClick(workspaceItem.id, `${itemKey}`)
+}
+
+// not ideal, but it works temporarily while this is still a modal
+useSetupMenuState({
+  goToWorkspaceMenuItem: onWorkspaceMenuItemClick
+})
 
 watch(
   () => user.value,

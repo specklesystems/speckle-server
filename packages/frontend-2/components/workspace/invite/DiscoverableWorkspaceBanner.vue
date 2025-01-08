@@ -14,7 +14,7 @@ import { useSynchronizedCookie } from '~/lib/common/composables/reactiveCookie'
 import { graphql } from '~/lib/common/generated/gql'
 import {
   DashboardJoinWorkspaceDocument,
-  type WorkspaceInviteDiscoverableWorkspaceBanner_DiscoverableWorkspaceFragment
+  type WorkspaceInviteDiscoverableWorkspaceBanner_LimitedWorkspaceFragment
 } from '~/lib/common/generated/gql/graphql'
 import { CookieKeys } from '~/lib/common/helpers/constants'
 import {
@@ -22,15 +22,16 @@ import {
   getFirstErrorMessage,
   modifyObjectField
 } from '~/lib/common/helpers/graphql'
+import { workspaceRoute } from '~/lib/common/helpers/route'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 
 graphql(`
-  fragment WorkspaceInviteDiscoverableWorkspaceBanner_DiscoverableWorkspace on DiscoverableWorkspace {
+  fragment WorkspaceInviteDiscoverableWorkspaceBanner_LimitedWorkspace on LimitedWorkspace {
     id
     name
+    slug
     description
     logo
-    defaultLogoIndex
   }
   fragment WorkspaceInviteDiscoverableWorkspaceBanner_Workspace on Workspace {
     id
@@ -39,14 +40,13 @@ graphql(`
     createdAt
     updatedAt
     logo
-    defaultLogoIndex
     domainBasedMembershipProtectionEnabled
     discoverabilityEnabled
   }
 `)
 
 const props = defineProps<{
-  workspace: WorkspaceInviteDiscoverableWorkspaceBanner_DiscoverableWorkspaceFragment
+  workspace: WorkspaceInviteDiscoverableWorkspaceBanner_LimitedWorkspaceFragment
 }>()
 
 const mixpanel = useMixpanel()
@@ -65,7 +65,7 @@ const invite = computed(() => ({
   workspace: {
     id: props.workspace.id,
     logo: props.workspace.logo || undefined,
-    defaultLogoIndex: props.workspace.defaultLogoIndex
+    name: props.workspace.name
   }
 }))
 
@@ -76,7 +76,7 @@ const processJoin = async (accept: boolean) => {
       props.workspace.id
     ]
     apollo.cache.evict({
-      id: getCacheId('DiscoverableWorkspace', props.workspace.id)
+      id: getCacheId('LimitedWorkspace', props.workspace.id)
     })
     return
   }
@@ -115,7 +115,7 @@ const processJoin = async (accept: boolean) => {
 
   if (result?.data) {
     apollo.cache.evict({
-      id: getCacheId('DiscoverableWorkspace', props.workspace.id)
+      id: getCacheId('LimitedWorkspace', props.workspace.id)
     })
 
     triggerNotification({
@@ -130,7 +130,7 @@ const processJoin = async (accept: boolean) => {
       workspace_id: props.workspace.id
     })
 
-    router.push(`/workspaces/${props.workspace.id}`)
+    router.push(workspaceRoute(props.workspace.slug))
   } else {
     triggerNotification({
       type: ToastNotificationType.Danger,

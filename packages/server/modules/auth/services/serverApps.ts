@@ -13,7 +13,8 @@ import {
   UpdateDefaultApp
 } from '@/modules/auth/domain/operations'
 import { ScopeRecord } from '@/modules/auth/helpers/types'
-import { createAppToken, createBareToken } from '@/modules/core/services/tokens'
+import { CreateAndStoreAppToken } from '@/modules/core/domain/tokens/operations'
+import { createBareToken } from '@/modules/core/services/tokens'
 import { ServerScope } from '@speckle/shared'
 import bcrypt from 'bcrypt'
 import { ResourceMismatch } from '@/modules/shared/errors'
@@ -71,7 +72,7 @@ export const createAppTokenFromAccessCodeFactory =
     deleteAuthorizationCode: DeleteAuthorizationCode
     getApp: GetApp
     createRefreshToken: CreateRefreshToken
-    createAppToken: typeof createAppToken
+    createAppToken: CreateAndStoreAppToken
     createBareToken: typeof createBareToken
   }): CreateAppTokenFromAccessCode =>
   async ({ appId, appSecret, accessCode, challenge }) => {
@@ -128,7 +129,7 @@ export const refreshAppTokenFactory =
     revokeRefreshToken: RevokeRefreshToken
     createRefreshToken: CreateRefreshToken
     getApp: GetApp
-    createAppToken: typeof createAppToken
+    createAppToken: CreateAndStoreAppToken
     createBareToken: typeof createBareToken
   }) =>
   async (params: { refreshToken: string; appId: string; appSecret: string }) => {
@@ -156,7 +157,7 @@ export const refreshAppTokenFactory =
     if (!app || app.secret !== appSecret) throw new RefreshTokenError('Invalid request')
 
     // Create the new token
-    const appToken = await createAppToken({
+    const appToken = await deps.createAppToken({
       userId: refreshTokenDb.userId,
       name: `${app.name}-token`,
       scopes: app.scopes.map((s) => s.name),
@@ -164,7 +165,7 @@ export const refreshAppTokenFactory =
     })
 
     // Create a new refresh token
-    const bareToken = await createBareToken()
+    const bareToken = await deps.createBareToken()
 
     const freshRefreshToken = {
       id: bareToken.tokenId,

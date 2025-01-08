@@ -1,8 +1,12 @@
 import { z } from 'zod'
 
-const EnabledModules = z.object({
-  workspaces: z.boolean()
-})
+const EnabledModules = z
+  .object({
+    workspaces: z.boolean(),
+    gatekeeper: z.boolean(),
+    billing: z.boolean()
+  })
+  .partial()
 
 export type EnabledModules = z.infer<typeof EnabledModules>
 

@@ -55,6 +55,12 @@ export type DownloadProject = (
      * Specify if target project is private
      */
     token?: string
+    /**
+     * Specify a target workspace to download into
+     * The author needs to be member of the workspace
+     */
+    workspaceId?: string
+    regionKey?: string
   },
   options?: Partial<{
     logger: Logger

@@ -102,7 +102,7 @@ export const numberOfFreeConnections = (knex: Knex) => {
 }
 
 export const withTransaction = async <T>(
-  callback: Promise<T>,
+  callback: Promise<T> | T,
   trx: Knex.Transaction
 ): Promise<T> => {
   try {

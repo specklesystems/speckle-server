@@ -1,7 +1,6 @@
 import { beforeEachContext, truncateTables } from '@/test/hooks'
 import { expect } from 'chai'
 import { describe, it } from 'mocha'
-import { createUser, getUser } from '@/modules/core/services/users'
 import {
   createRandomEmail,
   createRandomPassword
@@ -26,11 +25,21 @@ import {
   updateAllInviteTargetsFactory
 } from '@/modules/serverinvites/repositories/serverInvites'
 import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
-import { getServerInfo } from '@/modules/core/services/generic'
 import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
+import {
+  countAdminUsersFactory,
+  legacyGetUserFactory,
+  storeUserAclFactory,
+  storeUserFactory
+} from '@/modules/core/repositories/users'
+import { createUserFactory } from '@/modules/core/services/users/management'
+import { UsersEmitter } from '@/modules/core/events/usersEmitter'
+import { getServerInfoFactory } from '@/modules/core/repositories/server'
 
+const getServerInfo = getServerInfoFactory({ db })
+const getUser = legacyGetUserFactory({ db })
 const requestNewEmailVerification = requestNewEmailVerificationFactory({
   findEmail: findEmailFactory({ db }),
   getUser,
@@ -49,6 +58,17 @@ const createUserEmail = validateAndCreateUserEmailFactory({
     updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
   }),
   requestNewEmailVerification
+})
+
+const findEmail = findEmailFactory({ db })
+const createUser = createUserFactory({
+  getServerInfo,
+  findEmail,
+  storeUser: storeUserFactory({ db }),
+  countAdminUsers: countAdminUsersFactory({ db }),
+  storeUserAcl: storeUserAclFactory({ db }),
+  validateAndCreateUserEmail: createUserEmail,
+  usersEventsEmitter: UsersEmitter.emit
 })
 
 describe('User emails graphql @core', () => {

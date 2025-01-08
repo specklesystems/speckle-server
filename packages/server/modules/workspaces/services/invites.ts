@@ -9,7 +9,6 @@ import { getWorkspaceRoute } from '@/modules/core/helpers/routeHelper'
 import { isResourceAllowed } from '@/modules/core/helpers/token'
 import { UserRecord } from '@/modules/core/helpers/types'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
-import { getUser } from '@/modules/core/repositories/users'
 import {
   ProjectInviteResourceType,
   ServerInviteResourceType
@@ -57,6 +56,7 @@ import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
 import { WorkspaceInviteResourceType } from '@/modules/workspaces/domain/constants'
 import {
   GetWorkspace,
+  GetWorkspaceBySlug,
   GetWorkspaceDomains
 } from '@/modules/workspaces/domain/operations'
 import { WorkspaceInviteResourceTarget } from '@/modules/workspaces/domain/types'
@@ -74,9 +74,10 @@ import {
   anyEmailCompliantWithWorkspaceDomains,
   userEmailsCompliantWithWorkspaceDomains
 } from '@/modules/workspaces/domain/logic'
-import { getStream } from '@/modules/core/repositories/streams'
+import { GetStream } from '@/modules/core/domain/streams/operations'
+import { GetUser } from '@/modules/core/domain/users/operations'
 
-const isWorkspaceResourceTarget = (
+export const isWorkspaceResourceTarget = (
   target: InviteResourceTarget
 ): target is WorkspaceInviteResourceTarget =>
   target.resourceType === WorkspaceInviteResourceType
@@ -127,7 +128,7 @@ type CollectAndValidateWorkspaceTargetsFactoryDeps =
     getWorkspace: GetWorkspace
     getWorkspaceDomains: GetWorkspaceDomains
     findVerifiedEmailsByUserId: FindVerifiedEmailsByUserId
-    getStream: typeof getStream
+    getStream: GetStream
   }
 
 export const collectAndValidateWorkspaceTargetsFactory =
@@ -323,7 +324,7 @@ export const buildWorkspaceInviteEmailContentsFactory =
 
     const subject = `${inviter.name} has invited you to the "${workspace.name}" Speckle workspace`
     const inviteLink = new URL(
-      `${getWorkspaceRoute(workspace.id)}?token=${invite.token}&accept=true`,
+      `${getWorkspaceRoute(workspace.slug)}?token=${invite.token}&accept=true`,
       getFrontendOrigin()
     ).toString()
 
@@ -382,19 +383,27 @@ function buildPendingWorkspaceCollaboratorModel(
 }
 
 export const getUserPendingWorkspaceInviteFactory =
-  (deps: { findInvite: FindInvite; getUser: typeof getUser }) =>
+  (deps: {
+    findInvite: FindInvite
+    getUser: GetUser
+    getWorkspaceBySlug: GetWorkspaceBySlug
+  }) =>
   async (params: {
-    workspaceId: MaybeNullOrUndefined<string>
+    workspaceId?: MaybeNullOrUndefined<string>
+    workspaceSlug?: MaybeNullOrUndefined<string>
     userId: MaybeNullOrUndefined<string>
     token: MaybeNullOrUndefined<string>
   }) => {
-    const { workspaceId, userId, token } = params
-    if (!userId?.length && !token?.length) return null
-    if (!token?.length && !workspaceId?.length) return null
+    const { userId, token, workspaceSlug } = params
+    let { workspaceId } = params
 
-    // TODO: Test w/o token & workspace, or w/ just token
+    if (!userId?.length && !token?.length) return null
+    if (!token?.length && !(workspaceId?.length || workspaceSlug?.length)) return null
 
     const userTarget = userId ? buildUserTarget(userId) : undefined
+    if (!workspaceId?.length && workspaceSlug?.length) {
+      workspaceId = (await deps.getWorkspaceBySlug({ workspaceSlug }))?.id
+    }
 
     const invite = await deps.findInvite<
       typeof WorkspaceInviteResourceType,
@@ -420,10 +429,7 @@ export const getUserPendingWorkspaceInviteFactory =
   }
 
 export const getUserPendingWorkspaceInvitesFactory =
-  (deps: {
-    getUserResourceInvites: QueryAllUserResourceInvites
-    getUser: typeof getUser
-  }) =>
+  (deps: { getUserResourceInvites: QueryAllUserResourceInvites; getUser: GetUser }) =>
   async (userId: string): Promise<PendingWorkspaceCollaboratorGraphQLReturn[]> => {
     if (!userId) return []
 

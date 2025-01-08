@@ -115,6 +115,11 @@ const {
 } = useFilterUtilities()
 
 const revitPropertyRegex = /^parameters\./
+// Note: we've split this regex check in two to not clash with navis properties. This makes generally makes dim very sad, as we're layering hacks.
+// Navis object properties come under `properties`, same as revit ones - as such we can't assume they're the same. Here we're targeting revit's
+// specific two subcategories of `properties`.
+const revitPropertyRegexDui3000InstanceProps = /^properties\.Instance/ // note this is partially valid for civil3d, or dim should test against it
+const revitPropertyRegexDui3000TypeProps = /^properties\.Type/ // note this is partially valid for civil3d, or dim should test against it
 
 const showAllFilters = ref(false)
 
@@ -123,7 +128,11 @@ const props = defineProps<{
 }>()
 
 const isRevitProperty = (key: string): boolean => {
-  return revitPropertyRegex.test(key)
+  return (
+    revitPropertyRegex.test(key) ||
+    revitPropertyRegexDui3000InstanceProps.test(key) ||
+    revitPropertyRegexDui3000TypeProps.test(key)
+  )
 }
 
 const relevantFilters = computed(() => {
@@ -144,6 +153,9 @@ const relevantFilters = computed(() => {
       f.key.includes('midPoint.') ||
       f.key.includes('startPoint.') ||
       f.key.includes('startPoint.') ||
+      f.key.includes('.materialName') ||
+      f.key.includes('.materialClass') ||
+      f.key.includes('.materialCategory') ||
       f.key.includes('displayStyle') ||
       f.key.includes('displayValue') ||
       f.key.includes('displayMesh')

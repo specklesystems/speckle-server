@@ -24,7 +24,7 @@ import {
   ValidateInputAttachments
 } from '@/modules/comments/domain/operations'
 import { ResourceType } from '@/modules/comments/domain/types'
-import { getStream } from '@/modules/core/repositories/streams'
+import { GetStream } from '@/modules/core/domain/streams/operations'
 import { CommentNotFoundError } from '@/modules/comments/errors'
 import { UserInputError } from '@/modules/core/errors/userinput'
 
@@ -244,7 +244,7 @@ export const editCommentFactory =
 export const archiveCommentFactory =
   (deps: {
     getComment: GetComment
-    getStream: typeof getStream
+    getStream: GetStream
     updateComment: UpdateComment
   }) =>
   async ({

@@ -1,5 +1,4 @@
 import { db } from '@/db/knex'
-import { getStream } from '@/modules/core/repositories/streams'
 import {
   findEmailsByUserIdFactory,
   findVerifiedEmailsByUserIdFactory
@@ -45,16 +44,53 @@ import {
   StreamRoles,
   WorkspaceRoles
 } from '@speckle/shared'
+import { getStreamFactory } from '@/modules/core/repositories/streams'
+import { getUserFactory } from '@/modules/core/repositories/users'
+import { getServerInfoFactory } from '@/modules/core/repositories/server'
+import {
+  associateSsoProviderWithWorkspaceFactory,
+  getWorkspaceSsoProviderRecordFactory,
+  storeSsoProviderRecordFactory,
+  upsertUserSsoSessionFactory
+} from '@/modules/workspaces/repositories/sso'
+import { getEncryptor } from '@/modules/workspaces/helpers/sso'
+import { OidcProvider } from '@/modules/workspaces/domain/sso/types'
+import { getFeatureFlags, getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
+import { getDefaultSsoSessionExpirationDate } from '@/modules/workspaces/domain/sso/logic'
+import {
+  getWorkspacePlanFactory,
+  upsertPaidWorkspacePlanFactory
+} from '@/modules/gatekeeper/repositories/billing'
+import { SetOptional } from 'type-fest'
+import { isMultiRegionTestMode } from '@/test/speckle-helpers/regions'
+import {
+  assignRegionFactory,
+  getAvailableRegionsFactory
+} from '@/modules/workspaces/services/regions'
+import { getRegionsFactory } from '@/modules/multiregion/repositories'
+import { canWorkspaceUseRegionsFactory } from '@/modules/gatekeeper/services/featureAuthorization'
+import {
+  getDefaultRegionFactory,
+  upsertRegionAssignmentFactory
+} from '@/modules/workspaces/repositories/regions'
+import { getDb } from '@/modules/multiregion/utils/dbSelector'
+import { WorkspacePlan } from '@/modules/gatekeeper/domain/billing'
+
+const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
 
 export type BasicTestWorkspace = {
   /**
    * Leave empty, will be filled on creation
+   * Note: Will be set to undefined if tests running with workspaces disabled entirely cause workspaces can't be created!
    */
   id: string
   /**
    * Leave empty, will be filled on creation
    */
   ownerId: string
+  /**
+   * You can leave empty, will be filled on creation
+   */
   slug: string
   name: string
   description?: string
@@ -65,10 +101,27 @@ export type BasicTestWorkspace = {
 }
 
 export const createTestWorkspace = async (
-  workspace: Omit<BasicTestWorkspace, 'slug'> & { slug?: string },
+  workspace: SetOptional<BasicTestWorkspace, 'slug'>,
   owner: BasicTestUser,
-  domain?: string
+  options?: {
+    domain?: string
+    addPlan?: Pick<WorkspacePlan, 'name' | 'status'> | boolean
+    regionKey?: string
+  }
 ) => {
+  const { domain, addPlan = true, regionKey } = options || {}
+  const useRegion = isMultiRegionTestMode() && regionKey
+
+  if (!FF_WORKSPACES_MODULE_ENABLED) {
+    // Just skip creation and set id to undefined - this allows this to be invoked the same way if FFs are on or off
+    // When BasicTestStream.workspaceId is set to this workspaces id, it will end up just being undefined, making the stream
+    // be created as if it was not assigned to a workspace, allowing tests to still work
+    // (Surely if you explicitly invoke createTestWorkspace with FFs off, you know what you're doing)
+    workspace.id = undefined as unknown as string
+    return
+  }
+
+  const upsertWorkspacePlan = upsertPaidWorkspacePlanFactory({ db })
   const createWorkspace = createWorkspaceFactory({
     validateSlug: validateSlugFactory({
       getWorkspaceBySlug: getWorkspaceBySlugFactory({ db })
@@ -93,6 +146,7 @@ export const createTestWorkspace = async (
     userResourceAccessLimits: null
   })
 
+  workspace.slug = newWorkspace.slug
   workspace.id = newWorkspace.id
   workspace.ownerId = owner.id
 
@@ -101,7 +155,6 @@ export const createTestWorkspace = async (
       findEmailsByUserId: findEmailsByUserIdFactory({ db }),
       storeWorkspaceDomain: storeWorkspaceDomainFactory({ db }),
       getWorkspace: getWorkspaceFactory({ db }),
-      upsertWorkspace: upsertWorkspaceFactory({ db }),
       emitWorkspaceEvent: getEventBus().emit,
       getDomains: getWorkspaceDomainsFactory({ db })
     })({
@@ -111,11 +164,51 @@ export const createTestWorkspace = async (
     })
   }
 
+  if (addPlan || useRegion) {
+    await upsertWorkspacePlan({
+      workspacePlan: {
+        createdAt: new Date(),
+        workspaceId: newWorkspace.id,
+        name:
+          typeof addPlan === 'object' && Object.hasOwn(addPlan, 'name')
+            ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              (addPlan.name as any)
+            : 'business',
+        status:
+          typeof addPlan === 'object' && Object.hasOwn(addPlan, 'status')
+            ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              (addPlan.status as any)
+            : 'valid'
+      }
+    })
+  }
+
+  if (useRegion) {
+    const regionDb = await getDb({ regionKey })
+    const assignRegion = assignRegionFactory({
+      getAvailableRegions: getAvailableRegionsFactory({
+        getRegions: getRegionsFactory({ db }),
+        canWorkspaceUseRegions: canWorkspaceUseRegionsFactory({
+          getWorkspacePlan: getWorkspacePlanFactory({ db })
+        })
+      }),
+      upsertRegionAssignment: upsertRegionAssignmentFactory({ db }),
+      getDefaultRegion: getDefaultRegionFactory({ db }),
+      getWorkspace: getWorkspaceFactory({ db }),
+      insertRegionWorkspace: upsertWorkspaceFactory({ db: regionDb })
+    })
+    await assignRegion({
+      workspaceId: newWorkspace.id,
+      regionKey
+    })
+  }
+
   const updateWorkspace = updateWorkspaceFactory({
     validateSlug: validateSlugFactory({
       getWorkspaceBySlug: getWorkspaceBySlugFactory({ db })
     }),
     getWorkspace: getWorkspaceWithDomainsFactory({ db }),
+    getWorkspaceSsoProviderRecord: getWorkspaceSsoProviderRecordFactory({ db }),
     upsertWorkspace: upsertWorkspaceFactory({ db }),
     emitWorkspaceEvent: (...args) => getEventBus().emit(...args)
   })
@@ -154,6 +247,10 @@ export const assignToWorkspace = async (
   user: BasicTestUser,
   role?: WorkspaceRoles
 ) => {
+  if (!FF_WORKSPACES_MODULE_ENABLED) {
+    return // Just skip
+  }
+
   const updateWorkspaceRole = updateWorkspaceRoleFactory({
     getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db }),
     findVerifiedEmailsByUserId: findVerifiedEmailsByUserIdFactory({ db }),
@@ -173,6 +270,10 @@ export const unassignFromWorkspace = async (
   workspace: BasicTestWorkspace,
   user: BasicTestUser
 ) => {
+  if (!FF_WORKSPACES_MODULE_ENABLED) {
+    return // Just skip
+  }
+
   const deleteWorkspaceRole = deleteWorkspaceRoleFactory({
     getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
     deleteWorkspaceRole: dbDeleteWorkspaceRoleFactory({ db }),
@@ -194,21 +295,28 @@ export const unassignFromWorkspaces = async (
 export const assignToWorkspaces = async (
   pairs: [BasicTestWorkspace, BasicTestUser, MaybeNullOrUndefined<WorkspaceRoles>][]
 ) => {
-  await Promise.all(pairs.map((p) => assignToWorkspace(p[0], p[1], p[2] || undefined)))
+  // Serial execution is somehow faster with bigger batch sizes, assignToWorkspace
+  // may be quite heavy on the DB
+  for (const [workspace, user, role] of pairs) {
+    await assignToWorkspace(workspace, user, role || undefined)
+  }
 }
 
 export const createTestWorkspaces = async (
-  pairs: [BasicTestWorkspace, BasicTestUser, string?][]
+  pairs: Parameters<typeof createTestWorkspace>[]
 ) => {
-  await Promise.all(pairs.map((p) => createTestWorkspace(p[0], p[1], p[2])))
+  await Promise.all(pairs.map((p) => createTestWorkspace(...p)))
 }
 
 export const createWorkspaceInviteDirectly = async (
   args: CreateWorkspaceInviteMutationVariables,
   inviterId: string
 ) => {
+  const getServerInfo = getServerInfoFactory({ db })
+  const getStream = getStreamFactory({ db })
+  const getUser = getUserFactory({ db })
   const createAndSendInvite = createAndSendInviteFactory({
-    findUserByTarget: findUserByTargetFactory(),
+    findUserByTarget: findUserByTargetFactory({ db }),
     insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
     collectAndValidateResourceTargets: collectAndValidateWorkspaceTargetsFactory({
       getStream,
@@ -224,7 +332,9 @@ export const createWorkspaceInviteDirectly = async (
       getEventBus().emit({
         eventName,
         payload
-      })
+      }),
+    getUser,
+    getServerInfo
   })
 
   const createInvite = createWorkspaceInviteFactory({
@@ -235,5 +345,50 @@ export const createWorkspaceInviteDirectly = async (
     ...args,
     inviterId,
     inviterResourceAccessRules: null
+  })
+}
+
+export const createTestOidcProvider = async (
+  workspaceId: string,
+  providerData: Partial<OidcProvider> = {}
+) => {
+  const providerId = cryptoRandomString({ length: 9 })
+  await storeSsoProviderRecordFactory({ db, encrypt: getEncryptor() })({
+    providerRecord: {
+      id: providerId,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      providerType: 'oidc',
+      provider: {
+        providerName: 'Test Provider',
+        clientId: 'test-provider',
+        clientSecret: cryptoRandomString({ length: 12 }),
+        issuerUrl: new URL('', getFrontendOrigin()).toString(),
+        ...providerData
+      }
+    }
+  })
+  await associateSsoProviderWithWorkspaceFactory({ db })({
+    workspaceId,
+    providerId
+  })
+  return providerId
+}
+
+export const createTestSsoSession = async (
+  userId: string,
+  workspaceId: string,
+  validUntil?: Date
+) => {
+  const { providerId } =
+    (await getWorkspaceSsoProviderRecordFactory({ db })({ workspaceId })) ?? {}
+  if (!providerId) throw new Error('No provider found')
+  await upsertUserSsoSessionFactory({ db })({
+    userSsoSession: {
+      userId,
+      providerId,
+      createdAt: new Date(),
+      validUntil: validUntil ?? getDefaultSsoSessionExpirationDate()
+    }
   })
 }

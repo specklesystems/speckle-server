@@ -3,44 +3,99 @@ import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { authorizeResolver } from '@/modules/shared'
 import {
   filteredSubscribe,
-  ProjectSubscriptions
+  ProjectSubscriptions,
+  publish
 } from '@/modules/shared/utils/subscriptions'
 import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
 import {
-  batchDeleteCommits,
-  batchMoveCommits
+  batchDeleteCommitsFactory,
+  batchMoveCommitsFactory
 } from '@/modules/core/services/commit/batchCommitActions'
+import { CommitNotFoundError } from '@/modules/core/errors/commit'
 import {
-  createCommitByBranchId,
-  markCommitReceivedAndNotify,
-  updateCommitAndNotify
+  createCommitByBranchIdFactory,
+  markCommitReceivedAndNotifyFactory,
+  updateCommitAndNotifyFactory
 } from '@/modules/core/services/commit/management'
 import {
   getRateLimitResult,
   isRateLimitBreached
 } from '@/modules/core/services/ratelimiter'
 import { RateLimitError } from '@/modules/core/errors/ratelimit'
+import {
+  createCommitFactory,
+  deleteCommitsFactory,
+  getCommitBranchFactory,
+  getCommitFactory,
+  getCommitsFactory,
+  insertBranchCommitsFactory,
+  insertStreamCommitsFactory,
+  moveCommitsToBranchFactory,
+  switchCommitBranchFactory,
+  updateCommitFactory
+} from '@/modules/core/repositories/commits'
+import { db } from '@/db/knex'
+import {
+  createBranchFactory,
+  getBranchByIdFactory,
+  getStreamBranchByNameFactory,
+  markCommitBranchUpdatedFactory
+} from '@/modules/core/repositories/branches'
+import {
+  getCommitStreamFactory,
+  getStreamFactory,
+  getStreamsFactory,
+  markCommitStreamUpdatedFactory
+} from '@/modules/core/repositories/streams'
+import { VersionsEmitter } from '@/modules/core/events/versionsEmitter'
+import {
+  addCommitCreatedActivityFactory,
+  addCommitDeletedActivityFactory,
+  addCommitMovedActivityFactory,
+  addCommitUpdatedActivityFactory
+} from '@/modules/activitystream/services/commitActivity'
+import { getObjectFactory } from '@/modules/core/repositories/objects'
+import { saveActivityFactory } from '@/modules/activitystream/repositories'
+import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
+import coreModule from '@/modules/core'
 import { StreamNotFoundError } from '@/modules/core/errors/stream'
 
 export = {
   Project: {
     async version(parent, args, ctx) {
-      return await ctx.loaders.streams.getStreamCommit
-        .forStream(parent.id)
+      const projectDB = await getProjectDbClient({ projectId: parent.id })
+      const version = await ctx.loaders
+        .forRegion({ db: projectDB })
+        .streams.getStreamCommit.forStream(parent.id)
         .load(args.id)
+      if (!version) {
+        throw new CommitNotFoundError('Version not found')
+      }
+
+      return version
     }
   },
   Version: {
     async authorUser(parent, _args, ctx) {
       const { author } = parent
       if (!author) return null
-      return (await ctx.loaders.users.getUser.load(author)) || null
+      const projectDB = await getProjectDbClient({ projectId: parent.streamId })
+      return (
+        (await ctx.loaders.forRegion({ db: projectDB }).users.getUser.load(author)) ||
+        null
+      )
     },
     async model(parent, _args, ctx) {
-      return await ctx.loaders.commits.getCommitBranch.load(parent.id)
+      const projectDB = await getProjectDbClient({ projectId: parent.streamId })
+      return await ctx.loaders
+        .forRegion({ db: projectDB })
+        .commits.getCommitBranch.load(parent.id)
     },
     async previewUrl(parent, _args, ctx) {
-      const stream = await ctx.loaders.commits.getCommitStream.load(parent.id)
+      const projectDB = await getProjectDbClient({ projectId: parent.streamId })
+      const stream = await ctx.loaders
+        .forRegion({ db: projectDB })
+        .commits.getCommitStream.load(parent.id)
       const path = `/preview/${stream!.id}/commits/${parent.id}`
       return new URL(path, getServerOrigin()).toString()
     }
@@ -50,16 +105,44 @@ export = {
   },
   VersionMutations: {
     async moveToModel(_parent, args, ctx) {
+      const projectId = args.input.projectId
+      const projectDb = await getProjectDbClient({ projectId })
+
+      const batchMoveCommits = batchMoveCommitsFactory({
+        getCommits: getCommitsFactory({ db: projectDb }),
+        getStreams: getStreamsFactory({ db: projectDb }),
+        getStreamBranchByName: getStreamBranchByNameFactory({ db: projectDb }),
+        createBranch: createBranchFactory({ db: projectDb }),
+        moveCommitsToBranch: moveCommitsToBranchFactory({ db: projectDb }),
+        addCommitMovedActivity: addCommitMovedActivityFactory({
+          saveActivity: saveActivityFactory({ db }),
+          publish
+        })
+      })
       return await batchMoveCommits(args.input, ctx.userId!)
     },
     async delete(_parent, args, ctx) {
+      const projectId = args.input.projectId
+      const projectDb = await getProjectDbClient({ projectId })
+
+      const batchDeleteCommits = batchDeleteCommitsFactory({
+        getCommits: getCommitsFactory({ db: projectDb }),
+        getStreams: getStreamsFactory({ db: projectDb }),
+        deleteCommits: deleteCommitsFactory({ db: projectDb }),
+        addCommitDeletedActivity: addCommitDeletedActivityFactory({
+          saveActivity: saveActivityFactory({ db }),
+          publish
+        })
+      })
       await batchDeleteCommits(args.input, ctx.userId!)
       return true
     },
     async update(_parent, args, ctx) {
-      const stream = await ctx.loaders.commits.getCommitStream.load(
-        args.input.versionId
-      )
+      const projectId = args.input.projectId
+      const projectDb = await getProjectDbClient({ projectId })
+      const stream = await ctx.loaders
+        .forRegion({ db: projectDb })
+        .commits.getCommitStream.load(args.input.versionId)
       if (!stream) {
         throw new StreamNotFoundError('Commit stream not found')
       }
@@ -70,6 +153,22 @@ export = {
         Roles.Stream.Contributor,
         ctx.resourceAccessRules
       )
+
+      const updateCommitAndNotify = updateCommitAndNotifyFactory({
+        getCommit: getCommitFactory({ db: projectDb }),
+        getStream: getStreamFactory({ db: projectDb }),
+        getCommitStream: getCommitStreamFactory({ db: projectDb }),
+        getStreamBranchByName: getStreamBranchByNameFactory({ db: projectDb }),
+        getCommitBranch: getCommitBranchFactory({ db: projectDb }),
+        switchCommitBranch: switchCommitBranchFactory({ db: projectDb }),
+        updateCommit: updateCommitFactory({ db: projectDb }),
+        addCommitUpdatedActivity: addCommitUpdatedActivityFactory({
+          saveActivity: saveActivityFactory({ db }),
+          publish
+        }),
+        markCommitStreamUpdated: markCommitStreamUpdatedFactory({ db: projectDb }),
+        markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db: projectDb })
+      })
       return await updateCommitAndNotify(args.input, ctx.userId!)
     },
     async create(_parent, args, ctx) {
@@ -80,10 +179,31 @@ export = {
         ctx.resourceAccessRules
       )
 
+      await coreModule.executeHooks('onCreateVersionRequest', {
+        projectId: args.input.projectId
+      })
+
       const rateLimitResult = await getRateLimitResult('COMMIT_CREATE', ctx.userId!)
       if (isRateLimitBreached(rateLimitResult)) {
         throw new RateLimitError(rateLimitResult)
       }
+
+      const projectDb = await getProjectDbClient({ projectId: args.input.projectId })
+
+      const createCommitByBranchId = createCommitByBranchIdFactory({
+        createCommit: createCommitFactory({ db: projectDb }),
+        getObject: getObjectFactory({ db: projectDb }),
+        getBranchById: getBranchByIdFactory({ db: projectDb }),
+        insertStreamCommits: insertStreamCommitsFactory({ db: projectDb }),
+        insertBranchCommits: insertBranchCommitsFactory({ db: projectDb }),
+        markCommitStreamUpdated: markCommitStreamUpdatedFactory({ db: projectDb }),
+        markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db: projectDb }),
+        versionsEventEmitter: VersionsEmitter.emit,
+        addCommitCreatedActivity: addCommitCreatedActivityFactory({
+          saveActivity: saveActivityFactory({ db }),
+          publish
+        })
+      })
 
       const commit = await createCommitByBranchId({
         authorId: ctx.userId!,
@@ -105,8 +225,12 @@ export = {
         Roles.Stream.Reviewer,
         ctx.resourceAccessRules
       )
+      const projectDb = await getProjectDbClient({ projectId: args.input.projectId })
 
-      await markCommitReceivedAndNotify({
+      await markCommitReceivedAndNotifyFactory({
+        getCommit: getCommitFactory({ db: projectDb }),
+        saveActivity: saveActivityFactory({ db })
+      })({
         input: args.input,
         userId: ctx.userId!
       })

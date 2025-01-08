@@ -114,6 +114,12 @@ export class WorkspaceDomainsInvalidState extends BaseError {
   static statusCode = 500
 }
 
+export class WorkspacePaidPlanActiveError extends BaseError {
+  static defaultMessage = 'Workspace has an active paid plan, cancel it first'
+  static code = 'WORKSPACE_PAID_PLAN_ACTIVE'
+  static statusCode = 400
+}
+
 export class InvalidWorkspaceLicenseError extends BaseError {
   static defaultMessage = 'Invalid workspace license'
   static code = 'INVALID_WORKSPACE_LICENSE'

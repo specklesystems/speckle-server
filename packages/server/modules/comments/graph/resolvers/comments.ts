@@ -1,6 +1,5 @@
 import { pubsub } from '@/modules/shared/utils/subscriptions'
 import { ForbiddenError } from '@/modules/shared/errors'
-import { getStream } from '@/modules/core/services/streams'
 import { Roles } from '@/modules/core/helpers/mainConstants'
 import {
   streamResourceCheckFactory,
@@ -51,9 +50,9 @@ import {
   ProjectSubscriptions
 } from '@/modules/shared/utils/subscriptions'
 import {
-  addCommentCreatedActivity,
-  addCommentArchivedActivity,
-  addReplyAddedActivity
+  addCommentArchivedActivityFactory,
+  addCommentCreatedActivityFactory,
+  addReplyAddedActivityFactory
 } from '@/modules/activitystream/services/commentActivity'
 import {
   doViewerResourcesFit,
@@ -81,178 +80,95 @@ import {
 import { Resolvers, ResourceType } from '@/modules/core/graph/generated/graphql'
 import { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
 import { CommentRecord } from '@/modules/comments/helpers/types'
-import { db } from '@/db/knex'
+import { db, mainDb } from '@/db/knex'
 import { CommentsEmitter } from '@/modules/comments/events/emitter'
 import { getBlobsFactory } from '@/modules/blobstorage/repositories'
 import { ResourceIdentifier } from '@/modules/comments/domain/types'
 import {
-  getAllBranchCommits,
-  getCommitsAndTheirBranchIds,
+  getAllBranchCommitsFactory,
+  getCommitsAndTheirBranchIdsFactory,
   getSpecificBranchCommitsFactory
 } from '@/modules/core/repositories/commits'
-import { getStreamObjects } from '@/modules/core/repositories/objects'
 import { adminOverrideEnabled } from '@/modules/shared/helpers/envHelper'
 import {
   getBranchLatestCommitsFactory,
   getStreamBranchesByNameFactory
 } from '@/modules/core/repositories/branches'
+import { getStreamObjectsFactory } from '@/modules/core/repositories/objects'
+import { getStreamFactory } from '@/modules/core/repositories/streams'
+import { saveActivityFactory } from '@/modules/activitystream/repositories'
+import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
+import { Knex } from 'knex'
 
-const streamResourceCheck = streamResourceCheckFactory({
-  checkStreamResourceAccess: checkStreamResourceAccessFactory({ db })
-})
-const markCommentViewed = markCommentViewedFactory({ db })
-const validateInputAttachments = validateInputAttachmentsFactory({
-  getBlobs: getBlobsFactory({ db })
-})
-const insertComments = insertCommentsFactory({ db })
-const insertCommentLinks = insertCommentLinksFactory({ db })
-const deleteComment = deleteCommentFactory({ db })
-const createComment = createCommentFactory({
-  checkStreamResourcesAccess: streamResourceCheck,
-  validateInputAttachments,
-  insertComments,
-  insertCommentLinks,
-  deleteComment,
-  markCommentViewed,
-  commentsEventsEmit: CommentsEmitter.emit
-})
-const createCommentReply = createCommentReplyFactory({
-  validateInputAttachments,
-  insertComments,
-  insertCommentLinks,
-  checkStreamResourcesAccess: streamResourceCheck,
-  deleteComment,
-  markCommentUpdated: markCommentUpdatedFactory({ db }),
-  commentsEventsEmit: CommentsEmitter.emit
-})
-const getComment = getCommentFactory({ db })
-const updateComment = updateCommentFactory({ db })
-const editComment = editCommentFactory({
-  getComment,
-  validateInputAttachments,
-  updateComment,
-  commentsEventsEmit: CommentsEmitter.emit
-})
-const archiveComment = archiveCommentFactory({
-  getComment,
-  getStream,
-  updateComment
-})
-const getResourceCommentCount = getResourceCommentCountFactory({ db })
-
-const getCommentsResources = getCommentsResourcesFactory({ db })
-const getViewerResourcesFromLegacyIdentifiers =
-  getViewerResourcesFromLegacyIdentifiersFactory({
-    getViewerResourcesForComments: getViewerResourcesForCommentsFactory({
-      getCommentsResources: getCommentsResourcesFactory({ db }),
-      getViewerResourcesFromLegacyIdentifiers: (...args) =>
-        getViewerResourcesFromLegacyIdentifiers(...args) // recursive dep
-    }),
-    getCommitsAndTheirBranchIds,
-    getStreamObjects
-  })
-
-const getViewerResourcesForComment = getViewerResourcesForCommentFactory({
-  getCommentsResources,
-  getViewerResourcesFromLegacyIdentifiers
-})
-const convertLegacyDataToState = convertLegacyDataToStateFactory({
-  getViewerResourcesForComments: getViewerResourcesForCommentsFactory({
-    getCommentsResources,
-    getViewerResourcesFromLegacyIdentifiers
-  })
-})
-
+// We can use the main DB for these
+const getStream = getStreamFactory({ db })
 const authorizeProjectCommentsAccess = authorizeProjectCommentsAccessFactory({
   getStream,
   adminOverrideEnabled
 })
-const authorizeCommentAccess = authorizeCommentAccessFactory({
-  getStream,
-  adminOverrideEnabled,
-  getComment
-})
 
-const getViewerResourceItemsUngrouped = getViewerResourceItemsUngroupedFactory({
-  getViewerResourceGroups: getViewerResourceGroupsFactory({
-    getStreamObjects,
-    getBranchLatestCommits: getBranchLatestCommitsFactory({ db }),
-    getStreamBranchesByName: getStreamBranchesByNameFactory({ db }),
-    getSpecificBranchCommits: getSpecificBranchCommitsFactory({ db }),
-    getAllBranchCommits
-  })
-})
-const createCommentThreadAndNotify = createCommentThreadAndNotifyFactory({
-  getViewerResourceItemsUngrouped,
-  validateInputAttachments,
-  insertComments,
-  insertCommentLinks,
-  markCommentViewed,
-  commentsEventsEmit: CommentsEmitter.emit,
-  addCommentCreatedActivity
-})
-const createCommentReplyAndNotify = createCommentReplyAndNotifyFactory({
-  getComment,
-  validateInputAttachments,
-  insertComments,
-  insertCommentLinks,
-  markCommentUpdated: markCommentUpdatedFactory({ db }),
-  commentsEventsEmit: CommentsEmitter.emit,
-  addReplyAddedActivity
-})
-const editCommentAndNotify = editCommentAndNotifyFactory({
-  getComment,
-  validateInputAttachments,
-  updateComment,
-  commentsEventsEmit: CommentsEmitter.emit
-})
-const archiveCommentAndNotify = archiveCommentAndNotifyFactory({
-  getComment,
-  getStream,
-  updateComment,
-  addCommentArchivedActivity
-})
-const getPaginatedCommitComments = getPaginatedCommitCommentsFactory({
-  getPaginatedCommitCommentsPage: getPaginatedCommitCommentsPageFactory({ db }),
-  getPaginatedCommitCommentsTotalCount: getPaginatedCommitCommentsTotalCountFactory({
-    db
-  })
-})
-const getPaginatedBranchComments = getPaginatedBranchCommentsFactory({
-  getPaginatedBranchCommentsPage: getPaginatedBranchCommentsPageFactory({ db }),
-  getPaginatedBranchCommentsTotalCount: getPaginatedBranchCommentsTotalCountFactory({
-    db
-  })
-})
-const getPaginatedProjectComments = getPaginatedProjectCommentsFactory({
-  resolvePaginatedProjectCommentsLatestModelResources:
-    resolvePaginatedProjectCommentsLatestModelResourcesFactory({ db }),
-  getPaginatedProjectCommentsPage: getPaginatedProjectCommentsPageFactory({ db }),
-  getPaginatedProjectCommentsTotalCount: getPaginatedProjectCommentsTotalCountFactory({
-    db
-  })
-})
-
-const getStreamComment = async (
-  { streamId, commentId }: { streamId: string; commentId: string },
-  ctx: GraphQLContext
-) => {
-  await authorizeProjectCommentsAccess({
-    projectId: streamId,
-    authCtx: ctx
+const buildAuthorizeCommentAccess = (deps: { db: Knex; mainDb: Knex }) =>
+  authorizeCommentAccessFactory({
+    getStream: getStreamFactory({ db: deps.mainDb }),
+    adminOverrideEnabled,
+    getComment: getCommentFactory(deps)
   })
 
-  const comment = await getComment({ id: commentId, userId: ctx.userId })
-  if (comment?.streamId !== streamId)
-    throw new ForbiddenError('You do not have access to this comment.')
-
-  return comment
+const buildGetViewerResourcesFromLegacyIdentifiers = (deps: { db: Knex }) => {
+  const getViewerResourcesFromLegacyIdentifiers =
+    getViewerResourcesFromLegacyIdentifiersFactory({
+      getViewerResourcesForComments: getViewerResourcesForCommentsFactory({
+        getCommentsResources: getCommentsResourcesFactory(deps),
+        getViewerResourcesFromLegacyIdentifiers: (...args) =>
+          getViewerResourcesFromLegacyIdentifiers(...args) // recursive dep
+      }),
+      getCommitsAndTheirBranchIds: getCommitsAndTheirBranchIdsFactory(deps),
+      getStreamObjects: getStreamObjectsFactory(deps)
+    })
+  return getViewerResourcesFromLegacyIdentifiers
 }
 
-// FIXME: Non-null assertions considered unsafe but are parity with previous .js logic
+const buildGetViewerResourceItemsUngrouped = (deps: { db: Knex }) =>
+  getViewerResourceItemsUngroupedFactory({
+    getViewerResourceGroups: getViewerResourceGroupsFactory({
+      getStreamObjects: getStreamObjectsFactory(deps),
+      getBranchLatestCommits: getBranchLatestCommitsFactory(deps),
+      getStreamBranchesByName: getStreamBranchesByNameFactory(deps),
+      getSpecificBranchCommits: getSpecificBranchCommitsFactory(deps),
+      getAllBranchCommits: getAllBranchCommitsFactory(deps)
+    })
+  })
+
+const getStreamCommentFactory =
+  (deps: { db: Knex; mainDb: Knex }) =>
+  async (
+    { streamId, commentId }: { streamId: string; commentId: string },
+    ctx: GraphQLContext
+  ) => {
+    const authorizeProjectCommentsAccess = authorizeProjectCommentsAccessFactory({
+      getStream: getStreamFactory(deps),
+      adminOverrideEnabled
+    })
+    await authorizeProjectCommentsAccess({
+      projectId: streamId,
+      authCtx: ctx
+    })
+
+    const getComment = getCommentFactory(deps)
+    const comment = await getComment({ id: commentId, userId: ctx.userId })
+    if (comment?.streamId !== streamId)
+      throw new ForbiddenError('You do not have access to this comment.')
+
+    return comment
+  }
+
 export = {
   Query: {
     async comment(_parent, args, context) {
+      const projectId = args.streamId
+      const projectDb = await getProjectDbClient({ projectId })
+      const getStreamComment = getStreamCommentFactory({ db: projectDb, mainDb })
+
       return await getStreamComment(
         { streamId: args.streamId, commentId: args.id },
         context
@@ -260,11 +176,14 @@ export = {
     },
 
     async comments(_parent, args, context) {
+      const projectId = args.streamId
+      const projectDb = await getProjectDbClient({ projectId })
+
       await authorizeProjectCommentsAccess({
         projectId: args.streamId,
         authCtx: context
       })
-      const getComments = getCommentsLegacyFactory({ db })
+      const getComments = getCommentsLegacyFactory({ db: projectDb })
       return {
         ...(await getComments({
           ...args,
@@ -276,17 +195,22 @@ export = {
   },
   Comment: {
     async replies(parent, args, ctx) {
+      const projectId = parent.streamId
+      const projectDb = await getProjectDbClient({ projectId })
+
       // If limit=0, short-cut full execution and use data loader
       if (args.limit === 0) {
         return {
-          totalCount: await ctx.loaders.comments.getReplyCount.load(parent.id),
+          totalCount: await ctx.loaders
+            .forRegion({ db: projectDb })
+            .comments.getReplyCount.load(parent.id),
           items: [],
           cursor: null
         }
       }
 
       const resources = [{ resourceId: parent.id, resourceType: ResourceType.Comment }]
-      const getComments = getCommentsLegacyFactory({ db })
+      const getComments = getCommentsLegacyFactory({ db: projectDb })
       return await getComments({
         resources,
         replies: true,
@@ -299,20 +223,26 @@ export = {
      */
     text(parent) {
       const commentText = parent?.text || ''
-      return ensureCommentSchema(commentText as SmartTextEditorValueSchema)
+      return {
+        ...ensureCommentSchema(commentText),
+        projectId: parent.streamId
+      }
     },
 
     rawText(parent) {
-      const { doc } = ensureCommentSchema(
-        (parent.text as SmartTextEditorValueSchema) || ''
-      )
+      const { doc } = ensureCommentSchema(parent.text || '')
       return documentToBasicString(doc)
     },
     async hasParent(parent) {
       return !!parent.parentComment
     },
     async parent(parent, _args, ctx) {
-      return ctx.loaders.comments.getReplyParent.load(parent.id)
+      const projectId = parent.streamId
+      const projectDb = await getProjectDbClient({ projectId })
+
+      return ctx.loaders
+        .forRegion({ db: projectDb })
+        .comments.getReplyParent.load(parent.id)
     },
     /**
      * Resolve resources, if they weren't already preloaded
@@ -320,24 +250,54 @@ export = {
     async resources(parent, _args, ctx) {
       if (has(parent, 'resources'))
         return (parent as CommentRecord & { resources: ResourceIdentifier[] }).resources
-      return await ctx.loaders.comments.getResources.load(parent.id)
+
+      const projectId = parent.streamId
+      const projectDb = await getProjectDbClient({ projectId })
+
+      return await ctx.loaders
+        .forRegion({ db: projectDb })
+        .comments.getResources.load(parent.id)
     },
     async viewedAt(parent, _args, ctx) {
       if (has(parent, 'viewedAt'))
         return (parent as CommentRecord & { viewedAt: Date }).viewedAt
-      return await ctx.loaders.comments.getViewedAt.load(parent.id)
+
+      const projectId = parent.streamId
+      const projectDb = await getProjectDbClient({ projectId })
+
+      return await ctx.loaders
+        .forRegion({ db: projectDb })
+        .comments.getViewedAt.load(parent.id)
     },
     async author(parent, _args, ctx) {
       return ctx.loaders.users.getUser.load(parent.authorId)
     },
     async replyAuthors(parent, args, ctx) {
-      const authorIds = await ctx.loaders.comments.getReplyAuthorIds.load(parent.id)
+      const projectId = parent.streamId
+      const projectDb = await getProjectDbClient({ projectId })
+
+      const authorIds = await ctx.loaders
+        .forRegion({ db: projectDb })
+        .comments.getReplyAuthorIds.load(parent.id)
+
       return {
         totalCount: authorIds.length,
         authorIds: authorIds.slice(0, args.limit || 25)
       }
     },
     async viewerResources(parent) {
+      const projectId = parent.streamId
+      const projectDb = await getProjectDbClient({ projectId })
+
+      const getCommentsResources = getCommentsResourcesFactory({ db: projectDb })
+      const getViewerResourcesFromLegacyIdentifiers =
+        buildGetViewerResourcesFromLegacyIdentifiers({ db: projectDb })
+
+      const getViewerResourcesForComment = getViewerResourcesForCommentFactory({
+        getCommentsResources,
+        getViewerResourcesFromLegacyIdentifiers
+      })
+
       return await getViewerResourcesForComment(parent.streamId, parent.id)
     },
     /**
@@ -369,6 +329,9 @@ export = {
      * SerializedViewerState
      */
     async viewerState(parent) {
+      const projectId = parent.streamId
+      const projectDb = await getProjectDbClient({ projectId })
+
       const parentData = parent.data
       if (!parentData) return null
 
@@ -378,6 +341,15 @@ export = {
       }
 
       if (isLegacyData(parentData)) {
+        const getViewerResourcesFromLegacyIdentifiers =
+          buildGetViewerResourcesFromLegacyIdentifiers({ db: projectDb })
+        const convertLegacyDataToState = convertLegacyDataToStateFactory({
+          getViewerResourcesForComments: getViewerResourcesForCommentsFactory({
+            getCommentsResources: getCommentsResourcesFactory({ db: projectDb }),
+            getViewerResourcesFromLegacyIdentifiers
+          })
+        })
+
         return convertLegacyDataToState(parentData, parent)
       }
 
@@ -395,6 +367,20 @@ export = {
         projectId: parent.id,
         authCtx: context
       })
+
+      const projectDb = await getProjectDbClient({ projectId: parent.id })
+      const getPaginatedProjectComments = getPaginatedProjectCommentsFactory({
+        resolvePaginatedProjectCommentsLatestModelResources:
+          resolvePaginatedProjectCommentsLatestModelResourcesFactory({ db: projectDb }),
+        getPaginatedProjectCommentsPage: getPaginatedProjectCommentsPageFactory({
+          db: projectDb
+        }),
+        getPaginatedProjectCommentsTotalCount:
+          getPaginatedProjectCommentsTotalCountFactory({
+            db: projectDb
+          })
+      })
+
       return await getPaginatedProjectComments({
         ...args,
         projectId: parent.id,
@@ -406,6 +392,9 @@ export = {
       })
     },
     async comment(parent, args, context) {
+      const projectId = parent.id
+      const projectDb = await getProjectDbClient({ projectId })
+      const getStreamComment = getStreamCommentFactory({ db: projectDb, mainDb })
       return await getStreamComment(
         { streamId: parent.id, commentId: args.id },
         context
@@ -414,11 +403,23 @@ export = {
   },
   Version: {
     async commentThreads(parent, args, context) {
-      const stream = await context.loaders.commits.getCommitStream.load(parent.id)
+      const projectId = parent.streamId
       await authorizeProjectCommentsAccess({
-        projectId: stream!.id,
+        projectId,
         authCtx: context
       })
+
+      const projectDb = await getProjectDbClient({ projectId })
+      const getPaginatedCommitComments = getPaginatedCommitCommentsFactory({
+        getPaginatedCommitCommentsPage: getPaginatedCommitCommentsPageFactory({
+          db: projectDb
+        }),
+        getPaginatedCommitCommentsTotalCount:
+          getPaginatedCommitCommentsTotalCountFactory({
+            db: projectDb
+          })
+      })
+
       return await getPaginatedCommitComments({
         ...args,
         commitId: parent.id,
@@ -431,10 +432,23 @@ export = {
   },
   Model: {
     async commentThreads(parent, args, context) {
+      const projectId = parent.streamId
       await authorizeProjectCommentsAccess({
-        projectId: parent.streamId,
+        projectId,
         authCtx: context
       })
+      const projectDb = await getProjectDbClient({ projectId })
+
+      const getPaginatedBranchComments = getPaginatedBranchCommentsFactory({
+        getPaginatedBranchCommentsPage: getPaginatedBranchCommentsPageFactory({
+          db: projectDb
+        }),
+        getPaginatedBranchCommentsTotalCount:
+          getPaginatedBranchCommentsTotalCountFactory({
+            db: projectDb
+          })
+      })
+
       return await getPaginatedBranchComments({
         ...args,
         branchId: parent.id,
@@ -446,7 +460,7 @@ export = {
     }
   },
   ViewerUserActivityMessage: {
-    async user(parent, args, context) {
+    async user(parent, _args, context) {
       const { userId } = parent
       return context.loaders.users.getUser.load(userId!)
     }
@@ -455,72 +469,220 @@ export = {
     async commentCount(parent, _args, context) {
       if (context.role === Roles.Server.ArchivedUser)
         throw new ForbiddenError('You are not authorized.')
-      return await context.loaders.streams.getCommentThreadCount.load(parent.id)
+
+      const projectId = parent.id
+      const projectDb = await getProjectDbClient({ projectId })
+
+      return await context.loaders
+        .forRegion({ db: projectDb })
+        .streams.getCommentThreadCount.load(parent.id)
     }
   },
   Commit: {
-    async commentCount(parent, args, context) {
+    async commentCount(parent, _args, context) {
       if (context.role === Roles.Server.ArchivedUser)
         throw new ForbiddenError('You are not authorized.')
+
+      const projectId = parent.streamId
+      const projectDb = await getProjectDbClient({ projectId })
+      const getResourceCommentCount = getResourceCommentCountFactory({ db: projectDb })
+
       return await getResourceCommentCount({ resourceId: parent.id })
     }
   },
   Object: {
-    async commentCount(parent, args, context) {
+    async commentCount(parent, _args, context) {
       if (context.role === Roles.Server.ArchivedUser)
         throw new ForbiddenError('You are not authorized.')
+
+      const projectId = parent.streamId
+      const projectDb = await getProjectDbClient({ projectId })
+      const getResourceCommentCount = getResourceCommentCountFactory({ db: projectDb })
+
       return await getResourceCommentCount({ resourceId: parent.id })
     }
   },
   CommentMutations: {
     async markViewed(_parent, args, ctx) {
+      const projectDb = await getProjectDbClient({ projectId: args.input.projectId })
+      const authorizeCommentAccess = buildAuthorizeCommentAccess({
+        db: projectDb,
+        mainDb
+      })
       await authorizeCommentAccess({
         authCtx: ctx,
-        commentId: args.commentId
+        commentId: args.input.commentId
       })
-      await markCommentViewed(args.commentId, ctx.userId!)
+
+      const markCommentViewed = markCommentViewedFactory({ db: projectDb })
+      await markCommentViewed(args.input.commentId, ctx.userId!)
+
       return true
     },
     async create(_parent, args, ctx) {
+      const projectId = args.input.projectId
+
       await authorizeProjectCommentsAccess({
-        projectId: args.input.projectId,
+        projectId,
         authCtx: ctx,
         requireProjectRole: true
       })
+
+      const projectDb = await getProjectDbClient({ projectId })
+
+      const getViewerResourceItemsUngrouped = buildGetViewerResourceItemsUngrouped({
+        db: projectDb
+      })
+      const getViewerResourcesFromLegacyIdentifiers =
+        buildGetViewerResourcesFromLegacyIdentifiers({ db: projectDb })
+
+      const validateInputAttachments = validateInputAttachmentsFactory({
+        getBlobs: getBlobsFactory({ db: projectDb })
+      })
+      const insertComments = insertCommentsFactory({ db: projectDb })
+      const insertCommentLinks = insertCommentLinksFactory({ db: projectDb })
+      const markCommentViewed = markCommentViewedFactory({ db: projectDb })
+
+      const createCommentThreadAndNotify = createCommentThreadAndNotifyFactory({
+        getViewerResourceItemsUngrouped,
+        validateInputAttachments,
+        insertComments,
+        insertCommentLinks,
+        markCommentViewed,
+        commentsEventsEmit: CommentsEmitter.emit,
+        addCommentCreatedActivity: addCommentCreatedActivityFactory({
+          getViewerResourcesFromLegacyIdentifiers,
+          getViewerResourceItemsUngrouped,
+          saveActivity: saveActivityFactory({ db: mainDb }),
+          publish
+        })
+      })
+
       return await createCommentThreadAndNotify(args.input, ctx.userId!)
     },
     async reply(_parent, args, ctx) {
+      const projectDb = await getProjectDbClient({ projectId: args.input.projectId })
+      const authorizeCommentAccess = buildAuthorizeCommentAccess({
+        db: projectDb,
+        mainDb
+      })
       await authorizeCommentAccess({
         commentId: args.input.threadId,
         authCtx: ctx,
         requireProjectRole: true
       })
+
+      const getComment = getCommentFactory({ db: projectDb })
+      const validateInputAttachments = validateInputAttachmentsFactory({
+        getBlobs: getBlobsFactory({ db: projectDb })
+      })
+      const insertComments = insertCommentsFactory({ db: projectDb })
+      const insertCommentLinks = insertCommentLinksFactory({ db: projectDb })
+      const getViewerResourcesFromLegacyIdentifiers =
+        buildGetViewerResourcesFromLegacyIdentifiers({ db: projectDb })
+
+      const createCommentReplyAndNotify = createCommentReplyAndNotifyFactory({
+        getComment,
+        validateInputAttachments,
+        insertComments,
+        insertCommentLinks,
+        markCommentUpdated: markCommentUpdatedFactory({ db: projectDb }),
+        commentsEventsEmit: CommentsEmitter.emit,
+        addReplyAddedActivity: addReplyAddedActivityFactory({
+          getViewerResourcesForComment: getViewerResourcesForCommentFactory({
+            getCommentsResources: getCommentsResourcesFactory({ db: projectDb }),
+            getViewerResourcesFromLegacyIdentifiers
+          }),
+          saveActivity: saveActivityFactory({ db: mainDb }),
+          publish
+        })
+      })
+
       return await createCommentReplyAndNotify(args.input, ctx.userId!)
     },
     async edit(_parent, args, ctx) {
+      const projectDb = await getProjectDbClient({
+        projectId: args.input.projectId
+      })
+      const authorizeCommentAccess = buildAuthorizeCommentAccess({
+        db: projectDb,
+        mainDb
+      })
       await authorizeCommentAccess({
         authCtx: ctx,
         commentId: args.input.commentId,
         requireProjectRole: true
       })
+
+      const getComment = getCommentFactory({ db: projectDb })
+      const validateInputAttachments = validateInputAttachmentsFactory({
+        getBlobs: getBlobsFactory({ db: projectDb })
+      })
+      const updateComment = updateCommentFactory({ db: projectDb })
+
+      const editCommentAndNotify = editCommentAndNotifyFactory({
+        getComment,
+        validateInputAttachments,
+        updateComment,
+        commentsEventsEmit: CommentsEmitter.emit
+      })
+
       return await editCommentAndNotify(args.input, ctx.userId!)
     },
     async archive(_parent, args, ctx) {
+      const projectDb = await getProjectDbClient({
+        projectId: args.input.projectId
+      })
+      const authorizeCommentAccess = buildAuthorizeCommentAccess({
+        db: projectDb,
+        mainDb
+      })
       await authorizeCommentAccess({
         authCtx: ctx,
-        commentId: args.commentId,
+        commentId: args.input.commentId,
         requireProjectRole: true
       })
-      await archiveCommentAndNotify(args.commentId, ctx.userId!, args.archived)
+
+      const getComment = getCommentFactory({ db: projectDb })
+      const getStream = getStreamFactory({ db: projectDb })
+      const updateComment = updateCommentFactory({ db: projectDb })
+      const getViewerResourcesFromLegacyIdentifiers =
+        buildGetViewerResourcesFromLegacyIdentifiers({ db: projectDb })
+      const getViewerResourcesForComment = getViewerResourcesForCommentFactory({
+        getCommentsResources: getCommentsResourcesFactory({ db: projectDb }),
+        getViewerResourcesFromLegacyIdentifiers
+      })
+      const archiveCommentAndNotify = archiveCommentAndNotifyFactory({
+        getComment,
+        getStream,
+        updateComment,
+        addCommentArchivedActivity: addCommentArchivedActivityFactory({
+          getViewerResourcesForComment,
+          saveActivity: saveActivityFactory({ db: mainDb }),
+          publish
+        })
+      })
+
+      await archiveCommentAndNotify(
+        args.input.commentId,
+        ctx.userId!,
+        args.input.archived
+      )
       return true
     }
   },
   Mutation: {
     commentMutations: () => ({}),
     async broadcastViewerUserActivity(_parent, args, context) {
+      const projectId = args.projectId
       await authorizeProjectCommentsAccess({
-        projectId: args.projectId,
+        projectId,
         authCtx: context
+      })
+
+      const projectDb = await getProjectDbClient({ projectId })
+      const getViewerResourceItemsUngrouped = buildGetViewerResourceItemsUngrouped({
+        db: projectDb
       })
 
       await publish(ViewerSubscriptions.UserActivityBroadcasted, {
@@ -532,7 +694,7 @@ export = {
       return true
     },
 
-    async userViewerActivityBroadcast(parent, args, context) {
+    async userViewerActivityBroadcast(_parent, args, context) {
       await authorizeProjectCommentsAccess({
         projectId: args.streamId,
         authCtx: context
@@ -546,7 +708,7 @@ export = {
       })
       return true
     },
-    async userCommentThreadActivityBroadcast(parent, args, context) {
+    async userCommentThreadActivityBroadcast(_parent, args, context) {
       if (!context.userId) return false
 
       const stream = await getStream({
@@ -565,7 +727,7 @@ export = {
       return true
     },
 
-    async commentCreate(parent, args, context) {
+    async commentCreate(_parent, args, context) {
       if (!context.userId)
         throw new ForbiddenError('Only registered users can comment.')
 
@@ -577,12 +739,38 @@ export = {
       if (!stream?.allowPublicComments && !stream?.role)
         throw new ForbiddenError('You are not authorized.')
 
+      const projectDb = await getProjectDbClient({ projectId: args.input.streamId })
+
+      const createComment = createCommentFactory({
+        checkStreamResourcesAccess: streamResourceCheckFactory({
+          checkStreamResourceAccess: checkStreamResourceAccessFactory({ db: projectDb })
+        }),
+        validateInputAttachments: validateInputAttachmentsFactory({
+          getBlobs: getBlobsFactory({ db: projectDb })
+        }),
+        insertComments: insertCommentsFactory({ db: projectDb }),
+        insertCommentLinks: insertCommentLinksFactory({ db: projectDb }),
+        deleteComment: deleteCommentFactory({ db: projectDb }),
+        markCommentViewed: markCommentViewedFactory({ db: projectDb }),
+        commentsEventsEmit: CommentsEmitter.emit
+      })
       const comment = await createComment({
         userId: context.userId,
         input: args.input
       })
 
-      await addCommentCreatedActivity({
+      const getViewerResourceItemsUngrouped = buildGetViewerResourceItemsUngrouped({
+        db: projectDb
+      })
+      const getViewerResourcesFromLegacyIdentifiers =
+        buildGetViewerResourcesFromLegacyIdentifiers({ db: projectDb })
+
+      await addCommentCreatedActivityFactory({
+        getViewerResourceItemsUngrouped,
+        getViewerResourcesFromLegacyIdentifiers,
+        saveActivity: saveActivityFactory({ db: mainDb }),
+        publish
+      })({
         streamId: args.input.streamId,
         userId: context.userId,
         input: args.input,
@@ -592,7 +780,7 @@ export = {
       return comment.id
     },
 
-    async commentEdit(parent, args, context) {
+    async commentEdit(_parent, args, context) {
       // NOTE: This is NOT in use anywhere
       const stream = await authorizeProjectCommentsAccess({
         projectId: args.input.streamId,
@@ -600,30 +788,61 @@ export = {
         requireProjectRole: true
       })
       const matchUser = !stream.role
+
+      const projectDb = await getProjectDbClient({ projectId: args.input.streamId })
+      const editComment = editCommentFactory({
+        getComment: getCommentFactory({ db: projectDb }),
+        validateInputAttachments: validateInputAttachmentsFactory({
+          getBlobs: getBlobsFactory({ db: projectDb })
+        }),
+        updateComment: updateCommentFactory({ db: projectDb }),
+        commentsEventsEmit: CommentsEmitter.emit
+      })
+
       await editComment({ userId: context.userId!, input: args.input, matchUser })
       return true
     },
 
     // used for flagging a comment as viewed
-    async commentView(parent, args, context) {
+    async commentView(_parent, args, context) {
       await authorizeProjectCommentsAccess({
         projectId: args.streamId,
         authCtx: context
       })
+
+      const projectDb = await getProjectDbClient({ projectId: args.streamId })
+      const markCommentViewed = markCommentViewedFactory({ db: projectDb })
+
       await markCommentViewed(args.commentId, context.userId!)
       return true
     },
 
-    async commentArchive(parent, args, context) {
+    async commentArchive(_parent, args, context) {
       await authorizeProjectCommentsAccess({
         projectId: args.streamId,
         authCtx: context,
         requireProjectRole: true
       })
 
+      const projectDb = await getProjectDbClient({ projectId: args.streamId })
+      const archiveComment = archiveCommentFactory({
+        getComment: getCommentFactory({ db: projectDb }),
+        getStream,
+        updateComment: updateCommentFactory({ db: projectDb })
+      })
       const updatedComment = await archiveComment({ ...args, userId: context.userId! }) // NOTE: permissions check inside service
 
-      await addCommentArchivedActivity({
+      const getViewerResourcesFromLegacyIdentifiers =
+        buildGetViewerResourcesFromLegacyIdentifiers({ db: projectDb })
+      const getViewerResourcesForComment = getViewerResourcesForCommentFactory({
+        getCommentsResources: getCommentsResourcesFactory({ db: projectDb }),
+        getViewerResourcesFromLegacyIdentifiers
+      })
+      await addCommentArchivedActivityFactory({
+        getViewerResourcesForComment,
+        saveActivity: saveActivityFactory({ db: mainDb }),
+        publish
+      })({
         streamId: args.streamId,
         commentId: args.commentId,
         userId: context.userId!,
@@ -634,7 +853,7 @@ export = {
       return true
     },
 
-    async commentReply(parent, args, context) {
+    async commentReply(_parent, args, context) {
       if (!context.userId)
         throw new ForbiddenError('Only registered users can comment.')
 
@@ -646,6 +865,21 @@ export = {
       if (!stream?.allowPublicComments && !stream?.role)
         throw new ForbiddenError('You are not authorized.')
 
+      const projectDb = await getProjectDbClient({ projectId: args.input.streamId })
+
+      const createCommentReply = createCommentReplyFactory({
+        validateInputAttachments: validateInputAttachmentsFactory({
+          getBlobs: getBlobsFactory({ db: projectDb })
+        }),
+        insertComments: insertCommentsFactory({ db: projectDb }),
+        insertCommentLinks: insertCommentLinksFactory({ db: projectDb }),
+        checkStreamResourcesAccess: streamResourceCheckFactory({
+          checkStreamResourceAccess: checkStreamResourceAccessFactory({ db: projectDb })
+        }),
+        deleteComment: deleteCommentFactory({ db: projectDb }),
+        markCommentUpdated: markCommentUpdatedFactory({ db: projectDb }),
+        commentsEventsEmit: CommentsEmitter.emit
+      })
       const reply = await createCommentReply({
         authorId: context.userId,
         parentCommentId: args.input.parentComment,
@@ -655,7 +889,16 @@ export = {
         blobIds: args.input.blobIds
       })
 
-      await addReplyAddedActivity({
+      const getViewerResourcesFromLegacyIdentifiers =
+        buildGetViewerResourcesFromLegacyIdentifiers({ db: projectDb })
+      await addReplyAddedActivityFactory({
+        getViewerResourcesForComment: getViewerResourcesForCommentFactory({
+          getCommentsResources: getCommentsResourcesFactory({ db: projectDb }),
+          getViewerResourcesFromLegacyIdentifiers
+        }),
+        saveActivity: saveActivityFactory({ db: mainDb }),
+        publish
+      })({
         streamId: args.input.streamId,
         input: args.input,
         reply,
@@ -706,6 +949,13 @@ export = {
           if (!variables.resourceIds) {
             return payload.streamId === variables.streamId
           }
+
+          const projectDb = await getProjectDbClient({ projectId: payload.streamId })
+          const streamResourceCheck = streamResourceCheckFactory({
+            checkStreamResourceAccess: checkStreamResourceAccessFactory({
+              db: projectDb
+            })
+          })
 
           // otherwise perform a deeper check
           try {
@@ -769,6 +1019,11 @@ export = {
           if (!target.resourceIdString.trim().length) return false
           if (payload.projectId !== target.projectId) return false
 
+          const projectDb = await getProjectDbClient({ projectId: payload.projectId })
+          const getViewerResourceItemsUngrouped = buildGetViewerResourceItemsUngrouped({
+            db: projectDb
+          })
+
           const [stream, requestedResourceItems] = await Promise.all([
             getStream({
               streamId: payload.projectId,
@@ -803,6 +1058,11 @@ export = {
         async (payload, variables, context) => {
           const target = variables.target
           if (payload.projectId !== target.projectId) return false
+
+          const projectDb = await getProjectDbClient({ projectId: payload.projectId })
+          const getViewerResourceItemsUngrouped = buildGetViewerResourceItemsUngrouped({
+            db: projectDb
+          })
 
           const [stream, requestedResourceItems] = await Promise.all([
             getStream({

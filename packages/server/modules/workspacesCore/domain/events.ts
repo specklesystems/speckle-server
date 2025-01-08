@@ -3,22 +3,28 @@ import { WorkspaceRoles } from '@speckle/shared'
 
 export const workspaceEventNamespace = 'workspace' as const
 
-const workspaceEventPrefix = `${workspaceEventNamespace}.` as const
+const eventPrefix = `${workspaceEventNamespace}.` as const
 
 export const WorkspaceEvents = {
-  Created: `${workspaceEventPrefix}created`,
-  Updated: `${workspaceEventPrefix}updated`,
-  RoleDeleted: `${workspaceEventPrefix}role-deleted`,
-  RoleUpdated: `${workspaceEventPrefix}role-updated`,
-  JoinedFromDiscovery: `${workspaceEventPrefix}joined-from-discovery`
+  Authorized: `${eventPrefix}authorized`,
+  Created: `${eventPrefix}created`,
+  Updated: `${eventPrefix}updated`,
+  RoleDeleted: `${eventPrefix}role-deleted`,
+  RoleUpdated: `${eventPrefix}role-updated`,
+  JoinedFromDiscovery: `${eventPrefix}joined-from-discovery`
 } as const
 
 export type WorkspaceEvents = (typeof WorkspaceEvents)[keyof typeof WorkspaceEvents]
 
-type WorkspaceCreatedPayload = Workspace & {
+type WorkspaceAuthorizedPayload = {
+  userId: string | null
+  workspaceId: string
+}
+type WorkspaceCreatedPayload = {
+  workspace: Workspace
   createdByUserId: string
 }
-type WorkspaceUpdatedPayload = Workspace
+type WorkspaceUpdatedPayload = { workspace: Workspace }
 type WorkspaceRoleDeletedPayload = Pick<WorkspaceAcl, 'userId' | 'workspaceId' | 'role'>
 type WorkspaceRoleUpdatedPayload = Pick<
   WorkspaceAcl,
@@ -31,6 +37,7 @@ type WorkspaceJoinedFromDiscoveryPayload = {
 }
 
 export type WorkspaceEventsPayloads = {
+  [WorkspaceEvents.Authorized]: WorkspaceAuthorizedPayload
   [WorkspaceEvents.Created]: WorkspaceCreatedPayload
   [WorkspaceEvents.Updated]: WorkspaceUpdatedPayload
   [WorkspaceEvents.RoleDeleted]: WorkspaceRoleDeletedPayload

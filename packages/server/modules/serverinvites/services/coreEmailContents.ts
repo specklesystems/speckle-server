@@ -1,13 +1,11 @@
+import { GetStream } from '@/modules/core/domain/streams/operations'
 import {
   getRegistrationRoute,
   getStreamRoute
 } from '@/modules/core/helpers/routeHelper'
 import { StreamRecord } from '@/modules/core/helpers/types'
-import { getStream } from '@/modules/core/repositories/streams'
-import {
-  EmailTemplateParams,
-  sanitizeMessage
-} from '@/modules/emails/services/emailRendering'
+import { EmailTemplateParams } from '@/modules/emails/domain/operations'
+import { sanitizeMessage } from '@/modules/emails/services/emailRendering'
 import {
   PrimaryInviteResourceTarget,
   ProjectInviteResourceTarget
@@ -162,7 +160,7 @@ const buildProjectEmailTemplateParams = (
   }
 }
 
-type BuildProjectInviteContentsFactoryDeps = { getStream: typeof getStream }
+type BuildProjectInviteContentsFactoryDeps = { getStream: GetStream }
 
 const buildProjectInviteContentsFactory =
   (deps: BuildProjectInviteContentsFactoryDeps): BuildProjectInviteEmailContents =>

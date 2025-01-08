@@ -60,6 +60,11 @@ spec:
           - name: postgres-certificate
             mountPath: /postgres-certificate
         {{- end }}
+        {{- if .Values.featureFlags.workspacesMultiRegionEnabled }}
+          - name: multi-region-config
+            mountPath: /multi-region-config
+            readOnly: true
+        {{- end }}
 
         env:
           - name: HOST
@@ -77,6 +82,14 @@ spec:
               secretKeyRef:
                 name: {{ default .Values.secretName .Values.db.connectionString.secretName }}
                 key: {{ default "postgres_url" .Values.db.connectionString.secretKey }}
+          {{- if .Values.preview_service.postgresMaxConnections }}
+          - name: POSTGRES_MAX_CONNECTIONS_PREVIEW_SERVICE
+            value: {{ .Values.preview_service.postgresMaxConnections | quote }}
+          {{- end }}
+          - name: POSTGRES_CONNECTION_CREATE_TIMEOUT_MILLIS
+            value: {{ .Values.db.connectionCreateTimeoutMillis | quote }}
+          - name: POSTGRES_CONNECTION_ACQUIRE_TIMEOUT_MILLIS
+            value: {{ .Values.db.connectionAcquireTimeoutMillis | quote }}
 
           - name: LOG_LEVEL
             value: {{ .Values.preview_service.logLevel | quote }}
@@ -96,6 +109,12 @@ spec:
           {{- if .Values.preview_service.puppeteer.timeoutMilliseconds }}
           - name: PREVIEW_TIMEOUT
             value: {{ .Values.preview_service.puppeteer.timeoutMilliseconds | quote }}
+          {{- end }}
+          {{- if .Values.featureFlags.workspacesMultiRegionEnabled }}
+          - name: FF_WORKSPACES_MULTI_REGION_ENABLED
+            value: {{ .Values.featureFlags.workspacesMultiRegionEnabled | quote }}
+          - name: MULTI_REGION_CONFIG_PATH
+            value: "/multi-region-config/multi-region-config.json"
           {{- end }}
 
       {{- if .Values.preview_service.affinity }}
@@ -132,4 +151,12 @@ spec:
         - name: postgres-certificate
           configMap:
             name: postgres-certificate
+      {{- end }}
+      {{- if .Values.featureFlags.workspacesMultiRegionEnabled }}
+        - name: multi-region-config
+          secret:
+            secretName: {{ .Values.multiRegion.config.secretName }}
+            items:
+            - key: {{ .Values.multiRegion.config.secretKey }}
+              path: "multi-region-config.json"
       {{- end }}

@@ -1,8 +1,6 @@
 /* istanbul ignore file */
 import passport from 'passport'
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20'
-import { findOrCreateUser, getUserByEmail } from '@/modules/core/services/users'
-import { getServerInfo } from '@/modules/core/services/generic'
 
 import {
   UserInputError,
@@ -24,13 +22,18 @@ import {
   ValidateServerInvite
 } from '@/modules/serverinvites/services/operations'
 import { PassportAuthenticateHandlerBuilder } from '@/modules/auth/domain/operations'
+import {
+  FindOrCreateValidatedUser,
+  LegacyGetUserByEmail
+} from '@/modules/core/domain/users/operations'
+import { GetServerInfo } from '@/modules/core/domain/server/operations'
 import { EnvironmentResourceError } from '@/modules/shared/errors'
 
 const googleStrategyBuilderFactory =
   (deps: {
-    getServerInfo: typeof getServerInfo
-    getUserByEmail: typeof getUserByEmail
-    findOrCreateUser: typeof findOrCreateUser
+    getServerInfo: GetServerInfo
+    getUserByEmail: LegacyGetUserByEmail
+    findOrCreateUser: FindOrCreateValidatedUser
     validateServerInvite: ValidateServerInvite
     finalizeInvitedServerRegistration: FinalizeInvitedServerRegistration
     resolveAuthRedirectPath: ResolveAuthRedirectPath
@@ -113,7 +116,12 @@ const googleStrategyBuilderFactory =
               role: invite
                 ? getResourceTypeRole(invite.resource, ServerInviteResourceType)
                 : undefined,
-              verified: !!invite
+              verified: !!invite,
+              signUpContext: {
+                req,
+                isInvite: !!invite,
+                newsletterConsent: !!req.session.newsletterConsent
+              }
             }
           })
 

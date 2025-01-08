@@ -19,13 +19,10 @@
       >
         <div
           v-if="loading || !items"
+          class="flex items-center justify-center py-3"
           tabindex="0"
-          :style="{ paddingRight: paddingRightStyle }"
-          :class="rowsWrapperClasses"
         >
-          <div :class="getClasses(undefined, 0, { noPadding: true })" tabindex="0">
-            <CommonLoadingBar loading />
-          </div>
+          <CommonLoadingIcon />
         </div>
         <template v-else-if="items?.length">
           <div
@@ -85,7 +82,7 @@
 import { noop, isString } from 'lodash'
 import { computed } from 'vue'
 import type { PropAnyComponent } from '~~/src/helpers/common/components'
-import { CommonLoadingBar, FormButton } from '~~/src/lib'
+import { CommonLoadingIcon, FormButton } from '~~/src/lib'
 import { directive as vTippy } from 'vue-tippy'
 
 export type TableColumn<I> = {
@@ -155,9 +152,10 @@ const getHeaderClasses = (
     noPadding: boolean
   }>
 ): string => {
-  const classParts = [
-    column ? props.columns.find((c) => c.id === column)?.classes : '' || ''
-  ]
+  const columnClasses = column
+    ? props.columns.find((c) => c.id === column)?.classes
+    : ''
+  const classParts = [columnClasses || '']
 
   if (!options?.noPadding) {
     if (colIndex === 0) {

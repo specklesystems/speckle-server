@@ -1,8 +1,9 @@
+import { db } from '@/db/knex'
 import { cliLogger } from '@/logging/logging'
 import { StreamNotFoundError } from '@/modules/core/errors/stream'
 import { UserNotFoundError } from '@/modules/core/errors/user'
-import { getStream } from '@/modules/core/repositories/streams'
-import { getUser } from '@/modules/core/repositories/users'
+import { getStreamFactory } from '@/modules/core/repositories/streams'
+import { getUserFactory } from '@/modules/core/repositories/users'
 import { ForbiddenError } from '@/modules/shared/errors'
 import { BasicTestCommit, createTestCommits } from '@/test/speckle-helpers/commitHelper'
 import dayjs from 'dayjs'
@@ -31,6 +32,9 @@ const command: CommandModule<
     }
   },
   handler: async (argv) => {
+    const getUser = getUserFactory({ db })
+    const getStream = getStreamFactory({ db })
+
     const count = argv.count
     const streamId = argv.streamId
     const authorId = argv.authorId

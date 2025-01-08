@@ -1,23 +1,29 @@
 import bcrypt from 'bcrypt'
 import crs from 'crypto-random-string'
-import knex from '@/db/knex'
-import {
-  ServerAcl,
-  ApiTokens,
-  PersonalApiTokens,
-  TokenScopes,
-  UserServerAppTokens,
-  TokenResourceAccess
-} from '@/modules/core/dbSchema'
 import {
   TokenResourceAccessRecord,
   TokenValidationResult
 } from '@/modules/core/helpers/types'
-import { getTokenAppInfo } from '@/modules/core/repositories/tokens'
-import { Optional, ServerRoles } from '@speckle/shared'
-import { TokenResourceIdentifierInput } from '@/modules/core/graph/generated/graphql'
+import { Optional, ServerScope } from '@speckle/shared'
+import {
+  CreateAndStoreAppToken,
+  CreateAndStorePersonalAccessToken,
+  CreateAndStoreUserToken,
+  GetApiTokenById,
+  GetTokenResourceAccessDefinitionsById,
+  GetTokenScopesById,
+  RevokeUserTokenById,
+  StoreApiToken,
+  StorePersonalApiToken,
+  StoreTokenResourceAccessDefinitions,
+  StoreTokenScopes,
+  StoreUserServerAppToken,
+  UpdateApiToken,
+  ValidateToken
+} from '@/modules/core/domain/tokens/operations'
+import { GetTokenAppInfo } from '@/modules/auth/domain/operations'
+import { GetUserRole } from '@/modules/core/domain/users/operations'
 import { TokenCreateError } from '@/modules/core/errors/user'
-import { UserInputError } from '@/modules/core/errors/userinput'
 
 /*
   Tokens
@@ -34,189 +40,134 @@ export async function createBareToken() {
   return { tokenId, tokenString, tokenHash, lastChars }
 }
 
-export async function createToken({
-  userId,
-  name,
-  scopes,
-  lifespan,
-  limitResources
-}: {
-  userId: string
-  name: string
-  scopes: string[]
-  lifespan?: number | bigint
-  /**
-   * Optionally limit the resources that the token can access
-   */
-  limitResources?: TokenResourceIdentifierInput[] | null
-}) {
-  const { tokenId, tokenString, tokenHash, lastChars } = await createBareToken()
-
-  if (scopes.length === 0) throw new TokenCreateError('No scopes provided')
-
-  const token = {
-    id: tokenId,
-    tokenDigest: tokenHash,
-    lastChars,
-    owner: userId,
-    name,
-    lifespan
-  }
-  const tokenScopes = scopes.map((scope) => ({ tokenId, scopeName: scope }))
-  const resourceAccessEntries: Optional<TokenResourceAccessRecord[]> =
-    limitResources?.map((resource) => ({
-      tokenId,
-      resourceId: resource.id,
-      resourceType: resource.type
-    }))
-
-  await ApiTokens.knex().insert(token)
-  await Promise.all([
-    TokenScopes.knex().insert(tokenScopes),
-    ...(resourceAccessEntries?.length
-      ? [TokenResourceAccess.knex().insert(resourceAccessEntries)]
-      : [])
-  ])
-
-  return { id: tokenId, token: tokenId + tokenString }
+type CreateTokenDeps = {
+  storeApiToken: StoreApiToken
+  storeTokenScopes: StoreTokenScopes
+  storeTokenResourceAccessDefinitions: StoreTokenResourceAccessDefinitions
 }
 
-export async function createAppToken(
-  params: Parameters<typeof createToken>[0] & { appId: string }
-) {
-  const token = await createToken(params)
-  await UserServerAppTokens.knex().insert({
-    tokenId: token.token.slice(0, 10),
-    userId: params.userId,
-    appId: params.appId
-  })
-  return token.token
-}
+export const createTokenFactory =
+  (deps: CreateTokenDeps): CreateAndStoreUserToken =>
+  async ({ userId, name, scopes, lifespan, limitResources }) => {
+    const { tokenId, tokenString, tokenHash, lastChars } = await createBareToken()
 
-// Creates a personal access token for a user with a set of given scopes.
-export async function createPersonalAccessToken(
-  userId: string,
-  name: string,
-  scopes: string[],
-  lifespan?: number | bigint
-) {
-  const { id, token } = await createToken({
-    userId,
-    name,
-    scopes,
-    lifespan
-  })
+    if (scopes.length === 0) throw new TokenCreateError('No scopes provided')
 
-  // Store the relationship
-  await PersonalApiTokens.knex().insert({ userId, tokenId: id })
-
-  return token
-}
-
-export async function validateToken(
-  tokenString: string
-): Promise<TokenValidationResult> {
-  const tokenId = tokenString.slice(0, 10)
-  const tokenContent = tokenString.slice(10, 42)
-
-  const token = await ApiTokens.knex().where({ id: tokenId }).select('*').first()
-
-  if (!token) {
-    return { valid: false }
-  }
-
-  const timeDiff = Math.abs(Date.now() - new Date(token.createdAt).getTime())
-  if (timeDiff > token.lifespan) {
-    await revokeToken(tokenId, token.owner)
-    return { valid: false }
-  }
-
-  const valid = await bcrypt.compare(tokenContent, token.tokenDigest)
-
-  if (valid) {
-    const [scopes, acl, app, resourceAccessRules] = await Promise.all([
-      TokenScopes.knex()
-        .select<{ scopeName: string }[]>('scopeName')
-        .where({ tokenId }),
-      ServerAcl.knex()
-        .select<{ role: ServerRoles }[]>('role')
-        .where({ userId: token.owner })
-        .first(),
-      getTokenAppInfo({ token: tokenString }),
-      TokenResourceAccess.knex<TokenResourceAccessRecord[]>().where({
-        [TokenResourceAccess.col.tokenId]: tokenId
-      }),
-      ApiTokens.knex().where({ id: tokenId }).update({ lastUsed: knex.fn.now() })
-    ])
-    const role = acl!.role
-
-    return {
-      valid: true,
-      userId: token.owner,
-      role,
-      scopes: scopes.map((s) => s.scopeName),
-      appId: app?.id || null,
-      resourceAccessRules: resourceAccessRules.length ? resourceAccessRules : null
+    const token = {
+      id: tokenId,
+      tokenDigest: tokenHash,
+      lastChars,
+      owner: userId,
+      name,
+      lifespan
     }
-  } else return { valid: false }
-}
+    const tokenScopes = scopes.map((scope) => ({ tokenId, scopeName: scope }))
+    const resourceAccessEntries: Optional<TokenResourceAccessRecord[]> =
+      limitResources?.map((resource) => ({
+        tokenId,
+        resourceId: resource.id,
+        resourceType: resource.type
+      }))
 
-export async function revokeToken(tokenId: string, userId: string) {
-  tokenId = tokenId.slice(0, 10)
-  const delCount = await ApiTokens.knex().where({ id: tokenId, owner: userId }).del()
+    await deps.storeApiToken(token)
+    await Promise.all([
+      deps.storeTokenScopes(tokenScopes),
+      ...(resourceAccessEntries?.length
+        ? [deps.storeTokenResourceAccessDefinitions(resourceAccessEntries)]
+        : [])
+    ])
 
-  if (delCount === 0) throw new UserInputError('Token revokation failed')
-  return true
-}
+    return { id: tokenId, token: tokenId + tokenString }
+  }
 
-export async function revokeTokenById(tokenId: string) {
-  const delCount = await ApiTokens.knex()
-    .where({ id: tokenId.slice(0, 10) })
-    .del()
+export const createAppTokenFactory =
+  (
+    deps: CreateTokenDeps & {
+      storeUserServerAppToken: StoreUserServerAppToken
+    }
+  ): CreateAndStoreAppToken =>
+  async (params) => {
+    const token = await createTokenFactory(deps)(params)
+    await deps.storeUserServerAppToken({
+      tokenId: token.token.slice(0, 10),
+      userId: params.userId,
+      appId: params.appId
+    })
+    return token.token
+  }
 
-  if (delCount === 0) throw new UserInputError('Token revokation failed')
-  return true
-}
+/**
+ * Creates a personal access token for a user with a set of given scopes.
+ */
+export const createPersonalAccessTokenFactory =
+  (
+    deps: CreateTokenDeps & {
+      storePersonalApiToken: StorePersonalApiToken
+    }
+  ): CreateAndStorePersonalAccessToken =>
+  async (
+    userId: string,
+    name: string,
+    scopes: ServerScope[],
+    lifespan?: number | bigint
+  ) => {
+    const { id, token } = await createTokenFactory(deps)({
+      userId,
+      name,
+      scopes,
+      lifespan
+    })
 
-export async function getUserTokens(userId: string) {
-  const { rows } = await knex.raw(
-    `
-      SELECT
-        t.id,
-        t.name,
-        t."lastChars",
-        t."createdAt",
-        t.lifespan,
-        t."name",
-        t."lastUsed",
-        ts.scopes
-      FROM
-        api_tokens t
-        JOIN (
-          SELECT
-            ARRAY_AGG(token_scopes. "scopeName") AS "scopes",
-            token_scopes. "tokenId" AS id
-          FROM
-            token_scopes
-            JOIN api_tokens ON "api_tokens"."id" = "token_scopes"."tokenId"
-          GROUP BY
-            token_scopes. "tokenId" ) ts USING (id)
-      WHERE
-        t.id IN(
-          SELECT
-            "tokenId" FROM personal_api_tokens
-          WHERE
-            "userId" = ? )
-    `,
-    [userId]
-  )
-  return rows as {
-    id: string
-    name: string | null
-    lastChars: string | null
-    createdAt: Date
-    lifespan: number
-    lastUsed: Date
-    scopes: string[]
-  }[]
-}
+    // Store the relationship
+    await deps.storePersonalApiToken({ userId, tokenId: id })
+
+    return token
+  }
+
+export const validateTokenFactory =
+  (deps: {
+    revokeUserTokenById: RevokeUserTokenById
+    getApiTokenById: GetApiTokenById
+    getTokenAppInfo: GetTokenAppInfo
+    getTokenScopesById: GetTokenScopesById
+    getUserRole: GetUserRole
+    getTokenResourceAccessDefinitionsById: GetTokenResourceAccessDefinitionsById
+    updateApiToken: UpdateApiToken
+  }): ValidateToken =>
+  async (tokenString: string): Promise<TokenValidationResult> => {
+    const tokenId = tokenString.slice(0, 10)
+    const tokenContent = tokenString.slice(10, 42)
+
+    const token = await deps.getApiTokenById(tokenId)
+
+    if (!token) {
+      return { valid: false }
+    }
+
+    const timeDiff = Math.abs(Date.now() - new Date(token.createdAt).getTime())
+    if (timeDiff > token.lifespan) {
+      await deps.revokeUserTokenById(tokenId, token.owner)
+      return { valid: false }
+    }
+
+    const valid = await bcrypt.compare(tokenContent, token.tokenDigest)
+
+    if (valid) {
+      const [scopes, role, app, resourceAccessRules] = await Promise.all([
+        deps.getTokenScopesById(tokenId),
+        deps.getUserRole(token.owner),
+        deps.getTokenAppInfo({ token: tokenString }),
+        deps.getTokenResourceAccessDefinitionsById(tokenId),
+        deps.updateApiToken(tokenId, { lastUsed: new Date() })
+      ])
+
+      return {
+        valid: true,
+        userId: token.owner,
+        role: role!,
+        scopes: scopes.map((s) => s.scopeName),
+        appId: app?.id || null,
+        resourceAccessRules: resourceAccessRules.length ? resourceAccessRules : null
+      }
+    } else return { valid: false }
+  }
