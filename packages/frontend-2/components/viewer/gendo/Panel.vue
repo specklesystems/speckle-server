@@ -65,10 +65,7 @@
     </div>
     <template #actions>
       <div class="flex w-full items-center justify-between gap-4">
-        <span
-          v-if="limits && !isOutOfCredits && !isNearingLimit"
-          class="text-body-2xs text-right pl-1"
-        >
+        <span v-if="limits" class="text-body-2xs text-right pl-1">
           {{ limits.used }}/{{ limits.limit }} free renders used this month
         </span>
         <FormButton

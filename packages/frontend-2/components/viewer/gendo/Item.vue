@@ -2,28 +2,31 @@
   <div v-if="detailedRender">
     <div class="relative">
       <div v-if="detailedRender.status === 'COMPLETED' && renderUrl" class="group">
-        <button @click="isDialogOpen = true">
-          <img :src="renderUrl" alt="render" class="rounded-lg shadow" />
+        <button class="flex" @click="isDialogOpen = true">
+          <NuxtImg :src="renderUrl" alt="render" class="rounded-lg shadow" />
         </button>
-        <div class="absolute top-2 left-2 flex gap-2">
-          <!-- eslint-disable-next-line vuejs-accessibility/anchor-has-content -->
-          <a
-            v-tippy="'Download'"
-            class="bg-foundation p-1 rounded"
-            :href="renderUrl"
-            target="_blank"
-            title="download image"
+        <div class="absolute top-2 left-2 flex gap-1">
+          <FormButton
+            v-tippy="`Download`"
+            :to="renderUrl"
+            download
+            :icon-left="ArrowDownTrayIcon"
+            hide-text
+            color="outline"
+            size="sm"
           >
-            <ArrowDownTrayIcon class="w-4" />
-          </a>
-          <button
-            v-if="detailedRender.camera"
-            v-tippy="'Set view'"
-            class="bg-foundation p-1 rounded"
+            Download
+          </FormButton>
+          <FormButton
+            v-tippy="`Set view`"
+            :icon-left="VideoCameraIcon"
+            hide-text
+            color="outline"
+            size="sm"
             @click="setView()"
           >
-            <VideoCameraIcon class="w-4" />
-          </button>
+            Set View
+          </FormButton>
         </div>
       </div>
       <div
@@ -39,13 +42,13 @@
         <ExclamationCircleIcon v-else class="w-6 text-danger" />
       </div>
       <div
-        class="absolute bottom-4 left-2 text-body-xs space-x-2 flex items-center min-w-0 max-w-full overflow-hidden"
+        class="absolute bottom-2 left-2 text-body-xs space-x-2 flex items-center min-w-0 max-w-full overflow-hidden"
       >
         <div
           class="bg-foundation p-0.5 flex items-center space-x-1 min-w-0 max-w-full rounded-md"
         >
           <UserAvatar :user="detailedRender.user" size="sm" />
-          <span class="truncate max-w-full select-none">
+          <span class="truncate max-w-full select-none pr-1">
             {{ detailedRender.prompt }}
           </span>
         </div>
@@ -116,11 +119,6 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
       href: renderUrl.value || undefined,
       target: '_blank'
     }
-  },
-  {
-    text: 'Set View',
-    props: { color: 'outline' },
-    onClick: setView
   }
 ])
 
