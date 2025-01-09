@@ -1,4 +1,3 @@
-import knex from '@/db/knex'
 import {
   GetActiveUserStreams,
   GetActivityCountByResourceId,
@@ -27,6 +26,7 @@ import { Knex } from 'knex'
 import { getStreamFactory } from '@/modules/core/repositories/streams'
 import { getUserFactory } from '@/modules/core/repositories/users'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
+import { getProjectDbClient } from '@/modules/multiregion/dbSelector'
 
 const tables = {
   streamActivity: <T extends object = StreamActivityRecord>(db: Knex) =>
@@ -58,7 +58,7 @@ export const getActiveUserStreamsFactory =
       .select(StreamActivity.col.userId)
       // creates the UserSteams type by aggregating the streamId-s, grouped by userId
       .select(
-        knex.raw(`array_agg(distinct ${StreamActivity.name}."streamId") as "streamIds"`)
+        db.raw(`array_agg(distinct ${StreamActivity.name}."streamId") as "streamIds"`)
       )
       .groupBy(StreamActivity.col.userId)
       .join(
@@ -253,11 +253,15 @@ export const saveActivityFactory =
         }
       }
 
+      const projectDb = await getProjectDbClient({ projectId: streamId })
+      // yes, we're manually instantiating this thing here, but i do not want to go through all the places,
+      // where we're calling saveActivity!
+      // the whole activity module will need to be refactored to use the eventBus
       await dispatchStreamEventFactory({
-        getStreamWebhooks: getStreamWebhooksFactory({ db }),
+        getStreamWebhooks: getStreamWebhooksFactory({ db: projectDb }),
         getServerInfo: getServerInfoFactory({ db }),
-        getStream: getStreamFactory({ db }),
-        createWebhookEvent: createWebhookEventFactory({ db }),
+        getStream: getStreamFactory({ db: projectDb }),
+        createWebhookEvent: createWebhookEventFactory({ db: projectDb }),
         getUser: getUserFactory({ db })
       })({
         streamId,

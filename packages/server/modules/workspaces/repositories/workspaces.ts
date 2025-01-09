@@ -6,7 +6,6 @@ import {
 } from '@/modules/workspacesCore/domain/types'
 import {
   CountDomainsByWorkspaceId,
-  CountProjectsVersionsByWorkspaceId,
   CountWorkspaceRoleWithOptionalProjectRole,
   DeleteWorkspace,
   DeleteWorkspaceDomain,
@@ -15,6 +14,7 @@ import {
   GetUserIdsWithRoleInWorkspace,
   GetWorkspace,
   GetWorkspaceBySlug,
+  GetWorkspaceBySlugOrId,
   GetWorkspaceCollaborators,
   GetWorkspaceCollaboratorsTotalCount,
   GetWorkspaceDomains,
@@ -41,7 +41,6 @@ import {
   ServerAcl,
   ServerInvites,
   StreamAcl,
-  StreamCommits,
   Streams,
   Users
 } from '@/modules/core/dbSchema'
@@ -141,6 +140,18 @@ export const getWorkspaceFactory =
   async ({ workspaceId, userId }) => {
     const workspace = await workspaceWithRoleBaseQuery({ db, userId })
       .where(Workspaces.col.id, workspaceId)
+      .first()
+
+    return workspace || null
+  }
+
+export const getWorkspaceBySlugOrIdFactory =
+  (deps: { db: Knex }): GetWorkspaceBySlugOrId =>
+  async ({ workspaceSlugOrId }) => {
+    const { db } = deps
+    const workspace = await workspaceWithRoleBaseQuery({ db })
+      .where(Workspaces.col.slug, workspaceSlugOrId)
+      .orWhere(Workspaces.col.id, workspaceSlugOrId)
       .first()
 
     return workspace || null
@@ -373,18 +384,6 @@ export const getWorkspaceWithDomainsFactory =
         (domain: WorkspaceDomain | null) => domain !== null
       )
     } as Workspace & { domains: WorkspaceDomain[] }
-  }
-
-export const countProjectsVersionsByWorkspaceIdFactory =
-  ({ db }: { db: Knex }): CountProjectsVersionsByWorkspaceId =>
-  async ({ workspaceId }) => {
-    const [res] = await tables
-      .streams(db)
-      .join(StreamCommits.name, StreamCommits.col.streamId, Streams.col.id)
-      .where({ workspaceId })
-      .count(StreamCommits.col.commitId)
-
-    return parseInt(res.count.toString())
   }
 
 export const getUserIdsWithRoleInWorkspaceFactory =

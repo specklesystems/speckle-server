@@ -168,7 +168,7 @@ const createPersonalAccessToken = createPersonalAccessTokenFactory({
 
 describe('Webhooks @webhooks', () => {
   const getWebhook = getWebhookByIdFactory({ db })
-  let server, sendRequest, app
+  let server, sendRequest
 
   const userOne = {
     name: 'User',
@@ -192,8 +192,9 @@ describe('Webhooks @webhooks', () => {
   }
 
   before(async () => {
-    ;({ app, server } = await beforeEachContext())
-    ;({ sendRequest } = await initializeTestServer(server, app))
+    const ctx = await beforeEachContext()
+    server = ctx.server
+    ;({ sendRequest } = await initializeTestServer(ctx))
 
     userOne.id = await createUser(userOne)
     streamOne.ownerId = userOne.id

@@ -1,5 +1,4 @@
 /* eslint-disable no-restricted-imports */
-/* eslint-disable camelcase */
 /* istanbul ignore file */
 import { packageRoot } from './bootstrap'
 import fs from 'fs'
@@ -10,8 +9,14 @@ import {
   postgresMaxConnections,
   isDevOrTestEnv
 } from '@/modules/shared/helpers/envHelper'
-import { dbLogger as logger } from './logging/logging'
+import { dbLogger as logger } from '@/logging/logging'
 import { Knex } from 'knex'
+import {
+  createKnexConfig,
+  configureKnexClient,
+  KnexConfigArgs,
+  RegionServerConfig
+} from '@speckle/shared/dist/commonjs/environment/multiRegionConfig.js'
 
 function walk(dir: string) {
   let results: string[] = []
@@ -69,67 +74,38 @@ if (env.POSTGRES_USER && env.POSTGRES_PASSWORD) {
 // this is why the new datetime columns are created like this
 // table.specificType('createdAt', 'TIMESTAMPTZ(3)').defaultTo(knex.fn.now())
 
-export const createKnexConfig = ({
-  connectionString,
-  caCertificate
-}: {
-  connectionString?: string
-  caCertificate?: string | undefined
-}): Knex.Config => {
-  return {
-    client: 'pg',
-    migrations: {
-      extension: 'ts',
-      loadExtensions: isTestEnv() ? ['.js', '.ts'] : ['.js'],
-      directory: migrationDirs
-    },
-    log: {
-      warn(message: unknown) {
-        logger.warn(message)
-      },
-      error(message: unknown) {
-        logger.error(message)
-      },
-      deprecate(message: unknown) {
-        logger.info(message)
-      },
-      debug(message: unknown) {
-        logger.debug(message)
-      }
-    },
-    connection: {
-      connectionString,
-      ssl: caCertificate ? { ca: caCertificate, rejectUnauthorized: true } : undefined,
-      application_name: 'speckle_server'
-    },
-    // we wish to avoid leaking sql queries in the logs: https://knexjs.org/guide/#compilesqlonerror
-    compileSqlOnError: isDevOrTestEnv(),
-    asyncStackTraces: isDevOrTestEnv(),
-    pool: {
-      min: 0,
-      max: postgresMaxConnections(),
-      acquireTimeoutMillis: 16000, //allows for 3x creation attempts plus idle time between attempts
-      createTimeoutMillis: 5000
-    }
-  }
+const configArgs: KnexConfigArgs = {
+  migrationDirs,
+  isTestEnv: isTestEnv(),
+  isDevOrTestEnv: isDevOrTestEnv(),
+  applicationName: 'speckle_server',
+  logger,
+  maxConnections: postgresMaxConnections()
 }
 
 const config: Record<string, Knex.Config> = {
   test: {
     ...createKnexConfig({
-      connectionString: connectionUri || 'postgres://127.0.0.1/speckle2_test'
+      connectionString: connectionUri || 'postgres://127.0.0.1/speckle2_test',
+      ...configArgs
     })
   },
   development: {
     ...createKnexConfig({
-      connectionString: connectionUri || 'postgres://127.0.0.1/speckle2_dev'
+      connectionString: connectionUri || 'postgres://127.0.0.1/speckle2_dev',
+      ...configArgs
     })
   },
   production: {
     ...createKnexConfig({
-      connectionString: connectionUri
+      connectionString: connectionUri,
+      ...configArgs
     })
   }
+}
+
+export const configureClient = (config: RegionServerConfig) => {
+  return configureKnexClient(config, configArgs)
 }
 
 export default config

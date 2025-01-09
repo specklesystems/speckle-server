@@ -40,17 +40,8 @@
       />
     </div>
     <AuthPasswordChecks :password="password" class="mt-2 h-12 sm:h-8" />
-    <div class="mt-8 text-body-2xs flex px-2 text-foreground-2 space-x-2">
-      <!-- 
-        Note the newsletter consent box is here because i got very confused re layout of the panel
-        and didn't figure out a better way to put it where i needed it to be
-       -->
-      <FormCheckbox
-        v-model="newsletterConsent"
-        name="newsletter"
-        label="Opt in for exclusive Speckle news and tips"
-        class="text-body-xs"
-      />
+    <div class="mt-8 flex px-2">
+      <AuthRegisterNewsletter v-model:newsletter-consent="newsletterConsent" />
     </div>
     <FormButton
       submit
@@ -61,16 +52,10 @@
     >
       Sign up
     </FormButton>
-    <div
-      v-if="serverInfo.termsOfService"
-      class="mt-2 text-body-2xs text-foreground-2 text-center terms-of-service"
-      v-html="serverInfo.termsOfService"
-    />
-    <div v-if="!inviteEmail" class="mt-2 sm:mt-4 text-center text-body-sm">
-      <span class="mr-2">Already have an account?</span>
-      <CommonTextLink :to="finalLoginRoute" :icon-right="ArrowRightIcon">
-        Log in
-      </CommonTextLink>
+    <AuthRegisterTerms v-if="serverInfo.termsOfService" :server-info="serverInfo" />
+    <div v-if="!inviteEmail" class="mt-2 sm:mt-4 text-center text-body-xs">
+      <span class="mr-2 text-foreground-3">Already have an account?</span>
+      <CommonTextLink :to="finalLoginRoute">Log in</CommonTextLink>
     </div>
   </form>
 </template>
@@ -84,7 +69,6 @@ import { loginRoute } from '~~/lib/common/helpers/route'
 import { passwordRules } from '~~/lib/auth/helpers/validation'
 import { graphql } from '~~/lib/common/generated/gql'
 import type { ServerTermsOfServicePrivacyPolicyFragmentFragment } from '~~/lib/common/generated/gql/graphql'
-import { ArrowRightIcon } from '@heroicons/vue/20/solid'
 import { useMounted } from '@vueuse/core'
 
 /**

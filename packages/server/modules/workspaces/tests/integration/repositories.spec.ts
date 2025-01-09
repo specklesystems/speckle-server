@@ -161,7 +161,7 @@ describe('Workspace repositories', () => {
       })
 
       afterEach(async () => {
-        truncateTables(['workspaces'])
+        await truncateTables(['workspaces'])
       })
 
       it('returns all workspace members', async () => {
@@ -209,7 +209,7 @@ describe('Workspace repositories', () => {
       })
 
       afterEach(async () => {
-        truncateTables(['workspaces'])
+        await truncateTables(['workspaces'])
       })
 
       it('limits search results to specified workspace', async () => {

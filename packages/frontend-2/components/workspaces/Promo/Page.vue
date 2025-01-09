@@ -1,7 +1,6 @@
 <template>
   <div class="flex flex-col gap-12">
     <WorkspacesPromoBanner @create="openWorkspaceCreateDialog" />
-
     <section>
       <div class="flex justify-between mb-2">
         <h4 class="text-foreground-2 text-heading-sm">In a nutshell</h4>
@@ -29,7 +28,6 @@
 
         <CommonCard
           title="SSO"
-          badge="Coming soon"
           description="Ensure compliance and security with workspace based SSO."
         >
           <template #icon>
@@ -38,9 +36,8 @@
         </CommonCard>
 
         <CommonCard
-          title="Sovereign Data Regions"
-          badge="Coming soon"
-          description="Store each project's data in the geographical location that you need, with granular precision going beyond continents."
+          title="Data residency"
+          description="Store your workspace projects in the geographical region of your choice."
         >
           <template #icon>
             <GlobeAltIcon class="size-6 text-foreground-2 ml-1" />
@@ -49,7 +46,7 @@
 
         <CommonCard
           title="... and more!"
-          description="We will be rolling out new features, like advanced permissions, audit logs, bigger uploads and more over the coming months."
+          description="We will be rolling out new features, like advanced permissions, audit logs, and more over the coming months."
         >
           <template #icon>
             <PlusIcon class="size-6 text-foreground-2 ml-1" />

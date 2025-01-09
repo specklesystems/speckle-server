@@ -63,9 +63,9 @@
             >
               <NuxtLink :to="workspacesRoute" @click="handleIntroducingWorkspacesClick">
                 <LayoutSidebarMenuGroupItem
+                  v-if="!hasWorkspaces || route.path === workspacesRoute"
                   label="Introducing workspaces"
                   :active="isActive(workspacesRoute)"
-                  tag="BETA"
                 >
                   <template #icon>
                     <IconWorkspaces class="size-4 text-foreground-2" />
@@ -81,6 +81,12 @@
                 <LayoutSidebarMenuGroupItem
                   :label="item.label"
                   :active="isActive(item.to)"
+                  :tag="
+                    item.plan?.status === WorkspacePlanStatuses.Trial ||
+                    !item.plan?.status
+                      ? 'Trial'
+                      : undefined
+                  "
                   class="!pl-1"
                 >
                   <template #icon>
@@ -187,6 +193,7 @@ import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { HomeIcon } from '@heroicons/vue/24/outline'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { Roles } from '@speckle/shared'
+import { WorkspacePlanStatuses } from '~/lib/common/generated/gql/graphql'
 
 const { isLoggedIn } = useActiveUser()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
@@ -214,7 +221,6 @@ const isActive = (...routes: string[]): boolean => {
 const isNotGuest = computed(
   () => Roles.Server.Admin || user.value?.role === Roles.Server.User
 )
-
 const workspacesItems = computed(() =>
   workspaceResult.value?.activeUser
     ? workspaceResult.value.activeUser.workspaces.items.map((workspace) => ({
@@ -222,10 +228,14 @@ const workspacesItems = computed(() =>
         id: workspace.id,
         to: workspaceRoute(workspace.slug),
         logo: workspace.logo,
-        defaultLogoIndex: workspace.defaultLogoIndex
+        defaultLogoIndex: workspace.defaultLogoIndex,
+        plan: {
+          status: workspace.plan?.status
+        }
       }))
     : []
 )
+const hasWorkspaces = computed(() => workspacesItems.value.length > 0)
 
 onWorkspaceResult((result) => {
   if (result.data?.activeUser) {

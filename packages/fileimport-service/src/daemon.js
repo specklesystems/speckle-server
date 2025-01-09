@@ -6,8 +6,7 @@ const {
   metricInputFileSize,
   metricOperationErrors
 } = require('./prometheusMetrics')
-const knex = require('../knex')
-const FileUploads = () => knex('file_uploads')
+const getDbClients = require('../knex')
 
 const { downloadFile } = require('./filesApi')
 const fs = require('fs')
@@ -16,7 +15,7 @@ const { spawn } = require('child_process')
 const ServerAPI = require('../ifc/api')
 const objDependencies = require('./objDependencies')
 const { logger } = require('../observability/logging')
-const { Scopes } = require('@speckle/shared')
+const { Scopes, wait } = require('@speckle/shared')
 
 const HEALTHCHECK_FILE_PATH = '/tmp/last_successful_query'
 
@@ -31,7 +30,7 @@ let TIME_LIMIT = 10 * 60 * 1000
 const providedTimeLimit = parseInt(process.env.FILE_IMPORT_TIME_LIMIT_MIN)
 if (providedTimeLimit) TIME_LIMIT = providedTimeLimit * 60 * 1000
 
-async function startTask() {
+async function startTask(knex) {
   const { rows } = await knex.raw(`
     UPDATE file_uploads
     SET
@@ -49,15 +48,16 @@ async function startTask() {
   return rows[0]
 }
 
-async function doTask(task) {
+async function doTask(mainDb, regionName, taskDb, task) {
   const taskId = task.id
 
   // Mark task as started
-  await knex.raw(`NOTIFY file_import_started, '${task.id}'`)
+  await mainDb.raw(`NOTIFY file_import_started, '${task.id}'`)
 
   let taskLogger = logger.child({ taskId })
   let tempUserToken = null
-  let serverApi = null
+  let mainServerApi = null
+  let taskServerApi = null
   let fileTypeForMetric = 'unknown'
   let fileSizeForMetric = 0
 
@@ -67,7 +67,7 @@ async function doTask(task) {
 
   try {
     taskLogger.info("Doing task '{taskId}'.")
-    const info = await FileUploads().where({ id: taskId }).first()
+    const info = await taskDb('file_uploads').where({ id: taskId }).first()
     if (!info) {
       throw new Error('Internal error: DB inconsistent')
     }
@@ -80,26 +80,38 @@ async function doTask(task) {
       fileName: info.fileName,
       fileSize: fileSizeForMetric,
       userId: info.userId,
-      streamId: info.streamId,
-      branchName: info.branchName
+      projectId: info.streamId,
+      modelName: info.branchName
     })
     fs.mkdirSync(TMP_INPUT_DIR, { recursive: true })
 
-    serverApi = new ServerAPI({ db: knex, streamId: info.streamId, logger: taskLogger })
+    mainServerApi = new ServerAPI({
+      db: mainDb,
+      streamId: info.streamId,
+      logger: taskLogger
+    })
+    taskServerApi = new ServerAPI({
+      db: taskDb,
+      streamId: info.streamId,
+      logger: taskLogger
+    })
 
     branchMetadata = {
       branchName: info.branchName,
       streamId: info.streamId
     }
-    const existingBranch = await serverApi.getBranchByNameAndStreamId({
+    const existingBranch = await taskServerApi.getBranchByNameAndStreamId({
       streamId: info.streamId,
       name: info.branchName
     })
     if (!existingBranch) {
       newBranchCreated = true
     }
+    taskLogger = taskLogger.child({
+      modelId: existingBranch?.id
+    })
 
-    const { token } = await serverApi.createToken({
+    const { token } = await mainServerApi.createToken({
       userId: info.userId,
       name: 'temp upload token',
       scopes: [Scopes.Streams.Write, Scopes.Streams.Read],
@@ -122,11 +134,14 @@ async function doTask(task) {
           '--no-experimental-fetch',
           './ifc/import_file.js',
           TMP_FILE_PATH,
+          TMP_RESULTS_PATH,
           info.userId,
           info.streamId,
           info.branchName,
           `File upload: ${info.fileName}`,
-          info.id
+          info.id,
+          existingBranch?.id || '',
+          regionName
         ],
         {
           USER_TOKEN: tempUserToken
@@ -140,10 +155,14 @@ async function doTask(task) {
         [
           './stl/import_file.py',
           TMP_FILE_PATH,
+          TMP_RESULTS_PATH,
           info.userId,
           info.streamId,
           info.branchName,
-          `File upload: ${info.fileName}`
+          `File upload: ${info.fileName}`,
+          info.id,
+          existingBranch?.id || '',
+          regionName
         ],
         {
           USER_TOKEN: tempUserToken
@@ -165,10 +184,14 @@ async function doTask(task) {
           '-u',
           './obj/import_file.py',
           TMP_FILE_PATH,
+          TMP_RESULTS_PATH,
           info.userId,
           info.streamId,
           info.branchName,
-          `File upload: ${info.fileName}`
+          `File upload: ${info.fileName}`,
+          info.id,
+          existingBranch?.id || '',
+          regionName
         ],
         {
           USER_TOKEN: tempUserToken
@@ -185,7 +208,7 @@ async function doTask(task) {
 
     const commitId = output.commitId
 
-    await knex.raw(
+    await taskDb.raw(
       `
       UPDATE file_uploads
       SET
@@ -199,7 +222,7 @@ async function doTask(task) {
     )
   } catch (err) {
     taskLogger.error(err)
-    await knex.raw(
+    await taskDb.raw(
       `
       UPDATE file_uploads
       SET
@@ -208,12 +231,13 @@ async function doTask(task) {
         "convertedMessage" = ?
       WHERE "id" = ?
     `,
-      [err.toString(), task.id]
+      // DB only accepts a varchar 255
+      [err.toString().substring(0, 254), task.id]
     )
     metricOperationErrors.labels(fileTypeForMetric).inc()
   } finally {
     const { streamId, branchName } = branchMetadata
-    await knex.raw(
+    await mainDb.raw(
       `NOTIFY file_import_update, '${task.id}:::${streamId}:::${branchName}:::${
         newBranchCreated ? 1 : 0
       }'`
@@ -226,7 +250,7 @@ async function doTask(task) {
   if (fs.existsSync(TMP_RESULTS_PATH)) fs.unlinkSync(TMP_RESULTS_PATH)
 
   if (tempUserToken) {
-    await serverApi.revokeTokenById(tempUserToken)
+    await mainServerApi.revokeTokenById(tempUserToken)
   }
 }
 
@@ -305,42 +329,53 @@ function wrapLogLine(line, isErr, logger) {
   logger.info({ parserLogLine: line }, 'ParserLog: {parserLogLine}')
 }
 
-async function tick() {
-  if (shouldExit) {
-    process.exit(0)
-  }
-
-  try {
-    const task = await startTask()
-
-    fs.writeFile(HEALTHCHECK_FILE_PATH, '' + Date.now(), () => {})
-
-    if (!task) {
-      setTimeout(tick, 1000)
-      return
+const doStuff = async () => {
+  const dbClients = await getDbClients()
+  const mainDb = dbClients.main.public
+  const dbClientsIterator = infiniteDbClientsIterator(dbClients)
+  while (!shouldExit) {
+    const [regionName, taskDb] = dbClientsIterator.next().value
+    try {
+      const task = await startTask(taskDb)
+      fs.writeFile(HEALTHCHECK_FILE_PATH, '' + Date.now(), () => {})
+      if (!task) {
+        await wait(1000)
+        continue
+      }
+      await doTask(mainDb, regionName, taskDb, task)
+      await wait(10)
+    } catch (err) {
+      metricOperationErrors.labels('main_loop').inc()
+      logger.error(err, 'Error executing task')
+      await wait(5000)
     }
-
-    await doTask(task)
-
-    // Check for another task very soon
-    setTimeout(tick, 10)
-  } catch (err) {
-    metricOperationErrors.labels('main_loop').inc()
-    logger.error(err, 'Error executing task')
-    setTimeout(tick, 5000)
   }
 }
 
 async function main() {
   logger.info('Starting FileUploads Service...')
-  initPrometheusMetrics()
+  await initPrometheusMetrics()
 
   process.on('SIGTERM', () => {
     shouldExit = true
     logger.info('Shutting down...')
   })
 
-  tick()
+  await doStuff()
+  process.exit(0)
+}
+
+function* infiniteDbClientsIterator(dbClients) {
+  let index = 0
+  const dbClientEntries = [...Object.entries(dbClients)]
+  const clientCount = dbClientEntries.length
+  while (true) {
+    // reset index
+    if (index === clientCount) index = 0
+    const [regionName, dbConnection] = dbClientEntries[index]
+    index++
+    yield [regionName, dbConnection.public]
+  }
 }
 
 main()

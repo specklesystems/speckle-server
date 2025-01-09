@@ -48,6 +48,12 @@
               :title="workspaceItem.name"
               collapsible
               class="workspace-item"
+              :tag="
+                workspaceItem.plan?.status === WorkspacePlanStatuses.Trial ||
+                !workspaceItem.plan?.status
+                  ? 'Trial'
+                  : undefined
+              "
               :collapsed="targetWorkspaceId !== workspaceItem.id"
             >
               <template #title-icon>
@@ -73,7 +79,6 @@
                   "
                   :tooltip-text="workspaceMenuItem.tooltipText"
                   :disabled="workspaceMenuItem.disabled"
-                  :tag="workspaceMenuItem.disabled ? 'Coming soon' : undefined"
                   extra-padding
                   @click="
                     onWorkspaceMenuItemClick(
@@ -139,6 +144,7 @@ import { graphql } from '~~/lib/common/generated/gql'
 import type { WorkspaceRoles } from '@speckle/shared'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { workspacesRoute } from '~/lib/common/helpers/route'
+import { WorkspacePlanStatuses } from '~/lib/common/generated/gql/graphql'
 
 graphql(`
   fragment SettingsDialog_Workspace on Workspace {
@@ -147,6 +153,9 @@ graphql(`
     slug
     role
     name
+    plan {
+      status
+    }
   }
 `)
 
