@@ -64,10 +64,10 @@
       <ViewerGendoList />
     </div>
     <template #actions>
-      <div class="flex w-full items-center justify-end">
+      <div class="flex w-full items-center justify-between gap-4">
         <span
           v-if="limits && !isOutOfCredits && !isNearingLimit"
-          class="text-body-2xs text-right"
+          class="text-body-2xs text-right pl-1"
         >
           {{ limits.used }}/{{ limits.limit }} free renders used this month
         </span>

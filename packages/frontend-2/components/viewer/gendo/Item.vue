@@ -39,7 +39,7 @@
         <ExclamationCircleIcon v-else class="w-6 text-danger" />
       </div>
       <div
-        class="absolute bottom-2 left-2 text-body-xs space-x-2 flex items-center min-w-0 max-w-full overflow-hidden"
+        class="absolute bottom-4 left-2 text-body-xs space-x-2 flex items-center min-w-0 max-w-full overflow-hidden"
       >
         <div
           class="bg-foundation p-0.5 flex items-center space-x-1 min-w-0 max-w-full rounded-md"
