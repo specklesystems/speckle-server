@@ -151,7 +151,7 @@
 </template>
 
 <script setup lang="ts">
-// import { graphql } from '~~/lib/common/generated/gql'
+import { graphql } from '~~/lib/common/generated/gql'
 // import { useForm } from 'vee-validate'
 // import { useQuery, useMutation } from '@vue/apollo-composable'
 // import { settingsUpdateWorkspaceMutation } from '~/lib/settings/graphql/mutations'
@@ -170,24 +170,24 @@
 // import { WorkspacePlanStatuses } from '~/lib/common/generated/gql/graphql'
 // import { isPaidPlan } from '~/lib/billing/helpers/types'
 // import { useWorkspaceSsoStatus } from '~/lib/workspaces/composables/sso'
-// graphql(`
-//   fragment SettingsWorkspacesGeneral_Workspace on Workspace {
-//     ...SettingsWorkspacesGeneralEditAvatar_Workspace
-//     ...SettingsWorkspaceGeneralDeleteDialog_Workspace
-//     ...SettingsWorkspacesGeneralEditSlugDialog_Workspace
-//     id
-//     name
-//     slug
-//     description
-//     logo
-//     role
-//     defaultProjectRole
-//     plan {
-//       status
-//       name
-//     }
-//   }
-// `)
+graphql(`
+  fragment SettingsWorkspacesGeneral_Workspace on Workspace {
+    ...SettingsWorkspacesGeneralEditAvatar_Workspace
+    ...SettingsWorkspaceGeneralDeleteDialog_Workspace
+    ...SettingsWorkspacesGeneralEditSlugDialog_Workspace
+    id
+    name
+    slug
+    description
+    logo
+    role
+    defaultProjectRole
+    plan {
+      status
+      name
+    }
+  }
+`)
 
 // type FormValues = { name: string; description: string; defaultProjectRole: StreamRoles }
 

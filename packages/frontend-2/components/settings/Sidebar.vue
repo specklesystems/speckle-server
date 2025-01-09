@@ -80,7 +80,6 @@
                 class="!pl-8"
               />
             </NuxtLink>
-            workspaces/security/sso/Wrapper.vue
           </LayoutSidebarMenuGroup>
           <NuxtLink v-if="!isGuest" :to="workspacesRoute">
             <LayoutSidebarMenuGroupItem label="Create workspace">

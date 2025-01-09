@@ -3,7 +3,7 @@
     :title="collapsible ? 'Members' : undefined"
     :collapsible="collapsible"
     :icon="iconName"
-    :icon-click="iconClick"
+    :icon-click="isWorkspaceAdmin ? iconClick : undefined"
     :icon-text="iconText"
     :tag="workspaceInfo.team.totalCount.toString() || undefined"
     no-hover
@@ -19,7 +19,7 @@
         <button
           v-if="invitedTeamCount && isWorkspaceAdmin"
           class="hidden md:flex items-center shrink-0 justify-center text-body-3xs px-2 h-8 rounded-full border border-dashed border-outline-2 hover:bg-foundation select-none"
-          @click="openSettingsDialog(SettingMenuKeys.Workspace.Members)"
+          @click="navigateTo(settingsRoutes.workspace(workspaceInfo.slug).members)"
         >
           + {{ invitedTeamCount }} pending
         </button>
@@ -37,11 +37,8 @@
 </template>
 <script setup lang="ts">
 import { graphql } from '~~/lib/common/generated/gql'
-import {
-  type AvailableSettingsMenuKeys,
-  SettingMenuKeys
-} from '~/lib/settings/helpers/types'
 import type { WorkspaceSidebarMembers_WorkspaceFragment } from '~/lib/common/generated/gql/graphql'
+import { settingsRoutes } from '~/lib/common/helpers/route'
 
 graphql(`
   fragment WorkspaceSidebarMembers_Workspace on Workspace {
@@ -49,20 +46,15 @@ graphql(`
   }
 `)
 
+defineEmits<{
+  (e: 'show-invite-dialog'): void
+}>()
+
 const props = defineProps<{
   workspaceInfo: WorkspaceSidebarMembers_WorkspaceFragment
   collapsible?: boolean
   isWorkspaceAdmin?: boolean
 }>()
-
-const emit = defineEmits<{
-  (e: 'show-invite-dialog'): void
-  (e: 'show-settings-dialog', v: AvailableSettingsMenuKeys): void
-}>()
-
-const openSettingsDialog = (target: AvailableSettingsMenuKeys) => {
-  emit('show-settings-dialog', target)
-}
 
 const team = computed(() => props.workspaceInfo.team.items || [])
 
@@ -73,7 +65,7 @@ const iconName = computed(() => {
 
 const iconClick = computed(() => {
   if (!props.isWorkspaceAdmin) return undefined
-  return () => openSettingsDialog(SettingMenuKeys.Workspace.Members)
+  return () => navigateTo(settingsRoutes.workspace(props.workspaceInfo.slug).members)
 })
 
 const iconText = computed(() => {

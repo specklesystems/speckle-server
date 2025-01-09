@@ -207,6 +207,7 @@ const verifiedUserDomains = computed(() => {
 const isDomainProtectionEnabled = computed({
   get: () => workspace.value?.domainBasedMembershipProtectionEnabled || false,
   set: async (newVal) => {
+    if (!workspace.value?.id) return
     const mutationResult = await apollo
       .mutate({
         mutation: SettingsUpdateWorkspaceSecurityDocument,
@@ -231,7 +232,7 @@ const isDomainProtectionEnabled = computed({
           if (!data?.workspaceMutations) return
 
           cache.modify<Workspace>({
-            id: getCacheId('Workspace', workspace.value?.id),
+            id: getCacheId('Workspace', workspace.value.id),
             fields: {
               domainBasedMembershipProtectionEnabled: () =>
                 res.data?.workspaceMutations.update
@@ -261,6 +262,7 @@ const isDomainProtectionEnabled = computed({
 const isDomainDiscoverabilityEnabled = computed({
   get: () => workspace.value?.discoverabilityEnabled || false,
   set: async (newVal) => {
+    if (!workspace.value?.id) return
     const mutationResult = await apollo.mutate({
       mutation: SettingsUpdateWorkspaceSecurityDocument,
       variables: {
