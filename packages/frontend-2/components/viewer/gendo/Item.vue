@@ -88,6 +88,7 @@ import {
 } from '@heroicons/vue/24/outline'
 import { useCameraUtilities } from '~/lib/viewer/composables/ui'
 import { Vector3 } from 'three'
+import type { LayoutDialogButton } from '@speckle/ui-components'
 
 const props = defineProps<{
   renderRequest: GendoAiRender
