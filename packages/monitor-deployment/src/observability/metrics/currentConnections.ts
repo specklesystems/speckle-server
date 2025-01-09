@@ -15,7 +15,7 @@ export const init: MetricInitializer = (config) => {
       dbClients.map(async ({ client, regionKey }) => {
         try {
           const currentConnectionResults = await client.raw<{
-            rows: [{ datname: string; state: string; query: string; interval: number }]
+            rows: [{ datname: string; state: string; query: string; interval: string }]
           }>(
             `
             SELECT datname, state, query, ROUND((EXTRACT(EPOCH FROM clock_timestamp()) - EXTRACT(EPOCH FROM query_start)) * 1000) AS interval
@@ -31,7 +31,7 @@ export const init: MetricInitializer = (config) => {
           for (const row of currentConnectionResults.rows) {
             currentConnections.set(
               { ...labels, query: row.query, region: regionKey },
-              row.interval
+              parseInt(row.interval)
             )
           }
         } catch (err) {
