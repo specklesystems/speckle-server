@@ -209,10 +209,8 @@ const isProjectReadOnly = computed(() => {
 })
 
 const isWorkspaceReadOnly = computed(() => {
-  if (!projectDetails.value) return true
-
-  if (projectDetails.value?.workspace?.readOnly) return true
-  return false
+  if (!projectDetails.value?.workspace) return false // project is not even in a workspace
+  return projectDetails.value?.workspace?.readOnly
 })
 
 // Enable later when FE2 is ready for accepting/denying requested accesses
