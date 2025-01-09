@@ -12,11 +12,13 @@ import {
 import { db } from '@/db/knex'
 import { expect } from 'chai'
 import {
+  bulkLookupUsersFactory,
   countAdminUsersFactory,
   getUserByEmailFactory,
   getUserFactory,
   getUsersFactory,
   listUsersFactory,
+  lookupUsersFactory,
   storeUserAclFactory,
   storeUserFactory
 } from '@/modules/core/repositories/users'
@@ -33,6 +35,8 @@ import {
 } from '@/modules/serverinvites/repositories/serverInvites'
 import { UsersEmitter } from '@/modules/core/events/usersEmitter'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
+import { BasicTestStream, createTestStream } from '@/test/speckle-helpers/streamHelper'
+import { BasicTestUser, createTestUser } from '@/test/authHelper'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUsers = getUsersFactory({ db })
@@ -65,6 +69,8 @@ const createUser = createUserFactory({
 })
 const getUserByEmail = getUserByEmailFactory({ db })
 const listUsers = listUsersFactory({ db })
+const lookupUsers = lookupUsersFactory({ db })
+const bulkLookupUsers = bulkLookupUsersFactory({ db })
 
 describe('Find users @core', () => {
   describe('getUsers', () => {
@@ -155,6 +161,147 @@ describe('Find users @core', () => {
       })
       const user = await getUserByEmail(email)
       expect(user!.email).to.equal(email.toLowerCase())
+    })
+  })
+
+  describe('lookupUsers', () => {
+    it('should find matches by name', async () => {
+      const email = createRandomEmail()
+      const userId = await createUser({
+        email,
+        name: 'John Spackle',
+        password: createRandomPassword()
+      })
+      const { users } = await lookupUsers({ query: 'Spack' })
+      expect(users.some((user) => user.id === userId)).to.equal(true)
+    })
+    it('should not find matches by name if filtered to emails only', async () => {
+      const email = createRandomEmail()
+      const userId = await createUser({
+        email,
+        name: 'John Spackle',
+        password: createRandomPassword()
+      })
+      const { users } = await lookupUsers({ query: 'Spack', emailOnly: true })
+      expect(users.some((user) => user.id === userId)).to.equal(false)
+    })
+    it('should find matches by email', async () => {
+      const email = createRandomEmail()
+      const userId = await createUser({
+        email,
+        name: 'John Spackle',
+        password: createRandomPassword()
+      })
+      const { users } = await lookupUsers({ query: email })
+      expect(users.some((user) => user.id === userId)).to.equal(true)
+    })
+    it('should find matches by email, case insensitive', async () => {
+      const email = 'fooBAR@example.org'
+      const userId = await createUser({
+        email,
+        name: 'John Spackle',
+        password: createRandomPassword()
+      })
+      const { users } = await lookupUsers({ query: 'FoObAr@example.org' })
+      expect(users.some((user) => user.id === userId)).to.equal(true)
+    })
+    it('should find matches limited to the given project', async () => {
+      const userA: BasicTestUser = {
+        id: '',
+        email: createRandomEmail(),
+        name: 'Beatrice'
+      }
+      const userB: BasicTestUser = {
+        id: '',
+        email: createRandomEmail(),
+        name: 'Beatrice'
+      }
+      await createTestUser(userA)
+      await createTestUser(userB)
+      const project: BasicTestStream = {
+        id: '',
+        ownerId: '',
+        name: 'Test Project',
+        isPublic: false
+      }
+      await createTestStream(project, userA)
+
+      const { users } = await lookupUsers({ query: 'beatrice', projectId: project.id })
+      expect(users.some((user) => user.id === userA.id)).to.equal(true)
+      expect(users.some((user) => user.id === userB.id)).to.equal(false)
+    })
+  })
+
+  describe('bulkLookupUsers', () => {
+    it('should find matches for all emails provided', async () => {
+      const userA: BasicTestUser = {
+        id: '',
+        email: createRandomEmail(),
+        name: 'Harald'
+      }
+      const userB: BasicTestUser = {
+        id: '',
+        email: createRandomEmail(),
+        name: 'Beatrice'
+      }
+      await createTestUser(userA)
+      await createTestUser(userB)
+
+      const users = await bulkLookupUsers({ emails: [userA.email, userB.email] })
+
+      expect(users.length).to.equal(2)
+      expect(users.some((user) => user?.id === userA.id)).to.equal(true)
+      expect(users.some((user) => user?.id === userB.id)).to.equal(true)
+    })
+    it('should return matches in the same order they were provided', async () => {
+      const userA: BasicTestUser = {
+        id: '',
+        email: createRandomEmail(),
+        name: 'Barald'
+      }
+      const userB: BasicTestUser = {
+        id: '',
+        email: createRandomEmail(),
+        name: 'Heatrice'
+      }
+      await createTestUser(userA)
+      await createTestUser(userB)
+
+      const users = await bulkLookupUsers({ emails: [userB.email, userA.email] })
+
+      expect(users[0]?.id).to.equal(userB.id)
+      expect(users[1]?.id).to.equal(userA.id)
+    })
+    it('should find matches for all emails provided, case insensitive', async () => {
+      const testUser: BasicTestUser = {
+        id: '',
+        email: 'barBAZ@example.org',
+        name: 'Bonathon'
+      }
+      await createTestUser(testUser)
+
+      const users = await bulkLookupUsers({ emails: ['BARbaz@example.org'] })
+
+      expect(users.length).to.equal(1)
+      expect(users.some((user) => user?.id === testUser.id)).to.equal(true)
+    })
+    it('should return null for positions where email matched no user', async () => {
+      const testEmail = createRandomEmail()
+      const testUser: BasicTestUser = {
+        id: '',
+        email: testEmail,
+        name: 'MICHAEL'
+      }
+      await createTestUser(testUser)
+
+      const users = await bulkLookupUsers({
+        emails: [createRandomEmail(), testEmail, createRandomEmail()]
+      })
+
+      expect(users.length).to.equal(3)
+      expect(users[0]).to.equal(null)
+      expect(users[1]?.id).to.equal(testUser.id)
+      expect(users[2]).to.equal(null)
     })
   })
 })
