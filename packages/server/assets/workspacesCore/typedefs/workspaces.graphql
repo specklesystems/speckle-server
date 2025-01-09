@@ -147,8 +147,16 @@ type WorkspaceMutations {
   # We are, for the moment, doing the check in the resolver
   deleteDomain(input: WorkspaceDomainDeleteInput!): Workspace!
     @hasScope(scope: "workspace:update")
+  deleteSsoProvider(workspaceId: String!): Boolean!
   invites: WorkspaceInviteMutations!
   projects: WorkspaceProjectMutations! @hasServerRole(role: SERVER_USER)
+  updateCreationState(input: WorkspaceCreationStateInput!): Boolean!
+}
+
+input WorkspaceCreationStateInput {
+  workspaceId: ID!
+  completed: Boolean!
+  state: JSONObject!
 }
 
 input WorkspaceProjectCreateInput {
@@ -225,60 +233,6 @@ input PendingWorkspaceCollaboratorsFilter {
   search: String
 }
 
-type WorkspaceVersionsCount {
-  """
-  Total number of versions of all projects in the workspace
-  """
-  current: Int!
-  """
-  Maximum number of version of all projects in the workspace with no additional cost
-  """
-  max: Int!
-}
-
-enum Currency {
-  GBP
-  USD
-  EUR
-}
-
-type WorkspaceCostItem {
-  count: Int!
-  name: String!
-  cost: Float!
-  label: String!
-}
-
-type WorkspaceCostDiscount {
-  name: String!
-  amount: Float!
-}
-
-type WorkspaceCost {
-  """
-  Estimated cost of the workspace with no discount applied
-  """
-  subTotal: Float!
-  """
-  Currency of the price
-  """
-  currency: Currency!
-  items: [WorkspaceCostItem!]!
-  """
-  Discount applied to the total
-  """
-  discount: WorkspaceCostDiscount
-  """
-  Total cost with discount applied
-  """
-  total: Float!
-}
-
-type WorkspaceBilling {
-  versionsCount: WorkspaceVersionsCount!
-  cost: WorkspaceCost!
-}
-
 type Workspace {
   id: ID!
   name: String!
@@ -322,10 +276,11 @@ type Workspace {
     cursor: String
     filter: WorkspaceProjectsFilter
   ): ProjectCollection!
-  """
-  Billing data for Workspaces beta
-  """
-  billing: WorkspaceBilling @hasWorkspaceRole(role: MEMBER)
+  automateFunctions(
+    limit: Int! = 25
+    cursor: String
+    filter: AutomateFunctionsFilter
+  ): AutomateFunctionCollection!
   """
   Information about the workspace's SSO configuration and the current user's SSO session, if present
   """
@@ -338,6 +293,15 @@ type Workspace {
   Enable/Disable discovery of the workspace
   """
   discoverabilityEnabled: Boolean!
+  """
+  Info about the workspace creation state
+  """
+  creationState: WorkspaceCreationState
+}
+
+type WorkspaceCreationState {
+  completed: Boolean!
+  state: JSONObject!
 }
 
 type WorkspaceSso {
@@ -541,4 +505,77 @@ extend type LimitedUser {
   workspaceDomainPolicyCompliant(workspaceId: String): Boolean
   # if workspaceId is undefined | null, just return undefined
   # this can be implemented by the workspaceCore resolver too, to avoid frontend component duplication
+}
+
+enum WorkspaceProjectsUpdatedMessageType {
+  ADDED
+  REMOVED
+}
+
+type WorkspaceProjectsUpdatedMessage {
+  """
+  Message type
+  """
+  type: WorkspaceProjectsUpdatedMessageType!
+  """
+  Project ID
+  """
+  projectId: String!
+  """
+  Workspace ID
+  """
+  workspaceId: String!
+  """
+  Project entity, null if project was deleted
+  """
+  project: Project
+}
+
+type WorkspaceUpdatedMessage {
+  """
+  Workspace ID
+  """
+  id: String!
+  """
+  Workspace itself
+  """
+  workspace: Workspace!
+}
+
+extend type Subscription {
+  """
+  Track newly added or deleted projects in a specific workspace.
+  Either slug or id must be set.
+  """
+  workspaceProjectsUpdated(
+    workspaceId: String
+    workspaceSlug: String
+  ): WorkspaceProjectsUpdatedMessage!
+    @hasServerRole(role: SERVER_GUEST)
+    @hasScopes(scopes: ["workspace:read", "streams:read"])
+
+  """
+  Track updates to a specific workspace.
+  Either slug or id must be set.
+  """
+  workspaceUpdated(
+    workspaceId: String
+    workspaceSlug: String
+  ): WorkspaceUpdatedMessage!
+    @hasServerRole(role: SERVER_GUEST)
+    @hasScope(scope: "workspace:read")
+}
+
+extend type Mutation {
+  admin: AdminMutations! @hasServerRole(role: SERVER_ADMIN)
+}
+
+input AdminUpdateWorkspacePlanInput {
+  workspaceId: ID!
+  plan: WorkspacePlans!
+  status: WorkspacePlanStatuses!
+}
+
+type AdminMutations {
+  updateWorkspacePlan(input: AdminUpdateWorkspacePlanInput!): Boolean!
 }

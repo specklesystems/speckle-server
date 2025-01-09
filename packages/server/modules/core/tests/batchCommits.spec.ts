@@ -94,6 +94,8 @@ describe('Batch commits', () => {
 
   let otherCommits: BasicTestCommit[]
 
+  let streamId: string
+
   before(async () => {
     await cleanup()
     await createTestUsers([me, otherGuy])
@@ -125,15 +127,15 @@ describe('Batch commits', () => {
       )
     ])
 
-    myCommits = times(
-      userCommmitCount,
-      (i): BasicTestCommit => ({
+    myCommits = times(userCommmitCount, (i): BasicTestCommit => {
+      streamId = i % 2 === 0 ? myStream.id : otherStream.id
+      return {
         id: '',
         objectId: '',
-        streamId: i % 2 === 0 ? myStream.id : otherStream.id,
+        streamId,
         authorId: me.id
-      })
-    )
+      }
+    })
     otherCommits = times(
       userCommmitCount,
       (): BasicTestCommit => ({
@@ -155,10 +157,10 @@ describe('Batch commits', () => {
   const buildBatchActionInvoker =
     (apollo: ServerAndContext) => (type: BatchActionType, commitIds: string[]) => {
       if (type === BatchActionType.Delete) {
-        return deleteCommits(apollo, { input: { commitIds } })
+        return deleteCommits(apollo, { input: { commitIds, streamId } })
       } else if (type === BatchActionType.Move) {
         return moveCommits(apollo, {
-          input: { commitIds, targetBranch: secondBranchName }
+          input: { commitIds, targetBranch: secondBranchName, streamId }
         })
       } else {
         throw new Error('Unexpected batch action type')
@@ -211,21 +213,21 @@ describe('Batch commits', () => {
       let myDeletableCommits: BasicTestCommit[]
 
       beforeEach(async () => {
-        myDeletableCommits = times(
-          deletableCommitCount,
-          (i): BasicTestCommit => ({
+        myDeletableCommits = times(deletableCommitCount, (i): BasicTestCommit => {
+          streamId = i % 2 === 0 ? myStream.id : otherStream.id
+          return {
             id: '',
+            streamId,
             objectId: '',
-            streamId: i % 2 === 0 ? myStream.id : otherStream.id,
             authorId: me.id
-          })
-        )
+          }
+        })
 
         await createTestCommits(myDeletableCommits)
       })
 
       const invokeDelete = (commitIds: string[]) =>
-        deleteCommits(apollo, { input: { commitIds } })
+        deleteCommits(apollo, { input: { commitIds, streamId } })
 
       const validateDeleted = async (commitIds: string[]) => {
         const commits = await getCommits(commitIds)
@@ -245,23 +247,24 @@ describe('Batch commits', () => {
       const movableCommitCount = 5
 
       let myMovableCommits: BasicTestCommit[]
+      let streamId: string
 
       before(async () => {
-        myMovableCommits = times(
-          movableCommitCount,
-          (i): BasicTestCommit => ({
+        myMovableCommits = times(movableCommitCount, (i): BasicTestCommit => {
+          streamId = i % 2 === 0 ? myStream.id : otherStream.id
+          return {
             id: '',
             objectId: '',
-            streamId: i % 2 === 0 ? myStream.id : otherStream.id,
+            streamId,
             authorId: me.id
-          })
-        )
+          }
+        })
 
         await createTestCommits(myMovableCommits)
       })
 
       const invokeMove = (commitIds: string[], targetBranch = secondBranchName) =>
-        moveCommits(apollo, { input: { commitIds, targetBranch } })
+        moveCommits(apollo, { input: { commitIds, targetBranch, streamId } })
       const validateMoved = async (
         commitIds: string[],
         targetBranch = secondBranchName

@@ -47,7 +47,7 @@ import {
   getViewerResourcesForCommentsFactory,
   getViewerResourcesFromLegacyIdentifiersFactory
 } from '@/modules/core/services/commit/viewerResources'
-import { db } from '@/db/knex'
+import { db, mainDb } from '@/db/knex'
 import {
   getCommentFactory,
   getCommentsResourcesFactory,
@@ -69,7 +69,7 @@ import { addBranchCreatedActivityFactory } from '@/modules/activitystream/servic
 import { authorizeResolver } from '@/modules/shared'
 import { Roles } from '@speckle/shared'
 import { getDefaultRegionFactory } from '@/modules/workspaces/repositories/regions'
-import { getDb } from '@/modules/multiregion/dbSelector'
+import { getDb } from '@/modules/multiregion/utils/dbSelector'
 import { createNewProjectFactory } from '@/modules/core/services/projects'
 import {
   deleteProjectFactory,
@@ -117,8 +117,8 @@ const command: CommandModule<
   },
   handler: async (argv) => {
     let projectDb = db
-    console.log(argv)
     let regionKey: string | undefined = undefined
+
     if (argv.workspaceId) {
       await authorizeResolver(
         argv.authorId,
@@ -130,10 +130,9 @@ const command: CommandModule<
         workspaceId: argv.workspaceId
       })
       regionKey = workspaceDefaultRegion?.key
-      console.log(workspaceDefaultRegion)
-      console.log(regionKey)
       projectDb = await getDb({ regionKey })
     }
+
     const getStream = getStreamFactory({ db: projectDb })
     const getObject = getObjectFactory({ db: projectDb })
     const markCommitStreamUpdated = markCommitStreamUpdatedFactory({ db: projectDb })
@@ -176,7 +175,7 @@ const command: CommandModule<
       addCommentCreatedActivity: addCommentCreatedActivityFactory({
         getViewerResourcesFromLegacyIdentifiers,
         getViewerResourceItemsUngrouped,
-        saveActivity: saveActivityFactory({ db: projectDb }),
+        saveActivity: saveActivityFactory({ db: mainDb }),
         publish
       })
     })
@@ -192,7 +191,7 @@ const command: CommandModule<
           getCommentsResources: getCommentsResourcesFactory({ db: projectDb }),
           getViewerResourcesFromLegacyIdentifiers
         }),
-        saveActivity: saveActivityFactory({ db: projectDb }),
+        saveActivity: saveActivityFactory({ db: mainDb }),
         publish
       })
     })
@@ -207,7 +206,7 @@ const command: CommandModule<
       markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db: projectDb }),
       versionsEventEmitter: VersionsEmitter.emit,
       addCommitCreatedActivity: addCommitCreatedActivityFactory({
-        saveActivity: saveActivityFactory({ db: projectDb }),
+        saveActivity: saveActivityFactory({ db: mainDb }),
         publish
       })
     })
@@ -216,7 +215,7 @@ const command: CommandModule<
 
     const createNewProject = createNewProjectFactory({
       storeProject: storeProjectFactory({ db: projectDb }),
-      getProject: getProjectFactory({ db }),
+      getProject: getProjectFactory({ db: projectDb }),
       deleteProject: deleteProjectFactory({ db: projectDb }),
       storeModel: storeModelFactory({ db: projectDb }),
       // THIS MUST GO TO THE MAIN DB
@@ -251,7 +250,7 @@ const command: CommandModule<
         getStreamBranchByName,
         createBranch: createBranchFactory({ db: projectDb }),
         addBranchCreatedActivity: addBranchCreatedActivityFactory({
-          saveActivity: saveActivityFactory({ db: projectDb }),
+          saveActivity: saveActivityFactory({ db: mainDb }),
           publish
         })
       })

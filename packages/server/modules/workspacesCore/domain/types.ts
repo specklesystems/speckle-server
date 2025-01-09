@@ -66,3 +66,17 @@ export type WorkspaceRegionAssignment = {
   regionKey: string
   createdAt: Date
 }
+
+export type WorkspaceJoinRequestStatus =
+  | 'pending'
+  | 'accepted'
+  | 'rejected'
+  | 'dismissed'
+
+export type WorkspaceJoinRequest = {
+  workspaceId: string
+  userId: string
+  status: WorkspaceJoinRequestStatus
+  createdAt: Date
+  updatedAt: Date
+}

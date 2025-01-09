@@ -63,7 +63,8 @@ import {
 
 const tables = {
   commits: (db: Knex) => db<CommitRecord>(Commits.name),
-  branchCommits: (db: Knex) => db<BranchCommitRecord>(BranchCommits.name),
+  branchCommits: <T extends object = BranchCommitRecord>(db: Knex) =>
+    db<T>(BranchCommits.name),
   streamCommits: (db: Knex) => db<StreamCommitRecord>(StreamCommits.name),
   streamAcl: (db: Knex) => db<StreamAclRecord>(StreamAcl.name)
 }
@@ -172,12 +173,23 @@ export const getBatchedBranchCommitsFactory =
   (deps: { db: Knex }): GetBatchedBranchCommits =>
   (branchIds: string[], options?: Partial<BatchedSelectOptions>) => {
     const baseQuery = tables
-      .branchCommits(deps.db)
-      .select<BranchCommitRecord[]>('*')
+      .branchCommits<BranchCommitRecord & { streamId: string }>(deps.db)
+      .select<(BranchCommitRecord & { streamId: string })[]>([
+        ...BranchCommits.cols,
+        StreamCommits.col.streamId
+      ])
+      .innerJoin(
+        StreamCommits.name,
+        StreamCommits.col.commitId,
+        BranchCommits.col.commitId
+      )
       .whereIn(BranchCommits.col.branchId, branchIds)
       .orderBy(BranchCommits.col.branchId)
 
-    return executeBatchedSelect(baseQuery, options)
+    return executeBatchedSelect<
+      BranchCommitRecord & { streamId: string },
+      (BranchCommitRecord & { streamId: string })[]
+    >(baseQuery, options)
   }
 
 export const insertCommitsFactory =
@@ -254,9 +266,12 @@ export const getCommitsAndTheirBranchIdsFactory =
       .commits(deps.db)
       .select<Array<CommitWithStreamBranchId>>([
         ...Commits.cols,
-        BranchCommits.col.branchId
+        knex.raw(`(array_agg(??))[1] as "branchId"`, [BranchCommits.col.branchId]),
+        knex.raw(`(array_agg(??))[1] as "streamId"`, [StreamCommits.col.streamId])
       ])
       .innerJoin(BranchCommits.name, BranchCommits.col.commitId, Commits.col.id)
+      .innerJoin(StreamCommits.name, StreamCommits.col.commitId, Commits.col.id)
+      .groupBy(Commits.col.id)
       .whereIn(Commits.col.id, commitIds)
   }
 
@@ -657,6 +672,7 @@ export const legacyGetPaginatedStreamCommitsPageFactory =
       .streamCommits(deps.db)
       .columns([
         { id: 'commits.id' },
+        'stream_commits.streamId',
         'message',
         'referencedObject',
         'sourceApplication',
@@ -667,6 +683,7 @@ export const legacyGetPaginatedStreamCommitsPageFactory =
         { authorName: 'users.name' },
         { authorId: 'users.id' },
         { authorAvatar: 'users.avatar' },
+        { streamId: 'stream_commits.streamId' },
         knex.raw(`?? as "author"`, ['users.id'])
       ])
       .select()

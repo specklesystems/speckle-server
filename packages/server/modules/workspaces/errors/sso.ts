@@ -34,6 +34,17 @@ export class SsoProviderProfileMissingError extends BaseError {
   static code = 'SSO_PROVIDER_PROFILE_MISSING_ERROR'
 }
 
+export class SsoProviderProfileMissingPropertiesError extends BaseError {
+  static code = 'SSO_PROVIDER_PROFILE_MISSING_PROPERTIES_ERROR'
+  constructor(properties: string[]) {
+    super(
+      `User profile from identity provider missing required properties: ${properties.join(
+        ', '
+      )}`
+    )
+  }
+}
+
 export class SsoProviderProfileInvalidError extends BaseError {
   static defaultMessage = 'SSO provider user profile is invalid.'
   static code = 'SSO_PROVIDER_PROFILE_INVALID_ERROR'
@@ -70,4 +81,14 @@ export class OidcProviderMissingGrantTypeError extends BaseError {
   static defaultMessage = 'OIDC issuer does not support authorization_code grant type'
   static code = 'SSO_OIDC_PROVIDER_MISSING_GRANT_TYPE'
   static statusCode = 400
+}
+
+export class OidcStateInvalidError extends BaseError {
+  static defaultMessage = 'OIDC state information malformed or invalid.'
+  static code = 'SSO_OIDC_STATE_INVALID'
+}
+
+export class OidcStateMissingError extends BaseError {
+  static defaultMessage = 'OIDC state missing for specified session.'
+  static code = 'SSO_OIDC_STATE_MISSING'
 }

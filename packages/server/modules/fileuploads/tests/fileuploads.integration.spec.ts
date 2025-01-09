@@ -142,16 +142,15 @@ describe('FileUploads @fileuploads', () => {
   let existingCanonicalUrl: string
   let existingPort: string
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let sendRequest: (token: string, query: unknown) => Promise<any>
+  let sendRequest: (token: string, query: string | object) => Promise<any>
   let serverAddress: string
   let serverPort: string
 
   before(async () => {
-    ;({ app, server } = await beforeEachContext())
-    ;({ serverAddress, serverPort, sendRequest } = await initializeTestServer(
-      server,
-      app
-    ))
+    const ctx = await beforeEachContext()
+    server = ctx.server
+    app = ctx.app
+    ;({ serverAddress, serverPort, sendRequest } = await initializeTestServer(ctx))
 
     //TODO does mocha have a nicer way of temporarily swapping an environment variable, like vitest?
     existingCanonicalUrl = process.env['CANONICAL_URL'] || ''
@@ -189,7 +188,9 @@ describe('FileUploads @fileuploads', () => {
         .attach('test.ifc', require.resolve('@/readme.md'), 'test.ifc')
 
       expect(response.statusCode).to.equal(201)
-      expect(response.body).to.deep.equal({})
+      expect(response.headers['content-type']).to.contain('application/json;')
+      expect(response.body.uploadResults).to.have.lengthOf(1)
+      expect(response.body.uploadResults[0].fileName).to.equal('test.ifc')
       const gqlResponse = await sendRequest(userOneToken, {
         query: `query ($streamId: String!) {
           stream(id: $streamId) {
@@ -206,6 +207,9 @@ describe('FileUploads @fileuploads', () => {
       expect(noErrors(gqlResponse))
       expect(gqlResponse.body.data.stream.fileUploads).to.have.lengthOf(1)
       expect(gqlResponse.body.data.stream.fileUploads[0].fileName).to.equal('test.ifc')
+      expect(gqlResponse.body.data.stream.fileUploads[0].id).to.equal(
+        response.body.uploadResults[0].blobId
+      )
 
       //TODO expect subscription notification
     })
@@ -217,7 +221,11 @@ describe('FileUploads @fileuploads', () => {
         .attach('blob1', require.resolve('@/readme.md'), 'test1.ifc')
         .attach('blob2', require.resolve('@/package.json'), 'test2.ifc')
       expect(response.status).to.equal(201)
-      expect(response.body).to.deep.equal({})
+      expect(response.headers['content-type']).to.contain('application/json;')
+      expect(response.body.uploadResults).to.have.lengthOf(2)
+      expect(
+        response.body.uploadResults.map((file: { fileName: string }) => file.fileName)
+      ).to.have.members(['test1.ifc', 'test2.ifc'])
       const gqlResponse = await sendRequest(userOneToken, {
         query: `query ($streamId: String!) {
           stream(id: $streamId) {
@@ -241,6 +249,11 @@ describe('FileUploads @fileuploads', () => {
           (file: { fileName: string }) => file.fileName
         )
       ).to.have.members(['test1.ifc', 'test2.ifc'])
+      expect(
+        gqlResponse.body.data.stream.fileUploads.map((file: { id: string }) => file.id)
+      ).to.have.members(
+        response.body.uploadResults.map((file: { blobId: string }) => file.blobId)
+      )
     })
 
     it('Returns 400 for bad form data', async () => {
@@ -252,6 +265,37 @@ describe('FileUploads @fileuploads', () => {
         .send('--XXX\r\nCon')
 
       expect(response.status).to.equal(400)
+      expect(response.headers['content-type']).to.contain('application/json;')
+      expect(response.body.error).to.contain('Upload request error.')
+      const gqlResponse = await sendRequest(userOneToken, {
+        query: `query ($streamId: String!) {
+          stream(id: $streamId) {
+            id
+            fileUploads {
+              id
+              fileName
+              convertedStatus
+            }
+          }
+        }`,
+        variables: { streamId: createdStreamId }
+      })
+      expect(noErrors(gqlResponse))
+      expect(
+        gqlResponse.body.data.stream.fileUploads,
+        JSON.stringify(gqlResponse.body.data)
+      ).to.have.lengthOf(0)
+    })
+
+    it('Returns 400 for missing headers', async () => {
+      const response = await request(app)
+        .post(`/api/file/autodetect/${createdStreamId}/main`)
+        .set('Authorization', `Bearer ${userOneToken}`)
+      // .set('Content-type', 'multipart/form-data; boundary=XXX') // purposely missing content type
+
+      expect(response.status).to.equal(400)
+      expect(response.headers['content-type']).to.contain('application/json;')
+      expect(response.body.error.message).to.contain('Missing Content-Type')
       const gqlResponse = await sendRequest(userOneToken, {
         query: `query ($streamId: String!) {
           stream(id: $streamId) {
@@ -278,8 +322,11 @@ describe('FileUploads @fileuploads', () => {
         .set('Authorization', `Bearer ${userOneToken}`)
         .attach('toolarge.ifc', Buffer.alloc(114_857_601, 'asdf'), 'toolarge.ifc')
       expect(response.status).to.equal(201)
-
-      expect(response.body).to.deep.equal({})
+      expect(response.headers['content-type']).to.contain('application/json;')
+      expect(response.body.uploadResults).to.have.lengthOf(1)
+      expect(
+        response.body.uploadResults.map((file: { fileName: string }) => file.fileName)
+      ).to.have.members(['toolarge.ifc'])
       const gqlResponse = await sendRequest(userOneToken, {
         query: `query ($streamId: String!) {
           stream(id: $streamId) {
@@ -298,6 +345,9 @@ describe('FileUploads @fileuploads', () => {
         gqlResponse.body.data.stream.fileUploads,
         JSON.stringify(gqlResponse.body.data)
       ).to.have.lengthOf(1)
+      expect(gqlResponse.body.data.stream.fileUploads[0].id).to.equal(
+        response.body.uploadResults[0].blobId
+      )
       //TODO expect no notifications
     })
 
@@ -343,7 +393,7 @@ describe('FileUploads @fileuploads', () => {
         .set('Authorization', `Bearer ${userOneToken}`)
         .set('Accept', 'application/json')
         .attach('test.ifc', require.resolve('@/readme.md'), 'test.ifc')
-      expect(response.statusCode).to.equal(500) //FIXME should be 404 (technically a 401, but we don't want to leak existence of stream so 404 is preferrable)
+      expect(response.statusCode).to.equal(404) //FIXME should be 404 (technically a 401, but we don't want to leak existence of stream so 404 is preferrable)
       const gqlResponse = await sendRequest(userOneToken, {
         query: `query ($streamId: String!) {
           stream(id: $streamId) {

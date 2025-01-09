@@ -6,16 +6,14 @@ import { UserEmail } from '@/modules/core/domain/userEmails/types'
 import { getEmailVerificationFinalizationRoute } from '@/modules/core/helpers/routeHelper'
 import { ServerInfo, UserRecord } from '@/modules/core/helpers/types'
 import { EmailVerificationRequestError } from '@/modules/emails/errors'
-import {
-  EmailTemplateParams,
-  renderEmail
-} from '@/modules/emails/services/emailRendering'
-import { sendEmail } from '@/modules/emails/services/sending'
 import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
 import {
   DeleteOldAndInsertNewVerification,
+  EmailTemplateParams,
+  RenderEmail,
   RequestEmailVerification,
-  RequestNewEmailVerification
+  RequestNewEmailVerification,
+  SendEmail
 } from '@/modules/emails/domain/operations'
 import { GetUser } from '@/modules/core/domain/users/operations'
 import { GetServerInfo } from '@/modules/core/domain/server/operations'
@@ -150,8 +148,8 @@ function buildEmailTemplateParams(verificationId: string): EmailTemplateParams {
 }
 
 type SendVerificationEmailDeps = {
-  sendEmail: typeof sendEmail
-  renderEmail: typeof renderEmail
+  sendEmail: SendEmail
+  renderEmail: RenderEmail
 }
 
 const sendVerificationEmailFactory =

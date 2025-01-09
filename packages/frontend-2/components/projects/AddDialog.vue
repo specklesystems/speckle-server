@@ -1,11 +1,5 @@
 <template>
-  <LayoutDialog
-    v-model:open="open"
-    max-width="sm"
-    :buttons="dialogButtons"
-    hide-closer
-    prevent-close-on-click-outside
-  >
+  <LayoutDialog v-model:open="open" max-width="sm" :buttons="dialogButtons">
     <template #header>Create a new project</template>
     <form class="flex flex-col text-foreground" @submit="onSubmit">
       <div class="flex flex-col gap-y-4 mb-2">
@@ -88,7 +82,6 @@ graphql(`
   fragment ProjectsAddDialog_Workspace on Workspace {
     id
     ...ProjectsWorkspaceSelect_Workspace
-    ...ProjectsNewWorkspace_Workspace
   }
 `)
 
@@ -118,7 +111,8 @@ const emit = defineEmits<{
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
 const createProject = useCreateProject()
 const router = useRouter()
-const { handleSubmit, meta } = useForm<FormValues>()
+const logger = useLogger()
+const { handleSubmit, meta, isSubmitting } = useForm<FormValues>()
 const { result: workspaceResult } = useQuery(projectWorkspaceSelectQuery, null, () => ({
   enabled: isWorkspacesEnabled.value
 }))
@@ -127,45 +121,62 @@ const visibility = ref(ProjectVisibility.Unlisted)
 const selectedWorkspace = ref<ProjectsAddDialog_WorkspaceFragment>()
 const showConfirmDialog = ref(false)
 const confirmActionType = ref<'navigate' | 'close' | null>(null)
+const isClosing = ref(false)
 
 const open = defineModel<boolean>('open', { required: true })
 
 const mp = useMixpanel()
 
 const onSubmit = handleSubmit(async (values) => {
-  const workspaceId = props.workspaceId || selectedWorkspace.value?.id
+  if (isClosing.value) return // Prevent submission while closing
 
-  await createProject({
-    name: values.name,
-    description: values.description,
-    visibility: visibility.value,
-    ...(workspaceId ? { workspaceId } : {})
-  })
-  emit('created')
-  mp.track('Stream Action', {
-    type: 'action',
-    name: 'create',
-    // eslint-disable-next-line camelcase
-    workspace_id: props.workspaceId
-  })
-  open.value = false
+  try {
+    isClosing.value = true
+    const workspaceId = props.workspaceId || selectedWorkspace.value?.id
+
+    await createProject({
+      name: values.name,
+      description: values.description,
+      visibility: visibility.value,
+      ...(workspaceId ? { workspaceId } : {})
+    })
+    emit('created')
+    mp.track('Stream Action', {
+      type: 'action',
+      name: 'create',
+      // eslint-disable-next-line camelcase
+      workspace_id: props.workspaceId
+    })
+    open.value = false
+  } catch (error) {
+    isClosing.value = false
+    logger.error('Failed to create project:', error)
+  }
 })
 
 const workspaces = computed(
   () => workspaceResult.value?.activeUser?.workspaces.items ?? []
 )
 const hasWorkspaces = computed(() => workspaces.value.length > 0)
+
 const dialogButtons = computed((): LayoutDialogButton[] => {
+  const isDisabled = isSubmitting.value || isClosing.value
+
   return [
     {
       text: 'Cancel',
-      props: { color: 'outline' },
+      props: {
+        color: 'outline',
+        disabled: isDisabled
+      },
       onClick: confirmCancel
     },
     {
       text: 'Create',
       props: {
-        submit: true
+        submit: true,
+        loading: isDisabled,
+        disabled: isDisabled
       },
       onClick: onSubmit
     }
@@ -206,6 +217,7 @@ const handleConfirmAction = () => {
 watch(open, (newVal, oldVal) => {
   if (newVal && !oldVal) {
     selectedWorkspace.value = undefined
+    isClosing.value = false
   }
 })
 </script>

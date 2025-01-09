@@ -19,8 +19,14 @@ export type PaidWorkspacePlanStatuses =
 
 export type TrialWorkspacePlanStatuses = 'trial' | 'expired'
 
+export type PlanStatuses =
+  | PaidWorkspacePlanStatuses
+  | TrialWorkspacePlanStatuses
+  | UnpaidWorkspacePlanStatuses
+
 type BaseWorkspacePlan = {
   workspaceId: string
+  createdAt: Date
 }
 
 export type PaidWorkspacePlan = BaseWorkspacePlan & {
@@ -50,6 +56,10 @@ export type UpsertTrialWorkspacePlan = (args: {
 
 export type UpsertPaidWorkspacePlan = (args: {
   workspacePlan: PaidWorkspacePlan
+}) => Promise<void>
+
+export type UpsertUnpaidWorkspacePlan = (args: {
+  workspacePlan: UnpaidWorkspacePlan
 }) => Promise<void>
 
 export type UpsertWorkspacePlan = (args: {
@@ -100,6 +110,7 @@ export type CreateCheckoutSession = (args: {
   guestCount: number
   workspacePlan: PaidWorkspacePlans
   billingInterval: WorkspacePlanBillingIntervals
+  isCreateFlow: boolean
 }) => Promise<CheckoutSession>
 
 export type WorkspaceSubscription = {
@@ -135,6 +146,23 @@ export const subscriptionData = z.object({
   ]),
   products: subscriptionProduct.array()
 })
+
+export const calculateSubscriptionSeats = ({
+  subscriptionData,
+  guestSeatProductId
+}: {
+  subscriptionData: SubscriptionData
+  guestSeatProductId: string
+}): { plan: number; guest: number } => {
+  const guestProduct = subscriptionData.products.find(
+    (p) => p.productId === guestSeatProductId
+  )
+
+  const planProduct = subscriptionData.products.find(
+    (p) => p.productId !== guestSeatProductId
+  )
+  return { guest: guestProduct?.quantity || 0, plan: planProduct?.quantity || 0 }
+}
 
 // this abstracts the stripe sub data
 export type SubscriptionData = z.infer<typeof subscriptionData>

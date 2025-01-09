@@ -43,12 +43,14 @@ export const startCheckoutSessionFactory =
     workspaceId,
     workspaceSlug,
     workspacePlan,
-    billingInterval
+    billingInterval,
+    isCreateFlow
   }: {
     workspaceId: string
     workspaceSlug: string
     workspacePlan: PaidWorkspacePlans
     billingInterval: WorkspacePlanBillingIntervals
+    isCreateFlow: boolean
   }): Promise<CheckoutSession> => {
     // get workspace plan, if we're already on a paid plan, do not allow checkout
     // paid plans should use a subscription modification
@@ -78,30 +80,31 @@ export const startCheckoutSessionFactory =
         // it will create a new customer and a new sub though, the reactivation would use the existing customer
         case 'trial':
         case 'expired':
-          // if there is already a checkout session for the workspace, stop, someone else is maybe trying to pay for the workspace
-          const workspaceCheckoutSession = await getWorkspaceCheckoutSession({
-            workspaceId
-          })
-          if (workspaceCheckoutSession) {
-            if (workspaceCheckoutSession.paymentStatus === 'paid')
-              // this is should not be possible, but its better to be checking it here, than double charging the customer
-              throw new WorkspaceAlreadyPaidError()
-            if (
-              new Date().getTime() - workspaceCheckoutSession.createdAt.getTime() >
-              10 * 60 * 1000
-            ) {
-              await deleteCheckoutSession({
-                checkoutSessionId: workspaceCheckoutSession.id
-              })
-            } else {
-              throw new WorkspaceCheckoutSessionInProgressError()
-            }
-          }
-
           // lets go ahead and pay
           break
         default:
           throwUncoveredError(existingWorkspacePlan)
+      }
+    }
+
+    // if there is already a checkout session for the workspace, stop, someone else is maybe trying to pay for the workspace
+    const workspaceCheckoutSession = await getWorkspaceCheckoutSession({
+      workspaceId
+    })
+    if (workspaceCheckoutSession) {
+      if (workspaceCheckoutSession.paymentStatus === 'paid')
+        // this is should not be possible, but its better to be checking it here, than double charging the customer
+        throw new WorkspaceAlreadyPaidError()
+      if (
+        new Date().getTime() - workspaceCheckoutSession.createdAt.getTime() >
+        1000
+        // 10 * 60 * 1000
+      ) {
+        await deleteCheckoutSession({
+          checkoutSessionId: workspaceCheckoutSession.id
+        })
+      } else {
+        throw new WorkspaceCheckoutSessionInProgressError()
       }
     }
 
@@ -118,7 +121,8 @@ export const startCheckoutSessionFactory =
       billingInterval,
       workspacePlan,
       guestCount,
-      seatCount: adminCount + memberCount
+      seatCount: adminCount + memberCount,
+      isCreateFlow
     })
 
     await saveCheckoutSession({ checkoutSession })
@@ -167,6 +171,7 @@ export const completeCheckoutSessionFactory =
     // a plan determines the workspace feature set
     await upsertPaidWorkspacePlan({
       workspacePlan: {
+        createdAt: new Date(),
         workspaceId: checkoutSession.workspaceId,
         name: checkoutSession.workspacePlan,
         status: 'valid'

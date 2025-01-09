@@ -56,7 +56,8 @@ import {
 } from '@/modules/activitystream/services/commitActivity'
 import { getObjectFactory } from '@/modules/core/repositories/objects'
 import { saveActivityFactory } from '@/modules/activitystream/repositories'
-import { getProjectDbClient } from '@/modules/multiregion/dbSelector'
+import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
+import coreModule from '@/modules/core'
 
 export = {
   Project: {
@@ -103,7 +104,6 @@ export = {
   },
   VersionMutations: {
     async moveToModel(_parent, args, ctx) {
-      // TODO: how to get streamId here?
       const projectId = args.input.projectId
       const projectDb = await getProjectDbClient({ projectId })
 
@@ -121,7 +121,6 @@ export = {
       return await batchMoveCommits(args.input, ctx.userId!)
     },
     async delete(_parent, args, ctx) {
-      // TODO: how to get streamId here?
       const projectId = args.input.projectId
       const projectDb = await getProjectDbClient({ projectId })
 
@@ -138,7 +137,6 @@ export = {
       return true
     },
     async update(_parent, args, ctx) {
-      // TODO: how to get streamId here?
       const projectId = args.input.projectId
       const projectDb = await getProjectDbClient({ projectId })
       const stream = await ctx.loaders
@@ -179,6 +177,10 @@ export = {
         Roles.Stream.Contributor,
         ctx.resourceAccessRules
       )
+
+      await coreModule.executeHooks('onCreateVersionRequest', {
+        projectId: args.input.projectId
+      })
 
       const rateLimitResult = await getRateLimitResult('COMMIT_CREATE', ctx.userId!)
       if (isRateLimitBreached(rateLimitResult)) {

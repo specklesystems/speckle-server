@@ -1,7 +1,5 @@
 <template>
   <div class="min-h-full">
-    <main class="layout-container">
-      <slot />
-    </main>
+    <slot />
   </div>
 </template>

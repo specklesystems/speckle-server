@@ -404,7 +404,7 @@ export const getPaginatedProjectModelsTotalCountFactory =
     }
 
     const baseQ = getPaginatedProjectModelsBaseQueryFactory(deps)(projectId, params)
-    const q = knex.count<{ count: string }[]>().from(baseQ.as('sq1'))
+    const q = deps.db.count<{ count: string }[]>().from(baseQ.as('sq1'))
 
     const [res] = await q
     return parseInt(res?.count || '0')

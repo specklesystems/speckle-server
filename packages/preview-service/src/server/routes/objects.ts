@@ -1,3 +1,4 @@
+import { getProjectDbClient } from '@/clients/knex.js'
 import {
   getObjectChildrenStreamFactory,
   getObjectFactory
@@ -5,12 +6,10 @@ import {
 import { isSimpleTextRequested, simpleTextOrJsonContentType } from '@/utils/headers.js'
 import { SpeckleObjectsStream } from '@/utils/speckleObjectsStream.js'
 import express, { RequestHandler } from 'express'
-import type { Knex } from 'knex'
 import { PassThrough, pipeline } from 'stream'
 import zlib from 'zlib'
 
-const objectsRouterFactory = (deps: { db: Knex }) => {
-  const { db } = deps
+const objectsRouterFactory = () => {
   const objectsRouter = express.Router()
 
   // This method was copy-pasted from the server method, without authentication/authorization (this web service is an internal one)
@@ -21,8 +20,10 @@ const objectsRouterFactory = (deps: { db: Knex }) => {
         streamId: req.params.streamId,
         objectId: req.params.objectId
       })
+
+      const projectDb = await getProjectDbClient({ projectId: req.params.streamId })
       // Populate first object (the "commit")
-      const obj = await getObjectFactory({ db })({
+      const obj = await getObjectFactory({ db: projectDb })({
         streamId: req.params.streamId,
         objectId: req.params.objectId
       })
@@ -36,7 +37,7 @@ const objectsRouterFactory = (deps: { db: Knex }) => {
         'Content-Type': simpleTextOrJsonContentType(req)
       })
 
-      const dbStream = await getObjectChildrenStreamFactory({ db })({
+      const dbStream = await getObjectChildrenStreamFactory({ db: projectDb })({
         streamId: req.params.streamId,
         objectId: req.params.objectId
       })
@@ -63,9 +64,8 @@ const objectsRouterFactory = (deps: { db: Knex }) => {
             boundLogger.error(err, 'Error downloading object from stream')
           } else {
             boundLogger.info(
-              `Downloaded object from stream (size: ${
-                gzipStream.bytesWritten / 1000000
-              } MB)`
+              { megaBytesWritten: gzipStream.bytesWritten / 1000000 },
+              'Downloaded object from stream (size: {megaBytesWritten} MB)'
             )
           }
         }
@@ -80,7 +80,9 @@ const objectsRouterFactory = (deps: { db: Knex }) => {
         streamId: req.params.streamId,
         objectId: req.params.objectId
       })
-      const obj = await getObjectFactory({ db })({
+
+      const projectDb = await getProjectDbClient({ projectId: req.params.streamId })
+      const obj = await getObjectFactory({ db: projectDb })({
         streamId: req.params.streamId,
         objectId: req.params.objectId
       })

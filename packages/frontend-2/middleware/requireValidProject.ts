@@ -1,3 +1,5 @@
+import { ProjectVisibility } from '~/lib/common/generated/gql/graphql'
+import { WorkspaceSsoErrorCodes } from '~/lib/workspaces/helpers/types'
 import { useApolloClientFromNuxt } from '~~/lib/common/composables/graphql'
 import {
   convertThrowIntoFetchResult,
@@ -10,7 +12,6 @@ import { projectAccessCheckQuery } from '~~/lib/projects/graphql/queries'
  */
 export default defineNuxtRouteMiddleware(async (to) => {
   const projectId = to.params.id as string
-
   const client = useApolloClientFromNuxt()
 
   const { data, errors } = await client
@@ -19,17 +20,46 @@ export default defineNuxtRouteMiddleware(async (to) => {
       variables: { id: projectId },
       context: {
         skipLoggingErrors: true
-      }
+      },
+      fetchPolicy: 'network-only'
     })
     .catch(convertThrowIntoFetchResult)
 
-  // If project succesfully resolved, move on
-  if (data?.project?.id) return
+  // If project is public or link shareable, allow access regardless of SSO
+  if (
+    data?.project?.visibility === ProjectVisibility.Public ||
+    data?.project?.visibility === ProjectVisibility.Unlisted
+  ) {
+    return
+  }
 
-  const isForbidden = (errors || []).find((e) => e.extensions['code'] === 'FORBIDDEN')
-  const isNotFound = (errors || []).find(
-    (e) => e.extensions['code'] === 'STREAM_NOT_FOUND'
+  // Check for SSO session error
+  const ssoSessionError = (errors || []).find(
+    (e) => e.extensions?.['code'] === WorkspaceSsoErrorCodes.SESSION_MISSING_OR_EXPIRED
   )
+
+  // If we have an SSO error, the message contains the workspace slug
+  if (ssoSessionError) {
+    const workspaceSlug = ssoSessionError.message
+    return navigateTo(`/workspaces/${workspaceSlug}/sso/session-error`)
+  }
+
+  // If project successfully resolved and isn't public or link shareable, continue with normal flow
+  if (data?.project?.id) {
+    return
+  }
+
+  const isForbidden = (errors || []).find((e) => e.extensions?.['code'] === 'FORBIDDEN')
+  const isNotFound = (errors || []).find(
+    (e) => e.extensions?.['code'] === 'STREAM_NOT_FOUND'
+  )
+
+  if (isNotFound) {
+    return abortNavigation(
+      createError({ statusCode: 404, message: 'Project not found' })
+    )
+  }
+
   if (isForbidden) {
     return abortNavigation(
       createError({
@@ -39,18 +69,11 @@ export default defineNuxtRouteMiddleware(async (to) => {
     )
   }
 
-  if (isNotFound) {
-    return abortNavigation(
-      createError({ statusCode: 404, message: 'Project not found' })
-    )
-  }
-
   if (errors?.length) {
-    const errMsg = getFirstErrorMessage(errors)
     return abortNavigation(
       createError({
         statusCode: 500,
-        message: errMsg
+        message: getFirstErrorMessage(errors) || 'An unexpected error occurred'
       })
     )
   }

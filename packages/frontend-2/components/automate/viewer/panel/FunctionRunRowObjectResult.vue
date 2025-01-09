@@ -1,7 +1,7 @@
 <template>
-  <div :class="`overflow-hidden`">
+  <div class="overflow-hidden">
     <button
-      :class="`block transition text-left hover:bg-primary-muted hover:shadow-md rounded-md p-1 cursor-pointer border-l-2  ${
+      :class="`block w-full transition text-left hover:bg-primary-muted hover:shadow-md rounded-md p-1 cursor-pointer border-l-2  ${
         isIsolated || metadataGradientIsSet
           ? 'border-primary bg-primary-muted shadow-md'
           : 'border-transparent'
@@ -30,6 +30,7 @@
 </template>
 <script setup lang="ts">
 import {
+  CheckIcon,
   XMarkIcon,
   InformationCircleIcon,
   ExclamationTriangleIcon
@@ -154,6 +155,11 @@ const setOrUnsetGradient = () => {
 
 const iconAndColor = computed(() => {
   switch (props.result.level) {
+    case 'SUCCESS':
+      return {
+        icon: CheckIcon,
+        color: 'text-success font-medium'
+      }
     case 'ERROR':
       return {
         icon: XMarkIcon,

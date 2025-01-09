@@ -1,6 +1,6 @@
 <template>
   <div
-    v-show="(query?.length || 0) >= 3"
+    v-show="(query?.length || 0) >= 1"
     class="bg-foundation text-foreground rounded shadow-md p-2"
   >
     <ul>
@@ -14,7 +14,7 @@
         </li>
       </template>
       <template v-else>
-        <li>Couldn't find anything 🤷</li>
+        <li>Couldn't find anyone</li>
       </template>
     </ul>
   </div>

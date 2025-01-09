@@ -58,7 +58,7 @@
 
 <script setup lang="ts">
 import { ref, useSlots } from 'vue'
-import ArrowFilled from '~~/src/components/layout/sidebar/menu/group/ArrowFilled.vue'
+import ArrowFilled from '~~/src/components/global/icon/ArrowFilled.vue'
 import { ArrowUpRightIcon } from '@heroicons/vue/24/outline'
 import CommonBadge from '~~/src/components/common/Badge.vue'
 

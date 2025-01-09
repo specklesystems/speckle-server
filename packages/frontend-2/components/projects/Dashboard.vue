@@ -40,6 +40,13 @@
       </div>
     </div>
     <CommonLoadingBar :loading="showLoadingBar" class="my-2" />
+
+    <ProjectsHiddenProjectWarning
+      v-if="projectsPanelResult?.activeUser && projects?.numberOfHidden"
+      :hidden-item-count="projectsPanelResult.activeUser.projects.numberOfHidden"
+      :user="projectsPanelResult.activeUser"
+    />
+
     <ProjectsDashboardEmptyState
       v-if="showEmptyState"
       :is-guest="isGuest"
@@ -78,6 +85,12 @@ import type { Nullable, Optional, StreamRoles } from '@speckle/shared'
 import { useDebouncedTextInput, type InfiniteLoaderState } from '@speckle/ui-components'
 import { MagnifyingGlassIcon, Squares2X2Icon } from '@heroicons/vue/24/outline'
 
+graphql(`
+  fragment ProjectsDashboard_UserProjectCollection on UserProjectCollection {
+    numberOfHidden
+  }
+`)
+
 const logger = useLogger()
 
 const infiniteLoaderId = ref('')
@@ -108,7 +121,8 @@ const {
   filter: {
     search: (search.value || '').trim() || null,
     onlyWithRoles: selectedRoles.value?.length ? selectedRoles.value : null
-  }
+  },
+  cursor: null as Nullable<string>
 }))
 
 const { result: workspacesResult } = useQuery(

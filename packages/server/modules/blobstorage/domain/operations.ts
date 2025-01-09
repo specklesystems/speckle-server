@@ -4,6 +4,7 @@ import {
 } from '@/modules/blobstorage/domain/types'
 import { MaybeNullOrUndefined, Nullable } from '@speckle/shared'
 import type { Readable } from 'stream'
+import { StoreFileStream } from '@/modules/blobstorage/domain/storageOperations'
 
 export type GetBlobs = (params: {
   streamId?: MaybeNullOrUndefined<string>
@@ -33,20 +34,16 @@ export type GetBlobMetadataCollection = (params: {
 }) => Promise<{ blobs: BlobStorageItem[]; cursor: Nullable<string> }>
 
 export type UploadFileStream = (
-  storeFileStream: (params: {
-    objectKey: string
-    fileStream: Readable | Buffer
-  }) => Promise<{
-    fileHash: string
-  }>,
-  params1: {
+  streamData: {
     streamId: string
     userId: string | undefined
   },
-  params2: {
+  blobData: {
     blobId: string
     fileName: string
     fileType: string | undefined
     fileStream: Readable | Buffer
   }
 ) => Promise<{ blobId: string; fileName: string; fileHash: string }>
+
+export { StoreFileStream }
