@@ -122,6 +122,7 @@ import type { SettingsWorkspacesRegionsSelect_ServerRegionItemFragment } from '~
 import { useMixpanel } from '~/lib/core/composables/mp'
 import { settingsWorkspaceRegionsQuery } from '~/lib/settings/graphql/queries'
 import { useSetDefaultWorkspaceRegion } from '~/lib/workspaces/composables/management'
+import { settingsRoutes } from '~/lib/common/helpers/route'
 
 graphql(`
   fragment SettingsWorkspacesRegions_Workspace on Workspace {
@@ -225,7 +226,7 @@ const saveDefaultRegion = async () => {
 }
 
 const goToBilling = () => {
-  // goToWorkspaceMenuItem(props.workspaceId, SettingMenuKeys.Workspace.Billing)
+  navigateTo(settingsRoutes.workspace(slug.value).billing)
 }
 
 watch(

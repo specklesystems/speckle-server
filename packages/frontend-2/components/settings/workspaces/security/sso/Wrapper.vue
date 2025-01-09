@@ -141,6 +141,7 @@ import { HorizontalDirection } from '~~/lib/common/composables/window'
 import { EllipsisHorizontalIcon } from '@heroicons/vue/24/solid'
 import { graphql } from '~/lib/common/generated/gql'
 import { Roles } from '@speckle/shared'
+import { settingsRoutes } from '~/lib/common/helpers/route'
 
 graphql(`
   fragment SettingsWorkspacesSecuritySsoWrapper_Workspace on Workspace {
@@ -167,6 +168,7 @@ enum ActionTypes {
   Delete = 'delete'
 }
 
+const route = useRoute()
 const apiOrigin = useApiOrigin()
 const logger = useLogger()
 const menuId = useId()
@@ -232,9 +234,8 @@ const redirectUrl = computed(() => {
 })
 
 const goToBilling = () => {
-  // goToWorkspaceMenuItem(props.workspace.id, SettingMenuKeys.Workspace.Billing)
+  navigateTo(settingsRoutes.workspace(props.workspace.slug).billing)
 }
-const route = useRoute()
 
 const errorProviderInfo = ref<
   | {
