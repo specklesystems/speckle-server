@@ -129,7 +129,7 @@ graphql(`
       name
       company
       verified
-      workspaceDomainPolicyCompliant(workspaceId: $workspaceId)
+      # workspaceDomainPolicyCompliant(workspaceId: $workspaceId)
     }
   }
 `)

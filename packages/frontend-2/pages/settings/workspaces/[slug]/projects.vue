@@ -10,7 +10,6 @@
         :projects="projects"
         :workspace-id="workspaceId"
         :disable-create="result?.workspace.readOnly"
-        @close="$emit('close')"
       />
       <InfiniteLoading
         v-if="projects?.length"
@@ -24,9 +23,11 @@
 
 <script setup lang="ts">
 import { settingsWorkspacesProjectsQuery } from '~~/lib/settings/graphql/queries'
+import { workspaceGetIdBySlugQuery } from '~~/lib/workspaces/graphql/queries'
 import { usePaginatedQuery } from '~/lib/common/composables/graphql'
 import { graphql } from '~/lib/common/generated/gql'
 import { useWorkspaceProjectsUpdatedTracking } from '~/lib/workspaces/composables/projectUpdates'
+import { useQuery } from '@vue/apollo-composable'
 
 graphql(`
   fragment SettingsWorkspacesProjects_ProjectCollection on ProjectCollection {
@@ -37,13 +38,22 @@ graphql(`
   }
 `)
 
-const props = defineProps<{
-  workspaceId: string
-}>()
+definePageMeta({
+  middleware: ['auth'],
+  layout: 'settings'
+})
 
-defineEmits<{
-  (e: 'close'): void
-}>()
+useHead({
+  title: 'Settings - Projects'
+})
+
+const slug = computed(() => (route.params.slug as string) || '')
+
+const route = useRoute()
+const { result: workspaceResult } = useQuery(workspaceGetIdBySlugQuery, () => ({
+  slug: slug.value
+}))
+const workspaceId = computed(() => workspaceResult.value?.workspaceBySlug.id || '')
 
 const search = ref('')
 
@@ -56,7 +66,8 @@ const {
   baseVariables: computed(() => ({
     limit: 50,
     filter: { search: search.value?.length ? search.value : null },
-    workspaceId: props.workspaceId
+    workspaceId: workspaceId.value,
+    enabled: !!workspaceId.value
   })),
   resolveKey: (vars) => [vars.workspaceId, vars.filter?.search || ''],
   resolveCurrentResult: (res) => res?.workspace.projects,
@@ -68,7 +79,5 @@ const {
 })
 
 const projects = computed(() => result.value?.workspace.projects.items || [])
-const workspaceSlug = computed(() => result.value?.workspace.slug || '')
-
-useWorkspaceProjectsUpdatedTracking(computed(() => workspaceSlug.value))
+useWorkspaceProjectsUpdatedTracking(computed(() => slug.value))
 </script>

@@ -17,16 +17,16 @@ export const settingsSidebarAutomateFunctionsQuery = graphql(`
 `)
 
 export const settingsWorkspaceGeneralQuery = graphql(`
-  query SettingsWorkspaceGeneral($id: String!) {
-    workspace(id: $id) {
+  query SettingsWorkspaceGeneral($slug: String!) {
+    workspaceBySlug(slug: $slug) {
       ...SettingsWorkspacesGeneral_Workspace
     }
   }
 `)
 
 export const settingsWorkspaceBillingQuery = graphql(`
-  query SettingsWorkspaceBilling($workspaceId: String!) {
-    workspace(id: $workspaceId) {
+  query SettingsWorkspaceBilling($slug: String!) {
+    workspaceBySlug(slug: $slug) {
       id
       ...SettingsWorkspacesBilling_Workspace
     }
@@ -42,8 +42,8 @@ export const settingsWorkspaceBillingCustomerPortalQuery = graphql(`
 `)
 
 export const settingsWorkspaceRegionsQuery = graphql(`
-  query SettingsWorkspaceRegions($workspaceId: String!) {
-    workspace(id: $workspaceId) {
+  query SettingsWorkspaceRegions($slug: String!) {
+    workspaceBySlug(slug: $slug) {
       id
       ...SettingsWorkspacesRegions_Workspace
     }
@@ -55,10 +55,10 @@ export const settingsWorkspaceRegionsQuery = graphql(`
 
 export const settingsWorkspacesMembersQuery = graphql(`
   query SettingsWorkspacesMembers(
-    $workspaceId: String!
+    $slug: String!
     $invitesFilter: PendingWorkspaceCollaboratorsFilter
   ) {
-    workspace(id: $workspaceId) {
+    workspaceBySlug(slug: $slug) {
       ...SettingsWorkspacesMembers_Workspace
       ...SettingsWorkspacesMembersMembersTable_Workspace
       ...SettingsWorkspacesMembersGuestsTable_Workspace
@@ -123,8 +123,8 @@ export const settingsWorkspacesProjectsQuery = graphql(`
 `)
 
 export const settingsWorkspacesSecurityQuery = graphql(`
-  query SettingsWorkspaceSecurity($workspaceId: String!) {
-    workspace(id: $workspaceId) {
+  query SettingsWorkspaceSecurity($slug: String!) {
+    workspaceBySlug(slug: $slug) {
       ...SettingsWorkspacesSecurity_Workspace
     }
     activeUser {

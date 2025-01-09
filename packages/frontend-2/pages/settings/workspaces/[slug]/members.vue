@@ -8,20 +8,20 @@
         class="mb-6"
       />
       <LayoutTabsHorizontal v-model:active-item="activeTab" :items="tabItems">
-        <template #default="{ activeItem }">
+        <template v-if="workspace" #default="{ activeItem }">
           <SettingsWorkspacesMembersTable
             v-if="activeItem.id === 'members'"
             :workspace="workspace"
-            :workspace-id="workspaceId"
+            :workspace-id="workspace.id"
           />
           <SettingsWorkspacesMembersGuestsTable
             v-if="activeItem.id === 'guests'"
             :workspace="workspace"
-            :workspace-id="workspaceId"
+            :workspace-id="workspace.id"
           />
           <SettingsWorkspacesMembersInvitesTable
             v-if="activeItem.id === 'invites'"
-            :workspace-id="workspaceId"
+            :workspace-id="workspace.id"
             :workspace="workspace"
           />
         </template>
@@ -55,29 +55,35 @@ graphql(`
   }
 `)
 
-const props = defineProps<{
-  workspaceId: string
-}>()
+definePageMeta({
+  middleware: ['auth'],
+  layout: 'settings'
+})
 
+useHead({
+  title: 'Settings - Members'
+})
+
+const slug = computed(() => (route.params.slug as string) || '')
+
+const route = useRoute()
 const { result } = useQuery(settingsWorkspacesMembersQuery, () => ({
-  workspaceId: props.workspaceId
+  slug: slug.value
 }))
 
-const isAdmin = computed(() => result.value?.workspace?.role === Roles.Workspace.Admin)
-const workspace = computed(() => result.value?.workspace)
+const workspace = computed(() => result.value?.workspaceBySlug)
+const isAdmin = computed(() => workspace.value?.role === Roles.Workspace.Admin)
 const memberCount = computed(
   () =>
-    result.value?.workspace.team.items.filter(
-      (item) => item.role !== Roles.Workspace.Guest
-    ).length
+    workspace.value?.team.items.filter((item) => item.role !== Roles.Workspace.Guest)
+      .length
 )
 const guestCount = computed(
   () =>
-    result.value?.workspace.team.items.filter(
-      (item) => item.role === Roles.Workspace.Guest
-    ).length
+    workspace.value?.team.items.filter((item) => item.role === Roles.Workspace.Guest)
+      .length
 )
-const invitedCount = computed(() => result.value?.workspace.invitedTeam?.length)
+const invitedCount = computed(() => workspace.value?.invitedTeam?.length)
 const tabItems = computed<LayoutPageTabItem[]>(() => [
   { title: 'Members', id: 'members', count: memberCount.value },
   { title: 'Guests', id: 'guests', count: guestCount.value },

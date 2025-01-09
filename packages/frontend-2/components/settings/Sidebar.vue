@@ -12,11 +12,11 @@
           <NuxtLink
             v-for="(sidebarMenuItem, key) in userMenuItems"
             :key="key"
-            :to="sidebarMenuItem.to"
+            :to="sidebarMenuItem.getRoute()"
           >
             <LayoutSidebarMenuGroupItem
               :label="sidebarMenuItem.title"
-              :active="route.path === sidebarMenuItem.to"
+              :active="route.path === sidebarMenuItem.getRoute()"
             />
           </NuxtLink>
         </LayoutSidebarMenuGroup>
@@ -24,11 +24,11 @@
           <NuxtLink
             v-for="(sidebarMenuItem, key) in serverMenuItems"
             :key="key"
-            :to="sidebarMenuItem.to"
+            :to="sidebarMenuItem.getRoute()"
           >
             <LayoutSidebarMenuGroupItem
               :label="sidebarMenuItem.title"
-              :active="route.path === sidebarMenuItem.to"
+              :active="route.path === sidebarMenuItem.getRoute()"
             />
           </NuxtLink>
         </LayoutSidebarMenuGroup>
@@ -53,11 +53,12 @@
                 size="sm"
               />
             </template>
-            <template
+            <NuxtLink
               v-for="(workspaceMenuItem, itemKey) in workspaceMenuItems"
               :key="`${index}-${itemKey}`"
+              :to="workspaceMenuItem.getRoute(workspaceItem.slug)"
             >
-              <LayoutSidebarMenuGroupItem
+              <!-- <LayoutSidebarMenuGroupItem
                 v-if="workspaceMenuItem.permission?.includes(workspaceItem.role as WorkspaceRoles)"
                 :label="workspaceMenuItem.title"
                 :tooltip-text="
@@ -72,8 +73,14 @@
                 "
                 class="!pl-8"
                 :to="workspaceMenuItem.to"
+              /> -->
+              <LayoutSidebarMenuGroupItem
+                v-if="workspaceMenuItem.permission?.includes(workspaceItem.role as WorkspaceRoles)"
+                :label="workspaceMenuItem.title"
+                class="!pl-8"
               />
-            </template>
+            </NuxtLink>
+            workspaces/security/sso/Wrapper.vue
           </LayoutSidebarMenuGroup>
           <NuxtLink v-if="!isGuest" :to="workspacesRoute">
             <LayoutSidebarMenuGroupItem label="Create workspace">
@@ -103,8 +110,7 @@ import {
 } from '@speckle/ui-components'
 import { graphql } from '~~/lib/common/generated/gql'
 import type { WorkspaceRoles } from '@speckle/shared'
-import { workspacesRoute, settingsRoutes, homeRoute } from '~/lib/common/helpers/route'
-import type { SettingsMenu_WorkspaceFragment } from '~/lib/common/generated/gql/graphql'
+import { workspacesRoute, homeRoute } from '~/lib/common/helpers/route'
 import { WorkspacePlanStatuses } from '~/lib/common/generated/gql/graphql'
 
 graphql(`
@@ -152,9 +158,9 @@ const workspaceItems = computed(
 const isAdmin = computed(() => user.value?.role === Roles.Server.Admin)
 const isGuest = computed(() => user.value?.role === Roles.Server.Guest)
 
-const needsSsoSession = (workspace: SettingsMenu_WorkspaceFragment, to: string) => {
-  return workspace.sso?.provider?.id && to !== settingsRoutes.workspace.general
-    ? !workspace.sso?.session?.validUntil
-    : false
-}
+// const needsSsoSession = (workspace: SettingsMenu_WorkspaceFragment, to: string) => {
+//   return workspace.sso?.provider?.id && to !== settingsRoutes.workspace.general
+//     ? !workspace.sso?.session?.validUntil
+//     : false
+// }
 </script>

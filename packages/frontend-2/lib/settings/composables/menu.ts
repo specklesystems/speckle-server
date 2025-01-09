@@ -27,32 +27,34 @@ export const useSettingsMenu = () => {
   const workspaceMenuItems = shallowRef<SettingsMenuItem[]>([
     {
       title: 'General',
-      to: settingsRoutes.workspace.general,
+      getRoute: (slug?: string) => (slug ? settingsRoutes.workspace(slug).general : ''),
       permission: [Roles.Workspace.Admin, Roles.Workspace.Member, Roles.Workspace.Guest]
     },
     {
       title: 'Members',
-      to: settingsRoutes.workspace.members,
+      getRoute: (slug?: string) => (slug ? settingsRoutes.workspace(slug).members : ''),
       permission: [Roles.Workspace.Admin, Roles.Workspace.Member]
     },
     {
       title: 'Projects',
-      to: settingsRoutes.workspace.projects,
+      getRoute: (slug?: string) =>
+        slug ? settingsRoutes.workspace(slug).projects : '',
       permission: [Roles.Workspace.Admin, Roles.Workspace.Member]
     },
     {
       title: 'Security',
-      to: settingsRoutes.workspace.security,
+      getRoute: (slug?: string) =>
+        slug ? settingsRoutes.workspace(slug).security : '',
       permission: [Roles.Workspace.Admin]
     },
     {
       title: 'Billing',
-      to: settingsRoutes.workspace.billing,
+      getRoute: (slug?: string) => (slug ? settingsRoutes.workspace(slug).billing : ''),
       permission: [Roles.Workspace.Admin, Roles.Workspace.Member]
     },
     {
       title: 'Data residency',
-      to: settingsRoutes.workspace.regions,
+      getRoute: (slug?: string) => (slug ? settingsRoutes.workspace(slug).regions : ''),
       permission: [Roles.Workspace.Admin, Roles.Workspace.Member],
       ...(!isMultiRegionEnabled
         ? {
@@ -68,21 +70,21 @@ export const useSettingsMenu = () => {
   const userMenuItems = shallowRef<SettingsMenuItem[]>([
     {
       title: 'Profile',
-      to: settingsRoutes.user.profile
+      getRoute: () => settingsRoutes.user.profile
     },
     {
       title: 'Notifications',
-      to: settingsRoutes.user.notifications
+      getRoute: () => settingsRoutes.user.notifications
     },
     {
       title: 'Developer',
-      to: settingsRoutes.user.developerSettings
+      getRoute: () => settingsRoutes.user.developerSettings
     },
     ...(isMultipleEmailsEnabled
       ? [
           {
             title: 'Emails',
-            to: settingsRoutes.user.emails
+            getRoute: () => settingsRoutes.user.emails
           }
         ]
       : [])
@@ -91,21 +93,21 @@ export const useSettingsMenu = () => {
   const serverMenuItems = shallowRef<SettingsMenuItem[]>([
     {
       title: 'General',
-      to: settingsRoutes.server.general
+      getRoute: () => settingsRoutes.server.general
     },
     {
       title: 'Members',
-      to: settingsRoutes.server.members
+      getRoute: () => settingsRoutes.server.members
     },
     {
       title: 'Projects',
-      to: settingsRoutes.server.projects
+      getRoute: () => settingsRoutes.server.projects
     },
     ...(isMultiRegionEnabled
       ? [
           {
             title: 'Regions',
-            to: settingsRoutes.server.regions
+            getRoute: () => settingsRoutes.server.regions
           }
         ]
       : [])
