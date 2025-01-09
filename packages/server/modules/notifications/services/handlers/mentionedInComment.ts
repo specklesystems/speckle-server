@@ -12,18 +12,16 @@ import { ServerInfo } from '@/modules/core/helpers/types'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { getStreamFactory } from '@/modules/core/repositories/streams'
 import { getUserFactory, UserWithOptionalRole } from '@/modules/core/repositories/users'
-import {
-  EmailTemplateParams,
-  renderEmail
-} from '@/modules/emails/services/emailRendering'
+import { EmailTemplateParams } from '@/modules/emails/domain/operations'
+import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
-import { getProjectDbClient } from '@/modules/multiregion/dbSelector'
+import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { NotificationValidationError } from '@/modules/notifications/errors'
 import {
   NotificationHandler,
   MentionedInCommentMessage
 } from '@/modules/notifications/helpers/types'
-import { getBaseUrl } from '@/modules/shared/helpers/envHelper'
+import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
 import { MaybeFalsy, Nullable } from '@/modules/shared/helpers/typeHelper'
 import { Knex } from 'knex'
 
@@ -151,7 +149,7 @@ function buildEmailTemplateParams(
     objectId,
     commitId
   })
-  const url = new URL(commentRoute, getBaseUrl()).toString()
+  const url = new URL(commentRoute, getFrontendOrigin()).toString()
 
   return {
     mjml: buildEmailTemplateMjml(state),

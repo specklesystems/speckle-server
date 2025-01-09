@@ -1,60 +1,56 @@
 <template>
-  <div class="flex flex-col gap-y-6">
-    <div class="flex flex-col lg:flex-row justify-between gap-y-4">
-      <SettingsSectionHeader
-        :title="hasTrialPlan ? 'Start your subscription' : 'Upgrade your plan'"
-        subheading
-      />
-      <div class="flex items-center gap-x-4">
-        <p class="text-foreground-3 text-body-xs">Save 20% with annual billing</p>
-        <FormSwitch v-model="isYearlyPlan" :show-label="false" name="annual billing" />
-      </div>
-    </div>
-    <component
-      :is="isDesktop ? DesktopTable : MobileTable"
-      :workspace-id="workspaceId"
-      :current-plan="currentPlan"
-      :is-yearly-plan="isYearlyPlan"
-      :is-admin="isAdmin"
+  <div class="flex flex-col lg:grid lg:grid-cols-3 gap-4 w-full">
+    <SettingsWorkspacesBillingPricingTablePlan
+      v-for="plan in plans"
+      :key="plan.name"
+      :plan="plan"
+      :yearly-interval-selected="isYearlySelected"
+      v-bind="$props"
+      @on-yearly-interval-selected="onYearlyIntervalSelected"
+      @on-plan-selected="onPlanSelected"
     />
   </div>
 </template>
 
 <script setup lang="ts">
-import { useBreakpoints } from '@vueuse/core'
-import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
 import {
-  WorkspacePlanStatuses,
-  type WorkspacePlan
+  type WorkspacePlan,
+  BillingInterval,
+  type WorkspacePlans
 } from '~/lib/common/generated/gql/graphql'
-import { graphql } from '~/lib/common/generated/gql'
+import { pricingPlansConfig } from '~/lib/billing/helpers/constants'
 import type { MaybeNullOrUndefined } from '@speckle/shared'
 
-graphql(`
-  fragment SettingsWorkspacesBillingPricingTable_WorkspacePlan on WorkspacePlan {
-    name
-    status
-  }
-`)
-
-const props = defineProps<{
-  workspaceId: string
-  currentPlan: MaybeNullOrUndefined<WorkspacePlan>
-  isAdmin: boolean
+const emit = defineEmits<{
+  (e: 'onPlanSelected', value: { name: WorkspacePlans; cycle: BillingInterval }): void
 }>()
 
-const breakpoints = useBreakpoints(TailwindBreakpoints)
+const props = defineProps<{
+  currentPlan?: MaybeNullOrUndefined<WorkspacePlan>
+  workspaceId?: string
+  isAdmin?: boolean
+  activeBillingInterval?: BillingInterval
+}>()
 
-const DesktopTable = defineAsyncComponent(
-  () => import('@/components/settings/workspaces/billing/PricingTable/Desktop.vue')
-)
-const MobileTable = defineAsyncComponent(
-  () => import('@/components/settings/workspaces/billing/PricingTable/Mobile.vue')
-)
-const isDesktop = breakpoints.greaterOrEqual('lg')
-const isYearlyPlan = ref(false)
+const plans = ref(pricingPlansConfig.plans)
+const isYearlySelected = ref(false)
 
-const hasTrialPlan = computed(
-  () => props.currentPlan?.status === WorkspacePlanStatuses.Trial || !props.currentPlan
+const onYearlyIntervalSelected = (newValue: boolean) => {
+  isYearlySelected.value = newValue
+}
+
+const onPlanSelected = (value: WorkspacePlans) => {
+  emit('onPlanSelected', {
+    name: value,
+    cycle: isYearlySelected.value ? BillingInterval.Yearly : BillingInterval.Monthly
+  })
+}
+
+watch(
+  () => props.activeBillingInterval,
+  (newVal) => {
+    isYearlySelected.value = newVal === BillingInterval.Yearly
+  },
+  { immediate: true }
 )
 </script>

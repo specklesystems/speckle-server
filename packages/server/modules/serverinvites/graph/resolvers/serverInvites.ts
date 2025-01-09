@@ -360,7 +360,8 @@ export = {
         deleteInvite: deleteInviteFromDbFactory({ db }),
         validateResourceAccess: validateProjectInviteBeforeFinalizationFactory({
           getProject: getStream
-        })
+        }),
+        emitEvent: getEventBus().emit
       })
 
       await authorizeResolver(userId, streamId, Roles.Stream.Owner, resourceAccessRules)
@@ -394,13 +395,14 @@ export = {
       return true
     },
 
-    async inviteDelete(_parent, args) {
+    async inviteDelete(_parent, args, ctx) {
       const { inviteId } = args
 
       await deleteInviteFactory({
         findInvite: findInviteFactory({ db }),
-        deleteInvite: deleteInviteFromDbFactory({ db })
-      })(inviteId)
+        deleteInvite: deleteInviteFromDbFactory({ db }),
+        emitEvent: getEventBus().emit
+      })(inviteId, ctx.userId!)
 
       return true
     }
@@ -510,7 +512,8 @@ export = {
         deleteInvite: deleteInviteFromDbFactory({ db }),
         validateResourceAccess: validateProjectInviteBeforeFinalizationFactory({
           getProject: getStream
-        })
+        }),
+        emitEvent: getEventBus().emit
       })
 
       await cancelInvite({

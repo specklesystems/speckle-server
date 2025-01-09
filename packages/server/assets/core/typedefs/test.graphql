@@ -1,0 +1,7 @@
+extend type Subscription {
+  """
+  Cyclically sends a message to the client, used for testing
+  Note: Only works in test environment
+  """
+  ping: String!
+}

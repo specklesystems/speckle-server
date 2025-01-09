@@ -3,12 +3,11 @@
     <div class="flex items-center justify-between h-6 mb-6">
       <h2 class="h6 font-medium">Runs</h2>
       <FormButton
-        v-if="!automation.isTestAutomation"
-        :icon-left="ArrowPathIcon"
+        v-if="!automation.isTestAutomation && isEditable"
         :disabled="!automation.enabled"
         @click="onTrigger"
       >
-        Trigger Automation
+        Trigger automation
       </FormButton>
     </div>
     <AutomateRunsTable
@@ -20,7 +19,6 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ArrowPathIcon } from '@heroicons/vue/24/outline'
 import { usePaginatedQuery } from '~/lib/common/composables/graphql'
 import { graphql } from '~/lib/common/generated/gql'
 import type { ProjectPageAutomationRuns_AutomationFragment } from '~/lib/common/generated/gql/graphql'
@@ -49,6 +47,7 @@ graphql(`
 const props = defineProps<{
   automation: ProjectPageAutomationRuns_AutomationFragment
   projectId: string
+  isEditable: boolean
 }>()
 
 const { identifier, onInfiniteLoad } = usePaginatedQuery({

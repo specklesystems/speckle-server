@@ -114,6 +114,14 @@ export const Warning = {
   }
 }
 
+export const Neutral = {
+  ...Default,
+  args: {
+    ...Default.args,
+    color: 'neutral'
+  }
+}
+
 export const CustomIcon = {
   ...WithoutDescriptionAndActions,
   args: {

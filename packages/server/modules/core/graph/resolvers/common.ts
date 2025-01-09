@@ -1,7 +1,7 @@
 import { mainDb } from '@/db/knex'
 import { getBlobsFactory } from '@/modules/blobstorage/repositories'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
-import { getProjectDbClient } from '@/modules/multiregion/dbSelector'
+import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { isNonNullable } from '@speckle/shared'
 import { keyBy } from 'lodash'
 

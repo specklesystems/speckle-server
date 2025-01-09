@@ -8,7 +8,7 @@
         <div class="flex flow-row justify-start items-center z-20">
           <CommonEditableTitle
             v-model="name"
-            :disabled="loading"
+            :disabled="loading || !isEditable"
             :custom-classes="{
               input: 'h4',
               pencil: 'ml-2 mt-2 w-4 h-4'
@@ -24,7 +24,7 @@
         </div>
       </div>
       <FormSwitch
-        v-if="!automation.isTestAutomation"
+        v-if="!automation.isTestAutomation && isEditable"
         :id="switchId"
         v-model="enabled"
         name="enable"
@@ -69,6 +69,8 @@ graphql(`
 graphql(`
   fragment ProjectPageAutomationHeader_Project on Project {
     id
+    role
+    workspaceId
     ...ProjectPageModelsCardProject
   }
 `)
@@ -76,6 +78,7 @@ graphql(`
 const props = defineProps<{
   project: ProjectPageAutomationHeader_ProjectFragment
   automation: ProjectPageAutomationHeader_AutomationFragment
+  isEditable: boolean
 }>()
 
 const switchId = useId()
@@ -146,7 +149,9 @@ const enabled = computed({
         automationId: res.id,
         automationName: res.name,
         projectId: props.project.id,
-        enabled: res.enabled
+        enabled: res.enabled,
+        /* eslint-disable-next-line camelcase */
+        workspace_id: props.project.workspaceId
       })
     }
   }

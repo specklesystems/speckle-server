@@ -75,23 +75,26 @@ const onSubmit = async () => {
   if (!isValidCommentContentInput(content)) return
 
   loading.value = true
-  await createReply({
-    content,
-    threadId: threadId.value,
-    projectId: projectId.value
-  })
-  updateIsTyping(false)
+  try {
+    await createReply({
+      content,
+      threadId: threadId.value,
+      projectId: projectId.value
+    })
+    updateIsTyping(false)
 
-  // Mark all attachments as in use to prevent cleanup
-  commentValue.value.attachments?.forEach((a) => {
-    a.inUse = true
-  })
+    // Mark all attachments as in use to prevent cleanup
+    commentValue.value.attachments?.forEach((a) => {
+      a.inUse = true
+    })
 
-  commentValue.value = {
-    doc: undefined,
-    attachments: undefined
+    commentValue.value = {
+      doc: undefined,
+      attachments: undefined
+    }
+    emit('submit')
+  } finally {
+    loading.value = false
   }
-  loading.value = false
-  emit('submit')
 }
 </script>

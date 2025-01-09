@@ -325,6 +325,12 @@ export default class Materials {
     )
   }
 
+  public static isSpeckleMaterial(
+    material: Material
+  ): material is SpeckleMaterial & Material {
+    return 'speckleUserData' in material
+  }
+
   private async createDefaultMeshMaterials() {
     this.meshGhostMaterial = new SpeckleGhostMaterial(
       {

@@ -64,7 +64,10 @@ import { userEmailsCompliantWithWorkspaceDomains } from '@/modules/workspaces/do
 import { workspaceRoles as workspaceRoleDefinitions } from '@/modules/workspaces/roles'
 import { blockedDomains } from '@speckle/shared'
 import { DeleteStreamRecord } from '@/modules/core/domain/streams/operations'
-import { DeleteSsoProvider } from '@/modules/workspaces/domain/sso/operations'
+import {
+  DeleteSsoProvider,
+  GetWorkspaceSsoProviderRecord
+} from '@/modules/workspaces/domain/sso/operations'
 
 type WorkspaceCreateArgs = {
   userId: string
@@ -175,7 +178,7 @@ export const createWorkspaceFactory =
     // emit a workspace created event
     await emitWorkspaceEvent({
       eventName: WorkspaceEvents.Created,
-      payload: { ...workspace, createdByUserId: userId }
+      payload: { workspace, createdByUserId: userId }
     })
 
     return { ...workspace }
@@ -230,11 +233,13 @@ const sanitizeInput = (input: Partial<Workspace>) => {
 export const updateWorkspaceFactory =
   ({
     getWorkspace,
+    getWorkspaceSsoProviderRecord,
     validateSlug,
     upsertWorkspace,
     emitWorkspaceEvent
   }: {
     getWorkspace: GetWorkspaceWithDomains
+    getWorkspaceSsoProviderRecord: GetWorkspaceSsoProviderRecord
     validateSlug: ValidateWorkspaceSlug
     upsertWorkspace: UpsertWorkspace
     emitWorkspaceEvent: EventBus['emit']
@@ -253,7 +258,14 @@ export const updateWorkspaceFactory =
       throw new WorkspaceInvalidUpdateError()
     }
 
-    if (workspaceInput.slug) await validateSlug({ slug: workspaceInput.slug })
+    if (workspaceInput.slug) {
+      const ssoProvider = await getWorkspaceSsoProviderRecord({ workspaceId })
+      if (ssoProvider)
+        throw new WorkspaceInvalidUpdateError(
+          'Cannot update workspace slug if SSO is configured.'
+        )
+      await validateSlug({ slug: workspaceInput.slug })
+    }
 
     const workspace = {
       ...omit(currentWorkspace, 'domains'),
@@ -262,7 +274,10 @@ export const updateWorkspaceFactory =
     }
 
     await upsertWorkspace({ workspace })
-    await emitWorkspaceEvent({ eventName: WorkspaceEvents.Updated, payload: workspace })
+    await emitWorkspaceEvent({
+      eventName: WorkspaceEvents.Updated,
+      payload: { workspace }
+    })
 
     return workspace
   }
@@ -464,14 +479,12 @@ export const addDomainToWorkspaceFactory =
     findEmailsByUserId,
     storeWorkspaceDomain,
     getWorkspace,
-    upsertWorkspace,
     emitWorkspaceEvent,
     getDomains
   }: {
     findEmailsByUserId: FindEmailsByUserId
     storeWorkspaceDomain: StoreWorkspaceDomain
     getWorkspace: GetWorkspace
-    upsertWorkspace: UpsertWorkspace
     getDomains: GetWorkspaceDomains
     emitWorkspaceEvent: EventBus['emit']
   }) =>
@@ -530,14 +543,8 @@ export const addDomainToWorkspaceFactory =
 
     await storeWorkspaceDomain({ workspaceDomain })
 
-    if (domains.length === 0) {
-      await upsertWorkspace({
-        workspace: { ...workspace, discoverabilityEnabled: true }
-      })
-    }
-
     await emitWorkspaceEvent({
       eventName: WorkspaceEvents.Updated,
-      payload: workspace
+      payload: { workspace }
     })
   }

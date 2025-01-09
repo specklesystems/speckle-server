@@ -75,6 +75,7 @@
 //                 return toReference({ __typename: 'Stream', id: args.id })
 //               }
 
+<<<<<<< HEAD
 //               return original
 //             }
 //           },
@@ -89,6 +90,22 @@
 //               if (args?.id) {
 //                 return toReference({ __typename: 'Project', id: args.id })
 //               }
+=======
+              return original
+            }
+          },
+          streams: {
+            keyArgs: ['query'],
+            merge: buildAbstractCollectionMergeFunction('UserStreamCollection', {
+              checkIdentity: true
+            })
+          },
+          project: {
+            read(original, { args, toReference }) {
+              if (args?.id) {
+                return toReference({ __typename: 'Project', id: args.id })
+              }
+>>>>>>> main
 
 //               return original
 //             }

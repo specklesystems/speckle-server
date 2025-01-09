@@ -42,9 +42,9 @@ export const createCheckoutSessionFactory =
     workspacePlan,
     billingInterval,
     workspaceSlug,
-    workspaceId
+    workspaceId,
+    isCreateFlow
   }) => {
-    //?settings=workspace/security&
     const resultUrl = getResultUrl({ frontendOrigin, workspaceId, workspaceSlug })
     const price = getWorkspacePlanPrice({ billingInterval, workspacePlan })
     const costLineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = [
@@ -59,13 +59,17 @@ export const createCheckoutSessionFactory =
         quantity: guestCount
       })
 
+    const cancel_url = isCreateFlow
+      ? `${frontendOrigin}/workspaces/create?workspaceId=${workspaceId}&payment_status=canceled&session_id={CHECKOUT_SESSION_ID}`
+      : `${resultUrl.toString()}&payment_status=canceled&session_id={CHECKOUT_SESSION_ID}`
+
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',
 
       line_items: costLineItems,
 
       success_url: `${resultUrl.toString()}&payment_status=success&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${resultUrl.toString()}&payment_status=canceled&session_id={CHECKOUT_SESSION_ID}`
+      cancel_url
     })
 
     if (!session.url) throw new Error('Failed to create an active checkout session')
@@ -127,7 +131,7 @@ export const getSubscriptionDataFactory =
 export const parseSubscriptionData = (
   stripeSubscription: Stripe.Subscription
 ): SubscriptionData => {
-  return {
+  const subscriptionData = {
     customerId:
       typeof stripeSubscription.customer === 'string'
         ? stripeSubscription.customer
@@ -135,7 +139,7 @@ export const parseSubscriptionData = (
     subscriptionId: stripeSubscription.id,
     status: stripeSubscription.status,
     cancelAt: stripeSubscription.cancel_at
-      ? new Date(stripeSubscription.cancel_at)
+      ? new Date(stripeSubscription.cancel_at * 1000)
       : null,
     products: stripeSubscription.items.data.map((subscriptionItem) => {
       const productId =
@@ -155,6 +159,7 @@ export const parseSubscriptionData = (
       }
     })
   }
+  return subscriptionData
 }
 
 // this should be a reconcile subscriptions, we keep an accurate state in the DB
@@ -176,7 +181,7 @@ export const reconcileWorkspaceSubscriptionFactory =
         // we're moving a product to a new price for ie upgrading to a yearly plan
       } else if (existingProduct.priceId !== product.priceId) {
         items.push({ quantity: product.quantity, price: product.priceId })
-        items.push({ id: product.subscriptionItemId, deleted: true })
+        items.push({ id: existingProduct.subscriptionItemId, deleted: true })
       } else {
         items.push({
           quantity: product.quantity,

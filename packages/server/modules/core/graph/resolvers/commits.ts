@@ -80,8 +80,9 @@ import { CommitGraphQLReturn } from '@/modules/core/helpers/graphTypes'
 import {
   getProjectDbClient,
   getRegisteredDbClients
-} from '@/modules/multiregion/dbSelector'
+} from '@/modules/multiregion/utils/dbSelector'
 import { LegacyUserCommit } from '@/modules/core/domain/commits/types'
+import coreModule from '@/modules/core'
 
 const getStreams = getStreamsFactory({ db })
 
@@ -323,6 +324,10 @@ export = {
   },
   Mutation: {
     async commitCreate(_parent, args, context) {
+      await coreModule.executeHooks('onCreateVersionRequest', {
+        projectId: args.commit.streamId
+      })
+
       const projectDb = await getProjectDbClient({ projectId: args.commit.streamId })
       await authorizeResolver(
         context.userId,

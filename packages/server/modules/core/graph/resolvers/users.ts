@@ -14,7 +14,9 @@ import {
   searchUsersFactory,
   markOnboardingCompleteFactory,
   legacyGetPaginatedUsersCountFactory,
-  legacyGetPaginatedUsersFactory
+  legacyGetPaginatedUsersFactory,
+  lookupUsersFactory,
+  bulkLookupUsersFactory
 } from '@/modules/core/repositories/users'
 import { UsersMeta } from '@/modules/core/dbSchema'
 import { throwForNotHavingServerRole } from '@/modules/shared/authz'
@@ -68,6 +70,8 @@ const changeUserRole = changeUserRoleFactory({
   updateUserServerRole: updateUserServerRoleFactory({ db })
 })
 const searchUsers = searchUsersFactory({ db })
+const bulkLookupUsers = bulkLookupUsersFactory({ db })
+const lookupUsers = lookupUsersFactory({ db })
 const markOnboardingComplete = markOnboardingCompleteFactory({ db })
 const getAdminUsersListCollection = getAdminUsersListCollectionFactory({
   countUsers: legacyGetPaginatedUsersCountFactory({ db }),
@@ -78,9 +82,6 @@ const getAdminUsersListCollection = getAdminUsersListCollectionFactory({
 
 export = {
   Query: {
-    async _() {
-      return `Ph'nglui mglw'nafh Cthulhu R'lyeh wgah'nagl fhtagn.`
-    },
     async activeUser(_parent, _args, context) {
       const activeUserId = context.userId
       if (!activeUserId) return null
@@ -96,7 +97,7 @@ export = {
       if (!id) return null
       return await getUser(id)
     },
-    async user(parent, args, context) {
+    async user(_parent, args, context) {
       // User wants info about himself and he's not authenticated - just return null
       if (!context.auth && !args.id) return null
 
@@ -139,14 +140,37 @@ export = {
       return { cursor, items: users }
     },
 
-    async userPwdStrength(parent, args) {
+    async users(_parent, args) {
+      if (args.input.query.length < 1)
+        throw new BadRequestError('Search query must be at least 1 character.')
+
+      if ((args.input.limit || 0) > 100)
+        throw new BadRequestError(
+          'Cannot return more than 100 items, please use pagination.'
+        )
+
+      const { cursor, users } = await lookupUsers(args.input)
+      return { cursor, items: users }
+    },
+    async usersByEmail(_parent, args) {
+      if (args.input.emails.length < 1)
+        throw new BadRequestError('Must provide at least one email to search for.')
+
+      if ((args.input.limit || 0) > 20)
+        throw new BadRequestError(
+          'Cannot return more than 20 items, please use a shorter list.'
+        )
+
+      return await bulkLookupUsers(args.input)
+    },
+    async userPwdStrength(_parent, args) {
       const res = zxcvbn(args.pwd)
       return { score: res.score, feedback: res.feedback }
     }
   },
 
   User: {
-    async email(parent, args, context) {
+    async email(parent, _args, context) {
       // NOTE: we're redacting the field (returning null) rather than throwing a full error which would invalidate the request.
       if (context.userId === parent.id) {
         try {

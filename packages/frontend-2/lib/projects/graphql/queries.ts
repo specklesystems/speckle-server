@@ -27,12 +27,14 @@ export const projectsDashboardQuery = graphql(`
     activeUser {
       id
       projects(filter: $filter, limit: 6, cursor: $cursor) {
+        ...ProjectsDashboard_UserProjectCollection
         cursor
         totalCount
         items {
           ...ProjectDashboardItem
         }
       }
+      ...ProjectsHiddenProjectWarning_User
       ...ProjectsDashboardHeaderProjects_User
     }
   }
@@ -235,6 +237,7 @@ export const projectAutomationsTabQuery = graphql(`
   query ProjectAutomationsTab($projectId: String!) {
     project(id: $projectId) {
       id
+      role
       models(limit: 1) {
         items {
           id
@@ -248,9 +251,16 @@ export const projectAutomationsTabQuery = graphql(`
         }
         cursor
       }
+      workspace {
+        id
+        automateFunctions(limit: 0) {
+          totalCount
+        }
+        ...AutomateFunctionCreateDialog_Workspace
+      }
       ...FormSelectProjects_Project
     }
-    ...ProjectPageAutomationsEmptyState_Query
+    ...AutomateFunctionsPageHeader_Query
   }
 `)
 

@@ -17,6 +17,8 @@ export const VALID_EMAIL = ValidationHelpers.VALID_EMAIL
  */
 export const isEmail = ValidationHelpers.isEmail
 
+export const isEmailOrEmpty = ValidationHelpers.isEmailOrEmpty
+
 export const isOneOrMultipleEmails = ValidationHelpers.isOneOrMultipleEmails
 
 export const isRequired = ValidationHelpers.isRequired

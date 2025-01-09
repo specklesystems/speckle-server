@@ -207,7 +207,11 @@ export default class SpeckleConverter {
 
       // If this is a built element and has a display value, only iterate through the "elements" prop if it exists.
       /** 10.25.2023 This might be serious legacy stuff that we might not need anymore */
-      if (obj.speckle_type.toLowerCase().includes('builtelements')) {
+      /** 22.11.2024 We have just added stuff to this serious legacy stuff that might not be needed anymore (joke's on us, it is needed) */
+      if (
+        obj.speckle_type.toLowerCase().includes('builtelements') ||
+        obj.speckle_type.toLowerCase().includes('objects.data')
+      ) {
         const elements = this.getElementsValue(obj)
         if (elements) {
           childrenConversionPromisses.push(

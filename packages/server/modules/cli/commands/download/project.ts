@@ -47,7 +47,7 @@ import {
   getViewerResourcesForCommentsFactory,
   getViewerResourcesFromLegacyIdentifiersFactory
 } from '@/modules/core/services/commit/viewerResources'
-import { db } from '@/db/knex'
+import { db, mainDb } from '@/db/knex'
 import {
   getCommentFactory,
   getCommentsResourcesFactory,
@@ -69,7 +69,7 @@ import { addBranchCreatedActivityFactory } from '@/modules/activitystream/servic
 import { authorizeResolver } from '@/modules/shared'
 import { Roles } from '@speckle/shared'
 import { getDefaultRegionFactory } from '@/modules/workspaces/repositories/regions'
-import { getDb } from '@/modules/multiregion/dbSelector'
+import { getDb } from '@/modules/multiregion/utils/dbSelector'
 import { createNewProjectFactory } from '@/modules/core/services/projects'
 import {
   deleteProjectFactory,
@@ -175,7 +175,7 @@ const command: CommandModule<
       addCommentCreatedActivity: addCommentCreatedActivityFactory({
         getViewerResourcesFromLegacyIdentifiers,
         getViewerResourceItemsUngrouped,
-        saveActivity: saveActivityFactory({ db: projectDb }),
+        saveActivity: saveActivityFactory({ db: mainDb }),
         publish
       })
     })
@@ -191,7 +191,7 @@ const command: CommandModule<
           getCommentsResources: getCommentsResourcesFactory({ db: projectDb }),
           getViewerResourcesFromLegacyIdentifiers
         }),
-        saveActivity: saveActivityFactory({ db: projectDb }),
+        saveActivity: saveActivityFactory({ db: mainDb }),
         publish
       })
     })
@@ -206,7 +206,7 @@ const command: CommandModule<
       markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db: projectDb }),
       versionsEventEmitter: VersionsEmitter.emit,
       addCommitCreatedActivity: addCommitCreatedActivityFactory({
-        saveActivity: saveActivityFactory({ db: projectDb }),
+        saveActivity: saveActivityFactory({ db: mainDb }),
         publish
       })
     })
@@ -250,7 +250,7 @@ const command: CommandModule<
         getStreamBranchByName,
         createBranch: createBranchFactory({ db: projectDb }),
         addBranchCreatedActivity: addBranchCreatedActivityFactory({
-          saveActivity: saveActivityFactory({ db: projectDb }),
+          saveActivity: saveActivityFactory({ db: mainDb }),
           publish
         })
       })

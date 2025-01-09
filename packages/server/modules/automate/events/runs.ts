@@ -26,6 +26,7 @@ export type AutomateEventsPayloads = {
     run: AutomationRunRecord
     functionRun: AutomationFunctionRunRecord
     automationId: string
+    projectId: string
   }
 }
 

@@ -3,6 +3,31 @@ import { trimEnd } from 'lodash'
 import * as Environment from '@speckle/shared/dist/commonjs/environment/index.js'
 import { ensureError } from '@speckle/shared'
 
+export function getStringFromEnv(
+  envVarKey: string,
+  options?: Partial<{
+    /**
+     * If set to true, wont throw if the env var is not set
+     */
+    unsafe: boolean
+  }>
+): string {
+  const envVar = process.env[envVarKey]
+  if (!envVar) {
+    if (options?.unsafe) return ''
+    throw new MisconfiguredEnvironmentError(`${envVarKey} env var not configured`)
+  }
+  return envVar
+}
+
+export function getIntFromEnv(envVarKey: string, aDefault = '0'): number {
+  return parseInt(process.env[envVarKey] || aDefault)
+}
+
+export function getBooleanFromEnv(envVarKey: string, aDefault = false): boolean {
+  return ['1', 'true', true].includes(process.env[envVarKey] || aDefault.toString())
+}
+
 export function getSessionSecret() {
   if (!process.env.SESSION_SECRET) {
     throw new MisconfiguredEnvironmentError('SESSION_SECRET env var not configured')
@@ -43,31 +68,6 @@ export function getFileSizeLimitMB() {
 
 export function getMaximumObjectSizeMB() {
   return getIntFromEnv('MAX_OBJECT_SIZE_MB', '100')
-}
-
-export function getIntFromEnv(envVarKey: string, aDefault = '0'): number {
-  return parseInt(process.env[envVarKey] || aDefault)
-}
-
-export function getBooleanFromEnv(envVarKey: string, aDefault = false): boolean {
-  return ['1', 'true', true].includes(process.env[envVarKey] || aDefault.toString())
-}
-
-export function getStringFromEnv(
-  envVarKey: string,
-  options?: Partial<{
-    /**
-     * If set to true, wont throw if the env var is not set
-     */
-    unsafe: boolean
-  }>
-): string {
-  const envVar = process.env[envVarKey]
-  if (!envVar) {
-    if (options?.unsafe) return ''
-    throw new MisconfiguredEnvironmentError(`${envVarKey} env var not configured`)
-  }
-  return envVar
 }
 
 /**
@@ -168,15 +168,6 @@ export function getMailchimpNewsletterIds() {
 }
 
 /**
- * Get app base url / canonical url / origin
- * TODO: Go over all getBaseUrl() usages and move them to getXOrigin() instead
- * @deprecated Since the new FE both apps (Server & FE) have different base urls, so use `getFrontendOrigin()` or `getServerOrigin()` instead
- */
-export function getBaseUrl() {
-  return getServerOrigin()
-}
-
-/**
  * Whether notification job consumption & handling should be disabled
  */
 export function shouldDisableNotificationsConsumption() {
@@ -241,7 +232,7 @@ export function getPort() {
  * Check whether we're running an SSL server
  */
 export function isSSLServer() {
-  return /^https:\/\//.test(getBaseUrl())
+  return /^https:\/\//.test(getServerOrigin())
 }
 
 function parseUrlVar(value: string, name: string) {
@@ -342,8 +333,8 @@ export function delayGraphqlResponsesBy() {
   return getIntFromEnv('DELAY_GQL_RESPONSES_BY', '0')
 }
 
-export function getAutomateEncryptionKeysPath() {
-  return getStringFromEnv('AUTOMATE_ENCRYPTION_KEYS_PATH')
+export function getEncryptionKeysPath() {
+  return getStringFromEnv('ENCRYPTION_KEYS_PATH')
 }
 
 export function getGendoAIKey() {
@@ -370,6 +361,14 @@ export function isEmailEnabled() {
 
 export function postgresMaxConnections() {
   return getIntFromEnv('POSTGRES_MAX_CONNECTIONS_SERVER', '4')
+}
+
+export function postgresConnectionAcquireTimeoutMillis() {
+  return getIntFromEnv('POSTGRES_CONNECTION_ACQUIRE_TIMEOUT_MILLIS', '16000')
+}
+
+export function postgresConnectionCreateTimeoutMillis() {
+  return getIntFromEnv('POSTGRES_CONNECTION_CREATE_TIMEOUT_MILLIS', '5000')
 }
 
 export function highFrequencyMetricsCollectionPeriodMs() {

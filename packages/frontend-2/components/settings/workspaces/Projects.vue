@@ -9,6 +9,7 @@
         v-model:search="search"
         :projects="projects"
         :workspace-id="workspaceId"
+        :disable-create="result?.workspace.readOnly"
         @close="$emit('close')"
       />
       <InfiniteLoading
@@ -25,6 +26,7 @@
 import { settingsWorkspacesProjectsQuery } from '~~/lib/settings/graphql/queries'
 import { usePaginatedQuery } from '~/lib/common/composables/graphql'
 import { graphql } from '~/lib/common/generated/gql'
+import { useWorkspaceProjectsUpdatedTracking } from '~/lib/workspaces/composables/projectUpdates'
 
 graphql(`
   fragment SettingsWorkspacesProjects_ProjectCollection on ProjectCollection {
@@ -66,4 +68,7 @@ const {
 })
 
 const projects = computed(() => result.value?.workspace.projects.items || [])
+const workspaceSlug = computed(() => result.value?.workspace.slug || '')
+
+useWorkspaceProjectsUpdatedTracking(computed(() => workspaceSlug.value))
 </script>

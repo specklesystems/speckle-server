@@ -12,7 +12,7 @@ extend type Query {
   Returns all streams that the active user is a collaborator on.
   Pass in the `query` parameter to search by name, description or ID.
   """
-  streams(query: String, limit: Int = 25, cursor: String): StreamCollection
+  streams(query: String, limit: Int = 25, cursor: String): UserStreamCollection
     @hasServerRole(role: SERVER_GUEST)
     @hasScope(scope: "streams:read")
     @deprecated(
@@ -87,7 +87,7 @@ extend type User {
   Returns all streams that the user is a collaborator on. If requested for a user, who isn't the
   authenticated user, then this will only return discoverable streams.
   """
-  streams(limit: Int! = 25, cursor: String): StreamCollection!
+  streams(limit: Int! = 25, cursor: String): UserStreamCollection!
     @hasServerRole(role: SERVER_GUEST)
     @hasScope(scope: "streams:read")
     @deprecated(
@@ -118,7 +118,7 @@ extend type LimitedUser {
   """
   Returns all discoverable streams that the user is a collaborator on
   """
-  streams(limit: Int! = 25, cursor: String): StreamCollection!
+  streams(limit: Int! = 25, cursor: String): UserStreamCollection!
     @hasServerRole(role: SERVER_GUEST)
     @hasScope(scope: "streams:read")
     @deprecated(
@@ -164,6 +164,13 @@ type PendingStreamCollaborator {
   Only available if the active user is the pending stream collaborator
   """
   token: String
+}
+
+type UserStreamCollection {
+  numberOfHidden: Int!
+  totalCount: Int!
+  cursor: String
+  items: [Stream!]
 }
 
 type StreamCollection {

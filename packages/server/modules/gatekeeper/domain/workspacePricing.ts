@@ -113,7 +113,7 @@ export type WorkspacePlanBillingIntervals = z.infer<
 
 const starter: WorkspacePlanFeaturesAndLimits = {
   ...baseFeatures,
-  name: 'team',
+  name: 'starter',
   description: 'The team plan',
   oidcSso: false,
   workspaceDataRegionSpecificity: false,
@@ -123,7 +123,7 @@ const starter: WorkspacePlanFeaturesAndLimits = {
 
 const plus: WorkspacePlanFeaturesAndLimits = {
   ...baseFeatures,
-  name: 'pro',
+  name: 'plus',
   description: 'The pro plan',
   oidcSso: true,
   workspaceDataRegionSpecificity: false,

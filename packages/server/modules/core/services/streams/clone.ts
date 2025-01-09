@@ -47,6 +47,9 @@ import { GetUser } from '@/modules/core/domain/users/operations'
 type CloneStreamInitialState = {
   user: UserWithOptionalRole<UserRecord>
   targetStream: StreamWithOptionalRole
+  /**
+   * Target streeam DB TRX for ensuring everything gets properly inserted
+   */
   trx: Knex.Transaction
 }
 
@@ -81,7 +84,7 @@ const decrementingDateGenerator = () => {
 type PrepareStateDeps = {
   getStream: GetStream
   getUser: GetUser
-  db: Knex
+  newProjectDb: Knex
 }
 
 const prepareStateFactory =
@@ -93,13 +96,18 @@ const prepareStateFactory =
         info: { sourceStreamId }
       })
     }
+    if (targetStream.regionKey) {
+      throw new StreamCloneError(
+        'Cloning of multiregion streams is not currently supported'
+      )
+    }
 
     const user = await deps.getUser(userId)
     if (!user) {
       throw new StreamCloneError('Clone target user not found')
     }
 
-    const trx = await deps.db.transaction()
+    const trx = await deps.newProjectDb.transaction()
 
     return { user, targetStream, trx }
   }
@@ -153,14 +161,16 @@ const cloneStreamObjectsOldFactory =
   }
 
 type CloneStreamObjectsDeps = {
-  db: Knex
+  newProjectDb: Knex
+  sourceProjectDb: Knex
 }
 
 // For sample onboarding stream, goes from 25s to ~250ms vs `cloneStreamObjectsOld`
+// TODO: This kind of query is not supported in multiregion, we can use the old one but apparently its 10 times slower...
 const cloneStreamObjectsFactory =
   (deps: CloneStreamObjectsDeps) =>
   async (state: CloneStreamInitialState, newStreamId: string) => {
-    const query = deps.db
+    const query = deps.sourceProjectDb // same as targetProjectDb for now
       .raw(
         `
         INSERT INTO objects ("id", "speckleType", "totalChildrenCount", "totalChildrenCountByDepth", "createdAt", "data", "streamId")
@@ -490,6 +500,8 @@ const cloneStreamCommentsFactory =
  * Create a new stream that is cloned from another one for the target user.
  * Important note: There are no access checks here, even private streams can be cloned! Do any
  * access control checking before you invoke this function, if needed.
+ *
+ * TODO: Does not currently support multiregion projects because of `cloneStreamObjectsFactory`
  * @returns The ID of the new stream
  */
 export const cloneStreamFactory =
@@ -509,19 +521,16 @@ export const cloneStreamFactory =
       const { newStream } = coreCloneResult
       // Clone comments
       await cloneStreamCommentsFactory(deps)(state, coreCloneResult)
-      // Create activity item
-      await deps.addStreamClonedActivity(
-        {
-          sourceStreamId,
-          newStream,
-          clonerId: userId
-        },
-        { trx: state.trx }
-      )
 
       // Commit transaction
       await state.trx.commit()
 
+      // Create activity item
+      await deps.addStreamClonedActivity({
+        sourceStreamId,
+        newStream,
+        clonerId: userId
+      })
       return coreCloneResult.newStream
     } catch (e) {
       await state.trx.rollback()

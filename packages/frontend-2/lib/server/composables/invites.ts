@@ -22,8 +22,13 @@ export function useInviteUserToServer() {
   const { mutate, loading } = useMutation(inviteServerUserMutation)
 
   return {
-    mutate: async (input: ServerInviteCreateInput | ServerInviteCreateInput[]) => {
+    mutate: async (
+      input: ServerInviteCreateInput | ServerInviteCreateInput[],
+      options?: { hideToasts?: boolean }
+    ) => {
       const finalInput = isArray(input) ? input : [input]
+      const { hideToasts } = options || {}
+
       const res = await mutate(
         {
           input: finalInput
@@ -53,17 +58,27 @@ export function useInviteUserToServer() {
       ).catch(convertThrowIntoFetchResult)
 
       if (res?.data?.serverInviteBatchCreate) {
-        triggerNotification({
-          type: ToastNotificationType.Success,
-          title: `Server invite${finalInput.length > 1 ? 's' : ''} sent`
-        })
+        if (!hideToasts) {
+          triggerNotification({
+            type: ToastNotificationType.Success,
+            title:
+              finalInput.length > 1
+                ? 'Server invites sent'
+                : `Server invite sent to ${finalInput[0].email}`
+          })
+        }
       } else {
         const errMsg = getFirstErrorMessage(res?.errors)
-        triggerNotification({
-          type: ToastNotificationType.Danger,
-          title: `Couldn't send invite${finalInput.length > 1 ? 's' : ''}`,
-          description: errMsg
-        })
+        if (!hideToasts) {
+          triggerNotification({
+            type: ToastNotificationType.Danger,
+            title:
+              finalInput.length > 1
+                ? "Couldn't send invites"
+                : `Couldn't send invite to ${finalInput[0].email}`,
+            description: errMsg
+          })
+        }
       }
 
       return !!res?.data?.serverInviteBatchCreate

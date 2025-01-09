@@ -11,7 +11,9 @@ import type {
   BulletStepType,
   NumberStepType,
   HorizontalOrVertical,
-  PropAnyComponent
+  PropAnyComponent,
+  AlertColor,
+  AlertAction
 } from '~~/src/helpers/common/components'
 import { TailwindBreakpoints } from '~~/src/helpers/tailwind'
 import CommonStepsNumber from '~~/src/components/common/steps/Number.vue'
@@ -189,5 +191,7 @@ export type {
   AvatarUser,
   AvatarUserWithId,
   LayoutPageTabItem,
-  PropAnyComponent
+  PropAnyComponent,
+  AlertColor,
+  AlertAction
 }
