@@ -118,7 +118,6 @@ export const onBranchDeletedSubscription = gql`
     branchDeleted(streamId: $streamId)
   }
 `
-
 export const usersRetrievalQuery = gql`
   query UsersRetrieval($input: UsersRetrievalInput!) {
     users(input: $input) {
@@ -126,6 +125,20 @@ export const usersRetrievalQuery = gql`
       items {
         id
         name
+      }
+    }
+  }
+`
+
+export const activeUserProjectsQuery = gql`
+  query ActiveUserProjects($filter: UserProjectsFilter!) {
+    activeUser {
+      projects(filter: $filter) {
+        cursor
+        items {
+          id
+          name
+        }
       }
     }
   }

@@ -2,5 +2,5 @@
   <AuthPasswordResetPanel />
 </template>
 <script setup lang="ts">
-useHead({ title: 'Forgotten password' })
+useHead({ title: 'Reset your password' })
 </script>

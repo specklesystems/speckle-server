@@ -2,7 +2,7 @@
 <template>
   <div v-if="showControls">
     <div
-      class="absolute z-20 flex max-h-screen simple-scrollbar flex-col space-y-1 md:space-y-2 bg-green-300/0 px-2"
+      class="absolute z-20 flex max-h-screen simple-scrollbar flex-col space-y-1 md:space-y-2 px-2 overflow-y-auto"
       :class="
         showNavbar && !isEmbedEnabled
           ? 'pt-[3.8rem]'

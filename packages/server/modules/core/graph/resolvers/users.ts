@@ -15,7 +15,8 @@ import {
   markOnboardingCompleteFactory,
   legacyGetPaginatedUsersCountFactory,
   legacyGetPaginatedUsersFactory,
-  lookupUsersFactory
+  lookupUsersFactory,
+  bulkLookupUsersFactory
 } from '@/modules/core/repositories/users'
 import { UsersMeta } from '@/modules/core/dbSchema'
 import { throwForNotHavingServerRole } from '@/modules/shared/authz'
@@ -69,6 +70,7 @@ const changeUserRole = changeUserRoleFactory({
   updateUserServerRole: updateUserServerRoleFactory({ db })
 })
 const searchUsers = searchUsersFactory({ db })
+const bulkLookupUsers = bulkLookupUsersFactory({ db })
 const lookupUsers = lookupUsersFactory({ db })
 const markOnboardingComplete = markOnboardingCompleteFactory({ db })
 const getAdminUsersListCollection = getAdminUsersListCollectionFactory({
@@ -150,7 +152,17 @@ export = {
       const { cursor, users } = await lookupUsers(args.input)
       return { cursor, items: users }
     },
+    async usersByEmail(_parent, args) {
+      if (args.input.emails.length < 1)
+        throw new BadRequestError('Must provide at least one email to search for.')
 
+      if ((args.input.limit || 0) > 20)
+        throw new BadRequestError(
+          'Cannot return more than 20 items, please use a shorter list.'
+        )
+
+      return await bulkLookupUsers(args.input)
+    },
     async userPwdStrength(_parent, args) {
       const res = zxcvbn(args.pwd)
       return { score: res.score, feedback: res.feedback }

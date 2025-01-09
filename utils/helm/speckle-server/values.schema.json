@@ -1774,6 +1774,21 @@
           "description": "If enabled, will output logs in a human-readable format. Otherwise, logs will be output in JSON format.",
           "default": false
         },
+        "inspect": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "If enabled, indicates that the Speckle FE2 should be deployed with the nodejs inspect feature enabled",
+              "default": false
+            },
+            "port": {
+              "type": "string",
+              "description": "The port on which the nodejs inspect feature should be exposed",
+              "default": "7000"
+            }
+          }
+        },
         "enabled": {
           "type": "boolean",
           "description": "Feature flag to enable running the new web application frontend.",
