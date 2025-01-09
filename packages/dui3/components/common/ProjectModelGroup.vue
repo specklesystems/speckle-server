@@ -65,12 +65,28 @@
     </button>
 
     <div v-show="showModels" class="space-y-2 mt-2 pb-1">
+      <CommonAlert
+        v-if="isWorkspaceReadOnly"
+        size="xs"
+        :color="'warning'"
+        :actions="[
+          {
+            title: 'Subscribe',
+            onClick: () => $openUrl(workspaceUrl)
+          }
+        ]"
+      >
+        <template #description>
+          The workspace is in a read-only locked state until there's an active
+          subscription. Subscribe to a plan to regain full access.
+        </template>
+      </CommonAlert>
       <ModelSender
         v-for="model in project.senders"
         :key="model.modelCardId"
         :model-card="model"
         :project="project"
-        :readonly="isProjectReadOnly"
+        :readonly="isProjectReadOnly || isWorkspaceReadOnly"
       />
       <ModelReceiver
         v-for="model in project.receivers"
@@ -193,6 +209,11 @@ const isProjectReadOnly = computed(() => {
   return false
 })
 
+const isWorkspaceReadOnly = computed(() => {
+  if (!projectDetails.value?.workspace) return false // project is not even in a workspace
+  return projectDetails.value?.workspace?.readOnly
+})
+
 // Enable later when FE2 is ready for accepting/denying requested accesses
 // const hasServerMatch = computed(() =>
 //   accountStore.isAccountExistsByServer(props.project.serverUrl)
@@ -244,6 +265,13 @@ const projectUrl = computed(() => {
   const acc = accountStore.accounts.find((acc) => acc.accountInfo.id === clientId)
   return `${acc?.accountInfo.serverInfo.url as string}/projects/${
     props.project.projectId
+  }`
+})
+
+const workspaceUrl = computed(() => {
+  const acc = accountStore.accounts.find((acc) => acc.accountInfo.id === clientId)
+  return `${acc?.accountInfo.serverInfo.url as string}/workspaces/${
+    projectDetails.value?.workspace?.slug
   }`
 })
 
