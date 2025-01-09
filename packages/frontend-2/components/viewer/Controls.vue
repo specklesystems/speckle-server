@@ -2,7 +2,7 @@
 <template>
   <div v-if="showControls">
     <div
-      class="absolute z-20 flex max-h-screen simple-scrollbar flex-col space-y-1 md:space-y-2 bg-green-300/0 px-2"
+      class="absolute z-20 flex max-h-screen simple-scrollbar flex-col space-y-1 md:space-y-2 px-2"
       :class="
         showNavbar && !isEmbedEnabled
           ? 'pt-[3.8rem]'
@@ -183,10 +183,8 @@
     </div>
     <div
       ref="scrollableControlsContainer"
-      :class="`simple-scrollbar absolute z-10 pl-12 pr-2 md:pr-0 md:pl-14 mb-4 max-h-[calc(100dvh-4.5rem)] overflow-y-auto px-[2px] py-[2px] transition ${
-        activePanel !== 'none'
-          ? 'translate-x-0 opacity-100'
-          : '-translate-x-[100%] opacity-0'
+      :class="`simple-scrollbar absolute z-10 pl-12 pr-2 md:pr-0 md:pl-14 mb-4 max-h-[calc(100dvh-4.5rem)] overflow-y-auto px-[2px] py-[2px] ${
+        activePanel !== 'none' ? 'opacity-100' : 'opacity-0'
       } ${isEmbedEnabled ? 'mt-1.5' : 'mt-[3.7rem]'}`"
       :style="`width: ${isMobile ? '100%' : `${width + 4}px`};`"
     >

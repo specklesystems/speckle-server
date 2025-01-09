@@ -44,7 +44,8 @@
       </div>
     </div>
     <p v-else class="py-4 text-body-xs text-foreground-2">
-      You don't have any projects that can be moved into this workspace
+      You don't have any projects that can be moved into this workspace. Only projects
+      you own and that aren't in another workspace can be moved.
     </p>
 
     <ProjectsMoveToWorkspaceDialog

@@ -555,6 +555,12 @@ export type BranchUpdateInput = {
   streamId: Scalars['String']['input'];
 };
 
+export type BulkUsersRetrievalInput = {
+  cursor?: InputMaybe<Scalars['String']['input']>;
+  emails: Array<Scalars['String']['input']>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+};
+
 export type CancelCheckoutSessionInput = {
   sessionId: Scalars['ID']['input'];
   workspaceId: Scalars['ID']['input'];
@@ -2472,8 +2478,8 @@ export type ProjectVersionsUpdatedMessage = {
   __typename?: 'ProjectVersionsUpdatedMessage';
   /** Version ID */
   id: Scalars['String']['output'];
-  /** Only set if version was deleted, in other scenarios can be queried from 'version' */
-  modelId?: Maybe<Scalars['String']['output']>;
+  /** Version's model ID */
+  modelId: Scalars['String']['output'];
   type: ProjectVersionsUpdatedMessageType;
   /** Null if version was deleted */
   version?: Maybe<Version>;
@@ -2600,6 +2606,8 @@ export type Query = {
   userSearch: UserSearchResultCollection;
   /** Look up server users */
   users: UserSearchResultCollection;
+  /** Look up server users with a collection of emails */
+  usersByEmail: Array<Maybe<LimitedUser>>;
   /** Validates the slug, to make sure it contains only valid characters and its not taken. */
   validateWorkspaceSlug: Scalars['Boolean']['output'];
   workspace: Workspace;
@@ -2743,6 +2751,11 @@ export type QueryUserSearchArgs = {
 
 export type QueryUsersArgs = {
   input: UsersRetrievalInput;
+};
+
+
+export type QueryUsersByEmailArgs = {
+  input: BulkUsersRetrievalInput;
 };
 
 
@@ -3871,6 +3884,7 @@ export type UserProjectsFilter = {
   onlyWithRoles?: InputMaybe<Array<Scalars['String']['input']>>;
   /** Filter out projects by name */
   search?: InputMaybe<Scalars['String']['input']>;
+  workspaceId?: InputMaybe<Scalars['ID']['input']>;
 };
 
 export type UserProjectsUpdatedMessage = {
@@ -4740,6 +4754,7 @@ export type ResolversTypes = {
   BranchCreateInput: BranchCreateInput;
   BranchDeleteInput: BranchDeleteInput;
   BranchUpdateInput: BranchUpdateInput;
+  BulkUsersRetrievalInput: BulkUsersRetrievalInput;
   CancelCheckoutSessionInput: CancelCheckoutSessionInput;
   CheckoutSession: ResolverTypeWrapper<CheckoutSession>;
   CheckoutSessionInput: CheckoutSessionInput;
@@ -5031,6 +5046,7 @@ export type ResolversParentTypes = {
   BranchCreateInput: BranchCreateInput;
   BranchDeleteInput: BranchDeleteInput;
   BranchUpdateInput: BranchUpdateInput;
+  BulkUsersRetrievalInput: BulkUsersRetrievalInput;
   CancelCheckoutSessionInput: CancelCheckoutSessionInput;
   CheckoutSession: CheckoutSession;
   CheckoutSessionInput: CheckoutSessionInput;
@@ -6132,7 +6148,7 @@ export type ProjectVersionsPreviewGeneratedMessageResolvers<ContextType = GraphQ
 
 export type ProjectVersionsUpdatedMessageResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ProjectVersionsUpdatedMessage'] = ResolversParentTypes['ProjectVersionsUpdatedMessage']> = {
   id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  modelId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  modelId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   type?: Resolver<ResolversTypes['ProjectVersionsUpdatedMessageType'], ParentType, ContextType>;
   version?: Resolver<Maybe<ResolversTypes['Version']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
@@ -6168,6 +6184,7 @@ export type QueryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   userPwdStrength?: Resolver<ResolversTypes['PasswordStrengthCheckResults'], ParentType, ContextType, RequireFields<QueryUserPwdStrengthArgs, 'pwd'>>;
   userSearch?: Resolver<ResolversTypes['UserSearchResultCollection'], ParentType, ContextType, RequireFields<QueryUserSearchArgs, 'archived' | 'emailOnly' | 'limit' | 'query'>>;
   users?: Resolver<ResolversTypes['UserSearchResultCollection'], ParentType, ContextType, RequireFields<QueryUsersArgs, 'input'>>;
+  usersByEmail?: Resolver<Array<Maybe<ResolversTypes['LimitedUser']>>, ParentType, ContextType, RequireFields<QueryUsersByEmailArgs, 'input'>>;
   validateWorkspaceSlug?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<QueryValidateWorkspaceSlugArgs, 'slug'>>;
   workspace?: Resolver<ResolversTypes['Workspace'], ParentType, ContextType, RequireFields<QueryWorkspaceArgs, 'id'>>;
   workspaceBySlug?: Resolver<ResolversTypes['Workspace'], ParentType, ContextType, RequireFields<QueryWorkspaceBySlugArgs, 'slug'>>;

@@ -1211,6 +1211,11 @@
         "ratelimiting": {
           "type": "object",
           "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "If enabled, rate limiting will be applied to the Speckle server.",
+              "default": true
+            },
             "all_requests": {
               "type": "number",
               "description": "The maximum number of requests that can be made to the Speckle server in a moving one second window.",
@@ -1768,6 +1773,21 @@
           "type": "boolean",
           "description": "If enabled, will output logs in a human-readable format. Otherwise, logs will be output in JSON format.",
           "default": false
+        },
+        "inspect": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "If enabled, indicates that the Speckle FE2 should be deployed with the nodejs inspect feature enabled",
+              "default": false
+            },
+            "port": {
+              "type": "string",
+              "description": "The port on which the nodejs inspect feature should be exposed",
+              "default": "7000"
+            }
+          }
         },
         "enabled": {
           "type": "boolean",

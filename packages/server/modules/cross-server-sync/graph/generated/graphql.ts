@@ -536,6 +536,12 @@ export type BranchUpdateInput = {
   streamId: Scalars['String']['input'];
 };
 
+export type BulkUsersRetrievalInput = {
+  cursor?: InputMaybe<Scalars['String']['input']>;
+  emails: Array<Scalars['String']['input']>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+};
+
 export type CancelCheckoutSessionInput = {
   sessionId: Scalars['ID']['input'];
   workspaceId: Scalars['ID']['input'];
@@ -2453,8 +2459,8 @@ export type ProjectVersionsUpdatedMessage = {
   __typename?: 'ProjectVersionsUpdatedMessage';
   /** Version ID */
   id: Scalars['String']['output'];
-  /** Only set if version was deleted, in other scenarios can be queried from 'version' */
-  modelId?: Maybe<Scalars['String']['output']>;
+  /** Version's model ID */
+  modelId: Scalars['String']['output'];
   type: ProjectVersionsUpdatedMessageType;
   /** Null if version was deleted */
   version?: Maybe<Version>;
@@ -2581,6 +2587,8 @@ export type Query = {
   userSearch: UserSearchResultCollection;
   /** Look up server users */
   users: UserSearchResultCollection;
+  /** Look up server users with a collection of emails */
+  usersByEmail: Array<Maybe<LimitedUser>>;
   /** Validates the slug, to make sure it contains only valid characters and its not taken. */
   validateWorkspaceSlug: Scalars['Boolean']['output'];
   workspace: Workspace;
@@ -2724,6 +2732,11 @@ export type QueryUserSearchArgs = {
 
 export type QueryUsersArgs = {
   input: UsersRetrievalInput;
+};
+
+
+export type QueryUsersByEmailArgs = {
+  input: BulkUsersRetrievalInput;
 };
 
 
@@ -3852,6 +3865,7 @@ export type UserProjectsFilter = {
   onlyWithRoles?: InputMaybe<Array<Scalars['String']['input']>>;
   /** Filter out projects by name */
   search?: InputMaybe<Scalars['String']['input']>;
+  workspaceId?: InputMaybe<Scalars['ID']['input']>;
 };
 
 export type UserProjectsUpdatedMessage = {

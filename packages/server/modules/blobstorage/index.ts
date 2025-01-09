@@ -129,10 +129,19 @@ export const init: SpeckleModule['init'] = async (app) => {
         uploadError?: Error | null | string
         formKey: string
       }>[] = []
-      const busboy = Busboy({
-        headers: req.headers,
-        limits: { fileSize: getFileSizeLimit() }
-      })
+      let busboy: Busboy.Busboy
+      try {
+        // Busboy does some validation of user input (headers) on creation
+        busboy = Busboy({
+          headers: req.headers,
+          limits: { fileSize: getFileSizeLimit() }
+        })
+      } catch (err) {
+        throw new BadRequestError(
+          err instanceof Error ? err.message : 'Error while uploading blob',
+          ensureError(err, 'Unknown error while uploading blob')
+        )
+      }
 
       const [projectDb, projectStorage] = await Promise.all([
         getProjectDbClient({ projectId: streamId }),
@@ -244,9 +253,12 @@ export const init: SpeckleModule['init'] = async (app) => {
           )
         )
 
-        const status = 400
-        const response = 'Upload request error. The server logs may have more details.'
-        res.status(status).end(response)
+        res.contentType('application/json')
+        res
+          .status(400)
+          .end(
+            '{ "error": "Upload request error. The server logs may have more details." }'
+          )
       })
 
       req.pipe(busboy)

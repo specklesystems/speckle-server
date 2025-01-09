@@ -212,7 +212,7 @@ const initKnexPrometheusMetricsForRegionEvents = async (params: {
           sqlNumberBindings: data.bindings?.length || -1
         })
         .observe(durationSec)
-    params.logger.debug(
+    params.logger.info(
       {
         region,
         sql: data.sql,
@@ -221,7 +221,7 @@ const initKnexPrometheusMetricsForRegionEvents = async (params: {
         sqlQueryDurationMs: toNDecimalPlaces(durationMs, 0),
         sqlNumberBindings: data.bindings?.length || -1
       },
-      "DB query successfully completed, for method '{sqlMethod}', after {sqlQueryDurationMs}ms"
+      'DB query successfully completed after {sqlQueryDurationMs} ms'
     )
   })
 

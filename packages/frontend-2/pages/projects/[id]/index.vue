@@ -216,7 +216,7 @@ const pageTabItems = computed((): LayoutPageTabItem[] => {
     items.push({
       title: 'Automations',
       id: 'automations',
-      tag: 'Beta'
+      tag: 'BETA'
     })
   }
 
