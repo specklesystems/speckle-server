@@ -26,7 +26,6 @@ import {
   Euler,
   Scene,
   Mesh,
-  MeshBasicMaterial,
   SphereGeometry
 } from 'three'
 
@@ -38,6 +37,7 @@ import { Intersections } from '../../Intersections.js'
 import { lerp } from 'three/src/math/MathUtils.js'
 import { computeOrthographicSize } from '../CameraController.js'
 import { ObjectLayers } from '../../../IViewer.js'
+import SpeckleBasicMaterial from '../../materials/SpeckleBasicMaterial.js'
 
 /**
  * @param {Number} value
@@ -99,6 +99,8 @@ export interface SmoothOrbitControlsOptions {
   zoomToCursor?: boolean
   // Orbit around cursor
   orbitAroundCursor?: boolean
+  // Show orbit point
+  showOrbitPoint?: boolean
   // Dampening
   damperDecay?: number
 }
@@ -175,11 +177,8 @@ export class SmoothOrbitControls extends SpeckleControls {
   private intersections: Intersections
 
   private orbitSphere: Mesh
-  private originSphere: Mesh
   private pivotPoint: Vector3 = new Vector3()
-  private lastPivot: Vector3 = new Vector3()
-
-  private forceUpdate = false
+  private lastPivotPoint: Vector3 = new Vector3()
 
   public get enabled(): boolean {
     return this._enabled
@@ -221,20 +220,20 @@ export class SmoothOrbitControls extends SpeckleControls {
     this._options = Object.assign({}, options)
     this.setDamperDecayTime(this._options.damperDecay)
 
-    this.orbitSphere = new Mesh(
-      new SphereGeometry(0.5, 32, 16),
-      new MeshBasicMaterial({ color: 0x43af11 })
-    )
+    const billboardMaterial = new SpeckleBasicMaterial({ color: 0x43af11 }, [
+      'BILLBOARD_FIXED'
+    ])
+    billboardMaterial.opacity = 0.75
+    billboardMaterial.transparent = true
+    billboardMaterial.color.convertSRGBToLinear()
+    billboardMaterial.toneMapped = false
+    billboardMaterial.depthTest = false
+    billboardMaterial.billboardPixelHeight = 15 * window.devicePixelRatio
+
+    this.orbitSphere = new Mesh(new SphereGeometry(0.5, 32, 16), billboardMaterial)
     this.orbitSphere.layers.set(ObjectLayers.OVERLAY)
     this.orbitSphere.visible = false
     this.scene.add(this.orbitSphere)
-
-    this.originSphere = new Mesh(
-      new SphereGeometry(0.5, 32, 16),
-      new MeshBasicMaterial({ color: 0x00ff00 })
-    )
-    this.originSphere.layers.set(ObjectLayers.OVERLAY)
-    // this.scene.add(this.originSphere)
   }
 
   /**
@@ -315,7 +314,7 @@ export class SmoothOrbitControls extends SpeckleControls {
       this.goalSpherical.radius === this.spherical.radius &&
       this.goalLogFov === this.logFov &&
       this.goalOrigin.equals(this.origin) &&
-      !this.forceUpdate
+      this.pivotPoint.equals(this.lastPivotPoint)
     )
   }
 
@@ -331,6 +330,7 @@ export class SmoothOrbitControls extends SpeckleControls {
     // polar, azimuth and radius:
     this.setOrbit()
     this.setFieldOfView(Math.exp(this.goalLogFov))
+    this.orbitSphere.visible = this._options.showOrbitPoint
   }
 
   /** Computes min/max radius values based on the current world size */
@@ -622,11 +622,8 @@ export class SmoothOrbitControls extends SpeckleControls {
       normalization
     )
     this.origin.set(x, y, z)
-    const v = new Vector3().set(x, y, z)
-    this.originSphere.position.copy(v.applyMatrix4(this._basisTransform))
     this.moveCamera()
 
-    this.forceUpdate = false
     return true
   }
 
@@ -644,24 +641,27 @@ export class SmoothOrbitControls extends SpeckleControls {
       .copy(this.pivotPoint)
       .applyMatrix4(this._basisTransformInv)
 
+    // let cameraPivotDist
+    // if (this._targetCamera instanceof OrthographicCamera) {
+    //   const offset = dir.multiplyScalar(
+    //     this._options.maximumRadius - this.options.minimumRadius - this.spherical.radius
+    //   )
+    //   const plm = new Vector3().copy(camPos).sub(offset)
+    //   cameraPivotDist = camPos.distanceTo(pivotPoint)
+    // } else cameraPivotDist = camPos.distanceTo(pivotPoint)
     const cameraPivotDist = camPos.distanceTo(pivotPoint)
     const cameraPivotDir = new Vector3().copy(camPos).sub(pivotPoint)
     cameraPivotDir.normalize()
 
-    // const dot = Math.min(Math.max(dir.dot(cameraPivotDir), -1), 1)
-    // const angle = Math.acos(dot)
-    // console.log('Angle -> ', angle)
-    const polarRadius = cameraPivotDist // * Math.cos(angle)
+    const dot = Math.min(Math.max(dir.dot(cameraPivotDir), -1), 1)
+    const angle = Math.acos(dot)
+    const polarRadius = cameraPivotDist * Math.cos(angle)
     const polarOrigin = camPos.sub(new Vector3().copy(dir).multiplyScalar(polarRadius))
 
     this.goalOrigin.copy(polarOrigin)
     this.origin.copy(polarOrigin)
     this.goalSpherical.radius = polarRadius
     this.spherical.radius = polarRadius
-
-    this.originSphere.position.copy(polarOrigin)
-    // console.log('Origin -> ', polarOrigin)
-    // console.log('Dist -> ', cameraPivotDist, ' Radius -> ', polarRadius)
   }
 
   /** Function expects the origin in a CS where Y is up */
@@ -694,6 +694,11 @@ export class SmoothOrbitControls extends SpeckleControls {
   }
 
   protected usePivotal = false
+  /** This flag decides if full pivotal movement is going to be used or a 'softer' inbetween pivotal and polar one,
+   *  where the polar origin is moved at the same depth as the pivot point. We don't expose this (yet)
+   */
+  protected fullPivotal = true
+
   protected moveCamera() {
     this.spherical.makeSafe()
 
@@ -701,7 +706,7 @@ export class SmoothOrbitControls extends SpeckleControls {
       .copy(this.pivotPoint)
       .applyMatrix4(this._basisTransformInv)
     const prevPivotPoint = new Vector3()
-      .copy(this.lastPivot)
+      .copy(this.lastPivotPoint)
       .applyMatrix4(this._basisTransformInv)
 
     const deltaPivot = prevPivotPoint.sub(pivotPoint)
@@ -712,15 +717,9 @@ export class SmoothOrbitControls extends SpeckleControls {
     }
 
     let position
-    if (this.usePivotal) {
+    if (this.usePivotal && this.fullPivotal) {
       position = this.positionFromPivotal(this.pivotalOrigin, quaternion)
       this.polarFromPivotal()
-      // position = this.positionFromSpherical(this.spherical, this.origin)
-      // console.log(
-      //   'Pivotal -> ',
-      //   this.positionFromPivotal(this.pivotalOrigin, quaternion)
-      // )
-      // console.log('Polar -> ', this.positionFromSpherical(this.spherical, this.origin))
     } else position = this.positionFromSpherical(this.spherical, this.origin)
 
     position.applyQuaternion(
@@ -728,19 +727,19 @@ export class SmoothOrbitControls extends SpeckleControls {
     )
     quaternion.premultiply(new Quaternion().setFromRotationMatrix(this._basisTransform))
 
-    if (this._targetCamera instanceof OrthographicCamera) {
-      const cameraDirection = new Vector3()
-        .setFromSpherical(this.spherical)
-        .applyQuaternion(new Quaternion().setFromRotationMatrix(this._basisTransform))
-        .normalize()
-      position.add(
-        cameraDirection.multiplyScalar(
-          this._options.maximumRadius -
-            this.options.minimumRadius -
-            this.spherical.radius
-        )
-      )
-    }
+    // if (this._targetCamera instanceof OrthographicCamera) {
+    //   const cameraDirection = new Vector3()
+    //     .setFromSpherical(this.spherical)
+    //     .applyQuaternion(new Quaternion().setFromRotationMatrix(this._basisTransform))
+    //     .normalize()
+    //   position.add(
+    //     cameraDirection.multiplyScalar(
+    //       this._options.maximumRadius -
+    //         this.options.minimumRadius -
+    //         this.spherical.radius
+    //     )
+    //   )
+    // }
     this._targetCamera.position.copy(position)
     this._targetCamera.quaternion.copy(quaternion)
     this._targetCamera.updateMatrixWorld(true)
@@ -763,16 +762,22 @@ export class SmoothOrbitControls extends SpeckleControls {
       this._targetCamera.updateProjectionMatrix()
     }
 
-    this.lastPivot.copy(this.pivotPoint)
+    this.lastPivotPoint.copy(this.pivotPoint)
+
+    this.orbitSphere.position.copy(
+      this._options.orbitAroundCursor
+        ? this.pivotPoint
+        : new Vector3().copy(this.origin).applyMatrix4(this._basisTransform)
+    )
   }
 
-  /* Ortho height to distance functions
+  // Ortho height to distance functions
   private orthographicHeightToDistance(height: number) {
     if (!(this._targetCamera instanceof OrthographicCamera))
       return this.spherical.radius
 
     return height / (Math.tan(MathUtils.DEG2RAD * Math.exp(this.logFov) * 0.5) * 2)
-  }*/
+  }
 
   /** Three.js Spherical assumes (0, 1, 0) as up... */
   protected positionFromSpherical(spherical: Spherical, origin?: Vector3) {
@@ -960,31 +965,32 @@ export class SmoothOrbitControls extends SpeckleControls {
   }
 
   protected onPointerDown = (event: PointerEvent) => {
-    const x =
-      ((event.clientX - this._container.offsetLeft) / this._container.offsetWidth) * 2 -
-      1
+    if (this._options.orbitAroundCursor) {
+      const x =
+        ((event.clientX - this._container.offsetLeft) / this._container.offsetWidth) *
+          2 -
+        1
 
-    const y =
-      ((event.clientY - this._container.offsetTop) / this._container.offsetHeight) *
-        -2 +
-      1
-    const res = this.intersections.intersect(
-      this.scene,
-      this._targetCamera as PerspectiveCamera,
-      new Vector2(x, y),
-      ObjectLayers.STREAM_CONTENT_MESH,
-      true,
-      this.world.worldBox // TO DO: This does not account for transformed objects
-    )
-    if (res) {
-      this.lastPivot.copy(this.pivotPoint)
-      this.pivotPoint.copy(res[0].point)
-      this.polarFromPivotal()
-      this.orbitSphere.position.copy(res[0].point)
-      this.forceUpdate = true
-      this.usePivotal = this._options.orbitAroundCursor && true
-      this.orbitSphere.visible = true
+      const y =
+        ((event.clientY - this._container.offsetTop) / this._container.offsetHeight) *
+          -2 +
+        1
+      const res = this.intersections.intersect(
+        this.scene,
+        this._targetCamera as PerspectiveCamera,
+        new Vector2(x, y),
+        ObjectLayers.STREAM_CONTENT_MESH,
+        true,
+        this.world.worldBox // TO DO: This does not account for transformed objects
+      )
+      if (res) {
+        this.pivotPoint.copy(res[0].point)
+        this.polarFromPivotal()
+
+        this.usePivotal = true
+      }
     }
+    this.orbitSphere.visible = this._options.showOrbitPoint
 
     if (this.pointers.length > 2) {
       return
@@ -1080,7 +1086,6 @@ export class SmoothOrbitControls extends SpeckleControls {
     if (this.isUserPointing) {
       this.emit(PointerChangeEvent.PointerChangeEnd)
     }
-    this.usePivotal = false
     this.orbitSphere.visible = false
   }
 
@@ -1143,6 +1148,7 @@ export class SmoothOrbitControls extends SpeckleControls {
       60
     this.userAdjustOrbit(0, 0, deltaZoom)
     event.preventDefault()
+    this.usePivotal = false
     // TO DO
     // this.dispatchEvent({ type: 'user-interaction' })
   }
