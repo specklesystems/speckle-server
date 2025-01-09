@@ -38,27 +38,31 @@
           :disabled="isLoading || timeOutWait || isOutOfCredits"
           textarea-classes="sm:!min-h-24"
         />
-        <div class="flex justify-between gap-2 items-center text-foreground-2">
-          <FormButton
-            color="outline"
-            size="sm"
-            external
-            to="https://www.gendo.ai/terms-of-service"
-            target="_blank"
-          >
-            <div class="flex items-center gap-1 text-foreground-2 font-normal">
-              <span class="text-body-2xs font-semibold text-foreground">Forum:</span>
-              <span>Writing prompts</span>
-              <ArrowTopRightOnSquareIcon class="h-3 w-3" />
-            </div>
-          </FormButton>
+        <div class="gendo-button-container">
+          <div class="flex justify-between gap-2 items-center text-foreground-2">
+            <FormButton
+              color="outline"
+              size="sm"
+              external
+              to="https://www.gendo.ai/terms-of-service"
+              target="_blank"
+            >
+              <div class="flex items-center gap-1 text-foreground-2 font-normal">
+                <span class="forum-label text-body-2xs font-semibold text-foreground">
+                  Forum:
+                </span>
+                <span>Writing prompts</span>
+                <ArrowTopRightOnSquareIcon class="h-3 w-3" />
+              </div>
+            </FormButton>
 
-          <FormButton
-            :disabled="!prompt || isLoading || timeOutWait || isOutOfCredits"
-            @click="enqueMagic()"
-          >
-            Render
-          </FormButton>
+            <FormButton
+              :disabled="!prompt || isLoading || timeOutWait || isOutOfCredits"
+              @click="enqueMagic()"
+            >
+              Render
+            </FormButton>
+          </div>
         </div>
       </div>
       <ViewerGendoList @reuse-prompt="prompt = $event" />
@@ -222,3 +226,15 @@ const lodgeRequest = async (screenshot: string) => {
   refetch()
 }
 </script>
+
+<style scoped>
+.gendo-button-container {
+  container-type: inline-size;
+}
+
+@container (max-width: 240px) {
+  .forum-label {
+    display: none;
+  }
+}
+</style>
