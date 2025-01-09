@@ -38,6 +38,17 @@
               Set View
             </FormButton>
           </div>
+          <div v-tippy="`Reuse prompt`">
+            <FormButton
+              :icon-left="ArrowUpIcon"
+              hide-text
+              color="subtle"
+              size="sm"
+              @click="reusePrompt"
+            >
+              Reuse prompt
+            </FormButton>
+          </div>
         </div>
       </div>
       <div
@@ -56,22 +67,12 @@
         class="absolute bottom-2 left-2 space-x-2 flex items-center min-w-0 max-w-full overflow-hidden"
       >
         <div
-          class="group bg-foundation p-0.5 flex items-center space-x-1 min-w-0 max-w-full rounded-md"
+          class="bg-foundation p-0.5 flex items-center space-x-1 min-w-0 max-w-full rounded-md"
         >
           <UserAvatar :user="detailedRender.user" size="sm" />
           <span class="truncate max-w-full select-none pr-1 max-w-40 text-body-2xs">
             {{ detailedRender.prompt }}
           </span>
-          <FormButton
-            hide-text
-            :icon-left="ArrowUpIcon"
-            color="subtle"
-            size="sm"
-            class="hidden group-hover:block"
-            @click="reusePrompt"
-          >
-            Reuse prompt
-          </FormButton>
         </div>
       </div>
     </div>
