@@ -13,18 +13,15 @@
           />
         </button>
         <div class="hidden group-hover:flex absolute top-2 left-2 gap-1">
-          <div v-tippy="`Download`">
+          <div v-tippy="`Reuse prompt`">
             <FormButton
-              :to="renderUrl"
-              external
-              target="_blank"
-              download
-              :icon-left="ArrowDownTrayIcon"
+              :icon-left="ArrowUturnUpIcon"
               hide-text
-              color="outline"
+              color="subtle"
               size="sm"
+              @click="reusePrompt"
             >
-              Download
+              Reuse prompt
             </FormButton>
           </div>
           <div v-tippy="`Set view`">
@@ -38,15 +35,18 @@
               Set View
             </FormButton>
           </div>
-          <div v-tippy="`Reuse prompt`">
+          <div v-tippy="`Download`">
             <FormButton
-              :icon-left="ArrowUpIcon"
+              :to="renderUrl"
+              external
+              target="_blank"
+              download
+              :icon-left="ArrowDownTrayIcon"
               hide-text
-              color="subtle"
+              color="outline"
               size="sm"
-              @click="reusePrompt"
             >
-              Reuse prompt
+              Download
             </FormButton>
           </div>
         </div>
@@ -95,7 +95,7 @@ import {
   VideoCameraIcon,
   ExclamationCircleIcon,
   ArrowDownTrayIcon,
-  ArrowUpIcon
+  ArrowUturnUpIcon
 } from '@heroicons/vue/24/outline'
 import { useCameraUtilities } from '~/lib/viewer/composables/ui'
 import { Vector3 } from 'three'
