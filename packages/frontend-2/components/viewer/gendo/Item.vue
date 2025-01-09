@@ -115,16 +115,12 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
       as: 'a',
       href: renderUrl.value || undefined,
       target: '_blank'
-    },
-    icon: ArrowDownTrayIcon,
-    show: !!renderUrl.value
+    }
   },
   {
     text: 'Set View',
     props: { color: 'outline' },
-    icon: VideoCameraIcon,
-    onClick: setView,
-    show: !!detailedRender.value?.camera
+    onClick: setView
   }
 ])
 
