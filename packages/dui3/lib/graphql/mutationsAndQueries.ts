@@ -314,24 +314,10 @@ export const projectDetailsQuery = graphql(`
       id
       role
       name
-      team {
-        user {
-          avatar
-          id
-          name
-        }
+      workspace {
+        slug
+        readOnly
       }
-      visibility
-    }
-  }
-`)
-
-export const projectDetailsWithAutomateQuery = graphql(`
-  query ProjectDetails($projectId: String!) {
-    project(id: $projectId) {
-      id
-      role
-      name
       team {
         user {
           avatar
