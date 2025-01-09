@@ -3,7 +3,7 @@
     :title="collapsible ? 'Members' : undefined"
     :collapsible="collapsible"
     :icon="iconName"
-    :icon-click="isWorkspaceAdmin ? iconClick : undefined"
+    :icon-click="iconClick"
     :icon-text="iconText"
     :tag="workspaceInfo.team.totalCount.toString() || undefined"
     no-hover

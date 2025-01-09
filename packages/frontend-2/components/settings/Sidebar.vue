@@ -8,7 +8,10 @@
             <p class="text-body-xs font-medium text-foreground">Exit settings</p>
           </NuxtLink>
         </LayoutSidebarMenuGroup>
-        <LayoutSidebarMenuGroup collapsible title="User settings">
+        <LayoutSidebarMenuGroup title="User settings">
+          <template #title-icon>
+            <IconAccount class="size-4" />
+          </template>
           <NuxtLink
             v-for="(sidebarMenuItem, key) in userMenuItems"
             :key="key"
@@ -20,7 +23,10 @@
             />
           </NuxtLink>
         </LayoutSidebarMenuGroup>
-        <LayoutSidebarMenuGroup v-if="isAdmin" collapsible title="Server settings">
+        <LayoutSidebarMenuGroup v-if="isAdmin" title="Server settings">
+          <template #title-icon>
+            <IconServer class="size-4" />
+          </template>
           <NuxtLink
             v-for="(sidebarMenuItem, key) in serverMenuItems"
             :key="key"
