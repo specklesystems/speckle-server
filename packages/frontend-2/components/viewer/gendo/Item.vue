@@ -2,10 +2,7 @@
   <div v-if="detailedRender">
     <div class="relative">
       <div v-if="detailedRender.status === 'COMPLETED' && renderUrl" class="group">
-        <button
-          class="relative flex cursor-zoom-in h-32 w-full"
-          @click="isPreviewOpen = true"
-        >
+        <button class="relative flex cursor-zoom-in h-32 w-full" @click="openPreview">
           <div class="bg-highlight-3 flex items-center justify-center">
             <CommonLoadingIcon />
           </div>
@@ -88,6 +85,7 @@ import {
 import { useCameraUtilities } from '~/lib/viewer/composables/ui'
 import { Vector3 } from 'three'
 import { CommonLoadingIcon } from '@speckle/ui-components'
+import { useMixpanel } from '~/lib/core/composables/mp'
 
 const props = defineProps<{
   renderRequest: GendoAiRender
@@ -124,6 +122,7 @@ onRenderUpdated(() => {
 const detailedRender = computed(() => result.value?.project?.version?.gendoAIRender)
 
 const { setView: setViewInternal } = useCameraUtilities()
+const mixpanel = useMixpanel()
 
 const apiOrigin = useApiOrigin()
 const renderUrl = computed(() => {
@@ -145,5 +144,13 @@ const setView = () => {
     },
     true
   )
+}
+
+const openPreview = () => {
+  mixpanel.track('Gendo Render Preview Opened', {
+    renderId: detailedRender.value?.id,
+    prompt: detailedRender.value?.prompt
+  })
+  isPreviewOpen.value = true
 }
 </script>
