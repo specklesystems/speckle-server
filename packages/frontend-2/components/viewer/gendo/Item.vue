@@ -70,7 +70,10 @@
           class="bg-foundation p-0.5 flex items-center space-x-1 min-w-0 max-w-full rounded-md"
         >
           <UserAvatar :user="detailedRender.user" size="sm" />
-          <span class="truncate max-w-full select-none pr-1 max-w-40 text-body-2xs">
+          <span
+            v-tippy="detailedRender.prompt"
+            class="truncate max-w-full select-none pr-1 max-w-40 text-body-2xs"
+          >
             {{ detailedRender.prompt }}
           </span>
         </div>
