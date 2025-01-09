@@ -93,7 +93,6 @@ import {
 import { useCameraUtilities } from '~/lib/viewer/composables/ui'
 import { Vector3 } from 'three'
 import { CommonLoadingIcon } from '@speckle/ui-components'
-import { ViewerGendoDialog } from '#build/components'
 
 const props = defineProps<{
   renderRequest: GendoAiRender
