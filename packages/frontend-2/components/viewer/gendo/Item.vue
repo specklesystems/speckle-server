@@ -6,27 +6,29 @@
           <NuxtImg :src="renderUrl" alt="render" class="rounded-lg shadow" />
         </button>
         <div class="hidden group-hover:flex absolute top-2 left-2 gap-1">
-          <FormButton
-            v-tippy="`Download`"
-            :to="renderUrl"
-            download
-            :icon-left="ArrowDownTrayIcon"
-            hide-text
-            color="outline"
-            size="sm"
-          >
-            Download
-          </FormButton>
-          <FormButton
-            v-tippy="`Set view`"
-            :icon-left="VideoCameraIcon"
-            hide-text
-            color="outline"
-            size="sm"
-            @click="setView()"
-          >
-            Set View
-          </FormButton>
+          <div v-tippy="`Download`">
+            <FormButton
+              :to="renderUrl"
+              download
+              :icon-left="ArrowDownTrayIcon"
+              hide-text
+              color="outline"
+              size="sm"
+            >
+              Download
+            </FormButton>
+          </div>
+          <div v-tippy="`Set view`">
+            <FormButton
+              :icon-left="VideoCameraIcon"
+              hide-text
+              color="outline"
+              size="sm"
+              @click="setView()"
+            >
+              Set View
+            </FormButton>
+          </div>
         </div>
       </div>
       <div
