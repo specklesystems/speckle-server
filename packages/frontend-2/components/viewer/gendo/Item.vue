@@ -2,10 +2,10 @@
   <div v-if="detailedRender">
     <div class="relative">
       <div v-if="detailedRender.status === 'COMPLETED' && renderUrl" class="group">
-        <button class="flex" @click="isDialogOpen = true">
+        <button class="flex cursor-zoom-in" @click="isDialogOpen = true">
           <NuxtImg :src="renderUrl" alt="render" class="rounded-lg shadow" />
         </button>
-        <div class="absolute top-2 left-2 flex gap-1">
+        <div class="hidden group-hover:flex absolute top-2 left-2 gap-1">
           <FormButton
             v-tippy="`Download`"
             :to="renderUrl"
@@ -54,25 +54,16 @@
         </div>
       </div>
     </div>
-    <LayoutDialog v-model:open="isDialogOpen" max-width="xl" :buttons="dialogButtons">
-      <template #header>
-        <div class="flex items-center gap-2">
-          <UserAvatar :user="detailedRender?.user" size="sm" />
-          <span class="text-body-sm text-foreground">{{ detailedRender?.prompt }}</span>
-        </div>
-      </template>
-      <div class="flex justify-center">
-        <NuxtImg
-          :src="renderUrl || undefined"
-          alt="render preview"
-          class="max-w-full max-h-[80vh] object-contain"
-        />
-      </div>
-      <div class="mt-4 flex items-center gap-4">
-        <UserAvatar :user="detailedRender?.user" size="sm" />
-        <span class="text-body-sm text-foreground">{{ detailedRender?.prompt }}</span>
-      </div>
-    </LayoutDialog>
+    <div class="absolute z-50 inset-0 flex items-center justify-center">
+      <div
+        class="absolute inset-0 backdrop-blur-xs bg-black/60 dark:bg-neutral-900/60"
+      />
+      <NuxtImg
+        :src="renderUrl || undefined"
+        alt="render preview"
+        class="relative z-10 max-h-[80vh] max-w-[80vw] object-contain"
+      />
+    </div>
   </div>
   <div v-else />
 </template>
@@ -91,7 +82,6 @@ import {
 } from '@heroicons/vue/24/outline'
 import { useCameraUtilities } from '~/lib/viewer/composables/ui'
 import { Vector3 } from 'three'
-import type { LayoutDialogButton } from '@speckle/ui-components'
 
 const props = defineProps<{
   renderRequest: GendoAiRender
@@ -109,18 +99,6 @@ const isDialogOpen = ref(false)
 const versionId = computed(() => {
   return resourceItems.value[0].versionId as string
 })
-
-const dialogButtons = computed((): LayoutDialogButton[] => [
-  {
-    text: 'Download',
-    props: {
-      color: 'outline',
-      as: 'a',
-      href: renderUrl.value || undefined,
-      target: '_blank'
-    }
-  }
-])
 
 const { result, refetch } = useQuery(getGendoAIRender, () => ({
   projectId: projectId.value,
