@@ -32,7 +32,7 @@
           textarea-classes="sm:!min-h-24"
         />
         <!-- Container query incase user resizes panel to min size -->
-        <div class="gendo-button-container">
+        <div class="gendo-container-query">
           <div class="flex justify-between gap-2 items-center text-foreground-2">
             <FormButton
               color="outline"
@@ -42,7 +42,9 @@
               target="_blank"
             >
               <div class="flex items-center gap-1 text-foreground-2 font-normal">
-                <span class="forum-label text-body-2xs font-semibold text-foreground">
+                <span
+                  class="hidden-under-250 text-body-2xs font-semibold text-foreground"
+                >
                   Forum:
                 </span>
                 <span>Writing prompts</span>
@@ -62,9 +64,10 @@
       <ViewerGendoList @reuse-prompt="prompt = $event" />
     </div>
     <template #actions>
-      <div class="flex w-full items-center justify-between gap-2">
+      <div class="gendo-container-query flex w-full items-center justify-between gap-2">
         <span v-if="limits" class="text-body-2xs text-right">
-          {{ limits.used }}/{{ limits.limit }} free renders used this month
+          {{ limits.used }}/{{ limits.limit }} free renders used
+          <span class="hidden-under-250">this month</span>
         </span>
         <span v-else />
         <FormButton
@@ -231,12 +234,12 @@ const lodgeRequest = async (screenshot: string) => {
 </script>
 
 <style scoped>
-.gendo-button-container {
+.gendo-container-query {
   container-type: inline-size;
 }
 
 @container (max-width: 250px) {
-  .forum-label {
+  .hidden-under-250 {
     display: none;
   }
 }

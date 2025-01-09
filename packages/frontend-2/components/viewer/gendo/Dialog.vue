@@ -12,9 +12,14 @@
       <NuxtImg
         :src="renderUrl"
         :alt="renderPrompt"
-        class="w-full h-full max-h-[70vh] max-w-[80vw] object-contain"
+        class="relative z-10 w-full h-full max-h-[70vh] max-w-[80vw] object-contain"
       />
-      <FormButton color="outline" :icon-left="XMarkIcon" @click="isOpen = false">
+      <FormButton
+        class="relative z-10"
+        color="outline"
+        :icon-left="XMarkIcon"
+        @click="isOpen = false"
+      >
         Close
       </FormButton>
     </div>

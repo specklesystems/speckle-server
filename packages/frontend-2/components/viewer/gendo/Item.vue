@@ -14,9 +14,7 @@
             class="absolute inset-0 rounded-lg shadow h-32 w-full object-cover"
           />
         </button>
-        <div
-          class="hidden group-hover:flex justify-between absolute top-2 left-2 gap-1"
-        >
+        <div class="hidden group-hover:flex absolute top-2 left-2 gap-1">
           <div class="flex gap-1">
             <div v-tippy="`Reuse prompt`">
               <FormButton
@@ -77,11 +75,11 @@
         >
           <UserAvatar :user="detailedRender.user" size="sm" />
           <button
-            v-tippy="detailedRender.prompt"
+            v-tippy="capitalizedPrompt"
             class="truncate select-none pr-1 max-w-40 text-body-2xs cursor-copy"
             @click="copyPrompt"
           >
-            {{ detailedRender.prompt }}
+            {{ capitalizedPrompt }}
           </button>
         </div>
       </div>
@@ -206,4 +204,9 @@ const copyPrompt = async () => {
     prompt: detailedRender.value?.prompt
   })
 }
+
+const capitalizedPrompt = computed(() => {
+  const prompt = detailedRender.value?.prompt || ''
+  return prompt.charAt(0).toUpperCase() + prompt.slice(1)
+})
 </script>
