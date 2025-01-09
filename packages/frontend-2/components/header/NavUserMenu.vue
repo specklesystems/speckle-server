@@ -36,6 +36,7 @@
           </div>
           <MenuItem v-if="activeUser" v-slot="{ active }">
             <NuxtLink
+              :to="settingsRoutes.user.profile"
               :class="[
                 active ? 'bg-highlight-1' : '',
                 'text-body-xs flex px-2 py-1 text-foreground cursor-pointer transition mx-1 rounded'
@@ -46,6 +47,7 @@
           </MenuItem>
           <MenuItem v-if="isAdmin" v-slot="{ active }">
             <NuxtLink
+              :to="settingsRoutes.server.general"
               :class="[
                 active ? 'bg-highlight-1' : '',
                 'text-body-xs flex px-2 py-1 text-foreground cursor-pointer transition mx-1 rounded'
@@ -133,7 +135,7 @@ import { Roles } from '@speckle/shared'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { useAuthManager } from '~~/lib/auth/composables/auth'
 import { useTheme } from '~~/lib/core/composables/theme'
-import { downloadManagerUrl } from '~/lib/common/helpers/route'
+import { downloadManagerUrl, settingsRoutes } from '~/lib/common/helpers/route'
 import type { RouteLocationRaw } from 'vue-router'
 import { useServerInfo } from '~/lib/core/composables/server'
 
