@@ -68,7 +68,7 @@
       <ViewerGendoList @reuse-prompt="prompt = $event" />
     </div>
     <template #actions>
-      <div class="flex w-full items-center justify-between gap-4">
+      <div class="flex w-full items-center justify-between gap-2">
         <span v-if="limits" class="text-body-2xs text-right">
           {{ limits.used }}/{{ limits.limit }} free renders used this month
         </span>

@@ -70,16 +70,21 @@
           class="bg-foundation p-0.5 flex items-center space-x-1 min-w-0 max-w-full rounded-md"
         >
           <UserAvatar :user="detailedRender.user" size="sm" />
-          <span
+          <button
             v-tippy="detailedRender.prompt"
-            class="truncate max-w-full select-none pr-1 max-w-40 text-body-2xs"
+            class="truncate max-w-full select-none pr-1 max-w-40 text-body-2xs cursor-copy"
+            @click="copyPrompt"
           >
             {{ detailedRender.prompt }}
-          </span>
+          </button>
         </div>
       </div>
     </div>
-    <ViewerGendoDialog v-model:open="isPreviewOpen" :render-url="renderUrl" />
+    <ViewerGendoDialog
+      v-model:open="isPreviewOpen"
+      :render-url="renderUrl"
+      :render-prompt="detailedRender.prompt"
+    />
   </div>
   <div v-else />
 </template>
@@ -116,6 +121,9 @@ const {
     response: { resourceItems }
   }
 } = useInjectedViewerState()
+
+const { copy } = useClipboard()
+const { triggerNotification } = useGlobalToast()
 
 const isPreviewOpen = ref(false)
 
@@ -179,5 +187,17 @@ const openPreview = () => {
     prompt: detailedRender.value?.prompt
   })
   isPreviewOpen.value = true
+}
+
+const copyPrompt = async () => {
+  await copy(detailedRender.value?.prompt || '')
+  triggerNotification({
+    type: ToastNotificationType.Info,
+    title: 'Prompt copied to clipboard'
+  })
+  mixpanel.track('Gendo Prompt Copied', {
+    renderId: detailedRender.value?.id,
+    prompt: detailedRender.value?.prompt
+  })
 }
 </script>

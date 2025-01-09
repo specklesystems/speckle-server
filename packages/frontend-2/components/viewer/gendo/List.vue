@@ -1,5 +1,7 @@
 <template>
-  <div class="flex flex-col gap-y-2 max-h-48 overflow-y-scroll">
+  <div
+    class="flex flex-col gap-y-2 max-h-56 overflow-y-scroll overflow-x-hidden simple-scroll"
+  >
     <ViewerGendoItem
       v-for="render in renders"
       :key="render?.id"
