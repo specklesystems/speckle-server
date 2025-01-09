@@ -19,6 +19,7 @@ import {
 } from '@/modules/shared/helpers/envHelper'
 import Redis from 'ioredis'
 import { Knex } from 'knex'
+import TTLCache from '@isaacs/ttlcache'
 
 const ServerConfig = buildTableHelper('server_config', [
   'id',
@@ -45,29 +46,55 @@ export type GetServerConfig = (params: {
   bustCache?: boolean
 }) => Promise<ServerConfigRecord>
 
-export const getServerConfigFactory =
-  (deps: { db: Knex; cache?: Redis }): GetServerConfig =>
-  async (params) => {
-    const { cache, db } = deps
+const inMemoryCache = new TTLCache<string, ServerConfigRecord>({ max: 2000 })
+
+export const getServerConfigFactory = (deps: {
+  db: Knex
+  cache?: Redis
+  options?: {
+    inMemoryExpiryTimeSeconds?: number
+    redisExpiryTimeSeconds?: number
+  }
+}): GetServerConfig => {
+  return async (params) => {
+    const { cache, db, options } = deps
     const { bustCache } = params
-    if (cache && !bustCache) {
-      const cachedResult = await cache.get(SERVER_CONFIG_CACHE_KEY)
-      if (cachedResult) return JSON.parse(cachedResult) as ServerConfigRecord
+
+    if (!bustCache) {
+      const inMemoryResult = inMemoryCache.get(SERVER_CONFIG_CACHE_KEY)
+      if (inMemoryResult) return inMemoryResult
+    } else {
+      //bustCache
+      inMemoryCache.delete(SERVER_CONFIG_CACHE_KEY)
     }
-    if (cache && bustCache) {
-      await cache.del(SERVER_CONFIG_CACHE_KEY)
+
+    if (cache) {
+      if (!bustCache) {
+        const cachedResult = await cache.get(SERVER_CONFIG_CACHE_KEY)
+        if (cachedResult) return JSON.parse(cachedResult) as ServerConfigRecord
+      } else {
+        //bustCache
+        await cache.del(SERVER_CONFIG_CACHE_KEY)
+      }
     }
     const result = await tables.serverConfig(db).select('*').first()
-    if (cache) {
-      await cache.setex(
-        SERVER_CONFIG_CACHE_KEY,
-        60 /* seconds */,
-        JSON.stringify(result)
-      )
+
+    if (result) {
+      inMemoryCache.set(SERVER_CONFIG_CACHE_KEY, result, {
+        ttl: (options?.inMemoryExpiryTimeSeconds || 2) * 1000 // convert seconds to milliseconds
+      })
+      if (cache) {
+        await cache.setex(
+          SERVER_CONFIG_CACHE_KEY,
+          options?.redisExpiryTimeSeconds || 60,
+          JSON.stringify(result)
+        )
+      }
     }
     // An entry should always exist as it is placed there by database migrations
     return result!
   }
+}
 
 export const getServerInfoFactory =
   (deps: { getServerConfig: GetServerConfig }): GetServerInfo =>
