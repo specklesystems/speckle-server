@@ -2,8 +2,15 @@
   <div v-if="detailedRender">
     <div class="relative">
       <div v-if="detailedRender.status === 'COMPLETED' && renderUrl" class="group">
-        <button class="flex cursor-zoom-in" @click="isDialogOpen = true">
-          <NuxtImg :src="renderUrl" alt="render" class="rounded-lg shadow" />
+        <button class="relative flex cursor-zoom-in h-32" @click="isPreviewOpen = true">
+          <div class="bg-highlight-3 flex items-center justify-center">
+            <CommonLoadingIcon />
+          </div>
+          <NuxtImg
+            :src="renderUrl"
+            :alt="detailedRender.prompt"
+            class="absolute inset-0 rounded-lg shadow h-32 object-cover"
+          />
         </button>
         <div class="hidden group-hover:flex absolute top-2 left-2 gap-1">
           <div v-tippy="`Download`">
@@ -56,15 +63,28 @@
         </div>
       </div>
     </div>
-    <div class="absolute z-50 inset-0 flex items-center justify-center">
-      <div
+    <div
+      v-if="isPreviewOpen"
+      class="absolute z-50 inset-0 flex items-center justify-center"
+    >
+      <button
         class="absolute inset-0 backdrop-blur-xs bg-black/60 dark:bg-neutral-900/60"
+        @click="isPreviewOpen = false"
       />
-      <NuxtImg
-        :src="renderUrl || undefined"
-        alt="render preview"
-        class="relative z-10 max-h-[80vh] max-w-[80vw] object-contain"
-      />
+      <div class="relative z-10 flex flex-col items-center justify-center">
+        <NuxtImg
+          :src="renderUrl || undefined"
+          alt="render preview"
+          class="w-full h-full max-h-[80vh] max-w-[80vw] object-contain"
+        />
+        <FormButton
+          :icon-left="XMarkIcon"
+          color="outline"
+          @click="isPreviewOpen = false"
+        >
+          Close
+        </FormButton>
+      </div>
     </div>
   </div>
   <div v-else />
@@ -80,10 +100,12 @@ import { useInjectedViewerState } from '~/lib/viewer/composables/setup'
 import {
   VideoCameraIcon,
   ExclamationCircleIcon,
-  ArrowDownTrayIcon
+  ArrowDownTrayIcon,
+  XMarkIcon
 } from '@heroicons/vue/24/outline'
 import { useCameraUtilities } from '~/lib/viewer/composables/ui'
 import { Vector3 } from 'three'
+import { CommonLoadingIcon } from '@speckle/ui-components'
 
 const props = defineProps<{
   renderRequest: GendoAiRender
@@ -96,7 +118,7 @@ const {
   }
 } = useInjectedViewerState()
 
-const isDialogOpen = ref(false)
+const isPreviewOpen = ref(false)
 
 const versionId = computed(() => {
   return resourceItems.value[0].versionId as string

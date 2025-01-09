@@ -15,12 +15,13 @@
         </CommonBadge>
       </div>
     </template>
-    <div class="py-2 px-3 flex flex-col gap-2">
-      <CommonAlert v-if="!limits" color="danger">
+    <div class="pt-2 px-3 flex flex-col">
+      <CommonAlert v-if="!limits" class="mb-2" color="danger">
         <template #title>No credits available</template>
       </CommonAlert>
       <CommonAlert
         v-else-if="isNearingLimit || isOutOfCredits"
+        class="mb-2"
         :color="alertColor"
         size="xs"
       >
