@@ -2585,7 +2585,7 @@ export type Query = {
   /** Look up server users */
   users: UserSearchResultCollection;
   /** Look up server users with a collection of emails */
-  usersByEmail: UserSearchResultCollection;
+  usersByEmail: Array<Maybe<LimitedUser>>;
   /** Validates the slug, to make sure it contains only valid characters and its not taken. */
   validateWorkspaceSlug: Scalars['Boolean']['output'];
   workspace: Workspace;
