@@ -8,7 +8,8 @@
         <div class="absolute top-2 left-2 flex gap-2">
           <!-- eslint-disable-next-line vuejs-accessibility/anchor-has-content -->
           <a
-            class="bg-foundation p-0.5 rounded"
+            v-tippy="'Download'"
+            class="bg-foundation p-1 rounded"
             :href="renderUrl"
             target="_blank"
             title="download image"
@@ -18,7 +19,7 @@
           <button
             v-if="detailedRender.camera"
             v-tippy="'Set view'"
-            class="bg-foundation p-0.5 rounded"
+            class="bg-foundation p-1 rounded"
             @click="setView()"
           >
             <VideoCameraIcon class="w-4" />
@@ -38,21 +39,25 @@
         <ExclamationCircleIcon v-else class="w-6 text-danger" />
       </div>
       <div
-        class="absolute bottom-2 left-2 text-body-xs rounded-md pr-4 space-x-2 flex items-center min-w-0 max-w-full overflow-hidden"
+        class="absolute bottom-2 left-2 text-body-xs space-x-2 flex items-center min-w-0 max-w-full overflow-hidden"
       >
         <div
-          class="bg-foundation p-2 flex items-center space-x-2 min-w-0 max-w-full rounded-md"
+          class="bg-foundation p-0.5 flex items-center space-x-1 min-w-0 max-w-full rounded-md"
         >
           <UserAvatar :user="detailedRender.user" size="sm" />
-          <span class="truncate max-w-full">{{ detailedRender.prompt }}</span>
+          <span class="truncate max-w-full select-none">
+            {{ detailedRender.prompt }}
+          </span>
         </div>
       </div>
     </div>
-    <LayoutDialog
-      v-model:open="isDialogOpen"
-      max-width="xl"
-      :title="detailedRender?.prompt || 'Render Preview'"
-    >
+    <LayoutDialog v-model:open="isDialogOpen" max-width="xl" :buttons="dialogButtons">
+      <template #header>
+        <div class="flex items-center gap-2">
+          <UserAvatar :user="detailedRender?.user" size="sm" />
+          <span class="text-body-sm text-foreground">{{ detailedRender?.prompt }}</span>
+        </div>
+      </template>
       <div class="flex justify-center">
         <NuxtImg
           :src="renderUrl || undefined"
@@ -100,6 +105,27 @@ const isDialogOpen = ref(false)
 const versionId = computed(() => {
   return resourceItems.value[0].versionId as string
 })
+
+const dialogButtons = computed((): LayoutDialogButton[] => [
+  {
+    text: 'Download',
+    props: {
+      color: 'outline',
+      as: 'a',
+      href: renderUrl.value || undefined,
+      target: '_blank'
+    },
+    icon: ArrowDownTrayIcon,
+    show: !!renderUrl.value
+  },
+  {
+    text: 'Set View',
+    props: { color: 'outline' },
+    icon: VideoCameraIcon,
+    onClick: setView,
+    show: !!detailedRender.value?.camera
+  }
+])
 
 const { result, refetch } = useQuery(getGendoAIRender, () => ({
   projectId: projectId.value,
