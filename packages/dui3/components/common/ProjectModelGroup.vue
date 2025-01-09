@@ -67,6 +67,7 @@
     <div v-show="showModels" class="space-y-2 mt-2 pb-1">
       <CommonAlert
         v-if="isWorkspaceReadOnly"
+        size="xs"
         :color="'warning'"
         :actions="[
           {
