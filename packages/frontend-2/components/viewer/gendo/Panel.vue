@@ -16,16 +16,9 @@
       </div>
     </template>
     <div class="pt-2 px-3 flex flex-col gap-y-2">
-      <CommonAlert v-if="!limits" color="danger">
-        <template #title>No credits available</template>
-      </CommonAlert>
-      <CommonAlert
-        v-else-if="isNearingLimit || isOutOfCredits"
-        :color="alertColor"
-        size="xs"
-      >
+      <CommonAlert v-if="showAlert" :color="alertColor" size="xs">
         <template #title>
-          {{ limits.used }}/{{ limits.limit }} free renders used this month
+          {{ alertMessage }}
         </template>
       </CommonAlert>
       <div class="flex flex-col gap-y-2">
@@ -155,6 +148,15 @@ const alertColor = computed(() => {
   if (isNearingLimit.value) return 'warning'
   return 'neutral'
 })
+
+const alertMessage = computed(() => {
+  if (!limits.value) return 'No credits available'
+  return `${limits.value.used}/${limits.value.limit} free renders used this month`
+})
+
+const showAlert = computed(
+  () => !limits.value || isNearingLimit.value || isOutOfCredits.value
+)
 
 const enqueMagic = async () => {
   isLoading.value = true
