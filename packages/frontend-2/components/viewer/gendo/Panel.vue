@@ -15,7 +15,7 @@
         </CommonBadge>
       </div>
     </template>
-    <div class="py-2 px-3">
+    <div class="py-2 px-3 flex flex-col gap-2">
       <CommonAlert v-if="!limits" color="danger">
         <template #title>No credits available</template>
       </CommonAlert>
@@ -27,33 +27,8 @@
         <template #title>
           {{ limits.used }}/{{ limits.limit }} free renders used this month
         </template>
-        <template #description>
-          <FormButton
-            to="https://gendo.ai?utm=speckle"
-            target="_blank"
-            size="sm"
-            :icon-right="ArrowTopRightOnSquareIcon"
-            color="outline"
-          >
-            Get more credits
-          </FormButton>
-        </template>
       </CommonAlert>
-      <FormButton
-        v-else
-        color="outline"
-        size="sm"
-        external
-        to="https://www.gendo.ai/terms-of-service"
-        target="_blank"
-      >
-        <div class="flex items-center gap-1 text-foreground-2 font-normal">
-          <span class="text-body-2xs font-semibold text-foreground">Forum:</span>
-          <span>Writing effective prompts</span>
-          <ArrowTopRightOnSquareIcon class="h-3 w-3" />
-        </div>
-      </FormButton>
-      <div class="flex flex-col gap-y-2 mt-2">
+      <div class="flex flex-col gap-y-2">
         <FormTextArea
           v-model="prompt"
           name="prompt"
@@ -63,13 +38,21 @@
           :disabled="isLoading || timeOutWait || isOutOfCredits"
           textarea-classes="sm:!min-h-24"
         />
-        <div class="flex justify-end gap-2 items-center text-foreground-2">
-          <span
-            v-if="limits && !isOutOfCredits && !isNearingLimit"
-            class="text-body-2xs text-right"
+        <div class="flex justify-between gap-2 items-center text-foreground-2">
+          <FormButton
+            color="outline"
+            size="sm"
+            external
+            to="https://www.gendo.ai/terms-of-service"
+            target="_blank"
           >
-            {{ limits.used }}/{{ limits.limit }} free renders used this month
-          </span>
+            <div class="flex items-center gap-1 text-foreground-2 font-normal">
+              <span class="text-body-2xs font-semibold text-foreground">Forum:</span>
+              <span>Writing prompts</span>
+              <ArrowTopRightOnSquareIcon class="h-3 w-3" />
+            </div>
+          </FormButton>
+
           <FormButton
             :disabled="!prompt || isLoading || timeOutWait || isOutOfCredits"
             @click="enqueMagic()"
@@ -82,6 +65,12 @@
     </div>
     <template #actions>
       <div class="flex w-full items-center justify-end">
+        <span
+          v-if="limits && !isOutOfCredits && !isNearingLimit"
+          class="text-body-2xs text-right"
+        >
+          {{ limits.used }}/{{ limits.limit }} free renders used this month
+        </span>
         <FormButton
           color="subtle"
           size="sm"

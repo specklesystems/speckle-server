@@ -2,14 +2,27 @@
   <div v-if="detailedRender">
     <div class="relative">
       <div v-if="detailedRender.status === 'COMPLETED' && renderUrl" class="group">
-        <img :src="renderUrl" alt="render" class="rounded-lg shadow" />
-        <div
-          class="absolute top-2 left-2 bg-foundation p-1 rounded opacity-0 group-hover:opacity-100 transition"
-        >
+        <button @click="isDialogOpen = true">
+          <img :src="renderUrl" alt="render" class="rounded-lg shadow" />
+        </button>
+        <div class="absolute top-2 left-2 flex gap-2">
           <!-- eslint-disable-next-line vuejs-accessibility/anchor-has-content -->
-          <a :href="renderUrl" target="_blank" title="download image">
+          <a
+            class="bg-foundation p-0.5 rounded"
+            :href="renderUrl"
+            target="_blank"
+            title="download image"
+          >
             <ArrowDownTrayIcon class="w-4" />
           </a>
+          <button
+            v-if="detailedRender.camera"
+            v-tippy="'Set view'"
+            class="bg-foundation p-0.5 rounded"
+            @click="setView()"
+          >
+            <VideoCameraIcon class="w-4" />
+          </button>
         </div>
       </div>
       <div
@@ -25,24 +38,33 @@
         <ExclamationCircleIcon v-else class="w-6 text-danger" />
       </div>
       <div
-        class="absolute bottom-2 left-2 text-sm rounded-md pr-4 space-x-2 flex items-center min-w-0 max-w-full overflow-hidden"
+        class="absolute bottom-2 left-2 text-body-xs rounded-md pr-4 space-x-2 flex items-center min-w-0 max-w-full overflow-hidden"
       >
         <div
           class="bg-foundation p-2 flex items-center space-x-2 min-w-0 max-w-full rounded-md"
         >
           <UserAvatar :user="detailedRender.user" size="sm" />
-          <button
-            v-if="detailedRender.camera"
-            v-tippy="'Set view'"
-            class="mt-[2px] hover:text-blue-500 transition"
-            @click="setView()"
-          >
-            <VideoCameraIcon class="w-4" />
-          </button>
           <span class="truncate max-w-full">{{ detailedRender.prompt }}</span>
         </div>
       </div>
     </div>
+    <LayoutDialog
+      v-model:open="isDialogOpen"
+      max-width="xl"
+      :title="detailedRender?.prompt || 'Render Preview'"
+    >
+      <div class="flex justify-center">
+        <NuxtImg
+          :src="renderUrl || undefined"
+          alt="render preview"
+          class="max-w-full max-h-[80vh] object-contain"
+        />
+      </div>
+      <div class="mt-4 flex items-center gap-4">
+        <UserAvatar :user="detailedRender?.user" size="sm" />
+        <span class="text-body-sm text-foreground">{{ detailedRender?.prompt }}</span>
+      </div>
+    </LayoutDialog>
   </div>
   <div v-else />
 </template>
@@ -72,6 +94,8 @@ const {
     response: { resourceItems }
   }
 } = useInjectedViewerState()
+
+const isDialogOpen = ref(false)
 
 const versionId = computed(() => {
   return resourceItems.value[0].versionId as string
