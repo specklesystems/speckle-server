@@ -2,14 +2,17 @@
   <div v-if="detailedRender">
     <div class="relative">
       <div v-if="detailedRender.status === 'COMPLETED' && renderUrl" class="group">
-        <button class="relative flex cursor-zoom-in h-32" @click="isPreviewOpen = true">
+        <button
+          class="relative flex cursor-zoom-in h-32 w-full"
+          @click="isPreviewOpen = true"
+        >
           <div class="bg-highlight-3 flex items-center justify-center">
             <CommonLoadingIcon />
           </div>
           <NuxtImg
             :src="renderUrl"
             :alt="detailedRender.prompt"
-            class="absolute inset-0 rounded-lg shadow h-32 object-cover"
+            class="absolute inset-0 rounded-lg shadow h-32 w-full object-cover"
           />
         </button>
         <div class="hidden group-hover:flex absolute top-2 left-2 gap-1">
@@ -65,13 +68,12 @@
         </div>
       </div>
     </div>
-    <LayoutDialog :open="isPreviewOpen" max-width="xl" is-transparent>
-      <NuxtImg
-        :src="renderUrl || undefined"
-        alt="render preview"
-        class="w-full h-full max-h-[80vh] max-w-[80vw] object-contain"
-      />
-    </LayoutDialog>
+    <ViewerGendoDialog
+      v-if="renderUrl"
+      :open="isPreviewOpen"
+      :render-url="renderUrl"
+      :render-prompt="detailedRender.prompt"
+    />
   </div>
   <div v-else />
 </template>
@@ -91,6 +93,7 @@ import {
 import { useCameraUtilities } from '~/lib/viewer/composables/ui'
 import { Vector3 } from 'three'
 import { CommonLoadingIcon } from '@speckle/ui-components'
+import { ViewerGendoDialog } from '#build/components'
 
 const props = defineProps<{
   renderRequest: GendoAiRender

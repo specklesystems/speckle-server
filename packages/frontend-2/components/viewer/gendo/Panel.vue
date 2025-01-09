@@ -15,13 +15,12 @@
         </CommonBadge>
       </div>
     </template>
-    <div class="pt-2 px-3 flex flex-col">
-      <CommonAlert v-if="!limits" class="mb-2" color="danger">
+    <div class="pt-2 px-3 flex flex-col gap-y-2">
+      <CommonAlert v-if="!limits" color="danger">
         <template #title>No credits available</template>
       </CommonAlert>
       <CommonAlert
         v-else-if="isNearingLimit || isOutOfCredits"
-        class="mb-2"
         :color="alertColor"
         size="xs"
       >
@@ -66,6 +65,10 @@
     </div>
     <template #actions>
       <div class="flex w-full items-center justify-between gap-4">
+        <span v-if="limits" class="text-body-2xs text-right">
+          {{ limits.used }}/{{ limits.limit }} free renders used this month
+        </span>
+        <span v-else />
         <FormButton
           color="subtle"
           size="sm"
@@ -78,9 +81,6 @@
             <ArrowTopRightOnSquareIcon class="h-3 w-3" />
           </div>
         </FormButton>
-        <span v-if="limits" class="text-body-2xs text-right">
-          {{ limits.used }}/{{ limits.limit }} free renders used this month
-        </span>
       </div>
     </template>
   </ViewerLayoutPanel>
