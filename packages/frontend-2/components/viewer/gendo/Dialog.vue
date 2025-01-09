@@ -1,15 +1,10 @@
 <template>
-  <LayoutDialog
-    v-model:open="isOpen"
-    :title="renderPrompt"
-    max-width="xl"
-    is-transparent
-  >
-    <div class="flex flex-col gap-4">
+  <LayoutDialog v-model:open="isOpen" max-width="xl" is-transparent>
+    <div class="flex flex-col items-center justify-center gap-2">
       <NuxtImg
         :src="renderUrl"
         alt="render preview"
-        class="w-full h-full max-h-[80vh] max-w-[80vw] object-contain"
+        class="w-full h-full max-h-[70vh] max-w-[80vw] object-contain"
       />
       <FormButton color="outline" @click="isOpen = false">Close</FormButton>
     </div>
@@ -18,8 +13,7 @@
 
 <script setup lang="ts">
 defineProps<{
-  renderUrl: string
-  renderPrompt: string
+  renderUrl?: string
 }>()
 
 const isOpen = defineModel<boolean>('open', { required: true })

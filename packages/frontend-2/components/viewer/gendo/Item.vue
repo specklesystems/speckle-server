@@ -68,12 +68,7 @@
         </div>
       </div>
     </div>
-    <ViewerGendoDialog
-      v-if="renderUrl"
-      :open="isPreviewOpen"
-      :render-url="renderUrl"
-      :render-prompt="detailedRender.prompt"
-    />
+    <ViewerGendoDialog v-model:open="isPreviewOpen" :render-url="renderUrl" />
   </div>
   <div v-else />
 </template>
@@ -132,7 +127,7 @@ const { setView: setViewInternal } = useCameraUtilities()
 
 const apiOrigin = useApiOrigin()
 const renderUrl = computed(() => {
-  if (detailedRender.value?.status !== 'COMPLETED') return null
+  if (detailedRender.value?.status !== 'COMPLETED') return undefined
   const url = new URL(
     `/api/stream/${projectId.value}/blob/${detailedRender.value?.responseImage}`,
     apiOrigin
