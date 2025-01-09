@@ -4,7 +4,7 @@ import type { Redis } from 'ioredis'
 export type GetFromLayeredCache<T> = (params: {
   retrieveFromSource: () => Promise<T | undefined>
   key: string
-  inMemoryCache: TTLCache<string, T>
+  inMemoryCache: TTLCache<string, T | undefined>
   distributedCache?: Redis
   bustCache?: boolean
 }) => Promise<T | undefined>
@@ -16,6 +16,7 @@ export const layeredCacheFactory = <T>(deps: {
   }
 }): GetFromLayeredCache<T> => {
   const { options } = deps
+  const inMemoryTtl = (options?.inMemoryExpiryTimeSeconds || 2) * 1000 // convert seconds to milliseconds
 
   return async (params) => {
     const { key, retrieveFromSource, inMemoryCache, distributedCache, bustCache } =
@@ -37,7 +38,7 @@ export const layeredCacheFactory = <T>(deps: {
 
           // update inMemoryCache with the result from distributedCache. Prevents us hitting Redis too often.
           inMemoryCache.set(key, parsedCachedResult, {
-            ttl: (options?.inMemoryExpiryTimeSeconds || 2) * 1000 // convert seconds to milliseconds
+            ttl: inMemoryTtl
           })
           return parsedCachedResult
         }
@@ -48,17 +49,16 @@ export const layeredCacheFactory = <T>(deps: {
     }
     const result = await retrieveFromSource()
 
-    if (result) {
-      inMemoryCache.set(key, result, {
-        ttl: (options?.inMemoryExpiryTimeSeconds || 2) * 1000 // convert seconds to milliseconds
-      })
-      if (distributedCache) {
-        await distributedCache.setex(
-          key,
-          options?.redisExpiryTimeSeconds || 60,
-          JSON.stringify(result)
-        )
-      }
+    // update both layers of cache with whatever we got from the source
+    inMemoryCache.set(key, result, {
+      ttl: inMemoryTtl
+    })
+    if (distributedCache) {
+      await distributedCache.setex(
+        key,
+        options?.redisExpiryTimeSeconds || 60,
+        JSON.stringify(result)
+      )
     }
 
     return result
