@@ -19,6 +19,7 @@ import {
 } from '@/modules/shared/helpers/envHelper'
 import Redis from 'ioredis'
 import { Knex } from 'knex'
+import { layeredCacheFactory } from '@/modules/core/utils/layeredCache'
 import TTLCache from '@isaacs/ttlcache'
 
 const ServerConfig = buildTableHelper('server_config', [
@@ -46,53 +47,32 @@ export type GetServerConfig = (params: {
   bustCache?: boolean
 }) => Promise<ServerConfigRecord>
 
-const inMemoryCache = new TTLCache<string, ServerConfigRecord>({ max: 2000 })
+const cache = layeredCacheFactory<ServerConfigRecord>({
+  options: {
+    inMemoryExpiryTimeSeconds: 2,
+    redisExpiryTimeSeconds: 60
+  }
+})
+
+const inMemoryCache = new TTLCache<string, ServerConfigRecord>({
+  max: 2000
+})
 
 export const getServerConfigFactory = (deps: {
   db: Knex
-  cache?: Redis
-  options?: {
-    inMemoryExpiryTimeSeconds?: number
-    redisExpiryTimeSeconds?: number
-  }
+  distributedCache?: Redis
 }): GetServerConfig => {
+  const { db } = deps
   return async (params) => {
-    const { cache, db, options } = deps
-    const { bustCache } = params
-
-    if (!bustCache) {
-      const inMemoryResult = inMemoryCache.get(SERVER_CONFIG_CACHE_KEY)
-      if (inMemoryResult) return inMemoryResult
-    } else {
-      //bustCache
-      inMemoryCache.delete(SERVER_CONFIG_CACHE_KEY)
-    }
-
-    if (cache) {
-      if (!bustCache) {
-        const cachedResult = await cache.get(SERVER_CONFIG_CACHE_KEY)
-        if (cachedResult) return JSON.parse(cachedResult) as ServerConfigRecord
-      } else {
-        //bustCache
-        await cache.del(SERVER_CONFIG_CACHE_KEY)
+    return (await cache({
+      key: SERVER_CONFIG_CACHE_KEY,
+      inMemoryCache,
+      distributedCache: deps.distributedCache,
+      bustCache: params.bustCache,
+      retrieveFromSource: async () => {
+        return await tables.serverConfig(db).select('*').first()
       }
-    }
-    const result = await tables.serverConfig(db).select('*').first()
-
-    if (result) {
-      inMemoryCache.set(SERVER_CONFIG_CACHE_KEY, result, {
-        ttl: (options?.inMemoryExpiryTimeSeconds || 2) * 1000 // convert seconds to milliseconds
-      })
-      if (cache) {
-        await cache.setex(
-          SERVER_CONFIG_CACHE_KEY,
-          options?.redisExpiryTimeSeconds || 60,
-          JSON.stringify(result)
-        )
-      }
-    }
-    // An entry should always exist as it is placed there by database migrations
-    return result!
+    }))!
   }
 }
 
