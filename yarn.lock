@@ -17075,7 +17075,6 @@ __metadata:
     pino: "npm:^8.7.0"
     pino-http: "npm:^8.2.1"
     pino-pretty: "npm:^9.1.1"
-    postgres-interval: "npm:^4.0.2"
     prettier: "npm:^2.5.1"
     prom-client: "npm:^14.0.1"
     rimraf: "npm:^5.0.7"
@@ -44573,13 +44572,6 @@ __metadata:
   dependencies:
     xtend: "npm:^4.0.0"
   checksum: 10/746b71f93805ae33b03528e429dc624706d1f9b20ee81bf743263efb6a0cd79ae02a642a8a480dbc0f09547b4315ab7df6ce5ec0be77ed700bac42730f5c76b2
-  languageName: node
-  linkType: hard
-
-"postgres-interval@npm:^4.0.2":
-  version: 4.0.2
-  resolution: "postgres-interval@npm:4.0.2"
-  checksum: 10/8eb7487d24c2752c5bd0798e0039e336ba5814f19a1e60926f9e4ecbbaea85387aa1871175085e90bc2a3bc354c8bfe0ef0b7a162817cff7d4b4714b83f9f1bd
   languageName: node
   linkType: hard
 
