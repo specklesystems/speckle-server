@@ -26,7 +26,8 @@ import {
   GetWorkspaceWithProjectsDocument,
   AddWorkspaceDomainDocument,
   DeleteWorkspaceDomainDocument,
-  CreateWorkspaceProjectDocument
+  CreateWorkspaceProjectDocument,
+  DismissWorkspaceDocument
 } from '@/test/graphql/generated/graphql'
 import { beforeEachContext } from '@/test/hooks'
 import { AllScopes } from '@/modules/core/helpers/mainConstants'
@@ -47,6 +48,8 @@ import {
 } from '@/modules/core/helpers/testHelpers'
 import { getWorkspaceFactory } from '@/modules/workspaces/repositories/workspaces'
 import { grantStreamPermissionsFactory } from '@/modules/core/repositories/streams'
+import { WorkspaceJoinRequestNotFoundError } from '@/modules/workspaces/errors/workspace'
+import { WorkspaceJoinRequests } from '@/modules/workspacesCore/helpers/db'
 
 const grantStreamPermissions = grantStreamPermissionsFactory({ db })
 
@@ -834,6 +837,45 @@ describe('Workspaces GQL CRUD', () => {
         expect(resC).to.haveGraphQLErrors('Provided default project role is invalid')
       })
     })
+
+    describe('mutation workspaceMutations.dismiss', () => {
+      it('should return an error if workspace does not exists', async () => {
+        const res = await apollo.execute(DismissWorkspaceDocument, {
+          input: {
+            workspaceId: cryptoRandomString({ length: 6 })
+          }
+        })
+        expect(res).to.haveGraphQLErrors(
+          WorkspaceJoinRequestNotFoundError.defaultMessage
+        )
+      })
+      it('should dismiss a workspace', async () => {
+        const workspace: BasicTestWorkspace = {
+          id: '',
+          slug: '',
+          ownerId: '',
+          name: cryptoRandomString({ length: 6 }),
+          description: cryptoRandomString({ length: 12 })
+        }
+        await createTestWorkspace(workspace, testAdminUser)
+
+        await db(WorkspaceJoinRequests.name).insert({
+          workspaceId: workspace.id,
+          userId: testAdminUser.id,
+          status: 'pending'
+        })
+
+        const dismissRes = await apollo.execute(DismissWorkspaceDocument, {
+          input: {
+            workspaceId: workspace.id
+          }
+        })
+
+        expect(dismissRes).to.not.haveGraphQLErrors()
+        expect(dismissRes?.data?.workspaceMutations.dismiss).to.equal(true)
+      })
+    })
+
     describe('mutation activeUserMutations.userWorkspaceMutations', () => {
       describe('leave', () => {
         it('allows the active user to leave a workspace', async () => {

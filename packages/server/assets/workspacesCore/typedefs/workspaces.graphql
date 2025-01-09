@@ -151,6 +151,11 @@ type WorkspaceMutations {
   invites: WorkspaceInviteMutations!
   projects: WorkspaceProjectMutations! @hasServerRole(role: SERVER_USER)
   updateCreationState(input: WorkspaceCreationStateInput!): Boolean!
+  dismiss(input: WorkspaceDismissInput!): Boolean! @hasServerRole(role: SERVER_USER)
+}
+
+input WorkspaceDismissInput {
+  workspaceId: ID!
 }
 
 input WorkspaceCreationStateInput {

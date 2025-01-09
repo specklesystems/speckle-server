@@ -4278,6 +4278,10 @@ export type WorkspaceCreationStateInput = {
   workspaceId: Scalars['ID']['input'];
 };
 
+export type WorkspaceDismissInput = {
+  workspaceId: Scalars['ID']['input'];
+};
+
 export type WorkspaceDomain = {
   __typename?: 'WorkspaceDomain';
   domain: Scalars['String']['output'];
@@ -4371,6 +4375,7 @@ export type WorkspaceMutations = {
   delete: Scalars['Boolean']['output'];
   deleteDomain: Workspace;
   deleteSsoProvider: Scalars['Boolean']['output'];
+  dismiss: Scalars['Boolean']['output'];
   invites: WorkspaceInviteMutations;
   join: Workspace;
   leave: Scalars['Boolean']['output'];
@@ -4405,6 +4410,11 @@ export type WorkspaceMutationsDeleteDomainArgs = {
 
 export type WorkspaceMutationsDeleteSsoProviderArgs = {
   workspaceId: Scalars['String']['input'];
+};
+
+
+export type WorkspaceMutationsDismissArgs = {
+  input: WorkspaceDismissInput;
 };
 
 
