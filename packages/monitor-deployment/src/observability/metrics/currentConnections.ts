@@ -28,6 +28,7 @@ export const init: MetricInitializer = (config) => {
                 LIMIT 100;
             `
           )
+          currentConnections.reset()
           for (const row of currentConnectionResults.rows) {
             currentConnections.set(
               { ...labels, query: row.query, region: regionKey },
