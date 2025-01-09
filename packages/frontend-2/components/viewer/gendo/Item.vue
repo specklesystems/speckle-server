@@ -3,7 +3,9 @@
     <div class="relative">
       <div v-if="detailedRender.status === 'COMPLETED' && renderUrl" class="group">
         <button class="relative flex cursor-zoom-in h-32 w-full" @click="openPreview">
-          <div class="bg-highlight-3 flex items-center justify-center">
+          <div
+            class="bg-highlight-3 flex items-center justify-center w-full h-full rounded-lg"
+          >
             <CommonLoadingIcon />
           </div>
           <NuxtImg
@@ -12,28 +14,32 @@
             class="absolute inset-0 rounded-lg shadow h-32 w-full object-cover"
           />
         </button>
-        <div class="hidden group-hover:flex absolute top-2 left-2 gap-1">
-          <div v-tippy="`Reuse prompt`">
-            <FormButton
-              :icon-left="ArrowUturnUpIcon"
-              hide-text
-              color="subtle"
-              size="sm"
-              @click="reusePrompt"
-            >
-              Reuse prompt
-            </FormButton>
-          </div>
-          <div v-tippy="`Set view`">
-            <FormButton
-              :icon-left="VideoCameraIcon"
-              hide-text
-              color="outline"
-              size="sm"
-              @click="setView()"
-            >
-              Set View
-            </FormButton>
+        <div
+          class="hidden group-hover:flex justify-between absolute top-2 left-2 gap-1"
+        >
+          <div class="flex gap-1">
+            <div v-tippy="`Reuse prompt`">
+              <FormButton
+                :icon-left="ArrowUturnUpIcon"
+                hide-text
+                color="outline"
+                size="sm"
+                @click="reusePrompt"
+              >
+                Reuse prompt
+              </FormButton>
+            </div>
+            <div v-tippy="`Set view`">
+              <FormButton
+                :icon-left="VideoCameraIcon"
+                hide-text
+                color="outline"
+                size="sm"
+                @click="setView()"
+              >
+                Set View
+              </FormButton>
+            </div>
           </div>
           <div v-tippy="`Download`">
             <FormButton
@@ -72,7 +78,7 @@
           <UserAvatar :user="detailedRender.user" size="sm" />
           <button
             v-tippy="detailedRender.prompt"
-            class="truncate max-w-full select-none pr-1 max-w-40 text-body-2xs cursor-copy"
+            class="truncate select-none pr-1 max-w-40 text-body-2xs cursor-copy"
             @click="copyPrompt"
           >
             {{ detailedRender.prompt }}

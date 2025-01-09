@@ -38,13 +38,14 @@
           :disabled="isLoading || timeOutWait || isOutOfCredits"
           textarea-classes="sm:!min-h-24"
         />
+        <!-- Container query incase user resizes panel to min size -->
         <div class="gendo-button-container">
           <div class="flex justify-between gap-2 items-center text-foreground-2">
             <FormButton
               color="outline"
               size="sm"
               external
-              to="https://www.gendo.ai/terms-of-service"
+              to="https://www.gendo.ai/terms-of-service?utm=speckle"
               target="_blank"
             >
               <div class="flex items-center gap-1 text-foreground-2 font-normal">
@@ -232,7 +233,7 @@ const lodgeRequest = async (screenshot: string) => {
   container-type: inline-size;
 }
 
-@container (max-width: 240px) {
+@container (max-width: 250px) {
   .forum-label {
     display: none;
   }
