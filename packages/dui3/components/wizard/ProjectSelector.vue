@@ -79,46 +79,10 @@
           ]"
           full-width
         />
-        <div v-if="hasWorkspace">
-          <FormSelectBase
-            key="name"
-            v-model="selectedWorkspace"
-            clearable
-            label="Workspaces"
-            placeholder="Nothing selected"
-            name="Workspaces"
-            show-label
-            :items="workspaces"
-            :disabled-item-predicate="userCantCreateWorkspace"
-            mount-menu-on-body
-          >
-            <template #something-selected="{ value }">
-              <span>{{ value.name }}</span>
-            </template>
-            <template #option="{ item }">
-              <div
-                v-tippy="{
-                  content: item.readOnly
-                    ? 'This workspace is read-only.'
-                    : item.role === 'workspace:guest'
-                    ? 'You do not have write access on this workspace.'
-                    : undefined,
-                  disabled: !(item.readOnly || item.role === 'workspace:guest')
-                }"
-                class="flex items-center"
-              >
-                <span class="truncate">{{ item.name }}</span>
-              </div>
-            </template>
-          </FormSelectBase>
-          <div
-            v-if="selectedWorkspace"
-            class="text-xs caption rounded p-2 bg-blue-500/10 my-2"
-          >
-            Project will be created in the selected workspace.
-          </div>
-        </div>
-
+        <WizardWorkspaceSelector
+          v-if="account.workspacesEnabled"
+          @update:selected-workspace-id="(newSelectedWorkspace : WorkspaceListWorkspaceItemFragment) => (selectedWorkspace = newSelectedWorkspace)"
+        ></WizardWorkspaceSelector>
         <div class="mt-4 flex justify-center items-center space-x-2">
           <FormButton text @click="showNewProjectDialog = false">Cancel</FormButton>
           <FormButton submit>Create</FormButton>
@@ -135,8 +99,7 @@ import { useAccountStore } from '~/store/accounts'
 import {
   createProjectInWorkspaceMutation,
   createProjectMutation,
-  projectsListQuery,
-  workspacesListQuery
+  projectsListQuery
 } from '~/lib/graphql/mutationsAndQueries'
 import { useMutation, useQuery, provideApolloClient } from '@vue/apollo-composable'
 import type {
@@ -187,11 +150,6 @@ const selectAccount = (account: DUIAccount) => {
   selectedAccountId.value = account.accountInfo.id
   void trackEvent('DUI3 Action', { name: 'Account Select' }, account.accountInfo.id)
 }
-
-watch(showNewProjectDialog, () => {
-  selectedWorkspace.value = undefined
-  refetchWorkspaces()
-})
 
 const { handleSubmit } = useForm<{ name: string }>()
 const onSubmitCreateNewProject = handleSubmit(() => {
@@ -259,9 +217,6 @@ const createNewProjectInWorkspace = async (name: string) => {
   }
 }
 
-const userCantCreateWorkspace = (item: WorkspaceListWorkspaceItemFragment) =>
-  (!!item?.role && item.role === 'workspace:guest') || !!item.readOnly
-
 const {
   result: projectsResult,
   loading,
@@ -277,21 +232,6 @@ const {
   }),
   () => ({ clientId: accountId.value, debounce: 500, fetchPolicy: 'network-only' })
 )
-
-const { result: workspacesResult, refetch: refetchWorkspaces } = useQuery(
-  workspacesListQuery,
-  () => ({
-    limit: 5,
-    filter: {
-      search: (searchText.value || '').trim() || null
-    }
-  }),
-  () => ({ clientId: accountId.value, debounce: 500, fetchPolicy: 'network-only' })
-)
-
-const workspaces = computed(() => workspacesResult.value?.activeUser?.workspaces.items)
-
-const hasWorkspace = computed(() => workspaces.value?.length !== 0)
 
 const projects = computed(() => projectsResult.value?.activeUser?.projects.items)
 const hasReachedEnd = ref(false)
