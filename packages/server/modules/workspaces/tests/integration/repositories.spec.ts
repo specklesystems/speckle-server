@@ -773,7 +773,7 @@ describe('Workspace repositories', () => {
       expect(workspaces.length).to.equal(1)
     })
 
-    it.only('should not return discoverable workspaces with existing requests for the user', async () => {
+    it('should not return discoverable workspaces with existing requests for the user', async () => {
       const user = await createAndStoreTestUser()
       await updateUserEmail({
         query: {
@@ -843,316 +843,316 @@ describe('Workspace repositories', () => {
       expect(workspaces.length).to.equal(1)
     })
   })
-})
 
-describe('getWorkspaceDomainsFactory creates a function, that', () => {
-  it('returns a workspace with domains', async () => {
-    const user = {
-      id: createRandomPassword(),
-      name: createRandomPassword(),
-      email: createRandomPassword()
-    }
-    await createTestUser(user)
-    const workspace = {
-      id: createRandomPassword(),
-      name: 'my workspace',
-      slug: cryptoRandomString({ length: 10 }),
-      ownerId: user.id
-    }
-    await createTestWorkspace(workspace, user)
-
-    await storeWorkspaceDomainFactory({ db })({
-      workspaceDomain: {
+  describe('getWorkspaceDomainsFactory creates a function, that', () => {
+    it('returns a workspace with domains', async () => {
+      const user = {
         id: createRandomPassword(),
-        domain: 'example.org',
-        verified: true,
-        workspaceId: workspace.id,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        createdByUserId: user.id
+        name: createRandomPassword(),
+        email: createRandomPassword()
       }
+      await createTestUser(user)
+      const workspace = {
+        id: createRandomPassword(),
+        name: 'my workspace',
+        slug: cryptoRandomString({ length: 10 }),
+        ownerId: user.id
+      }
+      await createTestWorkspace(workspace, user)
+
+      await storeWorkspaceDomainFactory({ db })({
+        workspaceDomain: {
+          id: createRandomPassword(),
+          domain: 'example.org',
+          verified: true,
+          workspaceId: workspace.id,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          createdByUserId: user.id
+        }
+      })
+      const workspaceWithDomains = await getWorkspaceWithDomainsFactory({ db })({
+        id: workspace.id
+      })
+      expect(workspaceWithDomains?.domains.length).to.eq(1)
     })
-    const workspaceWithDomains = await getWorkspaceWithDomainsFactory({ db })({
-      id: workspace.id
-    })
-    expect(workspaceWithDomains?.domains.length).to.eq(1)
   })
-})
 
-describe('countWorkspaceRoleWithOptionalProjectRoleFactory returns a function, that', () => {
-  it('counts workspace roles by userId', async () => {
-    const admin = {
-      id: createRandomPassword(),
-      name: createRandomPassword(),
-      email: createRandomEmail()
-    }
-    await createTestUser(admin)
-    const workspace = {
-      id: createRandomPassword(),
-      name: 'my workspace',
-      slug: cryptoRandomString({ length: 10 }),
-      ownerId: admin.id
-    }
-    await createTestWorkspace(workspace, admin)
+  describe('countWorkspaceRoleWithOptionalProjectRoleFactory returns a function, that', () => {
+    it('counts workspace roles by userId', async () => {
+      const admin = {
+        id: createRandomPassword(),
+        name: createRandomPassword(),
+        email: createRandomEmail()
+      }
+      await createTestUser(admin)
+      const workspace = {
+        id: createRandomPassword(),
+        name: 'my workspace',
+        slug: cryptoRandomString({ length: 10 }),
+        ownerId: admin.id
+      }
+      await createTestWorkspace(workspace, admin)
 
-    // just another workspace, for testing if workspaceId filter works
-    const workspace2 = {
-      id: createRandomPassword(),
-      name: 'my workspace',
-      slug: cryptoRandomString({ length: 10 }),
-      ownerId: admin.id
-    }
-    await createTestWorkspace(workspace2, admin)
+      // just another workspace, for testing if workspaceId filter works
+      const workspace2 = {
+        id: createRandomPassword(),
+        name: 'my workspace',
+        slug: cryptoRandomString({ length: 10 }),
+        ownerId: admin.id
+      }
+      await createTestWorkspace(workspace2, admin)
 
-    const admin2 = {
-      id: createRandomPassword(),
-      name: createRandomPassword(),
-      email: createRandomEmail()
-    }
-    await createTestUser(admin2)
-    await assignToWorkspace(workspace, admin2, Roles.Workspace.Admin)
+      const admin2 = {
+        id: createRandomPassword(),
+        name: createRandomPassword(),
+        email: createRandomEmail()
+      }
+      await createTestUser(admin2)
+      await assignToWorkspace(workspace, admin2, Roles.Workspace.Admin)
 
-    const member = {
-      id: createRandomPassword(),
-      name: createRandomPassword(),
-      email: createRandomEmail()
-    }
-    await createTestUser(member)
-    await assignToWorkspace(workspace, member, Roles.Workspace.Member)
-    let count = await countWorkspaceRoleWithOptionalProjectRoleFactory({ db })({
-      workspaceId: workspace.id,
-      workspaceRole: Roles.Workspace.Admin
+      const member = {
+        id: createRandomPassword(),
+        name: createRandomPassword(),
+        email: createRandomEmail()
+      }
+      await createTestUser(member)
+      await assignToWorkspace(workspace, member, Roles.Workspace.Member)
+      let count = await countWorkspaceRoleWithOptionalProjectRoleFactory({ db })({
+        workspaceId: workspace.id,
+        workspaceRole: Roles.Workspace.Admin
+      })
+      expect(count).to.equal(2)
+
+      count = await countWorkspaceRoleWithOptionalProjectRoleFactory({ db })({
+        workspaceId: workspace.id,
+        workspaceRole: Roles.Workspace.Member
+      })
+      expect(count).to.equal(1)
     })
-    expect(count).to.equal(2)
+    it('counts workspace roles with a project role filter', async () => {
+      const admin = {
+        id: createRandomPassword(),
+        name: createRandomPassword(),
+        email: createRandomEmail()
+      }
+      await createTestUser(admin)
+      const workspace = {
+        id: createRandomPassword(),
+        name: 'my workspace',
+        slug: cryptoRandomString({ length: 10 }),
+        ownerId: admin.id
+      }
 
-    count = await countWorkspaceRoleWithOptionalProjectRoleFactory({ db })({
-      workspaceId: workspace.id,
-      workspaceRole: Roles.Workspace.Member
+      await createTestWorkspace(workspace, admin)
+
+      const member = {
+        id: createRandomPassword(),
+        name: createRandomPassword(),
+        email: createRandomEmail()
+      }
+      await createTestUser(member)
+      await assignToWorkspace(workspace, member, Roles.Workspace.Member)
+
+      const member2 = {
+        id: createRandomPassword(),
+        name: createRandomPassword(),
+        email: createRandomEmail()
+      }
+      await createTestUser(member2)
+      await assignToWorkspace(workspace, member2, Roles.Workspace.Member)
+
+      const project1 = {
+        id: createRandomString(),
+        name: 'test stream',
+        isPublic: true,
+        ownerId: admin.id,
+        workspaceId: workspace.id
+      }
+      const project2 = {
+        id: createRandomString(),
+        name: 'test stream 2',
+        isPublic: true,
+        ownerId: member.id,
+        workspaceId: workspace.id
+      }
+
+      const project3 = {
+        id: createRandomString(),
+        name: 'test stream 3',
+        isPublic: true,
+        ownerId: member.id,
+        workspaceId: workspace.id
+      }
+      await createTestStream(project1, admin)
+      await createTestStream(project2, member)
+      await createTestStream(project3, member2)
+
+      let count = await countWorkspaceRoleWithOptionalProjectRoleFactory({ db })({
+        workspaceId: workspace.id,
+        workspaceRole: Roles.Workspace.Admin,
+        projectRole: Roles.Stream.Owner
+      })
+      expect(count).to.equal(1)
+
+      count = await countWorkspaceRoleWithOptionalProjectRoleFactory({ db })({
+        workspaceId: workspace.id,
+        workspaceRole: Roles.Workspace.Member,
+        projectRole: Roles.Stream.Owner
+      })
+      expect(count).to.equal(2)
     })
-    expect(count).to.equal(1)
-  })
-  it('counts workspace roles with a project role filter', async () => {
-    const admin = {
-      id: createRandomPassword(),
-      name: createRandomPassword(),
-      email: createRandomEmail()
-    }
-    await createTestUser(admin)
-    const workspace = {
-      id: createRandomPassword(),
-      name: 'my workspace',
-      slug: cryptoRandomString({ length: 10 }),
-      ownerId: admin.id
-    }
+    it('does not count project roles, that are not in the workspace', async () => {
+      const admin = {
+        id: createRandomPassword(),
+        name: createRandomPassword(),
+        email: createRandomEmail()
+      }
+      await createTestUser(admin)
+      const workspace = {
+        id: createRandomPassword(),
+        name: 'my workspace',
+        slug: cryptoRandomString({ length: 10 }),
+        ownerId: admin.id
+      }
+      await createTestWorkspace(workspace, admin)
 
-    await createTestWorkspace(workspace, admin)
+      const guest = {
+        id: createRandomPassword(),
+        name: createRandomPassword(),
+        email: createRandomEmail()
+      }
+      await createTestUser(guest)
+      await assignToWorkspace(workspace, guest, Roles.Workspace.Guest)
 
-    const member = {
-      id: createRandomPassword(),
-      name: createRandomPassword(),
-      email: createRandomEmail()
-    }
-    await createTestUser(member)
-    await assignToWorkspace(workspace, member, Roles.Workspace.Member)
+      const guest2 = {
+        id: createRandomPassword(),
+        name: createRandomPassword(),
+        email: createRandomEmail()
+      }
+      await createTestUser(guest2)
+      await assignToWorkspace(workspace, guest2, Roles.Workspace.Guest)
 
-    const member2 = {
-      id: createRandomPassword(),
-      name: createRandomPassword(),
-      email: createRandomEmail()
-    }
-    await createTestUser(member2)
-    await assignToWorkspace(workspace, member2, Roles.Workspace.Member)
+      // only project 1 is in the workspace
+      const project1 = {
+        id: createRandomString(),
+        name: 'test stream',
+        isPublic: true,
+        ownerId: admin.id,
+        workspaceId: workspace.id
+      }
+      // this is not in the workspace, roles here should not count
+      const project2 = {
+        id: createRandomString(),
+        name: 'test stream 2',
+        isPublic: true,
+        ownerId: guest.id
+      }
 
-    const project1 = {
-      id: createRandomString(),
-      name: 'test stream',
-      isPublic: true,
-      ownerId: admin.id,
-      workspaceId: workspace.id
-    }
-    const project2 = {
-      id: createRandomString(),
-      name: 'test stream 2',
-      isPublic: true,
-      ownerId: member.id,
-      workspaceId: workspace.id
-    }
+      await createTestStream(project1, admin)
+      await createTestStream(project2, guest)
 
-    const project3 = {
-      id: createRandomString(),
-      name: 'test stream 3',
-      isPublic: true,
-      ownerId: member.id,
-      workspaceId: workspace.id
-    }
-    await createTestStream(project1, admin)
-    await createTestStream(project2, member)
-    await createTestStream(project3, member2)
+      // adding project roles to guests
+      await upsertProjectRole({
+        role: Roles.Stream.Contributor,
+        projectId: project1.id,
+        userId: guest.id
+      })
 
-    let count = await countWorkspaceRoleWithOptionalProjectRoleFactory({ db })({
-      workspaceId: workspace.id,
-      workspaceRole: Roles.Workspace.Admin,
-      projectRole: Roles.Stream.Owner
+      await upsertProjectRole({
+        role: Roles.Stream.Reviewer,
+        projectId: project1.id,
+        userId: guest2.id
+      })
+
+      // adding contributor to guest 2 on project 2
+      await upsertProjectRole({
+        role: Roles.Stream.Contributor,
+        projectId: project2.id,
+        userId: guest2.id
+      })
+
+      const count = await countWorkspaceRoleWithOptionalProjectRoleFactory({ db })({
+        workspaceId: workspace.id,
+        workspaceRole: Roles.Workspace.Guest,
+        projectRole: Roles.Stream.Contributor
+      })
+      // checking that the non workspace project doesn't leak into the counts
+      expect(count).to.equal(1)
     })
-    expect(count).to.equal(1)
+    it('does not count roles from other workspaces when filtering by project role too', async () => {
+      const admin = {
+        id: createRandomPassword(),
+        name: createRandomPassword(),
+        email: createRandomEmail()
+      }
+      await createTestUser(admin)
+      const workspace1 = {
+        id: createRandomPassword(),
+        name: 'my workspace',
+        slug: cryptoRandomString({ length: 10 }),
+        ownerId: admin.id
+      }
+      await createTestWorkspace(workspace1, admin)
 
-    count = await countWorkspaceRoleWithOptionalProjectRoleFactory({ db })({
-      workspaceId: workspace.id,
-      workspaceRole: Roles.Workspace.Member,
-      projectRole: Roles.Stream.Owner
+      const workspace2 = {
+        id: createRandomPassword(),
+        name: 'my workspace 2',
+        slug: cryptoRandomString({ length: 10 }),
+        ownerId: admin.id
+      }
+      await createTestWorkspace(workspace2, admin)
+
+      const member = {
+        id: createRandomPassword(),
+        name: createRandomPassword(),
+        email: createRandomEmail()
+      }
+      await createTestUser(member)
+      await assignToWorkspace(workspace1, member, Roles.Workspace.Member)
+      // member becomes a guest in the other workspace and it leaks back into the first
+      await assignToWorkspace(workspace2, member, Roles.Workspace.Guest)
+
+      const project1 = {
+        id: createRandomString(),
+        name: 'test stream',
+        isPublic: true,
+        ownerId: admin.id,
+        workspaceId: workspace1.id
+      }
+      // this is not in the workspace, roles here should not count
+      const project2 = {
+        id: createRandomString(),
+        name: 'test stream 2',
+        isPublic: true,
+        ownerId: admin.id,
+        workspaceId: workspace2.id
+      }
+
+      await createTestStream(project1, admin)
+      await createTestStream(project2, admin)
+
+      await grantStreamPermissions({
+        role: Roles.Stream.Contributor,
+        streamId: project2.id,
+        userId: member.id
+      })
+
+      let count = await countWorkspaceRoleWithOptionalProjectRoleFactory({ db })({
+        workspaceId: workspace1.id,
+        workspaceRole: Roles.Workspace.Guest,
+        projectRole: Roles.Stream.Contributor
+      })
+
+      expect(count).to.equal(0)
+
+      count = await countWorkspaceRoleWithOptionalProjectRoleFactory({ db })({
+        workspaceId: workspace2.id,
+        workspaceRole: Roles.Workspace.Guest,
+        projectRole: Roles.Stream.Contributor
+      })
+
+      expect(count).to.equal(1)
     })
-    expect(count).to.equal(2)
-  })
-  it('does not count project roles, that are not in the workspace', async () => {
-    const admin = {
-      id: createRandomPassword(),
-      name: createRandomPassword(),
-      email: createRandomEmail()
-    }
-    await createTestUser(admin)
-    const workspace = {
-      id: createRandomPassword(),
-      name: 'my workspace',
-      slug: cryptoRandomString({ length: 10 }),
-      ownerId: admin.id
-    }
-    await createTestWorkspace(workspace, admin)
-
-    const guest = {
-      id: createRandomPassword(),
-      name: createRandomPassword(),
-      email: createRandomEmail()
-    }
-    await createTestUser(guest)
-    await assignToWorkspace(workspace, guest, Roles.Workspace.Guest)
-
-    const guest2 = {
-      id: createRandomPassword(),
-      name: createRandomPassword(),
-      email: createRandomEmail()
-    }
-    await createTestUser(guest2)
-    await assignToWorkspace(workspace, guest2, Roles.Workspace.Guest)
-
-    // only project 1 is in the workspace
-    const project1 = {
-      id: createRandomString(),
-      name: 'test stream',
-      isPublic: true,
-      ownerId: admin.id,
-      workspaceId: workspace.id
-    }
-    // this is not in the workspace, roles here should not count
-    const project2 = {
-      id: createRandomString(),
-      name: 'test stream 2',
-      isPublic: true,
-      ownerId: guest.id
-    }
-
-    await createTestStream(project1, admin)
-    await createTestStream(project2, guest)
-
-    // adding project roles to guests
-    await upsertProjectRole({
-      role: Roles.Stream.Contributor,
-      projectId: project1.id,
-      userId: guest.id
-    })
-
-    await upsertProjectRole({
-      role: Roles.Stream.Reviewer,
-      projectId: project1.id,
-      userId: guest2.id
-    })
-
-    // adding contributor to guest 2 on project 2
-    await upsertProjectRole({
-      role: Roles.Stream.Contributor,
-      projectId: project2.id,
-      userId: guest2.id
-    })
-
-    const count = await countWorkspaceRoleWithOptionalProjectRoleFactory({ db })({
-      workspaceId: workspace.id,
-      workspaceRole: Roles.Workspace.Guest,
-      projectRole: Roles.Stream.Contributor
-    })
-    // checking that the non workspace project doesn't leak into the counts
-    expect(count).to.equal(1)
-  })
-  it('does not count roles from other workspaces when filtering by project role too', async () => {
-    const admin = {
-      id: createRandomPassword(),
-      name: createRandomPassword(),
-      email: createRandomEmail()
-    }
-    await createTestUser(admin)
-    const workspace1 = {
-      id: createRandomPassword(),
-      name: 'my workspace',
-      slug: cryptoRandomString({ length: 10 }),
-      ownerId: admin.id
-    }
-    await createTestWorkspace(workspace1, admin)
-
-    const workspace2 = {
-      id: createRandomPassword(),
-      name: 'my workspace 2',
-      slug: cryptoRandomString({ length: 10 }),
-      ownerId: admin.id
-    }
-    await createTestWorkspace(workspace2, admin)
-
-    const member = {
-      id: createRandomPassword(),
-      name: createRandomPassword(),
-      email: createRandomEmail()
-    }
-    await createTestUser(member)
-    await assignToWorkspace(workspace1, member, Roles.Workspace.Member)
-    // member becomes a guest in the other workspace and it leaks back into the first
-    await assignToWorkspace(workspace2, member, Roles.Workspace.Guest)
-
-    const project1 = {
-      id: createRandomString(),
-      name: 'test stream',
-      isPublic: true,
-      ownerId: admin.id,
-      workspaceId: workspace1.id
-    }
-    // this is not in the workspace, roles here should not count
-    const project2 = {
-      id: createRandomString(),
-      name: 'test stream 2',
-      isPublic: true,
-      ownerId: admin.id,
-      workspaceId: workspace2.id
-    }
-
-    await createTestStream(project1, admin)
-    await createTestStream(project2, admin)
-
-    await grantStreamPermissions({
-      role: Roles.Stream.Contributor,
-      streamId: project2.id,
-      userId: member.id
-    })
-
-    let count = await countWorkspaceRoleWithOptionalProjectRoleFactory({ db })({
-      workspaceId: workspace1.id,
-      workspaceRole: Roles.Workspace.Guest,
-      projectRole: Roles.Stream.Contributor
-    })
-
-    expect(count).to.equal(0)
-
-    count = await countWorkspaceRoleWithOptionalProjectRoleFactory({ db })({
-      workspaceId: workspace2.id,
-      workspaceRole: Roles.Workspace.Guest,
-      projectRole: Roles.Stream.Contributor
-    })
-
-    expect(count).to.equal(1)
   })
 })
