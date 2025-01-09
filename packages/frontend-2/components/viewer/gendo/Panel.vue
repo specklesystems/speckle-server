@@ -66,9 +66,6 @@
     </div>
     <template #actions>
       <div class="flex w-full items-center justify-between gap-4">
-        <span v-if="limits" class="text-body-2xs text-right pl-1">
-          {{ limits.used }}/{{ limits.limit }} free renders used this month
-        </span>
         <FormButton
           color="subtle"
           size="sm"
@@ -81,6 +78,9 @@
             <ArrowTopRightOnSquareIcon class="h-3 w-3" />
           </div>
         </FormButton>
+        <span v-if="limits" class="text-body-2xs text-right">
+          {{ limits.used }}/{{ limits.limit }} free renders used this month
+        </span>
       </div>
     </template>
   </ViewerLayoutPanel>
