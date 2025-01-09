@@ -4,6 +4,7 @@
       v-for="render in renders"
       :key="render?.id"
       :render-request="render"
+      @reuse-prompt="$emit('reuse-prompt', $event)"
     />
   </div>
 </template>
@@ -15,6 +16,11 @@ import {
   onGendoAiRenderCreated
 } from '~/lib/gendo/graphql/queriesAndMutations'
 import { useInjectedViewerState } from '~/lib/viewer/composables/setup'
+
+defineEmits<{
+  (e: 'reuse-prompt', prompt: string): void
+}>()
+
 const {
   projectId,
   resources: {

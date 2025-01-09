@@ -61,7 +61,7 @@
           </FormButton>
         </div>
       </div>
-      <ViewerGendoList />
+      <ViewerGendoList @reuse-prompt="prompt = $event" />
     </div>
     <template #actions>
       <div class="flex w-full items-center justify-between gap-4">
@@ -118,10 +118,10 @@ const timeOutWait = ref(false)
 
 const suggestedPrompts = ref<string[]>([
   'Example: Minimalist Scandinavian interior with warm natural lighting',
-  'Luxury penthouse with floor-to-ceiling windows and city views',
-  'Cozy industrial loft with exposed brick and steel elements',
-  'Modern office space with biophilic design elements',
-  'High-end retail space with dramatic lighting'
+  'Example: Luxury penthouse with floor-to-ceiling windows and city views',
+  'Example: Cozy industrial loft with exposed brick and steel elements',
+  'Example: Modern office space with biophilic design elements',
+  'Example: High-end retail space with dramatic lighting'
 ])
 
 const { result, refetch } = useQuery(activeUserGendoLimits)
