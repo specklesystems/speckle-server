@@ -4,7 +4,6 @@ import {
   SelectionEvent,
   ViewerEvent,
   Viewer,
-  HybridCameraController,
   ViewModes,
   SelectionExtension,
   CameraController
