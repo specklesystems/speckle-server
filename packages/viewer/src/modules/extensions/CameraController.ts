@@ -196,8 +196,7 @@ export class CameraController extends Extension implements SpeckleCamera {
       this.perspectiveCamera,
       this.viewer.getContainer(),
       this.viewer.World,
-      this.viewer.getRenderer().scene,
-      this.viewer.getRenderer().intersections,
+      this.viewer.getRenderer(),
       this._options
     )
     orbitControls.enabled = true

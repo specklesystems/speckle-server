@@ -24,7 +24,6 @@ import {
   OrthographicCamera,
   Quaternion,
   Euler,
-  Scene,
   Mesh,
   SphereGeometry
 } from 'three'
@@ -33,11 +32,11 @@ import { Damper, SETTLING_TIME } from '../../utils/Damper.js'
 
 import { World } from '../../World.js'
 import { SpeckleControls } from './SpeckleControls.js'
-import { Intersections } from '../../Intersections.js'
 import { lerp } from 'three/src/math/MathUtils.js'
 import { computeOrthographicSize } from '../CameraController.js'
 import { ObjectLayers } from '../../../IViewer.js'
 import SpeckleBasicMaterial from '../../materials/SpeckleBasicMaterial.js'
+import SpeckleRenderer from '../../SpeckleRenderer.js'
 
 /**
  * @param {Number} value
@@ -172,9 +171,8 @@ export class SmoothOrbitControls extends SpeckleControls {
   protected _basisTransformInv: Matrix4 = new Matrix4()
   protected _radiusDelta: number = 0
 
-  protected scene: Scene
   protected world: World
-  protected intersections: Intersections
+  protected renderer: SpeckleRenderer
 
   protected orbitSphere: Mesh
   protected pivotPoint: Vector3 = new Vector3()
@@ -208,16 +206,14 @@ export class SmoothOrbitControls extends SpeckleControls {
     camera: PerspectiveCamera | OrthographicCamera,
     container: HTMLElement,
     world: World,
-    scene: Scene,
-    intersections: Intersections,
+    renderer: SpeckleRenderer,
     options: Required<SmoothOrbitControlsOptions>
   ) {
     super()
     this._targetCamera = camera
     this._container = container
     this.world = world
-    this.intersections = intersections
-    this.scene = scene
+    this.renderer = renderer
     this._options = Object.assign({}, options)
     this.setDamperDecayTime(this._options.damperDecay)
 
@@ -234,7 +230,7 @@ export class SmoothOrbitControls extends SpeckleControls {
     this.orbitSphere = new Mesh(new SphereGeometry(0.5, 32, 16), billboardMaterial)
     this.orbitSphere.layers.set(ObjectLayers.OVERLAY)
     this.orbitSphere.visible = false
-    this.scene.add(this.orbitSphere)
+    this.renderer.scene.add(this.orbitSphere)
   }
 
   /**
@@ -339,7 +335,6 @@ export class SmoothOrbitControls extends SpeckleControls {
     // polar, azimuth and radius:
     this.setOrbit()
     this.setFieldOfView(Math.exp(this.goalLogFov))
-    this.orbitSphere.visible = this._options.showOrbitPoint
   }
 
   /** Computes min/max radius values based on the current world size */
@@ -1000,15 +995,15 @@ export class SmoothOrbitControls extends SpeckleControls {
         ((event.clientY - this._container.offsetTop) / this._container.offsetHeight) *
           -2 +
         1
-      const res = this.intersections.intersect(
-        this.scene,
+      const res = this.renderer.intersections.intersect(
+        this.renderer.scene,
         this._targetCamera as PerspectiveCamera,
         new Vector2(x, y),
         ObjectLayers.STREAM_CONTENT_MESH,
         true,
-        this.world.worldBox // TO DO: This does not account for transformed objects
+        this.renderer.clippingVolume
       )
-      if (res) {
+      if (res && res.length) {
         this.pivotPoint.copy(res[0].point)
         this.usePivotal = true
       }
