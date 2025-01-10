@@ -1,4 +1,7 @@
-import { UpdateWorkspaceJoinRequestStatus } from '@/modules/workspaces/domain/operations'
+import {
+  CreateWorkspaceJoinRequest,
+  UpdateWorkspaceJoinRequestStatus
+} from '@/modules/workspaces/domain/operations'
 import { WorkspaceJoinRequest } from '@/modules/workspacesCore/domain/types'
 import { WorkspaceJoinRequests } from '@/modules/workspacesCore/helpers/db'
 import { Knex } from 'knex'
@@ -7,6 +10,12 @@ const tables = {
   workspaceJoinRequests: (db: Knex) =>
     db<WorkspaceJoinRequest>(WorkspaceJoinRequests.name)
 }
+
+export const createWorkspaceJoinRequestFactory =
+  ({ db }: { db: Knex }): CreateWorkspaceJoinRequest =>
+  async (request) => {
+    return await tables.workspaceJoinRequests(db).insert(request)
+  }
 
 export const updateWorkspaceJoinRequestStatusFactory =
   ({ db }: { db: Knex }): UpdateWorkspaceJoinRequestStatus =>

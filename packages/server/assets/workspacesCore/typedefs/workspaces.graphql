@@ -155,9 +155,15 @@ type WorkspaceMutations {
   Dismiss a workspace from the discoverable list, behind the scene a join request is created with the status "dismissed"
   """
   dismiss(input: WorkspaceDismissInput!): Boolean! @hasServerRole(role: SERVER_USER)
+  requestToJoin(input: WorkspaceRequestToJoinInput!): Boolean!
+    @hasServerRole(role: SERVER_USER)
 }
 
 input WorkspaceDismissInput {
+  workspaceId: ID!
+}
+
+input WorkspaceRequestToJoinInput {
   workspaceId: ID!
 }
 

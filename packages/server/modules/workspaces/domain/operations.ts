@@ -316,3 +316,12 @@ export type UpdateWorkspaceJoinRequestStatus = (params: {
   userId: string
   status: WorkspaceJoinRequestStatus
 }) => Promise<Pick<WorkspaceJoinRequest, 'workspaceId' | 'userId'> | undefined>
+
+export type CreateWorkspaceJoinRequest = (
+  params: Omit<WorkspaceJoinRequest, 'createdAt' | 'updatedAt'>
+) => Promise<WorkspaceJoinRequest>
+
+export type SendWorkspaceJoinRequestReceivedEmail = (params: {
+  workspace: Pick<Workspace, 'id' | 'name' | 'slug'>
+  requester: { id: string; name: string; email: string }
+}) => Promise<void>
