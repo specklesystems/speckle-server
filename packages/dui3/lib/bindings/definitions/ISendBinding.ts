@@ -31,5 +31,8 @@ export interface ISendBindingEvents
     idMap: Record<string, string>
     newSelectedObjectIds: string[]
   }) => void
+  /**
+   * Use whenever want to cancel model card progress, it is used on Archicad so far since send operation blocks the UI thread.
+   */
   triggerCancel: (modelCardId: string) => void
 }

@@ -183,6 +183,7 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     () => sendFilters.value?.find((f) => f.name === 'Selection') as ISendFilter
   )
 
+  // Used on Archicad so far since send operation blocks the UI thread.
   app.$sendBinding?.on('triggerCancel', (modelCardId: string) => {
     const model = documentModelStore.value.models.find(
       (m) => m.modelCardId === modelCardId
