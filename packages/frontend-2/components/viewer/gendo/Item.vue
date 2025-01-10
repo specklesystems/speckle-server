@@ -72,10 +72,7 @@
           class="bg-foundation p-0.5 flex items-center gap-x-1 min-w-0 max-w-full rounded-md"
         >
           <UserAvatar :user="detailedRender.user" size="sm" />
-          <div
-            v-tippy="capitalizedPrompt"
-            class="truncate select-none max-w-48 text-body-2xs"
-          >
+          <div v-tippy="capitalizedPrompt" class="truncate select-none text-body-2xs">
             {{ capitalizedPrompt }}
           </div>
           <div v-tippy="`Reuse prompt`" class="shrink-0 h-6">
