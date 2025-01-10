@@ -15,29 +15,38 @@
           />
         </button>
         <div class="hidden group-hover:flex absolute top-2 left-2 gap-1">
-          <div class="flex gap-1">
-            <div v-tippy="`Reuse prompt`">
-              <FormButton
-                :icon-left="ArrowUturnUpIcon"
-                hide-text
-                color="outline"
-                size="sm"
-                @click="reusePrompt"
-              >
-                Reuse prompt
-              </FormButton>
-            </div>
-            <div v-tippy="`Set view`">
-              <FormButton
-                :icon-left="VideoCameraIcon"
-                hide-text
-                color="outline"
-                size="sm"
-                @click="setView()"
-              >
-                Set View
-              </FormButton>
-            </div>
+          <div v-tippy="`Reuse prompt`">
+            <FormButton
+              :icon-left="ArrowUturnUpIcon"
+              hide-text
+              color="outline"
+              size="sm"
+              @click="reusePrompt"
+            >
+              Reuse prompt
+            </FormButton>
+          </div>
+          <div v-tippy="`Set view`">
+            <FormButton
+              :icon-left="VideoCameraIcon"
+              hide-text
+              color="outline"
+              size="sm"
+              @click="setView()"
+            >
+              Set View
+            </FormButton>
+          </div>
+          <div v-tippy="`Set view`">
+            <FormButton
+              :icon-left="IconFeedback"
+              hide-text
+              color="outline"
+              size="sm"
+              @click="isFeedbackOpen = true"
+            >
+              Give feedback
+            </FormButton>
           </div>
           <div v-tippy="`Download`">
             <FormButton
@@ -89,6 +98,12 @@
       :render-url="renderUrl"
       :render-prompt="detailedRender.prompt"
     />
+    <ViewerGendoFeedbackDialog
+      v-model:open="isFeedbackOpen"
+      :render-id="detailedRender.id"
+      :render-url="renderUrl"
+      :render-prompt="detailedRender.prompt"
+    />
   </div>
   <div v-else />
 </template>
@@ -119,6 +134,8 @@ const emit = defineEmits<{
   (e: 'reuse-prompt', prompt: string): void
 }>()
 
+const IconFeedback = resolveComponent('IconFeedback')
+
 const {
   projectId,
   resources: {
@@ -130,6 +147,7 @@ const { copy } = useClipboard()
 const { triggerNotification } = useGlobalToast()
 
 const isPreviewOpen = ref(false)
+const isFeedbackOpen = ref(false)
 
 const versionId = computed(() => {
   return resourceItems.value[0].versionId as string
@@ -198,10 +216,6 @@ const copyPrompt = async () => {
   triggerNotification({
     type: ToastNotificationType.Info,
     title: 'Prompt copied to clipboard'
-  })
-  mixpanel.track('Gendo Prompt Copied', {
-    renderId: detailedRender.value?.id,
-    prompt: detailedRender.value?.prompt
   })
 }
 
