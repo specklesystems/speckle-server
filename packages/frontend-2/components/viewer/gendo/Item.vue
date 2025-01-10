@@ -37,7 +37,7 @@
               Set View
             </FormButton>
           </div>
-          <div v-tippy="`Set view`">
+          <div v-tippy="`Give us feedback`">
             <FormButton
               :icon-left="IconFeedback"
               hide-text
