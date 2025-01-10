@@ -6,7 +6,8 @@ import {
   Viewer,
   HybridCameraController,
   ViewModes,
-  SelectionExtension
+  SelectionExtension,
+  CameraController
 } from '@speckle/viewer'
 
 import './style.css'
@@ -45,7 +46,7 @@ const createViewer = async (containerName: string, _stream: string) => {
   const viewer: Viewer = new Viewer(container, params)
   await viewer.init()
 
-  const cameraController = viewer.createExtension(HybridCameraController)
+  const cameraController = viewer.createExtension(CameraController)
   const selection = viewer.createExtension(SelectionExtension)
   const sections = viewer.createExtension(SectionTool)
   viewer.createExtension(SectionOutlines)

@@ -131,54 +131,55 @@ export enum PointerChangeEvent {
  * ensure that the camera's matrixWorld is in sync before using SmoothControls.
  */
 export class SmoothOrbitControls extends SpeckleControls {
-  private _enabled: boolean = false
-  private _options: Required<SmoothOrbitControlsOptions>
-  private isUserPointing = false
+  protected _enabled: boolean = false
+  protected _options: Required<SmoothOrbitControlsOptions>
+  protected isUserPointing = false
 
   // Pan state
   public enablePan = true
   public enableTap = true
-  private panProjection = new Matrix3()
-  private panPerPixel = 0
+  protected panProjection = new Matrix3()
+  protected panPerPixel = 0
 
   // Internal orbital position state
   public spherical = new Spherical()
-  private goalSpherical = new Spherical()
-  private origin = new Vector3()
-  private pivotalOrigin: Vector3 = new Vector3()
-  private goalOrigin = new Vector3()
-  private targetDamperX = new Damper()
-  private targetDamperY = new Damper()
-  private targetDamperZ = new Damper()
-  private thetaDamper = new Damper()
-  private phiDamper = new Damper()
-  private radiusDamper = new Damper()
-  private logFov = Math.log(55)
-  private goalLogFov = this.logFov
-  private fovDamper = new Damper()
+  protected goalSpherical = new Spherical()
+  protected origin = new Vector3()
+  protected pivotalOrigin: Vector3 = new Vector3()
+  protected goalOrigin = new Vector3()
+  protected targetDamperX = new Damper()
+  protected targetDamperY = new Damper()
+  protected targetDamperZ = new Damper()
+  protected thetaDamper = new Damper()
+  protected phiDamper = new Damper()
+  protected radiusDamper = new Damper()
+  protected logFov = Math.log(55)
+  protected goalLogFov = this.logFov
+  protected fovDamper = new Damper()
 
   // Pointer state
-  private touchMode: TouchMode = null
-  private pointers: Pointer[] = []
-  private startPointerPosition = { clientX: 0, clientY: 0 }
-  private lastSeparation = 0
-  private touchDecided = false
-  private zoomControlCoord: Vector2 = new Vector2()
+  protected touchMode: TouchMode = null
+  protected pointers: Pointer[] = []
+  protected startPointerPosition = { clientX: 0, clientY: 0 }
+  protected lastSeparation = 0
+  protected touchDecided = false
+  protected zoomControlCoord: Vector2 = new Vector2()
 
-  private _targetCamera: PerspectiveCamera | OrthographicCamera
-  private _container: HTMLElement
-  private _lastTick: number = 0
-  private _basisTransform: Matrix4 = new Matrix4()
-  private _basisTransformInv: Matrix4 = new Matrix4()
-  private _radiusDelta: number = 0
+  protected _targetCamera: PerspectiveCamera | OrthographicCamera
+  protected _container: HTMLElement
+  protected _lastTick: number = 0
+  protected _basisTransform: Matrix4 = new Matrix4()
+  protected _basisTransformInv: Matrix4 = new Matrix4()
+  protected _radiusDelta: number = 0
 
-  private scene: Scene
-  private world: World
-  private intersections: Intersections
+  protected scene: Scene
+  protected world: World
+  protected intersections: Intersections
 
-  private orbitSphere: Mesh
-  private pivotPoint: Vector3 = new Vector3()
-  private lastPivotPoint: Vector3 = new Vector3()
+  protected orbitSphere: Mesh
+  protected pivotPoint: Vector3 = new Vector3()
+  protected lastPivotPoint: Vector3 = new Vector3()
+  protected usePivotal = false
 
   public get enabled(): boolean {
     return this._enabled
@@ -249,6 +250,14 @@ export class SmoothOrbitControls extends SpeckleControls {
 
   set targetCamera(value: PerspectiveCamera | OrthographicCamera) {
     this._targetCamera = value
+    this.usePivotal = this._options.orbitAroundCursor
+
+    /** We move the lat pivot point somwhere outside of world bounds, in order to force a pivotal origin recompute */
+    this.lastPivotPoint.set(
+      this.world.worldOrigin.x + this.world.worldSize.x,
+      this.world.worldOrigin.y + this.world.worldSize.y,
+      this.world.worldOrigin.z + this.world.worldSize.z
+    )
     this.moveCamera()
   }
 
@@ -627,44 +636,43 @@ export class SmoothOrbitControls extends SpeckleControls {
     return true
   }
 
-  protected polarFromPivotal() {
+  /** Function expects the position argument to be in a CS where Y is up */
+  protected polarFromPivotal(position: Vector3) {
     const quaternion = this.quaternionFromSpherical(this.spherical)
+    /** Forward direction */
     const dir = new Vector3().setFromMatrixColumn(
       new Matrix4().makeRotationFromQuaternion(quaternion),
       2
     )
-    const camPos = new Vector3()
-      .copy(this._targetCamera.position)
-      .applyMatrix4(this._basisTransformInv)
+    const camPos = new Vector3().copy(position)
 
+    /** Pivot needs to be transformed in a Y up CS  */
     const pivotPoint = new Vector3()
       .copy(this.pivotPoint)
       .applyMatrix4(this._basisTransformInv)
 
-    // let cameraPivotDist
-    // if (this._targetCamera instanceof OrthographicCamera) {
-    //   const offset = dir.multiplyScalar(
-    //     this._options.maximumRadius - this.options.minimumRadius - this.spherical.radius
-    //   )
-    //   const plm = new Vector3().copy(camPos).sub(offset)
-    //   cameraPivotDist = camPos.distanceTo(pivotPoint)
-    // } else cameraPivotDist = camPos.distanceTo(pivotPoint)
     const cameraPivotDist = camPos.distanceTo(pivotPoint)
     const cameraPivotDir = new Vector3().copy(camPos).sub(pivotPoint)
     cameraPivotDir.normalize()
 
     const dot = Math.min(Math.max(dir.dot(cameraPivotDir), -1), 1)
     const angle = Math.acos(dot)
+    /** We compute a new distanced based on the pivot point */
     const polarRadius = cameraPivotDist * Math.cos(angle)
+    /** We compute a new origin based on the pivot point, but keeping it along the camera's current forward direction */
     const polarOrigin = camPos.sub(new Vector3().copy(dir).multiplyScalar(polarRadius))
 
     this.goalOrigin.copy(polarOrigin)
     this.origin.copy(polarOrigin)
-    this.goalSpherical.radius = polarRadius
-    this.spherical.radius = polarRadius
+
+    /** For orthographica camera's we don't need to update the radius because it will break their orthographic size */
+    if (this._targetCamera instanceof PerspectiveCamera) {
+      this.goalSpherical.radius = polarRadius
+      this.spherical.radius = polarRadius
+    }
   }
 
-  /** Function expects the origin in a CS where Y is up */
+  /** Function expects the origin argument to be in a CS where Y is up */
   protected positionFromPivotal(origin: Vector3, quaternion: Quaternion) {
     const pivotPoint = new Vector3()
       .copy(this.pivotPoint)
@@ -680,11 +688,13 @@ export class SmoothOrbitControls extends SpeckleControls {
     return position
   }
 
-  /** Function expects the pivotPoint in a CS where Y is up */
-  protected getPivotalOrigin(pivotPoint: Vector3, quaternion: Quaternion) {
-    const pivotalOrigin = new Vector3()
-      .copy(this._targetCamera.position)
-      .applyMatrix4(this._basisTransformInv)
+  /** Function expects the pivotPoint and position arguments to be in a CS where Y is up */
+  protected getPivotalOrigin(
+    pivotPoint: Vector3,
+    position: Vector3,
+    quaternion: Quaternion
+  ) {
+    const pivotalOrigin = new Vector3().copy(position)
 
     pivotalOrigin.sub(pivotPoint)
     pivotalOrigin.applyQuaternion(new Quaternion().copy(quaternion).invert())
@@ -693,61 +703,76 @@ export class SmoothOrbitControls extends SpeckleControls {
     return pivotalOrigin
   }
 
-  protected usePivotal = false
-  /** This flag decides if full pivotal movement is going to be used or a 'softer' inbetween pivotal and polar one,
-   *  where the polar origin is moved at the same depth as the pivot point. We don't expose this (yet)
-   */
-  protected fullPivotal = true
-
   protected moveCamera() {
     this.spherical.makeSafe()
 
-    const pivotPoint = new Vector3()
-      .copy(this.pivotPoint)
-      .applyMatrix4(this._basisTransformInv)
-    const prevPivotPoint = new Vector3()
-      .copy(this.lastPivotPoint)
-      .applyMatrix4(this._basisTransformInv)
-
-    const deltaPivot = prevPivotPoint.sub(pivotPoint)
+    /** We get the current position and rotation based off the latest polar params
+     *  The ground truth is going to always be the polar CS!
+     */
     const quaternion = this.quaternionFromSpherical(this.spherical)
+    let position = this.positionFromSpherical(this.spherical, this.origin)
 
-    if (deltaPivot.length() > 0) {
-      this.pivotalOrigin.copy(this.getPivotalOrigin(pivotPoint, quaternion))
+    if (this.usePivotal) {
+      /** We transform both current and previous pivots in a CS where Y us up */
+      const pivotPoint = new Vector3()
+        .copy(this.pivotPoint)
+        .applyMatrix4(this._basisTransformInv)
+      const prevPivotPoint = new Vector3()
+        .copy(this.lastPivotPoint)
+        .applyMatrix4(this._basisTransformInv)
+
+      const deltaPivot = prevPivotPoint.sub(pivotPoint)
+
+      /** We recompute the pivotal origin/pivotal offset, but only when required! */
+      if (deltaPivot.length() > 0) {
+        this.pivotalOrigin.copy(this.getPivotalOrigin(pivotPoint, position, quaternion))
+      }
+
+      /** We get a new position in the pivotal CS */
+      position = this.positionFromPivotal(this.pivotalOrigin, quaternion)
+      /** We update the polar CS based off the new pivotal camera position,
+       *  essentially creating a virtual pair polar CS which can reproduce the pivotal position */
+      this.polarFromPivotal(position)
+      /** Update the last pivot */
+      this.lastPivotPoint.copy(this.pivotPoint)
     }
 
-    let position
-    if (this.usePivotal && this.fullPivotal) {
-      position = this.positionFromPivotal(this.pivotalOrigin, quaternion)
-      this.polarFromPivotal()
-    } else position = this.positionFromSpherical(this.spherical, this.origin)
-
+    /** We transform both position and quaternion in the required basis */
     position.applyQuaternion(
       new Quaternion().setFromRotationMatrix(this._basisTransform)
     )
     quaternion.premultiply(new Quaternion().setFromRotationMatrix(this._basisTransform))
 
-    // if (this._targetCamera instanceof OrthographicCamera) {
-    //   const cameraDirection = new Vector3()
-    //     .setFromSpherical(this.spherical)
-    //     .applyQuaternion(new Quaternion().setFromRotationMatrix(this._basisTransform))
-    //     .normalize()
-    //   position.add(
-    //     cameraDirection.multiplyScalar(
-    //       this._options.maximumRadius -
-    //         this.options.minimumRadius -
-    //         this.spherical.radius
-    //     )
-    //   )
-    // }
+    /** This is a trick we do for ortographic projection which stops the near plane from clipping into geometry
+     *  In orthographic projection the camera's 'depth' along it's forward does not matter. Zoooming is achieved by
+     *  varying the orthographic size, not by moving the camera.
+     */
+    if (this._targetCamera instanceof OrthographicCamera) {
+      const cameraDirection = new Vector3()
+        .setFromSpherical(this.spherical)
+        .applyQuaternion(new Quaternion().setFromRotationMatrix(this._basisTransform))
+        .normalize()
+      position.add(
+        cameraDirection.multiplyScalar(
+          this._options.maximumRadius -
+            this.options.minimumRadius -
+            this.spherical.radius
+        )
+      )
+    }
+    /** Apply values and update transform */
     this._targetCamera.position.copy(position)
     this._targetCamera.quaternion.copy(quaternion)
     this._targetCamera.updateMatrixWorld(true)
+
+    /** Fov update */
     if (this._targetCamera instanceof PerspectiveCamera)
       if (this._targetCamera.fov !== Math.exp(this.logFov)) {
         this._targetCamera.fov = Math.exp(this.logFov)
         this._targetCamera.updateProjectionMatrix()
       }
+
+    /** Compute the correct orthographic size based on the polar radius */
     if (this._targetCamera instanceof OrthographicCamera) {
       const orthographicSize = computeOrthographicSize(
         this.spherical.radius,
@@ -762,8 +787,7 @@ export class SmoothOrbitControls extends SpeckleControls {
       this._targetCamera.updateProjectionMatrix()
     }
 
-    this.lastPivotPoint.copy(this.pivotPoint)
-
+    /** Update the debug origin sphere */
     this.orbitSphere.position.copy(
       this._options.orbitAroundCursor
         ? this.pivotPoint
@@ -771,13 +795,14 @@ export class SmoothOrbitControls extends SpeckleControls {
     )
   }
 
-  // Ortho height to distance functions
+  /*
+  // Ortho height to distance function. Keeping for reference
   private orthographicHeightToDistance(height: number) {
     if (!(this._targetCamera instanceof OrthographicCamera))
       return this.spherical.radius
 
     return height / (Math.tan(MathUtils.DEG2RAD * Math.exp(this.logFov) * 0.5) * 2)
-  }
+  }*/
 
   /** Three.js Spherical assumes (0, 1, 0) as up... */
   protected positionFromSpherical(spherical: Spherical, origin?: Vector3) {
@@ -985,8 +1010,6 @@ export class SmoothOrbitControls extends SpeckleControls {
       )
       if (res) {
         this.pivotPoint.copy(res[0].point)
-        this.polarFromPivotal()
-
         this.usePivotal = true
       }
     }
