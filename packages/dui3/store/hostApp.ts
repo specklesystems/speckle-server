@@ -183,6 +183,16 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     () => sendFilters.value?.find((f) => f.name === 'Selection') as ISendFilter
   )
 
+  app.$sendBinding?.on('triggerCancel', (modelCardId: string) => {
+    const model = documentModelStore.value.models.find(
+      (m) => m.modelCardId === modelCardId
+    ) as ISenderModelCard
+    model.progress = undefined
+    model.error = undefined
+    void trackEvent('DUI3 Action', { name: 'Send Cancel' }, model.accountId)
+    model.latestCreatedVersionId = undefined
+  })
+
   app.$sendBinding?.on(
     'setIdMap',
     async ({ modelCardId, idMap, newSelectedObjectIds }) => {

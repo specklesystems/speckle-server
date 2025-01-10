@@ -31,4 +31,5 @@ export interface ISendBindingEvents
     idMap: Record<string, string>
     newSelectedObjectIds: string[]
   }) => void
+  triggerCancel: (modelCardId: string) => void
 }
