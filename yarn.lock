@@ -80,7 +80,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@apollo/client@npm:^3.12.4":
+"@apollo/client@npm:^3.12.4, @apollo/client@npm:^3.6.6, @apollo/client@npm:^3.7.0, @apollo/client@npm:^3.7.14, @apollo/client@npm:^3.8.0":
   version: 3.12.4
   resolution: "@apollo/client@npm:3.12.4"
   dependencies:
@@ -114,43 +114,6 @@ __metadata:
     subscriptions-transport-ws:
       optional: true
   checksum: 10/9659ccf03ab5d6708cf191a1bd09c33ab5f958a8d66e783f81ccc899448b362a51cecf7d62c0ff5b852e60a340238e6903b3c96dcb5cf68dfb8a438ee6cd24bb
-  languageName: node
-  linkType: hard
-
-"@apollo/client@npm:^3.6.6, @apollo/client@npm:^3.7.0, @apollo/client@npm:^3.7.14, @apollo/client@npm:^3.8.0":
-  version: 3.9.7
-  resolution: "@apollo/client@npm:3.9.7"
-  dependencies:
-    "@graphql-typed-document-node/core": "npm:^3.1.1"
-    "@wry/caches": "npm:^1.0.0"
-    "@wry/equality": "npm:^0.5.6"
-    "@wry/trie": "npm:^0.5.0"
-    graphql-tag: "npm:^2.12.6"
-    hoist-non-react-statics: "npm:^3.3.2"
-    optimism: "npm:^0.18.0"
-    prop-types: "npm:^15.7.2"
-    rehackt: "npm:0.0.6"
-    response-iterator: "npm:^0.2.6"
-    symbol-observable: "npm:^4.0.0"
-    ts-invariant: "npm:^0.10.3"
-    tslib: "npm:^2.3.0"
-    zen-observable-ts: "npm:^1.2.5"
-  peerDependencies:
-    graphql: ^15.0.0 || ^16.0.0
-    graphql-ws: ^5.5.5
-    react: ^16.8.0 || ^17.0.0 || ^18.0.0
-    react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
-    subscriptions-transport-ws: ^0.9.0 || ^0.11.0
-  peerDependenciesMeta:
-    graphql-ws:
-      optional: true
-    react:
-      optional: true
-    react-dom:
-      optional: true
-    subscriptions-transport-ws:
-      optional: true
-  checksum: 10/d11ccdc5fc69e003c0ad2c6aa9c263823abce6c164bda726cfacbed0f94dfce366aa6bed0abc8c747420b24c3248f4a561a6007350d48373c62728bdbf3bdbcb
   languageName: node
   linkType: hard
 
@@ -17560,7 +17523,7 @@ __metadata:
     typescript: "npm:^5.0.4"
     unplugin-vue-macros: "npm:^2.7.0"
     v3-infinite-loading: "npm:^1.2.2"
-    vee-validate: "npm:^4.15.0"
+    vee-validate: "npm:4.7.0"
     vite: "npm:^4.5.2"
     vite-plugin-dts: "npm:^3.6.3"
     vue: "npm:^3.3.8"
@@ -22961,15 +22924,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@vue/devtools-api@npm:^7.5.2":
-  version: 7.7.0
-  resolution: "@vue/devtools-api@npm:7.7.0"
-  dependencies:
-    "@vue/devtools-kit": "npm:^7.7.0"
-  checksum: 10/54a47d381ade37852996965896a1cfec7b19bc0831c18cf96c98b8d2e85932d13c664f99f62b321aa926e87c0d0b962c4387dfbe16eb2e3a5d20a0901e2311c6
-  languageName: node
-  linkType: hard
-
 "@vue/devtools-core@npm:7.6.8":
   version: 7.6.8
   resolution: "@vue/devtools-core@npm:7.6.8"
@@ -23001,36 +22955,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@vue/devtools-kit@npm:^7.7.0":
-  version: 7.7.0
-  resolution: "@vue/devtools-kit@npm:7.7.0"
-  dependencies:
-    "@vue/devtools-shared": "npm:^7.7.0"
-    birpc: "npm:^0.2.19"
-    hookable: "npm:^5.5.3"
-    mitt: "npm:^3.0.1"
-    perfect-debounce: "npm:^1.0.0"
-    speakingurl: "npm:^14.0.1"
-    superjson: "npm:^2.2.1"
-  checksum: 10/9f5d505408a9115e54c893c25be029bcb02d155502a29771e5402914f88fd1a6c89068c93630c947a17a0d89d0533e22d6b827cb260693f75305c84405e33628
-  languageName: node
-  linkType: hard
-
 "@vue/devtools-shared@npm:^7.6.8":
   version: 7.6.8
   resolution: "@vue/devtools-shared@npm:7.6.8"
   dependencies:
     rfdc: "npm:^1.4.1"
   checksum: 10/0f50509b7ef2c779a233d3ec5bee63a830b89d961ed710459463f33f60c2c4e59bcbd3676cb0ddbde4e3abc78fb0074f2a38d52745485b76bc5117d6b63ed2eb
-  languageName: node
-  linkType: hard
-
-"@vue/devtools-shared@npm:^7.7.0":
-  version: 7.7.0
-  resolution: "@vue/devtools-shared@npm:7.7.0"
-  dependencies:
-    rfdc: "npm:^1.4.1"
-  checksum: 10/ea17f252f97eaa22ace6f6f5a31a7ccd17d4817b0a913dc1f9d68eb5aac7284c2915182ab46afe111510b5519d313331bc40dd1101322932ad7a75f8293bce8c
   languageName: node
   linkType: hard
 
@@ -46557,21 +46487,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rehackt@npm:0.0.6":
-  version: 0.0.6
-  resolution: "rehackt@npm:0.0.6"
-  peerDependencies:
-    "@types/react": "*"
-    react: "*"
-  peerDependenciesMeta:
-    "@types/react":
-      optional: true
-    react:
-      optional: true
-  checksum: 10/3897c93270836159406529e0fa983bf4a11c07d2efc5c8f6bdfd7f6821d3b84a30d911c3f3b9c689948739e6955c5835c8dd9d91579150bec5092f356c0d91df
-  languageName: node
-  linkType: hard
-
 "rehackt@npm:^0.1.0":
   version: 0.1.0
   resolution: "rehackt@npm:0.1.0"
@@ -50990,7 +50905,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"type-fest@npm:^4.18.2, type-fest@npm:^4.7.1, type-fest@npm:^4.8.3":
+"type-fest@npm:^4.18.2, type-fest@npm:^4.7.1":
   version: 4.31.0
   resolution: "type-fest@npm:4.31.0"
   checksum: 10/e7e849845bf33e1237c3ff0d5ed00a251a807e3321ffe75278dd56a7d3c385badfe09180057c2d0b93cf7429432b8e7061b6ccf4cc468720d8f69073d2b1bed2
@@ -52504,18 +52419,6 @@ __metadata:
   peerDependencies:
     vue: ^3.0.0
   checksum: 10/9998c79c5818876afa126fd535a9709b1275b4a7d6e67d82d0ac19ffca894352ade770eeb47e8da9a05f68867a91ede1ca53d45d29ef6baf35cfd170705047af
-  languageName: node
-  linkType: hard
-
-"vee-validate@npm:^4.15.0":
-  version: 4.15.0
-  resolution: "vee-validate@npm:4.15.0"
-  dependencies:
-    "@vue/devtools-api": "npm:^7.5.2"
-    type-fest: "npm:^4.8.3"
-  peerDependencies:
-    vue: ^3.4.26
-  checksum: 10/1eb040e9e68959e0465d69a5600d092c8272975774fc53e351931ba120daa5d702d73caacad871cdfc0304cb63796041820e3bb88a69a93f57b322b984d026a1
   languageName: node
   linkType: hard
 
