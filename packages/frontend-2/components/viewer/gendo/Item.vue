@@ -11,7 +11,7 @@
           <NuxtImg
             :src="renderUrl"
             :alt="detailedRender.prompt"
-            class="relative z-10 rounded-lg shadow aspect-video w-full max-h-64 object-cover"
+            class="relative z-10 rounded-lg shadow aspect-video w-full object-cover"
           />
         </button>
         <div class="hidden group-hover:flex absolute top-2 left-2 gap-1 z-10">
