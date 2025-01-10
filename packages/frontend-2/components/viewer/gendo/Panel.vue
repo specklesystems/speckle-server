@@ -1,5 +1,5 @@
 <template>
-  <ViewerLayoutPanel move-actions-to-bottom @close="$emit('close')">
+  <ViewerLayoutPanel @close="$emit('close')">
     <template #title>
       <div class="flex gap-1 items-center">
         <span class="text-foreground border-b border-transparent">AI Render by</span>
@@ -31,45 +31,42 @@
           :disabled="isLoading || timeOutWait || isOutOfCredits"
           textarea-classes="sm:!min-h-24"
         />
-        <!-- Container query incase user resizes panel to min size -->
-        <div class="gendo-container-query">
-          <div class="flex justify-between gap-2 items-center text-foreground-2">
-            <FormButton
-              color="outline"
-              size="sm"
-              external
-              to="https://www.gendo.ai/terms-of-service?utm=speckle"
-              target="_blank"
-            >
-              <div class="flex items-center gap-1 text-foreground-2 font-normal">
-                <span
-                  class="hidden-under-250 text-body-2xs font-semibold text-foreground"
-                >
-                  Forum:
-                </span>
-                <span>Writing prompts</span>
-                <ArrowTopRightOnSquareIcon class="h-3 w-3" />
-              </div>
-            </FormButton>
+        <div class="flex justify-between gap-2 items-center text-foreground-2">
+          <FormButton
+            color="outline"
+            size="sm"
+            external
+            to="https://www.gendo.ai/terms-of-service?utm=speckle"
+            target="_blank"
+          >
+            <div class="flex items-center gap-1 text-foreground-2 font-normal">
+              <span>How to write prompts</span>
+              <ArrowTopRightOnSquareIcon class="h-3 w-3" />
+            </div>
+          </FormButton>
 
-            <FormButton
-              :disabled="!prompt || isLoading || timeOutWait || isOutOfCredits"
-              @click="enqueMagic()"
-            >
-              Render
-            </FormButton>
-          </div>
+          <FormButton
+            :disabled="!prompt || isLoading || timeOutWait || isOutOfCredits"
+            @click="enqueMagic()"
+          >
+            Generate
+          </FormButton>
         </div>
       </div>
       <ViewerGendoList @reuse-prompt="prompt = $event" />
+      <span v-if="limits" class="text-body-2xs text-right">
+        {{ limits.used }}/{{ limits.limit }} free renders used
+        <span class="hidden-under-250">this month</span>
+      </span>
     </div>
     <template #actions>
-      <div class="gendo-container-query flex w-full items-center justify-between gap-2">
-        <span v-if="limits" class="text-body-2xs text-right">
-          {{ limits.used }}/{{ limits.limit }} free renders used
-          <span class="hidden-under-250">this month</span>
-        </span>
-        <span v-else />
+      <div class="flex w-full items-center gap-2">
+        <FormButton color="subtle" size="sm">
+          <div class="flex items-center gap-1 text-foreground-2 font-normal">
+            <span>Submit feedback</span>
+            <IconFeedback class="h-3 w-3" />
+          </div>
+        </FormButton>
         <FormButton
           color="subtle"
           size="sm"
@@ -99,6 +96,7 @@ import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { useMixpanel } from '~/lib/core/composables/mp'
 import { CommonAlert, CommonBadge } from '@speckle/ui-components'
 import { ArrowTopRightOnSquareIcon } from '@heroicons/vue/24/outline'
+import { IconFeedback } from '#build/components'
 
 const {
   projectId,
@@ -232,15 +230,3 @@ const lodgeRequest = async (screenshot: string) => {
   refetch()
 }
 </script>
-
-<style scoped>
-.gendo-container-query {
-  container-type: inline-size;
-}
-
-@container (max-width: 250px) {
-  .hidden-under-250 {
-    display: none;
-  }
-}
-</style>

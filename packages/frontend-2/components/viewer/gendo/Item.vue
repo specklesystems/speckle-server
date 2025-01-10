@@ -2,30 +2,19 @@
   <div v-if="detailedRender">
     <div class="relative">
       <div v-if="detailedRender.status === 'COMPLETED' && renderUrl" class="group">
-        <button class="relative flex cursor-zoom-in h-32 w-full" @click="openPreview">
+        <button class="relative flex cursor-zoom-in" @click="openPreview">
           <div
-            class="bg-highlight-3 flex items-center justify-center w-full h-full rounded-lg"
+            class="absolute inset-0 bg-highlight-3 flex items-center justify-center rounded-lg"
           >
             <CommonLoadingIcon />
           </div>
           <NuxtImg
             :src="renderUrl"
             :alt="detailedRender.prompt"
-            class="absolute inset-0 rounded-lg shadow h-32 w-full object-cover"
+            class="relative z-10 rounded-lg shadow aspect-video w-full max-h-64 object-cover"
           />
         </button>
         <div class="hidden group-hover:flex absolute top-2 left-2 gap-1">
-          <div v-tippy="`Reuse prompt`">
-            <FormButton
-              :icon-left="ArrowUturnUpIcon"
-              hide-text
-              color="outline"
-              size="sm"
-              @click="reusePrompt"
-            >
-              Reuse prompt
-            </FormButton>
-          </div>
           <div v-tippy="`Set view`">
             <FormButton
               :icon-left="VideoCameraIcon"
@@ -37,15 +26,15 @@
               Set View
             </FormButton>
           </div>
-          <div v-tippy="`Give us feedback`">
+          <div v-tippy="`Copy prompt`">
             <FormButton
-              :icon-left="IconFeedback"
+              :icon-left="ArrowUturnUpIcon"
               hide-text
               color="outline"
               size="sm"
-              @click="isFeedbackOpen = true"
+              @click="copyPrompt"
             >
-              Give feedback
+              Copy prompt
             </FormButton>
           </div>
           <div v-tippy="`Download`">
@@ -83,24 +72,28 @@
           class="bg-foundation p-0.5 flex items-center space-x-1 min-w-0 max-w-full rounded-md"
         >
           <UserAvatar :user="detailedRender.user" size="sm" />
-          <button
+          <div
             v-tippy="capitalizedPrompt"
-            class="truncate select-none pr-1 max-w-40 text-body-2xs cursor-copy"
-            @click="copyPrompt"
+            class="truncate select-none pr-1 max-w-48 text-body-2xs"
           >
             {{ capitalizedPrompt }}
-          </button>
+          </div>
+          <div v-tippy="`Reuse prompt`" class="shrink-0">
+            <FormButton
+              :icon-left="ArrowUturnUpIcon"
+              hide-text
+              color="subtle"
+              size="sm"
+              @click="reusePrompt"
+            >
+              Reuse prompt
+            </FormButton>
+          </div>
         </div>
       </div>
     </div>
     <ViewerGendoDialog
       v-model:open="isPreviewOpen"
-      :render-url="renderUrl"
-      :render-prompt="detailedRender.prompt"
-    />
-    <ViewerGendoFeedbackDialog
-      v-model:open="isFeedbackOpen"
-      :render-id="detailedRender.id"
       :render-url="renderUrl"
       :render-prompt="detailedRender.prompt"
     />
@@ -134,8 +127,6 @@ const emit = defineEmits<{
   (e: 'reuse-prompt', prompt: string): void
 }>()
 
-const IconFeedback = resolveComponent('IconFeedback')
-
 const {
   projectId,
   resources: {
@@ -147,7 +138,6 @@ const { copy } = useClipboard()
 const { triggerNotification } = useGlobalToast()
 
 const isPreviewOpen = ref(false)
-const isFeedbackOpen = ref(false)
 
 const versionId = computed(() => {
   return resourceItems.value[0].versionId as string

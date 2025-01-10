@@ -148,7 +148,7 @@
           <!-- Gendo -->
           <ViewerControlsButtonToggle
             v-show="isGendoEnabled"
-            v-tippy="'AI render by Gendo'"
+            v-tippy="'AI Render by Gendo'"
             :active="activePanel === 'gendo'"
             @click="toggleActivePanel('gendo')"
           >
