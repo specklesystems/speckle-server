@@ -396,6 +396,16 @@ export const versionDetailsQuery = graphql(`
   }
 `)
 
+export const serverInfoQuery = graphql(`
+  query ServerInfo {
+    serverInfo {
+      workspaces {
+        workspacesEnabled
+      }
+    }
+  }
+`)
+
 export const versionCreatedSubscription = graphql(`
   subscription OnProjectVersionsUpdate($projectId: String!) {
     projectVersionsUpdated(id: $projectId) {
