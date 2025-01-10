@@ -14,7 +14,7 @@
             class="relative z-10 rounded-lg shadow aspect-video w-full max-h-64 object-cover"
           />
         </button>
-        <div class="hidden group-hover:flex absolute top-2 left-2 gap-1">
+        <div class="hidden group-hover:flex absolute top-2 left-2 gap-1 z-10">
           <div v-tippy="`Set view`">
             <FormButton
               :icon-left="VideoCameraIcon"
@@ -28,7 +28,7 @@
           </div>
           <div v-tippy="`Copy prompt`">
             <FormButton
-              :icon-left="ArrowUturnUpIcon"
+              :icon-left="ClipboardIcon"
               hide-text
               color="outline"
               size="sm"
@@ -66,19 +66,19 @@
         <ExclamationCircleIcon v-else class="w-6 text-danger" />
       </div>
       <div
-        class="absolute bottom-2 left-2 space-x-2 flex items-center min-w-0 max-w-full overflow-hidden"
+        class="absolute bottom-2 left-2 space-x-2 flex items-center min-w-0 max-w-full overflow-hidden z-10"
       >
         <div
-          class="bg-foundation p-0.5 flex items-center space-x-1 min-w-0 max-w-full rounded-md"
+          class="bg-foundation p-0.5 flex items-center gap-x-1 min-w-0 max-w-full rounded-md"
         >
           <UserAvatar :user="detailedRender.user" size="sm" />
           <div
             v-tippy="capitalizedPrompt"
-            class="truncate select-none pr-1 max-w-48 text-body-2xs"
+            class="truncate select-none max-w-48 text-body-2xs"
           >
             {{ capitalizedPrompt }}
           </div>
-          <div v-tippy="`Reuse prompt`" class="shrink-0">
+          <div v-tippy="`Reuse prompt`" class="shrink-0 h-6">
             <FormButton
               :icon-left="ArrowUturnUpIcon"
               hide-text
@@ -112,7 +112,8 @@ import {
   VideoCameraIcon,
   ExclamationCircleIcon,
   ArrowDownTrayIcon,
-  ArrowUturnUpIcon
+  ArrowUturnUpIcon,
+  ClipboardIcon
 } from '@heroicons/vue/24/outline'
 import { useCameraUtilities } from '~/lib/viewer/composables/ui'
 import { Vector3 } from 'three'

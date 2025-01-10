@@ -14,20 +14,28 @@
         :alt="renderPrompt"
         class="relative z-10 w-full h-full max-h-[70vh] max-w-[80vw] object-contain"
       />
-      <FormButton
-        class="relative z-10"
-        color="outline"
-        :icon-left="XMarkIcon"
-        @click="isOpen = false"
-      >
-        Close
-      </FormButton>
+      <div class="relative z-10 flex gap-2">
+        <FormButton
+          :to="renderUrl"
+          external
+          target="_blank"
+          download
+          color="outline"
+          :icon-left="ArrowDownTrayIcon"
+          @click="isOpen = false"
+        >
+          Download
+        </FormButton>
+        <FormButton color="outline" :icon-left="XMarkIcon" @click="isOpen = false">
+          Close
+        </FormButton>
+      </div>
     </div>
   </LayoutDialog>
 </template>
 
 <script setup lang="ts">
-import { XMarkIcon } from '@heroicons/vue/24/solid'
+import { XMarkIcon, ArrowDownTrayIcon } from '@heroicons/vue/24/solid'
 
 defineProps<{
   renderUrl?: string
