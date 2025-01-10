@@ -15,56 +15,54 @@
         </CommonBadge>
       </div>
     </template>
-    <div class="pt-2 px-3 flex flex-col gap-y-2">
-      <CommonAlert v-if="showAlert" :color="alertColor" size="xs">
-        <template #title>
-          {{ alertMessage }}
-        </template>
-      </CommonAlert>
-      <div class="flex flex-col gap-y-2">
-        <FormTextArea
-          v-model="prompt"
-          name="prompt"
-          size="lg"
-          :placeholder="randomPlaceholder"
-          color="foundation"
-          :disabled="isLoading || timeOutWait || isOutOfCredits"
-          textarea-classes="sm:!min-h-24"
-        />
-        <div class="flex justify-between gap-2 items-center text-foreground-2">
-          <FormButton
-            color="outline"
-            size="sm"
-            external
-            to="https://www.gendo.ai/terms-of-service?utm=speckle"
-            target="_blank"
-          >
-            <div class="flex items-center gap-1 text-foreground-2 font-normal">
-              <span>How to write prompts</span>
-              <ArrowTopRightOnSquareIcon class="h-3 w-3" />
-            </div>
-          </FormButton>
+    <div class="pt-2">
+      <div class="px-4 flex flex-col gap-y-2">
+        <CommonAlert v-if="showAlert" :color="alertColor" size="xs">
+          <template #title>
+            {{ alertMessage }}
+          </template>
+        </CommonAlert>
+        <div class="flex flex-col gap-y-2">
+          <FormTextArea
+            v-model="prompt"
+            name="prompt"
+            size="lg"
+            :placeholder="randomPlaceholder"
+            color="foundation"
+            :disabled="isLoading || timeOutWait || isOutOfCredits"
+            textarea-classes="sm:!min-h-24"
+          />
+          <div class="flex justify-between gap-2 items-center text-foreground-2">
+            <FormButton
+              color="outline"
+              size="sm"
+              external
+              to="https://www.gendo.ai/terms-of-service?utm=speckle"
+              target="_blank"
+            >
+              <div class="flex items-center gap-1 text-foreground-2 font-normal">
+                <span>How to write prompts</span>
+                <ArrowTopRightOnSquareIcon class="h-3 w-3" />
+              </div>
+            </FormButton>
 
-          <FormButton
-            :disabled="!prompt || isLoading || timeOutWait || isOutOfCredits"
-            @click="enqueMagic()"
-          >
-            Generate
-          </FormButton>
+            <FormButton
+              :disabled="!prompt || isLoading || timeOutWait || isOutOfCredits"
+              @click="enqueMagic()"
+            >
+              Generate
+            </FormButton>
+          </div>
         </div>
+        <ViewerGendoList @reuse-prompt="prompt = $event" />
       </div>
-      <ViewerGendoList @reuse-prompt="prompt = $event" />
-      <span v-if="limits" class="text-body-2xs text-right">
-        {{ limits.used }}/{{ limits.limit }} free renders used
-        <span class="hidden-under-250">this month</span>
-      </span>
-    </div>
-    <template #actions>
-      <div class="flex w-full items-center gap-2">
+      <div
+        class="flex w-full items-center justify-between gap-2 border-t border-outline-2 py-0.5 px-2"
+      >
         <FormButton color="subtle" size="sm">
           <div class="flex items-center gap-1 text-foreground-2 font-normal">
-            <span>Submit feedback</span>
             <IconFeedback class="h-3 w-3" />
+            <span>Feedback</span>
           </div>
         </FormButton>
         <FormButton
@@ -80,6 +78,12 @@
           </div>
         </FormButton>
       </div>
+    </div>
+    <template v-if="!showAlert && limits" #actions>
+      <span class="text-body-2xs text-right">
+        {{ limits.used }}/{{ limits.limit }} free renders used
+        <span class="hidden-under-250">this month</span>
+      </span>
     </template>
   </ViewerLayoutPanel>
 </template>
@@ -96,7 +100,6 @@ import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { useMixpanel } from '~/lib/core/composables/mp'
 import { CommonAlert, CommonBadge } from '@speckle/ui-components'
 import { ArrowTopRightOnSquareIcon } from '@heroicons/vue/24/outline'
-import { IconFeedback } from '#build/components'
 
 const {
   projectId,

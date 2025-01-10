@@ -153,7 +153,7 @@
             @click="toggleActivePanel('gendo')"
           >
             <IconGendo
-              class="h-6 w-6 md:h-8 md:w-8 -ml-1 -mt-1"
+              class="h-6 w-6 md:h-7 md:w-7 -ml-1 -mt-1"
               :class="activePanel === 'gendo' ? 'text-white' : 'text-foreground-2'"
             />
           </ViewerControlsButtonToggle>
