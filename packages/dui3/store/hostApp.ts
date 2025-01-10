@@ -184,11 +184,9 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
   )
 
   app.$sendBinding?.on('triggerCancel', (modelCardId: string) => {
-    console.log(modelCardId, 'cancel triggered by host app')
     const model = documentModelStore.value.models.find(
       (m) => m.modelCardId === modelCardId
     ) as ISenderModelCard
-    console.log(model, 'model to cancel progress')
     model.progress = undefined
     model.error = undefined
     void trackEvent('DUI3 Action', { name: 'Send Cancel' }, model.accountId)
