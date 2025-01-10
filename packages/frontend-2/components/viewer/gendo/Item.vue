@@ -66,7 +66,7 @@
         <ExclamationCircleIcon v-else class="w-6 text-danger" />
       </div>
       <div
-        class="absolute bottom-2 left-2 space-x-2 flex items-center min-w-0 max-w-full overflow-hidden z-10"
+        class="absolute bottom-2 left-2 right-2 space-x-2 flex items-center min-w-0 max-w-full overflow-hidden z-10"
       >
         <div
           class="bg-foundation p-0.5 flex items-center gap-x-1 min-w-0 max-w-full rounded-md"
@@ -120,6 +120,7 @@ import { useCameraUtilities } from '~/lib/viewer/composables/ui'
 import { Vector3 } from 'three'
 import { CommonLoadingIcon } from '@speckle/ui-components'
 import { useMixpanel } from '~/lib/core/composables/mp'
+import { upperFirst } from 'lodash-es'
 
 const props = defineProps<{
   renderRequest: GendoAiRender
@@ -181,8 +182,7 @@ const renderUrl = computed(() => {
 })
 
 const capitalizedPrompt = computed(() => {
-  const prompt = detailedRender.value?.prompt || ''
-  return prompt.charAt(0).toUpperCase() + prompt.slice(1)
+  return upperFirst(detailedRender.value?.prompt)
 })
 
 const reusePrompt = () => {

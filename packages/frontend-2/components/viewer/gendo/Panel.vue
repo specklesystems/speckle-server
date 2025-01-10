@@ -41,7 +41,7 @@
               target="_blank"
             >
               <div class="flex items-center gap-1 text-foreground-2 font-normal">
-                <span>How to write prompts</span>
+                <span>Writing prompts</span>
                 <ArrowTopRightOnSquareIcon class="h-3 w-3" />
               </div>
             </FormButton>
