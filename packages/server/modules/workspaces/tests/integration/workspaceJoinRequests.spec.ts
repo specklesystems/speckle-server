@@ -1,7 +1,9 @@
 import { db } from '@/db/knex'
 import { createRandomString } from '@/modules/core/helpers/testHelpers'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
+import { WorkspaceNotFoundError } from '@/modules/workspaces/errors/workspace'
 import { updateWorkspaceJoinRequestStatusFactory } from '@/modules/workspaces/repositories/workspaceJoinRequests'
+import { getWorkspaceFactory } from '@/modules/workspaces/repositories/workspaces'
 import { dismissWorkspaceJoinRequestFactory } from '@/modules/workspaces/services/workspaceJoinRequests'
 import {
   BasicTestWorkspace,
@@ -20,16 +22,18 @@ const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
   'workspaceJoinRequests services',
   () => {
     describe('dismissWorkspaceJoinRequestFactory, returns a function that ', () => {
-      it('throws a WorkspaceJoinRequestNotFoundError if the updateWorkspaceJoinRequestStatus does not exists', async () => {
-        expectToThrow(() =>
+      it('throws an error if the workspace does not exists', async () => {
+        const err = await expectToThrow(() =>
           dismissWorkspaceJoinRequestFactory({
+            getWorkspace: getWorkspaceFactory({ db }),
             updateWorkspaceJoinRequestStatus: updateWorkspaceJoinRequestStatusFactory({
               db
             })
           })({ workspaceId: createRandomString(), userId: createRandomString() })
         )
+        expect(err.message).to.equal(WorkspaceNotFoundError.defaultMessage)
       })
-      it('marks the request as dismissed', async () => {
+      it('creates the request with the dismissed status', async () => {
         const user: BasicTestUser = {
           id: '',
           name: 'John Speckle',
@@ -49,18 +53,21 @@ const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
         }
         await createTestWorkspace(workspace, user)
 
-        await db(WorkspaceJoinRequests.name).insert({
-          workspaceId: workspace.id,
-          userId: user.id,
-          status: 'pending'
-        })
         expect(
           await dismissWorkspaceJoinRequestFactory({
+            getWorkspace: getWorkspaceFactory({ db }),
             updateWorkspaceJoinRequestStatus: updateWorkspaceJoinRequestStatusFactory({
               db
             })
           })({ workspaceId: workspace.id, userId: user.id })
         ).to.equal(true)
+
+        expect(
+          await db(WorkspaceJoinRequests.name)
+            .where({ workspaceId: workspace.id, userId: user.id })
+            .select('status')
+            .first()
+        ).to.deep.equal({ status: 'dismissed' })
       })
     })
   }

@@ -779,6 +779,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
         projects: () => ({}),
         dismiss: async (_parent, args, ctx) => {
           return await dismissWorkspaceJoinRequestFactory({
+            getWorkspace: getWorkspaceFactory({ db }),
             updateWorkspaceJoinRequestStatus: updateWorkspaceJoinRequestStatusFactory({
               db
             })

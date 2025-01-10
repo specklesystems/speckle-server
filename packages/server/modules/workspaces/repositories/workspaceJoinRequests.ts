@@ -13,7 +13,9 @@ export const updateWorkspaceJoinRequestStatusFactory =
   async ({ workspaceId, userId, status }) => {
     const [request] = await tables
       .workspaceJoinRequests(db)
-      .update({ status }, ['workspaceId', 'userId'])
-      .where({ workspaceId, userId })
+      .insert({ workspaceId, userId, status })
+      .onConflict(['workspaceId', 'userId'])
+      .merge(['status'])
+      .returning('*')
     return request
   }

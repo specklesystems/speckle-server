@@ -119,9 +119,3 @@ export class WorkspacePaidPlanActiveError extends BaseError {
   static code = 'WORKSPACE_PAID_PLAN_ACTIVE'
   static statusCode = 400
 }
-
-export class WorkspaceJoinRequestNotFoundError extends BaseError {
-  static defaultMessage = 'Joinable workspace not found'
-  static code = 'WORKSPACE_JOIN_REQUEST_NOT_FOUND_ERROR'
-  static statusCode = 404
-}

@@ -48,8 +48,7 @@ import {
 } from '@/modules/core/helpers/testHelpers'
 import { getWorkspaceFactory } from '@/modules/workspaces/repositories/workspaces'
 import { grantStreamPermissionsFactory } from '@/modules/core/repositories/streams'
-import { WorkspaceJoinRequestNotFoundError } from '@/modules/workspaces/errors/workspace'
-import { WorkspaceJoinRequests } from '@/modules/workspacesCore/helpers/db'
+import { WorkspaceNotFoundError } from '@/modules/workspaces/errors/workspace'
 
 const grantStreamPermissions = grantStreamPermissionsFactory({ db })
 
@@ -845,9 +844,7 @@ describe('Workspaces GQL CRUD', () => {
             workspaceId: cryptoRandomString({ length: 6 })
           }
         })
-        expect(res).to.haveGraphQLErrors(
-          WorkspaceJoinRequestNotFoundError.defaultMessage
-        )
+        expect(res).to.haveGraphQLErrors(WorkspaceNotFoundError.defaultMessage)
       })
       it('should dismiss a workspace', async () => {
         const workspace: BasicTestWorkspace = {
@@ -858,12 +855,6 @@ describe('Workspaces GQL CRUD', () => {
           description: cryptoRandomString({ length: 12 })
         }
         await createTestWorkspace(workspace, testAdminUser)
-
-        await db(WorkspaceJoinRequests.name).insert({
-          workspaceId: workspace.id,
-          userId: testAdminUser.id,
-          status: 'pending'
-        })
 
         const dismissRes = await apollo.execute(DismissWorkspaceDocument, {
           input: {
