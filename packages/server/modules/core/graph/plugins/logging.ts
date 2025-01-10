@@ -1,5 +1,5 @@
 /* eslint-disable camelcase */
-import prometheusClient from 'prom-client'
+import { type Registry, Counter } from 'prom-client'
 import { graphqlLogger } from '@/logging/logging'
 import { redactSensitiveVariables } from '@/logging/loggingHelper'
 import { FieldNode, SelectionNode } from 'graphql'
@@ -25,13 +25,20 @@ declare module '@apollo/server' {
 
 const isFieldNode = (node: SelectionNode): node is FieldNode => node.kind === 'Field'
 
-const metricCallCount = new prometheusClient.Counter({
-  name: 'speckle_server_apollo_calls',
-  help: 'Number of calls',
-  labelNames: ['actionName']
-})
+let metricCallCount: Counter<string>
 
-export const loggingPlugin: ApolloServerPlugin<GraphQLContext> = {
+export const loggingPluginFactory: (deps: {
+  register: Registry
+}) => ApolloServerPlugin<GraphQLContext> = (deps) => ({
+  serverWillStart: async () => {
+    deps.register.removeSingleMetric('speckle_server_apollo_calls')
+    metricCallCount = new Counter({
+      name: 'speckle_server_apollo_calls',
+      help: 'Number of calls',
+      registers: [deps.register],
+      labelNames: ['actionName']
+    })
+  },
   requestDidStart: async () => {
     const apolloRequestStart = Date.now()
     return {
@@ -139,4 +146,4 @@ export const loggingPlugin: ApolloServerPlugin<GraphQLContext> = {
       }
     }
   }
-}
+})
