@@ -22,7 +22,6 @@
           download
           color="outline"
           :icon-left="ArrowDownTrayIcon"
-          @click="isOpen = false"
         >
           Download
         </FormButton>

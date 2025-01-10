@@ -80,7 +80,7 @@
       </div>
     </div>
     <template v-if="!showAlert && limits" #actions>
-      <div class="text-body-2xs text-right mt-2">
+      <div class="text-body-2xs p-1">
         {{ limits.used }}/{{ limits.limit }} free renders used
         <span class="hidden-under-250">this month</span>
       </div>

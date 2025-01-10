@@ -92,6 +92,7 @@
         </div>
       </div>
     </div>
+    <FeedbackDialog v-model:open="isFeedbackOpen" :intro="feedbackIntro" type="gendo" />
     <ViewerGendoDialog
       v-model:open="isPreviewOpen"
       :render-url="renderUrl"
@@ -139,6 +140,11 @@ const { copy } = useClipboard()
 const { triggerNotification } = useGlobalToast()
 
 const isPreviewOpen = ref(false)
+const isFeedbackOpen = ref(false)
+
+const feedbackIntro = ref(
+  'How can we improve the AI rendering experience? Let us know about the quality of renders, prompts that you have had success with, or any features that would make Gendo more useful for your workflow'
+)
 
 const versionId = computed(() => {
   return resourceItems.value[0].versionId as string
@@ -174,12 +180,17 @@ const renderUrl = computed(() => {
   return url.toString()
 })
 
+const capitalizedPrompt = computed(() => {
+  const prompt = detailedRender.value?.prompt || ''
+  return prompt.charAt(0).toUpperCase() + prompt.slice(1)
+})
+
 const reusePrompt = () => {
   mixpanel.track('Gendo Prompt Reused', {
     renderId: detailedRender.value?.id,
     prompt: detailedRender.value?.prompt
   })
-  emit('reuse-prompt', detailedRender.value?.prompt || '')
+  emit('reuse-prompt', capitalizedPrompt.value || '')
 }
 
 const setView = () => {
@@ -203,15 +214,10 @@ const openPreview = () => {
 }
 
 const copyPrompt = async () => {
-  await copy(detailedRender.value?.prompt || '')
+  await copy(capitalizedPrompt.value)
   triggerNotification({
     type: ToastNotificationType.Info,
     title: 'Prompt copied to clipboard'
   })
 }
-
-const capitalizedPrompt = computed(() => {
-  const prompt = detailedRender.value?.prompt || ''
-  return prompt.charAt(0).toUpperCase() + prompt.slice(1)
-})
 </script>
