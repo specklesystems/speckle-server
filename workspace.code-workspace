@@ -26,7 +26,11 @@
     },
     {
       "path": "packages/preview-service",
-      "name": "🖼️ preview-service"
+      "name": "🏃 preview-service"
+    },
+    {
+      "path": "packages/preview-frontend",
+      "name": "🖼️ preview-frontend"
     },
     {
       "path": "packages/viewer",

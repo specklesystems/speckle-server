@@ -2,7 +2,7 @@
 
 This component generates object previews for Speckle Objects.
 
-It reads preview tasks from the DB and uses Puppeteer and an internal Viewer to generate previews, which are currently stored in the DB.
+It reads preview tasks from a Redis backed Bull queue and uses Puppeteer and an internal Viewer to generate previews, which are sent back to a response queue.
 
 This is an overview of this service:
 
@@ -38,7 +38,7 @@ Finally, you can run the preview service with:
 yarn dev
 ```
 
-This will use the default dev DB connection of `postgres://speckle:speckle@127.0.0.1/speckle`. You can pass the environment variable `PG_CONNECTION_STRING` to change this to a different DB.
+This will use the default dev DB connection. You can pass the environment variable `REDIS_URL` to change this to a different DB.
 
 ### In a docker image
 

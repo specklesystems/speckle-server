@@ -11,6 +11,30 @@ export type CreateObjectPreview = (
   params: Pick<ObjectPreview, 'streamId' | 'objectId' | 'priority'>
 ) => Promise<void>
 
+export type ObjectPreviewInput = Pick<
+  ObjectPreview,
+  'streamId' | 'objectId' | 'priority'
+>
+export type StoreObjectPreview = (params: ObjectPreviewInput) => Promise<void>
+export type UpsertObjectPreview = (params: {
+  objectPreview: ObjectPreview
+}) => Promise<void>
+
+export type ObjectPreviewRequest = {
+  url: string
+  token: string
+  jobId: string
+}
+
+export type Preview = {
+  id: string
+  data: Buffer
+}
+
+export type StorePreview = (params: { preview: Preview }) => Promise<void>
+
+export type RequestObjectPreview = (params: ObjectPreviewRequest) => Promise<void>
+
 export type GetPreviewImage = (params: {
   previewId: string
 }) => Promise<Nullable<Buffer>>

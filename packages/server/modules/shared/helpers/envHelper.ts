@@ -85,6 +85,10 @@ export function getRedisUrl() {
   return getStringFromEnv('REDIS_URL')
 }
 
+export const getPreviewServiceRedisUrl = (): string | undefined => {
+  return process.env['PREVIEW_SERVICE_REDIS_URL']
+}
+
 export function getOidcDiscoveryUrl() {
   return getStringFromEnv('OIDC_DISCOVERY_URL')
 }

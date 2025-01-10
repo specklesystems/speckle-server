@@ -306,6 +306,7 @@ export const streamWritePermissionsPipelineFactory = (
   validateServerRoleBuilderFactory(deps)({ requiredRole: Roles.Server.Guest }),
   validateScope({ requiredScope: Scopes.Streams.Write }),
   validateRequiredStreamFactory(deps),
+
   validateStreamRoleBuilderFactory(deps)({ requiredRole: Roles.Stream.Contributor }),
   validateResourceAccess
 ]
