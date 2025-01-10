@@ -57,7 +57,7 @@
         <ViewerGendoList @reuse-prompt="prompt = $event" />
       </div>
       <div
-        class="flex w-full items-center justify-between gap-2 border-t border-outline-2 py-0.5 px-2"
+        class="flex w-full items-center justify-between gap-2 border-t border-outline-2 py-1 px-2"
       >
         <FormButton color="subtle" size="sm">
           <div class="flex items-center gap-1 text-foreground-2 font-normal">
