@@ -2,12 +2,12 @@ import TTLCache from '@isaacs/ttlcache'
 import type { Redis } from 'ioredis'
 
 export type GetFromLayeredCache<T> = (params: {
-  retrieveFromSource: () => Promise<T | undefined>
+  retrieveFromSource: () => Promise<T>
   key: string
-  inMemoryCache: TTLCache<string, T | undefined>
+  inMemoryCache: TTLCache<string, T>
   distributedCache?: Redis
   bustCache?: boolean
-}) => Promise<T | undefined>
+}) => Promise<T>
 
 export const layeredCacheFactory = <T>(deps: {
   options?: {

@@ -58,21 +58,29 @@ const inMemoryCache = new TTLCache<string, ServerConfigRecord>({
   max: 2000
 })
 
-export const getServerConfigFactory = (deps: {
+export const getServerConfigFactory =
+  (deps: { db: Knex }): GetServerConfig =>
+  async () =>
+    // ignore the bustCache parameter, as it will never be cached i.e. defaults to true
+    // An entry should always exist, as one is inserted via db migrations
+    (await tables.serverConfig(deps.db).select('*').first())!
+
+export const getServerConfigWithCacheFactory = (deps: {
   db: Knex
   distributedCache?: Redis
 }): GetServerConfig => {
   const { db } = deps
   return async (params) => {
-    return (await cache({
+    return await cache({
       key: SERVER_CONFIG_CACHE_KEY,
       inMemoryCache,
       distributedCache: deps.distributedCache,
       bustCache: params.bustCache,
       retrieveFromSource: async () => {
-        return await tables.serverConfig(db).select('*').first()
+        // An entry should always exist, as one is inserted via db migrations
+        return (await tables.serverConfig(db).select('*').first())!
       }
-    }))!
+    })
   }
 }
 
