@@ -22,22 +22,22 @@ export const dismissWorkspaceJoinRequestFactory =
     getWorkspace: GetWorkspace
     updateWorkspaceJoinRequestStatus: UpdateWorkspaceJoinRequestStatus
   }) =>
-    async ({ userId, workspaceId }: { userId: string; workspaceId: string }) => {
-      const workspace = await getWorkspace({ workspaceId })
-      if (!workspace) {
-        throw new WorkspaceNotFoundError()
-      }
-      await updateWorkspaceJoinRequestStatus({
-        userId,
-        workspaceId,
-        status: 'dismissed'
-      })
-      return true
+  async ({ userId, workspaceId }: { userId: string; workspaceId: string }) => {
+    const workspace = await getWorkspace({ workspaceId })
+    if (!workspace) {
+      throw new WorkspaceNotFoundError()
     }
+    await updateWorkspaceJoinRequestStatus({
+      userId,
+      workspaceId,
+      status: 'dismissed'
+    })
+    return true
+  }
 
 type WorkspaceJoinRequestReceivedEmailArgs = {
   workspace: { id: string; name: string; slug: string }
-  requester: { name: string; email: string }
+  requester: { name: string }
   workspaceAdmin: { id: string; name: string }
 }
 
@@ -50,7 +50,7 @@ const buildMjmlBody = ({
 Hi ${workspaceAdmin.name}!
 <br/>
 <br/>
-The user <span style="font-weight: bold;">${requester.name}</span> (${requester.email}) requested to join the workspace <span style="font-weight: bold;">${workspace.name}</span>. You can approve or deny the request from the workspace's members settings.
+<span style="font-weight: bold;">${requester.name}</span> is requesting to join your workspace <span style="font-weight: bold;">${workspace.name}</span>.
 <br/>
 <br/>
 
@@ -70,7 +70,7 @@ const buildTextBody = ({
   const bodyStart = `
 Hi ${workspaceAdmin.name}!
 \r\n\r\n
-The user ${requester.name} (${requester.email}) requested to join the workspace ${workspace.name}. You can approve or deny the request from the workspace's members settings.
+${requester.name} is requesting to join your workspace ${workspace.name}.
 \r\n\r\n
     `
   const bodyEnd = `Have questions or feedback? Please write us at hello@speckle.systems and we'd be more than happy to talk.`
@@ -83,7 +83,7 @@ const buildEmailTemplateParams = (args: WorkspaceJoinRequestReceivedEmailArgs) =
     mjml: buildMjmlBody(args),
     text: buildTextBody(args),
     cta: {
-      title: 'A user requested to join your workspace',
+      title: 'Manage Members',
       url
     }
   }
@@ -103,35 +103,37 @@ export const sendWorkspaceJoinRequestReceivedEmailFactory =
     getWorkspaceCollaborators: GetWorkspaceCollaborators
     getUserEmails: FindEmailsByUserId
   }) =>
-    async (args: Omit<WorkspaceJoinRequestReceivedEmailArgs, 'workspaceAdmin'>) => {
-      const [serverInfo, workspaceAdmins] = await Promise.all([
-        getServerInfo(),
-        getWorkspaceCollaborators({
-          workspaceId: args.workspace.id,
-          limit: 100,
-          filter: { roles: [Roles.Workspace.Admin] }
+  async (args: Omit<WorkspaceJoinRequestReceivedEmailArgs, 'workspaceAdmin'>) => {
+    const { requester, workspace } = args
+    const [serverInfo, workspaceAdmins] = await Promise.all([
+      getServerInfo(),
+      getWorkspaceCollaborators({
+        workspaceId: workspace.id,
+        limit: 100,
+        filter: { roles: [Roles.Workspace.Admin] }
+      })
+    ])
+    const sendEmailParams = await Promise.all(
+      workspaceAdmins.map(async (admin) => {
+        const userEmails = await getUserEmails({ userId: admin.id })
+        const emailTemplateParams = buildEmailTemplateParams({
+          requester,
+          workspace,
+          workspaceAdmin: admin
         })
-      ])
-      const sendEmailParams = await Promise.all(
-        workspaceAdmins.map(async (admin) => {
-          const userEmails = await getUserEmails({ userId: admin.id })
-          const emailTemplateParams = buildEmailTemplateParams({
-            ...args,
-            workspaceAdmin: admin
-          })
-          const { html, text } = await renderEmail(emailTemplateParams, serverInfo, null)
-          const subject = 'Workspace join request received'
-          const sendEmailParams = {
-            html,
-            text,
-            subject,
-            to: userEmails.map((e) => e.email)
-          }
-          return sendEmailParams
-        })
-      )
-      await Promise.all(sendEmailParams.map((params) => sendEmail(params)))
-    }
+        const { html, text } = await renderEmail(emailTemplateParams, serverInfo, null)
+        const subject = `${requester.name} wants to join your workspace`
+        const sendEmailParams = {
+          html,
+          text,
+          subject,
+          to: userEmails.map((e) => e.email)
+        }
+        return sendEmailParams
+      })
+    )
+    await Promise.all(sendEmailParams.map((params) => sendEmail(params)))
+  }
 
 export const requestToJoinWorkspaceFactory =
   ({
@@ -145,27 +147,27 @@ export const requestToJoinWorkspaceFactory =
     getUserById: GetUser
     getWorkspace: GetWorkspace
   }) =>
-    async ({ userId, workspaceId }: { userId: string; workspaceId: string }) => {
-      await createWorkspaceJoinRequest({
-        userId,
-        workspaceId,
-        status: 'pending'
-      })
+  async ({ userId, workspaceId }: { userId: string; workspaceId: string }) => {
+    await createWorkspaceJoinRequest({
+      userId,
+      workspaceId,
+      status: 'pending'
+    })
 
-      const requester = await getUserById(userId)
-      if (!requester) {
-        throw new NotFoundError('User not found')
-      }
-
-      const workspace = await getWorkspace({ workspaceId })
-      if (!workspace) {
-        throw new NotFoundError('Workspace not found')
-      }
-
-      await sendWorkspaceJoinRequestReceivedEmail({
-        workspace,
-        requester
-      })
-
-      return true
+    const requester = await getUserById(userId)
+    if (!requester) {
+      throw new NotFoundError('User not found')
     }
+
+    const workspace = await getWorkspace({ workspaceId })
+    if (!workspace) {
+      throw new NotFoundError('Workspace not found')
+    }
+
+    await sendWorkspaceJoinRequestReceivedEmail({
+      workspace,
+      requester
+    })
+
+    return true
+  }
