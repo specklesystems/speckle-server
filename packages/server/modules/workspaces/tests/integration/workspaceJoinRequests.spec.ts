@@ -1,5 +1,8 @@
 import { db } from '@/db/knex'
-import { createRandomString } from '@/modules/core/helpers/testHelpers'
+import {
+  createRandomEmail,
+  createRandomString
+} from '@/modules/core/helpers/testHelpers'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { WorkspaceNotFoundError } from '@/modules/workspaces/errors/workspace'
 import { getWorkspaceFactory } from '@/modules/workspaces/repositories/workspaces'
@@ -123,7 +126,7 @@ const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
         const user: BasicTestUser = {
           id: '',
           name: 'John Speckle',
-          email: 'john-speckle@example.org',
+          email: createRandomEmail(),
           role: Roles.Server.Admin,
           verified: true
         }
