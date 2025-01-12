@@ -308,3 +308,11 @@ export type GetWorkspaceCreationState = (params: {
 export type UpsertWorkspaceCreationState = (params: {
   workspaceCreationState: WorkspaceCreationState
 }) => Promise<void>
+
+/**
+ * Project regions
+ */
+
+export type CopyProjects = (params: { projectIds: string[] }) => Promise<string[]>
+export type CopyProjectModels = (params: { projectIds: string[] }) => Promise<Record<string, string[]>>
+export type CopyProjectVersions = (params: { projectIds: string[] }) => Promise<Record<string, string[]>>

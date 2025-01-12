@@ -170,6 +170,7 @@ type WorkspaceProjectMutations {
   updateRole(input: ProjectUpdateRoleInput!): Project!
     @hasStreamRole(role: STREAM_OWNER)
     @hasWorkspaceRole(role: MEMBER)
+  moveToRegion(projectId: String!, regionKey: String!): Project!
   moveToWorkspace(projectId: String!, workspaceId: String!): Project!
   create(input: WorkspaceProjectCreateInput!): Project!
 }
