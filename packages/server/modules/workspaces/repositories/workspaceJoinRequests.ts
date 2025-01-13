@@ -13,8 +13,11 @@ const tables = {
 
 export const createWorkspaceJoinRequestFactory =
   ({ db }: { db: Knex }): CreateWorkspaceJoinRequest =>
-  async (request) => {
-    return await tables.workspaceJoinRequests(db).insert(request)
+  async ({ workspaceJoinRequest }) => {
+    return (await tables
+      .workspaceJoinRequests(db)
+      .insert(workspaceJoinRequest, '*')
+      .first()) as WorkspaceJoinRequest
   }
 
 export const updateWorkspaceJoinRequestStatusFactory =

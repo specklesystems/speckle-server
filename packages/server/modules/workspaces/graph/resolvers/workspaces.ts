@@ -794,19 +794,26 @@ export = FF_WORKSPACES_MODULE_ENABLED
         },
         requestToJoin: async (_parent, args, ctx) => {
           const transaction = await db.transaction()
+          const createWorkspaceJoinRequest = createWorkspaceJoinRequestFactory({
+            db: transaction
+          })
+          const sendWorkspaceJoinRequestReceivedEmail =
+            sendWorkspaceJoinRequestReceivedEmailFactory({
+              renderEmail,
+              sendEmail,
+              getServerInfo,
+              getWorkspaceCollaborators: getWorkspaceCollaboratorsFactory({
+                db: transaction
+              }),
+              getUserEmails: findEmailsByUserIdFactory({ db: transaction })
+            })
+
           return await withTransaction(
             requestToJoinWorkspaceFactory({
-              createWorkspaceJoinRequest: createWorkspaceJoinRequestFactory({ db }),
-              sendWorkspaceJoinRequestReceivedEmail:
-                sendWorkspaceJoinRequestReceivedEmailFactory({
-                  renderEmail,
-                  sendEmail,
-                  getServerInfo,
-                  getWorkspaceCollaborators: getWorkspaceCollaboratorsFactory({ db }),
-                  getUserEmails: findEmailsByUserIdFactory({ db })
-                }),
-              getUserById: getUserFactory({ db }),
-              getWorkspace: getWorkspaceFactory({ db })
+              createWorkspaceJoinRequest,
+              sendWorkspaceJoinRequestReceivedEmail,
+              getUserById: getUserFactory({ db: transaction }),
+              getWorkspace: getWorkspaceFactory({ db: transaction })
             })({
               userId: ctx.userId!,
               workspaceId: args.input.workspaceId

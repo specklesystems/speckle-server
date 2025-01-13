@@ -4,7 +4,7 @@ import { FindEmailsByUserId } from '@/modules/core/domain/userEmails/operations'
 import { GetUser } from '@/modules/core/domain/users/operations'
 import { RenderEmail, SendEmail } from '@/modules/emails/domain/operations'
 import { NotFoundError } from '@/modules/shared/errors'
-import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
+import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
 import {
   CreateWorkspaceJoinRequest,
   GetWorkspace,
@@ -78,7 +78,10 @@ ${requester.name} is requesting to join your workspace ${workspace.name}.
 }
 
 const buildEmailTemplateParams = (args: WorkspaceJoinRequestReceivedEmailArgs) => {
-  const url = new URL(`workspaces/${args.workspace.slug}`, getServerOrigin()).toString()
+  const url = new URL(
+    `workspaces/${args.workspace.slug}`,
+    getFrontendOrigin()
+  ).toString()
   return {
     mjml: buildMjmlBody(args),
     text: buildTextBody(args),
@@ -149,9 +152,11 @@ export const requestToJoinWorkspaceFactory =
   }) =>
   async ({ userId, workspaceId }: { userId: string; workspaceId: string }) => {
     await createWorkspaceJoinRequest({
-      userId,
-      workspaceId,
-      status: 'pending'
+      workspaceJoinRequest: {
+        userId,
+        workspaceId,
+        status: 'pending'
+      }
     })
 
     const requester = await getUserById(userId)
