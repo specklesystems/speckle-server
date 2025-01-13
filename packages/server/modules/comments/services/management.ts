@@ -67,13 +67,16 @@ export const authorizeProjectCommentsAccessFactory =
       throw new StreamInvalidAccessError('Stream not found')
     }
 
+    // Check admin access first
+    if (deps.adminOverrideEnabled() && authCtx.role === Roles.Server.Admin) {
+      return project
+    }
+
     let success = true
     if (!project.isPublic && !authCtx.auth) success = false
     if (!project.isPublic && !project.role) success = false
     if (requireProjectRole && !project.role && !project.allowPublicComments)
       success = false
-    if (deps.adminOverrideEnabled() && authCtx.role === Roles.Server.Admin)
-      success = true
 
     if (!success) {
       throw new StreamInvalidAccessError('You are not authorized')
