@@ -9,6 +9,7 @@ generates:
       - 'typescript-resolvers'
     config:
       contextType: '@/modules/shared/helpers/typeHelper#GraphQLContext'
+      allowParentTypeOverride: true
       mappers:
         Stream: '@/modules/core/helpers/graphTypes#StreamGraphQLReturn'
         Commit: '@/modules/core/helpers/graphTypes#CommitGraphQLReturn'
@@ -64,6 +65,7 @@ generates:
         WorkspaceBillingMutations: '@/modules/gatekeeper/helpers/graphTypes#WorkspaceBillingMutationsGraphQLReturn'
         PendingWorkspaceCollaborator: '@/modules/workspacesCore/helpers/graphTypes#PendingWorkspaceCollaboratorGraphQLReturn'
         WorkspaceCollaborator: '@/modules/workspacesCore/helpers/graphTypes#WorkspaceCollaboratorGraphQLReturn'
+        WorkspaceJoinRequest: '@/modules/workspacesCore/helpers/graphTypes#WorkspaceJoinRequestGraphQLReturn'
         Webhook: '@/modules/webhooks/helpers/graphTypes#WebhookGraphQLReturn'
         SmartTextEditorValue: '@/modules/core/services/richTextEditorService#SmartTextEditorValueGraphQLReturn'
         BlobMetadata: '@/modules/blobstorage/domain/types#BlobStorageItem'
@@ -105,6 +107,8 @@ config:
   scalars:
     JSONObject: Record<string, unknown>
     DateTime: Date
+  enumValues:
+    WorkspaceJoinRequestStatus: '@/modules/workspacesCore/helpers/graphTypes#WorkspaceJoinRequestStatusGraphQLReturn'
 require:
   - ts-node/register
   - tsconfig-paths/register

@@ -323,3 +323,36 @@ export const dismissWorkspaceMutation = gql`
     }
   }
 `
+
+export const requestToJoinWorkspaceMutation = gql`
+  mutation requestToJoinWorkspace($input: WorkspaceRequestToJoinInput!) {
+    workspaceMutations {
+      requestToJoin(input: $input)
+    }
+  }
+`
+
+export const adminWorkspaceJoinRequestsQuery = gql`
+  query adminWorkspaceJoinRequests(
+    $filter: AdminWorkspaceJoinRequestFilter
+    $cursor: String
+    $limit: Int
+  ) {
+    adminWorkspacesJoinRequests(filter: $filter, cursor: $cursor, limit: $limit) {
+      items {
+        status
+        user {
+          id
+          name
+        }
+        workspace {
+          id
+          name
+        }
+        createdAt
+      }
+      cursor
+      totalCount
+    }
+  }
+`
