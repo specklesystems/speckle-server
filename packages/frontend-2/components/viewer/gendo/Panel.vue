@@ -15,8 +15,8 @@
         </CommonBadge>
       </div>
     </template>
-    <div class="pt-2">
-      <div class="px-4 flex flex-col gap-y-2">
+    <div class="pt-3">
+      <div class="px-3 flex flex-col gap-y-2">
         <CommonAlert v-if="showAlert" :color="alertColor" size="xs">
           <template #title>
             {{ alertMessage }}
@@ -57,7 +57,7 @@
         <ViewerGendoList @reuse-prompt="prompt = $event" />
       </div>
       <div
-        class="flex w-full items-center justify-between gap-2 border-t border-outline-2 py-1 px-2"
+        class="flex w-full items-center justify-between gap-2 border-t border-outline-2 py-1 px-1"
       >
         <FormButton color="subtle" size="sm" @click="isFeedbackOpen = true">
           <div class="flex items-center gap-1 text-foreground-2 font-normal">
