@@ -59,7 +59,7 @@
       <div
         class="flex w-full items-center justify-between gap-2 border-t border-outline-2 py-1 px-2"
       >
-        <FormButton color="subtle" size="sm">
+        <FormButton color="subtle" size="sm" @click="isFeedbackOpen = true">
           <div class="flex items-center gap-1 text-foreground-2 font-normal">
             <IconFeedback class="h-3 w-3" />
             <span>Feedback</span>
@@ -85,6 +85,7 @@
         <span class="hidden-under-250">this month</span>
       </div>
     </template>
+    <FeedbackDialog v-model:open="isFeedbackOpen" type="gendo" />
   </ViewerLayoutPanel>
 </template>
 <script setup lang="ts">
@@ -117,6 +118,7 @@ defineEmits<{
 const prompt = ref<string>()
 const isLoading = ref(false)
 const timeOutWait = ref(false)
+const isFeedbackOpen = ref(false)
 
 const suggestedPrompts = ref<string[]>([
   'Example: Minimalist Scandinavian interior with warm natural lighting',
