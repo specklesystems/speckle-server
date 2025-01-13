@@ -5,6 +5,7 @@ import { join } from 'lodash-es'
 import { Counter, Histogram, Registry } from 'prom-client'
 import prometheusClient from 'prom-client'
 import { init as commits } from '@/observability/metrics/commits.js'
+import { init as currentConnections } from '@/observability/metrics/currentConnections.js'
 import { init as dbMaxLogicalReplicationWorkers } from '@/observability/metrics/dbMaxLogicalReplicationWorkers.js'
 import { init as dbMaxReplicationSlots } from '@/observability/metrics/dbMaxReplicationSlots.js'
 import { init as dbMaxSyncWorkersPerSubscription } from '@/observability/metrics/dbMaxSyncWorkersPerSubscription.js'
@@ -60,6 +61,7 @@ function initMonitoringMetrics(params: {
 
   const metricsToInitialize = [
     commits,
+    currentConnections,
     dbMaxLogicalReplicationWorkers,
     dbMaxReplicationSlots,
     dbMaxSyncWorkersPerSubscription,
