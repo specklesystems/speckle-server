@@ -16,13 +16,13 @@
       </div>
     </template>
     <div class="pt-3">
-      <div class="px-3 flex flex-col gap-y-2">
+      <div class="px-3 flex flex-col gap-y-3">
         <CommonAlert v-if="showAlert" :color="alertColor" size="xs">
           <template #title>
             {{ alertMessage }}
           </template>
         </CommonAlert>
-        <div class="flex flex-col gap-y-2">
+        <div class="flex flex-col gap-y-3">
           <FormTextArea
             v-model="prompt"
             name="prompt"

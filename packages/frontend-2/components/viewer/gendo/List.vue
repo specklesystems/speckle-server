@@ -1,6 +1,6 @@
 <template>
   <div
-    class="flex flex-col gap-y-2 max-h-64 2xl:max-h-96 overflow-y-scroll overflow-x-hidden simple-scroll pb-4"
+    class="flex flex-col gap-y-3 max-h-64 2xl:max-h-96 overflow-y-scroll overflow-x-hidden simple-scroll pb-3"
   >
     <ViewerGendoItem
       v-for="render in renders"
