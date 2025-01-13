@@ -43,8 +43,8 @@ import {
 } from '@/modules/core/repositories/projects'
 import { mainDb } from '@/db/knex'
 import { storeModelFactory } from '@/modules/core/repositories/models'
-import { ProjectsEmitter } from '@/modules/core/events/projectsEmitter'
 import { getProjectFactory } from '@/modules/core/repositories/streams'
+import { getEventBus } from '@/modules/shared/services/eventBus'
 
 export const queryAllWorkspaceProjectsFactory = ({
   getStreams
@@ -278,7 +278,7 @@ export const createWorkspaceProjectFactory =
       storeModel: storeModelFactory({ db: projectDb }),
       // THIS MUST GO TO THE MAIN DB
       storeProjectRole: storeProjectRoleFactory({ db }),
-      projectsEventsEmitter: ProjectsEmitter.emit
+      emitEvent: getEventBus().emit
     })
 
     const project = await createNewProject({

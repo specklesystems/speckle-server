@@ -52,7 +52,6 @@ const {
   deleteServerOnlyInvitesFactory,
   updateAllInviteTargetsFactory
 } = require('@/modules/serverinvites/repositories/serverInvites')
-const { UsersEmitter } = require('@/modules/core/events/usersEmitter')
 const {
   storeApiTokenFactory,
   storeTokenScopesFactory,
@@ -61,6 +60,7 @@ const {
   storePersonalApiTokenFactory
 } = require('@/modules/core/repositories/tokens')
 const { getServerInfoFactory } = require('@/modules/core/repositories/server')
+const { getEventBus } = require('@/modules/shared/services/eventBus')
 
 let sendRequest
 let server
@@ -109,7 +109,7 @@ const createUser = createUserFactory({
     }),
     requestNewEmailVerification
   }),
-  usersEventsEmitter: UsersEmitter.emit
+  emitEvent: getEventBus().emit
 })
 const createPersonalAccessToken = createPersonalAccessTokenFactory({
   storeApiToken: storeApiTokenFactory({ db }),

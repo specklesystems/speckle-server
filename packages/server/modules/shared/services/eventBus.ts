@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   WorkspaceEventsPayloads,
   workspaceEventNamespace
@@ -14,6 +15,18 @@ import {
   serverinvitesEventNamespace,
   ServerInvitesEventsPayloads
 } from '@/modules/serverinvites/domain/events'
+import {
+  modelEventsNamespace,
+  ModelEventsPayloads
+} from '@/modules/core/domain/branches/events'
+import {
+  projectEventsNamespace,
+  ProjectEventsPayloads
+} from '@/modules/core/domain/projects/events'
+import {
+  userEventsNamespace,
+  UserEventsPayloads
+} from '@/modules/core/domain/users/events'
 
 type AllEventsWildcard = '**'
 type EventWildcard = '*'
@@ -34,6 +47,9 @@ type EventsByNamespace = {
   [workspaceEventNamespace]: WorkspaceEventsPayloads
   [gatekeeperEventNamespace]: GatekeeperEventPayloads
   [serverinvitesEventNamespace]: ServerInvitesEventsPayloads
+  [modelEventsNamespace]: ModelEventsPayloads
+  [projectEventsNamespace]: ProjectEventsPayloads
+  [userEventsNamespace]: UserEventsPayloads
 }
 
 type EventTypes = UnionToIntersection<EventsByNamespace[keyof EventsByNamespace]>
@@ -71,7 +87,7 @@ type EventPayloadsByNamespaceMap = {
 }
 
 export type EventPayload<T extends EventSubscriptionKey> = T extends AllEventsWildcard
-  ? // if event key is "*", get all events from the flat object
+  ? // if event key is "**", get all events from the flat object
     EventPayloadsMap[keyof EventPayloadsMap]
   : // else if, the key is a "namespace.*" wildcard
   T extends `${infer Namespace}.${EventWildcard}`
@@ -142,4 +158,11 @@ let eventBus: EventBus
 export function getEventBus(): EventBus {
   if (!eventBus) eventBus = initializeEventBus()
   return eventBus
+}
+
+export const isSpecificEventPayload = <EventName extends EventNames>(
+  payload: EventPayload<any>,
+  eventKey: EventName
+): payload is EventPayload<EventName> => {
+  return payload.eventName === eventKey
 }

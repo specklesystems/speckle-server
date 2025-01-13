@@ -59,7 +59,6 @@ import {
 import { getBlobsFactory } from '@/modules/blobstorage/repositories'
 import { validateInputAttachmentsFactory } from '@/modules/comments/services/commentTextService'
 import { VersionsEmitter } from '@/modules/core/events/versionsEmitter'
-import { ProjectsEmitter } from '@/modules/core/events/projectsEmitter'
 import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import { publish } from '@/modules/shared/utils/subscriptions'
 import { addCommitCreatedActivityFactory } from '@/modules/activitystream/services/commitActivity'
@@ -78,6 +77,7 @@ import {
   storeProjectRoleFactory
 } from '@/modules/core/repositories/projects'
 import { storeModelFactory } from '@/modules/core/repositories/models'
+import { getEventBus } from '@/modules/shared/services/eventBus'
 
 const command: CommandModule<
   unknown,
@@ -220,7 +220,7 @@ const command: CommandModule<
       storeModel: storeModelFactory({ db: projectDb }),
       // THIS MUST GO TO THE MAIN DB
       storeProjectRole: storeProjectRoleFactory({ db }),
-      projectsEventsEmitter: ProjectsEmitter.emit
+      emitEvent: getEventBus().emit
     })
 
     const createObject = createObjectFactory({

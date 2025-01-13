@@ -59,12 +59,12 @@ import {
   getStreamFactory,
   markBranchStreamUpdatedFactory
 } from '@/modules/core/repositories/streams'
-import { ModelsEmitter } from '@/modules/core/events/modelsEmitter'
 import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import {
   getProjectDbClient,
   getRegisteredRegionClients
 } from '@/modules/multiregion/utils/dbSelector'
+import { getEventBus } from '@/modules/shared/services/eventBus'
 
 export = {
   User: {
@@ -350,7 +350,7 @@ export = {
       const deleteBranchAndNotify = deleteBranchAndNotifyFactory({
         getStream,
         getBranchById: getBranchByIdFactory({ db: projectDB }),
-        modelsEventsEmitter: ModelsEmitter.emit,
+        emitEvent: getEventBus().emit,
         markBranchStreamUpdated,
         addBranchDeletedActivity: addBranchDeletedActivityFactory({
           saveActivity: saveActivityFactory({ db }),

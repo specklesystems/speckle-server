@@ -71,7 +71,6 @@ import {
   addStreamUpdatedActivityFactory
 } from '@/modules/activitystream/services/streamActivity'
 import { saveActivityFactory } from '@/modules/activitystream/repositories'
-import { ProjectsEmitter } from '@/modules/core/events/projectsEmitter'
 import {
   addOrUpdateStreamCollaboratorFactory,
   isStreamCollaboratorFactory,
@@ -119,7 +118,7 @@ const createStreamReturnRecord = createStreamReturnRecordFactory({
   }),
   createStream: createStreamFactory({ db }),
   createBranch: createBranchFactory({ db }),
-  projectsEventsEmitter: ProjectsEmitter.emit
+  emitEvent: getEventBus().emit
 })
 const deleteStreamAndNotify = deleteStreamAndNotifyFactory({
   deleteStream: deleteStreamFactory({ db }),

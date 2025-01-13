@@ -16,7 +16,6 @@ import {
 } from '@/modules/comments/repositories/comments'
 import { RateLimitError } from '@/modules/core/errors/ratelimit'
 import { StreamNotFoundError } from '@/modules/core/errors/stream'
-import { ProjectsEmitter } from '@/modules/core/events/projectsEmitter'
 import {
   ProjectVisibility,
   Resolvers,
@@ -119,7 +118,7 @@ const createStreamReturnRecord = createStreamReturnRecordFactory({
   }),
   createStream: createStreamFactory({ db }),
   createBranch: createBranchFactory({ db }),
-  projectsEventsEmitter: ProjectsEmitter.emit
+  emitEvent: getEventBus().emit
 })
 const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
 const isStreamCollaborator = isStreamCollaboratorFactory({

@@ -75,7 +75,6 @@ const {
   buildCoreInviteEmailContentsFactory
 } = require('@/modules/serverinvites/services/coreEmailContents')
 const { getEventBus } = require('@/modules/shared/services/eventBus')
-const { ProjectsEmitter } = require('@/modules/core/events/projectsEmitter')
 const { saveActivityFactory } = require('@/modules/activitystream/repositories')
 const { publish } = require('@/modules/shared/utils/subscriptions')
 const {
@@ -105,7 +104,6 @@ const {
 const {
   finalizeInvitedServerRegistrationFactory
 } = require('@/modules/serverinvites/services/processing')
-const { UsersEmitter } = require('@/modules/core/events/usersEmitter')
 const { getServerInfoFactory } = require('@/modules/core/repositories/server')
 const {
   getBranchCommitsTotalCountByNameFactory,
@@ -206,7 +204,7 @@ const createStream = legacyCreateStreamFactory({
     }),
     createStream: createStreamFactory({ db }),
     createBranch: createBranchFactory({ db }),
-    projectsEventsEmitter: ProjectsEmitter.emit
+    emitEvent: getEventBus().emit
   })
 })
 
@@ -235,7 +233,7 @@ const createUser = createUserFactory({
     }),
     requestNewEmailVerification
   }),
-  usersEventsEmitter: UsersEmitter.emit
+  emitEvent: getEventBus().emit
 })
 const getCommitsByUserId = legacyGetPaginatedUserCommitsPage({ db })
 const getCommitsByStreamId = legacyGetPaginatedStreamCommitsPageFactory({ db })

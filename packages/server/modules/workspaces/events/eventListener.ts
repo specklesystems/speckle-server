@@ -1,9 +1,4 @@
 import {
-  ProjectsEmitter,
-  ProjectEvents,
-  ProjectEventsPayloads
-} from '@/modules/core/events/projectsEmitter'
-import {
   deleteProjectRoleFactory,
   getStreamFactory,
   legacyGetStreamsFactory,
@@ -62,6 +57,10 @@ import {
 import { WorkspacesNotAuthorizedError } from '@/modules/workspaces/errors/workspace'
 import { publish, WorkspaceSubscriptions } from '@/modules/shared/utils/subscriptions'
 import { isWorkspaceResourceTarget } from '@/modules/workspaces/services/invites'
+import {
+  ProjectEvents,
+  ProjectEventsPayloads
+} from '@/modules/core/domain/projects/events'
 
 export const onProjectCreatedFactory =
   ({
@@ -318,7 +317,7 @@ export const initializeEventListenersFactory =
     })
 
     const quitCbs = [
-      ProjectsEmitter.listen(ProjectEvents.Created, async (payload) => {
+      eventBus.listen(ProjectEvents.Created, async ({ payload }) => {
         const onProjectCreated = onProjectCreatedFactory({
           getWorkspaceRoleToDefaultProjectRoleMapping:
             getWorkspaceRoleToDefaultProjectRoleMappingFactory({
