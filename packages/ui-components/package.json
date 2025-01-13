@@ -45,6 +45,7 @@
     }
   },
   "peerDependencies": {
+    "vee-validate": "^4.7.0",
     "vue": "^3.3.0"
   },
   "dependencies": {
@@ -57,7 +58,6 @@
     "lodash-es": "^4.0.0",
     "nanoid": "^3.0.0",
     "v3-infinite-loading": "^1.2.2",
-    "vee-validate": "^4.7.0",
     "vue-advanced-cropper": "^2.8.8",
     "vue-tippy": "^6.0.0"
   },
@@ -97,6 +97,7 @@
     "type-fest": "^2.13.1",
     "typescript": "^5.0.4",
     "unplugin-vue-macros": "^2.7.0",
+    "vee-validate": "4.7.0",
     "vite": "^4.5.2",
     "vite-plugin-dts": "^3.6.3",
     "vue": "^3.3.8",

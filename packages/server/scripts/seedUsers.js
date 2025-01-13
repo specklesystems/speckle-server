@@ -1,7 +1,6 @@
 require('../bootstrap')
 const { db } = require('@/db/knex')
 const { logger } = require('@/logging/logging')
-const { UsersEmitter } = require('@/modules/core/events/usersEmitter')
 const {
   getServerInfoFactory,
   getServerConfigFactory
@@ -36,6 +35,7 @@ const {
 const {
   finalizeInvitedServerRegistrationFactory
 } = require('@/modules/serverinvites/services/processing')
+const { getEventBus } = require('@/modules/shared/services/eventBus')
 const axios = require('axios').default
 
 const getServerInfo = getServerInfoFactory({
@@ -66,7 +66,7 @@ const createUser = createUserFactory({
     }),
     requestNewEmailVerification
   }),
-  usersEventsEmitter: UsersEmitter.emit
+  emitEvent: getEventBus().emit
 })
 
 const main = async () => {
