@@ -5,7 +5,3 @@ export const isMultiRegionEnabled = () => {
     getFeatureFlags()
   return !!(FF_WORKSPACES_MODULE_ENABLED && FF_WORKSPACES_MULTI_REGION_ENABLED)
 }
-
-export const getDefaultProjectRegionKey = (): string | null => {
-  return process.env['DEFAULT_PROJECT_REGION_KEY'] ?? null
-}

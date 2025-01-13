@@ -11,6 +11,7 @@ import { configureClient } from '@/knexfile'
 import { InitializeRegion } from '@/modules/multiregion/domain/operations'
 import {
   getAvailableRegionConfig,
+  getDefaultProjectRegionKey,
   getMainRegionConfig
 } from '@/modules/multiregion/regionConfig'
 import { ensureError, MaybeNullOrUndefined } from '@speckle/shared'
@@ -21,10 +22,7 @@ import {
   getRegisteredRegionConfigs
 } from '@/modules/multiregion/utils/regionSelector'
 import { mapValues } from 'lodash'
-import {
-  getDefaultProjectRegionKey,
-  isMultiRegionEnabled
-} from '@/modules/multiregion/helpers'
+import { isMultiRegionEnabled } from '@/modules/multiregion/helpers'
 
 let getter: GetProjectDb | undefined = undefined
 
@@ -80,8 +78,7 @@ let defaultRegionKeyCache: string | null | undefined = undefined
 
 export const getValidDefaultProjectRegionKey = async (): Promise<string | null> => {
   if (defaultRegionKeyCache !== undefined) return defaultRegionKeyCache
-  const defaultRegionKey = getDefaultProjectRegionKey()
-  defaultRegionKeyCache = defaultRegionKey
+  const defaultRegionKey = await getDefaultProjectRegionKey()
 
   if (!defaultRegionKey) return defaultRegionKey
   const registeredRegionClients = await getRegisteredRegionClients()
@@ -89,6 +86,8 @@ export const getValidDefaultProjectRegionKey = async (): Promise<string | null> 
     throw new MisconfiguredEnvironmentError(
       `There is no region client registered for the default region key ${defaultRegionKey} `
     )
+
+  defaultRegionKeyCache = defaultRegionKey
   return defaultRegionKey
 }
 
