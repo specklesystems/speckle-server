@@ -296,7 +296,7 @@ export function useViewerUserActivityTracking(params: {
 
   const focused = useWindowFocus()
 
-  // Disable disconnect-on-blur behavior in development mode only
+  // Disable disconnect-on-blur behaviour in development mode only
   // For testing multi-user interactions (like follow mode)
   watch(focused, async (newVal) => {
     if (import.meta.dev) return
