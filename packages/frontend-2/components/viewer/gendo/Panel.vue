@@ -41,7 +41,7 @@
               target="_blank"
             >
               <div class="flex items-center gap-1 text-foreground-2 font-normal">
-                <span>Writing prompts</span>
+                <span>Learn to prompt</span>
                 <ArrowTopRightOnSquareIcon class="h-3 w-3" />
               </div>
             </FormButton>
@@ -61,8 +61,7 @@
       >
         <FormButton color="subtle" size="sm" @click="isFeedbackOpen = true">
           <div class="flex items-center gap-1 text-foreground-2 font-normal">
-            <IconFeedback class="h-3 w-3" />
-            <span>Feedback</span>
+            <span>Give us feedback</span>
           </div>
         </FormButton>
         <FormButton
@@ -74,7 +73,6 @@
         >
           <div class="flex items-center gap-1 text-foreground-2 font-normal">
             <span>Terms</span>
-            <ArrowTopRightOnSquareIcon class="h-3 w-3" />
           </div>
         </FormButton>
       </div>
