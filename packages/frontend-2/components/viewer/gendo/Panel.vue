@@ -121,11 +121,11 @@ const timeOutWait = ref(false)
 const isFeedbackOpen = ref(false)
 
 const suggestedPrompts = ref<string[]>([
-  'Example: Minimalist Scandinavian interior with warm natural lighting',
-  'Example: Luxury penthouse with floor-to-ceiling windows and city views',
-  'Example: Cozy industrial loft with exposed brick and steel elements',
-  'Example: Modern office space with biophilic design elements',
-  'Example: High-end retail space with dramatic lighting'
+  'Example: Minimalist Scandinavian interior with warm natural lighting...',
+  'Example: Luxury penthouse with floor-to-ceiling windows and city views...',
+  'Example: Cozy industrial loft with exposed brick and steel elements...',
+  'Example: Modern office space with biophilic design elements...',
+  'Example: High-end retail space with dramatic lighting...'
 ])
 
 const { result, refetch } = useQuery(activeUserGendoLimits)
