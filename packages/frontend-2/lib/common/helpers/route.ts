@@ -23,25 +23,67 @@ export const guideBillingUrl = 'https://speckle.guide/workspaces/billing.html'
 
 export const settingsRoutes = {
   user: {
-    profile: '/settings/user/profile',
-    notifications: '/settings/user/notifications',
-    developerSettings: '/settings/user/developer',
-    emails: '/settings/user/emails'
+    profile: {
+      name: 'settings-user-profile',
+      route: '/settings/user/profile'
+    },
+    notifications: {
+      name: 'settings-user-notifications',
+      route: '/settings/user/notifications'
+    },
+    developerSettings: {
+      name: 'settings-user-developer',
+      route: '/settings/user/developer'
+    },
+    emails: {
+      name: 'settings-user-emails',
+      route: '/settings/user/emails'
+    }
   },
   server: {
-    general: '/settings/server/general',
-    projects: '/settings/server/projects',
-    members: '/settings/server/members',
-    regions: '/settings/server/regions'
+    general: {
+      name: 'settings-server-general',
+      route: '/settings/server/general'
+    },
+    projects: {
+      name: 'settings-server-projects',
+      route: '/settings/server/projects'
+    },
+    members: {
+      name: 'settings-server-members',
+      route: '/settings/server/members'
+    },
+    regions: {
+      name: 'settings-server-regions',
+      route: '/settings/server/regions'
+    }
   },
-  workspace: (slug: string) => ({
-    general: `/settings/workspaces/${slug}/general`,
-    members: `/settings/workspaces/${slug}/members`,
-    projects: `/settings/workspaces/${slug}/projects`,
-    security: `/settings/workspaces/${slug}/security`,
-    billing: `/settings/workspaces/${slug}/billing`,
-    regions: `/settings/workspaces/${slug}/regions`
-  })
+  workspace: {
+    general: {
+      name: 'settings-workspaces-slug-general',
+      route: (slug: string) => `/settings/workspaces/${slug}/general`
+    },
+    members: {
+      name: 'settings-workspaces-slug-members',
+      route: (slug: string) => `/settings/workspaces/${slug}/members`
+    },
+    projects: {
+      name: 'settings-workspaces-slug-projects',
+      route: (slug: string) => `/settings/workspaces/${slug}/projects`
+    },
+    security: {
+      name: 'settings-workspaces-slug-security',
+      route: (slug: string) => `/settings/workspaces/${slug}/security`
+    },
+    billing: {
+      name: 'settings-workspaces-slug-billing',
+      route: (slug: string) => `/settings/workspaces/${slug}/billing`
+    },
+    regions: {
+      name: 'settings-workspaces-slug-regions',
+      route: (slug: string) => `/settings/workspaces/${slug}/regions`
+    }
+  }
 }
 
 export const projectRoute = (

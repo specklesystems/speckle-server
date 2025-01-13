@@ -44,7 +44,7 @@
             :key="index"
             :title="workspaceItem.name"
             collapsible
-            :collapsed="true"
+            :collapsed="slug !== workspaceItem.slug"
             :tag="
               workspaceItem.plan?.status === WorkspacePlanStatuses.Trial ||
               !workspaceItem.plan?.status
@@ -64,25 +64,20 @@
               :key="`${index}-${itemKey}`"
               :to="workspaceMenuItem.getRoute(workspaceItem.slug)"
             >
-              <!-- <LayoutSidebarMenuGroupItem
+              <LayoutSidebarMenuGroupItem
                 v-if="workspaceMenuItem.permission?.includes(workspaceItem.role as WorkspaceRoles)"
                 :label="workspaceMenuItem.title"
+                :active="route.name === workspaceMenuItem.name"
                 :tooltip-text="
-                  needsSsoSession(workspaceItem, workspaceMenuItem.to)
+                  needsSsoSession(workspaceItem, workspaceMenuItem.name)
                     ? 'Log in with your SSO provider to access this page'
                     : workspaceMenuItem.tooltipText
                 "
                 :disabled="
                   !isAdmin &&
                   (workspaceMenuItem.disabled ||
-                    needsSsoSession(workspaceItem, workspaceMenuItem.to))
+                    needsSsoSession(workspaceItem, workspaceMenuItem.name))
                 "
-                class="!pl-8"
-                :to="workspaceMenuItem.to"
-              /> -->
-              <LayoutSidebarMenuGroupItem
-                v-if="workspaceMenuItem.permission?.includes(workspaceItem.role as WorkspaceRoles)"
-                :label="workspaceMenuItem.title"
                 class="!pl-8"
               />
             </NuxtLink>
@@ -115,8 +110,11 @@ import {
 } from '@speckle/ui-components'
 import { graphql } from '~~/lib/common/generated/gql'
 import type { WorkspaceRoles } from '@speckle/shared'
-import { workspacesRoute, homeRoute } from '~/lib/common/helpers/route'
-import { WorkspacePlanStatuses } from '~/lib/common/generated/gql/graphql'
+import { workspacesRoute, homeRoute, settingsRoutes } from '~/lib/common/helpers/route'
+import {
+  WorkspacePlanStatuses,
+  type SettingsMenu_WorkspaceFragment
+} from '~/lib/common/generated/gql/graphql'
 
 graphql(`
   fragment SettingsDialog_Workspace on Workspace {
@@ -154,6 +152,7 @@ const { result: workspaceResult } = useQuery(settingsSidebarQuery, null, {
 })
 const { userMenuItems, serverMenuItems, workspaceMenuItems } = useSettingsMenu()
 
+const slug = computed(() => route.params.slug as string)
 const workspaceItems = computed(
   () =>
     workspaceResult.value?.activeUser?.workspaces.items.filter(
@@ -163,9 +162,13 @@ const workspaceItems = computed(
 const isAdmin = computed(() => user.value?.role === Roles.Server.Admin)
 const isGuest = computed(() => user.value?.role === Roles.Server.Guest)
 
-// const needsSsoSession = (workspace: SettingsMenu_WorkspaceFragment, to: string) => {
-//   return workspace.sso?.provider?.id && to !== settingsRoutes.workspace.general
-//     ? !workspace.sso?.session?.validUntil
-//     : false
-// }
+const needsSsoSession = (
+  workspace: SettingsMenu_WorkspaceFragment,
+  routeName?: string
+) => {
+  return workspace.sso?.provider?.id &&
+    routeName !== settingsRoutes.workspace.general.name
+    ? !workspace.sso?.session?.validUntil
+    : false
+}
 </script>

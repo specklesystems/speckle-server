@@ -8,6 +8,7 @@ export type SettingsMenuItem = {
   tooltipText?: string
   permission?: AvailableRoles[]
   getRoute: (slug?: string) => string
+  name?: string
 }
 
 export type SettingsMenuItems = {

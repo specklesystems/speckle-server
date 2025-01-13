@@ -27,35 +27,45 @@ export const useSettingsMenu = () => {
   const workspaceMenuItems = shallowRef<SettingsMenuItem[]>([
     {
       title: 'General',
-      getRoute: (slug?: string) => (slug ? settingsRoutes.workspace(slug).general : ''),
+      getRoute: (slug?: string) =>
+        slug ? settingsRoutes.workspace.general.route(slug) : '',
+      name: settingsRoutes.workspace.general.name,
       permission: [Roles.Workspace.Admin, Roles.Workspace.Member, Roles.Workspace.Guest]
     },
     {
       title: 'Members',
-      getRoute: (slug?: string) => (slug ? settingsRoutes.workspace(slug).members : ''),
+      getRoute: (slug?: string) =>
+        slug ? settingsRoutes.workspace.members.route(slug) : '',
+      name: settingsRoutes.workspace.members.name,
       permission: [Roles.Workspace.Admin, Roles.Workspace.Member]
     },
     {
       title: 'Projects',
       getRoute: (slug?: string) =>
-        slug ? settingsRoutes.workspace(slug).projects : '',
+        slug ? settingsRoutes.workspace.projects.route(slug) : '',
+      name: settingsRoutes.workspace.projects.name,
       permission: [Roles.Workspace.Admin, Roles.Workspace.Member]
     },
     {
       title: 'Security',
       getRoute: (slug?: string) =>
-        slug ? settingsRoutes.workspace(slug).security : '',
+        slug ? settingsRoutes.workspace.security.route(slug) : '',
+      name: settingsRoutes.workspace.security.name,
       permission: [Roles.Workspace.Admin]
     },
     {
       title: 'Billing',
-      getRoute: (slug?: string) => (slug ? settingsRoutes.workspace(slug).billing : ''),
+      getRoute: (slug?: string) =>
+        slug ? settingsRoutes.workspace.billing.route(slug) : '',
+      name: settingsRoutes.workspace.billing.name,
       permission: [Roles.Workspace.Admin, Roles.Workspace.Member]
     },
     {
       title: 'Data residency',
-      getRoute: (slug?: string) => (slug ? settingsRoutes.workspace(slug).regions : ''),
+      getRoute: (slug?: string) =>
+        slug ? settingsRoutes.workspace.regions.route(slug) : '',
       permission: [Roles.Workspace.Admin, Roles.Workspace.Member],
+      name: settingsRoutes.workspace.regions.name,
       ...(!isMultiRegionEnabled
         ? {
             disabled: true,
@@ -70,21 +80,21 @@ export const useSettingsMenu = () => {
   const userMenuItems = shallowRef<SettingsMenuItem[]>([
     {
       title: 'Profile',
-      getRoute: () => settingsRoutes.user.profile
+      getRoute: () => settingsRoutes.user.profile.route
     },
     {
       title: 'Notifications',
-      getRoute: () => settingsRoutes.user.notifications
+      getRoute: () => settingsRoutes.user.notifications.route
     },
     {
       title: 'Developer',
-      getRoute: () => settingsRoutes.user.developerSettings
+      getRoute: () => settingsRoutes.user.developerSettings.route
     },
     ...(isMultipleEmailsEnabled
       ? [
           {
             title: 'Emails',
-            getRoute: () => settingsRoutes.user.emails
+            getRoute: () => settingsRoutes.user.emails.route
           }
         ]
       : [])
@@ -93,21 +103,21 @@ export const useSettingsMenu = () => {
   const serverMenuItems = shallowRef<SettingsMenuItem[]>([
     {
       title: 'General',
-      getRoute: () => settingsRoutes.server.general
+      getRoute: () => settingsRoutes.server.general.route
     },
     {
       title: 'Members',
-      getRoute: () => settingsRoutes.server.members
+      getRoute: () => settingsRoutes.server.members.route
     },
     {
       title: 'Projects',
-      getRoute: () => settingsRoutes.server.projects
+      getRoute: () => settingsRoutes.server.projects.route
     },
     ...(isMultiRegionEnabled
       ? [
           {
             title: 'Regions',
-            getRoute: () => settingsRoutes.server.regions
+            getRoute: () => settingsRoutes.server.regions.route
           }
         ]
       : [])
