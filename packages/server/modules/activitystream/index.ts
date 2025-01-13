@@ -31,16 +31,13 @@ import {
   onServerInviteCreatedFactory,
   onUserCreatedFactory
 } from '@/modules/activitystream/services/eventListener'
-import {
-  AccessRequestsEmitter,
-  AccessRequestsEvents
-} from '@/modules/accessrequests/events/emitter'
 import { isProjectResourceTarget } from '@/modules/serverinvites/helpers/core'
 import { publish } from '@/modules/shared/utils/subscriptions'
 import { isStreamAccessRequest } from '@/modules/accessrequests/repositories'
 import { ServerInvitesEvents } from '@/modules/serverinvites/domain/events'
 import { ProjectEvents } from '@/modules/core/domain/projects/events'
 import { UserEvents } from '@/modules/core/domain/users/events'
+import { AccessRequestEvents } from '@/modules/accessrequests/domain/events'
 
 let scheduledTask: ReturnType<ScheduleExecution> | null = null
 let quitEventListeners: Optional<() => void> = undefined
@@ -62,16 +59,16 @@ const initializeEventListeners = ({
       // this activity will always go in the main DB
       onUserCreatedFactory({ saveActivity: saveActivityFactory({ db }) })
     ),
-    AccessRequestsEmitter.listen(AccessRequestsEvents.Created, async ({ request }) => {
-      if (!isStreamAccessRequest(request)) return
+    eventBus.listen(AccessRequestEvents.Created, async (payload) => {
+      if (!isStreamAccessRequest(payload.payload.request)) return
       return await onServerAccessRequestCreatedFactory({
         addStreamAccessRequestedActivity: addStreamAccessRequestedActivityFactory({
           saveActivity: saveActivityFactory({ db })
         })
-      })({ request })
+      })(payload)
     }),
-    AccessRequestsEmitter.listen(AccessRequestsEvents.Finalized, async (payload) => {
-      if (!isStreamAccessRequest(payload.request)) return
+    eventBus.listen(AccessRequestEvents.Finalized, async (payload) => {
+      if (!isStreamAccessRequest(payload.payload.request)) return
       await onServerAccessRequestFinalizedFactory({
         addStreamAccessRequestDeclinedActivity:
           addStreamAccessRequestDeclinedActivityFactory({
