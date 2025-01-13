@@ -42,7 +42,10 @@ import {
   storeProjectFactory,
   storeProjectRoleFactory
 } from '@/modules/core/repositories/projects'
-import { getServerInfoFactory } from '@/modules/core/repositories/server'
+import {
+  getServerConfigFactory,
+  getServerInfoFactory
+} from '@/modules/core/repositories/server'
 import {
   getStreamFactory,
   getStreamCollaboratorsFactory,
