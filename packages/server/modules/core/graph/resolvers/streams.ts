@@ -84,10 +84,15 @@ import {
   getFavoriteStreamsCollectionFactory
 } from '@/modules/core/services/streams/favorite'
 import { getUserFactory, getUsersFactory } from '@/modules/core/repositories/users'
-import { getServerInfoFactory } from '@/modules/core/repositories/server'
+import {
+  getServerConfigFactory,
+  getServerInfoFactory
+} from '@/modules/core/repositories/server'
 import { adminOverrideEnabled } from '@/modules/shared/helpers/envHelper'
 
-const getServerInfo = getServerInfoFactory({ db })
+const getServerInfo = getServerInfoFactory({
+  getServerConfig: getServerConfigFactory({ db })
+})
 const getUsers = getUsersFactory({ db })
 const getUser = getUserFactory({ db })
 const getFavoriteStreamsCollection = getFavoriteStreamsCollectionFactory({

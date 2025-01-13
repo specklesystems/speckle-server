@@ -6,7 +6,10 @@ import {
   buildAbsoluteFrontendUrlFromPath,
   getStreamRoute
 } from '@/modules/core/helpers/routeHelper'
-import { getServerInfoFactory } from '@/modules/core/repositories/server'
+import {
+  getServerConfigFactory,
+  getServerInfoFactory
+} from '@/modules/core/repositories/server'
 import { getStreamFactory } from '@/modules/core/repositories/streams'
 import { getUserFactory } from '@/modules/core/repositories/users'
 import { EmailTemplateParams } from '@/modules/emails/domain/operations'
@@ -127,7 +130,9 @@ const handler: NotificationHandler<StreamAccessRequestApprovedMessage> = async (
   ...args
 ) => {
   const streamAccessRequestApprovedHandler = streamAccessRequestApprovedHandlerFactory({
-    getServerInfo: getServerInfoFactory({ db }),
+    getServerInfo: getServerInfoFactory({
+      getServerConfig: getServerConfigFactory({ db })
+    }),
     renderEmail,
     sendEmail,
     getUser: getUserFactory({ db }),

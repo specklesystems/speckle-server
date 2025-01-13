@@ -9,7 +9,10 @@ import { StreamAcl } from '@/modules/core/dbSchema'
 import { ProjectsEmitter } from '@/modules/core/events/projectsEmitter'
 import { StreamAclRecord, StreamRecord } from '@/modules/core/helpers/types'
 import { createBranchFactory } from '@/modules/core/repositories/branches'
-import { getServerInfoFactory } from '@/modules/core/repositories/server'
+import {
+  getServerConfigFactory,
+  getServerInfoFactory
+} from '@/modules/core/repositories/server'
 import {
   createStreamFactory,
   getStreamCollaboratorsFactory,
@@ -48,7 +51,9 @@ import { faker } from '@faker-js/faker'
 import { ensureError, Roles, StreamRoles } from '@speckle/shared'
 import { omit } from 'lodash'
 
-const getServerInfo = getServerInfoFactory({ db })
+const getServerInfo = getServerInfoFactory({
+  getServerConfig: getServerConfigFactory({ db })
+})
 const getUsers = getUsersFactory({ db })
 const getUser = getUserFactory({ db })
 const getStream = getStreamFactory({ db })

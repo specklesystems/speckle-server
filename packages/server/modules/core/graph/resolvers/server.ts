@@ -9,12 +9,15 @@ import {
   getServerInfoFactory,
   updateServerInfoFactory,
   getPublicRolesFactory,
-  getPublicScopesFactory
+  getPublicScopesFactory,
+  getServerConfigFactory
 } from '@/modules/core/repositories/server'
 import { db } from '@/db/knex'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
 
-const getServerInfo = getServerInfoFactory({ db })
+const getServerInfo = getServerInfoFactory({
+  getServerConfig: getServerConfigFactory({ db })
+})
 const updateServerInfo = updateServerInfoFactory({ db })
 const getPublicRoles = getPublicRolesFactory({ db })
 const getPublicScopes = getPublicScopesFactory({ db })

@@ -71,7 +71,10 @@ import {
   updateAllInviteTargetsFactory
 } from '@/modules/serverinvites/repositories/serverInvites'
 import { createUserFactory } from '@/modules/core/services/users/management'
-import { getServerInfoFactory } from '@/modules/core/repositories/server'
+import {
+  getServerConfigFactory,
+  getServerInfoFactory
+} from '@/modules/core/repositories/server'
 import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
 import { UsersEmitter } from '@/modules/core/events/usersEmitter'
 import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
@@ -287,7 +290,9 @@ export const getSsoRouter = (): Router => {
         }),
         createWorkspaceUserFromSsoProfile: createWorkspaceUserFromSsoProfileFactory({
           createUser: createUserFactory({
-            getServerInfo: getServerInfoFactory({ db: trx }),
+            getServerInfo: getServerInfoFactory({
+              getServerConfig: getServerConfigFactory({ db: trx })
+            }),
             findEmail: findEmailFactory({ db: trx }),
             storeUser: storeUserFactory({ db: trx }),
             countAdminUsers: countAdminUsersFactory({ db: trx }),
@@ -305,7 +310,9 @@ export const getSsoRouter = (): Router => {
               requestNewEmailVerification: requestNewEmailVerificationFactory({
                 findEmail: findEmailFactory({ db: trx }),
                 getUser: getUserFactory({ db: trx }),
-                getServerInfo: getServerInfoFactory({ db: trx }),
+                getServerInfo: getServerInfoFactory({
+                  getServerConfig: getServerConfigFactory({ db: trx })
+                }),
                 deleteOldAndInsertNewVerification:
                   deleteOldAndInsertNewVerificationFactory({ db: trx }),
                 renderEmail,

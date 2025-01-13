@@ -159,7 +159,10 @@ import {
 } from '@/modules/shared/utils/subscriptions'
 import { updateStreamRoleAndNotifyFactory } from '@/modules/core/services/streams/management'
 import { getUserFactory, getUsersFactory } from '@/modules/core/repositories/users'
-import { getServerInfoFactory } from '@/modules/core/repositories/server'
+import {
+  getServerConfigFactory,
+  getServerInfoFactory
+} from '@/modules/core/repositories/server'
 import { commandFactory } from '@/modules/shared/command'
 import { withTransaction } from '@/modules/shared/helpers/dbHelper'
 import {
@@ -205,7 +208,9 @@ import { InvalidWorkspacePlanStatus } from '@/modules/gatekeeper/errors/billing'
 import { BadRequestError } from '@/modules/shared/errors'
 
 const eventBus = getEventBus()
-const getServerInfo = getServerInfoFactory({ db })
+const getServerInfo = getServerInfoFactory({
+  getServerConfig: getServerConfigFactory({ db })
+})
 const getUser = getUserFactory({ db })
 const getUsers = getUsersFactory({ db })
 const getStream = getStreamFactory({ db })

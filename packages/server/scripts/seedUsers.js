@@ -2,7 +2,10 @@ require('../bootstrap')
 const { db } = require('@/db/knex')
 const { logger } = require('@/logging/logging')
 const { UsersEmitter } = require('@/modules/core/events/usersEmitter')
-const { getServerInfoFactory } = require('@/modules/core/repositories/server')
+const {
+  getServerInfoFactory,
+  getServerConfigFactory
+} = require('@/modules/core/repositories/server')
 const {
   findEmailFactory,
   createUserEmailFactory,
@@ -35,7 +38,9 @@ const {
 } = require('@/modules/serverinvites/services/processing')
 const axios = require('axios').default
 
-const getServerInfo = getServerInfoFactory({ db })
+const getServerInfo = getServerInfoFactory({
+  getServerConfig: getServerConfigFactory({ db })
+})
 const findEmail = findEmailFactory({ db })
 const requestNewEmailVerification = requestNewEmailVerificationFactory({
   findEmail,

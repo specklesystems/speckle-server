@@ -58,20 +58,27 @@ import { requestNewEmailVerificationFactory } from '@/modules/emails/services/ve
 import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
-import { getServerInfoFactory } from '@/modules/core/repositories/server'
+import {
+  getServerConfigFactory,
+  getServerInfoFactory
+} from '@/modules/core/repositories/server'
 import { initializeEventListenerFactory } from '@/modules/auth/services/postAuth'
 
 const findEmail = findEmailFactory({ db })
 const requestNewEmailVerification = requestNewEmailVerificationFactory({
   findEmail,
   getUser: getUserFactory({ db }),
-  getServerInfo: getServerInfoFactory({ db }),
+  getServerInfo: getServerInfoFactory({
+    getServerConfig: getServerConfigFactory({ db })
+  }),
   deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db }),
   renderEmail,
   sendEmail
 })
 const createUser = createUserFactory({
-  getServerInfo: getServerInfoFactory({ db }),
+  getServerInfo: getServerInfoFactory({
+    getServerConfig: getServerConfigFactory({ db })
+  }),
   findEmail,
   storeUser: storeUserFactory({ db }),
   countAdminUsers: countAdminUsersFactory({ db }),
@@ -111,7 +118,9 @@ const finalizeInvitedServerRegistration = finalizeInvitedServerRegistrationFacto
 const resolveAuthRedirectPath = resolveAuthRedirectPathFactory()
 
 const commonBuilderDeps = {
-  getServerInfo: getServerInfoFactory({ db }),
+  getServerInfo: getServerInfoFactory({
+    getServerConfig: getServerConfigFactory({ db })
+  }),
   getUserByEmail: legacyGetUserByEmailFactory({ db }),
   findOrCreateUser,
   validateServerInvite,

@@ -27,9 +27,14 @@ import {
 import { EmailSendingServiceMock } from '@/test/mocks/global'
 import { getStreamFactory } from '@/modules/core/repositories/streams'
 import { getUserFactory } from '@/modules/core/repositories/users'
-import { getServerInfoFactory } from '@/modules/core/repositories/server'
+import {
+  getServerConfigFactory,
+  getServerInfoFactory
+} from '@/modules/core/repositories/server'
 
-const getServerInfo = getServerInfoFactory({ db })
+const getServerInfo = getServerInfoFactory({
+  getServerConfig: getServerConfigFactory({ db })
+})
 const getUser = getUserFactory({ db })
 const getStream = getStreamFactory({ db })
 const createAndSendInvite = createAndSendInviteFactory({

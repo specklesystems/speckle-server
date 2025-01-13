@@ -2,7 +2,10 @@ import { db } from '@/db/knex'
 import { UsersEmitter } from '@/modules/core/events/usersEmitter'
 import { AllScopes, ServerRoles } from '@/modules/core/helpers/mainConstants'
 import { UserRecord } from '@/modules/core/helpers/types'
-import { getServerInfoFactory } from '@/modules/core/repositories/server'
+import {
+  getServerConfigFactory,
+  getServerInfoFactory
+} from '@/modules/core/repositories/server'
 import {
   storeApiTokenFactory,
   storePersonalApiTokenFactory,
@@ -36,7 +39,9 @@ import { faker } from '@faker-js/faker'
 import { ServerScope, wait } from '@speckle/shared'
 import { isArray, isNumber, kebabCase, omit, times } from 'lodash'
 
-const getServerInfo = getServerInfoFactory({ db })
+const getServerInfo = getServerInfoFactory({
+  getServerConfig: getServerConfigFactory({ db })
+})
 const findEmail = findEmailFactory({ db })
 const requestNewEmailVerification = requestNewEmailVerificationFactory({
   findEmail,

@@ -25,7 +25,10 @@ import { dispatchStreamEventFactory } from '@/modules/webhooks/services/webhooks
 import { Knex } from 'knex'
 import { getStreamFactory } from '@/modules/core/repositories/streams'
 import { getUserFactory } from '@/modules/core/repositories/users'
-import { getServerInfoFactory } from '@/modules/core/repositories/server'
+import {
+  getServerConfigFactory,
+  getServerInfoFactory
+} from '@/modules/core/repositories/server'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 
 const tables = {
@@ -259,7 +262,9 @@ export const saveActivityFactory =
       // the whole activity module will need to be refactored to use the eventBus
       await dispatchStreamEventFactory({
         getStreamWebhooks: getStreamWebhooksFactory({ db: projectDb }),
-        getServerInfo: getServerInfoFactory({ db }),
+        getServerInfo: getServerInfoFactory({
+          getServerConfig: getServerConfigFactory({ db })
+        }),
         getStream: getStreamFactory({ db: projectDb }),
         createWebhookEvent: createWebhookEventFactory({ db: projectDb }),
         getUser: getUserFactory({ db })

@@ -1,6 +1,9 @@
 import { db } from '@/db/knex'
 import { deleteExistingAuthTokensFactory } from '@/modules/auth/repositories'
-import { getServerInfoFactory } from '@/modules/core/repositories/server'
+import {
+  getServerConfigFactory,
+  getServerInfoFactory
+} from '@/modules/core/repositories/server'
 import {
   getUserByEmailFactory,
   getUserFactory,
@@ -29,7 +32,9 @@ export default function (app: Express) {
         getUserByEmail,
         getPendingToken: getPendingTokenFactory({ db }),
         createToken: createTokenFactory({ db }),
-        getServerInfo: getServerInfoFactory({ db }),
+        getServerInfo: getServerInfoFactory({
+          getServerConfig: getServerConfigFactory({ db })
+        }),
         renderEmail,
         sendEmail
       })

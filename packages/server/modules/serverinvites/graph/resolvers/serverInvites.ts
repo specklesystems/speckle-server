@@ -82,7 +82,10 @@ import {
   validateStreamAccessFactory
 } from '@/modules/core/services/streams/access'
 import { getUserFactory, getUsersFactory } from '@/modules/core/repositories/users'
-import { getServerInfoFactory } from '@/modules/core/repositories/server'
+import {
+  getServerConfigFactory,
+  getServerInfoFactory
+} from '@/modules/core/repositories/server'
 
 const saveActivity = saveActivityFactory({ db })
 const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
@@ -102,7 +105,9 @@ const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
     publish
   })
 })
-const getServerInfo = getServerInfoFactory({ db })
+const getServerInfo = getServerInfoFactory({
+  getServerConfig: getServerConfigFactory({ db })
+})
 const getStream = getStreamFactory({ db })
 const requestNewEmailVerification = requestNewEmailVerificationFactory({
   findEmail: findEmailFactory({ db }),
