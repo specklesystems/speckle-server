@@ -151,6 +151,8 @@ const projects = computed(() => projectsResult.value?.activeUser?.projects.items
 const hasProjects = computed(() => (projects.value ? projects.value.length > 0 : false))
 
 const onDownloadManager = (extension: ManagerExtension) => {
+  throw new Error('duhh hell')
+
   try {
     downloadManager(extension)
 
