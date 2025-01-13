@@ -3,7 +3,6 @@
     <div class="md:max-w-xl md:mx-auto pb-6 md:pb-0">
       <SettingsSectionHeader title="General" text="Manage your workspace settings" />
       <SettingsSectionHeader title="Workspace details" subheading />
-      {{ route.name }}
       <div class="pt-6">
         <FormTextInput
           v-model="name"

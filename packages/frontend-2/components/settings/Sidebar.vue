@@ -1,97 +1,127 @@
+<!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
+<!-- eslint-disable vuejs-accessibility/click-events-have-key-events -->
 <template>
-  <div class="h-full flex w-[17rem] shrink-0">
-    <LayoutSidebar class="border-r border-outline-3 px-2 pt-3 pb-2 bg-foundation-page">
-      <LayoutSidebarMenu>
-        <LayoutSidebarMenuGroup>
-          <NuxtLink :to="homeRoute" class="flex items-center gap-x-1.5 px-2.5">
-            <ChevronLeftIcon class="h-3 w-3 text-foreground-2" />
-            <p class="text-body-xs font-medium text-foreground">Exit settings</p>
-          </NuxtLink>
-        </LayoutSidebarMenuGroup>
-        <LayoutSidebarMenuGroup title="User settings">
-          <template #title-icon>
-            <IconAccount class="size-4" />
-          </template>
-          <NuxtLink
-            v-for="(sidebarMenuItem, key) in userMenuItems"
-            :key="key"
-            :to="sidebarMenuItem.getRoute()"
-          >
-            <LayoutSidebarMenuGroupItem
-              :label="sidebarMenuItem.title"
-              :active="route.path === sidebarMenuItem.getRoute()"
-            />
-          </NuxtLink>
-        </LayoutSidebarMenuGroup>
-        <LayoutSidebarMenuGroup v-if="isAdmin" title="Server settings">
-          <template #title-icon>
-            <IconServer class="size-4" />
-          </template>
-          <NuxtLink
-            v-for="(sidebarMenuItem, key) in serverMenuItems"
-            :key="key"
-            :to="sidebarMenuItem.getRoute()"
-          >
-            <LayoutSidebarMenuGroupItem
-              :label="sidebarMenuItem.title"
-              :active="route.path === sidebarMenuItem.getRoute()"
-            />
-          </NuxtLink>
-        </LayoutSidebarMenuGroup>
-        <LayoutSidebarMenuGroup v-if="isWorkspacesEnabled" title="Workspace settings">
-          <LayoutSidebarMenuGroup
-            v-for="(workspaceItem, index) in workspaceItems"
-            :key="index"
-            :title="workspaceItem.name"
-            collapsible
-            :collapsed="slug !== workspaceItem.slug"
-            :tag="
-              workspaceItem.plan?.status === WorkspacePlanStatuses.Trial ||
-              !workspaceItem.plan?.status
-                ? 'TRIAL'
-                : undefined
-            "
-          >
+  <div class="group">
+    <div
+      class="lg:hidden absolute inset-0 backdrop-blur-sm z-40 transition-all"
+      :class="isOpenMobile ? 'opacity-100' : 'opacity-0 pointer-events-none'"
+      @click="isOpenMobile = false"
+    />
+    <Portal to="mobile-navigation">
+      <div class="lg:hidden">
+        <FormButton
+          :color="isOpenMobile ? 'outline' : 'subtle'"
+          size="sm"
+          class="mt-px"
+          @click="isOpenMobile = !isOpenMobile"
+        >
+          <IconSidebar v-if="!isOpenMobile" class="h-4 w-4 -ml-1 -mr-1" />
+          <IconSidebarClose v-else class="h-4 w-4 -ml-1 -mr-1" />
+        </FormButton>
+      </div>
+    </Portal>
+    <div
+      class="absolute z-40 lg:static h-full flex w-[17rem] shrink-0 transition-all"
+      :class="isOpenMobile ? '' : '-translate-x-[17rem] lg:translate-x-0'"
+    >
+      <LayoutSidebar
+        class="border-r border-outline-3 px-2 pt-3 pb-2 bg-foundation-page"
+      >
+        <LayoutSidebarMenu>
+          <LayoutSidebarMenuGroup>
+            <NuxtLink :to="homeRoute" class="flex items-center gap-x-1.5 px-2.5">
+              <ChevronLeftIcon class="h-3 w-3 text-foreground-2" />
+              <p class="text-body-xs font-medium text-foreground">Exit settings</p>
+            </NuxtLink>
+          </LayoutSidebarMenuGroup>
+          <LayoutSidebarMenuGroup title="User settings">
             <template #title-icon>
-              <WorkspaceAvatar
-                :logo="workspaceItem.logo"
-                :name="workspaceItem.name"
-                size="sm"
-              />
+              <IconAccount class="size-4" />
             </template>
             <NuxtLink
-              v-for="(workspaceMenuItem, itemKey) in workspaceMenuItems"
-              :key="`${index}-${itemKey}`"
-              :to="workspaceMenuItem.getRoute(workspaceItem.slug)"
+              v-for="(sidebarMenuItem, key) in userMenuItems"
+              :key="key"
+              :to="sidebarMenuItem.getRoute()"
+              @click="isOpenMobile = false"
             >
               <LayoutSidebarMenuGroupItem
-                v-if="workspaceMenuItem.permission?.includes(workspaceItem.role as WorkspaceRoles)"
-                :label="workspaceMenuItem.title"
-                :active="route.name === workspaceMenuItem.name"
-                :tooltip-text="
-                  needsSsoSession(workspaceItem, workspaceMenuItem.name)
-                    ? 'Log in with your SSO provider to access this page'
-                    : workspaceMenuItem.tooltipText
-                "
-                :disabled="
-                  !isAdmin &&
-                  (workspaceMenuItem.disabled ||
-                    needsSsoSession(workspaceItem, workspaceMenuItem.name))
-                "
-                class="!pl-8"
+                :label="sidebarMenuItem.title"
+                :active="route.path === sidebarMenuItem.getRoute()"
               />
             </NuxtLink>
           </LayoutSidebarMenuGroup>
-          <NuxtLink v-if="!isGuest" :to="workspacesRoute">
-            <LayoutSidebarMenuGroupItem label="Create workspace">
-              <template #icon>
-                <PlusIcon class="h-4 w-4 text-foreground-2" />
+          <LayoutSidebarMenuGroup v-if="isAdmin" title="Server settings">
+            <template #title-icon>
+              <IconServer class="size-4" />
+            </template>
+            <NuxtLink
+              v-for="(sidebarMenuItem, key) in serverMenuItems"
+              :key="key"
+              :to="sidebarMenuItem.getRoute()"
+              @click="isOpenMobile = false"
+            >
+              <LayoutSidebarMenuGroupItem
+                :label="sidebarMenuItem.title"
+                :active="route.path === sidebarMenuItem.getRoute()"
+              />
+            </NuxtLink>
+          </LayoutSidebarMenuGroup>
+          <LayoutSidebarMenuGroup v-if="isWorkspacesEnabled" title="Workspace settings">
+            <LayoutSidebarMenuGroup
+              v-for="(workspaceItem, index) in workspaceItems"
+              :key="index"
+              :title="workspaceItem.name"
+              collapsible
+              :collapsed="slug !== workspaceItem.slug"
+              :tag="
+                workspaceItem.plan?.status === WorkspacePlanStatuses.Trial ||
+                !workspaceItem.plan?.status
+                  ? 'TRIAL'
+                  : undefined
+              "
+            >
+              <template #title-icon>
+                <WorkspaceAvatar
+                  :logo="workspaceItem.logo"
+                  :name="workspaceItem.name"
+                  size="sm"
+                />
               </template>
-            </LayoutSidebarMenuGroupItem>
-          </NuxtLink>
-        </LayoutSidebarMenuGroup>
-      </LayoutSidebarMenu>
-    </LayoutSidebar>
+              <NuxtLink
+                v-for="(workspaceMenuItem, itemKey) in workspaceMenuItems"
+                :key="`${index}-${itemKey}`"
+                :to="workspaceMenuItem.getRoute(workspaceItem.slug)"
+                @click="isOpenMobile = false"
+              >
+                <LayoutSidebarMenuGroupItem
+                  v-if="workspaceMenuItem.permission?.includes(workspaceItem.role as WorkspaceRoles)"
+                  :label="workspaceMenuItem.title"
+                  :active="route.name === workspaceMenuItem.name"
+                  :tooltip-text="
+                    needsSsoSession(workspaceItem, workspaceMenuItem.name)
+                      ? 'Log in with your SSO provider to access this page'
+                      : workspaceMenuItem.tooltipText
+                  "
+                  :disabled="
+                    !isAdmin &&
+                    (workspaceMenuItem.disabled ||
+                      needsSsoSession(workspaceItem, workspaceMenuItem.name))
+                  "
+                  class="!pl-8"
+                />
+              </NuxtLink>
+            </LayoutSidebarMenuGroup>
+            <NuxtLink v-if="!isGuest" :to="workspacesRoute">
+              <LayoutSidebarMenuGroupItem label="Create workspace">
+                <template #icon>
+                  <PlusIcon class="h-4 w-4 text-foreground-2" />
+                </template>
+              </LayoutSidebarMenuGroupItem>
+            </NuxtLink>
+          </LayoutSidebarMenuGroup>
+        </LayoutSidebarMenu>
+      </LayoutSidebar>
+    </div>
   </div>
 </template>
 
@@ -151,6 +181,8 @@ const { result: workspaceResult } = useQuery(settingsSidebarQuery, null, {
   enabled: isWorkspacesEnabled.value
 })
 const { userMenuItems, serverMenuItems, workspaceMenuItems } = useSettingsMenu()
+
+const isOpenMobile = ref(false)
 
 const slug = computed(() => route.params.slug as string)
 const workspaceItems = computed(
