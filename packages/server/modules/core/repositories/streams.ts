@@ -713,7 +713,7 @@ const getUserStreamsQueryBaseFactory =
         })
     }
 
-    if (workspaceId) {
+    if (!isUndefined(workspaceId)) {
       query.andWhere(Streams.col.workspaceId, workspaceId)
     }
 
