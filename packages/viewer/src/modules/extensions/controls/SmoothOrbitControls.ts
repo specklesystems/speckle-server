@@ -48,6 +48,7 @@ const clamp = (value: number, lowerLimit: number, upperLimit: number): number =>
   Math.max(lowerLimit, Math.min(upperLimit, value))
 
 const PAN_SENSITIVITY = 0.018
+const MOVEMENT_EPSILON = 1e-5
 const vector3 = new Vector3()
 
 export type TouchMode = null | ((dx: number, dy: number) => void)
@@ -626,9 +627,8 @@ export class SmoothOrbitControls extends SpeckleControls {
       normalization
     )
     this.origin.set(x, y, z)
-    this.moveCamera()
 
-    return true
+    return this.moveCamera()
   }
 
   /** Function expects the position argument to be in a CS where Y is up */
@@ -698,7 +698,10 @@ export class SmoothOrbitControls extends SpeckleControls {
     return pivotalOrigin
   }
 
-  protected moveCamera() {
+  protected moveCamera(): boolean {
+    const lastCameraPos = new Vector3().copy(this._targetCamera.position)
+    const lastCameraQuat = new Quaternion().copy(this._targetCamera.quaternion)
+
     this.spherical.makeSafe()
 
     /** We get the current position and rotation based off the latest polar params
@@ -784,9 +787,14 @@ export class SmoothOrbitControls extends SpeckleControls {
 
     /** Update the debug origin sphere */
     this.orbitSphere.position.copy(
-      this._options.orbitAroundCursor
+      this._options.orbitAroundCursor && this.usePivotal
         ? this.pivotPoint
         : new Vector3().copy(this.origin).applyMatrix4(this._basisTransform)
+    )
+
+    return (
+      lastCameraPos.sub(this._targetCamera.position).length() > MOVEMENT_EPSILON ||
+      lastCameraQuat.angleTo(this._targetCamera.quaternion) > MOVEMENT_EPSILON
     )
   }
 
