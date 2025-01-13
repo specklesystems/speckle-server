@@ -277,6 +277,7 @@ export class SmoothOrbitControls extends SpeckleControls {
     /** Three.js Spherical assumes (0, 1, 0) as up... */
     v1.applyMatrix4(this._basisTransformInv)
     this.setTarget(v1.x, v1.y, v1.z)
+    this.usePivotal = false
   }
 
   /**
@@ -295,6 +296,7 @@ export class SmoothOrbitControls extends SpeckleControls {
     this.setTarget(nativeOrigin.x, nativeOrigin.y, nativeOrigin.z)
 
     this.setRadius(sphere.radius)
+    this.usePivotal = false
   }
 
   /**
@@ -990,6 +992,7 @@ export class SmoothOrbitControls extends SpeckleControls {
     target.add(dxy.applyMatrix3(this.panProjection))
     this.setTarget(target.x, target.y, target.z)
     this.usePivotal = false
+    this.orbitSphere.visible = false
   }
 
   protected onPointerDown = (event: PointerEvent) => {
@@ -1149,6 +1152,7 @@ export class SmoothOrbitControls extends SpeckleControls {
       (event.button === 2 || event.ctrlKey || event.metaKey || event.shiftKey)
     ) {
       this.initializePan()
+      this.orbitSphere.visible = false
     }
     // this.element.style.cursor = 'grabbing'
   }
@@ -1175,6 +1179,7 @@ export class SmoothOrbitControls extends SpeckleControls {
     this.userAdjustOrbit(0, 0, deltaZoom)
     event.preventDefault()
     this.usePivotal = false
+    this.orbitSphere.visible = false
     // TO DO
     // this.dispatchEvent({ type: 'user-interaction' })
   }
