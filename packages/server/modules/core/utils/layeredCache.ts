@@ -1,11 +1,15 @@
-import TTLCache from '@isaacs/ttlcache'
 import type { Redis } from 'ioredis'
+
+export interface InMemoryCache<T> {
+  get: (key: string) => T | undefined
+  set: (key: string, value: T, options: { ttl: number }) => void
+}
 
 export type GetFromLayeredCache<T> = (params: {
   retrieveFromSource: () => Promise<T>
   key: string
-  inMemoryCache: TTLCache<string, T>
-  distributedCache?: Redis
+  inMemoryCache: InMemoryCache<T>
+  distributedCache?: Pick<Redis, 'get' | 'setex'>
   bustCache?: boolean
 }) => Promise<T>
 
@@ -25,13 +29,8 @@ export const layeredCacheFactory = <T>(deps: {
     if (!bustCache) {
       const inMemoryResult = inMemoryCache.get(key)
       if (inMemoryResult) return inMemoryResult
-    } else {
-      //bustCache
-      inMemoryCache.delete(key)
-    }
 
-    if (distributedCache) {
-      if (!bustCache) {
+      if (distributedCache) {
         const cachedResult = await distributedCache.get(key)
         if (cachedResult) {
           const parsedCachedResult = JSON.parse(cachedResult) as T
@@ -42,11 +41,10 @@ export const layeredCacheFactory = <T>(deps: {
           })
           return parsedCachedResult
         }
-      } else {
-        //bustCache
-        await distributedCache.del(key)
       }
     }
+    // if cache is to be busted, we will retrieve from source and then update the cache
+
     const result = await retrieveFromSource()
 
     // update both layers of cache with whatever we got from the source
