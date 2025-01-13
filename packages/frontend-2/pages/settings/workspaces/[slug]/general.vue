@@ -1,6 +1,6 @@
 <template>
   <section>
-    <!-- <div class="md:max-w-xl md:mx-auto pb-6 md:pb-0">
+    <div class="md:max-w-xl md:mx-auto pb-6 md:pb-0">
       <SettingsSectionHeader title="General" text="Manage your workspace settings" />
       <SettingsSectionHeader title="Workspace details" subheading />
       <div class="pt-6">
@@ -60,8 +60,8 @@
           </div>
           <div :key="String(isAdmin)" v-tippy="disabledTooltipText">
             <SettingsWorkspacesGeneralEditAvatar
-              v-if="workspaceResult?.workspace"
-              :workspace="workspaceResult?.workspace"
+              v-if="workspaceResult?.workspaceBySlug"
+              :workspace="workspaceResult?.workspaceBySlug"
               :disabled="!isAdmin || needsSsoLogin"
               size="xxl"
             />
@@ -94,7 +94,7 @@
       <hr class="my-6 border-outline-2" />
       <div class="flex flex-col space-y-6">
         <SettingsSectionHeader title="Leave workspace" subheading />
-        <CommonCard class="bg-foundation">
+        <CommonCard class="text-body-xs bg-foundation">
           By clicking the button below you will leave this workspace.
         </CommonCard>
         <div>
@@ -107,7 +107,7 @@
         <hr class="mb-6 mt-8 border-outline-2" />
         <div class="flex flex-col space-y-6">
           <SettingsSectionHeader title="Delete workspace" subheading />
-          <CommonCard class="bg-foundation">
+          <CommonCard class="text-body-xs bg-foundation">
             We will delete all projects where you are the sole owner, and any associated
             data. We will ask you to type in your email address and press the delete
             button.
@@ -131,45 +131,46 @@
     <SettingsWorkspacesGeneralLeaveDialog
       v-if="workspaceResult"
       v-model:open="showLeaveDialog"
-      :workspace="workspaceResult.workspace"
+      :workspace="workspaceResult.workspaceBySlug"
     />
 
     <SettingsWorkspacesGeneralDeleteDialog
       v-if="workspaceResult && isAdmin"
       v-model:open="showDeleteDialog"
-      :workspace="workspaceResult.workspace"
+      :workspace="workspaceResult.workspaceBySlug"
     />
 
     <SettingsWorkspacesGeneralEditSlugDialog
       v-if="workspaceResult && isAdmin"
       v-model:open="showEditSlugDialog"
       :base-url="baseUrl"
-      :workspace="workspaceResult.workspace"
+      :workspace="workspaceResult.workspaceBySlug"
       @update:slug="updateWorkspaceSlug"
-    /> -->
+    />
   </section>
 </template>
 
 <script setup lang="ts">
 import { graphql } from '~~/lib/common/generated/gql'
-// import { useForm } from 'vee-validate'
-// import { useQuery, useMutation } from '@vue/apollo-composable'
-// import { settingsUpdateWorkspaceMutation } from '~/lib/settings/graphql/mutations'
-// import { settingsWorkspaceGeneralQuery } from '~/lib/settings/graphql/queries'
-// import type { WorkspaceUpdateInput } from '~~/lib/common/generated/gql/graphql'
-// import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
-// import {
-//   getFirstErrorMessage,
-//   convertThrowIntoFetchResult
-// } from '~~/lib/common/helpers/graphql'
-// import { isRequired, isStringOfLength } from '~~/lib/common/helpers/validation'
-// import { useMixpanel } from '~/lib/core/composables/mp'
-// import { Roles, type StreamRoles } from '@speckle/shared'
-// import { workspaceRoute } from '~/lib/common/helpers/route'
-// import { useRoute } from 'vue-router'
-// import { WorkspacePlanStatuses } from '~/lib/common/generated/gql/graphql'
-// import { isPaidPlan } from '~/lib/billing/helpers/types'
-// import { useWorkspaceSsoStatus } from '~/lib/workspaces/composables/sso'
+import { useForm } from 'vee-validate'
+import { useQuery, useMutation } from '@vue/apollo-composable'
+import { settingsUpdateWorkspaceMutation } from '~/lib/settings/graphql/mutations'
+import { settingsWorkspaceGeneralQuery } from '~/lib/settings/graphql/queries'
+import type { WorkspaceUpdateInput } from '~~/lib/common/generated/gql/graphql'
+import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
+import {
+  getFirstErrorMessage,
+  convertThrowIntoFetchResult
+} from '~~/lib/common/helpers/graphql'
+import { isRequired, isStringOfLength } from '~~/lib/common/helpers/validation'
+import { useMixpanel } from '~/lib/core/composables/mp'
+import { Roles, type StreamRoles } from '@speckle/shared'
+import { workspaceRoute } from '~/lib/common/helpers/route'
+import { useRoute } from 'vue-router'
+import { WorkspacePlanStatuses } from '~/lib/common/generated/gql/graphql'
+import { isPaidPlan } from '~/lib/billing/helpers/types'
+import { useWorkspaceSsoStatus } from '~/lib/workspaces/composables/sso'
+
 graphql(`
   fragment SettingsWorkspacesGeneral_Workspace on Workspace {
     ...SettingsWorkspacesGeneralEditAvatar_Workspace
@@ -189,182 +190,195 @@ graphql(`
   }
 `)
 
-// type FormValues = { name: string; description: string; defaultProjectRole: StreamRoles }
+definePageMeta({
+  middleware: ['auth'],
+  layout: 'settings'
+})
 
-// const slug = computed(() => (route.params.slug as string) || '')
+useHead({
+  title: 'Settings - Members'
+})
 
-// const IconEdit = resolveComponent('IconEdit')
+type FormValues = { name: string; description: string; defaultProjectRole: StreamRoles }
 
-// const isBillingIntegrationEnabled = useIsBillingIntegrationEnabled()
-// const mixpanel = useMixpanel()
-// const router = useRouter()
-// const route = useRoute()
-// const { handleSubmit } = useForm<FormValues>()
-// const { triggerNotification } = useGlobalToast()
-// const { mutate: updateMutation } = useMutation(settingsUpdateWorkspaceMutation)
-// const { result: workspaceResult, onResult } = useQuery(
-//   settingsWorkspaceGeneralQuery,
-//   () => ({
-//     slug: slug.value
-//   })
-// )
-// const config = useRuntimeConfig()
-// const { hasSsoEnabled, needsSsoLogin } = useWorkspaceSsoStatus({
-//   workspaceSlug: computed(() => workspaceResult.value?.workspace?.slug || '')
-// })
+const routeSlug = computed(() => (route.params.slug as string) || '')
 
-// const name = ref('')
-// const slug = ref('')
-// const description = ref('')
-// const showDeleteDialog = ref(false)
-// const showEditSlugDialog = ref(false)
-// const showLeaveDialog = ref(false)
-// const defaultProjectRole = ref<StreamRoles>()
+const IconEdit = resolveComponent('IconEdit')
 
-// const isAdmin = computed(
-//   () => workspaceResult.value?.workspace?.role === Roles.Workspace.Admin
-// )
-// const canDeleteWorkspace = computed(
-//   () =>
-//     isAdmin.value &&
-//     !needsSsoLogin.value &&
-//     (!isBillingIntegrationEnabled ||
-//       !(
-//         [
-//           WorkspacePlanStatuses.Valid,
-//           WorkspacePlanStatuses.PaymentFailed,
-//           WorkspacePlanStatuses.CancelationScheduled
-//         ].includes(
-//           workspaceResult.value?.workspace?.plan?.status as WorkspacePlanStatuses
-//         ) && isPaidPlan(workspaceResult.value?.workspace?.plan?.name)
-//       ))
-// )
-// const deleteWorkspaceTooltip = computed(() => {
-//   if (needsSsoLogin.value)
-//     return 'You cannot delete a workspace that requires SSO without an active session'
-//   if (!canDeleteWorkspace.value) return 'You cannot delete an active workspace'
-//   if (!isAdmin.value) return 'Only admins can delete workspaces'
-//   return undefined
-// })
+const isBillingIntegrationEnabled = useIsBillingIntegrationEnabled()
+const mixpanel = useMixpanel()
+const router = useRouter()
+const route = useRoute()
+const { handleSubmit } = useForm<FormValues>()
+const { triggerNotification } = useGlobalToast()
+const { mutate: updateMutation } = useMutation(settingsUpdateWorkspaceMutation)
+const { result: workspaceResult, onResult } = useQuery(
+  settingsWorkspaceGeneralQuery,
+  () => ({
+    slug: routeSlug.value
+  })
+)
+const config = useRuntimeConfig()
+const { hasSsoEnabled, needsSsoLogin } = useWorkspaceSsoStatus({
+  workspaceSlug: computed(() => workspaceResult.value?.workspaceBySlug?.slug || '')
+})
 
-// const save = handleSubmit(async () => {
-//   if (!workspaceResult.value?.workspace) return
+const name = ref('')
+const slug = ref('')
+const description = ref('')
+const showDeleteDialog = ref(false)
+const showEditSlugDialog = ref(false)
+const showLeaveDialog = ref(false)
+const defaultProjectRole = ref<StreamRoles>()
 
-//   const input: WorkspaceUpdateInput = {
-//     id: workspaceResult.value.workspace.id
-//   }
-//   if (name.value !== workspaceResult.value.workspace.name) input.name = name.value
-//   if (description.value !== workspaceResult.value.workspace.description)
-//     input.description = description.value
-//   if (defaultProjectRole.value !== workspaceResult.value.workspace.defaultProjectRole)
-//     input.defaultProjectRole = defaultProjectRole.value
+const isAdmin = computed(
+  () => workspaceResult.value?.workspaceBySlug?.role === Roles.Workspace.Admin
+)
+const canDeleteWorkspace = computed(
+  () =>
+    isAdmin.value &&
+    !needsSsoLogin.value &&
+    (!isBillingIntegrationEnabled ||
+      !(
+        [
+          WorkspacePlanStatuses.Valid,
+          WorkspacePlanStatuses.PaymentFailed,
+          WorkspacePlanStatuses.CancelationScheduled
+        ].includes(
+          workspaceResult.value?.workspaceBySlug?.plan?.status as WorkspacePlanStatuses
+        ) && isPaidPlan(workspaceResult.value?.workspaceBySlug?.plan?.name)
+      ))
+)
+const deleteWorkspaceTooltip = computed(() => {
+  if (needsSsoLogin.value)
+    return 'You cannot delete a workspace that requires SSO without an active session'
+  if (!canDeleteWorkspace.value) return 'You cannot delete an active workspace'
+  if (!isAdmin.value) return 'Only admins can delete workspaces'
+  return undefined
+})
 
-//   const result = await updateMutation({ input }).catch(convertThrowIntoFetchResult)
+const save = handleSubmit(async () => {
+  if (!workspaceResult.value?.workspaceBySlug) return
 
-//   if (result?.data) {
-//     triggerNotification({
-//       type: ToastNotificationType.Success,
-//       title: 'Workspace updated'
-//     })
+  const input: WorkspaceUpdateInput = {
+    id: workspaceResult.value.workspaceBySlug.id
+  }
+  if (name.value !== workspaceResult.value.workspaceBySlug.name) input.name = name.value
+  if (description.value !== workspaceResult.value.workspaceBySlug.description)
+    input.description = description.value
+  if (
+    defaultProjectRole.value !==
+    workspaceResult.value.workspaceBySlug.defaultProjectRole
+  )
+    input.defaultProjectRole = defaultProjectRole.value
 
-//     mixpanel.track('Workspace General Settings Updated', {
-//       fields: (Object.keys(input) as Array<keyof WorkspaceUpdateInput>).filter(
-//         (key) => key !== 'id'
-//       ),
-//       // eslint-disable-next-line camelcase
-//       workspace_id: props.workspaceId,
-//       source: 'settings'
-//     })
-//   } else {
-//     const errorMessage = getFirstErrorMessage(result?.errors)
-//     triggerNotification({
-//       type: ToastNotificationType.Danger,
-//       title: 'Workspace update failed',
-//       description: errorMessage
-//     })
-//   }
-// })
+  const result = await updateMutation({ input }).catch(convertThrowIntoFetchResult)
 
-// watch(
-//   () => workspaceResult,
-//   () => {
-//     if (workspaceResult.value?.workspace) {
-//       name.value = workspaceResult.value.workspace.name
-//       description.value = workspaceResult.value.workspace.description ?? ''
-//       slug.value = workspaceResult.value.workspace.slug ?? ''
-//     }
-//   },
-//   { deep: true, immediate: true }
-// )
+  if (result?.data) {
+    triggerNotification({
+      type: ToastNotificationType.Success,
+      title: 'Workspace updated'
+    })
 
-// onResult((res) => {
-//   if (res.data) {
-//     defaultProjectRole.value = res.data.workspace.defaultProjectRole as StreamRoles
-//   }
-// })
+    mixpanel.track('Workspace General Settings Updated', {
+      fields: (Object.keys(input) as Array<keyof WorkspaceUpdateInput>).filter(
+        (key) => key !== 'id'
+      ),
+      // eslint-disable-next-line camelcase
+      workspace_id: workspaceResult.value.workspaceBySlug.id,
+      source: 'settings'
+    })
+  } else {
+    const errorMessage = getFirstErrorMessage(result?.errors)
+    triggerNotification({
+      type: ToastNotificationType.Danger,
+      title: 'Workspace update failed',
+      description: errorMessage
+    })
+  }
+})
 
-// const baseUrl = config.public.baseUrl
+watch(
+  () => workspaceResult,
+  () => {
+    if (workspaceResult.value?.workspaceBySlug) {
+      name.value = workspaceResult.value.workspaceBySlug.name
+      description.value = workspaceResult.value.workspaceBySlug.description ?? ''
+      slug.value = workspaceResult.value.workspaceBySlug.slug ?? ''
+    }
+  },
+  { deep: true, immediate: true }
+)
 
-// const slugHelp = computed(() => {
-//   return `${baseUrl}/workspaces/${slug.value}`
-// })
+onResult((res) => {
+  if (res.data) {
+    defaultProjectRole.value = res.data.workspaceBySlug
+      .defaultProjectRole as StreamRoles
+  }
+})
 
-// // Using toRef to fix reactivity bug around tooltips
-// const adminRef = toRef(isAdmin)
+const baseUrl = config.public.baseUrl
 
-// const disabledTooltipText = computed(() => {
-//   if (!adminRef.value) return 'Only admins can edit this field'
-//   if (needsSsoLogin.value) return 'Log in with your SSO provider to edit this field'
-//   return undefined
-// })
+const slugHelp = computed(() => {
+  return `${baseUrl}/workspaces/${slug.value}`
+})
 
-// const disableSlugInput = computed(() => !isAdmin.value || hasSsoEnabled.value)
+// Using toRef to fix reactivity bug around tooltips
+const adminRef = toRef(isAdmin)
 
-// const disabledSlugTooltipText = computed(() => {
-//   return hasSsoEnabled.value
-//     ? 'Short ID cannot be changed while SSO is enabled.'
-//     : disabledTooltipText.value
-// })
+const disabledTooltipText = computed(() => {
+  if (!adminRef.value) return 'Only admins can edit this field'
+  if (needsSsoLogin.value) return 'Log in with your SSO provider to edit this field'
+  return undefined
+})
 
-// const openSlugEditDialog = () => {
-//   if (hasSsoEnabled.value) return
-//   showEditSlugDialog.value = true
-// }
+const disableSlugInput = computed(() => !isAdmin.value || hasSsoEnabled.value)
 
-// const updateWorkspaceSlug = async (newSlug: string) => {
-//   if (!workspaceResult.value?.workspace) {
-//     return
-//   }
+const disabledSlugTooltipText = computed(() => {
+  return hasSsoEnabled.value
+    ? 'Short ID cannot be changed while SSO is enabled.'
+    : disabledTooltipText.value
+})
 
-//   const oldSlug = slug.value
+const openSlugEditDialog = () => {
+  if (hasSsoEnabled.value) return
+  showEditSlugDialog.value = true
+}
 
-//   const result = await updateMutation({
-//     input: {
-//       id: workspaceResult.value.workspace.id,
-//       slug: newSlug
-//     }
-//   })
+const updateWorkspaceSlug = async (newSlug: string) => {
+  if (!workspaceResult.value?.workspaceBySlug) {
+    return
+  }
 
-//   if (result && result.data) {
-//     triggerNotification({
-//       type: ToastNotificationType.Success,
-//       title: 'Workspace short ID updated'
-//     })
+  const oldSlug = slug.value
 
-//     showEditSlugDialog.value = false
+  const result = await updateMutation({
+    input: {
+      id: workspaceResult.value.workspaceBySlug.id,
+      slug: newSlug
+    }
+  })
 
-//     slug.value = newSlug
+  if (result && result.data) {
+    triggerNotification({
+      type: ToastNotificationType.Success,
+      title: 'Workspace short ID updated'
+    })
 
-//     if (route.params.slug === oldSlug) {
-//       router.replace(workspaceRoute(newSlug))
-//     }
-//   } else {
-//     const errorMessage = getFirstErrorMessage(result && result.errors)
-//     triggerNotification({
-//       type: ToastNotificationType.Danger,
-//       title: 'Failed to update workspace slug',
-//       description: errorMessage
-//     })
-//   }
-// }
+    showEditSlugDialog.value = false
+
+    slug.value = newSlug
+
+    if (routeSlug.value === oldSlug) {
+      router.replace(workspaceRoute(newSlug))
+    }
+  } else {
+    const errorMessage = getFirstErrorMessage(result && result.errors)
+    triggerNotification({
+      type: ToastNotificationType.Danger,
+      title: 'Failed to update workspace slug',
+      description: errorMessage
+    })
+  }
+}
 </script>
