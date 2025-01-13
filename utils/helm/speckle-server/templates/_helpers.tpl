@@ -589,6 +589,9 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 - name: FF_WORKSPACES_MULTI_REGION_ENABLED
   value: {{ .Values.featureFlags.workspacesMultiRegionEnabled | quote }}
 
+- name: DEFAULT_PROJECT_REGION_KEY
+  value: {{ .Values.multiRegion.config.defaultProjectRegionKey }}
+
 {{- if .Values.featureFlags.billingIntegrationEnabled }}
 - name: STRIPE_API_KEY
   valueFrom:

@@ -423,6 +423,8 @@ multiRegion:
     secretName: 'multi-region-config'
     ## @param multiRegion.config.secretKey If workspacesMultiRegionEnabled is enabled, the server will be deployed in a multi-region configuration based on the values in a secret. This allows the default secret key and filename to be overridden.
     secretKey: 'multi-region-config.json'
+    ## @param multiRegion.config.defaultProjectRegionKey forces new projects to be created in this region if not indicated otherwise
+    defaultProjectRegionKey: ''
 
 ## @section Server
 ## @descriptionStart
