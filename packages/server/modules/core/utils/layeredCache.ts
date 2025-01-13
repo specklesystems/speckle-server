@@ -6,25 +6,24 @@ export interface InMemoryCache<T> {
 }
 
 export type GetFromLayeredCache<T> = (params: {
-  retrieveFromSource: () => Promise<T>
   key: string
-  inMemoryCache: InMemoryCache<T>
-  distributedCache?: Pick<Redis, 'get' | 'setex'>
   bustCache?: boolean
 }) => Promise<T>
 
 export const layeredCacheFactory = <T>(deps: {
+  retrieveFromSource: () => Promise<T>
+  inMemoryCache: InMemoryCache<T>
+  distributedCache?: Pick<Redis, 'get' | 'setex'>
   options?: {
     inMemoryExpiryTimeSeconds?: number
     redisExpiryTimeSeconds?: number
   }
 }): GetFromLayeredCache<T> => {
-  const { options } = deps
+  const { options, retrieveFromSource, inMemoryCache, distributedCache } = deps
   const inMemoryTtl = (options?.inMemoryExpiryTimeSeconds || 2) * 1000 // convert seconds to milliseconds
 
   return async (params) => {
-    const { key, retrieveFromSource, inMemoryCache, distributedCache, bustCache } =
-      params
+    const { key, bustCache } = params
 
     if (!bustCache) {
       const inMemoryResult = inMemoryCache.get(key)

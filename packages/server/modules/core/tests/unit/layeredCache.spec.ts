@@ -5,12 +5,6 @@ import { expect } from 'chai'
 import Redis from 'ioredis'
 
 describe('Layered cache @core', () => {
-  const getFromLayeredCache = layeredCacheFactory<string>({
-    options: {
-      inMemoryExpiryTimeSeconds: 2, // it doesn't matter, as this is an implementation detail for the underlying cache
-      redisExpiryTimeSeconds: 60 // it doesn't matter, as this is an implementation detail for the underlying cache
-    }
-  })
   describe('with Memory cache only (without distributed cache)', () => {
     describe('bust cache is enabled', () => {
       it('should return from source and update the cache with new value', async () => {
@@ -22,12 +16,18 @@ describe('Layered cache @core', () => {
             expect(value).to.equal('fromSource')
           }
         }
-        const result = await getFromLayeredCache({
-          key,
+        const getFromLayeredCache = layeredCacheFactory<string>({
           inMemoryCache: mockInMemoryCache,
           distributedCache: undefined,
-          bustCache: true,
-          retrieveFromSource: async () => 'fromSource'
+          retrieveFromSource: async () => 'fromSource',
+          options: {
+            inMemoryExpiryTimeSeconds: 2, // it doesn't matter, as this is an implementation detail for the underlying cache
+            redisExpiryTimeSeconds: 60 // it doesn't matter, as this is an implementation detail for the underlying cache
+          }
+        })
+        const result = await getFromLayeredCache({
+          key,
+          bustCache: true
         })
         expect(result).to.equal('fromSource')
       })
@@ -36,22 +36,25 @@ describe('Layered cache @core', () => {
       describe('key is in the cache', () => {
         //NB we don't test if the key has expired or not, as this is an implementation detail for the underlying cache
         it('should return from cache', async () => {
+          const key = cryptoRandomString({ length: 10 })
           const mockInMemoryCache: InMemoryCache<string> = {
             get: () => 'fromInMemory',
             set: () => {
               expect(true, 'Key should not have been set').to.equal(false)
             }
           }
-          const key = cryptoRandomString({ length: 10 })
-          const result = await getFromLayeredCache({
-            key,
+          const getFromLayeredCache = layeredCacheFactory<string>({
             inMemoryCache: mockInMemoryCache,
             distributedCache: undefined,
-            bustCache: false,
-            retrieveFromSource: async () => {
-              expect(true, 'Should not be retrieving from source').to.equal(false)
-              return 'fromSource'
+            retrieveFromSource: async () => 'fromSource',
+            options: {
+              inMemoryExpiryTimeSeconds: 2, // it doesn't matter, as this is an implementation detail for the underlying cache
+              redisExpiryTimeSeconds: 60 // it doesn't matter, as this is an implementation detail for the underlying cache
             }
+          })
+          const result = await getFromLayeredCache({
+            key,
+            bustCache: false
           })
           expect(result).to.equal('fromInMemory')
         })
@@ -66,14 +69,18 @@ describe('Layered cache @core', () => {
               expect(value).to.equal('fromSource')
             }
           }
-          const result = await getFromLayeredCache({
-            key,
+          const getFromLayeredCache = layeredCacheFactory<string>({
             inMemoryCache: mockInMemoryCache,
             distributedCache: undefined,
-            bustCache: false,
-            retrieveFromSource: async () => {
-              return 'fromSource'
+            retrieveFromSource: async () => 'fromSource',
+            options: {
+              inMemoryExpiryTimeSeconds: 2, // it doesn't matter, as this is an implementation detail for the underlying cache
+              redisExpiryTimeSeconds: 60 // it doesn't matter, as this is an implementation detail for the underlying cache
             }
+          })
+          const result = await getFromLayeredCache({
+            key,
+            bustCache: false
           })
           expect(result).to.equal('fromSource')
         })
@@ -106,12 +113,18 @@ describe('Layered cache @core', () => {
             return Promise.resolve('OK')
           }
         }
-        const result = await getFromLayeredCache({
-          key,
+        const getFromLayeredCache = layeredCacheFactory<string>({
           inMemoryCache: mockInMemoryCache,
           distributedCache: mockDistributedCache,
-          bustCache: true,
-          retrieveFromSource: async () => 'fromSource'
+          retrieveFromSource: async () => 'fromSource',
+          options: {
+            inMemoryExpiryTimeSeconds: 2, // it doesn't matter, as this is an implementation detail for the underlying cache
+            redisExpiryTimeSeconds: 60 // it doesn't matter, as this is an implementation detail for the underlying cache
+          }
+        })
+        const result = await getFromLayeredCache({
+          key,
+          bustCache: true
         })
         expect(result).to.equal('fromSource')
       })
@@ -143,15 +156,18 @@ describe('Layered cache @core', () => {
               return Promise.resolve('OK')
             }
           }
-          const result = await getFromLayeredCache({
-            key,
+          const getFromLayeredCache = layeredCacheFactory<string>({
             inMemoryCache: mockInMemoryCache,
             distributedCache: mockDistributedCache,
-            bustCache: false,
-            retrieveFromSource: async () => {
-              expect(true, 'Should not be retrieving from source').to.equal(false)
-              return 'fromSource'
+            retrieveFromSource: async () => 'fromSource',
+            options: {
+              inMemoryExpiryTimeSeconds: 2, // it doesn't matter, as this is an implementation detail for the underlying cache
+              redisExpiryTimeSeconds: 60 // it doesn't matter, as this is an implementation detail for the underlying cache
             }
+          })
+          const result = await getFromLayeredCache({
+            key,
+            bustCache: false
           })
           expect(result).to.equal('fromInMemory')
         })
@@ -180,15 +196,18 @@ describe('Layered cache @core', () => {
               return Promise.resolve('OK')
             }
           }
-          const result = await getFromLayeredCache({
-            key,
+          const getFromLayeredCache = layeredCacheFactory<string>({
             inMemoryCache: mockInMemoryCache,
             distributedCache: mockDistributedCache,
-            bustCache: false,
-            retrieveFromSource: async () => {
-              expect(true, 'Should not be retrieving from source').to.equal(false)
-              return 'fromSource'
+            retrieveFromSource: async () => 'fromSource',
+            options: {
+              inMemoryExpiryTimeSeconds: 2, // it doesn't matter, as this is an implementation detail for the underlying cache
+              redisExpiryTimeSeconds: 60 // it doesn't matter, as this is an implementation detail for the underlying cache
             }
+          })
+          const result = await getFromLayeredCache({
+            key,
+            bustCache: false
           })
           expect(result).to.equal('fromDistributed')
         })
@@ -227,14 +246,18 @@ describe('Layered cache @core', () => {
               return Promise.resolve('OK')
             }
           }
-          const result = await getFromLayeredCache({
-            key,
+          const getFromLayeredCache = layeredCacheFactory<string>({
             inMemoryCache: mockInMemoryCache,
             distributedCache: mockDistributedCache,
-            bustCache: false,
-            retrieveFromSource: async () => {
-              return 'fromSource'
+            retrieveFromSource: async () => 'fromSource',
+            options: {
+              inMemoryExpiryTimeSeconds: 2, // it doesn't matter, as this is an implementation detail for the underlying cache
+              redisExpiryTimeSeconds: 60 // it doesn't matter, as this is an implementation detail for the underlying cache
             }
+          })
+          const result = await getFromLayeredCache({
+            key,
+            bustCache: false
           })
           expect(result).to.equal('fromSource')
           expect(mockInMemoryCache.setMemory[key]).to.equal('fromSource')

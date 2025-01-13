@@ -47,17 +47,6 @@ export type GetServerConfig = (params: {
   bustCache?: boolean
 }) => Promise<ServerConfigRecord>
 
-const cache = layeredCacheFactory<ServerConfigRecord>({
-  options: {
-    inMemoryExpiryTimeSeconds: 2,
-    redisExpiryTimeSeconds: 60
-  }
-})
-
-const inMemoryCache = new TTLCache<string, ServerConfigRecord>({
-  max: 2000
-})
-
 export const getServerConfigFactory =
   (deps: { db: Knex }): GetServerConfig =>
   async () =>
@@ -69,17 +58,27 @@ export const getServerConfigWithCacheFactory = (deps: {
   db: Knex
   distributedCache?: Redis
 }): GetServerConfig => {
-  const { db } = deps
+  const { db, distributedCache } = deps
+  const inMemoryCache = new TTLCache<string, ServerConfigRecord>({
+    max: 1 //because we only ever use one key, SERVER_CONFIG_CACHE_KEY
+  })
+
+  const getFromSourceOrCache = layeredCacheFactory<ServerConfigRecord>({
+    inMemoryCache,
+    distributedCache,
+    options: {
+      inMemoryExpiryTimeSeconds: 2,
+      redisExpiryTimeSeconds: 60
+    },
+    retrieveFromSource: async () => {
+      // An entry should always exist, as one is inserted via db migrations
+      return (await tables.serverConfig(db).select('*').first())!
+    }
+  })
   return async (params) => {
-    return await cache({
+    return await getFromSourceOrCache({
       key: SERVER_CONFIG_CACHE_KEY,
-      inMemoryCache,
-      distributedCache: deps.distributedCache,
-      bustCache: params.bustCache,
-      retrieveFromSource: async () => {
-        // An entry should always exist, as one is inserted via db migrations
-        return (await tables.serverConfig(db).select('*').first())!
-      }
+      bustCache: params.bustCache
     })
   }
 }
