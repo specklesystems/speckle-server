@@ -34,7 +34,10 @@ import {
 } from '@/modules/core/domain/streams/operations'
 import { ProjectNotFoundError } from '@/modules/core/errors/projects'
 import { WorkspaceProjectCreateInput } from '@/test/graphql/generated/graphql'
-import { getDb } from '@/modules/multiregion/utils/dbSelector'
+import {
+  getDb,
+  getValidDefaultProjectRegionKey
+} from '@/modules/multiregion/utils/dbSelector'
 import { createNewProjectFactory } from '@/modules/core/services/projects'
 import {
   deleteProjectFactory,
@@ -265,7 +268,8 @@ export const createWorkspaceProjectFactory =
     const workspaceDefaultRegion = await deps.getDefaultRegion({
       workspaceId: input.workspaceId
     })
-    const regionKey = workspaceDefaultRegion?.key
+    const regionKey =
+      workspaceDefaultRegion?.key ?? (await getValidDefaultProjectRegionKey())
     const projectDb = await getDb({ regionKey })
     const db = mainDb
 
