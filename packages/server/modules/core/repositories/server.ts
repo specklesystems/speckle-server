@@ -43,7 +43,7 @@ const tables = {
 
 const SERVER_CONFIG_CACHE_KEY = 'server_config'
 
-export type GetServerConfig = (params: {
+export type GetServerConfig = (params?: {
   bustCache?: boolean
 }) => Promise<ServerConfigRecord>
 
@@ -72,13 +72,13 @@ export const getServerConfigWithCacheFactory = (deps: {
     },
     retrieveFromSource: async () => {
       // An entry should always exist, as one is inserted via db migrations
-      return (await tables.serverConfig(db).select('*').first())!
+      return getServerConfigFactory({ db })()
     }
   })
   return async (params) => {
     return await getFromSourceOrCache({
       key: SERVER_CONFIG_CACHE_KEY,
-      bustCache: params.bustCache
+      bustCache: params?.bustCache
     })
   }
 }
