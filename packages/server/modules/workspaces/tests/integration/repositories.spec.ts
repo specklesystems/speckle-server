@@ -841,6 +841,15 @@ describe('Workspace repositories', () => {
       })
 
       expect(workspaces.length).to.equal(1)
+      expect(workspaces[0].id).to.equal(workspace.id)
+
+      const otherUserWorkspaces = await getUserDiscoverableWorkspaces({
+        domains: ['example.org'],
+        userId: otherUser.id
+      })
+
+      expect(otherUserWorkspaces.length).to.equal(1)
+      expect(otherUserWorkspaces[0].id).to.equal(workspaceWithExistingRequest.id)
     })
   })
 

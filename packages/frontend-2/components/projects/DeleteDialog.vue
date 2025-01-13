@@ -17,9 +17,6 @@
             {{ modelText }}
           </p>
           <p>
-            {{ discussionText }}
-          </p>
-          <p>
             {{ versionsText }}
           </p>
         </CommonCard>
@@ -58,9 +55,6 @@ graphql(`
     models(limit: 0) {
       totalCount
     }
-    commentThreads(limit: 0) {
-      totalCount
-    }
     workspace {
       slug
       id
@@ -95,12 +89,6 @@ const versionsText = computed(
   () =>
     `${props.project.versions.totalCount} ${
       props.project.versions.totalCount === 1 ? 'version' : 'versions'
-    }`
-)
-const discussionText = computed(
-  () =>
-    `${props.project.commentThreads.totalCount} ${
-      props.project.commentThreads.totalCount === 1 ? 'discussion' : 'discussions'
     }`
 )
 const dialogButtons = computed<LayoutDialogButton[]>(() => [

@@ -1,5 +1,8 @@
 import { moduleLogger } from '@/logging/logging'
-import { initializeRegisteredRegionClients as initDb } from '@/modules/multiregion/utils/dbSelector'
+import {
+  getValidDefaultProjectRegionKey,
+  initializeRegisteredRegionClients as initDb
+} from '@/modules/multiregion/utils/dbSelector'
 import { isMultiRegionEnabled } from '@/modules/multiregion/helpers'
 import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import {
@@ -18,6 +21,8 @@ const multiRegion: SpeckleModule = {
 
     // Init registered region clients
     await initDb()
+    // validate default project region key
+    await getValidDefaultProjectRegionKey()
 
     const isBlobStorageEnabled = isMultiRegionBlobStorageEnabled()
     if (isBlobStorageEnabled) {

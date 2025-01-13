@@ -31,7 +31,7 @@ import {
   workspaceUpdateRoleMutation
 } from '~/lib/workspaces/graphql/mutations'
 import { isFunction } from 'lodash-es'
-import type { GraphQLError } from 'graphql'
+import type { GraphQLError, GraphQLFormattedError } from 'graphql'
 import { onWorkspaceUpdatedSubscription } from '~/lib/workspaces/graphql/subscriptions'
 import { useLock } from '~/lib/common/composables/singleton'
 import type { Get } from 'type-fest'
@@ -131,7 +131,10 @@ export const useProcessWorkspaceInvite = () => {
       callback: () => MaybeAsync<void>
       preventErrorToasts?:
         | boolean
-        | ((errors: GraphQLError[], errMsg: string) => boolean)
+        | ((
+            errors: GraphQLError[] | GraphQLFormattedError[],
+            errMsg: string
+          ) => boolean)
     }>
   ) => {
     if (!isWorkspacesEnabled.value) return
@@ -253,7 +256,9 @@ export const useWorkspaceInviteManager = <
      */
     preventRedirect: boolean
     route: RouteLocationNormalized
-    preventErrorToasts: boolean | ((errors: GraphQLError[], errMsg: string) => boolean)
+    preventErrorToasts:
+      | boolean
+      | ((errors: GraphQLError[] | GraphQLFormattedError[], errMsg: string) => boolean)
   }>
 ) => {
   const isWorkspacesEnabled = useIsWorkspacesEnabled()

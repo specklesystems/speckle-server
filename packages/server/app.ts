@@ -290,7 +290,7 @@ export function buildApolloSubscriptionServer(
         const ctx = baseParams.context as GraphQLContext
 
         const logger = ctx.log || subscriptionLogger
-        logger.debug(
+        logger.info(
           {
             graphql_operation_name: baseParams.operationName,
             userId: baseParams.context.userId,

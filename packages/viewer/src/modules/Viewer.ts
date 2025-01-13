@@ -366,7 +366,7 @@ export class Viewer extends EventEmitter implements IViewer {
         this.speckleRenderer.removeRenderTree(resource)
         this.tree.getRenderTree(resource)?.purge()
         this.tree.purge(resource)
-        this.requestRender(UpdateFlags.RENDER | UpdateFlags.SHADOWS)
+        this.requestRender(UpdateFlags.RENDER_RESET | UpdateFlags.SHADOWS)
       }
     } finally {
       if (--this.inProgressOperations === 0) {

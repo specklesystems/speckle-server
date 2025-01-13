@@ -34,7 +34,10 @@ import {
 } from '@/modules/core/domain/streams/operations'
 import { ProjectNotFoundError } from '@/modules/core/errors/projects'
 import { WorkspaceProjectCreateInput } from '@/test/graphql/generated/graphql'
-import { getDb } from '@/modules/multiregion/utils/dbSelector'
+import {
+  getDb,
+  getValidDefaultProjectRegionKey
+} from '@/modules/multiregion/utils/dbSelector'
 import { createNewProjectFactory } from '@/modules/core/services/projects'
 import {
   deleteProjectFactory,
@@ -43,8 +46,8 @@ import {
 } from '@/modules/core/repositories/projects'
 import { mainDb } from '@/db/knex'
 import { storeModelFactory } from '@/modules/core/repositories/models'
-import { ProjectsEmitter } from '@/modules/core/events/projectsEmitter'
 import { getProjectFactory } from '@/modules/core/repositories/streams'
+import { getEventBus } from '@/modules/shared/services/eventBus'
 
 export const queryAllWorkspaceProjectsFactory = ({
   getStreams
@@ -265,7 +268,8 @@ export const createWorkspaceProjectFactory =
     const workspaceDefaultRegion = await deps.getDefaultRegion({
       workspaceId: input.workspaceId
     })
-    const regionKey = workspaceDefaultRegion?.key
+    const regionKey =
+      workspaceDefaultRegion?.key ?? (await getValidDefaultProjectRegionKey())
     const projectDb = await getDb({ regionKey })
     const db = mainDb
 
@@ -278,7 +282,7 @@ export const createWorkspaceProjectFactory =
       storeModel: storeModelFactory({ db: projectDb }),
       // THIS MUST GO TO THE MAIN DB
       storeProjectRole: storeProjectRoleFactory({ db }),
-      projectsEventsEmitter: ProjectsEmitter.emit
+      emitEvent: getEventBus().emit
     })
 
     const project = await createNewProject({
