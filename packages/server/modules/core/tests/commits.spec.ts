@@ -1,20 +1,18 @@
 /* istanbul ignore file */
-const expect = require('chai').expect
+import { expect } from 'chai'
 
-const { beforeEachContext } = require('@/test/hooks')
+import { beforeEachContext } from '@/test/hooks'
 
-const {
-  createBranchAndNotifyFactory
-} = require('@/modules/core/services/branch/management')
-const cryptoRandomString = require('crypto-random-string')
-const {
+import { createBranchAndNotifyFactory } from '@/modules/core/services/branch/management'
+import cryptoRandomString from 'crypto-random-string'
+import {
   createBranchFactory,
   getStreamBranchByNameFactory,
   markCommitBranchUpdatedFactory,
   getBranchByIdFactory
-} = require('@/modules/core/repositories/branches')
-const { db } = require('@/db/knex')
-const {
+} from '@/modules/core/repositories/branches'
+import { db } from '@/db/knex'
+import {
   getCommitFactory,
   deleteCommitFactory,
   createCommitFactory,
@@ -28,91 +26,74 @@ const {
   legacyGetPaginatedStreamCommitsPageFactory,
   getBranchCommitsTotalCountFactory,
   getPaginatedBranchCommitsItemsFactory
-} = require('@/modules/core/repositories/commits')
-const {
+} from '@/modules/core/repositories/commits'
+import {
   deleteCommitAndNotifyFactory,
   createCommitByBranchIdFactory,
   createCommitByBranchNameFactory,
   updateCommitAndNotifyFactory
-} = require('@/modules/core/services/commit/management')
-const {
+} from '@/modules/core/services/commit/management'
+import {
   getStreamFactory,
   getCommitStreamFactory,
   createStreamFactory,
   markCommitStreamUpdatedFactory
-} = require('@/modules/core/repositories/streams')
-const {
+} from '@/modules/core/repositories/streams'
+import {
   addCommitUpdatedActivityFactory,
   addCommitDeletedActivityFactory,
   addCommitCreatedActivityFactory
-} = require('@/modules/activitystream/services/commitActivity')
-const { VersionsEmitter } = require('@/modules/core/events/versionsEmitter')
-const {
+} from '@/modules/activitystream/services/commitActivity'
+import {
   getObjectFactory,
   storeSingleObjectIfNotFoundFactory,
   storeClosuresIfNotFoundFactory
-} = require('@/modules/core/repositories/objects')
-const {
+} from '@/modules/core/repositories/objects'
+import {
   legacyCreateStreamFactory,
   createStreamReturnRecordFactory
-} = require('@/modules/core/services/streams/management')
-const {
-  inviteUsersToProjectFactory
-} = require('@/modules/serverinvites/services/projectInviteManagement')
-const {
-  createAndSendInviteFactory
-} = require('@/modules/serverinvites/services/creation')
-const {
+} from '@/modules/core/services/streams/management'
+import { inviteUsersToProjectFactory } from '@/modules/serverinvites/services/projectInviteManagement'
+import { createAndSendInviteFactory } from '@/modules/serverinvites/services/creation'
+import {
   findUserByTargetFactory,
   insertInviteAndDeleteOldFactory,
   deleteServerOnlyInvitesFactory,
   updateAllInviteTargetsFactory
-} = require('@/modules/serverinvites/repositories/serverInvites')
-const {
-  collectAndValidateCoreTargetsFactory
-} = require('@/modules/serverinvites/services/coreResourceCollection')
-const {
-  buildCoreInviteEmailContentsFactory
-} = require('@/modules/serverinvites/services/coreEmailContents')
-const { getEventBus } = require('@/modules/shared/services/eventBus')
-const { saveActivityFactory } = require('@/modules/activitystream/repositories')
-const { publish } = require('@/modules/shared/utils/subscriptions')
-const {
+} from '@/modules/serverinvites/repositories/serverInvites'
+import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
+import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
+import { getEventBus } from '@/modules/shared/services/eventBus'
+import { saveActivityFactory } from '@/modules/activitystream/repositories'
+import { publish } from '@/modules/shared/utils/subscriptions'
+import {
   getUsersFactory,
   getUserFactory,
   storeUserFactory,
   countAdminUsersFactory,
   storeUserAclFactory
-} = require('@/modules/core/repositories/users')
-const {
+} from '@/modules/core/repositories/users'
+import {
   findEmailFactory,
   createUserEmailFactory,
   ensureNoPrimaryEmailForUserFactory
-} = require('@/modules/core/repositories/userEmails')
-const {
-  requestNewEmailVerificationFactory
-} = require('@/modules/emails/services/verification/request')
-const {
-  deleteOldAndInsertNewVerificationFactory
-} = require('@/modules/emails/repositories')
-const { renderEmail } = require('@/modules/emails/services/emailRendering')
-const { sendEmail } = require('@/modules/emails/services/sending')
-const { createUserFactory } = require('@/modules/core/services/users/management')
-const {
-  validateAndCreateUserEmailFactory
-} = require('@/modules/core/services/userEmails')
-const {
-  finalizeInvitedServerRegistrationFactory
-} = require('@/modules/serverinvites/services/processing')
-const { getServerInfoFactory } = require('@/modules/core/repositories/server')
-const {
+} from '@/modules/core/repositories/userEmails'
+import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
+import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
+import { renderEmail } from '@/modules/emails/services/emailRendering'
+import { sendEmail } from '@/modules/emails/services/sending'
+import { createUserFactory } from '@/modules/core/services/users/management'
+import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
+import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
+import { getServerInfoFactory } from '@/modules/core/repositories/server'
+import {
   getBranchCommitsTotalCountByNameFactory,
   getPaginatedBranchCommitsItemsByNameFactory
-} = require('@/modules/core/services/commit/retrieval')
-const { createObjectFactory } = require('@/modules/core/services/objects/management')
-const {
-  addBranchCreatedActivityFactory
-} = require('@/modules/activitystream/services/branchActivity')
+} from '@/modules/core/services/commit/retrieval'
+import { createObjectFactory } from '@/modules/core/services/objects/management'
+import { addBranchCreatedActivityFactory } from '@/modules/activitystream/services/branchActivity'
+import { ensureError } from '@speckle/shared'
+import { VersionEvents } from '@/modules/core/domain/commits/events'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = getUserFactory({ db })
@@ -150,7 +131,7 @@ const createCommitByBranchId = createCommitByBranchIdFactory({
   insertBranchCommits: insertBranchCommitsFactory({ db }),
   markCommitStreamUpdated,
   markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
-  versionsEventEmitter: VersionsEmitter.emit,
+  emitEvent: getEventBus().emit,
   addCommitCreatedActivity: addCommitCreatedActivityFactory({
     saveActivity: saveActivityFactory({ db }),
     publish
@@ -254,12 +235,14 @@ describe('Commits @core-commits', () => {
   const user = {
     name: 'Dimitrie Stefanescu',
     email: 'didimitrie4342@gmail.com',
-    password: 'sn3aky-1337-b1m'
+    password: 'sn3aky-1337-b1m',
+    id: ''
   }
 
   const stream = {
     name: 'Test Stream References',
-    description: 'Whatever goes in here usually...'
+    description: 'Whatever goes in here usually...',
+    id: ''
   }
 
   const testObject = {
@@ -277,12 +260,14 @@ describe('Commits @core-commits', () => {
     baz: 'qux5'
   }
 
+  let quitters: (() => void)[] = []
+
   const generateObject = async (streamId = stream.id, object = testObject) =>
     await createObject({ streamId, object })
   const generateStream = async (streamBase = stream, ownerId = user.id) =>
     await createStream({ ...streamBase, ownerId })
 
-  let commitId1, commitId2, commitId3
+  let commitId1: string, commitId2: string, commitId3: string
 
   before(async () => {
     await beforeEachContext()
@@ -336,19 +321,35 @@ describe('Commits @core-commits', () => {
     ).id
   })
 
+  afterEach(() => {
+    quitters.forEach((quit) => quit())
+    quitters = []
+  })
+
   it('Should create a commit by branch name', async () => {
+    const msg = 'first commit ive ever done, yes sir'
+
+    let eventFired = false
+    quitters.push(
+      getEventBus().listen(VersionEvents.Created, ({ payload }) => {
+        expect(payload.version.message).to.equal(msg)
+        eventFired = true
+      })
+    )
+
     const objectId = await generateObject()
     const id = (
       await createCommitByBranchName({
         streamId: stream.id,
         branchName: 'main',
-        message: 'first commit',
+        message: msg,
         sourceApplication: 'tests',
         objectId,
         authorId: user.id
       })
     ).id
     expect(id).to.be.a.string
+    expect(eventFired).to.be.true
   })
 
   // support SKDs not being able to handle the fe1 - fe2 link transition
@@ -386,7 +387,9 @@ describe('Commits @core-commits', () => {
       ).id
       expect(id).null
     } catch (error) {
-      expect(error.message).contains('Failed to find branch with name or id')
+      expect(ensureError(error).message).contains(
+        'Failed to find branch with name or id'
+      )
     }
   })
 
@@ -453,15 +456,15 @@ describe('Commits @core-commits', () => {
 
   it('Should get a commit by id', async () => {
     const cm = await getCommit(commitId1, { streamId: stream.id })
-    expect(cm.message).to.equal('FIRST COMMIT YOOOOOO')
-    expect(cm.author).to.equal(user.id)
+    expect(cm!.message).to.equal('FIRST COMMIT YOOOOOO')
+    expect(cm!.author).to.equal(user.id)
   })
 
   it('Should get the commits and their total count from a branch', async () => {
     const streamId = await generateStream()
 
     for (let i = 0; i < 10; i++) {
-      const t = { qux: i }
+      const t = { qux: i, id: '' }
       t.id = await createObject({ streamId, object: t })
       await createCommitByBranchName({
         streamId,
@@ -498,10 +501,15 @@ describe('Commits @core-commits', () => {
 
   it('Should get the commits and their total count from a stream', async () => {
     const streamId = await generateStream()
-    await createBranch({ name: 'dim/dev', streamId, authorId: user.id })
+    await createBranch({
+      name: 'dim/dev',
+      streamId,
+      authorId: user.id,
+      description: null
+    })
 
     for (let i = 0; i < 15; i++) {
-      const t = { thud: i }
+      const t = { thud: i, id: '' }
       t.id = await createObject({ streamId, object: t })
       await createCommitByBranchName({
         streamId,
@@ -562,18 +570,18 @@ describe('Commits @core-commits', () => {
 
     for (const commit of [serverCommit, branchCommit, idCommit]) {
       expect(commit).to.have.property('sourceApplication')
-      expect(commit.sourceApplication).to.be.a('string')
+      expect(commit!.sourceApplication).to.be.a('string')
 
       expect(commit).to.have.property('totalChildrenCount')
-      expect(commit.totalChildrenCount).to.be.a('number')
+      expect(commit!.totalChildrenCount).to.be.a('number')
 
       expect(commit).to.have.property('parents')
-      expect(commit.streamId).to.equal(stream.id)
+      expect(commit!.streamId).to.equal(stream.id)
     }
 
-    expect(idCommit.parents).to.be.a('array')
-    expect(idCommit.parents.length).to.equal(2)
-    expect(idCommit.streamId).to.equal(stream.id)
+    expect(idCommit!.parents).to.be.a('array')
+    expect(idCommit!.parents!.length).to.equal(2)
+    expect(idCommit!.streamId).to.equal(stream.id)
   })
 
   it('Should have an array of parents', async () => {
@@ -584,8 +592,8 @@ describe('Commits @core-commits', () => {
 
     for (const commit of commits) {
       expect(commit).to.have.property('parents')
-      expect(commit.parents).to.be.a('array')
-      expect(commit.parents.length).to.greaterThan(0)
+      expect(commit!.parents).to.be.a('array')
+      expect(commit!.parents!.length).to.greaterThan(0)
     }
   })
 })

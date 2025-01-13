@@ -52,7 +52,6 @@ const {
   grantStreamPermissionsFactory,
   markCommitStreamUpdatedFactory
 } = require('@/modules/core/repositories/streams')
-const { VersionsEmitter } = require('@/modules/core/events/versionsEmitter')
 const {
   getObjectFactory,
   storeSingleObjectIfNotFoundFactory,
@@ -146,7 +145,7 @@ const createCommitByBranchId = createCommitByBranchIdFactory({
   insertBranchCommits: insertBranchCommitsFactory({ db }),
   markCommitStreamUpdated,
   markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
-  versionsEventEmitter: VersionsEmitter.emit,
+  emitEvent: getEventBus().emit,
   addCommitCreatedActivity: addCommitCreatedActivityFactory({
     saveActivity: saveActivityFactory({ db }),
     publish

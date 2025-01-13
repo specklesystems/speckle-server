@@ -58,7 +58,6 @@ import {
 } from '@/modules/comments/repositories/comments'
 import { getBlobsFactory } from '@/modules/blobstorage/repositories'
 import { validateInputAttachmentsFactory } from '@/modules/comments/services/commentTextService'
-import { VersionsEmitter } from '@/modules/core/events/versionsEmitter'
 import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import { publish } from '@/modules/shared/utils/subscriptions'
 import { addCommitCreatedActivityFactory } from '@/modules/activitystream/services/commitActivity'
@@ -204,7 +203,7 @@ const command: CommandModule<
       insertBranchCommits: insertBranchCommitsFactory({ db: projectDb }),
       markCommitStreamUpdated,
       markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db: projectDb }),
-      versionsEventEmitter: VersionsEmitter.emit,
+      emitEvent: getEventBus().emit,
       addCommitCreatedActivity: addCommitCreatedActivityFactory({
         saveActivity: saveActivityFactory({ db: mainDb }),
         publish

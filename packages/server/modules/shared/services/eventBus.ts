@@ -27,6 +27,10 @@ import {
   userEventsNamespace,
   UserEventsPayloads
 } from '@/modules/core/domain/users/events'
+import {
+  versionEventsNamespace,
+  VersionEventsPayloads
+} from '@/modules/core/domain/commits/events'
 
 type AllEventsWildcard = '**'
 type EventWildcard = '*'
@@ -50,6 +54,7 @@ type EventsByNamespace = {
   [modelEventsNamespace]: ModelEventsPayloads
   [projectEventsNamespace]: ProjectEventsPayloads
   [userEventsNamespace]: UserEventsPayloads
+  [versionEventsNamespace]: VersionEventsPayloads
 }
 
 type EventTypes = UnionToIntersection<EventsByNamespace[keyof EventsByNamespace]>
