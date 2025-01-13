@@ -4496,6 +4496,7 @@ export type WorkspaceProjectInviteCreateInput = {
 export type WorkspaceProjectMutations = {
   __typename?: 'WorkspaceProjectMutations';
   create: Project;
+  moveToRegion: Project;
   moveToWorkspace: Project;
   updateRole: Project;
 };
@@ -4503,6 +4504,12 @@ export type WorkspaceProjectMutations = {
 
 export type WorkspaceProjectMutationsCreateArgs = {
   input: WorkspaceProjectCreateInput;
+};
+
+
+export type WorkspaceProjectMutationsMoveToRegionArgs = {
+  projectId: Scalars['String']['input'];
+  regionKey: Scalars['String']['input'];
 };
 
 

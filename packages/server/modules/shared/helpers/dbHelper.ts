@@ -22,7 +22,7 @@ export async function* executeBatchedSelect<
 >(
   selectQuery: Knex.QueryBuilder<TRecord, TResult>,
   options?: Partial<BatchedSelectOptions>
-): AsyncGenerator<Awaited<(typeof selectQuery)>, void, unknown> {
+): AsyncGenerator<Awaited<typeof selectQuery>, void, unknown> {
   const { batchSize = 100, trx } = options || {}
 
   if (trx) selectQuery.transacting(trx)
@@ -33,7 +33,7 @@ export async function* executeBatchedSelect<
   let currentOffset = 0
   while (hasMorePages) {
     const q = selectQuery.clone().offset(currentOffset)
-    const results = (await q) as Awaited<(typeof selectQuery)>
+    const results = (await q) as Awaited<typeof selectQuery>
 
     if (!results.length) {
       hasMorePages = false

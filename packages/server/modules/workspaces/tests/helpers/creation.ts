@@ -64,7 +64,7 @@ import {
 import { SetOptional } from 'type-fest'
 import { isMultiRegionTestMode } from '@/test/speckle-helpers/regions'
 import {
-  assignRegionFactory,
+  assignWorkspaceRegionFactory,
   getAvailableRegionsFactory
 } from '@/modules/workspaces/services/regions'
 import { getRegionsFactory } from '@/modules/multiregion/repositories'
@@ -185,7 +185,7 @@ export const createTestWorkspace = async (
 
   if (useRegion) {
     const regionDb = await getDb({ regionKey })
-    const assignRegion = assignRegionFactory({
+    const assignRegion = assignWorkspaceRegionFactory({
       getAvailableRegions: getAvailableRegionsFactory({
         getRegions: getRegionsFactory({ db }),
         canWorkspaceUseRegions: canWorkspaceUseRegionsFactory({

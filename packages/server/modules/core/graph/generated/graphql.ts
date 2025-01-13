@@ -4514,6 +4514,7 @@ export type WorkspaceProjectInviteCreateInput = {
 export type WorkspaceProjectMutations = {
   __typename?: 'WorkspaceProjectMutations';
   create: Project;
+  moveToRegion: Project;
   moveToWorkspace: Project;
   updateRole: Project;
 };
@@ -4521,6 +4522,12 @@ export type WorkspaceProjectMutations = {
 
 export type WorkspaceProjectMutationsCreateArgs = {
   input: WorkspaceProjectCreateInput;
+};
+
+
+export type WorkspaceProjectMutationsMoveToRegionArgs = {
+  projectId: Scalars['String']['input'];
+  regionKey: Scalars['String']['input'];
 };
 
 
@@ -6799,6 +6806,7 @@ export type WorkspacePlanResolvers<ContextType = GraphQLContext, ParentType exte
 
 export type WorkspaceProjectMutationsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['WorkspaceProjectMutations'] = ResolversParentTypes['WorkspaceProjectMutations']> = {
   create?: Resolver<ResolversTypes['Project'], ParentType, ContextType, RequireFields<WorkspaceProjectMutationsCreateArgs, 'input'>>;
+  moveToRegion?: Resolver<ResolversTypes['Project'], ParentType, ContextType, RequireFields<WorkspaceProjectMutationsMoveToRegionArgs, 'projectId' | 'regionKey'>>;
   moveToWorkspace?: Resolver<ResolversTypes['Project'], ParentType, ContextType, RequireFields<WorkspaceProjectMutationsMoveToWorkspaceArgs, 'projectId' | 'workspaceId'>>;
   updateRole?: Resolver<ResolversTypes['Project'], ParentType, ContextType, RequireFields<WorkspaceProjectMutationsUpdateRoleArgs, 'input'>>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
