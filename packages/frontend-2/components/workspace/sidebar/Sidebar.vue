@@ -86,7 +86,7 @@ const billingAlertAction = computed<Array<AlertAction>>(() => {
       {
         title: 'Subscribe',
         onClick: () =>
-          navigateTo(settingsRoutes.workspace(props.workspaceInfo.slug).billing)
+          navigateTo(settingsRoutes.workspace.billing.route(props.workspaceInfo.slug))
       }
     ]
   }

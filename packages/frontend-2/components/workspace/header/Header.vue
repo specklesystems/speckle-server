@@ -23,7 +23,7 @@
           @click="
             workspaceInfo.logo
               ? undefined
-              : navigateTo(settingsRoutes.workspace(workspaceInfo.slug).general)
+              : navigateTo(settingsRoutes.workspace.general.route(workspaceInfo.slug))
           "
         />
         <WorkspaceAvatar
@@ -55,7 +55,9 @@
           color="outline"
           :icon-left="Cog8ToothIcon"
           hide-text
-          @click="navigateTo(settingsRoutes.workspace(workspaceInfo.slug).general)"
+          @click="
+            navigateTo(settingsRoutes.workspace.general.route(workspaceInfo.slug))
+          "
         >
           Settings
         </FormButton>
@@ -130,7 +132,7 @@ const billingAlertAction = computed<Array<AlertAction>>(() => {
       {
         title: 'Subscribe',
         onClick: () =>
-          navigateTo(settingsRoutes.workspace(props.workspaceInfo.slug).billing)
+          navigateTo(settingsRoutes.workspace.billing.route(props.workspaceInfo.slug))
       }
     ]
   }

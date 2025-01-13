@@ -226,7 +226,7 @@ const saveDefaultRegion = async () => {
 }
 
 const goToBilling = () => {
-  navigateTo(settingsRoutes.workspace(slug.value).billing)
+  navigateTo(settingsRoutes.workspace.billing.route(slug.value))
 }
 
 watch(

@@ -234,7 +234,7 @@ const redirectUrl = computed(() => {
 })
 
 const goToBilling = () => {
-  navigateTo(settingsRoutes.workspace(props.workspace.slug).billing)
+  navigateTo(settingsRoutes.workspace.billing.route(props.workspace.slug))
 }
 
 const errorProviderInfo = ref<

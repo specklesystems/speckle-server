@@ -4,7 +4,7 @@
     collapsible
     icon="add"
     :icon-click="
-      () => navigateTo(settingsRoutes.workspace(workspaceInfo.slug).security)
+      () => navigateTo(settingsRoutes.workspace.security.route(workspaceInfo.slug))
     "
     icon-text="Add domain"
     no-hover
@@ -15,7 +15,9 @@
         <FormButton
           color="outline"
           size="sm"
-          @click="navigateTo(settingsRoutes.workspace(workspaceInfo.slug).security)"
+          @click="
+            navigateTo(settingsRoutes.workspace.security.route(workspaceInfo.slug))
+          "
         >
           Improve security
         </FormButton>

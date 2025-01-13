@@ -19,7 +19,9 @@
         <button
           v-if="invitedTeamCount && isWorkspaceAdmin"
           class="hidden md:flex items-center shrink-0 justify-center text-body-3xs px-2 h-8 rounded-full border border-dashed border-outline-2 hover:bg-foundation select-none"
-          @click="navigateTo(settingsRoutes.workspace(workspaceInfo.slug).members)"
+          @click="
+            navigateTo(settingsRoutes.workspace.members.route(workspaceInfo.slug))
+          "
         >
           + {{ invitedTeamCount }} pending
         </button>
@@ -65,7 +67,8 @@ const iconName = computed(() => {
 
 const iconClick = computed(() => {
   if (!props.isWorkspaceAdmin) return undefined
-  return () => navigateTo(settingsRoutes.workspace(props.workspaceInfo.slug).members)
+  return () =>
+    navigateTo(settingsRoutes.workspace.members.route(props.workspaceInfo.slug))
 })
 
 const iconText = computed(() => {

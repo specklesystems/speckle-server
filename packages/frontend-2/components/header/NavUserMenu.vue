@@ -36,7 +36,7 @@
           </div>
           <MenuItem v-if="activeUser" v-slot="{ active }">
             <NuxtLink
-              :to="settingsRoutes.user.profile"
+              :to="settingsRoutes.user.profile.route"
               :class="[
                 active ? 'bg-highlight-1' : '',
                 'text-body-xs flex px-2 py-1 text-foreground cursor-pointer transition mx-1 rounded'
@@ -47,7 +47,7 @@
           </MenuItem>
           <MenuItem v-if="isAdmin" v-slot="{ active }">
             <NuxtLink
-              :to="settingsRoutes.server.general"
+              :to="settingsRoutes.server.general.route"
               :class="[
                 active ? 'bg-highlight-1' : '',
                 'text-body-xs flex px-2 py-1 text-foreground cursor-pointer transition mx-1 rounded'
