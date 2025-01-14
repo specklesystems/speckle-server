@@ -433,3 +433,9 @@ export const shouldRunTestsInMultiregionMode = () =>
 export function shutdownTimeoutSeconds() {
   return getIntFromEnv('SHUTDOWN_TIMEOUT_SECONDS', '300')
 }
+
+export const knexAsyncStackTracesEnabled = () => {
+  const envSet = process.env.KNEX_ASYNC_STACK_TRACES_ENABLED
+  if (!envSet) return undefined
+  return getBooleanFromEnv('KNEX_ASYNC_STACK_TRACES_ENABLED')
+}
