@@ -14,20 +14,16 @@ const tables = {
 export const createWorkspaceJoinRequestFactory =
   ({ db }: { db: Knex }): CreateWorkspaceJoinRequest =>
   async ({ workspaceJoinRequest }) => {
-    return (await tables
-      .workspaceJoinRequests(db)
-      .insert(workspaceJoinRequest, '*')
-      .first()) as WorkspaceJoinRequest
+    const res = await tables.workspaceJoinRequests(db).insert(workspaceJoinRequest, '*')
+    return res[0]
   }
 
 export const updateWorkspaceJoinRequestStatusFactory =
   ({ db }: { db: Knex }): UpdateWorkspaceJoinRequestStatus =>
   async ({ workspaceId, userId, status }) => {
-    const [request] = await tables
+    return await tables
       .workspaceJoinRequests(db)
       .insert({ workspaceId, userId, status })
       .onConflict(['workspaceId', 'userId'])
       .merge(['status'])
-      .returning('*')
-    return request
   }
