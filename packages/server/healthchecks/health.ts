@@ -123,14 +123,11 @@ export const handleReadinessFactory = (deps: {
 
     return {
       details: {
-        postgres: merge(
-          allPostgresResults,
-          Object.fromEntries(
-            Object.entries(percentageFreeConnections).map(([k, v]) => [
-              k,
-              { percentageFreeConnections: v.toFixed(0) }
-            ])
-          )
+        postgres: Object.fromEntries(
+          Object.entries(percentageFreeConnections).map(([k, v]) => [
+            k,
+            { percentageFreeConnections: v.toFixed(0) }
+          ])
         ),
         redis: true
       }
