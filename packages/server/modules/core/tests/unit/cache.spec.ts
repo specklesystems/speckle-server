@@ -42,14 +42,14 @@ describe('utils cache @core', () => {
             expect(true, 'Key should not have been set').to.equal(false)
           }
         }
-        const getFromLayeredCache = retrieveViaCacheFactory<string>({
+        const getFromCache = retrieveViaCacheFactory<string>({
           cache: mockInMemoryCache,
           retrieveFromSource: async () => 'fromSource',
           options: {
             inMemoryTtlSeconds: 2 // it doesn't matter, as this is an implementation detail for the underlying cache
           }
         })
-        const result = await getFromLayeredCache({
+        const result = await getFromCache({
           key,
           bustCache: false
         })
@@ -66,14 +66,14 @@ describe('utils cache @core', () => {
             expect(value).to.equal('fromSource')
           }
         }
-        const getFromLayeredCache = retrieveViaCacheFactory<string>({
+        const getFromCache = retrieveViaCacheFactory<string>({
           cache: mockInMemoryCache,
           retrieveFromSource: async () => 'fromSource',
           options: {
             inMemoryTtlSeconds: 2 // it doesn't matter, as this is an implementation detail for the underlying cache
           }
         })
-        const result = await getFromLayeredCache({
+        const result = await getFromCache({
           key,
           bustCache: false
         })
