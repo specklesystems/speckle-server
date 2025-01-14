@@ -104,7 +104,7 @@ const showSetPrimaryDialog = ref(false)
 
 const primaryTooltip = computed(() => {
   if (props.emailData.primary) {
-    return 'Primary email cannot be deleted'
+    return 'This is already your primary email'
   } else if (!props.emailData.verified) {
     return 'Unverified emails cannot be set as primary'
   }
