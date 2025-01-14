@@ -112,11 +112,7 @@
                 </p>
               </div>
 
-              <FormButton
-                v-if="workspace"
-                color="outline"
-                @click="billingPortalRedirect(workspace?.id)"
-              >
+              <FormButton color="outline" @click="billingPortalRedirect(workspace?.id)">
                 Open billing portal
               </FormButton>
             </div>
