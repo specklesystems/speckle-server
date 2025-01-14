@@ -47,7 +47,10 @@
               </div>
             </FormButton>
 
-            <View v-tippy="isOutOfCredits ? 'No credits remaining' : undefined">
+            <View
+              :key="`gendo-credits-${isOutOfCredits}`"
+              v-tippy="isOutOfCredits ? 'No credits remaining' : undefined"
+            >
               <FormButton
                 :disabled="!prompt || isLoading || timeOutWait || isOutOfCredits"
                 @click="enqueMagic()"
