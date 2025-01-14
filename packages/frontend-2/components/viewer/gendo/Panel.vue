@@ -15,14 +15,12 @@
         </CommonBadge>
       </div>
     </template>
-    <div class="pt-2">
-      <div class="px-4 flex flex-col gap-y-2">
-        <CommonAlert v-if="showAlert" :color="alertColor" size="xs">
-          <template #title>
-            {{ alertMessage }}
-          </template>
+    <div class="pt-3">
+      <div class="px-3 flex flex-col gap-y-3">
+        <CommonAlert v-if="!limits" color="danger" size="xs">
+          <template #title>No credits available</template>
         </CommonAlert>
-        <div class="flex flex-col gap-y-2">
+        <div class="flex flex-col gap-y-3">
           <FormTextArea
             v-model="prompt"
             name="prompt"
@@ -31,6 +29,9 @@
             color="foundation"
             :disabled="isLoading || timeOutWait || isOutOfCredits"
             textarea-classes="sm:!min-h-24"
+            @keypress.enter.prevent="
+              !isLoading && !timeOutWait && !isOutOfCredits && prompt && enqueMagic()
+            "
           />
           <div class="flex justify-between gap-2 items-center text-foreground-2">
             <FormButton
@@ -41,28 +42,29 @@
               target="_blank"
             >
               <div class="flex items-center gap-1 text-foreground-2 font-normal">
-                <span>Writing prompts</span>
+                <span>Learn to prompt</span>
                 <ArrowTopRightOnSquareIcon class="h-3 w-3" />
               </div>
             </FormButton>
 
-            <FormButton
-              :disabled="!prompt || isLoading || timeOutWait || isOutOfCredits"
-              @click="enqueMagic()"
-            >
-              Generate
-            </FormButton>
+            <View v-tippy="isOutOfCredits ? 'No credits remaining' : undefined">
+              <FormButton
+                :disabled="!prompt || isLoading || timeOutWait || isOutOfCredits"
+                @click="enqueMagic()"
+              >
+                Generate
+              </FormButton>
+            </View>
           </div>
         </div>
         <ViewerGendoList @reuse-prompt="prompt = $event" />
       </div>
       <div
-        class="flex w-full items-center justify-between gap-2 border-t border-outline-2 py-1 px-2"
+        class="flex w-full items-center justify-between gap-2 border-t border-outline-2 py-1 px-1"
       >
         <FormButton color="subtle" size="sm" @click="isFeedbackOpen = true">
           <div class="flex items-center gap-1 text-foreground-2 font-normal">
-            <IconFeedback class="h-3 w-3" />
-            <span>Feedback</span>
+            <span>Give us feedback</span>
           </div>
         </FormButton>
         <FormButton
@@ -74,12 +76,11 @@
         >
           <div class="flex items-center gap-1 text-foreground-2 font-normal">
             <span>Terms</span>
-            <ArrowTopRightOnSquareIcon class="h-3 w-3" />
           </div>
         </FormButton>
       </div>
     </div>
-    <template v-if="!showAlert && limits" #actions>
+    <template v-if="limits" #actions>
       <div class="text-body-2xs p-1">
         {{ limits.used }}/{{ limits.limit }} free renders used
         <span class="hidden-under-250">this month</span>
@@ -121,11 +122,11 @@ const timeOutWait = ref(false)
 const isFeedbackOpen = ref(false)
 
 const suggestedPrompts = ref<string[]>([
-  'Example: Minimalist Scandinavian interior with warm natural lighting',
-  'Example: Luxury penthouse with floor-to-ceiling windows and city views',
-  'Example: Cozy industrial loft with exposed brick and steel elements',
-  'Example: Modern office space with biophilic design elements',
-  'Example: High-end retail space with dramatic lighting'
+  'Example: Minimalist Scandinavian interior with warm natural lighting...',
+  'Example: Luxury penthouse with floor-to-ceiling windows and city views...',
+  'Example: Cozy industrial loft with exposed brick and steel elements...',
+  'Example: Modern office space with biophilic design elements...',
+  'Example: High-end retail space with dramatic lighting...'
 ])
 
 const { result, refetch } = useQuery(activeUserGendoLimits)
@@ -142,27 +143,6 @@ const randomPlaceholder = computed(() => {
 const isOutOfCredits = computed(() => {
   return (limits.value?.used || 0) >= (limits.value?.limit || 0)
 })
-
-const isNearingLimit = computed(() => {
-  if (!limits.value) return
-  const usagePercent = (limits.value?.used / limits.value?.limit) * 100
-  return usagePercent >= 80
-})
-
-const alertColor = computed(() => {
-  if (isOutOfCredits.value) return 'danger'
-  if (isNearingLimit.value) return 'warning'
-  return 'neutral'
-})
-
-const alertMessage = computed(() => {
-  if (!limits.value) return 'No credits available'
-  return `${limits.value.used}/${limits.value.limit} free renders used this month`
-})
-
-const showAlert = computed(
-  () => !limits.value || isNearingLimit.value || isOutOfCredits.value
-)
 
 const enqueMagic = async () => {
   isLoading.value = true

@@ -21,6 +21,7 @@ import Redis from 'ioredis'
 import { Knex } from 'knex'
 import { layeredCacheFactory } from '@/modules/core/utils/layeredCache'
 import TTLCache from '@isaacs/ttlcache'
+import { LRUCache } from 'lru-cache'
 
 const ServerConfig = buildTableHelper('server_config', [
   'id',
@@ -42,6 +43,19 @@ const tables = {
 }
 
 const SERVER_CONFIG_CACHE_KEY = 'server_config'
+
+export const getServerInfoFromCacheFactory =
+  ({ cache }: { cache: LRUCache<string, ServerInfo> }) =>
+  () => {
+    const serverInfo = cache.get(SERVER_CONFIG_CACHE_KEY)
+    return serverInfo ?? null
+  }
+
+export const storeServerInfoInCacheFactory =
+  ({ cache }: { cache: LRUCache<string, ServerInfo> }) =>
+  ({ serverInfo }: { serverInfo: ServerInfo }) => {
+    cache.set(SERVER_CONFIG_CACHE_KEY, serverInfo)
+  }
 
 export type GetServerConfig = (params?: {
   bustCache?: boolean

@@ -10,14 +10,18 @@ import {
   updateServerInfoFactory,
   getPublicRolesFactory,
   getPublicScopesFactory,
-  getServerConfigFactory
+  getServerInfoFromCacheFactory,
+  storeServerInfoInCacheFactory
 } from '@/modules/core/repositories/server'
 import { db } from '@/db/knex'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
+import { LRUCache } from 'lru-cache'
+import { ServerInfo } from '@/modules/core/helpers/types'
 
-const getServerInfo = getServerInfoFactory({
-  getServerConfig: getServerConfigFactory({ db })
-})
+const cache = new LRUCache<string, ServerInfo>({ max: 1, ttl: 60 * 1000 })
+const getServerInfoFromCache = getServerInfoFromCacheFactory({ cache })
+const storeServerInfoInCache = storeServerInfoInCacheFactory({ cache })
+const getServerInfo = getServerInfoFactory({ db })
 const updateServerInfo = updateServerInfoFactory({ db })
 const getPublicRoles = getPublicRolesFactory({ db })
 const getPublicScopes = getPublicScopesFactory({ db })
@@ -25,7 +29,11 @@ const getPublicScopes = getPublicScopesFactory({ db })
 export = {
   Query: {
     async serverInfo() {
-      return await getServerInfo()
+      const cachedServerInfo = getServerInfoFromCache()
+      if (cachedServerInfo) return cachedServerInfo
+      const serverInfo = await getServerInfo()
+      storeServerInfoInCache({ serverInfo })
+      return serverInfo
     }
   },
   ServerInfo: {
@@ -61,6 +69,9 @@ export = {
 
       const update = removeNullOrUndefinedKeys(args.info)
       await updateServerInfo(update)
+      // we're currently going to ignore, that this should be propagated to all
+      // backend instances, and going to rely on the TTL in the cache to propagate the changes
+      cache.clear()
       return true
     },
     serverInfoMutations: () => ({})

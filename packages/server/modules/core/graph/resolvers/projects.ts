@@ -310,7 +310,7 @@ export = {
         storeModel: storeModelFactory({ db: projectDb }),
         // THIS MUST GO TO THE MAIN DB
         storeProjectRole: storeProjectRoleFactory({ db }),
-        projectsEventsEmitter: ProjectsEmitter.emit
+        emitEvent: getEventBus().emit
       })
 
       const project = await createNewProject({
