@@ -29,7 +29,7 @@
             color="foundation"
             :disabled="isLoading || timeOutWait || isOutOfCredits"
             textarea-classes="sm:!min-h-24"
-            @keyup.enter.prevent="
+            @keypress.enter.prevent="
               !isLoading && !timeOutWait && !isOutOfCredits && prompt && enqueMagic()
             "
           />
