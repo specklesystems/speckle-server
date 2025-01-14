@@ -36,6 +36,7 @@ export const updateWorkspaceJoinRequestStatusFactory =
   }
 
 type WorkspaceJoinRequestFilter = {
+  workspaceId: string
   status?: WorkspaceJoinRequestStatus | null
   userId: string
 }
@@ -51,6 +52,7 @@ const adminWorkspaceJoinRequestsBaseQueryFactory =
       )
       .where(WorkspaceAcl.col.role, Roles.Workspace.Admin)
       .where(WorkspaceAcl.col.userId, filter.userId)
+      .where(WorkspaceJoinRequests.col.workspaceId, filter.workspaceId)
     if (filter.status) query.andWhere(WorkspaceJoinRequests.col.status, filter.status)
     return query
   }

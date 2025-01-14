@@ -7,7 +7,7 @@ import {
   createTestUser
 } from '@/test/authHelper'
 import {
-  AdminWorkspaceJoinRequestsDocument,
+  GetWorkspaceWithJoinRequestsDocument,
   RequestToJoinWorkspaceDocument
 } from '@/test/graphql/generated/graphql'
 import { createTestContext, testApolloServer } from '@/test/graphqlHelper'
@@ -34,7 +34,7 @@ before(async () => {
 })
 
 describe('WorkspaceJoinRequests GQL', () => {
-  describe('User.adminWorkspacesJoinRequests', () => {
+  describe('Workspace.adminWorkspacesJoinRequests', () => {
     it('should return the workspace join requests for the admin', async () => {
       const admin = await createTestUser({
         name: 'admin user',
@@ -101,25 +101,46 @@ describe('WorkspaceJoinRequests GQL', () => {
       expect(joinReq2).to.not.haveGraphQLErrors()
 
       const sessionAdmin = await login(admin)
-      const res = await sessionAdmin.execute(AdminWorkspaceJoinRequestsDocument, {})
-      expect(res).to.not.haveGraphQLErrors()
+      const workspace1Res = await sessionAdmin.execute(
+        GetWorkspaceWithJoinRequestsDocument,
+        {
+          workspaceId: workspace1.id
+        }
+      )
+      expect(workspace1Res).to.not.haveGraphQLErrors()
 
-      const { items, totalCount } = res.data?.adminWorkspacesJoinRequests
+      const { items: items1, totalCount: totalCount1 } =
+        workspace1Res.data!.workspace!.adminWorkspacesJoinRequests!
 
-      expect(totalCount).to.equal(2)
+      expect(totalCount1).to.equal(1)
 
-      expect(items).to.have.length(2)
-      assert.deepEqual(items[1], {
+      expect(items1).to.have.length(1)
+      assert.deepEqual(items1[0], {
         status: 'pending',
         user: { id: user1.id, name: user1.name },
         workspace: { id: workspace1.id, name: workspace1.name },
-        createdAt: items[1].createdAt
+        createdAt: items1[0].createdAt
       })
-      assert.deepEqual(items[0], {
+
+      const workspace2Res = await sessionAdmin.execute(
+        GetWorkspaceWithJoinRequestsDocument,
+        {
+          workspaceId: workspace2.id
+        }
+      )
+      expect(workspace2Res).to.not.haveGraphQLErrors()
+
+      const { items: items2, totalCount: totalCount2 } =
+        workspace2Res.data!.workspace!.adminWorkspacesJoinRequests!
+
+      expect(totalCount2).to.equal(1)
+
+      expect(items2).to.have.length(1)
+      assert.deepEqual(items2[0], {
         status: 'pending',
         user: { id: user2.id, name: user2.name },
         workspace: { id: workspace2.id, name: workspace2.name },
-        createdAt: items[0].createdAt
+        createdAt: items2[0].createdAt
       })
     })
   })

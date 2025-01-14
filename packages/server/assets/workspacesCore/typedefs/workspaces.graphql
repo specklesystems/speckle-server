@@ -28,17 +28,6 @@ extend type Query {
   Validates the slug, to make sure it contains only valid characters and its not taken.
   """
   validateWorkspaceSlug(slug: String!): Boolean!
-
-  """
-  Get all join requests for all the workspaces the user is an admin of
-  """
-  adminWorkspacesJoinRequests(
-    filter: AdminWorkspaceJoinRequestFilter
-    cursor: String
-    limit: Int! = 25
-  ): WorkspaceJoinRequestCollection!
-    @hasServerRole(role: SERVER_USER)
-    @hasScope(scope: "workspace:read")
 }
 
 input WorkspaceInviteLookupOptions {
@@ -322,6 +311,18 @@ type Workspace {
   Info about the workspace creation state
   """
   creationState: WorkspaceCreationState
+  """
+  Get all join requests for all the workspaces the user is an admin of
+  """
+  adminWorkspacesJoinRequests(
+    filter: AdminWorkspaceJoinRequestFilter
+    cursor: String
+    limit: Int! = 25
+  ): WorkspaceJoinRequestCollection!
+    @hasServerRole(role: SERVER_USER)
+    @hasScope(scope: "workspace:read")
+    @hasWorkspaceRole(role: ADMIN)
+    @isOwner
 }
 
 type WorkspaceCreationState {

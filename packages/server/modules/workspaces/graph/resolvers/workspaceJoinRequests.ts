@@ -9,8 +9,8 @@ import { WorkspaceJoinRequestStatus } from '@/modules/workspacesCore/domain/type
 import { WorkspaceJoinRequestGraphQLReturn } from '@/modules/workspacesCore/helpers/graphTypes'
 
 export default {
-  Query: {
-    adminWorkspacesJoinRequests: async (_parent, args, ctx) => {
+  Workspace: {
+    adminWorkspacesJoinRequests: async (parent, args, ctx) => {
       const { filter, cursor, limit } = args
 
       return await getPaginatedItemsFactory<
@@ -28,8 +28,9 @@ export default {
         getTotalCount: countAdminWorkspaceJoinRequestsFactory({ db })
       })({
         filter: {
+          workspaceId: parent.id,
           status: filter?.status ?? undefined,
-          userId: ctx.userId!
+          userId: ctx.userId! // This is the worskpace admin, not the request userId
         },
         cursor: cursor ?? undefined,
         limit

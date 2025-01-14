@@ -2511,8 +2511,6 @@ export type Query = {
    * @deprecated use admin.UserList instead
    */
   adminUsers?: Maybe<AdminUsersListCollection>;
-  /** Get all join requests for all the workspaces the user is an admin of */
-  adminWorkspacesJoinRequests: WorkspaceJoinRequestCollection;
   /** Gets a specific app from the server. */
   app?: Maybe<ServerApp>;
   /**
@@ -2637,13 +2635,6 @@ export type QueryAdminUsersArgs = {
   limit?: Scalars['Int']['input'];
   offset?: Scalars['Int']['input'];
   query?: InputMaybe<Scalars['String']['input']>;
-};
-
-
-export type QueryAdminWorkspacesJoinRequestsArgs = {
-  cursor?: InputMaybe<Scalars['String']['input']>;
-  filter?: InputMaybe<AdminWorkspaceJoinRequestFilter>;
-  limit?: Scalars['Int']['input'];
 };
 
 
@@ -4163,6 +4154,8 @@ export type WebhookUpdateInput = {
 
 export type Workspace = {
   __typename?: 'Workspace';
+  /** Get all join requests for all the workspaces the user is an admin of */
+  adminWorkspacesJoinRequests: WorkspaceJoinRequestCollection;
   automateFunctions: AutomateFunctionCollection;
   createdAt: Scalars['DateTime']['output'];
   /** Info about the workspace creation state */
@@ -4203,6 +4196,13 @@ export type Workspace = {
   subscription?: Maybe<WorkspaceSubscription>;
   team: WorkspaceCollaboratorCollection;
   updatedAt: Scalars['DateTime']['output'];
+};
+
+
+export type WorkspaceAdminWorkspacesJoinRequestsArgs = {
+  cursor?: InputMaybe<Scalars['String']['input']>;
+  filter?: InputMaybe<AdminWorkspaceJoinRequestFilter>;
+  limit?: Scalars['Int']['input'];
 };
 
 

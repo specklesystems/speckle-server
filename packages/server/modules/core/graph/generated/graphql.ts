@@ -2531,8 +2531,6 @@ export type Query = {
    * @deprecated use admin.UserList instead
    */
   adminUsers?: Maybe<AdminUsersListCollection>;
-  /** Get all join requests for all the workspaces the user is an admin of */
-  adminWorkspacesJoinRequests: WorkspaceJoinRequestCollection;
   /** Gets a specific app from the server. */
   app?: Maybe<ServerApp>;
   /**
@@ -2657,13 +2655,6 @@ export type QueryAdminUsersArgs = {
   limit?: Scalars['Int']['input'];
   offset?: Scalars['Int']['input'];
   query?: InputMaybe<Scalars['String']['input']>;
-};
-
-
-export type QueryAdminWorkspacesJoinRequestsArgs = {
-  cursor?: InputMaybe<Scalars['String']['input']>;
-  filter?: InputMaybe<AdminWorkspaceJoinRequestFilter>;
-  limit?: Scalars['Int']['input'];
 };
 
 
@@ -4183,6 +4174,8 @@ export type WebhookUpdateInput = {
 
 export type Workspace = {
   __typename?: 'Workspace';
+  /** Get all join requests for all the workspaces the user is an admin of */
+  adminWorkspacesJoinRequests: WorkspaceJoinRequestCollection;
   automateFunctions: AutomateFunctionCollection;
   createdAt: Scalars['DateTime']['output'];
   /** Info about the workspace creation state */
@@ -4223,6 +4216,13 @@ export type Workspace = {
   subscription?: Maybe<WorkspaceSubscription>;
   team: WorkspaceCollaboratorCollection;
   updatedAt: Scalars['DateTime']['output'];
+};
+
+
+export type WorkspaceAdminWorkspacesJoinRequestsArgs = {
+  cursor?: InputMaybe<Scalars['String']['input']>;
+  filter?: InputMaybe<AdminWorkspaceJoinRequestFilter>;
+  limit?: Scalars['Int']['input'];
 };
 
 
@@ -6235,7 +6235,6 @@ export type QueryResolvers<ContextType = GraphQLContext, ParentType = ResolversP
   admin?: Resolver<ResolversTypes['AdminQueries'], ParentType, ContextType>;
   adminStreams?: Resolver<Maybe<ResolversTypes['StreamCollection']>, ParentType, ContextType, RequireFields<QueryAdminStreamsArgs, 'limit' | 'offset'>>;
   adminUsers?: Resolver<Maybe<ResolversTypes['AdminUsersListCollection']>, ParentType, ContextType, RequireFields<QueryAdminUsersArgs, 'limit' | 'offset' | 'query'>>;
-  adminWorkspacesJoinRequests?: Resolver<ResolversTypes['WorkspaceJoinRequestCollection'], ParentType, ContextType, RequireFields<QueryAdminWorkspacesJoinRequestsArgs, 'limit'>>;
   app?: Resolver<Maybe<ResolversTypes['ServerApp']>, ParentType, ContextType, RequireFields<QueryAppArgs, 'id'>>;
   apps?: Resolver<Maybe<Array<Maybe<ResolversTypes['ServerAppListItem']>>>, ParentType, ContextType>;
   authenticatedAsApp?: Resolver<Maybe<ResolversTypes['ServerAppListItem']>, ParentType, ContextType>;
@@ -6759,6 +6758,7 @@ export type WebhookEventCollectionResolvers<ContextType = GraphQLContext, Parent
 };
 
 export type WorkspaceResolvers<ContextType = GraphQLContext, ParentType = ResolversParentTypes['Workspace']> = {
+  adminWorkspacesJoinRequests?: Resolver<ResolversTypes['WorkspaceJoinRequestCollection'], ParentType, ContextType, RequireFields<WorkspaceAdminWorkspacesJoinRequestsArgs, 'limit'>>;
   automateFunctions?: Resolver<ResolversTypes['AutomateFunctionCollection'], ParentType, ContextType, RequireFields<WorkspaceAutomateFunctionsArgs, 'limit'>>;
   createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   creationState?: Resolver<Maybe<ResolversTypes['WorkspaceCreationState']>, ParentType, ContextType>;
