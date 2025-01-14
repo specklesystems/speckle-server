@@ -35,6 +35,10 @@ import {
   accessRequestEventsNamespace,
   AccessRequestEventsPayloads
 } from '@/modules/accessrequests/domain/events'
+import {
+  commentEventsNamespace,
+  CommentEventsPayloads
+} from '@/modules/comments/domain/events'
 
 type AllEventsWildcard = '**'
 type EventWildcard = '*'
@@ -60,6 +64,7 @@ type EventsByNamespace = {
   [userEventsNamespace]: UserEventsPayloads
   [versionEventsNamespace]: VersionEventsPayloads
   [accessRequestEventsNamespace]: AccessRequestEventsPayloads
+  [commentEventsNamespace]: CommentEventsPayloads
 }
 
 type EventTypes = UnionToIntersection<EventsByNamespace[keyof EventsByNamespace]>
@@ -114,7 +119,7 @@ export type EventPayload<T extends EventSubscriptionKey> = T extends AllEventsWi
 export function initializeEventBus() {
   const emitter = new EventEmitter({ wildcard: true })
 
-  return {
+  const core = {
     /**
      * Emit a module event. This function must be awaited to ensure all listeners
      * execute. Any errors thrown in the listeners will bubble up and throw from
@@ -155,6 +160,44 @@ export function initializeEventBus() {
     destroy() {
       emitter.removeAllListeners()
     }
+  }
+
+  // Extra utils
+  const listenOnce = <K extends EventSubscriptionKey>(
+    eventName: K,
+    handler: (event: EventPayload<K>) => MaybeAsync<unknown>,
+    options?: Partial<{
+      /**
+       * Timeout in milliseconds after which the listener will be removed even if it never fires
+       * (useful in tests for cleanup)
+       */
+      timeout: number
+    }>
+  ) => {
+    const removeListener = core.listen(eventName, async (event) => {
+      try {
+        await handler(event)
+      } finally {
+        removeListener()
+      }
+    })
+
+    if (options?.timeout) {
+      setTimeout(removeListener, options.timeout)
+    }
+
+    return removeListener
+  }
+
+  return {
+    ...core,
+    /**
+     * Listen for module events only once. Any errors thrown here will bubble out of where
+     * emit() was invoked.
+     *
+     * @returns Callback for stopping listening
+     */
+    listenOnce
   }
 }
 
