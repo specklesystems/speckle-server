@@ -8,7 +8,7 @@
       @click="isOpenMobile = false"
     />
     <Portal to="mobile-navigation">
-      <div class="lg:hidden">
+      <div class="lg:hidden flex items-center justify-between">
         <FormButton
           :color="isOpenMobile ? 'outline' : 'subtle'"
           size="sm"
@@ -18,6 +18,11 @@
           <IconSidebar v-if="!isOpenMobile" class="h-4 w-4 -ml-1 -mr-1" />
           <IconSidebarClose v-else class="h-4 w-4 -ml-1 -mr-1" />
         </FormButton>
+
+        <NuxtLink :to="homeRoute" class="flex items-center gap-x-1 pl-0.5">
+          <ChevronLeftIcon class="h-4 w-4 text-foreground-2" />
+          <p class="text-body-xs font-medium text-foreground">Settings</p>
+        </NuxtLink>
       </div>
     </Portal>
     <div
@@ -28,8 +33,8 @@
         class="border-r border-outline-3 px-2 pt-3 pb-2 bg-foundation-page"
       >
         <LayoutSidebarMenu>
-          <LayoutSidebarMenuGroup>
-            <NuxtLink :to="homeRoute" class="flex items-center gap-x-1.5 px-2.5">
+          <LayoutSidebarMenuGroup v-if="!isMobile">
+            <NuxtLink :to="homeRoute" class="items-center gap-x-1.5 px-2.5 flex">
               <ChevronLeftIcon class="h-3 w-3 text-foreground-2" />
               <p class="text-body-xs font-medium text-foreground">Exit settings</p>
             </NuxtLink>
@@ -145,6 +150,8 @@ import {
   WorkspacePlanStatuses,
   type SettingsMenu_WorkspaceFragment
 } from '~/lib/common/generated/gql/graphql'
+import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
+import { useBreakpoints } from '@vueuse/core'
 
 graphql(`
   fragment SettingsDialog_Workspace on Workspace {
@@ -181,6 +188,8 @@ const { result: workspaceResult } = useQuery(settingsSidebarQuery, null, {
   enabled: isWorkspacesEnabled.value
 })
 const { userMenuItems, serverMenuItems, workspaceMenuItems } = useSettingsMenu()
+const breakpoints = useBreakpoints(TailwindBreakpoints)
+const isMobile = breakpoints.smaller('lg')
 
 const isOpenMobile = ref(false)
 
