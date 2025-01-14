@@ -54,14 +54,16 @@ export const getServerConfigFactory =
     // An entry should always exist, as one is inserted via db migrations
     (await tables.serverConfig(deps.db).select('*').first())!
 
+//instantiate the cache in the module scope, so it is shared across all server config factories
+const inMemoryCache = new TTLCache<string, ServerConfigRecord>({
+  max: 1 //because we only ever use one key, SERVER_CONFIG_CACHE_KEY
+})
+
 export const getServerConfigWithCacheFactory = (deps: {
   db: Knex
   distributedCache?: Redis
 }): GetServerConfig => {
   const { db, distributedCache } = deps
-  const inMemoryCache = new TTLCache<string, ServerConfigRecord>({
-    max: 1 //because we only ever use one key, SERVER_CONFIG_CACHE_KEY
-  })
 
   const getFromSourceOrCache = layeredCacheFactory<ServerConfigRecord>({
     inMemoryCache,
