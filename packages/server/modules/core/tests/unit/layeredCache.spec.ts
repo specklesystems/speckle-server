@@ -1,8 +1,9 @@
 import { describe } from 'mocha'
-import { InMemoryCache, layeredCacheFactory } from '@/modules/core/utils/layeredCache'
+import { layeredCacheFactory } from '@/modules/core/utils/layeredCache'
 import cryptoRandomString from 'crypto-random-string'
 import { expect } from 'chai'
 import Redis from 'ioredis'
+import type { InMemoryCache } from '@/modules/core/utils/cache'
 
 describe('Layered cache @core', () => {
   describe('with Memory cache only (without distributed cache)', () => {

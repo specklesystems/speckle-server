@@ -10,18 +10,17 @@ import {
   updateServerInfoFactory,
   getPublicRolesFactory,
   getPublicScopesFactory,
-  getServerInfoFromCacheFactory,
-  storeServerInfoInCacheFactory
+  getServerConfigWithCacheFactory
 } from '@/modules/core/repositories/server'
 import { db } from '@/db/knex'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
-import { LRUCache } from 'lru-cache'
-import { ServerInfo } from '@/modules/core/helpers/types'
+import type { ServerConfigRecord } from '@/modules/core/helpers/types'
+import TTLCache from '@isaacs/ttlcache'
 
-const cache = new LRUCache<string, ServerInfo>({ max: 1, ttl: 60 * 1000 })
-const getServerInfoFromCache = getServerInfoFromCacheFactory({ cache })
-const storeServerInfoInCache = storeServerInfoInCacheFactory({ cache })
-const getServerInfo = getServerInfoFactory({ db })
+const cache = new TTLCache<string, ServerConfigRecord>({ max: 1, ttl: 60 * 1000 })
+const getServerInfo = getServerInfoFactory({
+  getServerConfig: getServerConfigWithCacheFactory({ inMemoryCache: cache, db })
+})
 const updateServerInfo = updateServerInfoFactory({ db })
 const getPublicRoles = getPublicRolesFactory({ db })
 const getPublicScopes = getPublicScopesFactory({ db })
@@ -29,11 +28,7 @@ const getPublicScopes = getPublicScopesFactory({ db })
 export = {
   Query: {
     async serverInfo() {
-      const cachedServerInfo = getServerInfoFromCache()
-      if (cachedServerInfo) return cachedServerInfo
-      const serverInfo = await getServerInfo()
-      storeServerInfoInCache({ serverInfo })
-      return serverInfo
+      return await getServerInfo()
     }
   },
   ServerInfo: {

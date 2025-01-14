@@ -17,11 +17,9 @@ import {
   getServerOrigin,
   getServerVersion
 } from '@/modules/shared/helpers/envHelper'
-import Redis from 'ioredis'
 import { Knex } from 'knex'
-import { layeredCacheFactory } from '@/modules/core/utils/layeredCache'
 import TTLCache from '@isaacs/ttlcache'
-import { LRUCache } from 'lru-cache'
+import { retrieveViaCacheFactory } from '@/modules/core/utils/cache'
 
 const ServerConfig = buildTableHelper('server_config', [
   'id',
@@ -44,19 +42,6 @@ const tables = {
 
 const SERVER_CONFIG_CACHE_KEY = 'server_config'
 
-export const getServerInfoFromCacheFactory =
-  ({ cache }: { cache: LRUCache<string, ServerInfo> }) =>
-  () => {
-    const serverInfo = cache.get(SERVER_CONFIG_CACHE_KEY)
-    return serverInfo ?? null
-  }
-
-export const storeServerInfoInCacheFactory =
-  ({ cache }: { cache: LRUCache<string, ServerInfo> }) =>
-  ({ serverInfo }: { serverInfo: ServerInfo }) => {
-    cache.set(SERVER_CONFIG_CACHE_KEY, serverInfo)
-  }
-
 export type GetServerConfig = (params?: {
   bustCache?: boolean
 }) => Promise<ServerConfigRecord>
@@ -68,23 +53,16 @@ export const getServerConfigFactory =
     // An entry should always exist, as one is inserted via db migrations
     (await tables.serverConfig(deps.db).select('*').first())!
 
-//instantiate the cache in the module scope, so it is shared across all server config factories
-const inMemoryCache = new TTLCache<string, ServerConfigRecord>({
-  max: 1 //because we only ever use one key, SERVER_CONFIG_CACHE_KEY
-})
-
 export const getServerConfigWithCacheFactory = (deps: {
   db: Knex
-  distributedCache?: Redis
+  inMemoryCache: TTLCache<string, ServerConfigRecord>
 }): GetServerConfig => {
-  const { db, distributedCache } = deps
+  const { db, inMemoryCache } = deps
 
-  const getFromSourceOrCache = layeredCacheFactory<ServerConfigRecord>({
+  const getFromSourceOrCache = retrieveViaCacheFactory<ServerConfigRecord>({
     inMemoryCache,
-    distributedCache,
     options: {
-      inMemoryExpiryTimeSeconds: 2,
-      redisExpiryTimeSeconds: 60
+      inMemoryTtlSeconds: 60
     },
     retrieveFromSource: async () => {
       // An entry should always exist, as one is inserted via db migrations

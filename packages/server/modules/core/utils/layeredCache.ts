@@ -1,14 +1,5 @@
 import type { Redis } from 'ioredis'
-
-export interface InMemoryCache<T> {
-  get: (key: string) => T | undefined
-  set: (key: string, value: T, options: { ttl: number }) => void
-}
-
-export type GetFromLayeredCache<T> = (params: {
-  key: string
-  bustCache?: boolean
-}) => Promise<T>
+import { InMemoryCache, RetrieveFromCache } from '@/modules/core/utils/cache'
 
 export const layeredCacheFactory = <T>(deps: {
   retrieveFromSource: () => Promise<T>
@@ -18,7 +9,7 @@ export const layeredCacheFactory = <T>(deps: {
     inMemoryExpiryTimeSeconds?: number
     redisExpiryTimeSeconds?: number
   }
-}): GetFromLayeredCache<T> => {
+}): RetrieveFromCache<T> => {
   const { options, retrieveFromSource, inMemoryCache, distributedCache } = deps
   const inMemoryTtl = (options?.inMemoryExpiryTimeSeconds || 2) * 1000 // convert seconds to milliseconds
 
