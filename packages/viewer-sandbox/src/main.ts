@@ -6,7 +6,6 @@ import {
   Viewer,
   ViewModes,
   SelectionExtension,
-  CameraController,
   HybridCameraController
 } from '@speckle/viewer'
 
