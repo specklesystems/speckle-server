@@ -6,11 +6,11 @@
     :buttons="buttons"
   >
     <div
-      v-if="hasMoveableProjects"
+      v-if="projects.length > 0"
       class="flex flex-col mt-2 border rounded-md border-outline-3"
     >
       <div
-        v-for="project in moveableProjects"
+        v-for="project in projects"
         :key="project.id"
         class="flex px-4 py-3 items-center space-x-2 justify-between border-b last:border-0 border-outline-3"
       >
@@ -51,7 +51,6 @@
     <ProjectsMoveToWorkspaceDialog
       v-if="selectedProject"
       v-model:open="showMoveToWorkspaceDialog"
-      :workspace="workspace"
       :project="selectedProject"
       event-source="move-projects-dialog"
     />
@@ -60,49 +59,20 @@
 <script setup lang="ts">
 import type { LayoutDialogButton } from '@speckle/ui-components'
 import { graphql } from '~~/lib/common/generated/gql'
-import type {
-  MoveProjectsDialog_WorkspaceFragment,
-  ProjectsMoveToWorkspaceDialog_ProjectFragment
-} from '~~/lib/common/generated/gql/graphql'
+import type { ProjectsMoveToWorkspaceDialog_ProjectFragment } from '~~/lib/common/generated/gql/graphql'
 import { useQuery } from '@vue/apollo-composable'
 import { moveProjectsDialogQuery } from '~~/lib/workspaces/graphql/queries'
 import { Roles } from '@speckle/shared'
 
 graphql(`
-  fragment MoveProjectsDialog_Workspace on Workspace {
-    id
-    ...ProjectsMoveToWorkspaceDialog_Workspace
-    projects {
-      items {
-        id
-        modelCount: models(limit: 0) {
-          totalCount
-        }
-        versions(limit: 0) {
-          totalCount
-        }
-      }
+  fragment MoveProjectsDialog_Project on Project {
+    ...ProjectsMoveToWorkspaceDialog_Project
+    role
+    workspace {
+      id
     }
   }
 `)
-
-graphql(`
-  fragment MoveProjectsDialog_User on User {
-    projects {
-      items {
-        ...ProjectsMoveToWorkspaceDialog_Project
-        role
-        workspace {
-          id
-        }
-      }
-    }
-  }
-`)
-
-const props = defineProps<{
-  workspace: MoveProjectsDialog_WorkspaceFragment
-}>()
 
 const open = defineModel<boolean>('open', { required: true })
 
@@ -111,23 +81,7 @@ const { result } = useQuery(moveProjectsDialogQuery)
 const selectedProject = ref<ProjectsMoveToWorkspaceDialog_ProjectFragment | null>(null)
 const showMoveToWorkspaceDialog = ref(false)
 
-const workspaceProjects = computed(() =>
-  props.workspace.projects.items.map((project) => project.id)
-)
-const userProjects = computed(() => result.value?.activeUser?.projects.items || [])
-const projectsWithWorkspace = computed(() =>
-  userProjects.value
-    .filter((project) => !!project.workspace?.id)
-    .map((project) => project.id)
-)
-const moveableProjects = computed(() =>
-  userProjects.value.filter(
-    (project) =>
-      !workspaceProjects.value.includes(project.id) &&
-      !projectsWithWorkspace.value.includes(project.id)
-  )
-)
-const hasMoveableProjects = computed(() => moveableProjects.value.length > 0)
+const projects = computed(() => result.value?.activeUser?.projects.items || [])
 const buttons = computed((): LayoutDialogButton[] => [
   {
     text: 'Done',

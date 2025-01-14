@@ -75,9 +75,15 @@ export const workspaceInviteQuery = graphql(`
 `)
 
 export const moveProjectsDialogQuery = graphql(`
-  query MoveProjectsDialog {
+  query MoveProjectsDialog($filter: UserProjectsFilter) {
     activeUser {
-      ...MoveProjectsDialog_User
+      projects(filter: $filter) {
+        items {
+          id
+          ...MoveProjectsDialog_Project
+        }
+        cursor
+      }
     }
   }
 `)
