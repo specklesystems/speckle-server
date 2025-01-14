@@ -1,5 +1,5 @@
 <template>
-  <div v-if="detailedRender" className="mb-2">
+  <div v-if="detailedRender" class="mb-2">
     <div class="relative">
       <div v-if="detailedRender.status === 'COMPLETED' && renderUrl" class="group">
         <button class="relative flex cursor-zoom-in" @click="openPreview">
