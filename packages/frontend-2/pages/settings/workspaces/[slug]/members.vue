@@ -36,6 +36,7 @@ import { useQuery } from '@vue/apollo-composable'
 import { graphql } from '~/lib/common/generated/gql'
 import { settingsWorkspacesMembersQuery } from '~/lib/settings/graphql/queries'
 import type { LayoutPageTabItem } from '~~/lib/layout/helpers/components'
+import { workspaceGetIdBySlugQuery } from '~~/lib/workspaces/graphql/queries'
 
 graphql(`
   fragment SettingsWorkspacesMembers_Workspace on Workspace {
@@ -67,11 +68,19 @@ useHead({
 const slug = computed(() => (route.params.slug as string) || '')
 
 const route = useRoute()
-const { result } = useQuery(settingsWorkspacesMembersQuery, () => ({
+const { result: workspaceResult } = useQuery(workspaceGetIdBySlugQuery, () => ({
   slug: slug.value
 }))
+const workspaceId = computed(() => workspaceResult.value?.workspaceBySlug.id || '')
+const { result } = useQuery(
+  settingsWorkspacesMembersQuery,
+  () => ({
+    workspaceId: workspaceId.value
+  }),
+  () => ({ enabled: !!workspaceId.value })
+)
 
-const workspace = computed(() => result.value?.workspaceBySlug)
+const workspace = computed(() => result.value?.workspace)
 const isAdmin = computed(() => workspace.value?.role === Roles.Workspace.Admin)
 const memberCount = computed(
   () =>
