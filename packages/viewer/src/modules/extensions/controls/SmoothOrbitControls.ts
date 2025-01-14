@@ -218,7 +218,7 @@ export class SmoothOrbitControls extends SpeckleControls {
     this._options = Object.assign({}, options)
     this.setDamperDecayTime(this._options.damperDecay)
 
-    const billboardMaterial = new SpeckleBasicMaterial({ color: 0x43af11 }, [
+    const billboardMaterial = new SpeckleBasicMaterial({ color: 0x047efb }, [
       'BILLBOARD_FIXED'
     ])
     billboardMaterial.opacity = 0.75
@@ -1017,9 +1017,12 @@ export class SmoothOrbitControls extends SpeckleControls {
       if (res && res.length) {
         this.pivotPoint.copy(res[0].point)
         this.usePivotal = true
+        this.orbitSphere.visible = this._options.showOrbitPoint
+      } else {
+        this.usePivotal = false
+        this.orbitSphere.visible = false
       }
     }
-    this.orbitSphere.visible = this._options.showOrbitPoint
 
     if (this.pointers.length > 2) {
       return
