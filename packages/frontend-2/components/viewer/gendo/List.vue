@@ -1,9 +1,12 @@
 <template>
-  <div class="space-y-4 mt-4">
+  <div
+    class="flex flex-col gap-y-2 max-h-64 2xl:max-h-96 overflow-y-scroll overflow-x-hidden simple-scroll pb-4"
+  >
     <ViewerGendoItem
       v-for="render in renders"
       :key="render?.id"
       :render-request="render"
+      @reuse-prompt="$emit('reuse-prompt', $event)"
     />
   </div>
 </template>
@@ -15,6 +18,11 @@ import {
   onGendoAiRenderCreated
 } from '~/lib/gendo/graphql/queriesAndMutations'
 import { useInjectedViewerState } from '~/lib/viewer/composables/setup'
+
+defineEmits<{
+  (e: 'reuse-prompt', prompt: string): void
+}>()
+
 const {
   projectId,
   resources: {

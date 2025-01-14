@@ -244,12 +244,17 @@ const onShowSettingsDialog = (target: AvailableSettingsMenuKeys) => {
   settingsDialogTarget.value = target
 }
 
+const hasFinalized = ref(false)
+
 onResult((queryResult) => {
   if (
     queryResult.data?.workspaceBySlug.creationState?.completed === false &&
     queryResult.data.workspaceBySlug.creationState.state
   ) {
     if (import.meta.server) return
+    if (hasFinalized.value) return
+
+    hasFinalized.value = true
     finalizeWizard(
       queryResult.data.workspaceBySlug.creationState.state as WorkspaceWizardState,
       queryResult.data.workspaceBySlug.id

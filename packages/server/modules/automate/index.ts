@@ -1,6 +1,5 @@
 import { automateLogger, moduleLogger } from '@/logging/logging'
 import { Optional, SpeckleModule } from '@/modules/shared/helpers/typeHelper'
-import { VersionEvents, VersionsEmitter } from '@/modules/core/events/versionsEmitter'
 import {
   onModelVersionCreateFactory,
   triggerAutomationRevisionRunFactory
@@ -58,6 +57,8 @@ import {
 import { isFinished } from '@/modules/automate/domain/logic'
 import { mixpanel } from '@/modules/shared/utils/mixpanel'
 import { getProjectFactory } from '@/modules/core/repositories/projects'
+import { getEventBus } from '@/modules/shared/services/eventBus'
+import { VersionEvents } from '@/modules/core/domain/commits/events'
 
 const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
 let quitListeners: Optional<() => void> = undefined
@@ -97,12 +98,11 @@ const initializeEventListeners = () => {
     storeUserServerAppToken: storeUserServerAppTokenFactory({ db })
   })
 
-  // TODO: Use new event bus
   const quitters = [
     // Automation trigger events
-    VersionsEmitter.listen(
+    getEventBus().listen(
       VersionEvents.Created,
-      async ({ modelId, version, projectId }) => {
+      async ({ payload: { modelId, version, projectId } }) => {
         const projectDb = await getProjectDbClient({ projectId })
         await onModelVersionCreateFactory({
           getAutomation: getAutomationFactory({ db: projectDb }),

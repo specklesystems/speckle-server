@@ -50,7 +50,6 @@ import {
 } from '@/modules/core/repositories/branches'
 import { db } from '@/db/knex'
 import { deleteBranchAndNotifyFactory } from '@/modules/core/services/branch/management'
-import { ModelsEmitter } from '@/modules/core/events/modelsEmitter'
 import {
   createCommitByBranchIdFactory,
   createCommitByBranchNameFactory
@@ -60,7 +59,6 @@ import {
   insertBranchCommitsFactory,
   insertStreamCommitsFactory
 } from '@/modules/core/repositories/commits'
-import { VersionsEmitter } from '@/modules/core/events/versionsEmitter'
 import { addCommitCreatedActivityFactory } from '@/modules/activitystream/services/commitActivity'
 import {
   getObjectFactory,
@@ -81,7 +79,6 @@ import {
 import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
 import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import { ProjectsEmitter } from '@/modules/core/events/projectsEmitter'
 import {
   addStreamInviteAcceptedActivityFactory,
   addStreamPermissionsAddedActivityFactory
@@ -116,7 +113,7 @@ const createBranch = createBranchFactory({ db })
 const deleteBranchAndNotify = deleteBranchAndNotifyFactory({
   getStream,
   getBranchById: getBranchByIdFactory({ db }),
-  modelsEventsEmitter: ModelsEmitter.emit,
+  emitEvent: getEventBus().emit,
   markBranchStreamUpdated,
   addBranchDeletedActivity: addBranchDeletedActivityFactory({
     saveActivity: saveActivityFactory({ db }),
@@ -134,7 +131,7 @@ const createCommitByBranchId = createCommitByBranchIdFactory({
   insertBranchCommits: insertBranchCommitsFactory({ db }),
   markCommitStreamUpdated,
   markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
-  versionsEventEmitter: VersionsEmitter.emit,
+  emitEvent: getEventBus().emit,
   addCommitCreatedActivity: addCommitCreatedActivityFactory({
     saveActivity: saveActivityFactory({ db }),
     publish
@@ -171,7 +168,7 @@ const createStream = legacyCreateStreamFactory({
     }),
     createStream: createStreamFactory({ db }),
     createBranch: createBranchFactory({ db }),
-    projectsEventsEmitter: ProjectsEmitter.emit
+    emitEvent: getEventBus().emit
   })
 })
 const deleteStream = deleteStreamFactory({ db })
@@ -238,6 +235,8 @@ describe('Streams @core-streams', () => {
     id: ''
   }
 
+  let quitters: (() => void)[] = []
+
   const userLimitedUserDataSet = [
     { display: 'User', limitedUser: false },
     { display: 'LimitedUser', limitedUser: true }
@@ -253,8 +252,22 @@ describe('Streams @core-streams', () => {
     ])
   })
 
+  afterEach(() => {
+    quitters.forEach((quit) => quit())
+    quitters = []
+  })
+
   describe('Create, Read, Update, Delete Streams', () => {
     it('Should create a stream', async () => {
+      let eventFired = false
+      quitters.push(
+        getEventBus().listen('projects.created', async ({ payload }) => {
+          if (payload.project.name === testStream.name) {
+            eventFired = true
+          }
+        })
+      )
+
       const stream1Id = await createStream({ ...testStream, ownerId: userOne.id })
       expect(stream1Id).to.not.be.null
 
@@ -263,6 +276,7 @@ describe('Streams @core-streams', () => {
         ownerId: userOne.id
       })
       expect(stream2Id).to.not.be.null
+      expect(eventFired).to.be.ok
     })
 
     it('Should get a stream', async () => {

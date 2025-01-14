@@ -41,7 +41,8 @@ const regionConfigSchema = z.object({
 
 const multiRegionConfigSchema = z.object({
   main: regionConfigSchema,
-  regions: z.record(z.string(), regionConfigSchema)
+  regions: z.record(z.string(), regionConfigSchema),
+  defaultProjectRegionKey: z.string().min(3).nullish()
 })
 
 export type MultiRegionConfig = z.infer<typeof multiRegionConfigSchema>

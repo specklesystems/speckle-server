@@ -46,13 +46,13 @@ const {
   updateAllInviteTargetsFactory,
   deleteAllUserInvitesFactory
 } = require('@/modules/serverinvites/repositories/serverInvites')
-const { UsersEmitter } = require('@/modules/core/events/usersEmitter')
 const {
   deleteStreamFactory,
   getUserDeletableStreamsFactory
 } = require('@/modules/core/repositories/streams')
 const { dbLogger } = require('@/logging/logging')
 const { getServerInfoFactory } = require('@/modules/core/repositories/server')
+const { getEventBus } = require('@/modules/shared/services/eventBus')
 
 const getUsers = legacyGetPaginatedUsersFactory({ db })
 const countUsers = legacyGetPaginatedUsersCountFactory({ db })
@@ -83,7 +83,7 @@ const createUser = createUserFactory({
     }),
     requestNewEmailVerification
   }),
-  usersEventsEmitter: UsersEmitter.emit
+  emitEvent: getEventBus().emit
 })
 const deleteUser = deleteUserFactory({
   deleteStream: deleteStreamFactory({ db }),

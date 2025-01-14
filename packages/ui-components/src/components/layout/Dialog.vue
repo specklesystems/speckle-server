@@ -158,6 +158,7 @@ const props = withDefaults(
      * If set, the modal will be wrapped in a form element and the `onSubmit` callback will be invoked when the user submits the form
      */
     onSubmit?: (e: SubmitEvent) => void
+    isTransparent?: boolean
   }>(),
   {
     fullscreen: 'mobile'
@@ -237,8 +238,12 @@ const isFullscreenDesktop = computed(
 
 const dialogPanelClasses = computed(() => {
   const classParts: string[] = [
-    'transform md:rounded-xl text-foreground overflow-hidden transition-all bg-foundation-page text-left shadow-xl border border-outline-2 flex flex-col md:h-auto'
+    'transform md:rounded-xl text-foreground overflow-hidden transition-all text-left flex flex-col md:h-auto'
   ]
+
+  if (!props.isTransparent) {
+    classParts.push('bg-foundation-page shadow-xl border border-outline-2')
+  }
 
   if (isFullscreenDesktop.value) {
     classParts.push('md:h-full')

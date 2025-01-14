@@ -16,7 +16,6 @@ import {
 } from '@/modules/comments/repositories/comments'
 import { RateLimitError } from '@/modules/core/errors/ratelimit'
 import { StreamNotFoundError } from '@/modules/core/errors/stream'
-import { ProjectsEmitter } from '@/modules/core/events/projectsEmitter'
 import {
   ProjectVisibility,
   Resolvers,
@@ -36,6 +35,13 @@ import {
   insertCommitsFactory,
   insertStreamCommitsFactory
 } from '@/modules/core/repositories/commits'
+import { storeModelFactory } from '@/modules/core/repositories/models'
+import {
+  deleteProjectFactory,
+  getProjectFactory,
+  storeProjectFactory,
+  storeProjectRoleFactory
+} from '@/modules/core/repositories/projects'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import {
   getStreamFactory,
@@ -50,6 +56,7 @@ import {
   getUserStreamsCountFactory
 } from '@/modules/core/repositories/streams'
 import { getUserFactory, getUsersFactory } from '@/modules/core/repositories/users'
+import { createNewProjectFactory } from '@/modules/core/services/projects'
 import {
   getRateLimitResult,
   isRateLimitBreached
@@ -69,7 +76,11 @@ import {
 } from '@/modules/core/services/streams/management'
 import { createOnboardingStreamFactory } from '@/modules/core/services/streams/onboarding'
 import { getOnboardingBaseProjectFactory } from '@/modules/cross-server-sync/services/onboardingProject'
-import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
+import {
+  getDb,
+  getProjectDbClient,
+  getValidDefaultProjectRegionKey
+} from '@/modules/multiregion/utils/dbSelector'
 import {
   deleteAllResourceInvitesFactory,
   findUserByTargetFactory,
@@ -119,7 +130,7 @@ const createStreamReturnRecord = createStreamReturnRecordFactory({
   }),
   createStream: createStreamFactory({ db }),
   createBranch: createBranchFactory({ db }),
-  projectsEventsEmitter: ProjectsEmitter.emit
+  emitEvent: getEventBus().emit
 })
 const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
 const isStreamCollaborator = isStreamCollaboratorFactory({
@@ -284,10 +295,23 @@ export = {
         throw new RateLimitError(rateLimitResult)
       }
 
-      const project = await createStreamReturnRecord({
+      const regionKey = await getValidDefaultProjectRegionKey()
+      const projectDb = await getDb({ regionKey })
+
+      const createNewProject = createNewProjectFactory({
+        storeProject: storeProjectFactory({ db: projectDb }),
+        getProject: getProjectFactory({ db }),
+        deleteProject: deleteProjectFactory({ db: projectDb }),
+        storeModel: storeModelFactory({ db: projectDb }),
+        // THIS MUST GO TO THE MAIN DB
+        storeProjectRole: storeProjectRoleFactory({ db }),
+        projectsEventsEmitter: ProjectsEmitter.emit
+      })
+
+      const project = await createNewProject({
         ...(args.input || {}),
         ownerId: context.userId!,
-        ownerResourceAccessRules: context.resourceAccessRules
+        regionKey
       })
 
       return project
