@@ -48,7 +48,7 @@
             </FormButton>
 
             <View
-              :key="isOutOfCredits"
+              :key="`gendo-credits-${isOutOfCredits}`"
               v-tippy="isOutOfCredits ? 'No credits remaining' : undefined"
             >
               <FormButton
