@@ -11,6 +11,7 @@ export interface SanityBlogPost extends SanityDocument {
     asset: Reference
   }
   url: string
+  webflowUrl: string
 }
 
 export default defineEventHandler(async (): Promise<TutorialItem[]> => {
@@ -45,7 +46,7 @@ export default defineEventHandler(async (): Promise<TutorialItem[]> => {
         ? imageBuilder.image(item.mainImage).width(600).height(300).fit('fillmax').url()
         : undefined,
       id: item._id,
-      url: item.url
+      url: item.webflowUrl
     }))
   } catch (e) {
     const errMsg = ensureError(e).message
