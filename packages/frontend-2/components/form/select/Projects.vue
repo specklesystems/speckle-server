@@ -135,7 +135,7 @@ const props = defineProps({
     default: false
   },
   /**
-   * Whether to only return projects with a workspace
+   * Whether to only return projects within a specific workspace
    */
   workspaceId: {
     type: String as PropType<Optional<string>>
