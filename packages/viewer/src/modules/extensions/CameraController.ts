@@ -249,8 +249,8 @@ export class CameraController extends Extension implements SpeckleCamera {
     oldControls.enabled = false
     newControls.enabled = true
     newControls.fromPositionAndTarget(
-      oldControls.getPosition(),
-      oldControls.getTarget()
+      oldControls.getCurrentPosition(),
+      oldControls.getCurrentTarget()
     )
     newControls.jumpToGoal()
     this._activeControls = newControls

@@ -186,7 +186,10 @@ export class SmoothOrbitControls extends SpeckleControls {
   public set enabled(value: boolean) {
     if (value) {
       this.enableInteraction()
-    } else this.disableInteraction()
+    } else {
+      this.disableInteraction()
+      this.orbitSphere.visible = false
+    }
     this._enabled = value
   }
 
@@ -313,6 +316,22 @@ export class SmoothOrbitControls extends SpeckleControls {
    */
   public getTarget(): Vector3 {
     return this.goalOrigin.clone().applyMatrix4(this._basisTransform)
+  }
+
+  /**
+   * Gets the current goal position
+   */
+  public getCurrentPosition(): Vector3 {
+    return this.positionFromSpherical(this.spherical, this.origin).applyMatrix4(
+      this._basisTransform
+    )
+  }
+
+  /**
+   * Gets the point in model coordinates the model should orbit/pivot around.
+   */
+  public getCurrentTarget(): Vector3 {
+    return this.origin.clone().applyMatrix4(this._basisTransform)
   }
 
   public isStationary(): boolean {

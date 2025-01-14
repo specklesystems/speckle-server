@@ -232,6 +232,27 @@ class FlyControls extends SpeckleControls {
   }
 
   /**
+   * Gets the current goal position
+   */
+  public getCurrentPosition(): Vector3 {
+    return this.position
+  }
+
+  /**
+   * Gets the point in model coordinates the model should orbit/pivot around.
+   */
+  public getCurrentTarget(): Vector3 {
+    const target = new Vector3().copy(this.position)
+    const matrix = new Matrix4().makeRotationFromEuler(this.euler)
+    const forward = new Vector3()
+      .setFromMatrixColumn(matrix, 2)
+      .applyMatrix4(this._basisTransform)
+      .normalize()
+    target.addScaledVector(forward, -this.world.getRelativeOffset(0.2))
+    return target
+  }
+
+  /**
    * Sets the smoothing decay time.
    */
   public setDamperDecayTime(decayMilliseconds: number) {

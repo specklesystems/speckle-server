@@ -26,4 +26,6 @@ export abstract class SpeckleControls extends EventEmitter {
   abstract fromPositionAndTarget(position: Vector3, target: Vector3): void
   abstract getTarget(): Vector3
   abstract getPosition(): Vector3
+  abstract getCurrentTarget(): Vector3
+  abstract getCurrentPosition(): Vector3
 }
