@@ -112,7 +112,6 @@ import {
   ExecutionEngineNetworkError
 } from '@/modules/automate/errors/executionEngine'
 import { db } from '@/db/knex'
-import { AutomateRunsEmitter } from '@/modules/automate/events/runs'
 import { getCommitFactory } from '@/modules/core/repositories/commits'
 import { validateStreamAccessFactory } from '@/modules/core/services/streams/access'
 import { getUserFactory } from '@/modules/core/repositories/users'
@@ -642,7 +641,7 @@ export = (FF_AUTOMATE_MODULE_ENABLED
                 buildDecryptor
               }),
               createAppToken,
-              automateRunsEmitter: AutomateRunsEmitter.emit,
+              emitEvent: getEventBus().emit,
               getAutomationToken: getAutomationTokenFactory({ db: projectDb }),
               upsertAutomationRun: upsertAutomationRunFactory({ db: projectDb }),
               getFullAutomationRevisionMetadata:
@@ -899,7 +898,7 @@ export = (FF_AUTOMATE_MODULE_ENABLED
             automationRunUpdater: updateAutomationRunFactory({
               db: projectDb
             }),
-            runEventEmit: AutomateRunsEmitter.emit
+            emitEvent: getEventBus().emit
           }
 
           const payload = {
