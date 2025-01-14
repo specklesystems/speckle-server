@@ -8,7 +8,6 @@ import {
 } from '@/modules/activitystream/services/commentActivity'
 import { addCommitCreatedActivityFactory } from '@/modules/activitystream/services/commitActivity'
 import { getBlobsFactory } from '@/modules/blobstorage/repositories'
-import { CommentsEmitter } from '@/modules/comments/events/emitter'
 import {
   getCommentFactory,
   getCommentsResourcesFactory,
@@ -122,7 +121,7 @@ const crossServerSyncModule: SpeckleModule = {
       insertComments,
       insertCommentLinks,
       markCommentViewed,
-      commentsEventsEmit: CommentsEmitter.emit,
+      emitEvent: getEventBus().emit,
       addCommentCreatedActivity: addCommentCreatedActivityFactory({
         getViewerResourcesFromLegacyIdentifiers,
         getViewerResourceItemsUngrouped,
@@ -136,7 +135,7 @@ const crossServerSyncModule: SpeckleModule = {
       insertComments,
       insertCommentLinks,
       markCommentUpdated: markCommentUpdatedFactory({ db }),
-      commentsEventsEmit: CommentsEmitter.emit,
+      emitEvent: getEventBus().emit,
       addReplyAddedActivity: addReplyAddedActivityFactory({
         getViewerResourcesForComment: getViewerResourcesForCommentFactory({
           getCommentsResources: getCommentsResourcesFactory({ db }),
