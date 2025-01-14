@@ -1,5 +1,9 @@
+/**
+ * Responsible for handling the retrieval of a value from source, and caching in both in-memory and distributed cache.
+ */
+
 import type { Redis } from 'ioredis'
-import { InMemoryCache, RetrieveFromCache } from '@/modules/core/utils/cache'
+import { InMemoryCache, RetrieveFromCache } from '@/modules/core/utils/cacheHandler'
 
 export const layeredCacheFactory = <T>(deps: {
   retrieveFromSource: () => Promise<T>
@@ -18,7 +22,7 @@ export const layeredCacheFactory = <T>(deps: {
 
     if (!bustCache) {
       const inMemoryResult = inMemoryCache.get(key)
-      if (inMemoryResult) return inMemoryResult
+      if (inMemoryResult !== undefined) return inMemoryResult
 
       if (distributedCache) {
         const cachedResult = await distributedCache.get(key)

@@ -18,8 +18,8 @@ import {
   getServerVersion
 } from '@/modules/shared/helpers/envHelper'
 import { Knex } from 'knex'
-import TTLCache from '@isaacs/ttlcache'
-import { retrieveViaCacheFactory } from '@/modules/core/utils/cache'
+import { retrieveViaCacheFactory } from '@/modules/core/utils/cacheHandler'
+import { InMemoryCache } from '@/modules/core/utils/cacheHandler'
 
 const ServerConfig = buildTableHelper('server_config', [
   'id',
@@ -53,14 +53,14 @@ export const getServerConfigFactory =
     // An entry should always exist, as one is inserted via db migrations
     (await tables.serverConfig(deps.db).select('*').first())!
 
-export const getServerConfigWithCacheFactory = (deps: {
+export const getServerConfigViaCacheFactory = (deps: {
   db: Knex
-  inMemoryCache: TTLCache<string, ServerConfigRecord>
+  cache: InMemoryCache<ServerConfigRecord>
 }): GetServerConfig => {
-  const { db, inMemoryCache } = deps
+  const { db, cache } = deps
 
   const getFromSourceOrCache = retrieveViaCacheFactory<ServerConfigRecord>({
-    inMemoryCache,
+    cache,
     options: {
       inMemoryTtlSeconds: 60
     },

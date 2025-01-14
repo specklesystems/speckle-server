@@ -1,5 +1,8 @@
 import { describe } from 'mocha'
-import { InMemoryCache, retrieveViaCacheFactory } from '@/modules/core/utils/cache'
+import {
+  InMemoryCache,
+  retrieveViaCacheFactory
+} from '@/modules/core/utils/cacheHandler'
 import cryptoRandomString from 'crypto-random-string'
 import { expect } from 'chai'
 
@@ -15,7 +18,7 @@ describe('utils cache @core', () => {
         }
       }
       const getViaCache = retrieveViaCacheFactory<string>({
-        inMemoryCache: mockInMemoryCache,
+        cache: mockInMemoryCache,
         retrieveFromSource: async () => 'fromSource',
         options: {
           inMemoryTtlSeconds: 2 // it doesn't matter, as this is an implementation detail for the underlying cache
@@ -40,7 +43,7 @@ describe('utils cache @core', () => {
           }
         }
         const getFromLayeredCache = retrieveViaCacheFactory<string>({
-          inMemoryCache: mockInMemoryCache,
+          cache: mockInMemoryCache,
           retrieveFromSource: async () => 'fromSource',
           options: {
             inMemoryTtlSeconds: 2 // it doesn't matter, as this is an implementation detail for the underlying cache
@@ -64,7 +67,7 @@ describe('utils cache @core', () => {
           }
         }
         const getFromLayeredCache = retrieveViaCacheFactory<string>({
-          inMemoryCache: mockInMemoryCache,
+          cache: mockInMemoryCache,
           retrieveFromSource: async () => 'fromSource',
           options: {
             inMemoryTtlSeconds: 2 // it doesn't matter, as this is an implementation detail for the underlying cache

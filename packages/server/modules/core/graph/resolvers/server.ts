@@ -10,16 +10,17 @@ import {
   updateServerInfoFactory,
   getPublicRolesFactory,
   getPublicScopesFactory,
-  getServerConfigWithCacheFactory
+  getServerConfigViaCacheFactory
 } from '@/modules/core/repositories/server'
 import { db } from '@/db/knex'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
-import type { ServerConfigRecord } from '@/modules/core/helpers/types'
-import TTLCache from '@isaacs/ttlcache'
+import { getServerConfigCache } from '@/modules/core/cache/cache'
 
-const cache = new TTLCache<string, ServerConfigRecord>({ max: 1, ttl: 60 * 1000 })
 const getServerInfo = getServerInfoFactory({
-  getServerConfig: getServerConfigWithCacheFactory({ inMemoryCache: cache, db })
+  getServerConfig: getServerConfigViaCacheFactory({
+    cache: getServerConfigCache(),
+    db
+  })
 })
 const updateServerInfo = updateServerInfoFactory({ db })
 const getPublicRoles = getPublicRolesFactory({ db })
@@ -66,7 +67,7 @@ export = {
       await updateServerInfo(update)
       // we're currently going to ignore, that this should be propagated to all
       // backend instances, and going to rely on the TTL in the cache to propagate the changes
-      cache.clear()
+      getServerConfigCache().clear()
       return true
     },
     serverInfoMutations: () => ({})
