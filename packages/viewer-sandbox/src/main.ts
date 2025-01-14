@@ -4,9 +4,9 @@ import {
   SelectionEvent,
   ViewerEvent,
   Viewer,
-  CameraController,
   ViewModes,
-  SelectionExtension
+  SelectionExtension,
+  CameraController
 } from '@speckle/viewer'
 
 import './style.css'
@@ -20,6 +20,7 @@ import {
 import { SectionTool } from '@speckle/viewer'
 import { SectionOutlines } from '@speckle/viewer'
 import { ViewModesKeys } from './Extensions/ViewModesKeys'
+// import { JSONSpeckleStream } from './JSONSpeckleStream'
 import { BoxSelection } from './Extensions/BoxSelection'
 
 const createViewer = async (containerName: string, _stream: string) => {
@@ -111,7 +112,7 @@ const getStream = () => {
     // prettier-ignore
     // 'https://app.speckle.systems/streams/da9e320dad/commits/5388ef24b8?c=%5B-7.66134,10.82932,6.41935,-0.07739,-13.88552,1.8697,0,1%5D'
     // Revit sample house (good for bim-like stuff with many display meshes)
-    // 'https://app.speckle.systems/streams/da9e320dad/commits/5388ef24b8'
+    'https://app.speckle.systems/streams/da9e320dad/commits/5388ef24b8'
     // 'https://latest.speckle.systems/streams/c1faab5c62/commits/ab1a1ab2b6'
     // 'https://app.speckle.systems/streams/da9e320dad/commits/5388ef24b8'
     // 'https://latest.speckle.systems/streams/58b5648c4d/commits/60371ecb2d'
@@ -456,6 +457,8 @@ const getStream = () => {
     // Perfectly flat
     // 'https://app.speckle.systems/projects/344f803f81/models/5582ab673e'
 
+    // big baker
+    // 'https://latest.speckle.systems/projects/126cd4b7bb/models/032d09f716'
     // 'https://speckle.xyz/streams/27e89d0ad6/commits/5ed4b74252'
 
     //Gingerbread

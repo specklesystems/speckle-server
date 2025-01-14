@@ -63,8 +63,6 @@ class FlyControls extends SpeckleControls {
   }
 
   public set enabled(value: boolean) {
-    if (value) this.connect()
-    else this.disconnect()
     this._enabled = value
   }
 
@@ -109,6 +107,8 @@ class FlyControls extends SpeckleControls {
     this.container = container
     this.world = world
     this._options = Object.assign({}, options)
+
+    this.connect()
   }
 
   public isStationary(): boolean {
@@ -123,9 +123,12 @@ class FlyControls extends SpeckleControls {
     const now = performance.now()
     delta = delta !== undefined ? delta : now - this._lastTick
     this._lastTick = now
-    const deltaSeconds = delta / 1000
 
+    if (!this._enabled) return false
+
+    const deltaSeconds = delta / 1000
     const scaledWalkingSpeed = this.world.getRelativeOffset(0.2) * walkingSpeed
+
     if (this.keyMap.forward)
       this.velocity.z = -scaledWalkingSpeed * this._options.moveSpeed * deltaSeconds
     if (this.keyMap.back)
@@ -145,9 +148,14 @@ class FlyControls extends SpeckleControls {
     if (!this.keyMap.down && !this.keyMap.up) this.velocity.y = 0
 
     if (this.isStationary()) return false
-
     this.moveBy(this.velocity)
 
+    this.updatePositionRotation(delta)
+
+    return true
+  }
+
+  protected updatePositionRotation(delta: number) {
     const diagonal = this.world.worldBox.min.distanceTo(this.world.worldBox.max)
     const minMaxRange = diagonal < 1 ? diagonal : 1
     this.position.x = this.positionXDamper.update(
@@ -175,12 +183,10 @@ class FlyControls extends SpeckleControls {
 
     this.rotate(this.euler)
     this._targetCamera.position.copy(this.position)
-
-    return true
   }
 
   public jumpToGoal(): void {
-    this.update(SETTLING_TIME)
+    this.updatePositionRotation(SETTLING_TIME)
   }
 
   public fitToSphere(sphere: Sphere): void {
@@ -192,14 +198,14 @@ class FlyControls extends SpeckleControls {
     this.goalPosition.copy(pos)
   }
 
-  /** The input position and target will be in a basis with (0,1,0) as up */
+  /** The input position and target will be in a basis with (0,0,1) as up */
   public fromPositionAndTarget(position: Vector3, target: Vector3): void {
     const cPos = this.getPosition()
     const cTarget = this.getTarget()
     if (cPos.equals(position) && cTarget.equals(target)) return
 
-    const tPosition = new Vector3().copy(position).applyMatrix4(this._basisTransform)
-    const tTarget = new Vector3().copy(target).applyMatrix4(this._basisTransform)
+    const tPosition = new Vector3().copy(position)
+    const tTarget = new Vector3().copy(target)
     const matrix = new Matrix4()
       .lookAt(tPosition, tTarget, this._up)
       .premultiply(this._basisTransformInv)
@@ -208,7 +214,7 @@ class FlyControls extends SpeckleControls {
     this.goalPosition.copy(tPosition)
   }
 
-  /** The returned vector needs to be in a basis with (0,1,0) as up */
+  /** The returned vector needs to be in a basis with (0,0,1) as up */
   public getTarget(): Vector3 {
     const target = new Vector3().copy(this.goalPosition)
     const matrix = new Matrix4().makeRotationFromEuler(this.goalEuler)
@@ -217,12 +223,12 @@ class FlyControls extends SpeckleControls {
       .applyMatrix4(this._basisTransform)
       .normalize()
     target.addScaledVector(forward, -this.world.getRelativeOffset(0.2))
-    return target.applyMatrix4(this._basisTransformInv)
+    return target
   }
 
-  /** The returned vector needs to be in a basis with (0,1,0) as up */
+  /** The returned vector needs to be in a basis with (0,0,1) as up */
   public getPosition(): Vector3 {
-    return new Vector3().copy(this.goalPosition).applyMatrix4(this._basisTransformInv)
+    return new Vector3().copy(this.goalPosition)
   }
 
   /**
@@ -292,7 +298,7 @@ class FlyControls extends SpeckleControls {
 
   // event listeners
   protected onMouseMove = (event: PointerEvent) => {
-    if (event.buttons !== 1) return
+    if (event.buttons !== 1 || !this._enabled) return
 
     const movementX = event.movementX || 0
     const movementY = event.movementY || 0

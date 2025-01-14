@@ -94,6 +94,8 @@ export const DefaultOrbitControlsOptions: Required<CameraControllerOptions> = {
   touchAction: 'none',
   infiniteZoom: true,
   zoomToCursor: true,
+  orbitAroundCursor: true,
+  showOrbitPoint: true,
   lookSpeed: 1,
   moveSpeed: 1,
   damperDecay: 30,
@@ -194,8 +196,7 @@ export class CameraController extends Extension implements SpeckleCamera {
       this.perspectiveCamera,
       this.viewer.getContainer(),
       this.viewer.World,
-      this.viewer.getRenderer().scene,
-      this.viewer.getRenderer().intersections,
+      this.viewer.getRenderer(),
       this._options
     )
     orbitControls.enabled = true
@@ -295,8 +296,8 @@ export class CameraController extends Extension implements SpeckleCamera {
     this.emit(CameraEvent.Dynamic)
   }
 
-  public onEarlyUpdate() {
-    const changed = this._activeControls.update()
+  public onEarlyUpdate(_delta?: number) {
+    const changed = this._activeControls.update(_delta)
     if (changed !== this._lastCameraChanged) {
       this.emit(changed ? CameraEvent.Dynamic : CameraEvent.Stationary)
     }
