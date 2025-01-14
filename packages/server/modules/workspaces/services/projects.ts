@@ -1,8 +1,5 @@
 import { StreamRecord } from '@/modules/core/helpers/types'
 import {
-  CopyProjectModels,
-  CopyProjects,
-  CopyProjectVersions,
   GetDefaultRegion,
   GetWorkspace,
   GetWorkspaceRoleForUser,
@@ -200,18 +197,6 @@ export const moveProjectToWorkspaceFactory =
 
     // Assign project to workspace
     return await updateProject({ projectUpdate: { id: projectId, workspaceId } })
-  }
-
-export const moveProjectToRegionFactory =
-  (deps: {
-    copyProjects: CopyProjects
-    copyProjectModels: CopyProjectModels
-    copyProjectVersions: CopyProjectVersions
-  }) =>
-  async (args: { projectId: string }): Promise<void> => {
-    const projectIds = await deps.copyProjects({ projectIds: [args.projectId] })
-    const modelIdsByProjectId = await deps.copyProjectModels({ projectIds })
-    const versionIdsByProjectId = await deps.copyProjectVersions({ projectIds })
   }
 
 export const getWorkspaceRoleToDefaultProjectRoleMappingFactory =

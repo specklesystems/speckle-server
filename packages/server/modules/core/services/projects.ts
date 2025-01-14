@@ -62,7 +62,7 @@ export const createNewProjectFactory =
           async () => {
             await getProject({ projectId })
           },
-          { maxAttempts: 10 }
+          { maxAttempts: 100 }
         )
       } catch (err) {
         if (err instanceof StreamNotFoundError) {

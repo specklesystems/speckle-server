@@ -1,5 +1,7 @@
 import { db } from '@/db/knex'
 import { AllScopes } from '@/modules/core/helpers/mainConstants'
+import { createRandomEmail } from '@/modules/core/helpers/testHelpers'
+import { StreamRecord } from '@/modules/core/helpers/types'
 import { grantStreamPermissionsFactory } from '@/modules/core/repositories/streams'
 import {
   BasicTestWorkspace,
@@ -8,6 +10,7 @@ import {
 import {
   BasicTestUser,
   createAuthTokenForUser,
+  createTestUser,
   createTestUsers
 } from '@/test/authHelper'
 import {
@@ -15,7 +18,8 @@ import {
   CreateWorkspaceProjectDocument,
   GetWorkspaceProjectsDocument,
   GetWorkspaceTeamDocument,
-  MoveProjectToWorkspaceDocument
+  MoveProjectToWorkspaceDocument,
+  UpdateProjectRegionDocument
 } from '@/test/graphql/generated/graphql'
 import {
   createTestContext,
@@ -23,10 +27,16 @@ import {
   TestApolloServer
 } from '@/test/graphqlHelper'
 import { beforeEachContext } from '@/test/hooks'
+import {
+  getMainTestRegionClient,
+  isMultiRegionTestMode,
+  waitForRegionUser
+} from '@/test/speckle-helpers/regions'
 import { BasicTestStream, createTestStream } from '@/test/speckle-helpers/streamHelper'
 import { Roles } from '@speckle/shared'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
+import { Knex } from 'knex'
 
 const grantStreamPermissions = grantStreamPermissionsFactory({ db })
 
@@ -272,3 +282,70 @@ describe('Workspace project GQL CRUD', () => {
     })
   })
 })
+
+isMultiRegionTestMode()
+  ? describe('Workspace project region changes', () => {
+      const testRegionKey = 'region1'
+
+      const adminUser: BasicTestUser = {
+        id: '',
+        name: 'John Speckle',
+        email: createRandomEmail()
+      }
+
+      const testWorkspace: BasicTestWorkspace = {
+        id: '',
+        ownerId: '',
+        slug: '',
+        name: 'Unlimited Workspace'
+      }
+
+      const testProject: BasicTestStream = {
+        id: '',
+        ownerId: '',
+        name: 'Regional Project',
+        isPublic: true
+      }
+
+      let apollo: TestApolloServer
+      let regionDb: Knex
+
+      before(async () => {
+        await createTestUser(adminUser)
+        await waitForRegionUser(adminUser)
+        await createTestWorkspace(testWorkspace, adminUser, {
+          regionKey: testRegionKey,
+          addPlan: {
+            name: 'unlimited',
+            status: 'valid'
+          }
+        })
+
+        testProject.workspaceId = testWorkspace.id
+
+        apollo = await testApolloServer({ authUserId: adminUser.id })
+        regionDb = getMainTestRegionClient()
+      })
+
+      beforeEach(async () => {
+        await createTestStream(testProject, adminUser)
+      })
+
+      it('moves project record to target regional db', async () => {
+        const res = await apollo.execute(UpdateProjectRegionDocument, {
+          projectId: testProject.id,
+          regionKey: testRegionKey
+        })
+
+        expect(res).to.not.haveGraphQLErrors()
+
+        const project = await regionDb
+          .table<StreamRecord>('streams')
+          .select('*')
+          .where({ id: testProject.id })
+          .first()
+
+        expect(project).to.not.be.undefined
+      })
+    })
+  : void 0

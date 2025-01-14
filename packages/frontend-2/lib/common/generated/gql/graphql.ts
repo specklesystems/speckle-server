@@ -2595,7 +2595,7 @@ export type Query = {
   /** Look up server users */
   users: UserSearchResultCollection;
   /** Look up server users with a collection of emails */
-  usersByEmail: UserSearchResultCollection;
+  usersByEmail: Array<Maybe<LimitedUser>>;
   /** Validates the slug, to make sure it contains only valid characters and its not taken. */
   validateWorkspaceSlug: Scalars['Boolean']['output'];
   workspace: Workspace;
@@ -3872,6 +3872,7 @@ export type UserProjectsFilter = {
   onlyWithRoles?: InputMaybe<Array<Scalars['String']['input']>>;
   /** Filter out projects by name */
   search?: InputMaybe<Scalars['String']['input']>;
+  workspaceId?: InputMaybe<Scalars['ID']['input']>;
 };
 
 export type UserProjectsUpdatedMessage = {
@@ -4491,6 +4492,11 @@ export type WorkspaceProjectInviteCreateInput = {
 export type WorkspaceProjectMutations = {
   __typename?: 'WorkspaceProjectMutations';
   create: Project;
+  /**
+   * Update project region and move all regional data to new db.
+   * TODO: Currently performs all operations synchronously in request, should probably be scheduled.
+   */
+  moveToRegion: Project;
   moveToWorkspace: Project;
   updateRole: Project;
 };
@@ -4498,6 +4504,12 @@ export type WorkspaceProjectMutations = {
 
 export type WorkspaceProjectMutationsCreateArgs = {
   input: WorkspaceProjectCreateInput;
+};
+
+
+export type WorkspaceProjectMutationsMoveToRegionArgs = {
+  projectId: Scalars['String']['input'];
+  regionKey: Scalars['String']['input'];
 };
 
 
@@ -8132,6 +8144,7 @@ export type WorkspacePlanFieldArgs = {
 }
 export type WorkspaceProjectMutationsFieldArgs = {
   create: WorkspaceProjectMutationsCreateArgs,
+  moveToRegion: WorkspaceProjectMutationsMoveToRegionArgs,
   moveToWorkspace: WorkspaceProjectMutationsMoveToWorkspaceArgs,
   updateRole: WorkspaceProjectMutationsUpdateRoleArgs,
 }

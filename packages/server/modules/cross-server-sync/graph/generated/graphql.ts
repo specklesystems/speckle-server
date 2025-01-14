@@ -4495,6 +4495,10 @@ export type WorkspaceProjectInviteCreateInput = {
 export type WorkspaceProjectMutations = {
   __typename?: 'WorkspaceProjectMutations';
   create: Project;
+  /**
+   * Update project region and move all regional data to new db.
+   * TODO: Currently performs all operations synchronously in request, should probably be scheduled.
+   */
   moveToRegion: Project;
   moveToWorkspace: Project;
   updateRole: Project;

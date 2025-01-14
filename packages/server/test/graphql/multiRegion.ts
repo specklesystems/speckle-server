@@ -60,3 +60,15 @@ export const updateRegionMutation = gql`
 
   ${mainRegionMetadataFragment}
 `
+
+export const updateProjectRegionMutation = gql`
+  mutation UpdateProjectRegion($projectId: String!, $regionKey: String!) {
+    workspaceMutations {
+      projects {
+        moveToRegion(projectId: $projectId, regionKey: $regionKey) {
+          id
+        }
+      }
+    }
+  }
+`
