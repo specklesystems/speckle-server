@@ -315,3 +315,11 @@ export const onWorkspaceUpdatedSubscription = gql`
 
   ${basicWorkspaceFragment}
 `
+
+export const dismissWorkspaceMutation = gql`
+  mutation dismissWorkspace($input: WorkspaceDismissInput!) {
+    workspaceMutations {
+      dismiss(input: $input)
+    }
+  }
+`
