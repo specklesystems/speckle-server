@@ -203,6 +203,8 @@ import { Knex } from 'knex'
 import { getPaginatedItemsFactory } from '@/modules/shared/services/paginatedItems'
 import { InvalidWorkspacePlanStatus } from '@/modules/gatekeeper/errors/billing'
 import { BadRequestError } from '@/modules/shared/errors'
+import { dismissWorkspaceJoinRequestFactory } from '@/modules/workspaces/services/workspaceJoinRequests'
+import { updateWorkspaceJoinRequestStatusFactory } from '@/modules/workspaces/repositories/workspaceJoinRequests'
 
 const eventBus = getEventBus()
 const getServerInfo = getServerInfoFactory({ db })
@@ -774,7 +776,15 @@ export = FF_WORKSPACES_MODULE_ENABLED
           return true
         },
         invites: () => ({}),
-        projects: () => ({})
+        projects: () => ({}),
+        dismiss: async (_parent, args, ctx) => {
+          return await dismissWorkspaceJoinRequestFactory({
+            getWorkspace: getWorkspaceFactory({ db }),
+            updateWorkspaceJoinRequestStatus: updateWorkspaceJoinRequestStatusFactory({
+              db
+            })
+          })({ userId: ctx.userId!, workspaceId: args.input.workspaceId })
+        }
       },
       WorkspaceInviteMutations: {
         resend: async (_parent, args, ctx) => {
