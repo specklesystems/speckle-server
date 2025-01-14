@@ -1,5 +1,5 @@
 <template>
-  <div v-if="detailedRender">
+  <div v-if="detailedRender" class="mb-2">
     <div class="relative">
       <div v-if="detailedRender.status === 'COMPLETED' && renderUrl" class="group">
         <button class="relative flex cursor-zoom-in" @click="openPreview">
@@ -55,7 +55,7 @@
       </div>
       <div
         v-if="detailedRender.status !== 'COMPLETED'"
-        class="relative w-full h-32 rounded-lg flex items-center justify-center"
+        class="relative w-full h-40 rounded-lg flex items-center justify-center"
       >
         <div
           :class="`absolute rounded-lg w-full h-full top-0 ${
@@ -66,7 +66,7 @@
         <ExclamationCircleIcon v-else class="w-6 text-danger" />
       </div>
       <div
-        class="absolute bottom-2 left-2 right-2 space-x-2 flex items-center min-w-0 max-w-full overflow-hidden z-10"
+        class="absolute bottom-2 left-2 right-2 space-x-2 flex items-center min-w-0 w-fit max-w-full overflow-hidden z-10"
       >
         <div
           class="bg-foundation p-0.5 flex items-center gap-x-1 min-w-0 max-w-full rounded-md"
