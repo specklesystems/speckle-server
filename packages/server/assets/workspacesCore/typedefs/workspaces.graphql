@@ -322,7 +322,6 @@ type Workspace {
     @hasServerRole(role: SERVER_USER)
     @hasScope(scope: "workspace:read")
     @hasWorkspaceRole(role: ADMIN)
-    @isOwner
 }
 
 type WorkspaceCreationState {
