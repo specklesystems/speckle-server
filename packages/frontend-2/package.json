@@ -99,6 +99,8 @@
     "@nuxt/image": "^1.8.1",
     "@nuxtjs/tailwindcss": "^6.12.2",
     "@parcel/watcher": "^2.4.1",
+    "@sanity/image-url": "^1.1.0",
+    "@sanity/types": "^3.70.0",
     "@speckle/tailwind-theme": "workspace:^",
     "@tailwindcss/forms": "^0.5.3",
     "@tailwindcss/line-clamp": "^0.4.2",

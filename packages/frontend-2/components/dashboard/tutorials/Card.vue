@@ -1,12 +1,12 @@
 <template>
-  <NuxtLink :to="webflowItem.url" target="_blank" @click="trackClick">
+  <NuxtLink :to="tutorialItem.url" target="_blank" @click="trackClick">
     <div
       class="bg-foundation border border-outline-3 rounded-xl flex flex-col overflow-hidden hover:border-outline-5 transition"
     >
       <NuxtImg
-        v-if="webflowItem.featureImageUrl"
-        :src="webflowItem.featureImageUrl"
-        :alt="webflowItem.title"
+        v-if="tutorialItem.image"
+        :src="tutorialItem.image"
+        :alt="tutorialItem.title"
         class="h-32 w-full object-cover"
         width="400"
         height="225"
@@ -19,7 +19,7 @@
       </div>
       <div class="p-5">
         <h3 class="text-body-2xs text-foreground truncate">
-          {{ webflowItem.title }}
+          {{ tutorialItem.title }}
         </h3>
       </div>
     </div>
@@ -27,19 +27,19 @@
 </template>
 
 <script lang="ts" setup>
-import type { WebflowItem } from '~/lib/dashboard/helpers/types'
+import type { TutorialItem } from '~/lib/dashboard/helpers/types'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 
 const mixpanel = useMixpanel()
 
 const props = defineProps<{
-  webflowItem: WebflowItem
+  tutorialItem: TutorialItem
 }>()
 
 const trackClick = () => {
   mixpanel.track('Tutorial clicked', {
-    title: props.webflowItem.title,
-    id: props.webflowItem.id
+    title: props.tutorialItem.title,
+    id: props.tutorialItem.id
   })
 }
 </script>
