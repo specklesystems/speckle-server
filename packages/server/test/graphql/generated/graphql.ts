@@ -1,4 +1,3 @@
-import { WorkspaceJoinRequestStatusGraphQLReturn as WorkspaceJoinRequestStatus } from '@/modules/workspacesCore/helpers/graphTypes';
 import { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
 export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;
@@ -4407,7 +4406,11 @@ export type WorkspaceJoinRequestCollection = {
   totalCount: Scalars['Int']['output'];
 };
 
-export { WorkspaceJoinRequestStatus };
+export enum WorkspaceJoinRequestStatus {
+  Accepted = 'accepted',
+  Denied = 'denied',
+  Pending = 'pending'
+}
 
 export type WorkspaceMutations = {
   __typename?: 'WorkspaceMutations';

@@ -1,4 +1,3 @@
-import { WorkspaceJoinRequestStatusGraphQLReturn as WorkspaceJoinRequestStatus } from '@/modules/workspacesCore/helpers/graphTypes';
 export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;
 export type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
@@ -4406,7 +4405,11 @@ export type WorkspaceJoinRequestCollection = {
   totalCount: Scalars['Int']['output'];
 };
 
-export { WorkspaceJoinRequestStatus };
+export enum WorkspaceJoinRequestStatus {
+  Accepted = 'accepted',
+  Denied = 'denied',
+  Pending = 'pending'
+}
 
 export type WorkspaceMutations = {
   __typename?: 'WorkspaceMutations';

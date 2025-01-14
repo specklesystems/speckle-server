@@ -9,7 +9,6 @@ generates:
       - 'typescript-resolvers'
     config:
       contextType: '@/modules/shared/helpers/typeHelper#GraphQLContext'
-      allowParentTypeOverride: true
       mappers:
         Stream: '@/modules/core/helpers/graphTypes#StreamGraphQLReturn'
         Commit: '@/modules/core/helpers/graphTypes#CommitGraphQLReturn'
@@ -107,8 +106,6 @@ config:
   scalars:
     JSONObject: Record<string, unknown>
     DateTime: Date
-  enumValues:
-    WorkspaceJoinRequestStatus: '@/modules/workspacesCore/helpers/graphTypes#WorkspaceJoinRequestStatusGraphQLReturn'
 require:
   - ts-node/register
   - tsconfig-paths/register

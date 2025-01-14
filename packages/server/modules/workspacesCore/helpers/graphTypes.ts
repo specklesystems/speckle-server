@@ -1,20 +1,12 @@
 import { MutationsObjectGraphQLReturn } from '@/modules/core/helpers/graphTypes'
-import { LimitedUserRecord, UserRecord } from '@/modules/core/helpers/types'
+import { LimitedUserRecord } from '@/modules/core/helpers/types'
 import { WorkspaceSsoProviderRecord } from '@/modules/workspaces/domain/sso/types'
 import { WorkspaceTeamMember } from '@/modules/workspaces/domain/types'
-import {
-  Workspace,
-  WorkspaceJoinRequest,
-  WorkspaceJoinRequestStatus
-} from '@/modules/workspacesCore/domain/types'
+import { Workspace, WorkspaceJoinRequest } from '@/modules/workspacesCore/domain/types'
 import { WorkspaceRoles } from '@speckle/shared'
 
 export type WorkspaceGraphQLReturn = Workspace
-export type WorkspaceJoinRequestGraphQLReturn = WorkspaceJoinRequest & {
-  user: UserRecord
-  workspace: Workspace
-}
-export type WorkspaceJoinRequestStatusGraphQLReturn = WorkspaceJoinRequestStatus
+export type WorkspaceJoinRequestGraphQLReturn = WorkspaceJoinRequest
 export type WorkspaceBillingGraphQLReturn = { parent: Workspace }
 export type WorkspaceSsoGraphQLReturn = WorkspaceSsoProviderRecord
 export type WorkspaceMutationsGraphQLReturn = MutationsObjectGraphQLReturn

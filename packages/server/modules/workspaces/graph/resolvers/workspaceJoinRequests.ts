@@ -18,6 +18,7 @@ export default {
           limit: number
           cursor?: string
           filter: {
+            workspaceId: string
             userId: string
             status?: WorkspaceJoinRequestStatus | null
           }

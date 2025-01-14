@@ -74,7 +74,7 @@ export const getAdminWorkspaceJoinRequestsFactory =
       query.andWhere(WorkspaceJoinRequests.col.createdAt, '<', cursor)
     }
     return await query
-      .select<WorkspaceJoinRequest>(WorkspaceJoinRequests.cols)
+      .select<WorkspaceJoinRequest[]>(WorkspaceJoinRequests.cols)
       .orderBy(WorkspaceJoinRequests.col.createdAt, 'desc')
       .limit(limit)
   }
