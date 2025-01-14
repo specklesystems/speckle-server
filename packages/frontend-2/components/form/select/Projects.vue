@@ -133,6 +133,12 @@ const props = defineProps({
   ownedOnly: {
     type: Boolean,
     default: false
+  },
+  /**
+   * Whether to only return projects with a workspace
+   */
+  workspaceId: {
+    type: String as PropType<Optional<string>>
   }
 })
 
@@ -155,10 +161,11 @@ const invokeSearch = async (search: string) => {
   if (!isLoggedIn.value) return []
   const results = await apollo.query({
     query: searchProjectsQuery,
-    variables: {
+    variables: computed(() => ({
       search: search.trim().length ? search : null,
-      onlyWithRoles: props.ownedOnly ? [Roles.Stream.Owner] : null
-    }
+      onlyWithRoles: props.ownedOnly ? [Roles.Stream.Owner] : null,
+      ...(props.workspaceId && { workspaceId: props.workspaceId })
+    })).value
   })
   return results.data.activeUser?.projects.items || []
 }
