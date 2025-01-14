@@ -4,6 +4,8 @@ import {
   Workspace,
   WorkspaceAcl,
   WorkspaceDomain,
+  WorkspaceJoinRequest,
+  WorkspaceJoinRequestStatus,
   WorkspaceRegionAssignment,
   WorkspaceWithDomains,
   WorkspaceWithOptionalRole
@@ -308,3 +310,9 @@ export type GetWorkspaceCreationState = (params: {
 export type UpsertWorkspaceCreationState = (params: {
   workspaceCreationState: WorkspaceCreationState
 }) => Promise<void>
+
+export type UpdateWorkspaceJoinRequestStatus = (params: {
+  workspaceId: string
+  userId: string
+  status: WorkspaceJoinRequestStatus
+}) => Promise<Pick<WorkspaceJoinRequest, 'workspaceId' | 'userId'> | undefined>
