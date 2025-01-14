@@ -29,7 +29,6 @@ const {
   validateInputAttachmentsFactory
 } = require('@/modules/comments/services/commentTextService')
 const { getBlobsFactory } = require('@/modules/blobstorage/repositories')
-const { CommentsEmitter } = require('@/modules/comments/events/emitter')
 const {
   createCommitByBranchIdFactory,
   createCommitByBranchNameFactory
@@ -138,7 +137,7 @@ const createComment = createCommentFactory({
   insertCommentLinks: insertCommentLinksFactory({ db }),
   deleteComment: deleteCommentFactory({ db }),
   markCommentViewed,
-  commentsEventsEmit: CommentsEmitter.emit
+  emitEvent: getEventBus().emit
 })
 
 const getObject = getObjectFactory({ db })
