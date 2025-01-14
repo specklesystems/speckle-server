@@ -229,7 +229,7 @@ const isDomainProtectionEnabled = computed({
         },
         update: (cache, res) => {
           const { data } = res
-          if (!data?.workspaceMutations) return
+          if (!data?.workspaceMutations || !workspace.value) return
 
           cache.modify<Workspace>({
             id: getCacheId('Workspace', workspace.value.id),

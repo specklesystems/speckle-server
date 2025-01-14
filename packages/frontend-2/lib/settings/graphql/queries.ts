@@ -55,10 +55,10 @@ export const settingsWorkspaceRegionsQuery = graphql(`
 
 export const settingsWorkspacesMembersQuery = graphql(`
   query SettingsWorkspacesMembers(
-    $slug: String!
+    $workspaceId: String!
     $invitesFilter: PendingWorkspaceCollaboratorsFilter
   ) {
-    workspaceBySlug(slug: $slug) {
+    workspace(id: $workspaceId) {
       ...SettingsWorkspacesMembers_Workspace
       ...SettingsWorkspacesMembersMembersTable_Workspace
       ...SettingsWorkspacesMembersGuestsTable_Workspace
