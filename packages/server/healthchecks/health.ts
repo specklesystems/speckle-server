@@ -88,35 +88,9 @@ export const handleLivenessFactory =
 
 export const handleReadinessFactory = (deps: {
   isRedisAlive: RedisCheck
-  areAllPostgresAlive: MultiDBCheck
   getFreeConnectionsCalculators: () => FreeConnectionsCalculators
 }): ReadinessHandler => {
   return async () => {
-    const allPostgresResults = await deps.areAllPostgresAlive()
-    const deadPostgresKeys = Object.entries(allPostgresResults)
-      .filter((result) => !result[1].isAlive)
-      .map((result) => result[0])
-
-    if (deadPostgresKeys.length) {
-      throw new ReadinessError(
-        `Readiness health check failed. Postgres for ${join(
-          deadPostgresKeys,
-          ', '
-        )} is not available.`,
-        {
-          cause: new MultiError(
-            Object.entries(allPostgresResults).map((kv) =>
-              ensureErrorOrWrapAsCause(
-                //HACK: kv[1] is not typed correctly as the filter does not narrow the type
-                (kv[1] as { isAlive: false; err: unknown }).err,
-                'Unknown Postgres error.'
-              )
-            )
-          )
-        }
-      )
-    }
-
     const redisClient = getGenericRedis()
     const redisCheck = await deps.isRedisAlive({ client: redisClient })
     if (!redisCheck.isAlive) {
