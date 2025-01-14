@@ -55,7 +55,7 @@ import type { NotificationPreferences } from '~~/lib/user/helpers/components'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 
 definePageMeta({
-  middleware: ['auth'],
+  middleware: ['auth', 'settings'],
   layout: 'settings'
 })
 

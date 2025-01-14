@@ -19,7 +19,7 @@
           <IconSidebarClose v-else class="h-4 w-4 -ml-1 -mr-1" />
         </FormButton>
 
-        <NuxtLink :to="homeRoute" class="flex items-center gap-x-1 pl-0.5">
+        <NuxtLink :to="exitSettingsRoute" class="flex items-center gap-x-1 pl-0.5">
           <ChevronLeftIcon class="h-4 w-4 text-foreground-2" />
           <p class="text-body-xs font-medium text-foreground">Settings</p>
         </NuxtLink>
@@ -34,7 +34,10 @@
       >
         <LayoutSidebarMenu>
           <LayoutSidebarMenuGroup v-if="!isMobile">
-            <NuxtLink :to="homeRoute" class="items-center gap-x-1.5 px-2.5 flex">
+            <NuxtLink
+              :to="exitSettingsRoute"
+              class="items-center gap-x-1.5 px-2.5 flex"
+            >
               <ChevronLeftIcon class="h-3 w-3 text-foreground-2" />
               <p class="text-body-xs font-medium text-foreground">Exit settings</p>
             </NuxtLink>
@@ -137,7 +140,7 @@ import { useQuery } from '@vue/apollo-composable'
 import { settingsSidebarQuery } from '~/lib/settings/graphql/queries'
 import { PlusIcon, ChevronLeftIcon } from '@heroicons/vue/24/outline'
 import { useActiveUser } from '~/lib/auth/composables/activeUser'
-import { useSettingsMenu } from '~/lib/settings/composables/menu'
+import { useSettingsMenu, useSettingsMenuState } from '~/lib/settings/composables/menu'
 import {
   LayoutSidebar,
   LayoutSidebarMenu,
@@ -181,6 +184,7 @@ graphql(`
   }
 `)
 
+const settingsMenuState = useSettingsMenuState()
 const { activeUser: user } = useActiveUser()
 const route = useRoute()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
@@ -212,4 +216,8 @@ const needsSsoSession = (
     ? !workspace.sso?.session?.validUntil
     : false
 }
+
+const exitSettingsRoute = computed(
+  () => settingsMenuState.value.previousRoute ?? homeRoute
+)
 </script>

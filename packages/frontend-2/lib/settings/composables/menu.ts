@@ -2,7 +2,6 @@ import type { SettingsMenuItem } from '~/lib/settings/helpers/types'
 import { useIsMultipleEmailsEnabled } from '~/composables/globals'
 import { Roles } from '@speckle/shared'
 import { useIsMultiregionEnabled } from '~/lib/multiregion/composables/main'
-import type { InjectionKey } from 'vue'
 import { graphql } from '~/lib/common/generated/gql'
 import { settingsRoutes } from '~/lib/common/helpers/route'
 
@@ -130,16 +129,9 @@ export const useSettingsMenu = () => {
   }
 }
 
-type MenuState = {
-  goToWorkspaceMenuItem: (workspaceId: string, menuTarget: string) => void
-}
-const MenuStateKey: InjectionKey<MenuState> = Symbol('menuState')
-
-export const useSetupMenuState = (params: MenuState) => {
-  const state = params
-  provide(MenuStateKey, state)
-}
-
-export const useMenuState = () => {
-  return inject(MenuStateKey)!
-}
+export const useSettingsMenuState = () =>
+  useState<{
+    previousRoute: string | undefined
+  }>('settings-menu-state', () => ({
+    previousRoute: undefined
+  }))

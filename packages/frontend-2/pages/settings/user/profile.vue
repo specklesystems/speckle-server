@@ -35,7 +35,7 @@ import { useActiveUser } from '~/lib/auth/composables/activeUser'
 import { ClipboardIcon } from '@heroicons/vue/24/outline'
 
 definePageMeta({
-  middleware: ['auth'],
+  middleware: ['auth', 'settings'],
   layout: 'settings'
 })
 
