@@ -39,6 +39,10 @@ import {
   commentEventsNamespace,
   CommentEventsPayloads
 } from '@/modules/comments/domain/events'
+import {
+  automationEventsNamespace,
+  AutomationEventsPayloads
+} from '@/modules/automate/domain/events'
 
 type AllEventsWildcard = '**'
 type EventWildcard = '*'
@@ -65,6 +69,7 @@ type EventsByNamespace = {
   [versionEventsNamespace]: VersionEventsPayloads
   [accessRequestEventsNamespace]: AccessRequestEventsPayloads
   [commentEventsNamespace]: CommentEventsPayloads
+  [automationEventsNamespace]: AutomationEventsPayloads
 }
 
 type EventTypes = UnionToIntersection<EventsByNamespace[keyof EventsByNamespace]>

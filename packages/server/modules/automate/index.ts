@@ -28,10 +28,6 @@ import authGithubAppRest from '@/modules/automate/rest/authGithubApp'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { TokenScopeData } from '@/modules/shared/domain/rolesAndScopes/types'
 import { db } from '@/db/knex'
-import {
-  AutomationsEmitter,
-  AutomationsEvents
-} from '@/modules/automate/events/automations'
 import { ProjectSubscriptions, publish } from '@/modules/shared/utils/subscriptions'
 import { AutomateRunsEmitter, AutomateRunsEvents } from '@/modules/automate/events/runs'
 import { getBranchLatestCommitsFactory } from '@/modules/core/repositories/branches'
@@ -59,6 +55,7 @@ import { mixpanel } from '@/modules/shared/utils/mixpanel'
 import { getProjectFactory } from '@/modules/core/repositories/projects'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { VersionEvents } from '@/modules/core/domain/commits/events'
+import { AutomationEvents } from '@/modules/automate/domain/events'
 
 const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
 let quitListeners: Optional<() => void> = undefined
@@ -128,31 +125,37 @@ const initializeEventListeners = () => {
       }
     ),
     // Automation management events
-    AutomationsEmitter.listen(AutomationsEvents.Created, async ({ automation }) => {
-      await publish(ProjectSubscriptions.ProjectAutomationsUpdated, {
-        projectId: automation.projectId,
-        projectAutomationsUpdated: {
-          type: ProjectAutomationsUpdatedMessageType.Created,
-          automationId: automation.id,
-          automation,
-          revision: null
-        }
-      })
-    }),
-    AutomationsEmitter.listen(AutomationsEvents.Updated, async ({ automation }) => {
-      await publish(ProjectSubscriptions.ProjectAutomationsUpdated, {
-        projectId: automation.projectId,
-        projectAutomationsUpdated: {
-          type: ProjectAutomationsUpdatedMessageType.Updated,
-          automationId: automation.id,
-          automation,
-          revision: null
-        }
-      })
-    }),
-    AutomationsEmitter.listen(
-      AutomationsEvents.CreatedRevision,
-      async ({ automation, revision }) => {
+    getEventBus().listen(
+      AutomationEvents.Created,
+      async ({ payload: { automation } }) => {
+        await publish(ProjectSubscriptions.ProjectAutomationsUpdated, {
+          projectId: automation.projectId,
+          projectAutomationsUpdated: {
+            type: ProjectAutomationsUpdatedMessageType.Created,
+            automationId: automation.id,
+            automation,
+            revision: null
+          }
+        })
+      }
+    ),
+    getEventBus().listen(
+      AutomationEvents.Updated,
+      async ({ payload: { automation } }) => {
+        await publish(ProjectSubscriptions.ProjectAutomationsUpdated, {
+          projectId: automation.projectId,
+          projectAutomationsUpdated: {
+            type: ProjectAutomationsUpdatedMessageType.Updated,
+            automationId: automation.id,
+            automation,
+            revision: null
+          }
+        })
+      }
+    ),
+    getEventBus().listen(
+      AutomationEvents.CreatedRevision,
+      async ({ payload: { automation, revision } }) => {
         await publish(ProjectSubscriptions.ProjectAutomationsUpdated, {
           projectId: automation.projectId,
           projectAutomationsUpdated: {
