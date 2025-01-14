@@ -203,8 +203,15 @@ import { Knex } from 'knex'
 import { getPaginatedItemsFactory } from '@/modules/shared/services/paginatedItems'
 import { InvalidWorkspacePlanStatus } from '@/modules/gatekeeper/errors/billing'
 import { BadRequestError } from '@/modules/shared/errors'
-import { dismissWorkspaceJoinRequestFactory } from '@/modules/workspaces/services/workspaceJoinRequests'
-import { updateWorkspaceJoinRequestStatusFactory } from '@/modules/workspaces/repositories/workspaceJoinRequests'
+import {
+  dismissWorkspaceJoinRequestFactory,
+  requestToJoinWorkspaceFactory,
+  sendWorkspaceJoinRequestReceivedEmailFactory
+} from '@/modules/workspaces/services/workspaceJoinRequests'
+import {
+  createWorkspaceJoinRequestFactory,
+  updateWorkspaceJoinRequestStatusFactory
+} from '@/modules/workspaces/repositories/workspaceJoinRequests'
 
 const eventBus = getEventBus()
 const getServerInfo = getServerInfoFactory({ db })
@@ -784,6 +791,35 @@ export = FF_WORKSPACES_MODULE_ENABLED
               db
             })
           })({ userId: ctx.userId!, workspaceId: args.input.workspaceId })
+        },
+        requestToJoin: async (_parent, args, ctx) => {
+          const transaction = await db.transaction()
+          const createWorkspaceJoinRequest = createWorkspaceJoinRequestFactory({
+            db: transaction
+          })
+          const sendWorkspaceJoinRequestReceivedEmail =
+            sendWorkspaceJoinRequestReceivedEmailFactory({
+              renderEmail,
+              sendEmail,
+              getServerInfo,
+              getWorkspaceCollaborators: getWorkspaceCollaboratorsFactory({
+                db: transaction
+              }),
+              getUserEmails: findEmailsByUserIdFactory({ db: transaction })
+            })
+
+          return await withTransaction(
+            requestToJoinWorkspaceFactory({
+              createWorkspaceJoinRequest,
+              sendWorkspaceJoinRequestReceivedEmail,
+              getUserById: getUserFactory({ db: transaction }),
+              getWorkspace: getWorkspaceFactory({ db: transaction })
+            })({
+              userId: ctx.userId!,
+              workspaceId: args.input.workspaceId
+            }),
+            transaction
+          )
         }
       },
       WorkspaceInviteMutations: {
