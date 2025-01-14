@@ -29,6 +29,9 @@
             color="foundation"
             :disabled="isLoading || timeOutWait || isOutOfCredits"
             textarea-classes="sm:!min-h-24"
+            @keyup.enter.prevent="
+              !isLoading && !timeOutWait && !isOutOfCredits && prompt && enqueMagic()
+            "
           />
           <div class="flex justify-between gap-2 items-center text-foreground-2">
             <FormButton
