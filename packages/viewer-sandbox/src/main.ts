@@ -459,12 +459,14 @@ const getStream = () => {
     // 'https://speckle.xyz/streams/27e89d0ad6/commits/5ed4b74252'
 
     //Gingerbread
-    'https://latest.speckle.systems/projects/387050bffe/models/48f7eb26fb'
+    // 'https://latest.speckle.systems/projects/387050bffe/models/48f7eb26fb'
     // DUI3 Mesh Colors
     // 'https://app.speckle.systems/projects/93200a735d/models/cbacd3eaeb@344a397239'
 
     // Instance toilets
     // 'https://app.speckle.systems/projects/e89b61b65c/models/2a0995f124'
+
+    'https://latest.speckle.systems/projects/3fe1880c36/models/65bb4287a8'
   )
 }
 
