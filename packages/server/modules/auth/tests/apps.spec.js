@@ -73,7 +73,10 @@ const {
   getTokenResourceAccessDefinitionsByIdFactory,
   updateApiTokenFactory
 } = require('@/modules/core/repositories/tokens')
-const { getServerInfoFactory } = require('@/modules/core/repositories/server')
+const {
+  getServerInfoFactory,
+  getServerConfigFactory
+} = require('@/modules/core/repositories/server')
 const { getEventBus } = require('@/modules/shared/services/eventBus')
 
 const db = knex
@@ -115,7 +118,9 @@ const refreshAppToken = refreshAppTokenFactory({
   createBareToken
 })
 
-const getServerInfo = getServerInfoFactory({ db })
+const getServerInfo = getServerInfoFactory({
+  getServerConfig: getServerConfigFactory({ db })
+})
 const findEmail = findEmailFactory({ db })
 const requestNewEmailVerification = requestNewEmailVerificationFactory({
   findEmail,

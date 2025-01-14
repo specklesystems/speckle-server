@@ -58,7 +58,10 @@ const {
   storeTokenScopesFactory,
   storeTokenResourceAccessDefinitionsFactory
 } = require('@/modules/core/repositories/tokens')
-const { getServerInfoFactory } = require('@/modules/core/repositories/server')
+const {
+  getServerInfoFactory,
+  getServerConfigFactory
+} = require('@/modules/core/repositories/server')
 const { createObjectFactory } = require('@/modules/core/services/objects/management')
 const {
   storeSingleObjectIfNotFoundFactory,
@@ -88,13 +91,17 @@ const findEmail = findEmailFactory({ db })
 const requestNewEmailVerification = requestNewEmailVerificationFactory({
   findEmail,
   getUser: getUserFactory({ db }),
-  getServerInfo: getServerInfoFactory({ db }),
+  getServerInfo: getServerInfoFactory({
+    getServerConfig: getServerConfigFactory({ db })
+  }),
   deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db }),
   renderEmail,
   sendEmail
 })
 const createUser = createUserFactory({
-  getServerInfo: getServerInfoFactory({ db }),
+  getServerInfo: getServerInfoFactory({
+    getServerConfig: getServerConfigFactory({ db })
+  }),
   findEmail,
   storeUser: storeUserFactory({ db }),
   countAdminUsers: countAdminUsersFactory({ db }),

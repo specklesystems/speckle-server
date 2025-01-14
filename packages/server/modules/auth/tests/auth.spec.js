@@ -67,10 +67,13 @@ const {
 } = require('@/modules/serverinvites/services/processing')
 const {
   getServerInfoFactory,
-  updateServerInfoFactory
+  updateServerInfoFactory,
+  getServerConfigFactory
 } = require('@/modules/core/repositories/server')
 
-const getServerInfo = getServerInfoFactory({ db })
+const getServerInfo = getServerInfoFactory({
+  getServerConfig: getServerConfigFactory({ db })
+})
 const getUser = getUserFactory({ db })
 const getUsers = getUsersFactory({ db })
 const createInviteDirectly = createStreamInviteDirectly
