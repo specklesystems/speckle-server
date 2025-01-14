@@ -5,7 +5,11 @@
         title="Projects"
         text="Manage projects in your workspace"
       />
+      <div v-if="loading && !projects.length" class="flex justify-center py-8">
+        <CommonLoadingIcon />
+      </div>
       <SettingsSharedProjects
+        v-else
         v-model:search="search"
         :projects="projects"
         :workspace-id="workspaceId"
@@ -60,7 +64,7 @@ const search = ref('')
 const {
   identifier,
   onInfiniteLoad,
-  query: { result }
+  query: { result, loading }
 } = usePaginatedQuery({
   query: settingsWorkspacesProjectsQuery,
   baseVariables: computed(() => ({

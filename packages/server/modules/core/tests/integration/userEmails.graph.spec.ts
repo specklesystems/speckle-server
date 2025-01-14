@@ -35,8 +35,8 @@ import {
   storeUserFactory
 } from '@/modules/core/repositories/users'
 import { createUserFactory } from '@/modules/core/services/users/management'
-import { UsersEmitter } from '@/modules/core/events/usersEmitter'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
+import { getEventBus } from '@/modules/shared/services/eventBus'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = legacyGetUserFactory({ db })
@@ -68,7 +68,7 @@ const createUser = createUserFactory({
   countAdminUsers: countAdminUsersFactory({ db }),
   storeUserAcl: storeUserAclFactory({ db }),
   validateAndCreateUserEmail: createUserEmail,
-  usersEventsEmitter: UsersEmitter.emit
+  emitEvent: getEventBus().emit
 })
 
 describe('User emails graphql @core', () => {

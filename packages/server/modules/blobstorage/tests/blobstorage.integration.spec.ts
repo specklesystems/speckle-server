@@ -27,7 +27,6 @@ import { sendEmail } from '@/modules/emails/services/sending'
 import { createUserFactory } from '@/modules/core/services/users/management'
 import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
 import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
-import { UsersEmitter } from '@/modules/core/events/usersEmitter'
 import { createTokenFactory } from '@/modules/core/services/tokens'
 import {
   storeApiTokenFactory,
@@ -42,6 +41,7 @@ import { faker } from '@faker-js/faker'
 import { BasicTestUser } from '@/test/authHelper'
 import cryptoRandomString from 'crypto-random-string'
 import type { BlobStorageItem } from '@/modules/blobstorage/domain/types'
+import { getEventBus } from '@/modules/shared/services/eventBus'
 
 const getServerInfo = getServerInfoFactory({ db })
 
@@ -70,7 +70,7 @@ const createUser = createUserFactory({
     }),
     requestNewEmailVerification
   }),
-  usersEventsEmitter: UsersEmitter.emit
+  emitEvent: getEventBus().emit
 })
 
 const createRandomUser = async (): Promise<BasicTestUser> => {

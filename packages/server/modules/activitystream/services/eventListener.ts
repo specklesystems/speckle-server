@@ -1,8 +1,5 @@
 import { Logger } from '@/logging/logging'
-import {
-  AccessRequestsEvents,
-  AccessRequestsEventsPayloads
-} from '@/modules/accessrequests/events/emitter'
+import { AccessRequestEvents } from '@/modules/accessrequests/domain/events'
 import {
   AccessRequestType,
   isStreamAccessRequest
@@ -14,7 +11,7 @@ import {
   SaveActivity
 } from '@/modules/activitystream/domain/operations'
 import { GetStream } from '@/modules/core/domain/streams/operations'
-import { UsersEvents, UsersEventsPayloads } from '@/modules/core/events/usersEmitter'
+import { UserEvents } from '@/modules/core/domain/users/events'
 import {
   ServerInvitesEvents,
   ServerInvitesEventsPayloads
@@ -23,11 +20,12 @@ import {
   isProjectResourceTarget,
   resolveTarget
 } from '@/modules/serverinvites/helpers/core'
+import { EventPayload } from '@/modules/shared/services/eventBus'
 
 export const onUserCreatedFactory =
   ({ saveActivity }: { saveActivity: SaveActivity }) =>
-  async (payload: UsersEventsPayloads[UsersEvents.Created]) => {
-    const { user } = payload
+  async (payload: EventPayload<typeof UserEvents.Created>) => {
+    const { user } = payload.payload
 
     await saveActivity({
       streamId: null,
@@ -46,11 +44,11 @@ export const onServerAccessRequestCreatedFactory =
   }: {
     addStreamAccessRequestedActivity: AddStreamAccessRequestedActivity
   }) =>
-  async (payload: AccessRequestsEventsPayloads[AccessRequestsEvents.Created]) => {
+  async (payload: EventPayload<typeof AccessRequestEvents.Created>) => {
     const {
       request: { resourceId, requesterId }
-    } = payload
-    if (!isStreamAccessRequest(payload.request)) return
+    } = payload.payload
+    if (!isStreamAccessRequest(payload.payload.request)) return
     if (!resourceId) return
 
     await addStreamAccessRequestedActivity({
@@ -65,12 +63,12 @@ export const onServerAccessRequestFinalizedFactory =
   }: {
     addStreamAccessRequestDeclinedActivity: AddStreamAccessRequestDeclinedActivity
   }) =>
-  async (payload: AccessRequestsEventsPayloads[AccessRequestsEvents.Finalized]) => {
+  async (payload: EventPayload<typeof AccessRequestEvents.Finalized>) => {
     const {
       approved,
       finalizedBy,
       request: { resourceId, resourceType, requesterId }
-    } = payload
+    } = payload.payload
     if (!resourceId) return
 
     if (resourceType === AccessRequestType.Stream) {

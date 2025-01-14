@@ -203,6 +203,15 @@ import { Knex } from 'knex'
 import { getPaginatedItemsFactory } from '@/modules/shared/services/paginatedItems'
 import { InvalidWorkspacePlanStatus } from '@/modules/gatekeeper/errors/billing'
 import { BadRequestError } from '@/modules/shared/errors'
+import {
+  dismissWorkspaceJoinRequestFactory,
+  requestToJoinWorkspaceFactory,
+  sendWorkspaceJoinRequestReceivedEmailFactory
+} from '@/modules/workspaces/services/workspaceJoinRequests'
+import {
+  createWorkspaceJoinRequestFactory,
+  updateWorkspaceJoinRequestStatusFactory
+} from '@/modules/workspaces/repositories/workspaceJoinRequests'
 
 const eventBus = getEventBus()
 const getServerInfo = getServerInfoFactory({ db })
@@ -774,7 +783,44 @@ export = FF_WORKSPACES_MODULE_ENABLED
           return true
         },
         invites: () => ({}),
-        projects: () => ({})
+        projects: () => ({}),
+        dismiss: async (_parent, args, ctx) => {
+          return await dismissWorkspaceJoinRequestFactory({
+            getWorkspace: getWorkspaceFactory({ db }),
+            updateWorkspaceJoinRequestStatus: updateWorkspaceJoinRequestStatusFactory({
+              db
+            })
+          })({ userId: ctx.userId!, workspaceId: args.input.workspaceId })
+        },
+        requestToJoin: async (_parent, args, ctx) => {
+          const transaction = await db.transaction()
+          const createWorkspaceJoinRequest = createWorkspaceJoinRequestFactory({
+            db: transaction
+          })
+          const sendWorkspaceJoinRequestReceivedEmail =
+            sendWorkspaceJoinRequestReceivedEmailFactory({
+              renderEmail,
+              sendEmail,
+              getServerInfo,
+              getWorkspaceCollaborators: getWorkspaceCollaboratorsFactory({
+                db: transaction
+              }),
+              getUserEmails: findEmailsByUserIdFactory({ db: transaction })
+            })
+
+          return await withTransaction(
+            requestToJoinWorkspaceFactory({
+              createWorkspaceJoinRequest,
+              sendWorkspaceJoinRequestReceivedEmail,
+              getUserById: getUserFactory({ db: transaction }),
+              getWorkspace: getWorkspaceFactory({ db: transaction })
+            })({
+              userId: ctx.userId!,
+              workspaceId: args.input.workspaceId
+            }),
+            transaction
+          )
+        }
       },
       WorkspaceInviteMutations: {
         resend: async (_parent, args, ctx) => {
@@ -1357,6 +1403,24 @@ export = FF_WORKSPACES_MODULE_ENABLED
             findEmailsByUserId: findEmailsByUserIdFactory({ db }),
             getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db })
           })({ workspaceId, userId })
+        },
+        workspaceRole: async (parent, args, context) => {
+          const workspaceId = args.workspaceId
+          if (!workspaceId) return null
+
+          await authorizeResolver(
+            context.userId,
+            workspaceId,
+            Roles.Workspace.Member,
+            context.resourceAccessRules
+          )
+
+          const userId = parent.id
+
+          return await getWorkspaceRoleForUserFactory({ db })({
+            userId,
+            workspaceId
+          })
         }
       },
       ServerInfo: {

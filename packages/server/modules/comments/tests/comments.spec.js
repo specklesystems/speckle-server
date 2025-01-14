@@ -72,7 +72,6 @@ const {
   getStreamBranchByNameFactory,
   createBranchFactory
 } = require('@/modules/core/repositories/branches')
-const { VersionsEmitter } = require('@/modules/core/events/versionsEmitter')
 const {
   getObjectFactory,
   storeSingleObjectIfNotFoundFactory,
@@ -101,7 +100,6 @@ const {
   buildCoreInviteEmailContentsFactory
 } = require('@/modules/serverinvites/services/coreEmailContents')
 const { getEventBus } = require('@/modules/shared/services/eventBus')
-const { ProjectsEmitter } = require('@/modules/core/events/projectsEmitter')
 const { saveActivityFactory } = require('@/modules/activitystream/repositories')
 const { publish } = require('@/modules/shared/utils/subscriptions')
 const {
@@ -134,7 +132,6 @@ const {
 const {
   finalizeInvitedServerRegistrationFactory
 } = require('@/modules/serverinvites/services/processing')
-const { UsersEmitter } = require('@/modules/core/events/usersEmitter')
 const { getServerInfoFactory } = require('@/modules/core/repositories/server')
 const { createObjectFactory } = require('@/modules/core/services/objects/management')
 
@@ -197,7 +194,7 @@ const createCommitByBranchId = createCommitByBranchIdFactory({
   insertBranchCommits: insertBranchCommitsFactory({ db }),
   markCommitStreamUpdated,
   markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
-  versionsEventEmitter: VersionsEmitter.emit,
+  emitEvent: getEventBus().emit,
   addCommitCreatedActivity: addCommitCreatedActivityFactory({
     saveActivity: saveActivityFactory({ db }),
     publish
@@ -234,7 +231,7 @@ const createStream = legacyCreateStreamFactory({
     }),
     createStream: createStreamFactory({ db }),
     createBranch: createBranchFactory({ db }),
-    projectsEventsEmitter: ProjectsEmitter.emit
+    emitEvent: getEventBus().emit
   })
 })
 
@@ -263,7 +260,7 @@ const createUser = createUserFactory({
     }),
     requestNewEmailVerification
   }),
-  usersEventsEmitter: UsersEmitter.emit
+  emitEvent: getEventBus().emit
 })
 const createObject = createObjectFactory({
   storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({ db }),

@@ -555,6 +555,12 @@ export type BranchUpdateInput = {
   streamId: Scalars['String']['input'];
 };
 
+export type BulkUsersRetrievalInput = {
+  cursor?: InputMaybe<Scalars['String']['input']>;
+  emails: Array<Scalars['String']['input']>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+};
+
 export type CancelCheckoutSessionInput = {
   sessionId: Scalars['ID']['input'];
   workspaceId: Scalars['ID']['input'];
@@ -1074,6 +1080,7 @@ export type LimitedUser = {
   totalOwnedStreamsFavorites: Scalars['Int']['output'];
   verified?: Maybe<Scalars['Boolean']['output']>;
   workspaceDomainPolicyCompliant?: Maybe<Scalars['Boolean']['output']>;
+  workspaceRole?: Maybe<Scalars['String']['output']>;
 };
 
 
@@ -1127,6 +1134,15 @@ export type LimitedUserTimelineArgs = {
  * to another user
  */
 export type LimitedUserWorkspaceDomainPolicyCompliantArgs = {
+  workspaceId?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+/**
+ * Limited user type, for showing public info about a user
+ * to another user
+ */
+export type LimitedUserWorkspaceRoleArgs = {
   workspaceId?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -2600,6 +2616,8 @@ export type Query = {
   userSearch: UserSearchResultCollection;
   /** Look up server users */
   users: UserSearchResultCollection;
+  /** Look up server users with a collection of emails */
+  usersByEmail: Array<Maybe<LimitedUser>>;
   /** Validates the slug, to make sure it contains only valid characters and its not taken. */
   validateWorkspaceSlug: Scalars['Boolean']['output'];
   workspace: Workspace;
@@ -2743,6 +2761,11 @@ export type QueryUserSearchArgs = {
 
 export type QueryUsersArgs = {
   input: UsersRetrievalInput;
+};
+
+
+export type QueryUsersByEmailArgs = {
+  input: BulkUsersRetrievalInput;
 };
 
 
@@ -3871,6 +3894,7 @@ export type UserProjectsFilter = {
   onlyWithRoles?: InputMaybe<Array<Scalars['String']['input']>>;
   /** Filter out projects by name */
   search?: InputMaybe<Scalars['String']['input']>;
+  workspaceId?: InputMaybe<Scalars['ID']['input']>;
 };
 
 export type UserProjectsUpdatedMessage = {
@@ -4283,6 +4307,10 @@ export type WorkspaceCreationStateInput = {
   workspaceId: Scalars['ID']['input'];
 };
 
+export type WorkspaceDismissInput = {
+  workspaceId: Scalars['ID']['input'];
+};
+
 export type WorkspaceDomain = {
   __typename?: 'WorkspaceDomain';
   domain: Scalars['String']['output'];
@@ -4376,10 +4404,13 @@ export type WorkspaceMutations = {
   delete: Scalars['Boolean']['output'];
   deleteDomain: Workspace;
   deleteSsoProvider: Scalars['Boolean']['output'];
+  /** Dismiss a workspace from the discoverable list, behind the scene a join request is created with the status "dismissed" */
+  dismiss: Scalars['Boolean']['output'];
   invites: WorkspaceInviteMutations;
   join: Workspace;
   leave: Scalars['Boolean']['output'];
   projects: WorkspaceProjectMutations;
+  requestToJoin: Scalars['Boolean']['output'];
   /** Set the default region where project data will be stored. Only available to admins. */
   setDefaultRegion: Workspace;
   update: Workspace;
@@ -4413,6 +4444,11 @@ export type WorkspaceMutationsDeleteSsoProviderArgs = {
 };
 
 
+export type WorkspaceMutationsDismissArgs = {
+  input: WorkspaceDismissInput;
+};
+
+
 export type WorkspaceMutationsJoinArgs = {
   input: JoinWorkspaceInput;
 };
@@ -4420,6 +4456,11 @@ export type WorkspaceMutationsJoinArgs = {
 
 export type WorkspaceMutationsLeaveArgs = {
   id: Scalars['ID']['input'];
+};
+
+
+export type WorkspaceMutationsRequestToJoinArgs = {
+  input: WorkspaceRequestToJoinInput;
 };
 
 
@@ -4531,6 +4572,10 @@ export enum WorkspaceProjectsUpdatedMessageType {
   Added = 'ADDED',
   Removed = 'REMOVED'
 }
+
+export type WorkspaceRequestToJoinInput = {
+  workspaceId: Scalars['ID']['input'];
+};
 
 export enum WorkspaceRole {
   Admin = 'ADMIN',
@@ -4740,6 +4785,7 @@ export type ResolversTypes = {
   BranchCreateInput: BranchCreateInput;
   BranchDeleteInput: BranchDeleteInput;
   BranchUpdateInput: BranchUpdateInput;
+  BulkUsersRetrievalInput: BulkUsersRetrievalInput;
   CancelCheckoutSessionInput: CancelCheckoutSessionInput;
   CheckoutSession: ResolverTypeWrapper<CheckoutSession>;
   CheckoutSessionInput: CheckoutSessionInput;
@@ -4947,6 +4993,7 @@ export type ResolversTypes = {
   WorkspaceCreateInput: WorkspaceCreateInput;
   WorkspaceCreationState: ResolverTypeWrapper<WorkspaceCreationState>;
   WorkspaceCreationStateInput: WorkspaceCreationStateInput;
+  WorkspaceDismissInput: WorkspaceDismissInput;
   WorkspaceDomain: ResolverTypeWrapper<WorkspaceDomain>;
   WorkspaceDomainDeleteInput: WorkspaceDomainDeleteInput;
   WorkspaceFeatureName: WorkspaceFeatureName;
@@ -4965,6 +5012,7 @@ export type ResolversTypes = {
   WorkspaceProjectsFilter: WorkspaceProjectsFilter;
   WorkspaceProjectsUpdatedMessage: ResolverTypeWrapper<Omit<WorkspaceProjectsUpdatedMessage, 'project'> & { project?: Maybe<ResolversTypes['Project']> }>;
   WorkspaceProjectsUpdatedMessageType: WorkspaceProjectsUpdatedMessageType;
+  WorkspaceRequestToJoinInput: WorkspaceRequestToJoinInput;
   WorkspaceRole: WorkspaceRole;
   WorkspaceRoleDeleteInput: WorkspaceRoleDeleteInput;
   WorkspaceRoleUpdateInput: WorkspaceRoleUpdateInput;
@@ -5031,6 +5079,7 @@ export type ResolversParentTypes = {
   BranchCreateInput: BranchCreateInput;
   BranchDeleteInput: BranchDeleteInput;
   BranchUpdateInput: BranchUpdateInput;
+  BulkUsersRetrievalInput: BulkUsersRetrievalInput;
   CancelCheckoutSessionInput: CancelCheckoutSessionInput;
   CheckoutSession: CheckoutSession;
   CheckoutSessionInput: CheckoutSessionInput;
@@ -5218,6 +5267,7 @@ export type ResolversParentTypes = {
   WorkspaceCreateInput: WorkspaceCreateInput;
   WorkspaceCreationState: WorkspaceCreationState;
   WorkspaceCreationStateInput: WorkspaceCreationStateInput;
+  WorkspaceDismissInput: WorkspaceDismissInput;
   WorkspaceDomain: WorkspaceDomain;
   WorkspaceDomainDeleteInput: WorkspaceDomainDeleteInput;
   WorkspaceInviteCreateInput: WorkspaceInviteCreateInput;
@@ -5232,6 +5282,7 @@ export type ResolversParentTypes = {
   WorkspaceProjectMutations: WorkspaceProjectMutationsGraphQLReturn;
   WorkspaceProjectsFilter: WorkspaceProjectsFilter;
   WorkspaceProjectsUpdatedMessage: Omit<WorkspaceProjectsUpdatedMessage, 'project'> & { project?: Maybe<ResolversParentTypes['Project']> };
+  WorkspaceRequestToJoinInput: WorkspaceRequestToJoinInput;
   WorkspaceRoleDeleteInput: WorkspaceRoleDeleteInput;
   WorkspaceRoleUpdateInput: WorkspaceRoleUpdateInput;
   WorkspaceSso: WorkspaceSsoGraphQLReturn;
@@ -5759,6 +5810,7 @@ export type LimitedUserResolvers<ContextType = GraphQLContext, ParentType extend
   totalOwnedStreamsFavorites?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   verified?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
   workspaceDomainPolicyCompliant?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType, Partial<LimitedUserWorkspaceDomainPolicyCompliantArgs>>;
+  workspaceRole?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType, Partial<LimitedUserWorkspaceRoleArgs>>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -6168,6 +6220,7 @@ export type QueryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   userPwdStrength?: Resolver<ResolversTypes['PasswordStrengthCheckResults'], ParentType, ContextType, RequireFields<QueryUserPwdStrengthArgs, 'pwd'>>;
   userSearch?: Resolver<ResolversTypes['UserSearchResultCollection'], ParentType, ContextType, RequireFields<QueryUserSearchArgs, 'archived' | 'emailOnly' | 'limit' | 'query'>>;
   users?: Resolver<ResolversTypes['UserSearchResultCollection'], ParentType, ContextType, RequireFields<QueryUsersArgs, 'input'>>;
+  usersByEmail?: Resolver<Array<Maybe<ResolversTypes['LimitedUser']>>, ParentType, ContextType, RequireFields<QueryUsersByEmailArgs, 'input'>>;
   validateWorkspaceSlug?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<QueryValidateWorkspaceSlugArgs, 'slug'>>;
   workspace?: Resolver<ResolversTypes['Workspace'], ParentType, ContextType, RequireFields<QueryWorkspaceArgs, 'id'>>;
   workspaceBySlug?: Resolver<ResolversTypes['Workspace'], ParentType, ContextType, RequireFields<QueryWorkspaceBySlugArgs, 'slug'>>;
@@ -6751,10 +6804,12 @@ export type WorkspaceMutationsResolvers<ContextType = GraphQLContext, ParentType
   delete?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<WorkspaceMutationsDeleteArgs, 'workspaceId'>>;
   deleteDomain?: Resolver<ResolversTypes['Workspace'], ParentType, ContextType, RequireFields<WorkspaceMutationsDeleteDomainArgs, 'input'>>;
   deleteSsoProvider?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<WorkspaceMutationsDeleteSsoProviderArgs, 'workspaceId'>>;
+  dismiss?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<WorkspaceMutationsDismissArgs, 'input'>>;
   invites?: Resolver<ResolversTypes['WorkspaceInviteMutations'], ParentType, ContextType>;
   join?: Resolver<ResolversTypes['Workspace'], ParentType, ContextType, RequireFields<WorkspaceMutationsJoinArgs, 'input'>>;
   leave?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<WorkspaceMutationsLeaveArgs, 'id'>>;
   projects?: Resolver<ResolversTypes['WorkspaceProjectMutations'], ParentType, ContextType>;
+  requestToJoin?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<WorkspaceMutationsRequestToJoinArgs, 'input'>>;
   setDefaultRegion?: Resolver<ResolversTypes['Workspace'], ParentType, ContextType, RequireFields<WorkspaceMutationsSetDefaultRegionArgs, 'regionKey' | 'workspaceId'>>;
   update?: Resolver<ResolversTypes['Workspace'], ParentType, ContextType, RequireFields<WorkspaceMutationsUpdateArgs, 'input'>>;
   updateCreationState?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<WorkspaceMutationsUpdateCreationStateArgs, 'input'>>;

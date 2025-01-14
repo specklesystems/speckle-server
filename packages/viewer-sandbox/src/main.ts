@@ -21,7 +21,6 @@ import { SectionTool } from '@speckle/viewer'
 import { SectionOutlines } from '@speckle/viewer'
 import { ViewModesKeys } from './Extensions/ViewModesKeys'
 import { BoxSelection } from './Extensions/BoxSelection'
-import { SnowPipeline } from './Pipelines/Snow/SnowPipeline'
 
 const createViewer = async (containerName: string, _stream: string) => {
   const container = document.querySelector<HTMLElement>(containerName)
@@ -83,9 +82,6 @@ const createViewer = async (containerName: string, _stream: string) => {
     Object.assign(sandbox.sceneParams.worldSize, viewer.World.worldSize)
     Object.assign(sandbox.sceneParams.worldOrigin, viewer.World.worldOrigin)
     sandbox.refresh()
-    const snowPipeline = new SnowPipeline(viewer.getRenderer())
-    viewer.getRenderer().pipeline = snowPipeline
-    void snowPipeline.start()
   })
 
   viewer.on(ViewerEvent.UnloadComplete, () => {
@@ -463,12 +459,14 @@ const getStream = () => {
     // 'https://speckle.xyz/streams/27e89d0ad6/commits/5ed4b74252'
 
     //Gingerbread
-    'https://latest.speckle.systems/projects/387050bffe/models/48f7eb26fb'
+    // 'https://latest.speckle.systems/projects/387050bffe/models/48f7eb26fb'
     // DUI3 Mesh Colors
     // 'https://app.speckle.systems/projects/93200a735d/models/cbacd3eaeb@344a397239'
 
     // Instance toilets
     // 'https://app.speckle.systems/projects/e89b61b65c/models/2a0995f124'
+
+    'https://latest.speckle.systems/projects/3fe1880c36/models/65bb4287a8'
   )
 }
 

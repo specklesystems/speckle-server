@@ -1,5 +1,4 @@
 import { db } from '@/db/knex'
-import { UsersEmitter } from '@/modules/core/events/usersEmitter'
 import {
   createRandomEmail,
   createRandomPassword
@@ -42,6 +41,7 @@ import {
 import { Scopes } from '@speckle/shared'
 import { expect } from 'chai'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
+import { getEventBus } from '@/modules/shared/services/eventBus'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = legacyGetUserFactory({ db })
@@ -73,7 +73,7 @@ const createUser = createUserFactory({
   countAdminUsers: countAdminUsersFactory({ db }),
   storeUserAcl: storeUserAclFactory({ db }),
   validateAndCreateUserEmail: createUserEmail,
-  usersEventsEmitter: UsersEmitter.emit
+  emitEvent: getEventBus().emit
 })
 
 const createPersonalAccessToken = createPersonalAccessTokenFactory({

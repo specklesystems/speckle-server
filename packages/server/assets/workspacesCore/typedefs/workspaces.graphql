@@ -151,6 +151,20 @@ type WorkspaceMutations {
   invites: WorkspaceInviteMutations!
   projects: WorkspaceProjectMutations! @hasServerRole(role: SERVER_USER)
   updateCreationState(input: WorkspaceCreationStateInput!): Boolean!
+  """
+  Dismiss a workspace from the discoverable list, behind the scene a join request is created with the status "dismissed"
+  """
+  dismiss(input: WorkspaceDismissInput!): Boolean! @hasServerRole(role: SERVER_USER)
+  requestToJoin(input: WorkspaceRequestToJoinInput!): Boolean!
+    @hasServerRole(role: SERVER_USER)
+}
+
+input WorkspaceDismissInput {
+  workspaceId: ID!
+}
+
+input WorkspaceRequestToJoinInput {
+  workspaceId: ID!
 }
 
 input WorkspaceCreationStateInput {
@@ -503,6 +517,7 @@ extend type Project {
 # case of using userSearch, and we alway expose this
 extend type LimitedUser {
   workspaceDomainPolicyCompliant(workspaceId: String): Boolean
+  workspaceRole(workspaceId: String): String
   # if workspaceId is undefined | null, just return undefined
   # this can be implemented by the workspaceCore resolver too, to avoid frontend component duplication
 }

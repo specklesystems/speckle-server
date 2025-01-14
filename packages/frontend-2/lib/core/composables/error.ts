@@ -2,8 +2,8 @@ import { useScopedState } from '~~/lib/common/composables/scopedState'
 import * as Observability from '@speckle/shared/dist/esm/observability/index'
 import {
   prettify,
-  type AbstractErrorHandler,
-  type AbstractErrorHandlerParams,
+  type AbstractLoggerHandler,
+  type AbstractLoggerHandlerParams,
   type AbstractUnhandledErrorHandler
 } from '~/lib/core/helpers/observability'
 
@@ -31,20 +31,22 @@ export function useAppErrorState() {
   }
 }
 
-export type ErrorLoggingTransport = {
-  onError: AbstractErrorHandler
+export type CustomLoggingTransport = {
+  onLog?: AbstractLoggerHandler
   onUnhandledError?: AbstractUnhandledErrorHandler
 }
 
-const useErrorLoggingTransportState = () =>
-  useScopedState('useErrorLoggingTransport', () => ({
-    transports: [] as ErrorLoggingTransport[]
+const useCustomLoggingTransportState = () =>
+  useScopedState('useCustomLoggingTransport', () => ({
+    transports: [] as CustomLoggingTransport[]
   }))
 
-export const useCreateErrorLoggingTransport = () => {
-  const { transports } = useErrorLoggingTransportState()
+export const useCreateLoggingTransport = () => {
+  const { transports } = useCustomLoggingTransportState()
 
-  return (transport: ErrorLoggingTransport) => {
+  return (transport: CustomLoggingTransport) => {
+    if (!transport.onLog && !transport.onUnhandledError) return noop
+
     transports.push(transport)
     const remove = () => {
       const idx = transports.indexOf(transport)
@@ -57,20 +59,21 @@ export const useCreateErrorLoggingTransport = () => {
   }
 }
 
-export const useGetErrorLoggingTransports = () => {
-  const { transports } = useErrorLoggingTransportState()
+export const useGetLoggingTransports = () => {
+  const { transports } = useCustomLoggingTransportState()
 
   return transports
 }
 
-export const useLogToErrorLoggingTransports = () => {
-  const transports = useGetErrorLoggingTransports()
-  const invokeTransportsWithPayload = (payload: AbstractErrorHandlerParams) => {
-    transports.forEach((handler) =>
-      handler.onError(payload, {
+export const useLogToLoggingTransports = () => {
+  const transports = useGetLoggingTransports()
+  const invokeTransportsWithPayload = (payload: AbstractLoggerHandlerParams) => {
+    transports.forEach((handler) => {
+      if (!handler.onLog) return
+      handler.onLog(payload, {
         prettifyMessage: (msg) => prettify(payload.otherData || {}, msg)
       })
-    )
+    })
   }
 
   return {
