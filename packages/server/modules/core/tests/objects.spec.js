@@ -79,6 +79,8 @@ const {
   getObjectChildrenQueryFactory,
   getStreamObjectsFactory
 } = require('@/modules/core/repositories/objects')
+const { backfillDataSizeProperty } = require('@/modules/core/services/objects/dataSize')
+const { getLogger } = require('@speckle/shared/dist/commonjs/observability/index.js')
 
 const sampleCommit = JSON.parse(`{
   "Objects": [
@@ -687,6 +689,30 @@ describe('Objects @core-objects', () => {
     for (let i = 0; i < promisses.length; i++) {
       await promisses[i]
     }
+  })
+
+  it('should backfill null object dataSizes', async () => {
+    const streamId = await createStream({
+      ...stream,
+      isPublic: false,
+      ownerId: userOne.id
+    })
+    await createObjects({
+      streamId,
+      objects: createManyObjects(10000 - 1)
+    })
+    await db('objects').update({ sizeBytes: null }).where({ streamId })
+    const getObjectsWithDataSize = async () =>
+      db('objects').select('sizeBytes').where({ streamId }).whereNotNull('sizeBytes')
+    let result = await getObjectsWithDataSize()
+    expect(result.length).to.equal(0)
+
+    await backfillDataSizeProperty({
+      db,
+      logger: getLogger(process.env.LOG_LEVEL, process.env.LOG_PRETTY)
+    })
+    result = await getObjectsWithDataSize()
+    expect(result.length).to.equal(10000)
   })
 })
 
