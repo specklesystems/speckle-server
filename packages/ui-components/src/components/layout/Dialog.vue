@@ -268,13 +268,15 @@ const dialogPanelClasses = computed(() => {
 const slotContainerClasses = computed(() => {
   const classParts: string[] = ['flex-1 simple-scrollbar overflow-y-auto text-body-xs']
 
-  if (hasTitle.value) {
-    classParts.push('px-6 py-4')
-    if (isFullscreenDesktop.value) {
-      classParts.push('md:p-0')
+  if (!props.isTransparent) {
+    if (hasTitle.value) {
+      classParts.push('px-6 py-4')
+      if (isFullscreenDesktop.value) {
+        classParts.push('md:p-0')
+      }
+    } else if (!isFullscreenDesktop.value) {
+      classParts.push('px-6 py-4')
     }
-  } else if (!isFullscreenDesktop.value) {
-    classParts.push('px-6 py-4')
   }
 
   return classParts.join(' ')
