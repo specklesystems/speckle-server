@@ -772,6 +772,11 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 - name: POSTGRES_CONNECTION_ACQUIRE_TIMEOUT_MILLIS
   value: {{ .Values.db.connectionAcquireTimeoutMillis | quote }}
 
+{{- if .Values.db.knexAsyncStackTracesEnabled }}
+- name: KNEX_ASYNC_STACK_TRACES_ENABLED
+  value: {{ .Values.db.knexAsyncStackTracesEnabled | quote }}
+{{- end}}
+
 - name: PGSSLMODE
   value: "{{ .Values.db.PGSSLMODE }}"
 

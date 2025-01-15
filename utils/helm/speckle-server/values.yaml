@@ -194,6 +194,9 @@ db:
   ## @param db.connectionCreationTimeoutMillis The maximum time in milliseconds to wait for a new connection to be created in the connection pool. Should be less than the acquisition timeout, as a new connection may need to be created then acquired.
   ##
   connectionCreationTimeoutMillis: 5000
+  ## @param db.knexAsyncStackTracesEnabled If enabled, will provide better stack traces for errors arising out of knex operations
+  ##
+  knexAsyncStackTracesEnabled: false
 
   ## @param db.databaseName (Optional) The name of the Postgres database to which Speckle will connect. Only required for the Database Monitoring utility when the connection string is to a database connection pool and multi-region is disabled, otherwise this value is ignored.
   databaseName: ''
