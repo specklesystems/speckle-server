@@ -80,7 +80,7 @@
           full-width
         />
         <WizardWorkspaceSelector
-          v-if="account.workspacesEnabled"
+          v-if="workspacesEnabled"
           @update:selected-workspace-id="(newSelectedWorkspace : WorkspaceListWorkspaceItemFragment) => (selectedWorkspace = newSelectedWorkspace)"
         ></WizardWorkspaceSelector>
         <div class="mt-4 flex justify-center items-center space-x-2">
@@ -99,7 +99,8 @@ import { useAccountStore } from '~/store/accounts'
 import {
   createProjectInWorkspaceMutation,
   createProjectMutation,
-  projectsListQuery
+  projectsListQuery,
+  serverInfoQuery
 } from '~/lib/graphql/mutationsAndQueries'
 import { useMutation, useQuery, provideApolloClient } from '@vue/apollo-composable'
 import type {
@@ -216,6 +217,16 @@ const createNewProjectInWorkspace = async (name: string) => {
     // TODO: Error out
   }
 }
+
+const { result: serverInfoResult } = useQuery(
+  serverInfoQuery,
+  () => ({}),
+  () => ({ clientId: accountId.value, debounce: 500, fetchPolicy: 'network-only' })
+)
+
+const workspacesEnabled = computed(
+  () => serverInfoResult.value?.serverInfo.workspaces.workspacesEnabled
+)
 
 const {
   result: projectsResult,
