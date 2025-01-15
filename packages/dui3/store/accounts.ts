@@ -156,15 +156,22 @@ export const useAccountStore = defineStore('accountStore', () => {
         }
       })
 
-      // get workspace enabled flag and store it in account
-      const res = await client.query({ query: serverInfoQuery })
+      let workspacesEnabled = false
+      try {
+        // get workspace enabled flag and store it in account
+        const res = await client.query({ query: serverInfoQuery })
+        workspacesEnabled = !!res.data.serverInfo.workspaces.workspacesEnabled
+      } catch (err) {
+        // probably having some local account or client could not established well for some reason!
+        console.log(err)
+      }
 
       apolloClients[acc.id] = client
       newAccs.push({
         accountInfo: acc,
         client,
         isValid: true,
-        workspacesEnabled: !!res.data.serverInfo.workspaces.workspacesEnabled
+        workspacesEnabled
       })
     }
 
