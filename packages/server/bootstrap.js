@@ -31,8 +31,8 @@ if (isApolloMonitoringEnabled() && !getApolloServerVersion()) {
 }
 
 //knex is a singleton controlled by module so can't wait til app init
-const { initOpenTelemetry } = require('./otel')
-initOpenTelemetry()
+// const { initOpenTelemetry } = require('./otel')
+// initOpenTelemetry()
 
 // If running in test env, load .env.test first
 // (appRoot necessary, cause env files aren't loaded through require() calls)
