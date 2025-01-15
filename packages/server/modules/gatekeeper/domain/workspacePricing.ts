@@ -156,9 +156,9 @@ const academia: WorkspacePlanFeaturesAndLimits = {
   name: 'academia',
   description: 'The academia plan',
   oidcSso: true,
-  workspaceDataRegionSpecificity: false,
-  automateMinutes: null,
-  uploadSize: 100
+  workspaceDataRegionSpecificity: true,
+  automateMinutes: 900,
+  uploadSize: 1000
 }
 
 const paidWorkspacePlanFeatures: Record<
