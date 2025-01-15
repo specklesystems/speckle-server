@@ -1,8 +1,11 @@
 <template>
-  <div v-if="detailedRender" class="mb-2">
+  <div v-if="detailedRender">
     <div class="relative">
       <div v-if="detailedRender.status === 'COMPLETED' && renderUrl" class="group">
-        <button class="relative flex cursor-zoom-in" @click="openPreview">
+        <button
+          class="relative flex cursor-zoom-in w-full aspect-video"
+          @click="openPreview"
+        >
           <div
             class="absolute inset-0 bg-highlight-3 flex items-center justify-center rounded-lg"
           >
@@ -66,7 +69,7 @@
         <ExclamationCircleIcon v-else class="w-6 text-danger" />
       </div>
       <div
-        class="absolute bottom-2 left-0 gap-x-2 px-2 flex items-center min-w-0 max-w-full overflow-hidden z-10"
+        class="absolute bottom-2 left-0 gap-x-2 p-2 flex items-center min-w-0 max-w-full overflow-hidden z-10"
       >
         <div
           class="bg-foundation p-0.5 flex items-center gap-x-1 min-w-0 max-w-full rounded-md"
