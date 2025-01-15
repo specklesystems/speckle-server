@@ -75,7 +75,7 @@ export const workspaceInviteQuery = graphql(`
 `)
 
 export const moveProjectsDialogQuery = graphql(`
-  query MoveProjectsDialog {
+  query MoveProjectsDialog($limit: Int, $cursor: String, $filter: UserProjectsFilter) {
     activeUser {
       ...MoveProjectsDialog_User
     }
