@@ -18,7 +18,7 @@
           />
         </button>
         <div class="hidden group-hover:flex absolute top-2 left-2 gap-1 z-10">
-          <div v-tippy="`Set view`">
+          <div v-tippy="`Reset view`">
             <FormButton
               :icon-left="VideoCameraIcon"
               hide-text
@@ -26,7 +26,7 @@
               size="sm"
               @click="setView()"
             >
-              Set View
+              Reset View
             </FormButton>
           </div>
           <div v-tippy="`Copy prompt`">

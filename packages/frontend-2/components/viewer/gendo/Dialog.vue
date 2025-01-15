@@ -1,5 +1,5 @@
 <template>
-  <LayoutDialog v-model:open="isOpen" max-width="xl" is-transparent>
+  <LayoutDialog v-model:open="isOpen" max-width="xl" is-transparent hide-closer>
     <div class="relative flex flex-col items-center justify-center gap-2 w-full h-full">
       <!-- Fullscreen button behind image to handle background clicks -->
       <!-- that are still inside dialog and show loading state -->
