@@ -325,3 +325,13 @@ export type SendWorkspaceJoinRequestReceivedEmail = (params: {
   workspace: Pick<Workspace, 'id' | 'name' | 'slug'>
   requester: { id: string; name: string; email: string }
 }) => Promise<void>
+
+export type SendWorkspaceJoinRequestApprovedEmail = (params: {
+  workspace: Pick<Workspace, 'id' | 'name' | 'slug'>
+  requester: { id: string; name: string; email: string }
+}) => Promise<void>
+
+export type GetWorkspaceJoinRequest = (
+  params: Pick<WorkspaceJoinRequest, 'userId' | 'workspaceId'> &
+    Partial<Pick<WorkspaceJoinRequest, 'status'>>
+) => Promise<WorkspaceJoinRequest | undefined>
