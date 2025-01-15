@@ -1,6 +1,7 @@
 <template>
   <div
-    class="flex flex-col gap-y-2 max-h-[calc(100dvh-22rem)] overflow-y-auto overflow-x-hidden simple-scrollbar"
+    v-if="renders.length"
+    class="flex flex-col gap-y-2 max-h-[calc(100dvh-22rem)] overflow-y-auto overflow-x-hidden simple-scrollbar mb-3"
   >
     <ViewerGendoItem
       v-for="render in renders"
@@ -9,6 +10,7 @@
       @reuse-prompt="$emit('reuse-prompt', $event)"
     />
   </div>
+  <div v-else />
 </template>
 <script setup lang="ts">
 import { useQuery, useSubscription } from '@vue/apollo-composable'
