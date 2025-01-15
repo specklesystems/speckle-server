@@ -5,6 +5,11 @@ import { AsyncLocalStorage } from 'node:async_hooks'
 
 type StorageType = {
   requestId: string
+  dbMetrics: {
+    totalDuration: number
+    totalCount: number
+    queries: string[]
+  }
 }
 
 const storage = asyncRequestContextEnabled()
@@ -17,7 +22,14 @@ export const initiateRequestContextMiddleware: express.RequestHandler = (
   next
 ) => {
   const reqId = req.headers[REQUEST_ID_HEADER] || 'unknown'
-  const store: StorageType = { requestId: reqId as string }
+  const store: StorageType = {
+    requestId: reqId as string,
+    dbMetrics: {
+      totalCount: 0,
+      totalDuration: 0,
+      queries: []
+    }
+  }
   storage?.enterWith(store)
   next()
 }

@@ -216,6 +216,14 @@ const initKnexPrometheusMetricsForRegionEvents = async (params: {
 
     const trace = (new Error().stack || '').split('\n').slice(1).join('\n').trim()
     const reqCtx = getRequestContext()
+
+    // Update reqCtx with DB query metrics
+    if (reqCtx) {
+      reqCtx.dbMetrics.totalCount++
+      reqCtx.dbMetrics.totalDuration += durationMs || 0
+      reqCtx.dbMetrics.queries.push(data.sql)
+    }
+
     params.logger.info(
       {
         region,
