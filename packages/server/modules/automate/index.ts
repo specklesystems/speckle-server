@@ -28,12 +28,7 @@ import authGithubAppRest from '@/modules/automate/rest/authGithubApp'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { TokenScopeData } from '@/modules/shared/domain/rolesAndScopes/types'
 import { db } from '@/db/knex'
-import {
-  AutomationsEmitter,
-  AutomationsEvents
-} from '@/modules/automate/events/automations'
 import { ProjectSubscriptions, publish } from '@/modules/shared/utils/subscriptions'
-import { AutomateRunsEmitter, AutomateRunsEvents } from '@/modules/automate/events/runs'
 import { getBranchLatestCommitsFactory } from '@/modules/core/repositories/branches'
 import { getCommitFactory } from '@/modules/core/repositories/commits'
 import { legacyGetUserFactory } from '@/modules/core/repositories/users'
@@ -59,6 +54,7 @@ import { mixpanel } from '@/modules/shared/utils/mixpanel'
 import { getProjectFactory } from '@/modules/core/repositories/projects'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { VersionEvents } from '@/modules/core/domain/commits/events'
+import { AutomationEvents, AutomationRunEvents } from '@/modules/automate/domain/events'
 
 const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
 let quitListeners: Optional<() => void> = undefined
@@ -115,7 +111,7 @@ const initializeEventListeners = () => {
               buildDecryptor
             }),
             createAppToken,
-            automateRunsEmitter: AutomateRunsEmitter.emit,
+            emitEvent: getEventBus().emit,
             getAutomationToken: getAutomationTokenFactory({ db: projectDb }),
             upsertAutomationRun: upsertAutomationRunFactory({ db: projectDb }),
             getFullAutomationRevisionMetadata: getFullAutomationRevisionMetadataFactory(
@@ -128,31 +124,37 @@ const initializeEventListeners = () => {
       }
     ),
     // Automation management events
-    AutomationsEmitter.listen(AutomationsEvents.Created, async ({ automation }) => {
-      await publish(ProjectSubscriptions.ProjectAutomationsUpdated, {
-        projectId: automation.projectId,
-        projectAutomationsUpdated: {
-          type: ProjectAutomationsUpdatedMessageType.Created,
-          automationId: automation.id,
-          automation,
-          revision: null
-        }
-      })
-    }),
-    AutomationsEmitter.listen(AutomationsEvents.Updated, async ({ automation }) => {
-      await publish(ProjectSubscriptions.ProjectAutomationsUpdated, {
-        projectId: automation.projectId,
-        projectAutomationsUpdated: {
-          type: ProjectAutomationsUpdatedMessageType.Updated,
-          automationId: automation.id,
-          automation,
-          revision: null
-        }
-      })
-    }),
-    AutomationsEmitter.listen(
-      AutomationsEvents.CreatedRevision,
-      async ({ automation, revision }) => {
+    getEventBus().listen(
+      AutomationEvents.Created,
+      async ({ payload: { automation } }) => {
+        await publish(ProjectSubscriptions.ProjectAutomationsUpdated, {
+          projectId: automation.projectId,
+          projectAutomationsUpdated: {
+            type: ProjectAutomationsUpdatedMessageType.Created,
+            automationId: automation.id,
+            automation,
+            revision: null
+          }
+        })
+      }
+    ),
+    getEventBus().listen(
+      AutomationEvents.Updated,
+      async ({ payload: { automation } }) => {
+        await publish(ProjectSubscriptions.ProjectAutomationsUpdated, {
+          projectId: automation.projectId,
+          projectAutomationsUpdated: {
+            type: ProjectAutomationsUpdatedMessageType.Updated,
+            automationId: automation.id,
+            automation,
+            revision: null
+          }
+        })
+      }
+    ),
+    getEventBus().listen(
+      AutomationEvents.CreatedRevision,
+      async ({ payload: { automation, revision } }) => {
         await publish(ProjectSubscriptions.ProjectAutomationsUpdated, {
           projectId: automation.projectId,
           projectAutomationsUpdated: {
@@ -168,9 +170,9 @@ const initializeEventListeners = () => {
       }
     ),
     // Automation run lifecycle events
-    AutomateRunsEmitter.listen(
-      AutomateRunsEvents.Created,
-      async ({ manifests, run, automation }) => {
+    getEventBus().listen(
+      AutomationRunEvents.Created,
+      async ({ payload: { manifests, run, automation } }) => {
         const validatedManifests = manifests
           .map((manifest) => {
             if (isVersionCreatedTriggerManifest(manifest)) {
@@ -214,9 +216,9 @@ const initializeEventListeners = () => {
         )
       }
     ),
-    AutomateRunsEmitter.listen(
-      AutomateRunsEvents.StatusUpdated,
-      async ({ run, functionRun, automationId, projectId }) => {
+    getEventBus().listen(
+      AutomationRunEvents.StatusUpdated,
+      async ({ payload: { run, functionRun, automationId, projectId } }) => {
         const projectDb = await getProjectDbClient({ projectId })
 
         const triggers = await getAutomationRunFullTriggersFactory({ db: projectDb })({
@@ -253,9 +255,9 @@ const initializeEventListeners = () => {
       }
     ),
     // Mixpanel events
-    AutomateRunsEmitter.listen(
-      AutomateRunsEvents.StatusUpdated,
-      async ({ run, functionRun, automationId, projectId }) => {
+    getEventBus().listen(
+      AutomationRunEvents.StatusUpdated,
+      async ({ payload: { run, functionRun, automationId, projectId } }) => {
         if (!isFinished(run.status)) return
 
         const projectDb = await getProjectDbClient({ projectId })
@@ -301,9 +303,9 @@ const initializeEventListeners = () => {
         })
       }
     ),
-    AutomateRunsEmitter.listen(
-      AutomateRunsEvents.Created,
-      async ({ automation, run: automationRun, source, manifests }) => {
+    getEventBus().listen(
+      AutomationRunEvents.Created,
+      async ({ payload: { automation, run: automationRun, source, manifests } }) => {
         const manifest = manifests.at(0)
         if (!manifest || !isVersionCreatedTriggerManifest(manifest)) {
           automateLogger.error('Unexpected run trigger manifest type', {

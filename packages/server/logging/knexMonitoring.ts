@@ -4,6 +4,7 @@ import { type Knex } from 'knex'
 import { Logger } from 'pino'
 import { toNDecimalPlaces } from '@/modules/core/utils/formatting'
 import { omit } from 'lodash'
+import { getRequestContext } from '@/logging/requestContext'
 
 let metricQueryDuration: prometheusClient.Summary<string>
 let metricQueryErrors: prometheusClient.Counter<string>
@@ -212,6 +213,9 @@ const initKnexPrometheusMetricsForRegionEvents = async (params: {
           sqlNumberBindings: data.bindings?.length || -1
         })
         .observe(durationSec)
+
+    const trace = (new Error().stack || '').split('\n').slice(1).join('\n').trim()
+    const reqCtx = getRequestContext()
     params.logger.info(
       {
         region,
@@ -219,7 +223,9 @@ const initKnexPrometheusMetricsForRegionEvents = async (params: {
         sqlMethod: normalizeSqlMethod(data.method),
         sqlQueryId: queryId,
         sqlQueryDurationMs: toNDecimalPlaces(durationMs, 0),
-        sqlNumberBindings: data.bindings?.length || -1
+        sqlNumberBindings: data.bindings?.length || -1,
+        trace,
+        ...(reqCtx ? { req: { id: reqCtx.requestId } } : {})
       },
       'DB query successfully completed after {sqlQueryDurationMs} ms'
     )

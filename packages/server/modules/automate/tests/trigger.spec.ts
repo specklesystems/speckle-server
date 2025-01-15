@@ -74,7 +74,6 @@ import {
 import { buildDecryptor } from '@/modules/shared/utils/libsodium'
 import { mapGqlStatusToDbStatus } from '@/modules/automate/utils/automateFunctionRunStatus'
 import { db } from '@/db/knex'
-import { AutomateRunsEmitter } from '@/modules/automate/events/runs'
 import { getCommitFactory } from '@/modules/core/repositories/commits'
 import { validateStreamAccessFactory } from '@/modules/core/services/streams/access'
 import { authorizeResolver } from '@/modules/shared'
@@ -85,6 +84,8 @@ import {
   storeTokenScopesFactory,
   storeUserServerAppTokenFactory
 } from '@/modules/core/repositories/tokens'
+import { getEventBus } from '@/modules/shared/services/eventBus'
+import { AutomationRunEvents } from '@/modules/automate/domain/events'
 
 const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
 
@@ -336,7 +337,7 @@ const createAppToken = createAppTokenFactory({
             }),
             getEncryptionKeyPairFor,
             createAppToken,
-            automateRunsEmitter: AutomateRunsEmitter.emit,
+            emitEvent: getEventBus().emit,
             getAutomationToken,
             upsertAutomationRun,
             getFullAutomationRevisionMetadata,
@@ -430,7 +431,7 @@ const createAppToken = createAppTokenFactory({
           }),
           getEncryptionKeyPairFor,
           createAppToken,
-          automateRunsEmitter: AutomateRunsEmitter.emit,
+          emitEvent: getEventBus().emit,
           getAutomationToken,
           upsertAutomationRun,
           getFullAutomationRevisionMetadata,
@@ -521,6 +522,18 @@ const createAppToken = createAppTokenFactory({
             }
           ]
         })
+
+        let eventFired = false
+        getEventBus().listenOnce(
+          AutomationRunEvents.Created,
+          async ({ payload }) => {
+            expect(payload.automation.id).to.equal(automation.id)
+            expect(payload.run.automationRevisionId).to.equal(automationRevisionId)
+            expect(payload.source).to.equal(RunTriggerSource.Manual)
+            eventFired = true
+          },
+          { timeout: 1000 }
+        )
         const executionEngineRunId = cryptoRandomString({ length: 10 })
         const { automationRunId } = await triggerAutomationRevisionRunFactory({
           automateRunTrigger: async () => ({
@@ -531,7 +544,7 @@ const createAppToken = createAppTokenFactory({
           }),
           getEncryptionKeyPairFor,
           createAppToken,
-          automateRunsEmitter: AutomateRunsEmitter.emit,
+          emitEvent: getEventBus().emit,
           getAutomationToken,
           upsertAutomationRun,
           getFullAutomationRevisionMetadata,
@@ -558,6 +571,7 @@ const createAppToken = createAppTokenFactory({
         for (const run of storedRun.functionRuns) {
           expect(run.status).to.equal(expectedStatus)
         }
+        expect(eventFired).to.be.true
       })
     })
     describe('Run conditions are NOT met if', () => {
@@ -1016,7 +1030,7 @@ const createAppToken = createAppTokenFactory({
             }),
             getEncryptionKeyPairFor,
             createAppToken,
-            automateRunsEmitter: AutomateRunsEmitter.emit,
+            emitEvent: getEventBus().emit,
             getAutomationToken,
             upsertAutomationRun,
             getFullAutomationRevisionMetadata,
@@ -1242,7 +1256,7 @@ const createAppToken = createAppTokenFactory({
             getAutomationFunctionRunRecord: getFunctionRun,
             upsertAutomationFunctionRunRecord: upsertAutomationFunctionRun,
             automationRunUpdater: updateAutomationRun,
-            runEventEmit: AutomateRunsEmitter.emit
+            emitEvent: getEventBus().emit
           })
 
           return report
@@ -1361,6 +1375,15 @@ const createAppToken = createAppTokenFactory({
             projectId: testUserStream.id
           }
 
+          let eventFired = false
+          getEventBus().listenOnce(
+            AutomationRunEvents.StatusUpdated,
+            async ({ payload }) => {
+              expect(payload.functionRun.id).to.equal(functionRunId)
+              eventFired = true
+            },
+            { timeout: 1000 }
+          )
           await expect(report(params)).to.eventually.be.true
 
           const [updatedRun, updatedFnRun] = await Promise.all([
@@ -1371,6 +1394,7 @@ const createAppToken = createAppTokenFactory({
           expect(updatedRun?.status).to.equal(AutomationRunStatuses.succeeded)
           expect(updatedFnRun?.status).to.equal(AutomationRunStatuses.succeeded)
           expect(updatedFnRun?.contextView).to.equal(contextView)
+          expect(eventFired).to.be.true
         })
       })
     })

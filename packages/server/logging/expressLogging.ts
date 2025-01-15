@@ -10,7 +10,7 @@ import { ensureError, type Optional } from '@speckle/shared'
 import { getRequestParameters, getRequestPath } from '@/modules/core/helpers/server'
 import { get } from 'lodash'
 
-const REQUEST_ID_HEADER = 'x-request-id'
+export const REQUEST_ID_HEADER = 'x-request-id'
 
 const GenerateRequestId: GenReqId = (req: IncomingMessage) => DetermineRequestId(req)
 
