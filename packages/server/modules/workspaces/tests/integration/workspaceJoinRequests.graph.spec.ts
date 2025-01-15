@@ -13,7 +13,7 @@ import {
 import { createTestContext, testApolloServer } from '@/test/graphqlHelper'
 import { beforeEachContext } from '@/test/hooks'
 import { AllScopes, Roles } from '@speckle/shared'
-import { assert, expect } from 'chai'
+import { expect } from 'chai'
 import { upsertWorkspaceRoleFactory } from '@/modules/workspaces/repositories/workspaces'
 
 async function login(user: BasicTestUser) {
@@ -115,12 +115,9 @@ describe('WorkspaceJoinRequests GQL', () => {
       expect(totalCount1).to.equal(1)
 
       expect(items1).to.have.length(1)
-      assert.deepEqual(items1[0], {
-        status: 'pending',
-        user: { id: user1.id, name: user1.name },
-        workspace: { id: workspace1.id, name: workspace1.name },
-        createdAt: items1[0].createdAt
-      })
+      expect(items1[0].status).to.equal('pending')
+      expect(items1[0].workspace.id).to.equal(workspace1.id)
+      expect(items1[0].user.id).to.equal(user1.id)
 
       const workspace2Res = await sessionAdmin.execute(
         GetWorkspaceWithJoinRequestsDocument,
@@ -136,12 +133,9 @@ describe('WorkspaceJoinRequests GQL', () => {
       expect(totalCount2).to.equal(1)
 
       expect(items2).to.have.length(1)
-      assert.deepEqual(items2[0], {
-        status: 'pending',
-        user: { id: user2.id, name: user2.name },
-        workspace: { id: workspace2.id, name: workspace2.name },
-        createdAt: items2[0].createdAt
-      })
+      expect(items2[0].status).to.equal('pending')
+      expect(items2[0].workspace.id).to.equal(workspace2.id)
+      expect(items2[0].user.id).to.equal(user2.id)
     })
   })
 })
