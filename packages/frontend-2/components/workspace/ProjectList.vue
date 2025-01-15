@@ -120,6 +120,7 @@ graphql(`
     ...WorkspaceSecurity_Workspace
     ...BillingAlert_Workspace
     ...WorkspaceMixpanelUpdateGroup_Workspace
+    ...MoveProjectsDialog_Workspace
     ...InviteDialogWorkspace_Workspace
     projects {
       ...WorkspaceProjectList_ProjectCollection
