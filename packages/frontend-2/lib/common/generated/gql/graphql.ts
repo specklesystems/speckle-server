@@ -4388,6 +4388,7 @@ export type WorkspaceMutations = {
   join: Workspace;
   leave: Scalars['Boolean']['output'];
   projects: WorkspaceProjectMutations;
+  requestToJoin: Scalars['Boolean']['output'];
   /** Set the default region where project data will be stored. Only available to admins. */
   setDefaultRegion: Workspace;
   update: Workspace;
@@ -4433,6 +4434,11 @@ export type WorkspaceMutationsJoinArgs = {
 
 export type WorkspaceMutationsLeaveArgs = {
   id: Scalars['ID']['input'];
+};
+
+
+export type WorkspaceMutationsRequestToJoinArgs = {
+  input: WorkspaceRequestToJoinInput;
 };
 
 
@@ -4544,6 +4550,10 @@ export enum WorkspaceProjectsUpdatedMessageType {
   Added = 'ADDED',
   Removed = 'REMOVED'
 }
+
+export type WorkspaceRequestToJoinInput = {
+  workspaceId: Scalars['ID']['input'];
+};
 
 export enum WorkspaceRole {
   Admin = 'ADMIN',
@@ -8133,6 +8143,7 @@ export type WorkspaceMutationsFieldArgs = {
   join: WorkspaceMutationsJoinArgs,
   leave: WorkspaceMutationsLeaveArgs,
   projects: {},
+  requestToJoin: WorkspaceMutationsRequestToJoinArgs,
   setDefaultRegion: WorkspaceMutationsSetDefaultRegionArgs,
   update: WorkspaceMutationsUpdateArgs,
   updateCreationState: WorkspaceMutationsUpdateCreationStateArgs,
