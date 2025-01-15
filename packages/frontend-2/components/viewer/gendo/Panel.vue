@@ -41,7 +41,7 @@
               color="outline"
               size="sm"
               external
-              to="https://www.gendo.ai/terms-of-service?utm=speckle"
+              to="https://speckle.community/t/say-hello-to-ai-renders-in-speckle/15913"
               target="_blank"
             >
               <div class="flex items-center gap-1 text-foreground-2 font-normal">
