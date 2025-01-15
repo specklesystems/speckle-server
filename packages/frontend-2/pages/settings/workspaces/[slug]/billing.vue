@@ -223,7 +223,7 @@ definePageMeta({
 })
 
 useHead({
-  title: 'Settings - Billing'
+  title: 'Settings | Workspace - Billing'
 })
 
 const slug = computed(() => (route.params.slug as string) || '')

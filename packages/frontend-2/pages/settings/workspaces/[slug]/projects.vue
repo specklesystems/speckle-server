@@ -48,7 +48,7 @@ definePageMeta({
 })
 
 useHead({
-  title: 'Settings - Projects'
+  title: 'Settings | Workspace - Projects'
 })
 
 const slug = computed(() => (route.params.slug as string) || '')

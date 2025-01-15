@@ -158,7 +158,7 @@ definePageMeta({
 })
 
 useHead({
-  title: 'Settings - Regions'
+  title: 'Settings | Workspace - Regions'
 })
 
 const slug = computed(() => (route.params.slug as string) || '')

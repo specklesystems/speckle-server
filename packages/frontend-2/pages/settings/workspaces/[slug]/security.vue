@@ -164,7 +164,7 @@ definePageMeta({
 })
 
 useHead({
-  title: 'Settings - Security'
+  title: 'Settings | Workspace - Security'
 })
 
 const slug = computed(() => (route.params.slug as string) || '')

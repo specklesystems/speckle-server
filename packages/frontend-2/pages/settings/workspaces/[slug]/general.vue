@@ -196,7 +196,7 @@ definePageMeta({
 })
 
 useHead({
-  title: 'Settings - Members'
+  title: 'Settings | Workspace - General'
 })
 
 type FormValues = { name: string; description: string; defaultProjectRole: StreamRoles }
