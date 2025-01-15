@@ -148,7 +148,7 @@ const documents = {
     "\n  fragment ThreadCommentAttachment on Comment {\n    text {\n      attachments {\n        id\n        fileName\n        fileType\n        fileSize\n      }\n    }\n  }\n": types.ThreadCommentAttachmentFragmentDoc,
     "\n  fragment ViewerCommentsListItem on Comment {\n    id\n    rawText\n    archived\n    author {\n      ...LimitedUserAvatar\n    }\n    createdAt\n    viewedAt\n    replies {\n      totalCount\n      cursor\n      items {\n        ...ViewerCommentsReplyItem\n      }\n    }\n    replyAuthors(limit: 4) {\n      totalCount\n      items {\n        ...FormUsersSelectItem\n      }\n    }\n    resources {\n      resourceId\n      resourceType\n    }\n  }\n": types.ViewerCommentsListItemFragmentDoc,
     "\n  fragment ViewerModelVersionCardItem on Version {\n    id\n    message\n    referencedObject\n    sourceApplication\n    createdAt\n    previewUrl\n    authorUser {\n      ...LimitedUserAvatar\n    }\n  }\n": types.ViewerModelVersionCardItemFragmentDoc,
-    "\n  fragment MoveProjectsDialog_Project on Project {\n    ...ProjectsMoveToWorkspaceDialog_Project\n    role\n    workspace {\n      id\n    }\n  }\n": types.MoveProjectsDialog_ProjectFragmentDoc,
+    "\n  fragment MoveProjectsDialog_User on User {\n    projects(limit: $limit, cursor: $cursor, filter: $filter) {\n      totalCount\n      items {\n        ...ProjectsMoveToWorkspaceDialog_Project\n        role\n      }\n    }\n  }\n": types.MoveProjectsDialog_UserFragmentDoc,
     "\n  fragment WorkspaceProjectList_Workspace on Workspace {\n    id\n    ...WorkspaceBase_Workspace\n    ...WorkspaceTeam_Workspace\n    ...WorkspaceSecurity_Workspace\n    ...BillingAlert_Workspace\n    ...WorkspaceMixpanelUpdateGroup_Workspace\n    ...InviteDialogWorkspace_Workspace\n    projects {\n      ...WorkspaceProjectList_ProjectCollection\n    }\n    creationState {\n      completed\n      state\n    }\n    readOnly\n  }\n": types.WorkspaceProjectList_WorkspaceFragmentDoc,
     "\n  fragment WorkspaceProjectList_ProjectCollection on ProjectCollection {\n    totalCount\n    items {\n      ...ProjectDashboardItem\n    }\n    cursor\n  }\n": types.WorkspaceProjectList_ProjectCollectionFragmentDoc,
     "\n  fragment WorkspaceHeader_Workspace on Workspace {\n    ...WorkspaceBase_Workspace\n    ...WorkspaceTeam_Workspace\n    ...BillingAlert_Workspace\n    readOnly\n  }\n": types.WorkspaceHeader_WorkspaceFragmentDoc,
@@ -372,7 +372,7 @@ const documents = {
     "\n  query WorkspaceProjectsQuery(\n    $workspaceSlug: String!\n    $filter: WorkspaceProjectsFilter\n    $cursor: String\n  ) {\n    workspaceBySlug(slug: $workspaceSlug) {\n      id\n      projects(filter: $filter, cursor: $cursor, limit: 10) {\n        ...WorkspaceProjectList_ProjectCollection\n      }\n    }\n  }\n": types.WorkspaceProjectsQueryDocument,
     "\n  query WorkspaceFunctionsQuery($workspaceSlug: String!) {\n    ...AutomateFunctionsPageHeader_Query\n    workspaceBySlug(slug: $workspaceSlug) {\n      id\n      name\n      automateFunctions {\n        items {\n          id\n          ...AutomationsFunctionsCard_AutomateFunction\n          ...AutomateAutomationCreateDialog_AutomateFunction\n        }\n      }\n    }\n  }\n": types.WorkspaceFunctionsQueryDocument,
     "\n  query WorkspaceInvite(\n    $workspaceId: String\n    $token: String\n    $options: WorkspaceInviteLookupOptions\n  ) {\n    workspaceInvite(workspaceId: $workspaceId, token: $token, options: $options) {\n      ...WorkspaceInviteBanner_PendingWorkspaceCollaborator\n      ...WorkspaceInviteBlock_PendingWorkspaceCollaborator\n    }\n  }\n": types.WorkspaceInviteDocument,
-    "\n  query MoveProjectsDialog($filter: UserProjectsFilter) {\n    activeUser {\n      projects(filter: $filter) {\n        items {\n          id\n          ...MoveProjectsDialog_Project\n        }\n        cursor\n      }\n    }\n  }\n": types.MoveProjectsDialogDocument,
+    "\n  query MoveProjectsDialog($limit: Int, $cursor: String, $filter: UserProjectsFilter) {\n    activeUser {\n      ...MoveProjectsDialog_User\n    }\n  }\n": types.MoveProjectsDialogDocument,
     "\n  query ValidateWorkspaceSlug($slug: String!) {\n    validateWorkspaceSlug(slug: $slug)\n  }\n": types.ValidateWorkspaceSlugDocument,
     "\n  query WorkspaceSsoByEmail($email: String!) {\n    workspaceSsoByEmail(email: $email) {\n      ...AuthSsoLogin_Workspace\n    }\n  }\n": types.WorkspaceSsoByEmailDocument,
     "\n  query WorkspaceSsoCheck($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      ...WorkspaceSsoStatus_Workspace\n    }\n    activeUser {\n      ...WorkspaceSsoStatus_User\n    }\n  }\n": types.WorkspaceSsoCheckDocument,
@@ -946,7 +946,7 @@ export function graphql(source: "\n  fragment ViewerModelVersionCardItem on Vers
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment MoveProjectsDialog_Project on Project {\n    ...ProjectsMoveToWorkspaceDialog_Project\n    role\n    workspace {\n      id\n    }\n  }\n"): (typeof documents)["\n  fragment MoveProjectsDialog_Project on Project {\n    ...ProjectsMoveToWorkspaceDialog_Project\n    role\n    workspace {\n      id\n    }\n  }\n"];
+export function graphql(source: "\n  fragment MoveProjectsDialog_User on User {\n    projects(limit: $limit, cursor: $cursor, filter: $filter) {\n      totalCount\n      items {\n        ...ProjectsMoveToWorkspaceDialog_Project\n        role\n      }\n    }\n  }\n"): (typeof documents)["\n  fragment MoveProjectsDialog_User on User {\n    projects(limit: $limit, cursor: $cursor, filter: $filter) {\n      totalCount\n      items {\n        ...ProjectsMoveToWorkspaceDialog_Project\n        role\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -1842,7 +1842,7 @@ export function graphql(source: "\n  query WorkspaceInvite(\n    $workspaceId: S
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query MoveProjectsDialog($filter: UserProjectsFilter) {\n    activeUser {\n      projects(filter: $filter) {\n        items {\n          id\n          ...MoveProjectsDialog_Project\n        }\n        cursor\n      }\n    }\n  }\n"): (typeof documents)["\n  query MoveProjectsDialog($filter: UserProjectsFilter) {\n    activeUser {\n      projects(filter: $filter) {\n        items {\n          id\n          ...MoveProjectsDialog_Project\n        }\n        cursor\n      }\n    }\n  }\n"];
+export function graphql(source: "\n  query MoveProjectsDialog($limit: Int, $cursor: String, $filter: UserProjectsFilter) {\n    activeUser {\n      ...MoveProjectsDialog_User\n    }\n  }\n"): (typeof documents)["\n  query MoveProjectsDialog($limit: Int, $cursor: String, $filter: UserProjectsFilter) {\n    activeUser {\n      ...MoveProjectsDialog_User\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
