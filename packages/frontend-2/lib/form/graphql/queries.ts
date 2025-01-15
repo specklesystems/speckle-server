@@ -1,9 +1,20 @@
 import { graphql } from '~~/lib/common/generated/gql'
 
 export const searchProjectsQuery = graphql(`
-  query SearchProjects($search: String, $onlyWithRoles: [String!] = null) {
+  query SearchProjects(
+    $search: String
+    $onlyWithRoles: [String!] = null
+    $workspaceId: ID
+  ) {
     activeUser {
-      projects(limit: 10, filter: { search: $search, onlyWithRoles: $onlyWithRoles }) {
+      projects(
+        limit: 10
+        filter: {
+          search: $search
+          onlyWithRoles: $onlyWithRoles
+          workspaceId: $workspaceId
+        }
+      ) {
         totalCount
         items {
           ...FormSelectProjects_Project
