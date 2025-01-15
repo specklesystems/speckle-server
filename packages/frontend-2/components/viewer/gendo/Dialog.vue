@@ -1,5 +1,5 @@
 <template>
-  <LayoutDialog v-model:open="isOpen" max-width="xl" is-transparent>
+  <LayoutDialog v-model:open="isOpen" max-width="xl" is-transparent hide-closer>
     <div class="relative flex flex-col items-center justify-center gap-2 w-full h-full">
       <!-- Fullscreen button behind image to handle background clicks -->
       <!-- that are still inside dialog and show loading state -->
@@ -9,11 +9,13 @@
       >
         <CommonLoadingIcon />
       </button>
-      <NuxtImg
-        :src="renderUrl"
-        :alt="renderPrompt"
-        class="relative z-10 w-full h-full max-h-[70vh] max-w-[80vw] object-contain"
-      />
+      <div class="w-full h-full min-h-96">
+        <NuxtImg
+          :src="renderUrl"
+          :alt="renderPrompt"
+          class="relative z-10 w-full h-full max-h-[70vh] max-w-[80vw] object-contain"
+        />
+      </div>
       <div class="relative z-10 flex gap-2">
         <FormButton
           :to="renderUrl"
