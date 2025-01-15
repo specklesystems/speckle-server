@@ -439,3 +439,7 @@ export const knexAsyncStackTracesEnabled = () => {
   if (!envSet) return undefined
   return getBooleanFromEnv('KNEX_ASYNC_STACK_TRACES_ENABLED')
 }
+
+export const asyncRequestContextEnabled = () => {
+  return getBooleanFromEnv('ASYNC_REQUEST_CONTEXT_ENABLED')
+}

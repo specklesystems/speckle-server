@@ -478,6 +478,8 @@ server:
   max_project_models_per_page: 500
   ## @param server.speckleAutomateUrl The url of the Speckle Automate instance
   speckleAutomateUrl: 'https://automate.speckle.systems'
+  ## @param server.asyncRequestContextEnabled If enabled, the server will use the async request context for improved log msg correlation
+  asyncRequestContextEnabled: false
 
   gendoAI:
     ## @param server.gendoAI.apiUrl The url of the Gendo AI application, including protocol.

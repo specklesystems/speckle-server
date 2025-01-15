@@ -718,6 +718,11 @@ Generate the environment variables for Speckle server and Speckle objects deploy
   value: {{ .Values.server.migration.movedTo }}
   {{- end }}
 
+{{- if .Values.server.asyncRequestContextEnabled }}
+- name: ASYNC_REQUEST_CONTEXT_ENABLED
+  value: {{ .Values.server.asyncRequestContextEnabled | quote }}
+{{- end}}
+
 # *** No more closures flag - prevents writing to the closure table ***
 - name: FF_NO_CLOSURE_WRITES
   value: {{ .Values.featureFlags.noClosureWrites | quote }}
