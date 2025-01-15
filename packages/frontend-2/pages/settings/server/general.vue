@@ -107,7 +107,7 @@ import type {
 } from '~~/lib/common/generated/gql/graphql'
 
 definePageMeta({
-  middleware: ['auth', 'settings'],
+  middleware: ['auth', 'settings', 'admin'],
   layout: 'settings'
 })
 

@@ -28,7 +28,7 @@ import {
 import { useQuery } from '@vue/apollo-composable'
 
 definePageMeta({
-  middleware: ['auth', 'settings'],
+  middleware: ['auth', 'settings', 'admin'],
   layout: 'settings'
 })
 
