@@ -20,6 +20,9 @@
         <CommonAlert v-if="!limits" color="danger" size="xs">
           <template #title>No credits available</template>
         </CommonAlert>
+        <CommonAlert v-else-if="isOutOfCredits" color="neutral" size="xs">
+          <template #title>Credits reset on {{ formattedResetDate }}</template>
+        </CommonAlert>
         <div class="flex flex-col gap-y-3">
           <FormTextArea
             v-model="prompt"
@@ -145,6 +148,17 @@ const randomPlaceholder = computed(() => {
 
 const isOutOfCredits = computed(() => {
   return (limits.value?.used || 0) >= (limits.value?.limit || 0)
+})
+
+const formattedResetDate = computed(() => {
+  if (!limits.value?.resetDate) return ''
+
+  const resetDate = new Date(limits.value.resetDate)
+  return resetDate.toLocaleDateString('en-US', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric'
+  })
 })
 
 const enqueMagic = async () => {
