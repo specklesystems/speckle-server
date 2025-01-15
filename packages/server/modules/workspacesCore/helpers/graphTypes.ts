@@ -10,6 +10,7 @@ export type WorkspaceJoinRequestGraphQLReturn = WorkspaceJoinRequest
 export type WorkspaceBillingGraphQLReturn = { parent: Workspace }
 export type WorkspaceSsoGraphQLReturn = WorkspaceSsoProviderRecord
 export type WorkspaceMutationsGraphQLReturn = MutationsObjectGraphQLReturn
+export type WorkspaceJoinRequestMutationsGraphQLReturn = MutationsObjectGraphQLReturn
 export type WorkspaceInviteMutationsGraphQLReturn = MutationsObjectGraphQLReturn
 export type WorkspaceProjectMutationsGraphQLReturn = MutationsObjectGraphQLReturn
 export type ProjectRoleGraphQLReturn = {

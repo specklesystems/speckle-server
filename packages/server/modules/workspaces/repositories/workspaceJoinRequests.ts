@@ -1,5 +1,6 @@
 import {
   CreateWorkspaceJoinRequest,
+  GetWorkspaceJoinRequest,
   UpdateWorkspaceJoinRequestStatus
 } from '@/modules/workspaces/domain/operations'
 import {
@@ -33,6 +34,20 @@ export const updateWorkspaceJoinRequestStatusFactory =
       .insert({ workspaceId, userId, status })
       .onConflict(['workspaceId', 'userId'])
       .merge(['status'])
+  }
+
+export const getWorkspaceJoinRequestFactory =
+  ({ db }: { db: Knex }): GetWorkspaceJoinRequest =>
+  async ({ workspaceId, userId, status }) => {
+    const query = tables
+      .workspaceJoinRequests(db)
+      .where(WorkspaceJoinRequests.col.workspaceId, workspaceId)
+      .where(WorkspaceJoinRequests.col.userId, userId)
+    if (status) {
+      query.andWhere(WorkspaceJoinRequests.col.status, status)
+    }
+
+    return await query.first()
   }
 
 type WorkspaceJoinRequestFilter = {

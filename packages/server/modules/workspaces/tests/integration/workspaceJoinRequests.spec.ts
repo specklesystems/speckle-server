@@ -9,9 +9,12 @@ import { getWorkspaceFactory } from '@/modules/workspaces/repositories/workspace
 import { UserWithOptionalRole } from '@/modules/core/repositories/users'
 import {
   CreateWorkspaceJoinRequest,
-  SendWorkspaceJoinRequestReceivedEmail
+  SendWorkspaceJoinRequestApprovedEmail,
+  SendWorkspaceJoinRequestReceivedEmail,
+  UpdateWorkspaceJoinRequestStatus
 } from '@/modules/workspaces/domain/operations'
 import {
+  approveWorkspaceJoinRequestFactory,
   dismissWorkspaceJoinRequestFactory,
   requestToJoinWorkspaceFactory
 } from '@/modules/workspaces/services/workspaceJoinRequests'
@@ -167,6 +170,125 @@ const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
           workspace
         )
         expect(sendWorkspaceJoinRequestReceivedEmailCalls[0].requester).to.equal(user)
+      })
+    })
+
+    describe('approveWorkspaceJoinRequestFactory, returns a function that ', () => {
+      it('throws a NotFoundError if the user does not exists', async () => {
+        const err = await expectToThrow(() =>
+          approveWorkspaceJoinRequestFactory({
+            updateWorkspaceJoinRequestStatus: (async () =>
+              Promise.resolve()) as unknown as UpdateWorkspaceJoinRequestStatus,
+            sendWorkspaceJoinRequestApprovedEmail: async () => Promise.resolve(),
+            getUserById: async () => null,
+            getWorkspace: async () => null,
+            getWorkspaceJoinRequest: async () => undefined
+          })({ workspaceId: createRandomString(), userId: createRandomString() })
+        )
+
+        expect(err.message).to.equal('User not found')
+      })
+      it('throws a WorkspaceNotFoundError if the workspace does not exists', async () => {
+        const user = await createTestUser({})
+        const err = await expectToThrow(() =>
+          approveWorkspaceJoinRequestFactory({
+            updateWorkspaceJoinRequestStatus: (async () =>
+              Promise.resolve()) as unknown as UpdateWorkspaceJoinRequestStatus,
+            sendWorkspaceJoinRequestApprovedEmail: async () => Promise.resolve(),
+            getUserById: async () => user as unknown as UserWithOptionalRole,
+            getWorkspace: async () => null,
+            getWorkspaceJoinRequest: async () => undefined
+          })({ workspaceId: createRandomString(), userId: createRandomString() })
+        )
+
+        expect(err.message).to.equal(WorkspaceNotFoundError.defaultMessage)
+      })
+      it('throws a NotFoundError if the request does not exists in the pending status', async () => {
+        const user = await createTestUser({})
+        const workspace: BasicTestWorkspace = {
+          id: '',
+          slug: '',
+          ownerId: '',
+          name: cryptoRandomString({ length: 6 }),
+          description: cryptoRandomString({ length: 12 })
+        }
+        await createTestWorkspace(workspace, user)
+        const err = await expectToThrow(() =>
+          approveWorkspaceJoinRequestFactory({
+            updateWorkspaceJoinRequestStatus: (async () =>
+              Promise.resolve()) as unknown as UpdateWorkspaceJoinRequestStatus,
+            sendWorkspaceJoinRequestApprovedEmail: async () => Promise.resolve(),
+            getUserById: async () => user as unknown as UserWithOptionalRole,
+            getWorkspace: async () => workspace as unknown as Workspace,
+            getWorkspaceJoinRequest: async () => undefined
+          })({ workspaceId: createRandomString(), userId: createRandomString() })
+        )
+
+        expect(err.message).to.equal('Workspace join request not found')
+      })
+      it('marks the request as approved and send an email to the requester', async () => {
+        const sendWorkspaceJoinRequestApprovedEmailCalls: Parameters<SendWorkspaceJoinRequestApprovedEmail>[number][] =
+          []
+        const sendWorkspaceJoinRequestApprovedEmail = async (
+          args: Parameters<SendWorkspaceJoinRequestApprovedEmail>[number]
+        ) => sendWorkspaceJoinRequestApprovedEmailCalls.push(args)
+
+        const user: BasicTestUser = {
+          id: '',
+          name: 'John Speckle',
+          email: createRandomEmail(),
+          role: Roles.Server.Admin,
+          verified: true
+        }
+
+        await createTestUser(user)
+
+        const workspace: BasicTestWorkspace = {
+          id: '',
+          slug: '',
+          ownerId: '',
+          name: cryptoRandomString({ length: 6 }),
+          description: cryptoRandomString({ length: 12 })
+        }
+        await createTestWorkspace(workspace, user)
+
+        const request = await createWorkspaceJoinRequestFactory({ db })({
+          workspaceJoinRequest: {
+            workspaceId: workspace.id,
+            userId: user.id,
+            status: 'pending'
+          }
+        })
+
+        const updateWorkspaceJoinRequestStatus =
+          updateWorkspaceJoinRequestStatusFactory({ db })
+
+        expect(
+          await approveWorkspaceJoinRequestFactory({
+            updateWorkspaceJoinRequestStatus,
+            sendWorkspaceJoinRequestApprovedEmail:
+              sendWorkspaceJoinRequestApprovedEmail as unknown as SendWorkspaceJoinRequestApprovedEmail,
+            getUserById: async () => user as unknown as UserWithOptionalRole,
+            getWorkspace: async () => workspace as unknown as Workspace,
+            getWorkspaceJoinRequest: async () => request
+          })({ workspaceId: workspace.id, userId: user.id })
+        ).to.equal(true)
+
+        expect(
+          (await db<WorkspaceJoinRequest>(WorkspaceJoinRequests.name)
+            .where({
+              workspaceId: workspace.id,
+              userId: user.id
+            })
+            .select('status')
+            .first())!.status
+        ).to.equal('approved')
+
+        expect(sendWorkspaceJoinRequestApprovedEmailCalls).to.have.length(1)
+        expect(sendWorkspaceJoinRequestApprovedEmailCalls[0].workspace).to.equal(
+          workspace
+        )
+        expect(sendWorkspaceJoinRequestApprovedEmailCalls[0].requester).to.equal(user)
       })
     })
   }

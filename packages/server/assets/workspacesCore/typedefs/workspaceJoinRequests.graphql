@@ -1,0 +1,16 @@
+extend type Mutation {
+  workspaceJoinRequestMutations: WorkspaceJoinRequestMutations!
+    @hasServerRole(role: SERVER_GUEST)
+}
+
+input ApproveWorkspaceJoinRequestInput {
+  workspaceId: String!
+  userId: String!
+}
+
+type WorkspaceJoinRequestMutations {
+  approve(input: ApproveWorkspaceJoinRequestInput!): Boolean!
+    @hasServerRole(role: SERVER_USER)
+    @hasScope(scope: "workspace:update")
+    @hasWorkspaceRole(role: ADMIN)
+}
