@@ -108,6 +108,7 @@ import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { useMixpanel } from '~/lib/core/composables/mp'
 import { CommonAlert, CommonBadge } from '@speckle/ui-components'
 import { ArrowTopRightOnSquareIcon } from '@heroicons/vue/24/outline'
+import dayjs from 'dayjs'
 
 const {
   projectId,
@@ -152,13 +153,7 @@ const isOutOfCredits = computed(() => {
 
 const formattedResetDate = computed(() => {
   if (!limits.value?.resetDate) return ''
-
-  const resetDate = new Date(limits.value.resetDate)
-  return resetDate.toLocaleDateString('en-US', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric'
-  })
+  return dayjs(limits.value.resetDate).format('Do MMMM YYYY')
 })
 
 const enqueMagic = async () => {
