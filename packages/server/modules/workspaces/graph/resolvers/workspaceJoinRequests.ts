@@ -10,6 +10,7 @@ import { getPaginatedItemsFactory } from '@/modules/shared/services/paginatedIte
 import {
   countAdminWorkspaceJoinRequestsFactory,
   getAdminWorkspaceJoinRequestsFactory,
+  getWorkspaceJoinRequestFactory,
   updateWorkspaceJoinRequestStatusFactory
 } from '@/modules/workspaces/repositories/workspaceJoinRequests'
 import { getWorkspaceFactory } from '@/modules/workspaces/repositories/workspaces'
@@ -78,7 +79,8 @@ export default {
           updateWorkspaceJoinRequestStatus,
           sendWorkspaceJoinRequestApprovedEmail,
           getUserById: getUserFactory({ db: transaction }),
-          getWorkspace: getWorkspaceFactory({ db: transaction })
+          getWorkspace: getWorkspaceFactory({ db: transaction }),
+          getWorkspaceJoinRequest: getWorkspaceJoinRequestFactory({ db: transaction })
         })({
           userId: args.input.userId,
           workspaceId: args.input.workspaceId
