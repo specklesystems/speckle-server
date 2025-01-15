@@ -224,9 +224,9 @@ const paddingClasses = computed(() => {
     case 'base':
     default:
       if (hideText) return 'w-8'
-      if (hasIconLeft) return 'py-1 pr-4 pl-2'
-      if (hasIconRight) return 'py-1 pl-4 pr-2'
-      return 'px-4 py-1'
+      if (hasIconLeft) return 'py-0 pr-4 pl-2'
+      if (hasIconRight) return 'py-0 pl-4 pr-2'
+      return 'px-4 py-0'
   }
 })
 
