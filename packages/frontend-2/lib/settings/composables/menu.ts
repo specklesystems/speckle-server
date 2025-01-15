@@ -1,24 +1,9 @@
-import type { SettingsMenuItems } from '~/lib/settings/helpers/types'
-import SettingsUserProfile from '~/components/settings/user/Profile.vue'
-import SettingsUserNotifications from '~/components/settings/user/Notifications.vue'
-import SettingsUserDeveloper from '~/components/settings/user/developer/Developer.vue'
-import SettingsUserEmails from '~/components/settings/user/Emails.vue'
-import SettingsServerGeneral from '~/components/settings/server/General.vue'
-import SettingsServerRegions from '~/components/settings/server/Regions.vue'
-import SettingsServerProjects from '~/components/settings/server/Projects.vue'
-import SettingsServerMembers from '~/components/settings/server/Members.vue'
-import SettingsWorkspaceGeneral from '~/components/settings/workspaces/General.vue'
-import SettingsWorkspacesMembers from '~/components/settings/workspaces/Members.vue'
-import SettingsWorkspacesSecurity from '~/components/settings/workspaces/Security.vue'
-import SettingsWorkspacesProjects from '~/components/settings/workspaces/Projects.vue'
-import SettingsWorkspacesBilling from '~/components/settings/workspaces/Billing.vue'
-import SettingsWorkspacesRegions from '~/components/settings/workspaces/Regions.vue'
+import type { SettingsMenuItem } from '~/lib/settings/helpers/types'
 import { useIsMultipleEmailsEnabled } from '~/composables/globals'
 import { Roles } from '@speckle/shared'
-import { SettingMenuKeys } from '~/lib/settings/helpers/types'
 import { useIsMultiregionEnabled } from '~/lib/multiregion/composables/main'
-import type { InjectionKey } from 'vue'
 import { graphql } from '~/lib/common/generated/gql'
+import { settingsRoutes } from '~/lib/common/helpers/route'
 
 graphql(`
   fragment SettingsMenu_Workspace on Workspace {
@@ -38,36 +23,48 @@ export const useSettingsMenu = () => {
   const isMultipleEmailsEnabled = useIsMultipleEmailsEnabled().value
   const isMultiRegionEnabled = useIsMultiregionEnabled()
 
-  const workspaceMenuItems = shallowRef<SettingsMenuItems>({
-    [SettingMenuKeys.Workspace.General]: {
+  const workspaceMenuItems = shallowRef<SettingsMenuItem[]>([
+    {
       title: 'General',
-      component: SettingsWorkspaceGeneral,
+      getRoute: (slug?: string) =>
+        slug ? settingsRoutes.workspace.general.route(slug) : '',
+      name: settingsRoutes.workspace.general.name,
       permission: [Roles.Workspace.Admin, Roles.Workspace.Member, Roles.Workspace.Guest]
     },
-    [SettingMenuKeys.Workspace.Members]: {
+    {
       title: 'Members',
-      component: SettingsWorkspacesMembers,
+      getRoute: (slug?: string) =>
+        slug ? settingsRoutes.workspace.members.route(slug) : '',
+      name: settingsRoutes.workspace.members.name,
       permission: [Roles.Workspace.Admin, Roles.Workspace.Member]
     },
-    [SettingMenuKeys.Workspace.Projects]: {
+    {
       title: 'Projects',
-      component: SettingsWorkspacesProjects,
+      getRoute: (slug?: string) =>
+        slug ? settingsRoutes.workspace.projects.route(slug) : '',
+      name: settingsRoutes.workspace.projects.name,
       permission: [Roles.Workspace.Admin, Roles.Workspace.Member]
     },
-    [SettingMenuKeys.Workspace.Security]: {
+    {
       title: 'Security',
-      component: SettingsWorkspacesSecurity,
+      getRoute: (slug?: string) =>
+        slug ? settingsRoutes.workspace.security.route(slug) : '',
+      name: settingsRoutes.workspace.security.name,
       permission: [Roles.Workspace.Admin]
     },
-    [SettingMenuKeys.Workspace.Billing]: {
+    {
       title: 'Billing',
-      component: SettingsWorkspacesBilling,
+      getRoute: (slug?: string) =>
+        slug ? settingsRoutes.workspace.billing.route(slug) : '',
+      name: settingsRoutes.workspace.billing.name,
       permission: [Roles.Workspace.Admin, Roles.Workspace.Member]
     },
-    [SettingMenuKeys.Workspace.Regions]: {
+    {
       title: 'Data residency',
-      component: SettingsWorkspacesRegions,
+      getRoute: (slug?: string) =>
+        slug ? settingsRoutes.workspace.regions.route(slug) : '',
       permission: [Roles.Workspace.Admin, Roles.Workspace.Member],
+      name: settingsRoutes.workspace.regions.name,
       ...(!isMultiRegionEnabled
         ? {
             disabled: true,
@@ -77,53 +74,53 @@ export const useSettingsMenu = () => {
             disabled: false
           })
     }
-  })
+  ])
 
-  const userMenuItems = shallowRef<SettingsMenuItems>({
-    [SettingMenuKeys.User.Profile]: {
-      title: 'User profile',
-      component: SettingsUserProfile
+  const userMenuItems = shallowRef<SettingsMenuItem[]>([
+    {
+      title: 'Profile',
+      getRoute: () => settingsRoutes.user.profile.route
+    },
+    {
+      title: 'Notifications',
+      getRoute: () => settingsRoutes.user.notifications.route
+    },
+    {
+      title: 'Developer',
+      getRoute: () => settingsRoutes.user.developerSettings.route
     },
     ...(isMultipleEmailsEnabled
-      ? {
-          [SettingMenuKeys.User.Emails]: {
+      ? [
+          {
             title: 'Emails',
-            component: SettingsUserEmails
+            getRoute: () => settingsRoutes.user.emails.route
           }
-        }
-      : {}),
-    [SettingMenuKeys.User.Notifications]: {
-      title: 'Notifications',
-      component: SettingsUserNotifications
-    },
-    [SettingMenuKeys.User.DeveloperSettings]: {
-      title: 'Developer',
-      component: SettingsUserDeveloper
-    }
-  })
+        ]
+      : [])
+  ])
 
-  const serverMenuItems = shallowRef<SettingsMenuItems>({
-    [SettingMenuKeys.Server.General]: {
+  const serverMenuItems = shallowRef<SettingsMenuItem[]>([
+    {
       title: 'General',
-      component: SettingsServerGeneral
+      getRoute: () => settingsRoutes.server.general.route
     },
-    [SettingMenuKeys.Server.ActiveUsers]: {
+    {
       title: 'Members',
-      component: SettingsServerMembers
+      getRoute: () => settingsRoutes.server.members.route
     },
-    [SettingMenuKeys.Server.Projects]: {
+    {
       title: 'Projects',
-      component: SettingsServerProjects
+      getRoute: () => settingsRoutes.server.projects.route
     },
     ...(isMultiRegionEnabled
-      ? {
-          [SettingMenuKeys.Server.Regions]: {
+      ? [
+          {
             title: 'Regions',
-            component: SettingsServerRegions
+            getRoute: () => settingsRoutes.server.regions.route
           }
-        }
-      : {})
-  })
+        ]
+      : [])
+  ])
 
   return {
     userMenuItems,
@@ -132,16 +129,9 @@ export const useSettingsMenu = () => {
   }
 }
 
-type MenuState = {
-  goToWorkspaceMenuItem: (workspaceId: string, menuTarget: string) => void
-}
-const MenuStateKey: InjectionKey<MenuState> = Symbol('menuState')
-
-export const useSetupMenuState = (params: MenuState) => {
-  const state = params
-  provide(MenuStateKey, state)
-}
-
-export const useMenuState = () => {
-  return inject(MenuStateKey)!
-}
+export const useSettingsMenuState = () =>
+  useState<{
+    previousRoute: string | undefined
+  }>('settings-menu-state', () => ({
+    previousRoute: undefined
+  }))

@@ -7,7 +7,7 @@
     >
       <button
         v-if="collapsible"
-        class="group flex items-center w-full rounded-md"
+        class="group flex items-center w-full rounded-md gap-x-1"
         :class="noHover ? '' : 'py-0.5 px-2'"
         @click="isCollapsed = !isCollapsed"
       >

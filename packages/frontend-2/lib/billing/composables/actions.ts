@@ -51,7 +51,9 @@ export const useBillingActions = () => {
   )
   const { sendWebhook } = useZapier()
 
-  const billingPortalRedirect = async (workspaceId: string) => {
+  const billingPortalRedirect = async (workspaceId?: string) => {
+    if (!workspaceId) return
+
     mixpanel.track('Workspace Billing Portal Button Clicked', {
       // eslint-disable-next-line camelcase
       workspace_id: workspaceId

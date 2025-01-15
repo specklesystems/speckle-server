@@ -28,6 +28,15 @@ import { useQuery } from '@vue/apollo-composable'
 import type { SettingsServerRegionsTable_ServerRegionItemFragment } from '~/lib/common/generated/gql/graphql'
 import { graphql } from '~~/lib/common/generated/gql'
 
+definePageMeta({
+  middleware: ['auth', 'settings', 'admin'],
+  layout: 'settings'
+})
+
+useHead({
+  title: 'Settings | Server - Regions'
+})
+
 const isAddEditDialogOpen = ref(false)
 
 const query = graphql(`

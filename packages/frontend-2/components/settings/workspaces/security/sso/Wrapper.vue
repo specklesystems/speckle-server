@@ -140,9 +140,8 @@ import type { LayoutMenuItem } from '@speckle/ui-components'
 import { HorizontalDirection } from '~~/lib/common/composables/window'
 import { EllipsisHorizontalIcon } from '@heroicons/vue/24/solid'
 import { graphql } from '~/lib/common/generated/gql'
-import { useMenuState } from '~/lib/settings/composables/menu'
-import { SettingMenuKeys } from '~/lib/settings/helpers/types'
 import { Roles } from '@speckle/shared'
+import { settingsRoutes } from '~/lib/common/helpers/route'
 
 graphql(`
   fragment SettingsWorkspacesSecuritySsoWrapper_Workspace on Workspace {
@@ -169,7 +168,7 @@ enum ActionTypes {
   Delete = 'delete'
 }
 
-const { goToWorkspaceMenuItem } = useMenuState()
+const route = useRoute()
 const apiOrigin = useApiOrigin()
 const logger = useLogger()
 const menuId = useId()
@@ -235,9 +234,8 @@ const redirectUrl = computed(() => {
 })
 
 const goToBilling = () => {
-  goToWorkspaceMenuItem(props.workspace.id, SettingMenuKeys.Workspace.Billing)
+  navigateTo(settingsRoutes.workspace.billing.route(props.workspace.slug))
 }
-const route = useRoute()
 
 const errorProviderInfo = ref<
   | {

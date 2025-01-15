@@ -1,12 +1,8 @@
 <template>
   <div>
-    <SettingsUserProfileDeleteAccountDialog
-      v-model:open="showDeleteDialog"
-      :user="user"
-    />
     <div class="flex flex-col space-y-6">
       <SettingsSectionHeader title="Delete account" subheading />
-      <CommonCard class="bg-foundation">
+      <CommonCard class="text-body-xs bg-foundation">
         We will delete all projects where you are the sole owner, and any associated
         data. We will ask you to type in your email address and press the delete button.
       </CommonCard>
@@ -14,6 +10,11 @@
         <FormButton @click="toggleDeleteDialog">Delete account</FormButton>
       </div>
     </div>
+
+    <SettingsUserProfileDeleteAccountDialog
+      v-model:open="showDeleteDialog"
+      :user="user"
+    />
   </div>
 </template>
 
