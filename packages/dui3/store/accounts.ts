@@ -17,7 +17,6 @@ import { setContext } from '@apollo/client/link/context'
 import { useHostAppStore } from '~/store/hostApp'
 import type { ToastNotification } from '@speckle/ui-components'
 import { ToastNotificationType } from '@speckle/ui-components'
-import { serverInfoQuery } from '~/lib/graphql/mutationsAndQueries'
 
 export type DUIAccount = {
   /** account info coming from the host app */
@@ -26,7 +25,6 @@ export type DUIAccount = {
   client: ApolloClient<unknown>
   /** whether an intial serverinfo query succeeded. */
   isValid: boolean
-  workspacesEnabled: boolean
 }
 
 const accountTestQuery = gql`
@@ -156,22 +154,21 @@ export const useAccountStore = defineStore('accountStore', () => {
         }
       })
 
-      let workspacesEnabled = false
-      try {
-        // get workspace enabled flag and store it in account
-        const res = await client.query({ query: serverInfoQuery })
-        workspacesEnabled = !!res.data.serverInfo.workspaces.workspacesEnabled
-      } catch (err) {
-        // probably having some local account or client could not established well for some reason!
-        console.log(err)
-      }
+      // const workspacesEnabled = false
+      // try {
+      //   // get workspace enabled flag and store it in account
+      //   const res = await client.query({ query: serverInfoQuery })
+      //   workspacesEnabled = !!res.data.serverInfo.workspaces.workspacesEnabled
+      // } catch (err) {
+      //   // probably having some local account or client could not established well for some reason!
+      //   console.log(err)
+      // }
 
       apolloClients[acc.id] = client
       newAccs.push({
         accountInfo: acc,
         client,
-        isValid: true,
-        workspacesEnabled
+        isValid: true
       })
     }
 
