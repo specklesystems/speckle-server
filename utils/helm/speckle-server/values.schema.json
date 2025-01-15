@@ -661,6 +661,11 @@
           "description": "The url of the Speckle Automate instance",
           "default": "https://automate.speckle.systems"
         },
+        "asyncRequestContextEnabled": {
+          "type": "boolean",
+          "description": "If enabled, the server will use the async request context for improved log msg correlation",
+          "default": false
+        },
         "gendoAI": {
           "type": "object",
           "properties": {
