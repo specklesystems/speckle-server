@@ -33,7 +33,10 @@ import {
   storeTokenScopesFactory,
   storeTokenResourceAccessDefinitionsFactory
 } from '@/modules/core/repositories/tokens'
-import { getServerInfoFactory } from '@/modules/core/repositories/server'
+import {
+  getServerConfigFactory,
+  getServerInfoFactory
+} from '@/modules/core/repositories/server'
 import { BasicTestStream, createTestStream } from '@/test/speckle-helpers/streamHelper'
 import { waitForRegionUser } from '@/test/speckle-helpers/regions'
 import { createTestWorkspace } from '@/modules/workspaces/tests/helpers/creation'
@@ -43,7 +46,9 @@ import cryptoRandomString from 'crypto-random-string'
 import type { BlobStorageItem } from '@/modules/blobstorage/domain/types'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 
-const getServerInfo = getServerInfoFactory({ db })
+const getServerInfo = getServerInfoFactory({
+  getServerConfig: getServerConfigFactory({ db })
+})
 
 const findEmail = findEmailFactory({ db })
 const requestNewEmailVerification = requestNewEmailVerificationFactory({

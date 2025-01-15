@@ -41,7 +41,10 @@ import {
 import { dbLogger } from '@/logging/logging'
 import { getAdminUsersListCollectionFactory } from '@/modules/core/services/users/legacyAdminUsersList'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
-import { getServerInfoFactory } from '@/modules/core/repositories/server'
+import {
+  getServerConfigFactory,
+  getServerInfoFactory
+} from '@/modules/core/repositories/server'
 
 const getUser = legacyGetUserFactory({ db })
 const getUserByEmail = legacyGetUserByEmailFactory({ db })
@@ -54,7 +57,9 @@ const updateUserAndNotify = updateUserAndNotifyFactory({
   })
 })
 
-const getServerInfo = getServerInfoFactory({ db })
+const getServerInfo = getServerInfoFactory({
+  getServerConfig: getServerConfigFactory({ db })
+})
 const deleteUser = deleteUserFactory({
   deleteStream: deleteStreamFactory({ db }),
   logger: dbLogger,

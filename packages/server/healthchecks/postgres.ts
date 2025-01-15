@@ -1,5 +1,5 @@
 import type { Knex } from 'knex'
-import { getServerInfoFactory } from '@/modules/core/repositories/server'
+import { getServerConfigFactory } from '@/modules/core/repositories/server'
 import { getAllRegisteredDbClients } from '@/modules/multiregion/utils/dbSelector'
 import type { CheckResponse, MultiDBCheck } from '@/healthchecks/types'
 import { ensureErrorOrWrapAsCause } from '@/modules/shared/errors/ensureError'
@@ -9,10 +9,10 @@ type DBCheck = (params: { db: Knex }) => Promise<CheckResponse>
 
 export const isPostgresAlive: DBCheck = async (params) => {
   const { db } = params
-  const getServerInfo = getServerInfoFactory({ db })
+  const getServerConfig = getServerConfigFactory({ db })
 
   try {
-    await getServerInfo()
+    await getServerConfig({ bustCache: true }) // we always want this to hit the database, so it should not be cached
   } catch (err) {
     return { isAlive: false, err: ensureError(err, 'Unknown Postgres error.') }
   }

@@ -4,7 +4,10 @@ import {
   createRandomPassword
 } from '@/modules/core/helpers/testHelpers'
 import { createBranchFactory } from '@/modules/core/repositories/branches'
-import { getServerInfoFactory } from '@/modules/core/repositories/server'
+import {
+  getServerConfigFactory,
+  getServerInfoFactory
+} from '@/modules/core/repositories/server'
 import {
   createStreamFactory,
   getStreamFactory
@@ -55,7 +58,9 @@ const WebhooksConfig = () => knex(WEBHOOKS_CONFIG_TABLE)
 const randomId = () => crs({ length: 10 })
 
 const cleanOrphanedWebhookConfigs = cleanOrphanedWebhookConfigsFactory({ db })
-const getServerInfo = getServerInfoFactory({ db })
+const getServerInfo = getServerInfoFactory({
+  getServerConfig: getServerConfigFactory({ db })
+})
 const getUsers = getUsersFactory({ db })
 const getUser = getUserFactory({ db })
 const getStream = getStreamFactory({ db })

@@ -34,7 +34,10 @@ import { reconcileWorkspaceSubscriptionFactory } from '@/modules/gatekeeper/clie
 import { ScheduleExecution } from '@/modules/core/domain/scheduledTasks/operations'
 import { EventBusEmit, getEventBus } from '@/modules/shared/services/eventBus'
 import { sendWorkspaceTrialExpiresEmailFactory } from '@/modules/gatekeeper/services/trialEmails'
-import { getServerInfoFactory } from '@/modules/core/repositories/server'
+import {
+  getServerConfigFactory,
+  getServerInfoFactory
+} from '@/modules/core/repositories/server'
 import { findEmailsByUserIdFactory } from '@/modules/core/repositories/userEmails'
 import { sendEmail } from '@/modules/emails/services/sending'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
@@ -87,7 +90,9 @@ const scheduleWorkspaceTrialEmails = ({
   scheduleExecution: ScheduleExecution
 }) => {
   const sendWorkspaceTrialEmail = sendWorkspaceTrialExpiresEmailFactory({
-    getServerInfo: getServerInfoFactory({ db }),
+    getServerInfo: getServerInfoFactory({
+      getServerConfig: getServerConfigFactory({ db })
+    }),
     getUserEmails: findEmailsByUserIdFactory({ db }),
     getWorkspaceCollaborators: getWorkspaceCollaboratorsFactory({ db }),
     sendEmail,

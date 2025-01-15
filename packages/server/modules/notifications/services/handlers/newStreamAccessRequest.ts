@@ -21,7 +21,10 @@ import { getStreamFactory } from '@/modules/core/repositories/streams'
 import { GetUser } from '@/modules/core/domain/users/operations'
 import { getUserFactory } from '@/modules/core/repositories/users'
 import { GetServerInfo } from '@/modules/core/domain/server/operations'
-import { getServerInfoFactory } from '@/modules/core/repositories/server'
+import {
+  getServerConfigFactory,
+  getServerInfoFactory
+} from '@/modules/core/repositories/server'
 import { EmailTemplateParams } from '@/modules/emails/domain/operations'
 
 type ValidateMessageDeps = {
@@ -147,7 +150,9 @@ const newStreamAccessRequestHandlerFactory =
 
 const handler: NotificationHandler<NewStreamAccessRequestMessage> = (...args) => {
   const newStreamAccessRequestHandler = newStreamAccessRequestHandlerFactory({
-    getServerInfo: getServerInfoFactory({ db }),
+    getServerInfo: getServerInfoFactory({
+      getServerConfig: getServerConfigFactory({ db })
+    }),
     renderEmail,
     sendEmail,
     getUser: getUserFactory({ db }),

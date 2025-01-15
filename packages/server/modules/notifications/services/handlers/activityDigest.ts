@@ -29,7 +29,10 @@ import { getActivityFactory } from '@/modules/activitystream/repositories'
 import { getStreamFactory } from '@/modules/core/repositories/streams'
 import { getUserFactory } from '@/modules/core/repositories/users'
 import { GetServerInfo } from '@/modules/core/domain/server/operations'
-import { getServerInfoFactory } from '@/modules/core/repositories/server'
+import {
+  getServerConfigFactory,
+  getServerInfoFactory
+} from '@/modules/core/repositories/server'
 import { EmailBody, EmailInput } from '@/modules/emails/domain/operations'
 
 const digestNotificationEmailHandlerFactory =
@@ -439,7 +442,9 @@ const digestNotificationEmailHandler = digestNotificationEmailHandlerFactory({
     getActivity: getActivityFactory({ db }),
     getUser: getUserFactory({ db })
   }),
-  getServerInfo: getServerInfoFactory({ db }),
+  getServerInfo: getServerInfoFactory({
+    getServerConfig: getServerConfigFactory({ db })
+  }),
   renderEmail
 })
 

@@ -9,7 +9,10 @@ import { GetUser } from '@/modules/core/domain/users/operations'
 import { Roles } from '@/modules/core/helpers/mainConstants'
 import { getCommentRoute } from '@/modules/core/helpers/routeHelper'
 import { ServerInfo } from '@/modules/core/helpers/types'
-import { getServerInfoFactory } from '@/modules/core/repositories/server'
+import {
+  getServerConfigFactory,
+  getServerInfoFactory
+} from '@/modules/core/repositories/server'
 import { getStreamFactory } from '@/modules/core/repositories/streams'
 import { getUserFactory, UserWithOptionalRole } from '@/modules/core/repositories/users'
 import { EmailTemplateParams } from '@/modules/emails/domain/operations'
@@ -228,7 +231,9 @@ const handler: NotificationHandler<MentionedInCommentMessage> = async (...args) 
     getUser: getUserFactory({ db }),
     getStream: getStreamFactory({ db }),
     getCommentResolver: ({ projectDb }) => getCommentFactory({ db: projectDb }),
-    getServerInfo: getServerInfoFactory({ db }),
+    getServerInfo: getServerInfoFactory({
+      getServerConfig: getServerConfigFactory({ db })
+    }),
     renderEmail,
     sendEmail
   })
