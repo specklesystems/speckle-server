@@ -1,6 +1,6 @@
 <template>
   <div
-    class="flex flex-col gap-y-2 max-h-64 2xl:max-h-96 overflow-y-auto overflow-x-hidden simple-scrollbar"
+    class="flex flex-col gap-y-2 max-h-[calc(100dvh-22rem)] overflow-y-auto overflow-x-hidden simple-scrollbar"
   >
     <ViewerGendoItem
       v-for="render in renders"
