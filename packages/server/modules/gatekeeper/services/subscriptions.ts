@@ -81,6 +81,9 @@ export const handleSubscriptionUpdateFactory =
           break
         case 'unlimited':
         case 'academia':
+        case 'starterFree':
+        case 'plusFree':
+        case 'businessFree':
           throw new WorkspacePlanMismatchError()
         default:
           throwUncoveredError(workspacePlan)
@@ -131,6 +134,9 @@ export const addWorkspaceSubscriptionSeatIfNeededFactory =
         break
       case 'unlimited':
       case 'academia':
+      case 'starterFree':
+      case 'plusFree':
+      case 'businessFree':
         throw new WorkspacePlanMismatchError()
       default:
         throwUncoveredError(workspacePlan)
@@ -261,6 +267,9 @@ export const downscaleWorkspaceSubscriptionFactory =
         break
       case 'unlimited':
       case 'academia':
+      case 'starterFree':
+      case 'plusFree':
+      case 'businessFree':
         throw new WorkspacePlanMismatchError()
       default:
         throwUncoveredError(workspacePlan)
@@ -373,6 +382,9 @@ export const upgradeWorkspaceSubscriptionFactory =
     switch (workspacePlan.name) {
       case 'unlimited':
       case 'academia':
+      case 'starterFree':
+      case 'plusFree':
+      case 'businessFree':
         throw new WorkspaceNotPaidPlanError()
       case 'starter':
       case 'plus':

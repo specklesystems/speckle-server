@@ -62,6 +62,9 @@ enum WorkspacePlans {
   business
   unlimited
   academia
+  starterFree
+  plusFree
+  businessFree
 }
 
 enum WorkspacePlanStatuses {
