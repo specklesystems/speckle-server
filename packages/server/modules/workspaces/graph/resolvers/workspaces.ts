@@ -484,9 +484,9 @@ export = FF_WORKSPACES_MODULE_ENABLED
 
             case WorkspacePlans.Academia:
             case WorkspacePlans.Unlimited:
-            case WorkspacePlans.StarterFree:
-            case WorkspacePlans.PlusFree:
-            case WorkspacePlans.BusinessFree:
+            case WorkspacePlans.StarterInvoiced:
+            case WorkspacePlans.PlusInvoiced:
+            case WorkspacePlans.BusinessInvoiced:
               switch (status) {
                 case WorkspacePlanStatuses.Valid:
                   await upsertUnpaidWorkspacePlanFactory({ db })({
@@ -568,9 +568,9 @@ export = FF_WORKSPACES_MODULE_ENABLED
                 }
               case 'unlimited':
               case 'academia':
-              case 'starterFree':
-              case 'plusFree':
-              case 'businessFree':
+              case 'starterInvoiced':
+              case 'plusInvoiced':
+              case 'businessInvoiced':
                 break
               default:
                 throwUncoveredError(workspacePlan)

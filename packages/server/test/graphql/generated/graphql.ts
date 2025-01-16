@@ -4485,11 +4485,11 @@ export enum WorkspacePlanStatuses {
 export enum WorkspacePlans {
   Academia = 'academia',
   Business = 'business',
-  BusinessFree = 'businessFree',
+  BusinessInvoiced = 'businessInvoiced',
   Plus = 'plus',
-  PlusFree = 'plusFree',
+  PlusInvoiced = 'plusInvoiced',
   Starter = 'starter',
-  StarterFree = 'starterFree',
+  StarterInvoiced = 'starterInvoiced',
   Unlimited = 'unlimited'
 }
 

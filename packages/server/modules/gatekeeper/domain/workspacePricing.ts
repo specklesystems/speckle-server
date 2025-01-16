@@ -91,9 +91,9 @@ export type PaidWorkspacePlans = z.infer<typeof paidWorkspacePlans>
 export const unpaidWorkspacePlans = z.union([
   z.literal('unlimited'),
   z.literal('academia'),
-  z.literal('starterFree'),
-  z.literal('plusFree'),
-  z.literal('businessFree')
+  z.literal('starterInvoiced'),
+  z.literal('plusInvoiced'),
+  z.literal('businessInvoiced')
 ])
 
 export type UnpaidWorkspacePlans = z.infer<typeof unpaidWorkspacePlans>
@@ -179,9 +179,9 @@ export const unpaidWorkspacePlanFeatures: Record<
 > = {
   academia,
   unlimited,
-  starterFree: starter,
-  plusFree: plus,
-  businessFree: business
+  starterInvoiced: starter,
+  plusInvoiced: plus,
+  businessInvoiced: business
 }
 
 export const workspacePlanFeatures: Record<
