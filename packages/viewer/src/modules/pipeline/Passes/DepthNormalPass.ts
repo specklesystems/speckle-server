@@ -10,7 +10,8 @@ import {
   Scene,
   Texture,
   WebGLMultipleRenderTargets,
-  WebGLRenderer
+  WebGLRenderer,
+  WebGLRenderTarget
 } from 'three'
 import { BaseGPass } from './GPass.js'
 import { Pipeline } from '../Pipelines/Pipeline.js'
@@ -46,6 +47,10 @@ export class DepthNormalPass extends BaseGPass {
 
   get normalTexture(): Texture {
     return this.mrt.texture[1]
+  }
+
+  get outputTarget(): WebGLRenderTarget | null {
+    return this.mrt as unknown as WebGLRenderTarget
   }
 
   public set options(value: DepthNormalPassOptions) {
