@@ -64,6 +64,7 @@ generates:
         WorkspaceBillingMutations: '@/modules/gatekeeper/helpers/graphTypes#WorkspaceBillingMutationsGraphQLReturn'
         PendingWorkspaceCollaborator: '@/modules/workspacesCore/helpers/graphTypes#PendingWorkspaceCollaboratorGraphQLReturn'
         WorkspaceCollaborator: '@/modules/workspacesCore/helpers/graphTypes#WorkspaceCollaboratorGraphQLReturn'
+        WorkspaceJoinRequest: '@/modules/workspacesCore/helpers/graphTypes#WorkspaceJoinRequestGraphQLReturn'
         Webhook: '@/modules/webhooks/helpers/graphTypes#WebhookGraphQLReturn'
         SmartTextEditorValue: '@/modules/core/services/richTextEditorService#SmartTextEditorValueGraphQLReturn'
         BlobMetadata: '@/modules/blobstorage/domain/types#BlobStorageItem'

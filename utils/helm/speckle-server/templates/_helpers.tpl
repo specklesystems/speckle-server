@@ -718,6 +718,11 @@ Generate the environment variables for Speckle server and Speckle objects deploy
   value: {{ .Values.server.migration.movedTo }}
   {{- end }}
 
+{{- if .Values.server.asyncRequestContextEnabled }}
+- name: ASYNC_REQUEST_CONTEXT_ENABLED
+  value: {{ .Values.server.asyncRequestContextEnabled | quote }}
+{{- end}}
+
 # *** No more closures flag - prevents writing to the closure table ***
 - name: FF_NO_CLOSURE_WRITES
   value: {{ .Values.featureFlags.noClosureWrites | quote }}
@@ -771,6 +776,11 @@ Generate the environment variables for Speckle server and Speckle objects deploy
   value: {{ .Values.db.connectionCreateTimeoutMillis | quote }}
 - name: POSTGRES_CONNECTION_ACQUIRE_TIMEOUT_MILLIS
   value: {{ .Values.db.connectionAcquireTimeoutMillis | quote }}
+
+{{- if .Values.db.knexAsyncStackTracesEnabled }}
+- name: KNEX_ASYNC_STACK_TRACES_ENABLED
+  value: {{ .Values.db.knexAsyncStackTracesEnabled | quote }}
+{{- end}}
 
 - name: PGSSLMODE
   value: "{{ .Values.db.PGSSLMODE }}"

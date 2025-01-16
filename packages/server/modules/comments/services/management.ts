@@ -14,7 +14,6 @@ import {
   CommentLinkResourceType,
   CommentRecord
 } from '@/modules/comments/helpers/types'
-import { CommentsEvents, CommentsEventsEmit } from '@/modules/comments/events/emitter'
 import {
   formatSerializedViewerState,
   inputToDataStruct
@@ -41,6 +40,8 @@ import {
   AddCommentCreatedActivity,
   AddReplyAddedActivity
 } from '@/modules/activitystream/domain/operations'
+import { EventBusEmit } from '@/modules/shared/services/eventBus'
+import { CommentEvents } from '@/modules/comments/domain/events'
 
 type AuthorizeProjectCommentsAccessDeps = {
   getStream: GetStream
@@ -116,7 +117,7 @@ export const createCommentThreadAndNotifyFactory =
     insertComments: InsertComments
     insertCommentLinks: InsertCommentLinks
     markCommentViewed: MarkCommentViewed
-    commentsEventsEmit: CommentsEventsEmit
+    emitEvent: EventBusEmit
     addCommentCreatedActivity: AddCommentCreatedActivity
   }): CreateCommentThreadAndNotify =>
   async (input: CreateCommentInput, userId: string) => {
@@ -176,8 +177,11 @@ export const createCommentThreadAndNotifyFactory =
     // Mark as viewed and emit events
     await Promise.all([
       deps.markCommentViewed(comment.id, userId),
-      deps.commentsEventsEmit(CommentsEvents.Created, {
-        comment
+      deps.emitEvent({
+        eventName: CommentEvents.Created,
+        payload: {
+          comment
+        }
       }),
       deps.addCommentCreatedActivity({
         streamId: input.projectId,
@@ -200,7 +204,7 @@ export const createCommentReplyAndNotifyFactory =
     insertComments: InsertComments
     insertCommentLinks: InsertCommentLinks
     markCommentUpdated: MarkCommentUpdated
-    commentsEventsEmit: CommentsEventsEmit
+    emitEvent: EventBusEmit
     addReplyAddedActivity: AddReplyAddedActivity
   }): CreateCommentReplyAndNotify =>
   async (input: CreateCommentReplyInput, userId: string) => {
@@ -237,8 +241,11 @@ export const createCommentReplyAndNotifyFactory =
     // Mark parent comment updated and emit events
     await Promise.all([
       deps.markCommentUpdated(thread.id),
-      deps.commentsEventsEmit(CommentsEvents.Created, {
-        comment: reply
+      deps.emitEvent({
+        eventName: CommentEvents.Created,
+        payload: {
+          comment: reply
+        }
       }),
       deps.addReplyAddedActivity({
         streamId: thread.streamId,
@@ -256,7 +263,7 @@ export const editCommentAndNotifyFactory =
     getComment: GetComment
     validateInputAttachments: ValidateInputAttachments
     updateComment: UpdateComment
-    commentsEventsEmit: CommentsEventsEmit
+    emitEvent: EventBusEmit
   }): EditCommentAndNotify =>
   async (input: EditCommentInput, userId: string) => {
     const comment = await deps.getComment({ id: input.commentId, userId })
@@ -275,9 +282,12 @@ export const editCommentAndNotifyFactory =
       })
     })
 
-    await deps.commentsEventsEmit(CommentsEvents.Updated, {
-      previousComment: comment,
-      newComment: updatedComment!
+    await deps.emitEvent({
+      eventName: CommentEvents.Updated,
+      payload: {
+        previousComment: comment,
+        newComment: updatedComment!
+      }
     })
 
     return updatedComment
