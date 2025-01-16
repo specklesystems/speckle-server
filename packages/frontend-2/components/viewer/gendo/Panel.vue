@@ -19,6 +19,25 @@
       <div class="px-3 flex flex-col gap-y-3">
         <CommonAlert v-if="!limits" color="danger" size="xs">
           <template #title>No credits available</template>
+          <template #description>
+            <div class="leading-snug">
+              AI Renders are only available on
+              <NuxtLink
+                class="border-b border-outline-3 hover:border-outline-5 pb-px leading-none"
+                external
+                to="https://app.speckle.systems"
+                target="_blank"
+              >
+                app.speckle.systems
+              </NuxtLink>
+            </div>
+          </template>
+        </CommonAlert>
+        <CommonAlert v-else-if="!activeUser" color="danger" size="xs">
+          <template #title>Sign in required</template>
+          <template #description>
+            <div class="leading-snug">Please sign in to generate AI renders</div>
+          </template>
         </CommonAlert>
         <CommonAlert v-else-if="isOutOfCredits" color="neutral" size="xs">
           <template #title>Credits reset on {{ formattedResetDate }}</template>
@@ -50,9 +69,15 @@
               </div>
             </FormButton>
 
-            <View
+            <div
               :key="`gendo-credits-${isOutOfCredits}`"
-              v-tippy="isOutOfCredits ? 'No credits remaining' : undefined"
+              v-tippy="
+                !limits
+                  ? 'No credits available'
+                  : isOutOfCredits
+                  ? 'No credits remaining'
+                  : undefined
+              "
             >
               <FormButton
                 :disabled="!prompt || isLoading || timeOutWait || isOutOfCredits"
@@ -60,10 +85,12 @@
               >
                 Generate
               </FormButton>
-            </View>
+            </div>
           </div>
         </div>
-        <ViewerGendoList @reuse-prompt="prompt = $event" />
+        <ViewerGendoList v-if="isGendoEnabled" @reuse-prompt="prompt = $event" />
+        <!-- Empty div to maintain flex gapping -->
+        <div v-else />
       </div>
       <div
         class="flex w-full items-center justify-between gap-2 border-t border-outline-2 py-1 px-1"
@@ -123,6 +150,9 @@ defineEmits<{
   (e: 'close'): void
 }>()
 
+const { activeUser } = useActiveUser()
+const config = useRuntimeConfig()
+
 const prompt = ref<string>()
 const isLoading = ref(false)
 const timeOutWait = ref(false)
@@ -136,7 +166,13 @@ const suggestedPrompts = ref<string[]>([
   'Example: High-end retail space with dramatic lighting...'
 ])
 
-const { result, refetch } = useQuery(activeUserGendoLimits)
+const isGendoEnabled = computed(
+  () => !!activeUser.value && !!config.public.gendoEnabled
+)
+
+const { result, refetch } = useQuery(activeUserGendoLimits, undefined, {
+  enabled: isGendoEnabled
+})
 
 const limits = computed(() => {
   return result?.value?.activeUser?.gendoAICredits
