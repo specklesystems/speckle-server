@@ -1,5 +1,4 @@
 import { db } from '@/db/knex'
-import { UsersEmitter } from '@/modules/core/events/usersEmitter'
 import { AllScopes, ServerRoles } from '@/modules/core/helpers/mainConstants'
 import { UserRecord } from '@/modules/core/helpers/types'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
@@ -32,6 +31,7 @@ import {
   updateAllInviteTargetsFactory
 } from '@/modules/serverinvites/repositories/serverInvites'
 import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
+import { getEventBus } from '@/modules/shared/services/eventBus'
 import { faker } from '@faker-js/faker'
 import { ServerScope, wait } from '@speckle/shared'
 import { isArray, isNumber, kebabCase, omit, times } from 'lodash'
@@ -62,7 +62,7 @@ const createUser = createUserFactory({
     }),
     requestNewEmailVerification
   }),
-  usersEventsEmitter: UsersEmitter.emit
+  emitEvent: getEventBus().emit
 })
 const createPersonalAccessToken = createPersonalAccessTokenFactory({
   storeApiToken: storeApiTokenFactory({ db }),

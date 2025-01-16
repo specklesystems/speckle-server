@@ -157,6 +157,10 @@ export type AdminUsersListItem = {
   registeredUser?: Maybe<User>;
 };
 
+export type AdminWorkspaceJoinRequestFilter = {
+  status?: InputMaybe<WorkspaceJoinRequestStatus>;
+};
+
 export type ApiToken = {
   __typename?: 'ApiToken';
   createdAt: Scalars['DateTime']['output'];
@@ -208,6 +212,11 @@ export type AppUpdateInput = {
   redirectUrl: Scalars['String']['input'];
   scopes: Array<InputMaybe<Scalars['String']['input']>>;
   termsAndConditionsLink?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type ApproveWorkspaceJoinRequestInput = {
+  userId: Scalars['String']['input'];
+  workspaceId: Scalars['String']['input'];
 };
 
 export type ArchiveCommentInput = {
@@ -1460,6 +1469,7 @@ export type Mutation = {
   webhookDelete: Scalars['String']['output'];
   /** Updates an existing webhook */
   webhookUpdate: Scalars['String']['output'];
+  workspaceJoinRequestMutations: WorkspaceJoinRequestMutations;
   workspaceMutations: WorkspaceMutations;
 };
 
@@ -4149,6 +4159,8 @@ export type WebhookUpdateInput = {
 
 export type Workspace = {
   __typename?: 'Workspace';
+  /** Get all join requests for all the workspaces the user is an admin of */
+  adminWorkspacesJoinRequests: WorkspaceJoinRequestCollection;
   automateFunctions: AutomateFunctionCollection;
   createdAt: Scalars['DateTime']['output'];
   /** Info about the workspace creation state */
@@ -4189,6 +4201,13 @@ export type Workspace = {
   subscription?: Maybe<WorkspaceSubscription>;
   team: WorkspaceCollaboratorCollection;
   updatedAt: Scalars['DateTime']['output'];
+};
+
+
+export type WorkspaceAdminWorkspacesJoinRequestsArgs = {
+  cursor?: InputMaybe<Scalars['String']['input']>;
+  filter?: InputMaybe<AdminWorkspaceJoinRequestFilter>;
+  limit?: Scalars['Int']['input'];
 };
 
 
@@ -4288,6 +4307,10 @@ export type WorkspaceCreationStateInput = {
   workspaceId: Scalars['ID']['input'];
 };
 
+export type WorkspaceDismissInput = {
+  workspaceId: Scalars['ID']['input'];
+};
+
 export type WorkspaceDomain = {
   __typename?: 'WorkspaceDomain';
   domain: Scalars['String']['output'];
@@ -4373,6 +4396,37 @@ export type WorkspaceInviteUseInput = {
   token: Scalars['String']['input'];
 };
 
+export type WorkspaceJoinRequest = {
+  __typename?: 'WorkspaceJoinRequest';
+  createdAt: Scalars['DateTime']['output'];
+  status: WorkspaceJoinRequestStatus;
+  user: LimitedUser;
+  workspace: Workspace;
+};
+
+export type WorkspaceJoinRequestCollection = {
+  __typename?: 'WorkspaceJoinRequestCollection';
+  cursor?: Maybe<Scalars['String']['output']>;
+  items: Array<WorkspaceJoinRequest>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type WorkspaceJoinRequestMutations = {
+  __typename?: 'WorkspaceJoinRequestMutations';
+  approve: Scalars['Boolean']['output'];
+};
+
+
+export type WorkspaceJoinRequestMutationsApproveArgs = {
+  input: ApproveWorkspaceJoinRequestInput;
+};
+
+export enum WorkspaceJoinRequestStatus {
+  Approved = 'approved',
+  Denied = 'denied',
+  Pending = 'pending'
+}
+
 export type WorkspaceMutations = {
   __typename?: 'WorkspaceMutations';
   addDomain: Workspace;
@@ -4381,10 +4435,13 @@ export type WorkspaceMutations = {
   delete: Scalars['Boolean']['output'];
   deleteDomain: Workspace;
   deleteSsoProvider: Scalars['Boolean']['output'];
+  /** Dismiss a workspace from the discoverable list, behind the scene a join request is created with the status "dismissed" */
+  dismiss: Scalars['Boolean']['output'];
   invites: WorkspaceInviteMutations;
   join: Workspace;
   leave: Scalars['Boolean']['output'];
   projects: WorkspaceProjectMutations;
+  requestToJoin: Scalars['Boolean']['output'];
   /** Set the default region where project data will be stored. Only available to admins. */
   setDefaultRegion: Workspace;
   update: Workspace;
@@ -4418,6 +4475,11 @@ export type WorkspaceMutationsDeleteSsoProviderArgs = {
 };
 
 
+export type WorkspaceMutationsDismissArgs = {
+  input: WorkspaceDismissInput;
+};
+
+
 export type WorkspaceMutationsJoinArgs = {
   input: JoinWorkspaceInput;
 };
@@ -4425,6 +4487,11 @@ export type WorkspaceMutationsJoinArgs = {
 
 export type WorkspaceMutationsLeaveArgs = {
   id: Scalars['ID']['input'];
+};
+
+
+export type WorkspaceMutationsRequestToJoinArgs = {
+  input: WorkspaceRequestToJoinInput;
 };
 
 
@@ -4448,10 +4515,17 @@ export type WorkspaceMutationsUpdateRoleArgs = {
   input: WorkspaceRoleUpdateInput;
 };
 
+export enum WorkspacePaymentMethod {
+  Billing = 'billing',
+  Invoice = 'invoice',
+  Unpaid = 'unpaid'
+}
+
 export type WorkspacePlan = {
   __typename?: 'WorkspacePlan';
   createdAt: Scalars['DateTime']['output'];
   name: WorkspacePlans;
+  paymentMethod: WorkspacePaymentMethod;
   status: WorkspacePlanStatuses;
 };
 
@@ -4467,8 +4541,11 @@ export enum WorkspacePlanStatuses {
 export enum WorkspacePlans {
   Academia = 'academia',
   Business = 'business',
+  BusinessInvoiced = 'businessInvoiced',
   Plus = 'plus',
+  PlusInvoiced = 'plusInvoiced',
   Starter = 'starter',
+  StarterInvoiced = 'starterInvoiced',
   Unlimited = 'unlimited'
 }
 
@@ -4547,6 +4624,10 @@ export enum WorkspaceProjectsUpdatedMessageType {
   Added = 'ADDED',
   Removed = 'REMOVED'
 }
+
+export type WorkspaceRequestToJoinInput = {
+  workspaceId: Scalars['ID']['input'];
+};
 
 export enum WorkspaceRole {
   Admin = 'ADMIN',

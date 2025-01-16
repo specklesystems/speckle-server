@@ -21,6 +21,7 @@ import { SectionTool } from '@speckle/viewer'
 import { SectionOutlines } from '@speckle/viewer'
 import { ViewModesKeys } from './Extensions/ViewModesKeys'
 import { BoxSelection } from './Extensions/BoxSelection'
+import { PassReader } from './Extensions/PassReader'
 
 const createViewer = async (containerName: string, _stream: string) => {
   const container = document.querySelector<HTMLElement>(containerName)
@@ -56,6 +57,7 @@ const createViewer = async (containerName: string, _stream: string) => {
   viewer.createExtension(ViewModesKeys)
   const boxSelect = viewer.createExtension(BoxSelection)
   boxSelect.realtimeSelection = false
+  viewer.createExtension(PassReader)
   // const rotateCamera = viewer.createExtension(RotateCamera)
   cameraController // use it
   selection // use it
@@ -111,7 +113,7 @@ const getStream = () => {
     // prettier-ignore
     // 'https://app.speckle.systems/streams/da9e320dad/commits/5388ef24b8?c=%5B-7.66134,10.82932,6.41935,-0.07739,-13.88552,1.8697,0,1%5D'
     // Revit sample house (good for bim-like stuff with many display meshes)
-    // 'https://app.speckle.systems/streams/da9e320dad/commits/5388ef24b8'
+    'https://app.speckle.systems/streams/da9e320dad/commits/5388ef24b8'
     // 'https://latest.speckle.systems/streams/c1faab5c62/commits/ab1a1ab2b6'
     // 'https://app.speckle.systems/streams/da9e320dad/commits/5388ef24b8'
     // 'https://latest.speckle.systems/streams/58b5648c4d/commits/60371ecb2d'
@@ -459,12 +461,14 @@ const getStream = () => {
     // 'https://speckle.xyz/streams/27e89d0ad6/commits/5ed4b74252'
 
     //Gingerbread
-    'https://latest.speckle.systems/projects/387050bffe/models/48f7eb26fb'
+    // 'https://latest.speckle.systems/projects/387050bffe/models/48f7eb26fb'
     // DUI3 Mesh Colors
     // 'https://app.speckle.systems/projects/93200a735d/models/cbacd3eaeb@344a397239'
 
     // Instance toilets
     // 'https://app.speckle.systems/projects/e89b61b65c/models/2a0995f124'
+
+    // 'https://latest.speckle.systems/projects/3fe1880c36/models/65bb4287a8'
   )
 }
 

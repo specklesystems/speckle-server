@@ -1,79 +1,124 @@
 <template>
-  <ViewerLayoutPanel move-actions-to-bottom @close="$emit('close')">
+  <ViewerLayoutPanel @close="$emit('close')">
     <template #title>
-      <span class="text-foreground">AI Render by</span>
-      <CommonTextLink
-        text
-        link
-        class="ml-1"
-        to="https://gendo.ai?utm=speckle"
-        target="_blank"
-      >
-        Gendo
-      </CommonTextLink>
-
-      <span class="text-foreground-2">&nbsp;(Beta)</span>
+      <div class="flex gap-1 items-center">
+        <span class="text-foreground border-b border-transparent">AI Render by</span>
+        <NuxtLink
+          class="flex gap-1 items-center border-b border-outline-3 hover:border-outline-5 pb-px leading-none mt-0.5"
+          to="https://gendo.ai?utm=speckle"
+          target="_blank"
+        >
+          Gendo
+        </NuxtLink>
+        <CommonBadge color-classes="bg-highlight-3 text-foreground-2 scale-90">
+          BETA
+        </CommonBadge>
+      </div>
     </template>
-    <div class="p-2">
-      <div class="space-y-2 flex flex-col mt-2">
-        <FormTextArea
-          v-model="prompt"
-          name="prompt"
-          label=""
-          size="lg"
-          placeholder="Your prompt"
-        />
-        <div class="flex justify-end space-x-2 items-center">
-          <div v-if="limits" class="text-xs text-foreground-2">
-            You have used {{ limits.used }} out of {{ limits.limit }} monthly free
-            renders.
-          </div>
-          <FormButton
-            v-if="(limits?.used || 1) < (limits?.limit || 0)"
-            :disabled="
-              !prompt ||
-              isLoading ||
-              timeOutWait ||
-              (limits?.used || 0) >= (limits?.limit || 0)
+    <div class="pt-3">
+      <div class="px-3 flex flex-col gap-y-3">
+        <CommonAlert v-if="!limits" color="danger" size="xs">
+          <template #title>No credits available</template>
+          <template #description>
+            <div class="leading-snug">
+              AI Renders are only available on
+              <NuxtLink
+                class="border-b border-outline-3 hover:border-outline-5 pb-px leading-none"
+                external
+                to="https://app.speckle.systems"
+                target="_blank"
+              >
+                app.speckle.systems
+              </NuxtLink>
+            </div>
+          </template>
+        </CommonAlert>
+        <CommonAlert v-else-if="!activeUser" color="danger" size="xs">
+          <template #title>Sign in required</template>
+          <template #description>
+            <div class="leading-snug">Please sign in to generate AI renders</div>
+          </template>
+        </CommonAlert>
+        <CommonAlert v-else-if="isOutOfCredits" color="neutral" size="xs">
+          <template #title>Credits reset on {{ formattedResetDate }}</template>
+        </CommonAlert>
+        <div class="flex flex-col gap-y-3">
+          <FormTextArea
+            v-model="prompt"
+            name="prompt"
+            size="lg"
+            :placeholder="randomPlaceholder"
+            color="foundation"
+            :disabled="isLoading || timeOutWait || isOutOfCredits"
+            textarea-classes="sm:!min-h-24"
+            @keypress.enter.prevent="
+              !isLoading && !timeOutWait && !isOutOfCredits && prompt && enqueMagic()
             "
-            @click="enqueMagic()"
-          >
-            Render
-          </FormButton>
-          <FormButton v-else to="https://gendo.ai?utm=speckle" target="_blank">
-            Visit Gendo
-          </FormButton>
+          />
+          <div class="flex justify-between gap-2 items-center text-foreground-2">
+            <FormButton
+              color="outline"
+              size="sm"
+              external
+              to="https://speckle.community/t/say-hello-to-ai-renders-in-speckle/15913"
+              target="_blank"
+            >
+              <div class="flex items-center gap-1 text-foreground-2 font-normal">
+                <span>Learn to prompt</span>
+                <ArrowTopRightOnSquareIcon class="h-3 w-3" />
+              </div>
+            </FormButton>
+
+            <div
+              :key="`gendo-credits-${isOutOfCredits}`"
+              v-tippy="
+                !limits
+                  ? 'No credits available'
+                  : isOutOfCredits
+                  ? 'No credits remaining'
+                  : undefined
+              "
+            >
+              <FormButton
+                :disabled="!prompt || isLoading || timeOutWait || isOutOfCredits"
+                @click="enqueMagic()"
+              >
+                Generate
+              </FormButton>
+            </div>
+          </div>
         </div>
+        <ViewerGendoList @reuse-prompt="prompt = $event" />
+        <!-- Empty div to maintain flex gapping -->
       </div>
-      <ViewerGendoList />
+      <div
+        class="flex w-full items-center justify-between gap-2 border-t border-outline-2 py-1 px-1"
+      >
+        <FormButton color="subtle" size="sm" @click="isFeedbackOpen = true">
+          <div class="flex items-center gap-1 text-foreground-2 font-normal">
+            <span>Give us feedback</span>
+          </div>
+        </FormButton>
+        <FormButton
+          color="subtle"
+          size="sm"
+          external
+          to="https://www.gendo.ai/terms-of-service"
+          target="_blank"
+        >
+          <div class="flex items-center gap-1 text-foreground-2 font-normal">
+            <span>Terms</span>
+          </div>
+        </FormButton>
+      </div>
     </div>
-    <template #actions>
-      <div class="flex grow items-center justify-between">
-        <span class="text-foreground-2 text-sm">
-          <CommonTextLink
-            text
-            link
-            class="mr-2"
-            to="https://www.gendo.ai/terms-of-service"
-            target="_blank"
-          >
-            Terms and conditions
-          </CommonTextLink>
-        </span>
-        <div>
-          <span class="text-foreground-2 text-sm">More about</span>
-          <CommonTextLink
-            text
-            link
-            class="ml-1"
-            to="https://gendo.ai?utm=speckle"
-            target="_blank"
-          >
-            Gendo
-          </CommonTextLink>
-        </div>
+    <template v-if="limits" #actions>
+      <div class="text-body-2xs p-1">
+        {{ limits.used }}/{{ limits.limit }} free renders used
+        <span class="hidden-under-250">this month</span>
       </div>
     </template>
+    <FeedbackDialog v-model:open="isFeedbackOpen" type="gendo" />
   </ViewerLayoutPanel>
 </template>
 <script setup lang="ts">
@@ -87,6 +132,9 @@ import {
 } from '~~/lib/gendo/graphql/queriesAndMutations'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { useMixpanel } from '~/lib/core/composables/mp'
+import { CommonAlert, CommonBadge } from '@speckle/ui-components'
+import { ArrowTopRightOnSquareIcon } from '@heroicons/vue/24/outline'
+import dayjs from 'dayjs'
 
 const {
   projectId,
@@ -101,21 +149,56 @@ defineEmits<{
   (e: 'close'): void
 }>()
 
+const { activeUser } = useActiveUser()
+
 const prompt = ref<string>()
 const isLoading = ref(false)
 const timeOutWait = ref(false)
+const isFeedbackOpen = ref(false)
 
-const { result, refetch } = useQuery(activeUserGendoLimits)
+const suggestedPrompts = ref<string[]>([
+  'Example: Minimalist Scandinavian interior with warm natural lighting...',
+  'Example: Luxury penthouse with floor-to-ceiling windows and city views...',
+  'Example: Cozy industrial loft with exposed brick and steel elements...',
+  'Example: Modern office space with biophilic design elements...',
+  'Example: High-end retail space with dramatic lighting...'
+])
+
+const isGendoEnabled = useIsGendoModuleEnabled()
+
+const isGendoPanelEnabled = computed(() => !!activeUser.value && !!isGendoEnabled.value)
+
+const { result, refetch } = useQuery(activeUserGendoLimits, undefined, {
+  enabled: isGendoPanelEnabled.value
+})
 
 const limits = computed(() => {
   return result?.value?.activeUser?.gendoAICredits
 })
 
+const randomPlaceholder = computed(() => {
+  const randomIndex = Math.floor(Math.random() * suggestedPrompts.value.length)
+  return suggestedPrompts.value[randomIndex]
+})
+
+const isOutOfCredits = computed(() => {
+  return (limits.value?.used || 0) >= (limits.value?.limit || 0)
+})
+
+const formattedResetDate = computed(() => {
+  if (!limits.value?.resetDate) return ''
+  return dayjs(limits.value.resetDate).format('Do MMMM YYYY')
+})
+
 const enqueMagic = async () => {
   isLoading.value = true
+  const pass = [
+    ...viewerInstance.getRenderer().pipeline.getPass('DEPTH'),
+    ...viewerInstance.getRenderer().pipeline.getPass('DEPTH-NORMAL')
+  ]
   const [depthData, width, height] = await viewerInstance
     .getExtension(PassReader)
-    .read('DEPTH')
+    .read(pass)
   const screenshot = PassReader.toBase64(
     PassReader.decodeDepth(depthData),
     width,

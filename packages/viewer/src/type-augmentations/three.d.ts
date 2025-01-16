@@ -7,5 +7,10 @@ declare module 'three' {
   interface BufferGeometry {
     boundsTree: MeshBVH
   }
+
+  interface WebGLMultipleRenderTargets {
+    width: number
+    height: number
+  }
 }
 export {}

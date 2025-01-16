@@ -25,13 +25,13 @@ import {
   getStreamFactory,
   markBranchStreamUpdatedFactory
 } from '@/modules/core/repositories/streams'
-import { ModelsEmitter } from '@/modules/core/events/modelsEmitter'
 import { legacyGetUserFactory } from '@/modules/core/repositories/users'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { getPaginatedStreamBranchesFactory } from '@/modules/core/services/branch/retrieval'
 import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import { filteredSubscribe, publish } from '@/modules/shared/utils/subscriptions'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
+import { getEventBus } from '@/modules/shared/services/eventBus'
 
 export = {
   Query: {},
@@ -135,7 +135,7 @@ export = {
       const deleteBranchAndNotify = deleteBranchAndNotifyFactory({
         getStream,
         getBranchById: getBranchByIdFactory({ db: projectDB }),
-        modelsEventsEmitter: ModelsEmitter.emit,
+        emitEvent: getEventBus().emit,
         markBranchStreamUpdated,
         addBranchDeletedActivity: addBranchDeletedActivityFactory({
           saveActivity: saveActivityFactory({ db }),
