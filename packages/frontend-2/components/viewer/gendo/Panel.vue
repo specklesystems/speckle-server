@@ -88,9 +88,8 @@
             </div>
           </div>
         </div>
-        <ViewerGendoList v-if="isGendoEnabled" @reuse-prompt="prompt = $event" />
+        <ViewerGendoList @reuse-prompt="prompt = $event" />
         <!-- Empty div to maintain flex gapping -->
-        <div v-else />
       </div>
       <div
         class="flex w-full items-center justify-between gap-2 border-t border-outline-2 py-1 px-1"
