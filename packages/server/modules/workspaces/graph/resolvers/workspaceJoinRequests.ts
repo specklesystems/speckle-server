@@ -1,10 +1,22 @@
 import { db } from '@/db/knex'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
+import { getServerInfoFactory } from '@/modules/core/repositories/server'
+import { findEmailsByUserIdFactory } from '@/modules/core/repositories/userEmails'
+import { getUserFactory } from '@/modules/core/repositories/users'
+import { renderEmail } from '@/modules/emails/services/emailRendering'
+import { sendEmail } from '@/modules/emails/services/sending'
+import { commandFactory } from '@/modules/shared/command'
 import { getPaginatedItemsFactory } from '@/modules/shared/services/paginatedItems'
+import { ApproveWorkspaceJoinRequest } from '@/modules/workspaces/domain/operations'
 import {
   countAdminWorkspaceJoinRequestsFactory,
-  getAdminWorkspaceJoinRequestsFactory
+  getAdminWorkspaceJoinRequestsFactory,
+  getWorkspaceJoinRequestFactory,
+  updateWorkspaceJoinRequestStatusFactory
 } from '@/modules/workspaces/repositories/workspaceJoinRequests'
+import { getWorkspaceFactory } from '@/modules/workspaces/repositories/workspaces'
+import { sendWorkspaceJoinRequestApprovedEmailFactory } from '@/modules/workspaces/services/workspaceJoinRequestEmails/approved'
+import { approveWorkspaceJoinRequestFactory } from '@/modules/workspaces/services/workspaceJoinRequests'
 import { WorkspaceJoinRequestStatus } from '@/modules/workspacesCore/domain/types'
 import { WorkspaceJoinRequestGraphQLReturn } from '@/modules/workspacesCore/helpers/graphTypes'
 
@@ -44,6 +56,42 @@ export default {
     },
     workspace: async (parent, _args, ctx) => {
       return await ctx.loaders.workspaces!.getWorkspace.load(parent.workspaceId)
+    }
+  },
+  Mutation: {
+    workspaceJoinRequestMutations: () => ({})
+  },
+  WorkspaceJoinRequestMutations: {
+    approve: async (_parent, args) => {
+      const approveWorkspaceJoinRequest = commandFactory<ApproveWorkspaceJoinRequest>({
+        db,
+        operationFactory: ({ db }) => {
+          const updateWorkspaceJoinRequestStatus =
+            updateWorkspaceJoinRequestStatusFactory({
+              db
+            })
+          const sendWorkspaceJoinRequestApprovedEmail =
+            sendWorkspaceJoinRequestApprovedEmailFactory({
+              renderEmail,
+              sendEmail,
+              getServerInfo: getServerInfoFactory({ db }),
+              getUserEmails: findEmailsByUserIdFactory({ db })
+            })
+          return approveWorkspaceJoinRequestFactory({
+            updateWorkspaceJoinRequestStatus,
+            sendWorkspaceJoinRequestApprovedEmail,
+            getUserById: getUserFactory({ db }),
+            getWorkspace: getWorkspaceFactory({ db }),
+            getWorkspaceJoinRequest: getWorkspaceJoinRequestFactory({
+              db
+            })
+          })
+        }
+      })
+      return await approveWorkspaceJoinRequest({
+        userId: args.input.userId,
+        workspaceId: args.input.workspaceId
+      })
     }
   }
 } as Resolvers
