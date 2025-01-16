@@ -88,9 +88,8 @@
             </div>
           </div>
         </div>
-        <ViewerGendoList v-if="isGendoEnabled" @reuse-prompt="prompt = $event" />
+        <ViewerGendoList @reuse-prompt="prompt = $event" />
         <!-- Empty div to maintain flex gapping -->
-        <div v-else />
       </div>
       <div
         class="flex w-full items-center justify-between gap-2 border-t border-outline-2 py-1 px-1"
@@ -151,7 +150,6 @@ defineEmits<{
 }>()
 
 const { activeUser } = useActiveUser()
-const config = useRuntimeConfig()
 
 const prompt = ref<string>()
 const isLoading = ref(false)
@@ -166,12 +164,12 @@ const suggestedPrompts = ref<string[]>([
   'Example: High-end retail space with dramatic lighting...'
 ])
 
-const isGendoEnabled = computed(
-  () => !!activeUser.value && !!config.public.gendoEnabled
-)
+const isGendoEnabled = useIsGendoModuleEnabled()
+
+const isGendoPanelEnabled = computed(() => !!activeUser.value && !!isGendoEnabled.value)
 
 const { result, refetch } = useQuery(activeUserGendoLimits, undefined, {
-  enabled: isGendoEnabled
+  enabled: isGendoPanelEnabled.value
 })
 
 const limits = computed(() => {
