@@ -17,7 +17,7 @@ const buildMjmlBody = ({
 Hi ${requester.name}!
 <br/>
 <br/>
-Your request to join the workspace <span style="font-weight: bold;">${workspace.name}</span> was denied by the workspace admin..
+Your request to join the workspace <span style="font-weight: bold;">${workspace.name}</span> was denied by the workspace admin.
 <br/>
 <br/>
 
