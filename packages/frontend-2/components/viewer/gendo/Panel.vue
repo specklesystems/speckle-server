@@ -170,7 +170,7 @@ const isGendoEnabled = useIsGendoModuleEnabled()
 const isGendoPanelEnabled = computed(() => !!activeUser.value && !!isGendoEnabled.value)
 
 const { result, refetch } = useQuery(activeUserGendoLimits, undefined, {
-  enabled: isGendoPanelEnabled
+  enabled: isGendoPanelEnabled.value
 })
 
 const limits = computed(() => {
