@@ -8,8 +8,17 @@ input ApproveWorkspaceJoinRequestInput {
   userId: String!
 }
 
+input DenyWorkspaceJoinRequestInput {
+  workspaceId: String!
+  userId: String!
+}
+
 type WorkspaceJoinRequestMutations {
   approve(input: ApproveWorkspaceJoinRequestInput!): Boolean!
+    @hasServerRole(role: SERVER_USER)
+    @hasScope(scope: "workspace:update")
+    @hasWorkspaceRole(role: ADMIN)
+  deny(input: DenyWorkspaceJoinRequestInput!): Boolean!
     @hasServerRole(role: SERVER_USER)
     @hasScope(scope: "workspace:update")
     @hasWorkspaceRole(role: ADMIN)

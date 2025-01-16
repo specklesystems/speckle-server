@@ -3,9 +3,11 @@ import { GetUser } from '@/modules/core/domain/users/operations'
 import { NotFoundError } from '@/modules/shared/errors'
 import {
   CreateWorkspaceJoinRequest,
+  DenyWorkspaceJoinRequest,
   GetWorkspace,
   GetWorkspaceJoinRequest,
   SendWorkspaceJoinRequestApprovedEmail,
+  SendWorkspaceJoinRequestDeniedEmail,
   SendWorkspaceJoinRequestReceivedEmail,
   UpdateWorkspaceJoinRequestStatus
 } from '@/modules/workspaces/domain/operations'
@@ -111,6 +113,54 @@ export const approveWorkspaceJoinRequestFactory =
     })
 
     await sendWorkspaceJoinRequestApprovedEmail({
+      workspace,
+      requester
+    })
+
+    return true
+  }
+
+export const denyWorkspaceJoinRequestFactory =
+  ({
+    updateWorkspaceJoinRequestStatus,
+    sendWorkspaceJoinRequestDeniedEmail,
+    getUserById,
+    getWorkspace,
+    getWorkspaceJoinRequest
+  }: {
+    updateWorkspaceJoinRequestStatus: UpdateWorkspaceJoinRequestStatus
+    sendWorkspaceJoinRequestDeniedEmail: SendWorkspaceJoinRequestDeniedEmail
+    getUserById: GetUser
+    getWorkspace: GetWorkspace
+    getWorkspaceJoinRequest: GetWorkspaceJoinRequest
+  }): DenyWorkspaceJoinRequest =>
+  async ({ userId, workspaceId }) => {
+    const requester = await getUserById(userId)
+    if (!requester) {
+      throw new NotFoundError('User not found')
+    }
+
+    const workspace = await getWorkspace({ workspaceId })
+    if (!workspace) {
+      throw new WorkspaceNotFoundError('Workspace not found')
+    }
+
+    const request = await getWorkspaceJoinRequest({
+      userId,
+      workspaceId,
+      status: 'pending'
+    })
+    if (!request) {
+      throw new NotFoundError('Workspace join request not found')
+    }
+
+    await updateWorkspaceJoinRequestStatus({
+      userId,
+      workspaceId,
+      status: 'denied'
+    })
+
+    await sendWorkspaceJoinRequestDeniedEmail({
       workspace,
       requester
     })
