@@ -216,6 +216,14 @@ const initKnexPrometheusMetricsForRegionEvents = async (params: {
 
     const trace = (new Error().stack || '').split('\n').slice(1).join('\n').trim()
     const reqCtx = getRequestContext()
+
+    // Update reqCtx with DB query metrics
+    if (reqCtx) {
+      reqCtx.dbMetrics.totalCount++
+      reqCtx.dbMetrics.totalDuration += durationMs || 0
+      reqCtx.dbMetrics.queries.push(data.sql)
+    }
+
     params.logger.info(
       {
         region,
@@ -246,6 +254,17 @@ const initKnexPrometheusMetricsForRegionEvents = async (params: {
         })
         .observe(durationSec)
     metricQueryErrors.inc()
+
+    const trace = (new Error().stack || '').split('\n').slice(1).join('\n').trim()
+    const reqCtx = getRequestContext()
+
+    // Update reqCtx with DB query metrics
+    if (reqCtx) {
+      reqCtx.dbMetrics.totalCount++
+      reqCtx.dbMetrics.totalDuration += durationMs || 0
+      reqCtx.dbMetrics.queries.push(data.sql)
+    }
+
     params.logger.warn(
       {
         err: typeof err === 'object' ? omit(err, 'detail') : err,
@@ -254,7 +273,9 @@ const initKnexPrometheusMetricsForRegionEvents = async (params: {
         sqlMethod: normalizeSqlMethod(data.method),
         sqlQueryId: queryId,
         sqlQueryDurationMs: toNDecimalPlaces(durationMs, 0),
-        sqlNumberBindings: data.bindings?.length || -1
+        sqlNumberBindings: data.bindings?.length || -1,
+        trace,
+        ...(reqCtx ? { req: { id: reqCtx.requestId } } : {})
       },
       'DB query errored for {sqlMethod} after {sqlQueryDurationMs}ms'
     )

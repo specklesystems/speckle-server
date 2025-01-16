@@ -20,6 +20,9 @@
         <CommonAlert v-if="!limits" color="danger" size="xs">
           <template #title>No credits available</template>
         </CommonAlert>
+        <CommonAlert v-else-if="isOutOfCredits" color="neutral" size="xs">
+          <template #title>Credits reset on {{ formattedResetDate }}</template>
+        </CommonAlert>
         <div class="flex flex-col gap-y-3">
           <FormTextArea
             v-model="prompt"
@@ -38,7 +41,7 @@
               color="outline"
               size="sm"
               external
-              to="https://www.gendo.ai/terms-of-service?utm=speckle"
+              to="https://speckle.community/t/say-hello-to-ai-renders-in-speckle/15913"
               target="_blank"
             >
               <div class="flex items-center gap-1 text-foreground-2 font-normal">
@@ -105,6 +108,7 @@ import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { useMixpanel } from '~/lib/core/composables/mp'
 import { CommonAlert, CommonBadge } from '@speckle/ui-components'
 import { ArrowTopRightOnSquareIcon } from '@heroicons/vue/24/outline'
+import dayjs from 'dayjs'
 
 const {
   projectId,
@@ -145,6 +149,11 @@ const randomPlaceholder = computed(() => {
 
 const isOutOfCredits = computed(() => {
   return (limits.value?.used || 0) >= (limits.value?.limit || 0)
+})
+
+const formattedResetDate = computed(() => {
+  if (!limits.value?.resetDate) return ''
+  return dayjs(limits.value.resetDate).format('Do MMMM YYYY')
 })
 
 const enqueMagic = async () => {
