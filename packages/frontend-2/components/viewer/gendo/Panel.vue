@@ -158,9 +158,13 @@ const formattedResetDate = computed(() => {
 
 const enqueMagic = async () => {
   isLoading.value = true
+  const pass = [
+    ...viewerInstance.getRenderer().pipeline.getPass('DEPTH'),
+    ...viewerInstance.getRenderer().pipeline.getPass('DEPTH-NORMAL')
+  ]
   const [depthData, width, height] = await viewerInstance
     .getExtension(PassReader)
-    .read('DEPTH')
+    .read(pass)
   const screenshot = PassReader.toBase64(
     PassReader.decodeDepth(depthData),
     width,
