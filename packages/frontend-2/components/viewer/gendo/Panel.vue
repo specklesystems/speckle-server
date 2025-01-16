@@ -49,7 +49,7 @@
             size="lg"
             :placeholder="randomPlaceholder"
             color="foundation"
-            :disabled="isLoading || timeOutWait || isOutOfCredits"
+            :disabled="isLoading || timeOutWait || isOutOfCredits || !canContribute"
             textarea-classes="sm:!min-h-24"
             @keypress.enter.prevent="
               !isLoading && !timeOutWait && !isOutOfCredits && prompt && enqueMagic()
@@ -69,18 +69,15 @@
               </div>
             </FormButton>
 
-            <div
-              :key="`gendo-credits-${isOutOfCredits}`"
-              v-tippy="
-                !limits
-                  ? 'No credits available'
-                  : isOutOfCredits
-                  ? 'No credits remaining'
-                  : undefined
-              "
-            >
+            <div :key="`gendo-credits-${isOutOfCredits}`" v-tippy="tooltipMessage">
               <FormButton
-                :disabled="!prompt || isLoading || timeOutWait || isOutOfCredits"
+                :disabled="
+                  !prompt ||
+                  isLoading ||
+                  timeOutWait ||
+                  isOutOfCredits ||
+                  !canContribute
+                "
                 @click="enqueMagic()"
               >
                 Generate
@@ -135,11 +132,12 @@ import { useMixpanel } from '~/lib/core/composables/mp'
 import { CommonAlert, CommonBadge } from '@speckle/ui-components'
 import { ArrowTopRightOnSquareIcon } from '@heroicons/vue/24/outline'
 import dayjs from 'dayjs'
+import { canModifyModels } from '~/lib/projects/helpers/permissions'
 
 const {
   projectId,
   resources: {
-    response: { resourceItems }
+    response: { resourceItems, project }
   },
   ui: { camera },
   viewer: { instance: viewerInstance }
@@ -165,6 +163,10 @@ const suggestedPrompts = ref<string[]>([
 ])
 
 const isGendoEnabled = useIsGendoModuleEnabled()
+
+const canContribute = computed(() =>
+  project.value ? canModifyModels(project.value) : false
+)
 
 const isGendoPanelEnabled = computed(() => !!activeUser.value && !!isGendoEnabled.value)
 
@@ -264,4 +266,11 @@ const lodgeRequest = async (screenshot: string) => {
   isLoading.value = false
   refetch()
 }
+
+const tooltipMessage = computed(() => {
+  if (!canContribute.value) return 'Project permissions required'
+  if (!limits.value) return 'No credits available'
+  if (isOutOfCredits.value) return 'No credits remaining'
+  return undefined
+})
 </script>
