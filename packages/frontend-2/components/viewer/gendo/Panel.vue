@@ -19,6 +19,28 @@
       <div class="px-3 flex flex-col gap-y-3">
         <CommonAlert v-if="!limits" color="danger" size="xs">
           <template #title>No credits available</template>
+          <template #description>
+            <div class="leading-snug">
+              AI Renders are only available on
+              <NuxtLink
+                class="border-b border-outline-3 hover:border-outline-5 pb-px leading-none"
+                external
+                to="https://app.speckle.systems"
+                target="_blank"
+              >
+                app.speckle.systems
+              </NuxtLink>
+            </div>
+          </template>
+        </CommonAlert>
+        <CommonAlert v-else-if="!activeUser" color="danger" size="xs">
+          <template #title>Sign in required</template>
+          <template #description>
+            <div class="leading-snug">Please sign in to generate AI renders</div>
+          </template>
+        </CommonAlert>
+        <CommonAlert v-else-if="isOutOfCredits" color="neutral" size="xs">
+          <template #title>Credits reset on {{ formattedResetDate }}</template>
         </CommonAlert>
         <div class="flex flex-col gap-y-3">
           <FormTextArea
@@ -38,7 +60,7 @@
               color="outline"
               size="sm"
               external
-              to="https://www.gendo.ai/terms-of-service?utm=speckle"
+              to="https://speckle.community/t/say-hello-to-ai-renders-in-speckle/15913"
               target="_blank"
             >
               <div class="flex items-center gap-1 text-foreground-2 font-normal">
@@ -47,9 +69,15 @@
               </div>
             </FormButton>
 
-            <View
+            <div
               :key="`gendo-credits-${isOutOfCredits}`"
-              v-tippy="isOutOfCredits ? 'No credits remaining' : undefined"
+              v-tippy="
+                !limits
+                  ? 'No credits available'
+                  : isOutOfCredits
+                  ? 'No credits remaining'
+                  : undefined
+              "
             >
               <FormButton
                 :disabled="!prompt || isLoading || timeOutWait || isOutOfCredits"
@@ -57,10 +85,11 @@
               >
                 Generate
               </FormButton>
-            </View>
+            </div>
           </div>
         </div>
         <ViewerGendoList @reuse-prompt="prompt = $event" />
+        <!-- Empty div to maintain flex gapping -->
       </div>
       <div
         class="flex w-full items-center justify-between gap-2 border-t border-outline-2 py-1 px-1"
@@ -105,6 +134,7 @@ import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { useMixpanel } from '~/lib/core/composables/mp'
 import { CommonAlert, CommonBadge } from '@speckle/ui-components'
 import { ArrowTopRightOnSquareIcon } from '@heroicons/vue/24/outline'
+import dayjs from 'dayjs'
 
 const {
   projectId,
@@ -119,6 +149,8 @@ defineEmits<{
   (e: 'close'): void
 }>()
 
+const { activeUser } = useActiveUser()
+
 const prompt = ref<string>()
 const isLoading = ref(false)
 const timeOutWait = ref(false)
@@ -132,7 +164,13 @@ const suggestedPrompts = ref<string[]>([
   'Example: High-end retail space with dramatic lighting...'
 ])
 
-const { result, refetch } = useQuery(activeUserGendoLimits)
+const isGendoEnabled = useIsGendoModuleEnabled()
+
+const isGendoPanelEnabled = computed(() => !!activeUser.value && !!isGendoEnabled.value)
+
+const { result, refetch } = useQuery(activeUserGendoLimits, undefined, {
+  enabled: isGendoPanelEnabled.value
+})
 
 const limits = computed(() => {
   return result?.value?.activeUser?.gendoAICredits
@@ -147,11 +185,20 @@ const isOutOfCredits = computed(() => {
   return (limits.value?.used || 0) >= (limits.value?.limit || 0)
 })
 
+const formattedResetDate = computed(() => {
+  if (!limits.value?.resetDate) return ''
+  return dayjs(limits.value.resetDate).format('Do MMMM YYYY')
+})
+
 const enqueMagic = async () => {
   isLoading.value = true
+  const pass = [
+    ...viewerInstance.getRenderer().pipeline.getPass('DEPTH'),
+    ...viewerInstance.getRenderer().pipeline.getPass('DEPTH-NORMAL')
+  ]
   const [depthData, width, height] = await viewerInstance
     .getExtension(PassReader)
-    .read('DEPTH')
+    .read(pass)
   const screenshot = PassReader.toBase64(
     PassReader.decodeDepth(depthData),
     width,
