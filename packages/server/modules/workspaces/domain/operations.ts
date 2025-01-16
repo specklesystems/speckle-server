@@ -335,3 +335,7 @@ export type GetWorkspaceJoinRequest = (
   params: Pick<WorkspaceJoinRequest, 'userId' | 'workspaceId'> &
     Partial<Pick<WorkspaceJoinRequest, 'status'>>
 ) => Promise<WorkspaceJoinRequest | undefined>
+
+export type ApproveWorkspaceJoinRequest = (
+  params: Pick<WorkspaceJoinRequest, 'workspaceId' | 'userId'>
+) => Promise<boolean>

@@ -5,8 +5,9 @@ import { findEmailsByUserIdFactory } from '@/modules/core/repositories/userEmail
 import { getUserFactory } from '@/modules/core/repositories/users'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
-import { withTransaction } from '@/modules/shared/helpers/dbHelper'
+import { commandFactory } from '@/modules/shared/command'
 import { getPaginatedItemsFactory } from '@/modules/shared/services/paginatedItems'
+import { ApproveWorkspaceJoinRequest } from '@/modules/workspaces/domain/operations'
 import {
   countAdminWorkspaceJoinRequestsFactory,
   getAdminWorkspaceJoinRequestsFactory,
@@ -62,31 +63,35 @@ export default {
   },
   WorkspaceJoinRequestMutations: {
     approve: async (_parent, args) => {
-      const transaction = await db.transaction()
-      const updateWorkspaceJoinRequestStatus = updateWorkspaceJoinRequestStatusFactory({
-        db: transaction
+      const approveWorkspaceJoinRequest = commandFactory<ApproveWorkspaceJoinRequest>({
+        db,
+        operationFactory: ({ db }) => {
+          const updateWorkspaceJoinRequestStatus =
+            updateWorkspaceJoinRequestStatusFactory({
+              db
+            })
+          const sendWorkspaceJoinRequestApprovedEmail =
+            sendWorkspaceJoinRequestApprovedEmailFactory({
+              renderEmail,
+              sendEmail,
+              getServerInfo: getServerInfoFactory({ db }),
+              getUserEmails: findEmailsByUserIdFactory({ db })
+            })
+          return approveWorkspaceJoinRequestFactory({
+            updateWorkspaceJoinRequestStatus,
+            sendWorkspaceJoinRequestApprovedEmail,
+            getUserById: getUserFactory({ db }),
+            getWorkspace: getWorkspaceFactory({ db }),
+            getWorkspaceJoinRequest: getWorkspaceJoinRequestFactory({
+              db
+            })
+          })
+        }
       })
-      const sendWorkspaceJoinRequestApprovedEmail =
-        sendWorkspaceJoinRequestApprovedEmailFactory({
-          renderEmail,
-          sendEmail,
-          getServerInfo: getServerInfoFactory({ db: transaction }),
-          getUserEmails: findEmailsByUserIdFactory({ db: transaction })
-        })
-
-      return await withTransaction(
-        approveWorkspaceJoinRequestFactory({
-          updateWorkspaceJoinRequestStatus,
-          sendWorkspaceJoinRequestApprovedEmail,
-          getUserById: getUserFactory({ db: transaction }),
-          getWorkspace: getWorkspaceFactory({ db: transaction }),
-          getWorkspaceJoinRequest: getWorkspaceJoinRequestFactory({ db: transaction })
-        })({
-          userId: args.input.userId,
-          workspaceId: args.input.workspaceId
-        }),
-        transaction
-      )
+      return await approveWorkspaceJoinRequest({
+        userId: args.input.userId,
+        workspaceId: args.input.workspaceId
+      })
     }
   }
 } as Resolvers
