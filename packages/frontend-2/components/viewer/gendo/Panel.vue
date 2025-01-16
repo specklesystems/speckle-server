@@ -268,9 +268,10 @@ const lodgeRequest = async (screenshot: string) => {
 }
 
 const tooltipMessage = computed(() => {
+  if (!activeUser.value) return 'You must be logged in'
   if (!canContribute.value) return 'Project permissions required'
-  if (!limits.value) return 'No credits available'
   if (isOutOfCredits.value) return 'No credits remaining'
+  if (!limits.value) return 'No credits available'
   return undefined
 })
 </script>
