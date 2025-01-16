@@ -88,7 +88,7 @@
             </div>
           </div>
         </div>
-        <LazyViewerGendoList @reuse-prompt="prompt = $event" />
+        <ViewerGendoList @reuse-prompt="prompt = $event" />
         <!-- Empty div to maintain flex gapping -->
       </div>
       <div
@@ -135,7 +135,6 @@ import { useMixpanel } from '~/lib/core/composables/mp'
 import { CommonAlert, CommonBadge } from '@speckle/ui-components'
 import { ArrowTopRightOnSquareIcon } from '@heroicons/vue/24/outline'
 import dayjs from 'dayjs'
-import { LazyViewerGendoList } from '#build/components'
 
 const {
   projectId,
