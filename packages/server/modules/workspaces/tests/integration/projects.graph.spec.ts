@@ -3,6 +3,7 @@ import { AllScopes } from '@/modules/core/helpers/mainConstants'
 import { createRandomEmail } from '@/modules/core/helpers/testHelpers'
 import { StreamRecord } from '@/modules/core/helpers/types'
 import { grantStreamPermissionsFactory } from '@/modules/core/repositories/streams'
+import { getDb } from '@/modules/multiregion/utils/dbSelector'
 import {
   BasicTestWorkspace,
   createTestWorkspace
@@ -28,7 +29,6 @@ import {
 } from '@/test/graphqlHelper'
 import { beforeEachContext } from '@/test/hooks'
 import {
-  getMainTestRegionClient,
   isMultiRegionTestMode,
   waitForRegionUser
 } from '@/test/speckle-helpers/regions'
@@ -285,7 +285,8 @@ describe('Workspace project GQL CRUD', () => {
 
 isMultiRegionTestMode()
   ? describe('Workspace project region changes', () => {
-      const testRegionKey = 'region1'
+      const regionKey1 = 'region1'
+      const regionKey2 = 'region2'
 
       const adminUser: BasicTestUser = {
         id: '',
@@ -314,7 +315,7 @@ isMultiRegionTestMode()
         await createTestUser(adminUser)
         await waitForRegionUser(adminUser)
         await createTestWorkspace(testWorkspace, adminUser, {
-          regionKey: testRegionKey,
+          regionKey: regionKey1,
           addPlan: {
             name: 'unlimited',
             status: 'valid'
@@ -324,7 +325,7 @@ isMultiRegionTestMode()
         testProject.workspaceId = testWorkspace.id
 
         apollo = await testApolloServer({ authUserId: adminUser.id })
-        regionDb = getMainTestRegionClient()
+        regionDb = await getDb({ regionKey: regionKey2 })
       })
 
       beforeEach(async () => {
@@ -334,7 +335,7 @@ isMultiRegionTestMode()
       it('moves project record to target regional db', async () => {
         const res = await apollo.execute(UpdateProjectRegionDocument, {
           projectId: testProject.id,
-          regionKey: testRegionKey
+          regionKey: regionKey2
         })
 
         expect(res).to.not.haveGraphQLErrors()
