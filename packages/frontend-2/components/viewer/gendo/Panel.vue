@@ -88,9 +88,8 @@
             </div>
           </div>
         </div>
-        <ViewerGendoList v-if="isGendoPanelEnabled" @reuse-prompt="prompt = $event" />
+        <LazyViewerGendoList @reuse-prompt="prompt = $event" />
         <!-- Empty div to maintain flex gapping -->
-        <div v-else />
       </div>
       <div
         class="flex w-full items-center justify-between gap-2 border-t border-outline-2 py-1 px-1"
@@ -136,6 +135,7 @@ import { useMixpanel } from '~/lib/core/composables/mp'
 import { CommonAlert, CommonBadge } from '@speckle/ui-components'
 import { ArrowTopRightOnSquareIcon } from '@heroicons/vue/24/outline'
 import dayjs from 'dayjs'
+import { LazyViewerGendoList } from '#build/components'
 
 const {
   projectId,
