@@ -300,7 +300,7 @@ export function buildApolloSubscriptionServer(
             graphql_variables: redactSensitiveVariables(baseParams.variables),
             graphql_operation_type: 'subscription'
           },
-          'Subscription started for {graphqlOperationName}'
+          'Subscription started for {graphql_operation_name}'
         )
 
         baseParams.formatResponse = (val: SubscriptionResponse) => {
