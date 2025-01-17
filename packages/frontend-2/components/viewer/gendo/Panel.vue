@@ -49,11 +49,9 @@
             size="lg"
             :placeholder="randomPlaceholder"
             color="foundation"
-            :disabled="isLoading || timeOutWait || isOutOfCredits || !canContribute"
+            :disabled="textAreaDisabled"
             textarea-classes="sm:!min-h-24"
-            @keypress.enter.prevent="
-              !isLoading && !timeOutWait && !isOutOfCredits && prompt && enqueMagic()
-            "
+            @keypress.enter.prevent="!buttonDisabled && enqueMagic()"
           />
           <div class="flex justify-between gap-2 items-center text-foreground-2">
             <FormButton
@@ -69,17 +67,8 @@
               </div>
             </FormButton>
 
-            <div :key="`gendo-credits-${isOutOfCredits}`" v-tippy="tooltipMessage">
-              <FormButton
-                :disabled="
-                  !prompt ||
-                  isLoading ||
-                  timeOutWait ||
-                  isOutOfCredits ||
-                  !canContribute
-                "
-                @click="enqueMagic()"
-              >
+            <div :key="`gendo-tooltip-${buttonDisabled}`" v-tippy="tooltipMessage">
+              <FormButton :disabled="buttonDisabled" @click="enqueMagic()">
                 Generate
               </FormButton>
             </div>
@@ -176,6 +165,20 @@ const { result, refetch } = useQuery(activeUserGendoLimits, undefined, {
 
 const limits = computed(() => {
   return result?.value?.activeUser?.gendoAICredits
+})
+
+const textAreaDisabled = computed(() => {
+  return (
+    isLoading.value ||
+    timeOutWait.value ||
+    isOutOfCredits.value ||
+    !canContribute.value ||
+    !activeUser.value
+  )
+})
+
+const buttonDisabled = computed(() => {
+  return !prompt.value || textAreaDisabled.value
 })
 
 const randomPlaceholder = computed(() => {
