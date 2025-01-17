@@ -28,16 +28,15 @@ import { Knex } from 'knex'
 import {
   onServerAccessRequestCreatedFactory,
   onServerAccessRequestFinalizedFactory,
-  onServerInviteCreatedFactory,
-  onUserCreatedFactory
+  onServerInviteCreatedFactory
 } from '@/modules/activitystream/services/eventListener'
 import { isProjectResourceTarget } from '@/modules/serverinvites/helpers/core'
 import { publish } from '@/modules/shared/utils/subscriptions'
 import { isStreamAccessRequest } from '@/modules/accessrequests/repositories'
 import { ServerInvitesEvents } from '@/modules/serverinvites/domain/events'
 import { ProjectEvents } from '@/modules/core/domain/projects/events'
-import { UserEvents } from '@/modules/core/domain/users/events'
 import { AccessRequestEvents } from '@/modules/accessrequests/domain/events'
+import { reportUserActivityFactory } from '@/modules/activitystream/services/userActivity'
 
 let scheduledTask: ReturnType<ScheduleExecution> | null = null
 let quitEventListeners: Optional<() => void> = undefined
@@ -53,12 +52,13 @@ const initializeEventListeners = ({
   eventBus: EventBus
   db: Knex
 }) => {
+  const saveActivity = saveActivityFactory({ db })
+  const reportUserActivity = reportUserActivityFactory({
+    eventListen: eventBus.listen,
+    saveActivity
+  })
   const quitCbs = [
-    eventBus.listen(
-      UserEvents.Created,
-      // this activity will always go in the main DB
-      onUserCreatedFactory({ saveActivity: saveActivityFactory({ db }) })
-    ),
+    reportUserActivity(),
     eventBus.listen(AccessRequestEvents.Created, async (payload) => {
       if (!isStreamAccessRequest(payload.payload.request)) return
       return await onServerAccessRequestCreatedFactory({
