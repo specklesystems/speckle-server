@@ -205,13 +205,13 @@ import { InvalidWorkspacePlanStatus } from '@/modules/gatekeeper/errors/billing'
 import { BadRequestError } from '@/modules/shared/errors'
 import {
   dismissWorkspaceJoinRequestFactory,
-  requestToJoinWorkspaceFactory,
-  sendWorkspaceJoinRequestReceivedEmailFactory
+  requestToJoinWorkspaceFactory
 } from '@/modules/workspaces/services/workspaceJoinRequests'
 import {
   createWorkspaceJoinRequestFactory,
   updateWorkspaceJoinRequestStatusFactory
 } from '@/modules/workspaces/repositories/workspaceJoinRequests'
+import { sendWorkspaceJoinRequestReceivedEmailFactory } from '@/modules/workspaces/services/workspaceJoinRequestEmails/received'
 
 const eventBus = getEventBus()
 const getServerInfo = getServerInfoFactory({ db })
@@ -484,6 +484,9 @@ export = FF_WORKSPACES_MODULE_ENABLED
 
             case WorkspacePlans.Academia:
             case WorkspacePlans.Unlimited:
+            case WorkspacePlans.StarterInvoiced:
+            case WorkspacePlans.PlusInvoiced:
+            case WorkspacePlans.BusinessInvoiced:
               switch (status) {
                 case WorkspacePlanStatuses.Valid:
                   await upsertUnpaidWorkspacePlanFactory({ db })({
@@ -565,6 +568,9 @@ export = FF_WORKSPACES_MODULE_ENABLED
                 }
               case 'unlimited':
               case 'academia':
+              case 'starterInvoiced':
+              case 'plusInvoiced':
+              case 'businessInvoiced':
                 break
               default:
                 throwUncoveredError(workspacePlan)

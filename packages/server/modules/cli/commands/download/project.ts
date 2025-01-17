@@ -27,7 +27,6 @@ import {
   createCommentThreadAndNotifyFactory
 } from '@/modules/comments/services/management'
 import { createBranchAndNotifyFactory } from '@/modules/core/services/branch/management'
-import { CommentsEmitter } from '@/modules/comments/events/emitter'
 import {
   addCommentCreatedActivityFactory,
   addReplyAddedActivityFactory
@@ -170,7 +169,7 @@ const command: CommandModule<
       insertComments,
       insertCommentLinks,
       markCommentViewed,
-      commentsEventsEmit: CommentsEmitter.emit,
+      emitEvent: getEventBus().emit,
       addCommentCreatedActivity: addCommentCreatedActivityFactory({
         getViewerResourcesFromLegacyIdentifiers,
         getViewerResourceItemsUngrouped,
@@ -184,7 +183,7 @@ const command: CommandModule<
       insertComments,
       insertCommentLinks,
       markCommentUpdated: markCommentUpdatedFactory({ db: projectDb }),
-      commentsEventsEmit: CommentsEmitter.emit,
+      emitEvent: getEventBus().emit,
       addReplyAddedActivity: addReplyAddedActivityFactory({
         getViewerResourcesForComment: getViewerResourcesForCommentFactory({
           getCommentsResources: getCommentsResourcesFactory({ db: projectDb }),

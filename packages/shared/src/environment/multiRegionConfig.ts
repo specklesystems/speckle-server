@@ -2,6 +2,7 @@ import { z } from 'zod'
 import fs from 'node:fs/promises'
 import { Knex, knex } from 'knex'
 import { Logger } from 'pino'
+import { isUndefined } from '#lodash'
 
 const regionConfigSchema = z.object({
   postgres: z.object({
@@ -92,6 +93,12 @@ export type KnexConfigArgs = {
   applicationName: string
   connectionAcquireTimeoutMillis: number
   connectionCreateTimeoutMillis: number
+  /**
+   * If set to any value - true or false - will explicitly enable or disable async stack traces
+   * that show where queries are launched from. If not set, will default to true in dev
+   * and test environments
+   */
+  asyncStackTraces?: boolean
 }
 
 export const createKnexConfig = ({
@@ -103,11 +110,16 @@ export const createKnexConfig = ({
   maxConnections,
   caCertificate,
   connectionAcquireTimeoutMillis,
-  connectionCreateTimeoutMillis
+  connectionCreateTimeoutMillis,
+  asyncStackTraces
 }: {
   connectionString?: string | undefined
   caCertificate?: string | undefined
 } & KnexConfigArgs): Knex.Config => {
+  const shouldEnableAsyncStackTraces = isUndefined(asyncStackTraces)
+    ? isDevOrTestEnv
+    : asyncStackTraces
+
   return {
     client: 'pg',
     migrations: {
@@ -137,7 +149,7 @@ export const createKnexConfig = ({
     },
     // we wish to avoid leaking sql queries in the logs: https://knexjs.org/guide/#compilesqlonerror
     compileSqlOnError: isDevOrTestEnv,
-    asyncStackTraces: isDevOrTestEnv,
+    asyncStackTraces: shouldEnableAsyncStackTraces,
     pool: {
       min: 0,
       max: maxConnections,
