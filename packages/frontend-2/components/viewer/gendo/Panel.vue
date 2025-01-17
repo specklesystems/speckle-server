@@ -15,7 +15,7 @@
         </CommonBadge>
       </div>
     </template>
-    <div class="pt-3">
+    <div v-if="!loading" class="pt-3">
       <div class="px-3 flex flex-col gap-y-3">
         <CommonAlert v-if="!limits" color="danger" size="xs">
           <template #title>No credits available</template>
@@ -67,7 +67,18 @@
               </div>
             </FormButton>
 
-            <div :key="`gendo-tooltip-${buttonDisabled}`" v-tippy="tooltipMessage">
+            <div
+              v-if="!limits"
+              :key="`gendo-tooltip-${buttonDisabled}`"
+              v-tippy="`No credits available`"
+            >
+              <FormButton disabled>Generate</FormButton>
+            </div>
+            <div
+              v-else
+              :key="`gendo-tooltip-${buttonDisabled}`"
+              v-tippy="tooltipMessage"
+            >
               <FormButton :disabled="buttonDisabled" @click="enqueMagic()">
                 Generate
               </FormButton>
@@ -75,7 +86,6 @@
           </div>
         </div>
         <ViewerGendoList @reuse-prompt="prompt = $event" />
-        <!-- Empty div to maintain flex gapping -->
       </div>
       <div
         class="flex w-full items-center justify-between gap-2 border-t border-outline-2 py-1 px-1"
@@ -98,7 +108,10 @@
         </FormButton>
       </div>
     </div>
-    <template v-if="limits" #actions>
+    <div v-else class="flex w-full h-full items-center justify-center">
+      <CommonLoadingIcon />
+    </div>
+    <template v-if="!loading && limits" #actions>
       <div class="text-body-2xs p-1">
         {{ limits.used }}/{{ limits.limit }} free renders used
         <span class="hidden-under-250">this month</span>
@@ -159,7 +172,7 @@ const canContribute = computed(() =>
 
 const isGendoPanelEnabled = computed(() => !!activeUser.value && !!isGendoEnabled.value)
 
-const { result, refetch } = useQuery(activeUserGendoLimits, undefined, {
+const { result, refetch, loading } = useQuery(activeUserGendoLimits, undefined, {
   enabled: isGendoPanelEnabled.value
 })
 
@@ -274,7 +287,6 @@ const tooltipMessage = computed(() => {
   if (!activeUser.value) return 'You must be logged in'
   if (!canContribute.value) return 'Project permissions required'
   if (isOutOfCredits.value) return 'No credits remaining'
-  if (!limits.value) return 'No credits available'
   return undefined
 })
 </script>
