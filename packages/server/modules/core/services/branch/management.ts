@@ -37,6 +37,7 @@ import {
 } from '@/modules/activitystream/domain/operations'
 import { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { ModelEvents } from '@/modules/core/domain/branches/events'
+import { ForbiddenError } from '@/modules/shared/errors'
 
 const isBranchCreateInput = (
   i: BranchCreateInput | CreateModelInput
@@ -152,7 +153,7 @@ export const deleteBranchAndNotifyFactory =
       )
     }
     if (existingBranch.authorId !== userId && stream.role !== Roles.Stream.Owner) {
-      throw new BranchUpdateError(
+      throw new ForbiddenError(
         'Only the branch creator or stream owners are allowed to delete branches',
         {
           info: { ...input, userId }

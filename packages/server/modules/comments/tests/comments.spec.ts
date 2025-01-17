@@ -478,7 +478,9 @@ describe('Comments @comments', () => {
       .then(() => {
         throw new Error('This should have been rejected')
       })
-      .catch((error) => expect(error.message).to.be.equal('Object not found'))
+      .catch((error) =>
+        expect(error.message).to.be.equal('Object not found in the specified stream')
+      )
 
     // create a comment on streamA but commitB
     await createComment({
