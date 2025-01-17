@@ -3,7 +3,10 @@ import {
   AddOrUpdateStreamCollaborator,
   GetStream
 } from '@/modules/core/domain/streams/operations'
-import { StreamInvalidAccessError } from '@/modules/core/errors/stream'
+import {
+  StreamInvalidAccessError,
+  StreamNotFoundError
+} from '@/modules/core/errors/stream'
 import { isResourceAllowed } from '@/modules/core/helpers/token'
 import { ProjectInviteResourceType } from '@/modules/serverinvites/domain/constants'
 import { InviteFinalizingError } from '@/modules/serverinvites/errors'

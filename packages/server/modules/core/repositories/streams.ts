@@ -44,7 +44,8 @@ import { Knex } from 'knex'
 import { isProjectCreateInput } from '@/modules/core/helpers/stream'
 import {
   StreamAccessUpdateError,
-  StreamNotFoundError
+  StreamNotFoundError,
+  StreamUpdateError
 } from '@/modules/core/errors/stream'
 import { metaHelpers } from '@/modules/core/helpers/meta'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
@@ -974,7 +975,9 @@ export const updateProjectFactory =
     const updatedStream = await updateStreamFactory({ db })(projectUpdate)
 
     if (!updatedStream) {
-      throw new StreamUpdateError()
+      throw new StreamUpdateError(
+        'Stream was not updated, or an error occurred during update.'
+      )
     }
 
     return updatedStream

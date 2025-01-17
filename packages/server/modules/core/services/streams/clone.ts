@@ -43,6 +43,9 @@ import {
   InsertBranches
 } from '@/modules/core/domain/branches/operations'
 import { GetUser } from '@/modules/core/domain/users/operations'
+import { UserNotFoundError } from '@/modules/core/errors/user'
+import { BranchNotFoundError } from '@/modules/core/errors/branch'
+import { CommentNotFoundError } from '@/modules/comments/errors'
 
 type CloneStreamInitialState = {
   user: UserWithOptionalRole<UserRecord>

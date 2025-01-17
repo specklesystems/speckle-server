@@ -17,7 +17,11 @@ import {
   UpdateUserServerRole,
   ValidateUserPassword
 } from '@/modules/core/domain/users/operations'
-import { UserUpdateError, UserValidationError } from '@/modules/core/errors/user'
+import {
+  UserNotFoundError,
+  UserUpdateError,
+  UserValidationError
+} from '@/modules/core/errors/user'
 import { PasswordTooShortError, UserInputError } from '@/modules/core/errors/userinput'
 import { UserUpdateInput } from '@/modules/core/graph/generated/graphql'
 import type { UserRecord } from '@/modules/core/helpers/userHelper'
