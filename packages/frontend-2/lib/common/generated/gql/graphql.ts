@@ -159,6 +159,10 @@ export type AdminUsersListItem = {
   registeredUser?: Maybe<User>;
 };
 
+export type AdminWorkspaceJoinRequestFilter = {
+  status?: InputMaybe<WorkspaceJoinRequestStatus>;
+};
+
 export type ApiToken = {
   __typename?: 'ApiToken';
   createdAt: Scalars['DateTime']['output'];
@@ -210,6 +214,11 @@ export type AppUpdateInput = {
   redirectUrl: Scalars['String']['input'];
   scopes: Array<InputMaybe<Scalars['String']['input']>>;
   termsAndConditionsLink?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type ApproveWorkspaceJoinRequestInput = {
+  userId: Scalars['String']['input'];
+  workspaceId: Scalars['String']['input'];
 };
 
 export type ArchiveCommentInput = {
@@ -1457,6 +1466,7 @@ export type Mutation = {
   webhookDelete: Scalars['String']['output'];
   /** Updates an existing webhook */
   webhookUpdate: Scalars['String']['output'];
+  workspaceJoinRequestMutations: WorkspaceJoinRequestMutations;
   workspaceMutations: WorkspaceMutations;
 };
 
@@ -4146,6 +4156,8 @@ export type WebhookUpdateInput = {
 
 export type Workspace = {
   __typename?: 'Workspace';
+  /** Get all join requests for all the workspaces the user is an admin of */
+  adminWorkspacesJoinRequests: WorkspaceJoinRequestCollection;
   automateFunctions: AutomateFunctionCollection;
   createdAt: Scalars['DateTime']['output'];
   /** Info about the workspace creation state */
@@ -4186,6 +4198,13 @@ export type Workspace = {
   subscription?: Maybe<WorkspaceSubscription>;
   team: WorkspaceCollaboratorCollection;
   updatedAt: Scalars['DateTime']['output'];
+};
+
+
+export type WorkspaceAdminWorkspacesJoinRequestsArgs = {
+  cursor?: InputMaybe<Scalars['String']['input']>;
+  filter?: InputMaybe<AdminWorkspaceJoinRequestFilter>;
+  limit?: Scalars['Int']['input'];
 };
 
 
@@ -4374,6 +4393,37 @@ export type WorkspaceInviteUseInput = {
   token: Scalars['String']['input'];
 };
 
+export type WorkspaceJoinRequest = {
+  __typename?: 'WorkspaceJoinRequest';
+  createdAt: Scalars['DateTime']['output'];
+  status: WorkspaceJoinRequestStatus;
+  user: LimitedUser;
+  workspace: Workspace;
+};
+
+export type WorkspaceJoinRequestCollection = {
+  __typename?: 'WorkspaceJoinRequestCollection';
+  cursor?: Maybe<Scalars['String']['output']>;
+  items: Array<WorkspaceJoinRequest>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type WorkspaceJoinRequestMutations = {
+  __typename?: 'WorkspaceJoinRequestMutations';
+  approve: Scalars['Boolean']['output'];
+};
+
+
+export type WorkspaceJoinRequestMutationsApproveArgs = {
+  input: ApproveWorkspaceJoinRequestInput;
+};
+
+export enum WorkspaceJoinRequestStatus {
+  Approved = 'approved',
+  Denied = 'denied',
+  Pending = 'pending'
+}
+
 export type WorkspaceMutations = {
   __typename?: 'WorkspaceMutations';
   addDomain: Workspace;
@@ -4462,10 +4512,17 @@ export type WorkspaceMutationsUpdateRoleArgs = {
   input: WorkspaceRoleUpdateInput;
 };
 
+export enum WorkspacePaymentMethod {
+  Billing = 'billing',
+  Invoice = 'invoice',
+  Unpaid = 'unpaid'
+}
+
 export type WorkspacePlan = {
   __typename?: 'WorkspacePlan';
   createdAt: Scalars['DateTime']['output'];
   name: WorkspacePlans;
+  paymentMethod: WorkspacePaymentMethod;
   status: WorkspacePlanStatuses;
 };
 
@@ -6948,6 +7005,9 @@ export type AllObjectTypes = {
   WorkspaceCreationState: WorkspaceCreationState,
   WorkspaceDomain: WorkspaceDomain,
   WorkspaceInviteMutations: WorkspaceInviteMutations,
+  WorkspaceJoinRequest: WorkspaceJoinRequest,
+  WorkspaceJoinRequestCollection: WorkspaceJoinRequestCollection,
+  WorkspaceJoinRequestMutations: WorkspaceJoinRequestMutations,
   WorkspaceMutations: WorkspaceMutations,
   WorkspacePlan: WorkspacePlan,
   WorkspaceProjectMutations: WorkspaceProjectMutations,
@@ -7441,6 +7501,7 @@ export type MutationFieldArgs = {
   webhookCreate: MutationWebhookCreateArgs,
   webhookDelete: MutationWebhookDeleteArgs,
   webhookUpdate: MutationWebhookUpdateArgs,
+  workspaceJoinRequestMutations: {},
   workspaceMutations: {},
 }
 export type ObjectFieldArgs = {
@@ -8068,6 +8129,7 @@ export type WebhookEventCollectionFieldArgs = {
   totalCount: {},
 }
 export type WorkspaceFieldArgs = {
+  adminWorkspacesJoinRequests: WorkspaceAdminWorkspacesJoinRequestsArgs,
   automateFunctions: WorkspaceAutomateFunctionsArgs,
   createdAt: {},
   creationState: {},
@@ -8130,6 +8192,20 @@ export type WorkspaceInviteMutationsFieldArgs = {
   resend: WorkspaceInviteMutationsResendArgs,
   use: WorkspaceInviteMutationsUseArgs,
 }
+export type WorkspaceJoinRequestFieldArgs = {
+  createdAt: {},
+  status: {},
+  user: {},
+  workspace: {},
+}
+export type WorkspaceJoinRequestCollectionFieldArgs = {
+  cursor: {},
+  items: {},
+  totalCount: {},
+}
+export type WorkspaceJoinRequestMutationsFieldArgs = {
+  approve: WorkspaceJoinRequestMutationsApproveArgs,
+}
 export type WorkspaceMutationsFieldArgs = {
   addDomain: WorkspaceMutationsAddDomainArgs,
   billing: {},
@@ -8151,6 +8227,7 @@ export type WorkspaceMutationsFieldArgs = {
 export type WorkspacePlanFieldArgs = {
   createdAt: {},
   name: {},
+  paymentMethod: {},
   status: {},
 }
 export type WorkspaceProjectMutationsFieldArgs = {
@@ -8334,6 +8411,9 @@ export type AllObjectFieldArgTypes = {
   WorkspaceCreationState: WorkspaceCreationStateFieldArgs,
   WorkspaceDomain: WorkspaceDomainFieldArgs,
   WorkspaceInviteMutations: WorkspaceInviteMutationsFieldArgs,
+  WorkspaceJoinRequest: WorkspaceJoinRequestFieldArgs,
+  WorkspaceJoinRequestCollection: WorkspaceJoinRequestCollectionFieldArgs,
+  WorkspaceJoinRequestMutations: WorkspaceJoinRequestMutationsFieldArgs,
   WorkspaceMutations: WorkspaceMutationsFieldArgs,
   WorkspacePlan: WorkspacePlanFieldArgs,
   WorkspaceProjectMutations: WorkspaceProjectMutationsFieldArgs,

@@ -79,7 +79,7 @@
         </div>
         <FormButton
           class="!max-w-none !md:max-w-max w-full md:w-auto"
-          @click="goToBilling"
+          :to="settingsRoutes.workspace.billing.route(slug)"
         >
           Upgrade to Business
         </FormButton>
@@ -223,10 +223,6 @@ const saveDefaultRegion = async () => {
     })
     showDefaultRegionSaveDisclaimer.value = false
   }
-}
-
-const goToBilling = () => {
-  navigateTo(settingsRoutes.workspace.billing.route(slug.value))
 }
 
 watch(

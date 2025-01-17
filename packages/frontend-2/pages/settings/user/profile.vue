@@ -34,17 +34,11 @@
 import { useActiveUser } from '~/lib/auth/composables/activeUser'
 import { ClipboardIcon } from '@heroicons/vue/24/outline'
 
-definePageMeta({
-  middleware: ['auth', 'settings'],
-  layout: 'settings'
-})
-
 useHead({
   title: 'Settings - Profile'
 })
 
-const { distinctId } = useActiveUser()
-const { activeUser: user } = useActiveUser()
+const { distinctId, activeUser: user } = useActiveUser()
 const { copy } = useClipboard()
 
 const copyUserId = () => {

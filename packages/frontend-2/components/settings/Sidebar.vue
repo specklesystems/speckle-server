@@ -47,8 +47,8 @@
               <IconAccount class="size-4" />
             </template>
             <NuxtLink
-              v-for="(sidebarMenuItem, key) in userMenuItems"
-              :key="key"
+              v-for="sidebarMenuItem in userMenuItems"
+              :key="`user-item-${sidebarMenuItem.name}`"
               :to="sidebarMenuItem.getRoute()"
               @click="isOpenMobile = false"
             >
@@ -63,8 +63,8 @@
               <IconServer class="size-4" />
             </template>
             <NuxtLink
-              v-for="(sidebarMenuItem, key) in serverMenuItems"
-              :key="key"
+              v-for="sidebarMenuItem in serverMenuItems"
+              :key="`server-item-${sidebarMenuItem.name}`"
               :to="sidebarMenuItem.getRoute()"
               @click="isOpenMobile = false"
             >
@@ -76,8 +76,8 @@
           </LayoutSidebarMenuGroup>
           <LayoutSidebarMenuGroup v-if="isWorkspacesEnabled" title="Workspace settings">
             <LayoutSidebarMenuGroup
-              v-for="(workspaceItem, index) in workspaceItems"
-              :key="index"
+              v-for="workspaceItem in workspaceItems"
+              :key="`workspace-item-${workspaceItem.slug}`"
               :title="workspaceItem.name"
               collapsible
               :collapsed="slug !== workspaceItem.slug"
@@ -96,8 +96,8 @@
                 />
               </template>
               <NuxtLink
-                v-for="(workspaceMenuItem, itemKey) in workspaceMenuItems"
-                :key="`${index}-${itemKey}`"
+                v-for="workspaceMenuItem in workspaceMenuItems"
+                :key="`workspace-menu-item-${workspaceMenuItem.name}-${workspaceItem.slug}`"
                 :to="workspaceMenuItem.getRoute(workspaceItem.slug)"
                 @click="isOpenMobile = false"
               >
@@ -189,7 +189,7 @@ const { activeUser: user } = useActiveUser()
 const route = useRoute()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
 const { result: workspaceResult } = useQuery(settingsSidebarQuery, null, {
-  enabled: isWorkspacesEnabled.value
+  enabled: computed(() => isWorkspacesEnabled.value)
 })
 const { userMenuItems, serverMenuItems, workspaceMenuItems } = useSettingsMenu()
 const breakpoints = useBreakpoints(TailwindBreakpoints)
@@ -202,7 +202,7 @@ const workspaceItems = computed(
   () =>
     workspaceResult.value?.activeUser?.workspaces.items.filter(
       (item) => item.creationState?.completed !== false // Removed workspaces that are not completely created
-    ) ?? []
+    ) || []
 )
 const isAdmin = computed(() => user.value?.role === Roles.Server.Admin)
 const isGuest = computed(() => user.value?.role === Roles.Server.Guest)

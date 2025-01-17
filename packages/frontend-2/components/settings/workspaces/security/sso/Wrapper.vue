@@ -28,7 +28,9 @@
           </div>
         </div>
 
-        <FormButton v-else @click="goToBilling">Upgrade to Plus</FormButton>
+        <FormButton v-else :to="settingsRoutes.workspace.billing.route(workspace.slug)">
+          Upgrade to Plus
+        </FormButton>
       </div>
 
       <CommonCard
@@ -232,10 +234,6 @@ const handleCancel = () => {
 const redirectUrl = computed(() => {
   return `${apiOrigin}/api/v1/workspaces/${props.workspace.slug}/sso/oidc/callback`
 })
-
-const goToBilling = () => {
-  navigateTo(settingsRoutes.workspace.billing.route(props.workspace.slug))
-}
 
 const errorProviderInfo = ref<
   | {
