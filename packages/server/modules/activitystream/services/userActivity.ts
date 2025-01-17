@@ -12,9 +12,9 @@ const addUserCreatedActivityFactory =
 
     await saveActivity({
       streamId: null,
-      resourceType: 'user',
+      resourceType: ResourceTypes.User,
       resourceId: user.id,
-      actionType: 'user_create',
+      actionType: ActionTypes.User.Create,
       userId: user.id,
       info: { user },
       message: 'User created'
