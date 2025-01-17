@@ -16,7 +16,6 @@ import {
   addStreamPermissionsRevokedActivityFactory,
   addStreamUpdatedActivityFactory
 } from '@/modules/activitystream/services/streamActivity'
-import { ModelsEmitter } from '@/modules/core/events/modelsEmitter'
 import { AllScopes } from '@/modules/core/helpers/mainConstants'
 import {
   deleteBranchByIdFactory,
@@ -65,6 +64,7 @@ import {
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { deleteAllResourceInvitesFactory } from '@/modules/serverinvites/repositories/serverInvites'
 import { authorizeResolver } from '@/modules/shared'
+import { getEventBus } from '@/modules/shared/services/eventBus'
 import { publish } from '@/modules/shared/utils/subscriptions'
 import {
   BasicTestWorkspace,
@@ -177,7 +177,7 @@ const buildDeleteModel = async (params: { projectId: string }) => {
   const deleteBranchAndNotify = deleteBranchAndNotifyFactory({
     getStream,
     getBranchById: getBranchByIdFactory({ db: projectDB }),
-    modelsEventsEmitter: ModelsEmitter.emit,
+    emitEvent: getEventBus().emit,
     markBranchStreamUpdated,
     addBranchDeletedActivity: addBranchDeletedActivityFactory({
       saveActivity: saveActivityFactory({ db }),

@@ -63,7 +63,6 @@ const {
   deleteServerOnlyInvitesFactory,
   updateAllInviteTargetsFactory
 } = require('@/modules/serverinvites/repositories/serverInvites')
-const { UsersEmitter } = require('@/modules/core/events/usersEmitter')
 const { createPersonalAccessTokenFactory } = require('@/modules/core/services/tokens')
 const {
   storeApiTokenFactory,
@@ -72,6 +71,7 @@ const {
   storePersonalApiTokenFactory
 } = require('@/modules/core/repositories/tokens')
 const { getServerInfoFactory } = require('@/modules/core/repositories/server')
+const { getEventBus } = require('@/modules/shared/services/eventBus')
 
 const getUser = getUserFactory({ db })
 const getStream = getStreamFactory({ db })
@@ -131,7 +131,7 @@ const createUser = createUserFactory({
     }),
     requestNewEmailVerification
   }),
-  usersEventsEmitter: UsersEmitter.emit
+  emitEvent: getEventBus().emit
 })
 
 const createPersonalAccessToken = createPersonalAccessTokenFactory({
@@ -1444,8 +1444,15 @@ describe('GraphQL API Core @core-api', () => {
 
         expect(stream.name).to.equal('TS1 (u A) Private UPDATED')
         expect(stream.collaborators).to.have.lengthOf(2)
-        expect(stream.collaborators[0].role).to.equal(Roles.Stream.Contributor)
-        expect(stream.collaborators[1].role).to.equal(Roles.Stream.Owner)
+
+        const d2User = stream.collaborators.find((c) => c.name === 'd2')
+        const testUserUpdated = stream.collaborators.find(
+          (c) => c.name === 'test user updated'
+        )
+        expect(d2User).to.be.ok
+        expect(testUserUpdated).to.be.ok
+        expect(d2User.role).to.equal(Roles.Stream.Contributor)
+        expect(testUserUpdated.role).to.equal(Roles.Stream.Owner)
       })
 
       it('Should retrieve a public stream even if not authenticated', async () => {

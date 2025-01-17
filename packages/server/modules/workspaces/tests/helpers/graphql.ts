@@ -315,3 +315,49 @@ export const onWorkspaceUpdatedSubscription = gql`
 
   ${basicWorkspaceFragment}
 `
+
+export const dismissWorkspaceMutation = gql`
+  mutation dismissWorkspace($input: WorkspaceDismissInput!) {
+    workspaceMutations {
+      dismiss(input: $input)
+    }
+  }
+`
+
+export const requestToJoinWorkspaceMutation = gql`
+  mutation requestToJoinWorkspace($input: WorkspaceRequestToJoinInput!) {
+    workspaceMutations {
+      requestToJoin(input: $input)
+    }
+  }
+`
+
+export const getWorkspaceWithJoinRequestsQuery = gql`
+  query GetWorkspaceWithJoinRequests(
+    $workspaceId: String!
+    $filter: AdminWorkspaceJoinRequestFilter
+    $cursor: String
+    $limit: Int
+  ) {
+    workspace(id: $workspaceId) {
+      ...BasicWorkspace
+      adminWorkspacesJoinRequests(filter: $filter, cursor: $cursor, limit: $limit) {
+        items {
+          status
+          user {
+            id
+            name
+          }
+          workspace {
+            id
+            name
+          }
+          createdAt
+        }
+        cursor
+        totalCount
+      }
+    }
+  }
+  ${basicWorkspaceFragment}
+`

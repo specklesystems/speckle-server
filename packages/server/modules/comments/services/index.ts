@@ -1,13 +1,11 @@
 import crs from 'crypto-random-string'
 import { ForbiddenError, ResourceMismatch } from '@/modules/shared/errors'
 import { buildCommentTextFromInput } from '@/modules/comments/services/commentTextService'
-import { CommentsEvents, CommentsEventsEmit } from '@/modules/comments/events/emitter'
 import { isNonNullable, Roles } from '@speckle/shared'
 import {
   ResourceIdentifier,
   CommentCreateInput,
-  CommentEditInput,
-  SmartTextEditorValue
+  CommentEditInput
 } from '@/modules/core/graph/generated/graphql'
 import { CommentLinkRecord, CommentRecord } from '@/modules/comments/helpers/types'
 import { SmartTextEditorValueSchema } from '@/modules/core/services/richTextEditorService'
@@ -25,6 +23,9 @@ import {
 } from '@/modules/comments/domain/operations'
 import { ResourceType } from '@/modules/comments/domain/types'
 import { GetStream } from '@/modules/core/domain/streams/operations'
+import { EventBusEmit } from '@/modules/shared/services/eventBus'
+import { CommentEvents } from '@/modules/comments/domain/events'
+import { JSONContent } from '@tiptap/core'
 import { CommentNotFoundError } from '@/modules/comments/errors'
 import { UserInputError } from '@/modules/core/errors/userinput'
 
@@ -56,7 +57,7 @@ export const createCommentFactory =
     insertCommentLinks: InsertCommentLinks
     deleteComment: DeleteComment
     markCommentViewed: MarkCommentViewed
-    commentsEventsEmit: CommentsEventsEmit
+    emitEvent: EventBusEmit
   }) =>
   async ({ userId, input }: { userId: string; input: CommentCreateInput }) => {
     if (input.resources.length < 1)
@@ -122,8 +123,11 @@ export const createCommentFactory =
 
     await deps.markCommentViewed(id, userId) // so we don't self mark a comment as unread the moment it's created
 
-    await deps.commentsEventsEmit(CommentsEvents.Created, {
-      comment: newComment
+    await deps.emitEvent({
+      eventName: CommentEvents.Created,
+      payload: {
+        comment: newComment
+      }
     })
 
     return newComment
@@ -140,7 +144,7 @@ export const createCommentReplyFactory =
     checkStreamResourcesAccess: CheckStreamResourcesAccess
     deleteComment: DeleteComment
     markCommentUpdated: MarkCommentUpdated
-    commentsEventsEmit: CommentsEventsEmit
+    emitEvent: EventBusEmit
   }) =>
   async ({
     authorId,
@@ -153,7 +157,7 @@ export const createCommentReplyFactory =
     authorId: string
     parentCommentId: string
     streamId: string
-    text: SmartTextEditorValue
+    text: JSONContent
     data: CommentRecord['data']
     blobIds: string[]
   }) => {
@@ -191,8 +195,11 @@ export const createCommentReplyFactory =
 
     await deps.markCommentUpdated(parentCommentId)
 
-    await deps.commentsEventsEmit(CommentsEvents.Created, {
-      comment: newComment
+    await deps.emitEvent({
+      eventName: CommentEvents.Created,
+      payload: {
+        comment: newComment
+      }
     })
 
     return newComment
@@ -206,7 +213,7 @@ export const editCommentFactory =
     getComment: GetComment
     validateInputAttachments: ValidateInputAttachments
     updateComment: UpdateComment
-    commentsEventsEmit: CommentsEventsEmit
+    emitEvent: EventBusEmit
   }) =>
   async ({
     userId,
@@ -230,9 +237,12 @@ export const editCommentFactory =
     })
     const updatedComment = await deps.updateComment(input.id, { text: newText })
 
-    await deps.commentsEventsEmit(CommentsEvents.Updated, {
-      previousComment: editedComment,
-      newComment: updatedComment!
+    await deps.emitEvent({
+      eventName: CommentEvents.Updated,
+      payload: {
+        previousComment: editedComment,
+        newComment: updatedComment!
+      }
     })
 
     return updatedComment

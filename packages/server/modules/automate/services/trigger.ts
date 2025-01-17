@@ -31,10 +31,6 @@ import { automateLogger } from '@/logging/logging'
 import { FunctionInputDecryptor } from '@/modules/automate/services/encryption'
 import { LibsodiumEncryptionError } from '@/modules/shared/errors/encryption'
 import {
-  AutomateRunsEmitter,
-  AutomateRunsEventsEmitter
-} from '@/modules/automate/events/runs'
-import {
   GetActiveTriggerDefinitions,
   GetAutomation,
   GetAutomationRevision,
@@ -50,6 +46,8 @@ import { GetBranchLatestCommits } from '@/modules/core/domain/branches/operation
 import { GetCommit } from '@/modules/core/domain/commits/operations'
 import { ValidateStreamAccess } from '@/modules/core/domain/streams/operations'
 import { CreateAndStoreAppToken } from '@/modules/core/domain/tokens/operations'
+import { EventBusEmit } from '@/modules/shared/services/eventBus'
+import { AutomationRunEvents } from '@/modules/automate/domain/events'
 
 export type OnModelVersionCreateDeps = {
   getAutomation: GetAutomation
@@ -216,7 +214,7 @@ export type TriggerAutomationRevisionRunDeps = {
   getAutomationToken: GetAutomationToken
   createAppToken: CreateAndStoreAppToken
   upsertAutomationRun: UpsertAutomationRun
-  automateRunsEmitter: AutomateRunsEventsEmitter
+  emitEvent: EventBusEmit
   getFullAutomationRevisionMetadata: GetFullAutomationRevisionMetadata
   getCommit: GetCommit
 } & CreateAutomationRunDataDeps &
@@ -237,7 +235,7 @@ export const triggerAutomationRevisionRunFactory =
       getAutomationToken,
       createAppToken,
       upsertAutomationRun,
-      automateRunsEmitter,
+      emitEvent,
       getFullAutomationRevisionMetadata,
       getCommit
     } = deps
@@ -318,12 +316,15 @@ export const triggerAutomationRevisionRunFactory =
       await upsertAutomationRun(automationRun)
     }
 
-    await automateRunsEmitter(AutomateRunsEmitter.events.Created, {
-      run: automationRun,
-      manifests: triggerManifests,
-      automation: automationWithRevision,
-      source,
-      triggerType: manifest.triggerType
+    await emitEvent({
+      eventName: AutomationRunEvents.Created,
+      payload: {
+        run: automationRun,
+        manifests: triggerManifests,
+        automation: automationWithRevision,
+        source,
+        triggerType: manifest.triggerType
+      }
     })
 
     return { automationRunId: automationRun.id }

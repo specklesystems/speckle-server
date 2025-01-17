@@ -232,7 +232,7 @@ export type GetPaginatedBranchCommitsItemsByName = (params: {
   limit: number
   cursor?: Nullable<string>
 }) => Promise<{
-  commits: Commit[]
+  commits: CommitWithStreamBranchId[]
   cursor: string | null
 }>
 

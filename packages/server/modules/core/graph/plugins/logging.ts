@@ -1,11 +1,12 @@
 /* eslint-disable camelcase */
-import prometheusClient from 'prom-client'
+import { type Registry, Counter } from 'prom-client'
 import { graphqlLogger } from '@/logging/logging'
 import { redactSensitiveVariables } from '@/logging/loggingHelper'
 import type { FieldNode, SelectionNode } from 'graphql'
 import type { ApolloServerPlugin } from '@apollo/server'
 import type { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
 import { shouldLogAsInfoLevel } from '@/logging/graphqlError'
+import { getRequestContext } from '@/logging/requestContext'
 
 type ApolloLoggingPluginTransaction = {
   start: number
@@ -25,13 +26,20 @@ declare module '@apollo/server' {
 
 const isFieldNode = (node: SelectionNode): node is FieldNode => node.kind === 'Field'
 
-const metricCallCount = new prometheusClient.Counter({
-  name: 'speckle_server_apollo_calls',
-  help: 'Number of calls',
-  labelNames: ['actionName']
-})
+let metricCallCount: Counter<string>
 
-export const loggingPlugin: ApolloServerPlugin<GraphQLContext> = {
+export const loggingPluginFactory: (deps: {
+  register: Registry
+}) => ApolloServerPlugin<GraphQLContext> = (deps) => ({
+  serverWillStart: async () => {
+    deps.register.removeSingleMetric('speckle_server_apollo_calls')
+    metricCallCount = new Counter({
+      name: 'speckle_server_apollo_calls',
+      help: 'Number of calls',
+      registers: [deps.register],
+      labelNames: ['actionName']
+    })
+  },
   requestDidStart: async () => {
     const apolloRequestStart = Date.now()
     return {
@@ -55,7 +63,9 @@ export const loggingPlugin: ApolloServerPlugin<GraphQLContext> = {
         const auth = ctx.contextValue
         const userId = auth?.userId
 
-        const actionName = `${ctx.operation.operation} ${firstSelectedField.name.value}`
+        const operationName = ctx.operationName || ctx.operation?.name?.value
+        const actionName =
+          operationName || `${ctx.operation.operation} ${firstSelectedField.name.value}`
         const op = `GQL ${actionName}`
         const name = `GQL ${firstSelectedField.name.value}`
         const kind = ctx.operation.operation
@@ -66,8 +76,8 @@ export const loggingPlugin: ApolloServerPlugin<GraphQLContext> = {
           graphql_operation_kind: kind,
           graphql_query: query,
           graphql_variables: redactSensitiveVariables(variables),
-          graphql_operation_value: op,
-          graphql_operation_name: name,
+          graphql_operation_name: actionName,
+          graphql_operation_title: op,
           userId
         })
 
@@ -102,6 +112,13 @@ export const loggingPlugin: ApolloServerPlugin<GraphQLContext> = {
           const query = ctx.request.query
           const variables = redactSensitiveVariables(ctx.request.variables)
 
+          const reqCtx = getRequestContext()
+          if (reqCtx) {
+            logger = logger.child({
+              dbMetrics: reqCtx.dbMetrics
+            })
+          }
+
           if (err.path) {
             logger = logger.child({
               'query-path': err.path.join(' > '),
@@ -113,30 +130,37 @@ export const loggingPlugin: ApolloServerPlugin<GraphQLContext> = {
           if (shouldLogAsInfoLevel(err)) {
             logger.info(
               { err },
-              '{graphql_operation_value} failed after {apollo_query_duration_ms} ms'
+              '{graphql_operation_title} failed after {apollo_query_duration_ms} ms'
             )
           } else {
             logger.error(
               err,
-              '{graphql_operation_value} failed after {apollo_query_duration_ms} ms'
+              '{graphql_operation_title} failed after {apollo_query_duration_ms} ms'
             )
           }
         }
       },
       willSendResponse: async (ctx) => {
-        const logger = ctx.contextValue.log || graphqlLogger
+        let logger = ctx.contextValue.log || graphqlLogger
 
         if (ctx.request.transaction) {
           ctx.request.transaction.finish()
+        }
+
+        const reqCtx = getRequestContext()
+        if (reqCtx) {
+          logger = logger.child({
+            dbMetrics: reqCtx.dbMetrics
+          })
         }
 
         logger.info(
           {
             apollo_query_duration_ms: Date.now() - apolloRequestStart
           },
-          '{graphql_operation_value} finished after {apollo_query_duration_ms} ms'
+          '{graphql_operation_title} finished after {apollo_query_duration_ms} ms'
         )
       }
     }
   }
-}
+})

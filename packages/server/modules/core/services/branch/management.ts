@@ -16,7 +16,6 @@ import {
 import { BranchRecord } from '@/modules/core/helpers/types'
 import { has } from 'lodash'
 import { isBranchDeleteInput, isBranchUpdateInput } from '@/modules/core/helpers/branch'
-import { ModelsEmitter, ModelsEventsEmitter } from '@/modules/core/events/modelsEmitter'
 import {
   CreateBranchAndNotify,
   DeleteBranchAndNotify,
@@ -36,6 +35,8 @@ import {
   AddBranchDeletedActivity,
   AddBranchUpdatedActivity
 } from '@/modules/activitystream/domain/operations'
+import { EventBusEmit } from '@/modules/shared/services/eventBus'
+import { ModelEvents } from '@/modules/core/domain/branches/events'
 
 const isBranchCreateInput = (
   i: BranchCreateInput | CreateModelInput
@@ -128,7 +129,7 @@ export const deleteBranchAndNotifyFactory =
   (deps: {
     getStream: GetStream
     getBranchById: GetBranchById
-    modelsEventsEmitter: ModelsEventsEmitter
+    emitEvent: EventBusEmit
     markBranchStreamUpdated: MarkBranchStreamUpdated
     addBranchDeletedActivity: AddBranchDeletedActivity
     deleteBranchById: DeleteBranchById
@@ -173,10 +174,13 @@ export const deleteBranchAndNotifyFactory =
           branchName: existingBranch.name
         }),
         deps.markBranchStreamUpdated(input.id),
-        deps.modelsEventsEmitter(ModelsEmitter.events.Deleted, {
-          modelId: existingBranch.id,
-          model: existingBranch,
-          projectId: streamId
+        deps.emitEvent({
+          eventName: ModelEvents.Deleted,
+          payload: {
+            modelId: existingBranch.id,
+            model: existingBranch,
+            projectId: streamId
+          }
         })
       ])
     }

@@ -17,11 +17,13 @@
         <div
           class="hidden lg:flex h-full w-[17rem] shrink-0 border-l border-outline-3 bg-foundation-page"
         >
-          <PortalTarget name="right-sidebar">
-            <div class="h-full w-full flex items-center justify-center">
-              <CommonLoadingIcon />
-            </div>
-          </PortalTarget>
+          <ClientOnly>
+            <PortalTarget name="right-sidebar">
+              <div class="h-full w-full flex items-center justify-center">
+                <CommonLoadingIcon />
+              </div>
+            </PortalTarget>
+          </ClientOnly>
         </div>
       </div>
     </div>

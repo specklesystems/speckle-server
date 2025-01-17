@@ -44,8 +44,8 @@ import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repos
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
 import { createUserFactory } from '@/modules/core/services/users/management'
-import { UsersEmitter } from '@/modules/core/events/usersEmitter'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
+import { getEventBus } from '@/modules/shared/services/eventBus'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUsers = legacyGetPaginatedUsersFactory({ db })
@@ -80,7 +80,7 @@ const createUser = createUserFactory({
   countAdminUsers: countAdminUsersFactory({ db }),
   storeUserAcl: storeUserAclFactory({ db }),
   validateAndCreateUserEmail: createUserEmail,
-  usersEventsEmitter: UsersEmitter.emit
+  emitEvent: getEventBus().emit
 })
 const getUserByEmail = getUserByEmailFactory({ db })
 const legacyGetUserByEmail = legacyGetUserByEmailFactory({ db })

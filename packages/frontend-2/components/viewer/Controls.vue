@@ -2,7 +2,7 @@
 <template>
   <div v-if="showControls">
     <div
-      class="absolute z-20 flex max-h-screen simple-scrollbar flex-col space-y-1 md:space-y-2 bg-green-300/0 px-2"
+      class="absolute z-20 flex max-h-screen simple-scrollbar flex-col space-y-1 md:space-y-2 px-2"
       :class="
         showNavbar && !isEmbedEnabled
           ? 'pt-[3.8rem]'
@@ -148,15 +148,13 @@
           <!-- Gendo -->
           <ViewerControlsButtonToggle
             v-show="isGendoEnabled"
-            v-tippy="'Real time AI rendering powered by Gendo'"
+            v-tippy="'AI Render by Gendo'"
             :active="activePanel === 'gendo'"
-            class="hover:hue-rotate-30 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-amber-200 via-violet-600 to-sky-900"
             @click="toggleActivePanel('gendo')"
           >
-            <img
-              src="~/assets/images/gendo/logo.svg"
-              alt="gendo Logo"
-              class="h-6 w-6 md:h-8 md:w-8 -ml-1 -mt-1"
+            <IconGendo
+              class="h-6 w-6 md:h-7 md:w-7 -ml-1 -mt-1"
+              :class="activePanel === 'gendo' ? 'text-white' : 'text-foreground-2'"
             />
           </ViewerControlsButtonToggle>
         </div>

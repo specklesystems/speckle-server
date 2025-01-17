@@ -71,7 +71,6 @@ import {
   addCommitMovedActivityFactory,
   addCommitDeletedActivityFactory
 } from '@/modules/activitystream/services/commitActivity'
-import { VersionsEmitter } from '@/modules/core/events/versionsEmitter'
 import { getObjectFactory } from '@/modules/core/repositories/objects'
 import { validateStreamAccessFactory } from '@/modules/core/services/streams/access'
 import { saveActivityFactory } from '@/modules/activitystream/repositories'
@@ -83,6 +82,7 @@ import {
 } from '@/modules/multiregion/utils/dbSelector'
 import { LegacyUserCommit } from '@/modules/core/domain/commits/types'
 import coreModule from '@/modules/core'
+import { getEventBus } from '@/modules/shared/services/eventBus'
 
 const getStreams = getStreamsFactory({ db })
 
@@ -349,7 +349,7 @@ export = {
         insertBranchCommits: insertBranchCommitsFactory({ db: projectDb }),
         markCommitStreamUpdated: markCommitStreamUpdatedFactory({ db: projectDb }),
         markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db: projectDb }),
-        versionsEventEmitter: VersionsEmitter.emit,
+        emitEvent: getEventBus().emit,
         addCommitCreatedActivity: addCommitCreatedActivityFactory({
           saveActivity: saveActivityFactory({ db }),
           publish

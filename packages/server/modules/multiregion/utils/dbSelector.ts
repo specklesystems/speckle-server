@@ -6,11 +6,12 @@ import {
 } from '@/modules/multiregion/services/projectRegion'
 import { Knex } from 'knex'
 import { getRegionFactory } from '@/modules/multiregion/repositories'
-import { DatabaseError } from '@/modules/shared/errors'
+import { DatabaseError, MisconfiguredEnvironmentError } from '@/modules/shared/errors'
 import { configureClient } from '@/knexfile'
 import { InitializeRegion } from '@/modules/multiregion/domain/operations'
 import {
   getAvailableRegionConfig,
+  getDefaultProjectRegionKey,
   getMainRegionConfig
 } from '@/modules/multiregion/regionConfig'
 import { ensureError, MaybeNullOrUndefined } from '@speckle/shared'
@@ -70,6 +71,24 @@ const initializeDbGetter = async (): Promise<GetProjectDb> => {
 export const getProjectDbClient: GetProjectDb = async ({ projectId }) => {
   if (!getter) getter = await initializeDbGetter()
   return await getter({ projectId })
+}
+
+// the default region key is a config value, we're caching this globally
+let defaultRegionKeyCache: string | null | undefined = undefined
+
+export const getValidDefaultProjectRegionKey = async (): Promise<string | null> => {
+  if (defaultRegionKeyCache !== undefined) return defaultRegionKeyCache
+  const defaultRegionKey = await getDefaultProjectRegionKey()
+
+  if (!defaultRegionKey) return defaultRegionKey
+  const registeredRegionClients = await getRegisteredRegionClients()
+  if (!(defaultRegionKey in registeredRegionClients))
+    throw new MisconfiguredEnvironmentError(
+      `There is no region client registered for the default region key ${defaultRegionKey} `
+    )
+
+  defaultRegionKeyCache = defaultRegionKey
+  return defaultRegionKey
 }
 
 type RegionClients = Record<string, Knex>

@@ -47,7 +47,6 @@ import {
   getStreamsFactory,
   markCommitStreamUpdatedFactory
 } from '@/modules/core/repositories/streams'
-import { VersionsEmitter } from '@/modules/core/events/versionsEmitter'
 import {
   addCommitCreatedActivityFactory,
   addCommitDeletedActivityFactory,
@@ -58,6 +57,7 @@ import { getObjectFactory } from '@/modules/core/repositories/objects'
 import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import coreModule from '@/modules/core'
+import { getEventBus } from '@/modules/shared/services/eventBus'
 import { StreamNotFoundError } from '@/modules/core/errors/stream'
 
 export = {
@@ -198,7 +198,7 @@ export = {
         insertBranchCommits: insertBranchCommitsFactory({ db: projectDb }),
         markCommitStreamUpdated: markCommitStreamUpdatedFactory({ db: projectDb }),
         markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db: projectDb }),
-        versionsEventEmitter: VersionsEmitter.emit,
+        emitEvent: getEventBus().emit,
         addCommitCreatedActivity: addCommitCreatedActivityFactory({
           saveActivity: saveActivityFactory({ db }),
           publish

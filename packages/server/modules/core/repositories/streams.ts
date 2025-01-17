@@ -1,5 +1,6 @@
 import _, {
   clamp,
+  groupBy,
   has,
   isNaN,
   isNull,
@@ -80,7 +81,6 @@ import {
   GetFavoritedStreamsCount,
   SetStreamFavorited,
   CanUserFavoriteStream,
-  LegacyGetStreamCollaborators,
   GetBatchUserFavoriteData,
   GetBatchStreamFavoritesCounts,
   GetOwnedFavoritesCountByUserIds,
@@ -95,7 +95,8 @@ import {
   MarkBranchStreamUpdated,
   MarkCommitStreamUpdated,
   MarkOnboardingBaseStream,
-  GetUserDeletableStreams
+  GetUserDeletableStreams,
+  GetStreamsCollaborators
 } from '@/modules/core/domain/streams/operations'
 import { generateProjectName } from '@/modules/core/domain/projects/logic'
 export type { StreamWithOptionalRole, StreamWithCommitId }
@@ -597,6 +598,37 @@ export const getDiscoverableStreamsPageFactory =
   }
 
 /**
+ * Get stream collaborators for multiple streams at a time
+ */
+export const getStreamsCollaboratorsFactory =
+  (deps: { db: Knex }): GetStreamsCollaborators =>
+  async ({ streamIds }) => {
+    if (!streamIds.length) return {}
+
+    const q = tables
+      .streamAcl(deps.db)
+      .select<Array<UserWithRole & { streamRole: StreamRoles; streamId: string }>>([
+        ...Users.cols,
+        knex.raw(`(array_agg(??))[1] as "streamRole"`, [StreamAcl.col.role]),
+        knex.raw(`(array_agg(??))[1] as "streamId"`, [StreamAcl.col.resourceId]),
+        knex.raw(`(array_agg(??))[1] as "role"`, [ServerAcl.col.role])
+      ])
+      .whereIn(StreamAcl.col.resourceId, streamIds)
+      .innerJoin(Users.name, Users.col.id, StreamAcl.col.userId)
+      .innerJoin(ServerAcl.name, ServerAcl.col.userId, Users.col.id)
+      .groupBy(StreamAcl.col.resourceId, Users.col.id)
+
+    const res = (await q).map((i) => ({
+      ...removePrivateFields(i),
+      streamRole: i.streamRole,
+      role: i.role,
+      streamId: i.streamId
+    }))
+
+    return groupBy(res, 'streamId')
+  }
+
+/**
  * Get all stream collaborators. Optionally filter only specific roles.
  */
 export const getStreamCollaboratorsFactory =
@@ -630,32 +662,6 @@ export const getStreamCollaboratorsFactory =
       role: i.role
     }))
     return items
-  }
-
-/**
- * @deprecated Use getStreamCollaborators instead
- */
-export const legacyGetStreamUsersFactory =
-  (deps: { db: Knex }): LegacyGetStreamCollaborators =>
-  async ({ streamId }) => {
-    const query = tables
-      .streamAcl(deps.db)
-      .columns({ role: 'stream_acl.role' }, 'id', 'name', 'company', 'avatar')
-      .select()
-      .where({ resourceId: streamId })
-      .rightJoin('users', { 'users.id': 'stream_acl.userId' })
-      .select<
-        {
-          role: string
-          id: string
-          name: string
-          company: string
-          avatar: string
-        }[]
-      >('stream_acl.role', 'name', 'id', 'company', 'avatar')
-      .orderBy('stream_acl.role')
-
-    return await query
   }
 
 export const getProjectCollaboratorsFactory =
@@ -712,7 +718,7 @@ const getUserStreamsQueryBaseFactory =
         })
     }
 
-    if (workspaceId) {
+    if (!isUndefined(workspaceId)) {
       query.andWhere(Streams.col.workspaceId, workspaceId)
     }
 

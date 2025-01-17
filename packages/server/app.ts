@@ -49,7 +49,8 @@ import {
   enableMixpanel,
   getPort,
   getBindAddress,
-  shutdownTimeoutSeconds
+  shutdownTimeoutSeconds,
+  asyncRequestContextEnabled
 } from '@/modules/shared/helpers/envHelper'
 import * as ModulesSetup from '@/modules'
 import { GraphQLContext, Optional } from '@/modules/shared/helpers/typeHelper'
@@ -75,7 +76,7 @@ import {
   ContextError,
   UnauthorizedError
 } from '@/modules/shared/errors'
-import { loggingPlugin } from '@/modules/core/graph/plugins/logging'
+import { loggingPluginFactory } from '@/modules/core/graph/plugins/logging'
 import { shouldLogAsInfoLevel } from '@/logging/graphqlError'
 import { getUserFactory } from '@/modules/core/repositories/users'
 import { initFactory as healthchecksInitFactory } from '@/healthchecks'
@@ -83,6 +84,7 @@ import type { ReadinessHandler } from '@/healthchecks/types'
 import type ws from 'ws'
 import type { Server as MockWsServer } from 'mock-socket'
 import { SetOptional } from 'type-fest'
+import { initiateRequestContextMiddleware } from '@/logging/requestContext'
 
 const GRAPHQL_PATH = '/graphql'
 
@@ -295,7 +297,7 @@ export function buildApolloSubscriptionServer(
         const ctx = baseParams.context as GraphQLContext
 
         const logger = ctx.log || subscriptionLogger
-        logger.debug(
+        logger.info(
           {
             graphql_operation_name: baseParams.operationName,
             userId: baseParams.context.userId,
@@ -303,7 +305,7 @@ export function buildApolloSubscriptionServer(
             graphql_variables: redactSensitiveVariables(baseParams.variables),
             graphql_operation_type: 'subscription'
           },
-          'Subscription started for {graphqlOperationName}'
+          'Subscription started for {graphql_operation_name}'
         )
 
         baseParams.formatResponse = (val: SubscriptionResponse) => {
@@ -351,7 +353,7 @@ export async function buildApolloServer(options?: {
     schema,
     plugins: [
       statusCodePlugin,
-      loggingPlugin,
+      loggingPluginFactory({ register: prometheusClient.register }),
       ApolloServerPluginLandingPageLocalDefault({
         embed: true,
         includeCookies: true
@@ -410,8 +412,13 @@ export async function init() {
 
   app.use(cookieParser())
   app.use(DetermineRequestIdMiddleware)
+  app.use(initiateRequestContextMiddleware)
   app.use(determineClientIpAddressMiddleware)
   app.use(LoggingExpressMiddleware)
+
+  if (asyncRequestContextEnabled()) {
+    startupLogger.info('Async request context tracking enabled 👀')
+  }
 
   if (process.env.COMPRESSION) {
     app.use(compression())

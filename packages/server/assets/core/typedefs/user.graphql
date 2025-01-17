@@ -52,6 +52,13 @@ extend type Query {
     @hasScopes(scopes: ["users:read", "profile:read"])
 
   """
+  Look up server users with a collection of emails
+  """
+  usersByEmail(input: BulkUsersRetrievalInput!): [LimitedUser]!
+    @hasServerRole(role: SERVER_GUEST)
+    @hasScopes(scopes: ["users:read", "profile:read"])
+
+  """
   Validate password strength
   """
   userPwdStrength(pwd: String!): PasswordStrengthCheckResults!
@@ -78,6 +85,12 @@ input UsersRetrievalInput {
   Only find users that are collaborators of the specified project
   """
   projectId: String
+}
+
+input BulkUsersRetrievalInput {
+  emails: [String!]!
+  cursor: String
+  limit: Int
 }
 
 type PasswordStrengthCheckResults {

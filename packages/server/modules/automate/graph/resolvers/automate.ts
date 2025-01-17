@@ -112,8 +112,6 @@ import {
   ExecutionEngineNetworkError
 } from '@/modules/automate/errors/executionEngine'
 import { db } from '@/db/knex'
-import { AutomationsEmitter } from '@/modules/automate/events/automations'
-import { AutomateRunsEmitter } from '@/modules/automate/events/runs'
 import { getCommitFactory } from '@/modules/core/repositories/commits'
 import { validateStreamAccessFactory } from '@/modules/core/services/streams/access'
 import { getUserFactory } from '@/modules/core/repositories/users'
@@ -575,7 +573,7 @@ export = (FF_AUTOMATE_MODULE_ENABLED
             storeAutomation: storeAutomationFactory({ db: projectDb }),
             storeAutomationToken: storeAutomationTokenFactory({ db: projectDb }),
             validateStreamAccess,
-            automationsEventsEmit: AutomationsEmitter.emit
+            eventEmit: getEventBus().emit
           })
 
           return (
@@ -594,7 +592,7 @@ export = (FF_AUTOMATE_MODULE_ENABLED
             getAutomation: getAutomationFactory({ db: projectDb }),
             updateAutomation: updateAutomationFactory({ db: projectDb }),
             validateStreamAccess,
-            automationsEventsEmit: AutomationsEmitter.emit
+            eventEmit: getEventBus().emit
           })
 
           return await update({
@@ -617,7 +615,7 @@ export = (FF_AUTOMATE_MODULE_ENABLED
               buildDecryptor
             }),
             getFunctionReleases,
-            automationsEventsEmit: AutomationsEmitter.emit,
+            eventEmit: getEventBus().emit,
             validateStreamAccess
           })
 
@@ -644,7 +642,7 @@ export = (FF_AUTOMATE_MODULE_ENABLED
                 buildDecryptor
               }),
               createAppToken,
-              automateRunsEmitter: AutomateRunsEmitter.emit,
+              emitEvent: getEventBus().emit,
               getAutomationToken: getAutomationTokenFactory({ db: projectDb }),
               upsertAutomationRun: upsertAutomationRunFactory({ db: projectDb }),
               getFullAutomationRevisionMetadata:
@@ -673,7 +671,7 @@ export = (FF_AUTOMATE_MODULE_ENABLED
             storeAutomation: storeAutomationFactory({ db: projectDb }),
             storeAutomationRevision: storeAutomationRevisionFactory({ db: projectDb }),
             validateStreamAccess,
-            automationsEventsEmit: AutomationsEmitter.emit
+            eventEmit: getEventBus().emit
           })
 
           return await create({
@@ -901,7 +899,7 @@ export = (FF_AUTOMATE_MODULE_ENABLED
             automationRunUpdater: updateAutomationRunFactory({
               db: projectDb
             }),
-            runEventEmit: AutomateRunsEmitter.emit
+            emitEvent: getEventBus().emit
           }
 
           const payload = {
