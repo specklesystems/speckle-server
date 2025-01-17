@@ -155,7 +155,7 @@ const documents = {
     "\n  fragment WorkspaceHeader_Workspace on Workspace {\n    ...WorkspaceBase_Workspace\n    ...WorkspaceTeam_Workspace\n    ...BillingAlert_Workspace\n    readOnly\n  }\n": types.WorkspaceHeader_WorkspaceFragmentDoc,
     "\n  fragment WorkspaceInviteBanner_PendingWorkspaceCollaborator on PendingWorkspaceCollaborator {\n    id\n    invitedBy {\n      id\n      ...LimitedUserAvatar\n    }\n    workspaceId\n    workspaceName\n    token\n    user {\n      id\n    }\n    ...UseWorkspaceInviteManager_PendingWorkspaceCollaborator\n  }\n": types.WorkspaceInviteBanner_PendingWorkspaceCollaboratorFragmentDoc,
     "\n  fragment WorkspaceInviteBlock_PendingWorkspaceCollaborator on PendingWorkspaceCollaborator {\n    id\n    workspaceId\n    workspaceName\n    token\n    user {\n      id\n      name\n      ...LimitedUserAvatar\n    }\n    title\n    email\n    ...UseWorkspaceInviteManager_PendingWorkspaceCollaborator\n  }\n": types.WorkspaceInviteBlock_PendingWorkspaceCollaboratorFragmentDoc,
-    "\n  fragment WorkspaceInviteDiscoverableWorkspaceBanner_LimitedWorkspace on LimitedWorkspace {\n    id\n    name\n    slug\n    description\n    logo\n  }\n  fragment WorkspaceInviteDiscoverableWorkspaceBanner_Workspace on Workspace {\n    id\n    name\n    description\n    createdAt\n    updatedAt\n    logo\n    domainBasedMembershipProtectionEnabled\n    discoverabilityEnabled\n  }\n": types.WorkspaceInviteDiscoverableWorkspaceBanner_LimitedWorkspaceFragmentDoc,
+    "\n  fragment WorkspaceInviteDiscoverableWorkspaceBanner_LimitedWorkspace on LimitedWorkspace {\n    id\n    name\n    slug\n    description\n    logo\n  }\n": types.WorkspaceInviteDiscoverableWorkspaceBanner_LimitedWorkspaceFragmentDoc,
     "\n  fragment WorkspaceSidebarAbout_Workspace on Workspace {\n    ...WorkspaceDashboardAbout_Workspace\n  }\n": types.WorkspaceSidebarAbout_WorkspaceFragmentDoc,
     "\n  fragment WorkspaceSidebarMembers_Workspace on Workspace {\n    ...WorkspaceTeam_Workspace\n  }\n": types.WorkspaceSidebarMembers_WorkspaceFragmentDoc,
     "\n  fragment WorkspaceSidebarSecurity_Workspace on Workspace {\n    ...WorkspaceSecurity_Workspace\n  }\n": types.WorkspaceSidebarSecurity_WorkspaceFragmentDoc,
@@ -191,7 +191,7 @@ const documents = {
     "\n  query ServerInfoAllScopes {\n    serverInfo {\n      scopes {\n        name\n        description\n      }\n    }\n  }\n": types.ServerInfoAllScopesDocument,
     "\n  query ProjectModelsSelectorValues($projectId: String!, $cursor: String) {\n    project(id: $projectId) {\n      id\n      models(limit: 100, cursor: $cursor) {\n        cursor\n        totalCount\n        items {\n          ...CommonModelSelectorModel\n        }\n      }\n    }\n  }\n": types.ProjectModelsSelectorValuesDocument,
     "\n  query MainServerInfoData {\n    serverInfo {\n      adminContact\n      canonicalUrl\n      company\n      description\n      guestModeEnabled\n      inviteOnly\n      name\n      termsOfService\n      version\n      automateUrl\n    }\n  }\n": types.MainServerInfoDataDocument,
-    "\n  mutation DashboardJoinWorkspace($input: JoinWorkspaceInput!) {\n    workspaceMutations {\n      join(input: $input) {\n        ...WorkspaceInviteDiscoverableWorkspaceBanner_Workspace\n      }\n    }\n  }\n": types.DashboardJoinWorkspaceDocument,
+    "\n  mutation DashboardRequestToJoinWorkspace($input: WorkspaceRequestToJoinInput!) {\n    workspaceMutations {\n      requestToJoin(input: $input)\n    }\n  }\n": types.DashboardRequestToJoinWorkspaceDocument,
     "\n  query DashboardProjectsPageQuery {\n    activeUser {\n      id\n      projects(limit: 3) {\n        items {\n          ...DashboardProjectCard_Project\n        }\n      }\n      ...ProjectsDashboardHeaderProjects_User\n    }\n  }\n": types.DashboardProjectsPageQueryDocument,
     "\n  query DashboardProjectsPageWorkspaceQuery {\n    activeUser {\n      id\n      ...ProjectsDashboardHeaderWorkspaces_User\n    }\n  }\n": types.DashboardProjectsPageWorkspaceQueryDocument,
     "\n  mutation DeleteAccessToken($token: String!) {\n    apiTokenRevoke(token: $token)\n  }\n": types.DeleteAccessTokenDocument,
@@ -975,7 +975,7 @@ export function graphql(source: "\n  fragment WorkspaceInviteBlock_PendingWorksp
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment WorkspaceInviteDiscoverableWorkspaceBanner_LimitedWorkspace on LimitedWorkspace {\n    id\n    name\n    slug\n    description\n    logo\n  }\n  fragment WorkspaceInviteDiscoverableWorkspaceBanner_Workspace on Workspace {\n    id\n    name\n    description\n    createdAt\n    updatedAt\n    logo\n    domainBasedMembershipProtectionEnabled\n    discoverabilityEnabled\n  }\n"): (typeof documents)["\n  fragment WorkspaceInviteDiscoverableWorkspaceBanner_LimitedWorkspace on LimitedWorkspace {\n    id\n    name\n    slug\n    description\n    logo\n  }\n  fragment WorkspaceInviteDiscoverableWorkspaceBanner_Workspace on Workspace {\n    id\n    name\n    description\n    createdAt\n    updatedAt\n    logo\n    domainBasedMembershipProtectionEnabled\n    discoverabilityEnabled\n  }\n"];
+export function graphql(source: "\n  fragment WorkspaceInviteDiscoverableWorkspaceBanner_LimitedWorkspace on LimitedWorkspace {\n    id\n    name\n    slug\n    description\n    logo\n  }\n"): (typeof documents)["\n  fragment WorkspaceInviteDiscoverableWorkspaceBanner_LimitedWorkspace on LimitedWorkspace {\n    id\n    name\n    slug\n    description\n    logo\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -1119,7 +1119,7 @@ export function graphql(source: "\n  query MainServerInfoData {\n    serverInfo 
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  mutation DashboardJoinWorkspace($input: JoinWorkspaceInput!) {\n    workspaceMutations {\n      join(input: $input) {\n        ...WorkspaceInviteDiscoverableWorkspaceBanner_Workspace\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation DashboardJoinWorkspace($input: JoinWorkspaceInput!) {\n    workspaceMutations {\n      join(input: $input) {\n        ...WorkspaceInviteDiscoverableWorkspaceBanner_Workspace\n      }\n    }\n  }\n"];
+export function graphql(source: "\n  mutation DashboardRequestToJoinWorkspace($input: WorkspaceRequestToJoinInput!) {\n    workspaceMutations {\n      requestToJoin(input: $input)\n    }\n  }\n"): (typeof documents)["\n  mutation DashboardRequestToJoinWorkspace($input: WorkspaceRequestToJoinInput!) {\n    workspaceMutations {\n      requestToJoin(input: $input)\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
