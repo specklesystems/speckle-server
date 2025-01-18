@@ -383,7 +383,7 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
 
   const setModelReceiveResult = async (args: {
     modelCardId: string
-    bakedObjectIds: string[]
+    bakedObjectIds: Record<string, string>
     conversionResults: ConversionResult[]
   }) => {
     const model = documentModelStore.value.models.find(

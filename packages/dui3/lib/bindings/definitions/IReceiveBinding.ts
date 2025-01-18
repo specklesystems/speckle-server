@@ -20,7 +20,7 @@ export interface IReceiveBindingEvents
   // See note oon timeout in bridge v2; we might not need this
   setModelReceiveResult: (args: {
     modelCardId: string
-    bakedObjectIds: string[]
+    bakedObjectIds: Record<string, string>
     conversionResults: ConversionResult[]
   }) => void
 }
