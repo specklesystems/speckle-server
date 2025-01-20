@@ -4,7 +4,7 @@
     collapsible
     icon="add"
     :icon-click="
-      () => navigateTo(settingsRoutes.workspace.security.route(workspaceInfo.slug))
+      () => navigateTo(settingsWorkspaceRoutes.security.route(workspaceInfo.slug))
     "
     icon-text="Add domain"
     no-hover
@@ -16,7 +16,7 @@
           color="outline"
           size="sm"
           @click="
-            navigateTo(settingsRoutes.workspace.security.route(workspaceInfo.slug))
+            navigateTo(settingsWorkspaceRoutes.security.route(workspaceInfo.slug))
           "
         >
           Improve security
@@ -27,7 +27,7 @@
 </template>
 <script setup lang="ts">
 import { graphql } from '~~/lib/common/generated/gql'
-import { settingsRoutes } from '~/lib/common/helpers/route'
+import { settingsWorkspaceRoutes } from '~/lib/common/helpers/route'
 import type { WorkspaceSidebarSecurity_WorkspaceFragment } from '~/lib/common/generated/gql/graphql'
 
 graphql(`

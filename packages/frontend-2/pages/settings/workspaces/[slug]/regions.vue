@@ -79,7 +79,7 @@
         </div>
         <FormButton
           class="!max-w-none !md:max-w-max w-full md:w-auto"
-          :to="settingsRoutes.workspace.billing.route(slug)"
+          :to="settingsWorkspaceRoutes.billing.route(slug)"
         >
           Upgrade to Business
         </FormButton>
@@ -122,7 +122,7 @@ import type { SettingsWorkspacesRegionsSelect_ServerRegionItemFragment } from '~
 import { useMixpanel } from '~/lib/core/composables/mp'
 import { settingsWorkspaceRegionsQuery } from '~/lib/settings/graphql/queries'
 import { useSetDefaultWorkspaceRegion } from '~/lib/workspaces/composables/management'
-import { settingsRoutes } from '~/lib/common/helpers/route'
+import { settingsWorkspaceRoutes } from '~/lib/common/helpers/route'
 
 graphql(`
   fragment SettingsWorkspacesRegions_Workspace on Workspace {

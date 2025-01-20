@@ -41,7 +41,7 @@ import {
   type WorkspaceProjectList_WorkspaceFragment
 } from '~/lib/common/generated/gql/graphql'
 import { graphql } from '~~/lib/common/generated/gql'
-import { settingsRoutes } from '~/lib/common/helpers/route'
+import { settingsWorkspaceRoutes } from '~/lib/common/helpers/route'
 
 graphql(`
   fragment WorkspaceSidebar_Workspace on Workspace {
@@ -86,7 +86,7 @@ const billingAlertAction = computed<Array<AlertAction>>(() => {
       {
         title: 'Subscribe',
         onClick: () =>
-          navigateTo(settingsRoutes.workspace.billing.route(props.workspaceInfo.slug))
+          navigateTo(settingsWorkspaceRoutes.billing.route(props.workspaceInfo.slug))
       }
     ]
   }

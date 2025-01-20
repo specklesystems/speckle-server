@@ -19,9 +19,7 @@
         <button
           v-if="invitedTeamCount && isWorkspaceAdmin"
           class="hidden md:flex items-center shrink-0 justify-center text-body-3xs px-2 h-8 rounded-full border border-dashed border-outline-2 hover:bg-foundation select-none"
-          @click="
-            navigateTo(settingsRoutes.workspace.members.route(workspaceInfo.slug))
-          "
+          @click="navigateTo(settingsWorkspaceRoutes.members.route(workspaceInfo.slug))"
         >
           + {{ invitedTeamCount }} pending
         </button>
@@ -40,7 +38,7 @@
 <script setup lang="ts">
 import { graphql } from '~~/lib/common/generated/gql'
 import type { WorkspaceSidebarMembers_WorkspaceFragment } from '~/lib/common/generated/gql/graphql'
-import { settingsRoutes } from '~/lib/common/helpers/route'
+import { settingsWorkspaceRoutes } from '~/lib/common/helpers/route'
 
 graphql(`
   fragment WorkspaceSidebarMembers_Workspace on Workspace {
@@ -68,7 +66,7 @@ const iconName = computed(() => {
 const iconClick = computed(() => {
   if (!props.isWorkspaceAdmin) return undefined
   return () =>
-    navigateTo(settingsRoutes.workspace.members.route(props.workspaceInfo.slug))
+    navigateTo(settingsWorkspaceRoutes.members.route(props.workspaceInfo.slug))
 })
 
 const iconText = computed(() => {

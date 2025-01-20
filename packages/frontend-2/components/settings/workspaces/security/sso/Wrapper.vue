@@ -28,7 +28,7 @@
           </div>
         </div>
 
-        <FormButton v-else :to="settingsRoutes.workspace.billing.route(workspace.slug)">
+        <FormButton v-else :to="settingsWorkspaceRoutes.billing.route(workspace.slug)">
           Upgrade to Plus
         </FormButton>
       </div>
@@ -143,7 +143,7 @@ import { HorizontalDirection } from '~~/lib/common/composables/window'
 import { EllipsisHorizontalIcon } from '@heroicons/vue/24/solid'
 import { graphql } from '~/lib/common/generated/gql'
 import { Roles } from '@speckle/shared'
-import { settingsRoutes } from '~/lib/common/helpers/route'
+import { settingsWorkspaceRoutes } from '~/lib/common/helpers/route'
 
 graphql(`
   fragment SettingsWorkspacesSecuritySsoWrapper_Workspace on Workspace {

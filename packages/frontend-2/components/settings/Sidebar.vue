@@ -48,13 +48,13 @@
             </template>
             <NuxtLink
               v-for="sidebarMenuItem in userMenuItems"
-              :key="`user-item-${sidebarMenuItem.name}`"
-              :to="sidebarMenuItem.getRoute()"
+              :key="`user-item-${sidebarMenuItem.route}`"
+              :to="sidebarMenuItem.route"
               @click="isOpenMobile = false"
             >
               <LayoutSidebarMenuGroupItem
                 :label="sidebarMenuItem.title"
-                :active="route.path === sidebarMenuItem.getRoute()"
+                :active="route.path === sidebarMenuItem.route"
               />
             </NuxtLink>
           </LayoutSidebarMenuGroup>
@@ -64,13 +64,13 @@
             </template>
             <NuxtLink
               v-for="sidebarMenuItem in serverMenuItems"
-              :key="`server-item-${sidebarMenuItem.name}`"
-              :to="sidebarMenuItem.getRoute()"
+              :key="`server-item-${sidebarMenuItem.route}`"
+              :to="sidebarMenuItem.route"
               @click="isOpenMobile = false"
             >
               <LayoutSidebarMenuGroupItem
                 :label="sidebarMenuItem.title"
-                :active="route.path === sidebarMenuItem.getRoute()"
+                :active="route.path === sidebarMenuItem.route"
               />
             </NuxtLink>
           </LayoutSidebarMenuGroup>
@@ -98,7 +98,7 @@
               <NuxtLink
                 v-for="workspaceMenuItem in workspaceMenuItems"
                 :key="`workspace-menu-item-${workspaceMenuItem.name}-${workspaceItem.slug}`"
-                :to="workspaceMenuItem.getRoute(workspaceItem.slug)"
+                :to="workspaceMenuItem.route(workspaceItem.slug)"
                 @click="isOpenMobile = false"
               >
                 <LayoutSidebarMenuGroupItem
@@ -148,7 +148,11 @@ import {
 } from '@speckle/ui-components'
 import { graphql } from '~~/lib/common/generated/gql'
 import type { WorkspaceRoles } from '@speckle/shared'
-import { workspacesRoute, homeRoute, settingsRoutes } from '~/lib/common/helpers/route'
+import {
+  workspacesRoute,
+  homeRoute,
+  settingsWorkspaceRoutes
+} from '~/lib/common/helpers/route'
 import {
   WorkspacePlanStatuses,
   type SettingsMenu_WorkspaceFragment
@@ -212,7 +216,7 @@ const needsSsoSession = (
   routeName?: string
 ) => {
   return workspace.sso?.provider?.id &&
-    routeName !== settingsRoutes.workspace.general.name
+    routeName !== settingsWorkspaceRoutes.general.name
     ? !workspace.sso?.session?.validUntil
     : false
 }

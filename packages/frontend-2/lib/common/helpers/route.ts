@@ -21,68 +21,44 @@ export const defaultZapierWebhookUrl =
   'https://hooks.zapier.com/hooks/catch/12120532/2m4okri/'
 export const guideBillingUrl = 'https://speckle.guide/workspaces/billing.html'
 
-export const settingsRoutes = {
-  user: {
-    profile: {
-      name: 'settings-user-profile',
-      route: '/settings/user/profile'
-    },
-    notifications: {
-      name: 'settings-user-notifications',
-      route: '/settings/user/notifications'
-    },
-    developerSettings: {
-      name: 'settings-user-developer',
-      route: '/settings/user/developer'
-    },
-    emails: {
-      name: 'settings-user-emails',
-      route: '/settings/user/emails'
-    }
+export const settingsUserRoutes = {
+  profile: '/settings/user/profile',
+  notifications: '/settings/user/notifications',
+  developerSettings: '/settings/user/developer',
+  emails: '/settings/user/emails'
+}
+
+export const settingsServerRoutes = {
+  general: '/settings/server/general',
+  projects: '/settings/server/projects',
+  members: '/settings/server/members',
+  regions: '/settings/server/regions'
+}
+
+export const settingsWorkspaceRoutes = {
+  general: {
+    name: 'settings-workspaces-slug-general',
+    route: (slug: string) => `/settings/workspaces/${slug}/general`
   },
-  server: {
-    general: {
-      name: 'settings-server-general',
-      route: '/settings/server/general'
-    },
-    projects: {
-      name: 'settings-server-projects',
-      route: '/settings/server/projects'
-    },
-    members: {
-      name: 'settings-server-members',
-      route: '/settings/server/members'
-    },
-    regions: {
-      name: 'settings-server-regions',
-      route: '/settings/server/regions'
-    }
+  members: {
+    name: 'settings-workspaces-slug-members',
+    route: (slug: string) => `/settings/workspaces/${slug}/members`
   },
-  workspace: {
-    general: {
-      name: 'settings-workspaces-slug-general',
-      route: (slug: string) => `/settings/workspaces/${slug}/general`
-    },
-    members: {
-      name: 'settings-workspaces-slug-members',
-      route: (slug: string) => `/settings/workspaces/${slug}/members`
-    },
-    projects: {
-      name: 'settings-workspaces-slug-projects',
-      route: (slug: string) => `/settings/workspaces/${slug}/projects`
-    },
-    security: {
-      name: 'settings-workspaces-slug-security',
-      route: (slug: string) => `/settings/workspaces/${slug}/security`
-    },
-    billing: {
-      name: 'settings-workspaces-slug-billing',
-      route: (slug: string) => `/settings/workspaces/${slug}/billing`
-    },
-    regions: {
-      name: 'settings-workspaces-slug-regions',
-      route: (slug: string) => `/settings/workspaces/${slug}/regions`
-    }
+  projects: {
+    name: 'settings-workspaces-slug-projects',
+    route: (slug: string) => `/settings/workspaces/${slug}/projects`
+  },
+  security: {
+    name: 'settings-workspaces-slug-security',
+    route: (slug: string) => `/settings/workspaces/${slug}/security`
+  },
+  billing: {
+    name: 'settings-workspaces-slug-billing',
+    route: (slug: string) => `/settings/workspaces/${slug}/billing`
+  },
+  regions: {
+    name: 'settings-workspaces-slug-regions',
+    route: (slug: string) => `/settings/workspaces/${slug}/regions`
   }
 }
 

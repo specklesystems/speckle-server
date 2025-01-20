@@ -23,7 +23,7 @@
           @click="
             workspaceInfo.logo
               ? undefined
-              : navigateTo(settingsRoutes.workspace.general.route(workspaceInfo.slug))
+              : navigateTo(settingsWorkspaceRoutes.general.route(workspaceInfo.slug))
           "
         />
         <WorkspaceAvatar
@@ -55,9 +55,7 @@
           color="outline"
           :icon-left="Cog8ToothIcon"
           hide-text
-          @click="
-            navigateTo(settingsRoutes.workspace.general.route(workspaceInfo.slug))
-          "
+          @click="navigateTo(settingsWorkspaceRoutes.general.route(workspaceInfo.slug))"
         >
           Settings
         </FormButton>
@@ -87,7 +85,7 @@ import {
 import { Cog8ToothIcon } from '@heroicons/vue/24/outline'
 import { type AlertAction } from '@speckle/ui-components'
 import { Roles } from '@speckle/shared'
-import { settingsRoutes } from '~/lib/common/helpers/route'
+import { settingsWorkspaceRoutes } from '~/lib/common/helpers/route'
 
 graphql(`
   fragment WorkspaceHeader_Workspace on Workspace {
@@ -132,7 +130,7 @@ const billingAlertAction = computed<Array<AlertAction>>(() => {
       {
         title: 'Subscribe',
         onClick: () =>
-          navigateTo(settingsRoutes.workspace.billing.route(props.workspaceInfo.slug))
+          navigateTo(settingsWorkspaceRoutes.billing.route(props.workspaceInfo.slug))
       }
     ]
   }
