@@ -85,6 +85,28 @@ const mocks: SpeckleModuleMocksConfig = FF_AUTOMATE_MODULE_ENABLED
             return store.get('AutomateFunction', { id }) as any
           }
         },
+        User: {
+          automateFunctions: () => {
+            const count = faker.number.int({ min: 0, max: 20 })
+
+            return {
+              cursor: null,
+              totalCount: count,
+              items: times(count, () => store.get('AutomateFunction'))
+            } as any
+          }
+        },
+        Workspace: {
+          automateFunctions: () => {
+            const count = faker.number.int({ min: 0, max: 20 })
+
+            return {
+              cursor: null,
+              totalCount: count,
+              items: times(count, () => store.get('AutomateFunction'))
+            } as any
+          }
+        },
         Project: {
           automations: () => {
             const forceAutomations = false

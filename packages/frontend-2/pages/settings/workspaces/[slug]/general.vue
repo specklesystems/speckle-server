@@ -60,8 +60,8 @@
           </div>
           <div :key="String(isAdmin)" v-tippy="disabledTooltipText">
             <SettingsWorkspacesGeneralEditAvatar
-              v-if="workspaceResult?.workspace"
-              :workspace="workspaceResult?.workspace"
+              v-if="workspaceResult?.workspaceBySlug"
+              :workspace="workspaceResult?.workspaceBySlug"
               :disabled="!isAdmin || needsSsoLogin"
               size="xxl"
             />
@@ -94,7 +94,7 @@
       <hr class="my-6 border-outline-2" />
       <div class="flex flex-col space-y-6">
         <SettingsSectionHeader title="Leave workspace" subheading />
-        <CommonCard class="bg-foundation">
+        <CommonCard class="text-body-xs bg-foundation">
           By clicking the button below you will leave this workspace.
         </CommonCard>
         <div>
@@ -107,7 +107,7 @@
         <hr class="mb-6 mt-8 border-outline-2" />
         <div class="flex flex-col space-y-6">
           <SettingsSectionHeader title="Delete workspace" subheading />
-          <CommonCard class="bg-foundation">
+          <CommonCard class="text-body-xs bg-foundation">
             We will delete all projects where you are the sole owner, and any associated
             data. We will ask you to type in your email address and press the delete
             button.
@@ -131,20 +131,20 @@
     <SettingsWorkspacesGeneralLeaveDialog
       v-if="workspaceResult"
       v-model:open="showLeaveDialog"
-      :workspace="workspaceResult.workspace"
+      :workspace="workspaceResult.workspaceBySlug"
     />
 
     <SettingsWorkspacesGeneralDeleteDialog
       v-if="workspaceResult && isAdmin"
       v-model:open="showDeleteDialog"
-      :workspace="workspaceResult.workspace"
+      :workspace="workspaceResult.workspaceBySlug"
     />
 
     <SettingsWorkspacesGeneralEditSlugDialog
       v-if="workspaceResult && isAdmin"
       v-model:open="showEditSlugDialog"
       :base-url="baseUrl"
-      :workspace="workspaceResult.workspace"
+      :workspace="workspaceResult.workspaceBySlug"
       @update:slug="updateWorkspaceSlug"
     />
   </section>
@@ -170,6 +170,7 @@ import { useRoute } from 'vue-router'
 import { WorkspacePlanStatuses } from '~/lib/common/generated/gql/graphql'
 import { isPaidPlan } from '~/lib/billing/helpers/types'
 import { useWorkspaceSsoStatus } from '~/lib/workspaces/composables/sso'
+
 graphql(`
   fragment SettingsWorkspacesGeneral_Workspace on Workspace {
     ...SettingsWorkspacesGeneralEditAvatar_Workspace
@@ -189,11 +190,17 @@ graphql(`
   }
 `)
 
+definePageMeta({
+  layout: 'settings'
+})
+
+useHead({
+  title: 'Settings | Workspace - General'
+})
+
 type FormValues = { name: string; description: string; defaultProjectRole: StreamRoles }
 
-const props = defineProps<{
-  workspaceId: string
-}>()
+const routeSlug = computed(() => (route.params.slug as string) || '')
 
 const IconEdit = resolveComponent('IconEdit')
 
@@ -207,12 +214,12 @@ const { mutate: updateMutation } = useMutation(settingsUpdateWorkspaceMutation)
 const { result: workspaceResult, onResult } = useQuery(
   settingsWorkspaceGeneralQuery,
   () => ({
-    id: props.workspaceId
+    slug: routeSlug.value
   })
 )
 const config = useRuntimeConfig()
 const { hasSsoEnabled, needsSsoLogin } = useWorkspaceSsoStatus({
-  workspaceSlug: computed(() => workspaceResult.value?.workspace?.slug || '')
+  workspaceSlug: computed(() => workspaceResult.value?.workspaceBySlug?.slug || '')
 })
 
 const name = ref('')
@@ -224,7 +231,7 @@ const showLeaveDialog = ref(false)
 const defaultProjectRole = ref<StreamRoles>()
 
 const isAdmin = computed(
-  () => workspaceResult.value?.workspace?.role === Roles.Workspace.Admin
+  () => workspaceResult.value?.workspaceBySlug?.role === Roles.Workspace.Admin
 )
 const canDeleteWorkspace = computed(
   () =>
@@ -237,8 +244,8 @@ const canDeleteWorkspace = computed(
           WorkspacePlanStatuses.PaymentFailed,
           WorkspacePlanStatuses.CancelationScheduled
         ].includes(
-          workspaceResult.value?.workspace?.plan?.status as WorkspacePlanStatuses
-        ) && isPaidPlan(workspaceResult.value?.workspace?.plan?.name)
+          workspaceResult.value?.workspaceBySlug?.plan?.status as WorkspacePlanStatuses
+        ) && isPaidPlan(workspaceResult.value?.workspaceBySlug?.plan?.name)
       ))
 )
 const deleteWorkspaceTooltip = computed(() => {
@@ -250,15 +257,18 @@ const deleteWorkspaceTooltip = computed(() => {
 })
 
 const save = handleSubmit(async () => {
-  if (!workspaceResult.value?.workspace) return
+  if (!workspaceResult.value?.workspaceBySlug) return
 
   const input: WorkspaceUpdateInput = {
-    id: workspaceResult.value.workspace.id
+    id: workspaceResult.value.workspaceBySlug.id
   }
-  if (name.value !== workspaceResult.value.workspace.name) input.name = name.value
-  if (description.value !== workspaceResult.value.workspace.description)
+  if (name.value !== workspaceResult.value.workspaceBySlug.name) input.name = name.value
+  if (description.value !== workspaceResult.value.workspaceBySlug.description)
     input.description = description.value
-  if (defaultProjectRole.value !== workspaceResult.value.workspace.defaultProjectRole)
+  if (
+    defaultProjectRole.value !==
+    workspaceResult.value.workspaceBySlug.defaultProjectRole
+  )
     input.defaultProjectRole = defaultProjectRole.value
 
   const result = await updateMutation({ input }).catch(convertThrowIntoFetchResult)
@@ -274,7 +284,7 @@ const save = handleSubmit(async () => {
         (key) => key !== 'id'
       ),
       // eslint-disable-next-line camelcase
-      workspace_id: props.workspaceId,
+      workspace_id: workspaceResult.value.workspaceBySlug.id,
       source: 'settings'
     })
   } else {
@@ -290,10 +300,10 @@ const save = handleSubmit(async () => {
 watch(
   () => workspaceResult,
   () => {
-    if (workspaceResult.value?.workspace) {
-      name.value = workspaceResult.value.workspace.name
-      description.value = workspaceResult.value.workspace.description ?? ''
-      slug.value = workspaceResult.value.workspace.slug ?? ''
+    if (workspaceResult.value?.workspaceBySlug) {
+      name.value = workspaceResult.value.workspaceBySlug.name
+      description.value = workspaceResult.value.workspaceBySlug.description ?? ''
+      slug.value = workspaceResult.value.workspaceBySlug.slug ?? ''
     }
   },
   { deep: true, immediate: true }
@@ -301,7 +311,8 @@ watch(
 
 onResult((res) => {
   if (res.data) {
-    defaultProjectRole.value = res.data.workspace.defaultProjectRole as StreamRoles
+    defaultProjectRole.value = res.data.workspaceBySlug
+      .defaultProjectRole as StreamRoles
   }
 })
 
@@ -334,7 +345,7 @@ const openSlugEditDialog = () => {
 }
 
 const updateWorkspaceSlug = async (newSlug: string) => {
-  if (!workspaceResult.value?.workspace) {
+  if (!workspaceResult.value?.workspaceBySlug) {
     return
   }
 
@@ -342,7 +353,7 @@ const updateWorkspaceSlug = async (newSlug: string) => {
 
   const result = await updateMutation({
     input: {
-      id: workspaceResult.value.workspace.id,
+      id: workspaceResult.value.workspaceBySlug.id,
       slug: newSlug
     }
   })
@@ -357,7 +368,7 @@ const updateWorkspaceSlug = async (newSlug: string) => {
 
     slug.value = newSlug
 
-    if (route.params.slug === oldSlug) {
+    if (routeSlug.value === oldSlug) {
       router.replace(workspaceRoute(newSlug))
     }
   } else {

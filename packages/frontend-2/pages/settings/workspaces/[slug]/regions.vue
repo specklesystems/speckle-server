@@ -79,7 +79,7 @@
         </div>
         <FormButton
           class="!max-w-none !md:max-w-max w-full md:w-auto"
-          @click="goToBilling"
+          :to="settingsWorkspaceRoutes.billing.route(slug)"
         >
           Upgrade to Business
         </FormButton>
@@ -120,10 +120,9 @@ import { useMutationLoading, useQuery, useQueryLoading } from '@vue/apollo-compo
 import { graphql } from '~/lib/common/generated/gql'
 import type { SettingsWorkspacesRegionsSelect_ServerRegionItemFragment } from '~/lib/common/generated/gql/graphql'
 import { useMixpanel } from '~/lib/core/composables/mp'
-import { useMenuState } from '~/lib/settings/composables/menu'
 import { settingsWorkspaceRegionsQuery } from '~/lib/settings/graphql/queries'
-import { SettingMenuKeys } from '~/lib/settings/helpers/types'
 import { useSetDefaultWorkspaceRegion } from '~/lib/workspaces/composables/management'
+import { settingsWorkspaceRoutes } from '~/lib/common/helpers/route'
 
 graphql(`
   fragment SettingsWorkspacesRegions_Workspace on Workspace {
@@ -153,12 +152,18 @@ graphql(`
   }
 `)
 
-const props = defineProps<{
-  workspaceId: string
-}>()
+definePageMeta({
+  layout: 'settings'
+})
 
+useHead({
+  title: 'Settings | Workspace - Regions'
+})
+
+const slug = computed(() => (route.params.slug as string) || '')
+
+const route = useRoute()
 const mp = useMixpanel()
-const { goToWorkspaceMenuItem } = useMenuState()
 const pageFetchPolicy = usePageQueryStandardFetchPolicy()
 const isMutationLoading = useMutationLoading()
 const isQueryLoading = useQueryLoading()
@@ -166,7 +171,7 @@ const setDefaultWorkspaceRegion = useSetDefaultWorkspaceRegion()
 const { result } = useQuery(
   settingsWorkspaceRegionsQuery,
   () => ({
-    workspaceId: props.workspaceId
+    slug: slug.value
   }),
   () => ({
     fetchPolicy: pageFetchPolicy.value
@@ -175,7 +180,7 @@ const { result } = useQuery(
 
 const showDefaultRegionSaveDisclaimer = ref(false)
 const defaultRegion = ref<SettingsWorkspacesRegionsSelect_ServerRegionItemFragment>()
-const workspace = computed(() => result.value?.workspace)
+const workspace = computed(() => result.value?.workspaceBySlug)
 const availableRegions = computed(
   () => result.value?.serverInfo.multiRegion.regions || []
 )
@@ -201,31 +206,28 @@ const onDefaultRegionSave = () => {
 
 const saveDefaultRegion = async () => {
   const regionKey = defaultRegion.value?.key
+  if (!workspace.value) return
   if (!regionKey) return
-  if (regionKey === result.value?.workspace.defaultRegion?.key) return
+  if (regionKey === workspace.value?.defaultRegion?.key) return
 
   const res = await setDefaultWorkspaceRegion({
-    workspaceId: props.workspaceId,
+    workspaceId: workspace.value?.id,
     regionKey
   })
   if (res?.defaultRegion?.id) {
     mp.track('Workspace Default Region Set', {
       regionKey,
       // eslint-disable-next-line camelcase
-      workspace_id: props.workspaceId
+      workspace_id: workspace.value?.id
     })
     showDefaultRegionSaveDisclaimer.value = false
   }
 }
 
-const goToBilling = () => {
-  goToWorkspaceMenuItem(props.workspaceId, SettingMenuKeys.Workspace.Billing)
-}
-
 watch(
   result,
   () => {
-    defaultRegion.value = result.value?.workspace.defaultRegion || undefined
+    defaultRegion.value = workspace.value?.defaultRegion || undefined
   },
   { immediate: true }
 )

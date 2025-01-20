@@ -53,6 +53,14 @@ graphql(`
   }
 `)
 
+definePageMeta({
+  layout: 'settings'
+})
+
+useHead({
+  title: 'Settings - Emails'
+})
+
 type FormValues = { email: string }
 
 const { handleSubmit } = useForm<FormValues>()
