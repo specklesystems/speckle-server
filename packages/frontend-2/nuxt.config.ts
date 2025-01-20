@@ -209,7 +209,13 @@ export default defineNuxtConfig({
       appMiddleware: ['auth', 'settings', 'admin']
     },
     '/settings/workspaces/*': {
-      appMiddleware: ['auth', 'settings', 'admin', 'requires-workspaces-enabled']
+      appMiddleware: [
+        'auth',
+        'settings',
+        'admin',
+        'requires-workspaces-enabled',
+        'require-valid-workspace'
+      ]
     }
   },
 
