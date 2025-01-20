@@ -18,6 +18,8 @@ const _changeEvent = { type: 'change' }
 const _PI_2 = Math.PI / 2
 type MoveType = 'forward' | 'back' | 'left' | 'right' | 'up' | 'down'
 const walkingSpeed = 1.42 // m/s
+const closeRelativeFactor = 0.03
+const farRelativeFactor = 0.2
 
 export interface FlyControlsOptions {
   [name: string]: unknown
@@ -55,6 +57,8 @@ class FlyControls extends SpeckleControls {
   protected _enabled: boolean = false
   private _basisTransform: Matrix4 = new Matrix4()
   private _basisTransformInv: Matrix4 = new Matrix4()
+
+  protected _minDist: number
 
   private world: World
 
@@ -95,6 +99,10 @@ class FlyControls extends SpeckleControls {
     this._basisTransformInv.invert()
   }
 
+  public set minDist(value: number) {
+    this._minDist = value
+  }
+
   constructor(
     camera: PerspectiveCamera | OrthographicCamera,
     container: HTMLElement,
@@ -126,8 +134,14 @@ class FlyControls extends SpeckleControls {
 
     if (!this._enabled) return false
 
+    let relativeFactor = this.world.getRelativeOffset(farRelativeFactor)
+    if (this._minDist) {
+      if (this._minDist < relativeFactor * 0.5)
+        relativeFactor = this.world.getRelativeOffset(closeRelativeFactor)
+    }
+
     const deltaSeconds = delta / 1000
-    const scaledWalkingSpeed = this.world.getRelativeOffset(0.2) * walkingSpeed
+    const scaledWalkingSpeed = relativeFactor * walkingSpeed
 
     if (this.keyMap.forward)
       this.velocity.z = -scaledWalkingSpeed * this._options.moveSpeed * deltaSeconds

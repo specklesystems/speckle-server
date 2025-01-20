@@ -425,6 +425,7 @@ export class CameraController extends Extension implements SpeckleCamera {
     fallback?: number
   ): number | undefined {
     const minDist = this.getClosestGeometryDistance(fallback)
+    ;(this._controlsList[1] as FlyControls).minDist = minDist
     if (minDist === Number.POSITIVE_INFINITY) {
       return this.computeNearCameraPlaneEmpiric(targetVolume, offsetScale)
     }
