@@ -26,7 +26,7 @@
                   label="Email"
                   :rules="[
                     isEmailOrEmpty,
-                    canHaveRole({
+                    canHaveWorkspaceRole({
                       allowedDomains: props.allowedDomains,
                       workspaceRole: item.value.workspaceRole
                     })
@@ -79,7 +79,10 @@ import type { InviteGenericForm, InviteGenericItem } from '~~/lib/invites/helper
 import { emptyInviteGenericItem } from '~~/lib/invites/helpers/constants'
 import { isEmailOrEmpty } from '~~/lib/common/helpers/validation'
 import { Roles, type WorkspaceRoles, type MaybeNullOrUndefined } from '@speckle/shared'
-import { canHaveRole, matchesDomainPolicy } from '~/lib/invites/helpers/validation'
+import {
+  canHaveWorkspaceRole,
+  matchesDomainPolicy
+} from '~/lib/invites/helpers/validation'
 
 const emit = defineEmits<{
   (e: 'onSubmit', v: InviteGenericItem[]): void

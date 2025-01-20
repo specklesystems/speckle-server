@@ -16,10 +16,13 @@ export const matchesDomainPolicy = (
   allowedDomains: MaybeNullOrUndefined<string[]>
 ) => {
   if (!allowedDomains || allowedDomains.length === 0) return true
-  return allowedDomains && val ? allowedDomains.includes(val.split('@')[1]) : true
+  if (!val) return true
+
+  const emailDomain = val.split('@')[1]
+  return allowedDomains.some((domain) => emailDomain?.endsWith(domain))
 }
 
-export const canHaveRole =
+export const canHaveWorkspaceRole =
   (params: {
     allowedDomains: MaybeNullOrUndefined<string[]>
     workspaceRole?: WorkspaceRoles
