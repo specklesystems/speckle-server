@@ -55,10 +55,10 @@ export const settingsWorkspaceRegionsQuery = graphql(`
 
 export const settingsWorkspacesMembersQuery = graphql(`
   query SettingsWorkspacesMembers(
-    $workspaceId: String!
+    $slug: String!
     $invitesFilter: PendingWorkspaceCollaboratorsFilter
   ) {
-    workspace(id: $workspaceId) {
+    workspaceBySlug(slug: $slug) {
       ...SettingsWorkspacesMembers_Workspace
       ...SettingsWorkspacesMembersMembersTable_Workspace
       ...SettingsWorkspacesMembersGuestsTable_Workspace
@@ -68,11 +68,8 @@ export const settingsWorkspacesMembersQuery = graphql(`
 `)
 
 export const settingsWorkspacesMembersSearchQuery = graphql(`
-  query SettingsWorkspacesMembersSearch(
-    $workspaceId: String!
-    $filter: WorkspaceTeamFilter
-  ) {
-    workspace(id: $workspaceId) {
+  query SettingsWorkspacesMembersSearch($slug: String!, $filter: WorkspaceTeamFilter) {
+    workspaceBySlug(slug: $slug) {
       id
       team(filter: $filter) {
         items {
@@ -86,10 +83,10 @@ export const settingsWorkspacesMembersSearchQuery = graphql(`
 
 export const settingsWorkspacesInvitesSearchQuery = graphql(`
   query SettingsWorkspacesInvitesSearch(
-    $workspaceId: String!
+    $slug: String!
     $invitesFilter: PendingWorkspaceCollaboratorsFilter
   ) {
-    workspace(id: $workspaceId) {
+    workspaceBySlug(slug: $slug) {
       ...SettingsWorkspacesMembersInvitesTable_Workspace
     }
   }

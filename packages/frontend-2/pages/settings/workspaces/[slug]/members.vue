@@ -8,21 +8,21 @@
         class="mb-6"
       />
       <LayoutTabsHorizontal v-model:active-item="activeTab" :items="tabItems">
-        <template v-if="workspace" #default="{ activeItem }">
+        <template #default="{ activeItem }">
           <SettingsWorkspacesMembersTable
             v-if="activeItem.id === 'members'"
             :workspace="workspace"
-            :workspace-id="workspace.id"
+            :workspace-slug="slug"
           />
           <SettingsWorkspacesMembersGuestsTable
             v-if="activeItem.id === 'guests'"
             :workspace="workspace"
-            :workspace-id="workspace.id"
+            :workspace-slug="slug"
           />
           <SettingsWorkspacesMembersInvitesTable
             v-if="activeItem.id === 'invites'"
-            :workspace-id="workspace.id"
             :workspace="workspace"
+            :workspace-slug="slug"
           />
         </template>
       </LayoutTabsHorizontal>
@@ -36,7 +36,6 @@ import { useQuery } from '@vue/apollo-composable'
 import { graphql } from '~/lib/common/generated/gql'
 import { settingsWorkspacesMembersQuery } from '~/lib/settings/graphql/queries'
 import type { LayoutPageTabItem } from '~~/lib/layout/helpers/components'
-import { workspaceGetIdBySlugQuery } from '~~/lib/workspaces/graphql/queries'
 
 graphql(`
   fragment SettingsWorkspacesMembers_Workspace on Workspace {
@@ -67,19 +66,11 @@ useHead({
 const slug = computed(() => (route.params.slug as string) || '')
 
 const route = useRoute()
-const { result: workspaceResult } = useQuery(workspaceGetIdBySlugQuery, () => ({
+const { result } = useQuery(settingsWorkspacesMembersQuery, () => ({
   slug: slug.value
 }))
-const workspaceId = computed(() => workspaceResult.value?.workspaceBySlug.id || '')
-const { result } = useQuery(
-  settingsWorkspacesMembersQuery,
-  () => ({
-    workspaceId: workspaceId.value
-  }),
-  () => ({ enabled: !!workspaceId.value })
-)
 
-const workspace = computed(() => result.value?.workspace)
+const workspace = computed(() => result.value?.workspaceBySlug)
 const isAdmin = computed(() => workspace.value?.role === Roles.Workspace.Admin)
 const memberCount = computed(
   () =>

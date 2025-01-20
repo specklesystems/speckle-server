@@ -102,7 +102,7 @@
 </template>
 
 <script setup lang="ts">
-import { Roles, type WorkspaceRoles } from '@speckle/shared'
+import { Roles, type WorkspaceRoles, type MaybeNullOrUndefined } from '@speckle/shared'
 import { settingsWorkspacesMembersSearchQuery } from '~~/lib/settings/graphql/queries'
 import { useQuery } from '@vue/apollo-composable'
 import type { SettingsWorkspacesMembersMembersTable_WorkspaceFragment } from '~~/lib/common/generated/gql/graphql'
@@ -129,7 +129,7 @@ graphql(`
       name
       company
       verified
-      workspaceDomainPolicyCompliant(workspaceId: $workspaceId)
+      workspaceDomainPolicyCompliant
     }
   }
 `)
@@ -157,8 +157,8 @@ enum ActionTypes {
 }
 
 const props = defineProps<{
-  workspace?: SettingsWorkspacesMembersMembersTable_WorkspaceFragment
-  workspaceId: string
+  workspace: MaybeNullOrUndefined<SettingsWorkspacesMembersMembersTable_WorkspaceFragment>
+  workspaceSlug: string
 }>()
 
 const search = ref('')
@@ -173,7 +173,7 @@ const { result: searchResult, loading: searchResultLoading } = useQuery(
         ? [roleFilter.value]
         : [Roles.Workspace.Admin, Roles.Workspace.Member]
     },
-    workspaceId: props.workspaceId
+    slug: props.workspaceSlug
   }),
   () => ({
     enabled: !!search.value.length || !!roleFilter.value
@@ -194,7 +194,7 @@ const showActionsMenu = ref<Record<string, boolean>>({})
 const members = computed(() => {
   const memberArray =
     search.value.length || roleFilter.value
-      ? searchResult.value?.workspace?.team.items
+      ? searchResult.value?.workspaceBySlug?.team.items
       : props.workspace?.team.items
   return (memberArray || [])
     .map(({ user, ...rest }) => ({
@@ -214,7 +214,7 @@ const canRemoveMember = computed(
 const hasNoResults = computed(
   () =>
     (search.value.length || roleFilter.value) &&
-    searchResult.value?.workspace.team.items.length === 0
+    searchResult.value?.workspaceBySlug?.team.items.length === 0
 )
 
 const currentUserRole = computed<WorkspaceRoles | undefined>(() => {
@@ -261,22 +261,22 @@ const openDeleteUserRoleDialog = (user: UserItem) => {
 }
 
 const onUpdateRole = async (newRoleValue: WorkspaceRoles) => {
-  if (!userToModify.value || !newRoleValue) return
+  if (!userToModify.value || !newRoleValue || !props.workspace?.id) return
 
   await updateUserRole({
     userId: userToModify.value.id,
     role: newRoleValue,
-    workspaceId: props.workspaceId
+    workspaceId: props.workspace.id
   })
 }
 
 const onRemoveUser = async () => {
-  if (!userToModify.value?.id) return
+  if (!userToModify.value?.id || !props.workspace?.id) return
 
   await updateUserRole({
     userId: userToModify.value.id,
     role: null,
-    workspaceId: props.workspaceId
+    workspaceId: props.workspace.id
   })
 }
 
