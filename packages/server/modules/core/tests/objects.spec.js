@@ -63,7 +63,10 @@ const {
 const {
   finalizeInvitedServerRegistrationFactory
 } = require('@/modules/serverinvites/services/processing')
-const { getServerInfoFactory } = require('@/modules/core/repositories/server')
+const {
+  getServerInfoFactory,
+  getServerConfigFactory
+} = require('@/modules/core/repositories/server')
 const {
   createObjectFactory,
   createObjectsBatchedFactory,
@@ -103,7 +106,9 @@ const sampleObject = JSON.parse(`{
   "speckleType": "Tests.Polyline"
 }`)
 
-const getServerInfo = getServerInfoFactory({ db })
+const getServerInfo = getServerInfoFactory({
+  getServerConfig: getServerConfigFactory({ db })
+})
 const getUser = getUserFactory({ db })
 const getUsers = getUsersFactory({ db })
 const getStream = getStreamFactory({ db })

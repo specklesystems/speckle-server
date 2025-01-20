@@ -42,7 +42,10 @@ import {
   storeProjectFactory,
   storeProjectRoleFactory
 } from '@/modules/core/repositories/projects'
-import { getServerInfoFactory } from '@/modules/core/repositories/server'
+import {
+  getServerConfigFactory,
+  getServerInfoFactory
+} from '@/modules/core/repositories/server'
 import {
   getStreamFactory,
   getStreamCollaboratorsFactory,
@@ -101,7 +104,9 @@ import {
 } from '@/modules/shared/utils/subscriptions'
 import { has } from 'lodash'
 
-const getServerInfo = getServerInfoFactory({ db })
+const getServerInfo = getServerInfoFactory({
+  getServerConfig: getServerConfigFactory({ db })
+})
 const getUsers = getUsersFactory({ db })
 const getUser = getUserFactory({ db })
 const saveActivity = saveActivityFactory({ db })

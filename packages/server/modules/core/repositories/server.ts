@@ -18,7 +18,8 @@ import {
   getServerVersion
 } from '@/modules/shared/helpers/envHelper'
 import { Knex } from 'knex'
-import { LRUCache } from 'lru-cache'
+import { retrieveViaCacheFactory } from '@/modules/core/utils/cacheHandler'
+import { InMemoryCache } from '@/modules/core/utils/cacheHandler'
 
 const ServerConfig = buildTableHelper('server_config', [
   'id',
@@ -41,28 +42,52 @@ const tables = {
 
 const SERVER_CONFIG_CACHE_KEY = 'server_config'
 
-export const getServerInfoFromCacheFactory =
-  ({ cache }: { cache: LRUCache<string, ServerInfo> }) =>
-  () => {
-    const serverInfo = cache.get(SERVER_CONFIG_CACHE_KEY)
-    return serverInfo ?? null
-  }
+export type GetServerConfig = (params?: {
+  bustCache?: boolean
+}) => Promise<ServerConfigRecord>
 
-export const storeServerInfoInCacheFactory =
-  ({ cache }: { cache: LRUCache<string, ServerInfo> }) =>
-  ({ serverInfo }: { serverInfo: ServerInfo }) => {
-    cache.set(SERVER_CONFIG_CACHE_KEY, serverInfo)
+export const getServerConfigFactory =
+  (deps: { db: Knex }): GetServerConfig =>
+  async () =>
+    // ignore the bustCache parameter, as it will never be cached i.e. defaults to true
+    // An entry should always exist, as one is inserted via db migrations
+    (await tables.serverConfig(deps.db).select('*').first())!
+
+export const getServerConfigViaCacheFactory = (deps: {
+  db: Knex
+  cache: InMemoryCache<ServerConfigRecord>
+}): GetServerConfig => {
+  const { db, cache } = deps
+
+  const getFromSourceOrCache = retrieveViaCacheFactory<ServerConfigRecord>({
+    cache,
+    options: {
+      inMemoryTtlSeconds: 60
+    },
+    retrieveFromSource: async () => {
+      // An entry should always exist, as one is inserted via db migrations
+      return getServerConfigFactory({ db })()
+    }
+  })
+  return async (params) => {
+    return await getFromSourceOrCache({
+      key: SERVER_CONFIG_CACHE_KEY,
+      bustCache: params?.bustCache
+    })
   }
+}
 
 export const getServerInfoFactory =
-  (deps: { db: Knex }): GetServerInfo =>
+  (deps: { getServerConfig: GetServerConfig }): GetServerInfo =>
   async () => {
     const movedTo = getServerMovedTo()
     const movedFrom = getServerMovedFrom()
 
+    const serverConfig = await deps.getServerConfig({ bustCache: false })
+
     // An entry should always exist from migrations
     const serverInfo: ServerInfo = {
-      ...(await tables.serverConfig(deps.db).select('*').first())!,
+      ...serverConfig,
       version: getServerVersion(),
       canonicalUrl: getServerOrigin(),
       configuration: {

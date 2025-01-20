@@ -72,9 +72,14 @@ const {
   storeTokenResourceAccessDefinitionsFactory,
   storePersonalApiTokenFactory
 } = require('@/modules/core/repositories/tokens')
-const { getServerInfoFactory } = require('@/modules/core/repositories/server')
+const {
+  getServerInfoFactory,
+  getServerConfigFactory
+} = require('@/modules/core/repositories/server')
 
-const getServerInfo = getServerInfoFactory({ db })
+const getServerInfo = getServerInfoFactory({
+  getServerConfig: getServerConfigFactory({ db })
+})
 const getUser = getUserFactory({ db })
 const getUsers = getUsersFactory({ db })
 const getStream = getStreamFactory({ db })
