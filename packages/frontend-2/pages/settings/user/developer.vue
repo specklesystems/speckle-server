@@ -49,7 +49,6 @@ import type {
 } from '~~/lib/developer-settings/helpers/types'
 
 definePageMeta({
-  middleware: ['auth', 'settings'],
   layout: 'settings'
 })
 

@@ -201,6 +201,15 @@ export default defineNuxtConfig({
         to: '/settings/server/members',
         statusCode: 301
       }
+    },
+    '/settings/**': {
+      appMiddleware: ['auth', 'settings']
+    },
+    '/settings/server/*': {
+      appMiddleware: ['auth', 'settings', 'admin']
+    },
+    '/settings/workspaces/*': {
+      appMiddleware: ['auth', 'settings', 'admin', 'requires-workspaces-enabled']
     }
   },
 

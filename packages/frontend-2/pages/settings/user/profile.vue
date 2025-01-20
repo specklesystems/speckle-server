@@ -38,6 +38,10 @@ useHead({
   title: 'Settings - Profile'
 })
 
+definePageMeta({
+  layout: 'settings'
+})
+
 const { distinctId, activeUser: user } = useActiveUser()
 const { copy } = useClipboard()
 

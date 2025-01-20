@@ -29,7 +29,6 @@ import type { SettingsServerRegionsTable_ServerRegionItemFragment } from '~/lib/
 import { graphql } from '~~/lib/common/generated/gql'
 
 definePageMeta({
-  middleware: ['auth', 'settings', 'admin'],
   layout: 'settings'
 })
 

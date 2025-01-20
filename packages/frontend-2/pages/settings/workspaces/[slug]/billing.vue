@@ -218,7 +218,6 @@ graphql(`
 `)
 
 definePageMeta({
-  middleware: ['auth', 'settings'],
   layout: 'settings'
 })
 
