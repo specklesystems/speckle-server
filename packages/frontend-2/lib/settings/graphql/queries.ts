@@ -102,12 +102,12 @@ export const settingsUserEmailsQuery = graphql(`
 
 export const settingsWorkspacesProjectsQuery = graphql(`
   query SettingsWorkspacesProjects(
-    $workspaceId: String!
+    $slug: String!
     $limit: Int!
     $cursor: String
     $filter: WorkspaceProjectsFilter
   ) {
-    workspace(id: $workspaceId) {
+    workspaceBySlug(slug: $slug) {
       id
       slug
       readOnly

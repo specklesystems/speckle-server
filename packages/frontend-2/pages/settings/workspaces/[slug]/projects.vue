@@ -12,8 +12,8 @@
         v-else
         v-model:search="search"
         :projects="projects"
-        :workspace-id="workspaceId"
-        :disable-create="result?.workspace.readOnly"
+        :workspace-id="result?.workspaceBySlug.id"
+        :disable-create="result?.workspaceBySlug.readOnly"
       />
       <InfiniteLoading
         v-if="projects?.length"
@@ -27,11 +27,9 @@
 
 <script setup lang="ts">
 import { settingsWorkspacesProjectsQuery } from '~~/lib/settings/graphql/queries'
-import { workspaceGetIdBySlugQuery } from '~~/lib/workspaces/graphql/queries'
 import { usePaginatedQuery } from '~/lib/common/composables/graphql'
 import { graphql } from '~/lib/common/generated/gql'
 import { useWorkspaceProjectsUpdatedTracking } from '~/lib/workspaces/composables/projectUpdates'
-import { useQuery } from '@vue/apollo-composable'
 
 graphql(`
   fragment SettingsWorkspacesProjects_ProjectCollection on ProjectCollection {
@@ -50,15 +48,11 @@ useHead({
   title: 'Settings | Workspace - Projects'
 })
 
-const slug = computed(() => (route.params.slug as string) || '')
-
 const route = useRoute()
-const { result: workspaceResult } = useQuery(workspaceGetIdBySlugQuery, () => ({
-  slug: slug.value
-}))
-const workspaceId = computed(() => workspaceResult.value?.workspaceBySlug.id || '')
 
 const search = ref('')
+
+const slug = computed(() => (route.params.slug as string) || '')
 
 const {
   identifier,
@@ -69,11 +63,10 @@ const {
   baseVariables: computed(() => ({
     limit: 50,
     filter: { search: search.value?.length ? search.value : null },
-    workspaceId: workspaceId.value,
-    enabled: !!workspaceId.value
+    slug: slug.value
   })),
-  resolveKey: (vars) => [vars.workspaceId, vars.filter?.search || ''],
-  resolveCurrentResult: (res) => res?.workspace.projects,
+  resolveKey: (vars) => [vars.slug, vars.filter?.search || ''],
+  resolveCurrentResult: (res) => res?.workspaceBySlug.projects,
   resolveNextPageVariables: (baseVars, cursor) => ({
     ...baseVars,
     cursor
@@ -81,6 +74,6 @@ const {
   resolveCursorFromVariables: (vars) => vars.cursor
 })
 
-const projects = computed(() => result.value?.workspace.projects.items || [])
+const projects = computed(() => result.value?.workspaceBySlug.projects.items || [])
 useWorkspaceProjectsUpdatedTracking(computed(() => slug.value))
 </script>

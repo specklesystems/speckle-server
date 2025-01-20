@@ -123,11 +123,3 @@ export const workspaceWizardRegionQuery = graphql(`
     }
   }
 `)
-
-export const workspaceGetIdBySlugQuery = graphql(`
-  query WorkspaceGetIdBySlug($slug: String!) {
-    workspaceBySlug(slug: $slug) {
-      id
-    }
-  }
-`)
