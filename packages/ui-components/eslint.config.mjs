@@ -147,6 +147,14 @@ const configs = [
       '@typescript-eslint/ban-types': 'off'
     }
   },
+  {
+    files: ['utils/*.cjs'],
+    languageOptions: {
+      globals: {
+        ...globals.node
+      }
+    }
+  },
   prettierConfig
 ]
 
