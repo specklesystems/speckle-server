@@ -221,7 +221,6 @@ const initKnexPrometheusMetricsForRegionEvents = async (params: {
     if (reqCtx) {
       reqCtx.dbMetrics.totalCount++
       reqCtx.dbMetrics.totalDuration += durationMs || 0
-      reqCtx.dbMetrics.queries.push(data.sql)
     }
 
     params.logger.info(
@@ -262,7 +261,6 @@ const initKnexPrometheusMetricsForRegionEvents = async (params: {
     if (reqCtx) {
       reqCtx.dbMetrics.totalCount++
       reqCtx.dbMetrics.totalDuration += durationMs || 0
-      reqCtx.dbMetrics.queries.push(data.sql)
     }
 
     params.logger.warn(
