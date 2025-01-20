@@ -28,7 +28,9 @@
           </div>
         </div>
 
-        <FormButton v-else @click="goToBilling">Upgrade to Plus</FormButton>
+        <FormButton v-else :to="settingsWorkspaceRoutes.billing.route(workspace.slug)">
+          Upgrade to Plus
+        </FormButton>
       </div>
 
       <CommonCard
@@ -140,9 +142,8 @@ import type { LayoutMenuItem } from '@speckle/ui-components'
 import { HorizontalDirection } from '~~/lib/common/composables/window'
 import { EllipsisHorizontalIcon } from '@heroicons/vue/24/solid'
 import { graphql } from '~/lib/common/generated/gql'
-import { useMenuState } from '~/lib/settings/composables/menu'
-import { SettingMenuKeys } from '~/lib/settings/helpers/types'
 import { Roles } from '@speckle/shared'
+import { settingsWorkspaceRoutes } from '~/lib/common/helpers/route'
 
 graphql(`
   fragment SettingsWorkspacesSecuritySsoWrapper_Workspace on Workspace {
@@ -169,7 +170,7 @@ enum ActionTypes {
   Delete = 'delete'
 }
 
-const { goToWorkspaceMenuItem } = useMenuState()
+const route = useRoute()
 const apiOrigin = useApiOrigin()
 const logger = useLogger()
 const menuId = useId()
@@ -233,11 +234,6 @@ const handleCancel = () => {
 const redirectUrl = computed(() => {
   return `${apiOrigin}/api/v1/workspaces/${props.workspace.slug}/sso/oidc/callback`
 })
-
-const goToBilling = () => {
-  goToWorkspaceMenuItem(props.workspace.id, SettingMenuKeys.Workspace.Billing)
-}
-const route = useRoute()
 
 const errorProviderInfo = ref<
   | {

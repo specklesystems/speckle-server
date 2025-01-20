@@ -5,11 +5,8 @@
       <template v-if="isBillingIntegrationEnabled">
         <div class="flex flex-col gap-y-4 md:gap-y-6">
           <BillingAlert
-            v-if="
-              workspaceResult &&
-              workspaceResult.workspace?.plan?.status !== WorkspacePlanStatuses.Valid
-            "
-            :workspace="workspaceResult.workspace"
+            v-if="workspace && workspace?.plan?.status !== WorkspacePlanStatuses.Valid"
+            :workspace="workspace"
           />
           <SettingsSectionHeader title="Billing summary" subheading class="pt-4" />
           <div class="border border-outline-3 rounded-lg">
@@ -115,7 +112,7 @@
                 </p>
               </div>
 
-              <FormButton color="outline" @click="billingPortalRedirect(workspaceId)">
+              <FormButton color="outline" @click="billingPortalRedirect(workspace?.id)">
                 Open billing portal
               </FormButton>
             </div>
@@ -124,7 +121,7 @@
           <SettingsSectionHeader :title="pricingTableHeading" subheading class="pt-4" />
           <SettingsWorkspacesBillingPricingTable
             v-if="isPurchasablePlan || statusIsTrial"
-            :workspace-id="workspaceId"
+            :workspace-id="workspace?.id"
             :current-plan="currentPlan"
             :active-billing-interval="subscription?.billingInterval"
             :is-admin="isAdmin"
@@ -140,7 +137,7 @@
             target="_blank"
             @click="
               mixpanel.track('Workspace Docs Link Clicked', {
-                workspace_id: props.workspaceId
+                workspace_id: workspace?.id
               })
             "
           >
@@ -152,7 +149,7 @@
             href="mailto:billing@speckle.systems"
             @click="
               mixpanel.track('Workspace Support Link Clicked', {
-                workspace_id: props.workspaceId
+                workspace_id: workspace?.id
               })
             "
           >
@@ -161,11 +158,11 @@
         </div>
 
         <SettingsWorkspacesBillingUpgradeDialog
-          v-if="selectedPlanName && selectedPlanCycle && workspaceId"
+          v-if="selectedPlanName && selectedPlanCycle && workspace?.id"
           v-model:open="isUpgradeDialogOpen"
           :plan="selectedPlanName"
           :billing-interval="selectedPlanCycle"
-          :workspace-id="workspaceId"
+          :workspace-id="workspace.id"
         />
       </template>
       <template v-else>Coming soon</template>
@@ -202,6 +199,7 @@ graphql(`
       name
       status
       createdAt
+      paymentMethod
     }
     subscription {
       billingInterval
@@ -220,15 +218,22 @@ graphql(`
   }
 `)
 
-const props = defineProps<{
-  workspaceId: string
-}>()
+definePageMeta({
+  layout: 'settings'
+})
 
+useHead({
+  title: 'Settings | Workspace - Billing'
+})
+
+const slug = computed(() => (route.params.slug as string) || '')
+
+const route = useRoute()
 const isBillingIntegrationEnabled = useIsBillingIntegrationEnabled()
 const { result: workspaceResult } = useQuery(
   settingsWorkspaceBillingQuery,
   () => ({
-    workspaceId: props.workspaceId
+    slug: slug.value
   }),
   () => ({
     enabled: isBillingIntegrationEnabled
@@ -246,7 +251,7 @@ const selectedPlanName = ref<WorkspacePlans>()
 const selectedPlanCycle = ref<BillingInterval>()
 const isUpgradeDialogOpen = ref(false)
 
-const workspace = computed(() => workspaceResult.value?.workspace)
+const workspace = computed(() => workspaceResult.value?.workspaceBySlug)
 const currentPlan = computed(() => workspace.value?.plan)
 const subscription = computed(() => workspace.value?.subscription)
 const statusIsTrial = computed(
@@ -378,7 +383,7 @@ const showStatusBadge = computed(() => {
 
 const onPlanSelected = (plan: { name: WorkspacePlans; cycle: BillingInterval }) => {
   const { name, cycle } = plan
-  if (!isPaidPlan(name) || !props.workspaceId) return
+  if (!isPaidPlan(name) || !workspace.value?.id) return
 
   if (
     statusIsTrial.value ||
@@ -389,13 +394,13 @@ const onPlanSelected = (plan: { name: WorkspacePlans; cycle: BillingInterval }) 
       plan,
       cycle,
       // eslint-disable-next-line camelcase
-      workspace_id: props.workspaceId
+      workspace_id: workspace.value?.id
     })
 
     redirectToCheckout({
       plan: name as unknown as PaidWorkspacePlans,
       cycle,
-      workspaceId: props.workspaceId
+      workspaceId: workspace.value?.id
     })
   } else {
     selectedPlanName.value = name
