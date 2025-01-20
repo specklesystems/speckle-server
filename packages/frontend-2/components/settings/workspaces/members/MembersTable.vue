@@ -4,7 +4,6 @@
       v-model:search="search"
       v-model:role="roleFilter"
       search-placeholder="Search members..."
-      :workspace-id="workspaceId"
       :workspace="workspace"
       show-role-filter
     />

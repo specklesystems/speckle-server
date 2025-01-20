@@ -3,7 +3,6 @@
     <SettingsWorkspacesMembersTableHeader
       v-model:search="search"
       search-placeholder="Search guests..."
-      :workspace-id="workspaceId"
       :workspace="workspace"
     />
     <LayoutTable
@@ -83,7 +82,7 @@
       v-if="userToModify"
       v-model:open="showGuestsPermissionsDialog"
       :user="userToModify"
-      :workspace-id="workspaceId"
+      :workspace-id="workspace?.id"
     />
 
     <SettingsWorkspacesMembersChangeRoleDialog
