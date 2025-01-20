@@ -2,11 +2,7 @@
   <section>
     <div class="md:max-w-5xl md:mx-auto pb-6 md:pb-0">
       <SettingsSectionHeader title="Projects" text="Manage projects on your server" />
-      <SettingsSharedProjects
-        v-model:search="search"
-        :projects="projects"
-        @close="$emit('close')"
-      />
+      <SettingsSharedProjects v-model:search="search" :projects="projects" />
       <InfiniteLoading
         v-if="projects?.length"
         :settings="{ identifier }"
@@ -31,9 +27,14 @@ graphql(`
     }
   }
 `)
-defineEmits<{
-  (e: 'close'): void
-}>()
+
+definePageMeta({
+  layout: 'settings'
+})
+
+useHead({
+  title: 'Settings | Server - Projects'
+})
 
 const search = ref('')
 

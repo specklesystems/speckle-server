@@ -12,9 +12,8 @@
         v-else
         v-model:search="search"
         :projects="projects"
-        :workspace-id="workspaceId"
-        :disable-create="result?.workspace.readOnly"
-        @close="$emit('close')"
+        :workspace-id="result?.workspaceBySlug.id"
+        :disable-create="result?.workspaceBySlug.readOnly"
       />
       <InfiniteLoading
         v-if="projects?.length"
@@ -41,15 +40,19 @@ graphql(`
   }
 `)
 
-const props = defineProps<{
-  workspaceId: string
-}>()
+definePageMeta({
+  layout: 'settings'
+})
 
-defineEmits<{
-  (e: 'close'): void
-}>()
+useHead({
+  title: 'Settings | Workspace - Projects'
+})
+
+const route = useRoute()
 
 const search = ref('')
+
+const slug = computed(() => (route.params.slug as string) || '')
 
 const {
   identifier,
@@ -60,10 +63,10 @@ const {
   baseVariables: computed(() => ({
     limit: 50,
     filter: { search: search.value?.length ? search.value : null },
-    workspaceId: props.workspaceId
+    slug: slug.value
   })),
-  resolveKey: (vars) => [vars.workspaceId, vars.filter?.search || ''],
-  resolveCurrentResult: (res) => res?.workspace.projects,
+  resolveKey: (vars) => [vars.slug, vars.filter?.search || ''],
+  resolveCurrentResult: (res) => res?.workspaceBySlug.projects,
   resolveNextPageVariables: (baseVars, cursor) => ({
     ...baseVars,
     cursor
@@ -71,8 +74,6 @@ const {
   resolveCursorFromVariables: (vars) => vars.cursor
 })
 
-const projects = computed(() => result.value?.workspace.projects.items || [])
-const workspaceSlug = computed(() => result.value?.workspace.slug || '')
-
-useWorkspaceProjectsUpdatedTracking(computed(() => workspaceSlug.value))
+const projects = computed(() => result.value?.workspaceBySlug.projects.items || [])
+useWorkspaceProjectsUpdatedTracking(computed(() => slug.value))
 </script>

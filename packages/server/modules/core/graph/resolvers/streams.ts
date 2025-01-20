@@ -29,7 +29,6 @@ import {
   getStreamCollaboratorsFactory,
   canUserFavoriteStreamFactory,
   setStreamFavoritedFactory,
-  legacyGetStreamUsersFactory,
   getUserStreamsPageFactory,
   getUserStreamsCountFactory
 } from '@/modules/core/repositories/streams'
@@ -177,7 +176,6 @@ const favoriteStream = favoriteStreamFactory({
   setStreamFavorited: setStreamFavoritedFactory({ db }),
   getStream
 })
-const getStreamUsers = legacyGetStreamUsersFactory({ db })
 const getUserStreams = getUserStreamsPageFactory({ db })
 const getUserStreamsCount = getUserStreamsCountFactory({ db })
 
@@ -267,9 +265,14 @@ export = {
   },
 
   Stream: {
-    async collaborators(parent) {
-      const users = await getStreamUsers({ streamId: parent.id })
-      return users
+    async collaborators(parent, _args, ctx) {
+      const collaborators = await ctx.loaders.streams.getCollaborators.load(parent.id)
+
+      // In this GQL return type, role actually refers to the stream role
+      return collaborators.map((collaborator) => ({
+        ...collaborator,
+        role: collaborator.streamRole
+      }))
     },
 
     async pendingCollaborators(parent) {

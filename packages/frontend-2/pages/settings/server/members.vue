@@ -27,6 +27,14 @@ import {
 } from '~~/lib/server-management/graphql/queries'
 import { useQuery } from '@vue/apollo-composable'
 
+definePageMeta({
+  layout: 'settings'
+})
+
+useHead({
+  title: 'Settings | Server - Members'
+})
+
 const { result: invitesResult } = useQuery(getInvitesCountQuery)
 const { result: usersResult } = useQuery(getUsersCountQuery)
 

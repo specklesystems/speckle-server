@@ -62,6 +62,9 @@ enum WorkspacePlans {
   business
   unlimited
   academia
+  starterInvoiced
+  plusInvoiced
+  businessInvoiced
 }
 
 enum WorkspacePlanStatuses {
@@ -73,10 +76,17 @@ enum WorkspacePlanStatuses {
   expired
 }
 
+enum WorkspacePaymentMethod {
+  unpaid
+  invoice
+  billing
+}
+
 type WorkspacePlan {
   name: WorkspacePlans!
   status: WorkspacePlanStatuses!
   createdAt: DateTime!
+  paymentMethod: WorkspacePaymentMethod!
 }
 
 type WorkspaceSubscriptionSeats {

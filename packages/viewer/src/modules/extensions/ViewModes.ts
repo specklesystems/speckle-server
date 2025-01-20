@@ -1,4 +1,6 @@
-import { UpdateFlags } from '../../IViewer.js'
+import { IViewer, UpdateFlags, ViewerEvent } from '../../IViewer.js'
+import { BasitPass } from '../pipeline/Passes/BasitPass.js'
+import { GPass } from '../pipeline/Passes/GPass.js'
 import { ArcticViewPipeline } from '../pipeline/Pipelines/ArcticViewPipeline.js'
 import { BasitPipeline } from '../pipeline/Pipelines/BasitViewPipeline.js'
 import { DefaultPipeline } from '../pipeline/Pipelines/DefaultPipeline.js'
@@ -9,6 +11,7 @@ import { MRTShadedViewPipeline } from '../pipeline/Pipelines/MRT/MRTShadedViewPi
 import { PenViewPipeline } from '../pipeline/Pipelines/PenViewPipeline.js'
 import { ShadedViewPipeline } from '../pipeline/Pipelines/ShadedViewPipeline.js'
 import { Extension } from './Extension.js'
+import { FilteringExtension, FilteringState } from './FilteringExtension.js'
 
 export enum ViewMode {
   DEFAULT,
@@ -28,6 +31,34 @@ export interface ViewModeEventPayload {
 }
 
 export class ViewModes extends Extension {
+  public get inject() {
+    return [FilteringExtension]
+  }
+
+  public constructor(
+    viewer: IViewer,
+    protected filteringExtension: FilteringExtension
+  ) {
+    super(viewer)
+    /** Not a super fan of this, but it avoids us caching another set of per vertex color indices */
+    if (filteringExtension)
+      filteringExtension.on(ViewerEvent.FilteringStateSet, (arg: FilteringState) => {
+        /** If no texture colored filters are present */
+        if (
+          (!arg.colorGroups || !arg.colorGroups.length) &&
+          (!arg.userColorGroups || !arg.userColorGroups.length)
+        ) {
+          /** If any basit pass exists, set it's required color indices */
+          this.viewer
+            .getRenderer()
+            .pipeline.getPass('BASIT')
+            .forEach((pass: GPass) => {
+              ;(pass as BasitPass).applyColorIndices()
+            })
+        }
+      })
+  }
+
   public on<T extends ViewModeEvent>(
     eventType: T,
     listener: (arg: ViewModeEventPayload[T]) => void

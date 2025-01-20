@@ -106,6 +106,14 @@ import type {
   Query
 } from '~~/lib/common/generated/gql/graphql'
 
+definePageMeta({
+  layout: 'settings'
+})
+
+useHead({
+  title: 'Settings | Server - General'
+})
+
 type FormValues = {
   name: string
   description: string
