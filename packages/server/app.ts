@@ -106,12 +106,20 @@ function logSubscriptionOperation(params: {
   const userId = ctx.userId
   if (!error && !response) return
 
+  const reqCtx = getRequestContext()
+
   const logger = ctx.log.child({
     graphql_query: execParams.query.toString(),
     graphql_variables: redactSensitiveVariables(execParams.variables),
     graphql_operation_name: execParams.operationName,
     graphql_operation_type: 'subscription',
-    userId
+    userId,
+    ...(reqCtx
+      ? {
+          req: { id: reqCtx.requestId },
+          dbMetrics: reqCtx.dbMetrics
+        }
+      : {})
   })
 
   const errMsg = 'GQL subscription event {graphql_operation_name} errored'
