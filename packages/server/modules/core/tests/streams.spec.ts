@@ -18,8 +18,8 @@ import {
   createStreamFactory,
   deleteStreamFactory,
   getStreamFactory,
+  getStreamsCollaboratorsFactory,
   grantStreamPermissionsFactory,
-  legacyGetStreamUsersFactory,
   markBranchStreamUpdatedFactory,
   markCommitStreamUpdatedFactory,
   revokeStreamPermissionsFactory,
@@ -198,7 +198,7 @@ const isStreamCollaborator = isStreamCollaboratorFactory({
   getStream
 })
 const grantPermissionsStream = grantStreamPermissionsFactory({ db })
-const getStreamUsers = legacyGetStreamUsersFactory({ db })
+const getStreamsUsers = getStreamsCollaboratorsFactory({ db })
 const createObject = createObjectFactory({
   storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({ db }),
   storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db })
@@ -338,7 +338,9 @@ describe('Streams @core-streams', () => {
     })
 
     it('Should get the users with access to a stream', async () => {
-      const users = await getStreamUsers({ streamId: testStream.id })
+      const ret = await getStreamsUsers({ streamIds: [testStream.id] })
+      const users = ret[testStream.id]
+
       expect(users).to.have.lengthOf(2)
       expect(users[0]).to.not.have.property('email')
       expect(users[0]).to.have.property('id')

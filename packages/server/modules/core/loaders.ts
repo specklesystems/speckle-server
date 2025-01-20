@@ -4,7 +4,7 @@ import { graphDataloadersBuilders } from '@/modules'
 import { ModularizedDataLoadersConstraint } from '@/modules/shared/helpers/graphqlHelper'
 import { Knex } from 'knex'
 import { isNonNullable, Optional } from '@speckle/shared'
-import { flatten, noop } from 'lodash'
+import { flatten, noop, isFunction } from 'lodash'
 import { db } from '@/db/knex'
 
 /**
@@ -26,7 +26,12 @@ const makeLazyDataLoader = <K, V, C = K>(
         dataloader = new DataLoader<K, V, C>(...args)
       }
 
-      return dataloader[prop as keyof DataLoader<K, V, C>]
+      const ret = dataloader[prop as keyof DataLoader<K, V, C>]
+      if (isFunction(ret)) {
+        return ret.bind(dataloader)
+      } else {
+        return ret
+      }
     }
   })
 }
