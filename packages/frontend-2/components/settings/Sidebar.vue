@@ -2,17 +2,11 @@
 <!-- eslint-disable vuejs-accessibility/click-events-have-key-events -->
 <template>
   <div class="group">
-    <div
-      class="lg:hidden absolute inset-0 backdrop-blur-sm z-40 transition-all"
-      :class="isOpenMobile ? 'opacity-100' : 'opacity-0 pointer-events-none'"
-      @click="isOpenMobile = false"
-    />
     <Portal to="mobile-navigation">
       <div class="lg:hidden flex items-center justify-between">
         <FormButton
           :color="isOpenMobile ? 'outline' : 'subtle'"
           size="sm"
-          class="mt-px"
           @click="isOpenMobile = !isOpenMobile"
         >
           <IconSidebar v-if="!isOpenMobile" class="h-4 w-4 -ml-1 -mr-1" />

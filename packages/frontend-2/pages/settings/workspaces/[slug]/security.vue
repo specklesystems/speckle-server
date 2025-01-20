@@ -110,7 +110,7 @@
     </div>
 
     <SettingsWorkspacesSecurityDomainRemoveDialog
-      v-if="removeDialogDomain && workspace"
+      v-if="removeDialogDomain"
       v-model:open="showRemoveDomainDialog"
       :workspace-id="workspace?.id"
       :domain="removeDialogDomain"
