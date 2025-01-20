@@ -77,8 +77,8 @@
             <div class="flex-1 flex-col pr-6 gap-y-1">
               <p class="text-body-xs font-medium text-foreground">Domain protection</p>
               <p class="text-body-2xs text-foreground-2 leading-5 max-w-md">
-                Admins won't be able to add users as members (or admins) to a workspace
-                unless they are part of a workspace's email domain.
+                Only users with email addresses from your verified domains can be added
+                as workspace members or administrators.
               </p>
             </div>
             <FormSwitch
@@ -91,11 +91,11 @@
           <div class="flex items-center">
             <div class="flex-1 flex-col pr-6 gap-y-1">
               <p class="text-body-xs font-medium text-foreground">
-                Domain discoverability
+                Domain-based discoverability
               </p>
               <p class="text-body-2xs text-foreground-2 leading-5 max-w-md">
-                Makes your workspace discoverable by employees who sign up with your
-                company's specified email domain.
+                When enabled, users with a verified email address from your verified
+                domain list will be able to able to automatically join this workspace.
               </p>
             </div>
             <FormSwitch
@@ -204,6 +204,7 @@ const verifiedUserDomains = computed(() => {
   ]
 })
 
+// TODO: Refactor this
 const isDomainProtectionEnabled = computed({
   get: () => workspace.value?.domainBasedMembershipProtectionEnabled || false,
   set: async (newVal) => {
@@ -248,6 +249,11 @@ const isDomainProtectionEnabled = computed({
         value: newVal,
         // eslint-disable-next-line camelcase
         workspace_id: workspace.value?.id
+      })
+
+      triggerNotification({
+        type: ToastNotificationType.Success,
+        title: `Domain protection ${newVal ? 'enabled' : 'disabled'}`
       })
     } else {
       triggerNotification({
@@ -301,6 +307,11 @@ const isDomainDiscoverabilityEnabled = computed({
         value: newVal,
         // eslint-disable-next-line camelcase
         workspace_id: workspace.value?.id
+      })
+
+      triggerNotification({
+        type: ToastNotificationType.Success,
+        title: `Discoverability ${newVal ? 'enabled' : 'disabled'}`
       })
     } else {
       triggerNotification({
