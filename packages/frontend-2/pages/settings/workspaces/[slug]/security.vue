@@ -120,19 +120,19 @@
 
 <script setup lang="ts">
 import type { ShallowRef } from 'vue'
-import { useApolloClient, useQuery } from '@vue/apollo-composable'
+import { useQuery, useMutation } from '@vue/apollo-composable'
 import { graphql } from '~/lib/common/generated/gql'
-import type {
-  Workspace,
-  SettingsWorkspacesSecurityDomainRemoveDialog_WorkspaceDomainFragment
-} from '~/lib/common/generated/gql/graphql'
-import { SettingsUpdateWorkspaceSecurityDocument } from '~/lib/common/generated/gql/graphql'
-import { getCacheId, getFirstErrorMessage } from '~/lib/common/helpers/graphql'
+import type { SettingsWorkspacesSecurityDomainRemoveDialog_WorkspaceDomainFragment } from '~/lib/common/generated/gql/graphql'
+import { getFirstErrorMessage } from '~/lib/common/helpers/graphql'
 import { settingsWorkspacesSecurityQuery } from '~/lib/settings/graphql/queries'
 import { useAddWorkspaceDomain } from '~/lib/settings/composables/management'
 import { useMixpanel } from '~/lib/core/composables/mp'
 import { blockedDomains } from '@speckle/shared'
 import { useIsWorkspacesSsoEnabled } from '~/composables/globals'
+import {
+  workspaceUpdateDomainProtectionMutation,
+  workspaceUpdateDiscoverabilityMutation
+} from '~/lib/workspaces/graphql/mutations'
 
 graphql(`
   fragment SettingsWorkspacesSecurity_Workspace on Workspace {
@@ -173,8 +173,13 @@ const route = useRoute()
 const addWorkspaceDomain = useAddWorkspaceDomain()
 const { triggerNotification } = useGlobalToast()
 const isSsoEnabled = useIsWorkspacesSsoEnabled()
-const apollo = useApolloClient().client
 const mixpanel = useMixpanel()
+const { mutate: updateDomainProtection } = useMutation(
+  workspaceUpdateDomainProtectionMutation
+)
+const { mutate: updateDiscoverability } = useMutation(
+  workspaceUpdateDiscoverabilityMutation
+)
 
 const selectedDomain = ref<string>()
 const showRemoveDomainDialog = ref(false)
@@ -204,47 +209,19 @@ const verifiedUserDomains = computed(() => {
   ]
 })
 
-// TODO: Refactor this
 const isDomainProtectionEnabled = computed({
   get: () => workspace.value?.domainBasedMembershipProtectionEnabled || false,
   set: async (newVal) => {
     if (!workspace.value?.id) return
-    const mutationResult = await apollo
-      .mutate({
-        mutation: SettingsUpdateWorkspaceSecurityDocument,
-        variables: {
-          input: {
-            id: workspace.value?.id,
-            domainBasedMembershipProtectionEnabled: newVal
-          }
-        },
-        optimisticResponse: {
-          workspaceMutations: {
-            update: {
-              __typename: 'Workspace',
-              id: workspace.value?.id,
-              domainBasedMembershipProtectionEnabled: newVal,
-              discoverabilityEnabled: workspace.value?.discoverabilityEnabled || false
-            }
-          }
-        },
-        update: (cache, res) => {
-          const { data } = res
-          if (!data?.workspaceMutations || !workspace.value) return
 
-          cache.modify<Workspace>({
-            id: getCacheId('Workspace', workspace.value.id),
-            fields: {
-              domainBasedMembershipProtectionEnabled: () =>
-                res.data?.workspaceMutations.update
-                  .domainBasedMembershipProtectionEnabled || false
-            }
-          })
-        }
-      })
-      .catch(convertThrowIntoFetchResult)
+    const result = await updateDomainProtection({
+      input: {
+        id: workspace.value.id,
+        domainBasedMembershipProtectionEnabled: newVal
+      }
+    }).catch(convertThrowIntoFetchResult)
 
-    if (mutationResult?.data) {
+    if (result?.data) {
       mixpanel.track('Workspace Domain Protection Toggled', {
         value: newVal,
         // eslint-disable-next-line camelcase
@@ -259,7 +236,7 @@ const isDomainProtectionEnabled = computed({
       triggerNotification({
         type: ToastNotificationType.Danger,
         title: 'Failed to update',
-        description: getFirstErrorMessage(mutationResult?.errors)
+        description: getFirstErrorMessage(result?.errors)
       })
     }
   }
@@ -269,40 +246,15 @@ const isDomainDiscoverabilityEnabled = computed({
   get: () => workspace.value?.discoverabilityEnabled || false,
   set: async (newVal) => {
     if (!workspace.value?.id) return
-    const mutationResult = await apollo.mutate({
-      mutation: SettingsUpdateWorkspaceSecurityDocument,
-      variables: {
-        input: {
-          id: workspace.value?.id,
-          discoverabilityEnabled: newVal
-        }
-      },
-      optimisticResponse: {
-        workspaceMutations: {
-          update: {
-            __typename: 'Workspace',
-            id: workspace.value?.id,
-            domainBasedMembershipProtectionEnabled:
-              workspace.value?.domainBasedMembershipProtectionEnabled || false,
-            discoverabilityEnabled: newVal
-          }
-        }
-      },
-      update: (cache, res) => {
-        const { data } = res
-        if (!data?.workspaceMutations) return
 
-        cache.modify<Workspace>({
-          id: getCacheId('Workspace', workspace.value?.id || ''),
-          fields: {
-            discoverabilityEnabled: () =>
-              res.data?.workspaceMutations.update.discoverabilityEnabled || false
-          }
-        })
+    const result = await updateDiscoverability({
+      input: {
+        id: workspace.value.id,
+        discoverabilityEnabled: newVal
       }
-    })
+    }).catch(convertThrowIntoFetchResult)
 
-    if (mutationResult?.data) {
+    if (result?.data) {
       mixpanel.track('Workspace Discoverability Toggled', {
         value: newVal,
         // eslint-disable-next-line camelcase
@@ -317,7 +269,7 @@ const isDomainDiscoverabilityEnabled = computed({
       triggerNotification({
         type: ToastNotificationType.Danger,
         title: 'Failed to update',
-        description: getFirstErrorMessage(mutationResult?.errors)
+        description: getFirstErrorMessage(result?.errors)
       })
     }
   }

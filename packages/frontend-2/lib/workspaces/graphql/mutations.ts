@@ -83,3 +83,25 @@ export const updateWorkspaceCreationStateMutation = graphql(`
     }
   }
 `)
+
+export const workspaceUpdateDomainProtectionMutation = graphql(`
+  mutation WorkspaceUpdateDomainProtectionMutation($input: WorkspaceUpdateInput!) {
+    workspaceMutations {
+      update(input: $input) {
+        id
+        domainBasedMembershipProtectionEnabled
+      }
+    }
+  }
+`)
+
+export const workspaceUpdateDiscoverabilityMutation = graphql(`
+  mutation WorkspaceUpdateDiscoverabilityMutation($input: WorkspaceUpdateInput!) {
+    workspaceMutations {
+      update(input: $input) {
+        id
+        discoverabilityEnabled
+      }
+    }
+  }
+`)

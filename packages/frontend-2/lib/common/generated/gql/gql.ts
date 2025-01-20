@@ -355,6 +355,8 @@ const documents = {
     "\n  mutation SetDefaultWorkspaceRegion($workspaceId: String!, $regionKey: String!) {\n    workspaceMutations {\n      setDefaultRegion(workspaceId: $workspaceId, regionKey: $regionKey) {\n        id\n        defaultRegion {\n          id\n          ...SettingsWorkspacesRegionsSelect_ServerRegionItem\n        }\n      }\n    }\n  }\n": types.SetDefaultWorkspaceRegionDocument,
     "\n  mutation DeleteWorkspaceSsoProvider($workspaceId: String!) {\n    workspaceMutations {\n      deleteSsoProvider(workspaceId: $workspaceId)\n    }\n  }\n": types.DeleteWorkspaceSsoProviderDocument,
     "\n  mutation SetWorkspaceCreationState($input: WorkspaceCreationStateInput!) {\n    workspaceMutations {\n      updateCreationState(input: $input)\n    }\n  }\n": types.SetWorkspaceCreationStateDocument,
+    "\n  mutation WorkspaceUpdateDomainProtectionMutation($input: WorkspaceUpdateInput!) {\n    workspaceMutations {\n      update(input: $input) {\n        id\n        domainBasedMembershipProtectionEnabled\n      }\n    }\n  }\n": types.WorkspaceUpdateDomainProtectionMutationDocument,
+    "\n  mutation WorkspaceUpdateDiscoverabilityMutation($input: WorkspaceUpdateInput!) {\n    workspaceMutations {\n      update(input: $input) {\n        id\n        discoverabilityEnabled\n      }\n    }\n  }\n": types.WorkspaceUpdateDiscoverabilityMutationDocument,
     "\n  query WorkspaceAccessCheck($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      id\n    }\n  }\n": types.WorkspaceAccessCheckDocument,
     "\n  query WorkspacePageQuery(\n    $workspaceSlug: String!\n    $invitesFilter: PendingWorkspaceCollaboratorsFilter\n    $token: String\n  ) {\n    workspaceBySlug(slug: $workspaceSlug) {\n      ...WorkspaceProjectList_Workspace\n    }\n    workspaceInvite(\n      workspaceId: $workspaceSlug\n      token: $token\n      options: { useSlug: true }\n    ) {\n      id\n      ...WorkspaceInviteBanner_PendingWorkspaceCollaborator\n      ...WorkspaceInviteBlock_PendingWorkspaceCollaborator\n    }\n  }\n": types.WorkspacePageQueryDocument,
     "\n  query WorkspaceProjectsQuery(\n    $workspaceSlug: String!\n    $filter: WorkspaceProjectsFilter\n    $cursor: String\n  ) {\n    workspaceBySlug(slug: $workspaceSlug) {\n      id\n      projects(filter: $filter, cursor: $cursor, limit: 10) {\n        ...WorkspaceProjectList_ProjectCollection\n      }\n    }\n  }\n": types.WorkspaceProjectsQueryDocument,
@@ -1770,6 +1772,14 @@ export function graphql(source: "\n  mutation DeleteWorkspaceSsoProvider($worksp
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  mutation SetWorkspaceCreationState($input: WorkspaceCreationStateInput!) {\n    workspaceMutations {\n      updateCreationState(input: $input)\n    }\n  }\n"): (typeof documents)["\n  mutation SetWorkspaceCreationState($input: WorkspaceCreationStateInput!) {\n    workspaceMutations {\n      updateCreationState(input: $input)\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  mutation WorkspaceUpdateDomainProtectionMutation($input: WorkspaceUpdateInput!) {\n    workspaceMutations {\n      update(input: $input) {\n        id\n        domainBasedMembershipProtectionEnabled\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation WorkspaceUpdateDomainProtectionMutation($input: WorkspaceUpdateInput!) {\n    workspaceMutations {\n      update(input: $input) {\n        id\n        domainBasedMembershipProtectionEnabled\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  mutation WorkspaceUpdateDiscoverabilityMutation($input: WorkspaceUpdateInput!) {\n    workspaceMutations {\n      update(input: $input) {\n        id\n        discoverabilityEnabled\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation WorkspaceUpdateDiscoverabilityMutation($input: WorkspaceUpdateInput!) {\n    workspaceMutations {\n      update(input: $input) {\n        id\n        discoverabilityEnabled\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
