@@ -106,7 +106,6 @@ const getUsers = getUsersFactory({ db })
 const getUser = getUserFactory({ db })
 const saveActivity = saveActivityFactory({ db })
 const getStream = getStreamFactory({ db })
-const getStreamCollaborators = getStreamCollaboratorsFactory({ db })
 const createStreamReturnRecord = createStreamReturnRecordFactory({
   inviteUsersToProject: inviteUsersToProjectFactory({
     createAndSendInvite: createAndSendInviteFactory({
@@ -394,8 +393,8 @@ export = {
 
       return await ctx.loaders.streams.getRole.load(parent.id)
     },
-    async team(parent) {
-      const users = await getStreamCollaborators(parent.id)
+    async team(parent, _args, ctx) {
+      const users = await ctx.loaders.streams.getCollaborators.load(parent.id)
       return users.map((u) => ({
         user: u,
         role: u.streamRole,

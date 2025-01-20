@@ -22,6 +22,7 @@ import { SectionOutlines } from '@speckle/viewer'
 import { ViewModesKeys } from './Extensions/ViewModesKeys'
 // import { JSONSpeckleStream } from './JSONSpeckleStream'
 import { BoxSelection } from './Extensions/BoxSelection'
+import { PassReader } from './Extensions/PassReader'
 
 const createViewer = async (containerName: string, _stream: string) => {
   const container = document.querySelector<HTMLElement>(containerName)
@@ -57,6 +58,7 @@ const createViewer = async (containerName: string, _stream: string) => {
   viewer.createExtension(ViewModesKeys)
   const boxSelect = viewer.createExtension(BoxSelection)
   boxSelect.realtimeSelection = false
+  viewer.createExtension(PassReader)
   // const rotateCamera = viewer.createExtension(RotateCamera)
   cameraController // use it
   selection // use it
@@ -468,6 +470,8 @@ const getStream = () => {
 
     // Instance toilets
     // 'https://app.speckle.systems/projects/e89b61b65c/models/2a0995f124'
+
+    // 'https://latest.speckle.systems/projects/3fe1880c36/models/65bb4287a8'
   )
 }
 

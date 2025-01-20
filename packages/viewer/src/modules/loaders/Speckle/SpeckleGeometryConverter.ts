@@ -286,9 +286,9 @@ export class SpeckleGeometryConverter extends GeometryConverter {
         Logger.warn(
           `Mesh (id ${node.raw.id}) colours are mismatched with vertice counts. The number of colours must equal the number of vertices.`
         )
-      }
+      } else
       /** We want the colors in linear space */
-      colors = this.unpackColors(colorsRaw, true)
+        colors = this.unpackColors(colorsRaw, true)
     }
 
     return {

@@ -155,9 +155,15 @@ type WorkspaceMutations {
   Dismiss a workspace from the discoverable list, behind the scene a join request is created with the status "dismissed"
   """
   dismiss(input: WorkspaceDismissInput!): Boolean! @hasServerRole(role: SERVER_USER)
+  requestToJoin(input: WorkspaceRequestToJoinInput!): Boolean!
+    @hasServerRole(role: SERVER_USER)
 }
 
 input WorkspaceDismissInput {
+  workspaceId: ID!
+}
+
+input WorkspaceRequestToJoinInput {
   workspaceId: ID!
 }
 
@@ -305,6 +311,17 @@ type Workspace {
   Info about the workspace creation state
   """
   creationState: WorkspaceCreationState
+  """
+  Get all join requests for all the workspaces the user is an admin of
+  """
+  adminWorkspacesJoinRequests(
+    filter: AdminWorkspaceJoinRequestFilter
+    cursor: String
+    limit: Int! = 25
+  ): WorkspaceJoinRequestCollection!
+    @hasServerRole(role: SERVER_USER)
+    @hasScope(scope: "workspace:read")
+    @hasWorkspaceRole(role: ADMIN)
 }
 
 type WorkspaceCreationState {
@@ -442,6 +459,29 @@ type WorkspaceCollection {
   totalCount: Int!
   cursor: String
   items: [Workspace!]!
+}
+
+type WorkspaceJoinRequestCollection {
+  totalCount: Int!
+  cursor: String
+  items: [WorkspaceJoinRequest!]!
+}
+
+type WorkspaceJoinRequest {
+  workspace: Workspace!
+  user: LimitedUser!
+  status: WorkspaceJoinRequestStatus!
+  createdAt: DateTime!
+}
+
+enum WorkspaceJoinRequestStatus {
+  pending
+  approved
+  denied
+}
+
+input AdminWorkspaceJoinRequestFilter {
+  status: WorkspaceJoinRequestStatus
 }
 
 extend type User {

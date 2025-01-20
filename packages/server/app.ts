@@ -49,7 +49,8 @@ import {
   enableMixpanel,
   getPort,
   getBindAddress,
-  shutdownTimeoutSeconds
+  shutdownTimeoutSeconds,
+  asyncRequestContextEnabled
 } from '@/modules/shared/helpers/envHelper'
 import * as ModulesSetup from '@/modules'
 import { GraphQLContext, Optional } from '@/modules/shared/helpers/typeHelper'
@@ -78,6 +79,7 @@ import type { ReadinessHandler } from '@/healthchecks/types'
 import type ws from 'ws'
 import type { Server as MockWsServer } from 'mock-socket'
 import { SetOptional } from 'type-fest'
+import { initiateRequestContextMiddleware } from '@/logging/requestContext'
 
 const GRAPHQL_PATH = '/graphql'
 
@@ -298,7 +300,7 @@ export function buildApolloSubscriptionServer(
             graphql_variables: redactSensitiveVariables(baseParams.variables),
             graphql_operation_type: 'subscription'
           },
-          'Subscription started for {graphqlOperationName}'
+          'Subscription started for {graphql_operation_name}'
         )
 
         baseParams.formatResponse = (val: SubscriptionResponse) => {
@@ -405,8 +407,13 @@ export async function init() {
 
   app.use(cookieParser())
   app.use(DetermineRequestIdMiddleware)
+  app.use(initiateRequestContextMiddleware)
   app.use(determineClientIpAddressMiddleware)
   app.use(LoggingExpressMiddleware)
+
+  if (asyncRequestContextEnabled()) {
+    startupLogger.info('Async request context tracking enabled 👀')
+  }
 
   if (process.env.COMPRESSION) {
     app.use(compression())
