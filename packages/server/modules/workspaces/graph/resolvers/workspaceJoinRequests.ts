@@ -7,7 +7,10 @@ import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
 import { commandFactory } from '@/modules/shared/command'
 import { getPaginatedItemsFactory } from '@/modules/shared/services/paginatedItems'
-import { ApproveWorkspaceJoinRequest } from '@/modules/workspaces/domain/operations'
+import {
+  ApproveWorkspaceJoinRequest,
+  DenyWorkspaceJoinRequest
+} from '@/modules/workspaces/domain/operations'
 import {
   countAdminWorkspaceJoinRequestsFactory,
   getAdminWorkspaceJoinRequestsFactory,
@@ -16,7 +19,11 @@ import {
 } from '@/modules/workspaces/repositories/workspaceJoinRequests'
 import { getWorkspaceFactory } from '@/modules/workspaces/repositories/workspaces'
 import { sendWorkspaceJoinRequestApprovedEmailFactory } from '@/modules/workspaces/services/workspaceJoinRequestEmails/approved'
-import { approveWorkspaceJoinRequestFactory } from '@/modules/workspaces/services/workspaceJoinRequests'
+import { sendWorkspaceJoinRequestDeniedEmailFactory } from '@/modules/workspaces/services/workspaceJoinRequestEmails/denied'
+import {
+  approveWorkspaceJoinRequestFactory,
+  denyWorkspaceJoinRequestFactory
+} from '@/modules/workspaces/services/workspaceJoinRequests'
 import { WorkspaceJoinRequestStatus } from '@/modules/workspacesCore/domain/types'
 import { WorkspaceJoinRequestGraphQLReturn } from '@/modules/workspacesCore/helpers/graphTypes'
 
@@ -89,6 +96,39 @@ export default {
         }
       })
       return await approveWorkspaceJoinRequest({
+        userId: args.input.userId,
+        workspaceId: args.input.workspaceId
+      })
+    },
+    deny: async (_parent, args) => {
+      const denyWorkspaceJoinRequest = commandFactory<DenyWorkspaceJoinRequest>({
+        db,
+        operationFactory: ({ db }) => {
+          const updateWorkspaceJoinRequestStatus =
+            updateWorkspaceJoinRequestStatusFactory({
+              db
+            })
+          const sendWorkspaceJoinRequestDeniedEmail =
+            sendWorkspaceJoinRequestDeniedEmailFactory({
+              renderEmail,
+              sendEmail,
+              getServerInfo: getServerInfoFactory({ db }),
+              getUserEmails: findEmailsByUserIdFactory({ db })
+            })
+
+          return denyWorkspaceJoinRequestFactory({
+            updateWorkspaceJoinRequestStatus,
+            sendWorkspaceJoinRequestDeniedEmail,
+            getUserById: getUserFactory({ db }),
+            getWorkspace: getWorkspaceFactory({ db }),
+            getWorkspaceJoinRequest: getWorkspaceJoinRequestFactory({
+              db
+            })
+          })
+        }
+      })
+
+      return await denyWorkspaceJoinRequest({
         userId: args.input.userId,
         workspaceId: args.input.workspaceId
       })
