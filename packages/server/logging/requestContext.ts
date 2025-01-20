@@ -8,7 +8,6 @@ type StorageType = {
   dbMetrics: {
     totalDuration: number
     totalCount: number
-    queries: string[]
   }
 }
 
@@ -22,16 +21,20 @@ export const initiateRequestContextMiddleware: express.RequestHandler = (
   next
 ) => {
   const reqId = req.headers[REQUEST_ID_HEADER] || 'unknown'
+  enterNewRequestContext({ reqId: reqId as string })
+  next()
+}
+
+export const enterNewRequestContext = (params: { reqId: string }) => {
+  const { reqId } = params
   const store: StorageType = {
-    requestId: reqId as string,
+    requestId: reqId,
     dbMetrics: {
       totalCount: 0,
-      totalDuration: 0,
-      queries: []
+      totalDuration: 0
     }
   }
   storage?.enterWith(store)
-  next()
 }
 
 export const getRequestContext = () => storage?.getStore()

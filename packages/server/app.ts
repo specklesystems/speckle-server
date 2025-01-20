@@ -79,7 +79,12 @@ import type { ReadinessHandler } from '@/healthchecks/types'
 import type ws from 'ws'
 import type { Server as MockWsServer } from 'mock-socket'
 import { SetOptional } from 'type-fest'
-import { initiateRequestContextMiddleware } from '@/logging/requestContext'
+import {
+  enterNewRequestContext,
+  getRequestContext,
+  initiateRequestContextMiddleware
+} from '@/logging/requestContext'
+import { randomUUID } from 'crypto'
 
 const GRAPHQL_PATH = '/graphql'
 
@@ -217,7 +222,9 @@ export function buildApolloSubscriptionServer(
         let token: string
         try {
           const headers = getHeaders({ connContext, connectionParams })
-          const requestId = headers['x-request-id'] || ''
+          const requestId = headers['x-request-id'] || `ws-${randomUUID()}`
+          enterNewRequestContext({ reqId: requestId })
+
           logger.debug(
             { requestId, headers: sanitizeHeaders(headers) },
             'New websocket connection'
@@ -270,13 +277,15 @@ export function buildApolloSubscriptionServer(
         webSocket: WebSocket,
         connContext: PossiblyMockedConnectionContext
       ) => {
+        const reqCtx = getRequestContext()
         const logger = connContext.request?.log || subscriptionLogger
         const headers = getHeaders({ connContext })
         logger.debug(
           {
             ws_protocol: webSocket.protocol,
             ws_url: webSocket.url,
-            headers: sanitizeHeaders(headers)
+            headers: sanitizeHeaders(headers),
+            ...(reqCtx ? { req: { id: reqCtx.requestId } } : {})
           },
           'Websocket disconnected.'
         )
@@ -286,10 +295,18 @@ export function buildApolloSubscriptionServer(
         // kinda hacky, but we're using this as an "subscription event emitted"
         // callback to clear subscription connection dataloaders to avoid stale cache
         const baseParams = params[1]
+
         metricSubscriptionTotalOperations.inc({
-          subscriptionType: baseParams.operationName
+          subscriptionType: baseParams.operationName // FIXME: operationName can be empty
         })
         const ctx = baseParams.context as GraphQLContext
+
+        const reqCtx = getRequestContext()
+        if (reqCtx) {
+          // Reset db metrics for each event
+          reqCtx.dbMetrics.totalCount = 0
+          reqCtx.dbMetrics.totalDuration = 0
+        }
 
         const logger = ctx.log || subscriptionLogger
         logger.info(
@@ -298,9 +315,10 @@ export function buildApolloSubscriptionServer(
             userId: baseParams.context.userId,
             graphql_query: baseParams.query.toString(),
             graphql_variables: redactSensitiveVariables(baseParams.variables),
-            graphql_operation_type: 'subscription'
+            graphql_operation_type: 'subscription',
+            ...(reqCtx ? { req: { id: reqCtx.requestId } } : {})
           },
-          'Subscription started for {graphql_operation_name}'
+          'Subscription event fired for {graphql_operation_name}'
         )
 
         baseParams.formatResponse = (val: SubscriptionResponse) => {
