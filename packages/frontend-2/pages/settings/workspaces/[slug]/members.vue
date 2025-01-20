@@ -24,6 +24,11 @@
             :workspace="workspace"
             :workspace-slug="slug"
           />
+          <SettingsWorkspacesMembersJoinRequestsTable
+            v-if="activeItem.id === 'joinRequests'"
+            :workspace="workspace"
+            :workspace-slug="slug"
+          />
         </template>
       </LayoutTabsHorizontal>
     </div>
@@ -51,6 +56,9 @@ graphql(`
       user {
         id
       }
+    }
+    adminWorkspacesJoinRequests {
+      totalCount
     }
   }
 `)
@@ -83,6 +91,9 @@ const guestCount = computed(
       .length
 )
 const invitedCount = computed(() => workspace.value?.invitedTeam?.length)
+const joinRequestCount = computed(
+  () => workspace.value?.adminWorkspacesJoinRequests?.totalCount
+)
 const tabItems = computed<LayoutPageTabItem[]>(() => [
   { title: 'Members', id: 'members', count: memberCount.value },
   { title: 'Guests', id: 'guests', count: guestCount.value },
@@ -92,6 +103,13 @@ const tabItems = computed<LayoutPageTabItem[]>(() => [
     disabled: !isAdmin.value,
     disabledMessage: 'Only workspace admins can manage invites',
     count: invitedCount.value
+  },
+  {
+    title: 'Join requests',
+    id: 'joinRequests',
+    disabled: !isAdmin.value,
+    disabledMessage: 'Only workspace admins can manage join requests',
+    count: joinRequestCount.value
   }
 ])
 

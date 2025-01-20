@@ -927,11 +927,6 @@ export type DeleteVersionsInput = {
   versionIds: Array<Scalars['ID']['input']>;
 };
 
-export type DenyWorkspaceJoinRequestInput = {
-  userId: Scalars['String']['input'];
-  workspaceId: Scalars['String']['input'];
-};
-
 export enum DiscoverableStreamsSortType {
   CreatedDate = 'CREATED_DATE',
   FavoritesCount = 'FAVORITES_COUNT'
@@ -4420,17 +4415,11 @@ export type WorkspaceJoinRequestCollection = {
 export type WorkspaceJoinRequestMutations = {
   __typename?: 'WorkspaceJoinRequestMutations';
   approve: Scalars['Boolean']['output'];
-  deny: Scalars['Boolean']['output'];
 };
 
 
 export type WorkspaceJoinRequestMutationsApproveArgs = {
   input: ApproveWorkspaceJoinRequestInput;
-};
-
-
-export type WorkspaceJoinRequestMutationsDenyArgs = {
-  input: DenyWorkspaceJoinRequestInput;
 };
 
 export enum WorkspaceJoinRequestStatus {

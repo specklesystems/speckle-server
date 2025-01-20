@@ -24,12 +24,14 @@
           :hide-items="[Roles.Workspace.Guest]"
         />
       </div>
-      <div v-if="!isWorkspaceAdmin" v-tippy="'You must be a workspace admin'">
-        <FormButton :disabled="!isWorkspaceAdmin">Invite</FormButton>
-      </div>
-      <FormButton v-else @click="() => (isInviteDialogOpen = !isInviteDialogOpen)">
-        Invite
-      </FormButton>
+      <template v-if="showInviteButton">
+        <div v-if="!isWorkspaceAdmin" v-tippy="'You must be a workspace admin'">
+          <FormButton :disabled="!isWorkspaceAdmin">Invite</FormButton>
+        </div>
+        <FormButton v-else @click="() => (isInviteDialogOpen = !isInviteDialogOpen)">
+          Invite
+        </FormButton>
+      </template>
     </div>
     <InviteDialogWorkspace
       v-if="workspace"
@@ -57,6 +59,7 @@ const props = defineProps<{
   searchPlaceholder: string
   workspace: MaybeNullOrUndefined<SettingsWorkspacesMembersTableHeader_WorkspaceFragment>
   showRoleFilter?: boolean
+  showInviteButton?: boolean
 }>()
 
 const search = defineModel<string>('search')
