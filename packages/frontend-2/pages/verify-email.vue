@@ -116,6 +116,10 @@ const verifyCode = () => {
 
 useHead({ title: 'Verify Email' })
 
+definePageMeta({
+  layout: 'verify-email'
+})
+
 onMounted(() => {
   mixpanel.track('Visit Email Verification')
   resume()
