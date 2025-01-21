@@ -36,7 +36,7 @@ import { isStreamAccessRequest } from '@/modules/accessrequests/repositories'
 import { ServerInvitesEvents } from '@/modules/serverinvites/domain/events'
 import { ProjectEvents } from '@/modules/core/domain/projects/events'
 import { AccessRequestEvents } from '@/modules/accessrequests/domain/events'
-import { reportUserActivityFactory } from '@/modules/activitystream/services/userActivity'
+import { reportUserActivityFactory } from '@/modules/activitystream/events/userListeners'
 
 let scheduledTask: ReturnType<ScheduleExecution> | null = null
 let quitEventListeners: Optional<() => void> = undefined
