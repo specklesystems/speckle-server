@@ -33,7 +33,7 @@
             :icon-left="HandThumbUpIcon"
             hide-text
             color="subtle"
-            @click="handleThumbsUp"
+            @click="handleFeedback('positive')"
           >
             Thumbs up
           </FormButton>
@@ -41,7 +41,7 @@
             :icon-left="HandThumbDownIcon"
             hide-text
             color="subtle"
-            @click="handleThumbsDown"
+            @click="handleFeedback('negative')"
           >
             Thumbs down
           </FormButton>
@@ -71,6 +71,8 @@
 import { HandThumbUpIcon, HandThumbDownIcon } from '@heroicons/vue/24/outline'
 import { useMixpanel } from '~/lib/core/composables/mp'
 
+type FeedbackValue = 'positive' | 'negative'
+
 const mixpanel = useMixpanel()
 
 const props = defineProps<{
@@ -82,7 +84,7 @@ const isOpen = defineModel<boolean>('open', { required: true })
 
 const isFeedbackDialogOpen = ref(false)
 const hasFeedback = ref(false)
-const initialFeedback = ref<'positive' | 'negative' | null>(null)
+const initialFeedback = ref<FeedbackValue>()
 
 const feedbackIntro = computed(() => {
   if (initialFeedback.value === 'positive') {
@@ -91,25 +93,14 @@ const feedbackIntro = computed(() => {
   return "We're sorry this render didn't meet your expectations. Please help us improve - what aspects didn't work well? What would have made this render more useful for you?"
 })
 
-const handleThumbsUp = () => {
-  initialFeedback.value = 'positive'
-  mixpanel.track('Gendo Render Feedback', {
-    feedback: 'positive',
+const handleFeedback = (value: FeedbackValue) => {
+  initialFeedback.value = value
+  mixpanel.track('Gendo Render Feedback Given', {
+    feedback: value,
     prompt: props.renderPrompt,
-    // eslint-disable-next-line camelcase
-    render_url: props.renderUrl
+    renderUrl: props.renderUrl
   })
-  hasFeedback.value = true
-}
 
-const handleThumbsDown = () => {
-  initialFeedback.value = 'negative'
-  mixpanel.track('Gendo Render Feedback', {
-    feedback: 'negative',
-    prompt: props.renderPrompt,
-    // eslint-disable-next-line camelcase
-    render_url: props.renderUrl
-  })
   hasFeedback.value = true
 }
 </script>
