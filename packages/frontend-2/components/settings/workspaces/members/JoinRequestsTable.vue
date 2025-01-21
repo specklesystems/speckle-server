@@ -47,7 +47,9 @@
 
     <WorkspaceJoinRequestApproveDialog
       v-model:open="showApproveJoinRequestDialog"
-      :name="userToModify?.user.name"
+      :name="userToApprove?.user.name"
+      :workspace-id="props.workspace?.id"
+      :user-id="userToApprove?.id"
     />
   </div>
 </template>
@@ -59,6 +61,7 @@ import { graphql } from '~/lib/common/generated/gql'
 import { EllipsisHorizontalIcon, XMarkIcon } from '@heroicons/vue/24/outline'
 import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
 import { HorizontalDirection } from '~~/lib/common/composables/window'
+import { useWorkspaceJoinRequest } from '~/lib/workspaces/composables/joinRequests'
 
 type UserItem = (typeof joinRequests)['value'][0]
 
@@ -71,7 +74,7 @@ graphql(`
   fragment SettingsWorkspacesMembersRequestsTable_Workspace on Workspace {
     ...SettingsWorkspacesMembersTableHeader_Workspace
     id
-    adminWorkspacesJoinRequests {
+    adminWorkspacesJoinRequests(filter: $joinRequestsFilter) {
       totalCount
       items {
         createdAt
@@ -91,8 +94,9 @@ const props = defineProps<{
 }>()
 
 const showApproveJoinRequestDialog = ref(false)
-const userToModify = ref<UserItem>()
+const userToApprove = ref<UserItem>()
 const showActionsMenu = ref<Record<string, boolean>>({})
+const { deny } = useWorkspaceJoinRequest()
 
 const joinRequests = computed(() =>
   (props.workspace?.adminWorkspacesJoinRequests?.items || []).map((item) => ({
@@ -107,12 +111,16 @@ const actionItems = computed((): LayoutMenuItem[][] => [
 ])
 
 const onApprove = (user: UserItem) => {
-  userToModify.value = user
+  userToApprove.value = user
   showApproveJoinRequestDialog.value = true
 }
 
-const onDeny = (user: UserItem) => {
-  userToModify.value = user
+const onDeny = async (user: UserItem) => {
+  if (!props.workspace?.id) return
+  await deny({
+    workspaceId: props.workspace?.id,
+    userId: user.id
+  })
 }
 
 const onActionChosen = (actionItem: LayoutMenuItem, user: UserItem) => {

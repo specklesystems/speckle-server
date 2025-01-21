@@ -16,12 +16,17 @@
 </template>
 <script setup lang="ts">
 import type { LayoutDialogButton } from '@speckle/ui-components'
+import { useWorkspaceJoinRequest } from '~/lib/workspaces/composables/joinRequests'
 
-defineProps<{
+const props = defineProps<{
   name?: string
+  workspaceId?: string
+  userId?: string
 }>()
 
 const open = defineModel<boolean>('open', { required: true })
+
+const { approve } = useWorkspaceJoinRequest()
 
 const dialogButtons = computed((): LayoutDialogButton[] => {
   return [
@@ -34,8 +39,15 @@ const dialogButtons = computed((): LayoutDialogButton[] => {
     },
     {
       text: 'Approve',
-      onClick: () => {
-        open.value = false
+      onClick: async () => {
+        if (props.workspaceId && props.userId) {
+          await approve({
+            workspaceId: props.workspaceId,
+            userId: props.userId
+          })
+
+          open.value = false
+        }
       }
     }
   ]

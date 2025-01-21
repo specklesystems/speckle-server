@@ -41,6 +41,7 @@ import { useQuery } from '@vue/apollo-composable'
 import { graphql } from '~/lib/common/generated/gql'
 import { settingsWorkspacesMembersQuery } from '~/lib/settings/graphql/queries'
 import type { LayoutPageTabItem } from '~~/lib/layout/helpers/components'
+import { WorkspaceJoinRequestStatus } from '~~/lib/common/generated/gql/graphql'
 
 graphql(`
   fragment SettingsWorkspacesMembers_Workspace on Workspace {
@@ -57,7 +58,7 @@ graphql(`
         id
       }
     }
-    adminWorkspacesJoinRequests {
+    adminWorkspacesJoinRequests(filter: $joinRequestsFilter) {
       totalCount
     }
   }
@@ -75,7 +76,10 @@ const slug = computed(() => (route.params.slug as string) || '')
 
 const route = useRoute()
 const { result } = useQuery(settingsWorkspacesMembersQuery, () => ({
-  slug: slug.value
+  slug: slug.value,
+  joinRequestsFilter: {
+    status: WorkspaceJoinRequestStatus.Pending
+  }
 }))
 
 const workspace = computed(() => result.value?.workspaceBySlug)

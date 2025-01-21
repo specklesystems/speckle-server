@@ -57,6 +57,7 @@ export const settingsWorkspacesMembersQuery = graphql(`
   query SettingsWorkspacesMembers(
     $slug: String!
     $invitesFilter: PendingWorkspaceCollaboratorsFilter
+    $joinRequestsFilter: AdminWorkspaceJoinRequestFilter
   ) {
     workspaceBySlug(slug: $slug) {
       ...SettingsWorkspacesMembers_Workspace
