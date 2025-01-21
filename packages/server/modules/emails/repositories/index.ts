@@ -2,16 +2,21 @@ import { EmailVerifications } from '@/modules/core/dbSchema'
 import {
   DeleteOldAndInsertNewVerification,
   DeleteVerifications,
-  GetPendingToken
+  GetPendingToken,
+  GetPendingVerificationByEmail
 } from '@/modules/emails/domain/operations'
 import { InvalidArgumentError } from '@/modules/shared/errors'
 import cryptoRandomString from 'crypto-random-string'
 import dayjs from 'dayjs'
 import { Knex } from 'knex'
+import { hash } from 'bcrypt'
+import { EmailVerification } from '@/modules/emails/domain/types'
 
 const tables = {
-  emailVerifications: (db: Knex) => db<EmailVerificationRecord>(EmailVerifications.name)
+  emailVerifications: (db: Knex) => db<EmailVerification>(EmailVerifications.name)
 }
+
+const hashEmailVerificationCode = async (code: string) => hash(code, 10)
 
 export type EmailVerificationRecord = {
   id: string
@@ -54,6 +59,10 @@ export const deleteVerificationsFactory =
     await q
   }
 
+function generateEmailVerificationCode() {
+  return cryptoRandomString({ length: 6, type: 'numeric' })
+}
+
 /**
  * Delete all previous verification entries and create a new one
  */
@@ -71,10 +80,27 @@ export const deleteOldAndInsertNewVerificationFactory =
     }).col
 
     const newId = cryptoRandomString({ length: 20 })
+    const code = generateEmailVerificationCode()
     await tables.emailVerifications(deps.db).insert({
       [EmailVerificationCols.id]: newId,
-      [EmailVerificationCols.email]: email
+      [EmailVerificationCols.email]: email,
+      [EmailVerificationCols.code]: await hashEmailVerificationCode(code)
     })
 
-    return newId
+    return code
+  }
+
+export const getPendingVerificationByEmailFactory =
+  ({ db }: { db: Knex }): GetPendingVerificationByEmail =>
+  async ({ email }) => {
+    return await tables
+      .emailVerifications(db)
+      .where(EmailVerifications.col.email, email)
+      .where(
+        EmailVerifications.col.createdAt,
+        '<',
+        dayjs().subtract(5, 'minutes').toISOString()
+      )
+      .orderBy(EmailVerifications.col.createdAt, 'desc')
+      .first()
   }
