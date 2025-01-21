@@ -196,10 +196,6 @@ const initKnexPrometheusMetricsForRegionEvents = async (params: {
   const connectionAcquisitionStartTime: Record<string, number> = {}
   const connectionInUseStartTime: Record<string, number> = {}
 
-  db.on('start', (builder: Knex.QueryBuilder) => {
-    console.log(!!builder)
-  })
-
   db.on('query', (data: QueryEvent) => {
     const queryId = data.__knexQueryUid + ''
     queryMetadata[queryId] = {
@@ -210,7 +206,7 @@ const initKnexPrometheusMetricsForRegionEvents = async (params: {
 
   db.on('query-response', (_response: unknown, data: QueryEvent) => {
     const queryId = data.__knexQueryUid + ''
-    const { startTime, stackTrace } = queryMetadata[queryId]
+    const { startTime = NaN, stackTrace = undefined } = queryMetadata[queryId] || {}
 
     const durationMs = performance.now() - startTime
     const durationSec = toNDecimalPlaces(durationMs / 1000, 2)
@@ -249,7 +245,7 @@ const initKnexPrometheusMetricsForRegionEvents = async (params: {
 
   db.on('query-error', (err: unknown, data: QueryEvent) => {
     const queryId = data.__knexQueryUid + ''
-    const { startTime, stackTrace } = queryMetadata[queryId]
+    const { startTime = NaN, stackTrace = undefined } = queryMetadata[queryId] || {}
 
     const durationMs = performance.now() - startTime
     const durationSec = toNDecimalPlaces(durationMs / 1000, 2)
