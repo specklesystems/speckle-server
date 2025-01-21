@@ -34,7 +34,7 @@
               </NuxtLink>
             </MenuItem>
           </div>
-          <MenuItem v-if="activeUser" v-slot="{ active }">
+          <MenuItem v-if="!needsEmailVerification && activeUser" v-slot="{ active }">
             <NuxtLink
               :to="settingsUserRoutes.profile"
               :class="[
@@ -45,7 +45,7 @@
               Settings
             </NuxtLink>
           </MenuItem>
-          <MenuItem v-if="isAdmin" v-slot="{ active }">
+          <MenuItem v-if="!needsEmailVerification && isAdmin" v-slot="{ active }">
             <NuxtLink
               :to="settingsServerRoutes.general"
               :class="[
@@ -67,7 +67,10 @@
               {{ isDarkTheme ? 'Light mode' : 'Dark mode' }}
             </NuxtLink>
           </MenuItem>
-          <MenuItem v-if="activeUser && !isGuest" v-slot="{ active }">
+          <MenuItem
+            v-if="!needsEmailVerification && activeUser && !isGuest"
+            v-slot="{ active }"
+          >
             <NuxtLink
               :class="[
                 active ? 'bg-highlight-1' : '',
@@ -148,7 +151,7 @@ defineProps<{
 }>()
 
 const { logout } = useAuthManager()
-const { activeUser, isGuest } = useActiveUser()
+const { activeUser, isGuest, needsEmailVerification } = useActiveUser()
 const { isDarkTheme, toggleTheme } = useTheme()
 const { serverInfo } = useServerInfo()
 const menuButtonId = useId()
