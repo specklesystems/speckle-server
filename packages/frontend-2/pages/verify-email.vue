@@ -98,7 +98,7 @@ const verifyCode = () => {
   try {
     hasError.value = false
     triggerNotification({
-      type: ToastNotificationType.Danger,
+      type: ToastNotificationType.Loading,
       title: 'Verifying code...'
     })
     // TODO: Add verification API call here
