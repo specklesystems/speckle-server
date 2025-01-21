@@ -276,7 +276,7 @@ const lodgeRequest = async (screenshot: string) => {
   } else {
     triggerNotification({
       type: ToastNotificationType.Success,
-      title: 'Render successfully enqued'
+      title: 'Render successfully enqueued'
     })
   }
   isLoading.value = false
