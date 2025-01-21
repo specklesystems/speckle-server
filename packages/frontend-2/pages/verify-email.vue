@@ -12,12 +12,16 @@
     <div class="mt-8">
       <FormButton
         v-if="hasEmail"
-        :disabled="resendVerificationEmailLoading || cooldownRemaining > 0"
+        :disabled="isResendDisabled"
         color="outline"
         size="sm"
         @click="onResend"
       >
-        {{ cooldownRemaining > 0 ? `Resend in ${cooldownRemaining}s` : 'Resend code' }}
+        {{
+          cooldownRemaining > 0 && fromRegistration
+            ? `Resend in ${cooldownRemaining}s`
+            : 'Resend code'
+        }}
       </FormButton>
     </div>
   </div>
@@ -34,10 +38,18 @@ import {
   getFirstErrorMessage
 } from '~/lib/common/helpers/graphql'
 import { useIntervalFn } from '@vueuse/core'
+import { useRoute } from 'vue-router'
+
+useHead({ title: 'Verify Email' })
+
+definePageMeta({
+  layout: 'verify-email'
+})
 
 const mixpanel = useMixpanel()
 const { activeUser } = useActiveUser()
 const { triggerNotification } = useGlobalToast()
+const route = useRoute()
 
 const { pause: stopCooldown, resume } = useIntervalFn(
   () => {
@@ -59,6 +71,8 @@ const hasEmail = computed(
   () => !!email.value?.length && ValidationHelpers.VALID_EMAIL.exec(email.value)
 )
 
+const fromRegistration = computed(() => route.query.source === 'registration')
+
 const COOLDOWN_SECONDS = 30
 const cooldownRemaining = ref(COOLDOWN_SECONDS)
 
@@ -70,6 +84,12 @@ const startCooldown = () => {
 
 const { mutate: resendVerificationEmail, loading: resendVerificationEmailLoading } =
   useMutation(requestVerificationByEmailMutation)
+
+const isResendDisabled = computed(
+  () =>
+    resendVerificationEmailLoading.value ||
+    (fromRegistration.value && cooldownRemaining.value > 0)
+)
 
 const onResend = async () => {
   const emailAddress = email.value
@@ -114,14 +134,12 @@ const verifyCode = () => {
   }
 }
 
-useHead({ title: 'Verify Email' })
-
-definePageMeta({
-  layout: 'verify-email'
-})
-
 onMounted(() => {
-  mixpanel.track('Visit Email Verification')
-  resume()
+  mixpanel.track('Visit Email Verification', {
+    source: fromRegistration.value ? 'registration' : 'middleware'
+  })
+  if (fromRegistration.value) {
+    resume() // Only start countdown if coming from registration
+  }
 })
 </script>
