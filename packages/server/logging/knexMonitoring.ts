@@ -183,6 +183,7 @@ interface QueryEvent extends Knex.Sql {
   __knexUid: string
   __knexTxId: string
   __knexQueryUid: string
+  __stackTrace: string
 }
 
 const initKnexPrometheusMetricsForRegionEvents = async (params: {
@@ -191,20 +192,29 @@ const initKnexPrometheusMetricsForRegionEvents = async (params: {
   logger: Logger
 }) => {
   const { region, db } = params
-  const queryStartTime: Record<string, number> = {}
+  const queryMetadata: Record<string, { startTime: number; stackTrace: string }> = {}
   const connectionAcquisitionStartTime: Record<string, number> = {}
   const connectionInUseStartTime: Record<string, number> = {}
 
+  db.on('start', (builder: Knex.QueryBuilder) => {
+    console.log(!!builder)
+  })
+
   db.on('query', (data: QueryEvent) => {
     const queryId = data.__knexQueryUid + ''
-    queryStartTime[queryId] = performance.now()
+    queryMetadata[queryId] = {
+      startTime: performance.now(),
+      stackTrace: data.__stackTrace
+    }
   })
 
   db.on('query-response', (_response: unknown, data: QueryEvent) => {
     const queryId = data.__knexQueryUid + ''
-    const durationMs = performance.now() - queryStartTime[queryId]
+    const { startTime, stackTrace } = queryMetadata[queryId]
+
+    const durationMs = performance.now() - startTime
     const durationSec = toNDecimalPlaces(durationMs / 1000, 2)
-    delete queryStartTime[queryId]
+    delete queryMetadata[queryId]
     if (!isNaN(durationSec))
       metricQueryDuration
         .labels({
@@ -214,7 +224,6 @@ const initKnexPrometheusMetricsForRegionEvents = async (params: {
         })
         .observe(durationSec)
 
-    const trace = (new Error().stack || '').split('\n').slice(1).join('\n').trim()
     const reqCtx = getRequestContext()
 
     // Update reqCtx with DB query metrics
@@ -231,7 +240,7 @@ const initKnexPrometheusMetricsForRegionEvents = async (params: {
         sqlQueryId: queryId,
         sqlQueryDurationMs: toNDecimalPlaces(durationMs, 0),
         sqlNumberBindings: data.bindings?.length || -1,
-        trace,
+        trace: stackTrace,
         ...(reqCtx ? { req: { id: reqCtx.requestId } } : {})
       },
       'DB query successfully completed after {sqlQueryDurationMs} ms'
@@ -240,9 +249,11 @@ const initKnexPrometheusMetricsForRegionEvents = async (params: {
 
   db.on('query-error', (err: unknown, data: QueryEvent) => {
     const queryId = data.__knexQueryUid + ''
-    const durationMs = performance.now() - queryStartTime[queryId]
+    const { startTime, stackTrace } = queryMetadata[queryId]
+
+    const durationMs = performance.now() - startTime
     const durationSec = toNDecimalPlaces(durationMs / 1000, 2)
-    delete queryStartTime[queryId]
+    delete queryMetadata[queryId]
 
     if (!isNaN(durationSec))
       metricQueryDuration
@@ -254,7 +265,6 @@ const initKnexPrometheusMetricsForRegionEvents = async (params: {
         .observe(durationSec)
     metricQueryErrors.inc()
 
-    const trace = (new Error().stack || '').split('\n').slice(1).join('\n').trim()
     const reqCtx = getRequestContext()
 
     // Update reqCtx with DB query metrics
@@ -272,7 +282,7 @@ const initKnexPrometheusMetricsForRegionEvents = async (params: {
         sqlQueryId: queryId,
         sqlQueryDurationMs: toNDecimalPlaces(durationMs, 0),
         sqlNumberBindings: data.bindings?.length || -1,
-        trace,
+        trace: stackTrace,
         ...(reqCtx ? { req: { id: reqCtx.requestId } } : {})
       },
       'DB query errored for {sqlMethod} after {sqlQueryDurationMs}ms'
