@@ -17,7 +17,6 @@
         />
       </div>
       <div
-        v-if="!hasFeedback"
         class="bg-foundation rounded-md p-2 relative z-10 flex items-center justify-between gap-2 mb-4 w-full"
       >
         <div class="flex gap-2 h-8">
@@ -26,7 +25,7 @@
           </FormButton>
           <FormButton color="subtle" @click="isOpen = false">Close</FormButton>
         </div>
-        <div class="flex items-center gap-2">
+        <div v-if="!hasFeedback" class="flex items-center gap-2">
           <p class="text-body-xs text-foreground-2">
             What do you think about this render?
           </p>
@@ -47,18 +46,18 @@
             Thumbs down
           </FormButton>
         </div>
-      </div>
-      <div v-else class="flex items-center gap-2">
-        <p class="text-body-xs text-foreground-2">Thanks for your feedback!</p>
-        <FormButton color="outline" @click="isFeedbackDialogOpen = true">
-          Give detailed feedback
-        </FormButton>
+        <div v-else class="flex items-center gap-2">
+          <p class="text-body-xs text-foreground-2">Thanks for your feedback!</p>
+          <FormButton color="outline" @click="isFeedbackDialogOpen = true">
+            Give detailed feedback
+          </FormButton>
+        </div>
       </div>
     </div>
     <FeedbackDialog
       v-model:open="isFeedbackDialogOpen"
       type="gendo"
-      intro="Help us improve Gendo AI renders. Share your thoughts about the quality, prompts that work well, or features you'd like to see."
+      :intro="feedbackIntro"
       :metadata="{
         initialFeedback: initialFeedback,
         render_url: renderUrl,
@@ -69,7 +68,7 @@
 </template>
 
 <script setup lang="ts">
-import { HandThumbUpIcon, HandThumbDownIcon } from '@heroicons/vue/24/solid'
+import { HandThumbUpIcon, HandThumbDownIcon } from '@heroicons/vue/24/outline'
 import { useMixpanel } from '~/lib/core/composables/mp'
 
 const mixpanel = useMixpanel()
@@ -84,6 +83,13 @@ const isOpen = defineModel<boolean>('open', { required: true })
 const isFeedbackDialogOpen = ref(false)
 const hasFeedback = ref(false)
 const initialFeedback = ref<'positive' | 'negative' | null>(null)
+
+const feedbackIntro = computed(() => {
+  if (initialFeedback.value === 'positive') {
+    return "Great to hear you liked this render! Help us make Gendo even better - what worked well about this render? Are there specific features you'd like to see?"
+  }
+  return "We're sorry this render didn't meet your expectations. Please help us improve - what aspects didn't work well? What would have made this render more useful for you?"
+})
 
 const handleThumbsUp = () => {
   initialFeedback.value = 'positive'
