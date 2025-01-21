@@ -17,7 +17,10 @@ import {
   getWorkspaceJoinRequestFactory,
   updateWorkspaceJoinRequestStatusFactory
 } from '@/modules/workspaces/repositories/workspaceJoinRequests'
-import { getWorkspaceFactory } from '@/modules/workspaces/repositories/workspaces'
+import {
+  getWorkspaceFactory,
+  upsertWorkspaceRoleFactory
+} from '@/modules/workspaces/repositories/workspaces'
 import { sendWorkspaceJoinRequestApprovedEmailFactory } from '@/modules/workspaces/services/workspaceJoinRequestEmails/approved'
 import { sendWorkspaceJoinRequestDeniedEmailFactory } from '@/modules/workspaces/services/workspaceJoinRequestEmails/denied'
 import {
@@ -94,7 +97,8 @@ export default {
             getWorkspace: getWorkspaceFactory({ db }),
             getWorkspaceJoinRequest: getWorkspaceJoinRequestFactory({
               db
-            })
+            }),
+            upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db })
           })
         }
       })

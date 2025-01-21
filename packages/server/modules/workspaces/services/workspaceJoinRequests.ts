@@ -9,8 +9,10 @@ import {
   SendWorkspaceJoinRequestApprovedEmail,
   SendWorkspaceJoinRequestDeniedEmail,
   SendWorkspaceJoinRequestReceivedEmail,
-  UpdateWorkspaceJoinRequestStatus
+  UpdateWorkspaceJoinRequestStatus,
+  UpsertWorkspaceRole
 } from '@/modules/workspaces/domain/operations'
+import { Roles } from '@speckle/shared'
 
 export const dismissWorkspaceJoinRequestFactory =
   ({
@@ -78,13 +80,15 @@ export const approveWorkspaceJoinRequestFactory =
     sendWorkspaceJoinRequestApprovedEmail,
     getUserById,
     getWorkspace,
-    getWorkspaceJoinRequest
+    getWorkspaceJoinRequest,
+    upsertWorkspaceRole
   }: {
     updateWorkspaceJoinRequestStatus: UpdateWorkspaceJoinRequestStatus
     sendWorkspaceJoinRequestApprovedEmail: SendWorkspaceJoinRequestApprovedEmail
     getUserById: GetUser
     getWorkspace: GetWorkspace
     getWorkspaceJoinRequest: GetWorkspaceJoinRequest
+    upsertWorkspaceRole: UpsertWorkspaceRole
   }) =>
   async ({ userId, workspaceId }: { userId: string; workspaceId: string }) => {
     const requester = await getUserById(userId)
@@ -111,6 +115,9 @@ export const approveWorkspaceJoinRequestFactory =
       workspaceId,
       status: 'approved'
     })
+
+    const role = Roles.Workspace.Member
+    await upsertWorkspaceRole({ userId, workspaceId, role, createdAt: new Date() })
 
     await sendWorkspaceJoinRequestApprovedEmail({
       workspace,

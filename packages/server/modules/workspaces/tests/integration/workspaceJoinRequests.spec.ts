@@ -12,7 +12,8 @@ import {
   SendWorkspaceJoinRequestApprovedEmail,
   SendWorkspaceJoinRequestDeniedEmail,
   SendWorkspaceJoinRequestReceivedEmail,
-  UpdateWorkspaceJoinRequestStatus
+  UpdateWorkspaceJoinRequestStatus,
+  UpsertWorkspaceRole
 } from '@/modules/workspaces/domain/operations'
 import {
   denyWorkspaceJoinRequestFactory,
@@ -184,7 +185,8 @@ const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
             sendWorkspaceJoinRequestApprovedEmail: async () => Promise.resolve(),
             getUserById: async () => null,
             getWorkspace: async () => null,
-            getWorkspaceJoinRequest: async () => undefined
+            getWorkspaceJoinRequest: async () => undefined,
+            upsertWorkspaceRole: async () => Promise.resolve()
           })({ workspaceId: createRandomString(), userId: createRandomString() })
         )
 
@@ -199,7 +201,8 @@ const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
             sendWorkspaceJoinRequestApprovedEmail: async () => Promise.resolve(),
             getUserById: async () => user as unknown as UserWithOptionalRole,
             getWorkspace: async () => null,
-            getWorkspaceJoinRequest: async () => undefined
+            getWorkspaceJoinRequest: async () => undefined,
+            upsertWorkspaceRole: async () => Promise.resolve()
           })({ workspaceId: createRandomString(), userId: createRandomString() })
         )
 
@@ -222,7 +225,8 @@ const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
             sendWorkspaceJoinRequestApprovedEmail: async () => Promise.resolve(),
             getUserById: async () => user as unknown as UserWithOptionalRole,
             getWorkspace: async () => workspace as unknown as Workspace,
-            getWorkspaceJoinRequest: async () => undefined
+            getWorkspaceJoinRequest: async () => undefined,
+            upsertWorkspaceRole: async () => Promise.resolve()
           })({ workspaceId: createRandomString(), userId: createRandomString() })
         )
 
@@ -234,6 +238,13 @@ const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
         const sendWorkspaceJoinRequestApprovedEmail = async (
           args: Parameters<SendWorkspaceJoinRequestApprovedEmail>[number]
         ) => sendWorkspaceJoinRequestApprovedEmailCalls.push(args)
+
+        const upsertWorkspaceRoleCalls: Parameters<UpsertWorkspaceRole>[number][] = []
+        const upsertWorkspaceRole = async (
+          args: Parameters<UpsertWorkspaceRole>[number]
+        ) => {
+          upsertWorkspaceRoleCalls.push(args)
+        }
 
         const user: BasicTestUser = {
           id: '',
@@ -272,7 +283,8 @@ const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
               sendWorkspaceJoinRequestApprovedEmail as unknown as SendWorkspaceJoinRequestApprovedEmail,
             getUserById: async () => user as unknown as UserWithOptionalRole,
             getWorkspace: async () => workspace as unknown as Workspace,
-            getWorkspaceJoinRequest: async () => request
+            getWorkspaceJoinRequest: async () => request,
+            upsertWorkspaceRole
           })({ workspaceId: workspace.id, userId: user.id })
         ).to.equal(true)
 
@@ -285,6 +297,11 @@ const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
             .select('status')
             .first())!.status
         ).to.equal('approved')
+
+        expect(upsertWorkspaceRoleCalls).to.have.length(1)
+        expect(upsertWorkspaceRoleCalls[0].workspaceId).to.equal(workspace.id)
+        expect(upsertWorkspaceRoleCalls[0].userId).to.equal(user.id)
+        expect(upsertWorkspaceRoleCalls[0].role).to.equal(Roles.Workspace.Member)
 
         expect(sendWorkspaceJoinRequestApprovedEmailCalls).to.have.length(1)
         expect(sendWorkspaceJoinRequestApprovedEmailCalls[0].workspace).to.equal(
