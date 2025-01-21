@@ -1,4 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { enableImprovedKnexTelemetryStackTraces } from '@/modules/shared/helpers/envHelper'
+import { collectLongTrace } from '@speckle/shared'
 import knexQueryCompiler from 'knex/lib/query/querycompiler'
 
 /**
@@ -8,16 +10,18 @@ import knexQueryCompiler from 'knex/lib/query/querycompiler'
  */
 
 export const patchKnex = () => {
-  // Preserve stack trace on query compilation
-  const originalToSQL = knexQueryCompiler.prototype.toSQL
-  const newToSQL: typeof originalToSQL = function (
-    this: typeof knexQueryCompiler.prototype,
-    ...args: any
-  ) {
-    const ret = originalToSQL.apply(this, args)
-    ret.__stackTrace = (new Error().stack || '').split('\n').slice(1).join('\n').trim()
-    return ret
-  }
+  if (enableImprovedKnexTelemetryStackTraces()) {
+    // Preserve stack trace on query compilation
+    const originalToSQL = knexQueryCompiler.prototype.toSQL
+    const newToSQL: typeof originalToSQL = function (
+      this: typeof knexQueryCompiler.prototype,
+      ...args: any
+    ) {
+      const ret = originalToSQL.apply(this, args)
+      ret.__stackTrace = collectLongTrace()
+      return ret
+    }
 
-  knexQueryCompiler.prototype.toSQL = newToSQL
+    knexQueryCompiler.prototype.toSQL = newToSQL
+  }
 }

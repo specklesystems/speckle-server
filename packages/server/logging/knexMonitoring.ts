@@ -5,6 +5,7 @@ import { Logger } from 'pino'
 import { toNDecimalPlaces } from '@/modules/core/utils/formatting'
 import { omit } from 'lodash'
 import { getRequestContext } from '@/logging/requestContext'
+import { collectLongTrace } from '@speckle/shared'
 
 let metricQueryDuration: prometheusClient.Summary<string>
 let metricQueryErrors: prometheusClient.Counter<string>
@@ -228,6 +229,7 @@ const initKnexPrometheusMetricsForRegionEvents = async (params: {
       reqCtx.dbMetrics.totalDuration += durationMs || 0
     }
 
+    const trace = stackTrace || collectLongTrace()
     params.logger.info(
       {
         region,
@@ -236,7 +238,7 @@ const initKnexPrometheusMetricsForRegionEvents = async (params: {
         sqlQueryId: queryId,
         sqlQueryDurationMs: toNDecimalPlaces(durationMs, 0),
         sqlNumberBindings: data.bindings?.length || -1,
-        trace: stackTrace,
+        trace,
         ...(reqCtx ? { req: { id: reqCtx.requestId } } : {})
       },
       'DB query successfully completed after {sqlQueryDurationMs} ms'
@@ -269,6 +271,7 @@ const initKnexPrometheusMetricsForRegionEvents = async (params: {
       reqCtx.dbMetrics.totalDuration += durationMs || 0
     }
 
+    const trace = stackTrace || collectLongTrace()
     params.logger.warn(
       {
         err: typeof err === 'object' ? omit(err, 'detail') : err,
@@ -278,7 +281,7 @@ const initKnexPrometheusMetricsForRegionEvents = async (params: {
         sqlQueryId: queryId,
         sqlQueryDurationMs: toNDecimalPlaces(durationMs, 0),
         sqlNumberBindings: data.bindings?.length || -1,
-        trace: stackTrace,
+        trace,
         ...(reqCtx ? { req: { id: reqCtx.requestId } } : {})
       },
       'DB query errored for {sqlMethod} after {sqlQueryDurationMs}ms'

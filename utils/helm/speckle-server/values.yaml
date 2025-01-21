@@ -197,6 +197,9 @@ db:
   ## @param db.knexAsyncStackTracesEnabled If enabled, will provide better stack traces for errors arising out of knex operations
   ##
   knexAsyncStackTracesEnabled: false
+  ## @param db.knexImprovedTelemetryStackTraces If enabled, will provide better stack traces for knex telemetry
+  ##
+  knexImprovedTelemetryStackTraces: false
 
   ## @param db.databaseName (Optional) The name of the Postgres database to which Speckle will connect. Only required for the Database Monitoring utility when the connection string is to a database connection pool and multi-region is disabled, otherwise this value is ignored.
   databaseName: ''
