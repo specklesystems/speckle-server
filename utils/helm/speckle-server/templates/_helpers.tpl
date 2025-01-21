@@ -782,6 +782,11 @@ Generate the environment variables for Speckle server and Speckle objects deploy
   value: {{ .Values.db.knexAsyncStackTracesEnabled | quote }}
 {{- end}}
 
+{{- if .Values.db.knexImprovedTelemetryStackTraces }}
+- name: KNEX_IMPROVED_TELEMETRY_STACK_TRACES
+  value: {{ .Values.db.knexImprovedTelemetryStackTraces | quote }}
+{{- end}}
+
 - name: PGSSLMODE
   value: "{{ .Values.db.PGSSLMODE }}"
 

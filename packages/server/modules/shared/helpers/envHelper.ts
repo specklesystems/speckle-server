@@ -443,3 +443,7 @@ export const knexAsyncStackTracesEnabled = () => {
 export const asyncRequestContextEnabled = () => {
   return getBooleanFromEnv('ASYNC_REQUEST_CONTEXT_ENABLED')
 }
+
+export function enableImprovedKnexTelemetryStackTraces() {
+  return getBooleanFromEnv('KNEX_IMPROVED_TELEMETRY_STACK_TRACES')
+}
