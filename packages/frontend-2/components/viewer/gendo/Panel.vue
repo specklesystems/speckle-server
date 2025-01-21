@@ -117,7 +117,11 @@
         <span class="hidden-under-250">this month</span>
       </div>
     </template>
-    <FeedbackDialog v-model:open="isFeedbackOpen" type="gendo" />
+    <FeedbackDialog
+      v-model:open="isFeedbackOpen"
+      intro="Help us improve Gendo AI renders. What did you like or dislike? How could we improve the experience for you and your workflow?"
+      type="gendo"
+    />
   </ViewerLayoutPanel>
 </template>
 <script setup lang="ts">
