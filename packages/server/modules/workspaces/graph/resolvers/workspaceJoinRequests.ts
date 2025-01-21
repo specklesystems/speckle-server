@@ -58,6 +58,9 @@ export default {
     }
   },
   WorkspaceJoinRequest: {
+    id: async (parent) => {
+      return parent.userId + parent.workspaceId
+    },
     user: async (parent, _args, ctx) => {
       return await ctx.loaders.users.getUser.load(parent.userId)
     },
