@@ -46,6 +46,7 @@ class FlyControls extends SpeckleControls {
     up: false,
     down: false
   }
+  protected contextMenuTriggered = false
 
   protected eulerXDamper: Damper = new Damper()
   protected eulerYDamper: Damper = new Damper()
@@ -128,6 +129,14 @@ class FlyControls extends SpeckleControls {
   }
 
   public update(delta?: number): boolean {
+    /** We do this because sometimes while holding a kewy down you get an extra
+     *  key down event **after** the context menu event, locking it in place
+     */
+    if (this.contextMenuTriggered) {
+      this.cancelMove()
+      this.contextMenuTriggered = false
+    }
+
     const now = performance.now()
     delta = delta !== undefined ? delta : now - this._lastTick
     this._lastTick = now
@@ -306,6 +315,7 @@ class FlyControls extends SpeckleControls {
     this.container.addEventListener('pointermove', this.onMouseMove)
     document.addEventListener('keydown', this.onKeyDown)
     document.addEventListener('keyup', this.onKeyUp)
+    document.addEventListener('contextmenu', this.onContextMenu)
   }
 
   protected disconnect() {
@@ -314,6 +324,7 @@ class FlyControls extends SpeckleControls {
     this.container.removeEventListener('pointermove', this.onMouseMove)
     document.removeEventListener('keydown', this.onKeyDown)
     document.removeEventListener('keyup', this.onKeyUp)
+    document.removeEventListener('contextmenu', this.onContextMenu)
     for (const k in this.keyMap) this.keyMap[k as MoveType] = false
   }
 
@@ -411,6 +422,19 @@ class FlyControls extends SpeckleControls {
         this.keyMap.down = false
         break
     }
+  }
+
+  protected onContextMenu = () => {
+    this.contextMenuTriggered = true
+  }
+
+  protected cancelMove() {
+    this.keyMap.forward = false
+    this.keyMap.left = false
+    this.keyMap.back = false
+    this.keyMap.right = false
+    this.keyMap.up = false
+    this.keyMap.down = false
   }
 }
 export { FlyControls }

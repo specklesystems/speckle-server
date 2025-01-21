@@ -12,10 +12,25 @@ export class HybridCameraController extends CameraController {
     up: false,
     down: false
   }
+
+  protected contextMenuTriggered = false
+
   public constructor(viewer: IViewer) {
     super(viewer)
     document.addEventListener('keydown', this.onKeyDown.bind(this))
     document.addEventListener('keyup', this.onKeyUp.bind(this))
+    document.addEventListener('contextmenu', this.onContextMenu.bind(this))
+  }
+
+  public onEarlyUpdate(_delta?: number): void {
+    super.onEarlyUpdate(_delta)
+    /** We do this because sometimes while holding a kewy down you get an extra
+     *  key down event **after** the context menu event, locking it in place
+     */
+    if (this.contextMenuTriggered) {
+      this.cancelMove()
+      this.contextMenuTriggered = false
+    }
   }
 
   protected onKeyDown(event: KeyboardEvent) {
@@ -100,6 +115,24 @@ export class HybridCameraController extends CameraController {
         this.keyMap.down = false
         break
     }
+    if (
+      this._controlsList[1].enabled &&
+      Object.values(this.keyMap).every((v) => v === false)
+    )
+      this.toggleControls()
+  }
+
+  protected onContextMenu() {
+    this.contextMenuTriggered = true
+  }
+
+  protected cancelMove() {
+    this.keyMap.back = false
+    this.keyMap.forward = false
+    this.keyMap.down = false
+    this.keyMap.up = false
+    this.keyMap.left = false
+    this.keyMap.right = false
     if (
       this._controlsList[1].enabled &&
       Object.values(this.keyMap).every((v) => v === false)
