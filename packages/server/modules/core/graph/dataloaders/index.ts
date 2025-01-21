@@ -11,7 +11,8 @@ import {
   getOwnedFavoritesCountByUserIdsFactory,
   getStreamRolesFactory,
   getUserStreamCountsFactory,
-  getStreamsSourceAppsFactory
+  getStreamsSourceAppsFactory,
+  getStreamsCollaboratorsFactory
 } from '@/modules/core/repositories/streams'
 import { keyBy } from 'lodash'
 import {
@@ -83,7 +84,10 @@ import {
 } from '@/modules/automate/errors/executionEngine'
 import { queryInvitesFactory } from '@/modules/serverinvites/repositories/serverInvites'
 import { getAppScopesFactory } from '@/modules/auth/repositories'
-import { StreamWithCommitId } from '@/modules/core/domain/streams/types'
+import {
+  LimitedUserWithStreamRole,
+  StreamWithCommitId
+} from '@/modules/core/domain/streams/types'
 import {
   getUsersFactory,
   UserWithOptionalRole
@@ -139,6 +143,7 @@ const dataLoadersDefinition = defineRequestDataloaders(
     const getUserStreamCounts = getUserStreamCountsFactory({ db })
     const getStreamsSourceApps = getStreamsSourceAppsFactory({ db })
     const getUsers = getUsersFactory({ db })
+    const getStreamsCollaborators = getStreamsCollaboratorsFactory({ db })
 
     return {
       streams: {
@@ -198,6 +203,17 @@ const dataLoadersDefinition = defineRequestDataloaders(
             }
           }
         })(),
+        /**
+         * Get all collaborators for a stream
+         */
+        getCollaborators: createLoader<string, Array<LimitedUserWithStreamRole>>(
+          async (streamIds) => {
+            const results = await getStreamsCollaborators({
+              streamIds: streamIds.slice()
+            })
+            return streamIds.map((i) => results[i] || [])
+          }
+        ),
 
         /**
          * Get favorite metadata for a specific stream and user

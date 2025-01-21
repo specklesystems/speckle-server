@@ -476,7 +476,7 @@ type WorkspaceJoinRequest {
 
 enum WorkspaceJoinRequestStatus {
   pending
-  accepted
+  approved
   denied
 }
 

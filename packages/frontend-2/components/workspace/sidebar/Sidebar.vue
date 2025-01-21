@@ -1,12 +1,8 @@
-<!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
-<!-- eslint-disable vuejs-accessibility/click-events-have-key-events -->
 <template>
   <div class="w-full">
-    <!-- Sidebar Content -->
     <div class="w-full">
       <LayoutSidebar>
         <div class="flex flex-col divide-y divide-outline-3">
-          <!-- Subscription Reminder -->
           <div v-if="!isWorkspaceGuest && isInTrial" class="p-4">
             <BillingAlert
               :workspace="workspaceInfo"
@@ -14,33 +10,23 @@
               condensed
             />
           </div>
-
           <div class="px-4 py-2">
             <WorkspaceSidebarAbout
               :workspace-info="workspaceInfo"
               collapsible
               :is-workspace-admin="isWorkspaceAdmin"
-              @show-settings-dialog="openSettingsDialog"
             />
           </div>
-
-          <!-- Members -->
           <div v-if="!isWorkspaceGuest" class="px-4 py-2">
             <WorkspaceSidebarMembers
               :workspace-info="workspaceInfo"
               :is-workspace-admin="isWorkspaceAdmin"
               collapsible
-              @show-settings-dialog="openSettingsDialog"
               @show-invite-dialog="$emit('show-invite-dialog')"
             />
           </div>
-
-          <!-- Security -->
           <div v-if="isWorkspaceAdmin && !hasDomains" class="px-4 py-2">
-            <WorkspaceSidebarSecurity
-              :workspace-info="workspaceInfo"
-              @show-settings-dialog="openSettingsDialog"
-            />
+            <WorkspaceSidebarSecurity :workspace-info="workspaceInfo" />
           </div>
         </div>
       </LayoutSidebar>
@@ -54,31 +40,28 @@ import {
   WorkspacePlanStatuses,
   type WorkspaceProjectList_WorkspaceFragment
 } from '~/lib/common/generated/gql/graphql'
-import {
-  SettingMenuKeys,
-  type AvailableSettingsMenuKeys
-} from '~/lib/settings/helpers/types'
 import { graphql } from '~~/lib/common/generated/gql'
+import { settingsWorkspaceRoutes } from '~/lib/common/helpers/route'
 
 graphql(`
   fragment WorkspaceSidebar_Workspace on Workspace {
     ...WorkspaceDashboardAbout_Workspace
     ...WorkspaceTeam_Workspace
     ...WorkspaceSecurity_Workspace
+    slug
     plan {
       status
     }
   }
 `)
 
-const props = defineProps<{
-  workspaceInfo: WorkspaceProjectList_WorkspaceFragment
+defineEmits<{
+  (e: 'show-invite-dialog'): void
+  (e: 'show-move-projects-dialog'): void
 }>()
 
-const emit = defineEmits<{
-  (e: 'show-invite-dialog'): void
-  (e: 'show-settings-dialog', v: AvailableSettingsMenuKeys): void
-  (e: 'show-move-projects-dialog'): void
+const props = defineProps<{
+  workspaceInfo: WorkspaceProjectList_WorkspaceFragment
 }>()
 
 const isWorkspaceGuest = computed(
@@ -102,14 +85,11 @@ const billingAlertAction = computed<Array<AlertAction>>(() => {
     return [
       {
         title: 'Subscribe',
-        onClick: () => openSettingsDialog(SettingMenuKeys.Workspace.Billing)
+        onClick: () =>
+          navigateTo(settingsWorkspaceRoutes.billing.route(props.workspaceInfo.slug))
       }
     ]
   }
   return []
 })
-
-const openSettingsDialog = (target: AvailableSettingsMenuKeys) => {
-  emit('show-settings-dialog', target)
-}
 </script>

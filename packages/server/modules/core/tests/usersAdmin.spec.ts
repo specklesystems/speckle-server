@@ -1,10 +1,8 @@
-const expect = require('chai').expect
-const assert = require('assert')
-
-const { beforeEachContext } = require('@/test/hooks')
-const { Roles } = require('@speckle/shared')
-const cryptoRandomString = require('crypto-random-string')
-const {
+import assert from 'assert'
+import { beforeEachContext } from '@/test/hooks'
+import { ensureError, Roles } from '@speckle/shared'
+import cryptoRandomString from 'crypto-random-string'
+import {
   legacyGetPaginatedUsersFactory,
   legacyGetPaginatedUsersCountFactory,
   getUserFactory,
@@ -15,44 +13,37 @@ const {
   deleteUserRecordFactory,
   getUserRoleFactory,
   updateUserServerRoleFactory
-} = require('@/modules/core/repositories/users')
-const { db } = require('@/db/knex')
-const {
+} from '@/modules/core/repositories/users'
+import { db } from '@/db/knex'
+import {
   findEmailFactory,
   createUserEmailFactory,
   ensureNoPrimaryEmailForUserFactory
-} = require('@/modules/core/repositories/userEmails')
-const {
-  requestNewEmailVerificationFactory
-} = require('@/modules/emails/services/verification/request')
-const {
-  deleteOldAndInsertNewVerificationFactory
-} = require('@/modules/emails/repositories')
-const { renderEmail } = require('@/modules/emails/services/emailRendering')
-const { sendEmail } = require('@/modules/emails/services/sending')
-const {
+} from '@/modules/core/repositories/userEmails'
+import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
+import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
+import { renderEmail } from '@/modules/emails/services/emailRendering'
+import { sendEmail } from '@/modules/emails/services/sending'
+import {
   createUserFactory,
   deleteUserFactory,
   changeUserRoleFactory
-} = require('@/modules/core/services/users/management')
-const {
-  validateAndCreateUserEmailFactory
-} = require('@/modules/core/services/userEmails')
-const {
-  finalizeInvitedServerRegistrationFactory
-} = require('@/modules/serverinvites/services/processing')
-const {
+} from '@/modules/core/services/users/management'
+import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
+import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
+import {
   deleteServerOnlyInvitesFactory,
   updateAllInviteTargetsFactory,
   deleteAllUserInvitesFactory
-} = require('@/modules/serverinvites/repositories/serverInvites')
-const {
+} from '@/modules/serverinvites/repositories/serverInvites'
+import {
   deleteStreamFactory,
   getUserDeletableStreamsFactory
-} = require('@/modules/core/repositories/streams')
-const { dbLogger } = require('@/logging/logging')
-const { getServerInfoFactory } = require('@/modules/core/repositories/server')
-const { getEventBus } = require('@/modules/shared/services/eventBus')
+} from '@/modules/core/repositories/streams'
+import { dbLogger } from '@/logging/logging'
+import { getServerInfoFactory } from '@/modules/core/repositories/server'
+import { getEventBus } from '@/modules/shared/services/eventBus'
+import { expect } from 'chai'
 
 const getUsers = legacyGetPaginatedUsersFactory({ db })
 const countUsers = legacyGetPaginatedUsersCountFactory({ db })
@@ -91,7 +82,8 @@ const deleteUser = deleteUserFactory({
   isLastAdminUser: isLastAdminUserFactory({ db }),
   getUserDeletableStreams: getUserDeletableStreamsFactory({ db }),
   deleteAllUserInvites: deleteAllUserInvitesFactory({ db }),
-  deleteUserRecord: deleteUserRecordFactory({ db })
+  deleteUserRecord: deleteUserRecordFactory({ db }),
+  emitEvent: getEventBus().emit
 })
 const getUserRole = getUserRoleFactory({ db })
 const buildChangeUserRole = (guestModeEnabled = false) =>
@@ -106,7 +98,8 @@ describe('User admin @user-services', () => {
   const myTestActor = {
     name: 'Gergo Jedlicska',
     email: 'gergo@jedlicska.com',
-    password: 'sn3aky-1337-b1m'
+    password: 'sn3aky-1337-b1m',
+    id: ''
   }
 
   before(async () => {
@@ -143,7 +136,7 @@ describe('User admin @user-services', () => {
 
   it('Get users query limit is sanitized to upper limit', async () => {
     const userInputs = Array(250)
-      .fill()
+      .fill(undefined)
       .map((v, i) => createNewDroid(i))
 
     expect(await countUsers()).to.equal(1)
@@ -178,7 +171,7 @@ describe('User admin @user-services', () => {
         await changeUserRole({ userId: myTestActor.id, role })
         assert.fail('This should have failed')
       } catch (err) {
-        expect(err.message).to.equal(`Invalid role specified: ${role}`)
+        expect(ensureError(err).message).to.equal(`Invalid role specified: ${role}`)
       }
     })
     it('throws if guest role not enabled, but trying to change user role to guest', async () => {
@@ -187,7 +180,7 @@ describe('User admin @user-services', () => {
         await changeUserRole({ userId: myTestActor.id, role })
         assert.fail('This should have failed')
       } catch (err) {
-        expect(err.message).to.equal('Guest role is not enabled')
+        expect(ensureError(err).message).to.equal('Guest role is not enabled')
       }
     })
     it('modifies role', async () => {
@@ -218,7 +211,7 @@ describe('User admin @user-services', () => {
         await changeUserRole({ userId: myTestActor.id, role: Roles.Server.User })
         assert.fail('This should have failed')
       } catch (err) {
-        expect(err.message).to.equal(
+        expect(ensureError(err).message).to.equal(
           'Cannot remove the last admin role from the server'
         )
       }
@@ -226,7 +219,7 @@ describe('User admin @user-services', () => {
   })
 })
 
-const createNewDroid = (number) => {
+const createNewDroid = (number: string | number) => {
   return {
     name: `${number}`,
     email: `${number}@droidarmy.com`,
