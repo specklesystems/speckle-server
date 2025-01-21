@@ -3,6 +3,7 @@ import {
   DoubleSide,
   OrthographicCamera,
   PerspectiveCamera,
+  Plane,
   Scene,
   WebGLRenderer
 } from 'three'
@@ -38,6 +39,12 @@ export class BasitPass extends BaseGPass {
 
   public get displayName(): string {
     return 'BASIT'
+  }
+
+  public setClippingPlanes(planes: Plane[]) {
+    for (const k in this.materialMap) {
+      this.materialMap[k][2].clippingPlanes = planes
+    }
   }
 
   protected buildMaterials() {

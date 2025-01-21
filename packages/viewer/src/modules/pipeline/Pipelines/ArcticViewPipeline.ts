@@ -30,7 +30,8 @@ export class ArcticViewPipeline extends ProgressivePipeline {
       ObjectLayers.STREAM_CONTENT_LINE,
       ObjectLayers.STREAM_CONTENT_POINT,
       ObjectLayers.STREAM_CONTENT_POINT_CLOUD,
-      ObjectLayers.STREAM_CONTENT_TEXT
+      ObjectLayers.STREAM_CONTENT_TEXT,
+      ObjectLayers.PROPS
     ])
     viewportPass.setVisibility(ObjectVisibility.OPAQUE)
     viewportPass.options = { minIntensity: 0.75 }
@@ -72,11 +73,7 @@ export class ArcticViewPipeline extends ProgressivePipeline {
     stencilMaskPass.setClearFlags(ClearFlags.DEPTH)
 
     const overlayPass = new GeometryPass()
-    overlayPass.setLayers([
-      ObjectLayers.PROPS,
-      ObjectLayers.OVERLAY,
-      ObjectLayers.MEASUREMENTS
-    ])
+    overlayPass.setLayers([ObjectLayers.OVERLAY, ObjectLayers.MEASUREMENTS])
 
     this.dynamicStage.push(
       stencilPass,
