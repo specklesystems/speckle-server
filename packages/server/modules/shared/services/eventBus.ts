@@ -212,6 +212,7 @@ export function initializeEventBus() {
 export type EventBus = ReturnType<typeof initializeEventBus>
 export type EventBusPayloads = EventTypes
 export type EventBusEmit = EventBus['emit']
+export type EventBusListen = EventBus['listen']
 export type EmitArg = Parameters<EventBusEmit>[0]
 
 let eventBus: EventBus

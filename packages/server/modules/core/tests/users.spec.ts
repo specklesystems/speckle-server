@@ -100,7 +100,6 @@ import {
 } from '@/modules/core/services/users/management'
 import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
 import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
-import { addUserUpdatedActivityFactory } from '@/modules/activitystream/services/userActivity'
 import { dbLogger } from '@/logging/logging'
 import {
   storeApiTokenFactory,
@@ -214,9 +213,7 @@ const getUserByEmail = legacyGetUserByEmailFactory({ db })
 const updateUser = updateUserAndNotifyFactory({
   getUser: getUserFactory({ db }),
   updateUser: updateUserFactory({ db }),
-  addUserUpdatedActivity: addUserUpdatedActivityFactory({
-    saveActivity: saveActivityFactory({ db })
-  })
+  emitEvent: getEventBus().emit
 })
 const updateUserPassword = changePasswordFactory({
   getUser: getUserFactory({ db }),
@@ -231,7 +228,8 @@ const deleteUser = deleteUserFactory({
   isLastAdminUser: isLastAdminUserFactory({ db }),
   getUserDeletableStreams: getUserDeletableStreamsFactory({ db }),
   deleteAllUserInvites: deleteAllUserInvitesFactory({ db }),
-  deleteUserRecord: deleteUserRecordFactory({ db })
+  deleteUserRecord: deleteUserRecordFactory({ db }),
+  emitEvent: getEventBus().emit
 })
 const changeUserRole = changeUserRoleFactory({
   getServerInfo,
