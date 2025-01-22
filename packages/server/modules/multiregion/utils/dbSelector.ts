@@ -215,7 +215,12 @@ const setUpUserReplication = async ({
           info: { pubName, regionName }
         }
       )
-    if (!err.message.includes('already exists')) throw err
+    if (
+      !['already exists', 'violates unique constraint'].some((message) =>
+        err.message.includes(message)
+      )
+    )
+      throw err
   }
 
   const fromUrl = new URL(

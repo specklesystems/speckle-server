@@ -9,6 +9,7 @@ import {
   copyProjectModelsFactory,
   copyProjectsFactory,
   copyProjectVersionsFactory,
+  copyWorkspaceFactory,
   getDefaultRegionFactory,
   upsertRegionAssignmentFactory
 } from '@/modules/workspaces/repositories/regions'
@@ -83,6 +84,7 @@ export default {
             getWorkspacePlan: getWorkspacePlanFactory({ db })
           })
         }),
+        copyWorkspace: copyWorkspaceFactory({ sourceDb, targetDb }),
         copyProjects: copyProjectsFactory({ sourceDb, targetDb }),
         copyProjectModels: copyProjectModelsFactory({ sourceDb, targetDb }),
         copyProjectVersions: copyProjectVersionsFactory({ sourceDb, targetDb })

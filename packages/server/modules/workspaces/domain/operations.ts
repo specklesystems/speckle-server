@@ -352,6 +352,7 @@ export type UpdateProjectRegion = (params: {
   regionKey: string
 }) => Promise<Stream>
 
+export type CopyWorkspace = (params: { workspaceId: string }) => Promise<string>
 export type CopyProjects = (params: { projectIds: string[] }) => Promise<string[]>
 export type CopyProjectModels = (params: {
   projectIds: string[]

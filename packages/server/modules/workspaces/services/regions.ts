@@ -8,6 +8,7 @@ import {
   CopyProjectModels,
   CopyProjects,
   CopyProjectVersions,
+  CopyWorkspace,
   GetAvailableRegions,
   GetDefaultRegion,
   GetWorkspace,
@@ -86,6 +87,7 @@ export const updateProjectRegionFactory =
     countProjectModels: GetStreamBranchCount
     countProjectVersions: GetStreamCommitCount
     getAvailableRegions: GetAvailableRegions
+    copyWorkspace: CopyWorkspace
     copyProjects: CopyProjects
     copyProjectModels: CopyProjectModels
     copyProjectVersions: CopyProjectVersions
@@ -119,6 +121,9 @@ export const updateProjectRegionFactory =
         }
       )
     }
+
+    // Move workspace
+    await deps.copyWorkspace({ workspaceId: project.workspaceId })
 
     // Move commits
     const projectIds = await deps.copyProjects({ projectIds: [projectId] })

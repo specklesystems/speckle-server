@@ -23,10 +23,16 @@ import {
   CopyProjectModels,
   CopyProjects,
   CopyProjectVersions,
+  CopyWorkspace,
   GetDefaultRegion,
   UpsertRegionAssignment
 } from '@/modules/workspaces/domain/operations'
-import { WorkspaceRegionAssignment } from '@/modules/workspacesCore/domain/types'
+import { WorkspaceNotFoundError } from '@/modules/workspaces/errors/workspace'
+import {
+  Workspace,
+  WorkspaceRegionAssignment
+} from '@/modules/workspacesCore/domain/types'
+import { Workspaces } from '@/modules/workspacesCore/helpers/db'
 import { Knex } from 'knex'
 
 export const WorkspaceRegions = buildTableHelper('workspace_regions', [
@@ -35,6 +41,7 @@ export const WorkspaceRegions = buildTableHelper('workspace_regions', [
 ])
 
 const tables = {
+  workspaces: (db: Knex) => db<Workspace>(Workspaces.name),
   workspaceRegions: (db: Knex) => db<WorkspaceRegionAssignment>(WorkspaceRegions.name),
   regions: (db: Knex) => db<RegionRecord>(Regions.name),
   projects: (db: Knex) => db<Stream>(Streams.name),
@@ -71,6 +78,23 @@ export const getDefaultRegionFactory =
       .first()
 
     return row
+  }
+
+export const copyWorkspaceFactory =
+  (deps: { sourceDb: Knex; targetDb: Knex }): CopyWorkspace =>
+  async ({ workspaceId }) => {
+    const workspace = await tables
+      .workspaces(deps.sourceDb)
+      .select('*')
+      .where({ id: workspaceId })
+
+    if (!workspace) {
+      throw new WorkspaceNotFoundError()
+    }
+
+    await tables.workspaces(deps.targetDb).insert(workspace)
+
+    return workspaceId
   }
 
 export const copyProjectsFactory =
