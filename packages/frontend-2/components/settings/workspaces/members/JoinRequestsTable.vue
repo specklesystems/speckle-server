@@ -77,6 +77,7 @@ graphql(`
     adminWorkspacesJoinRequests(filter: $joinRequestsFilter) {
       totalCount
       items {
+        id
         createdAt
         status
         user {
