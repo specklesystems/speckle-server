@@ -1,4 +1,9 @@
-import { WorkspaceNotFoundError } from '@/modules/workspaces/errors/workspace'
+import {
+  WorkspaceJoinNotAllowedError,
+  WorkspaceNotDiscoverableError,
+  WorkspaceNotFoundError,
+  WorkspaceNotJoinableError
+} from '@/modules/workspaces/errors/workspace'
 import { GetUser } from '@/modules/core/domain/users/operations'
 import { NotFoundError } from '@/modules/shared/errors'
 import {
@@ -6,6 +11,7 @@ import {
   DenyWorkspaceJoinRequest,
   GetWorkspace,
   GetWorkspaceJoinRequest,
+  GetWorkspaceWithDomains,
   SendWorkspaceJoinRequestApprovedEmail,
   SendWorkspaceJoinRequestDeniedEmail,
   SendWorkspaceJoinRequestReceivedEmail,
@@ -13,6 +19,7 @@ import {
   UpsertWorkspaceRole
 } from '@/modules/workspaces/domain/operations'
 import { Roles } from '@speckle/shared'
+import { FindEmailsByUserId } from '@/modules/core/domain/userEmails/operations'
 
 export const dismissWorkspaceJoinRequestFactory =
   ({
@@ -40,12 +47,14 @@ export const requestToJoinWorkspaceFactory =
     createWorkspaceJoinRequest,
     sendWorkspaceJoinRequestReceivedEmail,
     getUserById,
-    getWorkspace
+    getWorkspaceWithDomains,
+    getUserEmails
   }: {
     createWorkspaceJoinRequest: CreateWorkspaceJoinRequest
     sendWorkspaceJoinRequestReceivedEmail: SendWorkspaceJoinRequestReceivedEmail
     getUserById: GetUser
-    getWorkspace: GetWorkspace
+    getWorkspaceWithDomains: GetWorkspaceWithDomains
+    getUserEmails: FindEmailsByUserId
   }) =>
   async ({ userId, workspaceId }: { userId: string; workspaceId: string }) => {
     const requester = await getUserById(userId)
@@ -53,10 +62,23 @@ export const requestToJoinWorkspaceFactory =
       throw new NotFoundError('User not found')
     }
 
-    const workspace = await getWorkspace({ workspaceId })
+    const workspace = await getWorkspaceWithDomains({ id: workspaceId })
     if (!workspace) {
       throw new WorkspaceNotFoundError('Workspace not found')
     }
+    if (!workspace?.discoverabilityEnabled) throw new WorkspaceNotDiscoverableError()
+    const workspaceDomains = workspace.domains.filter((domain) => domain.verified)
+    if (!workspaceDomains.length) throw new WorkspaceNotJoinableError()
+
+    const userEmails = await getUserEmails({ userId })
+    const matchingEmail = userEmails.find((userEmail) => {
+      if (!userEmail.verified) return false
+      return workspaceDomains
+        .map((domain) => domain.domain)
+        .includes(userEmail.email.split('@')[1])
+    })
+
+    if (!matchingEmail) throw new WorkspaceJoinNotAllowedError()
 
     await createWorkspaceJoinRequest({
       workspaceJoinRequest: {
