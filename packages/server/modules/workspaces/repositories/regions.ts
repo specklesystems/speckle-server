@@ -207,10 +207,10 @@ export const copyProjectVersionsFactory =
 
       for await (const versions of executeBatchedSelect(selectVersions)) {
         for (const version of versions) {
-          const { commitId, ...commit } = version
+          const { commitId, streamId, ...commit } = version
 
           // Store copied version id
-          copiedVersionIds[projectId].push(commitId)
+          copiedVersionIds[streamId].push(commitId)
 
           // Copy `commits` row to target db
           await tables.versions(deps.targetDb).insert(commit).onConflict().ignore()

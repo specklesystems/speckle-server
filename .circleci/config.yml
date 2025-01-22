@@ -598,10 +598,18 @@ jobs:
           POSTGRES_PASSWORD: speckle
           POSTGRES_USER: speckle
         command: -c 'max_connections=1000' -c 'port=5433' -c 'wal_level=logical'
+      - image: 'speckle/speckle-postgres'
+        environment:
+          POSTGRES_DB: speckle2_test
+          POSTGRES_PASSWORD: speckle
+          POSTGRES_USER: speckle
+        command: -c 'max_connections=1000' -c 'port=5434' -c 'wal_level=logical'
       - image: 'minio/minio'
         command: server /data --console-address ":9001" --address "0.0.0.0:9000"
       - image: 'minio/minio'
         command: server /data --console-address ":9021" --address "0.0.0.0:9020"
+      - image: 'minio/minio'
+        command: server /data --console-address ":9041" --address "0.0.0.0:9040"
     environment:
       # Same as test-server:
       NODE_ENV: test

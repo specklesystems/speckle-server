@@ -1,7 +1,7 @@
 import { db } from '@/db/knex'
 import { AllScopes } from '@/modules/core/helpers/mainConstants'
 import { createRandomEmail } from '@/modules/core/helpers/testHelpers'
-import { StreamRecord } from '@/modules/core/helpers/types'
+import { BranchRecord, CommitRecord, StreamRecord } from '@/modules/core/helpers/types'
 import { grantStreamPermissionsFactory } from '@/modules/core/repositories/streams'
 import { getDb } from '@/modules/multiregion/utils/dbSelector'
 import {
@@ -28,6 +28,12 @@ import {
   TestApolloServer
 } from '@/test/graphqlHelper'
 import { beforeEachContext } from '@/test/hooks'
+import { BasicTestBranch, createTestBranch } from '@/test/speckle-helpers/branchHelper'
+import {
+  BasicTestCommit,
+  createTestCommit,
+  createTestObject
+} from '@/test/speckle-helpers/commitHelper'
 import {
   isMultiRegionTestMode,
   waitForRegionUser
@@ -37,6 +43,7 @@ import { Roles } from '@speckle/shared'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
 import { Knex } from 'knex'
+import { SetOptional } from 'type-fest'
 
 const grantStreamPermissions = grantStreamPermissionsFactory({ db })
 
@@ -294,10 +301,9 @@ isMultiRegionTestMode()
         email: createRandomEmail()
       }
 
-      const testWorkspace: BasicTestWorkspace = {
+      const testWorkspace: SetOptional<BasicTestWorkspace, 'slug'> = {
         id: '',
         ownerId: '',
-        slug: '',
         name: 'Unlimited Workspace'
       }
 
@@ -308,12 +314,34 @@ isMultiRegionTestMode()
         isPublic: true
       }
 
+      const testModel: BasicTestBranch = {
+        id: '',
+        name: cryptoRandomString({ length: 8 }),
+        streamId: '',
+        authorId: ''
+      }
+
+      const testVersion: BasicTestCommit = {
+        id: '',
+        objectId: '',
+        streamId: '',
+        authorId: ''
+      }
+
       let apollo: TestApolloServer
-      let regionDb: Knex
+      let targetRegionDb: Knex
 
       before(async () => {
         await createTestUser(adminUser)
         await waitForRegionUser(adminUser)
+
+        apollo = await testApolloServer({ authUserId: adminUser.id })
+        targetRegionDb = await getDb({ regionKey: regionKey2 })
+      })
+
+      beforeEach(async () => {
+        delete testWorkspace.slug
+
         await createTestWorkspace(testWorkspace, adminUser, {
           regionKey: regionKey1,
           addPlan: {
@@ -324,12 +352,20 @@ isMultiRegionTestMode()
 
         testProject.workspaceId = testWorkspace.id
 
-        apollo = await testApolloServer({ authUserId: adminUser.id })
-        regionDb = await getDb({ regionKey: regionKey2 })
-      })
-
-      beforeEach(async () => {
         await createTestStream(testProject, adminUser)
+        await createTestBranch({
+          stream: testProject,
+          branch: testModel,
+          owner: adminUser
+        })
+
+        testVersion.branchName = testModel.name
+        testVersion.objectId = await createTestObject({ projectId: testProject.id })
+
+        await createTestCommit(testVersion, {
+          owner: adminUser,
+          stream: testProject
+        })
       })
 
       it('moves project record to target regional db', async () => {
@@ -340,13 +376,47 @@ isMultiRegionTestMode()
 
         expect(res).to.not.haveGraphQLErrors()
 
-        const project = await regionDb
+        const project = await targetRegionDb
           .table<StreamRecord>('streams')
           .select('*')
           .where({ id: testProject.id })
           .first()
 
         expect(project).to.not.be.undefined
+      })
+
+      it('moves project models to target regional db', async () => {
+        const res = await apollo.execute(UpdateProjectRegionDocument, {
+          projectId: testProject.id,
+          regionKey: regionKey2
+        })
+
+        expect(res).to.not.haveGraphQLErrors()
+
+        const branch = await targetRegionDb
+          .table<BranchRecord>('branches')
+          .select('*')
+          .where({ id: testModel.id })
+          .first()
+
+        expect(branch).to.not.be.undefined
+      })
+
+      it('moves project model versions to target regional db', async () => {
+        const res = await apollo.execute(UpdateProjectRegionDocument, {
+          projectId: testProject.id,
+          regionKey: regionKey2
+        })
+
+        expect(res).to.not.haveGraphQLErrors()
+
+        const version = await targetRegionDb
+          .table<CommitRecord>('commits')
+          .select('*')
+          .where({ id: testVersion.id })
+          .first()
+
+        expect(version).to.not.be.undefined
       })
     })
   : void 0
