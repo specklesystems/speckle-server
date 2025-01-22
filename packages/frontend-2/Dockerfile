@@ -34,8 +34,17 @@ RUN yarn workspaces foreach -W run build
 RUN find ./packages/frontend-2/.output/ -type f \( -name "*.js.map" -o -name "*.mjs.map" -o -name "*.cjs.map" \) -exec rm -f {} \;
 
 ENV TINI_VERSION v0.19.0
-ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
-RUN chmod +x /tini
+RUN apt-get update -y \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y \
+     --no-install-recommends \
+     ca-certificates=20230311 \
+     curl=7.88.1-10+deb12u8 \
+    && curl -fsSL https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini -o /tini \
+    && chmod +x /tini \
+    && apt-get remove -y curl \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 FROM gcr.io/distroless/nodejs18-debian12:nonroot@sha256:afdea027580f7afcaf1f316b2b3806690c297cb3ce6ddc5cf6a15804dc1c790f as production-stage
 ARG NODE_ENV=production
