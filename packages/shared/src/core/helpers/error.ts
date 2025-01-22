@@ -20,3 +20,14 @@ export function throwUncoveredError(e: never): never {
 export function createUncoveredError(e: never) {
   return new Error(`Uncovered error case ${e}.`)
 }
+
+/**
+ * Note: Only V8 and Node.js support controlling the stack trace limit
+ */
+export const collectLongTrace = (limit?: number) => {
+  const originalLimit = Error.stackTraceLimit
+  Error.stackTraceLimit = limit || 30
+  const trace = (new Error().stack || '').split('\n').slice(1).join('\n').trim()
+  Error.stackTraceLimit = originalLimit
+  return trace
+}

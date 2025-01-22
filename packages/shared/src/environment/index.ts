@@ -55,6 +55,11 @@ const parseFeatureFlags = () => {
     FF_FILEIMPORT_IFC_DOTNET_ENABLED: {
       schema: z.boolean(),
       defaults: { production: false, _: false }
+    },
+    // Forces email verification for all users
+    FF_FORCE_EMAIL_VERIFICATION: {
+      schema: z.boolean(),
+      defaults: { production: false, _: false }
     }
   })
 
@@ -80,6 +85,7 @@ export function getFeatureFlags(): {
   FF_BILLING_INTEGRATION_ENABLED: boolean
   FF_WORKSPACES_MULTI_REGION_ENABLED: boolean
   FF_FILEIMPORT_IFC_DOTNET_ENABLED: boolean
+  FF_FORCE_EMAIL_VERIFICATION: boolean
 } {
   if (!parsedFlags) parsedFlags = parseFeatureFlags()
   return parsedFlags

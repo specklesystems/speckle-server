@@ -84,6 +84,11 @@
           "type": "boolean",
           "description": "Toggles whether the experimental .Net IFC importer is used for importing IFC files.",
           "default": false
+        },
+        "forceEmailVerification": {
+          "type": "boolean",
+          "description": "Forces email verification for all users",
+          "default": false
         }
       }
     },
@@ -244,6 +249,11 @@
         "knexAsyncStackTracesEnabled": {
           "type": "boolean",
           "description": "If enabled, will provide better stack traces for errors arising out of knex operations",
+          "default": false
+        },
+        "knexImprovedTelemetryStackTraces": {
+          "type": "boolean",
+          "description": "If enabled, will provide better stack traces for knex telemetry",
           "default": false
         },
         "databaseName": {

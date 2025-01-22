@@ -945,6 +945,11 @@ export type DeleteVersionsInput = {
   versionIds: Array<Scalars['ID']['input']>;
 };
 
+export type DenyWorkspaceJoinRequestInput = {
+  userId: Scalars['String']['input'];
+  workspaceId: Scalars['String']['input'];
+};
+
 export enum DiscoverableStreamsSortType {
   CreatedDate = 'CREATED_DATE',
   FavoritesCount = 'FAVORITES_COUNT'
@@ -4418,6 +4423,7 @@ export type WorkspaceInviteUseInput = {
 export type WorkspaceJoinRequest = {
   __typename?: 'WorkspaceJoinRequest';
   createdAt: Scalars['DateTime']['output'];
+  id: Scalars['String']['output'];
   status: WorkspaceJoinRequestStatus;
   user: LimitedUser;
   workspace: Workspace;
@@ -4433,11 +4439,17 @@ export type WorkspaceJoinRequestCollection = {
 export type WorkspaceJoinRequestMutations = {
   __typename?: 'WorkspaceJoinRequestMutations';
   approve: Scalars['Boolean']['output'];
+  deny: Scalars['Boolean']['output'];
 };
 
 
 export type WorkspaceJoinRequestMutationsApproveArgs = {
   input: ApproveWorkspaceJoinRequestInput;
+};
+
+
+export type WorkspaceJoinRequestMutationsDenyArgs = {
+  input: DenyWorkspaceJoinRequestInput;
 };
 
 export enum WorkspaceJoinRequestStatus {
@@ -4894,6 +4906,7 @@ export type ResolversTypes = {
   DeleteModelInput: DeleteModelInput;
   DeleteUserEmailInput: DeleteUserEmailInput;
   DeleteVersionsInput: DeleteVersionsInput;
+  DenyWorkspaceJoinRequestInput: DenyWorkspaceJoinRequestInput;
   DiscoverableStreamsSortType: DiscoverableStreamsSortType;
   DiscoverableStreamsSortingInput: DiscoverableStreamsSortingInput;
   EditCommentInput: EditCommentInput;
@@ -5195,6 +5208,7 @@ export type ResolversParentTypes = {
   DeleteModelInput: DeleteModelInput;
   DeleteUserEmailInput: DeleteUserEmailInput;
   DeleteVersionsInput: DeleteVersionsInput;
+  DenyWorkspaceJoinRequestInput: DenyWorkspaceJoinRequestInput;
   DiscoverableStreamsSortingInput: DiscoverableStreamsSortingInput;
   EditCommentInput: EditCommentInput;
   EmailVerificationRequestInput: EmailVerificationRequestInput;
@@ -6884,6 +6898,7 @@ export type WorkspaceInviteMutationsResolvers<ContextType = GraphQLContext, Pare
 
 export type WorkspaceJoinRequestResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['WorkspaceJoinRequest'] = ResolversParentTypes['WorkspaceJoinRequest']> = {
   createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   status?: Resolver<ResolversTypes['WorkspaceJoinRequestStatus'], ParentType, ContextType>;
   user?: Resolver<ResolversTypes['LimitedUser'], ParentType, ContextType>;
   workspace?: Resolver<ResolversTypes['Workspace'], ParentType, ContextType>;
@@ -6899,6 +6914,7 @@ export type WorkspaceJoinRequestCollectionResolvers<ContextType = GraphQLContext
 
 export type WorkspaceJoinRequestMutationsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['WorkspaceJoinRequestMutations'] = ResolversParentTypes['WorkspaceJoinRequestMutations']> = {
   approve?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<WorkspaceJoinRequestMutationsApproveArgs, 'input'>>;
+  deny?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<WorkspaceJoinRequestMutationsDenyArgs, 'input'>>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 

@@ -589,6 +589,9 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 - name: FF_WORKSPACES_MULTI_REGION_ENABLED
   value: {{ .Values.featureFlags.workspacesMultiRegionEnabled | quote }}
 
+- name: FF_FORCE_EMAIL_VERIFICATION
+  value: {{ .Values.featureFlags.forceEmailVerification | quote }}
+
 {{- if .Values.featureFlags.billingIntegrationEnabled }}
 - name: STRIPE_API_KEY
   valueFrom:
@@ -780,6 +783,11 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 {{- if .Values.db.knexAsyncStackTracesEnabled }}
 - name: KNEX_ASYNC_STACK_TRACES_ENABLED
   value: {{ .Values.db.knexAsyncStackTracesEnabled | quote }}
+{{- end}}
+
+{{- if .Values.db.knexImprovedTelemetryStackTraces }}
+- name: KNEX_IMPROVED_TELEMETRY_STACK_TRACES
+  value: {{ .Values.db.knexImprovedTelemetryStackTraces | quote }}
 {{- end}}
 
 - name: PGSSLMODE
