@@ -6,7 +6,7 @@
     <p class="text-center text-body-sm text-foreground-2">
       Your answers will help us improve
     </p>
-    <form class="mt-8 w-full space-y-6" @submit="onSubmit">
+    <form class="mt-8 w-full flex flex-col gap-4" @submit="onSubmit">
       <OnboardingRoleSelect v-model="values.role" name="role" required />
       <OnboardingPlanSelect v-model="values.plan" name="plan" required />
       <OnboardingSourceSelect v-model="values.source" name="source" required />
@@ -14,7 +14,7 @@
         <FormButton size="lg" :disabled="!meta.valid || isSubmitting" submit full-width>
           Continue
         </FormButton>
-        <div class="opacity-60 hover:opacity-100 max-w-max mx-auto px-1">
+        <!-- <div class="opacity-60 hover:opacity-100 max-w-max mx-auto px-1">
           <FormButton
             size="sm"
             text
@@ -25,7 +25,7 @@
           >
             Skip
           </FormButton>
-        </div>
+        </div> -->
       </div>
     </form>
   </div>
