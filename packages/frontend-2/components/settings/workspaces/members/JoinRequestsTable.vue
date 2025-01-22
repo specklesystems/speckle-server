@@ -47,23 +47,22 @@
 
     <WorkspaceJoinRequestApproveDialog
       v-model:open="showApproveJoinRequestDialog"
-      :name="userToApprove?.user.name"
-      :workspace-id="props.workspace?.id"
-      :user-id="userToApprove?.id"
+      :join-request="requestToApprove"
     />
   </div>
 </template>
 
 <script setup lang="ts">
 import { type MaybeNullOrUndefined } from '@speckle/shared'
-import type { SettingsWorkspacesMembersRequestsTable_WorkspaceFragment } from '~~/lib/common/generated/gql/graphql'
+import type {
+  SettingsWorkspacesMembersRequestsTable_WorkspaceFragment,
+  WorkspaceJoinRequestApproveDialog_WorkspaceJoinRequestFragment
+} from '~~/lib/common/generated/gql/graphql'
 import { graphql } from '~/lib/common/generated/gql'
 import { EllipsisHorizontalIcon, XMarkIcon } from '@heroicons/vue/24/outline'
 import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
 import { HorizontalDirection } from '~~/lib/common/composables/window'
 import { useWorkspaceJoinRequest } from '~/lib/workspaces/composables/joinRequests'
-
-type UserItem = (typeof joinRequests)['value'][0]
 
 enum ActionTypes {
   Approve = 'approve',
@@ -77,6 +76,7 @@ graphql(`
     adminWorkspacesJoinRequests(filter: $joinRequestsFilter) {
       totalCount
       items {
+        ...WorkspaceJoinRequestApproveDialog_WorkspaceJoinRequest
         id
         createdAt
         status
@@ -95,15 +95,13 @@ const props = defineProps<{
 }>()
 
 const showApproveJoinRequestDialog = ref(false)
-const userToApprove = ref<UserItem>()
+const requestToApprove =
+  ref<WorkspaceJoinRequestApproveDialog_WorkspaceJoinRequestFragment>()
 const showActionsMenu = ref<Record<string, boolean>>({})
 const { deny } = useWorkspaceJoinRequest()
 
-const joinRequests = computed(() =>
-  (props.workspace?.adminWorkspacesJoinRequests?.items || []).map((item) => ({
-    ...item,
-    id: item.user.id
-  }))
+const joinRequests = computed(
+  () => props.workspace?.adminWorkspacesJoinRequests?.items || []
 )
 
 const actionItems = computed((): LayoutMenuItem[][] => [
@@ -111,26 +109,36 @@ const actionItems = computed((): LayoutMenuItem[][] => [
   [{ title: 'Deny', id: ActionTypes.Deny }]
 ])
 
-const onApprove = (user: UserItem) => {
-  userToApprove.value = user
+const onApprove = (
+  request: WorkspaceJoinRequestApproveDialog_WorkspaceJoinRequestFragment
+) => {
+  requestToApprove.value = request
   showApproveJoinRequestDialog.value = true
 }
 
-const onDeny = async (user: UserItem) => {
+const onDeny = async (
+  request: WorkspaceJoinRequestApproveDialog_WorkspaceJoinRequestFragment
+) => {
   if (!props.workspace?.id) return
-  await deny({
-    workspaceId: props.workspace?.id,
-    userId: user.id
-  })
+  await deny(
+    {
+      workspaceId: props.workspace?.id,
+      userId: request.user.id
+    },
+    request.id
+  )
 }
 
-const onActionChosen = (actionItem: LayoutMenuItem, user: UserItem) => {
+const onActionChosen = (
+  actionItem: LayoutMenuItem,
+  request: WorkspaceJoinRequestApproveDialog_WorkspaceJoinRequestFragment
+) => {
   switch (actionItem.id) {
     case ActionTypes.Approve:
-      onApprove(user)
+      onApprove(request)
       break
     case ActionTypes.Deny:
-      onDeny(user)
+      onDeny(request)
       break
   }
 }

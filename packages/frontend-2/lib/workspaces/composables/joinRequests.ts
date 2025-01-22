@@ -10,7 +10,9 @@ import type {
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import {
   convertThrowIntoFetchResult,
-  getFirstErrorMessage
+  getFirstErrorMessage,
+  modifyObjectField,
+  getCacheId
 } from '~~/lib/common/helpers/graphql'
 
 export const useWorkspaceJoinRequest = () => {
@@ -18,8 +20,31 @@ export const useWorkspaceJoinRequest = () => {
   const { mutate: denyMutation } = useMutation(denyWorkspaceJoinRequestMutation)
   const { triggerNotification } = useGlobalToast()
 
-  const approve = async (input: ApproveWorkspaceJoinRequestInput) => {
-    const result = await approveMutation({ input }).catch(convertThrowIntoFetchResult)
+  const approve = async (input: ApproveWorkspaceJoinRequestInput, id: string) => {
+    const result = await approveMutation(
+      { input },
+      {
+        update: (cache) => {
+          cache.evict({
+            id: getCacheId('WorkspaceJoinRequest', id)
+          })
+
+          modifyObjectField(
+            cache,
+            getCacheId('Workspace', input.workspaceId),
+            'adminWorkspacesJoinRequests',
+            ({ helpers: { createUpdatedValue } }) => {
+              return createUpdatedValue(({ update }) => {
+                update('totalCount', (totalCount) => totalCount - 1)
+              })
+            },
+            {
+              autoEvictFiltered: true
+            }
+          )
+        }
+      }
+    ).catch(convertThrowIntoFetchResult)
 
     if (result?.data) {
       triggerNotification({
@@ -36,8 +61,31 @@ export const useWorkspaceJoinRequest = () => {
     }
   }
 
-  const deny = async (input: DenyWorkspaceJoinRequestInput) => {
-    const result = await denyMutation({ input }).catch(convertThrowIntoFetchResult)
+  const deny = async (input: DenyWorkspaceJoinRequestInput, id: string) => {
+    const result = await denyMutation(
+      { input },
+      {
+        update: (cache) => {
+          cache.evict({
+            id: getCacheId('WorkspaceJoinRequest', id)
+          })
+
+          modifyObjectField(
+            cache,
+            getCacheId('Workspace', input.workspaceId),
+            'adminWorkspacesJoinRequests',
+            ({ helpers: { createUpdatedValue } }) => {
+              return createUpdatedValue(({ update }) => {
+                update('totalCount', (totalCount) => totalCount - 1)
+              })
+            },
+            {
+              autoEvictFiltered: true
+            }
+          )
+        }
+      }
+    ).catch(convertThrowIntoFetchResult)
 
     if (result?.data) {
       triggerNotification({
