@@ -206,7 +206,7 @@ const setUpUserReplication = async ({
   try {
     await from.public.raw(`CREATE PUBLICATION ${pubName} FOR TABLE users;`)
   } catch (err) {
-    if (!(err instanceof Error))
+    if (!(err instanceof Error)) {
       throw new DatabaseError(
         'Could not create publication {pubName} when setting up user replication for region {regionName}',
         from.public,
@@ -215,9 +215,13 @@ const setUpUserReplication = async ({
           info: { pubName, regionName }
         }
       )
+    }
+
+    const errorMessage = err.message
+
     if (
       !['already exists', 'violates unique constraint'].some((message) =>
-        err.message.includes(message)
+        errorMessage.includes(message)
       )
     )
       throw err
