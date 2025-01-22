@@ -43,7 +43,8 @@ import { useRoute } from 'vue-router'
 useHead({ title: 'Verify Email' })
 
 definePageMeta({
-  layout: 'verify-email'
+  layout: 'verify-email',
+  middleware: ['auth']
 })
 
 const mixpanel = useMixpanel()
