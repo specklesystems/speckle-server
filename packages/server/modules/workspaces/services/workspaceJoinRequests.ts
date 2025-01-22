@@ -1,8 +1,8 @@
 import {
-  WorkspaceJoinNotAllowedError,
   WorkspaceNotDiscoverableError,
   WorkspaceNotFoundError,
-  WorkspaceNotJoinableError
+  WorkspaceNotJoinableError,
+  WorkspaceProtectedError
 } from '@/modules/workspaces/errors/workspace'
 import { GetUser } from '@/modules/core/domain/users/operations'
 import { NotFoundError } from '@/modules/shared/errors'
@@ -20,6 +20,7 @@ import {
 } from '@/modules/workspaces/domain/operations'
 import { Roles } from '@speckle/shared'
 import { FindEmailsByUserId } from '@/modules/core/domain/userEmails/operations'
+import { userEmailsCompliantWithWorkspaceDomains } from '@/modules/workspaces/domain/logic'
 
 export const dismissWorkspaceJoinRequestFactory =
   ({
@@ -71,14 +72,14 @@ export const requestToJoinWorkspaceFactory =
     if (!workspaceDomains.length) throw new WorkspaceNotJoinableError()
 
     const userEmails = await getUserEmails({ userId })
-    const matchingEmail = userEmails.find((userEmail) => {
-      if (!userEmail.verified) return false
-      return workspaceDomains
-        .map((domain) => domain.domain)
-        .includes(userEmail.email.split('@')[1])
-    })
 
-    if (!matchingEmail) throw new WorkspaceJoinNotAllowedError()
+    const canJoinWorkspace = userEmailsCompliantWithWorkspaceDomains({
+      workspaceDomains: workspace.domains,
+      userEmails
+    })
+    if (!canJoinWorkspace) {
+      throw new WorkspaceProtectedError()
+    }
 
     await createWorkspaceJoinRequest({
       workspaceJoinRequest: {
