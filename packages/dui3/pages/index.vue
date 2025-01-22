@@ -1,25 +1,6 @@
 <template>
   <div>
     <div v-if="store.hostAppName">
-      <!-- TEMPORARY MESSAGE TO USER! will be deleted -->
-      <LayoutPanel fancy-glow class="mr-4 ml-2 scale-95 pointer-events-auto">
-        <h1
-          class="h4 font-bold w-full bg-gradient-to-r from-blue-500 via-blue-400 to-blue-600 inline-block py-1 text-transparent bg-clip-text"
-        >
-          {{
-            `Next-Gen ${
-              store.hostAppName.charAt(0).toUpperCase() + store.hostAppName.slice(1)
-            } Connector!`
-          }}
-        </h1>
-        <div class="text-foreground-2">
-          Connector installed with
-          <span class="font-bold">version 2!</span>
-        </div>
-        <FormButton text link @click="app.$openUrl('https://speckle.systems')">
-          Read the announcement
-        </FormButton>
-      </LayoutPanel>
       <!-- IMPORTANT CHECK!! otherwise host app communication corrputed for many different reasons -->
       <div v-if="accounts.length !== 0">
         <div
@@ -70,6 +51,27 @@
               <div v-else class="text-foreground-2">
                 Welcome to Speckle! Please open a file to use this plugin.
               </div>
+            </div>
+            <!-- TEMPORARY MESSAGE TO USER! will be deleted -->
+            <div class="mt-2 bg-blue-500/10 rounded-md p-2">
+              <h1
+                class="h4 font-bold w-full bg-gradient-to-r from-blue-500 via-blue-400 to-blue-600 inline-block py-1 text-transparent bg-clip-text"
+              >
+                Note: Beta Connector
+              </h1>
+              <div class="text-foreground-2 text-sm">
+                This is a
+                <span class="font-bold">beta</span>
+                connector that will eventually replace the existing one.
+                <br />
+                <br />
+                While in beta, there will be some missing functionality and some rough
+                corners.
+              </div>
+              <!-- TODO: replace with correct link -->
+              <FormButton text link @click="app.$openUrl('https://speckle.systems')">
+                Find out more
+              </FormButton>
             </div>
           </LayoutPanel>
         </div>
