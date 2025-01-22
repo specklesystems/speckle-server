@@ -1,4 +1,3 @@
-import { clamp } from 'three/src/math/MathUtils.js'
 import { IViewer } from '../../IViewer.js'
 import { CameraController } from './CameraController.js'
 type MoveType = 'forward' | 'back' | 'left' | 'right' | 'up' | 'down'
@@ -34,7 +33,6 @@ export class HybridCameraController extends CameraController {
   }
 
   protected onKeyDown(event: KeyboardEvent) {
-    let moveSpeed = this.options.moveSpeed ? this.options.moveSpeed : 1
     switch (event.code) {
       case 'ArrowUp':
       case 'KeyW':
@@ -65,19 +63,9 @@ export class HybridCameraController extends CameraController {
       case 'KeyE':
         this.keyMap.down = true
         break
-      case 'KeyF':
-        moveSpeed += 0.25
-        moveSpeed = clamp(moveSpeed, 0.1, 5)
-        this.options = { moveSpeed }
-        break
-      case 'KeyC':
-        moveSpeed -= 0.25
-        moveSpeed = clamp(moveSpeed, 0.1, 5)
-        this.options = { moveSpeed }
-        break
     }
     if (
-      !this._controlsList[1].enabled &&
+      !this._flyControls.enabled &&
       Object.values(this.keyMap).some((v) => v === true)
     )
       this.toggleControls()
@@ -116,7 +104,7 @@ export class HybridCameraController extends CameraController {
         break
     }
     if (
-      this._controlsList[1].enabled &&
+      this._flyControls.enabled &&
       Object.values(this.keyMap).every((v) => v === false)
     )
       this.toggleControls()
@@ -134,7 +122,7 @@ export class HybridCameraController extends CameraController {
     this.keyMap.left = false
     this.keyMap.right = false
     if (
-      this._controlsList[1].enabled &&
+      this._flyControls.enabled &&
       Object.values(this.keyMap).every((v) => v === false)
     )
       this.toggleControls()

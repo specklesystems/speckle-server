@@ -20,7 +20,7 @@ type MoveType = 'forward' | 'back' | 'left' | 'right' | 'up' | 'down'
 const walkingSpeed = 1.42 // m/s
 const closeRelativeFactor = 0.03
 const farRelativeFactor = 0.2
-const relativeTargetDistance = 0.01
+const relativeMinTargetDistance = 0.01
 
 export interface FlyControlsOptions {
   [name: string]: unknown
@@ -250,7 +250,7 @@ class FlyControls extends SpeckleControls {
       .normalize()
     target.addScaledVector(
       forward,
-      -this.world.getRelativeOffset(relativeTargetDistance)
+      -this.world.getRelativeOffset(relativeMinTargetDistance)
     )
     return target
   }
@@ -279,7 +279,7 @@ class FlyControls extends SpeckleControls {
       .normalize()
     target.addScaledVector(
       forward,
-      -this.world.getRelativeOffset(relativeTargetDistance)
+      -this.world.getRelativeOffset(relativeMinTargetDistance)
     )
     return target
   }

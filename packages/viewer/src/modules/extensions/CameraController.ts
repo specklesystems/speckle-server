@@ -23,9 +23,6 @@ import {
   SmoothOrbitControls
 } from './controls/SmoothOrbitControls.js'
 
-// const UP: Vector3 = new Vector3(0, 1, 0)
-// const quatBuff = new Quaternion()
-
 export enum NearPlaneCalculation {
   EMPIRIC,
   ACCURATE
@@ -111,7 +108,8 @@ export class CameraController extends Extension implements SpeckleCamera {
   protected _lastCameraChanged: boolean = false
   protected _options: Required<CameraControllerOptions> = DefaultOrbitControlsOptions
   protected _activeControls: SpeckleControls
-  protected _controlsList: SpeckleControls[] = []
+  protected _orbitControls: SmoothOrbitControls
+  protected _flyControls: FlyControls
 
   get renderingCamera(): PerspectiveCamera | OrthographicCamera {
     return this._renderingCamera
@@ -152,9 +150,8 @@ export class CameraController extends Extension implements SpeckleCamera {
 
   public set options(value: CameraControllerOptions) {
     Object.assign(this._options, value)
-    this._controlsList.forEach((controls: SpeckleControls) => {
-      controls.options = value
-    })
+    this._orbitControls.options = value
+    this._flyControls.options = value
   }
 
   public constructor(viewer: IViewer) {
@@ -183,31 +180,28 @@ export class CameraController extends Extension implements SpeckleCamera {
     /** Perspective camera as default on startup */
     this.renderingCamera = this.perspectiveCamera
 
-    const flyControls = new FlyControls(
+    this._flyControls = new FlyControls(
       this._renderingCamera,
       this.viewer.getContainer(),
       this.viewer.World,
       this._options
     )
-    flyControls.enabled = false
-    flyControls.setDamperDecayTime(30)
-    flyControls.up = new Vector3(0, 0, 1)
+    this._flyControls.enabled = false
+    this._flyControls.setDamperDecayTime(30)
+    this._flyControls.up = new Vector3(0, 0, 1)
 
-    const orbitControls = new SmoothOrbitControls(
+    this._orbitControls = new SmoothOrbitControls(
       this.perspectiveCamera,
       this.viewer.getContainer(),
       this.viewer.World,
       this.viewer.getRenderer(),
       this._options
     )
-    orbitControls.enabled = true
+    this._orbitControls.enabled = true
 
     this.viewer.getRenderer().speckleCamera = this
 
-    this._controlsList.push(orbitControls)
-    this._controlsList.push(flyControls)
-
-    this._activeControls = orbitControls
+    this._activeControls = this._orbitControls
 
     this.default()
   }
@@ -240,9 +234,9 @@ export class CameraController extends Extension implements SpeckleCamera {
     let newControls: SpeckleControls | undefined = undefined
 
     if (this._activeControls instanceof SmoothOrbitControls) {
-      newControls = this._controlsList[1]
+      newControls = this._flyControls
     } else if (this._activeControls instanceof FlyControls) {
-      newControls = this._controlsList[0]
+      newControls = this._orbitControls
     }
 
     if (!newControls) throw new Error('Not controls found!')
@@ -427,8 +421,9 @@ export class CameraController extends Extension implements SpeckleCamera {
     fallback?: number
   ): number | undefined {
     const minDist = this.getClosestGeometryDistance(fallback)
-    ;(this._controlsList[0] as SmoothOrbitControls).minDist = minDist
-    ;(this._controlsList[1] as FlyControls).minDist = minDist
+    this._flyControls.minDist = minDist
+    this._orbitControls.minDist = minDist
+
     if (minDist === Number.POSITIVE_INFINITY) {
       return this.computeNearCameraPlaneEmpiric(targetVolume, offsetScale)
     }

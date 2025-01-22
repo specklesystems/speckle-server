@@ -114,6 +114,8 @@ export enum PointerChangeEvent {
 
 const closeRelativeFactorPan = 0.06
 const farRelativeFactorPan = 0.4
+const relativeMinTargetDistance = 0.01
+const relativeMaxTargetDistance = 0.2
 
 /**
  * SmoothControls is a Three.js helper for adding delightful pointer and
@@ -513,8 +515,8 @@ export class SmoothOrbitControls extends SpeckleControls {
     )
     worldSizeOffset = clamp(
       worldSizeOffset,
-      this.world.getRelativeOffset(0.01),
-      this.world.getRelativeOffset(0.2)
+      this.world.getRelativeOffset(relativeMinTargetDistance),
+      this.world.getRelativeOffset(relativeMaxTargetDistance)
     )
     const zoomAmount = worldSizeOffset * Math.sign(deltaZoom) //deltaZoom * this.spherical.radius * Math.tan(fov * 0.5)
 
@@ -821,7 +823,6 @@ export class SmoothOrbitControls extends SpeckleControls {
         ? this.pivotPoint
         : new Vector3().copy(this.origin).applyMatrix4(this._basisTransform)
     )
-    this.orbitSphere.visible = true
 
     return (
       lastCameraPos.sub(this._targetCamera.position).length() > MOVEMENT_EPSILON ||
