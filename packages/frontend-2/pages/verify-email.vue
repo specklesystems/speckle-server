@@ -44,7 +44,7 @@ useHead({ title: 'Verify Email' })
 
 definePageMeta({
   layout: 'onboarding',
-  middleware: ['auth']
+  middleware: ['auth', 'can-view-verify-email']
 })
 
 const mixpanel = useMixpanel()

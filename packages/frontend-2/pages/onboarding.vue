@@ -40,6 +40,7 @@ import type {
   OnboardingPlan,
   OnboardingSource
 } from '~/lib/auth/helpers/onboarding'
+import { homeRoute } from '~/lib/common/helpers/route'
 
 useHead({
   title: 'Welcome to Speckle'
@@ -63,12 +64,21 @@ const { handleSubmit, meta, isSubmitting, values } = useForm({
   }
 })
 
-const { setUserOnboardingComplete, setMixpanelSegments } = useProcessOnboarding()
+const { setUserOnboardingComplete, setMixpanelSegments, createOnboardingProject } =
+  useProcessOnboarding()
+const { activeUser } = useActiveUser()
 
 const onSubmit = handleSubmit(async () => {
   if (values.role) {
     setMixpanelSegments({ role: values.role })
   }
   await setUserOnboardingComplete()
+  navigateTo(homeRoute)
+})
+
+onMounted(() => {
+  if (activeUser.value?.versions.totalCount === 0) {
+    createOnboardingProject()
+  }
 })
 </script>
