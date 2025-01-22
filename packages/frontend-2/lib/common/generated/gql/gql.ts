@@ -17,8 +17,6 @@ const documents = {
     "\n  fragment AuthLoginWithEmailBlock_PendingWorkspaceCollaborator on PendingWorkspaceCollaborator {\n    id\n    email\n    user {\n      id\n    }\n  }\n": types.AuthLoginWithEmailBlock_PendingWorkspaceCollaboratorFragmentDoc,
     "\n  query AuthRegisterPanelWorkspaceInvite($token: String) {\n    workspaceInvite(token: $token) {\n      id\n      ...AuthWorkspaceInviteHeader_PendingWorkspaceCollaborator\n    }\n  }\n": types.AuthRegisterPanelWorkspaceInviteDocument,
     "\n  fragment ServerTermsOfServicePrivacyPolicyFragment on ServerInfo {\n    termsOfService\n  }\n": types.ServerTermsOfServicePrivacyPolicyFragmentFragmentDoc,
-    "\n  query EmailVerificationBannerState {\n    activeUser {\n      id\n      email\n      verified\n      hasPendingVerification\n    }\n  }\n": types.EmailVerificationBannerStateDocument,
-    "\n  mutation RequestVerification {\n    requestVerification\n  }\n": types.RequestVerificationDocument,
     "\n  fragment AuthWorkspaceInviteHeader_PendingWorkspaceCollaborator on PendingWorkspaceCollaborator {\n    id\n    workspaceName\n    email\n    user {\n      id\n      ...LimitedUserAvatar\n    }\n  }\n": types.AuthWorkspaceInviteHeader_PendingWorkspaceCollaboratorFragmentDoc,
     "\n  fragment AuthSsoLogin_Workspace on LimitedWorkspace {\n    id\n    slug\n    name\n    logo\n  }\n": types.AuthSsoLogin_WorkspaceFragmentDoc,
     "\n  fragment AuthStategiesServerInfoFragment on ServerInfo {\n    authStrategies {\n      id\n      name\n      url\n    }\n    ...AuthThirdPartyLoginButtonOIDC_ServerInfo\n  }\n": types.AuthStategiesServerInfoFragmentFragmentDoc,
@@ -419,14 +417,6 @@ export function graphql(source: "\n  query AuthRegisterPanelWorkspaceInvite($tok
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  fragment ServerTermsOfServicePrivacyPolicyFragment on ServerInfo {\n    termsOfService\n  }\n"): (typeof documents)["\n  fragment ServerTermsOfServicePrivacyPolicyFragment on ServerInfo {\n    termsOfService\n  }\n"];
-/**
- * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function graphql(source: "\n  query EmailVerificationBannerState {\n    activeUser {\n      id\n      email\n      verified\n      hasPendingVerification\n    }\n  }\n"): (typeof documents)["\n  query EmailVerificationBannerState {\n    activeUser {\n      id\n      email\n      verified\n      hasPendingVerification\n    }\n  }\n"];
-/**
- * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function graphql(source: "\n  mutation RequestVerification {\n    requestVerification\n  }\n"): (typeof documents)["\n  mutation RequestVerification {\n    requestVerification\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
