@@ -472,8 +472,8 @@ export class CameraController extends Extension implements SpeckleCamera {
   }
 
   protected getClosestGeometryDistance(fallback?: number): number {
-    const cameraPosition = this._renderingCamera.position
-    const cameraTarget = this.getTarget()
+    const cameraPosition = this._activeControls.getCurrentPosition()
+    const cameraTarget = this._activeControls.getCurrentTarget()
     const cameraDir = new Vector3().subVectors(cameraTarget, cameraPosition).normalize()
 
     const batches = this.viewer
