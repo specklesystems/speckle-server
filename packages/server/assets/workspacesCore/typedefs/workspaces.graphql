@@ -468,6 +468,7 @@ type WorkspaceJoinRequestCollection {
 }
 
 type WorkspaceJoinRequest {
+  id: String!
   workspace: Workspace!
   user: LimitedUser!
   status: WorkspaceJoinRequestStatus!
