@@ -137,6 +137,8 @@ spec:
             value: {{ .Values.featureFlags.workspacesMultiRegionEnabled | quote }}
           - name: NUXT_PUBLIC_FF_GENDOAI_MODULE_ENABLED
             value: {{ .Values.featureFlags.gendoAIModuleEnabled | quote }}
+          - name: NUXT_PUBLIC_FF_FORCE_EMAIL_VERIFICATION
+            value: {{ .Values.featureFlags.forceEmailVerification | quote }}
           {{- if .Values.analytics.survicate_workspace_key }}
           - name: NUXT_PUBLIC_SURVICATE_WORKSPACE_KEY
             value: {{ .Values.analytics.survicate_workspace_key | quote }}
