@@ -20,6 +20,7 @@ type MoveType = 'forward' | 'back' | 'left' | 'right' | 'up' | 'down'
 const walkingSpeed = 1.42 // m/s
 const closeRelativeFactor = 0.03
 const farRelativeFactor = 0.2
+const relativeTargetDistance = 0.01
 
 export interface FlyControlsOptions {
   [name: string]: unknown
@@ -27,6 +28,7 @@ export interface FlyControlsOptions {
   lookSpeed?: number
   moveSpeed?: number
   damperDecay?: number
+  relativeUpDown?: boolean
 }
 
 class FlyControls extends SpeckleControls {
@@ -171,6 +173,7 @@ class FlyControls extends SpeckleControls {
     if (!this.keyMap.down && !this.keyMap.up) this.velocity.y = 0
 
     if (this.isStationary()) return false
+
     this.moveBy(this.velocity)
 
     this.updatePositionRotation(delta)
@@ -245,7 +248,10 @@ class FlyControls extends SpeckleControls {
       .setFromMatrixColumn(matrix, 2)
       .applyMatrix4(this._basisTransform)
       .normalize()
-    target.addScaledVector(forward, -this.world.getRelativeOffset(0.2))
+    target.addScaledVector(
+      forward,
+      -this.world.getRelativeOffset(relativeTargetDistance)
+    )
     return target
   }
 
@@ -271,7 +277,10 @@ class FlyControls extends SpeckleControls {
       .setFromMatrixColumn(matrix, 2)
       .applyMatrix4(this._basisTransform)
       .normalize()
-    target.addScaledVector(forward, -this.world.getRelativeOffset(0.2))
+    target.addScaledVector(
+      forward,
+      -this.world.getRelativeOffset(relativeTargetDistance)
+    )
     return target
   }
 
@@ -291,7 +300,9 @@ class FlyControls extends SpeckleControls {
     const camera = this._targetCamera
     _vectorBuff0.setFromMatrixColumn(camera.matrix, 2)
     this.goalPosition.addScaledVector(_vectorBuff0, amount.z)
-    _vectorBuff0.setFromMatrixColumn(camera.matrix, 1)
+    this._options.relativeUpDown
+      ? _vectorBuff0.setFromMatrixColumn(camera.matrix, 1)
+      : _vectorBuff0.copy(this.up)
     this.goalPosition.addScaledVector(_vectorBuff0, amount.y)
     _vectorBuff0.setFromMatrixColumn(camera.matrix, 0)
     this.goalPosition.addScaledVector(_vectorBuff0, amount.x)

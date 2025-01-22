@@ -112,6 +112,9 @@ export enum PointerChangeEvent {
   PointerChangeEnd = 'pointer-change-end'
 }
 
+const closeRelativeFactorPan = 0.06
+const farRelativeFactorPan = 0.4
+
 /**
  * SmoothControls is a Three.js helper for adding delightful pointer and
  * keyboard-based input to a staged Three.js scene. Its API is very similar to
@@ -179,6 +182,8 @@ export class SmoothOrbitControls extends SpeckleControls {
   protected pivotPoint: Vector3 = new Vector3()
   protected lastPivotPoint: Vector3 = new Vector3()
   protected usePivotal = false
+
+  protected _minDist: number
 
   public get enabled(): boolean {
     return this._enabled
@@ -259,6 +264,10 @@ export class SmoothOrbitControls extends SpeckleControls {
       this.world.worldOrigin.z + this.world.worldSize.z
     )
     this.moveCamera()
+  }
+
+  public set minDist(value: number) {
+    this._minDist = value
   }
 
   /** The input position and target will be in a basis with (0,1,0) as up */
@@ -812,6 +821,7 @@ export class SmoothOrbitControls extends SpeckleControls {
         ? this.pivotPoint
         : new Vector3().copy(this.origin).applyMatrix4(this._basisTransform)
     )
+    this.orbitSphere.visible = true
 
     return (
       lastCameraPos.sub(this._targetCamera.position).length() > MOVEMENT_EPSILON ||
@@ -996,14 +1006,20 @@ export class SmoothOrbitControls extends SpeckleControls {
 
   protected movePan(dx: number, dy: number) {
     const dxy = vector3.set(dx, dy, 0).multiplyScalar(this._options.inputSensitivity)
+    let relativeFactor = this.world.getRelativeOffset(farRelativeFactorPan)
+    if (this._minDist) {
+      if (this._minDist < relativeFactor * 0.5) {
+        relativeFactor = this.world.getRelativeOffset(closeRelativeFactorPan)
+      }
+    }
+
+    const radiusFactor = clamp(
+      this.spherical.radius,
+      this.world.getRelativeOffset(0.025),
+      Number.MAX_VALUE
+    )
     const metersPerPixel =
-      clamp(
-        this.spherical.radius,
-        this.world.getRelativeOffset(0.025),
-        Number.MAX_VALUE
-      ) *
-      Math.exp(this.logFov) *
-      this.panPerPixel
+      Math.max(relativeFactor, radiusFactor) * Math.exp(this.logFov) * this.panPerPixel
     dxy.multiplyScalar(metersPerPixel)
 
     /** This panProjection assumes (0, 1, 0) as up... */

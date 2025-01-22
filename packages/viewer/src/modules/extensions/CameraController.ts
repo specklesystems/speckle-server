@@ -94,12 +94,13 @@ export const DefaultOrbitControlsOptions: Required<CameraControllerOptions> = {
   touchAction: 'none',
   infiniteZoom: true,
   zoomToCursor: true,
-  orbitAroundCursor: true,
+  orbitAroundCursor: false,
   showOrbitPoint: true,
   lookSpeed: 1,
   moveSpeed: 1,
   damperDecay: 30,
   enableLook: true,
+  relativeUpDown: false,
   nearPlaneCalculation: NearPlaneCalculation.ACCURATE
 }
 
@@ -248,6 +249,7 @@ export class CameraController extends Extension implements SpeckleCamera {
 
     oldControls.enabled = false
     newControls.enabled = true
+
     newControls.fromPositionAndTarget(
       oldControls.getCurrentPosition(),
       oldControls.getCurrentTarget()
@@ -425,6 +427,7 @@ export class CameraController extends Extension implements SpeckleCamera {
     fallback?: number
   ): number | undefined {
     const minDist = this.getClosestGeometryDistance(fallback)
+    ;(this._controlsList[0] as SmoothOrbitControls).minDist = minDist
     ;(this._controlsList[1] as FlyControls).minDist = minDist
     if (minDist === Number.POSITIVE_INFINITY) {
       return this.computeNearCameraPlaneEmpiric(targetVolume, offsetScale)
