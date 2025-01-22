@@ -1,31 +1,48 @@
 <template>
-  <div class="w-full h-full bg-foundation flex items-center justify-center">
-    <!-- 
-    Note: You might be asking yourself why do we need this route: the answer is that cloning 
-    a project is not instant, and it might take some time to get it done. We want to display
-    some sort of progress to the user in the meantime. Moreover, it makes various composables 
-    more sane to use rather than in the router navigation guards.
-  -->
-    <!-- 
-    TODO: Make this page nicer :)  
-  -->
-    <div class="w-1/5 flex flex-col space-y-2 justify-center text-center">
-      <div class="text-xs text-foreground-2">{{ status }}</div>
-      <CommonLoadingBar loading />
-      <!-- <div class="mx-auto w-20"><LogoTextWhite /></div> -->
-    </div>
+  <div class="flex flex-col items-center justify-center p-4 max-w-sm mx-auto">
+    <h1 class="text-heading-xl text-forefround mb-2 font-normal">
+      Tell us about yourself
+    </h1>
+    <p class="text-center text-body-sm text-foreground-2">
+      Your answers will help us improve
+    </p>
+    <form class="mt-8 w-full space-y-6" @submit="onSubmit">
+      <OnboardingRoleSelect v-model="values.role" name="role" required />
+      <OnboardingPlanSelect v-model="values.plan" name="plan" required />
+      <OnboardingSourceSelect v-model="values.source" name="source" required />
+      <div class="mt-2 flex flex-col gap-4">
+        <FormButton size="lg" :disabled="!meta.valid || isSubmitting" submit full-width>
+          Continue
+        </FormButton>
+        <div class="opacity-60 hover:opacity-100 max-w-max mx-auto px-1">
+          <FormButton
+            size="sm"
+            text
+            link
+            color="subtle"
+            full-width
+            @click="setUserOnboardingComplete"
+          >
+            Skip
+          </FormButton>
+        </div>
+      </div>
+    </form>
   </div>
 </template>
+
 <script setup lang="ts">
-import { useViewerTour } from '~/lib/viewer/composables/tour'
-import {
-  useProcessOnboarding,
-  FIRST_MODEL_NAME
-} from '~~/lib/auth/composables/onboarding'
-import { homeRoute, modelRoute, projectRoute } from '~~/lib/common/helpers/route'
+import { useForm } from 'vee-validate'
+import { useProcessOnboarding } from '~~/lib/auth/composables/onboarding'
+import { isRequired } from '~~/lib/common/helpers/validation'
+import type {
+  OnboardingRole,
+  OnboardingPlan,
+  OnboardingSource
+} from '~/lib/auth/helpers/onboarding'
 
 useHead({
-  title: 'Setting up'
+  title: 'Welcome to Speckle'
 })
 
 definePageMeta({
@@ -33,38 +50,25 @@ definePageMeta({
   layout: 'onboarding'
 })
 
-const router = useRouter()
-const { createOnboardingProject, setUserOnboardingComplete } = useProcessOnboarding()
-const tourStage = useViewerTour()
-
-const status = ref('Setting up your account')
-
-onMounted(async () => {
-  // Little hacks to make things more exciting
-  setTimeout(() => {
-    status.value = 'Getting there...'
-  }, 2000)
-  const { projectId, project } = await createOnboardingProject()
-
-  await setUserOnboardingComplete()
-  status.value = 'Almost done!'
-
-  tourStage.showNavbar.value = false
-  tourStage.showControls.value = false
-  tourStage.showTour.value = true
-
-  const firstModelToLoad = project?.models.items.find(
-    (model) => model.name === FIRST_MODEL_NAME
-  )
-
-  if (projectId) {
-    if (firstModelToLoad) {
-      router.push({ path: modelRoute(projectId, firstModelToLoad.id) })
-    } else {
-      router.push({ path: projectRoute(projectId) })
-    }
-  } else {
-    router.push({ path: homeRoute })
+const { handleSubmit, meta, isSubmitting, values } = useForm({
+  initialValues: {
+    role: undefined as OnboardingRole | undefined,
+    plan: [] as OnboardingPlan[],
+    source: undefined as OnboardingSource | undefined
+  },
+  validationSchema: {
+    role: isRequired,
+    plan: isRequired,
+    source: isRequired
   }
+})
+
+const { setUserOnboardingComplete, setMixpanelSegments } = useProcessOnboarding()
+
+const onSubmit = handleSubmit(async () => {
+  if (values.role) {
+    setMixpanelSegments({ role: values.role })
+  }
+  await setUserOnboardingComplete()
 })
 </script>

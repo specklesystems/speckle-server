@@ -1,6 +1,6 @@
 <template>
   <div class="flex flex-col items-center justify-center p-4">
-    <h1 class="text-heading-xl text-forefround my-6 font-normal">Check your inbox</h1>
+    <h1 class="text-heading-xl text-forefround mb-6 font-normal">Check your inbox</h1>
     <p class="text-center text-body-sm text-foreground">
       We sent you a verification code to
       <span class="font-medium">{{ email }}.</span>
@@ -43,7 +43,7 @@ import { useRoute } from 'vue-router'
 useHead({ title: 'Verify Email' })
 
 definePageMeta({
-  layout: 'verify-email',
+  layout: 'onboarding',
   middleware: ['auth']
 })
 

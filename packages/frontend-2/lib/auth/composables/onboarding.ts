@@ -1,7 +1,7 @@
 import { useApolloClient } from '@vue/apollo-composable'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { UnsupportedEnvironmentError } from '~~/lib/core/errors/base'
-import type { OnboardingState } from '~~/lib/auth/helpers/onboarding'
+import type { OnboardingState } from '../helpers/onboarding'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { OnboardingError } from '~~/lib/auth/errors/errors'
 import { finishOnboardingMutation } from '~~/lib/auth/graphql/mutations'
@@ -15,26 +15,20 @@ import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables
 import { useNavigateToHome } from '~~/lib/common/helpers/route'
 import { projectsDashboardQuery } from '~~/lib/projects/graphql/queries'
 
-const ONBOARDING_PROP_INDUSTRY = 'onboarding_v1_industry'
 const ONBOARDING_PROP_ROLE = 'onboarding_v1_role'
 
 export const FIRST_MODEL_NAME = 'base design'
 export const SECOND_MODEL_NAME = 'building wrapper'
 
-export function useProcessOnboarding() {
+export const useProcessOnboarding = () => {
   const mixpanel = useMixpanel()
   const { distinctId, activeUser } = useActiveUser()
   const apollo = useApolloClient().client
   const { triggerNotification } = useGlobalToast()
   const goHome = useNavigateToHome()
 
-  /**
-   * Sends to mp the segmentation info (industry, role)
-   * @param state
-   */
-  const setMixpanelSegments = (state: OnboardingState) => {
-    mixpanel.people.set_once(ONBOARDING_PROP_INDUSTRY, state.industry || null)
-    mixpanel.people.set_once(ONBOARDING_PROP_ROLE, state.role || null)
+  const setMixpanelSegments = (segments: Partial<OnboardingState>) => {
+    mixpanel.people.set(segments)
   }
 
   /**
@@ -130,7 +124,6 @@ export function useProcessOnboarding() {
       throw new OnboardingError('Attempting to onboard unidentified user')
 
     // Send data to mixpanel
-    mixpanel.people.set_once(ONBOARDING_PROP_INDUSTRY, state.industry || null)
     mixpanel.people.set_once(ONBOARDING_PROP_ROLE, state.role || null)
 
     // Mark onboarding as finished
