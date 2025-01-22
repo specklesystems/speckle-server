@@ -55,6 +55,8 @@ featureFlags:
   workspacesMultiRegionEnabled: false
   ## @param featureFlags.fileImportIFCDotNetEnabled Toggles whether the experimental .Net IFC importer is used for importing IFC files.
   fileImportIFCDotNetEnabled: false
+  ## @param featureFlags.forceEmailVerification Forces email verification for all users
+  forceEmailVerification: false
 
 analytics:
   ## @param analytics.enabled Enable or disable analytics

@@ -84,6 +84,11 @@
           "type": "boolean",
           "description": "Toggles whether the experimental .Net IFC importer is used for importing IFC files.",
           "default": false
+        },
+        "forceEmailVerification": {
+          "type": "boolean",
+          "description": "Forces email verification for all users",
+          "default": false
         }
       }
     },
