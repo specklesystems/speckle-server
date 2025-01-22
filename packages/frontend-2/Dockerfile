@@ -50,7 +50,7 @@ FROM gcr.io/distroless/nodejs18-debian12:nonroot@sha256:afdea027580f7afcaf1f316b
 ARG NODE_ENV=production
 ENV NODE_ENV=${NODE_ENV}
 
-COPY --from=build-stage /tini /tini
+COPY --link --from=build-stage /tini /tini
 
 ENTRYPOINT ["/tini", "--"]
 
@@ -62,7 +62,7 @@ ENV NUXT_PUBLIC_MIXPANEL_TOKEN_ID=acd87c5a50b56df91a795e999812a3a4
 ENV NUXT_PUBLIC_MIXPANEL_API_HOST=https://analytics.speckle.systems
 
 WORKDIR /speckle-server
-COPY --from=build-stage  /speckle-server/packages/frontend-2/.output .
+COPY --link --from=build-stage  /speckle-server/packages/frontend-2/.output .
 
 EXPOSE ${PORT}
 

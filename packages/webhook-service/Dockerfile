@@ -64,10 +64,10 @@ ENV NODE_ENV=${NODE_ENV}
 
 WORKDIR /speckle-server/packages/webhook-service/
 COPY packages/webhook-service/src .
-COPY --from=build-stage /speckle-server/wait /usr/bin/wait
-COPY --from=build-stage /speckle-server/tini /usr/bin/tini
-COPY --from=build-stage /speckle-server/packages/shared ./packages/shared
-COPY --from=build-stage /speckle-server/packages/webhook-service ./packages/webhook-service
-COPY --from=dependency-stage /speckle-server/node_modules ./node_modules
+COPY --link --from=build-stage /speckle-server/wait /usr/bin/wait
+COPY --link --from=build-stage /speckle-server/tini /usr/bin/tini
+COPY --link --from=build-stage /speckle-server/packages/shared ./packages/shared
+COPY --link --from=build-stage /speckle-server/packages/webhook-service ./packages/webhook-service
+COPY --link --from=dependency-stage /speckle-server/node_modules ./node_modules
 
 ENTRYPOINT [ "tini", "--", "/nodejs/bin/node", "main.js"]

@@ -71,22 +71,22 @@ ARG SPECKLE_SERVER_VERSION
 ENV NODE_ENV=${NODE_ENV} \
     SPECKLE_SERVER_VERSION=${SPECKLE_SERVER_VERSION}
 
-COPY --from=build-stage /speckle-server/wait /wait
-COPY --from=build-stage /speckle-server/tini /tini
+COPY --link --from=build-stage /speckle-server/wait /wait
+COPY --link --from=build-stage /speckle-server/tini /tini
 
 WORKDIR /speckle-server
-COPY --from=build-stage /speckle-server/package.json ./package.json
-COPY --from=build-stage /speckle-server/packages/shared ./packages/shared
-COPY --from=build-stage /speckle-server/packages/objectloader ./packages/objectloader
-COPY --from=dependency-stage /speckle-server/node_modules ./node_modules
+COPY --link --from=build-stage /speckle-server/package.json ./package.json
+COPY --link --from=build-stage /speckle-server/packages/shared ./packages/shared
+COPY --link --from=build-stage /speckle-server/packages/objectloader ./packages/objectloader
+COPY --link --from=dependency-stage /speckle-server/node_modules ./node_modules
 
 WORKDIR /speckle-server/packages/server
-COPY --from=build-stage /speckle-server/packages/server/package.json ./package.json
-COPY --from=build-stage /speckle-server/packages/server/dist ./dist
-COPY --from=build-stage /speckle-server/packages/server/assets ./assets
-COPY --from=build-stage /speckle-server/packages/server/bin ./bin
+COPY --link --from=build-stage /speckle-server/packages/server/package.json ./package.json
+COPY --link --from=build-stage /speckle-server/packages/server/dist ./dist
+COPY --link --from=build-stage /speckle-server/packages/server/assets ./assets
+COPY --link --from=build-stage /speckle-server/packages/server/bin ./bin
 # Copy only if exists https://stackoverflow.com/questions/31528384/conditional-copy-add-in-dockerfile/46801962#46801962
-COPY --from=dependency-stage /speckle-server/packages/server/node_module[s] ./node_modules
+COPY --link --from=dependency-stage /speckle-server/packages/server/node_module[s] ./node_modules
 
 ENTRYPOINT ["/nodejs/bin/node"]
 CMD ["bin/www"]
