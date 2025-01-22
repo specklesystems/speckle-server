@@ -33,8 +33,8 @@ RUN apt-get update -y \
      curl=7.88.1-10+deb12u8 \
     && curl -fsSL https://github.com/ufoscout/docker-compose-wait/releases/download/${WAIT_VERSION}/wait -o ./wait \
     && chmod +x ./wait \
-    && curl -fsSL https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini -o /usr/bin/tini \
-    && chmod +x /usr/bin/tini \
+    && curl -fsSL https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini -o ./tini \
+    && chmod +x ./tini \
     && apt-get remove -y curl \
     && apt-get autoremove -y \
     && apt-get clean \
