@@ -819,7 +819,8 @@ export = FF_WORKSPACES_MODULE_ENABLED
                 createWorkspaceJoinRequest,
                 sendWorkspaceJoinRequestReceivedEmail,
                 getUserById: getUserFactory({ db }),
-                getWorkspace: getWorkspaceFactory({ db })
+                getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db }),
+                getUserEmails: findEmailsByUserIdFactory({ db })
               })
             }
           })
