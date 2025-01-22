@@ -79,6 +79,9 @@ export class MRTEdgesPipeline extends ProgressivePipeline {
     blendPassDynamic.setTexture('tEdges', edgesPassDynamic.outputTarget?.texture)
     blendPassDynamic.accumulationFrames = this.accumulationFrameCount
 
+    const postBlendGeometryPass = new GeometryPass()
+    postBlendGeometryPass.setLayers([ObjectLayers.PROPS])
+
     const stencilPass = new StencilPass()
     stencilPass.setVisibility(ObjectVisibility.STENCIL)
     stencilPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
@@ -89,11 +92,7 @@ export class MRTEdgesPipeline extends ProgressivePipeline {
     stencilMaskPass.setClearFlags(ClearFlags.DEPTH)
 
     const overlayPass = new GeometryPass()
-    overlayPass.setLayers([
-      ObjectLayers.PROPS,
-      ObjectLayers.OVERLAY,
-      ObjectLayers.MEASUREMENTS
-    ])
+    overlayPass.setLayers([ObjectLayers.OVERLAY, ObjectLayers.MEASUREMENTS])
 
     this.dynamicStage.push(
       depthPassNormalDynamic,
@@ -101,8 +100,9 @@ export class MRTEdgesPipeline extends ProgressivePipeline {
       stencilPass,
       opaqueColorPass,
       transparentColorPass,
-      stencilMaskPass,
       blendPassDynamic,
+      postBlendGeometryPass,
+      stencilMaskPass,
       overlayPass
     )
     this.progressiveStage.push(
@@ -113,16 +113,18 @@ export class MRTEdgesPipeline extends ProgressivePipeline {
       stencilPass,
       opaqueColorPass,
       transparentColorPass,
-      stencilMaskPass,
       blendPass,
+      postBlendGeometryPass,
+      stencilMaskPass,
       overlayPass
     )
     this.passthroughStage.push(
       stencilPass,
       opaqueColorPass,
       transparentColorPass,
-      stencilMaskPass,
       blendPass,
+      postBlendGeometryPass,
+      stencilMaskPass,
       overlayPass
     )
 

@@ -9,14 +9,22 @@ WORKDIR /speckle-server
 # install wait
 ARG WAIT_VERSION=2.8.0
 ENV WAIT_VERSION=${WAIT_VERSION}
-ADD https://github.com/ufoscout/docker-compose-wait/releases/download/${WAIT_VERSION}/wait ./wait
-RUN chmod +x ./wait
-
 # install tini
 ARG TINI_VERSION=v0.19.0
 ENV TINI_VERSION=${TINI_VERSION}
-ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini ./tini
-RUN chmod +x ./tini
+RUN apt-get update -y \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y \
+     --no-install-recommends \
+     ca-certificates=20230311 \
+     curl=7.88.1-10+deb12u8 \
+    && curl -fsSL https://github.com/ufoscout/docker-compose-wait/releases/download/${WAIT_VERSION}/wait -o ./wait \
+    && chmod +x ./wait \
+    && curl -fsSL https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini -o ./tini \
+    && chmod +x ./tini \
+    && apt-get remove -y curl \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 # install node packages
 COPY .yarnrc.yml .
