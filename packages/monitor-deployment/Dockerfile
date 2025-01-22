@@ -50,10 +50,10 @@ ARG NODE_ENV
 ENV NODE_ENV=${NODE_ENV}
 
 WORKDIR /speckle-server
-COPY --from=build-stage /speckle-server/tini /usr/bin/tini
-COPY --from=build-stage /speckle-server/packages/shared ./packages/shared
-COPY --from=build-stage /speckle-server/packages/monitor-deployment ./packages/monitor-deployment
-COPY --from=build-stage /speckle-server/node_modules ./node_modules
+COPY --link --from=build-stage /speckle-server/tini /usr/bin/tini
+COPY --link --from=build-stage /speckle-server/packages/shared ./packages/shared
+COPY --link --from=build-stage /speckle-server/packages/monitor-deployment ./packages/monitor-deployment
+COPY --link --from=build-stage /speckle-server/node_modules ./node_modules
 
 WORKDIR /speckle-server/packages/monitor-deployment
 
