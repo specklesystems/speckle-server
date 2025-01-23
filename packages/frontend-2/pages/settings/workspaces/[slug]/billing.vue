@@ -118,18 +118,41 @@
             </div>
           </div>
 
-          <SettingsSectionHeader :title="pricingTableHeading" subheading class="pt-4" />
-          <SettingsWorkspacesBillingPricingTable
-            v-if="isPurchasablePlan || statusIsTrial"
-            :workspace-id="workspace?.id"
-            :current-plan="currentPlan"
-            :active-billing-interval="subscription?.billingInterval"
-            :is-admin="isAdmin"
-            @on-plan-selected="onPlanSelected"
-          />
+          <template v-if="isPurchasablePlan || statusIsTrial">
+            <SettingsSectionHeader
+              :title="pricingTableHeading"
+              subheading
+              class="pt-4"
+            />
+            <SettingsWorkspacesBillingPricingTable
+              :workspace-id="workspace?.id"
+              :current-plan="currentPlan"
+              :active-billing-interval="subscription?.billingInterval"
+              :is-admin="isAdmin"
+              @on-plan-selected="onPlanSelected"
+            />
+          </template>
         </div>
 
-        <div class="mt-8 text-center text-foreground-2">
+        <div v-if="isInvoicedPlan" class="mt-8 text-foreground-2 text-body-xs">
+          Need help?
+          <a
+            class="text-foreground hover:underline"
+            href="mailto:billing@speckle.systems"
+            @click="
+              mixpanel.track('Workspace Support Link Clicked', {
+                workspace_id: workspace?.id,
+                plan: currentPlan?.name
+              })
+            "
+          >
+            Contact us
+          </a>
+        </div>
+        <div
+          v-else-if="isPurchasablePlan"
+          class="mt-8 text-center text-foreground-2 text-body-xs"
+        >
           Need help?
           <NuxtLink
             class="text-foreground"
@@ -137,7 +160,8 @@
             target="_blank"
             @click="
               mixpanel.track('Workspace Docs Link Clicked', {
-                workspace_id: workspace?.id
+                workspace_id: workspace?.id,
+                plan: currentPlan?.name
               })
             "
           >
@@ -149,7 +173,8 @@
             href="mailto:billing@speckle.systems"
             @click="
               mixpanel.track('Workspace Support Link Clicked', {
-                workspace_id: workspace?.id
+                workspace_id: workspace?.id,
+                plan: currentPlan?.name
               })
             "
           >
@@ -180,6 +205,7 @@ import {
   WorkspacePlans,
   WorkspacePlanStatuses,
   BillingInterval,
+  WorkspacePaymentMethod,
   type PaidWorkspacePlans
 } from '~/lib/common/generated/gql/graphql'
 import { useBillingActions } from '~/lib/billing/composables/actions'
@@ -284,6 +310,9 @@ const nextPaymentDue = computed(() =>
       ? dayjs(subscription.value?.currentBillingCycleEnd).format('MMMM D, YYYY')
       : dayjs(currentPlan.value?.createdAt).add(31, 'days').format('MMMM D, YYYY')
     : 'Never'
+)
+const isInvoicedPlan = computed(
+  () => currentPlan.value?.paymentMethod === WorkspacePaymentMethod.Invoice
 )
 const isAdmin = computed(() => workspace.value?.role === Roles.Workspace.Admin)
 const guestSeatCount = computed(() =>

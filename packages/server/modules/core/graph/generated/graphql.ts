@@ -4434,6 +4434,7 @@ export type WorkspaceInviteUseInput = {
 export type WorkspaceJoinRequest = {
   __typename?: 'WorkspaceJoinRequest';
   createdAt: Scalars['DateTime']['output'];
+  id: Scalars['String']['output'];
   status: WorkspaceJoinRequestStatus;
   user: LimitedUser;
   workspace: Workspace;
@@ -6900,6 +6901,7 @@ export type WorkspaceInviteMutationsResolvers<ContextType = GraphQLContext, Pare
 
 export type WorkspaceJoinRequestResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['WorkspaceJoinRequest'] = ResolversParentTypes['WorkspaceJoinRequest']> = {
   createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   status?: Resolver<ResolversTypes['WorkspaceJoinRequestStatus'], ParentType, ContextType>;
   user?: Resolver<ResolversTypes['LimitedUser'], ParentType, ContextType>;
   workspace?: Resolver<ResolversTypes['Workspace'], ParentType, ContextType>;
