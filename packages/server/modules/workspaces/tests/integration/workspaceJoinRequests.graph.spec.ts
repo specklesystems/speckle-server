@@ -38,43 +38,59 @@ describe('WorkspaceJoinRequests GQL', () => {
     it('should return the workspace join requests for the admin', async () => {
       const admin = await createTestUser({
         name: 'admin user',
-        role: Roles.Server.User
+        role: Roles.Server.User,
+        email: `${createRandomString()}@example.org`,
+        verified: true
       })
 
-      const user1 = await createTestUser({ name: 'user 1', role: Roles.Server.User })
-      const user2 = await createTestUser({ name: 'user 2', role: Roles.Server.User })
+      const user1 = await createTestUser({
+        name: 'user 1',
+        role: Roles.Server.User,
+        email: `${createRandomString()}@example.org`,
+        verified: true
+      })
+      const user2 = await createTestUser({
+        name: 'user 2',
+        role: Roles.Server.User,
+        email: `${createRandomString()}@example.org`,
+        verified: true
+      })
 
       const workspace1 = {
         id: createRandomString(),
         name: 'Workspace 1',
         ownerId: admin.id,
-        description: ''
+        description: '',
+        discoverabilityEnabled: true
       }
-      await createTestWorkspace(workspace1, admin)
+      await createTestWorkspace(workspace1, admin, { domain: 'example.org' })
 
       const workspace2 = {
         id: createRandomString(),
         name: 'Workspace 2',
         ownerId: admin.id,
-        description: ''
+        description: '',
+        discoverabilityEnabled: true
       }
-      await createTestWorkspace(workspace2, admin)
+      await createTestWorkspace(workspace2, admin, { domain: 'example.org' })
 
       const nobodyWorkspace = {
         id: createRandomString(),
         name: 'nobody',
         ownerId: admin.id,
-        description: ''
+        description: '',
+        discoverabilityEnabled: true
       }
-      await createTestWorkspace(nobodyWorkspace, admin)
+      await createTestWorkspace(nobodyWorkspace, admin, { domain: 'example.org' })
 
       const nonAdminWorkspace = {
         id: createRandomString(),
         name: 'nonadmin',
         ownerId: admin.id,
-        description: ''
+        description: '',
+        discoverabilityEnabled: true
       }
-      await createTestWorkspace(nonAdminWorkspace, admin)
+      await createTestWorkspace(nonAdminWorkspace, admin, { domain: 'example.org' })
       await upsertWorkspaceRoleFactory({ db })({
         userId: admin.id,
         workspaceId: nonAdminWorkspace.id,
