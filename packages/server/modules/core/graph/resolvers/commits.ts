@@ -65,15 +65,8 @@ import {
   getStreamBranchByNameFactory,
   createBranchFactory
 } from '@/modules/core/repositories/branches'
-import {
-  addCommitCreatedActivityFactory,
-  addCommitUpdatedActivityFactory,
-  addCommitMovedActivityFactory,
-  addCommitDeletedActivityFactory
-} from '@/modules/activitystream/services/commitActivity'
 import { getObjectFactory } from '@/modules/core/repositories/objects'
 import { validateStreamAccessFactory } from '@/modules/core/services/streams/access'
-import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { CommitGraphQLReturn } from '@/modules/core/helpers/graphTypes'
 import {
@@ -350,10 +343,7 @@ export = {
         markCommitStreamUpdated: markCommitStreamUpdatedFactory({ db: projectDb }),
         markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db: projectDb }),
         emitEvent: getEventBus().emit,
-        addCommitCreatedActivity: addCommitCreatedActivityFactory({
-          saveActivity: saveActivityFactory({ db }),
-          publish
-        })
+        publishSub: publish
       })
 
       const createCommitByBranchName = createCommitByBranchNameFactory({
@@ -388,10 +378,8 @@ export = {
         getCommitBranch: getCommitBranchFactory({ db: projectDb }),
         switchCommitBranch: switchCommitBranchFactory({ db: projectDb }),
         updateCommit: updateCommitFactory({ db: projectDb }),
-        addCommitUpdatedActivity: addCommitUpdatedActivityFactory({
-          saveActivity: saveActivityFactory({ db }),
-          publish
-        }),
+        publishSub: publish,
+        emitEvent: getEventBus().emit,
         markCommitStreamUpdated: markCommitStreamUpdatedFactory({ db: projectDb }),
         markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db: projectDb })
       })
@@ -410,7 +398,7 @@ export = {
       const projectDb = await getProjectDbClient({ projectId: args.input.streamId })
       await markCommitReceivedAndNotifyFactory({
         getCommit: getCommitFactory({ db: projectDb }),
-        saveActivity: saveActivityFactory({ db })
+        emitEvent: getEventBus().emit
       })({
         input: args.input,
         userId: context.userId!
@@ -433,10 +421,8 @@ export = {
         markCommitStreamUpdated: markCommitStreamUpdatedFactory({ db: projectDb }),
         markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db: projectDb }),
         deleteCommit: deleteCommitFactory({ db: projectDb }),
-        addCommitDeletedActivity: addCommitDeletedActivityFactory({
-          saveActivity: saveActivityFactory({ db }),
-          publish
-        })
+        publishSub: publish,
+        emitEvent: getEventBus().emit
       })
       const deleted = await deleteCommitAndNotify(
         args.commit.id,
@@ -455,10 +441,8 @@ export = {
         getStreamBranchByName: getStreamBranchByNameFactory({ db: projectDb }),
         createBranch: createBranchFactory({ db: projectDb }),
         moveCommitsToBranch: moveCommitsToBranchFactory({ db: projectDb }),
-        addCommitMovedActivity: addCommitMovedActivityFactory({
-          saveActivity: saveActivityFactory({ db }),
-          publish
-        })
+        publishSub: publish,
+        emitEvent: getEventBus().emit
       })
       await batchMoveCommits(args.input, ctx.userId!)
       return true
@@ -471,10 +455,8 @@ export = {
         getCommits: getCommitsFactory({ db: projectDb }),
         getStreams,
         deleteCommits: deleteCommitsFactory({ db: projectDb }),
-        addCommitDeletedActivity: addCommitDeletedActivityFactory({
-          saveActivity: saveActivityFactory({ db }),
-          publish
-        })
+        publishSub: publish,
+        emitEvent: getEventBus().emit
       })
       await batchDeleteCommits(args.input, ctx.userId!)
       return true

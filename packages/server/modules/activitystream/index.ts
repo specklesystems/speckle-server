@@ -29,6 +29,7 @@ import { ProjectEvents } from '@/modules/core/domain/projects/events'
 import { reportUserActivityFactory } from '@/modules/activitystream/events/userListeners'
 import { reportAccessRequestActivityFactory } from '@/modules/activitystream/events/accessRequestListeners'
 import { reportBranchActivityFactory } from '@/modules/activitystream/events/branchListeners'
+import { reportCommitActivityFactory } from '@/modules/activitystream/events/commitListeners'
 
 let scheduledTask: ReturnType<ScheduleExecution> | null = null
 let quitEventListeners: Optional<() => void> = undefined
@@ -57,11 +58,16 @@ const initializeEventListeners = ({
     eventListen: eventBus.listen,
     saveActivity
   })
+  const reportCommitActivity = reportCommitActivityFactory({
+    eventListen: eventBus.listen,
+    saveActivity
+  })
 
   const quitCbs = [
     reportUserActivity(),
     reportAccessRequestActivity(),
     reportBranchActivity(),
+    reportCommitActivity(),
     eventBus.listen(ServerInvitesEvents.Created, async ({ payload }) => {
       if (!isProjectResourceTarget(payload.invite.resource)) return
       await onServerInviteCreatedFactory({

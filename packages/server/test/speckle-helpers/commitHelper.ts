@@ -1,6 +1,3 @@
-import { db } from '@/db/knex'
-import { saveActivityFactory } from '@/modules/activitystream/repositories'
-import { addCommitCreatedActivityFactory } from '@/modules/activitystream/services/commitActivity'
 import {
   getBranchByIdFactory,
   getStreamBranchByNameFactory,
@@ -127,10 +124,7 @@ export async function createTestCommits(
         markCommitStreamUpdated,
         markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db: projectDb }),
         emitEvent: getEventBus().emit,
-        addCommitCreatedActivity: addCommitCreatedActivityFactory({
-          saveActivity: saveActivityFactory({ db }),
-          publish
-        })
+        publishSub: publish
       })
 
       const createCommitByBranchName = createCommitByBranchNameFactory({
