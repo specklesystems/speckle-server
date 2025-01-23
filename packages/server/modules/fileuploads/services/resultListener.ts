@@ -1,16 +1,20 @@
 import {
   FileImportSubscriptions,
+  ProjectSubscriptions,
   publish,
   type PublishSubscription
 } from '@/modules/shared/utils/subscriptions'
 import {
   ProjectFileImportUpdatedMessageType,
+  ProjectModelsUpdatedMessageType,
   ProjectPendingModelsUpdatedMessageType,
   ProjectPendingVersionsUpdatedMessageType
 } from '@/modules/core/graph/generated/graphql'
 import { GetFileInfo } from '@/modules/fileuploads/domain/operations'
 import { GetStreamBranchByName } from '@/modules/core/domain/branches/operations'
-import { AddBranchCreatedActivity } from '@/modules/activitystream/domain/operations'
+import { EventBusEmit } from '@/modules/shared/services/eventBus'
+import { ModelEvents } from '@/modules/core/domain/branches/events'
+import { BranchPubsubEvents } from '@/modules/shared'
 import { fileUploadsLogger as logger } from '@/logging/logging'
 import { FileUploadConvertedStatus } from '@/modules/fileuploads/helpers/types'
 import { FileUploadInternalError } from '@/modules/fileuploads/helpers/errors'
@@ -19,7 +23,7 @@ type OnFileImportProcessedDeps = {
   getFileInfo: GetFileInfo
   getStreamBranchByName: GetStreamBranchByName
   publish: PublishSubscription
-  addBranchCreatedActivity: AddBranchCreatedActivity
+  eventEmit: EventBusEmit
 }
 
 type ParsedMessage = {
@@ -71,7 +75,27 @@ export const onFileImportProcessedFactory =
         projectId: upload.streamId
       })
 
-      if (branch) await deps.addBranchCreatedActivity({ branch })
+      if (branch) {
+        await Promise.all([
+          deps.eventEmit({
+            eventName: ModelEvents.Created,
+            payload: { model: branch, projectId: branch.streamId }
+          }),
+          // TODO: Move to event bus listeners
+          deps.publish(BranchPubsubEvents.BranchCreated, {
+            branchCreated: { ...branch },
+            streamId: branch.streamId
+          }),
+          deps.publish(ProjectSubscriptions.ProjectModelsUpdated, {
+            projectId: branch.streamId,
+            projectModelsUpdated: {
+              id: branch.id,
+              type: ProjectModelsUpdatedMessageType.Created,
+              model: branch
+            }
+          })
+        ])
+      }
     } else {
       await deps.publish(FileImportSubscriptions.ProjectPendingVersionsUpdated, {
         projectPendingVersionsUpdated: {

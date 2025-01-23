@@ -90,7 +90,6 @@ import {
   getPaginatedBranchCommitsItemsByNameFactory
 } from '@/modules/core/services/commit/retrieval'
 import { createObjectFactory } from '@/modules/core/services/objects/management'
-import { addBranchCreatedActivityFactory } from '@/modules/activitystream/services/branchActivity'
 import { ensureError } from '@speckle/shared'
 import { VersionEvents } from '@/modules/core/domain/commits/events'
 
@@ -104,10 +103,8 @@ const createBranch = createBranchFactory({ db })
 const createBranchAndNotify = createBranchAndNotifyFactory({
   createBranch,
   getStreamBranchByName: getStreamBranchByNameFactory({ db }),
-  addBranchCreatedActivity: addBranchCreatedActivityFactory({
-    saveActivity: saveActivityFactory({ db }),
-    publish
-  })
+  publishSub: publish,
+  eventEmit: getEventBus().emit
 })
 const getCommit = getCommitFactory({ db })
 const deleteCommitAndNotify = deleteCommitAndNotifyFactory({

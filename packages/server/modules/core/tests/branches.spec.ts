@@ -24,10 +24,6 @@ import {
   getStreamBranchCountFactory
 } from '@/modules/core/repositories/branches'
 import {
-  addBranchUpdatedActivityFactory,
-  addBranchDeletedActivityFactory
-} from '@/modules/activitystream/services/branchActivity'
-import {
   getStreamFactory,
   createStreamFactory,
   markBranchStreamUpdatedFactory,
@@ -103,20 +99,15 @@ const createBranch = createBranchFactory({ db: knex })
 const updateBranchAndNotify = updateBranchAndNotifyFactory({
   getBranchById: getBranchByIdFactory({ db: knex }),
   updateBranch: updateBranchFactory({ db: knex }),
-  addBranchUpdatedActivity: addBranchUpdatedActivityFactory({
-    saveActivity: saveActivityFactory({ db }),
-    publish
-  })
+  publishSub: publish,
+  eventEmit: getEventBus().emit
 })
 const deleteBranchAndNotify = deleteBranchAndNotifyFactory({
   getStream,
   getBranchById: getBranchByIdFactory({ db: knex }),
   emitEvent: getEventBus().emit,
   markBranchStreamUpdated,
-  addBranchDeletedActivity: addBranchDeletedActivityFactory({
-    saveActivity: saveActivityFactory({ db }),
-    publish
-  }),
+  publishSub: publish,
   deleteBranchById: deleteBranchByIdFactory({ db: knex })
 })
 

@@ -19,11 +19,10 @@ import { streamWritePermissionsPipelineFactory } from '@/modules/shared/authz'
 import { getRolesFactory } from '@/modules/shared/repositories/roles'
 import { getStreamBranchByNameFactory } from '@/modules/core/repositories/branches'
 import { getStreamFactory } from '@/modules/core/repositories/streams'
-import { addBranchCreatedActivityFactory } from '@/modules/activitystream/services/branchActivity'
-import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import { getPort } from '@/modules/shared/helpers/envHelper'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { listenFor } from '@/modules/core/utils/dbNotificationListener'
+import { getEventBus } from '@/modules/shared/services/eventBus'
 
 export const init: SpeckleModule['init'] = async (app, isInitial) => {
   if (process.env.DISABLE_FILE_UPLOADS) {
@@ -120,6 +119,9 @@ export const init: SpeckleModule['init'] = async (app, isInitial) => {
         }
       )
 
+      // FIXME: Fix the type issue
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-expect-error
       req.pipe(pipedReq)
     }
   )
@@ -133,10 +135,7 @@ export const init: SpeckleModule['init'] = async (app, isInitial) => {
         getFileInfo: getFileInfoFactory({ db: projectDb }),
         publish,
         getStreamBranchByName: getStreamBranchByNameFactory({ db: projectDb }),
-        addBranchCreatedActivity: addBranchCreatedActivityFactory({
-          publish,
-          saveActivity: saveActivityFactory({ db })
-        })
+        eventEmit: getEventBus().emit
       })(parsedMessage)
     })
     listenFor('file_import_started', async (msg) => {
