@@ -286,6 +286,7 @@ export const commentThreadsFragment = graphql(`
     createdAt
     viewerState
     replyAuthors {
+      totalCount
       items {
         id
         avatar
@@ -297,6 +298,7 @@ export const commentThreadsFragment = graphql(`
       name
     }
     replies {
+      totalCount
       items {
         ...CommentRepliesItem
       }

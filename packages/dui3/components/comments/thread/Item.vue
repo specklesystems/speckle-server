@@ -1,43 +1,66 @@
 <template>
   <div
-    :class="`border border-blue-500/10 rounded-md space-y-2 overflow-hidden mb-2 ${
-      expanded ? 'shadow' : ''
-    }`"
+    :class="`py-1 sm:py-2 my-1 sm:my-2 px-2 flex flex-col bg-foundation border-l-4 hover:shadow-lg  rounded transition cursor-pointer
+      ${expanded ? 'border-primary ' : 'border-transparent hover:bg-primary-muted'}
+    `"
   >
     <button
-      class="flex space-x-1 items-center max-w-full w-full px-1 py-1 h-8 transition hover:bg-primary-muted"
+      class="flex flex-col justify-between space-x-1 max-w-full w-full px-1 py-1 transition"
       @click="highlightObjects"
     >
-      <UserAvatarGroup :users="threadAuthors" />
-      <span class="truncate text-xs sm:text-sm font-medium">
+      <div class="flex items-center space-x-2">
+        <UserAvatarGroup :users="threadAuthors" class="flex-grow" />
+        <div class="flex items-center space-x-1">
+          <span class="grow truncate text-body-xs font-medium text-foreground-2">
+            {{ thread.author.name }}
+            <span v-if="threadAuthors.length !== 1">
+              & {{ thread.replyAuthors.totalCount }} others
+            </span>
+          </span>
+        </div>
+      </div>
+
+      <div class="truncate text-body-xs mt-1">
         {{ thread.rawText }}
-      </span>
-      <div class="h-full grow flex justify-end">
-        <button
-          class="hover:bg-primary-muted hover:text-primary flex h-full items-center justify-center rounded"
-          @click.stop="expanded = !expanded"
+      </div>
+      <div
+        :class="`text-xs font-medium flex items-center space-x-2 ${
+          hasReply ? 'text-primary' : 'text-foreground-2'
+        } mb-1`"
+      >
+        <FormButton
+          :disabled="thread.replies.totalCount === 0"
+          text
+          link
+          @click="expanded = !expanded"
         >
-          <ChevronDownIcon
-            :class="`h-3 w-3 transition ${!expanded ? '-rotate-90' : 'rotate-0'}`"
-          />
-        </button>
+          {{ thread.replies.totalCount }}
+          {{ thread.replies.totalCount === 1 ? 'reply' : 'replies' }}
+        </FormButton>
+        <span class="text-foreground-2 text-body-2xs">
+          {{ createdAt }}
+        </span>
       </div>
     </button>
-    <div v-if="expanded" class="px-2 pb-2 space-y-4">
-      {{ selectedObjectIds }}
+    <div v-if="expanded && hasReply" class="px-2 pb-2 space-y-4 shadow-inner">
+      <CommentsThreadReplyItem
+        v-for="reply in replies"
+        :key="reply.id"
+        :reply="reply"
+      ></CommentsThreadReplyItem>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import type { CommentThreadsItemFragment } from '~/lib/common/generated/gql/graphql'
-import { ChevronDownIcon } from '@heroicons/vue/24/outline'
 import { objectQuery } from '~/lib/graphql/mutationsAndQueries'
 import { useQuery } from '@vue/apollo-composable'
 import { useAccountStore } from '~/store/accounts'
 import type { IModelCard } from '~/lib/models/card'
 import { useHostAppStore } from '~/store/hostApp'
 import type { IReceiverModelCard } from '~/lib/models/card/receiver'
+import dayjs from 'dayjs'
 
 const props = defineProps<{
   modelCard: IModelCard
@@ -47,6 +70,16 @@ const props = defineProps<{
 const isSender = computed(() => {
   return props.modelCard.typeDiscriminator.includes('SenderModelCard')
 })
+
+const createdAt = computed(() => {
+  return dayjs(props.thread.createdAt).from(dayjs())
+})
+
+const hasReply = computed(() => {
+  return props.thread.replies.totalCount !== 0
+})
+
+const replies = computed(() => [...props.thread.replies.items.slice().reverse()])
 
 const applicationIds = ref<string[]>([])
 
@@ -109,8 +142,11 @@ selectedObjectIds.value.forEach((objectId) => {
 
 const highlightObjects = async () => {
   if (isSender.value) {
+    // NOTE: sent objects has same hack with automate, unfortunately we call server again to get applicationId on sent objects
     await app.$baseBinding.highlightObjects(applicationIds.value)
   } else {
+    // NOTE: received objects generates different application ids
+    // thats why we need mapped bakedObjectIds on HostObjectBuilders
     const receiver = hostAppStore.models.find(
       (m) => m.modelId === props.modelCard.modelId
     ) as unknown as IReceiverModelCard
