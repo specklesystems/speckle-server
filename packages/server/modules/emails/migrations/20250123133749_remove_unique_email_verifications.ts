@@ -4,8 +4,7 @@ const TABLE_NAME = 'email_verifications'
 
 export async function up(knex: Knex): Promise<void> {
   await knex.schema.alterTable(TABLE_NAME, (table) => {
-    table.string('code')
-    table.unique('email')
+    table.dropUnique(['email'])
   })
 }
 
