@@ -615,7 +615,7 @@ jobs:
       NODE_ENV: test
       DATABASE_URL: 'postgres://speckle:speckle@127.0.0.1:5432/speckle2_test'
       PGDATABASE: speckle2_test
-      POSTGRES_MAX_CONNECTIONS_SERVER: 20
+      POSTGRES_MAX_CONNECTIONS_SERVER: 50
       PGUSER: speckle
       SESSION_SECRET: 'keyboard cat'
       STRATEGY_LOCAL: 'true'

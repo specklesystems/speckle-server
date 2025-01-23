@@ -26,6 +26,7 @@ import { Roles } from '@speckle/shared'
 import { getProjectFactory } from '@/modules/core/repositories/streams'
 import { getStreamBranchCountFactory } from '@/modules/core/repositories/branches'
 import { getStreamCommitCountFactory } from '@/modules/core/repositories/commits'
+import { withTransaction } from '@/modules/shared/helpers/dbHelper'
 
 export default {
   Workspace: {
@@ -72,7 +73,7 @@ export default {
       )
 
       const sourceDb = await getProjectDbClient({ projectId: args.projectId })
-      const targetDb = await getDb({ regionKey: args.regionKey })
+      const targetDb = await (await getDb({ regionKey: args.regionKey })).transaction()
 
       const updateProjectRegion = updateProjectRegionFactory({
         getProject: getProjectFactory({ db: sourceDb }),
@@ -90,7 +91,7 @@ export default {
         copyProjectVersions: copyProjectVersionsFactory({ sourceDb, targetDb })
       })
 
-      return await updateProjectRegion(args)
+      return await withTransaction(updateProjectRegion(args), targetDb)
     }
   }
 } as Resolvers
