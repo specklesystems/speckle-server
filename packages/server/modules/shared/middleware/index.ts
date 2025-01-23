@@ -41,6 +41,10 @@ import {
 import { db } from '@/db/knex'
 import { getTokenAppInfoFactory } from '@/modules/auth/repositories/apps'
 import { getUserRoleFactory } from '@/modules/core/repositories/users'
+import {
+  CacheProvider,
+  retrieveViaCacheFactory
+} from '@/modules/core/utils/cacheHandler'
 
 export const authMiddlewareCreator = (steps: AuthPipelineFunction[]) => {
   const pipeline = authPipelineCreator(steps)
@@ -120,11 +124,9 @@ export async function createAuthContextFromToken(
   }
 }
 
-export async function authContextMiddleware(
-  req: Request,
-  res: Response,
-  next: NextFunction
-) {
+export const authContextMiddlewareFactory = (deps: {
+  cache: CacheProvider<AuthContext>
+}) => {
   const validateToken = validateTokenFactory({
     revokeUserTokenById: revokeUserTokenByIdFactory({ db }),
     getApiTokenById: getApiTokenByIdFactory({ db }),
@@ -139,30 +141,43 @@ export async function authContextMiddleware(
     updateApiToken: updateApiTokenFactory({ db })
   })
 
-  const token = getTokenFromRequest(req)
-  const authContext = await createAuthContextFromToken(token, validateToken)
-  const loggedContext = Object.fromEntries(
-    Object.entries(authContext).filter(
-      ([key]) => !['token'].includes(key.toLocaleLowerCase())
+  const retrieveViaCache = retrieveViaCacheFactory<AuthContext>({
+    retrieveFromSource: (token) => createAuthContextFromToken(token, validateToken),
+    options: { prefix: 'speckle_auth_context', inMemoryTtlSeconds: 5 }, //risk that this may be longer than the token expiry, so keeping it a very short time
+    cache: deps.cache
+  })
+
+  return async (req: Request, res: Response, next: NextFunction) => {
+    const token = getTokenFromRequest(req)
+    let authContext: AuthContext = { auth: false }
+    if (token) authContext = await retrieveViaCache({ key: token })
+    const loggedContext = Object.fromEntries(
+      Object.entries(authContext).filter(
+        ([key]) => !['token'].includes(key.toLocaleLowerCase())
+      )
     )
-  )
-  req.log = req.log.child({ authContext: loggedContext })
-  if (!authContext.auth && authContext.err) {
-    let message = 'Unknown Auth context error'
-    let status = 500
-    if (authContext.err instanceof UnauthorizedError) {
-      status = 401
-      message = authContext.err?.message || message
+    req.log = req.log.child({ authContext: loggedContext })
+    if (!authContext.auth && authContext.err) {
+      const defaultMessage = 'Unknown Auth context error'
+      //NOTE due to the possibility of the auth context being rehydrated from cache, we cannot assert the error with `instanceof` and must check the name
+      switch (authContext.err.name) {
+        case 'UnauthorizedError':
+          return res
+            .status(401)
+            .json({ error: authContext.err.message || defaultMessage })
+        case 'ForbiddenError':
+          return res
+            .status(403)
+            .json({ error: authContext.err.message || defaultMessage })
+        default:
+          req.log.error({ err: authContext.err }, 'Auth context error')
+          return res.status(500).json({ error: defaultMessage })
+      }
     }
-    if (authContext.err instanceof ForbiddenError) {
-      status = 403
-      message = authContext.err?.message || message
-    }
-    if (status === 500) req.log.error({ err: authContext.err }, 'Auth context error')
-    return res.status(status).json({ error: message })
+
+    req.context = authContext
+    next()
   }
-  req.context = authContext
-  next()
 }
 
 export async function addLoadersToCtx(

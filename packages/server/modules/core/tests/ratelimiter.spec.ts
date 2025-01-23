@@ -1,7 +1,6 @@
 /* istanbul ignore file */
 import { TIME } from '@speckle/shared'
 import {
-  createRateLimiterMiddleware,
   getRateLimitResult,
   isRateLimitBreached,
   getActionForPath,
@@ -11,7 +10,8 @@ import {
   createConsumer,
   RateLimiterMapping,
   allActions,
-  RateLimitAction
+  RateLimitAction,
+  rateLimiterMiddlewareFactory
 } from '@/modules/core/services/ratelimiter'
 import { expect } from 'chai'
 import httpMocks from 'node-mocks-http'
@@ -121,7 +121,7 @@ describe('Rate Limiting', () => {
         })
       )
 
-      const SUT = createRateLimiterMiddleware(testMappings)
+      const SUT = rateLimiterMiddlewareFactory(testMappings)
 
       await temporarilyEnableRateLimiter(async () => {
         await SUT(request, response, next)
@@ -144,7 +144,7 @@ describe('Rate Limiting', () => {
         nextCalled++
       }
 
-      const SUT = createRateLimiterMiddleware(createTestRateLimiterMappings())
+      const SUT = rateLimiterMiddlewareFactory(createTestRateLimiterMappings())
       response = httpMocks.createResponse()
 
       await temporarilyEnableRateLimiter(async () => {
