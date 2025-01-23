@@ -1,11 +1,11 @@
 <template>
   <div
-    :class="`py-1 sm:py-2 my-1 sm:my-2 px-2 flex flex-col bg-foundation border-l-4 hover:shadow-lg  rounded transition cursor-pointer
+    :class="`pt-2 sm:py-2 my-2 sm:my-2 px-2 flex flex-col bg-foundation border-l-4 hover:shadow-lg  rounded transition cursor-pointer
       ${expanded ? 'border-primary ' : 'border-transparent hover:bg-primary-muted'}
     `"
   >
     <button
-      class="flex flex-col justify-between space-x-1 max-w-full w-full px-1 py-1 transition"
+      class="flex flex-col justify-between space-x-1 max-w-full w-full px-1 transition"
       @click="highlightObjects"
     >
       <div class="flex items-center space-x-2">
@@ -26,7 +26,7 @@
       <div
         :class="`text-xs font-medium flex items-center space-x-2 ${
           hasReply ? 'text-primary' : 'text-foreground-2'
-        } mb-1`"
+        }`"
       >
         <FormButton
           :disabled="thread.replies.totalCount === 0"
@@ -42,7 +42,7 @@
         </span>
       </div>
     </button>
-    <div v-if="expanded && hasReply" class="px-2 pb-2 space-y-4 shadow-inner">
+    <div v-if="expanded && hasReply" class="px-2 pb-2 space-y-1 shadow-inner">
       <CommentsThreadReplyItem
         v-for="reply in replies"
         :key="reply.id"
