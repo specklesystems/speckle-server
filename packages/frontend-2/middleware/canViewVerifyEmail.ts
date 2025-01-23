@@ -4,7 +4,7 @@ import { convertThrowIntoFetchResult } from '~~/lib/common/helpers/graphql'
 import { homeRoute } from '~~/lib/common/helpers/route'
 
 /**
- * Apply this to a page to prevent access to the verify email page when user has already verified
+ * Apply this to a page to prevent access to the verify email page when user has already verified all emails
  */
 export default defineNuxtRouteMiddleware(async () => {
   const client = useApolloClientFromNuxt()
@@ -16,10 +16,11 @@ export default defineNuxtRouteMiddleware(async () => {
 
   if (!data?.activeUser?.id) return
 
-  // Check if the user has verified their email
-  const hasVerifiedEmail = data?.activeUser.verified
+  // If ALL emails are verified (primary and secondary), redirect away from verify page
+  const allEmailsVerified =
+    data.activeUser.verified && data.activeUser.emails.every((email) => email.verified)
 
-  if (hasVerifiedEmail) {
+  if (allEmailsVerified) {
     return navigateTo(homeRoute)
   }
 

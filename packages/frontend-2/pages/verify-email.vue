@@ -1,146 +1,87 @@
 <template>
   <div class="flex flex-col items-center justify-center p-4">
-    <h1 class="text-heading-xl text-forefround mb-6 font-normal">Check your inbox</h1>
+    <h1 class="text-heading-xl text-forefround mb-6 font-normal">
+      {{ unverifiedEmail?.primary ? 'Verify your email' : 'Verify additional email' }}
+    </h1>
     <p class="text-center text-body-sm text-foreground">
       We sent you a verification code to
-      <span class="font-medium">{{ email }}.</span>
+      <span class="font-medium">{{ unverifiedEmail?.email }}</span>
     </p>
     <p class="text-center text-body-sm text-foreground mb-8">
       Paste (or type) it below to continue.
     </p>
-    <FormCodeInput v-model="code" :error="hasError" @complete="verifyCode" />
-    <div class="mt-8">
+    <FormCodeInput v-model="code" :error="hasError" @complete="console.log('done')" />
+    <div class="mt-8 flex gap-2">
+      <FormButton color="subtle" size="sm" @click="showDeleteDialog = true">
+        Cancel
+      </FormButton>
       <FormButton
-        v-if="hasEmail"
         :disabled="isResendDisabled"
         color="outline"
         size="sm"
-        @click="onResend"
+        @click="resendEmail"
       >
-        {{
-          cooldownRemaining > 0 && fromRegistration
-            ? `Resend in ${cooldownRemaining}s`
-            : 'Resend code'
-        }}
+        {{ cooldownRemaining > 0 ? `Resend in ${cooldownRemaining}s` : 'Resend code' }}
       </FormButton>
     </div>
+    <SettingsUserEmailDeleteDialog
+      v-model:open="showDeleteDialog"
+      :email-id="unverifiedEmail?.id"
+      :email="unverifiedEmail?.email"
+      cancel
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { FormCodeInput, ValidationHelpers } from '@speckle/ui-components'
-import { useMutation } from '@vue/apollo-composable'
-import { useMixpanel } from '~~/lib/core/composables/mp'
-import { requestVerificationByEmailMutation } from '~/lib/auth/graphql/mutations'
-import { useGlobalToast, ToastNotificationType } from '~/lib/common/composables/toast'
-import {
-  convertThrowIntoFetchResult,
-  getFirstErrorMessage
-} from '~/lib/common/helpers/graphql'
+import { FormCodeInput } from '@speckle/ui-components'
+import { useUserEmails } from '~/lib/user/composables/emails'
 import { useIntervalFn } from '@vueuse/core'
 import { useRoute } from 'vue-router'
 
-useHead({ title: 'Verify Email' })
-
-definePageMeta({
-  layout: 'onboarding',
-  middleware: ['auth', 'can-view-verify-email']
+useHead({
+  title: 'Verify your email'
 })
 
-const mixpanel = useMixpanel()
-const { activeUser } = useActiveUser()
-const { triggerNotification } = useGlobalToast()
+definePageMeta({
+  middleware: ['auth', 'can-view-verify-email'],
+  layout: 'onboarding'
+})
+
+const { unverifiedEmail, resendVerificationEmail } = useUserEmails()
 const route = useRoute()
 
-const { pause: stopCooldown, resume } = useIntervalFn(
+const code = ref('')
+const hasError = ref(false)
+const cooldownRemaining = ref(0)
+const showDeleteDialog = ref(false)
+
+const isResendDisabled = computed(() => cooldownRemaining.value > 0)
+
+const { pause: stopInterval, resume: startInterval } = useIntervalFn(
   () => {
     if (cooldownRemaining.value > 0) {
       cooldownRemaining.value--
     } else {
-      stopCooldown()
+      stopInterval()
     }
   },
   1000,
   { immediate: false }
 )
 
-const code = ref('')
-const hasError = ref(false)
-
-const email = computed(() => activeUser.value?.email)
-const hasEmail = computed(
-  () => !!email.value?.length && ValidationHelpers.VALID_EMAIL.exec(email.value)
-)
-
-const fromRegistration = computed(() => route.query.source === 'registration')
-
-const COOLDOWN_SECONDS = 30
-const cooldownRemaining = ref(COOLDOWN_SECONDS)
-
-const startCooldown = () => {
-  cooldownRemaining.value = COOLDOWN_SECONDS
-  stopCooldown()
-  resume()
-}
-
-const { mutate: resendVerificationEmail, loading: resendVerificationEmailLoading } =
-  useMutation(requestVerificationByEmailMutation)
-
-const isResendDisabled = computed(
-  () =>
-    resendVerificationEmailLoading.value ||
-    (fromRegistration.value && cooldownRemaining.value > 0)
-)
-
-const onResend = async () => {
-  const emailAddress = email.value
-  if (!emailAddress || !hasEmail.value) return
-
-  const res = await resendVerificationEmail({ email: emailAddress }).catch(
-    convertThrowIntoFetchResult
-  )
-  if (res?.data?.requestVerificationByEmail) {
-    triggerNotification({
-      type: ToastNotificationType.Success,
-      title: 'Verification email (re-)sent successfully'
-    })
-    startCooldown()
-  } else {
-    const errMsg = getFirstErrorMessage(res?.errors)
-    triggerNotification({
-      type: ToastNotificationType.Danger,
-      title: 'Error sending verification email',
-      description: errMsg
-    })
-  }
-}
-
-const verifyCode = () => {
-  try {
-    hasError.value = false
-    triggerNotification({
-      type: ToastNotificationType.Loading,
-      title: 'Verifying code...'
-    })
-    // TODO: Add verification API call here
-    // await verifyEmailCode(value)
-    mixpanel.track('Email Verification Success')
-  } catch (error) {
-    hasError.value = true
-    mixpanel.track('Email Verification Failed')
-    triggerNotification({
-      type: ToastNotificationType.Danger,
-      title: 'Invalid verification code'
-    })
+const resendEmail = async () => {
+  const success = await resendVerificationEmail()
+  if (success) {
+    cooldownRemaining.value = 30
+    startInterval()
   }
 }
 
 onMounted(() => {
-  mixpanel.track('Visit Email Verification', {
-    source: fromRegistration.value ? 'registration' : 'middleware'
-  })
-  if (fromRegistration.value) {
-    resume() // Only start countdown if coming from registration
+  if (route.query.source === 'registration') {
+    cooldownRemaining.value = 30
+    startInterval()
   }
 })
 </script>

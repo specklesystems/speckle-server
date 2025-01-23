@@ -1,38 +1,32 @@
 <template>
   <LayoutDialog
     v-model:open="isOpen"
-    title="Delete email address"
+    :title="cancel ? 'Cancel adding email' : 'Delete email address'"
     max-width="xs"
     :buttons="dialogButtons"
   >
     <p class="text-body-xs text-foreground mb-2">
-      Are you sure you want to delete
-      <span class="font-medium">{{ email }}</span>
-      from your account?
+      {{
+        cancel
+          ? `Are you sure you want to cancel adding ${email} to your account?`
+          : `Are you sure you want to delete ${email} from your account?`
+      }}
     </p>
   </LayoutDialog>
 </template>
 
 <script setup lang="ts">
 import type { LayoutDialogButton } from '@speckle/ui-components'
-import { settingsDeleteUserEmailMutation } from '~/lib/settings/graphql/mutations'
-import { useMutation } from '@vue/apollo-composable'
-import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
-import {
-  getFirstErrorMessage,
-  convertThrowIntoFetchResult
-} from '~~/lib/common/helpers/graphql'
-import { useMixpanel } from '~/lib/core/composables/mp'
+import { useUserEmails } from '~/lib/user/composables/emails'
 
 const props = defineProps<{
-  emailId: string
-  email: string
+  emailId?: string
+  email?: string
+  cancel?: boolean
 }>()
 const isOpen = defineModel<boolean>('open', { required: true })
 
-const { mutate: deleteMutation } = useMutation(settingsDeleteUserEmailMutation)
-const { triggerNotification } = useGlobalToast()
-const mixpanel = useMixpanel()
+const { deleteUserEmail } = useUserEmails()
 
 const dialogButtons = computed((): LayoutDialogButton[] => [
   {
@@ -43,7 +37,7 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
     }
   },
   {
-    text: 'Delete',
+    text: props.cancel ? 'Confirm' : 'Delete',
     props: { color: 'primary' },
     onClick: () => {
       onDeleteEmail()
@@ -52,24 +46,10 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
 ])
 
 const onDeleteEmail = async () => {
-  const result = await deleteMutation({ input: { id: props.emailId } }).catch(
-    convertThrowIntoFetchResult
-  )
-  if (result?.data) {
-    triggerNotification({
-      type: ToastNotificationType.Success,
-      title: `${props.email} deleted`
-    })
-
-    mixpanel.track('Email Deleted')
-  } else {
-    const errorMessage = getFirstErrorMessage(result?.errors)
-    triggerNotification({
-      type: ToastNotificationType.Danger,
-      title: errorMessage
-    })
+  if (!props.emailId || !props.email) return
+  const success = await deleteUserEmail(props.emailId, props.email, props.cancel)
+  if (success) {
+    isOpen.value = false
   }
-
-  isOpen.value = false
 }
 </script>
