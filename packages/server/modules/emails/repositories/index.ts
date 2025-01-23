@@ -98,7 +98,7 @@ export const getPendingVerificationByEmailFactory =
       .where(EmailVerifications.col.email, email)
       .where(
         EmailVerifications.col.createdAt,
-        '<',
+        '>',
         dayjs().subtract(5, 'minutes').toISOString()
       )
       .orderBy(EmailVerifications.col.createdAt, 'desc')
