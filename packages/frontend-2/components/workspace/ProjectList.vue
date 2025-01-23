@@ -4,7 +4,6 @@
       <WorkspaceSidebar
         v-if="workspace"
         :workspace-info="workspace"
-        @show-settings-dialog="onShowSettingsDialog"
         @show-invite-dialog="showInviteDialog = true"
       />
     </Portal>
@@ -23,7 +22,6 @@
         v-if="workspace"
         :icon="Squares2X2Icon"
         :workspace-info="workspace"
-        @show-settings-dialog="onShowSettingsDialog"
         @show-move-projects-dialog="showMoveProjectsDialog = true"
         @show-new-project-dialog="openNewProject = true"
         @show-invite-dialog="showInviteDialog = true"
@@ -74,12 +72,6 @@
 
       <template v-if="workspace">
         <InviteDialogWorkspace v-model:open="showInviteDialog" :workspace="workspace" />
-        <SettingsDialog
-          v-model:open="showSettingsDialog"
-          :target-menu-item="settingsDialogTarget"
-          :target-workspace-id="workspace.id"
-          :sso-provider-info="ssoProviderInfo"
-        />
         <WorkspaceMoveProjectsDialog
           v-model:open="showMoveProjectsDialog"
           :workspace="workspace"
@@ -103,10 +95,6 @@ import { graphql } from '~~/lib/common/generated/gql'
 import type { WorkspaceProjectsQueryQueryVariables } from '~~/lib/common/generated/gql/graphql'
 import { workspaceRoute } from '~/lib/common/helpers/route'
 import { useWorkspacesMixpanel } from '~/lib/workspaces/composables/mixpanel'
-import {
-  SettingMenuKeys,
-  type AvailableSettingsMenuKeys
-} from '~/lib/settings/helpers/types'
 import { useBillingActions } from '~/lib/billing/composables/actions'
 import { useWorkspacesWizard } from '~/lib/workspaces/composables/wizard'
 import type { WorkspaceWizardState } from '~/lib/workspaces/helpers/types'
@@ -164,15 +152,6 @@ const showMoveProjectsDialog = ref(false)
 const selectedRoles = ref(undefined as Optional<StreamRoles[]>)
 const openNewProject = ref(false)
 const showInviteDialog = ref(false)
-const showSettingsDialog = ref(false)
-const settingsDialogTarget = ref<AvailableSettingsMenuKeys>(
-  SettingMenuKeys.Workspace.General
-)
-const ssoProviderInfo = ref<{
-  providerName: string
-  clientId: string
-  issuerUrl: string
-} | null>(null)
 
 const token = computed(() => route.query.token as Optional<string>)
 
@@ -239,11 +218,6 @@ const clearSearch = () => {
   selectedRoles.value = []
 }
 
-const onShowSettingsDialog = (target: AvailableSettingsMenuKeys) => {
-  showSettingsDialog.value = true
-  settingsDialogTarget.value = target
-}
-
 const hasFinalized = ref(false)
 
 onResult((queryResult) => {
@@ -270,15 +244,6 @@ onResult((queryResult) => {
       title: queryResult.data.workspaceBySlug.name
     })
     validateCheckoutSession(queryResult.data.workspaceBySlug)
-  }
-})
-
-onMounted(() => {
-  const ssoValidationSuccess = route.query?.ssoValidationSuccess
-
-  if (ssoValidationSuccess) {
-    // Open security settings dialog
-    onShowSettingsDialog(SettingMenuKeys.Workspace.Security)
   }
 })
 </script>

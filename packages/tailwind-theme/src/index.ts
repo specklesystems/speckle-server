@@ -1,4 +1,4 @@
-import plugin, { darkThemeVariables, lightThemeVariables } from './plugin.js'
+import { darkThemeVariables, lightThemeVariables, plugin } from './plugin.js'
 
 export default plugin
-export { darkThemeVariables, lightThemeVariables }
+export { darkThemeVariables, lightThemeVariables, plugin }

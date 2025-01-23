@@ -2,7 +2,7 @@ import { getFeatureFlags, getFrontendOrigin } from '@/modules/shared/helpers/env
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { pricingTable } from '@/modules/gatekeeper/domain/workspacePricing'
 import { authorizeResolver } from '@/modules/shared'
-import { Roles } from '@speckle/shared'
+import { Roles, throwUncoveredError } from '@speckle/shared'
 import {
   countWorkspaceRoleWithOptionalProjectRoleFactory,
   getWorkspaceFactory
@@ -33,6 +33,7 @@ import { canWorkspaceAccessFeatureFactory } from '@/modules/gatekeeper/services/
 import { upgradeWorkspaceSubscriptionFactory } from '@/modules/gatekeeper/services/subscriptions'
 import { isWorkspaceReadOnlyFactory } from '@/modules/gatekeeper/services/readOnly'
 import { calculateSubscriptionSeats } from '@/modules/gatekeeper/domain/billing'
+import { WorkspacePaymentMethod } from '@/test/graphql/generated/graphql'
 
 const { FF_GATEKEEPER_MODULE_ENABLED } = getFeatureFlags()
 
@@ -47,7 +48,30 @@ export = FF_GATEKEEPER_MODULE_ENABLED
       },
       Workspace: {
         plan: async (parent) => {
-          return await getWorkspacePlanFactory({ db })({ workspaceId: parent.id })
+          const workspacePlan = await getWorkspacePlanFactory({ db })({
+            workspaceId: parent.id
+          })
+          if (!workspacePlan) return null
+          let paymentMethod: WorkspacePaymentMethod
+          switch (workspacePlan.name) {
+            case 'starter':
+            case 'plus':
+            case 'business':
+              paymentMethod = WorkspacePaymentMethod.Billing
+              break
+            case 'unlimited':
+            case 'academia':
+              paymentMethod = WorkspacePaymentMethod.Unpaid
+              break
+            case 'starterInvoiced':
+            case 'plusInvoiced':
+            case 'businessInvoiced':
+              paymentMethod = WorkspacePaymentMethod.Invoice
+              break
+            default:
+              throwUncoveredError(workspacePlan)
+          }
+          return { ...workspacePlan, paymentMethod }
         },
         subscription: async (parent) => {
           const workspaceId = parent.id
