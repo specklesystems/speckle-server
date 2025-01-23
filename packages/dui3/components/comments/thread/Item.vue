@@ -1,7 +1,7 @@
 <template>
   <div
-    :class="`pt-2 sm:py-2 my-2 sm:my-2 px-2 flex flex-col bg-foundation border-l-4 hover:shadow-lg  rounded transition cursor-pointer
-      ${expanded ? 'border-primary ' : 'border-transparent hover:bg-primary-muted'}
+    :class="`pt-2 sm:py-2 my-2 sm:my-2 px-2 flex flex-col bg-foundation border-l-4 hover:shadow-lg  rounded transition cursor-pointer dark:border-gray-800 border-gray-300 border
+      ${expanded ? 'border-primary ' : 'hover:bg-primary-muted'}
     `"
   >
     <button
