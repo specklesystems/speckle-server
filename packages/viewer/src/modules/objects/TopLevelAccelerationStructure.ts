@@ -37,7 +37,7 @@ import { AccelerationStructure } from './AccelerationStructure.js'
   fine as it is. If we really really really need that 100% accuracy, we'll just make it relative to the origin
  */
 export class TopLevelAccelerationStructure {
-  private debugBVH = false
+  private debugBVH = true
   private static cubeIndices = [
     // front
     0, 1, 2, 2, 3, 0,
@@ -142,14 +142,14 @@ export class TopLevelAccelerationStructure {
   public refit() {
     const positions = this.accelerationStructure.geometry.attributes.position
       .array as number[]
-    const boxBuffer: Box3 = new Box3()
+    // const boxBuffer: Box3 = new Box3()
     for (let k = 0; k < this.batchObjects.length; k++) {
       const start = this.batchObjects[k].tasVertIndexStart
-      const basBox =
-        this.batchObjects[k].accelerationStructure.getBoundingBox(boxBuffer)
+      const basBox = this.batchObjects[k].aabb //accelerationStructure.getBoundingBox(boxBuffer)
       this.updateVertArray(basBox, start * 3, positions)
     }
     this.accelerationStructure.bvh.refit()
+    this.bvhHelper?.update()
   }
 
   /* Core Cast Functions */

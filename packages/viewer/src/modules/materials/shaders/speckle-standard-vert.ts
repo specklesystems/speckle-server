@@ -198,7 +198,7 @@ void main() {
         vec4 rteLocalPosition = computeRelativePositionSeparate(position_lowT.xyz, position_highT.xyz, uViewer_low, uViewer_high);
         #ifdef TRANSFORM_STORAGE
             vec4 rtePivot = computeRelativePositionSeparate(tPivotLow.xyz, tPivotHigh.xyz, uViewer_low, uViewer_high);
-            rteLocalPosition.xyz = rotate_vertex_position_delta(rteLocalPosition, rtePivot, tQuaternion) * tScale.xyz + rtePivot.xyz + tTranslation.xyz;
+            rteLocalPosition.xyz = rotate_vertex_position((rteLocalPosition - rtePivot).xyz * tScale.xyz, tQuaternion) + rtePivot.xyz + tTranslation.xyz;
         #endif
         #ifdef USE_INSTANCING
             vec4 instancePivot = computeRelativePositionSeparate(ZERO3, ZERO3, uViewer_low, uViewer_high);

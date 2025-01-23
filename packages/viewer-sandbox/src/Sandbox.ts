@@ -313,18 +313,13 @@ export default class Sandbox {
     this.objectControls
       .addInput(position, 'value', { label: 'Position' })
       .on('change', () => {
-        // const unionBox: Box3 = new Box3()
-        // objects.forEach((obj: BatchObject) => {
-        //   unionBox.union(obj.renderView.aabb)
-        // })
-        // const origin = unionBox.getCenter(new Vector3())
+        const unionBox: Box3 = new Box3()
         objects.forEach((obj: BatchObject) => {
-          obj.transformTRS(position.value)
-          // obj.position = new Vector3(
-          //   position.value.x,
-          //   position.value.y,
-          //   position.value.z
-          // )
+          unionBox.union(obj.renderView.aabb || new Box3())
+        })
+        const origin = unionBox.getCenter(new Vector3())
+        objects.forEach((obj: BatchObject) => {
+          obj.transformTRS(position.value, rotation.value, scale.value, origin)
         })
         this.viewer.requestRender()
       })
@@ -337,19 +332,13 @@ export default class Sandbox {
         z: { step: 0.1 }
       })
       .on('change', () => {
-        // const unionBox: Box3 = new Box3()
-        // objects.forEach((obj: BatchObject) => {
-        //   unionBox.union(obj.renderView.aabb)
-        // })
-        // const origin = unionBox.getCenter(new Vector3())
+        const unionBox: Box3 = new Box3()
         objects.forEach((obj: BatchObject) => {
-          // obj.transformTRS(position.value, rotation.value, scale.value, origin)
-          obj.euler = new Euler(
-            rotation.value.x,
-            rotation.value.y,
-            rotation.value.z,
-            'XYZ'
-          )
+          unionBox.union(obj.renderView.aabb || new Box3())
+        })
+        const origin = unionBox.getCenter(new Vector3())
+        objects.forEach((obj: BatchObject) => {
+          obj.transformTRS(position.value, rotation.value, scale.value, origin)
         })
         this.viewer.requestRender()
       })
