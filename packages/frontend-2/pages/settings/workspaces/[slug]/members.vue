@@ -41,7 +41,8 @@ import { useQuery } from '@vue/apollo-composable'
 import { graphql } from '~/lib/common/generated/gql'
 import { settingsWorkspacesMembersQuery } from '~/lib/settings/graphql/queries'
 import type { LayoutPageTabItem } from '~~/lib/layout/helpers/components'
-import { WorkspaceJoinRequestStatus } from '~~/lib/common/generated/gql/graphql'
+import { useOnWorkspaceUpdated } from '~/lib/workspaces/composables/management'
+import { WorkspaceJoinRequestStatus } from '~/lib/common/generated/gql/graphql'
 
 graphql(`
   fragment SettingsWorkspacesMembers_Workspace on Workspace {
@@ -50,7 +51,6 @@ graphql(`
     team {
       items {
         id
-        role
       }
     }
     invitedTeam(filter: $invitesFilter) {
@@ -72,9 +72,9 @@ useHead({
   title: 'Settings | Workspace - Members'
 })
 
+const route = useRoute()
 const slug = computed(() => (route.params.slug as string) || '')
 
-const route = useRoute()
 const { result } = useQuery(settingsWorkspacesMembersQuery, () => ({
   slug: slug.value,
   joinRequestsFilter: {
@@ -118,4 +118,6 @@ const tabItems = computed<LayoutPageTabItem[]>(() => [
 ])
 
 const activeTab = ref(tabItems.value[0])
+
+useOnWorkspaceUpdated({ workspaceSlug: slug })
 </script>
