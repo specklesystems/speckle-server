@@ -23,8 +23,7 @@ describe('utils cache @core', () => {
         cache: mockInMemoryCache,
         retrieveFromSource: async () => 'fromSource',
         options: {
-          prefix,
-          inMemoryTtlSeconds: 2 // it doesn't matter, as this is an implementation detail for the underlying cache and not part of the mock
+          prefix
         }
       })
       const result = await getViaCache({
@@ -36,7 +35,6 @@ describe('utils cache @core', () => {
   })
   describe('bust cache is disabled', () => {
     describe('key is in the cache', () => {
-      //NB we don't test if the key has expired or not, as this is an implementation detail for the underlying cache and not part of the mock
       it('should return from cache', async () => {
         const key = cryptoRandomString({ length: 10 })
         const prefix = cryptoRandomString({ length: 5 })
@@ -51,8 +49,7 @@ describe('utils cache @core', () => {
           cache: mockInMemoryCache,
           retrieveFromSource: async () => 'fromSource',
           options: {
-            prefix,
-            inMemoryTtlSeconds: 2 // it doesn't matter, as this is an implementation detail for the underlying cache and not part of the mock
+            prefix
           }
         })
         const result = await getFromCache({
@@ -78,8 +75,7 @@ describe('utils cache @core', () => {
           cache: mockInMemoryCache,
           retrieveFromSource: async () => 'fromSource',
           options: {
-            prefix,
-            inMemoryTtlSeconds: 2 // it doesn't matter, as this is an implementation detail for the underlying cache and not part of the mock
+            prefix
           }
         })
         const result = await getFromCache({

@@ -143,7 +143,7 @@ export const authContextMiddlewareFactory = (deps: {
 
   const retrieveViaCache = retrieveViaCacheFactory<AuthContext>({
     retrieveFromSource: (token) => createAuthContextFromToken(token, validateToken),
-    options: { prefix: 'speckle_auth_context', inMemoryTtlSeconds: 5 }, //risk that this may be longer than the token expiry, so keeping it a very short time
+    options: { prefix: 'speckle_auth_context' },
     cache: deps.cache
   })
 

@@ -1,6 +1,6 @@
 export interface CacheProvider<T> {
   get: (key: string) => Promise<T | undefined>
-  set: (key: string, value: T, options: { ttlMilliseconds: number }) => Promise<void>
+  set: (key: string, value: T) => Promise<void>
 }
 
 export type RetrieveFromCache<T> = (params: {
@@ -16,11 +16,9 @@ export const retrieveViaCacheFactory = <T>(deps: {
   cache: CacheProvider<T>
   options: {
     prefix: string
-    inMemoryTtlSeconds: number
   }
 }): RetrieveFromCache<T> => {
   const { options, retrieveFromSource, cache } = deps
-  const ttlMilliseconds = options.inMemoryTtlSeconds * 1000
   return async (params) => {
     const { key, bustCache } = params
 
@@ -33,7 +31,7 @@ export const retrieveViaCacheFactory = <T>(deps: {
 
     // if cache is to be busted or if there is no cache hit, we will retrieve from source and then update the cache
     const result = await retrieveFromSource(key)
-    await cache.set(cacheKey, result, { ttlMilliseconds })
+    await cache.set(cacheKey, result)
 
     return result
   }

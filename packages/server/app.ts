@@ -467,7 +467,10 @@ export async function init() {
   app.use(rateLimiterMiddlewareFactory()) // Rate limiting by IP address for all users
   app.use(
     authContextMiddlewareFactory({
-      cache: redisCacheFactory({ redis: getGenericRedis() })
+      cache: redisCacheFactory({
+        redis: getGenericRedis(),
+        options: { ttlMilliseconds: 2 * 1000 }
+      })
     })
   )
   app.use(
