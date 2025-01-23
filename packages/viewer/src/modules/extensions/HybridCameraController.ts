@@ -55,12 +55,12 @@ export class HybridCameraController extends CameraController {
         break
 
       case 'PageUp':
-      case 'KeyQ':
+      case 'KeyE':
         this.keyMap.up = true
         break
 
       case 'PageDown':
-      case 'KeyE':
+      case 'KeyQ':
         this.keyMap.down = true
         break
     }
@@ -94,12 +94,12 @@ export class HybridCameraController extends CameraController {
         break
 
       case 'PageUp':
-      case 'KeyQ':
+      case 'KeyE':
         this.keyMap.up = false
         break
 
       case 'PageDown':
-      case 'KeyE':
+      case 'KeyQ':
         this.keyMap.down = false
         break
     }
