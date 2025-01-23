@@ -91,6 +91,29 @@ varying vec3 vViewPosition;
     { 
         return position + 2.0 * cross(quat.xyz, cross(quat.xyz, position) + quat.w * position);
     }
+
+    highp vec3 rotate_vertex_position_delta(highp vec4 v0, highp vec4 v1, highp vec4 quat)
+    {
+        /** !!! WORKAROUND FOR Intel IrisXe CARDS !!! */
+        /** The code below will not produce correct results in intel IrisXE integrated GPUs. 
+         *  The geometry will turn mangled, albeit stable
+         *  I can't know for sure what is going on, but rotating the difference seems to 
+         *  force the result into a lower precision?
+         */
+        // highp vec4 position = v0 - v1;
+        // return position.xyz + 2.0 * cross(quat.xyz, cross(quat.xyz, position.xyz) + quat.w * position.xyz);
+
+        /** Subtracting the rotated vectors works. */
+        return rotate_vertex_position(v0.xyz, quat) - rotate_vertex_position(v1.xyz, quat);
+
+        /** An alternate workaround is
+         * highp vec3 position = (v0.xyz * (1. + 1e-7)) - (v1.xyz * (1. _ 1e-7));
+           return position + 2.0 * cross(quat.xyz, cross(quat.xyz, position) + quat.w * position);
+
+           However I'm not such a fan of the (1. + 1e-7) part
+        */
+    }
+
 #endif
 
 attribute float gradientIndex;
@@ -176,7 +199,7 @@ void main() {
         vec4 rteLocalPosition = computeRelativePositionSeparate(position_lowT.xyz, position_highT.xyz, uViewer_low, uViewer_high);
         #ifdef TRANSFORM_STORAGE
             vec4 rtePivot = computeRelativePositionSeparate(tPivotLow.xyz, tPivotHigh.xyz, uViewer_low, uViewer_high);
-            rteLocalPosition.xyz = rotate_vertex_position((rteLocalPosition - rtePivot).xyz, tQuaternion) * tScale.xyz + rtePivot.xyz + tTranslation.xyz;
+            rteLocalPosition.xyz = rotate_vertex_position_delta(rteLocalPosition, rtePivot, tQuaternion) * tScale.xyz + rtePivot.xyz + tTranslation.xyz;
         #endif
         #ifdef USE_INSTANCING
             vec4 instancePivot = computeRelativePositionSeparate(ZERO3, ZERO3, uViewer_low, uViewer_high);
@@ -224,7 +247,11 @@ void main() {
         #endif
         #ifdef TRANSFORM_STORAGE
             vec4 rtePivotShadow = computeRelativePositionSeparate(tPivotLow.xyz, tPivotHigh.xyz, uShadowViewer_low, uShadowViewer_high);
-            shadowPosition.xyz = rotate_vertex_position((shadowPosition - rtePivotShadow).xyz, tQuaternion) * tScale.xyz + rtePivotShadow.xyz + tTranslation.xyz;
+            shadowPosition.xyz = rotate_vertex_position_delta(shadowPosition, rtePivotShadow, tQuaternion) * tScale.xyz + rtePivotShadow.xyz + tTranslation.xyz;
+        #endif
+        #ifdef USE_INSTANCING
+            vec4 rtePivotShadow = computeRelativePositionSeparate(ZERO3, ZERO3, uShadowViewer_low, uShadowViewer_high);
+            shadowPosition.xyz = (mat3(instanceMatrix) * (shadowPosition - rtePivotShadow).xyz) + rtePivotShadow.xyz + instanceMatrix[3].xyz;
         #endif
         shadowWorldPosition = modelMatrix * shadowPosition + vec4( shadowWorldNormal * directionalLightShadows[ i ].shadowNormalBias, 0 );
         vDirectionalShadowCoord[ i ] = shadowMatrix * shadowWorldPosition;

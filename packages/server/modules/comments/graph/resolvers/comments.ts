@@ -81,7 +81,6 @@ import { Resolvers, ResourceType } from '@/modules/core/graph/generated/graphql'
 import { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
 import { CommentRecord } from '@/modules/comments/helpers/types'
 import { db, mainDb } from '@/db/knex'
-import { CommentsEmitter } from '@/modules/comments/events/emitter'
 import { getBlobsFactory } from '@/modules/blobstorage/repositories'
 import { ResourceIdentifier } from '@/modules/comments/domain/types'
 import {
@@ -97,8 +96,9 @@ import {
 import { getStreamObjectsFactory } from '@/modules/core/repositories/objects'
 import { getStreamFactory } from '@/modules/core/repositories/streams'
 import { saveActivityFactory } from '@/modules/activitystream/repositories'
-import { getProjectDbClient } from '@/modules/multiregion/dbSelector'
+import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { Knex } from 'knex'
+import { getEventBus } from '@/modules/shared/services/eventBus'
 
 // We can use the main DB for these
 const getStream = getStreamFactory({ db })
@@ -549,7 +549,7 @@ export = {
         insertComments,
         insertCommentLinks,
         markCommentViewed,
-        commentsEventsEmit: CommentsEmitter.emit,
+        emitEvent: getEventBus().emit,
         addCommentCreatedActivity: addCommentCreatedActivityFactory({
           getViewerResourcesFromLegacyIdentifiers,
           getViewerResourceItemsUngrouped,
@@ -587,7 +587,7 @@ export = {
         insertComments,
         insertCommentLinks,
         markCommentUpdated: markCommentUpdatedFactory({ db: projectDb }),
-        commentsEventsEmit: CommentsEmitter.emit,
+        emitEvent: getEventBus().emit,
         addReplyAddedActivity: addReplyAddedActivityFactory({
           getViewerResourcesForComment: getViewerResourcesForCommentFactory({
             getCommentsResources: getCommentsResourcesFactory({ db: projectDb }),
@@ -624,7 +624,7 @@ export = {
         getComment,
         validateInputAttachments,
         updateComment,
-        commentsEventsEmit: CommentsEmitter.emit
+        emitEvent: getEventBus().emit
       })
 
       return await editCommentAndNotify(args.input, ctx.userId!)
@@ -752,7 +752,7 @@ export = {
         insertCommentLinks: insertCommentLinksFactory({ db: projectDb }),
         deleteComment: deleteCommentFactory({ db: projectDb }),
         markCommentViewed: markCommentViewedFactory({ db: projectDb }),
-        commentsEventsEmit: CommentsEmitter.emit
+        emitEvent: getEventBus().emit
       })
       const comment = await createComment({
         userId: context.userId,
@@ -796,7 +796,7 @@ export = {
           getBlobs: getBlobsFactory({ db: projectDb })
         }),
         updateComment: updateCommentFactory({ db: projectDb }),
-        commentsEventsEmit: CommentsEmitter.emit
+        emitEvent: getEventBus().emit
       })
 
       await editComment({ userId: context.userId!, input: args.input, matchUser })
@@ -878,7 +878,7 @@ export = {
         }),
         deleteComment: deleteCommentFactory({ db: projectDb }),
         markCommentUpdated: markCommentUpdatedFactory({ db: projectDb }),
-        commentsEventsEmit: CommentsEmitter.emit
+        emitEvent: getEventBus().emit
       })
       const reply = await createCommentReply({
         authorId: context.userId,

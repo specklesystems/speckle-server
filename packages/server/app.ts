@@ -11,7 +11,7 @@ import compression from 'compression'
 import cookieParser from 'cookie-parser'
 
 import { createTerminus } from '@godaddy/terminus'
-import Logging from '@/logging'
+import Metrics from '@/logging'
 import {
   startupLogger,
   shutdownLogger,
@@ -49,7 +49,8 @@ import {
   enableMixpanel,
   getPort,
   getBindAddress,
-  shutdownTimeoutSeconds
+  shutdownTimeoutSeconds,
+  asyncRequestContextEnabled
 } from '@/modules/shared/helpers/envHelper'
 import * as ModulesSetup from '@/modules'
 import { GraphQLContext, Optional } from '@/modules/shared/helpers/typeHelper'
@@ -70,16 +71,30 @@ import { defaultErrorHandler } from '@/modules/core/rest/defaultErrorHandler'
 import { migrateDbToLatest } from '@/db/migrations'
 import { statusCodePlugin } from '@/modules/core/graph/plugins/statusCode'
 import { BaseError, ForbiddenError } from '@/modules/shared/errors'
-import { loggingPlugin } from '@/modules/core/graph/plugins/logging'
+import { loggingPluginFactory } from '@/modules/core/graph/plugins/logging'
 import { shouldLogAsInfoLevel } from '@/logging/graphqlError'
 import { getUserFactory } from '@/modules/core/repositories/users'
 import { initFactory as healthchecksInitFactory } from '@/healthchecks'
-import type { ReadinessHandler } from '@/healthchecks/health'
+import type { ReadinessHandler } from '@/healthchecks/types'
+import type ws from 'ws'
+import type { Server as MockWsServer } from 'mock-socket'
+import { SetOptional } from 'type-fest'
+import {
+  enterNewRequestContext,
+  getRequestContext,
+  initiateRequestContextMiddleware
+} from '@/logging/requestContext'
+import { randomUUID } from 'crypto'
 
 const GRAPHQL_PATH = '/graphql'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type SubscriptionResponse = { errors?: GraphQLError[]; data?: any }
+
+/**
+ * In mocked Ws connections, request will be undefined
+ */
+type PossiblyMockedConnectionContext = SetOptional<ConnectionContext, 'request'>
 
 function logSubscriptionOperation(params: {
   ctx: GraphQLContext
@@ -91,12 +106,20 @@ function logSubscriptionOperation(params: {
   const userId = ctx.userId
   if (!error && !response) return
 
+  const reqCtx = getRequestContext()
+
   const logger = ctx.log.child({
     graphql_query: execParams.query.toString(),
     graphql_variables: redactSensitiveVariables(execParams.variables),
     graphql_operation_name: execParams.operationName,
     graphql_operation_type: 'subscription',
-    userId
+    userId,
+    ...(reqCtx
+      ? {
+          req: { id: reqCtx.requestId },
+          dbMetrics: reqCtx.dbMetrics
+        }
+      : {})
   })
 
   const errMsg = 'GQL subscription event {graphql_operation_name} errored'
@@ -118,12 +141,23 @@ function logSubscriptionOperation(params: {
   }
 }
 
+const isWsServer = (server: http.Server | MockWsServer): server is MockWsServer => {
+  return 'on' in server && 'clients' in server
+}
+
 /**
  * TODO: subscriptions-transport-ws is no longer maintained, we should migrate to graphql-ws insted. The problem
  * is that graphql-ws uses an entirely different protocol, so the client-side has to change as well, and so old clients
  * will be unable to use any WebSocket/subscriptions functionality with the updated server
  */
-function buildApolloSubscriptionServer(server: http.Server): SubscriptionServer {
+export function buildApolloSubscriptionServer(
+  server: http.Server | MockWsServer
+): SubscriptionServer {
+  const httpServer = isWsServer(server) ? undefined : server
+  const mockServer = isWsServer(server) ? server : undefined
+
+  // we have to break the type here, cause its a mock
+  const wsServer = mockServer ? (mockServer as unknown as ws.Server) : undefined
   const schema = ModulesSetup.graphSchema()
 
   // Init metrics
@@ -156,6 +190,20 @@ function buildApolloSubscriptionServer(server: http.Server): SubscriptionServer 
     labelNames: ['subscriptionType', 'status'] as const
   })
 
+  const getHeaders = (params: {
+    connContext?: PossiblyMockedConnectionContext
+    connectionParams?: Record<string, unknown>
+  }) => {
+    const { connContext, connectionParams } = params
+    const connCtxHeaders = connContext?.request?.headers || {}
+    const paramsHeaders = connectionParams?.headers || {}
+
+    return {
+      ...connCtxHeaders,
+      ...paramsHeaders
+    } as Record<string, string>
+  }
+
   return SubscriptionServer.create(
     {
       schema,
@@ -164,12 +212,12 @@ function buildApolloSubscriptionServer(server: http.Server): SubscriptionServer 
       onConnect: async (
         connectionParams: Record<string, unknown>,
         webSocket: WebSocket,
-        connContext: ConnectionContext
+        connContext: PossiblyMockedConnectionContext
       ) => {
         metricConnectCounter.inc()
         metricConnectedClients.inc()
 
-        const logger = connContext.request.log || subscriptionLogger
+        const logger = connContext.request?.log || subscriptionLogger
 
         const possiblePaths = [
           'Authorization',
@@ -181,9 +229,12 @@ function buildApolloSubscriptionServer(server: http.Server): SubscriptionServer 
         // Resolve token
         let token: string
         try {
-          const requestId = get(connectionParams, 'headers.x-request-id') as string
+          const headers = getHeaders({ connContext, connectionParams })
+          const requestId = headers['x-request-id'] || `ws-${randomUUID()}`
+          enterNewRequestContext({ reqId: requestId })
+
           logger.debug(
-            { requestId, headers: sanitizeHeaders(connContext.request.headers) },
+            { requestId, headers: sanitizeHeaders(headers) },
             'New websocket connection'
           )
           let header: Optional<string>
@@ -210,6 +261,7 @@ function buildApolloSubscriptionServer(server: http.Server): SubscriptionServer 
         // Build context (Apollo Server v3 no longer triggers context building automatically
         // for subscriptions)
         try {
+          const headers = getHeaders({ connContext, connectionParams })
           const buildCtx = await buildContext({
             req: null,
             token,
@@ -220,7 +272,7 @@ function buildApolloSubscriptionServer(server: http.Server): SubscriptionServer 
               userId: buildCtx.userId,
               ws_protocol: webSocket.protocol,
               ws_url: webSocket.url,
-              headers: sanitizeHeaders(connContext.request.headers)
+              headers: sanitizeHeaders(headers)
             },
             'Websocket connected and subscription context built.'
           )
@@ -229,13 +281,19 @@ function buildApolloSubscriptionServer(server: http.Server): SubscriptionServer 
           throw new ForbiddenError('Subscription context build failed')
         }
       },
-      onDisconnect: (webSocket: WebSocket, connContext: ConnectionContext) => {
-        const logger = connContext.request.log || subscriptionLogger
+      onDisconnect: (
+        webSocket: WebSocket,
+        connContext: PossiblyMockedConnectionContext
+      ) => {
+        const reqCtx = getRequestContext()
+        const logger = connContext.request?.log || subscriptionLogger
+        const headers = getHeaders({ connContext })
         logger.debug(
           {
             ws_protocol: webSocket.protocol,
             ws_url: webSocket.url,
-            headers: sanitizeHeaders(connContext.request.headers)
+            headers: sanitizeHeaders(headers),
+            ...(reqCtx ? { req: { id: reqCtx.requestId } } : {})
           },
           'Websocket disconnected.'
         )
@@ -245,21 +303,30 @@ function buildApolloSubscriptionServer(server: http.Server): SubscriptionServer 
         // kinda hacky, but we're using this as an "subscription event emitted"
         // callback to clear subscription connection dataloaders to avoid stale cache
         const baseParams = params[1]
+
         metricSubscriptionTotalOperations.inc({
-          subscriptionType: baseParams.operationName
+          subscriptionType: baseParams.operationName // FIXME: operationName can be empty
         })
         const ctx = baseParams.context as GraphQLContext
 
+        const reqCtx = getRequestContext()
+        if (reqCtx) {
+          // Reset db metrics for each event
+          reqCtx.dbMetrics.totalCount = 0
+          reqCtx.dbMetrics.totalDuration = 0
+        }
+
         const logger = ctx.log || subscriptionLogger
-        logger.debug(
+        logger.info(
           {
             graphql_operation_name: baseParams.operationName,
             userId: baseParams.context.userId,
             graphql_query: baseParams.query.toString(),
             graphql_variables: redactSensitiveVariables(baseParams.variables),
-            graphql_operation_type: 'subscription'
+            graphql_operation_type: 'subscription',
+            ...(reqCtx ? { req: { id: reqCtx.requestId } } : {})
           },
-          'Subscription started for {graphqlOperationName}'
+          'Subscription event fired for {graphql_operation_name}'
         )
 
         baseParams.formatResponse = (val: SubscriptionResponse) => {
@@ -286,8 +353,8 @@ function buildApolloSubscriptionServer(server: http.Server): SubscriptionServer 
       },
       keepAlive: 30000 //milliseconds. Loadbalancers may close the connection after inactivity. e.g. nginx default is 60000ms.
     },
-    {
-      server,
+    wsServer || {
+      server: httpServer!,
       path: GRAPHQL_PATH
     }
   )
@@ -307,7 +374,7 @@ export async function buildApolloServer(options?: {
     schema,
     plugins: [
       statusCodePlugin,
-      loggingPlugin,
+      loggingPluginFactory({ register: prometheusClient.register }),
       ApolloServerPluginLandingPageLocalDefault({
         embed: true,
         includeCookies: true
@@ -360,16 +427,19 @@ export async function init() {
   const app = express()
   app.disable('x-powered-by')
 
-  Logging(app)
-
   // Moves things along automatically on restart.
   // Should perhaps be done manually?
-  await migrateDbToLatest(knex)()
+  await migrateDbToLatest({ region: 'main', db: knex })
 
   app.use(cookieParser())
   app.use(DetermineRequestIdMiddleware)
+  app.use(initiateRequestContextMiddleware)
   app.use(determineClientIpAddressMiddleware)
   app.use(LoggingExpressMiddleware)
+
+  if (asyncRequestContextEnabled()) {
+    startupLogger.info('Async request context tracking enabled 👀')
+  }
 
   if (process.env.COMPRESSION) {
     app.use(compression())
@@ -378,9 +448,9 @@ export async function init() {
   app.use(corsMiddleware())
   // there are some paths, that need the raw body
   app.use((req, res, next) => {
-    const rawPaths = ['/api/v1/billing/webhooks']
-    if (rawPaths.includes(req.path)) {
-      express.raw({ type: 'application/json' })(req, res, next)
+    const rawPaths = ['/api/v1/billing/webhooks', '/api/thirdparty/gendo/']
+    if (rawPaths.some((p) => req.path.startsWith(p))) {
+      express.raw({ type: 'application/json', limit: '100mb' })(req, res, next)
     } else {
       express.json({ limit: '100mb' })(req, res, next)
     }
@@ -392,8 +462,8 @@ export async function init() {
 
   // Log errors
   app.use(errorLoggingMiddleware)
+  app.use(createRateLimiterMiddleware()) // Rate limiting by IP address for all users
   app.use(authContextMiddleware)
-  app.use(createRateLimiterMiddleware())
   app.use(
     async (
       _req: express.Request,
@@ -412,6 +482,11 @@ export async function init() {
 
   // Initialize healthchecks
   const healthchecks = await healthchecksInitFactory()(app, true)
+
+  // Metrics relies on 'regions' table in the database, so much be initialized after migrations in the main database ("migrateDbToLatest({ region: 'main'," etc..)
+  // It also relies on the regional knex clients, which will initialize and run migrations in the respective regions.
+  // It must be initialized after the multiregion module is initialized in ModulesSetup.init
+  await Metrics(app)
 
   // Init HTTP server & subscription server
   const server = http.createServer(app)
@@ -451,14 +526,14 @@ export async function init() {
 }
 
 export async function shutdown(params: {
-  graphqlServer: ApolloServer<GraphQLContext>
+  graphqlServer: Optional<ApolloServer<GraphQLContext>>
 }): Promise<void> {
-  await params.graphqlServer.stop()
+  await params.graphqlServer?.stop()
   await ModulesSetup.shutdown()
 }
 
 const shouldUseFrontendProxy = () =>
-  process.env.NODE_ENV === 'development' && process.env.USE_FRONTEND_2 !== 'true'
+  process.env.NODE_ENV === 'development' && process.env.USE_FRONTEND_PROXY === 'true'
 
 async function createFrontendProxy() {
   const frontendHost = process.env.FRONTEND_HOST || '127.0.0.1'
@@ -496,7 +571,7 @@ export async function startHttp(params: {
     // app.use('/', frontendProxy)
     app.use(await createFrontendProxy())
 
-    startupLogger.info('✨ Proxying frontend-1 (dev mode):')
+    startupLogger.info('✨ Proxying frontend (dev mode):')
     startupLogger.info(`👉 main application: http://127.0.0.1:${port}/`)
   }
 

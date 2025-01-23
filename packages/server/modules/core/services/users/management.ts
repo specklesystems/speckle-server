@@ -1,4 +1,3 @@
-import { addUserUpdatedActivityFactory } from '@/modules/activitystream/services/userActivity'
 import {
   ChangeUserPassword,
   ChangeUserRole,
@@ -36,7 +35,6 @@ import {
   FindPrimaryEmailForUser,
   ValidateAndCreateUserEmail
 } from '@/modules/core/domain/userEmails/operations'
-import { UsersEvents, UsersEventsEmitter } from '@/modules/core/events/usersEmitter'
 import {
   DeleteStreamRecord,
   GetUserDeletableStreams
@@ -44,6 +42,8 @@ import {
 import { Logger } from '@/logging/logging'
 import { DeleteAllUserInvites } from '@/modules/serverinvites/domain/operations'
 import { GetServerInfo } from '@/modules/core/domain/server/operations'
+import { EventBusEmit } from '@/modules/shared/services/eventBus'
+import { UserEvents } from '@/modules/core/domain/users/events'
 
 export const MINIMUM_PASSWORD_LENGTH = 8
 
@@ -55,7 +55,7 @@ export const updateUserAndNotifyFactory =
   (deps: {
     getUser: GetUser
     updateUser: UpdateUser
-    addUserUpdatedActivity: ReturnType<typeof addUserUpdatedActivityFactory>
+    emitEvent: EventBusEmit
   }): UpdateUserAndNotify =>
   async (userId: string, update: UserUpdateInput) => {
     const existingUser = await deps.getUser(userId)
@@ -82,10 +82,13 @@ export const updateUserAndNotifyFactory =
       throw new UserUpdateError("Couldn't update user")
     }
 
-    await deps.addUserUpdatedActivity({
-      oldUser: existingUser,
-      update,
-      updaterId: userId
+    await deps.emitEvent({
+      eventName: UserEvents.Updated,
+      payload: {
+        oldUser: existingUser,
+        update,
+        updaterId: userId
+      }
     })
 
     return newUser
@@ -138,7 +141,7 @@ export const createUserFactory =
     countAdminUsers: CountAdminUsers
     storeUserAcl: StoreUserAcl
     validateAndCreateUserEmail: ValidateAndCreateUserEmail
-    usersEventsEmitter: UsersEventsEmitter
+    emitEvent: EventBusEmit
   }): CreateValidatedUser =>
   async (user, options = undefined) => {
     // ONLY ALLOW SKIPPING WHEN CREATING USERS FOR TESTS, IT'S UNSAFE OTHERWISE
@@ -223,7 +226,10 @@ export const createUserFactory =
       }
     })
 
-    await deps.usersEventsEmitter(UsersEvents.Created, { user: newUser, signUpCtx })
+    await deps.emitEvent({
+      eventName: UserEvents.Created,
+      payload: { user: newUser, signUpCtx }
+    })
 
     return newUser.id
   }
@@ -260,8 +266,9 @@ export const deleteUserFactory =
     getUserDeletableStreams: GetUserDeletableStreams
     deleteAllUserInvites: DeleteAllUserInvites
     deleteUserRecord: DeleteUserRecord
+    emitEvent: EventBusEmit
   }): DeleteUser =>
-  async (id) => {
+  async (id, invokerId) => {
     deps.logger.info('Deleting user ' + id)
     const isLastAdmin = await deps.isLastAdminUser(id)
     if (isLastAdmin) {
@@ -277,7 +284,15 @@ export const deleteUserFactory =
     // THIS REALLY SHOULD BE A REACTION TO THE USER DELETED EVENT EMITTED HER
     await deps.deleteAllUserInvites(id)
 
-    return await deps.deleteUserRecord(id)
+    const deleted = await deps.deleteUserRecord(id)
+    if (deleted) {
+      await deps.emitEvent({
+        eventName: UserEvents.Deleted,
+        payload: { targetUserId: id, invokerUserId: invokerId || id }
+      })
+    }
+
+    return deleted
   }
 
 export const changeUserRoleFactory =

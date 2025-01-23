@@ -26,6 +26,14 @@ export const useIsWorkspacesSsoEnabled = () => {
   return ref(FF_WORKSPACES_SSO_ENABLED)
 }
 
+export const useIsWorkspacesMultiRegionBlobStorageEnabled = () => {
+  const {
+    public: { FF_WORKSPACES_MULTI_REGION_ENABLED }
+  } = useRuntimeConfig()
+
+  return ref(FF_WORKSPACES_MULTI_REGION_ENABLED)
+}
+
 export const useIsMultipleEmailsEnabled = () => {
   const {
     public: { FF_MULTIPLE_EMAILS_MODULE_ENABLED }

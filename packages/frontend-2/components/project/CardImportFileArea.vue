@@ -2,7 +2,7 @@
   <FormFileUploadZone
     ref="uploadZone"
     v-slot="{ isDraggingFiles }"
-    :disabled="isUploading"
+    :disabled="isUploading || disabled"
     :size-limit="maxSizeInBytes"
     :accept="accept"
     class="flex items-center h-full"
@@ -54,6 +54,7 @@ import type { Nullable } from '@speckle/shared'
 const props = defineProps<{
   projectId: string
   modelName?: string
+  disabled?: boolean
 }>()
 
 const {

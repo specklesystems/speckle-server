@@ -43,6 +43,7 @@
         :show-label="false"
         :show-required="false"
         :preselected-function="validatedPreselectedFunction"
+        :workspace-id="workspaceId"
       />
       <AutomateAutomationCreateDialogFunctionParametersStep
         v-else-if="
@@ -60,12 +61,14 @@
           v-model:automation-name="automationName"
           :preselected-project="preselectedProject"
           :is-test-automation="isTestAutomation"
+          :workspace-id="workspaceId"
         />
         <AutomateAutomationCreateDialogSelectFunctionStep
           v-if="isTestAutomation"
           v-model:selected-function="selectedFunction"
           :preselected-function="validatedPreselectedFunction"
           :page-size="2"
+          :workspace-id="workspaceId"
         />
       </template>
     </div>
@@ -124,6 +127,7 @@ graphql(`
 `)
 
 const props = defineProps<{
+  workspaceId?: string
   preselectedFunction?: Optional<CreateAutomationSelectableFunction>
   preselectedProject?: Optional<FormSelectProjects_ProjectFragment>
 }>()
@@ -219,6 +223,7 @@ const buttons = computed((): LayoutDialogButton[] => {
             disabled: !selectedFunction.value
           },
           onClick: () => {
+            mixpanel.track('Automate Select Function')
             step.value++
           }
         }
@@ -236,6 +241,9 @@ const buttons = computed((): LayoutDialogButton[] => {
         {
           id: 'fnParamsNext',
           text: 'Next',
+          onClick: () => {
+            mixpanel.track('Automate Set Function Parameters ')
+          },
           props: {
             disabled: hasParameterErrors.value
           },
@@ -255,6 +263,9 @@ const buttons = computed((): LayoutDialogButton[] => {
         {
           id: 'detailsCreate',
           text: 'Create',
+          onClick: () => {
+            mixpanel.track('Automate Set Automation Details')
+          },
           submit: true,
           disabled: creationLoading.value
         }
@@ -428,7 +439,7 @@ const onDetailsSubmit = handleDetailsSubmit(async () => {
       return
     }
 
-    mixpanel.track('Automation created', {
+    mixpanel.track('Automate Automation Created', {
       automationId: aId,
       name,
       projectId: project.id,

@@ -1,19 +1,20 @@
-import knex from '@/db/knex'
 import { logger } from '@/logging/logging'
+import { CommonDbArgs, getTargettedDbClients } from '@/modules/cli/commands/db/helpers'
 import { CommandModule } from 'yargs'
 
-const command: CommandModule<unknown, { times: number }> = {
+const command: CommandModule<unknown, { times: number } & CommonDbArgs> = {
   command: 'down [times]',
   describe: 'Undo last migration',
-  builder(yargs) {
-    return yargs.positional('times', {
-      describe: 'Number of migrations to undo',
+  builder: {
+    times: {
       type: 'number',
-      default: 1
-    })
+      default: 1,
+      describe: 'Number of migrations to undo'
+    }
   },
   async handler(argv) {
-    const howManyTimes = argv.times || 1
+    const { times, regionKey } = argv
+    const howManyTimes = times || 1
 
     logger.info(
       howManyTimes === 1
@@ -21,8 +22,12 @@ const command: CommandModule<unknown, { times: number }> = {
         : `Undoing last ${howManyTimes} migrations...`
     )
 
-    for (let i = 0; i < howManyTimes; i++) {
-      await knex.migrate.down()
+    const dbs = await getTargettedDbClients({ regionKey })
+    for (const db of dbs) {
+      logger.info(`Migrating DB ${db.regionKey}...`)
+      for (let i = 0; i < howManyTimes; i++) {
+        await db.client.migrate.down()
+      }
     }
 
     logger.info('Completed!')

@@ -14,11 +14,7 @@ import { groupBy } from 'lodash'
 import { packageRoot } from '@/bootstrap'
 import path from 'path'
 import * as ejs from 'ejs'
-import {
-  EmailBody,
-  EmailInput,
-  renderEmail
-} from '@/modules/emails/services/emailRendering'
+import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { getUserNotificationPreferencesFactory } from '@/modules/notifications/services/notificationPreferences'
 import { getSavedUserNotificationPreferencesFactory } from '@/modules/notifications/repositories'
 import { db } from '@/db/knex'
@@ -34,6 +30,7 @@ import { getStreamFactory } from '@/modules/core/repositories/streams'
 import { getUserFactory } from '@/modules/core/repositories/users'
 import { GetServerInfo } from '@/modules/core/domain/server/operations'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
+import { EmailBody, EmailInput } from '@/modules/emails/domain/operations'
 
 const digestNotificationEmailHandlerFactory =
   (

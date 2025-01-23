@@ -46,7 +46,6 @@ import {
   markCommentUpdatedFactory,
   markCommentViewedFactory
 } from '@/modules/comments/repositories/comments'
-import { CommentsEmitter } from '@/modules/comments/events/emitter'
 import {
   addCommentCreatedActivityFactory,
   addReplyAddedActivityFactory
@@ -54,14 +53,14 @@ import {
 import { validateInputAttachmentsFactory } from '@/modules/comments/services/commentTextService'
 import { getBlobsFactory } from '@/modules/blobstorage/repositories'
 import { createCommitByBranchIdFactory } from '@/modules/core/services/commit/management'
-import { VersionsEmitter } from '@/modules/core/events/versionsEmitter'
 import { addCommitCreatedActivityFactory } from '@/modules/activitystream/services/commitActivity'
 import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import { publish } from '@/modules/shared/utils/subscriptions'
 import { getUserFactory } from '@/modules/core/repositories/users'
 import { createObjectFactory } from '@/modules/core/services/objects/management'
-import { getProjectDbClient } from '@/modules/multiregion/dbSelector'
-import { db } from '@/db/knex'
+import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
+import { db, mainDb } from '@/db/knex'
+import { getEventBus } from '@/modules/shared/services/eventBus'
 
 const command: CommandModule<
   unknown,
@@ -144,11 +143,11 @@ const command: CommandModule<
       insertComments,
       insertCommentLinks,
       markCommentViewed,
-      commentsEventsEmit: CommentsEmitter.emit,
+      emitEvent: getEventBus().emit,
       addCommentCreatedActivity: addCommentCreatedActivityFactory({
         getViewerResourcesFromLegacyIdentifiers,
         getViewerResourceItemsUngrouped,
-        saveActivity: saveActivityFactory({ db: projectDb }),
+        saveActivity: saveActivityFactory({ db: mainDb }),
         publish
       })
     })
@@ -159,13 +158,13 @@ const command: CommandModule<
       insertComments,
       insertCommentLinks,
       markCommentUpdated: markCommentUpdatedFactory({ db: projectDb }),
-      commentsEventsEmit: CommentsEmitter.emit,
+      emitEvent: getEventBus().emit,
       addReplyAddedActivity: addReplyAddedActivityFactory({
         getViewerResourcesForComment: getViewerResourcesForCommentFactory({
           getCommentsResources: getCommentsResourcesFactory({ db: projectDb }),
           getViewerResourcesFromLegacyIdentifiers
         }),
-        saveActivity: saveActivityFactory({ db: projectDb }),
+        saveActivity: saveActivityFactory({ db: mainDb }),
         publish
       })
     })
@@ -178,9 +177,9 @@ const command: CommandModule<
       insertBranchCommits: insertBranchCommitsFactory({ db: projectDb }),
       markCommitStreamUpdated,
       markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db: projectDb }),
-      versionsEventEmitter: VersionsEmitter.emit,
+      emitEvent: getEventBus().emit,
       addCommitCreatedActivity: addCommitCreatedActivityFactory({
-        saveActivity: saveActivityFactory({ db: projectDb }),
+        saveActivity: saveActivityFactory({ db: mainDb }),
         publish
       })
     })

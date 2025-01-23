@@ -1,6 +1,7 @@
-import type {
-  BillingInterval,
-  WorkspacePlans
+import {
+  type BillingInterval,
+  type WorkspacePlans,
+  PaidWorkspacePlans
 } from '~/lib/common/generated/gql/graphql'
 import type { WorkspaceRoles } from '@speckle/shared'
 
@@ -11,7 +12,7 @@ export enum PlanFeaturesList {
   PrivateAutomateFunctions = 'Private automate functions',
   DomainSecurity = 'Domain security',
   SSO = 'Single Sign-On (SSO)',
-  CustomDataRegion = 'Custom data region',
+  CustomDataRegion = 'Custom data residency',
   PrioritySupport = 'Priority support'
 }
 
@@ -22,3 +23,9 @@ export type PricingPlan = {
     [I in BillingInterval]: Record<WorkspaceRoles, number>
   }
 }
+
+// Check if the plan matches PaidWorkspacePlans
+export const isPaidPlan = (plan?: WorkspacePlans): boolean =>
+  plan
+    ? Object.values(PaidWorkspacePlans).includes(plan as unknown as PaidWorkspacePlans)
+    : false

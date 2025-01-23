@@ -11,76 +11,81 @@ const baseFeatures = [
 ]
 
 export const pricingPlansConfig: {
-  features: Record<PlanFeaturesList, { name: string; description: string }>
+  features: Record<
+    PlanFeaturesList,
+    { name: string; description: (price?: number) => string }
+  >
   plans: Record<
-    WorkspacePlans.Team | WorkspacePlans.Pro | WorkspacePlans.Business,
+    WorkspacePlans.Starter | WorkspacePlans.Plus | WorkspacePlans.Business,
     PricingPlan
   >
 } = {
   features: {
     [PlanFeaturesList.Workspaces]: {
       name: PlanFeaturesList.Workspaces,
-      description: ''
+      description: () => `A shared space for your team and projects`
     },
     [PlanFeaturesList.RoleManagement]: {
       name: PlanFeaturesList.RoleManagement,
-      description: ''
+      description: () => `Control individual members' access and edit rights`
     },
     [PlanFeaturesList.GuestUsers]: {
       name: PlanFeaturesList.GuestUsers,
-      description: ''
+      description: (price?: number) =>
+        `Give guests access to specific projects in the workspace at £${price}/month/guest`
     },
     [PlanFeaturesList.PrivateAutomateFunctions]: {
       name: PlanFeaturesList.PrivateAutomateFunctions,
-      description: ''
+      description: () =>
+        `Create and manage private automation functions securely within your workspace`
     },
     [PlanFeaturesList.DomainSecurity]: {
       name: PlanFeaturesList.DomainSecurity,
-      description: ''
+      description: () => `Require workspace members to use a verified company email`
     },
     [PlanFeaturesList.SSO]: {
       name: PlanFeaturesList.SSO,
-      description: ''
+      description: () => `Require workspace members to log in with your SSO provider`
     },
     [PlanFeaturesList.CustomDataRegion]: {
       name: PlanFeaturesList.CustomDataRegion,
-      description: ''
+      description: () => `Store the workspace data in a custom region`
     },
     [PlanFeaturesList.PrioritySupport]: {
       name: PlanFeaturesList.PrioritySupport,
-      description: ''
+      description: () => `Personal and fast support`
     }
   },
   plans: {
-    [WorkspacePlans.Team]: {
-      name: WorkspacePlans.Team,
+    [WorkspacePlans.Starter]: {
+      name: WorkspacePlans.Starter,
       features: [...baseFeatures],
       cost: {
         [BillingInterval.Monthly]: {
+          [Roles.Workspace.Guest]: 15,
+          [Roles.Workspace.Member]: 15,
+          [Roles.Workspace.Admin]: 15
+        },
+        [BillingInterval.Yearly]: {
           [Roles.Workspace.Guest]: 12,
           [Roles.Workspace.Member]: 12,
           [Roles.Workspace.Admin]: 12
-        },
-        [BillingInterval.Yearly]: {
-          [Roles.Workspace.Guest]: 10,
-          [Roles.Workspace.Member]: 10,
-          [Roles.Workspace.Admin]: 10
         }
       }
     },
-    [WorkspacePlans.Pro]: {
-      name: WorkspacePlans.Pro,
+    [WorkspacePlans.Plus]: {
+      name: WorkspacePlans.Plus,
       features: [...baseFeatures, PlanFeaturesList.SSO],
       cost: {
         [BillingInterval.Monthly]: {
-          [Roles.Workspace.Guest]: 40,
-          [Roles.Workspace.Member]: 40,
-          [Roles.Workspace.Admin]: 40
+          [Roles.Workspace.Guest]: 15,
+          [Roles.Workspace.Member]: 50,
+          [Roles.Workspace.Admin]: 50
         },
         [BillingInterval.Yearly]: {
-          [Roles.Workspace.Guest]: 36,
-          [Roles.Workspace.Member]: 36,
-          [Roles.Workspace.Admin]: 36
+          [Roles.Workspace.Guest]: 12,
+          [Roles.Workspace.Member]: 40,
+          [Roles.Workspace.Admin]: 40
         }
       }
     },
@@ -94,14 +99,14 @@ export const pricingPlansConfig: {
       ],
       cost: {
         [BillingInterval.Monthly]: {
-          [Roles.Workspace.Guest]: 79,
-          [Roles.Workspace.Member]: 79,
-          [Roles.Workspace.Admin]: 79
+          [Roles.Workspace.Guest]: 15,
+          [Roles.Workspace.Member]: 75,
+          [Roles.Workspace.Admin]: 75
         },
         [BillingInterval.Yearly]: {
-          [Roles.Workspace.Guest]: 63,
-          [Roles.Workspace.Member]: 63,
-          [Roles.Workspace.Admin]: 63
+          [Roles.Workspace.Guest]: 12,
+          [Roles.Workspace.Member]: 60,
+          [Roles.Workspace.Admin]: 60
         }
       }
     }

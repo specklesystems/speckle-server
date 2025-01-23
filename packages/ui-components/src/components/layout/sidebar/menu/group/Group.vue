@@ -1,17 +1,18 @@
 <template>
-  <div class="flex flex-col">
+  <div class="flex flex-col group">
     <div
       v-if="title"
       class="h-8 flex items-center justify-between select-none rounded-md"
-      :class="[collapsible && 'hover:bg-highlight-1']"
+      :class="[collapsible && !noHover && 'hover:bg-highlight-1']"
     >
       <button
         v-if="collapsible"
-        class="group flex items-center w-full rounded-md py-0.5 px-2"
+        class="group flex items-center w-full rounded-md gap-x-1"
+        :class="noHover ? '' : 'py-0.5 px-2'"
         @click="isCollapsed = !isCollapsed"
       >
         <ArrowFilled
-          :class="[isCollapsed ? '-rotate-90' : '']"
+          :class="[isCollapsed ? '-rotate-90' : '', noHover ? '-ml-1' : '']"
           class="text-foreground-2 shrink-0"
         />
         <div
@@ -20,7 +21,7 @@
         >
           <slot name="title-icon"></slot>
         </div>
-        <div class="flex flex-1 items-center justify-between truncate">
+        <div class="flex flex-1 items-center truncate justify-between">
           <h6 class="font-semibold text-foreground-2 truncate text-body-2xs pr-2">
             {{ title }}
           </h6>
@@ -43,12 +44,14 @@
         </div>
       </div>
       <button
-        v-if="plusClick"
-        v-tippy="plusText ? plusText : undefined"
-        class="hidden group-hover:flex p-[3px] shrink-0 hover:bg-primary-muted rounded mr-2 text-foreground-2"
-        @click="plusClick"
+        v-if="iconClick"
+        v-tippy="iconText ? iconText : undefined"
+        class="hidden group-hover:flex p-1 shrink-0 hover:bg-primary-muted rounded text-foreground-2"
+        :class="noHover ? '' : 'mr-2'"
+        @click="iconClick"
       >
-        <Plus class="h-4 w-4" />
+        <Edit v-if="icon === 'edit'" class="h-4 w-4" />
+        <Plus v-else class="h-4 w-4" />
       </button>
     </div>
 
@@ -59,8 +62,9 @@
 </template>
 
 <script setup lang="ts">
-import ArrowFilled from '~~/src/components/layout/sidebar/menu/group/ArrowFilled.vue'
-import Plus from '~~/src/components/layout/sidebar/menu/group/Plus.vue'
+import Plus from '~~/src/components/global/icon/Plus.vue'
+import Edit from '~~/src/components/global/icon/Edit.vue'
+import ArrowFilled from '~~/src/components/global/icon/ArrowFilled.vue'
 import CommonBadge from '~~/src/components/common/Badge.vue'
 
 defineProps<{
@@ -68,8 +72,10 @@ defineProps<{
   title?: string
   collapsible?: boolean
   collapsed?: boolean
-  plusText?: string
-  plusClick?: () => void
+  icon?: 'add' | 'edit'
+  iconText?: string
+  iconClick?: () => void
+  noHover?: boolean
 }>()
 
 const isCollapsed = defineModel<boolean>('collapsed')

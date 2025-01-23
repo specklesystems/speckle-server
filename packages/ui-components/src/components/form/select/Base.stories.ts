@@ -99,7 +99,7 @@ export const Default: StoryType = {
       return { args }
     },
     template: `
-      <div class="flex justify-center h-72">
+      <div class="flex justify-center h-72 w-full">
         <FormSelectBase v-bind="args" class="max-w-xs w-full" @update:modelValue="onModelUpdate"/>
       </div>
     `,
@@ -144,6 +144,15 @@ export const WithLabelAndHelp: StoryType = {
     ...Default.args,
     showLabel: true,
     help: 'Some help text'
+  }
+}
+
+export const WithTooltip: StoryType = {
+  ...Default,
+  args: {
+    ...Default.args,
+    showLabel: true,
+    tooltipText: 'Hi, im a tooltip'
   }
 }
 
@@ -352,6 +361,33 @@ export const WithRequired: StoryType = {
   args: {
     ...Default.args,
     showRequired: true
+  }
+}
+
+export const WithLabelToTheLeft: StoryType = {
+  ...Default,
+  render: (args, ctx) => ({
+    components: { FormSelectBase },
+    setup: () => {
+      return { args }
+    },
+    template: `
+      <div class="flex h-72 w-full">
+        <FormSelectBase v-bind="args" class="w-full" @update:modelValue="onModelUpdate"/>
+      </div>
+    `,
+    methods: {
+      onModelUpdate(val: FakeItemType) {
+        args['update:modelValue'](val)
+        ctx.updateArgs({ ...args, modelValue: val })
+      }
+    }
+  }),
+  args: {
+    ...Default.args,
+    labelPosition: 'left',
+    help: 'Some help text',
+    showLabel: true
   }
 }
 

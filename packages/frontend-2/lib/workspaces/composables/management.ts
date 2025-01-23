@@ -1,8 +1,9 @@
 import type { RouteLocationNormalized } from 'vue-router'
 import { waitForever, type MaybeAsync, type Optional } from '@speckle/shared'
-import { useApolloClient, useMutation } from '@vue/apollo-composable'
+import { useApolloClient, useMutation, useSubscription } from '@vue/apollo-composable'
 import { graphql } from '~/lib/common/generated/gql'
 import type {
+  OnWorkspaceUpdatedSubscription,
   UseWorkspaceInviteManager_PendingWorkspaceCollaboratorFragment,
   Workspace,
   WorkspaceCreateInput,
@@ -30,8 +31,11 @@ import {
   workspaceUpdateRoleMutation
 } from '~/lib/workspaces/graphql/mutations'
 import { isFunction } from 'lodash-es'
-import type { GraphQLError } from 'graphql'
-import { useClipboard } from '~~/composables/browser'
+import type { GraphQLError, GraphQLFormattedError } from 'graphql'
+import { onWorkspaceUpdatedSubscription } from '~/lib/workspaces/graphql/subscriptions'
+import { useLock } from '~/lib/common/composables/singleton'
+import type { Get } from 'type-fest'
+import type { ApolloCache } from '@apollo/client/core'
 
 export const useInviteUserToWorkspace = () => {
   const { activeUser } = useActiveUser()
@@ -39,7 +43,13 @@ export const useInviteUserToWorkspace = () => {
   const { mutate } = useMutation(inviteToWorkspaceMutation)
   const isWorkspacesEnabled = useIsWorkspacesEnabled()
 
-  return async (workspaceId: string, inputs: WorkspaceInviteCreateInput[]) => {
+  return async (args: {
+    workspaceId: string
+    inputs: WorkspaceInviteCreateInput[]
+    hideNotifications?: boolean
+  }) => {
+    const { workspaceId, inputs, hideNotifications } = args
+
     const userId = activeUser.value?.id
     if (!userId) return
     if (!isWorkspacesEnabled.value) return
@@ -81,7 +91,7 @@ export const useInviteUserToWorkspace = () => {
         }
       ).catch(convertThrowIntoFetchResult)) || {}
 
-    if (!data?.workspaceMutations.invites.batchCreate.id) {
+    if (!data?.workspaceMutations.invites.batchCreate.id && !hideNotifications) {
       const err = getFirstErrorMessage(errors)
       triggerNotification({
         type: ToastNotificationType.Danger,
@@ -89,10 +99,12 @@ export const useInviteUserToWorkspace = () => {
         description: err
       })
     } else {
-      triggerNotification({
-        type: ToastNotificationType.Success,
-        title: 'Invite successfully sent'
-      })
+      if (!hideNotifications) {
+        triggerNotification({
+          type: ToastNotificationType.Success,
+          title: 'Invite successfully sent'
+        })
+      }
     }
 
     return data?.workspaceMutations.invites.batchCreate
@@ -119,7 +131,10 @@ export const useProcessWorkspaceInvite = () => {
       callback: () => MaybeAsync<void>
       preventErrorToasts?:
         | boolean
-        | ((errors: GraphQLError[], errMsg: string) => boolean)
+        | ((
+            errors: GraphQLError[] | GraphQLFormattedError[],
+            errMsg: string
+          ) => boolean)
     }>
   ) => {
     if (!isWorkspacesEnabled.value) return
@@ -241,7 +256,9 @@ export const useWorkspaceInviteManager = <
      */
     preventRedirect: boolean
     route: RouteLocationNormalized
-    preventErrorToasts: boolean | ((errors: GraphQLError[], errMsg: string) => boolean)
+    preventErrorToasts:
+      | boolean
+      | ((errors: GraphQLError[] | GraphQLFormattedError[], errMsg: string) => boolean)
   }>
 ) => {
   const isWorkspacesEnabled = useIsWorkspacesEnabled()
@@ -340,8 +357,6 @@ export function useCreateWorkspace() {
   const { triggerNotification } = useGlobalToast()
   const { activeUser } = useActiveUser()
   const router = useRouter()
-  const mixpanel = useMixpanel()
-
   return async (
     input: WorkspaceCreateInput,
     options?: Partial<{
@@ -350,12 +365,7 @@ export function useCreateWorkspace() {
        * Defaults to false.
        */
       navigateOnSuccess: boolean
-    }>,
-    eventProperties?: Partial<{
-      /**
-       * Used for sending the Mixpanel event
-       */
-      source: string
+      hideNotifications: boolean
     }>
   ) => {
     const userId = activeUser.value?.id
@@ -389,17 +399,12 @@ export function useCreateWorkspace() {
       .catch(convertThrowIntoFetchResult)
 
     if (res.data?.workspaceMutations.create.id) {
-      mixpanel.track('Workspace Created', {
-        source: eventProperties?.source,
-        fields: Object.keys(input) as Array<keyof WorkspaceCreateInput>,
-        // eslint-disable-next-line camelcase
-        workspace_id: res.data?.workspaceMutations.create.id
-      })
-
-      triggerNotification({
-        type: ToastNotificationType.Success,
-        title: 'Workspace successfully created'
-      })
+      if (!options?.hideNotifications) {
+        triggerNotification({
+          type: ToastNotificationType.Success,
+          title: 'Workspace successfully created'
+        })
+      }
 
       if (options?.navigateOnSuccess === true) {
         router.push(workspaceRoute(res.data?.workspaceMutations.create.slug))
@@ -484,14 +489,11 @@ export const useWorkspaceUpdateRole = () => {
 
 export const copyWorkspaceLink = async (slug: string) => {
   const { copy } = useClipboard()
-  const { triggerNotification } = useGlobalToast()
 
   const url = new URL(workspaceRoute(slug), window.location.toString()).toString()
 
-  await copy(url)
-  triggerNotification({
-    type: ToastNotificationType.Success,
-    title: 'Copied workspace link to clipboard'
+  await copy(url, {
+    successMessage: 'Copied workspace link to clipboard'
   })
 }
 
@@ -520,5 +522,47 @@ export const useSetDefaultWorkspaceRegion = () => {
     }
 
     return res?.data?.workspaceMutations.setDefaultRegion
+  }
+}
+
+export const useOnWorkspaceUpdated = (params: {
+  workspaceSlug: Ref<string>
+  /**
+   * Optionally do extra work on each message, besides the main cache update
+   */
+  handler?: (
+    data: NonNullable<Get<OnWorkspaceUpdatedSubscription, 'workspaceUpdated'>>,
+    cache: ApolloCache<unknown>
+  ) => void
+}) => {
+  const { workspaceSlug, handler } = params
+
+  const apollo = useApolloClient().client
+  const { hasLock } = useLock(
+    computed(() => `useOnWorkspaceUpdated-${unref(workspaceSlug.value)}`)
+  )
+  const enabled = computed(() => !!(hasLock.value || handler))
+  const { onResult } = useSubscription(
+    onWorkspaceUpdatedSubscription,
+    () => ({
+      workspaceSlug: params.workspaceSlug.value
+    }),
+    () => ({
+      enabled: enabled.value,
+      errorPolicy: 'all'
+    })
+  )
+
+  // Main, locked cache update
+  onResult((result) => {
+    if (!result.data?.workspaceUpdated || !hasLock.value) return
+  })
+
+  // Optional handler
+  if (handler) {
+    onResult((result) => {
+      if (!result.data?.workspaceUpdated) return
+      handler(result.data.workspaceUpdated, apollo.cache)
+    })
   }
 }

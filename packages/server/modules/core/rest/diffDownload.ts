@@ -8,7 +8,7 @@ import { db } from '@/db/knex'
 import { validatePermissionsReadStreamFactory } from '@/modules/core/services/streams/auth'
 import { getStreamFactory } from '@/modules/core/repositories/streams'
 import { authorizeResolver, validateScopes } from '@/modules/shared'
-import { getProjectDbClient } from '@/modules/multiregion/dbSelector'
+import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { UserInputError } from '@/modules/core/errors/userinput'
 import { ensureError } from '@speckle/shared'
 
@@ -36,13 +36,13 @@ export default (app: Application) => {
 
     const projectDb = await getProjectDbClient({ projectId: req.params.streamId })
     const getObjectsStream = getObjectsStreamFactory({ db: projectDb })
-    let childrenList: string[] = []
+    let childrenList: string[]
     try {
       childrenList = JSON.parse(req.body.objects)
     } catch (err) {
       throw new UserInputError(
-        'Error parsing the objects parameter. The objects parameter value should be a string. The contents of the string is expected to be a stringified JSON array of object ids.',
-        ensureError(err, 'Unknown JSON parse error.')
+        'Invalid body. Please provide a JSON object containing the property "objects" of type string. The value must be a JSON string representation of an array of object IDs.',
+        ensureError(err, 'Unknown JSON parsing issue')
       )
     }
     const simpleText = req.headers.accept === 'text/plain'

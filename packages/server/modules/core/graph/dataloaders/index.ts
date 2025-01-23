@@ -11,7 +11,8 @@ import {
   getOwnedFavoritesCountByUserIdsFactory,
   getStreamRolesFactory,
   getUserStreamCountsFactory,
-  getStreamsSourceAppsFactory
+  getStreamsSourceAppsFactory,
+  getStreamsCollaboratorsFactory
 } from '@/modules/core/repositories/streams'
 import { keyBy } from 'lodash'
 import {
@@ -65,7 +66,6 @@ import {
   getAutomationRevisionsFactory,
   getAutomationRunsTriggersFactory,
   getAutomationsFactory,
-  getFunctionAutomationCountsFactory,
   getLatestAutomationRevisionsFactory,
   getRevisionsFunctionsFactory,
   getRevisionsTriggerDefinitionsFactory
@@ -84,7 +84,10 @@ import {
 } from '@/modules/automate/errors/executionEngine'
 import { queryInvitesFactory } from '@/modules/serverinvites/repositories/serverInvites'
 import { getAppScopesFactory } from '@/modules/auth/repositories'
-import { StreamWithCommitId } from '@/modules/core/domain/streams/types'
+import {
+  LimitedUserWithStreamRole,
+  StreamWithCommitId
+} from '@/modules/core/domain/streams/types'
 import {
   getUsersFactory,
   UserWithOptionalRole
@@ -110,7 +113,6 @@ const dataLoadersDefinition = defineRequestDataloaders(
     const getLatestAutomationRevisions = getLatestAutomationRevisionsFactory({ db })
     const getRevisionsTriggerDefinitions = getRevisionsTriggerDefinitionsFactory({ db })
     const getRevisionsFunctions = getRevisionsFunctionsFactory({ db })
-    const getFunctionAutomationCounts = getFunctionAutomationCountsFactory({ db })
     const getStreamCommentCounts = getStreamCommentCountsFactory({ db })
     const getAutomationRunsTriggers = getAutomationRunsTriggersFactory({ db })
     const getCommentsResources = getCommentsResourcesFactory({ db })
@@ -141,6 +143,7 @@ const dataLoadersDefinition = defineRequestDataloaders(
     const getUserStreamCounts = getUserStreamCountsFactory({ db })
     const getStreamsSourceApps = getStreamsSourceAppsFactory({ db })
     const getUsers = getUsersFactory({ db })
+    const getStreamsCollaborators = getStreamsCollaboratorsFactory({ db })
 
     return {
       streams: {
@@ -200,6 +203,17 @@ const dataLoadersDefinition = defineRequestDataloaders(
             }
           }
         })(),
+        /**
+         * Get all collaborators for a stream
+         */
+        getCollaborators: createLoader<string, Array<LimitedUserWithStreamRole>>(
+          async (streamIds) => {
+            const results = await getStreamsCollaborators({
+              streamIds: streamIds.slice()
+            })
+            return streamIds.map((i) => results[i] || [])
+          }
+        ),
 
         /**
          * Get favorite metadata for a specific stream and user
@@ -547,14 +561,6 @@ const dataLoadersDefinition = defineRequestDataloaders(
         })
       },
       automations: {
-        getFunctionAutomationCount: createLoader<string, number>(
-          async (functionIds) => {
-            const results = await getFunctionAutomationCounts({
-              functionIds: functionIds.slice()
-            })
-            return functionIds.map((i) => results[i] || 0)
-          }
-        ),
         getAutomation: createLoader<string, Nullable<AutomationRecord>>(async (ids) => {
           const results = keyBy(
             await getAutomations({ automationIds: ids.slice() }),

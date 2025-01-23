@@ -41,18 +41,22 @@ featureFlags:
   gendoAIModuleEnabled: false
   ## @param featureFlags.noClosureWrites Toggles whether to stop writing to the closure table
   noClosureWrites: false
-  ## @param featureFlags.workspaceModuleEnabled High level flag fully toggles the workspaces module
-  workspaceModuleEnabled: false
-  ## @param featureFlags.workspaceSsoEnabled High level flag fully toggles the workspaces dynamic sso
-  workspaceSsoEnabled: false
+  ## @param featureFlags.workspacesModuleEnabled High level flag fully toggles the workspaces module
+  workspacesModuleEnabled: false
+  ## @param featureFlags.workspacesSSOEnabled High level flag fully toggles the workspaces dynamic sso
+  workspacesSSOEnabled: false
   ## @param featureFlags.multipleEmailsModuleEnabled High level flag fully toggles multiple emails
   multipleEmailsModuleEnabled: false
   ## @param featureFlags.gatekeeperModuleEnabled High level flag that enables the gatekeeper module
   gatekeeperModuleEnabled: false
   ## @param featureFlags.billingIntegrationEnabled High level flag that enables the billing integration
   billingIntegrationEnabled: false
-  ## @param featureFlags.workspacesMultiRegionEnabled Toggles whether multi-region is available within workspaces. workspaceModuleEnabled must also be enabled.
+  ## @param featureFlags.workspacesMultiRegionEnabled Toggles whether multi-region is available within workspaces. workspacesModuleEnabled must also be enabled.
   workspacesMultiRegionEnabled: false
+  ## @param featureFlags.fileImportIFCDotNetEnabled Toggles whether the experimental .Net IFC importer is used for importing IFC files.
+  fileImportIFCDotNetEnabled: false
+  ## @param featureFlags.forceEmailVerification Forces email verification for all users
+  forceEmailVerification: false
 
 analytics:
   ## @param analytics.enabled Enable or disable analytics
@@ -186,6 +190,22 @@ db:
   ## ref: https://www.postgresql.org/docs/current/libpq-ssl.html#LIBPQ-SSL-PROTECTION
   ##
   PGSSLMODE: require
+  ## @param db.connectionAcquisitionTimeoutMillis The maximum time in milliseconds to wait for a connection to be acquired from the connection pool.
+  ##
+  connectionAcquisitionTimeoutMillis: 15000
+  ## @param db.connectionCreationTimeoutMillis The maximum time in milliseconds to wait for a new connection to be created in the connection pool. Should be less than the acquisition timeout, as a new connection may need to be created then acquired.
+  ##
+  connectionCreationTimeoutMillis: 5000
+  ## @param db.knexAsyncStackTracesEnabled If enabled, will provide better stack traces for errors arising out of knex operations
+  ##
+  knexAsyncStackTracesEnabled: false
+  ## @param db.knexImprovedTelemetryStackTraces If enabled, will provide better stack traces for knex telemetry
+  ##
+  knexImprovedTelemetryStackTraces: false
+
+  ## @param db.databaseName (Optional) The name of the Postgres database to which Speckle will connect. Only required for the Database Monitoring utility when the connection string is to a database connection pool and multi-region is disabled, otherwise this value is ignored.
+  databaseName: ''
+
   connectionString:
     ## @param db.connectionString.secretName Required. A secret containing the full connection string to the Postgres database (e.g. in format of `protocol://username:password@host:port/database`) stored within the Kubernetes cluster as an opaque Kubernetes Secret. Ref: https://kubernetes.io/docs/concepts/configuration/secret/#opaque-secrets
     ##
@@ -463,20 +483,20 @@ server:
   max_project_models_per_page: 500
   ## @param server.speckleAutomateUrl The url of the Speckle Automate instance
   speckleAutomateUrl: 'https://automate.speckle.systems'
+  ## @param server.asyncRequestContextEnabled If enabled, the server will use the async request context for improved log msg correlation
+  asyncRequestContextEnabled: false
 
   gendoAI:
     ## @param server.gendoAI.apiUrl The url of the Gendo AI application, including protocol.
     apiUrl: 'https://api.gendo.ai/external/generate'
+
+    ## @param server.gendoAI.creditLimit The number of Gendo AI credit a user gets every month.
+    creditLimit: 40
     key:
       ## @param server.gendoAI.key.secretName The name of the Kubernetes Secret containing the Gendo AI key. If left blank, will default to the `secretName` parameter.
       secretName: ''
       ## @param server.gendoAI.key.secretKey The key within the Kubernetes Secret holding the Gendo AI key as its value.
       secretKey: 'gendoai_key'
-    keyResponse:
-      ## @param server.gendoAI.keyResponse.secretName The name of the Kubernetes Secret containing the Gendo AI key response. If left blank, will default to the `secretName` parameter.
-      secretName: ''
-      ## @param server.gendoAI.keyResponse.secretKey The key within the Kubernetes Secret holding the Gendo AI key response as its value.
-      secretKey: 'gendoai_key_response'
     ratelimiting:
       ## @param server.gendoAI.ratelimiting.renderRequest The number of render requests allowed per period
       renderRequest: 1
@@ -736,6 +756,8 @@ server:
     ##
     memory: 3Gi
   ratelimiting:
+    ## @param server.ratelimiting.enabled If enabled, rate limiting will be applied to the Speckle server.
+    enabled: true
     ## @param server.ratelimiting.all_requests The maximum number of requests that can be made to the Speckle server in a moving one second window.
     all_requests: 500
     ## @param server.ratelimiting.burst_all_requests If the regular limit is exceeded, the limit is increased to the burst limit. This is the maximum number of requests that can be made to the Speckle server in a moving one minute window.
@@ -1050,6 +1072,11 @@ frontend_2:
   ## @param frontend_2.logPretty If enabled, will output logs in a human-readable format. Otherwise, logs will be output in JSON format.
   ##
   logPretty: false
+  inspect:
+    ## @param frontend_2.inspect.enabled If enabled, indicates that the Speckle FE2 should be deployed with the nodejs inspect feature enabled
+    enabled: false
+    ## @param frontend_2.inspect.port The port on which the nodejs inspect feature should be exposed
+    port: '7000'
   ## @param frontend_2.enabled Feature flag to enable running the new web application frontend.
   ##
   enabled: true
@@ -1134,6 +1161,10 @@ preview_service:
     ## @param preview_service.monitoring.metricsPort The port on which the metrics server will be exposed.
     metricsPort: '9094'
 
+  ## @param preview_service.postgresMaxConnections The maximum number of connections that the Preview Service postgres client will make to the Postgres database.
+  ##
+  postgresMaxConnections: 2
+
   puppeteer:
     ## @param preview_service.puppeteer.userDataDirectory The path to the user data directory. If not set, defaults to '/tmp/puppeteer'. This is mounted in the deployment as a volume with read-write access.
     userDataDirectory: ''
@@ -1209,6 +1240,9 @@ webhook_service:
   ## @param webhook_service.image The Docker image to be used for the Speckle Webhook Service component. If blank, defaults to speckle/speckle-webhook-service:{{ .Values.docker_image_tag }}. If provided, this value should be the full path including tag. The docker_image_tag value will be ignored.
   ##
   image: ''
+  ## @param webhook_service.postgresMaxConnections The maximum number of connections that the Webhook Service postgres client will make to the Postgres database.
+  ##
+  postgresMaxConnections: 1
 
   requests:
     ## @param webhook_service.requests.cpu The CPU that should be available on a node when scheduling this pod.
@@ -1280,6 +1314,10 @@ fileimport_service:
   ## @param fileimport_service.image The Docker image to be used for the Speckle FileImport Service component. If blank, defaults to speckle/speckle-fileimport-service:{{ .Values.docker_image_tag }}. If provided, this value should be the full path including tag. The docker_image_tag value will be ignored.
   ##
   image: ''
+
+  ## @param fileimport_service.postgresMaxConnections The maximum number of connections that the File Import Service postgres client will make to the Postgres database.
+  ##
+  postgresMaxConnections: 1
 
   requests:
     ## @param fileimport_service.requests.cpu The CPU that should be available on a node when scheduling this pod.
@@ -1353,6 +1391,17 @@ monitoring:
   ## @param monitoring.logPretty If enabled, will output logs in a human-readable format. Otherwise, logs will be output in JSON format.
   ##
   logPretty: false
+
+  ## @param monitoring.port The port on which the Monitoring Service will run.
+  ##
+  port: 9092
+
+  ## @param monitoring.maximumPostgresConnections The maximum number of connections that the Monitoring Service will allow to the Postgres database. A connection pool exists to manage access to the connections.
+  ##
+  maximumPostgresConnections: 2
+
+  ## @param monitoring.metricsCollectionPeriodSeconds The period in seconds at which the Monitoring Service will query the Postgres database for metrics. Unlike typical Prometheus metrics, the data from the database is not collected in real-time when /metrics is accessed, and is instead done out-of-band on a timed interval.
+  metricsCollectionPeriodSeconds: 120
 
   ## @param monitoring.image The Docker image to be used for the Speckle Monitoring component. If blank, defaults to speckle/speckle-monitoring-deployment:{{ .Values.docker_image_tag }}. If provided, this value should be the full path including tag. The docker_image_tag value will be ignored.
   ##

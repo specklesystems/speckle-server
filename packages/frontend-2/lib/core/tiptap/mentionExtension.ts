@@ -10,27 +10,32 @@ import type { Get } from 'type-fest'
 import tippy from 'tippy.js'
 import type { Instance, GetReferenceClientRect } from 'tippy.js'
 import type { Optional } from '@speckle/shared'
+import type { EditorInstanceStateStorage } from '~/lib/core/tiptap/editorStateExtension'
 
 export type SuggestionOptionsItem = NonNullable<
-  Get<MentionsUserSearchQuery, 'userSearch.items[0]'>
+  Get<MentionsUserSearchQuery, 'users.items[0]'>
 >
 
 export type MentionData = { label: string; id: string }
 
 const suggestionOptions: Omit<SuggestionOptions<SuggestionOptionsItem>, 'editor'> = {
-  items: async ({ query }) => {
-    if (query.length < 3) return []
+  async items({ query, editor }) {
+    if (query.length < 1) return []
+
+    const state = editor.storage.editorInstanceState as EditorInstanceStateStorage
+    const projectId = state.state.projectId
 
     const { $apollo } = useNuxtApp()
     const apolloClient = ($apollo as { default: ApolloClient<unknown> }).default
     const { data } = await apolloClient.query({
       query: mentionsUserSearchQuery,
       variables: {
-        query
+        query,
+        projectId
       }
     })
 
-    return data.userSearch?.items || []
+    return data.users?.items || []
   },
   render: () => {
     let component: VueRenderer
@@ -50,7 +55,7 @@ const suggestionOptions: Omit<SuggestionOptions<SuggestionOptionsItem>, 'editor'
         popup = tippy('body', {
           getReferenceClientRect: props.clientRect as null | GetReferenceClientRect,
           appendTo: () => document.body,
-          content: component.element,
+          content: component.element!,
           showOnCreate: true,
           interactive: true,
           trigger: 'manual',
@@ -89,7 +94,7 @@ const suggestionOptions: Omit<SuggestionOptions<SuggestionOptionsItem>, 'editor'
       onExit() {
         popup[0].destroy()
         component.destroy()
-        component.element.remove()
+        component.element?.remove()
       }
     }
   }

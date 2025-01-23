@@ -178,6 +178,11 @@ export const getBatchedBranchCommitsFactory =
         ...BranchCommits.cols,
         StreamCommits.col.streamId
       ])
+      .innerJoin(
+        StreamCommits.name,
+        StreamCommits.col.commitId,
+        BranchCommits.col.commitId
+      )
       .whereIn(BranchCommits.col.branchId, branchIds)
       .orderBy(BranchCommits.col.branchId)
 

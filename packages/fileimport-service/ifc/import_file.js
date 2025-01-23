@@ -1,8 +1,6 @@
 const fs = require('fs')
 const { logger: parentLogger } = require('../observability/logging')
 
-const TMP_RESULTS_PATH = '/tmp/import_result.json'
-
 const { parseAndCreateCommitFactory } = require('./index')
 const Observability = require('@speckle/shared/dist/commonjs/observability/index.js')
 const getDbClients = require('../knex')
@@ -12,6 +10,7 @@ async function main() {
 
   const [
     filePath,
+    tmpResultsPath,
     userId,
     streamId,
     branchName,
@@ -21,11 +20,11 @@ async function main() {
     regionName
   ] = cmdArgs
   const logger = Observability.extendLoggerComponent(
-    parentLogger.child({ streamId, branchName, userId, fileId, filePath }),
+    parentLogger.child({ streamId, branchName, userId, fileId, branchId, filePath }),
     'ifc'
   )
 
-  logger.info('ARGV: ', filePath, userId, streamId, branchName, branchId, commitMessage)
+  logger.info({ commitMessage }, 'IFC parser started.')
 
   const data = fs.readFileSync(filePath)
 
@@ -61,7 +60,7 @@ async function main() {
     }
   }
 
-  fs.writeFileSync(TMP_RESULTS_PATH, JSON.stringify(output))
+  fs.writeFileSync(tmpResultsPath, JSON.stringify(output))
 
   process.exit(0)
 }

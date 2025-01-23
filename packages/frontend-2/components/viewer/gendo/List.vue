@@ -1,11 +1,16 @@
 <template>
-  <div class="space-y-4 mt-4">
+  <div
+    v-if="renders.length"
+    class="flex flex-col gap-y-2 max-h-[calc(100dvh-22rem)] overflow-y-auto overflow-x-hidden simple-scrollbar mb-3"
+  >
     <ViewerGendoItem
       v-for="render in renders"
       :key="render?.id"
       :render-request="render"
+      @reuse-prompt="$emit('reuse-prompt', $event)"
     />
   </div>
+  <div v-else />
 </template>
 <script setup lang="ts">
 import { useQuery, useSubscription } from '@vue/apollo-composable'
@@ -15,6 +20,11 @@ import {
   onGendoAiRenderCreated
 } from '~/lib/gendo/graphql/queriesAndMutations'
 import { useInjectedViewerState } from '~/lib/viewer/composables/setup'
+
+defineEmits<{
+  (e: 'reuse-prompt', prompt: string): void
+}>()
+
 const {
   projectId,
   resources: {

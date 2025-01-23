@@ -43,6 +43,7 @@ import {
 } from '@/modules/core/repositories/streams'
 import { omit } from 'lodash'
 import { createAndStoreTestWorkspaceFactory } from '@/test/speckle-helpers/workspaces'
+import { WorkspaceJoinRequests } from '@/modules/workspacesCore/helpers/db'
 
 const getWorkspace = getWorkspaceFactory({ db })
 const getWorkspaceBySlug = getWorkspaceBySlugFactory({ db })
@@ -770,6 +771,85 @@ describe('Workspace repositories', () => {
       })
 
       expect(workspaces.length).to.equal(1)
+    })
+
+    it('should not return discoverable workspaces with existing requests for the user', async () => {
+      const user = await createAndStoreTestUser()
+      await updateUserEmail({
+        query: {
+          email: user.email
+        },
+        update: {
+          verified: true
+        }
+      })
+      const otherUser = await createAndStoreTestUser()
+      await updateUserEmail({
+        query: {
+          email: otherUser.email
+        },
+        update: {
+          verified: true
+        }
+      })
+
+      const workspace = await createAndStoreTestWorkspace({
+        discoverabilityEnabled: true
+      })
+      await storeWorkspaceDomain({
+        workspaceDomain: {
+          id: cryptoRandomString({ length: 6 }),
+          domain: 'example.org',
+          workspaceId: workspace.id,
+          verified: true,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          createdByUserId: user.id
+        }
+      })
+      // existing request for other user
+      await db(WorkspaceJoinRequests.name).insert({
+        workspaceId: workspace.id,
+        userId: otherUser.id,
+        createdAt: new Date(),
+        status: 'pending'
+      })
+      const workspaceWithExistingRequest = await createAndStoreTestWorkspace({
+        discoverabilityEnabled: true
+      })
+      await storeWorkspaceDomain({
+        workspaceDomain: {
+          id: cryptoRandomString({ length: 6 }),
+          domain: 'example.org',
+          workspaceId: workspaceWithExistingRequest.id,
+          verified: true,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          createdByUserId: user.id
+        }
+      })
+      await db(WorkspaceJoinRequests.name).insert({
+        workspaceId: workspaceWithExistingRequest.id,
+        userId: user.id,
+        createdAt: new Date(),
+        status: 'pending'
+      })
+
+      const workspaces = await getUserDiscoverableWorkspaces({
+        domains: ['example.org'],
+        userId: user.id
+      })
+
+      expect(workspaces.length).to.equal(1)
+      expect(workspaces[0].id).to.equal(workspace.id)
+
+      const otherUserWorkspaces = await getUserDiscoverableWorkspaces({
+        domains: ['example.org'],
+        userId: otherUser.id
+      })
+
+      expect(otherUserWorkspaces.length).to.equal(1)
+      expect(otherUserWorkspaces[0].id).to.equal(workspaceWithExistingRequest.id)
     })
   })
 

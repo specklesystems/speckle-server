@@ -1,8 +1,10 @@
 <template>
   <div>
     <div v-if="hasBanners" class="mb-8 empty:mb-0">
-      <ProjectsInviteBanners
-        v-if="projectsInvites?.projectInvites?.length"
+      <ProjectsInviteBanner
+        v-for="item in projectsInvites?.projectInvites"
+        :key="item?.id"
+        :invite="item"
         :invites="projectsInvites"
       />
       <WorkspaceInviteBanner
@@ -29,7 +31,9 @@ import { CookieKeys } from '~/lib/common/helpers/constants'
 
 graphql(`
   fragment ProjectsDashboardHeaderProjects_User on User {
-    ...ProjectsInviteBanners
+    projectInvites {
+      ...ProjectsInviteBanner
+    }
   }
 `)
 

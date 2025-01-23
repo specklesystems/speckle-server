@@ -5,6 +5,7 @@ import {
   publish
 } from '@/modules/shared/utils/subscriptions'
 import { authorizeResolver } from '@/modules/shared'
+import { Knex } from 'knex'
 
 import {
   getPaginatedBranchCommitsFactory,
@@ -70,50 +71,57 @@ import {
   addCommitMovedActivityFactory,
   addCommitDeletedActivityFactory
 } from '@/modules/activitystream/services/commitActivity'
-import { VersionsEmitter } from '@/modules/core/events/versionsEmitter'
 import { getObjectFactory } from '@/modules/core/repositories/objects'
 import { validateStreamAccessFactory } from '@/modules/core/services/streams/access'
 import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { CommitGraphQLReturn } from '@/modules/core/helpers/graphTypes'
-import { getProjectDbClient } from '@/modules/multiregion/dbSelector'
+import {
+  getProjectDbClient,
+  getRegisteredDbClients
+} from '@/modules/multiregion/utils/dbSelector'
+import { LegacyUserCommit } from '@/modules/core/domain/commits/types'
+import coreModule from '@/modules/core'
+import { getEventBus } from '@/modules/shared/services/eventBus'
 
 const getStreams = getStreamsFactory({ db })
 
 const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
-const getCommitsByUserId = legacyGetPaginatedUserCommitsPage({ db })
-const getCommitsTotalCountByUserId = legacyGetPaginatedUserCommitsTotalCount({ db })
 
 const getAuthorId = (commit: CommitGraphQLReturn) => {
   if ('author' in commit) return commit.author
   return commit.authorId
 }
 
-const getUserCommits = async (
-  publicOnly: boolean,
-  userId: string,
-  args: { limit: number; cursor?: MaybeNullOrUndefined<string> },
-  streamIdWhitelist?: string[]
-) => {
-  const totalCount = await getCommitsTotalCountByUserId({
-    userId,
-    publicOnly,
-    streamIdWhitelist
-  })
-  if (args.limit && args.limit > 100)
-    throw new BadRequestError(
-      'Cannot return more than 100 items, please use pagination.'
-    )
-  const { commits: items, cursor } = await getCommitsByUserId({
-    userId,
-    limit: args.limit,
-    cursor: args.cursor,
-    publicOnly,
-    streamIdWhitelist
-  })
+const getUserCommitsFactory =
+  ({ db }: { db: Knex }) =>
+  async (
+    publicOnly: boolean,
+    userId: string,
+    args: { limit: number; cursor?: MaybeNullOrUndefined<string> },
+    streamIdWhitelist?: string[]
+  ) => {
+    const getCommitsTotalCountByUserId = legacyGetPaginatedUserCommitsTotalCount({ db })
+    const totalCount = await getCommitsTotalCountByUserId({
+      userId,
+      publicOnly,
+      streamIdWhitelist
+    })
+    if (args.limit && args.limit > 100)
+      throw new BadRequestError(
+        'Cannot return more than 100 items, please use pagination.'
+      )
+    const getCommitsByUserId = legacyGetPaginatedUserCommitsPage({ db })
+    const { commits: items, cursor } = await getCommitsByUserId({
+      userId,
+      limit: args.limit,
+      cursor: args.cursor,
+      publicOnly,
+      streamIdWhitelist
+    })
 
-  return { items, cursor, totalCount }
-}
+    return { items, cursor, totalCount }
+  }
 
 export = {
   Query: {},
@@ -233,29 +241,85 @@ export = {
   },
   LimitedUser: {
     async commits(parent, args, ctx) {
-      // TODO: scan all regions
-      return await getUserCommits(
-        true,
-        parent.id,
-        args,
-        toProjectIdWhitelist(ctx.resourceAccessRules)
-      )
+      // this function is not optimized but it is deprecated
+      // DUI 2 only uses the totalCount
+      const { cursor } = args
+      let result: {
+        items: LegacyUserCommit[]
+        totalCount: number
+        cursor?: string | null
+      } = {
+        cursor,
+        items: [],
+        totalCount: 0
+      }
+      const regionClients = await getRegisteredDbClients()
+      for (const client of [db, ...regionClients]) {
+        const getUserCommits = getUserCommitsFactory({ db: client })
+        const { items, totalCount, cursor } = await getUserCommits(
+          true,
+          parent.id,
+          args,
+          toProjectIdWhitelist(ctx.resourceAccessRules)
+        )
+
+        result = {
+          items: [...result.items, ...items],
+          totalCount: result.totalCount + totalCount,
+          cursor: cursor ?? result.cursor // this is a bad approximation but this is not used and will be deprecated soon
+        }
+      }
+      return result
     }
   },
   User: {
     async commits(parent, args, context) {
-      // TODO: scan all regions
-      return await getUserCommits(
-        context.userId !== parent.id,
-        parent.id,
-        args,
-        toProjectIdWhitelist(context.resourceAccessRules)
-      )
+      // this function is not optimized but it is deprecated
+      // DUI 2 only uses the totalCount
+      const { cursor } = args
+      let result: {
+        items: LegacyUserCommit[]
+        totalCount: number
+        cursor?: string | null
+      } = {
+        cursor,
+        items: [],
+        totalCount: 0
+      }
+      const regionClients = await getRegisteredDbClients()
+      for (const client of [db, ...regionClients]) {
+        const getUserCommits = getUserCommitsFactory({ db: client })
+        const { items, totalCount, cursor } = await getUserCommits(
+          context.userId !== parent.id,
+          parent.id,
+          args,
+          toProjectIdWhitelist(context.resourceAccessRules)
+        )
+
+        result = {
+          items: [...result.items, ...items],
+          totalCount: result.totalCount + totalCount,
+          cursor: cursor ?? result.cursor // this is a bad approximation but this is not used and will be deprecated soon
+        }
+      }
+      return result
     }
   },
   Branch: {
-    async commits(parent, args) {
+    async commits(parent, args, ctx) {
       const projectDB = await getProjectDbClient({ projectId: parent.streamId })
+
+      // If limit=0 & no filter, short-cut full execution and use data loader
+      if (args.limit === 0) {
+        return {
+          totalCount: await ctx.loaders
+            .forRegion({ db: projectDB })
+            .branches.getCommitCount.load(parent.id),
+          items: [],
+          cursor: null
+        }
+      }
+
       const getPaginatedBranchCommits = getPaginatedBranchCommitsFactory({
         getSpecificBranchCommits: getSpecificBranchCommitsFactory({ db: projectDB }),
         getPaginatedBranchCommitsItems: getPaginatedBranchCommitsItemsFactory({
@@ -272,6 +336,10 @@ export = {
   },
   Mutation: {
     async commitCreate(_parent, args, context) {
+      await coreModule.executeHooks('onCreateVersionRequest', {
+        projectId: args.commit.streamId
+      })
+
       const projectDb = await getProjectDbClient({ projectId: args.commit.streamId })
       await authorizeResolver(
         context.userId,
@@ -293,7 +361,7 @@ export = {
         insertBranchCommits: insertBranchCommitsFactory({ db: projectDb }),
         markCommitStreamUpdated: markCommitStreamUpdatedFactory({ db: projectDb }),
         markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db: projectDb }),
-        versionsEventEmitter: VersionsEmitter.emit,
+        emitEvent: getEventBus().emit,
         addCommitCreatedActivity: addCommitCreatedActivityFactory({
           saveActivity: saveActivityFactory({ db }),
           publish

@@ -88,6 +88,7 @@
             :project-id="projectId"
             :model-name="model.name"
             class="w-full h-full"
+            :disabled="project?.workspace?.readOnly"
           />
         </div>
       </div>
@@ -140,6 +141,10 @@ graphql(`
     role
     visibility
     ...ProjectPageModelsActions_Project
+    workspace {
+      id
+      readOnly
+    }
   }
 `)
 

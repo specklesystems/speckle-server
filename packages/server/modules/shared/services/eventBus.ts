@@ -1,7 +1,12 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   WorkspaceEventsPayloads,
   workspaceEventNamespace
 } from '@/modules/workspacesCore/domain/events'
+import {
+  gatekeeperEventNamespace,
+  GatekeeperEventPayloads
+} from '@/modules/gatekeeperCore/domain/events'
 import { MaybeAsync } from '@speckle/shared'
 import { UnionToIntersection } from 'type-fest'
 
@@ -10,19 +15,64 @@ import {
   serverinvitesEventNamespace,
   ServerInvitesEventsPayloads
 } from '@/modules/serverinvites/domain/events'
+import {
+  modelEventsNamespace,
+  ModelEventsPayloads
+} from '@/modules/core/domain/branches/events'
+import {
+  projectEventsNamespace,
+  ProjectEventsPayloads
+} from '@/modules/core/domain/projects/events'
+import {
+  userEventsNamespace,
+  UserEventsPayloads
+} from '@/modules/core/domain/users/events'
+import {
+  versionEventsNamespace,
+  VersionEventsPayloads
+} from '@/modules/core/domain/commits/events'
+import {
+  accessRequestEventsNamespace,
+  AccessRequestEventsPayloads
+} from '@/modules/accessrequests/domain/events'
+import {
+  commentEventsNamespace,
+  CommentEventsPayloads
+} from '@/modules/comments/domain/events'
+import {
+  automationEventsNamespace,
+  AutomationEventsPayloads,
+  automationRunEventsNamespace,
+  AutomationRunEventsPayloads
+} from '@/modules/automate/domain/events'
 
+type AllEventsWildcard = '**'
 type EventWildcard = '*'
 
-type TestEvents = {
-  ['test.string']: string
-  ['test.number']: number
+export const TestEvents = {
+  String: 'test.string',
+  Number: 'test.number'
+} as const
+
+type TestEventsPayloads = {
+  [TestEvents.String]: string
+  [TestEvents.Number]: number
 }
 
 // we should only ever extend this type, other helper types will be derived from this
 type EventsByNamespace = {
-  test: TestEvents
+  test: TestEventsPayloads
   [workspaceEventNamespace]: WorkspaceEventsPayloads
+  [gatekeeperEventNamespace]: GatekeeperEventPayloads
   [serverinvitesEventNamespace]: ServerInvitesEventsPayloads
+  [modelEventsNamespace]: ModelEventsPayloads
+  [projectEventsNamespace]: ProjectEventsPayloads
+  [userEventsNamespace]: UserEventsPayloads
+  [versionEventsNamespace]: VersionEventsPayloads
+  [accessRequestEventsNamespace]: AccessRequestEventsPayloads
+  [commentEventsNamespace]: CommentEventsPayloads
+  [automationEventsNamespace]: AutomationEventsPayloads
+  [automationRunEventsNamespace]: AutomationRunEventsPayloads
 }
 
 type EventTypes = UnionToIntersection<EventsByNamespace[keyof EventsByNamespace]>
@@ -34,7 +84,7 @@ type EventNamesByNamespace = {
 
 // generated type for a top level wildcard one level nested wildcards per namespace and each possible event
 type EventSubscriptionKey =
-  | EventWildcard
+  | AllEventsWildcard
   | `${keyof EventNamesByNamespace}.${EventWildcard}`
   | {
       [Namespace in keyof EventNamesByNamespace]: EventNamesByNamespace[Namespace]
@@ -59,8 +109,8 @@ type EventPayloadsByNamespaceMap = {
   }
 }
 
-type EventPayload<T extends EventSubscriptionKey> = T extends EventWildcard
-  ? // if event key is "*", get all events from the flat object
+export type EventPayload<T extends EventSubscriptionKey> = T extends AllEventsWildcard
+  ? // if event key is "**", get all events from the flat object
     EventPayloadsMap[keyof EventPayloadsMap]
   : // else if, the key is a "namespace.*" wildcard
   T extends `${infer Namespace}.${EventWildcard}`
@@ -77,7 +127,7 @@ type EventPayload<T extends EventSubscriptionKey> = T extends EventWildcard
 export function initializeEventBus() {
   const emitter = new EventEmitter({ wildcard: true })
 
-  return {
+  const core = {
     /**
      * Emit a module event. This function must be awaited to ensure all listeners
      * execute. Any errors thrown in the listeners will bubble up and throw from
@@ -119,11 +169,50 @@ export function initializeEventBus() {
       emitter.removeAllListeners()
     }
   }
+
+  // Extra utils
+  const listenOnce = <K extends EventSubscriptionKey>(
+    eventName: K,
+    handler: (event: EventPayload<K>) => MaybeAsync<unknown>,
+    options?: Partial<{
+      /**
+       * Timeout in milliseconds after which the listener will be removed even if it never fires
+       * (useful in tests for cleanup)
+       */
+      timeout: number
+    }>
+  ) => {
+    const removeListener = core.listen(eventName, async (event) => {
+      try {
+        await handler(event)
+      } finally {
+        removeListener()
+      }
+    })
+
+    if (options?.timeout) {
+      setTimeout(removeListener, options.timeout)
+    }
+
+    return removeListener
+  }
+
+  return {
+    ...core,
+    /**
+     * Listen for module events only once. Any errors thrown here will bubble out of where
+     * emit() was invoked.
+     *
+     * @returns Callback for stopping listening
+     */
+    listenOnce
+  }
 }
 
 export type EventBus = ReturnType<typeof initializeEventBus>
 export type EventBusPayloads = EventTypes
 export type EventBusEmit = EventBus['emit']
+export type EventBusListen = EventBus['listen']
 export type EmitArg = Parameters<EventBusEmit>[0]
 
 let eventBus: EventBus
@@ -131,4 +220,11 @@ let eventBus: EventBus
 export function getEventBus(): EventBus {
   if (!eventBus) eventBus = initializeEventBus()
   return eventBus
+}
+
+export const isSpecificEventPayload = <EventName extends EventNames>(
+  payload: EventPayload<any>,
+  eventKey: EventName
+): payload is EventPayload<EventName> => {
+  return payload.eventName === eventKey
 }

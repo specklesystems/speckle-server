@@ -2,16 +2,20 @@ import { GendoAIRenders } from '@/modules/core/dbSchema'
 import {
   GetLatestVersionRenderRequests,
   GetRenderByGenerationId,
+  GetUserCredits,
   GetVersionRenderRequest,
   StoreRender,
-  UpdateRenderRecord
+  UpdateRenderRecord,
+  UpsertUserCredits
 } from '@/modules/gendo/domain/operations'
+import { UserCredits } from '@/modules/gendo/domain/types'
 import { GendoAIRenderRecord } from '@/modules/gendo/helpers/types'
 import { Knex } from 'knex'
 import { pick } from 'lodash'
 
 const tables = {
-  gendoAIRenders: (db: Knex) => db<GendoAIRenderRecord>(GendoAIRenders.name)
+  gendoAIRenders: (db: Knex) => db<GendoAIRenderRecord>(GendoAIRenders.name),
+  gendoUserCredits: (db: Knex) => db<UserCredits>('gendo_user_credits')
 }
 
 export const storeRenderFactory =
@@ -67,4 +71,22 @@ export const getVersionRenderRequestFactory =
       .orderBy(GendoAIRenders.col.createdAt, 'desc')
       .first()
     return record
+  }
+
+export const getUserCreditsFactory =
+  ({ db }: { db: Knex }): GetUserCredits =>
+  async ({ userId }) => {
+    const userCredits = await tables
+      .gendoUserCredits(db)
+      .select()
+      .where({ userId })
+      .first()
+
+    return userCredits || null
+  }
+
+export const upsertUserCreditsFactory =
+  ({ db }: { db: Knex }): UpsertUserCredits =>
+  async ({ userCredits }) => {
+    await tables.gendoUserCredits(db).insert(userCredits).onConflict('userId').merge()
   }

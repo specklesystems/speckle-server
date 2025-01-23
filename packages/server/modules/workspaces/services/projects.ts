@@ -1,5 +1,6 @@
 import { StreamRecord } from '@/modules/core/helpers/types'
 import {
+  GetDefaultRegion,
   GetWorkspace,
   GetWorkspaceRoleForUser,
   GetWorkspaceRoles,
@@ -32,6 +33,21 @@ import {
   UpdateStreamRole
 } from '@/modules/core/domain/streams/operations'
 import { ProjectNotFoundError } from '@/modules/core/errors/projects'
+import { WorkspaceProjectCreateInput } from '@/test/graphql/generated/graphql'
+import {
+  getDb,
+  getValidDefaultProjectRegionKey
+} from '@/modules/multiregion/utils/dbSelector'
+import { createNewProjectFactory } from '@/modules/core/services/projects'
+import {
+  deleteProjectFactory,
+  storeProjectFactory,
+  storeProjectRoleFactory
+} from '@/modules/core/repositories/projects'
+import { mainDb } from '@/db/knex'
+import { storeModelFactory } from '@/modules/core/repositories/models'
+import { getProjectFactory } from '@/modules/core/repositories/streams'
+import { getEventBus } from '@/modules/shared/services/eventBus'
 
 export const queryAllWorkspaceProjectsFactory = ({
   getStreams
@@ -243,4 +259,37 @@ export const updateWorkspaceProjectRoleFactory =
       updater.userId!,
       updater.resourceAccessRules
     )
+  }
+
+export const createWorkspaceProjectFactory =
+  (deps: { getDefaultRegion: GetDefaultRegion }) =>
+  async (params: { input: WorkspaceProjectCreateInput; ownerId: string }) => {
+    const { input, ownerId } = params
+    const workspaceDefaultRegion = await deps.getDefaultRegion({
+      workspaceId: input.workspaceId
+    })
+    const regionKey =
+      workspaceDefaultRegion?.key ?? (await getValidDefaultProjectRegionKey())
+    const projectDb = await getDb({ regionKey })
+    const db = mainDb
+
+    // todo, use the command factory here, but for that, we need to migrate to the event bus
+    // deps not injected to ensure proper DB injection
+    const createNewProject = createNewProjectFactory({
+      storeProject: storeProjectFactory({ db: projectDb }),
+      getProject: getProjectFactory({ db }),
+      deleteProject: deleteProjectFactory({ db: projectDb }),
+      storeModel: storeModelFactory({ db: projectDb }),
+      // THIS MUST GO TO THE MAIN DB
+      storeProjectRole: storeProjectRoleFactory({ db }),
+      emitEvent: getEventBus().emit
+    })
+
+    const project = await createNewProject({
+      ...input,
+      regionKey,
+      ownerId
+    })
+
+    return project
   }

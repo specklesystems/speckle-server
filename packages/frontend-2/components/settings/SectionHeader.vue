@@ -5,7 +5,7 @@
       :class="{ 'md:items-center': subheading }"
     >
       <h2 v-if="subheading" class="text-heading-lg">{{ title }}</h2>
-      <h1 v-else class="text-heading-xl hidden md:block">
+      <h1 v-else class="text-heading-xl">
         {{ title }}
       </h1>
       <div v-if="buttons.length > 0" class="flex flex-wrap gap-2">
@@ -20,7 +20,11 @@
         </FormButton>
       </div>
     </div>
-    <p v-if="text" class="text-body-xs text-foreground-2 pt-1">
+    <p
+      v-if="text"
+      class="text-body-xs text-foreground-2 pt-1"
+      :class="{ 'pt-6': subheading }"
+    >
       {{ text }}
     </p>
     <hr v-if="!subheading && !hideDivider" class="my-6 border-outline-2" />

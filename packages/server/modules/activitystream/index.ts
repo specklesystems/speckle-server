@@ -24,23 +24,19 @@ import {
   acquireTaskLockFactory,
   releaseTaskLockFactory
 } from '@/modules/core/repositories/scheduledTasks'
-import { UsersEmitter, UsersEvents } from '@/modules/core/events/usersEmitter'
 import { Knex } from 'knex'
 import {
   onServerAccessRequestCreatedFactory,
   onServerAccessRequestFinalizedFactory,
-  onServerInviteCreatedFactory,
-  onUserCreatedFactory
+  onServerInviteCreatedFactory
 } from '@/modules/activitystream/services/eventListener'
-import {
-  AccessRequestsEmitter,
-  AccessRequestsEvents
-} from '@/modules/accessrequests/events/emitter'
 import { isProjectResourceTarget } from '@/modules/serverinvites/helpers/core'
 import { publish } from '@/modules/shared/utils/subscriptions'
 import { isStreamAccessRequest } from '@/modules/accessrequests/repositories'
 import { ServerInvitesEvents } from '@/modules/serverinvites/domain/events'
-import { ProjectEvents, ProjectsEmitter } from '@/modules/core/events/projectsEmitter'
+import { ProjectEvents } from '@/modules/core/domain/projects/events'
+import { AccessRequestEvents } from '@/modules/accessrequests/domain/events'
+import { reportUserActivityFactory } from '@/modules/activitystream/events/userListeners'
 
 let scheduledTask: ReturnType<ScheduleExecution> | null = null
 let quitEventListeners: Optional<() => void> = undefined
@@ -56,22 +52,23 @@ const initializeEventListeners = ({
   eventBus: EventBus
   db: Knex
 }) => {
+  const saveActivity = saveActivityFactory({ db })
+  const reportUserActivity = reportUserActivityFactory({
+    eventListen: eventBus.listen,
+    saveActivity
+  })
   const quitCbs = [
-    UsersEmitter.listen(
-      UsersEvents.Created,
-      // this activity will always go in the main DB
-      onUserCreatedFactory({ saveActivity: saveActivityFactory({ db }) })
-    ),
-    AccessRequestsEmitter.listen(AccessRequestsEvents.Created, async ({ request }) => {
-      if (!isStreamAccessRequest(request)) return
+    reportUserActivity(),
+    eventBus.listen(AccessRequestEvents.Created, async (payload) => {
+      if (!isStreamAccessRequest(payload.payload.request)) return
       return await onServerAccessRequestCreatedFactory({
         addStreamAccessRequestedActivity: addStreamAccessRequestedActivityFactory({
           saveActivity: saveActivityFactory({ db })
         })
-      })({ request })
+      })(payload)
     }),
-    AccessRequestsEmitter.listen(AccessRequestsEvents.Finalized, async (payload) => {
-      if (!isStreamAccessRequest(payload.request)) return
+    eventBus.listen(AccessRequestEvents.Finalized, async (payload) => {
+      if (!isStreamAccessRequest(payload.payload.request)) return
       await onServerAccessRequestFinalizedFactory({
         addStreamAccessRequestDeclinedActivity:
           addStreamAccessRequestDeclinedActivityFactory({
@@ -90,12 +87,20 @@ const initializeEventListeners = ({
         getStream: getStreamFactory({ db })
       })(payload)
     }),
-    ProjectsEmitter.listen(ProjectEvents.Created, async ({ ownerId, project }) => {
-      await addStreamCreatedActivityFactory({
-        saveActivity: saveActivityFactory({ db }),
-        publish
-      })({ streamId: project.id, creatorId: ownerId, stream: project, input: project })
-    })
+    eventBus.listen(
+      ProjectEvents.Created,
+      async ({ payload: { ownerId, project } }) => {
+        await addStreamCreatedActivityFactory({
+          saveActivity: saveActivityFactory({ db }),
+          publish
+        })({
+          streamId: project.id,
+          creatorId: ownerId,
+          stream: project,
+          input: project
+        })
+      }
+    )
   ]
 
   return () => quitCbs.forEach((quit) => quit())

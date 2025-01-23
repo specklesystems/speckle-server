@@ -2,7 +2,7 @@ import { db } from '@/db/knex'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { getWorkspacePlanFactory } from '@/modules/gatekeeper/repositories/billing'
 import { canWorkspaceUseRegionsFactory } from '@/modules/gatekeeper/services/featureAuthorization'
-import { getDb } from '@/modules/multiregion/dbSelector'
+import { getDb } from '@/modules/multiregion/utils/dbSelector'
 import { getRegionsFactory } from '@/modules/multiregion/repositories'
 import { authorizeResolver } from '@/modules/shared'
 import {
@@ -21,16 +21,6 @@ import { Roles } from '@speckle/shared'
 
 export default {
   Workspace: {
-    availableRegions: async (parent) => {
-      const getAvailableRegions = getAvailableRegionsFactory({
-        getRegions: getRegionsFactory({ db }),
-        canWorkspaceUseRegions: canWorkspaceUseRegionsFactory({
-          getWorkspacePlan: getWorkspacePlanFactory({ db })
-        })
-      })
-
-      return await getAvailableRegions({ workspaceId: parent.id })
-    },
     defaultRegion: async (parent) => {
       const getDefaultRegion = getDefaultRegionFactory({ db })
       return await getDefaultRegion({ workspaceId: parent.id })

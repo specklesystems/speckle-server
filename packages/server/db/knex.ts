@@ -16,7 +16,7 @@ config.log = {
   }
 }
 
-dbStartupLogger.info(`Loaded knex conf for ${env}`)
+dbStartupLogger.debug(`Loaded knex conf for ${env}`)
 
 const knexInstance = knex(config)
 

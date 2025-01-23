@@ -56,10 +56,17 @@ import {
 } from '~/lib/common/helpers/route'
 import { useEnumSteps, useEnumStepsWidgetSetup } from '~/lib/form/composables/steps'
 import { useForm } from 'vee-validate'
-import { useCreateAutomateFunction } from '~/lib/automate/composables/management'
+import {
+  useCreateAutomateFunction,
+  useUpdateAutomateFunction
+} from '~/lib/automate/composables/management'
 import { useMutationLoading } from '@vue/apollo-composable'
-import type { AutomateFunctionCreateDialogDoneStep_AutomateFunctionFragment } from '~~/lib/common/generated/gql/graphql'
+import type {
+  AutomateFunctionCreateDialogDoneStep_AutomateFunctionFragment,
+  AutomateFunctionCreateDialog_WorkspaceFragment
+} from '~~/lib/common/generated/gql/graphql'
 import { useMixpanel } from '~/lib/core/composables/mp'
+import { graphql } from '~/lib/common/generated/gql'
 
 enum FunctionCreateSteps {
   Authorize,
@@ -70,10 +77,19 @@ enum FunctionCreateSteps {
 
 type DetailsFormValues = FunctionDetailsFormValues
 
+graphql(`
+  fragment AutomateFunctionCreateDialog_Workspace on Workspace {
+    id
+    name
+    slug
+  }
+`)
+
 const props = defineProps<{
   isAuthorized: boolean
   templates: CreatableFunctionTemplate[]
   githubOrgs: string[]
+  workspace?: AutomateFunctionCreateDialog_WorkspaceFragment
 }>()
 const open = defineModel<boolean>('open', { required: true })
 
@@ -81,6 +97,7 @@ const mixpanel = useMixpanel()
 const logger = useLogger()
 const mutationLoading = useMutationLoading()
 const createFunction = useCreateAutomateFunction()
+const updateFunction = useUpdateAutomateFunction()
 const { handleSubmit: handleDetailsSubmit } = useForm<DetailsFormValues>()
 const onDetailsSubmit = handleDetailsSubmit(async (values) => {
   if (!selectedTemplate.value) {
@@ -99,20 +116,37 @@ const onDetailsSubmit = handleDetailsSubmit(async (values) => {
     }
   })
 
-  if (res?.id) {
-    mixpanel.track('Automate Function Created', {
-      functionId: res.id,
-      templateId: selectedTemplate.value.id,
-      name: values.name
-    })
-    createdFunction.value = res
-    step.value++
+  if (!res?.id) {
+    // TODO: Error toast with butter
+    return
   }
+
+  mixpanel.track('Automate Function Created', {
+    functionId: res.id,
+    templateId: selectedTemplate.value.id,
+    name: values.name,
+    /* eslint-disable-next-line camelcase */
+    workspace_id: props.workspace?.id
+  })
+  createdFunction.value = res
+  step.value++
+
+  if (!props.workspace?.id) {
+    return
+  }
+
+  await updateFunction({
+    input: {
+      id: res.id,
+      workspaceIds: [props.workspace.id]
+    }
+  })
 })
 
 const onSubmit = computed(() => {
   switch (enumStep.value) {
     case FunctionCreateSteps.Details:
+      mixpanel.track('Automate Configure Function Details')
       return onDetailsSubmit
     default:
       return noop
@@ -162,7 +196,10 @@ const title = computed(() => {
 })
 
 const authorizeGithubUrl = computed(() => {
-  const redirectUrl = new URL(automateGithubAppAuthorizationRoute, apiBaseUrl)
+  const redirectUrl = new URL(
+    automateGithubAppAuthorizationRoute(props.workspace?.slug),
+    apiBaseUrl
+  )
   return redirectUrl.toString()
 })
 
@@ -182,6 +219,9 @@ const buttons = computed((): LayoutDialogButton[] => {
         {
           id: 'authorizeAuthorize',
           text: 'Authorize',
+          onClick: () => {
+            mixpanel.track('Automate Start Authorize GitHub App')
+          },
           props: {
             fullWidth: true,
             to: authorizeGithubUrl.value,
@@ -198,7 +238,10 @@ const buttons = computed((): LayoutDialogButton[] => {
             iconRight: ChevronRightIcon,
             disabled: !selectedTemplate.value
           },
-          onClick: () => step.value++
+          onClick: () => {
+            mixpanel.track('Automate Select Function Template')
+            step.value++
+          }
         }
       ]
     case FunctionCreateSteps.Details:
