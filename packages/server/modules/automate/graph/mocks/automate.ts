@@ -253,7 +253,7 @@ const mocks: SpeckleModuleMocksConfig = FF_AUTOMATE_MODULE_ENABLED
 
             return {
               ...user,
-              id: rand ? user.id : ctx.userId
+              id: rand ? user.id : ctx.userId || user.id
             }
           },
           releases: () => store.get('AutomateFunctionReleaseCollection') as any
