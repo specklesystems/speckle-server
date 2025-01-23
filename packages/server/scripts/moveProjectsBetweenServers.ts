@@ -1,3 +1,6 @@
+// eslint-disable-next-line no-restricted-imports
+import '../bootstrap'
+
 import { configureClient } from '@/knexfile'
 import {
   getBatchedStreamCommentsFactory,
@@ -45,6 +48,7 @@ import {
 import { retry } from '@lifeomic/attempt'
 import { Roles, StreamRoles } from '@speckle/shared'
 import knex from 'knex'
+import { omit } from 'lodash'
 
 const projectIds = [
   'edbf5f099d'
@@ -61,15 +65,26 @@ const projectIds = [
   // '97e8715da4'
 ]
 
+// real
+// const userIdMapping: Record<string, string> = {
+//   '52fb7b2818': 'ee07689e6c', // Aida Ramirez Marrujo
+//   a8bbe5fd68: '63147c73f9', // Xintong Chen
+//   a736ff389b: 'e31189c187', // Felipe Curado
+//   '230687c24c': 'aa5235d45d', // Julian Höll
+//   '02d31038bc': '0b567b1cc9' // DT
+// }
+
 const userIdMapping: Record<string, string> = {
-  '52fb7b281': 'ee07689e6c', // Aida Ramirez Marrujo
-  a8bbe5fd68: '63147c73f9', // Xintong Chen
-  a736ff389b: 'e31189c187', // Felipe Curado
-  '230687c24c': 'aa5235d45d', // Julian Höll
-  '02d31038bc': '0b567b1cc9' // DT
+  '52fb7b2818': 'ee07689e6c', // Aida Ramirez Marrujo
+  a8bbe5fd68: 'ee07689e6c', // Xintong Chen
+  a736ff389b: 'ee07689e6c', // Felipe Curado
+  '230687c24c': 'ee07689e6c', // Julian Höll
+  '02d31038bc': 'ee07689e6c' // DT
 }
 
-const workspaceId = 'a1f85661a9'
+// real
+// const workspaceId = 'a1f85661a9'
+const workspaceId = '760fd72e88'
 
 const sourceDbConnection = getStringFromEnv('SOURCE_DB_CONNECTION')
 const sourceDb = knex(sourceDbConnection)
@@ -107,7 +122,11 @@ const main = async () => {
 
     const grantStreamPermissions = grantStreamPermissionsFactory({ db: mainTrx })
     await storeProjectFactory({ db: regionTrx })({
-      project: { ...sourceProject, regionKey: workspaceRegion?.key || null }
+      project: {
+        ...sourceProject,
+        regionKey: workspaceRegion?.key || null,
+        workspaceId
+      }
     })
 
     // need to wait for project replication somewhere
@@ -139,7 +158,8 @@ const main = async () => {
       // objects
       // the heavy stuff done in batches
       for await (const objectsBatch of getBatchedStreamObjectsFactory({ db: sourceDb })(
-        sourceProject.id
+        sourceProject.id,
+        { batchSize: 500 }
       )) {
         await insertObjectsFactory({ db: regionTrx })(objectsBatch)
       }
@@ -153,13 +173,15 @@ const main = async () => {
       )) {
         const branchesAuthorRemapped = branchBatch.map((b) => {
           branchIds.push(b.id)
+          if (!b.authorId) return b
           if (!(b.authorId in userIdMapping)) throw new Error('Unknown branch author')
           return {
             ...b,
             authorId: userIdMapping[b.authorId]
           }
         })
-        await insertBranchesFactory({ db: regionTrx })(branchesAuthorRemapped)
+        if (branchesAuthorRemapped.length)
+          await insertBranchesFactory({ db: regionTrx })(branchesAuthorRemapped)
       }
 
       // commits
@@ -173,14 +195,19 @@ const main = async () => {
         const commitsRemapped = commitBatch.map((c) => {
           sc.push({ streamId: sourceProject.id, commitId: c.id })
           bc.push({ branchId, commitId: c.id })
-          if (!c.author) return c
+          if (!c.author) return omit(c, 'branchId')
           if (!(c.author in userIdMapping)) throw new Error('Unknown commit author')
-          return {
+          const commit = {
             ...c,
             author: userIdMapping[c.author]
           }
+
+          // yeah, that is added by the repo function...
+          const omited = omit(commit, 'branchId')
+          return omited
         })
-        await insertCommitsFactory({ db: regionTrx })(commitsRemapped)
+        if (commitsRemapped.length)
+          await insertCommitsFactory({ db: regionTrx })(commitsRemapped)
       }
 
       // stream_commits
@@ -193,24 +220,31 @@ const main = async () => {
       for await (const commentBatch of getBatchedStreamCommentsFactory({
         db: sourceDb
       })(sourceProject.id)) {
-        const commentsRemapped = commentBatch.map((c) => {
-          if (!(c.authorId in userIdMapping))
-            throw new Error('Comment author not found')
-          return {
-            ...c,
-            authorId: userIdMapping[c.authorId]
-          }
-        })
+        const commentsRemapped = commentBatch
+          .map((c) => {
+            if (!(c.authorId in userIdMapping))
+              throw new Error('Comment author not found')
+            if (c.text)
+              return {
+                ...c,
+                authorId: userIdMapping[c.authorId]
+              }
+          })
+          .filter((c) => c !== undefined)
         // TODO: this borks the createdAt date !!!!!
         // TODO: why is the text null in the return object?
-        await insertCommentsFactory({ db: regionTrx })(commentsRemapped)
+        if (commentsRemapped.length)
+          // @ts-expect-error comments are always text
+          await insertCommentsFactory({ db: regionTrx })(commentsRemapped)
       }
       // comment views need userId mapping
       // skipping comment views for now, its not essential...
 
       // comment links
-      const commentLinks = await getCommentLinksFactory({ db: sourceDb })(commentIds)
-      await insertCommentLinksFactory({ db: regionTrx })(commentLinks)
+      if (commentIds.length) {
+        const commentLinks = await getCommentLinksFactory({ db: sourceDb })(commentIds)
+        await insertCommentLinksFactory({ db: regionTrx })(commentLinks)
+      }
 
       // skipping file uploads and blobs, there is none of that in the current source
       // file uploads
@@ -251,7 +285,7 @@ const main = async () => {
           await grantStreamPermissions({ userId, streamId: sourceProject.id, role })
       }
 
-      throw new Error('not ready to commit to this just yet')
+      // throw new Error('not ready to commit to this just yet')
       await mainTrx.commit()
       await regionTrx.commit()
     } catch (err) {
@@ -259,6 +293,7 @@ const main = async () => {
       await mainTrx.commit()
       // cleanup the project from the DB
       await deleteProjectFactory({ db: regionDb })({ projectId: sourceProject.id })
+      throw err
     }
   }
 }
