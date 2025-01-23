@@ -10,6 +10,7 @@ import {
   BranchUpdateInput,
   CreateModelInput,
   DeleteModelInput,
+  ProjectModelsUpdatedMessageType,
   UpdateModelInput
 } from '@/modules/core/graph/generated/graphql'
 import { BranchRecord } from '@/modules/core/helpers/types'
@@ -29,13 +30,13 @@ import {
   GetStream,
   MarkBranchStreamUpdated
 } from '@/modules/core/domain/streams/operations'
-import {
-  AddBranchCreatedActivity,
-  AddBranchDeletedActivity,
-  AddBranchUpdatedActivity
-} from '@/modules/activitystream/domain/operations'
 import { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { ModelEvents } from '@/modules/core/domain/branches/events'
+import {
+  ProjectSubscriptions,
+  PublishSubscription
+} from '@/modules/shared/utils/subscriptions'
+import { BranchPubsubEvents } from '@/modules/shared'
 
 const isBranchCreateInput = (
   i: BranchCreateInput | CreateModelInput
@@ -45,7 +46,8 @@ export const createBranchAndNotifyFactory =
   (deps: {
     getStreamBranchByName: GetStreamBranchByName
     createBranch: StoreBranch
-    addBranchCreatedActivity: AddBranchCreatedActivity
+    eventEmit: EventBusEmit
+    publishSub: PublishSubscription
   }): CreateBranchAndNotify =>
   async (input: BranchCreateInput | CreateModelInput, creatorId: string) => {
     const streamId = isBranchCreateInput(input) ? input.streamId : input.projectId
@@ -60,7 +62,26 @@ export const createBranchAndNotifyFactory =
       streamId: isBranchCreateInput(input) ? input.streamId : input.projectId,
       authorId: creatorId
     })
-    await deps.addBranchCreatedActivity({ branch })
+
+    await Promise.all([
+      deps.eventEmit({
+        eventName: ModelEvents.Created,
+        payload: { model: branch, projectId: branch.streamId }
+      }),
+      // TODO: Move to event bus listeners
+      deps.publishSub(BranchPubsubEvents.BranchCreated, {
+        branchCreated: { ...branch },
+        streamId: branch.streamId
+      }),
+      deps.publishSub(ProjectSubscriptions.ProjectModelsUpdated, {
+        projectId: branch.streamId,
+        projectModelsUpdated: {
+          id: branch.id,
+          type: ProjectModelsUpdatedMessageType.Created,
+          model: branch
+        }
+      })
+    ])
 
     return branch
   }
@@ -69,7 +90,8 @@ export const updateBranchAndNotifyFactory =
   (deps: {
     getBranchById: GetBranchById
     updateBranch: UpdateBranch
-    addBranchUpdatedActivity: AddBranchUpdatedActivity
+    publishSub: PublishSubscription
+    eventEmit: EventBusEmit
   }): UpdateBranchAndNotify =>
   async (input: BranchUpdateInput | UpdateModelInput, userId: string) => {
     const streamId = isBranchUpdateInput(input) ? input.streamId : input.projectId
@@ -113,12 +135,31 @@ export const updateBranchAndNotifyFactory =
     }
 
     if (newBranch) {
-      await deps.addBranchUpdatedActivity({
-        update: input,
-        userId,
-        oldBranch: existingBranch,
-        newBranch
-      })
+      await Promise.all([
+        deps.eventEmit({
+          eventName: ModelEvents.Updated,
+          payload: {
+            update: input,
+            userId,
+            oldModel: existingBranch,
+            newModel: newBranch
+          }
+        }),
+        // TODO: Move to event bus listeners
+        deps.publishSub(BranchPubsubEvents.BranchUpdated, {
+          branchUpdated: { ...input },
+          streamId,
+          branchId: input.id
+        }),
+        deps.publishSub(ProjectSubscriptions.ProjectModelsUpdated, {
+          projectId: streamId,
+          projectModelsUpdated: {
+            model: newBranch,
+            id: newBranch.id,
+            type: ProjectModelsUpdatedMessageType.Updated
+          }
+        })
+      ])
     }
 
     return newBranch
@@ -130,8 +171,8 @@ export const deleteBranchAndNotifyFactory =
     getBranchById: GetBranchById
     emitEvent: EventBusEmit
     markBranchStreamUpdated: MarkBranchStreamUpdated
-    addBranchDeletedActivity: AddBranchDeletedActivity
     deleteBranchById: DeleteBranchById
+    publishSub: PublishSubscription
   }): DeleteBranchAndNotify =>
   async (input: BranchDeleteInput | DeleteModelInput, userId: string) => {
     const streamId = isBranchDeleteInput(input) ? input.streamId : input.projectId
@@ -167,18 +208,28 @@ export const deleteBranchAndNotifyFactory =
     const isDeleted = !!(await deps.deleteBranchById(existingBranch.id))
     if (isDeleted) {
       await Promise.all([
-        deps.addBranchDeletedActivity({
-          input,
-          userId,
-          branchName: existingBranch.name
-        }),
         deps.markBranchStreamUpdated(input.id),
         deps.emitEvent({
           eventName: ModelEvents.Deleted,
           payload: {
             modelId: existingBranch.id,
             model: existingBranch,
-            projectId: streamId
+            projectId: streamId,
+            input,
+            userId
+          }
+        }),
+        // TODO: Move to event bus listeners
+        deps.publishSub(BranchPubsubEvents.BranchDeleted, {
+          branchDeleted: input,
+          streamId
+        }),
+        deps.publishSub(ProjectSubscriptions.ProjectModelsUpdated, {
+          projectId: streamId,
+          projectModelsUpdated: {
+            id: input.id,
+            type: ProjectModelsUpdatedMessageType.Deleted,
+            model: null
           }
         })
       ])

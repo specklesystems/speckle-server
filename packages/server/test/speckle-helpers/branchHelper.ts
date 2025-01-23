@@ -1,12 +1,10 @@
-import { db } from '@/db/knex'
-import { saveActivityFactory } from '@/modules/activitystream/repositories'
-import { addBranchCreatedActivityFactory } from '@/modules/activitystream/services/branchActivity'
 import {
   createBranchFactory,
   getStreamBranchByNameFactory
 } from '@/modules/core/repositories/branches'
 import { createBranchAndNotifyFactory } from '@/modules/core/services/branch/management'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
+import { getEventBus } from '@/modules/shared/services/eventBus'
 import { publish } from '@/modules/shared/utils/subscriptions'
 import { BasicTestUser } from '@/test/authHelper'
 import { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
@@ -44,10 +42,8 @@ export async function createTestBranch(params: {
   const createBranchAndNotify = createBranchAndNotifyFactory({
     getStreamBranchByName: getStreamBranchByNameFactory({ db: projectDb }),
     createBranch: createBranchFactory({ db: projectDb }),
-    addBranchCreatedActivity: addBranchCreatedActivityFactory({
-      saveActivity: saveActivityFactory({ db }),
-      publish
-    })
+    publishSub: publish,
+    eventEmit: getEventBus().emit
   })
 
   const id = (

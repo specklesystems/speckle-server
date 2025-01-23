@@ -51,15 +51,9 @@ import {
 } from '@/modules/core/repositories/commits'
 import { db } from '@/db/knex'
 import {
-  addBranchCreatedActivityFactory,
-  addBranchDeletedActivityFactory,
-  addBranchUpdatedActivityFactory
-} from '@/modules/activitystream/services/branchActivity'
-import {
   getStreamFactory,
   markBranchStreamUpdatedFactory
 } from '@/modules/core/repositories/streams'
-import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import {
   getProjectDbClient,
   getRegisteredRegionClients
@@ -312,10 +306,8 @@ export = {
       const createBranchAndNotify = createBranchAndNotifyFactory({
         getStreamBranchByName: getStreamBranchByNameFactory({ db: projectDB }),
         createBranch: createBranchFactory({ db: projectDB }),
-        addBranchCreatedActivity: addBranchCreatedActivityFactory({
-          saveActivity: saveActivityFactory({ db }),
-          publish
-        })
+        publishSub: publish,
+        eventEmit: getEventBus().emit
       })
       return await createBranchAndNotify(args.input, ctx.userId!)
     },
@@ -330,10 +322,8 @@ export = {
       const updateBranchAndNotify = updateBranchAndNotifyFactory({
         getBranchById: getBranchByIdFactory({ db: projectDB }),
         updateBranch: updateBranchFactory({ db: projectDB }),
-        addBranchUpdatedActivity: addBranchUpdatedActivityFactory({
-          saveActivity: saveActivityFactory({ db }),
-          publish
-        })
+        publishSub: publish,
+        eventEmit: getEventBus().emit
       })
       return await updateBranchAndNotify(args.input, ctx.userId!)
     },
@@ -352,10 +342,7 @@ export = {
         getBranchById: getBranchByIdFactory({ db: projectDB }),
         emitEvent: getEventBus().emit,
         markBranchStreamUpdated,
-        addBranchDeletedActivity: addBranchDeletedActivityFactory({
-          saveActivity: saveActivityFactory({ db }),
-          publish
-        }),
+        publishSub: publish,
         deleteBranchById: deleteBranchByIdFactory({ db: projectDB })
       })
       return await deleteBranchAndNotify(args.input, ctx.userId!)
