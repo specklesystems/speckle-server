@@ -119,9 +119,6 @@ export const init: SpeckleModule['init'] = async (app, isInitial) => {
         }
       )
 
-      // FIXME: Fix the type issue
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-expect-error
       req.pipe(pipedReq)
     }
   )
