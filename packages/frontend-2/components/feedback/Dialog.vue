@@ -47,6 +47,7 @@ const props = withDefaults(
     title?: string
     intro?: string
     hideSuppport?: boolean
+    metadata?: Record<string, unknown>
   }>(),
   {
     type: 'general'
@@ -92,7 +93,8 @@ const onSubmit = handleSubmit(async () => {
 
   mixpanel.track('Feedback Sent', {
     message: feedback.value,
-    feedbackType: props.type
+    feedbackType: props.type,
+    ...props.metadata
   })
 
   await sendWebhook(defaultZapierWebhookUrl, {

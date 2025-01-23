@@ -7,11 +7,9 @@ import {
 import {
   AddStreamAccessRequestDeclinedActivity,
   AddStreamAccessRequestedActivity,
-  AddStreamInviteSentOutActivity,
-  SaveActivity
+  AddStreamInviteSentOutActivity
 } from '@/modules/activitystream/domain/operations'
 import { GetStream } from '@/modules/core/domain/streams/operations'
-import { UserEvents } from '@/modules/core/domain/users/events'
 import {
   ServerInvitesEvents,
   ServerInvitesEventsPayloads
@@ -21,22 +19,6 @@ import {
   resolveTarget
 } from '@/modules/serverinvites/helpers/core'
 import { EventPayload } from '@/modules/shared/services/eventBus'
-
-export const onUserCreatedFactory =
-  ({ saveActivity }: { saveActivity: SaveActivity }) =>
-  async (payload: EventPayload<typeof UserEvents.Created>) => {
-    const { user } = payload.payload
-
-    await saveActivity({
-      streamId: null,
-      resourceType: 'user',
-      resourceId: user.id,
-      actionType: 'user_create',
-      userId: user.id,
-      info: { user },
-      message: 'User created'
-    })
-  }
 
 export const onServerAccessRequestCreatedFactory =
   ({

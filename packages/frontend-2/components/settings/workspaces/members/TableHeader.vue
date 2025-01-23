@@ -43,7 +43,7 @@ import { MagnifyingGlassIcon } from '@heroicons/vue/24/outline'
 import { useDebouncedTextInput } from '@speckle/ui-components'
 import type { SettingsWorkspacesMembersTableHeader_WorkspaceFragment } from '~/lib/common/generated/gql/graphql'
 import { graphql } from '~/lib/common/generated/gql'
-import { Roles, type WorkspaceRoles } from '@speckle/shared'
+import { Roles, type WorkspaceRoles, type MaybeNullOrUndefined } from '@speckle/shared'
 
 graphql(`
   fragment SettingsWorkspacesMembersTableHeader_Workspace on Workspace {
@@ -55,8 +55,7 @@ graphql(`
 
 const props = defineProps<{
   searchPlaceholder: string
-  workspaceId: string
-  workspace?: SettingsWorkspacesMembersTableHeader_WorkspaceFragment
+  workspace: MaybeNullOrUndefined<SettingsWorkspacesMembersTableHeader_WorkspaceFragment>
   showRoleFilter?: boolean
 }>()
 

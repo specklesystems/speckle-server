@@ -24,6 +24,7 @@ import {
 import { getCacheId, getFirstErrorMessage } from '~/lib/common/helpers/graphql'
 import { settingsDeleteWorkspaceDomainMutation } from '~/lib/settings/graphql/mutations'
 import { useMixpanel } from '~/lib/core/composables/mp'
+import type { MaybeNullOrUndefined } from '@speckle/shared'
 
 graphql(`
   fragment SettingsWorkspacesSecurityDomainRemoveDialog_WorkspaceDomain on WorkspaceDomain {
@@ -42,7 +43,7 @@ graphql(`
 `)
 
 const props = defineProps<{
-  workspaceId: string
+  workspaceId: MaybeNullOrUndefined<string>
   domain: SettingsWorkspacesSecurityDomainRemoveDialog_WorkspaceDomainFragment
 }>()
 
@@ -53,6 +54,8 @@ const { triggerNotification } = useGlobalToast()
 const mixpanel = useMixpanel()
 
 const handleRemove = async () => {
+  if (!props.workspaceId) return
+
   const result = await apollo
     .mutate({
       mutation: settingsDeleteWorkspaceDomainMutation,
@@ -64,7 +67,7 @@ const handleRemove = async () => {
       },
       update: (cache, res) => {
         const { data } = res
-        if (!data?.workspaceMutations) return
+        if (!data?.workspaceMutations || !props.workspaceId) return
 
         cache.modify<Workspace>({
           id: getCacheId('Workspace', props.workspaceId),

@@ -159,7 +159,7 @@ export type ValidateUserPassword = (params: {
   password: string
 }) => Promise<boolean>
 
-export type DeleteUser = (id: string) => Promise<boolean>
+export type DeleteUser = (id: string, invokerId?: string) => Promise<boolean>
 
 export type ChangeUserRole = (params: { userId: string; role: string }) => Promise<void>
 
