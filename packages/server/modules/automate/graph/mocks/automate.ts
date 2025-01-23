@@ -18,7 +18,6 @@ import { faker } from '@faker-js/faker'
 import { Automate, isNullOrUndefined, SourceAppNames } from '@speckle/shared'
 import dayjs from 'dayjs'
 import { times } from 'lodash'
-import { LimitedUser } from '@/modules/core/domain/users/types'
 
 const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
 
@@ -52,7 +51,7 @@ const getRandomModelVersion = async (offset?: number) => {
 
 const mocks: SpeckleModuleMocksConfig = FF_AUTOMATE_MODULE_ENABLED
   ? {
-      resolvers: ({ store, helpers: { getMockRef } }) => ({
+      resolvers: ({ store, helpers: { getMockRef, resolveAndCache } }) => ({
         AutomationRevisionTriggerDefinition: {
           __resolveType: () => 'VersionCreatedTriggerDefinition'
         },
@@ -247,15 +246,10 @@ const mocks: SpeckleModuleMocksConfig = FF_AUTOMATE_MODULE_ENABLED
           }
         },
         AutomateFunction: {
-          creator: async (_parent, args, ctx) => {
+          creator: resolveAndCache((parent, args, ctx) => {
             const rand = faker.datatype.boolean()
-            const user = getMockRef<LimitedUser>('LimitedUser')
-
-            return {
-              ...user,
-              id: rand ? user.id : ctx.userId || user.id
-            }
-          },
+            return getMockRef('LimitedUser', { id: !rand ? ctx.userId : undefined })
+          }),
           releases: () => store.get('AutomateFunctionReleaseCollection') as any
         },
         AutomateFunctionRelease: {
