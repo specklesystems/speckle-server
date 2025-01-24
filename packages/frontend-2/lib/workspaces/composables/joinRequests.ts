@@ -20,13 +20,16 @@ export const useWorkspaceJoinRequest = () => {
   const { mutate: denyMutation } = useMutation(denyWorkspaceJoinRequestMutation)
   const { triggerNotification } = useGlobalToast()
 
-  const approve = async (input: ApproveWorkspaceJoinRequestInput, id: string) => {
+  const approve = async (
+    input: ApproveWorkspaceJoinRequestInput,
+    requestId: string
+  ) => {
     const result = await approveMutation(
       { input },
       {
         update: (cache) => {
           cache.evict({
-            id: getCacheId('WorkspaceJoinRequest', id)
+            id: getCacheId('WorkspaceJoinRequest', requestId)
           })
 
           modifyObjectField(
@@ -61,13 +64,13 @@ export const useWorkspaceJoinRequest = () => {
     }
   }
 
-  const deny = async (input: DenyWorkspaceJoinRequestInput, id: string) => {
+  const deny = async (input: DenyWorkspaceJoinRequestInput, requestId: string) => {
     const result = await denyMutation(
       { input },
       {
         update: (cache) => {
           cache.evict({
-            id: getCacheId('WorkspaceJoinRequest', id)
+            id: getCacheId('WorkspaceJoinRequest', requestId)
           })
 
           modifyObjectField(
