@@ -211,6 +211,8 @@ export const resetPubSubFactory = (deps: { db: Knex }) => async () => {
 
   // Drop all subs
   for (const subscription of subscriptions.rows) {
+    // If we do not log something here, CircleCI may kill the job while we wait all `dropSubs` calls to finish.
+    console.log(`Dropping subscription ${subscription.subname}`)
     await dropSubs(subscription)
     await wait(500)
   }
