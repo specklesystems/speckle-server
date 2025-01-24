@@ -21,6 +21,8 @@ import {
 import { Roles } from '@speckle/shared'
 import { FindEmailsByUserId } from '@/modules/core/domain/userEmails/operations'
 import { userEmailsCompliantWithWorkspaceDomains } from '@/modules/workspaces/domain/logic'
+import { EventBus } from '@/modules/shared/services/eventBus'
+import { WorkspaceEvents } from '@/modules/workspacesCore/domain/events'
 
 export const dismissWorkspaceJoinRequestFactory =
   ({
@@ -104,7 +106,8 @@ export const approveWorkspaceJoinRequestFactory =
     getUserById,
     getWorkspace,
     getWorkspaceJoinRequest,
-    upsertWorkspaceRole
+    upsertWorkspaceRole,
+    emit
   }: {
     updateWorkspaceJoinRequestStatus: UpdateWorkspaceJoinRequestStatus
     sendWorkspaceJoinRequestApprovedEmail: SendWorkspaceJoinRequestApprovedEmail
@@ -112,6 +115,7 @@ export const approveWorkspaceJoinRequestFactory =
     getWorkspace: GetWorkspace
     getWorkspaceJoinRequest: GetWorkspaceJoinRequest
     upsertWorkspaceRole: UpsertWorkspaceRole
+    emit: EventBus['emit']
   }) =>
   async ({ userId, workspaceId }: { userId: string; workspaceId: string }) => {
     const requester = await getUserById(userId)
@@ -141,6 +145,8 @@ export const approveWorkspaceJoinRequestFactory =
 
     const role = Roles.Workspace.Member
     await upsertWorkspaceRole({ userId, workspaceId, role, createdAt: new Date() })
+
+    await emit({ eventName: WorkspaceEvents.Updated, payload: { workspace } })
 
     await sendWorkspaceJoinRequestApprovedEmail({
       workspace,
