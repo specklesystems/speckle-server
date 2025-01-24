@@ -16,21 +16,7 @@ export const userEmailsQuery = graphql(`
       emails {
         ...EmailFields
       }
-    }
-  }
-`)
-
-export const deleteUserEmailMutation = graphql(`
-  mutation DeleteUserEmail($input: DeleteUserEmailInput!) {
-    activeUserMutations {
-      emailMutations {
-        delete(input: $input) {
-          id
-          emails {
-            ...EmailFields
-          }
-        }
-      }
+      hasPendingVerification
     }
   }
 `)

@@ -30,12 +30,9 @@
 </template>
 
 <script setup lang="ts">
-import { isEmail, isRequired } from '~~/lib/common/helpers/validation'
 import { useForm } from 'vee-validate'
-import { useMutation } from '@vue/apollo-composable'
-import { settingsCreateUserEmailMutation } from '~/lib/settings/graphql/mutations'
-import { convertThrowIntoFetchResult } from '~~/lib/common/helpers/graphql'
-import { useMixpanel } from '~/lib/core/composables/mp'
+import { isEmail, isRequired } from '~~/lib/common/helpers/validation'
+import { useUserEmails } from '~/lib/user/composables/emails'
 
 definePageMeta({
   layout: 'settings'
@@ -48,18 +45,13 @@ useHead({
 type FormValues = { email: string }
 
 const { handleSubmit } = useForm<FormValues>()
-const { mutate: createMutation } = useMutation(settingsCreateUserEmailMutation)
-const mixpanel = useMixpanel()
-
+const { addUserEmail } = useUserEmails()
 const email = ref('')
 
 const onAddEmailSubmit = handleSubmit(async () => {
-  const result = await createMutation({ input: { email: email.value } }).catch(
-    convertThrowIntoFetchResult
-  )
-  if (result?.data) {
+  const success = await addUserEmail(email.value)
+  if (success) {
     email.value = ''
-    mixpanel.track('Email Added')
   }
 })
 </script>

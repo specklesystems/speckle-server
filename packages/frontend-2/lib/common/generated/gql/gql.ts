@@ -315,8 +315,7 @@ const documents = {
     "\n  mutation UpdateNotificationPreferences($input: JSONObject!) {\n    userNotificationPreferencesUpdate(preferences: $input)\n  }\n": types.UpdateNotificationPreferencesDocument,
     "\n  mutation DeleteAccount($input: UserDeleteInput!) {\n    userDelete(userConfirmation: $input)\n  }\n": types.DeleteAccountDocument,
     "\n  fragment EmailFields on UserEmail {\n    id\n    email\n    verified\n    primary\n  }\n": types.EmailFieldsFragmentDoc,
-    "\n  query UserEmails {\n    activeUser {\n      id\n      emails {\n        ...EmailFields\n      }\n    }\n  }\n": types.UserEmailsDocument,
-    "\n  mutation DeleteUserEmail($input: DeleteUserEmailInput!) {\n    activeUserMutations {\n      emailMutations {\n        delete(input: $input) {\n          id\n          emails {\n            ...EmailFields\n          }\n        }\n      }\n    }\n  }\n": types.DeleteUserEmailDocument,
+    "\n  query UserEmails {\n    activeUser {\n      id\n      emails {\n        ...EmailFields\n      }\n      hasPendingVerification\n    }\n  }\n": types.UserEmailsDocument,
     "\n  fragment ViewerCommentBubblesData on Comment {\n    id\n    viewedAt\n    viewerState\n  }\n": types.ViewerCommentBubblesDataFragmentDoc,
     "\n  fragment ViewerCommentThread on Comment {\n    ...ViewerCommentsListItem\n    ...ViewerCommentBubblesData\n    ...ViewerCommentsReplyItem\n  }\n": types.ViewerCommentThreadFragmentDoc,
     "\n  fragment ViewerCommentsReplyItem on Comment {\n    id\n    archived\n    rawText\n    text {\n      doc\n    }\n    author {\n      ...LimitedUserAvatar\n    }\n    createdAt\n    ...ThreadCommentAttachment\n  }\n": types.ViewerCommentsReplyItemFragmentDoc,
@@ -1612,11 +1611,7 @@ export function graphql(source: "\n  fragment EmailFields on UserEmail {\n    id
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query UserEmails {\n    activeUser {\n      id\n      emails {\n        ...EmailFields\n      }\n    }\n  }\n"): (typeof documents)["\n  query UserEmails {\n    activeUser {\n      id\n      emails {\n        ...EmailFields\n      }\n    }\n  }\n"];
-/**
- * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function graphql(source: "\n  mutation DeleteUserEmail($input: DeleteUserEmailInput!) {\n    activeUserMutations {\n      emailMutations {\n        delete(input: $input) {\n          id\n          emails {\n            ...EmailFields\n          }\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation DeleteUserEmail($input: DeleteUserEmailInput!) {\n    activeUserMutations {\n      emailMutations {\n        delete(input: $input) {\n          id\n          emails {\n            ...EmailFields\n          }\n        }\n      }\n    }\n  }\n"];
+export function graphql(source: "\n  query UserEmails {\n    activeUser {\n      id\n      emails {\n        ...EmailFields\n      }\n      hasPendingVerification\n    }\n  }\n"): (typeof documents)["\n  query UserEmails {\n    activeUser {\n      id\n      emails {\n        ...EmailFields\n      }\n      hasPendingVerification\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
