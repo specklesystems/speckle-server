@@ -1,21 +1,36 @@
 import { graphql } from '~/lib/common/generated/gql'
 
-graphql(`
-  fragment UserEmails_User on User {
+export const emailFieldsFragment = graphql(`
+  fragment EmailFields on UserEmail {
     id
-    emails {
-      id
-      email
-      primary
-      verified
-    }
+    email
+    verified
+    primary
   }
 `)
 
 export const userEmailsQuery = graphql(`
-  query UserEmailsQuery {
+  query UserEmails {
     activeUser {
-      ...UserEmails_User
+      id
+      emails {
+        ...EmailFields
+      }
+    }
+  }
+`)
+
+export const deleteUserEmailMutation = graphql(`
+  mutation DeleteUserEmail($input: DeleteUserEmailInput!) {
+    activeUserMutations {
+      emailMutations {
+        delete(input: $input) {
+          id
+          emails {
+            ...EmailFields
+          }
+        }
+      }
     }
   }
 `)

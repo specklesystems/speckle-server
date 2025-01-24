@@ -1,7 +1,5 @@
 <template>
-  <li
-    class="border-outline-2 border-x border-b first:border-t first:rounded-t-lg last:rounded-b-lg p-6 border-b-outline-3 last:border-b-outline-2"
-  >
+  <div class="p-6">
     <div
       v-if="emailData.primary || !emailData.verified"
       class="flex w-full gap-x-2 pb-4 md:pb-3"
@@ -70,15 +68,15 @@
       :email="emailData.email"
       :is-verifying="!emailData.verified"
     />
-  </li>
+  </div>
 </template>
 
 <script setup lang="ts">
-import type { SettingsUserEmailCards_UserEmailFragment } from '~~/lib/common/generated/gql/graphql'
+import type { UserEmail } from '~~/lib/common/generated/gql/graphql'
 import { useUserEmails } from '~/lib/user/composables/emails'
 
 const props = defineProps<{
-  emailData: SettingsUserEmailCards_UserEmailFragment
+  emailData: UserEmail
 }>()
 
 const { resendVerificationEmail } = useUserEmails()

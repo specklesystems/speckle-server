@@ -110,7 +110,6 @@ const documents = {
     "\n  fragment SettingsServerRegionsTable_ServerRegionItem on ServerRegionItem {\n    id\n    name\n    key\n    description\n  }\n": types.SettingsServerRegionsTable_ServerRegionItemFragmentDoc,
     "\n  fragment SettingsSharedDeleteUserDialog_Workspace on Workspace {\n    id\n    plan {\n      status\n      name\n    }\n    subscription {\n      currentBillingCycleEnd\n      seats {\n        guest\n        plan\n      }\n    }\n  }\n": types.SettingsSharedDeleteUserDialog_WorkspaceFragmentDoc,
     "\n  fragment SettingsSharedProjects_Project on Project {\n    ...ProjectsDeleteDialog_Project\n    id\n    name\n    visibility\n    createdAt\n    updatedAt\n    models(limit: 0) {\n      totalCount\n    }\n    versions(limit: 0) {\n      totalCount\n    }\n    team {\n      id\n      user {\n        name\n        id\n        avatar\n      }\n    }\n  }\n": types.SettingsSharedProjects_ProjectFragmentDoc,
-    "\n  fragment SettingsUserEmailCards_UserEmail on UserEmail {\n    email\n    id\n    primary\n    verified\n  }\n": types.SettingsUserEmailCards_UserEmailFragmentDoc,
     "\n  fragment SettingsUserProfileChangePassword_User on User {\n    id\n    email\n  }\n": types.SettingsUserProfileChangePassword_UserFragmentDoc,
     "\n  fragment SettingsUserProfileDeleteAccount_User on User {\n    id\n    email\n  }\n": types.SettingsUserProfileDeleteAccount_UserFragmentDoc,
     "\n  fragment SettingsUserProfileDetails_User on User {\n    id\n    name\n    company\n    ...UserProfileEditDialogAvatar_User\n  }\n": types.SettingsUserProfileDetails_UserFragmentDoc,
@@ -286,9 +285,9 @@ const documents = {
     "\n                      fragment AddDomainWorkspace on Workspace {\n                        slug\n                      }\n                    ": types.AddDomainWorkspaceFragmentDoc,
     "\n  fragment SettingsMenu_Workspace on Workspace {\n    id\n    sso {\n      provider {\n        id\n      }\n      session {\n        validUntil\n      }\n    }\n  }\n": types.SettingsMenu_WorkspaceFragmentDoc,
     "\n  mutation SettingsUpdateWorkspace($input: WorkspaceUpdateInput!) {\n    workspaceMutations {\n      update(input: $input) {\n        ...SettingsWorkspacesGeneral_Workspace\n      }\n    }\n  }\n": types.SettingsUpdateWorkspaceDocument,
-    "\n  mutation SettingsCreateUserEmail($input: CreateUserEmailInput!) {\n    activeUserMutations {\n      emailMutations {\n        create(input: $input) {\n          ...SettingsUserEmails_User\n        }\n      }\n    }\n  }\n": types.SettingsCreateUserEmailDocument,
-    "\n  mutation SettingsDeleteUserEmail($input: DeleteUserEmailInput!) {\n    activeUserMutations {\n      emailMutations {\n        delete(input: $input) {\n          ...SettingsUserEmails_User\n        }\n      }\n    }\n  }\n": types.SettingsDeleteUserEmailDocument,
-    "\n  mutation SettingsSetPrimaryUserEmail($input: SetPrimaryUserEmailInput!) {\n    activeUserMutations {\n      emailMutations {\n        setPrimary(input: $input) {\n          ...SettingsUserEmails_User\n        }\n      }\n    }\n  }\n": types.SettingsSetPrimaryUserEmailDocument,
+    "\n  mutation SettingsCreateUserEmail($input: CreateUserEmailInput!) {\n    activeUserMutations {\n      emailMutations {\n        create(input: $input) {\n          id\n          emails {\n            ...EmailFields\n          }\n        }\n      }\n    }\n  }\n": types.SettingsCreateUserEmailDocument,
+    "\n  mutation SettingsDeleteUserEmail($input: DeleteUserEmailInput!) {\n    activeUserMutations {\n      emailMutations {\n        delete(input: $input) {\n          id\n          emails {\n            ...EmailFields\n          }\n        }\n      }\n    }\n  }\n": types.SettingsDeleteUserEmailDocument,
+    "\n  mutation SettingsSetPrimaryUserEmail($input: SetPrimaryUserEmailInput!) {\n    activeUserMutations {\n      emailMutations {\n        setPrimary(input: $input) {\n          id\n          emails {\n            ...EmailFields\n          }\n        }\n      }\n    }\n  }\n": types.SettingsSetPrimaryUserEmailDocument,
     "\n  mutation SettingsNewEmailVerification($input: EmailVerificationRequestInput!) {\n    activeUserMutations {\n      emailMutations {\n        requestNewEmailVerification(input: $input)\n      }\n    }\n  }\n": types.SettingsNewEmailVerificationDocument,
     "\n  mutation SettingsUpdateWorkspaceSecurity($input: WorkspaceUpdateInput!) {\n    workspaceMutations {\n      update(input: $input) {\n        id\n        domainBasedMembershipProtectionEnabled\n        discoverabilityEnabled\n      }\n    }\n  }\n": types.SettingsUpdateWorkspaceSecurityDocument,
     "\n  mutation SettingsDeleteWorkspace($workspaceId: String!) {\n    workspaceMutations {\n      delete(workspaceId: $workspaceId)\n    }\n  }\n": types.SettingsDeleteWorkspaceDocument,
@@ -315,8 +314,9 @@ const documents = {
     "\n  mutation UpdateUser($input: UserUpdateInput!) {\n    activeUserMutations {\n      update(user: $input) {\n        id\n        name\n        bio\n        company\n        avatar\n      }\n    }\n  }\n": types.UpdateUserDocument,
     "\n  mutation UpdateNotificationPreferences($input: JSONObject!) {\n    userNotificationPreferencesUpdate(preferences: $input)\n  }\n": types.UpdateNotificationPreferencesDocument,
     "\n  mutation DeleteAccount($input: UserDeleteInput!) {\n    userDelete(userConfirmation: $input)\n  }\n": types.DeleteAccountDocument,
-    "\n  fragment UserEmails_User on User {\n    id\n    emails {\n      id\n      email\n      primary\n      verified\n    }\n  }\n": types.UserEmails_UserFragmentDoc,
-    "\n  query UserEmailsQuery {\n    activeUser {\n      ...UserEmails_User\n    }\n  }\n": types.UserEmailsQueryDocument,
+    "\n  fragment EmailFields on UserEmail {\n    id\n    email\n    verified\n    primary\n  }\n": types.EmailFieldsFragmentDoc,
+    "\n  query UserEmails {\n    activeUser {\n      id\n      emails {\n        ...EmailFields\n      }\n    }\n  }\n": types.UserEmailsDocument,
+    "\n  mutation DeleteUserEmail($input: DeleteUserEmailInput!) {\n    activeUserMutations {\n      emailMutations {\n        delete(input: $input) {\n          id\n          emails {\n            ...EmailFields\n          }\n        }\n      }\n    }\n  }\n": types.DeleteUserEmailDocument,
     "\n  fragment ViewerCommentBubblesData on Comment {\n    id\n    viewedAt\n    viewerState\n  }\n": types.ViewerCommentBubblesDataFragmentDoc,
     "\n  fragment ViewerCommentThread on Comment {\n    ...ViewerCommentsListItem\n    ...ViewerCommentBubblesData\n    ...ViewerCommentsReplyItem\n  }\n": types.ViewerCommentThreadFragmentDoc,
     "\n  fragment ViewerCommentsReplyItem on Comment {\n    id\n    archived\n    rawText\n    text {\n      doc\n    }\n    author {\n      ...LimitedUserAvatar\n    }\n    createdAt\n    ...ThreadCommentAttachment\n  }\n": types.ViewerCommentsReplyItemFragmentDoc,
@@ -382,7 +382,6 @@ const documents = {
     "\n  fragment ProjectPageSettingsTab_Project on Project {\n    id\n    role\n  }\n": types.ProjectPageSettingsTab_ProjectFragmentDoc,
     "\n  fragment SettingsServerProjects_ProjectCollection on ProjectCollection {\n    totalCount\n    items {\n      ...SettingsSharedProjects_Project\n    }\n  }\n": types.SettingsServerProjects_ProjectCollectionFragmentDoc,
     "\n  query SettingsServerRegions {\n    serverInfo {\n      multiRegion {\n        regions {\n          id\n          ...SettingsServerRegionsTable_ServerRegionItem\n        }\n        availableKeys\n      }\n    }\n  }\n": types.SettingsServerRegionsDocument,
-    "\n  fragment SettingsUserEmails_User on User {\n    id\n    emails {\n      ...SettingsUserEmailCards_UserEmail\n    }\n  }\n": types.SettingsUserEmails_UserFragmentDoc,
     "\n  fragment SettingsWorkspacesBilling_Workspace on Workspace {\n    ...BillingAlert_Workspace\n    id\n    role\n    plan {\n      name\n      status\n      createdAt\n      paymentMethod\n    }\n    subscription {\n      billingInterval\n      currentBillingCycleEnd\n      seats {\n        guest\n        plan\n      }\n    }\n    team {\n      items {\n        id\n        role\n      }\n    }\n  }\n": types.SettingsWorkspacesBilling_WorkspaceFragmentDoc,
     "\n  fragment SettingsWorkspacesGeneral_Workspace on Workspace {\n    ...SettingsWorkspacesGeneralEditAvatar_Workspace\n    ...SettingsWorkspaceGeneralDeleteDialog_Workspace\n    ...SettingsWorkspacesGeneralEditSlugDialog_Workspace\n    id\n    name\n    slug\n    description\n    logo\n    role\n    defaultProjectRole\n    plan {\n      status\n      name\n    }\n  }\n": types.SettingsWorkspacesGeneral_WorkspaceFragmentDoc,
     "\n  fragment SettingsWorkspacesMembers_Workspace on Workspace {\n    id\n    role\n    team {\n      items {\n        id\n        role\n      }\n    }\n    invitedTeam(filter: $invitesFilter) {\n      user {\n        id\n      }\n    }\n  }\n": types.SettingsWorkspacesMembers_WorkspaceFragmentDoc,
@@ -790,10 +789,6 @@ export function graphql(source: "\n  fragment SettingsSharedDeleteUserDialog_Wor
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  fragment SettingsSharedProjects_Project on Project {\n    ...ProjectsDeleteDialog_Project\n    id\n    name\n    visibility\n    createdAt\n    updatedAt\n    models(limit: 0) {\n      totalCount\n    }\n    versions(limit: 0) {\n      totalCount\n    }\n    team {\n      id\n      user {\n        name\n        id\n        avatar\n      }\n    }\n  }\n"): (typeof documents)["\n  fragment SettingsSharedProjects_Project on Project {\n    ...ProjectsDeleteDialog_Project\n    id\n    name\n    visibility\n    createdAt\n    updatedAt\n    models(limit: 0) {\n      totalCount\n    }\n    versions(limit: 0) {\n      totalCount\n    }\n    team {\n      id\n      user {\n        name\n        id\n        avatar\n      }\n    }\n  }\n"];
-/**
- * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function graphql(source: "\n  fragment SettingsUserEmailCards_UserEmail on UserEmail {\n    email\n    id\n    primary\n    verified\n  }\n"): (typeof documents)["\n  fragment SettingsUserEmailCards_UserEmail on UserEmail {\n    email\n    id\n    primary\n    verified\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -1497,15 +1492,15 @@ export function graphql(source: "\n  mutation SettingsUpdateWorkspace($input: Wo
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  mutation SettingsCreateUserEmail($input: CreateUserEmailInput!) {\n    activeUserMutations {\n      emailMutations {\n        create(input: $input) {\n          ...SettingsUserEmails_User\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation SettingsCreateUserEmail($input: CreateUserEmailInput!) {\n    activeUserMutations {\n      emailMutations {\n        create(input: $input) {\n          ...SettingsUserEmails_User\n        }\n      }\n    }\n  }\n"];
+export function graphql(source: "\n  mutation SettingsCreateUserEmail($input: CreateUserEmailInput!) {\n    activeUserMutations {\n      emailMutations {\n        create(input: $input) {\n          id\n          emails {\n            ...EmailFields\n          }\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation SettingsCreateUserEmail($input: CreateUserEmailInput!) {\n    activeUserMutations {\n      emailMutations {\n        create(input: $input) {\n          id\n          emails {\n            ...EmailFields\n          }\n        }\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  mutation SettingsDeleteUserEmail($input: DeleteUserEmailInput!) {\n    activeUserMutations {\n      emailMutations {\n        delete(input: $input) {\n          ...SettingsUserEmails_User\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation SettingsDeleteUserEmail($input: DeleteUserEmailInput!) {\n    activeUserMutations {\n      emailMutations {\n        delete(input: $input) {\n          ...SettingsUserEmails_User\n        }\n      }\n    }\n  }\n"];
+export function graphql(source: "\n  mutation SettingsDeleteUserEmail($input: DeleteUserEmailInput!) {\n    activeUserMutations {\n      emailMutations {\n        delete(input: $input) {\n          id\n          emails {\n            ...EmailFields\n          }\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation SettingsDeleteUserEmail($input: DeleteUserEmailInput!) {\n    activeUserMutations {\n      emailMutations {\n        delete(input: $input) {\n          id\n          emails {\n            ...EmailFields\n          }\n        }\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  mutation SettingsSetPrimaryUserEmail($input: SetPrimaryUserEmailInput!) {\n    activeUserMutations {\n      emailMutations {\n        setPrimary(input: $input) {\n          ...SettingsUserEmails_User\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation SettingsSetPrimaryUserEmail($input: SetPrimaryUserEmailInput!) {\n    activeUserMutations {\n      emailMutations {\n        setPrimary(input: $input) {\n          ...SettingsUserEmails_User\n        }\n      }\n    }\n  }\n"];
+export function graphql(source: "\n  mutation SettingsSetPrimaryUserEmail($input: SetPrimaryUserEmailInput!) {\n    activeUserMutations {\n      emailMutations {\n        setPrimary(input: $input) {\n          id\n          emails {\n            ...EmailFields\n          }\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation SettingsSetPrimaryUserEmail($input: SetPrimaryUserEmailInput!) {\n    activeUserMutations {\n      emailMutations {\n        setPrimary(input: $input) {\n          id\n          emails {\n            ...EmailFields\n          }\n        }\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -1613,11 +1608,15 @@ export function graphql(source: "\n  mutation DeleteAccount($input: UserDeleteIn
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment UserEmails_User on User {\n    id\n    emails {\n      id\n      email\n      primary\n      verified\n    }\n  }\n"): (typeof documents)["\n  fragment UserEmails_User on User {\n    id\n    emails {\n      id\n      email\n      primary\n      verified\n    }\n  }\n"];
+export function graphql(source: "\n  fragment EmailFields on UserEmail {\n    id\n    email\n    verified\n    primary\n  }\n"): (typeof documents)["\n  fragment EmailFields on UserEmail {\n    id\n    email\n    verified\n    primary\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query UserEmailsQuery {\n    activeUser {\n      ...UserEmails_User\n    }\n  }\n"): (typeof documents)["\n  query UserEmailsQuery {\n    activeUser {\n      ...UserEmails_User\n    }\n  }\n"];
+export function graphql(source: "\n  query UserEmails {\n    activeUser {\n      id\n      emails {\n        ...EmailFields\n      }\n    }\n  }\n"): (typeof documents)["\n  query UserEmails {\n    activeUser {\n      id\n      emails {\n        ...EmailFields\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  mutation DeleteUserEmail($input: DeleteUserEmailInput!) {\n    activeUserMutations {\n      emailMutations {\n        delete(input: $input) {\n          id\n          emails {\n            ...EmailFields\n          }\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation DeleteUserEmail($input: DeleteUserEmailInput!) {\n    activeUserMutations {\n      emailMutations {\n        delete(input: $input) {\n          id\n          emails {\n            ...EmailFields\n          }\n        }\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -1878,10 +1877,6 @@ export function graphql(source: "\n  fragment SettingsServerProjects_ProjectColl
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  query SettingsServerRegions {\n    serverInfo {\n      multiRegion {\n        regions {\n          id\n          ...SettingsServerRegionsTable_ServerRegionItem\n        }\n        availableKeys\n      }\n    }\n  }\n"): (typeof documents)["\n  query SettingsServerRegions {\n    serverInfo {\n      multiRegion {\n        regions {\n          id\n          ...SettingsServerRegionsTable_ServerRegionItem\n        }\n        availableKeys\n      }\n    }\n  }\n"];
-/**
- * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function graphql(source: "\n  fragment SettingsUserEmails_User on User {\n    id\n    emails {\n      ...SettingsUserEmailCards_UserEmail\n    }\n  }\n"): (typeof documents)["\n  fragment SettingsUserEmails_User on User {\n    id\n    emails {\n      ...SettingsUserEmailCards_UserEmail\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

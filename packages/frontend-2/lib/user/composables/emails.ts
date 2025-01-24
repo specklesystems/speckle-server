@@ -8,6 +8,8 @@ import {
   convertThrowIntoFetchResult,
   getFirstErrorMessage
 } from '~/lib/common/helpers/graphql'
+import { orderBy } from 'lodash-es'
+import type { UserEmail } from '~/lib/common/generated/gql/graphql'
 
 export function useUserEmails() {
   const { triggerNotification } = useGlobalToast()
@@ -16,7 +18,10 @@ export function useUserEmails() {
   const { mutate: resendMutation } = useMutation(settingsNewEmailVerificationMutation)
   const { mutate: deleteMutation } = useMutation(settingsDeleteUserEmailMutation)
 
-  const emails = computed(() => result.value?.activeUser?.emails ?? [])
+  const emails = computed(() => {
+    const emailList = result.value?.activeUser?.emails ?? []
+    return orderBy(emailList, ['primary', 'verified'], ['desc', 'desc']) as UserEmail[]
+  })
 
   const unverifiedEmail = computed(() => {
     const email =

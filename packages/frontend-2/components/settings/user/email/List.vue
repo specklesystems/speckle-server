@@ -1,17 +1,15 @@
 <template>
-  <ul class="flex flex-col">
-    <SettingsUserEmailListItem
-      v-for="email in emailData"
-      :key="email.id"
-      :email-data="email"
-    />
+  <ul
+    class="flex flex-col border border-outline-2 rounded-lg divide-y divide-outline-2"
+  >
+    <li v-for="email in emails" :key="email.id">
+      <SettingsUserEmailListItem :email-data="email" />
+    </li>
   </ul>
 </template>
 
 <script setup lang="ts">
-import type { UserEmail } from '~~/lib/common/generated/gql/graphql'
+import { useUserEmails } from '~/lib/user/composables/emails'
 
-defineProps<{
-  emailData: UserEmail[]
-}>()
+const { emails } = useUserEmails()
 </script>

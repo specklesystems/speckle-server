@@ -12,7 +12,12 @@
     </p>
     <FormCodeInput v-model="code" :error="hasError" @complete="console.log('done')" />
     <div class="mt-8 flex gap-2">
-      <FormButton color="subtle" size="sm" @click="showDeleteDialog = true">
+      <FormButton
+        v-if="unverifiedEmail?.primary"
+        color="subtle"
+        size="sm"
+        @click="showDeleteDialog = true"
+      >
         Cancel
       </FormButton>
       <FormButton

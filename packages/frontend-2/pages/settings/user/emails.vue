@@ -6,7 +6,7 @@
         text="Manage your email addresses"
       />
       <SettingsSectionHeader title="Your emails" subheading />
-      <SettingsUserEmailList class="pt-6" :email-data="emails" />
+      <SettingsUserEmailList />
       <hr class="my-6 md:my-8 border-outline-2" />
       <SettingsSectionHeader title="Add new email" subheading />
       <div class="flex flex-col md:flex-row w-full pt-4 md:pt-6 pb-6">
@@ -36,7 +36,6 @@ import { useMutation } from '@vue/apollo-composable'
 import { settingsCreateUserEmailMutation } from '~/lib/settings/graphql/mutations'
 import { convertThrowIntoFetchResult } from '~~/lib/common/helpers/graphql'
 import { useMixpanel } from '~/lib/core/composables/mp'
-import { useUserEmails } from '~/lib/user/composables/emails'
 
 definePageMeta({
   layout: 'settings'
@@ -49,7 +48,6 @@ useHead({
 type FormValues = { email: string }
 
 const { handleSubmit } = useForm<FormValues>()
-const { emails } = useUserEmails()
 const { mutate: createMutation } = useMutation(settingsCreateUserEmailMutation)
 const mixpanel = useMixpanel()
 
