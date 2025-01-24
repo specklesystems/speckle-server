@@ -123,7 +123,6 @@ import type { ShallowRef } from 'vue'
 import { useQuery, useMutation } from '@vue/apollo-composable'
 import { graphql } from '~/lib/common/generated/gql'
 import type { SettingsWorkspacesSecurityDomainRemoveDialog_WorkspaceDomainFragment } from '~/lib/common/generated/gql/graphql'
-import { getFirstErrorMessage } from '~/lib/common/helpers/graphql'
 import { settingsWorkspacesSecurityQuery } from '~/lib/settings/graphql/queries'
 import { useAddWorkspaceDomain } from '~/lib/settings/composables/management'
 import { useMixpanel } from '~/lib/core/composables/mp'
@@ -170,7 +169,6 @@ const slug = computed(() => (route.params.slug as string) || '')
 
 const route = useRoute()
 const addWorkspaceDomain = useAddWorkspaceDomain()
-const { triggerNotification } = useGlobalToast()
 const isSsoEnabled = useIsWorkspacesSsoEnabled()
 const mixpanel = useMixpanel()
 const { mutate: updateDomainProtection } = useMutation(
@@ -226,17 +224,6 @@ const isDomainProtectionEnabled = computed({
         // eslint-disable-next-line camelcase
         workspace_id: workspace.value?.id
       })
-
-      triggerNotification({
-        type: ToastNotificationType.Success,
-        title: `Domain protection ${newVal ? 'enabled' : 'disabled'}`
-      })
-    } else {
-      triggerNotification({
-        type: ToastNotificationType.Danger,
-        title: 'Failed to update',
-        description: getFirstErrorMessage(result?.errors)
-      })
     }
   }
 })
@@ -258,17 +245,6 @@ const isDomainDiscoverabilityEnabled = computed({
         value: newVal,
         // eslint-disable-next-line camelcase
         workspace_id: workspace.value?.id
-      })
-
-      triggerNotification({
-        type: ToastNotificationType.Success,
-        title: `Discoverability ${newVal ? 'enabled' : 'disabled'}`
-      })
-    } else {
-      triggerNotification({
-        type: ToastNotificationType.Danger,
-        title: 'Failed to update',
-        description: getFirstErrorMessage(result?.errors)
       })
     }
   }

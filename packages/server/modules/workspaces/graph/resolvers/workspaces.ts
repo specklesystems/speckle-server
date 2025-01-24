@@ -1423,12 +1423,12 @@ export = FF_WORKSPACES_MODULE_ENABLED
             context.resourceAccessRules
           )
 
-          const userId = parent.id
-
-          return await getWorkspaceRoleForUserFactory({ db })({
-            userId,
+          const role = await getWorkspaceRoleForUserFactory({ db })({
+            userId: parent.id,
             workspaceId
           })
+
+          return role?.role ?? null
         }
       },
       ServerInfo: {

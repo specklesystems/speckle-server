@@ -245,7 +245,8 @@ const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
             getUserById: async () => null,
             getWorkspace: async () => null,
             getWorkspaceJoinRequest: async () => undefined,
-            upsertWorkspaceRole: async () => Promise.resolve()
+            upsertWorkspaceRole: async () => Promise.resolve(),
+            emit: async () => Promise.resolve()
           })({ workspaceId: createRandomString(), userId: createRandomString() })
         )
 
@@ -261,7 +262,8 @@ const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
             getUserById: async () => user as unknown as UserWithOptionalRole,
             getWorkspace: async () => null,
             getWorkspaceJoinRequest: async () => undefined,
-            upsertWorkspaceRole: async () => Promise.resolve()
+            upsertWorkspaceRole: async () => Promise.resolve(),
+            emit: async () => Promise.resolve()
           })({ workspaceId: createRandomString(), userId: createRandomString() })
         )
 
@@ -285,7 +287,8 @@ const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
             getUserById: async () => user as unknown as UserWithOptionalRole,
             getWorkspace: async () => workspace as unknown as Workspace,
             getWorkspaceJoinRequest: async () => undefined,
-            upsertWorkspaceRole: async () => Promise.resolve()
+            upsertWorkspaceRole: async () => Promise.resolve(),
+            emit: async () => Promise.resolve()
           })({ workspaceId: createRandomString(), userId: createRandomString() })
         )
 
@@ -343,7 +346,8 @@ const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
             getUserById: async () => user as unknown as UserWithOptionalRole,
             getWorkspace: async () => workspace as unknown as Workspace,
             getWorkspaceJoinRequest: async () => request,
-            upsertWorkspaceRole
+            upsertWorkspaceRole,
+            emit: async () => Promise.resolve()
           })({ workspaceId: workspace.id, userId: user.id })
         ).to.equal(true)
 
