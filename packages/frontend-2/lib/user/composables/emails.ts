@@ -3,7 +3,7 @@ import {
   settingsNewEmailVerificationMutation,
   settingsDeleteUserEmailMutation
 } from '~/lib/settings/graphql/mutations'
-import { settingsUserEmailsQuery } from '~/lib/settings/graphql/queries'
+import { userEmailsQuery } from '~/lib/user/graphql/queries'
 import {
   convertThrowIntoFetchResult,
   getFirstErrorMessage
@@ -12,7 +12,7 @@ import {
 export function useUserEmails() {
   const { triggerNotification } = useGlobalToast()
 
-  const { result } = useQuery(settingsUserEmailsQuery)
+  const { result } = useQuery(userEmailsQuery)
   const { mutate: resendMutation } = useMutation(settingsNewEmailVerificationMutation)
   const { mutate: deleteMutation } = useMutation(settingsDeleteUserEmailMutation)
 
@@ -25,17 +25,15 @@ export function useUserEmails() {
     return email || null
   })
 
-  const resendVerificationEmail = async () => {
-    if (!unverifiedEmail.value?.id) return null
-
+  const resendVerificationEmail = async (emailId: string, email: string) => {
     const result = await resendMutation({
-      input: { id: unverifiedEmail.value.id }
+      input: { id: emailId }
     }).catch(convertThrowIntoFetchResult)
 
     if (result?.data) {
       triggerNotification({
         type: ToastNotificationType.Success,
-        title: `Verification email sent to ${unverifiedEmail.value.email}`
+        title: `Verification email sent to ${email}`
       })
       return true
     }

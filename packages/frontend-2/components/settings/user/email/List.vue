@@ -9,9 +9,9 @@
 </template>
 
 <script setup lang="ts">
-import type { SettingsUserEmailCards_UserEmailFragment } from '~~/lib/common/generated/gql/graphql'
+import type { UserEmail } from '~~/lib/common/generated/gql/graphql'
 
 defineProps<{
-  emailData: SettingsUserEmailCards_UserEmailFragment[]
+  emailData: UserEmail[]
 }>()
 </script>

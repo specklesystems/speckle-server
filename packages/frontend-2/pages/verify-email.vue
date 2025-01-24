@@ -71,7 +71,11 @@ const { pause: stopInterval, resume: startInterval } = useIntervalFn(
 )
 
 const resendEmail = async () => {
-  const success = await resendVerificationEmail()
+  if (!unverifiedEmail.value) return
+  const success = await resendVerificationEmail(
+    unverifiedEmail.value.id,
+    unverifiedEmail.value?.email
+  )
   if (success) {
     cooldownRemaining.value = 30
     startInterval()

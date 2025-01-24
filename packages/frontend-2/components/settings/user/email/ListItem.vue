@@ -18,7 +18,7 @@
         v-if="!emailData.verified"
         color="outline"
         size="sm"
-        @click="resendVerificationEmail"
+        @click="resendVerificationEmail(emailData.id, emailData.email)"
       >
         Resend verification email
       </FormButton>
@@ -68,24 +68,14 @@
       v-model:open="showDeleteDialog"
       :email-id="emailData.id"
       :email="emailData.email"
+      :is-verifying="!emailData.verified"
     />
   </li>
 </template>
 
 <script setup lang="ts">
 import type { SettingsUserEmailCards_UserEmailFragment } from '~~/lib/common/generated/gql/graphql'
-import { graphql } from '~~/lib/common/generated/gql'
-
 import { useUserEmails } from '~/lib/user/composables/emails'
-
-graphql(`
-  fragment SettingsUserEmailCards_UserEmail on UserEmail {
-    email
-    id
-    primary
-    verified
-  }
-`)
 
 const props = defineProps<{
   emailData: SettingsUserEmailCards_UserEmailFragment
@@ -102,7 +92,6 @@ const primaryTooltip = computed(() => {
   } else if (!props.emailData.verified) {
     return 'Unverified emails cannot be set as primary'
   }
-
   return undefined
 })
 
@@ -112,7 +101,6 @@ const description = computed(() => {
   } else if (!props.emailData.verified) {
     return 'Unverified emails cannot be set as primary'
   }
-
   return null
 })
 
