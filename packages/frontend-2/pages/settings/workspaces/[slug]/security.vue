@@ -95,7 +95,7 @@
               </p>
               <p class="text-body-2xs text-foreground-2 leading-5 max-w-md">
                 When enabled, users with a verified email address from your verified
-                domain list will be able to able to automatically join this workspace.
+                domain list will be able to request to join this workspace.
               </p>
             </div>
             <FormSwitch
