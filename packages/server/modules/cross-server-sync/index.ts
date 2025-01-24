@@ -5,7 +5,6 @@ import {
   addCommentCreatedActivityFactory,
   addReplyAddedActivityFactory
 } from '@/modules/activitystream/services/commentActivity'
-import { addCommitCreatedActivityFactory } from '@/modules/activitystream/services/commitActivity'
 import { getBlobsFactory } from '@/modules/blobstorage/repositories'
 import {
   getCommentFactory,
@@ -153,11 +152,7 @@ const crossServerSyncModule: SpeckleModule = {
       insertBranchCommits: insertBranchCommitsFactory({ db }),
       markCommitStreamUpdated,
       markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
-      emitEvent: getEventBus().emit,
-      addCommitCreatedActivity: addCommitCreatedActivityFactory({
-        saveActivity: saveActivityFactory({ db }),
-        publish
-      })
+      emitEvent: getEventBus().emit
     })
 
     const createObject = createObjectFactory({

@@ -53,7 +53,6 @@ import {
 import { validateInputAttachmentsFactory } from '@/modules/comments/services/commentTextService'
 import { getBlobsFactory } from '@/modules/blobstorage/repositories'
 import { createCommitByBranchIdFactory } from '@/modules/core/services/commit/management'
-import { addCommitCreatedActivityFactory } from '@/modules/activitystream/services/commitActivity'
 import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import { publish } from '@/modules/shared/utils/subscriptions'
 import { getUserFactory } from '@/modules/core/repositories/users'
@@ -177,11 +176,7 @@ const command: CommandModule<
       insertBranchCommits: insertBranchCommitsFactory({ db: projectDb }),
       markCommitStreamUpdated,
       markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db: projectDb }),
-      emitEvent: getEventBus().emit,
-      addCommitCreatedActivity: addCommitCreatedActivityFactory({
-        saveActivity: saveActivityFactory({ db: mainDb }),
-        publish
-      })
+      emitEvent: getEventBus().emit
     })
 
     const createObject = createObjectFactory({

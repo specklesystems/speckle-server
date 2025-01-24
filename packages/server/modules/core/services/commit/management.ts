@@ -1,11 +1,4 @@
 import {
-  AddCommitCreatedActivity,
-  AddCommitDeletedActivity,
-  AddCommitUpdatedActivity,
-  SaveActivity
-} from '@/modules/activitystream/domain/operations'
-import { ActionTypes, ResourceTypes } from '@/modules/activitystream/helpers/types'
-import {
   GetBranchById,
   GetStreamBranchByName,
   MarkCommitBranchUpdated
@@ -49,7 +42,7 @@ import { ensureError, Roles } from '@speckle/shared'
 import { has } from 'lodash'
 
 export const markCommitReceivedAndNotifyFactory =
-  ({ getCommit, saveActivity }: { getCommit: GetCommit; saveActivity: SaveActivity }) =>
+  ({ getCommit, emitEvent }: { getCommit: GetCommit; emitEvent: EventBusEmit }) =>
   async (params: {
     input: MarkReceivedVersionInput | CommitReceivedInput
     userId: string
@@ -75,17 +68,15 @@ export const markCommitReceivedAndNotifyFactory =
       )
     }
 
-    await saveActivity({
-      streamId: oldInput.streamId,
-      resourceType: ResourceTypes.Commit,
-      resourceId: oldInput.commitId,
-      actionType: ActionTypes.Commit.Receive,
-      userId,
-      info: {
-        sourceApplication: input.sourceApplication,
-        message: input.message
-      },
-      message: `Commit ${oldInput.commitId} was received by user ${userId}`
+    await emitEvent({
+      eventName: VersionEvents.Received,
+      payload: {
+        projectId: oldInput.streamId,
+        versionId: oldInput.commitId,
+        userId,
+        sourceApplication: oldInput.sourceApplication,
+        message: oldInput.message
+      }
     })
   }
 
@@ -98,10 +89,9 @@ export const createCommitByBranchIdFactory =
     insertBranchCommits: InsertBranchCommits
     markCommitStreamUpdated: MarkCommitStreamUpdated
     markCommitBranchUpdated: MarkCommitBranchUpdated
-    addCommitCreatedActivity: AddCommitCreatedActivity
     emitEvent: EventBusEmit
   }): CreateCommitByBranchId =>
-  async (params, options) => {
+  async (params) => {
     const {
       streamId,
       branchId,
@@ -111,7 +101,6 @@ export const createCommitByBranchIdFactory =
       sourceApplication,
       parents
     } = params
-    const { notify = true } = options || {}
 
     // If no total children count is passed in, get it from the original object
     // that this commit references.
@@ -148,6 +137,10 @@ export const createCommitByBranchIdFactory =
       deps.insertStreamCommits([{ streamId, commitId: id }])
     ])
 
+    const input = {
+      ...params,
+      branchName: branch.name
+    }
     await Promise.all([
       deps.markCommitStreamUpdated(id),
       deps.markCommitBranchUpdated(id),
@@ -156,27 +149,12 @@ export const createCommitByBranchIdFactory =
         payload: {
           projectId: streamId,
           modelId: branchId,
-          version: commit
+          version: commit,
+          input,
+          modelName: branch.name,
+          userId: authorId
         }
-      }),
-      ...(notify
-        ? [
-            deps.addCommitCreatedActivity({
-              commitId: commit.id,
-              streamId,
-              userId: authorId,
-              branchName: branch.name,
-              input: {
-                ...commit,
-                branchName: branch.name,
-                objectId,
-                streamId
-              },
-              modelId: branch.id,
-              commit
-            })
-          ]
-        : [])
+      })
     ])
 
     return { ...commit, streamId, branchId }
@@ -188,7 +166,7 @@ export const createCommitByBranchNameFactory =
     getStreamBranchByName: GetStreamBranchByName
     getBranchById: GetBranchById
   }): CreateCommitByBranchName =>
-  async (params, options) => {
+  async (params) => {
     const {
       streamId,
       objectId,
@@ -198,9 +176,6 @@ export const createCommitByBranchNameFactory =
       parents,
       totalChildrenCount
     } = params
-
-    const { notify = true } = options || {}
-
     const branchName = params.branchName.toLowerCase()
     let myBranch = await deps.getStreamBranchByName(streamId, branchName)
     if (!myBranch) {
@@ -215,24 +190,21 @@ export const createCommitByBranchNameFactory =
       )
     }
 
-    const commit = await deps.createCommitByBranchId(
-      {
-        streamId,
-        branchId: myBranch.id,
-        objectId,
-        authorId,
-        message,
-        sourceApplication,
-        totalChildrenCount,
-        parents
-      },
-      { notify }
-    )
+    const commit = await deps.createCommitByBranchId({
+      streamId,
+      branchId: myBranch.id,
+      objectId,
+      authorId,
+      message,
+      sourceApplication,
+      totalChildrenCount,
+      parents
+    })
 
     return commit
   }
 
-const isOldVersionUpdateInput = (
+export const isOldVersionUpdateInput = (
   i: CommitUpdateInput | UpdateVersionInput
 ): i is CommitUpdateInput => has(i, 'streamId')
 
@@ -245,9 +217,9 @@ export const updateCommitAndNotifyFactory =
     getCommitBranch: GetCommitBranch
     switchCommitBranch: SwitchCommitBranch
     updateCommit: UpdateCommit
-    addCommitUpdatedActivity: AddCommitUpdatedActivity
     markCommitStreamUpdated: MarkCommitStreamUpdated
     markCommitBranchUpdated: MarkCommitBranchUpdated
+    emitEvent: EventBusEmit
   }): UpdateCommitAndNotify =>
   async (params: CommitUpdateInput | UpdateVersionInput, userId: string) => {
     const {
@@ -323,19 +295,21 @@ export const updateCommitAndNotifyFactory =
     }
 
     if (commit) {
-      await deps.addCommitUpdatedActivity({
-        commitId,
-        streamId: stream.id,
-        userId,
-        originalCommit: commit,
-        update: params,
-        newCommit,
-        branchId: branch!.id
-      })
-
       const [updatedBranch] = await Promise.all([
         deps.markCommitBranchUpdated(commit.id),
-        deps.markCommitStreamUpdated(commit.id)
+        deps.markCommitStreamUpdated(commit.id),
+        deps.emitEvent({
+          eventName: VersionEvents.Updated,
+          payload: {
+            projectId: stream.id,
+            modelId: branch!.id,
+            versionId: commitId,
+            newVersion: newCommit,
+            oldVersion: commit,
+            userId,
+            update: params
+          }
+        })
       ])
       branch = updatedBranch
     }
@@ -349,7 +323,7 @@ export const deleteCommitAndNotifyFactory =
     markCommitStreamUpdated: MarkCommitStreamUpdated
     markCommitBranchUpdated: MarkCommitBranchUpdated
     deleteCommit: DeleteCommit
-    addCommitDeletedActivity: AddCommitDeletedActivity
+    emitEvent: EventBusEmit
   }): DeleteCommitAndNotify =>
   async (commitId: string, streamId: string, userId: string) => {
     const commit = await deps.getCommit(commitId)
@@ -372,12 +346,15 @@ export const deleteCommitAndNotifyFactory =
 
     const isDeleted = await deps.deleteCommit(commitId)
     if (isDeleted) {
-      await deps.addCommitDeletedActivity({
-        commitId,
-        streamId,
-        userId,
-        commit,
-        branchId: updatedBranch.id
+      await deps.emitEvent({
+        eventName: VersionEvents.Deleted,
+        payload: {
+          projectId: streamId,
+          modelId: updatedBranch.id,
+          versionId: commitId,
+          userId,
+          version: commit
+        }
       })
     }
 

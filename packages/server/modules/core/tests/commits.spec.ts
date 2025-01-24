@@ -40,11 +40,6 @@ import {
   markCommitStreamUpdatedFactory
 } from '@/modules/core/repositories/streams'
 import {
-  addCommitUpdatedActivityFactory,
-  addCommitDeletedActivityFactory,
-  addCommitCreatedActivityFactory
-} from '@/modules/activitystream/services/commitActivity'
-import {
   getObjectFactory,
   storeSingleObjectIfNotFoundFactory,
   storeClosuresIfNotFoundFactory
@@ -64,8 +59,6 @@ import {
 import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
 import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import { saveActivityFactory } from '@/modules/activitystream/repositories'
-import { publish } from '@/modules/shared/utils/subscriptions'
 import {
   getUsersFactory,
   getUserFactory,
@@ -112,10 +105,7 @@ const deleteCommitAndNotify = deleteCommitAndNotifyFactory({
   markCommitStreamUpdated,
   markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
   deleteCommit: deleteCommitFactory({ db }),
-  addCommitDeletedActivity: addCommitDeletedActivityFactory({
-    saveActivity: saveActivityFactory({ db }),
-    publish
-  })
+  emitEvent: getEventBus().emit
 })
 
 const getObject = getObjectFactory({ db })
@@ -127,11 +117,7 @@ const createCommitByBranchId = createCommitByBranchIdFactory({
   insertBranchCommits: insertBranchCommitsFactory({ db }),
   markCommitStreamUpdated,
   markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
-  emitEvent: getEventBus().emit,
-  addCommitCreatedActivity: addCommitCreatedActivityFactory({
-    saveActivity: saveActivityFactory({ db }),
-    publish
-  })
+  emitEvent: getEventBus().emit
 })
 
 const createCommitByBranchName = createCommitByBranchNameFactory({
@@ -148,10 +134,7 @@ const updateCommitAndNotify = updateCommitAndNotifyFactory({
   getCommitBranch: getCommitBranchFactory({ db }),
   switchCommitBranch: switchCommitBranchFactory({ db }),
   updateCommit: updateCommitFactory({ db }),
-  addCommitUpdatedActivity: addCommitUpdatedActivityFactory({
-    saveActivity: saveActivityFactory({ db }),
-    publish
-  }),
+  emitEvent: getEventBus().emit,
   markCommitStreamUpdated,
   markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db })
 })

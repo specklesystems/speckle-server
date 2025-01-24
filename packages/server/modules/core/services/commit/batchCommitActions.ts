@@ -1,11 +1,8 @@
 import {
-  AddCommitDeletedActivity,
-  AddCommitMovedActivity
-} from '@/modules/activitystream/domain/operations'
-import {
   GetStreamBranchByName,
   StoreBranch
 } from '@/modules/core/domain/branches/operations'
+import { VersionEvents } from '@/modules/core/domain/commits/events'
 import {
   DeleteCommits,
   GetCommits,
@@ -26,6 +23,7 @@ import {
 } from '@/modules/core/graph/generated/graphql'
 import { Roles } from '@/modules/core/helpers/mainConstants'
 import { ensureError } from '@/modules/shared/helpers/errorHelper'
+import { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { difference, groupBy, has, keyBy } from 'lodash'
 
 type OldBatchInput = CommitsMoveInput | CommitsDeleteInput
@@ -153,7 +151,7 @@ export const batchMoveCommitsFactory =
     deps: ValidateCommitsMoveDeps & {
       createBranch: StoreBranch
       moveCommitsToBranch: MoveCommitsToBranch
-      addCommitMovedActivity: AddCommitMovedActivity
+      emitEvent: EventBusEmit
     }
   ): ValidateAndBatchMoveCommits =>
   async (params: CommitsMoveInput | MoveVersionsInput, userId: string) => {
@@ -177,16 +175,19 @@ export const batchMoveCommitsFactory =
 
       await deps.moveCommitsToBranch(commitIds, finalBranch.id)
       await Promise.all(
-        commitsWithStreams.map(({ commit, stream }) =>
-          deps.addCommitMovedActivity({
-            commitId: commit.id,
-            streamId: stream.id,
-            userId,
-            commit,
-            originalBranchId: commit.branchId,
-            newBranchId: finalBranch.id
+        commitsWithStreams.map(async ({ commit, stream }) => {
+          await deps.emitEvent({
+            eventName: VersionEvents.MovedModel,
+            payload: {
+              versionId: commit.id,
+              projectId: stream.id,
+              userId,
+              originalModelId: commit.branchId,
+              newModelId: finalBranch.id,
+              version: commit
+            }
           })
-        )
+        })
       )
       return finalBranch
     } catch (e) {
@@ -202,7 +203,7 @@ export const batchDeleteCommitsFactory =
   (
     deps: ValidateBatchBaseRulesDeps & {
       deleteCommits: DeleteCommits
-      addCommitDeletedActivity: AddCommitDeletedActivity
+      emitEvent: EventBusEmit
     }
   ): ValidateAndBatchDeleteCommits =>
   async (params: CommitsDeleteInput | DeleteVersionsInput, userId: string) => {
@@ -216,15 +217,20 @@ export const batchDeleteCommitsFactory =
     try {
       await deps.deleteCommits(commitIds)
       await Promise.all(
-        commitsWithStreams.map(({ commit, stream }) =>
-          deps.addCommitDeletedActivity({
-            commitId: commit.id,
-            streamId: stream.id,
-            userId,
-            commit,
-            branchId: commit.branchId
-          })
-        )
+        commitsWithStreams.map(async ({ commit, stream }) => {
+          await Promise.all([
+            deps.emitEvent({
+              eventName: VersionEvents.Deleted,
+              payload: {
+                projectId: stream.id,
+                modelId: commit.branchId,
+                versionId: commit.id,
+                userId,
+                version: commit
+              }
+            })
+          ])
+        })
       )
     } catch (e) {
       const err = ensureError(e)
