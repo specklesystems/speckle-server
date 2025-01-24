@@ -22,7 +22,7 @@ import {
 import { legacyGetUserFactory } from '@/modules/core/repositories/users'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { getPaginatedStreamBranchesFactory } from '@/modules/core/services/branch/retrieval'
-import { filteredSubscribe, publish } from '@/modules/shared/utils/subscriptions'
+import { filteredSubscribe } from '@/modules/shared/utils/subscriptions'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 
@@ -82,7 +82,6 @@ export = {
       const createBranchAndNotify = createBranchAndNotifyFactory({
         getStreamBranchByName,
         createBranch: createBranchFactory({ db: projectDB }),
-        publishSub: publish,
         eventEmit: getEventBus().emit
       })
       const { id } = await createBranchAndNotify(args.branch, context.userId!)
@@ -103,7 +102,6 @@ export = {
       const updateBranchAndNotify = updateBranchAndNotifyFactory({
         getBranchById,
         updateBranch: updateBranchFactory({ db: projectDB }),
-        publishSub: publish,
         eventEmit: getEventBus().emit
       })
       const newBranch = await updateBranchAndNotify(args.branch, context.userId!)
@@ -126,7 +124,6 @@ export = {
         getBranchById: getBranchByIdFactory({ db: projectDB }),
         emitEvent: getEventBus().emit,
         markBranchStreamUpdated,
-        publishSub: publish,
         deleteBranchById: deleteBranchByIdFactory({ db: projectDB })
       })
       const deleted = await deleteBranchAndNotify(args.branch, context.userId!)

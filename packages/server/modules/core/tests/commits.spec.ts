@@ -104,7 +104,6 @@ const createBranch = createBranchFactory({ db })
 const createBranchAndNotify = createBranchAndNotifyFactory({
   createBranch,
   getStreamBranchByName: getStreamBranchByNameFactory({ db }),
-  publishSub: publish,
   eventEmit: getEventBus().emit
 })
 const getCommit = getCommitFactory({ db })

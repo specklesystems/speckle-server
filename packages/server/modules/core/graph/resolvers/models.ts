@@ -20,8 +20,7 @@ import {
 } from '@/modules/core/services/commit/retrieval'
 import {
   filteredSubscribe,
-  ProjectSubscriptions,
-  publish
+  ProjectSubscriptions
 } from '@/modules/shared/utils/subscriptions'
 import {
   createBranchFactory,
@@ -306,7 +305,6 @@ export = {
       const createBranchAndNotify = createBranchAndNotifyFactory({
         getStreamBranchByName: getStreamBranchByNameFactory({ db: projectDB }),
         createBranch: createBranchFactory({ db: projectDB }),
-        publishSub: publish,
         eventEmit: getEventBus().emit
       })
       return await createBranchAndNotify(args.input, ctx.userId!)
@@ -322,7 +320,6 @@ export = {
       const updateBranchAndNotify = updateBranchAndNotifyFactory({
         getBranchById: getBranchByIdFactory({ db: projectDB }),
         updateBranch: updateBranchFactory({ db: projectDB }),
-        publishSub: publish,
         eventEmit: getEventBus().emit
       })
       return await updateBranchAndNotify(args.input, ctx.userId!)
@@ -342,7 +339,6 @@ export = {
         getBranchById: getBranchByIdFactory({ db: projectDB }),
         emitEvent: getEventBus().emit,
         markBranchStreamUpdated,
-        publishSub: publish,
         deleteBranchById: deleteBranchByIdFactory({ db: projectDB })
       })
       return await deleteBranchAndNotify(args.input, ctx.userId!)

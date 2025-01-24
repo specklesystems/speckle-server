@@ -155,7 +155,6 @@ const buildUpdateModel = async (params: { projectId: string }) => {
   const updateBranchAndNotify = updateBranchAndNotifyFactory({
     getBranchById: getBranchByIdFactory({ db: projectDB }),
     updateBranch: updateBranchFactory({ db: projectDB }),
-    publishSub: publish,
     eventEmit: getEventBus().emit
   })
   return updateBranchAndNotify
@@ -173,7 +172,6 @@ const buildDeleteModel = async (params: { projectId: string }) => {
     getBranchById: getBranchByIdFactory({ db: projectDB }),
     emitEvent: getEventBus().emit,
     markBranchStreamUpdated,
-    publishSub: publish,
     deleteBranchById: deleteBranchByIdFactory({ db: projectDB })
   })
   return deleteBranchAndNotify

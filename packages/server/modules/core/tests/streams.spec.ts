@@ -114,7 +114,6 @@ const deleteBranchAndNotify = deleteBranchAndNotifyFactory({
   getBranchById: getBranchByIdFactory({ db }),
   emitEvent: getEventBus().emit,
   markBranchStreamUpdated,
-  publishSub: publish,
   deleteBranchById: deleteBranchByIdFactory({ db })
 })
 

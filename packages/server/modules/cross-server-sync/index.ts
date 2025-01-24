@@ -195,7 +195,6 @@ const crossServerSyncModule: SpeckleModule = {
         createBranchAndNotify: createBranchAndNotifyFactory({
           createBranch: createBranchFactory({ db }),
           getStreamBranchByName,
-          publishSub: publish,
           eventEmit: getEventBus().emit
         })
       }),
