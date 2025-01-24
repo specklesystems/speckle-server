@@ -1169,7 +1169,7 @@ export type MarkReceivedVersionInput = {
 
 export type Model = {
   __typename?: 'Model';
-  author: LimitedUser;
+  author?: Maybe<LimitedUser>;
   automationsStatus?: Maybe<TriggeredAutomationsStatus>;
   /** Return a model tree of children */
   childrenTree: Array<ModelsTreeItem>;
@@ -4401,6 +4401,7 @@ export type WorkspaceInviteUseInput = {
 export type WorkspaceJoinRequest = {
   __typename?: 'WorkspaceJoinRequest';
   createdAt: Scalars['DateTime']['output'];
+  id: Scalars['String']['output'];
   status: WorkspaceJoinRequestStatus;
   user: LimitedUser;
   workspace: Workspace;
@@ -8214,6 +8215,7 @@ export type WorkspaceInviteMutationsFieldArgs = {
 }
 export type WorkspaceJoinRequestFieldArgs = {
   createdAt: {},
+  id: {},
   status: {},
   user: {},
   workspace: {},
