@@ -738,7 +738,7 @@ export const checkStreamResourceAccessFactory =
         const linkage = await tables
           .streamCommits(deps.db)
           .select()
-          .where({ commitId: res.resourceId, streamId })
+          .where({ streamId, commitId: res.resourceId })
           .first()
         if (!linkage) throw new Error('Commit not found')
         if (linkage.streamId !== streamId)
