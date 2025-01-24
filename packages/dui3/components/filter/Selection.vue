@@ -14,7 +14,7 @@
     </div>
   </div>
   <div v-if="isEtabs" class="flex justify-between items-center mt-2">
-    <FormButton full-width @click="app.$selectionBinding.getSelection()">
+    <FormButton full-width @click="selectionStore.refreshSelectionFromHostApp()">
       Set Selection
     </FormButton>
   </div>
@@ -30,7 +30,6 @@ const emit = defineEmits<{
 }>()
 
 const store = useHostAppStore()
-const app = useNuxtApp()
 const { selectionFilter } = storeToRefs(store)
 
 const selectionStore = useSelectionStore()
