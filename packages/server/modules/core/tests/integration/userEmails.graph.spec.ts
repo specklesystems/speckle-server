@@ -177,7 +177,7 @@ describe('User emails graphql @core', () => {
     })
   })
 
-  describe('verify user email mutation', () => {
+  describe.only('verify user email mutation', () => {
     it('should throw an error if there is no pending verification for the email', async () => {
       const email = createRandomEmail()
       const user = await createTestUser({

@@ -1,6 +1,5 @@
 import { db } from '@/db/knex'
 import { AllScopes, ServerRoles } from '@/modules/core/helpers/mainConstants'
-import { AllScopes as AuthScopes } from '@speckle/shared'
 import { UserRecord } from '@/modules/core/helpers/types'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import {
@@ -199,14 +198,14 @@ export async function createAuthTokenForUser(
  * Login a user for tests and return the ApolloServer instance
  */
 export async function login(user: Pick<BasicTestUser, 'id' | 'role'>) {
-  const token = await createAuthTokenForUser(user.id, AuthScopes)
+  const token = await createAuthTokenForUser(user.id, AllScopes)
   return await testApolloServer({
     context: await createTestContext({
       auth: true,
       userId: user.id,
       token,
       role: user.role,
-      scopes: AuthScopes
+      scopes: AllScopes
     })
   })
 }
