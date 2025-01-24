@@ -143,3 +143,13 @@ export const activeUserProjectsQuery = gql`
     }
   }
 `
+
+export const verifyUserEmailMutation = gql`
+  mutation VerifyUserEmail($input: VerifyUserEmailInput!) {
+    activeUserMutations {
+      emailMutations {
+        verify(input: $input)
+      }
+    }
+  }
+`
