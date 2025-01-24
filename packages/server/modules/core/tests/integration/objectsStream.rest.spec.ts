@@ -136,7 +136,7 @@ describe('Objects REST @core', () => {
     const objsIds = manyObjs.objs.map((o) => o.id)
 
     await createObjectsBatched({ streamId: project.id, objects: manyObjs.objs })
-    for (let i = 0; i < 40; i++) {
+    for (let i = 0; i < 6; i++) {
       forceCloseStreamingConnection({
         serverAddress,
         projectId: project.id,
@@ -162,7 +162,7 @@ describe('Objects REST @core', () => {
       return //HACK force correct type below
     }
     const gaugeContents = match[0][2] //second capture group of the first & only match gives the gauge value
-    expect(parseInt(gaugeContents), gaugeContents).to.lte(3)
+    expect(parseInt(gaugeContents), gaugeContents).to.lte(0)
   })
 })
 
