@@ -1,6 +1,7 @@
 import { ModelEvents } from '@/modules/core/domain/branches/events'
 import { ProjectModelsUpdatedMessageType } from '@/modules/core/graph/generated/graphql'
 import { BranchPubsubEvents } from '@/modules/shared'
+import { DependenciesOf } from '@/modules/shared/helpers/factory'
 import { EventBusListen, EventPayload } from '@/modules/shared/services/eventBus'
 import {
   ProjectSubscriptions,
@@ -72,7 +73,15 @@ const reportModelDeletedFactory =
   }
 
 export const reportSubscriptionEventsFactory =
-  (deps: { eventListen: EventBusListen; publish: PublishSubscription }) => () => {
+  (
+    deps: {
+      eventListen: EventBusListen
+      publish: PublishSubscription
+    } & DependenciesOf<typeof reportModelCreatedFactory> &
+      DependenciesOf<typeof reportModelUpdatedFactory> &
+      DependenciesOf<typeof reportModelDeletedFactory>
+  ) =>
+  () => {
     const reportModelCreated = reportModelCreatedFactory(deps)
     const reportModelUpdated = reportModelUpdatedFactory(deps)
     const reportModelDeleted = reportModelDeletedFactory(deps)
