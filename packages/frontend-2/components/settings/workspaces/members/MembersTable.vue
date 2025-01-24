@@ -130,7 +130,6 @@ graphql(`
       company
       verified
       workspaceDomainPolicyCompliant
-      projectRole
     }
   }
 `)
