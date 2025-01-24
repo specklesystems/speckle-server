@@ -176,21 +176,6 @@ export type AddStreamCommentMentionActivity = (params: {
   threadId: string
 }) => Promise<void>
 
-export type AddStreamInviteDeclinedActivity = (params: {
-  streamId: string
-  inviteTargetId: string
-  inviterId: string
-  stream: StreamRecord
-}) => Promise<void>
-
-export type AddStreamInviteSentOutActivity = (params: {
-  streamId: string
-  inviteTargetId: string | null
-  inviterId: string
-  inviteTargetEmail: string | null
-  stream: StreamRecord
-}) => Promise<void>
-
 export type AddStreamDeletedActivity = (params: {
   streamId: string
   deleterId: string

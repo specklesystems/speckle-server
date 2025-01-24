@@ -17,7 +17,6 @@ const {
 const { authorizeResolver } = require('@/modules/shared')
 const { grantStreamPermissionsFactory } = require('@/modules/core/repositories/streams')
 const {
-  addStreamInviteAcceptedActivityFactory,
   addStreamPermissionsAddedActivityFactory
 } = require('@/modules/activitystream/services/streamActivity')
 const { publish } = require('@/modules/shared/utils/subscriptions')
@@ -74,10 +73,7 @@ const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
   validateStreamAccess,
   getUser,
   grantStreamPermissions: grantStreamPermissionsFactory({ db }),
-  addStreamInviteAcceptedActivity: addStreamInviteAcceptedActivityFactory({
-    saveActivity,
-    publish
-  }),
+  emitEvent: getEventBus().emit,
   addStreamPermissionsAddedActivity: addStreamPermissionsAddedActivityFactory({
     saveActivity,
     publish

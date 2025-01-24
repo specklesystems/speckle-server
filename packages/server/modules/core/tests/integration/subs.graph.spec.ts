@@ -3,7 +3,6 @@ import { db } from '@/db/knex'
 import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import {
   addStreamDeletedActivityFactory,
-  addStreamInviteAcceptedActivityFactory,
   addStreamPermissionsAddedActivityFactory,
   addStreamPermissionsRevokedActivityFactory,
   addStreamUpdatedActivityFactory
@@ -208,10 +207,7 @@ const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
   validateStreamAccess,
   getUser: getUserFactory({ db }),
   grantStreamPermissions: grantStreamPermissionsFactory({ db }),
-  addStreamInviteAcceptedActivity: addStreamInviteAcceptedActivityFactory({
-    saveActivity,
-    publish
-  }),
+  emitEvent: getEventBus().emit,
   addStreamPermissionsAddedActivity: addStreamPermissionsAddedActivityFactory({
     saveActivity,
     publish
