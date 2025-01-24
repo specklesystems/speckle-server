@@ -28,7 +28,8 @@
                     isEmailOrEmpty,
                     canHaveRole({
                       allowedDomains: props.allowedDomains,
-                      workspaceRole: item.value.workspaceRole
+                      workspaceRole: item.value.workspaceRole,
+                      projectRole: item.value.projectRole
                     })
                   ]"
                   :help="
@@ -39,15 +40,30 @@
                 />
               </div>
               <FormSelectWorkspaceRoles
+                v-if="props.inviteTarget === 'workspace'"
                 v-model="item.value.workspaceRole"
                 label="Select role"
-                :name="`project-role-${item.key}`"
+                :name="`fields.${index}.workspaceRole`"
                 class="sm:w-44"
                 mount-menu-on-body
                 :allow-unset="false"
                 :show-label="index === 0"
                 :disabled-items="getDisabledWorkspaceItems(item.value.email)"
                 disabled-item-tooltip="This email does not match the set domain policy, and can only be invited as a guest"
+                :rules="[isRequiredIfDependencyExists(() => item.value.email)]"
+              />
+              <FormSelectProjectRoles
+                v-if="props.inviteTarget === 'project'"
+                v-model="item.value.projectRole"
+                label="Select role"
+                :name="`fields.${index}.projectRole`"
+                class="sm:w-44"
+                mount-menu-on-body
+                :allow-unset="false"
+                :show-label="index === 0"
+                :disabled-items="getDisabledProjectItems(item.value.email)"
+                disabled-item-tooltip="This email does not match the set domain policy, and can only be invited as a reviewer"
+                :rules="[isRequiredIfDependencyExists(() => item.value.email)]"
               />
             </div>
           </div>
@@ -78,8 +94,17 @@ import { PlusIcon, TrashIcon } from '@heroicons/vue/24/outline'
 import type { InviteGenericForm, InviteGenericItem } from '~~/lib/invites/helpers/types'
 import { emptyInviteGenericItem } from '~~/lib/invites/helpers/constants'
 import { isEmailOrEmpty } from '~~/lib/common/helpers/validation'
-import { Roles, type WorkspaceRoles, type MaybeNullOrUndefined } from '@speckle/shared'
-import { canHaveRole, matchesDomainPolicy } from '~/lib/invites/helpers/validation'
+import {
+  Roles,
+  type WorkspaceRoles,
+  type StreamRoles,
+  type MaybeNullOrUndefined
+} from '@speckle/shared'
+import {
+  canHaveRole,
+  matchesDomainPolicy,
+  isRequiredIfDependencyExists
+} from '~/lib/invites/helpers/validation'
 
 const emit = defineEmits<{
   (e: 'onSubmit', v: InviteGenericItem[]): void
@@ -89,7 +114,7 @@ const emit = defineEmits<{
 const props = defineProps<{
   title: string
   invites: InviteGenericItem[]
-  allowedDomains: MaybeNullOrUndefined<string[]>
+  allowedDomains?: MaybeNullOrUndefined<string[]>
   inviteTarget: 'workspace' | 'project'
 }>()
 
@@ -107,6 +132,10 @@ const {
   remove: removeInvite
 } = useFieldArray<InviteGenericItem>('fields')
 
+const enableNextButton = computed(() => {
+  return fields.value.some((item) => item.value.email)
+})
+
 const dialogButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Cancel',
@@ -116,7 +145,8 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Invite',
     props: {
-      submit: true
+      submit: true,
+      disabled: !enableNextButton.value
     },
     onClick: onSubmit
   }
@@ -132,8 +162,9 @@ const onUpdateOpen = (open: boolean) => {
 const addInviteItem = () => {
   pushInvite({
     ...emptyInviteGenericItem,
-    workspaceRole: Roles.Workspace.Member,
-    projectRole: Roles.Stream.Contributor
+    ...(props.inviteTarget === 'workspace'
+      ? { workspaceRole: Roles.Workspace.Member }
+      : { projectRole: Roles.Stream.Contributor })
   })
 }
 
@@ -145,6 +176,10 @@ const getDisabledWorkspaceItems = (email: string): WorkspaceRoles[] => {
   return !matchesDomainPolicy(email, props.allowedDomains)
     ? [Roles.Workspace.Admin, Roles.Workspace.Member]
     : []
+}
+
+const getDisabledProjectItems = (email: string): StreamRoles[] => {
+  return !matchesDomainPolicy(email, props.allowedDomains) ? [Roles.Stream.Owner] : []
 }
 
 const onSubmit = handleSubmit(() => {

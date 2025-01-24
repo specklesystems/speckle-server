@@ -101,6 +101,10 @@ export { vKeyboardClickable } from '~~/src/directives/accessibility'
 export { useAvatarSizeClasses } from '~~/src/composables/user/avatar'
 export type { UserAvatarSize } from '~~/src/composables/user/avatar'
 import CommonProgressBar from '~~/src/components/common/ProgressBar.vue'
+export type {
+  FormSelectBaseButtonStyle,
+  FormSelectBaseInputSize
+} from '~~/src/components/form/select/Base.vue'
 
 export {
   CommonLoadingIcon,

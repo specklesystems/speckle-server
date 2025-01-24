@@ -12,5 +12,7 @@ export const emptyInviteGenericItem: InviteGenericItem = {
   workspaceRole: undefined,
   projectRole: undefined,
   serverRole: undefined,
-  matchesDomainPolicy: undefined
+  matchesDomainPolicy: undefined,
+  needsWorkspaceRole: undefined,
+  needsServerRole: undefined
 }

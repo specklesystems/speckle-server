@@ -104,6 +104,7 @@ const showBillingInfo = computed(() => {
     props.workspace.plan.status === WorkspacePlanStatuses.Valid
   )
 })
+
 const onSelectUsersSubmit = async (updatedInvites: InviteGenericItem[]) => {
   invites.value = updatedInvites
 

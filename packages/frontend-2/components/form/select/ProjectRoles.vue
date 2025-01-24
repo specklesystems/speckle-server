@@ -13,6 +13,8 @@
     :disabled-item-predicate="disabledItemPredicate"
     :allow-unset="allowUnset"
     :disabled="disabled"
+    :size="size"
+    :button-style="buttonStyle"
   >
     <template #nothing-selected>
       {{ multiple ? 'Select roles' : 'Select role' }}
@@ -55,6 +57,10 @@
 import { Roles, RoleInfo } from '@speckle/shared'
 import type { StreamRoles, Nullable } from '@speckle/shared'
 import { useFormSelectChildInternals } from '~~/lib/form/composables/select'
+import type {
+  FormSelectBaseInputSize,
+  FormSelectBaseButtonStyle
+} from '@speckle/ui-components'
 
 type ValueType = StreamRoles | StreamRoles[] | undefined
 
@@ -70,6 +76,8 @@ const props = defineProps<{
   disabledItemsTooltip?: string
   allowUnset?: boolean
   disabled?: boolean
+  size?: FormSelectBaseInputSize
+  buttonStyle?: FormSelectBaseButtonStyle
 }>()
 
 const elementToWatchForChanges = ref(null as Nullable<HTMLElement>)

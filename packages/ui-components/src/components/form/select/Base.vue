@@ -251,9 +251,9 @@ import { useElementBounding, useMounted, useIntersectionObserver } from '@vueuse
 import type { LabelPosition } from '~~/src/composables/form/input'
 import { directive as vTippy } from 'vue-tippy'
 
-type ButtonStyle = 'base' | 'simple' | 'tinted'
+export type FormSelectBaseButtonStyle = 'base' | 'simple' | 'tinted'
+export type FormSelectBaseInputSize = 'sm' | 'base' | 'lg' | 'xl'
 type ValueType = SingleItem | SingleItem[] | undefined
-type InputSize = 'sm' | 'base' | 'lg' | 'xl'
 
 const isObjectLikeType = (v: unknown): v is Record<string, unknown> => isObjectLike(v)
 
@@ -263,7 +263,7 @@ const emit = defineEmits<{
 
 const props = defineProps({
   size: {
-    type: String as PropType<Optional<InputSize>>,
+    type: String as PropType<Optional<FormSelectBaseInputSize>>,
     default: undefined
   },
   multiple: {
@@ -355,7 +355,7 @@ const props = defineProps({
     default: false
   },
   buttonStyle: {
-    type: String as PropType<Optional<ButtonStyle>>,
+    type: String as PropType<Optional<FormSelectBaseButtonStyle>>,
     default: 'base'
   },
   hideCheckmarks: {

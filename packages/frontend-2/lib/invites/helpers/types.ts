@@ -13,10 +13,13 @@ export interface InviteServerForm {
 
 export type InviteGenericItem = {
   email: string
-  workspaceRole?: WorkspaceRoles
   projectRole?: StreamRoles
+  workspaceRole?: WorkspaceRoles
+  needsWorkspaceRole?: boolean
   serverRole?: ServerRoles
+  needsServerRole?: boolean
   matchesDomainPolicy?: boolean
+  userId?: string
 }
 
 export interface InviteGenericForm {

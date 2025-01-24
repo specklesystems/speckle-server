@@ -3,10 +3,10 @@
     <Dialog as="div" class="relative z-50" @close="onClose">
       <TransitionChild
         as="template"
-        enter="ease-out duration-300"
+        enter="ease-out duration-10"
         enter-from="opacity-0"
         enter-to="opacity-100"
-        leave="ease-in duration-400"
+        leave="ease-in duration-10"
         leave-from="opacity-100"
         leave-to="opacity-0"
       >
@@ -25,14 +25,14 @@
         >
           <TransitionChild
             as="template"
-            enter="ease-out duration-5000"
+            enter="ease-out duration-10"
             :enter-from="`md:opacity-0 ${
               fullscreen === 'mobile' || fullscreen === 'all'
                 ? 'translate-y-[100%]'
                 : 'translate-y-4'
             } md:translate-y-4`"
             enter-to="md:opacity-100 translate-y-0"
-            leave="ease-in duration-5000"
+            leave="ease-in duration-10"
             leave-from="md:opacity-100 translate-y-0"
             :leave-to="`md:opacity-0 ${
               fullscreen === 'mobile' || fullscreen === 'all'

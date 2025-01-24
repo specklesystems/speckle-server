@@ -7,7 +7,7 @@
           'Users that do not comply with the domain policy can only be invited as guests'
         "
       >
-        <ExclamationCircleIcon class="text-danger w-5 w-4" />
+        <ExclamationCircleIcon class="text-danger w-4" />
       </div>
       <span class="truncate text-body-sm flex-1">
         {{ selectedEmails.join(', ') }}
