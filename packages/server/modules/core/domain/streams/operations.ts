@@ -21,6 +21,7 @@ import { MaybeNullOrUndefined, Nullable, Optional, StreamRoles } from '@speckle/
 import { Knex } from 'knex'
 import type express from 'express'
 import { ProjectCreateArgs } from '@/modules/core/domain/projects/operations'
+import { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
 
 export type LegacyGetStreams = (params: {
   cursor?: string | Date | null | undefined
@@ -308,7 +309,7 @@ export type AddOrUpdateStreamCollaborator = (
   addedById: string,
   adderResourceAccessRules?: MaybeNullOrUndefined<TokenResourceIdentifier[]>,
   options?: Partial<{
-    fromInvite: boolean
+    fromInvite: ServerInviteRecord
   }>
 ) => Promise<Stream>
 

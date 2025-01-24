@@ -64,7 +64,6 @@ import { getEventBus } from '@/modules/shared/services/eventBus'
 import { createBranchFactory } from '@/modules/core/repositories/branches'
 import {
   addStreamDeletedActivityFactory,
-  addStreamInviteAcceptedActivityFactory,
   addStreamPermissionsAddedActivityFactory,
   addStreamPermissionsRevokedActivityFactory,
   addStreamUpdatedActivityFactory
@@ -155,10 +154,7 @@ const updateStreamRoleAndNotify = updateStreamRoleAndNotifyFactory({
     validateStreamAccess,
     getUser,
     grantStreamPermissions: grantStreamPermissionsFactory({ db }),
-    addStreamInviteAcceptedActivity: addStreamInviteAcceptedActivityFactory({
-      saveActivity,
-      publish
-    }),
+    emitEvent: getEventBus().emit,
     addStreamPermissionsAddedActivity: addStreamPermissionsAddedActivityFactory({
       saveActivity,
       publish

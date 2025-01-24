@@ -1,5 +1,4 @@
 import {
-  addStreamInviteAcceptedActivityFactory,
   addStreamPermissionsAddedActivityFactory,
   addStreamPermissionsRevokedActivityFactory
 } from '@/modules/activitystream/services/streamActivity'
@@ -18,8 +17,10 @@ import {
   StreamInvalidAccessError
 } from '@/modules/core/errors/stream'
 import { StreamRecord } from '@/modules/core/helpers/types'
+import { ServerInvitesEvents } from '@/modules/serverinvites/domain/events'
 import { AuthorizeResolver } from '@/modules/shared/domain/operations'
 import { BadRequestError, ForbiddenError, LogicError } from '@/modules/shared/errors'
+import { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { ensureError, Roles, StreamRoles } from '@speckle/shared'
 
 /**
@@ -144,9 +145,7 @@ export const addOrUpdateStreamCollaboratorFactory =
     validateStreamAccess: ValidateStreamAccess
     getUser: GetUser
     grantStreamPermissions: GrantStreamPermissions
-    addStreamInviteAcceptedActivity: ReturnType<
-      typeof addStreamInviteAcceptedActivityFactory
-    >
+    emitEvent: EventBusEmit
     addStreamPermissionsAddedActivity: ReturnType<
       typeof addStreamPermissionsAddedActivityFactory
     >
@@ -191,12 +190,13 @@ export const addOrUpdateStreamCollaboratorFactory =
     })) as StreamRecord // validateStreamAccess already checked that it exists
 
     if (fromInvite) {
-      await deps.addStreamInviteAcceptedActivity({
-        streamId,
-        inviterId: addedById,
-        inviteTargetId: userId,
-        role: role as StreamRoles,
-        stream
+      await deps.emitEvent({
+        eventName: ServerInvitesEvents.Finalized,
+        payload: {
+          invite: fromInvite,
+          finalizerUserId: addedById,
+          accept: true
+        }
       })
     } else {
       await deps.addStreamPermissionsAddedActivity({

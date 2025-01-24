@@ -58,16 +58,14 @@ import {
   validateStreamAccessFactory
 } from '@/modules/core/services/streams/access'
 import { authorizeResolver } from '@/modules/shared'
-import {
-  addStreamInviteAcceptedActivityFactory,
-  addStreamPermissionsAddedActivityFactory
-} from '@/modules/activitystream/services/streamActivity'
+import { addStreamPermissionsAddedActivityFactory } from '@/modules/activitystream/services/streamActivity'
 import { publish } from '@/modules/shared/utils/subscriptions'
 import { getUserFactory } from '@/modules/core/repositories/users'
 import {
   TestInvitesGraphQLOperations,
   buildInvitesGraphqlOperations
 } from '@/modules/workspaces/tests/helpers/invites'
+import { getEventBus } from '@/modules/shared/services/eventBus'
 
 enum InviteByTarget {
   Email = 'email',
@@ -82,10 +80,7 @@ const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
   validateStreamAccess,
   getUser,
   grantStreamPermissions: grantStreamPermissionsFactory({ db }),
-  addStreamInviteAcceptedActivity: addStreamInviteAcceptedActivityFactory({
-    saveActivity,
-    publish
-  }),
+  emitEvent: getEventBus().emit,
   addStreamPermissionsAddedActivity: addStreamPermissionsAddedActivityFactory({
     saveActivity,
     publish

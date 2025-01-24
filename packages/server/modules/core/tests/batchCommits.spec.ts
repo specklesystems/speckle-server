@@ -1,10 +1,7 @@
 import { buildApolloServer } from '@/app'
 import { db } from '@/db/knex'
 import { saveActivityFactory } from '@/modules/activitystream/repositories'
-import {
-  addStreamInviteAcceptedActivityFactory,
-  addStreamPermissionsAddedActivityFactory
-} from '@/modules/activitystream/services/streamActivity'
+import { addStreamPermissionsAddedActivityFactory } from '@/modules/activitystream/services/streamActivity'
 import { Commits, Streams, Users } from '@/modules/core/dbSchema'
 import { Roles } from '@/modules/core/helpers/mainConstants'
 import { createBranchFactory } from '@/modules/core/repositories/branches'
@@ -16,6 +13,7 @@ import {
   validateStreamAccessFactory
 } from '@/modules/core/services/streams/access'
 import { authorizeResolver } from '@/modules/shared'
+import { getEventBus } from '@/modules/shared/services/eventBus'
 import { publish } from '@/modules/shared/utils/subscriptions'
 import { BasicTestUser, createTestUsers } from '@/test/authHelper'
 import { deleteCommits, moveCommits } from '@/test/graphql/commits'
@@ -45,10 +43,7 @@ const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
   validateStreamAccess,
   getUser,
   grantStreamPermissions: grantStreamPermissionsFactory({ db }),
-  addStreamInviteAcceptedActivity: addStreamInviteAcceptedActivityFactory({
-    saveActivity,
-    publish
-  }),
+  emitEvent: getEventBus().emit,
   addStreamPermissionsAddedActivity: addStreamPermissionsAddedActivityFactory({
     saveActivity,
     publish

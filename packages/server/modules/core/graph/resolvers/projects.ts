@@ -3,7 +3,6 @@ import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import {
   addStreamClonedActivityFactory,
   addStreamDeletedActivityFactory,
-  addStreamInviteAcceptedActivityFactory,
   addStreamPermissionsAddedActivityFactory,
   addStreamPermissionsRevokedActivityFactory,
   addStreamUpdatedActivityFactory
@@ -150,10 +149,7 @@ const updateStreamRoleAndNotify = updateStreamRoleAndNotifyFactory({
     validateStreamAccess,
     getUser,
     grantStreamPermissions: grantStreamPermissionsFactory({ db }),
-    addStreamInviteAcceptedActivity: addStreamInviteAcceptedActivityFactory({
-      saveActivity,
-      publish
-    }),
+    emitEvent: getEventBus().emit,
     addStreamPermissionsAddedActivity: addStreamPermissionsAddedActivityFactory({
       saveActivity,
       publish

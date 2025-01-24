@@ -48,10 +48,7 @@ import {
 } from '@/modules/core/services/streams/access'
 import { authorizeResolver } from '@/modules/shared'
 import { grantStreamPermissionsFactory } from '@/modules/core/repositories/streams'
-import {
-  addStreamInviteAcceptedActivityFactory,
-  addStreamPermissionsAddedActivityFactory
-} from '@/modules/activitystream/services/streamActivity'
+import { addStreamPermissionsAddedActivityFactory } from '@/modules/activitystream/services/streamActivity'
 import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import { publish } from '@/modules/shared/utils/subscriptions'
 import { getUserFactory } from '@/modules/core/repositories/users'
@@ -73,10 +70,7 @@ const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
   validateStreamAccess,
   getUser,
   grantStreamPermissions: grantStreamPermissionsFactory({ db }),
-  addStreamInviteAcceptedActivity: addStreamInviteAcceptedActivityFactory({
-    saveActivity,
-    publish
-  }),
+  emitEvent: getEventBus().emit,
   addStreamPermissionsAddedActivity: addStreamPermissionsAddedActivityFactory({
     saveActivity,
     publish

@@ -17,10 +17,7 @@ import {
   requestStreamAccessFactory
 } from '@/modules/accessrequests/services/stream'
 import { saveActivityFactory } from '@/modules/activitystream/repositories'
-import {
-  addStreamInviteAcceptedActivityFactory,
-  addStreamPermissionsAddedActivityFactory
-} from '@/modules/activitystream/services/streamActivity'
+import { addStreamPermissionsAddedActivityFactory } from '@/modules/activitystream/services/streamActivity'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { mapStreamRoleToValue } from '@/modules/core/helpers/graphTypes'
 import { Roles } from '@/modules/core/helpers/mainConstants'
@@ -75,10 +72,7 @@ const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
   validateStreamAccess,
   getUser,
   grantStreamPermissions: grantStreamPermissionsFactory({ db }),
-  addStreamInviteAcceptedActivity: addStreamInviteAcceptedActivityFactory({
-    saveActivity,
-    publish
-  }),
+  emitEvent: getEventBus().emit,
   addStreamPermissionsAddedActivity: addStreamPermissionsAddedActivityFactory({
     saveActivity,
     publish

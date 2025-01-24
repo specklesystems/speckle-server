@@ -31,6 +31,7 @@ import {
 } from '@/modules/serverinvites/errors'
 import {
   buildUserTarget,
+  isProjectResourceTarget,
   resolveInviteTargetTitle,
   resolveTarget,
   ResourceTargetTypeRoleTypeMap
@@ -39,7 +40,8 @@ import { PendingStreamCollaboratorGraphQLReturn } from '@/modules/serverinvites/
 import {
   CreateAndSendInvite,
   FinalizeInvite,
-  GetInvitationTargetUsers
+  GetInvitationTargetUsers,
+  GetProjectInviteProject
 } from '@/modules/serverinvites/services/operations'
 import {
   MaybeNullOrUndefined,
@@ -291,4 +293,15 @@ export const getPendingProjectCollaboratorsFactory =
     }
 
     return results
+  }
+
+export const getProjectInviteProjectFactory =
+  (deps: { getStream: GetStream }): GetProjectInviteProject =>
+  async (params) => {
+    const { invite } = params
+    const primaryResourceTarget = invite.resource
+
+    if (!isProjectResourceTarget(primaryResourceTarget)) return undefined
+
+    return await deps.getStream({ streamId: primaryResourceTarget.resourceId })
   }
