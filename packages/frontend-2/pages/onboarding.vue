@@ -1,34 +1,56 @@
 <template>
-  <div class="flex flex-col items-center justify-center p-4 max-w-sm mx-auto">
-    <h1 class="text-heading-xl text-forefround mb-2 font-normal">
-      Tell us about yourself
-    </h1>
-    <p class="text-center text-body-sm text-foreground-2">
-      Your answers will help us improve
-    </p>
-    <form class="mt-8 w-full flex flex-col gap-4" @submit="onSubmit">
-      <OnboardingRoleSelect v-model="values.role" name="role" required />
-      <OnboardingPlanSelect v-model="values.plan" name="plan" required />
-      <OnboardingSourceSelect v-model="values.source" name="source" required />
-      <div class="mt-2 flex flex-col gap-4">
-        <FormButton size="lg" :disabled="!meta.valid || isSubmitting" submit full-width>
-          Continue
+  <HeaderWithEmptyPage show-logo :logo-link="false">
+    <template #header-actions>
+      <div class="flex gap-2 items-center">
+        <FormButton
+          class="opacity-70 hover:opacity-100 p-1"
+          size="sm"
+          color="subtle"
+          @click="setUserOnboardingComplete"
+        >
+          Skip
         </FormButton>
-        <!-- <div class="opacity-60 hover:opacity-100 max-w-max mx-auto px-1">
-          <FormButton
-            size="sm"
-            text
-            link
-            color="subtle"
-            full-width
-            @click="setUserOnboardingComplete"
-          >
-            Skip
-          </FormButton>
-        </div> -->
+        <FormButton color="outline" @click="() => logout({ skipRedirect: false })">
+          Sign out
+        </FormButton>
       </div>
-    </form>
-  </div>
+    </template>
+    <div class="flex flex-col items-center justify-center p-4 max-w-sm mx-auto">
+      <h1 class="text-heading-xl text-forefround mb-2 font-normal">
+        Tell us about yourself
+      </h1>
+      <p class="text-center text-body-sm text-foreground-2">
+        Your answers will help us improve
+      </p>
+      <form class="mt-8 w-full flex flex-col gap-4" @submit="onSubmit">
+        <OnboardingRoleSelect v-model="values.role" name="role" required />
+        <OnboardingPlanSelect v-model="values.plan" name="plan" required />
+        <OnboardingSourceSelect v-model="values.source" name="source" required />
+        <div class="mt-2 flex flex-col gap-4">
+          <FormButton
+            size="lg"
+            :disabled="!meta.valid || isSubmitting"
+            submit
+            full-width
+          >
+            Continue
+          </FormButton>
+          <div class="opacity-70 hover:opacity-100 max-w-max mx-auto px-1">
+            <FormButton
+              size="sm"
+              text
+              link
+              color="subtle"
+              full-width
+              @click="setUserOnboardingComplete"
+            >
+              Skip
+            </FormButton>
+          </div>
+        </div>
+      </form>
+    </div>
+  </HeaderWithEmptyPage>
 </template>
 
 <script setup lang="ts">
@@ -41,6 +63,7 @@ import type {
   OnboardingSource
 } from '~/lib/auth/helpers/onboarding'
 import { homeRoute } from '~/lib/common/helpers/route'
+import { useAuthManager } from '~/lib/auth/composables/auth'
 
 useHead({
   title: 'Welcome to Speckle'
@@ -48,7 +71,7 @@ useHead({
 
 definePageMeta({
   middleware: ['auth'],
-  layout: 'onboarding'
+  layout: 'empty'
 })
 
 const { handleSubmit, meta, isSubmitting, values } = useForm({
@@ -67,6 +90,7 @@ const { handleSubmit, meta, isSubmitting, values } = useForm({
 const { setUserOnboardingComplete, setMixpanelSegments, createOnboardingProject } =
   useProcessOnboarding()
 const { activeUser } = useActiveUser()
+const { logout } = useAuthManager()
 
 const onSubmit = handleSubmit(async () => {
   if (values.role) {
