@@ -210,8 +210,10 @@ export const resetPubSubFactory = (deps: { db: Knex }) => async () => {
   }
 
   // Drop all subs
-  // (concurrently, cause it seems possible and we have those delays there)
-  await Promise.all(subscriptions.rows.map(dropSubs))
+  for (const subscription of subscriptions.rows) {
+    await dropSubs(subscription)
+    await wait(1000)
+  }
 
   // Drop all pubs
   for (const pub of publications.rows) {
