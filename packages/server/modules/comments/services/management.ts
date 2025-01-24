@@ -5,7 +5,8 @@ import { StreamInvalidAccessError } from '@/modules/core/errors/stream'
 import {
   CreateCommentInput,
   CreateCommentReplyInput,
-  EditCommentInput
+  EditCommentInput,
+  ProjectCommentsUpdatedMessageType
 } from '@/modules/core/graph/generated/graphql'
 import { CommentCreateError, CommentUpdateError } from '@/modules/comments/errors'
 import { buildCommentTextFromInput } from '@/modules/comments/services/commentTextService'
@@ -26,6 +27,7 @@ import {
   EditCommentAndNotify,
   GetComment,
   GetViewerResourceItemsUngrouped,
+  GetViewerResourcesForComment,
   InsertCommentLinks,
   InsertCommentPayload,
   InsertComments,
@@ -35,13 +37,13 @@ import {
   ValidateInputAttachments
 } from '@/modules/comments/domain/operations'
 import { GetStream } from '@/modules/core/domain/streams/operations'
-import {
-  AddCommentArchivedActivity,
-  AddCommentCreatedActivity,
-  AddReplyAddedActivity
-} from '@/modules/activitystream/domain/operations'
 import { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { CommentEvents } from '@/modules/comments/domain/events'
+import {
+  CommentSubscriptions,
+  ProjectSubscriptions,
+  PublishSubscription
+} from '@/modules/shared/utils/subscriptions'
 
 type AuthorizeProjectCommentsAccessDeps = {
   getStream: GetStream
@@ -118,7 +120,7 @@ export const createCommentThreadAndNotifyFactory =
     insertCommentLinks: InsertCommentLinks
     markCommentViewed: MarkCommentViewed
     emitEvent: EventBusEmit
-    addCommentCreatedActivity: AddCommentCreatedActivity
+    publishSub: PublishSubscription
   }): CreateCommentThreadAndNotify =>
   async (input: CreateCommentInput, userId: string) => {
     const [resources] = await Promise.all([
@@ -180,17 +182,29 @@ export const createCommentThreadAndNotifyFactory =
       deps.emitEvent({
         eventName: CommentEvents.Created,
         payload: {
-          comment
+          comment,
+          input,
+          isThread: true
         }
       }),
-      deps.addCommentCreatedActivity({
-        streamId: input.projectId,
-        userId,
-        input: {
-          ...input,
-          resolvedResourceItems: resources
+      // TODO: Move to event bus listeners
+      // @deprecated unused in FE2
+      deps.publishSub(CommentSubscriptions.CommentActivity, {
+        commentActivity: {
+          type: 'comment-added',
+          comment
         },
-        comment
+        streamId: input.projectId,
+        resourceIds: resources.map((i) => i.versionId || i.objectId).join(',')
+      }),
+      deps.publishSub(ProjectSubscriptions.ProjectCommentsUpdated, {
+        projectCommentsUpdated: {
+          id: comment.id,
+          type: ProjectCommentsUpdatedMessageType.Created,
+          comment
+        },
+        projectId: input.projectId,
+        resourceItems: resources
       })
     ])
 
@@ -205,7 +219,8 @@ export const createCommentReplyAndNotifyFactory =
     insertCommentLinks: InsertCommentLinks
     markCommentUpdated: MarkCommentUpdated
     emitEvent: EventBusEmit
-    addReplyAddedActivity: AddReplyAddedActivity
+    publishSub: PublishSubscription
+    getViewerResourcesForComment: GetViewerResourcesForComment
   }): CreateCommentReplyAndNotify =>
   async (input: CreateCommentReplyInput, userId: string) => {
     const thread = await deps.getComment({ id: input.threadId, userId })
@@ -244,14 +259,29 @@ export const createCommentReplyAndNotifyFactory =
       deps.emitEvent({
         eventName: CommentEvents.Created,
         payload: {
-          comment: reply
+          comment: reply,
+          input,
+          isThread: false
         }
       }),
-      deps.addReplyAddedActivity({
-        streamId: thread.streamId,
-        input,
-        reply,
-        userId
+      // TODO: Move to event bus listeners
+      // @deprecated
+      deps.publishSub(CommentSubscriptions.CommentThreadActivity, {
+        commentThreadActivity: {
+          type: 'reply-added',
+          reply
+        },
+        streamId: reply.streamId,
+        commentId: thread.id
+      }),
+      deps.publishSub(ProjectSubscriptions.ProjectCommentsUpdated, {
+        projectCommentsUpdated: {
+          id: reply.id,
+          type: ProjectCommentsUpdatedMessageType.Created,
+          comment: reply
+        },
+        projectId: reply.streamId,
+        resourceItems: await deps.getViewerResourcesForComment(reply.streamId, reply.id)
       })
     ])
 
@@ -298,7 +328,9 @@ export const archiveCommentAndNotifyFactory =
     getComment: GetComment
     getStream: GetStream
     updateComment: UpdateComment
-    addCommentArchivedActivity: AddCommentArchivedActivity
+    emitEvent: EventBusEmit
+    publishSub: PublishSubscription
+    getViewerResourcesForComment: GetViewerResourcesForComment
   }): ArchiveCommentAndNotify =>
   async (commentId: string, userId: string, archived = true) => {
     const comment = await deps.getComment({ id: commentId, userId })
@@ -321,17 +353,36 @@ export const archiveCommentAndNotifyFactory =
       archived
     })
 
-    await deps.addCommentArchivedActivity({
-      streamId: stream.id,
-      commentId,
-      userId,
-      input: {
-        archived,
+    await Promise.all([
+      deps.emitEvent({
+        eventName: CommentEvents.Archived,
+        payload: {
+          userId,
+          input: { archived, commentId, streamId: stream.id },
+          comment: updatedComment!
+        }
+      }),
+      // TODO: Move to event bus listeners
+      // @deprecated not used in FE2
+      deps.publishSub(CommentSubscriptions.CommentThreadActivity, {
+        commentThreadActivity: {
+          type: archived ? 'comment-archived' : 'comment-added'
+        },
         streamId: stream.id,
         commentId
-      },
-      comment: updatedComment!
-    })
+      }),
+      deps.publishSub(ProjectSubscriptions.ProjectCommentsUpdated, {
+        projectCommentsUpdated: {
+          id: commentId,
+          type: archived
+            ? ProjectCommentsUpdatedMessageType.Archived
+            : ProjectCommentsUpdatedMessageType.Created,
+          comment: archived ? null : comment
+        },
+        projectId: stream.id,
+        resourceItems: await deps.getViewerResourcesForComment(stream.id, comment.id)
+      })
+    ])
 
     return updatedComment
   }

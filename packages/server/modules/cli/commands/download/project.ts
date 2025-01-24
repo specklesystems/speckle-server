@@ -28,10 +28,6 @@ import {
 } from '@/modules/comments/services/management'
 import { createBranchAndNotifyFactory } from '@/modules/core/services/branch/management'
 import {
-  addCommentCreatedActivityFactory,
-  addReplyAddedActivityFactory
-} from '@/modules/activitystream/services/commentActivity'
-import {
   createCommitFactory,
   getAllBranchCommitsFactory,
   getCommitsAndTheirBranchIdsFactory,
@@ -46,7 +42,7 @@ import {
   getViewerResourcesForCommentsFactory,
   getViewerResourcesFromLegacyIdentifiersFactory
 } from '@/modules/core/services/commit/viewerResources'
-import { db, mainDb } from '@/db/knex'
+import { db } from '@/db/knex'
 import {
   getCommentFactory,
   getCommentsResourcesFactory,
@@ -57,7 +53,6 @@ import {
 } from '@/modules/comments/repositories/comments'
 import { getBlobsFactory } from '@/modules/blobstorage/repositories'
 import { validateInputAttachmentsFactory } from '@/modules/comments/services/commentTextService'
-import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import { publish } from '@/modules/shared/utils/subscriptions'
 import { getUserFactory } from '@/modules/core/repositories/users'
 import { createObjectFactory } from '@/modules/core/services/objects/management'
@@ -168,12 +163,7 @@ const command: CommandModule<
       insertCommentLinks,
       markCommentViewed,
       emitEvent: getEventBus().emit,
-      addCommentCreatedActivity: addCommentCreatedActivityFactory({
-        getViewerResourcesFromLegacyIdentifiers,
-        getViewerResourceItemsUngrouped,
-        saveActivity: saveActivityFactory({ db: mainDb }),
-        publish
-      })
+      publishSub: publish
     })
     const createCommentReplyAndNotify = createCommentReplyAndNotifyFactory({
       getComment: getCommentFactory({ db: projectDb }),
@@ -182,14 +172,11 @@ const command: CommandModule<
       insertCommentLinks,
       markCommentUpdated: markCommentUpdatedFactory({ db: projectDb }),
       emitEvent: getEventBus().emit,
-      addReplyAddedActivity: addReplyAddedActivityFactory({
-        getViewerResourcesForComment: getViewerResourcesForCommentFactory({
-          getCommentsResources: getCommentsResourcesFactory({ db: projectDb }),
-          getViewerResourcesFromLegacyIdentifiers
-        }),
-        saveActivity: saveActivityFactory({ db: mainDb }),
-        publish
-      })
+      getViewerResourcesForComment: getViewerResourcesForCommentFactory({
+        getCommentsResources: getCommentsResourcesFactory({ db: projectDb }),
+        getViewerResourcesFromLegacyIdentifiers
+      }),
+      publishSub: publish
     })
 
     const createCommitByBranchId = createCommitByBranchIdFactory({

@@ -50,11 +50,6 @@ import {
   ProjectSubscriptions
 } from '@/modules/shared/utils/subscriptions'
 import {
-  addCommentArchivedActivityFactory,
-  addCommentCreatedActivityFactory,
-  addReplyAddedActivityFactory
-} from '@/modules/activitystream/services/commentActivity'
-import {
   doViewerResourcesFit,
   getViewerResourcesForCommentFactory,
   getViewerResourcesFromLegacyIdentifiersFactory,
@@ -95,7 +90,6 @@ import {
 } from '@/modules/core/repositories/branches'
 import { getStreamObjectsFactory } from '@/modules/core/repositories/objects'
 import { getStreamFactory } from '@/modules/core/repositories/streams'
-import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { Knex } from 'knex'
 import { getEventBus } from '@/modules/shared/services/eventBus'
@@ -533,8 +527,6 @@ export = {
       const getViewerResourceItemsUngrouped = buildGetViewerResourceItemsUngrouped({
         db: projectDb
       })
-      const getViewerResourcesFromLegacyIdentifiers =
-        buildGetViewerResourcesFromLegacyIdentifiers({ db: projectDb })
 
       const validateInputAttachments = validateInputAttachmentsFactory({
         getBlobs: getBlobsFactory({ db: projectDb })
@@ -550,12 +542,7 @@ export = {
         insertCommentLinks,
         markCommentViewed,
         emitEvent: getEventBus().emit,
-        addCommentCreatedActivity: addCommentCreatedActivityFactory({
-          getViewerResourcesFromLegacyIdentifiers,
-          getViewerResourceItemsUngrouped,
-          saveActivity: saveActivityFactory({ db: mainDb }),
-          publish
-        })
+        publishSub: publish
       })
 
       return await createCommentThreadAndNotify(args.input, ctx.userId!)
@@ -588,14 +575,11 @@ export = {
         insertCommentLinks,
         markCommentUpdated: markCommentUpdatedFactory({ db: projectDb }),
         emitEvent: getEventBus().emit,
-        addReplyAddedActivity: addReplyAddedActivityFactory({
-          getViewerResourcesForComment: getViewerResourcesForCommentFactory({
-            getCommentsResources: getCommentsResourcesFactory({ db: projectDb }),
-            getViewerResourcesFromLegacyIdentifiers
-          }),
-          saveActivity: saveActivityFactory({ db: mainDb }),
-          publish
-        })
+        getViewerResourcesForComment: getViewerResourcesForCommentFactory({
+          getCommentsResources: getCommentsResourcesFactory({ db: projectDb }),
+          getViewerResourcesFromLegacyIdentifiers
+        }),
+        publishSub: publish
       })
 
       return await createCommentReplyAndNotify(args.input, ctx.userId!)
@@ -656,11 +640,9 @@ export = {
         getComment,
         getStream,
         updateComment,
-        addCommentArchivedActivity: addCommentArchivedActivityFactory({
-          getViewerResourcesForComment,
-          saveActivity: saveActivityFactory({ db: mainDb }),
-          publish
-        })
+        getViewerResourcesForComment,
+        publishSub: publish,
+        emitEvent: getEventBus().emit
       })
 
       await archiveCommentAndNotify(
@@ -740,6 +722,8 @@ export = {
         throw new ForbiddenError('You are not authorized.')
 
       const projectDb = await getProjectDbClient({ projectId: args.input.streamId })
+      const getViewerResourcesFromLegacyIdentifiers =
+        buildGetViewerResourcesFromLegacyIdentifiers({ db: projectDb })
 
       const createComment = createCommentFactory({
         checkStreamResourcesAccess: streamResourceCheckFactory({
@@ -752,29 +736,13 @@ export = {
         insertCommentLinks: insertCommentLinksFactory({ db: projectDb }),
         deleteComment: deleteCommentFactory({ db: projectDb }),
         markCommentViewed: markCommentViewedFactory({ db: projectDb }),
-        emitEvent: getEventBus().emit
+        emitEvent: getEventBus().emit,
+        publishSub: publish,
+        getViewerResourcesFromLegacyIdentifiers
       })
       const comment = await createComment({
         userId: context.userId,
         input: args.input
-      })
-
-      const getViewerResourceItemsUngrouped = buildGetViewerResourceItemsUngrouped({
-        db: projectDb
-      })
-      const getViewerResourcesFromLegacyIdentifiers =
-        buildGetViewerResourcesFromLegacyIdentifiers({ db: projectDb })
-
-      await addCommentCreatedActivityFactory({
-        getViewerResourceItemsUngrouped,
-        getViewerResourcesFromLegacyIdentifiers,
-        saveActivity: saveActivityFactory({ db: mainDb }),
-        publish
-      })({
-        streamId: args.input.streamId,
-        userId: context.userId,
-        input: args.input,
-        comment
       })
 
       return comment.id
@@ -825,30 +793,22 @@ export = {
       })
 
       const projectDb = await getProjectDbClient({ projectId: args.streamId })
-      const archiveComment = archiveCommentFactory({
-        getComment: getCommentFactory({ db: projectDb }),
-        getStream,
-        updateComment: updateCommentFactory({ db: projectDb })
-      })
-      const updatedComment = await archiveComment({ ...args, userId: context.userId! }) // NOTE: permissions check inside service
-
       const getViewerResourcesFromLegacyIdentifiers =
         buildGetViewerResourcesFromLegacyIdentifiers({ db: projectDb })
       const getViewerResourcesForComment = getViewerResourcesForCommentFactory({
         getCommentsResources: getCommentsResourcesFactory({ db: projectDb }),
         getViewerResourcesFromLegacyIdentifiers
       })
-      await addCommentArchivedActivityFactory({
-        getViewerResourcesForComment,
-        saveActivity: saveActivityFactory({ db: mainDb }),
-        publish
-      })({
-        streamId: args.streamId,
-        commentId: args.commentId,
-        userId: context.userId!,
-        input: args,
-        comment: updatedComment
+
+      const archiveComment = archiveCommentFactory({
+        getComment: getCommentFactory({ db: projectDb }),
+        getStream,
+        updateComment: updateCommentFactory({ db: projectDb }),
+        emitEvent: getEventBus().emit,
+        publishSub: publish,
+        getViewerResourcesForComment
       })
+      await archiveComment({ ...args, userId: context.userId! }) // NOTE: permissions check inside service
 
       return true
     },
@@ -878,7 +838,13 @@ export = {
         }),
         deleteComment: deleteCommentFactory({ db: projectDb }),
         markCommentUpdated: markCommentUpdatedFactory({ db: projectDb }),
-        emitEvent: getEventBus().emit
+        emitEvent: getEventBus().emit,
+        publishSub: publish,
+        getViewerResourcesForComment: getViewerResourcesForCommentFactory({
+          getCommentsResources: getCommentsResourcesFactory({ db: projectDb }),
+          getViewerResourcesFromLegacyIdentifiers:
+            buildGetViewerResourcesFromLegacyIdentifiers({ db: projectDb })
+        })
       })
       const reply = await createCommentReply({
         authorId: context.userId,
@@ -887,22 +853,6 @@ export = {
         text: args.input.text as SmartTextEditorValueSchema,
         data: args.input.data ?? null,
         blobIds: args.input.blobIds
-      })
-
-      const getViewerResourcesFromLegacyIdentifiers =
-        buildGetViewerResourcesFromLegacyIdentifiers({ db: projectDb })
-      await addReplyAddedActivityFactory({
-        getViewerResourcesForComment: getViewerResourcesForCommentFactory({
-          getCommentsResources: getCommentsResourcesFactory({ db: projectDb }),
-          getViewerResourcesFromLegacyIdentifiers
-        }),
-        saveActivity: saveActivityFactory({ db: mainDb }),
-        publish
-      })({
-        streamId: args.input.streamId,
-        input: args.input,
-        reply,
-        userId: context.userId
       })
 
       return reply.id

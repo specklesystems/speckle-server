@@ -5,7 +5,8 @@ import { isNonNullable, Roles } from '@speckle/shared'
 import {
   ResourceIdentifier,
   CommentCreateInput,
-  CommentEditInput
+  CommentEditInput,
+  ProjectCommentsUpdatedMessageType
 } from '@/modules/core/graph/generated/graphql'
 import { CommentLinkRecord, CommentRecord } from '@/modules/comments/helpers/types'
 import { SmartTextEditorValueSchema } from '@/modules/core/services/richTextEditorService'
@@ -14,6 +15,8 @@ import {
   CheckStreamResourcesAccess,
   DeleteComment,
   GetComment,
+  GetViewerResourcesForComment,
+  GetViewerResourcesFromLegacyIdentifiers,
   InsertCommentLinks,
   InsertComments,
   MarkCommentUpdated,
@@ -26,6 +29,11 @@ import { GetStream } from '@/modules/core/domain/streams/operations'
 import { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { CommentEvents } from '@/modules/comments/domain/events'
 import { JSONContent } from '@tiptap/core'
+import {
+  CommentSubscriptions,
+  ProjectSubscriptions,
+  PublishSubscription
+} from '@/modules/shared/utils/subscriptions'
 
 export const streamResourceCheckFactory =
   (deps: {
@@ -56,6 +64,8 @@ export const createCommentFactory =
     deleteComment: DeleteComment
     markCommentViewed: MarkCommentViewed
     emitEvent: EventBusEmit
+    publishSub: PublishSubscription
+    getViewerResourcesFromLegacyIdentifiers: GetViewerResourcesFromLegacyIdentifiers
   }) =>
   async ({ userId, input }: { userId: string; input: CommentCreateInput }) => {
     if (input.resources.length < 1)
@@ -116,12 +126,37 @@ export const createCommentFactory =
 
     await deps.markCommentViewed(id, userId) // so we don't self mark a comment as unread the moment it's created
 
-    await deps.emitEvent({
-      eventName: CommentEvents.Created,
-      payload: {
-        comment: newComment
-      }
-    })
+    await Promise.all([
+      deps.emitEvent({
+        eventName: CommentEvents.Created,
+        payload: {
+          comment: newComment,
+          input,
+          isThread: true
+        }
+      }),
+      // @deprecated unused in FE2
+      deps.publishSub(CommentSubscriptions.CommentActivity, {
+        commentActivity: {
+          type: 'comment-added',
+          comment: newComment
+        },
+        streamId: input.streamId,
+        resourceIds: input.resources.map((res) => res?.resourceId).join(',')
+      }),
+      deps.publishSub(ProjectSubscriptions.ProjectCommentsUpdated, {
+        projectCommentsUpdated: {
+          id: newComment.id,
+          type: ProjectCommentsUpdatedMessageType.Created,
+          comment: newComment
+        },
+        projectId: input.streamId,
+        resourceItems: await deps.getViewerResourcesFromLegacyIdentifiers(
+          input.streamId,
+          input.resources.filter(isNonNullable)
+        )
+      })
+    ])
 
     return newComment
   }
@@ -138,6 +173,8 @@ export const createCommentReplyFactory =
     deleteComment: DeleteComment
     markCommentUpdated: MarkCommentUpdated
     emitEvent: EventBusEmit
+    publishSub: PublishSubscription
+    getViewerResourcesForComment: GetViewerResourcesForComment
   }) =>
   async ({
     authorId,
@@ -188,12 +225,45 @@ export const createCommentReplyFactory =
 
     await deps.markCommentUpdated(parentCommentId)
 
-    await deps.emitEvent({
-      eventName: CommentEvents.Created,
-      payload: {
-        comment: newComment
-      }
-    })
+    await Promise.all([
+      deps.emitEvent({
+        eventName: CommentEvents.Created,
+        payload: {
+          comment: newComment,
+          isThread: false,
+          input: {
+            threadId: parentCommentId,
+            projectId: streamId,
+            content: {
+              blobIds,
+              doc: text
+            }
+          }
+        }
+      }),
+      // TODO: Move to event bus listeners
+      // @deprecated
+      deps.publishSub(CommentSubscriptions.CommentThreadActivity, {
+        commentThreadActivity: {
+          type: 'reply-added',
+          reply: newComment
+        },
+        streamId: newComment.streamId,
+        commentId: parentCommentId
+      }),
+      deps.publishSub(ProjectSubscriptions.ProjectCommentsUpdated, {
+        projectCommentsUpdated: {
+          id: newComment.id,
+          type: ProjectCommentsUpdatedMessageType.Created,
+          comment: newComment
+        },
+        projectId: newComment.streamId,
+        resourceItems: await deps.getViewerResourcesForComment(
+          newComment.streamId,
+          newComment.id
+        )
+      })
+    ])
 
     return newComment
   }
@@ -249,6 +319,9 @@ export const archiveCommentFactory =
     getComment: GetComment
     getStream: GetStream
     updateComment: UpdateComment
+    emitEvent: EventBusEmit
+    publishSub: PublishSubscription
+    getViewerResourcesForComment: GetViewerResourcesForComment
   }) =>
   async ({
     commentId,
@@ -275,5 +348,37 @@ export const archiveCommentFactory =
     }
 
     const updatedComment = await deps.updateComment(commentId, { archived })
+
+    await Promise.all([
+      deps.emitEvent({
+        eventName: CommentEvents.Archived,
+        payload: {
+          userId,
+          input: { archived, commentId, streamId },
+          comment: updatedComment!
+        }
+      }),
+      // TODO: Move to event bus listeners
+      // @deprecated not used in FE2
+      deps.publishSub(CommentSubscriptions.CommentThreadActivity, {
+        commentThreadActivity: {
+          type: archived ? 'comment-archived' : 'comment-added'
+        },
+        streamId,
+        commentId
+      }),
+      deps.publishSub(ProjectSubscriptions.ProjectCommentsUpdated, {
+        projectCommentsUpdated: {
+          id: commentId,
+          type: archived
+            ? ProjectCommentsUpdatedMessageType.Archived
+            : ProjectCommentsUpdatedMessageType.Created,
+          comment: archived ? null : comment
+        },
+        projectId: streamId,
+        resourceItems: await deps.getViewerResourcesForComment(streamId, comment.id)
+      })
+    ])
+
     return updatedComment!
   }
