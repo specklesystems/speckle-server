@@ -67,7 +67,6 @@ import { ensureOnboardingProjectFactory } from '@/modules/cross-server-sync/serv
 import { downloadProjectFactory } from '@/modules/cross-server-sync/services/project'
 import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import { publish } from '@/modules/shared/utils/subscriptions'
 
 const crossServerSyncModule: SpeckleModule = {
   init() {
@@ -114,8 +113,7 @@ const crossServerSyncModule: SpeckleModule = {
       insertComments,
       insertCommentLinks,
       markCommentViewed,
-      emitEvent: getEventBus().emit,
-      publishSub: publish
+      emitEvent: getEventBus().emit
     })
     const createCommentReplyAndNotify = createCommentReplyAndNotifyFactory({
       getComment: getCommentFactory({ db }),
@@ -127,8 +125,7 @@ const crossServerSyncModule: SpeckleModule = {
       getViewerResourcesForComment: getViewerResourcesForCommentFactory({
         getCommentsResources: getCommentsResourcesFactory({ db }),
         getViewerResourcesFromLegacyIdentifiers
-      }),
-      publishSub: publish
+      })
     })
     const getStreamBranchByName = getStreamBranchByNameFactory({ db })
     const createCommitByBranchId = createCommitByBranchIdFactory({

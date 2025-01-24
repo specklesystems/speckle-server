@@ -147,7 +147,6 @@ const createComment = createCommentFactory({
   deleteComment: deleteCommentFactory({ db }),
   markCommentViewed,
   emitEvent: getEventBus().emit,
-  publishSub: publish,
   getViewerResourcesFromLegacyIdentifiers
 })
 

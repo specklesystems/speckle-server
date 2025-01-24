@@ -49,7 +49,6 @@ import {
 import { validateInputAttachmentsFactory } from '@/modules/comments/services/commentTextService'
 import { getBlobsFactory } from '@/modules/blobstorage/repositories'
 import { createCommitByBranchIdFactory } from '@/modules/core/services/commit/management'
-import { publish } from '@/modules/shared/utils/subscriptions'
 import { getUserFactory } from '@/modules/core/repositories/users'
 import { createObjectFactory } from '@/modules/core/services/objects/management'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
@@ -137,8 +136,7 @@ const command: CommandModule<
       insertComments,
       insertCommentLinks,
       markCommentViewed,
-      emitEvent: getEventBus().emit,
-      publishSub: publish
+      emitEvent: getEventBus().emit
     })
 
     const createCommentReplyAndNotify = createCommentReplyAndNotifyFactory({
@@ -151,8 +149,7 @@ const command: CommandModule<
       getViewerResourcesForComment: getViewerResourcesForCommentFactory({
         getCommentsResources: getCommentsResourcesFactory({ db: projectDb }),
         getViewerResourcesFromLegacyIdentifiers
-      }),
-      publishSub: publish
+      })
     })
 
     const createCommitByBranchId = createCommitByBranchIdFactory({

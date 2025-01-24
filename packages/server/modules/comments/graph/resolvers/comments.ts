@@ -541,8 +541,7 @@ export = {
         insertComments,
         insertCommentLinks,
         markCommentViewed,
-        emitEvent: getEventBus().emit,
-        publishSub: publish
+        emitEvent: getEventBus().emit
       })
 
       return await createCommentThreadAndNotify(args.input, ctx.userId!)
@@ -578,8 +577,7 @@ export = {
         getViewerResourcesForComment: getViewerResourcesForCommentFactory({
           getCommentsResources: getCommentsResourcesFactory({ db: projectDb }),
           getViewerResourcesFromLegacyIdentifiers
-        }),
-        publishSub: publish
+        })
       })
 
       return await createCommentReplyAndNotify(args.input, ctx.userId!)
@@ -641,7 +639,6 @@ export = {
         getStream,
         updateComment,
         getViewerResourcesForComment,
-        publishSub: publish,
         emitEvent: getEventBus().emit
       })
 
@@ -737,7 +734,6 @@ export = {
         deleteComment: deleteCommentFactory({ db: projectDb }),
         markCommentViewed: markCommentViewedFactory({ db: projectDb }),
         emitEvent: getEventBus().emit,
-        publishSub: publish,
         getViewerResourcesFromLegacyIdentifiers
       })
       const comment = await createComment({
@@ -793,20 +789,11 @@ export = {
       })
 
       const projectDb = await getProjectDbClient({ projectId: args.streamId })
-      const getViewerResourcesFromLegacyIdentifiers =
-        buildGetViewerResourcesFromLegacyIdentifiers({ db: projectDb })
-      const getViewerResourcesForComment = getViewerResourcesForCommentFactory({
-        getCommentsResources: getCommentsResourcesFactory({ db: projectDb }),
-        getViewerResourcesFromLegacyIdentifiers
-      })
-
       const archiveComment = archiveCommentFactory({
         getComment: getCommentFactory({ db: projectDb }),
         getStream,
         updateComment: updateCommentFactory({ db: projectDb }),
-        emitEvent: getEventBus().emit,
-        publishSub: publish,
-        getViewerResourcesForComment
+        emitEvent: getEventBus().emit
       })
       await archiveComment({ ...args, userId: context.userId! }) // NOTE: permissions check inside service
 
@@ -839,7 +826,6 @@ export = {
         deleteComment: deleteCommentFactory({ db: projectDb }),
         markCommentUpdated: markCommentUpdatedFactory({ db: projectDb }),
         emitEvent: getEventBus().emit,
-        publishSub: publish,
         getViewerResourcesForComment: getViewerResourcesForCommentFactory({
           getCommentsResources: getCommentsResourcesFactory({ db: projectDb }),
           getViewerResourcesFromLegacyIdentifiers:

@@ -2,6 +2,7 @@ import {
   CommentCreatedActivityInput,
   ReplyCreatedActivityInput
 } from '@/modules/activitystream/domain/types'
+import { ViewerResourceItem } from '@/modules/comments/domain/types'
 import { CommentRecord } from '@/modules/comments/helpers/types'
 import { MutationCommentArchiveArgs } from '@/modules/core/graph/generated/graphql'
 
@@ -18,6 +19,7 @@ export type CommentEventsPayloads = {
     comment: CommentRecord
     isThread: boolean
     input: CommentCreatedActivityInput | ReplyCreatedActivityInput
+    resourceItems: ViewerResourceItem[]
   }
   [CommentEvents.Updated]: {
     previousComment: CommentRecord

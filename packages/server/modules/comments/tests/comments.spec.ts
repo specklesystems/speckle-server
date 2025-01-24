@@ -165,7 +165,6 @@ const createComment = createCommentFactory({
   deleteComment,
   markCommentViewed,
   emitEvent: getEventBus().emit,
-  publishSub: publish,
   getViewerResourcesFromLegacyIdentifiers
 })
 const getViewerResourcesForComment = getViewerResourcesForCommentFactory({
@@ -181,7 +180,6 @@ const createCommentReply = createCommentReplyFactory({
   deleteComment,
   markCommentUpdated: markCommentUpdatedFactory({ db }),
   emitEvent: getEventBus().emit,
-  publishSub: publish,
   getViewerResourcesForComment
 })
 const getComment = getCommentFactory({ db })
@@ -196,9 +194,7 @@ const archiveComment = archiveCommentFactory({
   getComment,
   getStream,
   updateComment,
-  emitEvent: getEventBus().emit,
-  publishSub: publish,
-  getViewerResourcesForComment
+  emitEvent: getEventBus().emit
 })
 const getComments = getCommentsLegacyFactory({ db })
 const getResourceCommentCount = getResourceCommentCountFactory({ db })

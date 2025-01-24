@@ -53,7 +53,6 @@ import {
 } from '@/modules/comments/repositories/comments'
 import { getBlobsFactory } from '@/modules/blobstorage/repositories'
 import { validateInputAttachmentsFactory } from '@/modules/comments/services/commentTextService'
-import { publish } from '@/modules/shared/utils/subscriptions'
 import { getUserFactory } from '@/modules/core/repositories/users'
 import { createObjectFactory } from '@/modules/core/services/objects/management'
 import { authorizeResolver } from '@/modules/shared'
@@ -162,8 +161,7 @@ const command: CommandModule<
       insertComments,
       insertCommentLinks,
       markCommentViewed,
-      emitEvent: getEventBus().emit,
-      publishSub: publish
+      emitEvent: getEventBus().emit
     })
     const createCommentReplyAndNotify = createCommentReplyAndNotifyFactory({
       getComment: getCommentFactory({ db: projectDb }),
@@ -175,8 +173,7 @@ const command: CommandModule<
       getViewerResourcesForComment: getViewerResourcesForCommentFactory({
         getCommentsResources: getCommentsResourcesFactory({ db: projectDb }),
         getViewerResourcesFromLegacyIdentifiers
-      }),
-      publishSub: publish
+      })
     })
 
     const createCommitByBranchId = createCommitByBranchIdFactory({
