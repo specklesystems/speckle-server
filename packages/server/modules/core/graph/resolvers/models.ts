@@ -211,6 +211,7 @@ export = {
   },
   Model: {
     async author(parent, _args, ctx) {
+      if (!parent.authorId) return null
       return await ctx.loaders.users.getUser.load(parent.authorId)
     },
     async previewUrl(parent, _args, ctx) {
