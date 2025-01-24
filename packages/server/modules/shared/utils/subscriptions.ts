@@ -56,7 +56,7 @@ import {
   SubscriptionWorkspaceUpdatedArgs,
   WorkspaceUpdatedMessage
 } from '@/modules/core/graph/generated/graphql'
-import { Merge } from 'type-fest'
+import { Merge, OverrideProperties } from 'type-fest'
 import {
   ModelGraphQLReturn,
   ProjectGraphQLReturn,
@@ -276,8 +276,10 @@ type SubscriptionTypeMap = {
   }
   [CommentSubscriptions.CommentThreadActivity]: {
     payload: {
-      commentThreadActivity: Partial<CommentThreadActivityMessage> &
-        Pick<CommentThreadActivityMessage, 'type'>
+      commentThreadActivity: OverrideProperties<
+        CommentThreadActivityMessage,
+        { reply?: CommentRecord }
+      >
       streamId: string
       commentId: string
     }
@@ -299,7 +301,7 @@ type SubscriptionTypeMap = {
         comment: CommentRecord
       }
       streamId: string
-      resourceIds: string[]
+      resourceIds: string
     }
     variables: SubscriptionCommentActivityArgs
   }

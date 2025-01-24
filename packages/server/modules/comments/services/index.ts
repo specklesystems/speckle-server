@@ -14,6 +14,8 @@ import {
   CheckStreamResourcesAccess,
   DeleteComment,
   GetComment,
+  GetViewerResourcesForComment,
+  GetViewerResourcesFromLegacyIdentifiers,
   InsertCommentLinks,
   InsertComments,
   MarkCommentUpdated,
@@ -56,6 +58,7 @@ export const createCommentFactory =
     deleteComment: DeleteComment
     markCommentViewed: MarkCommentViewed
     emitEvent: EventBusEmit
+    getViewerResourcesFromLegacyIdentifiers: GetViewerResourcesFromLegacyIdentifiers
   }) =>
   async ({ userId, input }: { userId: string; input: CommentCreateInput }) => {
     if (input.resources.length < 1)
@@ -116,10 +119,17 @@ export const createCommentFactory =
 
     await deps.markCommentViewed(id, userId) // so we don't self mark a comment as unread the moment it's created
 
+    const resourceItems = await deps.getViewerResourcesFromLegacyIdentifiers(
+      input.streamId,
+      input.resources.filter(isNonNullable)
+    )
     await deps.emitEvent({
       eventName: CommentEvents.Created,
       payload: {
-        comment: newComment
+        comment: newComment,
+        input,
+        isThread: true,
+        resourceItems
       }
     })
 
@@ -138,6 +148,7 @@ export const createCommentReplyFactory =
     deleteComment: DeleteComment
     markCommentUpdated: MarkCommentUpdated
     emitEvent: EventBusEmit
+    getViewerResourcesForComment: GetViewerResourcesForComment
   }) =>
   async ({
     authorId,
@@ -188,10 +199,24 @@ export const createCommentReplyFactory =
 
     await deps.markCommentUpdated(parentCommentId)
 
+    const resourceItems = await deps.getViewerResourcesForComment(
+      newComment.streamId,
+      newComment.id
+    )
     await deps.emitEvent({
       eventName: CommentEvents.Created,
       payload: {
-        comment: newComment
+        comment: newComment,
+        isThread: false,
+        input: {
+          threadId: parentCommentId,
+          projectId: streamId,
+          content: {
+            blobIds,
+            doc: text
+          }
+        },
+        resourceItems
       }
     })
 
@@ -249,6 +274,7 @@ export const archiveCommentFactory =
     getComment: GetComment
     getStream: GetStream
     updateComment: UpdateComment
+    emitEvent: EventBusEmit
   }) =>
   async ({
     commentId,
@@ -275,5 +301,15 @@ export const archiveCommentFactory =
     }
 
     const updatedComment = await deps.updateComment(commentId, { archived })
+
+    await deps.emitEvent({
+      eventName: CommentEvents.Archived,
+      payload: {
+        userId,
+        input: { archived, commentId, streamId },
+        comment: updatedComment!
+      }
+    })
+
     return updatedComment!
   }
