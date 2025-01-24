@@ -8,8 +8,17 @@ WORKDIR /speckle-server
 # Download tini
 ARG TINI_VERSION=v0.19.0
 ENV TINI_VERSION=${TINI_VERSION}
-ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini ./tini
-RUN chmod +x ./tini
+RUN apt-get update -y \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y \
+     --no-install-recommends \
+     ca-certificates=20230311 \
+     curl=7.88.1-10+deb12u8 \
+    && curl -fsSL https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini -o ./tini \
+    && chmod +x ./tini \
+    && apt-get remove -y curl \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 ARG NODE_ENV
 ENV NODE_ENV=${NODE_ENV}
@@ -41,10 +50,10 @@ ARG NODE_ENV
 ENV NODE_ENV=${NODE_ENV}
 
 WORKDIR /speckle-server
-COPY --from=build-stage /speckle-server/tini /usr/bin/tini
-COPY --from=build-stage /speckle-server/packages/shared ./packages/shared
-COPY --from=build-stage /speckle-server/packages/monitor-deployment ./packages/monitor-deployment
-COPY --from=build-stage /speckle-server/node_modules ./node_modules
+COPY --link --from=build-stage /speckle-server/tini /usr/bin/tini
+COPY --link --from=build-stage /speckle-server/packages/shared ./packages/shared
+COPY --link --from=build-stage /speckle-server/packages/monitor-deployment ./packages/monitor-deployment
+COPY --link --from=build-stage /speckle-server/node_modules ./node_modules
 
 WORKDIR /speckle-server/packages/monitor-deployment
 

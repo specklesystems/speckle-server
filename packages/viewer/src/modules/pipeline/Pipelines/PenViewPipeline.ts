@@ -110,7 +110,7 @@ export class PenViewPipeline extends ProgressivePipeline {
         return +a.material.colorWrite - +b.material.colorWrite
       }
     })()
-    geometryPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
+    geometryPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH, ObjectLayers.PROPS])
 
     const stencilMaskPass = new StencilMaskPass()
     stencilMaskPass.setVisibility(ObjectVisibility.STENCIL)

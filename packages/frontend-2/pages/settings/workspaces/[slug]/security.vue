@@ -6,10 +6,7 @@
         text="Manage verified workspace domains and associated features."
       />
       <template v-if="isSsoEnabled">
-        <SettingsWorkspacesSecuritySsoWrapper
-          v-if="result?.workspace"
-          :workspace="result.workspace"
-        />
+        <SettingsWorkspacesSecuritySsoWrapper v-if="workspace" :workspace="workspace" />
         <hr class="my-6 md:my-8 border-outline-2" />
       </template>
       <section>
@@ -18,10 +15,7 @@
           class="pb-4 md:pb-6"
           subheading
         />
-        <CommonCard
-          v-if="result?.workspace.sso?.provider?.id"
-          class="bg-foundation mb-4"
-        >
+        <CommonCard v-if="workspace?.sso?.provider?.id" class="bg-foundation mb-4">
           With SSO enabled, allowed domains are configured on your identity provider's
           side.
         </CommonCard>
@@ -83,8 +77,8 @@
             <div class="flex-1 flex-col pr-6 gap-y-1">
               <p class="text-body-xs font-medium text-foreground">Domain protection</p>
               <p class="text-body-2xs text-foreground-2 leading-5 max-w-md">
-                Admins won't be able to add users as members (or admins) to a workspace
-                unless they are part of a workspace's email domain.
+                Only users with email addresses from your verified domains can be added
+                as workspace members or administrators.
               </p>
             </div>
             <FormSwitch
@@ -97,11 +91,11 @@
           <div class="flex items-center">
             <div class="flex-1 flex-col pr-6 gap-y-1">
               <p class="text-body-xs font-medium text-foreground">
-                Domain discoverability
+                Domain-based discoverability
               </p>
               <p class="text-body-2xs text-foreground-2 leading-5 max-w-md">
-                Makes your workspace discoverable by employees who sign up with your
-                company's specified email domain.
+                When enabled, users with a verified email address from your verified
+                domain list will be able to request to join this workspace.
               </p>
             </div>
             <FormSwitch
@@ -118,7 +112,7 @@
     <SettingsWorkspacesSecurityDomainRemoveDialog
       v-if="removeDialogDomain"
       v-model:open="showRemoveDomainDialog"
-      :workspace-id="workspaceId"
+      :workspace-id="workspace?.id"
       :domain="removeDialogDomain"
     />
   </section>
@@ -126,19 +120,18 @@
 
 <script setup lang="ts">
 import type { ShallowRef } from 'vue'
-import { useApolloClient, useQuery } from '@vue/apollo-composable'
+import { useQuery, useMutation } from '@vue/apollo-composable'
 import { graphql } from '~/lib/common/generated/gql'
-import type {
-  Workspace,
-  SettingsWorkspacesSecurityDomainRemoveDialog_WorkspaceDomainFragment
-} from '~/lib/common/generated/gql/graphql'
-import { SettingsUpdateWorkspaceSecurityDocument } from '~/lib/common/generated/gql/graphql'
-import { getCacheId, getFirstErrorMessage } from '~/lib/common/helpers/graphql'
+import type { SettingsWorkspacesSecurityDomainRemoveDialog_WorkspaceDomainFragment } from '~/lib/common/generated/gql/graphql'
 import { settingsWorkspacesSecurityQuery } from '~/lib/settings/graphql/queries'
 import { useAddWorkspaceDomain } from '~/lib/settings/composables/management'
 import { useMixpanel } from '~/lib/core/composables/mp'
 import { blockedDomains } from '@speckle/shared'
 import { useIsWorkspacesSsoEnabled } from '~/composables/globals'
+import {
+  workspaceUpdateDomainProtectionMutation,
+  workspaceUpdateDiscoverabilityMutation
+} from '~/lib/workspaces/graphql/mutations'
 
 graphql(`
   fragment SettingsWorkspacesSecurity_Workspace on Workspace {
@@ -164,15 +157,26 @@ graphql(`
   }
 `)
 
-const props = defineProps<{
-  workspaceId: string
-}>()
+definePageMeta({
+  layout: 'settings'
+})
 
+useHead({
+  title: 'Settings | Workspace - Security'
+})
+
+const slug = computed(() => (route.params.slug as string) || '')
+
+const route = useRoute()
 const addWorkspaceDomain = useAddWorkspaceDomain()
-const { triggerNotification } = useGlobalToast()
 const isSsoEnabled = useIsWorkspacesSsoEnabled()
-const apollo = useApolloClient().client
 const mixpanel = useMixpanel()
+const { mutate: updateDomainProtection } = useMutation(
+  workspaceUpdateDomainProtectionMutation
+)
+const { mutate: updateDiscoverability } = useMutation(
+  workspaceUpdateDiscoverabilityMutation
+)
 
 const selectedDomain = ref<string>()
 const showRemoveDomainDialog = ref(false)
@@ -181,14 +185,14 @@ const removeDialogDomain =
 const blockedDomainItems: ShallowRef<string[]> = shallowRef(blockedDomains)
 
 const { result } = useQuery(settingsWorkspacesSecurityQuery, {
-  workspaceId: props.workspaceId
+  slug: slug.value
 })
 
+const workspace = computed(() => result.value?.workspaceBySlug)
 const workspaceDomains = computed(() => {
-  return result.value?.workspace.domains || []
+  return workspace.value?.domains || []
 })
 const hasWorkspaceDomains = computed(() => workspaceDomains.value.length > 0)
-
 const verifiedUserDomains = computed(() => {
   const workspaceDomainSet = new Set(workspaceDomains.value.map((item) => item.domain))
 
@@ -203,128 +207,65 @@ const verifiedUserDomains = computed(() => {
 })
 
 const isDomainProtectionEnabled = computed({
-  get: () => result.value?.workspace.domainBasedMembershipProtectionEnabled || false,
+  get: () => workspace.value?.domainBasedMembershipProtectionEnabled || false,
   set: async (newVal) => {
-    const mutationResult = await apollo
-      .mutate({
-        mutation: SettingsUpdateWorkspaceSecurityDocument,
-        variables: {
-          input: {
-            id: props.workspaceId,
-            domainBasedMembershipProtectionEnabled: newVal
-          }
-        },
-        optimisticResponse: {
-          workspaceMutations: {
-            update: {
-              __typename: 'Workspace',
-              id: props.workspaceId,
-              domainBasedMembershipProtectionEnabled: newVal,
-              discoverabilityEnabled:
-                result.value?.workspace.discoverabilityEnabled || false
-            }
-          }
-        },
-        update: (cache, res) => {
-          const { data } = res
-          if (!data?.workspaceMutations) return
+    if (!workspace.value?.id) return
 
-          cache.modify<Workspace>({
-            id: getCacheId('Workspace', props.workspaceId),
-            fields: {
-              domainBasedMembershipProtectionEnabled: () =>
-                res.data?.workspaceMutations.update
-                  .domainBasedMembershipProtectionEnabled || false
-            }
-          })
-        }
-      })
-      .catch(convertThrowIntoFetchResult)
+    const result = await updateDomainProtection({
+      input: {
+        id: workspace.value.id,
+        domainBasedMembershipProtectionEnabled: newVal
+      }
+    }).catch(convertThrowIntoFetchResult)
 
-    if (mutationResult?.data) {
+    if (result?.data) {
       mixpanel.track('Workspace Domain Protection Toggled', {
         value: newVal,
         // eslint-disable-next-line camelcase
-        workspace_id: props.workspaceId
-      })
-    } else {
-      triggerNotification({
-        type: ToastNotificationType.Danger,
-        title: 'Failed to update',
-        description: getFirstErrorMessage(mutationResult?.errors)
+        workspace_id: workspace.value?.id
       })
     }
   }
 })
 
 const isDomainDiscoverabilityEnabled = computed({
-  get: () => result.value?.workspace.discoverabilityEnabled || false,
+  get: () => workspace.value?.discoverabilityEnabled || false,
   set: async (newVal) => {
-    const mutationResult = await apollo.mutate({
-      mutation: SettingsUpdateWorkspaceSecurityDocument,
-      variables: {
-        input: {
-          id: props.workspaceId,
-          discoverabilityEnabled: newVal
-        }
-      },
-      optimisticResponse: {
-        workspaceMutations: {
-          update: {
-            __typename: 'Workspace',
-            id: props.workspaceId,
-            domainBasedMembershipProtectionEnabled:
-              result.value?.workspace.domainBasedMembershipProtectionEnabled || false,
-            discoverabilityEnabled: newVal
-          }
-        }
-      },
-      update: (cache, res) => {
-        const { data } = res
-        if (!data?.workspaceMutations) return
+    if (!workspace.value?.id) return
 
-        cache.modify<Workspace>({
-          id: getCacheId('Workspace', props.workspaceId),
-          fields: {
-            discoverabilityEnabled: () =>
-              res.data?.workspaceMutations.update.discoverabilityEnabled || false
-          }
-        })
+    const result = await updateDiscoverability({
+      input: {
+        id: workspace.value.id,
+        discoverabilityEnabled: newVal
       }
-    })
+    }).catch(convertThrowIntoFetchResult)
 
-    if (mutationResult?.data) {
+    if (result?.data) {
       mixpanel.track('Workspace Discoverability Toggled', {
         value: newVal,
         // eslint-disable-next-line camelcase
-        workspace_id: props.workspaceId
-      })
-    } else {
-      triggerNotification({
-        type: ToastNotificationType.Danger,
-        title: 'Failed to update',
-        description: getFirstErrorMessage(mutationResult?.errors)
+        workspace_id: workspace.value?.id
       })
     }
   }
 })
 
 const addDomain = async () => {
-  if (!selectedDomain.value || !result.value?.workspace) return
+  if (!selectedDomain.value || !workspace.value) return
   await addWorkspaceDomain.mutate(
     {
       domain: selectedDomain.value,
-      workspaceId: props.workspaceId
+      workspaceId: workspace.value.id
     },
-    result.value?.workspace.domains ?? [],
-    result.value?.workspace.discoverabilityEnabled,
-    result.value?.workspace.domainBasedMembershipProtectionEnabled,
-    result.value?.workspace.hasAccessToSSO
+    workspace.value.domains ?? [],
+    workspace.value.discoverabilityEnabled,
+    workspace.value.domainBasedMembershipProtectionEnabled,
+    workspace.value.hasAccessToSSO
   )
 
   mixpanel.track('Workspace Domain Added', {
     // eslint-disable-next-line camelcase
-    workspace_id: props.workspaceId
+    workspace_id: workspace.value?.id
   })
   selectedDomain.value = undefined
 }

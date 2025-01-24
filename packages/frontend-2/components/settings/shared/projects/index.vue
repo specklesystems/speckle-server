@@ -149,10 +149,6 @@ defineProps<{
   disableCreate?: boolean
 }>()
 
-const emit = defineEmits<{
-  (e: 'close'): void
-}>()
-
 const search = defineModel<string>('search')
 const { on, bind } = useDebouncedTextInput({ model: search })
 const router = useRouter()
@@ -168,7 +164,6 @@ const openProjectDeleteDialog = (item: ProjectsDeleteDialog_ProjectFragment) => 
 
 const handleProjectClick = (id: string) => {
   router.push(projectRoute(id))
-  emit('close')
 }
 
 enum ActionTypes {
@@ -193,7 +188,6 @@ const onActionChosen = (
 ) => {
   if (actionItem.id === ActionTypes.EditMembers) {
     router.push(projectCollaboratorsRoute(project.id))
-    emit('close')
   } else if (actionItem.id === ActionTypes.ViewProject) {
     handleProjectClick(project.id)
   } else if (actionItem.id === ActionTypes.DeleteProject) {

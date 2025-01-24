@@ -61,6 +61,7 @@
           v-model:automation-name="automationName"
           :preselected-project="preselectedProject"
           :is-test-automation="isTestAutomation"
+          :workspace-id="workspaceId"
         />
         <AutomateAutomationCreateDialogSelectFunctionStep
           v-if="isTestAutomation"

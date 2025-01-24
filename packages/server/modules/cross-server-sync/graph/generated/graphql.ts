@@ -926,6 +926,11 @@ export type DeleteVersionsInput = {
   versionIds: Array<Scalars['ID']['input']>;
 };
 
+export type DenyWorkspaceJoinRequestInput = {
+  userId: Scalars['String']['input'];
+  workspaceId: Scalars['String']['input'];
+};
+
 export enum DiscoverableStreamsSortType {
   CreatedDate = 'CREATED_DATE',
   FavoritesCount = 'FAVORITES_COUNT'
@@ -1167,7 +1172,7 @@ export type MarkReceivedVersionInput = {
 
 export type Model = {
   __typename?: 'Model';
-  author: LimitedUser;
+  author?: Maybe<LimitedUser>;
   automationsStatus?: Maybe<TriggeredAutomationsStatus>;
   /** Return a model tree of children */
   childrenTree: Array<ModelsTreeItem>;
@@ -3843,6 +3848,7 @@ export type UserEmailMutations = {
   delete: User;
   requestNewEmailVerification?: Maybe<Scalars['Boolean']['output']>;
   setPrimary: User;
+  verify?: Maybe<Scalars['Boolean']['output']>;
 };
 
 
@@ -3863,6 +3869,11 @@ export type UserEmailMutationsRequestNewEmailVerificationArgs = {
 
 export type UserEmailMutationsSetPrimaryArgs = {
   input: SetPrimaryUserEmailInput;
+};
+
+
+export type UserEmailMutationsVerifyArgs = {
+  input: VerifyUserEmailInput;
 };
 
 export type UserGendoAiCredits = {
@@ -3943,6 +3954,11 @@ export type UsersRetrievalInput = {
   projectId?: InputMaybe<Scalars['String']['input']>;
   /** The query looks for matches in user name & email */
   query: Scalars['String']['input'];
+};
+
+export type VerifyUserEmailInput = {
+  code: Scalars['String']['input'];
+  email: Scalars['String']['input'];
 };
 
 export type Version = {
@@ -4399,6 +4415,7 @@ export type WorkspaceInviteUseInput = {
 export type WorkspaceJoinRequest = {
   __typename?: 'WorkspaceJoinRequest';
   createdAt: Scalars['DateTime']['output'];
+  id: Scalars['String']['output'];
   status: WorkspaceJoinRequestStatus;
   user: LimitedUser;
   workspace: Workspace;
@@ -4414,11 +4431,17 @@ export type WorkspaceJoinRequestCollection = {
 export type WorkspaceJoinRequestMutations = {
   __typename?: 'WorkspaceJoinRequestMutations';
   approve: Scalars['Boolean']['output'];
+  deny: Scalars['Boolean']['output'];
 };
 
 
 export type WorkspaceJoinRequestMutationsApproveArgs = {
   input: ApproveWorkspaceJoinRequestInput;
+};
+
+
+export type WorkspaceJoinRequestMutationsDenyArgs = {
+  input: DenyWorkspaceJoinRequestInput;
 };
 
 export enum WorkspaceJoinRequestStatus {
