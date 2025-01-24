@@ -41,12 +41,12 @@ import {
 import { createNewProjectFactory } from '@/modules/core/services/projects'
 import {
   deleteProjectFactory,
+  getProjectFactory,
   storeProjectFactory,
   storeProjectRoleFactory
 } from '@/modules/core/repositories/projects'
 import { mainDb } from '@/db/knex'
 import { storeModelFactory } from '@/modules/core/repositories/models'
-import { getProjectFactory } from '@/modules/core/repositories/streams'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import {
   getWorkspaceFactory,
