@@ -6,22 +6,24 @@ import { getDb, getProjectDbClient } from '@/modules/multiregion/utils/dbSelecto
 import { getRegionsFactory } from '@/modules/multiregion/repositories'
 import { authorizeResolver } from '@/modules/shared'
 import {
-  copyProjectModelsFactory,
-  copyProjectsFactory,
-  copyProjectVersionsFactory,
-  copyWorkspaceFactory,
   getDefaultRegionFactory,
   upsertRegionAssignmentFactory
 } from '@/modules/workspaces/repositories/regions'
+import {
+  copyProjectModelsFactory,
+  copyProjectsFactory,
+  copyProjectVersionsFactory,
+  copyWorkspaceFactory
+} from '@/modules/workspaces/repositories/projectRegions'
 import {
   getWorkspaceFactory,
   upsertWorkspaceFactory
 } from '@/modules/workspaces/repositories/workspaces'
 import {
   assignWorkspaceRegionFactory,
-  getAvailableRegionsFactory,
-  updateProjectRegionFactory
+  getAvailableRegionsFactory
 } from '@/modules/workspaces/services/regions'
+import { updateProjectRegionFactory } from '@/modules/workspaces/services/projectRegions'
 import { Roles } from '@speckle/shared'
 import { getProjectFactory } from '@/modules/core/repositories/streams'
 import { getStreamBranchCountFactory } from '@/modules/core/repositories/branches'
