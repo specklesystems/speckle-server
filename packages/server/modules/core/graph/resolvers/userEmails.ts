@@ -10,6 +10,7 @@ import {
 } from '@/modules/core/repositories/userEmails'
 import { db } from '@/db/knex'
 import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
+import { requestNewEmailVerificationFactory as requestNewEmailVerificationFactoryOld } from '@/modules/emails/services/verification/request.old'
 import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
 import {
   deleteServerOnlyInvitesFactory,
@@ -30,16 +31,32 @@ import {
   verifyUserEmailFactory
 } from '@/modules/core/services/users/emailVerification'
 import { commandFactory } from '@/modules/shared/command'
+import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
+
+const { FF_FORCE_EMAIL_VERIFICATION } = getFeatureFlags()
 
 const getUser = getUserFactory({ db })
-const requestNewEmailVerification = requestNewEmailVerificationFactory({
-  findEmail: findEmailFactory({ db }),
-  getUser,
-  getServerInfo: getServerInfoFactory({ db }),
-  deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db }),
-  renderEmail,
-  sendEmail
-})
+const requestNewEmailVerification = FF_FORCE_EMAIL_VERIFICATION
+  ? requestNewEmailVerificationFactory({
+      findEmail: findEmailFactory({ db }),
+      getUser,
+      getServerInfo: getServerInfoFactory({ db }),
+      deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({
+        db
+      }),
+      renderEmail,
+      sendEmail
+    })
+  : requestNewEmailVerificationFactoryOld({
+      findEmail: findEmailFactory({ db }),
+      getUser,
+      getServerInfo: getServerInfoFactory({ db }),
+      deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({
+        db
+      }),
+      renderEmail,
+      sendEmail
+    })
 
 export = {
   ActiveUserMutations: {
