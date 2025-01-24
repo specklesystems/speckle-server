@@ -42,6 +42,14 @@ export const useIsMultipleEmailsEnabled = () => {
   return ref(FF_MULTIPLE_EMAILS_MODULE_ENABLED)
 }
 
+export const useIsEmailVerificationForced = () => {
+  const {
+    public: { FF_FORCE_EMAIL_VERIFICATION }
+  } = useRuntimeConfig()
+
+  return ref(FF_FORCE_EMAIL_VERIFICATION)
+}
+
 export const useIsGendoModuleEnabled = () => {
   const {
     public: { FF_GENDOAI_MODULE_ENABLED }

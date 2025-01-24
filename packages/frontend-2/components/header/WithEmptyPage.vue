@@ -1,23 +1,11 @@
 <template>
   <div>
-    <nav class="fixed z-40 top-0 h-12 bg-foundation border-b border-outline-2">
-      <div
-        class="flex gap-8 items-center justify-between h-full w-screen py-4 px-3 sm:px-4"
-      >
-        <div>
-          <HeaderLogoBlock
-            v-if="showLogo"
-            :active="false"
-            :to="homeRoute"
-            :no-link="!logoLink"
-            class="hidden lg:flex lg:min-w-40"
-          />
-        </div>
-        <div>
-          <slot name="header-actions" />
-        </div>
-      </div>
-    </nav>
+    <HeaderEmpty v-if="emptyHeader" :show-logo="showLogo" :logo-link="logoLink">
+      <template #header-actions>
+        <slot name="header-actions" />
+      </template>
+    </HeaderEmpty>
+    <HeaderNavBar v-else />
     <div class="h-dvh w-dvh overflow-hidden flex flex-col">
       <!-- Static Spacer to allow for absolutely positioned HeaderNavBar  -->
       <div class="h-12 w-full shrink-0"></div>
@@ -34,10 +22,9 @@
 </template>
 
 <script setup lang="ts">
-import { homeRoute } from '~/lib/common/helpers/route'
-
 withDefaults(
   defineProps<{
+    emptyHeader: boolean
     showLogo: boolean
     logoLink: boolean
   }>(),

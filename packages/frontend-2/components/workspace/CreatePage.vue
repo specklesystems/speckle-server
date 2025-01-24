@@ -1,5 +1,5 @@
 <template>
-  <HeaderWithEmptyPage show-logo :logo-link="false">
+  <HeaderWithEmptyPage empty-header show-logo :logo-link="false">
     <template #header-actions>
       <FormButton size="sm" color="outline" @click="onCancelClick">Cancel</FormButton>
     </template>

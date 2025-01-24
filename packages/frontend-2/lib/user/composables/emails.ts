@@ -24,6 +24,8 @@ export function useUserEmails() {
   const { mutate: deleteMutation } = useMutation(settingsDeleteUserEmailMutation)
   const { mutate: createMutation } = useMutation(settingsCreateUserEmailMutation)
 
+  const isEmailVerificationForced = useIsEmailVerificationForced()
+
   const emails = computed(() => {
     const emailList = result.value?.activeUser?.emails ?? []
     return orderBy(emailList, ['primary', 'verified'], ['desc', 'desc']) as UserEmail[]
@@ -43,7 +45,9 @@ export function useUserEmails() {
 
     if (result?.data) {
       mixpanel.track('Email Added')
-      navigateTo(verifyEmailRoute)
+      if (isEmailVerificationForced.value) {
+        navigateTo(verifyEmailRoute)
+      }
       return true
     }
 
@@ -66,6 +70,7 @@ export function useUserEmails() {
         type: ToastNotificationType.Success,
         title: `Verification email sent to ${email}`
       })
+      navigateTo(verifyEmailRoute)
       return true
     }
 

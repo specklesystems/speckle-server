@@ -1,5 +1,9 @@
 <template>
-  <HeaderWithEmptyPage show-logo :logo-link="false">
+  <HeaderWithEmptyPage
+    :empty-header="isEmailVerificationForced"
+    show-logo
+    :logo-link="false"
+  >
     <template #header-actions>
       <FormButton
         v-if="isPrimaryEmail"
@@ -71,7 +75,7 @@ definePageMeta({
   middleware: ['auth', 'can-view-verify-email'],
   layout: 'empty'
 })
-
+const isEmailVerificationForced = useIsEmailVerificationForced()
 const { unverifiedEmail, resendVerificationEmail } = useUserEmails()
 const route = useRoute()
 const { logout } = useAuthManager()

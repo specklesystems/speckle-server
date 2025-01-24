@@ -18,7 +18,7 @@
         size="sm"
         @click="resendVerificationEmail(emailData.id, emailData.email)"
       >
-        Resend verification email
+        Verify email
       </FormButton>
     </div>
     <div class="flex flex-col md:flex-row">
