@@ -5,7 +5,7 @@
     </h1>
 
     <div class="flex flex-col space-y-4">
-      <p class="text-center text-body-xs text-foreground-2 mb-2">
+      <p class="text-center text-body-xs text-foreground mb-2">
         Choose a new password for your Speckle account
       </p>
       <FormTextInput

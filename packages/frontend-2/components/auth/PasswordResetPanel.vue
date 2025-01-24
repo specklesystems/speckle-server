@@ -19,7 +19,7 @@
       </div>
     </div>
 
-    <div class="flex flex-col gap-y-3 mt-8">
+    <div class="flex flex-col gap-y-2 mt-8">
       <FormButton submit full-width size="lg" :disabled="loading">
         Send reset email
       </FormButton>
