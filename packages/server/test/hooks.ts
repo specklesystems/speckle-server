@@ -209,8 +209,12 @@ export const resetPubSubFactory = (deps: { db: Knex }) => async () => {
     )
   }
 
+  console.log(subscriptions.rows.length)
+  console.log(subscriptions.rows)
+
   // Drop all subs
   for (const subscription of subscriptions.rows) {
+    console.log(JSON.stringify(subscription, null, 2))
     await dropSubs(subscription)
     await wait(1000)
   }
