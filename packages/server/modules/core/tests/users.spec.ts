@@ -60,7 +60,6 @@ import {
 import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
 import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import { publish } from '@/modules/shared/utils/subscriptions'
 import {
   getUsersFactory,
   getUserFactory,
@@ -134,8 +133,7 @@ const createCommitByBranchId = createCommitByBranchIdFactory({
   insertBranchCommits: insertBranchCommitsFactory({ db }),
   markCommitStreamUpdated,
   markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
-  emitEvent: getEventBus().emit,
-  publishSub: publish
+  emitEvent: getEventBus().emit
 })
 
 const createCommitByBranchName = createCommitByBranchNameFactory({

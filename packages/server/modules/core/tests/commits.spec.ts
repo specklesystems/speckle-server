@@ -59,7 +59,6 @@ import {
 import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
 import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import { publish } from '@/modules/shared/utils/subscriptions'
 import {
   getUsersFactory,
   getUserFactory,
@@ -106,7 +105,6 @@ const deleteCommitAndNotify = deleteCommitAndNotifyFactory({
   markCommitStreamUpdated,
   markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
   deleteCommit: deleteCommitFactory({ db }),
-  publishSub: publish,
   emitEvent: getEventBus().emit
 })
 
@@ -119,8 +117,7 @@ const createCommitByBranchId = createCommitByBranchIdFactory({
   insertBranchCommits: insertBranchCommitsFactory({ db }),
   markCommitStreamUpdated,
   markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
-  emitEvent: getEventBus().emit,
-  publishSub: publish
+  emitEvent: getEventBus().emit
 })
 
 const createCommitByBranchName = createCommitByBranchNameFactory({
@@ -137,7 +134,6 @@ const updateCommitAndNotify = updateCommitAndNotifyFactory({
   getCommitBranch: getCommitBranchFactory({ db }),
   switchCommitBranch: switchCommitBranchFactory({ db }),
   updateCommit: updateCommitFactory({ db }),
-  publishSub: publish,
   emitEvent: getEventBus().emit,
   markCommitStreamUpdated,
   markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db })

@@ -152,8 +152,7 @@ const crossServerSyncModule: SpeckleModule = {
       insertBranchCommits: insertBranchCommitsFactory({ db }),
       markCommitStreamUpdated,
       markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
-      emitEvent: getEventBus().emit,
-      publishSub: publish
+      emitEvent: getEventBus().emit
     })
 
     const createObject = createObjectFactory({

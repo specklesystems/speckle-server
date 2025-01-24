@@ -181,7 +181,6 @@ const buildDeleteVersion = async (params: { projectId: string }) => {
     getCommits: getCommitsFactory({ db: projectDb }),
     getStreams: getStreamsFactory({ db: projectDb }),
     deleteCommits: deleteCommitsFactory({ db: projectDb }),
-    publishSub: publish,
     emitEvent: getEventBus().emit
   })
   return batchDeleteCommits
@@ -198,7 +197,6 @@ const buildUpdateVersion = async (params: { projectId: string }) => {
     getCommitBranch: getCommitBranchFactory({ db: projectDb }),
     switchCommitBranch: switchCommitBranchFactory({ db: projectDb }),
     updateCommit: updateCommitFactory({ db: projectDb }),
-    publishSub: publish,
     emitEvent: getEventBus().emit,
     markCommitStreamUpdated: markCommitStreamUpdatedFactory({ db: projectDb }),
     markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db: projectDb })

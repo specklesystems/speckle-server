@@ -3,8 +3,7 @@ import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { authorizeResolver } from '@/modules/shared'
 import {
   filteredSubscribe,
-  ProjectSubscriptions,
-  publish
+  ProjectSubscriptions
 } from '@/modules/shared/utils/subscriptions'
 import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
 import {
@@ -105,7 +104,6 @@ export = {
         getStreamBranchByName: getStreamBranchByNameFactory({ db: projectDb }),
         createBranch: createBranchFactory({ db: projectDb }),
         moveCommitsToBranch: moveCommitsToBranchFactory({ db: projectDb }),
-        publishSub: publish,
         emitEvent: getEventBus().emit
       })
       return await batchMoveCommits(args.input, ctx.userId!)
@@ -118,7 +116,6 @@ export = {
         getCommits: getCommitsFactory({ db: projectDb }),
         getStreams: getStreamsFactory({ db: projectDb }),
         deleteCommits: deleteCommitsFactory({ db: projectDb }),
-        publishSub: publish,
         emitEvent: getEventBus().emit
       })
       await batchDeleteCommits(args.input, ctx.userId!)
@@ -149,7 +146,6 @@ export = {
         getCommitBranch: getCommitBranchFactory({ db: projectDb }),
         switchCommitBranch: switchCommitBranchFactory({ db: projectDb }),
         updateCommit: updateCommitFactory({ db: projectDb }),
-        publishSub: publish,
         emitEvent: getEventBus().emit,
         markCommitStreamUpdated: markCommitStreamUpdatedFactory({ db: projectDb }),
         markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db: projectDb })
@@ -183,8 +179,7 @@ export = {
         insertBranchCommits: insertBranchCommitsFactory({ db: projectDb }),
         markCommitStreamUpdated: markCommitStreamUpdatedFactory({ db: projectDb }),
         markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db: projectDb }),
-        emitEvent: getEventBus().emit,
-        publishSub: publish
+        emitEvent: getEventBus().emit
       })
 
       const commit = await createCommitByBranchId({

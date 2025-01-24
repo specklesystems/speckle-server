@@ -80,7 +80,6 @@ const {
   buildCoreInviteEmailContentsFactory
 } = require('@/modules/serverinvites/services/coreEmailContents')
 const { getEventBus } = require('@/modules/shared/services/eventBus')
-const { publish } = require('@/modules/shared/utils/subscriptions')
 const {
   getUsersFactory,
   getUserFactory,
@@ -140,8 +139,7 @@ const createCommitByBranchId = createCommitByBranchIdFactory({
   insertBranchCommits: insertBranchCommitsFactory({ db }),
   markCommitStreamUpdated,
   markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
-  emitEvent: getEventBus().emit,
-  publishSub: publish
+  emitEvent: getEventBus().emit
 })
 
 const createCommitByBranchName = createCommitByBranchNameFactory({

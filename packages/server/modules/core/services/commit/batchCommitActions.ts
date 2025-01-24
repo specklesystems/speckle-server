@@ -19,17 +19,11 @@ import {
   CommitsDeleteInput,
   CommitsMoveInput,
   DeleteVersionsInput,
-  MoveVersionsInput,
-  ProjectVersionsUpdatedMessageType
+  MoveVersionsInput
 } from '@/modules/core/graph/generated/graphql'
 import { Roles } from '@/modules/core/helpers/mainConstants'
-import { CommitPubsubEvents } from '@/modules/shared'
 import { ensureError } from '@/modules/shared/helpers/errorHelper'
 import { EventBusEmit } from '@/modules/shared/services/eventBus'
-import {
-  ProjectSubscriptions,
-  PublishSubscription
-} from '@/modules/shared/utils/subscriptions'
 import { difference, groupBy, has, keyBy } from 'lodash'
 
 type OldBatchInput = CommitsMoveInput | CommitsDeleteInput
@@ -158,7 +152,6 @@ export const batchMoveCommitsFactory =
       createBranch: StoreBranch
       moveCommitsToBranch: MoveCommitsToBranch
       emitEvent: EventBusEmit
-      publishSub: PublishSubscription
     }
   ): ValidateAndBatchMoveCommits =>
   async (params: CommitsMoveInput | MoveVersionsInput, userId: string) => {
@@ -183,29 +176,17 @@ export const batchMoveCommitsFactory =
       await deps.moveCommitsToBranch(commitIds, finalBranch.id)
       await Promise.all(
         commitsWithStreams.map(async ({ commit, stream }) => {
-          await Promise.all([
-            deps.emitEvent({
-              eventName: VersionEvents.MovedModel,
-              payload: {
-                versionId: commit.id,
-                projectId: stream.id,
-                userId,
-                originalModelId: commit.branchId,
-                newModelId: finalBranch.id,
-                version: commit
-              }
-            }),
-            // TODO: Move to event bus listeners
-            deps.publishSub(ProjectSubscriptions.ProjectVersionsUpdated, {
+          await deps.emitEvent({
+            eventName: VersionEvents.MovedModel,
+            payload: {
+              versionId: commit.id,
               projectId: stream.id,
-              projectVersionsUpdated: {
-                id: commit.id,
-                version: { ...commit, streamId: stream.id },
-                type: ProjectVersionsUpdatedMessageType.Updated,
-                modelId: finalBranch.id
-              }
-            })
-          ])
+              userId,
+              originalModelId: commit.branchId,
+              newModelId: finalBranch.id,
+              version: commit
+            }
+          })
         })
       )
       return finalBranch
@@ -223,7 +204,6 @@ export const batchDeleteCommitsFactory =
     deps: ValidateBatchBaseRulesDeps & {
       deleteCommits: DeleteCommits
       emitEvent: EventBusEmit
-      publishSub: PublishSubscription
     }
   ): ValidateAndBatchDeleteCommits =>
   async (params: CommitsDeleteInput | DeleteVersionsInput, userId: string) => {
@@ -247,24 +227,6 @@ export const batchDeleteCommitsFactory =
                 versionId: commit.id,
                 userId,
                 version: commit
-              }
-            }),
-            // TODO: Move to event bus listeners
-            deps.publishSub(CommitPubsubEvents.CommitDeleted, {
-              commitDeleted: {
-                ...commit,
-                streamId: stream.id,
-                branchId: commit.branchId
-              },
-              streamId: stream.id
-            }),
-            deps.publishSub(ProjectSubscriptions.ProjectVersionsUpdated, {
-              projectId: stream.id,
-              projectVersionsUpdated: {
-                id: commit.id,
-                type: ProjectVersionsUpdatedMessageType.Deleted,
-                version: null,
-                modelId: commit.branchId
               }
             })
           ])

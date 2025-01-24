@@ -34,16 +34,10 @@ import {
   CommitReceivedInput,
   CommitUpdateInput,
   MarkReceivedVersionInput,
-  ProjectVersionsUpdatedMessageType,
   UpdateVersionInput
 } from '@/modules/core/graph/generated/graphql'
 import { BranchRecord, CommitRecord } from '@/modules/core/helpers/types'
-import { CommitPubsubEvents } from '@/modules/shared'
 import { EventBusEmit } from '@/modules/shared/services/eventBus'
-import {
-  ProjectSubscriptions,
-  PublishSubscription
-} from '@/modules/shared/utils/subscriptions'
 import { ensureError, Roles } from '@speckle/shared'
 import { has } from 'lodash'
 
@@ -96,7 +90,6 @@ export const createCommitByBranchIdFactory =
     markCommitStreamUpdated: MarkCommitStreamUpdated
     markCommitBranchUpdated: MarkCommitBranchUpdated
     emitEvent: EventBusEmit
-    publishSub: PublishSubscription
   }): CreateCommitByBranchId =>
   async (params) => {
     const {
@@ -161,20 +154,6 @@ export const createCommitByBranchIdFactory =
           modelName: branch.name,
           userId: authorId
         }
-      }),
-      // TODO: Move to event bus listeners
-      deps.publishSub(CommitPubsubEvents.CommitCreated, {
-        commitCreated: { ...input, id, authorId },
-        streamId
-      }),
-      deps.publishSub(ProjectSubscriptions.ProjectVersionsUpdated, {
-        projectId: streamId,
-        projectVersionsUpdated: {
-          id: commit.id,
-          version: { ...commit, streamId },
-          type: ProjectVersionsUpdatedMessageType.Created,
-          modelId: branchId
-        }
       })
     ])
 
@@ -225,7 +204,7 @@ export const createCommitByBranchNameFactory =
     return commit
   }
 
-const isOldVersionUpdateInput = (
+export const isOldVersionUpdateInput = (
   i: CommitUpdateInput | UpdateVersionInput
 ): i is CommitUpdateInput => has(i, 'streamId')
 
@@ -241,7 +220,6 @@ export const updateCommitAndNotifyFactory =
     markCommitStreamUpdated: MarkCommitStreamUpdated
     markCommitBranchUpdated: MarkCommitBranchUpdated
     emitEvent: EventBusEmit
-    publishSub: PublishSubscription
   }): UpdateCommitAndNotify =>
   async (params: CommitUpdateInput | UpdateVersionInput, userId: string) => {
     const {
@@ -317,13 +295,6 @@ export const updateCommitAndNotifyFactory =
     }
 
     if (commit) {
-      const legacyUpdateStruct: CommitUpdateInput = isOldVersionUpdateInput(params)
-        ? params
-        : {
-            id: params.versionId,
-            message: params.message,
-            streamId: stream.id
-          }
       const [updatedBranch] = await Promise.all([
         deps.markCommitBranchUpdated(commit.id),
         deps.markCommitStreamUpdated(commit.id),
@@ -337,21 +308,6 @@ export const updateCommitAndNotifyFactory =
             oldVersion: commit,
             userId,
             update: params
-          }
-        }),
-        // TODO: Move to event bus listeners
-        deps.publishSub(CommitPubsubEvents.CommitUpdated, {
-          commitUpdated: { ...legacyUpdateStruct },
-          streamId: stream.id,
-          commitId
-        }),
-        deps.publishSub(ProjectSubscriptions.ProjectVersionsUpdated, {
-          projectId: stream.id,
-          projectVersionsUpdated: {
-            id: commitId,
-            version: { ...newCommit, streamId: stream.id },
-            type: ProjectVersionsUpdatedMessageType.Updated,
-            modelId: branch!.id
           }
         })
       ])
@@ -368,7 +324,6 @@ export const deleteCommitAndNotifyFactory =
     markCommitBranchUpdated: MarkCommitBranchUpdated
     deleteCommit: DeleteCommit
     emitEvent: EventBusEmit
-    publishSub: PublishSubscription
   }): DeleteCommitAndNotify =>
   async (commitId: string, streamId: string, userId: string) => {
     const commit = await deps.getCommit(commitId)
@@ -391,32 +346,16 @@ export const deleteCommitAndNotifyFactory =
 
     const isDeleted = await deps.deleteCommit(commitId)
     if (isDeleted) {
-      await Promise.all([
-        deps.emitEvent({
-          eventName: VersionEvents.Deleted,
-          payload: {
-            projectId: streamId,
-            modelId: updatedBranch.id,
-            versionId: commitId,
-            userId,
-            version: commit
-          }
-        }),
-        // TODO: Move to event bus listeners
-        deps.publishSub(CommitPubsubEvents.CommitDeleted, {
-          commitDeleted: { ...commit, streamId, branchId: updatedBranch.id },
-          streamId
-        }),
-        deps.publishSub(ProjectSubscriptions.ProjectVersionsUpdated, {
+      await deps.emitEvent({
+        eventName: VersionEvents.Deleted,
+        payload: {
           projectId: streamId,
-          projectVersionsUpdated: {
-            id: commitId,
-            type: ProjectVersionsUpdatedMessageType.Deleted,
-            version: null,
-            modelId: updatedBranch.id
-          }
-        })
-      ])
+          modelId: updatedBranch.id,
+          versionId: commitId,
+          userId,
+          version: commit
+        }
+      })
     }
 
     return isDeleted

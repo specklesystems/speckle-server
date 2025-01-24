@@ -1,8 +1,7 @@
 import { CommitNotFoundError } from '@/modules/core/errors/commit'
 import {
   CommitSubscriptions,
-  filteredSubscribe,
-  publish
+  filteredSubscribe
 } from '@/modules/shared/utils/subscriptions'
 import { authorizeResolver } from '@/modules/shared'
 import { Knex } from 'knex'
@@ -342,8 +341,7 @@ export = {
         insertBranchCommits: insertBranchCommitsFactory({ db: projectDb }),
         markCommitStreamUpdated: markCommitStreamUpdatedFactory({ db: projectDb }),
         markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db: projectDb }),
-        emitEvent: getEventBus().emit,
-        publishSub: publish
+        emitEvent: getEventBus().emit
       })
 
       const createCommitByBranchName = createCommitByBranchNameFactory({
@@ -378,7 +376,6 @@ export = {
         getCommitBranch: getCommitBranchFactory({ db: projectDb }),
         switchCommitBranch: switchCommitBranchFactory({ db: projectDb }),
         updateCommit: updateCommitFactory({ db: projectDb }),
-        publishSub: publish,
         emitEvent: getEventBus().emit,
         markCommitStreamUpdated: markCommitStreamUpdatedFactory({ db: projectDb }),
         markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db: projectDb })
@@ -421,7 +418,6 @@ export = {
         markCommitStreamUpdated: markCommitStreamUpdatedFactory({ db: projectDb }),
         markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db: projectDb }),
         deleteCommit: deleteCommitFactory({ db: projectDb }),
-        publishSub: publish,
         emitEvent: getEventBus().emit
       })
       const deleted = await deleteCommitAndNotify(
@@ -441,7 +437,6 @@ export = {
         getStreamBranchByName: getStreamBranchByNameFactory({ db: projectDb }),
         createBranch: createBranchFactory({ db: projectDb }),
         moveCommitsToBranch: moveCommitsToBranchFactory({ db: projectDb }),
-        publishSub: publish,
         emitEvent: getEventBus().emit
       })
       await batchMoveCommits(args.input, ctx.userId!)
@@ -455,7 +450,6 @@ export = {
         getCommits: getCommitsFactory({ db: projectDb }),
         getStreams,
         deleteCommits: deleteCommitsFactory({ db: projectDb }),
-        publishSub: publish,
         emitEvent: getEventBus().emit
       })
       await batchDeleteCommits(args.input, ctx.userId!)

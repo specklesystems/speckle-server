@@ -176,8 +176,7 @@ const command: CommandModule<
       insertBranchCommits: insertBranchCommitsFactory({ db: projectDb }),
       markCommitStreamUpdated,
       markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db: projectDb }),
-      emitEvent: getEventBus().emit,
-      publishSub: publish
+      emitEvent: getEventBus().emit
     })
 
     const createObject = createObjectFactory({

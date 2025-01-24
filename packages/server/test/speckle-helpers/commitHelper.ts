@@ -21,7 +21,6 @@ import {
 import { createObjectFactory } from '@/modules/core/services/objects/management'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import { publish } from '@/modules/shared/utils/subscriptions'
 import { BasicTestUser } from '@/test/authHelper'
 import { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
 
@@ -123,8 +122,7 @@ export async function createTestCommits(
         insertBranchCommits: insertBranchCommitsFactory({ db: projectDb }),
         markCommitStreamUpdated,
         markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db: projectDb }),
-        emitEvent: getEventBus().emit,
-        publishSub: publish
+        emitEvent: getEventBus().emit
       })
 
       const createCommitByBranchName = createCommitByBranchNameFactory({
