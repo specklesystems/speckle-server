@@ -8,7 +8,7 @@
         {
           id: 'actions',
           header: '',
-          classes: 'col-span-6 flex items-center justify-end'
+          classes: 'col-span-3 lg:col-span-6 flex items-center justify-end'
         }
       ]"
       :items="joinRequests"
@@ -28,20 +28,12 @@
         </p>
       </template>
       <template #actions="{ item }">
-        <LayoutMenu
-          v-model:open="showActionsMenu[item.id]"
-          :items="actionItems"
-          mount-menu-on-body
-          :menu-position="HorizontalDirection.Left"
-          @chosen="({ item: actionItem }) => onActionChosen(actionItem, item)"
-        >
-          <FormButton
-            :color="showActionsMenu[item.id] ? 'outline' : 'subtle'"
-            hide-text
-            :icon-right="showActionsMenu[item.id] ? XMarkIcon : EllipsisHorizontalIcon"
-            @click="toggleMenu(item.id)"
-          />
-        </LayoutMenu>
+        <div class="flex items-center gap-x-2">
+          <FormButton color="outline" size="sm" @click="onApprove(item)">
+            Approve
+          </FormButton>
+          <FormButton color="outline" size="sm" @click="onDeny(item)">Deny</FormButton>
+        </div>
       </template>
     </LayoutTable>
 
@@ -59,15 +51,7 @@ import type {
   WorkspaceJoinRequestApproveDialog_WorkspaceJoinRequestFragment
 } from '~~/lib/common/generated/gql/graphql'
 import { graphql } from '~/lib/common/generated/gql'
-import { EllipsisHorizontalIcon, XMarkIcon } from '@heroicons/vue/24/outline'
-import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
-import { HorizontalDirection } from '~~/lib/common/composables/window'
 import { useWorkspaceJoinRequest } from '~/lib/workspaces/composables/joinRequests'
-
-enum ActionTypes {
-  Approve = 'approve',
-  Deny = 'deny'
-}
 
 graphql(`
   fragment SettingsWorkspacesMembersRequestsTable_Workspace on Workspace {
@@ -94,20 +78,15 @@ const props = defineProps<{
   workspace: MaybeNullOrUndefined<SettingsWorkspacesMembersRequestsTable_WorkspaceFragment>
 }>()
 
+const { deny } = useWorkspaceJoinRequest()
+
 const showApproveJoinRequestDialog = ref(false)
 const requestToApprove =
   ref<WorkspaceJoinRequestApproveDialog_WorkspaceJoinRequestFragment>()
-const showActionsMenu = ref<Record<string, boolean>>({})
-const { deny } = useWorkspaceJoinRequest()
 
 const joinRequests = computed(
   () => props.workspace?.adminWorkspacesJoinRequests?.items || []
 )
-
-const actionItems = computed((): LayoutMenuItem[][] => [
-  [{ title: 'Approve...', id: ActionTypes.Approve }],
-  [{ title: 'Deny', id: ActionTypes.Deny }]
-])
 
 const onApprove = (
   request: WorkspaceJoinRequestApproveDialog_WorkspaceJoinRequestFragment
@@ -127,23 +106,5 @@ const onDeny = async (
     },
     request.id
   )
-}
-
-const onActionChosen = (
-  actionItem: LayoutMenuItem,
-  request: WorkspaceJoinRequestApproveDialog_WorkspaceJoinRequestFragment
-) => {
-  switch (actionItem.id) {
-    case ActionTypes.Approve:
-      onApprove(request)
-      break
-    case ActionTypes.Deny:
-      onDeny(request)
-      break
-  }
-}
-
-const toggleMenu = (itemId: string) => {
-  showActionsMenu.value[itemId] = !showActionsMenu.value[itemId]
 }
 </script>
