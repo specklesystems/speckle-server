@@ -57,12 +57,14 @@ export const settingsWorkspacesMembersQuery = graphql(`
   query SettingsWorkspacesMembers(
     $slug: String!
     $invitesFilter: PendingWorkspaceCollaboratorsFilter
+    $joinRequestsFilter: AdminWorkspaceJoinRequestFilter
   ) {
     workspaceBySlug(slug: $slug) {
       ...SettingsWorkspacesMembers_Workspace
       ...SettingsWorkspacesMembersMembersTable_Workspace
       ...SettingsWorkspacesMembersGuestsTable_Workspace
       ...SettingsWorkspacesMembersInvitesTable_Workspace
+      ...SettingsWorkspacesMembersRequestsTable_Workspace
     }
   }
 `)
@@ -77,6 +79,18 @@ export const settingsWorkspacesMembersSearchQuery = graphql(`
           ...SettingsWorkspacesMembersMembersTable_WorkspaceCollaborator
         }
       }
+    }
+  }
+`)
+
+export const settingsWorkspacesJoinRequestsSearchQuery = graphql(`
+  query SettingsWorkspacesJoinRequestsSearch(
+    $slug: String!
+    $joinRequestsFilter: AdminWorkspaceJoinRequestFilter
+  ) {
+    workspaceBySlug(slug: $slug) {
+      id
+      ...SettingsWorkspacesMembersRequestsTable_Workspace
     }
   }
 `)
