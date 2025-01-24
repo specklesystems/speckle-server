@@ -3,10 +3,9 @@
     <h1 class="text-heading-xl text-center inline-block mb-4 w-full">
       Reset your password
     </h1>
-    <div class="flex flex-col space-y-4 text-body-xs">
-      <div>
-        Type in the email address you used, so we can verify your account. We will send
-        you instructions on how to reset your password.
+    <div class="flex flex-col space-y-4">
+      <div class="text-body-xs text-foreground text-center mb-2">
+        Enter your email address and we'll send you the password reset instructions.
       </div>
       <div>
         <FormTextInput
@@ -20,7 +19,7 @@
       </div>
     </div>
 
-    <div class="flex flex-col gap-y-2 mt-4">
+    <div class="flex flex-col gap-y-3 mt-8">
       <FormButton submit full-width size="lg" :disabled="loading">
         Send reset email
       </FormButton>
