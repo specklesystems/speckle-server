@@ -147,22 +147,10 @@ describe('Objects REST @core', () => {
 
     //sleep for a bit to allow the server to close the connections
     await new Promise((r) => setTimeout(r, 3000))
-
-    const metricsResponse = await fetch(`${serverAddress}/metrics`, {
-      method: 'GET'
+    const gaugeContents = await determineRemainingDatabaseConnectionCapacity({
+      serverAddress
     })
-    const metricBody = await metricsResponse.text()
-    const match = [
-      ...metricBody.matchAll(
-        /(^speckle_server_knex_remaining_capacity.*)\}\s([\d]+)$/gm
-      )
-    ]
-    if (!match) {
-      expect(match).not.to.be.null
-      return //HACK force correct type below
-    }
-    const gaugeContents = match[0][2] //second capture group of the first & only match gives the gauge value
-    expect(parseInt(gaugeContents), gaugeContents).to.lte(0)
+    expect(parseInt(gaugeContents), gaugeContents).to.gte(1) //expect at least 1 connection to become available in the time frame
   })
 })
 
@@ -195,4 +183,27 @@ const forceCloseStreamingConnection = async (params: {
     controller.abort('force closing the connection') //immediately abort the connection
   }
   await partiallyGetBodyStreamThenCloseConnection()
+}
+
+const determineRemainingDatabaseConnectionCapacity = async (params: {
+  serverAddress: string
+}): Promise<string> => {
+  const { serverAddress } = params
+  const metricsResponse = await fetch(`${serverAddress}/metrics`, {
+    method: 'GET'
+  })
+  const metricBody = await metricsResponse.text()
+  const match = [
+    ...metricBody.matchAll(/(^speckle_server_knex_remaining_capacity.*)\}\s([\d]+)$/gm)
+  ]
+  if (!match) {
+    expect(match).not.to.be.null
+    return '' //HACK force correct type below
+  }
+  const gaugeContents = match[0][2] //second capture group of the first & only match gives the gauge value
+  if (!gaugeContents) {
+    expect(gaugeContents).not.to.be.null
+    return '' //HACK force correct type below
+  }
+  return gaugeContents
 }
