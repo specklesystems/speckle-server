@@ -98,3 +98,6 @@ export async function down(knex: Knex): Promise<void> {
     'DROP INDEX CONCURRENTLY automation_triggers_automationrevisionid_triggeringid_index'
   )
 }
+
+// This migration is not transactional because it uses CREATE INDEX CONCURRENTLY
+export const config = { transaction: false }
