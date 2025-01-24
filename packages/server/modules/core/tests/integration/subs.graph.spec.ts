@@ -2,10 +2,6 @@
 import { db } from '@/db/knex'
 import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import {
-  addBranchDeletedActivityFactory,
-  addBranchUpdatedActivityFactory
-} from '@/modules/activitystream/services/branchActivity'
-import {
   addCommitDeletedActivityFactory,
   addCommitUpdatedActivityFactory
 } from '@/modules/activitystream/services/commitActivity'
@@ -159,10 +155,7 @@ const buildUpdateModel = async (params: { projectId: string }) => {
   const updateBranchAndNotify = updateBranchAndNotifyFactory({
     getBranchById: getBranchByIdFactory({ db: projectDB }),
     updateBranch: updateBranchFactory({ db: projectDB }),
-    addBranchUpdatedActivity: addBranchUpdatedActivityFactory({
-      saveActivity: saveActivityFactory({ db }),
-      publish
-    })
+    eventEmit: getEventBus().emit
   })
   return updateBranchAndNotify
 }
@@ -179,10 +172,6 @@ const buildDeleteModel = async (params: { projectId: string }) => {
     getBranchById: getBranchByIdFactory({ db: projectDB }),
     emitEvent: getEventBus().emit,
     markBranchStreamUpdated,
-    addBranchDeletedActivity: addBranchDeletedActivityFactory({
-      saveActivity: saveActivityFactory({ db }),
-      publish
-    }),
     deleteBranchById: deleteBranchByIdFactory({ db: projectDB })
   })
   return deleteBranchAndNotify
