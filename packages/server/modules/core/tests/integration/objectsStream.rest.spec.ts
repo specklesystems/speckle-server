@@ -136,7 +136,7 @@ describe('Objects REST @core', () => {
     const objsIds = manyObjs.objs.map((o) => o.id)
 
     await createObjectsBatched({ streamId: project.id, objects: manyObjs.objs })
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < 40; i++) {
       forceCloseStreamingConnection({
         serverAddress,
         projectId: project.id,
@@ -144,6 +144,9 @@ describe('Objects REST @core', () => {
         objsIds
       })
     }
+
+    //sleep for a bit to allow the server to close the connections
+    await new Promise((r) => setTimeout(r, 3000))
 
     const metricsResponse = await fetch(`${serverAddress}/metrics`, {
       method: 'GET'
