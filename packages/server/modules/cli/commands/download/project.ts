@@ -244,7 +244,6 @@ const command: CommandModule<
       createBranchAndNotify: createBranchAndNotifyFactory({
         getStreamBranchByName,
         createBranch: createBranchFactory({ db: projectDb }),
-        publishSub: publish,
         eventEmit: getEventBus().emit
       })
     })

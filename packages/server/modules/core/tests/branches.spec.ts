@@ -99,7 +99,6 @@ const createBranch = createBranchFactory({ db: knex })
 const updateBranchAndNotify = updateBranchAndNotifyFactory({
   getBranchById: getBranchByIdFactory({ db: knex }),
   updateBranch: updateBranchFactory({ db: knex }),
-  publishSub: publish,
   eventEmit: getEventBus().emit
 })
 const deleteBranchAndNotify = deleteBranchAndNotifyFactory({
@@ -107,7 +106,6 @@ const deleteBranchAndNotify = deleteBranchAndNotifyFactory({
   getBranchById: getBranchByIdFactory({ db: knex }),
   emitEvent: getEventBus().emit,
   markBranchStreamUpdated,
-  publishSub: publish,
   deleteBranchById: deleteBranchByIdFactory({ db: knex })
 })
 

@@ -5,7 +5,6 @@ import {
 import { createBranchAndNotifyFactory } from '@/modules/core/services/branch/management'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import { publish } from '@/modules/shared/utils/subscriptions'
 import { BasicTestUser } from '@/test/authHelper'
 import { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
 import { omit } from 'lodash'
@@ -42,7 +41,6 @@ export async function createTestBranch(params: {
   const createBranchAndNotify = createBranchAndNotifyFactory({
     getStreamBranchByName: getStreamBranchByNameFactory({ db: projectDb }),
     createBranch: createBranchFactory({ db: projectDb }),
-    publishSub: publish,
     eventEmit: getEventBus().emit
   })
 
