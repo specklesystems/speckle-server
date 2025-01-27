@@ -17,30 +17,18 @@
     </template>
     <div v-if="!loading" class="pt-3">
       <div class="px-3 flex flex-col gap-y-3">
-        <CommonAlert v-if="!limits" color="danger" size="xs">
-          <template #title>No credits available</template>
-          <template #description>
-            <div class="leading-snug">
-              AI Renders are only available on
-              <NuxtLink
-                class="border-b border-outline-3 hover:border-outline-5 pb-px leading-none"
-                external
-                to="https://app.speckle.systems"
-                target="_blank"
-              >
-                app.speckle.systems
-              </NuxtLink>
-            </div>
-          </template>
-        </CommonAlert>
-        <CommonAlert v-else-if="!activeUser" color="danger" size="xs">
+        <CommonAlert v-if="!activeUser" color="danger" size="xs">
           <template #title>Sign in required</template>
-          <template #description>
-            <div class="leading-snug">Please sign in to generate AI renders</div>
-          </template>
+        </CommonAlert>
+        <CommonAlert v-else-if="!canContribute" color="danger" size="xs">
+          <template #title>You do not have permission</template>
+        </CommonAlert>
+        <CommonAlert v-else-if="!limits" color="neutral" size="xs">
+          <template #title>No credits available</template>
         </CommonAlert>
         <CommonAlert v-else-if="isOutOfCredits" color="neutral" size="xs">
-          <template #title>Credits reset on {{ formattedResetDate }}</template>
+          <template #title>Out of credits</template>
+          <template #description>Credits reset on {{ formattedResetDate }}</template>
         </CommonAlert>
         <div class="flex flex-col gap-y-3">
           <FormTextArea
@@ -66,19 +54,7 @@
                 <ArrowTopRightOnSquareIcon class="h-3 w-3" />
               </div>
             </FormButton>
-
-            <div
-              v-if="!limits"
-              :key="`gendo-tooltip-${buttonDisabled}`"
-              v-tippy="`No credits available`"
-            >
-              <FormButton disabled>Generate</FormButton>
-            </div>
-            <div
-              v-else
-              :key="`gendo-tooltip-${buttonDisabled}`"
-              v-tippy="tooltipMessage"
-            >
+            <div :key="`gendo-tooltip-${buttonDisabled}`" v-tippy="tooltipMessage">
               <FormButton :disabled="buttonDisabled" @click="enqueMagic()">
                 Generate
               </FormButton>
@@ -190,12 +166,21 @@ const textAreaDisabled = computed(() => {
     timeOutWait.value ||
     isOutOfCredits.value ||
     !canContribute.value ||
-    !activeUser.value
+    !activeUser.value ||
+    !limits.value
   )
 })
 
 const buttonDisabled = computed(() => {
   return !prompt.value || textAreaDisabled.value
+})
+
+const tooltipMessage = computed(() => {
+  if (!activeUser.value) return 'You must be logged in'
+  if (!canContribute.value) return 'Project permissions required'
+  if (isOutOfCredits.value) return 'No credits remaining'
+  if (!limits.value) return 'No credits available'
+  return undefined
 })
 
 const randomPlaceholder = computed(() => {
@@ -286,11 +271,4 @@ const lodgeRequest = async (screenshot: string) => {
   isLoading.value = false
   refetch()
 }
-
-const tooltipMessage = computed(() => {
-  if (!activeUser.value) return 'You must be logged in'
-  if (!canContribute.value) return 'Project permissions required'
-  if (isOutOfCredits.value) return 'No credits remaining'
-  return undefined
-})
 </script>

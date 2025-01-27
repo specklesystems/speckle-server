@@ -1,34 +1,28 @@
 <template>
   <form class="mx-auto w-full px-2" @submit="onSubmit">
-    <h1 class="text-heading-xl text-center inline-block mb-4">Reset your password</h1>
+    <h1 class="text-heading-xl text-center w-full inline-block mb-4">
+      Reset your password
+    </h1>
 
-    <div class="flex flex-col space-y-2 text-body-sm">
-      <div class="mb-4">One step closer to resetting your password</div>
+    <div class="flex flex-col space-y-4">
+      <p class="text-center text-body-xs text-foreground mb-2">
+        Choose a new password for your Speckle account
+      </p>
       <FormTextInput
+        v-model="password"
         type="password"
         name="password"
         label="Password"
         placeholder="New password"
         color="foundation"
         size="lg"
-        :rules="passwordRules"
+        :rules="[isRequired]"
         show-label
-        show-required
       />
-      <FormTextInput
-        type="password"
-        name="password-repeat"
-        label="Password (confirmation)"
-        color="foundation"
-        size="lg"
-        :rules="passwordRepeatRules"
-        placeholder="Confirm new password"
-        show-label
-        show-required
-      />
+      <AuthPasswordChecks :password="password" />
     </div>
 
-    <FormButton class="mt-4" submit full-width size="lg" :disabled="loading">
+    <FormButton class="mt-8" submit full-width size="lg" :disabled="loading">
       Reset password
     </FormButton>
   </form>
@@ -36,11 +30,10 @@
 <script setup lang="ts">
 import { useForm } from 'vee-validate'
 import { usePasswordReset } from '~~/lib/auth/composables/passwordReset'
-import { isRequired, isSameAs } from '~~/lib/common/helpers/validation'
+import { isRequired } from '~~/lib/common/helpers/validation'
 
 type FormValues = {
   password: string
-  repeatPassword: string
 }
 
 const props = defineProps<{
@@ -50,9 +43,8 @@ const props = defineProps<{
 const { handleSubmit } = useForm<FormValues>()
 const { finalize } = usePasswordReset()
 
-const passwordRules = [isRequired]
-const passwordRepeatRules = [...passwordRules, isSameAs('password')]
 const loading = ref(false)
+const password = ref('')
 
 const onSubmit = handleSubmit(
   async ({ password }) => await finalize(password, props.token)
