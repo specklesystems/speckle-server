@@ -7,7 +7,6 @@ import {
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
 import {
   getProjectCollaboratorsFactory,
-  getProjectFactory,
   updateProjectFactory,
   upsertProjectRoleFactory,
   getRolesByUserIdFactory,
@@ -212,6 +211,7 @@ import {
   updateWorkspaceJoinRequestStatusFactory
 } from '@/modules/workspaces/repositories/workspaceJoinRequests'
 import { sendWorkspaceJoinRequestReceivedEmailFactory } from '@/modules/workspaces/services/workspaceJoinRequestEmails/received'
+import { getProjectFactory } from '@/modules/core/repositories/projects'
 
 const eventBus = getEventBus()
 const getServerInfo = getServerInfoFactory({ db })

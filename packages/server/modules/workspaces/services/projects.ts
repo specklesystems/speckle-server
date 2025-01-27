@@ -41,13 +41,17 @@ import {
 import { createNewProjectFactory } from '@/modules/core/services/projects'
 import {
   deleteProjectFactory,
+  getProjectFactory,
   storeProjectFactory,
   storeProjectRoleFactory
 } from '@/modules/core/repositories/projects'
 import { mainDb } from '@/db/knex'
 import { storeModelFactory } from '@/modules/core/repositories/models'
-import { getProjectFactory } from '@/modules/core/repositories/streams'
 import { getEventBus } from '@/modules/shared/services/eventBus'
+import {
+  getWorkspaceFactory,
+  upsertWorkspaceFactory
+} from '@/modules/workspaces/repositories/workspaces'
 
 export const queryAllWorkspaceProjectsFactory = ({
   getStreams
@@ -264,6 +268,9 @@ export const updateWorkspaceProjectRoleFactory =
 export const createWorkspaceProjectFactory =
   (deps: { getDefaultRegion: GetDefaultRegion }) =>
   async (params: { input: WorkspaceProjectCreateInput; ownerId: string }) => {
+    // yes, i know, this is not aligned with our current definition of a service, but this was already this way
+    // we need to figure out a good pattern for these situations, where we can not figure out the DB-s up front
+    // its also hard to add a unit test for this in the current setup...
     const { input, ownerId } = params
     const workspaceDefaultRegion = await deps.getDefaultRegion({
       workspaceId: input.workspaceId
@@ -272,6 +279,18 @@ export const createWorkspaceProjectFactory =
       workspaceDefaultRegion?.key ?? (await getValidDefaultProjectRegionKey())
     const projectDb = await getDb({ regionKey })
     const db = mainDb
+
+    const regionalWorkspace = await getWorkspaceFactory({ db: projectDb })({
+      workspaceId: input.workspaceId
+    })
+
+    if (!regionalWorkspace) {
+      const workspace = await getWorkspaceFactory({ db })({
+        workspaceId: input.workspaceId
+      })
+      if (!workspace) throw new WorkspaceNotFoundError()
+      await upsertWorkspaceFactory({ db: projectDb })({ workspace })
+    }
 
     // todo, use the command factory here, but for that, we need to migrate to the event bus
     // deps not injected to ensure proper DB injection
