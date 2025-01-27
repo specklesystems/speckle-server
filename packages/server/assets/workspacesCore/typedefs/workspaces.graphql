@@ -318,7 +318,7 @@ type Workspace {
     filter: AdminWorkspaceJoinRequestFilter
     cursor: String
     limit: Int! = 25
-  ): WorkspaceJoinRequestCollection!
+  ): WorkspaceJoinRequestCollection
     @hasServerRole(role: SERVER_USER)
     @hasScope(scope: "workspace:read")
     @hasWorkspaceRole(role: ADMIN)

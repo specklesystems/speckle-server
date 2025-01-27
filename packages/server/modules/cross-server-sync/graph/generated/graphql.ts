@@ -4176,7 +4176,7 @@ export type WebhookUpdateInput = {
 export type Workspace = {
   __typename?: 'Workspace';
   /** Get all join requests for all the workspaces the user is an admin of */
-  adminWorkspacesJoinRequests: WorkspaceJoinRequestCollection;
+  adminWorkspacesJoinRequests?: Maybe<WorkspaceJoinRequestCollection>;
   automateFunctions: AutomateFunctionCollection;
   createdAt: Scalars['DateTime']['output'];
   /** Info about the workspace creation state */
