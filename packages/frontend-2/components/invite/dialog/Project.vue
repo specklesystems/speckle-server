@@ -127,8 +127,8 @@ const onSelectUsersSubmit = async (updatedInvites: InviteGenericItem[]) => {
   if (data.usersByEmail) {
     invites.value = updatedInvites.map((invite, index) => ({
       ...invite,
-      needsWorkspaceRole: invite.needsWorkspaceRole ?? !invite.workspaceRole,
-      needsServerRole: invite.needsServerRole ?? !invite.serverRole,
+      needsWorkspaceRole: invite.needsWorkspaceRole ?? !!invite.workspaceRole?.length,
+      needsServerRole: invite.needsServerRole ?? !!invite.serverRole?.length,
       userId: data.usersByEmail[index]?.id,
       serverRole: (data.usersByEmail[index]?.role as ServerRoles) ?? Roles.Server.User,
       workspaceRole:
