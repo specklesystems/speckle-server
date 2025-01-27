@@ -510,7 +510,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
       },
       WorkspaceMutations: {
         create: async (_parent, args, context) => {
-          const { name, description, defaultLogoIndex, logo, slug } = args.input
+          const { name, description, logo, slug } = args.input
 
           const createWorkspace = createWorkspaceFactory({
             validateSlug: validateSlugFactory({
@@ -530,8 +530,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
               name,
               slug,
               description: description ?? null,
-              logo: logo ?? null,
-              defaultLogoIndex: defaultLogoIndex ?? 0
+              logo: logo ?? null
             },
             userResourceAccessLimits: context.resourceAccessRules
           })
