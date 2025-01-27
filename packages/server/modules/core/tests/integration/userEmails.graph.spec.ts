@@ -15,9 +15,10 @@ import { testApolloServer } from '@/test/graphqlHelper'
 import {
   CreateUserEmailDocument,
   DeleteUserEmailDocument,
-  SetPrimaryUserEmailDocument
+  SetPrimaryUserEmailDocument,
+  VerifyUserEmailDocument
 } from '@/test/graphql/generated/graphql'
-import { UserEmails, Users } from '@/modules/core/dbSchema'
+import { EmailVerifications, UserEmails, Users } from '@/modules/core/dbSchema'
 import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
 import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
 import {
@@ -37,7 +38,12 @@ import {
 import { createUserFactory } from '@/modules/core/services/users/management'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { getEventBus } from '@/modules/shared/services/eventBus'
+import { createTestUser, login } from '@/test/authHelper'
+import { EmailVerificationFinalizationError } from '@/modules/emails/errors'
+import { Roles } from '@speckle/shared'
+import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 
+const { FF_FORCE_EMAIL_VERIFICATION } = getFeatureFlags()
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = legacyGetUserFactory({ db })
 const requestNewEmailVerification = requestNewEmailVerificationFactory({
@@ -172,4 +178,91 @@ describe('User emails graphql @core', () => {
       ).to.eq(email.toLowerCase())
     })
   })
+  ;(FF_FORCE_EMAIL_VERIFICATION ? describe : describe.skip)(
+    'verify user email mutation',
+    () => {
+      it('should throw an error if there is no pending verification for the email', async () => {
+        const email = createRandomEmail()
+        const user = await createTestUser({
+          email,
+          role: Roles.Server.User
+        })
+        const session = await login(user)
+
+        // Delete email verification
+        await db(EmailVerifications.name).where({ email }).delete()
+
+        const res = await session.execute(VerifyUserEmailDocument, {
+          input: { email, code: '123456' }
+        })
+
+        expect(res).to.haveGraphQLErrors({
+          code: EmailVerificationFinalizationError.code
+        })
+      })
+      it('should throw an error if verification is expired', async () => {
+        const email = createRandomEmail()
+        const user = await createTestUser({
+          email,
+          role: Roles.Server.User
+        })
+        const session = await login(user)
+
+        // Manually reset email verification code
+        const verificationCode = await deleteOldAndInsertNewVerificationFactory({ db })(
+          email
+        )
+        // Manually expire email verification
+        await db(EmailVerifications.name)
+          .where({ email })
+          .update({ createdAt: new Date('2020-01-01') })
+
+        const res = await session.execute(VerifyUserEmailDocument, {
+          input: { email, code: verificationCode }
+        })
+
+        expect(res).to.haveGraphQLErrors({
+          code: EmailVerificationFinalizationError.code
+        })
+      })
+      it('should throw an error if code is not correct', async () => {
+        const email = createRandomEmail()
+        const user = await createTestUser({
+          email,
+          role: Roles.Server.User
+        })
+        const session = await login(user)
+
+        const res = await session.execute(VerifyUserEmailDocument, {
+          input: { email, code: '123456' }
+        })
+
+        expect(res).to.haveGraphQLErrors({
+          code: EmailVerificationFinalizationError.code
+        })
+      })
+      it('should mark user email as verified', async () => {
+        const email = createRandomEmail()
+        const user = await createTestUser({
+          email,
+          role: Roles.Server.User
+        })
+        const session = await login(user)
+
+        // Manually reset email verification code
+        const verificationCode = await deleteOldAndInsertNewVerificationFactory({ db })(
+          email
+        )
+
+        const res = await session.execute(VerifyUserEmailDocument, {
+          input: { email, code: verificationCode }
+        })
+
+        expect(res).to.not.haveGraphQLErrors()
+
+        const userEmail = await findEmailFactory({ db })({ email, userId: user.id })
+        expect(userEmail?.verified).to.be.true
+      })
+    }
+  )
 })

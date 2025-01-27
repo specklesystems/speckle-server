@@ -6,6 +6,7 @@
       search-placeholder="Search members..."
       :workspace="workspace"
       show-role-filter
+      show-invite-button
     />
     <LayoutTable
       class="mt-6 md:mt-8 mb-12"
