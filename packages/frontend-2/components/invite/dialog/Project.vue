@@ -118,9 +118,9 @@ const onSelectUsersSubmit = async (updatedInvites: InviteGenericItem[]) => {
     query: getUsersByEmailQuery,
     variables: {
       input: {
-        emails: updatedInvites.map((invite) => invite.email),
-        workspaceId: props.project.workspace?.id
-      }
+        emails: updatedInvites.map((invite) => invite.email)
+      },
+      workspaceId: props.project.workspace?.id
     }
   })
 
