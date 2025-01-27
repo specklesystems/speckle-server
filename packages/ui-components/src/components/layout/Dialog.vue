@@ -2,6 +2,7 @@
   <TransitionRoot as="template" :show="open">
     <Dialog as="div" class="relative z-50" @close="onClose">
       <TransitionChild
+        v-if="!hideBackdrop"
         as="template"
         enter="ease-out duration-10"
         enter-from="opacity-0"
@@ -11,6 +12,7 @@
         leave-to="opacity-0"
       >
         <div
+          v-if="!hideBackdrop"
           class="fixed top-0 left-0 w-full h-full backdrop-blur-xs bg-black/60 dark:bg-neutral-900/60 transition-opacity"
         />
       </TransitionChild>
@@ -159,6 +161,7 @@ const props = withDefaults(
      */
     onSubmit?: (e: SubmitEvent) => void
     isTransparent?: boolean
+    hideBackdrop?: boolean
   }>(),
   {
     fullscreen: 'mobile'

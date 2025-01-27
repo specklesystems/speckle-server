@@ -28,8 +28,10 @@
     </template>
     <InviteDialogProjectWorkspaceMembers
       v-else
-      :open="isSelectUsersOpen"
+      v-model:open="isSelectUsersOpen"
       :project="props.project"
+      hide-backdrop
+      @on-cancel="isOpen = false"
     />
   </div>
 </template>
@@ -125,18 +127,21 @@ const onSelectUsersSubmit = async (updatedInvites: InviteGenericItem[]) => {
   })
 
   if (data.usersByEmail) {
-    invites.value = updatedInvites.map((invite, index) => ({
-      ...invite,
-      needsWorkspaceRole: invite.needsWorkspaceRole ?? !!invite.workspaceRole?.length,
-      needsServerRole: invite.needsServerRole ?? !!invite.serverRole?.length,
-      userId: data.usersByEmail[index]?.id,
-      serverRole: (data.usersByEmail[index]?.role as ServerRoles) ?? Roles.Server.User,
-      workspaceRole:
-        invite.workspaceRole ||
-        (matchesDomainPolicy(invite.email, allowedDomains.value)
-          ? Roles.Workspace.Member
-          : Roles.Workspace.Guest)
-    }))
+    invites.value = updatedInvites.map((invite, index) => {
+      return {
+        ...invite,
+        needsWorkspaceRole: invite.needsWorkspaceRole ?? !invite.workspaceRole?.length,
+        needsServerRole: invite.needsServerRole ?? !invite.serverRole?.length,
+        userId: data.usersByEmail[index]?.id,
+        serverRole:
+          (data.usersByEmail[index]?.role as ServerRoles) ?? Roles.Server.User,
+        workspaceRole:
+          invite.workspaceRole ||
+          (matchesDomainPolicy(invite.email, allowedDomains.value)
+            ? Roles.Workspace.Member
+            : Roles.Workspace.Guest)
+      }
+    })
   }
 
   isSelectUsersOpen.value = false
@@ -207,10 +212,10 @@ const sendInvites = async () => {
 
 watch(isOpen, (newVal) => {
   if (newVal) {
-    isSelectUsersOpen.value = true
     invites.value = [
       { ...emptyInviteGenericItem, projectRole: Roles.Stream.Contributor }
     ]
+    isSelectUsersOpen.value = true
   }
 })
 </script>
