@@ -24,6 +24,11 @@
             :workspace="workspace"
             :workspace-slug="slug"
           />
+          <SettingsWorkspacesMembersJoinRequestsTable
+            v-if="activeItem.id === 'joinRequests'"
+            :workspace="workspace"
+            :workspace-slug="slug"
+          />
         </template>
       </LayoutTabsHorizontal>
     </div>
@@ -36,6 +41,8 @@ import { useQuery } from '@vue/apollo-composable'
 import { graphql } from '~/lib/common/generated/gql'
 import { settingsWorkspacesMembersQuery } from '~/lib/settings/graphql/queries'
 import type { LayoutPageTabItem } from '~~/lib/layout/helpers/components'
+import { useOnWorkspaceUpdated } from '~/lib/workspaces/composables/management'
+import { WorkspaceJoinRequestStatus } from '~/lib/common/generated/gql/graphql'
 
 graphql(`
   fragment SettingsWorkspacesMembers_Workspace on Workspace {
@@ -44,13 +51,15 @@ graphql(`
     team {
       items {
         id
-        role
       }
     }
     invitedTeam(filter: $invitesFilter) {
       user {
         id
       }
+    }
+    adminWorkspacesJoinRequests(filter: $joinRequestsFilter) {
+      totalCount
     }
   }
 `)
@@ -63,11 +72,14 @@ useHead({
   title: 'Settings | Workspace - Members'
 })
 
+const route = useRoute()
 const slug = computed(() => (route.params.slug as string) || '')
 
-const route = useRoute()
 const { result } = useQuery(settingsWorkspacesMembersQuery, () => ({
-  slug: slug.value
+  slug: slug.value,
+  joinRequestsFilter: {
+    status: WorkspaceJoinRequestStatus.Pending
+  }
 }))
 
 const workspace = computed(() => result.value?.workspaceBySlug)
@@ -83,6 +95,9 @@ const guestCount = computed(
       .length
 )
 const invitedCount = computed(() => workspace.value?.invitedTeam?.length)
+const joinRequestCount = computed(
+  () => workspace.value?.adminWorkspacesJoinRequests?.totalCount
+)
 const tabItems = computed<LayoutPageTabItem[]>(() => [
   { title: 'Members', id: 'members', count: memberCount.value },
   { title: 'Guests', id: 'guests', count: guestCount.value },
@@ -92,8 +107,17 @@ const tabItems = computed<LayoutPageTabItem[]>(() => [
     disabled: !isAdmin.value,
     disabledMessage: 'Only workspace admins can manage invites',
     count: invitedCount.value
+  },
+  {
+    title: 'Join requests',
+    id: 'joinRequests',
+    disabled: !isAdmin.value,
+    disabledMessage: 'Only workspace admins can manage join requests',
+    count: joinRequestCount.value
   }
 ])
 
 const activeTab = ref(tabItems.value[0])
+
+useOnWorkspaceUpdated({ workspaceSlug: slug })
 </script>

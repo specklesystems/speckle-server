@@ -119,7 +119,7 @@ export type StreamCommitRecord = {
 export type BranchRecord = {
   id: string
   streamId: string
-  authorId: string
+  authorId: string | null
   name: string
   description: Nullable<string>
   createdAt: Date

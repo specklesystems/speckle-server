@@ -55,7 +55,7 @@
     <AuthRegisterTerms v-if="serverInfo.termsOfService" :server-info="serverInfo" />
     <div v-if="!inviteEmail" class="mt-2 sm:mt-4 text-center text-body-xs">
       <span class="mr-2 text-foreground-3">Already have an account?</span>
-      <CommonTextLink :to="finalLoginRoute">Log in</CommonTextLink>
+      <NuxtLink class="text-foreground" :to="finalLoginRoute">Log in</NuxtLink>
     </div>
   </form>
 </template>
