@@ -24,9 +24,9 @@
 <script setup lang="ts">
 withDefaults(
   defineProps<{
-    emptyHeader: boolean
-    showLogo: boolean
-    logoLink: boolean
+    emptyHeader?: boolean
+    showLogo?: boolean
+    logoLink?: boolean
   }>(),
   {
     logoLink: true

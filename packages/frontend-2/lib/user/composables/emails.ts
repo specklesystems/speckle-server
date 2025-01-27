@@ -14,6 +14,7 @@ import type { UserEmail } from '~/lib/common/generated/gql/graphql'
 import { useGlobalToast } from '~/lib/common/composables/toast'
 import { useMixpanel } from '~/lib/core/composables/mp'
 import { verifyEmailRoute, homeRoute } from '~/lib/common/helpers/route'
+import { verifyEmailMutation } from '~/lib/user/graphql/mutations'
 
 export function useUserEmails() {
   const { triggerNotification } = useGlobalToast()
@@ -23,6 +24,7 @@ export function useUserEmails() {
   const { mutate: resendMutation } = useMutation(settingsNewEmailVerificationMutation)
   const { mutate: deleteMutation } = useMutation(settingsDeleteUserEmailMutation)
   const { mutate: createMutation } = useMutation(settingsCreateUserEmailMutation)
+  const { mutate: verifyMutation } = useMutation(verifyEmailMutation)
 
   const isEmailVerificationForced = useIsEmailVerificationForced()
 
@@ -114,11 +116,36 @@ export function useUserEmails() {
     return false
   }
 
+  const verifyUserEmail = async (email: string, code: string) => {
+    const result = await verifyMutation({
+      input: { email, code }
+    }).catch(convertThrowIntoFetchResult)
+
+    if (result?.data?.activeUserMutations?.emailMutations?.verify) {
+      triggerNotification({
+        type: ToastNotificationType.Success,
+        title: 'Email verified',
+        description: 'Your email has been successfully verified'
+      })
+      navigateTo(homeRoute)
+      return true
+    }
+
+    const errorMessage = getFirstErrorMessage(result?.errors)
+    triggerNotification({
+      type: ToastNotificationType.Danger,
+      title: 'Verification failed',
+      description: errorMessage
+    })
+    return false
+  }
+
   return {
     emails,
     unverifiedEmail,
     addUserEmail,
     resendVerificationEmail,
-    deleteUserEmail
+    deleteUserEmail,
+    verifyUserEmail
   }
 }

@@ -317,6 +317,7 @@ const documents = {
     "\n  mutation UpdateUser($input: UserUpdateInput!) {\n    activeUserMutations {\n      update(user: $input) {\n        id\n        name\n        bio\n        company\n        avatar\n      }\n    }\n  }\n": types.UpdateUserDocument,
     "\n  mutation UpdateNotificationPreferences($input: JSONObject!) {\n    userNotificationPreferencesUpdate(preferences: $input)\n  }\n": types.UpdateNotificationPreferencesDocument,
     "\n  mutation DeleteAccount($input: UserDeleteInput!) {\n    userDelete(userConfirmation: $input)\n  }\n": types.DeleteAccountDocument,
+    "\n  mutation verifyEmail($input: VerifyUserEmailInput!) {\n    activeUserMutations {\n      emailMutations {\n        verify(input: $input)\n      }\n    }\n  }\n": types.VerifyEmailDocument,
     "\n  fragment EmailFields on UserEmail {\n    id\n    email\n    verified\n    primary\n  }\n": types.EmailFieldsFragmentDoc,
     "\n  query UserEmails {\n    activeUser {\n      id\n      emails {\n        ...EmailFields\n      }\n      hasPendingVerification\n    }\n  }\n": types.UserEmailsDocument,
     "\n  fragment ViewerCommentBubblesData on Comment {\n    id\n    viewedAt\n    viewerState\n  }\n": types.ViewerCommentBubblesDataFragmentDoc,
@@ -380,6 +381,7 @@ const documents = {
     "\n  fragment AutomateFunctionPage_AutomateFunction on AutomateFunction {\n    id\n    name\n    description\n    logo\n    supportedSourceApps\n    tags\n    ...AutomateFunctionPageHeader_Function\n    ...AutomateFunctionPageInfo_AutomateFunction\n    ...AutomateAutomationCreateDialog_AutomateFunction\n    creator {\n      id\n    }\n  }\n": types.AutomateFunctionPage_AutomateFunctionFragmentDoc,
     "\n  query AutomateFunctionPage($functionId: ID!) {\n    automateFunction(id: $functionId) {\n      ...AutomateFunctionPage_AutomateFunction\n    }\n    activeUser {\n      workspaces {\n        items {\n          ...AutomateFunctionCreateDialog_Workspace\n          ...AutomateFunctionEditDialog_Workspace\n        }\n      }\n    }\n  }\n": types.AutomateFunctionPageDocument,
     "\n  query AutomateFunctionsPage($search: String, $cursor: String = null) {\n    ...AutomateFunctionsPageItems_Query\n    ...AutomateFunctionsPageHeader_Query\n  }\n": types.AutomateFunctionsPageDocument,
+    "\n  query DiscoverableWorkspaces {\n    activeUser {\n      discoverableWorkspaces {\n        id\n        name\n        logo\n        description\n        slug\n        defaultLogoIndex\n      }\n    }\n  }\n": types.DiscoverableWorkspacesDocument,
     "\n  fragment ProjectPageProject on Project {\n    id\n    createdAt\n    modelCount: models(limit: 0) {\n      totalCount\n    }\n    commentThreadCount: commentThreads(limit: 0) {\n      totalCount\n    }\n    workspace {\n      id\n    }\n    ...ProjectPageTeamInternals_Project\n    ...ProjectPageProjectHeader\n    ...ProjectPageTeamDialog\n    ...ProjectsMoveToWorkspaceDialog_Project\n  }\n": types.ProjectPageProjectFragmentDoc,
     "\n  fragment ProjectPageAutomationPage_Automation on Automation {\n    id\n    ...ProjectPageAutomationHeader_Automation\n    ...ProjectPageAutomationFunctions_Automation\n    ...ProjectPageAutomationRuns_Automation\n  }\n": types.ProjectPageAutomationPage_AutomationFragmentDoc,
     "\n  fragment ProjectPageAutomationPage_Project on Project {\n    id\n    workspaceId\n    ...ProjectPageAutomationHeader_Project\n  }\n": types.ProjectPageAutomationPage_ProjectFragmentDoc,
@@ -1624,6 +1626,10 @@ export function graphql(source: "\n  mutation DeleteAccount($input: UserDeleteIn
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
+export function graphql(source: "\n  mutation verifyEmail($input: VerifyUserEmailInput!) {\n    activeUserMutations {\n      emailMutations {\n        verify(input: $input)\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation verifyEmail($input: VerifyUserEmailInput!) {\n    activeUserMutations {\n      emailMutations {\n        verify(input: $input)\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
 export function graphql(source: "\n  fragment EmailFields on UserEmail {\n    id\n    email\n    verified\n    primary\n  }\n"): (typeof documents)["\n  fragment EmailFields on UserEmail {\n    id\n    email\n    verified\n    primary\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
@@ -1873,6 +1879,10 @@ export function graphql(source: "\n  query AutomateFunctionPage($functionId: ID!
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  query AutomateFunctionsPage($search: String, $cursor: String = null) {\n    ...AutomateFunctionsPageItems_Query\n    ...AutomateFunctionsPageHeader_Query\n  }\n"): (typeof documents)["\n  query AutomateFunctionsPage($search: String, $cursor: String = null) {\n    ...AutomateFunctionsPageItems_Query\n    ...AutomateFunctionsPageHeader_Query\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query DiscoverableWorkspaces {\n    activeUser {\n      discoverableWorkspaces {\n        id\n        name\n        logo\n        description\n        slug\n        defaultLogoIndex\n      }\n    }\n  }\n"): (typeof documents)["\n  query DiscoverableWorkspaces {\n    activeUser {\n      discoverableWorkspaces {\n        id\n        name\n        logo\n        description\n        slug\n        defaultLogoIndex\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

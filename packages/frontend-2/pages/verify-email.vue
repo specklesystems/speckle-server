@@ -29,7 +29,11 @@
       <p class="text-center text-body-sm text-foreground mb-8">
         Paste (or type) it below to continue.
       </p>
-      <FormCodeInput v-model="code" :error="hasError" @complete="console.log('done')" />
+      <FormCodeInput
+        v-model="code"
+        :error="hasError"
+        @complete="handleVerificationComplete"
+      />
       <div class="mt-8 flex gap-2">
         <FormButton
           v-if="!isPrimaryEmail"
@@ -76,7 +80,7 @@ definePageMeta({
   layout: 'empty'
 })
 const isEmailVerificationForced = useIsEmailVerificationForced()
-const { unverifiedEmail, resendVerificationEmail } = useUserEmails()
+const { unverifiedEmail, resendVerificationEmail, verifyUserEmail } = useUserEmails()
 const route = useRoute()
 const { logout } = useAuthManager()
 
@@ -109,6 +113,15 @@ const resendEmail = async () => {
   if (success) {
     cooldownRemaining.value = 30
     startInterval()
+  }
+}
+
+const handleVerificationComplete = async (code: string) => {
+  if (!unverifiedEmail.value?.email) return
+
+  const success = await verifyUserEmail(unverifiedEmail.value.email, code)
+  if (!success) {
+    hasError.value = true
   }
 }
 

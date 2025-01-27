@@ -24,10 +24,11 @@ import { homeRoute } from '~/lib/common/helpers/route'
 
 withDefaults(
   defineProps<{
-    showLogo: boolean
-    logoLink: boolean
+    showLogo?: boolean
+    logoLink?: boolean
   }>(),
   {
+    showLogo: true,
     logoLink: true
   }
 )
