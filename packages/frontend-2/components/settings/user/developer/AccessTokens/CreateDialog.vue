@@ -14,9 +14,8 @@
           show-label
           type="text"
         />
-        <FormSelectBadges
+        <FormSelectMulti
           v-model="scopes"
-          multiple
           name="scopes"
           label="Scopes"
           placeholder="Choose Scopes"
@@ -28,7 +27,19 @@
           :label-id="badgesLabelId"
           :button-id="badgesButtonId"
           by="id"
-        />
+        >
+          <template #something-selected="{ value }">
+            <template v-if="value.length === 1">
+              {{ value[0].text }}
+            </template>
+            <template v-else>{{ value.length }} items selected</template>
+          </template>
+          <template #option="{ item }">
+            <div class="flex items-center w-full">
+              <span class="text-xs text-foreground-2">{{ item.id }}</span>
+            </div>
+          </template>
+        </FormSelectMulti>
       </div>
     </form>
   </LayoutDialog>
@@ -36,11 +47,7 @@
 
 <script setup lang="ts">
 import { useMutation } from '@vue/apollo-composable'
-import {
-  LayoutDialog,
-  FormSelectBadges,
-  type LayoutDialogButton
-} from '@speckle/ui-components'
+import { LayoutDialog, type LayoutDialogButton } from '@speckle/ui-components'
 import type { TokenFormValues } from '~~/lib/developer-settings/helpers/types'
 import { createAccessTokenMutation } from '~~/lib/developer-settings/graphql/mutations'
 import { isItemSelected, isRequired } from '~~/lib/common/helpers/validation'
