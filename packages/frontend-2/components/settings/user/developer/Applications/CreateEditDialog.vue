@@ -21,7 +21,7 @@
           label="Scopes"
           placeholder="Choose Scopes"
           help="It's good practice to limit the scopes of your token to the absolute minimum."
-          :rules="[isItemSelected]"
+          :rules="[isMultiItemSelected]"
           show-label
           :items="applicationScopes"
           mount-menu-on-body
@@ -79,7 +79,7 @@ import {
   editApplicationMutation
 } from '~~/lib/developer-settings/graphql/mutations'
 import {
-  isItemSelected,
+  isMultiItemSelected,
   isRequired,
   isUrl,
   fullyResetForm

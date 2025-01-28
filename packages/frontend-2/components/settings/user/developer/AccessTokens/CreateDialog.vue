@@ -20,7 +20,7 @@
           label="Scopes"
           placeholder="Choose Scopes"
           help="It's good practice to limit the scopes of your token to the absolute minimum. For example, if your application or script will only read and write projects/streams, select just those scopes."
-          :rules="[isItemSelected]"
+          :rules="[isMultiItemSelected]"
           show-label
           :items="apiTokenScopes"
           mount-menu-on-body
@@ -50,7 +50,7 @@ import { useMutation } from '@vue/apollo-composable'
 import { LayoutDialog, type LayoutDialogButton } from '@speckle/ui-components'
 import type { TokenFormValues } from '~~/lib/developer-settings/helpers/types'
 import { createAccessTokenMutation } from '~~/lib/developer-settings/graphql/mutations'
-import { isItemSelected, isRequired } from '~~/lib/common/helpers/validation'
+import { isMultiItemSelected, isRequired } from '~~/lib/common/helpers/validation'
 import { useForm } from 'vee-validate'
 import {
   convertThrowIntoFetchResult,
