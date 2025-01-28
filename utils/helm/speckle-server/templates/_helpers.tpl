@@ -592,6 +592,9 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 - name: FF_FORCE_EMAIL_VERIFICATION
   value: {{ .Values.featureFlags.forceEmailVerification | quote }}
 
+- name: FF_FORCE_ONBOARDING
+  value: {{ .Values.featureFlags.forceOnboarding | quote }}
+
 {{- if .Values.featureFlags.billingIntegrationEnabled }}
 - name: STRIPE_API_KEY
   valueFrom:
