@@ -89,6 +89,11 @@
           "type": "boolean",
           "description": "Forces email verification for all users",
           "default": false
+        },
+        "objectsStreamingFix": {
+          "type": "boolean",
+          "description": "Enables the fix for the objects streaming issue when client prematurely closes the connection",
+          "default": false
         }
       }
     },

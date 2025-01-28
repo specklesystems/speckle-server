@@ -57,6 +57,8 @@ featureFlags:
   fileImportIFCDotNetEnabled: false
   ## @param featureFlags.forceEmailVerification Forces email verification for all users
   forceEmailVerification: false
+  ## @param featureFlags.objectsStreamingFix Enables the fix for the objects streaming issue when client prematurely closes the connection
+  objectsStreamingFix: false
 
 analytics:
   ## @param analytics.enabled Enable or disable analytics

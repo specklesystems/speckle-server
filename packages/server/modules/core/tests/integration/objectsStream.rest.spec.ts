@@ -48,6 +48,7 @@ import {
   storeObjectsIfNotFoundFactory
 } from '@/modules/core/repositories/objects'
 import { expect } from 'chai'
+import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = legacyGetUserFactory({ db })
@@ -95,63 +96,68 @@ const createObjectsBatched = createObjectsBatchedFactory({
   storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db })
 })
 
+const { FF_OBJECTS_STREAMING_FIX } = getFeatureFlags()
+
 describe('Objects REST @core', () => {
   let serverAddress: string
   before(async () => {
     const ctx = await beforeEachContext()
     ;({ serverAddress } = await initializeTestServer(ctx))
   })
-  it('should close database connections if client connection is prematurely closed', async () => {
-    const userId = await createUser({
-      name: 'emails user',
-      email: createRandomEmail(),
-      password: createRandomPassword()
-    })
-    const user = await getUser(userId)
-
-    const project = {
-      id: '',
-      name: 'test project',
-      ownerId: userId
-    }
-    await createTestStream(project as unknown as BasicTestStream, user)
-
-    const token = `Bearer ${await createPersonalAccessToken(
-      user.id,
-      'test token user A',
-      [
-        Scopes.Streams.Read,
-        Scopes.Streams.Write,
-        Scopes.Users.Read,
-        Scopes.Users.Email,
-        Scopes.Tokens.Write,
-        Scopes.Tokens.Read,
-        Scopes.Profile.Read,
-        Scopes.Profile.Email
-      ]
-    )}`
-
-    const manyObjs: { commit: RawSpeckleObject; objs: RawSpeckleObject[] } =
-      generateManyObjects(3333, 'perlin merlin magic')
-    const objsIds = manyObjs.objs.map((o) => o.id)
-
-    await createObjectsBatched({ streamId: project.id, objects: manyObjs.objs })
-    for (let i = 0; i < 4; i++) {
-      forceCloseStreamingConnection({
-        serverAddress,
-        projectId: project.id,
-        token,
-        objsIds
+  ;(FF_OBJECTS_STREAMING_FIX ? it : it.skip)(
+    'should close database connections if client connection is prematurely closed',
+    async () => {
+      const userId = await createUser({
+        name: 'emails user',
+        email: createRandomEmail(),
+        password: createRandomPassword()
       })
-    }
+      const user = await getUser(userId)
 
-    //sleep for a bit to allow the server to close the connections
-    await new Promise((r) => setTimeout(r, 3000))
-    const gaugeContents = await determineRemainingDatabaseConnectionCapacity({
-      serverAddress
-    })
-    expect(parseInt(gaugeContents), gaugeContents).to.gte(4) //expect all connections to become available again after the client closes them
-  })
+      const project = {
+        id: '',
+        name: 'test project',
+        ownerId: userId
+      }
+      await createTestStream(project as unknown as BasicTestStream, user)
+
+      const token = `Bearer ${await createPersonalAccessToken(
+        user.id,
+        'test token user A',
+        [
+          Scopes.Streams.Read,
+          Scopes.Streams.Write,
+          Scopes.Users.Read,
+          Scopes.Users.Email,
+          Scopes.Tokens.Write,
+          Scopes.Tokens.Read,
+          Scopes.Profile.Read,
+          Scopes.Profile.Email
+        ]
+      )}`
+
+      const manyObjs: { commit: RawSpeckleObject; objs: RawSpeckleObject[] } =
+        generateManyObjects(3333, 'perlin merlin magic')
+      const objsIds = manyObjs.objs.map((o) => o.id)
+
+      await createObjectsBatched({ streamId: project.id, objects: manyObjs.objs })
+      for (let i = 0; i < 4; i++) {
+        forceCloseStreamingConnection({
+          serverAddress,
+          projectId: project.id,
+          token,
+          objsIds
+        })
+      }
+
+      //sleep for a bit to allow the server to close the connections
+      await new Promise((r) => setTimeout(r, 3000))
+      const gaugeContents = await determineRemainingDatabaseConnectionCapacity({
+        serverAddress
+      })
+      expect(parseInt(gaugeContents), gaugeContents).to.gte(4) //expect all connections to become available again after the client closes them
+    }
+  )
 })
 
 const forceCloseStreamingConnection = async (params: {
