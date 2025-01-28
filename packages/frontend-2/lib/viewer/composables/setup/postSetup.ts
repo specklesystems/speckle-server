@@ -14,7 +14,8 @@ import {
   SectionToolEvent,
   SectionTool,
   ViewModes,
-  ViewModeEvent
+  ViewModeEvent,
+  SpeckleLoader
 } from '@speckle/viewer'
 import { useAuthCookie } from '~~/lib/auth/composables/auth'
 import type {
@@ -107,12 +108,15 @@ function useViewerObjectAutoLoading() {
     if (unload) {
       viewer.unloadObject(objectUrl)
     } else {
-      viewer.loadObjectAsync(
+      const loader = new SpeckleLoader(
+        viewer.getWorldTree(),
         objectUrl,
         authToken.value || undefined,
         disableViewerCache ? false : undefined,
-        options?.zoomToObject
+        undefined
       )
+
+      viewer.loadObject(loader, options?.zoomToObject)
     }
   }
 
