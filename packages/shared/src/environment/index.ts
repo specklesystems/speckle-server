@@ -60,6 +60,11 @@ const parseFeatureFlags = () => {
     FF_FORCE_EMAIL_VERIFICATION: {
       schema: z.boolean(),
       defaults: { production: false, _: false }
+    },
+    // Forces onboarding for all users
+    FF_FORCE_ONBOARDING: {
+      schema: z.boolean(),
+      defaults: { production: false, _: false }
     }
   })
 
@@ -86,6 +91,7 @@ export function getFeatureFlags(): {
   FF_WORKSPACES_MULTI_REGION_ENABLED: boolean
   FF_FILEIMPORT_IFC_DOTNET_ENABLED: boolean
   FF_FORCE_EMAIL_VERIFICATION: boolean
+  FF_FORCE_ONBOARDING: boolean
 } {
   if (!parsedFlags) parsedFlags = parseFeatureFlags()
   return parsedFlags

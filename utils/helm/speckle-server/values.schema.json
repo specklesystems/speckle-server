@@ -89,6 +89,11 @@
           "type": "boolean",
           "description": "Forces email verification for all users",
           "default": false
+        },
+        "forceOnboarding": {
+          "type": "boolean",
+          "description": "Forces onboarding for all users",
+          "default": false
         }
       }
     },
