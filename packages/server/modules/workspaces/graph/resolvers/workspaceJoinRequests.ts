@@ -6,6 +6,7 @@ import { getUserFactory } from '@/modules/core/repositories/users'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
 import { commandFactory } from '@/modules/shared/command'
+import { getEventBus } from '@/modules/shared/services/eventBus'
 import { getPaginatedItemsFactory } from '@/modules/shared/services/paginatedItems'
 import {
   ApproveWorkspaceJoinRequest,
@@ -29,6 +30,8 @@ import {
 } from '@/modules/workspaces/services/workspaceJoinRequests'
 import { WorkspaceJoinRequestStatus } from '@/modules/workspacesCore/domain/types'
 import { WorkspaceJoinRequestGraphQLReturn } from '@/modules/workspacesCore/helpers/graphTypes'
+
+const eventBus = getEventBus()
 
 export default {
   Workspace: {
@@ -78,7 +81,8 @@ export default {
     approve: async (_parent, args) => {
       const approveWorkspaceJoinRequest = commandFactory<ApproveWorkspaceJoinRequest>({
         db,
-        operationFactory: ({ db }) => {
+        eventBus,
+        operationFactory: ({ db, emit }) => {
           const updateWorkspaceJoinRequestStatus =
             updateWorkspaceJoinRequestStatusFactory({
               db
@@ -98,7 +102,8 @@ export default {
             getWorkspaceJoinRequest: getWorkspaceJoinRequestFactory({
               db
             }),
-            upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db })
+            upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
+            emit
           })
         }
       })
