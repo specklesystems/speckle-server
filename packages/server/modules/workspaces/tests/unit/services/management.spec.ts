@@ -93,8 +93,7 @@ const getCreateWorkspaceInput = () => {
       description: 'foobar',
       slug: cryptoRandomString({ length: 10 }),
       logo: null,
-      name: cryptoRandomString({ length: 6 }),
-      defaultLogoIndex: 0
+      name: cryptoRandomString({ length: 6 })
     }
   }
 }
@@ -258,7 +257,6 @@ describe('Workspace services', () => {
         createdAt: new Date(),
         updatedAt: new Date(),
         logo: null,
-        defaultLogoIndex: 0,
         discoverabilityEnabled: false,
         domainBasedMembershipProtectionEnabled: false,
         defaultProjectRole: 'stream:contributor',
@@ -1094,8 +1092,7 @@ describe('Workspace role services', () => {
                   description: null,
                   discoverabilityEnabled: false,
                   domainBasedMembershipProtectionEnabled: false,
-                  defaultProjectRole: 'stream:contributor',
-                  defaultLogoIndex: 0
+                  defaultProjectRole: 'stream:contributor'
                 }
               },
               getDomains: async () => {
@@ -1135,8 +1132,7 @@ describe('Workspace role services', () => {
           description: null,
           discoverabilityEnabled: false,
           domainBasedMembershipProtectionEnabled: false,
-          defaultProjectRole: 'stream:contributor',
-          defaultLogoIndex: 0
+          defaultProjectRole: 'stream:contributor'
         }
 
         await addDomainToWorkspaceFactory({
