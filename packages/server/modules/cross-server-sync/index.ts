@@ -46,12 +46,12 @@ import {
 } from '@/modules/core/repositories/objects'
 import {
   deleteProjectFactory,
+  getProjectFactory,
   storeProjectFactory,
   storeProjectRoleFactory
 } from '@/modules/core/repositories/projects'
 import {
   getOnboardingBaseStreamFactory,
-  getProjectFactory,
   getStreamCollaboratorsFactory,
   getStreamFactory,
   markCommitStreamUpdatedFactory,
