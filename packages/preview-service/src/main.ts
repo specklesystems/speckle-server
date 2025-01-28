@@ -6,10 +6,10 @@ import {
   CHROMIUM_EXECUTABLE_PATH,
   PREVIEWS_HEADED,
   USER_DATA_DIR
-} from './config.js'
+} from '@/config.js'
 import Bull from 'bull'
-import { logger } from './logging.js'
-import { jobProcessor } from './jobProcessor.js'
+import { logger } from '@/logging.js'
+import { jobProcessor } from '@/jobProcessor.js'
 import { Redis, RedisOptions } from 'ioredis'
 import { jobPayload } from '@speckle/shared/dist/esm/previews/job.js'
 

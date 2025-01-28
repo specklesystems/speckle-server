@@ -9,3 +9,5 @@ export type TakeScreenshot = () => Promise<PreviewResult>
 
 export type LoadArgs = { url: string; token: string }
 export type Load = (args: LoadArgs) => Promise<void>
+
+export type { PreviewResult } from './job.js'
