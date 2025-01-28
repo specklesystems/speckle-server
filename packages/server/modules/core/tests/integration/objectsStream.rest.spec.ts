@@ -136,7 +136,7 @@ describe('Objects REST @core', () => {
     const objsIds = manyObjs.objs.map((o) => o.id)
 
     await createObjectsBatched({ streamId: project.id, objects: manyObjs.objs })
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < 4; i++) {
       forceCloseStreamingConnection({
         serverAddress,
         projectId: project.id,
@@ -150,7 +150,7 @@ describe('Objects REST @core', () => {
     const gaugeContents = await determineRemainingDatabaseConnectionCapacity({
       serverAddress
     })
-    expect(parseInt(gaugeContents), gaugeContents).to.gte(1) //expect at least 1 connection to become available in the time frame
+    expect(parseInt(gaugeContents), gaugeContents).to.gte(4) //expect all connections to become available again after the client closes them
   })
 })
 
