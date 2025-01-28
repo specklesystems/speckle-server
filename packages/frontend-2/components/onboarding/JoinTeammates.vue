@@ -21,7 +21,7 @@
         <FormButton
           color="outline"
           size="sm"
-          :loading="loading"
+          :loading="loadingStates[workspace.id]"
           :disabled="requestedWorkspaces.includes(workspace.id)"
           @click="() => processRequest(true, workspace.id)"
         >
@@ -54,39 +54,45 @@ defineEmits(['next'])
 const mixpanel = useMixpanel()
 const { triggerNotification } = useGlobalToast()
 
-const { mutate: requestToJoin, loading } = useMutation(
-  dashboardRequestToJoinWorkspaceMutation
-)
+const loadingStates = ref<Record<string, boolean>>({})
+
+const { mutate: requestToJoin } = useMutation(dashboardRequestToJoinWorkspaceMutation)
 
 const requestedWorkspaces = ref<string[]>([])
 
 const processRequest = async (accept: boolean, workspaceId: string) => {
   if (accept) {
-    const result = await requestToJoin({
-      input: { workspaceId }
-    }).catch(convertThrowIntoFetchResult)
+    loadingStates.value[workspaceId] = true
 
-    if (result?.data) {
-      requestedWorkspaces.value.push(workspaceId)
-      mixpanel.track('Workspace Join Request Sent', {
-        workspaceId,
-        location: 'onboarding',
-        // eslint-disable-next-line camelcase
-        workspace_id: workspaceId
-      })
+    try {
+      const result = await requestToJoin({
+        input: { workspaceId }
+      }).catch(convertThrowIntoFetchResult)
 
-      triggerNotification({
-        title: 'Request sent',
-        description: 'Your request to join the workspace has been sent.',
-        type: ToastNotificationType.Success
-      })
-    } else {
-      const errorMessage = getFirstErrorMessage(result?.errors)
-      triggerNotification({
-        title: 'Failed to send request',
-        description: errorMessage,
-        type: ToastNotificationType.Danger
-      })
+      if (result?.data) {
+        requestedWorkspaces.value.push(workspaceId)
+        mixpanel.track('Workspace Join Request Sent', {
+          workspaceId,
+          location: 'onboarding',
+          // eslint-disable-next-line camelcase
+          workspace_id: workspaceId
+        })
+
+        triggerNotification({
+          title: 'Request sent',
+          description: 'Your request to join the workspace has been sent.',
+          type: ToastNotificationType.Success
+        })
+      } else {
+        const errorMessage = getFirstErrorMessage(result?.errors)
+        triggerNotification({
+          title: 'Failed to send request',
+          description: errorMessage,
+          type: ToastNotificationType.Danger
+        })
+      }
+    } finally {
+      loadingStates.value[workspaceId] = false
     }
   }
 }

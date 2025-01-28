@@ -41,6 +41,7 @@ import { useProcessOnboarding } from '~~/lib/auth/composables/onboarding'
 import { useAuthManager } from '~/lib/auth/composables/auth'
 import { useQuery } from '@vue/apollo-composable'
 import { graphql } from '~/lib/common/generated/gql'
+import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 
 const discoverableWorkspacesQuery = graphql(`
   query DiscoverableWorkspaces {
@@ -51,7 +52,6 @@ const discoverableWorkspacesQuery = graphql(`
         logo
         description
         slug
-        defaultLogoIndex
       }
     }
   }
