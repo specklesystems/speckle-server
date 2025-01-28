@@ -288,6 +288,7 @@ const keyValuePairs = computed(() => {
       arrayLength = arr.length
       if (arr.length > 0) {
         innerType = Array.isArray(arr[0]) ? 'array' : typeof arr[0]
+        // We truncate this above with css - but limit to 100 to limit dom size
         arrayPreview = arr.slice(0, 100).join(', ')
       }
     }
