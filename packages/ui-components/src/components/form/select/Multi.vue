@@ -9,7 +9,7 @@
       <div class="flex flex-col" :class="{ 'pb-1': showLabel && !isLeftLabelPosition }">
         <label
           :id="labelId"
-          class="flex text-body-xs text-foreground font-medium"
+          class="flex text-body-xs text-foreground font-medium pointer-events-none"
           :class="[{ 'sr-only': !showLabel }, { 'items-center gap-1': showOptional }]"
           :for="buttonId"
         >
@@ -722,7 +722,7 @@ const debouncedSearch = debounce(triggerSearch, 1000)
 
 const listboxOptionClasses = (params: { disabled: boolean }) => {
   const { disabled } = params
-  const classParts = ['relative transition select-none py-1 px-2']
+  const classParts = ['relative transition select-none px-2']
 
   if (disabled) {
     classParts.push('opacity-50 cursor-not-allowed')
@@ -785,5 +785,6 @@ onClickOutside(
     ignore: [listboxButton]
   }
 )
+
 defineExpose({ triggerSearch })
 </script>
