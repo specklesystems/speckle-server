@@ -159,7 +159,7 @@ export type ValidateUserPassword = (params: {
   password: string
 }) => Promise<boolean>
 
-export type DeleteUser = (id: string) => Promise<boolean>
+export type DeleteUser = (id: string, invokerId?: string) => Promise<boolean>
 
 export type ChangeUserRole = (params: { userId: string; role: string }) => Promise<void>
 
@@ -194,6 +194,18 @@ export type LookupUsers = (filter: {
   users: User[]
   cursor: Nullable<string>
 }>
+
+/**
+ * @returns An array of matches in order provided, or null for positions where no match found for email.
+ */
+export type BulkLookupUsers = (filter: {
+  emails: string[]
+  /**
+   * Defaults to 10
+   */
+  limit?: MaybeNullOrUndefined<number>
+  cursor?: MaybeNullOrUndefined<string>
+}) => Promise<(User | null)[]>
 
 type AdminUserListArgs = {
   cursor: string | null

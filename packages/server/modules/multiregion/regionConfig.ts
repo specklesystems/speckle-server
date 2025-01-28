@@ -58,3 +58,9 @@ export const getMainRegionConfig = async (): Promise<MainRegionConfig> => {
 export const getAvailableRegionConfig: GetAvailableRegionConfig = async () => {
   return (await getMultiRegionConfig()).regions
 }
+
+export const getDefaultProjectRegionKey = async (): Promise<string | null> => {
+  if (!isMultiRegionEnabled()) return null
+  const defaultRegionKey = (await getMultiRegionConfig()).defaultProjectRegionKey
+  return defaultRegionKey ?? null
+}

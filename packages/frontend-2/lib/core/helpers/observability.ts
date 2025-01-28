@@ -14,7 +14,7 @@ import {
   isString,
   noop
 } from 'lodash-es'
-import type { Logger } from 'pino'
+import type { Logger, Level } from 'pino'
 
 /**
  * Add pino-pretty like formatting
@@ -59,7 +59,6 @@ const prettifiedLoggerFactory =
 
 export function buildFakePinoLogger(
   options?: Partial<{
-    onError: (...args: any[]) => void
     /**
      * Returns an object that will be merged into the log context when outputting to the console.
      * These will not be sent to seq!
@@ -69,18 +68,12 @@ export function buildFakePinoLogger(
 ) {
   const bindings = options?.consoleBindings
 
-  const errLogger = (...args: unknown[]) => {
-    const { onError } = options || {}
-    if (onError) onError(...args)
-    prettifiedLoggerFactory(console.error, bindings)(...args)
-  }
-
   const logger = {
     debug: prettifiedLoggerFactory(console.debug, bindings),
     info: prettifiedLoggerFactory(console.info, bindings),
     warn: prettifiedLoggerFactory(console.warn, bindings),
-    error: errLogger,
-    fatal: errLogger,
+    error: prettifiedLoggerFactory(console.error, bindings),
+    fatal: prettifiedLoggerFactory(console.error, bindings),
     trace: prettifiedLoggerFactory(console.trace, bindings),
     silent: noop
   } as unknown as ReturnType<typeof Observability.getLogger>
@@ -121,13 +114,14 @@ export const formatAppError = (err: SimpleError): SimpleError => {
   }
 }
 
-export type AbstractErrorHandler = (
+export type AbstractLoggerHandler = (
   params: {
     args: unknown[]
     firstString: Optional<string>
     firstError: Optional<Error>
     otherData: Record<string, unknown>
     nonObjectOtherData: unknown[]
+    level: Level
   },
   helpers: {
     prettifyMessage: (msg: string) => string
@@ -141,16 +135,16 @@ export type AbstractUnhandledErrorHandler = (params: {
   message: string
 }) => void
 
-export type AbstractErrorHandlerParams = Parameters<AbstractErrorHandler>[0]
+export type AbstractLoggerHandlerParams = Parameters<AbstractLoggerHandler>[0]
 
 /**
- * Adds proxy that intercepts error log calls so that they can be sent to any transport
+ * Adds proxy that intercepts logger calls so that they can be sent to any transport
  */
-export function enableCustomErrorHandling(params: {
+export function enableCustomLoggerHandling(params: {
   logger: Logger
-  onError: AbstractErrorHandler
+  handler: AbstractLoggerHandler
 }): Logger {
-  const { logger, onError } = params
+  const { logger, handler } = params
   return new Proxy(logger, {
     get(target, prop) {
       if (
@@ -160,37 +154,37 @@ export function enableCustomErrorHandling(params: {
         return (...args: unknown[]) => {
           const log = logMethod.bind(target)
 
+          const level = prop as Level
           const firstError = args.find((arg): arg is Error => arg instanceof Error)
-          const isError = ['error', 'fatal'].includes(prop as string) || firstError
 
-          if (isError) {
-            const firstString = args.find(isString)
-            const otherData: unknown[] = args.filter(
-              (o) => !(o instanceof Error) && o !== firstString
-            )
+          const firstString = args.find(isString)
+          const otherData: unknown[] = args.filter(
+            (o) => !(o instanceof Error) && o !== firstString
+          )
 
-            const errorMessage = firstError?.message ?? firstString ?? `Unknown error`
-            if (errorMessage !== firstString) {
-              otherData.unshift(firstString)
-            }
-
-            const otherDataObjects = otherData.filter(isObjectLike)
-            const otherDataNonObjects = otherData.filter((o) => !isObjectLike(o))
-            const mergedOtherDataObject = Object.assign(
-              {},
-              ...otherDataObjects
-            ) as Record<string, unknown>
-            onError(
-              {
-                args,
-                firstError,
-                firstString,
-                otherData: mergedOtherDataObject,
-                nonObjectOtherData: otherDataNonObjects
-              },
-              { prettifyMessage: (msg) => prettify(mergedOtherDataObject, msg) }
-            )
+          const errorMessage = firstError?.message ?? firstString ?? `Unknown error`
+          if (errorMessage !== firstString) {
+            otherData.unshift(firstString)
           }
+
+          const otherDataObjects = otherData.filter(isObjectLike)
+          const otherDataNonObjects = otherData.filter((o) => !isObjectLike(o))
+          const mergedOtherDataObject = Object.assign(
+            {},
+            ...otherDataObjects
+          ) as Record<string, unknown>
+
+          handler(
+            {
+              args,
+              firstError,
+              firstString,
+              otherData: mergedOtherDataObject,
+              nonObjectOtherData: otherDataNonObjects,
+              level
+            },
+            { prettifyMessage: (msg) => prettify(mergedOtherDataObject, msg) }
+          )
 
           return log(...args)
         }

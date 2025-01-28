@@ -10,6 +10,7 @@ import {
   GetStreamBranchByName,
   MarkCommitBranchUpdated
 } from '@/modules/core/domain/branches/operations'
+import { VersionEvents } from '@/modules/core/domain/commits/events'
 import {
   CreateCommitByBranchId,
   CreateCommitByBranchName,
@@ -37,16 +38,13 @@ import {
   CommitUpdateError
 } from '@/modules/core/errors/commit'
 import {
-  VersionEvents,
-  VersionsEventEmitter
-} from '@/modules/core/events/versionsEmitter'
-import {
   CommitReceivedInput,
   CommitUpdateInput,
   MarkReceivedVersionInput,
   UpdateVersionInput
 } from '@/modules/core/graph/generated/graphql'
 import { BranchRecord, CommitRecord } from '@/modules/core/helpers/types'
+import { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { ensureError, Roles } from '@speckle/shared'
 import { has } from 'lodash'
 
@@ -100,8 +98,8 @@ export const createCommitByBranchIdFactory =
     insertBranchCommits: InsertBranchCommits
     markCommitStreamUpdated: MarkCommitStreamUpdated
     markCommitBranchUpdated: MarkCommitBranchUpdated
-    versionsEventEmitter: VersionsEventEmitter
     addCommitCreatedActivity: AddCommitCreatedActivity
+    emitEvent: EventBusEmit
   }): CreateCommitByBranchId =>
   async (params, options) => {
     const {
@@ -153,10 +151,13 @@ export const createCommitByBranchIdFactory =
     await Promise.all([
       deps.markCommitStreamUpdated(id),
       deps.markCommitBranchUpdated(id),
-      deps.versionsEventEmitter(VersionEvents.Created, {
-        projectId: streamId,
-        modelId: branchId,
-        version: commit
+      deps.emitEvent({
+        eventName: VersionEvents.Created,
+        payload: {
+          projectId: streamId,
+          modelId: branchId,
+          version: commit
+        }
       }),
       ...(notify
         ? [

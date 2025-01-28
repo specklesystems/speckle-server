@@ -4,6 +4,8 @@ import { type Knex } from 'knex'
 import { Logger } from 'pino'
 import { toNDecimalPlaces } from '@/modules/core/utils/formatting'
 import { omit } from 'lodash'
+import { getRequestContext } from '@/logging/requestContext'
+import { collectLongTrace } from '@speckle/shared'
 
 let metricQueryDuration: prometheusClient.Summary<string>
 let metricQueryErrors: prometheusClient.Counter<string>
@@ -182,6 +184,7 @@ interface QueryEvent extends Knex.Sql {
   __knexUid: string
   __knexTxId: string
   __knexQueryUid: string
+  __stackTrace: string
 }
 
 const initKnexPrometheusMetricsForRegionEvents = async (params: {
@@ -190,20 +193,25 @@ const initKnexPrometheusMetricsForRegionEvents = async (params: {
   logger: Logger
 }) => {
   const { region, db } = params
-  const queryStartTime: Record<string, number> = {}
+  const queryMetadata: Record<string, { startTime: number; stackTrace: string }> = {}
   const connectionAcquisitionStartTime: Record<string, number> = {}
   const connectionInUseStartTime: Record<string, number> = {}
 
   db.on('query', (data: QueryEvent) => {
     const queryId = data.__knexQueryUid + ''
-    queryStartTime[queryId] = performance.now()
+    queryMetadata[queryId] = {
+      startTime: performance.now(),
+      stackTrace: data.__stackTrace
+    }
   })
 
   db.on('query-response', (_response: unknown, data: QueryEvent) => {
     const queryId = data.__knexQueryUid + ''
-    const durationMs = performance.now() - queryStartTime[queryId]
+    const { startTime = NaN, stackTrace = undefined } = queryMetadata[queryId] || {}
+
+    const durationMs = performance.now() - startTime
     const durationSec = toNDecimalPlaces(durationMs / 1000, 2)
-    delete queryStartTime[queryId]
+    delete queryMetadata[queryId]
     if (!isNaN(durationSec))
       metricQueryDuration
         .labels({
@@ -212,24 +220,38 @@ const initKnexPrometheusMetricsForRegionEvents = async (params: {
           sqlNumberBindings: data.bindings?.length || -1
         })
         .observe(durationSec)
-    params.logger.debug(
+
+    const reqCtx = getRequestContext()
+
+    // Update reqCtx with DB query metrics
+    if (reqCtx) {
+      reqCtx.dbMetrics.totalCount++
+      reqCtx.dbMetrics.totalDuration += durationMs || 0
+    }
+
+    const trace = stackTrace || collectLongTrace()
+    params.logger.info(
       {
         region,
         sql: data.sql,
         sqlMethod: normalizeSqlMethod(data.method),
         sqlQueryId: queryId,
         sqlQueryDurationMs: toNDecimalPlaces(durationMs, 0),
-        sqlNumberBindings: data.bindings?.length || -1
+        sqlNumberBindings: data.bindings?.length || -1,
+        trace,
+        ...(reqCtx ? { req: { id: reqCtx.requestId } } : {})
       },
-      "DB query successfully completed, for method '{sqlMethod}', after {sqlQueryDurationMs}ms"
+      'DB query successfully completed after {sqlQueryDurationMs} ms'
     )
   })
 
   db.on('query-error', (err: unknown, data: QueryEvent) => {
     const queryId = data.__knexQueryUid + ''
-    const durationMs = performance.now() - queryStartTime[queryId]
+    const { startTime = NaN, stackTrace = undefined } = queryMetadata[queryId] || {}
+
+    const durationMs = performance.now() - startTime
     const durationSec = toNDecimalPlaces(durationMs / 1000, 2)
-    delete queryStartTime[queryId]
+    delete queryMetadata[queryId]
 
     if (!isNaN(durationSec))
       metricQueryDuration
@@ -240,6 +262,16 @@ const initKnexPrometheusMetricsForRegionEvents = async (params: {
         })
         .observe(durationSec)
     metricQueryErrors.inc()
+
+    const reqCtx = getRequestContext()
+
+    // Update reqCtx with DB query metrics
+    if (reqCtx) {
+      reqCtx.dbMetrics.totalCount++
+      reqCtx.dbMetrics.totalDuration += durationMs || 0
+    }
+
+    const trace = stackTrace || collectLongTrace()
     params.logger.warn(
       {
         err: typeof err === 'object' ? omit(err, 'detail') : err,
@@ -248,7 +280,9 @@ const initKnexPrometheusMetricsForRegionEvents = async (params: {
         sqlMethod: normalizeSqlMethod(data.method),
         sqlQueryId: queryId,
         sqlQueryDurationMs: toNDecimalPlaces(durationMs, 0),
-        sqlNumberBindings: data.bindings?.length || -1
+        sqlNumberBindings: data.bindings?.length || -1,
+        trace,
+        ...(reqCtx ? { req: { id: reqCtx.requestId } } : {})
       },
       'DB query errored for {sqlMethod} after {sqlQueryDurationMs}ms'
     )

@@ -9,7 +9,8 @@ import {
   postgresMaxConnections,
   isDevOrTestEnv,
   postgresConnectionAcquireTimeoutMillis,
-  postgresConnectionCreateTimeoutMillis
+  postgresConnectionCreateTimeoutMillis,
+  knexAsyncStackTracesEnabled
 } from '@/modules/shared/helpers/envHelper'
 import { dbLogger as logger } from '@/logging/logging'
 import { Knex } from 'knex'
@@ -84,7 +85,8 @@ const configArgs: KnexConfigArgs = {
   logger,
   maxConnections: postgresMaxConnections(),
   connectionAcquireTimeoutMillis: postgresConnectionAcquireTimeoutMillis(),
-  connectionCreateTimeoutMillis: postgresConnectionCreateTimeoutMillis()
+  connectionCreateTimeoutMillis: postgresConnectionCreateTimeoutMillis(),
+  asyncStackTraces: knexAsyncStackTracesEnabled()
 }
 
 const config: Record<string, Knex.Config> = {

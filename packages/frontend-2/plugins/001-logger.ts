@@ -2,9 +2,9 @@ import { omit } from 'lodash-es'
 import type { SetRequired } from 'type-fest'
 import { useReadUserId } from '~/lib/auth/composables/activeUser'
 import {
-  useCreateErrorLoggingTransport,
-  useGetErrorLoggingTransports,
-  useLogToErrorLoggingTransports
+  useCreateLoggingTransport,
+  useGetLoggingTransports,
+  useLogToLoggingTransports
 } from '~/lib/core/composables/error'
 import {
   useRequestId,
@@ -14,9 +14,9 @@ import {
 import { isObjectLike } from '~~/lib/common/helpers/type'
 import {
   buildFakePinoLogger,
-  enableCustomErrorHandling,
-  type AbstractErrorHandler,
-  type AbstractErrorHandlerParams,
+  enableCustomLoggerHandling,
+  type AbstractLoggerHandler,
+  type AbstractLoggerHandlerParams,
   type AbstractUnhandledErrorHandler
 } from '~~/lib/core/helpers/observability'
 
@@ -45,8 +45,8 @@ export default defineNuxtPlugin(async (nuxtApp) => {
   const serverReqId = useServerRequestId()
   const getUserId = useReadUserId()
   const country = useUserCountry()
-  const registerErrorTransport = useCreateErrorLoggingTransport()
-  const { invokeTransportsWithPayload } = useLogToErrorLoggingTransports()
+  const registerErrorTransport = useCreateLoggingTransport()
+  const { invokeTransportsWithPayload } = useLogToLoggingTransports()
 
   const collectMainInfo = (params: { isBrowser: boolean }) => {
     const info = {
@@ -68,7 +68,7 @@ export default defineNuxtPlugin(async (nuxtApp) => {
   let logger: ReturnType<
     typeof import('@speckle/shared/dist/esm/observability/index').getLogger
   >
-  const errorHandlers: AbstractErrorHandler[] = []
+  const logHandlers: AbstractLoggerHandler[] = []
   const unhandledErrorHandlers: AbstractUnhandledErrorHandler[] = []
 
   if (import.meta.server) {
@@ -160,45 +160,65 @@ export default defineNuxtPlugin(async (nuxtApp) => {
       }
       unhandledErrorHandlers.push(unhandledErrorLogger)
 
-      const errorLogger: AbstractErrorHandler = ({
+      const mainSeqTransport: AbstractLoggerHandler = ({
         args,
         firstString,
         firstError,
         otherData,
-        nonObjectOtherData
+        nonObjectOtherData,
+        level
       }) => {
         if (!args.length) return
 
-        const errorMessage = firstError?.message ?? firstString ?? `Unknown error`
-        const exception =
-          firstError?.stack ??
-          new Error(
-            'No Error instance was thrown, thus the following stack trace is synthesized manually'
-          ).stack
+        const isError = ['error', 'fatal'].includes(level)
+        const isImportant = !!otherData?.important
+        if (!isError && !isImportant) return
 
-        seqLogger.emit({
-          timestamp: new Date(),
-          level: 'error',
-          messageTemplate: 'Client-side error: {mainSeqErrorMessage}',
-          properties: {
-            mainSeqErrorMessage: errorMessage, // weird name to avoid collision with otherData
-            extraData: nonObjectOtherData,
-            ...otherData,
-            ...collectCoreInfo()
-          },
-          exception
-        })
+        if (isError) {
+          const errorMessage = firstError?.message ?? firstString ?? `Unknown error`
+          const exception =
+            firstError?.stack ??
+            new Error(
+              'No Error instance was thrown, thus the following stack trace is synthesized manually'
+            ).stack
+
+          seqLogger.emit({
+            timestamp: new Date(),
+            level: 'error',
+            messageTemplate: 'Client-side error: {mainSeqErrorMessage}',
+            properties: {
+              mainSeqErrorMessage: errorMessage, // weird name to avoid collision with otherData
+              extraData: nonObjectOtherData,
+              ...otherData,
+              ...collectCoreInfo()
+            },
+            exception
+          })
+        } else {
+          seqLogger.emit({
+            timestamp: new Date(),
+            level,
+            messageTemplate: firstString,
+            properties: {
+              extraData: nonObjectOtherData,
+              firstError,
+              ...otherData,
+              ...collectCoreInfo()
+            }
+          })
+        }
       }
-      errorHandlers.push(errorLogger)
+      logHandlers.push(mainSeqTransport)
+
       logger.debug('Set up seq ingestion...')
     }
   }
 
   // Register seq transports, if any
-  if (errorHandlers.length) {
+  if (logHandlers.length || unhandledErrorHandlers.length) {
     registerErrorTransport({
-      onError: (...params) => {
-        errorHandlers.forEach((handler) => handler(...params))
+      onLog: (...params) => {
+        logHandlers.forEach((handler) => handler(...params))
       },
       onUnhandledError: (event) => {
         unhandledErrorHandlers.forEach((handler) => handler(event))
@@ -206,12 +226,12 @@ export default defineNuxtPlugin(async (nuxtApp) => {
     })
   }
 
-  // Global error handler - handle all transports besides the core pino/console.log logger
-  const transports = useGetErrorLoggingTransports()
-  logger = enableCustomErrorHandling({
+  // Global logger handler - handle all transports besides the core pino/console.log logger
+  const transports = useGetLoggingTransports()
+  logger = enableCustomLoggerHandling({
     logger,
-    onError: (params, helpers) => {
-      transports.forEach((handler) => handler.onError(params, helpers))
+    handler: (params, helpers) => {
+      transports.forEach((handler) => handler.onLog?.(params, helpers))
     }
   })
 
@@ -275,12 +295,13 @@ export default defineNuxtPlugin(async (nuxtApp) => {
           ...(finalStack ? { stack: finalStack } : {})
         })
 
-        const payload: AbstractErrorHandlerParams = {
+        const payload: AbstractLoggerHandlerParams = {
           args: ['Fatal server error', serverFatalError],
           firstError: nuxtError,
           firstString: 'Fatal server error',
           otherData: { isAppError: true },
-          nonObjectOtherData: []
+          nonObjectOtherData: [],
+          level: 'fatal'
         }
         invokeTransportsWithPayload(payload)
 
@@ -290,6 +311,15 @@ export default defineNuxtPlugin(async (nuxtApp) => {
           console.error('Fatal error occurred on server:', payload)
         }
       }
+    })
+  }
+
+  // Log important tier app mounted msg for seq
+  if (!import.meta.server) {
+    nuxtApp.hook('app:mounted', () => {
+      logger.info('App mounted in the client', {
+        important: true
+      })
     })
   }
 

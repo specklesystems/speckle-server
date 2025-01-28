@@ -108,7 +108,7 @@
       "Prorotation"
     ],
     "tailwindCSS.experimental.configFile": {
-      "packages/frontend-2/tailwind.config.mjs": "packages/frontend-2/**"
+      "packages/frontend-2/tailwind.config.cjs": "packages/frontend-2/**"
     },
     "vue-semantic-server.trace.server": "off",
     "vue-syntactic-server.trace.server": "off",

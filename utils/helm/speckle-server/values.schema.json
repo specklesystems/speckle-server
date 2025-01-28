@@ -84,6 +84,11 @@
           "type": "boolean",
           "description": "Toggles whether the experimental .Net IFC importer is used for importing IFC files.",
           "default": false
+        },
+        "forceEmailVerification": {
+          "type": "boolean",
+          "description": "Forces email verification for all users",
+          "default": false
         }
       }
     },
@@ -240,6 +245,16 @@
           "type": "number",
           "description": "The maximum time in milliseconds to wait for a new connection to be created in the connection pool. Should be less than the acquisition timeout, as a new connection may need to be created then acquired.",
           "default": 5000
+        },
+        "knexAsyncStackTracesEnabled": {
+          "type": "boolean",
+          "description": "If enabled, will provide better stack traces for errors arising out of knex operations",
+          "default": false
+        },
+        "knexImprovedTelemetryStackTraces": {
+          "type": "boolean",
+          "description": "If enabled, will provide better stack traces for knex telemetry",
+          "default": false
         },
         "databaseName": {
           "type": "string",
@@ -655,6 +670,11 @@
           "type": "string",
           "description": "The url of the Speckle Automate instance",
           "default": "https://automate.speckle.systems"
+        },
+        "asyncRequestContextEnabled": {
+          "type": "boolean",
+          "description": "If enabled, the server will use the async request context for improved log msg correlation",
+          "default": false
         },
         "gendoAI": {
           "type": "object",
@@ -1773,6 +1793,21 @@
           "type": "boolean",
           "description": "If enabled, will output logs in a human-readable format. Otherwise, logs will be output in JSON format.",
           "default": false
+        },
+        "inspect": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "If enabled, indicates that the Speckle FE2 should be deployed with the nodejs inspect feature enabled",
+              "default": false
+            },
+            "port": {
+              "type": "string",
+              "description": "The port on which the nodejs inspect feature should be exposed",
+              "default": "7000"
+            }
+          }
         },
         "enabled": {
           "type": "boolean",

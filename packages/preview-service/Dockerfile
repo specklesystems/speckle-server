@@ -11,8 +11,17 @@ WORKDIR /speckle-server
 # install wait
 ARG WAIT_VERSION=2.8.0
 ENV WAIT_VERSION=${WAIT_VERSION}
-ADD https://github.com/ufoscout/docker-compose-wait/releases/download/${WAIT_VERSION}/wait ./wait
-RUN chmod +x ./wait
+RUN apt-get update -y \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y \
+     --no-install-recommends \
+     ca-certificates=20230311 \
+     curl=7.88.1-10+deb12u8 \
+    && curl -fsSL https://github.com/ufoscout/docker-compose-wait/releases/download/${WAIT_VERSION}/wait -o ./wait \
+    && chmod +x ./wait \
+    && apt-get remove -y curl \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 COPY .yarnrc.yml .
 COPY .yarn ./.yarn
@@ -68,7 +77,7 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-COPY --from=build-stage /speckle-server/wait /wait
+COPY --link --from=build-stage /speckle-server/wait /wait
 
 ARG NODE_ENV
 ENV NODE_ENV=${NODE_ENV}

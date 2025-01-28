@@ -1,3 +1,4 @@
+import { ProjectEvents } from '@/modules/core/domain/projects/events'
 import { generateProjectName } from '@/modules/core/domain/projects/logic'
 import {
   CreateProject,
@@ -11,10 +12,7 @@ import {
 import { Project } from '@/modules/core/domain/streams/types'
 import { RegionalProjectCreationError } from '@/modules/core/errors/projects'
 import { StreamNotFoundError } from '@/modules/core/errors/stream'
-import {
-  ProjectEvents,
-  ProjectsEventsEmitter
-} from '@/modules/core/events/projectsEmitter'
+import { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { retry } from '@lifeomic/attempt'
 import { Roles } from '@speckle/shared'
 import cryptoRandomString from 'crypto-random-string'
@@ -26,13 +24,13 @@ export const createNewProjectFactory =
     deleteProject,
     storeProjectRole,
     storeModel,
-    projectsEventsEmitter
+    emitEvent
   }: {
     storeProject: StoreProject
     getProject: GetProject
     deleteProject: DeleteProject
     storeProjectRole: StoreProjectRole
-    projectsEventsEmitter: ProjectsEventsEmitter
+    emitEvent: EventBusEmit
     storeModel: StoreModel
   }): CreateProject =>
   async ({ description, name, regionKey, visibility, workspaceId, ownerId }) => {
@@ -60,7 +58,8 @@ export const createNewProjectFactory =
       try {
         await retry(
           async () => {
-            await getProject({ projectId })
+            const replicatedProject = await getProject({ projectId })
+            if (!replicatedProject) throw new StreamNotFoundError()
           },
           { maxAttempts: 10 }
         )
@@ -81,6 +80,6 @@ export const createNewProjectFactory =
       projectId,
       authorId: ownerId
     })
-    await projectsEventsEmitter(ProjectEvents.Created, { project, ownerId })
+    await emitEvent({ eventName: ProjectEvents.Created, payload: { project, ownerId } })
     return project
   }

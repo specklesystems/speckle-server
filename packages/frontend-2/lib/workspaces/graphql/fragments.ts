@@ -38,6 +38,7 @@ export const workspaceInvitedTeamFragment = graphql(`
 export const workspaceTeamFragment = graphql(`
   fragment WorkspaceTeam_Workspace on Workspace {
     id
+    slug
     team {
       totalCount
       items {
@@ -49,6 +50,9 @@ export const workspaceTeamFragment = graphql(`
         }
       }
     }
+    adminWorkspacesJoinRequests {
+      totalCount
+    }
     ...WorkspaceInvitedTeam_Workspace
   }
 `)
@@ -56,6 +60,7 @@ export const workspaceTeamFragment = graphql(`
 export const workspaceSecurityFragment = graphql(`
   fragment WorkspaceSecurity_Workspace on Workspace {
     id
+    slug
     domains {
       id
       domain

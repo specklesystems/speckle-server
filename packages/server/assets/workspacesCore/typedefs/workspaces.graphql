@@ -151,6 +151,20 @@ type WorkspaceMutations {
   invites: WorkspaceInviteMutations!
   projects: WorkspaceProjectMutations! @hasServerRole(role: SERVER_USER)
   updateCreationState(input: WorkspaceCreationStateInput!): Boolean!
+  """
+  Dismiss a workspace from the discoverable list, behind the scene a join request is created with the status "dismissed"
+  """
+  dismiss(input: WorkspaceDismissInput!): Boolean! @hasServerRole(role: SERVER_USER)
+  requestToJoin(input: WorkspaceRequestToJoinInput!): Boolean!
+    @hasServerRole(role: SERVER_USER)
+}
+
+input WorkspaceDismissInput {
+  workspaceId: ID!
+}
+
+input WorkspaceRequestToJoinInput {
+  workspaceId: ID!
 }
 
 input WorkspaceCreationStateInput {
@@ -297,6 +311,17 @@ type Workspace {
   Info about the workspace creation state
   """
   creationState: WorkspaceCreationState
+  """
+  Get all join requests for all the workspaces the user is an admin of
+  """
+  adminWorkspacesJoinRequests(
+    filter: AdminWorkspaceJoinRequestFilter
+    cursor: String
+    limit: Int! = 25
+  ): WorkspaceJoinRequestCollection
+    @hasServerRole(role: SERVER_USER)
+    @hasScope(scope: "workspace:read")
+    @hasWorkspaceRole(role: ADMIN)
 }
 
 type WorkspaceCreationState {
@@ -436,6 +461,30 @@ type WorkspaceCollection {
   items: [Workspace!]!
 }
 
+type WorkspaceJoinRequestCollection {
+  totalCount: Int!
+  cursor: String
+  items: [WorkspaceJoinRequest!]!
+}
+
+type WorkspaceJoinRequest {
+  id: String!
+  workspace: Workspace!
+  user: LimitedUser!
+  status: WorkspaceJoinRequestStatus!
+  createdAt: DateTime!
+}
+
+enum WorkspaceJoinRequestStatus {
+  pending
+  approved
+  denied
+}
+
+input AdminWorkspaceJoinRequestFilter {
+  status: WorkspaceJoinRequestStatus
+}
+
 extend type User {
   """
   Get discoverable workspaces with verified domains that match the active user's
@@ -503,6 +552,7 @@ extend type Project {
 # case of using userSearch, and we alway expose this
 extend type LimitedUser {
   workspaceDomainPolicyCompliant(workspaceId: String): Boolean
+  workspaceRole(workspaceId: String): String
   # if workspaceId is undefined | null, just return undefined
   # this can be implemented by the workspaceCore resolver too, to avoid frontend component duplication
 }

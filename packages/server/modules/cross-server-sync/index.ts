@@ -8,7 +8,6 @@ import {
 } from '@/modules/activitystream/services/commentActivity'
 import { addCommitCreatedActivityFactory } from '@/modules/activitystream/services/commitActivity'
 import { getBlobsFactory } from '@/modules/blobstorage/repositories'
-import { CommentsEmitter } from '@/modules/comments/events/emitter'
 import {
   getCommentFactory,
   getCommentsResourcesFactory,
@@ -22,8 +21,6 @@ import {
   createCommentReplyAndNotifyFactory,
   createCommentThreadAndNotifyFactory
 } from '@/modules/comments/services/management'
-import { ProjectsEmitter } from '@/modules/core/events/projectsEmitter'
-import { VersionsEmitter } from '@/modules/core/events/versionsEmitter'
 import {
   createBranchFactory,
   getBranchByIdFactory,
@@ -49,12 +46,12 @@ import {
 } from '@/modules/core/repositories/objects'
 import {
   deleteProjectFactory,
+  getProjectFactory,
   storeProjectFactory,
   storeProjectRoleFactory
 } from '@/modules/core/repositories/projects'
 import {
   getOnboardingBaseStreamFactory,
-  getProjectFactory,
   getStreamCollaboratorsFactory,
   getStreamFactory,
   markCommitStreamUpdatedFactory,
@@ -76,6 +73,7 @@ import { downloadCommitFactory } from '@/modules/cross-server-sync/services/comm
 import { ensureOnboardingProjectFactory } from '@/modules/cross-server-sync/services/onboardingProject'
 import { downloadProjectFactory } from '@/modules/cross-server-sync/services/project'
 import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
+import { getEventBus } from '@/modules/shared/services/eventBus'
 import { publish } from '@/modules/shared/utils/subscriptions'
 
 const crossServerSyncModule: SpeckleModule = {
@@ -123,7 +121,7 @@ const crossServerSyncModule: SpeckleModule = {
       insertComments,
       insertCommentLinks,
       markCommentViewed,
-      commentsEventsEmit: CommentsEmitter.emit,
+      emitEvent: getEventBus().emit,
       addCommentCreatedActivity: addCommentCreatedActivityFactory({
         getViewerResourcesFromLegacyIdentifiers,
         getViewerResourceItemsUngrouped,
@@ -137,7 +135,7 @@ const crossServerSyncModule: SpeckleModule = {
       insertComments,
       insertCommentLinks,
       markCommentUpdated: markCommentUpdatedFactory({ db }),
-      commentsEventsEmit: CommentsEmitter.emit,
+      emitEvent: getEventBus().emit,
       addReplyAddedActivity: addReplyAddedActivityFactory({
         getViewerResourcesForComment: getViewerResourcesForCommentFactory({
           getCommentsResources: getCommentsResourcesFactory({ db }),
@@ -156,7 +154,7 @@ const crossServerSyncModule: SpeckleModule = {
       insertBranchCommits: insertBranchCommitsFactory({ db }),
       markCommitStreamUpdated,
       markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
-      versionsEventEmitter: VersionsEmitter.emit,
+      emitEvent: getEventBus().emit,
       addCommitCreatedActivity: addCommitCreatedActivityFactory({
         saveActivity: saveActivityFactory({ db }),
         publish
@@ -174,7 +172,7 @@ const crossServerSyncModule: SpeckleModule = {
       deleteProject: deleteProjectFactory({ db }),
       storeModel: storeModelFactory({ db }),
       storeProjectRole: storeProjectRoleFactory({ db }),
-      projectsEventsEmitter: ProjectsEmitter.emit
+      emitEvent: getEventBus().emit
     })
 
     const ensureOnboardingProject = ensureOnboardingProjectFactory({

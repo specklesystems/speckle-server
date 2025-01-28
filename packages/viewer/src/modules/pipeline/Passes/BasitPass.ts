@@ -3,6 +3,7 @@ import {
   DoubleSide,
   OrthographicCamera,
   PerspectiveCamera,
+  Plane,
   Scene,
   WebGLRenderer
 } from 'three'
@@ -33,10 +34,17 @@ export class BasitPass extends BaseGPass {
     this.tree = tree
     this.speckleRenderer = renderer
     this.buildMaterials()
+    this.applyColorIndices()
   }
 
   public get displayName(): string {
     return 'BASIT'
+  }
+
+  public setClippingPlanes(planes: Plane[]) {
+    for (const k in this.materialMap) {
+      this.materialMap[k][2].clippingPlanes = planes
+    }
   }
 
   protected buildMaterials() {
@@ -82,7 +90,7 @@ export class BasitPass extends BaseGPass {
     }
   }
 
-  protected applyColorIndices() {
+  public applyColorIndices() {
     for (const item in this.materialMap) {
       const batch = this.materialMap[item][0]
       const colorMap = this.materialMap[item][1]
@@ -131,7 +139,6 @@ export class BasitPass extends BaseGPass {
   ): boolean {
     if (!camera || !scene) return false
 
-    this.applyColorIndices()
     this.overrideMaterials()
 
     if (this.onBeforeRender) this.onBeforeRender()

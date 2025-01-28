@@ -4,6 +4,8 @@ import {
   Workspace,
   WorkspaceAcl,
   WorkspaceDomain,
+  WorkspaceJoinRequest,
+  WorkspaceJoinRequestStatus,
   WorkspaceRegionAssignment,
   WorkspaceWithDomains,
   WorkspaceWithOptionalRole
@@ -308,3 +310,41 @@ export type GetWorkspaceCreationState = (params: {
 export type UpsertWorkspaceCreationState = (params: {
   workspaceCreationState: WorkspaceCreationState
 }) => Promise<void>
+
+export type UpdateWorkspaceJoinRequestStatus = (params: {
+  workspaceId: string
+  userId: string
+  status: WorkspaceJoinRequestStatus
+}) => Promise<number[]>
+
+export type CreateWorkspaceJoinRequest = (params: {
+  workspaceJoinRequest: Omit<WorkspaceJoinRequest, 'createdAt' | 'updatedAt'>
+}) => Promise<WorkspaceJoinRequest>
+
+export type SendWorkspaceJoinRequestReceivedEmail = (params: {
+  workspace: Pick<Workspace, 'id' | 'name' | 'slug'>
+  requester: { id: string; name: string; email: string }
+}) => Promise<void>
+
+export type SendWorkspaceJoinRequestApprovedEmail = (params: {
+  workspace: Pick<Workspace, 'id' | 'name' | 'slug'>
+  requester: { id: string; name: string; email: string }
+}) => Promise<void>
+
+export type SendWorkspaceJoinRequestDeniedEmail = (params: {
+  workspace: Pick<Workspace, 'id' | 'name' | 'slug'>
+  requester: { id: string; name: string; email: string }
+}) => Promise<void>
+
+export type GetWorkspaceJoinRequest = (
+  params: Pick<WorkspaceJoinRequest, 'userId' | 'workspaceId'> &
+    Partial<Pick<WorkspaceJoinRequest, 'status'>>
+) => Promise<WorkspaceJoinRequest | undefined>
+
+export type ApproveWorkspaceJoinRequest = (
+  params: Pick<WorkspaceJoinRequest, 'workspaceId' | 'userId'>
+) => Promise<boolean>
+
+export type DenyWorkspaceJoinRequest = (
+  params: Pick<WorkspaceJoinRequest, 'workspaceId' | 'userId'>
+) => Promise<boolean>

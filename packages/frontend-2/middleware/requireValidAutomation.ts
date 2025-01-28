@@ -35,12 +35,12 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
   if (data?.project?.automations) return
 
-  const isForbidden = (errors || []).find((e) => e.extensions['code'] === 'FORBIDDEN')
+  const isForbidden = (errors || []).find((e) => e.extensions?.['code'] === 'FORBIDDEN')
   const isNotFoundProject = (errors || []).find(
-    (e) => e.extensions['code'] === 'STREAM_NOT_FOUND'
+    (e) => e.extensions?.['code'] === 'STREAM_NOT_FOUND'
   )
   const isNotFoundAutomation = (errors || []).find(
-    (e) => e.extensions['code'] === 'AUTOMATION_NOT_FOUND'
+    (e) => e.extensions?.['code'] === 'AUTOMATION_NOT_FOUND'
   )
   if (isForbidden) {
     return abortNavigation(
