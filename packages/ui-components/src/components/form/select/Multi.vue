@@ -255,8 +255,8 @@ const props = defineProps({
     default: () => []
   },
   modelValue: {
-    type: Array as PropType<SingleItem[]>,
-    default: () => []
+    type: [Array, Object, String, Number] as PropType<ValueType>,
+    default: undefined
   },
   /**
    * Whether to enable the search bar. You must also set one of the following:
@@ -454,8 +454,7 @@ const props = defineProps({
 const { value, errorMessage: error } = useField<ValueType>(props.name, props.rules, {
   validateOnMount: props.validateOnMount,
   validateOnValueUpdate: props.validateOnValueUpdate,
-
-  initialValue: props.modelValue as ValueType
+  initialValue: isArray(props.modelValue) ? props.modelValue : []
 })
 
 const isMounted = useMounted()
@@ -628,7 +627,8 @@ const isDisabled = computed(
 
 const wrappedValue = computed({
   get: () => {
-    return isArray(value.value) ? value.value : []
+    const currentValue = value.value
+    return isArray(currentValue) ? currentValue : []
   },
   set: (newVal) => {
     if (!isArray(newVal)) {
