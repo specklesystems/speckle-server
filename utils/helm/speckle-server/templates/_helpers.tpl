@@ -726,10 +726,6 @@ Generate the environment variables for Speckle server and Speckle objects deploy
   value: {{ .Values.server.asyncRequestContextEnabled | quote }}
 {{- end}}
 
-# *** No more closures flag - prevents writing to the closure table ***
-- name: FF_NO_CLOSURE_WRITES
-  value: {{ .Values.featureFlags.noClosureWrites | quote }}
-
 # *** Gendo render module ***
 - name: FF_GENDOAI_MODULE_ENABLED
   value: {{ .Values.featureFlags.gendoAIModuleEnabled | quote }}
