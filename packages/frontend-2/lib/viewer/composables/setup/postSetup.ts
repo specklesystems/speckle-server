@@ -1,5 +1,7 @@
 import { difference, flatten, isEqual, uniq } from 'lodash-es'
+import { useThrottleFn, onKeyStroke, watchTriggerable } from '@vueuse/core'
 import {
+  LoaderEvent,
   ViewMode,
   type PropertyInfo,
   type StringPropertyInfo,
@@ -56,7 +58,6 @@ import {
   useCameraUtilities,
   useMeasurementUtilities
 } from '~~/lib/viewer/composables/ui'
-import { onKeyStroke, watchTriggerable } from '@vueuse/core'
 import { setupDebugMode } from '~~/lib/viewer/composables/setup/dev'
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 import { useMixpanel } from '~~/lib/core/composables/mp'
@@ -96,8 +97,29 @@ function useViewerObjectAutoLoading() {
     resources: {
       response: { resourceItems }
     },
+    ui: { loadProgress },
     urlHashState: { focusedThreadId }
   } = useInjectedViewerState()
+
+  const loadingProgressMap: { [id: string]: number } = {}
+
+  viewer.on(ViewerEvent.LoadComplete, (id) => {
+    delete loadingProgressMap[id]
+    consolidateProgressInternal({ id, progress: 1 })
+  })
+
+  const consolidateProgressInternal = (args: { progress: number; id: string }) => {
+    loadingProgressMap[args.id] = args.progress
+    let min = 42
+    const values = Object.values(loadingProgressMap) as number[]
+    for (const num of values) {
+      min = Math.min(min, num)
+    }
+
+    loadProgress.value = min
+  }
+
+  const consolidateProgressThorttled = useThrottleFn(consolidateProgressInternal, 250)
 
   const loadObject = (
     objectId: string,
@@ -115,6 +137,12 @@ function useViewerObjectAutoLoading() {
         disableViewerCache ? false : undefined,
         undefined
       )
+
+      loader.on(LoaderEvent.LoadProgress, (args) => consolidateProgressThorttled(args))
+      loader.on(LoaderEvent.LoadCancelled, (id) => {
+        delete loadingProgressMap[id]
+        consolidateProgressInternal({ id, progress: 1 })
+      })
 
       viewer.loadObject(loader, options?.zoomToObject)
     }

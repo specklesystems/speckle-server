@@ -277,6 +277,7 @@ export type InjectableViewerState = Readonly<{
     lightConfig: Ref<SunLightConfiguration>
     explodeFactor: Ref<number>
     viewerBusy: WritableComputedRef<boolean>
+    loadProgress: Ref<number>
     selection: Ref<Nullable<Vector3>>
     measurement: {
       enabled: Ref<boolean>
@@ -919,6 +920,8 @@ function setupInterfaceState(
     set: (newVal) => (isViewerBusy.value = !!newVal)
   })
 
+  const loadProgress = ref(1)
+
   const isolatedObjectIds = ref([] as string[])
   const hiddenObjectIds = ref([] as string[])
   const selectedObjects = shallowRef<Raw<SpeckleObject>[]>([])
@@ -978,6 +981,7 @@ function setupInterfaceState(
       explodeFactor,
       spotlightUserSessionId,
       viewerBusy,
+      loadProgress,
       threads: {
         items: commentThreads,
         openThread: {

@@ -2,11 +2,13 @@
   <div>
     <div
       v-show="viewerBusy"
-      :class="`absolute w-full max-w-screen h-1 bg-blue-500/20 overflow-hidden ${
+      :class="`absolute w-full max-w-screen h-12 bg-blue-500/20 overflow-hidden ${
         showNavbar && !isEmbedEnabled ? 'mt-14' : 'mt-0'
-      } text-xs text-foreground-on-primary z-50`"
+      } text-xs text-foreground-on-primary z-50 text-center`"
     >
-      <div class="swoosher absolute top-0 bg-blue-500/50 rounded-md"></div>
+      <!-- Mike or andrew pls make me biutifullll -->
+      <span class="text-2xl text-red-500">{{ Math.floor(loadProgress * 100) }}%</span>
+      <div class="swoosher absolute top-0 bg-blue-500 rounded-md"></div>
     </div>
   </div>
 </template>
@@ -16,7 +18,7 @@ import { useViewerTour } from '~/lib/viewer/composables/tour'
 import { useInjectedViewerInterfaceState } from '~~/lib/viewer/composables/setup'
 const { isEnabled: isEmbedEnabled } = useEmbed()
 
-const { viewerBusy } = useInjectedViewerInterfaceState()
+const { viewerBusy, loadProgress } = useInjectedViewerInterfaceState()
 const { showNavbar } = useViewerTour()
 </script>
 <style scoped>
