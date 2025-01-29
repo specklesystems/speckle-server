@@ -19,21 +19,21 @@
 
   // Use 'forwardPorts' to make a list of ports inside the container available locally.
   "forwardPorts": [
-    1025, //maildev
-    1080, //maildev (UI)
+    "maildev:1025",
+    "maildev:1080",
     3000, //speckle server
-    5401, //postgres-region1
-    5432, //postgres
-    6379, //redis
-    8001, //redis_insight
-    8090, //keycloak
-    8443, //keycloak
-    9000, //minio
-    9001, //minio (UI)
-    9010, //keycloak
-    9020, //minio-region1
-    9021, //minio-region1 (UI)
-    16543 //pgadmin
+    "postgres-region1:5401",
+    "postgres:5432",
+    "redis:6379",
+    "redis_insight:8001",
+    "keycloak:8090",
+    "keycloak:8443",
+    "minio:9000",
+    "minio:9001",
+    "keycloak:9010",
+    "minio-region1:9020",
+    "minio-region1:9021",
+    "pgadmin:16543"
   ],
 
   // Use 'postCreateCommand' to run commands after the container is created.

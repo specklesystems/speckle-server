@@ -3,6 +3,14 @@ services:
   devcontainer:
     image: 'mcr.microsoft.com/devcontainers/typescript-node:1-18-bullseye'
     volumes:
-      - ..:/workspaces:cached
-    # network_mode: service.db
+      - ..:/workspaces:cached # mounts our local directory (git root) to the container in /workspaces directory (with access mode of cached)
+      - type: volume
+        source: node_modules # top-level volume
+        # we override the node_modules from the above access-mode volume
+        # with an empty volume to avoid conflicting CPU build instructions
+        target: /workspaces/node_modules
+        read_only: false
     command: sleep infinity
+
+volumes:
+  node_modules:
