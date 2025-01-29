@@ -35,9 +35,9 @@
       Log in
     </FormButton>
     <div class="mt-1 text-center text-body-xs text-foreground-3 select-none">
-      Forgot password?
+      Forgot your password?
       <NuxtLink :to="forgottenPasswordRoute" class="text-foreground">
-        Recover password
+        Reset password
       </NuxtLink>
     </div>
   </form>

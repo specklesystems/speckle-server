@@ -306,8 +306,20 @@ export = {
     }
   },
   Branch: {
-    async commits(parent, args) {
+    async commits(parent, args, ctx) {
       const projectDB = await getProjectDbClient({ projectId: parent.streamId })
+
+      // If limit=0 & no filter, short-cut full execution and use data loader
+      if (args.limit === 0) {
+        return {
+          totalCount: await ctx.loaders
+            .forRegion({ db: projectDB })
+            .branches.getCommitCount.load(parent.id),
+          items: [],
+          cursor: null
+        }
+      }
+
       const getPaginatedBranchCommits = getPaginatedBranchCommitsFactory({
         getSpecificBranchCommits: getSpecificBranchCommitsFactory({ db: projectDB }),
         getPaginatedBranchCommitsItems: getPaginatedBranchCommitsItemsFactory({

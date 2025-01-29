@@ -462,8 +462,8 @@ export async function init() {
 
   // Log errors
   app.use(errorLoggingMiddleware)
+  app.use(createRateLimiterMiddleware()) // Rate limiting by IP address for all users
   app.use(authContextMiddleware)
-  app.use(createRateLimiterMiddleware())
   app.use(
     async (
       _req: express.Request,

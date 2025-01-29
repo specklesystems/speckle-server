@@ -7,7 +7,6 @@ import {
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
 import {
   getProjectCollaboratorsFactory,
-  getProjectFactory,
   updateProjectFactory,
   upsertProjectRoleFactory,
   getRolesByUserIdFactory,
@@ -212,6 +211,7 @@ import {
   updateWorkspaceJoinRequestStatusFactory
 } from '@/modules/workspaces/repositories/workspaceJoinRequests'
 import { sendWorkspaceJoinRequestReceivedEmailFactory } from '@/modules/workspaces/services/workspaceJoinRequestEmails/received'
+import { getProjectFactory } from '@/modules/core/repositories/projects'
 
 const eventBus = getEventBus()
 const getServerInfo = getServerInfoFactory({ db })
@@ -510,7 +510,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
       },
       WorkspaceMutations: {
         create: async (_parent, args, context) => {
-          const { name, description, defaultLogoIndex, logo, slug } = args.input
+          const { name, description, logo, slug } = args.input
 
           const createWorkspace = createWorkspaceFactory({
             validateSlug: validateSlugFactory({
@@ -530,8 +530,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
               name,
               slug,
               description: description ?? null,
-              logo: logo ?? null,
-              defaultLogoIndex: defaultLogoIndex ?? 0
+              logo: logo ?? null
             },
             userResourceAccessLimits: context.resourceAccessRules
           })
@@ -1423,12 +1422,12 @@ export = FF_WORKSPACES_MODULE_ENABLED
             context.resourceAccessRules
           )
 
-          const userId = parent.id
-
-          return await getWorkspaceRoleForUserFactory({ db })({
-            userId,
+          const role = await getWorkspaceRoleForUserFactory({ db })({
+            userId: parent.id,
             workspaceId
           })
+
+          return role?.role ?? null
         }
       },
       ServerInfo: {

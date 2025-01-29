@@ -44,14 +44,12 @@ import { Knex } from 'knex'
 import { isProjectCreateInput } from '@/modules/core/helpers/stream'
 import {
   StreamAccessUpdateError,
-  StreamNotFoundError,
   StreamUpdateError
 } from '@/modules/core/errors/stream'
 import { metaHelpers } from '@/modules/core/helpers/meta'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
 import {
   DeleteProjectRole,
-  GetProject,
   GetProjectCollaborators,
   UpdateProject,
   GetRolesByUserId,
@@ -170,18 +168,6 @@ export const getStreamFactory =
       ...(options || {})
     })
     return <Optional<StreamWithOptionalRole>>streams[0]
-  }
-
-export const getProjectFactory =
-  (deps: { db: Knex }): GetProject =>
-  async ({ projectId }) => {
-    const project = await getStreamFactory(deps)({ streamId: projectId })
-
-    if (!project) {
-      throw new StreamNotFoundError()
-    }
-
-    return project
   }
 
 export const getCommitStreamsFactory =

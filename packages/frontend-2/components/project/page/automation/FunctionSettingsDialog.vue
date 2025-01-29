@@ -112,6 +112,8 @@ graphql(`
     parameters
     release {
       id
+      versionTag
+      createdAt
       inputSchema
       function {
         id
@@ -157,7 +159,9 @@ const mixpanel = useMixpanel()
 
 const jsonForm = ref<{ triggerChange: () => Promise<Optional<JsonFormsChangeEvent>> }>()
 const selectedModel = ref<CommonModelSelectorModelFragment>()
-const selectedRelease = ref<SearchAutomateFunctionReleaseItemFragment>()
+const selectedRelease = ref<SearchAutomateFunctionReleaseItemFragment | undefined>(
+  props.revisionFn?.release
+)
 const inputSchema = computed(() =>
   formattedJsonFormSchema(selectedRelease.value?.inputSchema)
 )
@@ -198,6 +202,7 @@ const resolveFirstModelValue = (items: SearchAutomateFunctionReleaseItemFragment
       functionId: functionId.value,
       functionVersionId: currentReleaseId.value
     })
+    return props.revisionFn?.release
   }
 
   return modelValue

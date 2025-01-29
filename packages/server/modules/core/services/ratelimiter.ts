@@ -17,6 +17,7 @@ import { RateLimitError } from '@/modules/core/errors/ratelimit'
 import { rateLimiterLogger } from '@/logging/logging'
 import { createRedisClient } from '@/modules/shared/redis/redis'
 import { getRequestPath } from '@/modules/core/helpers/server'
+import { getTokenFromRequest } from '@/modules/shared/middleware'
 
 export interface RateLimitResult {
   isWithinLimits: boolean
@@ -297,7 +298,10 @@ export const getActionForPath = (path: string, verb: string): RateLimitAction =>
 }
 
 export const getSourceFromRequest = (req: express.Request): string => {
-  let source: string | null = req?.context?.userId || getIpFromRequest(req)
+  let source: string | null =
+    req?.context?.userId ||
+    getTokenFromRequest(req)?.substring(10) || // token ID
+    getIpFromRequest(req)
 
   if (!source) source = 'unknown'
   return source
