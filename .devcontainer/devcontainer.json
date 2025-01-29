@@ -2,21 +2,49 @@
 // README at: https://github.com/devcontainers/templates/tree/main/src/typescript-node
 {
   "name": "Node.js & TypeScript",
-  // Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
-  "image": "mcr.microsoft.com/devcontainers/typescript-node:1-18-bullseye",
+  "dockerComposeFile": [
+    "../docker-compose-deps.yml",
+    "./docker-compose-devcontainer.yml"
+  ],
+  "service": "devcontainer",
+
+  // Path to the workspace within the container.
+  // Needs to match destination volume ('volumes' property) in docker-compose-devcontainer.yml.
+  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
 
   // Features to add to the dev container. More info: https://containers.dev/features.
-  // "features": {},
+  "features": {
+    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {}
+  },
 
   // Use 'forwardPorts' to make a list of ports inside the container available locally.
-  // "forwardPorts": [],
+  "forwardPorts": [
+    1025, //maildev
+    1080, //maildev (UI)
+    3000, //speckle server
+    5401, //postgres-region1
+    5432, //postgres
+    6379, //redis
+    8001, //redis_insight
+    8090, //keycloak
+    8443, //keycloak
+    9000, //minio
+    9001, //minio (UI)
+    9010, //keycloak
+    9020, //minio-region1
+    9021, //minio-region1 (UI)
+    16543 //pgadmin
+  ],
 
   // Use 'postCreateCommand' to run commands after the container is created.
-  "postCreateCommand": "yarn && yarn build:public"
+  "postCreateCommand": "yarn && yarn build:public",
 
   // Configure tool-specific properties.
   // "customizations": {},
 
   // Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
   // "remoteUser": "root"
+
+  // Environment variables to set in the container.
+  "remoteEnv": { "LOCAL_WORKSPACE_FOLDER": "${localWorkspaceFolder}" }
 }

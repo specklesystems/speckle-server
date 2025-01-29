@@ -1,0 +1,8 @@
+version: '3.8'
+services:
+  devcontainer:
+    image: 'mcr.microsoft.com/devcontainers/typescript-node:1-18-bullseye'
+    volumes:
+      - ..:/workspaces:cached
+    # network_mode: service.db
+    command: sleep infinity
