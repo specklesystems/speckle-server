@@ -1,3 +1,5 @@
+import type { TutorialItem } from '~/lib/dashboard/helpers/types'
+
 export const tutorials: TutorialItem[] = [
   {
     title: 'How To Get Data From Grasshopper Into Power BI',
