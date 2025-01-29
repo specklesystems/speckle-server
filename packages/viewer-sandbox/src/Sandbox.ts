@@ -57,6 +57,7 @@ import Bright from '../assets/hdri/Bright.png'
 import { Euler, Vector3, Box3, Color, LinearFilter } from 'three'
 import { GeometryType } from '@speckle/viewer'
 import { MeshBatch } from '@speckle/viewer'
+import ObjectLoader from '@speckle/objectloader'
 
 export default class Sandbox {
   private viewer: Viewer
@@ -1312,5 +1313,38 @@ export default class Sandbox {
     })
 
     void this.viewer.loadObject(loader, true)
+  }
+
+  public async objectLoaderOnly(resource: string, enableCaching: boolean) {
+    const token = localStorage.getItem(
+      resource.includes('latest') ? 'AuthTokenLatest' : 'AuthToken'
+    ) as string
+    const objUrls = await UrlHelper.getResourceUrls(resource, token)
+    const url = new URL(objUrls[0])
+
+    const segments = url.pathname.split('/')
+    if (
+      segments.length < 5 ||
+      url.pathname.indexOf('streams') === -1 ||
+      url.pathname.indexOf('objects') === -1
+    ) {
+      throw new Error('Unexpected object url format.')
+    }
+
+    const serverUrl = url.origin
+    const streamId = segments[2]
+    const objectId = segments[4]
+    const loader = new ObjectLoader({
+      serverUrl,
+      token,
+      streamId,
+      objectId,
+
+      options: { enableCaching }
+    })
+    for await (const obj of loader.getObjectIterator()) {
+      // console.log('Loaded -> ', obj)
+    }
+    console.log('Done')
   }
 }

@@ -104,7 +104,8 @@ const createViewer = async (containerName: string, _stream: string) => {
   sandbox.makeDiffUI()
   sandbox.makeMeasurementsUI()
 
-  await sandbox.loadUrl(_stream)
+  await sandbox.objectLoaderOnly(_stream, true)
+  // await sandbox.loadUrl(_stream)
   // await sandbox.loadJSON(JSONSpeckleStream)
 }
 
@@ -301,7 +302,7 @@ const getStream = () => {
     // 'https://app.speckle.systems/streams/0a2f096caf/commits/eee0e4436f?overlay=72828bce0d&c=%5B14.04465,-332.88372,258.40392,53.09575,31.13694,126.39999,0,1%5D&filter=%7B%22propertyInfoKey%22%3A%22level.name%22%7D'
     // 'Bilal's tests
     // 'https://latest.speckle.systems/streams/97750296c2/commits/5386a0af02' // 700k+ objects 30kk tris
-    // 'https://latest.speckle.systems/streams/97750296c2/commits/2a6fd781f2' // NEW
+    'https://latest.speckle.systems/streams/97750296c2/commits/2a6fd781f2' // NEW
 
     // 'https://latest.speckle.systems/streams/97750296c2/commits/48f0567a88' // 1015849 objects
     // 'https://latest.speckle.systems/streams/97750296c2/commits/aec0841f7e' // 11k objects
@@ -472,7 +473,7 @@ const getStream = () => {
     // 'https://latest.speckle.systems/projects/db06488e1c/models/21f3930771'
 
     // FAR OFF
-    'https://app.speckle.systems/projects/bdd828221e/models/eb99326dc3'
+    // 'https://app.speckle.systems/projects/bdd828221e/models/eb99326dc3'
   )
 }
 
