@@ -91,7 +91,7 @@ export const DefaultOrbitControlsOptions: Required<CameraControllerOptions> = {
   touchAction: 'none',
   infiniteZoom: true,
   zoomToCursor: true,
-  orbitAroundCursor: false,
+  orbitAroundCursor: true,
   showOrbitPoint: true,
   lookSpeed: 1,
   moveSpeed: 1,
