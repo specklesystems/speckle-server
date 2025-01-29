@@ -1,37 +1,47 @@
 <template>
   <div>
-    <template v-if="!hasWorkspace || isWorkspaceAdmin">
-      <InviteDialogSharedSelectUsers
-        v-model:open="isSelectUsersOpen"
-        title="Invite to project"
-        :invites="invites"
-        :allowed-domains="allowedDomains"
-        invite-target="project"
-        @on-submit="onSelectUsersSubmit"
-        @on-cancel="isOpen = false"
-      />
-      <InviteDialogSharedSelectPermissions
-        v-model:open="isWorkspacePermissionsOpen"
-        :invites="workspaceInvites"
-        :allowed-domains="allowedDomains"
-        invite-target="workspace"
-        @on-submit="onWorkspacePermissionsSubmit"
-        @on-back="onWorkspacePermissionsBack"
-      />
-      <InviteDialogSharedSelectPermissions
-        v-model:open="isServerPermissionsOpen"
-        :invites="serverInvites"
-        invite-target="server"
-        @on-submit="onServerPermissionsSubmit"
-        @on-back="onServerPermissionsBack"
-      />
-    </template>
-    <InviteDialogProjectWorkspaceMembers
-      v-else
+    <InviteDialogSharedSelectUsers
       v-model:open="isSelectUsersOpen"
-      :project="props.project"
-      hide-backdrop
+      :invites="invites"
+      :allowed-domains="allowedDomains"
+      invite-target="project"
+      show-billing-info
+      @on-submit="onSelectUsersSubmit"
       @on-cancel="isOpen = false"
+    >
+      <div v-if="invitableWorkspaceMembers.length">
+        <hr class="border-outline-3 my-2" />
+        <h3 class="text-body-xs text-foreground font-medium mb-1 mt-4">
+          Existing workspace members
+        </h3>
+        <p class="text-body-2xs text-foreground-2 mb-4">
+          Add existing workspace members to the project
+        </p>
+        <ul class="flex flex-col mb-2">
+          <InviteDialogProjectWorkspaceMembersRow
+            v-for="member in invitableWorkspaceMembers"
+            :key="member.user.id"
+            :user="member"
+            :workspace="props.project.workspace"
+            :project-id="props.project.id"
+          />
+        </ul>
+      </div>
+    </InviteDialogSharedSelectUsers>
+    <InviteDialogSharedSelectPermissions
+      v-model:open="isWorkspacePermissionsOpen"
+      :invites="workspaceInvites"
+      :allowed-domains="allowedDomains"
+      invite-target="workspace"
+      @on-submit="onWorkspacePermissionsSubmit"
+      @on-back="onWorkspacePermissionsBack"
+    />
+    <InviteDialogSharedSelectPermissions
+      v-model:open="isServerPermissionsOpen"
+      :invites="serverInvites"
+      invite-target="server"
+      @on-submit="onServerPermissionsSubmit"
+      @on-back="onServerPermissionsBack"
     />
   </div>
 </template>
@@ -50,6 +60,7 @@ import { Roles, type ServerRoles } from '@speckle/shared'
 import { matchesDomainPolicy } from '~/lib/invites/helpers/validation'
 import { getUsersByEmailQuery } from '~/lib/invites/graphql/queries'
 import { useInviteUserToProject } from '~~/lib/projects/composables/projectManagement'
+import { useTeamInternals } from '~~/lib/projects/composables/team'
 
 graphql(`
   fragment InviteDialogProject_Project on Project {
@@ -79,6 +90,7 @@ const isOpen = defineModel<boolean>('open', { required: true })
 const apollo = useApolloClient().client
 const { isAdmin } = useActiveUser()
 const createInvite = useInviteUserToProject()
+const { collaboratorListItems } = useTeamInternals(computed(() => props.project))
 
 const isSelectUsersOpen = ref(false)
 const isWorkspacePermissionsOpen = ref(false)
@@ -86,9 +98,6 @@ const isServerPermissionsOpen = ref(false)
 const invites = ref<InviteGenericItem[]>([])
 
 const hasWorkspace = computed(() => !!props.project.workspace)
-const isWorkspaceAdmin = computed(
-  () => hasWorkspace.value && props.project.workspace?.role === Roles.Workspace.Admin
-)
 const allowedDomains = computed(() =>
   hasWorkspace.value && props.project.workspace?.domainBasedMembershipProtectionEnabled
     ? props.project.workspace.domains?.map((d) => d.domain)
@@ -100,6 +109,17 @@ const workspaceInvites = computed(() =>
 const serverInvites = computed(() =>
   invites.value.filter((invite) => invite.needsServerRole)
 )
+const invitableWorkspaceMembers = computed(() => {
+  const currentProjectMemberIds = new Set(
+    collaboratorListItems.value.map((item) => item.user?.id)
+  )
+
+  return (
+    props.project?.workspace?.team?.items.filter(
+      (member) => member.user.id && !currentProjectMemberIds.has(member.user.id)
+    ) || []
+  )
+})
 
 const onWorkspacePermissionsBack = () => {
   isWorkspacePermissionsOpen.value = false

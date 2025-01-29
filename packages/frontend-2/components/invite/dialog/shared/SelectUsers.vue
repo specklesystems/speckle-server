@@ -6,7 +6,8 @@
     @update:open="onUpdateOpen"
   >
     <template #header>
-      {{ title }}
+      Invite to
+      <span class="capitalize">{{ inviteTarget }}</span>
     </template>
     <form @submit="onSubmit">
       <div class="flex flex-col gap-y-3 text-foreground">
@@ -82,6 +83,13 @@
           Add another user
         </FormButton>
 
+        <div v-if="showBillingInfo" class="text-body-2xs text-foreground-2 leading-5">
+          <p>
+            Inviting users may add seats to your current billing cycle. If there are
+            available seats, they will be used first. Your workspace is currently billed
+            for X.
+          </p>
+        </div>
         <slot />
       </div>
     </form>
@@ -112,10 +120,10 @@ const emit = defineEmits<{
 }>()
 
 const props = defineProps<{
-  title: string
   invites: InviteGenericItem[]
   allowedDomains?: MaybeNullOrUndefined<string[]>
   inviteTarget: 'workspace' | 'project'
+  showBillingInfo?: boolean
 }>()
 
 const isOpen = defineModel<boolean>('open', { required: true })
