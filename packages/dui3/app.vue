@@ -11,7 +11,6 @@ import { useMixpanel } from '~/lib/core/composables/mixpanel'
 import { useConfigStore } from '~/store/config'
 import { useAccountStore } from '~/store/accounts'
 import { storeToRefs } from 'pinia'
-import { useUpdateConnector } from '~/lib/core/composables/updateConnector'
 
 const uiConfigStore = useConfigStore()
 const { isDarkTheme } = storeToRefs(uiConfigStore)
@@ -31,15 +30,11 @@ useHead({
   script: import.meta.dev ? ['http://localhost:8098'] : []
 })
 
-onMounted(async () => {
+onMounted(() => {
   const { trackEvent, addConnectorToProfile, identifyProfile } = useMixpanel()
-  const { checkUpdate } = useUpdateConnector()
   // TODO: some host apps can open DUI3 automatically, with this case we shouldn't mark track event as `"type": "action"`,
   // we need to get this info from source app. (TBD which apps: Rhino opens automatically, not sure acad, sketchup and revit needs trigger button to init)
   trackEvent('DUI3 Action', { name: 'Launch' })
-
-  // Checks whether new version available for the connector or not and throws a toast notification if any.
-  await checkUpdate()
 
   const { accounts } = useAccountStore()
 

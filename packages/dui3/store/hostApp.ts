@@ -18,7 +18,10 @@ import type { ConversionResult } from 'lib/conversions/conversionResult'
 import { defineStore } from 'pinia'
 import type { CardSetting } from '~/lib/models/card/setting'
 import { useAccountStore } from '~/store/accounts'
-import type { Version } from '~/lib/core/composables/updateConnector'
+import {
+  useUpdateConnector,
+  type Version
+} from '~/lib/core/composables/updateConnector'
 
 export type ProjectModelGroup = {
   projectId: string
@@ -33,6 +36,7 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
   const { trackEvent } = useMixpanel()
   const { $openUrl } = useNuxtApp()
   const accountsStore = useAccountStore()
+  const { checkUpdate } = useUpdateConnector()
 
   const latestAvailableVersion = ref<Version | null>(null)
 
@@ -461,8 +465,11 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
   const getHostAppVersion = async () =>
     (hostAppVersion.value = await app.$baseBinding.getSourceApplicationVersion())
 
-  const getConnectorVersion = async () =>
-    (connectorVersion.value = await app.$baseBinding.getConnectorVersion())
+  const getConnectorVersion = async () => {
+    connectorVersion.value = await app.$baseBinding.getConnectorVersion()
+    // Checks whether new version available for the connector or not and throws a toast notification if any.
+    await checkUpdate()
+  }
 
   /**
    * Used internally in this store store only for initialisation. Refreshed the document info from the host app. Should be called on document changed events.
