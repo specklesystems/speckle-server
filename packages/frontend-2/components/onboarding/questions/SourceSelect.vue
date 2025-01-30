@@ -1,6 +1,7 @@
 <template>
   <FormSelectBase
     v-bind="props"
+    id="source-select"
     v-model="selectedValue"
     label="How did you hear about Speckle?"
     placeholder="Select one"

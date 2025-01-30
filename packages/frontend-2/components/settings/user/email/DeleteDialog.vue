@@ -8,8 +8,8 @@
     <p class="text-body-xs text-foreground mb-2">
       {{
         cancel
-          ? `Are you sure you want to cancel adding ${email} to your account?`
-          : `Are you sure you want to delete ${email} from your account?`
+          ? `Are you sure you want to cancel adding ${email?.email} to your account?`
+          : `Are you sure you want to delete ${email?.email} from your account?`
       }}
     </p>
   </LayoutDialog>
@@ -17,13 +17,14 @@
 
 <script setup lang="ts">
 import type { LayoutDialogButton } from '@speckle/ui-components'
+import type { UserEmail } from '~/lib/common/generated/gql/graphql'
 import { useUserEmails } from '~/lib/user/composables/emails'
 
 const props = defineProps<{
-  emailId?: string
-  email?: string
+  email?: UserEmail
   cancel?: boolean
 }>()
+
 const isOpen = defineModel<boolean>('open', { required: true })
 
 const { deleteUserEmail } = useUserEmails()
@@ -46,8 +47,8 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
 ])
 
 const onDeleteEmail = async () => {
-  if (!props.emailId || !props.email) return
-  const success = await deleteUserEmail(props.emailId, props.email, props.cancel)
+  if (!props.email) return
+  const success = await deleteUserEmail(props.email)
   if (success) {
     isOpen.value = false
   }

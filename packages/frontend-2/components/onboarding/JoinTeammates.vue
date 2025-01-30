@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col items-center gap-4 w-full">
+  <div class="flex flex-col items-center gap-2 w-full">
     <CommonCard
       v-for="workspace in workspaces"
       :key="workspace.id"
@@ -14,24 +14,30 @@
             size="xl"
           />
         </div>
-        <div class="flex flex-col flex-1">
-          <h6 class="text-heading-sm">{{ workspace.name }}</h6>
-          <p class="text-body-2xs text-foreground-2">{{ workspace.description }}</p>
+        <div class="flex flex-col sm:flex-row gap-4 justify-between flex-1">
+          <div class="flex flex-col flex-1">
+            <h6 class="text-heading-sm">{{ workspace.name }}</h6>
+            <p class="text-body-2xs text-foreground-2">{{ workspace.description }}</p>
+          </div>
+          <FormButton
+            color="outline"
+            size="sm"
+            :loading="loadingStates[workspace.id]"
+            :disabled="requestedWorkspaces.includes(workspace.id)"
+            @click="() => processRequest(true, workspace.id)"
+          >
+            {{
+              requestedWorkspaces.includes(workspace.id)
+                ? 'Requested'
+                : 'Request to join'
+            }}
+          </FormButton>
         </div>
-        <FormButton
-          color="outline"
-          size="sm"
-          :loading="loadingStates[workspace.id]"
-          :disabled="requestedWorkspaces.includes(workspace.id)"
-          @click="() => processRequest(true, workspace.id)"
-        >
-          {{
-            requestedWorkspaces.includes(workspace.id) ? 'Requested' : 'Request to join'
-          }}
-        </FormButton>
       </div>
     </CommonCard>
-    <FormButton @click="$emit('next')">Continue</FormButton>
+    <div class="mt-2 w-full">
+      <FormButton size="lg" full-width @click="$emit('next')">Continue</FormButton>
+    </div>
   </div>
 </template>
 

@@ -1,6 +1,7 @@
 <template>
   <FormSelectBase
     v-bind="props"
+    id="role-select"
     v-model="selectedValue"
     label="What's your role?"
     placeholder="Select one"

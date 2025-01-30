@@ -24,10 +24,10 @@
       </h1>
       <p class="text-center text-body-sm text-foreground">
         We sent you a verification code to
-        <span class="font-medium">{{ unverifiedEmail?.email }}</span>
+        <span class="font-semibold">{{ currentEmail?.email }}</span>
       </p>
       <p class="text-center text-body-sm text-foreground mb-8">
-        Paste (or type) it below to continue.
+        Paste (or type) it below to continue. Code expires in 5 minutes.
       </p>
       <FormCodeInput
         v-model="code"
@@ -44,6 +44,14 @@
           Cancel
         </FormButton>
         <FormButton
+          v-else-if="!isEmailVerificationForced"
+          color="subtle"
+          size="sm"
+          @click="navigateTo(onboardingRoute)"
+        >
+          Skip
+        </FormButton>
+        <FormButton
           :disabled="isResendDisabled"
           color="outline"
           size="sm"
@@ -56,8 +64,7 @@
       </div>
       <SettingsUserEmailDeleteDialog
         v-model:open="showDeleteDialog"
-        :email-id="unverifiedEmail?.id"
-        :email="unverifiedEmail?.email"
+        :email="currentEmail"
         cancel
       />
     </div>
@@ -70,27 +77,43 @@ import { useUserEmails } from '~/lib/user/composables/emails'
 import { useIntervalFn } from '@vueuse/core'
 import { useRoute } from 'vue-router'
 import { useAuthManager } from '~/lib/auth/composables/auth'
+import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
+import { onboardingRoute } from '~~/lib/common/helpers/route'
+import type { UserEmail } from '~/lib/common/generated/gql/graphql'
 
 useHead({
   title: 'Verify your email'
 })
 
 definePageMeta({
-  middleware: ['auth', 'can-view-verify-email'],
+  middleware: ['auth'],
   layout: 'empty'
 })
+
 const isEmailVerificationForced = useIsEmailVerificationForced()
-const { unverifiedEmail, resendVerificationEmail, verifyUserEmail } = useUserEmails()
+const {
+  unverifiedPrimaryEmail,
+  unverifiedEmails,
+  resendVerificationEmail,
+  verifyUserEmail
+} = useUserEmails()
 const route = useRoute()
 const { logout } = useAuthManager()
+const { triggerNotification } = useGlobalToast()
 
 const code = ref('')
 const hasError = ref(false)
 const cooldownRemaining = ref(0)
 const showDeleteDialog = ref(false)
+const isLoading = ref(false)
+
+// Get the email to verify - either primary unverified or first unverified
+const currentEmail = computed<UserEmail | undefined>(
+  () => unverifiedPrimaryEmail.value || (unverifiedEmails.value[0] ?? undefined)
+)
 
 const isResendDisabled = computed(() => cooldownRemaining.value > 0)
-const isPrimaryEmail = computed(() => unverifiedEmail.value?.primary)
+const isPrimaryEmail = computed(() => currentEmail.value?.primary ?? false)
 
 const { pause: stopInterval, resume: startInterval } = useIntervalFn(
   () => {
@@ -105,11 +128,8 @@ const { pause: stopInterval, resume: startInterval } = useIntervalFn(
 )
 
 const resendEmail = async () => {
-  if (!unverifiedEmail.value) return
-  const success = await resendVerificationEmail(
-    unverifiedEmail.value.id,
-    unverifiedEmail.value?.email
-  )
+  if (!currentEmail.value) return
+  const success = await resendVerificationEmail(currentEmail.value)
   if (success) {
     cooldownRemaining.value = 30
     startInterval()
@@ -117,11 +137,23 @@ const resendEmail = async () => {
 }
 
 const handleVerificationComplete = async (code: string) => {
-  if (!unverifiedEmail.value?.email) return
+  if (!currentEmail.value) return
 
-  const success = await verifyUserEmail(unverifiedEmail.value.email, code)
-  if (!success) {
-    hasError.value = true
+  if (isLoading.value) return
+  isLoading.value = true
+
+  triggerNotification({
+    type: ToastNotificationType.Loading,
+    title: 'Verifying code'
+  })
+
+  try {
+    const success = await verifyUserEmail(currentEmail.value, code)
+    if (!success) {
+      hasError.value = true
+    }
+  } finally {
+    isLoading.value = false
   }
 }
 

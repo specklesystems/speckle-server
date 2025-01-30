@@ -21,15 +21,17 @@ export default defineNuxtRouteMiddleware(async (to) => {
   const isAuthPage = to.path.startsWith('/authn/')
   const isVerifyEmailPage = to.path === verifyEmailRoute
 
-  const shouldSkipMiddleware =
-    !isEmailVerificationForced.value || isAuthPage || isVerifyEmailPage
-
-  if (shouldSkipMiddleware) return
+  // Skip if not forced and not on verify email page
+  if (!isEmailVerificationForced.value && !isVerifyEmailPage) return
+  if (isAuthPage) return
 
   const hasUnverifiedEmails =
     !data.activeUser.verified || data.activeUser.emails.some((email) => !email.verified)
 
   if (hasUnverifiedEmails) {
-    return navigateTo(verifyEmailRoute)
+    // Redirect to verify email if not already there
+    if (!isVerifyEmailPage) {
+      return navigateTo(verifyEmailRoute)
+    }
   }
 })

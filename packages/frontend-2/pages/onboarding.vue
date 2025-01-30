@@ -1,8 +1,9 @@
 <template>
-  <HeaderWithEmptyPage show-logo :logo-link="false">
+  <HeaderWithEmptyPage empty-header show-logo :logo-link="false">
     <template #header-actions>
       <div class="flex gap-2 items-center">
         <FormButton
+          v-if="!isOnboardingForced"
           class="opacity-70 hover:opacity-100 p-1"
           size="sm"
           color="subtle"
@@ -65,6 +66,8 @@ definePageMeta({
   middleware: ['auth'],
   layout: 'empty'
 })
+
+const isOnboardingForced = useIsOnboardingForced()
 
 const { setUserOnboardingComplete, createOnboardingProject } = useProcessOnboarding()
 const { activeUser } = useActiveUser()

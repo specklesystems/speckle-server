@@ -5,7 +5,7 @@
         <FormTextInput
           ref="inputRefs"
           v-model="digits[index]"
-          class="text-center text-body-sm py-6 !px-2"
+          class="text-center !text-[14px] py-6 !px-2 font-semibold"
           color="foundation"
           :name="`code-${index}`"
           type="text"

@@ -6,6 +6,7 @@ export const emailFieldsFragment = graphql(`
     email
     verified
     primary
+    userId
   }
 `)
 

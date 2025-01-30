@@ -318,7 +318,7 @@ const documents = {
     "\n  mutation UpdateNotificationPreferences($input: JSONObject!) {\n    userNotificationPreferencesUpdate(preferences: $input)\n  }\n": types.UpdateNotificationPreferencesDocument,
     "\n  mutation DeleteAccount($input: UserDeleteInput!) {\n    userDelete(userConfirmation: $input)\n  }\n": types.DeleteAccountDocument,
     "\n  mutation verifyEmail($input: VerifyUserEmailInput!) {\n    activeUserMutations {\n      emailMutations {\n        verify(input: $input)\n      }\n    }\n  }\n": types.VerifyEmailDocument,
-    "\n  fragment EmailFields on UserEmail {\n    id\n    email\n    verified\n    primary\n  }\n": types.EmailFieldsFragmentDoc,
+    "\n  fragment EmailFields on UserEmail {\n    id\n    email\n    verified\n    primary\n    userId\n  }\n": types.EmailFieldsFragmentDoc,
     "\n  query UserEmails {\n    activeUser {\n      id\n      emails {\n        ...EmailFields\n      }\n      hasPendingVerification\n    }\n  }\n": types.UserEmailsDocument,
     "\n  fragment ViewerCommentBubblesData on Comment {\n    id\n    viewedAt\n    viewerState\n  }\n": types.ViewerCommentBubblesDataFragmentDoc,
     "\n  fragment ViewerCommentThread on Comment {\n    ...ViewerCommentsListItem\n    ...ViewerCommentBubblesData\n    ...ViewerCommentsReplyItem\n  }\n": types.ViewerCommentThreadFragmentDoc,
@@ -1630,7 +1630,7 @@ export function graphql(source: "\n  mutation verifyEmail($input: VerifyUserEmai
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment EmailFields on UserEmail {\n    id\n    email\n    verified\n    primary\n  }\n"): (typeof documents)["\n  fragment EmailFields on UserEmail {\n    id\n    email\n    verified\n    primary\n  }\n"];
+export function graphql(source: "\n  fragment EmailFields on UserEmail {\n    id\n    email\n    verified\n    primary\n    userId\n  }\n"): (typeof documents)["\n  fragment EmailFields on UserEmail {\n    id\n    email\n    verified\n    primary\n    userId\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

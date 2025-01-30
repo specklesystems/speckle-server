@@ -16,7 +16,7 @@
         v-if="!emailData.verified"
         color="outline"
         size="sm"
-        @click="resendVerificationEmail(emailData.id, emailData.email)"
+        @click="resendVerificationEmail(emailData)"
       >
         Verify email
       </FormButton>
@@ -64,8 +64,7 @@
 
     <SettingsUserEmailDeleteDialog
       v-model:open="showDeleteDialog"
-      :email-id="emailData.id"
-      :email="emailData.email"
+      :email="emailData"
       :is-verifying="!emailData.verified"
     />
   </div>

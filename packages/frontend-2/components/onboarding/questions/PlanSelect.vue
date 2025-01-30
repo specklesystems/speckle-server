@@ -1,6 +1,7 @@
 <template>
-  <FormSelectBase
+  <FormSelectMulti
     v-bind="props"
+    id="plan-select"
     v-model="selectedValue"
     label="What are you planning to do with Speckle?"
     placeholder="Select all that apply"
@@ -9,7 +10,6 @@
     show-label
     allow-unset
     clearable
-    multiple
     :items="plans"
   >
     <template #option="{ item }">
@@ -17,10 +17,14 @@
         {{ PlanTitleMap[item] }}
       </div>
     </template>
+
     <template #something-selected="{ value }">
-      <span>{{ PlanTitleMap[isArrayValue(value) ? value[0] : value] }}</span>
+      <template v-if="value.length === 1">
+        {{ PlanTitleMap[isArrayValue(value) ? value[0] : value] }}
+      </template>
+      <template v-else>{{ value.length }} items selected</template>
     </template>
-  </FormSelectBase>
+  </FormSelectMulti>
 </template>
 
 <script setup lang="ts">
