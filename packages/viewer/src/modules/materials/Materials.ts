@@ -273,10 +273,13 @@ export default class Materials {
       (renderView.geometryType === GeometryType.LINE ||
         renderView.geometryType === GeometryType.POINT)
 
+    const displayStyleFirst = renderView.geometryType === GeometryType.LINE
     if (!materialData) {
-      materialData =
-        renderView.renderData.renderMaterial || renderView.renderData.displayStyle
+      materialData = displayStyleFirst
+        ? renderView.renderData.displayStyle || renderView.renderData.renderMaterial
+        : renderView.renderData.renderMaterial || renderView.renderData.displayStyle
     }
+
     /** DUI3 rules which apply only if the technical material exist (color proxies) in absence of a render material or display style from DUI2
      *  The technical material will contribute to the material hash
      */
@@ -292,6 +295,8 @@ export default class Materials {
           : Materials.isDisplayStyle(materialData) &&
             renderView.geometryType !== GeometryType.MESH
           ? Materials.displayStyleToString(materialData)
+          : Materials.isRendeMaterial(materialData)
+          ? Materials.renderMaterialToString(materialData)
           : ''
       if ((materialData as MaterialOptions).stencilOutlines) {
         mat += '/' + (materialData as MaterialOptions).stencilOutlines
