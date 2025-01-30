@@ -279,6 +279,60 @@ export const objectQuery = graphql(`
   }
 `)
 
+export const commentThreadsFragment = graphql(`
+  fragment CommentThreadsItem on Comment {
+    id
+    rawText
+    createdAt
+    viewerState
+    replyAuthors {
+      totalCount
+      items {
+        id
+        avatar
+      }
+    }
+    author {
+      id
+      avatar
+      name
+    }
+    replies {
+      totalCount
+      items {
+        ...CommentRepliesItem
+      }
+    }
+  }
+`)
+
+export const commentRepliesFragment = graphql(`
+  fragment CommentRepliesItem on Comment {
+    id
+    rawText
+    author {
+      id
+      avatar
+      name
+    }
+    createdAt
+  }
+`)
+
+export const commentsQuery = graphql(`
+  query CommentsQuery($projectId: String!, $modelId: String!) {
+    project(id: $projectId) {
+      model(id: $modelId) {
+        commentThreads {
+          items {
+            ...CommentThreadsItem
+          }
+        }
+      }
+    }
+  }
+`)
+
 export const projectAddByUrlQueryWithVersion = graphql(`
   query ProjectAddByUrlQueryWithVersion(
     $projectId: String!
