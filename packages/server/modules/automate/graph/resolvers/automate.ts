@@ -473,6 +473,12 @@ export = (FF_AUTOMATE_MODULE_ENABLED
                   : {}
             })
 
+            if (!fn) {
+              return {
+                items: []
+              }
+            }
+
             return {
               cursor: fn.versionCursor,
               totalCount: fn.versionCount,
@@ -749,6 +755,12 @@ export = (FF_AUTOMATE_MODULE_ENABLED
               }
             })
 
+            if (!res) {
+              return {
+                items: []
+              }
+            }
+
             const items = res.items.map(convertFunctionToGraphQLReturn)
 
             return {
@@ -797,6 +809,12 @@ export = (FF_AUTOMATE_MODULE_ENABLED
                 }
               }
             })
+
+            if (!res) {
+              return {
+                items: []
+              }
+            }
 
             const items = res.functions.map(convertFunctionToGraphQLReturn)
 
