@@ -69,7 +69,15 @@
                 corners.
               </div>
               <!-- TODO: replace with correct link -->
-              <FormButton text link @click="app.$openUrl('https://speckle.systems')">
+              <FormButton
+                text
+                link
+                @click="
+                  app.$openUrl(
+                    'https://www.speckle.systems/blog/speckle-connectors-2-21-release'
+                  )
+                "
+              >
                 Find out more
               </FormButton>
             </div>
