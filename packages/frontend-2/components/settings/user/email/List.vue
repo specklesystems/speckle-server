@@ -1,6 +1,6 @@
 <template>
   <ul
-    class="flex flex-col border border-outline-2 rounded-lg divide-y divide-outline-2"
+    class="flex flex-col border border-outline-2 rounded-lg divide-y divide-outline-2 mt-4"
   >
     <li v-for="email in sortedEmails" :key="email.id">
       <SettingsUserEmailListItem :email-data="email" />

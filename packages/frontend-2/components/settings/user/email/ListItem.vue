@@ -16,7 +16,7 @@
         v-if="!emailData.verified"
         color="outline"
         size="sm"
-        @click="resendVerificationEmail(emailData)"
+        @click="handleVerifyEmail"
       >
         Verify email
       </FormButton>
@@ -100,6 +100,11 @@ const description = computed(() => {
   }
   return null
 })
+
+const handleVerifyEmail = async () => {
+  await resendVerificationEmail(props.emailData)
+  navigateTo(`/verify-email?emailId=${props.emailData.id}`)
+}
 
 const toggleSetPrimaryDialog = () => {
   showSetPrimaryDialog.value = true

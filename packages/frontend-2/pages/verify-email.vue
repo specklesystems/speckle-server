@@ -36,20 +36,24 @@
       />
       <div class="mt-8 flex gap-2">
         <FormButton
-          v-if="!isPrimaryEmail"
-          color="subtle"
-          size="sm"
-          @click="showDeleteDialog = true"
-        >
-          Cancel
-        </FormButton>
-        <FormButton
-          v-else-if="!isEmailVerificationForced"
+          v-if="!isEmailVerificationForced && isPrimaryEmail"
           color="subtle"
           size="sm"
           @click="navigateTo(onboardingRoute)"
         >
           Skip
+        </FormButton>
+        <FormButton
+          v-if="!isPrimaryEmail"
+          color="subtle"
+          size="sm"
+          @click="
+            isEmailVerificationForced
+              ? (showDeleteDialog = true)
+              : navigateTo(settingsUserRoutes.emails)
+          "
+        >
+          Cancel
         </FormButton>
         <FormButton
           :disabled="isResendDisabled"
@@ -78,7 +82,7 @@ import { useIntervalFn } from '@vueuse/core'
 import { useRoute } from 'vue-router'
 import { useAuthManager } from '~/lib/auth/composables/auth'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
-import { onboardingRoute } from '~~/lib/common/helpers/route'
+import { onboardingRoute, settingsUserRoutes } from '~~/lib/common/helpers/route'
 import type { UserEmail } from '~/lib/common/generated/gql/graphql'
 
 useHead({
