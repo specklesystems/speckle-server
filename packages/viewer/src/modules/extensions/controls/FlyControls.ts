@@ -18,6 +18,9 @@ const _changeEvent = { type: 'change' }
 const _PI_2 = Math.PI / 2
 type MoveType = 'forward' | 'back' | 'left' | 'right' | 'up' | 'down'
 const walkingSpeed = 1.42 // m/s
+const closeRelativeFactor = 0.03
+const farRelativeFactor = 0.2
+const relativeMinTargetDistance = 0.01
 
 export interface FlyControlsOptions {
   [name: string]: unknown
@@ -25,6 +28,7 @@ export interface FlyControlsOptions {
   lookSpeed?: number
   moveSpeed?: number
   damperDecay?: number
+  relativeUpDown?: boolean
 }
 
 class FlyControls extends SpeckleControls {
@@ -44,6 +48,7 @@ class FlyControls extends SpeckleControls {
     up: false,
     down: false
   }
+  protected contextMenuTriggered = false
 
   protected eulerXDamper: Damper = new Damper()
   protected eulerYDamper: Damper = new Damper()
@@ -56,6 +61,8 @@ class FlyControls extends SpeckleControls {
   private _basisTransform: Matrix4 = new Matrix4()
   private _basisTransformInv: Matrix4 = new Matrix4()
 
+  protected _minDist: number
+
   private world: World
 
   public get enabled(): boolean {
@@ -63,8 +70,6 @@ class FlyControls extends SpeckleControls {
   }
 
   public set enabled(value: boolean) {
-    if (value) this.connect()
-    else this.disconnect()
     this._enabled = value
   }
 
@@ -97,6 +102,10 @@ class FlyControls extends SpeckleControls {
     this._basisTransformInv.invert()
   }
 
+  public set minDist(value: number) {
+    this._minDist = value
+  }
+
   constructor(
     camera: PerspectiveCamera | OrthographicCamera,
     container: HTMLElement,
@@ -109,6 +118,8 @@ class FlyControls extends SpeckleControls {
     this.container = container
     this.world = world
     this._options = Object.assign({}, options)
+
+    this.connect()
   }
 
   public isStationary(): boolean {
@@ -120,12 +131,29 @@ class FlyControls extends SpeckleControls {
   }
 
   public update(delta?: number): boolean {
+    /** We do this because sometimes while holding a kewy down you get an extra
+     *  key down event **after** the context menu event, locking it in place
+     */
+    if (this.contextMenuTriggered) {
+      this.cancelMove()
+      this.contextMenuTriggered = false
+    }
+
     const now = performance.now()
     delta = delta !== undefined ? delta : now - this._lastTick
     this._lastTick = now
-    const deltaSeconds = delta / 1000
 
-    const scaledWalkingSpeed = this.world.getRelativeOffset(0.2) * walkingSpeed
+    if (!this._enabled) return false
+
+    let relativeFactor = this.world.getRelativeOffset(farRelativeFactor)
+    if (this._minDist) {
+      if (this._minDist < relativeFactor * 0.5)
+        relativeFactor = this.world.getRelativeOffset(closeRelativeFactor)
+    }
+
+    const deltaSeconds = delta / 1000
+    const scaledWalkingSpeed = relativeFactor * walkingSpeed
+
     if (this.keyMap.forward)
       this.velocity.z = -scaledWalkingSpeed * this._options.moveSpeed * deltaSeconds
     if (this.keyMap.back)
@@ -148,6 +176,12 @@ class FlyControls extends SpeckleControls {
 
     this.moveBy(this.velocity)
 
+    this.updatePositionRotation(delta)
+
+    return true
+  }
+
+  protected updatePositionRotation(delta: number) {
     const diagonal = this.world.worldBox.min.distanceTo(this.world.worldBox.max)
     const minMaxRange = diagonal < 1 ? diagonal : 1
     this.position.x = this.positionXDamper.update(
@@ -175,12 +209,10 @@ class FlyControls extends SpeckleControls {
 
     this.rotate(this.euler)
     this._targetCamera.position.copy(this.position)
-
-    return true
   }
 
   public jumpToGoal(): void {
-    this.update(SETTLING_TIME)
+    this.updatePositionRotation(SETTLING_TIME)
   }
 
   public fitToSphere(sphere: Sphere): void {
@@ -192,14 +224,14 @@ class FlyControls extends SpeckleControls {
     this.goalPosition.copy(pos)
   }
 
-  /** The input position and target will be in a basis with (0,1,0) as up */
+  /** The input position and target will be in a basis with (0,0,1) as up */
   public fromPositionAndTarget(position: Vector3, target: Vector3): void {
     const cPos = this.getPosition()
     const cTarget = this.getTarget()
     if (cPos.equals(position) && cTarget.equals(target)) return
 
-    const tPosition = new Vector3().copy(position).applyMatrix4(this._basisTransform)
-    const tTarget = new Vector3().copy(target).applyMatrix4(this._basisTransform)
+    const tPosition = new Vector3().copy(position)
+    const tTarget = new Vector3().copy(target)
     const matrix = new Matrix4()
       .lookAt(tPosition, tTarget, this._up)
       .premultiply(this._basisTransformInv)
@@ -208,7 +240,7 @@ class FlyControls extends SpeckleControls {
     this.goalPosition.copy(tPosition)
   }
 
-  /** The returned vector needs to be in a basis with (0,1,0) as up */
+  /** The returned vector needs to be in a basis with (0,0,1) as up */
   public getTarget(): Vector3 {
     const target = new Vector3().copy(this.goalPosition)
     const matrix = new Matrix4().makeRotationFromEuler(this.goalEuler)
@@ -216,13 +248,40 @@ class FlyControls extends SpeckleControls {
       .setFromMatrixColumn(matrix, 2)
       .applyMatrix4(this._basisTransform)
       .normalize()
-    target.addScaledVector(forward, -this.world.getRelativeOffset(0.2))
-    return target.applyMatrix4(this._basisTransformInv)
+    target.addScaledVector(
+      forward,
+      -this.world.getRelativeOffset(relativeMinTargetDistance)
+    )
+    return target
   }
 
-  /** The returned vector needs to be in a basis with (0,1,0) as up */
+  /** The returned vector needs to be in a basis with (0,0,1) as up */
   public getPosition(): Vector3 {
-    return new Vector3().copy(this.goalPosition).applyMatrix4(this._basisTransformInv)
+    return new Vector3().copy(this.goalPosition)
+  }
+
+  /**
+   * Gets the current goal position
+   */
+  public getCurrentPosition(): Vector3 {
+    return this.position
+  }
+
+  /**
+   * Gets the point in model coordinates the model should orbit/pivot around.
+   */
+  public getCurrentTarget(): Vector3 {
+    const target = new Vector3().copy(this.position)
+    const matrix = new Matrix4().makeRotationFromEuler(this.euler)
+    const forward = new Vector3()
+      .setFromMatrixColumn(matrix, 2)
+      .applyMatrix4(this._basisTransform)
+      .normalize()
+    target.addScaledVector(
+      forward,
+      -this.world.getRelativeOffset(relativeMinTargetDistance)
+    )
+    return target
   }
 
   /**
@@ -241,7 +300,9 @@ class FlyControls extends SpeckleControls {
     const camera = this._targetCamera
     _vectorBuff0.setFromMatrixColumn(camera.matrix, 2)
     this.goalPosition.addScaledVector(_vectorBuff0, amount.z)
-    _vectorBuff0.setFromMatrixColumn(camera.matrix, 1)
+    this._options.relativeUpDown
+      ? _vectorBuff0.setFromMatrixColumn(camera.matrix, 1)
+      : _vectorBuff0.copy(this.up)
     this.goalPosition.addScaledVector(_vectorBuff0, amount.y)
     _vectorBuff0.setFromMatrixColumn(camera.matrix, 0)
     this.goalPosition.addScaledVector(_vectorBuff0, amount.x)
@@ -265,6 +326,7 @@ class FlyControls extends SpeckleControls {
     this.container.addEventListener('pointermove', this.onMouseMove)
     document.addEventListener('keydown', this.onKeyDown)
     document.addEventListener('keyup', this.onKeyUp)
+    document.addEventListener('contextmenu', this.onContextMenu)
   }
 
   protected disconnect() {
@@ -273,6 +335,7 @@ class FlyControls extends SpeckleControls {
     this.container.removeEventListener('pointermove', this.onMouseMove)
     document.removeEventListener('keydown', this.onKeyDown)
     document.removeEventListener('keyup', this.onKeyUp)
+    document.removeEventListener('contextmenu', this.onContextMenu)
     for (const k in this.keyMap) this.keyMap[k as MoveType] = false
   }
 
@@ -292,7 +355,7 @@ class FlyControls extends SpeckleControls {
 
   // event listeners
   protected onMouseMove = (event: PointerEvent) => {
-    if (event.buttons !== 1) return
+    if (event.buttons !== 1 || !this._enabled) return
 
     const movementX = event.movementX || 0
     const movementY = event.movementY || 0
@@ -327,12 +390,12 @@ class FlyControls extends SpeckleControls {
         break
 
       case 'PageUp':
-      case 'KeyQ':
+      case 'KeyE':
         this.keyMap.up = true
         break
 
       case 'PageDown':
-      case 'KeyE':
+      case 'KeyQ':
         this.keyMap.down = true
         break
     }
@@ -361,15 +424,28 @@ class FlyControls extends SpeckleControls {
         break
 
       case 'PageUp':
-      case 'KeyQ':
+      case 'KeyE':
         this.keyMap.up = false
         break
 
       case 'PageDown':
-      case 'KeyE':
+      case 'KeyQ':
         this.keyMap.down = false
         break
     }
+  }
+
+  protected onContextMenu = () => {
+    this.contextMenuTriggered = true
+  }
+
+  protected cancelMove() {
+    this.keyMap.forward = false
+    this.keyMap.left = false
+    this.keyMap.back = false
+    this.keyMap.right = false
+    this.keyMap.up = false
+    this.keyMap.down = false
   }
 }
 export { FlyControls }
