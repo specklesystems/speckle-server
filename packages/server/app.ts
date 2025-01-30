@@ -607,7 +607,7 @@ export async function startHttp(params: {
     },
     logger: (message, err) => {
       if (err) {
-        shutdownLogger.error({ err }, message)
+        shutdownLogger.warn({ err }, message)
       } else {
         shutdownLogger.info(message)
       }
