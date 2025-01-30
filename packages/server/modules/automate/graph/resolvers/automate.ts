@@ -475,6 +475,8 @@ export = (FF_AUTOMATE_MODULE_ENABLED
 
             if (!fn) {
               return {
+                cursor: null,
+                totalCount: 0,
                 items: []
               }
             }
@@ -757,6 +759,8 @@ export = (FF_AUTOMATE_MODULE_ENABLED
 
             if (!res) {
               return {
+                cursor: null,
+                totalCount: 0,
                 items: []
               }
             }
@@ -812,6 +816,8 @@ export = (FF_AUTOMATE_MODULE_ENABLED
 
             if (!res) {
               return {
+                cursor: null,
+                totalCount: 0,
                 items: []
               }
             }

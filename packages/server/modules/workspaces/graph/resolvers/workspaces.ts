@@ -1173,6 +1173,8 @@ export = FF_WORKSPACES_MODULE_ENABLED
 
             if (!res) {
               return {
+                cursor: null,
+                totalCount: 0,
                 items: []
               }
             }
