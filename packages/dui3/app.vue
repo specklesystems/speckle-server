@@ -32,7 +32,6 @@ useHead({
 
 onMounted(() => {
   const { trackEvent, addConnectorToProfile, identifyProfile } = useMixpanel()
-  // const { checkUpdate } = useUpdateConnector()
   // TODO: some host apps can open DUI3 automatically, with this case we shouldn't mark track event as `"type": "action"`,
   // we need to get this info from source app. (TBD which apps: Rhino opens automatically, not sure acad, sketchup and revit needs trigger button to init)
   trackEvent('DUI3 Action', { name: 'Launch' })
