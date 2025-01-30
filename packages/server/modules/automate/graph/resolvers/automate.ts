@@ -473,6 +473,14 @@ export = (FF_AUTOMATE_MODULE_ENABLED
                   : {}
             })
 
+            if (!fn) {
+              return {
+                cursor: null,
+                totalCount: 0,
+                items: []
+              }
+            }
+
             return {
               cursor: fn.versionCursor,
               totalCount: fn.versionCount,
@@ -749,6 +757,14 @@ export = (FF_AUTOMATE_MODULE_ENABLED
               }
             })
 
+            if (!res) {
+              return {
+                cursor: null,
+                totalCount: 0,
+                items: []
+              }
+            }
+
             const items = res.items.map(convertFunctionToGraphQLReturn)
 
             return {
@@ -797,6 +813,14 @@ export = (FF_AUTOMATE_MODULE_ENABLED
                 }
               }
             })
+
+            if (!res) {
+              return {
+                cursor: null,
+                totalCount: 0,
+                items: []
+              }
+            }
 
             const items = res.functions.map(convertFunctionToGraphQLReturn)
 

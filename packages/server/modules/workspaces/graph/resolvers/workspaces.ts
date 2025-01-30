@@ -1171,6 +1171,14 @@ export = FF_WORKSPACES_MODULE_ENABLED
               }
             })
 
+            if (!res) {
+              return {
+                cursor: null,
+                totalCount: 0,
+                items: []
+              }
+            }
+
             const items = res.functions.map(convertFunctionToGraphQLReturn)
 
             return {
