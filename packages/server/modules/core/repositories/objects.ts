@@ -24,6 +24,7 @@ import {
 import { SpeckleObject } from '@/modules/core/domain/objects/types'
 import { SetOptional } from 'type-fest'
 import { get, set, toNumber } from 'lodash'
+import { LogicError } from '@/modules/shared/errors'
 
 const ObjectChildrenClosure = buildTableHelper('object_children_closure', [
   'parent',
@@ -386,7 +387,7 @@ export const getObjectChildrenQueryFactory =
               if (typeof statement.value === 'number') castType = 'numeric'
 
               if (operatorsWhitelist.indexOf(statement.operator) === -1)
-                throw new Error('Invalid operator for query')
+                throw new LogicError('Invalid operator for query')
 
               // Determine the correct where clause (where, and where, or where)
               let whereClause: keyof typeof nestedWhereQuery
@@ -442,7 +443,7 @@ export const getObjectChildrenQueryFactory =
       if (castType === 'text') cursor.value = `"${cursor.value}"`
 
       if (operatorsWhitelist.indexOf(cursor.operator) === -1)
-        throw new Error('Invalid operator for cursor')
+        throw new LogicError('Invalid operator for cursor')
 
       // Unwrapping the tuple comparison of ( userOrderByField, id ) > ( lastValueOfUserOrderBy, lastSeenId )
       if (fullObjectSelect) {
