@@ -29,16 +29,25 @@ export function useUpdateConnector() {
   )
 
   async function checkUpdate() {
-    await getVersions()
-    if (!isUpToDate.value && !config.isDevMode) {
-      const notification: ToastNotification = {
-        type: ToastNotificationType.Success,
-        title: `New connector update available`,
-        description: latestAvailableVersion.value?.Number.replace('+0', ''), // TODO: currently versions end with "+0" Alan will have a look
-        cta: {
-          title: `Update`,
-          onClick: () => downloadLatestVersion()
+    try {
+      await getVersions()
+      if (!isUpToDate.value && !config.isDevMode) {
+        const notification: ToastNotification = {
+          type: ToastNotificationType.Success,
+          title: `New connector update available`,
+          description: latestAvailableVersion.value?.Number.replace('+0', ''), // TODO: currently versions end with "+0" Alan will have a look
+          cta: {
+            title: `Update`,
+            onClick: () => downloadLatestVersion()
+          }
         }
+        hostApp.setNotification(notification)
+      }
+    } catch (e) {
+      console.error(e)
+      const notification: ToastNotification = {
+        type: ToastNotificationType.Danger,
+        title: `No version found to check update!`
       }
       hostApp.setNotification(notification)
     }
