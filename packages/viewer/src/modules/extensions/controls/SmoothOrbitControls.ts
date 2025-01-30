@@ -818,11 +818,14 @@ export class SmoothOrbitControls extends SpeckleControls {
     }
 
     /** Update the debug origin sphere */
-    this.orbitSphere.position.copy(
+    const spherePos =
       this._options.orbitAroundCursor && this.usePivotal
         ? this.pivotPoint
         : new Vector3().copy(this.origin).applyMatrix4(this._basisTransform)
-    )
+    /** TO DO: Revisit and set by writing to it's position */
+    ;(
+      this.orbitSphere.material as SpeckleBasicMaterial
+    ).userData.billboardPos.value.copy(spherePos)
 
     return (
       lastCameraPos.sub(this._targetCamera.position).length() > MOVEMENT_EPSILON ||
