@@ -230,7 +230,7 @@ export default class Materials {
     return 'filterType' in material
   }
 
-  public static isRendeMaterial(
+  public static isRenderMaterial(
     materialData:
       | Material
       | FilterMaterial
@@ -287,7 +287,7 @@ export default class Materials {
       mat += Materials.minimalMaterialToString(colorMaterialData)
     } else if (materialData) {
       mat =
-        Materials.isRendeMaterial(materialData) &&
+        Materials.isRenderMaterial(materialData) &&
         (renderView.geometryType === GeometryType.MESH ||
           renderView.geometryType === GeometryType.POINT || // Maybe even include GeometryType.POINT_CLOUD actually?
           renderView.geometryType === GeometryType.TEXT)
@@ -295,7 +295,7 @@ export default class Materials {
           : Materials.isDisplayStyle(materialData) &&
             renderView.geometryType !== GeometryType.MESH
           ? Materials.displayStyleToString(materialData)
-          : Materials.isRendeMaterial(materialData)
+          : Materials.isRenderMaterial(materialData)
           ? Materials.renderMaterialToString(materialData)
           : ''
       if ((materialData as MaterialOptions).stencilOutlines) {
