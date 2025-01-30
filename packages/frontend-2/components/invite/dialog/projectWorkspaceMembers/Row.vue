@@ -17,7 +17,7 @@
       size="sm"
     />
     <FormButton color="outline" size="sm" :disabled="disableButton" @click="onInvite">
-      Invite
+      Add
     </FormButton>
   </li>
 </template>

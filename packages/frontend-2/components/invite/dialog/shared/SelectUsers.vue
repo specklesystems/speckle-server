@@ -9,6 +9,7 @@
       Invite to
       <span class="capitalize">{{ inviteTarget }}</span>
     </template>
+    <slot name="top" />
     <form @submit="onSubmit">
       <div class="flex flex-col gap-y-3 text-foreground">
         <div v-for="(item, index) in fields" :key="item.key" class="flex gap-x-3">

@@ -9,24 +9,27 @@
       @on-submit="onSelectUsersSubmit"
       @on-cancel="isOpen = false"
     >
-      <div v-if="invitableWorkspaceMembers.length">
-        <hr class="border-outline-3 my-2" />
-        <h3 class="text-body-xs text-foreground font-medium mb-1 mt-4">
-          Existing workspace members
+      <template #top>
+        <div v-if="invitableWorkspaceMembers.length" class="pb-4">
+          <h3 class="text-body-xs text-foreground font-medium mb-3">
+            Add existing members
+          </h3>
+
+          <ul class="flex flex-col mb-2">
+            <InviteDialogProjectWorkspaceMembersRow
+              v-for="member in invitableWorkspaceMembers"
+              :key="member.user.id"
+              :user="member"
+              :workspace="props.project.workspace"
+              :project-id="props.project.id"
+            />
+          </ul>
+        </div>
+        <hr class="border-outline-3 mb-4" />
+        <h3 class="text-body-xs text-foreground font-medium mb-3">
+          Invite new members
         </h3>
-        <p class="text-body-2xs text-foreground-2 mb-4">
-          Add existing workspace members to the project
-        </p>
-        <ul class="flex flex-col mb-2">
-          <InviteDialogProjectWorkspaceMembersRow
-            v-for="member in invitableWorkspaceMembers"
-            :key="member.user.id"
-            :user="member"
-            :workspace="props.project.workspace"
-            :project-id="props.project.id"
-          />
-        </ul>
-      </div>
+      </template>
     </InviteDialogSharedSelectUsers>
     <InviteDialogSharedSelectPermissions
       v-model:open="isWorkspacePermissionsOpen"
