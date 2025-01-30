@@ -241,6 +241,7 @@ export class SmoothOrbitControls extends SpeckleControls {
     this.orbitSphere = new Mesh(new SphereGeometry(0.5, 32, 16), billboardMaterial)
     this.orbitSphere.layers.set(ObjectLayers.OVERLAY)
     this.orbitSphere.visible = false
+    this.orbitSphere.frustumCulled = false
     this.renderer.scene.add(this.orbitSphere)
   }
 
@@ -823,9 +824,8 @@ export class SmoothOrbitControls extends SpeckleControls {
         ? this.pivotPoint
         : new Vector3().copy(this.origin).applyMatrix4(this._basisTransform)
     /** TO DO: Revisit and set by writing to it's position */
-    ;(
-      this.orbitSphere.material as SpeckleBasicMaterial
-    ).userData.billboardPos.value.copy(spherePos)
+    const mat = this.orbitSphere.material as SpeckleBasicMaterial
+    mat.userData.billboardPos.value.copy(spherePos)
 
     return (
       lastCameraPos.sub(this._targetCamera.position).length() > MOVEMENT_EPSILON ||
