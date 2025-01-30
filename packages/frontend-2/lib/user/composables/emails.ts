@@ -14,7 +14,11 @@ import {
 import type { UserEmail } from '~/lib/common/generated/gql/graphql'
 import { useGlobalToast } from '~/lib/common/composables/toast'
 import { useMixpanel } from '~/lib/core/composables/mp'
-import { verifyEmailRoute, homeRoute } from '~/lib/common/helpers/route'
+import {
+  verifyEmailRoute,
+  homeRoute,
+  settingsUserRoutes
+} from '~/lib/common/helpers/route'
 import { verifyEmailMutation } from '~/lib/user/graphql/mutations'
 
 export function useUserEmails() {
@@ -142,6 +146,9 @@ export function useUserEmails() {
           'verified',
           () => true
         )
+        navigateTo(homeRoute)
+      } else {
+        navigateTo(settingsUserRoutes.emails)
       }
 
       triggerNotification({

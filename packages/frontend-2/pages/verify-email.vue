@@ -95,7 +95,8 @@ const {
   unverifiedPrimaryEmail,
   unverifiedEmails,
   resendVerificationEmail,
-  verifyUserEmail
+  verifyUserEmail,
+  emails
 } = useUserEmails()
 const route = useRoute()
 const { logout } = useAuthManager()
@@ -107,10 +108,14 @@ const cooldownRemaining = ref(0)
 const showDeleteDialog = ref(false)
 const isLoading = ref(false)
 
-// Get the email to verify - either primary unverified or first unverified
-const currentEmail = computed<UserEmail | undefined>(
-  () => unverifiedPrimaryEmail.value || (unverifiedEmails.value[0] ?? undefined)
-)
+// Get the email to verify - first check URL param, then fall back to primary or first unverified
+const currentEmail = computed<UserEmail | undefined>(() => {
+  const emailId = route.query.emailId as string
+  if (emailId) {
+    return emails.value.find((e) => e.id === emailId)
+  }
+  return unverifiedPrimaryEmail.value || (unverifiedEmails.value[0] ?? undefined)
+})
 
 const isResendDisabled = computed(() => cooldownRemaining.value > 0)
 const isPrimaryEmail = computed(() => currentEmail.value?.primary ?? false)

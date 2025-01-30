@@ -7,7 +7,7 @@
           class="opacity-70 hover:opacity-100 p-1"
           size="sm"
           color="subtle"
-          @click="setUserOnboardingComplete"
+          @click="setUserOnboardingComplete()"
         >
           Skip
         </FormButton>
