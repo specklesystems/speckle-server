@@ -32,6 +32,7 @@ import {
 } from '@/modules/core/domain/users/operations'
 import crs from 'crypto-random-string'
 import { GetServerInfo } from '@/modules/core/domain/server/operations'
+import { EnvironmentResourceError } from '@/modules/shared/errors'
 
 const githubStrategyBuilderFactory =
   (deps: {
@@ -87,7 +88,7 @@ const githubStrategyBuilderFactory =
         try {
           const email = profile.emails?.[0].value
           if (!email) {
-            throw new Error('No email provided by Github')
+            throw new EnvironmentResourceError('No email provided by Github')
           }
 
           const name = profile.displayName || profile.username || crs({ length: 10 })
