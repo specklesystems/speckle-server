@@ -95,7 +95,8 @@ class SpeckleBasicMaterial extends ExtendedMeshBasicMaterial {
       this.userData.billboardSize.value.copy(SpeckleBasicMaterial.vecBuff)
       SpeckleBasicMaterial.matBuff.copy(camera.projectionMatrix).invert()
       this.userData.invProjection.value.copy(SpeckleBasicMaterial.matBuff)
-      this.userData.billboardPos.value.copy(object.position)
+      /** TO DO: Revisit and Enable this */
+      // this.userData.billboardPos.value.copy(object.position)
     }
 
     if (this.defines && this.defines['USE_RTE']) {
