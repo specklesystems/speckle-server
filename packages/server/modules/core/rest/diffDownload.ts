@@ -1,4 +1,4 @@
-import zlib from 'zlib'
+// import zlib from 'zlib'
 import { corsMiddleware } from '@/modules/core/configs/cors'
 import type { Application } from 'express'
 import { SpeckleObjectsStream } from '@/modules/core/rest/speckleObjectsStream'
@@ -72,13 +72,13 @@ export default (app: Application) => {
     speckleObjStream.on('close', () => {
       req.log.info('Speckle objects stream has closed')
     })
-    const gzipStream = zlib.createGzip()
-    gzipStream.on('end', () => {
-      req.log.info('Gzip stream has ended')
-    })
-    gzipStream.on('close', () => {
-      req.log.info('Gzip stream has closed')
-    })
+    // const gzipStream = zlib.createGzip()
+    // gzipStream.on('end', () => {
+    //   req.log.info('Gzip stream has ended')
+    // })
+    // gzipStream.on('close', () => {
+    //   req.log.info('Gzip stream has closed')
+    // })
 
     let chainPipeline: Duplex
 
@@ -89,10 +89,14 @@ export default (app: Application) => {
       // Some more conversation around this: https://stackoverflow.com/questions/61072482/node-closing-streams-properly-after-pipeline
       chainPipeline = chain([
         speckleObjStream,
-        gzipStream,
+        // gzipStream,
         new PassThrough({ highWaterMark: 16384 * 31 }),
         res
       ])
+      chainPipeline.on('finish', () => {
+        req.log.info('Chain pipeline has finished')
+      })
+
       chainPipeline.on('end', () => {
         req.log.info('Chain pipeline has ended')
       })
@@ -114,16 +118,17 @@ export default (app: Application) => {
 
         req.log.info(
           {
-            childCount: childrenList.length,
-            mbWritten: gzipStream.bytesWritten / 1000000
+            childCount: childrenList.length
+            // mbWritten: gzipStream.bytesWritten / 1000000
           },
           'Encountered error. Prior to error, we streamed {childCount} objects (size: {mbWritten} MB)'
         )
       })
     } else {
+      req.log.info('Create stream.pipeline for streaming objects')
       pipeline(
         speckleObjStream,
-        gzipStream,
+        // gzipStream,
         new PassThrough({ highWaterMark: 16384 * 31 }),
         res,
         (err) => {
@@ -136,16 +141,15 @@ export default (app: Application) => {
                 req.log.error(err, 'App error streaming objects')
                 break
             }
-            return
+          } else {
+            req.log.info(
+              {
+                childCount: childrenList.length
+                // mbWritten: gzipStream.bytesWritten / 1000000
+              },
+              'Streamed {childCount} objects (size: {mbWritten} MB)'
+            )
           }
-
-          req.log.info(
-            {
-              childCount: childrenList.length,
-              mbWritten: gzipStream.bytesWritten / 1000000
-            },
-            'Streamed {childCount} objects (size: {mbWritten} MB)'
-          )
         }
       )
     }
@@ -167,10 +171,12 @@ export default (app: Application) => {
         })
         // https://knexjs.org/faq/recipes.html#manually-closing-streams
         // https://github.com/knex/knex/issues/2324
-        req.on('close', () => {
+        res.on('close', () => {
           req.log.info("Client has sent a 'close' event; Closing DB stream.")
-          dbStream.end.bind(dbStream)
-          dbStream.destroy.bind(dbStream)
+          // dbStream.end.bind(dbStream)
+          dbStream.end()
+          dbStream.destroy()
+          // dbStream.destroy.bind(dbStream)
         })
 
         await new Promise((resolve, reject) => {
@@ -196,6 +202,9 @@ export default (app: Application) => {
             )
             dbStream.pipe(chainPipeline, { end: false }) // will not call end on the speckleObjStream, so it remains open for the next batch of objects
           } else {
+            req.log.info(
+              `Using pipe into speckleObjStream for streaming objects from index ${cStart}`
+            )
             dbStream.pipe(speckleObjStream, { end: false }) // will not call end on the speckleObjStream, so it remains open for the next batch of objects
           }
         })
