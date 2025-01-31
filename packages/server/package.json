@@ -115,7 +115,6 @@
     "response-time": "^2.3.2",
     "sanitize-html": "^2.7.1",
     "sharp": "^0.32.6",
-    "stream-chain": "^3.4.0",
     "string-pixel-width": "^1.10.0",
     "stripe": "^17.1.0",
     "subscriptions-transport-ws": "^0.11.0",
