@@ -1,8 +1,6 @@
-import { ObjectChildrenClosureRecord, ObjectRecord } from '@/modules/core/helpers/types'
+import { ObjectRecord } from '@/modules/core/helpers/types'
 import { Nullable, NullableKeysToOptional } from '@speckle/shared'
 import { OverrideProperties, SetOptional } from 'type-fest'
-
-export type SpeckleObjectClosureEntry = ObjectChildrenClosureRecord
 
 export type SpeckleObject = ObjectRecord
 
