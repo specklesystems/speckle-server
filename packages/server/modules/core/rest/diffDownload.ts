@@ -14,6 +14,7 @@ import { ensureError } from '@speckle/shared'
 import chain from 'stream-chain'
 import { get } from 'lodash'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
+import { DatabaseError } from '@/modules/shared/errors'
 
 const { FF_OBJECTS_STREAMING_FIX } = getFeatureFlags()
 
@@ -154,7 +155,7 @@ export default (app: Application) => {
       }
     } catch (ex) {
       req.log.error(ex, `DB Error streaming objects`)
-      speckleObjStream.emit('error', new Error('Database streaming error'))
+      speckleObjStream.emit('error', new DatabaseError('Database streaming error'))
     } finally {
       speckleObjStream.end()
     }

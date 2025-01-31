@@ -47,6 +47,8 @@ import { ServerAppRecord, UserRecord } from '@/modules/core/helpers/types'
 import cryptoRandomString from 'crypto-random-string'
 import { Knex } from 'knex'
 import { difference, omit } from 'lodash'
+import { AppCreateError } from '@/modules/auth/errors'
+import { UserInputError } from '@/modules/core/errors/userinput'
 
 const tables = {
   serverApps: (db: Knex) => db<ServerAppRecord>(ServerApps.name),
@@ -276,7 +278,7 @@ export const createAppFactory =
     const scopes = (app.scopes || []).filter((s) => !!s?.length)
 
     if (!scopes.length) {
-      throw new Error('Cannot create an app with no scopes.')
+      throw new AppCreateError('Cannot create an app with no scopes.')
     }
 
     const insertableApp = {
@@ -376,7 +378,7 @@ export const revokeRefreshTokenFactory =
 export const createAuthorizationCodeFactory =
   (deps: { db: Knex }): CreateAuthorizationCode =>
   async ({ appId, userId, challenge }) => {
-    if (!challenge) throw new Error('Please provide a valid challenge.')
+    if (!challenge) throw new UserInputError('Please provide a valid challenge.')
 
     const ac = {
       id: cryptoRandomString({ length: 42 }),

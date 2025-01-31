@@ -4,9 +4,9 @@ import {
   SelectionEvent,
   ViewerEvent,
   Viewer,
-  CameraController,
   ViewModes,
-  SelectionExtension
+  SelectionExtension,
+  HybridCameraController
 } from '@speckle/viewer'
 
 import './style.css'
@@ -20,6 +20,7 @@ import {
 import { SectionTool } from '@speckle/viewer'
 import { SectionOutlines } from '@speckle/viewer'
 import { ViewModesKeys } from './Extensions/ViewModesKeys'
+// import { JSONSpeckleStream } from './JSONSpeckleStream'
 import { BoxSelection } from './Extensions/BoxSelection'
 import { PassReader } from './Extensions/PassReader'
 
@@ -45,7 +46,7 @@ const createViewer = async (containerName: string, _stream: string) => {
   const viewer: Viewer = new Viewer(container, params)
   await viewer.init()
 
-  const cameraController = viewer.createExtension(CameraController)
+  const cameraController = viewer.createExtension(HybridCameraController)
   const selection = viewer.createExtension(SelectionExtension)
   const sections = viewer.createExtension(SectionTool)
   viewer.createExtension(SectionOutlines)
@@ -458,6 +459,8 @@ const getStream = () => {
     // Perfectly flat
     // 'https://app.speckle.systems/projects/344f803f81/models/5582ab673e'
 
+    // big baker
+    // 'https://latest.speckle.systems/projects/126cd4b7bb/models/032d09f716'
     // 'https://speckle.xyz/streams/27e89d0ad6/commits/5ed4b74252'
 
     //Gingerbread
@@ -472,7 +475,7 @@ const getStream = () => {
     // 'https://latest.speckle.systems/projects/db06488e1c/models/21f3930771'
 
     // FAR OFF
-    // 'https://app.speckle.systems/projects/bdd828221e/models/eb99326dc3'
+    // // 'https://app.speckle.systems/projects/bdd828221e/models/eb99326dc3'
     // 'https://latest.speckle.systems/projects/5e9c38fae7/models/d44c54b6b7'
 
     // v2 colored lines
