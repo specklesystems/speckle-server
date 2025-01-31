@@ -48,7 +48,6 @@ import {
   storeObjectsIfNotFoundFactory
 } from '@/modules/core/repositories/objects'
 import { expect } from 'chai'
-// import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { parse, Parser } from 'csv-parse'
 import { createReadStream } from 'fs'
 
@@ -98,16 +97,14 @@ const createObjectsBatched = createObjectsBatchedFactory({
   storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db })
 })
 
-// const { FF_OBJECTS_STREAMING_FIX } = getFeatureFlags()
-
 describe('Objects streaming REST @core', () => {
   let serverAddress: string
   before(async () => {
     const ctx = await beforeEachContext()
     ;({ serverAddress } = await initializeTestServer(ctx))
   })
-  // ;(FF_OBJECTS_STREAMING_FIX ? it : it.skip)(
-  it.skip('should close database connections if client connection is prematurely closed', async () => {
+
+  it('should close database connections if client connection is prematurely closed', async () => {
     const userId = await createUser({
       name: 'emails user',
       email: createRandomEmail(),
@@ -158,7 +155,7 @@ describe('Objects streaming REST @core', () => {
     })
     expect(parseInt(gaugeContents), gaugeContents).to.gte(4) //expect all connections to become available again after the client closes them
   })
-  // ;(FF_OBJECTS_STREAMING_FIX ? it : it.skip)(
+
   it('should stream model with some failing feature', async () => {
     const userId = await createUser({
       name: 'emails user',

@@ -1,4 +1,4 @@
-// import zlib from 'zlib'
+import zlib from 'zlib'
 import { corsMiddleware } from '@/modules/core/configs/cors'
 import type { Application } from 'express'
 import { SpeckleObjectsStream } from '@/modules/core/rest/speckleObjectsStream'
@@ -72,13 +72,13 @@ export default (app: Application) => {
     speckleObjStream.on('close', () => {
       req.log.info('Speckle objects stream has closed')
     })
-    // const gzipStream = zlib.createGzip()
-    // gzipStream.on('end', () => {
-    //   req.log.info('Gzip stream has ended')
-    // })
-    // gzipStream.on('close', () => {
-    //   req.log.info('Gzip stream has closed')
-    // })
+    const gzipStream = zlib.createGzip()
+    gzipStream.on('end', () => {
+      req.log.info('Gzip stream has ended')
+    })
+    gzipStream.on('close', () => {
+      req.log.info('Gzip stream has closed')
+    })
 
     let chainPipeline: Duplex
 
@@ -89,7 +89,7 @@ export default (app: Application) => {
       // Some more conversation around this: https://stackoverflow.com/questions/61072482/node-closing-streams-properly-after-pipeline
       chainPipeline = chain([
         speckleObjStream,
-        // gzipStream,
+        gzipStream,
         new PassThrough({ highWaterMark: 16384 * 31 }),
         res
       ])
@@ -118,8 +118,8 @@ export default (app: Application) => {
 
         req.log.info(
           {
-            childCount: childrenList.length
-            // mbWritten: gzipStream.bytesWritten / 1000000
+            childCount: childrenList.length,
+            mbWritten: gzipStream.bytesWritten / 1000000
           },
           'Encountered error. Prior to error, we streamed {childCount} objects (size: {mbWritten} MB)'
         )
@@ -128,7 +128,7 @@ export default (app: Application) => {
       req.log.info('Create stream.pipeline for streaming objects')
       pipeline(
         speckleObjStream,
-        // gzipStream,
+        gzipStream,
         new PassThrough({ highWaterMark: 16384 * 31 }),
         res,
         (err) => {
@@ -144,8 +144,8 @@ export default (app: Application) => {
           } else {
             req.log.info(
               {
-                childCount: childrenList.length
-                // mbWritten: gzipStream.bytesWritten / 1000000
+                childCount: childrenList.length,
+                mbWritten: gzipStream.bytesWritten / 1000000
               },
               'Streamed {childCount} objects (size: {mbWritten} MB)'
             )
