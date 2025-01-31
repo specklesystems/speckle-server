@@ -27,12 +27,7 @@ export default (app: Application) => {
       userId: req.context.userId || '-',
       streamId: req.params.streamId
     })
-    res.on('finish', () => {
-      res.log.info('Response has finished')
-    })
-    res.on('close', () => {
-      res.log.info('Response has closed')
-    })
+
     const hasStreamAccess = await validatePermissionsReadStream(
       req.params.streamId,
       req
@@ -46,7 +41,6 @@ export default (app: Application) => {
     let childrenList: string[]
     try {
       childrenList = JSON.parse(req.body.objects)
-      req.log.info(`Received request to stream ${childrenList.length} objects`)
     } catch (err) {
       throw new UserInputError(
         'Invalid body. Please provide a JSON object containing the property "objects" of type string. The value must be a JSON string representation of an array of object IDs.',
@@ -62,21 +56,7 @@ export default (app: Application) => {
 
     // "output" stream, connected to res with `pipeline` (auto-closing res)
     const speckleObjStream = new SpeckleObjectsStream(simpleText)
-    speckleObjStream.on('end', () => {
-      req.log.info('Speckle objects stream has ended')
-    })
-    speckleObjStream.on('close', () => {
-      req.log.info('Speckle objects stream has closed')
-    })
     const gzipStream = zlib.createGzip()
-    gzipStream.on('end', () => {
-      req.log.info('Gzip stream has ended')
-    })
-    gzipStream.on('close', () => {
-      req.log.info('Gzip stream has closed')
-    })
-
-    req.log.info('Create stream.pipeline for streaming objects')
     pipeline(
       speckleObjStream,
       gzipStream,
@@ -107,12 +87,7 @@ export default (app: Application) => {
     const cSize = 1000
     try {
       for (let cStart = 0; cStart < childrenList.length; cStart += cSize) {
-        if (!speckleObjStream.writable) {
-          req.log.info('Client disconnected. Stopping streaming.')
-          break
-        }
-
-        req.log.info(`Streaming 1000 objects from index ${cStart}`)
+        if (!speckleObjStream.writable) break
         const childrenChunk = childrenList.slice(cStart, cStart + cSize)
 
         const dbStream = await getObjectsStream({
@@ -122,33 +97,13 @@ export default (app: Application) => {
         // https://knexjs.org/faq/recipes.html#manually-closing-streams
         // https://github.com/knex/knex/issues/2324
         res.on('close', () => {
-          req.log.info("Client has sent a 'close' event; Closing DB stream.")
-          // dbStream.end.bind(dbStream)
           dbStream.end()
           dbStream.destroy()
-          // dbStream.destroy.bind(dbStream)
         })
 
         await new Promise((resolve, reject) => {
-          dbStream.once('end', () => {
-            req.log.info(
-              `End event received from DB stream for objects from index ${cStart}`
-            )
-            return resolve
-          })
-          dbStream.once('close', () => {
-            req.log.info(
-              `Close event received from DB stream for objects from index ${cStart}`
-            )
-          })
-          dbStream.once('error', (err) => {
-            req.log.error(`Error in DB stream for objects from index ${cStart}: ${err}`)
-            return reject
-          })
-
-          req.log.info(
-            `Using pipe into speckleObjStream for streaming objects from index ${cStart}`
-          )
+          dbStream.once('end', resolve)
+          dbStream.once('error', reject)
           dbStream.pipe(speckleObjStream, { end: false }) // will not call end on the speckleObjStream, so it remains open for the next batch of objects
         })
       }
@@ -156,7 +111,6 @@ export default (app: Application) => {
       req.log.error(ex, `DB Error streaming objects`)
       speckleObjStream.emit('error', new DatabaseError('Database streaming error'))
     } finally {
-      req.log.info('Closing speckleObjStream')
       speckleObjStream.end()
     }
   })
