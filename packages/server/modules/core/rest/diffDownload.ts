@@ -11,6 +11,7 @@ import { authorizeResolver, validateScopes } from '@/modules/shared'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { UserInputError } from '@/modules/core/errors/userinput'
 import { ensureError } from '@speckle/shared'
+import { DatabaseError } from '@/modules/shared/errors'
 
 export default (app: Application) => {
   const validatePermissionsReadStream = validatePermissionsReadStreamFactory({
@@ -153,7 +154,7 @@ export default (app: Application) => {
       }
     } catch (ex) {
       req.log.error(ex, `DB Error streaming objects`)
-      speckleObjStream.emit('error', new Error('Database streaming error'))
+      speckleObjStream.emit('error', new DatabaseError('Database streaming error'))
     } finally {
       req.log.info('Closing speckleObjStream')
       speckleObjStream.end()
