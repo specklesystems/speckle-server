@@ -2,7 +2,7 @@ import zlib from 'zlib'
 import { corsMiddleware } from '@/modules/core/configs/cors'
 import type { Application } from 'express'
 import { SpeckleObjectsStream } from '@/modules/core/rest/speckleObjectsStream'
-import { PassThrough, pipeline } from 'stream'
+import { pipeline, PassThrough } from 'stream'
 import { getObjectsStreamFactory } from '@/modules/core/repositories/objects'
 import { db } from '@/db/knex'
 import { validatePermissionsReadStreamFactory } from '@/modules/core/services/streams/auth'
@@ -66,7 +66,7 @@ export default (app: Application) => {
         if (err) {
           switch (err.code) {
             case 'ERR_STREAM_PREMATURE_CLOSE':
-              //ignore this, it's a client disconnect
+              req.log.debug({ err }, 'Stream to client has prematurely closed')
               break
             default:
               req.log.error(err, 'App error streaming objects')
