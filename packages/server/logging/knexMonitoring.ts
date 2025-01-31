@@ -230,7 +230,7 @@ const initKnexPrometheusMetricsForRegionEvents = async (params: {
     }
 
     const trace = stackTrace || collectLongTrace()
-    params.logger.info(
+    params.logger.debug(
       {
         region,
         sql: data.sql,
