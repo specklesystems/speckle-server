@@ -2,7 +2,7 @@ import zlib from 'zlib'
 import { corsMiddleware } from '@/modules/core/configs/cors'
 import type { Application } from 'express'
 import { SpeckleObjectsStream } from '@/modules/core/rest/speckleObjectsStream'
-import { Duplex, PassThrough, pipeline } from 'stream'
+import { PassThrough, pipeline } from 'stream'
 import { getObjectsStreamFactory } from '@/modules/core/repositories/objects'
 import { db } from '@/db/knex'
 import { validatePermissionsReadStreamFactory } from '@/modules/core/services/streams/auth'
@@ -11,11 +11,6 @@ import { authorizeResolver, validateScopes } from '@/modules/shared'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { UserInputError } from '@/modules/core/errors/userinput'
 import { ensureError } from '@speckle/shared'
-import chain from 'stream-chain'
-import { get } from 'lodash'
-import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
-
-const { FF_OBJECTS_STREAMING_FIX } = getFeatureFlags()
 
 export default (app: Application) => {
   const validatePermissionsReadStream = validatePermissionsReadStreamFactory({
@@ -80,32 +75,15 @@ export default (app: Application) => {
       req.log.info('Gzip stream has closed')
     })
 
-    let chainPipeline: Duplex
-
-    if (FF_OBJECTS_STREAMING_FIX) {
-      // From node documentation: https://nodejs.org/docs/latest-v18.x/api/stream.html#stream_stream_pipeline_source_transforms_destination_callback
-      //    > stream.pipeline() leaves dangling event listeners on the streams after the callback has been invoked. In the case of reuse of streams after failure, this can cause event listener leaks and swallowed errors.
-      // As workaround, we are using chain from 'stream-chain'
-      // Some more conversation around this: https://stackoverflow.com/questions/61072482/node-closing-streams-properly-after-pipeline
-      chainPipeline = chain([
-        speckleObjStream,
-        gzipStream,
-        new PassThrough({ highWaterMark: 16384 * 31 }),
-        res
-      ])
-      chainPipeline.on('finish', () => {
-        req.log.info('Chain pipeline has finished')
-      })
-
-      chainPipeline.on('end', () => {
-        req.log.info('Chain pipeline has ended')
-      })
-      chainPipeline.on('close', () => {
-        req.log.info('Chain pipeline has closed')
-      })
-      chainPipeline.on('error', (err) => {
+    req.log.info('Create stream.pipeline for streaming objects')
+    pipeline(
+      speckleObjStream,
+      gzipStream,
+      new PassThrough({ highWaterMark: 16384 * 31 }),
+      res,
+      (err) => {
         if (err) {
-          switch (get(err, 'code')) {
+          switch (err.code) {
             case 'ERR_STREAM_PREMATURE_CLOSE':
               req.log.info({ err }, 'Stream to client has prematurely closed')
               break
@@ -113,46 +91,17 @@ export default (app: Application) => {
               req.log.error(err, 'App error streaming objects')
               break
           }
-          return
+        } else {
+          req.log.info(
+            {
+              childCount: childrenList.length,
+              mbWritten: gzipStream.bytesWritten / 1000000
+            },
+            'Streamed {childCount} objects (size: {mbWritten} MB)'
+          )
         }
-
-        req.log.info(
-          {
-            childCount: childrenList.length,
-            mbWritten: gzipStream.bytesWritten / 1000000
-          },
-          'Encountered error. Prior to error, we streamed {childCount} objects (size: {mbWritten} MB)'
-        )
-      })
-    } else {
-      req.log.info('Create stream.pipeline for streaming objects')
-      pipeline(
-        speckleObjStream,
-        gzipStream,
-        new PassThrough({ highWaterMark: 16384 * 31 }),
-        res,
-        (err) => {
-          if (err) {
-            switch (err.code) {
-              case 'ERR_STREAM_PREMATURE_CLOSE':
-                req.log.info({ err }, 'Stream to client has prematurely closed')
-                break
-              default:
-                req.log.error(err, 'App error streaming objects')
-                break
-            }
-          } else {
-            req.log.info(
-              {
-                childCount: childrenList.length,
-                mbWritten: gzipStream.bytesWritten / 1000000
-              },
-              'Streamed {childCount} objects (size: {mbWritten} MB)'
-            )
-          }
-        }
-      )
-    }
+      }
+    )
 
     const cSize = 1000
     try {
@@ -196,29 +145,18 @@ export default (app: Application) => {
             return reject
           })
 
-          if (FF_OBJECTS_STREAMING_FIX) {
-            req.log.info(
-              `Using chain pipeline for streaming objects from index ${cStart}`
-            )
-            dbStream.pipe(chainPipeline, { end: false }) // will not call end on the speckleObjStream, so it remains open for the next batch of objects
-          } else {
-            req.log.info(
-              `Using pipe into speckleObjStream for streaming objects from index ${cStart}`
-            )
-            dbStream.pipe(speckleObjStream, { end: false }) // will not call end on the speckleObjStream, so it remains open for the next batch of objects
-          }
+          req.log.info(
+            `Using pipe into speckleObjStream for streaming objects from index ${cStart}`
+          )
+          dbStream.pipe(speckleObjStream, { end: false }) // will not call end on the speckleObjStream, so it remains open for the next batch of objects
         })
       }
     } catch (ex) {
       req.log.error(ex, `DB Error streaming objects`)
       speckleObjStream.emit('error', new Error('Database streaming error'))
     } finally {
-      // if (FF_OBJECTS_STREAMING_FIX) {
-      // chainPipeline!.end()
-      // } else {
       req.log.info('Closing speckleObjStream')
       speckleObjStream.end()
-      // }
     }
   })
 }
