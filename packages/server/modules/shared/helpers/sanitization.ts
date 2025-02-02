@@ -1,6 +1,13 @@
 import { MaybeNullOrUndefined, Nullable } from '@speckle/shared'
+import { BaseError } from '@/modules/shared/errors'
 
 const base64ImagePattern = /^data:image\/[a-zA-Z+.-]+;base64,[a-zA-Z0-9+/]+=*$/
+
+class InvalidUrlError extends BaseError {
+  static code = 'INVALID_URL_ERROR'
+  static defaultMessage = 'Invalid URL'
+  static statusCode = 400
+}
 
 const validateImageUrl = (url: string): string => {
   // Parse the URL to ensure it's valid
@@ -8,19 +15,19 @@ const validateImageUrl = (url: string): string => {
   try {
     parsedUrl = new URL(url)
   } catch (e) {
-    throw new Error('Invalid URL')
+    throw new InvalidUrlError('Invalid URL')
   }
 
   // Only allow http: and https: protocols
   if (parsedUrl.protocol !== 'http:' && parsedUrl.protocol !== 'https:') {
-    throw new Error('Invalid protocol')
+    throw new InvalidUrlError('Invalid protocol')
   }
 
   // Check the file extension to ensure it's an image
   const allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp']
   const extension = parsedUrl.pathname.split('.').pop()?.toLowerCase() || 'invalid'
   if (!allowedExtensions.includes(extension)) {
-    throw new Error('Invalid file type')
+    throw new InvalidUrlError('Invalid file type')
   }
 
   // If all checks pass, return the sanitized URL

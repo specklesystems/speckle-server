@@ -8,7 +8,6 @@ export const Workspaces = buildTableHelper('workspaces', [
   'createdAt',
   'updatedAt',
   'logo',
-  'defaultLogoIndex',
   'defaultProjectRole',
   'domainBasedMembershipProtectionEnabled',
   'discoverabilityEnabled'

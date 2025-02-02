@@ -378,7 +378,6 @@ const handleGetLimitedWorkspaceRequestFactory =
     const limitedWorkspace = {
       name: workspace.name,
       logo: workspace.logo,
-      defaultLogoIndex: workspace.defaultLogoIndex,
       ssoProviderName: ssoProviderData?.provider?.providerName
     }
 

@@ -58,7 +58,8 @@ export const createNewProjectFactory =
       try {
         await retry(
           async () => {
-            await getProject({ projectId })
+            const replicatedProject = await getProject({ projectId })
+            if (!replicatedProject) throw new StreamNotFoundError()
           },
           { maxAttempts: 100 }
         )

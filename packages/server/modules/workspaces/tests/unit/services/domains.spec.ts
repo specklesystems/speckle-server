@@ -21,7 +21,6 @@ describe('workspace domain services', () => {
     it('returns null if the workspace is not domain protected', async () => {
       const isCompliant = await isUserWorkspaceDomainPolicyCompliantFactory({
         getWorkspaceWithDomains: async () => ({
-          defaultLogoIndex: 0,
           name: cryptoRandomString({ length: 10 }),
           logo: null,
           slug: cryptoRandomString({ length: 10 }),
@@ -45,7 +44,6 @@ describe('workspace domain services', () => {
       const domain = 'example.com'
       const isCompliant = await isUserWorkspaceDomainPolicyCompliantFactory({
         getWorkspaceWithDomains: async () => ({
-          defaultLogoIndex: 0,
           name: cryptoRandomString({ length: 10 }),
           logo: null,
           slug: cryptoRandomString({ length: 10 }),

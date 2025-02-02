@@ -140,8 +140,7 @@ export const createTestWorkspace = async (
       name: workspace.name,
       slug: workspace.slug || cryptoRandomString({ length: 10 }),
       description: workspace.description || null,
-      logo: workspace.logo || null,
-      defaultLogoIndex: 0
+      logo: workspace.logo || null
     },
     userResourceAccessLimits: null
   })
