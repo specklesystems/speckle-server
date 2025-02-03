@@ -1,7 +1,13 @@
 import { db } from '@/db/knex'
 import { AllScopes } from '@/modules/core/helpers/mainConstants'
 import { createRandomEmail } from '@/modules/core/helpers/testHelpers'
-import { BranchRecord, CommitRecord, StreamRecord } from '@/modules/core/helpers/types'
+import {
+  BranchCommitRecord,
+  BranchRecord,
+  CommitRecord,
+  StreamCommitRecord,
+  StreamRecord
+} from '@/modules/core/helpers/types'
 import { grantStreamPermissionsFactory } from '@/modules/core/repositories/streams'
 import { getDb } from '@/modules/multiregion/utils/dbSelector'
 import {
@@ -415,8 +421,21 @@ isMultiRegionTestMode()
           .select('*')
           .where({ id: testVersion.id })
           .first()
-
         expect(version).to.not.be.undefined
+
+        const streamCommitsRecord = await targetRegionDb
+          .table<StreamCommitRecord>('stream_commits')
+          .select('*')
+          .where({ commitId: testVersion.id })
+          .first()
+        expect(streamCommitsRecord).to.not.be.undefined
+
+        const branchCommitsRecord = await targetRegionDb
+          .table<BranchCommitRecord>('branch_commits')
+          .select('*')
+          .where({ commitId: testVersion.id })
+          .first()
+        expect(branchCommitsRecord).to.not.be.undefined
       })
     })
   : void 0
