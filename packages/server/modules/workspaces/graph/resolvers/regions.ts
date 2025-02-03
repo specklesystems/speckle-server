@@ -25,7 +25,7 @@ import {
 } from '@/modules/workspaces/services/regions'
 import { updateProjectRegionFactory } from '@/modules/workspaces/services/projectRegions'
 import { Roles } from '@speckle/shared'
-import { getProjectFactory } from '@/modules/core/repositories/streams'
+import { getProjectFactory } from '@/modules/core/repositories/projects'
 import { getStreamBranchCountFactory } from '@/modules/core/repositories/branches'
 import { getStreamCommitCountFactory } from '@/modules/core/repositories/commits'
 import { withTransaction } from '@/modules/shared/helpers/dbHelper'
