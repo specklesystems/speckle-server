@@ -15,6 +15,19 @@
         </CommonBadge>
       </div>
     </template>
+
+    <div class="text-body-2xs text-foreground px-3 py-2 border-b border-outline-3">
+      Win 7200 Gendo credits!
+      <NuxtLink
+        class="text-primary"
+        to="https://www.linkedin.com/feed/update/urn:li:activity:7288604901792768000"
+        target="_blank"
+        @click="mixpanel.track('Gendo Contest Link Clicked')"
+      >
+        Share your render here
+      </NuxtLink>
+    </div>
+
     <div class="pt-3">
       <div class="px-3 flex flex-col gap-y-3">
         <CommonAlert v-if="!activeUser" color="danger" size="xs">
