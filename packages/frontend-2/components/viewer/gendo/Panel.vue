@@ -24,7 +24,7 @@
         target="_blank"
         @click="mixpanel.track('Gendo Contest Link Clicked')"
       >
-        Share your render here
+        Learn more here
       </NuxtLink>
     </div>
 
