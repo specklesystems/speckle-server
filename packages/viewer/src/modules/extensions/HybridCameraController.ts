@@ -1,3 +1,4 @@
+import { PerspectiveCamera } from 'three'
 import { IViewer } from '../../IViewer.js'
 import { CameraController } from './CameraController.js'
 type MoveType = 'forward' | 'back' | 'left' | 'right' | 'up' | 'down'
@@ -66,6 +67,7 @@ export class HybridCameraController extends CameraController {
     }
     if (
       !this._flyControls.enabled &&
+      this._renderingCamera instanceof PerspectiveCamera &&
       Object.values(this.keyMap).some((v) => v === true)
     )
       this.toggleControls()

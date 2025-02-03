@@ -25,7 +25,8 @@ import {
   Quaternion,
   Euler,
   Mesh,
-  SphereGeometry
+  SphereGeometry,
+  Ray
 } from 'three'
 
 import { Damper, SETTLING_TIME } from '../../utils/Damper.js'
@@ -257,6 +258,39 @@ export class SmoothOrbitControls extends SpeckleControls {
   }
 
   set targetCamera(value: PerspectiveCamera | OrthographicCamera) {
+    /** When you drop out of WASD, the radius is very close to the camera
+     *  And if you switch to orthogrtaphic you will get a vey large orthographic size
+     *  This is a workaround where we try to get a more reasonable radius, by getting
+     *  the closest intersection distance to the scene geometry from the camera
+     */
+    if (value instanceof OrthographicCamera) {
+      if (this.goalSpherical.radius < this._minDist) {
+        /** Fallback radius, in the middle of the allowed radius range */
+        let recomputedRadius =
+          this.options.minimumRadius +
+          (this._options.maximumRadius - this.options.minimumRadius) * 0.5
+        const ray = new Ray(
+          this._targetCamera.position,
+          this._targetCamera.getWorldDirection(new Vector3())
+        )
+        const res = this.renderer.intersections.intersectRay(
+          this.renderer.scene,
+          this._targetCamera as PerspectiveCamera,
+          ray,
+          ObjectLayers.STREAM_CONTENT_MESH,
+          false,
+          this.renderer.clippingVolume,
+          false,
+          false
+        )
+        if (res && res.length) {
+          recomputedRadius = res[0].distance
+        }
+        this.spherical.radius = recomputedRadius
+        this.goalSpherical.radius = recomputedRadius
+      }
+    }
+
     this._targetCamera = value
     this.usePivotal = this._options.orbitAroundCursor
 
@@ -266,6 +300,7 @@ export class SmoothOrbitControls extends SpeckleControls {
       this.world.worldOrigin.y + this.world.worldSize.y,
       this.world.worldOrigin.z + this.world.worldSize.z
     )
+
     this.moveCamera()
   }
 
