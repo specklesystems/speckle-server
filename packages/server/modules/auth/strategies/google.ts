@@ -27,6 +27,7 @@ import {
   LegacyGetUserByEmail
 } from '@/modules/core/domain/users/operations'
 import { GetServerInfo } from '@/modules/core/domain/server/operations'
+import { EnvironmentResourceError } from '@/modules/shared/errors'
 
 const googleStrategyBuilderFactory =
   (deps: {
@@ -72,7 +73,7 @@ const googleStrategyBuilderFactory =
         try {
           const email = profile.emails?.[0].value
           if (!email) {
-            throw new Error('No email provided by Google')
+            throw new EnvironmentResourceError('No email provided by Google')
           }
 
           const name = profile.displayName

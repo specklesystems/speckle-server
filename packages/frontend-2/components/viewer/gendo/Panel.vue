@@ -15,7 +15,20 @@
         </CommonBadge>
       </div>
     </template>
-    <div v-if="!loading" class="pt-3">
+
+    <div class="text-body-2xs text-foreground px-3 py-2 border-b border-outline-3">
+      Win 7200 Gendo credits!
+      <NuxtLink
+        class="text-primary"
+        to="https://www.linkedin.com/feed/update/urn:li:activity:7288604901792768000"
+        target="_blank"
+        @click="mixpanel.track('Gendo Contest Link Clicked')"
+      >
+        Learn more here
+      </NuxtLink>
+    </div>
+
+    <div class="pt-3">
       <div class="px-3 flex flex-col gap-y-3">
         <CommonAlert v-if="!activeUser" color="danger" size="xs">
           <template #title>Sign in required</template>
@@ -83,9 +96,6 @@
           </div>
         </FormButton>
       </div>
-    </div>
-    <div v-else class="flex w-full h-full items-center justify-center">
-      <CommonLoadingIcon />
     </div>
     <template v-if="!loading && limits" #actions>
       <div class="text-body-2xs p-1">

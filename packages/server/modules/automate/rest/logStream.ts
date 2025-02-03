@@ -16,6 +16,7 @@ import { authMiddlewareCreator } from '@/modules/shared/middleware'
 import { getRolesFactory } from '@/modules/shared/repositories/roles'
 import { Roles, Scopes } from '@speckle/shared'
 import { Application } from 'express'
+import { FunctionRunNotFoundError } from '@/modules/automate/errors/runs'
 
 export default (app: Application) => {
   app.get(
@@ -47,10 +48,12 @@ export default (app: Application) => {
         automationRunId: runId
       })
       if (!run) {
-        throw new Error("Couldn't find automation or its run")
+        throw new FunctionRunNotFoundError("Couldn't find automation or its run")
       }
       if (!run.executionEngineRunId) {
-        throw new Error('No associated run found on the execution engine')
+        throw new FunctionRunNotFoundError(
+          'No associated run found on the execution engine'
+        )
       }
 
       const setPlaintextHeaders = () => {

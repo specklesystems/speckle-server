@@ -14,6 +14,7 @@ import { CreateAuthorizationCode } from '@/modules/auth/domain/operations'
 import { authLogger } from '@/logging/logging'
 import { ensureError } from '@speckle/shared'
 import { LegacyGetUser } from '@/modules/core/domain/users/operations'
+import { ForbiddenError } from '@/modules/shared/errors'
 
 export const sessionMiddlewareFactory = (): RequestHandler => {
   const RedisStore = ConnectRedis(ExpressSession)
@@ -69,7 +70,7 @@ export const finalizeAuthMiddlewareFactory =
   async (req, res) => {
     try {
       if (!req.user) {
-        throw new Error('Cannot finalize auth - No user attached to session')
+        throw new ForbiddenError('Cannot finalize auth - No user attached to session')
       }
 
       const ac = await deps.createAuthorizationCode({
