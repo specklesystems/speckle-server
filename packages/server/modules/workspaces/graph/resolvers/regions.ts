@@ -10,6 +10,7 @@ import {
   upsertRegionAssignmentFactory
 } from '@/modules/workspaces/repositories/regions'
 import {
+  copyProjectAutomationsFactory,
   copyProjectModelsFactory,
   copyProjectObjectsFactory,
   copyProjectsFactory,
@@ -31,6 +32,7 @@ import { getStreamBranchCountFactory } from '@/modules/core/repositories/branche
 import { getStreamCommitCountFactory } from '@/modules/core/repositories/commits'
 import { withTransaction } from '@/modules/shared/helpers/dbHelper'
 import { getStreamObjectCountFactory } from '@/modules/core/repositories/objects'
+import { getProjectAutomationsTotalCountFactory } from '@/modules/automate/repositories/automations'
 
 export default {
   Workspace: {
@@ -84,6 +86,9 @@ export default {
         countProjectModels: getStreamBranchCountFactory({ db: sourceDb }),
         countProjectVersions: getStreamCommitCountFactory({ db: sourceDb }),
         countProjectObjects: getStreamObjectCountFactory({ db: sourceDb }),
+        countProjectAutomations: getProjectAutomationsTotalCountFactory({
+          db: sourceDb
+        }),
         getAvailableRegions: getAvailableRegionsFactory({
           getRegions: getRegionsFactory({ db }),
           canWorkspaceUseRegions: canWorkspaceUseRegionsFactory({
@@ -94,7 +99,8 @@ export default {
         copyProjects: copyProjectsFactory({ sourceDb, targetDb }),
         copyProjectModels: copyProjectModelsFactory({ sourceDb, targetDb }),
         copyProjectVersions: copyProjectVersionsFactory({ sourceDb, targetDb }),
-        copyProjectObjects: copyProjectObjectsFactory({ sourceDb, targetDb })
+        copyProjectObjects: copyProjectObjectsFactory({ sourceDb, targetDb }),
+        copyProjectAutomations: copyProjectAutomationsFactory({ sourceDb, targetDb })
       })
 
       return await withTransaction(updateProjectRegion(args), targetDb)

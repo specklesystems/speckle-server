@@ -66,7 +66,7 @@ export type AutomationRunRecord = {
   executionEngineRunId: string | null
 }
 
-export type AutomateRevisionFunctionRecord = {
+export type AutomationRevisionFunctionRecord = {
   functionReleaseId: string
   functionId: string
   functionInputs: string | null
@@ -118,7 +118,7 @@ export type AutomationTokenRecord = {
 }
 
 export type AutomationRevisionWithTriggersFunctions = AutomationRevisionRecord & {
-  functions: AutomateRevisionFunctionRecord[]
+  functions: AutomationRevisionFunctionRecord[]
   triggers: AutomationTriggerDefinitionRecord[]
 }
 
