@@ -15,6 +15,8 @@ export type GetStreamObjects = (
   objectIds: string[]
 ) => Promise<SpeckleObject[]>
 
+export type GetStreamObjectCount = (params: { streamId: string }) => Promise<number>
+
 export type GetObject = (
   objectId: string,
   streamId: string

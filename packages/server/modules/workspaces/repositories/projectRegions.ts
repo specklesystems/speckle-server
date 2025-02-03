@@ -2,6 +2,7 @@ import {
   BranchCommits,
   Branches,
   Commits,
+  Objects,
   StreamCommits,
   StreamFavorites,
   Streams,
@@ -12,12 +13,15 @@ import { Commit } from '@/modules/core/domain/commits/types'
 import { Stream } from '@/modules/core/domain/streams/types'
 import {
   BranchCommitRecord,
+  ObjectChildrenClosureRecord,
+  ObjectRecord,
   StreamCommitRecord,
   StreamFavoriteRecord
 } from '@/modules/core/helpers/types'
 import { executeBatchedSelect } from '@/modules/shared/helpers/dbHelper'
 import {
   CopyProjectModels,
+  CopyProjectObjects,
   CopyProjects,
   CopyProjectVersions,
   CopyWorkspace
@@ -26,6 +30,7 @@ import { WorkspaceNotFoundError } from '@/modules/workspaces/errors/workspace'
 import { Knex } from 'knex'
 import { Workspace } from '@/modules/workspacesCore/domain/types'
 import { Workspaces } from '@/modules/workspacesCore/helpers/db'
+import { ObjectPreview } from '@/modules/previews/domain/types'
 
 const tables = {
   workspaces: (db: Knex) => db<Workspace>(Workspaces.name),
@@ -35,9 +40,17 @@ const tables = {
   branchCommits: (db: Knex) => db<BranchCommitRecord>(BranchCommits.name),
   streamCommits: (db: Knex) => db<StreamCommitRecord>(StreamCommits.name),
   streamFavorites: (db: Knex) => db<StreamFavoriteRecord>(StreamFavorites.name),
-  streamsMeta: (db: Knex) => db(StreamsMeta.name)
+  streamsMeta: (db: Knex) => db(StreamsMeta.name),
+  objects: (db: Knex) => db<ObjectRecord>(Objects.name),
+  objectClosures: (db: Knex) =>
+    db<ObjectChildrenClosureRecord>('object_children_closure'),
+  objectPreviews: (db: Knex) => db<ObjectPreview>('object_preview')
 }
 
+/**
+ * Copies rows from the following tables:
+ * - workspaces
+ */
 export const copyWorkspaceFactory =
   (deps: { sourceDb: Knex; targetDb: Knex }): CopyWorkspace =>
   async ({ workspaceId }) => {
@@ -55,6 +68,12 @@ export const copyWorkspaceFactory =
     return workspaceId
   }
 
+/**
+ * Copies rows from the following tables:
+ * - streams
+ * - streams_meta
+ * - stream_favorites
+ */
 export const copyProjectsFactory =
   (deps: { sourceDb: Knex; targetDb: Knex }): CopyProjects =>
   async ({ projectIds }) => {
@@ -116,15 +135,18 @@ export const copyProjectsFactory =
     return copiedProjectIds
   }
 
+/**
+ * Copies rows from the following tables:
+ * - branches
+ */
 export const copyProjectModelsFactory =
   (deps: { sourceDb: Knex; targetDb: Knex }): CopyProjectModels =>
   async ({ projectIds }) => {
-    const copiedModelIds: Record<string, string[]> = projectIds.reduce(
-      (result, id) => ({ ...result, [id]: [] }),
-      {}
-    )
+    const copiedModelIds: Record<string, string[]> = {}
 
     for (const projectId of projectIds) {
+      copiedModelIds[projectId] = []
+
       const selectModels = tables
         .models(deps.sourceDb)
         .select('*')
@@ -144,15 +166,21 @@ export const copyProjectModelsFactory =
     return copiedModelIds
   }
 
+/**
+ * Copies rows from the following tables:
+ * - commits
+ * - branch_commits
+ * - stream_commits
+ */
 export const copyProjectVersionsFactory =
   (deps: { sourceDb: Knex; targetDb: Knex }): CopyProjectVersions =>
   async ({ projectIds }) => {
-    const copiedVersionIds: Record<string, string[]> = projectIds.reduce(
-      (result, id) => ({ ...result, [id]: [] }),
-      {}
-    )
+    const copiedVersionIds: Record<string, string[]> = {}
 
     for (const projectId of projectIds) {
+      copiedVersionIds[projectId] = []
+
+      // Copy `commits` table rows in batches
       const selectVersions = tables
         .streamCommits(deps.sourceDb)
         .select('*')
@@ -170,13 +198,13 @@ export const copyProjectVersionsFactory =
           // Store copied version id
           copiedVersionIds[streamId].push(commitId)
 
-          // Copy `commits` row to target db
+          // Write `commits` row to target db
           await tables.versions(deps.targetDb).insert(commit).onConflict().ignore()
         }
 
         const commitIds = versions.map((version) => version.commitId)
 
-        // Fetch `branch_commits` rows for versions in batch
+        // Copy `branch_commits` table rows for current batch of versions
         const selectBranchCommits = tables
           .branchCommits(deps.sourceDb)
           .select('*')
@@ -184,7 +212,7 @@ export const copyProjectVersionsFactory =
 
         for await (const branchCommits of executeBatchedSelect(selectBranchCommits)) {
           for (const branchCommit of branchCommits) {
-            // Copy `branch_commits` row to target db
+            // Write `branch_commits` row to target db
             await tables
               .branchCommits(deps.targetDb)
               .insert(branchCommit)
@@ -193,7 +221,7 @@ export const copyProjectVersionsFactory =
           }
         }
 
-        // Fetch `stream_commits` rows for versions in batch
+        // Copy `stream_commits` table rows for current batch of versions
         const selectStreamCommits = tables
           .streamCommits(deps.sourceDb)
           .select('*')
@@ -201,7 +229,7 @@ export const copyProjectVersionsFactory =
 
         for await (const streamCommits of executeBatchedSelect(selectStreamCommits)) {
           for (const streamCommit of streamCommits) {
-            // Copy `stream_commits` row to target db
+            // Write `stream_commits` row to target db
             await tables
               .streamCommits(deps.targetDb)
               .insert(streamCommit)
@@ -213,4 +241,73 @@ export const copyProjectVersionsFactory =
     }
 
     return copiedVersionIds
+  }
+
+/**
+ * Copies rows from the following tables:
+ * - objects
+ * - object_children_closure
+ * - object_preview
+ */
+export const copyProjectObjectsFactory =
+  (deps: { sourceDb: Knex; targetDb: Knex }): CopyProjectObjects =>
+  async ({ projectIds }) => {
+    const copiedObjectIds: Record<string, string[]> = {}
+
+    for (const projectId of projectIds) {
+      copiedObjectIds[projectId] = []
+
+      // Copy `objects` table rows in batches
+      const selectObjects = tables
+        .objects(deps.sourceDb)
+        .select<ObjectRecord[]>('*')
+        .where(Objects.col.streamId, projectId)
+        .orderBy(Objects.col.id)
+
+      for await (const objects of executeBatchedSelect(selectObjects)) {
+        for (const object of objects) {
+          // Store copied object ids by source project
+          copiedObjectIds[projectId].push(object.id)
+
+          // Write `objects` table row to target db
+          await tables.objects(deps.targetDb).insert(object).onConflict().ignore()
+        }
+      }
+
+      // Copy `object_children_closure` rows in batches
+      const selectObjectClosures = tables
+        .objectClosures(deps.sourceDb)
+        .select<ObjectChildrenClosureRecord[]>('*')
+        .where('streamId', projectId)
+
+      for await (const closures of executeBatchedSelect(selectObjectClosures)) {
+        for (const closure of closures) {
+          // Write `object_children_closure` row to target db
+          await tables
+            .objectClosures(deps.targetDb)
+            .insert(closure)
+            .onConflict()
+            .ignore()
+        }
+      }
+
+      // Copy `object_preview` rows in batches
+      const selectObjectPreviews = tables
+        .objectPreviews(deps.sourceDb)
+        .select<ObjectPreview[]>('*')
+        .where('streamId', projectId)
+
+      for await (const previews of executeBatchedSelect(selectObjectPreviews)) {
+        for (const preview of previews) {
+          // Write `object_preview` row to target db
+          await tables
+            .objectPreviews(deps.targetDb)
+            .insert(preview)
+            .onConflict()
+            .ignore()
+        }
+      }
+    }
+
+    return copiedObjectIds
   }

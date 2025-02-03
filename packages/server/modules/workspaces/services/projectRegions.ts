@@ -1,8 +1,10 @@
 import { GetStreamBranchCount } from '@/modules/core/domain/branches/operations'
 import { GetStreamCommitCount } from '@/modules/core/domain/commits/operations'
+import { GetStreamObjectCount } from '@/modules/core/domain/objects/operations'
 import { GetProject } from '@/modules/core/domain/projects/operations'
 import {
   CopyProjectModels,
+  CopyProjectObjects,
   CopyProjects,
   CopyProjectVersions,
   CopyWorkspace,
@@ -16,11 +18,13 @@ export const updateProjectRegionFactory =
     getProject: GetProject
     countProjectModels: GetStreamBranchCount
     countProjectVersions: GetStreamCommitCount
+    countProjectObjects: GetStreamObjectCount
     getAvailableRegions: GetAvailableRegions
     copyWorkspace: CopyWorkspace
     copyProjects: CopyProjects
     copyProjectModels: CopyProjectModels
     copyProjectVersions: CopyProjectVersions
+    copyProjectObjects: CopyProjectObjects
   }): UpdateProjectRegion =>
   async (params) => {
     const { projectId, regionKey } = params
@@ -60,7 +64,9 @@ export const updateProjectRegionFactory =
     const modelIds = await deps.copyProjectModels({ projectIds })
     const versionIds = await deps.copyProjectVersions({ projectIds })
 
-    // TODO: Move objects
+    // Move objects
+    const objectIds = await deps.copyProjectObjects({ projectIds })
+
     // TODO: Move automations
     // TODO: Move comments
     // TODO: Move file blobs
@@ -69,12 +75,17 @@ export const updateProjectRegionFactory =
     // TODO: Validate state after move captures latest state of project
     const sourceProjectModelCount = await deps.countProjectModels(projectId)
     const sourceProjectVersionCount = await deps.countProjectVersions(projectId)
+    const sourceProjectObjectCount = await deps.countProjectObjects({
+      streamId: projectId
+    })
 
-    const isReconciled =
-      modelIds[projectId].length === sourceProjectModelCount &&
-      versionIds[projectId].length === sourceProjectVersionCount
+    const tests = [
+      modelIds[projectId].length === sourceProjectModelCount,
+      versionIds[projectId].length === sourceProjectVersionCount,
+      objectIds[projectId].length === sourceProjectObjectCount
+    ]
 
-    if (!isReconciled) {
+    if (!tests.every((test) => !!test)) {
       // TODO: Move failed or source project added data while changing regions. Retry move.
       throw new ProjectRegionAssignmentError(
         'Missing data from source project in target region copy after move.'
