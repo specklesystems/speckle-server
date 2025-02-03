@@ -66,6 +66,16 @@
           }}
         </FormButton>
       </div>
+      <div v-if="!isJustRegistered" class="w-full max-w-sm mx-auto mt-8">
+        <CommonAlert color="neutral" size="xs">
+          <template #title>Why am I seeing this?</template>
+          <template #description>
+            This server now requires you to verify all email addresses before you can
+            access your account.
+          </template>
+        </CommonAlert>
+      </div>
+
       <SettingsUserEmailDeleteDialog
         v-model:open="showDeleteDialog"
         :email="currentEmail"
@@ -80,7 +90,7 @@ import { FormCodeInput } from '@speckle/ui-components'
 import { useUserEmails } from '~/lib/user/composables/emails'
 import { useIntervalFn } from '@vueuse/core'
 import { useRoute } from 'vue-router'
-import { useAuthManager } from '~/lib/auth/composables/auth'
+import { useAuthManager, useIsJustRegistered } from '~/lib/auth/composables/auth'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import { onboardingRoute, settingsUserRoutes } from '~~/lib/common/helpers/route'
 import type { UserEmail } from '~/lib/common/generated/gql/graphql'
@@ -105,6 +115,7 @@ const {
 const route = useRoute()
 const { logout } = useAuthManager()
 const { triggerNotification } = useGlobalToast()
+const isJustRegistered = useIsJustRegistered()
 
 const code = ref('')
 const hasError = ref(false)
