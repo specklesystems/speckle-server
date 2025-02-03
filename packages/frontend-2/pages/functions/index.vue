@@ -1,11 +1,7 @@
 <template>
   <div>
     <Portal to="navigation">
-      <HeaderNavLink
-        :to="automationFunctionsRoute"
-        name="Functions"
-        :separator="false"
-      />
+      <HeaderNavLink :to="automateFunctionsRoute" name="Functions" :separator="false" />
     </Portal>
     <div class="flex flex-col gap-4">
       <div class="flex items-center gap-2 mb-2">
@@ -44,7 +40,7 @@ import {
   usePaginatedQuery
 } from '~/lib/common/composables/graphql'
 import { graphql } from '~/lib/common/generated/gql'
-import { automationFunctionsRoute } from '~/lib/common/helpers/route'
+import { automateFunctionsRoute } from '~/lib/common/helpers/route'
 
 definePageMeta({
   middleware: ['auth', 'requires-automate-enabled']
