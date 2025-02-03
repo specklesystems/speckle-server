@@ -112,11 +112,10 @@ export const automateGithubAppAuthorizationRoute = (workspaceSlug?: string) => {
   }`
 }
 
-export const automateFunctionsRoute = (workspaceSlug?: string) =>
-  workspaceSlug ? `/workspaces/${workspaceSlug}/functions` : '/functions'
+export const publicAutomateFunctionsRoute = '/functions'
 
 export const automateFunctionRoute = (functionId: string) =>
-  `${automateFunctionsRoute()}/${functionId}`
+  `${publicAutomateFunctionsRoute}/${functionId}`
 
 export const workspaceRoute = (slug: string) => `/workspaces/${slug}`
 export const workspaceSsoRoute = (slug: string) => `/workspaces/${slug}/sso`

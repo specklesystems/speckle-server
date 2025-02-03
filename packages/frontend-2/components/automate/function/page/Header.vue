@@ -8,14 +8,14 @@
           :name="fnWorkspace.name"
         />
         <HeaderNavLink
-          :to="automateFunctionsRoute(fnWorkspace.slug)"
+          :to="workspaceFunctionsRoute(fnWorkspace.slug)"
           name="Functions"
         />
         <HeaderNavLink :to="automateFunctionRoute(fn.id)" :name="fn.name" />
       </template>
       <template v-else>
         <HeaderNavLink
-          :to="automateFunctionsRoute()"
+          :to="publicAutomateFunctionsRoute"
           :separator="false"
           name="Functions"
         />
@@ -41,7 +41,8 @@ import type {
 } from '~/lib/common/generated/gql/graphql'
 import {
   automateFunctionRoute,
-  automateFunctionsRoute,
+  publicAutomateFunctionsRoute,
+  workspaceFunctionsRoute,
   workspaceRoute
 } from '~/lib/common/helpers/route'
 

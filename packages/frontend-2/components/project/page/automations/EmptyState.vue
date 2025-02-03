@@ -16,7 +16,7 @@
 </template>
 <script setup lang="ts">
 import {
-  automateFunctionsRoute,
+  publicAutomateFunctionsRoute,
   workspaceFunctionsRoute
 } from '~/lib/common/helpers/route'
 import type { CreateAutomationSelectableFunction } from '~/lib/automate/helpers/automations'
@@ -58,7 +58,7 @@ onMounted(() => {
 const functionsGalleryRoute = computed(() =>
   props.workspaceSlug
     ? workspaceFunctionsRoute(props.workspaceSlug)
-    : automateFunctionsRoute
+    : publicAutomateFunctionsRoute
 )
 
 const isVisibleAction = (action: LayoutDialogButton): boolean => {
