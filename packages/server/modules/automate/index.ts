@@ -55,6 +55,7 @@ import { getProjectFactory } from '@/modules/core/repositories/projects'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { VersionEvents } from '@/modules/core/domain/commits/events'
 import { AutomationEvents, AutomationRunEvents } from '@/modules/automate/domain/events'
+import { LogicError } from '@/modules/shared/errors'
 
 const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
 let quitListeners: Optional<() => void> = undefined
@@ -267,7 +268,7 @@ const initializeEventListeners = () => {
           db: projectDb
         })(run.automationRevisionId)
         const fullRun = await getFullAutomationRunByIdFactory({ db: projectDb })(run.id)
-        if (!fullRun) throw new Error('This should never happen')
+        if (!fullRun) throw new LogicError('This should never happen')
 
         if (!automationWithRevision) {
           automateLogger.error(

@@ -183,16 +183,16 @@ export const createTestAutomationFactory =
     )
 
     // Get latest release for specified function
-    const { functionVersions: functionReleases } = await getFunction({ functionId })
+    const fn = await getFunction({ functionId })
 
-    if (!functionReleases || functionReleases.length === 0) {
+    if (!fn || !fn.functionVersions || fn.functionVersions.length === 0) {
       // TODO: This should probably be okay for test automations
       throw new AutomationCreationError(
         'The specified function does not have any releases'
       )
     }
 
-    const latestFunctionRelease = functionReleases[0]
+    const latestFunctionRelease = fn.functionVersions[0]
 
     // Create and store the automation record
     const automationId = cryptoRandomString({ length: 10 })
@@ -380,7 +380,7 @@ const validateNewRevisionFunctions =
       ),
       (r) =>
         updateId({
-          functionReleaseId: r.functionVersionId,
+          functionReleaseId: r?.functionVersionId ?? '',
           functionId: r.functionId
         })
     )
