@@ -32,7 +32,7 @@
     "pino-http": "^8.0.0",
     "pino-pretty": "^9.1.1",
     "prom-client": "^14.0.1",
-    "undici": "^5.28.4",
+    "undici": "^5.28.5",
     "valid-filename": "^3.1.0",
     "web-ifc": "^0.0.36",
     "znv": "^0.4.0",
