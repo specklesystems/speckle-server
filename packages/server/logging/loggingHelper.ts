@@ -29,6 +29,13 @@ export const redactSensitiveVariables = (variables: unknown): unknown => {
       return acc
     }
 
+    if (typeof acc[key] === 'string' && acc[key].startsWith('data:image/png;')) {
+      acc[key] = `${acc[key].substring(
+        0,
+        40
+      )}...[truncated image data. Original length: ${acc[key].length}]`
+    }
+
     acc[key] = val
     return acc
   }, {} as Record<string, unknown>)
