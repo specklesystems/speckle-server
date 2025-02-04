@@ -1,4 +1,23 @@
 import { db } from '@/db/knex'
+import {
+  AutomationFunctionRunRecord,
+  AutomationRecord,
+  AutomationRevisionFunctionRecord,
+  AutomationRevisionRecord,
+  AutomationRunRecord,
+  AutomationRunTriggerRecord,
+  AutomationTokenRecord,
+  AutomationTriggerDefinitionRecord
+} from '@/modules/automate/helpers/types'
+import {
+  AutomationFunctionRuns,
+  AutomationRevisionFunctions,
+  AutomationRevisions,
+  AutomationRuns,
+  AutomationRunTriggers,
+  AutomationTokens,
+  AutomationTriggers
+} from '@/modules/core/dbSchema'
 import { AllScopes } from '@/modules/core/helpers/mainConstants'
 import { createRandomEmail } from '@/modules/core/helpers/testHelpers'
 import {
@@ -35,6 +54,7 @@ import {
   TestApolloServer
 } from '@/test/graphqlHelper'
 import { beforeEachContext } from '@/test/hooks'
+import { createTestAutomation } from '@/test/speckle-helpers/automationHelper'
 import { BasicTestBranch, createTestBranch } from '@/test/speckle-helpers/branchHelper'
 import {
   BasicTestCommit,
@@ -58,7 +78,20 @@ const tables = {
   versions: (db: Knex) => db.table<CommitRecord>('commits'),
   streamCommits: (db: Knex) => db.table<StreamCommitRecord>('stream_commits'),
   branchCommits: (db: Knex) => db.table<BranchCommitRecord>('branch_commits'),
-  objects: (db: Knex) => db.table<ObjectRecord>('objects')
+  objects: (db: Knex) => db.table<ObjectRecord>('objects'),
+  automations: (db: Knex) => db.table<AutomationRecord>('automations'),
+  automationTokens: (db: Knex) => db<AutomationTokenRecord>(AutomationTokens.name),
+  automationRevisions: (db: Knex) =>
+    db<AutomationRevisionRecord>(AutomationRevisions.name),
+  automationTriggers: (db: Knex) =>
+    db<AutomationTriggerDefinitionRecord>(AutomationTriggers.name),
+  automationRevisionFunctions: (db: Knex) =>
+    db<AutomationRevisionFunctionRecord>(AutomationRevisionFunctions.name),
+  automationRuns: (db: Knex) => db<AutomationRunRecord>(AutomationRuns.name),
+  automationRunTriggers: (db: Knex) =>
+    db<AutomationRunTriggerRecord>(AutomationRunTriggers.name),
+  automationFunctionRuns: (db: Knex) =>
+    db<AutomationFunctionRunRecord>(AutomationFunctionRuns.name)
 }
 
 const grantStreamPermissions = grantStreamPermissionsFactory({ db })
@@ -344,6 +377,10 @@ isMultiRegionTestMode()
         authorId: ''
       }
 
+      let testAutomation: AutomationRecord
+      let testAutomationToken: AutomationTokenRecord
+      let testAutomationRevision: AutomationRevisionRecord
+
       let apollo: TestApolloServer
       let targetRegionDb: Knex
 
@@ -382,6 +419,23 @@ isMultiRegionTestMode()
           owner: adminUser,
           stream: testProject
         })
+
+        const { automation, revision } = await createTestAutomation({
+          userId: adminUser.id,
+          projectId: testProject.id,
+          revision: {
+            functionId: cryptoRandomString({ length: 9 }),
+            functionReleaseId: cryptoRandomString({ length: 9 })
+          }
+        })
+
+        if (!revision) {
+          throw new Error('Failed to create automation revision.')
+        }
+
+        testAutomation = automation.automation
+        testAutomationToken = automation.token
+        testAutomationRevision = revision
       })
 
       it('moves project record to target regional db', async () => {
@@ -463,6 +517,40 @@ isMultiRegionTestMode()
           .first()
 
         expect(object).to.not.be.undefined
+      })
+
+      it('moves project automation data to target regional db', async () => {
+        const res = await apollo.execute(UpdateProjectRegionDocument, {
+          projectId: testProject.id,
+          regionKey: regionKey2
+        })
+
+        expect(res).to.not.haveGraphQLErrors()
+
+        const automation = await tables
+          .automations(targetRegionDb)
+          .select('*')
+          .where({ id: testAutomation.id })
+          .first()
+        expect(automation).to.not.be.undefined
+
+        const automationToken = await tables
+          .automationTokens(targetRegionDb)
+          .select('*')
+          .where({ automationId: testAutomation.id })
+          .first()
+        expect(automationToken).to.not.be.undefined
+        expect(automationToken?.automateToken).to.equal(
+          testAutomationToken.automateToken
+        )
+
+        const automationRevision = await tables
+          .automationRevisions(targetRegionDb)
+          .select('*')
+          .where({ automationId: testAutomation.id })
+          .first()
+        expect(automationRevision).to.not.be.undefined
+        expect(automationRevision?.id).to.equal(testAutomationRevision.id)
       })
     })
   : void 0
