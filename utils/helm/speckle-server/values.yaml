@@ -59,8 +59,6 @@ featureFlags:
   forceEmailVerification: false
   ## @param featureFlags.forceOnboarding Forces onboarding for all users
   forceOnboarding: false
-  ## @param featureFlags.objectsStreamingFix Enables the fix for the objects streaming issue when client prematurely closes the connection
-  objectsStreamingFix: false
 
 analytics:
   ## @param analytics.enabled Enable or disable analytics
