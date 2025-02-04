@@ -34,6 +34,7 @@ import { upgradeWorkspaceSubscriptionFactory } from '@/modules/gatekeeper/servic
 import { isWorkspaceReadOnlyFactory } from '@/modules/gatekeeper/services/readOnly'
 import { calculateSubscriptionSeats } from '@/modules/gatekeeper/domain/billing'
 import { WorkspacePaymentMethod } from '@/test/graphql/generated/graphql'
+import { LogicError } from '@/modules/shared/errors'
 
 const { FF_GATEKEEPER_MODULE_ENABLED } = getFeatureFlags()
 
@@ -93,7 +94,9 @@ export = FF_GATEKEEPER_MODULE_ENABLED
           if (!workspaceSubscription) return null
           const workspace = await getWorkspaceFactory({ db })({ workspaceId })
           if (!workspace)
-            throw new Error('This cannot be, if there is a sub, there is a workspace')
+            throw new LogicError(
+              'This cannot be, if there is a sub, there is a workspace'
+            )
           return await createCustomerPortalUrlFactory({
             stripe: getStripeClient(),
             frontendOrigin: getFrontendOrigin()

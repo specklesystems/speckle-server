@@ -2,7 +2,6 @@
   <FormSelectBase
     v-model="selectedValue"
     :items="roles"
-    :multiple="multiple"
     :clearable="clearable"
     name="projectRoles"
     label="Project roles"
@@ -16,9 +15,7 @@
     :size="size"
     :button-style="buttonStyle"
   >
-    <template #nothing-selected>
-      {{ multiple ? 'Select roles' : 'Select role' }}
-    </template>
+    <template #nothing-selected>Select role</template>
     <template #something-selected="{ value }">
       <template v-if="isMultiItemArrayValue(value)">
         <div ref="elementToWatchForChanges" class="flex items-center space-x-0.5">
@@ -69,7 +66,6 @@ const emit = defineEmits<{
 }>()
 
 const props = defineProps<{
-  multiple?: boolean
   modelValue?: ValueType
   clearable?: boolean
   disabledItems?: StreamRoles[]

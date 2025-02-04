@@ -36,7 +36,7 @@ const versionId = computed(() => {
   return resourceItems.value[0].versionId as string
 })
 
-const { result, subscribeToMore, refetch } = useQuery(getGendoAIRenders, () => ({
+const { result, refetch } = useQuery(getGendoAIRenders, () => ({
   projectId: projectId.value,
   versionId: versionId.value
 }))
@@ -49,18 +49,6 @@ const { onResult: onRenderCreated } = useSubscription(onGendoAiRenderCreated, ()
 onRenderCreated(() => {
   refetch()
 })
-
-subscribeToMore(() => ({
-  document: onGendoAiRenderCreated,
-  variables: {
-    id: projectId.value,
-    versionId: versionId.value
-  },
-  updateQuery: (previousResult) => {
-    refetch()
-    return previousResult
-  }
-}))
 
 const renders = computed(() => {
   return (result.value?.project?.version?.gendoAIRenders?.items ||

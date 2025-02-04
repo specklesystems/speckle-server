@@ -1,22 +1,15 @@
 <template>
-  <!-- If multiple, use FormSelectMultiple instead -->
   <div>
-    <Listbox
+    <div
       :key="forceUpdateKey"
-      v-model="wrappedValue"
-      :name="name"
-      :multiple="multiple"
-      :by="by"
-      :disabled="isDisabled"
-      as="div"
       :class="{
         'md:flex md:items-center md:space-x-2 md:justify-between': isLeftLabelPosition
       }"
     >
       <div class="flex flex-col" :class="{ 'pb-1': showLabel && !isLeftLabelPosition }">
-        <ListboxLabel
+        <label
           :id="labelId"
-          class="flex text-body-xs text-foreground font-medium"
+          class="flex text-body-xs text-foreground font-medium pointer-events-none"
           :class="[{ 'sr-only': !showLabel }, { 'items-center gap-1': showOptional }]"
           :for="buttonId"
         >
@@ -25,7 +18,7 @@
           <div v-else-if="showOptional" class="text-body-2xs font-normal">
             (optional)
           </div>
-        </ListboxLabel>
+        </label>
         <p
           v-if="helpTipId && isLeftLabelPosition"
           :id="helpTipId"
@@ -37,12 +30,14 @@
       </div>
       <div v-tippy="tooltipText">
         <div :class="buttonsWrapperClasses">
-          <!-- <div class="relative flex"> -->
-          <ListboxButton
+          <button
             :id="buttonId"
             ref="listboxButton"
-            v-slot="{ open }"
+            type="button"
             :class="buttonClasses"
+            :aria-expanded="isOpen"
+            :aria-haspopup="true"
+            @click="toggleDropdown"
           >
             <div class="flex items-center justify-between w-full">
               <div
@@ -79,7 +74,7 @@
                   *
                 </div>
                 <ChevronUpIcon
-                  v-if="open"
+                  v-if="isOpen"
                   class="h-4 w-4 text-foreground"
                   aria-hidden="true"
                 />
@@ -90,11 +85,8 @@
                 />
               </div>
             </div>
-            <!-- Sync isOpen with dropdown open state -->
-            <template v-if="(isOpen = open)"></template>
-          </ListboxButton>
-          <!-- </div> -->
-          <!-- Clear Button -->
+          </button>
+
           <button
             v-if="renderClearButton"
             :class="clearButtonClasses"
@@ -103,6 +95,7 @@
           >
             <XMarkIcon class="w-3 h-3" />
           </button>
+
           <Transition
             v-if="isMounted"
             leave-active-class="transition ease-in duration-100"
@@ -110,12 +103,16 @@
             leave-to-class="opacity-0"
           >
             <Teleport to="body" :disabled="!mountMenuOnBody">
-              <ListboxOptions
+              <div
+                v-if="isOpen"
                 ref="menuEl"
                 :class="listboxOptionsClasses"
                 :style="listboxOptionsStyle"
+                role="listbox"
+                :aria-labelledby="labelId"
                 @focus="searchInput?.focus()"
               >
+                <!-- Search input section -->
                 <label v-if="hasSearch" class="flex flex-col mx-1 mb-1">
                   <span class="sr-only label text-foreground">Search</span>
                   <div class="relative">
@@ -134,7 +131,8 @@
                     />
                   </div>
                 </label>
-                <div class="overflow-auto simple-scrollbar max-h-60">
+
+                <div class="overflow-auto simple-scrollbar max-h-60 flex flex-col">
                   <div v-if="isAsyncSearchMode && isAsyncLoading" class="px-1">
                     <CommonLoadingBar :loading="true" />
                   </div>
@@ -144,72 +142,59 @@
                     </div>
                   </div>
                   <template v-if="!isAsyncSearchMode || !isAsyncLoading">
-                    <ListboxOption
+                    <button
                       v-for="item in finalItems"
                       :key="itemKey(item)"
-                      v-slot="{
-                        active,
-                        selected
-                      }: {
-                        active: boolean,
-                        selected: boolean
-                      }"
-                      :value="(item as SingleItem)"
+                      v-tippy="
+                        disabledItemPredicate?.(item) ? disabledItemTooltip : undefined
+                      "
+                      type="button"
+                      role="option"
+                      :aria-selected="isSelected(item)"
                       :disabled="disabledItemPredicate?.(item) || false"
+                      :class="
+                        listboxOptionClasses({
+                          disabled: disabledItemPredicate?.(item) || false
+                        })
+                      "
+                      @click="(e) => selectItem(item, e)"
                     >
-                      <li
-                        v-tippy="
-                          disabledItemPredicate?.(item)
-                            ? disabledItemTooltip
-                            : undefined
-                        "
-                        :class="
-                          listboxOptionClasses({
-                            active,
-                            disabled: disabledItemPredicate?.(item) || false
-                          })
-                        "
+                      <div
+                        class="block w-full px-2 py-1.5 rounded-md text-left flex items-center gap-1"
+                        :class="[
+                          isSelected(item) ? 'bg-highlight-3' : '',
+                          !hideCheckmarks ? 'pr-8' : 'pr-2',
+                          !disabledItemPredicate?.(item) && !isSelected(item)
+                            ? 'hover:bg-highlight-1'
+                            : ''
+                        ]"
                       >
-                        <span
-                          class="block px-2 py-1.5 rounded-md"
-                          :class="[
-                            selected ? 'bg-highlight-3' : '',
-                            !hideCheckmarks ? 'pr-8' : 'pr-2',
-                            !disabledItemPredicate?.(item) && !selected
-                              ? 'hover:bg-highlight-1'
-                              : ''
-                          ]"
+                        <FormCheckbox
+                          :name="`select-${itemKey(item)}`"
+                          :checked="isSelected(item)"
+                          :disabled="disabledItemPredicate?.(item)"
+                          :hide-label="true"
+                          @change.stop
+                        />
+                        <slot
+                          name="option"
+                          class="truncate"
+                          :item="item"
+                          :selected="isSelected(item)"
+                          :disabled="disabledItemPredicate?.(item) || false"
                         >
-                          <slot
-                            name="option"
-                            class="truncate"
-                            :item="item"
-                            :active="active"
-                            :selected="selected"
-                            :disabled="disabledItemPredicate?.(item) || false"
-                          >
-                            {{ simpleDisplayText(item) }}
-                          </slot>
-
-                          <span
-                            v-if="!hideCheckmarks && selected"
-                            :class="[
-                              'absolute top-0 bottom-0 right-0 text-foreground flex items-center pr-4'
-                            ]"
-                          >
-                            <CheckIcon class="h-4 w-4" aria-hidden="true" />
-                          </span>
-                        </span>
-                      </li>
-                    </ListboxOption>
+                          {{ simpleDisplayText(item) }}
+                        </slot>
+                      </div>
+                    </button>
                   </template>
                 </div>
-              </ListboxOptions>
+              </div>
             </Teleport>
           </Transition>
         </div>
       </div>
-    </Listbox>
+    </div>
     <p
       v-if="helpTipId && !isLeftLabelPosition"
       :id="helpTipId"
@@ -226,15 +211,7 @@
   generic="SingleItem extends Record<string, unknown> | string | number"
 >
 import {
-  Listbox,
-  ListboxButton,
-  ListboxOption,
-  ListboxOptions,
-  ListboxLabel
-} from '@headlessui/vue'
-import {
   ChevronDownIcon,
-  CheckIcon,
   ChevronUpIcon,
   MagnifyingGlassIcon,
   XMarkIcon,
@@ -248,13 +225,19 @@ import { useField } from 'vee-validate'
 import type { RuleExpression } from 'vee-validate'
 import { nanoid } from 'nanoid'
 import CommonLoadingBar from '~~/src/components/common/loading/Bar.vue'
-import { useElementBounding, useMounted, useIntersectionObserver } from '@vueuse/core'
+import {
+  useElementBounding,
+  useMounted,
+  useIntersectionObserver,
+  onClickOutside
+} from '@vueuse/core'
 import type { LabelPosition } from '~~/src/composables/form/input'
 import { directive as vTippy } from 'vue-tippy'
+import FormCheckbox from '~~/src/components/form/Checkbox.vue'
 
-export type FormSelectBaseButtonStyle = 'base' | 'simple' | 'tinted'
-export type FormSelectBaseInputSize = 'sm' | 'base' | 'lg' | 'xl'
+type ButtonStyle = 'base' | 'simple' | 'tinted'
 type ValueType = SingleItem | SingleItem[] | undefined
+type InputSize = 'sm' | 'base' | 'lg' | 'xl'
 
 const isObjectLikeType = (v: unknown): v is Record<string, unknown> => isObjectLike(v)
 
@@ -264,19 +247,15 @@ const emit = defineEmits<{
 
 const props = defineProps({
   size: {
-    type: String as PropType<Optional<FormSelectBaseInputSize>>,
+    type: String as PropType<Optional<InputSize>>,
     default: undefined
-  },
-  multiple: {
-    type: Boolean,
-    default: false
   },
   items: {
     type: Array as PropType<SingleItem[]>,
     default: () => []
   },
   modelValue: {
-    type: [Object, Array, String] as PropType<ValueType>,
+    type: [Array, Object, String, Number] as PropType<ValueType>,
     default: undefined
   },
   /**
@@ -356,7 +335,7 @@ const props = defineProps({
     default: false
   },
   buttonStyle: {
-    type: String as PropType<Optional<FormSelectBaseButtonStyle>>,
+    type: String as PropType<Optional<ButtonStyle>>,
     default: 'base'
   },
   hideCheckmarks: {
@@ -475,15 +454,14 @@ const props = defineProps({
 const { value, errorMessage: error } = useField<ValueType>(props.name, props.rules, {
   validateOnMount: props.validateOnMount,
   validateOnValueUpdate: props.validateOnValueUpdate,
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-  initialValue: props.modelValue as ValueType
+  initialValue: isArray(props.modelValue) ? props.modelValue : []
 })
 
 const isMounted = useMounted()
 
 const searchInput = ref(null as Nullable<HTMLInputElement>)
-const menuEl = ref(null as Nullable<{ el: Nullable<HTMLElement> }>)
-const listboxButton = ref(null as Nullable<{ el: Nullable<HTMLButtonElement> }>)
+const menuEl = ref<HTMLDivElement | null>(null)
+const listboxButton = ref<HTMLButtonElement | null>(null)
 const searchValue = ref('')
 const currentItems = ref([]) as Ref<SingleItem[]>
 const isAsyncLoading = ref(false)
@@ -491,13 +469,14 @@ const forceUpdateKey = ref(1)
 const internalHelpTipId = ref(nanoid())
 const isOpen = ref(false)
 
-const listboxButtonBounding = useElementBounding(
-  computed(() => listboxButton.value?.el),
-  { windowResize: true, windowScroll: true, immediate: true }
-)
+const listboxButtonBounding = useElementBounding(listboxButton, {
+  windowResize: true,
+  windowScroll: true,
+  immediate: true
+})
 
 useIntersectionObserver(
-  computed(() => menuEl.value?.el),
+  computed(() => menuEl.value),
   ([{ isIntersecting }]) => {
     if (isIntersecting && props.mountMenuOnBody) {
       listboxButtonBounding.update()
@@ -649,58 +628,31 @@ const isDisabled = computed(
 const wrappedValue = computed({
   get: () => {
     const currentValue = value.value
-    if (props.multiple) {
-      return isArray(currentValue) ? currentValue : []
-    } else {
-      return isArray(currentValue) ? undefined : currentValue
-    }
+    return isArray(currentValue) ? currentValue : []
   },
   set: (newVal) => {
-    if (props.multiple && !isArray(newVal)) {
-      console.warn('Attempting to set non-array value in selector w/ multiple=true')
+    if (!isArray(newVal)) {
+      console.warn('Attempting to set non-array value in selector')
       return
-    } else if (!props.multiple && isArray(newVal)) {
-      console.warn('Attempting to set array value in selector w/ multiple=false')
-      return
-    }
-
-    let finalValue: typeof value.value
-    if (props.multiple) {
-      finalValue = newVal || []
-    } else {
-      const currentVal = value.value
-      const isUnset =
-        props.allowUnset &&
-        currentVal &&
-        newVal &&
-        itemKey(currentVal as SingleItem) === itemKey(newVal as SingleItem)
-      finalValue = isUnset ? undefined : newVal
     }
 
     if (props.fullyControlValue) {
-      // Not setting value.value, cause then we don't give a chance for the parent
-      // component to reject the update
-      emit('update:modelValue', finalValue)
+      emit('update:modelValue', newVal)
     } else {
-      value.value = finalValue
+      value.value = newVal
     }
 
-    // hacky, but there's no other way to force ListBox to re-read the modelValue prop which
-    // we need in case the update was rejected and ListBox still thinks the value is the one
-    // that was clicked on
     forceUpdateKey.value += 1
   }
 })
 
 const hasValueSelected = computed(() => {
-  if (props.multiple && isArray(wrappedValue.value))
-    return wrappedValue.value.length !== 0
+  if (isArray(wrappedValue.value)) return wrappedValue.value.length !== 0
   else return !!wrappedValue.value
 })
 
 const clearValue = () => {
-  if (props.multiple) wrappedValue.value = []
-  else wrappedValue.value = undefined
+  wrappedValue.value = []
 }
 
 const finalItems = computed(() => {
@@ -768,10 +720,9 @@ const triggerSearch = async () => {
 }
 const debouncedSearch = debounce(triggerSearch, 1000)
 
-const listboxOptionClasses = (params: { active: boolean; disabled: boolean }) => {
-  const { disabled } = params || {}
-
-  const classParts = ['relative transition select-none py-1 px-2']
+const listboxOptionClasses = (params: { disabled: boolean }) => {
+  const { disabled } = params
+  const classParts = ['relative transition select-none px-2']
 
   if (disabled) {
     classParts.push('opacity-50 cursor-not-allowed')
@@ -800,6 +751,40 @@ onMounted(() => {
     void triggerSearch()
   }
 })
+
+const toggleDropdown = () => {
+  if (!isDisabled.value) {
+    isOpen.value = !isOpen.value
+  }
+}
+
+const isSelected = (item: SingleItem) => {
+  return wrappedValue.value.some((v) => itemKey(v) === itemKey(item))
+}
+
+const selectItem = (item: SingleItem, event?: Event) => {
+  if (props.disabledItemPredicate?.(item)) return
+  event?.stopPropagation()
+
+  const currentValue = wrappedValue.value
+  const itemExists = currentValue.some((v) => itemKey(v) === itemKey(item))
+
+  wrappedValue.value = itemExists
+    ? currentValue.filter((v) => itemKey(v) !== itemKey(item))
+    : [...currentValue, item]
+}
+
+onClickOutside(
+  menuEl,
+  () => {
+    if (isOpen.value) {
+      isOpen.value = false
+    }
+  },
+  {
+    ignore: [listboxButton]
+  }
+)
 
 defineExpose({ triggerSearch })
 </script>

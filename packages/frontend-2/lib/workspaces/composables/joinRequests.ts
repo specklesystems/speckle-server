@@ -14,11 +14,13 @@ import {
   modifyObjectField,
   getCacheId
 } from '~~/lib/common/helpers/graphql'
+import { useMixpanel } from '~/lib/core/composables/mp'
 
 export const useWorkspaceJoinRequest = () => {
   const { mutate: approveMutation } = useMutation(approveWorkspaceJoinRequestMutation)
   const { mutate: denyMutation } = useMutation(denyWorkspaceJoinRequestMutation)
   const { triggerNotification } = useGlobalToast()
+  const mixpanel = useMixpanel()
 
   const approve = async (
     input: ApproveWorkspaceJoinRequestInput,
@@ -53,6 +55,11 @@ export const useWorkspaceJoinRequest = () => {
       triggerNotification({
         type: ToastNotificationType.Success,
         title: 'Workspace join request approved'
+      })
+
+      mixpanel.track('Workspace Join Request Approved', {
+        // eslint-disable-next-line camelcase
+        workspace_id: input.workspaceId
       })
     } else {
       const errorMessage = getFirstErrorMessage(result?.errors)
@@ -94,6 +101,11 @@ export const useWorkspaceJoinRequest = () => {
       triggerNotification({
         type: ToastNotificationType.Success,
         title: 'Workspace join request denied'
+      })
+
+      mixpanel.track('Workspace Join Request Denied', {
+        // eslint-disable-next-line camelcase
+        workspace_id: input.workspaceId
       })
     } else {
       const errorMessage = getFirstErrorMessage(result?.errors)
