@@ -6,6 +6,7 @@
     label="What's your role?"
     placeholder="Select one"
     required
+    :rules="isRequired"
     name="role"
     show-label
     allow-unset
@@ -26,6 +27,7 @@
 <script setup lang="ts">
 import { useFormSelectChildInternals } from '@speckle/ui-components'
 import { OnboardingRole, RoleTitleMap } from '~/lib/auth/helpers/onboarding'
+import { isRequired } from '~~/lib/common/helpers/validation'
 
 const props = defineProps<{
   modelValue?: OnboardingRole

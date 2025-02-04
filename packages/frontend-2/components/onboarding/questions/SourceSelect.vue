@@ -6,6 +6,7 @@
     label="How did you hear about Speckle?"
     placeholder="Select one"
     required
+    :rules="isRequired"
     name="source"
     show-label
     allow-unset
@@ -26,6 +27,7 @@
 <script setup lang="ts">
 import { useFormSelectChildInternals } from '@speckle/ui-components'
 import { OnboardingSource, SourceTitleMap } from '~/lib/auth/helpers/onboarding'
+import { isRequired } from '~~/lib/common/helpers/validation'
 
 const props = defineProps<{
   modelValue?: OnboardingSource

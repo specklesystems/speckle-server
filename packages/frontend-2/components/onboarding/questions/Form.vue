@@ -26,7 +26,6 @@
 
 <script setup lang="ts">
 import { useForm } from 'vee-validate'
-import { isRequired } from '~~/lib/common/helpers/validation'
 import type {
   OnboardingRole,
   OnboardingPlan,
@@ -44,11 +43,6 @@ const { handleSubmit, meta, isSubmitting, values } = useForm({
     role: undefined as OnboardingRole | undefined,
     plan: [] as OnboardingPlan[],
     source: undefined as OnboardingSource | undefined
-  },
-  validationSchema: {
-    role: isRequired,
-    plan: isRequired,
-    source: isRequired
   }
 })
 

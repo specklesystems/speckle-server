@@ -6,6 +6,7 @@
     label="What are you planning to do with Speckle?"
     placeholder="Select all that apply"
     required
+    :rules="isRequired"
     name="plan"
     show-label
     allow-unset
@@ -30,6 +31,7 @@
 <script setup lang="ts">
 import { useFormSelectChildInternals } from '@speckle/ui-components'
 import { OnboardingPlan, PlanTitleMap } from '~/lib/auth/helpers/onboarding'
+import { isRequired } from '~~/lib/common/helpers/validation'
 
 const props = defineProps<{
   modelValue?: OnboardingPlan[]
