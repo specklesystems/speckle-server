@@ -23,7 +23,6 @@
           :rules="[isMultiItemSelected]"
           show-label
           :items="apiTokenScopes"
-          show-clear
           mount-menu-on-body
           :label-id="badgesLabelId"
           :button-id="badgesButtonId"
