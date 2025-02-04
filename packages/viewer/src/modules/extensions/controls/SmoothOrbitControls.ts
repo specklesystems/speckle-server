@@ -862,9 +862,16 @@ export class SmoothOrbitControls extends SpeckleControls {
     const mat = this.orbitSphere.material as SpeckleBasicMaterial
     mat.userData.billboardPos.value.copy(spherePos)
 
+    /** We'd rather have a palpable epsilon for regular sized streams, but also
+     *  compute a custom one for microscopic ones
+     */
+    const epsilon = Math.min(
+      MOVEMENT_EPSILON,
+      this.world.getRelativeOffset(MOVEMENT_EPSILON)
+    )
     return (
-      lastCameraPos.sub(this._targetCamera.position).length() > MOVEMENT_EPSILON ||
-      lastCameraQuat.angleTo(this._targetCamera.quaternion) > MOVEMENT_EPSILON
+      lastCameraPos.sub(this._targetCamera.position).length() > epsilon ||
+      lastCameraQuat.angleTo(this._targetCamera.quaternion) > epsilon
     )
   }
 

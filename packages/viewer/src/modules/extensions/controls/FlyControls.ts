@@ -183,7 +183,8 @@ class FlyControls extends SpeckleControls {
 
   protected updatePositionRotation(delta: number) {
     const diagonal = this.world.worldBox.min.distanceTo(this.world.worldBox.max)
-    const minMaxRange = diagonal < 1 ? diagonal : 1
+    /** For very small values, the dampners need even smaller normalization */
+    const minMaxRange = diagonal < 1 ? this.world.getRelativeOffset(diagonal) : 1
     this.position.x = this.positionXDamper.update(
       this.position.x,
       this.goalPosition.x,
