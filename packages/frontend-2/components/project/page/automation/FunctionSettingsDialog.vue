@@ -57,7 +57,7 @@
           v-if="revisionFn"
           text
           target="_blank"
-          :to="automationFunctionRoute(revisionFn.release.function.id)"
+          :to="automateFunctionRoute(revisionFn.release.function.id)"
         >
           View function
         </FormButton>
@@ -75,7 +75,7 @@
 </template>
 <script setup lang="ts">
 import type { MaybeNullOrUndefined, Optional } from '@speckle/shared'
-import { automationFunctionRoute } from '~/lib/common/helpers/route'
+import { automateFunctionRoute } from '~/lib/common/helpers/route'
 import {
   useJsonFormsChangeHandler,
   hasJsonFormErrors as hasFormErrors

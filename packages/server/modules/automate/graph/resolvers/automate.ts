@@ -556,7 +556,11 @@ export = (FF_AUTOMATE_MODULE_ENABLED
                 origin: getServerOrigin()
               },
               functionName: args.input.name,
-              description: args.input.description
+              description: args.input.description,
+              repositoryUrl:
+                'https://github.com/specklesystems/speckle_automate_python_example',
+              supportedSourceApps: [],
+              tags: []
             }
           })
         },

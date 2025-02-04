@@ -52,7 +52,7 @@ import type {
 } from '~/lib/automate/helpers/functions'
 import {
   automateGithubAppAuthorizationRoute,
-  automationFunctionRoute
+  automateFunctionRoute
 } from '~/lib/common/helpers/route'
 import { useEnumSteps, useEnumStepsWidgetSetup } from '~/lib/form/composables/steps'
 import { useForm } from 'vee-validate'
@@ -281,7 +281,7 @@ const buttons = computed((): LayoutDialogButton[] => {
             iconRight: ArrowRightIcon,
             fullWidth: true,
             to: createdFunction.value?.id
-              ? automationFunctionRoute(createdFunction.value.id)
+              ? automateFunctionRoute(createdFunction.value.id)
               : undefined
           }
         }
