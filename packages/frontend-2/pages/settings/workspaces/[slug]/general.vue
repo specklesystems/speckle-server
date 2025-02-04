@@ -126,6 +126,12 @@
           </div>
         </div>
       </template>
+      <template v-if="isServerAdmin">
+        <hr class="mb-6 mt-8 border-outline-2" />
+        <p class="text-body-2xs text-foreground-2">
+          Workspace ID: #{{ workspaceResult?.workspaceBySlug?.id }}
+        </p>
+      </template>
     </div>
 
     <SettingsWorkspacesGeneralLeaveDialog
@@ -221,6 +227,7 @@ const config = useRuntimeConfig()
 const { hasSsoEnabled, needsSsoLogin } = useWorkspaceSsoStatus({
   workspaceSlug: computed(() => workspaceResult.value?.workspaceBySlug?.slug || '')
 })
+const { isAdmin: isServerAdmin } = useActiveUser()
 
 const name = ref('')
 const slug = ref('')

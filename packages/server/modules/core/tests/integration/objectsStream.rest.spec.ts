@@ -48,7 +48,8 @@ import {
   storeObjectsIfNotFoundFactory
 } from '@/modules/core/repositories/objects'
 import { expect } from 'chai'
-import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
+import { parse, Parser } from 'csv-parse'
+import { createReadStream } from 'fs'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = legacyGetUserFactory({ db })
@@ -96,68 +97,149 @@ const createObjectsBatched = createObjectsBatchedFactory({
   storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db })
 })
 
-const { FF_OBJECTS_STREAMING_FIX } = getFeatureFlags()
-
-describe('Objects REST @core', () => {
+describe('Objects streaming REST @core', () => {
   let serverAddress: string
   before(async () => {
     const ctx = await beforeEachContext()
     ;({ serverAddress } = await initializeTestServer(ctx))
   })
-  ;(FF_OBJECTS_STREAMING_FIX ? it : it.skip)(
-    'should close database connections if client connection is prematurely closed',
-    async () => {
-      const userId = await createUser({
-        name: 'emails user',
-        email: createRandomEmail(),
-        password: createRandomPassword()
-      })
-      const user = await getUser(userId)
 
-      const project = {
-        id: '',
-        name: 'test project',
-        ownerId: userId
-      }
-      await createTestStream(project as unknown as BasicTestStream, user)
+  it('should close database connections if client connection is prematurely closed', async () => {
+    const userId = await createUser({
+      name: 'emails user',
+      email: createRandomEmail(),
+      password: createRandomPassword()
+    })
+    const user = await getUser(userId)
 
-      const token = `Bearer ${await createPersonalAccessToken(
-        user.id,
-        'test token user A',
-        [
-          Scopes.Streams.Read,
-          Scopes.Streams.Write,
-          Scopes.Users.Read,
-          Scopes.Users.Email,
-          Scopes.Tokens.Write,
-          Scopes.Tokens.Read,
-          Scopes.Profile.Read,
-          Scopes.Profile.Email
-        ]
-      )}`
-
-      const manyObjs: { commit: RawSpeckleObject; objs: RawSpeckleObject[] } =
-        generateManyObjects(3333, 'perlin merlin magic')
-      const objsIds = manyObjs.objs.map((o) => o.id)
-
-      await createObjectsBatched({ streamId: project.id, objects: manyObjs.objs })
-      for (let i = 0; i < 4; i++) {
-        forceCloseStreamingConnection({
-          serverAddress,
-          projectId: project.id,
-          token,
-          objsIds
-        })
-      }
-
-      //sleep for a bit to allow the server to close the connections
-      await new Promise((r) => setTimeout(r, 3000))
-      const gaugeContents = await determineRemainingDatabaseConnectionCapacity({
-        serverAddress
-      })
-      expect(parseInt(gaugeContents), gaugeContents).to.gte(4) //expect all connections to become available again after the client closes them
+    const project = {
+      id: '',
+      name: 'test project',
+      ownerId: userId
     }
-  )
+    await createTestStream(project as unknown as BasicTestStream, user)
+
+    const token = `Bearer ${await createPersonalAccessToken(
+      user.id,
+      'test token user A',
+      [
+        Scopes.Streams.Read,
+        Scopes.Streams.Write,
+        Scopes.Users.Read,
+        Scopes.Users.Email,
+        Scopes.Tokens.Write,
+        Scopes.Tokens.Read,
+        Scopes.Profile.Read,
+        Scopes.Profile.Email
+      ]
+    )}`
+
+    const manyObjs: { commit: RawSpeckleObject; objs: RawSpeckleObject[] } =
+      generateManyObjects(3333, 'perlin merlin magic')
+    const objsIds = manyObjs.objs.map((o) => o.id)
+
+    await createObjectsBatched({ streamId: project.id, objects: manyObjs.objs })
+    for (let i = 0; i < 4; i++) {
+      forceCloseStreamingConnection({
+        serverAddress,
+        projectId: project.id,
+        token,
+        objsIds
+      })
+    }
+
+    //sleep for a bit to allow the server to close the connections
+    await new Promise((r) => setTimeout(r, 3000))
+    const gaugeContents = await determineRemainingDatabaseConnectionCapacity({
+      serverAddress
+    })
+    expect(parseInt(gaugeContents), gaugeContents).to.gte(4) //expect all connections to become available again after the client closes them
+  })
+
+  it('should stream model with some failing feature', async () => {
+    const userId = await createUser({
+      name: 'emails user',
+      email: createRandomEmail(),
+      password: createRandomPassword()
+    })
+    const user = await getUser(userId)
+
+    const project = {
+      id: '',
+      name: 'test project',
+      ownerId: userId
+    }
+    await createTestStream(project as unknown as BasicTestStream, user)
+
+    const token = `Bearer ${await createPersonalAccessToken(
+      user.id,
+      'test token user A',
+      [
+        Scopes.Streams.Read,
+        Scopes.Streams.Write,
+        Scopes.Users.Read,
+        Scopes.Users.Email,
+        Scopes.Tokens.Write,
+        Scopes.Tokens.Read,
+        Scopes.Profile.Read,
+        Scopes.Profile.Email
+      ]
+    )}`
+
+    // import CSV file
+    const csvStream = createReadStream(
+      //FIXME this relies on running this test from `packages/server` directory
+      `${process.cwd()}/test/assets/failing-streaming-model-f547dc4e88.csv`
+    )
+      // eslint-disable-next-line camelcase
+      .pipe(parse({ delimiter: ',', from_line: 2 }))
+
+    function csvParserAsPromise(
+      stream: Parser
+    ): Promise<{ manyObjs: RawSpeckleObject[]; objsIds: string[] }> {
+      const manyObjs: RawSpeckleObject[] = []
+      const objsIds: string[] = []
+      return new Promise((resolve, reject) => {
+        stream.on('data', (row: string[]) => {
+          const obj = JSON.parse(row[1])
+          manyObjs.push(obj)
+          objsIds.push(row[0])
+        })
+        stream.on('end', () => resolve({ manyObjs, objsIds }))
+        stream.on('error', (error: unknown) => reject(error))
+      })
+    }
+
+    const { manyObjs, objsIds } = await csvParserAsPromise(csvStream)
+
+    const preGaugeContents = await determineRemainingDatabaseConnectionCapacity({
+      serverAddress
+    })
+    expect(
+      parseInt(preGaugeContents),
+      `Prior to test, we did not have sufficient DB connections free: ${preGaugeContents}`
+    ).to.gte(4) // all connections are available before the test
+
+    await createObjectsBatched({ streamId: project.id, objects: manyObjs })
+    for (let i = 0; i < 1; i++) {
+      forceCloseStreamingConnection({
+        serverAddress,
+        projectId: project.id,
+        token,
+        objsIds
+      })
+    }
+
+    //sleep for a bit to allow the server to close the connections
+    await new Promise((r) => setTimeout(r, 3000))
+    const postGaugeContents = await determineRemainingDatabaseConnectionCapacity({
+      serverAddress
+    })
+    expect(
+      parseInt(postGaugeContents),
+      `After the test, we did not have sufficient DB connections free: ${postGaugeContents}`
+    ).to.gte(4) //expect all connections to become available again after the client closes them
+  }).timeout(50000)
 })
 
 const forceCloseStreamingConnection = async (params: {
