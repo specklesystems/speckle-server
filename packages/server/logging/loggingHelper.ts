@@ -29,11 +29,11 @@ export const redactSensitiveVariables = (variables: unknown): unknown => {
       return acc
     }
 
-    if (typeof acc[key] === 'string' && acc[key].startsWith('data:image/png;')) {
-      acc[key] = `${acc[key].substring(
-        0,
-        40
-      )}...[truncated image data. Original length: ${acc[key].length}]`
+    const value = acc[key]
+    if (value && typeof value === 'string' && value.startsWith('data:image/png;')) {
+      acc[key] = `${value.substring(0, 40)}...[truncated image data. Original length: ${
+        value.length
+      }]`
     }
 
     acc[key] = val
