@@ -126,7 +126,7 @@
           </div>
         </div>
       </template>
-      <template v-if="isServerAdmin">
+      <template v-if="isServerAdmin || isAdmin">
         <hr class="mb-6 mt-8 border-outline-2" />
         <p class="text-body-2xs text-foreground-2">
           Workspace ID: #{{ workspaceResult?.workspaceBySlug?.id }}
