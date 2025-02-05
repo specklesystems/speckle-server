@@ -61,7 +61,14 @@ const objectsRouterFactory = () => {
         res,
         (err) => {
           if (err) {
-            boundLogger.error(err, 'Error downloading object from stream')
+            switch (err.code) {
+              case 'ERR_STREAM_PREMATURE_CLOSE':
+                boundLogger.info({ err }, 'Client closed connection early')
+                break
+              default:
+                boundLogger.error({ err }, 'Error downloading object from stream')
+                break
+            }
           } else {
             boundLogger.info(
               { megaBytesWritten: gzipStream.bytesWritten / 1000000 },
