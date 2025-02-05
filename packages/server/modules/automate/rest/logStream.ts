@@ -1,12 +1,10 @@
 import { db } from '@/db/knex'
 import { getAutomationRunLogs } from '@/modules/automate/clients/executionEngine'
 import { ExecutionEngineFailedResponseError } from '@/modules/automate/errors/executionEngine'
-import {
-  getAutomationProjectFactory,
-  getAutomationRunWithTokenFactory
-} from '@/modules/automate/repositories/automations'
+import { getAutomationRunWithTokenFactory } from '@/modules/automate/repositories/automations'
 import { corsMiddleware } from '@/modules/core/configs/cors'
 import { getStreamFactory } from '@/modules/core/repositories/streams'
+import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import {
   validateRequiredStreamFactory,
   validateResourceAccess,
@@ -18,10 +16,11 @@ import { authMiddlewareCreator } from '@/modules/shared/middleware'
 import { getRolesFactory } from '@/modules/shared/repositories/roles'
 import { Roles, Scopes } from '@speckle/shared'
 import { Application } from 'express'
+import { FunctionRunNotFoundError } from '@/modules/automate/errors/runs'
 
 export default (app: Application) => {
   app.get(
-    '/api/automate/automations/:automationId/runs/:runId/logs',
+    '/api/v1/projects/:streamId/automations/:automationId/runs/:runId/logs',
     corsMiddleware(),
     authMiddlewareCreator([
       validateServerRoleBuilderFactory({
@@ -29,28 +28,32 @@ export default (app: Application) => {
       })({ requiredRole: Roles.Server.Guest }),
       validateScope({ requiredScope: Scopes.Streams.Read }),
       validateRequiredStreamFactory({
-        getStream: getStreamFactory({ db }),
-        getAutomationProject: getAutomationProjectFactory({ db })
+        getStream: getStreamFactory({ db })
       }),
       validateStreamRoleBuilderFactory({ getRoles: getRolesFactory({ db }) })({
-        requiredRole: Roles.Stream.Owner
+        requiredRole: Roles.Stream.Reviewer
       }),
       validateResourceAccess
     ]),
     async (req, res) => {
+      const projectDb = await getProjectDbClient({ projectId: req.params.streamId })
       const automationId = req.params.automationId
       const runId = req.params.runId
 
-      const getAutomationRunWithToken = getAutomationRunWithTokenFactory({ db })
+      const getAutomationRunWithToken = getAutomationRunWithTokenFactory({
+        db: projectDb
+      })
       const run = await getAutomationRunWithToken({
         automationId,
         automationRunId: runId
       })
       if (!run) {
-        throw new Error("Couldn't find automation or its run")
+        throw new FunctionRunNotFoundError("Couldn't find automation or its run")
       }
       if (!run.executionEngineRunId) {
-        throw new Error('No associated run found on the execution engine')
+        throw new FunctionRunNotFoundError(
+          'No associated run found on the execution engine'
+        )
       }
 
       const setPlaintextHeaders = () => {

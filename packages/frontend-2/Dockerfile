@@ -34,14 +34,23 @@ RUN yarn workspaces foreach -W run build
 RUN find ./packages/frontend-2/.output/ -type f \( -name "*.js.map" -o -name "*.mjs.map" -o -name "*.cjs.map" \) -exec rm -f {} \;
 
 ENV TINI_VERSION=v0.19.0
-ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
-RUN chmod +x /tini
+RUN apt-get update -y \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y \
+     --no-install-recommends \
+     ca-certificates=20230311 \
+     curl=7.88.1-10+deb12u8 \
+    && curl -fsSL https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini -o /tini \
+    && chmod +x /tini \
+    && apt-get remove -y curl \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 FROM gcr.io/distroless/nodejs22-debian12:nonroot@sha256:ed26b3ab750110c51d9dbdfd6c697561dc40a01c296460c3494d47b550ef4126 AS production-stage
 ARG NODE_ENV=production
 ENV NODE_ENV=${NODE_ENV}
 
-COPY --from=build-stage /tini /tini
+COPY --link --from=build-stage /tini /tini
 
 ENTRYPOINT ["/tini", "--"]
 
@@ -53,7 +62,7 @@ ENV NUXT_PUBLIC_MIXPANEL_TOKEN_ID=acd87c5a50b56df91a795e999812a3a4
 ENV NUXT_PUBLIC_MIXPANEL_API_HOST=https://analytics.speckle.systems
 
 WORKDIR /speckle-server
-COPY --from=build-stage  /speckle-server/packages/frontend-2/.output .
+COPY --link --from=build-stage  /speckle-server/packages/frontend-2/.output .
 
 EXPOSE ${PORT}
 

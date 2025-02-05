@@ -13,9 +13,17 @@ import {
   UpdateDefaultApp
 } from '@/modules/auth/domain/operations'
 import { ScopeRecord } from '@/modules/auth/helpers/types'
-import { createAppToken, createBareToken } from '@/modules/core/services/tokens'
+import { CreateAndStoreAppToken } from '@/modules/core/domain/tokens/operations'
+import { createBareToken } from '@/modules/core/services/tokens'
 import { ServerScope } from '@speckle/shared'
 import bcrypt from 'bcrypt'
+import {
+  AccessCodeNotFoundError,
+  AppTokenCreateError,
+  RefreshTokenError,
+  RefreshTokenNotFound
+} from '@/modules/auth/errors'
+import { ResourceMismatch } from '@/modules/shared/errors'
 
 /**
  * Cached all scopes. Caching occurs on first initializeDefaultApps() call
@@ -64,29 +72,30 @@ export const createAppTokenFromAccessCodeFactory =
     deleteAuthorizationCode: DeleteAuthorizationCode
     getApp: GetApp
     createRefreshToken: CreateRefreshToken
-    createAppToken: typeof createAppToken
+    createAppToken: CreateAndStoreAppToken
     createBareToken: typeof createBareToken
   }): CreateAppTokenFromAccessCode =>
   async ({ appId, appSecret, accessCode, challenge }) => {
     const code = await deps.getAuthorizationCode({ id: accessCode })
 
-    if (!code) throw new Error('Access code not found.')
+    if (!code) throw new AccessCodeNotFoundError('Access code not found.')
     if (code.appId !== appId)
-      throw new Error('Invalid request: application id does not match.')
+      throw new ResourceMismatch('Invalid request: application id does not match.')
 
     await deps.deleteAuthorizationCode({ id: accessCode })
 
     const timeDiff = Math.abs(Date.now() - new Date(code.createdAt).getTime())
     if (timeDiff > code.lifespan) {
-      throw new Error('Access code expired')
+      throw new AppTokenCreateError('Access code expired')
     }
 
-    if (code.challenge !== challenge) throw new Error('Invalid request')
+    if (code.challenge !== challenge) throw new AppTokenCreateError('Invalid request')
 
     const app = await deps.getApp({ id: appId })
 
-    if (!app) throw new Error('Invalid app')
-    if (app.secret !== appSecret) throw new Error('Invalid app credentials')
+    if (!app) throw new AppTokenCreateError('Invalid app')
+    if (app.secret !== appSecret)
+      throw new AppTokenCreateError('Invalid app credentials')
 
     const appScopes = app.scopes.map((s) => s.name)
 
@@ -120,7 +129,7 @@ export const refreshAppTokenFactory =
     revokeRefreshToken: RevokeRefreshToken
     createRefreshToken: CreateRefreshToken
     getApp: GetApp
-    createAppToken: typeof createAppToken
+    createAppToken: CreateAndStoreAppToken
     createBareToken: typeof createBareToken
   }) =>
   async (params: { refreshToken: string; appId: string; appSecret: string }) => {
@@ -131,24 +140,24 @@ export const refreshAppTokenFactory =
 
     const refreshTokenDb = await deps.getRefreshToken({ id: refreshTokenId })
 
-    if (!refreshTokenDb) throw new Error('Invalid request')
+    if (!refreshTokenDb) throw new RefreshTokenNotFound('Invalid request')
 
-    if (refreshTokenDb.appId !== appId) throw new Error('Invalid request')
+    if (refreshTokenDb.appId !== appId) throw new ResourceMismatch('Invalid request')
 
     const timeDiff = Math.abs(Date.now() - new Date(refreshTokenDb.createdAt).getTime())
     if (timeDiff > refreshTokenDb.lifespan) {
       await deps.revokeRefreshToken({ tokenId: refreshTokenId })
-      throw new Error('Refresh token expired')
+      throw new RefreshTokenError('Refresh token expired')
     }
 
     const valid = await bcrypt.compare(refreshTokenContent, refreshTokenDb.tokenDigest)
-    if (!valid) throw new Error('Invalid token') // sneky hackstors
+    if (!valid) throw new RefreshTokenError('Invalid token') // sneky hackstors
 
     const app = await deps.getApp({ id: appId })
-    if (!app || app.secret !== appSecret) throw new Error('Invalid request')
+    if (!app || app.secret !== appSecret) throw new RefreshTokenError('Invalid request')
 
     // Create the new token
-    const appToken = await createAppToken({
+    const appToken = await deps.createAppToken({
       userId: refreshTokenDb.userId,
       name: `${app.name}-token`,
       scopes: app.scopes.map((s) => s.name),
@@ -156,7 +165,7 @@ export const refreshAppTokenFactory =
     })
 
     // Create a new refresh token
-    const bareToken = await createBareToken()
+    const bareToken = await deps.createBareToken()
 
     const freshRefreshToken = {
       id: bareToken.tokenId,

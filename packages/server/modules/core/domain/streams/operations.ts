@@ -8,7 +8,6 @@ import {
 import { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
 import {
   DiscoverableStreamsSortingInput,
-  ProjectCreateInput,
   ProjectUpdateInput,
   ProjectUpdateRoleInput,
   QueryDiscoverableStreamsArgs,
@@ -20,6 +19,8 @@ import {
 import { ContextResourceAccessRules } from '@/modules/core/helpers/token'
 import { MaybeNullOrUndefined, Nullable, Optional, StreamRoles } from '@speckle/shared'
 import { Knex } from 'knex'
+import type express from 'express'
+import { ProjectCreateArgs } from '@/modules/core/domain/projects/operations'
 
 export type LegacyGetStreams = (params: {
   cursor?: string | Date | null | undefined
@@ -63,21 +64,20 @@ export type GetCommitStream = (params: {
 
 export type GetStreamCollaborators = (
   streamId: string,
-  type?: StreamRoles
+  type?: StreamRoles,
+  options?: Partial<{
+    limit: number
+  }>
 ) => Promise<Array<LimitedUserWithStreamRole>>
 
-export type LegacyGetStreamCollaborators = (params: { streamId: string }) => Promise<
-  {
-    role: string
-    id: string
-    name: string
-    company: string
-    avatar: string
-  }[]
->
+export type GetStreamsCollaborators = (params: { streamIds: string[] }) => Promise<{
+  [streamId: string]: Array<LimitedUserWithStreamRole>
+}>
+
+export type GetUserDeletableStreams = (userId: string) => Promise<Array<string>>
 
 export type StoreStream = (
-  input: StreamCreateInput | ProjectCreateInput,
+  input: StreamCreateInput | ProjectCreateArgs,
   options?: Partial<{
     ownerId: string
     trx: Knex.Transaction
@@ -95,7 +95,7 @@ export type CanUserFavoriteStream = (params: {
   streamId: string
 }) => Promise<boolean>
 
-export type DeleteStreamRecords = (streamId: string) => Promise<number>
+export type DeleteStreamRecord = (streamId: string) => Promise<number>
 
 export type GetOnboardingBaseStream = (version: string) => Promise<Optional<Stream>>
 
@@ -157,7 +157,12 @@ export type BaseUserStreamsQueryParams = {
    * Only allow streams with the specified IDs to be returned
    */
   streamIdWhitelist?: string[]
-  workspaceId?: string
+  workspaceId?: string | null
+
+  /**
+   * Only with active sso session
+   */
+  onlyWithActiveSsoSession?: boolean
 }
 
 export type UserStreamsQueryParams = BaseUserStreamsQueryParams & {
@@ -244,13 +249,10 @@ export type GrantStreamPermissions = (
 ) => Promise<Optional<Stream>>
 
 export type CreateStream = (
-  params: (StreamCreateInput | ProjectCreateInput) & {
+  params: (StreamCreateInput | ProjectCreateArgs) & {
     ownerId: string
     ownerResourceAccessRules?: MaybeNullOrUndefined<TokenResourceIdentifier[]>
-  },
-  options?: Partial<{
-    createActivity: boolean
-  }>
+  }
 ) => Promise<Stream>
 
 export type LegacyCreateStream = (
@@ -346,3 +348,32 @@ export type FavoriteStream = (params: {
   favorited?: boolean | undefined
   userResourceAccessRules?: ContextResourceAccessRules
 }) => Promise<Stream>
+
+export type AdminGetProjectList = (args: {
+  query: string | null
+  orderBy: string | null
+  visibility: string | null
+  limit: number
+  streamIdWhitelist?: string[]
+  cursor: string | null
+}) => Promise<{
+  cursor: null | string
+  items: Stream[]
+  totalCount: number
+}>
+
+export type ValidatePermissionsReadStream = (
+  streamId: string,
+  req: express.Request
+) => Promise<{
+  result: boolean
+  status: number
+}>
+
+export type ValidatePermissionsWriteStream = (
+  streamId: string,
+  req: express.Request
+) => Promise<{
+  result: boolean
+  status: number
+}>

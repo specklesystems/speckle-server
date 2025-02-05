@@ -12,7 +12,6 @@ import {
   NotificationType,
   NotificationTypeMessageMap
 } from '@/modules/notifications/helpers/types'
-import { sleep } from '@/test/helpers'
 import {
   getActivityFactory,
   saveActivityFactory
@@ -36,16 +35,15 @@ import {
 import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
 import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import { addStreamCreatedActivityFactory } from '@/modules/activitystream/services/streamActivity'
-import { ProjectsEmitter } from '@/modules/core/events/projectsEmitter'
 import { createBranchFactory } from '@/modules/core/repositories/branches'
-import { publish } from '@/modules/shared/utils/subscriptions'
 import { getUserFactory, getUsersFactory } from '@/modules/core/repositories/users'
+import { getServerInfoFactory } from '@/modules/core/repositories/server'
 
 const cleanup = async () => {
   await truncateTables([StreamActivity.name, Users.name])
 }
 
+const getServerInfo = getServerInfoFactory({ db })
 const getUser = getUserFactory({ db })
 const getUsers = getUsersFactory({ db })
 const getStream = getStreamFactory({ db })
@@ -54,10 +52,6 @@ const createActivitySummary = createActivitySummaryFactory({
   getStream,
   getActivity: getActivityFactory({ db }),
   getUser
-})
-const addStreamCreatedActivity = addStreamCreatedActivityFactory({
-  saveActivity: saveActivityFactory({ db }),
-  publish
 })
 const createStream = legacyCreateStreamFactory({
   createStreamReturnRecord: createStreamReturnRecordFactory({
@@ -76,14 +70,14 @@ const createStream = legacyCreateStreamFactory({
             eventName,
             payload
           }),
-        getUser
+        getUser,
+        getServerInfo
       }),
       getUsers
     }),
     createStream: createStreamFactory({ db }),
     createBranch: createBranchFactory({ db }),
-    addStreamCreatedActivity,
-    projectsEventsEmitter: ProjectsEmitter.emit
+    emitEvent: getEventBus().emit
   })
 })
 const deleteStream = deleteStreamFactory({ db })
@@ -123,7 +117,8 @@ describe('Activity summary @activity', () => {
         end: new Date()
       })
 
-      expect(summary?.streamActivities).to.have.length(0)
+      // stream creation is an activity
+      expect(summary?.streamActivities).to.have.length(2)
     })
     it('gets activities for the user', async () => {
       const start = new Date()
@@ -132,16 +127,6 @@ describe('Activity summary @activity', () => {
           createStream({ ...stream, ownerId: userA.id })
         )
       )
-      await saveActivity({
-        streamId: streamIds[0],
-        resourceType: ResourceTypes.Stream,
-        resourceId: streamIds[0],
-        actionType: ActionTypes.Stream.Create,
-        userId: userA.id,
-        info: {},
-        message: 'foo'
-      })
-      await sleep(100)
       const summary = await createActivitySummary({
         userId: userA.id,
         streamIds,
@@ -149,7 +134,7 @@ describe('Activity summary @activity', () => {
         end: new Date()
       })
 
-      expect(summary?.streamActivities).to.have.length(1)
+      expect(summary?.streamActivities).to.have.length(2)
     })
 
     it('if stream is deleted, activity summary returns with null as stream value', async () => {

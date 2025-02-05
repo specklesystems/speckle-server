@@ -6,9 +6,12 @@ import {
   authHasFailed
 } from '@/modules/shared/authz'
 import { Request, Response, NextFunction, Handler } from 'express'
-import { ForbiddenError, UnauthorizedError } from '@/modules/shared/errors'
+import {
+  ForbiddenError,
+  NotFoundError,
+  UnauthorizedError
+} from '@/modules/shared/errors'
 import { ensureError } from '@/modules/shared/helpers/errorHelper'
-import { validateToken } from '@/modules/core/services/tokens'
 import { TokenValidationResult } from '@/modules/core/helpers/types'
 import { buildRequestLoaders } from '@/modules/core/loaders'
 import {
@@ -27,6 +30,17 @@ import { resourceAccessRuleToIdentifier } from '@/modules/core/helpers/token'
 import { delayGraphqlResponsesBy } from '@/modules/shared/helpers/envHelper'
 import { subscriptionLogger } from '@/logging/logging'
 import { GetUser } from '@/modules/core/domain/users/operations'
+import { validateTokenFactory } from '@/modules/core/services/tokens'
+import {
+  getApiTokenByIdFactory,
+  getTokenResourceAccessDefinitionsByIdFactory,
+  getTokenScopesByIdFactory,
+  revokeUserTokenByIdFactory,
+  updateApiTokenFactory
+} from '@/modules/core/repositories/tokens'
+import { db } from '@/db/knex'
+import { getTokenAppInfoFactory } from '@/modules/auth/repositories/apps'
+import { getUserRoleFactory } from '@/modules/core/repositories/users'
 
 export const authMiddlewareCreator = (steps: AuthPipelineFunction[]) => {
   const pipeline = authPipelineCreator(steps)
@@ -44,6 +58,7 @@ export const authMiddlewareCreator = (steps: AuthPipelineFunction[]) => {
         message = authResult.error?.message || message
         if (authResult.error instanceof UnauthorizedError) status = 401
         if (authResult.error instanceof ForbiddenError) status = 403
+        if (authResult.error instanceof NotFoundError) status = 404
       }
       return res.status(status).json({ error: message })
     }
@@ -72,9 +87,7 @@ export const getTokenFromRequest = (req: Request | null | undefined): string | n
  */
 export async function createAuthContextFromToken(
   rawToken: string | null,
-  tokenValidator: (
-    tokenString: string
-  ) => Promise<TokenValidationResult> = validateToken
+  tokenValidator: (tokenString: string) => Promise<TokenValidationResult>
 ): Promise<AuthContext> {
   // null, undefined or empty string tokens can continue without errors and auth: false
   // to enable anonymous user access to public resources
@@ -112,8 +125,22 @@ export async function authContextMiddleware(
   res: Response,
   next: NextFunction
 ) {
+  const validateToken = validateTokenFactory({
+    revokeUserTokenById: revokeUserTokenByIdFactory({ db }),
+    getApiTokenById: getApiTokenByIdFactory({ db }),
+    getTokenAppInfo: getTokenAppInfoFactory({ db }),
+    getTokenScopesById: getTokenScopesByIdFactory({ db }),
+    getUserRole: getUserRoleFactory({ db }),
+    getTokenResourceAccessDefinitionsById: getTokenResourceAccessDefinitionsByIdFactory(
+      {
+        db
+      }
+    ),
+    updateApiToken: updateApiTokenFactory({ db })
+  })
+
   const token = getTokenFromRequest(req)
-  const authContext = await createAuthContextFromToken(token)
+  const authContext = await createAuthContextFromToken(token, validateToken)
   const loggedContext = Object.fromEntries(
     Object.entries(authContext).filter(
       ([key]) => !['token'].includes(key.toLocaleLowerCase())
@@ -138,13 +165,13 @@ export async function authContextMiddleware(
   next()
 }
 
-export function addLoadersToCtx(
+export async function addLoadersToCtx(
   ctx: Merge<Omit<GraphQLContext, 'loaders'>, { log?: Optional<pino.Logger> }>,
   options?: Partial<{ cleanLoadersEarly: boolean }>
-): GraphQLContext {
+): Promise<GraphQLContext> {
   const log =
     ctx.log || Observability.extendLoggerComponent(Observability.getLogger(), 'graphql')
-  const loaders = buildRequestLoaders(ctx, options)
+  const loaders = await buildRequestLoaders(ctx, options)
   return { ...ctx, loaders, log }
 }
 
@@ -160,9 +187,23 @@ export async function buildContext({
   token?: Nullable<string>
   cleanLoadersEarly?: boolean
 }): Promise<GraphQLContext> {
+  const validateToken = validateTokenFactory({
+    revokeUserTokenById: revokeUserTokenByIdFactory({ db }),
+    getApiTokenById: getApiTokenByIdFactory({ db }),
+    getTokenAppInfo: getTokenAppInfoFactory({ db }),
+    getTokenScopesById: getTokenScopesByIdFactory({ db }),
+    getUserRole: getUserRoleFactory({ db }),
+    getTokenResourceAccessDefinitionsById: getTokenResourceAccessDefinitionsByIdFactory(
+      {
+        db
+      }
+    ),
+    updateApiToken: updateApiTokenFactory({ db })
+  })
+
   const ctx =
     req?.context ||
-    (await createAuthContextFromToken(token ?? getTokenFromRequest(req)))
+    (await createAuthContextFromToken(token ?? getTokenFromRequest(req), validateToken))
 
   const log = Observability.extendLoggerComponent(
     req?.log || subscriptionLogger,
@@ -176,7 +217,7 @@ export async function buildContext({
   }
 
   // Adding request data loaders
-  return addLoadersToCtx(
+  return await addLoadersToCtx(
     {
       ...ctx,
       log

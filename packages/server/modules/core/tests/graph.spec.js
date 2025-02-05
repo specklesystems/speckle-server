@@ -5,8 +5,6 @@ const request = require('supertest')
 const { beforeEachContext, initializeTestServer } = require(`@/test/hooks`)
 const { generateManyObjects } = require(`@/test/helpers`)
 
-const { createUser, changeUserRole } = require('@/modules/core/services/users')
-const { createPersonalAccessToken } = require('../services/tokens')
 const { Roles, Scopes } = require('@speckle/shared')
 const cryptoRandomString = require('crypto-random-string')
 const { saveActivityFactory } = require('@/modules/activitystream/repositories')
@@ -31,8 +29,49 @@ const {
 const { publish } = require('@/modules/shared/utils/subscriptions')
 const {
   getUserFactory,
-  legacyGetPaginatedUsersFactory
+  legacyGetPaginatedUsersFactory,
+  storeUserFactory,
+  countAdminUsersFactory,
+  storeUserAclFactory,
+  isLastAdminUserFactory,
+  updateUserServerRoleFactory
 } = require('@/modules/core/repositories/users')
+const {
+  findEmailFactory,
+  createUserEmailFactory,
+  ensureNoPrimaryEmailForUserFactory
+} = require('@/modules/core/repositories/userEmails')
+const {
+  requestNewEmailVerificationFactory
+} = require('@/modules/emails/services/verification/request')
+const {
+  deleteOldAndInsertNewVerificationFactory
+} = require('@/modules/emails/repositories')
+const { renderEmail } = require('@/modules/emails/services/emailRendering')
+const { sendEmail } = require('@/modules/emails/services/sending')
+const {
+  createUserFactory,
+  changeUserRoleFactory
+} = require('@/modules/core/services/users/management')
+const {
+  validateAndCreateUserEmailFactory
+} = require('@/modules/core/services/userEmails')
+const {
+  finalizeInvitedServerRegistrationFactory
+} = require('@/modules/serverinvites/services/processing')
+const {
+  deleteServerOnlyInvitesFactory,
+  updateAllInviteTargetsFactory
+} = require('@/modules/serverinvites/repositories/serverInvites')
+const { createPersonalAccessTokenFactory } = require('@/modules/core/services/tokens')
+const {
+  storeApiTokenFactory,
+  storeTokenScopesFactory,
+  storeTokenResourceAccessDefinitionsFactory,
+  storePersonalApiTokenFactory
+} = require('@/modules/core/repositories/tokens')
+const { getServerInfoFactory } = require('@/modules/core/repositories/server')
+const { getEventBus } = require('@/modules/shared/services/eventBus')
 
 const getUser = getUserFactory({ db })
 const getStream = getStreamFactory({ db })
@@ -66,9 +105,53 @@ const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
 })
 const getUsers = legacyGetPaginatedUsersFactory({ db })
 
+const getServerInfo = getServerInfoFactory({ db })
+const findEmail = findEmailFactory({ db })
+const requestNewEmailVerification = requestNewEmailVerificationFactory({
+  findEmail,
+  getUser: getUserFactory({ db }),
+  getServerInfo,
+  deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db }),
+  renderEmail,
+  sendEmail
+})
+const createUser = createUserFactory({
+  getServerInfo,
+  findEmail,
+  storeUser: storeUserFactory({ db }),
+  countAdminUsers: countAdminUsersFactory({ db }),
+  storeUserAcl: storeUserAclFactory({ db }),
+  validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
+    createUserEmail: createUserEmailFactory({ db }),
+    ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
+    findEmail,
+    updateEmailInvites: finalizeInvitedServerRegistrationFactory({
+      deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
+      updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
+    }),
+    requestNewEmailVerification
+  }),
+  emitEvent: getEventBus().emit
+})
+
+const createPersonalAccessToken = createPersonalAccessTokenFactory({
+  storeApiToken: storeApiTokenFactory({ db }),
+  storeTokenScopes: storeTokenScopesFactory({ db }),
+  storeTokenResourceAccessDefinitions: storeTokenResourceAccessDefinitionsFactory({
+    db
+  }),
+  storePersonalApiToken: storePersonalApiTokenFactory({ db })
+})
+
 let app
 let server
 let sendRequest
+
+const changeUserRole = changeUserRoleFactory({
+  getServerInfo,
+  isLastAdminUser: isLastAdminUserFactory({ db }),
+  updateUserServerRole: updateUserServerRoleFactory({ db })
+})
 
 describe('GraphQL API Core @core-api', () => {
   const userA = {
@@ -89,8 +172,10 @@ describe('GraphQL API Core @core-api', () => {
 
   // set up app & two basic users to ping pong permissions around
   before(async () => {
-    ;({ app, server } = await beforeEachContext())
-    ;({ sendRequest } = await initializeTestServer(server, app))
+    const ctx = await beforeEachContext()
+    server = ctx.server
+    app = ctx.app
+    ;({ sendRequest } = await initializeTestServer(ctx))
 
     userA.id = await createUser(userA)
     userA.token = `Bearer ${await createPersonalAccessToken(
@@ -278,7 +363,10 @@ describe('GraphQL API Core @core-api', () => {
         const res = await sendRequest(userA.token, {
           query: 'mutation($user:UserUpdateInput!) { userUpdate( user: $user) } ',
           variables: {
-            user: { name: 'Miticå', bio: 'He never really knows what he is doing.' }
+            user: {
+              name: 'test user updated',
+              bio: 'He never really knows what he is doing.'
+            }
           }
         })
         expect(res).to.be.json
@@ -1130,7 +1218,7 @@ describe('GraphQL API Core @core-api', () => {
         expect(res).to.be.json
         expect(res.body.errors).to.not.exist
         expect(res.body.data).to.have.property('user')
-        expect(res.body.data.user.name).to.equal('Miticå')
+        expect(res.body.data.user.name).to.equal('test user updated')
         expect(res.body.data.user.email).to.equal('d.1@speckle.systems')
         expect(res.body.data.user.role).to.equal(Roles.Server.Admin)
       })
@@ -1356,8 +1444,15 @@ describe('GraphQL API Core @core-api', () => {
 
         expect(stream.name).to.equal('TS1 (u A) Private UPDATED')
         expect(stream.collaborators).to.have.lengthOf(2)
-        expect(stream.collaborators[0].role).to.equal(Roles.Stream.Contributor)
-        expect(stream.collaborators[1].role).to.equal(Roles.Stream.Owner)
+
+        const d2User = stream.collaborators.find((c) => c.name === 'd2')
+        const testUserUpdated = stream.collaborators.find(
+          (c) => c.name === 'test user updated'
+        )
+        expect(d2User).to.be.ok
+        expect(testUserUpdated).to.be.ok
+        expect(d2User.role).to.equal(Roles.Stream.Contributor)
+        expect(testUserUpdated.role).to.equal(Roles.Stream.Owner)
       })
 
       it('Should retrieve a public stream even if not authenticated', async () => {

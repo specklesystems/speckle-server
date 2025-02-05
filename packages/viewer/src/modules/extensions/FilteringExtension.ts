@@ -417,7 +417,9 @@ export class FilteringExtension extends Extension {
     this.UserspaceColorState = null
     this.StateKey = undefined
     this.Renderer.resetMaterials()
-    this.viewer.requestRender(UpdateFlags.RENDER | UpdateFlags.SHADOWS)
+    this.CurrentFilteringState = {}
+    this.viewer.requestRender(UpdateFlags.RENDER_RESET | UpdateFlags.SHADOWS)
+    this.emit(ViewerEvent.FilteringStateSet, this.CurrentFilteringState)
     return null
   }
 
@@ -538,7 +540,7 @@ export class FilteringExtension extends Extension {
     }
 
     this.Renderer.viewer.requestRender(
-      UpdateFlags.RENDER | UpdateFlags.SHADOWS | UpdateFlags.CLIPPING_PLANES
+      UpdateFlags.RENDER_RESET | UpdateFlags.SHADOWS | UpdateFlags.CLIPPING_PLANES
     )
     this.emit(ViewerEvent.FilteringStateSet, this.CurrentFilteringState)
     return this.CurrentFilteringState

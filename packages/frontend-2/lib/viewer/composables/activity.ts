@@ -21,7 +21,7 @@ import { broadcastViewerUserActivityMutation } from '~~/lib/viewer/graphql/mutat
 import { convertThrowIntoFetchResult } from '~~/lib/common/helpers/graphql'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
-import { useIntervalFn } from '@vueuse/core'
+import { useIntervalFn, useWindowFocus } from '@vueuse/core'
 import type { MaybeRef } from '@vueuse/core'
 import type { CSSProperties, Ref } from 'vue'
 import { useViewerAnchoredPoints } from '~~/lib/viewer/composables/anchorPoints'
@@ -294,7 +294,21 @@ export function useViewerUserActivityTracking(params: {
     }
   }
 
+  const focused = useWindowFocus()
+
+  // Disable disconnect-on-blur behaviour in development mode only
+  // For testing multi-user interactions (like follow mode)
+  watch(focused, async (newVal) => {
+    if (import.meta.dev) return
+
+    if (!newVal) {
+      await sendUpdate.emitDisconnected()
+    } else {
+      await sendUpdate.emitViewing()
+    }
+  })
   const sendUpdateAndHideStaleUsers = () => {
+    if (!focused.value) return
     hideStaleUsers()
     sendUpdate.emitViewing()
   }

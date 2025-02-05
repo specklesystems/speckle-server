@@ -13,9 +13,10 @@
         </FormButton>
       </template>
     </ProjectPageSettingsBlock>
-    <ProjectPageSettingsGeneralBlockDeleteDialog
+    <ProjectsDeleteDialog
       v-if="project"
       v-model:open="showDeleteDialog"
+      redirect-on-complete
       :project="project"
     />
   </div>
@@ -23,27 +24,16 @@
 
 <script setup lang="ts">
 import { graphql } from '~~/lib/common/generated/gql'
-import type { ProjectPageSettingsGeneralBlockDelete_ProjectFragment } from '~~/lib/common/generated/gql/graphql'
+import type { ProjectsDeleteDialog_ProjectFragment } from '~~/lib/common/generated/gql/graphql'
 
 graphql(`
   fragment ProjectPageSettingsGeneralBlockDelete_Project on Project {
-    id
-    name
-    role
-    models(limit: 0) {
-      totalCount
-    }
-    commentThreads(limit: 0) {
-      totalCount
-    }
-    workspace {
-      slug
-    }
+    ...ProjectsDeleteDialog_Project
   }
 `)
 
 defineProps<{
-  project?: ProjectPageSettingsGeneralBlockDelete_ProjectFragment
+  project?: ProjectsDeleteDialog_ProjectFragment
 }>()
 
 const showDeleteDialog = ref(false)

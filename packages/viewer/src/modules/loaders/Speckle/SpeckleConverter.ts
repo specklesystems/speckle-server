@@ -16,27 +16,30 @@ export type SpeckleConverterNodeDelegate =
  * Warning: HIC SVNT DRACONES.
  */
 export default class SpeckleConverter {
-  private objectLoader: ObjectLoader
-  private activePromises: number
-  private maxChildrenPromises: number
-  private spoofIDs = false
-  private tree: WorldTree
-  private subtree: TreeNode
-  private typeLookupTable: { [type: string]: string } = {}
-  private instanceDefinitionLookupTable: { [id: string]: TreeNode } = {}
-  private instancedObjectsLookupTable: { [id: string]: SpeckleObject } = {}
-  private instanceProxies: { [id: string]: TreeNode } = {}
-  private renderMaterialMap: { [id: string]: SpeckleObject } = {}
-  private colorMap: { [id: string]: SpeckleObject } = {}
-  private instanceCounter = 0
+  protected objectLoader: ObjectLoader
+  protected activePromises: number
+  protected maxChildrenPromises: number
+  protected spoofIDs = false
+  protected tree: WorldTree
+  protected subtree: TreeNode
+  protected typeLookupTable: { [type: string]: string } = {}
+  protected instanceDefinitionLookupTable: { [id: string]: TreeNode } = {}
+  protected instancedObjectsLookupTable: { [id: string]: SpeckleObject } = {}
+  protected instanceProxies: { [id: string]: TreeNode } = {}
+  protected renderMaterialMap: { [id: string]: SpeckleObject } = {}
+  protected colorMap: { [id: string]: SpeckleObject } = {}
+  protected instanceCounter = 0
 
-  private readonly NodeConverterMapping: {
+  protected readonly NodeConverterMapping: {
     [name: string]: SpeckleConverterNodeDelegate
   } = {
     View3D: this.View3DToNode.bind(this),
     BlockInstance: this.BlockInstanceToNode.bind(this),
     Pointcloud: this.PointcloudToNode.bind(this),
     Brep: this.BrepToNode.bind(this),
+    BrepX: this.BrepToNode.bind(this),
+    ExtrusionX: this.BrepToNode.bind(this),
+    SubDX: this.BrepToNode.bind(this),
     Mesh: this.MeshToNode.bind(this),
     Point: this.PointToNode.bind(this),
     Line: this.LineToNode.bind(this),
@@ -57,7 +60,7 @@ export default class SpeckleConverter {
     Parameter: null
   }
 
-  private readonly IgnoreNodes = ['Parameter']
+  protected readonly IgnoreNodes = ['Parameter']
 
   constructor(objectLoader: ObjectLoader, tree: WorldTree) {
     if (!objectLoader) {
@@ -204,7 +207,11 @@ export default class SpeckleConverter {
 
       // If this is a built element and has a display value, only iterate through the "elements" prop if it exists.
       /** 10.25.2023 This might be serious legacy stuff that we might not need anymore */
-      if (obj.speckle_type.toLowerCase().includes('builtelements')) {
+      /** 22.11.2024 We have just added stuff to this serious legacy stuff that might not be needed anymore (joke's on us, it is needed) */
+      if (
+        obj.speckle_type.toLowerCase().includes('builtelements') ||
+        obj.speckle_type.toLowerCase().includes('objects.data')
+      ) {
         const elements = this.getElementsValue(obj)
         if (elements) {
           childrenConversionPromisses.push(

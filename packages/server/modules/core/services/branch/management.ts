@@ -1,9 +1,4 @@
-import { Roles, isNullOrUndefined } from '@speckle/shared'
-import {
-  addBranchCreatedActivity,
-  addBranchDeletedActivity,
-  addBranchUpdatedActivity
-} from '@/modules/activitystream/services/branchActivity'
+import { Roles, ensureError, isNullOrUndefined } from '@speckle/shared'
 import {
   BranchCreateError,
   BranchDeleteError,
@@ -20,7 +15,6 @@ import {
 import { BranchRecord } from '@/modules/core/helpers/types'
 import { has } from 'lodash'
 import { isBranchDeleteInput, isBranchUpdateInput } from '@/modules/core/helpers/branch'
-import { ModelsEmitter, ModelsEventsEmitter } from '@/modules/core/events/modelsEmitter'
 import {
   CreateBranchAndNotify,
   DeleteBranchAndNotify,
@@ -35,6 +29,13 @@ import {
   GetStream,
   MarkBranchStreamUpdated
 } from '@/modules/core/domain/streams/operations'
+import {
+  AddBranchCreatedActivity,
+  AddBranchDeletedActivity,
+  AddBranchUpdatedActivity
+} from '@/modules/activitystream/domain/operations'
+import { EventBusEmit } from '@/modules/shared/services/eventBus'
+import { ModelEvents } from '@/modules/core/domain/branches/events'
 
 const isBranchCreateInput = (
   i: BranchCreateInput | CreateModelInput
@@ -44,7 +45,7 @@ export const createBranchAndNotifyFactory =
   (deps: {
     getStreamBranchByName: GetStreamBranchByName
     createBranch: StoreBranch
-    addBranchCreatedActivity: typeof addBranchCreatedActivity
+    addBranchCreatedActivity: AddBranchCreatedActivity
   }): CreateBranchAndNotify =>
   async (input: BranchCreateInput | CreateModelInput, creatorId: string) => {
     const streamId = isBranchCreateInput(input) ? input.streamId : input.projectId
@@ -68,7 +69,7 @@ export const updateBranchAndNotifyFactory =
   (deps: {
     getBranchById: GetBranchById
     updateBranch: UpdateBranch
-    addBranchUpdatedActivity: typeof addBranchUpdatedActivity
+    addBranchUpdatedActivity: AddBranchUpdatedActivity
   }): UpdateBranchAndNotify =>
   async (input: BranchUpdateInput | UpdateModelInput, userId: string) => {
     const streamId = isBranchUpdateInput(input) ? input.streamId : input.projectId
@@ -95,7 +96,21 @@ export const updateBranchAndNotifyFactory =
       throw new BranchUpdateError('Please specify a property to update')
     }
 
-    const newBranch = await deps.updateBranch(input.id, updates)
+    let newBranch: BranchRecord
+    try {
+      newBranch = await deps.updateBranch(input.id, updates)
+    } catch (e) {
+      if (ensureError(e).message.includes('branches_streamid_name_unique')) {
+        throw new BranchUpdateError(
+          'A branch with this name already exists in the parent stream',
+          {
+            info: { ...input, userId }
+          }
+        )
+      } else {
+        throw e
+      }
+    }
 
     if (newBranch) {
       await deps.addBranchUpdatedActivity({
@@ -113,9 +128,9 @@ export const deleteBranchAndNotifyFactory =
   (deps: {
     getStream: GetStream
     getBranchById: GetBranchById
-    modelsEventsEmitter: ModelsEventsEmitter
+    emitEvent: EventBusEmit
     markBranchStreamUpdated: MarkBranchStreamUpdated
-    addBranchDeletedActivity: typeof addBranchDeletedActivity
+    addBranchDeletedActivity: AddBranchDeletedActivity
     deleteBranchById: DeleteBranchById
   }): DeleteBranchAndNotify =>
   async (input: BranchDeleteInput | DeleteModelInput, userId: string) => {
@@ -158,10 +173,13 @@ export const deleteBranchAndNotifyFactory =
           branchName: existingBranch.name
         }),
         deps.markBranchStreamUpdated(input.id),
-        deps.modelsEventsEmitter(ModelsEmitter.events.Deleted, {
-          modelId: existingBranch.id,
-          model: existingBranch,
-          projectId: streamId
+        deps.emitEvent({
+          eventName: ModelEvents.Deleted,
+          payload: {
+            modelId: existingBranch.id,
+            model: existingBranch,
+            projectId: streamId
+          }
         })
       ])
     }

@@ -13,6 +13,7 @@
     :fully-control-value="fullyControlValue"
     :disabled="disabled"
     :disabled-item-predicate="disabledItemPredicate"
+    :disabled-item-tooltip="disabledItemTooltip"
     :clearable="clearable"
   >
     <template #nothing-selected>
@@ -82,6 +83,10 @@ const props = defineProps({
     required: false,
     type: Array as PropType<WorkspaceRoles[]>
   },
+  currentRole: {
+    type: String as PropType<WorkspaceRoles>,
+    required: false
+  },
   showLabel: Boolean,
   clearable: Boolean,
   hideItems: {
@@ -91,6 +96,11 @@ const props = defineProps({
   hideDescription: {
     required: false,
     type: Boolean
+  },
+  allowUnset: {
+    required: false,
+    type: Boolean,
+    default: true
   }
 })
 
@@ -115,8 +125,15 @@ const roles = computed(() => {
   return Object.values(Roles.Workspace)
 })
 
+const disabledItemTooltip = computed(() =>
+  props.currentRole
+    ? `User is already a ${RoleInfo.Workspace[props.currentRole].title}`
+    : undefined
+)
+
 const disabledItemPredicate = (item: WorkspaceRoles) =>
-  props.disabledItems && props.disabledItems.length > 0
-    ? props.disabledItems.includes(item)
-    : false
+  (props.disabledItems &&
+    props.disabledItems.length > 0 &&
+    props.disabledItems.includes(item)) ||
+  item === props.currentRole
 </script>

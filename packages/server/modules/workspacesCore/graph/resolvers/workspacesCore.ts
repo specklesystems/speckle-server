@@ -1,6 +1,10 @@
 import { WorkspacesModuleDisabledError } from '@/modules/core/errors/workspaces'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
+import {
+  filteredSubscribe,
+  WorkspaceSubscriptions
+} from '@/modules/shared/utils/subscriptions'
 
 const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
 
@@ -46,6 +50,9 @@ export = !FF_WORKSPACES_MODULE_ENABLED
         leave: async () => {
           throw new WorkspacesModuleDisabledError()
         },
+        setDefaultRegion: async () => {
+          throw new WorkspacesModuleDisabledError()
+        },
         invites: () => ({})
       },
       WorkspaceInviteMutations: {
@@ -86,6 +93,9 @@ export = !FF_WORKSPACES_MODULE_ENABLED
         discoverableWorkspaces: async () => {
           throw new WorkspacesModuleDisabledError()
         },
+        expiredSsoSessions: async () => {
+          return []
+        },
         workspaces: async () => {
           throw new WorkspacesModuleDisabledError()
         },
@@ -105,13 +115,28 @@ export = !FF_WORKSPACES_MODULE_ENABLED
         }
       },
       LimitedUser: {
-        workspaceDomainPolicyCompliant: async () => null
+        workspaceDomainPolicyCompliant: async () => null,
+        workspaceRole: async () => null
       },
       ServerInfo: {
         workspaces: () => ({})
       },
       ServerWorkspacesInfo: {
         workspacesEnabled: () => false
+      },
+      Subscription: {
+        workspaceProjectsUpdated: {
+          subscribe: filteredSubscribe(
+            WorkspaceSubscriptions.WorkspaceProjectsUpdated,
+            () => false
+          )
+        },
+        workspaceUpdated: {
+          subscribe: filteredSubscribe(
+            WorkspaceSubscriptions.WorkspaceUpdated,
+            () => false
+          )
+        }
       }
     } as Resolvers)
   : {}

@@ -64,6 +64,10 @@ import {
 import { ExtendedComment } from '@/modules/comments/domain/types'
 import { BranchLatestCommit } from '@/modules/core/domain/commits/types'
 import { getBranchLatestCommitsFactory } from '@/modules/core/repositories/branches'
+import { CommitNotFoundError } from '@/modules/core/errors/commit'
+import { ResourceMismatch } from '@/modules/shared/errors'
+import { ObjectNotFoundError } from '@/modules/core/errors/object'
+import { CommentNotFoundError } from '@/modules/comments/errors'
 
 const tables = {
   streamCommits: (db: Knex) => db<StreamCommitRecord>(StreamCommits.name),
@@ -411,7 +415,7 @@ export const getPaginatedCommitCommentsTotalCountFactory =
   (deps: { db: Knex }): GetPaginatedCommitCommentsTotalCount =>
   async (params: Omit<PaginatedCommitCommentsParams, 'limit' | 'cursor'>) => {
     const baseQ = getPaginatedCommitCommentsBaseQueryFactory(deps)(params)
-    const q = knex.count<{ count: string }[]>().from(baseQ.as('sq1'))
+    const q = deps.db.count<{ count: string }[]>().from(baseQ.as('sq1'))
     const [row] = await q
 
     return parseInt(row.count || '0')
@@ -476,7 +480,7 @@ export const getPaginatedBranchCommentsTotalCountFactory =
   (deps: { db: Knex }) =>
   async (params: Omit<PaginatedBranchCommentsParams, 'limit' | 'cursor'>) => {
     const baseQ = getPaginatedBranchCommentsBaseQueryFactory(deps)(params)
-    const q = knex.count<{ count: string }[]>().from(baseQ.as('sq1'))
+    const q = deps.db.count<{ count: string }[]>().from(baseQ.as('sq1'))
     const [row] = await q
 
     return parseInt(row.count || '0')
@@ -673,7 +677,7 @@ export const getPaginatedProjectCommentsTotalCountFactory =
       params,
       options
     )
-    const q = knex.count<{ count: string }[]>().from(baseQuery.as('sq1'))
+    const q = deps.db.count<{ count: string }[]>().from(baseQuery.as('sq1'))
     const [row] = await q
 
     return parseInt(row.count || '0')
@@ -740,9 +744,9 @@ export const checkStreamResourceAccessFactory =
           .select()
           .where({ commitId: res.resourceId, streamId })
           .first()
-        if (!linkage) throw new Error('Commit not found')
+        if (!linkage) throw new CommitNotFoundError('Commit not found')
         if (linkage.streamId !== streamId)
-          throw new Error(
+          throw new ResourceMismatch(
             'Stop hacking - that commit id is not part of the specified stream.'
           )
         break
@@ -753,7 +757,7 @@ export const checkStreamResourceAccessFactory =
           .select()
           .where({ id: res.resourceId, streamId })
           .first()
-        if (!obj) throw new Error('Object not found')
+        if (!obj) throw new ObjectNotFoundError('Object not found')
         break
       }
       case 'comment': {
@@ -761,15 +765,15 @@ export const checkStreamResourceAccessFactory =
           .comments(deps.db)
           .where({ id: res.resourceId })
           .first()
-        if (!comment) throw new Error('Comment not found')
+        if (!comment) throw new CommentNotFoundError('Comment not found')
         if (comment.streamId !== streamId)
-          throw new Error(
+          throw new ResourceMismatch(
             'Stop hacking - that comment is not part of the specified stream.'
           )
         break
       }
       default:
-        throw Error(
+        throw new ResourceMismatch(
           `resource type ${res.resourceType} is not supported as a comment target`
         )
     }
@@ -866,7 +870,12 @@ export const getCommentsLegacyFactory =
     query.orderBy('createdAt', 'desc')
     query.limit(limit || 1) // need at least 1 row to get totalCount
 
-    const rows = await query
+    const rows = (await query) as Array<
+      CommentRecord & {
+        total_count: string
+        resources: Array<{ resourceId: string; resourceType: string }>
+      }
+    >
     const totalCount = rows && rows.length > 0 ? parseInt(rows[0].total_count) : 0
     const nextCursor = rows && rows.length > 0 ? rows[rows.length - 1].createdAt : null
 

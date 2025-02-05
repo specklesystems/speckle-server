@@ -25,7 +25,7 @@ export interface SelectionExtensionOptions {
   hoverMaterialData?: RenderMaterial & DisplayStyle & MaterialOptions
 }
 
-const DefaultSelectionExtensionOptions: SelectionExtensionOptions = {
+export const DefaultSelectionExtensionOptions: SelectionExtensionOptions = {
   selectionMaterialData: {
     id: MathUtils.generateUUID(),
     color: 0x047efb,
@@ -181,11 +181,12 @@ export class SelectionExtension extends Extension {
     if (!this._enabled) return
 
     if (!selection) {
-      this.removeSelection()
+      this.clearSelection()
       return
     }
     if (selection.multiple) {
-      this.selectedNodes.push(selection.hits[0].node)
+      if (!this.selectedNodes.includes(selection.hits[0].node))
+        this.selectedNodes.push(selection.hits[0].node)
     } else {
       this.selectedNodes = [selection.hits[0].node]
     }

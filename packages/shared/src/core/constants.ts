@@ -123,6 +123,9 @@ export const Scopes = Object.freeze(<const>{
     Read: 'workspace:read',
     Update: 'workspace:update',
     Delete: 'workspace:delete'
+  },
+  Gatekeeper: {
+    WorkspaceBilling: 'workspace:billing'
   }
 })
 
@@ -138,6 +141,8 @@ export type AutomateFunctionScopes =
   (typeof Scopes)['AutomateFunctions'][keyof (typeof Scopes)['AutomateFunctions']]
 export type WorkspaceScopes =
   (typeof Scopes)['Workspaces'][keyof (typeof Scopes)['Workspaces']]
+export type GatekeeperScopes =
+  (typeof Scopes)['Gatekeeper'][keyof (typeof Scopes)['Gatekeeper']]
 
 export type AvailableScopes =
   | StreamScopes
@@ -232,7 +237,7 @@ export const SourceApps: SourceAppDefinition[] = [
   { searchKey: 'ifc', name: 'IFC', short: 'IFC', bgColor: '#bd2e2e' },
   { searchKey: 'qgis', name: 'QGIS', short: 'QGIS', bgColor: '#70e029' },
   { searchKey: 'arcgis', name: 'ArcGIS', short: 'AGIS', bgColor: '#3a6eff' },
-  { searchKey: 'etabs', name: 'ETABS', short: 'ETABS', bgColor: '#6d6d6d' },
+  { searchKey: 'etabs', name: 'ETABS', short: 'EDB', bgColor: '#6d6d6d' },
   { searchKey: 'powerbi', name: 'PowerBI', short: 'PBI', bgColor: '#ffff96' },
   { searchKey: 'sketchup', name: 'SketchUp', short: 'SKP', bgColor: '#8cb7ff' },
   { searchKey: 'sap', name: 'SAP2000', short: 'SAP', bgColor: '#6d6d6d' },
@@ -242,7 +247,7 @@ export const SourceApps: SourceAppDefinition[] = [
   {
     searchKey: 'teklastructures',
     name: 'Tekla Structures',
-    short: 'TEKLAS',
+    short: 'TKL',
     bgColor: '#3a6eff'
   },
   { searchKey: 'openroads', name: 'OpenRoads', short: 'OROAD', bgColor: '#846256' },

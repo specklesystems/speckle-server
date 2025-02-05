@@ -51,7 +51,7 @@ const getRandomModelVersion = async (offset?: number) => {
 
 const mocks: SpeckleModuleMocksConfig = FF_AUTOMATE_MODULE_ENABLED
   ? {
-      resolvers: ({ store }) => ({
+      resolvers: ({ store, helpers: { getMockRef, resolveAndCache } }) => ({
         AutomationRevisionTriggerDefinition: {
           __resolveType: () => 'VersionCreatedTriggerDefinition'
         },
@@ -66,16 +66,14 @@ const mocks: SpeckleModuleMocksConfig = FF_AUTOMATE_MODULE_ENABLED
           version: store.get('Version') as any
         },
         Query: {
-          automateFunctions: (_parent, args) => {
+          automateFunctions: () => {
             const forceZero = false
             const count = forceZero ? 0 : faker.number.int({ min: 0, max: 20 })
-
-            const isFeatured = args.filter?.featuredFunctionsOnly
 
             return {
               cursor: null,
               totalCount: count,
-              items: times(count, () => store.get('AutomateFunction', { isFeatured }))
+              items: times(count, () => store.get('AutomateFunction'))
             } as any
           },
           automateFunction: (_parent, args) => {
@@ -85,6 +83,28 @@ const mocks: SpeckleModuleMocksConfig = FF_AUTOMATE_MODULE_ENABLED
             }
 
             return store.get('AutomateFunction', { id }) as any
+          }
+        },
+        User: {
+          automateFunctions: () => {
+            const count = faker.number.int({ min: 0, max: 20 })
+
+            return {
+              cursor: null,
+              totalCount: count,
+              items: times(count, () => store.get('AutomateFunction'))
+            } as any
+          }
+        },
+        Workspace: {
+          automateFunctions: () => {
+            const count = faker.number.int({ min: 0, max: 20 })
+
+            return {
+              cursor: null,
+              totalCount: count,
+              items: times(count, () => store.get('AutomateFunction'))
+            } as any
           }
         },
         Project: {
@@ -159,7 +179,8 @@ const mocks: SpeckleModuleMocksConfig = FF_AUTOMATE_MODULE_ENABLED
               (i): AutomationRevisionTriggerDefinitionGraphQLReturn => ({
                 triggerType: VersionCreationTriggerType,
                 triggeringId: i.model.id,
-                automationRevisionId: parent.id
+                automationRevisionId: parent.id,
+                projectId: (store.get('Project') as any).id
               })
             )
           },
@@ -225,16 +246,11 @@ const mocks: SpeckleModuleMocksConfig = FF_AUTOMATE_MODULE_ENABLED
           }
         },
         AutomateFunction: {
-          // creator: async (_parent, args, ctx) => {
-          //   const rand = faker.datatype.boolean()
-          //   const activeUser = ctx.userId
-          //     ? await ctx.loaders.users.getUser.load(ctx.userId)
-          //     : null
-
-          //   return rand ? (store.get('LimitedUser') as any) : activeUser
-          // }
-          releases: () => store.get('AutomateFunctionReleaseCollection') as any,
-          automationCount: () => faker.number.int({ min: 0, max: 99 })
+          creator: resolveAndCache((parent, args, ctx) => {
+            const rand = faker.datatype.boolean()
+            return getMockRef('LimitedUser', { id: !rand ? ctx.userId : undefined })
+          }),
+          releases: () => store.get('AutomateFunctionReleaseCollection') as any
         },
         AutomateFunctionRelease: {
           function: () => store.get('AutomateFunction') as any
@@ -318,30 +334,39 @@ const mocks: SpeckleModuleMocksConfig = FF_AUTOMATE_MODULE_ENABLED
           },
           commitId: () => '0c259d384a4df3cce3f24667560e5124e68f202f',
           inputSchema: () => {
-            // random fro 1 to 3
-            const rand = faker.number.int({ min: 1, max: 3 })
-            switch (rand) {
-              case 1:
-                return {
-                  $schema: 'https://json-schema.org/draft/2020-12/schema',
-                  $id: 'https://example.com/product.schema.json',
-                  title: 'Product',
-                  description: "A product from Acme's catalog",
-                  type: 'object',
-                  properties: {
-                    name: {
-                      desciption: 'Random name',
-                      type: 'string'
-                    },
-                    productId: {
-                      description: 'The unique identifier for a product',
-                      type: 'integer'
-                    }
-                  },
-                  required: ['productId']
+            return {
+              $schema: 'https://json-schema.org/draft/2020-12/schema',
+              $id: 'https://example.com/product.schema.json',
+              title: 'Product',
+              description: "A product from Acme's catalog",
+              type: 'object',
+              properties: {
+                Boolean: {
+                  description: faker.lorem.sentence(5),
+                  type: 'boolean'
+                },
+                'Required Boolean': {
+                  description: faker.lorem.sentence(5),
+                  type: 'boolean'
+                },
+                Integer: {
+                  description: faker.lorem.sentence(5),
+                  type: 'integer'
+                },
+                'Required Integer': {
+                  description: faker.lorem.sentence(5),
+                  type: 'integer'
+                },
+                String: {
+                  description: faker.lorem.sentence(5),
+                  type: 'string'
+                },
+                'Required String': {
+                  description: faker.lorem.sentence(5),
+                  type: 'string'
                 }
-              default:
-                return null
+              },
+              required: ['Required Boolean', 'Required Integer', 'Required String']
             }
           }
         }),

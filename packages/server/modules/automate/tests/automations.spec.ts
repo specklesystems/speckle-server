@@ -11,7 +11,7 @@ import {
   AuthCodePayloadAction,
   createStoredAuthCodeFactory
 } from '@/modules/automate/services/authCode'
-import { getGenericRedis } from '@/modules/core'
+import { getGenericRedis } from '@/modules/shared/redis/redis'
 import { ProjectAutomationRevisionCreateInput } from '@/modules/core/graph/generated/graphql'
 import { BranchRecord } from '@/modules/core/helpers/types'
 import { getLatestStreamBranchFactory } from '@/modules/core/repositories/branches'
@@ -42,7 +42,6 @@ import { expect } from 'chai'
 import { times } from 'lodash'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { db } from '@/db/knex'
-import { AutomationsEmitter } from '@/modules/automate/events/automations'
 import {
   addOrUpdateStreamCollaboratorFactory,
   validateStreamAccessFactory
@@ -56,6 +55,8 @@ import {
 import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import { publish } from '@/modules/shared/utils/subscriptions'
 import { getUserFactory } from '@/modules/core/repositories/users'
+import { getEventBus } from '@/modules/shared/services/eventBus'
+import { AutomationEvents } from '@/modules/automate/domain/events'
 
 /**
  * TODO: Extra test ideas
@@ -89,7 +90,7 @@ const buildAutomationUpdate = () => {
     getAutomation,
     updateAutomation: updateDbAutomation,
     validateStreamAccess,
-    automationsEventsEmit: AutomationsEmitter.emit
+    eventEmit: getEventBus().emit
   })
 
   return update
@@ -182,10 +183,17 @@ const buildAutomationUpdate = () => {
       })
 
       it('creates an automation', async () => {
+        let eventFired = false
+        const name = 'My Super Automation #1'
+
+        getEventBus().listenOnce(AutomationEvents.Created, async ({ payload }) => {
+          expect(payload.automation.name).to.equal(name)
+          eventFired = true
+        })
         const create = buildAutomationCreate()
 
         const automation = await create({
-          input: { name: 'Automation #1', enabled: true },
+          input: { name, enabled: true },
           projectId: myStream.id,
           userId: me.id
         })
@@ -193,6 +201,8 @@ const buildAutomationUpdate = () => {
         expect(automation).to.be.ok
         expect(automation.automation).to.be.ok
         expect(automation.token).to.be.ok
+        expect(automation.automation.name).to.equal(name)
+        expect(eventFired).to.be.true
       })
     })
 
@@ -264,6 +274,14 @@ const buildAutomationUpdate = () => {
           userId: me.id
         })
 
+        let eventFired = false
+        getEventBus().listenOnce(AutomationEvents.Updated, async ({ payload }) => {
+          expect(payload.automation.name).to.equal(initAutomation.name)
+          expect(payload.automation.enabled).to.be.false
+          expect(payload.automation.id).to.equal(initAutomation.id)
+          eventFired = true
+        })
+
         const updatedAutomation = await update({
           input: { id: initAutomation.id, enabled: false },
           userId: me.id,
@@ -273,6 +291,7 @@ const buildAutomationUpdate = () => {
         expect(updatedAutomation).to.be.ok
         expect(updatedAutomation.enabled).to.be.false
         expect(updatedAutomation.name).to.equal(initAutomation.name)
+        expect(eventFired).to.be.true
       })
 
       it('updates all available properties', async () => {
@@ -339,6 +358,15 @@ const buildAutomationUpdate = () => {
       })
 
       it('works successfully', async () => {
+        let eventFired = false
+        getEventBus().listenOnce(
+          AutomationEvents.CreatedRevision,
+          async ({ payload }) => {
+            expect(payload.automation.id).to.equal(createdAutomation.automation.id)
+            expect(payload.revision).to.be.ok
+            eventFired = true
+          }
+        )
         const create = buildAutomationRevisionCreate()
 
         const ret = await create({
@@ -352,6 +380,7 @@ const buildAutomationUpdate = () => {
         expect(ret.automationId).to.equal(createdAutomation.automation.id)
         expect(ret.triggers.length).to.be.ok
         expect(ret.functions.length).to.be.ok
+        expect(eventFired).to.be.true
       })
 
       it('fails if automation does not exist', async () => {
@@ -578,7 +607,7 @@ const buildAutomationUpdate = () => {
         )
 
         apollo = await testApolloServer({
-          context: createTestContext({
+          context: await createTestContext({
             userId: me.id,
             token: 'abc',
             role: Roles.Server.User

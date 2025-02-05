@@ -1,15 +1,13 @@
-'use strict'
 import cors from 'cors'
 import {
-  validateToken,
-  revokeTokenById,
-  createAppToken,
-  createBareToken
+  createBareToken,
+  createAppTokenFactory,
+  validateTokenFactory
 } from '@/modules/core/services/tokens'
 import { validateScopes } from '@/modules/shared'
 import { InvalidAccessCodeRequestError } from '@/modules/auth/errors'
 import { ensureError, Optional, Scopes } from '@speckle/shared'
-import { ForbiddenError } from '@/modules/shared/errors'
+import { BadRequestError, ForbiddenError } from '@/modules/shared/errors'
 import {
   getAppFactory,
   revokeRefreshTokenFactory,
@@ -17,7 +15,8 @@ import {
   getAuthorizationCodeFactory,
   deleteAuthorizationCodeFactory,
   createRefreshTokenFactory,
-  getRefreshTokenFactory
+  getRefreshTokenFactory,
+  getTokenAppInfoFactory
 } from '@/modules/auth/repositories/apps'
 import { db } from '@/db/knex'
 import {
@@ -25,6 +24,19 @@ import {
   refreshAppTokenFactory
 } from '@/modules/auth/services/serverApps'
 import { Express } from 'express'
+import {
+  getApiTokenByIdFactory,
+  getTokenResourceAccessDefinitionsByIdFactory,
+  getTokenScopesByIdFactory,
+  revokeTokenByIdFactory,
+  revokeUserTokenByIdFactory,
+  storeApiTokenFactory,
+  storeTokenResourceAccessDefinitionsFactory,
+  storeTokenScopesFactory,
+  storeUserServerAppTokenFactory,
+  updateApiTokenFactory
+} from '@/modules/core/repositories/tokens'
+import { getUserRoleFactory } from '@/modules/core/repositories/users'
 
 // TODO: Secure these endpoints!
 export default function (app: Express) {
@@ -36,6 +48,16 @@ export default function (app: Express) {
     try {
       const getApp = getAppFactory({ db })
       const createAuthorizationCode = createAuthorizationCodeFactory({ db })
+      const validateToken = validateTokenFactory({
+        revokeUserTokenById: revokeUserTokenByIdFactory({ db }),
+        getApiTokenById: getApiTokenByIdFactory({ db }),
+        getTokenAppInfo: getTokenAppInfoFactory({ db }),
+        getTokenScopesById: getTokenScopesByIdFactory({ db }),
+        getUserRole: getUserRoleFactory({ db }),
+        getTokenResourceAccessDefinitionsById:
+          getTokenResourceAccessDefinitionsByIdFactory({ db }),
+        updateApiToken: updateApiTokenFactory({ db })
+      })
 
       const preventRedirect = !!req.query.preventRedirect
       const appId = req.query.appId as Optional<string>
@@ -92,6 +114,16 @@ export default function (app: Express) {
     try {
       const createRefreshToken = createRefreshTokenFactory({ db })
       const getApp = getAppFactory({ db })
+      const createAppToken = createAppTokenFactory({
+        storeApiToken: storeApiTokenFactory({ db }),
+        storeTokenScopes: storeTokenScopesFactory({ db }),
+        storeTokenResourceAccessDefinitions: storeTokenResourceAccessDefinitionsFactory(
+          {
+            db
+          }
+        ),
+        storeUserServerAppToken: storeUserServerAppTokenFactory({ db })
+      })
       const createAppTokenFromAccessCode = createAppTokenFromAccessCodeFactory({
         getAuthorizationCode: getAuthorizationCodeFactory({ db }),
         deleteAuthorizationCode: deleteAuthorizationCodeFactory({ db }),
@@ -112,7 +144,7 @@ export default function (app: Express) {
       // Token refresh
       if (req.body.refreshToken) {
         if (!req.body.appId || !req.body.appSecret)
-          throw new Error('Invalid request - App Id and Secret are required.')
+          throw new BadRequestError('Invalid request - App Id and Secret are required.')
 
         const authResponse = await refreshAppToken({
           refreshToken: req.body.refreshToken,
@@ -129,7 +161,7 @@ export default function (app: Express) {
         !req.body.accessCode ||
         !req.body.challenge
       )
-        throw new Error(
+        throw new BadRequestError(
           `Invalid request, insufficient information provided in the request. App Id, Secret, Access Code, and Challenge are required.`
         )
 
@@ -152,11 +184,12 @@ export default function (app: Express) {
   app.post('/auth/logout', async (req, res) => {
     try {
       const revokeRefreshToken = revokeRefreshTokenFactory({ db })
+      const revokeTokenById = revokeTokenByIdFactory({ db })
 
       const token = req.body.token
       const refreshToken = req.body.refreshToken
 
-      if (!token) throw new Error('Invalid request. No token provided.')
+      if (!token) throw new BadRequestError('Invalid request. No token provided.')
       await revokeTokenById(token)
 
       if (refreshToken) await revokeRefreshToken({ tokenId: refreshToken })

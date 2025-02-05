@@ -1,24 +1,14 @@
 /* istanbul ignore file */
 import { expect } from 'chai'
-import { createUser } from '@/modules/core/services/users'
-import { createPersonalAccessToken } from '@/modules/core/services/tokens'
-import { createObjects } from '@/modules/core/services/objects'
 import { beforeEachContext, initializeTestServer } from '@/test/hooks'
 import { createManyObjects } from '@/test/helpers'
 
 import {
-  getStreamHistoryFactory,
-  getCommitHistoryFactory,
-  getObjectHistoryFactory,
-  getUserHistoryFactory,
   getTotalStreamCountFactory,
-  getTotalCommitCountFactory,
-  getTotalObjectCountFactory,
   getTotalUserCountFactory
 } from '@/modules/stats/repositories/index'
 import { Scopes } from '@speckle/shared'
 import { Server } from 'node:http'
-import { Express } from 'express'
 import { db } from '@/db/knex'
 import {
   createCommitByBranchIdFactory,
@@ -40,8 +30,11 @@ import {
   getStreamFactory,
   markCommitStreamUpdatedFactory
 } from '@/modules/core/repositories/streams'
-import { VersionsEmitter } from '@/modules/core/events/versionsEmitter'
-import { getObjectFactory } from '@/modules/core/repositories/objects'
+import {
+  getObjectFactory,
+  storeClosuresIfNotFoundFactory,
+  storeObjectsIfNotFoundFactory
+} from '@/modules/core/repositories/objects'
 import {
   createStreamReturnRecordFactory,
   legacyCreateStreamFactory
@@ -49,19 +42,47 @@ import {
 import { inviteUsersToProjectFactory } from '@/modules/serverinvites/services/projectInviteManagement'
 import { createAndSendInviteFactory } from '@/modules/serverinvites/services/creation'
 import {
+  deleteServerOnlyInvitesFactory,
   findUserByTargetFactory,
-  insertInviteAndDeleteOldFactory
+  insertInviteAndDeleteOldFactory,
+  updateAllInviteTargetsFactory
 } from '@/modules/serverinvites/repositories/serverInvites'
 import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
 import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import { ProjectsEmitter } from '@/modules/core/events/projectsEmitter'
-import { addStreamCreatedActivityFactory } from '@/modules/activitystream/services/streamActivity'
 import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import { publish } from '@/modules/shared/utils/subscriptions'
 import { addCommitCreatedActivityFactory } from '@/modules/activitystream/services/commitActivity'
-import { getUserFactory, getUsersFactory } from '@/modules/core/repositories/users'
+import {
+  countAdminUsersFactory,
+  getUserFactory,
+  getUsersFactory,
+  storeUserAclFactory,
+  storeUserFactory
+} from '@/modules/core/repositories/users'
+import {
+  createUserEmailFactory,
+  ensureNoPrimaryEmailForUserFactory,
+  findEmailFactory
+} from '@/modules/core/repositories/userEmails'
+import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
+import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
+import { renderEmail } from '@/modules/emails/services/emailRendering'
+import { sendEmail } from '@/modules/emails/services/sending'
+import { createUserFactory } from '@/modules/core/services/users/management'
+import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
+import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
+import { createPersonalAccessTokenFactory } from '@/modules/core/services/tokens'
+import {
+  storeApiTokenFactory,
+  storePersonalApiTokenFactory,
+  storeTokenResourceAccessDefinitionsFactory,
+  storeTokenScopesFactory
+} from '@/modules/core/repositories/tokens'
+import { getServerInfoFactory } from '@/modules/core/repositories/server'
+import { createObjectsFactory } from '@/modules/core/services/objects/management'
 
+const getServerInfo = getServerInfoFactory({ db })
 const getUsers = getUsersFactory({ db })
 const markCommitStreamUpdated = markCommitStreamUpdatedFactory({ db })
 const getObject = getObjectFactory({ db })
@@ -73,7 +94,7 @@ const createCommitByBranchId = createCommitByBranchIdFactory({
   insertBranchCommits: insertBranchCommitsFactory({ db }),
   markCommitStreamUpdated,
   markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
-  versionsEventEmitter: VersionsEmitter.emit,
+  emitEvent: getEventBus().emit,
   addCommitCreatedActivity: addCommitCreatedActivityFactory({
     saveActivity: saveActivityFactory({ db }),
     publish
@@ -86,10 +107,6 @@ const createCommitByBranchName = createCommitByBranchNameFactory({
   getBranchById: getBranchByIdFactory({ db })
 })
 
-const addStreamCreatedActivity = addStreamCreatedActivityFactory({
-  saveActivity: saveActivityFactory({ db }),
-  publish
-})
 const getStream = getStreamFactory({ db })
 const createStream = legacyCreateStreamFactory({
   createStreamReturnRecord: createStreamReturnRecordFactory({
@@ -108,15 +125,54 @@ const createStream = legacyCreateStreamFactory({
             eventName,
             payload
           }),
-        getUser: getUserFactory({ db })
+        getUser: getUserFactory({ db }),
+        getServerInfo
       }),
       getUsers
     }),
     createStream: createStreamFactory({ db }),
     createBranch: createBranchFactory({ db }),
-    addStreamCreatedActivity,
-    projectsEventsEmitter: ProjectsEmitter.emit
+    emitEvent: getEventBus().emit
   })
+})
+const findEmail = findEmailFactory({ db })
+const requestNewEmailVerification = requestNewEmailVerificationFactory({
+  findEmail,
+  getUser: getUserFactory({ db }),
+  getServerInfo,
+  deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db }),
+  renderEmail,
+  sendEmail
+})
+const createUser = createUserFactory({
+  getServerInfo,
+  findEmail,
+  storeUser: storeUserFactory({ db }),
+  countAdminUsers: countAdminUsersFactory({ db }),
+  storeUserAcl: storeUserAclFactory({ db }),
+  validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
+    createUserEmail: createUserEmailFactory({ db }),
+    ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
+    findEmail,
+    updateEmailInvites: finalizeInvitedServerRegistrationFactory({
+      deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
+      updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
+    }),
+    requestNewEmailVerification
+  }),
+  emitEvent: getEventBus().emit
+})
+const createPersonalAccessToken = createPersonalAccessTokenFactory({
+  storeApiToken: storeApiTokenFactory({ db }),
+  storeTokenScopes: storeTokenScopesFactory({ db }),
+  storeTokenResourceAccessDefinitions: storeTokenResourceAccessDefinitionsFactory({
+    db
+  }),
+  storePersonalApiToken: storePersonalApiTokenFactory({ db })
+})
+const createObjects = createObjectsFactory({
+  storeObjectsIfNotFoundFactory: storeObjectsIfNotFoundFactory({ db }),
+  storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db })
 })
 
 const params = { numUsers: 25, numStreams: 30, numObjects: 100, numCommits: 100 }
@@ -137,58 +193,11 @@ describe('Server stats services @stats-services', function () {
     const res = await getTotalStreamCountFactory({ db })()
     expect(res).to.equal(params.numStreams)
   })
-
-  it('should return the total number of commits on this server', async () => {
-    const res = await getTotalCommitCountFactory({ db })()
-    expect(res).to.equal(params.numCommits)
-  })
-
-  it('should return the total number of objects on this server', async () => {
-    const res = await getTotalObjectCountFactory({ db })()
-    expect(res).to.equal(params.numObjects)
-  })
-
-  it('should return the stream creation history by month', async () => {
-    const res = await getStreamHistoryFactory({ db })()
-    expect(res).to.be.an('array')
-    expect(res[0]).to.have.property('count')
-    expect(res[0]).to.have.property('created_month')
-    expect(res[0].count).to.be.a('number')
-    expect(res[0].count).to.equal(params.numStreams)
-  })
-
-  it('should return the commit creation history by month', async () => {
-    const res = await getCommitHistoryFactory({ db })()
-    expect(res).to.be.an('array')
-    expect(res[0]).to.have.property('count')
-    expect(res[0]).to.have.property('created_month')
-    expect(res[0].count).to.be.a('number')
-    expect(res[0].count).to.equal(params.numCommits)
-  })
-
-  it('should return the object creation history by month', async () => {
-    const res = await getObjectHistoryFactory({ db })()
-    expect(res).to.be.an('array')
-    expect(res[0]).to.have.property('count')
-    expect(res[0]).to.have.property('created_month')
-    expect(res[0].count).to.be.a('number')
-    expect(res[0].count).to.equal(params.numObjects)
-  })
-
-  it('should return the user creation history by month', async () => {
-    const res = await getUserHistoryFactory({ db })()
-    expect(res).to.be.an('array')
-    expect(res[0]).to.have.property('count')
-    expect(res[0]).to.have.property('created_month')
-    expect(res[0].count).to.be.a('number')
-    expect(res[0].count).to.equal(params.numUsers)
-  })
 })
 
 describe('Server stats api @stats-api', function () {
   let server: Server,
-    sendRequest: Awaited<ReturnType<typeof initializeTestServer>>['sendRequest'],
-    app: Express
+    sendRequest: Awaited<ReturnType<typeof initializeTestServer>>['sendRequest']
 
   const adminUser = {
     name: 'Dimitrie',
@@ -225,8 +234,9 @@ describe('Server stats api @stats-api', function () {
 
   before(async function () {
     this.timeout(15000)
-    ;({ app, server } = await beforeEachContext())
-    ;({ sendRequest } = await initializeTestServer(server, app))
+    const ctx = await beforeEachContext()
+    server = ctx.server
+    ;({ sendRequest } = await initializeTestServer(ctx))
 
     adminUser.id = await createUser(adminUser)
     adminUser.goodToken = `Bearer ${await createPersonalAccessToken(
@@ -292,10 +302,10 @@ describe('Server stats api @stats-api', function () {
     expect(res.body.data.serverStats).to.have.property('commitHistory')
     expect(res.body.data.serverStats).to.have.property('userHistory')
 
-    expect(res.body.data.serverStats.totalStreamCount).to.equal(params.numStreams)
-    expect(res.body.data.serverStats.totalCommitCount).to.equal(params.numCommits)
-    expect(res.body.data.serverStats.totalObjectCount).to.equal(params.numObjects)
-    expect(res.body.data.serverStats.totalUserCount).to.equal(params.numUsers + 2) // we're registering two extra users in the before hook
+    expect(res.body.data.serverStats.totalStreamCount).to.equal(0) // the endpoint is deprecated and we're now returning 0
+    expect(res.body.data.serverStats.totalCommitCount).to.equal(0) // the endpoint is deprecated and we're now returning 0
+    expect(res.body.data.serverStats.totalObjectCount).to.equal(0) // the endpoint is deprecated and we're now returning 0
+    expect(res.body.data.serverStats.totalUserCount).to.equal(0) // the endpoint is deprecated and we're now returning 0
 
     expect(res.body.data.serverStats.streamHistory).to.be.an('array')
     expect(res.body.data.serverStats.commitHistory).to.be.an('array')

@@ -1,17 +1,16 @@
-import { db } from '@/db/knex'
 import {
   AddCommitCreatedActivity,
-  AddCommitUpdatedActivity
+  AddCommitDeletedActivity,
+  AddCommitUpdatedActivity,
+  SaveActivity
 } from '@/modules/activitystream/domain/operations'
-import {
-  addCommitDeletedActivity,
-  addCommitReceivedActivity
-} from '@/modules/activitystream/services/commitActivity'
+import { ActionTypes, ResourceTypes } from '@/modules/activitystream/helpers/types'
 import {
   GetBranchById,
   GetStreamBranchByName,
   MarkCommitBranchUpdated
 } from '@/modules/core/domain/branches/operations'
+import { VersionEvents } from '@/modules/core/domain/commits/events'
 import {
   CreateCommitByBranchId,
   CreateCommitByBranchName,
@@ -35,54 +34,62 @@ import {
 import {
   CommitCreateError,
   CommitDeleteError,
+  CommitNotFoundError,
   CommitReceiveError,
   CommitUpdateError
 } from '@/modules/core/errors/commit'
-import {
-  VersionEvents,
-  VersionsEventEmitter
-} from '@/modules/core/events/versionsEmitter'
 import {
   CommitReceivedInput,
   CommitUpdateInput,
   MarkReceivedVersionInput,
   UpdateVersionInput
 } from '@/modules/core/graph/generated/graphql'
-import { CommitRecord } from '@/modules/core/helpers/types'
-import { getCommitFactory } from '@/modules/core/repositories/commits'
-import { ensureError, MaybeNullOrUndefined, Nullable, Roles } from '@speckle/shared'
+import { BranchRecord, CommitRecord } from '@/modules/core/helpers/types'
+import { EventBusEmit } from '@/modules/shared/services/eventBus'
+import { ensureError, Roles } from '@speckle/shared'
 import { has } from 'lodash'
+import { BranchNotFoundError } from '@/modules/core/errors/branch'
 
-export async function markCommitReceivedAndNotify(params: {
-  input: MarkReceivedVersionInput | CommitReceivedInput
-  userId: string
-}) {
-  const { input, userId } = params
+export const markCommitReceivedAndNotifyFactory =
+  ({ getCommit, saveActivity }: { getCommit: GetCommit; saveActivity: SaveActivity }) =>
+  async (params: {
+    input: MarkReceivedVersionInput | CommitReceivedInput
+    userId: string
+  }) => {
+    const { input, userId } = params
 
-  const oldInput: CommitReceivedInput =
-    'projectId' in input
-      ? {
-          ...input,
-          streamId: input.projectId,
-          commitId: input.versionId
-        }
-      : input
+    const oldInput: CommitReceivedInput =
+      'projectId' in input
+        ? {
+            ...input,
+            streamId: input.projectId,
+            commitId: input.versionId
+          }
+        : input
 
-  const commit = await getCommitFactory({ db })(oldInput.commitId, {
-    streamId: oldInput.streamId
-  })
-  if (!commit) {
-    throw new CommitReceiveError(
-      `Failed to find commit with id ${oldInput.commitId} in stream ${oldInput.streamId}.`,
-      { info: params }
-    )
+    const commit = await getCommit(oldInput.commitId, {
+      streamId: oldInput.streamId
+    })
+    if (!commit) {
+      throw new CommitReceiveError(
+        `Failed to find commit with id ${oldInput.commitId} in stream ${oldInput.streamId}.`,
+        { info: params }
+      )
+    }
+
+    await saveActivity({
+      streamId: oldInput.streamId,
+      resourceType: ResourceTypes.Commit,
+      resourceId: oldInput.commitId,
+      actionType: ActionTypes.Commit.Receive,
+      userId,
+      info: {
+        sourceApplication: input.sourceApplication,
+        message: input.message
+      },
+      message: `Commit ${oldInput.commitId} was received by user ${userId}`
+    })
   }
-
-  await addCommitReceivedActivity({
-    input: oldInput,
-    userId
-  })
-}
 
 export const createCommitByBranchIdFactory =
   (deps: {
@@ -93,22 +100,10 @@ export const createCommitByBranchIdFactory =
     insertBranchCommits: InsertBranchCommits
     markCommitStreamUpdated: MarkCommitStreamUpdated
     markCommitBranchUpdated: MarkCommitBranchUpdated
-    versionsEventEmitter: VersionsEventEmitter
     addCommitCreatedActivity: AddCommitCreatedActivity
+    emitEvent: EventBusEmit
   }): CreateCommitByBranchId =>
-  async (
-    params: {
-      streamId: string
-      branchId: string
-      objectId: string
-      authorId: string
-      message: Nullable<string>
-      sourceApplication: Nullable<string>
-      totalChildrenCount?: MaybeNullOrUndefined<number>
-      parents: Nullable<string[]>
-    },
-    options?: Partial<{ notify: boolean }>
-  ) => {
+  async (params, options) => {
     const {
       streamId,
       branchId,
@@ -158,10 +153,13 @@ export const createCommitByBranchIdFactory =
     await Promise.all([
       deps.markCommitStreamUpdated(id),
       deps.markCommitBranchUpdated(id),
-      deps.versionsEventEmitter(VersionEvents.Created, {
-        projectId: streamId,
-        modelId: branchId,
-        version: commit
+      deps.emitEvent({
+        eventName: VersionEvents.Created,
+        payload: {
+          projectId: streamId,
+          modelId: branchId,
+          version: commit
+        }
       }),
       ...(notify
         ? [
@@ -183,7 +181,7 @@ export const createCommitByBranchIdFactory =
         : [])
     ])
 
-    return commit
+    return { ...commit, streamId, branchId }
   }
 
 export const createCommitByBranchNameFactory =
@@ -192,19 +190,7 @@ export const createCommitByBranchNameFactory =
     getStreamBranchByName: GetStreamBranchByName
     getBranchById: GetBranchById
   }): CreateCommitByBranchName =>
-  async (
-    params: {
-      streamId: string
-      branchName: string
-      objectId: string
-      authorId: string
-      message: Nullable<string>
-      sourceApplication: Nullable<string>
-      totalChildrenCount?: MaybeNullOrUndefined<number>
-      parents: Nullable<string[]>
-    },
-    options?: Partial<{ notify: boolean }>
-  ) => {
+  async (params, options) => {
     const {
       streamId,
       objectId,
@@ -311,21 +297,20 @@ export const updateCommitAndNotifyFactory =
       )
     }
 
+    let branch: BranchRecord | undefined = await deps.getCommitBranch(commitId)
     if (newBranchName) {
       try {
-        const [newBranch, oldBranch] = await Promise.all([
-          deps.getStreamBranchByName(streamId, newBranchName),
-          deps.getCommitBranch(commitId)
-        ])
+        const newBranch = await deps.getStreamBranchByName(streamId, newBranchName)
 
-        if (!newBranch || !oldBranch) {
-          throw new Error("Couldn't resolve branch")
+        if (!newBranch || !branch) {
+          throw new BranchNotFoundError("Couldn't resolve branch")
         }
         if (!commit) {
-          throw new Error("Couldn't find commit")
+          throw new CommitNotFoundError("Couldn't find commit")
         }
 
-        await deps.switchCommitBranch(commitId, newBranch.id, oldBranch.id)
+        await deps.switchCommitBranch(commitId, newBranch.id, branch.id)
+        branch = newBranch
       } catch (e) {
         throw new CommitUpdateError('Failed to update commit branch', {
           cause: ensureError(e),
@@ -346,16 +331,18 @@ export const updateCommitAndNotifyFactory =
         userId,
         originalCommit: commit,
         update: params,
-        newCommit
+        newCommit,
+        branchId: branch!.id
       })
 
-      await Promise.all([
-        deps.markCommitStreamUpdated(commit.id),
-        deps.markCommitBranchUpdated(commit.id)
+      const [updatedBranch] = await Promise.all([
+        deps.markCommitBranchUpdated(commit.id),
+        deps.markCommitStreamUpdated(commit.id)
       ])
+      branch = updatedBranch
     }
 
-    return newCommit
+    return { ...newCommit, streamId: stream.id, branchId: branch!.id }
   }
 
 export const deleteCommitAndNotifyFactory =
@@ -364,7 +351,7 @@ export const deleteCommitAndNotifyFactory =
     markCommitStreamUpdated: MarkCommitStreamUpdated
     markCommitBranchUpdated: MarkCommitBranchUpdated
     deleteCommit: DeleteCommit
-    addCommitDeletedActivity: typeof addCommitDeletedActivity
+    addCommitDeletedActivity: AddCommitDeletedActivity
   }): DeleteCommitAndNotify =>
   async (commitId: string, streamId: string, userId: string) => {
     const commit = await deps.getCommit(commitId)

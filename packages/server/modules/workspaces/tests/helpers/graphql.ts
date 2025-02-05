@@ -8,6 +8,7 @@ export const basicWorkspaceFragment = gql`
     updatedAt
     createdAt
     role
+    readOnly
   }
 `
 
@@ -31,31 +32,6 @@ export const basicPendingWorkspaceCollaboratorFragment = gql`
   }
 `
 
-export const workspaceBillingFragment = gql`
-  fragment WorkspaceBilling on Workspace {
-    billing {
-      versionsCount {
-        current
-        max
-      }
-      cost {
-        subTotal
-        currency
-        items {
-          count
-          name
-          cost
-          label
-        }
-        discount {
-          name
-          amount
-        }
-        total
-      }
-    }
-  }
-`
 export const workspaceProjectsFragment = gql`
   fragment WorkspaceProjects on ProjectCollection {
     items {
@@ -120,17 +96,6 @@ export const getWorkspaceWithTeamQuery = gql`
 
   ${basicWorkspaceFragment}
   ${basicPendingWorkspaceCollaboratorFragment}
-`
-
-export const getWorkspaceWithBillingQuery = gql`
-  query GetWorkspaceWithBilling($workspaceId: String!) {
-    workspace(id: $workspaceId) {
-      ...BasicWorkspace
-      ...WorkspaceBilling
-    }
-  }
-  ${basicWorkspaceFragment}
-  ${workspaceBillingFragment}
 `
 
 export const getWorkspaceWithProjectsQuery = gql`
@@ -261,4 +226,138 @@ export const deleteWorkspaceDomainMutation = gql`
       }
     }
   }
+`
+
+export const getAvailableRegionsQuery = gql`
+  query GetAvailableRegions {
+    serverInfo {
+      multiRegion {
+        regions {
+          id
+          key
+          name
+        }
+      }
+    }
+  }
+`
+
+export const getDefaultRegionQuery = gql`
+  query GetWorkspaceDefaultRegion($workspaceId: String!) {
+    workspace(id: $workspaceId) {
+      id
+      defaultRegion {
+        id
+        key
+        name
+      }
+    }
+  }
+`
+
+export const setDefaultRegionMutation = gql`
+  mutation SetWorkspaceDefaultRegion($workspaceId: String!, $regionKey: String!) {
+    workspaceMutations {
+      setDefaultRegion(regionKey: $regionKey, workspaceId: $workspaceId) {
+        id
+        defaultRegion {
+          id
+          key
+          name
+        }
+      }
+    }
+  }
+`
+
+export const onWorkspaceProjectsUpdatedSubscription = gql`
+  subscription OnWorkspaceProjectsUpdated(
+    $workspaceId: String
+    $workspaceSlug: String
+  ) {
+    workspaceProjectsUpdated(workspaceId: $workspaceId, workspaceSlug: $workspaceSlug) {
+      type
+      projectId
+      workspaceId
+      project {
+        id
+        name
+      }
+    }
+  }
+
+  ${basicWorkspaceFragment}
+`
+
+export const onWorkspaceUpdatedSubscription = gql`
+  subscription OnWorkspaceUpdated($workspaceId: String, $workspaceSlug: String) {
+    workspaceUpdated(workspaceId: $workspaceId, workspaceSlug: $workspaceSlug) {
+      id
+      workspace {
+        ...BasicWorkspace
+        team {
+          totalCount
+          items {
+            id
+            role
+            user {
+              id
+              name
+            }
+          }
+        }
+        invitedTeam {
+          ...BasicPendingWorkspaceCollaborator
+        }
+      }
+    }
+  }
+
+  ${basicWorkspaceFragment}
+`
+
+export const dismissWorkspaceMutation = gql`
+  mutation dismissWorkspace($input: WorkspaceDismissInput!) {
+    workspaceMutations {
+      dismiss(input: $input)
+    }
+  }
+`
+
+export const requestToJoinWorkspaceMutation = gql`
+  mutation requestToJoinWorkspace($input: WorkspaceRequestToJoinInput!) {
+    workspaceMutations {
+      requestToJoin(input: $input)
+    }
+  }
+`
+
+export const getWorkspaceWithJoinRequestsQuery = gql`
+  query GetWorkspaceWithJoinRequests(
+    $workspaceId: String!
+    $filter: AdminWorkspaceJoinRequestFilter
+    $cursor: String
+    $limit: Int
+  ) {
+    workspace(id: $workspaceId) {
+      ...BasicWorkspace
+      adminWorkspacesJoinRequests(filter: $filter, cursor: $cursor, limit: $limit) {
+        items {
+          status
+          user {
+            id
+            name
+          }
+          workspace {
+            id
+            name
+          }
+          createdAt
+        }
+        cursor
+        totalCount
+      }
+    }
+  }
+  ${basicWorkspaceFragment}
 `

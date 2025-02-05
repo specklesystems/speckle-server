@@ -1,6 +1,6 @@
 import { knex, ServerInvites, Streams, Users } from '@/modules/core/dbSchema'
 import {
-  getUserByEmail,
+  getUserByEmailFactory,
   getUserFactory,
   UserWithOptionalRole
 } from '@/modules/core/repositories/users'
@@ -131,7 +131,7 @@ export const findUserByTargetFactory =
   (target: string): Promise<UserWithOptionalRole | null> => {
     const { userEmail, userId } = resolveTarget(target)
     return userEmail
-      ? getUserByEmail(userEmail, { withRole: true })
+      ? getUserByEmailFactory(deps)(userEmail, { withRole: true })
       : getUserFactory(deps)(userId!, { withRole: true })
   }
 
@@ -501,7 +501,7 @@ export const findInviteByTokenFactory =
     return (await q) || null
   }
 
-export const markInviteUpdatedfactory =
+export const markInviteUpdatedFactory =
   ({ db }: { db: Knex }): MarkInviteUpdated =>
   async ({ inviteId }) => {
     const cols = ServerInvites.with({ withoutTablePrefix: true }).col

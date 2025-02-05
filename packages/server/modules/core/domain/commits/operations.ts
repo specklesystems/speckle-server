@@ -1,21 +1,31 @@
 import { Branch } from '@/modules/core/domain/branches/types'
 import {
-  CommitWithBranchId,
   CommitWithStreamBranchMetadata,
   Commit,
   CommitBranch,
-  CommitWithStreamId
+  CommitWithStreamId,
+  LegacyUserCommit,
+  LegacyStreamCommit,
+  CommitWithStreamBranchId
 } from '@/modules/core/domain/commits/types'
 import {
+  CommitsDeleteInput,
   CommitsMoveInput,
   CommitUpdateInput,
+  DeleteVersionsInput,
   ModelVersionsFilter,
   MoveVersionsInput,
+  StreamCommitsArgs,
   UpdateVersionInput
 } from '@/modules/core/graph/generated/graphql'
 import { BranchCommitRecord, StreamCommitRecord } from '@/modules/core/helpers/types'
 import { BatchedSelectOptions } from '@/modules/shared/helpers/dbHelper'
-import { MaybeNullOrUndefined, Nullable, Optional } from '@speckle/shared'
+import {
+  MaybeNullOrUndefined,
+  Nullable,
+  NullableKeysToOptional,
+  Optional
+} from '@speckle/shared'
 import { Knex } from 'knex'
 
 export type GetCommits = (
@@ -44,16 +54,14 @@ export type GetSpecificBranchCommits = (
     branchId: string
     commitId: string
   }[]
-) => Promise<CommitWithBranchId[]>
+) => Promise<CommitWithStreamBranchId[]>
 
 export type StoreCommit = (
-  params: Omit<Commit, 'id' | 'createdAt'> & {
-    message?: Nullable<string>
-  }
+  params: Omit<NullableKeysToOptional<Commit>, 'id' | 'createdAt'>
 ) => Promise<Commit>
 
 export type CreateCommitByBranchId = (
-  params: {
+  params: NullableKeysToOptional<{
     streamId: string
     branchId: string
     objectId: string
@@ -62,14 +70,14 @@ export type CreateCommitByBranchId = (
     sourceApplication: Nullable<string>
     totalChildrenCount?: MaybeNullOrUndefined<number>
     parents: Nullable<string[]>
-  },
+  }>,
   options?: Partial<{
     notify: boolean
   }>
-) => Promise<Commit>
+) => Promise<CommitWithStreamBranchId>
 
 export type CreateCommitByBranchName = (
-  params: {
+  params: NullableKeysToOptional<{
     streamId: string
     branchName: string
     objectId: string
@@ -78,7 +86,7 @@ export type CreateCommitByBranchName = (
     sourceApplication: Nullable<string>
     totalChildrenCount?: MaybeNullOrUndefined<number>
     parents: Nullable<string[]>
-  },
+  }>,
   options?: Partial<{
     notify: boolean
   }>
@@ -101,7 +109,7 @@ export type InsertStreamCommits = (
 export type UpdateCommitAndNotify = (
   params: CommitUpdateInput | UpdateVersionInput,
   userId: string
-) => Promise<Commit>
+) => Promise<CommitWithStreamBranchId>
 
 export type GetCommitBranches = (commitIds: string[]) => Promise<CommitBranch[]>
 
@@ -158,7 +166,7 @@ export type GetUserAuthoredCommitCounts = (params: {
 
 export type GetCommitsAndTheirBranchIds = (
   commitIds: string[]
-) => Promise<CommitWithBranchId[]>
+) => Promise<CommitWithStreamBranchId[]>
 
 export type GetBatchedStreamCommits = (
   streamId: string,
@@ -168,7 +176,7 @@ export type GetBatchedStreamCommits = (
 export type GetBatchedBranchCommits = (
   branchIds: string[],
   options?: Partial<BatchedSelectOptions>
-) => AsyncGenerator<BranchCommitRecord[], void, unknown>
+) => AsyncGenerator<(BranchCommitRecord & { streamId: string })[], void, unknown>
 
 export type InsertCommits = (
   commits: Commit[],
@@ -195,7 +203,7 @@ export type PaginatedBranchCommitsParams = PaginatedBranchCommitsBaseParams & {
 export type GetPaginatedBranchCommitsItems = (
   params: PaginatedBranchCommitsParams
 ) => Promise<{
-  commits: Commit[]
+  commits: CommitWithStreamBranchId[]
   cursor: string | null
 }>
 
@@ -209,7 +217,22 @@ export type GetPaginatedBranchCommits = (
   }
 ) => Promise<{
   totalCount: number
-  items: Commit[]
+  items: CommitWithStreamBranchId[]
+  cursor: string | null
+}>
+
+export type GetBranchCommitsTotalCountByName = (params: {
+  streamId: string
+  branchName: string
+}) => Promise<number>
+
+export type GetPaginatedBranchCommitsItemsByName = (params: {
+  streamId: string
+  branchName: string
+  limit: number
+  cursor?: Nullable<string>
+}) => Promise<{
+  commits: CommitWithStreamBranchId[]
   cursor: string | null
 }>
 
@@ -223,9 +246,54 @@ export type ValidateAndBatchMoveCommits = (
   userId: string
 ) => Promise<Branch>
 
+export type ValidateAndBatchDeleteCommits = (
+  params: CommitsDeleteInput | DeleteVersionsInput,
+  userId: string
+) => Promise<void>
+
 export type GetObjectCommitsWithStreamIds = (
   objectIds: string[],
   options?: {
     streamIds?: string[]
   }
 ) => Promise<CommitWithStreamId[]>
+
+export type LegacyGetPaginatedUserCommitsPage = (params: {
+  userId: string
+  limit?: MaybeNullOrUndefined<number>
+  cursor?: MaybeNullOrUndefined<string>
+  publicOnly?: MaybeNullOrUndefined<boolean>
+  streamIdWhitelist?: MaybeNullOrUndefined<string[]>
+}) => Promise<{
+  commits: LegacyUserCommit[]
+  cursor: Nullable<string>
+}>
+
+export type LegacyGetPaginatedUserCommitsTotalCount = ({
+  userId,
+  publicOnly,
+  streamIdWhitelist
+}: {
+  userId: string
+  publicOnly?: MaybeNullOrUndefined<boolean>
+  streamIdWhitelist?: MaybeNullOrUndefined<string[]>
+}) => Promise<number>
+
+export type LegacyGetPaginatedStreamCommitsPage = (params: {
+  streamId: string
+  limit?: MaybeNullOrUndefined<number>
+  cursor?: MaybeNullOrUndefined<string>
+  ignoreGlobalsBranch?: MaybeNullOrUndefined<boolean>
+}) => Promise<{
+  commits: LegacyStreamCommit[]
+  cursor: Nullable<string>
+}>
+
+export type LegacyGetPaginatedStreamCommits = (
+  streamId: string,
+  params: StreamCommitsArgs
+) => Promise<{
+  items: LegacyStreamCommit[]
+  cursor: Nullable<string>
+  totalCount: number
+}>

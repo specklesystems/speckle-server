@@ -6,7 +6,7 @@ import {
   LoginParams
 } from '@/modules/auth/tests/helpers/registration'
 import { AllScopes } from '@/modules/core/helpers/mainConstants'
-import { updateServerInfo } from '@/modules/core/services/generic'
+import { updateServerInfoFactory } from '@/modules/core/repositories/server'
 import { findInviteFactory } from '@/modules/serverinvites/repositories/serverInvites'
 import { expectToThrow, itEach } from '@/test/assertionHelper'
 import { BasicTestUser, createTestUsers } from '@/test/authHelper'
@@ -32,6 +32,8 @@ import {
 } from '@/test/speckle-helpers/streamHelper'
 import { Roles } from '@speckle/shared'
 import { expect } from 'chai'
+
+const updateServerInfo = updateServerInfoFactory({ db })
 
 describe('Server registration', () => {
   let restApi: LocalAuthRestApiHelpers
@@ -163,7 +165,7 @@ describe('Server registration', () => {
           streamId: basicAdminStream.id
         },
         {
-          context: createTestContext({
+          context: await createTestContext({
             userId: newUser.id,
             auth: true,
             role: Roles.Server.User,

@@ -383,6 +383,27 @@ export const useAuthManager = (
   }
 
   /**
+   * Initiate SSO flow. Will create a user if one does not already exist.
+   */
+  const signInOrSignUpWithSso = (params: {
+    challenge: string
+    workspaceSlug: string
+    newsletterConsent?: boolean
+  }) => {
+    postAuthRedirect.set(`/workspaces/${params.workspaceSlug}`)
+
+    const authUrl = new URL(
+      `/api/v1/workspaces/${params.workspaceSlug}/sso/auth`,
+      apiOrigin
+    )
+    authUrl.searchParams.set('challenge', params.challenge)
+    if (params.newsletterConsent) {
+      authUrl.searchParams.set('newsletter_consent', 'true')
+    }
+    navigateTo(authUrl.toString(), { external: true })
+  }
+
+  /**
    * Log out
    */
   const logout = async (
@@ -425,6 +446,7 @@ export const useAuthManager = (
     authToken,
     loginWithEmail,
     signUpWithEmail,
+    signInOrSignUpWithSso,
     logout,
     watchAuthQueryString,
     inviteToken

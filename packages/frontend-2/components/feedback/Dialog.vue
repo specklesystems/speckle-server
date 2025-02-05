@@ -1,15 +1,14 @@
 <template>
   <LayoutDialog
     v-model:open="isOpen"
-    title="Give us feedback"
+    :title="dialogTitle"
     :buttons="dialogButtons"
     :on-submit="onSubmit"
     max-width="md"
   >
-    <div class="flex flex-col gap-4">
+    <div class="flex flex-col gap-2">
       <p class="text-body-xs text-foreground font-medium">
-        How can we improve Speckle? If you have a feature request, please also share how
-        you would use it and why it's important to you
+        {{ dialogIntro }}
       </p>
       <FormTextArea
         v-model="feedback"
@@ -18,6 +17,13 @@
         label="Feedback"
         color="foundation"
       />
+      <p v-if="!hideSuppport" class="text-body-xs !leading-4">
+        Need help? For support, head over to our
+        <FormButton to="https://speckle.community/" target="_blank" link text>
+          community forum
+        </FormButton>
+        where we can chat and solve problems together.
+      </p>
     </div>
   </LayoutDialog>
 </template>
@@ -30,8 +36,23 @@ import { useZapier } from '~/lib/core/composables/zapier'
 import { useGlobalToast, ToastNotificationType } from '~~/lib/common/composables/toast'
 import { isRequired } from '~/lib/common/helpers/validation'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
+import { defaultZapierWebhookUrl } from '~/lib/common/helpers/route'
 
+type FeedbackType = 'general' | 'gendo'
 type FormValues = { feedback: string }
+
+const props = withDefaults(
+  defineProps<{
+    type?: FeedbackType
+    title?: string
+    intro?: string
+    hideSuppport?: boolean
+    metadata?: Record<string, unknown>
+  }>(),
+  {
+    type: 'general'
+  }
+)
 
 const isOpen = defineModel<boolean>('open', { required: true })
 
@@ -52,6 +73,14 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
   }
 ])
 
+const dialogTitle = computed(() => props.title || 'Give us feedback')
+
+const dialogIntro = computed(
+  () =>
+    props.intro ||
+    'How can we improve Speckle? If you have a feature request, please also share how you would use it and why its important to you'
+)
+
 const onSubmit = handleSubmit(async () => {
   if (!feedback.value) return
 
@@ -63,10 +92,12 @@ const onSubmit = handleSubmit(async () => {
   })
 
   mixpanel.track('Feedback Sent', {
-    message: feedback.value
+    message: feedback.value,
+    feedbackType: props.type,
+    ...props.metadata
   })
 
-  await sendWebhook('https://hooks.zapier.com/hooks/catch/12120532/2m4okri/', {
+  await sendWebhook(defaultZapierWebhookUrl, {
     userId: user.value?.id ?? '',
     feedback: feedback.value
   })

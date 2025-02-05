@@ -1,3 +1,5 @@
+import { ProjectVisibility } from '~/lib/common/generated/gql/graphql'
+import { WorkspaceSsoErrorCodes } from '~/lib/workspaces/helpers/types'
 import { useApolloClientFromNuxt } from '~~/lib/common/composables/graphql'
 import {
   convertThrowIntoFetchResult,
@@ -24,13 +26,41 @@ export default defineNuxtRouteMiddleware(async (to) => {
   // If project succesfully resolved, move on
   if (data?.project?.model?.id) return
 
-  const isForbidden = (errors || []).find((e) => e.extensions['code'] === 'FORBIDDEN')
+  const isForbidden = (errors || []).find((e) => e.extensions?.['code'] === 'FORBIDDEN')
   const isProjectNotFound = (errors || []).find(
-    (e) => e.extensions['code'] === 'STREAM_NOT_FOUND'
+    (e) => e.extensions?.['code'] === 'STREAM_NOT_FOUND'
   )
   const isModelNotFound = (errors || []).find(
-    (e) => e.extensions['code'] === 'BRANCH_NOT_FOUND'
+    (e) => e.extensions?.['code'] === 'BRANCH_NOT_FOUND'
   )
+
+  // Check if project exists and model is valid
+  if (!data?.project?.model?.id) {
+    if (errors?.length) {
+      const errMsg = getFirstErrorMessage(errors)
+      return abortNavigation(errMsg)
+    }
+    return
+  }
+
+  // If project is public or link shareable, allow access
+  if (
+    data.project.visibility === ProjectVisibility.Public ||
+    data.project.visibility === ProjectVisibility.Unlisted
+  ) {
+    return
+  }
+
+  // Check for SSO session error
+  const ssoSessionError = (errors || []).find(
+    (e) => e.extensions?.['code'] === WorkspaceSsoErrorCodes.SESSION_MISSING_OR_EXPIRED
+  )
+
+  if (ssoSessionError) {
+    const workspaceSlug = ssoSessionError.message
+    return navigateTo(`/workspaces/${workspaceSlug}/sso/session-error`)
+  }
+
   if (isForbidden) {
     return abortNavigation(
       createError({

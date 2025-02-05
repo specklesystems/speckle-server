@@ -30,7 +30,7 @@ import {
   deleteInviteFactory as deleteInviteFromDbFactory,
   queryAllUserResourceInvitesFactory,
   queryAllResourceInvitesFactory,
-  markInviteUpdatedfactory,
+  markInviteUpdatedFactory,
   deleteServerOnlyInvitesFactory,
   updateAllInviteTargetsFactory
 } from '@/modules/serverinvites/repositories/serverInvites'
@@ -67,7 +67,6 @@ import {
   findEmailFactory
 } from '@/modules/core/repositories/userEmails'
 import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
-import { getServerInfo } from '@/modules/core/services/generic'
 import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
 import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
@@ -83,6 +82,7 @@ import {
   validateStreamAccessFactory
 } from '@/modules/core/services/streams/access'
 import { getUserFactory, getUsersFactory } from '@/modules/core/repositories/users'
+import { getServerInfoFactory } from '@/modules/core/repositories/server'
 
 const saveActivity = saveActivityFactory({ db })
 const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
@@ -102,6 +102,7 @@ const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
     publish
   })
 })
+const getServerInfo = getServerInfoFactory({ db })
 const getStream = getStreamFactory({ db })
 const requestNewEmailVerification = requestNewEmailVerificationFactory({
   findEmail: findEmailFactory({ db }),
@@ -130,7 +131,8 @@ const buildCreateAndSendServerOrProjectInvite = () =>
         eventName,
         payload
       }),
-    getUser
+    getUser,
+    getServerInfo
   })
 
 export = {
@@ -358,7 +360,8 @@ export = {
         deleteInvite: deleteInviteFromDbFactory({ db }),
         validateResourceAccess: validateProjectInviteBeforeFinalizationFactory({
           getProject: getStream
-        })
+        }),
+        emitEvent: getEventBus().emit
       })
 
       await authorizeResolver(userId, streamId, Roles.Stream.Owner, resourceAccessRules)
@@ -382,8 +385,9 @@ export = {
         }),
         findUserByTarget: findUserByTargetFactory({ db }),
         findInvite: findInviteFactory({ db }),
-        markInviteUpdated: markInviteUpdatedfactory({ db }),
-        getUser
+        markInviteUpdated: markInviteUpdatedFactory({ db }),
+        getUser,
+        getServerInfo
       })
 
       await resendInviteEmail({ inviteId })
@@ -391,13 +395,14 @@ export = {
       return true
     },
 
-    async inviteDelete(_parent, args) {
+    async inviteDelete(_parent, args, ctx) {
       const { inviteId } = args
 
       await deleteInviteFactory({
         findInvite: findInviteFactory({ db }),
-        deleteInvite: deleteInviteFromDbFactory({ db })
-      })(inviteId)
+        deleteInvite: deleteInviteFromDbFactory({ db }),
+        emitEvent: getEventBus().emit
+      })(inviteId, ctx.userId!)
 
       return true
     }
@@ -507,7 +512,8 @@ export = {
         deleteInvite: deleteInviteFromDbFactory({ db }),
         validateResourceAccess: validateProjectInviteBeforeFinalizationFactory({
           getProject: getStream
-        })
+        }),
+        emitEvent: getEventBus().emit
       })
 
       await cancelInvite({

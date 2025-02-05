@@ -3,17 +3,15 @@
     <template #header>
       <div class="flex flex-col">
         <div class="flex items-center space-x-2 max-w-full w-full">
-          <div class="mt-[6px] shrink-0">
-            <AutomateRunsTriggerStatusIcon
-              :summary="summary"
-              class="h-6 w-6 sm:h-10 sm:w-10"
-            />
-          </div>
-          <div class="flex min-w-0 flex-col gap-1">
-            <h4 :class="[`h6 sm:h5 font-medium whitespace-normal`, summary.titleColor]">
+          <AutomateRunsTriggerStatusIcon
+            :summary="summary"
+            class="h-6 w-6 sm:h-10 sm:w-10"
+          />
+          <div class="flex min-w-0 flex-col gap-0.5">
+            <h4 class="text-heading-sm" :class="[summary.titleColor]">
               {{ summary.title }}
             </h4>
-            <div class="caption text-foreground-2 whitespace-normal">
+            <div class="text-body-2xs text-foreground-2">
               {{ summary.longSummary }}
             </div>
           </div>
@@ -40,7 +38,7 @@
           to="https://speckle.systems/blog/automate-with-speckle/"
           class="order-2 sm:order-1"
         >
-          Learn more about Automate here!
+          Learn more about Automate
         </FormButton>
         <div
           class="flex w-full justify-between order-1 sm:order-2 sm:justify-normal sm:w-auto sm:space-x-1"

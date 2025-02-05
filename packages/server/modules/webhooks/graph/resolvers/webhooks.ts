@@ -16,9 +16,9 @@ import {
   getWebhookEventsCountFactory,
   updateWebhookConfigFactory
 } from '@/modules/webhooks/repositories/webhooks'
-import { db } from '@/db/knex'
 import { ForbiddenError } from '@/modules/shared/errors'
 import { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
+import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 
 const streamWebhooksResolver = async (
   parent: { id: string },
@@ -32,13 +32,17 @@ const streamWebhooksResolver = async (
     context.resourceAccessRules
   )
 
+  const projectDb = await getProjectDbClient({ projectId: parent.id })
+
   if (args.id) {
-    const wh = await getWebhookByIdFactory({ db })({ id: args.id })
+    const wh = await getWebhookByIdFactory({ db: projectDb })({ id: args.id })
     const items = wh ? [wh] : []
     return { items, totalCount: items.length }
   }
 
-  const items = await getStreamWebhooksFactory({ db })({ streamId: parent.id })
+  const items = await getStreamWebhooksFactory({ db: projectDb })({
+    streamId: parent.id
+  })
   return { items, totalCount: items.length }
 }
 
@@ -47,11 +51,13 @@ export = {
     projectId: (parent) => parent.streamId,
     hasSecret: (parent) => !!parent.secret?.length,
     history: async (parent, args) => {
-      const items = await getLastWebhookEventsFactory({ db })({
+      const projectDb = await getProjectDbClient({ projectId: parent.streamId })
+
+      const items = await getLastWebhookEventsFactory({ db: projectDb })({
         webhookId: parent.id,
         limit: args.limit
       })
-      const totalCount = await getWebhookEventsCountFactory({ db })({
+      const totalCount = await getWebhookEventsCountFactory({ db: projectDb })({
         webhookId: parent.id
       })
 
@@ -72,10 +78,11 @@ export = {
         Roles.Stream.Owner,
         context.resourceAccessRules
       )
+      const projectDb = await getProjectDbClient({ projectId: args.webhook.streamId })
 
       const id = await createWebhookFactory({
-        createWebhookConfig: createWebhookConfigFactory({ db }),
-        countWebhooksByStreamId: countWebhooksByStreamIdFactory({ db })
+        createWebhookConfig: createWebhookConfigFactory({ db: projectDb }),
+        countWebhooksByStreamId: countWebhooksByStreamIdFactory({ db: projectDb })
       })({
         streamId: args.webhook.streamId,
         url: args.webhook.url,
@@ -95,14 +102,16 @@ export = {
         context.resourceAccessRules
       )
 
-      const wh = await getWebhookByIdFactory({ db })({ id: args.webhook.id })
+      const projectDb = await getProjectDbClient({ projectId: args.webhook.streamId })
+
+      const wh = await getWebhookByIdFactory({ db: projectDb })({ id: args.webhook.id })
       if (args.webhook.streamId !== wh?.streamId)
         throw new ForbiddenError(
           'The webhook id and stream id do not match. Please check your inputs.'
         )
 
       const updated = await updateWebhookFactory({
-        updateWebhookConfig: updateWebhookConfigFactory({ db })
+        updateWebhookConfig: updateWebhookConfigFactory({ db: projectDb })
       })({
         id: args.webhook.id,
         url: args.webhook.url,
@@ -122,9 +131,11 @@ export = {
         context.resourceAccessRules
       )
 
+      const projectDb = await getProjectDbClient({ projectId: args.webhook.streamId })
+
       return await deleteWebhookFactory({
-        deleteWebhookConfig: deleteWebhookConfigFactory({ db }),
-        getWebhookById: getWebhookByIdFactory({ db })
+        deleteWebhookConfig: deleteWebhookConfigFactory({ db: projectDb }),
+        getWebhookById: getWebhookByIdFactory({ db: projectDb })
       })(args.webhook)
     }
   }

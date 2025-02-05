@@ -1,14 +1,19 @@
 <template>
   <LayoutDialog v-model:open="isOpen" title="Delete account" max-width="md">
-    <form class="flex flex-col gap-2" @submit="onDelete">
-      <p class="text-body-xs font-medium mb-1">
-        This action cannot be undone. We will delete all projects where you are the sole
-        owner, and any associated data.
-      </p>
+    <form class="flex flex-col gap-y-3" @submit="onDelete">
       <p class="text-body-xs">
-        To delete your account, type in your
+        <span class="font-medium">
+          Are you sure you want to permanently delete your account? This action cannot
+          be undone.
+        </span>
+        We will delete all projects where you are the sole owner, and any associated
+        data.
+      </p>
+
+      <p class="text-body-xs">
+        To confirm, type your
         <HelpText :text="emailPlaceholder">e-mail address</HelpText>
-        and press the Delete.
+        below.
       </p>
 
       <div class="flex gap-2 mt-3 mb-6">

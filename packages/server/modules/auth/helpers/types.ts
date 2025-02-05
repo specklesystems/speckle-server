@@ -69,6 +69,11 @@ export type UserServerAppTokenRecord = {
   tokenId: string
 }
 
+export type PersonalApiTokenRecord = {
+  userId: string
+  tokenId: string
+}
+
 export type TokenScopeRecord = {
   tokenId: string
   scopeName: ServerScope

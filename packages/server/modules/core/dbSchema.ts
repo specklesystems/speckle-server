@@ -266,7 +266,8 @@ export const Streams = buildTableHelper(
     'updatedAt',
     'allowPublicComments',
     'isDiscoverable',
-    'workspaceId'
+    'workspaceId',
+    'regionKey'
   ],
   StreamsMeta
 )
@@ -401,7 +402,8 @@ export const EmailVerifications = buildTableHelper('email_verifications', [
   'id',
   'email',
   'createdAt',
-  'used'
+  'used',
+  'code'
 ])
 
 export const ServerAccessRequests = buildTableHelper('server_access_requests', [

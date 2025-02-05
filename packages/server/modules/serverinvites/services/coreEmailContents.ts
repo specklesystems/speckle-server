@@ -4,10 +4,8 @@ import {
   getStreamRoute
 } from '@/modules/core/helpers/routeHelper'
 import { StreamRecord } from '@/modules/core/helpers/types'
-import {
-  EmailTemplateParams,
-  sanitizeMessage
-} from '@/modules/emails/services/emailRendering'
+import { EmailTemplateParams } from '@/modules/emails/domain/operations'
+import { sanitizeMessage } from '@/modules/emails/services/emailRendering'
 import {
   PrimaryInviteResourceTarget,
   ProjectInviteResourceTarget

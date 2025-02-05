@@ -1,10 +1,7 @@
 import speckleTheme from '@speckle/tailwind-theme'
-import { tailwindContentEntry as themeEntry } from '@speckle/tailwind-theme/tailwind-configure'
-import { tailwindContentEntry as uiLibEntry } from '@speckle/ui-components/tailwind-configure'
+import { tailwindContentEntries as themeEntries } from '@speckle/tailwind-theme/tailwind-configure'
+import { tailwindContentEntries as uiLibEntries } from '@speckle/ui-components/tailwind-configure'
 import formsPlugin from '@tailwindcss/forms'
-
-import { createRequire } from 'module'
-const req = createRequire(import.meta.url)
 
 /** @type {import('tailwindcss').Config} */
 const config = {
@@ -19,8 +16,8 @@ const config = {
     './app.vue',
     './.storybook/**/*.{js,ts,vue}',
     './lib/**/composables/*.{js,ts}',
-    themeEntry(req),
-    uiLibEntry(req)
+    ...themeEntries(),
+    ...uiLibEntries()
     // `./lib/**/*.{js,ts,vue}`, // TODO: Wait for fix https://github.com/nuxt/framework/issues/2886#issuecomment-1108312903
   ],
   plugins: [speckleTheme, formsPlugin]

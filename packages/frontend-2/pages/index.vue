@@ -54,12 +54,25 @@
         </section>
       </div>
       <section>
-        <h2 class="text-heading-sm text-foreground-2">News &amp; tutorials</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 pt-5">
+        <div class="flex items-center justify-between">
+          <h2 class="text-heading-sm text-foreground-2">Tutorials</h2>
+          <FormButton
+            color="outline"
+            size="sm"
+            to="https://www.speckle.systems/tutorials"
+            external
+            target="_blank"
+          >
+            View all
+          </FormButton>
+        </div>
+        <div
+          class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 pt-5"
+        >
           <DashboardTutorialCard
-            v-for="tutorial in tutorials"
-            :key="tutorial.id"
-            :tutorial="tutorial"
+            v-for="tutorialItem in tutorialItems"
+            :key="tutorialItem.title"
+            :tutorial-item="tutorialItem"
           />
         </div>
       </section>
@@ -74,10 +87,8 @@ import {
   dashboardProjectsPageWorkspacesQuery
 } from '~~/lib/dashboard/graphql/queries'
 import type { QuickStartItem } from '~~/lib/dashboard/helpers/types'
-import { getResizedGhostImage } from '~~/lib/dashboard/helpers/utils'
 import { useQuery } from '@vue/apollo-composable'
 import { useMixpanel } from '~~/lib/core/composables/mp'
-import GhostContentAPI from '@tryghost/content-api'
 import {
   docsPageUrl,
   forumPageUrl,
@@ -89,6 +100,7 @@ import { downloadManager } from '~~/lib/common/utils/downloadManager'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import type { LayoutDialogButton } from '@speckle/ui-components'
 import type { PromoBanner } from '~/lib/promo-banners/types'
+import { tutorials } from '~/lib/dashboard/helpers/tutorials'
 
 useHead({ title: 'Dashboard' })
 
@@ -97,7 +109,6 @@ definePageMeta({
   alias: ['/profile', '/dashboard']
 })
 
-const config = useRuntimeConfig()
 const mixpanel = useMixpanel()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
 const { result: projectsResult } = useQuery(dashboardProjectsPageQuery)
@@ -109,20 +120,11 @@ const { result: workspacesResult } = useQuery(
   })
 )
 const { triggerNotification } = useGlobalToast()
-const { data: tutorials } = await useLazyAsyncData('tutorials', fetchTutorials, {
-  server: false
-})
 const { isGuest } = useActiveUser()
 const router = useRouter()
 
 const openNewProject = ref(false)
-
-const ghostContentApi = new GhostContentAPI({
-  url: 'https://v1.speckle.systems',
-  key: config.public.ghostApiKey,
-  version: 'v5.0'
-})
-
+const tutorialItems = shallowRef(tutorials)
 const quickStartItems = shallowRef<QuickStartItem[]>([
   {
     title: 'Install Speckle manager',
@@ -170,24 +172,6 @@ const createProjectButton = shallowRef<LayoutDialogButton[]>([
 
 const projects = computed(() => projectsResult.value?.activeUser?.projects.items)
 const hasProjects = computed(() => (projects.value ? projects.value.length > 0 : false))
-
-async function fetchTutorials() {
-  const posts = await ghostContentApi.posts.browse({
-    limit: 8,
-    filter: 'visibility:public'
-  })
-
-  return posts
-    .filter((post) => post.url)
-    .map((post) => ({
-      id: post.id,
-      readingTime: post.reading_time,
-      publishedAt: post.published_at,
-      url: post.url,
-      title: post.title,
-      featureImage: getResizedGhostImage({ url: post.feature_image, width: 600 })
-    }))
-}
 
 const onDownloadManager = (extension: ManagerExtension) => {
   try {

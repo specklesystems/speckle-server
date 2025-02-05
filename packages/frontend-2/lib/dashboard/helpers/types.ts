@@ -1,13 +1,9 @@
-import type { Nullable } from '@speckle/shared'
 import { type LayoutDialogButton } from '@speckle/ui-components'
 
 export type TutorialItem = {
-  id: string
-  readingTime?: number
-  publishedAt?: Nullable<string>
-  url?: string
-  title?: string
-  featureImage?: Nullable<string>
+  title: string
+  image: string
+  url: string
 }
 
 export type QuickStartItem = {

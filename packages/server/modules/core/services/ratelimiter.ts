@@ -2,7 +2,7 @@ import express from 'express'
 import {
   getRedisUrl,
   getIntFromEnv,
-  isTestEnv
+  getBooleanFromEnv
 } from '@/modules/shared/helpers/envHelper'
 import {
   BurstyRateLimiter,
@@ -17,6 +17,7 @@ import { RateLimitError } from '@/modules/core/errors/ratelimit'
 import { rateLimiterLogger } from '@/logging/logging'
 import { createRedisClient } from '@/modules/shared/redis/redis'
 import { getRequestPath } from '@/modules/core/helpers/server'
+import { getTokenFromRequest } from '@/modules/shared/middleware'
 
 export interface RateLimitResult {
   isWithinLimits: boolean
@@ -54,6 +55,10 @@ export type RateLimiterMapping = {
 }
 
 export type RateLimitAction = keyof typeof LIMITS
+
+export const isRateLimiterEnabled = (): boolean => {
+  return getBooleanFromEnv('RATELIMITER_ENABLED', true)
+}
 
 export const LIMITS = <const>{
   ALL_REQUESTS: {
@@ -293,7 +298,10 @@ export const getActionForPath = (path: string, verb: string): RateLimitAction =>
 }
 
 export const getSourceFromRequest = (req: express.Request): string => {
-  let source: string | null = req?.context?.userId || getIpFromRequest(req)
+  let source: string | null =
+    req?.context?.userId ||
+    getTokenFromRequest(req)?.substring(10) || // token ID
+    getIpFromRequest(req)
 
   if (!source) source = 'unknown'
   return source
@@ -307,7 +315,7 @@ export const createRateLimiterMiddleware = (
     res: express.Response,
     next: express.NextFunction
   ) => {
-    if (isTestEnv()) return next()
+    if (!isRateLimiterEnabled()) return next()
     const path = getRequestPath(req) || ''
     const action = getActionForPath(path, req.method)
     const source = getSourceFromRequest(req)

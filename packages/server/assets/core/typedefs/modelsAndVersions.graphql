@@ -39,7 +39,7 @@ extend type Project {
   """
   Retrieve a specific project version by its ID
   """
-  version(id: String!): Version
+  version(id: String!): Version!
 
   """
   Retrieve a specific project model by its ID
@@ -106,7 +106,7 @@ type Model {
   The shortened/display name that doesn't include the names of parent models
   """
   displayName: String!
-  author: LimitedUser!
+  author: LimitedUser
   description: String
   createdAt: DateTime!
   updatedAt: DateTime!
@@ -160,7 +160,8 @@ type ModelMutations {
 }
 
 input MoveVersionsInput {
-  versionIds: [String!]!
+  projectId: ID!
+  versionIds: [ID!]!
   """
   If the name references a nonexistant model, it will be created
   """
@@ -168,14 +169,16 @@ input MoveVersionsInput {
 }
 
 input DeleteVersionsInput {
-  versionIds: [String!]!
+  projectId: ID!
+  versionIds: [ID!]!
 }
 
 """
 Only non-null values will be updated
 """
 input UpdateVersionInput {
-  versionId: String!
+  projectId: ID!
+  versionId: ID!
   message: String
 }
 
@@ -325,9 +328,9 @@ type ProjectVersionsUpdatedMessage {
   """
   version: Version
   """
-  Only set if version was deleted, in other scenarios can be queried from 'version'
+  Version's model ID
   """
-  modelId: String
+  modelId: String!
 }
 
 type ProjectVersionsPreviewGeneratedMessage {
@@ -341,12 +344,19 @@ extend type Subscription {
   Subscribe to changes to a project's models. Optionally specify modelIds to track.
   """
   projectModelsUpdated(id: String!, modelIds: [String!]): ProjectModelsUpdatedMessage!
+    @hasServerRole(role: SERVER_GUEST)
+    @hasScope(scope: "streams:read")
+
   """
   Subscribe to changes to a project's versions.
   """
   projectVersionsUpdated(id: String!): ProjectVersionsUpdatedMessage!
+    @hasServerRole(role: SERVER_GUEST)
+    @hasScope(scope: "streams:read")
   """
   Subscribe to when a project's versions get their preview image fully generated.
   """
   projectVersionsPreviewGenerated(id: String!): ProjectVersionsPreviewGeneratedMessage!
+    @hasServerRole(role: SERVER_GUEST)
+    @hasScope(scope: "streams:read")
 }

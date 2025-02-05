@@ -17,7 +17,7 @@ import {
   CreateBranchAndNotify,
   GetStreamBranchByName
 } from '@/modules/core/domain/branches/operations'
-import { CreateStream } from '@/modules/core/domain/streams/operations'
+import { CreateProject } from '@/modules/core/domain/projects/operations'
 import { GetUser } from '@/modules/core/domain/users/operations'
 
 type ProjectMetadata = Awaited<ReturnType<typeof getProjectMetadata>>
@@ -193,7 +193,7 @@ const importVersionsFactory =
   }
 
 type DownloadProjectDeps = {
-  createStreamReturnRecord: CreateStream
+  createNewProject: CreateProject
 } & GetLocalResourcesDeps &
   ImportVersionsDeps
 
@@ -203,7 +203,7 @@ type DownloadProjectDeps = {
 export const downloadProjectFactory =
   (deps: DownloadProjectDeps): DownloadProject =>
   async (params, options) => {
-    const { projectUrl, authorId, syncComments, token } = params
+    const { projectUrl, authorId, syncComments, token, workspaceId, regionKey } = params
     const { logger = crossServerSyncLogger } = options || {}
 
     logger.info(`Project download started at: ${new Date().toISOString()}`)
@@ -219,9 +219,11 @@ export const downloadProjectFactory =
     })
 
     logger.debug(`Creating project locally...`)
-    const project = await deps.createStreamReturnRecord({
+    const project = await deps.createNewProject({
       ...projectInfo.projectInfo,
-      ownerId: localResources.user.id
+      workspaceId,
+      ownerId: localResources.user.id,
+      regionKey
     })
 
     await importVersionsFactory(deps)({

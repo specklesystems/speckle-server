@@ -1,8 +1,7 @@
-import { getServerInfo } from '@/modules/core/services/generic'
-import {
-  EmailTemplateServerInfo,
-  renderEmail
-} from '@/modules/emails/services/emailRendering'
+import { db } from '@/db/knex'
+import { getServerInfoFactory } from '@/modules/core/repositories/server'
+import { EmailTemplateServerInfo } from '@/modules/emails/domain/operations'
+import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { expect } from 'chai'
 import sanitize from 'sanitize-html'
 
@@ -84,7 +83,7 @@ describe('Basic email template', () => {
   })
 
   it('prefills server info, if not passed in', async () => {
-    const serverInfo = await getServerInfo()
+    const serverInfo = await getServerInfoFactory({ db })()
 
     const { text, html } = await renderEmail(
       {

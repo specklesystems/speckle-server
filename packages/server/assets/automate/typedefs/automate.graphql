@@ -138,7 +138,6 @@ type AutomateFunction {
     limit: Int
     filter: AutomateFunctionReleasesFilter
   ): AutomateFunctionReleaseCollection!
-  automationCount: Int!
   """
   SourceAppNames values from @speckle/shared. Empty array means - all of them
   """
@@ -148,6 +147,12 @@ type AutomateFunction {
   Only returned if user is a part of this speckle server
   """
   creator: LimitedUser
+  workspaceIds: [String!]
+}
+
+type AutomateFunctionToken {
+  functionId: String!
+  functionToken: String!
 }
 
 type AutomateFunctionRelease {
@@ -213,10 +218,10 @@ input AutomateFunctionsFilter {
   By default we skip functions without releases. Set this to true to include them.
   """
   functionsWithoutReleases: Boolean
-  featuredFunctionsOnly: Boolean
 }
 
 input AutomateFunctionRunStatusReportInput {
+  projectId: String!
   functionRunId: String!
   status: AutomateRunStatus!
   statusMessage: String
@@ -246,6 +251,11 @@ input CreateAutomateFunctionInput {
   org: String
 }
 
+input CreateAutomateFunctionWithoutVersionInput {
+  name: String!
+  description: String!
+}
+
 """
 Any null values will be ignored
 """
@@ -259,6 +269,7 @@ input UpdateAutomateFunctionInput {
   supportedSourceApps: [String!]
   tags: [String!]
   logo: String
+  workspaceIds: [String!]
 }
 
 type UserAutomateInfo {
@@ -268,6 +279,11 @@ type UserAutomateInfo {
 
 extend type User {
   automateInfo: UserAutomateInfo! @isOwner
+  automateFunctions(
+    filter: AutomateFunctionsFilter
+    cursor: String
+    limit: Int
+  ): AutomateFunctionCollection!
 }
 
 enum AutomateFunctionTemplateLanguage {
@@ -311,22 +327,28 @@ extend type ProjectMutations {
 type AutomateMutations {
   createFunction(input: CreateAutomateFunctionInput!): AutomateFunction!
     @hasScope(scope: "automate-functions:write")
+  createFunctionWithoutVersion(
+    input: CreateAutomateFunctionWithoutVersionInput!
+  ): AutomateFunctionToken!
+    @hasScope(scope: "automate-functions:write")
+    @hasServerRole(role: SERVER_ADMIN)
   updateFunction(input: UpdateAutomateFunctionInput!): AutomateFunction!
     @hasScope(scope: "automate-functions:write")
 }
 
 extend type Project {
   automations(filter: String, cursor: String, limit: Int): AutomationCollection!
-    @hasStreamRole(role: STREAM_OWNER)
+    @hasStreamRole(role: STREAM_REVIEWER)
   """
   Get a single automation by id. Error will be thrown if automation is not found or inaccessible.
   """
-  automation(id: String!): Automation! @hasStreamRole(role: STREAM_OWNER)
+  automation(id: String!): Automation! @hasStreamRole(role: STREAM_REVIEWER)
 }
 
 input AutomateAuthCodePayloadTest {
   code: String!
   userId: String!
+  workspaceId: String
   action: String!
 }
 

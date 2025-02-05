@@ -54,6 +54,7 @@ export type StreamRecord = {
   allowPublicComments: boolean
   isDiscoverable: boolean
   workspaceId: Nullable<string>
+  regionKey: Nullable<string>
 }
 
 export type StreamAclRecord = {
@@ -88,6 +89,10 @@ export type ServerInfo = ServerConfigRecord & {
    */
   version: string
   migration?: { movedFrom?: string; movedTo?: string }
+  configuration: {
+    objectSizeLimitBytes: number
+    objectMultipartUploadSizeLimitBytes: number
+  }
 }
 
 export type CommitRecord = {
@@ -114,16 +119,11 @@ export type StreamCommitRecord = {
 export type BranchRecord = {
   id: string
   streamId: string
-  authorId: string
+  authorId: string | null
   name: string
   description: Nullable<string>
   createdAt: Date
   updatedAt: Date
-}
-
-export type ScheduledTaskRecord = {
-  taskName: string
-  lockExpiresAt: Date
 }
 
 export type ObjectRecord = {
@@ -133,6 +133,13 @@ export type ObjectRecord = {
   totalChildrenCountByDepth: Nullable<Record<string, unknown>>
   createdAt: Date
   data: Nullable<Record<string, unknown>>
+  streamId: string
+}
+
+export type ObjectChildrenClosureRecord = {
+  parent: string
+  child: string
+  minDepth: number
   streamId: string
 }
 

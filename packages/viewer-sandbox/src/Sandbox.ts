@@ -1,4 +1,27 @@
-import { SectionTool, SpeckleStandardMaterial, TreeNode } from '@speckle/viewer'
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+import {
+  ArcticViewPipeline,
+  ClearFlags,
+  DefaultLightConfiguration,
+  DefaultPipeline,
+  InputType,
+  MRTEdgesPipeline,
+  MRTPenViewPipeline,
+  MRTShadedViewPipeline,
+  NormalsPass,
+  ObjectLayers,
+  OutputPass,
+  Pipeline,
+  SectionTool,
+  SpeckleOfflineLoader,
+  SpeckleRenderer,
+  SpeckleStandardMaterial,
+  TAAPipeline,
+  TreeNode
+} from '@speckle/viewer'
 import {
   CanonicalView,
   Viewer,
@@ -19,7 +42,6 @@ import {
 } from '@speckle/viewer'
 import { FolderApi, Pane } from 'tweakpane'
 import { DiffResult } from '@speckle/viewer'
-import type { PipelineOptions } from '@speckle/viewer/dist/modules/pipeline/Pipeline'
 import { Units } from '@speckle/viewer'
 import { SelectionExtension } from '@speckle/viewer'
 import { FilteringExtension } from '@speckle/viewer'
@@ -32,7 +54,7 @@ import Mild2 from '../assets/hdri/Mild2.png'
 import Sharp from '../assets/hdri/Sharp.png'
 import Bright from '../assets/hdri/Bright.png'
 
-import { Euler, Vector3, Box3, Color } from 'three'
+import { Euler, Vector3, Box3, Color, LinearFilter } from 'three'
 import { GeometryType } from '@speckle/viewer'
 import { MeshBatch } from '@speckle/viewer'
 
@@ -88,7 +110,7 @@ export default class Sandbox {
       minDistance: 0,
       maxDistance: 0.008
     }
-  } as PipelineOptions
+  }
 
   public lightParams: SunLightConfiguration = {
     enabled: true,
@@ -142,7 +164,6 @@ export default class Sandbox {
     // Mad HTML/CSS skills
     container.appendChild(this.pane['containerElem_'])
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     this.pane['containerElem_'].style = 'pointer-events:auto;'
 
     this.tabs = this.pane.addTab({
@@ -159,6 +180,7 @@ export default class Sandbox {
 
     viewer.on(ViewerEvent.LoadComplete, async (url: string) => {
       url
+      this.viewer.setLightConfiguration(DefaultLightConfiguration)
       this.addStreamControls(url)
       this.addViewControls()
       this.addBatches()
@@ -274,7 +296,6 @@ export default class Sandbox {
       this.objectControls.dispose()
     }
     this.objectControls = this.tabs.pages[0].addFolder({
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       title: `Object: ${node.model.id}`
     })
 
@@ -377,7 +398,6 @@ export default class Sandbox {
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
 
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         const file = e.target?.files[0] as Blob & { name: string }
 
         const reader = new FileReader()
@@ -412,7 +432,7 @@ export default class Sandbox {
     })
     toggleSectionBox.on('click', () => {
       let box = this.viewer.getRenderer().boxFromObjects(
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         this.selectionList.map((val) => val.hits[0].node.model.raw.id) as string[]
       )
       if (!box) {
@@ -443,7 +463,7 @@ export default class Sandbox {
     })
     zoomExtents.on('click', () => {
       this.viewer.getExtension(CameraController).setCameraView(
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         this.selectionList.map((val) => val.hits[0].node.model.id) as string[],
         true
       )
@@ -481,6 +501,17 @@ export default class Sandbox {
     })
     screenshot.on('click', async () => {
       console.warn(await this.viewer.screenshot())
+
+      /** Read depth */
+      // const pass = [
+      //   ...this.viewer.getRenderer().pipeline.getPass('DEPTH'),
+      //   ...this.viewer.getRenderer().pipeline.getPass('DEPTH-NORMAL')
+      // ]
+      // const [depthData, width, height] = await this.viewer
+      //   .getExtension(PassReader)
+      //   .read(pass)
+
+      // console.log(PassReader.toBase64(PassReader.decodeDepth(depthData), width, height))
     })
 
     const rotate = this.tabs.pages[0].addButton({
@@ -499,27 +530,101 @@ export default class Sandbox {
         await waitForAnimation(1000)
       }
     })
+    this.tabs.pages[0].addSeparator()
 
+    const pipeline = { output: 0 }
+    this.tabs.pages[0]
+      .addInput(pipeline, 'output', {
+        label: 'Pipeline',
+        options: {
+          DEFAULT: 0,
+          EDGED: 1,
+          SHADED: 2,
+          PEN: 3,
+          ARCTIC: 4,
+          TAA: 5,
+          DEBUG_NORMALS: 6
+        }
+      })
+      .on('change', (value) => {
+        switch (value.value) {
+          case 0:
+            this.viewer.getRenderer().pipeline = new DefaultPipeline(
+              this.viewer.getRenderer()
+            )
+            break
+          case 1:
+            this.viewer.getRenderer().pipeline = new MRTEdgesPipeline(
+              this.viewer.getRenderer()
+            )
+            break
+          case 2:
+            this.viewer.getRenderer().pipeline = new MRTShadedViewPipeline(
+              this.viewer.getRenderer()
+            )
+            break
+          case 3:
+            this.viewer.getRenderer().pipeline = new MRTPenViewPipeline(
+              this.viewer.getRenderer()
+            )
+            break
+          case 4:
+            this.viewer.getRenderer().pipeline = new ArcticViewPipeline(
+              this.viewer.getRenderer()
+            )
+            break
+          case 5:
+            this.viewer.getRenderer().pipeline = new TAAPipeline(
+              this.viewer.getRenderer()
+            )
+            break
+          case 6:
+            this.viewer.getRenderer().pipeline = new (class extends Pipeline {
+              constructor(speckleRenderer: SpeckleRenderer) {
+                super(speckleRenderer)
+                const normalPass = new NormalsPass()
+                normalPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
+                normalPass.setClearColor(0x000000, 1)
+                normalPass.setClearFlags(ClearFlags.COLOR | ClearFlags.DEPTH)
+                normalPass.outputTarget = Pipeline.createRenderTarget({
+                  minFilter: LinearFilter,
+                  magFilter: LinearFilter
+                })
+                normalPass.outputTarget.samples = 4
+
+                const outputPass = new OutputPass()
+                outputPass.setTexture('tDiffuse', normalPass.outputTarget?.texture)
+                outputPass.options = { inputType: InputType.Normals }
+
+                this.passList.push(normalPass, outputPass)
+              }
+            })(this.viewer.getRenderer())
+
+          default:
+            break
+        }
+        this.viewer.requestRender(UpdateFlags.RENDER_RESET)
+      })
+
+    this.tabs.pages[0].addSeparator()
     const colors = this.tabs.pages[0].addButton({
       title: `PM's Colors`
     })
     colors.on('click', async () => {
       const colorNodes = this.viewer.getWorldTree().findAll(
         (node: TreeNode) =>
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-return
           node.model.renderView &&
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
           node.model.renderView.renderData.colorMaterial &&
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
           node.model.renderView.geometryType === GeometryType.MESH
       )
       const colorMap: { [color: number]: Array<string> } = {}
       for (let k = 0; k < colorNodes.length; k++) {
         const node = colorNodes[k]
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+
         const color: number = node.model.renderView.renderData.colorMaterial.color
         if (!colorMap[color]) colorMap[color] = []
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
+
         colorMap[color].push(node.model.id)
       }
       const colorGroups = []
@@ -546,6 +651,8 @@ export default class Sandbox {
           damperDecay: value.value
         }
       })
+
+    this.tabs.pages[0].addSeparator()
 
     const canonicalViewsFolder = this.tabs.pages[0].addFolder({
       title: 'Canonical Views',
@@ -685,191 +792,6 @@ export default class Sandbox {
           })
         })
         this.viewer.requestRender(UpdateFlags.RENDER | UpdateFlags.SHADOWS)
-      })
-
-    const pipelineFolder = this.tabs.pages[1].addFolder({
-      title: 'Pipeline',
-      expanded: true
-    })
-    pipelineFolder
-      .addInput(this.pipelineParams, 'pipelineOutput', {
-        options: {
-          DEPTH_RGBA: 0,
-          DEPTH: 1,
-          COLOR: 2,
-          GEOMETRY_NORMALS: 3,
-          RECONSTRUCTED_NORMALS: 4,
-          DYNAMIC_AO: 5,
-          DYNAMIC_AO_BLURED: 6,
-          PROGRESSIVE_AO: 7,
-          FINAL: 8
-        }
-      })
-      .on('change', () => {
-        this.viewer.getRenderer().pipelineOptions = this.pipelineParams
-        this.viewer.requestRender()
-      })
-
-    pipelineFolder
-      .addInput(this.pipelineParams, 'accumulationFrames', {
-        min: 1,
-        max: 128,
-        step: 1
-      })
-      .on('change', () => {
-        this.viewer.getRenderer().pipelineOptions = this.pipelineParams
-        this.viewer.requestRender()
-      })
-
-    const dynamicAoFolder = pipelineFolder.addFolder({
-      title: 'Dynamic AO',
-      expanded: false
-    })
-    dynamicAoFolder
-      .addInput(this.pipelineParams, 'dynamicAoEnabled')
-      .on('change', () => {
-        this.viewer.getRenderer().pipelineOptions = this.pipelineParams
-        this.viewer.requestRender()
-      })
-
-    dynamicAoFolder
-      .addInput(this.pipelineParams.dynamicAoParams, 'intensity', { min: 0, max: 5 })
-      .on('change', () => {
-        this.viewer.getRenderer().pipelineOptions = this.pipelineParams
-        this.viewer.requestRender()
-      })
-
-    dynamicAoFolder
-      .addInput(this.pipelineParams.dynamicAoParams, 'kernelRadius', {
-        min: 0,
-        max: 500
-      })
-      .on('change', () => {
-        this.viewer.getRenderer().pipelineOptions = this.pipelineParams
-        this.viewer.requestRender()
-      })
-
-    dynamicAoFolder
-      .addInput(this.pipelineParams.dynamicAoParams, 'bias', {
-        min: -1,
-        max: 1
-      })
-      .on('change', () => {
-        this.viewer.getRenderer().pipelineOptions = this.pipelineParams
-        this.viewer.requestRender()
-      })
-    dynamicAoFolder
-      .addInput(this.pipelineParams.dynamicAoParams, 'normalsType', {
-        options: {
-          DEFAULT: 0,
-          ADVANCED: 1,
-          ACCURATE: 2
-        }
-      })
-      .on('change', () => {
-        this.viewer.getRenderer().pipelineOptions = this.pipelineParams
-        this.viewer.requestRender()
-      })
-
-    dynamicAoFolder
-      .addInput(this.pipelineParams.dynamicAoParams, 'blurEnabled', {})
-      .on('change', () => {
-        this.viewer.getRenderer().pipelineOptions = this.pipelineParams
-        this.viewer.requestRender()
-      })
-
-    dynamicAoFolder
-      .addInput(this.pipelineParams.dynamicAoParams, 'blurRadius', {
-        min: 0,
-        max: 10
-      })
-      .on('change', () => {
-        this.viewer.getRenderer().pipelineOptions = this.pipelineParams
-        this.viewer.requestRender()
-      })
-
-    dynamicAoFolder
-      .addInput(this.pipelineParams.dynamicAoParams, 'blurDepthCutoff', {
-        min: 0,
-        max: 1,
-        step: 0.00001
-      })
-      .on('change', () => {
-        this.viewer.getRenderer().pipelineOptions = this.pipelineParams
-        this.viewer.requestRender()
-      })
-
-    const staticAoFolder = pipelineFolder.addFolder({
-      title: 'Static AO',
-      expanded: false
-    })
-    // staticAoFolder
-    //   .addInput(Sandbox.pipelineParams, 'staticAoEnabled', {})
-    //   .on('change', () => {
-    //     this.viewer.getRenderer().pipelineOptions = Sandbox.pipelineParams
-    //     this.viewer.requestRender()
-    //   })
-    staticAoFolder
-      .addInput(this.pipelineParams.staticAoParams, 'intensity', {
-        min: 0,
-        max: 5,
-        step: 0.01
-      })
-      .on('change', () => {
-        this.viewer.getRenderer().pipelineOptions = this.pipelineParams
-        this.viewer.requestRender()
-      })
-    // staticAoFolder
-    //   .addInput(Sandbox.pipelineParams.staticAoParams, 'minDistance', {
-    //     min: 0,
-    //     max: 100,
-    //     step: 0.000001
-    //   })
-    //   .on('change', () => {
-    //     this.viewer.getRenderer().pipelineOptions = Sandbox.pipelineParams
-    //     this.viewer.requestRender()
-    //   })
-
-    // staticAoFolder
-    //   .addInput(Sandbox.pipelineParams.staticAoParams, 'maxDistance', {
-    //     min: 0,
-    //     max: 100,
-    //     step: 0.000001
-    //   })
-    //   .on('change', () => {
-    //     this.viewer.getRenderer().pipelineOptions = Sandbox.pipelineParams
-    //     this.viewer.requestRender()
-    //   })
-    staticAoFolder
-      .addInput(this.pipelineParams.staticAoParams, 'kernelRadius', {
-        min: 0,
-        max: 1000
-      })
-      .on('change', () => {
-        this.viewer.getRenderer().pipelineOptions = this.pipelineParams
-        this.viewer.requestRender()
-      })
-
-    staticAoFolder
-      .addInput(this.pipelineParams.staticAoParams, 'bias', {
-        min: -1,
-        max: 1,
-        step: 0.0001
-      })
-      .on('change', () => {
-        this.viewer.getRenderer().pipelineOptions = this.pipelineParams
-        this.viewer.requestRender()
-      })
-
-    staticAoFolder
-      .addInput(this.pipelineParams.staticAoParams, 'kernelSize', {
-        min: 1,
-        max: 128,
-        step: 1
-      })
-      .on('change', () => {
-        this.viewer.getRenderer().pipelineOptions = this.pipelineParams
-        this.viewer.requestRender()
       })
 
     const lightsFolder = this.tabs.pages[1].addFolder({
@@ -1341,9 +1263,7 @@ export default class Sandbox {
     const objects = this.viewer.getRenderer().allObjects
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     objects.traverse((obj: any) => {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
       if (obj.hasOwnProperty('boundsTreeSizeInBytes')) {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         size += obj['boundsTreeSizeInBytes']
         // console.log(obj['boundsTreeSizeInBytes'] / 1024 / 1024)
       }
@@ -1357,11 +1277,11 @@ export default class Sandbox {
       url.includes('latest') ? 'AuthTokenLatest' : 'AuthToken'
     ) as string
     const objUrls = await UrlHelper.getResourceUrls(url, authToken)
-    for (const url of objUrls) {
+    for (const objUrl of objUrls) {
       console.log(`Loading ${url}`)
       const loader = new SpeckleLoader(
         this.viewer.getWorldTree(),
-        url,
+        objUrl,
         authToken,
         true,
         undefined
@@ -1377,8 +1297,20 @@ export default class Sandbox {
         console.error(`Loader warning: ${arg.message}`)
       })
 
-      await this.viewer.loadObject(loader, true)
+      void this.viewer.loadObject(loader, true)
     }
     localStorage.setItem('last-load-url', url)
+  }
+
+  public async loadJSON(json: string) {
+    const loader = new SpeckleOfflineLoader(this.viewer.getWorldTree(), json)
+    loader.on(LoaderEvent.LoadCancelled, (resource: string) => {
+      console.warn(`Resource ${resource} loading was canceled`)
+    })
+    loader.on(LoaderEvent.LoadWarning, (arg: { message: string }) => {
+      console.error(`Loader warning: ${arg.message}`)
+    })
+
+    void this.viewer.loadObject(loader, true)
   }
 }

@@ -1,0 +1,128 @@
+extend type Query {
+  workspacePricingPlans: JSONObject!
+}
+
+extend type WorkspaceMutations {
+  billing: WorkspaceBillingMutations! @hasScope(scope: "workspace:billing")
+}
+
+enum PaidWorkspacePlans {
+  starter
+  plus
+  business
+}
+
+enum BillingInterval {
+  monthly
+  yearly
+}
+
+enum SessionPaymentStatus {
+  paid
+  unpaid
+}
+
+input CheckoutSessionInput {
+  workspaceId: ID!
+  workspacePlan: PaidWorkspacePlans!
+  billingInterval: BillingInterval!
+  isCreateFlow: Boolean
+}
+
+type CheckoutSession {
+  id: ID!
+  url: String!
+  workspacePlan: PaidWorkspacePlans!
+  paymentStatus: SessionPaymentStatus!
+  billingInterval: BillingInterval!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+input CancelCheckoutSessionInput {
+  sessionId: ID!
+  workspaceId: ID!
+}
+
+input UpgradePlanInput {
+  workspaceId: ID!
+  workspacePlan: PaidWorkspacePlans!
+  billingInterval: BillingInterval!
+}
+
+type WorkspaceBillingMutations {
+  createCheckoutSession(input: CheckoutSessionInput!): CheckoutSession!
+  cancelCheckoutSession(input: CancelCheckoutSessionInput!): Boolean!
+  upgradePlan(input: UpgradePlanInput!): Boolean!
+}
+
+enum WorkspacePlans {
+  starter
+  plus
+  business
+  unlimited
+  academia
+  starterInvoiced
+  plusInvoiced
+  businessInvoiced
+}
+
+enum WorkspacePlanStatuses {
+  valid
+  paymentFailed
+  cancelationScheduled
+  canceled
+  trial
+  expired
+}
+
+enum WorkspacePaymentMethod {
+  unpaid
+  invoice
+  billing
+}
+
+type WorkspacePlan {
+  name: WorkspacePlans!
+  status: WorkspacePlanStatuses!
+  createdAt: DateTime!
+  paymentMethod: WorkspacePaymentMethod!
+}
+
+type WorkspaceSubscriptionSeats {
+  plan: Int!
+  guest: Int!
+}
+
+type WorkspaceSubscription {
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  currentBillingCycleEnd: DateTime!
+  billingInterval: BillingInterval!
+  seats: WorkspaceSubscriptionSeats!
+}
+
+extend type Workspace {
+  # for now, this is nullable, cause existing workspaces have not been migrated to plans
+  # this doesn't need a special token scope
+  plan: WorkspacePlan
+  subscription: WorkspaceSubscription
+    @hasScope(scope: "workspace:billing")
+    @hasWorkspaceRole(role: ADMIN)
+  # this can only be created if there is an active subscription
+  customerPortalUrl: String
+    @hasScope(scope: "workspace:billing")
+    @hasWorkspaceRole(role: ADMIN)
+  hasAccessToFeature(featureName: WorkspaceFeatureName!): Boolean!
+    @hasWorkspaceRole(role: GUEST)
+  """
+  A Workspace is marked as readOnly if its trial period is finished or a paid plan is subscribed but payment has failed
+  """
+  readOnly: Boolean!
+}
+
+enum WorkspaceFeatureName {
+  domainBasedSecurityPolicies
+  oidcSso
+  workspaceDataRegionSpecificity
+}

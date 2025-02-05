@@ -12,7 +12,9 @@
           v-on="on"
         />
       </div>
-      <FormButton @click="openNewProject = true">Create</FormButton>
+      <FormButton :disabled="disableCreate" @click="openNewProject = true">
+        Create
+      </FormButton>
     </div>
 
     <LayoutTable
@@ -89,7 +91,8 @@
       </template>
     </LayoutTable>
 
-    <SettingsSharedProjectsDeleteDialog
+    <ProjectsDeleteDialog
+      v-if="projectToModify"
       v-model:open="showProjectDeleteDialog"
       :project="projectToModify"
     />
@@ -99,10 +102,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
 import { HorizontalDirection } from '~~/lib/common/composables/window'
-import type { ItemType, ProjectItem } from '~~/lib/server-management/helpers/types'
-import type { SettingsSharedProjects_ProjectFragment } from '~~/lib/common/generated/gql/graphql'
+import type {
+  SettingsSharedProjects_ProjectFragment,
+  ProjectsDeleteDialog_ProjectFragment
+} from '~~/lib/common/generated/gql/graphql'
 import {
   MagnifyingGlassIcon,
   EllipsisHorizontalIcon,
@@ -116,15 +120,16 @@ import { projectCollaboratorsRoute, projectRoute } from '~/lib/common/helpers/ro
 
 graphql(`
   fragment SettingsSharedProjects_Project on Project {
+    ...ProjectsDeleteDialog_Project
     id
     name
     visibility
     createdAt
     updatedAt
-    models {
+    models(limit: 0) {
       totalCount
     }
-    versions {
+    versions(limit: 0) {
       totalCount
     }
     team {
@@ -141,55 +146,51 @@ graphql(`
 defineProps<{
   projects?: SettingsSharedProjects_ProjectFragment[]
   workspaceId?: string
-}>()
-
-const emit = defineEmits<{
-  (e: 'close'): void
+  disableCreate?: boolean
 }>()
 
 const search = defineModel<string>('search')
 const { on, bind } = useDebouncedTextInput({ model: search })
 const router = useRouter()
 
-const projectToModify = ref<ProjectItem | null>(null)
+const projectToModify = ref<ProjectsDeleteDialog_ProjectFragment | null>(null)
 const showProjectDeleteDialog = ref(false)
 const openNewProject = ref(false)
 
-const openProjectDeleteDialog = (item: ItemType) => {
-  if (isProject(item)) {
-    projectToModify.value = item
-    showProjectDeleteDialog.value = true
-  }
+const openProjectDeleteDialog = (item: ProjectsDeleteDialog_ProjectFragment) => {
+  projectToModify.value = item
+  showProjectDeleteDialog.value = true
 }
 
-const handleProjectClick = (item: ItemType) => {
-  router.push(projectRoute(item.id))
-  emit('close')
+const handleProjectClick = (id: string) => {
+  router.push(projectRoute(id))
 }
 
 enum ActionTypes {
   ViewProject = 'view-project',
   EditMembers = 'edit-members',
-  RemoveProject = 'remove-project'
+  DeleteProject = 'delete-project'
 }
 
 const showActionsMenu = ref<Record<string, boolean>>({})
 
 const actionItems: LayoutMenuItem[][] = [
   [
-    { title: 'View project...', id: ActionTypes.ViewProject },
-    { title: 'Edit members...', id: ActionTypes.EditMembers },
-    { title: 'Remove project...', id: ActionTypes.RemoveProject }
+    { title: 'View project', id: ActionTypes.ViewProject },
+    { title: 'Edit members', id: ActionTypes.EditMembers },
+    { title: 'Delete project...', id: ActionTypes.DeleteProject }
   ]
 ]
 
-const onActionChosen = (actionItem: LayoutMenuItem, project: ProjectItem) => {
+const onActionChosen = (
+  actionItem: LayoutMenuItem,
+  project: ProjectsDeleteDialog_ProjectFragment
+) => {
   if (actionItem.id === ActionTypes.EditMembers) {
     router.push(projectCollaboratorsRoute(project.id))
-    emit('close')
   } else if (actionItem.id === ActionTypes.ViewProject) {
-    handleProjectClick(project)
-  } else if (actionItem.id === ActionTypes.RemoveProject) {
+    handleProjectClick(project.id)
+  } else if (actionItem.id === ActionTypes.DeleteProject) {
     openProjectDeleteDialog(project)
   }
 }

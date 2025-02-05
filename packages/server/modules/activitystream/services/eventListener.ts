@@ -1,68 +1,56 @@
+import { Logger } from '@/logging/logging'
+import { AccessRequestEvents } from '@/modules/accessrequests/domain/events'
 import {
-  AccessRequestsEmitter,
-  AccessRequestsEvents,
-  AccessRequestsEventsPayloads
-} from '@/modules/accessrequests/events/emitter'
-import { AccessRequestType } from '@/modules/accessrequests/repositories'
+  AccessRequestType,
+  isStreamAccessRequest
+} from '@/modules/accessrequests/repositories'
 import {
   AddStreamAccessRequestDeclinedActivity,
   AddStreamAccessRequestedActivity,
-  SaveActivity
+  AddStreamInviteSentOutActivity
 } from '@/modules/activitystream/domain/operations'
+import { GetStream } from '@/modules/core/domain/streams/operations'
 import {
-  UsersEmitter,
-  UsersEvents,
-  UsersEventsPayloads
-} from '@/modules/core/events/usersEmitter'
+  ServerInvitesEvents,
+  ServerInvitesEventsPayloads
+} from '@/modules/serverinvites/domain/events'
+import {
+  isProjectResourceTarget,
+  resolveTarget
+} from '@/modules/serverinvites/helpers/core'
+import { EventPayload } from '@/modules/shared/services/eventBus'
 
-const onUserCreatedFactory =
-  ({ saveActivity }: { saveActivity: SaveActivity }) =>
-  async (payload: UsersEventsPayloads[UsersEvents.Created]) => {
-    const { user } = payload
-
-    await saveActivity({
-      streamId: null,
-      resourceType: 'user',
-      resourceId: user.id,
-      actionType: 'user_create',
-      userId: user.id,
-      info: { user },
-      message: 'User created'
-    })
-  }
-
-const onServerAccessRequestCreatedFactory =
+export const onServerAccessRequestCreatedFactory =
   ({
     addStreamAccessRequestedActivity
   }: {
     addStreamAccessRequestedActivity: AddStreamAccessRequestedActivity
   }) =>
-  async (payload: AccessRequestsEventsPayloads[AccessRequestsEvents.Created]) => {
+  async (payload: EventPayload<typeof AccessRequestEvents.Created>) => {
     const {
-      request: { resourceId, resourceType, requesterId }
-    } = payload
+      request: { resourceId, requesterId }
+    } = payload.payload
+    if (!isStreamAccessRequest(payload.payload.request)) return
     if (!resourceId) return
 
-    if (resourceType === AccessRequestType.Stream) {
-      await addStreamAccessRequestedActivity({
-        streamId: resourceId,
-        requesterId
-      })
-    }
+    await addStreamAccessRequestedActivity({
+      streamId: resourceId,
+      requesterId
+    })
   }
 
-const onServerAccessRequestFinalizedFactory =
+export const onServerAccessRequestFinalizedFactory =
   ({
     addStreamAccessRequestDeclinedActivity
   }: {
     addStreamAccessRequestDeclinedActivity: AddStreamAccessRequestDeclinedActivity
   }) =>
-  async (payload: AccessRequestsEventsPayloads[AccessRequestsEvents.Finalized]) => {
+  async (payload: EventPayload<typeof AccessRequestEvents.Finalized>) => {
     const {
       approved,
       finalizedBy,
       request: { resourceId, resourceType, requesterId }
-    } = payload
+    } = payload.payload
     if (!resourceId) return
 
     if (resourceType === AccessRequestType.Stream) {
@@ -77,34 +65,34 @@ const onServerAccessRequestFinalizedFactory =
     }
   }
 
-/**
- * Initialize event listener for tracking various Speckle events and responding
- * to them by creating activitystream entries
- */
-export const initializeEventListenerFactory =
+export const onServerInviteCreatedFactory =
   ({
-    addStreamAccessRequestedActivity,
-    addStreamAccessRequestDeclinedActivity,
-    saveActivity
+    getStream,
+    logger,
+    addStreamInviteSentOutActivity
   }: {
-    addStreamAccessRequestedActivity: AddStreamAccessRequestedActivity
-    addStreamAccessRequestDeclinedActivity: AddStreamAccessRequestDeclinedActivity
-    saveActivity: SaveActivity
+    getStream: GetStream
+    logger: Logger
+    addStreamInviteSentOutActivity: AddStreamInviteSentOutActivity
   }) =>
-  () => {
-    const quitCbs = [
-      UsersEmitter.listen(UsersEvents.Created, onUserCreatedFactory({ saveActivity })),
-      AccessRequestsEmitter.listen(
-        AccessRequestsEvents.Created,
-        onServerAccessRequestCreatedFactory({ addStreamAccessRequestedActivity })
-      ),
-      AccessRequestsEmitter.listen(
-        AccessRequestsEvents.Finalized,
-        onServerAccessRequestFinalizedFactory({
-          addStreamAccessRequestDeclinedActivity
-        })
-      )
-    ]
+  async (payload: ServerInvitesEventsPayloads[typeof ServerInvitesEvents.Created]) => {
+    const { invite } = payload
+    const primaryResourceTarget = invite.resource
 
-    return () => quitCbs.forEach((quit) => quit())
+    if (!isProjectResourceTarget(primaryResourceTarget)) return
+
+    const userTarget = resolveTarget(invite.target)
+    const project = await getStream({ streamId: primaryResourceTarget.resourceId })
+    if (!project) {
+      logger.warn('No project found for project invite', { invite })
+      return
+    }
+
+    await addStreamInviteSentOutActivity({
+      streamId: project.id,
+      inviterId: invite.inviterId,
+      inviteTargetEmail: userTarget.userEmail,
+      inviteTargetId: userTarget.userId,
+      stream: project
+    })
   }
