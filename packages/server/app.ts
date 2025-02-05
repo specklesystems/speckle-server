@@ -25,6 +25,7 @@ import {
 } from '@/logging/expressLogging'
 
 import { errorLoggingMiddleware } from '@/logging/errorLogging'
+import { redisLogger } from '@/logging/logging'
 import prometheusClient from 'prom-client'
 
 import { ApolloServer } from '@apollo/server'
@@ -474,7 +475,10 @@ export async function init() {
       authContextMiddlewareFactory({
         cache: redisCacheFactory({
           redis: getGenericRedis(),
-          options: { ttlMilliseconds: getCacheAuthPipelineTtlSeconds() * 1000 }
+          options: {
+            ttlMilliseconds: getCacheAuthPipelineTtlSeconds() * 1000,
+            logger: redisLogger
+          }
         })
       })
     )
