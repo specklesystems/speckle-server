@@ -72,6 +72,7 @@ const getEnabledModuleNames = () => {
     'cross-server-sync',
     'emails',
     'fileuploads',
+    'gatekeeperCore',
     'notifications',
     'previews',
     'pwdreset',
