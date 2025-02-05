@@ -41,12 +41,18 @@ const objectsRouterFactory = () => {
         streamId: req.params.streamId,
         objectId: req.params.objectId
       })
+
       // https://knexjs.org/faq/recipes.html#manually-closing-streams
       // https://github.com/knex/knex/issues/2324
-      res.on('close', () => {
+      const responseCloseHandler = () => {
         dbStream.end()
         dbStream.destroy()
+      }
+
+      dbStream.on('close', () => {
+        res.removeListener('close', responseCloseHandler)
       })
+      res.on('close', responseCloseHandler)
 
       const speckleObjStream = new SpeckleObjectsStream(isSimpleTextRequested(req))
       const gzipStream = zlib.createGzip()
