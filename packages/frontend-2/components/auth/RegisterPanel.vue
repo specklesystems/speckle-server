@@ -5,22 +5,22 @@
         <h1 class="text-heading-xl text-center inline-block">
           Create your Speckle account
         </h1>
-        <h2 class="text-body-sm text-center text-foreground-2">
-          Connectivity, Collaboration and Automation for 3D
-        </h2>
       </div>
       <AuthWorkspaceInviteHeader v-else :invite="workspaceInvite" />
       <template v-if="isInviteOnly && !inviteToken">
-        <div class="flex space-x-2 items-center">
-          <ExclamationTriangleIcon class="h-8 w-8 text-warning" />
-          <div>
-            This server is invite only. If you have received an invitation email, please
-            follow the instructions in it.
-          </div>
-        </div>
-        <div v-if="!inviteEmail" class="flex space-x-2 items-center justify-center">
+        <CommonAlert color="warning">
+          <template #title>This server is invite only</template>
+          <template #description>
+            If you have received an invitation email, please follow the instructions in
+            it.
+          </template>
+        </CommonAlert>
+        <div
+          v-if="!inviteEmail"
+          class="flex gap-1 text-foregound-3 text-body-xs items-center justify-center"
+        >
           <span>Already have an account?</span>
-          <CommonTextLink :to="loginRoute">Log in</CommonTextLink>
+          <NuxtLink class="text-foreground" :to="loginRoute">Log in</NuxtLink>
         </div>
       </template>
       <template v-else>
@@ -31,6 +31,7 @@
           :app-id="appId"
           :newsletter-consent="newsletterConsent"
         />
+
         <div>
           <div
             v-if="hasThirdPartyStrategies && hasLocalStrategy"
@@ -55,25 +56,8 @@ import { useQuery } from '@vue/apollo-composable'
 import { AuthStrategy } from '~~/lib/auth/helpers/strategies'
 import { useLoginOrRegisterUtils } from '~~/lib/auth/composables/auth'
 import { graphql } from '~~/lib/common/generated/gql'
-import { ExclamationTriangleIcon } from '@heroicons/vue/24/outline'
 import { loginRoute } from '~~/lib/common/helpers/route'
-
-const registerPanelQuery = graphql(`
-  query AuthRegisterPanel($token: String) {
-    serverInfo {
-      inviteOnly
-      authStrategies {
-        id
-      }
-      ...AuthStategiesServerInfoFragment
-      ...ServerTermsOfServicePrivacyPolicyFragment
-    }
-    serverInviteByToken(token: $token) {
-      id
-      email
-    }
-  }
-`)
+import { authRegisterPanelQuery } from '~/lib/auth/graphql/queries'
 
 const registerPanelWorkspaceInviteQuery = graphql(`
   query AuthRegisterPanelWorkspaceInvite($token: String) {
@@ -86,7 +70,7 @@ const registerPanelWorkspaceInviteQuery = graphql(`
 
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
 const { appId, challenge, inviteToken } = useLoginOrRegisterUtils()
-const { result } = useQuery(registerPanelQuery, () => ({
+const { result } = useQuery(authRegisterPanelQuery, () => ({
   token: inviteToken.value
 }))
 const { result: workspaceInviteResult } = useQuery(

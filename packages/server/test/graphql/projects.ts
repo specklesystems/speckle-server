@@ -1,4 +1,4 @@
-import { gql } from 'apollo-server-express'
+import gql from 'graphql-tag'
 
 export const basicProjectFieldsFragment = gql`
   fragment BasicProjectFields on Project {
@@ -48,6 +48,16 @@ export const getProjectObjectQuery = gql`
         id
         createdAt
       }
+    }
+  }
+`
+
+export const getProjectQuery = gql`
+  query GetProject($id: String!) {
+    project(id: $id) {
+      id
+      name
+      workspaceId
     }
   }
 `

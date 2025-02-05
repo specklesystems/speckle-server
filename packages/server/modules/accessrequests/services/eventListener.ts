@@ -1,66 +1,84 @@
-import {
-  AccessRequestsEmitter,
-  AccessRequestsEvents,
-  AccessRequestsEventsPayloads
-} from '@/modules/accessrequests/events/emitter'
+import { AccessRequestEvents } from '@/modules/accessrequests/domain/events'
 import { isStreamAccessRequest } from '@/modules/accessrequests/repositories'
+import { GetStreamCollaborators } from '@/modules/core/domain/streams/operations'
 import { Roles } from '@/modules/core/helpers/mainConstants'
-import { getStreamCollaborators } from '@/modules/core/repositories/streams'
-import { NotificationType } from '@/modules/notifications/helpers/types'
-import { publishNotification } from '@/modules/notifications/services/publication'
+import {
+  NotificationPublisher,
+  NotificationType
+} from '@/modules/notifications/helpers/types'
+import { EventBus, EventPayload } from '@/modules/shared/services/eventBus'
 
-async function onServerAccessRequestCreated(
-  payload: AccessRequestsEventsPayloads[AccessRequestsEvents.Created]
-) {
-  const { request } = payload
+type OnServerAccessRequestCreatedDeps = {
+  getStreamCollaborators: GetStreamCollaborators
+  publishNotification: NotificationPublisher
+}
 
-  // Send out email to all owners of the stream
-  if (isStreamAccessRequest(request)) {
-    const owners = await getStreamCollaborators(request.resourceId, Roles.Stream.Owner)
-    await Promise.all(
-      owners.map((o) =>
-        publishNotification(NotificationType.NewStreamAccessRequest, {
-          targetUserId: o.id,
-          data: {
-            requestId: request.id
-          }
-        })
+const onServerAccessRequestCreatedFactory =
+  (deps: OnServerAccessRequestCreatedDeps) =>
+  async (payload: EventPayload<typeof AccessRequestEvents.Created>) => {
+    const { request } = payload.payload
+
+    // Send out email to all owners of the stream
+    if (isStreamAccessRequest(request)) {
+      const owners = await deps.getStreamCollaborators(
+        request.resourceId,
+        Roles.Stream.Owner
       )
-    )
+      await Promise.all(
+        owners.map((o) =>
+          deps.publishNotification(NotificationType.NewStreamAccessRequest, {
+            targetUserId: o.id,
+            data: {
+              requestId: request.id
+            }
+          })
+        )
+      )
+    }
   }
+
+type OnServerAccessRequestFinalizedDeps = {
+  publishNotification: NotificationPublisher
 }
 
-async function onServerAccessRequestFinalized(
-  payload: AccessRequestsEventsPayloads[AccessRequestsEvents.Finalized]
-) {
-  const { approved, request, finalizedBy } = payload
+const onServerAccessRequestFinalizedFactory =
+  (deps: OnServerAccessRequestFinalizedDeps) =>
+  async (payload: EventPayload<typeof AccessRequestEvents.Finalized>) => {
+    const { approved, request, finalizedBy } = payload.payload
 
-  // Send out email to requester, if accepted
-  if (approved && isStreamAccessRequest(request)) {
-    await publishNotification(NotificationType.StreamAccessRequestApproved, {
-      targetUserId: request.requesterId,
-      data: {
-        request,
-        finalizedBy
-      }
-    })
+    // Send out email to requester, if accepted
+    if (approved && isStreamAccessRequest(request)) {
+      await deps.publishNotification(NotificationType.StreamAccessRequestApproved, {
+        targetUserId: request.requesterId,
+        data: {
+          request,
+          finalizedBy
+        }
+      })
+    }
   }
-}
 
 /**
  * Initialize event listener for tracking various Speckle events
  */
-export function initializeEventListener() {
-  const quitCbs = [
-    AccessRequestsEmitter.listen(
-      AccessRequestsEvents.Created,
-      onServerAccessRequestCreated
-    ),
-    AccessRequestsEmitter.listen(
-      AccessRequestsEvents.Finalized,
-      onServerAccessRequestFinalized
-    )
-  ]
+export const initializeEventListenerFactory =
+  (
+    deps: {
+      eventBus: EventBus
+    } & OnServerAccessRequestCreatedDeps &
+      OnServerAccessRequestFinalizedDeps
+  ) =>
+  () => {
+    const onServerAccessRequestCreated = onServerAccessRequestCreatedFactory(deps)
+    const onServerAccessRequestFinalized = onServerAccessRequestFinalizedFactory(deps)
 
-  return () => quitCbs.forEach((quit) => quit())
-}
+    const quitCbs = [
+      deps.eventBus.listen(AccessRequestEvents.Created, onServerAccessRequestCreated),
+      deps.eventBus.listen(
+        AccessRequestEvents.Finalized,
+        onServerAccessRequestFinalized
+      )
+    ]
+
+    return () => quitCbs.forEach((quit) => quit())
+  }

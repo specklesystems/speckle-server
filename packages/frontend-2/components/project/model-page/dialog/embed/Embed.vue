@@ -1,7 +1,7 @@
 <template>
   <LayoutDialog
     v-model:open="isOpen"
-    max-width="md"
+    max-width="lg"
     :buttons="isPrivate ? nonDiscoverableButtons : discoverableButtons"
   >
     <template v-if="isPrivate" #header>Change access permissions</template>
@@ -43,9 +43,6 @@
             Copy this code to embed your model in a webpage or document.
           </p>
           <LayoutDialogSection border-b border-t title="Options">
-            <template #icon>
-              <Cog6ToothIcon class="h-full w-full" />
-            </template>
             <div class="flex flex-col gap-1.5 sm:gap-2 text-body-xs cursor-default">
               <div v-for="option in embedDialogOptions" :key="option.id">
                 <label
@@ -73,9 +70,6 @@
             border-b
             title="Preview"
           >
-            <template #icon>
-              <EyeIcon class="h-full w-full" />
-            </template>
             <ProjectModelPageDialogEmbedIframe
               v-if="!isSmallerOrEqualSm"
               :src="updatedUrl"
@@ -92,7 +86,6 @@
 </template>
 
 <script setup lang="ts">
-import { Cog6ToothIcon, EyeIcon } from '@heroicons/vue/24/outline'
 import {
   ProjectVisibility,
   type ProjectsModelPageEmbed_ProjectFragment
@@ -195,15 +188,15 @@ const isPrivate = computed(() => {
 
 const discoverableButtons = computed((): LayoutDialogButton[] => [
   {
-    text: 'Cancel',
-    props: { color: 'outline', fullWidth: true },
+    text: 'Close',
+    props: { color: 'outline' },
     onClick: () => {
       isOpen.value = false
     }
   },
   {
     text: 'Copy embed code',
-    props: { fullWidth: true },
+    props: {},
     onClick: () => {
       handleEmbedCodeCopy(iframeCode.value)
     }
@@ -213,7 +206,7 @@ const discoverableButtons = computed((): LayoutDialogButton[] => [
 const nonDiscoverableButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Close',
-    props: { color: 'outline', fullWidth: true },
+    props: { color: 'outline' },
     onClick: () => {
       isOpen.value = false
     }
@@ -221,7 +214,6 @@ const nonDiscoverableButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Save',
     props: {
-      fullWidth: true,
       disabled: projectVisibility.value === props.project.visibility
     },
     onClick: saveProjectVisibility

@@ -1,4 +1,4 @@
-import { gql } from 'apollo-server-express'
+import { gql } from 'graphql-tag'
 
 export const automateFunctionFragment = gql`
   fragment TestAutomateFunction on AutomateFunction {
@@ -22,7 +22,6 @@ export const automateFunctionFragment = gql`
         commitId
       }
     }
-    automationCount
     supportedSourceApps
     tags
   }

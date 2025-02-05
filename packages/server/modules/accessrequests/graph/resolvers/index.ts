@@ -1,19 +1,99 @@
-import { AccessRequestType } from '@/modules/accessrequests/repositories'
+import { db } from '@/db/knex'
 import {
-  getPendingProjectRequests,
-  getPendingStreamRequests,
-  getUserProjectAccessRequest,
-  getUserStreamAccessRequest,
-  processPendingProjectRequest,
-  processPendingStreamRequest,
-  requestProjectAccess,
-  requestStreamAccess
+  AccessRequestType,
+  createNewRequestFactory,
+  deleteRequestByIdFactory,
+  getPendingAccessRequestFactory,
+  getPendingAccessRequestsFactory,
+  getUsersPendingAccessRequestFactory
+} from '@/modules/accessrequests/repositories'
+import {
+  getPendingProjectRequestsFactory,
+  getPendingStreamRequestsFactory,
+  getUserProjectAccessRequestFactory,
+  getUserStreamAccessRequestFactory,
+  processPendingStreamRequestFactory,
+  requestProjectAccessFactory,
+  requestStreamAccessFactory
 } from '@/modules/accessrequests/services/stream'
+import { saveActivityFactory } from '@/modules/activitystream/repositories'
+import {
+  addStreamInviteAcceptedActivityFactory,
+  addStreamPermissionsAddedActivityFactory
+} from '@/modules/activitystream/services/streamActivity'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { mapStreamRoleToValue } from '@/modules/core/helpers/graphTypes'
 import { Roles } from '@/modules/core/helpers/mainConstants'
-import { validateStreamAccess } from '@/modules/core/services/streams/streamAccessService'
+import {
+  getStreamFactory,
+  grantStreamPermissionsFactory
+} from '@/modules/core/repositories/streams'
+import { getUserFactory } from '@/modules/core/repositories/users'
+import {
+  addOrUpdateStreamCollaboratorFactory,
+  validateStreamAccessFactory
+} from '@/modules/core/services/streams/access'
+import { authorizeResolver } from '@/modules/shared'
 import { LogicError } from '@/modules/shared/errors'
+import { getEventBus } from '@/modules/shared/services/eventBus'
+import { publish } from '@/modules/shared/utils/subscriptions'
+
+const getUser = getUserFactory({ db })
+const getStream = getStreamFactory({ db })
+const getUserProjectAccessRequest = getUserProjectAccessRequestFactory({
+  getUsersPendingAccessRequest: getUsersPendingAccessRequestFactory({ db })
+})
+
+const getUserStreamAccessRequest = getUserStreamAccessRequestFactory({
+  getUserProjectAccessRequest
+})
+
+const requestProjectAccess = requestProjectAccessFactory({
+  getUserStreamAccessRequest,
+  getStream,
+  createNewRequest: createNewRequestFactory({ db }),
+  emitEvent: getEventBus().emit
+})
+
+const requestStreamAccess = requestStreamAccessFactory({
+  requestProjectAccess
+})
+
+const getPendingProjectRequests = getPendingProjectRequestsFactory({
+  getPendingAccessRequests: getPendingAccessRequestsFactory({ db })
+})
+
+const getPendingStreamRequests = getPendingStreamRequestsFactory({
+  getPendingProjectRequests
+})
+
+const saveActivity = saveActivityFactory({ db })
+const validateStreamAccess = validateStreamAccessFactory({
+  authorizeResolver
+})
+const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
+  validateStreamAccess,
+  getUser,
+  grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+  addStreamInviteAcceptedActivity: addStreamInviteAcceptedActivityFactory({
+    saveActivity,
+    publish
+  }),
+  addStreamPermissionsAddedActivity: addStreamPermissionsAddedActivityFactory({
+    saveActivity,
+    publish
+  })
+})
+
+const processPendingStreamRequest = processPendingStreamRequestFactory({
+  getPendingAccessRequest: getPendingAccessRequestFactory({ db }),
+  validateStreamAccess,
+  addOrUpdateStreamCollaborator,
+  deleteRequestById: deleteRequestByIdFactory({ db }),
+  emitEvent: getEventBus().emit
+})
+
+const processPendingProjectRequest = processPendingStreamRequest
 
 const resolvers: Resolvers = {
   Mutation: {

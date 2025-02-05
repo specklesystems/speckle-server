@@ -1,5 +1,4 @@
 import { crossServerSyncLogger, Logger } from '@/logging/logging'
-import { getUser } from '@/modules/core/repositories/users'
 import { CrossServerProjectSyncError } from '@/modules/cross-server-sync/errors'
 import {
   createApolloClient,
@@ -9,11 +8,17 @@ import {
 } from '@/modules/cross-server-sync/utils/graphqlClient'
 import { CrossSyncProjectMetadataQuery } from '@/modules/cross-server-sync/graph/generated/graphql'
 import { omit } from 'lodash'
-import { downloadCommit } from '@/modules/cross-server-sync/services/commit'
 import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
-import { createStreamReturnRecord } from '@/modules/core/services/streams/management'
-import { createBranchAndNotify } from '@/modules/core/services/branch/management'
-import { getStreamBranchByName } from '@/modules/core/repositories/branches'
+import {
+  DownloadCommit,
+  DownloadProject
+} from '@/modules/cross-server-sync/domain/operations'
+import {
+  CreateBranchAndNotify,
+  GetStreamBranchByName
+} from '@/modules/core/domain/branches/operations'
+import { CreateProject } from '@/modules/core/domain/projects/operations'
+import { GetUser } from '@/modules/core/domain/users/operations'
 
 type ProjectMetadata = Awaited<ReturnType<typeof getProjectMetadata>>
 
@@ -42,15 +47,20 @@ const projectMetadataQuery = gql`
   }
 `
 
-const getLocalResources = async (params: { authorId: string }) => {
-  const { authorId } = params
-  const user = await getUser(authorId)
-  if (!user) {
-    throw new CrossServerProjectSyncError('Target author not found')
-  }
-
-  return { user }
+type GetLocalResourcesDeps = {
+  getUser: GetUser
 }
+
+const getLocalResourcesFactory =
+  (deps: GetLocalResourcesDeps) => async (params: { authorId: string }) => {
+    const { authorId } = params
+    const user = await deps.getUser(authorId)
+    if (!user) {
+      throw new CrossServerProjectSyncError('Target author not found')
+    }
+
+    return { user }
+  }
 
 const parseIncomingUrl = (projectUrl: string) => {
   const [, origin, , projectId] = PROJECT_URL_RGX.exec(projectUrl) || []
@@ -103,139 +113,139 @@ const getProjectMetadata = async (params: {
   return { projectInfo, versions }
 }
 
-const ensureBranch = async (params: {
-  streamId: string
-  branchName: string
-  authorId: string
-}) => {
-  const { streamId, branchName, authorId } = params
-  const existingBranch = await getStreamBranchByName(streamId, branchName)
-  if (!existingBranch) {
-    const newBranch = await createBranchAndNotify(
-      {
-        streamId,
-        name: branchName
-      },
-      authorId
-    )
-    return newBranch
-  }
-
-  return existingBranch
+type EnsureBranchDeps = {
+  getStreamBranchByName: GetStreamBranchByName
+  createBranchAndNotify: CreateBranchAndNotify
 }
 
-const importVersions = async (params: {
-  logger: Logger
-  projectInfo: ProjectMetadata
-  localProjectId: string
-  localAuthorId: string
-  origin: string
-  syncComments?: boolean
-  token?: string
-}) => {
-  const {
-    logger,
-    projectInfo,
-    origin,
-    localProjectId,
-    syncComments,
-    localAuthorId,
-    token
-  } = params
-  const projectId = projectInfo.projectInfo.id
+const ensureBranchFactory =
+  (deps: EnsureBranchDeps) =>
+  async (params: { streamId: string; branchName: string; authorId: string }) => {
+    const { streamId, branchName, authorId } = params
+    const existingBranch = await deps.getStreamBranchByName(streamId, branchName)
+    if (!existingBranch) {
+      const newBranch = await deps.createBranchAndNotify(
+        {
+          streamId,
+          name: branchName
+        },
+        authorId
+      )
+      return newBranch
+    }
 
-  logger.debug(`Serially downloading ${projectInfo.versions.length} versions...`)
-  for (const version of projectInfo.versions) {
-    // Ensure branch exists
-    const branchName = version.model.name
-    await ensureBranch({
-      streamId: localProjectId,
-      branchName,
-      authorId: localAuthorId
-    })
+    return existingBranch
+  }
 
-    // Actually download
-    const url = new URL(
-      `/projects/${projectId}/models/${version.model.id}@${version.id}`,
-      origin
-    )
-    await downloadCommit(
-      {
-        commitUrl: url.toString(),
-        targetStreamId: localProjectId,
-        commentAuthorId: syncComments ? localAuthorId : undefined,
+type ImportVersionsDeps = {
+  downloadCommit: DownloadCommit
+} & EnsureBranchDeps
+
+const importVersionsFactory =
+  (deps: ImportVersionsDeps) =>
+  async (params: {
+    logger: Logger
+    projectInfo: ProjectMetadata
+    localProjectId: string
+    localAuthorId: string
+    origin: string
+    syncComments?: boolean
+    token?: string
+  }) => {
+    const {
+      logger,
+      projectInfo,
+      origin,
+      localProjectId,
+      syncComments,
+      localAuthorId,
+      token
+    } = params
+    const projectId = projectInfo.projectInfo.id
+
+    logger.debug(`Serially downloading ${projectInfo.versions.length} versions...`)
+    for (const version of projectInfo.versions) {
+      // Ensure branch exists
+      const branchName = version.model.name
+      await ensureBranchFactory(deps)({
+        streamId: localProjectId,
         branchName,
-        token
-      },
-      { logger }
-    )
+        authorId: localAuthorId
+      })
+
+      // Actually download
+      const url = new URL(
+        `/projects/${projectId}/models/${version.model.id}@${version.id}`,
+        origin
+      )
+
+      await deps.downloadCommit(
+        {
+          commitUrl: url.toString(),
+          targetStreamId: localProjectId,
+          commentAuthorId: syncComments ? localAuthorId : undefined,
+          branchName,
+          token
+        },
+        { logger }
+      )
+    }
   }
-}
+
+type DownloadProjectDeps = {
+  createNewProject: CreateProject
+} & GetLocalResourcesDeps &
+  ImportVersionsDeps
 
 /**
  * Downloads a project from an external FE2 Speckle server instance
  */
-export const downloadProject = async (
-  params: {
-    /**
-     * An FE2 project URL (must be publicly accessible)
-     */
-    projectUrl: string
-    /**
-     * ID of user that should own the project locally
-     */
-    authorId: string
-    syncComments?: boolean
-    /**
-     * Specify if target project is private
-     */
-    token?: string
-  },
-  options?: Partial<{
-    logger: Logger
-  }>
-) => {
-  const { projectUrl, authorId, syncComments, token } = params
-  const { logger = crossServerSyncLogger } = options || {}
+export const downloadProjectFactory =
+  (deps: DownloadProjectDeps): DownloadProject =>
+  async (params, options) => {
+    const { projectUrl, authorId, syncComments, token, workspaceId, regionKey } = params
+    const { logger = crossServerSyncLogger } = options || {}
 
-  logger.info(`Project download started at: ${new Date().toISOString()}`)
+    logger.info(`Project download started at: ${new Date().toISOString()}`)
 
-  const localResources = await getLocalResources({ authorId })
-  const parsedUrl = parseIncomingUrl(projectUrl)
-  const client = await createApolloClient(parsedUrl.origin, { token })
+    const localResources = await getLocalResourcesFactory(deps)({ authorId })
+    const parsedUrl = parseIncomingUrl(projectUrl)
+    const client = await createApolloClient(parsedUrl.origin, { token })
 
-  logger.debug(`Resolving project metadata and associated versions...`)
-  const projectInfo = await getProjectMetadata({
-    client,
-    projectId: parsedUrl.projectId
-  })
+    logger.debug(`Resolving project metadata and associated versions...`)
+    const projectInfo = await getProjectMetadata({
+      client,
+      projectId: parsedUrl.projectId
+    })
 
-  logger.debug(`Creating project locally...`)
-  const project = await createStreamReturnRecord({
-    ...projectInfo.projectInfo,
-    ownerId: localResources.user.id
-  })
+    logger.debug(`Creating project locally...`)
+    const project = await deps.createNewProject({
+      ...projectInfo.projectInfo,
+      workspaceId,
+      ownerId: localResources.user.id,
+      regionKey
+    })
 
-  await importVersions({
-    logger,
-    projectInfo,
-    localProjectId: project.id,
-    localAuthorId: localResources.user.id,
-    origin: parsedUrl.origin,
-    syncComments,
-    token
-  })
-  logger.info(`Project download completed at: ${new Date().toISOString()}`)
+    await importVersionsFactory(deps)({
+      logger,
+      projectInfo,
+      localProjectId: project.id,
+      localAuthorId: localResources.user.id,
+      origin: parsedUrl.origin,
+      syncComments,
+      token
+    })
+    logger.info(`Project download completed at: ${new Date().toISOString()}`)
 
-  const newProjectUrl = new URL(
-    `/projects/${project.id}`,
-    getFrontendOrigin(true)
-  ).toString()
-  logger.info(`New Project URL: ${newProjectUrl}`)
+    const newProjectUrl = new URL(
+      `/projects/${project.id}`,
+      getFrontendOrigin(true)
+    ).toString()
+    logger.info(`New Project URL: ${newProjectUrl}`)
 
-  return {
-    newProjectUrl,
-    projectId: project.id,
-    project
+    return {
+      newProjectUrl,
+      projectId: project.id,
+      project
+    }
   }
-}

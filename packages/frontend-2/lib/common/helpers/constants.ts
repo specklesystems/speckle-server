@@ -4,7 +4,9 @@
 export enum CookieKeys {
   AuthToken = 'authn',
   Theme = 'theme',
-  PostAuthRedirect = 'postAuthRedirect'
+  PostAuthRedirect = 'postAuthRedirect',
+  DismissedDiscoverableWorkspaces = 'dismissedDiscoverableWorkspaces',
+  DismissedWorkspaceBanner = 'dismissedWorkspaceBanner'
 }
 
 /**

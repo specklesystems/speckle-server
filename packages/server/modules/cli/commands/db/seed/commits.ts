@@ -1,6 +1,10 @@
+import { db } from '@/db/knex'
 import { cliLogger } from '@/logging/logging'
-import { getStream } from '@/modules/core/repositories/streams'
-import { getUser } from '@/modules/core/repositories/users'
+import { StreamNotFoundError } from '@/modules/core/errors/stream'
+import { UserNotFoundError } from '@/modules/core/errors/user'
+import { getStreamFactory } from '@/modules/core/repositories/streams'
+import { getUserFactory } from '@/modules/core/repositories/users'
+import { ForbiddenError } from '@/modules/shared/errors'
 import { BasicTestCommit, createTestCommits } from '@/test/speckle-helpers/commitHelper'
 import dayjs from 'dayjs'
 import { times } from 'lodash'
@@ -28,6 +32,9 @@ const command: CommandModule<
     }
   },
   handler: async (argv) => {
+    const getUser = getUserFactory({ db })
+    const getStream = getStreamFactory({ db })
+
     const count = argv.count
     const streamId = argv.streamId
     const authorId = argv.authorId
@@ -35,15 +42,15 @@ const command: CommandModule<
 
     const user = await getUser(authorId)
     if (!user?.id) {
-      throw new Error(`User with ID ${authorId} not found`)
+      throw new UserNotFoundError(`User with ID ${authorId} not found`)
     }
 
     const stream = await getStream({ streamId, userId: user.id })
     if (!stream?.id) {
-      throw new Error(`Stream with ID ${streamId} not found`)
+      throw new StreamNotFoundError(`Stream with ID ${streamId} not found`)
     }
     if (!stream.isPublic && !stream.role) {
-      throw new Error(
+      throw new ForbiddenError(
         `Commit author does not have access to the specified stream ${streamId}`
       )
     }

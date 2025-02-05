@@ -5,7 +5,7 @@ services:
   postgres:
     build:
       context: .
-      dockerfile: docker/postgres/Dockerfile
+      dockerfile: utils/postgres/Dockerfile
     restart: always
     environment:
       POSTGRES_DB: speckle
@@ -17,6 +17,22 @@ services:
       - ./setup/db/11-docker_postgres_keycloack_init.sql:/docker-entrypoint-initdb.d/11-docker_postgres_keycloack_init.sql
     ports:
       - '127.0.0.1:5432:5432'
+
+  postgres-region1:
+    build:
+      context: .
+      dockerfile: utils/postgres/Dockerfile
+    restart: always
+    environment:
+      POSTGRES_DB: speckle
+      POSTGRES_USER: speckle
+      POSTGRES_PASSWORD: speckle
+    volumes:
+      - postgres-region1-data:/var/lib/postgresql/data/
+      - ./setup/db/10-docker_postgres_init.sql:/docker-entrypoint-initdb.d/10-docker_postgres_init.sql
+      - ./setup/db/11-docker_postgres_keycloack_init.sql:/docker-entrypoint-initdb.d/11-docker_postgres_keycloack_init.sql
+    ports:
+      - '127.0.0.1:5401:5432'
 
   redis:
     image: 'redis:7-alpine'
@@ -36,6 +52,16 @@ services:
       - '127.0.0.1:9000:9000'
       - '127.0.0.1:9001:9001'
 
+  minio-region1:
+    image: 'minio/minio'
+    command: server /data --console-address ":9001"
+    restart: always
+    volumes:
+      - minio-region1-data:/data
+    ports:
+      - '127.0.0.1:9020:9000'
+      - '127.0.0.1:9021:9001'
+
   # Local OIDC provider for testing
   keycloak:
     image: quay.io/keycloak/keycloak:25.0
@@ -44,8 +70,8 @@ services:
     environment:
       KC_DB: postgres
       KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
-      KC_DB_USERNAME: keycloak
-      KC_DB_PASSWORD: keycloak
+      KC_DB_USERNAME: speckle
+      KC_DB_PASSWORD: speckle
 
       KC_HOSTNAME: 127.0.0.1
       KC_HOSTNAME_PORT: 9000
@@ -106,7 +132,9 @@ services:
 
 volumes:
   postgres-data:
+  postgres-region1-data:
   redis-data:
   pgadmin-data:
   redis_insight-data:
   minio-data:
+  minio-region1-data:

@@ -62,6 +62,11 @@ spec:
             readOnly: true
             mountPath: /encryption-keys
         {{- end }}
+        {{- if .Values.featureFlags.workspacesMultiRegionEnabled }}
+          - name: multi-region-config
+            mountPath: /multi-region-config
+            readOnly: true
+        {{- end }}
 
         # Allow for k8s to remove the pod from the service endpoints to stop receive traffic
         lifecycle:
@@ -73,11 +78,9 @@ spec:
           periodSeconds: 10
           failureThreshold: 60 # 10*60 = 600s; accounts for long-running db migrations
           timeoutSeconds: 3
-          exec:
-            command:
-              - node
-              - -e
-              - "try { require('node:http').request({headers: {'Content-Type': 'application/json'}, port:3000, hostname:'127.0.0.1', path:'/liveness', method: 'GET', timeout: 2000 }, (res) => { body = ''; res.on('data', (chunk) => {body += chunk;}); res.on('end', () => {process.exit(res.statusCode != 200 || body.toLowerCase().includes('error'));}); }).end(); } catch { process.exit(1); }"
+          httpGet:
+            path: /liveness
+            port: {{ include "server.port" $ }}
 
         livenessProbe:
           periodSeconds: 60
@@ -138,4 +141,12 @@ spec:
         - name: encryption-keys
           secret:
             secretName: encryption-keys
+      {{- end }}
+      {{- if .Values.featureFlags.workspacesMultiRegionEnabled }}
+        - name: multi-region-config
+          secret:
+            secretName: {{ .Values.multiRegion.config.secretName }}
+            items:
+            - key: {{ .Values.multiRegion.config.secretKey }}
+              path: "multi-region-config.json"
       {{- end }}

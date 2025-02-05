@@ -1,20 +1,16 @@
 <template>
-  <li class="border-x border-b first:border-t first:rounded-t-lg last:rounded-b-lg p-6">
+  <li
+    class="border-outline-2 border-x border-b first:border-t first:rounded-t-lg last:rounded-b-lg p-6 border-b-outline-3 last:border-b-outline-2"
+  >
     <div
       v-if="emailData.primary || !emailData.verified"
       class="flex w-full gap-x-2 pb-4 md:pb-3"
     >
-      <CommonBadge
-        v-if="emailData.primary"
-        rounded
-        color-classes="bg-info-lighter text-outline-4"
-      >
-        Primary
-      </CommonBadge>
+      <CommonBadge v-if="emailData.primary" rounded>Primary</CommonBadge>
       <CommonBadge
         v-if="!emailData.verified"
+        color-classes="text-foreground bg-outline-3"
         rounded
-        color-classes="bg-outline-3 text-foreground-3"
       >
         Unverified
       </CommonBadge>
@@ -37,22 +33,28 @@
         </p>
       </div>
       <div class="flex gap-x-2 pt-4 md:pt-0">
-        <FormButton
-          :disabled="!emailData.verified || emailData.primary"
-          color="outline"
-          size="sm"
-          @click="toggleSetPrimaryDialog"
+        <div v-tippy="primaryTooltip">
+          <FormButton
+            :disabled="!emailData.verified || emailData.primary"
+            color="outline"
+            size="sm"
+            @click="toggleSetPrimaryDialog"
+          >
+            Set as primary
+          </FormButton>
+        </div>
+        <div
+          v-tippy="emailData.primary ? 'Primary email cannot be deleted' : undefined"
         >
-          Set as primary
-        </FormButton>
-        <FormButton
-          :disabled="emailData.primary"
-          color="outline"
-          size="sm"
-          @click="toggleDeleteDialog"
-        >
-          Delete
-        </FormButton>
+          <FormButton
+            :disabled="emailData.primary"
+            color="outline"
+            size="sm"
+            @click="toggleDeleteDialog"
+          >
+            Delete
+          </FormButton>
+        </div>
       </div>
     </div>
 
@@ -100,11 +102,21 @@ const { mutate: resendMutation } = useMutation(settingsNewEmailVerificationMutat
 const showDeleteDialog = ref(false)
 const showSetPrimaryDialog = ref(false)
 
+const primaryTooltip = computed(() => {
+  if (props.emailData.primary) {
+    return 'This is already your primary email'
+  } else if (!props.emailData.verified) {
+    return 'Unverified emails cannot be set as primary'
+  }
+
+  return undefined
+})
+
 const description = computed(() => {
   if (props.emailData.primary) {
-    return 'Used for sign in and notifications'
+    return 'Used for signing in and notifications'
   } else if (!props.emailData.verified) {
-    return 'Unverified email cannot be set as primary'
+    return 'Unverified emails cannot be set as primary'
   }
 
   return null

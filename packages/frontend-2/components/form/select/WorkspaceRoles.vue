@@ -9,8 +9,12 @@
     :label-id="labelId"
     :button-id="buttonId"
     mount-menu-on-body
+    :show-label="showLabel"
     :fully-control-value="fullyControlValue"
     :disabled="disabled"
+    :disabled-item-predicate="disabledItemPredicate"
+    :disabled-item-tooltip="disabledItemTooltip"
+    :clearable="clearable"
   >
     <template #nothing-selected>
       {{ multiple ? 'Select roles' : 'Select role' }}
@@ -38,8 +42,13 @@
       </template>
     </template>
     <template #option="{ item }">
-      <div class="flex items-center">
-        <span class="truncate">{{ RoleInfo.Workspace[firstItem(item)].title }}</span>
+      <div class="flex flex-col space-y-0.5">
+        <span class="truncate" :class="{ 'font-medium': !hideDescription }">
+          {{ RoleInfo.Workspace[firstItem(item)].title }}
+        </span>
+        <span v-if="!hideDescription" class="text-body-2xs text-foreground-2">
+          {{ RoleInfo.Workspace[firstItem(item)].description }}
+        </span>
       </div>
     </template>
   </FormSelectBase>
@@ -69,7 +78,30 @@ const props = defineProps({
     type: String,
     default: 'Workspace Roles'
   },
-  disabled: Boolean
+  disabled: Boolean,
+  disabledItems: {
+    required: false,
+    type: Array as PropType<WorkspaceRoles[]>
+  },
+  currentRole: {
+    type: String as PropType<WorkspaceRoles>,
+    required: false
+  },
+  showLabel: Boolean,
+  clearable: Boolean,
+  hideItems: {
+    required: false,
+    type: Array as PropType<WorkspaceRoles[]>
+  },
+  hideDescription: {
+    required: false,
+    type: Boolean
+  },
+  allowUnset: {
+    required: false,
+    type: Boolean,
+    default: true
+  }
 })
 
 const elementToWatchForChanges = ref(null as Nullable<HTMLElement>)
@@ -84,5 +116,24 @@ const { selectedValue, isMultiItemArrayValue, hiddenSelectedItemCount, firstItem
     dynamicVisibility: { elementToWatchForChanges, itemContainer }
   })
 
-const roles = computed(() => Object.values(Roles.Workspace))
+const roles = computed(() => {
+  if (props.hideItems && props.hideItems.length) {
+    return Object.values(Roles.Workspace).filter(
+      (role) => !props.hideItems?.includes(role)
+    )
+  }
+  return Object.values(Roles.Workspace)
+})
+
+const disabledItemTooltip = computed(() =>
+  props.currentRole
+    ? `User is already a ${RoleInfo.Workspace[props.currentRole].title}`
+    : undefined
+)
+
+const disabledItemPredicate = (item: WorkspaceRoles) =>
+  (props.disabledItems &&
+    props.disabledItems.length > 0 &&
+    props.disabledItems.includes(item)) ||
+  item === props.currentRole
 </script>

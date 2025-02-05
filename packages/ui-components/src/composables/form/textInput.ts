@@ -6,6 +6,7 @@ import type { Ref, ToRefs } from 'vue'
 import type { MaybeNullOrUndefined, Nullable } from '@speckle/shared'
 import { nanoid } from 'nanoid'
 import { debounce, isArray, isBoolean, isString, isUndefined, noop } from 'lodash'
+import type { LabelPosition } from './input'
 
 export type InputColor = 'page' | 'foundation' | 'transparent'
 
@@ -25,8 +26,11 @@ export function useTextInputCore<V extends string | string[] = string>(params: {
     autoFocus?: boolean
     showClear?: boolean
     useLabelInErrors?: boolean
+    customErrorMessage?: string
     hideErrorMessage?: boolean
     color?: InputColor
+    labelPosition?: LabelPosition
+    customHelpClass?: string
   }>
   emit: {
     (e: 'change', val: { event?: Event; value: V }): void
@@ -39,16 +43,21 @@ export function useTextInputCore<V extends string | string[] = string>(params: {
 }) {
   const { props, inputEl, emit, options } = params
 
-  const { value, errorMessage: error } = useField<V>(props.name, props.rules, {
-    validateOnMount: unref(props.validateOnMount),
-    validateOnValueUpdate: unref(props.validateOnValueUpdate),
-    initialValue: unref(props.modelValue) || undefined
-  })
+  const { value, errorMessage: veeErrorMessage } = useField<V>(
+    props.name,
+    props.rules,
+    {
+      validateOnMount: unref(props.validateOnMount),
+      validateOnValueUpdate: unref(props.validateOnValueUpdate),
+      initialValue: unref(props.modelValue) || undefined
+    }
+  )
 
   const labelClasses = computed(() => {
     const classParts = [
-      'flex text-body-xs font-medium',
-      unref(props.color) === 'foundation' ? 'text-foreground' : 'text-foreground-2'
+      'flex text-body-xs font-medium gap-1 items-center',
+      unref(props.color) === 'foundation' ? 'text-foreground' : 'text-foreground-2',
+      unref(props.labelPosition) !== 'left' ? 'pb-1' : null
     ]
     if (!unref(props.showLabel)) {
       classParts.push('sr-only')
@@ -73,10 +82,8 @@ export function useTextInputCore<V extends string | string[] = string>(params: {
       coreInputClasses.value
     ]
 
-    if (error.value) {
-      classParts.push(
-        'focus:border-danger focus:ring-danger border-2 border-danger text-danger-darker'
-      )
+    if (hasError.value) {
+      classParts.push('!border-danger')
     } else {
       classParts.push('border-0 focus:ring-2 focus:ring-outline-2')
     }
@@ -98,23 +105,34 @@ export function useTextInputCore<V extends string | string[] = string>(params: {
   const internalHelpTipId = ref(nanoid())
 
   const title = computed(() => unref(props.label) || unref(props.name))
+
   const errorMessage = computed(() => {
-    const base = error.value
+    if (unref(props.customErrorMessage)) {
+      return unref(props.customErrorMessage)
+    }
+
+    const base = veeErrorMessage.value
     if (!base || !unref(props.useLabelInErrors)) return base
     return base.replace('Value', title.value)
   })
+
+  const hasError = computed(() => !!errorMessage.value)
 
   const hideHelpTip = computed(
     () => errorMessage.value && unref(props.hideErrorMessage)
   )
   const helpTip = computed(() => errorMessage.value || unref(props.help))
   const hasHelpTip = computed(() => !!helpTip.value)
+  const customHelpTipClass = computed(() => unref(props.customHelpClass))
   const helpTipId = computed(() =>
     hasHelpTip.value ? `${unref(props.name)}-${internalHelpTipId.value}` : undefined
   )
   const helpTipClasses = computed((): string => {
-    const classParts = ['text-body-2xs']
-    classParts.push(error.value ? 'text-danger' : 'text-foreground-2')
+    const classParts = ['text-body-2xs break-words']
+    classParts.push(hasError.value ? 'text-danger' : 'text-foreground-2')
+    if (customHelpTipClass.value) {
+      classParts.push(customHelpTipClass.value)
+    }
     return classParts.join(' ')
   })
   const shouldShowClear = computed(() => {
@@ -153,7 +171,8 @@ export function useTextInputCore<V extends string | string[] = string>(params: {
     clear,
     focus,
     labelClasses,
-    shouldShowClear
+    shouldShowClear,
+    hasError
   }
 }
 

@@ -2,7 +2,7 @@
   <FormFileUploadZone
     ref="uploadZone"
     v-slot="{ isDraggingFiles }"
-    :disabled="isUploading"
+    :disabled="isUploading || disabled"
     :size-limit="maxSizeInBytes"
     :accept="accept"
     class="flex items-center h-full"
@@ -34,7 +34,7 @@
       </div>
       <span v-else class="text-body-xs text-foreground-2 text-center select-none">
         Use our
-        <NuxtLink target="_blank" :to="connectorsPageUrl" class="font-medium">
+        <NuxtLink target="_blank" :to="downloadManagerUrl" class="font-medium">
           connectors
         </NuxtLink>
         to publish a {{ modelName ? '' : 'new model' }} version to
@@ -48,12 +48,13 @@
 import { useFileImport } from '~~/lib/core/composables/fileImport'
 import { useFileUploadProgressCore } from '~~/lib/form/composables/fileUpload'
 import { ExclamationTriangleIcon } from '@heroicons/vue/24/solid'
-import { connectorsPageUrl } from '~/lib/common/helpers/route'
+import { downloadManagerUrl } from '~/lib/common/helpers/route'
 import type { Nullable } from '@speckle/shared'
 
 const props = defineProps<{
   projectId: string
   modelName?: string
+  disabled?: boolean
 }>()
 
 const {

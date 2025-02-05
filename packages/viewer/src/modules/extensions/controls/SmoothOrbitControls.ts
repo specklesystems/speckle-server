@@ -24,16 +24,20 @@ import {
   OrthographicCamera,
   Quaternion,
   Euler,
-  Scene
+  Mesh,
+  SphereGeometry,
+  Ray
 } from 'three'
 
 import { Damper, SETTLING_TIME } from '../../utils/Damper.js'
 
 import { World } from '../../World.js'
 import { SpeckleControls } from './SpeckleControls.js'
-import { Intersections } from '../../Intersections.js'
 import { lerp } from 'three/src/math/MathUtils.js'
 import { computeOrthographicSize } from '../CameraController.js'
+import { ObjectLayers } from '../../../IViewer.js'
+import SpeckleBasicMaterial from '../../materials/SpeckleBasicMaterial.js'
+import SpeckleRenderer from '../../SpeckleRenderer.js'
 
 /**
  * @param {Number} value
@@ -45,6 +49,7 @@ const clamp = (value: number, lowerLimit: number, upperLimit: number): number =>
   Math.max(lowerLimit, Math.min(upperLimit, value))
 
 const PAN_SENSITIVITY = 0.018
+const MOVEMENT_EPSILON = 1e-5
 const vector3 = new Vector3()
 
 export type TouchMode = null | ((dx: number, dy: number) => void)
@@ -93,6 +98,10 @@ export interface SmoothOrbitControlsOptions {
   infiniteZoom?: boolean
   // Zoom to cursor
   zoomToCursor?: boolean
+  // Orbit around cursor
+  orbitAroundCursor?: boolean
+  // Show orbit point
+  showOrbitPoint?: boolean
   // Dampening
   damperDecay?: number
 }
@@ -103,6 +112,11 @@ export enum PointerChangeEvent {
   PointerChangeStart = 'pointer-change-start',
   PointerChangeEnd = 'pointer-change-end'
 }
+
+const closeRelativeFactorPan = 0.06
+const farRelativeFactorPan = 0.4
+const relativeMinTargetDistance = 0.01
+const relativeMaxTargetDistance = 0.2
 
 /**
  * SmoothControls is a Three.js helper for adding delightful pointer and
@@ -123,49 +137,56 @@ export enum PointerChangeEvent {
  * ensure that the camera's matrixWorld is in sync before using SmoothControls.
  */
 export class SmoothOrbitControls extends SpeckleControls {
-  private _enabled: boolean = false
-  private _options: Required<SmoothOrbitControlsOptions>
-  private isUserPointing = false
+  protected _enabled: boolean = false
+  protected _options: Required<SmoothOrbitControlsOptions>
+  protected isUserPointing = false
 
   // Pan state
   public enablePan = true
   public enableTap = true
-  private panProjection = new Matrix3()
-  private panPerPixel = 0
+  protected panProjection = new Matrix3()
+  protected panPerPixel = 0
 
   // Internal orbital position state
   public spherical = new Spherical()
-  private goalSpherical = new Spherical()
-  private origin = new Vector3()
-  private goalOrigin = new Vector3()
-  private targetDamperX = new Damper()
-  private targetDamperY = new Damper()
-  private targetDamperZ = new Damper()
-  private thetaDamper = new Damper()
-  private phiDamper = new Damper()
-  private radiusDamper = new Damper()
-  private logFov = Math.log(55)
-  private goalLogFov = this.logFov
-  private fovDamper = new Damper()
+  protected goalSpherical = new Spherical()
+  protected origin = new Vector3()
+  protected pivotalOrigin: Vector3 = new Vector3()
+  protected goalOrigin = new Vector3()
+  protected targetDamperX = new Damper()
+  protected targetDamperY = new Damper()
+  protected targetDamperZ = new Damper()
+  protected thetaDamper = new Damper()
+  protected phiDamper = new Damper()
+  protected radiusDamper = new Damper()
+  protected logFov = Math.log(55)
+  protected goalLogFov = this.logFov
+  protected fovDamper = new Damper()
 
   // Pointer state
-  private touchMode: TouchMode = null
-  private pointers: Pointer[] = []
-  private startPointerPosition = { clientX: 0, clientY: 0 }
-  private lastSeparation = 0
-  private touchDecided = false
-  private zoomControlCoord: Vector2 = new Vector2()
+  protected touchMode: TouchMode = null
+  protected pointers: Pointer[] = []
+  protected startPointerPosition = { clientX: 0, clientY: 0 }
+  protected lastSeparation = 0
+  protected touchDecided = false
+  protected zoomControlCoord: Vector2 = new Vector2()
 
-  private _targetCamera: PerspectiveCamera | OrthographicCamera
-  private _container: HTMLElement
-  private _lastTick: number = 0
-  private _basisTransform: Matrix4 = new Matrix4()
-  private _basisTransformInv: Matrix4 = new Matrix4()
-  private _radiusDelta: number = 0
+  protected _targetCamera: PerspectiveCamera | OrthographicCamera
+  protected _container: HTMLElement
+  protected _lastTick: number = 0
+  protected _basisTransform: Matrix4 = new Matrix4()
+  protected _basisTransformInv: Matrix4 = new Matrix4()
+  protected _radiusDelta: number = 0
 
-  private scene: Scene
-  private world: World
-  private intersections: Intersections
+  protected world: World
+  protected renderer: SpeckleRenderer
+
+  protected orbitSphere: Mesh
+  protected pivotPoint: Vector3 = new Vector3()
+  protected lastPivotPoint: Vector3 = new Vector3()
+  protected usePivotal = false
+
+  protected _minDist: number
 
   public get enabled(): boolean {
     return this._enabled
@@ -173,7 +194,10 @@ export class SmoothOrbitControls extends SpeckleControls {
   public set enabled(value: boolean) {
     if (value) {
       this.enableInteraction()
-    } else this.disableInteraction()
+    } else {
+      this.disableInteraction()
+      this.orbitSphere.visible = false
+    }
     this._enabled = value
   }
 
@@ -194,20 +218,32 @@ export class SmoothOrbitControls extends SpeckleControls {
     camera: PerspectiveCamera | OrthographicCamera,
     container: HTMLElement,
     world: World,
-    scene: Scene,
-    intersections: Intersections,
+    renderer: SpeckleRenderer,
     options: Required<SmoothOrbitControlsOptions>
   ) {
     super()
     this._targetCamera = camera
     this._container = container
     this.world = world
-    this.intersections = intersections
-    this.scene = scene
+    this.renderer = renderer
     this._options = Object.assign({}, options)
     this.setDamperDecayTime(this._options.damperDecay)
-    this.scene
-    this.intersections
+
+    const billboardMaterial = new SpeckleBasicMaterial({ color: 0x047efb }, [
+      'BILLBOARD_FIXED'
+    ])
+    billboardMaterial.opacity = 0.75
+    billboardMaterial.transparent = true
+    billboardMaterial.color.convertSRGBToLinear()
+    billboardMaterial.toneMapped = false
+    billboardMaterial.depthTest = false
+    billboardMaterial.billboardPixelHeight = 15 * window.devicePixelRatio
+
+    this.orbitSphere = new Mesh(new SphereGeometry(0.5, 32, 16), billboardMaterial)
+    this.orbitSphere.layers.set(ObjectLayers.OVERLAY)
+    this.orbitSphere.visible = false
+    this.orbitSphere.frustumCulled = false
+    this.renderer.scene.add(this.orbitSphere)
   }
 
   /**
@@ -222,8 +258,54 @@ export class SmoothOrbitControls extends SpeckleControls {
   }
 
   set targetCamera(value: PerspectiveCamera | OrthographicCamera) {
+    /** When you drop out of WASD, the radius is very close to the camera
+     *  And if you switch to orthogrtaphic you will get a vey large orthographic size
+     *  This is a workaround where we try to get a more reasonable radius, by getting
+     *  the closest intersection distance to the scene geometry from the camera
+     */
+    if (value instanceof OrthographicCamera) {
+      if (this.goalSpherical.radius < this._minDist) {
+        /** Fallback radius, in the middle of the allowed radius range */
+        let recomputedRadius =
+          this.options.minimumRadius +
+          (this._options.maximumRadius - this.options.minimumRadius) * 0.5
+        const ray = new Ray(
+          this._targetCamera.position,
+          this._targetCamera.getWorldDirection(new Vector3())
+        )
+        const res = this.renderer.intersections.intersectRay(
+          this.renderer.scene,
+          this._targetCamera as PerspectiveCamera,
+          ray,
+          ObjectLayers.STREAM_CONTENT_MESH,
+          false,
+          this.renderer.clippingVolume,
+          false,
+          false
+        )
+        if (res && res.length) {
+          recomputedRadius = res[0].distance
+        }
+        this.spherical.radius = recomputedRadius
+        this.goalSpherical.radius = recomputedRadius
+      }
+    }
+
     this._targetCamera = value
+    this.usePivotal = this._options.orbitAroundCursor
+
+    /** We move the lat pivot point somwhere outside of world bounds, in order to force a pivotal origin recompute */
+    this.lastPivotPoint.set(
+      this.world.worldOrigin.x + this.world.worldSize.x,
+      this.world.worldOrigin.y + this.world.worldSize.y,
+      this.world.worldOrigin.z + this.world.worldSize.z
+    )
+
     this.moveCamera()
+  }
+
+  public set minDist(value: number) {
+    this._minDist = value
   }
 
   /** The input position and target will be in a basis with (0,1,0) as up */
@@ -245,6 +327,7 @@ export class SmoothOrbitControls extends SpeckleControls {
     /** Three.js Spherical assumes (0, 1, 0) as up... */
     v1.applyMatrix4(this._basisTransformInv)
     this.setTarget(v1.x, v1.y, v1.z)
+    this.usePivotal = false
   }
 
   /**
@@ -263,13 +346,16 @@ export class SmoothOrbitControls extends SpeckleControls {
     this.setTarget(nativeOrigin.x, nativeOrigin.y, nativeOrigin.z)
 
     this.setRadius(sphere.radius)
+    this.usePivotal = false
   }
 
   /**
    * Gets the current goal position
    */
   public getPosition(): Vector3 {
-    return this.positionFromSpherical(this.goalSpherical, this.goalOrigin)
+    return this.positionFromSpherical(this.goalSpherical, this.goalOrigin).applyMatrix4(
+      this._basisTransform
+    )
   }
 
   /**
@@ -279,13 +365,30 @@ export class SmoothOrbitControls extends SpeckleControls {
     return this.goalOrigin.clone().applyMatrix4(this._basisTransform)
   }
 
+  /**
+   * Gets the current goal position
+   */
+  public getCurrentPosition(): Vector3 {
+    return this.positionFromSpherical(this.spherical, this.origin).applyMatrix4(
+      this._basisTransform
+    )
+  }
+
+  /**
+   * Gets the point in model coordinates the model should orbit/pivot around.
+   */
+  public getCurrentTarget(): Vector3 {
+    return this.origin.clone().applyMatrix4(this._basisTransform)
+  }
+
   public isStationary(): boolean {
     return (
       this.goalSpherical.theta === this.spherical.theta &&
       this.goalSpherical.phi === this.spherical.phi &&
       this.goalSpherical.radius === this.spherical.radius &&
       this.goalLogFov === this.logFov &&
-      this.goalOrigin.equals(this.origin)
+      this.goalOrigin.equals(this.origin) &&
+      this.pivotPoint.equals(this.lastPivotPoint)
     )
   }
 
@@ -329,6 +432,7 @@ export class SmoothOrbitControls extends SpeckleControls {
     goalPhi: number = this.goalSpherical.phi,
     goalRadius: number = this.goalSpherical.radius
   ): boolean {
+    this.computeMinMaxRadius()
     const {
       minimumAzimuthalAngle,
       maximumAzimuthalAngle,
@@ -337,10 +441,6 @@ export class SmoothOrbitControls extends SpeckleControls {
       minimumRadius,
       maximumRadius
     } = this._options
-
-    if (isNaN(minimumRadius) || isNaN(maximumRadius)) {
-      this.computeMinMaxRadius()
-    }
 
     const { theta, phi, radius } = this.goalSpherical
 
@@ -414,7 +514,6 @@ export class SmoothOrbitControls extends SpeckleControls {
    * such that they progress across their allowed ranges in sync.
    */
   adjustOrbit(deltaTheta: number, deltaPhi: number, deltaZoom: number) {
-    deltaZoom
     this._radiusDelta
     const { theta, phi, radius } = this.goalSpherical
 
@@ -452,8 +551,8 @@ export class SmoothOrbitControls extends SpeckleControls {
     )
     worldSizeOffset = clamp(
       worldSizeOffset,
-      this.world.getRelativeOffset(0.01),
-      this.world.getRelativeOffset(0.2)
+      this.world.getRelativeOffset(relativeMinTargetDistance),
+      this.world.getRelativeOffset(relativeMaxTargetDistance)
     )
     const zoomAmount = worldSizeOffset * Math.sign(deltaZoom) //deltaZoom * this.spherical.radius * Math.tan(fov * 0.5)
 
@@ -597,17 +696,123 @@ export class SmoothOrbitControls extends SpeckleControls {
     )
     this.origin.set(x, y, z)
 
-    this.moveCamera()
-
-    return true
+    return this.moveCamera()
   }
 
-  protected moveCamera() {
-    // Derive the new camera position from the updated spherical:
-    this.spherical.makeSafe()
-    const position = this.positionFromSpherical(this.spherical, this.origin)
+  /** Function expects the position argument to be in a CS where Y is up */
+  protected polarFromPivotal(position: Vector3) {
     const quaternion = this.quaternionFromSpherical(this.spherical)
+    /** Forward direction */
+    const dir = new Vector3().setFromMatrixColumn(
+      new Matrix4().makeRotationFromQuaternion(quaternion),
+      2
+    )
+    const camPos = new Vector3().copy(position)
 
+    /** Pivot needs to be transformed in a Y up CS  */
+    const pivotPoint = new Vector3()
+      .copy(this.pivotPoint)
+      .applyMatrix4(this._basisTransformInv)
+
+    const cameraPivotDist = camPos.distanceTo(pivotPoint)
+    const cameraPivotDir = new Vector3().copy(camPos).sub(pivotPoint)
+    cameraPivotDir.normalize()
+
+    const dot = Math.min(Math.max(dir.dot(cameraPivotDir), -1), 1)
+    const angle = Math.acos(dot)
+    /** We compute a new distanced based on the pivot point */
+    const polarRadius = cameraPivotDist * Math.cos(angle)
+    /** We compute a new origin based on the pivot point, but keeping it along the camera's current forward direction */
+    const polarOrigin = camPos.sub(new Vector3().copy(dir).multiplyScalar(polarRadius))
+
+    this.goalOrigin.copy(polarOrigin)
+    this.origin.copy(polarOrigin)
+
+    /** For orthographica camera's we don't need to update the radius because it will break their orthographic size */
+    if (this._targetCamera instanceof PerspectiveCamera) {
+      this.goalSpherical.radius = polarRadius
+      this.spherical.radius = polarRadius
+    }
+  }
+
+  /** Function expects the origin argument to be in a CS where Y is up */
+  protected positionFromPivotal(origin: Vector3, quaternion: Quaternion) {
+    const pivotPoint = new Vector3()
+      .copy(this.pivotPoint)
+      .applyMatrix4(this._basisTransformInv)
+
+    const position = new Vector3()
+    position.copy(origin)
+
+    position.sub(pivotPoint)
+    position.applyQuaternion(quaternion)
+    position.add(pivotPoint)
+
+    return position
+  }
+
+  /** Function expects the pivotPoint and position arguments to be in a CS where Y is up */
+  protected getPivotalOrigin(
+    pivotPoint: Vector3,
+    position: Vector3,
+    quaternion: Quaternion
+  ) {
+    const pivotalOrigin = new Vector3().copy(position)
+
+    pivotalOrigin.sub(pivotPoint)
+    pivotalOrigin.applyQuaternion(new Quaternion().copy(quaternion).invert())
+    pivotalOrigin.add(pivotPoint)
+
+    return pivotalOrigin
+  }
+
+  protected moveCamera(): boolean {
+    const lastCameraPos = new Vector3().copy(this._targetCamera.position)
+    const lastCameraQuat = new Quaternion().copy(this._targetCamera.quaternion)
+
+    this.spherical.makeSafe()
+
+    /** We get the current position and rotation based off the latest polar params
+     *  The ground truth is going to always be the polar CS!
+     */
+    const quaternion = this.quaternionFromSpherical(this.spherical)
+    let position = this.positionFromSpherical(this.spherical, this.origin)
+
+    if (this.usePivotal) {
+      /** We transform both current and previous pivots in a CS where Y us up */
+      const pivotPoint = new Vector3()
+        .copy(this.pivotPoint)
+        .applyMatrix4(this._basisTransformInv)
+      const prevPivotPoint = new Vector3()
+        .copy(this.lastPivotPoint)
+        .applyMatrix4(this._basisTransformInv)
+
+      const deltaPivot = prevPivotPoint.sub(pivotPoint)
+
+      /** We recompute the pivotal origin/pivotal offset, but only when required! */
+      if (deltaPivot.length() > 0) {
+        this.pivotalOrigin.copy(this.getPivotalOrigin(pivotPoint, position, quaternion))
+      }
+
+      /** We get a new position in the pivotal CS */
+      position = this.positionFromPivotal(this.pivotalOrigin, quaternion)
+      /** We update the polar CS based off the new pivotal camera position,
+       *  essentially creating a virtual pair polar CS which can reproduce the pivotal position */
+      this.polarFromPivotal(position)
+      /** Update the last pivot */
+      this.lastPivotPoint.copy(this.pivotPoint)
+    }
+
+    /** We transform both position and quaternion in the required basis */
+    position.applyQuaternion(
+      new Quaternion().setFromRotationMatrix(this._basisTransform)
+    )
+    quaternion.premultiply(new Quaternion().setFromRotationMatrix(this._basisTransform))
+
+    /** This is a trick we do for ortographic projection which stops the near plane from clipping into geometry
+     *  In orthographic projection the camera's 'depth' along it's forward does not matter. Zoooming is achieved by
+     *  varying the orthographic size, not by moving the camera.
+     */
     if (this._targetCamera instanceof OrthographicCamera) {
       const cameraDirection = new Vector3()
         .setFromSpherical(this.spherical)
@@ -621,14 +826,19 @@ export class SmoothOrbitControls extends SpeckleControls {
         )
       )
     }
+    /** Apply values and update transform */
     this._targetCamera.position.copy(position)
     this._targetCamera.quaternion.copy(quaternion)
+    this._targetCamera.updateMatrixWorld(true)
 
+    /** Fov update */
     if (this._targetCamera instanceof PerspectiveCamera)
       if (this._targetCamera.fov !== Math.exp(this.logFov)) {
         this._targetCamera.fov = Math.exp(this.logFov)
         this._targetCamera.updateProjectionMatrix()
       }
+
+    /** Compute the correct orthographic size based on the polar radius */
     if (this._targetCamera instanceof OrthographicCamera) {
       const orthographicSize = computeOrthographicSize(
         this.spherical.radius,
@@ -642,9 +852,31 @@ export class SmoothOrbitControls extends SpeckleControls {
       this._targetCamera.bottom = orthographicSize.y / -2
       this._targetCamera.updateProjectionMatrix()
     }
+
+    /** Update the debug origin sphere */
+    const spherePos =
+      this._options.orbitAroundCursor && this.usePivotal
+        ? this.pivotPoint
+        : new Vector3().copy(this.origin).applyMatrix4(this._basisTransform)
+    /** TO DO: Revisit and set by writing to it's position */
+    const mat = this.orbitSphere.material as SpeckleBasicMaterial
+    mat.userData.billboardPos.value.copy(spherePos)
+
+    /** We'd rather have a palpable epsilon for regular sized streams, but also
+     *  compute a custom one for microscopic ones
+     */
+    const epsilon = Math.min(
+      MOVEMENT_EPSILON,
+      this.world.getRelativeOffset(MOVEMENT_EPSILON)
+    )
+    return (
+      lastCameraPos.sub(this._targetCamera.position).length() > epsilon ||
+      lastCameraQuat.angleTo(this._targetCamera.quaternion) > epsilon
+    )
   }
 
-  /* Ortho height to distance functions
+  /*
+  // Ortho height to distance function. Keeping for reference
   private orthographicHeightToDistance(height: number) {
     if (!(this._targetCamera instanceof OrthographicCamera))
       return this.spherical.radius
@@ -658,9 +890,6 @@ export class SmoothOrbitControls extends SpeckleControls {
     position.setFromSpherical(spherical)
     if (origin) position.add(origin)
 
-    position.applyQuaternion(
-      new Quaternion().setFromRotationMatrix(this._basisTransform)
-    )
     return position
   }
 
@@ -670,7 +899,7 @@ export class SmoothOrbitControls extends SpeckleControls {
     quaternion.setFromEuler(
       new Euler(spherical.phi - Math.PI / 2, spherical.theta, 0, 'YXZ')
     )
-    quaternion.premultiply(new Quaternion().setFromRotationMatrix(this._basisTransform))
+
     return quaternion
   }
 
@@ -823,23 +1052,59 @@ export class SmoothOrbitControls extends SpeckleControls {
 
   protected movePan(dx: number, dy: number) {
     const dxy = vector3.set(dx, dy, 0).multiplyScalar(this._options.inputSensitivity)
+    let relativeFactor = this.world.getRelativeOffset(farRelativeFactorPan)
+    if (this._minDist) {
+      if (this._minDist < relativeFactor * 0.5) {
+        relativeFactor = this.world.getRelativeOffset(closeRelativeFactorPan)
+      }
+    }
+
+    const radiusFactor = clamp(
+      this.spherical.radius,
+      this.world.getRelativeOffset(0.025),
+      Number.MAX_VALUE
+    )
     const metersPerPixel =
-      clamp(
-        this.spherical.radius,
-        this.world.getRelativeOffset(0.025),
-        Number.MAX_VALUE
-      ) *
-      Math.exp(this.logFov) *
-      this.panPerPixel
+      Math.max(relativeFactor, radiusFactor) * Math.exp(this.logFov) * this.panPerPixel
     dxy.multiplyScalar(metersPerPixel)
 
     /** This panProjection assumes (0, 1, 0) as up... */
     const target = this.getTarget().applyMatrix4(this._basisTransformInv)
     target.add(dxy.applyMatrix3(this.panProjection))
     this.setTarget(target.x, target.y, target.z)
+    this.usePivotal = false
+    this.orbitSphere.visible = false
   }
 
   protected onPointerDown = (event: PointerEvent) => {
+    if (this._options.orbitAroundCursor) {
+      const x =
+        ((event.clientX - this._container.offsetLeft) / this._container.offsetWidth) *
+          2 -
+        1
+
+      const y =
+        ((event.clientY - this._container.offsetTop) / this._container.offsetHeight) *
+          -2 +
+        1
+      const res = this.renderer.intersections.intersect(
+        this.renderer.scene,
+        this._targetCamera as PerspectiveCamera,
+        new Vector2(x, y),
+        ObjectLayers.STREAM_CONTENT_MESH,
+        true,
+        this.renderer.clippingVolume
+      )
+      if (res && res.length) {
+        this.pivotPoint.copy(res[0].point)
+        this.usePivotal = true
+        this.orbitSphere.visible = this._options.showOrbitPoint
+      } else {
+        this.usePivotal = false
+        this.orbitSphere.visible = false
+      }
+    }
+
     if (this.pointers.length > 2) {
       return
     }
@@ -853,11 +1118,6 @@ export class SmoothOrbitControls extends SpeckleControls {
       this.startPointerPosition.clientY = event.clientY
     }
 
-    // try {
-    //   this._container.setPointerCapture(event.pointerId)
-    // } catch (e) {
-    //   e
-    // }
     this.pointers.push({
       clientX: event.clientX,
       clientY: event.clientY,
@@ -939,6 +1199,7 @@ export class SmoothOrbitControls extends SpeckleControls {
     if (this.isUserPointing) {
       this.emit(PointerChangeEvent.PointerChangeEnd)
     }
+    this.orbitSphere.visible = false
   }
 
   protected onTouchChange(event: PointerEvent) {
@@ -975,20 +1236,21 @@ export class SmoothOrbitControls extends SpeckleControls {
       (event.button === 2 || event.ctrlKey || event.metaKey || event.shiftKey)
     ) {
       this.initializePan()
-      //   ;(this.scene.element as any)[$panElement].style.opacity = 1
+      this.orbitSphere.visible = false
     }
     // this.element.style.cursor = 'grabbing'
   }
 
   protected onWheel = (event: WheelEvent) => {
     const x =
-      ((event.clientX - this._container.clientLeft) / this._container.clientWidth) * 2 -
+      ((event.clientX - this._container.offsetLeft) / this._container.offsetWidth) * 2 -
       1
 
     const y =
-      ((event.clientY - this._container.clientTop) / this._container.clientHeight) *
+      ((event.clientY - this._container.offsetTop) / this._container.offsetHeight) *
         -2 +
       1
+
     this.zoomControlCoord.set(x, y)
 
     const deltaZoom =
@@ -1000,6 +1262,8 @@ export class SmoothOrbitControls extends SpeckleControls {
       60
     this.userAdjustOrbit(0, 0, deltaZoom)
     event.preventDefault()
+    this.usePivotal = false
+    this.orbitSphere.visible = false
     // TO DO
     // this.dispatchEvent({ type: 'user-interaction' })
   }

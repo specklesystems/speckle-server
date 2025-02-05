@@ -5,21 +5,153 @@ const request = require('supertest')
 const { beforeEachContext, initializeTestServer } = require(`@/test/hooks`)
 const { generateManyObjects } = require(`@/test/helpers`)
 
-const {
-  createUser,
-  getUsers,
-  changeUserRole
-} = require('@/modules/core/services/users')
-const { createPersonalAccessToken } = require('../services/tokens')
-const {
-  addOrUpdateStreamCollaborator,
-  removeStreamCollaborator
-} = require('@/modules/core/services/streams/streamAccessService')
 const { Roles, Scopes } = require('@speckle/shared')
+const cryptoRandomString = require('crypto-random-string')
+const { saveActivityFactory } = require('@/modules/activitystream/repositories')
+const { db } = require('@/db/knex')
+const {
+  validateStreamAccessFactory,
+  isStreamCollaboratorFactory,
+  removeStreamCollaboratorFactory,
+  addOrUpdateStreamCollaboratorFactory
+} = require('@/modules/core/services/streams/access')
+const { authorizeResolver } = require('@/modules/shared')
+const {
+  getStreamFactory,
+  revokeStreamPermissionsFactory,
+  grantStreamPermissionsFactory
+} = require('@/modules/core/repositories/streams')
+const {
+  addStreamPermissionsRevokedActivityFactory,
+  addStreamInviteAcceptedActivityFactory,
+  addStreamPermissionsAddedActivityFactory
+} = require('@/modules/activitystream/services/streamActivity')
+const { publish } = require('@/modules/shared/utils/subscriptions')
+const {
+  getUserFactory,
+  legacyGetPaginatedUsersFactory,
+  storeUserFactory,
+  countAdminUsersFactory,
+  storeUserAclFactory,
+  isLastAdminUserFactory,
+  updateUserServerRoleFactory
+} = require('@/modules/core/repositories/users')
+const {
+  findEmailFactory,
+  createUserEmailFactory,
+  ensureNoPrimaryEmailForUserFactory
+} = require('@/modules/core/repositories/userEmails')
+const {
+  requestNewEmailVerificationFactory
+} = require('@/modules/emails/services/verification/request')
+const {
+  deleteOldAndInsertNewVerificationFactory
+} = require('@/modules/emails/repositories')
+const { renderEmail } = require('@/modules/emails/services/emailRendering')
+const { sendEmail } = require('@/modules/emails/services/sending')
+const {
+  createUserFactory,
+  changeUserRoleFactory
+} = require('@/modules/core/services/users/management')
+const {
+  validateAndCreateUserEmailFactory
+} = require('@/modules/core/services/userEmails')
+const {
+  finalizeInvitedServerRegistrationFactory
+} = require('@/modules/serverinvites/services/processing')
+const {
+  deleteServerOnlyInvitesFactory,
+  updateAllInviteTargetsFactory
+} = require('@/modules/serverinvites/repositories/serverInvites')
+const { createPersonalAccessTokenFactory } = require('@/modules/core/services/tokens')
+const {
+  storeApiTokenFactory,
+  storeTokenScopesFactory,
+  storeTokenResourceAccessDefinitionsFactory,
+  storePersonalApiTokenFactory
+} = require('@/modules/core/repositories/tokens')
+const { getServerInfoFactory } = require('@/modules/core/repositories/server')
+const { getEventBus } = require('@/modules/shared/services/eventBus')
+
+const getUser = getUserFactory({ db })
+const getStream = getStreamFactory({ db })
+const saveActivity = saveActivityFactory({ db })
+const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
+const isStreamCollaborator = isStreamCollaboratorFactory({
+  getStream
+})
+const removeStreamCollaborator = removeStreamCollaboratorFactory({
+  validateStreamAccess,
+  isStreamCollaborator,
+  revokeStreamPermissions: revokeStreamPermissionsFactory({ db }),
+  addStreamPermissionsRevokedActivity: addStreamPermissionsRevokedActivityFactory({
+    saveActivity,
+    publish
+  })
+})
+
+const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
+  validateStreamAccess,
+  getUser,
+  grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+  addStreamInviteAcceptedActivity: addStreamInviteAcceptedActivityFactory({
+    saveActivity,
+    publish
+  }),
+  addStreamPermissionsAddedActivity: addStreamPermissionsAddedActivityFactory({
+    saveActivity,
+    publish
+  })
+})
+const getUsers = legacyGetPaginatedUsersFactory({ db })
+
+const getServerInfo = getServerInfoFactory({ db })
+const findEmail = findEmailFactory({ db })
+const requestNewEmailVerification = requestNewEmailVerificationFactory({
+  findEmail,
+  getUser: getUserFactory({ db }),
+  getServerInfo,
+  deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db }),
+  renderEmail,
+  sendEmail
+})
+const createUser = createUserFactory({
+  getServerInfo,
+  findEmail,
+  storeUser: storeUserFactory({ db }),
+  countAdminUsers: countAdminUsersFactory({ db }),
+  storeUserAcl: storeUserAclFactory({ db }),
+  validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
+    createUserEmail: createUserEmailFactory({ db }),
+    ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
+    findEmail,
+    updateEmailInvites: finalizeInvitedServerRegistrationFactory({
+      deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
+      updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
+    }),
+    requestNewEmailVerification
+  }),
+  emitEvent: getEventBus().emit
+})
+
+const createPersonalAccessToken = createPersonalAccessTokenFactory({
+  storeApiToken: storeApiTokenFactory({ db }),
+  storeTokenScopes: storeTokenScopesFactory({ db }),
+  storeTokenResourceAccessDefinitions: storeTokenResourceAccessDefinitionsFactory({
+    db
+  }),
+  storePersonalApiToken: storePersonalApiTokenFactory({ db })
+})
 
 let app
 let server
 let sendRequest
+
+const changeUserRole = changeUserRoleFactory({
+  getServerInfo,
+  isLastAdminUser: isLastAdminUserFactory({ db }),
+  updateUserServerRole: updateUserServerRoleFactory({ db })
+})
 
 describe('GraphQL API Core @core-api', () => {
   const userA = {
@@ -40,8 +172,10 @@ describe('GraphQL API Core @core-api', () => {
 
   // set up app & two basic users to ping pong permissions around
   before(async () => {
-    ;({ app, server } = await beforeEachContext())
-    ;({ sendRequest } = await initializeTestServer(server, app))
+    const ctx = await beforeEachContext()
+    server = ctx.server
+    app = ctx.app
+    ;({ sendRequest } = await initializeTestServer(ctx))
 
     userA.id = await createUser(userA)
     userA.token = `Bearer ${await createPersonalAccessToken(
@@ -212,6 +346,7 @@ describe('GraphQL API Core @core-api', () => {
         })
         expect(res).to.be.json
         expect(res.body.errors).to.exist
+        expect(res.body.errors[0].extensions?.code).to.equal('USER_INPUT_ERROR')
       })
 
       it('Should fail to create a stream with an invalid scope token', async () => {
@@ -221,13 +356,17 @@ describe('GraphQL API Core @core-api', () => {
             'mutation { streamCreate(stream: { name: "INVALID TS1 (u A) Private", description: "Hello World", isPublic:false } ) }'
         })
         expect(res.body.errors).to.exist
+        expect(res.body.errors[0].extensions?.code).to.equal('FORBIDDEN')
       })
 
       it('Should edit my profile', async () => {
         const res = await sendRequest(userA.token, {
           query: 'mutation($user:UserUpdateInput!) { userUpdate( user: $user) } ',
           variables: {
-            user: { name: 'Miticå', bio: 'He never really knows what he is doing.' }
+            user: {
+              name: 'test user updated',
+              bio: 'He never really knows what he is doing.'
+            }
           }
         })
         expect(res).to.be.json
@@ -238,7 +377,7 @@ describe('GraphQL API Core @core-api', () => {
       it('Should delete my account', async () => {
         const userDelete = {
           name: 'delete',
-          email: 'delete@speckle.systems',
+          email: `${cryptoRandomString({ length: 10 })}@example.org`,
           password: 'wowwowwowwowwow'
         }
         userDelete.id = await createUser(userDelete)
@@ -264,12 +403,18 @@ describe('GraphQL API Core @core-api', () => {
           variables: { user: { email: 'wrongEmail@email.com' } }
         })
         expect(badTokenScopesBadEmail.body.errors).to.exist
+        expect(badTokenScopesBadEmail.body.errors[0].extensions?.code).to.equal(
+          'FORBIDDEN'
+        )
         const badTokenScopesGoodEmail = await sendRequest(userDelete.token, {
           query:
             'mutation($user:UserDeleteInput!) { userDelete( userConfirmation: $user) } ',
           variables: { user: { email: userDelete.email } }
         })
         expect(badTokenScopesGoodEmail.body.errors).to.exist
+        expect(badTokenScopesGoodEmail.body.errors[0].extensions?.code).to.equal(
+          'FORBIDDEN'
+        )
 
         userDelete.token = `Bearer ${await createPersonalAccessToken(
           userDelete.id,
@@ -293,6 +438,9 @@ describe('GraphQL API Core @core-api', () => {
           variables: { user: { email: 'wrongEmail@email.com' } }
         })
         expect(goodTokenScopesBadEmail.body.errors).to.exist
+        expect(goodTokenScopesBadEmail.body.errors[0].extensions?.code).to.equal(
+          'BAD_REQUEST_ERROR'
+        )
         const goodTokenScopesGoodEmail = await sendRequest(userDelete.token, {
           query:
             'mutation($user:UserDeleteInput!) { userDelete( userConfirmation: $user) } ',
@@ -330,6 +478,7 @@ describe('GraphQL API Core @core-api', () => {
           query: ` { otherUser(id:"${userB.id}") { id name role } }`
         })
         expect(res.body.errors).to.exist
+        expect(res.body.errors[0].extensions?.code).to.equal('FORBIDDEN')
         expect(queriedUserB.body.data.otherUser.role).to.equal(Roles.Server.User)
       })
     })
@@ -338,7 +487,7 @@ describe('GraphQL API Core @core-api', () => {
       it('Only admins can delete user', async () => {
         const userDelete = {
           name: 'delete',
-          email: 'delete@speckle.systems',
+          email: `${cryptoRandomString({ length: 10 })}@example.org`,
           password: 'wowwowwowwowwow'
         }
         userDelete.id = await createUser(userDelete)
@@ -372,6 +521,7 @@ describe('GraphQL API Core @core-api', () => {
         const query = `mutation { adminDeleteUser( userConfirmation: { email: "${userA.email}" } ) } `
         const res = await sendRequest(userA.token, { query })
         expect(res.body.errors).to.exist
+        expect(res.body.errors[0].extensions?.code).to.equal('USER_INPUT_ERROR')
         expect(res.body.errors[0].message).to.equal(
           'Cannot remove the last admin role from the server'
         )
@@ -492,6 +642,9 @@ describe('GraphQL API Core @core-api', () => {
         })
         expect(res).to.be.json
         expect(res.body.errors).to.exist
+        expect(res.body.errors[0].extensions?.code).to.equal(
+          'STREAM_INVALID_ACCESS_ERROR'
+        )
       })
 
       it('Should fail to grant myself permissions', async () => {
@@ -500,6 +653,9 @@ describe('GraphQL API Core @core-api', () => {
         })
         expect(res).to.be.json
         expect(res.body.errors).to.exist
+        expect(res.body.errors[0].extensions?.code).to.equal(
+          'STREAM_INVALID_ACCESS_ERROR'
+        )
       })
 
       it('Should revoke permissions', async () => {
@@ -530,6 +686,7 @@ describe('GraphQL API Core @core-api', () => {
         })
         expect(resNotAuth).to.be.json
         expect(resNotAuth.body.errors).to.exist
+        expect(resNotAuth.body.errors[0].extensions?.code).to.equal('FORBIDDEN')
       })
 
       it('Should fail to edit/write on a public stream if no access is provided', async () => {
@@ -538,6 +695,7 @@ describe('GraphQL API Core @core-api', () => {
           query: `mutation { streamUpdate(stream: {id:"${ts4}" name: "HACK", description: "Hello World, Again!", isPublic:false } ) }`
         })
         expect(res.body.errors).to.exist
+        expect(res.body.errors[0].extensions?.code).to.equal('FORBIDDEN')
       })
 
       it('Should fail editing a private stream if no access has been granted', async () => {
@@ -546,6 +704,7 @@ describe('GraphQL API Core @core-api', () => {
         })
 
         expect(res.body.errors).to.exist
+        expect(res.body.errors[0].extensions?.code).to.equal('FORBIDDEN')
       })
 
       it('Should fail to delete a stream because of permissions', async () => {
@@ -603,7 +762,9 @@ describe('GraphQL API Core @core-api', () => {
           query: '{ adminStreams(limit: 200) { totalCount items { id name } } }'
         })
         expect(streamResults.body.errors).to.exist
-        expect(streamResults.body.errors[0].extensions.code).to.equal('BAD_USER_INPUT')
+        expect(streamResults.body.errors[0].extensions.code).to.equal(
+          'BAD_REQUEST_ERROR'
+        )
 
         streamResults = await sendRequest(userA.token, {
           query: '{ adminStreams(limit: 2) { totalCount items { id name } } }'
@@ -755,6 +916,7 @@ describe('GraphQL API Core @core-api', () => {
         })
         expect(res2).to.be.json
         expect(res2.body.errors).to.exist
+        expect(res2.body.errors[0].extensions?.code).to.equal('FORBIDDEN')
       })
 
       it('Should create a read receipt', async () => {
@@ -803,6 +965,7 @@ describe('GraphQL API Core @core-api', () => {
         })
         expect(res).to.be.json
         expect(res.body.errors).to.exist
+        expect(res.body.errors[0].extensions?.code).to.equal('FORBIDDEN')
 
         const res2 = await sendRequest(userA.token, {
           query:
@@ -934,6 +1097,7 @@ describe('GraphQL API Core @core-api', () => {
         })
         expect(res).to.be.json
         expect(res.body.errors).to.exist
+        expect(res.body.errors[0].extensions.code).to.equal('BRANCH_UPDATE_ERROR')
         expect(res.body.errors[0].message).to.equal('Branch not found')
 
         const res1 = await sendRequest(userC.token, {
@@ -943,6 +1107,7 @@ describe('GraphQL API Core @core-api', () => {
         })
         expect(res1).to.be.json
         expect(res1.body.errors).to.exist
+        expect(res1.body.errors[0].extensions.code).to.equal('BRANCH_UPDATE_ERROR')
         expect(res1.body.errors[0].message).to.equal(
           'Only the branch creator or stream owners are allowed to delete branches'
         )
@@ -1017,6 +1182,7 @@ describe('GraphQL API Core @core-api', () => {
         })
         expect(res2).to.be.json
         expect(res2.body.errors).to.exist
+        expect(res2.body.errors[0].extensions.code).to.equal('BRANCH_UPDATE_ERROR')
         expect(res2.body.errors[0].message).to.equal(
           'The branch ID and stream ID do not match, please check your inputs'
         )
@@ -1035,6 +1201,7 @@ describe('GraphQL API Core @core-api', () => {
         })
         expect(res).to.be.json
         expect(res.body.errors).to.exist
+        expect(res.body.errors[0].extensions.code).to.equal('BRANCH_UPDATE_ERROR')
         expect(res.body.errors[0].message).to.equal(
           'The branch ID and stream ID do not match, please check your inputs'
         )
@@ -1051,7 +1218,7 @@ describe('GraphQL API Core @core-api', () => {
         expect(res).to.be.json
         expect(res.body.errors).to.not.exist
         expect(res.body.data).to.have.property('user')
-        expect(res.body.data.user.name).to.equal('Miticå')
+        expect(res.body.data.user.name).to.equal('test user updated')
         expect(res.body.data.user.email).to.equal('d.1@speckle.systems')
         expect(res.body.data.user.role).to.equal(Roles.Server.Admin)
       })
@@ -1240,12 +1407,14 @@ describe('GraphQL API Core @core-api', () => {
         let res = await sendRequest(userB.token, { query: queryLim })
         expect(res).to.be.json
         expect(res.body.errors).to.exist
+        expect(res.body.errors[0].extensions.code).to.equal('BAD_REQUEST_ERROR')
 
         const queryPagination =
           'query { userSearch( query: "matteo", limit: 200 ) { cursor items { id name } } } '
         res = await sendRequest(userB.token, { query: queryPagination })
         expect(res).to.be.json
         expect(res.body.errors).to.exist
+        expect(res.body.errors[0].extensions.code).to.equal('BAD_REQUEST_ERROR')
       })
     })
 
@@ -1275,8 +1444,15 @@ describe('GraphQL API Core @core-api', () => {
 
         expect(stream.name).to.equal('TS1 (u A) Private UPDATED')
         expect(stream.collaborators).to.have.lengthOf(2)
-        expect(stream.collaborators[0].role).to.equal(Roles.Stream.Contributor)
-        expect(stream.collaborators[1].role).to.equal(Roles.Stream.Owner)
+
+        const d2User = stream.collaborators.find((c) => c.name === 'd2')
+        const testUserUpdated = stream.collaborators.find(
+          (c) => c.name === 'test user updated'
+        )
+        expect(d2User).to.be.ok
+        expect(testUserUpdated).to.be.ok
+        expect(d2User.role).to.equal(Roles.Stream.Contributor)
+        expect(testUserUpdated.role).to.equal(Roles.Stream.Owner)
       })
 
       it('Should retrieve a public stream even if not authenticated', async () => {
@@ -1682,6 +1858,7 @@ describe('GraphQL API Core @core-api', () => {
       const res = await sendRequest(userB.token, { query, variables })
       expect(res).to.be.json
       expect(res.body.errors).to.exist
+      expect(res.body.errors[0].extensions.code).to.equal('FORBIDDEN')
     })
   })
 
@@ -1749,6 +1926,7 @@ describe('GraphQL API Core @core-api', () => {
       // WHY NOT 401 ???
       // expect( res ).to.have.status( 401 )
       expect(res.body.errors).to.exist
+      expect(res.body.errors[0].extensions.code).to.equal('FORBIDDEN')
       expect(res.body.errors[0].message).to.equal(
         'You do not have the required server role'
       )
@@ -1772,6 +1950,7 @@ describe('GraphQL API Core @core-api', () => {
         query: `query { stream(id:"${streamId}") { id name } }`
       })
       expect(res.body.errors).to.exist
+      expect(res.body.errors[0].extensions.code).to.equal('FORBIDDEN')
       expect(res.body.errors[0].message).to.equal(
         'You do not have the required server role'
       )
@@ -1781,6 +1960,7 @@ describe('GraphQL API Core @core-api', () => {
           '{ user { streams( limit: 30 ) { totalCount cursor items { id name } } } }'
       })
       expect(res.body.errors).to.exist
+      expect(res.body.errors[0].extensions.code).to.equal('FORBIDDEN')
       expect(res.body.errors[0].message).to.equal(
         'You do not have the required server role'
       )
@@ -1789,6 +1969,7 @@ describe('GraphQL API Core @core-api', () => {
         query: `mutation { streamDelete( id:"${streamId}")}`
       })
       expect(res.body.errors).to.exist
+      expect(res.body.errors[0].extensions.code).to.equal('FORBIDDEN')
       expect(res.body.errors[0].message).to.equal(
         'You do not have the required server role'
       )
@@ -1797,6 +1978,7 @@ describe('GraphQL API Core @core-api', () => {
         query: `mutation { streamUpdate(stream: {id:"${streamId}" name: "HACK", description: "Hello World, Again!", isPublic:false } ) }`
       })
       expect(res.body.errors).to.exist
+      expect(res.body.errors[0].extensions.code).to.equal('FORBIDDEN')
       expect(res.body.errors[0].message).to.equal(
         'You do not have the required server role'
       )
@@ -1817,6 +1999,7 @@ describe('GraphQL API Core @core-api', () => {
         }
       })
       expect(res.body.errors).to.exist
+      expect(res.body.errors[0].extensions.code).to.equal('FORBIDDEN')
       expect(res.body.errors[0].message).to.equal(
         'You do not have the required server role'
       )
@@ -1832,6 +2015,7 @@ describe('GraphQL API Core @core-api', () => {
         }
       })
       expect(res.body.errors).to.exist
+      expect(res.body.errors[0].extensions.code).to.equal('FORBIDDEN')
       expect(res.body.errors[0].message).to.equal(
         'You do not have the required server role'
       )
@@ -1853,6 +2037,7 @@ describe('GraphQL API Core @core-api', () => {
       const res = await sendRequest(archivedUser.token, { query, variables })
 
       expect(res.body.errors).to.exist
+      expect(res.body.errors[0].extensions.code).to.equal('FORBIDDEN')
       expect(res.body.errors[0].message).to.equal(
         'You do not have the required server role'
       )
@@ -1865,6 +2050,7 @@ describe('GraphQL API Core @core-api', () => {
         variables: { input: { email: 'cabbages@speckle.systems', message: 'wow!' } }
       })
       expect(res.body.errors).to.exist
+      expect(res.body.errors[0].extensions.code).to.equal('FORBIDDEN')
       expect(res.body.errors[0].message).to.equal(
         'You do not have the required server role'
       )
@@ -1879,6 +2065,7 @@ describe('GraphQL API Core @core-api', () => {
       })
 
       expect(res.body.errors).to.exist
+      expect(res.body.errors[0].extensions.code).to.equal('FORBIDDEN')
       expect(res.body.errors[0].message).to.equal(
         'You do not have the required server role'
       )
@@ -1897,6 +2084,7 @@ describe('GraphQL API Core @core-api', () => {
         variables: { myCommit: commit }
       })
       expect(res.body.errors).to.exist
+      expect(res.body.errors[0].extensions.code).to.equal('FORBIDDEN')
       expect(res.body.errors[0].message).to.equal(
         'You do not have the required server role'
       )

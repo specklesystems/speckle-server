@@ -137,7 +137,7 @@ export const localAuthRestApi = (params: { express: Express }) => {
 
   const authCheck = async (params: { token: string }) => {
     const query =
-      'query LocalAuthRestApiAuthCheck { activeUser { id email name role } }'
+      'query LocalAuthRestApiAuthCheck { activeUser { id email name role emails { id email verified } } }'
     const res = await request(express)
       .post('/graphql')
       .set('Authorization', `Bearer ${params.token}`)
@@ -148,7 +148,15 @@ export const localAuthRestApi = (params: { express: Express }) => {
     }
 
     const body = res.body as {
-      data: { activeUser?: { id: string; name: string; email: string; role: string } }
+      data: {
+        activeUser?: {
+          id: string
+          name: string
+          email: string
+          role: string
+          emails: Array<{ id: string; email: string; verified: boolean }>
+        }
+      }
       errors?: { message: string; extensions: Record<string, string> }[]
     }
     if (!body.data.activeUser) {

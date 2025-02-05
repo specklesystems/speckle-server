@@ -1,25 +1,22 @@
 <template>
   <LayoutDialog v-model:open="isOpen" title="Delete account" max-width="md">
-    <form class="flex flex-col gap-2" @submit="onDelete">
-      <div
-        class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 py-3 px-3 rounded border bg-foundation-2 border-outline-5 text-body-xs text-foreground py-4 px-6 mb-2"
-      >
-        <div>
-          <ExclamationTriangleIcon class="mt-0.5 h-6 w-6 text-danger" />
-        </div>
-        <div>
-          <p class="text-body-xs font-medium mb-1">
-            This action cannot be undone. We will delete all projects where you are the
-            sole owner, and any associated data.
-          </p>
-          <p class="text-body-xs">
-            To delete your account, type in your
-            <HelpText :text="emailPlaceholder">e-mail address</HelpText>
-            and press the button.
-          </p>
-        </div>
-      </div>
-      <div class="flex gap-2">
+    <form class="flex flex-col gap-y-3" @submit="onDelete">
+      <p class="text-body-xs">
+        <span class="font-medium">
+          Are you sure you want to permanently delete your account? This action cannot
+          be undone.
+        </span>
+        We will delete all projects where you are the sole owner, and any associated
+        data.
+      </p>
+
+      <p class="text-body-xs">
+        To confirm, type your
+        <HelpText :text="emailPlaceholder">e-mail address</HelpText>
+        below.
+      </p>
+
+      <div class="flex gap-2 mt-3 mb-6">
         <FormTextInput
           name="deleteEmail"
           label="Your e-mail address"
@@ -43,7 +40,6 @@
   </LayoutDialog>
 </template>
 <script setup lang="ts">
-import { ExclamationTriangleIcon } from '@heroicons/vue/24/outline'
 import { useForm } from 'vee-validate'
 import type { GenericValidateFunction } from 'vee-validate'
 import { graphql } from '~~/lib/common/generated/gql'

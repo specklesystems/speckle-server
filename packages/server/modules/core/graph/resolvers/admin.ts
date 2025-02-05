@@ -1,12 +1,34 @@
+import { db } from '@/db/knex'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { mapServerRoleToValue } from '@/modules/core/helpers/graphTypes'
 import { toProjectIdWhitelist } from '@/modules/core/helpers/token'
+import { legacyGetStreamsFactory } from '@/modules/core/repositories/streams'
+import { countUsersFactory, listUsersFactory } from '@/modules/core/repositories/users'
 import {
-  adminInviteList,
-  adminProjectList,
-  adminUserList
+  adminInviteListFactory,
+  adminProjectListFactory,
+  adminUserListFactory
 } from '@/modules/core/services/admin'
-import { getTotalStreamCount, getTotalUserCount } from '@/modules/stats/services'
+import {
+  countServerInvitesFactory,
+  queryServerInvitesFactory
+} from '@/modules/serverinvites/repositories/serverInvites'
+import {
+  getTotalStreamCountFactory,
+  getTotalUserCountFactory
+} from '@/modules/stats/repositories'
+
+const adminUserList = adminUserListFactory({
+  listUsers: listUsersFactory({ db }),
+  countUsers: countUsersFactory({ db })
+})
+const adminInviteList = adminInviteListFactory({
+  countServerInvites: countServerInvitesFactory({ db }),
+  queryServerInvites: queryServerInvitesFactory({ db })
+})
+const adminProjectList = adminProjectListFactory({
+  getStreams: legacyGetStreamsFactory({ db })
+})
 
 export = {
   Query: {
@@ -38,11 +60,11 @@ export = {
   },
   ServerStatistics: {
     async totalProjectCount() {
-      return await getTotalStreamCount()
+      return await getTotalStreamCountFactory({ db })()
     },
 
     async totalUserCount() {
-      return await getTotalUserCount()
+      return await getTotalUserCountFactory({ db })()
     },
     async totalPendingInvites() {
       return 0

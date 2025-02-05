@@ -1,14 +1,15 @@
 import {
+  ActivitySummary,
+  StreamActivitySummary
+} from '@/modules/activitystream/domain/types'
+import {
   ActionTypes,
   ResourceTypes,
   StreamScopeActivity,
   AllActivityTypes
 } from '@/modules/activitystream/helpers/types'
-import {
-  ActivitySummary,
-  StreamActivitySummary
-} from '@/modules/activitystream/services/summary'
 import { ServerInfo, UserRecord } from '@/modules/core/helpers/types'
+import { renderEmail } from '@/modules/emails/services/emailRendering'
 import {
   digestMostActiveStream,
   mostActiveComment,
@@ -19,10 +20,14 @@ import {
   digestActiveStreams,
   closingOverview,
   Digest,
-  prepareSummaryEmail
+  prepareSummaryEmailFactory
 } from '@/modules/notifications/services/handlers/activityDigest'
 import { expect } from 'chai'
 import { range } from 'lodash'
+
+const prepareSummaryEmail = prepareSummaryEmailFactory({
+  renderEmail
+})
 
 describe('Activity digest notifications @notifications', () => {
   const user: UserRecord = {
@@ -50,7 +55,11 @@ describe('Activity digest notifications @notifications', () => {
     completed: false,
     inviteOnly: true,
     version: 'testing 1 2 3',
-    guestModeEnabled: false
+    guestModeEnabled: false,
+    configuration: {
+      objectMultipartUploadSizeLimitBytes: 1000000,
+      objectSizeLimitBytes: 1000000
+    }
   }
 
   const topic: DigestTopic = {
@@ -112,7 +121,8 @@ describe('Activity digest notifications @notifications', () => {
         updatedAt: new Date(),
         allowPublicComments: true,
         isDiscoverable: true,
-        workspaceId: null
+        workspaceId: null,
+        regionKey: null
       },
       activity: activities ?? [createActivity()]
     })

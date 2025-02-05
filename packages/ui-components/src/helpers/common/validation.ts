@@ -3,7 +3,7 @@ import type { GenericValidateFunction } from 'vee-validate'
 import { isNullOrUndefined } from '@speckle/shared'
 
 export const VALID_HTTP_URL = /^https?:\/\//
-export const VALID_EMAIL = /^[\w-_.+]+@[\w-_.+]+$/
+export const VALID_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 /**
  * Note about new validators:
@@ -16,6 +16,14 @@ export const VALID_EMAIL = /^[\w-_.+]+@[\w-_.+]+$/
  */
 export const isEmail: GenericValidateFunction<string> = (val) =>
   (val || '').match(VALID_EMAIL) ? true : 'Value should be a valid e-mail address'
+
+/**
+ * Used for placeholders inputs where the user can leave the field empty
+ */
+export const isEmailOrEmpty: GenericValidateFunction<string> = (val) =>
+  (val || '').match(VALID_EMAIL) || !val
+    ? true
+    : 'Value should be a valid e-mail address'
 
 export const isOneOrMultipleEmails: GenericValidateFunction<string> = (val) => {
   const emails = (val || '').split(',').map((i) => i.trim())
@@ -86,6 +94,13 @@ export const isUrl: GenericValidateFunction<string> = (value) => {
 }
 
 export const isItemSelected: GenericValidateFunction<unknown[]> = (val) => {
+  if (Array.isArray(val) && val.length > 0) {
+    return true
+  }
+  return 'Value should have at least a single item selected'
+}
+
+export const isMultiItemSelected = <T>(val: T[] | unknown): true | string => {
   if (Array.isArray(val) && val.length > 0) {
     return true
   }

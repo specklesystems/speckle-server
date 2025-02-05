@@ -10,40 +10,41 @@
     :disabled="disabled"
     :label-id="labelId"
     :button-id="buttonId"
-    hide-checkmarks
+    :disabled-item-predicate="disabledItemPredicate"
+    :disabled-item-tooltip="disabledItemTooltip"
     by="id"
-    class="min-w-[85px]"
-    mount-menu-on-body
+    class="w-28 sm:w-60"
+    :mount-menu-on-body="mountMenuOnBody"
+    size="sm"
   >
     <template #something-selected="{ value }">
-      <div class="text-normal text-right">
+      <div class="text-right text-foreground text-body-2xs">
         {{ isArray(value) ? value[0].title : value.title }}
       </div>
     </template>
-    <template #option="{ item, selected }">
-      <div class="flex flex-col">
-        <div
-          :class="[
-            'text-normal',
-            selected ? 'text-primary' : '',
-            item.id === 'delete' ? 'text-danger' : ''
-          ]"
-        >
+    <template #option="{ item }">
+      <div class="flex flex-col space-y-0.5">
+        <span class="truncate font-medium">
           {{ item.title }}
-        </div>
+        </span>
+        <span v-if="item.description" class="text-body-2xs text-foreground-2">
+          {{ item.description }}
+        </span>
       </div>
     </template>
   </FormSelectBase>
 </template>
 <script setup lang="ts">
-import { roleSelectItems } from '~~/lib/projects/helpers/components'
+import {
+  roleSelectItems,
+  type SelectableStreamRoleSelectItem
+} from '~~/lib/projects/helpers/components'
 import { Roles } from '@speckle/shared'
 import type { StreamRoles } from '@speckle/shared'
 import { reduce, isArray } from 'lodash-es'
 
 const emit = defineEmits<{
   (e: 'update:modelValue', v: StreamRoles): void
-  (e: 'delete'): void
 }>()
 
 const props = defineProps<{
@@ -51,8 +52,10 @@ const props = defineProps<{
   showLabel?: boolean
   name?: string
   disabled?: boolean
-  hideRemove?: boolean
   hideOwner?: boolean
+  disabledRoles?: StreamRoles[]
+  disabledItemTooltip?: string
+  mountMenuOnBody?: boolean
 }>()
 
 const labelId = useId()
@@ -61,11 +64,7 @@ const items = ref(
   reduce(
     roleSelectItems,
     (results, item) => {
-      if (item.id === 'delete') {
-        if (!props.hideRemove) {
-          results[item.id] = item
-        }
-      } else if (item.id === Roles.Stream.Owner) {
+      if (item.id === Roles.Stream.Owner) {
         if (!props.hideOwner) {
           results[item.id] = item
         }
@@ -87,8 +86,12 @@ const selectedValue = computed({
 const selectValue = computed({
   get: () => items.value[selectedValue.value],
   set: (newVal) => {
-    if (newVal.id === 'delete') return emit('delete')
     selectedValue.value = newVal.id
   }
 })
+
+const disabledItemPredicate = (item: SelectableStreamRoleSelectItem) => {
+  if (!props.disabledRoles?.length) return false
+  return (props.disabledRoles as string[]).includes(item.id)
+}
 </script>

@@ -8,55 +8,63 @@ import {
   AllActivityTypes,
   StreamScopeActivity
 } from '@/modules/activitystream/helpers/types'
-import { getServerInfo } from '@/modules/core/services/generic'
 import { ServerInfo, UserRecord } from '@/modules/core/helpers/types'
-import { getUserNotificationPreferences } from '@/modules/notifications/services/notificationPreferences'
 import { sendEmail, SendEmailParams } from '@/modules/emails/services/sending'
 import { groupBy } from 'lodash'
 import { packageRoot } from '@/bootstrap'
 import path from 'path'
 import * as ejs from 'ejs'
+import { renderEmail } from '@/modules/emails/services/emailRendering'
+import { getUserNotificationPreferencesFactory } from '@/modules/notifications/services/notificationPreferences'
+import { getSavedUserNotificationPreferencesFactory } from '@/modules/notifications/repositories'
+import { db } from '@/db/knex'
+import { GetUserNotificationPreferences } from '@/modules/notifications/domain/operations'
+import { CreateActivitySummary } from '@/modules/activitystream/domain/operations'
 import {
   ActivitySummary,
-  createActivitySummary,
   StreamActivitySummary
-} from '@/modules/activitystream/services/summary'
-import {
-  EmailBody,
-  EmailInput,
-  renderEmail
-} from '@/modules/emails/services/emailRendering'
+} from '@/modules/activitystream/domain/types'
+import { createActivitySummaryFactory } from '@/modules/activitystream/services/summary'
+import { getActivityFactory } from '@/modules/activitystream/repositories'
+import { getStreamFactory } from '@/modules/core/repositories/streams'
+import { getUserFactory } from '@/modules/core/repositories/users'
+import { GetServerInfo } from '@/modules/core/domain/server/operations'
+import { getServerInfoFactory } from '@/modules/core/repositories/server'
+import { EmailBody, EmailInput } from '@/modules/emails/domain/operations'
 
-const handler: NotificationHandler<ActivityDigestMessage> = async (msg) => {
-  const {
-    targetUserId,
-    data: { streamIds, start, end }
-  } = msg
-  await digestNotificationEmailHandler(targetUserId, streamIds, start, end, sendEmail)
-}
-
-export default handler
-
-const digestNotificationEmailHandler = async (
-  userId: string,
-  streamIds: string[],
-  start: Date,
-  end: Date,
-  emailSender: (params: SendEmailParams) => Promise<boolean>
-): Promise<boolean | null> => {
-  const wantDigests =
-    (await (await getUserNotificationPreferences(userId)).activityDigest?.email) !==
-    false
-  const activitySummary = await createActivitySummary(userId, streamIds, start, end)
-  // if there are no activities stop early
-  if (!wantDigests || !activitySummary || !activitySummary.streamActivities.length)
-    return null
-  const serverInfo = await getServerInfo()
-  const digest = digestSummaryData(activitySummary, serverInfo)
-  if (!digest) return null
-  const emailInput = await prepareSummaryEmail(digest, serverInfo)
-  return await emailSender(emailInput)
-}
+const digestNotificationEmailHandlerFactory =
+  (
+    deps: {
+      getUserNotificationPreferences: GetUserNotificationPreferences
+      createActivitySummary: CreateActivitySummary
+      getServerInfo: GetServerInfo
+    } & PrepareSummaryEmailDeps
+  ) =>
+  async (
+    userId: string,
+    streamIds: string[],
+    start: Date,
+    end: Date,
+    emailSender: (params: SendEmailParams) => Promise<boolean>
+  ): Promise<boolean | null> => {
+    const wantDigests =
+      (await deps.getUserNotificationPreferences(userId)).activityDigest?.email !==
+      false
+    const activitySummary = await deps.createActivitySummary({
+      userId,
+      streamIds,
+      start,
+      end
+    })
+    // if there are no activities stop early
+    if (!wantDigests || !activitySummary || !activitySummary.streamActivities.length)
+      return null
+    const serverInfo = await deps.getServerInfo()
+    const digest = digestSummaryData(activitySummary, serverInfo)
+    if (!digest) return null
+    const emailInput = await prepareSummaryEmailFactory(deps)(digest, serverInfo)
+    return await emailSender(emailInput)
+  }
 
 /**
  * Organize the activity summary into topics.
@@ -196,7 +204,7 @@ export const mostActiveComment: TopicDigesterFunction = (
 
   const heading = 'Most active comment'
 
-  const fact = `The most active comment was on ${streamActivity.stream.name} stream. 
+  const fact = `The most active comment was on ${streamActivity.stream.name} stream.
   It received ${replies.length} replies.`
 
   const text = `${heading}\n\n${fact}`
@@ -361,23 +369,26 @@ const flattenActivities = (
   return allActivity
 }
 
-export const prepareSummaryEmail = async (
-  digest: Digest,
-  serverInfo: ServerInfo
-): Promise<EmailInput> => {
-  const body = await renderEmailBody(digest, serverInfo)
-  const cta = {
-    title: 'Check activities',
-    url: serverInfo.canonicalUrl
-  }
-  const subject = 'Speckle weekly digest'
-  const { text, html } = await renderEmail(
-    { mjml: { bodyStart: body.mjml }, text: { bodyStart: body.text }, cta },
-    serverInfo,
-    digest.user
-  )
-  return { to: digest.user.email, subject, text, html }
+type PrepareSummaryEmailDeps = {
+  renderEmail: typeof renderEmail
 }
+
+export const prepareSummaryEmailFactory =
+  (deps: PrepareSummaryEmailDeps) =>
+  async (digest: Digest, serverInfo: ServerInfo): Promise<EmailInput> => {
+    const body = await renderEmailBody(digest, serverInfo)
+    const cta = {
+      title: 'Check activities',
+      url: serverInfo.canonicalUrl
+    }
+    const subject = 'Speckle weekly digest'
+    const { text, html } = await deps.renderEmail(
+      { mjml: { bodyStart: body.mjml }, text: { bodyStart: body.text }, cta },
+      serverInfo,
+      digest.user
+    )
+    return { to: digest.user.email, subject, text, html }
+  }
 
 export const renderEmailBody = async (
   digest: Digest,
@@ -416,3 +427,29 @@ Here's a summary of what happened in the past week
   mjml += mjmlTopics.join('\n')
   return { text, mjml }
 }
+
+const digestNotificationEmailHandler = digestNotificationEmailHandlerFactory({
+  getUserNotificationPreferences: getUserNotificationPreferencesFactory({
+    getSavedUserNotificationPreferences: getSavedUserNotificationPreferencesFactory({
+      db
+    })
+  }),
+  createActivitySummary: createActivitySummaryFactory({
+    getStream: getStreamFactory({ db }),
+    getActivity: getActivityFactory({ db }),
+    getUser: getUserFactory({ db })
+  }),
+  getServerInfo: getServerInfoFactory({ db }),
+  renderEmail
+})
+
+const handler: NotificationHandler<ActivityDigestMessage> = async (msg) => {
+  const {
+    targetUserId,
+    data: { streamIds, start, end }
+  } = msg
+
+  await digestNotificationEmailHandler(targetUserId, streamIds, start, end, sendEmail)
+}
+
+export default handler

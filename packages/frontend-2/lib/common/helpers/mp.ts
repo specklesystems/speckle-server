@@ -5,7 +5,17 @@ import type { Merge } from 'type-fest'
 export type MixpanelClient = Merge<
   Pick<
     OverridedMixpanel,
-    'track' | 'init' | 'reset' | 'register' | 'identify' | 'people' | 'add_group'
+    | 'track'
+    | 'init'
+    | 'reset'
+    | 'register'
+    | 'identify'
+    | 'people'
+    | 'add_group'
+    | 'get_group'
+    | 'alias'
+    | 'start_session_recording'
+    | 'stop_session_recording'
   >,
   {
     people: Pick<OverridedMixpanel['people'], 'set' | 'set_once'>
@@ -25,5 +35,9 @@ export const fakeMixpanelClient = (): MixpanelClient => ({
     set: noop,
     set_once: noop
   },
-  add_group: noop
+  add_group: noop,
+  get_group: noop as MixpanelClient['get_group'],
+  alias: noop,
+  start_session_recording: noop,
+  stop_session_recording: noop
 })

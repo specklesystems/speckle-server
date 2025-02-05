@@ -1,4 +1,3 @@
-import { getStream } from '@/modules/core/repositories/streams'
 import {
   ProjectInviteResourceType,
   ServerInviteResourceType
@@ -11,8 +10,9 @@ import {
   isServerResourceTarget
 } from '@/modules/serverinvites/helpers/core'
 import { authorizeResolver } from '@/modules/shared'
-import { Roles, ServerRoles } from '@speckle/shared'
+import { Roles } from '@speckle/shared'
 import { flatten } from 'lodash'
+import { GetStream } from '@/modules/core/domain/streams/operations'
 
 const collectAndValidateServerTargetFactory =
   (): CollectAndValidateResourceTargets => (params) => {
@@ -28,50 +28,38 @@ const collectAndValidateServerTargetFactory =
       return []
     }
 
-    const secondaryRole =
-      primaryResourceTarget.secondaryResourceRoles?.[ServerInviteResourceType]
-
     // Validate primary resource target
     if (primaryServerResourceTarget) {
-      const { role } = primaryServerResourceTarget
-      const { guestModeEnabled } = serverInfo
-
       if (targetUser) {
         throw new InviteCreateValidationError(
           'This email is already associated with an account on this server'
         )
       }
+    }
 
-      if (!Object.values(Roles.Server).includes(role)) {
-        throw new InviteCreateValidationError('Invalid server role')
-      }
+    const targetRole =
+      primaryServerResourceTarget?.role ||
+      primaryResourceTarget.secondaryResourceRoles?.[ServerInviteResourceType] ||
+      Roles.Server.User
 
-      if (inviter.role !== Roles.Server.Admin && role === Roles.Server.Admin) {
-        throw new InviteCreateValidationError(
-          'Only server admins can assign the admin server role'
-        )
-      }
-
-      if (role === Roles.Server.Guest && !guestModeEnabled) {
-        throw new InviteCreateValidationError(
-          'Guest mode is not enabled on this server'
-        )
-      }
-    } else {
-      // Validate secondary role, if any
-      if (
-        secondaryRole &&
-        !Object.values(Roles.Server).includes(secondaryRole as ServerRoles)
-      ) {
-        throw new InviteCreateValidationError('Invalid server role')
-      }
+    // Role based validation
+    if (!Object.values(Roles.Server).includes(targetRole)) {
+      throw new InviteCreateValidationError('Invalid server role')
+    }
+    if (inviter.role !== Roles.Server.Admin && targetRole === Roles.Server.Admin) {
+      throw new InviteCreateValidationError(
+        'Only server admins can assign the admin server role'
+      )
+    }
+    if (targetRole === Roles.Server.Guest && !serverInfo.guestModeEnabled) {
+      throw new InviteCreateValidationError('Guest mode is not enabled on this server')
     }
 
     // Build server resource target
     const finalTarget: ServerInviteResourceTarget & { primary: boolean } = {
       resourceId: '',
       resourceType: ServerInviteResourceType,
-      role: primaryServerResourceTarget?.role || secondaryRole || Roles.Server.User,
+      role: targetRole,
       primary: !!primaryServerResourceTarget
     }
 
@@ -79,7 +67,7 @@ const collectAndValidateServerTargetFactory =
   }
 
 type CollectAndValidateProjectTargetFactoryDeps = {
-  getStream: typeof getStream
+  getStream: GetStream
 }
 
 const collectAndValidateProjectTargetFactory =
@@ -94,18 +82,24 @@ const collectAndValidateProjectTargetFactory =
       ? primaryResourceTarget
       : null
 
+    const targetRole =
+      primaryProjectResourceTarget?.role ||
+      primaryResourceTarget.secondaryResourceRoles?.[ProjectInviteResourceType] ||
+      Roles.Stream.Contributor
+
+    if (!Object.values(Roles.Stream).includes(targetRole)) {
+      throw new InviteCreateValidationError('Unexpected project invite role')
+    }
+    if (targetUser?.role === Roles.Server.Guest && targetRole === Roles.Stream.Owner) {
+      throw new InviteCreateValidationError('Guest users cannot be owners of projects')
+    }
+
     if (!primaryProjectResourceTarget) {
-      // Validate secondary resource role, in case its relevant down the line
-      const secondaryRole =
-        primaryResourceTarget.secondaryResourceRoles?.[ProjectInviteResourceType]
-      if (secondaryRole && !Object.values(Roles.Stream).includes(secondaryRole)) {
-        throw new InviteCreateValidationError('Unexpected project invite role')
-      }
       // Not primarily a project target, skip adding resource target
       return []
     }
 
-    const { role, resourceId } = primaryProjectResourceTarget
+    const { resourceId } = primaryProjectResourceTarget
 
     // Validate that inviter has access to this project
     try {
@@ -117,7 +111,7 @@ const collectAndValidateProjectTargetFactory =
       )
     } catch (e) {
       throw new InviteCreateValidationError(
-        "Inviter doesn't have proper access to the resource",
+        "Inviter doesn't have owner access to the project",
         { cause: e as Error }
       )
     }
@@ -135,12 +129,6 @@ const collectAndValidateProjectTargetFactory =
       throw new InviteCreateValidationError(
         'The target user is already a collaborator of the specified project'
       )
-    }
-    if (!Object.values(Roles.Stream).includes(role)) {
-      throw new InviteCreateValidationError('Unexpected project invite role')
-    }
-    if (targetUser?.role === Roles.Server.Guest && role === Roles.Stream.Owner) {
-      throw new InviteCreateValidationError('Guest users cannot be owners of projects')
     }
 
     return [{ ...primaryProjectResourceTarget, primary: true }]

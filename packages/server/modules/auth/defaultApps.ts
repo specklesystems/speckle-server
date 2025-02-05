@@ -4,6 +4,8 @@ import {
   getServerOrigin,
   getFeatureFlags
 } from '@/modules/shared/helpers/envHelper'
+import { ServerScope } from '@speckle/shared'
+import { Merge } from 'type-fest'
 
 export enum DefaultAppIds {
   Web = 'spklwebapp',
@@ -150,3 +152,10 @@ export function getDefaultApps() {
 export function getDefaultApp({ id }: { id: string }) {
   return defaultApps.find((app) => app.id === id) || null
 }
+
+export type DefaultApp = (typeof defaultApps)[number]
+
+/**
+ * Some workflows need 'all' unwrapped into the actual scopes
+ */
+export type DefaultAppWithUnwrappedScopes = Merge<DefaultApp, { scopes: ServerScope[] }>

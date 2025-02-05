@@ -1,10 +1,11 @@
 'use strict'
 
 const crypto = require('crypto')
-const knex = require('./knex')
+const getDbClients = require('./knex')
 const fs = require('fs')
 const metrics = require('./observability/prometheusMetrics')
 const { logger } = require('./observability/logging')
+const { wait } = require('@speckle/shared')
 
 let shouldExit = false
 const HEALTHCHECK_FILE_PATH = '/tmp/last_successful_query'
@@ -12,10 +13,10 @@ const HEALTHCHECK_FILE_PATH = '/tmp/last_successful_query'
 const { makeNetworkRequest } = require('./webhookCaller')
 const WebhookError = require('./errors')
 
-async function startTask() {
-  const { rows } = await knex.raw(`
+const startTask = async (db) => {
+  const { rows } = await db.raw(`
     UPDATE webhooks_events
-    SET 
+    SET
       "status" = 1,
       "lastUpdate" = NOW()
     FROM (
@@ -30,12 +31,12 @@ async function startTask() {
   return rows[0]
 }
 
-async function doTask(task) {
+const doTask = async (db, task) => {
   let boundLogger = logger.child({ taskId: task.id })
   try {
-    const { rows } = await knex.raw(
+    const { rows } = await db.raw(
       `
-      SELECT 
+      SELECT
         ev.payload as evt,
         cnf.id as wh_id, cnf.url as wh_url, cnf.secret as wh_secret, cnf.enabled as wh_enabled
       FROM webhooks_events ev
@@ -84,7 +85,7 @@ async function doTask(task) {
       )
     }
 
-    await knex.raw(
+    await db.raw(
       `
       UPDATE webhooks_events
       SET
@@ -103,7 +104,7 @@ async function doTask(task) {
       default:
         boundLogger.error(err, 'Failed to trigger webhook event.')
     }
-    await knex.raw(
+    await db.raw(
       `
       UPDATE webhooks_events
       SET
@@ -118,33 +119,37 @@ async function doTask(task) {
   }
 }
 
-async function tick() {
-  if (shouldExit) {
-    process.exit(0)
-  }
-
-  try {
-    const task = await startTask()
-
-    fs.writeFile(HEALTHCHECK_FILE_PATH, '' + Date.now(), () => {})
-
-    if (!task) {
-      setTimeout(tick, 1000)
-      return
+const doStuff = async (dbClients) => {
+  while (!shouldExit) {
+    const tasks = (
+      await Promise.all(
+        dbClients.map(async (db) => {
+          fs.writeFile(HEALTHCHECK_FILE_PATH, '' + Date.now(), () => {})
+          const task = await startTask(db)
+          if (!task) return
+          return [db, task]
+        })
+      )
+    ).filter((t) => t)
+    if (!tasks.length) {
+      await wait(1000)
+      continue
     }
 
-    const metricDurationEnd = metrics.metricDuration.startTimer()
+    await Promise.all(
+      tasks.map(async ([db, task]) => {
+        try {
+          const metricDurationEnd = metrics.metricDuration.startTimer()
 
-    await doTask(task)
+          await doTask(db, task)
 
-    metricDurationEnd({ op: 'webhook' })
-
-    // Check for another task very soon
-    setTimeout(tick, 10)
-  } catch (err) {
-    metrics.metricOperationErrors.labels('main_loop').inc()
-    logger.error(err, 'Error executing task')
-    setTimeout(tick, 5000)
+          metricDurationEnd({ op: 'webhook' })
+        } catch (err) {
+          metrics.metricOperationErrors.labels('main_loop').inc()
+          logger.error(err, 'Error executing task')
+        }
+      })
+    )
   }
 }
 
@@ -155,9 +160,12 @@ async function main() {
     shouldExit = true
     logger.info('Shutting down...')
   })
-  metrics.initPrometheusMetrics()
+  await metrics.initPrometheusMetrics()
 
-  tick()
+  const dbClients = Object.values(await getDbClients()).map((client) => client.public)
+
+  await doStuff(dbClients)
+  process.exit(0)
 }
 
 main()

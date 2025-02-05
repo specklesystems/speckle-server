@@ -1,92 +1,127 @@
-import { settingsQueries } from '~/lib/common/helpers/route'
-import type { SettingsMenuItems } from '~/lib/settings/helpers/types'
-import SettingsUserProfile from '~/components/settings/user/Profile.vue'
-import SettingsUserNotifications from '~/components/settings/user/Notifications.vue'
-import SettingsUserDeveloper from '~/components/settings/user/Developer.vue'
-import SettingsUserEmails from '~/components/settings/user/Emails.vue'
-import SettingsServerGeneral from '~/components/settings/server/General.vue'
-import SettingsServerProjects from '~/components/settings/server/Projects.vue'
-import SettingsServerActiveUsers from '~/components/settings/server/ActiveUsers.vue'
-import SettingsServerPendingInvitations from '~/components/settings/server/PendingInvitations.vue'
-import SettingsWorkspaceGeneral from '~/components/settings/workspaces/General.vue'
-import SettingsWorkspacesMembers from '~/components/settings/workspaces/Members.vue'
-import SettingsWorkspacesProjects from '~/components/settings/workspaces/Projects.vue'
+import type {
+  GenericSettingsMenuItem,
+  WorkspaceSettingsMenuItem
+} from '~/lib/settings/helpers/types'
 import { useIsMultipleEmailsEnabled } from '~/composables/globals'
+import { Roles } from '@speckle/shared'
+import { useIsMultiregionEnabled } from '~/lib/multiregion/composables/main'
+import { graphql } from '~/lib/common/generated/gql'
+import {
+  settingsWorkspaceRoutes,
+  settingsUserRoutes,
+  settingsServerRoutes
+} from '~/lib/common/helpers/route'
+
+graphql(`
+  fragment SettingsMenu_Workspace on Workspace {
+    id
+    sso {
+      provider {
+        id
+      }
+      session {
+        validUntil
+      }
+    }
+  }
+`)
 
 export const useSettingsMenu = () => {
-  const workspaceMenuItems = shallowRef<SettingsMenuItems>({
-    general: {
+  const isMultipleEmailsEnabled = useIsMultipleEmailsEnabled().value
+  const isMultiRegionEnabled = useIsMultiregionEnabled()
+
+  const workspaceMenuItems = shallowRef<WorkspaceSettingsMenuItem[]>([
+    {
       title: 'General',
-      component: SettingsWorkspaceGeneral
+      name: settingsWorkspaceRoutes.general.name,
+      route: (slug: string) => settingsWorkspaceRoutes.general.route(slug),
+      permission: [Roles.Workspace.Admin, Roles.Workspace.Member, Roles.Workspace.Guest]
     },
-    members: {
+    {
       title: 'Members',
-      component: SettingsWorkspacesMembers
+      name: settingsWorkspaceRoutes.members.name,
+      route: (slug: string) => settingsWorkspaceRoutes.members.route(slug),
+      permission: [Roles.Workspace.Admin, Roles.Workspace.Member]
     },
-    projects: {
+    {
       title: 'Projects',
-      component: SettingsWorkspacesProjects
+      name: settingsWorkspaceRoutes.projects.name,
+      route: (slug: string) => settingsWorkspaceRoutes.projects.route(slug),
+      permission: [Roles.Workspace.Admin, Roles.Workspace.Member]
     },
-    billing: {
-      title: 'Billing',
-      disabled: true,
-      tooltipText: 'Manage billing for your workspace'
-    },
-    security: {
+    {
       title: 'Security',
-      disabled: true,
-      tooltipText: 'SSO, manage permissions, restrict domain access'
+      name: settingsWorkspaceRoutes.security.name,
+      route: (slug: string) => settingsWorkspaceRoutes.security.route(slug),
+      permission: [Roles.Workspace.Admin]
     },
-    regions: {
-      title: 'Regions',
-      disabled: true,
-      tooltipText: 'Set up regions for custom data residency'
+    {
+      title: 'Billing',
+      name: settingsWorkspaceRoutes.billing.name,
+      route: (slug: string) => settingsWorkspaceRoutes.billing.route(slug),
+      permission: [Roles.Workspace.Admin, Roles.Workspace.Member]
+    },
+    {
+      title: 'Data residency',
+      name: settingsWorkspaceRoutes.regions.name,
+      route: (slug: string) => settingsWorkspaceRoutes.regions.route(slug),
+      permission: [Roles.Workspace.Admin, Roles.Workspace.Member],
+      ...(!isMultiRegionEnabled
+        ? {
+            disabled: true,
+            tooltipText: 'Data residency management is not enabled on this server'
+          }
+        : {
+            disabled: false
+          })
     }
-  })
+  ])
 
-  const userMenuItemValues: SettingsMenuItems = {
-    [settingsQueries.user.profile]: {
+  const userMenuItems = shallowRef<GenericSettingsMenuItem[]>([
+    {
       title: 'Profile',
-      component: SettingsUserProfile
+      route: settingsUserRoutes.profile
     },
-    [settingsQueries.user.notifications]: {
+    {
       title: 'Notifications',
-      component: SettingsUserNotifications
+      route: settingsUserRoutes.notifications
     },
-    [settingsQueries.user.developerSettings]: {
-      title: 'Developer settings',
-      component: SettingsUserDeveloper
-    }
-  }
+    {
+      title: 'Developer',
+      route: settingsUserRoutes.developerSettings
+    },
+    ...(isMultipleEmailsEnabled
+      ? [
+          {
+            title: 'Emails',
+            route: settingsUserRoutes.emails
+          }
+        ]
+      : [])
+  ])
 
-  const multipleEmailsEnabled = useIsMultipleEmailsEnabled().value
-  if (multipleEmailsEnabled) {
-    userMenuItemValues[settingsQueries.user.emails] = {
-      title: 'Email addresses',
-      component: SettingsUserEmails
-    }
-  }
-
-  const userMenuItems = shallowRef<SettingsMenuItems>(userMenuItemValues)
-
-  const serverMenuItems = shallowRef<SettingsMenuItems>({
-    [settingsQueries.server.general]: {
+  const serverMenuItems = shallowRef<GenericSettingsMenuItem[]>([
+    {
       title: 'General',
-      component: SettingsServerGeneral
+      route: settingsServerRoutes.general
     },
-    [settingsQueries.server.projects]: {
+    {
+      title: 'Members',
+      route: settingsServerRoutes.members
+    },
+    {
       title: 'Projects',
-      component: SettingsServerProjects
+      route: settingsServerRoutes.projects
     },
-    [settingsQueries.server.activeUsers]: {
-      title: 'Active users',
-      component: SettingsServerActiveUsers
-    },
-    [settingsQueries.server.pendingInvitations]: {
-      title: 'Pending invitations',
-      component: SettingsServerPendingInvitations
-    }
-  })
+    ...(isMultiRegionEnabled
+      ? [
+          {
+            title: 'Regions',
+            route: settingsServerRoutes.regions
+          }
+        ]
+      : [])
+  ])
 
   return {
     userMenuItems,
@@ -94,3 +129,10 @@ export const useSettingsMenu = () => {
     workspaceMenuItems
   }
 }
+
+export const useSettingsMenuState = () =>
+  useState<{
+    previousRoute: string | undefined
+  }>('settings-menu-state', () => ({
+    previousRoute: undefined
+  }))

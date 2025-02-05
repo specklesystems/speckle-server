@@ -42,7 +42,21 @@ extend type Query {
     cursor: String
     archived: Boolean = false
     emailOnly: Boolean = false
-  ): UserSearchResultCollection!
+  ): UserSearchResultCollection! @deprecated(reason: "Use users() instead.")
+
+  """
+  Look up server users
+  """
+  users(input: UsersRetrievalInput!): UserSearchResultCollection!
+    @hasServerRole(role: SERVER_GUEST)
+    @hasScopes(scopes: ["users:read", "profile:read"])
+
+  """
+  Look up server users with a collection of emails
+  """
+  usersByEmail(input: BulkUsersRetrievalInput!): [LimitedUser]!
+    @hasServerRole(role: SERVER_GUEST)
+    @hasScopes(scopes: ["users:read", "profile:read"])
 
   """
   Validate password strength
@@ -51,6 +65,32 @@ extend type Query {
     @deprecated(
       reason: "Part of the old API surface and will be removed in the future."
     )
+}
+
+input UsersRetrievalInput {
+  """
+  The query looks for matches in user name & email
+  """
+  query: String!
+  cursor: String
+  """
+  Limit defaults to 10
+  """
+  limit: Int
+  """
+  Only find users with directly matching emails
+  """
+  emailOnly: Boolean
+  """
+  Only find users that are collaborators of the specified project
+  """
+  projectId: String
+}
+
+input BulkUsersRetrievalInput {
+  emails: [String!]!
+  cursor: String
+  limit: Int
 }
 
 type PasswordStrengthCheckResults {
@@ -111,12 +151,6 @@ type LimitedUser {
   avatar: String
   verified: Boolean
   role: String
-}
-
-type AvatarUser {
-  id: ID!
-  name: String!
-  avatar: String
 }
 
 """

@@ -1,9 +1,24 @@
+import { buildApolloServer } from '@/app'
+import { db } from '@/db/knex'
 import {
-  deleteRequestById,
-  getPendingAccessRequest
+  createNewRequestFactory,
+  deleteRequestByIdFactory,
+  getPendingAccessRequestFactory,
+  getUsersPendingAccessRequestFactory
 } from '@/modules/accessrequests/repositories'
-import { requestStreamAccess } from '@/modules/accessrequests/services/stream'
+import {
+  getUserProjectAccessRequestFactory,
+  getUserStreamAccessRequestFactory,
+  requestProjectAccessFactory,
+  requestStreamAccessFactory
+} from '@/modules/accessrequests/services/stream'
 import { ActionTypes } from '@/modules/activitystream/helpers/types'
+import { saveActivityFactory } from '@/modules/activitystream/repositories'
+import {
+  addStreamInviteAcceptedActivityFactory,
+  addStreamPermissionsAddedActivityFactory,
+  addStreamPermissionsRevokedActivityFactory
+} from '@/modules/activitystream/services/streamActivity'
 import {
   ServerAccessRequests,
   StreamActivity,
@@ -13,12 +28,23 @@ import {
 import { StreamAccessUpdateError } from '@/modules/core/errors/stream'
 import { mapStreamRoleToValue } from '@/modules/core/helpers/graphTypes'
 import { Roles } from '@/modules/core/helpers/mainConstants'
-import { getStreamCollaborators } from '@/modules/core/repositories/streams'
 import {
-  addOrUpdateStreamCollaborator,
-  removeStreamCollaborator
-} from '@/modules/core/services/streams/streamAccessService'
+  getStreamCollaboratorsFactory,
+  getStreamFactory,
+  grantStreamPermissionsFactory,
+  revokeStreamPermissionsFactory
+} from '@/modules/core/repositories/streams'
+import { getUserFactory } from '@/modules/core/repositories/users'
+import {
+  addOrUpdateStreamCollaboratorFactory,
+  isStreamCollaboratorFactory,
+  removeStreamCollaboratorFactory,
+  validateStreamAccessFactory
+} from '@/modules/core/services/streams/access'
 import { NotificationType } from '@/modules/notifications/helpers/types'
+import { authorizeResolver } from '@/modules/shared'
+import { getEventBus } from '@/modules/shared/services/eventBus'
+import { publish } from '@/modules/shared/utils/subscriptions'
 import { BasicTestUser, createTestUsers } from '@/test/authHelper'
 import {
   createStreamAccessRequest,
@@ -28,18 +54,61 @@ import {
   useStreamAccessRequest
 } from '@/test/graphql/accessRequests'
 import { StreamRole } from '@/test/graphql/generated/graphql'
+import { createAuthedTestContext, ServerAndContext } from '@/test/graphqlHelper'
 import { truncateTables } from '@/test/hooks'
 import { EmailSendingServiceMock } from '@/test/mocks/global'
 import {
   buildNotificationsStateTracker,
   NotificationsStateManager
 } from '@/test/notificationsHelper'
-import { buildAuthenticatedApolloServer } from '@/test/serverHelper'
 import { getStreamActivities } from '@/test/speckle-helpers/activityStreamHelper'
 import { BasicTestStream, createTestStreams } from '@/test/speckle-helpers/streamHelper'
-import { ApolloServer } from 'apollo-server-express'
 import { expect } from 'chai'
 import { noop } from 'lodash'
+
+const getUser = getUserFactory({ db })
+const getStreamCollaborators = getStreamCollaboratorsFactory({ db })
+const getStream = getStreamFactory({ db })
+const requestStreamAccess = requestStreamAccessFactory({
+  requestProjectAccess: requestProjectAccessFactory({
+    getUserStreamAccessRequest: getUserStreamAccessRequestFactory({
+      getUserProjectAccessRequest: getUserProjectAccessRequestFactory({
+        getUsersPendingAccessRequest: getUsersPendingAccessRequestFactory({ db })
+      })
+    }),
+    getStream,
+    createNewRequest: createNewRequestFactory({ db }),
+    emitEvent: getEventBus().emit
+  })
+})
+const saveActivity = saveActivityFactory({ db })
+const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
+const isStreamCollaborator = isStreamCollaboratorFactory({
+  getStream
+})
+const removeStreamCollaborator = removeStreamCollaboratorFactory({
+  validateStreamAccess,
+  isStreamCollaborator,
+  revokeStreamPermissions: revokeStreamPermissionsFactory({ db }),
+  addStreamPermissionsRevokedActivity: addStreamPermissionsRevokedActivityFactory({
+    saveActivity,
+    publish
+  })
+})
+
+const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
+  validateStreamAccess,
+  getUser,
+  grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+  addStreamInviteAcceptedActivity: addStreamInviteAcceptedActivityFactory({
+    saveActivity,
+    publish
+  }),
+  addStreamPermissionsAddedActivity: addStreamPermissionsAddedActivityFactory({
+    saveActivity,
+    publish
+  })
+})
 
 const isNotCollaboratorError = (e: unknown) =>
   e instanceof StreamAccessUpdateError &&
@@ -55,7 +124,7 @@ const cleanup = async () => {
 }
 
 describe('Stream access requests', () => {
-  let apollo: ApolloServer
+  let apollo: ServerAndContext
   let notificationsStateManager: NotificationsStateManager
 
   const me: BasicTestUser = {
@@ -105,7 +174,10 @@ describe('Stream access requests', () => {
       [otherGuysPublicStream, otherGuy],
       [myPrivateStream, me]
     ])
-    apollo = await buildAuthenticatedApolloServer(me.id)
+    apollo = {
+      apollo: await buildApolloServer(),
+      context: await createAuthedTestContext(me.id)
+    }
     notificationsStateManager = buildNotificationsStateTracker()
   })
 
@@ -245,7 +317,7 @@ describe('Stream access requests', () => {
     })
 
     it('returns null if no req found', async () => {
-      await deleteRequestById(myRequestId)
+      await deleteRequestByIdFactory({ db })(myRequestId)
 
       const results = await getReq(otherGuysPrivateStream.id)
       expect(results).to.not.haveGraphQLErrors()
@@ -365,7 +437,7 @@ describe('Stream access requests', () => {
         expect(results.data?.streamAccessRequestUse).to.be.ok
 
         // req should be deleted
-        const req = await getPendingAccessRequest(validReqId)
+        const req = await getPendingAccessRequestFactory({ db })(validReqId)
         expect(req).to.not.be.ok
 
         // activity stream item should be inserted

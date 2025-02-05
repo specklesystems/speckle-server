@@ -5,11 +5,13 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Launch via NPM",
+      "name": "Launch via Yarn",
       "request": "launch",
-      "runtimeArgs": ["run-script", "dev"],
-      "runtimeExecutable": "npm",
+      "console": "integratedTerminal",
+      "runtimeArgs": ["dev"],
+      "runtimeExecutable": "yarn",
       "skipFiles": ["<node_internals>/**"],
+      "envFile": "${workspaceFolder}/.env",
       "type": "node"
     }
   ]

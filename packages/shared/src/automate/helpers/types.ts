@@ -20,7 +20,7 @@ export type TriggerDefinitionsSchema = {
   definitions: Array<VersionCreatedTriggerDefinition>
 }
 
-export type ObjectResultLevel = 'INFO' | 'WARNING' | 'ERROR'
+export type ObjectResultLevel = 'SUCCESS' | 'INFO' | 'WARNING' | 'ERROR'
 
 export type ResultsSchema = {
   version: number
@@ -36,7 +36,7 @@ export type ResultsSchema = {
           gradientValues?: Record<string, { gradientValue: number }>
         }
       >
-      visualoverrides: Nullable<Record<string, unknown>>
+      visualOverrides: Nullable<Record<string, unknown>>
     }>
     blobIds?: string[]
   }
@@ -157,7 +157,7 @@ export const formatResultsSchema = (state: UnformattedResultsSchema): ResultsSch
             throwInvalidError(`values.[${i}].objectResults.objectIds`),
           message: value.message || null,
           metadata: value.metadata || null,
-          visualoverrides: value.visualoverrides || null
+          visualOverrides: value.visualOverrides || null
         }
       }),
       blobIds: values.blobIds || undefined

@@ -3,15 +3,126 @@ import { expect } from 'chai'
 
 import { beforeEachContext, initializeTestServer } from '@/test/hooks'
 
-import { createUser } from '@/modules/core/services/users'
-import { createStream } from '@/modules/core/services/streams'
-import { createToken } from '@/modules/core/services/tokens'
 import type { Server } from 'http'
 import type { Express } from 'express'
 import request from 'supertest'
 import { Scopes } from '@/modules/core/helpers/mainConstants'
 import cryptoRandomString from 'crypto-random-string'
 import { noErrors } from '@/test/helpers'
+import {
+  createStreamFactory,
+  getStreamFactory
+} from '@/modules/core/repositories/streams'
+import { db } from '@/db/knex'
+import {
+  createStreamReturnRecordFactory,
+  legacyCreateStreamFactory
+} from '@/modules/core/services/streams/management'
+import { inviteUsersToProjectFactory } from '@/modules/serverinvites/services/projectInviteManagement'
+import { createAndSendInviteFactory } from '@/modules/serverinvites/services/creation'
+import {
+  deleteServerOnlyInvitesFactory,
+  findUserByTargetFactory,
+  insertInviteAndDeleteOldFactory,
+  updateAllInviteTargetsFactory
+} from '@/modules/serverinvites/repositories/serverInvites'
+import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
+import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
+import { getEventBus } from '@/modules/shared/services/eventBus'
+import { createBranchFactory } from '@/modules/core/repositories/branches'
+import {
+  countAdminUsersFactory,
+  getUserFactory,
+  getUsersFactory,
+  storeUserAclFactory,
+  storeUserFactory
+} from '@/modules/core/repositories/users'
+import {
+  createUserEmailFactory,
+  ensureNoPrimaryEmailForUserFactory,
+  findEmailFactory
+} from '@/modules/core/repositories/userEmails'
+import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
+import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
+import { renderEmail } from '@/modules/emails/services/emailRendering'
+import { createUserFactory } from '@/modules/core/services/users/management'
+import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
+import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
+import { sendEmail } from '@/modules/emails/services/sending'
+import { createTokenFactory } from '@/modules/core/services/tokens'
+import {
+  storeApiTokenFactory,
+  storeTokenResourceAccessDefinitionsFactory,
+  storeTokenScopesFactory
+} from '@/modules/core/repositories/tokens'
+import { getServerInfoFactory } from '@/modules/core/repositories/server'
+
+const getServerInfo = getServerInfoFactory({ db })
+const getUser = getUserFactory({ db })
+const getUsers = getUsersFactory({ db })
+const getStream = getStreamFactory({ db })
+const createStream = legacyCreateStreamFactory({
+  createStreamReturnRecord: createStreamReturnRecordFactory({
+    inviteUsersToProject: inviteUsersToProjectFactory({
+      createAndSendInvite: createAndSendInviteFactory({
+        findUserByTarget: findUserByTargetFactory({ db }),
+        insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
+        collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
+          getStream
+        }),
+        buildInviteEmailContents: buildCoreInviteEmailContentsFactory({
+          getStream
+        }),
+        emitEvent: ({ eventName, payload }) =>
+          getEventBus().emit({
+            eventName,
+            payload
+          }),
+        getUser,
+        getServerInfo
+      }),
+      getUsers
+    }),
+    createStream: createStreamFactory({ db }),
+    createBranch: createBranchFactory({ db }),
+    emitEvent: getEventBus().emit
+  })
+})
+
+const findEmail = findEmailFactory({ db })
+const requestNewEmailVerification = requestNewEmailVerificationFactory({
+  findEmail,
+  getUser: getUserFactory({ db }),
+  getServerInfo,
+  deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db }),
+  renderEmail,
+  sendEmail
+})
+const createUser = createUserFactory({
+  getServerInfo,
+  findEmail,
+  storeUser: storeUserFactory({ db }),
+  countAdminUsers: countAdminUsersFactory({ db }),
+  storeUserAcl: storeUserAclFactory({ db }),
+  validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
+    createUserEmail: createUserEmailFactory({ db }),
+    ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
+    findEmail,
+    updateEmailInvites: finalizeInvitedServerRegistrationFactory({
+      deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
+      updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
+    }),
+    requestNewEmailVerification
+  }),
+  emitEvent: getEventBus().emit
+})
+const createToken = createTokenFactory({
+  storeApiToken: storeApiTokenFactory({ db }),
+  storeTokenScopes: storeTokenScopesFactory({ db }),
+  storeTokenResourceAccessDefinitions: storeTokenResourceAccessDefinitionsFactory({
+    db
+  })
+})
 
 describe('FileUploads @fileuploads', () => {
   let server: Server
@@ -27,17 +138,23 @@ describe('FileUploads @fileuploads', () => {
   let userOneToken: string
   let createdStreamId: string
   let existingCanonicalUrl: string
+  let existingPort: string
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let sendRequest: (token: string, query: unknown) => Promise<any>
+  let sendRequest: (token: string, query: string | object) => Promise<any>
   let serverAddress: string
+  let serverPort: string
 
   before(async () => {
-    ;({ app, server } = await beforeEachContext())
-    ;({ serverAddress, sendRequest } = await initializeTestServer(server, app))
+    const ctx = await beforeEachContext()
+    server = ctx.server
+    app = ctx.app
+    ;({ serverAddress, serverPort, sendRequest } = await initializeTestServer(ctx))
 
     //TODO does mocha have a nicer way of temporarily swapping an environment variable, like vitest?
     existingCanonicalUrl = process.env['CANONICAL_URL'] || ''
+    existingPort = process.env['PORT'] || ''
     process.env['CANONICAL_URL'] = serverAddress
+    process.env['PORT'] = serverPort
 
     userOneId = await createUser(userOne)
   })
@@ -46,8 +163,7 @@ describe('FileUploads @fileuploads', () => {
     ;({ token: userOneToken } = await createToken({
       userId: userOneId,
       name: 'test token',
-      scopes: [Scopes.Streams.Write],
-      lifespan: 3600
+      scopes: [Scopes.Streams.Write]
     }))
   })
 
@@ -57,7 +173,8 @@ describe('FileUploads @fileuploads', () => {
 
   after(async () => {
     process.env['CANONICAL_URL'] = existingCanonicalUrl
-    await server.close()
+    process.env['PORT'] = existingPort
+    await server?.close()
   })
 
   describe('Uploads files', () => {
@@ -69,7 +186,9 @@ describe('FileUploads @fileuploads', () => {
         .attach('test.ifc', require.resolve('@/readme.md'), 'test.ifc')
 
       expect(response.statusCode).to.equal(201)
-      expect(response.body).to.deep.equal({})
+      expect(response.headers['content-type']).to.contain('application/json;')
+      expect(response.body.uploadResults).to.have.lengthOf(1)
+      expect(response.body.uploadResults[0].fileName).to.equal('test.ifc')
       const gqlResponse = await sendRequest(userOneToken, {
         query: `query ($streamId: String!) {
           stream(id: $streamId) {
@@ -86,6 +205,9 @@ describe('FileUploads @fileuploads', () => {
       expect(noErrors(gqlResponse))
       expect(gqlResponse.body.data.stream.fileUploads).to.have.lengthOf(1)
       expect(gqlResponse.body.data.stream.fileUploads[0].fileName).to.equal('test.ifc')
+      expect(gqlResponse.body.data.stream.fileUploads[0].id).to.equal(
+        response.body.uploadResults[0].blobId
+      )
 
       //TODO expect subscription notification
     })
@@ -97,7 +219,11 @@ describe('FileUploads @fileuploads', () => {
         .attach('blob1', require.resolve('@/readme.md'), 'test1.ifc')
         .attach('blob2', require.resolve('@/package.json'), 'test2.ifc')
       expect(response.status).to.equal(201)
-      expect(response.body).to.deep.equal({})
+      expect(response.headers['content-type']).to.contain('application/json;')
+      expect(response.body.uploadResults).to.have.lengthOf(2)
+      expect(
+        response.body.uploadResults.map((file: { fileName: string }) => file.fileName)
+      ).to.have.members(['test1.ifc', 'test2.ifc'])
       const gqlResponse = await sendRequest(userOneToken, {
         query: `query ($streamId: String!) {
           stream(id: $streamId) {
@@ -121,6 +247,11 @@ describe('FileUploads @fileuploads', () => {
           (file: { fileName: string }) => file.fileName
         )
       ).to.have.members(['test1.ifc', 'test2.ifc'])
+      expect(
+        gqlResponse.body.data.stream.fileUploads.map((file: { id: string }) => file.id)
+      ).to.have.members(
+        response.body.uploadResults.map((file: { blobId: string }) => file.blobId)
+      )
     })
 
     it('Returns 400 for bad form data', async () => {
@@ -132,6 +263,37 @@ describe('FileUploads @fileuploads', () => {
         .send('--XXX\r\nCon')
 
       expect(response.status).to.equal(400)
+      expect(response.headers['content-type']).to.contain('application/json;')
+      expect(response.body.error).to.contain('Upload request error.')
+      const gqlResponse = await sendRequest(userOneToken, {
+        query: `query ($streamId: String!) {
+          stream(id: $streamId) {
+            id
+            fileUploads {
+              id
+              fileName
+              convertedStatus
+            }
+          }
+        }`,
+        variables: { streamId: createdStreamId }
+      })
+      expect(noErrors(gqlResponse))
+      expect(
+        gqlResponse.body.data.stream.fileUploads,
+        JSON.stringify(gqlResponse.body.data)
+      ).to.have.lengthOf(0)
+    })
+
+    it('Returns 400 for missing headers', async () => {
+      const response = await request(app)
+        .post(`/api/file/autodetect/${createdStreamId}/main`)
+        .set('Authorization', `Bearer ${userOneToken}`)
+      // .set('Content-type', 'multipart/form-data; boundary=XXX') // purposely missing content type
+
+      expect(response.status).to.equal(400)
+      expect(response.headers['content-type']).to.contain('application/json;')
+      expect(response.body.error.message).to.contain('Missing Content-Type')
       const gqlResponse = await sendRequest(userOneToken, {
         query: `query ($streamId: String!) {
           stream(id: $streamId) {
@@ -158,8 +320,11 @@ describe('FileUploads @fileuploads', () => {
         .set('Authorization', `Bearer ${userOneToken}`)
         .attach('toolarge.ifc', Buffer.alloc(114_857_601, 'asdf'), 'toolarge.ifc')
       expect(response.status).to.equal(201)
-
-      expect(response.body).to.deep.equal({})
+      expect(response.headers['content-type']).to.contain('application/json;')
+      expect(response.body.uploadResults).to.have.lengthOf(1)
+      expect(
+        response.body.uploadResults.map((file: { fileName: string }) => file.fileName)
+      ).to.have.members(['toolarge.ifc'])
       const gqlResponse = await sendRequest(userOneToken, {
         query: `query ($streamId: String!) {
           stream(id: $streamId) {
@@ -178,6 +343,9 @@ describe('FileUploads @fileuploads', () => {
         gqlResponse.body.data.stream.fileUploads,
         JSON.stringify(gqlResponse.body.data)
       ).to.have.lengthOf(1)
+      expect(gqlResponse.body.data.stream.fileUploads[0].id).to.equal(
+        response.body.uploadResults[0].blobId
+      )
       //TODO expect no notifications
     })
 
@@ -223,7 +391,7 @@ describe('FileUploads @fileuploads', () => {
         .set('Authorization', `Bearer ${userOneToken}`)
         .set('Accept', 'application/json')
         .attach('test.ifc', require.resolve('@/readme.md'), 'test.ifc')
-      expect(response.statusCode).to.equal(500) //FIXME should be 404 (technically a 401, but we don't want to leak existence of stream so 404 is preferrable)
+      expect(response.statusCode).to.equal(404) //FIXME should be 404 (technically a 401, but we don't want to leak existence of stream so 404 is preferrable)
       const gqlResponse = await sendRequest(userOneToken, {
         query: `query ($streamId: String!) {
           stream(id: $streamId) {

@@ -1,11 +1,11 @@
 <template>
   <LayoutDialog
     v-model:open="isOpen"
-    max-width="sm"
+    max-width="xs"
     :buttons="[
       {
         text: 'Delete',
-        props: { color: 'danger', fullWidth: true, disabled: loading },
+        props: { color: 'danger', disabled: loading },
         onClick: () => {
           onDelete()
         }
@@ -18,14 +18,15 @@
     </template>
     <div class="flex flex-col text-foreground">
       <p>
-        Deleting versions is an irrevocable action! If you are sure about wanting to
-        delete
+        Are you sure you want to delete
         <template v-if="versions.length > 1">the selected versions,</template>
         <template v-else-if="versions.length">
           the selected version
-          <span class="inline font-medium">"{{ versions[0].message }}",</span>
+          <span v-if="versions[0].message" class="inline font-medium">
+            "{{ versions[0].message }}"
+          </span>
         </template>
-        please click on the button below!
+        ?
       </p>
     </div>
   </LayoutDialog>
@@ -52,7 +53,7 @@ const emit = defineEmits<{
 const props = defineProps<{
   versions: ProjectModelPageDialogDeleteVersionFragment[]
   open: boolean
-  projectId?: string
+  projectId: string
   modelId?: string
 }>()
 
@@ -70,10 +71,10 @@ const onDelete = async () => {
   loading.value = true
   const success = await deleteVersions(
     {
+      projectId: props.projectId,
       versionIds: props.versions.map((v) => v.id)
     },
     {
-      projectId: props.projectId,
       modelId: props.modelId
     }
   )

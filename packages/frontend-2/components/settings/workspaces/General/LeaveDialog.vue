@@ -2,13 +2,13 @@
   <LayoutDialog
     v-model:open="isOpen"
     title="Leave workspace"
-    max-width="sm"
+    max-width="xs"
     :buttons="dialogButtons"
   >
-    <p class="text-body-xs text-foreground">
-      Are you sure you want to leave the
+    <p class="text-body-xs text-foreground mb-2">
+      Are you sure you want to leave
       <span class="font-medium">{{ workspace.name }}</span>
-      workspace?
+      ?
     </p>
   </LayoutDialog>
 </template>
@@ -31,6 +31,8 @@ import {
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { isUndefined } from 'lodash-es'
+import { useMixpanel } from '~/lib/core/composables/mp'
+import { homeRoute } from '~/lib/common/helpers/route'
 
 graphql(`
   fragment SettingsWorkspaceGeneralDeleteDialog_Workspace on Workspace {
@@ -49,6 +51,8 @@ const { mutate: leaveWorkspace } = useMutation(settingsLeaveWorkspaceMutation)
 const { triggerNotification } = useGlobalToast()
 const { activeUser } = useActiveUser()
 const apollo = useApolloClient().client
+const mixpanel = useMixpanel()
+const router = useRouter()
 
 const onLeave = async () => {
   isOpen.value = false
@@ -59,6 +63,8 @@ const onLeave = async () => {
   }).catch(convertThrowIntoFetchResult)
 
   if (result?.data) {
+    router.push(homeRoute)
+
     if (activeUser.value) {
       cache.evict({
         id: getCacheId('Workspace', props.workspace.id)
@@ -88,6 +94,11 @@ const onLeave = async () => {
       title: 'Workspace left',
       description: `You have left the ${props.workspace.name} workspace`
     })
+
+    mixpanel.track('Workspace User Left', {
+      // eslint-disable-next-line camelcase
+      workspace_id: props.workspace.id
+    })
   } else {
     const errorMessage = getFirstErrorMessage(result?.errors)
     triggerNotification({
@@ -101,7 +112,7 @@ const onLeave = async () => {
 const dialogButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Cancel',
-    props: { color: 'outline', fullWidth: true },
+    props: { color: 'outline' },
     onClick: () => {
       isOpen.value = false
     }
@@ -109,8 +120,7 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Leave',
     props: {
-      fullWidth: true,
-      color: 'danger'
+      color: 'primary'
     },
     onClick: onLeave
   }

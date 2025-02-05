@@ -8,23 +8,23 @@
     >
       <div class="flex items-center flex-grow order-2 sm:order-1 pl-2 sm:pl-4">
         <!-- Name -->
-        <div
-          class="flex justify-between sm:justify-start gap-2 items-center w-full sm:w-auto"
-        >
+        <div class="flex gap-2 items-center">
           <NuxtLink :to="modelLink || undefined">
             <span class="text-heading text-foreground hover:text-primary">
               {{ name }}
             </span>
           </NuxtLink>
-          <span
-            v-if="model"
-            class="opacity-100 sm:opacity-0 group-hover:opacity-100 transition"
-          >
+          <span v-if="model">
             <ProjectPageModelsActions
               v-model:open="showActionsMenu"
               :model="model"
               :project="project"
               :can-edit="canContribute"
+              :menu-position="
+                itemType === StructureItemType.EmptyModel
+                  ? HorizontalDirection.Right
+                  : HorizontalDirection.Left
+              "
               @click.stop.prevent
               @model-updated="$emit('model-updated')"
               @upload-version="triggerVersionUpload"
@@ -51,6 +51,7 @@
           ref="importArea"
           :project-id="project.id"
           :model-name="item.fullName"
+          :disabled="project?.workspace?.readOnly"
           class="hidden"
         />
         <div
@@ -70,6 +71,7 @@
             v-else
             :project-id="project.id"
             :model-name="item.fullName"
+            :disabled="project?.workspace?.readOnly"
             class="h-full w-full"
           />
         </div>
@@ -230,6 +232,7 @@ import { has } from 'lodash-es'
 import type { Nullable } from '@speckle/shared'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useIsModelExpanded } from '~~/lib/projects/composables/models'
+import { HorizontalDirection } from '~~/lib/common/composables/window'
 
 /**
  * TODO: The template in this file is a complete mess, needs refactoring
@@ -246,6 +249,10 @@ enum StructureItemType {
 graphql(`
   fragment ProjectPageModelsStructureItem_Project on Project {
     id
+    workspace {
+      id
+      readOnly
+    }
     ...ProjectPageModelsActions_Project
   }
 `)
@@ -380,7 +387,9 @@ const modelLink = computed(() => {
 
 const viewAllUrl = computed(() => {
   if (isPendingFileUpload(props.item)) return undefined
-  return modelRoute(props.project.id, `$${props.item.fullName}`)
+  const fullName = props.item.fullName
+  const encodedFullName = `$${fullName}`.replace(/\//g, '%2F')
+  return modelRoute(props.project.id, encodedFullName)
 })
 
 const {

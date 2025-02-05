@@ -4,177 +4,291 @@ import { type Knex } from 'knex'
 import { Logger } from 'pino'
 import { toNDecimalPlaces } from '@/modules/core/utils/formatting'
 import { omit } from 'lodash'
+import { getRequestContext } from '@/logging/requestContext'
+import { collectLongTrace } from '@speckle/shared'
 
-export const initKnexPrometheusMetrics = (params: {
-  db: Knex
+let metricQueryDuration: prometheusClient.Summary<string>
+let metricQueryErrors: prometheusClient.Counter<string>
+let metricConnectionAcquisitionDuration: prometheusClient.Histogram<string>
+let metricConnectionPoolErrors: prometheusClient.Counter<string>
+let metricConnectionInUseDuration: prometheusClient.Histogram<string>
+let metricConnectionPoolReapingDuration: prometheusClient.Histogram<string>
+const initializedRegions: string[] = []
+let initializedPollingMetrics = false
+
+export const initKnexPrometheusMetrics = async (params: {
+  getAllDbClients: () => Promise<
+    Array<{ client: Knex; isMain: boolean; regionKey: string }>
+  >
   register: Registry
   logger: Logger
 }) => {
-  const normalizeSqlMethod = (sqlMethod: string) => {
-    if (!sqlMethod) return 'unknown'
-    switch (sqlMethod.toLocaleLowerCase()) {
-      case 'first':
-        return 'select'
-      default:
-        return sqlMethod.toLocaleLowerCase()
-    }
+  if (!initializedPollingMetrics) {
+    initializedPollingMetrics = true
+    new prometheusClient.Gauge({
+      registers: [params.register],
+      name: 'speckle_server_knex_free',
+      labelNames: ['region'],
+      help: 'Number of free DB connections',
+      async collect() {
+        for (const dbClient of await params.getAllDbClients()) {
+          this.set(
+            { region: dbClient.regionKey },
+            dbClient.client.client.pool.numFree()
+          )
+        }
+      }
+    })
+
+    new prometheusClient.Gauge({
+      registers: [params.register],
+      name: 'speckle_server_knex_used',
+      labelNames: ['region'],
+      help: 'Number of used DB connections',
+      async collect() {
+        for (const dbClient of await params.getAllDbClients()) {
+          this.set(
+            { region: dbClient.regionKey },
+            dbClient.client.client.pool.numUsed()
+          )
+        }
+      }
+    })
+
+    new prometheusClient.Gauge({
+      registers: [params.register],
+      name: 'speckle_server_knex_pending',
+      labelNames: ['region'],
+      help: 'Number of pending DB connection aquires',
+      async collect() {
+        for (const dbClient of await params.getAllDbClients()) {
+          this.set(
+            { region: dbClient.regionKey },
+            dbClient.client.client.pool.numPendingAcquires()
+          )
+        }
+      }
+    })
+
+    new prometheusClient.Gauge({
+      registers: [params.register],
+      name: 'speckle_server_knex_pending_creates',
+      labelNames: ['region'],
+      help: 'Number of pending DB connection creates',
+      async collect() {
+        for (const dbClient of await params.getAllDbClients()) {
+          this.set(
+            { region: dbClient.regionKey },
+            dbClient.client.client.pool.numPendingCreates()
+          )
+        }
+      }
+    })
+
+    new prometheusClient.Gauge({
+      registers: [params.register],
+      name: 'speckle_server_knex_pending_validations',
+      labelNames: ['region'],
+      help: 'Number of pending DB connection validations. This is a state between pending acquisition and acquiring a connection.',
+      async collect() {
+        for (const dbClient of await params.getAllDbClients()) {
+          this.set(
+            { region: dbClient.regionKey },
+            dbClient.client.client.pool.numPendingValidations()
+          )
+        }
+      }
+    })
+
+    new prometheusClient.Gauge({
+      registers: [params.register],
+      name: 'speckle_server_knex_remaining_capacity',
+      labelNames: ['region'],
+      help: 'Remaining capacity of the DB connection pool',
+      async collect() {
+        for (const dbClient of await params.getAllDbClients()) {
+          this.set(
+            { region: dbClient.regionKey },
+            numberOfFreeConnections(dbClient.client)
+          )
+        }
+      }
+    })
+
+    metricQueryDuration = new prometheusClient.Summary({
+      registers: [params.register],
+      labelNames: ['sqlMethod', 'sqlNumberBindings', 'region'],
+      name: 'speckle_server_knex_query_duration',
+      help: 'Summary of the DB query durations in seconds'
+    })
+
+    metricQueryErrors = new prometheusClient.Counter({
+      registers: [params.register],
+      labelNames: ['sqlMethod', 'sqlNumberBindings', 'region'],
+      name: 'speckle_server_knex_query_errors',
+      help: 'Number of DB queries with errors'
+    })
+
+    metricConnectionAcquisitionDuration = new prometheusClient.Histogram({
+      registers: [params.register],
+      name: 'speckle_server_knex_connection_acquisition_duration',
+      labelNames: ['region'],
+      help: 'Summary of the DB connection acquisition duration, from request to acquire connection from pool until successfully acquired, in seconds'
+    })
+
+    metricConnectionPoolErrors = new prometheusClient.Counter({
+      registers: [params.register],
+      name: 'speckle_server_knex_connection_acquisition_errors',
+      labelNames: ['region'],
+      help: 'Number of DB connection pool acquisition errors'
+    })
+
+    metricConnectionInUseDuration = new prometheusClient.Histogram({
+      registers: [params.register],
+      name: 'speckle_server_knex_connection_usage_duration',
+      labelNames: ['region'],
+      help: 'Summary of the DB connection duration, from successful acquisition of connection from pool until release back to pool, in seconds'
+    })
+
+    metricConnectionPoolReapingDuration = new prometheusClient.Histogram({
+      registers: [params.register],
+      name: 'speckle_server_knex_connection_pool_reaping_duration',
+      labelNames: ['region'],
+      help: 'Summary of the DB connection pool reaping duration, in seconds. Reaping is the process of removing idle connections from the pool.'
+    })
   }
 
-  const queryStartTime: Record<string, number> = {}
+  // configure hooks on knex
+  for (const dbClient of await params.getAllDbClients()) {
+    if (initializedRegions.includes(dbClient.regionKey)) continue
+    initKnexPrometheusMetricsForRegionEvents({
+      logger: params.logger,
+      region: dbClient.regionKey,
+      db: dbClient.client
+    })
+    initializedRegions.push(dbClient.regionKey)
+  }
+}
+
+const normalizeSqlMethod = (sqlMethod: string) => {
+  if (!sqlMethod) return 'unknown'
+  switch (sqlMethod.toLocaleLowerCase()) {
+    case 'first':
+      return 'select'
+    default:
+      return sqlMethod.toLocaleLowerCase()
+  }
+}
+
+interface QueryEvent extends Knex.Sql {
+  __knexUid: string
+  __knexTxId: string
+  __knexQueryUid: string
+  __stackTrace: string
+}
+
+const initKnexPrometheusMetricsForRegionEvents = async (params: {
+  region: string
+  db: Knex
+  logger: Logger
+}) => {
+  const { region, db } = params
+  const queryMetadata: Record<string, { startTime: number; stackTrace: string }> = {}
   const connectionAcquisitionStartTime: Record<string, number> = {}
   const connectionInUseStartTime: Record<string, number> = {}
 
-  new prometheusClient.Gauge({
-    registers: [params.register],
-    name: 'speckle_server_knex_free',
-    help: 'Number of free DB connections',
-    collect() {
-      this.set(params.db.client.pool.numFree())
-    }
-  })
-
-  new prometheusClient.Gauge({
-    registers: [params.register],
-    name: 'speckle_server_knex_used',
-    help: 'Number of used DB connections',
-    collect() {
-      this.set(params.db.client.pool.numUsed())
-    }
-  })
-
-  new prometheusClient.Gauge({
-    registers: [params.register],
-    name: 'speckle_server_knex_pending',
-    help: 'Number of pending DB connection aquires',
-    collect() {
-      this.set(params.db.client.pool.numPendingAcquires())
-    }
-  })
-
-  new prometheusClient.Gauge({
-    registers: [params.register],
-    name: 'speckle_server_knex_pending_creates',
-    help: 'Number of pending DB connection creates',
-    collect() {
-      this.set(params.db.client.pool.numPendingCreates())
-    }
-  })
-
-  new prometheusClient.Gauge({
-    registers: [params.register],
-    name: 'speckle_server_knex_pending_validations',
-    help: 'Number of pending DB connection validations. This is a state between pending acquisition and acquiring a connection.',
-    collect() {
-      this.set(params.db.client.pool.numPendingValidations())
-    }
-  })
-
-  new prometheusClient.Gauge({
-    registers: [params.register],
-    name: 'speckle_server_knex_remaining_capacity',
-    help: 'Remaining capacity of the DB connection pool',
-    collect() {
-      this.set(numberOfFreeConnections(params.db))
-    }
-  })
-
-  const metricQueryDuration = new prometheusClient.Summary({
-    registers: [params.register],
-    labelNames: ['sqlMethod', 'sqlNumberBindings'],
-    name: 'speckle_server_knex_query_duration',
-    help: 'Summary of the DB query durations in seconds'
-  })
-
-  const metricQueryErrors = new prometheusClient.Counter({
-    registers: [params.register],
-    labelNames: ['sqlMethod', 'sqlNumberBindings'],
-    name: 'speckle_server_knex_query_errors',
-    help: 'Number of DB queries with errors'
-  })
-
-  const metricConnectionAcquisitionDuration = new prometheusClient.Histogram({
-    registers: [params.register],
-    name: 'speckle_server_knex_connection_acquisition_duration',
-    help: 'Summary of the DB connection acquisition duration, from request to acquire connection from pool until successfully acquired, in seconds'
-  })
-
-  const metricConnectionPoolErrors = new prometheusClient.Counter({
-    registers: [params.register],
-    name: 'speckle_server_knex_connection_acquisition_errors',
-    help: 'Number of DB connection pool acquisition errors'
-  })
-
-  const metricConnectionInUseDuration = new prometheusClient.Histogram({
-    registers: [params.register],
-    name: 'speckle_server_knex_connection_usage_duration',
-    help: 'Summary of the DB connection duration, from successful acquisition of connection from pool until release back to pool, in seconds'
-  })
-
-  const metricConnectionPoolReapingDuration = new prometheusClient.Histogram({
-    registers: [params.register],
-    name: 'speckle_server_knex_connection_pool_reaping_duration',
-    help: 'Summary of the DB connection pool reaping duration, in seconds. Reaping is the process of removing idle connections from the pool.'
-  })
-
-  // configure hooks on knex
-
-  params.db.on('query', (data) => {
+  db.on('query', (data: QueryEvent) => {
     const queryId = data.__knexQueryUid + ''
-    queryStartTime[queryId] = performance.now()
+    queryMetadata[queryId] = {
+      startTime: performance.now(),
+      stackTrace: data.__stackTrace
+    }
   })
 
-  params.db.on('query-response', (_data, querySpec) => {
-    const queryId = querySpec.__knexQueryUid + ''
-    const durationMs = performance.now() - queryStartTime[queryId]
+  db.on('query-response', (_response: unknown, data: QueryEvent) => {
+    const queryId = data.__knexQueryUid + ''
+    const { startTime = NaN, stackTrace = undefined } = queryMetadata[queryId] || {}
+
+    const durationMs = performance.now() - startTime
     const durationSec = toNDecimalPlaces(durationMs / 1000, 2)
-    delete queryStartTime[queryId]
+    delete queryMetadata[queryId]
     if (!isNaN(durationSec))
       metricQueryDuration
         .labels({
-          sqlMethod: normalizeSqlMethod(querySpec.method),
-          sqlNumberBindings: querySpec.bindings?.length || -1
+          region,
+          sqlMethod: normalizeSqlMethod(data.method),
+          sqlNumberBindings: data.bindings?.length || -1
         })
         .observe(durationSec)
-    params.logger.debug(
+
+    const reqCtx = getRequestContext()
+
+    // Update reqCtx with DB query metrics
+    if (reqCtx) {
+      reqCtx.dbMetrics.totalCount++
+      reqCtx.dbMetrics.totalDuration += durationMs || 0
+    }
+
+    const trace = stackTrace || collectLongTrace()
+    params.logger.info(
       {
-        sql: querySpec.sql,
-        sqlMethod: normalizeSqlMethod(querySpec.method),
+        region,
+        sql: data.sql,
+        sqlMethod: normalizeSqlMethod(data.method),
         sqlQueryId: queryId,
         sqlQueryDurationMs: toNDecimalPlaces(durationMs, 0),
-        sqlNumberBindings: querySpec.bindings?.length || -1
+        sqlNumberBindings: data.bindings?.length || -1,
+        trace,
+        ...(reqCtx ? { req: { id: reqCtx.requestId } } : {})
       },
-      "DB query successfully completed, for method '{sqlMethod}', after {sqlQueryDurationMs}ms"
+      'DB query successfully completed after {sqlQueryDurationMs} ms'
     )
   })
 
-  params.db.on('query-error', (err, querySpec) => {
-    const queryId = querySpec.__knexQueryUid + ''
-    const durationMs = performance.now() - queryStartTime[queryId]
+  db.on('query-error', (err: unknown, data: QueryEvent) => {
+    const queryId = data.__knexQueryUid + ''
+    const { startTime = NaN, stackTrace = undefined } = queryMetadata[queryId] || {}
+
+    const durationMs = performance.now() - startTime
     const durationSec = toNDecimalPlaces(durationMs / 1000, 2)
-    delete queryStartTime[queryId]
+    delete queryMetadata[queryId]
 
     if (!isNaN(durationSec))
       metricQueryDuration
         .labels({
-          sqlMethod: normalizeSqlMethod(querySpec.method),
-          sqlNumberBindings: querySpec.bindings?.length || -1
+          region,
+          sqlMethod: normalizeSqlMethod(data.method),
+          sqlNumberBindings: data.bindings?.length || -1
         })
         .observe(durationSec)
     metricQueryErrors.inc()
+
+    const reqCtx = getRequestContext()
+
+    // Update reqCtx with DB query metrics
+    if (reqCtx) {
+      reqCtx.dbMetrics.totalCount++
+      reqCtx.dbMetrics.totalDuration += durationMs || 0
+    }
+
+    const trace = stackTrace || collectLongTrace()
     params.logger.warn(
       {
-        err: omit(err, 'detail'),
-        sql: querySpec.sql,
-        sqlMethod: normalizeSqlMethod(querySpec.method),
+        err: typeof err === 'object' ? omit(err, 'detail') : err,
+        region,
+        sql: data.sql,
+        sqlMethod: normalizeSqlMethod(data.method),
         sqlQueryId: queryId,
         sqlQueryDurationMs: toNDecimalPlaces(durationMs, 0),
-        sqlNumberBindings: querySpec.bindings?.length || -1
+        sqlNumberBindings: data.bindings?.length || -1,
+        trace,
+        ...(reqCtx ? { req: { id: reqCtx.requestId } } : {})
       },
       'DB query errored for {sqlMethod} after {sqlQueryDurationMs}ms'
     )
   })
 
-  const pool = params.db.client.pool
+  const pool = db.client.pool
 
   // configure hooks on knex connection pool
   pool.on('acquireRequest', (eventId: number) => {
@@ -190,7 +304,8 @@ export const initKnexPrometheusMetrics = (params: {
     const now = performance.now()
     const durationMs = now - connectionAcquisitionStartTime[eventId]
     delete connectionAcquisitionStartTime[eventId]
-    if (!isNaN(durationMs)) metricConnectionAcquisitionDuration.observe(durationMs)
+    if (!isNaN(durationMs))
+      metricConnectionAcquisitionDuration.labels({ region }).observe(durationMs)
 
     // successful acquisition is the start of usage, so record that start time
     let knexUid: string | undefined = undefined
@@ -234,7 +349,8 @@ export const initKnexPrometheusMetrics = (params: {
 
     const now = performance.now()
     const durationMs = now - connectionInUseStartTime[knexUid]
-    if (!isNaN(durationMs)) metricConnectionInUseDuration.observe(durationMs)
+    if (!isNaN(durationMs))
+      metricConnectionInUseDuration.labels({ region }).observe(durationMs)
     // params.logger.debug(
     //   {
     //     knexUid,
@@ -263,7 +379,8 @@ export const initKnexPrometheusMetrics = (params: {
   pool.on('stopReaping', () => {
     if (!reapingStartTime) return
     const durationMs = performance.now() - reapingStartTime
-    if (!isNaN(durationMs)) metricConnectionPoolReapingDuration.observe(durationMs)
+    if (!isNaN(durationMs))
+      metricConnectionPoolReapingDuration.labels({ region }).observe(durationMs)
     reapingStartTime = undefined
   })
 

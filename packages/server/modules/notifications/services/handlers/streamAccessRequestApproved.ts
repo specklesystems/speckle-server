@@ -1,14 +1,16 @@
+import { db } from '@/db/knex'
+import { GetServerInfo } from '@/modules/core/domain/server/operations'
+import { GetStream } from '@/modules/core/domain/streams/operations'
+import { GetUser } from '@/modules/core/domain/users/operations'
 import {
   buildAbsoluteFrontendUrlFromPath,
   getStreamRoute
 } from '@/modules/core/helpers/routeHelper'
-import { getStream } from '@/modules/core/repositories/streams'
-import { getUser } from '@/modules/core/repositories/users'
-import { getServerInfo } from '@/modules/core/services/generic'
-import {
-  EmailTemplateParams,
-  renderEmail
-} from '@/modules/emails/services/emailRendering'
+import { getServerInfoFactory } from '@/modules/core/repositories/server'
+import { getStreamFactory } from '@/modules/core/repositories/streams'
+import { getUserFactory } from '@/modules/core/repositories/users'
+import { EmailTemplateParams } from '@/modules/emails/domain/operations'
+import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
 import { NotificationValidationError } from '@/modules/notifications/errors'
 import {
@@ -16,35 +18,43 @@ import {
   StreamAccessRequestApprovedMessage
 } from '@/modules/notifications/helpers/types'
 
-async function validateMessage(msg: StreamAccessRequestApprovedMessage) {
-  const {
-    targetUserId,
-    data: {
-      request: { resourceId },
-      finalizedBy
-    }
-  } = msg
-
-  const [targetUser, finalizer, stream] = await Promise.all([
-    getUser(targetUserId),
-    getUser(finalizedBy),
-    getStream({ streamId: resourceId, userId: targetUserId })
-  ])
-
-  if (!targetUser)
-    throw new NotificationValidationError('Invalid notification target user')
-  if (!finalizer)
-    throw new NotificationValidationError('Invalid notification finalizer')
-  if (!stream) throw new NotificationValidationError('Invalid stream')
-  if (!stream.role)
-    throw new NotificationValidationError(
-      'User doesnt appear to have a role on the stream'
-    )
-
-  return { targetUser, finalizer, stream }
+type ValidateMessageDeps = {
+  getUser: GetUser
+  getStream: GetStream
 }
 
-type ValidatedMessageState = Awaited<ReturnType<typeof validateMessage>>
+const validateMessageFactory =
+  (deps: ValidateMessageDeps) => async (msg: StreamAccessRequestApprovedMessage) => {
+    const {
+      targetUserId,
+      data: {
+        request: { resourceId },
+        finalizedBy
+      }
+    } = msg
+
+    const [targetUser, finalizer, stream] = await Promise.all([
+      deps.getUser(targetUserId),
+      deps.getUser(finalizedBy),
+      deps.getStream({ streamId: resourceId, userId: targetUserId })
+    ])
+
+    if (!targetUser)
+      throw new NotificationValidationError('Invalid notification target user')
+    if (!finalizer)
+      throw new NotificationValidationError('Invalid notification finalizer')
+    if (!stream) throw new NotificationValidationError('Invalid stream')
+    if (!stream.role)
+      throw new NotificationValidationError(
+        'User doesnt appear to have a role on the stream'
+      )
+
+    return { targetUser, finalizer, stream }
+  }
+
+type ValidatedMessageState = Awaited<
+  ReturnType<ReturnType<typeof validateMessageFactory>>
+>
 
 function buildEmailTemplateMjml(
   state: ValidatedMessageState
@@ -87,24 +97,43 @@ function buildEmailTemplateParams(state: ValidatedMessageState): EmailTemplatePa
   }
 }
 
-const handler: NotificationHandler<StreamAccessRequestApprovedMessage> = async (
-  msg
-) => {
-  const state = await validateMessage(msg)
-  const htmlTemplateParams = buildEmailTemplateParams(state)
-  const serverInfo = await getServerInfo()
-  const { html, text } = await renderEmail(
-    htmlTemplateParams,
-    serverInfo,
-    state.targetUser
-  )
+const streamAccessRequestApprovedHandlerFactory =
+  (
+    deps: {
+      getServerInfo: GetServerInfo
+      renderEmail: typeof renderEmail
+      sendEmail: typeof sendEmail
+    } & ValidateMessageDeps
+  ): NotificationHandler<StreamAccessRequestApprovedMessage> =>
+  async (msg) => {
+    const state = await validateMessageFactory(deps)(msg)
+    const htmlTemplateParams = buildEmailTemplateParams(state)
+    const serverInfo = await deps.getServerInfo()
+    const { html, text } = await deps.renderEmail(
+      htmlTemplateParams,
+      serverInfo,
+      state.targetUser
+    )
 
-  await sendEmail({
-    to: state.targetUser.email,
-    text,
-    html,
-    subject: 'Your project access request has been approved'
+    await deps.sendEmail({
+      to: state.targetUser.email,
+      text,
+      html,
+      subject: 'Your project access request has been approved'
+    })
+  }
+
+const handler: NotificationHandler<StreamAccessRequestApprovedMessage> = async (
+  ...args
+) => {
+  const streamAccessRequestApprovedHandler = streamAccessRequestApprovedHandlerFactory({
+    getServerInfo: getServerInfoFactory({ db }),
+    renderEmail,
+    sendEmail,
+    getUser: getUserFactory({ db }),
+    getStream: getStreamFactory({ db })
   })
+  return streamAccessRequestApprovedHandler(...args)
 }
 
 export default handler

@@ -1,7 +1,7 @@
 <template>
   <LayoutDialog
     v-model:open="isOpen"
-    max-width="sm"
+    max-width="xs"
     @fully-closed="$emit('fully-closed')"
   >
     <template #header>
@@ -81,13 +81,13 @@ const onMove = async (targetModelName: string, newModelCreated?: boolean) => {
   loading.value = true
   const success = await moveVersions(
     {
+      projectId: props.projectId,
       versionIds: props.versions.map((v) => v.id),
       targetModelName
     },
     {
       previousModelId: props.modelId,
-      newModelCreated,
-      projectId: props.projectId
+      newModelCreated
     }
   )
   loading.value = false

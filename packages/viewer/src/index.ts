@@ -13,7 +13,8 @@ import {
   ViewerEvent,
   type ViewerParams,
   LightConfiguration,
-  ViewerEventPayload
+  ViewerEventPayload,
+  StencilOutlineType
 } from './IViewer.js'
 import type {
   PropertyInfo,
@@ -32,20 +33,24 @@ import type {
 } from './modules/queries/Query.js'
 import { type Utils } from './modules/Utils.js'
 import { BatchObject } from './modules/batching/BatchObject.js'
-import { Box3, Vector3 } from 'three'
 import {
   type MeasurementOptions,
   MeasurementType,
   MeasurementsExtension
 } from './modules/extensions/measurements/MeasurementsExtension.js'
 import { Units } from './modules/converter/Units.js'
-import { SelectionExtension } from './modules/extensions/SelectionExtension.js'
+import {
+  SelectionExtension,
+  SelectionExtensionOptions,
+  DefaultSelectionExtensionOptions
+} from './modules/extensions/SelectionExtension.js'
 import { CameraController } from './modules/extensions/CameraController.js'
 import { type InlineView } from './modules/extensions/CameraController.js'
 import { type CanonicalView } from './modules/extensions/CameraController.js'
 import { CameraEvent, CameraEventPayload } from './modules/objects/SpeckleCamera.js'
 import {
   SectionTool,
+  SectionToolEvent,
   SectionToolEventPayload
 } from './modules/extensions/SectionTool.js'
 import { SectionOutlines } from './modules/extensions/SectionOutlines.js'
@@ -64,7 +69,7 @@ import { Loader, LoaderEvent } from './modules/loaders/Loader.js'
 import { SpeckleLoader } from './modules/loaders/Speckle/SpeckleLoader.js'
 import { ObjLoader } from './modules/loaders/OBJ/ObjLoader.js'
 import { LegacyViewer } from './modules/LegacyViewer.js'
-import { SpeckleType } from './modules/loaders/GeometryConverter.js'
+import { GeometryConverter, SpeckleType } from './modules/loaders/GeometryConverter.js'
 import Input, { InputEvent, InputEventPayload } from './modules/input/Input.js'
 import { GeometryType } from './modules/batching/Batch.js'
 import { MeshBatch } from './modules/batching/MeshBatch.js'
@@ -72,25 +77,82 @@ import SpeckleStandardMaterial from './modules/materials/SpeckleStandardMaterial
 import SpeckleTextMaterial from './modules/materials/SpeckleTextMaterial.js'
 import { SpeckleText } from './modules/objects/SpeckleText.js'
 import { NodeRenderView } from './modules/tree/NodeRenderView.js'
-import { type ExtendedIntersection } from './modules/objects/SpeckleRaycaster.js'
+import {
+  CONTAINED,
+  INTERSECTED,
+  NOT_INTERSECTED,
+  type ExtendedIntersection
+} from './modules/objects/SpeckleRaycaster.js'
 import { SpeckleGeometryConverter } from './modules/loaders/Speckle/SpeckleGeometryConverter.js'
 import { Assets } from './modules/Assets.js'
-import { SpecklePass } from './modules/pipeline/SpecklePass.js'
 import { InstancedBatchObject } from './modules/batching/InstancedBatchObject.js'
 import { HybridCameraController } from './modules/extensions/HybridCameraController.js'
+import SpeckleBasicMaterial from './modules/materials/SpeckleBasicMaterial.js'
+import LineBatch from './modules/batching/LineBatch.js'
+import { PointBatch } from './modules/batching/PointBatch.js'
+import TextBatch from './modules/batching/TextBatch.js'
+import { ArcticViewPipeline } from './modules/pipeline/Pipelines/ArcticViewPipeline.js'
+import { DefaultPipeline } from './modules/pipeline/Pipelines/DefaultPipeline.js'
+import { EdgesPipeline } from './modules/pipeline/Pipelines/EdgesPipeline.js'
+import { PenViewPipeline } from './modules/pipeline/Pipelines/PenViewPipeline.js'
+import { ShadedViewPipeline } from './modules/pipeline/Pipelines/ShadedViewPipeline.js'
+import { TAAPipeline } from './modules/pipeline/Pipelines/TAAPipeline.js'
+import SpeckleRenderer from './modules/SpeckleRenderer.js'
+import { MRTEdgesPipeline } from './modules/pipeline/Pipelines/MRT/MRTEdgesPipeline.js'
+import { RenderTree } from './modules/tree/RenderTree.js'
+import SpeckleConverter from './modules/loaders/Speckle/SpeckleConverter.js'
+import { MRTShadedViewPipeline } from './modules/pipeline/Pipelines/MRT/MRTShadedViewPipeline.js'
+import { MRTPenViewPipeline } from './modules/pipeline/Pipelines/MRT/MRTPenViewPipeline.js'
+import { ViewMode, ViewModes } from './modules/extensions/ViewModes.js'
+import {
+  BaseGPass,
+  ClearFlags,
+  GPass,
+  ObjectVisibility,
+  PassOptions,
+  ProgressiveGPass
+} from './modules/pipeline/Passes/GPass.js'
+import { Pipeline } from './modules/pipeline/Pipelines/Pipeline.js'
+import { ProgressivePipeline } from './modules/pipeline/Pipelines/ProgressivePipeline.js'
+import { DepthPass } from './modules/pipeline/Passes/DepthPass.js'
+import { GeometryPass } from './modules/pipeline/Passes/GeometryPass.js'
+import { NormalsPass } from './modules/pipeline/Passes/NormalsPass.js'
+import { InputType, OutputPass } from './modules/pipeline/Passes/OutputPass.js'
+import { ViewportPass } from './modules/pipeline/Passes/ViewportPass.js'
+import { BlendPass } from './modules/pipeline/Passes/BlendPass.js'
+import { DepthNormalPass } from './modules/pipeline/Passes/DepthNormalPass.js'
+import { BasitPass } from './modules/pipeline/Passes/BasitPass.js'
+import { ProgressiveAOPass } from './modules/pipeline/Passes/ProgressiveAOPass.js'
+import { TAAPass } from './modules/pipeline/Passes/TAAPass.js'
+import {
+  FilterMaterial,
+  FilterMaterialOptions,
+  FilterMaterialType
+} from './modules/materials/Materials.js'
+import { SpeckleOfflineLoader } from './modules/loaders/Speckle/SpeckleOfflineLoader.js'
+import { AccelerationStructure } from './modules/objects/AccelerationStructure.js'
+import { TopLevelAccelerationStructure } from './modules/objects/TopLevelAccelerationStructure.js'
+import { StencilPass } from './modules/pipeline/Passes/StencilPass.js'
+import { StencilMaskPass } from './modules/pipeline/Passes/StencilMaskPass.js'
+import { SpeckleWebGLRenderer } from './modules/objects/SpeckleWebGLRenderer.js'
+import { InstancedMeshBatch } from './modules/batching/InstancedMeshBatch.js'
+import { ViewModeEvent, ViewModeEventPayload } from './modules/extensions/ViewModes.js'
+import { BasitPipeline } from './modules/pipeline/Pipelines/BasitViewPipeline.js'
+import SpeckleMesh from './modules/objects/SpeckleMesh.js'
+import SpeckleInstancedMesh from './modules/objects/SpeckleInstancedMesh.js'
 
 export {
   Viewer,
   LegacyViewer,
+  SpeckleWebGLRenderer,
   DefaultViewerParams,
   ViewerEvent,
   DefaultLightConfiguration,
   World,
   BatchObject,
   InstancedBatchObject,
-  Box3,
-  Vector3,
   WorldTree,
+  RenderTree,
   VisualDiffMode,
   MeasurementType,
   Units,
@@ -105,6 +167,8 @@ export {
   ExplodeExtension,
   DiffExtension,
   Loader,
+  SpeckleConverter,
+  GeometryConverter,
   SpeckleLoader,
   ObjLoader,
   LoaderEvent,
@@ -115,14 +179,67 @@ export {
   ObjectLayers,
   GeometryType,
   MeshBatch,
+  InstancedMeshBatch,
+  LineBatch,
+  PointBatch,
+  TextBatch,
+  AccelerationStructure,
+  TopLevelAccelerationStructure,
   SpeckleStandardMaterial,
+  SpeckleBasicMaterial,
   SpeckleTextMaterial,
   SpeckleText,
   NodeRenderView,
   SpeckleGeometryConverter,
   Assets,
   AssetType,
-  HybridCameraController
+  HybridCameraController,
+  SpeckleRenderer,
+  SectionToolEvent,
+  StencilOutlineType,
+  GPass,
+  BaseGPass,
+  ProgressiveGPass,
+  DepthPass,
+  GeometryPass,
+  NormalsPass,
+  OutputPass,
+  ViewportPass,
+  BlendPass,
+  DepthNormalPass,
+  BasitPass,
+  ProgressiveAOPass,
+  TAAPass,
+  StencilPass,
+  StencilMaskPass,
+  PassOptions,
+  ClearFlags,
+  ObjectVisibility,
+  InputType,
+  Pipeline,
+  ProgressivePipeline,
+  DefaultPipeline,
+  EdgesPipeline,
+  ShadedViewPipeline,
+  PenViewPipeline,
+  ArcticViewPipeline,
+  TAAPipeline,
+  MRTEdgesPipeline,
+  MRTShadedViewPipeline,
+  MRTPenViewPipeline,
+  BasitPipeline,
+  ViewModes,
+  ViewMode,
+  FilterMaterial,
+  FilterMaterialType,
+  FilterMaterialOptions,
+  SpeckleOfflineLoader,
+  NOT_INTERSECTED,
+  INTERSECTED,
+  CONTAINED,
+  ViewModeEvent,
+  SpeckleMesh,
+  SpeckleInstancedMesh
 }
 
 export type {
@@ -155,7 +272,9 @@ export type {
   InputEventPayload,
   SectionToolEventPayload,
   CameraEventPayload,
-  SpecklePass
+  SelectionExtensionOptions,
+  DefaultSelectionExtensionOptions,
+  ViewModeEventPayload
 }
 
 export * as UrlHelper from './modules/UrlHelper.js'

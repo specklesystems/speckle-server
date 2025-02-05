@@ -19,8 +19,9 @@
         v-model="localProjectDescription"
         name="projectDescription"
         label="Project description"
-        placeholder="Description (optional)"
+        placeholder="Description"
         show-label
+        show-optional
         color="foundation"
         :disabled="disabled"
       />
@@ -37,7 +38,7 @@
       max-width="md"
       :buttons="dialogButtons"
     >
-      <template #header>Unsaved Changes</template>
+      <template #header>Unsaved changes</template>
       <div class="space-y-4">
         <p>You have unsaved changes. Do you want to save them before leaving?</p>
       </div>
@@ -112,14 +113,13 @@ const resetLocalState = () => {
 
 const dialogButtons = computed<LayoutDialogButton[]>(() => [
   {
-    text: 'Discard Changes',
-    props: { color: 'outline', fullWidth: true },
+    text: 'Discard changes',
+    props: { color: 'outline' },
     onClick: handleRedirection
   },
   {
-    text: 'Save Changes',
+    text: 'Save changes',
     props: {
-      fullWidth: true,
       submit: true
     },
     onClick: () => {

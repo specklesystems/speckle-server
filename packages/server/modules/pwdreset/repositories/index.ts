@@ -3,6 +3,13 @@ import { PasswordResetTokens } from '@/modules/core/dbSchema'
 import { StringChain } from 'lodash'
 import dayjs from 'dayjs'
 import { InvalidArgumentError } from '@/modules/shared/errors'
+import { Knex } from 'knex'
+import {
+  CreateToken,
+  DeleteTokens,
+  EmailOrTokenId,
+  GetPendingToken
+} from '@/modules/pwdreset/domain/operations'
 
 export type PasswordResetTokenRecord = {
   id: string
@@ -10,16 +17,18 @@ export type PasswordResetTokenRecord = {
   createdAt: StringChain
 }
 
-export type EmailOrTokenId = { email?: string; tokenId?: string }
+const tables = {
+  pwdresetTokens: (db: Knex) => db<PasswordResetTokenRecord>(PasswordResetTokens.name)
+}
 
-const baseQuery = (identity: EmailOrTokenId) => {
+const baseQueryFactory = (deps: { db: Knex }) => (identity: EmailOrTokenId) => {
   const { email, tokenId } = identity
   if (!email && !tokenId)
     throw new InvalidArgumentError(
       'Either the email address or token ID must be specified'
     )
 
-  const q = PasswordResetTokens.knex<PasswordResetTokenRecord>()
+  const q = tables.pwdresetTokens(deps.db)
   if (email) {
     q.where(PasswordResetTokens.col.email, email)
   } else {
@@ -32,37 +41,47 @@ const baseQuery = (identity: EmailOrTokenId) => {
 /**
  * Attempt to find a valid & pending password reset token that was created in the last hour
  */
-export async function getPendingToken(identity: EmailOrTokenId) {
-  const anHourAgo = dayjs().subtract(1, 'hour')
+export const getPendingTokenFactory =
+  (deps: { db: Knex }): GetPendingToken =>
+  async (identity: EmailOrTokenId) => {
+    const anHourAgo = dayjs().subtract(1, 'hour')
 
-  const record = await baseQuery(identity)
-    .andWhere(PasswordResetTokens.col.createdAt, '>', anHourAgo.toISOString())
-    .first()
+    const record = await baseQueryFactory(deps)(identity)
+      .andWhere(PasswordResetTokens.col.createdAt, '>', anHourAgo.toISOString())
+      .first()
 
-  return record
-}
+    return record
+  }
 
 /**
  * Delete all tokens that fit the specified identity
  */
-export async function deleteTokens(identity: EmailOrTokenId) {
-  await baseQuery(identity).del()
-}
+export const deleteTokensFactory =
+  (deps: { db: Knex }): DeleteTokens =>
+  async (identity: EmailOrTokenId) => {
+    const q = baseQueryFactory(deps)
+    await q(identity).del()
+  }
 
 /**
  * Delete old tokens and create new one
  */
-export async function createToken(email: string) {
-  if (!email) throw new InvalidArgumentError('E-mail address is empty')
+export const createTokenFactory =
+  (deps: { db: Knex }): CreateToken =>
+  async (email: string) => {
+    if (!email) throw new InvalidArgumentError('E-mail address is empty')
 
-  await deleteTokens({ email })
-  const data: PasswordResetTokenRecord[] = await PasswordResetTokens.knex().insert(
-    {
-      id: crs({ length: 10 }),
-      email
-    },
-    Object.values(PasswordResetTokens.with({ withoutTablePrefix: true }).col)
-  )
+    await deleteTokensFactory(deps)({ email })
 
-  return data[0]
-}
+    const data: PasswordResetTokenRecord[] = await tables
+      .pwdresetTokens(deps.db)
+      .insert(
+        {
+          id: crs({ length: 10 }),
+          email
+        },
+        '*'
+      )
+
+    return data[0]
+  }

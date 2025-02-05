@@ -148,9 +148,24 @@ export const WithClear = mergeStories(Default, {
 
 export const LabelLeft = mergeStories(Default, {
   args: {
-    name: generateRandomName('withclear'),
+    name: generateRandomName('labelleft'),
     label: 'With label left',
     labelPosition: 'left'
+  }
+})
+
+export const WithTooltip = mergeStories(Default, {
+  args: {
+    name: generateRandomName('withTooltip'),
+    tooltipText: 'Hello, im a tooltip'
+  }
+})
+
+export const Loading = mergeStories(Default, {
+  args: {
+    name: generateRandomName('loading'),
+    label: 'With loading spinner',
+    loading: true
   }
 })
 

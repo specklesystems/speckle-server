@@ -1,129 +1,140 @@
 <template>
-  <div class="flex flex-col sm:flex-row justify-between sm:items-center">
-    <div class="flex gap-2 mb-3 mt-2">
-      <div class="flex items-center">
-        <WorkspaceAvatar
-          :logo="workspaceInfo.logo"
-          :default-logo-index="workspaceInfo.defaultLogoIndex"
-          size="lg"
-        />
-      </div>
-      <div class="flex flex-col">
-        <h1 class="text-heading-lg">{{ workspaceInfo.name }}</h1>
-        <div class="text-body-xs text-foreground-2">
-          {{ workspaceInfo.description || 'No workspace description' }}
-        </div>
-      </div>
+  <div class="flex flex-col gap-3 lg:gap-4">
+    <div v-if="!isWorkspaceGuest && !isInTrial && !hasValidPlan">
+      <BillingAlert :workspace="workspaceInfo" :actions="billingAlertAction" />
     </div>
-    <div class="flex items-center gap-2">
-      <div
-        class="text-body-3xs bg-foundation-2 text-foreground-2 rounded px-3 py-1 font-medium select-none"
-      >
-        {{ workspaceInfo.totalProjects.totalCount || 0 }} Project{{
-          workspaceInfo.totalProjects.totalCount === 1 ? '' : 's'
-        }}
-      </div>
-      <UserAvatarGroup
-        :users="team.map((teamMember) => teamMember.user)"
-        class="max-w-[104px]"
+    <div v-if="!isWorkspaceGuest && isInTrial" class="lg:hidden">
+      <BillingAlert
+        :workspace="workspaceInfo"
+        :actions="billingAlertAction"
+        condensed
       />
-      <FormButton
-        v-if="isWorkspaceAdmin"
-        color="outline"
-        @click="showInviteDialog = !showInviteDialog"
-      >
-        Invite
-      </FormButton>
-      <LayoutMenu
-        v-model:open="showActionsMenu"
-        :items="actionsItems"
-        @click.stop.prevent
-        @chosen="onActionChosen"
-      >
-        <FormButton
-          color="subtle"
-          hide-text
-          :icon-right="EllipsisHorizontalIcon"
-          @click="showActionsMenu = !showActionsMenu"
-        />
-      </LayoutMenu>
     </div>
-    <WorkspaceInviteDialog
-      v-model:open="showInviteDialog"
-      :workspace-id="workspaceInfo.id"
-      :workspace="workspaceInfo"
-    />
-    <SettingsDialog
-      v-model:open="showSettingsDialog"
-      target-menu-item="general"
-      :target-workspace-id="workspaceInfo.id"
-    />
+    <div class="flex items-center justify-between gap-4">
+      <div class="flex items-center gap-3 lg:gap-4">
+        <WorkspaceAvatar
+          v-tippy="workspaceInfo.logo ? undefined : 'Add a workspace icon'"
+          :name="workspaceInfo.name"
+          :logo="workspaceInfo.logo"
+          size="lg"
+          class="hidden md:block"
+          :class="{ 'cursor-pointer': !workspaceInfo.logo }"
+          is-button
+          @click="
+            workspaceInfo.logo
+              ? undefined
+              : navigateTo(settingsWorkspaceRoutes.general.route(workspaceInfo.slug))
+          "
+        />
+        <WorkspaceAvatar
+          class="md:hidden"
+          :name="workspaceInfo.name"
+          :logo="workspaceInfo.logo"
+        />
+        <h1 class="text-heading-sm md:text-heading line-clamp-2">
+          {{ workspaceInfo.name }}
+        </h1>
+        <CommonBadge rounded color-classes="bg-highlight-3 text-foreground-2">
+          <span class="capitalize">
+            {{ workspaceInfo.role?.split(':').reverse()[0] }}
+          </span>
+        </CommonBadge>
+      </div>
+
+      <div class="flex gap-1.5 md:gap-2">
+        <WorkspaceHeaderAddProjectMenu
+          v-if="!isWorkspaceGuest"
+          :is-workspace-admin="isWorkspaceAdmin"
+          hide-text-on-mobile
+          :disabled="workspaceInfo.readOnly"
+          @new-project="$emit('show-new-project-dialog')"
+          @move-project="$emit('show-move-projects-dialog')"
+        />
+
+        <FormButton
+          color="outline"
+          :icon-left="Cog8ToothIcon"
+          hide-text
+          @click="navigateTo(settingsWorkspaceRoutes.general.route(workspaceInfo.slug))"
+        >
+          Settings
+        </FormButton>
+        <ClientOnly>
+          <PortalTarget name="workspace-sidebar-toggle"></PortalTarget>
+        </ClientOnly>
+      </div>
+    </div>
+
+    <div class="lg:hidden mb-2">
+      <WorkspaceSidebarMembers
+        v-if="!isWorkspaceGuest"
+        :workspace-info="workspaceInfo"
+        :is-workspace-admin="isWorkspaceAdmin"
+        @show-invite-dialog="$emit('show-invite-dialog')"
+      />
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { Roles } from '@speckle/shared'
 import { graphql } from '~~/lib/common/generated/gql'
-import type { WorkspaceHeader_WorkspaceFragment } from '~~/lib/common/generated/gql/graphql'
-import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
-import { EllipsisHorizontalIcon } from '@heroicons/vue/24/solid'
-import { copyWorkspaceLink } from '~/lib/workspaces/composables/management'
+import {
+  WorkspacePlanStatuses,
+  type WorkspaceHeader_WorkspaceFragment
+} from '~~/lib/common/generated/gql/graphql'
+import { Cog8ToothIcon } from '@heroicons/vue/24/outline'
+import { type AlertAction } from '@speckle/ui-components'
+import { Roles } from '@speckle/shared'
+import { settingsWorkspaceRoutes } from '~/lib/common/helpers/route'
 
 graphql(`
   fragment WorkspaceHeader_Workspace on Workspace {
-    ...WorkspaceAvatar_Workspace
-    id
-    role
-    name
-    logo
-    description
-    totalProjects: projects {
-      totalCount
-    }
-    team {
-      id
-      user {
-        id
-        name
-        ...LimitedUserAvatar
-      }
-    }
-    ...WorkspaceInviteDialog_Workspace
+    ...WorkspaceBase_Workspace
+    ...WorkspaceTeam_Workspace
+    ...BillingAlert_Workspace
+    slug
+    readOnly
   }
 `)
 
-enum ActionTypes {
-  Settings = 'settings',
-  CopyLink = 'copy-link'
-}
+defineEmits<{
+  (e: 'show-move-projects-dialog'): void
+  (e: 'show-new-project-dialog'): void
+  (e: 'show-invite-dialog'): void
+}>()
 
 const props = defineProps<{
   workspaceInfo: WorkspaceHeader_WorkspaceFragment
 }>()
 
-const showInviteDialog = ref(false)
-const showActionsMenu = ref(false)
-const showSettingsDialog = ref(false)
-
-const team = computed(() => props.workspaceInfo.team || [])
 const isWorkspaceAdmin = computed(
   () => props.workspaceInfo.role === Roles.Workspace.Admin
 )
-const actionsItems = computed<LayoutMenuItem[][]>(() => [
-  [{ title: 'Copy link', id: ActionTypes.CopyLink }],
-  [{ title: 'Settings...', id: ActionTypes.Settings }]
-])
-
-const onActionChosen = (params: { item: LayoutMenuItem; event: MouseEvent }) => {
-  const { item } = params
-
-  switch (item.id) {
-    case ActionTypes.CopyLink:
-      copyWorkspaceLink(props.workspaceInfo.id)
-      break
-    case ActionTypes.Settings:
-      showSettingsDialog.value = true
-      break
+const isInTrial = computed(
+  () =>
+    props.workspaceInfo.plan?.status === WorkspacePlanStatuses.Trial ||
+    !props.workspaceInfo.plan
+)
+const hasValidPlan = computed(
+  () => props.workspaceInfo.plan?.status === WorkspacePlanStatuses.Valid
+)
+const isWorkspaceGuest = computed(
+  () => props.workspaceInfo.role === Roles.Workspace.Guest
+)
+const billingAlertAction = computed<Array<AlertAction>>(() => {
+  if (
+    (isInTrial.value && isWorkspaceAdmin.value) ||
+    props.workspaceInfo.plan?.status === WorkspacePlanStatuses.Expired
+  ) {
+    return [
+      {
+        title: 'Subscribe',
+        onClick: () =>
+          navigateTo(settingsWorkspaceRoutes.billing.route(props.workspaceInfo.slug))
+      }
+    ]
   }
-}
+
+  return []
+})
 </script>

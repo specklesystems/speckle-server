@@ -2,15 +2,18 @@
 import mailchimp from '@mailchimp/mailchimp_marketing'
 import { md5 } from '@/modules/shared/helpers/cryptoHelper'
 import { getMailchimpConfig } from '@/modules/shared/helpers/envHelper'
-// import { getUserById } from '@/modules/core/services/users'
 import { UserRecord } from '@/modules/core/helpers/types'
+import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
 
 let mailchimpInitialized = false
 
 function initializeMailchimp() {
   if (mailchimpInitialized) return
   const config = getMailchimpConfig() // Note: throws an error if not configured
-  if (!config) throw new Error('Cannot initialize mailchimp without config values')
+  if (!config)
+    throw new MisconfiguredEnvironmentError(
+      'Cannot initialize mailchimp without config values'
+    )
 
   mailchimp.setConfig({
     apiKey: config.apiKey,

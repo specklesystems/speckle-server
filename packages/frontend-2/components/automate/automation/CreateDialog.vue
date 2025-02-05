@@ -9,45 +9,41 @@
     prevent-close-on-click-outside
     @fully-closed="reset"
   >
-    <template v-if="isTestAutomation" #header>
-      Create
-      <span class="font-extrabold text-fancy-gradient">test</span>
-      automation
-    </template>
-    <div class="flex flex-col gap-6">
+    <template v-if="isTestAutomation" #header>Create test automation</template>
+    <div class="flex flex-col gap-4">
       <CommonStepsNumber
         v-if="shouldShowStepsWidget"
         v-model="stepsWidgetModel"
-        class="mb-2"
+        class="my-2"
         :steps="stepsWidgetSteps"
         :go-vertical-below="TailwindBreakpoints.sm"
         non-interactive
       />
-      <CommonAlert v-if="isTestAutomation" color="info">
-        <template #title>What is a "test automation"?</template>
-        <template #description>
-          <ul class="list-disc ml-4">
-            <li>
-              A test automation is a sandbox environment that allows you to connect your
-              local development environment for testing purposes. It enables you to run
-              your code against project data and submit results directly to the
-              connected test automation.
-            </li>
-            <li>
-              Unlike regular automations, test automations are not triggered by changes
-              to project data. They cannot be started by pushing a new version to a
-              model.
-            </li>
-            <li>Consequently, test automations do not execute published functions.</li>
-          </ul>
-        </template>
-      </CommonAlert>
+      <CommonCard v-if="isTestAutomation" class="bg-foundation py-3 px-4">
+        <p class="text-body-xs font-medium text-foreground">
+          What is a "test automation"?
+        </p>
+        <ul class="list-disc ml-4 text-body-xs text-foreground-2 mt-2">
+          <li>
+            A test automation is a sandbox environment that allows you to connect your
+            local development environment for testing purposes. It enables you to run
+            your code against project data and submit results directly to the connected
+            test automation.
+          </li>
+          <li>
+            Unlike regular automations, test automations are not triggered by changes to
+            project data. They cannot be started by pushing a new version to a model.
+          </li>
+          <li>Consequently, test automations do not execute published functions.</li>
+        </ul>
+      </CommonCard>
       <AutomateAutomationCreateDialogSelectFunctionStep
         v-if="enumStep === AutomationCreateSteps.SelectFunction"
         v-model:selected-function="selectedFunction"
         :show-label="false"
         :show-required="false"
         :preselected-function="validatedPreselectedFunction"
+        :workspace-id="workspaceId"
       />
       <AutomateAutomationCreateDialogFunctionParametersStep
         v-else-if="
@@ -65,12 +61,14 @@
           v-model:automation-name="automationName"
           :preselected-project="preselectedProject"
           :is-test-automation="isTestAutomation"
+          :workspace-id="workspaceId"
         />
         <AutomateAutomationCreateDialogSelectFunctionStep
           v-if="isTestAutomation"
           v-model:selected-function="selectedFunction"
           :preselected-function="validatedPreselectedFunction"
           :page-size="2"
+          :workspace-id="workspaceId"
         />
       </template>
     </div>
@@ -83,11 +81,6 @@ import {
   TailwindBreakpoints,
   type LayoutDialogButton
 } from '@speckle/ui-components'
-import {
-  ChevronLeftIcon,
-  ChevronRightIcon,
-  CodeBracketIcon
-} from '@heroicons/vue/24/outline'
 import { graphql } from '~/lib/common/generated/gql'
 import { Automate, type Optional } from '@speckle/shared'
 import type { CreateAutomationSelectableFunction } from '~/lib/automate/helpers/automations'
@@ -134,6 +127,7 @@ graphql(`
 `)
 
 const props = defineProps<{
+  workspaceId?: string
   preselectedFunction?: Optional<CreateAutomationSelectableFunction>
   preselectedProject?: Optional<FormSelectProjects_ProjectFragment>
 }>()
@@ -204,7 +198,7 @@ const enableSubmitTestAutomation = computed(() => {
 })
 
 const title = computed(() => {
-  return isTestAutomation.value ? undefined : 'Create Automation'
+  return isTestAutomation.value ? undefined : 'Create automation'
 })
 
 const buttons = computed((): LayoutDialogButton[] => {
@@ -215,8 +209,7 @@ const buttons = computed((): LayoutDialogButton[] => {
           id: 'createTestAutomation',
           text: 'Create test automation',
           props: {
-            color: 'outline',
-            iconLeft: CodeBracketIcon
+            color: 'outline'
           },
           onClick: () => {
             isTestAutomation.value = true
@@ -227,10 +220,10 @@ const buttons = computed((): LayoutDialogButton[] => {
           id: 'selectFnNext',
           text: 'Next',
           props: {
-            iconRight: ChevronRightIcon,
             disabled: !selectedFunction.value
           },
           onClick: () => {
+            mixpanel.track('Automate Select Function')
             step.value++
           }
         }
@@ -241,17 +234,17 @@ const buttons = computed((): LayoutDialogButton[] => {
           id: 'fnParamsPrev',
           text: 'Previous',
           props: {
-            color: 'outline',
-            iconLeft: ChevronLeftIcon,
-            class: '!text-primary'
+            color: 'outline'
           },
           onClick: () => step.value--
         },
         {
           id: 'fnParamsNext',
           text: 'Next',
+          onClick: () => {
+            mixpanel.track('Automate Set Function Parameters ')
+          },
           props: {
-            iconRight: ChevronRightIcon,
             disabled: hasParameterErrors.value
           },
           submit: true
@@ -263,14 +256,16 @@ const buttons = computed((): LayoutDialogButton[] => {
           id: 'detailsPrev',
           text: 'Previous',
           props: {
-            color: 'outline',
-            iconLeft: ChevronLeftIcon
+            color: 'outline'
           },
           onClick: () => step.value--
         },
         {
           id: 'detailsCreate',
           text: 'Create',
+          onClick: () => {
+            mixpanel.track('Automate Set Automation Details')
+          },
           submit: true,
           disabled: creationLoading.value
         }
@@ -281,8 +276,7 @@ const buttons = computed((): LayoutDialogButton[] => {
           id: 'detailsPrev',
           text: 'Back',
           props: {
-            color: 'outline',
-            iconLeft: ChevronLeftIcon
+            color: 'outline'
           },
           onClick: reset
         },
@@ -445,7 +439,7 @@ const onDetailsSubmit = handleDetailsSubmit(async () => {
       return
     }
 
-    mixpanel.track('Automation created', {
+    mixpanel.track('Automate Automation Created', {
       automationId: aId,
       name,
       projectId: project.id,

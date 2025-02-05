@@ -1,1 +1,1 @@
-export declare function tailwindContentEntry(req: NodeRequire): string
+export declare function tailwindContentEntries(): string[]

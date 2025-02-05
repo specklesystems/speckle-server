@@ -3,6 +3,31 @@ import { trimEnd } from 'lodash'
 import * as Environment from '@speckle/shared/dist/commonjs/environment/index.js'
 import { ensureError } from '@speckle/shared'
 
+export function getStringFromEnv(
+  envVarKey: string,
+  options?: Partial<{
+    /**
+     * If set to true, wont throw if the env var is not set
+     */
+    unsafe: boolean
+  }>
+): string {
+  const envVar = process.env[envVarKey]
+  if (!envVar) {
+    if (options?.unsafe) return ''
+    throw new MisconfiguredEnvironmentError(`${envVarKey} env var not configured`)
+  }
+  return envVar
+}
+
+export function getIntFromEnv(envVarKey: string, aDefault = '0'): number {
+  return parseInt(process.env[envVarKey] || aDefault)
+}
+
+export function getBooleanFromEnv(envVarKey: string, aDefault = false): boolean {
+  return ['1', 'true', true].includes(process.env[envVarKey] || aDefault.toString())
+}
+
 export function getSessionSecret() {
   if (!process.env.SESSION_SECRET) {
     throw new MisconfiguredEnvironmentError('SESSION_SECRET env var not configured')
@@ -18,6 +43,8 @@ export function isTestEnv() {
 export function isDevEnv() {
   return process.env.NODE_ENV === 'development'
 }
+
+export const isDevOrTestEnv = () => isDevEnv() || isTestEnv()
 
 export function isProdEnv() {
   return process.env.NODE_ENV === 'production'
@@ -43,14 +70,6 @@ export function getMaximumObjectSizeMB() {
   return getIntFromEnv('MAX_OBJECT_SIZE_MB', '100')
 }
 
-export function getIntFromEnv(envVarKey: string, aDefault = '0'): number {
-  return parseInt(process.env[envVarKey] || aDefault)
-}
-
-export function getBooleanFromEnv(envVarKey: string, aDefault = false): boolean {
-  return ['1', 'true'].includes(process.env[envVarKey] || aDefault.toString())
-}
-
 /**
  * Whether the server is supposed to serve frontend 2.0
  */
@@ -63,97 +82,47 @@ export function enableNewFrontendMessaging() {
 }
 
 export function getRedisUrl() {
-  if (!process.env.REDIS_URL) {
-    throw new MisconfiguredEnvironmentError('REDIS_URL env var not configured')
-  }
-
-  return process.env.REDIS_URL
+  return getStringFromEnv('REDIS_URL')
 }
 
 export function getOidcDiscoveryUrl() {
-  if (!process.env.OIDC_DISCOVERY_URL) {
-    throw new MisconfiguredEnvironmentError('OIDC_DISCOVERY_URL env var not configured')
-  }
-
-  return process.env.OIDC_DISCOVERY_URL
+  return getStringFromEnv('OIDC_DISCOVERY_URL')
 }
 
 export function getOidcClientId() {
-  if (!process.env.OIDC_CLIENT_ID) {
-    throw new MisconfiguredEnvironmentError('OIDC_CLIENT_ID env var not configured')
-  }
-
-  return process.env.OIDC_CLIENT_ID
+  return getStringFromEnv('OIDC_CLIENT_ID')
 }
 
 export function getOidcClientSecret() {
-  if (!process.env.OIDC_CLIENT_SECRET) {
-    throw new MisconfiguredEnvironmentError('OIDC_CLIENT_SECRET env var not configured')
-  }
-
-  return process.env.OIDC_CLIENT_SECRET
+  return getStringFromEnv('OIDC_CLIENT_SECRET')
 }
 
 export function getOidcName() {
-  if (!process.env.OIDC_NAME) {
-    throw new MisconfiguredEnvironmentError('OIDC_NAME env var not configured')
-  }
-
-  return process.env.OIDC_NAME
+  return getStringFromEnv('OIDC_NAME')
 }
 
 export function getGoogleClientId() {
-  if (!process.env.GOOGLE_CLIENT_ID) {
-    throw new MisconfiguredEnvironmentError('GOOGLE_CLIENT_ID env var not configured')
-  }
-
-  return process.env.GOOGLE_CLIENT_ID
+  return getStringFromEnv('GOOGLE_CLIENT_ID')
 }
 
 export function getGoogleClientSecret() {
-  if (!process.env.GOOGLE_CLIENT_SECRET) {
-    throw new MisconfiguredEnvironmentError(
-      'GOOGLE_CLIENT_SECRET env var not configured'
-    )
-  }
-
-  return process.env.GOOGLE_CLIENT_SECRET
+  return getStringFromEnv('GOOGLE_CLIENT_SECRET')
 }
 
 export function getGithubClientId() {
-  if (!process.env.GITHUB_CLIENT_ID) {
-    throw new MisconfiguredEnvironmentError('GITHUB_CLIENT_ID env var not configured')
-  }
-
-  return process.env.GITHUB_CLIENT_ID
+  return getStringFromEnv('GITHUB_CLIENT_ID')
 }
 
 export function getGithubClientSecret() {
-  if (!process.env.GITHUB_CLIENT_SECRET) {
-    throw new MisconfiguredEnvironmentError(
-      'GITHUB_CLIENT_SECRET env var not configured'
-    )
-  }
-
-  return process.env.GITHUB_CLIENT_SECRET
+  return getStringFromEnv('GITHUB_CLIENT_SECRET')
 }
 
 export function getAzureAdIdentityMetadata() {
-  if (!process.env.AZURE_AD_IDENTITY_METADATA) {
-    throw new MisconfiguredEnvironmentError(
-      'AZURE_AD_IDENTITY_METADATA env var not configured'
-    )
-  }
-
-  return process.env.AZURE_AD_IDENTITY_METADATA
+  return getStringFromEnv('AZURE_AD_IDENTITY_METADATA')
 }
 
 export function getAzureAdClientId() {
-  if (!process.env.AZURE_AD_CLIENT_ID) {
-    throw new MisconfiguredEnvironmentError('AZURE_AD_CLIENT_ID env var not configured')
-  }
-
-  return process.env.AZURE_AD_CLIENT_ID
+  return getStringFromEnv('AZURE_AD_CLIENT_ID')
 }
 
 export function getAzureAdIssuer() {
@@ -165,7 +134,7 @@ export function getAzureAdClientSecret() {
 }
 
 export function getMailchimpStatus() {
-  return [true, 'true'].includes(process.env.MAILCHIMP_ENABLED || false)
+  return getBooleanFromEnv('MAILCHIMP_ENABLED', false)
 }
 
 export function getMailchimpConfig() {
@@ -196,15 +165,6 @@ export function getMailchimpNewsletterIds() {
   if (!process.env.MAILCHIMP_NEWSLETTER_LIST_ID)
     throw new MisconfiguredEnvironmentError('Mailchimp newsletter id is not configured')
   return { listId: process.env.MAILCHIMP_NEWSLETTER_LIST_ID }
-}
-
-/**
- * Get app base url / canonical url / origin
- * TODO: Go over all getBaseUrl() usages and move them to getXOrigin() instead
- * @deprecated Since the new FE both apps (Server & FE) have different base urls, so use `getFrontendOrigin()` or `getServerOrigin()` instead
- */
-export function getBaseUrl() {
-  return getServerOrigin()
 }
 
 /**
@@ -260,11 +220,19 @@ export function getServerOrigin() {
   }
 }
 
+export function getBindAddress(aDefault: string = '127.0.0.1') {
+  return process.env.BIND_ADDRESS || aDefault
+}
+
+export function getPort() {
+  return getIntFromEnv('PORT', '3000')
+}
+
 /**
  * Check whether we're running an SSL server
  */
 export function isSSLServer() {
-  return /^https:\/\//.test(getBaseUrl())
+  return /^https:\/\//.test(getServerOrigin())
 }
 
 function parseUrlVar(value: string, name: string) {
@@ -290,7 +258,7 @@ export function getServerMovedTo() {
 }
 
 export function adminOverrideEnabled() {
-  return process.env.ADMIN_OVERRIDE_ENABLED === 'true'
+  return getBooleanFromEnv('ADMIN_OVERRIDE_ENABLED')
 }
 
 export function enableMixpanel() {
@@ -309,7 +277,7 @@ export function speckleAutomateUrl() {
 }
 
 export function weeklyEmailDigestEnabled() {
-  return process.env.WEEKLY_DIGEST_ENABLED === 'true'
+  return getBooleanFromEnv('WEEKLY_DIGEST_ENABLED')
 }
 
 /**
@@ -353,12 +321,7 @@ export function getOnboardingStreamCacheBustNumber() {
 }
 
 export function getEmailFromAddress() {
-  if (!process.env.EMAIL_FROM) {
-    throw new MisconfiguredEnvironmentError(
-      'Email From environment variable (EMAIL_FROM) is not configured'
-    )
-  }
-  return process.env.EMAIL_FROM
+  return getStringFromEnv('EMAIL_FROM')
 }
 
 export function getMaximumProjectModelsPerPage() {
@@ -370,26 +333,20 @@ export function delayGraphqlResponsesBy() {
   return getIntFromEnv('DELAY_GQL_RESPONSES_BY', '0')
 }
 
-export function getAutomateEncryptionKeysPath() {
-  if (!process.env.AUTOMATE_ENCRYPTION_KEYS_PATH) {
-    throw new MisconfiguredEnvironmentError(
-      'Automate encryption keys path environment variable (AUTOMATE_ENCRYPTION_KEYS_PATH) is not configured'
-    )
-  }
-
-  return process.env.AUTOMATE_ENCRYPTION_KEYS_PATH
+export function getEncryptionKeysPath() {
+  return getStringFromEnv('ENCRYPTION_KEYS_PATH')
 }
 
 export function getGendoAIKey() {
-  return process.env.GENDOAI_KEY
+  return getStringFromEnv('GENDOAI_KEY')
 }
 
-export function getGendoAIResponseKey() {
-  return process.env.GENDOAI_KEY_RESPONSE
+export function getGendoAICreditLimit() {
+  return getIntFromEnv('GENDOAI_CREDIT_LIMIT')
 }
 
-export function getGendoAIAPIEndpoint() {
-  return process.env.GENDOAI_API_ENDPOINT
+export function getGendoAiApiEndpoint() {
+  return getStringFromEnv('GENDOAI_API_ENDPOINT')
 }
 
 export const getFeatureFlags = () => Environment.getFeatureFlags()
@@ -399,11 +356,19 @@ export function getLicenseToken(): string | undefined {
 }
 
 export function isEmailEnabled() {
-  return process.env.EMAIL === 'true'
+  return getBooleanFromEnv('EMAIL')
 }
 
 export function postgresMaxConnections() {
   return getIntFromEnv('POSTGRES_MAX_CONNECTIONS_SERVER', '4')
+}
+
+export function postgresConnectionAcquireTimeoutMillis() {
+  return getIntFromEnv('POSTGRES_CONNECTION_ACQUIRE_TIMEOUT_MILLIS', '16000')
+}
+
+export function postgresConnectionCreateTimeoutMillis() {
+  return getIntFromEnv('POSTGRES_CONNECTION_CREATE_TIMEOUT_MILLIS', '5000')
 }
 
 export function highFrequencyMetricsCollectionPeriodMs() {
@@ -411,5 +376,74 @@ export function highFrequencyMetricsCollectionPeriodMs() {
 }
 
 export function maximumObjectUploadFileSizeMb() {
-  return getIntFromEnv('MAX_OBJECT_UPLOAD_FILE_SIZE_MB', '50')
+  return getIntFromEnv('MAX_OBJECT_UPLOAD_FILE_SIZE_MB', '100')
+}
+
+export function getS3AccessKey() {
+  return getStringFromEnv('S3_ACCESS_KEY')
+}
+
+export function getS3SecretKey() {
+  return getStringFromEnv('S3_SECRET_KEY')
+}
+
+export function getS3Endpoint() {
+  return getStringFromEnv('S3_ENDPOINT')
+}
+
+export function getS3Region(aDefault: string = 'us-east-1') {
+  return process.env.S3_REGION || aDefault
+}
+
+export function getS3BucketName() {
+  return getStringFromEnv('S3_BUCKET')
+}
+
+export function createS3Bucket() {
+  return getBooleanFromEnv('S3_CREATE_BUCKET')
+}
+
+export function getStripeApiKey(): string {
+  return getStringFromEnv('STRIPE_API_KEY')
+}
+
+export function getStripeEndpointSigningKey(): string {
+  return getStringFromEnv('STRIPE_ENDPOINT_SIGNING_KEY')
+}
+
+export function getOtelTracingUrl() {
+  return getStringFromEnv('OTEL_TRACE_URL')
+}
+
+export function getOtelTraceKey() {
+  return getStringFromEnv('OTEL_TRACE_KEY')
+}
+
+export function getOtelHeaderValue() {
+  return getStringFromEnv('OTEL_TRACE_VALUE')
+}
+
+export function getMultiRegionConfigPath(options?: Partial<{ unsafe: boolean }>) {
+  return getStringFromEnv('MULTI_REGION_CONFIG_PATH', options)
+}
+
+export const shouldRunTestsInMultiregionMode = () =>
+  getBooleanFromEnv('RUN_TESTS_IN_MULTIREGION_MODE')
+
+export function shutdownTimeoutSeconds() {
+  return getIntFromEnv('SHUTDOWN_TIMEOUT_SECONDS', '300')
+}
+
+export const knexAsyncStackTracesEnabled = () => {
+  const envSet = process.env.KNEX_ASYNC_STACK_TRACES_ENABLED
+  if (!envSet) return undefined
+  return getBooleanFromEnv('KNEX_ASYNC_STACK_TRACES_ENABLED')
+}
+
+export const asyncRequestContextEnabled = () => {
+  return getBooleanFromEnv('ASYNC_REQUEST_CONTEXT_ENABLED')
+}
+
+export function enableImprovedKnexTelemetryStackTraces() {
+  return getBooleanFromEnv('KNEX_IMPROVED_TELEMETRY_STACK_TRACES')
 }

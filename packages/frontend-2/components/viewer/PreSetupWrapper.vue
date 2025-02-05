@@ -5,7 +5,15 @@
         <!-- Nav -->
         <Portal to="navigation">
           <ViewerScope :state="state">
+            <template v-if="project?.workspace && isWorkspacesEnabled">
+              <HeaderNavLink
+                :to="workspaceRoute(project?.workspace.slug)"
+                :name="project?.workspace.name"
+                :separator="false"
+              ></HeaderNavLink>
+            </template>
             <HeaderNavLink
+              v-else
               :to="projectsRoute"
               name="Projects"
               :separator="false"
@@ -24,7 +32,7 @@
             v-if="showTour"
             class="fixed w-full h-[100dvh] flex justify-center items-center pointer-events-none z-[100]"
           >
-            <TourOnboarding />
+            <TourOnboarding @complete="showTour = false" />
           </div>
           <!-- Viewer host -->
           <div
@@ -114,6 +122,8 @@ import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 import { useViewerTour } from '~/lib/viewer/composables/tour'
 import { useFilterUtilities } from '~/lib/viewer/composables/ui'
 import { projectsRoute } from '~~/lib/common/helpers/route'
+import { workspaceRoute } from '~/lib/common/helpers/route'
+import { useMixpanel } from '~/lib/core/composables/mp'
 
 const emit = defineEmits<{
   setup: [InjectableViewerState]
@@ -121,6 +131,7 @@ const emit = defineEmits<{
 
 const route = useRoute()
 const { showTour, showControls } = useViewerTour()
+const isWorkspacesEnabled = useIsWorkspacesEnabled()
 
 const modelId = computed(() => route.params.modelId as string)
 
@@ -148,6 +159,11 @@ graphql(`
     createdAt
     name
     visibility
+    workspace {
+      id
+      slug
+      name
+    }
   }
 `)
 
@@ -183,4 +199,14 @@ const lastUpdate = computed(() => {
 })
 
 useHead({ title })
+
+const mp = useMixpanel()
+onMounted(() => {
+  const referrer = document.referrer
+  const shouldTrackEvent = !referrer?.includes('speckle.systems') && !import.meta.dev
+
+  if (isEmbedEnabled.value && shouldTrackEvent) {
+    mp.track('Embedded Model Load')
+  }
+})
 </script>

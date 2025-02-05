@@ -9,7 +9,7 @@
         viewBox="0 0 8 24"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
-        class="text-outline-2"
+        class="text-outline-5"
       >
         <path d="M2 18L6 6" stroke="currentColor" />
       </svg>
@@ -18,7 +18,7 @@
       :to="disableLink ? undefined : to"
       class="flex gap-1 items-center text-body-xs ml-0.5 text-foreground-2 select-none truncate"
       :class="disableLink ? '' : 'hover:!text-foreground'"
-      active-class="group is-active !text-foreground"
+      active-class="group is-active !text-foreground font-medium"
     >
       <div class="truncate">
         {{ name || to }}

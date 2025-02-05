@@ -4,8 +4,10 @@
     :model-value="workspace.logo"
     :placeholder="workspace.name"
     name="edit-avatar"
-    :disabled="loading"
+    :disabled="loading || disabled"
     :size="size"
+    :rounded="false"
+    light-style
     @save="onSave"
   />
 </template>
@@ -27,10 +29,12 @@ graphql(`
 const props = defineProps<{
   workspace: SettingsWorkspacesGeneralEditAvatar_WorkspaceFragment
   size: UserAvatarSize
+  disabled?: boolean
 }>()
 
-const editMode = ref(false)
 const { mutate, loading } = useUpdateWorkspace()
+
+const editMode = ref(false)
 
 const onSave = async (newVal: MaybeNullOrUndefined<string>) => {
   if (props.workspace.logo === newVal) return

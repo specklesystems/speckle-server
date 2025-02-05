@@ -2,10 +2,10 @@
   <LayoutDialog
     v-model:open="isOpen"
     title="Delete email address"
-    max-width="sm"
+    max-width="xs"
     :buttons="dialogButtons"
   >
-    <p class="text-body-xs text-foreground">
+    <p class="text-body-xs text-foreground mb-2">
       Are you sure you want to delete
       <span class="font-medium">{{ email }}</span>
       from your account?
@@ -22,6 +22,7 @@ import {
   getFirstErrorMessage,
   convertThrowIntoFetchResult
 } from '~~/lib/common/helpers/graphql'
+import { useMixpanel } from '~/lib/core/composables/mp'
 
 const props = defineProps<{
   emailId: string
@@ -31,18 +32,19 @@ const isOpen = defineModel<boolean>('open', { required: true })
 
 const { mutate: deleteMutation } = useMutation(settingsDeleteUserEmailMutation)
 const { triggerNotification } = useGlobalToast()
+const mixpanel = useMixpanel()
 
 const dialogButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Cancel',
-    props: { color: 'outline', fullWidth: true },
+    props: { color: 'outline' },
     onClick: () => {
       isOpen.value = false
     }
   },
   {
     text: 'Delete',
-    props: { color: 'primary', fullWidth: true },
+    props: { color: 'primary' },
     onClick: () => {
       onDeleteEmail()
     }
@@ -58,6 +60,8 @@ const onDeleteEmail = async () => {
       type: ToastNotificationType.Success,
       title: `${props.email} deleted`
     })
+
+    mixpanel.track('Email Deleted')
   } else {
     const errorMessage = getFirstErrorMessage(result?.errors)
     triggerNotification({

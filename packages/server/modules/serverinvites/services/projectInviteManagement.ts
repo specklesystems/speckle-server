@@ -1,4 +1,6 @@
+import { GetStream } from '@/modules/core/domain/streams/operations'
 import { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
+import { GetUser, GetUsers } from '@/modules/core/domain/users/operations'
 import {
   MutationStreamInviteUseArgs,
   ProjectInviteCreateInput,
@@ -8,7 +10,6 @@ import {
 import { ContextResourceAccessRules } from '@/modules/core/helpers/token'
 import { LimitedUserRecord } from '@/modules/core/helpers/types'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
-import { getUser, getUsers } from '@/modules/core/repositories/users'
 import {
   ProjectInviteResourceType,
   ServerInviteResourceType
@@ -26,7 +27,7 @@ import {
 } from '@/modules/serverinvites/domain/types'
 import {
   InviteCreateValidationError,
-  NoInviteFoundError
+  InviteNotFoundError
 } from '@/modules/serverinvites/errors'
 import {
   buildUserTarget,
@@ -57,7 +58,7 @@ const isStreamInviteCreateInput = (
 ): i is StreamInviteCreateInput => has(i, 'streamId')
 
 export const createProjectInviteFactory =
-  (deps: { createAndSendInvite: CreateAndSendInvite }) =>
+  (deps: { createAndSendInvite: CreateAndSendInvite; getStream: GetStream }) =>
   async (params: {
     input: StreamInviteCreateInput | FullProjectInviteCreateInput
     inviterId: string
@@ -66,9 +67,15 @@ export const createProjectInviteFactory =
      * If invite also has secondary resource targets, you can specify the expected roles here
      */
     secondaryResourceRoles?: Partial<ResourceTargetTypeRoleTypeMap>
+    allowWorkspacedProjects?: boolean
   }) => {
-    const { input, inviterId, inviterResourceAccessRules, secondaryResourceRoles } =
-      params
+    const {
+      input,
+      inviterId,
+      inviterResourceAccessRules,
+      secondaryResourceRoles,
+      allowWorkspacedProjects
+    } = params
     const { email, userId, role } = input
 
     if (!email && !userId) {
@@ -85,6 +92,15 @@ export const createProjectInviteFactory =
       : input.projectId
     if (!resourceId?.length) {
       throw new InviteCreateValidationError('Invalid project ID specified')
+    }
+
+    // If workspace project, ensure secondaryResourceRoles are set (channeling users
+    // to the correct gql resolver)
+    const project = await deps.getStream({ streamId: resourceId })
+    if (!allowWorkspacedProjects && project && project?.workspaceId) {
+      throw new InviteCreateValidationError(
+        'Target project belongs to a workspace, you should use a workspace invite instead'
+      )
     }
 
     const target = (userId ? buildUserTarget(userId) : email)!
@@ -135,7 +151,7 @@ export const useProjectInviteAndNotifyFactory =
  * Invite users to be contributors for the specified project
  */
 export const inviteUsersToProjectFactory =
-  (deps: { createAndSendInvite: CreateAndSendInvite; getUsers: typeof getUsers }) =>
+  (deps: { createAndSendInvite: CreateAndSendInvite; getUsers: GetUsers }) =>
   async (
     inviterId: string,
     streamId: string,
@@ -191,16 +207,13 @@ function buildPendingStreamCollaboratorModel(
  * Get all pending invitations to projects that this user has
  */
 export const getUserPendingProjectInvitesFactory =
-  (deps: {
-    getUserResourceInvites: QueryAllUserResourceInvites
-    getUser: typeof getUser
-  }) =>
+  (deps: { getUserResourceInvites: QueryAllUserResourceInvites; getUser: GetUser }) =>
   async (userId: string): Promise<PendingStreamCollaboratorGraphQLReturn[]> => {
     if (!userId) return []
 
     const targetUser = await deps.getUser(userId)
     if (!targetUser) {
-      throw new NoInviteFoundError('Nonexistant user specified')
+      throw new InviteNotFoundError('Nonexistant user specified')
     }
 
     const invites = await deps.getUserResourceInvites<
@@ -218,7 +231,7 @@ export const getUserPendingProjectInvitesFactory =
  * Either the user ID or invite ID must be set
  */
 export const getUserPendingProjectInviteFactory =
-  (deps: { findInvite: FindInvite; getUser: typeof getUser }) =>
+  (deps: { findInvite: FindInvite; getUser: GetUser }) =>
   async (
     projectId: string,
     userId: MaybeNullOrUndefined<string>,

@@ -30,7 +30,6 @@ input ProjectCreateInput {
   name: String
   description: String
   visibility: ProjectVisibility
-  workspaceId: String
 }
 
 input ProjectUpdateRoleInput {
@@ -151,11 +150,12 @@ extend type User {
     limit: Int! = 25
     cursor: String
     filter: UserProjectsFilter
-  ): ProjectCollection! @isOwner
+  ): UserProjectCollection! @isOwner
 }
 
-type ProjectCollection {
+type UserProjectCollection {
   totalCount: Int!
+  numberOfHidden: Int!
   cursor: String
   items: [Project!]!
 }
@@ -182,7 +182,7 @@ type Project {
   """
   Collaborators who have been invited, but not yet accepted.
   """
-  invitedTeam: [PendingStreamCollaborator!] @hasStreamRole(role: STREAM_OWNER)
+  invitedTeam: [PendingStreamCollaborator!] @hasStreamRole(role: STREAM_CONTRIBUTOR)
   """
   Source apps used in any models of this project
   """
@@ -199,6 +199,7 @@ input UserProjectsFilter {
   Only include projects where user has the specified roles
   """
   onlyWithRoles: [String!]
+  workspaceId: ID
 }
 
 enum UserProjectsUpdatedMessageType {
@@ -246,10 +247,15 @@ extend type Subscription {
   Track newly added or deleted projects owned by the active user
   """
   userProjectsUpdated: UserProjectsUpdatedMessage!
+    @hasServerRole(role: SERVER_GUEST)
+    @hasScope(scope: "profile:read")
+
   """
   Track updates to a specific project
   """
   projectUpdated(id: String!): ProjectUpdatedMessage!
+    @hasServerRole(role: SERVER_GUEST)
+    @hasScope(scope: "streams:read")
 }
 
 extend type User {

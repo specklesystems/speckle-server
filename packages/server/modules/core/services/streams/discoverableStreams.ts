@@ -1,16 +1,17 @@
 import {
+  CountDiscoverableStreams,
+  GetDiscoverableStreams,
+  GetDiscoverableStreamsPage,
+  GetDiscoverableStreamsParams
+} from '@/modules/core/domain/streams/operations'
+import {
   DiscoverableStreamsSortingInput,
   DiscoverableStreamsSortType,
   QueryDiscoverableStreamsArgs,
   SortDirection
 } from '@/modules/core/graph/generated/graphql'
 import { StreamRecord } from '@/modules/core/helpers/types'
-import {
-  countDiscoverableStreams,
-  GetDiscoverableStreamsParams,
-  getDiscoverableStreams as getDiscoverableStreamsQuery,
-  encodeDiscoverableStreamsCursor
-} from '@/modules/core/repositories/streams'
+import { encodeDiscoverableStreamsCursor } from '@/modules/core/repositories/streams'
 import { Nullable, Optional } from '@/modules/shared/helpers/typeHelper'
 import { clamp } from 'lodash'
 
@@ -46,21 +47,30 @@ function formatRetrievalParams(
 /**
  * Retrieve discoverable streams
  */
-export async function getDiscoverableStreams(
-  args: QueryDiscoverableStreamsArgs,
-  streamIdWhitelist?: Optional<string[]>
-): Promise<StreamCollection> {
-  const params = formatRetrievalParams(args, streamIdWhitelist)
-  const [items, totalCount] = await Promise.all([
-    getDiscoverableStreamsQuery(params),
-    countDiscoverableStreams(params)
-  ])
+export const getDiscoverableStreamsFactory =
+  (deps: {
+    getDiscoverableStreamsPage: GetDiscoverableStreamsPage
+    countDiscoverableStreams: CountDiscoverableStreams
+  }): GetDiscoverableStreams =>
+  async (
+    args: QueryDiscoverableStreamsArgs,
+    streamIdWhitelist?: Optional<string[]>
+  ): Promise<StreamCollection> => {
+    const params = formatRetrievalParams(args, streamIdWhitelist)
+    const [items, totalCount] = await Promise.all([
+      deps.getDiscoverableStreamsPage(params),
+      deps.countDiscoverableStreams(params)
+    ])
 
-  const cursor = encodeDiscoverableStreamsCursor(params.sort.type, items, params.cursor)
+    const cursor = encodeDiscoverableStreamsCursor(
+      params.sort.type,
+      items,
+      params.cursor
+    )
 
-  return {
-    totalCount,
-    cursor,
-    items
+    return {
+      totalCount,
+      cursor,
+      items
+    }
   }
-}

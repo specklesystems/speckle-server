@@ -12,11 +12,13 @@
           v-on="on"
         />
       </div>
-      <FormButton @click="openNewProject = true">Create</FormButton>
+      <FormButton :disabled="disableCreate" @click="openNewProject = true">
+        Create
+      </FormButton>
     </div>
 
     <LayoutTable
-      class="mt-6 md:mt-8"
+      class="mt-6"
       :columns="[
         { id: 'name', header: 'Name', classes: 'col-span-3 truncate' },
         { id: 'type', header: 'Type', classes: 'col-span-1' },
@@ -24,14 +26,15 @@
         { id: 'modified', header: 'Modified', classes: 'col-span-2' },
         { id: 'models', header: 'Models', classes: 'col-span-1' },
         { id: 'versions', header: 'Versions', classes: 'col-span-1' },
-        { id: 'contributors', header: 'Contributors', classes: 'col-span-2' }
+        { id: 'contributors', header: 'Contributors', classes: 'col-span-2 pr-8' },
+        { id: 'actions', header: '', classes: 'absolute right-2 top-0.5' }
       ]"
       :items="projects"
-      :buttons="[{ icon: TrashIcon, label: 'Delete', action: openProjectDeleteDialog }]"
-      :on-row-click="handleProjectClick"
     >
       <template #name="{ item }">
-        {{ isProject(item) ? item.name : '' }}
+        <NuxtLink :to="projectRoute(item.id)">
+          {{ isProject(item) ? item.name : '' }}
+        </NuxtLink>
       </template>
 
       <template #type="{ item }">
@@ -65,13 +68,31 @@
       </template>
 
       <template #contributors="{ item }">
-        <div v-if="isProject(item)" class="py-1">
+        <div v-if="isProject(item)">
           <UserAvatarGroup :users="item.team.map((t) => t.user)" :max-count="3" />
         </div>
       </template>
+
+      <template #actions="{ item }">
+        <LayoutMenu
+          v-model:open="showActionsMenu[item.id]"
+          :items="actionItems"
+          mount-menu-on-body
+          :menu-position="HorizontalDirection.Left"
+          @chosen="({ item: actionItem }) => onActionChosen(actionItem, item)"
+        >
+          <FormButton
+            :color="showActionsMenu[item.id] ? 'outline' : 'subtle'"
+            hide-text
+            :icon-right="showActionsMenu[item.id] ? XMarkIcon : EllipsisHorizontalIcon"
+            @click.stop="toggleMenu(item.id)"
+          />
+        </LayoutMenu>
+      </template>
     </LayoutTable>
 
-    <SettingsSharedProjectsDeleteDialog
+    <ProjectsDeleteDialog
+      v-if="projectToModify"
       v-model:open="showProjectDeleteDialog"
       :project="projectToModify"
     />
@@ -81,25 +102,34 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import type { ItemType, ProjectItem } from '~~/lib/server-management/helpers/types'
-import type { SettingsSharedProjects_ProjectFragment } from '~~/lib/common/generated/gql/graphql'
-import { MagnifyingGlassIcon, TrashIcon } from '@heroicons/vue/24/outline'
+import { HorizontalDirection } from '~~/lib/common/composables/window'
+import type {
+  SettingsSharedProjects_ProjectFragment,
+  ProjectsDeleteDialog_ProjectFragment
+} from '~~/lib/common/generated/gql/graphql'
+import {
+  MagnifyingGlassIcon,
+  EllipsisHorizontalIcon,
+  XMarkIcon
+} from '@heroicons/vue/24/outline'
 import { isProject } from '~~/lib/server-management/helpers/utils'
-import { useDebouncedTextInput } from '@speckle/ui-components'
+import { useDebouncedTextInput, type LayoutMenuItem } from '@speckle/ui-components'
 import { graphql } from '~/lib/common/generated/gql'
+import { useRouter } from 'vue-router'
+import { projectCollaboratorsRoute, projectRoute } from '~/lib/common/helpers/route'
 
 graphql(`
   fragment SettingsSharedProjects_Project on Project {
+    ...ProjectsDeleteDialog_Project
     id
     name
     visibility
     createdAt
     updatedAt
-    models {
+    models(limit: 0) {
       totalCount
     }
-    versions {
+    versions(limit: 0) {
       totalCount
     }
     team {
@@ -116,29 +146,56 @@ graphql(`
 defineProps<{
   projects?: SettingsSharedProjects_ProjectFragment[]
   workspaceId?: string
-}>()
-
-const emit = defineEmits<{
-  (e: 'close'): void
+  disableCreate?: boolean
 }>()
 
 const search = defineModel<string>('search')
 const { on, bind } = useDebouncedTextInput({ model: search })
 const router = useRouter()
 
-const projectToModify = ref<ProjectItem | null>(null)
+const projectToModify = ref<ProjectsDeleteDialog_ProjectFragment | null>(null)
 const showProjectDeleteDialog = ref(false)
 const openNewProject = ref(false)
 
-const openProjectDeleteDialog = (item: ItemType) => {
-  if (isProject(item)) {
-    projectToModify.value = item
-    showProjectDeleteDialog.value = true
+const openProjectDeleteDialog = (item: ProjectsDeleteDialog_ProjectFragment) => {
+  projectToModify.value = item
+  showProjectDeleteDialog.value = true
+}
+
+const handleProjectClick = (id: string) => {
+  router.push(projectRoute(id))
+}
+
+enum ActionTypes {
+  ViewProject = 'view-project',
+  EditMembers = 'edit-members',
+  DeleteProject = 'delete-project'
+}
+
+const showActionsMenu = ref<Record<string, boolean>>({})
+
+const actionItems: LayoutMenuItem[][] = [
+  [
+    { title: 'View project', id: ActionTypes.ViewProject },
+    { title: 'Edit members', id: ActionTypes.EditMembers },
+    { title: 'Delete project...', id: ActionTypes.DeleteProject }
+  ]
+]
+
+const onActionChosen = (
+  actionItem: LayoutMenuItem,
+  project: ProjectsDeleteDialog_ProjectFragment
+) => {
+  if (actionItem.id === ActionTypes.EditMembers) {
+    router.push(projectCollaboratorsRoute(project.id))
+  } else if (actionItem.id === ActionTypes.ViewProject) {
+    handleProjectClick(project.id)
+  } else if (actionItem.id === ActionTypes.DeleteProject) {
+    openProjectDeleteDialog(project)
   }
 }
 
-const handleProjectClick = (item: ItemType) => {
-  router.push(`/projects/${item.id}`)
-  emit('close')
+const toggleMenu = (itemId: string) => {
+  showActionsMenu.value[itemId] = !showActionsMenu.value[itemId]
 }
 </script>

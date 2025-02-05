@@ -1,12 +1,14 @@
-import { gql } from 'apollo-server-express'
+import { gql } from 'graphql-tag'
 
 export const basicWorkspaceFragment = gql`
   fragment BasicWorkspace on Workspace {
     id
     name
+    slug
     updatedAt
     createdAt
     role
+    readOnly
   }
 `
 
@@ -27,6 +29,16 @@ export const basicPendingWorkspaceCollaboratorFragment = gql`
       name
     }
     token
+  }
+`
+
+export const workspaceProjectsFragment = gql`
+  fragment WorkspaceProjects on ProjectCollection {
+    items {
+      id
+    }
+    cursor
+    totalCount
   }
 `
 
@@ -86,6 +98,20 @@ export const getWorkspaceWithTeamQuery = gql`
   ${basicPendingWorkspaceCollaboratorFragment}
 `
 
+export const getWorkspaceWithProjectsQuery = gql`
+  query GetWorkspaceWithProjects($workspaceId: String!) {
+    workspace(id: $workspaceId) {
+      ...BasicWorkspace
+      projects {
+        ...WorkspaceProjects
+      }
+    }
+  }
+
+  ${basicWorkspaceFragment}
+  ${workspaceProjectsFragment}
+`
+
 export const cancelInviteMutation = gql`
   mutation CancelWorkspaceInvite($workspaceId: String!, $inviteId: String!) {
     workspaceMutations {
@@ -114,8 +140,12 @@ export const useInviteMutation = gql`
 `
 
 export const getWorkspaceInviteQuery = gql`
-  query GetWorkspaceInvite($workspaceId: String!, $token: String) {
-    workspaceInvite(workspaceId: $workspaceId, token: $token) {
+  query GetWorkspaceInvite(
+    $workspaceId: String!
+    $token: String
+    $options: WorkspaceInviteLookupOptions = null
+  ) {
+    workspaceInvite(workspaceId: $workspaceId, token: $token, options: $options) {
       ...BasicPendingWorkspaceCollaborator
     }
   }
@@ -168,4 +198,166 @@ export const resendWorkspaceInviteMutation = gql`
       }
     }
   }
+`
+
+export const addWorkspaceDomainMutation = gql`
+  mutation AddWorkspaceDomain($input: AddDomainToWorkspaceInput!) {
+    workspaceMutations {
+      addDomain(input: $input) {
+        id
+        domains {
+          id
+        }
+      }
+    }
+  }
+`
+
+export const deleteWorkspaceDomainMutation = gql`
+  mutation DeleteWorkspaceDomain($input: WorkspaceDomainDeleteInput!) {
+    workspaceMutations {
+      deleteDomain(input: $input) {
+        id
+        domains {
+          id
+        }
+        domainBasedMembershipProtectionEnabled
+        discoverabilityEnabled
+      }
+    }
+  }
+`
+
+export const getAvailableRegionsQuery = gql`
+  query GetAvailableRegions {
+    serverInfo {
+      multiRegion {
+        regions {
+          id
+          key
+          name
+        }
+      }
+    }
+  }
+`
+
+export const getDefaultRegionQuery = gql`
+  query GetWorkspaceDefaultRegion($workspaceId: String!) {
+    workspace(id: $workspaceId) {
+      id
+      defaultRegion {
+        id
+        key
+        name
+      }
+    }
+  }
+`
+
+export const setDefaultRegionMutation = gql`
+  mutation SetWorkspaceDefaultRegion($workspaceId: String!, $regionKey: String!) {
+    workspaceMutations {
+      setDefaultRegion(regionKey: $regionKey, workspaceId: $workspaceId) {
+        id
+        defaultRegion {
+          id
+          key
+          name
+        }
+      }
+    }
+  }
+`
+
+export const onWorkspaceProjectsUpdatedSubscription = gql`
+  subscription OnWorkspaceProjectsUpdated(
+    $workspaceId: String
+    $workspaceSlug: String
+  ) {
+    workspaceProjectsUpdated(workspaceId: $workspaceId, workspaceSlug: $workspaceSlug) {
+      type
+      projectId
+      workspaceId
+      project {
+        id
+        name
+      }
+    }
+  }
+
+  ${basicWorkspaceFragment}
+`
+
+export const onWorkspaceUpdatedSubscription = gql`
+  subscription OnWorkspaceUpdated($workspaceId: String, $workspaceSlug: String) {
+    workspaceUpdated(workspaceId: $workspaceId, workspaceSlug: $workspaceSlug) {
+      id
+      workspace {
+        ...BasicWorkspace
+        team {
+          totalCount
+          items {
+            id
+            role
+            user {
+              id
+              name
+            }
+          }
+        }
+        invitedTeam {
+          ...BasicPendingWorkspaceCollaborator
+        }
+      }
+    }
+  }
+
+  ${basicWorkspaceFragment}
+`
+
+export const dismissWorkspaceMutation = gql`
+  mutation dismissWorkspace($input: WorkspaceDismissInput!) {
+    workspaceMutations {
+      dismiss(input: $input)
+    }
+  }
+`
+
+export const requestToJoinWorkspaceMutation = gql`
+  mutation requestToJoinWorkspace($input: WorkspaceRequestToJoinInput!) {
+    workspaceMutations {
+      requestToJoin(input: $input)
+    }
+  }
+`
+
+export const getWorkspaceWithJoinRequestsQuery = gql`
+  query GetWorkspaceWithJoinRequests(
+    $workspaceId: String!
+    $filter: AdminWorkspaceJoinRequestFilter
+    $cursor: String
+    $limit: Int
+  ) {
+    workspace(id: $workspaceId) {
+      ...BasicWorkspace
+      adminWorkspacesJoinRequests(filter: $filter, cursor: $cursor, limit: $limit) {
+        items {
+          status
+          user {
+            id
+            name
+          }
+          workspace {
+            id
+            name
+          }
+          createdAt
+        }
+        cursor
+        totalCount
+      }
+    }
+  }
+  ${basicWorkspaceFragment}
 `

@@ -181,7 +181,6 @@ export const NoTarget: StoryObj = mergeStories(Default, {
 
 export const FullWidth: StoryObj = mergeStories(Default, {
   args: {
-    fullWidth: true,
     default: 'Full width button'
   }
 })

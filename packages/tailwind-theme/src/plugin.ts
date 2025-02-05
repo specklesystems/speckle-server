@@ -1,4 +1,4 @@
-import plugin from 'tailwindcss/plugin.js'
+import buildPlugin from 'tailwindcss/plugin.js'
 import preset from './preset.js'
 
 export const lightThemeVariables = {
@@ -22,6 +22,7 @@ export const lightThemeVariables = {
   '--foreground-3': '#7C7C7D',
   /* foreground color when put on top of a primary colored background */
   '--foreground-on-primary': '#fff',
+  '--foreground-disabled': '#1A1A1A50',
 
   /* primary color */
   '--primary': '#136CFF',
@@ -45,21 +46,25 @@ export const lightThemeVariables = {
   /* success variations */
   '--success': '#34D399',
   '--success-lighter': '#53EDB5',
+  '--success-lightest': '#EEFEF8',
   '--success-darker': '#1CBA80',
 
   /* warning variations */
   '--warning': '#FBBF24',
   '--warning-lighter': '#FFD770',
+  '--warning-lightest': '#FEF9EE',
   '--warning-darker': '#E0AB20',
 
   /* info variations */
-  '--info': '#B9B8CC',
-  '--info-lighter': '#D2D1E5',
-  '--info-darker': '#6D6B99',
+  '--info': '#B8C0CC',
+  '--info-lighter': '#E0ECFF',
+  '--info-lightest': '#EEEEFE',
+  '--info-darker': '#6B7D99',
 
   /* danger variations */
   '--danger': '#C45959',
   '--danger-lighter': '#F78888',
+  '--danger-lightest': '#FEEEEE',
   '--danger-darker': '#913333'
 }
 
@@ -83,16 +88,17 @@ export const darkThemeVariables = {
   '--foreground-2': '#B0B1B5',
   '--foreground-3': '#7E7F82',
   '--foreground-on-primary': '#FFFFFF',
+  '--foreground-disabled': '#FFFFFF50',
 
   /* primary color */
   '--primary': '#136CFF',
   /* focused primary color */
-  '--primary-focus': '#458CFF',
+  '--primary-focus': '#0057E5',
   /* muted primary color */
   '--primary-muted': '#292B39',
 
   /* outline variations */
-  '--outline-1': '#2B7CFF',
+  '--outline-1': '#276FE5',
   '--outline-2': '#2E313F',
   '--outline-3': '#282833',
   '--outline-4': '#4B40C9',
@@ -106,25 +112,29 @@ export const darkThemeVariables = {
   /* success variations */
   '--success': '#34D399',
   '--success-lighter': '#53EDB5',
+  '--success-lightest': '#072C1F',
   '--success-darker': '#1CBA80',
 
   /* warning variations */
   '--warning': '#FBBF24',
   '--warning-lighter': '#FFD770',
+  '--warning-lightest': '#302303',
   '--warning-darker': '#E0AB20',
 
   /* info variations */
-  '--info': '#B9B8CC',
-  '--info-lighter': '#D2D1E5',
-  '--info-darker': '#6D6B99',
+  '--info': '#B8C0CC',
+  '--info-lighter': '#E0ECFF',
+  '--info-lightest': '#030330',
+  '--info-darker': '#6B7D99',
 
   /* danger variations */
   '--danger': '#F87171',
   '--danger-lighter': '#FF8F8F',
+  '--danger-lightest': '#300303',
   '--danger-darker': '#AB3E3E'
 }
 
-export default plugin(function ({ addComponents, addBase }) {
+const plugin = buildPlugin(function ({ addComponents, addBase }) {
   addBase({
     /* cyrillic-ext */
     '@font-face': {
@@ -369,3 +379,6 @@ export default plugin(function ({ addComponents, addBase }) {
     }
   })
 }, preset)
+
+export default plugin
+export { plugin }

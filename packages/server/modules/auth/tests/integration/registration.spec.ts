@@ -6,7 +6,7 @@ import {
   LoginParams
 } from '@/modules/auth/tests/helpers/registration'
 import { AllScopes } from '@/modules/core/helpers/mainConstants'
-import { updateServerInfo } from '@/modules/core/services/generic'
+import { updateServerInfoFactory } from '@/modules/core/repositories/server'
 import { findInviteFactory } from '@/modules/serverinvites/repositories/serverInvites'
 import { expectToThrow, itEach } from '@/test/assertionHelper'
 import { BasicTestUser, createTestUsers } from '@/test/authHelper'
@@ -32,6 +32,8 @@ import {
 } from '@/test/speckle-helpers/streamHelper'
 import { Roles } from '@speckle/shared'
 import { expect } from 'chai'
+
+const updateServerInfo = updateServerInfoFactory({ db })
 
 describe('Server registration', () => {
   let restApi: LocalAuthRestApiHelpers
@@ -88,7 +90,10 @@ describe('Server registration', () => {
       const params = generateRegistrationParams()
       params.challenge = challenge
 
-      await restApi.register(params)
+      const user = await restApi.register(params)
+
+      // email remains unverified
+      expect(user.emails.every((e) => !e.verified)).to.be.true
     })
 
     it('fails without challenge', async () => {
@@ -160,7 +165,7 @@ describe('Server registration', () => {
           streamId: basicAdminStream.id
         },
         {
-          context: createTestContext({
+          context: await createTestContext({
             userId: newUser.id,
             auth: true,
             role: Roles.Server.User,
@@ -202,7 +207,9 @@ describe('Server registration', () => {
         itEach(
           [{ stream: true }, { stream: false }],
           ({ stream }) =>
-            `works with valid ${stream ? 'stream' : 'server'} invite token`,
+            `works with valid ${
+              stream ? 'stream' : 'server'
+            } invite token and auto-verifies email`,
           async ({ stream }) => {
             const challenge = 'bababooey'
             const params = generateRegistrationParams()
@@ -221,6 +228,7 @@ describe('Server registration', () => {
 
             const newUser = await restApi.register(params)
             expect(newUser.role).to.equal(Roles.Server.Admin)
+            expect(newUser.emails.every((e) => e.verified)).to.be.true
           }
         )
       })

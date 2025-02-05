@@ -59,16 +59,14 @@ export const HeaderAndFooter = {
         text: 'Close',
         props: {
           color: 'outline',
-          link: false,
-          fullWidth: true
+          link: false
         }
       },
       {
         text: 'Save',
         props: {
           color: 'default',
-          link: false,
-          fullWidth: true
+          link: false
         }
       }
     ]
@@ -93,8 +91,7 @@ export const WithSubmit = {
         text: 'Submit',
         props: {
           color: 'default',
-          submit: true,
-          fullWidth: true
+          submit: true
         }
       }
     ]
@@ -144,6 +141,31 @@ export const WithOverflowingTooltip: StoryObj = {
       <LayoutDialog v-model:open="open" v-bind="args">
         <div class="flex flex-col text-foreground space-y-4">
           <p v-tippy="\`Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris vehicula mauris sed tortor tempor, eget viverra arcu dapibus. Vivamus ac erat sit amet justo pulvinar condimentum. Vivamus volutpat eget justo in elementum. Quisque ut metus sed elit eleifend faucibus eget vel diam. Sed eget accumsan felis. Nullam sollicitudin a felis eget aliquet. Fusce vitae erat rutrum, convallis ipsum in, efficitur lectus. Mauris sed augue at lacus malesuada mattis. Mauris tincidunt augue nec magna mollis efficitur. Etiam suscipit pellentesque lorem, quis placerat mi tristique et. Donec at scelerisque dolor. Proin nec libero vitae ligula tincidunt interdum eget et odio.\`">Hover on me!</p>
+        </div>
+      </LayoutDialog>
+    </div>`
+  })
+}
+
+export const Transparent: StoryObj = {
+  ...Default,
+  args: {
+    ...Default.args,
+    isTransparent: true,
+    maxWidth: 'md'
+  },
+  render: (args) => ({
+    components: { LayoutDialog, FormButton },
+    setup() {
+      const open = ref(false)
+      return { args, open }
+    },
+    template: `<div>
+      <FormButton @click="() => open = true">Open Transparent Dialog</FormButton>
+      <LayoutDialog v-model:open="open" v-bind="args">
+        <div class="flex flex-col space-y-4">
+          <div class="h4 font-semibold">Transparent Background</div>
+          <div>This dialog has a transparent background, useful for custom styling or overlay purposes.</div>
         </div>
       </LayoutDialog>
     </div>`

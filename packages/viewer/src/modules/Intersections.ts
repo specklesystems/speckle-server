@@ -17,6 +17,7 @@ import {
   SpeckleRaycaster
 } from './objects/SpeckleRaycaster.js'
 import { ObjectLayers } from '../IViewer.js'
+import { World } from './World.js'
 
 export class Intersections {
   protected raycaster: SpeckleRaycaster
@@ -197,21 +198,13 @@ export class Intersections {
         return a.distance - b.distance
       })
     if (bounds) {
-      this.boundsBuffer.copy(bounds)
       /** We slightly increase the tested bounds to account for fp precision issues which
        *  have proven to arise exactly at the edge of the bounds. Our BVH returns intersection
        *  points ever so slightly off the actual surface, so for very thin geometries it might
        *  fall outside of the bounds
        */
-      const offsetSize = new Vector3(
-        0.001 * (this.boundsBuffer.max.x - this.boundsBuffer.min.x),
-        0.001 * (this.boundsBuffer.max.y - this.boundsBuffer.min.y),
-        0.001 * (this.boundsBuffer.max.z - this.boundsBuffer.min.z)
-      )
+      this.boundsBuffer.copy(World.expandBoxRelative(bounds))
 
-      this.boundsBuffer.expandByVector(
-        new Vector3(offsetSize.x, offsetSize.y, offsetSize.z)
-      )
       results = results.filter((result) => {
         return (
           this.boundsBuffer.containsPoint(result.point) ||

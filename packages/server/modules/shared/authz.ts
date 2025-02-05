@@ -1,73 +1,43 @@
 import { Scopes, Roles } from '@/modules/core/helpers/mainConstants'
 import { getRolesFactory } from '@/modules/shared/repositories/roles'
-import { getStream } from '@/modules/core/services/streams'
 
 import {
   BaseError,
   ForbiddenError,
   UnauthorizedError,
   ContextError,
-  BadRequestError,
-  DatabaseError
+  DatabaseError,
+  NotFoundError
 } from '@/modules/shared/errors'
 import { adminOverrideEnabled } from '@/modules/shared/helpers/envHelper'
 import {
   AvailableRoles,
   MaybeNullOrUndefined,
-  Nullable,
   ServerRoles,
   StreamRoles
 } from '@speckle/shared'
-import { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
 import { isResourceAllowed } from '@/modules/core/helpers/token'
-import { getAutomationProject } from '@/modules/automate/repositories/automations'
 import { UserRoleData } from '@/modules/shared/domain/rolesAndScopes/types'
 import db from '@/db/knex'
-
-interface AuthResult {
-  authorized: boolean
-}
+import {
+  AuthContext,
+  AuthParams,
+  AuthResult,
+  AuthData
+} from '@/modules/shared/domain/authz/types'
+import { StreamWithOptionalRole } from '@/modules/core/repositories/streams'
+import {
+  ValidateServerRoleBuilder,
+  ValidateStreamRoleBuilder
+} from '@/modules/shared/domain/authz/operations'
+import { GetRoles } from '@/modules/shared/domain/rolesAndScopes/operations'
+import { ValidateUserServerRole } from '@/modules/shared/domain/operations'
+export { AuthContext, AuthParams }
 
 interface AuthFailedResult extends AuthResult {
   authorized: false
   error: BaseError | null
   fatal?: boolean
-}
-
-interface Stream {
-  id: string
-  role?: StreamRoles
-  isPublic: boolean
-  allowPublicComments: boolean
-}
-
-export interface AuthContext {
-  auth: boolean
-  userId?: string
-  role?: ServerRoles
-  token?: string
-  scopes?: string[]
-  stream?: Stream
-  err?: Error | BaseError
-  /**
-   * Set if authenticated with an app token
-   */
-  appId?: string | null
-  /**
-   * Set, if the token has resource access limits (e.g. only access to specific projects)
-   */
-  resourceAccessRules?: Nullable<TokenResourceIdentifier[]>
-}
-
-export interface AuthParams {
-  streamId?: string
-  automationId?: string
-}
-
-interface AuthData {
-  context: AuthContext
-  authResult: AuthResult
-  params?: AuthParams
 }
 
 interface AuthFailedData extends AuthData {
@@ -151,21 +121,29 @@ export function validateRole<T extends AvailableRoles>({
   }
 }
 
-export const validateServerRole = ({ requiredRole }: { requiredRole: ServerRoles }) =>
-  validateRole({
-    requiredRole,
-    rolesLookup: getRolesFactory({ db }),
-    iddqd: Roles.Server.Admin,
-    roleGetter: (context) => context.role || null
-  })
+type ValidateRoleBuilderDeps = {
+  getRoles: GetRoles
+}
 
-export const validateStreamRole = ({ requiredRole }: { requiredRole: StreamRoles }) =>
-  validateRole({
-    requiredRole,
-    rolesLookup: getRolesFactory({ db }),
-    iddqd: Roles.Stream.Owner,
-    roleGetter: (context) => context?.stream?.role || null
-  })
+export const validateServerRoleBuilderFactory =
+  (deps: ValidateRoleBuilderDeps): ValidateServerRoleBuilder =>
+  ({ requiredRole }) =>
+    validateRole({
+      requiredRole,
+      rolesLookup: deps.getRoles,
+      iddqd: Roles.Server.Admin,
+      roleGetter: (context) => context.role || null
+    })
+
+export const validateStreamRoleBuilderFactory =
+  (deps: ValidateRoleBuilderDeps): ValidateStreamRoleBuilder =>
+  ({ requiredRole }: { requiredRole: StreamRoles }) =>
+    validateRole({
+      requiredRole,
+      rolesLookup: deps.getRoles,
+      iddqd: Roles.Stream.Owner,
+      roleGetter: (context) => context?.stream?.role || null
+    })
 
 export const validateResourceAccess: AuthPipelineFunction = async ({
   context,
@@ -226,24 +204,25 @@ export const validateScope =
 type StreamGetter = (params: {
   streamId: string
   userId?: string
-}) => Promise<MaybeNullOrUndefined<Stream>>
+}) => Promise<MaybeNullOrUndefined<StreamWithOptionalRole>>
+
+type ValidateRequiredStreamDeps = {
+  getStream: StreamGetter
+}
 
 // this doesn't do any checks  on the scopes, its sole responsibility is to add the
 // stream object to the pipeline context
-export const contextRequiresStream =
-  (deps: {
-    getStream: StreamGetter
-    getAutomationProject: typeof getAutomationProject
-  }): AuthPipelineFunction =>
+export const validateRequiredStreamFactory =
+  (deps: ValidateRequiredStreamDeps): AuthPipelineFunction =>
   // stream getter is an async func over { streamId, userId } returning a stream object
   // IoC baby...
   async ({ context, authResult, params }) => {
-    const { getStream, getAutomationProject } = deps
+    const { getStream } = deps
 
-    if (!params?.streamId && !params?.automationId)
+    if (!params?.streamId)
       return authFailed(
         context,
-        new ContextError("The context doesn't have a streamId or automationId")
+        new ContextError("The context doesn't have a streamId")
       )
     // because we're assigning to the context, it would raise if it would be null
     // its probably?? safer than returning a new context
@@ -253,20 +232,20 @@ export const contextRequiresStream =
     // cause stream getter could throw, its not a safe function if we want to
     // keep the pipeline rolling
     try {
-      const stream = params.streamId
-        ? await getStream({
-            streamId: params.streamId,
-            userId: context?.userId
-          })
-        : await getAutomationProject({
-            automationId: params.automationId!,
-            userId: context?.userId
-          })
+      const stream = await getStream({
+        streamId: params.streamId,
+        userId: context?.userId
+      })
 
       if (!stream)
         return authFailed(
           context,
-          new BadRequestError('Stream inputs are malformed'),
+          new NotFoundError(
+            'Project ID is malformed and cannot be found, or the project does not exist',
+            {
+              info: { projectId: params.streamId }
+            }
+          ),
           true
         )
       context.stream = stream
@@ -315,38 +294,56 @@ export const authPipelineCreator = (
     }
     // validate auth result a bit...
     if (authResult.authorized && authHasFailed(authResult))
-      throw new Error('Auth failure')
+      throw new UnauthorizedError('Auth failure')
     return { context, authResult }
   }
   return pipeline
 }
 
-export const streamWritePermissions: AuthPipelineFunction[] = [
-  validateServerRole({ requiredRole: Roles.Server.Guest }),
+export const streamWritePermissionsPipelineFactory = (
+  deps: ValidateRoleBuilderDeps & ValidateRequiredStreamDeps
+): AuthPipelineFunction[] => [
+  validateServerRoleBuilderFactory(deps)({ requiredRole: Roles.Server.Guest }),
   validateScope({ requiredScope: Scopes.Streams.Write }),
-  contextRequiresStream({ getStream, getAutomationProject }),
-  validateStreamRole({ requiredRole: Roles.Stream.Contributor }),
-  validateResourceAccess
-]
-export const streamReadPermissions: AuthPipelineFunction[] = [
-  validateServerRole({ requiredRole: Roles.Server.Guest }),
-  validateScope({ requiredScope: Scopes.Streams.Read }),
-  contextRequiresStream({ getStream, getAutomationProject }),
-  validateStreamRole({ requiredRole: Roles.Stream.Contributor }),
+  validateRequiredStreamFactory(deps),
+  validateStreamRoleBuilderFactory(deps)({ requiredRole: Roles.Stream.Contributor }),
   validateResourceAccess
 ]
 
-if (adminOverrideEnabled()) streamReadPermissions.push(allowForServerAdmins)
+export const streamReadPermissionsPipelineFactory = (
+  deps: ValidateRoleBuilderDeps &
+    ValidateRequiredStreamDeps & {
+      adminOverrideEnabled: typeof adminOverrideEnabled
+    }
+): AuthPipelineFunction[] => {
+  const ret: AuthPipelineFunction[] = [
+    validateServerRoleBuilderFactory(deps)({ requiredRole: Roles.Server.Guest }),
+    validateScope({ requiredScope: Scopes.Streams.Read }),
+    validateRequiredStreamFactory(deps),
+    validateStreamRoleBuilderFactory(deps)({ requiredRole: Roles.Stream.Contributor }),
+    validateResourceAccess
+  ]
 
-export const throwForNotHavingServerRole = async (
-  context: AuthContext,
-  requiredRole: ServerRoles
-) => {
-  const { authResult } = await validateServerRole({ requiredRole })({
-    context,
-    authResult: { authorized: false }
-  })
-  if (authHasFailed(authResult))
-    throw authResult.error ?? new Error('Auth failed without an error')
-  return true
+  if (deps.adminOverrideEnabled()) ret.push(allowForServerAdmins)
+
+  return ret
 }
+
+export const throwForNotHavingServerRoleFactory =
+  (deps: { validateServerRole: ValidateServerRoleBuilder }): ValidateUserServerRole =>
+  async (context: AuthContext, requiredRole: ServerRoles) => {
+    const { authResult } = await deps.validateServerRole({ requiredRole })({
+      context,
+      authResult: { authorized: false }
+    })
+    if (authHasFailed(authResult))
+      throw authResult.error ?? new ForbiddenError('Auth failed without an error')
+    return true
+  }
+
+// Global singleton for easy access
+export const throwForNotHavingServerRole = throwForNotHavingServerRoleFactory({
+  validateServerRole: validateServerRoleBuilderFactory({
+    getRoles: getRolesFactory({ db })
+  })
+})

@@ -1,11 +1,11 @@
 <template>
   <div class="flex flex-col space-y-6">
-    <SettingsSectionHeader title="Change password" subheading />
-    <p class="text-body-xs text-foreground">
+    <SettingsSectionHeader title="Password change" subheading />
+    <CommonCard class="text-body-xs bg-foundation">
       Press the button below to start the password reset process.
       <br />
       Once pressed, you will receive an e-mail with further instructions.
-    </p>
+    </CommonCard>
     <div>
       <FormButton color="primary" @click="onClick">Reset password</FormButton>
     </div>

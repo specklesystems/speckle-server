@@ -7,14 +7,15 @@
       } ${heightClasses}`"
     >
       <UserAvatar
-        v-for="(user, i) in items"
+        v-for="(user, i) in visibleUsers"
         :key="user.id || i"
         :user="user"
         :size="size"
+        :hide-tooltip="hideTooltips"
       />
     </div>
-    <UserAvatar v-if="finalHiddenItemCount" :size="size">
-      +{{ finalHiddenItemCount }}
+    <UserAvatar v-if="totalHiddenCount" :size="size" class="select-none">
+      +{{ totalHiddenCount }}
     </UserAvatar>
   </div>
 </template>
@@ -32,12 +33,16 @@ const props = withDefaults(
     overlap?: boolean
     size?: UserAvatarSize
     maxCount?: number
+    hideTooltips?: boolean
+    maxAvatars?: number
   }>(),
   {
     users: () => [],
     overlap: true,
     size: 'base',
-    maxCount: undefined
+    maxCount: undefined,
+    hideTooltips: false,
+    maxAvatars: undefined
   }
 )
 
@@ -58,11 +63,19 @@ const maxCountHiddenItemCount = computed(() => {
   return Math.max(props.users.length - props.maxCount, 0)
 })
 
-const finalHiddenItemCount = computed(
-  () => hiddenItemCount.value + maxCountHiddenItemCount.value
-)
+const visibleUsers = computed(() => {
+  const result = props.users
+  const limit = Math.min(props.maxCount ?? Infinity, props.maxAvatars ?? Infinity)
+  return result.slice(0, limit)
+})
 
-const items = computed(() =>
-  props.maxCount ? props.users.slice(0, props.maxCount) : props.users
+const maxAvatarsHiddenCount = computed(() => {
+  if (!props.maxAvatars) return 0
+  return Math.max(props.users.length - props.maxAvatars, 0)
+})
+
+const totalHiddenCount = computed(
+  () =>
+    hiddenItemCount.value + maxCountHiddenItemCount.value + maxAvatarsHiddenCount.value
 )
 </script>

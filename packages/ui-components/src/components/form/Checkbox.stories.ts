@@ -35,6 +35,9 @@ export default {
     },
     id: {
       type: 'string'
+    },
+    labelPosition: {
+      type: 'string'
     }
   }
 } as Meta
@@ -60,7 +63,8 @@ const defaultArgs = {
   value: 'test1' as string | true,
   disabled: false,
   modelValue: undefined as Optional<string | true>,
-  rules: undefined as Optional<RuleExpression<any>[]>
+  rules: undefined as Optional<RuleExpression<any>[]>,
+  labelPosition: 'right' as 'right' | 'left'
 }
 
 export const Default: StoryObj<typeof defaultArgs> = {
@@ -217,5 +221,13 @@ export const Single: StoryObj<typeof defaultArgs> = {
           'Set `value` to `true` for non-grouped checkboxes. That way v-model will be `undefined` if unchecked or `true` if checked.'
       }
     }
+  }
+}
+
+export const LeftLabel: StoryObj<typeof defaultArgs> = {
+  ...Default,
+  args: {
+    ...Default.args,
+    labelPosition: 'left'
   }
 }

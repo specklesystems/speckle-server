@@ -79,11 +79,9 @@ export class Viewer extends EventEmitter implements IViewer {
     const cs = []
     let pt = obj
     do {
-      if ((pt = Object.getPrototypeOf(pt))) cs.push(pt.constructor || null)
+      if ((pt = Object.getPrototypeOf(pt))) cs.push(pt.constructor.name || null)
     } while (pt !== null)
-    return cs.map(function (c) {
-      return c ? c.toString().split(/\s|\(/)[1] : null
-    })
+    return cs
   }
 
   public createExtension<T extends Extension>(type: Constructor<T>): T {
@@ -204,7 +202,7 @@ export class Viewer extends EventEmitter implements IViewer {
   }
 
   private update() {
-    const delta = this.clock.getDelta()
+    const delta = this.clock.getDelta() * 1000 // turn to miliseconds
     const extensions = Object.values(this.extensions)
     extensions.forEach((ext: Extension) => {
       ext.onEarlyUpdate(delta)
@@ -235,7 +233,7 @@ export class Viewer extends EventEmitter implements IViewer {
         })
         .catch((reason) => {
           Logger.error(reason)
-          Logger.error('Fallback to null environment!')
+          Logger.error('Environment failed to load!')
         })
     }
   }
@@ -308,6 +306,9 @@ export class Viewer extends EventEmitter implements IViewer {
    */
 
   public async loadObject(loader: Loader, zoomToObject = true) {
+    if (zoomToObject) {
+      this.getExtension(CameraController)?.default()
+    }
     if (++this.inProgressOperations === 1) this.emit(ViewerEvent.Busy, true)
 
     this.loaders[loader.resource] = loader
@@ -365,7 +366,7 @@ export class Viewer extends EventEmitter implements IViewer {
         this.speckleRenderer.removeRenderTree(resource)
         this.tree.getRenderTree(resource)?.purge()
         this.tree.purge(resource)
-        this.requestRender(UpdateFlags.RENDER | UpdateFlags.SHADOWS)
+        this.requestRender(UpdateFlags.RENDER_RESET | UpdateFlags.SHADOWS)
       }
     } finally {
       if (--this.inProgressOperations === 0) {

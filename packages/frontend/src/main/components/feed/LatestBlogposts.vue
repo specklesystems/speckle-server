@@ -122,7 +122,7 @@ export default {
   },
   mounted() {
     this.api = new GhostContentAPI({
-      url: 'https://speckle.systems',
+      url: 'https://v1.speckle.systems',
       key: 'bf4ca76b9606d0c13b0edf5dc1',
       version: 'v3'
     })

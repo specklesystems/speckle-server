@@ -25,7 +25,7 @@ spec:
 
         ports:
           - name: metrics
-            containerPort: 9092
+            containerPort: {{ .Values.monitoring.port }}
             protocol: TCP
 
         resources:
@@ -46,10 +46,15 @@ spec:
           runAsNonRoot: true
           runAsUser: 20000
 
-        {{- if .Values.db.useCertificate }}
         volumeMounts:
+        {{- if .Values.db.useCertificate }}
           - name: postgres-certificate
             mountPath: /postgres-certificate
+        {{- end }}
+        {{- if .Values.featureFlags.workspacesMultiRegionEnabled }}
+          - name: multi-region-config
+            mountPath: /multi-region-config
+            readOnly: true
         {{- end }}
 
         env:
@@ -58,16 +63,64 @@ spec:
               secretKeyRef:
                 name: {{ default .Values.secretName .Values.db.connectionString.secretName }}
                 key: {{ default "postgres_url" .Values.db.connectionString.secretKey }}
+          - name: POSTGRES_MAX_CONNECTIONS
+            value: {{ .Values.monitoring.maximumPostgresConnections | quote }}
+          - name: POSTGRES_CONNECTION_CREATE_TIMEOUT_MILLIS
+            value: {{ .Values.db.connectionCreateTimeoutMillis | quote }}
+          - name: POSTGRES_CONNECTION_ACQUIRE_TIMEOUT_MILLIS
+            value: {{ .Values.db.connectionAcquireTimeoutMillis | quote }}
+          - name: METRICS_HOST
+            value: '0.0.0.0' # bind to all interfaces, not just localhost. Required to allow prometheus to scrape metrics, and healthchecks to work.
+          - name: PROMETHEUS_METRICS_PORT
+            value: {{ .Values.monitoring.port | quote }}
+          - name: METRICS_COLLECTION_PERIOD_SECONDS
+            value: {{ .Values.monitoring.metricsCollectionPeriodSeconds | quote }}
+
+          {{- if .Values.db.databaseName }}
+          - name: POSTGRES_DATABASE
+            value: {{ .Values.db.databaseName | quote }}
+          {{- end }}
 
           {{- if .Values.db.useCertificate }}
           - name: NODE_EXTRA_CA_CERTS
             value: "/postgres-certificate/ca-certificate.crt"
+          {{- end }}
+          {{- if .Values.featureFlags.workspacesMultiRegionEnabled }}
+          - name: FF_WORKSPACES_MULTI_REGION_ENABLED
+            value: {{ .Values.featureFlags.workspacesMultiRegionEnabled | quote }}
+          - name: MULTI_REGION_CONFIG_PATH
+            value: "/multi-region-config/multi-region-config.json"
           {{- end }}
 
           - name: LOG_LEVEL
             value: {{ .Values.monitoring.logLevel }}
           - name: LOG_PRETTY
             value: {{ .Values.monitoring.logPretty | quote }}
+
+        startupProbe:
+          periodSeconds: 10
+          failureThreshold: 60 # 10*60 = 600s; allows for long-running db migrations
+          timeoutSeconds: 3
+          httpGet:
+            path: /
+            port: {{ .Values.monitoring.port }}
+
+        livenessProbe:
+          periodSeconds: 60
+          timeoutSeconds: 3
+          failureThreshold: 3
+          httpGet:
+            path: /
+            port: {{ .Values.monitoring.port }}
+
+        readinessProbe:
+          initialDelaySeconds: 5
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
+          httpGet:
+            path: /metrics
+            port: {{ .Values.monitoring.port }}
 
       priorityClassName: low-priority
       {{- if .Values.monitoring.serviceAccount.create }}
@@ -83,11 +136,19 @@ spec:
         seccompProfile:
           type: RuntimeDefault
 
-      {{- if .Values.db.useCertificate }}
       volumes:
+      {{- if .Values.db.useCertificate }}
         - name: postgres-certificate
           configMap:
             name: postgres-certificate
+      {{- end }}
+      {{- if .Values.featureFlags.workspacesMultiRegionEnabled }}
+        - name: multi-region-config
+          secret:
+            secretName: {{ .Values.multiRegion.config.secretName }}
+            items:
+            - key: {{ .Values.multiRegion.config.secretKey }}
+              path: "multi-region-config.json"
       {{- end }}
 
       {{- if .Values.monitoring.affinity }}

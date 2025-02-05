@@ -16,7 +16,6 @@ import {
   CreateAutomateFunctionInput,
   AutomateFunctionTemplateLanguage
 } from '@/modules/core/graph/generated/graphql'
-import { getUser } from '@/modules/core/repositories/users'
 import {
   MaybeNullOrUndefined,
   Nullable,
@@ -36,8 +35,7 @@ import { Request, Response } from 'express'
 import { UnauthorizedError } from '@/modules/shared/errors'
 import {
   AuthCodePayload,
-  AuthCodePayloadAction,
-  createStoredAuthCode
+  AuthCodePayloadAction
 } from '@/modules/automate/services/authCode'
 import {
   getServerOrigin,
@@ -46,6 +44,11 @@ import {
 } from '@/modules/shared/helpers/envHelper'
 import { getFunctionsMarketplaceUrl } from '@/modules/core/helpers/routeHelper'
 import { automateLogger } from '@/logging/logging'
+import { CreateStoredAuthCode } from '@/modules/automate/domain/operations'
+import { GetUser } from '@/modules/core/domain/users/operations'
+import { noop } from 'lodash'
+import { UnknownFunctionTemplateError } from '@/modules/automate/errors/functions'
+import { UserInputError } from '@/modules/core/errors/userinput'
 
 const mapGqlTemplateIdToExecEngineTemplateId = (
   id: AutomateFunctionTemplateLanguage
@@ -58,7 +61,7 @@ const mapGqlTemplateIdToExecEngineTemplateId = (
     case AutomateFunctionTemplateLanguage.Typescript:
       return ExecutionEngineFunctionTemplateId.TypeScript
     default:
-      throw new Error('Unknown template id')
+      throw new UnknownFunctionTemplateError('Unknown template id')
   }
 }
 
@@ -68,7 +71,7 @@ const repoUrlToBasicGitRepositoryMetadata = (
   const repoUrl = new URL(url)
   const pathParts = repoUrl.pathname.split('/').filter(Boolean)
   if (pathParts.length < 2) {
-    throw new Error('Invalid GitHub repository URL')
+    throw new UserInputError('Invalid GitHub repository URL')
   }
 
   const [owner, name] = pathParts
@@ -95,7 +98,8 @@ export const convertFunctionToGraphQLReturn = (
     logo: cleanFunctionLogo(fn.logo),
     tags: fn.tags,
     supportedSourceApps: fn.supportedSourceApps,
-    functionCreator: fn.functionCreator
+    functionCreator: fn.functionCreator,
+    workspaceIds: fn.workspaceIds
   }
 
   return ret
@@ -117,12 +121,12 @@ export const convertFunctionReleaseToGraphQLReturn = (
 }
 
 export type CreateFunctionDeps = {
-  createStoredAuthCode: ReturnType<typeof createStoredAuthCode>
+  createStoredAuthCode: CreateStoredAuthCode
   createExecutionEngineFn: typeof createFunction
-  getUser: typeof getUser
+  getUser: GetUser
 }
 
-export const createFunctionFromTemplate =
+export const createFunctionFromTemplateFactory =
   (deps: CreateFunctionDeps) =>
   async (params: { input: CreateAutomateFunctionInput; userId: string }) => {
     const { input, userId } = params
@@ -184,10 +188,10 @@ export const createFunctionFromTemplate =
 export type UpdateFunctionDeps = {
   updateFunction: typeof updateExecEngineFunction
   getFunction: typeof getFunction
-  createStoredAuthCode: ReturnType<typeof createStoredAuthCode>
+  createStoredAuthCode: CreateStoredAuthCode
 }
 
-export const updateFunction =
+export const updateFunctionFactory =
   (deps: UpdateFunctionDeps) =>
   async (params: { input: UpdateAutomateFunctionInput; userId: string }) => {
     const { updateFunction, createStoredAuthCode } = deps
@@ -226,14 +230,16 @@ export const updateFunction =
       }
     })
 
+    console.log(JSON.stringify(apiResult, null, 2))
+
     return convertFunctionToGraphQLReturn(apiResult)
   }
 
 export type StartAutomateFunctionCreatorAuthDeps = {
-  createStoredAuthCode: ReturnType<typeof createStoredAuthCode>
+  createStoredAuthCode: CreateStoredAuthCode
 }
 
-export const startAutomateFunctionCreatorAuth =
+export const startAutomateFunctionCreatorAuthFactory =
   (deps: StartAutomateFunctionCreatorAuthDeps) =>
   async (params: { req: Request; res: Response }) => {
     const { createStoredAuthCode } = deps
@@ -260,7 +266,7 @@ export const startAutomateFunctionCreatorAuth =
     return res.redirect(redirectUrl.toString())
   }
 
-export const handleAutomateFunctionCreatorAuthCallback =
+export const handleAutomateFunctionCreatorAuthCallbackFactory =
   () => async (params: { req: Request; res: Response }) => {
     const { req, res } = params
     const {
@@ -269,9 +275,11 @@ export const handleAutomateFunctionCreatorAuthCallback =
     } = req.query as Record<string, string>
 
     const isSuccess = ghAuth === 'success'
-    const redirectUrl = getFunctionsMarketplaceUrl()
+    const redirectUrl = getFunctionsMarketplaceUrl(req.session.workspaceSlug)
     redirectUrl.searchParams.set('ghAuth', isSuccess ? 'success' : ghAuth)
     redirectUrl.searchParams.set('ghAuthDesc', isSuccess ? '' : ghAuthDesc)
+
+    req.session?.destroy?.(noop)
 
     return res.redirect(redirectUrl.toString())
   }

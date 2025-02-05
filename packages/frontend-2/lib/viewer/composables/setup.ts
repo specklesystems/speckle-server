@@ -6,16 +6,17 @@ import {
   MeasurementType,
   FilteringExtension
 } from '@speckle/viewer'
-import type {
-  FilteringState,
-  PropertyInfo,
-  SunLightConfiguration,
-  SpeckleView,
-  MeasurementOptions,
-  DiffResult,
-  Viewer,
-  WorldTree,
-  VisualDiffMode
+import {
+  type FilteringState,
+  type PropertyInfo,
+  type SunLightConfiguration,
+  type SpeckleView,
+  type MeasurementOptions,
+  type DiffResult,
+  type Viewer,
+  type WorldTree,
+  type VisualDiffMode,
+  ViewMode
 } from '@speckle/viewer'
 import type { MaybeRef } from '@vueuse/shared'
 import { inject, ref, provide } from 'vue'
@@ -258,6 +259,7 @@ export type InjectableViewerState = Readonly<{
       target: Ref<Vector3>
       isOrthoProjection: Ref<boolean>
     }
+    viewMode: Ref<ViewMode>
     diff: {
       newVersion: ComputedRef<ViewerModelVersionCardItemFragment | undefined>
       oldVersion: ComputedRef<ViewerModelVersionCardItemFragment | undefined>
@@ -267,6 +269,10 @@ export type InjectableViewerState = Readonly<{
       enabled: Ref<boolean>
     }
     sectionBox: Ref<Nullable<Box3>>
+    sectionBoxContext: {
+      visible: Ref<boolean>
+      edited: Ref<boolean>
+    }
     highlightedObjectIds: Ref<string[]>
     lightConfig: Ref<SunLightConfiguration>
     explodeFactor: Ref<number>
@@ -766,6 +772,12 @@ function setupResponseResourceData(
   })
 
   onViewerLoadedResourcesError((err) => {
+    // Show full page error only if serious error (core data couldn't be loaded)
+    const isWorkingLoad = !!viewerLoadedResourcesResult.value?.project.models.items
+    if (isWorkingLoad) {
+      return
+    }
+
     globalError.value = createError({
       statusCode: 500,
       message: `Viewer loaded resource resolution failed: ${err}`
@@ -841,6 +853,13 @@ function setupResponseResourceData(
   const commentThreads = computed(() => commentThreadsMetadata.value?.items || [])
 
   onViewerLoadedThreadsError((err) => {
+    // Show full page error only if serious error (core data couldn't be loaded)
+    const isWorkingLoad =
+      !!viewerLoadedThreadsResult.value?.project.commentThreads.items
+    if (isWorkingLoad) {
+      return
+    }
+
     triggerNotification({
       type: ToastNotificationType.Danger,
       title: 'Comment loading failed',
@@ -912,6 +931,7 @@ function setupInterfaceState(
     if (explodeFactor.value !== 0) return true
     return false
   })
+  const viewMode = ref<ViewMode>(ViewMode.DEFAULT)
 
   const highlightedObjectIds = ref([] as string[])
   const spotlightUserSessionId = ref(null as Nullable<string>)
@@ -974,7 +994,12 @@ function setupInterfaceState(
         target,
         isOrthoProjection
       },
+      viewMode,
       sectionBox: ref(null as Nullable<Box3>),
+      sectionBoxContext: {
+        visible: ref(false),
+        edited: ref(false)
+      },
       filters: {
         isolatedObjectIds,
         hiddenObjectIds,
@@ -1055,7 +1080,7 @@ export function useInjectedViewerInterfaceState(): InjectableViewerState['ui'] {
 
 export function useResetUiState() {
   const {
-    ui: { camera, sectionBox, highlightedObjectIds, lightConfig }
+    ui: { camera, sectionBox, highlightedObjectIds, lightConfig, viewMode }
   } = useInjectedViewerState()
   const { resetFilters } = useFilterUtilities()
   const { endDiff } = useDiffUtilities()
@@ -1065,6 +1090,7 @@ export function useResetUiState() {
     sectionBox.value = null
     highlightedObjectIds.value = []
     lightConfig.value = { ...DefaultLightConfiguration }
+    viewMode.value = ViewMode.DEFAULT
     resetFilters()
     endDiff()
   }

@@ -14,9 +14,9 @@ type GendoAIRender {
   modelId: String!
   versionId: String!
   userId: String!
-  user: AvatarUser
-  createdAt: String!
-  updatedAt: String!
+  user: LimitedUser
+  createdAt: DateTime!
+  updatedAt: DateTime!
   gendoGenerationId: String
   status: String!
   prompt: String!
@@ -49,4 +49,14 @@ input GendoAIRenderInput {
 extend type Subscription {
   projectVersionGendoAIRenderCreated(id: String!, versionId: String!): GendoAIRender!
   projectVersionGendoAIRenderUpdated(id: String!, versionId: String!): GendoAIRender!
+}
+
+type UserGendoAICredits {
+  used: Int!
+  limit: Int!
+  resetDate: DateTime!
+}
+
+extend type User {
+  gendoAICredits: UserGendoAICredits! @isOwner
 }

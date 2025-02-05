@@ -3,6 +3,7 @@
 import { Nullable } from '@speckle/shared'
 import { SchemaConfig, MetaSchemaConfig } from '@/modules/core/dbSchema'
 import { camelCase, isString } from 'lodash'
+import { Knex } from 'knex'
 
 /**
  * All meta records must follow this interface
@@ -20,7 +21,9 @@ export interface BaseMetaRecord<V = any> {
 export function metaHelpers<
   R extends BaseMetaRecord,
   S extends SchemaConfig<any, any, MetaSchemaConfig<any, keyof BaseMetaRecord, any>>
->(table: S) {
+>(table: S, knex: Knex) {
+  const db = <RR extends object = R>() => knex<RR>(table.meta.name)
+
   return {
     /**
      * Get a single value
@@ -29,8 +32,7 @@ export function metaHelpers<
       id: string,
       key: keyof S['meta']['metaKey']
     ): Promise<Nullable<RR>> => {
-      const q = table.meta
-        .knex()
+      const q = db()
         .where(table.meta.col.key, <string>key)
         .andWhere(table.meta.parentIdentityCol, id)
         .first()
@@ -50,8 +52,8 @@ export function metaHelpers<
       requests: Array<{ id: string; key: keyof S['meta']['metaKey'] }>
     ) => {
       const meta = table.meta.withoutTablePrefix
-      const q = table.meta
-        .knex<Array<R>>()
+      const q = db()
+        .select<Array<RR>>('*')
         .whereIn(
           table.meta.col.key,
           requests.map((r) => <string>r.key)
@@ -84,8 +86,7 @@ export function metaHelpers<
       val: any
     ) => {
       const meta = table.meta.withoutTablePrefix
-      const q = table.meta
-        .knex()
+      const q = db<any>()
         .insert({
           [meta.parentIdentityCol]: id,
           [meta.col.key]: key,
@@ -102,8 +103,7 @@ export function metaHelpers<
      * Delete meta entry entirely
      */
     delete: async (id: string, key: keyof S['meta']['metaKey']) => {
-      const q = table.meta
-        .knex()
+      const q = db()
         .where(table.meta.col.key, <string>key)
         .andWhere(table.meta.parentIdentityCol, id)
         .del()

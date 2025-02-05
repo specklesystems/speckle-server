@@ -26,6 +26,20 @@
           <UserAvatarGroup :users="teamUsers" :max-count="2" />
         </div>
         <div class="pt-3">
+          <NuxtLink
+            v-if="project.workspace && showWorkspaceLink && isWorkspacesEnabled"
+            :to="workspaceRoute(project.workspace.slug)"
+            class="my-3 flex items-center"
+          >
+            <WorkspaceAvatar
+              :logo="project.workspace.logo"
+              :name="project.workspace.name"
+              size="sm"
+            />
+            <p class="text-body-2xs text-foreground ml-2 line-clamp-2">
+              {{ project.workspace.name }}
+            </p>
+          </NuxtLink>
           <FormButton
             :to="allProjectModelsRoute(project.id) + '/'"
             size="sm"
@@ -38,9 +52,7 @@
           </FormButton>
         </div>
       </div>
-      <div
-        class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2 flex-grow col-span-4 xl:col-span-3 w-full sm:[&>*:nth-child(2)]:hidden xl:[&>*:nth-child(2)]:block"
-      >
+      <div :class="gridClasses">
         <ProjectPageModelsCard
           v-for="pendingModel in pendingModels"
           :key="pendingModel.id"
@@ -65,6 +77,7 @@
         <ProjectCardImportFileArea
           v-if="hasNoModels"
           :project-id="project.id"
+          :disabled="project?.workspace?.readOnly"
           class="h-28 col-span-4"
         />
       </div>
@@ -81,15 +94,18 @@ import {
 } from '~~/lib/common/helpers/route'
 import { useGeneralProjectPageUpdateTracking } from '~~/lib/projects/composables/projectPages'
 import { ChevronRightIcon } from '@heroicons/vue/20/solid'
+import { workspaceRoute } from '~/lib/common/helpers/route'
 
 const props = defineProps<{
   project: ProjectDashboardItemFragment
+  showWorkspaceLink?: boolean
+  workspacePage?: boolean
 }>()
 
 const router = useRouter()
+const isWorkspacesEnabled = useIsWorkspacesEnabled()
 
 const projectId = computed(() => props.project.id)
-
 const updatedAt = computed(() => {
   return {
     full: formattedFullDate(props.project.updatedAt),
@@ -114,4 +130,29 @@ const hasNoModels = computed(() => !models.value.length && !pendingModels.value.
 const modelItemTotalCount = computed(
   () => props.project.models.totalCount + pendingModels.value.length
 )
+
+const gridClasses = computed(() => [
+  // Base classes
+  'grid',
+  'gap-2',
+  'flex-grow',
+  'col-span-4',
+  'xl:col-span-3',
+  'w-full',
+
+  // Grid columns
+  'grid-cols-1',
+  'sm:grid-cols-2',
+  props.workspacePage && 'lg:grid-cols-1',
+  props.workspacePage ? 'xl:grid-cols-2' : 'xl:grid-cols-3',
+  props.workspacePage && '2xl:grid-cols-3',
+
+  // Visibility rules
+  'sm:[&>*:nth-child(n+3)]:hidden',
+  props.workspacePage && 'lg:[&>*:nth-child(n+2)]:hidden',
+  props.workspacePage && 'xl:[&>*:nth-child(n+2)]:block',
+  !props.workspacePage && 'xl:[&>*:nth-child(n+3)]:block',
+  props.workspacePage && '2xl:[&>*:nth-child(n+2)]:block',
+  '2xl:[&>*:nth-child(n+3)]:block'
+])
 </script>

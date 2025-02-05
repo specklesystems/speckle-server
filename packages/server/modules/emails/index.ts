@@ -1,14 +1,11 @@
 /* istanbul ignore file */
 import { moduleLogger } from '@/logging/logging'
 import * as SendingService from '@/modules/emails/services/sending'
-import { initializeVerificationOnRegistration } from '@/modules/emails/services/verification/request'
 import { initializeTransporter } from '@/modules/emails/utils/transporter'
-import { Optional, SpeckleModule } from '@/modules/shared/helpers/typeHelper'
-
-let quitVerificationListeners: Optional<() => void> = undefined
+import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 
 const emailsModule: SpeckleModule = {
-  init: async (app, isInitial) => {
+  init: async (app) => {
     moduleLogger.info('📧 Init emails module')
 
     // init transporter
@@ -16,18 +13,12 @@ const emailsModule: SpeckleModule = {
 
     // init rest api
     ;(await import('./rest')).default(app)
-
-    // init event listeners
-    if (isInitial) {
-      quitVerificationListeners = initializeVerificationOnRegistration()
-    }
-  },
-
-  shutdown() {
-    quitVerificationListeners?.()
   }
 }
 
+/**
+ * @deprecated Use `sendEmail` from `@/modules/emails/services/sending` instead
+ */
 async function sendEmail({
   from,
   to,
