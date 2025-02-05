@@ -1,0 +1,6 @@
+extend type Workspace {
+  """
+  A Workspace is marked as readOnly if its trial period is finished or a paid plan is subscribed but payment has failed
+  """
+  readOnly: Boolean!
+}
