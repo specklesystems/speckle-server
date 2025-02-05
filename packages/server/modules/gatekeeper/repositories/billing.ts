@@ -1,3 +1,4 @@
+import { Streams } from '@/modules/core/dbSchema'
 import {
   CheckoutSession,
   GetCheckoutSession,
@@ -14,11 +15,20 @@ import {
   GetWorkspaceSubscription,
   GetWorkspaceSubscriptionBySubscriptionId,
   GetWorkspaceSubscriptions,
-  UpsertTrialWorkspacePlan
+  UpsertTrialWorkspacePlan,
+  UpsertUnpaidWorkspacePlan
 } from '@/modules/gatekeeper/domain/billing'
+import {
+  ChangeExpiredTrialWorkspacePlanStatuses,
+  GetWorkspacesByPlanDaysTillExpiry,
+  GetWorkspacePlanByProjectId
+} from '@/modules/gatekeeper/domain/operations'
+import { Workspace } from '@/modules/workspacesCore/domain/types'
+import { Workspaces } from '@/modules/workspacesCore/helpers/db'
 import { Knex } from 'knex'
 
 const tables = {
+  workspaces: (db: Knex) => db<Workspace>('workspaces'),
   workspacePlans: (db: Knex) => db<WorkspacePlan>('workspace_plans'),
   workspaceCheckoutSessions: (db: Knex) =>
     db<CheckoutSession>('workspace_checkout_sessions'),
@@ -60,6 +70,38 @@ export const upsertTrialWorkspacePlanFactory = ({
 }: {
   db: Knex
 }): UpsertTrialWorkspacePlan => upsertWorkspacePlanFactory({ db })
+
+export const upsertUnpaidWorkspacePlanFactory = ({
+  db
+}: {
+  db: Knex
+}): UpsertUnpaidWorkspacePlan => upsertWorkspacePlanFactory({ db })
+
+export const changeExpiredTrialWorkspacePlanStatusesFactory =
+  ({ db }: { db: Knex }): ChangeExpiredTrialWorkspacePlanStatuses =>
+  async ({ numberOfDays }) => {
+    return await tables
+      .workspacePlans(db)
+      .where({ status: 'trial' })
+      .andWhereRaw(`"createdAt" + make_interval(days => ${numberOfDays}) < now()`)
+      .update({ status: 'expired' })
+      .returning('*')
+  }
+
+export const getWorkspacesByPlanAgeFactory =
+  ({ db }: { db: Knex }): GetWorkspacesByPlanDaysTillExpiry =>
+  async ({ daysTillExpiry, planValidFor, plan, status }) => {
+    return await tables
+      .workspaces(db)
+      .select('workspaces.*')
+      .join('workspace_plans', 'workspaces.id', 'workspace_plans.workspaceId')
+      .where('workspace_plans.status', status)
+      .andWhere('workspace_plans.name', plan)
+      .andWhereRaw('? - extract(day from now () - workspace_plans."createdAt") = ?', [
+        planValidFor,
+        daysTillExpiry
+      ])
+  }
 
 export const saveCheckoutSessionFactory =
   ({ db }: { db: Knex }): SaveCheckoutSession =>
@@ -145,4 +187,21 @@ export const getWorkspaceSubscriptionsPastBillingCycleEndFactory =
       .workspaceSubscriptions(db)
       .select()
       .where('currentBillingCycleEnd', '<', cycleEnd)
+  }
+
+export const getWorkspacePlanByProjectIdFactory =
+  ({ db }: { db: Knex }): GetWorkspacePlanByProjectId =>
+  async ({ projectId }) => {
+    return await tables
+      .workspacePlans(db)
+      .select([
+        'workspace_plans.workspaceId',
+        'workspace_plans.status',
+        'workspace_plans.name',
+        'workspace_plans.createdAt'
+      ])
+      .innerJoin(Workspaces.name, Workspaces.col.id, 'workspace_plans.workspaceId')
+      .innerJoin(Streams.name, Streams.col.workspaceId, Workspaces.col.id)
+      .where({ [Streams.col.id]: projectId })
+      .first<WorkspacePlan | null>()
   }

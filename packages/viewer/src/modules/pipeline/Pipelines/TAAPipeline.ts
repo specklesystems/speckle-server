@@ -39,7 +39,8 @@ export class TAAPipeline extends ProgressivePipeline {
       ObjectLayers.STREAM_CONTENT_LINE,
       ObjectLayers.STREAM_CONTENT_POINT,
       ObjectLayers.STREAM_CONTENT_POINT_CLOUD,
-      ObjectLayers.STREAM_CONTENT_TEXT
+      ObjectLayers.STREAM_CONTENT_TEXT,
+      ObjectLayers.PROPS
     ])
     opaqueColorPass.setVisibility(ObjectVisibility.OPAQUE)
 
@@ -131,11 +132,7 @@ export class TAAPipeline extends ProgressivePipeline {
     jitteredStencilMaskPass.outputTarget = renderTarget
 
     const overlayPass = new GeometryPass()
-    overlayPass.setLayers([
-      ObjectLayers.PROPS,
-      ObjectLayers.OVERLAY,
-      ObjectLayers.MEASUREMENTS
-    ])
+    overlayPass.setLayers([ObjectLayers.OVERLAY, ObjectLayers.MEASUREMENTS])
 
     this.dynamicStage.push(
       stencilPass,

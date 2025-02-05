@@ -1,9 +1,12 @@
 import { db } from '@/db/knex'
-import { Resolvers } from '@/modules/core/graph/generated/graphql'
+import {
+  Resolvers,
+  WorkspacePlans,
+  WorkspacePlanStatuses
+} from '@/modules/core/graph/generated/graphql'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
 import {
   getProjectCollaboratorsFactory,
-  getProjectFactory,
   updateProjectFactory,
   upsertProjectRoleFactory,
   getRolesByUserIdFactory,
@@ -50,8 +53,7 @@ import {
   WorkspaceJoinNotAllowedError,
   WorkspaceNotFoundError,
   WorkspacePaidPlanActiveError,
-  WorkspacesNotAuthorizedError,
-  WorkspacesNotYetImplementedError
+  WorkspacesNotAuthorizedError
 } from '@/modules/workspaces/errors/workspace'
 import {
   deleteWorkspaceFactory as repoDeleteWorkspaceFactory,
@@ -73,7 +75,9 @@ import {
   getWorkspaceBySlugFactory,
   countDomainsByWorkspaceIdFactory,
   getWorkspaceCreationStateFactory,
-  upsertWorkspaceCreationStateFactory
+  upsertWorkspaceCreationStateFactory,
+  queryWorkspacesFactory,
+  countWorkspacesFactory
 } from '@/modules/workspaces/repositories/workspaces'
 import {
   buildWorkspaceInviteEmailContentsFactory,
@@ -105,7 +109,6 @@ import {
 } from '@/modules/workspaces/services/projects'
 import {
   getDiscoverableWorkspacesForUserFactory,
-  getPaginatedWorkspaceTeamFactory,
   getWorkspacesForUserFactory
 } from '@/modules/workspaces/services/retrieval'
 import {
@@ -163,7 +166,7 @@ import {
   isRateLimitBreached
 } from '@/modules/core/services/ratelimiter'
 import { RateLimitError } from '@/modules/core/errors/ratelimit'
-import { getRegionDb } from '@/modules/multiregion/dbSelector'
+import { getRegionDb } from '@/modules/multiregion/utils/dbSelector'
 import {
   listUserExpiredSsoSessionsFactory,
   listWorkspaceSsoMembershipsByUserEmailFactory
@@ -189,8 +192,26 @@ import {
 } from '@/modules/automate/services/authCode'
 import { getGenericRedis } from '@/modules/shared/redis/redis'
 import { convertFunctionToGraphQLReturn } from '@/modules/automate/services/functionManagement'
-import { getWorkspacePlanFactory } from '@/modules/gatekeeper/repositories/billing'
+import {
+  getWorkspacePlanFactory,
+  upsertPaidWorkspacePlanFactory,
+  upsertTrialWorkspacePlanFactory,
+  upsertUnpaidWorkspacePlanFactory
+} from '@/modules/gatekeeper/repositories/billing'
 import { Knex } from 'knex'
+import { getPaginatedItemsFactory } from '@/modules/shared/services/paginatedItems'
+import { InvalidWorkspacePlanStatus } from '@/modules/gatekeeper/errors/billing'
+import { BadRequestError } from '@/modules/shared/errors'
+import {
+  dismissWorkspaceJoinRequestFactory,
+  requestToJoinWorkspaceFactory
+} from '@/modules/workspaces/services/workspaceJoinRequests'
+import {
+  createWorkspaceJoinRequestFactory,
+  updateWorkspaceJoinRequestStatusFactory
+} from '@/modules/workspaces/repositories/workspaceJoinRequests'
+import { sendWorkspaceJoinRequestReceivedEmailFactory } from '@/modules/workspaces/services/workspaceJoinRequestEmails/received'
+import { getProjectFactory } from '@/modules/core/repositories/projects'
 
 const eventBus = getEventBus()
 const getServerInfo = getServerInfoFactory({ db })
@@ -357,7 +378,8 @@ export = FF_WORKSPACES_MODULE_ENABLED
         }
       },
       Mutation: {
-        workspaceMutations: () => ({})
+        workspaceMutations: () => ({}),
+        admin: () => ({})
       },
       ProjectInviteMutations: {
         async createForWorkspace(_parent, args, ctx) {
@@ -414,9 +436,81 @@ export = FF_WORKSPACES_MODULE_ENABLED
           return ctx.loaders.streams.getStream.load(args.projectId)
         }
       },
+      AdminMutations: {
+        updateWorkspacePlan: async (_parent, { input }) => {
+          const { workspaceId, plan: name, status } = input
+          const workspace = await getWorkspaceFactory({ db })({
+            workspaceId
+          })
+          const createdAt = new Date()
+          if (!workspace) throw new WorkspaceNotFoundError()
+          switch (name) {
+            case WorkspacePlans.Starter:
+              switch (status) {
+                case WorkspacePlanStatuses.Trial:
+                case WorkspacePlanStatuses.Expired:
+                  await upsertTrialWorkspacePlanFactory({ db })({
+                    workspacePlan: { workspaceId, status, name, createdAt }
+                  })
+                  return true
+                case WorkspacePlanStatuses.Valid:
+                case WorkspacePlanStatuses.CancelationScheduled:
+                case WorkspacePlanStatuses.Canceled:
+                case WorkspacePlanStatuses.PaymentFailed:
+                  await upsertPaidWorkspacePlanFactory({ db })({
+                    workspacePlan: { workspaceId, status, name, createdAt }
+                  })
+                  return true
+                default:
+                  throwUncoveredError(status)
+              }
+            case WorkspacePlans.Business:
+            case WorkspacePlans.Plus:
+              switch (status) {
+                case WorkspacePlanStatuses.Trial:
+                case WorkspacePlanStatuses.Expired:
+                  throw new InvalidWorkspacePlanStatus()
+                case WorkspacePlanStatuses.Valid:
+                case WorkspacePlanStatuses.CancelationScheduled:
+                case WorkspacePlanStatuses.Canceled:
+                case WorkspacePlanStatuses.PaymentFailed:
+                  await upsertPaidWorkspacePlanFactory({ db })({
+                    workspacePlan: { workspaceId, status, name, createdAt }
+                  })
+                  return true
+                default:
+                  throwUncoveredError(status)
+              }
+
+            case WorkspacePlans.Academia:
+            case WorkspacePlans.Unlimited:
+            case WorkspacePlans.StarterInvoiced:
+            case WorkspacePlans.PlusInvoiced:
+            case WorkspacePlans.BusinessInvoiced:
+              switch (status) {
+                case WorkspacePlanStatuses.Valid:
+                  await upsertUnpaidWorkspacePlanFactory({ db })({
+                    workspacePlan: { workspaceId, status, name, createdAt }
+                  })
+
+                  return true
+                case WorkspacePlanStatuses.CancelationScheduled:
+                case WorkspacePlanStatuses.Canceled:
+                case WorkspacePlanStatuses.Expired:
+                case WorkspacePlanStatuses.PaymentFailed:
+                case WorkspacePlanStatuses.Trial:
+                  throw new InvalidWorkspacePlanStatus()
+                default:
+                  throwUncoveredError(status)
+              }
+            default:
+              throwUncoveredError(name)
+          }
+        }
+      },
       WorkspaceMutations: {
         create: async (_parent, args, context) => {
-          const { name, description, defaultLogoIndex, logo, slug } = args.input
+          const { name, description, logo, slug } = args.input
 
           const createWorkspace = createWorkspaceFactory({
             validateSlug: validateSlugFactory({
@@ -436,8 +530,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
               name,
               slug,
               description: description ?? null,
-              logo: logo ?? null,
-              defaultLogoIndex: defaultLogoIndex ?? 0
+              logo: logo ?? null
             },
             userResourceAccessLimits: context.resourceAccessRules
           })
@@ -474,6 +567,9 @@ export = FF_WORKSPACES_MODULE_ENABLED
                 }
               case 'unlimited':
               case 'academia':
+              case 'starterInvoiced':
+              case 'plusInvoiced':
+              case 'businessInvoiced':
                 break
               default:
                 throwUncoveredError(workspacePlan)
@@ -692,7 +788,46 @@ export = FF_WORKSPACES_MODULE_ENABLED
           return true
         },
         invites: () => ({}),
-        projects: () => ({})
+        projects: () => ({}),
+        dismiss: async (_parent, args, ctx) => {
+          return await dismissWorkspaceJoinRequestFactory({
+            getWorkspace: getWorkspaceFactory({ db }),
+            updateWorkspaceJoinRequestStatus: updateWorkspaceJoinRequestStatusFactory({
+              db
+            })
+          })({ userId: ctx.userId!, workspaceId: args.input.workspaceId })
+        },
+        requestToJoin: async (_parent, args, ctx) => {
+          const requestToJoin = commandFactory({
+            db,
+            operationFactory: ({ db }) => {
+              const createWorkspaceJoinRequest = createWorkspaceJoinRequestFactory({
+                db
+              })
+              const sendWorkspaceJoinRequestReceivedEmail =
+                sendWorkspaceJoinRequestReceivedEmailFactory({
+                  renderEmail,
+                  sendEmail,
+                  getServerInfo,
+                  getWorkspaceCollaborators: getWorkspaceCollaboratorsFactory({
+                    db
+                  }),
+                  getUserEmails: findEmailsByUserIdFactory({ db })
+                })
+              return requestToJoinWorkspaceFactory({
+                createWorkspaceJoinRequest,
+                sendWorkspaceJoinRequestReceivedEmail,
+                getUserById: getUserFactory({ db }),
+                getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db }),
+                getUserEmails: findEmailsByUserIdFactory({ db })
+              })
+            }
+          })
+          return await requestToJoin({
+            userId: ctx.userId!,
+            workspaceId: args.input.workspaceId
+          })
+        }
       },
       WorkspaceInviteMutations: {
         resend: async (_parent, args, ctx) => {
@@ -952,13 +1087,25 @@ export = FF_WORKSPACES_MODULE_ENABLED
           return workspace?.role || null
         },
         team: async (parent, args) => {
-          const team = await getPaginatedWorkspaceTeamFactory({
-            getWorkspaceCollaborators: getWorkspaceCollaboratorsFactory({ db }),
-            getWorkspaceCollaboratorsTotalCount:
-              getWorkspaceCollaboratorsTotalCountFactory({ db })
+          const roles = args.filter?.roles?.map((r) => {
+            const role = r as WorkspaceRoles
+            if (!Object.values(Roles.Workspace).includes(role)) {
+              throw new BadRequestError(
+                `The filter role ${role} is not a valid workspace role`
+              )
+            }
+            return role
+          })
+          const filter = removeNullOrUndefinedKeys({
+            ...args?.filter,
+            roles
+          })
+          const team = await getPaginatedItemsFactory({
+            getItems: getWorkspaceCollaboratorsFactory({ db }),
+            getTotalCount: getWorkspaceCollaboratorsTotalCountFactory({ db })
           })({
             workspaceId: parent.id,
-            filter: removeNullOrUndefinedKeys(args?.filter || {}),
+            filter,
             limit: args.limit,
             cursor: args.cursor ?? undefined
           })
@@ -1023,6 +1170,14 @@ export = FF_WORKSPACES_MODULE_ENABLED
                 }
               }
             })
+
+            if (!res) {
+              return {
+                cursor: null,
+                totalCount: 0,
+                items: []
+              }
+            }
 
             const items = res.functions.map(convertFunctionToGraphQLReturn)
 
@@ -1241,8 +1396,15 @@ export = FF_WORKSPACES_MODULE_ENABLED
         }
       },
       AdminQueries: {
-        workspaceList: async () => {
-          throw new WorkspacesNotYetImplementedError()
+        workspaceList: async (_parent, args) => {
+          return await getPaginatedItemsFactory({
+            getItems: queryWorkspacesFactory({ db }),
+            getTotalCount: countWorkspacesFactory({ db })
+          })({
+            limit: args.limit,
+            cursor: args.cursor,
+            filter: { search: args.query ?? undefined }
+          })
         }
       },
       LimitedUser: {
@@ -1256,6 +1418,24 @@ export = FF_WORKSPACES_MODULE_ENABLED
             findEmailsByUserId: findEmailsByUserIdFactory({ db }),
             getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db })
           })({ workspaceId, userId })
+        },
+        workspaceRole: async (parent, args, context) => {
+          const workspaceId = args.workspaceId
+          if (!workspaceId) return null
+
+          await authorizeResolver(
+            context.userId,
+            workspaceId,
+            Roles.Workspace.Member,
+            context.resourceAccessRules
+          )
+
+          const role = await getWorkspaceRoleForUserFactory({ db })({
+            userId: parent.id,
+            workspaceId
+          })
+
+          return role?.role ?? null
         }
       },
       ServerInfo: {

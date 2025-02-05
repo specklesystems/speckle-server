@@ -1,5 +1,4 @@
 import { CommentRecord } from '@/modules/comments/helpers/types'
-import { CommentsEvents, CommentsEventsListen } from '@/modules/comments/events/emitter'
 import { ensureCommentSchema } from '@/modules/comments/services/commentTextService'
 import type { JSONContent } from '@tiptap/core'
 import { iterateContentNodes } from '@/modules/core/services/richTextEditorService'
@@ -9,6 +8,8 @@ import {
   NotificationType
 } from '@/modules/notifications/helpers/types'
 import { AddStreamCommentMentionActivity } from '@/modules/activitystream/domain/operations'
+import { EventBus } from '@/modules/shared/services/eventBus'
+import { CommentEvents } from '@/modules/comments/domain/events'
 
 function findMentionedUserIds(doc: JSONContent) {
   const mentionedUserIds = new Set<string>()
@@ -92,19 +93,16 @@ const processCommentMentionsFactory =
  * @returns Callback to invoke when you wish to stop listening for comments events
  */
 export const notifyUsersOnCommentEventsFactory =
-  (
-    deps: { commentsEventsListen: CommentsEventsListen } & SendNotificationsForUsersDeps
-  ) =>
-  async () => {
+  (deps: { eventBus: EventBus } & SendNotificationsForUsersDeps) => async () => {
     const processCommentMentions = processCommentMentionsFactory(deps)
 
     const exitCbs = [
-      deps.commentsEventsListen(CommentsEvents.Created, async ({ comment }) => {
+      deps.eventBus.listen(CommentEvents.Created, async ({ payload: { comment } }) => {
         await processCommentMentions(comment)
       }),
-      deps.commentsEventsListen(
-        CommentsEvents.Updated,
-        async ({ newComment, previousComment }) => {
+      deps.eventBus.listen(
+        CommentEvents.Updated,
+        async ({ payload: { newComment, previousComment } }) => {
           await processCommentMentions(newComment, previousComment)
         }
       )

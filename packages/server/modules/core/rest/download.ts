@@ -13,7 +13,7 @@ import { validatePermissionsReadStreamFactory } from '@/modules/core/services/st
 import { getStreamFactory } from '@/modules/core/repositories/streams'
 import { validateScopes, authorizeResolver } from '@/modules/shared'
 import type express from 'express'
-import { getProjectDbClient } from '@/modules/multiregion/dbSelector'
+import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 
 export default (app: express.Express) => {
   const validatePermissionsReadStream = validatePermissionsReadStreamFactory({
@@ -65,9 +65,9 @@ export default (app: express.Express) => {
     })
     // https://knexjs.org/faq/recipes.html#manually-closing-streams
     // https://github.com/knex/knex/issues/2324
-    req.on('close', () => {
-      dbStream.end.bind(dbStream)
-      dbStream.destroy.bind(dbStream)
+    res.on('close', () => {
+      dbStream.end()
+      dbStream.destroy()
     })
     const speckleObjStream = new SpeckleObjectsStream(simpleText)
     const gzipStream = zlib.createGzip()

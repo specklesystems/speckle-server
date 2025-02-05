@@ -138,6 +138,6 @@ export class ExtendedSelection extends SelectionExtension {
       )
     }
     this.lastGizmoTranslation.copy(this.dummyAnchor.position)
-    this.viewer.requestRender(UpdateFlags.RENDER | UpdateFlags.SHADOWS)
+    this.viewer.requestRender(UpdateFlags.RENDER_RESET | UpdateFlags.SHADOWS)
   }
 }

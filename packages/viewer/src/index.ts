@@ -77,7 +77,12 @@ import SpeckleStandardMaterial from './modules/materials/SpeckleStandardMaterial
 import SpeckleTextMaterial from './modules/materials/SpeckleTextMaterial.js'
 import { SpeckleText } from './modules/objects/SpeckleText.js'
 import { NodeRenderView } from './modules/tree/NodeRenderView.js'
-import { type ExtendedIntersection } from './modules/objects/SpeckleRaycaster.js'
+import {
+  CONTAINED,
+  INTERSECTED,
+  NOT_INTERSECTED,
+  type ExtendedIntersection
+} from './modules/objects/SpeckleRaycaster.js'
 import { SpeckleGeometryConverter } from './modules/loaders/Speckle/SpeckleGeometryConverter.js'
 import { Assets } from './modules/Assets.js'
 import { InstancedBatchObject } from './modules/batching/InstancedBatchObject.js'
@@ -124,10 +129,22 @@ import {
   FilterMaterialOptions,
   FilterMaterialType
 } from './modules/materials/Materials.js'
+import { SpeckleOfflineLoader } from './modules/loaders/Speckle/SpeckleOfflineLoader.js'
+import { AccelerationStructure } from './modules/objects/AccelerationStructure.js'
+import { TopLevelAccelerationStructure } from './modules/objects/TopLevelAccelerationStructure.js'
+import { StencilPass } from './modules/pipeline/Passes/StencilPass.js'
+import { StencilMaskPass } from './modules/pipeline/Passes/StencilMaskPass.js'
+import { SpeckleWebGLRenderer } from './modules/objects/SpeckleWebGLRenderer.js'
+import { InstancedMeshBatch } from './modules/batching/InstancedMeshBatch.js'
+import { ViewModeEvent, ViewModeEventPayload } from './modules/extensions/ViewModes.js'
+import { BasitPipeline } from './modules/pipeline/Pipelines/BasitViewPipeline.js'
+import SpeckleMesh from './modules/objects/SpeckleMesh.js'
+import SpeckleInstancedMesh from './modules/objects/SpeckleInstancedMesh.js'
 
 export {
   Viewer,
   LegacyViewer,
+  SpeckleWebGLRenderer,
   DefaultViewerParams,
   ViewerEvent,
   DefaultLightConfiguration,
@@ -162,9 +179,12 @@ export {
   ObjectLayers,
   GeometryType,
   MeshBatch,
+  InstancedMeshBatch,
   LineBatch,
   PointBatch,
   TextBatch,
+  AccelerationStructure,
+  TopLevelAccelerationStructure,
   SpeckleStandardMaterial,
   SpeckleBasicMaterial,
   SpeckleTextMaterial,
@@ -190,6 +210,8 @@ export {
   BasitPass,
   ProgressiveAOPass,
   TAAPass,
+  StencilPass,
+  StencilMaskPass,
   PassOptions,
   ClearFlags,
   ObjectVisibility,
@@ -205,11 +227,19 @@ export {
   MRTEdgesPipeline,
   MRTShadedViewPipeline,
   MRTPenViewPipeline,
+  BasitPipeline,
   ViewModes,
   ViewMode,
   FilterMaterial,
   FilterMaterialType,
-  FilterMaterialOptions
+  FilterMaterialOptions,
+  SpeckleOfflineLoader,
+  NOT_INTERSECTED,
+  INTERSECTED,
+  CONTAINED,
+  ViewModeEvent,
+  SpeckleMesh,
+  SpeckleInstancedMesh
 }
 
 export type {
@@ -243,7 +273,8 @@ export type {
   SectionToolEventPayload,
   CameraEventPayload,
   SelectionExtensionOptions,
-  DefaultSelectionExtensionOptions
+  DefaultSelectionExtensionOptions,
+  ViewModeEventPayload
 }
 
 export * as UrlHelper from './modules/UrlHelper.js'

@@ -106,7 +106,7 @@ type Model {
   The shortened/display name that doesn't include the names of parent models
   """
   displayName: String!
-  author: LimitedUser!
+  author: LimitedUser
   description: String
   createdAt: DateTime!
   updatedAt: DateTime!
@@ -328,9 +328,9 @@ type ProjectVersionsUpdatedMessage {
   """
   version: Version
   """
-  Only set if version was deleted, in other scenarios can be queried from 'version'
+  Version's model ID
   """
-  modelId: String
+  modelId: String!
 }
 
 type ProjectVersionsPreviewGeneratedMessage {

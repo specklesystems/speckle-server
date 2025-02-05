@@ -8,7 +8,7 @@
       in SSO-protected workspaces. To view {{ hiddenItemCount === 1 ? 'it' : 'them' }},
       authenticate with:
     </p>
-    <div class="flex gap-2 mt-2">
+    <div class="flex flex-wrap gap-2 mt-2">
       <FormButton
         v-for="session in user.expiredSsoSessions"
         :key="session.id"
@@ -17,11 +17,7 @@
         color="outline"
       >
         <div class="flex items-center gap-1">
-          <WorkspaceAvatar
-            size="2xs"
-            :default-logo-index="session.defaultLogoIndex"
-            :logo="session.logo"
-          />
+          <WorkspaceAvatar size="2xs" :name="session.name" :logo="session.logo" />
           {{ session.name }}
         </div>
       </FormButton>
@@ -42,7 +38,6 @@ graphql(`
       slug
       name
       logo
-      defaultLogoIndex
     }
   }
 `)

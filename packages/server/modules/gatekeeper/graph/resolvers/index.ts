@@ -2,7 +2,7 @@ import { getFeatureFlags, getFrontendOrigin } from '@/modules/shared/helpers/env
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { pricingTable } from '@/modules/gatekeeper/domain/workspacePricing'
 import { authorizeResolver } from '@/modules/shared'
-import { Roles } from '@speckle/shared'
+import { Roles, throwUncoveredError } from '@speckle/shared'
 import {
   countWorkspaceRoleWithOptionalProjectRoleFactory,
   getWorkspaceFactory
@@ -31,8 +31,14 @@ import {
 } from '@/modules/gatekeeper/repositories/billing'
 import { canWorkspaceAccessFeatureFactory } from '@/modules/gatekeeper/services/featureAuthorization'
 import { upgradeWorkspaceSubscriptionFactory } from '@/modules/gatekeeper/services/subscriptions'
+import { isWorkspaceReadOnlyFactory } from '@/modules/gatekeeper/services/readOnly'
+import { calculateSubscriptionSeats } from '@/modules/gatekeeper/domain/billing'
+import { WorkspacePaymentMethod } from '@/test/graphql/generated/graphql'
+import { LogicError } from '@/modules/shared/errors'
 
 const { FF_GATEKEEPER_MODULE_ENABLED } = getFeatureFlags()
+
+const getWorkspacePlan = getWorkspacePlanFactory({ db })
 
 export = FF_GATEKEEPER_MODULE_ENABLED
   ? ({
@@ -43,11 +49,42 @@ export = FF_GATEKEEPER_MODULE_ENABLED
       },
       Workspace: {
         plan: async (parent) => {
-          return await getWorkspacePlanFactory({ db })({ workspaceId: parent.id })
+          const workspacePlan = await getWorkspacePlanFactory({ db })({
+            workspaceId: parent.id
+          })
+          if (!workspacePlan) return null
+          let paymentMethod: WorkspacePaymentMethod
+          switch (workspacePlan.name) {
+            case 'starter':
+            case 'plus':
+            case 'business':
+              paymentMethod = WorkspacePaymentMethod.Billing
+              break
+            case 'unlimited':
+            case 'academia':
+              paymentMethod = WorkspacePaymentMethod.Unpaid
+              break
+            case 'starterInvoiced':
+            case 'plusInvoiced':
+            case 'businessInvoiced':
+              paymentMethod = WorkspacePaymentMethod.Invoice
+              break
+            default:
+              throwUncoveredError(workspacePlan)
+          }
+          return { ...workspacePlan, paymentMethod }
         },
         subscription: async (parent) => {
           const workspaceId = parent.id
-          return await getWorkspaceSubscriptionFactory({ db })({ workspaceId })
+          const subscription = await getWorkspaceSubscriptionFactory({ db })({
+            workspaceId
+          })
+          if (!subscription) return subscription
+          const seats = calculateSubscriptionSeats({
+            subscriptionData: subscription.subscriptionData,
+            guestSeatProductId: getWorkspacePlanProductId({ workspacePlan: 'guest' })
+          })
+          return { ...subscription, seats }
         },
         customerPortalUrl: async (parent) => {
           const workspaceId = parent.id
@@ -57,7 +94,9 @@ export = FF_GATEKEEPER_MODULE_ENABLED
           if (!workspaceSubscription) return null
           const workspace = await getWorkspaceFactory({ db })({ workspaceId })
           if (!workspace)
-            throw new Error('This cannot be, if there is a sub, there is a workspace')
+            throw new LogicError(
+              'This cannot be, if there is a sub, there is a workspace'
+            )
           return await createCustomerPortalUrlFactory({
             stripe: getStripeClient(),
             frontendOrigin: getFrontendOrigin()
@@ -75,6 +114,11 @@ export = FF_GATEKEEPER_MODULE_ENABLED
             workspaceFeature: args.featureName
           })
           return hasAccess
+        },
+        readOnly: async (parent) => {
+          return await isWorkspaceReadOnlyFactory({ getWorkspacePlan })({
+            workspaceId: parent.id
+          })
         }
       },
       WorkspaceMutations: {

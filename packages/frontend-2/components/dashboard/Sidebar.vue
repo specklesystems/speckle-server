@@ -58,8 +58,8 @@
               v-if="isWorkspacesEnabled"
               collapsible
               title="Workspaces"
-              :plus-click="isNotGuest ? handlePlusClick : undefined"
-              plus-text="Create workspace"
+              :icon-click="isNotGuest ? handlePlusClick : undefined"
+              icon-text="Create workspace"
             >
               <NuxtLink :to="workspacesRoute" @click="handleIntroducingWorkspacesClick">
                 <LayoutSidebarMenuGroupItem
@@ -83,6 +83,7 @@
                     :active="isActive(item.to)"
                     :tag="
                       item.plan.status === WorkspacePlanStatuses.Trial ||
+                      item.plan.status === WorkspacePlanStatuses.Expired ||
                       !item.plan.status
                         ? 'TRIAL'
                         : undefined
@@ -90,11 +91,7 @@
                     class="!pl-1"
                   >
                     <template #icon>
-                      <WorkspaceAvatar
-                        :logo="item.logo"
-                        :default-logo-index="item.defaultLogoIndex"
-                        size="sm"
-                      />
+                      <WorkspaceAvatar :name="item.name" :logo="item.logo" size="sm" />
                     </template>
                   </LayoutSidebarMenuGroupItem>
                 </NuxtLink>
@@ -235,10 +232,10 @@ const workspacesItems = computed(() =>
   workspaceResult.value?.activeUser
     ? workspaceResult.value.activeUser.workspaces.items.map((workspace) => ({
         label: workspace.name,
+        name: workspace.name,
         id: workspace.id,
         to: workspaceRoute(workspace.slug),
         logo: workspace.logo,
-        defaultLogoIndex: workspace.defaultLogoIndex,
         plan: {
           status: workspace.plan?.status
         },

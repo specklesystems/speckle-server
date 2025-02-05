@@ -2,14 +2,21 @@ import { z } from 'zod'
 import fs from 'node:fs/promises'
 import { Knex, knex } from 'knex'
 import { Logger } from 'pino'
+import { isUndefined } from '#lodash'
 
-export const regionConfigSchema = z.object({
+const regionConfigSchema = z.object({
   postgres: z.object({
     connectionUri: z
       .string()
       .describe(
         'Full Postgres connection URI (e.g. "postgres://user:password@host:port/dbname")'
       ),
+    databaseName: z
+      .string()
+      .describe(
+        'Name of the database to connect to. Used where the connection string is to a connection pool, and does not include the database name.'
+      )
+      .optional(),
     privateConnectionUri: z
       .string()
       .describe(
@@ -20,26 +27,30 @@ export const regionConfigSchema = z.object({
       .string()
       .describe('Public TLS ("CA") certificate for the Postgres server')
       .optional()
+  }),
+  blobStorage: z.object({
+    endpoint: z.string().url().describe('URL of the S3-compatible storage endpoint'),
+    accessKey: z.string().describe('Access key for the S3-compatible storage endpoint'),
+    secretKey: z.string().describe('Secret key for the S3-compatible storage endpoint'),
+    bucket: z.string().describe('Name of the S3-compatible storage bucket'),
+    createBucketIfNotExists: z
+      .boolean()
+      .describe('Whether to create the bucket if it does not exist'),
+    s3Region: z.string().describe('Region of the S3-compatible storage endpoint')
   })
-  //TODO - add the rest of the config when blob storage is implemented
-  // blobStorage: z
-  //   .object({
-  //     endpoint: z.string().url(),
-  //     accessKey: z.string(),
-  //     secretKey: z.string(),
-  //     bucket: z.string()
-  //   })
 })
 
-export const multiRegionConfigSchema = z.object({
+const multiRegionConfigSchema = z.object({
   main: regionConfigSchema,
-  regions: z.record(z.string(), regionConfigSchema)
+  regions: z.record(z.string(), regionConfigSchema),
+  defaultProjectRegionKey: z.string().min(3).nullish()
 })
 
 export type MultiRegionConfig = z.infer<typeof multiRegionConfigSchema>
 export type MainRegionConfig = MultiRegionConfig['main']
 export type DataRegionsConfig = MultiRegionConfig['regions']
 export type RegionServerConfig = z.infer<typeof regionConfigSchema>
+export type BlobStorageConfig = RegionServerConfig['blobStorage']
 
 export const loadMultiRegionsConfig = async ({
   path
@@ -63,7 +74,8 @@ export const loadMultiRegionsConfig = async ({
     throw new Error(`Multi-region config file at path '${path}' is not valid JSON`)
   }
 
-  const multiRegionConfigFileResult = multiRegionConfigSchema.safeParse(parsedJson) // This will throw if the config is invalid
+  const schema = multiRegionConfigSchema
+  const multiRegionConfigFileResult = schema.safeParse(parsedJson) // This will throw if the config is invalid
   if (!multiRegionConfigFileResult.success)
     throw new Error(
       `Multi-region config file at path '${path}' does not fit the schema: ${multiRegionConfigFileResult.error}`
@@ -79,6 +91,14 @@ export type KnexConfigArgs = {
   logger: Logger
   maxConnections: number
   applicationName: string
+  connectionAcquireTimeoutMillis: number
+  connectionCreateTimeoutMillis: number
+  /**
+   * If set to any value - true or false - will explicitly enable or disable async stack traces
+   * that show where queries are launched from. If not set, will default to true in dev
+   * and test environments
+   */
+  asyncStackTraces?: boolean
 }
 
 export const createKnexConfig = ({
@@ -88,11 +108,18 @@ export const createKnexConfig = ({
   isDevOrTestEnv,
   logger,
   maxConnections,
-  caCertificate
+  caCertificate,
+  connectionAcquireTimeoutMillis,
+  connectionCreateTimeoutMillis,
+  asyncStackTraces
 }: {
   connectionString?: string | undefined
   caCertificate?: string | undefined
 } & KnexConfigArgs): Knex.Config => {
+  const shouldEnableAsyncStackTraces = isUndefined(asyncStackTraces)
+    ? isDevOrTestEnv
+    : asyncStackTraces
+
   return {
     client: 'pg',
     migrations: {
@@ -122,18 +149,20 @@ export const createKnexConfig = ({
     },
     // we wish to avoid leaking sql queries in the logs: https://knexjs.org/guide/#compilesqlonerror
     compileSqlOnError: isDevOrTestEnv,
-    asyncStackTraces: isDevOrTestEnv,
+    asyncStackTraces: shouldEnableAsyncStackTraces,
     pool: {
       min: 0,
       max: maxConnections,
-      acquireTimeoutMillis: 16000, //allows for 3x creation attempts plus idle time between attempts
-      createTimeoutMillis: 5000
+      acquireTimeoutMillis: connectionAcquireTimeoutMillis, // If the maximum number of connections is reached, it wait for 16 seconds trying to acquire an existing connection before throwing a timeout error.
+      createTimeoutMillis: connectionCreateTimeoutMillis // If no existing connection is available and the maximum number of connections is not yet reached, the pool will try to create a new connection for 5 seconds before throwing a timeout error.
+      // createRetryIntervalMillis: 200, // Irrelevant & ignored because propogateCreateError is true.
+      // propagateCreateError: true // The propagateCreateError is set to true by default in Knex and throws a TimeoutError if the first create connection to the database fails. Knex recommends that this value is NOT set to false, despite what 'helpful' people on Stackoverflow tell you: https://github.com/knex/knex/issues/3455#issuecomment-535554401
     }
   }
 }
 
 export const configureKnexClient = (
-  config: RegionServerConfig,
+  config: Pick<RegionServerConfig, 'postgres'>,
   configArgs: KnexConfigArgs
 ): { public: Knex; private?: Knex } => {
   const knexConfig = createKnexConfig({

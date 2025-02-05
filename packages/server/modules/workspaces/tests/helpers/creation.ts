@@ -73,7 +73,8 @@ import {
   getDefaultRegionFactory,
   upsertRegionAssignmentFactory
 } from '@/modules/workspaces/repositories/regions'
-import { getDb } from '@/modules/multiregion/dbSelector'
+import { getDb } from '@/modules/multiregion/utils/dbSelector'
+import { WorkspacePlan } from '@/modules/gatekeeper/domain/billing'
 
 const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
 
@@ -102,7 +103,11 @@ export type BasicTestWorkspace = {
 export const createTestWorkspace = async (
   workspace: SetOptional<BasicTestWorkspace, 'slug'>,
   owner: BasicTestUser,
-  options?: { domain?: string; addPlan?: boolean; regionKey?: string }
+  options?: {
+    domain?: string
+    addPlan?: Pick<WorkspacePlan, 'name' | 'status'> | boolean
+    regionKey?: string
+  }
 ) => {
   const { domain, addPlan = true, regionKey } = options || {}
   const useRegion = isMultiRegionTestMode() && regionKey
@@ -135,8 +140,7 @@ export const createTestWorkspace = async (
       name: workspace.name,
       slug: workspace.slug || cryptoRandomString({ length: 10 }),
       description: workspace.description || null,
-      logo: workspace.logo || null,
-      defaultLogoIndex: 0
+      logo: workspace.logo || null
     },
     userResourceAccessLimits: null
   })
@@ -164,8 +168,16 @@ export const createTestWorkspace = async (
       workspacePlan: {
         createdAt: new Date(),
         workspaceId: newWorkspace.id,
-        name: 'business',
-        status: 'valid'
+        name:
+          typeof addPlan === 'object' && Object.hasOwn(addPlan, 'name')
+            ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              (addPlan.name as any)
+            : 'business',
+        status:
+          typeof addPlan === 'object' && Object.hasOwn(addPlan, 'status')
+            ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              (addPlan.status as any)
+            : 'valid'
       }
     })
   }

@@ -10,7 +10,10 @@ import {
   upsertPaidWorkspacePlanFactory,
   getWorkspaceSubscriptionFactory,
   getWorkspaceSubscriptionBySubscriptionIdFactory,
-  getWorkspaceSubscriptionsPastBillingCycleEndFactory
+  getWorkspaceSubscriptionsPastBillingCycleEndFactory,
+  changeExpiredTrialWorkspacePlanStatusesFactory,
+  upsertTrialWorkspacePlanFactory,
+  getWorkspacesByPlanAgeFactory
 } from '@/modules/gatekeeper/repositories/billing'
 import {
   createTestSubscriptionData,
@@ -21,6 +24,7 @@ import { truncateTables } from '@/test/hooks'
 import { createAndStoreTestWorkspaceFactory } from '@/test/speckle-helpers/workspaces'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
+import { beforeEach } from 'mocha'
 
 const upsertWorkspace = upsertWorkspaceFactory({ db })
 const createAndStoreTestWorkspace = createAndStoreTestWorkspaceFactory({
@@ -28,6 +32,7 @@ const createAndStoreTestWorkspace = createAndStoreTestWorkspaceFactory({
 })
 const getWorkspacePlan = getWorkspacePlanFactory({ db })
 const upsertPaidWorkspacePlan = upsertPaidWorkspacePlanFactory({ db })
+const upsertTrialWorkspacePlan = upsertTrialWorkspacePlanFactory({ db })
 const saveCheckoutSession = saveCheckoutSessionFactory({ db })
 const deleteCheckoutSession = deleteCheckoutSessionFactory({ db })
 const getCheckoutSession = getCheckoutSessionFactory({ db })
@@ -41,8 +46,15 @@ const getWorkspaceSubscriptionBySubscriptionId =
 const getSubscriptionsAboutToEndBillingCycle =
   getWorkspaceSubscriptionsPastBillingCycleEndFactory({ db })
 
+const changeExpiredTrialWorkspacePlanStatuses =
+  changeExpiredTrialWorkspacePlanStatusesFactory({ db })
+const getWorkspacesByPlanAge = getWorkspacesByPlanAgeFactory({ db })
+
 describe('billing repositories @gatekeeper', () => {
   describe('workspacePlans', () => {
+    beforeEach(async () => {
+      await truncateTables(['workspace_plans'])
+    })
     describe('upsertPaidWorkspacePlanFactory creates a function, that', () => {
       it('creates a workspacePlan if it does not exist', async () => {
         const workspace = await createAndStoreTestWorkspace()
@@ -83,6 +95,231 @@ describe('billing repositories @gatekeeper', () => {
 
         storedWorkspacePlan = await getWorkspacePlan({ workspaceId })
         expect(storedWorkspacePlan).deep.equal(planUpdate)
+      })
+    })
+    describe('changeExpiredTrialWorkspacePlanStatusesFactory creates a function, that', () => {
+      it('ignores non trial plans', async () => {
+        const workspace = await createAndStoreTestWorkspace()
+        await upsertPaidWorkspacePlan({
+          workspacePlan: {
+            name: 'business',
+            status: 'cancelationScheduled',
+            workspaceId: workspace.id,
+            createdAt: new Date(2023, 0, 1)
+          }
+        })
+
+        const expiredPlans = await changeExpiredTrialWorkspacePlanStatuses({
+          numberOfDays: 1
+        })
+        expect(expiredPlans.map((p) => p.workspaceId).includes(workspace.id)).to.be
+          .false
+      })
+      it('ignores non expired trial plans', async () => {
+        const workspace = await createAndStoreTestWorkspace()
+        await upsertTrialWorkspacePlan({
+          workspacePlan: {
+            name: 'starter',
+            status: 'trial',
+            workspaceId: workspace.id,
+            createdAt: new Date()
+          }
+        })
+
+        const expiredPlans = await changeExpiredTrialWorkspacePlanStatuses({
+          numberOfDays: 1
+        })
+        expect(expiredPlans.map((p) => p.workspaceId).includes(workspace.id)).to.be
+          .false
+      })
+      it('changes status to expired for expired trial plans', async () => {
+        const workspace1 = await createAndStoreTestWorkspace()
+        await upsertTrialWorkspacePlan({
+          workspacePlan: {
+            name: 'starter',
+            status: 'trial',
+            workspaceId: workspace1.id,
+            createdAt: new Date(2023, 0, 1)
+          }
+        })
+
+        const workspace2 = await createAndStoreTestWorkspace()
+        await upsertTrialWorkspacePlan({
+          workspacePlan: {
+            name: 'starter',
+            status: 'trial',
+            workspaceId: workspace2.id,
+            createdAt: new Date(2023, 0, 1)
+          }
+        })
+
+        const workspace3 = await createAndStoreTestWorkspace()
+        const workspace3Plan = {
+          name: 'starter',
+          status: 'trial',
+          workspaceId: workspace3.id,
+          createdAt: new Date()
+        } as const
+        await upsertTrialWorkspacePlan({
+          workspacePlan: workspace3Plan
+        })
+
+        const expiredPlans = await changeExpiredTrialWorkspacePlanStatuses({
+          numberOfDays: 1
+        })
+        const expiredWorkspaceIds = expiredPlans.map((p) => p.workspaceId)
+        expect(expiredWorkspaceIds.includes(workspace1.id)).to.be.true
+        expect(expiredWorkspaceIds.includes(workspace2.id)).to.be.true
+        expect(expiredWorkspaceIds.includes(workspace3.id)).to.be.false
+        expiredPlans.forEach((expiredPlan) => {
+          expect(expiredPlan.status).to.equal('expired')
+        })
+
+        const storedWorkspacePlan = await getWorkspacePlan({
+          workspaceId: workspace3.id
+        })
+        expect(storedWorkspacePlan).deep.equal(workspace3Plan)
+      })
+    })
+    describe('getWorkspaceByPlanAgeFactory returns a function, that', () => {
+      it('gets workspace where days to expire matches expected', async () => {
+        const workspace1 = await createAndStoreTestWorkspace()
+        const createdAt1 = new Date()
+        createdAt1.setHours(createdAt1.getHours() - 22)
+        const workspace1Plan = {
+          name: 'business',
+          status: 'paymentFailed',
+          createdAt: createdAt1,
+          workspaceId: workspace1.id
+        } as const
+        await upsertPaidWorkspacePlan({
+          workspacePlan: workspace1Plan
+        })
+        const workspace2 = await createAndStoreTestWorkspace()
+        const createdAt2 = new Date()
+        createdAt2.setHours(createdAt2.getHours() - 2)
+        const workspacePlan = {
+          name: 'business',
+          status: 'paymentFailed',
+          createdAt: createdAt2,
+          workspaceId: workspace2.id
+        } as const
+        await upsertPaidWorkspacePlan({
+          workspacePlan
+        })
+
+        const workspacesByPlanByDaysTillExpire = await getWorkspacesByPlanAge({
+          planValidFor: 2,
+          daysTillExpiry: 2,
+          status: workspacePlan.status,
+          plan: workspacePlan.name
+        })
+        expect(workspacesByPlanByDaysTillExpire).to.deep.equalInAnyOrder([
+          workspace1,
+          workspace2
+        ])
+      })
+      it('ignores workspaces where plans do not match', async () => {
+        const workspace1 = await createAndStoreTestWorkspace()
+        const createdAt1 = new Date()
+        createdAt1.setHours(createdAt1.getHours() - 22)
+        const workspace1Plan = {
+          name: 'business',
+          status: 'paymentFailed',
+          createdAt: createdAt1,
+          workspaceId: workspace1.id
+        } as const
+        await upsertPaidWorkspacePlan({
+          workspacePlan: workspace1Plan
+        })
+        const workspace2 = await createAndStoreTestWorkspace()
+        const createdAt2 = new Date()
+        createdAt2.setHours(createdAt2.getHours() - 2)
+        const workspace2Plan = {
+          name: 'starter',
+          status: 'paymentFailed',
+          createdAt: createdAt2,
+          workspaceId: workspace2.id
+        } as const
+        await upsertPaidWorkspacePlan({
+          workspacePlan: workspace2Plan
+        })
+
+        const workspacesByPlanByDaysTillExpire = await getWorkspacesByPlanAge({
+          planValidFor: 2,
+          daysTillExpiry: 2,
+          status: workspace2Plan.status,
+          plan: workspace2Plan.name
+        })
+        expect(workspacesByPlanByDaysTillExpire).to.deep.equalInAnyOrder([workspace2])
+      })
+      it('ignores workspaces where plan statuses do not match', async () => {
+        const workspace1 = await createAndStoreTestWorkspace()
+        const createdAt1 = new Date()
+        createdAt1.setHours(createdAt1.getHours() - 22)
+        const workspace1Plan = {
+          name: 'business',
+          status: 'paymentFailed',
+          createdAt: createdAt1,
+          workspaceId: workspace1.id
+        } as const
+        await upsertPaidWorkspacePlan({
+          workspacePlan: workspace1Plan
+        })
+        const workspace2 = await createAndStoreTestWorkspace()
+        const createdAt2 = new Date()
+        createdAt2.setHours(createdAt2.getHours() - 2)
+        const workspace2Plan = {
+          name: 'business',
+          status: 'valid',
+          createdAt: createdAt2,
+          workspaceId: workspace2.id
+        } as const
+        await upsertPaidWorkspacePlan({
+          workspacePlan: workspace2Plan
+        })
+
+        const workspacesByPlanByDaysTillExpire = await getWorkspacesByPlanAge({
+          planValidFor: 2,
+          daysTillExpiry: 2,
+          status: workspace2Plan.status,
+          plan: workspace2Plan.name
+        })
+        expect(workspacesByPlanByDaysTillExpire).to.deep.equalInAnyOrder([workspace2])
+      })
+      it('ignores workspaces where plan days till expiry do not match', async () => {
+        const workspace1 = await createAndStoreTestWorkspace()
+        const createdAt1 = new Date()
+        createdAt1.setHours(createdAt1.getHours() - 25)
+        const workspace1Plan = {
+          name: 'starter',
+          status: 'valid',
+          createdAt: createdAt1,
+          workspaceId: workspace1.id
+        } as const
+        await upsertPaidWorkspacePlan({
+          workspacePlan: workspace1Plan
+        })
+        const workspace2 = await createAndStoreTestWorkspace()
+        const createdAt2 = new Date()
+        createdAt2.setHours(createdAt2.getHours() - 2)
+        const workspacePlan2 = {
+          name: 'starter',
+          status: 'valid',
+          createdAt: createdAt2,
+          workspaceId: workspace2.id
+        } as const
+        await upsertPaidWorkspacePlan({
+          workspacePlan: workspacePlan2
+        })
+
+        const workspacesByPlanByDaysTillExpire = await getWorkspacesByPlanAge({
+          planValidFor: 2,
+          daysTillExpiry: 2,
+          status: workspacePlan2.status,
+          plan: workspacePlan2.name
+        })
+        expect(workspacesByPlanByDaysTillExpire).to.deep.equalInAnyOrder([workspace2])
       })
     })
   })

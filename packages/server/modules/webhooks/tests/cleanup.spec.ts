@@ -1,6 +1,4 @@
 import knex, { db } from '@/db/knex'
-import { ProjectsEmitter } from '@/modules/core/events/projectsEmitter'
-import { UsersEmitter } from '@/modules/core/events/usersEmitter'
 import {
   createRandomEmail,
   createRandomPassword
@@ -85,7 +83,7 @@ const createStream = legacyCreateStreamFactory({
     }),
     createStream: createStreamFactory({ db }),
     createBranch: createBranchFactory({ db }),
-    projectsEventsEmitter: ProjectsEmitter.emit
+    emitEvent: getEventBus().emit
   })
 })
 const findEmail = findEmailFactory({ db })
@@ -113,7 +111,7 @@ const createUser = createUserFactory({
     }),
     requestNewEmailVerification
   }),
-  usersEventsEmitter: UsersEmitter.emit
+  emitEvent: getEventBus().emit
 })
 
 const countWebhooks = async () => {

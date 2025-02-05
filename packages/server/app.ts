@@ -11,7 +11,7 @@ import compression from 'compression'
 import cookieParser from 'cookie-parser'
 
 import { createTerminus } from '@godaddy/terminus'
-import Logging from '@/logging'
+import Metrics from '@/logging'
 import {
   startupLogger,
   shutdownLogger,
@@ -49,7 +49,8 @@ import {
   enableMixpanel,
   getPort,
   getBindAddress,
-  shutdownTimeoutSeconds
+  shutdownTimeoutSeconds,
+  asyncRequestContextEnabled
 } from '@/modules/shared/helpers/envHelper'
 import * as ModulesSetup from '@/modules'
 import { GraphQLContext, Optional } from '@/modules/shared/helpers/typeHelper'
@@ -69,15 +70,21 @@ import { buildMocksConfig } from '@/modules/mocks'
 import { defaultErrorHandler } from '@/modules/core/rest/defaultErrorHandler'
 import { migrateDbToLatest } from '@/db/migrations'
 import { statusCodePlugin } from '@/modules/core/graph/plugins/statusCode'
-import { BaseError, ForbiddenError } from '@/modules/shared/errors'
-import { loggingPlugin } from '@/modules/core/graph/plugins/logging'
+import { BadRequestError, BaseError, ForbiddenError } from '@/modules/shared/errors'
+import { loggingPluginFactory } from '@/modules/core/graph/plugins/logging'
 import { shouldLogAsInfoLevel } from '@/logging/graphqlError'
 import { getUserFactory } from '@/modules/core/repositories/users'
 import { initFactory as healthchecksInitFactory } from '@/healthchecks'
-import type { ReadinessHandler } from '@/healthchecks/health'
+import type { ReadinessHandler } from '@/healthchecks/types'
 import type ws from 'ws'
 import type { Server as MockWsServer } from 'mock-socket'
 import { SetOptional } from 'type-fest'
+import {
+  enterNewRequestContext,
+  getRequestContext,
+  initiateRequestContextMiddleware
+} from '@/logging/requestContext'
+import { randomUUID } from 'crypto'
 
 const GRAPHQL_PATH = '/graphql'
 
@@ -99,12 +106,20 @@ function logSubscriptionOperation(params: {
   const userId = ctx.userId
   if (!error && !response) return
 
+  const reqCtx = getRequestContext()
+
   const logger = ctx.log.child({
     graphql_query: execParams.query.toString(),
     graphql_variables: redactSensitiveVariables(execParams.variables),
     graphql_operation_name: execParams.operationName,
     graphql_operation_type: 'subscription',
-    userId
+    userId,
+    ...(reqCtx
+      ? {
+          req: { id: reqCtx.requestId },
+          dbMetrics: reqCtx.dbMetrics
+        }
+      : {})
   })
 
   const errMsg = 'GQL subscription event {graphql_operation_name} errored'
@@ -215,7 +230,9 @@ export function buildApolloSubscriptionServer(
         let token: string
         try {
           const headers = getHeaders({ connContext, connectionParams })
-          const requestId = headers['x-request-id'] || ''
+          const requestId = headers['x-request-id'] || `ws-${randomUUID()}`
+          enterNewRequestContext({ reqId: requestId })
+
           logger.debug(
             { requestId, headers: sanitizeHeaders(headers) },
             'New websocket connection'
@@ -230,12 +247,12 @@ export function buildApolloSubscriptionServer(
           }
 
           if (!header) {
-            throw new Error("Couldn't resolve auth header for subscription")
+            throw new BadRequestError("Couldn't resolve auth header for subscription")
           }
 
           token = header.split(' ')[1]
           if (!token) {
-            throw new Error("Couldn't resolve token from auth header")
+            throw new BadRequestError("Couldn't resolve token from auth header")
           }
         } catch (e) {
           throw new ForbiddenError('You need a token to subscribe')
@@ -268,13 +285,15 @@ export function buildApolloSubscriptionServer(
         webSocket: WebSocket,
         connContext: PossiblyMockedConnectionContext
       ) => {
+        const reqCtx = getRequestContext()
         const logger = connContext.request?.log || subscriptionLogger
         const headers = getHeaders({ connContext })
         logger.debug(
           {
             ws_protocol: webSocket.protocol,
             ws_url: webSocket.url,
-            headers: sanitizeHeaders(headers)
+            headers: sanitizeHeaders(headers),
+            ...(reqCtx ? { req: { id: reqCtx.requestId } } : {})
           },
           'Websocket disconnected.'
         )
@@ -284,21 +303,30 @@ export function buildApolloSubscriptionServer(
         // kinda hacky, but we're using this as an "subscription event emitted"
         // callback to clear subscription connection dataloaders to avoid stale cache
         const baseParams = params[1]
+
         metricSubscriptionTotalOperations.inc({
-          subscriptionType: baseParams.operationName
+          subscriptionType: baseParams.operationName // FIXME: operationName can be empty
         })
         const ctx = baseParams.context as GraphQLContext
 
+        const reqCtx = getRequestContext()
+        if (reqCtx) {
+          // Reset db metrics for each event
+          reqCtx.dbMetrics.totalCount = 0
+          reqCtx.dbMetrics.totalDuration = 0
+        }
+
         const logger = ctx.log || subscriptionLogger
-        logger.debug(
+        logger.info(
           {
             graphql_operation_name: baseParams.operationName,
             userId: baseParams.context.userId,
             graphql_query: baseParams.query.toString(),
             graphql_variables: redactSensitiveVariables(baseParams.variables),
-            graphql_operation_type: 'subscription'
+            graphql_operation_type: 'subscription',
+            ...(reqCtx ? { req: { id: reqCtx.requestId } } : {})
           },
-          'Subscription started for {graphqlOperationName}'
+          'Subscription event fired for {graphql_operation_name}'
         )
 
         baseParams.formatResponse = (val: SubscriptionResponse) => {
@@ -346,7 +374,7 @@ export async function buildApolloServer(options?: {
     schema,
     plugins: [
       statusCodePlugin,
-      loggingPlugin,
+      loggingPluginFactory({ register: prometheusClient.register }),
       ApolloServerPluginLandingPageLocalDefault({
         embed: true,
         includeCookies: true
@@ -399,16 +427,19 @@ export async function init() {
   const app = express()
   app.disable('x-powered-by')
 
-  Logging(app)
-
   // Moves things along automatically on restart.
   // Should perhaps be done manually?
   await migrateDbToLatest({ region: 'main', db: knex })
 
   app.use(cookieParser())
   app.use(DetermineRequestIdMiddleware)
+  app.use(initiateRequestContextMiddleware)
   app.use(determineClientIpAddressMiddleware)
   app.use(LoggingExpressMiddleware)
+
+  if (asyncRequestContextEnabled()) {
+    startupLogger.info('Async request context tracking enabled 👀')
+  }
 
   if (process.env.COMPRESSION) {
     app.use(compression())
@@ -431,8 +462,8 @@ export async function init() {
 
   // Log errors
   app.use(errorLoggingMiddleware)
+  app.use(createRateLimiterMiddleware()) // Rate limiting by IP address for all users
   app.use(authContextMiddleware)
-  app.use(createRateLimiterMiddleware())
   app.use(
     async (
       _req: express.Request,
@@ -451,6 +482,11 @@ export async function init() {
 
   // Initialize healthchecks
   const healthchecks = await healthchecksInitFactory()(app, true)
+
+  // Metrics relies on 'regions' table in the database, so much be initialized after migrations in the main database ("migrateDbToLatest({ region: 'main'," etc..)
+  // It also relies on the regional knex clients, which will initialize and run migrations in the respective regions.
+  // It must be initialized after the multiregion module is initialized in ModulesSetup.init
+  await Metrics(app)
 
   // Init HTTP server & subscription server
   const server = http.createServer(app)
@@ -497,7 +533,7 @@ export async function shutdown(params: {
 }
 
 const shouldUseFrontendProxy = () =>
-  process.env.NODE_ENV === 'development' && process.env.USE_FRONTEND_2 !== 'true'
+  process.env.NODE_ENV === 'development' && process.env.USE_FRONTEND_PROXY === 'true'
 
 async function createFrontendProxy() {
   const frontendHost = process.env.FRONTEND_HOST || '127.0.0.1'
@@ -535,7 +571,7 @@ export async function startHttp(params: {
     // app.use('/', frontendProxy)
     app.use(await createFrontendProxy())
 
-    startupLogger.info('✨ Proxying frontend-1 (dev mode):')
+    startupLogger.info('✨ Proxying frontend (dev mode):')
     startupLogger.info(`👉 main application: http://127.0.0.1:${port}/`)
   }
 
@@ -571,7 +607,7 @@ export async function startHttp(params: {
     },
     logger: (message, err) => {
       if (err) {
-        shutdownLogger.error({ err }, message)
+        shutdownLogger.warn({ err }, message)
       } else {
         shutdownLogger.info(message)
       }

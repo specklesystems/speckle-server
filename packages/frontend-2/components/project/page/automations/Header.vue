@@ -31,7 +31,7 @@
 <script setup lang="ts">
 import { useDebouncedTextInput } from '@speckle/ui-components'
 import {
-  automationFunctionsRoute,
+  publicAutomateFunctionsRoute,
   workspaceFunctionsRoute
 } from '~/lib/common/helpers/route'
 
@@ -51,7 +51,7 @@ const exploreFunctionsMessage = computed(() =>
 const exploreFunctionsRoute = computed(() =>
   props.workspaceSlug
     ? workspaceFunctionsRoute(props.workspaceSlug)
-    : automationFunctionsRoute
+    : publicAutomateFunctionsRoute
 )
 
 const search = defineModel<string>('search')

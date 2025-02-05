@@ -14,7 +14,7 @@
         <WorkspaceAvatar
           v-if="workspace"
           :logo="workspace.logo"
-          :default-logo-index="workspace.defaultLogoIndex"
+          :name="workspace.name"
           size="xl"
         />
         <h1 class="text-heading-xl text-center mb-2">

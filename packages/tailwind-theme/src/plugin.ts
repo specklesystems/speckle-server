@@ -1,4 +1,4 @@
-import plugin from 'tailwindcss/plugin.js'
+import buildPlugin from 'tailwindcss/plugin.js'
 import preset from './preset.js'
 
 export const lightThemeVariables = {
@@ -56,10 +56,10 @@ export const lightThemeVariables = {
   '--warning-darker': '#E0AB20',
 
   /* info variations */
-  '--info': '#B9B8CC',
-  '--info-lighter': '#D2D1E5',
+  '--info': '#B8C0CC',
+  '--info-lighter': '#E0ECFF',
   '--info-lightest': '#EEEEFE',
-  '--info-darker': '#6D6B99',
+  '--info-darker': '#6B7D99',
 
   /* danger variations */
   '--danger': '#C45959',
@@ -93,12 +93,12 @@ export const darkThemeVariables = {
   /* primary color */
   '--primary': '#136CFF',
   /* focused primary color */
-  '--primary-focus': '#458CFF',
+  '--primary-focus': '#0057E5',
   /* muted primary color */
   '--primary-muted': '#292B39',
 
   /* outline variations */
-  '--outline-1': '#2B7CFF',
+  '--outline-1': '#276FE5',
   '--outline-2': '#2E313F',
   '--outline-3': '#282833',
   '--outline-4': '#4B40C9',
@@ -122,10 +122,10 @@ export const darkThemeVariables = {
   '--warning-darker': '#E0AB20',
 
   /* info variations */
-  '--info': '#B9B8CC',
-  '--info-lighter': '#D2D1E5',
+  '--info': '#B8C0CC',
+  '--info-lighter': '#E0ECFF',
   '--info-lightest': '#030330',
-  '--info-darker': '#6D6B99',
+  '--info-darker': '#6B7D99',
 
   /* danger variations */
   '--danger': '#F87171',
@@ -134,7 +134,7 @@ export const darkThemeVariables = {
   '--danger-darker': '#AB3E3E'
 }
 
-export default plugin(function ({ addComponents, addBase }) {
+const plugin = buildPlugin(function ({ addComponents, addBase }) {
   addBase({
     /* cyrillic-ext */
     '@font-face': {
@@ -379,3 +379,6 @@ export default plugin(function ({ addComponents, addBase }) {
     }
   })
 }, preset)
+
+export default plugin
+export { plugin }

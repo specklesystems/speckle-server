@@ -22,7 +22,7 @@ import { getStreamFactory } from '@/modules/core/repositories/streams'
 import { addBranchCreatedActivityFactory } from '@/modules/activitystream/services/branchActivity'
 import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import { getPort } from '@/modules/shared/helpers/envHelper'
-import { getProjectDbClient } from '@/modules/multiregion/dbSelector'
+import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { listenFor } from '@/modules/core/utils/dbNotificationListener'
 
 export const init: SpeckleModule['init'] = async (app, isInitial) => {
@@ -115,6 +115,7 @@ export const init: SpeckleModule['init'] = async (app, isInitial) => {
               'Error while uploading file.'
             )
           }
+          res.contentType('application/json')
           res.status(response.statusCode).send(body)
         }
       )

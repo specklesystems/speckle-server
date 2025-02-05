@@ -2,8 +2,8 @@
   <div class="flex flex-col items-center gap-4">
     <WorkspaceAvatar
       v-if="workspace"
+      :name="workspace.name"
       :logo="workspace.logo"
-      :default-logo-index="workspace.defaultLogoIndex"
       size="xl"
     />
 

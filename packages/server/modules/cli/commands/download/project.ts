@@ -27,7 +27,6 @@ import {
   createCommentThreadAndNotifyFactory
 } from '@/modules/comments/services/management'
 import { createBranchAndNotifyFactory } from '@/modules/core/services/branch/management'
-import { CommentsEmitter } from '@/modules/comments/events/emitter'
 import {
   addCommentCreatedActivityFactory,
   addReplyAddedActivityFactory
@@ -58,8 +57,6 @@ import {
 } from '@/modules/comments/repositories/comments'
 import { getBlobsFactory } from '@/modules/blobstorage/repositories'
 import { validateInputAttachmentsFactory } from '@/modules/comments/services/commentTextService'
-import { VersionsEmitter } from '@/modules/core/events/versionsEmitter'
-import { ProjectsEmitter } from '@/modules/core/events/projectsEmitter'
 import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import { publish } from '@/modules/shared/utils/subscriptions'
 import { addCommitCreatedActivityFactory } from '@/modules/activitystream/services/commitActivity'
@@ -69,7 +66,7 @@ import { addBranchCreatedActivityFactory } from '@/modules/activitystream/servic
 import { authorizeResolver } from '@/modules/shared'
 import { Roles } from '@speckle/shared'
 import { getDefaultRegionFactory } from '@/modules/workspaces/repositories/regions'
-import { getDb } from '@/modules/multiregion/dbSelector'
+import { getDb } from '@/modules/multiregion/utils/dbSelector'
 import { createNewProjectFactory } from '@/modules/core/services/projects'
 import {
   deleteProjectFactory,
@@ -78,6 +75,7 @@ import {
   storeProjectRoleFactory
 } from '@/modules/core/repositories/projects'
 import { storeModelFactory } from '@/modules/core/repositories/models'
+import { getEventBus } from '@/modules/shared/services/eventBus'
 
 const command: CommandModule<
   unknown,
@@ -171,7 +169,7 @@ const command: CommandModule<
       insertComments,
       insertCommentLinks,
       markCommentViewed,
-      commentsEventsEmit: CommentsEmitter.emit,
+      emitEvent: getEventBus().emit,
       addCommentCreatedActivity: addCommentCreatedActivityFactory({
         getViewerResourcesFromLegacyIdentifiers,
         getViewerResourceItemsUngrouped,
@@ -185,7 +183,7 @@ const command: CommandModule<
       insertComments,
       insertCommentLinks,
       markCommentUpdated: markCommentUpdatedFactory({ db: projectDb }),
-      commentsEventsEmit: CommentsEmitter.emit,
+      emitEvent: getEventBus().emit,
       addReplyAddedActivity: addReplyAddedActivityFactory({
         getViewerResourcesForComment: getViewerResourcesForCommentFactory({
           getCommentsResources: getCommentsResourcesFactory({ db: projectDb }),
@@ -204,7 +202,7 @@ const command: CommandModule<
       insertBranchCommits: insertBranchCommitsFactory({ db: projectDb }),
       markCommitStreamUpdated,
       markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db: projectDb }),
-      versionsEventEmitter: VersionsEmitter.emit,
+      emitEvent: getEventBus().emit,
       addCommitCreatedActivity: addCommitCreatedActivityFactory({
         saveActivity: saveActivityFactory({ db: mainDb }),
         publish
@@ -220,7 +218,7 @@ const command: CommandModule<
       storeModel: storeModelFactory({ db: projectDb }),
       // THIS MUST GO TO THE MAIN DB
       storeProjectRole: storeProjectRoleFactory({ db }),
-      projectsEventsEmitter: ProjectsEmitter.emit
+      emitEvent: getEventBus().emit
     })
 
     const createObject = createObjectFactory({

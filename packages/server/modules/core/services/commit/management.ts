@@ -10,6 +10,7 @@ import {
   GetStreamBranchByName,
   MarkCommitBranchUpdated
 } from '@/modules/core/domain/branches/operations'
+import { VersionEvents } from '@/modules/core/domain/commits/events'
 import {
   CreateCommitByBranchId,
   CreateCommitByBranchName,
@@ -33,13 +34,10 @@ import {
 import {
   CommitCreateError,
   CommitDeleteError,
+  CommitNotFoundError,
   CommitReceiveError,
   CommitUpdateError
 } from '@/modules/core/errors/commit'
-import {
-  VersionEvents,
-  VersionsEventEmitter
-} from '@/modules/core/events/versionsEmitter'
 import {
   CommitReceivedInput,
   CommitUpdateInput,
@@ -47,8 +45,10 @@ import {
   UpdateVersionInput
 } from '@/modules/core/graph/generated/graphql'
 import { BranchRecord, CommitRecord } from '@/modules/core/helpers/types'
+import { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { ensureError, Roles } from '@speckle/shared'
 import { has } from 'lodash'
+import { BranchNotFoundError } from '@/modules/core/errors/branch'
 
 export const markCommitReceivedAndNotifyFactory =
   ({ getCommit, saveActivity }: { getCommit: GetCommit; saveActivity: SaveActivity }) =>
@@ -100,8 +100,8 @@ export const createCommitByBranchIdFactory =
     insertBranchCommits: InsertBranchCommits
     markCommitStreamUpdated: MarkCommitStreamUpdated
     markCommitBranchUpdated: MarkCommitBranchUpdated
-    versionsEventEmitter: VersionsEventEmitter
     addCommitCreatedActivity: AddCommitCreatedActivity
+    emitEvent: EventBusEmit
   }): CreateCommitByBranchId =>
   async (params, options) => {
     const {
@@ -153,10 +153,13 @@ export const createCommitByBranchIdFactory =
     await Promise.all([
       deps.markCommitStreamUpdated(id),
       deps.markCommitBranchUpdated(id),
-      deps.versionsEventEmitter(VersionEvents.Created, {
-        projectId: streamId,
-        modelId: branchId,
-        version: commit
+      deps.emitEvent({
+        eventName: VersionEvents.Created,
+        payload: {
+          projectId: streamId,
+          modelId: branchId,
+          version: commit
+        }
       }),
       ...(notify
         ? [
@@ -300,10 +303,10 @@ export const updateCommitAndNotifyFactory =
         const newBranch = await deps.getStreamBranchByName(streamId, newBranchName)
 
         if (!newBranch || !branch) {
-          throw new Error("Couldn't resolve branch")
+          throw new BranchNotFoundError("Couldn't resolve branch")
         }
         if (!commit) {
-          throw new Error("Couldn't find commit")
+          throw new CommitNotFoundError("Couldn't find commit")
         }
 
         await deps.switchCommitBranch(commitId, newBranch.id, branch.id)
@@ -328,7 +331,8 @@ export const updateCommitAndNotifyFactory =
         userId,
         originalCommit: commit,
         update: params,
-        newCommit
+        newCommit,
+        branchId: branch!.id
       })
 
       const [updatedBranch] = await Promise.all([

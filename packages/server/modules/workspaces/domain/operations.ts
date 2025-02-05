@@ -4,6 +4,8 @@ import {
   Workspace,
   WorkspaceAcl,
   WorkspaceDomain,
+  WorkspaceJoinRequest,
+  WorkspaceJoinRequestStatus,
   WorkspaceRegionAssignment,
   WorkspaceWithDomains,
   WorkspaceWithOptionalRole
@@ -36,7 +38,6 @@ export type UpsertWorkspaceArgs = {
       NullableKeysToOptional<Workspace>,
       | 'domainBasedMembershipProtectionEnabled'
       | 'discoverabilityEnabled'
-      | 'defaultLogoIndex'
       | 'defaultProjectRole'
       | 'slug'
     >,
@@ -49,12 +50,7 @@ export type UpsertWorkspace = (args: UpsertWorkspaceArgs) => Promise<void>
 export type GetUserDiscoverableWorkspaces = (args: {
   domains: string[]
   userId: string
-}) => Promise<
-  Pick<
-    Workspace,
-    'id' | 'name' | 'slug' | 'description' | 'logo' | 'defaultLogoIndex'
-  >[]
->
+}) => Promise<Pick<Workspace, 'id' | 'name' | 'slug' | 'description' | 'logo'>[]>
 
 export type GetWorkspace = (args: {
   workspaceId: string
@@ -105,6 +101,18 @@ export type GetWorkspaceWithDomains = (args: {
 
 export type DeleteWorkspace = (args: DeleteWorkspaceArgs) => Promise<void>
 
+type CountWorkspacesArgs = {
+  filter?: {
+    search?: string
+  }
+}
+export type QueryWorkspacesArgs = CountWorkspacesArgs & {
+  limit: number
+  cursor?: string
+}
+export type QueryWorkspaces = (args: QueryWorkspacesArgs) => Promise<Workspace[]>
+export type CountWorkspaces = (args: CountWorkspacesArgs) => Promise<number>
+
 /** Workspace Roles */
 
 export type GetWorkspaceCollaboratorsArgs = {
@@ -115,7 +123,7 @@ export type GetWorkspaceCollaboratorsArgs = {
     /**
      * Optionally filter by workspace role(s)
      */
-    roles?: string[]
+    roles?: WorkspaceRoles[]
     /**
      * Optionally filter by user name or email
      */
@@ -296,3 +304,41 @@ export type GetWorkspaceCreationState = (params: {
 export type UpsertWorkspaceCreationState = (params: {
   workspaceCreationState: WorkspaceCreationState
 }) => Promise<void>
+
+export type UpdateWorkspaceJoinRequestStatus = (params: {
+  workspaceId: string
+  userId: string
+  status: WorkspaceJoinRequestStatus
+}) => Promise<number[]>
+
+export type CreateWorkspaceJoinRequest = (params: {
+  workspaceJoinRequest: Omit<WorkspaceJoinRequest, 'createdAt' | 'updatedAt'>
+}) => Promise<WorkspaceJoinRequest>
+
+export type SendWorkspaceJoinRequestReceivedEmail = (params: {
+  workspace: Pick<Workspace, 'id' | 'name' | 'slug'>
+  requester: { id: string; name: string; email: string }
+}) => Promise<void>
+
+export type SendWorkspaceJoinRequestApprovedEmail = (params: {
+  workspace: Pick<Workspace, 'id' | 'name' | 'slug'>
+  requester: { id: string; name: string; email: string }
+}) => Promise<void>
+
+export type SendWorkspaceJoinRequestDeniedEmail = (params: {
+  workspace: Pick<Workspace, 'id' | 'name' | 'slug'>
+  requester: { id: string; name: string; email: string }
+}) => Promise<void>
+
+export type GetWorkspaceJoinRequest = (
+  params: Pick<WorkspaceJoinRequest, 'userId' | 'workspaceId'> &
+    Partial<Pick<WorkspaceJoinRequest, 'status'>>
+) => Promise<WorkspaceJoinRequest | undefined>
+
+export type ApproveWorkspaceJoinRequest = (
+  params: Pick<WorkspaceJoinRequest, 'workspaceId' | 'userId'>
+) => Promise<boolean>
+
+export type DenyWorkspaceJoinRequest = (
+  params: Pick<WorkspaceJoinRequest, 'workspaceId' | 'userId'>
+) => Promise<boolean>

@@ -90,7 +90,10 @@ export type PaidWorkspacePlans = z.infer<typeof paidWorkspacePlans>
 // these are not publicly exposed for general use on billing enabled servers
 export const unpaidWorkspacePlans = z.union([
   z.literal('unlimited'),
-  z.literal('academia')
+  z.literal('academia'),
+  z.literal('starterInvoiced'),
+  z.literal('plusInvoiced'),
+  z.literal('businessInvoiced')
 ])
 
 export type UnpaidWorkspacePlans = z.infer<typeof unpaidWorkspacePlans>
@@ -156,9 +159,9 @@ const academia: WorkspacePlanFeaturesAndLimits = {
   name: 'academia',
   description: 'The academia plan',
   oidcSso: true,
-  workspaceDataRegionSpecificity: false,
-  automateMinutes: null,
-  uploadSize: 100
+  workspaceDataRegionSpecificity: true,
+  automateMinutes: 900,
+  uploadSize: 1000
 }
 
 const paidWorkspacePlanFeatures: Record<
@@ -175,7 +178,10 @@ export const unpaidWorkspacePlanFeatures: Record<
   WorkspacePlanFeaturesAndLimits
 > = {
   academia,
-  unlimited
+  unlimited,
+  starterInvoiced: starter,
+  plusInvoiced: plus,
+  businessInvoiced: business
 }
 
 export const workspacePlanFeatures: Record<

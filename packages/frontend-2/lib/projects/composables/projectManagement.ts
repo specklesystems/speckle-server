@@ -98,8 +98,7 @@ export function useProjectUpdateTracking(
       if (redirectOnDeletion || notifyOnUpdate) {
         triggerNotification({
           type: ToastNotificationType.Info,
-          title: isDeleted ? 'Project deleted' : 'Project updated',
-          description: isDeleted ? 'Redirecting to home' : undefined
+          title: isDeleted ? 'Project deleted' : 'Project updated'
         })
       }
     }
@@ -175,11 +174,6 @@ export function useCreateProject() {
         type: ToastNotificationType.Danger,
         title: 'Project creation failed',
         description: err
-      })
-    } else {
-      triggerNotification({
-        type: ToastNotificationType.Success,
-        title: 'Project successfully created'
       })
     }
 
@@ -270,9 +264,11 @@ export function useInviteUserToProject() {
 
   return async (
     projectId: string,
-    input: ProjectInviteCreateInput[] | WorkspaceProjectInviteCreateInput[]
+    input: ProjectInviteCreateInput[] | WorkspaceProjectInviteCreateInput[],
+    options?: { hideToasts?: boolean }
   ) => {
     const userId = activeUser.value?.id
+    const { hideToasts } = options || {}
     if (!userId) return
 
     const isWorkspaceInput = (
@@ -305,17 +301,25 @@ export function useInviteUserToProject() {
       err = !res?.id ? getFirstErrorMessage(errors) : undefined
     }
 
-    if (err) {
+    if (err && !hideToasts) {
       triggerNotification({
         type: ToastNotificationType.Danger,
-        title: 'Invitation failed',
+        title:
+          input.length > 1
+            ? "Couldn't send invites"
+            : `Coudldn't send invite to ${input[0].email}`,
         description: err
       })
     } else {
-      triggerNotification({
-        type: ToastNotificationType.Success,
-        title: 'Invite successfully sent'
-      })
+      if (!hideToasts) {
+        triggerNotification({
+          type: ToastNotificationType.Success,
+          title:
+            input.length > 1
+              ? 'Invites successfully send'
+              : `Invite successfully sent to ${input[0].email}`
+        })
+      }
     }
 
     return res
@@ -422,11 +426,6 @@ export function useDeleteProject() {
       .catch(convertThrowIntoFetchResult)
 
     if (result?.data?.projectMutations.delete) {
-      triggerNotification({
-        type: ToastNotificationType.Info,
-        title: 'Project deleted'
-      })
-
       if (goHome) {
         if (workspaceSlug) {
           router.push(workspaceRoute(workspaceSlug))

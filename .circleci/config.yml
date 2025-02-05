@@ -496,6 +496,7 @@ jobs:
       S3_REGION: '' # optional, defaults to 'us-east-1'
       ENCRYPTION_KEYS_PATH: 'test/assets/automate/encryptionKeys.json'
       FF_BILLING_INTEGRATION_ENABLED: 'true'
+      RATELIMITER_ENABLED: 'false'
     steps:
       - checkout
       - restore_cache:
@@ -578,6 +579,7 @@ jobs:
       S3_REGION: '' # optional, defaults to 'us-east-1'
       ENCRYPTION_KEYS_PATH: 'test/assets/automate/encryptionKeys.json'
       DISABLE_ALL_FFS: 'true'
+      RATELIMITER_ENABLED: 'false'
 
   test-server-multiregion:
     <<: *test-server-job
@@ -597,7 +599,9 @@ jobs:
           POSTGRES_USER: speckle
         command: -c 'max_connections=1000' -c 'port=5433' -c 'wal_level=logical'
       - image: 'minio/minio'
-        command: server /data --console-address ":9001"
+        command: server /data --console-address ":9001" --address "0.0.0.0:9000"
+      - image: 'minio/minio'
+        command: server /data --console-address ":9021" --address "0.0.0.0:9020"
     environment:
       # Same as test-server:
       NODE_ENV: test
@@ -621,8 +625,8 @@ jobs:
       MULTI_REGION_CONFIG_PATH: '../../.circleci/multiregion.test-ci.json'
       FF_WORKSPACES_MODULE_ENABLED: 'true'
       FF_WORKSPACES_MULTI_REGION_ENABLED: 'true'
-      FF_WORKSPACES_MULTI_REGION_BLOB_STORAGE_ENABLED: 'true'
       RUN_TESTS_IN_MULTIREGION_MODE: true
+      RATELIMITER_ENABLED: 'false'
 
   test-frontend-2:
     docker: &docker-node-browsers-image
@@ -1047,7 +1051,6 @@ jobs:
   docker-build-monitor-container:
     <<: *build-job
     environment:
-      FOLDER: utils
       SPECKLE_SERVER_PACKAGE: monitor-deployment
 
   docker-build-docker-compose-ingress:
@@ -1117,7 +1120,6 @@ jobs:
   docker-publish-monitor-container:
     <<: *publish-job
     environment:
-      FOLDER: utils
       SPECKLE_SERVER_PACKAGE: monitor-deployment
 
   docker-publish-docker-compose-ingress:

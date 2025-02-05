@@ -6,7 +6,6 @@ import {
   addStreamPermissionsRevokedActivityFactory
 } from '@/modules/activitystream/services/streamActivity'
 import { StreamAcl } from '@/modules/core/dbSchema'
-import { ProjectsEmitter } from '@/modules/core/events/projectsEmitter'
 import { StreamAclRecord, StreamRecord } from '@/modules/core/helpers/types'
 import { createBranchFactory } from '@/modules/core/repositories/branches'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
@@ -76,7 +75,7 @@ const createStream = legacyCreateStreamFactory({
     }),
     createStream: createStreamFactory({ db }),
     createBranch: createBranchFactory({ db }),
-    projectsEventsEmitter: ProjectsEmitter.emit
+    emitEvent: getEventBus().emit
   })
 })
 
@@ -132,10 +131,10 @@ export async function createTestStreams(
 }
 
 /**
- * Create basic stream for testing and update streamObj to have a real ID
+ * Create basic stream for testing and update streamObj in-place, via reference, to have a real ID
  */
 export async function createTestStream(
-  streamObj: BasicTestStream,
+  streamObj: Partial<BasicTestStream>,
   owner: BasicTestUser
 ) {
   let id: string

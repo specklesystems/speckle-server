@@ -62,6 +62,9 @@ enum WorkspacePlans {
   business
   unlimited
   academia
+  starterInvoiced
+  plusInvoiced
+  businessInvoiced
 }
 
 enum WorkspacePlanStatuses {
@@ -73,10 +76,22 @@ enum WorkspacePlanStatuses {
   expired
 }
 
+enum WorkspacePaymentMethod {
+  unpaid
+  invoice
+  billing
+}
+
 type WorkspacePlan {
   name: WorkspacePlans!
   status: WorkspacePlanStatuses!
   createdAt: DateTime!
+  paymentMethod: WorkspacePaymentMethod!
+}
+
+type WorkspaceSubscriptionSeats {
+  plan: Int!
+  guest: Int!
 }
 
 type WorkspaceSubscription {
@@ -84,6 +99,7 @@ type WorkspaceSubscription {
   updatedAt: DateTime!
   currentBillingCycleEnd: DateTime!
   billingInterval: BillingInterval!
+  seats: WorkspaceSubscriptionSeats!
 }
 
 extend type Workspace {
@@ -99,6 +115,10 @@ extend type Workspace {
     @hasWorkspaceRole(role: ADMIN)
   hasAccessToFeature(featureName: WorkspaceFeatureName!): Boolean!
     @hasWorkspaceRole(role: GUEST)
+  """
+  A Workspace is marked as readOnly if its trial period is finished or a paid plan is subscribed but payment has failed
+  """
+  readOnly: Boolean!
 }
 
 enum WorkspaceFeatureName {

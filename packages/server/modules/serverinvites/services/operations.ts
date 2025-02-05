@@ -1,7 +1,7 @@
 import { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
 import { ServerInfo } from '@/modules/core/helpers/types'
 import { UserWithOptionalRole } from '@/modules/core/repositories/users'
-import { EmailTemplateParams } from '@/modules/emails/services/emailRendering'
+import { EmailTemplateParams } from '@/modules/emails/domain/operations'
 import { CreateInviteParams } from '@/modules/serverinvites/domain/operations'
 import {
   InviteResourceTarget,

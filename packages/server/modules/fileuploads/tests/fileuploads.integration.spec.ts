@@ -30,7 +30,6 @@ import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/se
 import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { createBranchFactory } from '@/modules/core/repositories/branches'
-import { ProjectsEmitter } from '@/modules/core/events/projectsEmitter'
 import {
   countAdminUsersFactory,
   getUserFactory,
@@ -49,7 +48,6 @@ import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { createUserFactory } from '@/modules/core/services/users/management'
 import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
 import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
-import { UsersEmitter } from '@/modules/core/events/usersEmitter'
 import { sendEmail } from '@/modules/emails/services/sending'
 import { createTokenFactory } from '@/modules/core/services/tokens'
 import {
@@ -87,7 +85,7 @@ const createStream = legacyCreateStreamFactory({
     }),
     createStream: createStreamFactory({ db }),
     createBranch: createBranchFactory({ db }),
-    projectsEventsEmitter: ProjectsEmitter.emit
+    emitEvent: getEventBus().emit
   })
 })
 
@@ -116,7 +114,7 @@ const createUser = createUserFactory({
     }),
     requestNewEmailVerification
   }),
-  usersEventsEmitter: UsersEmitter.emit
+  emitEvent: getEventBus().emit
 })
 const createToken = createTokenFactory({
   storeApiToken: storeApiTokenFactory({ db }),
@@ -188,7 +186,9 @@ describe('FileUploads @fileuploads', () => {
         .attach('test.ifc', require.resolve('@/readme.md'), 'test.ifc')
 
       expect(response.statusCode).to.equal(201)
-      expect(response.body).to.deep.equal({})
+      expect(response.headers['content-type']).to.contain('application/json;')
+      expect(response.body.uploadResults).to.have.lengthOf(1)
+      expect(response.body.uploadResults[0].fileName).to.equal('test.ifc')
       const gqlResponse = await sendRequest(userOneToken, {
         query: `query ($streamId: String!) {
           stream(id: $streamId) {
@@ -205,6 +205,9 @@ describe('FileUploads @fileuploads', () => {
       expect(noErrors(gqlResponse))
       expect(gqlResponse.body.data.stream.fileUploads).to.have.lengthOf(1)
       expect(gqlResponse.body.data.stream.fileUploads[0].fileName).to.equal('test.ifc')
+      expect(gqlResponse.body.data.stream.fileUploads[0].id).to.equal(
+        response.body.uploadResults[0].blobId
+      )
 
       //TODO expect subscription notification
     })
@@ -216,7 +219,11 @@ describe('FileUploads @fileuploads', () => {
         .attach('blob1', require.resolve('@/readme.md'), 'test1.ifc')
         .attach('blob2', require.resolve('@/package.json'), 'test2.ifc')
       expect(response.status).to.equal(201)
-      expect(response.body).to.deep.equal({})
+      expect(response.headers['content-type']).to.contain('application/json;')
+      expect(response.body.uploadResults).to.have.lengthOf(2)
+      expect(
+        response.body.uploadResults.map((file: { fileName: string }) => file.fileName)
+      ).to.have.members(['test1.ifc', 'test2.ifc'])
       const gqlResponse = await sendRequest(userOneToken, {
         query: `query ($streamId: String!) {
           stream(id: $streamId) {
@@ -240,6 +247,11 @@ describe('FileUploads @fileuploads', () => {
           (file: { fileName: string }) => file.fileName
         )
       ).to.have.members(['test1.ifc', 'test2.ifc'])
+      expect(
+        gqlResponse.body.data.stream.fileUploads.map((file: { id: string }) => file.id)
+      ).to.have.members(
+        response.body.uploadResults.map((file: { blobId: string }) => file.blobId)
+      )
     })
 
     it('Returns 400 for bad form data', async () => {
@@ -251,6 +263,37 @@ describe('FileUploads @fileuploads', () => {
         .send('--XXX\r\nCon')
 
       expect(response.status).to.equal(400)
+      expect(response.headers['content-type']).to.contain('application/json;')
+      expect(response.body.error).to.contain('Upload request error.')
+      const gqlResponse = await sendRequest(userOneToken, {
+        query: `query ($streamId: String!) {
+          stream(id: $streamId) {
+            id
+            fileUploads {
+              id
+              fileName
+              convertedStatus
+            }
+          }
+        }`,
+        variables: { streamId: createdStreamId }
+      })
+      expect(noErrors(gqlResponse))
+      expect(
+        gqlResponse.body.data.stream.fileUploads,
+        JSON.stringify(gqlResponse.body.data)
+      ).to.have.lengthOf(0)
+    })
+
+    it('Returns 400 for missing headers', async () => {
+      const response = await request(app)
+        .post(`/api/file/autodetect/${createdStreamId}/main`)
+        .set('Authorization', `Bearer ${userOneToken}`)
+      // .set('Content-type', 'multipart/form-data; boundary=XXX') // purposely missing content type
+
+      expect(response.status).to.equal(400)
+      expect(response.headers['content-type']).to.contain('application/json;')
+      expect(response.body.error.message).to.contain('Missing Content-Type')
       const gqlResponse = await sendRequest(userOneToken, {
         query: `query ($streamId: String!) {
           stream(id: $streamId) {
@@ -277,8 +320,11 @@ describe('FileUploads @fileuploads', () => {
         .set('Authorization', `Bearer ${userOneToken}`)
         .attach('toolarge.ifc', Buffer.alloc(114_857_601, 'asdf'), 'toolarge.ifc')
       expect(response.status).to.equal(201)
-
-      expect(response.body).to.deep.equal({})
+      expect(response.headers['content-type']).to.contain('application/json;')
+      expect(response.body.uploadResults).to.have.lengthOf(1)
+      expect(
+        response.body.uploadResults.map((file: { fileName: string }) => file.fileName)
+      ).to.have.members(['toolarge.ifc'])
       const gqlResponse = await sendRequest(userOneToken, {
         query: `query ($streamId: String!) {
           stream(id: $streamId) {
@@ -297,6 +343,9 @@ describe('FileUploads @fileuploads', () => {
         gqlResponse.body.data.stream.fileUploads,
         JSON.stringify(gqlResponse.body.data)
       ).to.have.lengthOf(1)
+      expect(gqlResponse.body.data.stream.fileUploads[0].id).to.equal(
+        response.body.uploadResults[0].blobId
+      )
       //TODO expect no notifications
     })
 

@@ -1,5 +1,7 @@
 <template>
-  <div class="text-foreground-2 text-sm flex flex-col items-center space-y-1">
+  <div
+    class="text-foreground-2 text-body-xs flex flex-col items-center justify-center space-y-1"
+  >
     <template
       v-if="
         [

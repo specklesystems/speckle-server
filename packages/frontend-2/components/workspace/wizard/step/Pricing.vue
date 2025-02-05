@@ -49,7 +49,7 @@ import { pricingPlansConfig } from '~/lib/billing/helpers/constants'
 import { useMixpanel } from '~/lib/core/composables/mp'
 import { startCase } from 'lodash'
 
-const { state, goToNextStep, goToPreviousStep } = useWorkspacesWizard()
+const { goToNextStep, goToPreviousStep, state } = useWorkspacesWizard()
 const mixpanel = useMixpanel()
 
 const plans = ref(pricingPlansConfig.plans)
@@ -80,4 +80,8 @@ watch(
   },
   { immediate: true }
 )
+
+onMounted(() => {
+  mixpanel.track('Workspace Pricing Step Viewed')
+})
 </script>

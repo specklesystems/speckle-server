@@ -3,6 +3,7 @@
 import { Knex } from 'knex'
 import { isString } from 'lodash'
 import { postgresMaxConnections } from '@/modules/shared/helpers/envHelper'
+import { EnvironmentResourceError } from '@/modules/shared/errors'
 
 export type BatchedSelectOptions = {
   /**
@@ -76,11 +77,11 @@ export const formatJsonArrayRecords = <V extends Record<string, unknown>>(
 
 export const numberOfUsedOrPendingConnections = (db: Knex) => {
   if (!(db && 'client' in db && db.client))
-    throw new Error('knex is not defined or does not have a client.')
+    throw new EnvironmentResourceError('knex is not defined or does not have a client.')
 
   const dbClient: Knex.Client = db.client
   if (!('pool' in dbClient && dbClient.pool))
-    throw new Error('knex client does not have a connection pool')
+    throw new EnvironmentResourceError('knex client does not have a connection pool')
 
   const pool = dbClient.pool
 

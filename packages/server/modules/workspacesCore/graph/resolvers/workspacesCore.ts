@@ -93,6 +93,9 @@ export = !FF_WORKSPACES_MODULE_ENABLED
         discoverableWorkspaces: async () => {
           throw new WorkspacesModuleDisabledError()
         },
+        expiredSsoSessions: async () => {
+          return []
+        },
         workspaces: async () => {
           throw new WorkspacesModuleDisabledError()
         },
@@ -112,7 +115,8 @@ export = !FF_WORKSPACES_MODULE_ENABLED
         }
       },
       LimitedUser: {
-        workspaceDomainPolicyCompliant: async () => null
+        workspaceDomainPolicyCompliant: async () => null,
+        workspaceRole: async () => null
       },
       ServerInfo: {
         workspaces: () => ({})

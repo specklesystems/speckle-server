@@ -3,6 +3,31 @@ import { trimEnd } from 'lodash'
 import * as Environment from '@speckle/shared/dist/commonjs/environment/index.js'
 import { ensureError } from '@speckle/shared'
 
+export function getStringFromEnv(
+  envVarKey: string,
+  options?: Partial<{
+    /**
+     * If set to true, wont throw if the env var is not set
+     */
+    unsafe: boolean
+  }>
+): string {
+  const envVar = process.env[envVarKey]
+  if (!envVar) {
+    if (options?.unsafe) return ''
+    throw new MisconfiguredEnvironmentError(`${envVarKey} env var not configured`)
+  }
+  return envVar
+}
+
+export function getIntFromEnv(envVarKey: string, aDefault = '0'): number {
+  return parseInt(process.env[envVarKey] || aDefault)
+}
+
+export function getBooleanFromEnv(envVarKey: string, aDefault = false): boolean {
+  return ['1', 'true', true].includes(process.env[envVarKey] || aDefault.toString())
+}
+
 export function getSessionSecret() {
   if (!process.env.SESSION_SECRET) {
     throw new MisconfiguredEnvironmentError('SESSION_SECRET env var not configured')
@@ -43,31 +68,6 @@ export function getFileSizeLimitMB() {
 
 export function getMaximumObjectSizeMB() {
   return getIntFromEnv('MAX_OBJECT_SIZE_MB', '100')
-}
-
-export function getIntFromEnv(envVarKey: string, aDefault = '0'): number {
-  return parseInt(process.env[envVarKey] || aDefault)
-}
-
-export function getBooleanFromEnv(envVarKey: string, aDefault = false): boolean {
-  return ['1', 'true', true].includes(process.env[envVarKey] || aDefault.toString())
-}
-
-export function getStringFromEnv(
-  envVarKey: string,
-  options?: Partial<{
-    /**
-     * If set to true, wont throw if the env var is not set
-     */
-    unsafe: boolean
-  }>
-): string {
-  const envVar = process.env[envVarKey]
-  if (!envVar) {
-    if (options?.unsafe) return ''
-    throw new MisconfiguredEnvironmentError(`${envVarKey} env var not configured`)
-  }
-  return envVar
 }
 
 /**
@@ -363,6 +363,14 @@ export function postgresMaxConnections() {
   return getIntFromEnv('POSTGRES_MAX_CONNECTIONS_SERVER', '4')
 }
 
+export function postgresConnectionAcquireTimeoutMillis() {
+  return getIntFromEnv('POSTGRES_CONNECTION_ACQUIRE_TIMEOUT_MILLIS', '16000')
+}
+
+export function postgresConnectionCreateTimeoutMillis() {
+  return getIntFromEnv('POSTGRES_CONNECTION_CREATE_TIMEOUT_MILLIS', '5000')
+}
+
 export function highFrequencyMetricsCollectionPeriodMs() {
   return getIntFromEnv('HIGH_FREQUENCY_METRICS_COLLECTION_PERIOD_MS', '100')
 }
@@ -424,4 +432,18 @@ export const shouldRunTestsInMultiregionMode = () =>
 
 export function shutdownTimeoutSeconds() {
   return getIntFromEnv('SHUTDOWN_TIMEOUT_SECONDS', '300')
+}
+
+export const knexAsyncStackTracesEnabled = () => {
+  const envSet = process.env.KNEX_ASYNC_STACK_TRACES_ENABLED
+  if (!envSet) return undefined
+  return getBooleanFromEnv('KNEX_ASYNC_STACK_TRACES_ENABLED')
+}
+
+export const asyncRequestContextEnabled = () => {
+  return getBooleanFromEnv('ASYNC_REQUEST_CONTEXT_ENABLED')
+}
+
+export function enableImprovedKnexTelemetryStackTraces() {
+  return getBooleanFromEnv('KNEX_IMPROVED_TELEMETRY_STACK_TRACES')
 }

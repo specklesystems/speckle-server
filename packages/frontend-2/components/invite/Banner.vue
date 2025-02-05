@@ -5,7 +5,7 @@
       <WorkspaceAvatar
         v-if="invite.workspace"
         :logo="invite.workspace.logo"
-        :default-logo-index="invite.workspace.defaultLogoIndex"
+        :name="invite.workspace.name"
       />
       <div class="text-foreground">
         <slot name="message" />
@@ -28,7 +28,6 @@
           :size="buttonSize"
           color="outline"
           class="px-4"
-          :icon-left="CheckIcon"
           :disabled="loading"
           @click="onAcceptClick(token)"
         >
@@ -52,7 +51,6 @@
 <script setup lang="ts">
 import type { MaybeNullOrUndefined, Optional } from '@speckle/shared'
 import type { AvatarUserType } from '~/lib/user/composables/avatar'
-import { CheckIcon } from '@heroicons/vue/24/solid'
 import { usePostAuthRedirect } from '~/lib/auth/composables/postAuthRedirect'
 import {
   useNavigateToLogin,
@@ -69,7 +67,7 @@ type GenericInviteItem = {
   workspace?: {
     id: string
     logo?: string
-    defaultLogoIndex: number
+    name: string
   }
   user?: MaybeNullOrUndefined<{
     id: string
@@ -125,7 +123,9 @@ const mainInfoBlockClasses = computed(() => {
 const avatarSize = computed(() => (props.block ? 'xxl' : 'base'))
 const buttonSize = computed(() => (props.block ? 'lg' : 'sm'))
 const isForRegisteredUser = computed(() => !!props.invite.user?.id)
-const acceptMessage = computed(() => (props.invite.workspace ? 'Join' : 'Accept'))
+const acceptMessage = computed(() =>
+  props.invite.workspace ? 'Request to join' : 'Accept'
+)
 const declineMessage = computed(() => (props.invite.workspace ? 'Dismiss' : 'Decline'))
 
 const onLoginSignupClick = async () => {
@@ -149,7 +149,6 @@ const onDeclineClick = (token?: string) => {
     mixpanel.track('Invite Action', {
       accepted: false,
       type: 'workspace invite',
-      location: 'invite banner',
       // eslint-disable-next-line camelcase
       workspace_id: props.invite.workspace.id
     })
@@ -159,12 +158,6 @@ const onDeclineClick = (token?: string) => {
 const onAcceptClick = (token?: string) => {
   emit('processed', true, token)
   if (props.invite.workspace) {
-    mixpanel.track('Workspace Joined', {
-      location: 'invite banner',
-      // eslint-disable-next-line camelcase
-      workspace_id: props.invite.workspace.id
-    })
-
     mixpanel.track('Invite Action', {
       accepted: true,
       type: 'workspace invite',

@@ -4,6 +4,7 @@
     <template v-if="!loading && fn">
       <AutomateFunctionPageHeader
         :fn="fn"
+        :fn-workspace="fnWorkspace"
         :is-owner="isOwner"
         class="mb-12"
         @create-automation="showNewAutomationDialog = true"
@@ -16,6 +17,7 @@
       <AutomateAutomationCreateDialog
         v-model:open="showNewAutomationDialog"
         :preselected-function="fn"
+        :workspace-id="fnWorkspaceId"
       />
       <AutomateFunctionEditDialog
         v-if="editModel"
@@ -62,8 +64,18 @@ const pageQuery = graphql(`
       workspaces {
         items {
           ...AutomateFunctionCreateDialog_Workspace
+          ...AutomateFunctionEditDialog_Workspace
         }
       }
+    }
+  }
+`)
+
+const functionWorkspaceQuery = graphql(`
+  query AutomateFunctionPageWorkspace($workspaceId: String!) {
+    workspace(id: $workspaceId) {
+      id
+      ...AutomateFunctionPageHeader_Workspace
     }
   }
 `)
@@ -92,6 +104,20 @@ const showEditDialog = ref(false)
 const showNewAutomationDialog = ref(false)
 
 const fn = computed(() => result.value?.automateFunction)
+const fnWorkspaceId = computed(() => fn.value?.workspaceIds?.at(0))
+
+const { result: functionWorkspaceResult } = useQuery(
+  functionWorkspaceQuery,
+  () => ({
+    workspaceId: fnWorkspaceId.value as string
+  }),
+  () => ({
+    enabled: !!fnWorkspaceId.value
+  })
+)
+
+const fnWorkspace = computed(() => functionWorkspaceResult.value?.workspace)
+
 const isOwner = computed(
   () =>
     !!(
@@ -113,8 +139,6 @@ const editModel = computed((): Optional<FunctionDetailsFormValues> => {
   const func = fn.value
   if (!func) return undefined
 
-  const workspaceId = func.workspaceIds?.at(0)
-
   return {
     name: func.name,
     description: func.description,
@@ -124,7 +148,7 @@ const editModel = computed((): Optional<FunctionDetailsFormValues> => {
     ),
     tags: func.tags,
     workspace: activeUserWorkspaces.value.find(
-      (workspace) => workspace.id === workspaceId
+      (workspace) => workspace.id === fnWorkspaceId.value
     )
   }
 })

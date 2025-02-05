@@ -402,7 +402,8 @@ export const EmailVerifications = buildTableHelper('email_verifications', [
   'id',
   'email',
   'createdAt',
-  'used'
+  'used',
+  'code'
 ])
 
 export const ServerAccessRequests = buildTableHelper('server_access_requests', [

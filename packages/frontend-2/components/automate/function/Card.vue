@@ -2,7 +2,7 @@
   <Component
     :is="noButtons ? NuxtLink : 'div'"
     :class="classes"
-    :to="noButtons ? automationFunctionRoute(fn.id) : undefined"
+    :to="noButtons ? automateFunctionRoute(fn.id) : undefined"
     :external="externalMoreInfo"
     :target="externalMoreInfo ? '_blank' : undefined"
     class="rounded-lg border border-outline-3 bg-foundation overflow-hidden"
@@ -19,7 +19,7 @@
           >
             <Component
               :is="noButtons ? 'div' : NuxtLink"
-              :to="automationFunctionRoute(fn.id)"
+              :to="automateFunctionRoute(fn.id)"
               :target="externalMoreInfo ? '_blank' : undefined"
               class="truncate"
             >
@@ -52,7 +52,7 @@
           </FormButton>
           <FormButton
             color="subtle"
-            :to="automationFunctionRoute(fn.id)"
+            :to="automateFunctionRoute(fn.id)"
             :external="externalMoreInfo"
             :target="externalMoreInfo ? '_blank' : undefined"
           >
@@ -80,7 +80,7 @@
 import { graphql } from '~/lib/common/generated/gql'
 import type { AutomationsFunctionsCard_AutomateFunctionFragment } from '~/lib/common/generated/gql/graphql'
 import { CheckIcon } from '@heroicons/vue/24/outline'
-import { automationFunctionRoute } from '~/lib/common/helpers/route'
+import { automateFunctionRoute } from '~/lib/common/helpers/route'
 import { useMarkdown } from '~/lib/common/composables/markdown'
 
 graphql(`

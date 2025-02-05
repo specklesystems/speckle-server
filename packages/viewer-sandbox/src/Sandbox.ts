@@ -16,6 +16,7 @@ import {
   OutputPass,
   Pipeline,
   SectionTool,
+  SpeckleOfflineLoader,
   SpeckleRenderer,
   SpeckleStandardMaterial,
   TAAPipeline,
@@ -499,10 +500,18 @@ export default class Sandbox {
       title: 'Screenshot'
     })
     screenshot.on('click', async () => {
-      // console.warn(await this.viewer.screenshot())
-      this.viewer
-        .getExtension(FilteringExtension)
-        .hideObjects(['1facfaaf1d3682707edd9ac20ef34e62'])
+      console.warn(await this.viewer.screenshot())
+
+      /** Read depth */
+      // const pass = [
+      //   ...this.viewer.getRenderer().pipeline.getPass('DEPTH'),
+      //   ...this.viewer.getRenderer().pipeline.getPass('DEPTH-NORMAL')
+      // ]
+      // const [depthData, width, height] = await this.viewer
+      //   .getExtension(PassReader)
+      //   .read(pass)
+
+      // console.log(PassReader.toBase64(PassReader.decodeDepth(depthData), width, height))
     })
 
     const rotate = this.tabs.pages[0].addButton({
@@ -1291,5 +1300,17 @@ export default class Sandbox {
       void this.viewer.loadObject(loader, true)
     }
     localStorage.setItem('last-load-url', url)
+  }
+
+  public async loadJSON(json: string) {
+    const loader = new SpeckleOfflineLoader(this.viewer.getWorldTree(), json)
+    loader.on(LoaderEvent.LoadCancelled, (resource: string) => {
+      console.warn(`Resource ${resource} loading was canceled`)
+    })
+    loader.on(LoaderEvent.LoadWarning, (arg: { message: string }) => {
+      console.error(`Loader warning: ${arg.message}`)
+    })
+
+    void this.viewer.loadObject(loader, true)
   }
 }

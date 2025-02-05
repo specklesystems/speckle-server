@@ -10,9 +10,6 @@ export const ServerInvitesEvents = {
   Canceled: `${prefix}canceled`
 } as const
 
-export type ServerInvitesEventsKeys =
-  (typeof ServerInvitesEvents)[keyof typeof ServerInvitesEvents]
-
 export type ServerInvitesEventsPayloads = {
   [ServerInvitesEvents.Created]: {
     invite: ServerInviteRecord
