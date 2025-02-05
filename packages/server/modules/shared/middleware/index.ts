@@ -217,7 +217,7 @@ export async function authContextMiddleware(
   if (!authContext.auth && authContext.err) {
     const defaultMessage = 'Unknown Auth context error'
 
-    switch (authContext.constructor) {
+    switch (authContext.err.constructor) {
       case UnauthorizedError:
         return res
           .status(401)
