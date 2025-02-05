@@ -22,7 +22,7 @@ import {
 import { Optional, wait } from '@speckle/shared'
 import { mixpanel } from '@/modules/shared/utils/mixpanel'
 import * as Observability from '@speckle/shared/dist/commonjs/observability/index.js'
-import { pino } from 'pino'
+import { Logger, pino } from 'pino'
 import { getIpFromRequest } from '@/modules/shared/utils/ip'
 import { Netmask } from 'netmask'
 import { Merge } from 'type-fest'
@@ -126,6 +126,7 @@ export async function createAuthContextFromToken(
 
 export const authContextMiddlewareFactory = (deps: {
   cache: CacheProvider<AuthContext>
+  logger: Logger
 }) => {
   const validateToken = validateTokenFactory({
     revokeUserTokenById: revokeUserTokenByIdFactory({ db }),
@@ -143,14 +144,14 @@ export const authContextMiddlewareFactory = (deps: {
 
   const retrieveViaCache = retrieveViaCacheFactory<AuthContext>({
     retrieveFromSource: (token) => createAuthContextFromToken(token, validateToken),
-    options: { prefix: 'speckle_auth_context' },
+    options: { prefix: 'speckle_auth_context', logger: deps.logger },
     cache: deps.cache
   })
 
   return async (req: Request, res: Response, next: NextFunction) => {
     const token = getTokenFromRequest(req)
     let authContext: AuthContext = { auth: false }
-    if (token) authContext = await retrieveViaCache({ key: token })
+    if (token) authContext = await retrieveViaCache({ key: token.substring(0, 10) })
     const loggedContext = Object.fromEntries(
       Object.entries(authContext).filter(
         ([key]) => !['token'].includes(key.toLocaleLowerCase())

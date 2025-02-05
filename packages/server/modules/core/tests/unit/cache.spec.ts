@@ -5,6 +5,7 @@ import {
 } from '@/modules/core/utils/cacheHandler'
 import cryptoRandomString from 'crypto-random-string'
 import { expect } from 'chai'
+import { logger } from '@/logging/logging'
 
 describe('utils cache @core', () => {
   describe('bust cache is enabled', () => {
@@ -23,7 +24,8 @@ describe('utils cache @core', () => {
         cache: mockInMemoryCache,
         retrieveFromSource: async () => 'fromSource',
         options: {
-          prefix
+          prefix,
+          logger
         }
       })
       const result = await getViaCache({
@@ -49,7 +51,8 @@ describe('utils cache @core', () => {
           cache: mockInMemoryCache,
           retrieveFromSource: async () => 'fromSource',
           options: {
-            prefix
+            prefix,
+            logger
           }
         })
         const result = await getFromCache({
@@ -75,7 +78,8 @@ describe('utils cache @core', () => {
           cache: mockInMemoryCache,
           retrieveFromSource: async () => 'fromSource',
           options: {
-            prefix
+            prefix,
+            logger
           }
         })
         const result = await getFromCache({
