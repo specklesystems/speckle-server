@@ -180,6 +180,62 @@ export const authContextMiddlewareFactory = (deps: {
   }
 }
 
+/**
+ * @deprecated Use authContextMiddlewareFactory instead
+ * @param req
+ * @param res
+ * @param next
+ * @returns
+ */
+export const authContextMiddleware = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const validateToken = validateTokenFactory({
+    revokeUserTokenById: revokeUserTokenByIdFactory({ db }),
+    getApiTokenById: getApiTokenByIdFactory({ db }),
+    getTokenAppInfo: getTokenAppInfoFactory({ db }),
+    getTokenScopesById: getTokenScopesByIdFactory({ db }),
+    getUserRole: getUserRoleFactory({ db }),
+    getTokenResourceAccessDefinitionsById: getTokenResourceAccessDefinitionsByIdFactory(
+      {
+        db
+      }
+    ),
+    updateApiToken: updateApiTokenFactory({ db })
+  })
+
+  const token = getTokenFromRequest(req)
+  const authContext = await createAuthContextFromToken(token, validateToken)
+  const loggedContext = Object.fromEntries(
+    Object.entries(authContext).filter(
+      ([key]) => !['token'].includes(key.toLocaleLowerCase())
+    )
+  )
+  req.log = req.log.child({ authContext: loggedContext })
+  if (!authContext.auth && authContext.err) {
+    const defaultMessage = 'Unknown Auth context error'
+
+    switch (authContext.constructor) {
+      case UnauthorizedError:
+        return res
+          .status(401)
+          .json({ error: authContext.err.message || defaultMessage })
+      case ForbiddenError:
+        return res
+          .status(403)
+          .json({ error: authContext.err.message || defaultMessage })
+      default:
+        req.log.error({ err: authContext.err }, 'Auth context error')
+        return res.status(500).json({ error: defaultMessage })
+    }
+  }
+
+  req.context = authContext
+  next()
+}
+
 export async function addLoadersToCtx(
   ctx: Merge<Omit<GraphQLContext, 'loaders'>, { log?: Optional<pino.Logger> }>,
   options?: Partial<{ cleanLoadersEarly: boolean }>

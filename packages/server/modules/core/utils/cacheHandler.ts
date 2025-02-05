@@ -9,7 +9,7 @@ export type RetrieveFromCache<T> = (params: {
 }) => Promise<T>
 
 /**
- * Responsible for handling the retrieval of a value from a cache or, if no cache hit, from the source callback and then cache the value.
+ * Responsible for handling the retrieval of a value from a cache or, if no cache or no cache hit, from the source callback.
  */
 export const retrieveViaCacheFactory = <T>(deps: {
   retrieveFromSource: (key: string) => Promise<T>

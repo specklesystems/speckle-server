@@ -50,7 +50,9 @@ import {
   getPort,
   getBindAddress,
   shutdownTimeoutSeconds,
-  asyncRequestContextEnabled
+  asyncRequestContextEnabled,
+  getFeatureFlags,
+  getCacheAuthPipelineTtlSeconds
 } from '@/modules/shared/helpers/envHelper'
 import * as ModulesSetup from '@/modules'
 import { GraphQLContext, Optional } from '@/modules/shared/helpers/typeHelper'
@@ -59,6 +61,7 @@ import { rateLimiterMiddlewareFactory } from '@/modules/core/services/ratelimite
 import { get, has, isString } from 'lodash'
 import { corsMiddleware } from '@/modules/core/configs/cors'
 import {
+  authContextMiddleware,
   authContextMiddlewareFactory,
   buildContext,
   determineClientIpAddressMiddleware,
@@ -87,6 +90,7 @@ import {
 import { randomUUID } from 'crypto'
 import { redisCacheFactory } from '@/modules/core/utils/redisCacheProvider'
 import { getGenericRedis } from '@/modules/shared/redis/redis'
+const { FF_CACHE_AUTH_PIPELINE } = getFeatureFlags()
 
 const GRAPHQL_PATH = '/graphql'
 
@@ -465,14 +469,18 @@ export async function init() {
   // Log errors
   app.use(errorLoggingMiddleware)
   app.use(rateLimiterMiddlewareFactory()) // Rate limiting by IP address for all users
-  app.use(
-    authContextMiddlewareFactory({
-      cache: redisCacheFactory({
-        redis: getGenericRedis(),
-        options: { ttlMilliseconds: 2 * 1000 }
+  if (FF_CACHE_AUTH_PIPELINE) {
+    app.use(
+      authContextMiddlewareFactory({
+        cache: redisCacheFactory({
+          redis: getGenericRedis(),
+          options: { ttlMilliseconds: getCacheAuthPipelineTtlSeconds() * 1000 }
+        })
       })
-    })
-  )
+    )
+  } else {
+    app.use(authContextMiddleware)
+  }
   app.use(
     async (
       _req: express.Request,

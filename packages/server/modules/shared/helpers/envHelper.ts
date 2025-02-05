@@ -447,3 +447,6 @@ export const asyncRequestContextEnabled = () => {
 export function enableImprovedKnexTelemetryStackTraces() {
   return getBooleanFromEnv('KNEX_IMPROVED_TELEMETRY_STACK_TRACES')
 }
+
+export const getCacheAuthPipelineTtlSeconds = () =>
+  getIntFromEnv('CACHE_AUTH_PIPELINE_TTL_SECONDS', '2')

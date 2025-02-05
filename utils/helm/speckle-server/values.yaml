@@ -59,6 +59,8 @@ featureFlags:
   forceEmailVerification: false
   ## @param featureFlags.forceOnboarding Forces onboarding for all users
   forceOnboarding: false
+  ## @param featureFlags.cacheAuthPipeline Enables the caching of the authentication pipeline component of each client request
+  cacheAuthPipeline: false
 
 analytics:
   ## @param analytics.enabled Enable or disable analytics
@@ -488,6 +490,10 @@ server:
   ## @param server.asyncRequestContextEnabled If enabled, the server will use the async request context for improved log msg correlation
   asyncRequestContextEnabled: false
 
+  ## @param server.cacheAuthPipelineTtlSeconds The time in seconds for which the authentication pipeline component of each client request should be cached
+  cacheAuthPipelineTtlSeconds: 2
+
+  ## @section Gendo AI
   gendoAI:
     ## @param server.gendoAI.apiUrl The url of the Gendo AI application, including protocol.
     apiUrl: 'https://api.gendo.ai/external/generate'
