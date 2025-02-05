@@ -1,53 +1,50 @@
 <template>
   <div class="pt-4 flex gap-4 flex-col sm:flex-row sm:items-center sm:justify-between">
     <Portal to="navigation">
-      <HeaderNavLink
-        :to="automationFunctionsRoute"
-        :name="'Automate functions'"
-      ></HeaderNavLink>
-      <HeaderNavLink
-        :to="automationFunctionRoute(fn.id)"
-        :name="fn.name"
-      ></HeaderNavLink>
+      <template v-if="fnWorkspace">
+        <HeaderNavLink
+          :to="workspaceRoute(fnWorkspace.slug)"
+          :separator="false"
+          :name="fnWorkspace.name"
+        />
+        <HeaderNavLink
+          :to="workspaceFunctionsRoute(fnWorkspace.slug)"
+          name="Functions"
+        />
+        <HeaderNavLink :to="automateFunctionRoute(fn.id)" :name="fn.name" />
+      </template>
+      <template v-else>
+        <HeaderNavLink
+          :to="publicAutomateFunctionsRoute"
+          :separator="false"
+          name="Functions"
+        />
+        <HeaderNavLink :to="automateFunctionRoute(fn.id)" :name="fn.name" />
+      </template>
     </Portal>
     <div class="flex items-center gap-4">
       <AutomateFunctionLogo :logo="fn.logo" />
       <h1 class="text-heading-lg">{{ fn.name }}</h1>
-      <FormButton v-if="isOwner" size="sm" text class="mt-1" @click="$emit('edit')">
-        Edit
-      </FormButton>
     </div>
-    <div
-      v-tippy="
-        hasReleases ? undefined : 'Your function needs to have at least one release'
-      "
-      class="flex gap-2 shrink-0"
-    >
-      <FormButton
-        :icon-left="BoltIcon"
-        class="shrink-0"
-        full-width
-        :disabled="!hasReleases"
-        @click="$emit('createAutomation')"
-      >
-        Use in an automation
+    <div class="flex items-center align-center gap-2">
+      <FormButton v-if="isOwner" color="outline" @click="$emit('edit')">
+        Edit
       </FormButton>
     </div>
   </div>
 </template>
 <script setup lang="ts">
-import { BoltIcon } from '@heroicons/vue/24/outline'
 import { graphql } from '~/lib/common/generated/gql'
-import type { AutomateFunctionPageHeader_FunctionFragment } from '~/lib/common/generated/gql/graphql'
+import type {
+  AutomateFunctionPageHeader_FunctionFragment,
+  AutomateFunctionPageHeader_WorkspaceFragment
+} from '~/lib/common/generated/gql/graphql'
 import {
-  automationFunctionRoute,
-  automationFunctionsRoute
+  automateFunctionRoute,
+  publicAutomateFunctionsRoute,
+  workspaceFunctionsRoute,
+  workspaceRoute
 } from '~/lib/common/helpers/route'
-
-defineEmits<{
-  createAutomation: []
-  edit: []
-}>()
 
 graphql(`
   fragment AutomateFunctionPageHeader_Function on AutomateFunction {
@@ -63,13 +60,24 @@ graphql(`
     releases(limit: 1) {
       totalCount
     }
+    workspaceIds
+  }
+
+  fragment AutomateFunctionPageHeader_Workspace on Workspace {
+    id
+    name
+    slug
   }
 `)
 
-const props = defineProps<{
+defineProps<{
   fn: AutomateFunctionPageHeader_FunctionFragment
+  fnWorkspace?: AutomateFunctionPageHeader_WorkspaceFragment
   isOwner: boolean
 }>()
 
-const hasReleases = computed(() => props.fn.releases.totalCount > 0)
+defineEmits<{
+  createAutomation: []
+  edit: []
+}>()
 </script>

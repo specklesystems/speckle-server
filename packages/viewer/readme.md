@@ -9,7 +9,7 @@ Migration guide [here](https://speckle.notion.site/Migration-Guide-b2b4118d34b54
 
 ## Examples
 
-You can find readily available examples in the documentation [here](https://speckle.notion.site/Migration-Guide-b2b4118d34b544e9b9a848714348e7c7)
+You can find readily available examples in the documentation [here](https://speckle.guide/viewer/basic-example.html)
 
 ## Development
 

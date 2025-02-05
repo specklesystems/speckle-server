@@ -9,6 +9,7 @@ export const workspaceFragment = gql`
     createdAt
     updatedAt
     logo
+    readOnly
   }
 `
 
@@ -143,10 +144,12 @@ export const updateWorkspaceRoleQuery = gql`
 `
 
 export const createWorkspaceProjectQuery = gql`
-  mutation CreateWorkspaceProject($input: ProjectCreateInput!) {
-    projectMutations {
-      create(input: $input) {
-        ...TestWorkspaceProject
+  mutation CreateWorkspaceProject($input: WorkspaceProjectCreateInput!) {
+    workspaceMutations {
+      projects {
+        create(input: $input) {
+          ...TestWorkspaceProject
+        }
       }
     }
   }
@@ -171,6 +174,23 @@ export const getWorkspaceProjectsQuery = gql`
     }
   }
   ${workspaceProjectFragment}
+`
+
+export const getWorkspaceSsoQuery = gql`
+  query GetWorkspaceSso($id: String!) {
+    workspace(id: $id) {
+      sso {
+        provider {
+          id
+          name
+        }
+        session {
+          createdAt
+          validUntil
+        }
+      }
+    }
+  }
 `
 
 export const getWorkspaceTeamQuery = gql`
@@ -212,6 +232,17 @@ export const getProjectWorkspaceQuery = gql`
             name
           }
         }
+      }
+    }
+  }
+`
+
+export const getActiveUserExpiredSsoSessions = gql`
+  query ActiveUserExpiredSsoSessions {
+    activeUser {
+      expiredSsoSessions {
+        id
+        slug
       }
     }
   }

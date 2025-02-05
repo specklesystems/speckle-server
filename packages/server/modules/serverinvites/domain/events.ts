@@ -6,11 +6,9 @@ const prefix = `${serverinvitesEventNamespace}.` as const
 
 export const ServerInvitesEvents = {
   Created: `${prefix}created`,
-  Finalized: `${prefix}finalized`
+  Finalized: `${prefix}finalized`,
+  Canceled: `${prefix}canceled`
 } as const
-
-export type ServerInvitesEventsKeys =
-  (typeof ServerInvitesEvents)[keyof typeof ServerInvitesEvents]
 
 export type ServerInvitesEventsPayloads = {
   [ServerInvitesEvents.Created]: {
@@ -20,5 +18,9 @@ export type ServerInvitesEventsPayloads = {
     invite: ServerInviteRecord
     finalizerUserId: string
     accept: boolean
+  }
+  [ServerInvitesEvents.Canceled]: {
+    invite: ServerInviteRecord
+    cancelerUserId: string
   }
 }

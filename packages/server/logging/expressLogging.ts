@@ -7,10 +7,10 @@ import type { SerializedResponse } from 'pino'
 import type { GenReqId } from 'pino-http'
 import type { IncomingMessage, ServerResponse } from 'http'
 import { ensureError, type Optional } from '@speckle/shared'
-import { getRequestPath } from '@/modules/core/helpers/server'
+import { getRequestParameters, getRequestPath } from '@/modules/core/helpers/server'
 import { get } from 'lodash'
 
-const REQUEST_ID_HEADER = 'x-request-id'
+export const REQUEST_ID_HEADER = 'x-request-id'
 
 const GenerateRequestId: GenReqId = (req: IncomingMessage) => DetermineRequestId(req)
 
@@ -39,14 +39,25 @@ export const sanitizeHeaders = (headers: Record<string, unknown>) =>
     )
   )
 
+export const sanitizeQueryParams = (
+  query: Record<string, string | string[] | undefined>
+) => {
+  Object.keys(query).forEach(function (key) {
+    if (['code', 'state'].includes(key.toLocaleLowerCase())) {
+      query[key] = '******'
+    }
+  })
+  return query
+}
+
 export const LoggingExpressMiddleware = HttpLogger({
   logger,
   autoLogging: true,
   genReqId: GenerateRequestId,
   customLogLevel: (req, res, err) => {
     const path = getRequestPath(req)
-    const shouldBeDebug =
-      ['/metrics', '/readiness', '/liveness'].includes(path || '') ?? false
+    const shouldBeDebug = ['/metrics', '/readiness', '/liveness'].includes(path || '')
+    if (shouldBeDebug) return 'debug'
 
     if (res.statusCode >= 400 && res.statusCode < 500) {
       return 'info'
@@ -56,7 +67,7 @@ export const LoggingExpressMiddleware = HttpLogger({
       return 'info'
     }
 
-    return shouldBeDebug ? 'debug' : 'info'
+    return 'info'
   },
 
   customReceivedMessage() {
@@ -126,7 +137,9 @@ export const LoggingExpressMiddleware = HttpLogger({
         id: req.raw.id,
         method: req.raw.method,
         path: getRequestPath(req.raw),
-        // Allowlist useful headers
+        // Denylist potentially sensitive query parameters
+        pathParameters: sanitizeQueryParams(getRequestParameters(req.raw)),
+        // Denylist potentially sensitive headers
         headers: sanitizeHeaders(req.raw.headers)
       }
     }),

@@ -1,41 +1,38 @@
 <template>
-  <NuxtLink :to="tutorial.url" target="_blank">
+  <NuxtLink :to="tutorialItem.url" target="_blank" @click="trackClick">
     <div
       class="bg-foundation border border-outline-3 rounded-xl flex flex-col overflow-hidden hover:border-outline-5 transition"
     >
-      <div
-        :style="{ backgroundImage: `url(${tutorial.featureImage})` }"
-        class="bg-foundation-page bg-cover bg-center w-full h-32"
+      <NuxtImg
+        :src="tutorialItem.image"
+        :alt="tutorialItem.title"
+        class="h-32 w-full object-cover"
+        width="400"
+        height="225"
       />
-      <div class="p-5 pb-4">
-        <h3 v-if="tutorial.title" class="text-body-2xs text-foreground truncate">
-          {{ tutorial.title }}
+      <div class="p-5">
+        <h3 class="text-body-2xs text-foreground truncate">
+          {{ tutorialItem.title }}
         </h3>
-        <p class="text-body-3xs text-foreground-2 mt-2">
-          <span v-tippy="updatedAt.full">
-            {{ updatedAt.relative }}
-          </span>
-          <template v-if="tutorial.readingTime">
-            <span class="pl-1 pr-2">•</span>
-            {{ tutorial.readingTime }}m read
-          </template>
-        </p>
       </div>
     </div>
   </NuxtLink>
 </template>
 
 <script lang="ts" setup>
-import type { TutorialItem } from '~~/lib/dashboard/helpers/types'
+import type { TutorialItem } from '~/lib/dashboard/helpers/types'
+import { useMixpanel } from '~~/lib/core/composables/mp'
+
+const mixpanel = useMixpanel()
 
 const props = defineProps<{
-  tutorial: TutorialItem
+  tutorialItem: TutorialItem
 }>()
 
-const updatedAt = computed(() => {
-  return {
-    full: formattedFullDate(props.tutorial.publishedAt),
-    relative: formattedRelativeDate(props.tutorial.publishedAt, { capitalize: true })
-  }
-})
+const trackClick = () => {
+  mixpanel.track('Tutorial clicked', {
+    title: props.tutorialItem.title,
+    url: props.tutorialItem.url
+  })
+}
 </script>

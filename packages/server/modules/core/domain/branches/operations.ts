@@ -9,13 +9,29 @@ import {
   ModelsTreeItemCollection,
   ProjectModelsArgs,
   ProjectModelsTreeArgs,
+  StreamBranchesArgs,
   UpdateModelInput
 } from '@/modules/core/graph/generated/graphql'
 import { ModelsTreeItemGraphQLReturn } from '@/modules/core/helpers/graphTypes'
-import { Nullable, Optional } from '@speckle/shared'
+import { EmailVerification } from '@/modules/emails/domain/types'
+import { BatchedSelectOptions } from '@/modules/shared/helpers/dbHelper'
+import { MaybeNullOrUndefined, Nullable, Optional } from '@speckle/shared'
+import { Knex } from 'knex'
 import { Merge } from 'type-fest'
 
 export type GenerateBranchId = () => string
+
+export type GetBatchedStreamBranches = (
+  streamId: string,
+  options?: Partial<BatchedSelectOptions>
+) => AsyncGenerator<Branch[], void, unknown>
+
+export type InsertBranches = (
+  branches: Branch[],
+  options?: Partial<{
+    trx: Knex.Transaction
+  }>
+) => Promise<number[]>
 
 export type GetBranchesByIds = (
   branchIds: string[],
@@ -167,6 +183,15 @@ export type GetStreamBranchCount = (
   }>
 ) => Promise<number>
 
+export type GetPaginatedStreamBranchesPage = (params: {
+  streamId: string
+  limit?: MaybeNullOrUndefined<number>
+  cursor?: MaybeNullOrUndefined<string>
+}) => Promise<{
+  items: Branch[]
+  cursor: string | null
+}>
+
 export type GetBranchCommitCounts = (branchIds: string[]) => Promise<
   {
     count: number
@@ -179,3 +204,17 @@ export type GetBranchCommitCount = (branchId: string) => Promise<number>
 export type MarkCommitBranchUpdated = (commitId: string) => Promise<Branch>
 
 export type GetLatestStreamBranch = (streamId: string) => Promise<Branch>
+
+export type GetPaginatedStreamBranches = (
+  streamId: string,
+  params?: StreamBranchesArgs
+) => Promise<{
+  totalCount: number
+  cursor?: MaybeNullOrUndefined<string>
+  items: Branch[]
+}>
+
+export type VerifyUserEmail = ({
+  email,
+  code
+}: Pick<EmailVerification, 'email' | 'code'>) => Promise<void>

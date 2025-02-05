@@ -1,7 +1,12 @@
 import { Merge } from 'type-fest'
 import { VError, Options, Info } from 'verror'
 
-type ExtendedOptions<I extends Info = Info> = Merge<Options, { info?: Partial<I> }>
+export type ExtendedOptions<I extends Info = Info> = Merge<
+  Options,
+  { info?: Partial<I> }
+> & {
+  statusCode?: number
+}
 
 /**
  * Base application error (don't use directly, treat it as abstract). Built on top of `verror` so that you can
@@ -52,7 +57,7 @@ export class BaseError<I extends Info = Info> extends VError {
     const info = {
       ...(options.info || {}),
       code: new.target.code,
-      statusCode: new.target.statusCode
+      statusCode: options?.statusCode || new.target.statusCode
     }
 
     options.info = info as unknown as I

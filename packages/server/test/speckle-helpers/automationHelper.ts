@@ -39,14 +39,16 @@ import {
 } from '@/modules/automate/services/encryption'
 import { buildDecryptor } from '@/modules/shared/utils/libsodium'
 import { db } from '@/db/knex'
-import { AutomationsEmitter } from '@/modules/automate/events/automations'
-import { validateStreamAccess } from '@/modules/core/services/streams/streamAccessService'
+import { validateStreamAccessFactory } from '@/modules/core/services/streams/access'
+import { authorizeResolver } from '@/modules/shared'
+import { getEventBus } from '@/modules/shared/services/eventBus'
 
 const storeAutomation = storeAutomationFactory({ db })
 const storeAutomationToken = storeAutomationTokenFactory({ db })
 const storeAutomationRevision = storeAutomationRevisionFactory({ db })
 const getAutomation = getAutomationFactory({ db })
 const getLatestStreamBranch = getLatestStreamBranchFactory({ db })
+const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
 
 export const generateFunctionId = () => cryptoRandomString({ length: 10 })
 export const generateFunctionReleaseId = () => cryptoRandomString({ length: 10 })
@@ -67,7 +69,7 @@ export const buildAutomationCreate = (
     storeAutomation,
     storeAutomationToken,
     validateStreamAccess,
-    automationsEventsEmit: AutomationsEmitter.emit
+    eventEmit: getEventBus().emit
   })
 
   return create
@@ -99,7 +101,7 @@ export const buildAutomationRevisionCreate = (
       buildDecryptor
     }),
     validateStreamAccess,
-    automationsEventsEmit: AutomationsEmitter.emit,
+    eventEmit: getEventBus().emit,
     ...overrides
   })
 

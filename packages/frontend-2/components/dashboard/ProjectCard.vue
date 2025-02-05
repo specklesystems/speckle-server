@@ -23,12 +23,12 @@
     <div class="flex flex-col gap-y-3 pt-1">
       <NuxtLink
         v-if="project.workspace && isWorkspacesEnabled"
-        :to="workspaceRoute(project.workspace.id)"
+        :to="workspaceRoute(project.workspace.slug)"
         class="flex items-center"
       >
         <WorkspaceAvatar
           :logo="project.workspace.logo"
-          :default-logo-index="project.workspace.defaultLogoIndex"
+          :name="project.workspace.name"
           size="sm"
         />
         <p class="text-body-2xs text-foreground ml-2">
@@ -75,8 +75,9 @@ graphql(`
     }
     workspace {
       id
+      slug
       name
-      ...WorkspaceAvatar_Workspace
+      logo
     }
   }
 `)

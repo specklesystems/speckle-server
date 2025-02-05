@@ -1,5 +1,6 @@
+import { db } from '@/db/knex'
 import { AllScopes } from '@/modules/core/helpers/mainConstants'
-import { grantStreamPermissions } from '@/modules/core/repositories/streams'
+import { grantStreamPermissionsFactory } from '@/modules/core/repositories/streams'
 import {
   assignToWorkspace,
   BasicTestWorkspace,
@@ -29,6 +30,8 @@ import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
 import { isUndefined } from 'lodash'
 
+const grantStreamPermissions = grantStreamPermissionsFactory({ db })
+
 describe('Workspaces Roles GQL', () => {
   let apollo: TestApolloServer
 
@@ -51,7 +54,7 @@ describe('Workspaces Roles GQL', () => {
     await createTestUsers([serverAdminUser, serverMemberUser])
     const token = await createAuthTokenForUser(serverAdminUser.id, AllScopes)
     apollo = await testApolloServer({
-      context: createTestContext({
+      context: await createTestContext({
         auth: true,
         userId: serverAdminUser.id,
         token,
@@ -548,7 +551,7 @@ describe('Workspaces Roles GQL', () => {
     before(async () => {
       const token = await createAuthTokenForUser(serverMemberUser.id, AllScopes)
       workspaceMemberApollo = await testApolloServer({
-        context: createTestContext({
+        context: await createTestContext({
           auth: true,
           userId: serverMemberUser.id,
           token,

@@ -38,15 +38,16 @@ import {
 import { truncateTables } from '@/test/hooks'
 import { createTestStream } from '@/test/speckle-helpers/streamHelper'
 import {
-  grantStreamPermissions,
+  grantStreamPermissionsFactory,
   upsertProjectRoleFactory
 } from '@/modules/core/repositories/streams'
 import { omit } from 'lodash'
+import { createAndStoreTestWorkspaceFactory } from '@/test/speckle-helpers/workspaces'
+import { WorkspaceJoinRequests } from '@/modules/workspacesCore/helpers/db'
 
 const getWorkspace = getWorkspaceFactory({ db })
 const getWorkspaceBySlug = getWorkspaceBySlugFactory({ db })
 const getWorkspaceCollaborators = getWorkspaceCollaboratorsFactory({ db })
-const upsertWorkspace = upsertWorkspaceFactory({ db })
 const deleteWorkspace = deleteWorkspaceFactory({ db })
 const deleteWorkspaceRole = deleteWorkspaceRoleFactory({ db })
 const getWorkspaceRoles = getWorkspaceRolesFactory({ db })
@@ -58,6 +59,12 @@ const createUserEmail = createUserEmailFactory({ db })
 const updateUserEmail = updateUserEmailFactory({ db })
 const getUserDiscoverableWorkspaces = getUserDiscoverableWorkspacesFactory({ db })
 const upsertProjectRole = upsertProjectRoleFactory({ db })
+const grantStreamPermissions = grantStreamPermissionsFactory({ db })
+const upsertWorkspace = upsertWorkspaceFactory({ db })
+
+const createAndStoreTestWorkspace = createAndStoreTestWorkspaceFactory({
+  upsertWorkspace
+})
 
 const createAndStoreTestUser = async (): Promise<BasicTestUser> => {
   const testId = cryptoRandomString({ length: 6 })
@@ -73,29 +80,6 @@ const createAndStoreTestUser = async (): Promise<BasicTestUser> => {
   await createTestUser(userRecord)
 
   return userRecord
-}
-
-const createAndStoreTestWorkspace = async (
-  workspaceOverrides: Partial<Workspace> = {}
-) => {
-  const workspace: Omit<Workspace, 'domains'> = {
-    id: cryptoRandomString({ length: 10 }),
-    slug: cryptoRandomString({ length: 10 }),
-    name: cryptoRandomString({ length: 10 }),
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    description: null,
-    logo: null,
-    domainBasedMembershipProtectionEnabled: false,
-    discoverabilityEnabled: false,
-    defaultLogoIndex: 0,
-    defaultProjectRole: Roles.Stream.Contributor,
-    ...workspaceOverrides
-  }
-
-  await upsertWorkspace({ workspace })
-
-  return workspace
 }
 
 describe('Workspace repositories', () => {
@@ -178,7 +162,7 @@ describe('Workspace repositories', () => {
       })
 
       afterEach(async () => {
-        truncateTables(['workspaces'])
+        await truncateTables(['workspaces'])
       })
 
       it('returns all workspace members', async () => {
@@ -226,7 +210,7 @@ describe('Workspace repositories', () => {
       })
 
       afterEach(async () => {
-        truncateTables(['workspaces'])
+        await truncateTables(['workspaces'])
       })
 
       it('limits search results to specified workspace', async () => {
@@ -787,6 +771,85 @@ describe('Workspace repositories', () => {
       })
 
       expect(workspaces.length).to.equal(1)
+    })
+
+    it('should not return discoverable workspaces with existing requests for the user', async () => {
+      const user = await createAndStoreTestUser()
+      await updateUserEmail({
+        query: {
+          email: user.email
+        },
+        update: {
+          verified: true
+        }
+      })
+      const otherUser = await createAndStoreTestUser()
+      await updateUserEmail({
+        query: {
+          email: otherUser.email
+        },
+        update: {
+          verified: true
+        }
+      })
+
+      const workspace = await createAndStoreTestWorkspace({
+        discoverabilityEnabled: true
+      })
+      await storeWorkspaceDomain({
+        workspaceDomain: {
+          id: cryptoRandomString({ length: 6 }),
+          domain: 'example.org',
+          workspaceId: workspace.id,
+          verified: true,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          createdByUserId: user.id
+        }
+      })
+      // existing request for other user
+      await db(WorkspaceJoinRequests.name).insert({
+        workspaceId: workspace.id,
+        userId: otherUser.id,
+        createdAt: new Date(),
+        status: 'pending'
+      })
+      const workspaceWithExistingRequest = await createAndStoreTestWorkspace({
+        discoverabilityEnabled: true
+      })
+      await storeWorkspaceDomain({
+        workspaceDomain: {
+          id: cryptoRandomString({ length: 6 }),
+          domain: 'example.org',
+          workspaceId: workspaceWithExistingRequest.id,
+          verified: true,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          createdByUserId: user.id
+        }
+      })
+      await db(WorkspaceJoinRequests.name).insert({
+        workspaceId: workspaceWithExistingRequest.id,
+        userId: user.id,
+        createdAt: new Date(),
+        status: 'pending'
+      })
+
+      const workspaces = await getUserDiscoverableWorkspaces({
+        domains: ['example.org'],
+        userId: user.id
+      })
+
+      expect(workspaces.length).to.equal(1)
+      expect(workspaces[0].id).to.equal(workspace.id)
+
+      const otherUserWorkspaces = await getUserDiscoverableWorkspaces({
+        domains: ['example.org'],
+        userId: otherUser.id
+      })
+
+      expect(otherUserWorkspaces.length).to.equal(1)
+      expect(otherUserWorkspaces[0].id).to.equal(workspaceWithExistingRequest.id)
     })
   })
 

@@ -1,13 +1,17 @@
 import { ProjectTeamMember } from '@/modules/core/domain/projects/types'
+import { Stream } from '@/modules/core/domain/streams/types'
+import { ProjectNotFoundError } from '@/modules/core/errors/projects'
 import { StreamAclRecord, StreamRecord } from '@/modules/core/helpers/types'
+import { WorkspaceInvalidProjectError } from '@/modules/workspaces/errors/workspace'
 import {
   moveProjectToWorkspaceFactory,
-  queryAllWorkspaceProjectsFactory
+  queryAllWorkspaceProjectsFactory,
+  updateWorkspaceProjectRoleFactory
 } from '@/modules/workspaces/services/projects'
 import { WorkspaceAcl } from '@/modules/workspacesCore/domain/types'
 import { expectToThrow } from '@/test/assertionHelper'
 import { Roles } from '@speckle/shared'
-import { expect } from 'chai'
+import { assert, expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
 
 const getWorkspaceRoleToDefaultProjectRoleMapping = async () => ({
@@ -91,6 +95,37 @@ describe('Project retrieval services', () => {
 
 describe('Project management services', () => {
   describe('moveProjectToWorkspaceFactory returns a function, that', () => {
+    it('should throw if attempting to move a project, that does not exist', async () => {
+      const moveProjectToWorkspace = moveProjectToWorkspaceFactory({
+        getProject: async () => null,
+        updateProject: async () => {
+          expect.fail()
+        },
+        upsertProjectRole: async () => {
+          expect.fail()
+        },
+        getProjectCollaborators: async () => {
+          expect.fail()
+        },
+        getWorkspaceRoles: async () => {
+          expect.fail()
+        },
+        getWorkspaceRoleToDefaultProjectRoleMapping: async () => {
+          expect.fail()
+        },
+        updateWorkspaceRole: async () => {
+          expect.fail()
+        }
+      })
+
+      const err = await expectToThrow(() =>
+        moveProjectToWorkspace({
+          projectId: cryptoRandomString({ length: 6 }),
+          workspaceId: cryptoRandomString({ length: 6 })
+        })
+      )
+      expect(err.message).to.equal(new ProjectNotFoundError().message)
+    })
     it('should throw if attempting to move a project already in a workspace', async () => {
       const moveProjectToWorkspace = moveProjectToWorkspaceFactory({
         getProject: async () => {
@@ -118,12 +153,13 @@ describe('Project management services', () => {
         }
       })
 
-      await expectToThrow(() =>
+      const err = await expectToThrow(() =>
         moveProjectToWorkspace({
           projectId: cryptoRandomString({ length: 6 }),
           workspaceId: cryptoRandomString({ length: 6 })
         })
       )
+      expect(err instanceof WorkspaceInvalidProjectError).to.be.true
     })
 
     it('should preserve existing workspace roles in target workspace', async () => {
@@ -391,6 +427,35 @@ describe('Project management services', () => {
 
       expect(updatedRoles.length).to.equal(1)
       expect(updatedRoles[0].role).to.equal(Roles.Stream.Owner)
+    })
+  })
+  describe('updateWorkspaceProjectRoleFactory returns a function, that', () => {
+    it('should throw when attempting to promote a workspace guest to project owner', async () => {
+      const workspaceId = cryptoRandomString({ length: 9 })
+      const projectId = cryptoRandomString({ length: 9 })
+      const userId = cryptoRandomString({ length: 9 })
+
+      const updateWorkspaceProjectRole = updateWorkspaceProjectRoleFactory({
+        getStream: async () => {
+          return { workspaceId } as Stream
+        },
+        getWorkspaceRoleForUser: async () => ({
+          workspaceId,
+          userId,
+          role: Roles.Workspace.Guest,
+          createdAt: new Date()
+        }),
+        updateStreamRoleAndNotify: async () => {
+          assert.fail()
+        }
+      })
+
+      await expectToThrow(() =>
+        updateWorkspaceProjectRole({
+          role: { userId, projectId, role: Roles.Stream.Owner },
+          updater: { userId: '', resourceAccessRules: [] }
+        })
+      )
     })
   })
 })

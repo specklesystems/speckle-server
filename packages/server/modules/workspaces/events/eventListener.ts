@@ -1,14 +1,12 @@
 import {
-  ProjectsEmitter,
-  ProjectEvents,
-  ProjectEventsPayloads
-} from '@/modules/core/events/projectsEmitter'
-import {
   deleteProjectRoleFactory,
-  getStream,
+  getStreamFactory,
+  legacyGetStreamsFactory,
   upsertProjectRoleFactory
 } from '@/modules/core/repositories/streams'
 import {
+  GetWorkspace,
+  GetWorkspaceRoleForUser,
   GetWorkspaceRoles,
   GetWorkspaceRoleToDefaultProjectRoleMapping,
   QueryAllWorkspaceProjects
@@ -23,7 +21,7 @@ import {
 } from '@/modules/serverinvites/helpers/core'
 import { logger, moduleLogger } from '@/logging/logging'
 import { updateWorkspaceRoleFactory } from '@/modules/workspaces/services/management'
-import { getEventBus } from '@/modules/shared/services/eventBus'
+import { EventPayload, getEventBus } from '@/modules/shared/services/eventBus'
 import { WorkspaceInviteResourceType } from '@/modules/workspaces/domain/constants'
 import { Roles, WorkspaceRoles } from '@speckle/shared'
 import {
@@ -34,6 +32,7 @@ import { WorkspaceEvents } from '@/modules/workspacesCore/domain/events'
 import { Knex } from 'knex'
 import {
   getWorkspaceFactory,
+  getWorkspaceRoleForUserFactory,
   getWorkspaceRolesFactory,
   getWorkspaceWithDomainsFactory,
   upsertWorkspaceRoleFactory
@@ -42,9 +41,26 @@ import {
   queryAllWorkspaceProjectsFactory,
   getWorkspaceRoleToDefaultProjectRoleMappingFactory
 } from '@/modules/workspaces/services/projects'
-import { getStreams } from '@/modules/core/services/streams'
 import { withTransaction } from '@/modules/shared/helpers/dbHelper'
 import { findVerifiedEmailsByUserIdFactory } from '@/modules/core/repositories/userEmails'
+import { GetStream } from '@/modules/core/domain/streams/operations'
+import {
+  GetUserSsoSession,
+  GetWorkspaceSsoProviderRecord
+} from '@/modules/workspaces/domain/sso/operations'
+import { isValidSsoSession } from '@/modules/workspaces/domain/sso/logic'
+import { SsoSessionMissingOrExpiredError } from '@/modules/workspaces/errors/sso'
+import {
+  getUserSsoSessionFactory,
+  getWorkspaceSsoProviderRecordFactory
+} from '@/modules/workspaces/repositories/sso'
+import { WorkspacesNotAuthorizedError } from '@/modules/workspaces/errors/workspace'
+import { publish, WorkspaceSubscriptions } from '@/modules/shared/utils/subscriptions'
+import { isWorkspaceResourceTarget } from '@/modules/workspaces/services/invites'
+import {
+  ProjectEvents,
+  ProjectEventsPayloads
+} from '@/modules/core/domain/projects/events'
 
 export const onProjectCreatedFactory =
   ({
@@ -89,7 +105,7 @@ export const onProjectCreatedFactory =
 
 export const onInviteFinalizedFactory =
   (deps: {
-    getStream: typeof getStream
+    getStream: GetStream
     logger: typeof logger
     updateWorkspaceRole: ReturnType<typeof updateWorkspaceRoleFactory>
   }) =>
@@ -128,6 +144,36 @@ export const onInviteFinalizedFactory =
       workspaceId: project.workspaceId,
       skipProjectRoleUpdatesFor: [project.id]
     })
+  }
+
+export const onWorkspaceAuthorizedFactory =
+  ({
+    getWorkspace,
+    getWorkspaceRoleForUser,
+    getWorkspaceSsoProviderRecord,
+    getUserSsoSession
+  }: {
+    getWorkspace: GetWorkspace
+    getWorkspaceRoleForUser: GetWorkspaceRoleForUser
+    getWorkspaceSsoProviderRecord: GetWorkspaceSsoProviderRecord
+    getUserSsoSession: GetUserSsoSession
+  }) =>
+  async ({ userId, workspaceId }: { userId: string | null; workspaceId: string }) => {
+    if (!userId) throw new WorkspacesNotAuthorizedError()
+
+    // Guests cannot use (and are not restricted by) SSO
+    const workspaceRole = await getWorkspaceRoleForUser({ userId, workspaceId })
+    if (!workspaceRole) throw new WorkspacesNotAuthorizedError()
+    if (workspaceRole?.role === Roles.Workspace.Guest) return
+
+    const provider = await getWorkspaceSsoProviderRecord({ workspaceId })
+    if (!provider) return
+
+    const session = await getUserSsoSession({ userId, workspaceId })
+    if (!session || !isValidSsoSession(session)) {
+      const workspace = await getWorkspace({ workspaceId })
+      throw new SsoSessionMissingOrExpiredError(workspace?.slug)
+    }
   }
 
 export const onWorkspaceRoleDeletedFactory =
@@ -212,16 +258,70 @@ export const onWorkspaceRoleUpdatedFactory =
     }
   }
 
+const emitWorkspaceGraphqlSubscriptionsFactory =
+  (deps: { getWorkspace: GetWorkspace }) => async (params: EventPayload<'**'>) => {
+    const { eventName, payload } = params
+    switch (eventName) {
+      case WorkspaceEvents.Updated:
+        await publish(WorkspaceSubscriptions.WorkspaceUpdated, {
+          workspaceUpdated: {
+            workspace: payload.workspace,
+            id: payload.workspace.id
+          }
+        })
+        break
+      case WorkspaceEvents.RoleDeleted:
+      case WorkspaceEvents.RoleUpdated:
+        const { workspaceId } = payload
+        const foundWorkspace = await deps.getWorkspace({ workspaceId })
+        if (foundWorkspace) {
+          await publish(WorkspaceSubscriptions.WorkspaceUpdated, {
+            workspaceUpdated: {
+              workspace: foundWorkspace,
+              id: foundWorkspace.id
+            }
+          })
+        }
+        break
+      case ServerInvitesEvents.Created:
+      case ServerInvitesEvents.Canceled:
+      case ServerInvitesEvents.Finalized:
+        const { invite } = payload
+        if (!isWorkspaceResourceTarget(invite.resource)) return
+
+        const res = invite.resource
+        const newInviteWorkspace = await deps.getWorkspace({
+          workspaceId: res.resourceId
+        })
+        if (newInviteWorkspace) {
+          await publish(WorkspaceSubscriptions.WorkspaceUpdated, {
+            workspaceUpdated: {
+              workspace: newInviteWorkspace,
+              id: newInviteWorkspace.id
+            }
+          })
+        }
+
+        break
+    }
+  }
+
 export const initializeEventListenersFactory =
   ({ db }: { db: Knex }) =>
   () => {
     const eventBus = getEventBus()
+    const getStreams = legacyGetStreamsFactory({ db })
+    const getWorkspace = getWorkspaceFactory({ db })
+    const emitWorkspaceGraphqlSubscriptions = emitWorkspaceGraphqlSubscriptionsFactory({
+      getWorkspace
+    })
+
     const quitCbs = [
-      ProjectsEmitter.listen(ProjectEvents.Created, async (payload) => {
+      eventBus.listen(ProjectEvents.Created, async ({ payload }) => {
         const onProjectCreated = onProjectCreatedFactory({
           getWorkspaceRoleToDefaultProjectRoleMapping:
             getWorkspaceRoleToDefaultProjectRoleMappingFactory({
-              getWorkspace: getWorkspaceFactory({ db })
+              getWorkspace
             }),
           upsertProjectRole: upsertProjectRoleFactory({ db }),
           getWorkspaceRoles: getWorkspaceRolesFactory({ db })
@@ -230,7 +330,7 @@ export const initializeEventListenersFactory =
       }),
       eventBus.listen(ServerInvitesEvents.Finalized, async ({ payload }) => {
         const onInviteFinalized = onInviteFinalizedFactory({
-          getStream,
+          getStream: getStreamFactory({ db }),
           logger: moduleLogger,
           updateWorkspaceRole: updateWorkspaceRoleFactory({
             getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db }),
@@ -241,6 +341,15 @@ export const initializeEventListenersFactory =
           })
         })
         await onInviteFinalized(payload)
+      }),
+      eventBus.listen(WorkspaceEvents.Authorized, async ({ payload }) => {
+        const onWorkspaceAuthorized = onWorkspaceAuthorizedFactory({
+          getWorkspace,
+          getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({ db }),
+          getWorkspaceSsoProviderRecord: getWorkspaceSsoProviderRecordFactory({ db }),
+          getUserSsoSession: getUserSsoSessionFactory({ db })
+        })
+        await onWorkspaceAuthorized(payload)
       }),
       eventBus.listen(WorkspaceEvents.RoleDeleted, async ({ payload }) => {
         const trx = await db.transaction()
@@ -255,14 +364,15 @@ export const initializeEventListenersFactory =
         const onWorkspaceRoleUpdated = onWorkspaceRoleUpdatedFactory({
           getWorkspaceRoleToDefaultProjectRoleMapping:
             getWorkspaceRoleToDefaultProjectRoleMappingFactory({
-              getWorkspace: getWorkspaceFactory({ db: trx })
+              getWorkspace
             }),
           queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({ getStreams }),
           deleteProjectRole: deleteProjectRoleFactory({ db: trx }),
           upsertProjectRole: upsertProjectRoleFactory({ db: trx })
         })
         await withTransaction(onWorkspaceRoleUpdated(payload), trx)
-      })
+      }),
+      eventBus.listen('**', emitWorkspaceGraphqlSubscriptions)
     ]
 
     return () => quitCbs.forEach((quit) => quit())

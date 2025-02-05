@@ -30,6 +30,7 @@
             <ProjectPageTeamPermissionSelect
               :model-value="projectRole.role"
               :disabled="false"
+              mount-menu-on-body
               hide-owner
               @update:model-value="
                 (newRole) => updateProjectRole(projectRole.project.id, newRole)
@@ -47,14 +48,14 @@
 </template>
 
 <script setup lang="ts">
-import type { StreamRoles } from '@speckle/shared'
+import type { StreamRoles, MaybeNullOrUndefined } from '@speckle/shared'
 import { useUpdateUserRole } from '~~/lib/projects/composables/projectManagement'
 import type { WorkspaceCollaborator } from '~/lib/common/generated/gql/graphql'
 import { useDebouncedTextInput } from '@speckle/ui-components'
 
 const props = defineProps<{
   user: WorkspaceCollaborator
-  workspaceId: string
+  workspaceId: MaybeNullOrUndefined<string>
 }>()
 
 const open = defineModel<boolean>('open', { required: true })

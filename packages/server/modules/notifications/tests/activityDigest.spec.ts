@@ -55,7 +55,11 @@ describe('Activity digest notifications @notifications', () => {
     completed: false,
     inviteOnly: true,
     version: 'testing 1 2 3',
-    guestModeEnabled: false
+    guestModeEnabled: false,
+    configuration: {
+      objectMultipartUploadSizeLimitBytes: 1000000,
+      objectSizeLimitBytes: 1000000
+    }
   }
 
   const topic: DigestTopic = {
@@ -117,7 +121,8 @@ describe('Activity digest notifications @notifications', () => {
         updatedAt: new Date(),
         allowPublicComments: true,
         isDiscoverable: true,
-        workspaceId: null
+        workspaceId: null,
+        regionKey: null
       },
       activity: activities ?? [createActivity()]
     })

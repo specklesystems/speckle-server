@@ -18,8 +18,10 @@ import {
   getUserAclRoleFactory,
   getUserServerRoleFactory
 } from '@/modules/shared/repositories/acl'
-import { getStream } from '@/modules/core/repositories/streams'
+import { getStreamFactory } from '@/modules/core/repositories/streams'
+import { getEventBus } from '@/modules/shared/services/eventBus'
 
+const getStream = getStreamFactory({ db })
 const throwForNotHavingServerRole = throwForNotHavingServerRoleFactory({
   validateServerRole: validateServerRoleBuilderFactory({
     getRoles: getRolesFactory({ db })
@@ -30,7 +32,8 @@ const authorizeResolver = authorizeResolverFactory({
   adminOverrideEnabled,
   getUserServerRole: getUserServerRoleFactory({ db }),
   getStream,
-  getUserAclRole: getUserAclRoleFactory({ db })
+  getUserAclRole: getUserAclRoleFactory({ db }),
+  emitWorkspaceEvent: getEventBus().emit
 })
 
 /**

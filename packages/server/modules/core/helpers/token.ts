@@ -5,7 +5,14 @@ import {
 import { TokenCreateError } from '@/modules/core/errors/user'
 import { TokenResourceAccessRecord } from '@/modules/core/helpers/types'
 import { UserRole } from '@/modules/shared/domain/rolesAndScopes/types'
-import { MaybeNullOrUndefined, Nullable, Optional, Scopes } from '@speckle/shared'
+import {
+  AllScopes,
+  MaybeNullOrUndefined,
+  Nullable,
+  Optional,
+  Scopes,
+  ServerScope
+} from '@speckle/shared'
 import { differenceBy } from 'lodash'
 
 export enum RoleResourceTargets {
@@ -150,3 +157,6 @@ export const canCreateAppToken = (params: {
 
   return canCreateToken(params)
 }
+
+export const isValidScope = (scope: string): scope is ServerScope =>
+  (AllScopes as string[]).includes(scope)

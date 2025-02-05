@@ -1,15 +1,15 @@
 import { startServer } from '@/server/server.js'
-import type { Knex } from 'knex'
 import http from 'http'
 import type { AddressInfo } from 'net'
 import { getPostgresConnectionString } from '@/utils/env.js'
 
-export const startAndWaitOnServers = async (deps: { db: Knex }) => {
+export const startAndWaitOnServers = async () => {
   let serverAddress: string | AddressInfo | null = null
   let metricsServerAddress: string | AddressInfo | null = null
 
-  const { db } = deps
-  const { app, server, metricsServer } = startServer({ db, serveOnRandomPort: true })
+  const { app, server, metricsServer } = await startServer({
+    serveOnRandomPort: true
+  })
   server.on('listening', () => {
     serverAddress = server.address()
   })

@@ -41,6 +41,7 @@ export type AuthSessionData = {
   // More specific params used in OpenID based strategies
   tokenSet?: TokenSet
   userinfo?: UserinfoResponse
+  codeVerifier?: string
 }
 
 export type AuthRequestData = {
@@ -65,6 +66,11 @@ export type ServerAppsScopesRecord = {
 export type UserServerAppTokenRecord = {
   userId: string
   appId: string
+  tokenId: string
+}
+
+export type PersonalApiTokenRecord = {
+  userId: string
   tokenId: string
 }
 

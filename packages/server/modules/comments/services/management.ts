@@ -1,7 +1,6 @@
 import { ensureError, Roles, SpeckleViewer } from '@speckle/shared'
 import { AuthContext } from '@/modules/shared/authz'
 import { ForbiddenError } from '@/modules/shared/errors'
-import { getStream } from '@/modules/core/repositories/streams'
 import { StreamInvalidAccessError } from '@/modules/core/errors/stream'
 import {
   CreateCommentInput,
@@ -10,18 +9,11 @@ import {
 } from '@/modules/core/graph/generated/graphql'
 import { CommentCreateError, CommentUpdateError } from '@/modules/comments/errors'
 import { buildCommentTextFromInput } from '@/modules/comments/services/commentTextService'
-import { knex } from '@/modules/core/dbSchema'
 import {
   CommentLinkRecord,
   CommentLinkResourceType,
   CommentRecord
 } from '@/modules/comments/helpers/types'
-import { CommentsEvents, CommentsEventsEmit } from '@/modules/comments/events/emitter'
-import {
-  addCommentArchivedActivity,
-  addCommentCreatedActivity,
-  addReplyAddedActivity
-} from '@/modules/activitystream/services/commentActivity'
 import {
   formatSerializedViewerState,
   inputToDataStruct
@@ -42,9 +34,17 @@ import {
   UpdateComment,
   ValidateInputAttachments
 } from '@/modules/comments/domain/operations'
+import { GetStream } from '@/modules/core/domain/streams/operations'
+import {
+  AddCommentArchivedActivity,
+  AddCommentCreatedActivity,
+  AddReplyAddedActivity
+} from '@/modules/activitystream/domain/operations'
+import { EventBusEmit } from '@/modules/shared/services/eventBus'
+import { CommentEvents } from '@/modules/comments/domain/events'
 
 type AuthorizeProjectCommentsAccessDeps = {
-  getStream: typeof getStream
+  getStream: GetStream
   adminOverrideEnabled: typeof adminOverrideEnabled
 }
 
@@ -117,8 +117,8 @@ export const createCommentThreadAndNotifyFactory =
     insertComments: InsertComments
     insertCommentLinks: InsertCommentLinks
     markCommentViewed: MarkCommentViewed
-    commentsEventsEmit: CommentsEventsEmit
-    addCommentCreatedActivity: typeof addCommentCreatedActivity
+    emitEvent: EventBusEmit
+    addCommentCreatedActivity: AddCommentCreatedActivity
   }): CreateCommentThreadAndNotify =>
   async (input: CreateCommentInput, userId: string) => {
     const [resources] = await Promise.all([
@@ -149,27 +149,27 @@ export const createCommentThreadAndNotifyFactory =
 
     let comment: CommentRecord
     try {
-      comment = await knex.transaction(async (trx) => {
-        const [comment] = await deps.insertComments([commentPayload], { trx })
+      // i know we're loosing transactional consistency...
+      // it can be added back with the commandFactory on top of a service
+      const [insertedComment] = await deps.insertComments([commentPayload])
 
-        const links: CommentLinkRecord[] = resources.map((r) => {
-          let resourceId = r.objectId
-          let resourceType: CommentLinkResourceType = 'object'
-          if (r.versionId) {
-            resourceId = r.versionId
-            resourceType = 'commit'
-          }
+      const links: CommentLinkRecord[] = resources.map((r) => {
+        let resourceId = r.objectId
+        let resourceType: CommentLinkResourceType = 'object'
+        if (r.versionId) {
+          resourceId = r.versionId
+          resourceType = 'commit'
+        }
 
-          return {
-            commentId: comment.id,
-            resourceId,
-            resourceType
-          }
-        })
-        await deps.insertCommentLinks(links, { trx })
-
-        return comment
+        return {
+          commentId: insertedComment.id,
+          resourceId,
+          resourceType
+        }
       })
+      await deps.insertCommentLinks(links)
+
+      comment = insertedComment
     } catch (e) {
       throw new CommentCreateError('Comment creation failed', { cause: ensureError(e) })
     }
@@ -177,8 +177,11 @@ export const createCommentThreadAndNotifyFactory =
     // Mark as viewed and emit events
     await Promise.all([
       deps.markCommentViewed(comment.id, userId),
-      deps.commentsEventsEmit(CommentsEvents.Created, {
-        comment
+      deps.emitEvent({
+        eventName: CommentEvents.Created,
+        payload: {
+          comment
+        }
       }),
       deps.addCommentCreatedActivity({
         streamId: input.projectId,
@@ -201,8 +204,8 @@ export const createCommentReplyAndNotifyFactory =
     insertComments: InsertComments
     insertCommentLinks: InsertCommentLinks
     markCommentUpdated: MarkCommentUpdated
-    commentsEventsEmit: CommentsEventsEmit
-    addReplyAddedActivity: typeof addReplyAddedActivity
+    emitEvent: EventBusEmit
+    addReplyAddedActivity: AddReplyAddedActivity
   }): CreateCommentReplyAndNotify =>
   async (input: CreateCommentReplyInput, userId: string) => {
     const thread = await deps.getComment({ id: input.threadId, userId })
@@ -224,15 +227,13 @@ export const createCommentReplyAndNotifyFactory =
 
     let reply: CommentRecord
     try {
-      reply = await knex.transaction(async (trx) => {
-        const [reply] = await deps.insertComments([commentPayload], { trx })
-        const links: CommentLinkRecord[] = [
-          { resourceType: 'comment', resourceId: thread.id, commentId: reply.id }
-        ]
-        await deps.insertCommentLinks(links, { trx })
+      const [insertedReply] = await deps.insertComments([commentPayload])
+      const links: CommentLinkRecord[] = [
+        { resourceType: 'comment', resourceId: thread.id, commentId: insertedReply.id }
+      ]
+      await deps.insertCommentLinks(links)
 
-        return reply
-      })
+      reply = insertedReply
     } catch (e) {
       throw new CommentCreateError('Reply creation failed', { cause: ensureError(e) })
     }
@@ -240,8 +241,11 @@ export const createCommentReplyAndNotifyFactory =
     // Mark parent comment updated and emit events
     await Promise.all([
       deps.markCommentUpdated(thread.id),
-      deps.commentsEventsEmit(CommentsEvents.Created, {
-        comment: reply
+      deps.emitEvent({
+        eventName: CommentEvents.Created,
+        payload: {
+          comment: reply
+        }
       }),
       deps.addReplyAddedActivity({
         streamId: thread.streamId,
@@ -259,7 +263,7 @@ export const editCommentAndNotifyFactory =
     getComment: GetComment
     validateInputAttachments: ValidateInputAttachments
     updateComment: UpdateComment
-    commentsEventsEmit: CommentsEventsEmit
+    emitEvent: EventBusEmit
   }): EditCommentAndNotify =>
   async (input: EditCommentInput, userId: string) => {
     const comment = await deps.getComment({ id: input.commentId, userId })
@@ -278,9 +282,12 @@ export const editCommentAndNotifyFactory =
       })
     })
 
-    await deps.commentsEventsEmit(CommentsEvents.Updated, {
-      previousComment: comment,
-      newComment: updatedComment!
+    await deps.emitEvent({
+      eventName: CommentEvents.Updated,
+      payload: {
+        previousComment: comment,
+        newComment: updatedComment!
+      }
     })
 
     return updatedComment
@@ -289,9 +296,9 @@ export const editCommentAndNotifyFactory =
 export const archiveCommentAndNotifyFactory =
   (deps: {
     getComment: GetComment
-    getStream: typeof getStream
+    getStream: GetStream
     updateComment: UpdateComment
-    addCommentArchivedActivity: typeof addCommentArchivedActivity
+    addCommentArchivedActivity: AddCommentArchivedActivity
   }): ArchiveCommentAndNotify =>
   async (commentId: string, userId: string, archived = true) => {
     const comment = await deps.getComment({ id: commentId, userId })

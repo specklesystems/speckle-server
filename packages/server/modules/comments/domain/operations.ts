@@ -18,12 +18,39 @@ import {
   ViewerUpdateTrackingTarget
 } from '@/modules/core/graph/generated/graphql'
 import { SmartTextEditorValueSchema } from '@/modules/core/services/richTextEditorService'
+import { BatchedSelectOptions } from '@/modules/shared/helpers/dbHelper'
 import { MarkNullableOptional, Optional } from '@/modules/shared/helpers/typeHelper'
 import { MaybeNullOrUndefined, SpeckleViewer } from '@speckle/shared'
 import { Knex } from 'knex'
 import { Merge } from 'type-fest'
 
 type SerializedViewerState = SpeckleViewer.ViewerState.SerializedViewerState
+
+type GetBatchedStreamCommentsOptions = BatchedSelectOptions & {
+  /**
+   * Filter out comments with parent comment references
+   * Defaults to: false
+   */
+  withoutParentCommentOnly: boolean
+
+  /**
+   * Filter out comments without parent comment references
+   * Defaults to: false
+   */
+  withParentCommentOnly: boolean
+}
+
+export type GetBatchedStreamComments = (
+  streamId: string,
+  options?: Partial<GetBatchedStreamCommentsOptions>
+) => AsyncGenerator<CommentRecord[], void, unknown>
+
+export type GetCommentLinks = (
+  commentIds: string[],
+  options?: Partial<{
+    trx: Knex.Transaction
+  }>
+) => Promise<CommentLinkRecord[]>
 
 export type GetComment = (params: {
   id: string

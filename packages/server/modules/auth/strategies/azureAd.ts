@@ -1,8 +1,6 @@
 /* istanbul ignore file */
 import passport from 'passport'
 import { OIDCStrategy, IProfile, VerifyCallback } from 'passport-azure-ad'
-import { findOrCreateUser, getUserByEmail } from '@/modules/core/services/users'
-import { getServerInfo } from '@/modules/core/services/generic'
 
 import {
   UserInputError,
@@ -28,12 +26,19 @@ import {
   ValidateServerInvite
 } from '@/modules/serverinvites/services/operations'
 import { PassportAuthenticateHandlerBuilder } from '@/modules/auth/domain/operations'
+import {
+  FindOrCreateValidatedUser,
+  LegacyGetUserByEmail
+} from '@/modules/core/domain/users/operations'
+import { GetServerInfo } from '@/modules/core/domain/server/operations'
+import { EnvironmentResourceError } from '@/modules/shared/errors'
+import { InviteNotFoundError } from '@/modules/serverinvites/errors'
 
 const azureAdStrategyBuilderFactory =
   (deps: {
-    getServerInfo: typeof getServerInfo
-    getUserByEmail: typeof getUserByEmail
-    findOrCreateUser: typeof findOrCreateUser
+    getServerInfo: GetServerInfo
+    getUserByEmail: LegacyGetUserByEmail
+    findOrCreateUser: FindOrCreateValidatedUser
     validateServerInvite: ValidateServerInvite
     finalizeInvitedServerRegistration: FinalizeInvitedServerRegistration
     resolveAuthRedirectPath: ResolveAuthRedirectPath
@@ -100,7 +105,7 @@ const azureAdStrategyBuilderFactory =
           // than to refactor everything
           const profile = req.user as Optional<IProfile>
           if (!profile) {
-            throw new Error('No profile provided by Entra ID')
+            throw new EnvironmentResourceError('No profile provided by Entra ID')
           }
 
           logger = logger.child({ profileId: profile.oid })
@@ -155,7 +160,12 @@ const azureAdStrategyBuilderFactory =
               role: invite
                 ? getResourceTypeRole(invite.resource, ServerInviteResourceType)
                 : undefined,
-              verified: !!invite
+              verified: !!invite,
+              signUpContext: {
+                req,
+                isInvite: !!invite,
+                newsletterConsent: !!req.session.newsletterConsent
+              }
             }
           })
 
@@ -186,6 +196,8 @@ const azureAdStrategyBuilderFactory =
 
           switch (e.constructor) {
             case UserInputError:
+            case UnverifiedEmailSSOLoginError:
+            case InviteNotFoundError:
               logger.info(
                 { e },
                 'User input error during Entra ID authentication callback.'

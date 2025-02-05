@@ -94,19 +94,19 @@ export const useAutomationRunDetailsFns = () => {
     switch (status) {
       case AutomateRunStatus.Pending:
       case AutomateRunStatus.Initializing:
-        classParts.push('bg-warning-lighter text-warning-darker')
+        classParts.push('bg-warning-lighter')
         break
       case AutomateRunStatus.Running:
-        classParts.push('bg-info-lighter text-info-darker')
+        classParts.push('bg-info-lighter')
         break
       case AutomateRunStatus.Failed:
       case AutomateRunStatus.Exception:
       case AutomateRunStatus.Canceled:
       case AutomateRunStatus.Timeout:
-        classParts.push('bg-danger-lighter text-danger-darker')
+        classParts.push('bg-danger-lighter')
         break
       case AutomateRunStatus.Succeeded:
-        classParts.push('bg-success-lighter text-success-darker')
+        classParts.push('bg-success-lighter')
         break
     }
 
@@ -165,10 +165,11 @@ export const useAutomationRunDetailsFns = () => {
 }
 
 export const useAutomationRunLogs = (params: {
+  projectId: MaybeRef<Optional<string>>
   automationId: MaybeRef<Optional<string>>
   runId: MaybeRef<Optional<string>>
 }) => {
-  const { automationId, runId } = params
+  const { projectId, automationId, runId } = params
   const apiOrigin = useApiOrigin()
 
   const authToken = useAuthCookie()
@@ -178,7 +179,10 @@ export const useAutomationRunLogs = (params: {
   const isStreamFinished = ref(false)
 
   const url = computed(
-    () => `/api/automate/automations/${unref(automationId)}/runs/${unref(runId)}/logs`
+    () =>
+      `/api/v1/projects/${unref(projectId)}/automations/${unref(
+        automationId
+      )}/runs/${unref(runId)}/logs`
   )
   const key = computed(() => {
     if (!unref(automationId) || !unref(runId)) return null

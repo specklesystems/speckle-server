@@ -57,6 +57,14 @@ const configs = [
       '@typescript-eslint/ban-types': 'off',
       'no-unused-vars': 'off'
     }
+  },
+  {
+    files: ['utils/*.cjs'],
+    languageOptions: {
+      globals: {
+        ...globals.node
+      }
+    }
   }
 ]
 

@@ -4,11 +4,10 @@ const chai = require('chai')
 
 const expect = chai.expect
 
-const { createUser } = require('@/modules/core/services/users')
 const {
-  createPersonalAccessToken,
-  createAppToken,
-  createBareToken
+  createBareToken,
+  createAppTokenFactory,
+  createPersonalAccessTokenFactory
 } = require('@/modules/core/services/tokens')
 const { beforeEachContext, initializeTestServer } = require('@/test/hooks')
 const { Scopes } = require('@speckle/shared')
@@ -23,11 +22,57 @@ const { db } = require('@/db/knex')
 const {
   createAppTokenFromAccessCodeFactory
 } = require('@/modules/auth/services/serverApps')
+const {
+  findEmailFactory,
+  createUserEmailFactory,
+  ensureNoPrimaryEmailForUserFactory
+} = require('@/modules/core/repositories/userEmails')
+const {
+  requestNewEmailVerificationFactory
+} = require('@/modules/emails/services/verification/request')
+const {
+  getUserFactory,
+  storeUserFactory,
+  countAdminUsersFactory,
+  storeUserAclFactory
+} = require('@/modules/core/repositories/users')
+const {
+  deleteOldAndInsertNewVerificationFactory
+} = require('@/modules/emails/repositories')
+const { renderEmail } = require('@/modules/emails/services/emailRendering')
+const { sendEmail } = require('@/modules/emails/services/sending')
+const { createUserFactory } = require('@/modules/core/services/users/management')
+const {
+  validateAndCreateUserEmailFactory
+} = require('@/modules/core/services/userEmails')
+const {
+  finalizeInvitedServerRegistrationFactory
+} = require('@/modules/serverinvites/services/processing')
+const {
+  deleteServerOnlyInvitesFactory,
+  updateAllInviteTargetsFactory
+} = require('@/modules/serverinvites/repositories/serverInvites')
+const {
+  storeApiTokenFactory,
+  storeTokenScopesFactory,
+  storeTokenResourceAccessDefinitionsFactory,
+  storeUserServerAppTokenFactory,
+  storePersonalApiTokenFactory
+} = require('@/modules/core/repositories/tokens')
+const { getServerInfoFactory } = require('@/modules/core/repositories/server')
+const { getEventBus } = require('@/modules/shared/services/eventBus')
 
 let sendRequest
 let server
-let app
 
+const createAppToken = createAppTokenFactory({
+  storeApiToken: storeApiTokenFactory({ db }),
+  storeTokenScopes: storeTokenScopesFactory({ db }),
+  storeTokenResourceAccessDefinitions: storeTokenResourceAccessDefinitionsFactory({
+    db
+  }),
+  storeUserServerAppToken: storeUserServerAppTokenFactory({ db })
+})
 const createAuthorizationCode = createAuthorizationCodeFactory({ db })
 const createAppTokenFromAccessCode = createAppTokenFromAccessCodeFactory({
   getAuthorizationCode: getAuthorizationCodeFactory({ db }),
@@ -38,6 +83,43 @@ const createAppTokenFromAccessCode = createAppTokenFromAccessCodeFactory({
   createBareToken
 })
 
+const getServerInfo = getServerInfoFactory({ db })
+const findEmail = findEmailFactory({ db })
+const requestNewEmailVerification = requestNewEmailVerificationFactory({
+  findEmail,
+  getUser: getUserFactory({ db }),
+  getServerInfo,
+  deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db }),
+  renderEmail,
+  sendEmail
+})
+const createUser = createUserFactory({
+  getServerInfo,
+  findEmail,
+  storeUser: storeUserFactory({ db }),
+  countAdminUsers: countAdminUsersFactory({ db }),
+  storeUserAcl: storeUserAclFactory({ db }),
+  validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
+    createUserEmail: createUserEmailFactory({ db }),
+    ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
+    findEmail,
+    updateEmailInvites: finalizeInvitedServerRegistrationFactory({
+      deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
+      updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
+    }),
+    requestNewEmailVerification
+  }),
+  emitEvent: getEventBus().emit
+})
+const createPersonalAccessToken = createPersonalAccessTokenFactory({
+  storeApiToken: storeApiTokenFactory({ db }),
+  storeTokenScopes: storeTokenScopesFactory({ db }),
+  storeTokenResourceAccessDefinitions: storeTokenResourceAccessDefinitionsFactory({
+    db
+  }),
+  storePersonalApiToken: storePersonalApiTokenFactory({ db })
+})
+
 describe('GraphQL @apps-api', () => {
   let testUser
   let testUser2
@@ -45,8 +127,9 @@ describe('GraphQL @apps-api', () => {
   let testToken2
 
   before(async () => {
-    ;({ app, server } = await beforeEachContext())
-    ;({ sendRequest } = await initializeTestServer(server, app))
+    const ctx = await beforeEachContext()
+    server = ctx.server
+    ;({ sendRequest } = await initializeTestServer(ctx))
     testUser = {
       name: 'Dimitrie Stefanescu',
       email: 'didimitrie@gmail.com',

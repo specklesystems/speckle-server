@@ -57,6 +57,7 @@ const emit = defineEmits<{
 }>()
 
 const props = defineProps<{
+  projectId: string
   version: Nullable<ProjectModelPageDialogDeleteVersionFragment>
   open: boolean
 }>()
@@ -85,6 +86,7 @@ const onSubmit = handleSubmit(async ({ newMessage }) => {
 
   loading.value = true
   const success = !!(await updateVersion({
+    projectId: props.projectId,
     versionId: props.version?.id,
     message: newMessage
   }))

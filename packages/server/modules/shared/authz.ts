@@ -6,8 +6,8 @@ import {
   ForbiddenError,
   UnauthorizedError,
   ContextError,
-  BadRequestError,
-  DatabaseError
+  DatabaseError,
+  NotFoundError
 } from '@/modules/shared/errors'
 import { adminOverrideEnabled } from '@/modules/shared/helpers/envHelper'
 import {
@@ -19,7 +19,6 @@ import {
 import { isResourceAllowed } from '@/modules/core/helpers/token'
 import { UserRoleData } from '@/modules/shared/domain/rolesAndScopes/types'
 import db from '@/db/knex'
-import { GetAutomationProject } from '@/modules/automate/domain/operations'
 import {
   AuthContext,
   AuthParams,
@@ -209,7 +208,6 @@ type StreamGetter = (params: {
 
 type ValidateRequiredStreamDeps = {
   getStream: StreamGetter
-  getAutomationProject: GetAutomationProject
 }
 
 // this doesn't do any checks  on the scopes, its sole responsibility is to add the
@@ -219,12 +217,12 @@ export const validateRequiredStreamFactory =
   // stream getter is an async func over { streamId, userId } returning a stream object
   // IoC baby...
   async ({ context, authResult, params }) => {
-    const { getStream, getAutomationProject } = deps
+    const { getStream } = deps
 
-    if (!params?.streamId && !params?.automationId)
+    if (!params?.streamId)
       return authFailed(
         context,
-        new ContextError("The context doesn't have a streamId or automationId")
+        new ContextError("The context doesn't have a streamId")
       )
     // because we're assigning to the context, it would raise if it would be null
     // its probably?? safer than returning a new context
@@ -234,20 +232,20 @@ export const validateRequiredStreamFactory =
     // cause stream getter could throw, its not a safe function if we want to
     // keep the pipeline rolling
     try {
-      const stream = params.streamId
-        ? await getStream({
-            streamId: params.streamId,
-            userId: context?.userId
-          })
-        : await getAutomationProject({
-            automationId: params.automationId!,
-            userId: context?.userId
-          })
+      const stream = await getStream({
+        streamId: params.streamId,
+        userId: context?.userId
+      })
 
       if (!stream)
         return authFailed(
           context,
-          new BadRequestError('Stream inputs are malformed'),
+          new NotFoundError(
+            'Project ID is malformed and cannot be found, or the project does not exist',
+            {
+              info: { projectId: params.streamId }
+            }
+          ),
           true
         )
       context.stream = stream
@@ -296,7 +294,7 @@ export const authPipelineCreator = (
     }
     // validate auth result a bit...
     if (authResult.authorized && authHasFailed(authResult))
-      throw new Error('Auth failure')
+      throw new UnauthorizedError('Auth failure')
     return { context, authResult }
   }
   return pipeline
@@ -339,7 +337,7 @@ export const throwForNotHavingServerRoleFactory =
       authResult: { authorized: false }
     })
     if (authHasFailed(authResult))
-      throw authResult.error ?? new Error('Auth failed without an error')
+      throw authResult.error ?? new ForbiddenError('Auth failed without an error')
     return true
   }
 

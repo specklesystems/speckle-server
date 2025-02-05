@@ -1,4 +1,3 @@
-import { getStream } from '@/modules/core/repositories/streams'
 import {
   ProjectInviteResourceType,
   ServerInviteResourceType
@@ -13,6 +12,7 @@ import {
 import { authorizeResolver } from '@/modules/shared'
 import { Roles } from '@speckle/shared'
 import { flatten } from 'lodash'
+import { GetStream } from '@/modules/core/domain/streams/operations'
 
 const collectAndValidateServerTargetFactory =
   (): CollectAndValidateResourceTargets => (params) => {
@@ -67,7 +67,7 @@ const collectAndValidateServerTargetFactory =
   }
 
 type CollectAndValidateProjectTargetFactoryDeps = {
-  getStream: typeof getStream
+  getStream: GetStream
 }
 
 const collectAndValidateProjectTargetFactory =

@@ -3,7 +3,7 @@
     <Portal to="navigation">
       <template v-if="project.workspace && isWorkspacesEnabled">
         <HeaderNavLink
-          :to="workspaceRoute(project.workspace.id)"
+          :to="workspaceRoute(project.workspace.slug)"
           :name="project.workspace.name"
           :separator="false"
         ></HeaderNavLink>
@@ -24,11 +24,11 @@
     <div class="flex gap-x-3">
       <NuxtLink
         v-if="project.workspace && isWorkspacesEnabled"
-        :to="workspaceRoute(project.workspace.id)"
+        :to="workspaceRoute(project.workspace.slug)"
       >
         <WorkspaceAvatar
           :logo="project.workspace.logo"
-          :default-logo-index="project.workspace.defaultLogoIndex"
+          :name="project.workspace.name"
           size="sm"
           class="mt-0.5"
         />
@@ -57,15 +57,16 @@ graphql(`
     allowPublicComments
     workspace {
       id
+      slug
       name
-      ...WorkspaceAvatar_Workspace
+      logo
     }
   }
 `)
 
-const isWorkspacesEnabled = useIsWorkspacesEnabled()
-
 defineProps<{
   project: ProjectPageProjectHeaderFragment
 }>()
+
+const isWorkspacesEnabled = useIsWorkspacesEnabled()
 </script>

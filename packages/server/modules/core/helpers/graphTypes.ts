@@ -1,19 +1,24 @@
 import {
+  CommitWithStreamBranchId,
+  LegacyStreamCommit,
+  LegacyUserCommit
+} from '@/modules/core/domain/commits/types'
+import {
   LimitedUser,
   StreamRole,
   ServerRole,
-  ModelsTreeItem,
-  Commit
+  ModelsTreeItem
 } from '@/modules/core/graph/generated/graphql'
 import { Roles, ServerRoles, StreamRoles } from '@/modules/core/helpers/mainConstants'
 import {
   BranchRecord,
   CommitRecord,
   ObjectRecord,
+  ServerInfo,
   StreamRecord,
   UserRecord
 } from '@/modules/core/helpers/types'
-import { MaybeNullOrUndefined, Nullable } from '@speckle/shared'
+import { MaybeNullOrUndefined } from '@speckle/shared'
 
 /**
  * The types of objects we return in resolvers often don't have the exact type as the object in the schema.
@@ -31,19 +36,19 @@ export type StreamGraphQLReturn = StreamRecord & {
   role?: string | null
 }
 
-export type CommitGraphQLReturn = Commit & {
-  /**
-   * Commit DB schema actually has this as the author ID column, so we return it
-   * for field resolvers to be able to resolve extra things about the author (like name/avatar)
-   */
-  author: Nullable<string>
-}
+export type CommitGraphQLReturn = (
+  | CommitRecord
+  | LegacyStreamCommit
+  | LegacyUserCommit
+) & { streamId: string }
+
+export type BranchGraphQLReturn = BranchRecord
 
 export type ProjectGraphQLReturn = StreamGraphQLReturn
 
 export type ModelGraphQLReturn = BranchRecord
 
-export type VersionGraphQLReturn = CommitRecord
+export type VersionGraphQLReturn = CommitWithStreamBranchId
 
 export type LimitedUserGraphQLReturn = Omit<
   LimitedUser,
@@ -62,18 +67,21 @@ export type ModelsTreeItemGraphQLReturn = Omit<ModelsTreeItem, 'model' | 'childr
   projectId: string
 }
 
-export type ObjectGraphQLReturn = ObjectRecord
-
-/**
- * Return type for top-level mutations groupings like `projectMutations`, `activeUserMutations` etc.
- */
-export type MutationsObjectGraphQLReturn = Record<string, never>
+export type ObjectGraphQLReturn = Omit<
+  ObjectRecord,
+  'createdAt' | 'totalChildrenCountByDepth'
+>
 
 /**
  * Use this to override the generated graphql type, in cases like graphql resolver
  * collection objects
  */
 export type GraphQLEmptyReturn = Record<string, never>
+
+/**
+ * Return type for top-level mutations groupings like `projectMutations`, `activeUserMutations` etc.
+ */
+export type MutationsObjectGraphQLReturn = GraphQLEmptyReturn
 
 /**
  * Map GQL StreamRole enum to the value types we use in the backend
@@ -118,3 +126,5 @@ export type StreamCollaboratorGraphQLReturn = {
   company?: MaybeNullOrUndefined<string>
   avatar?: MaybeNullOrUndefined<string>
 }
+
+export type ServerInfoGraphQLReturn = ServerInfo

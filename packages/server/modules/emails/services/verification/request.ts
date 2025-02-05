@@ -3,30 +3,25 @@ import {
   FindPrimaryEmailForUser
 } from '@/modules/core/domain/userEmails/operations'
 import { UserEmail } from '@/modules/core/domain/userEmails/types'
-import { UsersEmitter, UsersEvents } from '@/modules/core/events/usersEmitter'
-import { getEmailVerificationFinalizationRoute } from '@/modules/core/helpers/routeHelper'
 import { ServerInfo, UserRecord } from '@/modules/core/helpers/types'
-import { getUser } from '@/modules/core/repositories/users'
-import { getServerInfo } from '@/modules/core/services/generic'
 import { EmailVerificationRequestError } from '@/modules/emails/errors'
 import {
-  EmailTemplateParams,
-  renderEmail
-} from '@/modules/emails/services/emailRendering'
-import { sendEmail } from '@/modules/emails/services/sending'
-import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
-import {
   DeleteOldAndInsertNewVerification,
+  EmailTemplateParams,
+  RenderEmail,
   RequestEmailVerification,
-  RequestNewEmailVerification
+  RequestNewEmailVerification,
+  SendEmail
 } from '@/modules/emails/domain/operations'
+import { GetUser } from '@/modules/core/domain/users/operations'
+import { GetServerInfo } from '@/modules/core/domain/server/operations'
 
 const EMAIL_SUBJECT = 'Speckle Account E-mail Verification'
 
 type CreateNewVerificationDeps = {
-  getUser: typeof getUser
+  getUser: GetUser
   findPrimaryEmailForUser: FindPrimaryEmailForUser
-  getServerInfo: typeof getServerInfo
+  getServerInfo: GetServerInfo
   deleteOldAndInsertNewVerification: DeleteOldAndInsertNewVerification
 }
 
@@ -50,27 +45,27 @@ const createNewVerificationFactory =
     if (user.verified)
       throw new EmailVerificationRequestError("User's email is already verified")
 
-    const verificationId = await deps.deleteOldAndInsertNewVerification(user.email)
+    const verificationCode = await deps.deleteOldAndInsertNewVerification(user.email)
 
     return {
       user,
       email,
-      verificationId,
+      verificationCode,
       serverInfo
     }
   }
 
 type VerificationRequestContext = {
   user: UserRecord
-  verificationId: string
+  verificationCode: string
   serverInfo: ServerInfo
   email: UserEmail
 }
 
 type CreateNewEmailVerificationFactoryDeps = {
   findEmail: FindEmail
-  getUser: typeof getUser
-  getServerInfo: typeof getServerInfo
+  getUser: GetUser
+  getServerInfo: GetServerInfo
   deleteOldAndInsertNewVerification: DeleteOldAndInsertNewVerification
 }
 
@@ -94,26 +89,28 @@ const createNewEmailVerificationFactory =
         'Unable to resolve verification target user'
       )
 
-    const verificationId = await deps.deleteOldAndInsertNewVerification(
+    const verificationCode = await deps.deleteOldAndInsertNewVerification(
       emailRecord.email
     )
     return {
       user,
       email: emailRecord,
-      verificationId,
+      verificationCode,
       serverInfo
     }
   }
 
-function buildMjmlBody() {
-  const bodyStart = `<mj-text>Hello,<br/><br/>You have just registered to the Speckle server, or initiated the email verification process manually. To finalize the verification process, click the button below:</mj-text>`
-  const bodyEnd = `<mj-text>This link expires in <strong>1 week</strong>.<br/>
-  If the link does not work, please proceed by</mj-text><br/>
+function buildMjmlBody(verificationCode: string) {
+  const bodyStart = `<mj-text>Hello,<br/><br/>You have just registered to the Speckle server, or initiated the email verification process manually. To finalize the verification process, use the code below.</mj-text>`
+  const bodyEnd = `<mj-text>This code expires in <strong>5 minutes</strong>: <br/>
+<strong>${verificationCode}</strong>
+<br />
+  If the code does not work, please proceed by</mj-text><br/>
   <mj-list>
     <mj-li>Logging in with your e-mail address and password</mj-li>
     <mj-li>Clicking on the Notification icon</mj-li>
     <mj-li>Selecting "Send Verification"</mj-li>
-    <mj-li>Verifying your e-mail address by clicking on the link in the e-mail you will receive</mj-li>
+    <mj-li>Verifying your e-mail address by using the new code</mj-li>
   </mj-list><br/>
   <mj-text>
     See you soon,<br/>
@@ -124,40 +121,32 @@ function buildMjmlBody() {
   return { bodyStart, bodyEnd }
 }
 
-function buildTextBody() {
-  const bodyStart = `Hello,\n\nYou have just registered to the Speckle server, or initiated the email verification process manually. To finalize the verification process, open the link below:`
-  const bodyEnd = `This link expires in 1 week. If the link does not work, please proceed by logging in to your Speckle account with your e-mail address and password, clicking the Notification icon, selecting "Send Verification" and verifying your e-mail address by clicking on the link in the e-mail you will receive.\n\nSee you soon,\nSpeckle
+function buildTextBody(verificationCode: string) {
+  const bodyStart = `Hello,\n\nYou have just registered to the Speckle server, or initiated the email verification process manually. To finalize the verification process, use the code below:`
+  const bodyEnd = `This code expires in 5 minutes:
+${verificationCode}
+\r\n
+If the code does not work, please proceed by logging in to your Speckle account with your e-mail address and password, clicking the Notification icon, selecting "Send Verification" and verifying your e-mail address by new code.\n\nSee you soon,\nSpeckle
   `
 
   return { bodyStart, bodyEnd }
 }
 
-function buildEmailLink(verificationId: string): string {
-  return new URL(
-    getEmailVerificationFinalizationRoute(verificationId),
-    getServerOrigin()
-  ).toString()
-}
-
-function buildEmailTemplateParams(verificationId: string): EmailTemplateParams {
+function buildEmailTemplateParams(verificationCode: string): EmailTemplateParams {
   return {
-    mjml: buildMjmlBody(),
-    text: buildTextBody(),
-    cta: {
-      title: 'Verify your E-mail',
-      url: buildEmailLink(verificationId)
-    }
+    mjml: buildMjmlBody(verificationCode),
+    text: buildTextBody(verificationCode)
   }
 }
 
 type SendVerificationEmailDeps = {
-  sendEmail: typeof sendEmail
-  renderEmail: typeof renderEmail
+  sendEmail: SendEmail
+  renderEmail: RenderEmail
 }
 
 const sendVerificationEmailFactory =
   (deps: SendVerificationEmailDeps) => async (state: VerificationRequestContext) => {
-    const emailTemplateParams = buildEmailTemplateParams(state.verificationId)
+    const emailTemplateParams = buildEmailTemplateParams(state.verificationCode)
     const { html, text } = await deps.renderEmail(
       emailTemplateParams,
       state.serverInfo,
@@ -184,25 +173,11 @@ export const requestEmailVerificationFactory =
     await sendVerificationEmailFactory(deps)(newVerificationState)
   }
 
-/**
- * Listen for user:created events and trigger email verification initialization
- */
-export const initializeVerificationOnRegistrationFactory =
-  (deps: {
-    userEmitterListener: typeof UsersEmitter.listen
-    requestEmailVerification: RequestEmailVerification
-  }) =>
-  () => {
-    return deps.userEmitterListener(UsersEvents.Created, async ({ user }) => {
-      // user might already be verified because of registration through an external identity provider
-      if (user.verified) return
-
-      await deps.requestEmailVerification(user.id)
-    })
-  }
-
 type RequestNewEmailVerificationDeps = CreateNewEmailVerificationFactoryDeps
 
+/**
+ * Request email verification for email with specified ID
+ */
 export const requestNewEmailVerificationFactory =
   (
     deps: RequestNewEmailVerificationDeps & SendVerificationEmailDeps

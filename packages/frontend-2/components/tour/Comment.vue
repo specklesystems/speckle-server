@@ -22,7 +22,7 @@
       >
         <div
           v-show="item.expanded"
-          class="transition bg-foundation rounded-lg shadow-md mb-8 mx-2 px-4 py-4 gap-2 sm:gap-4 sm:ml-12 sm:max-w-xs pointer-events-auto"
+          class="transition bg-foundation-page border border-outline-3 rounded-lg shadow-md mb-8 mx-2 gap-2 sm:gap-4 sm:ml-12 sm:max-w-xs pointer-events-auto"
         >
           <div
             class="sm:hidden flex items-center justify-center w-full gap-3 mt-1 mb-3"
@@ -41,21 +41,35 @@
             ></div>
           </div>
 
-          <slot></slot>
+          <div class="px-6 py-4">
+            <slot></slot>
+          </div>
 
-          <div class="flex items-center justify-between pointer-events-auto mt-4">
+          <div
+            class="flex items-center justify-between pointer-events-auto px-6 py-2 border-t border-outline-3"
+          >
             <slot name="actions">
-              <FormButton text color="outline" @click="$emit('skip')">Skip</FormButton>
-              <div class="flex justify-center space-x-2">
+              <FormButton text size="sm" color="outline" @click="$emit('skip')">
+                Skip
+              </FormButton>
+              <div class="flex justify-center items-center space-x-2">
                 <FormButton
                   v-show="index !== 0"
-                  :icon-left="ArrowLeftIcon"
+                  size="sm"
+                  color="outline"
                   text
                   @click="prev(index)"
                 >
+                  <ArrowLeftIcon class="h-3 w-3 mr-1" />
                   Previous
                 </FormButton>
-                <FormButton :icon-right="ArrowRightIcon" @click="next(index)">
+                <div v-if="index === 2">
+                  <div v-if="!disableNext" v-tippy="'First add another model'">
+                    <FormButton disabled>Finish</FormButton>
+                  </div>
+                  <FormButton v-else @click="$emit('skip')">Finish</FormButton>
+                </div>
+                <FormButton v-else :icon-right="ArrowRightIcon" @click="next(index)">
                   Next
                 </FormButton>
               </div>
@@ -83,6 +97,7 @@ defineEmits(['skip', 'previous', 'next'])
 const props = defineProps<{
   index: number
   item: SlideshowItem
+  disableNext: boolean
 }>()
 
 const {

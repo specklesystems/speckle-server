@@ -74,6 +74,7 @@ export type SerializedViewerState = {
       isOrthoProjection: boolean
       zoom: number
     }
+    viewMode: number
     sectionBox: Nullable<{
       min: number[]
       max: number[]
@@ -198,6 +199,7 @@ const initializeMissingData = (state: UnformattedState): SerializedViewerState =
         isOrthoProjection: state.ui?.camera?.isOrthoProjection || false,
         zoom: state.ui?.camera?.zoom || 1
       },
+      viewMode: state.ui?.viewMode || 0,
       sectionBox:
         state.ui?.sectionBox?.min?.length && state.ui?.sectionBox.max?.length
           ? {

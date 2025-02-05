@@ -1,5 +1,5 @@
 import { db } from '@/db/knex'
-import { AccessRequestsEmitter } from '@/modules/accessrequests/events/emitter'
+import { AccessRequestEvents } from '@/modules/accessrequests/domain/events'
 import {
   createNewRequestFactory,
   deleteRequestByIdFactory,
@@ -12,6 +12,12 @@ import {
   requestProjectAccessFactory
 } from '@/modules/accessrequests/services/stream'
 import { ActionTypes } from '@/modules/activitystream/helpers/types'
+import { saveActivityFactory } from '@/modules/activitystream/repositories'
+import {
+  addStreamInviteAcceptedActivityFactory,
+  addStreamPermissionsAddedActivityFactory,
+  addStreamPermissionsRevokedActivityFactory
+} from '@/modules/activitystream/services/streamActivity'
 import {
   ServerAccessRequests,
   StreamActivity,
@@ -21,12 +27,23 @@ import {
 import { StreamAccessUpdateError } from '@/modules/core/errors/stream'
 import { mapStreamRoleToValue } from '@/modules/core/helpers/graphTypes'
 import { Roles } from '@/modules/core/helpers/mainConstants'
-import { getStream, getStreamCollaborators } from '@/modules/core/repositories/streams'
 import {
-  addOrUpdateStreamCollaborator,
-  removeStreamCollaborator
-} from '@/modules/core/services/streams/streamAccessService'
+  getStreamCollaboratorsFactory,
+  getStreamFactory,
+  grantStreamPermissionsFactory,
+  revokeStreamPermissionsFactory
+} from '@/modules/core/repositories/streams'
+import { getUserFactory } from '@/modules/core/repositories/users'
+import {
+  addOrUpdateStreamCollaboratorFactory,
+  isStreamCollaboratorFactory,
+  removeStreamCollaboratorFactory,
+  validateStreamAccessFactory
+} from '@/modules/core/services/streams/access'
 import { NotificationType } from '@/modules/notifications/helpers/types'
+import { authorizeResolver } from '@/modules/shared'
+import { getEventBus } from '@/modules/shared/services/eventBus'
+import { publish } from '@/modules/shared/utils/subscriptions'
 import { BasicTestUser, createTestUsers } from '@/test/authHelper'
 import {
   CreateProjectAccessRequestDocument,
@@ -48,6 +65,9 @@ import { BasicTestStream, createTestStreams } from '@/test/speckle-helpers/strea
 import { expect } from 'chai'
 import { noop } from 'lodash'
 
+const getUser = getUserFactory({ db })
+const getStream = getStreamFactory({ db })
+const getStreamCollaborators = getStreamCollaboratorsFactory({ db })
 const requestProjectAccess = requestProjectAccessFactory({
   getUserStreamAccessRequest: getUserStreamAccessRequestFactory({
     getUserProjectAccessRequest: getUserProjectAccessRequestFactory({
@@ -56,7 +76,35 @@ const requestProjectAccess = requestProjectAccessFactory({
   }),
   getStream,
   createNewRequest: createNewRequestFactory({ db }),
-  accessRequestsEmitter: AccessRequestsEmitter.emit
+  emitEvent: getEventBus().emit
+})
+const saveActivity = saveActivityFactory({ db })
+const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
+const isStreamCollaborator = isStreamCollaboratorFactory({
+  getStream
+})
+const removeStreamCollaborator = removeStreamCollaboratorFactory({
+  validateStreamAccess,
+  isStreamCollaborator,
+  revokeStreamPermissions: revokeStreamPermissionsFactory({ db }),
+  addStreamPermissionsRevokedActivity: addStreamPermissionsRevokedActivityFactory({
+    saveActivity,
+    publish
+  })
+})
+
+const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
+  validateStreamAccess,
+  getUser,
+  grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+  addStreamInviteAcceptedActivity: addStreamInviteAcceptedActivityFactory({
+    saveActivity,
+    publish
+  }),
+  addStreamPermissionsAddedActivity: addStreamPermissionsAddedActivityFactory({
+    saveActivity,
+    publish
+  })
 })
 
 const isNotCollaboratorError = (e: unknown) =>
@@ -115,6 +163,8 @@ describe('Project access requests', () => {
     id: ''
   }
 
+  let quitters: (() => void)[] = []
+
   before(async () => {
     await cleanup()
     await createTestUsers([me, otherGuy, anotherGuy])
@@ -127,6 +177,11 @@ describe('Project access requests', () => {
       authUserId: me.id
     })
     notificationsStateManager = buildNotificationsStateTracker()
+  })
+
+  afterEach(() => {
+    quitters.forEach((q) => q())
+    quitters = []
   })
 
   after(async () => {
@@ -179,6 +234,13 @@ describe('Project access requests', () => {
     })
 
     it('operation succeeds', async () => {
+      let eventFired = false
+      quitters.push(
+        getEventBus().listen(AccessRequestEvents.Created, async (payload) => {
+          expect(payload.payload.request.requesterId).to.eq(me.id)
+          eventFired = true
+        })
+      )
       const sendEmailCall = EmailSendingServiceMock.hijackFunction(
         'sendEmail',
         async () => true
@@ -220,6 +282,7 @@ describe('Project access requests', () => {
         userId: me.id
       })
       expect(streamActivity).to.have.lengthOf(1)
+      expect(eventFired).to.be.true
     })
 
     it('operation fails if request already exists', async () => {
@@ -400,6 +463,15 @@ describe('Project access requests', () => {
     ]
     validProcessingDataSet.forEach(({ display, accept, role }) => {
       it(`${display} works`, async () => {
+        let eventFired = false
+        quitters.push(
+          getEventBus().listen(AccessRequestEvents.Finalized, async (payload) => {
+            expect(!!payload.payload.approved).to.eq(accept)
+            expect(payload.payload.finalizedBy).to.eq(me.id)
+            eventFired = true
+          })
+        )
+
         const results = await useReq(validReqId, accept, role)
         expect(results).to.not.haveGraphQLErrors()
         expect(results.data?.projectMutations.accessRequestMutations.use).to.be.ok
@@ -430,6 +502,7 @@ describe('Project access requests', () => {
           })
           expect(streamActivity).to.have.lengthOf(1)
         }
+        expect(eventFired).to.be.true
       })
     })
   })

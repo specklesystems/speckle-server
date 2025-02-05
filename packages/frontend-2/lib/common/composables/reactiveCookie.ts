@@ -5,9 +5,6 @@ import dayjs from 'dayjs'
 import { useScopedState } from '~~/lib/common/composables/scopedState'
 import { isUndefined } from 'lodash-es'
 import { isBraveOrSafari } from '@speckle/shared'
-import { abortControllerManager, isAbortError } from '~/lib/common/utils/requests'
-
-const aborts = abortControllerManager()
 
 /**
  * Makes useCookie() synchronized across the app so that a change to it from one place
@@ -43,16 +40,6 @@ export const useSynchronizedCookie = <CookieValue = string>(
         } else {
           tmpCookie.value = undefined
         }
-
-        // Fetch w/ abort of previous call, if any
-        const controller = aborts.popOnlyInCSR()
-        void fetch('/web-api/cookie-fix', {
-          signal: controller?.signal
-        }).catch((e) => {
-          if (!isAbortError(e)) {
-            throw e
-          }
-        })
       })
     }
 
@@ -64,3 +51,11 @@ export const useSynchronizedCookie = <CookieValue = string>(
 
     return cookie
   })
+
+export const useFixBraveSafariCookies = () => {
+  if (!import.meta.client || !isBraveOrSafari()) return
+
+  onMounted(async () => {
+    await fetch('/web-api/cookie-fix')
+  })
+}

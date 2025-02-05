@@ -4,9 +4,9 @@
       v-model:search="search"
       v-model:role="roleFilter"
       search-placeholder="Search members..."
-      :workspace-id="workspaceId"
       :workspace="workspace"
       show-role-filter
+      show-invite-button
     />
     <LayoutTable
       class="mt-6 md:mt-8 mb-12"
@@ -29,7 +29,7 @@
     >
       <template #name="{ item }">
         <div class="flex items-center gap-2">
-          <UserAvatar :user="item" />
+          <UserAvatar hide-tooltip :user="item" />
           <span class="truncate text-body-xs text-foreground">{{ item.name }}</span>
           <div
             v-if="
@@ -80,19 +80,17 @@
         <div v-else />
       </template>
     </LayoutTable>
-    <SettingsSharedChangeRoleDialog
+    <SettingsWorkspacesMembersChangeRoleDialog
       v-model:open="showChangeUserRoleDialog"
-      :name="userToModify?.name ?? ''"
-      :is-workspace-admin="isWorkspaceAdmin"
       :workspace-domain-policy-compliant="userToModify?.workspaceDomainPolicyCompliant"
+      :current-role="currentUserRole"
+      :workspace="workspace"
       @update-role="onUpdateRole"
     />
     <SettingsSharedDeleteUserDialog
       v-model:open="showDeleteUserRoleDialog"
-      :title="
-        userToModify?.role === Roles.Workspace.Guest ? 'Remove guest' : 'Remove user'
-      "
       :name="userToModify?.name ?? ''"
+      :workspace="workspace"
       @remove-user="onRemoveUser"
     />
     <SettingsWorkspacesGeneralLeaveDialog
@@ -104,7 +102,7 @@
 </template>
 
 <script setup lang="ts">
-import type { WorkspaceRoles } from '@speckle/shared'
+import { Roles, type WorkspaceRoles, type MaybeNullOrUndefined } from '@speckle/shared'
 import { settingsWorkspacesMembersSearchQuery } from '~~/lib/settings/graphql/queries'
 import { useQuery } from '@vue/apollo-composable'
 import type { SettingsWorkspacesMembersMembersTable_WorkspaceFragment } from '~~/lib/common/generated/gql/graphql'
@@ -117,8 +115,6 @@ import {
 import { useWorkspaceUpdateRole } from '~/lib/workspaces/composables/management'
 import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
 import { HorizontalDirection } from '~~/lib/common/composables/window'
-import { Roles } from '@speckle/shared'
-import { useMixpanel } from '~/lib/core/composables/mp'
 import { getRoleLabel } from '~~/lib/settings/helpers/utils'
 
 type UserItem = (typeof members)['value'][0]
@@ -133,7 +129,7 @@ graphql(`
       name
       company
       verified
-      workspaceDomainPolicyCompliant(workspaceId: $workspaceId)
+      workspaceDomainPolicyCompliant
     }
   }
 `)
@@ -142,7 +138,9 @@ graphql(`
   fragment SettingsWorkspacesMembersMembersTable_Workspace on Workspace {
     id
     name
+    ...SettingsSharedDeleteUserDialog_Workspace
     ...SettingsWorkspacesMembersTableHeader_Workspace
+    ...SettingsWorkspacesMembersChangeRoleDialog_Workspace
     team {
       items {
         id
@@ -159,8 +157,8 @@ enum ActionTypes {
 }
 
 const props = defineProps<{
-  workspace?: SettingsWorkspacesMembersMembersTable_WorkspaceFragment
-  workspaceId: string
+  workspace: MaybeNullOrUndefined<SettingsWorkspacesMembersMembersTable_WorkspaceFragment>
+  workspaceSlug: string
 }>()
 
 const search = ref('')
@@ -171,9 +169,11 @@ const { result: searchResult, loading: searchResultLoading } = useQuery(
   () => ({
     filter: {
       search: search.value,
-      role: roleFilter.value
+      roles: roleFilter.value
+        ? [roleFilter.value]
+        : [Roles.Workspace.Admin, Roles.Workspace.Member]
     },
-    workspaceId: props.workspaceId
+    slug: props.workspaceSlug
   }),
   () => ({
     enabled: !!search.value.length || !!roleFilter.value
@@ -181,7 +181,6 @@ const { result: searchResult, loading: searchResultLoading } = useQuery(
 )
 
 const updateUserRole = useWorkspaceUpdateRole()
-const mixpanel = useMixpanel()
 const { activeUser } = useActiveUser()
 
 const showChangeUserRoleDialog = ref(false)
@@ -195,12 +194,14 @@ const showActionsMenu = ref<Record<string, boolean>>({})
 const members = computed(() => {
   const memberArray =
     search.value.length || roleFilter.value
-      ? searchResult.value?.workspace?.team.items
+      ? searchResult.value?.workspaceBySlug?.team.items
       : props.workspace?.team.items
-  return (memberArray || []).map(({ user, ...rest }) => ({
-    ...user,
-    ...rest
-  }))
+  return (memberArray || [])
+    .map(({ user, ...rest }) => ({
+      ...user,
+      ...rest
+    }))
+    .filter((user) => user.role !== Roles.Workspace.Guest)
 })
 
 const isWorkspaceAdmin = computed(() => props.workspace?.role === Roles.Workspace.Admin)
@@ -213,14 +214,22 @@ const canRemoveMember = computed(
 const hasNoResults = computed(
   () =>
     (search.value.length || roleFilter.value) &&
-    searchResult.value?.workspace.team.items.length === 0
+    searchResult.value?.workspaceBySlug?.team.items.length === 0
 )
+
+const currentUserRole = computed<WorkspaceRoles | undefined>(() => {
+  if (userToModify.value?.role && isWorkspaceRole(userToModify.value.role)) {
+    return userToModify.value.role
+  }
+  return undefined
+})
+
 const filteredActionsItems = (user: UserItem) => {
   const baseItems: LayoutMenuItem[][] = []
 
   // Allow role change if the active user is an admin
-  if (isWorkspaceAdmin.value) {
-    baseItems.push([{ title: 'Update role...', id: ActionTypes.ChangeRole }])
+  if (isWorkspaceAdmin.value && !isActiveUserCurrentUser.value(user)) {
+    baseItems.push([{ title: 'Change role...', id: ActionTypes.ChangeRole }])
   }
 
   // Allow the current user to leave the workspace
@@ -252,33 +261,22 @@ const openDeleteUserRoleDialog = (user: UserItem) => {
 }
 
 const onUpdateRole = async (newRoleValue: WorkspaceRoles) => {
-  if (!userToModify.value || !newRoleValue) return
+  if (!userToModify.value || !newRoleValue || !props.workspace?.id) return
 
   await updateUserRole({
     userId: userToModify.value.id,
     role: newRoleValue,
-    workspaceId: props.workspaceId
-  })
-
-  mixpanel.track('Workspace User Role Updated', {
-    newRole: newRoleValue,
-    // eslint-disable-next-line camelcase
-    workspace_id: props.workspaceId
+    workspaceId: props.workspace.id
   })
 }
 
 const onRemoveUser = async () => {
-  if (!userToModify.value?.id) return
+  if (!userToModify.value?.id || !props.workspace?.id) return
 
   await updateUserRole({
     userId: userToModify.value.id,
     role: null,
-    workspaceId: props.workspaceId
-  })
-
-  mixpanel.track('Workspace User Removed', {
-    // eslint-disable-next-line camelcase
-    workspace_id: props.workspaceId
+    workspaceId: props.workspace.id
   })
 }
 

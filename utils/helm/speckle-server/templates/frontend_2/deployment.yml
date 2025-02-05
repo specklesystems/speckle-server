@@ -22,6 +22,12 @@ spec:
       - name: main
         image: {{ default (printf "speckle/speckle-frontend-2:%s" .Values.docker_image_tag) .Values.frontend_2.image }}
         imagePullPolicy: {{ .Values.imagePullPolicy }}
+        args: #overwrites the Dockerfile CMD statement
+          - "/nodejs/bin/node"
+        {{- if .Values.frontend_2.inspect.enabled }}
+          - {{ printf "--inspect=%s" .Values.frontend_2.inspect.port }}
+        {{- end }}
+          - "./server/index.mjs"
 
         ports:
           - name: www
@@ -91,9 +97,9 @@ spec:
               secretKeyRef:
                 name: {{ default .Values.secretName .Values.redis.connectionString.secretName }}
                 key: {{ default "redis_url" .Values.redis.connectionString.secretKey }}
-          {{- if .Values.frontend_2.ghostApiKey }}
-          - name: NUXT_PUBLIC_GHOST_API_KEY
-            value: {{ .Values.frontend_2.ghostApiKey | quote }}
+          {{- if .Values.frontend_2.webflowApiToken }}
+          - name: NUXT_WEBFLOW_API_TOKEN
+            value: {{ .Values.frontend_2.webflowApiToken | quote }}
           {{- end }}
           {{- if .Values.analytics.datadog_app_id }}
           - name: NUXT_PUBLIC_DATADOG_APP_ID
@@ -118,11 +124,23 @@ spec:
           - name: NUXT_PUBLIC_FF_AUTOMATE_MODULE_ENABLED
             value: {{ .Values.featureFlags.automateModuleEnabled | quote }}
           - name: NUXT_PUBLIC_FF_WORKSPACES_MODULE_ENABLED
-            value: {{ .Values.featureFlags.workspaceModuleEnabled | quote }}
+            value: {{ .Values.featureFlags.workspacesModuleEnabled | quote }}
           - name: NUXT_PUBLIC_FF_WORKSPACES_SSO_ENABLED
-            value: {{ .Values.featureFlags.workspaceSsoEnabled | quote }}
+            value: {{ .Values.featureFlags.workspacesSSOEnabled | quote }}
           - name: NUXT_PUBLIC_FF_MULTIPLE_EMAILS_MODULE_ENABLED
             value: {{ .Values.featureFlags.multipleEmailsModuleEnabled | quote }}
+          - name: NUXT_PUBLIC_FF_GATEKEEPER_MODULE_ENABLED
+            value: {{ .Values.featureFlags.gatekeeperModuleEnabled | quote }}
+          - name: NUXT_PUBLIC_FF_BILLING_INTEGRATION_ENABLED
+            value: {{ .Values.featureFlags.billingIntegrationEnabled | quote }}
+          - name: NUXT_PUBLIC_FF_WORKSPACES_MULTI_REGION_ENABLED
+            value: {{ .Values.featureFlags.workspacesMultiRegionEnabled | quote }}
+          - name: NUXT_PUBLIC_FF_GENDOAI_MODULE_ENABLED
+            value: {{ .Values.featureFlags.gendoAIModuleEnabled | quote }}
+          - name: NUXT_PUBLIC_FF_FORCE_EMAIL_VERIFICATION
+            value: {{ .Values.featureFlags.forceEmailVerification | quote }}
+          - name: NUXT_PUBLIC_FF_FORCE_ONBOARDING
+            value: {{ .Values.featureFlags.forceOnboarding | quote }}
           {{- if .Values.analytics.survicate_workspace_key }}
           - name: NUXT_PUBLIC_SURVICATE_WORKSPACE_KEY
             value: {{ .Values.analytics.survicate_workspace_key | quote }}

@@ -31,8 +31,10 @@ export const projectDashboardItemFragment = graphql(`
     }
     workspace {
       id
+      slug
       name
-      ...WorkspaceAvatar_Workspace
+      logo
+      readOnly
     }
     pendingImportedModels(limit: 4) {
       ...PendingFileUpload
@@ -95,6 +97,10 @@ export const projectPageLatestItemsModelsFragment = graphql(`
     id
     role
     visibility
+    workspace {
+      id
+      readOnly
+    }
     modelCount: models(limit: 0) {
       totalCount
     }

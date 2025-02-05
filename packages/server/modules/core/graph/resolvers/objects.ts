@@ -1,18 +1,28 @@
 import { authorizeResolver } from '@/modules/shared'
-
-import {
-  createObjects,
-  getObjectChildren,
-  getObjectChildrenQuery
-} from '@/modules/core/services/objects'
-
-import { Roles } from '@speckle/shared'
+import { isNonNullable, Roles } from '@speckle/shared'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
-import { getObject } from '@/modules/core/repositories/objects'
+import {
+  getObjectChildrenFactory,
+  getObjectChildrenQueryFactory,
+  getObjectFactory,
+  storeClosuresIfNotFoundFactory,
+  storeObjectsIfNotFoundFactory
+} from '@/modules/core/repositories/objects'
+import { createObjectsFactory } from '@/modules/core/services/objects/management'
+import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
+import coreModule from '@/modules/core'
+
+type GetObjectChildrenQueryParams = Parameters<
+  ReturnType<typeof getObjectChildrenQueryFactory>
+>[0]
 
 const getStreamObject: NonNullable<Resolvers['Stream']>['object'] =
   async function object(parent, args) {
-    return (await getObject(args.id, parent.id)) || null
+    return (
+      (await getObjectFactory({
+        db: await getProjectDbClient({ projectId: parent.id })
+      })(args.id, parent.id)) || null
+    )
   }
 
 export = {
@@ -24,37 +34,62 @@ export = {
   },
   Object: {
     async children(parent, args) {
+      const projectDB = await getProjectDbClient({ projectId: parent.streamId })
       // The simple query branch
       if (!args.query && !args.orderBy) {
+        const getObjectChildren = getObjectChildrenFactory({ db: projectDB })
         const result = await getObjectChildren({
           streamId: parent.streamId,
           objectId: parent.id,
           limit: args.limit,
           depth: args.depth,
-          select: args.select,
+          select: args.select?.filter(isNonNullable),
           cursor: args.cursor
         })
-        result.objects.forEach((x) => (x.streamId = parent.streamId))
+
+        // Hacky typing here, but I want to avoid filling up memory with a new array of new objects w/ .map()
+        const objects = result.objects as Array<
+          (typeof result)['objects'][number] & {
+            streamId: string
+          }
+        >
+        objects.forEach((x) => (x.streamId = parent.streamId))
+
         return {
           totalCount: parent.totalChildrenCount || 0,
           cursor: result.cursor,
-          objects: result.objects
+          objects
         }
       }
 
+      const getObjectChildrenQuery = getObjectChildrenQueryFactory({ db: projectDB })
       // The complex query branch
       const result = await getObjectChildrenQuery({
         streamId: parent.streamId,
         objectId: parent.id,
         limit: args.limit,
         depth: args.depth,
-        select: args.select,
-        query: args.query,
-        orderBy: args.orderBy,
+        select: args.select?.filter(isNonNullable),
+        // TODO: Theoretically users can feed in invalid structures here
+        query: args.query?.filter(
+          isNonNullable
+        ) as GetObjectChildrenQueryParams['query'],
+        orderBy: (args.orderBy || undefined) as GetObjectChildrenQueryParams['orderBy'],
         cursor: args.cursor
       })
-      result.objects.forEach((x) => (x.streamId = parent.streamId))
-      return result
+
+      // Hacky typing here, but I want to avoid filling up memory with a new array of new objects w/ .map()
+      const objects = result.objects as Array<
+        (typeof result)['objects'][number] & {
+          streamId: string
+        }
+      >
+      objects.forEach((x) => (x.streamId = parent.streamId))
+
+      return {
+        ...result,
+        objects
+      }
     }
   },
   Mutation: {
@@ -66,9 +101,20 @@ export = {
         context.resourceAccessRules
       )
 
+      await coreModule.executeHooks?.('onCreateObjectRequest', {
+        projectId: args.objectInput.streamId
+      })
+
+      const projectDB = await getProjectDbClient({
+        projectId: args.objectInput.streamId
+      })
+      const createObjects = createObjectsFactory({
+        storeObjectsIfNotFoundFactory: storeObjectsIfNotFoundFactory({ db: projectDB }),
+        storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db: projectDB })
+      })
       const ids = await createObjects({
         streamId: args.objectInput.streamId,
-        objects: args.objectInput.objects
+        objects: args.objectInput.objects.filter(isNonNullable)
       })
       return ids
     }

@@ -3,8 +3,8 @@
     <SettingsWorkspacesMembersTableHeader
       v-model:search="search"
       search-placeholder="Search pending invites..."
-      :workspace-id="workspaceId"
       :workspace="workspace"
+      show-invite-button
     />
     <LayoutTable
       class="mt-6 md:mt-8 mb-12"
@@ -29,13 +29,13 @@
     >
       <template #name="{ item }">
         <div class="flex items-center gap-2">
-          <UserAvatar v-if="item.user" :user="item.user" />
+          <UserAvatar v-if="item.user" hide-tooltip :user="item.user" />
           <span class="truncate text-body-xs text-foreground">{{ item.title }}</span>
         </div>
       </template>
       <template #invitedBy="{ item }">
         <div class="flex items-center gap-2">
-          <UserAvatar :user="item.invitedBy" />
+          <UserAvatar hide-tooltip :user="item.invitedBy" />
           <span class="truncate text-body-xs text-foreground">
             {{ item.invitedBy.name }}
           </span>
@@ -84,6 +84,7 @@ import {
 import { settingsWorkspacesInvitesSearchQuery } from '~/lib/settings/graphql/queries'
 import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
 import { HorizontalDirection } from '~~/lib/common/composables/window'
+import type { MaybeNullOrUndefined } from '@speckle/shared'
 
 graphql(`
   fragment SettingsWorkspacesMembersInvitesTable_PendingWorkspaceCollaborator on PendingWorkspaceCollaborator {
@@ -114,8 +115,8 @@ graphql(`
 `)
 
 const props = defineProps<{
-  workspaceId: string
-  workspace?: SettingsWorkspacesMembersInvitesTable_WorkspaceFragment
+  workspaceSlug: string
+  workspace: MaybeNullOrUndefined<SettingsWorkspacesMembersInvitesTable_WorkspaceFragment>
 }>()
 
 const search = ref('')
@@ -129,7 +130,7 @@ const { result: searchResult, loading: searchResultLoading } = useQuery(
     invitesFilter: {
       search: search.value
     },
-    workspaceId: props.workspaceId
+    slug: props.workspaceSlug
   }),
   () => ({
     enabled: !!search.value.length
@@ -138,7 +139,7 @@ const { result: searchResult, loading: searchResultLoading } = useQuery(
 
 const invites = computed(() =>
   search.value.length
-    ? searchResult.value?.workspace.invitedTeam
+    ? searchResult.value?.workspaceBySlug.invitedTeam
     : props.workspace?.invitedTeam
 )
 
@@ -151,18 +152,20 @@ const onActionChosen = async (
   actionItem: LayoutMenuItem,
   item: NonNullable<typeof invites.value>[0]
 ) => {
+  if (!props.workspace?.id) return
+
   switch (actionItem.id) {
     case 'resend-invite':
       await resendInvite({
         input: {
-          workspaceId: props.workspaceId,
+          workspaceId: props.workspace.id,
           inviteId: item.inviteId
         }
       })
       break
     case 'delete-invite':
       await cancelInvite({
-        workspaceId: props.workspaceId,
+        workspaceId: props.workspace.id,
         inviteId: item.inviteId
       })
       break

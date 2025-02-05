@@ -4,7 +4,12 @@ import { wrapRefWithTracking } from '~/lib/common/helpers/debugging'
 import { ToastNotificationType } from '~~/lib/common/composables/toast'
 import {
   convertThrowIntoFetchResult,
-  getFirstErrorMessage as getFirstGqlErrorMessage
+  getCacheId,
+  getFirstErrorMessage as getFirstGqlErrorMessage,
+  modifyObjectField,
+  ROOT_MUTATION,
+  ROOT_QUERY,
+  ROOT_SUBSCRIPTION
 } from '~/lib/common/helpers/graphql'
 
 /**
@@ -25,5 +30,10 @@ export {
   wrapRefWithTracking,
   noop,
   convertThrowIntoFetchResult,
-  getFirstGqlErrorMessage
+  getFirstGqlErrorMessage,
+  modifyObjectField,
+  getCacheId,
+  ROOT_QUERY,
+  ROOT_MUTATION,
+  ROOT_SUBSCRIPTION
 }

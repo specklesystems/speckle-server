@@ -1,12 +1,24 @@
 <template>
   <div>
-    <AutomateFunctionsPageHeader
-      v-model:search="search"
-      :active-user="result?.activeUser"
-      :server-info="result?.serverInfo"
-      class="mb-6"
-    />
-    <CommonLoadingBar :loading="pageQueryLoading" client-only class="mb-2" />
+    <Portal to="navigation">
+      <HeaderNavLink
+        :to="publicAutomateFunctionsRoute"
+        name="Functions"
+        :separator="false"
+      />
+    </Portal>
+    <div class="flex flex-col gap-4">
+      <div class="flex items-center gap-2 mb-2">
+        <IconBolt class="h-5 w-5" />
+        <h1 class="text-heading-lg">Functions</h1>
+      </div>
+      <AutomateFunctionsPageHeader
+        v-model:search="search"
+        :active-user="result?.activeUser"
+        :server-info="result?.serverInfo"
+        class="mb-6"
+      />
+    </div>
     <AutomateFunctionsPageItems
       :functions="finalResult"
       :search="!!search"
@@ -14,8 +26,8 @@
       @create-automation-from="openCreateNewAutomation"
       @clear-search="search = ''"
     />
+    <CommonLoadingBar :loading="pageQueryLoading" client-only class="mb-2" />
     <InfiniteLoading :settings="{ identifier }" @infinite="onInfiniteLoad" />
-
     <AutomateAutomationCreateDialog
       v-model:open="showNewAutomationDialog"
       :preselected-function="newAutomationTargetFn"
@@ -32,6 +44,7 @@ import {
   usePaginatedQuery
 } from '~/lib/common/composables/graphql'
 import { graphql } from '~/lib/common/generated/gql'
+import { publicAutomateFunctionsRoute } from '~/lib/common/helpers/route'
 
 definePageMeta({
   middleware: ['auth', 'requires-automate-enabled']
@@ -81,7 +94,11 @@ const {
 const showNewAutomationDialog = ref(false)
 const newAutomationTargetFn = ref<CreateAutomationSelectableFunction>()
 
-const finalResult = computed(() => paginatedResult.value || result.value)
+const finalResult = computed(
+  () =>
+    paginatedResult.value?.automateFunctions.items ||
+    result.value?.automateFunctions.items
+)
 
 const openCreateNewAutomation = (fn: CreateAutomationSelectableFunction) => {
   newAutomationTargetFn.value = fn

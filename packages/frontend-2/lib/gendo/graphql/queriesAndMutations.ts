@@ -1,5 +1,20 @@
 import { graphql } from '~~/lib/common/generated/gql'
 
+// TODO: Clean up these operations and make them component fragment based. Also some of the props requested don't seem to even be used
+
+export const activeUserGendoLimits = graphql(`
+  query ActiveUserGendoLimits {
+    activeUser {
+      id
+      gendoAICredits {
+        used
+        limit
+        resetDate
+      }
+    }
+  }
+`)
+
 export const requestGendoAIRender = graphql(`
   mutation requestGendoAIRender($input: GendoAIRenderInput!) {
     versionMutations {

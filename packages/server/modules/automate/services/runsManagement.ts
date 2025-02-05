@@ -1,3 +1,4 @@
+import { AutomationRunEvents } from '@/modules/automate/domain/events'
 import {
   GetFunctionRun,
   UpdateAutomationRun,
@@ -8,14 +9,11 @@ import {
   FunctionRunNotFoundError
 } from '@/modules/automate/errors/runs'
 import {
-  AutomateRunsEmitter,
-  AutomateRunsEventsEmitter
-} from '@/modules/automate/events/runs'
-import {
   AutomationFunctionRunRecord,
   AutomationRunStatus,
   AutomationRunStatuses
 } from '@/modules/automate/helpers/types'
+import { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { Automate } from '@speckle/shared'
 
 const AutomationRunStatusOrder: { [key in AutomationRunStatus]: number } = {
@@ -91,7 +89,7 @@ export type ReportFunctionRunStatusDeps = {
   getAutomationFunctionRunRecord: GetFunctionRun
   upsertAutomationFunctionRunRecord: UpsertAutomationFunctionRun
   automationRunUpdater: UpdateAutomationRun
-  runEventEmit: AutomateRunsEventsEmitter
+  emitEvent: EventBusEmit
 }
 
 export const reportFunctionRunStatusFactory =
@@ -100,15 +98,15 @@ export const reportFunctionRunStatusFactory =
     params: Pick<
       AutomationFunctionRunRecord,
       'runId' | 'status' | 'statusMessage' | 'contextView' | 'results'
-    >
+    > & { projectId: string }
   ): Promise<boolean> => {
     const {
       getAutomationFunctionRunRecord,
       upsertAutomationFunctionRunRecord,
       automationRunUpdater,
-      runEventEmit
+      emitEvent
     } = deps
-    const { runId, ...statusReportData } = params
+    const { projectId, runId, ...statusReportData } = params
 
     const currentFunctionRunRecordResult = await getAutomationFunctionRunRecord(runId)
 
@@ -147,10 +145,14 @@ export const reportFunctionRunStatusFactory =
       updatedAt: new Date()
     })
 
-    await runEventEmit(AutomateRunsEmitter.events.StatusUpdated, {
-      run: updatedRun,
-      functionRun: nextFunctionRunRecord,
-      automationId
+    await emitEvent({
+      eventName: AutomationRunEvents.StatusUpdated,
+      payload: {
+        run: updatedRun,
+        functionRun: nextFunctionRunRecord,
+        automationId,
+        projectId
+      }
     })
 
     return true

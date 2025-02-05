@@ -8,18 +8,13 @@ import {
   AllActivityTypes,
   StreamScopeActivity
 } from '@/modules/activitystream/helpers/types'
-import { getServerInfo } from '@/modules/core/services/generic'
 import { ServerInfo, UserRecord } from '@/modules/core/helpers/types'
 import { sendEmail, SendEmailParams } from '@/modules/emails/services/sending'
 import { groupBy } from 'lodash'
 import { packageRoot } from '@/bootstrap'
 import path from 'path'
 import * as ejs from 'ejs'
-import {
-  EmailBody,
-  EmailInput,
-  renderEmail
-} from '@/modules/emails/services/emailRendering'
+import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { getUserNotificationPreferencesFactory } from '@/modules/notifications/services/notificationPreferences'
 import { getSavedUserNotificationPreferencesFactory } from '@/modules/notifications/repositories'
 import { db } from '@/db/knex'
@@ -30,15 +25,19 @@ import {
   StreamActivitySummary
 } from '@/modules/activitystream/domain/types'
 import { createActivitySummaryFactory } from '@/modules/activitystream/services/summary'
-import { getStream } from '@/modules/core/services/streams'
 import { getActivityFactory } from '@/modules/activitystream/repositories'
+import { getStreamFactory } from '@/modules/core/repositories/streams'
+import { getUserFactory } from '@/modules/core/repositories/users'
+import { GetServerInfo } from '@/modules/core/domain/server/operations'
+import { getServerInfoFactory } from '@/modules/core/repositories/server'
+import { EmailBody, EmailInput } from '@/modules/emails/domain/operations'
 
 const digestNotificationEmailHandlerFactory =
   (
     deps: {
       getUserNotificationPreferences: GetUserNotificationPreferences
       createActivitySummary: CreateActivitySummary
-      getServerInfo: typeof getServerInfo
+      getServerInfo: GetServerInfo
     } & PrepareSummaryEmailDeps
   ) =>
   async (
@@ -436,10 +435,11 @@ const digestNotificationEmailHandler = digestNotificationEmailHandlerFactory({
     })
   }),
   createActivitySummary: createActivitySummaryFactory({
-    getStream,
-    getActivity: getActivityFactory({ db })
+    getStream: getStreamFactory({ db }),
+    getActivity: getActivityFactory({ db }),
+    getUser: getUserFactory({ db })
   }),
-  getServerInfo,
+  getServerInfo: getServerInfoFactory({ db }),
   renderEmail
 })
 

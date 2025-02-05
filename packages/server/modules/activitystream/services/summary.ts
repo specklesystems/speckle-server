@@ -2,21 +2,23 @@ import {
   NotificationPublisher,
   NotificationType
 } from '@/modules/notifications/helpers/types'
-import { getUser } from '@/modules/core/repositories/users'
-import { getStream as getStreamService } from '@/modules/core/services/streams'
 import {
   CreateActivitySummary,
   GetActiveUserStreams,
   GetActivity
 } from '@/modules/activitystream/domain/operations'
+import { GetStream } from '@/modules/core/domain/streams/operations'
+import { GetUser } from '@/modules/core/domain/users/operations'
 
 export const createActivitySummaryFactory =
   ({
     getStream,
-    getActivity
+    getActivity,
+    getUser
   }: {
-    getStream: typeof getStreamService
+    getStream: GetStream
     getActivity: GetActivity
+    getUser: GetUser
   }): CreateActivitySummary =>
   async ({
     userId,

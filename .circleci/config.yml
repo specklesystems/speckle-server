@@ -16,16 +16,23 @@ workflows:
                 - main
                 - hotfix*
 
-      - test-server:
+      - test-server: &test-server-job-definition
           context:
             - speckle-server-licensing
+            - stripe-integration
           filters: &filters-allow-all
             tags:
               # run tests for any commit on any branch, including any tags
               only: /.*/
+          requires:
+            - docker-publish-postgres-container
 
       - test-server-no-ff:
           filters: *filters-allow-all
+          requires:
+            - docker-publish-postgres-container
+
+      - test-server-multiregion: *test-server-job-definition
 
       - test-frontend-2:
           filters: *filters-allow-all
@@ -145,6 +152,12 @@ workflows:
           requires:
             - get-version
 
+      - docker-build-postgres-container:
+          context: *build-context
+          filters: *filters-build
+          requires:
+            - get-version
+
       - docker-build-monitor-container:
           context: *build-context
           filters: *filters-build
@@ -179,6 +192,7 @@ workflows:
             - test-objectsender
             - test-server
             - test-server-no-ff
+            - test-server-multiregion
             - test-preview-service
 
       - docker-publish-frontend:
@@ -194,6 +208,7 @@ workflows:
             - test-objectsender
             - test-server
             - test-server-no-ff
+            - test-server-multiregion
             - test-preview-service
 
       - docker-publish-frontend-2:
@@ -209,6 +224,7 @@ workflows:
             - test-objectsender
             - test-server
             - test-server-no-ff
+            - test-server-multiregion
             - test-preview-service
 
       - docker-publish-webhooks:
@@ -224,6 +240,7 @@ workflows:
             - test-objectsender
             - test-server
             - test-server-no-ff
+            - test-server-multiregion
             - test-preview-service
 
       - docker-publish-file-imports:
@@ -239,6 +256,7 @@ workflows:
             - test-objectsender
             - test-server
             - test-server-no-ff
+            - test-server-multiregion
             - test-preview-service
 
       - docker-publish-previews:
@@ -254,6 +272,7 @@ workflows:
             - test-objectsender
             - test-server
             - test-server-no-ff
+            - test-server-multiregion
             - test-preview-service
 
       - docker-publish-test-container:
@@ -269,7 +288,14 @@ workflows:
             - test-objectsender
             - test-server
             - test-server-no-ff
+            - test-server-multiregion
             - test-preview-service
+
+      - docker-publish-postgres-container:
+          context: *docker-hub-context
+          filters: *filters-publish
+          requires:
+            - docker-build-postgres-container
 
       - docker-publish-monitor-container:
           context: *docker-hub-context
@@ -284,6 +310,7 @@ workflows:
             - test-objectsender
             - test-server
             - test-server-no-ff
+            - test-server-multiregion
             - test-preview-service
 
       - docker-publish-docker-compose-ingress:
@@ -299,6 +326,7 @@ workflows:
             - test-objectsender
             - test-server
             - test-server-no-ff
+            - test-server-multiregion
             - test-preview-service
 
       - publish-helm-chart:
@@ -339,6 +367,7 @@ workflows:
             - get-version
             - test-server
             - test-server-no-ff
+            - test-server-multiregion
             - test-ui-components
             - test-frontend-2
             - test-viewer
@@ -417,9 +446,6 @@ jobs:
       - run:
           name: Install Dependencies
           command: yarn
-      - run:
-          name: Install Dependencies v2 (.node files missing bug)
-          command: yarn
       - save_cache:
           name: Save Yarn Package Cache
           key: yarn-packages-{{ checksum "yarn.lock" }}
@@ -441,11 +467,12 @@ jobs:
     docker:
       - image: cimg/node:18.19.0
       - image: cimg/redis:7.2.4
-      - image: cimg/postgres:14.11
+      - image: 'speckle/speckle-postgres'
         environment:
           POSTGRES_DB: speckle2_test
           POSTGRES_PASSWORD: speckle
           POSTGRES_USER: speckle
+        command: -c 'max_connections=1000'
       - image: 'minio/minio'
         command: server /data --console-address ":9001"
         # environment:
@@ -455,6 +482,7 @@ jobs:
       NODE_ENV: test
       DATABASE_URL: 'postgres://speckle:speckle@127.0.0.1:5432/speckle2_test'
       PGDATABASE: speckle2_test
+      POSTGRES_MAX_CONNECTIONS_SERVER: 20
       PGUSER: speckle
       SESSION_SECRET: 'keyboard cat'
       STRATEGY_LOCAL: 'true'
@@ -466,7 +494,9 @@ jobs:
       S3_CREATE_BUCKET: 'true'
       REDIS_URL: 'redis://127.0.0.1:6379'
       S3_REGION: '' # optional, defaults to 'us-east-1'
-      AUTOMATE_ENCRYPTION_KEYS_PATH: 'test/assets/automate/encryptionKeys.json'
+      ENCRYPTION_KEYS_PATH: 'test/assets/automate/encryptionKeys.json'
+      FF_BILLING_INTEGRATION_ENABLED: 'true'
+      RATELIMITER_ENABLED: 'false'
     steps:
       - checkout
       - restore_cache:
@@ -475,10 +505,6 @@ jobs:
             - yarn-packages-server-{{ checksum "yarn.lock" }}
       - run:
           name: Install Dependencies
-          command: yarn
-
-      - run:
-          name: Install Dependencies v2 (.node files missing bug)
           command: yarn
 
       - save_cache:
@@ -518,8 +544,8 @@ jobs:
           working_directory: 'packages/server'
 
       - run:
-          name: Checking for GQL schema breakages against speckle.xyz
-          command: 'yarn rover graph check Speckle-Server@speckle-xyz --schema ./introspected-schema.graphql'
+          name: Checking for GQL schema breakages against app.speckle.systems
+          command: 'yarn rover graph check Speckle-Server@app-speckle-systems --schema ./introspected-schema.graphql'
           working_directory: 'packages/server'
 
       - run:
@@ -551,12 +577,56 @@ jobs:
       S3_CREATE_BUCKET: 'true'
       REDIS_URL: 'redis://127.0.0.1:6379'
       S3_REGION: '' # optional, defaults to 'us-east-1'
-      AUTOMATE_ENCRYPTION_KEYS_PATH: 'test/assets/automate/encryptionKeys.json'
-      FF_AUTOMATE_MODULE_ENABLED: 'false' # Disable all FFs
-      FF_WORKSPACES_MODULE_ENABLED: 'false'
-      FF_WORKSPACES_SSO_ENABLED: 'false'
-      FF_MULTIPLE_EMAILS_MODULE_ENABLED: 'false'
-      FF_GENDOAI_MODULE_ENABLED: 'false'
+      ENCRYPTION_KEYS_PATH: 'test/assets/automate/encryptionKeys.json'
+      DISABLE_ALL_FFS: 'true'
+      RATELIMITER_ENABLED: 'false'
+
+  test-server-multiregion:
+    <<: *test-server-job
+    docker:
+      - image: cimg/node:18.19.0
+      - image: cimg/redis:7.2.4
+      - image: 'speckle/speckle-postgres'
+        environment:
+          POSTGRES_DB: speckle2_test
+          POSTGRES_PASSWORD: speckle
+          POSTGRES_USER: speckle
+        command: -c 'max_connections=1000' -c 'wal_level=logical'
+      - image: 'speckle/speckle-postgres'
+        environment:
+          POSTGRES_DB: speckle2_test
+          POSTGRES_PASSWORD: speckle
+          POSTGRES_USER: speckle
+        command: -c 'max_connections=1000' -c 'port=5433' -c 'wal_level=logical'
+      - image: 'minio/minio'
+        command: server /data --console-address ":9001" --address "0.0.0.0:9000"
+      - image: 'minio/minio'
+        command: server /data --console-address ":9021" --address "0.0.0.0:9020"
+    environment:
+      # Same as test-server:
+      NODE_ENV: test
+      DATABASE_URL: 'postgres://speckle:speckle@127.0.0.1:5432/speckle2_test'
+      PGDATABASE: speckle2_test
+      POSTGRES_MAX_CONNECTIONS_SERVER: 20
+      PGUSER: speckle
+      SESSION_SECRET: 'keyboard cat'
+      STRATEGY_LOCAL: 'true'
+      CANONICAL_URL: 'http://127.0.0.1:3000'
+      S3_ENDPOINT: 'http://127.0.0.1:9000'
+      S3_ACCESS_KEY: 'minioadmin'
+      S3_SECRET_KEY: 'minioadmin'
+      S3_BUCKET: 'speckle-server'
+      S3_CREATE_BUCKET: 'true'
+      REDIS_URL: 'redis://127.0.0.1:6379'
+      S3_REGION: '' # optional, defaults to 'us-east-1'
+      ENCRYPTION_KEYS_PATH: 'test/assets/automate/encryptionKeys.json'
+      FF_BILLING_INTEGRATION_ENABLED: 'true'
+      # These are the only different env keys:
+      MULTI_REGION_CONFIG_PATH: '../../.circleci/multiregion.test-ci.json'
+      FF_WORKSPACES_MODULE_ENABLED: 'true'
+      FF_WORKSPACES_MULTI_REGION_ENABLED: 'true'
+      RUN_TESTS_IN_MULTIREGION_MODE: true
+      RATELIMITER_ENABLED: 'false'
 
   test-frontend-2:
     docker: &docker-node-browsers-image
@@ -570,10 +640,6 @@ jobs:
             - yarn-packages-server-{{ checksum "yarn.lock" }}
       - run:
           name: Install Dependencies
-          command: yarn
-
-      - run:
-          name: Install Dependencies v2 (.node files missing bug)
           command: yarn
 
       - save_cache:
@@ -605,10 +671,6 @@ jobs:
           name: Install Dependencies
           command: yarn
 
-      - run:
-          name: Install Dependencies v2 (.node files missing bug)
-          command: yarn
-
       - save_cache:
           name: Save Yarn Package Cache
           key: yarn-packages-server-{{ checksum "yarn.lock" }}
@@ -633,7 +695,7 @@ jobs:
   test-preview-service:
     docker:
       - image: cimg/node:18.19.0
-      - image: cimg/postgres:14.11
+      - image: cimg/postgres:16.4@sha256:2e4f1a965bdd9ba77aa6a0a7b93968c07576ba2a8a7cf86d5eb7b31483db1378
         environment:
           POSTGRES_DB: preview_service_test
           POSTGRES_PASSWORD: preview_service_test
@@ -648,10 +710,6 @@ jobs:
             - yarn-packages-server-{{ checksum "yarn.lock" }}
       - run:
           name: Install Dependencies
-          command: yarn
-
-      - run:
-          name: Install Dependencies v2 (.node files missing bug)
           command: yarn
 
       - save_cache:
@@ -695,10 +753,6 @@ jobs:
           name: Install Dependencies
           command: yarn
 
-      - run:
-          name: Install Dependencies v2 (.node files missing bug)
-          command: yarn
-
       - save_cache:
           name: Save Yarn Package Cache
           key: yarn-packages-server-{{ checksum "yarn.lock" }}
@@ -727,10 +781,6 @@ jobs:
             - yarn-packages-server-{{ checksum "yarn.lock" }}
       - run:
           name: Install Dependencies
-          command: yarn
-
-      - run:
-          name: Install Dependencies v2 (.node files missing bug)
           command: yarn
 
       - save_cache:
@@ -782,10 +832,6 @@ jobs:
           name: Install Dependencies
           command: yarn
 
-      - run:
-          name: Install Dependencies v2 (.node files missing bug)
-          command: yarn
-
       - save_cache:
           name: Save Yarn Package Cache
           key: yarn-packages-server-{{ checksum "yarn.lock" }}
@@ -809,7 +855,7 @@ jobs:
     # because it requires node_modules
     # therefore this scanning has to be triggered via the cli
     docker: *docker-node-image
-    resource_class: small
+    resource_class: medium
     working_directory: *work-dir
     steps:
       - checkout
@@ -819,9 +865,6 @@ jobs:
             - yarn-packages-server-{{ checksum "yarn.lock" }}
       - run:
           name: Install Dependencies
-          command: yarn
-      - run:
-          name: Install Dependencies v2 (.node files missing bug)
           command: yarn
       - save_cache:
           name: Save Yarn Package Cache
@@ -999,10 +1042,15 @@ jobs:
       FOLDER: utils
       SPECKLE_SERVER_PACKAGE: test-deployment
 
-  docker-build-monitor-container:
+  docker-build-postgres-container:
     <<: *build-job
     environment:
       FOLDER: utils
+      SPECKLE_SERVER_PACKAGE: postgres
+
+  docker-build-monitor-container:
+    <<: *build-job
+    environment:
       SPECKLE_SERVER_PACKAGE: monitor-deployment
 
   docker-build-docker-compose-ingress:
@@ -1063,10 +1111,15 @@ jobs:
       FOLDER: utils
       SPECKLE_SERVER_PACKAGE: test-deployment
 
-  docker-publish-monitor-container:
+  docker-publish-postgres-container:
     <<: *publish-job
     environment:
       FOLDER: utils
+      SPECKLE_SERVER_PACKAGE: postgres
+
+  docker-publish-monitor-container:
+    <<: *publish-job
+    environment:
       SPECKLE_SERVER_PACKAGE: monitor-deployment
 
   docker-publish-docker-compose-ingress:
@@ -1089,9 +1142,6 @@ jobs:
             - yarn-packages-{{ checksum "yarn.lock" }}
       - run:
           name: Install Dependencies
-          command: yarn
-      - run:
-          name: Install Dependencies v2 (.node files missing bug)
           command: yarn
       - save_cache:
           name: Save Yarn Package Cache
@@ -1154,6 +1204,7 @@ jobs:
   publish-viewer-sandbox-cloudflare-pages:
     docker: *docker-node-image
     working_directory: *work-dir
+    resource_class: large
     steps:
       - checkout
       - restore_cache:
@@ -1162,9 +1213,6 @@ jobs:
             - yarn-packages-server-{{ checksum "yarn.lock" }}
       - run:
           name: Install Dependencies
-          command: yarn
-      - run:
-          name: Install Dependencies v2 (.node files missing bug)
           command: yarn
       - save_cache:
           name: Save Yarn Package Cache
@@ -1205,9 +1253,6 @@ jobs:
             - yarn-packages-server-{{ checksum "yarn.lock" }}
       - run:
           name: Install Dependencies
-          command: yarn
-      - run:
-          name: Install Dependencies v2 (.node files missing bug)
           command: yarn
       - save_cache:
           name: Save Yarn Package Cache

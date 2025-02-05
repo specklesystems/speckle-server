@@ -45,6 +45,13 @@ if (isTestEnv()) {
 
 dotenv.config({ path: `${packageRoot}/.env` })
 
+// knex is a singleton controlled by module so can't wait til app init
+const { initOpenTelemetry } = require('./otel')
+initOpenTelemetry()
+
+const { patchKnex } = require('./modules/core/patches/knex')
+patchKnex()
+
 module.exports = {
   appRoot,
   packageRoot

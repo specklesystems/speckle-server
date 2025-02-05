@@ -7,7 +7,7 @@
           <ViewerScope :state="state">
             <template v-if="project?.workspace && isWorkspacesEnabled">
               <HeaderNavLink
-                :to="workspaceRoute(project?.workspace.id)"
+                :to="workspaceRoute(project?.workspace.slug)"
                 :name="project?.workspace.name"
                 :separator="false"
               ></HeaderNavLink>
@@ -32,7 +32,7 @@
             v-if="showTour"
             class="fixed w-full h-[100dvh] flex justify-center items-center pointer-events-none z-[100]"
           >
-            <TourOnboarding />
+            <TourOnboarding @complete="showTour = false" />
           </div>
           <!-- Viewer host -->
           <div
@@ -123,6 +123,7 @@ import { useViewerTour } from '~/lib/viewer/composables/tour'
 import { useFilterUtilities } from '~/lib/viewer/composables/ui'
 import { projectsRoute } from '~~/lib/common/helpers/route'
 import { workspaceRoute } from '~/lib/common/helpers/route'
+import { useMixpanel } from '~/lib/core/composables/mp'
 
 const emit = defineEmits<{
   setup: [InjectableViewerState]
@@ -160,6 +161,7 @@ graphql(`
     visibility
     workspace {
       id
+      slug
       name
     }
   }
@@ -197,4 +199,14 @@ const lastUpdate = computed(() => {
 })
 
 useHead({ title })
+
+const mp = useMixpanel()
+onMounted(() => {
+  const referrer = document.referrer
+  const shouldTrackEvent = !referrer?.includes('speckle.systems') && !import.meta.dev
+
+  if (isEmbedEnabled.value && shouldTrackEvent) {
+    mp.track('Embedded Model Load')
+  }
+})
 </script>

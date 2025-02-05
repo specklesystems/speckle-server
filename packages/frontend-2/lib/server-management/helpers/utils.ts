@@ -9,9 +9,8 @@ import type { ServerRoles } from '@speckle/shared'
 
 export const roleLookupTable = RoleInfo.Server
 
-export const getRoleLabel = (role: keyof typeof roleLookupTable) => {
-  return roleLookupTable[role] || role.split(':')[1]
-}
+export const getRoleLabel = (role: keyof typeof roleLookupTable) =>
+  roleLookupTable[role] ? roleLookupTable[role].title : role.split(':')[1]
 
 export const isUser = (
   val: UserItem | ProjectItem | InviteItem

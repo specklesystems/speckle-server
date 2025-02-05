@@ -11,30 +11,35 @@ import {
   FileImportSubscriptions,
   filteredSubscribe
 } from '@/modules/shared/utils/subscriptions'
-import { db } from '@/db/knex'
-
-const getFileInfo = getFileInfoFactory({ db })
-const getStreamFileUploads = getStreamFileUploadsFactory({ db })
-const getStreamPendingModels = getStreamPendingModelsFactory({ db })
-const getBranchPendingVersions = getBranchPendingVersionsFactory({ db })
+import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 
 export = {
   Stream: {
     async fileUploads(parent) {
-      return await getStreamFileUploads({ streamId: parent.id })
+      const projectDb = await getProjectDbClient({ projectId: parent.id })
+      return await getStreamFileUploadsFactory({ db: projectDb })({
+        streamId: parent.id
+      })
     },
-    async fileUpload(_parent, args) {
-      return await getFileInfo({ fileId: args.id })
+    async fileUpload(parent, args) {
+      const projectDb = await getProjectDbClient({ projectId: parent.id })
+      return await getFileInfoFactory({ db: projectDb })({ fileId: args.id })
     }
   },
   Project: {
     async pendingImportedModels(parent, args) {
-      return await getStreamPendingModels(parent.id, args)
+      const projectDb = await getProjectDbClient({ projectId: parent.id })
+      return await getStreamPendingModelsFactory({ db: projectDb })(parent.id, args)
     }
   },
   Model: {
     async pendingImportedVersions(parent, args) {
-      return await getBranchPendingVersions(parent.streamId, parent.name, args)
+      const projectDb = await getProjectDbClient({ projectId: parent.streamId })
+      return await getBranchPendingVersionsFactory({ db: projectDb })(
+        parent.streamId,
+        parent.name,
+        args
+      )
     }
   },
   FileUpload: {
@@ -42,8 +47,10 @@ export = {
     modelName: (parent) => parent.branchName,
     convertedVersionId: (parent) => parent.convertedCommitId,
     async model(parent, _args, ctx) {
-      return await ctx.loaders.streams.getStreamBranchByName
-        .forStream(parent.streamId)
+      const projectDb = await getProjectDbClient({ projectId: parent.streamId })
+      return await ctx.loaders
+        .forRegion({ db: projectDb })
+        .streams.getStreamBranchByName.forStream(parent.streamId)
         .load(parent.branchName.toLowerCase())
     }
   },

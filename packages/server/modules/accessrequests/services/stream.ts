@@ -2,7 +2,6 @@ import {
   AccessRequestCreationError,
   AccessRequestProcessingError
 } from '@/modules/accessrequests/errors'
-import { AccessRequestsEmitter } from '@/modules/accessrequests/events/emitter'
 import { StreamAccessRequestGraphQLReturn } from '@/modules/accessrequests/helpers/graphTypes'
 import {
   AccessRequestType,
@@ -13,11 +12,6 @@ import {
 import { StreamInvalidAccessError } from '@/modules/core/errors/stream'
 import { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
 import { Roles, StreamRoles } from '@/modules/core/helpers/mainConstants'
-import { getStream } from '@/modules/core/repositories/streams'
-import {
-  addOrUpdateStreamCollaborator,
-  validateStreamAccess
-} from '@/modules/core/services/streams/streamAccessService'
 import { ensureError } from '@/modules/shared/helpers/errorHelper'
 import {
   MaybeNullOrUndefined,
@@ -35,6 +29,13 @@ import {
   GetUserStreamAccessRequest,
   RequestProjectAccess
 } from '@/modules/accessrequests/domain/operations'
+import {
+  AddOrUpdateStreamCollaborator,
+  GetStream,
+  ValidateStreamAccess
+} from '@/modules/core/domain/streams/operations'
+import { EventBusEmit } from '@/modules/shared/services/eventBus'
+import { AccessRequestEvents } from '@/modules/accessrequests/domain/events'
 
 function buildStreamAccessRequestGraphQLReturn(
   record: ServerAccessRequestRecord<AccessRequestType.Stream, string>
@@ -83,9 +84,9 @@ export const getUserStreamAccessRequestFactory =
 export const requestProjectAccessFactory =
   (deps: {
     getUserStreamAccessRequest: GetUserStreamAccessRequest
-    getStream: typeof getStream
+    getStream: GetStream
     createNewRequest: CreateNewRequest
-    accessRequestsEmitter: (typeof AccessRequestsEmitter)['emit']
+    emitEvent: EventBusEmit
   }): RequestProjectAccess =>
   async (userId: string, projectId: string) => {
     const [stream, existingRequest] = await Promise.all([
@@ -121,8 +122,11 @@ export const requestProjectAccessFactory =
       resourceId: projectId
     })
 
-    await deps.accessRequestsEmitter(AccessRequestsEmitter.events.Created, {
-      request: req
+    await deps.emitEvent({
+      eventName: AccessRequestEvents.Created,
+      payload: {
+        request: req
+      }
     })
 
     return req
@@ -165,10 +169,10 @@ export const getPendingStreamRequestsFactory =
 export const processPendingStreamRequestFactory =
   (deps: {
     getPendingAccessRequest: GetPendingAccessRequest
-    validateStreamAccess: typeof validateStreamAccess
-    addOrUpdateStreamCollaborator: typeof addOrUpdateStreamCollaborator
+    validateStreamAccess: ValidateStreamAccess
+    addOrUpdateStreamCollaborator: AddOrUpdateStreamCollaborator
     deleteRequestById: DeleteRequestById
-    accessRequestsEmitter: (typeof AccessRequestsEmitter)['emit']
+    emitEvent: EventBusEmit
   }) =>
   async (
     userId: string,
@@ -216,10 +220,13 @@ export const processPendingStreamRequestFactory =
 
     await deps.deleteRequestById(req.id)
 
-    await deps.accessRequestsEmitter(AccessRequestsEmitter.events.Finalized, {
-      request: req,
-      approved: accept ? { role } : undefined,
-      finalizedBy: userId
+    await deps.emitEvent({
+      eventName: AccessRequestEvents.Finalized,
+      payload: {
+        request: req,
+        approved: accept ? { role } : undefined,
+        finalizedBy: userId
+      }
     })
 
     return req

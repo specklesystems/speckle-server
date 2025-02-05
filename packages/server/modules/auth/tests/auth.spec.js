@@ -1,23 +1,139 @@
 const crs = require('crypto-random-string')
 const chai = require('chai')
 const request = require('supertest')
-const { createUser } = require('@/modules/core/services/users')
-const { createStream } = require('@/modules/core/services/streams')
 
-const { updateServerInfo } = require('@/modules/core/services/generic')
-const { getUserByEmail } = require('@/modules/core/services/users')
 const { TIME } = require('@speckle/shared')
 const { RATE_LIMITERS, createConsumer } = require('@/modules/core/services/ratelimiter')
 const { beforeEachContext, initializeTestServer } = require('@/test/hooks')
 const { createStreamInviteDirectly } = require('@/test/speckle-helpers/inviteHelper')
 const { RateLimiterMemory } = require('rate-limiter-flexible')
 const {
-  findInviteFactory
+  findInviteFactory,
+  findUserByTargetFactory,
+  insertInviteAndDeleteOldFactory,
+  deleteServerOnlyInvitesFactory,
+  updateAllInviteTargetsFactory
 } = require('@/modules/serverinvites/repositories/serverInvites')
-const db = require('@/db/knex')
+const { db } = require('@/db/knex')
+const {
+  legacyCreateStreamFactory,
+  createStreamReturnRecordFactory
+} = require('@/modules/core/services/streams/management')
+const {
+  inviteUsersToProjectFactory
+} = require('@/modules/serverinvites/services/projectInviteManagement')
+const {
+  createAndSendInviteFactory
+} = require('@/modules/serverinvites/services/creation')
+const {
+  collectAndValidateCoreTargetsFactory
+} = require('@/modules/serverinvites/services/coreResourceCollection')
+const {
+  getStreamFactory,
+  createStreamFactory
+} = require('@/modules/core/repositories/streams')
+const {
+  buildCoreInviteEmailContentsFactory
+} = require('@/modules/serverinvites/services/coreEmailContents')
+const { getEventBus } = require('@/modules/shared/services/eventBus')
+const { createBranchFactory } = require('@/modules/core/repositories/branches')
+const {
+  getUsersFactory,
+  getUserFactory,
+  storeUserFactory,
+  countAdminUsersFactory,
+  storeUserAclFactory,
+  legacyGetUserByEmailFactory
+} = require('@/modules/core/repositories/users')
+const {
+  findEmailFactory,
+  createUserEmailFactory,
+  ensureNoPrimaryEmailForUserFactory
+} = require('@/modules/core/repositories/userEmails')
+const {
+  requestNewEmailVerificationFactory
+} = require('@/modules/emails/services/verification/request')
+const {
+  deleteOldAndInsertNewVerificationFactory
+} = require('@/modules/emails/repositories')
+const { renderEmail } = require('@/modules/emails/services/emailRendering')
+const { sendEmail } = require('@/modules/emails/services/sending')
+const { createUserFactory } = require('@/modules/core/services/users/management')
+const {
+  validateAndCreateUserEmailFactory
+} = require('@/modules/core/services/userEmails')
+const {
+  finalizeInvitedServerRegistrationFactory
+} = require('@/modules/serverinvites/services/processing')
+const {
+  getServerInfoFactory,
+  updateServerInfoFactory
+} = require('@/modules/core/repositories/server')
 
+const getServerInfo = getServerInfoFactory({ db })
+const getUser = getUserFactory({ db })
+const getUsers = getUsersFactory({ db })
 const createInviteDirectly = createStreamInviteDirectly
 const findInvite = findInviteFactory({ db })
+const getStream = getStreamFactory({ db })
+const createStream = legacyCreateStreamFactory({
+  createStreamReturnRecord: createStreamReturnRecordFactory({
+    inviteUsersToProject: inviteUsersToProjectFactory({
+      createAndSendInvite: createAndSendInviteFactory({
+        findUserByTarget: findUserByTargetFactory({ db }),
+        insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
+        collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
+          getStream
+        }),
+        buildInviteEmailContents: buildCoreInviteEmailContentsFactory({
+          getStream
+        }),
+        emitEvent: ({ eventName, payload }) =>
+          getEventBus().emit({
+            eventName,
+            payload
+          }),
+        getUser,
+        getServerInfo
+      }),
+      getUsers
+    }),
+    createStream: createStreamFactory({ db }),
+    createBranch: createBranchFactory({ db }),
+    emitEvent: getEventBus().emit
+  })
+})
+
+const findEmail = findEmailFactory({ db })
+const requestNewEmailVerification = requestNewEmailVerificationFactory({
+  findEmail,
+  getUser: getUserFactory({ db }),
+  getServerInfo,
+  deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db }),
+  renderEmail,
+  sendEmail
+})
+const createUser = createUserFactory({
+  getServerInfo,
+  findEmail,
+  storeUser: storeUserFactory({ db }),
+  countAdminUsers: countAdminUsersFactory({ db }),
+  storeUserAcl: storeUserAclFactory({ db }),
+  validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
+    createUserEmail: createUserEmailFactory({ db }),
+    ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
+    findEmail,
+    updateEmailInvites: finalizeInvitedServerRegistrationFactory({
+      deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
+      updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
+    }),
+    requestNewEmailVerification
+  }),
+  emitEvent: getEventBus().emit
+})
+const getUserByEmail = legacyGetUserByEmailFactory({ db })
+const updateServerInfo = updateServerInfoFactory({ db })
+
 const expect = chai.expect
 
 let app
@@ -43,8 +159,10 @@ describe('Auth @auth', () => {
     }
 
     before(async () => {
-      ;({ app, server } = await beforeEachContext())
-      ;({ sendRequest } = await initializeTestServer(server, app))
+      const ctx = await beforeEachContext()
+      server = ctx.server
+      app = ctx.app
+      ;({ sendRequest } = await initializeTestServer(ctx))
 
       // Register a user for testing login flows
       await createUser(me).then((id) => (me.id = id))
