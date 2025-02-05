@@ -167,7 +167,7 @@ export default (app: Router, { executeHooks }: { executeHooks: ExecuteHooks }) =
           try {
             objs = JSON.parse(gunzippedBuffer)
           } catch {
-            req.log.error(
+            req.log.info(
               calculateLogMetadata({
                 batchSizeMb: gunzippedBufferMegabyteSize,
                 start,
