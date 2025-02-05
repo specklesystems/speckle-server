@@ -187,11 +187,11 @@ export const authContextMiddlewareFactory = (deps: {
  * @param next
  * @returns
  */
-export const authContextMiddleware = async (
+export async function authContextMiddleware(
   req: Request,
   res: Response,
   next: NextFunction
-) => {
+) {
   const validateToken = validateTokenFactory({
     revokeUserTokenById: revokeUserTokenByIdFactory({ db }),
     getApiTokenById: getApiTokenByIdFactory({ db }),
@@ -231,7 +231,6 @@ export const authContextMiddleware = async (
         return res.status(500).json({ error: defaultMessage })
     }
   }
-
   req.context = authContext
   next()
 }
