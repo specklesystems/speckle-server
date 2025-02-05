@@ -38,6 +38,10 @@ const apiRouterFactory = () => {
       })
       // https://knexjs.org/faq/recipes.html#manually-closing-streams
       // https://github.com/knex/knex/issues/2324
+      req.on('close', () => {
+        dbStream.end.bind(dbStream)
+        dbStream.destroy.bind(dbStream)
+      })
       res.on('close', () => {
         dbStream.end()
         dbStream.destroy()
