@@ -1,10 +1,14 @@
 # Using CLI
 
-You can run it like so from the `server` package's root directory: `./bin/cli`
+You can run it like so from the `server` package's root directory: `./bin/cli` (or `yarn cli`)
 
 Use the `--help` argument to get more info about each command.
 
-Example for running migrations: `./bin/cli db migrate latest`
+Example for running migrations: `yarn cli db migrate latest`
+
+## Using CLI in test mode (& DB)
+
+Use `yarn cli:test` to run the CLI in the TEST environment. This will use the test DB and will likely run some code a bit differently than in prod/dev.
 
 # Creating new commands
 

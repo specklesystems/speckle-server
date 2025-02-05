@@ -20,10 +20,6 @@ import {
   TokenResourceIdentifier,
   TokenResourceIdentifierType
 } from '@/modules/core/domain/tokens/types'
-import {
-  ProjectEvents,
-  ProjectsEventsEmitter
-} from '@/modules/core/events/projectsEmitter'
 import { inviteUsersToProjectFactory } from '@/modules/serverinvites/services/projectInviteManagement'
 import { ProjectInviteResourceType } from '@/modules/serverinvites/domain/constants'
 import {
@@ -49,13 +45,16 @@ import {
   AddStreamDeletedActivity,
   AddStreamUpdatedActivity
 } from '@/modules/activitystream/domain/operations'
+import { LogicError } from '@/modules/shared/errors'
+import { EventBusEmit } from '@/modules/shared/services/eventBus'
+import { ProjectEvents } from '@/modules/core/domain/projects/events'
 
 export const createStreamReturnRecordFactory =
   (deps: {
     createStream: StoreStream
     createBranch: StoreBranch
     inviteUsersToProject: ReturnType<typeof inviteUsersToProjectFactory>
-    projectsEventsEmitter: ProjectsEventsEmitter
+    emitEvent: EventBusEmit
   }): CreateStream =>
   async (params): Promise<StreamRecord> => {
     const { ownerId, ownerResourceAccessRules } = params
@@ -92,9 +91,12 @@ export const createStreamReturnRecordFactory =
       )
     }
 
-    await deps.projectsEventsEmitter(ProjectEvents.Created, {
-      project: stream,
-      ownerId
+    await deps.emitEvent({
+      eventName: ProjectEvents.Created,
+      payload: {
+        project: stream,
+        ownerId
+      }
     })
 
     return stream
@@ -119,6 +121,7 @@ export const deleteStreamAndNotifyFactory =
     authorizeResolver: AuthorizeResolver
     addStreamDeletedActivity: AddStreamDeletedActivity
     deleteAllResourceInvites: DeleteAllResourceInvites
+    getStream: GetStream
   }): DeleteStream =>
   async (
     streamId: string,
@@ -139,7 +142,15 @@ export const deleteStreamAndNotifyFactory =
       )
     }
 
-    await deps.addStreamDeletedActivity({ streamId, deleterId })
+    const stream = await deps.getStream({ streamId })
+    if (!stream)
+      throw new LogicError('Unexpectedly stream that should exist is not found...')
+
+    await deps.addStreamDeletedActivity({
+      streamId,
+      deleterId,
+      workspaceId: stream.workspaceId
+    })
 
     // TODO: this has been around since before my time, we should get rid of it...
     // delay deletion by a bit so we can do auth checks

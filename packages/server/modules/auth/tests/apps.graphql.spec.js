@@ -52,7 +52,6 @@ const {
   deleteServerOnlyInvitesFactory,
   updateAllInviteTargetsFactory
 } = require('@/modules/serverinvites/repositories/serverInvites')
-const { UsersEmitter } = require('@/modules/core/events/usersEmitter')
 const {
   storeApiTokenFactory,
   storeTokenScopesFactory,
@@ -61,10 +60,10 @@ const {
   storePersonalApiTokenFactory
 } = require('@/modules/core/repositories/tokens')
 const { getServerInfoFactory } = require('@/modules/core/repositories/server')
+const { getEventBus } = require('@/modules/shared/services/eventBus')
 
 let sendRequest
 let server
-let app
 
 const createAppToken = createAppTokenFactory({
   storeApiToken: storeApiTokenFactory({ db }),
@@ -110,7 +109,7 @@ const createUser = createUserFactory({
     }),
     requestNewEmailVerification
   }),
-  usersEventsEmitter: UsersEmitter.emit
+  emitEvent: getEventBus().emit
 })
 const createPersonalAccessToken = createPersonalAccessTokenFactory({
   storeApiToken: storeApiTokenFactory({ db }),
@@ -128,8 +127,9 @@ describe('GraphQL @apps-api', () => {
   let testToken2
 
   before(async () => {
-    ;({ app, server } = await beforeEachContext())
-    ;({ sendRequest } = await initializeTestServer(server, app))
+    const ctx = await beforeEachContext()
+    server = ctx.server
+    ;({ sendRequest } = await initializeTestServer(ctx))
     testUser = {
       name: 'Dimitrie Stefanescu',
       email: 'didimitrie@gmail.com',

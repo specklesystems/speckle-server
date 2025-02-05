@@ -9,7 +9,7 @@ import {
 } from '@/modules/workspaces/tests/helpers/creation'
 import { BasicTestUser, createTestUser } from '@/test/authHelper'
 import {
-  GetWorkspaceAvailableRegionsDocument,
+  GetAvailableRegionsDocument,
   GetWorkspaceDefaultRegionDocument,
   SetWorkspaceDefaultRegionDocument
 } from '@/test/graphql/generated/graphql'
@@ -81,25 +81,12 @@ isEnabled
       })
 
       describe('when listing', () => {
-        it("can't list if not workspace admin", async () => {
-          const res = await apollo.execute(
-            GetWorkspaceAvailableRegionsDocument,
-            { workspaceId: myFirstWorkspace.id },
-            { authUserId: otherGuy.id }
-          )
-
-          expect(res.data?.workspace.availableRegions).to.be.not.ok
-          expect(res).to.haveGraphQLErrors('You are not authorized')
-        })
-
         it('can list if workspace admin', async () => {
-          const res = await apollo.execute(GetWorkspaceAvailableRegionsDocument, {
-            workspaceId: myFirstWorkspace.id
-          })
+          const res = await apollo.execute(GetAvailableRegionsDocument, {})
 
           expect(res).to.not.haveGraphQLErrors()
           expect(
-            res.data?.workspace.availableRegions.map((r) => r.key)
+            res.data?.serverInfo.multiRegion.regions.map((r) => r.key)
           ).to.deep.equalInAnyOrder([region1Key, region2Key, ...getRegionKeys()])
         })
       })

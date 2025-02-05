@@ -1,10 +1,13 @@
 import { parseEnv } from 'znv'
 import { z } from 'zod'
 
-function parseFeatureFlags() {
+const isDisableAllFFsMode = () =>
+  ['true', '1'].includes(process.env.DISABLE_ALL_FFS || '')
+
+const parseFeatureFlags = () => {
   //INFO
   // As a convention all feature flags should be prefixed with a FF_
-  return parseEnv(process.env, {
+  const res = parseEnv(process.env, {
     // Enables the automate module.
     FF_AUTOMATE_MODULE_ENABLED: {
       schema: z.boolean(),
@@ -47,8 +50,32 @@ function parseFeatureFlags() {
     FF_WORKSPACES_MULTI_REGION_ENABLED: {
       schema: z.boolean(),
       defaults: { production: false, _: false }
+    },
+    // Toggles IFC parsing with experimental .Net parser
+    FF_FILEIMPORT_IFC_DOTNET_ENABLED: {
+      schema: z.boolean(),
+      defaults: { production: false, _: false }
+    },
+    // Forces email verification for all users
+    FF_FORCE_EMAIL_VERIFICATION: {
+      schema: z.boolean(),
+      defaults: { production: false, _: false }
+    },
+    // Forces onboarding for all users
+    FF_FORCE_ONBOARDING: {
+      schema: z.boolean(),
+      defaults: { production: false, _: false }
     }
   })
+
+  // Can be used to disable all feature flags for testing purposes
+  if (isDisableAllFFsMode()) {
+    for (const key of Object.keys(res)) {
+      ;(res as Record<string, boolean>)[key] = false
+    }
+  }
+
+  return res
 }
 
 let parsedFlags: ReturnType<typeof parseFeatureFlags> | undefined
@@ -62,6 +89,9 @@ export function getFeatureFlags(): {
   FF_GATEKEEPER_MODULE_ENABLED: boolean
   FF_BILLING_INTEGRATION_ENABLED: boolean
   FF_WORKSPACES_MULTI_REGION_ENABLED: boolean
+  FF_FILEIMPORT_IFC_DOTNET_ENABLED: boolean
+  FF_FORCE_EMAIL_VERIFICATION: boolean
+  FF_FORCE_ONBOARDING: boolean
 } {
   if (!parsedFlags) parsedFlags = parseFeatureFlags()
   return parsedFlags

@@ -1,21 +1,23 @@
 import { difference, flatten, isEqual, uniq } from 'lodash-es'
 import {
+  ViewMode,
+  type PropertyInfo,
+  type StringPropertyInfo,
+  type SunLightConfiguration
+} from '@speckle/viewer'
+import {
   ViewerEvent,
   VisualDiffMode,
   CameraController,
   UpdateFlags,
   SectionOutlines,
   SectionToolEvent,
-  SectionTool
-} from '@speckle/viewer'
-import type {
-  PropertyInfo,
-  StringPropertyInfo,
-  SunLightConfiguration
+  SectionTool,
+  ViewModes,
+  ViewModeEvent
 } from '@speckle/viewer'
 import { useAuthCookie } from '~~/lib/auth/composables/auth'
 import type {
-  Comment,
   Project,
   ProjectCommentThreadsArgs,
   ViewerResourceItem
@@ -37,10 +39,8 @@ import { useViewerCommentUpdateTracking } from '~~/lib/viewer/composables/commen
 import {
   getCacheId,
   getObjectReference,
-  isReference,
   modifyObjectFields
 } from '~~/lib/common/helpers/graphql'
-import type { ModifyFnCacheData } from '~~/lib/common/helpers/graphql'
 import {
   useViewerOpenedThreadUpdateEmitter,
   useViewerThreadTracking
@@ -57,8 +57,6 @@ import {
 } from '~~/lib/viewer/composables/ui'
 import { onKeyStroke, watchTriggerable } from '@vueuse/core'
 import { setupDebugMode } from '~~/lib/viewer/composables/setup/dev'
-import type { Reference } from '@apollo/client'
-import type { Modifier } from '@apollo/client/cache'
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 
@@ -221,7 +219,7 @@ function useViewerSubscriptionEventTracker() {
     (event, cache) => {
       const isArchived = event.type === ProjectCommentsUpdatedMessageType.Archived
       const isNew = event.type === ProjectCommentsUpdatedMessageType.Created
-      const model = event.comment
+      const comment = event.comment
 
       if (isArchived) {
         // Mark as archived
@@ -250,30 +248,21 @@ function useViewerSubscriptionEventTracker() {
             }
           }
         )
-      } else if (isNew && model) {
-        const parentId = model.parent?.id
+      } else if (isNew && comment) {
+        const parentId = comment.parent?.id
 
         // Add reply to parent
         if (parentId) {
-          cache.modify({
-            id: getCacheId('Comment', parentId),
-            fields: {
-              replies: ((
-                oldValue: ModifyFnCacheData<Comment['replies']> | Reference
-              ) => {
-                if (isReference(oldValue)) return oldValue
-
-                const newValue: typeof oldValue = {
-                  totalCount: (oldValue?.totalCount || 0) + 1,
-                  items: [
-                    getObjectReference('Comment', model.id),
-                    ...(oldValue?.items || [])
-                  ]
-                }
-                return newValue
-              }) as Modifier<ModifyFnCacheData<Comment['replies']> | Reference>
-            }
-          })
+          modifyObjectField(
+            cache,
+            getCacheId('Comment', parentId),
+            'replies',
+            ({ helpers: { createUpdatedValue, ref } }) =>
+              createUpdatedValue(({ update }) => {
+                update('totalCount', (totalCount) => totalCount + 1)
+                update('items', (items) => [ref('Comment', comment.id), ...items])
+              })
+          )
         } else {
           // Add comment thread
           modifyObjectFields<ProjectCommentThreadsArgs, Project['commentThreads']>(
@@ -283,7 +272,7 @@ function useViewerSubscriptionEventTracker() {
               if (fieldName !== 'commentThreads') return
 
               const newItems = [
-                getObjectReference('Comment', model.id),
+                getObjectReference('Comment', comment.id),
                 ...(data.items || [])
               ]
               return {
@@ -636,6 +625,44 @@ function useViewerFiltersIntegration() {
   )
 }
 
+function useViewerViewModeIntegration() {
+  const {
+    ui: { viewMode },
+    viewer: { instance }
+  } = useInjectedViewerState()
+
+  const viewModes = instance.getExtension(ViewModes)
+  const onViewModeChanged = (mode: ViewMode) => {
+    viewMode.value = mode
+  }
+
+  onMounted(() => {
+    if (!viewMode.value) {
+      viewMode.value = ViewMode.DEFAULT
+    }
+    viewModes.on(ViewModeEvent.Changed, onViewModeChanged)
+  })
+
+  onBeforeUnmount(() => {
+    // Reset view mode to default
+    viewModes.setViewMode(ViewMode.DEFAULT)
+    viewMode.value = ViewMode.DEFAULT
+
+    // Clean up event listener
+    viewModes.removeListener(ViewModeEvent.Changed, onViewModeChanged)
+  })
+
+  watch(
+    () => viewMode.value,
+    (newMode) => {
+      if (viewModes && newMode) {
+        viewModes.setViewMode(newMode)
+      }
+    },
+    { immediate: true }
+  )
+}
+
 function useLightConfigIntegration() {
   const {
     ui: { lightConfig },
@@ -874,6 +901,7 @@ export function useViewerPostSetup() {
   useViewerSectionBoxIntegration()
   useViewerCameraIntegration()
   useViewerFiltersIntegration()
+  useViewerViewModeIntegration()
   useLightConfigIntegration()
   useExplodeFactorIntegration()
   useDiffingIntegration()

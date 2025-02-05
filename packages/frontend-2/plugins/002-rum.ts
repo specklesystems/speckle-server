@@ -2,7 +2,7 @@ import {
   useGetInitialAuthState,
   useOnAuthStateChange
 } from '~/lib/auth/composables/auth'
-import { useCreateErrorLoggingTransport } from '~/lib/core/composables/error'
+import { useCreateLoggingTransport } from '~/lib/core/composables/error'
 import type { Plugin } from 'nuxt/dist/app/nuxt'
 import { isH3Error } from '~/lib/common/helpers/error'
 import { useRequestId, useServerRequestId } from '~/lib/core/composables/server'
@@ -15,7 +15,7 @@ function initRumClient(app: PluginNuxtApp) {
   const { keys } = resolveInitParams(app)
   const router = useRouter()
   const onAuthStateChange = useOnAuthStateChange()
-  const registerErrorTransport = useCreateErrorLoggingTransport()
+  const registerErrorTransport = useCreateLoggingTransport()
   const reqId = useRequestId()
 
   // Datadog
@@ -70,11 +70,16 @@ function initRumClient(app: PluginNuxtApp) {
           : {}
 
       registerErrorTransport({
-        onError: (
-          { args, firstError, firstString, otherData, nonObjectOtherData },
+        onLog: (
+          { args, firstError, firstString, otherData, nonObjectOtherData, level },
           { prettifyMessage }
         ) => {
-          if (!datadog || !('addError' in datadog)) return
+          if (
+            !datadog ||
+            !('addError' in datadog) ||
+            !['error', 'fatal'].includes(level)
+          )
+            return
 
           let error = firstError || firstString || args[0]
           const mainErrorMessageTemplate = firstString

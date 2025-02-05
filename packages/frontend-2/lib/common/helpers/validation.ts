@@ -17,6 +17,8 @@ export const VALID_EMAIL = ValidationHelpers.VALID_EMAIL
  */
 export const isEmail = ValidationHelpers.isEmail
 
+export const isEmailOrEmpty = ValidationHelpers.isEmailOrEmpty
+
 export const isOneOrMultipleEmails = ValidationHelpers.isOneOrMultipleEmails
 
 export const isRequired = ValidationHelpers.isRequired
@@ -30,6 +32,8 @@ export const stringContains = ValidationHelpers.stringContains
 export const isUrl = ValidationHelpers.isUrl
 
 export const isItemSelected = ValidationHelpers.isItemSelected
+
+export const isMultiItemSelected = ValidationHelpers.isMultiItemSelected
 
 /**
  * Wrapper over useForm's `resetForm` that fully resets the form and its initial values

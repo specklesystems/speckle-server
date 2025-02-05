@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // eslint-disable-next-line no-restricted-imports
 import '../bootstrap'
 
@@ -16,8 +17,15 @@ import { once } from 'events'
 import type http from 'http'
 import type express from 'express'
 import type net from 'net'
-import { MaybeAsync, MaybeNullOrUndefined } from '@speckle/shared'
-import type mocha from 'mocha'
+import {
+  ensureError,
+  MaybeAsync,
+  MaybeNullOrUndefined,
+  Nullable,
+  Optional,
+  wait
+} from '@speckle/shared'
+import * as mocha from 'mocha'
 import {
   getAvailableRegionKeysFactory,
   getFreeRegionKeysFactory
@@ -33,10 +41,16 @@ import {
 import {
   getRegisteredRegionClients,
   initializeRegion
-} from '@/modules/multiregion/dbSelector'
+} from '@/modules/multiregion/utils/dbSelector'
 import { Knex } from 'knex'
 import { isMultiRegionTestMode } from '@/test/speckle-helpers/regions'
 import { isMultiRegionEnabled } from '@/modules/multiregion/helpers'
+import { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
+import { ApolloServer } from '@apollo/server'
+import { ReadinessHandler } from '@/healthchecks/types'
+import { set } from 'lodash'
+import { fixStackTrace } from '@/test/speckle-helpers/error'
+import { EnvironmentResourceError } from '@/modules/shared/errors'
 
 // why is server config only created once!????
 // because its done in a migration, to not override existing configs
@@ -50,6 +64,42 @@ chai.use(chaiHttp)
 chai.use(deepEqualInAnyOrder)
 chai.use(graphqlChaiPlugin)
 
+// Please forgive me god for what I'm about to do, but Mocha's ancient API sucks ass
+// and there's NO OTHER WAY to format errors across all reporters
+const originalMochaRun = mocha.default.prototype.run
+set(mocha.default.prototype, 'run', function (this: any, ...args: any) {
+  const runner = originalMochaRun.apply(this, args)
+  runner.prependListener(mocha.Runner.constants.EVENT_TEST_FAIL, (_test, err) => {
+    fixStackTrace(err)
+  })
+
+  return runner
+})
+
+export const getMainTestRegionKey = () => {
+  const key = Object.keys(regionClients)[0]
+  if (!key) {
+    throw new Error('No registered region client found')
+  }
+
+  return key
+}
+
+export const getMainTestRegionKeyIfMultiRegion = () => {
+  const isMultiRegionMode = isMultiRegionTestMode()
+  return isMultiRegionMode ? getMainTestRegionKey() : undefined
+}
+
+export const getMainTestRegionClient = () => {
+  const key = getMainTestRegionKey()
+  const client = regionClients[key]
+  if (!client) {
+    throw new Error('No registered region client found')
+  }
+
+  return client
+}
+
 const inEachDb = async (fn: (db: Knex) => MaybeAsync<void>) => {
   await fn(mainDb)
   for (const regionClient of Object.values(regionClients)) {
@@ -61,8 +111,12 @@ const ensureAivenExtrasFactory = (deps: { db: Knex }) => async () => {
   await deps.db.raw('CREATE EXTENSION IF NOT EXISTS "aiven_extras";')
 }
 
-const setupMultiregionMode = async () => {
+const setupDatabases = async () => {
+  // First reset main db
   const db = mainDb
+  const resetMainDb = resetSchemaFactory({ db, regionKey: null })
+  await resetMainDb()
+
   const getAvailableRegionKeys = getAvailableRegionKeysFactory({
     getAvailableRegionConfig
   })
@@ -91,9 +145,9 @@ const setupMultiregionMode = async () => {
   // Store active region clients
   regionClients = await getRegisteredRegionClients()
 
-  // Reset each DB client (re-run all migrations and setup)
-  for (const [, regionClient] of Object.entries(regionClients)) {
-    const reset = resetSchemaFactory({ db: regionClient })
+  // Reset each region DB client (re-run all migrations and setup)
+  for (const [regionKey, db] of Object.entries(regionClients)) {
+    const reset = resetSchemaFactory({ db, regionKey })
     await reset()
   }
 
@@ -123,15 +177,17 @@ export const resetPubSubFactory = (deps: { db: Knex }) => async () => {
   const ensureAivenExtras = ensureAivenExtrasFactory(deps)
   await ensureAivenExtras()
 
+  type SubInfo = {
+    subname: string
+    subconninfo: string
+    subpublications: string[]
+    subslotname: string
+  }
+
   const subscriptions = (await deps.db.raw(
     `SELECT subname, subconninfo, subpublications, subslotname FROM aiven_extras.pg_list_all_subscriptions() WHERE subname ILIKE 'test_%';`
   )) as {
-    rows: Array<{
-      subname: string
-      subconninfo: string
-      subpublications: string[]
-      subslotname: string
-    }>
+    rows: Array<SubInfo>
   }
   const publications = (await deps.db.raw(
     `SELECT pubname FROM pg_publication WHERE pubname ILIKE 'test_%';`
@@ -139,19 +195,23 @@ export const resetPubSubFactory = (deps: { db: Knex }) => async () => {
     rows: Array<{ pubname: string }>
   }
 
-  // Drop all subs
-  for (const sub of subscriptions.rows) {
-    // Running serially, otherwise some kind of race condition issue can pop up
+  const dropSubs = async (info: SubInfo) => {
     await deps.db.raw(
-      `SELECT * FROM aiven_extras.pg_alter_subscription_disable('${sub.subname}');`
+      `SELECT * FROM aiven_extras.pg_alter_subscription_disable('${info.subname}');`
     )
+    await wait(500)
     await deps.db.raw(
-      `SELECT * FROM aiven_extras.pg_drop_subscription('${sub.subname}');`
+      `SELECT * FROM aiven_extras.pg_drop_subscription('${info.subname}');`
     )
+    await wait(1000)
     await deps.db.raw(
-      `SELECT * FROM aiven_extras.dblink_slot_create_or_drop('${sub.subconninfo}', '${sub.subslotname}', 'drop');`
+      `SELECT * FROM aiven_extras.dblink_slot_create_or_drop('${info.subconninfo}', '${info.subslotname}', 'drop');`
     )
   }
+
+  // Drop all subs
+  // (concurrently, cause it seems possible and we have those delays there)
+  await Promise.all(subscriptions.rows.map(dropSubs))
 
   // Drop all pubs
   for (const pub of publications.rows) {
@@ -188,24 +248,53 @@ const truncateTablesFactory = (deps: { db: Knex }) => async (tableNames?: string
   }
 }
 
-const resetSchemaFactory = (deps: { db: Knex }) => async () => {
-  const resetPubSub = resetPubSubFactory(deps)
+const resetSchemaFactory =
+  (deps: { db: Knex; regionKey: Nullable<string> }) => async () => {
+    const { regionKey } = deps
 
-  await unlockFactory(deps)()
-  await resetPubSub()
+    const resetPubSub = resetPubSubFactory(deps)
+    const truncate = truncateTablesFactory(deps)
 
-  // Reset schema
-  await deps.db.migrate.rollback()
-  await deps.db.migrate.latest()
-}
+    await unlockFactory(deps)()
+    await resetPubSub()
+    await truncate() // otherwise some rollbacks will fail
 
-export const truncateTables = async (tableNames?: string[]) => {
+    // Reset schema
+    try {
+      await deps.db.migrate.rollback()
+      await deps.db.migrate.latest()
+    } catch (e) {
+      throw new EnvironmentResourceError(
+        `Failed to reset schema for ${
+          regionKey ? 'region ' + regionKey + ' ' : 'main DB'
+        }`,
+        {
+          cause: ensureError(e)
+        }
+      )
+    }
+  }
+
+export const truncateTables = async (
+  tableNames?: string[],
+  options?: Partial<{
+    /**
+     * Whether to also reset pubsub before truncate. Pubsub only gets re-initialized on app
+     * init so don't do this if not needed!
+     * Defaults to: false
+     */
+    resetPubSub: boolean
+  }>
+) => {
+  const { resetPubSub = false } = options || {}
   const dbs = [mainDb, ...Object.values(regionClients)]
 
-  // First reset pubsubs
-  for (const db of dbs) {
-    const resetPubSub = resetPubSubFactory({ db })
-    await resetPubSub()
+  // First reset pubsubs, if needed
+  if (resetPubSub) {
+    for (const db of dbs) {
+      const resetPubSub = resetPubSubFactory({ db })
+      await resetPubSub()
+    }
   }
 
   // Now truncate
@@ -215,11 +304,15 @@ export const truncateTables = async (tableNames?: string[]) => {
   }
 }
 
-export const initializeTestServer = async (
-  server: http.Server,
+export const initializeTestServer = async (params: {
+  server: http.Server
   app: express.Express
-) => {
-  await startHttp(server, app, 0)
+  graphqlServer: ApolloServer<GraphQLContext>
+  readinessCheck: ReadinessHandler
+  customPortOverride?: number
+}) => {
+  await startHttp({ ...params, customPortOverride: params.customPortOverride ?? 0 })
+  const { server, app } = params
 
   await once(app, 'appStarted')
   const port = (server.address() as net.AddressInfo).port + ''
@@ -246,6 +339,8 @@ export const initializeTestServer = async (
   }
 }
 
+let graphqlServer: Optional<ApolloServer<GraphQLContext>> = undefined
+
 export const mochaHooks: mocha.RootHookObject = {
   beforeAll: async () => {
     if (isMultiRegionTestMode()) {
@@ -254,31 +349,26 @@ export const mochaHooks: mocha.RootHookObject = {
 
     logger.info('running before all')
 
-    // Init main db
-    const reset = resetSchemaFactory({ db: mainDb })
-    await reset()
-
-    // Init (or cleanup) multi-region mode
-    await setupMultiregionMode()
+    // Init (or cleanup) test databases
+    await setupDatabases()
 
     // Init app
-    await init()
+    ;({ graphqlServer } = await init())
   },
   afterAll: async () => {
     logger.info('running after all')
     await inEachDb(async (db) => {
       await unlockFactory({ db })()
     })
-    await shutdown()
+    await shutdown({ graphqlServer })
   }
 }
 
 export const buildApp = async () => {
-  const { app, graphqlServer, server } = await init()
-  return { app, graphqlServer, server }
+  return await init()
 }
 
 export const beforeEachContext = async () => {
-  await truncateTables()
+  await truncateTables(undefined, { resetPubSub: true })
   return await buildApp()
 }

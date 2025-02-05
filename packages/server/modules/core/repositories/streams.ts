@@ -1,5 +1,6 @@
 import _, {
   clamp,
+  groupBy,
   has,
   isNaN,
   isNull,
@@ -20,7 +21,7 @@ import {
   Branches,
   ServerAcl
 } from '@/modules/core/dbSchema'
-import { InvalidArgumentError } from '@/modules/shared/errors'
+import { InvalidArgumentError, LogicError } from '@/modules/shared/errors'
 import { Roles, StreamRoles } from '@/modules/core/helpers/mainConstants'
 import {
   StreamAclRecord,
@@ -50,7 +51,6 @@ import { metaHelpers } from '@/modules/core/helpers/meta'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
 import {
   DeleteProjectRole,
-  GetProject,
   GetProjectCollaborators,
   UpdateProject,
   GetRolesByUserId,
@@ -81,7 +81,6 @@ import {
   GetFavoritedStreamsCount,
   SetStreamFavorited,
   CanUserFavoriteStream,
-  LegacyGetStreamCollaborators,
   GetBatchUserFavoriteData,
   GetBatchStreamFavoritesCounts,
   GetOwnedFavoritesCountByUserIds,
@@ -96,7 +95,8 @@ import {
   MarkBranchStreamUpdated,
   MarkCommitStreamUpdated,
   MarkOnboardingBaseStream,
-  GetUserDeletableStreams
+  GetUserDeletableStreams,
+  GetStreamsCollaborators
 } from '@/modules/core/domain/streams/operations'
 import { generateProjectName } from '@/modules/core/domain/projects/logic'
 export type { StreamWithOptionalRole, StreamWithCommitId }
@@ -169,18 +169,6 @@ export const getStreamFactory =
       ...(options || {})
     })
     return <Optional<StreamWithOptionalRole>>streams[0]
-  }
-
-export const getProjectFactory =
-  (deps: { db: Knex }): GetProject =>
-  async ({ projectId }) => {
-    const project = await getStreamFactory(deps)({ streamId: projectId })
-
-    if (!project) {
-      throw new StreamNotFoundError()
-    }
-
-    return project
   }
 
 export const getCommitStreamsFactory =
@@ -598,11 +586,44 @@ export const getDiscoverableStreamsPageFactory =
   }
 
 /**
+ * Get stream collaborators for multiple streams at a time
+ */
+export const getStreamsCollaboratorsFactory =
+  (deps: { db: Knex }): GetStreamsCollaborators =>
+  async ({ streamIds }) => {
+    if (!streamIds.length) return {}
+
+    const q = tables
+      .streamAcl(deps.db)
+      .select<Array<UserWithRole & { streamRole: StreamRoles; streamId: string }>>([
+        ...Users.cols,
+        knex.raw(`(array_agg(??))[1] as "streamRole"`, [StreamAcl.col.role]),
+        knex.raw(`(array_agg(??))[1] as "streamId"`, [StreamAcl.col.resourceId]),
+        knex.raw(`(array_agg(??))[1] as "role"`, [ServerAcl.col.role])
+      ])
+      .whereIn(StreamAcl.col.resourceId, streamIds)
+      .innerJoin(Users.name, Users.col.id, StreamAcl.col.userId)
+      .innerJoin(ServerAcl.name, ServerAcl.col.userId, Users.col.id)
+      .groupBy(StreamAcl.col.resourceId, Users.col.id)
+
+    const res = (await q).map((i) => ({
+      ...removePrivateFields(i),
+      streamRole: i.streamRole,
+      role: i.role,
+      streamId: i.streamId
+    }))
+
+    return groupBy(res, 'streamId')
+  }
+
+/**
  * Get all stream collaborators. Optionally filter only specific roles.
  */
 export const getStreamCollaboratorsFactory =
   (deps: { db: Knex }): GetStreamCollaborators =>
-  async (streamId: string, type?: StreamRoles) => {
+  async (streamId: string, type?: StreamRoles, options?) => {
+    const { limit } = options || {}
+
     const q = tables
       .streamAcl(deps.db)
       .select<Array<UserWithRole & { streamRole: StreamRoles }>>([
@@ -619,38 +640,16 @@ export const getStreamCollaboratorsFactory =
       q.andWhere(StreamAcl.col.role, type)
     }
 
+    if (limit) {
+      q.limit(limit)
+    }
+
     const items = (await q).map((i) => ({
       ...removePrivateFields(i),
       streamRole: i.streamRole,
       role: i.role
     }))
     return items
-  }
-
-/**
- * @deprecated Use getStreamCollaborators instead
- */
-export const legacyGetStreamUsersFactory =
-  (deps: { db: Knex }): LegacyGetStreamCollaborators =>
-  async ({ streamId }) => {
-    const query = tables
-      .streamAcl(deps.db)
-      .columns({ role: 'stream_acl.role' }, 'id', 'name', 'company', 'avatar')
-      .select()
-      .where({ resourceId: streamId })
-      .rightJoin('users', { 'users.id': 'stream_acl.userId' })
-      .select<
-        {
-          role: string
-          id: string
-          name: string
-          company: string
-          avatar: string
-        }[]
-      >('stream_acl.role', 'name', 'id', 'company', 'avatar')
-      .orderBy('stream_acl.role')
-
-    return await query
   }
 
 export const getProjectCollaboratorsFactory =
@@ -671,14 +670,43 @@ const getUserStreamsQueryBaseFactory =
     ownedOnly,
     withRoles,
     streamIdWhitelist,
-    workspaceId
+    workspaceId,
+    onlyWithActiveSsoSession
   }: BaseUserStreamsQueryParams) => {
     const query = tables
       .streamAcl(deps.db)
       .where(StreamAcl.col.userId, userId)
       .join(Streams.name, StreamAcl.col.resourceId, Streams.col.id)
 
-    if (workspaceId) {
+    // select * from stream_acl sa
+    // join streams s on s.id = sa."resourceId"
+    // left join workspace_sso_providers wp on wp."workspaceId" = s."workspaceId"
+    // left join user_sso_sessions us on (us."userId" = sa."userId" and us."providerId" = wp."providerId")
+    // where sa."userId" = '7f1f8aa286'
+    // and ((wp."providerId" is not null and us."validUntil" > now()) or wp."providerId" is null)
+
+    if (onlyWithActiveSsoSession) {
+      query
+        .leftJoin(
+          'workspace_sso_providers',
+          'workspace_sso_providers.workspaceId',
+          Streams.col.workspaceId
+        )
+        .leftJoin('user_sso_sessions', function () {
+          this.on('user_sso_sessions.userId', '=', StreamAcl.col.userId).andOn(
+            'workspace_sso_providers.providerId',
+            '=',
+            'user_sso_sessions.providerId'
+          )
+        })
+        .andWhere(function () {
+          this.whereRaw(
+            'workspace_sso_providers."providerId" is not null and user_sso_sessions."validUntil" > now()'
+          ).orWhere('workspace_sso_providers.providerId', 'is', null)
+        })
+    }
+
+    if (!isUndefined(workspaceId)) {
       query.andWhere(Streams.col.workspaceId, workspaceId)
     }
 
@@ -934,7 +962,7 @@ export const updateProjectFactory =
     const updatedStream = await updateStreamFactory({ db })(projectUpdate)
 
     if (!updatedStream) {
-      throw new StreamUpdateError()
+      throw new StreamUpdateError('Stream was not updated.')
     }
 
     return updatedStream
@@ -1133,7 +1161,7 @@ export const markOnboardingBaseStreamFactory =
   async (streamId: string, version: string) => {
     const stream = await getStreamFactory(deps)({ streamId })
     if (!stream) {
-      throw new Error(`Stream ${streamId} not found`)
+      throw new StreamNotFoundError(`Stream ${streamId} not found`)
     }
     await updateStreamFactory(deps)({
       id: streamId,
@@ -1211,7 +1239,9 @@ export const legacyGetStreamsFactory =
 
     if (visibility && visibility !== 'all') {
       if (!['private', 'public'].includes(visibility))
-        throw new Error('Stream visibility should be either private, public or all')
+        throw new LogicError(
+          'Stream visibility should be either private, public or all'
+        )
       const isPublic = visibility === 'public'
       const publicFunc: Knex.QueryCallback = function () {
         this.where({ isPublic })

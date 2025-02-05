@@ -27,7 +27,6 @@ export type Workspace = {
   createdAt: Date
   updatedAt: Date
   logo: string | null
-  defaultLogoIndex: number
   defaultProjectRole: WorkspaceDefaultProjectRole
   domainBasedMembershipProtectionEnabled: boolean
   discoverabilityEnabled: boolean
@@ -35,7 +34,7 @@ export type Workspace = {
 
 export type LimitedWorkspace = Pick<
   Workspace,
-  'id' | 'slug' | 'name' | 'description' | 'logo' | 'defaultLogoIndex'
+  'id' | 'slug' | 'name' | 'description' | 'logo'
 >
 
 export type WorkspaceWithDomains = Workspace & { domains: WorkspaceDomain[] }
@@ -65,4 +64,14 @@ export type WorkspaceRegionAssignment = {
   workspaceId: string
   regionKey: string
   createdAt: Date
+}
+
+export type WorkspaceJoinRequestStatus = 'pending' | 'approved' | 'denied' | 'dismissed'
+
+export type WorkspaceJoinRequest = {
+  workspaceId: string
+  userId: string
+  status: WorkspaceJoinRequestStatus
+  createdAt: Date
+  updatedAt: Date
 }

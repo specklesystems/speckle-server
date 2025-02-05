@@ -8,9 +8,9 @@ import {
   storeClosuresIfNotFoundFactory,
   storeObjectsIfNotFoundFactory
 } from '@/modules/core/repositories/objects'
-import { db } from '@/db/knex'
 import { createObjectsFactory } from '@/modules/core/services/objects/management'
-import { getProjectDbClient } from '@/modules/multiregion/dbSelector'
+import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
+import coreModule from '@/modules/core'
 
 type GetObjectChildrenQueryParams = Parameters<
   ReturnType<typeof getObjectChildrenQueryFactory>
@@ -37,7 +37,7 @@ export = {
       const projectDB = await getProjectDbClient({ projectId: parent.streamId })
       // The simple query branch
       if (!args.query && !args.orderBy) {
-        const getObjectChildren = getObjectChildrenFactory({ db })
+        const getObjectChildren = getObjectChildrenFactory({ db: projectDB })
         const result = await getObjectChildren({
           streamId: parent.streamId,
           objectId: parent.id,
@@ -100,6 +100,10 @@ export = {
         Roles.Stream.Contributor,
         context.resourceAccessRules
       )
+
+      await coreModule.executeHooks?.('onCreateObjectRequest', {
+        projectId: args.objectInput.streamId
+      })
 
       const projectDB = await getProjectDbClient({
         projectId: args.objectInput.streamId

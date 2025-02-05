@@ -64,20 +64,17 @@ export type GetCommitStream = (params: {
 
 export type GetStreamCollaborators = (
   streamId: string,
-  type?: StreamRoles
+  type?: StreamRoles,
+  options?: Partial<{
+    limit: number
+  }>
 ) => Promise<Array<LimitedUserWithStreamRole>>
 
-export type GetUserDeletableStreams = (userId: string) => Promise<Array<string>>
+export type GetStreamsCollaborators = (params: { streamIds: string[] }) => Promise<{
+  [streamId: string]: Array<LimitedUserWithStreamRole>
+}>
 
-export type LegacyGetStreamCollaborators = (params: { streamId: string }) => Promise<
-  {
-    role: string
-    id: string
-    name: string
-    company: string
-    avatar: string
-  }[]
->
+export type GetUserDeletableStreams = (userId: string) => Promise<Array<string>>
 
 export type StoreStream = (
   input: StreamCreateInput | ProjectCreateArgs,
@@ -160,7 +157,12 @@ export type BaseUserStreamsQueryParams = {
    * Only allow streams with the specified IDs to be returned
    */
   streamIdWhitelist?: string[]
-  workspaceId?: string
+  workspaceId?: string | null
+
+  /**
+   * Only with active sso session
+   */
+  onlyWithActiveSsoSession?: boolean
 }
 
 export type UserStreamsQueryParams = BaseUserStreamsQueryParams & {

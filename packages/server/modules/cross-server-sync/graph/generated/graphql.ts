@@ -66,6 +66,16 @@ export type AdminInviteList = {
   totalCount: Scalars['Int']['output'];
 };
 
+export type AdminMutations = {
+  __typename?: 'AdminMutations';
+  updateWorkspacePlan: Scalars['Boolean']['output'];
+};
+
+
+export type AdminMutationsUpdateWorkspacePlanArgs = {
+  input: AdminUpdateWorkspacePlanInput;
+};
+
 export type AdminQueries = {
   __typename?: 'AdminQueries';
   inviteList: AdminInviteList;
@@ -106,6 +116,12 @@ export type AdminQueriesWorkspaceListArgs = {
   query?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type AdminUpdateWorkspacePlanInput = {
+  plan: WorkspacePlans;
+  status: WorkspacePlanStatuses;
+  workspaceId: Scalars['ID']['input'];
+};
+
 export type AdminUserList = {
   __typename?: 'AdminUserList';
   cursor?: Maybe<Scalars['String']['output']>;
@@ -139,6 +155,10 @@ export type AdminUsersListItem = {
   id: Scalars['String']['output'];
   invitedUser?: Maybe<ServerInvite>;
   registeredUser?: Maybe<User>;
+};
+
+export type AdminWorkspaceJoinRequestFilter = {
+  status?: InputMaybe<WorkspaceJoinRequestStatus>;
 };
 
 export type ApiToken = {
@@ -194,6 +214,17 @@ export type AppUpdateInput = {
   termsAndConditionsLink?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type ApproveWorkspaceJoinRequestInput = {
+  userId: Scalars['String']['input'];
+  workspaceId: Scalars['String']['input'];
+};
+
+export type ArchiveCommentInput = {
+  archived: Scalars['Boolean']['input'];
+  commentId: Scalars['String']['input'];
+  projectId: Scalars['String']['input'];
+};
+
 export type AuthStrategy = {
   __typename?: 'AuthStrategy';
   color?: Maybe<Scalars['String']['output']>;
@@ -207,11 +238,11 @@ export type AutomateAuthCodePayloadTest = {
   action: Scalars['String']['input'];
   code: Scalars['String']['input'];
   userId: Scalars['String']['input'];
+  workspaceId?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type AutomateFunction = {
   __typename?: 'AutomateFunction';
-  automationCount: Scalars['Int']['output'];
   /** Only returned if user is a part of this speckle server */
   creator?: Maybe<LimitedUser>;
   description: Scalars['String']['output'];
@@ -224,6 +255,7 @@ export type AutomateFunction = {
   /** SourceAppNames values from @speckle/shared. Empty array means - all of them */
   supportedSourceApps: Array<Scalars['String']['output']>;
   tags: Array<Scalars['String']['output']>;
+  workspaceIds?: Maybe<Array<Scalars['String']['output']>>;
 };
 
 
@@ -282,6 +314,7 @@ export type AutomateFunctionRun = {
 export type AutomateFunctionRunStatusReportInput = {
   contextView?: InputMaybe<Scalars['String']['input']>;
   functionRunId: Scalars['String']['input'];
+  projectId: Scalars['String']['input'];
   /** AutomateTypes.ResultsSchema type from @speckle/shared */
   results?: InputMaybe<Scalars['JSONObject']['input']>;
   status: AutomateRunStatus;
@@ -297,15 +330,18 @@ export type AutomateFunctionTemplate = {
 };
 
 export enum AutomateFunctionTemplateLanguage {
-  Demonstration = 'DEMONSTRATION',
-  Demonstrationpython = 'DEMONSTRATIONPYTHON',
   DotNet = 'DOT_NET',
   Python = 'PYTHON',
   Typescript = 'TYPESCRIPT'
 }
 
+export type AutomateFunctionToken = {
+  __typename?: 'AutomateFunctionToken';
+  functionId: Scalars['String']['output'];
+  functionToken: Scalars['String']['output'];
+};
+
 export type AutomateFunctionsFilter = {
-  featuredFunctionsOnly?: InputMaybe<Scalars['Boolean']['input']>;
   /** By default we skip functions without releases. Set this to true to include them. */
   functionsWithoutReleases?: InputMaybe<Scalars['Boolean']['input']>;
   search?: InputMaybe<Scalars['String']['input']>;
@@ -314,12 +350,18 @@ export type AutomateFunctionsFilter = {
 export type AutomateMutations = {
   __typename?: 'AutomateMutations';
   createFunction: AutomateFunction;
+  createFunctionWithoutVersion: AutomateFunctionToken;
   updateFunction: AutomateFunction;
 };
 
 
 export type AutomateMutationsCreateFunctionArgs = {
   input: CreateAutomateFunctionInput;
+};
+
+
+export type AutomateMutationsCreateFunctionWithoutVersionArgs = {
+  input: CreateAutomateFunctionWithoutVersionInput;
 };
 
 
@@ -503,6 +545,12 @@ export type BranchUpdateInput = {
   streamId: Scalars['String']['input'];
 };
 
+export type BulkUsersRetrievalInput = {
+  cursor?: InputMaybe<Scalars['String']['input']>;
+  emails: Array<Scalars['String']['input']>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+};
+
 export type CancelCheckoutSessionInput = {
   sessionId: Scalars['ID']['input'];
   workspaceId: Scalars['ID']['input'];
@@ -521,6 +569,7 @@ export type CheckoutSession = {
 
 export type CheckoutSessionInput = {
   billingInterval: BillingInterval;
+  isCreateFlow?: InputMaybe<Scalars['Boolean']['input']>;
   workspaceId: Scalars['ID']['input'];
   workspacePlan: PaidWorkspacePlans;
 };
@@ -651,8 +700,7 @@ export type CommentMutations = {
 
 
 export type CommentMutationsArchiveArgs = {
-  archived?: Scalars['Boolean']['input'];
-  commentId: Scalars['String']['input'];
+  input: ArchiveCommentInput;
 };
 
 
@@ -667,7 +715,7 @@ export type CommentMutationsEditArgs = {
 
 
 export type CommentMutationsMarkViewedArgs = {
-  commentId: Scalars['String']['input'];
+  input: MarkCommentViewedInput;
 };
 
 
@@ -783,10 +831,12 @@ export type CommitUpdateInput = {
 
 export type CommitsDeleteInput = {
   commitIds: Array<Scalars['String']['input']>;
+  streamId: Scalars['ID']['input'];
 };
 
 export type CommitsMoveInput = {
   commitIds: Array<Scalars['String']['input']>;
+  streamId: Scalars['ID']['input'];
   targetBranch: Scalars['String']['input'];
 };
 
@@ -812,6 +862,11 @@ export type CreateAutomateFunctionInput = {
   template: AutomateFunctionTemplateLanguage;
 };
 
+export type CreateAutomateFunctionWithoutVersionInput = {
+  description: Scalars['String']['input'];
+  name: Scalars['String']['input'];
+};
+
 export type CreateCommentInput = {
   content: CommentContentInput;
   projectId: Scalars['String']['input'];
@@ -827,6 +882,7 @@ export type CreateCommentInput = {
 
 export type CreateCommentReplyInput = {
   content: CommentContentInput;
+  projectId: Scalars['String']['input'];
   threadId: Scalars['String']['input'];
 };
 
@@ -856,12 +912,6 @@ export type CreateVersionInput = {
   totalChildrenCount?: InputMaybe<Scalars['Int']['input']>;
 };
 
-export enum Currency {
-  Eur = 'EUR',
-  Gbp = 'GBP',
-  Usd = 'USD'
-}
-
 export type DeleteModelInput = {
   id: Scalars['ID']['input'];
   projectId: Scalars['ID']['input'];
@@ -874,6 +924,11 @@ export type DeleteUserEmailInput = {
 export type DeleteVersionsInput = {
   projectId: Scalars['ID']['input'];
   versionIds: Array<Scalars['ID']['input']>;
+};
+
+export type DenyWorkspaceJoinRequestInput = {
+  userId: Scalars['String']['input'];
+  workspaceId: Scalars['String']['input'];
 };
 
 export enum DiscoverableStreamsSortType {
@@ -889,6 +944,7 @@ export type DiscoverableStreamsSortingInput = {
 export type EditCommentInput = {
   commentId: Scalars['String']['input'];
   content: CommentContentInput;
+  projectId: Scalars['String']['input'];
 };
 
 export type EmailVerificationRequestInput = {
@@ -1006,7 +1062,7 @@ export type LimitedUser = {
    * Returns all discoverable streams that the user is a collaborator on
    * @deprecated Part of the old API surface and will be removed in the future.
    */
-  streams: StreamCollection;
+  streams: UserStreamCollection;
   /**
    * The user's timeline in chronological order
    * @deprecated Part of the old API surface and will be removed in the future.
@@ -1019,6 +1075,7 @@ export type LimitedUser = {
   totalOwnedStreamsFavorites: Scalars['Int']['output'];
   verified?: Maybe<Scalars['Boolean']['output']>;
   workspaceDomainPolicyCompliant?: Maybe<Scalars['Boolean']['output']>;
+  workspaceRole?: Maybe<Scalars['String']['output']>;
 };
 
 
@@ -1075,11 +1132,18 @@ export type LimitedUserWorkspaceDomainPolicyCompliantArgs = {
   workspaceId?: InputMaybe<Scalars['String']['input']>;
 };
 
+
+/**
+ * Limited user type, for showing public info about a user
+ * to another user
+ */
+export type LimitedUserWorkspaceRoleArgs = {
+  workspaceId?: InputMaybe<Scalars['String']['input']>;
+};
+
 /** Workspace metadata visible to non-workspace members. */
 export type LimitedWorkspace = {
   __typename?: 'LimitedWorkspace';
-  /** Index of fallback workspace logo to use */
-  defaultLogoIndex: Scalars['Int']['output'];
   /** Workspace description */
   description?: Maybe<Scalars['String']['output']>;
   /** Workspace id */
@@ -1092,6 +1156,11 @@ export type LimitedWorkspace = {
   slug: Scalars['String']['output'];
 };
 
+export type MarkCommentViewedInput = {
+  commentId: Scalars['String']['input'];
+  projectId: Scalars['String']['input'];
+};
+
 export type MarkReceivedVersionInput = {
   message?: InputMaybe<Scalars['String']['input']>;
   projectId: Scalars['String']['input'];
@@ -1101,7 +1170,7 @@ export type MarkReceivedVersionInput = {
 
 export type Model = {
   __typename?: 'Model';
-  author: LimitedUser;
+  author?: Maybe<LimitedUser>;
   automationsStatus?: Maybe<TriggeredAutomationsStatus>;
   /** Return a model tree of children */
   childrenTree: Array<ModelsTreeItem>;
@@ -1218,6 +1287,7 @@ export type Mutation = {
   _?: Maybe<Scalars['String']['output']>;
   /** Various Active User oriented mutations */
   activeUserMutations: ActiveUserMutations;
+  admin: AdminMutations;
   adminDeleteUser: Scalars['Boolean']['output'];
   /** Creates an personal api token. */
   apiTokenCreate: Scalars['String']['output'];
@@ -1402,6 +1472,7 @@ export type Mutation = {
   webhookDelete: Scalars['String']['output'];
   /** Updates an existing webhook */
   webhookUpdate: Scalars['String']['output'];
+  workspaceJoinRequestMutations: WorkspaceJoinRequestMutations;
   workspaceMutations: WorkspaceMutations;
 };
 
@@ -1745,8 +1816,8 @@ export type ObjectCreateInput = {
 
 export enum PaidWorkspacePlans {
   Business = 'business',
-  Pro = 'pro',
-  Team = 'team'
+  Plus = 'plus',
+  Starter = 'starter'
 }
 
 export type PasswordStrengthCheckFeedback = {
@@ -2411,8 +2482,8 @@ export type ProjectVersionsUpdatedMessage = {
   __typename?: 'ProjectVersionsUpdatedMessage';
   /** Version ID */
   id: Scalars['String']['output'];
-  /** Only set if version was deleted, in other scenarios can be queried from 'version' */
-  modelId?: Maybe<Scalars['String']['output']>;
+  /** Version's model ID */
+  modelId: Scalars['String']['output'];
   type: ProjectVersionsUpdatedMessageType;
   /** Null if version was deleted */
   version?: Maybe<Version>;
@@ -2520,7 +2591,7 @@ export type Query = {
    * Pass in the `query` parameter to search by name, description or ID.
    * @deprecated Part of the old API surface and will be removed in the future. Use User.projects instead.
    */
-  streams?: Maybe<StreamCollection>;
+  streams?: Maybe<UserStreamCollection>;
   /**
    * Gets the profile of a user. If no id argument is provided, will return the current authenticated user's profile (as extracted from the authorization header).
    * @deprecated To be removed in the near future! Use 'activeUser' to get info about the active user or 'otherUser' to get info about another user.
@@ -2534,8 +2605,13 @@ export type Query = {
   /**
    * Search for users and return limited metadata about them, if you have the server:user role.
    * The query looks for matches in name & email
+   * @deprecated Use users() instead.
    */
   userSearch: UserSearchResultCollection;
+  /** Look up server users */
+  users: UserSearchResultCollection;
+  /** Look up server users with a collection of emails */
+  usersByEmail: Array<Maybe<LimitedUser>>;
   /** Validates the slug, to make sure it contains only valid characters and its not taken. */
   validateWorkspaceSlug: Scalars['Boolean']['output'];
   workspace: Workspace;
@@ -2677,6 +2753,16 @@ export type QueryUserSearchArgs = {
 };
 
 
+export type QueryUsersArgs = {
+  input: UsersRetrievalInput;
+};
+
+
+export type QueryUsersByEmailArgs = {
+  input: BulkUsersRetrievalInput;
+};
+
+
 export type QueryValidateWorkspaceSlugArgs = {
   slug: Scalars['String']['input'];
 };
@@ -2813,7 +2899,7 @@ export type ServerInfo = {
   inviteOnly?: Maybe<Scalars['Boolean']['output']>;
   /** Server relocation / migration info */
   migration?: Maybe<ServerMigration>;
-  /** Available to server admins only */
+  /** Info about server regions */
   multiRegion: ServerMultiRegionConfiguration;
   name: Scalars['String']['output'];
   /** @deprecated Use role constants from the @speckle/shared npm package instead */
@@ -2867,10 +2953,7 @@ export type ServerMultiRegionConfiguration = {
    * be filtered out from the result.
    */
   availableKeys: Array<Scalars['String']['output']>;
-  /**
-   * List of regions that are currently enabled on the server using the available region keys
-   * set in the multi region config file.
-   */
+  /** Regions available for project data residency */
   regions: Array<ServerRegionItem>;
 };
 
@@ -3240,6 +3323,11 @@ export type Subscription = {
    * @deprecated Part of the old API surface and will be removed in the future. Use 'projectVersionsUpdated' instead.
    */
   commitUpdated?: Maybe<Scalars['JSONObject']['output']>;
+  /**
+   * Cyclically sends a message to the client, used for testing
+   * Note: Only works in test environment
+   */
+  ping: Scalars['String']['output'];
   /** Subscribe to updates to automations in the project */
   projectAutomationsUpdated: ProjectAutomationsUpdatedMessage;
   /**
@@ -3299,6 +3387,16 @@ export type Subscription = {
   userViewerActivity?: Maybe<Scalars['JSONObject']['output']>;
   /** Track user activities in the viewer relating to the specified resources */
   viewerUserActivityBroadcasted: ViewerUserActivityMessage;
+  /**
+   * Track newly added or deleted projects in a specific workspace.
+   * Either slug or id must be set.
+   */
+  workspaceProjectsUpdated: WorkspaceProjectsUpdatedMessage;
+  /**
+   * Track updates to a specific workspace.
+   * Either slug or id must be set.
+   */
+  workspaceUpdated: WorkspaceUpdatedMessage;
 };
 
 
@@ -3430,6 +3528,18 @@ export type SubscriptionViewerUserActivityBroadcastedArgs = {
   target: ViewerUpdateTrackingTarget;
 };
 
+
+export type SubscriptionWorkspaceProjectsUpdatedArgs = {
+  workspaceId?: InputMaybe<Scalars['String']['input']>;
+  workspaceSlug?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type SubscriptionWorkspaceUpdatedArgs = {
+  workspaceId?: InputMaybe<Scalars['String']['input']>;
+  workspaceSlug?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type TestAutomationRun = {
   __typename?: 'TestAutomationRun';
   automationRunId: Scalars['String']['output'];
@@ -3482,6 +3592,7 @@ export type UpdateAutomateFunctionInput = {
   /** SourceAppNames values from @speckle/shared */
   supportedSourceApps?: InputMaybe<Array<Scalars['String']['input']>>;
   tags?: InputMaybe<Array<Scalars['String']['input']>>;
+  workspaceIds?: InputMaybe<Array<Scalars['String']['input']>>;
 };
 
 export type UpdateModelInput = {
@@ -3504,6 +3615,12 @@ export type UpdateVersionInput = {
   versionId: Scalars['ID']['input'];
 };
 
+export type UpgradePlanInput = {
+  billingInterval: BillingInterval;
+  workspaceId: Scalars['ID']['input'];
+  workspacePlan: PaidWorkspacePlans;
+};
+
 /**
  * Full user type, should only be used in the context of admin operations or
  * when a user is reading/writing info about himself
@@ -3519,6 +3636,7 @@ export type User = {
   apiTokens: Array<ApiToken>;
   /** Returns the apps you have authorized. */
   authorizedApps?: Maybe<Array<ServerAppListItem>>;
+  automateFunctions: AutomateFunctionCollection;
   automateInfo: UserAutomateInfo;
   avatar?: Maybe<Scalars['String']['output']>;
   bio?: Maybe<Scalars['String']['output']>;
@@ -3550,6 +3668,7 @@ export type User = {
    * @deprecated Part of the old API surface and will be removed in the future.
    */
   favoriteStreams: StreamCollection;
+  gendoAICredits: UserGendoAiCredits;
   /** Whether the user has a pending/active email verification token */
   hasPendingVerification?: Maybe<Scalars['Boolean']['output']>;
   id: Scalars['ID']['output'];
@@ -3563,14 +3682,14 @@ export type User = {
   /** Get all invitations to projects that the active user has */
   projectInvites: Array<PendingStreamCollaborator>;
   /** Get projects that the user participates in */
-  projects: ProjectCollection;
+  projects: UserProjectCollection;
   role?: Maybe<Scalars['String']['output']>;
   /**
    * Returns all streams that the user is a collaborator on. If requested for a user, who isn't the
    * authenticated user, then this will only return discoverable streams.
    * @deprecated Part of the old API surface and will be removed in the future. Use User.projects instead.
    */
-  streams: StreamCollection;
+  streams: UserStreamCollection;
   /**
    * The user's timeline in chronological order
    * @deprecated Part of the old API surface and will be removed in the future.
@@ -3606,6 +3725,17 @@ export type UserActivityArgs = {
   before?: InputMaybe<Scalars['DateTime']['input']>;
   cursor?: InputMaybe<Scalars['DateTime']['input']>;
   limit?: Scalars['Int']['input'];
+};
+
+
+/**
+ * Full user type, should only be used in the context of admin operations or
+ * when a user is reading/writing info about himself
+ */
+export type UserAutomateFunctionsArgs = {
+  cursor?: InputMaybe<Scalars['String']['input']>;
+  filter?: InputMaybe<AutomateFunctionsFilter>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
 };
 
 
@@ -3716,6 +3846,7 @@ export type UserEmailMutations = {
   delete: User;
   requestNewEmailVerification?: Maybe<Scalars['Boolean']['output']>;
   setPrimary: User;
+  verify?: Maybe<Scalars['Boolean']['output']>;
 };
 
 
@@ -3738,11 +3869,32 @@ export type UserEmailMutationsSetPrimaryArgs = {
   input: SetPrimaryUserEmailInput;
 };
 
+
+export type UserEmailMutationsVerifyArgs = {
+  input: VerifyUserEmailInput;
+};
+
+export type UserGendoAiCredits = {
+  __typename?: 'UserGendoAICredits';
+  limit: Scalars['Int']['output'];
+  resetDate: Scalars['DateTime']['output'];
+  used: Scalars['Int']['output'];
+};
+
+export type UserProjectCollection = {
+  __typename?: 'UserProjectCollection';
+  cursor?: Maybe<Scalars['String']['output']>;
+  items: Array<Project>;
+  numberOfHidden: Scalars['Int']['output'];
+  totalCount: Scalars['Int']['output'];
+};
+
 export type UserProjectsFilter = {
   /** Only include projects where user has the specified roles */
   onlyWithRoles?: InputMaybe<Array<Scalars['String']['input']>>;
   /** Filter out projects by name */
   search?: InputMaybe<Scalars['String']['input']>;
+  workspaceId?: InputMaybe<Scalars['ID']['input']>;
 };
 
 export type UserProjectsUpdatedMessage = {
@@ -3771,6 +3923,14 @@ export type UserSearchResultCollection = {
   items: Array<LimitedUser>;
 };
 
+export type UserStreamCollection = {
+  __typename?: 'UserStreamCollection';
+  cursor?: Maybe<Scalars['String']['output']>;
+  items?: Maybe<Array<Stream>>;
+  numberOfHidden: Scalars['Int']['output'];
+  totalCount: Scalars['Int']['output'];
+};
+
 export type UserUpdateInput = {
   avatar?: InputMaybe<Scalars['String']['input']>;
   bio?: InputMaybe<Scalars['String']['input']>;
@@ -3780,6 +3940,23 @@ export type UserUpdateInput = {
 
 export type UserWorkspacesFilter = {
   search?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type UsersRetrievalInput = {
+  cursor?: InputMaybe<Scalars['String']['input']>;
+  /** Only find users with directly matching emails */
+  emailOnly?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Limit defaults to 10 */
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  /** Only find users that are collaborators of the specified project */
+  projectId?: InputMaybe<Scalars['String']['input']>;
+  /** The query looks for matches in user name & email */
+  query: Scalars['String']['input'];
+};
+
+export type VerifyUserEmailInput = {
+  code: Scalars['String']['input'];
+  email: Scalars['String']['input'];
 };
 
 export type Version = {
@@ -3996,14 +4173,13 @@ export type WebhookUpdateInput = {
 
 export type Workspace = {
   __typename?: 'Workspace';
-  /** Regions available to the workspace for project data residency */
-  availableRegions: Array<ServerRegionItem>;
-  /** Billing data for Workspaces beta */
-  billing?: Maybe<WorkspaceBilling>;
+  /** Get all join requests for all the workspaces the user is an admin of */
+  adminWorkspacesJoinRequests?: Maybe<WorkspaceJoinRequestCollection>;
+  automateFunctions: AutomateFunctionCollection;
   createdAt: Scalars['DateTime']['output'];
+  /** Info about the workspace creation state */
+  creationState?: Maybe<WorkspaceCreationState>;
   customerPortalUrl?: Maybe<Scalars['String']['output']>;
-  /** Selected fallback when `logo` not set */
-  defaultLogoIndex: Scalars['Int']['output'];
   /** The default role workspace members will receive for workspace projects. */
   defaultProjectRole: Scalars['String']['output'];
   /**
@@ -4018,6 +4194,7 @@ export type Workspace = {
   domainBasedMembershipProtectionEnabled: Scalars['Boolean']['output'];
   /** Verified workspace domains */
   domains?: Maybe<Array<WorkspaceDomain>>;
+  hasAccessToFeature: Scalars['Boolean']['output'];
   id: Scalars['ID']['output'];
   /** Only available to workspace owners/members */
   invitedTeam?: Maybe<Array<PendingWorkspaceCollaborator>>;
@@ -4026,6 +4203,8 @@ export type Workspace = {
   name: Scalars['String']['output'];
   plan?: Maybe<WorkspacePlan>;
   projects: ProjectCollection;
+  /** A Workspace is marked as readOnly if its trial period is finished or a paid plan is subscribed but payment has failed */
+  readOnly: Scalars['Boolean']['output'];
   /** Active user's role for this workspace. `null` if request is not authenticated, or the workspace is not explicitly shared with you. */
   role?: Maybe<Scalars['String']['output']>;
   slug: Scalars['String']['output'];
@@ -4034,6 +4213,25 @@ export type Workspace = {
   subscription?: Maybe<WorkspaceSubscription>;
   team: WorkspaceCollaboratorCollection;
   updatedAt: Scalars['DateTime']['output'];
+};
+
+
+export type WorkspaceAdminWorkspacesJoinRequestsArgs = {
+  cursor?: InputMaybe<Scalars['String']['input']>;
+  filter?: InputMaybe<AdminWorkspaceJoinRequestFilter>;
+  limit?: Scalars['Int']['input'];
+};
+
+
+export type WorkspaceAutomateFunctionsArgs = {
+  cursor?: InputMaybe<Scalars['String']['input']>;
+  filter?: InputMaybe<AutomateFunctionsFilter>;
+  limit?: Scalars['Int']['input'];
+};
+
+
+export type WorkspaceHasAccessToFeatureArgs = {
+  featureName: WorkspaceFeatureName;
 };
 
 
@@ -4055,16 +4253,11 @@ export type WorkspaceTeamArgs = {
   limit?: Scalars['Int']['input'];
 };
 
-export type WorkspaceBilling = {
-  __typename?: 'WorkspaceBilling';
-  cost: WorkspaceCost;
-  versionsCount: WorkspaceVersionsCount;
-};
-
 export type WorkspaceBillingMutations = {
   __typename?: 'WorkspaceBillingMutations';
   cancelCheckoutSession: Scalars['Boolean']['output'];
   createCheckoutSession: CheckoutSession;
+  upgradePlan: Scalars['Boolean']['output'];
 };
 
 
@@ -4075,6 +4268,11 @@ export type WorkspaceBillingMutationsCancelCheckoutSessionArgs = {
 
 export type WorkspaceBillingMutationsCreateCheckoutSessionArgs = {
   input: CheckoutSessionInput;
+};
+
+
+export type WorkspaceBillingMutationsUpgradePlanArgs = {
+  input: UpgradePlanInput;
 };
 
 /** Overridden by `WorkspaceCollaboratorGraphQLReturn` */
@@ -4100,40 +4298,28 @@ export type WorkspaceCollection = {
   totalCount: Scalars['Int']['output'];
 };
 
-export type WorkspaceCost = {
-  __typename?: 'WorkspaceCost';
-  /** Currency of the price */
-  currency: Currency;
-  /** Discount applied to the total */
-  discount?: Maybe<WorkspaceCostDiscount>;
-  items: Array<WorkspaceCostItem>;
-  /** Estimated cost of the workspace with no discount applied */
-  subTotal: Scalars['Float']['output'];
-  /** Total cost with discount applied */
-  total: Scalars['Float']['output'];
-};
-
-export type WorkspaceCostDiscount = {
-  __typename?: 'WorkspaceCostDiscount';
-  amount: Scalars['Float']['output'];
-  name: Scalars['String']['output'];
-};
-
-export type WorkspaceCostItem = {
-  __typename?: 'WorkspaceCostItem';
-  cost: Scalars['Float']['output'];
-  count: Scalars['Int']['output'];
-  label: Scalars['String']['output'];
-  name: Scalars['String']['output'];
-};
-
 export type WorkspaceCreateInput = {
-  defaultLogoIndex?: InputMaybe<Scalars['Int']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
   /** Logo image as base64-encoded string */
   logo?: InputMaybe<Scalars['String']['input']>;
   name: Scalars['String']['input'];
   slug?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type WorkspaceCreationState = {
+  __typename?: 'WorkspaceCreationState';
+  completed: Scalars['Boolean']['output'];
+  state: Scalars['JSONObject']['output'];
+};
+
+export type WorkspaceCreationStateInput = {
+  completed: Scalars['Boolean']['input'];
+  state: Scalars['JSONObject']['input'];
+  workspaceId: Scalars['ID']['input'];
+};
+
+export type WorkspaceDismissInput = {
+  workspaceId: Scalars['ID']['input'];
 };
 
 export type WorkspaceDomain = {
@@ -4146,6 +4332,12 @@ export type WorkspaceDomainDeleteInput = {
   id: Scalars['ID']['input'];
   workspaceId: Scalars['ID']['input'];
 };
+
+export enum WorkspaceFeatureName {
+  DomainBasedSecurityPolicies = 'domainBasedSecurityPolicies',
+  OidcSso = 'oidcSso',
+  WorkspaceDataRegionSpecificity = 'workspaceDataRegionSpecificity'
+}
 
 export type WorkspaceInviteCreateInput = {
   /** Either this or userId must be filled */
@@ -4215,6 +4407,44 @@ export type WorkspaceInviteUseInput = {
   token: Scalars['String']['input'];
 };
 
+export type WorkspaceJoinRequest = {
+  __typename?: 'WorkspaceJoinRequest';
+  createdAt: Scalars['DateTime']['output'];
+  id: Scalars['String']['output'];
+  status: WorkspaceJoinRequestStatus;
+  user: LimitedUser;
+  workspace: Workspace;
+};
+
+export type WorkspaceJoinRequestCollection = {
+  __typename?: 'WorkspaceJoinRequestCollection';
+  cursor?: Maybe<Scalars['String']['output']>;
+  items: Array<WorkspaceJoinRequest>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type WorkspaceJoinRequestMutations = {
+  __typename?: 'WorkspaceJoinRequestMutations';
+  approve: Scalars['Boolean']['output'];
+  deny: Scalars['Boolean']['output'];
+};
+
+
+export type WorkspaceJoinRequestMutationsApproveArgs = {
+  input: ApproveWorkspaceJoinRequestInput;
+};
+
+
+export type WorkspaceJoinRequestMutationsDenyArgs = {
+  input: DenyWorkspaceJoinRequestInput;
+};
+
+export enum WorkspaceJoinRequestStatus {
+  Approved = 'approved',
+  Denied = 'denied',
+  Pending = 'pending'
+}
+
 export type WorkspaceMutations = {
   __typename?: 'WorkspaceMutations';
   addDomain: Workspace;
@@ -4223,13 +4453,17 @@ export type WorkspaceMutations = {
   delete: Scalars['Boolean']['output'];
   deleteDomain: Workspace;
   deleteSsoProvider: Scalars['Boolean']['output'];
+  /** Dismiss a workspace from the discoverable list, behind the scene a join request is created with the status "dismissed" */
+  dismiss: Scalars['Boolean']['output'];
   invites: WorkspaceInviteMutations;
   join: Workspace;
   leave: Scalars['Boolean']['output'];
   projects: WorkspaceProjectMutations;
+  requestToJoin: Scalars['Boolean']['output'];
   /** Set the default region where project data will be stored. Only available to admins. */
   setDefaultRegion: Workspace;
   update: Workspace;
+  updateCreationState: Scalars['Boolean']['output'];
   updateRole: Workspace;
 };
 
@@ -4259,6 +4493,11 @@ export type WorkspaceMutationsDeleteSsoProviderArgs = {
 };
 
 
+export type WorkspaceMutationsDismissArgs = {
+  input: WorkspaceDismissInput;
+};
+
+
 export type WorkspaceMutationsJoinArgs = {
   input: JoinWorkspaceInput;
 };
@@ -4266,6 +4505,11 @@ export type WorkspaceMutationsJoinArgs = {
 
 export type WorkspaceMutationsLeaveArgs = {
   id: Scalars['ID']['input'];
+};
+
+
+export type WorkspaceMutationsRequestToJoinArgs = {
+  input: WorkspaceRequestToJoinInput;
 };
 
 
@@ -4280,13 +4524,26 @@ export type WorkspaceMutationsUpdateArgs = {
 };
 
 
+export type WorkspaceMutationsUpdateCreationStateArgs = {
+  input: WorkspaceCreationStateInput;
+};
+
+
 export type WorkspaceMutationsUpdateRoleArgs = {
   input: WorkspaceRoleUpdateInput;
 };
 
+export enum WorkspacePaymentMethod {
+  Billing = 'billing',
+  Invoice = 'invoice',
+  Unpaid = 'unpaid'
+}
+
 export type WorkspacePlan = {
   __typename?: 'WorkspacePlan';
+  createdAt: Scalars['DateTime']['output'];
   name: WorkspacePlans;
+  paymentMethod: WorkspacePaymentMethod;
   status: WorkspacePlanStatuses;
 };
 
@@ -4302,8 +4559,11 @@ export enum WorkspacePlanStatuses {
 export enum WorkspacePlans {
   Academia = 'academia',
   Business = 'business',
-  Pro = 'pro',
-  Team = 'team',
+  BusinessInvoiced = 'businessInvoiced',
+  Plus = 'plus',
+  PlusInvoiced = 'plusInvoiced',
+  Starter = 'starter',
+  StarterInvoiced = 'starterInvoiced',
   Unlimited = 'unlimited'
 }
 
@@ -4355,6 +4615,27 @@ export type WorkspaceProjectsFilter = {
   search?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type WorkspaceProjectsUpdatedMessage = {
+  __typename?: 'WorkspaceProjectsUpdatedMessage';
+  /** Project entity, null if project was deleted */
+  project?: Maybe<Project>;
+  /** Project ID */
+  projectId: Scalars['String']['output'];
+  /** Message type */
+  type: WorkspaceProjectsUpdatedMessageType;
+  /** Workspace ID */
+  workspaceId: Scalars['String']['output'];
+};
+
+export enum WorkspaceProjectsUpdatedMessageType {
+  Added = 'ADDED',
+  Removed = 'REMOVED'
+}
+
+export type WorkspaceRequestToJoinInput = {
+  workspaceId: Scalars['ID']['input'];
+};
+
 export enum WorkspaceRole {
   Admin = 'ADMIN',
   Guest = 'GUEST',
@@ -4399,7 +4680,14 @@ export type WorkspaceSubscription = {
   billingInterval: BillingInterval;
   createdAt: Scalars['DateTime']['output'];
   currentBillingCycleEnd: Scalars['DateTime']['output'];
+  seats: WorkspaceSubscriptionSeats;
   updatedAt: Scalars['DateTime']['output'];
+};
+
+export type WorkspaceSubscriptionSeats = {
+  __typename?: 'WorkspaceSubscriptionSeats';
+  guest: Scalars['Int']['output'];
+  plan: Scalars['Int']['output'];
 };
 
 export type WorkspaceTeamFilter = {
@@ -4410,7 +4698,6 @@ export type WorkspaceTeamFilter = {
 };
 
 export type WorkspaceUpdateInput = {
-  defaultLogoIndex?: InputMaybe<Scalars['Int']['input']>;
   defaultProjectRole?: InputMaybe<Scalars['String']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
   discoverabilityEnabled?: InputMaybe<Scalars['Boolean']['input']>;
@@ -4422,12 +4709,12 @@ export type WorkspaceUpdateInput = {
   slug?: InputMaybe<Scalars['String']['input']>;
 };
 
-export type WorkspaceVersionsCount = {
-  __typename?: 'WorkspaceVersionsCount';
-  /** Total number of versions of all projects in the workspace */
-  current: Scalars['Int']['output'];
-  /** Maximum number of version of all projects in the workspace with no additional cost */
-  max: Scalars['Int']['output'];
+export type WorkspaceUpdatedMessage = {
+  __typename?: 'WorkspaceUpdatedMessage';
+  /** Workspace ID */
+  id: Scalars['String']['output'];
+  /** Workspace itself */
+  workspace: Workspace;
 };
 
 export type CrossSyncCommitBranchMetadataQueryVariables = Exact<{

@@ -1,5 +1,4 @@
 import { db } from '@/db/knex'
-import { UsersEmitter } from '@/modules/core/events/usersEmitter'
 import { AllScopes, ServerRoles } from '@/modules/core/helpers/mainConstants'
 import { UserRecord } from '@/modules/core/helpers/types'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
@@ -32,9 +31,11 @@ import {
   updateAllInviteTargetsFactory
 } from '@/modules/serverinvites/repositories/serverInvites'
 import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
+import { getEventBus } from '@/modules/shared/services/eventBus'
+import { createTestContext, testApolloServer } from '@/test/graphqlHelper'
 import { faker } from '@faker-js/faker'
-import { ServerScope } from '@speckle/shared'
-import { kebabCase, omit } from 'lodash'
+import { ServerScope, wait } from '@speckle/shared'
+import { isArray, isNumber, kebabCase, omit, times } from 'lodash'
 
 const getServerInfo = getServerInfoFactory({ db })
 const findEmail = findEmailFactory({ db })
@@ -62,7 +63,7 @@ const createUser = createUserFactory({
     }),
     requestNewEmailVerification
   }),
-  usersEventsEmitter: UsersEmitter.emit
+  emitEvent: getEventBus().emit
 })
 const createPersonalAccessToken = createPersonalAccessTokenFactory({
   storeApiToken: storeApiTokenFactory({ db }),
@@ -123,11 +124,58 @@ export async function createTestUser(userObj?: Partial<BasicTestUser>) {
   return baseUser
 }
 
+export type CreateTestUsersParams = {
+  /**
+   * Number of users to create. Either this or `users` must be set
+   */
+  count?: number
+  /**
+   * The users to create. Either this or `count` must be set
+   */
+  users?: BasicTestUser[]
+  /**
+   * Optional mapper to run on each user obj before insertion
+   */
+  mapper?: (params: { user: BasicTestUser; idx: number }) => BasicTestUser
+  /**
+   * For pagination purposes it might be imperative that users are serially created to ensure different timestamps
+   * and avoid flaky pagination bugs
+   */
+  serial?: boolean
+}
+
 /**
  * Create multiple users for tests and update them to include their ID
  */
-export async function createTestUsers(userObjs: BasicTestUser[]) {
-  await Promise.all(userObjs.map((o) => createTestUser(o)))
+export async function createTestUsers(
+  usersOrParams: BasicTestUser[] | CreateTestUsersParams
+) {
+  const params: CreateTestUsersParams = isArray(usersOrParams)
+    ? { users: usersOrParams }
+    : usersOrParams
+  if (!params.users && !isNumber(params.count)) {
+    throw new Error('Either count or users must be set')
+  }
+
+  let finalUsers = params.users
+    ? params.users
+    : times(params.count || 1, () => initTestUser({}))
+
+  const mapper = params.mapper
+  if (mapper) {
+    finalUsers = finalUsers.map((user, idx) => mapper({ user, idx }))
+  }
+
+  if (params.serial) {
+    const results: BasicTestUser[] = []
+    for (const finalUser of finalUsers) {
+      results.push(await createTestUser(finalUser))
+      await wait(1)
+    }
+    return results
+  } else {
+    return await Promise.all(finalUsers.map((o) => createTestUser(o)))
+  }
 }
 
 /**
@@ -144,4 +192,20 @@ export async function createAuthTokenForUser(
     'test-runner-token',
     scopes as ServerScope[]
   )
+}
+
+/**
+ * Login a user for tests and return the ApolloServer instance
+ */
+export async function login(user: Pick<BasicTestUser, 'id' | 'role'>) {
+  const token = await createAuthTokenForUser(user.id, AllScopes)
+  return await testApolloServer({
+    context: await createTestContext({
+      auth: true,
+      userId: user.id,
+      token,
+      role: user.role,
+      scopes: AllScopes
+    })
+  })
 }

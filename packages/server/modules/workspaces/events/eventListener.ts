@@ -1,9 +1,4 @@
 import {
-  ProjectsEmitter,
-  ProjectEvents,
-  ProjectEventsPayloads
-} from '@/modules/core/events/projectsEmitter'
-import {
   deleteProjectRoleFactory,
   getStreamFactory,
   legacyGetStreamsFactory,
@@ -26,7 +21,7 @@ import {
 } from '@/modules/serverinvites/helpers/core'
 import { logger, moduleLogger } from '@/logging/logging'
 import { updateWorkspaceRoleFactory } from '@/modules/workspaces/services/management'
-import { getEventBus } from '@/modules/shared/services/eventBus'
+import { EventPayload, getEventBus } from '@/modules/shared/services/eventBus'
 import { WorkspaceInviteResourceType } from '@/modules/workspaces/domain/constants'
 import { Roles, WorkspaceRoles } from '@speckle/shared'
 import {
@@ -60,6 +55,12 @@ import {
   getWorkspaceSsoProviderRecordFactory
 } from '@/modules/workspaces/repositories/sso'
 import { WorkspacesNotAuthorizedError } from '@/modules/workspaces/errors/workspace'
+import { publish, WorkspaceSubscriptions } from '@/modules/shared/utils/subscriptions'
+import { isWorkspaceResourceTarget } from '@/modules/workspaces/services/invites'
+import {
+  ProjectEvents,
+  ProjectEventsPayloads
+} from '@/modules/core/domain/projects/events'
 
 export const onProjectCreatedFactory =
   ({
@@ -162,6 +163,7 @@ export const onWorkspaceAuthorizedFactory =
 
     // Guests cannot use (and are not restricted by) SSO
     const workspaceRole = await getWorkspaceRoleForUser({ userId, workspaceId })
+    if (!workspaceRole) throw new WorkspacesNotAuthorizedError()
     if (workspaceRole?.role === Roles.Workspace.Guest) return
 
     const provider = await getWorkspaceSsoProviderRecord({ workspaceId })
@@ -256,17 +258,70 @@ export const onWorkspaceRoleUpdatedFactory =
     }
   }
 
+const emitWorkspaceGraphqlSubscriptionsFactory =
+  (deps: { getWorkspace: GetWorkspace }) => async (params: EventPayload<'**'>) => {
+    const { eventName, payload } = params
+    switch (eventName) {
+      case WorkspaceEvents.Updated:
+        await publish(WorkspaceSubscriptions.WorkspaceUpdated, {
+          workspaceUpdated: {
+            workspace: payload.workspace,
+            id: payload.workspace.id
+          }
+        })
+        break
+      case WorkspaceEvents.RoleDeleted:
+      case WorkspaceEvents.RoleUpdated:
+        const { workspaceId } = payload
+        const foundWorkspace = await deps.getWorkspace({ workspaceId })
+        if (foundWorkspace) {
+          await publish(WorkspaceSubscriptions.WorkspaceUpdated, {
+            workspaceUpdated: {
+              workspace: foundWorkspace,
+              id: foundWorkspace.id
+            }
+          })
+        }
+        break
+      case ServerInvitesEvents.Created:
+      case ServerInvitesEvents.Canceled:
+      case ServerInvitesEvents.Finalized:
+        const { invite } = payload
+        if (!isWorkspaceResourceTarget(invite.resource)) return
+
+        const res = invite.resource
+        const newInviteWorkspace = await deps.getWorkspace({
+          workspaceId: res.resourceId
+        })
+        if (newInviteWorkspace) {
+          await publish(WorkspaceSubscriptions.WorkspaceUpdated, {
+            workspaceUpdated: {
+              workspace: newInviteWorkspace,
+              id: newInviteWorkspace.id
+            }
+          })
+        }
+
+        break
+    }
+  }
+
 export const initializeEventListenersFactory =
   ({ db }: { db: Knex }) =>
   () => {
     const eventBus = getEventBus()
     const getStreams = legacyGetStreamsFactory({ db })
+    const getWorkspace = getWorkspaceFactory({ db })
+    const emitWorkspaceGraphqlSubscriptions = emitWorkspaceGraphqlSubscriptionsFactory({
+      getWorkspace
+    })
+
     const quitCbs = [
-      ProjectsEmitter.listen(ProjectEvents.Created, async (payload) => {
+      eventBus.listen(ProjectEvents.Created, async ({ payload }) => {
         const onProjectCreated = onProjectCreatedFactory({
           getWorkspaceRoleToDefaultProjectRoleMapping:
             getWorkspaceRoleToDefaultProjectRoleMappingFactory({
-              getWorkspace: getWorkspaceFactory({ db })
+              getWorkspace
             }),
           upsertProjectRole: upsertProjectRoleFactory({ db }),
           getWorkspaceRoles: getWorkspaceRolesFactory({ db })
@@ -289,7 +344,7 @@ export const initializeEventListenersFactory =
       }),
       eventBus.listen(WorkspaceEvents.Authorized, async ({ payload }) => {
         const onWorkspaceAuthorized = onWorkspaceAuthorizedFactory({
-          getWorkspace: getWorkspaceFactory({ db }),
+          getWorkspace,
           getWorkspaceRoleForUser: getWorkspaceRoleForUserFactory({ db }),
           getWorkspaceSsoProviderRecord: getWorkspaceSsoProviderRecordFactory({ db }),
           getUserSsoSession: getUserSsoSessionFactory({ db })
@@ -309,14 +364,15 @@ export const initializeEventListenersFactory =
         const onWorkspaceRoleUpdated = onWorkspaceRoleUpdatedFactory({
           getWorkspaceRoleToDefaultProjectRoleMapping:
             getWorkspaceRoleToDefaultProjectRoleMappingFactory({
-              getWorkspace: getWorkspaceFactory({ db: trx })
+              getWorkspace
             }),
           queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({ getStreams }),
           deleteProjectRole: deleteProjectRoleFactory({ db: trx }),
           upsertProjectRole: upsertProjectRoleFactory({ db: trx })
         })
         await withTransaction(onWorkspaceRoleUpdated(payload), trx)
-      })
+      }),
+      eventBus.listen('**', emitWorkspaceGraphqlSubscriptions)
     ]
 
     return () => quitCbs.forEach((quit) => quit())

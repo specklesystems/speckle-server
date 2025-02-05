@@ -1,14 +1,13 @@
+import { getProjectDbClient } from '@/clients/knex.js'
 import { getObjectsStreamFactory } from '@/repositories/objects.js'
 import { isSimpleTextRequested, simpleTextOrJsonContentType } from '@/utils/headers.js'
 import { SpeckleObjectsStream } from '@/utils/speckleObjectsStream.js'
 import express from 'express'
-import type { Knex } from 'knex'
 import { PassThrough, pipeline } from 'stream'
 import zlib from 'zlib'
 import { z } from 'zod'
 
-const apiRouterFactory = (deps: { db: Knex }) => {
-  const { db } = deps
+const apiRouterFactory = () => {
   const apiRouter = express.Router()
 
   const getObjectsRequestBodySchema = z.object({
@@ -31,15 +30,17 @@ const apiRouterFactory = (deps: { db: Knex }) => {
         'Content-Type': simpleTextOrJsonContentType(req)
       })
 
-      const dbStream = getObjectsStreamFactory({ db })({
+      const projectDb = await getProjectDbClient({ projectId: req.params.streamId })
+
+      const dbStream = getObjectsStreamFactory({ db: projectDb })({
         streamId: req.params.streamId,
         objectIds: getObjectsRequestBody.objects
       })
       // https://knexjs.org/faq/recipes.html#manually-closing-streams
       // https://github.com/knex/knex/issues/2324
-      req.on('close', () => {
-        dbStream.end.bind(dbStream)
-        dbStream.destroy.bind(dbStream)
+      res.on('close', () => {
+        dbStream.end()
+        dbStream.destroy()
       })
 
       const speckleObjStream = new SpeckleObjectsStream(isSimpleTextRequested(req))

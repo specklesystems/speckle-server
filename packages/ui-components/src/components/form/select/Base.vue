@@ -1,4 +1,5 @@
 <template>
+  <!-- If multiple, use FormSelectMultiple instead -->
   <div>
     <Listbox
       :key="forceUpdateKey"
@@ -8,185 +9,213 @@
       :by="by"
       :disabled="isDisabled"
       as="div"
+      :class="{
+        'md:flex md:items-center md:space-x-2 md:justify-between': isLeftLabelPosition
+      }"
     >
-      <ListboxLabel
-        :id="labelId"
-        class="flex text-body-xs text-foreground font-medium pb-1"
-        :class="[{ 'sr-only': !showLabel }, { 'items-center gap-1': showOptional }]"
-        :for="buttonId"
-      >
-        {{ label }}
-        <div v-if="showRequired" class="text-danger text-xs opacity-80">*</div>
-        <div v-else-if="showOptional" class="text-body-2xs font-normal">(optional)</div>
-      </ListboxLabel>
-      <div :class="buttonsWrapperClasses">
-        <!-- <div class="relative flex"> -->
-        <ListboxButton
-          :id="buttonId"
-          ref="listboxButton"
-          v-slot="{ open }"
-          :class="buttonClasses"
+      <div class="flex flex-col" :class="{ 'pb-1': showLabel && !isLeftLabelPosition }">
+        <ListboxLabel
+          :id="labelId"
+          class="flex text-body-xs text-foreground font-medium"
+          :class="[{ 'sr-only': !showLabel }, { 'items-center gap-1': showOptional }]"
+          :for="buttonId"
         >
-          <div class="flex items-center justify-between w-full">
-            <div
-              class="block truncate grow text-left text-xs sm:text-[13px]"
-              :class="[hasValueSelected ? 'text-foreground' : 'text-foreground-2']"
-            >
-              <template
-                v-if="!wrappedValue || (isArray(wrappedValue) && !wrappedValue.length)"
-              >
-                <slot name="nothing-selected">
-                  {{ placeholder ? placeholder : label }}
-                </slot>
-              </template>
-              <template v-else>
-                <slot name="something-selected" :value="wrappedValue">
-                  {{ simpleDisplayText(wrappedValue) }}
-                </slot>
-              </template>
-            </div>
-            <div class="pointer-events-none shrink-0 ml-1 flex items-center space-x-2">
-              <ExclamationCircleIcon
-                v-if="errorMessage"
-                class="h-4 w-4 text-danger"
-                aria-hidden="true"
-              />
-              <div
-                v-else-if="!showLabel && showRequired"
-                class="text-4xl text-danger opacity-50 h-4 w-4 leading-6"
-              >
-                *
-              </div>
-              <ChevronUpIcon
-                v-if="open"
-                class="h-4 w-4 text-foreground"
-                aria-hidden="true"
-              />
-              <ChevronDownIcon
-                v-else
-                class="h-4 w-4 text-foreground"
-                aria-hidden="true"
-              />
-            </div>
+          {{ label }}
+          <div v-if="showRequired" class="text-danger text-xs opacity-80">*</div>
+          <div v-else-if="showOptional" class="text-body-2xs font-normal">
+            (optional)
           </div>
-          <!-- Sync isOpen with dropdown open state -->
-          <template v-if="(isOpen = open)"></template>
-        </ListboxButton>
-        <!-- </div> -->
-        <!-- Clear Button -->
-        <button
-          v-if="renderClearButton"
-          :class="clearButtonClasses"
-          :disabled="disabled"
-          @click="clearValue()"
+        </ListboxLabel>
+        <p
+          v-if="helpTipId && isLeftLabelPosition"
+          :id="helpTipId"
+          class="text-xs"
+          :class="helpTipClasses"
         >
-          <XMarkIcon class="w-3 h-3" />
-        </button>
-        <Transition
-          v-if="isMounted"
-          leave-active-class="transition ease-in duration-100"
-          leave-from-class="opacity-100"
-          leave-to-class="opacity-0"
-        >
-          <Teleport to="body" :disabled="!mountMenuOnBody">
-            <ListboxOptions
-              ref="menuEl"
-              :class="listboxOptionsClasses"
-              :style="listboxOptionsStyle"
-              @focus="searchInput?.focus()"
-            >
-              <label v-if="hasSearch" class="flex flex-col mx-1 mb-1">
-                <span class="sr-only label text-foreground">Search</span>
-                <div class="relative">
-                  <div
-                    class="pointer-events-none absolute top-0 bottom-0 left-0 flex items-center pl-2"
-                  >
-                    <MagnifyingGlassIcon class="h-4 w-4 text-foreground-2" />
-                  </div>
-                  <input
-                    ref="searchInput"
-                    v-model="searchValue"
-                    type="text"
-                    class="py-1 pl-7 w-full bg-foundation placeholder:font-normal normal placeholder:text-foreground-2 text-[13px]"
-                    :placeholder="searchPlaceholder"
-                    @keydown.stop
-                  />
-                </div>
-              </label>
-              <div class="overflow-auto simple-scrollbar max-h-60">
-                <div v-if="isAsyncSearchMode && isAsyncLoading" class="px-1">
-                  <CommonLoadingBar :loading="true" />
-                </div>
-                <div v-else-if="isAsyncSearchMode && !currentItems.length">
-                  <div class="text-foreground-2 text-center">
-                    <slot name="nothing-found">Nothing found</slot>
-                  </div>
-                </div>
-                <template v-if="!isAsyncSearchMode || !isAsyncLoading">
-                  <ListboxOption
-                    v-for="item in finalItems"
-                    :key="itemKey(item)"
-                    v-slot="{
-                      active,
-                      selected
-                    }: {
-                      active: boolean,
-                      selected: boolean
-                    }"
-                    :value="(item as SingleItem)"
-                    :disabled="disabledItemPredicate?.(item) || false"
-                  >
-                    <li
-                      v-tippy="
-                        disabledItemPredicate?.(item) ? disabledItemTooltip : undefined
-                      "
-                      :class="
-                        listboxOptionClasses({
-                          active,
-                          disabled: disabledItemPredicate?.(item) || false
-                        })
-                      "
-                    >
-                      <span
-                        class="block px-2 py-1.5 rounded-md"
-                        :class="[
-                          selected ? 'bg-highlight-3' : '',
-                          !hideCheckmarks ? 'pr-8' : 'pr-2',
-                          !disabledItemPredicate?.(item) && !selected
-                            ? 'hover:bg-highlight-1'
-                            : ''
-                        ]"
-                      >
-                        <slot
-                          name="option"
-                          class="truncate"
-                          :item="item"
-                          :active="active"
-                          :selected="selected"
-                          :disabled="disabledItemPredicate?.(item) || false"
-                        >
-                          {{ simpleDisplayText(item) }}
-                        </slot>
-
-                        <span
-                          v-if="!hideCheckmarks && selected"
-                          :class="[
-                            'absolute top-0 bottom-0 right-0 text-foreground flex items-center pr-4'
-                          ]"
-                        >
-                          <CheckIcon class="h-4 w-4" aria-hidden="true" />
-                        </span>
-                      </span>
-                    </li>
-                  </ListboxOption>
+          {{ helpTip }}
+        </p>
+      </div>
+      <div v-tippy="tooltipText">
+        <div :class="buttonsWrapperClasses">
+          <!-- <div class="relative flex"> -->
+          <ListboxButton
+            :id="buttonId"
+            ref="listboxButton"
+            v-slot="{ open }"
+            :class="buttonClasses"
+          >
+            <div class="flex items-center justify-between w-full">
+              <div
+                class="block truncate grow text-left text-xs sm:text-[13px]"
+                :class="[hasValueSelected ? 'text-foreground' : 'text-foreground-2']"
+              >
+                <template
+                  v-if="
+                    !wrappedValue || (isArray(wrappedValue) && !wrappedValue.length)
+                  "
+                >
+                  <slot name="nothing-selected">
+                    {{ placeholder ? placeholder : label }}
+                  </slot>
+                </template>
+                <template v-else>
+                  <slot name="something-selected" :value="wrappedValue">
+                    {{ simpleDisplayText(wrappedValue) }}
+                  </slot>
                 </template>
               </div>
-            </ListboxOptions>
-          </Teleport>
-        </Transition>
+              <div
+                class="pointer-events-none shrink-0 ml-1 flex items-center space-x-2"
+              >
+                <ExclamationCircleIcon
+                  v-if="errorMessage"
+                  class="h-4 w-4 text-danger"
+                  aria-hidden="true"
+                />
+                <div
+                  v-else-if="!showLabel && showRequired"
+                  class="text-4xl text-danger opacity-50 h-4 w-4 leading-6"
+                >
+                  *
+                </div>
+                <ChevronUpIcon
+                  v-if="open"
+                  class="h-4 w-4 text-foreground"
+                  aria-hidden="true"
+                />
+                <ChevronDownIcon
+                  v-else
+                  class="h-4 w-4 text-foreground"
+                  aria-hidden="true"
+                />
+              </div>
+            </div>
+            <!-- Sync isOpen with dropdown open state -->
+            <template v-if="(isOpen = open)"></template>
+          </ListboxButton>
+          <!-- </div> -->
+          <!-- Clear Button -->
+          <button
+            v-if="renderClearButton"
+            :class="clearButtonClasses"
+            :disabled="disabled"
+            @click="clearValue()"
+          >
+            <XMarkIcon class="w-3 h-3" />
+          </button>
+          <Transition
+            v-if="isMounted"
+            leave-active-class="transition ease-in duration-100"
+            leave-from-class="opacity-100"
+            leave-to-class="opacity-0"
+          >
+            <Teleport to="body" :disabled="!mountMenuOnBody">
+              <ListboxOptions
+                ref="menuEl"
+                :class="listboxOptionsClasses"
+                :style="listboxOptionsStyle"
+                @focus="searchInput?.focus()"
+              >
+                <label v-if="hasSearch" class="flex flex-col mx-1 mb-1">
+                  <span class="sr-only label text-foreground">Search</span>
+                  <div class="relative">
+                    <div
+                      class="pointer-events-none absolute top-0 bottom-0 left-0 flex items-center pl-2"
+                    >
+                      <MagnifyingGlassIcon class="h-4 w-4 text-foreground-2" />
+                    </div>
+                    <input
+                      ref="searchInput"
+                      v-model="searchValue"
+                      type="text"
+                      class="py-1 pl-7 w-full bg-foundation placeholder:font-normal normal placeholder:text-foreground-2 text-[13px] focus-visible:[box-shadow:none] rounded-md hover:border-outline-5 focus-visible:border-outline-4"
+                      :placeholder="searchPlaceholder"
+                      @keydown.stop
+                    />
+                  </div>
+                </label>
+                <div class="overflow-auto simple-scrollbar max-h-60">
+                  <div v-if="isAsyncSearchMode && isAsyncLoading" class="px-1">
+                    <CommonLoadingBar :loading="true" />
+                  </div>
+                  <div v-else-if="isAsyncSearchMode && !currentItems.length">
+                    <div class="text-foreground-2 text-center">
+                      <slot name="nothing-found">Nothing found</slot>
+                    </div>
+                  </div>
+                  <template v-if="!isAsyncSearchMode || !isAsyncLoading">
+                    <ListboxOption
+                      v-for="item in finalItems"
+                      :key="itemKey(item)"
+                      v-slot="{
+                        active,
+                        selected
+                      }: {
+                        active: boolean,
+                        selected: boolean
+                      }"
+                      :value="(item as SingleItem)"
+                      :disabled="disabledItemPredicate?.(item) || false"
+                    >
+                      <li
+                        v-tippy="
+                          disabledItemPredicate?.(item)
+                            ? disabledItemTooltip
+                            : undefined
+                        "
+                        :class="
+                          listboxOptionClasses({
+                            active,
+                            disabled: disabledItemPredicate?.(item) || false
+                          })
+                        "
+                      >
+                        <span
+                          class="block px-2 py-1.5 rounded-md"
+                          :class="[
+                            selected ? 'bg-highlight-3' : '',
+                            !hideCheckmarks ? 'pr-8' : 'pr-2',
+                            !disabledItemPredicate?.(item) && !selected
+                              ? 'hover:bg-highlight-1'
+                              : ''
+                          ]"
+                        >
+                          <slot
+                            name="option"
+                            class="truncate"
+                            :item="item"
+                            :active="active"
+                            :selected="selected"
+                            :disabled="disabledItemPredicate?.(item) || false"
+                          >
+                            {{ simpleDisplayText(item) }}
+                          </slot>
+
+                          <span
+                            v-if="!hideCheckmarks && selected"
+                            :class="[
+                              'absolute top-0 bottom-0 right-0 text-foreground flex items-center pr-4'
+                            ]"
+                          >
+                            <CheckIcon class="h-4 w-4" aria-hidden="true" />
+                          </span>
+                        </span>
+                      </li>
+                    </ListboxOption>
+                  </template>
+                </div>
+              </ListboxOptions>
+            </Teleport>
+          </Transition>
+        </div>
       </div>
     </Listbox>
-    <p v-if="helpTipId" :id="helpTipId" class="mt-2 text-xs" :class="helpTipClasses">
+    <p
+      v-if="helpTipId && !isLeftLabelPosition"
+      :id="helpTipId"
+      class="mt-2 text-xs"
+      :class="helpTipClasses"
+    >
       {{ helpTip }}
     </p>
   </div>
@@ -220,6 +249,8 @@ import type { RuleExpression } from 'vee-validate'
 import { nanoid } from 'nanoid'
 import CommonLoadingBar from '~~/src/components/common/loading/Bar.vue'
 import { useElementBounding, useMounted, useIntersectionObserver } from '@vueuse/core'
+import type { LabelPosition } from '~~/src/composables/form/input'
+import { directive as vTippy } from 'vue-tippy'
 
 type ButtonStyle = 'base' | 'simple' | 'tinted'
 type ValueType = SingleItem | SingleItem[] | undefined
@@ -430,6 +461,14 @@ const props = defineProps({
   disabledItemTooltip: {
     required: false,
     type: String
+  },
+  labelPosition: {
+    type: String as PropType<LabelPosition>,
+    default: 'top'
+  },
+  tooltipText: {
+    type: String,
+    default: undefined
   }
 })
 
@@ -481,6 +520,8 @@ const helpTipClasses = computed((): string =>
   error.value ? 'text-danger' : 'text-foreground-2'
 )
 
+const isLeftLabelPosition = computed(() => props.labelPosition === 'left')
+
 const renderClearButton = computed(
   () => props.buttonStyle !== 'simple' && props.clearable && !props.disabled
 )
@@ -524,6 +565,10 @@ const buttonsWrapperClasses = computed(() => {
     classParts.push('h-8')
   } else if (sizeClasses.value?.length) {
     classParts.push(sizeClasses.value)
+  }
+
+  if (isLeftLabelPosition.value) {
+    classParts.push('md:basis-1/2')
   }
 
   return classParts.join(' ')

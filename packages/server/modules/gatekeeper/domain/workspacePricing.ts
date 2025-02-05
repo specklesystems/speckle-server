@@ -73,13 +73,15 @@ const baseFeatures = {
   workspace: true
 }
 
-export const trialWorkspacePlans = z.literal('team')
+// team
+export const trialWorkspacePlans = z.literal('starter')
 
 export type TrialWorkspacePlans = z.infer<typeof trialWorkspacePlans>
 
 export const paidWorkspacePlans = z.union([
   trialWorkspacePlans,
-  z.literal('pro'),
+  // pro
+  z.literal('plus'),
   z.literal('business')
 ])
 
@@ -88,7 +90,10 @@ export type PaidWorkspacePlans = z.infer<typeof paidWorkspacePlans>
 // these are not publicly exposed for general use on billing enabled servers
 export const unpaidWorkspacePlans = z.union([
   z.literal('unlimited'),
-  z.literal('academia')
+  z.literal('academia'),
+  z.literal('starterInvoiced'),
+  z.literal('plusInvoiced'),
+  z.literal('businessInvoiced')
 ])
 
 export type UnpaidWorkspacePlans = z.infer<typeof unpaidWorkspacePlans>
@@ -109,9 +114,9 @@ export type WorkspacePlanBillingIntervals = z.infer<
   typeof workspacePlanBillingIntervals
 >
 
-const team: WorkspacePlanFeaturesAndLimits = {
+const starter: WorkspacePlanFeaturesAndLimits = {
   ...baseFeatures,
-  name: 'team',
+  name: 'starter',
   description: 'The team plan',
   oidcSso: false,
   workspaceDataRegionSpecificity: false,
@@ -119,9 +124,9 @@ const team: WorkspacePlanFeaturesAndLimits = {
   uploadSize: 500
 }
 
-const pro: WorkspacePlanFeaturesAndLimits = {
+const plus: WorkspacePlanFeaturesAndLimits = {
   ...baseFeatures,
-  name: 'pro',
+  name: 'plus',
   description: 'The pro plan',
   oidcSso: true,
   workspaceDataRegionSpecificity: false,
@@ -154,17 +159,17 @@ const academia: WorkspacePlanFeaturesAndLimits = {
   name: 'academia',
   description: 'The academia plan',
   oidcSso: true,
-  workspaceDataRegionSpecificity: false,
-  automateMinutes: null,
-  uploadSize: 100
+  workspaceDataRegionSpecificity: true,
+  automateMinutes: 900,
+  uploadSize: 1000
 }
 
 const paidWorkspacePlanFeatures: Record<
   PaidWorkspacePlans,
   WorkspacePlanFeaturesAndLimits
 > = {
-  team,
-  pro,
+  starter,
+  plus,
   business
 }
 
@@ -173,7 +178,10 @@ export const unpaidWorkspacePlanFeatures: Record<
   WorkspacePlanFeaturesAndLimits
 > = {
   academia,
-  unlimited
+  unlimited,
+  starterInvoiced: starter,
+  plusInvoiced: plus,
+  businessInvoiced: business
 }
 
 export const workspacePlanFeatures: Record<

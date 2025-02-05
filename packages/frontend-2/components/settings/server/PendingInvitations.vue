@@ -58,9 +58,10 @@
       </template>
     </LayoutTable>
 
-    <SettingsServerPendingInvitationsDeleteDialog
+    <InviteDialogCancelInvite
+      v-if="inviteToModify"
       v-model:open="showDeleteInvitationDialog"
-      :invite="inviteToModify"
+      :email="inviteToModify?.email"
     />
 
     <InfiniteLoading
@@ -70,7 +71,7 @@
       @infinite="onInfiniteLoad"
     />
 
-    <SettingsServerUserInviteDialog v-model:open="showInviteDialog" />
+    <InviteDialogServer v-model:open="showInviteDialog" />
   </div>
 </template>
 
@@ -128,8 +129,8 @@ const invites = computed(() => result.value?.admin.inviteList.items || [])
 
 const actionItems: LayoutMenuItem[][] = [
   [
-    { title: 'Resend invitation', id: 'resend-invite' },
-    { title: 'Delete invitation...', id: 'delete-invite' }
+    { title: 'Resend invite', id: 'resend-invite' },
+    { title: 'Cancel invite...', id: 'delete-invite' }
   ]
 ]
 

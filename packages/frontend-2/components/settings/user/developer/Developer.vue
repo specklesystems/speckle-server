@@ -17,11 +17,10 @@
                   props: {
                     color: 'outline',
                     target: '_blank',
-                    external: true,
-                    iconLeft: BookOpenIcon
+                    external: true
                   },
                   onClick: goToExplorer,
-                  label: 'Open docs'
+                  label: 'Open explorer'
                 }
               ]"
             />
@@ -44,7 +43,6 @@
 </template>
 
 <script setup lang="ts">
-import { BookOpenIcon } from '@heroicons/vue/24/outline'
 import type {
   TokenItem,
   ApplicationItem,

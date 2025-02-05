@@ -77,6 +77,15 @@ const {
   threads: { openThread }
 } = useInjectedViewerInterfaceState()
 const { open: openThreadRaw } = useThreadUtilities()
+const { activeUser } = useActiveUser()
+const archiveComment = useArchiveComment()
+const { triggerNotification } = useGlobalToast()
+const {
+  projectId,
+  resources: {
+    response: { project }
+  }
+} = useInjectedViewerState()
 
 const mp = useMixpanel()
 const open = (id: string) => {
@@ -125,15 +134,6 @@ const threadAuthors = computed(() => {
   return authors
 })
 
-const { activeUser } = useActiveUser()
-const archiveComment = useArchiveComment()
-const { triggerNotification } = useGlobalToast()
-const {
-  resources: {
-    response: { project }
-  }
-} = useInjectedViewerState()
-
 const canArchiveOrUnarchive = computed(
   () =>
     activeUser.value &&
@@ -142,7 +142,11 @@ const canArchiveOrUnarchive = computed(
 )
 
 const toggleCommentResolvedStatus = async () => {
-  await archiveComment(props.thread.id, !props.thread.archived)
+  await archiveComment({
+    commentId: props.thread.id,
+    projectId: projectId.value,
+    archived: !props.thread.archived
+  })
   mp.track('Comment Action', {
     type: 'action',
     name: 'archive',

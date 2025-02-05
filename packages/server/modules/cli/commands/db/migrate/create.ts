@@ -3,6 +3,8 @@ import { appRoot } from '@/bootstrap'
 import fs from 'fs/promises'
 import { logger } from '@/logging/logging'
 import { CommandModule } from 'yargs'
+import { ensureError } from '@speckle/shared'
+import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
 
 /** @type {import('yargs').CommandModule} */
 const command: CommandModule<unknown, { name: string; module: string }> = {
@@ -25,10 +27,17 @@ const command: CommandModule<unknown, { name: string; module: string }> = {
 
     try {
       await fs.access(migrationDir)
-    } catch {
-      throw new Error(
-        `Migration directory '${migrationDir}' is not accessible! Check if it exists.`
-      )
+    } catch (e) {
+      const cause = ensureError(e)
+      if (cause.message.toLowerCase().includes('no such file or directory')) {
+        // Try to create it
+        await fs.mkdir(migrationDir, { recursive: true })
+      } else {
+        throw new MisconfiguredEnvironmentError(
+          `Migration directory '${migrationDir}' is not accessible! Check if it exists.`,
+          { cause }
+        )
+      }
     }
 
     logger.info('Creating migration...')

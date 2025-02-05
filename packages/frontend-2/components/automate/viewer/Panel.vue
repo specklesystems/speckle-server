@@ -3,15 +3,13 @@
     <ViewerLayoutPanel @close="$emit('close')">
       <template #title>Automate</template>
 
-      <div class="flex items-center space-x-2 w-full pl-3 mt-2">
-        <div class="mt-[6px] shrink-0">
-          <AutomateRunsTriggerStatusIcon :summary="summary" class="h-6 w-6" />
-        </div>
-        <div class="flex min-w-0 flex-col gap-1">
-          <h4 :class="[`label font-medium whitespace-normal`, summary.titleColor]">
+      <div class="flex items-center space-x-2 w-full pl-3 mt-3 mb-1">
+        <AutomateRunsTriggerStatusIcon :summary="summary" class="h-6 w-6" />
+        <div class="flex min-w-0 flex-col gap-0.5">
+          <h4 class="text-heading-sm" :class="[summary.titleColor]">
             {{ summary.title }}
           </h4>
-          <div class="caption text-foreground-2 whitespace-normal">
+          <div class="text-body-2xs text-foreground-2">
             {{ summary.longSummary }}
           </div>
         </div>

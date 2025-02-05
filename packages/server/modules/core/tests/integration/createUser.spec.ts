@@ -32,8 +32,9 @@ import {
   deleteServerOnlyInvitesFactory,
   updateAllInviteTargetsFactory
 } from '@/modules/serverinvites/repositories/serverInvites'
-import { UsersEmitter } from '@/modules/core/events/usersEmitter'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
+import { getEventBus } from '@/modules/shared/services/eventBus'
+import { UserEvents } from '@/modules/core/domain/users/events'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = legacyGetUserFactory({ db })
@@ -62,15 +63,31 @@ const createUser = createUserFactory({
     }),
     requestNewEmailVerification
   }),
-  usersEventsEmitter: UsersEmitter.emit
+  emitEvent: getEventBus().emit
 })
 
 describe('Users @core-users', () => {
+  let quitters: (() => void)[] = []
+
   beforeEach(async () => {
     await beforeEachContext()
   })
 
+  beforeEach(() => {
+    quitters.forEach((quit) => quit())
+    quitters = []
+  })
+
   it('Should create a user', async () => {
+    let eventFired = false
+    quitters.push(
+      getEventBus().listen(UserEvents.Created, async ({ payload }) => {
+        expect(payload.user).to.be.ok
+        expect(payload.signUpCtx).to.be.not.ok
+        eventFired = true
+      })
+    )
+
     const newUser = {
       name: 'John Doe',
       email: createRandomEmail(),
@@ -80,6 +97,7 @@ describe('Users @core-users', () => {
     const actorId = await createUser(newUser)
 
     expect(actorId).to.be.a('string')
+    expect(eventFired).to.be.true
   })
 
   it('Should store user email lowercase', async () => {

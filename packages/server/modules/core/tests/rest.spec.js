@@ -38,7 +38,6 @@ const {
 } = require('@/modules/serverinvites/services/coreEmailContents')
 const { getEventBus } = require('@/modules/shared/services/eventBus')
 const { createBranchFactory } = require('@/modules/core/repositories/branches')
-const { ProjectsEmitter } = require('@/modules/core/events/projectsEmitter')
 const {
   getUsersFactory,
   getUserFactory,
@@ -66,7 +65,6 @@ const {
 const {
   finalizeInvitedServerRegistrationFactory
 } = require('@/modules/serverinvites/services/processing')
-const { UsersEmitter } = require('@/modules/core/events/usersEmitter')
 const { createPersonalAccessTokenFactory } = require('@/modules/core/services/tokens')
 const {
   storeTokenScopesFactory,
@@ -104,7 +102,7 @@ const createStream = legacyCreateStreamFactory({
     }),
     createStream: createStreamFactory({ db }),
     createBranch: createBranchFactory({ db }),
-    projectsEventsEmitter: ProjectsEmitter.emit
+    emitEvent: getEventBus().emit
   })
 })
 
@@ -133,7 +131,7 @@ const createUser = createUserFactory({
     }),
     requestNewEmailVerification
   }),
-  usersEventsEmitter: UsersEmitter.emit
+  emitEvent: getEventBus().emit
 })
 const createPersonalAccessToken = createPersonalAccessTokenFactory({
   storeApiToken: storeApiTokenFactory({ db }),
@@ -503,6 +501,15 @@ describe('Upload/Download Routes @api-rest', () => {
       })
   })
 
+  it('Should return status code 400 when getting the list of objects and if it is not parseable', async () => {
+    const response = await request(app)
+      .post(`/api/getobjects/${testStream.id}`)
+      .set('Authorization', userA.token)
+      .send({ objects: ['lolz', 'thisIsBroken', 'shouldHaveBeenJSONStringified'] })
+
+    expect(response).to.have.status(400)
+  })
+
   it('Should properly check if the server has a list of objects', (done) => {
     const objectIds = []
     for (let i = 0; i < objBatches[0].length; i++) {
@@ -555,5 +562,14 @@ describe('Upload/Download Routes @api-rest', () => {
           done(err)
         }
       })
+  })
+
+  it('Should return status code 400 if the list of objects is not parseable', async () => {
+    const response = await request(app)
+      .post(`/api/diff/${testStream.id}`)
+      .set('Authorization', userA.token)
+      .send({ objects: ['lolz', 'thisIsBroken', 'shouldHaveBeenJSONStringified'] })
+
+    expect(response).to.have.status(400)
   })
 })

@@ -62,7 +62,6 @@ const {
   deleteServerOnlyInvitesFactory,
   updateAllInviteTargetsFactory
 } = require('@/modules/serverinvites/repositories/serverInvites')
-const { UsersEmitter } = require('@/modules/core/events/usersEmitter')
 const {
   storeApiTokenFactory,
   storeTokenScopesFactory,
@@ -75,6 +74,7 @@ const {
   updateApiTokenFactory
 } = require('@/modules/core/repositories/tokens')
 const { getServerInfoFactory } = require('@/modules/core/repositories/server')
+const { getEventBus } = require('@/modules/shared/services/eventBus')
 
 const db = knex
 const getApp = getAppFactory({ db: knex })
@@ -141,7 +141,7 @@ const createUser = createUserFactory({
     }),
     requestNewEmailVerification
   }),
-  usersEventsEmitter: UsersEmitter.emit
+  emitEvent: getEventBus().emit
 })
 const validateToken = validateTokenFactory({
   revokeUserTokenById: revokeUserTokenByIdFactory({ db }),

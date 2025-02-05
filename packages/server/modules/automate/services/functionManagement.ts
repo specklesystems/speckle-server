@@ -46,6 +46,9 @@ import { getFunctionsMarketplaceUrl } from '@/modules/core/helpers/routeHelper'
 import { automateLogger } from '@/logging/logging'
 import { CreateStoredAuthCode } from '@/modules/automate/domain/operations'
 import { GetUser } from '@/modules/core/domain/users/operations'
+import { noop } from 'lodash'
+import { UnknownFunctionTemplateError } from '@/modules/automate/errors/functions'
+import { UserInputError } from '@/modules/core/errors/userinput'
 
 const mapGqlTemplateIdToExecEngineTemplateId = (
   id: AutomateFunctionTemplateLanguage
@@ -57,12 +60,8 @@ const mapGqlTemplateIdToExecEngineTemplateId = (
       return ExecutionEngineFunctionTemplateId.DotNet
     case AutomateFunctionTemplateLanguage.Typescript:
       return ExecutionEngineFunctionTemplateId.TypeScript
-    case AutomateFunctionTemplateLanguage.Demonstration:
-      return ExecutionEngineFunctionTemplateId.Demonstration
-    case AutomateFunctionTemplateLanguage.Demonstrationpython:
-      return ExecutionEngineFunctionTemplateId.DemonstrationPython
     default:
-      throw new Error('Unknown template id')
+      throw new UnknownFunctionTemplateError('Unknown template id')
   }
 }
 
@@ -72,7 +71,7 @@ const repoUrlToBasicGitRepositoryMetadata = (
   const repoUrl = new URL(url)
   const pathParts = repoUrl.pathname.split('/').filter(Boolean)
   if (pathParts.length < 2) {
-    throw new Error('Invalid GitHub repository URL')
+    throw new UserInputError('Invalid GitHub repository URL')
   }
 
   const [owner, name] = pathParts
@@ -99,7 +98,8 @@ export const convertFunctionToGraphQLReturn = (
     logo: cleanFunctionLogo(fn.logo),
     tags: fn.tags,
     supportedSourceApps: fn.supportedSourceApps,
-    functionCreator: fn.functionCreator
+    functionCreator: fn.functionCreator,
+    workspaceIds: fn.workspaceIds
   }
 
   return ret
@@ -230,6 +230,8 @@ export const updateFunctionFactory =
       }
     })
 
+    console.log(JSON.stringify(apiResult, null, 2))
+
     return convertFunctionToGraphQLReturn(apiResult)
   }
 
@@ -273,9 +275,11 @@ export const handleAutomateFunctionCreatorAuthCallbackFactory =
     } = req.query as Record<string, string>
 
     const isSuccess = ghAuth === 'success'
-    const redirectUrl = getFunctionsMarketplaceUrl()
+    const redirectUrl = getFunctionsMarketplaceUrl(req.session.workspaceSlug)
     redirectUrl.searchParams.set('ghAuth', isSuccess ? 'success' : ghAuth)
     redirectUrl.searchParams.set('ghAuthDesc', isSuccess ? '' : ghAuthDesc)
+
+    req.session?.destroy?.(noop)
 
     return res.redirect(redirectUrl.toString())
   }

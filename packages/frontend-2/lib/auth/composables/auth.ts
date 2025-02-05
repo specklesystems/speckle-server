@@ -388,6 +388,7 @@ export const useAuthManager = (
   const signInOrSignUpWithSso = (params: {
     challenge: string
     workspaceSlug: string
+    newsletterConsent?: boolean
   }) => {
     postAuthRedirect.set(`/workspaces/${params.workspaceSlug}`)
 
@@ -396,7 +397,9 @@ export const useAuthManager = (
       apiOrigin
     )
     authUrl.searchParams.set('challenge', params.challenge)
-
+    if (params.newsletterConsent) {
+      authUrl.searchParams.set('newsletter_consent', 'true')
+    }
     navigateTo(authUrl.toString(), { external: true })
   }
 

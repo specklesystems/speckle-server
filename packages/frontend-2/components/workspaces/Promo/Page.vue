@@ -1,10 +1,9 @@
 <template>
   <div class="flex flex-col gap-12">
     <WorkspacesPromoBanner @create="openWorkspaceCreateDialog" />
-
     <section>
       <div class="flex justify-between mb-2">
-        <h4 class="text-foreground-2 text-heading-sm">In a nutshell</h4>
+        <h4 class="text-foreground text-heading">In a nutshell</h4>
         <FormButton @click="openWorkspaceCreateDialog">Create workspace</FormButton>
       </div>
 
@@ -29,7 +28,6 @@
 
         <CommonCard
           title="SSO"
-          badge="Coming soon"
           description="Ensure compliance and security with workspace based SSO."
         >
           <template #icon>
@@ -39,7 +37,6 @@
 
         <CommonCard
           title="Data residency"
-          badge="Coming soon"
           description="Store your workspace projects in the geographical region of your choice."
         >
           <template #icon>
@@ -57,11 +54,11 @@
         </CommonCard>
       </div>
     </section>
-    <WorkspaceCreateDialog
-      v-model:open="showWorkspaceCreateDialog"
-      navigate-on-success
-      event-source="promo-page"
-    />
+
+    <section>
+      <h4 class="text-foreground text-heading mb-6">Pricing</h4>
+      <SettingsWorkspacesBillingPricingTable />
+    </section>
   </div>
 </template>
 <script setup lang="ts">
@@ -73,13 +70,12 @@ import {
   GlobeAltIcon,
   PlusIcon
 } from '@heroicons/vue/24/outline'
-
-const showWorkspaceCreateDialog = ref(false)
+import { workspaceCreateRoute } from '~~/lib/common/helpers/route'
 
 const mixpanel = useMixpanel()
 
 const openWorkspaceCreateDialog = () => {
-  showWorkspaceCreateDialog.value = true
+  navigateTo(workspaceCreateRoute())
   mixpanel.track('Create Workspace Button Clicked', {
     source: 'promo-page'
   })

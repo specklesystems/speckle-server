@@ -2,9 +2,9 @@ import { ActionTypes, ResourceTypes } from '@/modules/activitystream/helpers/typ
 import { StreamRoles } from '@/modules/core/helpers/mainConstants'
 import {
   PublishSubscription,
-  StreamSubscriptions as StreamPubsubEvents
+  StreamSubscriptions as StreamPubsubEvents,
+  WorkspaceSubscriptions
 } from '@/modules/shared/utils/subscriptions'
-import { StreamCreateInput } from '@/test/graphql/generated/graphql'
 import { Knex } from 'knex'
 import { chunk, flatten } from 'lodash'
 import { StreamRecord } from '@/modules/core/helpers/types'
@@ -12,8 +12,10 @@ import {
   ProjectCreateInput,
   ProjectUpdatedMessageType,
   ProjectUpdateInput,
+  StreamCreateInput,
   StreamUpdateInput,
-  UserProjectsUpdatedMessageType
+  UserProjectsUpdatedMessageType,
+  WorkspaceProjectsUpdatedMessageType
 } from '@/modules/core/graph/generated/graphql'
 import {
   ProjectSubscriptions,
@@ -88,10 +90,10 @@ export const addStreamDeletedActivityFactory =
     saveActivity: SaveActivity
     publish: PublishSubscription
   }): AddStreamDeletedActivity =>
-  async (params: { streamId: string; deleterId: string }) => {
-    const { streamId, deleterId } = params
+  async (params) => {
+    const { streamId, deleterId, workspaceId } = params
 
-    // Notify any listeners on streamId
+    // Notify any listeners on streamId/workspaceId
     await Promise.all([
       publish(StreamPubsubEvents.StreamDeleted, {
         streamDeleted: { streamId },
@@ -103,7 +105,20 @@ export const addStreamDeletedActivityFactory =
           type: ProjectUpdatedMessageType.Deleted,
           project: null
         }
-      })
+      }),
+      ...(workspaceId
+        ? [
+            publish(WorkspaceSubscriptions.WorkspaceProjectsUpdated, {
+              workspaceProjectsUpdated: {
+                projectId: streamId,
+                type: WorkspaceProjectsUpdatedMessageType.Removed,
+                project: null,
+                workspaceId
+              },
+              workspaceId
+            })
+          ]
+        : [])
     ])
 
     // Notify all stream users
@@ -165,14 +180,29 @@ export const addStreamClonedActivityFactory =
     const newStreamId = newStream.id
 
     const publishSubscriptions = async () =>
-      publish(UserSubscriptions.UserProjectsUpdated, {
-        userProjectsUpdated: {
-          id: newStreamId,
-          type: UserProjectsUpdatedMessageType.Added,
-          project: newStream
-        },
-        ownerId: clonerId
-      })
+      await Promise.all([
+        publish(UserSubscriptions.UserProjectsUpdated, {
+          userProjectsUpdated: {
+            id: newStreamId,
+            type: UserProjectsUpdatedMessageType.Added,
+            project: newStream
+          },
+          ownerId: clonerId
+        }),
+        ...(newStream.workspaceId
+          ? [
+              publish(WorkspaceSubscriptions.WorkspaceProjectsUpdated, {
+                workspaceProjectsUpdated: {
+                  projectId: newStreamId,
+                  type: WorkspaceProjectsUpdatedMessageType.Added,
+                  project: newStream,
+                  workspaceId: newStream.workspaceId
+                },
+                workspaceId: newStream.workspaceId
+              })
+            ]
+          : [])
+      ])
 
     await Promise.all([
       saveActivity({
@@ -233,7 +263,20 @@ export const addStreamCreatedActivityFactory =
           project: stream
         },
         ownerId: creatorId
-      })
+      }),
+      ...(stream.workspaceId
+        ? [
+            publish(WorkspaceSubscriptions.WorkspaceProjectsUpdated, {
+              workspaceProjectsUpdated: {
+                projectId: streamId,
+                type: WorkspaceProjectsUpdatedMessageType.Added,
+                project: stream,
+                workspaceId: stream.workspaceId
+              },
+              workspaceId: stream.workspaceId
+            })
+          ]
+        : [])
     ])
   }
 

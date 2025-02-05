@@ -51,7 +51,6 @@ const {
   deleteServerOnlyInvitesFactory,
   updateAllInviteTargetsFactory
 } = require('@/modules/serverinvites/repositories/serverInvites')
-const { UsersEmitter } = require('@/modules/core/events/usersEmitter')
 const { createPersonalAccessTokenFactory } = require('@/modules/core/services/tokens')
 const {
   storePersonalApiTokenFactory,
@@ -65,6 +64,7 @@ const {
   storeSingleObjectIfNotFoundFactory,
   storeClosuresIfNotFoundFactory
 } = require('@/modules/core/repositories/objects')
+const { getEventBus } = require('@/modules/shared/services/eventBus')
 
 const getUser = getUserFactory({ db })
 const getUserActivity = getUserActivityFactory({ db })
@@ -109,7 +109,7 @@ const createUser = createUserFactory({
     }),
     requestNewEmailVerification
   }),
-  usersEventsEmitter: UsersEmitter.emit
+  emitEvent: getEventBus().emit
 })
 
 const createPersonalAccessToken = createPersonalAccessTokenFactory({
@@ -125,12 +125,10 @@ const createObject = createObjectFactory({
   storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db })
 })
 
+let server
 let sendRequest
 
 describe('Activity @activity', () => {
-  let server
-  let app
-
   const userIz = {
     name: 'Izzy Lyseggen',
     email: 'izzybizzi@speckle.systems',
@@ -187,8 +185,9 @@ describe('Activity @activity', () => {
   }
 
   before(async () => {
-    ;({ server, app } = await beforeEachContext())
-    ;({ sendRequest } = await initializeTestServer(server, app))
+    const ctx = await beforeEachContext()
+    server = ctx.server
+    ;({ sendRequest } = await initializeTestServer(ctx))
 
     const normalScopesList = [
       Scopes.Streams.Read,

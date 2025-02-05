@@ -53,7 +53,8 @@ export function useAddWorkspaceDomain() {
       input: AddDomainToWorkspaceInput,
       domains: WorkspaceDomain[],
       discoverabilityEnabled: boolean,
-      domainBasedMembershipProtectionEnabled: boolean
+      domainBasedMembershipProtectionEnabled: boolean,
+      hasAccessToSSO: boolean
     ) => {
       const result = await apollo
         .mutate({
@@ -87,9 +88,9 @@ export function useAddWorkspaceDomain() {
                     domain: input.domain
                   }
                 ],
-                discoverabilityEnabled:
-                  domains.length === 0 ? true : discoverabilityEnabled,
-                domainBasedMembershipProtectionEnabled
+                discoverabilityEnabled,
+                domainBasedMembershipProtectionEnabled,
+                hasAccessToSSO
               }
             }
           },

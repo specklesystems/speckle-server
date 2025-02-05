@@ -6,6 +6,7 @@ import dayjs from 'dayjs'
 import type { Get } from 'type-fest'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import type {
+  ArchiveCommentInput,
   CommentContentInput,
   CreateCommentReplyInput,
   OnViewerCommentsUpdatedSubscription
@@ -75,8 +76,10 @@ export function useMarkThreadViewed() {
       .mutate({
         mutation: markCommentViewedMutation,
         variables: {
-          projectId,
-          threadId
+          input: {
+            projectId,
+            commentId: threadId
+          }
         },
         update: (cache, { data }) => {
           if (!data?.commentMutations.markViewed) return
@@ -190,15 +193,16 @@ export function useArchiveComment() {
   const client = useApolloClient().client
   const { triggerNotification } = useGlobalToast()
 
-  return async (commentId: string, archived = true) => {
-    if (!isLoggedIn.value || !commentId) return false
+  return async (input: ArchiveCommentInput) => {
+    const { commentId, projectId } = input
+
+    if (!isLoggedIn.value || !commentId || !projectId) return false
 
     const { data, errors } = await client
       .mutate({
         mutation: archiveCommentMutation,
         variables: {
-          commentId,
-          archived
+          input
         }
       })
       .catch(convertThrowIntoFetchResult)

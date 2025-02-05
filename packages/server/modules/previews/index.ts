@@ -3,7 +3,7 @@ import { validateScopes, authorizeResolver } from '@/modules/shared'
 
 import { makeOgImage } from '@/modules/previews/ogImage'
 import { moduleLogger } from '@/logging/logging'
-import { listenForPreviewGenerationUpdatesFactory } from '@/modules/previews/services/resultListener'
+import { messageProcessor } from '@/modules/previews/resultListener'
 
 import cors from 'cors'
 import { db } from '@/db/knex'
@@ -17,10 +17,8 @@ import {
   createObjectPreviewFactory,
   getPreviewImageFactory
 } from '@/modules/previews/repository/previews'
-import { publish } from '@/modules/shared/utils/subscriptions'
 import {
   getCommitFactory,
-  getObjectCommitsWithStreamIdsFactory,
   getPaginatedBranchCommitsItemsFactory,
   legacyGetPaginatedStreamCommitsPageFactory
 } from '@/modules/core/repositories/commits'
@@ -29,6 +27,8 @@ import { getStreamFactory } from '@/modules/core/repositories/streams'
 import { getPaginatedBranchCommitsItemsByNameFactory } from '@/modules/core/services/commit/retrieval'
 import { getStreamBranchByNameFactory } from '@/modules/core/repositories/branches'
 import { getFormattedObjectFactory } from '@/modules/core/repositories/objects'
+import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
+import { listenFor } from '@/modules/core/utils/dbNotificationListener'
 
 const httpErrorImage = (httpErrorCode: number) =>
   require.resolve(`#/assets/previews/images/preview_${httpErrorCode}.png`)
@@ -42,36 +42,24 @@ export const init: SpeckleModule['init'] = (app, isInitial) => {
     moduleLogger.info('📸 Init object preview module')
   }
 
-  const getCommitsByStreamId = legacyGetPaginatedStreamCommitsPageFactory({ db })
-  const getStream = getStreamFactory({ db })
-  const getObjectPreviewBufferOrFilepath = getObjectPreviewBufferOrFilepathFactory({
-    getObject: getFormattedObjectFactory({ db }),
-    getObjectPreviewInfo: getObjectPreviewInfoFactory({ db }),
-    createObjectPreview: createObjectPreviewFactory({ db }),
-    getPreviewImage: getPreviewImageFactory({ db })
-  })
-  const sendObjectPreview = sendObjectPreviewFactory({
-    getStream,
-    getObjectPreviewBufferOrFilepath,
-    makeOgImage
-  })
-  const checkStreamPermissions = checkStreamPermissionsFactory({
-    validateScopes,
-    authorizeResolver,
-    getStream
-  })
-  const getCommitsByBranchName = getPaginatedBranchCommitsItemsByNameFactory({
-    getStreamBranchByName: getStreamBranchByNameFactory({ db }),
-    getPaginatedBranchCommitsItems: getPaginatedBranchCommitsItemsFactory({ db })
-  })
-
   app.options('/preview/:streamId/:angle?', cors())
   app.get('/preview/:streamId/:angle?', cors(), async (req, res) => {
+    const projectDb = await getProjectDbClient({ projectId: req.params.streamId })
+    const checkStreamPermissions = checkStreamPermissionsFactory({
+      validateScopes,
+      authorizeResolver,
+      // getting the stream from the main DB, cause it needs to join on roles
+      getStream: getStreamFactory({ db })
+    })
     const { hasPermissions, httpErrorCode } = await checkStreamPermissions(req)
     if (!hasPermissions) {
       // return res.status( httpErrorCode ).end()
       return res.sendFile(httpErrorImage(httpErrorCode))
     }
+
+    const getCommitsByStreamId = legacyGetPaginatedStreamCommitsPageFactory({
+      db: projectDb
+    })
 
     const { commits } = await getCommitsByStreamId({
       streamId: req.params.streamId,
@@ -83,6 +71,19 @@ export const init: SpeckleModule['init'] = (app, isInitial) => {
       return res.sendFile(noPreviewImage)
     }
     const lastCommit = commits[0]
+    const getObjectPreviewBufferOrFilepath = getObjectPreviewBufferOrFilepathFactory({
+      getObject: getFormattedObjectFactory({ db: projectDb }),
+      getObjectPreviewInfo: getObjectPreviewInfoFactory({ db: projectDb }),
+      createObjectPreview: createObjectPreviewFactory({ db: projectDb }),
+      getPreviewImage: getPreviewImageFactory({ db: projectDb })
+    })
+
+    const sendObjectPreview = sendObjectPreviewFactory({
+      // getting the stream from the projectDb here, to handle preview data properly
+      getStream: getStreamFactory({ db: projectDb }),
+      getObjectPreviewBufferOrFilepath,
+      makeOgImage
+    })
 
     return sendObjectPreview(
       req,
@@ -98,14 +99,28 @@ export const init: SpeckleModule['init'] = (app, isInitial) => {
     '/preview/:streamId/branches/:branchName/:angle?',
     cors(),
     async (req, res) => {
+      const checkStreamPermissions = checkStreamPermissionsFactory({
+        validateScopes,
+        authorizeResolver,
+        // getting the stream from the main DB, cause it needs to join on roles
+        getStream: getStreamFactory({ db })
+      })
       const { hasPermissions, httpErrorCode } = await checkStreamPermissions(req)
       if (!hasPermissions) {
         // return res.status( httpErrorCode ).end()
         return res.sendFile(httpErrorImage(httpErrorCode))
       }
 
+      const projectDb = await getProjectDbClient({ projectId: req.params.streamId })
+
       let commitsObj
       try {
+        const getCommitsByBranchName = getPaginatedBranchCommitsItemsByNameFactory({
+          getStreamBranchByName: getStreamBranchByNameFactory({ db: projectDb }),
+          getPaginatedBranchCommitsItems: getPaginatedBranchCommitsItemsFactory({
+            db: projectDb
+          })
+        })
         commitsObj = await getCommitsByBranchName({
           streamId: req.params.streamId,
           branchName: req.params.branchName,
@@ -121,6 +136,20 @@ export const init: SpeckleModule['init'] = (app, isInitial) => {
       }
       const lastCommit = commits[0]
 
+      const getObjectPreviewBufferOrFilepath = getObjectPreviewBufferOrFilepathFactory({
+        getObject: getFormattedObjectFactory({ db: projectDb }),
+        getObjectPreviewInfo: getObjectPreviewInfoFactory({ db: projectDb }),
+        createObjectPreview: createObjectPreviewFactory({ db: projectDb }),
+        getPreviewImage: getPreviewImageFactory({ db: projectDb })
+      })
+
+      const sendObjectPreview = sendObjectPreviewFactory({
+        // getting the stream from the projectDb here, to handle preview data properly
+        getStream: getStreamFactory({ db: projectDb }),
+        getObjectPreviewBufferOrFilepath,
+        makeOgImage
+      })
+
       return sendObjectPreview(
         req,
         res,
@@ -133,18 +162,39 @@ export const init: SpeckleModule['init'] = (app, isInitial) => {
 
   app.options('/preview/:streamId/commits/:commitId/:angle?', cors())
   app.get('/preview/:streamId/commits/:commitId/:angle?', cors(), async (req, res) => {
+    const checkStreamPermissions = checkStreamPermissionsFactory({
+      validateScopes,
+      authorizeResolver,
+      // getting the stream from the main DB, cause it needs to join on roles
+      getStream: getStreamFactory({ db })
+    })
     const { hasPermissions, httpErrorCode } = await checkStreamPermissions(req)
     if (!hasPermissions) {
       // return res.status( httpErrorCode ).end()
       return res.sendFile(httpErrorImage(httpErrorCode))
     }
 
-    const getCommit = getCommitFactory({ db })
+    const projectDb = await getProjectDbClient({ projectId: req.params.streamId })
+
+    const getCommit = getCommitFactory({ db: projectDb })
     const commit = await getCommit(req.params.commitId, {
       streamId: req.params.streamId
     })
     if (!commit) return res.sendFile(noPreviewImage)
 
+    const getObjectPreviewBufferOrFilepath = getObjectPreviewBufferOrFilepathFactory({
+      getObject: getFormattedObjectFactory({ db: projectDb }),
+      getObjectPreviewInfo: getObjectPreviewInfoFactory({ db: projectDb }),
+      createObjectPreview: createObjectPreviewFactory({ db: projectDb }),
+      getPreviewImage: getPreviewImageFactory({ db: projectDb })
+    })
+
+    const sendObjectPreview = sendObjectPreviewFactory({
+      // getting the stream from the projectDb here, to handle preview data properly
+      getStream: getStreamFactory({ db: projectDb }),
+      getObjectPreviewBufferOrFilepath,
+      makeOgImage
+    })
     return sendObjectPreview(
       req,
       res,
@@ -156,10 +206,31 @@ export const init: SpeckleModule['init'] = (app, isInitial) => {
 
   app.options('/preview/:streamId/objects/:objectId/:angle?', cors())
   app.get('/preview/:streamId/objects/:objectId/:angle?', cors(), async (req, res) => {
+    const checkStreamPermissions = checkStreamPermissionsFactory({
+      validateScopes,
+      authorizeResolver,
+      // getting the stream from the main DB, cause it needs to join on roles
+      getStream: getStreamFactory({ db })
+    })
     const { hasPermissions } = await checkStreamPermissions(req)
     if (!hasPermissions) {
       return res.status(403).end()
     }
+    const projectDb = await getProjectDbClient({ projectId: req.params.streamId })
+
+    const getObjectPreviewBufferOrFilepath = getObjectPreviewBufferOrFilepathFactory({
+      getObject: getFormattedObjectFactory({ db: projectDb }),
+      getObjectPreviewInfo: getObjectPreviewInfoFactory({ db: projectDb }),
+      createObjectPreview: createObjectPreviewFactory({ db: projectDb }),
+      getPreviewImage: getPreviewImageFactory({ db: projectDb })
+    })
+
+    const sendObjectPreview = sendObjectPreviewFactory({
+      // getting the stream from the projectDb here, to handle preview data properly
+      getStream: getStreamFactory({ db: projectDb }),
+      getObjectPreviewBufferOrFilepath,
+      makeOgImage
+    })
 
     return sendObjectPreview(
       req,
@@ -171,11 +242,7 @@ export const init: SpeckleModule['init'] = (app, isInitial) => {
   })
 
   if (isInitial) {
-    const listenForPreviewGenerationUpdates = listenForPreviewGenerationUpdatesFactory({
-      getObjectCommitsWithStreamIds: getObjectCommitsWithStreamIdsFactory({ db }),
-      publish
-    })
-    listenForPreviewGenerationUpdates()
+    listenFor('preview_generation_update', messageProcessor)
   }
 }
 

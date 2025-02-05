@@ -37,7 +37,6 @@ const {
 } = require('@/modules/serverinvites/services/coreEmailContents')
 const { getEventBus } = require('@/modules/shared/services/eventBus')
 const { createBranchFactory } = require('@/modules/core/repositories/branches')
-const { ProjectsEmitter } = require('@/modules/core/events/projectsEmitter')
 const {
   getUsersFactory,
   getUserFactory,
@@ -66,7 +65,6 @@ const {
 const {
   finalizeInvitedServerRegistrationFactory
 } = require('@/modules/serverinvites/services/processing')
-const { UsersEmitter } = require('@/modules/core/events/usersEmitter')
 const {
   getServerInfoFactory,
   updateServerInfoFactory
@@ -102,7 +100,7 @@ const createStream = legacyCreateStreamFactory({
     }),
     createStream: createStreamFactory({ db }),
     createBranch: createBranchFactory({ db }),
-    projectsEventsEmitter: ProjectsEmitter.emit
+    emitEvent: getEventBus().emit
   })
 })
 
@@ -131,7 +129,7 @@ const createUser = createUserFactory({
     }),
     requestNewEmailVerification
   }),
-  usersEventsEmitter: UsersEmitter.emit
+  emitEvent: getEventBus().emit
 })
 const getUserByEmail = legacyGetUserByEmailFactory({ db })
 const updateServerInfo = updateServerInfoFactory({ db })
@@ -161,8 +159,10 @@ describe('Auth @auth', () => {
     }
 
     before(async () => {
-      ;({ app, server } = await beforeEachContext())
-      ;({ sendRequest } = await initializeTestServer(server, app))
+      const ctx = await beforeEachContext()
+      server = ctx.server
+      app = ctx.app
+      ;({ sendRequest } = await initializeTestServer(ctx))
 
       // Register a user for testing login flows
       await createUser(me).then((id) => (me.id = id))

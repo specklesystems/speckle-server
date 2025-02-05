@@ -56,7 +56,6 @@ const {
 } = require('@/modules/serverinvites/services/coreEmailContents')
 const { getEventBus } = require('@/modules/shared/services/eventBus')
 const { createBranchFactory } = require('@/modules/core/repositories/branches')
-const { ProjectsEmitter } = require('@/modules/core/events/projectsEmitter')
 const {
   getUserFactory,
   getUsersFactory,
@@ -84,7 +83,6 @@ const {
 const {
   finalizeInvitedServerRegistrationFactory
 } = require('@/modules/serverinvites/services/processing')
-const { UsersEmitter } = require('@/modules/core/events/usersEmitter')
 const { createPersonalAccessTokenFactory } = require('@/modules/core/services/tokens')
 const {
   storeApiTokenFactory,
@@ -126,7 +124,7 @@ const createStream = legacyCreateStreamFactory({
     }),
     createStream: createStreamFactory({ db }),
     createBranch: createBranchFactory({ db }),
-    projectsEventsEmitter: ProjectsEmitter.emit
+    emitEvent: getEventBus().emit
   })
 })
 const grantPermissionsStream = grantStreamPermissionsFactory({ db })
@@ -155,7 +153,7 @@ const createUser = createUserFactory({
     }),
     requestNewEmailVerification
   }),
-  usersEventsEmitter: UsersEmitter.emit
+  emitEvent: getEventBus().emit
 })
 const createPersonalAccessToken = createPersonalAccessTokenFactory({
   storeApiToken: storeApiTokenFactory({ db }),
@@ -168,7 +166,7 @@ const createPersonalAccessToken = createPersonalAccessTokenFactory({
 
 describe('Webhooks @webhooks', () => {
   const getWebhook = getWebhookByIdFactory({ db })
-  let server, sendRequest, app
+  let server, sendRequest
 
   const userOne = {
     name: 'User',
@@ -192,8 +190,9 @@ describe('Webhooks @webhooks', () => {
   }
 
   before(async () => {
-    ;({ app, server } = await beforeEachContext())
-    ;({ sendRequest } = await initializeTestServer(server, app))
+    const ctx = await beforeEachContext()
+    server = ctx.server
+    ;({ sendRequest } = await initializeTestServer(ctx))
 
     userOne.id = await createUser(userOne)
     streamOne.ownerId = userOne.id

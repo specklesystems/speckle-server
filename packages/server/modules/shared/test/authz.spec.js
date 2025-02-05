@@ -316,7 +316,7 @@ describe('AuthZ @shared', () => {
       })
       const { authResult } = await step({ params: {} })
       expectAuthError(
-        new ContextError("The context doesn't have a streamId or automationId"),
+        new ContextError("The context doesn't have a streamId"),
         authResult
       )
     })
@@ -327,7 +327,7 @@ describe('AuthZ @shared', () => {
       })
       const { authResult } = await step({})
       expectAuthError(
-        new ContextError("The context doesn't have a streamId or automationId"),
+        new ContextError("The context doesn't have a streamId"),
         authResult
       )
     })
@@ -380,7 +380,13 @@ describe('AuthZ @shared', () => {
         context: {}
       })
 
-      expectAuthError(new NotFoundError('Stream inputs are malformed'), authResult)
+      expectAuthError(
+        new NotFoundError(
+          'Project ID is malformed and cannot be found, or the project does not exist',
+          { info: { projectId: 'the need for stream' } }
+        ),
+        authResult
+      )
     })
   })
   describe('Escape hatches', () => {

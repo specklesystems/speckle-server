@@ -1,11 +1,9 @@
 <!-- eslint-disable vue/no-v-html -->
 <template>
-  <div
-    v-if="cleanReadmeHtml.length"
-    :class="proseClasses"
-    v-html="cleanReadmeHtml"
-  ></div>
-  <div v-else class="italic text-center">No readme found</div>
+  <div v-if="cleanReadmeHtml.length" :class="proseClasses" v-html="cleanReadmeHtml" />
+  <div v-else class="text-foreground-2 text-body-xs text-center italic">
+    No readme found
+  </div>
 </template>
 <script setup lang="ts">
 import type { Nullable } from '@speckle/shared'

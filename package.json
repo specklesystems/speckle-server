@@ -59,6 +59,7 @@
     "husky": "^7.0.4",
     "lint-staged": "^12.3.7",
     "lockfile": "^1.0.4",
+    "npkill": "^0.12.2",
     "pino-pretty": "^9.1.1",
     "prettier": "^2.5.1",
     "ts-node": "^10.9.1",

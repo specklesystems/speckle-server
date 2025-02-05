@@ -63,7 +63,6 @@ const {
   deleteServerOnlyInvitesFactory,
   updateAllInviteTargetsFactory
 } = require('@/modules/serverinvites/repositories/serverInvites')
-const { UsersEmitter } = require('@/modules/core/events/usersEmitter')
 const { createPersonalAccessTokenFactory } = require('@/modules/core/services/tokens')
 const {
   storeApiTokenFactory,
@@ -72,6 +71,7 @@ const {
   storePersonalApiTokenFactory
 } = require('@/modules/core/repositories/tokens')
 const { getServerInfoFactory } = require('@/modules/core/repositories/server')
+const { getEventBus } = require('@/modules/shared/services/eventBus')
 
 const getUser = getUserFactory({ db })
 const getStream = getStreamFactory({ db })
@@ -131,7 +131,7 @@ const createUser = createUserFactory({
     }),
     requestNewEmailVerification
   }),
-  usersEventsEmitter: UsersEmitter.emit
+  emitEvent: getEventBus().emit
 })
 
 const createPersonalAccessToken = createPersonalAccessTokenFactory({
@@ -172,8 +172,10 @@ describe('GraphQL API Core @core-api', () => {
 
   // set up app & two basic users to ping pong permissions around
   before(async () => {
-    ;({ app, server } = await beforeEachContext())
-    ;({ sendRequest } = await initializeTestServer(server, app))
+    const ctx = await beforeEachContext()
+    server = ctx.server
+    app = ctx.app
+    ;({ sendRequest } = await initializeTestServer(ctx))
 
     userA.id = await createUser(userA)
     userA.token = `Bearer ${await createPersonalAccessToken(
@@ -361,7 +363,10 @@ describe('GraphQL API Core @core-api', () => {
         const res = await sendRequest(userA.token, {
           query: 'mutation($user:UserUpdateInput!) { userUpdate( user: $user) } ',
           variables: {
-            user: { name: 'Miticå', bio: 'He never really knows what he is doing.' }
+            user: {
+              name: 'test user updated',
+              bio: 'He never really knows what he is doing.'
+            }
           }
         })
         expect(res).to.be.json
@@ -1213,7 +1218,7 @@ describe('GraphQL API Core @core-api', () => {
         expect(res).to.be.json
         expect(res.body.errors).to.not.exist
         expect(res.body.data).to.have.property('user')
-        expect(res.body.data.user.name).to.equal('Miticå')
+        expect(res.body.data.user.name).to.equal('test user updated')
         expect(res.body.data.user.email).to.equal('d.1@speckle.systems')
         expect(res.body.data.user.role).to.equal(Roles.Server.Admin)
       })
@@ -1439,8 +1444,15 @@ describe('GraphQL API Core @core-api', () => {
 
         expect(stream.name).to.equal('TS1 (u A) Private UPDATED')
         expect(stream.collaborators).to.have.lengthOf(2)
-        expect(stream.collaborators[0].role).to.equal(Roles.Stream.Contributor)
-        expect(stream.collaborators[1].role).to.equal(Roles.Stream.Owner)
+
+        const d2User = stream.collaborators.find((c) => c.name === 'd2')
+        const testUserUpdated = stream.collaborators.find(
+          (c) => c.name === 'test user updated'
+        )
+        expect(d2User).to.be.ok
+        expect(testUserUpdated).to.be.ok
+        expect(d2User.role).to.equal(Roles.Stream.Contributor)
+        expect(testUserUpdated.role).to.equal(Roles.Stream.Owner)
       })
 
       it('Should retrieve a public stream even if not authenticated', async () => {

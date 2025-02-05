@@ -47,7 +47,6 @@ import {
   getStreamsFactory,
   markCommitStreamUpdatedFactory
 } from '@/modules/core/repositories/streams'
-import { VersionsEmitter } from '@/modules/core/events/versionsEmitter'
 import {
   addCommitCreatedActivityFactory,
   addCommitDeletedActivityFactory,
@@ -56,7 +55,9 @@ import {
 } from '@/modules/activitystream/services/commitActivity'
 import { getObjectFactory } from '@/modules/core/repositories/objects'
 import { saveActivityFactory } from '@/modules/activitystream/repositories'
-import { getProjectDbClient } from '@/modules/multiregion/dbSelector'
+import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
+import coreModule from '@/modules/core'
+import { getEventBus } from '@/modules/shared/services/eventBus'
 
 export = {
   Project: {
@@ -177,6 +178,10 @@ export = {
         ctx.resourceAccessRules
       )
 
+      await coreModule.executeHooks('onCreateVersionRequest', {
+        projectId: args.input.projectId
+      })
+
       const rateLimitResult = await getRateLimitResult('COMMIT_CREATE', ctx.userId!)
       if (isRateLimitBreached(rateLimitResult)) {
         throw new RateLimitError(rateLimitResult)
@@ -192,7 +197,7 @@ export = {
         insertBranchCommits: insertBranchCommitsFactory({ db: projectDb }),
         markCommitStreamUpdated: markCommitStreamUpdatedFactory({ db: projectDb }),
         markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db: projectDb }),
-        versionsEventEmitter: VersionsEmitter.emit,
+        emitEvent: getEventBus().emit,
         addCommitCreatedActivity: addCommitCreatedActivityFactory({
           saveActivity: saveActivityFactory({ db }),
           publish

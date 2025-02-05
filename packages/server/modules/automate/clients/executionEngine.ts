@@ -63,11 +63,32 @@ const getApiUrl = (
   if (options?.query) {
     Object.entries(options.query).forEach(([key, val]) => {
       if (isNullOrUndefined(val)) return
-      url.searchParams.append(key, val.toString())
+      try {
+        url.searchParams.append(key, val.toString())
+      } catch (e) {
+        console.log({ val })
+      }
     })
   }
 
   return url.toString()
+}
+
+const invokeSafeJsonRequest = async <
+  Response extends Record<string, unknown> = Record<string, unknown>
+>(
+  ...args: Parameters<typeof invokeRequest>
+): Promise<Response | null> => {
+  const [{ url, method }] = args
+  try {
+    return await invokeJsonRequest<Response>(...args)
+  } catch (e) {
+    automateLogger.error(
+      { url, method, err: e },
+      'Automate API request error suppressed.'
+    )
+    return null
+  }
 }
 
 const invokeJsonRequest = async <R = Record<string, unknown>>(
@@ -300,6 +321,34 @@ export const createFunction = async ({
   })
 }
 
+type CreateFunctionWithoutVersionBody = {
+  speckleServerAuthenticationPayload: AuthCodePayloadWithOrigin
+  functionName: string
+  description: string
+  repositoryUrl: string
+  supportedSourceApps: string[]
+  tags: string[]
+}
+
+type CreateFunctionWithoutVersionResponse = {
+  functionId: string
+  functionToken: string
+}
+
+export const createFunctionWithoutVersion = async ({
+  body
+}: {
+  body: CreateFunctionWithoutVersionBody
+}): Promise<CreateFunctionWithoutVersionResponse> => {
+  const url = getApiUrl('/api/v2/functions')
+  return await invokeJsonRequest<CreateFunctionWithoutVersionResponse>({
+    url,
+    method: 'post',
+    body,
+    retry: false
+  })
+}
+
 export type UpdateFunctionBody<AP extends AuthCodePayload = AuthCodePayloadWithOrigin> =
   {
     speckleServerAuthenticationPayload: AP
@@ -352,13 +401,11 @@ export const getFunction = async (params: {
     query
   })
 
-  const result = await invokeJsonRequest<GetFunctionResponse>({
+  return await invokeSafeJsonRequest<GetFunctionResponse>({
     url,
     method: 'get',
     token
   })
-
-  return result
 }
 
 export type GetFunctionReleaseResponse = FunctionReleaseSchemaType
@@ -400,15 +447,17 @@ export const getFunctionRelease = async (params: {
   const { functionId, functionReleaseId } = params
   const url = getApiUrl(`/api/v1/functions/${functionId}/versions/${functionReleaseId}`)
 
-  const result = await invokeJsonRequest<GetFunctionReleaseResponse>({
+  const result = await invokeSafeJsonRequest<GetFunctionReleaseResponse>({
     url,
     method: 'get'
   })
 
-  return {
-    ...result,
-    functionId
-  }
+  return result
+    ? {
+        ...result,
+        functionId
+      }
+    : null
 }
 
 export type GetFunctionsResponse = {
@@ -417,24 +466,78 @@ export type GetFunctionsResponse = {
   items: FunctionWithVersionsSchemaType[]
 }
 
-export const getFunctions = async (params: {
+export const getPublicFunctions = async (params: {
   query?: {
     query?: string
     cursor?: string
     limit?: number
     functionsWithoutVersions?: boolean
-    featuredFunctionsOnly?: boolean
   }
 }) => {
   const { query } = params
-  const url = getApiUrl(`/api/v1/functions`, { query })
+  const url = getApiUrl(`/api/v1/functions`, {
+    query: {
+      ...query,
+      featuredFunctionsOnly: true
+    }
+  })
 
-  const result = await invokeJsonRequest<GetFunctionsResponse>({
+  return await invokeSafeJsonRequest<GetFunctionsResponse>({
     url,
     method: 'get'
   })
+}
 
-  return result
+type GetUserFunctionsResponse = {
+  functions: FunctionWithVersionsSchemaType[]
+}
+
+export const getUserFunctions = async (params: {
+  userId: string
+  query?: {
+    query?: string
+    cursor?: string
+    limit?: number
+  }
+  body: {
+    speckleServerAuthenticationPayload: AuthCodePayloadWithOrigin
+  }
+}) => {
+  const { userId, query, body } = params
+  const url = getApiUrl(`/api/v2/users/${userId}/functions`, { query })
+
+  return await invokeSafeJsonRequest<GetUserFunctionsResponse>({
+    url,
+    method: 'POST',
+    body,
+    retry: false
+  })
+}
+
+type GetWorkspaceFunctionsResponse = {
+  functions: FunctionWithVersionsSchemaType[]
+}
+
+export const getWorkspaceFunctions = async (params: {
+  workspaceId: string
+  query?: {
+    query?: string
+    cursor?: string
+    limit?: number
+  }
+  body: {
+    speckleServerAuthenticationPayload: AuthCodePayloadWithOrigin
+  }
+}) => {
+  const { workspaceId, query, body } = params
+  const url = getApiUrl(`/api/v2/workspaces/${workspaceId}/functions`, { query })
+
+  return await invokeSafeJsonRequest<GetWorkspaceFunctionsResponse>({
+    url,
+    method: 'POST',
+    body,
+    retry: false
+  })
 }
 
 type UserGithubAuthStateResponse = {

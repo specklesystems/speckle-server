@@ -2,18 +2,16 @@ import { CommandModule } from 'yargs'
 import { cliLogger } from '@/logging/logging'
 import { getWorkspaceBySlugOrIdFactory } from '@/modules/workspaces/repositories/workspaces'
 import { db } from '@/db/knex'
-import {
-  PaidWorkspacePlanStatuses,
-  PlanStatuses
-} from '@/modules/gatekeeper/domain/billing'
+import { PaidWorkspacePlanStatuses } from '@/modules/gatekeeper/domain/billing'
 import { upsertPaidWorkspacePlanFactory } from '@/modules/gatekeeper/repositories/billing'
 import { PaidWorkspacePlans } from '@/modules/gatekeeper/domain/workspacePricing'
+import { WorkspaceNotFoundError } from '@/modules/workspaces/errors/workspace'
 
 const command: CommandModule<
   unknown,
   {
     workspaceSlugOrId: string
-    status: PlanStatuses
+    status: PaidWorkspacePlanStatuses
     plan: PaidWorkspacePlans
   }
 > = {
@@ -28,7 +26,7 @@ const command: CommandModule<
       describe: 'Plan to set the status for',
       type: 'string',
       default: 'business',
-      choices: ['business', 'team', 'pro']
+      choices: ['business', 'starter', 'plus']
     },
     status: {
       describe: 'Status to set for the workspace plan',
@@ -50,14 +48,17 @@ const command: CommandModule<
     )
     const workspace = await getWorkspaceBySlugOrIdFactory({ db })(args)
     if (!workspace) {
-      throw new Error(`Workspace w/ slug or id '${args.workspaceSlugOrId}' not found`)
+      throw new WorkspaceNotFoundError(
+        `Workspace w/ slug or id '${args.workspaceSlugOrId}' not found`
+      )
     }
 
     await upsertPaidWorkspacePlanFactory({ db })({
       workspacePlan: {
+        createdAt: new Date(),
         workspaceId: workspace.id,
         name: args.plan,
-        status: args.status as PaidWorkspacePlanStatuses
+        status: args.status
       }
     })
     cliLogger.info(`Plan set!`)
