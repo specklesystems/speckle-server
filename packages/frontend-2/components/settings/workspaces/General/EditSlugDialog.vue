@@ -43,6 +43,7 @@ import { workspaceRoute } from '~/lib/common/helpers/route'
 import { useQuery } from '@vue/apollo-composable'
 import { validateWorkspaceSlugQuery } from '~/lib/workspaces/graphql/queries'
 import { debounce } from 'lodash'
+import type { MaybeNullOrUndefined } from '@speckle/shared'
 
 graphql(`
   fragment SettingsWorkspacesGeneralEditSlugDialog_Workspace on Workspace {
@@ -53,7 +54,7 @@ graphql(`
 `)
 
 const props = defineProps<{
-  workspace: SettingsWorkspacesGeneralEditSlugDialog_WorkspaceFragment
+  workspace: MaybeNullOrUndefined<SettingsWorkspacesGeneralEditSlugDialog_WorkspaceFragment>
   baseUrl: string
 }>()
 
@@ -63,11 +64,11 @@ const emit = defineEmits<{
 }>()
 
 // Main ref that holds the current value of the slug input.
-const workspaceShortId = ref(props.workspace.slug)
+const workspaceShortId = ref(props.workspace?.slug)
 // Used to debounce API calls for slug validation.
-const debouncedWorkspaceShortId = ref(props.workspace.slug)
+const debouncedWorkspaceShortId = ref(props.workspace?.slug || '')
 // Keeps track of the initially generated slug to prevent unnecessary validations.
-const originalSlug = ref(props.workspace.slug)
+const originalSlug = ref(props.workspace?.slug)
 
 const { error, loading } = useQuery(
   validateWorkspaceSlugQuery,
@@ -75,13 +76,14 @@ const { error, loading } = useQuery(
     slug: debouncedWorkspaceShortId.value
   }),
   () => ({
-    enabled: debouncedWorkspaceShortId.value !== props.workspace.slug
+    enabled: debouncedWorkspaceShortId.value !== props.workspace?.slug
   })
 )
 
 const { handleSubmit, resetForm } = useForm<{ slug: string }>()
 
 const updateSlug = handleSubmit(() => {
+  if (!workspaceShortId.value) return
   emit('update:slug', workspaceShortId.value)
 })
 
@@ -97,7 +99,7 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
     text: 'Update',
     props: {
       color: 'primary',
-      disabled: workspaceShortId.value === props.workspace.slug || error.value !== null
+      disabled: workspaceShortId.value === props.workspace?.slug || error.value !== null
     },
     submit: true
   }
@@ -108,7 +110,7 @@ const updateDebouncedShortId = debounce((value: string) => {
 }, 300)
 
 watch(
-  () => props.workspace.slug,
+  () => props.workspace?.slug,
   (newValue) => {
     workspaceShortId.value = newValue
   },
