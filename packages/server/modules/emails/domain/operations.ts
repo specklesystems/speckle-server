@@ -1,4 +1,5 @@
 import { UserRecord } from '@/modules/core/helpers/types'
+import { EmailVerification } from '@/modules/emails/domain/types'
 import { EmailVerificationRecord } from '@/modules/emails/repositories'
 
 /**
@@ -76,3 +77,9 @@ export type RenderEmail = (
   serverInfo: EmailTemplateServerInfo,
   user: UserRecord | null
 ) => Promise<EmailContent>
+
+export type GetPendingVerificationByEmail = ({
+  email
+}: {
+  email: string
+}) => Promise<EmailVerification | undefined>

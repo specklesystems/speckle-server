@@ -21,7 +21,7 @@ import {
   Branches,
   ServerAcl
 } from '@/modules/core/dbSchema'
-import { InvalidArgumentError } from '@/modules/shared/errors'
+import { InvalidArgumentError, LogicError } from '@/modules/shared/errors'
 import { Roles, StreamRoles } from '@/modules/core/helpers/mainConstants'
 import {
   StreamAclRecord,
@@ -51,7 +51,6 @@ import { metaHelpers } from '@/modules/core/helpers/meta'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
 import {
   DeleteProjectRole,
-  GetProject,
   GetProjectCollaborators,
   UpdateProject,
   GetRolesByUserId,
@@ -170,18 +169,6 @@ export const getStreamFactory =
       ...(options || {})
     })
     return <Optional<StreamWithOptionalRole>>streams[0]
-  }
-
-export const getProjectFactory =
-  (deps: { db: Knex }): GetProject =>
-  async ({ projectId }) => {
-    const project = await getStreamFactory(deps)({ streamId: projectId })
-
-    if (!project) {
-      throw new StreamNotFoundError()
-    }
-
-    return project
   }
 
 export const getCommitStreamsFactory =
@@ -975,7 +962,7 @@ export const updateProjectFactory =
     const updatedStream = await updateStreamFactory({ db })(projectUpdate)
 
     if (!updatedStream) {
-      throw new StreamUpdateError()
+      throw new StreamUpdateError('Stream was not updated.')
     }
 
     return updatedStream
@@ -1174,7 +1161,7 @@ export const markOnboardingBaseStreamFactory =
   async (streamId: string, version: string) => {
     const stream = await getStreamFactory(deps)({ streamId })
     if (!stream) {
-      throw new Error(`Stream ${streamId} not found`)
+      throw new StreamNotFoundError(`Stream ${streamId} not found`)
     }
     await updateStreamFactory(deps)({
       id: streamId,
@@ -1252,7 +1239,9 @@ export const legacyGetStreamsFactory =
 
     if (visibility && visibility !== 'all') {
       if (!['private', 'public'].includes(visibility))
-        throw new Error('Stream visibility should be either private, public or all')
+        throw new LogicError(
+          'Stream visibility should be either private, public or all'
+        )
       const isPublic = visibility === 'public'
       const publicFunc: Knex.QueryCallback = function () {
         this.where({ isPublic })

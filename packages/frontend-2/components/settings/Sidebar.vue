@@ -98,7 +98,10 @@
                 <LayoutSidebarMenuGroupItem
                   v-if="workspaceMenuItem.permission?.includes(workspaceItem.role as WorkspaceRoles)"
                   :label="workspaceMenuItem.title"
-                  :active="route.name === workspaceMenuItem.name"
+                  :active="
+                    route.name === workspaceMenuItem.name &&
+                    route.params.slug === workspaceItem.slug
+                  "
                   :tooltip-text="
                     needsSsoSession(workspaceItem, workspaceMenuItem.name)
                       ? 'Log in with your SSO provider to access this page'

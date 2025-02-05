@@ -38,7 +38,6 @@ export type UpsertWorkspaceArgs = {
       NullableKeysToOptional<Workspace>,
       | 'domainBasedMembershipProtectionEnabled'
       | 'discoverabilityEnabled'
-      | 'defaultLogoIndex'
       | 'defaultProjectRole'
       | 'slug'
     >,
@@ -51,12 +50,7 @@ export type UpsertWorkspace = (args: UpsertWorkspaceArgs) => Promise<void>
 export type GetUserDiscoverableWorkspaces = (args: {
   domains: string[]
   userId: string
-}) => Promise<
-  Pick<
-    Workspace,
-    'id' | 'name' | 'slug' | 'description' | 'logo' | 'defaultLogoIndex'
-  >[]
->
+}) => Promise<Pick<Workspace, 'id' | 'name' | 'slug' | 'description' | 'logo'>[]>
 
 export type GetWorkspace = (args: {
   workspaceId: string
