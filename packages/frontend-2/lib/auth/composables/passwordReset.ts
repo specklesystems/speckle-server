@@ -19,8 +19,8 @@ export function usePasswordReset() {
       await requestResetEmail({ email, apiOrigin })
       triggerNotification({
         type: ToastNotificationType.Info,
-        title: 'Password reset process initialized',
-        description: `We've sent you instructions on how to reset your password at ${email}`
+        title: 'Password reset email sent',
+        description: `We've sent the password reset instructions to ${email}`
       })
     } catch (e) {
       triggerNotification({

@@ -8,13 +8,16 @@ import {
   getOidcName,
   getServerOrigin
 } from '@/modules/shared/helpers/envHelper'
-import { UnverifiedEmailSSOLoginError } from '@/modules/core/errors/userinput'
+import {
+  UnverifiedEmailSSOLoginError,
+  UserInputError
+} from '@/modules/core/errors/userinput'
 import { getNameFromUserInfo } from '@/modules/auth/helpers/oidc'
 import { ServerInviteResourceType } from '@/modules/serverinvites/domain/constants'
 import { getResourceTypeRole } from '@/modules/serverinvites/helpers/core'
 import { AuthStrategyBuilder } from '@/modules/auth/helpers/types'
 import { get } from 'lodash'
-import { Optional } from '@speckle/shared'
+import { ensureError, Optional } from '@speckle/shared'
 import { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
 import {
   FinalizeInvitedServerRegistration,
@@ -27,6 +30,8 @@ import {
   LegacyGetUserByEmail
 } from '@/modules/core/domain/users/operations'
 import { GetServerInfo } from '@/modules/core/domain/server/operations'
+import { EnvironmentResourceError } from '@/modules/shared/errors'
+import { InviteNotFoundError } from '@/modules/serverinvites/errors'
 
 const oidcStrategyBuilderFactory =
   (deps: {
@@ -79,7 +84,9 @@ const oidcStrategyBuilderFactory =
           try {
             const email = userinfo['email']
             if (!email) {
-              throw new Error('No email provided by the OIDC provider.')
+              throw new EnvironmentResourceError(
+                'No email provided by the OIDC provider.'
+              )
             }
 
             const name = getNameFromUserInfo(userinfo)
@@ -108,7 +115,7 @@ const oidcStrategyBuilderFactory =
 
             // if the server is invite only and we have no invite id, throw.
             if (serverInfo.inviteOnly && !token) {
-              throw new Error(
+              throw new EnvironmentResourceError(
                 'This server is invite only. Please provide an invite id.'
               )
             }
@@ -146,8 +153,20 @@ const oidcStrategyBuilderFactory =
               isInvite: !!invite
             })
           } catch (err) {
-            logger.error(err)
-            return done(err, undefined)
+            const e = ensureError(
+              err,
+              'Unexpected issue occured while authenticating with Google'
+            )
+            switch (e.constructor) {
+              case UnverifiedEmailSSOLoginError:
+              case UserInputError:
+              case InviteNotFoundError:
+                logger.info({ err: e })
+                break
+              default:
+                logger.error({ err: e })
+            }
+            return done(e, undefined)
           }
         }
       )
