@@ -447,3 +447,7 @@ export const asyncRequestContextEnabled = () => {
 export function enableImprovedKnexTelemetryStackTraces() {
   return getBooleanFromEnv('KNEX_IMPROVED_TELEMETRY_STACK_TRACES')
 }
+
+export function disablePreviews() {
+  return getBooleanFromEnv('DISABLE_PREVIEWS')
+}
