@@ -65,6 +65,11 @@ const parseFeatureFlags = () => {
     FF_FORCE_ONBOARDING: {
       schema: z.boolean(),
       defaults: { production: false, _: false }
+    },
+    // Enables the caching of the auth pipeline in Redis
+    FF_CACHE_AUTH_PIPELINE: {
+      schema: z.boolean(),
+      defaults: { production: false, _: true }
     }
   })
 
@@ -92,6 +97,7 @@ export function getFeatureFlags(): {
   FF_FILEIMPORT_IFC_DOTNET_ENABLED: boolean
   FF_FORCE_EMAIL_VERIFICATION: boolean
   FF_FORCE_ONBOARDING: boolean
+  FF_CACHE_AUTH_PIPELINE: boolean
 } {
   if (!parsedFlags) parsedFlags = parseFeatureFlags()
   return parsedFlags

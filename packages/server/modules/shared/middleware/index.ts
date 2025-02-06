@@ -22,7 +22,7 @@ import {
 import { Optional, wait } from '@speckle/shared'
 import { mixpanel } from '@/modules/shared/utils/mixpanel'
 import * as Observability from '@speckle/shared/dist/commonjs/observability/index.js'
-import { pino } from 'pino'
+import { Logger, pino } from 'pino'
 import { getIpFromRequest } from '@/modules/shared/utils/ip'
 import { Netmask } from 'netmask'
 import { Merge } from 'type-fest'
@@ -41,6 +41,10 @@ import {
 import { db } from '@/db/knex'
 import { getTokenAppInfoFactory } from '@/modules/auth/repositories/apps'
 import { getUserRoleFactory } from '@/modules/core/repositories/users'
+import {
+  CacheProvider,
+  retrieveViaCacheFactory
+} from '@/modules/core/utils/cacheHandler'
 
 export const authMiddlewareCreator = (steps: AuthPipelineFunction[]) => {
   const pipeline = authPipelineCreator(steps)
@@ -120,6 +124,70 @@ export async function createAuthContextFromToken(
   }
 }
 
+export const authContextMiddlewareFactory = (deps: {
+  cache: CacheProvider<AuthContext>
+  logger: Logger
+}) => {
+  const validateToken = validateTokenFactory({
+    revokeUserTokenById: revokeUserTokenByIdFactory({ db }),
+    getApiTokenById: getApiTokenByIdFactory({ db }),
+    getTokenAppInfo: getTokenAppInfoFactory({ db }),
+    getTokenScopesById: getTokenScopesByIdFactory({ db }),
+    getUserRole: getUserRoleFactory({ db }),
+    getTokenResourceAccessDefinitionsById: getTokenResourceAccessDefinitionsByIdFactory(
+      {
+        db
+      }
+    ),
+    updateApiToken: updateApiTokenFactory({ db })
+  })
+
+  const retrieveViaCache = retrieveViaCacheFactory<AuthContext>({
+    retrieveFromSource: (token) => createAuthContextFromToken(token, validateToken),
+    options: { prefix: 'speckle_auth_context', logger: deps.logger },
+    cache: deps.cache
+  })
+
+  return async (req: Request, res: Response, next: NextFunction) => {
+    const token = getTokenFromRequest(req)
+    let authContext: AuthContext = { auth: false }
+    if (token) authContext = await retrieveViaCache({ key: token })
+    const loggedContext = Object.fromEntries(
+      Object.entries(authContext).filter(
+        ([key]) => !['token'].includes(key.toLocaleLowerCase())
+      )
+    )
+    req.log = req.log.child({ authContext: loggedContext })
+    if (!authContext.auth && authContext.err) {
+      const defaultMessage = 'Unknown Auth context error'
+      //NOTE due to the possibility of the auth context being rehydrated from cache, we cannot assert the error with `instanceof` and must check the name
+      switch (authContext.err.name) {
+        case 'UnauthorizedError':
+          return res
+            .status(401)
+            .json({ error: authContext.err.message || defaultMessage })
+        case 'ForbiddenError':
+          return res
+            .status(403)
+            .json({ error: authContext.err.message || defaultMessage })
+        default:
+          req.log.error({ err: authContext.err }, 'Auth context error')
+          return res.status(500).json({ error: defaultMessage })
+      }
+    }
+
+    req.context = authContext
+    next()
+  }
+}
+
+/**
+ * @deprecated Use authContextMiddlewareFactory instead
+ * @param req
+ * @param res
+ * @param next
+ * @returns
+ */
 export async function authContextMiddleware(
   req: Request,
   res: Response,
@@ -148,18 +216,21 @@ export async function authContextMiddleware(
   )
   req.log = req.log.child({ authContext: loggedContext })
   if (!authContext.auth && authContext.err) {
-    let message = 'Unknown Auth context error'
-    let status = 500
-    if (authContext.err instanceof UnauthorizedError) {
-      status = 401
-      message = authContext.err?.message || message
+    const defaultMessage = 'Unknown Auth context error'
+
+    switch (authContext.err.constructor) {
+      case UnauthorizedError:
+        return res
+          .status(401)
+          .json({ error: authContext.err.message || defaultMessage })
+      case ForbiddenError:
+        return res
+          .status(403)
+          .json({ error: authContext.err.message || defaultMessage })
+      default:
+        req.log.error({ err: authContext.err }, 'Auth context error')
+        return res.status(500).json({ error: defaultMessage })
     }
-    if (authContext.err instanceof ForbiddenError) {
-      status = 403
-      message = authContext.err?.message || message
-    }
-    if (status === 500) req.log.error({ err: authContext.err }, 'Auth context error')
-    return res.status(status).json({ error: message })
   }
   req.context = authContext
   next()

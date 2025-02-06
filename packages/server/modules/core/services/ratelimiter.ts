@@ -307,7 +307,7 @@ export const getSourceFromRequest = (req: express.Request): string => {
   return source
 }
 
-export const createRateLimiterMiddleware = (
+export const rateLimiterMiddlewareFactory = (
   rateLimiterMapping: RateLimiterMapping = RATE_LIMITERS
 ) => {
   return async (

@@ -16,7 +16,8 @@ import {
   startupLogger,
   shutdownLogger,
   subscriptionLogger,
-  graphqlLogger
+  graphqlLogger,
+  authLogger
 } from '@/logging/logging'
 import {
   DetermineRequestIdMiddleware,
@@ -50,16 +51,19 @@ import {
   getPort,
   getBindAddress,
   shutdownTimeoutSeconds,
-  asyncRequestContextEnabled
+  asyncRequestContextEnabled,
+  getFeatureFlags,
+  getCacheAuthPipelineTtlSeconds
 } from '@/modules/shared/helpers/envHelper'
 import * as ModulesSetup from '@/modules'
 import { GraphQLContext, Optional } from '@/modules/shared/helpers/typeHelper'
-import { createRateLimiterMiddleware } from '@/modules/core/services/ratelimiter'
+import { rateLimiterMiddlewareFactory } from '@/modules/core/services/ratelimiter'
 
 import { get, has, isString } from 'lodash'
 import { corsMiddleware } from '@/modules/core/configs/cors'
 import {
   authContextMiddleware,
+  authContextMiddlewareFactory,
   buildContext,
   determineClientIpAddressMiddleware,
   mixpanelTrackerHelperMiddlewareFactory
@@ -85,6 +89,9 @@ import {
   initiateRequestContextMiddleware
 } from '@/logging/requestContext'
 import { randomUUID } from 'crypto'
+import { redisCacheFactory } from '@/modules/core/utils/redisCacheProvider'
+import { getGenericRedis } from '@/modules/shared/redis/redis'
+const { FF_CACHE_AUTH_PIPELINE } = getFeatureFlags()
 
 const GRAPHQL_PATH = '/graphql'
 
@@ -462,8 +469,22 @@ export async function init() {
 
   // Log errors
   app.use(errorLoggingMiddleware)
-  app.use(createRateLimiterMiddleware()) // Rate limiting by IP address for all users
-  app.use(authContextMiddleware)
+  app.use(rateLimiterMiddlewareFactory()) // Rate limiting by IP address for all users
+  if (FF_CACHE_AUTH_PIPELINE) {
+    app.use(
+      authContextMiddlewareFactory({
+        cache: redisCacheFactory({
+          redis: getGenericRedis(),
+          options: {
+            ttlMilliseconds: getCacheAuthPipelineTtlSeconds() * 1000
+          }
+        }),
+        logger: authLogger
+      })
+    )
+  } else {
+    app.use(authContextMiddleware)
+  }
   app.use(
     async (
       _req: express.Request,

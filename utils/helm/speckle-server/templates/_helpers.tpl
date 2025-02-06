@@ -595,6 +595,9 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 - name: FF_FORCE_ONBOARDING
   value: {{ .Values.featureFlags.forceOnboarding | quote }}
 
+- name: FF_CACHE_AUTH_PIPELINE
+  value: {{ .Values.featureFlags.cacheAuthPipeline | quote }}
+
 {{- if .Values.featureFlags.billingIntegrationEnabled }}
 - name: STRIPE_API_KEY
   valueFrom:
@@ -1093,4 +1096,6 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 - name: MULTI_REGION_CONFIG_PATH
   value: "/multi-region-config/multi-region-config.json"
 {{- end }}
+- name: CACHE_AUTH_PIPELINE_TTL_SECONDS
+  value: {{ .Values.server.cacheAuthPipelineTtlSeconds | quote }}
 {{- end }}
