@@ -151,7 +151,7 @@ export const authContextMiddlewareFactory = (deps: {
   return async (req: Request, res: Response, next: NextFunction) => {
     const token = getTokenFromRequest(req)
     let authContext: AuthContext = { auth: false }
-    if (token) authContext = await retrieveViaCache({ key: token.substring(0, 10) })
+    if (token) authContext = await retrieveViaCache({ key: token })
     const loggedContext = Object.fromEntries(
       Object.entries(authContext).filter(
         ([key]) => !['token'].includes(key.toLocaleLowerCase())
