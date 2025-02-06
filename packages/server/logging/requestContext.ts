@@ -21,7 +21,7 @@ export const initiateRequestContextMiddleware: express.RequestHandler = (
   _res,
   next
 ) => {
-  const reqId = req.headers[REQUEST_ID_HEADER] || 'unknown'
+  const reqId = req.id || req.headers[REQUEST_ID_HEADER] || 'unknown'
   enterNewRequestContext({ reqId: reqId as string })
   next()
 }
