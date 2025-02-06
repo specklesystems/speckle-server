@@ -1,8 +1,12 @@
 import {
   getAutomationFactory,
+  getFullAutomationRevisionMetadataFactory,
+  getFullAutomationRunByIdFactory,
+  getLatestAutomationRevisionFactory,
   storeAutomationFactory,
   storeAutomationRevisionFactory,
-  storeAutomationTokenFactory
+  storeAutomationTokenFactory,
+  upsertAutomationRunFactory
 } from '@/modules/automate/repositories/automations'
 import {
   CreateAutomationRevisionDeps,
@@ -15,6 +19,7 @@ import cryptoRandomString from 'crypto-random-string'
 import { createAutomation as clientCreateAutomation } from '@/modules/automate/clients/executionEngine'
 import {
   getBranchesByIdsFactory,
+  getBranchLatestCommitsFactory,
   getLatestStreamBranchFactory
 } from '@/modules/core/repositories/branches'
 
@@ -35,6 +40,7 @@ import {
 import { faker } from '@faker-js/faker'
 import {
   getEncryptionKeyPair,
+  getEncryptionKeyPairFor,
   getFunctionInputDecryptorFactory
 } from '@/modules/automate/services/encryption'
 import { buildDecryptor } from '@/modules/shared/utils/libsodium'
@@ -44,6 +50,7 @@ import { authorizeResolver } from '@/modules/shared'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { Knex } from 'knex'
+import { createTestAutomationRunFactory } from '@/modules/automate/services/trigger'
 
 const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
 
@@ -205,15 +212,54 @@ export type TestAutomationWithRevision = Awaited<
   ReturnType<typeof createTestAutomation>
 >
 
-// export const createTestAutomationRun = async (params: {
-//   automationId: string
-//   automationRunData?: Partial<AutomationRunRecord>
-//   automationFunctionRunData?: Partial<AutomationFunctionRunRecord>[]
-// }) => {
-//   const { automationId, automationRunData = {}, automationFunctionRunData = {} } = params
+export const createTestAutomationRun = async (params: {
+  userId: string
+  projectId: string
+  automationId: string
+}) => {
+  const { userId, projectId, automationId } = params
 
-//   const latestRevision = getLatestAutomationRevisionFactory({ db })
-// }
+  const projectDb = await getProjectDbClient({ projectId })
+
+  const { automationRunId } = await createTestAutomationRunFactory({
+    getEncryptionKeyPairFor,
+    getFunctionInputDecryptor: getFunctionInputDecryptorFactory({
+      buildDecryptor
+    }),
+    getAutomation: getAutomationFactory({
+      db: projectDb
+    }),
+    getLatestAutomationRevision: getLatestAutomationRevisionFactory({
+      db: projectDb
+    }),
+    getFullAutomationRevisionMetadata: getFullAutomationRevisionMetadataFactory({
+      db: projectDb
+    }),
+    upsertAutomationRun: upsertAutomationRunFactory({
+      db: projectDb
+    }),
+    getBranchLatestCommits: getBranchLatestCommitsFactory({
+      db: projectDb
+    }),
+    validateStreamAccess
+  })({ projectId, automationId, userId })
+
+  const automationRunData = await getFullAutomationRunByIdFactory({ db: projectDb })(
+    automationRunId
+  )
+
+  if (!automationRunData) {
+    throw new Error('Failed to create test automation run!')
+  }
+
+  const { triggers, functionRuns, ...automationRun } = automationRunData
+
+  return {
+    automationRun,
+    functionRuns,
+    triggers
+  }
+}
 
 export const truncateAutomations = async () => {
   await truncateTables([

@@ -54,7 +54,10 @@ import {
   TestApolloServer
 } from '@/test/graphqlHelper'
 import { beforeEachContext } from '@/test/hooks'
-import { createTestAutomation } from '@/test/speckle-helpers/automationHelper'
+import {
+  createTestAutomation,
+  createTestAutomationRun
+} from '@/test/speckle-helpers/automationHelper'
 import { BasicTestBranch, createTestBranch } from '@/test/speckle-helpers/branchHelper'
 import {
   BasicTestCommit,
@@ -380,6 +383,8 @@ isMultiRegionTestMode()
       let testAutomation: AutomationRecord
       let testAutomationToken: AutomationTokenRecord
       let testAutomationRevision: AutomationRevisionRecord
+      let testAutomationRun: AutomationRunRecord
+      let testAutomationFunctionRuns: AutomationFunctionRunRecord[]
 
       let apollo: TestApolloServer
       let targetRegionDb: Knex
@@ -436,6 +441,15 @@ isMultiRegionTestMode()
         testAutomation = automation.automation
         testAutomationToken = automation.token
         testAutomationRevision = revision
+
+        const { automationRun, functionRuns } = await createTestAutomationRun({
+          userId: adminUser.id,
+          projectId: testProject.id,
+          automationId: testAutomation.id
+        })
+
+        testAutomationRun = automationRun
+        testAutomationFunctionRuns = functionRuns
       })
 
       it('moves project record to target regional db', async () => {
@@ -551,6 +565,48 @@ isMultiRegionTestMode()
           .first()
         expect(automationRevision).to.not.be.undefined
         expect(automationRevision?.id).to.equal(testAutomationRevision.id)
+
+        const automationTrigger = await tables
+          .automationTriggers(targetRegionDb)
+          .select('*')
+          .where({ automationRevisionId: testAutomationRevision.id })
+          .first()
+        expect(automationTrigger).to.not.be.undefined
+      })
+
+      it('moves project automation runs to target regional db', async () => {
+        const res = await apollo.execute(UpdateProjectRegionDocument, {
+          projectId: testProject.id,
+          regionKey: regionKey2
+        })
+
+        expect(res).to.not.haveGraphQLErrors()
+
+        const automationRun = await tables
+          .automationRuns(targetRegionDb)
+          .select('*')
+          .where({ id: testAutomationRun.id })
+          .first()
+        expect(automationRun).to.not.be.undefined
+
+        const automationRunTriggers = await tables
+          .automationRunTriggers(targetRegionDb)
+          .select('*')
+          .where({ automationRunId: testAutomationRun.id })
+        expect(automationRunTriggers.length).to.not.equal(0)
+
+        const automationFunctionRuns = await tables
+          .automationFunctionRuns(targetRegionDb)
+          .select('*')
+          .where({ runId: testAutomationRun.id })
+        expect(automationFunctionRuns.length).to.equal(
+          testAutomationFunctionRuns.length
+        )
+        expect(
+          automationFunctionRuns.every((run) =>
+            testAutomationFunctionRuns.some((testRun) => testRun.id === run.id)
+          )
+        )
       })
     })
   : void 0
