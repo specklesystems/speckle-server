@@ -94,12 +94,18 @@ export default (app: Application) => {
           streamId: req.params.streamId,
           objectIds: childrenChunk
         })
+
         // https://knexjs.org/faq/recipes.html#manually-closing-streams
         // https://github.com/knex/knex/issues/2324
-        res.on('close', () => {
+        const responseCloseHandler = () => {
           dbStream.end()
           dbStream.destroy()
+        }
+
+        dbStream.on('close', () => {
+          res.removeListener('close', responseCloseHandler)
         })
+        res.on('close', responseCloseHandler)
 
         await new Promise((resolve, reject) => {
           dbStream.once('end', resolve)
