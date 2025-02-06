@@ -29,6 +29,10 @@ import { getProjectFactory } from '@/modules/core/repositories/projects'
 import { getStreamBranchCountFactory } from '@/modules/core/repositories/branches'
 import { getStreamCommitCountFactory } from '@/modules/core/repositories/commits'
 import { withTransaction } from '@/modules/shared/helpers/dbHelper'
+import { getFeatureFlags, isTestEnv } from '@/modules/shared/helpers/envHelper'
+import { WorkspacesNotYetImplementedError } from '@/modules/workspaces/errors/workspace'
+
+const { FF_MOVE_PROJECT_REGION_ENABLED } = getFeatureFlags()
 
 export default {
   Workspace: {
@@ -67,6 +71,10 @@ export default {
   },
   WorkspaceProjectMutations: {
     moveToRegion: async (_parent, args, context) => {
+      if (!FF_MOVE_PROJECT_REGION_ENABLED && !isTestEnv()) {
+        throw new WorkspacesNotYetImplementedError()
+      }
+
       await authorizeResolver(
         context.userId,
         args.projectId,

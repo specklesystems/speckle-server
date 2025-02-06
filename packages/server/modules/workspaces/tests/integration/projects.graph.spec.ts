@@ -382,6 +382,7 @@ isMultiRegionTestMode()
 
         expect(res).to.not.haveGraphQLErrors()
 
+        // TODO: Replace with gql query when possible
         const project = await targetRegionDb
           .table<StreamRecord>('streams')
           .select('*')
@@ -399,6 +400,7 @@ isMultiRegionTestMode()
 
         expect(res).to.not.haveGraphQLErrors()
 
+        // TODO: Replace with gql query when possible
         const branch = await targetRegionDb
           .table<BranchRecord>('branches')
           .select('*')
@@ -416,6 +418,7 @@ isMultiRegionTestMode()
 
         expect(res).to.not.haveGraphQLErrors()
 
+        // TODO: Replace with gql query when possible
         const version = await targetRegionDb
           .table<CommitRecord>('commits')
           .select('*')
@@ -423,6 +426,7 @@ isMultiRegionTestMode()
           .first()
         expect(version).to.not.be.undefined
 
+        // TODO: Replace with gql query when possible
         const streamCommitsRecord = await targetRegionDb
           .table<StreamCommitRecord>('stream_commits')
           .select('*')
@@ -430,6 +434,7 @@ isMultiRegionTestMode()
           .first()
         expect(streamCommitsRecord).to.not.be.undefined
 
+        // TODO: Replace with gql query when possible
         const branchCommitsRecord = await targetRegionDb
           .table<BranchCommitRecord>('branch_commits')
           .select('*')

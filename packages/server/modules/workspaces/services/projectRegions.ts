@@ -70,9 +70,12 @@ export const updateProjectRegionFactory =
     const sourceProjectModelCount = await deps.countProjectModels(projectId)
     const sourceProjectVersionCount = await deps.countProjectVersions(projectId)
 
-    const isReconciled =
-      modelIds[projectId].length === sourceProjectModelCount &&
-      versionIds[projectId].length === sourceProjectVersionCount
+    const tests = [
+      modelIds[projectId] === sourceProjectModelCount,
+      versionIds[projectId] === sourceProjectVersionCount
+    ]
+
+    const isReconciled = tests.every((test) => !!test)
 
     if (!isReconciled) {
       // TODO: Move failed or source project added data while changing regions. Retry move.
