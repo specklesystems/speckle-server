@@ -22,14 +22,17 @@ export const validateLicenseModuleAccess = async ({
 }): Promise<boolean> => {
   try {
     const { payload } = await jose.jwtVerify(licenseToken, publicKey)
+    console.log(payload)
 
     const claims = LicenseTokenClaims.safeParse(payload)
+    console.log(claims)
     if (!claims.success) return false
 
     // make sure we match the allowedDomains
     if (!claims.data.allowedDomains.includes(canonicalUrl)) return false
 
     const enabledModules = claims.data.enabledModules
+    console.log(enabledModules)
     for (const moduleName of requiredModules) {
       if (enabledModules[moduleName as keyof EnabledModules] !== true) return false
     }
@@ -37,6 +40,7 @@ export const validateLicenseModuleAccess = async ({
   } catch (err) {
     if (err instanceof jose.errors.JOSEError) {
       // I'm deliberately hiding all internal details here, if any checks fail, its an invalid token
+      console.log(err)
       return false
     }
   }
@@ -72,9 +76,12 @@ export const validateModuleLicense = async ({
 }): Promise<boolean> => {
   if (isDevEnv() || isTestEnv()) return true
   const licenseToken = getLicenseToken()
+  console.log(licenseToken)
   if (!licenseToken) return false
   const publicKey = await getPublicKey()
+  console.log(publicKey)
   const canonicalUrl = getServerOrigin()
+  console.log(canonicalUrl)
   return validateLicenseModuleAccess({
     licenseToken,
     canonicalUrl,
