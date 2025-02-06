@@ -271,8 +271,12 @@ export = {
       })
       return await deleteStreamAndNotify(id, userId!, resourceAccessRules)
     },
-    async createForOnboarding(_parent, _args, { userId, resourceAccessRules }) {
-      return await createOnboardingStream(userId!, resourceAccessRules)
+    async createForOnboarding(_parent, _args, { userId, resourceAccessRules, log }) {
+      return await createOnboardingStream({
+        targetUserId: userId!,
+        targetUserResourceAccessRules: resourceAccessRules,
+        logger: log
+      })
     },
     async update(_parent, { update }, { userId, resourceAccessRules }) {
       const projectDB = await getProjectDbClient({ projectId: update.id })
