@@ -1,6 +1,14 @@
 <template>
-  <HeaderWithEmptyPage empty-header show-logo :logo-link="false">
-    <template #header-actions>
+  <HeaderWithEmptyPage empty-header>
+    <template #header-left>
+      <HeaderLogoBlock
+        :active="false"
+        class="min-w-40 cursor-pointer"
+        no-link
+        @click="onCancelClick"
+      />
+    </template>
+    <template #header-right>
       <FormButton size="sm" color="outline" @click="onCancelClick">Cancel</FormButton>
     </template>
 

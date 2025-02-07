@@ -1,6 +1,9 @@
 <template>
-  <HeaderWithEmptyPage empty-header show-logo :logo-link="false">
-    <template #header-actions>
+  <HeaderWithEmptyPage empty-header>
+    <template #header-left>
+      <HeaderLogoBlock no-link />
+    </template>
+    <template #header-right>
       <div class="flex gap-2 items-center">
         <FormButton
           v-if="!isOnboardingForced"

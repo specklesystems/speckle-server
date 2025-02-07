@@ -1,10 +1,9 @@
 <template>
-  <HeaderWithEmptyPage
-    :empty-header="isEmailVerificationForced"
-    show-logo
-    :logo-link="false"
-  >
-    <template #header-actions>
+  <HeaderWithEmptyPage :empty-header="isEmailVerificationForced">
+    <template #header-left>
+      <HeaderLogoBlock no-link />
+    </template>
+    <template #header-right>
       <FormButton
         v-if="isPrimaryEmail"
         color="outline"

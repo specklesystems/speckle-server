@@ -1,8 +1,11 @@
 <template>
   <div>
-    <HeaderEmpty v-if="emptyHeader" :show-logo="showLogo" :logo-link="logoLink">
-      <template #header-actions>
-        <slot name="header-actions" />
+    <HeaderEmpty v-if="emptyHeader">
+      <template #header-left>
+        <slot name="header-left" />
+      </template>
+      <template #header-right>
+        <slot name="header-right" />
       </template>
     </HeaderEmpty>
     <HeaderNavBar v-else />
@@ -22,14 +25,7 @@
 </template>
 
 <script setup lang="ts">
-withDefaults(
-  defineProps<{
-    emptyHeader?: boolean
-    showLogo?: boolean
-    logoLink?: boolean
-  }>(),
-  {
-    logoLink: true
-  }
-)
+defineProps<{
+  emptyHeader?: boolean
+}>()
 </script>
