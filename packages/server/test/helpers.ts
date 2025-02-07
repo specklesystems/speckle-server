@@ -1,5 +1,4 @@
-import crypto from 'crypto'
-import { omit } from 'lodash'
+import { calculateObjectHash } from '@/modules/core/services/objects/management'
 
 export function generateManyObjects(shitTon: number, noise: unknown) {
   shitTon = shitTon || 10000
@@ -75,12 +74,7 @@ export function createManyObjects(num: number, noise?: unknown) {
  * @description Mutates the object in place to have an id. If the object already has an id, it will be left as is. If it does not, an id will be generated based on the object's contents (excluding the id field).
  */
 export function getAnIdForThisOnePlease(obj: { id: string } & Record<string, unknown>) {
-  obj.id =
-    obj.id ||
-    crypto
-      .createHash('md5')
-      .update(JSON.stringify(omit(obj, 'id')))
-      .digest('hex')
+  obj.id = obj.id || calculateObjectHash(obj)
 }
 
 export const sleep = (ms: number) => {
