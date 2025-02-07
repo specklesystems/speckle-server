@@ -9,6 +9,7 @@ import {
   AutomationTokenRecord,
   AutomationTriggerDefinitionRecord
 } from '@/modules/automate/helpers/types'
+import { CommentRecord } from '@/modules/comments/helpers/types'
 import {
   AutomationFunctionRuns,
   AutomationRevisionFunctions,
@@ -16,7 +17,8 @@ import {
   AutomationRuns,
   AutomationRunTriggers,
   AutomationTokens,
-  AutomationTriggers
+  AutomationTriggers,
+  Comments
 } from '@/modules/core/dbSchema'
 import { AllScopes } from '@/modules/core/helpers/mainConstants'
 import { createRandomEmail } from '@/modules/core/helpers/testHelpers'
@@ -59,6 +61,7 @@ import {
   createTestAutomationRun
 } from '@/test/speckle-helpers/automationHelper'
 import { BasicTestBranch, createTestBranch } from '@/test/speckle-helpers/branchHelper'
+import { createTestComment } from '@/test/speckle-helpers/commentHelper'
 import {
   BasicTestCommit,
   createTestCommit,
@@ -94,7 +97,8 @@ const tables = {
   automationRunTriggers: (db: Knex) =>
     db<AutomationRunTriggerRecord>(AutomationRunTriggers.name),
   automationFunctionRuns: (db: Knex) =>
-    db<AutomationFunctionRunRecord>(AutomationFunctionRuns.name)
+    db<AutomationFunctionRunRecord>(AutomationFunctionRuns.name),
+  comments: (db: Knex) => db.table<CommentRecord>(Comments.name)
 }
 
 const grantStreamPermissions = grantStreamPermissionsFactory({ db })
@@ -386,6 +390,8 @@ isMultiRegionTestMode()
       let testAutomationRun: AutomationRunRecord
       let testAutomationFunctionRuns: AutomationFunctionRunRecord[]
 
+      let testComment: CommentRecord
+
       let apollo: TestApolloServer
       let targetRegionDb: Knex
 
@@ -450,6 +456,12 @@ isMultiRegionTestMode()
 
         testAutomationRun = automationRun
         testAutomationFunctionRuns = functionRuns
+
+        testComment = await createTestComment({
+          userId: adminUser.id,
+          projectId: testProject.id,
+          objectId: testVersion.objectId
+        })
       })
 
       it('moves project record to target regional db', async () => {
@@ -611,6 +623,23 @@ isMultiRegionTestMode()
             testAutomationFunctionRuns.some((testRun) => testRun.id === run.id)
           )
         )
+      })
+
+      it('moves project comments to target regional db', async () => {
+        const res = await apollo.execute(UpdateProjectRegionDocument, {
+          projectId: testProject.id,
+          regionKey: regionKey2
+        })
+
+        expect(res).to.not.haveGraphQLErrors()
+
+        const comment = await tables
+          .comments(targetRegionDb)
+          .select('*')
+          .where({ id: testComment.id })
+          .first()
+
+        expect(comment).to.not.be.undefined
       })
     })
   : void 0
