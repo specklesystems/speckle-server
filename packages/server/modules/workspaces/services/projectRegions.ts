@@ -65,11 +65,11 @@ export const updateProjectRegionFactory =
 
     // Move commits
     const projectIds = await deps.copyProjects({ projectIds: [projectId] })
-    const modelIds = await deps.copyProjectModels({ projectIds })
-    const versionIds = await deps.copyProjectVersions({ projectIds })
+    const copiedModelCount = await deps.copyProjectModels({ projectIds })
+    const copiedVersionCount = await deps.copyProjectVersions({ projectIds })
 
     // Move objects
-    const objectIds = await deps.copyProjectObjects({ projectIds })
+    const copiedObjectCount = await deps.copyProjectObjects({ projectIds })
 
     // Move automations
     const automationIds = await deps.copyProjectAutomations({ projectIds })
@@ -89,9 +89,9 @@ export const updateProjectRegionFactory =
     })
 
     const tests = [
-      modelIds[projectId].length === sourceProjectModelCount,
-      versionIds[projectId].length === sourceProjectVersionCount,
-      objectIds[projectId].length === sourceProjectObjectCount,
+      copiedModelCount[projectId] === sourceProjectModelCount,
+      copiedVersionCount[projectId] === sourceProjectVersionCount,
+      copiedObjectCount[projectId] === sourceProjectObjectCount,
       automationIds[projectId].length === sourceProjectAutomationCount
     ]
 

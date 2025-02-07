@@ -15,6 +15,7 @@
         </CommonBadge>
       </div>
     </template>
+
     <div class="pt-3">
       <div class="px-3 flex flex-col gap-y-3">
         <CommonAlert v-if="!activeUser" color="danger" size="xs">

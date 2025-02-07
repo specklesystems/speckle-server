@@ -6,9 +6,9 @@ import {
   getServerVersion
 } from '@/modules/shared/helpers/envHelper'
 import Mixpanel from 'mixpanel'
-import { mixpanelLogger } from '@/logging/logging'
 import type express from 'express'
 import type http from 'http'
+import { mixpanelLogger } from '@/logging/logging'
 
 let client: Optional<Mixpanel.Mixpanel> = undefined
 let baseTrackingProperties: Optional<Record<string, string>> = undefined
@@ -49,6 +49,7 @@ export function mixpanel(params: {
   req: Optional<express.Request | http.IncomingMessage>
 }) {
   const { userEmail, req } = params
+  const logger = req?.log || mixpanelLogger
   const mixpanelUserId = userEmail?.length
     ? resolveMixpanelUserId(userEmail)
     : undefined
@@ -70,7 +71,7 @@ export function mixpanel(params: {
       if (client) {
         return new Promise<void>((resolve, reject) => {
           client.track(eventName, payload, (err) => {
-            mixpanelLogger.info(
+            logger.info(
               {
                 eventName,
                 payload,

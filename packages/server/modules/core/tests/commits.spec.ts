@@ -46,8 +46,7 @@ import {
 } from '@/modules/activitystream/services/commitActivity'
 import {
   getObjectFactory,
-  storeSingleObjectIfNotFoundFactory,
-  storeClosuresIfNotFoundFactory
+  storeSingleObjectIfNotFoundFactory
 } from '@/modules/core/repositories/objects'
 import {
   legacyCreateStreamFactory,
@@ -227,8 +226,7 @@ const getCommitsByBranchName = getPaginatedBranchCommitsItemsByNameFactory({
   getPaginatedBranchCommitsItems: getPaginatedBranchCommitsItemsFactory({ db })
 })
 const createObject = createObjectFactory({
-  storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({ db }),
-  storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db })
+  storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({ db })
 })
 
 describe('Commits @core-commits', () => {

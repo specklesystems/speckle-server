@@ -325,6 +325,9 @@ type CreateFunctionWithoutVersionBody = {
   speckleServerAuthenticationPayload: AuthCodePayloadWithOrigin
   functionName: string
   description: string
+  repositoryUrl: string
+  supportedSourceApps: string[]
+  tags: string[]
 }
 
 type CreateFunctionWithoutVersionResponse = {

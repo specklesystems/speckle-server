@@ -595,9 +595,6 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 - name: FF_FORCE_ONBOARDING
   value: {{ .Values.featureFlags.forceOnboarding | quote }}
 
-- name: FF_OBJECTS_STREAMING_FIX
-  value: {{ .Values.featureFlags.objectsStreamingFix | quote }}
-
 {{- if .Values.featureFlags.billingIntegrationEnabled }}
 - name: STRIPE_API_KEY
   valueFrom:
@@ -731,10 +728,6 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 - name: ASYNC_REQUEST_CONTEXT_ENABLED
   value: {{ .Values.server.asyncRequestContextEnabled | quote }}
 {{- end}}
-
-# *** No more closures flag - prevents writing to the closure table ***
-- name: FF_NO_CLOSURE_WRITES
-  value: {{ .Values.featureFlags.noClosureWrites | quote }}
 
 # *** Gendo render module ***
 - name: FF_GENDOAI_MODULE_ENABLED
