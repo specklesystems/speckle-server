@@ -7,7 +7,7 @@
   >
     <p class="text-body-xs text-foreground mb-2">
       Are you sure you want to permanently delete
-      <span class="font-medium">{{ workspace.name }}?</span>
+      <span class="font-medium">{{ workspace?.name }}?</span>
       This action cannot be undone.
     </p>
     <FormTextInput
@@ -58,6 +58,7 @@ import { useMixpanel } from '~/lib/core/composables/mp'
 import { homeRoute, defaultZapierWebhookUrl } from '~/lib/common/helpers/route'
 import { useZapier } from '~/lib/core/composables/zapier'
 import { useForm } from 'vee-validate'
+import type { MaybeNullOrUndefined } from '@speckle/shared'
 
 graphql(`
   fragment SettingsWorkspaceGeneralDeleteDialog_Workspace on Workspace {
@@ -67,7 +68,7 @@ graphql(`
 `)
 
 const props = defineProps<{
-  workspace: SettingsWorkspaceGeneralDeleteDialog_WorkspaceFragment
+  workspace: MaybeNullOrUndefined<SettingsWorkspaceGeneralDeleteDialog_WorkspaceFragment>
 }>()
 
 const isOpen = defineModel<boolean>('open', { required: true })
@@ -85,6 +86,7 @@ const workspaceNameInput = ref('')
 const feedback = ref('')
 
 const onDelete = async () => {
+  if (!props.workspace) return
   if (workspaceNameInput.value !== props.workspace.name) return
 
   const cache = apollo.cache
@@ -163,7 +165,7 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
     text: 'Delete',
     props: {
       color: 'danger',
-      disabled: workspaceNameInput.value !== props.workspace.name
+      disabled: workspaceNameInput.value !== props.workspace?.name
     },
     onClick: onDelete
   }
