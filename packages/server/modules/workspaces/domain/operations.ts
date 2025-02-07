@@ -365,4 +365,4 @@ export type CopyProjectVersions = (params: {
 }) => Promise<Record<string, number>>
 export type CopyProjectObjects = (params: {
   projectIds: string[]
-}) => Promise<Record<string, string[]>>
+}) => Promise<Record<string, number>>
