@@ -11,6 +11,7 @@ import {
 } from '@/modules/workspaces/repositories/regions'
 import {
   copyProjectAutomationsFactory,
+  copyProjectCommentsFactory,
   copyProjectModelsFactory,
   copyProjectObjectsFactory,
   copyProjectsFactory,
@@ -35,6 +36,7 @@ import { getStreamObjectCountFactory } from '@/modules/core/repositories/objects
 import { getProjectAutomationsTotalCountFactory } from '@/modules/automate/repositories/automations'
 import { getFeatureFlags, isTestEnv } from '@/modules/shared/helpers/envHelper'
 import { WorkspacesNotYetImplementedError } from '@/modules/workspaces/errors/workspace'
+import { getStreamCommentCountFactory } from '@/modules/comments/repositories/comments'
 
 const { FF_MOVE_PROJECT_REGION_ENABLED } = getFeatureFlags()
 
@@ -97,6 +99,7 @@ export default {
         countProjectAutomations: getProjectAutomationsTotalCountFactory({
           db: sourceDb
         }),
+        countProjectComments: getStreamCommentCountFactory({ db: sourceDb }),
         getAvailableRegions: getAvailableRegionsFactory({
           getRegions: getRegionsFactory({ db }),
           canWorkspaceUseRegions: canWorkspaceUseRegionsFactory({
@@ -108,7 +111,8 @@ export default {
         copyProjectModels: copyProjectModelsFactory({ sourceDb, targetDb }),
         copyProjectVersions: copyProjectVersionsFactory({ sourceDb, targetDb }),
         copyProjectObjects: copyProjectObjectsFactory({ sourceDb, targetDb }),
-        copyProjectAutomations: copyProjectAutomationsFactory({ sourceDb, targetDb })
+        copyProjectAutomations: copyProjectAutomationsFactory({ sourceDb, targetDb }),
+        copyProjectComments: copyProjectCommentsFactory({ sourceDb, targetDb })
       })
 
       return await withTransaction(updateProjectRegion(args), targetDb)

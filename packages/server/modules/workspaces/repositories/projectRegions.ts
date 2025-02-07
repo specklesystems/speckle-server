@@ -9,6 +9,9 @@ import {
   AutomationTriggers,
   BranchCommits,
   Branches,
+  CommentLinks,
+  Comments,
+  CommentViews,
   Commits,
   Objects,
   StreamCommits,
@@ -30,6 +33,7 @@ import {
 import { executeBatchedSelect } from '@/modules/shared/helpers/dbHelper'
 import {
   CopyProjectAutomations,
+  CopyProjectComments,
   CopyProjectModels,
   CopyProjectObjects,
   CopyProjects,
@@ -51,6 +55,11 @@ import {
   AutomationTokenRecord,
   AutomationTriggerDefinitionRecord
 } from '@/modules/automate/helpers/types'
+import {
+  CommentLinkRecord,
+  CommentRecord,
+  CommentViewRecord
+} from '@/modules/comments/helpers/types'
 
 const tables = {
   workspaces: (db: Knex) => db<Workspace>(Workspaces.name),
@@ -75,7 +84,10 @@ const tables = {
   automationRunTriggers: (db: Knex) =>
     db<AutomationRunTriggerRecord>(AutomationRunTriggers.name),
   automationFunctionRuns: (db: Knex) =>
-    db<AutomationFunctionRunRecord>(AutomationFunctionRuns.name)
+    db<AutomationFunctionRunRecord>(AutomationFunctionRuns.name),
+  comments: (db: Knex) => db.table<CommentRecord>(Comments.name),
+  commentViews: (db: Knex) => db.table<CommentViewRecord>(CommentViews.name),
+  commentLinks: (db: Knex) => db.table<CommentLinkRecord>(CommentLinks.name)
 }
 
 /**
@@ -458,4 +470,60 @@ export const copyProjectAutomationsFactory =
     }
 
     return copiedAutomationCountByProjectId
+  }
+
+/**
+ * Copies rows from the following tables:
+ * - comments
+ * - comment_views
+ * - comment_links
+ */
+export const copyProjectCommentsFactory =
+  (deps: { sourceDb: Knex; targetDb: Knex }): CopyProjectComments =>
+  async ({ projectIds }) => {
+    const copiedCommentCountByProjectId: Record<string, number> = {}
+
+    // Copy `comments` table rows in batches
+    const selectComments = tables
+      .comments(deps.sourceDb)
+      .select('*')
+      .whereIn(Comments.col.streamId, projectIds)
+
+    for await (const comments of executeBatchedSelect(selectComments)) {
+      const commentIds = comments.map((comment) => comment.id)
+
+      // Write `comments` rows to target db
+      await tables.comments(deps.targetDb).insert(comments).onConflict().ignore()
+
+      for (const comment of comments) {
+        copiedCommentCountByProjectId[comment.streamId] ??= 0
+        copiedCommentCountByProjectId[comment.streamId]++
+      }
+
+      // Copy `comment_views` table rows
+      const commentViews = await tables
+        .commentViews(deps.sourceDb)
+        .select('*')
+        .whereIn(CommentViews.col.commentId, commentIds)
+
+      await tables
+        .commentViews(deps.targetDb)
+        .insert(commentViews)
+        .onConflict()
+        .ignore()
+
+      // Copy `comment_links` table rows
+      const commentLinks = await tables
+        .commentLinks(deps.sourceDb)
+        .select('*')
+        .whereIn(CommentLinks.col.commentId, commentIds)
+
+      await tables
+        .commentLinks(deps.targetDb)
+        .insert(commentLinks)
+        .onConflict()
+        .ignore()
+    }
+
+    return copiedCommentCountByProjectId
   }
