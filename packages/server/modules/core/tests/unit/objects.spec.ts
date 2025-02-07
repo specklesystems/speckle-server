@@ -5,6 +5,9 @@ describe('object hash @core', () => {
   describe('calculates the object hash', () => {
     it('ignores the presence of any existing id', async () => {
       expect(calculateObjectHash({ id: '123', name: 'test' })).to.not.equal('123')
+      expect(calculateObjectHash({ id: '123', name: 'test' })).to.equal(
+        calculateObjectHash({ id: '', name: 'test' })
+      )
     })
     it('is the same id whether the existing id is empty or not present', async () => {
       expect(calculateObjectHash({ name: 'test' })).to.equal(
