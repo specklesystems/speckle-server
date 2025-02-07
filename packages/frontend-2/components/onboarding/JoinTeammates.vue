@@ -7,12 +7,7 @@
     >
       <div class="flex gap-4">
         <div>
-          <WorkspaceAvatar
-            v-if="workspace"
-            :name="workspace.name"
-            :logo="workspace.logo"
-            size="xl"
-          />
+          <WorkspaceAvatar :name="workspace.name" :logo="workspace.logo" size="xl" />
         </div>
         <div class="flex flex-col sm:flex-row gap-4 justify-between flex-1">
           <div class="flex flex-col flex-1">

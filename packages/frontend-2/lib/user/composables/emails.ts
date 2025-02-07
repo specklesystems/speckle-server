@@ -102,6 +102,7 @@ export function useUserEmails() {
         title: `${cancel ? 'Cancelled adding email' : 'Deleted email'}`,
         description: email.email
       })
+      mixpanel.track('Email Deleted')
 
       // If we're on the verify email page and there are no more unverified emails, redirect home
       if (route.path === verifyEmailRoute && unverifiedEmails.value.length === 0) {
