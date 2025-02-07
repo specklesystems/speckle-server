@@ -38,7 +38,7 @@
           v-if="!isEmailVerificationForced && isPrimaryEmail"
           color="subtle"
           size="sm"
-          @click="navigateTo(onboardingRoute)"
+          @click="navigateTo(homeRoute)"
         >
           Skip
         </FormButton>
@@ -65,7 +65,10 @@
           }}
         </FormButton>
       </div>
-      <div v-if="!registeredThisSession" class="w-full max-w-sm mx-auto mt-8">
+      <div
+        v-if="!registeredThisSession && isEmailVerificationForced"
+        class="w-full max-w-sm mx-auto mt-8"
+      >
         <CommonAlert color="neutral" size="xs">
           <template #title>Why am I seeing this?</template>
           <template #description>
@@ -91,7 +94,7 @@ import { useIntervalFn } from '@vueuse/core'
 import { useRoute } from 'vue-router'
 import { useAuthManager, useRegisteredThisSession } from '~/lib/auth/composables/auth'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
-import { onboardingRoute, settingsUserRoutes } from '~~/lib/common/helpers/route'
+import { homeRoute, settingsUserRoutes } from '~~/lib/common/helpers/route'
 import type { UserEmail } from '~/lib/common/generated/gql/graphql'
 
 useHead({
