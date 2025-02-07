@@ -69,8 +69,7 @@ import {
 } from '@/modules/core/repositories/branches'
 import {
   getObjectFactory,
-  storeSingleObjectIfNotFoundFactory,
-  storeClosuresIfNotFoundFactory
+  storeSingleObjectIfNotFoundFactory
 } from '@/modules/core/repositories/objects'
 import {
   legacyCreateStreamFactory,
@@ -255,8 +254,7 @@ const createUser = createUserFactory({
   emitEvent: getEventBus().emit
 })
 const createObject = createObjectFactory({
-  storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({ db }),
-  storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db })
+  storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({ db })
 })
 
 function buildCommentInputFromString(textString?: string) {
