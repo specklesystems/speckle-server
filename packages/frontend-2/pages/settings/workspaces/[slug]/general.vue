@@ -63,7 +63,7 @@
               v-if="workspaceResult?.workspaceBySlug"
               :workspace="workspaceResult?.workspaceBySlug"
               :disabled="!isAdmin || needsSsoLogin"
-              size="xxl"
+              size="3xl"
             />
           </div>
         </div>
