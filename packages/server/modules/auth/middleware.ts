@@ -5,16 +5,15 @@ import { createRedisClient } from '@/modules/shared/redis/redis'
 import {
   isSSLServer,
   getRedisUrl,
-  getFrontendOrigin
+  getFrontendOrigin,
+  getSessionSecret
 } from '@/modules/shared/helpers/envHelper'
-import { getSessionSecret } from '@/modules/shared/helpers/envHelper'
 import { isString, noop } from 'lodash'
 import { CreateAuthorizationCode } from '@/modules/auth/domain/operations'
-
-import { authLogger } from '@/logging/logging'
 import { ensureError } from '@speckle/shared'
 import { LegacyGetUser } from '@/modules/core/domain/users/operations'
 import { ForbiddenError } from '@/modules/shared/errors'
+import { UserInputError } from '@/modules/core/errors/userinput'
 
 export const sessionMiddlewareFactory = (): RequestHandler => {
   const RedisStore = ConnectRedis(ExpressSession)
@@ -93,10 +92,22 @@ export const finalizeAuthMiddlewareFactory =
 
       return res.redirect(redirectUrl)
     } catch (err) {
-      authLogger.error(err, 'Could not finalize auth')
+      const e = ensureError(err, 'Unexpected issue arose while finalizing auth')
+      switch (e.constructor) {
+        case ForbiddenError:
+          req.log.debug({ err: e }, 'Could not finalize auth')
+          break
+        case UserInputError:
+          req.log.info({ err: e }, 'Could not finalize auth')
+          break
+        default:
+          req.log.error({ err: e }, 'Could not finalize auth')
+          break
+      }
+
       if (req.session) req.session.destroy(noop)
       return res.status(401).send({
-        err: ensureError(err, 'Unexpected issue arose while finalizing auth').message
+        err: e.message
       })
     }
   }

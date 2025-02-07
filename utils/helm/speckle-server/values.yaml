@@ -39,8 +39,6 @@ featureFlags:
   automateModuleEnabled: false
   ## @param featureFlags.gendoAIModuleEnabled High level flag that toggles the Gendo AI render module
   gendoAIModuleEnabled: false
-  ## @param featureFlags.noClosureWrites Toggles whether to stop writing to the closure table
-  noClosureWrites: false
   ## @param featureFlags.workspacesModuleEnabled High level flag fully toggles the workspaces module
   workspacesModuleEnabled: false
   ## @param featureFlags.workspacesSSOEnabled High level flag fully toggles the workspaces dynamic sso
@@ -59,8 +57,6 @@ featureFlags:
   forceEmailVerification: false
   ## @param featureFlags.forceOnboarding Forces onboarding for all users
   forceOnboarding: false
-  ## @param featureFlags.objectsStreamingFix Enables the fix for the objects streaming issue when client prematurely closes the connection
-  objectsStreamingFix: false
 
 analytics:
   ## @param analytics.enabled Enable or disable analytics

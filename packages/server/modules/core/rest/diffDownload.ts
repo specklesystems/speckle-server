@@ -2,7 +2,7 @@ import zlib from 'zlib'
 import { corsMiddleware } from '@/modules/core/configs/cors'
 import type { Application } from 'express'
 import { SpeckleObjectsStream } from '@/modules/core/rest/speckleObjectsStream'
-import { Duplex, PassThrough, pipeline } from 'stream'
+import { pipeline, PassThrough } from 'stream'
 import { getObjectsStreamFactory } from '@/modules/core/repositories/objects'
 import { db } from '@/db/knex'
 import { validatePermissionsReadStreamFactory } from '@/modules/core/services/streams/auth'
@@ -11,12 +11,7 @@ import { authorizeResolver, validateScopes } from '@/modules/shared'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { UserInputError } from '@/modules/core/errors/userinput'
 import { ensureError } from '@speckle/shared'
-import chain from 'stream-chain'
-import { get } from 'lodash'
-import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { DatabaseError } from '@/modules/shared/errors'
-
-const { FF_OBJECTS_STREAMING_FIX } = getFeatureFlags()
 
 export default (app: Application) => {
   const validatePermissionsReadStream = validatePermissionsReadStreamFactory({
@@ -32,6 +27,7 @@ export default (app: Application) => {
       userId: req.context.userId || '-',
       streamId: req.params.streamId
     })
+
     const hasStreamAccess = await validatePermissionsReadStream(
       req.params.streamId,
       req
@@ -61,25 +57,16 @@ export default (app: Application) => {
     // "output" stream, connected to res with `pipeline` (auto-closing res)
     const speckleObjStream = new SpeckleObjectsStream(simpleText)
     const gzipStream = zlib.createGzip()
-
-    let chainPipeline: Duplex
-
-    if (FF_OBJECTS_STREAMING_FIX) {
-      // From node documentation: https://nodejs.org/docs/latest-v18.x/api/stream.html#stream_stream_pipeline_source_transforms_destination_callback
-      //    > stream.pipeline() leaves dangling event listeners on the streams after the callback has been invoked. In the case of reuse of streams after failure, this can cause event listener leaks and swallowed errors.
-      // As workaround, we are using chain from 'stream-chain'
-      // Some more conversation around this: https://stackoverflow.com/questions/61072482/node-closing-streams-properly-after-pipeline
-      chainPipeline = chain([
-        speckleObjStream,
-        gzipStream,
-        new PassThrough({ highWaterMark: 16384 * 31 }),
-        res
-      ])
-      chainPipeline.on('error', (err) => {
+    pipeline(
+      speckleObjStream,
+      gzipStream,
+      new PassThrough({ highWaterMark: 16384 * 31 }),
+      res,
+      (err) => {
         if (err) {
-          switch (get(err, 'code')) {
+          switch (err.code) {
             case 'ERR_STREAM_PREMATURE_CLOSE':
-              req.log.info({ err }, 'Stream to client has prematurely closed')
+              req.log.debug({ err }, 'Stream to client has prematurely closed')
               break
             default:
               req.log.error(err, 'App error streaming objects')
@@ -87,44 +74,15 @@ export default (app: Application) => {
           }
           return
         }
-
         req.log.info(
           {
             childCount: childrenList.length,
             mbWritten: gzipStream.bytesWritten / 1000000
           },
-          'Encountered error. Prior to error, we streamed {childCount} objects (size: {mbWritten} MB)'
+          'Streamed {childCount} objects (size: {mbWritten} MB)'
         )
-      })
-    } else {
-      pipeline(
-        speckleObjStream,
-        gzipStream,
-        new PassThrough({ highWaterMark: 16384 * 31 }),
-        res,
-        (err) => {
-          if (err) {
-            switch (err.code) {
-              case 'ERR_STREAM_PREMATURE_CLOSE':
-                req.log.info({ err }, 'Stream to client has prematurely closed')
-                break
-              default:
-                req.log.error(err, 'App error streaming objects')
-                break
-            }
-            return
-          }
-
-          req.log.info(
-            {
-              childCount: childrenList.length,
-              mbWritten: gzipStream.bytesWritten / 1000000
-            },
-            'Streamed {childCount} objects (size: {mbWritten} MB)'
-          )
-        }
-      )
-    }
+      }
+    )
 
     const cSize = 1000
     try {
@@ -136,21 +94,23 @@ export default (app: Application) => {
           streamId: req.params.streamId,
           objectIds: childrenChunk
         })
+
         // https://knexjs.org/faq/recipes.html#manually-closing-streams
         // https://github.com/knex/knex/issues/2324
-        req.on('close', () => {
-          dbStream.end.bind(dbStream)
-          dbStream.destroy.bind(dbStream)
+        const responseCloseHandler = () => {
+          dbStream.end()
+          dbStream.destroy()
+        }
+
+        dbStream.on('close', () => {
+          res.removeListener('close', responseCloseHandler)
         })
+        res.on('close', responseCloseHandler)
 
         await new Promise((resolve, reject) => {
-          if (FF_OBJECTS_STREAMING_FIX) {
-            dbStream.pipe(chainPipeline, { end: false })
-          } else {
-            dbStream.pipe(speckleObjStream, { end: false })
-          }
           dbStream.once('end', resolve)
           dbStream.once('error', reject)
+          dbStream.pipe(speckleObjStream, { end: false }) // will not call end on the speckleObjStream, so it remains open for the next batch of objects
         })
       }
     } catch (ex) {

@@ -5,7 +5,6 @@ import {
   getObjectChildrenFactory,
   getObjectChildrenQueryFactory,
   getObjectFactory,
-  storeClosuresIfNotFoundFactory,
   storeObjectsIfNotFoundFactory
 } from '@/modules/core/repositories/objects'
 import { createObjectsFactory } from '@/modules/core/services/objects/management'
@@ -109,8 +108,7 @@ export = {
         projectId: args.objectInput.streamId
       })
       const createObjects = createObjectsFactory({
-        storeObjectsIfNotFoundFactory: storeObjectsIfNotFoundFactory({ db: projectDB }),
-        storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db: projectDB })
+        storeObjectsIfNotFoundFactory: storeObjectsIfNotFoundFactory({ db: projectDB })
       })
       const ids = await createObjects({
         streamId: args.objectInput.streamId,

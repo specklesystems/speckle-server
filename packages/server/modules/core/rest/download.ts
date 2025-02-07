@@ -63,12 +63,19 @@ export default (app: express.Express) => {
       streamId: req.params.streamId,
       objectId: req.params.objectId
     })
+
     // https://knexjs.org/faq/recipes.html#manually-closing-streams
     // https://github.com/knex/knex/issues/2324
-    req.on('close', () => {
-      dbStream.end.bind(dbStream)
-      dbStream.destroy.bind(dbStream)
+    const responseCloseHandler = () => {
+      dbStream.end()
+      dbStream.destroy()
+    }
+
+    dbStream.on('close', () => {
+      res.removeListener('close', responseCloseHandler)
     })
+    res.on('close', responseCloseHandler)
+
     const speckleObjStream = new SpeckleObjectsStream(simpleText)
     const gzipStream = zlib.createGzip()
 
@@ -82,7 +89,14 @@ export default (app: express.Express) => {
       res,
       (err) => {
         if (err) {
-          boundLogger.error(err, 'Error downloading object.')
+          switch (err.code) {
+            case 'ERR_STREAM_PREMATURE_CLOSE':
+              boundLogger.info({ err }, 'Client closed connection early')
+              break
+            default:
+              boundLogger.error({ err }, 'Error downloading object from stream')
+              break
+          }
         } else {
           boundLogger.info(
             { megaBytesWritten: gzipStream.bytesWritten / 1000000 },
