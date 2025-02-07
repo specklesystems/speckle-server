@@ -162,11 +162,12 @@ const oidcStrategyBuilderFactory =
               case UserInputError:
               case InviteNotFoundError:
                 logger.info({ err: e })
-                break
+                return done(null, undefined)
               default:
                 logger.error({ err: e })
+                // Only when the server is operating abnormally should err be set, to indicate an internal error.
+                return done(e, undefined)
             }
-            return done(e, undefined)
           }
         }
       )
