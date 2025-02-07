@@ -1,10 +1,10 @@
 <template>
   <div class="flex flex-col gap-12">
-    <WorkspacesPromoBanner @create="openWorkspaceCreateDialog" />
+    <WorkspacesPromoBanner @create="openWorkspaceWizard" />
     <section>
       <div class="flex justify-between mb-2">
         <h4 class="text-foreground text-heading">In a nutshell</h4>
-        <FormButton @click="openWorkspaceCreateDialog">Create workspace</FormButton>
+        <FormButton @click="openWorkspaceWizard">Create workspace</FormButton>
       </div>
 
       <div class="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -74,7 +74,7 @@ import { workspaceCreateRoute } from '~~/lib/common/helpers/route'
 
 const mixpanel = useMixpanel()
 
-const openWorkspaceCreateDialog = () => {
+const openWorkspaceWizard = () => {
   navigateTo(workspaceCreateRoute())
   mixpanel.track('Create Workspace Button Clicked', {
     source: 'promo-page'
