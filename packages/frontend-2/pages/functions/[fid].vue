@@ -4,6 +4,7 @@
     <template v-if="!loading && fn">
       <AutomateFunctionPageHeader
         :fn="fn"
+        :fn-workspace="fnWorkspace"
         :is-owner="isOwner"
         class="mb-12"
         @create-automation="showNewAutomationDialog = true"
@@ -70,6 +71,15 @@ const pageQuery = graphql(`
   }
 `)
 
+const functionWorkspaceQuery = graphql(`
+  query AutomateFunctionPageWorkspace($workspaceId: String!) {
+    workspace(id: $workspaceId) {
+      id
+      ...AutomateFunctionPageHeader_Workspace
+    }
+  }
+`)
+
 definePageMeta({
   middleware: ['auth', 'require-valid-function']
 })
@@ -95,6 +105,19 @@ const showNewAutomationDialog = ref(false)
 
 const fn = computed(() => result.value?.automateFunction)
 const fnWorkspaceId = computed(() => fn.value?.workspaceIds?.at(0))
+
+const { result: functionWorkspaceResult } = useQuery(
+  functionWorkspaceQuery,
+  () => ({
+    workspaceId: fnWorkspaceId.value as string
+  }),
+  () => ({
+    enabled: !!fnWorkspaceId.value
+  })
+)
+
+const fnWorkspace = computed(() => functionWorkspaceResult.value?.workspace)
+
 const isOwner = computed(
   () =>
     !!(

@@ -61,8 +61,7 @@ const {
 const { getServerInfoFactory } = require('@/modules/core/repositories/server')
 const { createObjectFactory } = require('@/modules/core/services/objects/management')
 const {
-  storeSingleObjectIfNotFoundFactory,
-  storeClosuresIfNotFoundFactory
+  storeSingleObjectIfNotFoundFactory
 } = require('@/modules/core/repositories/objects')
 const { getEventBus } = require('@/modules/shared/services/eventBus')
 
@@ -121,8 +120,7 @@ const createPersonalAccessToken = createPersonalAccessTokenFactory({
   storePersonalApiToken: storePersonalApiTokenFactory({ db })
 })
 const createObject = createObjectFactory({
-  storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({ db }),
-  storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db })
+  storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({ db })
 })
 
 let server

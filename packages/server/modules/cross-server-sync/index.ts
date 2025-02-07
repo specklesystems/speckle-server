@@ -41,7 +41,6 @@ import { storeModelFactory } from '@/modules/core/repositories/models'
 import {
   getObjectFactory,
   getStreamObjectsFactory,
-  storeClosuresIfNotFoundFactory,
   storeSingleObjectIfNotFoundFactory
 } from '@/modules/core/repositories/objects'
 import {
@@ -162,8 +161,7 @@ const crossServerSyncModule: SpeckleModule = {
     })
 
     const createObject = createObjectFactory({
-      storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({ db }),
-      storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db })
+      storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({ db })
     })
 
     const createNewProject = createNewProjectFactory({

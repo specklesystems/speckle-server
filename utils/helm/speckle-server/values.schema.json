@@ -45,11 +45,6 @@
           "description": "High level flag that toggles the Gendo AI render module",
           "default": false
         },
-        "noClosureWrites": {
-          "type": "boolean",
-          "description": "Toggles whether to stop writing to the closure table",
-          "default": false
-        },
         "workspacesModuleEnabled": {
           "type": "boolean",
           "description": "High level flag fully toggles the workspaces module",
@@ -93,11 +88,6 @@
         "forceOnboarding": {
           "type": "boolean",
           "description": "Forces onboarding for all users",
-          "default": false
-        },
-        "objectsStreamingFix": {
-          "type": "boolean",
-          "description": "Enables the fix for the objects streaming issue when client prematurely closes the connection",
           "default": false
         }
       }
