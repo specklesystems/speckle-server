@@ -7,7 +7,7 @@
   >
     <p class="text-body-xs text-foreground mb-2">
       Are you sure you want to leave
-      <span class="font-medium">{{ workspace.name }}</span>
+      <span class="font-medium">{{ workspace?.name }}</span>
       ?
     </p>
   </LayoutDialog>

@@ -20,7 +20,7 @@
       v-model:model-value="workspaceShortId"
       name="slug"
       label="New short ID"
-      :help="`${baseUrl}${workspaceRoute(workspaceShortId)}`"
+      :help="`${baseUrl}${workspaceRoute(workspaceShortId || '')}`"
       color="foundation"
       :rules="[isStringOfLength({ maxLength: 50, minLength: 3 })]"
       :custom-error-message="
