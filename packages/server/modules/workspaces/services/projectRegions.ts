@@ -72,7 +72,7 @@ export const updateProjectRegionFactory =
     const copiedObjectCount = await deps.copyProjectObjects({ projectIds })
 
     // Move automations
-    const automationIds = await deps.copyProjectAutomations({ projectIds })
+    const copiedAutomationCount = await deps.copyProjectAutomations({ projectIds })
 
     // TODO: Move comments
     // TODO: Move file blobs
@@ -92,7 +92,7 @@ export const updateProjectRegionFactory =
       copiedModelCount[projectId] === sourceProjectModelCount,
       copiedVersionCount[projectId] === sourceProjectVersionCount,
       copiedObjectCount[projectId] === sourceProjectObjectCount,
-      automationIds[projectId].length === sourceProjectAutomationCount
+      copiedAutomationCount[projectId] === sourceProjectAutomationCount
     ]
 
     if (!tests.every((test) => !!test)) {

@@ -368,4 +368,4 @@ export type CopyProjectObjects = (params: {
 }) => Promise<Record<string, number>>
 export type CopyProjectAutomations = (params: {
   projectIds: string[]
-}) => Promise<Record<string, string[]>>
+}) => Promise<Record<string, number>>
