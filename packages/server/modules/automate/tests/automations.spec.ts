@@ -516,9 +516,11 @@ const buildAutomationUpdate = () => {
 
       it('fails when refering to nonexistent function releases', async () => {
         const create = buildAutomationRevisionCreate({
-          getFunctionRelease: async () => {
-            // TODO: Update once we know how exec engine should respond
-            throw new Error('Function release with ID XXX not found')
+          overrides: {
+            getFunctionRelease: async () => {
+              // TODO: Update once we know how exec engine should respond
+              throw new Error('Function release with ID XXX not found')
+            }
           }
         })
 

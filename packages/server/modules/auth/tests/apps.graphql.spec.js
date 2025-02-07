@@ -63,7 +63,6 @@ const { getServerInfoFactory } = require('@/modules/core/repositories/server')
 const { getEventBus } = require('@/modules/shared/services/eventBus')
 
 let sendRequest
-let server
 
 const createAppToken = createAppTokenFactory({
   storeApiToken: storeApiTokenFactory({ db }),
@@ -128,7 +127,6 @@ describe('GraphQL @apps-api', () => {
 
   before(async () => {
     const ctx = await beforeEachContext()
-    server = ctx.server
     ;({ sendRequest } = await initializeTestServer(ctx))
     testUser = {
       name: 'Dimitrie Stefanescu',
@@ -155,10 +153,6 @@ describe('GraphQL @apps-api', () => {
       Scopes.Apps.Read,
       Scopes.Apps.Write
     ])}`
-  })
-
-  after(async () => {
-    await server.close()
   })
 
   let testAppId

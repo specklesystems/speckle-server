@@ -2,11 +2,7 @@
 const expect = require('chai').expect
 const assert = require('assert')
 
-const {
-  beforeEachContext,
-  initializeTestServer,
-  truncateTables
-} = require('@/test/hooks')
+const { beforeEachContext, initializeTestServer } = require('@/test/hooks')
 const { noErrors } = require('@/test/helpers')
 const { Scopes, Roles } = require('@speckle/shared')
 const {
@@ -26,7 +22,6 @@ const {
   deleteWebhookFactory,
   dispatchStreamEventFactory
 } = require('@/modules/webhooks/services/webhooks')
-const { Users, Streams } = require('@/modules/core/dbSchema')
 const {
   getStreamFactory,
   createStreamFactory,
@@ -166,7 +161,7 @@ const createPersonalAccessToken = createPersonalAccessTokenFactory({
 
 describe('Webhooks @webhooks', () => {
   const getWebhook = getWebhookByIdFactory({ db })
-  let server, sendRequest
+  let sendRequest
 
   const userOne = {
     name: 'User',
@@ -191,7 +186,6 @@ describe('Webhooks @webhooks', () => {
 
   before(async () => {
     const ctx = await beforeEachContext()
-    server = ctx.server
     ;({ sendRequest } = await initializeTestServer(ctx))
 
     userOne.id = await createUser(userOne)
@@ -199,16 +193,6 @@ describe('Webhooks @webhooks', () => {
     streamOne.id = await createStream(streamOne)
 
     webhookOne.streamId = streamOne.id
-  })
-
-  after(async () => {
-    await truncateTables([
-      Users.name,
-      Streams.name,
-      'webhooks_config',
-      'webhooks_events'
-    ])
-    await server.close()
   })
 
   describe('Create, Read, Update, Delete Webhooks', () => {

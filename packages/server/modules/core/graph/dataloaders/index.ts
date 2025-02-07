@@ -56,7 +56,7 @@ import { Users } from '@/modules/core/dbSchema'
 import { getStreamPendingModelsFactory } from '@/modules/fileuploads/repositories/fileUploads'
 import { FileUploadRecord } from '@/modules/fileuploads/helpers/types'
 import {
-  AutomateRevisionFunctionRecord,
+  AutomationRevisionFunctionRecord,
   AutomationRecord,
   AutomationRevisionRecord,
   AutomationRunTriggerRecord,
@@ -595,7 +595,7 @@ const dataLoadersDefinition = defineRequestDataloaders(
           })
           return ids.map((i) => results[i] || [])
         }),
-        getRevisionFunctions: createLoader<string, AutomateRevisionFunctionRecord[]>(
+        getRevisionFunctions: createLoader<string, AutomationRevisionFunctionRecord[]>(
           async (ids) => {
             const results = await getRevisionsFunctions({
               automationRevisionIds: ids.slice()
