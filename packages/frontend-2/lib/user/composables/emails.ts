@@ -122,6 +122,11 @@ export function useUserEmails() {
   }
 
   const verifyUserEmail = async (email: UserEmail, code: string) => {
+    mixpanel.track('Email Verification Started', {
+      email: email.email,
+      isPrimary: email.primary
+    })
+
     const result = await verifyMutation({
       input: { email: email.email, code }
     }).catch(convertThrowIntoFetchResult)
@@ -130,6 +135,11 @@ export function useUserEmails() {
 
     if (result?.data?.activeUserMutations?.emailMutations?.verify) {
       if (!activeUserId.value) return
+
+      mixpanel.track('Email Verified', {
+        email: email.email,
+        isPrimary: email.primary
+      })
 
       // Update UserEmail verified status in cache
       modifyObjectField(
@@ -159,6 +169,11 @@ export function useUserEmails() {
       })
       return true
     }
+
+    mixpanel.track('Email Verification Failed', {
+      email: email.email,
+      isPrimary: email.primary
+    })
 
     triggerNotification({
       type: ToastNotificationType.Danger,

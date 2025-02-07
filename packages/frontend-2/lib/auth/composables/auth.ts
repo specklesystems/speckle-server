@@ -378,8 +378,8 @@ export const useAuthManager = (
       newsletter
     })
 
-    const isJustRegistered = useIsJustRegistered()
-    isJustRegistered.value = true
+    const registeredThisSession = useRegisteredThisSession()
+    registeredThisSession.value = true
 
     // eslint-disable-next-line camelcase
     goHome({ query: { access_code: accessCode } })
@@ -486,8 +486,8 @@ const useAuthAppIdAndChallenge = () => {
 /**
  * Indicates whether the user just completed registration
  */
-export const useIsJustRegistered = () =>
-  useState<boolean>('is-just-registered', () => false)
+export const useRegisteredThisSession = () =>
+  useState<boolean>('registered-this-session', () => false)
 
 export const useLoginOrRegisterUtils = () => {
   const appIdAndChallenge = useAuthAppIdAndChallenge()

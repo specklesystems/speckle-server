@@ -1,7 +1,7 @@
 import { useApolloClient } from '@vue/apollo-composable'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { UnsupportedEnvironmentError } from '~~/lib/core/errors/base'
-import type { OnboardingState } from '../helpers/onboarding'
+import type { OnboardingState } from '~~/lib/auth/helpers/onboarding'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { OnboardingError } from '~~/lib/auth/errors/errors'
 import { finishOnboardingMutation } from '~~/lib/auth/graphql/mutations'

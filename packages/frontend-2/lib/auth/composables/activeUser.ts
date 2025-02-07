@@ -72,17 +72,6 @@ export function useActiveUser() {
   const isGuest = computed(() => activeUser.value?.role === Roles.Server.Guest)
   const isAdmin = computed(() => activeUser.value?.role === Roles.Server.Admin)
 
-  // const emails = computed(() => activeUser.value?.emails)
-
-  // const primaryEmailNeedsVerification = computed(() => !activeUser.value?.verified)
-  // const secondaryEmailNeedsVerification = computed(
-  //   () => activeUser.value?.emails.some((email) => !email.verified) ?? false
-  // )
-  // const needsEmailVerification = computed(() => {
-  //   if (!isLoggedIn.value) return false
-  //   return primaryEmailNeedsVerification.value || secondaryEmailNeedsVerification.value
-  // })
-
   const projectVersionCount = computed(() => activeUser.value?.versions.totalCount)
 
   return {
