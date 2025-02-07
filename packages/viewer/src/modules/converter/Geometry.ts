@@ -285,6 +285,57 @@ export class Geometry {
     }
   }
 
+  /** Only supports indexed geometry */
+  public static computeVertexNormalsBuffer(
+    buffer: number[],
+    position: number[],
+    index: number[]
+  ) {
+    const pA = new Vector3(),
+      pB = new Vector3(),
+      pC = new Vector3()
+    const nA = new Vector3(),
+      nB = new Vector3(),
+      nC = new Vector3()
+    const cb = new Vector3(),
+      ab = new Vector3()
+
+    // indexed elements
+    for (let i = 0, il = index.length; i < il; i += 3) {
+      const vA = index[i + 0]
+      const vB = index[i + 1]
+      const vC = index[i + 2]
+
+      pA.fromArray(position, vA * 3)
+      pB.fromArray(position, vB * 3)
+      pC.fromArray(position, vC * 3)
+
+      cb.subVectors(pC, pB)
+      ab.subVectors(pA, pB)
+      cb.cross(ab)
+
+      nA.fromArray(buffer, vA * 3)
+      nB.fromArray(buffer, vB * 3)
+      nC.fromArray(buffer, vC * 3)
+
+      nA.add(cb)
+      nB.add(cb)
+      nC.add(cb)
+
+      buffer[vA * 3] = nA.x
+      buffer[vA * 3 + 1] = nA.y
+      buffer[vA * 3 + 2] = nA.z
+
+      buffer[vB * 3] = nB.x
+      buffer[vB * 3 + 1] = nB.y
+      buffer[vB * 3 + 2] = nB.z
+
+      buffer[vC * 3] = nC.x
+      buffer[vC * 3 + 1] = nC.y
+      buffer[vC * 3 + 2] = nC.z
+    }
+  }
+
   public static computeVertexNormals(
     buffer: BufferGeometry,
     doublePositions: Float64Array

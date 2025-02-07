@@ -215,6 +215,7 @@ export class MeshBatch extends PrimitiveBatch {
     const color = new Float32Array(hasVertexColors ? attributeCount : 0)
     color.fill(1)
     const batchIndices = new Float32Array(attributeCount / 3)
+    const normals = new Float32Array(attributeCount)
 
     let offset = 0
     let arrayOffset = 0
@@ -234,6 +235,21 @@ export class MeshBatch extends PrimitiveBatch {
       )
       position.set(geometry.attributes.POSITION, offset)
       if (geometry.attributes.COLOR) color.set(geometry.attributes.COLOR, offset)
+
+      /** We either copy over the provided vertex normals */
+      if (geometry.attributes.NORMAL) {
+        normals.set(geometry.attributes.NORMAL, offset)
+      } else {
+        /** Either we compute them ourselves */
+        Geometry.computeVertexNormalsBuffer(
+          normals.subarray(
+            offset,
+            offset + geometry.attributes.POSITION.length
+          ) as unknown as number[],
+          geometry.attributes.POSITION,
+          geometry.attributes.INDEX
+        )
+      }
       batchIndices.fill(
         k,
         offset / 3,
@@ -258,6 +274,7 @@ export class MeshBatch extends PrimitiveBatch {
     const geometry = this.makeMeshGeometry(
       indices,
       position,
+      normals,
       batchIndices,
       hasVertexColors ? color : undefined
     )
@@ -285,6 +302,7 @@ export class MeshBatch extends PrimitiveBatch {
   protected makeMeshGeometry(
     indices: Uint32Array | Uint16Array,
     position: Float64Array,
+    normals: Float32Array,
     batchIndices: Float32Array,
     color?: Float32Array
   ): BufferGeometry {
@@ -306,6 +324,12 @@ export class MeshBatch extends PrimitiveBatch {
       geometry.setAttribute('position', new Float32BufferAttribute(position, 3))
     }
 
+    if (normals) {
+      geometry
+        .setAttribute('normal', new Float32BufferAttribute(normals, 3))
+        .normalizeNormals()
+    }
+
     if (batchIndices) {
       geometry.setAttribute('objIndex', new Float32BufferAttribute(batchIndices, 1))
     }
@@ -319,7 +343,6 @@ export class MeshBatch extends PrimitiveBatch {
     this.gradientIndexBuffer.setUsage(DynamicDrawUsage)
     geometry.setAttribute('gradientIndex', this.gradientIndexBuffer)
 
-    Geometry.computeVertexNormals(geometry, position)
     Geometry.updateRTEGeometry(geometry, position)
 
     return geometry
