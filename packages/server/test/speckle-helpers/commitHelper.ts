@@ -13,7 +13,6 @@ import {
 } from '@/modules/core/repositories/commits'
 import {
   getObjectFactory,
-  storeClosuresIfNotFoundFactory,
   storeSingleObjectIfNotFoundFactory
 } from '@/modules/core/repositories/objects'
 import { markCommitStreamUpdatedFactory } from '@/modules/core/repositories/streams'
@@ -65,8 +64,7 @@ export async function createTestObject(params: { projectId: string }) {
   const createObject = createObjectFactory({
     storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({
       db: projectDb
-    }),
-    storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db: projectDb })
+    })
   })
 
   return await createObject({
@@ -86,8 +84,7 @@ async function ensureObjects(commits: BasicTestCommit[]) {
       const createObject = createObjectFactory({
         storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({
           db: projectDb
-        }),
-        storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db: projectDb })
+        })
       })
 
       return createObject({
