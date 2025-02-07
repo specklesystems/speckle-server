@@ -62,15 +62,13 @@ export const generateFunctionReleaseId = () => cryptoRandomString({ length: 10 }
  */
 export const buildAutomationCreate = (
   params: {
-    dbClient: Knex
+    dbClient?: Knex
     overrides?: Partial<{
       createDbAutomation: typeof clientCreateAutomation
     }>
-  } = {
-    dbClient: db
-  }
+  } = {}
 ) => {
-  const { dbClient, overrides } = params
+  const { dbClient = db, overrides } = params
 
   const create = createAutomationFactory({
     createAuthCode: createStoredAuthCodeFactory({ redis: createInmemoryRedisClient() }),
@@ -94,13 +92,11 @@ export const buildAutomationCreate = (
  */
 export const buildAutomationRevisionCreate = (
   params: {
-    dbClient: Knex
+    dbClient?: Knex
     overrides?: Partial<CreateAutomationRevisionDeps>
-  } = {
-    dbClient: db
-  }
+  } = {}
 ) => {
-  const { dbClient, overrides } = params
+  const { dbClient = db, overrides } = params
 
   const fakeGetRelease = (params: {
     functionReleaseId: string
