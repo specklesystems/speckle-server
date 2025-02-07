@@ -1,6 +1,16 @@
 import { db } from '@/db/knex'
 import { AllScopes } from '@/modules/core/helpers/mainConstants'
+import { createRandomEmail } from '@/modules/core/helpers/testHelpers'
+import {
+  BranchCommitRecord,
+  BranchRecord,
+  CommitRecord,
+  ObjectRecord,
+  StreamCommitRecord,
+  StreamRecord
+} from '@/modules/core/helpers/types'
 import { grantStreamPermissionsFactory } from '@/modules/core/repositories/streams'
+import { getDb } from '@/modules/multiregion/utils/dbSelector'
 import {
   BasicTestWorkspace,
   createTestWorkspace
@@ -8,6 +18,7 @@ import {
 import {
   BasicTestUser,
   createAuthTokenForUser,
+  createTestUser,
   createTestUsers
 } from '@/test/authHelper'
 import {
@@ -15,7 +26,8 @@ import {
   CreateWorkspaceProjectDocument,
   GetWorkspaceProjectsDocument,
   GetWorkspaceTeamDocument,
-  MoveProjectToWorkspaceDocument
+  MoveProjectToWorkspaceDocument,
+  UpdateProjectRegionDocument
 } from '@/test/graphql/generated/graphql'
 import {
   createTestContext,
@@ -23,10 +35,31 @@ import {
   TestApolloServer
 } from '@/test/graphqlHelper'
 import { beforeEachContext } from '@/test/hooks'
+import { BasicTestBranch, createTestBranch } from '@/test/speckle-helpers/branchHelper'
+import {
+  BasicTestCommit,
+  createTestCommit,
+  createTestObject
+} from '@/test/speckle-helpers/commitHelper'
+import {
+  isMultiRegionTestMode,
+  waitForRegionUser
+} from '@/test/speckle-helpers/regions'
 import { BasicTestStream, createTestStream } from '@/test/speckle-helpers/streamHelper'
 import { Roles } from '@speckle/shared'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
+import { Knex } from 'knex'
+import { SetOptional } from 'type-fest'
+
+const tables = {
+  projects: (db: Knex) => db.table<StreamRecord>('streams'),
+  models: (db: Knex) => db.table<BranchRecord>('branches'),
+  versions: (db: Knex) => db.table<CommitRecord>('commits'),
+  streamCommits: (db: Knex) => db.table<StreamCommitRecord>('stream_commits'),
+  branchCommits: (db: Knex) => db.table<BranchCommitRecord>('branch_commits'),
+  objects: (db: Knex) => db.table<ObjectRecord>('objects')
+}
 
 const grantStreamPermissions = grantStreamPermissionsFactory({ db })
 
@@ -272,3 +305,168 @@ describe('Workspace project GQL CRUD', () => {
     })
   })
 })
+
+isMultiRegionTestMode()
+  ? describe('Workspace project region changes', () => {
+      const regionKey1 = 'region1'
+      const regionKey2 = 'region2'
+
+      const adminUser: BasicTestUser = {
+        id: '',
+        name: 'John Speckle',
+        email: createRandomEmail()
+      }
+
+      const testWorkspace: SetOptional<BasicTestWorkspace, 'slug'> = {
+        id: '',
+        ownerId: '',
+        name: 'Unlimited Workspace'
+      }
+
+      const testProject: BasicTestStream = {
+        id: '',
+        ownerId: '',
+        name: 'Regional Project',
+        isPublic: true
+      }
+
+      const testModel: BasicTestBranch = {
+        id: '',
+        name: cryptoRandomString({ length: 8 }),
+        streamId: '',
+        authorId: ''
+      }
+
+      const testVersion: BasicTestCommit = {
+        id: '',
+        objectId: '',
+        streamId: '',
+        authorId: ''
+      }
+
+      let apollo: TestApolloServer
+      let targetRegionDb: Knex
+
+      before(async () => {
+        await createTestUser(adminUser)
+        await waitForRegionUser(adminUser)
+
+        apollo = await testApolloServer({ authUserId: adminUser.id })
+        targetRegionDb = await getDb({ regionKey: regionKey2 })
+      })
+
+      beforeEach(async () => {
+        delete testWorkspace.slug
+
+        await createTestWorkspace(testWorkspace, adminUser, {
+          regionKey: regionKey1,
+          addPlan: {
+            name: 'unlimited',
+            status: 'valid'
+          }
+        })
+
+        testProject.workspaceId = testWorkspace.id
+
+        await createTestStream(testProject, adminUser)
+        await createTestBranch({
+          stream: testProject,
+          branch: testModel,
+          owner: adminUser
+        })
+
+        testVersion.branchName = testModel.name
+        testVersion.objectId = await createTestObject({ projectId: testProject.id })
+
+        await createTestCommit(testVersion, {
+          owner: adminUser,
+          stream: testProject
+        })
+      })
+
+      it('moves project record to target regional db', async () => {
+        const res = await apollo.execute(UpdateProjectRegionDocument, {
+          projectId: testProject.id,
+          regionKey: regionKey2
+        })
+
+        expect(res).to.not.haveGraphQLErrors()
+
+        // TODO: Replace with gql query when possible
+        const project = await tables
+          .projects(targetRegionDb)
+          .select('*')
+          .where({ id: testProject.id })
+          .first()
+
+        expect(project).to.not.be.undefined
+      })
+
+      it('moves project models to target regional db', async () => {
+        const res = await apollo.execute(UpdateProjectRegionDocument, {
+          projectId: testProject.id,
+          regionKey: regionKey2
+        })
+
+        expect(res).to.not.haveGraphQLErrors()
+
+        // TODO: Replace with gql query when possible
+        const branch = await targetRegionDb
+          .table<BranchRecord>('branches')
+          .select('*')
+          .where({ id: testModel.id })
+          .first()
+
+        expect(branch).to.not.be.undefined
+      })
+
+      it('moves project model versions to target regional db', async () => {
+        const res = await apollo.execute(UpdateProjectRegionDocument, {
+          projectId: testProject.id,
+          regionKey: regionKey2
+        })
+
+        expect(res).to.not.haveGraphQLErrors()
+
+        // TODO: Replace with gql query when possible
+        const version = await tables
+          .versions(targetRegionDb)
+          .select('*')
+          .where({ id: testVersion.id })
+          .first()
+        expect(version).to.not.be.undefined
+
+        const streamCommitsRecord = await tables
+          .streamCommits(targetRegionDb)
+          .select('*')
+          .where({ commitId: testVersion.id })
+          .first()
+        expect(streamCommitsRecord).to.not.be.undefined
+
+        const branchCommitsRecord = await tables
+          .branchCommits(targetRegionDb)
+          .select('*')
+          .where({ commitId: testVersion.id })
+          .first()
+        expect(branchCommitsRecord).to.not.be.undefined
+      })
+
+      it('moves project version objects to target regional db', async () => {
+        const res = await apollo.execute(UpdateProjectRegionDocument, {
+          projectId: testProject.id,
+          regionKey: regionKey2
+        })
+
+        expect(res).to.not.haveGraphQLErrors()
+
+        // TODO: Replace with gql query when possible
+        const object = await tables
+          .objects(targetRegionDb)
+          .select('*')
+          .where({ id: testVersion.objectId })
+          .first()
+
+        expect(object).to.not.be.undefined
+      })
+    })
+  : void 0
