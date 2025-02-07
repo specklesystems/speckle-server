@@ -80,8 +80,8 @@ export const updateProjectRegionFactory =
     })
 
     const tests = [
-      modelIds[projectId].length === sourceProjectModelCount,
-      versionIds[projectId].length === sourceProjectVersionCount,
+      modelIds[projectId] === sourceProjectModelCount,
+      versionIds[projectId] === sourceProjectVersionCount,
       objectIds[projectId].length === sourceProjectObjectCount
     ]
 

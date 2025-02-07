@@ -392,6 +392,7 @@ isMultiRegionTestMode()
 
         expect(res).to.not.haveGraphQLErrors()
 
+        // TODO: Replace with gql query when possible
         const project = await tables
           .projects(targetRegionDb)
           .select('*')
@@ -409,6 +410,7 @@ isMultiRegionTestMode()
 
         expect(res).to.not.haveGraphQLErrors()
 
+        // TODO: Replace with gql query when possible
         const branch = await targetRegionDb
           .table<BranchRecord>('branches')
           .select('*')
@@ -426,6 +428,7 @@ isMultiRegionTestMode()
 
         expect(res).to.not.haveGraphQLErrors()
 
+        // TODO: Replace with gql query when possible
         const version = await tables
           .versions(targetRegionDb)
           .select('*')
@@ -456,6 +459,7 @@ isMultiRegionTestMode()
 
         expect(res).to.not.haveGraphQLErrors()
 
+        // TODO: Replace with gql query when possible
         const object = await tables
           .objects(targetRegionDb)
           .select('*')

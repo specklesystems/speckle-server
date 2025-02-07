@@ -359,10 +359,10 @@ export type CopyWorkspace = (params: { workspaceId: string }) => Promise<string>
 export type CopyProjects = (params: { projectIds: string[] }) => Promise<string[]>
 export type CopyProjectModels = (params: {
   projectIds: string[]
-}) => Promise<Record<string, string[]>>
+}) => Promise<Record<string, number>>
 export type CopyProjectVersions = (params: {
   projectIds: string[]
-}) => Promise<Record<string, string[]>>
+}) => Promise<Record<string, number>>
 export type CopyProjectObjects = (params: {
   projectIds: string[]
 }) => Promise<Record<string, string[]>>
