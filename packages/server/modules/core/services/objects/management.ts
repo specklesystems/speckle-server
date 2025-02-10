@@ -17,6 +17,13 @@ import {
   StoreObjectsIfNotFound,
   StoreSingleObjectIfNotFound
 } from '@/modules/core/domain/objects/operations'
+import { omit } from 'lodash'
+
+export const calculateObjectHash = (obj: RawSpeckleObject) =>
+  crypto
+    .createHash('md5')
+    .update(JSON.stringify(omit(obj, 'id'))) // omitting id field from hash, so we don't get different values depending on whether the id is present & empty, or not present at all.
+    .digest('hex')
 
 /**
  * Note: we're generating the hash here, rather than on the db side, as there are
@@ -30,9 +37,7 @@ const prepInsertionObject = (
   const MAX_OBJECT_SIZE_MB = getMaximumObjectSizeMB()
 
   if (obj.hash) obj.id = obj.hash
-  else
-    obj.id =
-      obj.id || crypto.createHash('md5').update(JSON.stringify(obj)).digest('hex') // generate a hash if none is present
+  else obj.id = obj.id || calculateObjectHash(obj)
 
   const stringifiedObj = JSON.stringify(obj)
   const objectByteSize = estimateStringMegabyteSize(stringifiedObj)
