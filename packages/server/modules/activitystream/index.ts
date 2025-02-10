@@ -14,10 +14,6 @@ import {
   addStreamInviteSentOutActivityFactory
 } from '@/modules/activitystream/services/streamActivity'
 import { getStreamFactory } from '@/modules/core/repositories/streams'
-import {
-  addStreamAccessRequestDeclinedActivityFactory,
-  addStreamAccessRequestedActivityFactory
-} from '@/modules/activitystream/services/accessRequestActivity'
 import { ScheduleExecution } from '@/modules/core/domain/scheduledTasks/operations'
 import { scheduleExecutionFactory } from '@/modules/core/services/taskScheduler'
 import {
@@ -25,18 +21,13 @@ import {
   releaseTaskLockFactory
 } from '@/modules/core/repositories/scheduledTasks'
 import { Knex } from 'knex'
-import {
-  onServerAccessRequestCreatedFactory,
-  onServerAccessRequestFinalizedFactory,
-  onServerInviteCreatedFactory
-} from '@/modules/activitystream/services/eventListener'
+import { onServerInviteCreatedFactory } from '@/modules/activitystream/services/eventListener'
 import { isProjectResourceTarget } from '@/modules/serverinvites/helpers/core'
 import { publish } from '@/modules/shared/utils/subscriptions'
-import { isStreamAccessRequest } from '@/modules/accessrequests/repositories'
 import { ServerInvitesEvents } from '@/modules/serverinvites/domain/events'
 import { ProjectEvents } from '@/modules/core/domain/projects/events'
-import { AccessRequestEvents } from '@/modules/accessrequests/domain/events'
 import { reportUserActivityFactory } from '@/modules/activitystream/events/userListeners'
+import { reportAccessRequestActivityFactory } from '@/modules/activitystream/events/accessRequestListeners'
 
 let scheduledTask: ReturnType<ScheduleExecution> | null = null
 let quitEventListeners: Optional<() => void> = undefined
@@ -57,25 +48,14 @@ const initializeEventListeners = ({
     eventListen: eventBus.listen,
     saveActivity
   })
+  const reportAccessRequestActivity = reportAccessRequestActivityFactory({
+    eventListen: eventBus.listen,
+    saveActivity
+  })
+
   const quitCbs = [
     reportUserActivity(),
-    eventBus.listen(AccessRequestEvents.Created, async (payload) => {
-      if (!isStreamAccessRequest(payload.payload.request)) return
-      return await onServerAccessRequestCreatedFactory({
-        addStreamAccessRequestedActivity: addStreamAccessRequestedActivityFactory({
-          saveActivity: saveActivityFactory({ db })
-        })
-      })(payload)
-    }),
-    eventBus.listen(AccessRequestEvents.Finalized, async (payload) => {
-      if (!isStreamAccessRequest(payload.payload.request)) return
-      await onServerAccessRequestFinalizedFactory({
-        addStreamAccessRequestDeclinedActivity:
-          addStreamAccessRequestDeclinedActivityFactory({
-            saveActivity: saveActivityFactory({ db })
-          })
-      })(payload)
-    }),
+    reportAccessRequestActivity(),
     eventBus.listen(ServerInvitesEvents.Created, async ({ payload }) => {
       if (!isProjectResourceTarget(payload.invite.resource)) return
       await onServerInviteCreatedFactory({
