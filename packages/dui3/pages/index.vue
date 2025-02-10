@@ -74,7 +74,7 @@
                 link
                 @click="
                   app.$openUrl(
-                    'https://www.speckle.systems/blog/speckle-connectors-2-21-release'
+                    'https://speckle.community/t/next-gen-connectors-supported-workflows-and-faq/16162'
                   )
                 "
               >
