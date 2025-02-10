@@ -1,5 +1,7 @@
 import { difference, flatten, isEqual, uniq } from 'lodash-es'
+import { useThrottleFn, onKeyStroke, watchTriggerable } from '@vueuse/core'
 import {
+  LoaderEvent,
   ViewMode,
   type PropertyInfo,
   type StringPropertyInfo,
@@ -14,7 +16,8 @@ import {
   SectionToolEvent,
   SectionTool,
   ViewModes,
-  ViewModeEvent
+  ViewModeEvent,
+  SpeckleLoader
 } from '@speckle/viewer'
 import { useAuthCookie } from '~~/lib/auth/composables/auth'
 import type {
@@ -55,7 +58,6 @@ import {
   useCameraUtilities,
   useMeasurementUtilities
 } from '~~/lib/viewer/composables/ui'
-import { onKeyStroke, watchTriggerable } from '@vueuse/core'
 import { setupDebugMode } from '~~/lib/viewer/composables/setup/dev'
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 import { useMixpanel } from '~~/lib/core/composables/mp'
@@ -95,8 +97,33 @@ function useViewerObjectAutoLoading() {
     resources: {
       response: { resourceItems }
     },
+    ui: { loadProgress },
     urlHashState: { focusedThreadId }
   } = useInjectedViewerState()
+
+  const loadingProgressMap: { [id: string]: number } = {}
+  const loadersMap: { [id: string]: SpeckleLoader } = {}
+
+  viewer.on(ViewerEvent.LoadComplete, (id) => {
+    delete loadingProgressMap[id]
+    // disposes of loader on load complete
+    loadersMap[id].dispose()
+    delete loadersMap[id]
+    consolidateProgressInternal({ id, progress: 1 })
+  })
+
+  const consolidateProgressInternal = (args: { progress: number; id: string }) => {
+    loadingProgressMap[args.id] = args.progress
+    let min = 42
+    const values = Object.values(loadingProgressMap) as number[]
+    for (const num of values) {
+      min = Math.min(min, num)
+    }
+
+    loadProgress.value = min
+  }
+
+  const consolidateProgressThorttled = useThrottleFn(consolidateProgressInternal, 250)
 
   const loadObject = (
     objectId: string,
@@ -107,12 +134,27 @@ function useViewerObjectAutoLoading() {
     if (unload) {
       viewer.unloadObject(objectUrl)
     } else {
-      viewer.loadObjectAsync(
+      const loader = new SpeckleLoader(
+        viewer.getWorldTree(),
         objectUrl,
         authToken.value || undefined,
         disableViewerCache ? false : undefined,
-        options?.zoomToObject
+        undefined
       )
+
+      loader.on(LoaderEvent.LoadProgress, (args) => consolidateProgressThorttled(args))
+      loader.on(LoaderEvent.LoadCancelled, (id) => {
+        delete loadingProgressMap[id]
+
+        // disposes of loader on load complete
+        loadersMap[id].dispose()
+        delete loadersMap[id]
+        consolidateProgressInternal({ id, progress: 1 })
+      })
+
+      loadersMap[objectUrl] = loader
+
+      viewer.loadObject(loader, options?.zoomToObject)
     }
   }
 
