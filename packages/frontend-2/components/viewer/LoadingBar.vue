@@ -1,14 +1,23 @@
 <template>
-  <div>
+  <div :class="`${viewerBusy ? 'mt-0' : '-mt-5'} transition-all`">
     <div
-      v-show="viewerBusy"
-      :class="`absolute w-full max-w-screen h-12 bg-blue-500/20 overflow-hidden ${
+      :class="`absolute w-full max-w-screen flex justify-center ${
         showNavbar && !isEmbedEnabled ? 'mt-14' : 'mt-0'
-      } text-xs text-foreground-on-primary z-50 text-center`"
+      }  z-50`"
     >
-      <!-- Mike or andrew pls make me biutifullll -->
-      <span class="text-2xl text-red-500">{{ Math.floor(loadProgress * 100) }}%</span>
-      <div class="swoosher absolute top-0 bg-blue-500 rounded-md"></div>
+      <div
+        class="relative bg-blue-500/20 mt-0 h-4 rounded-b-lg select-none px-2 py-1 w-2/3 lg:w-1/3 overflow-hidden"
+      >
+        <div
+          class="absolute h-full inset-0 bg-primary transition-[width]"
+          :style="`width: ${Math.floor(loadProgress * 100)}%`"
+        ></div>
+        <div
+          class="absolute h-full inset-0 text-center text-xs text-foreground-on-primary"
+        >
+          {{ Math.floor(loadProgress * 100) }}%
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -21,25 +30,3 @@ const { isEnabled: isEmbedEnabled } = useEmbed()
 const { viewerBusy, loadProgress } = useInjectedViewerInterfaceState()
 const { showNavbar } = useViewerTour()
 </script>
-<style scoped>
-.swoosher {
-  width: 100%;
-  height: 100%;
-  animation: swoosh 1s infinite linear;
-  transform-origin: 0% 30%;
-}
-
-@keyframes swoosh {
-  0% {
-    transform: translateX(0) scaleX(0);
-  }
-
-  40% {
-    transform: translateX(0) scaleX(0.4);
-  }
-
-  100% {
-    transform: translateX(100%) scaleX(0.5);
-  }
-}
-</style>
