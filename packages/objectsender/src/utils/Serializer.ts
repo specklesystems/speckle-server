@@ -10,6 +10,12 @@ type BasicSpeckleObject = Record<string, unknown> & {
   speckle_type: string
 }
 
+export type SerializerParams = {
+  transport: ITransport
+  chunkSize?: number
+  hashingFunction?: (s: string) => string
+}
+
 const isSpeckleObject = (obj: unknown): obj is BasicSpeckleObject =>
   isObjectLike(obj) && !!get(obj, 'speckle_type')
 
@@ -23,19 +29,15 @@ export class Serializer implements IDisposable {
   uniqueId: number
   hashingFunction: (s: string) => string
 
-  constructor(
-    transport: ITransport,
-    chunkSize: number = 1000,
-    hashingFunction: (s: string) => string = SHA1
-  ) {
-    this.chunkSize = chunkSize
+  constructor(params: SerializerParams) {
+    this.chunkSize = params.chunkSize || 1000
     this.detachLineage = [true] // first ever call is always detached
     this.lineage = []
     this.familyTree = {}
     this.closureTable = {}
-    this.transport = transport
+    this.transport = params.transport
     this.uniqueId = 0
-    this.hashingFunction = hashingFunction || SHA1
+    this.hashingFunction = params.hashingFunction || SHA1
   }
 
   async write(obj: Base) {
