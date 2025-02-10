@@ -99,3 +99,10 @@ export const isItemSelected: GenericValidateFunction<unknown[]> = (val) => {
   }
   return 'Value should have at least a single item selected'
 }
+
+export const isMultiItemSelected = <T>(val: T[] | unknown): true | string => {
+  if (Array.isArray(val) && val.length > 0) {
+    return true
+  }
+  return 'Value should have at least a single item selected'
+}

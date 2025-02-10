@@ -70,7 +70,7 @@ import { buildMocksConfig } from '@/modules/mocks'
 import { defaultErrorHandler } from '@/modules/core/rest/defaultErrorHandler'
 import { migrateDbToLatest } from '@/db/migrations'
 import { statusCodePlugin } from '@/modules/core/graph/plugins/statusCode'
-import { BaseError, ForbiddenError } from '@/modules/shared/errors'
+import { BadRequestError, BaseError, ForbiddenError } from '@/modules/shared/errors'
 import { loggingPluginFactory } from '@/modules/core/graph/plugins/logging'
 import { shouldLogAsInfoLevel } from '@/logging/graphqlError'
 import { getUserFactory } from '@/modules/core/repositories/users'
@@ -247,12 +247,12 @@ export function buildApolloSubscriptionServer(
           }
 
           if (!header) {
-            throw new Error("Couldn't resolve auth header for subscription")
+            throw new BadRequestError("Couldn't resolve auth header for subscription")
           }
 
           token = header.split(' ')[1]
           if (!token) {
-            throw new Error("Couldn't resolve token from auth header")
+            throw new BadRequestError("Couldn't resolve token from auth header")
           }
         } catch (e) {
           throw new ForbiddenError('You need a token to subscribe')
@@ -607,7 +607,7 @@ export async function startHttp(params: {
     },
     logger: (message, err) => {
       if (err) {
-        shutdownLogger.error({ err }, message)
+        shutdownLogger.warn({ err }, message)
       } else {
         shutdownLogger.info(message)
       }

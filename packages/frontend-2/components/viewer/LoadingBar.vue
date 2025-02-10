@@ -1,12 +1,12 @@
 <template>
-  <div :class="`${viewerBusy ? 'mt-0' : '-mt-5'} transition-all`">
+  <div :class="`${loadProgress < 1 && viewerBusy ? 'mt-0' : '-mt-5'} transition-all`">
     <div
       :class="`absolute w-full max-w-screen flex justify-center ${
         showNavbar && !isEmbedEnabled ? 'mt-14' : 'mt-0'
       }  z-50`"
     >
       <div
-        class="relative bg-blue-500/20 mt-0 h-4 rounded-b-lg select-none px-2 py-1 w-2/3 lg:w-1/3 overflow-hidden"
+        class="relative bg-blue-500/50 mt-0 h-4 rounded-b-lg select-none px-2 py-1 w-2/3 lg:w-1/3 overflow-hidden"
       >
         <div
           class="absolute h-full inset-0 bg-primary transition-[width]"
