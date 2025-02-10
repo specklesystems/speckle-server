@@ -31,7 +31,7 @@
             :disabled="resendVerificationEmailLoading"
             @click="onResend"
           >
-            Resend verification
+            Verify email
           </FormButton>
         </div>
       </div>

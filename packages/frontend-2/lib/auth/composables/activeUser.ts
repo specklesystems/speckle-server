@@ -11,6 +11,10 @@ export const activeUserQuery = graphql(`
     activeUser {
       id
       email
+      emails {
+        id
+        verified
+      }
       company
       bio
       name

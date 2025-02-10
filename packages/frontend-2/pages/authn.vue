@@ -1,5 +1,7 @@
 <template>
-  <NuxtPage />
+  <div>
+    <NuxtPage />
+  </div>
 </template>
 <script setup lang="ts">
 import { loginRoute } from '~~/lib/common/helpers/route'

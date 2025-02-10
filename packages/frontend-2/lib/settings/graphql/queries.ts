@@ -106,14 +106,6 @@ export const settingsWorkspacesInvitesSearchQuery = graphql(`
   }
 `)
 
-export const settingsUserEmailsQuery = graphql(`
-  query SettingsUserEmailsQuery {
-    activeUser {
-      ...SettingsUserEmails_User
-    }
-  }
-`)
-
 export const settingsWorkspacesProjectsQuery = graphql(`
   query SettingsWorkspacesProjects(
     $slug: String!

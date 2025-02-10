@@ -357,12 +357,6 @@ const leadingIconClasses = computed(() => {
 const iconClasses = computed((): string => {
   const classParts: string[] = []
 
-  if (props.customIcon) {
-    classParts.push('pl-8')
-  } else {
-    classParts.push('pl-2')
-  }
-
   if (!slots['input-right']) {
     if (props.rightIcon || errorMessage.value || shouldShowClear.value) {
       classParts.push('pr-8')

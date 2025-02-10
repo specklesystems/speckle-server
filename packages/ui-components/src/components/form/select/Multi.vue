@@ -132,7 +132,9 @@
                   </div>
                 </label>
 
-                <div class="overflow-auto simple-scrollbar max-h-60 flex flex-col">
+                <div
+                  class="overflow-auto simple-scrollbar max-h-60 gap-1 flex flex-col"
+                >
                   <div v-if="isAsyncSearchMode && isAsyncLoading" class="px-1">
                     <CommonLoadingBar :loading="true" />
                   </div>
@@ -162,7 +164,6 @@
                       <div
                         class="block w-full px-2 py-1.5 rounded-md text-left flex items-center gap-1"
                         :class="[
-                          isSelected(item) ? 'bg-highlight-3' : '',
                           !hideCheckmarks ? 'pr-8' : 'pr-2',
                           !disabledItemPredicate?.(item) && !isSelected(item)
                             ? 'hover:bg-highlight-1'

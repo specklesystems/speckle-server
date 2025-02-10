@@ -2,7 +2,8 @@ export enum ToastNotificationType {
   Success,
   Warning,
   Danger,
-  Info
+  Info,
+  Loading
 }
 
 export type ToastNotification = {

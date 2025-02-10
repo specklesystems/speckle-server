@@ -1,7 +1,5 @@
 <template>
-  <li
-    class="border-outline-2 border-x border-b first:border-t first:rounded-t-lg last:rounded-b-lg p-6 border-b-outline-3 last:border-b-outline-2"
-  >
+  <div class="p-6">
     <div
       v-if="emailData.primary || !emailData.verified"
       class="flex w-full gap-x-2 pb-4 md:pb-3"
@@ -18,9 +16,9 @@
         v-if="!emailData.verified"
         color="outline"
         size="sm"
-        @click="resendVerificationEmail"
+        @click="handleVerifyEmail"
       >
-        Resend verification email
+        Verify email
       </FormButton>
     </div>
     <div class="flex flex-col md:flex-row">
@@ -66,38 +64,21 @@
 
     <SettingsUserEmailDeleteDialog
       v-model:open="showDeleteDialog"
-      :email-id="emailData.id"
-      :email="emailData.email"
+      :email="emailData"
+      :is-verifying="!emailData.verified"
     />
-  </li>
+  </div>
 </template>
 
 <script setup lang="ts">
-import type { SettingsUserEmailCards_UserEmailFragment } from '~~/lib/common/generated/gql/graphql'
-import { useGlobalToast, ToastNotificationType } from '~~/lib/common/composables/toast'
-import { graphql } from '~~/lib/common/generated/gql'
-import { useMutation } from '@vue/apollo-composable'
-import { settingsNewEmailVerificationMutation } from '~~/lib/settings/graphql/mutations'
-import {
-  getFirstErrorMessage,
-  convertThrowIntoFetchResult
-} from '~~/lib/common/helpers/graphql'
-
-graphql(`
-  fragment SettingsUserEmailCards_UserEmail on UserEmail {
-    email
-    id
-    primary
-    verified
-  }
-`)
+import type { UserEmail } from '~~/lib/common/generated/gql/graphql'
+import { useUserEmails } from '~/lib/user/composables/emails'
 
 const props = defineProps<{
-  emailData: SettingsUserEmailCards_UserEmailFragment
+  emailData: UserEmail
 }>()
 
-const { triggerNotification } = useGlobalToast()
-const { mutate: resendMutation } = useMutation(settingsNewEmailVerificationMutation)
+const { resendVerificationEmail } = useUserEmails()
 
 const showDeleteDialog = ref(false)
 const showSetPrimaryDialog = ref(false)
@@ -108,7 +89,6 @@ const primaryTooltip = computed(() => {
   } else if (!props.emailData.verified) {
     return 'Unverified emails cannot be set as primary'
   }
-
   return undefined
 })
 
@@ -118,9 +98,13 @@ const description = computed(() => {
   } else if (!props.emailData.verified) {
     return 'Unverified emails cannot be set as primary'
   }
-
   return null
 })
+
+const handleVerifyEmail = async () => {
+  await resendVerificationEmail(props.emailData)
+  navigateTo(`/verify-email?emailId=${props.emailData.id}`)
+}
 
 const toggleSetPrimaryDialog = () => {
   showSetPrimaryDialog.value = true
@@ -128,23 +112,5 @@ const toggleSetPrimaryDialog = () => {
 
 const toggleDeleteDialog = () => {
   showDeleteDialog.value = true
-}
-
-const resendVerificationEmail = async () => {
-  const result = await resendMutation({ input: { id: props.emailData.id } }).catch(
-    convertThrowIntoFetchResult
-  )
-  if (result?.data) {
-    triggerNotification({
-      type: ToastNotificationType.Success,
-      title: `Verification mail sent to ${props.emailData.email}`
-    })
-  } else {
-    const errorMessage = getFirstErrorMessage(result?.errors)
-    triggerNotification({
-      type: ToastNotificationType.Danger,
-      title: errorMessage
-    })
-  }
 }
 </script>
