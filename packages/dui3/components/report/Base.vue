@@ -7,7 +7,7 @@
         @click.stop="toggleDialog()"
       >
         <InformationCircleIcon
-          v-if="summary.failedCount === 0"
+          v-if="summary.failedCount === 0 && summary.warningCount === 0"
           class="w-4 text-success"
         />
         <ExclamationCircleIcon v-else class="w-4 text-warning" />
@@ -122,13 +122,26 @@ const numberOfFailed = computed(() => props.report.filter((r) => r.status === 4)
 
 const summary = computed(() => {
   const failed = props.report.filter((item) => item.status === 4)
+  const warning = props.report.filter((item) => item.status === 3)
   const ok = props.report.filter((item) => item.status === 1)
-  const hint =
-    failed.length !== 0
-      ? `${failed.length} object(s) failed to convert`
-      : 'All objects converted ok'
+
+  let hint = 'All objects converted ok'
+  const isSuccess = failed.length === 0 && warning.length === 0
+  if (!isSuccess) {
+    if (failed.length !== 0 && warning.length !== 0) {
+      // both fail and warning
+      hint = `${failed.length} object(s) failed to convert, ${warning.length} object(s) converted with warning`
+    } else if (failed.length !== 0 && warning.length === 0) {
+      // only fail
+      hint = `${failed.length} object(s) failed to convert`
+    } else if (warning.length !== 0 && failed.length === 0) {
+      // only warning
+      hint = `${warning.length} object(s) converted with warning`
+    }
+  }
   return {
     failedCount: failed.length,
+    warningCount: warning.length,
     okCount: ok.length,
     hint
   }
