@@ -12,3 +12,11 @@ extend type WorkspaceMutations {
   """
   setDefaultRegion(workspaceId: String!, regionKey: String!): Workspace!
 }
+
+extend type WorkspaceProjectMutations {
+  """
+  Update project region and move all regional data to new db.
+  TODO: Currently performs all operations synchronously in request, should probably be scheduled.
+  """
+  moveToRegion(projectId: String!, regionKey: String!): Project!
+}
