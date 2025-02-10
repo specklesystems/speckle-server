@@ -164,11 +164,12 @@ const githubStrategyBuilderFactory =
             case InviteNotFoundError:
             case UnverifiedEmailSSOLoginError:
               logger.info(err)
-              break
+              return done(null, false, { message: e.message })
             default:
               logger.error(err)
+              // Only when the server is operating abnormally should err be set, to indicate an internal error.
+              return done(err, false, { message: e.message })
           }
-          return done(err, false, { message: e.message })
         }
       }
     )
