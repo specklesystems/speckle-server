@@ -304,10 +304,7 @@ export function useInviteUserToProject() {
     if (err && !hideToasts) {
       triggerNotification({
         type: ToastNotificationType.Danger,
-        title:
-          input.length > 1
-            ? "Couldn't send invites"
-            : `Coudldn't send invite to ${input[0].email}`,
+        title: input.length > 1 ? "Couldn't send invites" : "Couldn't send invite",
         description: err
       })
     } else {
@@ -315,9 +312,7 @@ export function useInviteUserToProject() {
         triggerNotification({
           type: ToastNotificationType.Success,
           title:
-            input.length > 1
-              ? 'Invites successfully send'
-              : `Invite successfully sent to ${input[0].email}`
+            input.length > 1 ? 'Invites successfully send' : 'Invite successfully sent'
         })
       }
     }

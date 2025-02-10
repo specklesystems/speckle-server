@@ -11,6 +11,7 @@
     :name="name || 'projects'"
     :label-id="labelId"
     :button-id="buttonId"
+    :tooltip-text="tooltipText"
     by="id"
   >
     <template #nothing-selected>
@@ -138,6 +139,9 @@ const props = defineProps({
    * Whether to only return projects within a specific workspace
    */
   workspaceId: {
+    type: String as PropType<Optional<string>>
+  },
+  tooltipText: {
     type: String as PropType<Optional<string>>
   }
 })

@@ -62,6 +62,7 @@ const emit = defineEmits<{
 const props = defineProps<{
   modelValue?: ValueType
   clearable?: boolean
+  hiddenItems?: StreamRoles[]
   disabledItems?: StreamRoles[]
   disabledItemsTooltip?: string
   allowUnset?: boolean
@@ -80,7 +81,9 @@ const { selectedValue, firstItem, isMultiItemArrayValue, hiddenSelectedItemCount
     dynamicVisibility: { elementToWatchForChanges, itemContainer }
   })
 
-const roles = computed(() => Object.values(Roles.Stream))
+const roles = computed(() =>
+  Object.values(Roles.Stream).filter((role) => !props.hiddenItems?.includes(role))
+)
 
 const disabledItemPredicate = (item: StreamRoles) =>
   props.disabledItems && props.disabledItems.length > 0

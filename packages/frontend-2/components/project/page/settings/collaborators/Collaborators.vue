@@ -21,12 +21,10 @@
       />
     </div>
 
-    <ProjectPageInviteDialog
+    <InviteDialogProject
       v-if="project"
       v-model:open="showInviteDialog"
       :project="project"
-      :project-id="projectId"
-      :disabled="!isOwner"
     />
   </ProjectPageSettingsBlock>
 </template>
@@ -53,7 +51,8 @@ const projectPageSettingsCollaboratorsQuery = graphql(`
     project(id: $projectId) {
       id
       ...ProjectPageTeamInternals_Project
-      ...ProjectPageInviteDialog_Project
+      ...InviteDialogProject_Project
+      workspaceId
     }
   }
 `)
@@ -83,10 +82,10 @@ const { result: pageResult } = useQuery(projectPageSettingsCollaboratorsQuery, (
 const { result: workspaceResult } = useQuery(
   projectPageSettingsCollaboratorWorkspaceQuery,
   () => ({
-    workspaceId: pageResult.value!.project.workspaceId!
+    workspaceId: pageResult.value!.project.workspace!.id
   }),
   () => ({
-    enabled: isWorkspacesEnabled.value && !!pageResult.value?.project.workspaceId
+    enabled: isWorkspacesEnabled.value && !!pageResult.value?.project.workspace?.id
   })
 )
 
