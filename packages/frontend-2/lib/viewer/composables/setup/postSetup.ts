@@ -60,18 +60,18 @@ import { setupDebugMode } from '~~/lib/viewer/composables/setup/dev'
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 
-function useViewerIsBusyEventHandler() {
+function useViewerLoadCompleteEventHandler() {
   const state = useInjectedViewerState()
 
-  const callback = (isBusy: boolean) => {
-    state.ui.viewerBusy.value = isBusy
+  const callback = () => {
+    state.ui.loading.value = true
   }
   onMounted(() => {
-    state.viewer.instance.on(ViewerEvent.Busy, callback)
+    state.viewer.instance.on(ViewerEvent.LoadComplete, callback)
   })
 
   onBeforeUnmount(() => {
-    state.viewer.instance.removeListener(ViewerEvent.Busy, callback)
+    state.viewer.instance.removeListener(ViewerEvent.LoadComplete, callback)
   })
 }
 
@@ -894,7 +894,7 @@ export function useViewerPostSetup() {
   useViewerObjectAutoLoading()
   useViewerReceiveTracking()
   useViewerSelectionEventHandler()
-  useViewerIsBusyEventHandler()
+  useViewerLoadCompleteEventHandler()
   useViewerSubscriptionEventTracker()
   useViewerThreadTracking()
   useViewerOpenedThreadUpdateEmitter()

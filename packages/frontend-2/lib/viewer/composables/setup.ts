@@ -276,7 +276,7 @@ export type InjectableViewerState = Readonly<{
     highlightedObjectIds: Ref<string[]>
     lightConfig: Ref<SunLightConfiguration>
     explodeFactor: Ref<number>
-    viewerBusy: WritableComputedRef<boolean>
+    loading: WritableComputedRef<boolean>
     selection: Ref<Nullable<Vector3>>
     measurement: {
       enabled: Ref<boolean>
@@ -359,8 +359,7 @@ function setupViewerMetadata(params: {
   const filteringState = shallowRef(undefined as Optional<FilteringState>)
   const views = ref([] as SpeckleView[])
 
-  const refreshWorldTreeAndFilters = async (busy: boolean) => {
-    if (busy) return
+  const refreshWorldTreeAndFilters = async () => {
     worldTree.value = viewer.getWorldTree()
     availableFilters.value = await viewer.getObjectProperties()
     views.value = viewer.getViews()
@@ -370,14 +369,14 @@ function setupViewerMetadata(params: {
   }
 
   onMounted(() => {
-    viewer.on(ViewerEvent.Busy, refreshWorldTreeAndFilters)
+    viewer.on(ViewerEvent.LoadComplete, refreshWorldTreeAndFilters)
     viewer
       .getExtension(FilteringExtension)
       .on(ViewerEvent.FilteringStateSet, updateFilteringState)
   })
 
   onBeforeUnmount(() => {
-    viewer.removeListener(ViewerEvent.Busy, refreshWorldTreeAndFilters)
+    viewer.removeListener(ViewerEvent.LoadComplete, refreshWorldTreeAndFilters)
     viewer
       .getExtension(FilteringExtension)
       .removeListener(ViewerEvent.FilteringStateSet, updateFilteringState)
@@ -913,10 +912,10 @@ function setupInterfaceState(
   state: InitialStateWithUrlHashState
 ): InitialStateWithInterface {
   // Is viewer busy - Using writable computed so that we can always intercept these calls
-  const isViewerBusy = ref(false)
-  const viewerBusy = computed({
-    get: () => isViewerBusy.value,
-    set: (newVal) => (isViewerBusy.value = !!newVal)
+  const isLoading = ref(false)
+  const loading = computed({
+    get: () => isLoading.value,
+    set: (newVal) => (isLoading.value = !!newVal)
   })
 
   const isolatedObjectIds = ref([] as string[])
@@ -977,7 +976,7 @@ function setupInterfaceState(
       lightConfig,
       explodeFactor,
       spotlightUserSessionId,
-      viewerBusy,
+      loading,
       threads: {
         items: commentThreads,
         openThread: {

@@ -109,8 +109,7 @@ const showRaw = ref(false)
 // in here (as i was expecting it to?). Therefore, refHack++ to trigger the computed prop rootNodes.
 // Possibly Fabs will know more :)
 const refhack = ref(1)
-useViewerEventListener(ViewerEvent.Busy, (isBusy: boolean) => {
-  if (isBusy) return
+useViewerEventListener(ViewerEvent.LoadComplete, () => {
   refhack.value++
 })
 
