@@ -373,7 +373,18 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     model.displayReceiveComplete = false
     model.hasDismissedUpdateWarning = true
     model.progress = { status: 'Starting to receive...' }
-    await app.$receiveBinding.receive(modelCardId)
+
+    // You should stop asking why if you saw anything related autocad..
+    // It solves the press "escape" issue.
+    // Because probably we don't give enough time to acad complete it's previos task and it stucks.
+    const shittyHostApps = ['autocad']
+    if (shittyHostApps.includes(hostAppName.value as string)) {
+      setTimeout(async () => {
+        await app.$receiveBinding.receive(modelCardId)
+      }, 500) // I prefer to sacrifice 500ms
+    } else {
+      await app.$receiveBinding.receive(modelCardId)
+    }
   }
 
   const receiveModelCancel = async (modelCardId: string) => {
