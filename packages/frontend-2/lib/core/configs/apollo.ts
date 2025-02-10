@@ -380,16 +380,24 @@ function createLink(params: {
         ? res.graphQLErrors
         : []
       const errMsg = res.networkError?.message || gqlErrors[0]?.message
-      logger.error(
-        {
-          ...omit(res, ['forward', 'response']),
-          networkErrorMessage: res.networkError?.message,
-          gqlErrorMessages: gqlErrors.map((e) => e.message),
-          errorMessage: errMsg,
-          graphql: true
-        },
-        'Apollo Client error: {errorMessage}'
+
+      // only log as error if at least one error has a status code of 5xx or has no status code
+      const shouldLogAsWarn = gqlErrors.every(
+        (e) =>
+          'statusCode' in e.extensions &&
+          typeof e.extensions.statusCode === 'number' &&
+          e.extensions.statusCode < 500
       )
+      const logContext = {
+        ...omit(res, ['forward', 'response']),
+        networkErrorMessage: res.networkError?.message,
+        gqlErrorMessages: gqlErrors.map((e) => e.message),
+        errorMessage: errMsg,
+        graphql: true
+      }
+      shouldLogAsWarn
+        ? logger.warn(logContext, 'Apollo Client error: {errorMessage}')
+        : logger.error(logContext, 'Apollo Client error: {errorMessage}')
     }
 
     const { networkError } = res
