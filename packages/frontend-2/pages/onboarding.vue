@@ -31,7 +31,7 @@
         }}
       </p>
       <OnboardingJoinTeammates
-        v-if="currentStage === 'join' && discoverableWorkspaces?.length"
+        v-if="currentStage === 'join' && discoverableWorkspaces.length > 0"
         :workspaces="discoverableWorkspaces"
         @next="currentStage = 'questions'"
       />
@@ -83,7 +83,7 @@ const discoverableWorkspaces = computed(
 )
 
 const currentStage = ref<'join' | 'questions'>(
-  discoverableWorkspaces.value ? 'join' : 'questions'
+  discoverableWorkspaces.value?.length > 0 ? 'join' : 'questions'
 )
 
 onMounted(() => {
