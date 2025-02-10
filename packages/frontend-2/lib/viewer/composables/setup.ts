@@ -920,7 +920,7 @@ function setupInterfaceState(
     set: (newVal) => (isViewerBusy.value = !!newVal)
   })
 
-  const loadProgress = ref(1)
+  const loadProgress = ref(0)
 
   const isolatedObjectIds = ref([] as string[])
   const hiddenObjectIds = ref([] as string[])
