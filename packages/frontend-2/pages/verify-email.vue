@@ -54,16 +54,23 @@
         >
           Cancel
         </FormButton>
-        <FormButton
-          :disabled="isResendDisabled"
-          color="outline"
-          size="sm"
-          @click="resendEmail"
+        <div
+          :key="cooldownRemaining"
+          v-tippy="
+            cooldownRemaining > 0
+              ? `You can send another code in ${cooldownRemaining}s`
+              : undefined
+          "
         >
-          {{
-            cooldownRemaining > 0 ? `Resend in ${cooldownRemaining}s` : 'Resend code'
-          }}
-        </FormButton>
+          <FormButton
+            :disabled="isResendDisabled"
+            color="outline"
+            size="sm"
+            @click="resendEmail"
+          >
+            {{ isResendDisabled ? 'Code sent' : 'Resend code' }}
+          </FormButton>
+        </div>
       </div>
       <div
         v-if="!registeredThisSession && isEmailVerificationForced"
@@ -160,8 +167,9 @@ const resendEmail = async () => {
 
 const handleVerificationComplete = async (code: string) => {
   if (!currentEmail.value) return
-
   if (isLoading.value) return
+
+  hasError.value = false
   isLoading.value = true
 
   triggerNotification({
@@ -178,6 +186,10 @@ const handleVerificationComplete = async (code: string) => {
     isLoading.value = false
   }
 }
+
+watch(code, () => {
+  hasError.value = false
+})
 
 onMounted(() => {
   if (route.query.source === 'registration') {
