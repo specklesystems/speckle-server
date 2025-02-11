@@ -8,7 +8,6 @@ import { homeRoute, onboardingRoute } from '~~/lib/common/helpers/route'
  */
 export default defineNuxtRouteMiddleware(async (to) => {
   const isOnboardingForced = useIsOnboardingForced()
-  const isEmailVerificationForced = useIsEmailVerificationForced()
 
   const client = useApolloClientFromNuxt()
   const { data } = await client
@@ -24,7 +23,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
   if (!isOnboardingForced.value) return
 
   // Ignore if user has not verified their email yet
-  if (isEmailVerificationForced.value && !data?.activeUser?.verified) return
+  if (!data?.activeUser?.verified) return
 
   const isOnboardingFinished = data?.activeUser?.isOnboardingFinished
   const isGoingToOnboarding = to.path === onboardingRoute

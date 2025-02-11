@@ -7,8 +7,6 @@ import { convertThrowIntoFetchResult } from '~~/lib/common/helpers/graphql'
  * Redirect user to /verify-email, if they haven't done it yet
  */
 export default defineNuxtRouteMiddleware(async (to) => {
-  const isEmailVerificationForced = useIsEmailVerificationForced()
-
   const client = useApolloClientFromNuxt()
   const { data } = await client
     .query({
@@ -21,8 +19,6 @@ export default defineNuxtRouteMiddleware(async (to) => {
   const isAuthPage = to.path.startsWith('/authn/')
   const isVerifyEmailPage = to.path === verifyEmailRoute
 
-  // Skip if not forced and not on verify email page
-  if (!isEmailVerificationForced.value && !isVerifyEmailPage) return
   if (isAuthPage) return
 
   const hasUnverifiedEmails = data.activeUser.emails.some((email) => !email.verified)

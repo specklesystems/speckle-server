@@ -34,8 +34,6 @@ export function useUserEmails() {
   const { mutate: createMutation } = useMutation(settingsCreateUserEmailMutation)
   const { mutate: verifyMutation } = useMutation(verifyEmailMutation)
 
-  const isEmailVerificationForced = useIsEmailVerificationForced()
-
   // Simple array of all emails
   const emails = computed(() => result.value?.activeUser?.emails ?? ([] as UserEmail[]))
 
@@ -53,9 +51,7 @@ export function useUserEmails() {
 
     if (result?.data) {
       mixpanel.track('Email Added')
-      if (isEmailVerificationForced.value) {
-        navigateTo(verifyEmailRoute)
-      }
+      navigateTo(verifyEmailRoute)
       return true
     }
 

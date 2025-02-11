@@ -1,5 +1,5 @@
 <template>
-  <HeaderWithEmptyPage :empty-header="isEmailVerificationForced">
+  <HeaderWithEmptyPage empty-header>
     <template #header-left>
       <HeaderLogoBlock no-link />
     </template>
@@ -35,22 +35,10 @@
       />
       <div class="mt-8 flex gap-2">
         <FormButton
-          v-if="!isEmailVerificationForced && isPrimaryEmail"
-          color="subtle"
-          size="sm"
-          @click="navigateTo(homeRoute)"
-        >
-          Skip
-        </FormButton>
-        <FormButton
           v-if="!isPrimaryEmail"
           color="subtle"
           size="sm"
-          @click="
-            isEmailVerificationForced
-              ? (showDeleteDialog = true)
-              : navigateTo(settingsUserRoutes.emails)
-          "
+          @click="showDeleteDialog = true"
         >
           Cancel
         </FormButton>
@@ -72,10 +60,7 @@
           </FormButton>
         </div>
       </div>
-      <div
-        v-if="!registeredThisSession && isEmailVerificationForced"
-        class="w-full max-w-sm mx-auto mt-8"
-      >
+      <div v-if="!registeredThisSession" class="w-full max-w-sm mx-auto mt-8">
         <CommonAlert color="neutral" size="xs">
           <template #title>Why am I seeing this?</template>
           <template #description>
@@ -101,7 +86,6 @@ import { useIntervalFn } from '@vueuse/core'
 import { useRoute } from 'vue-router'
 import { useAuthManager, useRegisteredThisSession } from '~/lib/auth/composables/auth'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
-import { homeRoute, settingsUserRoutes } from '~~/lib/common/helpers/route'
 import type { UserEmail } from '~/lib/common/generated/gql/graphql'
 
 useHead({
@@ -113,7 +97,6 @@ definePageMeta({
   layout: 'empty'
 })
 
-const isEmailVerificationForced = useIsEmailVerificationForced()
 const {
   unverifiedPrimaryEmail,
   unverifiedEmails,
