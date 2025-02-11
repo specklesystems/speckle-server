@@ -25,6 +25,5 @@
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 import { useInjectedViewerInterfaceState } from '~~/lib/viewer/composables/setup'
 const { isEnabled: isEmbedEnabled } = useEmbed()
-
 const { viewerBusy, loadProgress } = useInjectedViewerInterfaceState()
 </script>

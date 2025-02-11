@@ -82,8 +82,8 @@ const discoverableWorkspaces = computed(
   () => result.value?.activeUser?.discoverableWorkspaces || []
 )
 
-const currentStage = ref<'join' | 'questions'>(
-  discoverableWorkspaces.value?.length > 0 ? 'join' : 'questions'
+const currentStage = computed<'join' | 'questions'>(() =>
+  discoverableWorkspaces.value.length > 0 ? 'join' : 'questions'
 )
 
 onMounted(() => {
