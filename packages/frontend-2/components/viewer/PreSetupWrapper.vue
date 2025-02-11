@@ -48,7 +48,10 @@
           </div>
 
           <!-- Global loading bar -->
-          <ViewerLoadingBar class="absolute -top-2 left-0 w-full z-40" />
+          <ViewerLoadingBar class="absolute -top-2 left-0 w-full z-40 h-30" />
+          <div class="absolute left-0 w-full z-40 h-30 text-center bg-blue-500">
+            test
+          </div>
 
           <!-- Sidebar controls -->
           <Transition
