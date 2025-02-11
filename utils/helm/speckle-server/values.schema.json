@@ -45,11 +45,6 @@
           "description": "High level flag that toggles the Gendo AI render module",
           "default": false
         },
-        "noClosureWrites": {
-          "type": "boolean",
-          "description": "Toggles whether to stop writing to the closure table",
-          "default": false
-        },
         "workspacesModuleEnabled": {
           "type": "boolean",
           "description": "High level flag fully toggles the workspaces module",
@@ -83,6 +78,16 @@
         "fileImportIFCDotNetEnabled": {
           "type": "boolean",
           "description": "Toggles whether the experimental .Net IFC importer is used for importing IFC files.",
+          "default": false
+        },
+        "forceEmailVerification": {
+          "type": "boolean",
+          "description": "Forces email verification for all users",
+          "default": false
+        },
+        "forceOnboarding": {
+          "type": "boolean",
+          "description": "Forces onboarding for all users",
           "default": false
         }
       }
@@ -240,6 +245,16 @@
           "type": "number",
           "description": "The maximum time in milliseconds to wait for a new connection to be created in the connection pool. Should be less than the acquisition timeout, as a new connection may need to be created then acquired.",
           "default": 5000
+        },
+        "knexAsyncStackTracesEnabled": {
+          "type": "boolean",
+          "description": "If enabled, will provide better stack traces for errors arising out of knex operations",
+          "default": false
+        },
+        "knexImprovedTelemetryStackTraces": {
+          "type": "boolean",
+          "description": "If enabled, will provide better stack traces for knex telemetry",
+          "default": false
         },
         "databaseName": {
           "type": "string",
@@ -655,6 +670,11 @@
           "type": "string",
           "description": "The url of the Speckle Automate instance",
           "default": "https://automate.speckle.systems"
+        },
+        "asyncRequestContextEnabled": {
+          "type": "boolean",
+          "description": "If enabled, the server will use the async request context for improved log msg correlation",
+          "default": false
         },
         "gendoAI": {
           "type": "object",

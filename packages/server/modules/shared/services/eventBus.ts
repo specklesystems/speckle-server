@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   WorkspaceEventsPayloads,
   workspaceEventNamespace
@@ -14,6 +15,36 @@ import {
   serverinvitesEventNamespace,
   ServerInvitesEventsPayloads
 } from '@/modules/serverinvites/domain/events'
+import {
+  modelEventsNamespace,
+  ModelEventsPayloads
+} from '@/modules/core/domain/branches/events'
+import {
+  projectEventsNamespace,
+  ProjectEventsPayloads
+} from '@/modules/core/domain/projects/events'
+import {
+  userEventsNamespace,
+  UserEventsPayloads
+} from '@/modules/core/domain/users/events'
+import {
+  versionEventsNamespace,
+  VersionEventsPayloads
+} from '@/modules/core/domain/commits/events'
+import {
+  accessRequestEventsNamespace,
+  AccessRequestEventsPayloads
+} from '@/modules/accessrequests/domain/events'
+import {
+  commentEventsNamespace,
+  CommentEventsPayloads
+} from '@/modules/comments/domain/events'
+import {
+  automationEventsNamespace,
+  AutomationEventsPayloads,
+  automationRunEventsNamespace,
+  AutomationRunEventsPayloads
+} from '@/modules/automate/domain/events'
 
 type AllEventsWildcard = '**'
 type EventWildcard = '*'
@@ -34,6 +65,14 @@ type EventsByNamespace = {
   [workspaceEventNamespace]: WorkspaceEventsPayloads
   [gatekeeperEventNamespace]: GatekeeperEventPayloads
   [serverinvitesEventNamespace]: ServerInvitesEventsPayloads
+  [modelEventsNamespace]: ModelEventsPayloads
+  [projectEventsNamespace]: ProjectEventsPayloads
+  [userEventsNamespace]: UserEventsPayloads
+  [versionEventsNamespace]: VersionEventsPayloads
+  [accessRequestEventsNamespace]: AccessRequestEventsPayloads
+  [commentEventsNamespace]: CommentEventsPayloads
+  [automationEventsNamespace]: AutomationEventsPayloads
+  [automationRunEventsNamespace]: AutomationRunEventsPayloads
 }
 
 type EventTypes = UnionToIntersection<EventsByNamespace[keyof EventsByNamespace]>
@@ -71,7 +110,7 @@ type EventPayloadsByNamespaceMap = {
 }
 
 export type EventPayload<T extends EventSubscriptionKey> = T extends AllEventsWildcard
-  ? // if event key is "*", get all events from the flat object
+  ? // if event key is "**", get all events from the flat object
     EventPayloadsMap[keyof EventPayloadsMap]
   : // else if, the key is a "namespace.*" wildcard
   T extends `${infer Namespace}.${EventWildcard}`
@@ -88,7 +127,7 @@ export type EventPayload<T extends EventSubscriptionKey> = T extends AllEventsWi
 export function initializeEventBus() {
   const emitter = new EventEmitter({ wildcard: true })
 
-  return {
+  const core = {
     /**
      * Emit a module event. This function must be awaited to ensure all listeners
      * execute. Any errors thrown in the listeners will bubble up and throw from
@@ -130,11 +169,50 @@ export function initializeEventBus() {
       emitter.removeAllListeners()
     }
   }
+
+  // Extra utils
+  const listenOnce = <K extends EventSubscriptionKey>(
+    eventName: K,
+    handler: (event: EventPayload<K>) => MaybeAsync<unknown>,
+    options?: Partial<{
+      /**
+       * Timeout in milliseconds after which the listener will be removed even if it never fires
+       * (useful in tests for cleanup)
+       */
+      timeout: number
+    }>
+  ) => {
+    const removeListener = core.listen(eventName, async (event) => {
+      try {
+        await handler(event)
+      } finally {
+        removeListener()
+      }
+    })
+
+    if (options?.timeout) {
+      setTimeout(removeListener, options.timeout)
+    }
+
+    return removeListener
+  }
+
+  return {
+    ...core,
+    /**
+     * Listen for module events only once. Any errors thrown here will bubble out of where
+     * emit() was invoked.
+     *
+     * @returns Callback for stopping listening
+     */
+    listenOnce
+  }
 }
 
 export type EventBus = ReturnType<typeof initializeEventBus>
 export type EventBusPayloads = EventTypes
 export type EventBusEmit = EventBus['emit']
+export type EventBusListen = EventBus['listen']
 export type EmitArg = Parameters<EventBusEmit>[0]
 
 let eventBus: EventBus
@@ -142,4 +220,11 @@ let eventBus: EventBus
 export function getEventBus(): EventBus {
   if (!eventBus) eventBus = initializeEventBus()
   return eventBus
+}
+
+export const isSpecificEventPayload = <EventName extends EventNames>(
+  payload: EventPayload<any>,
+  eventKey: EventName
+): payload is EventPayload<EventName> => {
+  return payload.eventName === eventKey
 }

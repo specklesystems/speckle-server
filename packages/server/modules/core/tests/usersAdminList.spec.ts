@@ -30,7 +30,6 @@ import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/se
 import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { createBranchFactory } from '@/modules/core/repositories/branches'
-import { ProjectsEmitter } from '@/modules/core/events/projectsEmitter'
 import {
   countAdminUsersFactory,
   getUserFactory,
@@ -50,7 +49,6 @@ import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repos
 import { createUserFactory } from '@/modules/core/services/users/management'
 import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
 import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
-import { UsersEmitter } from '@/modules/core/events/usersEmitter'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 
 // To ensure that the invites are created in the correct order, we need to wait a bit between each creation
@@ -84,7 +82,7 @@ const createStream = legacyCreateStreamFactory({
     }),
     createStream: createStreamFactory({ db }),
     createBranch: createBranchFactory({ db }),
-    projectsEventsEmitter: ProjectsEmitter.emit
+    emitEvent: getEventBus().emit
   })
 })
 const createInviteDirectly = createStreamInviteDirectly
@@ -114,7 +112,7 @@ const createUser = createUserFactory({
     }),
     requestNewEmailVerification
   }),
-  usersEventsEmitter: UsersEmitter.emit
+  emitEvent: getEventBus().emit
 })
 
 function randomEl<T>(array: T[]): T {

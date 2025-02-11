@@ -1,6 +1,5 @@
 import { buildApolloServer } from '@/app'
 import { db } from '@/db/knex'
-import { AccessRequestsEmitter } from '@/modules/accessrequests/events/emitter'
 import {
   createNewRequestFactory,
   deleteRequestByIdFactory,
@@ -44,6 +43,7 @@ import {
 } from '@/modules/core/services/streams/access'
 import { NotificationType } from '@/modules/notifications/helpers/types'
 import { authorizeResolver } from '@/modules/shared'
+import { getEventBus } from '@/modules/shared/services/eventBus'
 import { publish } from '@/modules/shared/utils/subscriptions'
 import { BasicTestUser, createTestUsers } from '@/test/authHelper'
 import {
@@ -78,7 +78,7 @@ const requestStreamAccess = requestStreamAccessFactory({
     }),
     getStream,
     createNewRequest: createNewRequestFactory({ db }),
-    accessRequestsEmitter: AccessRequestsEmitter.emit
+    emitEvent: getEventBus().emit
   })
 })
 const saveActivity = saveActivityFactory({ db })

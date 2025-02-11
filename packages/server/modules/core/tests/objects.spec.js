@@ -36,7 +36,6 @@ const {
 } = require('@/modules/serverinvites/services/coreEmailContents')
 const { getEventBus } = require('@/modules/shared/services/eventBus')
 const { createBranchFactory } = require('@/modules/core/repositories/branches')
-const { ProjectsEmitter } = require('@/modules/core/events/projectsEmitter')
 const {
   getUsersFactory,
   getUserFactory,
@@ -64,16 +63,14 @@ const {
 const {
   finalizeInvitedServerRegistrationFactory
 } = require('@/modules/serverinvites/services/processing')
-const { UsersEmitter } = require('@/modules/core/events/usersEmitter')
 const { getServerInfoFactory } = require('@/modules/core/repositories/server')
 const {
   createObjectFactory,
-  createObjectsBatchedFactory,
+  createObjectsBatchedAndNoClosuresFactory,
   createObjectsFactory
 } = require('@/modules/core/services/objects/management')
 const {
   storeSingleObjectIfNotFoundFactory,
-  storeClosuresIfNotFoundFactory,
   storeObjectsIfNotFoundFactory,
   getFormattedObjectFactory,
   getObjectChildrenStreamFactory,
@@ -133,7 +130,7 @@ const createStream = legacyCreateStreamFactory({
     }),
     createStream: createStreamFactory({ db }),
     createBranch: createBranchFactory({ db }),
-    projectsEventsEmitter: ProjectsEmitter.emit
+    emitEvent: getEventBus().emit
   })
 })
 
@@ -162,19 +159,16 @@ const createUser = createUserFactory({
     }),
     requestNewEmailVerification
   }),
-  usersEventsEmitter: UsersEmitter.emit
+  emitEvent: getEventBus().emit
 })
 const createObject = createObjectFactory({
-  storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({ db }),
-  storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db })
+  storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({ db })
 })
-const createObjectsBatched = createObjectsBatchedFactory({
-  storeObjectsIfNotFoundFactory: storeObjectsIfNotFoundFactory({ db }),
-  storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db })
+const createObjectsBatched = createObjectsBatchedAndNoClosuresFactory({
+  storeObjectsIfNotFoundFactory: storeObjectsIfNotFoundFactory({ db })
 })
 const createObjects = createObjectsFactory({
-  storeObjectsIfNotFoundFactory: storeObjectsIfNotFoundFactory({ db }),
-  storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db })
+  storeObjectsIfNotFoundFactory: storeObjectsIfNotFoundFactory({ db })
 })
 const getObject = getFormattedObjectFactory({ db })
 const getObjectChildrenStream = getObjectChildrenStreamFactory({ db })
@@ -635,8 +629,8 @@ describe('Objects @core-objects', () => {
 
     await createObjectsBatched({ streamId: stream.id, objects: objs })
 
-    const parent = await getObject({ streamId: stream.id, objectId: commitId })
-    expect(parent.totalChildrenCount).to.equal(3333)
+    // const parent = await getObject({ streamId: stream.id, objectId: commitId })
+    // expect(parent.totalChildrenCount).to.equal(3333)
     const commitChildren = await getObjectChildren({
       streamId: stream.id,
       objectId: commitId,

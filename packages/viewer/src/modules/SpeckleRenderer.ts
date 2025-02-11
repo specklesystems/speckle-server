@@ -605,7 +605,7 @@ export default class SpeckleRenderer {
     this.updateHelpers()
 
     /** We'll just update the shadowcatcher after all batches are loaded */
-    this.updateShadowCatcher()
+    this.updateShadowCatcher(true)
     this.updateClippingPlanes()
     if (this._speckleCamera) this._speckleCamera.updateCameraPlanes(this.sceneBox)
     delete this.cancel[renderTree.id]
@@ -641,7 +641,6 @@ export default class SpeckleRenderer {
 
   public removeRenderTree(subtreeId: string) {
     this.rootGroup.remove(this.rootGroup.getObjectByName(subtreeId) as Object3D)
-    this.updateShadowCatcher()
 
     const batches = this.batcher.getBatches(subtreeId)
     batches.forEach((value) => {
@@ -651,6 +650,7 @@ export default class SpeckleRenderer {
     this.batcher.purgeBatches(subtreeId)
     this.updateDirectLights()
     this.updateHelpers()
+    this.updateShadowCatcher(true)
   }
 
   public cancelRenderTree(subtreeId: string) {
@@ -688,7 +688,7 @@ export default class SpeckleRenderer {
     } else if (Materials.isFilterMaterial(material)) {
       this.setFilterMaterial(rvMap, material)
     } else if (
-      Materials.isRendeMaterial(material) ||
+      Materials.isRenderMaterial(material) ||
       Materials.isDisplayStyle(material)
     ) {
       this.setDataMaterial(rvMap, material)
@@ -844,14 +844,15 @@ export default class SpeckleRenderer {
     this._shadowcatcher?.updateClippingPlanes(planes)
   }
 
-  public updateShadowCatcher() {
+  public updateShadowCatcher(force: boolean = false) {
     if (this.sunConfiguration.shadowcatcher !== undefined)
       this._shadowcatcher.shadowcatcherMesh.visible =
         this.sunConfiguration.shadowcatcher
     if (this.sunConfiguration.shadowcatcher) {
       this._shadowcatcher.bake(
         this.clippingVolume,
-        this._renderer.capabilities.maxTextureSize
+        this._renderer.capabilities.maxTextureSize,
+        force
       )
       this.needsRender = true
     }

@@ -76,7 +76,6 @@ type WorkspaceCreateArgs = {
     slug?: string | null
     description: string | null
     logo: string | null
-    defaultLogoIndex: number
   }
   userResourceAccessLimits: MaybeNullOrUndefined<TokenResourceIdentifier[]>
 }

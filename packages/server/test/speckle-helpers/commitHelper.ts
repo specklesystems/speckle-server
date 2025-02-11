@@ -1,7 +1,6 @@
 import { db } from '@/db/knex'
 import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import { addCommitCreatedActivityFactory } from '@/modules/activitystream/services/commitActivity'
-import { VersionsEmitter } from '@/modules/core/events/versionsEmitter'
 import {
   getBranchByIdFactory,
   getStreamBranchByNameFactory,
@@ -14,7 +13,6 @@ import {
 } from '@/modules/core/repositories/commits'
 import {
   getObjectFactory,
-  storeClosuresIfNotFoundFactory,
   storeSingleObjectIfNotFoundFactory
 } from '@/modules/core/repositories/objects'
 import { markCommitStreamUpdatedFactory } from '@/modules/core/repositories/streams'
@@ -24,6 +22,7 @@ import {
 } from '@/modules/core/services/commit/management'
 import { createObjectFactory } from '@/modules/core/services/objects/management'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
+import { getEventBus } from '@/modules/shared/services/eventBus'
 import { publish } from '@/modules/shared/utils/subscriptions'
 import { BasicTestUser } from '@/test/authHelper'
 import { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
@@ -65,8 +64,7 @@ export async function createTestObject(params: { projectId: string }) {
   const createObject = createObjectFactory({
     storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({
       db: projectDb
-    }),
-    storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db: projectDb })
+    })
   })
 
   return await createObject({
@@ -86,8 +84,7 @@ async function ensureObjects(commits: BasicTestCommit[]) {
       const createObject = createObjectFactory({
         storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({
           db: projectDb
-        }),
-        storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db: projectDb })
+        })
       })
 
       return createObject({
@@ -126,7 +123,7 @@ export async function createTestCommits(
         insertBranchCommits: insertBranchCommitsFactory({ db: projectDb }),
         markCommitStreamUpdated,
         markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db: projectDb }),
-        versionsEventEmitter: VersionsEmitter.emit,
+        emitEvent: getEventBus().emit,
         addCommitCreatedActivity: addCommitCreatedActivityFactory({
           saveActivity: saveActivityFactory({ db }),
           publish

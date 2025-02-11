@@ -63,6 +63,7 @@
           @input="$emit('input', { event: $event, value })"
           @focus="$emit('focus')"
           @blur="$emit('blur')"
+          @keydown.stop
         />
       </div>
       <slot name="input-right">

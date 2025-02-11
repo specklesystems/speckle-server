@@ -1,25 +1,23 @@
-import { Logger } from '@/logging/logging'
+import { authLogger, type Logger } from '@/logging/logging'
+import { maybeLoggerWithContext } from '@/logging/requestContext'
 import {
   addToMailchimpAudience,
   triggerMailchimpCustomerJourney
 } from '@/modules/auth/services/mailchimp'
-import {
-  UsersEvents,
-  UsersEventsListener,
-  UsersEventsPayloads
-} from '@/modules/core/events/usersEmitter'
+import { UserEvents } from '@/modules/core/domain/users/events'
 import {
   enableMixpanel,
   getMailchimpNewsletterIds,
   getMailchimpOnboardingIds,
   getMailchimpStatus
 } from '@/modules/shared/helpers/envHelper'
+import { EventBus, EventPayload } from '@/modules/shared/services/eventBus'
 import { mixpanel } from '@/modules/shared/utils/mixpanel'
 
 const onUserCreatedFactory =
-  (deps: { logger: Logger }) =>
-  async (payload: UsersEventsPayloads[UsersEvents.Created]) => {
-    const { user, signUpCtx } = payload
+  () => async (payload: EventPayload<typeof UserEvents.Created>) => {
+    const logger = maybeLoggerWithContext({ logger: authLogger })!
+    const { user, signUpCtx } = payload.payload
 
     try {
       // Send event to MP
@@ -44,13 +42,13 @@ const onUserCreatedFactory =
             await addToMailchimpAudience(user, listId)
           }
         } catch (error) {
-          deps.logger.warn(error, 'Failed to sign up user to mailchimp lists')
+          logger.warn({ err: error }, 'Failed to sign up user to mailchimp lists')
         }
       }
     } catch (e) {
-      deps.logger.error(
+      logger.error(
         {
-          error: e,
+          err: e,
           userId: user.id
         },
         'Post sign up tracking failed'
@@ -59,10 +57,9 @@ const onUserCreatedFactory =
   }
 
 export const initializeEventListenerFactory =
-  (deps: { usersEventsListener: UsersEventsListener; logger: Logger }) => () => {
-    const onUserCreated = onUserCreatedFactory(deps)
-
-    const cbs = [deps.usersEventsListener(UsersEvents.Created, onUserCreated)]
+  (deps: { eventBus: EventBus; logger: Logger }) => () => {
+    const onUserCreated = onUserCreatedFactory()
+    const cbs = [deps.eventBus.listen(UserEvents.Created, onUserCreated)]
 
     return () => cbs.forEach((cb) => cb())
   }

@@ -48,7 +48,6 @@ export default defineNuxtConfig({
   ],
   runtimeConfig: {
     redisUrl: '',
-    webflowApiToken: '',
     public: {
       ...featureFlags,
       apiOrigin: 'UNDEFINED',
@@ -159,6 +158,12 @@ export default defineNuxtConfig({
         'Access-Control-Expose-Headers': '*'
       }
     },
+    '/functions': {
+      redirect: {
+        to: '/',
+        statusCode: 307
+      }
+    },
     // Redirect old settings pages
     '/server-management/projects': {
       redirect: {
@@ -186,23 +191,35 @@ export default defineNuxtConfig({
     },
     '/profile': {
       redirect: {
-        to: '/?settings=user/profile',
+        to: '/?settings/user/profile',
         statusCode: 301
       }
     },
-
-    // Redirect settings 'route' to homepage with added query
-    '/settings': { redirect: '/?settings=user/profile' },
-    '/settings/user/profile': { redirect: '/?settings=user/profile' },
-    '/settings/user/notifications': { redirect: '/?settings=user/notifications' },
-    '/settings/user/developer-settings': {
-      redirect: '/?settings=user/developer-settings'
+    '/settings/server/active-users': {
+      redirect: {
+        to: '/settings/server/members',
+        statusCode: 301
+      }
     },
-    '/settings/server/general': { redirect: '/?settings=server/general' },
-    '/settings/server/projects': { redirect: '/?settings=server/projects' },
-    '/settings/server/active-users': { redirect: '/?settings=server/active-users' },
     '/settings/server/pending-invitations': {
-      redirect: '/?settings=server/pending-invitations'
+      redirect: {
+        to: '/settings/server/members',
+        statusCode: 301
+      }
+    },
+    '/settings/**': {
+      appMiddleware: ['auth', 'settings']
+    },
+    '/settings/server/*': {
+      appMiddleware: ['auth', 'settings', 'admin']
+    },
+    '/settings/workspaces/*': {
+      appMiddleware: [
+        'auth',
+        'settings',
+        'requires-workspaces-enabled',
+        'require-valid-workspace'
+      ]
     }
   },
 

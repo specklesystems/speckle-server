@@ -3,7 +3,9 @@
     title="Security"
     collapsible
     icon="add"
-    :icon-click="() => openSettingsDialog(SettingMenuKeys.Workspace.Security)"
+    :icon-click="
+      () => navigateTo(settingsWorkspaceRoutes.security.route(workspaceInfo.slug))
+    "
     icon-text="Add domain"
     no-hover
   >
@@ -13,7 +15,9 @@
         <FormButton
           color="outline"
           size="sm"
-          @click="openSettingsDialog(SettingMenuKeys.Workspace.Security)"
+          @click="
+            navigateTo(settingsWorkspaceRoutes.security.route(workspaceInfo.slug))
+          "
         >
           Improve security
         </FormButton>
@@ -23,10 +27,7 @@
 </template>
 <script setup lang="ts">
 import { graphql } from '~~/lib/common/generated/gql'
-import {
-  type AvailableSettingsMenuKeys,
-  SettingMenuKeys
-} from '~/lib/settings/helpers/types'
+import { settingsWorkspaceRoutes } from '~/lib/common/helpers/route'
 import type { WorkspaceSidebarSecurity_WorkspaceFragment } from '~/lib/common/generated/gql/graphql'
 
 graphql(`
@@ -38,12 +39,4 @@ graphql(`
 defineProps<{
   workspaceInfo: WorkspaceSidebarSecurity_WorkspaceFragment
 }>()
-
-const emit = defineEmits<{
-  (e: 'show-settings-dialog', v: AvailableSettingsMenuKeys): void
-}>()
-
-const openSettingsDialog = (target: AvailableSettingsMenuKeys) => {
-  emit('show-settings-dialog', target)
-}
 </script>

@@ -36,7 +36,8 @@ export class MRTShadedViewPipeline extends ProgressivePipeline {
       ObjectLayers.STREAM_CONTENT_LINE,
       ObjectLayers.STREAM_CONTENT_POINT,
       ObjectLayers.STREAM_CONTENT_POINT_CLOUD,
-      ObjectLayers.STREAM_CONTENT_TEXT
+      ObjectLayers.STREAM_CONTENT_TEXT,
+      ObjectLayers.PROPS
     ])
     viewportPass.options = {
       matcapTexture: {
@@ -71,6 +72,9 @@ export class MRTShadedViewPipeline extends ProgressivePipeline {
     blendPassDynamic.setTexture('tEdges', edgesPassDynamic.outputTarget?.texture)
     blendPassDynamic.accumulationFrames = this.accumulationFrameCount
 
+    const postBlendGeometryPass = new GeometryPass()
+    postBlendGeometryPass.setLayers([ObjectLayers.PROPS])
+
     const stencilPass = new StencilPass()
     stencilPass.setVisibility(ObjectVisibility.STENCIL)
     stencilPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
@@ -81,11 +85,7 @@ export class MRTShadedViewPipeline extends ProgressivePipeline {
     stencilMaskPass.setClearFlags(ClearFlags.DEPTH)
 
     const overlayPass = new GeometryPass()
-    overlayPass.setLayers([
-      ObjectLayers.PROPS,
-      ObjectLayers.OVERLAY,
-      ObjectLayers.MEASUREMENTS
-    ])
+    overlayPass.setLayers([ObjectLayers.OVERLAY, ObjectLayers.MEASUREMENTS])
 
     this.dynamicStage.push(
       depthPassNormalDynamic,
@@ -93,8 +93,9 @@ export class MRTShadedViewPipeline extends ProgressivePipeline {
       stencilPass,
       shadowcatcherPass,
       viewportPass,
-      stencilMaskPass,
       blendPassDynamic,
+      postBlendGeometryPass,
+      stencilMaskPass,
       overlayPass
     )
     this.progressiveStage.push(
@@ -104,16 +105,18 @@ export class MRTShadedViewPipeline extends ProgressivePipeline {
       stencilPass,
       shadowcatcherPass,
       viewportPass,
-      stencilMaskPass,
       blendPass,
+      postBlendGeometryPass,
+      stencilMaskPass,
       overlayPass
     )
     this.passthroughStage.push(
       stencilPass,
       shadowcatcherPass,
       viewportPass,
-      stencilMaskPass,
       blendPass,
+      stencilMaskPass,
+      postBlendGeometryPass,
       overlayPass
     )
 

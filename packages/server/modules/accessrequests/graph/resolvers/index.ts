@@ -1,5 +1,4 @@
 import { db } from '@/db/knex'
-import { AccessRequestsEmitter } from '@/modules/accessrequests/events/emitter'
 import {
   AccessRequestType,
   createNewRequestFactory,
@@ -36,6 +35,7 @@ import {
 } from '@/modules/core/services/streams/access'
 import { authorizeResolver } from '@/modules/shared'
 import { LogicError } from '@/modules/shared/errors'
+import { getEventBus } from '@/modules/shared/services/eventBus'
 import { publish } from '@/modules/shared/utils/subscriptions'
 
 const getUser = getUserFactory({ db })
@@ -52,7 +52,7 @@ const requestProjectAccess = requestProjectAccessFactory({
   getUserStreamAccessRequest,
   getStream,
   createNewRequest: createNewRequestFactory({ db }),
-  accessRequestsEmitter: AccessRequestsEmitter.emit
+  emitEvent: getEventBus().emit
 })
 
 const requestStreamAccess = requestStreamAccessFactory({
@@ -90,7 +90,7 @@ const processPendingStreamRequest = processPendingStreamRequestFactory({
   validateStreamAccess,
   addOrUpdateStreamCollaborator,
   deleteRequestById: deleteRequestByIdFactory({ db }),
-  accessRequestsEmitter: AccessRequestsEmitter.emit
+  emitEvent: getEventBus().emit
 })
 
 const processPendingProjectRequest = processPendingStreamRequest

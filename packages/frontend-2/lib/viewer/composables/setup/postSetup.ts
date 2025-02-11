@@ -1,5 +1,7 @@
 import { difference, flatten, isEqual, uniq } from 'lodash-es'
+import { useThrottleFn, onKeyStroke, watchTriggerable } from '@vueuse/core'
 import {
+  LoaderEvent,
   ViewMode,
   type PropertyInfo,
   type StringPropertyInfo,
@@ -14,11 +16,11 @@ import {
   SectionToolEvent,
   SectionTool,
   ViewModes,
-  ViewModeEvent
+  ViewModeEvent,
+  SpeckleLoader
 } from '@speckle/viewer'
 import { useAuthCookie } from '~~/lib/auth/composables/auth'
 import type {
-  Comment,
   Project,
   ProjectCommentThreadsArgs,
   ViewerResourceItem
@@ -40,10 +42,8 @@ import { useViewerCommentUpdateTracking } from '~~/lib/viewer/composables/commen
 import {
   getCacheId,
   getObjectReference,
-  isReference,
   modifyObjectFields
 } from '~~/lib/common/helpers/graphql'
-import type { ModifyFnCacheData } from '~~/lib/common/helpers/graphql'
 import {
   useViewerOpenedThreadUpdateEmitter,
   useViewerThreadTracking
@@ -58,10 +58,7 @@ import {
   useCameraUtilities,
   useMeasurementUtilities
 } from '~~/lib/viewer/composables/ui'
-import { onKeyStroke, watchTriggerable } from '@vueuse/core'
 import { setupDebugMode } from '~~/lib/viewer/composables/setup/dev'
-import type { Reference } from '@apollo/client'
-import type { Modifier } from '@apollo/client/cache'
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 
@@ -100,8 +97,29 @@ function useViewerObjectAutoLoading() {
     resources: {
       response: { resourceItems }
     },
+    ui: { loadProgress },
     urlHashState: { focusedThreadId }
   } = useInjectedViewerState()
+
+  const loadingProgressMap: { [id: string]: number } = {}
+
+  viewer.on(ViewerEvent.LoadComplete, (id) => {
+    delete loadingProgressMap[id]
+    consolidateProgressInternal({ id, progress: 1 })
+  })
+
+  const consolidateProgressInternal = (args: { progress: number; id: string }) => {
+    loadingProgressMap[args.id] = args.progress
+    let min = 42
+    const values = Object.values(loadingProgressMap) as number[]
+    for (const num of values) {
+      min = Math.min(min, num)
+    }
+
+    loadProgress.value = min
+  }
+
+  const consolidateProgressThorttled = useThrottleFn(consolidateProgressInternal, 250)
 
   const loadObject = (
     objectId: string,
@@ -109,15 +127,25 @@ function useViewerObjectAutoLoading() {
     options?: Partial<{ zoomToObject: boolean }>
   ) => {
     const objectUrl = getObjectUrl(projectId.value, objectId)
+
     if (unload) {
       viewer.unloadObject(objectUrl)
     } else {
-      viewer.loadObjectAsync(
+      const loader = new SpeckleLoader(
+        viewer.getWorldTree(),
         objectUrl,
         authToken.value || undefined,
         disableViewerCache ? false : undefined,
-        options?.zoomToObject
+        undefined
       )
+
+      loader.on(LoaderEvent.LoadProgress, (args) => consolidateProgressThorttled(args))
+      loader.on(LoaderEvent.LoadCancelled, (id) => {
+        delete loadingProgressMap[id]
+        consolidateProgressInternal({ id, progress: 1 })
+      })
+
+      viewer.loadObject(loader, options?.zoomToObject)
     }
   }
 
@@ -224,7 +252,7 @@ function useViewerSubscriptionEventTracker() {
     (event, cache) => {
       const isArchived = event.type === ProjectCommentsUpdatedMessageType.Archived
       const isNew = event.type === ProjectCommentsUpdatedMessageType.Created
-      const model = event.comment
+      const comment = event.comment
 
       if (isArchived) {
         // Mark as archived
@@ -253,30 +281,21 @@ function useViewerSubscriptionEventTracker() {
             }
           }
         )
-      } else if (isNew && model) {
-        const parentId = model.parent?.id
+      } else if (isNew && comment) {
+        const parentId = comment.parent?.id
 
         // Add reply to parent
         if (parentId) {
-          cache.modify({
-            id: getCacheId('Comment', parentId),
-            fields: {
-              replies: ((
-                oldValue: ModifyFnCacheData<Comment['replies']> | Reference
-              ) => {
-                if (isReference(oldValue)) return oldValue
-
-                const newValue: typeof oldValue = {
-                  totalCount: (oldValue?.totalCount || 0) + 1,
-                  items: [
-                    getObjectReference('Comment', model.id),
-                    ...(oldValue?.items || [])
-                  ]
-                }
-                return newValue
-              }) as Modifier<ModifyFnCacheData<Comment['replies']> | Reference>
-            }
-          })
+          modifyObjectField(
+            cache,
+            getCacheId('Comment', parentId),
+            'replies',
+            ({ helpers: { createUpdatedValue, ref } }) =>
+              createUpdatedValue(({ update }) => {
+                update('totalCount', (totalCount) => totalCount + 1)
+                update('items', (items) => [ref('Comment', comment.id), ...items])
+              })
+          )
         } else {
           // Add comment thread
           modifyObjectFields<ProjectCommentThreadsArgs, Project['commentThreads']>(
@@ -286,7 +305,7 @@ function useViewerSubscriptionEventTracker() {
               if (fieldName !== 'commentThreads') return
 
               const newItems = [
-                getObjectReference('Comment', model.id),
+                getObjectReference('Comment', comment.id),
                 ...(data.items || [])
               ]
               return {

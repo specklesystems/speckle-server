@@ -1,6 +1,6 @@
 import { Optional } from '@speckle/shared'
-import { buildTableHelper, knex, Objects } from '@/modules/core/dbSchema'
-import { ObjectChildrenClosureRecord, ObjectRecord } from '@/modules/core/helpers/types'
+import { knex, Objects } from '@/modules/core/dbSchema'
+import { ObjectRecord } from '@/modules/core/helpers/types'
 import {
   BatchedSelectOptions,
   executeBatchedSelect
@@ -16,7 +16,6 @@ import {
   GetObjectsStream,
   GetStreamObjects,
   HasObjects,
-  StoreClosuresIfNotFound,
   StoreObjects,
   StoreObjectsIfNotFound,
   StoreSingleObjectIfNotFound
@@ -24,18 +23,10 @@ import {
 import { SpeckleObject } from '@/modules/core/domain/objects/types'
 import { SetOptional } from 'type-fest'
 import { get, set, toNumber } from 'lodash'
-
-const ObjectChildrenClosure = buildTableHelper('object_children_closure', [
-  'parent',
-  'child',
-  'minDepth',
-  'streamId'
-])
+import { UserInputError } from '@/modules/core/errors/userinput'
 
 const tables = {
-  objects: (db: Knex) => db<ObjectRecord>(Objects.name),
-  objectChildrenClosure: (db: Knex) =>
-    db<ObjectChildrenClosureRecord>(ObjectChildrenClosure.name)
+  objects: (db: Knex) => db<ObjectRecord>(Objects.name)
 }
 
 export const getStreamObjectsFactory =
@@ -121,16 +112,6 @@ export const storeObjectsIfNotFoundFactory =
         // knex is bothered by string being inserted into jsonb, which is actually fine
         batch as SpeckleObject[]
       )
-      .onConflict()
-      .ignore()
-  }
-
-export const storeClosuresIfNotFoundFactory =
-  (deps: { db: Knex }): StoreClosuresIfNotFound =>
-  async (closuresBatch) => {
-    await tables
-      .objectChildrenClosure(deps.db)
-      .insert(closuresBatch)
       .onConflict()
       .ignore()
   }
@@ -386,7 +367,7 @@ export const getObjectChildrenQueryFactory =
               if (typeof statement.value === 'number') castType = 'numeric'
 
               if (operatorsWhitelist.indexOf(statement.operator) === -1)
-                throw new Error('Invalid operator for query')
+                throw new UserInputError('Invalid operator for query')
 
               // Determine the correct where clause (where, and where, or where)
               let whereClause: keyof typeof nestedWhereQuery
@@ -442,7 +423,7 @@ export const getObjectChildrenQueryFactory =
       if (castType === 'text') cursor.value = `"${cursor.value}"`
 
       if (operatorsWhitelist.indexOf(cursor.operator) === -1)
-        throw new Error('Invalid operator for cursor')
+        throw new UserInputError('Invalid operator for cursor')
 
       // Unwrapping the tuple comparison of ( userOrderByField, id ) > ( lastValueOfUserOrderBy, lastSeenId )
       if (fullObjectSelect) {
