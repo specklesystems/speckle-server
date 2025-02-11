@@ -158,6 +158,12 @@ export default defineNuxtConfig({
         'Access-Control-Expose-Headers': '*'
       }
     },
+    '/functions': {
+      redirect: {
+        to: '/',
+        statusCode: 307
+      }
+    },
     // Redirect old settings pages
     '/server-management/projects': {
       redirect: {

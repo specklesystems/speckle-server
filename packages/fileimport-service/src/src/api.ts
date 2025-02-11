@@ -10,7 +10,6 @@ import { ForceRequired } from '@speckle/shared/dist/commonjs/index.js'
 
 const tables = (db: Knex) => ({
   objects: db('objects'),
-  closures: db('object_children_closure'),
   branches: db<{
     id: string
     streamId: string
@@ -87,17 +86,9 @@ export class ServerAPI {
   }) {
     const insertionObject = this.prepInsertionObject(streamId, object)
 
-    const closures = []
     const totalChildrenCountByDepth: Record<string, number> = {}
     if (object.__closure !== null) {
       for (const prop in object.__closure) {
-        closures.push({
-          streamId,
-          parent: insertionObject.id,
-          child: prop,
-          minDepth: object.__closure[prop]
-        })
-
         if (totalChildrenCountByDepth[object.__closure[prop].toString()])
           totalChildrenCountByDepth[object.__closure[prop].toString()]++
         else totalChildrenCountByDepth[object.__closure[prop].toString()] = 1
@@ -107,27 +98,17 @@ export class ServerAPI {
     delete insertionObject.__tree
     delete insertionObject.__closure
 
-    insertionObject.totalChildrenCount = closures.length
+    insertionObject.totalChildrenCount = object.__closure?.length
     insertionObject.totalChildrenCountByDepth = JSON.stringify(
       totalChildrenCountByDepth
     )
 
     await this.tables.objects.insert(insertionObject).onConflict().ignore()
 
-    if (closures.length > 0) {
-      await this.tables.closures.insert(closures).onConflict().ignore()
-    }
-
     return insertionObject.id
   }
 
   async createObjectsBatched(streamId: string, objects: SpeckleObject[]) {
-    const closures: {
-      streamId: string
-      parent: string | undefined
-      child: string | undefined
-      minDepth: number
-    }[] = []
     const objsToInsert: ForceRequired<SpeckleObject, 'id'>[] = []
     const ids: string[] = []
 
@@ -139,12 +120,6 @@ export class ServerAPI {
 
       if (obj.__closure !== null) {
         for (const prop in obj.__closure) {
-          closures.push({
-            streamId,
-            parent: insertionObject.id,
-            child: prop,
-            minDepth: obj.__closure[prop]
-          })
           totalChildrenCountGlobal++
           if (totalChildrenCountByDepth[obj.__closure[prop].toString()])
             totalChildrenCountByDepth[obj.__closure[prop].toString()]++
@@ -164,7 +139,6 @@ export class ServerAPI {
       ids.push(insertionObject.id)
     })
 
-    const closureBatchSize = 1000
     const objectsBatchSize = 500
 
     // step 1: insert objects
@@ -184,23 +158,6 @@ export class ServerAPI {
       }
     }
 
-    // step 2: insert closures
-    if (closures.length > 0) {
-      const batches = chunk(closures, closureBatchSize)
-
-      for (const [index, batch] of batches.entries()) {
-        this.prepInsertionClosureBatch(batch)
-        await this.tables.closures.insert(batch).onConflict().ignore()
-        this.logger.info(
-          {
-            currentBatchCount: batch.length,
-            currentBatchId: index + 1,
-            totalNumberOfBatches: batches.length
-          },
-          'Inserted {currentBatchCount} closures from batch {currentBatchId} of {totalNumberOfBatches}'
-        )
-      }
-    }
     return ids
   }
 
