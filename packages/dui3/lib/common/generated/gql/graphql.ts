@@ -4868,7 +4868,7 @@ export type ModelDetailsQueryVariables = Exact<{
 }>;
 
 
-export type ModelDetailsQuery = { __typename?: 'Query', project: { __typename?: 'Project', id: string, name: string, model: { __typename?: 'Model', id: string, displayName: string, name: string, versions: { __typename?: 'VersionCollection', totalCount: number, items: Array<{ __typename?: 'Version', id: string }> }, author: { __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null } } } };
+export type ModelDetailsQuery = { __typename?: 'Query', project: { __typename?: 'Project', id: string, name: string, model: { __typename?: 'Model', id: string, displayName: string, name: string, versions: { __typename?: 'VersionCollection', totalCount: number, items: Array<{ __typename?: 'Version', id: string }> }, author?: { __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null } | null } } };
 
 export type VersionDetailsQueryVariables = Exact<{
   projectId: Scalars['String']['input'];
