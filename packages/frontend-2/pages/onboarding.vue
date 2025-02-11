@@ -5,15 +5,6 @@
     </template>
     <template #header-right>
       <div class="flex gap-2 items-center">
-        <FormButton
-          v-if="!isOnboardingForced"
-          class="opacity-70 hover:opacity-100 p-1"
-          size="sm"
-          color="subtle"
-          @click="setUserOnboardingComplete()"
-        >
-          Skip
-        </FormButton>
         <FormButton color="outline" @click="() => logout({ skipRedirect: false })">
           Sign out
         </FormButton>
@@ -75,9 +66,7 @@ definePageMeta({
   layout: 'empty'
 })
 
-const isOnboardingForced = useIsOnboardingForced()
-
-const { setUserOnboardingComplete, createOnboardingProject } = useProcessOnboarding()
+const { createOnboardingProject } = useProcessOnboarding()
 const { activeUser } = useActiveUser()
 const { logout } = useAuthManager()
 

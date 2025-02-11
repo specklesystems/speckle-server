@@ -42,14 +42,6 @@ export const useIsMultipleEmailsEnabled = () => {
   return ref(FF_MULTIPLE_EMAILS_MODULE_ENABLED)
 }
 
-export const useIsOnboardingForced = () => {
-  const {
-    public: { FF_FORCE_ONBOARDING }
-  } = useRuntimeConfig()
-
-  return ref(FF_FORCE_ONBOARDING)
-}
-
 export const useIsGendoModuleEnabled = () => {
   const {
     public: { FF_GENDOAI_MODULE_ENABLED }
