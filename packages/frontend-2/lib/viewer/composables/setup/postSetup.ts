@@ -102,13 +102,9 @@ function useViewerObjectAutoLoading() {
   } = useInjectedViewerState()
 
   const loadingProgressMap: { [id: string]: number } = {}
-  const loadersMap: { [id: string]: SpeckleLoader } = {}
 
   viewer.on(ViewerEvent.LoadComplete, (id) => {
     delete loadingProgressMap[id]
-    // disposes of loader on load complete
-    loadersMap[id].dispose()
-    delete loadersMap[id]
     consolidateProgressInternal({ id, progress: 1 })
   })
 
@@ -131,6 +127,7 @@ function useViewerObjectAutoLoading() {
     options?: Partial<{ zoomToObject: boolean }>
   ) => {
     const objectUrl = getObjectUrl(projectId.value, objectId)
+
     if (unload) {
       viewer.unloadObject(objectUrl)
     } else {
@@ -145,14 +142,8 @@ function useViewerObjectAutoLoading() {
       loader.on(LoaderEvent.LoadProgress, (args) => consolidateProgressThorttled(args))
       loader.on(LoaderEvent.LoadCancelled, (id) => {
         delete loadingProgressMap[id]
-
-        // disposes of loader on load complete
-        loadersMap[id].dispose()
-        delete loadersMap[id]
         consolidateProgressInternal({ id, progress: 1 })
       })
-
-      loadersMap[objectUrl] = loader
 
       viewer.loadObject(loader, options?.zoomToObject)
     }
