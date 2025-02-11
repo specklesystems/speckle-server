@@ -28,7 +28,7 @@ import {
 import { buildDecryptor } from '@/modules/shared/utils/libsodium'
 import { getUserEmailFromAutomationRunFactory } from '@/modules/automate/services/tracking'
 import authGithubAppRest from '@/modules/automate/rest/authGithubApp'
-import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
+import { getFeatureFlags, isTestEnv } from '@/modules/shared/helpers/envHelper'
 import { TokenScopeData } from '@/modules/shared/domain/rolesAndScopes/types'
 import { db } from '@/db/knex'
 import { ProjectSubscriptions, publish } from '@/modules/shared/utils/subscriptions'
@@ -288,7 +288,9 @@ const initializeEventListeners = () => {
           return
         }
 
-        const fn = await getFunction({ functionId: functionRun.functionId })
+        const fn = isTestEnv()
+          ? null
+          : await getFunction({ functionId: functionRun.functionId })
 
         const userEmail = await getUserEmailFromAutomationRunFactory({
           getFullAutomationRevisionMetadata: getFullAutomationRevisionMetadataFactory({
