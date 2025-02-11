@@ -9,6 +9,7 @@ import {
   AutomationTokenRecord,
   AutomationTriggerDefinitionRecord
 } from '@/modules/automate/helpers/types'
+import { ObjectStorage } from '@/modules/blobstorage/clients/objectStorage'
 import { CommentRecord } from '@/modules/comments/helpers/types'
 import {
   AutomationFunctionRuns,
@@ -18,7 +19,8 @@ import {
   AutomationRunTriggers,
   AutomationTokens,
   AutomationTriggers,
-  Comments
+  Comments,
+  FileUploads
 } from '@/modules/core/dbSchema'
 import { AllScopes } from '@/modules/core/helpers/mainConstants'
 import { createRandomEmail } from '@/modules/core/helpers/testHelpers'
@@ -31,6 +33,8 @@ import {
   StreamRecord
 } from '@/modules/core/helpers/types'
 import { grantStreamPermissionsFactory } from '@/modules/core/repositories/streams'
+import { FileUploadRecord } from '@/modules/fileuploads/helpers/types'
+import { getRegionObjectStorage } from '@/modules/multiregion/utils/blobStorageSelector'
 import { getDb } from '@/modules/multiregion/utils/dbSelector'
 import { Webhook, WebhookEvent } from '@/modules/webhooks/domain/types'
 import {
@@ -65,6 +69,7 @@ import {
   createTestAutomation,
   createTestAutomationRun
 } from '@/test/speckle-helpers/automationHelper'
+import { createTestBlob } from '@/test/speckle-helpers/blobHelper'
 import { BasicTestBranch, createTestBranch } from '@/test/speckle-helpers/branchHelper'
 import { createTestComment } from '@/test/speckle-helpers/commentHelper'
 import {
@@ -77,6 +82,7 @@ import {
   waitForRegionUser
 } from '@/test/speckle-helpers/regions'
 import { BasicTestStream, createTestStream } from '@/test/speckle-helpers/streamHelper'
+import { HeadObjectCommand } from '@aws-sdk/client-s3'
 import { Roles } from '@speckle/shared'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
@@ -105,7 +111,8 @@ const tables = {
     db<AutomationFunctionRunRecord>(AutomationFunctionRuns.name),
   comments: (db: Knex) => db.table<CommentRecord>(Comments.name),
   webhooks: (db: Knex) => db.table<Webhook>('webhooks_config'),
-  webhookEvents: (db: Knex) => db.table<WebhookEvent>('webhooks_events')
+  webhookEvents: (db: Knex) => db.table<WebhookEvent>('webhooks_events'),
+  fileUploads: (db: Knex) => db.table<FileUploadRecord>(FileUploads.name)
 }
 
 const grantStreamPermissions = grantStreamPermissionsFactory({ db })
@@ -399,10 +406,12 @@ isMultiRegionTestMode()
 
       let testComment: CommentRecord
       let testWebhookId: string
+      let testBlobId: string
 
       let apollo: TestApolloServer
       let sourceRegionDb: Knex
       let targetRegionDb: Knex
+      let targetRegionObjectStorage: ObjectStorage
 
       before(async () => {
         await createTestUser(adminUser)
@@ -411,6 +420,9 @@ isMultiRegionTestMode()
         apollo = await testApolloServer({ authUserId: adminUser.id })
         sourceRegionDb = await getDb({ regionKey: regionKey1 })
         targetRegionDb = await getDb({ regionKey: regionKey2 })
+        targetRegionObjectStorage = await getRegionObjectStorage({
+          regionKey: regionKey2
+        })
       })
 
       beforeEach(async () => {
@@ -487,6 +499,12 @@ isMultiRegionTestMode()
           webhookId: testWebhookId,
           payload: cryptoRandomString({ length: 9 })
         })
+
+        const testBlob = await createTestBlob({
+          userId: adminUser.id,
+          projectId: testProject.id
+        })
+        testBlobId = testBlob.blobId
       })
 
       it('moves project record to target regional db', async () => {
@@ -688,6 +706,30 @@ isMultiRegionTestMode()
           .where({ webhookId: testWebhookId })
           .first()
         expect(webhookEvent).to.not.be.undefined
+      })
+
+      it('moves project files and associated blobs to target regional db and object storage', async () => {
+        const res = await apollo.execute(UpdateProjectRegionDocument, {
+          projectId: testProject.id,
+          regionKey: regionKey2
+        })
+
+        expect(res).to.not.haveGraphQLErrors()
+
+        const fileMetadata = await tables
+          .fileUploads(targetRegionDb)
+          .select('*')
+          .where({ id: testBlobId })
+          .first()
+        expect(fileMetadata).to.not.be.undefined
+
+        const fileBlob = await targetRegionObjectStorage.client.send(
+          new HeadObjectCommand({
+            Bucket: targetRegionObjectStorage.bucket,
+            Key: `assets/${testProject.id}/${testBlobId}`
+          })
+        )
+        expect(fileBlob).to.not.be.undefined
       })
     })
   : void 0
