@@ -18,7 +18,7 @@
 </mj-section>
 <mj-section padding-top="20px">
   <mj-column>
-    <mj-text font-size="12px" line-height="18px" align="center" color="#666666">
+    <mj-text font-size="12px" line-height="18px" align="center" color="#999999">
       Brought to you by
       <a href="https://speckle.systems" target="_blank">Speckle</a>
       , the Open Source Data Platform for 3D Data. Follow Us
