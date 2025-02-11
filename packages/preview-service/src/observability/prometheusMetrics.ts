@@ -6,9 +6,6 @@ import type { Counter, Histogram, Summary } from 'prom-client'
 import prometheusClient from 'prom-client'
 import { Pool } from 'tarn'
 
-// let metricFree: Gauge<string> | null = null
-// let metricUsed: Gauge<string> = null
-// let metricPendingAquires: Gauge<string> | null = null
 let metricQueryDuration: Summary<string> | null = null
 let metricQueryErrors: Counter<string> | null = null
 export let metricDuration: Histogram<string> | null = null
@@ -30,7 +27,7 @@ function initKnexPrometheusMetrics(params: { db: Knex }) {
   }
   // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
   const dbConnectionPool = db.client.pool as Pool<unknown>
-  //metricFree =
+
   new prometheusClient.Gauge({
     name: 'speckle_server_knex_free',
     help: 'Number of free DB connections',
@@ -39,7 +36,6 @@ function initKnexPrometheusMetrics(params: { db: Knex }) {
     }
   })
 
-  //metricUsed =
   new prometheusClient.Gauge({
     name: 'speckle_server_knex_used',
     help: 'Number of used DB connections',
@@ -48,7 +44,6 @@ function initKnexPrometheusMetrics(params: { db: Knex }) {
     }
   })
 
-  //metricPendingAquires =
   new prometheusClient.Gauge({
     name: 'speckle_server_knex_pending',
     help: 'Number of pending DB connection aquires',
@@ -57,7 +52,6 @@ function initKnexPrometheusMetrics(params: { db: Knex }) {
     }
   })
 
-  //metricPendingCreates =
   new prometheusClient.Gauge({
     name: 'speckle_server_knex_pending_creates',
     help: 'Number of pending DB connection creates',
@@ -66,7 +60,6 @@ function initKnexPrometheusMetrics(params: { db: Knex }) {
     }
   })
 
-  //metricPendingValidations =
   new prometheusClient.Gauge({
     name: 'speckle_server_knex_pending_validations',
     help: 'Number of pending DB connection validations. This is a state between pending acquisition and acquiring a connection.',
