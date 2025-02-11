@@ -30,12 +30,16 @@
             : 'Your answers will help us improve'
         }}
       </p>
-      <OnboardingJoinTeammates
-        v-if="currentStage === 'join' && discoverableWorkspaces.length > 0"
-        :workspaces="discoverableWorkspaces"
-        @next="currentStage = 'questions'"
-      />
-      <OnboardingQuestionsForm v-else />
+
+      <template v-if="!loading">
+        <OnboardingJoinTeammates
+          v-if="currentStage === 'join' && discoverableWorkspaces.length > 0"
+          :workspaces="discoverableWorkspaces"
+          @next="currentStage = 'questions'"
+        />
+        <OnboardingQuestionsForm v-else />
+      </template>
+      <CommonLoadingIcon v-else size="lg" />
     </div>
   </HeaderWithEmptyPage>
 </template>
@@ -46,6 +50,7 @@ import { useAuthManager } from '~/lib/auth/composables/auth'
 import { useQuery } from '@vue/apollo-composable'
 import { graphql } from '~/lib/common/generated/gql'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
+import { CommonLoadingIcon } from '@speckle/ui-components'
 
 const discoverableWorkspacesQuery = graphql(`
   query DiscoverableWorkspaces {
@@ -76,14 +81,22 @@ const { setUserOnboardingComplete, createOnboardingProject } = useProcessOnboard
 const { activeUser } = useActiveUser()
 const { logout } = useAuthManager()
 
-const { result } = useQuery(discoverableWorkspacesQuery)
+const { result, loading } = useQuery(discoverableWorkspacesQuery)
+
+const currentStage = ref<'join' | 'questions'>('join')
 
 const discoverableWorkspaces = computed(
   () => result.value?.activeUser?.discoverableWorkspaces || []
 )
 
-const currentStage = computed<'join' | 'questions'>(() =>
-  discoverableWorkspaces.value.length > 0 ? 'join' : 'questions'
+watch(
+  loading,
+  (isLoading) => {
+    if (!isLoading && discoverableWorkspaces.value.length === 0) {
+      currentStage.value = 'questions'
+    }
+  },
+  { immediate: true }
 )
 
 onMounted(() => {

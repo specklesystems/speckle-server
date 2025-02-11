@@ -15,7 +15,8 @@ export enum OnboardingPlan {
   Analytics = 'analytics',
   Collaboration = 'collaboration',
   DataWarehouse = 'data-warehouse',
-  Development = 'development'
+  Development = 'development',
+  Other = 'other'
 }
 
 export enum OnboardingSource {
@@ -23,7 +24,8 @@ export enum OnboardingSource {
   Search = 'internet-search',
   Referral = 'friend-or-colleague',
   Event = 'event-conference',
-  Education = 'university-course'
+  Education = 'university-course',
+  Other = 'other'
 }
 
 export const RoleTitleMap: Record<OnboardingRole, string> = {
@@ -44,7 +46,8 @@ export const PlanTitleMap: Record<OnboardingPlan, string> = {
     'Data analytics, visualisation and reporting (eg PowerBI)',
   [OnboardingPlan.Collaboration]: 'Collaborate with my team and share 3D models online',
   [OnboardingPlan.DataWarehouse]: 'Data warehouse and common data environment (CDE)',
-  [OnboardingPlan.Development]: 'Develop custom functionalities and apps'
+  [OnboardingPlan.Development]: 'Develop custom functionalities and apps',
+  [OnboardingPlan.Other]: 'Other'
 }
 
 export const SourceTitleMap: Record<OnboardingSource, string> = {
@@ -52,7 +55,8 @@ export const SourceTitleMap: Record<OnboardingSource, string> = {
   [OnboardingSource.Search]: 'Internet search',
   [OnboardingSource.Referral]: 'Friend or colleague',
   [OnboardingSource.Event]: 'Event or conference',
-  [OnboardingSource.Education]: 'University or course'
+  [OnboardingSource.Education]: 'University or course',
+  [OnboardingSource.Other]: 'Other'
 }
 
 export type OnboardingState = {
