@@ -1,23 +1,13 @@
-# Database Monitor
+# File Import Service
 
-Responsible for querying all databases and generating metrics.
+## Description of how this works
 
-Metrics are available at `/metrics` endpoint and are in Prometheus format.
+A micro-service which polls a Postgres database table `file_uploads` for new records and processes them.
 
-## Development
+It retrieves a referenced file from an S3 bucket and stores it in a local directory for parsing.
 
-```bash
-yarn dev
-```
+The File Import service can parse either STL, OBJ, or IFC files using external packages, written in either .Net or Python (_note_, there is a legacy IFC parser written in Node.js). These external packages are controlled via shell commands.
 
-## Databases with self-signed certificates
+The parsers are responsible for extracting the necessary data from the files and storing it in the database. They are also responsible for creating a new Speckle model if necessary.
 
-Add the self-signed CA certificate to a file at `packages/monitor-deployment/ca-certificate.crt`
-
-Run `NODE_EXTRA_CA_CERTS=./ca-certificate.crt yarn dev` or `NODE_EXTRA_CA_CERTS=./ca-certificate.crt yarn start`
-
-## Production
-
-```bash
-yarn start
-```
+The service is then responsible for updating the status of the `file_uploads` table, and for posting a Postgres notification.
