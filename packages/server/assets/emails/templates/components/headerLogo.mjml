@@ -1,7 +1,7 @@
 <mj-section>
   <mj-column>
     <mj-image
-      width="200px"
+      width="150px"
       src="<%- params.serverInfo.canonicalUrl -%>/static/speckle-email-logo.png"
       alt="Speckle"
     />

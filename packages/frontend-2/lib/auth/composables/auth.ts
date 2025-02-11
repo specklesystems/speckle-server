@@ -303,12 +303,6 @@ export const useAuthManager = (
               skipRedirect: postAuthRedirect.hadPendingRedirect.value
             })
 
-            triggerNotification({
-              type: ToastNotificationType.Success,
-              title: 'Welcome!',
-              description: "You've been successfully authenticated"
-            })
-
             postAuthRedirect.popAndFollowRedirect()
           } catch (e) {
             triggerNotification({

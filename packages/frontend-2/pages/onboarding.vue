@@ -26,7 +26,7 @@
       <p class="text-center text-body-sm text-foreground-2 mb-8">
         {{
           currentStage === 'join'
-            ? 'Find your team on Speckle'
+            ? 'We found a workspace that matches your email domain'
             : 'Your answers will help us improve'
         }}
       </p>
