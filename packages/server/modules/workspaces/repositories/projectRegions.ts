@@ -38,6 +38,7 @@ import {
   CopyProjectObjects,
   CopyProjects,
   CopyProjectVersions,
+  CopyProjectWebhooks,
   CopyWorkspace
 } from '@/modules/workspaces/domain/operations'
 import { WorkspaceNotFoundError } from '@/modules/workspaces/errors/workspace'
@@ -60,6 +61,7 @@ import {
   CommentRecord,
   CommentViewRecord
 } from '@/modules/comments/helpers/types'
+import { Webhook, WebhookEvent } from '@/modules/webhooks/domain/types'
 
 const tables = {
   workspaces: (db: Knex) => db<Workspace>(Workspaces.name),
@@ -87,7 +89,9 @@ const tables = {
     db<AutomationFunctionRunRecord>(AutomationFunctionRuns.name),
   comments: (db: Knex) => db.table<CommentRecord>(Comments.name),
   commentViews: (db: Knex) => db.table<CommentViewRecord>(CommentViews.name),
-  commentLinks: (db: Knex) => db.table<CommentLinkRecord>(CommentLinks.name)
+  commentLinks: (db: Knex) => db.table<CommentLinkRecord>(CommentLinks.name),
+  webhooks: (db: Knex) => db.table<Webhook>('webhooks_config'),
+  webhookEvents: (db: Knex) => db.table<WebhookEvent>('webhooks_events')
 }
 
 /**
@@ -526,4 +530,50 @@ export const copyProjectCommentsFactory =
     }
 
     return copiedCommentCountByProjectId
+  }
+
+/**
+ * Copies rows from the following tables:
+ * - webhooks_config
+ * - webhooks_events
+ */
+export const copyProjectWebhooksFactory =
+  (deps: { sourceDb: Knex; targetDb: Knex }): CopyProjectWebhooks =>
+  async ({ projectIds }) => {
+    const copiedWebhookCountByProjectId: Record<string, number> = {}
+
+    // Copy `webhooks_config` table rows in batches
+    const selectWebhooks = tables
+      .webhooks(deps.sourceDb)
+      .select('*')
+      .whereIn('streamId', projectIds)
+
+    for await (const webhooks of executeBatchedSelect(selectWebhooks)) {
+      const webhookIds = webhooks.map((webhook) => webhook.id)
+
+      // Write `webhooks_config` rows to target db
+      await tables.webhooks(deps.targetDb).insert(webhooks).onConflict().ignore()
+
+      for (const webhook of webhooks) {
+        copiedWebhookCountByProjectId[webhook.streamId] ??= 0
+        copiedWebhookCountByProjectId[webhook.streamId]++
+      }
+
+      // Copy `webhooks_events` table rows in batches
+      const selectWebhookEvents = tables
+        .webhookEvents(deps.sourceDb)
+        .select('*')
+        .whereIn('webhookId', webhookIds)
+
+      for await (const webhookEvents of executeBatchedSelect(selectWebhookEvents)) {
+        // Write `webhooks_events` rows to target db
+        await tables
+          .webhookEvents(deps.targetDb)
+          .insert(webhookEvents)
+          .onConflict()
+          .ignore()
+      }
+    }
+
+    return copiedWebhookCountByProjectId
   }

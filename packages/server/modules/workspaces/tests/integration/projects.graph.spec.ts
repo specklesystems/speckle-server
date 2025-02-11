@@ -32,6 +32,11 @@ import {
 } from '@/modules/core/helpers/types'
 import { grantStreamPermissionsFactory } from '@/modules/core/repositories/streams'
 import { getDb } from '@/modules/multiregion/utils/dbSelector'
+import { Webhook, WebhookEvent } from '@/modules/webhooks/domain/types'
+import {
+  createWebhookConfigFactory,
+  createWebhookEventFactory
+} from '@/modules/webhooks/repositories/webhooks'
 import {
   BasicTestWorkspace,
   createTestWorkspace
@@ -98,7 +103,9 @@ const tables = {
     db<AutomationRunTriggerRecord>(AutomationRunTriggers.name),
   automationFunctionRuns: (db: Knex) =>
     db<AutomationFunctionRunRecord>(AutomationFunctionRuns.name),
-  comments: (db: Knex) => db.table<CommentRecord>(Comments.name)
+  comments: (db: Knex) => db.table<CommentRecord>(Comments.name),
+  webhooks: (db: Knex) => db.table<Webhook>('webhooks_config'),
+  webhookEvents: (db: Knex) => db.table<WebhookEvent>('webhooks_events')
 }
 
 const grantStreamPermissions = grantStreamPermissionsFactory({ db })
@@ -391,8 +398,10 @@ isMultiRegionTestMode()
       let testAutomationFunctionRuns: AutomationFunctionRunRecord[]
 
       let testComment: CommentRecord
+      let testWebhookId: string
 
       let apollo: TestApolloServer
+      let sourceRegionDb: Knex
       let targetRegionDb: Knex
 
       before(async () => {
@@ -400,6 +409,7 @@ isMultiRegionTestMode()
         await waitForRegionUser(adminUser)
 
         apollo = await testApolloServer({ authUserId: adminUser.id })
+        sourceRegionDb = await getDb({ regionKey: regionKey1 })
         targetRegionDb = await getDb({ regionKey: regionKey2 })
       })
 
@@ -461,6 +471,21 @@ isMultiRegionTestMode()
           userId: adminUser.id,
           projectId: testProject.id,
           objectId: testVersion.objectId
+        })
+
+        testWebhookId = await createWebhookConfigFactory({ db: sourceRegionDb })({
+          id: cryptoRandomString({ length: 9 }),
+          streamId: testProject.id,
+          url: 'https://example.org',
+          description: cryptoRandomString({ length: 9 }),
+          secret: cryptoRandomString({ length: 9 }),
+          enabled: false,
+          triggers: ['branch_create']
+        })
+        await createWebhookEventFactory({ db: sourceRegionDb })({
+          id: cryptoRandomString({ length: 9 }),
+          webhookId: testWebhookId,
+          payload: cryptoRandomString({ length: 9 })
         })
       })
 
@@ -640,6 +665,29 @@ isMultiRegionTestMode()
           .first()
 
         expect(comment).to.not.be.undefined
+      })
+
+      it('moves project webhooks to target regional db', async () => {
+        const res = await apollo.execute(UpdateProjectRegionDocument, {
+          projectId: testProject.id,
+          regionKey: regionKey2
+        })
+
+        expect(res).to.not.haveGraphQLErrors()
+
+        const webhook = await tables
+          .webhooks(targetRegionDb)
+          .select('*')
+          .where({ id: testWebhookId })
+          .first()
+        expect(webhook).to.not.be.undefined
+
+        const webhookEvent = await tables
+          .webhookEvents(targetRegionDb)
+          .select('*')
+          .where({ webhookId: testWebhookId })
+          .first()
+        expect(webhookEvent).to.not.be.undefined
       })
     })
   : void 0
