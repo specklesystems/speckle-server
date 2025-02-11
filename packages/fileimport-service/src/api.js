@@ -9,7 +9,6 @@ const Observability = require('@speckle/shared/dist/commonjs/observability/index
 
 const tables = (db) => ({
   objects: db('objects'),
-  closures: db('object_children_closure'),
   branches: db('branches'),
   streams: db('streams'),
   apiTokens: db('api_tokens'),
@@ -47,17 +46,9 @@ module.exports = class ServerAPI {
   async createObject({ streamId, object }) {
     const insertionObject = this.prepInsertionObject(streamId, object)
 
-    const closures = []
     const totalChildrenCountByDepth = {}
     if (object.__closure !== null) {
       for (const prop in object.__closure) {
-        closures.push({
-          streamId,
-          parent: insertionObject.id,
-          child: prop,
-          minDepth: object.__closure[prop]
-        })
-
         if (totalChildrenCountByDepth[object.__closure[prop].toString()])
           totalChildrenCountByDepth[object.__closure[prop].toString()]++
         else totalChildrenCountByDepth[object.__closure[prop].toString()] = 1
@@ -67,22 +58,17 @@ module.exports = class ServerAPI {
     delete insertionObject.__tree
     delete insertionObject.__closure
 
-    insertionObject.totalChildrenCount = closures.length
+    insertionObject.totalChildrenCount = object.__closures.length
     insertionObject.totalChildrenCountByDepth = JSON.stringify(
       totalChildrenCountByDepth
     )
 
     await this.tables.objects.insert(insertionObject).onConflict().ignore()
 
-    if (closures.length > 0) {
-      await this.tables.closures.insert(closures).onConflict().ignore()
-    }
-
     return insertionObject.id
   }
 
   async createObjectsBatched(streamId, objects) {
-    const closures = []
     const objsToInsert = []
     const ids = []
 
@@ -94,12 +80,6 @@ module.exports = class ServerAPI {
 
       if (obj.__closure !== null) {
         for (const prop in obj.__closure) {
-          closures.push({
-            streamId,
-            parent: insertionObject.id,
-            child: prop,
-            minDepth: obj.__closure[prop]
-          })
           totalChildrenCountGlobal++
           if (totalChildrenCountByDepth[obj.__closure[prop].toString()])
             totalChildrenCountByDepth[obj.__closure[prop].toString()]++
@@ -119,7 +99,6 @@ module.exports = class ServerAPI {
       ids.push(insertionObject.id)
     })
 
-    const closureBatchSize = 1000
     const objectsBatchSize = 500
 
     // step 1: insert objects
@@ -139,23 +118,6 @@ module.exports = class ServerAPI {
       }
     }
 
-    // step 2: insert closures
-    if (closures.length > 0) {
-      const batches = chunk(closures, closureBatchSize)
-
-      for (const [index, batch] of batches.entries()) {
-        this.prepInsertionClosureBatch(batch)
-        await this.tables.closures.insert(batch).onConflict().ignore()
-        this.logger.info(
-          {
-            currentBatchCount: batch.length,
-            currentBatchId: index + 1,
-            totalNumberOfBatches: batches.length
-          },
-          'Inserted {currentBatchCount} closures from batch {currentBatchId} of {totalNumberOfBatches}'
-        )
-      }
-    }
     return ids
   }
 
