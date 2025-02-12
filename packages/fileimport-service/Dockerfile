@@ -73,4 +73,4 @@ COPY --link --from=dotnet-build-stage /app/output packages/fileimport-service/sr
 
 WORKDIR /speckle-server/packages/fileimport-service
 
-ENTRYPOINT [ "tini", "--", "/nodejs/bin/node", "--loader=./dist/src/aliasLoader.js", "bin/www.js" ]
+ENTRYPOINT [ "tini", "--", "node", "--loader=./dist/src/aliasLoader.js", "bin/www.js" ]
