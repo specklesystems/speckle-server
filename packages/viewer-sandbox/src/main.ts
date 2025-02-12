@@ -482,6 +482,9 @@ const getStream = () => {
 
     // v2 colored lines
     // 'https://app.speckle.systems/projects/052b576a45/models/c756235fcc'
+
+    // Custom normals
+    // 'https://latest.speckle.systems/projects/51c449c440/models/08e97226cf'
   )
 }
 

@@ -562,6 +562,9 @@ export class InstancedMeshBatch implements Batch {
     const colors: number[] | undefined =
       this.renderViews[0].renderData.geometry.attributes?.COLOR
 
+    const normals: number[] | undefined =
+      this.renderViews[0].renderData.geometry.attributes?.NORMAL
+
     /** Catering to typescript
      *  There is no unniverse where indices or positions are undefined at this point
      */
@@ -573,6 +576,7 @@ export class InstancedMeshBatch implements Batch {
         ? new Uint32Array(indices)
         : new Uint16Array(indices),
       new Float64Array(positions),
+      normals ? new Float32Array(normals) : undefined,
       colors ? new Float32Array(colors) : undefined
     )
     this.mesh = new SpeckleInstancedMesh(this.geometry)
@@ -631,6 +635,7 @@ export class InstancedMeshBatch implements Batch {
   private makeInstancedMeshGeometry(
     indices: Uint32Array | Uint16Array,
     position: Float64Array,
+    normal?: Float32Array,
     color?: Float32Array
   ): BufferGeometry {
     this.geometry = new BufferGeometry()
@@ -655,7 +660,11 @@ export class InstancedMeshBatch implements Batch {
 
     this.instanceGradientBuffer = new Float32Array(this.renderViews.length)
 
-    Geometry.computeVertexNormals(this.geometry, position)
+    if (normal) {
+      this.geometry
+        .setAttribute('normal', new Float32BufferAttribute(normal, 3))
+        .normalizeNormals()
+    } else Geometry.computeVertexNormals(this.geometry, position)
 
     Geometry.updateRTEGeometry(this.geometry, position)
 
