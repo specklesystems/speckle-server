@@ -24,6 +24,7 @@ import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import { getPort } from '@/modules/shared/helpers/envHelper'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { listenFor } from '@/modules/core/utils/dbNotificationListener'
+import { modelsRouter } from '@/modules/fileuploads/rest/models'
 
 export const init: SpeckleModule['init'] = async (app, isInitial) => {
   if (process.env.DISABLE_FILE_UPLOADS) {
@@ -33,9 +34,15 @@ export const init: SpeckleModule['init'] = async (app, isInitial) => {
     moduleLogger.info('📄 Init FileUploads module')
   }
 
+  modelsRouter(app, db)
+
+  /**
+   * @deprecated
+   **/
   app.post(
     '/api/file/:fileType/:streamId/:branchName?',
     async (req, res, next) => {
+      //TODO: this db is always the main db?
       await authMiddlewareCreator(
         streamWritePermissionsPipelineFactory({
           getRoles: getRolesFactory({ db }),
