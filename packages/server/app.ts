@@ -24,7 +24,7 @@ import {
   sanitizeHeaders
 } from '@/logging/expressLogging'
 
-import { errorMetricsMiddleware } from '@/logging/errorLogging'
+import { errorMetricsMiddleware } from '@/logging/errorMetrics'
 import prometheusClient from 'prom-client'
 
 import { ApolloServer } from '@apollo/server'
