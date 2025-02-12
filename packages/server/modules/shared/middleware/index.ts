@@ -291,10 +291,9 @@ export const requestBodyParsingMiddlewareFactory =
         res,
         next
       )
-      return next()
+      return
     }
 
     //default
     expressJsonBodyParser({ limit: maxRequestBodySize })(req, res, next)
-    return next()
   }

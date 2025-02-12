@@ -13,7 +13,7 @@ export const errorMetricsMiddleware: express.ErrorRequestHandler = (
   next
 ) => {
   if (!err) {
-    return next()
+    return next(err)
   }
 
   if (metricErrorCount === null) {
