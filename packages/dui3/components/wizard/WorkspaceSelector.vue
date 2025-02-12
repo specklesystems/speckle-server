@@ -11,7 +11,6 @@
       :items="workspaces"
       :disabled-item-predicate="userCantCreateWorkspace"
       mount-menu-on-body
-      @click="emit('update:selectedWorkspace', selectedWorkspace)"
     >
       <template #something-selected="{ value }">
         <span>{{ value.name }}</span>
@@ -75,6 +74,10 @@ const { result: workspacesResult } = useQuery(
 
 const workspaces = computed(() => workspacesResult.value?.activeUser?.workspaces.items)
 const selectedWorkspace = ref<WorkspaceListWorkspaceItemFragment>()
+
+watch(selectedWorkspace, (newVal) => {
+  emit('update:selectedWorkspace', newVal)
+})
 
 // Utility function to check if the user cannot create a workspace
 const userCantCreateWorkspace = (item: WorkspaceListWorkspaceItemFragment) =>

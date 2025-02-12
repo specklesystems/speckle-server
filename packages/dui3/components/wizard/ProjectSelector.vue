@@ -81,7 +81,7 @@
         />
         <WizardWorkspaceSelector
           v-if="workspacesEnabled"
-          @update:selected-workspace-id="(newSelectedWorkspace : WorkspaceListWorkspaceItemFragment) => (selectedWorkspace = newSelectedWorkspace)"
+          @update:selected-workspace="(args) => setWorkspace(args as WorkspaceListWorkspaceItemFragment )"
         ></WizardWorkspaceSelector>
         <div class="mt-4 flex justify-center items-center space-x-2">
           <FormButton text @click="showNewProjectDialog = false">Cancel</FormButton>
@@ -128,6 +128,10 @@ const props = withDefaults(
   }>(),
   { showNewProject: true, disableNoWriteAccessProjects: false }
 )
+
+const setWorkspace = (args: WorkspaceListWorkspaceItemFragment) => {
+  selectedWorkspace.value = args
+}
 
 const selectedWorkspace = ref<WorkspaceListWorkspaceItemFragment>()
 
