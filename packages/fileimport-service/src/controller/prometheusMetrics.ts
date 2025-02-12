@@ -3,7 +3,7 @@ import prometheusClient, { Counter, Summary } from 'prom-client'
 import { getDbClients } from '@/knex.js'
 import { Knex } from 'knex'
 import { Pool } from 'tarn'
-import { isObject } from 'lodash'
+import { isObject } from 'lodash-es'
 import { IncomingMessage } from 'http'
 
 let metricQueryDuration: Summary<string> | null = null
