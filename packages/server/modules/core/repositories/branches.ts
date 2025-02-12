@@ -116,7 +116,7 @@ export const getStreamBranchesByNameFactory =
 
 export const getStreamBranchByNameFactory =
   (deps: { db: Knex }): GetStreamBranchByName =>
-  async (streamId: string, name: string) => {
+  async (streamId, name) => {
     if (!streamId || !name) return null
 
     const [first] = await getStreamBranchesByNameFactory(deps)(streamId, [name])
