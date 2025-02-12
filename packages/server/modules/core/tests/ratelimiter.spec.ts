@@ -5,7 +5,7 @@ import {
   getRateLimitResult,
   isRateLimitBreached,
   getActionForPath,
-  sendRateLimitResponse,
+  setRateLimitHeaders,
   RateLimitBreached,
   RateLimits,
   createConsumer,
@@ -90,8 +90,8 @@ describe('Rate Limiting', () => {
         msBeforeNext: 4900
       }
       const response = httpMocks.createResponse()
-      await sendRateLimitResponse(response, breached)
-      assert429response(response)
+      await setRateLimitHeaders(response, breached)
+      assertRateLimiterHeadersAddedToResponse(response)
     })
   })
 
@@ -140,7 +140,12 @@ describe('Rate Limiting', () => {
 
       let response = httpMocks.createResponse()
       let nextCalled = 0
-      const next = () => {
+      let nextCalledWithError = 0
+      const next = (err: unknown) => {
+        if (err) {
+          nextCalledWithError++
+          return
+        }
         nextCalled++
       }
 
@@ -152,7 +157,8 @@ describe('Rate Limiting', () => {
       })
 
       expect(nextCalled).to.equal(0)
-      assert429response(response)
+      expect(nextCalledWithError).to.equal(1)
+      assertRateLimiterHeadersAddedToResponse(response)
     })
   })
 })
@@ -166,9 +172,8 @@ const temporarilyEnableRateLimiter = async (callback: () => Promise<any>) => {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const assert429response = (response: any) => {
+const assertRateLimiterHeadersAddedToResponse = (response: any) => {
   expect(response.getHeader('X-RateLimit-Remaining')).to.be.undefined
   expect(response.getHeader('Retry-After')).to.be.greaterThanOrEqual(4)
   expect(response.getHeader('X-RateLimit-Reset')).to.not.be.undefined
-  expect(response.statusCode).to.equal(429)
 }

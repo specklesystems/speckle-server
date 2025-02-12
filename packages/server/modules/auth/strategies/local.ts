@@ -1,5 +1,5 @@
 import {
-  sendRateLimitResponse,
+  setRateLimitHeaders,
   getRateLimitResult,
   isRateLimitBreached
 } from '@/modules/core/services/ratelimiter'
@@ -24,6 +24,7 @@ import {
 } from '@/modules/core/domain/users/operations'
 import { GetServerInfo } from '@/modules/core/domain/server/operations'
 import { UserValidationError } from '@/modules/core/errors/user'
+import { RateLimitError } from '@/modules/core/errors/ratelimit'
 
 const localStrategyBuilderFactory =
   (deps: {
@@ -102,7 +103,8 @@ const localStrategyBuilderFactory =
           const source = ip ? ip : 'unknown'
           const rateLimitResult = await deps.getRateLimitResult('USER_CREATE', source)
           if (isRateLimitBreached(rateLimitResult)) {
-            return sendRateLimitResponse(res, rateLimitResult)
+            setRateLimitHeaders(res, rateLimitResult)
+            throw new RateLimitError(rateLimitResult)
           }
 
           // 1. if the server is invite only you must have an invite

@@ -272,11 +272,11 @@ export const LIMITS = <const>{
 
 export const allActions = Object.keys(LIMITS) as RateLimitAction[]
 
-export const sendRateLimitResponse = (
+export const setRateLimitHeaders = (
   res: express.Response,
   rateLimitBreached: RateLimitBreached
-): express.Response => {
-  if (res.headersSent) return res
+) => {
+  if (res.headersSent) return
   res.setHeader('Retry-After', rateLimitBreached.msBeforeNext / 1000)
   res.removeHeader('X-RateLimit-Remaining')
   res.setHeader(
@@ -284,9 +284,6 @@ export const sendRateLimitResponse = (
     new Date(Date.now() + rateLimitBreached.msBeforeNext).toISOString()
   )
   res.setHeader('X-Speckle-Meditation', 'https://http.cat/429')
-  return res.status(429).send({
-    err: 'You are sending too many requests. You have been rate limited. Please try again later.'
-  })
 }
 
 export const getActionForPath = (path: string, verb: string): RateLimitAction => {
@@ -310,29 +307,21 @@ export const getSourceFromRequest = (req: express.Request): string => {
 
 export const createRateLimiterMiddleware = (
   rateLimiterMapping: RateLimiterMapping = RATE_LIMITERS
-) => {
-  return async (
-    req: express.Request,
-    res: express.Response,
-    next: express.NextFunction
-  ) => {
-    if (!isRateLimiterEnabled()) return next()
+): express.RequestHandler => {
+  return async (req, res) => {
+    if (!isRateLimiterEnabled()) return
     const path = getRequestPath(req) || ''
     const action = getActionForPath(path, req.method)
     const source = getSourceFromRequest(req)
 
     const rateLimitResult = await getRateLimitResult(action, source, rateLimiterMapping)
     if (isRateLimitBreached(rateLimitResult)) {
-      return sendRateLimitResponse(res, rateLimitResult)
+      setRateLimitHeaders(res, rateLimitResult)
+      throw new RateLimitError(rateLimitResult)
     } else {
-      try {
-        if (!res.headersSent)
-          res.setHeader('X-RateLimit-Remaining', rateLimitResult.remainingPoints)
-        return next()
-      } catch (err) {
-        if (!(err instanceof RateLimitError)) throw err
-        return sendRateLimitResponse(res, err.rateLimitBreached)
-      }
+      if (!res.headersSent)
+        res.setHeader('X-RateLimit-Remaining', rateLimitResult.remainingPoints)
+      return
     }
   }
 }

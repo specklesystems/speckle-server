@@ -94,7 +94,7 @@ export const defaultErrorHandler: ErrorRequestHandler = (err, req, res, next) =>
       err.status < 600
     )
   ) {
-    logger.warn(
+    logger.error(
       { err },
       `Unexpected type of error when handling ${req.originalUrl} from ${req.ip}. Please raise a bug report to the developers.`
     )

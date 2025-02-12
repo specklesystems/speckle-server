@@ -11,7 +11,8 @@ import {
   NextFunction,
   Handler,
   raw as expressRawBodyParser,
-  json as expressJsonBodyParser
+  json as expressJsonBodyParser,
+  RequestHandler
 } from 'express'
 import {
   ForbiddenError,
@@ -238,7 +239,7 @@ export async function buildContext({
  */
 export const mixpanelTrackerHelperMiddlewareFactory =
   (deps: { getUser: GetUser }): Handler =>
-  async (req: Request, _res: Response, next: NextFunction) => {
+  async (req, _res, next) => {
     const ctx = req.context
     const user = ctx.userId ? await deps.getUser(ctx.userId) : null
     const mp = mixpanel({ userEmail: user?.email, req })
@@ -281,8 +282,8 @@ export async function determineClientIpAddressMiddleware(
 const RAW_BODY_PATH_PREFIXES = ['/api/v1/billing/webhooks', '/api/thirdparty/gendo/']
 
 export const requestBodyParsingMiddlewareFactory =
-  (deps: { maximumRequestBodySizeMb: number }) =>
-  async (req: Request, res: Response, next: NextFunction) => {
+  (deps: { maximumRequestBodySizeMb: number }): RequestHandler =>
+  async (req, res, next) => {
     const maxRequestBodySize = `${deps.maximumRequestBodySizeMb}mb`
 
     if (RAW_BODY_PATH_PREFIXES.some((p) => req.path.startsWith(p))) {
