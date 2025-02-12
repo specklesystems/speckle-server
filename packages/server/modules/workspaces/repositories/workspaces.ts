@@ -2,6 +2,7 @@ import {
   Workspace,
   WorkspaceAcl,
   WorkspaceDomain,
+  WorkspaceJoinRequest,
   WorkspaceWithOptionalRole
 } from '@/modules/workspacesCore/domain/types'
 import {
@@ -67,7 +68,9 @@ const tables = {
   workspaceDomains: (db: Knex) => db<WorkspaceDomain>('workspace_domains'),
   workspacesAcl: (db: Knex) => db<WorkspaceAcl>('workspace_acl'),
   workspaceCreationState: (db: Knex) =>
-    db<WorkspaceCreationState>('workspace_creation_state')
+    db<WorkspaceCreationState>('workspace_creation_state'),
+  workspaceJoinRequests: (db: Knex) =>
+    db<WorkspaceJoinRequest>('workspace_join_requests')
 }
 
 export const getUserDiscoverableWorkspacesFactory =
@@ -78,14 +81,7 @@ export const getUserDiscoverableWorkspacesFactory =
     }
     return (await tables
       .workspaces(db)
-      .select(
-        'workspaces.id as id',
-        'name',
-        'slug',
-        'description',
-        'logo',
-        'defaultLogoIndex'
-      )
+      .select('workspaces.id as id', 'name', 'slug', 'description', 'logo')
       .distinctOn('workspaces.id')
       .join('workspace_domains', 'workspace_domains.workspaceId', 'workspaces.id')
       .leftJoin(
@@ -93,12 +89,22 @@ export const getUserDiscoverableWorkspacesFactory =
         'acl.workspaceId',
         'workspaces.id'
       )
+      .leftJoin(
+        tables
+          .workspaceJoinRequests(db)
+          .select('*')
+          .where({ userId })
+          .as('joinRequest'),
+        'joinRequest.workspaceId',
+        'workspaces.id'
+      )
+      .whereNull('joinRequest.workspaceId')
       .whereIn('domain', domains)
       .where('discoverabilityEnabled', true)
       .where('verified', true)
       .where('role', null)) as Pick<
       Workspace,
-      'id' | 'name' | 'slug' | 'description' | 'logo' | 'defaultLogoIndex'
+      'id' | 'name' | 'slug' | 'description' | 'logo'
     >[]
   }
 
@@ -224,7 +230,6 @@ export const upsertWorkspaceFactory =
         'description',
         'logo',
         'slug',
-        'defaultLogoIndex',
         'defaultProjectRole',
         'name',
         'updatedAt',

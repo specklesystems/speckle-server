@@ -61,6 +61,7 @@
           v-model:automation-name="automationName"
           :preselected-project="preselectedProject"
           :is-test-automation="isTestAutomation"
+          :workspace-id="workspaceId"
         />
         <AutomateAutomationCreateDialogSelectFunctionStep
           v-if="isTestAutomation"
@@ -231,7 +232,7 @@ const buttons = computed((): LayoutDialogButton[] => {
       return [
         {
           id: 'fnParamsPrev',
-          text: 'Previous',
+          text: 'Back',
           props: {
             color: 'outline'
           },
@@ -253,7 +254,7 @@ const buttons = computed((): LayoutDialogButton[] => {
       const automationButtons: LayoutDialogButton[] = [
         {
           id: 'detailsPrev',
-          text: 'Previous',
+          text: 'Back',
           props: {
             color: 'outline'
           },

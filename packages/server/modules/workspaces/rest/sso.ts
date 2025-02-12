@@ -73,7 +73,6 @@ import {
 import { createUserFactory } from '@/modules/core/services/users/management'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
-import { UsersEmitter } from '@/modules/core/events/usersEmitter'
 import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
 import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
 import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
@@ -118,6 +117,7 @@ import { canWorkspaceUseOidcSsoFactory } from '@/modules/gatekeeper/services/fea
 import { getWorkspacePlanFactory } from '@/modules/gatekeeper/repositories/billing'
 import cryptoRandomString from 'crypto-random-string'
 import { base64Encode } from '@/modules/shared/helpers/cryptoHelper'
+import { getEventBus } from '@/modules/shared/services/eventBus'
 
 const moveAuthParamsToSessionMiddleware = moveAuthParamsToSessionMiddlewareFactory()
 const sessionMiddleware = sessionMiddlewareFactory()
@@ -312,7 +312,7 @@ export const getSsoRouter = (): Router => {
                 sendEmail
               })
             }),
-            usersEventsEmitter: UsersEmitter.emit
+            emitEvent: getEventBus().emit
           }),
           upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db: trx }),
           findInvite: findInviteFactory({ db: trx }),
@@ -378,7 +378,6 @@ const handleGetLimitedWorkspaceRequestFactory =
     const limitedWorkspace = {
       name: workspace.name,
       logo: workspace.logo,
-      defaultLogoIndex: workspace.defaultLogoIndex,
       ssoProviderName: ssoProviderData?.provider?.providerName
     }
 

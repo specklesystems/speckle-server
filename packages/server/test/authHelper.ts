@@ -1,5 +1,4 @@
 import { db } from '@/db/knex'
-import { UsersEmitter } from '@/modules/core/events/usersEmitter'
 import { AllScopes, ServerRoles } from '@/modules/core/helpers/mainConstants'
 import { UserRecord } from '@/modules/core/helpers/types'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
@@ -32,6 +31,8 @@ import {
   updateAllInviteTargetsFactory
 } from '@/modules/serverinvites/repositories/serverInvites'
 import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
+import { getEventBus } from '@/modules/shared/services/eventBus'
+import { createTestContext, testApolloServer } from '@/test/graphqlHelper'
 import { faker } from '@faker-js/faker'
 import { ServerScope, wait } from '@speckle/shared'
 import { isArray, isNumber, kebabCase, omit, times } from 'lodash'
@@ -62,7 +63,7 @@ const createUser = createUserFactory({
     }),
     requestNewEmailVerification
   }),
-  usersEventsEmitter: UsersEmitter.emit
+  emitEvent: getEventBus().emit
 })
 const createPersonalAccessToken = createPersonalAccessTokenFactory({
   storeApiToken: storeApiTokenFactory({ db }),
@@ -191,4 +192,20 @@ export async function createAuthTokenForUser(
     'test-runner-token',
     scopes as ServerScope[]
   )
+}
+
+/**
+ * Login a user for tests and return the ApolloServer instance
+ */
+export async function login(user: Pick<BasicTestUser, 'id' | 'role'>) {
+  const token = await createAuthTokenForUser(user.id, AllScopes)
+  return await testApolloServer({
+    context: await createTestContext({
+      auth: true,
+      userId: user.id,
+      token,
+      role: user.role,
+      scopes: AllScopes
+    })
+  })
 }

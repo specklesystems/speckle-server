@@ -29,7 +29,6 @@ const {
   validateInputAttachmentsFactory
 } = require('@/modules/comments/services/commentTextService')
 const { getBlobsFactory } = require('@/modules/blobstorage/repositories')
-const { CommentsEmitter } = require('@/modules/comments/events/emitter')
 const {
   createCommitByBranchIdFactory,
   createCommitByBranchNameFactory
@@ -52,11 +51,9 @@ const {
   grantStreamPermissionsFactory,
   markCommitStreamUpdatedFactory
 } = require('@/modules/core/repositories/streams')
-const { VersionsEmitter } = require('@/modules/core/events/versionsEmitter')
 const {
   getObjectFactory,
-  storeSingleObjectIfNotFoundFactory,
-  storeClosuresIfNotFoundFactory
+  storeSingleObjectIfNotFoundFactory
 } = require('@/modules/core/repositories/objects')
 const {
   legacyCreateStreamFactory,
@@ -82,7 +79,6 @@ const {
   buildCoreInviteEmailContentsFactory
 } = require('@/modules/serverinvites/services/coreEmailContents')
 const { getEventBus } = require('@/modules/shared/services/eventBus')
-const { ProjectsEmitter } = require('@/modules/core/events/projectsEmitter')
 const { saveActivityFactory } = require('@/modules/activitystream/repositories')
 const { publish } = require('@/modules/shared/utils/subscriptions')
 const {
@@ -115,7 +111,6 @@ const {
 const {
   finalizeInvitedServerRegistrationFactory
 } = require('@/modules/serverinvites/services/processing')
-const { UsersEmitter } = require('@/modules/core/events/usersEmitter')
 const { getServerInfoFactory } = require('@/modules/core/repositories/server')
 const { createObjectFactory } = require('@/modules/core/services/objects/management')
 
@@ -136,7 +131,7 @@ const createComment = createCommentFactory({
   insertCommentLinks: insertCommentLinksFactory({ db }),
   deleteComment: deleteCommentFactory({ db }),
   markCommentViewed,
-  commentsEventsEmit: CommentsEmitter.emit
+  emitEvent: getEventBus().emit
 })
 
 const getObject = getObjectFactory({ db })
@@ -148,7 +143,7 @@ const createCommitByBranchId = createCommitByBranchIdFactory({
   insertBranchCommits: insertBranchCommitsFactory({ db }),
   markCommitStreamUpdated,
   markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
-  versionsEventEmitter: VersionsEmitter.emit,
+  emitEvent: getEventBus().emit,
   addCommitCreatedActivity: addCommitCreatedActivityFactory({
     saveActivity: saveActivityFactory({ db }),
     publish
@@ -186,7 +181,7 @@ const createStream = legacyCreateStreamFactory({
     }),
     createStream: createStreamFactory({ db }),
     createBranch: createBranchFactory({ db }),
-    projectsEventsEmitter: ProjectsEmitter.emit
+    emitEvent: getEventBus().emit
   })
 })
 
@@ -220,11 +215,10 @@ const createUser = createUserFactory({
     }),
     requestNewEmailVerification
   }),
-  usersEventsEmitter: UsersEmitter.emit
+  emitEvent: getEventBus().emit
 })
 const createObject = createObjectFactory({
-  storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({ db }),
-  storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db })
+  storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({ db })
 })
 
 function buildCommentInputFromString(textString) {

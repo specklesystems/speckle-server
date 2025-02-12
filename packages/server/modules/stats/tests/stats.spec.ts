@@ -30,10 +30,8 @@ import {
   getStreamFactory,
   markCommitStreamUpdatedFactory
 } from '@/modules/core/repositories/streams'
-import { VersionsEmitter } from '@/modules/core/events/versionsEmitter'
 import {
   getObjectFactory,
-  storeClosuresIfNotFoundFactory,
   storeObjectsIfNotFoundFactory
 } from '@/modules/core/repositories/objects'
 import {
@@ -51,7 +49,6 @@ import {
 import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
 import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import { ProjectsEmitter } from '@/modules/core/events/projectsEmitter'
 import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import { publish } from '@/modules/shared/utils/subscriptions'
 import { addCommitCreatedActivityFactory } from '@/modules/activitystream/services/commitActivity'
@@ -74,7 +71,6 @@ import { sendEmail } from '@/modules/emails/services/sending'
 import { createUserFactory } from '@/modules/core/services/users/management'
 import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
 import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
-import { UsersEmitter } from '@/modules/core/events/usersEmitter'
 import { createPersonalAccessTokenFactory } from '@/modules/core/services/tokens'
 import {
   storeApiTokenFactory,
@@ -97,7 +93,7 @@ const createCommitByBranchId = createCommitByBranchIdFactory({
   insertBranchCommits: insertBranchCommitsFactory({ db }),
   markCommitStreamUpdated,
   markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
-  versionsEventEmitter: VersionsEmitter.emit,
+  emitEvent: getEventBus().emit,
   addCommitCreatedActivity: addCommitCreatedActivityFactory({
     saveActivity: saveActivityFactory({ db }),
     publish
@@ -135,7 +131,7 @@ const createStream = legacyCreateStreamFactory({
     }),
     createStream: createStreamFactory({ db }),
     createBranch: createBranchFactory({ db }),
-    projectsEventsEmitter: ProjectsEmitter.emit
+    emitEvent: getEventBus().emit
   })
 })
 const findEmail = findEmailFactory({ db })
@@ -163,7 +159,7 @@ const createUser = createUserFactory({
     }),
     requestNewEmailVerification
   }),
-  usersEventsEmitter: UsersEmitter.emit
+  emitEvent: getEventBus().emit
 })
 const createPersonalAccessToken = createPersonalAccessTokenFactory({
   storeApiToken: storeApiTokenFactory({ db }),
@@ -174,8 +170,7 @@ const createPersonalAccessToken = createPersonalAccessTokenFactory({
   storePersonalApiToken: storePersonalApiTokenFactory({ db })
 })
 const createObjects = createObjectsFactory({
-  storeObjectsIfNotFoundFactory: storeObjectsIfNotFoundFactory({ db }),
-  storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db })
+  storeObjectsIfNotFoundFactory: storeObjectsIfNotFoundFactory({ db })
 })
 
 const params = { numUsers: 25, numStreams: 30, numObjects: 100, numCommits: 100 }

@@ -6,11 +6,16 @@ import {
 } from '@/modules/multiregion/services/projectRegion'
 import { Knex } from 'knex'
 import { getRegionFactory } from '@/modules/multiregion/repositories'
-import { DatabaseError } from '@/modules/shared/errors'
+import {
+  DatabaseError,
+  LogicError,
+  MisconfiguredEnvironmentError
+} from '@/modules/shared/errors'
 import { configureClient } from '@/knexfile'
 import { InitializeRegion } from '@/modules/multiregion/domain/operations'
 import {
   getAvailableRegionConfig,
+  getDefaultProjectRegionKey,
   getMainRegionConfig
 } from '@/modules/multiregion/regionConfig'
 import { ensureError, MaybeNullOrUndefined } from '@speckle/shared'
@@ -36,12 +41,14 @@ export const getRegionDb: GetRegionDb = async ({ regionKey }) => {
   const regionClients = await getRegisteredRegionClients()
   if (!(regionKey in regionClients)) {
     const region = await getRegion({ key: regionKey })
-    if (!region) throw new Error('Invalid region key')
+    if (!region) throw new LogicError('Invalid region key')
 
     // the region was initialized in a different server instance
     const regionConfigs = await getAvailableRegionConfig()
     if (!(regionKey in regionConfigs))
-      throw new Error(`RegionKey ${regionKey} not available in config`)
+      throw new MisconfiguredEnvironmentError(
+        `RegionKey ${regionKey} not available in config`
+      )
 
     const newRegionConfig = regionConfigs[regionKey]
     const regionDb = configureClient(newRegionConfig).public
@@ -70,6 +77,24 @@ const initializeDbGetter = async (): Promise<GetProjectDb> => {
 export const getProjectDbClient: GetProjectDb = async ({ projectId }) => {
   if (!getter) getter = await initializeDbGetter()
   return await getter({ projectId })
+}
+
+// the default region key is a config value, we're caching this globally
+let defaultRegionKeyCache: string | null | undefined = undefined
+
+export const getValidDefaultProjectRegionKey = async (): Promise<string | null> => {
+  if (defaultRegionKeyCache !== undefined) return defaultRegionKeyCache
+  const defaultRegionKey = await getDefaultProjectRegionKey()
+
+  if (!defaultRegionKey) return defaultRegionKey
+  const registeredRegionClients = await getRegisteredRegionClients()
+  if (!(defaultRegionKey in registeredRegionClients))
+    throw new MisconfiguredEnvironmentError(
+      `There is no region client registered for the default region key ${defaultRegionKey} `
+    )
+
+  defaultRegionKeyCache = defaultRegionKey
+  return defaultRegionKey
 }
 
 type RegionClients = Record<string, Knex>
@@ -136,7 +161,9 @@ export const getAllRegisteredDbClients = async (): Promise<
 export const initializeRegion: InitializeRegion = async ({ regionKey }) => {
   const regionConfigs = await getAvailableRegionConfig()
   if (!(regionKey in regionConfigs))
-    throw new Error(`RegionKey ${regionKey} not available in config`)
+    throw new MisconfiguredEnvironmentError(
+      `RegionKey ${regionKey} not available in config`
+    )
 
   const newRegionConfig = regionConfigs[regionKey]
   const regionDb = configureClient(newRegionConfig)

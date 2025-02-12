@@ -1,6 +1,5 @@
 import { automateLogger, moduleLogger } from '@/logging/logging'
 import { Optional, SpeckleModule } from '@/modules/shared/helpers/typeHelper'
-import { VersionEvents, VersionsEmitter } from '@/modules/core/events/versionsEmitter'
 import {
   onModelVersionCreateFactory,
   triggerAutomationRevisionRunFactory
@@ -17,7 +16,10 @@ import {
 } from '@/modules/automate/repositories/automations'
 import { isNonNullable, Scopes, throwUncoveredError } from '@speckle/shared'
 import { registerOrUpdateScopeFactory } from '@/modules/shared/repositories/scopes'
-import { triggerAutomationRun } from '@/modules/automate/clients/executionEngine'
+import {
+  getFunction,
+  triggerAutomationRun
+} from '@/modules/automate/clients/executionEngine'
 import logStreamRest from '@/modules/automate/rest/logStream'
 import {
   getEncryptionKeyPairFor,
@@ -26,15 +28,10 @@ import {
 import { buildDecryptor } from '@/modules/shared/utils/libsodium'
 import { getUserEmailFromAutomationRunFactory } from '@/modules/automate/services/tracking'
 import authGithubAppRest from '@/modules/automate/rest/authGithubApp'
-import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
+import { getFeatureFlags, isTestEnv } from '@/modules/shared/helpers/envHelper'
 import { TokenScopeData } from '@/modules/shared/domain/rolesAndScopes/types'
 import { db } from '@/db/knex'
-import {
-  AutomationsEmitter,
-  AutomationsEvents
-} from '@/modules/automate/events/automations'
 import { ProjectSubscriptions, publish } from '@/modules/shared/utils/subscriptions'
-import { AutomateRunsEmitter, AutomateRunsEvents } from '@/modules/automate/events/runs'
 import { getBranchLatestCommitsFactory } from '@/modules/core/repositories/branches'
 import { getCommitFactory } from '@/modules/core/repositories/commits'
 import { legacyGetUserFactory } from '@/modules/core/repositories/users'
@@ -58,6 +55,11 @@ import {
 import { isFinished } from '@/modules/automate/domain/logic'
 import { mixpanel } from '@/modules/shared/utils/mixpanel'
 import { getProjectFactory } from '@/modules/core/repositories/projects'
+import { getEventBus } from '@/modules/shared/services/eventBus'
+import { VersionEvents } from '@/modules/core/domain/commits/events'
+import { AutomationEvents, AutomationRunEvents } from '@/modules/automate/domain/events'
+import { LogicError } from '@/modules/shared/errors'
+import { maybeLoggerWithContext } from '@/logging/requestContext'
 
 const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
 let quitListeners: Optional<() => void> = undefined
@@ -97,12 +99,11 @@ const initializeEventListeners = () => {
     storeUserServerAppToken: storeUserServerAppTokenFactory({ db })
   })
 
-  // TODO: Use new event bus
   const quitters = [
     // Automation trigger events
-    VersionsEmitter.listen(
+    getEventBus().listen(
       VersionEvents.Created,
-      async ({ modelId, version, projectId }) => {
+      async ({ payload: { modelId, version, projectId } }) => {
         const projectDb = await getProjectDbClient({ projectId })
         await onModelVersionCreateFactory({
           getAutomation: getAutomationFactory({ db: projectDb }),
@@ -115,7 +116,7 @@ const initializeEventListeners = () => {
               buildDecryptor
             }),
             createAppToken,
-            automateRunsEmitter: AutomateRunsEmitter.emit,
+            emitEvent: getEventBus().emit,
             getAutomationToken: getAutomationTokenFactory({ db: projectDb }),
             upsertAutomationRun: upsertAutomationRunFactory({ db: projectDb }),
             getFullAutomationRevisionMetadata: getFullAutomationRevisionMetadataFactory(
@@ -128,31 +129,37 @@ const initializeEventListeners = () => {
       }
     ),
     // Automation management events
-    AutomationsEmitter.listen(AutomationsEvents.Created, async ({ automation }) => {
-      await publish(ProjectSubscriptions.ProjectAutomationsUpdated, {
-        projectId: automation.projectId,
-        projectAutomationsUpdated: {
-          type: ProjectAutomationsUpdatedMessageType.Created,
-          automationId: automation.id,
-          automation,
-          revision: null
-        }
-      })
-    }),
-    AutomationsEmitter.listen(AutomationsEvents.Updated, async ({ automation }) => {
-      await publish(ProjectSubscriptions.ProjectAutomationsUpdated, {
-        projectId: automation.projectId,
-        projectAutomationsUpdated: {
-          type: ProjectAutomationsUpdatedMessageType.Updated,
-          automationId: automation.id,
-          automation,
-          revision: null
-        }
-      })
-    }),
-    AutomationsEmitter.listen(
-      AutomationsEvents.CreatedRevision,
-      async ({ automation, revision }) => {
+    getEventBus().listen(
+      AutomationEvents.Created,
+      async ({ payload: { automation } }) => {
+        await publish(ProjectSubscriptions.ProjectAutomationsUpdated, {
+          projectId: automation.projectId,
+          projectAutomationsUpdated: {
+            type: ProjectAutomationsUpdatedMessageType.Created,
+            automationId: automation.id,
+            automation,
+            revision: null
+          }
+        })
+      }
+    ),
+    getEventBus().listen(
+      AutomationEvents.Updated,
+      async ({ payload: { automation } }) => {
+        await publish(ProjectSubscriptions.ProjectAutomationsUpdated, {
+          projectId: automation.projectId,
+          projectAutomationsUpdated: {
+            type: ProjectAutomationsUpdatedMessageType.Updated,
+            automationId: automation.id,
+            automation,
+            revision: null
+          }
+        })
+      }
+    ),
+    getEventBus().listen(
+      AutomationEvents.CreatedRevision,
+      async ({ payload: { automation, revision } }) => {
         await publish(ProjectSubscriptions.ProjectAutomationsUpdated, {
           projectId: automation.projectId,
           projectAutomationsUpdated: {
@@ -168,17 +175,21 @@ const initializeEventListeners = () => {
       }
     ),
     // Automation run lifecycle events
-    AutomateRunsEmitter.listen(
-      AutomateRunsEvents.Created,
-      async ({ manifests, run, automation }) => {
+    getEventBus().listen(
+      AutomationRunEvents.Created,
+      async ({ payload: { manifests, run, automation } }) => {
+        const logger = maybeLoggerWithContext({ logger: automateLogger })!
         const validatedManifests = manifests
           .map((manifest) => {
             if (isVersionCreatedTriggerManifest(manifest)) {
               return manifest
             } else {
-              automateLogger.error('Unexpected run trigger manifest type', {
-                manifest
-              })
+              logger.error(
+                {
+                  manifest
+                },
+                'Unexpected run trigger manifest type'
+              )
             }
 
             return null
@@ -214,9 +225,9 @@ const initializeEventListeners = () => {
         )
       }
     ),
-    AutomateRunsEmitter.listen(
-      AutomateRunsEvents.StatusUpdated,
-      async ({ run, functionRun, automationId, projectId }) => {
+    getEventBus().listen(
+      AutomationRunEvents.StatusUpdated,
+      async ({ payload: { run, functionRun, automationId, projectId } }) => {
         const projectDb = await getProjectDbClient({ projectId })
 
         const triggers = await getAutomationRunFullTriggersFactory({ db: projectDb })({
@@ -253,11 +264,11 @@ const initializeEventListeners = () => {
       }
     ),
     // Mixpanel events
-    AutomateRunsEmitter.listen(
-      AutomateRunsEvents.StatusUpdated,
-      async ({ run, functionRun, automationId, projectId }) => {
+    getEventBus().listen(
+      AutomationRunEvents.StatusUpdated,
+      async ({ payload: { run, functionRun, automationId, projectId } }) => {
         if (!isFinished(run.status)) return
-
+        const logger = maybeLoggerWithContext({ logger: automateLogger })!
         const projectDb = await getProjectDbClient({ projectId })
         const project = await getProjectFactory({ db: projectDb })({ projectId })
 
@@ -265,10 +276,10 @@ const initializeEventListeners = () => {
           db: projectDb
         })(run.automationRevisionId)
         const fullRun = await getFullAutomationRunByIdFactory({ db: projectDb })(run.id)
-        if (!fullRun) throw new Error('This should never happen')
+        if (!fullRun) throw new LogicError('This should never happen')
 
         if (!automationWithRevision) {
-          automateLogger.error(
+          logger.error(
             {
               run
             },
@@ -276,6 +287,10 @@ const initializeEventListeners = () => {
           )
           return
         }
+
+        const fn = isTestEnv()
+          ? null
+          : await getFunction({ functionId: functionRun.functionId })
 
         const userEmail = await getUserEmailFromAutomationRunFactory({
           getFullAutomationRevisionMetadata: getFullAutomationRevisionMetadataFactory({
@@ -292,6 +307,9 @@ const initializeEventListeners = () => {
           automationRevisionId: automationWithRevision.id,
           automationName: automationWithRevision.name,
           runId: run.id,
+          functionId: fn?.functionId,
+          functionName: fn?.functionName,
+          functionType: fn?.isFeatured ? 'public' : 'private',
           functionRunId: functionRun.id,
           status: functionRun.status,
           durationInSeconds: functionRun.elapsed / 1000,
@@ -301,14 +319,18 @@ const initializeEventListeners = () => {
         })
       }
     ),
-    AutomateRunsEmitter.listen(
-      AutomateRunsEvents.Created,
-      async ({ automation, run: automationRun, source, manifests }) => {
+    getEventBus().listen(
+      AutomationRunEvents.Created,
+      async ({ payload: { automation, run: automationRun, source, manifests } }) => {
+        const logger = maybeLoggerWithContext({ logger: automateLogger })!
         const manifest = manifests.at(0)
         if (!manifest || !isVersionCreatedTriggerManifest(manifest)) {
-          automateLogger.error('Unexpected run trigger manifest type', {
-            manifest
-          })
+          logger.error(
+            {
+              manifest
+            },
+            'Unexpected run trigger manifest type'
+          )
           return
         }
         const projectDb = await getProjectDbClient({ projectId: manifest.projectId })

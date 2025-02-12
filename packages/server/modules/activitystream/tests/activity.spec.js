@@ -51,7 +51,6 @@ const {
   deleteServerOnlyInvitesFactory,
   updateAllInviteTargetsFactory
 } = require('@/modules/serverinvites/repositories/serverInvites')
-const { UsersEmitter } = require('@/modules/core/events/usersEmitter')
 const { createPersonalAccessTokenFactory } = require('@/modules/core/services/tokens')
 const {
   storePersonalApiTokenFactory,
@@ -62,9 +61,9 @@ const {
 const { getServerInfoFactory } = require('@/modules/core/repositories/server')
 const { createObjectFactory } = require('@/modules/core/services/objects/management')
 const {
-  storeSingleObjectIfNotFoundFactory,
-  storeClosuresIfNotFoundFactory
+  storeSingleObjectIfNotFoundFactory
 } = require('@/modules/core/repositories/objects')
+const { getEventBus } = require('@/modules/shared/services/eventBus')
 
 const getUser = getUserFactory({ db })
 const getUserActivity = getUserActivityFactory({ db })
@@ -109,7 +108,7 @@ const createUser = createUserFactory({
     }),
     requestNewEmailVerification
   }),
-  usersEventsEmitter: UsersEmitter.emit
+  emitEvent: getEventBus().emit
 })
 
 const createPersonalAccessToken = createPersonalAccessTokenFactory({
@@ -121,8 +120,7 @@ const createPersonalAccessToken = createPersonalAccessTokenFactory({
   storePersonalApiToken: storePersonalApiTokenFactory({ db })
 })
 const createObject = createObjectFactory({
-  storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({ db }),
-  storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db })
+  storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({ db })
 })
 
 let server

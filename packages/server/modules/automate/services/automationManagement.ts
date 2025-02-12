@@ -38,10 +38,6 @@ import { TriggeredAutomationsStatusGraphQLReturn } from '@/modules/automate/help
 import { FunctionInputDecryptor } from '@/modules/automate/services/encryption'
 import { LibsodiumEncryptionError } from '@/modules/shared/errors/encryption'
 import { validateInputAgainstFunctionSchema } from '@/modules/automate/utils/inputSchemaValidator'
-import {
-  AutomationsEmitter,
-  AutomationsEventsEmit
-} from '@/modules/automate/events/automations'
 import { validateAutomationName } from '@/modules/automate/utils/automationConfigurationValidator'
 import {
   CreateAutomation,
@@ -56,6 +52,8 @@ import {
 } from '@/modules/automate/domain/operations'
 import { GetBranchesByIds } from '@/modules/core/domain/branches/operations'
 import { ValidateStreamAccess } from '@/modules/core/domain/streams/operations'
+import { EventBusEmit } from '@/modules/shared/services/eventBus'
+import { AutomationEvents } from '@/modules/automate/domain/events'
 
 export type CreateAutomationDeps = {
   createAuthCode: CreateStoredAuthCode
@@ -63,7 +61,7 @@ export type CreateAutomationDeps = {
   storeAutomation: StoreAutomation
   storeAutomationToken: StoreAutomationToken
   validateStreamAccess: ValidateStreamAccess
-  automationsEventsEmit: AutomationsEventsEmit
+  eventEmit: EventBusEmit
 }
 
 export const createAutomationFactory =
@@ -86,7 +84,7 @@ export const createAutomationFactory =
       storeAutomation,
       storeAutomationToken,
       validateStreamAccess,
-      automationsEventsEmit
+      eventEmit
     } = deps
 
     validateAutomationName(name)
@@ -129,8 +127,11 @@ export const createAutomationFactory =
       automateToken: token
     })
 
-    await automationsEventsEmit(AutomationsEmitter.events.Created, {
-      automation: automationRecord
+    await eventEmit({
+      eventName: AutomationEvents.Created,
+      payload: {
+        automation: automationRecord
+      }
     })
 
     return { automation: automationRecord, token: automationTokenRecord }
@@ -142,7 +143,7 @@ export type CreateTestAutomationDeps = {
   storeAutomation: StoreAutomation
   storeAutomationRevision: StoreAutomationRevision
   validateStreamAccess: ValidateStreamAccess
-  automationsEventsEmit: AutomationsEventsEmit
+  eventEmit: EventBusEmit
 }
 
 /**
@@ -169,7 +170,7 @@ export const createTestAutomationFactory =
       storeAutomation,
       storeAutomationRevision,
       validateStreamAccess,
-      automationsEventsEmit
+      eventEmit
     } = deps
 
     validateAutomationName(name)
@@ -182,16 +183,16 @@ export const createTestAutomationFactory =
     )
 
     // Get latest release for specified function
-    const { functionVersions: functionReleases } = await getFunction({ functionId })
+    const fn = await getFunction({ functionId })
 
-    if (!functionReleases || functionReleases.length === 0) {
+    if (!fn || !fn.functionVersions || fn.functionVersions.length === 0) {
       // TODO: This should probably be okay for test automations
       throw new AutomationCreationError(
         'The specified function does not have any releases'
       )
     }
 
-    const latestFunctionRelease = functionReleases[0]
+    const latestFunctionRelease = fn.functionVersions[0]
 
     // Create and store the automation record
     const automationId = cryptoRandomString({ length: 10 })
@@ -208,8 +209,11 @@ export const createTestAutomationFactory =
       isTestAutomation: true
     })
 
-    await AutomationsEmitter.emit(AutomationsEmitter.events.Created, {
-      automation: automationRecord
+    await eventEmit({
+      eventName: AutomationEvents.Created,
+      payload: {
+        automation: automationRecord
+      }
     })
 
     // Create and store the automation revision
@@ -235,9 +239,12 @@ export const createTestAutomationFactory =
       publicKey: encryptionKeyPair.publicKey
     })
 
-    await automationsEventsEmit(AutomationsEmitter.events.CreatedRevision, {
-      automation: automationRecord,
-      revision: automationRevisionRecord
+    await eventEmit({
+      eventName: AutomationEvents.CreatedRevision,
+      payload: {
+        automation: automationRecord,
+        revision: automationRevisionRecord
+      }
     })
 
     return automationRecord
@@ -247,7 +254,7 @@ export type ValidateAndUpdateAutomationDeps = {
   getAutomation: GetAutomation
   updateAutomation: UpdateAutomation
   validateStreamAccess: ValidateStreamAccess
-  automationsEventsEmit: AutomationsEventsEmit
+  eventEmit: EventBusEmit
 }
 
 export const validateAndUpdateAutomationFactory =
@@ -261,12 +268,7 @@ export const validateAndUpdateAutomationFactory =
      */
     projectId?: string
   }) => {
-    const {
-      getAutomation,
-      updateAutomation,
-      validateStreamAccess,
-      automationsEventsEmit
-    } = deps
+    const { getAutomation, updateAutomation, validateStreamAccess, eventEmit } = deps
     const { input, userId, userResourceAccessRules, projectId } = params
 
     const existingAutomation = await getAutomation({
@@ -297,8 +299,11 @@ export const validateAndUpdateAutomationFactory =
       id: input.id
     })
 
-    await automationsEventsEmit(AutomationsEmitter.events.Updated, {
-      automation: res
+    await eventEmit({
+      eventName: AutomationEvents.Updated,
+      payload: {
+        automation: res
+      }
     })
 
     return res
@@ -375,7 +380,7 @@ const validateNewRevisionFunctions =
       ),
       (r) =>
         updateId({
-          functionReleaseId: r.functionVersionId,
+          functionReleaseId: r?.functionVersionId ?? '',
           functionId: r.functionId
         })
     )
@@ -396,7 +401,7 @@ export type CreateAutomationRevisionDeps = {
   getFunctionInputDecryptor: FunctionInputDecryptor
   getFunctionReleases: typeof getFunctionReleases
   validateStreamAccess: ValidateStreamAccess
-  automationsEventsEmit: AutomationsEventsEmit
+  eventEmit: EventBusEmit
 } & ValidateNewTriggerDefinitionsDeps &
   ValidateNewRevisionFunctionsDeps
 
@@ -416,7 +421,7 @@ export const createAutomationRevisionFactory =
       getFunctionInputDecryptor,
       getFunctionReleases,
       validateStreamAccess,
-      automationsEventsEmit
+      eventEmit
     } = deps
 
     const existingAutomation = await getAutomation({
@@ -538,9 +543,12 @@ export const createAutomationRevisionFactory =
     }
     const res = await storeAutomationRevision(revisionInput)
 
-    await automationsEventsEmit(AutomationsEmitter.events.CreatedRevision, {
-      automation: existingAutomation,
-      revision: res
+    await eventEmit({
+      eventName: AutomationEvents.CreatedRevision,
+      payload: {
+        automation: existingAutomation,
+        revision: res
+      }
     })
 
     return res

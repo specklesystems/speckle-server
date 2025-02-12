@@ -52,24 +52,41 @@ import {
   findEmailFactory,
   findPrimaryEmailForUserFactory
 } from '@/modules/core/repositories/userEmails'
-import { UsersEmitter } from '@/modules/core/events/usersEmitter'
 import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
 import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
+import { requestNewEmailVerificationFactory as requestNewEmailVerificationFactoryOld } from '@/modules/emails/services/verification/request.old'
 import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { initializeEventListenerFactory } from '@/modules/auth/services/postAuth'
+import { getEventBus } from '@/modules/shared/services/eventBus'
+import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 
+const { FF_FORCE_EMAIL_VERIFICATION } = getFeatureFlags()
 const findEmail = findEmailFactory({ db })
-const requestNewEmailVerification = requestNewEmailVerificationFactory({
-  findEmail,
-  getUser: getUserFactory({ db }),
-  getServerInfo: getServerInfoFactory({ db }),
-  deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db }),
-  renderEmail,
-  sendEmail
-})
+const requestNewEmailVerification = FF_FORCE_EMAIL_VERIFICATION
+  ? requestNewEmailVerificationFactory({
+      findEmail,
+      getUser: getUserFactory({ db }),
+      getServerInfo: getServerInfoFactory({ db }),
+      deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({
+        db
+      }),
+      renderEmail,
+      sendEmail
+    })
+  : requestNewEmailVerificationFactoryOld({
+      findEmail,
+      getUser: getUserFactory({ db }),
+      getServerInfo: getServerInfoFactory({ db }),
+      deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({
+        db
+      }),
+      renderEmail,
+      sendEmail
+    })
+
 const createUser = createUserFactory({
   getServerInfo: getServerInfoFactory({ db }),
   findEmail,
@@ -86,7 +103,7 @@ const createUser = createUserFactory({
     }),
     requestNewEmailVerification
   }),
-  usersEventsEmitter: UsersEmitter.emit
+  emitEvent: getEventBus().emit
 })
 
 const findOrCreateUser = findOrCreateUserFactory({
@@ -158,7 +175,7 @@ export const init: SpeckleModule['init'] = async (app, isInitial) => {
   // Listen to event emitters
   if (isInitial) {
     const initializeEventListener = initializeEventListenerFactory({
-      usersEventsListener: UsersEmitter.listen,
+      eventBus: getEventBus(),
       logger: authLogger
     })
     initializeEventListener()

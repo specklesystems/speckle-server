@@ -417,7 +417,9 @@ export class FilteringExtension extends Extension {
     this.UserspaceColorState = null
     this.StateKey = undefined
     this.Renderer.resetMaterials()
+    this.CurrentFilteringState = {}
     this.viewer.requestRender(UpdateFlags.RENDER_RESET | UpdateFlags.SHADOWS)
+    this.emit(ViewerEvent.FilteringStateSet, this.CurrentFilteringState)
     return null
   }
 

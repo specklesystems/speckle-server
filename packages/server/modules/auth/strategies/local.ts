@@ -23,6 +23,7 @@ import {
   ValidateUserPassword
 } from '@/modules/core/domain/users/operations'
 import { GetServerInfo } from '@/modules/core/domain/server/operations'
+import { UserValidationError } from '@/modules/core/errors/user'
 
 const localStrategyBuilderFactory =
   (deps: {
@@ -69,7 +70,16 @@ const localStrategyBuilderFactory =
 
           return next()
         } catch (err) {
-          req.log.info({ err }, 'Error while logging in.')
+          const e = ensureError(err, 'Unexpected issue occured while logging in')
+          switch (e.constructor) {
+            case UserInputError:
+            case UserValidationError:
+              req.log.info({ err }, 'Error while logging in.')
+              break
+            default:
+              req.log.error({ err }, 'Error while logging in.')
+              break
+          }
           return res.status(401).send({ err: true, message: 'Invalid credentials.' })
         }
       },

@@ -112,8 +112,6 @@ import {
   ExecutionEngineNetworkError
 } from '@/modules/automate/errors/executionEngine'
 import { db } from '@/db/knex'
-import { AutomationsEmitter } from '@/modules/automate/events/automations'
-import { AutomateRunsEmitter } from '@/modules/automate/events/runs'
 import { getCommitFactory } from '@/modules/core/repositories/commits'
 import { validateStreamAccessFactory } from '@/modules/core/services/streams/access'
 import { getUserFactory } from '@/modules/core/repositories/users'
@@ -126,6 +124,7 @@ import {
 } from '@/modules/core/repositories/tokens'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
+import { BranchNotFoundError } from '@/modules/core/errors/branch'
 
 const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
 
@@ -289,7 +288,7 @@ export = (FF_AUTOMATE_MODULE_ENABLED
           const branch = await ctx.loaders
             .forRegion({ db: projectDb })
             .commits.getCommitBranch.load(versionId)
-          if (!branch) throw Error('Invalid version Id')
+          if (!branch) throw new BranchNotFoundError('Invalid version Id')
 
           const projectId = branch.streamId
           const modelId = branch.id
@@ -475,6 +474,14 @@ export = (FF_AUTOMATE_MODULE_ENABLED
                   : {}
             })
 
+            if (!fn) {
+              return {
+                cursor: null,
+                totalCount: 0,
+                items: []
+              }
+            }
+
             return {
               cursor: fn.versionCursor,
               totalCount: fn.versionCount,
@@ -549,7 +556,11 @@ export = (FF_AUTOMATE_MODULE_ENABLED
                 origin: getServerOrigin()
               },
               functionName: args.input.name,
-              description: args.input.description
+              description: args.input.description,
+              repositoryUrl:
+                'https://github.com/specklesystems/speckle_automate_python_example',
+              supportedSourceApps: [],
+              tags: []
             }
           })
         },
@@ -574,7 +585,7 @@ export = (FF_AUTOMATE_MODULE_ENABLED
             storeAutomation: storeAutomationFactory({ db: projectDb }),
             storeAutomationToken: storeAutomationTokenFactory({ db: projectDb }),
             validateStreamAccess,
-            automationsEventsEmit: AutomationsEmitter.emit
+            eventEmit: getEventBus().emit
           })
 
           return (
@@ -593,7 +604,7 @@ export = (FF_AUTOMATE_MODULE_ENABLED
             getAutomation: getAutomationFactory({ db: projectDb }),
             updateAutomation: updateAutomationFactory({ db: projectDb }),
             validateStreamAccess,
-            automationsEventsEmit: AutomationsEmitter.emit
+            eventEmit: getEventBus().emit
           })
 
           return await update({
@@ -616,7 +627,7 @@ export = (FF_AUTOMATE_MODULE_ENABLED
               buildDecryptor
             }),
             getFunctionReleases,
-            automationsEventsEmit: AutomationsEmitter.emit,
+            eventEmit: getEventBus().emit,
             validateStreamAccess
           })
 
@@ -643,7 +654,7 @@ export = (FF_AUTOMATE_MODULE_ENABLED
                 buildDecryptor
               }),
               createAppToken,
-              automateRunsEmitter: AutomateRunsEmitter.emit,
+              emitEvent: getEventBus().emit,
               getAutomationToken: getAutomationTokenFactory({ db: projectDb }),
               upsertAutomationRun: upsertAutomationRunFactory({ db: projectDb }),
               getFullAutomationRevisionMetadata:
@@ -672,7 +683,7 @@ export = (FF_AUTOMATE_MODULE_ENABLED
             storeAutomation: storeAutomationFactory({ db: projectDb }),
             storeAutomationRevision: storeAutomationRevisionFactory({ db: projectDb }),
             validateStreamAccess,
-            automationsEventsEmit: AutomationsEmitter.emit
+            eventEmit: getEventBus().emit
           })
 
           return await create({
@@ -751,6 +762,14 @@ export = (FF_AUTOMATE_MODULE_ENABLED
               }
             })
 
+            if (!res) {
+              return {
+                cursor: null,
+                totalCount: 0,
+                items: []
+              }
+            }
+
             const items = res.items.map(convertFunctionToGraphQLReturn)
 
             return {
@@ -799,6 +818,14 @@ export = (FF_AUTOMATE_MODULE_ENABLED
                 }
               }
             })
+
+            if (!res) {
+              return {
+                cursor: null,
+                totalCount: 0,
+                items: []
+              }
+            }
 
             const items = res.functions.map(convertFunctionToGraphQLReturn)
 
@@ -900,7 +927,7 @@ export = (FF_AUTOMATE_MODULE_ENABLED
             automationRunUpdater: updateAutomationRunFactory({
               db: projectDb
             }),
-            runEventEmit: AutomateRunsEmitter.emit
+            emitEvent: getEventBus().emit
           }
 
           const payload = {

@@ -7,7 +7,6 @@ import {
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
 import {
   getProjectCollaboratorsFactory,
-  getProjectFactory,
   updateProjectFactory,
   upsertProjectRoleFactory,
   getRolesByUserIdFactory,
@@ -203,6 +202,16 @@ import { Knex } from 'knex'
 import { getPaginatedItemsFactory } from '@/modules/shared/services/paginatedItems'
 import { InvalidWorkspacePlanStatus } from '@/modules/gatekeeper/errors/billing'
 import { BadRequestError } from '@/modules/shared/errors'
+import {
+  dismissWorkspaceJoinRequestFactory,
+  requestToJoinWorkspaceFactory
+} from '@/modules/workspaces/services/workspaceJoinRequests'
+import {
+  createWorkspaceJoinRequestFactory,
+  updateWorkspaceJoinRequestStatusFactory
+} from '@/modules/workspaces/repositories/workspaceJoinRequests'
+import { sendWorkspaceJoinRequestReceivedEmailFactory } from '@/modules/workspaces/services/workspaceJoinRequestEmails/received'
+import { getProjectFactory } from '@/modules/core/repositories/projects'
 
 const eventBus = getEventBus()
 const getServerInfo = getServerInfoFactory({ db })
@@ -475,6 +484,9 @@ export = FF_WORKSPACES_MODULE_ENABLED
 
             case WorkspacePlans.Academia:
             case WorkspacePlans.Unlimited:
+            case WorkspacePlans.StarterInvoiced:
+            case WorkspacePlans.PlusInvoiced:
+            case WorkspacePlans.BusinessInvoiced:
               switch (status) {
                 case WorkspacePlanStatuses.Valid:
                   await upsertUnpaidWorkspacePlanFactory({ db })({
@@ -498,7 +510,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
       },
       WorkspaceMutations: {
         create: async (_parent, args, context) => {
-          const { name, description, defaultLogoIndex, logo, slug } = args.input
+          const { name, description, logo, slug } = args.input
 
           const createWorkspace = createWorkspaceFactory({
             validateSlug: validateSlugFactory({
@@ -518,8 +530,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
               name,
               slug,
               description: description ?? null,
-              logo: logo ?? null,
-              defaultLogoIndex: defaultLogoIndex ?? 0
+              logo: logo ?? null
             },
             userResourceAccessLimits: context.resourceAccessRules
           })
@@ -556,6 +567,9 @@ export = FF_WORKSPACES_MODULE_ENABLED
                 }
               case 'unlimited':
               case 'academia':
+              case 'starterInvoiced':
+              case 'plusInvoiced':
+              case 'businessInvoiced':
                 break
               default:
                 throwUncoveredError(workspacePlan)
@@ -774,7 +788,46 @@ export = FF_WORKSPACES_MODULE_ENABLED
           return true
         },
         invites: () => ({}),
-        projects: () => ({})
+        projects: () => ({}),
+        dismiss: async (_parent, args, ctx) => {
+          return await dismissWorkspaceJoinRequestFactory({
+            getWorkspace: getWorkspaceFactory({ db }),
+            updateWorkspaceJoinRequestStatus: updateWorkspaceJoinRequestStatusFactory({
+              db
+            })
+          })({ userId: ctx.userId!, workspaceId: args.input.workspaceId })
+        },
+        requestToJoin: async (_parent, args, ctx) => {
+          const requestToJoin = commandFactory({
+            db,
+            operationFactory: ({ db }) => {
+              const createWorkspaceJoinRequest = createWorkspaceJoinRequestFactory({
+                db
+              })
+              const sendWorkspaceJoinRequestReceivedEmail =
+                sendWorkspaceJoinRequestReceivedEmailFactory({
+                  renderEmail,
+                  sendEmail,
+                  getServerInfo,
+                  getWorkspaceCollaborators: getWorkspaceCollaboratorsFactory({
+                    db
+                  }),
+                  getUserEmails: findEmailsByUserIdFactory({ db })
+                })
+              return requestToJoinWorkspaceFactory({
+                createWorkspaceJoinRequest,
+                sendWorkspaceJoinRequestReceivedEmail,
+                getUserById: getUserFactory({ db }),
+                getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db }),
+                getUserEmails: findEmailsByUserIdFactory({ db })
+              })
+            }
+          })
+          return await requestToJoin({
+            userId: ctx.userId!,
+            workspaceId: args.input.workspaceId
+          })
+        }
       },
       WorkspaceInviteMutations: {
         resend: async (_parent, args, ctx) => {
@@ -1118,6 +1171,14 @@ export = FF_WORKSPACES_MODULE_ENABLED
               }
             })
 
+            if (!res) {
+              return {
+                cursor: null,
+                totalCount: 0,
+                items: []
+              }
+            }
+
             const items = res.functions.map(convertFunctionToGraphQLReturn)
 
             return {
@@ -1357,6 +1418,24 @@ export = FF_WORKSPACES_MODULE_ENABLED
             findEmailsByUserId: findEmailsByUserIdFactory({ db }),
             getWorkspaceWithDomains: getWorkspaceWithDomainsFactory({ db })
           })({ workspaceId, userId })
+        },
+        workspaceRole: async (parent, args, context) => {
+          const workspaceId = args.workspaceId
+          if (!workspaceId) return null
+
+          await authorizeResolver(
+            context.userId,
+            workspaceId,
+            Roles.Workspace.Member,
+            context.resourceAccessRules
+          )
+
+          const role = await getWorkspaceRoleForUserFactory({ db })({
+            userId: parent.id,
+            workspaceId
+          })
+
+          return role?.role ?? null
         }
       },
       ServerInfo: {

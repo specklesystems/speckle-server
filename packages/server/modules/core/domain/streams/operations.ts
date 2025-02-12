@@ -21,6 +21,7 @@ import { MaybeNullOrUndefined, Nullable, Optional, StreamRoles } from '@speckle/
 import { Knex } from 'knex'
 import type express from 'express'
 import { ProjectCreateArgs } from '@/modules/core/domain/projects/operations'
+import type { Logger } from 'pino'
 
 export type LegacyGetStreams = (params: {
   cursor?: string | Date | null | undefined
@@ -70,17 +71,11 @@ export type GetStreamCollaborators = (
   }>
 ) => Promise<Array<LimitedUserWithStreamRole>>
 
-export type GetUserDeletableStreams = (userId: string) => Promise<Array<string>>
+export type GetStreamsCollaborators = (params: { streamIds: string[] }) => Promise<{
+  [streamId: string]: Array<LimitedUserWithStreamRole>
+}>
 
-export type LegacyGetStreamCollaborators = (params: { streamId: string }) => Promise<
-  {
-    role: string
-    id: string
-    name: string
-    company: string
-    avatar: string
-  }[]
->
+export type GetUserDeletableStreams = (userId: string) => Promise<Array<string>>
 
 export type StoreStream = (
   input: StreamCreateInput | ProjectCreateArgs,
@@ -327,10 +322,11 @@ export type RemoveStreamCollaborator = (
 
 export type CloneStream = (userId: string, sourceStreamId: string) => Promise<Stream>
 
-export type CreateOnboardingStream = (
-  targetUserId: string,
+export type CreateOnboardingStream = (params: {
+  targetUserId: string
   targetUserResourceAccessRules: ContextResourceAccessRules
-) => Promise<Stream>
+  logger: Logger
+}) => Promise<Stream>
 
 export type GetDiscoverableStreams = (
   args: QueryDiscoverableStreamsArgs,

@@ -26,6 +26,7 @@ import {
   WorkspacePlanNotFoundError,
   WorkspaceSubscriptionNotFoundError
 } from '@/modules/gatekeeper/errors/billing'
+import { LogicError } from '@/modules/shared/errors'
 import { CountWorkspaceRoleWithOptionalProjectRole } from '@/modules/workspaces/domain/operations'
 import { throwUncoveredError, WorkspaceRoles } from '@speckle/shared'
 import { cloneDeep, isEqual, sum } from 'lodash'
@@ -81,6 +82,9 @@ export const handleSubscriptionUpdateFactory =
           break
         case 'unlimited':
         case 'academia':
+        case 'starterInvoiced':
+        case 'plusInvoiced':
+        case 'businessInvoiced':
           throw new WorkspacePlanMismatchError()
         default:
           throwUncoveredError(workspacePlan)
@@ -131,6 +135,9 @@ export const addWorkspaceSubscriptionSeatIfNeededFactory =
         break
       case 'unlimited':
       case 'academia':
+      case 'starterInvoiced':
+      case 'plusInvoiced':
+      case 'businessInvoiced':
         throw new WorkspacePlanMismatchError()
       default:
         throwUncoveredError(workspacePlan)
@@ -200,7 +207,7 @@ const mutateSubscriptionDataWithNewValidSeatNumbers = ({
   const product = subscriptionData.products.find(
     (product) => product.productId === productId
   )
-  if (seatCount < 0) throw new Error('Invalid seat count, cannot be negative')
+  if (seatCount < 0) throw new LogicError('Invalid seat count, cannot be negative')
 
   if (seatCount === 0 && product === undefined) return
   if (seatCount === 0 && product !== undefined) {
@@ -209,7 +216,7 @@ const mutateSubscriptionDataWithNewValidSeatNumbers = ({
   } else if (product !== undefined && product.quantity >= seatCount) {
     product.quantity = seatCount
   } else {
-    throw new Error('Invalid subscription state')
+    throw new LogicError('Invalid subscription state')
   }
 }
 
@@ -261,6 +268,9 @@ export const downscaleWorkspaceSubscriptionFactory =
         break
       case 'unlimited':
       case 'academia':
+      case 'starterInvoiced':
+      case 'plusInvoiced':
+      case 'businessInvoiced':
         throw new WorkspacePlanMismatchError()
       default:
         throwUncoveredError(workspacePlan)
@@ -373,6 +383,9 @@ export const upgradeWorkspaceSubscriptionFactory =
     switch (workspacePlan.name) {
       case 'unlimited':
       case 'academia':
+      case 'starterInvoiced':
+      case 'plusInvoiced':
+      case 'businessInvoiced':
         throw new WorkspaceNotPaidPlanError()
       case 'starter':
       case 'plus':

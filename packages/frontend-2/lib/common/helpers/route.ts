@@ -21,6 +21,47 @@ export const defaultZapierWebhookUrl =
   'https://hooks.zapier.com/hooks/catch/12120532/2m4okri/'
 export const guideBillingUrl = 'https://speckle.guide/workspaces/billing.html'
 
+export const settingsUserRoutes = {
+  profile: '/settings/user/profile',
+  notifications: '/settings/user/notifications',
+  developerSettings: '/settings/user/developer',
+  emails: '/settings/user/emails'
+}
+
+export const settingsServerRoutes = {
+  general: '/settings/server/general',
+  projects: '/settings/server/projects',
+  members: '/settings/server/members',
+  regions: '/settings/server/regions'
+}
+
+export const settingsWorkspaceRoutes = {
+  general: {
+    name: 'settings-workspaces-slug-general',
+    route: (slug: string) => `/settings/workspaces/${slug}/general`
+  },
+  members: {
+    name: 'settings-workspaces-slug-members',
+    route: (slug: string) => `/settings/workspaces/${slug}/members`
+  },
+  projects: {
+    name: 'settings-workspaces-slug-projects',
+    route: (slug: string) => `/settings/workspaces/${slug}/projects`
+  },
+  security: {
+    name: 'settings-workspaces-slug-security',
+    route: (slug: string) => `/settings/workspaces/${slug}/security`
+  },
+  billing: {
+    name: 'settings-workspaces-slug-billing',
+    route: (slug: string) => `/settings/workspaces/${slug}/billing`
+  },
+  regions: {
+    name: 'settings-workspaces-slug-regions',
+    route: (slug: string) => `/settings/workspaces/${slug}/regions`
+  }
+}
+
 export const projectRoute = (
   id: string,
   tab?: 'models' | 'discussions' | 'automations' | 'settings'
@@ -71,10 +112,10 @@ export const automateGithubAppAuthorizationRoute = (workspaceSlug?: string) => {
   }`
 }
 
-export const automationFunctionsRoute = '/functions'
+export const publicAutomateFunctionsRoute = '/functions'
 
-export const automationFunctionRoute = (functionId: string) =>
-  `${automationFunctionsRoute}/${functionId}`
+export const automateFunctionRoute = (functionId: string) =>
+  `${publicAutomateFunctionsRoute}/${functionId}`
 
 export const workspaceRoute = (slug: string) => `/workspaces/${slug}`
 export const workspaceSsoRoute = (slug: string) => `/workspaces/${slug}/sso`
