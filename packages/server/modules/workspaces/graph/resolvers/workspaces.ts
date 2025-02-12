@@ -584,7 +584,8 @@ export = FF_WORKSPACES_MODULE_ENABLED
               queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({
                 getStreams: legacyGetStreamsFactory({ db })
               }),
-              deleteSsoProvider: deleteSsoProviderFactory({ db })
+              deleteSsoProvider: deleteSsoProviderFactory({ db }),
+              emitWorkspaceEvent: getEventBus().emit
             })
 
           // this should be turned into a get all regions and map over the regions...

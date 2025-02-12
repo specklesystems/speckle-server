@@ -291,13 +291,15 @@ export const deleteWorkspaceFactory =
     deleteProject,
     queryAllWorkspaceProjects,
     deleteAllResourceInvites,
-    deleteSsoProvider
+    deleteSsoProvider,
+    emitWorkspaceEvent
   }: {
     deleteWorkspace: DeleteWorkspace
     deleteProject: DeleteStreamRecord
     queryAllWorkspaceProjects: QueryAllWorkspaceProjects
     deleteAllResourceInvites: DeleteAllResourceInvites
     deleteSsoProvider: DeleteSsoProvider
+    emitWorkspaceEvent: EventBus['emit']
   }) =>
   async ({ workspaceId }: WorkspaceDeleteArgs): Promise<void> => {
     // Delete workspace SSO provider, if present
@@ -328,6 +330,10 @@ export const deleteWorkspaceFactory =
     for (const projectIdsChunk of chunk(projectIds, 25)) {
       await Promise.all(projectIdsChunk.map((projectId) => deleteProject(projectId)))
     }
+    await emitWorkspaceEvent({
+      eventName: WorkspaceEvents.Deleted,
+      payload: { workspaceId }
+    })
   }
 
 type WorkspaceRoleDeleteArgs = {
