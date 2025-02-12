@@ -4,15 +4,15 @@ import {
   metricDuration,
   metricInputFileSize,
   metricOperationErrors
-} from '@/src/prometheusMetrics.js'
+} from '@/controller/prometheusMetrics.js'
 import { getDbClients } from '@/knex.js'
 
-import { downloadFile } from '@/src/filesApi.js'
+import { downloadFile } from '@/controller/filesApi.js'
 import fs from 'fs'
 import { spawn } from 'child_process'
 
-import { ServerAPI } from '@/src/api.js'
-import { downloadDependencies } from '@/src/objDependencies.js'
+import { ServerAPI } from '@/controller/api.js'
+import { downloadDependencies } from '@/controller/objDependencies.js'
 import { logger } from '@/observability/logging.js'
 import { Nullable, Scopes, wait } from '@speckle/shared'
 import { Knex } from 'knex'
