@@ -24,7 +24,7 @@ import {
   sanitizeHeaders
 } from '@/logging/expressLogging'
 
-import { errorLoggingMiddleware } from '@/logging/errorLogging'
+import { errorMetricsMiddleware } from '@/logging/errorLogging'
 import prometheusClient from 'prom-client'
 
 import { ApolloServer } from '@apollo/server'
@@ -50,7 +50,8 @@ import {
   getPort,
   getBindAddress,
   shutdownTimeoutSeconds,
-  asyncRequestContextEnabled
+  asyncRequestContextEnabled,
+  getMaximumRequestBodySizeMB
 } from '@/modules/shared/helpers/envHelper'
 import * as ModulesSetup from '@/modules'
 import { GraphQLContext, Optional } from '@/modules/shared/helpers/typeHelper'
@@ -62,7 +63,8 @@ import {
   authContextMiddleware,
   buildContext,
   determineClientIpAddressMiddleware,
-  mixpanelTrackerHelperMiddlewareFactory
+  mixpanelTrackerHelperMiddlewareFactory,
+  requestBodyParsingMiddlewareFactory
 } from '@/modules/shared/middleware'
 import { GraphQLError } from 'graphql'
 import { redactSensitiveVariables } from '@/logging/loggingHelper'
@@ -446,22 +448,17 @@ export async function init() {
   }
 
   app.use(corsMiddleware())
-  // there are some paths, that need the raw body
-  app.use((req, res, next) => {
-    const rawPaths = ['/api/v1/billing/webhooks', '/api/thirdparty/gendo/']
-    if (rawPaths.some((p) => req.path.startsWith(p))) {
-      express.raw({ type: 'application/json', limit: '100mb' })(req, res, next)
-    } else {
-      express.json({ limit: '100mb' })(req, res, next)
-    }
-  })
+
+  app.use(
+    requestBodyParsingMiddlewareFactory({
+      maximumRequestBodySizeMb: getMaximumRequestBodySizeMB()
+    })
+  ) // there are some paths that need the raw body, not a parsed body
   app.use(express.urlencoded({ limit: `${getFileSizeLimitMB()}mb`, extended: false }))
 
   // Trust X-Forwarded-* headers (for https protocol detection)
   app.enable('trust proxy')
 
-  // Log errors
-  app.use(errorLoggingMiddleware)
   app.use(createRateLimiterMiddleware()) // Rate limiting by IP address for all users
   app.use(authContextMiddleware)
   app.use(
@@ -514,6 +511,7 @@ export async function init() {
   })
 
   // At the very end adding default error handler middleware
+  app.use(errorMetricsMiddleware)
   app.use(defaultErrorHandler)
 
   return {

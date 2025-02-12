@@ -16,6 +16,26 @@ const resolveStatusCode = (e: Error): number => {
     if (infoStatus) return infoStatus
   }
 
+  // Errors thrown by express itself, such as `express.json()` middleware aren't instances of BaseError but may have a statusCode or status property
+  if (
+    typeof e === 'object' &&
+    'statusCode' in e &&
+    typeof e.statusCode === 'number' &&
+    e.statusCode >= 400 &&
+    e.statusCode < 600
+  ) {
+    return e.statusCode
+  }
+  if (
+    typeof e === 'object' &&
+    'status' in e &&
+    typeof e.status === 'number' &&
+    e.status >= 400 &&
+    e.status < 600
+  ) {
+    return e.status
+  }
+
   return 500
 }
 

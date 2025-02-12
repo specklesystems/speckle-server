@@ -5,7 +5,14 @@ import {
   AuthParams,
   authHasFailed
 } from '@/modules/shared/authz'
-import { Request, Response, NextFunction, Handler } from 'express'
+import {
+  Request,
+  Response,
+  NextFunction,
+  Handler,
+  raw as expressRawBodyParser,
+  json as expressJsonBodyParser
+} from 'express'
 import {
   ForbiddenError,
   NotFoundError,
@@ -269,3 +276,25 @@ export async function determineClientIpAddressMiddleware(
   }
   next()
 }
+
+//TODO ideally these should be identified alongside the route handlers
+const RAW_BODY_PATH_PREFIXES = ['/api/v1/billing/webhooks', '/api/thirdparty/gendo/']
+
+export const requestBodyParsingMiddlewareFactory =
+  (deps: { maximumRequestBodySizeMb: number }) =>
+  async (req: Request, res: Response, next: NextFunction) => {
+    const maxRequestBodySize = `${deps.maximumRequestBodySizeMb}mb`
+
+    if (RAW_BODY_PATH_PREFIXES.some((p) => req.path.startsWith(p))) {
+      expressRawBodyParser({ type: 'application/json', limit: maxRequestBodySize })(
+        req,
+        res,
+        next
+      )
+      return next()
+    }
+
+    //default
+    expressJsonBodyParser({ limit: maxRequestBodySize })(req, res, next)
+    return next()
+  }
