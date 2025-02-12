@@ -55,7 +55,10 @@
           </div>
 
           <!-- Global loading bar -->
-          <ViewerLoadingBar class="absolute -top-2 left-0 w-full z-40 h-30" />
+          <ViewerLoadingBar
+            class="absolute left-0 w-full z-40 h-30"
+            :class="isEmbedEnabled ? 'top-0' : ' -top-2'"
+          />
 
           <!-- Sidebar controls -->
           <Transition
