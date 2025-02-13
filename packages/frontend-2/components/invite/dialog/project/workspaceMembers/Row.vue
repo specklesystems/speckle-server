@@ -22,7 +22,7 @@
 <script setup lang="ts">
 import { graphql } from '~/lib/common/generated/gql/gql'
 import type { InviteDialogProjectWorkspaceMembersRow_WorkspaceCollaboratorFragment } from '~/lib/common/generated/gql/graphql'
-import { type StreamRoles, Roles } from '@speckle/shared'
+import { type StreamRoles, Roles, type MaybeNullOrUndefined } from '@speckle/shared'
 import { useInviteUserToProject } from '~~/lib/projects/composables/projectManagement'
 
 graphql(`
@@ -44,7 +44,7 @@ graphql(`
 const props = defineProps<{
   user: InviteDialogProjectWorkspaceMembersRow_WorkspaceCollaboratorFragment
   projectId: string
-  workspaceId: string
+  workspaceId: MaybeNullOrUndefined<string>
 }>()
 
 const createInvite = useInviteUserToProject()

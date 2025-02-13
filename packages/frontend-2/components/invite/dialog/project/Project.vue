@@ -5,7 +5,7 @@
       <InviteDialogProjectWorkspaceMembers :project="props.project" />
       <hr v-if="isAdmin" class="border-outline-3 mb-3 mt-5" />
     </template>
-    <template v-if="isInWorkspace && !isAdmin">
+    <template v-else-if="isInWorkspace && !isAdmin">
       <p class="text-body-xs text-foreground">
         All workspace members are already in this project.
       </p>

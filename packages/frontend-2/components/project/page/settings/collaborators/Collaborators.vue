@@ -105,7 +105,7 @@ const { collaboratorListItems, isOwner, isServerGuest } = useTeamInternals(
 
 const canEdit = computed(() => isOwner.value && !isServerGuest.value)
 const canInvite = computed(() =>
-  workspace?.value?.id ? projectRole.value === Roles.Stream.Owner : isOwner.value
+  workspace?.value?.id ? projectRole.value !== Roles.Stream.Reviewer : isOwner.value
 )
 
 const onCollaboratorRoleChange = async (
