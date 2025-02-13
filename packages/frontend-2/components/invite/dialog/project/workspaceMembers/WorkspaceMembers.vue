@@ -8,7 +8,6 @@
         v-for="member in invitableWorkspaceMembers"
         :key="member.user.id"
         :user="member"
-        :workspace="props.project.workspace"
         :project-id="props.project.id"
       />
     </ul>
