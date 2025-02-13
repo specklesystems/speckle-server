@@ -8,7 +8,6 @@ import express, { Express } from 'express'
 // `express-async-errors` patches express to catch errors in async handlers. no variable needed
 import 'express-async-errors'
 import compression from 'compression'
-import cookieParser from 'cookie-parser'
 
 import { createTerminus } from '@godaddy/terminus'
 import Metrics from '@/logging'
@@ -87,6 +86,9 @@ import {
   initiateRequestContextMiddleware
 } from '@/logging/requestContext'
 import { randomUUID } from 'crypto'
+import cookieParser from 'cookie-parser'
+import { handleMiddlewareErrors } from './modules/shared/middleware/middlewareWrapper'
+import { CookieParserError } from './modules/shared/errors/middleware'
 
 const GRAPHQL_PATH = '/graphql'
 
@@ -433,8 +435,20 @@ export async function init() {
   // Should perhaps be done manually?
   await migrateDbToLatest({ region: 'main', db: knex })
 
-  app.use(cookieParser())
-  app.use(DetermineRequestIdMiddleware)
+  app.use(
+    handleMiddlewareErrors({
+      wrappedRequestHandler: cookieParser(),
+      verbPhraseForLogMessage: 'parsing cookies',
+      expectedErrorType: CookieParserError
+    })
+  )
+  app.use(
+    handleMiddlewareErrors({
+      wrappedRequestHandler: DetermineRequestIdMiddleware,
+      verbPhraseForLogMessage: 'determining request id',
+      expectedErrorType: BadRequestError
+    })
+  )
   app.use(initiateRequestContextMiddleware)
   app.use(determineClientIpAddressMiddleware)
   app.use(LoggingExpressMiddleware)
