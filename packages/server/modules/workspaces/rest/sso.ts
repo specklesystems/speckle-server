@@ -99,7 +99,8 @@ import {
   getEncryptor,
   getSsoSessionState,
   getErrorMessage,
-  parseCodeVerifier
+  parseCodeVerifier,
+  getEmailFromOidcProfile
 } from '@/modules/workspaces/helpers/sso'
 import {
   OidcStateInvalidError,
@@ -642,7 +643,7 @@ const getOidcProviderUserDataFactory =
       WorkspaceSsoOidcCallbackRequestQuery
     >,
     provider: OidcProvider
-  ): Promise<UserinfoResponse<{ email: string }>> => {
+  ): Promise<UserinfoResponse<{ email: string } | { upn: string }>> => {
     if (!req.session.ssoNonce) throw new OidcStateInvalidError()
 
     const codeVerifier = await parseCodeVerifier(req)
@@ -658,7 +659,7 @@ const getOidcProviderUserDataFactory =
     if (!oidcProviderUserData) {
       throw new SsoProviderProfileMissingError()
     }
-    if (!oidcProviderUserData.email) {
+    if (!oidcProviderUserData.email && !oidcProviderUserData.upn) {
       req.log.error(
         { providedClaims: Object.keys(oidcProviderUserData) },
         'Missing required properties on OIDC provider.'
@@ -666,20 +667,21 @@ const getOidcProviderUserDataFactory =
       throw new SsoProviderProfileMissingPropertiesError(['email'])
     }
 
-    return oidcProviderUserData as UserinfoResponse<{ email: string }>
+    return oidcProviderUserData as UserinfoResponse<{ email: string } | { upn: string }>
   }
 
 const tryGetSpeckleUserDataFactory =
   ({ findEmail, getUser }: { findEmail: FindEmail; getUser: GetUser }) =>
   async (
     req: Request<WorkspaceSsoAuthRequestParams>,
-    oidcProviderUserData: UserinfoResponse<{ email: string }>
+    oidcProviderUserData: UserinfoResponse<{ email: string } | { upn: string }>
   ): Promise<UserWithOptionalRole | null> => {
     // Get currently signed-in user, if available
     const currentSessionUser = await getUser(req.context.userId ?? '')
 
     // Get user with email that matches OIDC provider user email, if match exists
-    const userEmail = await findEmail({ email: oidcProviderUserData.email })
+    const providerEmail = getEmailFromOidcProfile(oidcProviderUserData)
+    const userEmail = await findEmail({ email: providerEmail })
     if (!!userEmail && !userEmail.verified) throw new SsoUserEmailUnverifiedError()
     const existingSpeckleUser = await getUser(userEmail?.userId ?? '')
 

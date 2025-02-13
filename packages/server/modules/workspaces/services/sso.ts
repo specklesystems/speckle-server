@@ -34,6 +34,7 @@ import {
 import { WorkspaceInvalidRoleError } from '@/modules/workspaces/errors/workspace'
 import { LimitedWorkspace } from '@/modules/workspacesCore/domain/types'
 import { isValidSsoSession } from '@/modules/workspaces/domain/sso/logic'
+import { getEmailFromOidcProfile } from '@/modules/workspaces/helpers/sso'
 
 // this probably should go a lean validation endpoint too
 const validateOidcProviderAttributes = ({
@@ -129,7 +130,7 @@ export const createWorkspaceUserFromSsoProfileFactory =
     deleteInvite: DeleteInvite
   }) =>
   async (args: {
-    ssoProfile: UserinfoResponse<{ email: string }>
+    ssoProfile: UserinfoResponse<{ email: string } | { upn: string }>
     workspaceId: string
   }): Promise<Pick<UserWithOptionalRole, 'id' | 'email'>> => {
     // Check if user has email-based invite to given workspace
@@ -146,7 +147,8 @@ export const createWorkspaceUserFromSsoProfileFactory =
     }
 
     // Create Speckle user
-    const { name, email } = args.ssoProfile
+    const { name } = args.ssoProfile
+    const email = getEmailFromOidcProfile(args.ssoProfile)
 
     if (!name) {
       throw new SsoProviderProfileInvalidError('SSO provider user requires a name')
@@ -193,7 +195,7 @@ export const linkUserWithSsoProviderFactory =
   }) =>
   async (args: {
     userId: string
-    ssoProfile: UserinfoResponse<{ email: string }>
+    ssoProfile: UserinfoResponse<{ email: string } | { upn: string }>
   }): Promise<void> => {
     // TODO: Chuck's soapbox -
     //
@@ -211,7 +213,7 @@ export const linkUserWithSsoProviderFactory =
       await createUserEmail({
         userEmail: {
           userId: args.userId,
-          email: args.ssoProfile.email,
+          email: getEmailFromOidcProfile(args.ssoProfile),
           verified: true
         }
       })
