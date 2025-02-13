@@ -7,6 +7,27 @@ import { get, isNumber } from 'lodash'
 import { VError } from 'verror'
 import { logger as defaultLogger } from '@/logging/logging'
 
+const isErrorWithRelevantStatusCode = (e: unknown): e is { statusCode: number } => {
+  return (
+    !!e &&
+    typeof e === 'object' &&
+    'statusCode' in e &&
+    typeof e.statusCode === 'number' &&
+    e.statusCode >= 400 &&
+    e.statusCode < 600
+  )
+}
+const isErrorWithRelevantStatus = (e: unknown): e is { status: number } => {
+  return (
+    !!e &&
+    typeof e === 'object' &&
+    'status' in e &&
+    typeof e.status === 'number' &&
+    e.status >= 400 &&
+    e.status < 600
+  )
+}
+
 const resolveStatusCode = (e: Error): number => {
   if (e instanceof BaseError) {
     const infoStatus =
@@ -18,22 +39,10 @@ const resolveStatusCode = (e: Error): number => {
   }
 
   // Errors thrown by express itself, such as `express.json()` middleware aren't instances of BaseError but may have a statusCode or status property
-  if (
-    typeof e === 'object' &&
-    'statusCode' in e &&
-    typeof e.statusCode === 'number' &&
-    e.statusCode >= 400 &&
-    e.statusCode < 600
-  ) {
+  if (isErrorWithRelevantStatusCode(e)) {
     return e.statusCode
   }
-  if (
-    typeof e === 'object' &&
-    'status' in e &&
-    typeof e.status === 'number' &&
-    e.status >= 400 &&
-    e.status < 600
-  ) {
+  if (isErrorWithRelevantStatus(e)) {
     return e.status
   }
 
@@ -79,20 +88,8 @@ export const defaultErrorHandler: ErrorRequestHandler = (err, req, res, next) =>
   // Log unexpected types of errors which are not instances of BaseError or have a valid 'code' or 'statusCode' property
   if (
     !(err instanceof BaseError) &&
-    !(
-      typeof err === 'object' &&
-      'statusCode' in err &&
-      typeof err.statusCode === 'number' &&
-      err.statusCode >= 400 &&
-      err.statusCode < 600
-    ) &&
-    !(
-      typeof err === 'object' &&
-      'status' in err &&
-      typeof err.status === 'number' &&
-      err.status >= 400 &&
-      err.status < 600
-    )
+    !isErrorWithRelevantStatusCode(err) &&
+    !isErrorWithRelevantStatus(err)
   ) {
     logger.warn(
       { err },
