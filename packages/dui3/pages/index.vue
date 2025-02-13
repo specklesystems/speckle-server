@@ -2,7 +2,7 @@
   <div>
     <div v-if="store.hostAppName">
       <!-- IMPORTANT CHECK!! otherwise host app communication corrputed for many different reasons -->
-      <div v-if="accounts.length == 0">
+      <div v-if="accounts.length != 0">
         <div
           v-if="hasNoModelCards"
           class="fixed h-screen w-screen flex items-center justify-center pr-2 pointer-events-none"
