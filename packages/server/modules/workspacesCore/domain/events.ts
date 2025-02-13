@@ -6,6 +6,7 @@ export const workspaceEventNamespace = 'workspace' as const
 const eventPrefix = `${workspaceEventNamespace}.` as const
 
 export const WorkspaceEvents = {
+  Metrics: `${eventPrefix}metrics`,
   Authorized: `${eventPrefix}authorized`,
   Created: `${eventPrefix}created`,
   Updated: `${eventPrefix}updated`,
@@ -38,6 +39,7 @@ type WorkspaceJoinedFromDiscoveryPayload = {
 }
 
 export type WorkspaceEventsPayloads = {
+  [WorkspaceEvents.Metrics]: { workspace: Workspace }
   [WorkspaceEvents.Authorized]: WorkspaceAuthorizedPayload
   [WorkspaceEvents.Created]: WorkspaceCreatedPayload
   [WorkspaceEvents.Updated]: WorkspaceUpdatedPayload

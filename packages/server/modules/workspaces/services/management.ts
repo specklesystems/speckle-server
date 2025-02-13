@@ -57,7 +57,7 @@ import {
   FindVerifiedEmailsByUserId
 } from '@/modules/core/domain/userEmails/operations'
 import { DeleteAllResourceInvites } from '@/modules/serverinvites/domain/operations'
-import { WorkspaceInviteResourceType } from '@/modules/workspaces/domain/constants'
+import { WorkspaceInviteResourceType } from '@/modules/workspacesCore/domain/constants'
 import { ProjectInviteResourceType } from '@/modules/serverinvites/domain/constants'
 import { chunk, isEmpty, omit } from 'lodash'
 import { userEmailsCompliantWithWorkspaceDomains } from '@/modules/workspaces/domain/logic'

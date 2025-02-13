@@ -1,9 +1,5 @@
 import { db } from '@/db/knex'
-import {
-  Resolvers,
-  WorkspacePlans,
-  WorkspacePlanStatuses
-} from '@/modules/core/graph/generated/graphql'
+import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
 import {
   getProjectCollaboratorsFactory,
@@ -47,7 +43,7 @@ import { getInvitationTargetUsersFactory } from '@/modules/serverinvites/service
 import { authorizeResolver } from '@/modules/shared'
 import { getFeatureFlags, getServerOrigin } from '@/modules/shared/helpers/envHelper'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import { WorkspaceInviteResourceType } from '@/modules/workspaces/domain/constants'
+import { WorkspaceInviteResourceType } from '@/modules/workspacesCore/domain/constants'
 import {
   WorkspaceInvalidRoleError,
   WorkspaceJoinNotAllowedError,
@@ -194,13 +190,10 @@ import { getGenericRedis } from '@/modules/shared/redis/redis'
 import { convertFunctionToGraphQLReturn } from '@/modules/automate/services/functionManagement'
 import {
   getWorkspacePlanFactory,
-  upsertPaidWorkspacePlanFactory,
-  upsertTrialWorkspacePlanFactory,
-  upsertUnpaidWorkspacePlanFactory
+  upsertWorkspacePlanFactory
 } from '@/modules/gatekeeper/repositories/billing'
 import { Knex } from 'knex'
 import { getPaginatedItemsFactory } from '@/modules/shared/services/paginatedItems'
-import { InvalidWorkspacePlanStatus } from '@/modules/gatekeeper/errors/billing'
 import { BadRequestError } from '@/modules/shared/errors'
 import {
   dismissWorkspaceJoinRequestFactory,
@@ -212,6 +205,7 @@ import {
 } from '@/modules/workspaces/repositories/workspaceJoinRequests'
 import { sendWorkspaceJoinRequestReceivedEmailFactory } from '@/modules/workspaces/services/workspaceJoinRequestEmails/received'
 import { getProjectFactory } from '@/modules/core/repositories/projects'
+import { updateWorkspacePlanFactory } from '@/modules/gatekeeper/services/workspacePlans'
 
 const eventBus = getEventBus()
 const getServerInfo = getServerInfoFactory({ db })
@@ -439,73 +433,13 @@ export = FF_WORKSPACES_MODULE_ENABLED
       AdminMutations: {
         updateWorkspacePlan: async (_parent, { input }) => {
           const { workspaceId, plan: name, status } = input
-          const workspace = await getWorkspaceFactory({ db })({
-            workspaceId
-          })
-          const createdAt = new Date()
-          if (!workspace) throw new WorkspaceNotFoundError()
-          switch (name) {
-            case WorkspacePlans.Starter:
-              switch (status) {
-                case WorkspacePlanStatuses.Trial:
-                case WorkspacePlanStatuses.Expired:
-                  await upsertTrialWorkspacePlanFactory({ db })({
-                    workspacePlan: { workspaceId, status, name, createdAt }
-                  })
-                  return true
-                case WorkspacePlanStatuses.Valid:
-                case WorkspacePlanStatuses.CancelationScheduled:
-                case WorkspacePlanStatuses.Canceled:
-                case WorkspacePlanStatuses.PaymentFailed:
-                  await upsertPaidWorkspacePlanFactory({ db })({
-                    workspacePlan: { workspaceId, status, name, createdAt }
-                  })
-                  return true
-                default:
-                  throwUncoveredError(status)
-              }
-            case WorkspacePlans.Business:
-            case WorkspacePlans.Plus:
-              switch (status) {
-                case WorkspacePlanStatuses.Trial:
-                case WorkspacePlanStatuses.Expired:
-                  throw new InvalidWorkspacePlanStatus()
-                case WorkspacePlanStatuses.Valid:
-                case WorkspacePlanStatuses.CancelationScheduled:
-                case WorkspacePlanStatuses.Canceled:
-                case WorkspacePlanStatuses.PaymentFailed:
-                  await upsertPaidWorkspacePlanFactory({ db })({
-                    workspacePlan: { workspaceId, status, name, createdAt }
-                  })
-                  return true
-                default:
-                  throwUncoveredError(status)
-              }
 
-            case WorkspacePlans.Academia:
-            case WorkspacePlans.Unlimited:
-            case WorkspacePlans.StarterInvoiced:
-            case WorkspacePlans.PlusInvoiced:
-            case WorkspacePlans.BusinessInvoiced:
-              switch (status) {
-                case WorkspacePlanStatuses.Valid:
-                  await upsertUnpaidWorkspacePlanFactory({ db })({
-                    workspacePlan: { workspaceId, status, name, createdAt }
-                  })
-
-                  return true
-                case WorkspacePlanStatuses.CancelationScheduled:
-                case WorkspacePlanStatuses.Canceled:
-                case WorkspacePlanStatuses.Expired:
-                case WorkspacePlanStatuses.PaymentFailed:
-                case WorkspacePlanStatuses.Trial:
-                  throw new InvalidWorkspacePlanStatus()
-                default:
-                  throwUncoveredError(status)
-              }
-            default:
-              throwUncoveredError(name)
-          }
+          await updateWorkspacePlanFactory({
+            getWorkspace: getWorkspaceFactory({ db }),
+            upsertWorkspacePlan: upsertWorkspacePlanFactory({ db }),
+            emitEvent: getEventBus().emit
+          })({ workspaceId, name, status })
+          return true
         }
       },
       WorkspaceMutations: {
