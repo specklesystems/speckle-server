@@ -69,6 +69,7 @@ import { BlobStorage } from '@/modules/blobstorage/repositories'
 import { BlobStorageItem } from '@/modules/blobstorage/domain/types'
 import { GetObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3'
 import { FileUploadRecord } from '@/modules/fileuploads/helpers/types'
+import { getObjectKey } from '@/modules/blobstorage/helpers/blobs'
 
 const tables = {
   workspaces: (db: Knex) => db<Workspace>(Workspaces.name),
@@ -618,7 +619,7 @@ export const copyProjectBlobs =
         copiedBlobsCountByProjectId[blob.streamId]++
 
         // Copy file blob from one regional storage to the other
-        const objectKey = `assets/${blob.streamId}/${blob.id}`
+        const objectKey = getObjectKey(blob.streamId, blob.id)
         const sourceBlob = await deps.sourceObjectStorage.client.send(
           new GetObjectCommand({
             Bucket: deps.sourceObjectStorage.bucket,

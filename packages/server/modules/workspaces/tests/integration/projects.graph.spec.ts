@@ -10,6 +10,7 @@ import {
   AutomationTriggerDefinitionRecord
 } from '@/modules/automate/helpers/types'
 import { ObjectStorage } from '@/modules/blobstorage/clients/objectStorage'
+import { getObjectKey } from '@/modules/blobstorage/helpers/blobs'
 import { BlobStorageRecord } from '@/modules/blobstorage/helpers/types'
 import { BlobStorage } from '@/modules/blobstorage/repositories'
 import { CommentRecord } from '@/modules/comments/helpers/types'
@@ -729,7 +730,7 @@ isMultiRegionTestMode()
         const blob = await targetRegionObjectStorage.client.send(
           new HeadObjectCommand({
             Bucket: targetRegionObjectStorage.bucket,
-            Key: `assets/${testProject.id}/${testBlobId}`
+            Key: getObjectKey(testProject.id, testBlobId)
           })
         )
         expect(blob).to.not.be.undefined
