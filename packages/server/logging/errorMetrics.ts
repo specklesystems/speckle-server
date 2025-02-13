@@ -12,10 +12,6 @@ export const errorMetricsMiddleware: express.ErrorRequestHandler = (
   res,
   next
 ) => {
-  if (!err) {
-    return next(err)
-  }
-
   if (metricErrorCount === null) {
     metricErrorCount = new prometheusClient.Counter({
       name: 'speckle_server_request_errors',
