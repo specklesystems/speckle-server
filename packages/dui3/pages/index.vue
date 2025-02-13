@@ -139,12 +139,16 @@
             </h1>
 
             <div class="text-foreground-2 mt-2 mb-4">
-              You don't have a Speckle account just yet. Please open Speckle Manager and
-              sign in!
+              You don't have a Speckle account just yet.
             </div>
-            <FormButton text link small @click="accountStore.refreshAccounts()">
-              Refresh accounts
-            </FormButton>
+            <div class="flex flex-wrap justify-center space-x-4 max-width">
+              <FormButton text link @click="$openUrl(`speckle://accounts`)">
+                Add account via Manager
+              </FormButton>
+              <FormButton text link @click="accountStore.refreshAccounts()">
+                Refresh accounts
+              </FormButton>
+            </div>
             <CommonLoadingBar :loading="isLoading" />
             <!-- 
           TODO: Either
