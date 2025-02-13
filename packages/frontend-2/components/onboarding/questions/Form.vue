@@ -7,6 +7,19 @@
       <FormButton size="lg" :disabled="!meta.valid || isSubmitting" submit full-width>
         Continue
       </FormButton>
+      <div class="opacity-70 hover:opacity-100 max-w-max mx-auto px-1">
+        <FormButton
+          v-if="!isOnboardingForced"
+          size="sm"
+          text
+          link
+          color="subtle"
+          full-width
+          @click="setUserOnboardingComplete"
+        >
+          Skip
+        </FormButton>
+      </div>
     </div>
   </form>
 </template>
@@ -20,6 +33,8 @@ import type {
 } from '~/lib/auth/helpers/onboarding'
 import { useProcessOnboarding } from '~~/lib/auth/composables/onboarding'
 import { homeRoute } from '~/lib/common/helpers/route'
+
+const isOnboardingForced = useIsOnboardingForced()
 
 const { setUserOnboardingComplete, setMixpanelSegments } = useProcessOnboarding()
 

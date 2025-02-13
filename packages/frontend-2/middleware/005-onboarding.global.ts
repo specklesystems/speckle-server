@@ -7,6 +7,8 @@ import { homeRoute, onboardingRoute } from '~~/lib/common/helpers/route'
  * Redirect user to /onboarding, if they haven't done it yet
  */
 export default defineNuxtRouteMiddleware(async (to) => {
+  const isOnboardingForced = useIsOnboardingForced()
+
   const client = useApolloClientFromNuxt()
   const { data } = await client
     .query({
@@ -16,6 +18,9 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
   // Ignore if not logged in
   if (!data?.activeUser?.id) return
+
+  // Ignore if force onboarding ff is false
+  if (!isOnboardingForced.value) return
 
   // Ignore if user has not verified their email yet
   if (!data?.activeUser?.verified) return
