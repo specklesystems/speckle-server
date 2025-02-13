@@ -4,19 +4,20 @@ import { BaseError, LogicError } from '@/modules/shared/errors'
 
 /**
  * @description Wraps an _external_ middleware function to ensure that any errors (passed to error handling middleware or thrown) will extend from BaseError. And ensures that thrown errors always result in a call to `next(err)`.
- * @param deps.verbPhraseForLogMessage - A phrase that describes the action being performed by the middleware
+ * @param deps.verbPhraseForErrorMessage - A phrase that describes the action being performed by the middleware
+ * @param deps.expectedErrorType - The error type that the middleware is expected to throw. Defaults to LogicError, which is appropriate for middleware we control as we should be handling errors within it. For external middleware, you may want to use a different error type.
  */
 export const handleMiddlewareErrors = <ExpectedErrorType extends BaseError>(deps: {
   wrappedRequestHandler: RequestHandler
-  verbPhraseForLogMessage: string
-  expectedErrorType: {
+  verbPhraseForErrorMessage: string
+  expectedErrorType?: {
     new (message: string, info: { cause: Error }): ExpectedErrorType
   }
 }): RequestHandler => {
   const {
     wrappedRequestHandler,
-    verbPhraseForLogMessage: verbForLogging,
-    expectedErrorType
+    verbPhraseForErrorMessage: verbPhraseForLogMessage,
+    expectedErrorType = LogicError
   } = deps
 
   return (req, res, next) => {
@@ -35,8 +36,11 @@ export const handleMiddlewareErrors = <ExpectedErrorType extends BaseError>(deps
       }
 
       next(
-        new expectedErrorType(`Error while ${verbForLogging}`, {
-          cause: ensureError(err, `Unknown error handled while ${verbForLogging}`)
+        new expectedErrorType(`Error while ${verbPhraseForLogMessage}`, {
+          cause: ensureError(
+            err,
+            `Unknown error handled while ${verbPhraseForLogMessage}`
+          )
         })
       )
     }
@@ -48,9 +52,12 @@ export const handleMiddlewareErrors = <ExpectedErrorType extends BaseError>(deps
 
       next(
         new LogicError(
-          `Unexpected error while ${verbForLogging}. The middleware should not have thrown.`,
+          `Unexpected error while ${verbPhraseForLogMessage}. The middleware should not have thrown.`,
           {
-            cause: ensureError(err, `Unknown error thrown while ${verbForLogging}`)
+            cause: ensureError(
+              err,
+              `Unknown error thrown while ${verbPhraseForLogMessage}`
+            )
           }
         )
       )

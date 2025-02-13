@@ -317,22 +317,26 @@ export const createRateLimiterMiddleware = (
     next: express.NextFunction
   ) => {
     if (!isRateLimiterEnabled()) return next()
-    const path = getRequestPath(req) || ''
-    const action = getActionForPath(path, req.method)
-    const source = getSourceFromRequest(req)
+    try {
+      const path = getRequestPath(req) || ''
+      const action = getActionForPath(path, req.method)
+      const source = getSourceFromRequest(req)
 
-    const rateLimitResult = await getRateLimitResult(action, source, rateLimiterMapping)
-    if (isRateLimitBreached(rateLimitResult)) {
-      return sendRateLimitResponse(res, rateLimitResult)
-    } else {
-      try {
+      const rateLimitResult = await getRateLimitResult(
+        action,
+        source,
+        rateLimiterMapping
+      )
+      if (isRateLimitBreached(rateLimitResult)) {
+        return sendRateLimitResponse(res, rateLimitResult)
+      } else {
         if (!res.headersSent)
           res.setHeader('X-RateLimit-Remaining', rateLimitResult.remainingPoints)
         return next()
-      } catch (err) {
-        if (!(err instanceof RateLimitError)) throw err
-        return sendRateLimitResponse(res, err.rateLimitBreached)
       }
+    } catch (err) {
+      if (!(err instanceof RateLimitError)) throw err
+      return sendRateLimitResponse(res, err.rateLimitBreached)
     }
   }
 }

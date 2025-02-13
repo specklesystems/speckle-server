@@ -50,7 +50,8 @@ import {
   getBindAddress,
   shutdownTimeoutSeconds,
   asyncRequestContextEnabled,
-  getMaximumRequestBodySizeMB
+  getMaximumRequestBodySizeMB,
+  isCompressionEnabled
 } from '@/modules/shared/helpers/envHelper'
 import * as ModulesSetup from '@/modules'
 import { GraphQLContext, Optional } from '@/modules/shared/helpers/typeHelper'
@@ -88,7 +89,13 @@ import {
 import { randomUUID } from 'crypto'
 import cookieParser from 'cookie-parser'
 import { handleMiddlewareErrors } from './modules/shared/middleware/middlewareWrapper'
-import { CookieParserError } from './modules/shared/errors/middleware'
+import {
+  CompressionError,
+  CookieParserError,
+  CorsMiddlewareError,
+  HttpLoggerError
+} from './modules/shared/errors/middleware'
+import { UserInputError } from './modules/core/errors/userinput'
 
 const GRAPHQL_PATH = '/graphql'
 
@@ -438,55 +445,115 @@ export async function init() {
   app.use(
     handleMiddlewareErrors({
       wrappedRequestHandler: cookieParser(),
-      verbPhraseForLogMessage: 'parsing cookies',
+      verbPhraseForErrorMessage: 'parsing cookies',
       expectedErrorType: CookieParserError
     })
   )
   app.use(
     handleMiddlewareErrors({
       wrappedRequestHandler: DetermineRequestIdMiddleware,
-      verbPhraseForLogMessage: 'determining request id',
-      expectedErrorType: BadRequestError
+      verbPhraseForErrorMessage: 'determining request id'
     })
   )
-  app.use(initiateRequestContextMiddleware)
-  app.use(determineClientIpAddressMiddleware)
-  app.use(LoggingExpressMiddleware)
-
+  app.use(
+    handleMiddlewareErrors({
+      wrappedRequestHandler: initiateRequestContextMiddleware,
+      verbPhraseForErrorMessage: 'initiating request context'
+    })
+  )
   if (asyncRequestContextEnabled()) {
     startupLogger.info('Async request context tracking enabled 👀')
   }
 
-  if (process.env.COMPRESSION) {
-    app.use(compression())
+  app.use(
+    handleMiddlewareErrors({
+      wrappedRequestHandler: determineClientIpAddressMiddleware,
+      verbPhraseForErrorMessage: 'determining client IP address'
+    })
+  )
+  app.use(
+    handleMiddlewareErrors({
+      wrappedRequestHandler: LoggingExpressMiddleware,
+      verbPhraseForErrorMessage: 'logging http request',
+      expectedErrorType: HttpLoggerError
+    })
+  )
+
+  if (isCompressionEnabled()) {
+    app.use(
+      handleMiddlewareErrors({
+        wrappedRequestHandler: compression(),
+        verbPhraseForErrorMessage: 'compressing response',
+        expectedErrorType: CompressionError
+      })
+    )
   }
 
-  app.use(corsMiddleware())
+  app.use(
+    handleMiddlewareErrors({
+      wrappedRequestHandler: corsMiddleware(),
+      verbPhraseForErrorMessage: 'applying CORS',
+      expectedErrorType: CorsMiddlewareError
+    })
+  )
 
   app.use(
-    requestBodyParsingMiddlewareFactory({
-      maximumRequestBodySizeMb: getMaximumRequestBodySizeMB()
+    handleMiddlewareErrors({
+      // there are some paths that need the raw body, not a parsed body
+      wrappedRequestHandler: requestBodyParsingMiddlewareFactory({
+        maximumRequestBodySizeMb: getMaximumRequestBodySizeMB()
+      }),
+      verbPhraseForErrorMessage: 'parsing request body',
+      expectedErrorType: UserInputError
     })
-  ) // there are some paths that need the raw body, not a parsed body
-  app.use(express.urlencoded({ limit: `${getFileSizeLimitMB()}mb`, extended: false }))
+  )
+
+  app.use(
+    handleMiddlewareErrors({
+      wrappedRequestHandler: express.urlencoded({
+        limit: `${getFileSizeLimitMB()}mb`,
+        extended: false
+      }),
+      verbPhraseForErrorMessage: 'parsing urlencoded body',
+      expectedErrorType: UserInputError
+    })
+  )
 
   // Trust X-Forwarded-* headers (for https protocol detection)
   app.enable('trust proxy')
 
-  app.use(createRateLimiterMiddleware()) // Rate limiting by IP address for all users
-  app.use(authContextMiddleware)
+  app.use(
+    handleMiddlewareErrors({
+      wrappedRequestHandler: createRateLimiterMiddleware(), // Rate limiting by IP address for all users
+      verbPhraseForErrorMessage: 'rate limiting'
+    })
+  )
+  app.use(
+    handleMiddlewareErrors({
+      wrappedRequestHandler: authContextMiddleware,
+      verbPhraseForErrorMessage: 'authenticating user'
+    })
+  )
   app.use(
     async (
       _req: express.Request,
       res: express.Response,
       next: express.NextFunction
     ) => {
-      res.setHeader('Content-Security-Policy', "frame-ancestors 'none'")
+      if (!res.headersSent)
+        res.setHeader('Content-Security-Policy', "frame-ancestors 'none'")
       next()
     }
   )
   if (enableMixpanel())
-    app.use(mixpanelTrackerHelperMiddlewareFactory({ getUser: getUserFactory({ db }) }))
+    app.use(
+      handleMiddlewareErrors({
+        wrappedRequestHandler: mixpanelTrackerHelperMiddlewareFactory({
+          getUser: getUserFactory({ db })
+        }),
+        verbPhraseForErrorMessage: 'gathering user metrics'
+      })
+    )
 
   // Initialize default modules, including rest api handlers
   await ModulesSetup.init(app)
@@ -513,16 +580,6 @@ export async function init() {
       context: buildContext
     })
   )
-
-  // Expose prometheus metrics
-  app.get('/metrics', async (req, res) => {
-    try {
-      res.set('Content-Type', prometheusClient.register.contentType)
-      res.end(await prometheusClient.register.metrics())
-    } catch (ex: unknown) {
-      res.status(500).end(ex instanceof Error ? ex.message : `${ex}`)
-    }
-  })
 
   // At the very end adding default error handler middleware
   app.use(errorMetricsMiddleware)

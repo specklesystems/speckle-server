@@ -8,6 +8,8 @@ import { highFrequencyMetricsCollectionPeriodMs } from '@/modules/shared/helpers
 import { startupLogger as logger } from '@/logging/logging'
 import type express from 'express'
 import { getAllRegisteredDbClients } from '@/modules/multiregion/utils/dbSelector'
+import { handleMiddlewareErrors } from '@/modules/shared/middleware/middlewareWrapper'
+import { PrometheusExpressMetricsError } from '@/modules/shared/errors/middleware'
 
 let prometheusInitialized = false
 
@@ -34,14 +36,29 @@ export default async function (app: express.Express) {
       getAllDbClients: getAllRegisteredDbClients,
       logger
     })
-    const expressMetricsMiddleware = promBundle({
-      includeMethod: true,
-      includePath: true,
-      httpDurationMetricName: 'speckle_server_request_duration',
-      metricType: 'summary',
-      autoregister: false
-    })
 
-    app.use(expressMetricsMiddleware)
+    app.use(
+      handleMiddlewareErrors({
+        wrappedRequestHandler: promBundle({
+          includeMethod: true,
+          includePath: true,
+          httpDurationMetricName: 'speckle_server_request_duration',
+          metricType: 'summary',
+          autoregister: false
+        }),
+        verbPhraseForErrorMessage: 'gathering Express metrics',
+        expectedErrorType: PrometheusExpressMetricsError
+      })
+    )
+
+    // Expose prometheus metrics at the `/metrics` endpoint
+    app.get('/metrics', async (req, res) => {
+      try {
+        res.setHeader('Content-Type', prometheusClient.register.contentType)
+        res.end(await prometheusClient.register.metrics())
+      } catch (ex: unknown) {
+        res.status(500).end(ex instanceof Error ? ex.message : `${ex}`)
+      }
+    })
   }
 }
