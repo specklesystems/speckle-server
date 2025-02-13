@@ -20,9 +20,14 @@
         class="rounded-lg mb-2"
         @select="selectAccount(acc as DUIAccount)"
       />
-      <FormButton text size="xs" @click="accountStore.refreshAccounts()">
-        Refresh accounts
-      </FormButton>
+      <div class="flex flex-wrap justify-center space-x-4 max-width">
+        <FormButton text size="xs" @click="$openUrl(`speckle://accounts`)">
+          Add account via Manager
+        </FormButton>
+        <FormButton text size="xs" @click="accountStore.refreshAccounts()">
+          Refresh accounts
+        </FormButton>
+      </div>
     </LayoutDialog>
   </div>
 </template>
@@ -35,6 +40,7 @@ import { useMixpanel } from '~/lib/core/composables/mixpanel'
 
 const { trackEvent } = useMixpanel()
 const app = useNuxtApp()
+const { $openUrl } = useNuxtApp()
 
 const props = defineProps<{
   currentSelectedAccountId?: string

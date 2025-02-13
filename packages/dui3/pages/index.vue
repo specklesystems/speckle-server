@@ -2,15 +2,12 @@
   <div>
     <div v-if="store.hostAppName">
       <!-- IMPORTANT CHECK!! otherwise host app communication corrputed for many different reasons -->
-      <div v-if="accounts.length !== 0">
+      <div v-if="accounts.length != 0">
         <div
           v-if="hasNoModelCards"
-          class="fixed top-0 h-screen w-screen flex items-center pointer-events-none"
+          class="fixed h-screen w-screen flex items-center justify-center pr-2 pointer-events-none"
         >
-          <LayoutPanel
-            fancy-glow
-            class="mr-4 ml-2 scale-95 hover:scale-100 transition pointer-events-auto"
-          >
+          <LayoutPanel fancy-glow class="transition pointer-events-auto w-[90%]">
             <h1
               class="h4 font-bold w-full bg-gradient-to-r from-blue-500 via-blue-400 to-blue-600 inline-block py-1 text-transparent bg-clip-text"
             >
@@ -83,7 +80,10 @@
             </div>
           </LayoutPanel>
         </div>
-        <div v-if="accounts.length !== 0" class="space-y-2 mt-2 max-w-2/3 mb-16">
+        <div
+          v-if="accounts.length !== 0 && !hasNoModelCards"
+          class="space-y-2 mt-2 max-w-2/3 mb-16"
+        >
           <div v-for="project in store.projectModelGroups" :key="project.projectId">
             <CommonProjectModelGroup :project="project" />
           </div>
@@ -124,27 +124,41 @@
           @close="store.showErrorDialog = false"
         />
       </div>
+      <!-- No accounts present: display a signin button. This currently launches manager. -->
+      <!-- NOTE: The flow is horrible, we should migrate as many connectors as possible to their own account adding logic -->
       <div v-else>
         <div
-          class="fixed top-0 h-screen w-screen flex items-center pointer-events-none"
+          class="fixed h-screen w-screen flex items-center justify-center pr-2 pointer-events-none"
         >
-          <LayoutPanel
-            fancy-glow
-            class="mr-4 ml-2 scale-95 hover:scale-100 transition pointer-events-auto w-full"
-          >
+          <LayoutPanel fancy-glow class="transition pointer-events-auto w-[90%]">
             <h1
               class="h4 font-bold bg-gradient-to-r from-blue-500 via-blue-400 to-blue-600 inline-block py-1 text-transparent bg-clip-text"
             >
-              Hello!
+              Welcome to Speckle!
             </h1>
 
             <div class="text-foreground-2 mt-2 mb-4">
-              You don't have a Speckle account just yet. Please open Speckle Manager and
-              sign in!
+              Click the button below to sign into Speckle. This will allow you to
+              publish or load data.
             </div>
-            <FormButton text link small @click="accountStore.refreshAccounts()">
-              Refresh accounts
-            </FormButton>
+            <div class="text-foreground-2 text-sm mt-2 mb-4"></div>
+            <div class="flex flex-wrap justify-center space-y-2 max-width">
+              <FormButton full-width @click="$openUrl(`speckle://accounts`)">
+                Sign In
+              </FormButton>
+              <div>
+                <div class="text-xs">Already done?</div>
+                <FormButton
+                  size="sm"
+                  full-width
+                  text
+                  link
+                  @click="accountStore.refreshAccounts()"
+                >
+                  Click to refresh
+                </FormButton>
+              </div>
+            </div>
             <CommonLoadingBar :loading="isLoading" />
             <!-- 
           TODO: Either
@@ -158,11 +172,8 @@
       </div>
     </div>
     <div v-else>
-      <div class="fixed top-0 h-screen w-screen flex items-center pointer-events-none">
-        <LayoutPanel
-          fancy-glow
-          class="mr-4 ml-2 scale-95 hover:scale-100 transition pointer-events-auto w-full"
-        >
+      <div class="fixed h-screen w-screen flex items-center pointer-events-none">
+        <LayoutPanel fancy-glow class="transition pointer-events-auto w-full">
           <h1
             class="h4 font-bold bg-gradient-to-r from-blue-500 via-blue-400 to-blue-600 inline-block py-1 text-transparent bg-clip-text"
           >
