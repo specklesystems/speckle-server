@@ -13,6 +13,7 @@ import {
   Comments,
   CommentViews,
   Commits,
+  FileUploads,
   Objects,
   StreamCommits,
   StreamFavorites,
@@ -67,6 +68,7 @@ import { ObjectStorage } from '@/modules/blobstorage/clients/objectStorage'
 import { BlobStorage } from '@/modules/blobstorage/repositories'
 import { BlobStorageItem } from '@/modules/blobstorage/domain/types'
 import { GetObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3'
+import { FileUploadRecord } from '@/modules/fileuploads/helpers/types'
 
 const tables = {
   workspaces: (db: Knex) => db<Workspace>(Workspaces.name),
@@ -97,6 +99,7 @@ const tables = {
   commentLinks: (db: Knex) => db.table<CommentLinkRecord>(CommentLinks.name),
   webhooks: (db: Knex) => db.table<Webhook>('webhooks_config'),
   webhookEvents: (db: Knex) => db.table<WebhookEvent>('webhooks_events'),
+  fileUploads: (db: Knex) => db.table<FileUploadRecord>(FileUploads.name),
   blobStorage: (db: Knex) => db.table<BlobStorageItem>(BlobStorage.name)
 }
 
@@ -586,8 +589,9 @@ export const copyProjectWebhooksFactory =
 
 /**
  * Copies rows from the following tables:
+ * - file_uploads
  * - blob_storage
- * Also copy file blobs from one region to the other.
+ * Also copies blobs in storage from one region to the other.
  */
 export const copyProjectBlobs =
   (deps: {
@@ -630,6 +634,17 @@ export const copyProjectBlobs =
           })
         )
       }
+    }
+
+    // Copy `file_uploads` table rows in batches
+    const selectFileUploads = tables
+      .fileUploads(deps.sourceDb)
+      .select('*')
+      .whereIn(FileUploads.col.streamId, projectIds)
+
+    for await (const fileUploads of executeBatchedSelect(selectFileUploads)) {
+      // Write `file_uploads` rows to target db
+      await tables.fileUploads(deps.targetDb).insert(fileUploads).onConflict().ignore()
     }
 
     return copiedBlobsCountByProjectId
