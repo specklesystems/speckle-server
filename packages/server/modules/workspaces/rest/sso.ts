@@ -660,7 +660,7 @@ const getOidcProviderUserDataFactory =
     }
     if (!oidcProviderUserData.email) {
       req.log.error(
-        { oidcProviderUserData },
+        { providedClaims: Object.keys(oidcProviderUserData) },
         'Missing required properties on OIDC provider.'
       )
       throw new SsoProviderProfileMissingPropertiesError(['email'])
