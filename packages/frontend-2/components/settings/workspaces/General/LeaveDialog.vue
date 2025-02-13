@@ -7,7 +7,7 @@
   >
     <p class="text-body-xs text-foreground mb-2">
       Are you sure you want to leave
-      <span class="font-medium">{{ workspace.name }}</span>
+      <span class="font-medium">{{ workspace?.name }}</span>
       ?
     </p>
   </LayoutDialog>
@@ -33,6 +33,7 @@ import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { isUndefined } from 'lodash-es'
 import { useMixpanel } from '~/lib/core/composables/mp'
 import { homeRoute } from '~/lib/common/helpers/route'
+import type { MaybeNullOrUndefined } from '@speckle/shared'
 
 graphql(`
   fragment SettingsWorkspaceGeneralDeleteDialog_Workspace on Workspace {
@@ -42,7 +43,7 @@ graphql(`
 `)
 
 const props = defineProps<{
-  workspace: SettingsWorkspaceGeneralDeleteDialog_WorkspaceFragment
+  workspace: MaybeNullOrUndefined<SettingsWorkspaceGeneralDeleteDialog_WorkspaceFragment>
 }>()
 
 const isOpen = defineModel<boolean>('open', { required: true })
@@ -56,6 +57,7 @@ const router = useRouter()
 
 const onLeave = async () => {
   isOpen.value = false
+  if (!props.workspace) return
 
   const cache = apollo.cache
   const result = await leaveWorkspace({

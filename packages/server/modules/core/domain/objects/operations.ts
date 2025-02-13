@@ -2,8 +2,7 @@ import { Logger } from '@/logging/logging'
 import {
   InsertableSpeckleObject,
   RawSpeckleObject,
-  SpeckleObject,
-  SpeckleObjectClosureEntry
+  SpeckleObject
 } from '@/modules/core/domain/objects/types'
 import { BatchedSelectOptions } from '@/modules/shared/helpers/dbHelper'
 import { MaybeNullOrUndefined, Nullable, Optional } from '@speckle/shared'
@@ -43,10 +42,6 @@ export type StoreSingleObjectIfNotFound = (
 
 export type StoreObjectsIfNotFound = (
   objects: Array<SpeckleObject | InsertableSpeckleObject>
-) => Promise<void>
-
-export type StoreClosuresIfNotFound = (
-  closures: SpeckleObjectClosureEntry[]
 ) => Promise<void>
 
 export type GetObjectChildrenStream = (params: {
@@ -116,8 +111,6 @@ type CreateObjectsParams = {
   objects: RawSpeckleObject[]
   logger?: Logger
 }
-
-export type CreateObjectsBatched = (params: CreateObjectsParams) => Promise<boolean>
 
 export type CreateObjectsBatchedAndNoClosures = (
   params: CreateObjectsParams

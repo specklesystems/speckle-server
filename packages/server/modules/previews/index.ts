@@ -29,6 +29,7 @@ import { getStreamBranchByNameFactory } from '@/modules/core/repositories/branch
 import { getFormattedObjectFactory } from '@/modules/core/repositories/objects'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { listenFor } from '@/modules/core/utils/dbNotificationListener'
+import { disablePreviews } from '@/modules/shared/helpers/envHelper'
 
 const httpErrorImage = (httpErrorCode: number) =>
   require.resolve(`#/assets/previews/images/preview_${httpErrorCode}.png`)
@@ -36,7 +37,7 @@ const httpErrorImage = (httpErrorCode: number) =>
 const noPreviewImage = require.resolve('#/assets/previews/images/no_preview.png')
 
 export const init: SpeckleModule['init'] = (app, isInitial) => {
-  if (process.env.DISABLE_PREVIEWS) {
+  if (disablePreviews()) {
     moduleLogger.warn('📸 Object preview module is DISABLED')
   } else {
     moduleLogger.info('📸 Init object preview module')
@@ -75,7 +76,8 @@ export const init: SpeckleModule['init'] = (app, isInitial) => {
       getObject: getFormattedObjectFactory({ db: projectDb }),
       getObjectPreviewInfo: getObjectPreviewInfoFactory({ db: projectDb }),
       createObjectPreview: createObjectPreviewFactory({ db: projectDb }),
-      getPreviewImage: getPreviewImageFactory({ db: projectDb })
+      getPreviewImage: getPreviewImageFactory({ db: projectDb }),
+      logger: req.log
     })
 
     const sendObjectPreview = sendObjectPreviewFactory({
@@ -140,7 +142,8 @@ export const init: SpeckleModule['init'] = (app, isInitial) => {
         getObject: getFormattedObjectFactory({ db: projectDb }),
         getObjectPreviewInfo: getObjectPreviewInfoFactory({ db: projectDb }),
         createObjectPreview: createObjectPreviewFactory({ db: projectDb }),
-        getPreviewImage: getPreviewImageFactory({ db: projectDb })
+        getPreviewImage: getPreviewImageFactory({ db: projectDb }),
+        logger: req.log
       })
 
       const sendObjectPreview = sendObjectPreviewFactory({
@@ -186,7 +189,8 @@ export const init: SpeckleModule['init'] = (app, isInitial) => {
       getObject: getFormattedObjectFactory({ db: projectDb }),
       getObjectPreviewInfo: getObjectPreviewInfoFactory({ db: projectDb }),
       createObjectPreview: createObjectPreviewFactory({ db: projectDb }),
-      getPreviewImage: getPreviewImageFactory({ db: projectDb })
+      getPreviewImage: getPreviewImageFactory({ db: projectDb }),
+      logger: req.log
     })
 
     const sendObjectPreview = sendObjectPreviewFactory({
@@ -222,7 +226,8 @@ export const init: SpeckleModule['init'] = (app, isInitial) => {
       getObject: getFormattedObjectFactory({ db: projectDb }),
       getObjectPreviewInfo: getObjectPreviewInfoFactory({ db: projectDb }),
       createObjectPreview: createObjectPreviewFactory({ db: projectDb }),
-      getPreviewImage: getPreviewImageFactory({ db: projectDb })
+      getPreviewImage: getPreviewImageFactory({ db: projectDb }),
+      logger: req.log
     })
 
     const sendObjectPreview = sendObjectPreviewFactory({

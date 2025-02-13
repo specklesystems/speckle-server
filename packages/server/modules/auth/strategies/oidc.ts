@@ -8,13 +8,16 @@ import {
   getOidcName,
   getServerOrigin
 } from '@/modules/shared/helpers/envHelper'
-import { UnverifiedEmailSSOLoginError } from '@/modules/core/errors/userinput'
+import {
+  UnverifiedEmailSSOLoginError,
+  UserInputError
+} from '@/modules/core/errors/userinput'
 import { getNameFromUserInfo } from '@/modules/auth/helpers/oidc'
 import { ServerInviteResourceType } from '@/modules/serverinvites/domain/constants'
 import { getResourceTypeRole } from '@/modules/serverinvites/helpers/core'
 import { AuthStrategyBuilder } from '@/modules/auth/helpers/types'
 import { get } from 'lodash'
-import { Optional } from '@speckle/shared'
+import { ensureError, Optional } from '@speckle/shared'
 import { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
 import {
   FinalizeInvitedServerRegistration,
@@ -28,6 +31,7 @@ import {
 } from '@/modules/core/domain/users/operations'
 import { GetServerInfo } from '@/modules/core/domain/server/operations'
 import { EnvironmentResourceError } from '@/modules/shared/errors'
+import { InviteNotFoundError } from '@/modules/serverinvites/errors'
 
 const oidcStrategyBuilderFactory =
   (deps: {
@@ -149,8 +153,21 @@ const oidcStrategyBuilderFactory =
               isInvite: !!invite
             })
           } catch (err) {
-            logger.error(err)
-            return done(err, undefined)
+            const e = ensureError(
+              err,
+              'Unexpected issue occured while authenticating with Google'
+            )
+            switch (e.constructor) {
+              case UnverifiedEmailSSOLoginError:
+              case UserInputError:
+              case InviteNotFoundError:
+                logger.info({ err: e })
+                return done(null, undefined)
+              default:
+                logger.error({ err: e })
+                // Only when the server is operating abnormally should err be set, to indicate an internal error.
+                return done(e, undefined)
+            }
           }
         }
       )
