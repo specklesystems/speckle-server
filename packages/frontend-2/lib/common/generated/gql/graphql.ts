@@ -4587,6 +4587,11 @@ export type WorkspaceProjectInviteCreateInput = {
 export type WorkspaceProjectMutations = {
   __typename?: 'WorkspaceProjectMutations';
   create: Project;
+  /**
+   * Update project region and move all regional data to new db.
+   * TODO: Currently performs all operations synchronously in request, should probably be scheduled.
+   */
+  moveToRegion: Project;
   moveToWorkspace: Project;
   updateRole: Project;
 };
@@ -4594,6 +4599,12 @@ export type WorkspaceProjectMutations = {
 
 export type WorkspaceProjectMutationsCreateArgs = {
   input: WorkspaceProjectCreateInput;
+};
+
+
+export type WorkspaceProjectMutationsMoveToRegionArgs = {
+  projectId: Scalars['String']['input'];
+  regionKey: Scalars['String']['input'];
 };
 
 
@@ -8290,6 +8301,7 @@ export type WorkspacePlanFieldArgs = {
 }
 export type WorkspaceProjectMutationsFieldArgs = {
   create: WorkspaceProjectMutationsCreateArgs,
+  moveToRegion: WorkspaceProjectMutationsMoveToRegionArgs,
   moveToWorkspace: WorkspaceProjectMutationsMoveToWorkspaceArgs,
   updateRole: WorkspaceProjectMutationsUpdateRoleArgs,
 }

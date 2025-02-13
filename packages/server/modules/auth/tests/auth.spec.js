@@ -138,7 +138,6 @@ const expect = chai.expect
 
 let app
 let sendRequest
-let server
 
 describe('Auth @auth', () => {
   describe('Local authN & authZ (token endpoints)', () => {
@@ -160,7 +159,6 @@ describe('Auth @auth', () => {
 
     before(async () => {
       const ctx = await beforeEachContext()
-      server = ctx.server
       app = ctx.app
       ;({ sendRequest } = await initializeTestServer(ctx))
 
@@ -171,10 +169,6 @@ describe('Auth @auth', () => {
       await createStream({ ...myPrivateStream, ownerId: me.id }).then(
         (id) => (myPrivateStream.id = id)
       )
-    })
-
-    after(async () => {
-      await server.close()
     })
 
     it('Should register a new user (speckle frontend)', async () => {
