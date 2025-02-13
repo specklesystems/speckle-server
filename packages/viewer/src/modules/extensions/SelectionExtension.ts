@@ -316,6 +316,7 @@ export class SelectionExtension extends Extension {
         delete this.selectionMaterials[rv.guid]
       })
     }
+    this.viewer.requestRender(UpdateFlags.RENDER | UpdateFlags.CLIPPING_PLANES)
   }
 
   protected applyHover(renderView: NodeRenderView | null) {
