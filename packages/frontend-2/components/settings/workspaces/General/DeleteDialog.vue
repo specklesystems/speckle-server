@@ -89,6 +89,8 @@ const onDelete = async () => {
   if (!props.workspace) return
   if (workspaceNameInput.value !== props.workspace.name) return
 
+  // Create a copy of the workspace name and ID before deletion to avoid errors after deletion/cache update
+  const { name: workspaceName, id: workspaceId } = props.workspace
   const cache = apollo.cache
   const result = await deleteWorkspace({
     workspaceId: props.workspace.id
@@ -121,19 +123,19 @@ const onDelete = async () => {
 
     mixpanel.track('Workspace Deleted', {
       // eslint-disable-next-line camelcase
-      workspace_id: props.workspace.id,
+      workspace_id: workspaceId,
       feedback: feedback.value
     })
-    mixpanel.get_group('workspace_id', props.workspace.id).set_once({
+    mixpanel.get_group('workspace_id', workspaceId).set_once({
       isDeleted: true
     })
 
     await sendWebhook(defaultZapierWebhookUrl, {
       feedback: [
         `**Action:** Workspace Deleted`,
-        `**Workspace:** ${props.workspace.name}`,
+        `**Workspace:** ${workspaceName}`,
         `**User ID:** ${activeUser.value?.id}`,
-        `**Workspace ID:** ${props.workspace.id}`,
+        `**Workspace ID:** ${workspaceId}`,
         feedback.value
           ? `**Feedback:** ${feedback.value}`
           : '**Feedback:** No feedback provided'
@@ -143,7 +145,7 @@ const onDelete = async () => {
     triggerNotification({
       type: ToastNotificationType.Success,
       title: 'Workspace deleted',
-      description: `The ${props.workspace.name} workspace has been deleted`
+      description: `The ${workspaceName} workspace has been deleted`
     })
 
     router.push(homeRoute)
