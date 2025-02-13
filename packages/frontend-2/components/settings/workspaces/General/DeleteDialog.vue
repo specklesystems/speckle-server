@@ -130,9 +130,11 @@ const onDelete = async () => {
 
     await sendWebhook(defaultZapierWebhookUrl, {
       userId: activeUser.value?.id ?? '',
-      feedback: feedback.value
-        ? `Action: Workspace Deleted(${props.workspace.name}) Feedback: ${feedback.value}`
-        : `Action: Workspace Deleted(${props.workspace.name}) - No feedback provided`
+      feedback: `Action: Workspace Deleted (${props.workspace.name}) - User ID: ${
+        activeUser.value?.id
+      } - Workspace ID: ${props.workspace.id} - ${
+        feedback.value ? `Feedback: ${feedback.value}` : 'No feedback provided'
+      }`
     })
 
     triggerNotification({
