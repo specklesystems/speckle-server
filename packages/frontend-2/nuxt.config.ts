@@ -213,7 +213,7 @@ export default defineNuxtConfig({
     '/settings/server/*': {
       appMiddleware: ['auth', 'settings', 'admin']
     },
-    '/settings/workspaces/*': {
+    '/settings/workspaces/:slug/*': {
       appMiddleware: [
         'auth',
         'settings',
