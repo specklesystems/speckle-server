@@ -580,7 +580,7 @@ describe('Express @core-rest', () => {
     ;({ app } = await beforeEachContext())
   })
   it('Should return 400 for broken JSON', async () => {
-    const res = await request(app).post('/ping').send('{b0rken json}')
+    const res = await request(app).post('/graphql').send('{b0rken json}')
     expect(res).to.have.status(400)
   })
 })

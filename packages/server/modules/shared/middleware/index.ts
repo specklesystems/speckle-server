@@ -287,21 +287,39 @@ export const requestBodyParsingMiddlewareFactory =
     const maxRequestBodySize = `${deps.maximumRequestBodySizeMb}mb`
 
     const nextWithWrappedError = (err: unknown) => {
-      const e = new UserInputError('Invalid request body', {
-        cause: ensureError(err, 'Unknown error parsing request body')
-      })
-      next(e)
+      if (!err) {
+        next()
+        return
+      }
+
+      next(
+        new UserInputError('Invalid request body', {
+          cause: ensureError(err, 'Unknown error parsing request body')
+        })
+      )
+      return
     }
 
-    if (RAW_BODY_PATH_PREFIXES.some((p) => req.path.startsWith(p))) {
-      expressRawBodyParser({ type: 'application/json', limit: maxRequestBodySize })(
+    try {
+      if (RAW_BODY_PATH_PREFIXES.some((p) => req.path.startsWith(p))) {
+        expressRawBodyParser({ type: 'application/json', limit: maxRequestBodySize })(
+          req,
+          res,
+          nextWithWrappedError
+        )
+        return
+      }
+
+      //default
+      expressJsonBodyParser({ limit: maxRequestBodySize })(
         req,
         res,
         nextWithWrappedError
       )
       return
+    } catch (err) {
+      const e = ensureError(err, 'Unknown error parsing request body')
+      next(e)
+      return
     }
-
-    //default
-    expressJsonBodyParser({ limit: maxRequestBodySize })(req, res, nextWithWrappedError)
   }
