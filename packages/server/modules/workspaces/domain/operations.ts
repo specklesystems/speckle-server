@@ -375,3 +375,6 @@ export type CopyProjectComments = (params: {
 export type CopyProjectWebhooks = (params: {
   projectIds: string[]
 }) => Promise<Record<string, number>>
+export type CopyProjectBlobs = (params: {
+  projectIds: string[]
+}) => Promise<Record<string, number>>

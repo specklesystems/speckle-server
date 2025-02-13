@@ -10,6 +10,8 @@ import {
   AutomationTriggerDefinitionRecord
 } from '@/modules/automate/helpers/types'
 import { ObjectStorage } from '@/modules/blobstorage/clients/objectStorage'
+import { BlobStorageRecord } from '@/modules/blobstorage/helpers/types'
+import { BlobStorage } from '@/modules/blobstorage/repositories'
 import { CommentRecord } from '@/modules/comments/helpers/types'
 import {
   AutomationFunctionRuns,
@@ -112,6 +114,7 @@ const tables = {
   comments: (db: Knex) => db.table<CommentRecord>(Comments.name),
   webhooks: (db: Knex) => db.table<Webhook>('webhooks_config'),
   webhookEvents: (db: Knex) => db.table<WebhookEvent>('webhooks_events'),
+  blobStorage: (db: Knex) => db.table<BlobStorageRecord>(BlobStorage.name),
   fileUploads: (db: Knex) => db.table<FileUploadRecord>(FileUploads.name)
 }
 
@@ -716,20 +719,20 @@ isMultiRegionTestMode()
 
         expect(res).to.not.haveGraphQLErrors()
 
-        const fileMetadata = await tables
-          .fileUploads(targetRegionDb)
+        const blobMetadata = await tables
+          .blobStorage(sourceRegionDb)
           .select('*')
           .where({ id: testBlobId })
           .first()
-        expect(fileMetadata).to.not.be.undefined
+        expect(blobMetadata).to.not.be.undefined
 
-        const fileBlob = await targetRegionObjectStorage.client.send(
+        const blob = await targetRegionObjectStorage.client.send(
           new HeadObjectCommand({
             Bucket: targetRegionObjectStorage.bucket,
             Key: `assets/${testProject.id}/${testBlobId}`
           })
         )
-        expect(fileBlob).to.not.be.undefined
+        expect(blob).to.not.be.undefined
       })
     })
   : void 0

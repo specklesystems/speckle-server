@@ -33,6 +33,7 @@ import {
 import { executeBatchedSelect } from '@/modules/shared/helpers/dbHelper'
 import {
   CopyProjectAutomations,
+  CopyProjectBlobs,
   CopyProjectComments,
   CopyProjectModels,
   CopyProjectObjects,
@@ -62,6 +63,10 @@ import {
   CommentViewRecord
 } from '@/modules/comments/helpers/types'
 import { Webhook, WebhookEvent } from '@/modules/webhooks/domain/types'
+import { ObjectStorage } from '@/modules/blobstorage/clients/objectStorage'
+import { BlobStorage } from '@/modules/blobstorage/repositories'
+import { BlobStorageItem } from '@/modules/blobstorage/domain/types'
+import { GetObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3'
 
 const tables = {
   workspaces: (db: Knex) => db<Workspace>(Workspaces.name),
@@ -91,7 +96,8 @@ const tables = {
   commentViews: (db: Knex) => db.table<CommentViewRecord>(CommentViews.name),
   commentLinks: (db: Knex) => db.table<CommentLinkRecord>(CommentLinks.name),
   webhooks: (db: Knex) => db.table<Webhook>('webhooks_config'),
-  webhookEvents: (db: Knex) => db.table<WebhookEvent>('webhooks_events')
+  webhookEvents: (db: Knex) => db.table<WebhookEvent>('webhooks_events'),
+  blobStorage: (db: Knex) => db.table<BlobStorageItem>(BlobStorage.name)
 }
 
 /**
@@ -576,4 +582,55 @@ export const copyProjectWebhooksFactory =
     }
 
     return copiedWebhookCountByProjectId
+  }
+
+/**
+ * Copies rows from the following tables:
+ * - blob_storage
+ * Also copy file blobs from one region to the other.
+ */
+export const copyProjectBlobs =
+  (deps: {
+    sourceDb: Knex
+    sourceObjectStorage: ObjectStorage
+    targetDb: Knex
+    targetObjectStorage: ObjectStorage
+  }): CopyProjectBlobs =>
+  async ({ projectIds }) => {
+    const copiedBlobsCountByProjectId: Record<string, number> = {}
+
+    // Copy `blob_storage` table rows in batches
+    const selectBlobs = tables
+      .blobStorage(deps.sourceDb)
+      .select('*')
+      .whereIn(BlobStorage.col.streamId, projectIds)
+
+    for await (const blobs of executeBatchedSelect(selectBlobs)) {
+      // Write `blob_storage` rows to target db
+      await tables.blobStorage(deps.targetDb).insert(blobs).onConflict().ignore()
+
+      for (const blob of blobs) {
+        copiedBlobsCountByProjectId[blob.streamId] ??= 0
+        copiedBlobsCountByProjectId[blob.streamId]++
+
+        // Copy file blob from one regional storage to the other
+        const objectKey = `assets/${blob.streamId}/${blob.id}`
+        const sourceBlob = await deps.sourceObjectStorage.client.send(
+          new GetObjectCommand({
+            Bucket: deps.sourceObjectStorage.bucket,
+            Key: objectKey
+          })
+        )
+        await deps.targetObjectStorage.client.send(
+          new PutObjectCommand({
+            Bucket: deps.targetObjectStorage.bucket,
+            Key: objectKey,
+            Body: sourceBlob.Body,
+            ContentLength: sourceBlob.ContentLength
+          })
+        )
+      }
+    }
+
+    return copiedBlobsCountByProjectId
   }

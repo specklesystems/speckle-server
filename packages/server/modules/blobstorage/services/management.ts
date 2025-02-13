@@ -40,6 +40,7 @@ export const uploadFileStreamFactory =
       fileName,
       fileType
     }
+
     // need to insert the upload data before starting otherwise the upload finished
     // even might fire faster, than the db insert, causing missing asset data in the db
     await deps.upsertBlob(dbFile)
