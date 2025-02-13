@@ -5,6 +5,11 @@
       <InviteDialogProjectWorkspaceMembers :project="props.project" />
       <hr v-if="isAdmin" class="border-outline-3 mb-3 mt-5" />
     </template>
+    <template v-if="isInWorkspace && !isAdmin">
+      <p class="text-body-xs text-foreground">
+        All workspace members are already in this project.
+      </p>
+    </template>
     <template v-if="isAdmin || !isInWorkspace">
       <form @submit="onSubmit">
         <div class="flex flex-col gap-y-3 text-foreground">
@@ -206,13 +211,17 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
     props: { color: 'outline' },
     onClick: () => (isOpen.value = false)
   },
-  {
-    text: 'Invite',
-    props: {
-      submit: true
-    },
-    onClick: onSubmit
-  }
+  ...(!isInWorkspace.value || isAdmin.value
+    ? [
+        {
+          text: 'Invite',
+          props: {
+            submit: true
+          },
+          onClick: onSubmit
+        }
+      ]
+    : [])
 ])
 
 const getSeatText = (count: number, type: 'member' | 'guest') =>

@@ -6,7 +6,7 @@
       </p>
     </template>
     <template #top-buttons>
-      <FormButton @click="toggleInviteDialog">Invite</FormButton>
+      <FormButton :disabled="!canInvite" @click="toggleInviteDialog">Invite</FormButton>
     </template>
 
     <div class="flex flex-col mt-6">
@@ -31,7 +31,7 @@
 <script setup lang="ts">
 import type { Project } from '~~/lib/common/generated/gql/graphql'
 import type { ProjectCollaboratorListItem } from '~~/lib/projects/helpers/components'
-import type { Nullable, StreamRoles } from '@speckle/shared'
+import { type Nullable, type StreamRoles, Roles } from '@speckle/shared'
 import { useQuery, useApolloClient } from '@vue/apollo-composable'
 import { useTeamInternals } from '~~/lib/projects/composables/team'
 import { graphql } from '~~/lib/common/generated/gql'
@@ -91,6 +91,7 @@ const { result: workspaceResult } = useQuery(
 
 const project = computed(() => pageResult.value?.project)
 const workspace = computed(() => workspaceResult.value?.workspace)
+const projectRole = computed(() => project.value?.role)
 const updateRole = useUpdateUserRole(project)
 
 const toggleInviteDialog = () => {
@@ -103,6 +104,9 @@ const { collaboratorListItems, isOwner, isServerGuest } = useTeamInternals(
 )
 
 const canEdit = computed(() => isOwner.value && !isServerGuest.value)
+const canInvite = computed(() =>
+  workspace?.value?.id ? projectRole.value === Roles.Stream.Owner : isOwner.value
+)
 
 const onCollaboratorRoleChange = async (
   collaborator: ProjectCollaboratorListItem,
