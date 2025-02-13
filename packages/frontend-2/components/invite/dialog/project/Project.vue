@@ -53,12 +53,14 @@
                     show-label
                     :name="`project-${index}`"
                     :disabled="!canBeMember(item.value.email)"
-                    :tooltip-text="
-                      canBeMember(item.value.email)
-                        ? undefined
-                        : 'This email does not match the set domain policy, and can only be invited to individual projects'
-                    "
                   />
+                  <p
+                    v-if="!canBeMember(item.value.email)"
+                    class="text-body-3xs text-foreground-2 mt-2"
+                  >
+                    This email does not match the set domain policy, and can only be
+                    invited to individual projects
+                  </p>
                 </div>
               </div>
               <CommonTextLink class="mt-7">
