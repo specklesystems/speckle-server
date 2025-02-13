@@ -48,6 +48,7 @@ import {
 import { db } from '@/db/knex'
 import { getTokenAppInfoFactory } from '@/modules/auth/repositories/apps'
 import { getUserRoleFactory } from '@/modules/core/repositories/users'
+import { UserInputError } from '@/modules/core/errors/userinput'
 
 export const authMiddlewareCreator = (steps: AuthPipelineFunction[]) => {
   const pipeline = authPipelineCreator(steps)
@@ -285,15 +286,22 @@ export const requestBodyParsingMiddlewareFactory =
   async (req: Request, res: Response, next: NextFunction) => {
     const maxRequestBodySize = `${deps.maximumRequestBodySizeMb}mb`
 
+    const nextWithWrappedError = (err: unknown) => {
+      const e = new UserInputError('Invalid request body', {
+        cause: ensureError(err, 'Unknown error parsing request body')
+      })
+      next(e)
+    }
+
     if (RAW_BODY_PATH_PREFIXES.some((p) => req.path.startsWith(p))) {
       expressRawBodyParser({ type: 'application/json', limit: maxRequestBodySize })(
         req,
         res,
-        next
+        nextWithWrappedError
       )
       return
     }
 
     //default
-    expressJsonBodyParser({ limit: maxRequestBodySize })(req, res, next)
+    expressJsonBodyParser({ limit: maxRequestBodySize })(req, res, nextWithWrappedError)
   }

@@ -7,27 +7,6 @@ import { get, isNumber } from 'lodash'
 import { VError } from 'verror'
 import { logger as defaultLogger } from '@/logging/logging'
 
-const isErrorWithRelevantStatusCode = (e: unknown): e is { statusCode: number } => {
-  return (
-    !!e &&
-    typeof e === 'object' &&
-    'statusCode' in e &&
-    typeof e.statusCode === 'number' &&
-    e.statusCode >= 400 &&
-    e.statusCode < 600
-  )
-}
-const isErrorWithRelevantStatus = (e: unknown): e is { status: number } => {
-  return (
-    !!e &&
-    typeof e === 'object' &&
-    'status' in e &&
-    typeof e.status === 'number' &&
-    e.status >= 400 &&
-    e.status < 600
-  )
-}
-
 const resolveStatusCode = (e: Error): number => {
   if (e instanceof BaseError) {
     const infoStatus =
@@ -36,14 +15,6 @@ const resolveStatusCode = (e: Error): number => {
         : undefined
 
     if (infoStatus) return infoStatus
-  }
-
-  // Errors thrown by express itself, such as `express.json()` middleware aren't instances of BaseError but may have a statusCode or status property
-  if (isErrorWithRelevantStatusCode(e)) {
-    return e.statusCode
-  }
-  if (isErrorWithRelevantStatus(e)) {
-    return e.status
   }
 
   return 500
@@ -86,11 +57,7 @@ export const defaultErrorHandler: ErrorRequestHandler = (err, req, res, next) =>
   const logger = req.log || defaultLogger
 
   // Log unexpected types of errors which are not instances of BaseError or have a valid 'code' or 'statusCode' property
-  if (
-    !(err instanceof BaseError) &&
-    !isErrorWithRelevantStatusCode(err) &&
-    !isErrorWithRelevantStatus(err)
-  ) {
+  if (!(err instanceof BaseError)) {
     logger.warn(
       { err },
       `Unexpected type of error when handling ${req.originalUrl} from ${req.ip}. Please raise a bug report to the developers.`
