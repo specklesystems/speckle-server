@@ -118,7 +118,6 @@ import { getWorkspacePlanFactory } from '@/modules/gatekeeper/repositories/billi
 import cryptoRandomString from 'crypto-random-string'
 import { base64Encode } from '@/modules/shared/helpers/cryptoHelper'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import { logger } from '@/logging/logging'
 
 const moveAuthParamsToSessionMiddleware = moveAuthParamsToSessionMiddlewareFactory()
 const sessionMiddleware = sessionMiddlewareFactory()
@@ -660,7 +659,7 @@ const getOidcProviderUserDataFactory =
       throw new SsoProviderProfileMissingError()
     }
     if (!oidcProviderUserData.email) {
-      logger.error(
+      req.log.error(
         { oidcProviderUserData },
         'Missing required properties on OIDC provider.'
       )
