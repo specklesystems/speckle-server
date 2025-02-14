@@ -64,7 +64,8 @@ import {
   buildContext,
   determineClientIpAddressMiddleware,
   mixpanelTrackerHelperMiddlewareFactory,
-  requestBodyParsingMiddlewareFactory
+  requestBodyParsingMiddlewareFactory,
+  setContentSecurityPolicyHeader
 } from '@/modules/shared/middleware'
 import { GraphQLError } from 'graphql'
 import { redactSensitiveVariables } from '@/logging/loggingHelper'
@@ -444,20 +445,20 @@ export async function init() {
 
   app.use(
     handleMiddlewareErrors({
-      wrappedRequestHandler: cookieParser(),
+      handler: cookieParser(),
       verbPhraseForErrorMessage: 'parsing cookies',
       expectedErrorType: CookieParserError
     })
   )
   app.use(
     handleMiddlewareErrors({
-      wrappedRequestHandler: DetermineRequestIdMiddleware,
+      handler: DetermineRequestIdMiddleware,
       verbPhraseForErrorMessage: 'determining request id'
     })
   )
   app.use(
     handleMiddlewareErrors({
-      wrappedRequestHandler: initiateRequestContextMiddleware,
+      handler: initiateRequestContextMiddleware,
       verbPhraseForErrorMessage: 'initiating request context'
     })
   )
@@ -467,13 +468,13 @@ export async function init() {
 
   app.use(
     handleMiddlewareErrors({
-      wrappedRequestHandler: determineClientIpAddressMiddleware,
+      handler: determineClientIpAddressMiddleware,
       verbPhraseForErrorMessage: 'determining client IP address'
     })
   )
   app.use(
     handleMiddlewareErrors({
-      wrappedRequestHandler: LoggingExpressMiddleware,
+      handler: LoggingExpressMiddleware,
       verbPhraseForErrorMessage: 'logging http request',
       expectedErrorType: HttpLoggerError
     })
@@ -482,7 +483,7 @@ export async function init() {
   if (isCompressionEnabled()) {
     app.use(
       handleMiddlewareErrors({
-        wrappedRequestHandler: compression(),
+        handler: compression(),
         verbPhraseForErrorMessage: 'compressing response',
         expectedErrorType: CompressionError
       })
@@ -491,7 +492,7 @@ export async function init() {
 
   app.use(
     handleMiddlewareErrors({
-      wrappedRequestHandler: corsMiddleware(),
+      handler: corsMiddleware(),
       verbPhraseForErrorMessage: 'applying CORS',
       expectedErrorType: CorsMiddlewareError
     })
@@ -500,7 +501,7 @@ export async function init() {
   app.use(
     handleMiddlewareErrors({
       // there are some paths that need the raw body, not a parsed body
-      wrappedRequestHandler: requestBodyParsingMiddlewareFactory({
+      handler: requestBodyParsingMiddlewareFactory({
         maximumRequestBodySizeMb: getMaximumRequestBodySizeMB()
       }),
       verbPhraseForErrorMessage: 'parsing request body',
@@ -510,7 +511,7 @@ export async function init() {
 
   app.use(
     handleMiddlewareErrors({
-      wrappedRequestHandler: express.urlencoded({
+      handler: express.urlencoded({
         limit: `${getFileSizeLimitMB()}mb`,
         extended: false
       }),
@@ -524,31 +525,26 @@ export async function init() {
 
   app.use(
     handleMiddlewareErrors({
-      wrappedRequestHandler: createRateLimiterMiddleware(), // Rate limiting by IP address for all users
+      handler: createRateLimiterMiddleware(), // Rate limiting by IP address for all users
       verbPhraseForErrorMessage: 'rate limiting'
     })
   )
   app.use(
     handleMiddlewareErrors({
-      wrappedRequestHandler: authContextMiddleware,
+      handler: authContextMiddleware,
       verbPhraseForErrorMessage: 'authenticating user'
     })
   )
   app.use(
-    async (
-      _req: express.Request,
-      res: express.Response,
-      next: express.NextFunction
-    ) => {
-      if (!res.headersSent)
-        res.setHeader('Content-Security-Policy', "frame-ancestors 'none'")
-      next()
-    }
+    handleMiddlewareErrors({
+      handler: setContentSecurityPolicyHeader,
+      verbPhraseForErrorMessage: 'setting content security policy'
+    })
   )
   if (enableMixpanel())
     app.use(
       handleMiddlewareErrors({
-        wrappedRequestHandler: mixpanelTrackerHelperMiddlewareFactory({
+        handler: mixpanelTrackerHelperMiddlewareFactory({
           getUser: getUserFactory({ db })
         }),
         verbPhraseForErrorMessage: 'gathering user metrics'

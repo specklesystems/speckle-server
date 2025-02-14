@@ -3,24 +3,24 @@ import { ensureError } from '@speckle/shared'
 import { BaseError, LogicError } from '@/modules/shared/errors'
 
 /**
- * @description Wraps an _external_ middleware function to ensure that any errors (passed to error handling middleware or thrown) will extend from BaseError. And ensures that thrown errors always result in a call to `next(err)`.
- * @param deps.verbPhraseForErrorMessage - A phrase that describes the action being performed by the middleware
+ * @description Wraps an Express Request Handler function to ensure that any errors (passed to error handling middleware or thrown) will extend from BaseError. And ensures that thrown errors always result in a call to `next(err)`.
+ * @param deps.verbPhraseForErrorMessage - A phrase that describes the action being performed by the middleware. Will appear as `Error while ${verbPhraseForErrorMessage}` in the error message.
  * @param deps.expectedErrorType - The error type that the middleware is expected to throw. Defaults to LogicError, which is appropriate for middleware we control as we should be handling errors within it. For external middleware, you may want to use a different error type.
  */
 export const handleMiddlewareErrors = <ExpectedErrorType extends BaseError>(deps: {
-  wrappedRequestHandler: RequestHandler
+  handler: RequestHandler
   verbPhraseForErrorMessage: string
   expectedErrorType?: {
     new (message: string, info: { cause: Error }): ExpectedErrorType
   }
 }): RequestHandler => {
   const {
-    wrappedRequestHandler,
+    handler: wrappedRequestHandler,
     verbPhraseForErrorMessage: verbPhraseForLogMessage,
     expectedErrorType = LogicError
   } = deps
 
-  return (req, res, next) => {
+  return async (req, res, next) => {
     const nextWithWrappedError = (err: unknown) => {
       if (!err) {
         next()
@@ -46,7 +46,7 @@ export const handleMiddlewareErrors = <ExpectedErrorType extends BaseError>(deps
     }
 
     try {
-      wrappedRequestHandler(req, res, nextWithWrappedError)
+      await wrappedRequestHandler(req, res, nextWithWrappedError)
     } catch (err) {
       // This should never happen as middleware should not throw. It should have called `next(err)`. But just in case:
 

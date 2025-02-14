@@ -21,7 +21,7 @@ export const errorMetricsMiddleware: express.ErrorRequestHandler = (
   }
 
   let route = 'unknown'
-  if (req.route && req.route.path) route = req.route.path //FIXME this should be the route template, not the actual route.
+  if (req.route && req.route.path) route = req.route.path
   metricErrorCount.labels(route).inc()
   next(err)
 }

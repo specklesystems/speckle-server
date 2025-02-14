@@ -9,9 +9,9 @@ import {
   Request,
   Response,
   NextFunction,
-  Handler,
   raw as expressRawBodyParser,
-  json as expressJsonBodyParser
+  json as expressJsonBodyParser,
+  RequestHandler
 } from 'express'
 import {
   ForbiddenError,
@@ -49,10 +49,12 @@ import { db } from '@/db/knex'
 import { getTokenAppInfoFactory } from '@/modules/auth/repositories/apps'
 import { getUserRoleFactory } from '@/modules/core/repositories/users'
 
-export const authMiddlewareCreator = (steps: AuthPipelineFunction[]) => {
+export const authMiddlewareCreator = (
+  steps: AuthPipelineFunction[]
+): RequestHandler => {
   const pipeline = authPipelineCreator(steps)
 
-  const middleware = async (req: Request, res: Response, next: NextFunction) => {
+  return async (req, res, next) => {
     const { authResult } = await pipeline({
       context: req.context,
       params: req.params as AuthParams,
@@ -71,7 +73,6 @@ export const authMiddlewareCreator = (steps: AuthPipelineFunction[]) => {
     }
     return next()
   }
-  return middleware
 }
 
 export const getTokenFromRequest = (req: Request | null | undefined): string | null => {
@@ -127,11 +128,7 @@ export async function createAuthContextFromToken(
   }
 }
 
-export async function authContextMiddleware(
-  req: Request,
-  res: Response,
-  next: NextFunction
-) {
+export const authContextMiddleware: RequestHandler = async (req, res, next) => {
   const validateToken = validateTokenFactory({
     revokeUserTokenById: revokeUserTokenByIdFactory({ db }),
     getApiTokenById: getApiTokenByIdFactory({ db }),
@@ -237,7 +234,7 @@ export async function buildContext({
  * Adds a .mixpanel helper onto the req object that is already pre-identified with the active user's identity
  */
 export const mixpanelTrackerHelperMiddlewareFactory =
-  (deps: { getUser: GetUser }): Handler =>
+  (deps: { getUser: GetUser }): RequestHandler =>
   async (req: Request, _res: Response, next: NextFunction) => {
     const ctx = req.context
     const user = ctx.userId ? await deps.getUser(ctx.userId) : null
@@ -255,11 +252,7 @@ const X_SPECKLE_CLIENT_IP_HEADER = 'x-speckle-client-ip'
  * @param _res HTTP response object
  * @param next Express middleware-compatible next function
  */
-export async function determineClientIpAddressMiddleware(
-  req: Request,
-  _res: Response,
-  next: NextFunction
-) {
+export const determineClientIpAddressMiddleware: RequestHandler = (req, _res, next) => {
   const ip = getIpFromRequest(req)
   if (ip) {
     try {
@@ -281,8 +274,8 @@ export async function determineClientIpAddressMiddleware(
 const RAW_BODY_PATH_PREFIXES = ['/api/v1/billing/webhooks', '/api/thirdparty/gendo/']
 
 export const requestBodyParsingMiddlewareFactory =
-  (deps: { maximumRequestBodySizeMb: number }) =>
-  async (req: Request, res: Response, next: NextFunction) => {
+  (deps: { maximumRequestBodySizeMb: number }): RequestHandler =>
+  async (req, res, next) => {
     const maxRequestBodySize = `${deps.maximumRequestBodySizeMb}mb`
 
     if (RAW_BODY_PATH_PREFIXES.some((p) => req.path.startsWith(p))) {
@@ -298,3 +291,9 @@ export const requestBodyParsingMiddlewareFactory =
     expressJsonBodyParser({ limit: maxRequestBodySize })(req, res, next)
     return
   }
+
+export const setContentSecurityPolicyHeader: RequestHandler = (req, res, next) => {
+  if (!res.headersSent)
+    res.setHeader('Content-Security-Policy', "frame-ancestors 'none'")
+  next()
+}

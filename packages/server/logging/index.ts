@@ -39,7 +39,7 @@ export default async function (app: express.Express) {
 
     app.use(
       handleMiddlewareErrors({
-        wrappedRequestHandler: promBundle({
+        handler: promBundle({
           includeMethod: true,
           includePath: true,
           httpDurationMetricName: 'speckle_server_request_duration',
@@ -50,15 +50,15 @@ export default async function (app: express.Express) {
         expectedErrorType: PrometheusExpressMetricsError
       })
     )
-
-    // Expose prometheus metrics at the `/metrics` endpoint
-    app.get('/metrics', async (req, res) => {
-      try {
-        res.setHeader('Content-Type', prometheusClient.register.contentType)
-        res.end(await prometheusClient.register.metrics())
-      } catch (ex: unknown) {
-        res.status(500).end(ex instanceof Error ? ex.message : `${ex}`)
-      }
-    })
   }
+
+  // Expose prometheus metrics at the `/metrics` endpoint
+  app.get('/metrics', async (req, res) => {
+    try {
+      res.setHeader('Content-Type', prometheusClient.register.contentType)
+      res.end(await prometheusClient.register.metrics())
+    } catch (ex: unknown) {
+      res.status(500).end(ex instanceof Error ? ex.message : `${ex}`)
+    }
+  })
 }
