@@ -30,63 +30,63 @@ const config: Config = {
       },
       colors: {
         foundation: {
-          page: 'var(--foundation-page)',
-          DEFAULT: 'var(--foundation)',
-          2: 'var(--foundation-2)',
-          3: 'var(--foundation-3)',
-          4: 'var(--foundation-4)',
-          5: 'var(--foundation-5)',
-          focus: 'var(--foundation-focus)',
-          disabled: 'var(--foundation-disabled)'
+          page: 'rgba(var(--foundation-page), <alpha-value>)',
+          DEFAULT: 'rgba(var(--foundation), <alpha-value>)',
+          2: 'rgba(var(--foundation-2), <alpha-value>)',
+          3: 'rgba(var(--foundation-3), <alpha-value>)',
+          4: 'rgba(var(--foundation-4), <alpha-value>)',
+          5: 'rgba(var(--foundation-5), <alpha-value>)',
+          focus: 'rgba(var(--foundation-focus), <alpha-value>)',
+          disabled: 'rgba(var(--foundation-disabled), <alpha-value>)'
         },
         foreground: {
-          DEFAULT: 'var(--foreground)',
-          2: 'var(--foreground-2)',
-          3: 'var(--foreground-3)',
-          disabled: 'var(--foreground-disabled)',
-          'on-primary': 'var(--foreground-on-primary)',
-          primary: 'var(--foreground-primary)'
+          DEFAULT: 'rgba(var(--foreground), <alpha-value>)',
+          2: 'rgba(var(--foreground-2), <alpha-value>)',
+          3: 'rgba(var(--foreground-3), <alpha-value>)',
+          disabled: 'rgba(var(--foreground-disabled), <alpha-value>)',
+          'on-primary': 'rgba(var(--foreground-on-primary), <alpha-value>)',
+          primary: 'rgba(var(--foreground-primary), <alpha-value>)'
         },
         primary: {
-          DEFAULT: 'var(--primary)',
-          focus: 'var(--primary-focus)',
-          muted: 'var(--primary-muted)'
+          DEFAULT: 'rgba(var(--primary), <alpha-value>)',
+          focus: 'rgba(var(--primary-focus), <alpha-value>)',
+          muted: 'rgba(var(--primary-muted), <alpha-value>)'
         },
         outline: {
-          1: 'var(--outline-1)',
-          2: 'var(--outline-2)',
-          3: 'var(--outline-3)',
-          4: 'var(--outline-4)',
-          5: 'var(--outline-5)'
+          1: 'rgba(var(--outline-1), <alpha-value>)',
+          2: 'rgba(var(--outline-2), <alpha-value>)',
+          3: 'rgba(var(--outline-3), <alpha-value>)',
+          4: 'rgba(var(--outline-4), <alpha-value>)',
+          5: 'rgba(var(--outline-5), <alpha-value>)'
         },
         highlight: {
-          1: 'var(--highlight-1)',
-          2: 'var(--highlight-2)',
-          3: 'var(--highlight-3)'
+          1: 'rgba(var(--highlight-1), <alpha-value>)',
+          2: 'rgba(var(--highlight-2), <alpha-value>)',
+          3: 'rgba(var(--highlight-3), <alpha-value>)'
         },
         success: {
-          DEFAULT: 'var(--success)',
-          lighter: 'var(--success-lighter)',
-          lightest: 'var(--success-lightest)',
-          darker: 'var(--success-darker)'
+          DEFAULT: 'rgba(var(--success), <alpha-value>)',
+          lighter: 'rgba(var(--success-lighter), <alpha-value>)',
+          lightest: 'rgba(var(--success-lightest), <alpha-value>)',
+          darker: 'rgba(var(--success-darker), <alpha-value>)'
         },
         warning: {
-          DEFAULT: 'var(--warning)',
-          lighter: 'var(--warning-lighter)',
-          lightest: 'var(--warning-lightest)',
-          darker: 'var(--warning-darker)'
+          DEFAULT: 'rgba(var(--warning), <alpha-value>)',
+          lighter: 'rgba(var(--warning-lighter), <alpha-value>)',
+          lightest: 'rgba(var(--warning-lightest), <alpha-value>)',
+          darker: 'rgba(var(--warning-darker), <alpha-value>)'
         },
         info: {
-          DEFAULT: 'var(--info)',
-          lighter: 'var(--info-lighter)',
-          lightest: 'var(--info-lightest)',
-          darker: 'var(--info-darker)'
+          DEFAULT: 'rgba(var(--info), <alpha-value>)',
+          lighter: 'rgba(var(--info-lighter), <alpha-value>)',
+          lightest: 'rgba(var(--info-lightest), <alpha-value>)',
+          darker: 'rgba(var(--info-darker), <alpha-value>)'
         },
         danger: {
-          DEFAULT: 'var(--danger)',
-          lighter: 'var(--danger-lighter)',
-          lightest: 'var(--danger-lightest)',
-          darker: 'var(--danger-darker)'
+          DEFAULT: 'rgba(var(--danger), <alpha-value>)',
+          lighter: 'rgba(var(--danger-lighter), <alpha-value>)',
+          lightest: 'rgba(var(--danger-lightest), <alpha-value>)',
+          darker: 'rgba(var(--danger-darker), <alpha-value>)'
         }
       },
       borderRadius: {

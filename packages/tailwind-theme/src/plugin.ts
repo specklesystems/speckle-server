@@ -3,135 +3,135 @@ import preset from './preset.js'
 
 export const lightThemeVariables = {
   /* used only as the page background */
-  '--foundation-page': '#FAFAFA',
+  '--foundation-page': '250, 250, 250',
   /* used as the background for any elements that sit on the page */
-  '--foundation': '#FFFFFF',
-  '--foundation-2': '#F5F5F5',
-  '--foundation-3': '#fcfcfc',
-  '--foundation-4': '#fcfcfc',
-  '--foundation-5': '#fcfcfc',
+  '--foundation': '255, 255, 255',
+  '--foundation-2': '245, 245, 245',
+  '--foundation-3': '252, 252, 252',
+  '--foundation-4': '252, 252, 252',
+  '--foundation-5': '252, 252, 252',
   /* for hover/focus states */
-  '--foundation-focus': '#dbeafe',
+  '--foundation-focus': '219, 234, 254',
   /* for disabled backgrounds */
-  '--foundation-disabled': '#e5e5e5',
+  '--foundation-disabled': '229, 229, 229',
 
   /* default foreground color */
-  '--foreground': '#1A1A1A',
+  '--foreground': '26, 26, 26',
   /* dimmer foreground color, e.g. caption text */
-  '--foreground-2': '#626263',
-  '--foreground-3': '#7C7C7D',
+  '--foreground-2': '98, 98, 99',
+  '--foreground-3': '124, 124, 125',
   /* foreground color when put on top of a primary colored background */
-  '--foreground-on-primary': '#fff',
-  '--foreground-disabled': '#1A1A1A50',
+  '--foreground-on-primary': '255, 255, 255',
+  '--foreground-disabled': '26, 26, 26',
 
   /* primary color */
-  '--primary': '#136CFF',
+  '--primary': '19, 108, 255',
   /* focused primary color */
-  '--primary-focus': '#0057E5',
+  '--primary-focus': '0, 87, 229',
   /* muted primary color */
-  '--primary-muted': '#EDEDED',
+  '--primary-muted': '237, 237, 237',
 
   /* outline variations */
-  '--outline-1': '#276FE5',
-  '--outline-2': '#DFDFDF',
-  '--outline-3': '#E2E8F0',
-  '--outline-4': '#4B40C9',
-  '--outline-5': '#C4C4C4',
+  '--outline-1': '39, 111, 229',
+  '--outline-2': '223, 223, 223',
+  '--outline-3': '226, 232, 240',
+  '--outline-4': '75, 64, 201',
+  '--outline-5': '196, 196, 196',
 
   /* highlight variations */
-  '--highlight-1': '#F4F4F4',
-  '--highlight-2': '#F2F2F2',
-  '--highlight-3': '#EDEDED',
+  '--highlight-1': '244, 244, 244',
+  '--highlight-2': '242, 242, 242',
+  '--highlight-3': '237, 237, 237',
 
   /* success variations */
-  '--success': '#34D399',
-  '--success-lighter': '#53EDB5',
-  '--success-lightest': '#EEFEF8',
-  '--success-darker': '#1CBA80',
+  '--success': '52, 211, 153',
+  '--success-lighter': '83, 237, 181',
+  '--success-lightest': '238, 254, 248',
+  '--success-darker': '28, 186, 128',
 
   /* warning variations */
-  '--warning': '#FBBF24',
-  '--warning-lighter': '#FFD770',
-  '--warning-lightest': '#FEF9EE',
-  '--warning-darker': '#E0AB20',
+  '--warning': '251, 191, 36',
+  '--warning-lighter': '255, 215, 112',
+  '--warning-lightest': '254, 249, 238',
+  '--warning-darker': '224, 171, 32',
 
   /* info variations */
-  '--info': '#B8C0CC',
-  '--info-lighter': '#E0ECFF',
-  '--info-lightest': '#EEEEFE',
-  '--info-darker': '#6B7D99',
+  '--info': '184, 192, 204',
+  '--info-lighter': '224, 236, 255',
+  '--info-lightest': '238, 238, 254',
+  '--info-darker': '107, 125, 153',
 
   /* danger variations */
-  '--danger': '#C45959',
-  '--danger-lighter': '#F78888',
-  '--danger-lightest': '#FEEEEE',
-  '--danger-darker': '#913333'
+  '--danger': '196, 89, 89',
+  '--danger-lighter': '247, 136, 136',
+  '--danger-lightest': '254, 238, 238',
+  '--danger-darker': '145, 51, 51'
 }
 
 export const darkThemeVariables = {
   /* used only as the page background */
-  '--foundation-page': '#101012',
+  '--foundation-page': '16, 16, 18',
   /* used as the background for any elements that sit on the page */
-  '--foundation': '#15161C',
-  '--foundation-2': '#191A22',
-  '--foundation-3': '#52525b',
-  '--foundation-4': '#71717a',
-  '--foundation-5': '#a1a1aa',
+  '--foundation': '21, 22, 28',
+  '--foundation-2': '25, 26, 34',
+  '--foundation-3': '82, 82, 91',
+  '--foundation-4': '113, 113, 122',
+  '--foundation-5': '161, 161, 170',
   /* for hover/focus states */
-  '--foundation-focus': '#52525b',
+  '--foundation-focus': '82, 82, 91',
   /* for disabled backgrounds */
-  '--foundation-disabled': '#3c3c3d',
+  '--foundation-disabled': '60, 60, 61',
 
   /* default foreground color */
-  '--foreground': '#FFFFFF',
+  '--foreground': '255, 255, 255',
   /* dimmer foreground color, e.g. caption text */
-  '--foreground-2': '#B0B1B5',
-  '--foreground-3': '#7E7F82',
-  '--foreground-on-primary': '#FFFFFF',
-  '--foreground-disabled': '#FFFFFF50',
+  '--foreground-2': '176, 177, 181',
+  '--foreground-3': '126, 127, 130',
+  '--foreground-on-primary': '255, 255, 255',
+  '--foreground-disabled': '255, 255, 255',
 
   /* primary color */
-  '--primary': '#136CFF',
+  '--primary': '19, 108, 255',
   /* focused primary color */
-  '--primary-focus': '#0057E5',
+  '--primary-focus': '0, 87, 229',
   /* muted primary color */
-  '--primary-muted': '#292B39',
+  '--primary-muted': '41, 43, 57',
 
   /* outline variations */
-  '--outline-1': '#276FE5',
-  '--outline-2': '#2E313F',
-  '--outline-3': '#282833',
-  '--outline-4': '#4B40C9',
-  '--outline-5': '#434559',
+  '--outline-1': '39, 111, 229',
+  '--outline-2': '46, 49, 63',
+  '--outline-3': '40, 40, 51',
+  '--outline-4': '75, 64, 201',
+  '--outline-5': '67, 69, 89',
 
   /* highlight variations */
-  '--highlight-1': '#22242E',
-  '--highlight-2': '#292B39',
-  '--highlight-3': '#323445',
+  '--highlight-1': '34, 36, 46',
+  '--highlight-2': '41, 43, 57',
+  '--highlight-3': '50, 52, 69',
 
   /* success variations */
-  '--success': '#34D399',
-  '--success-lighter': '#53EDB5',
-  '--success-lightest': '#072C1F',
-  '--success-darker': '#1CBA80',
+  '--success': '52, 211, 153',
+  '--success-lighter': '83, 237, 181',
+  '--success-lightest': '7, 44, 31',
+  '--success-darker': '28, 186, 128',
 
   /* warning variations */
-  '--warning': '#FBBF24',
-  '--warning-lighter': '#FFD770',
-  '--warning-lightest': '#302303',
-  '--warning-darker': '#E0AB20',
+  '--warning': '251, 191, 36',
+  '--warning-lighter': '255, 215, 112',
+  '--warning-lightest': '48, 35, 3',
+  '--warning-darker': '224, 171, 32',
 
   /* info variations */
-  '--info': '#B8C0CC',
-  '--info-lighter': '#E0ECFF',
-  '--info-lightest': '#030330',
-  '--info-darker': '#6B7D99',
+  '--info': '184, 192, 204',
+  '--info-lighter': '224, 236, 255',
+  '--info-lightest': '3, 3, 48',
+  '--info-darker': '107, 125, 153',
 
   /* danger variations */
-  '--danger': '#F87171',
-  '--danger-lighter': '#FF8F8F',
-  '--danger-lightest': '#300303',
-  '--danger-darker': '#AB3E3E'
+  '--danger': '248, 113, 113',
+  '--danger-lighter': '255, 143, 143',
+  '--danger-lightest': '48, 3, 3',
+  '--danger-darker': '171, 62, 62'
 }
 
 const plugin = buildPlugin(function ({ addComponents, addBase }) {
