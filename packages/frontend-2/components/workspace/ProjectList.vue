@@ -94,11 +94,9 @@ import { usePaginatedQuery } from '~/lib/common/composables/graphql'
 import { graphql } from '~~/lib/common/generated/gql'
 import type { WorkspaceProjectsQueryQueryVariables } from '~~/lib/common/generated/gql/graphql'
 import { workspaceRoute } from '~/lib/common/helpers/route'
-// import { useWorkspacesMixpanel } from '~/lib/workspaces/composables/mixpanel'
 import { useBillingActions } from '~/lib/billing/composables/actions'
 import { useWorkspacesWizard } from '~/lib/workspaces/composables/wizard'
 import type { WorkspaceWizardState } from '~/lib/workspaces/helpers/types'
-// import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 
 graphql(`
   fragment WorkspaceProjectList_Workspace on Workspace {
@@ -131,9 +129,7 @@ graphql(`
   }
 `)
 
-// const { activeUser } = useActiveUser()
 const { validateCheckoutSession } = useBillingActions()
-// const { workspaceMixpanelUpdateGroup } = useWorkspacesMixpanel()
 const areQueriesLoading = useQueryLoading()
 const route = useRoute()
 const {
@@ -236,10 +232,6 @@ onResult((queryResult) => {
   }
 
   if (queryResult.data?.workspaceBySlug) {
-    // workspaceMixpanelUpdateGroup(
-    //   queryResult.data.workspaceBySlug,
-    //   activeUser.value?.email
-    // )
     useHeadSafe({
       title: queryResult.data.workspaceBySlug.name
     })
