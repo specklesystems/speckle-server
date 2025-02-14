@@ -5,7 +5,7 @@ import {
   startAutomateFunctionCreatorAuthFactory
 } from '@/modules/automate/services/functionManagement'
 import { getGenericRedis } from '@/modules/shared/redis/redis'
-import { corsMiddleware } from '@/modules/core/configs/cors'
+import { corsMiddlewareAllowingAllOrigins } from '@/modules/core/configs/cors'
 import { validateScope, validateServerRoleBuilderFactory } from '@/modules/shared/authz'
 import { authMiddlewareCreator } from '@/modules/shared/middleware'
 import { getRolesFactory } from '@/modules/shared/repositories/roles'
@@ -19,7 +19,7 @@ export default (app: Application) => {
   app.get(
     '/api/automate/auth/githubapp',
     sessionMiddlewareFactory(),
-    corsMiddleware(),
+    corsMiddlewareAllowingAllOrigins(),
     authMiddlewareCreator([
       validateServerRoleBuilderFactory({
         getRoles: getRolesFactory({ db })
@@ -46,7 +46,7 @@ export default (app: Application) => {
   app.get(
     '/api/automate/ghAuthComplete',
     sessionMiddlewareFactory(),
-    corsMiddleware(),
+    corsMiddlewareAllowingAllOrigins(),
     authMiddlewareCreator([
       validateServerRoleBuilderFactory({
         getRoles: getRolesFactory({ db })

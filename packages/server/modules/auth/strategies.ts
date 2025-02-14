@@ -12,6 +12,8 @@ import {
   sessionMiddlewareFactory
 } from '@/modules/auth/middleware'
 import { LegacyGetUser } from '@/modules/core/domain/users/operations'
+import { handleErrors } from '@/modules/shared/helpers/expressHelper'
+import { PassportAuthError } from '@/modules/shared/errors/middleware'
 
 const setupStrategiesFactory =
   (deps: {
@@ -29,7 +31,13 @@ const setupStrategiesFactory =
       done(null, user as AuthStrategyPassportUser)
     )
 
-    app.use(passport.initialize())
+    app.use(
+      handleErrors({
+        handler: passport.initialize(),
+        verbPhraseForErrorMessage: 'authentication via passport strategy',
+        defaultErrorType: PassportAuthError
+      })
+    )
 
     const sessionMiddleware = sessionMiddlewareFactory()
     const moveAuthParamsToSessionMiddleware = moveAuthParamsToSessionMiddlewareFactory()

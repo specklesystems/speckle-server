@@ -17,56 +17,64 @@ import {
 import { finalizePasswordResetFactory } from '@/modules/pwdreset/services/finalize'
 import { requestPasswordRecoveryFactory } from '@/modules/pwdreset/services/request'
 import { BadRequestError } from '@/modules/shared/errors'
-import { ensureError } from '@speckle/shared'
-import { Express } from 'express'
+import { handleErrors } from '@/modules/shared/helpers/expressHelper'
+import type { Express } from 'express'
+import {
+  InvalidPasswordRecoveryRequestError,
+  PasswordRecoveryFinalizationError
+} from '@/modules/pwdreset/errors'
 
 export default function (app: Express) {
   const getUserByEmail = getUserByEmailFactory({ db })
 
   // sends a password recovery email.
-  app.post('/auth/pwdreset/request', async (req, res) => {
-    try {
-      const requestPasswordRecovery = requestPasswordRecoveryFactory({
-        getUserByEmail,
-        getPendingToken: getPendingTokenFactory({ db }),
-        createToken: createTokenFactory({ db }),
-        getServerInfo: getServerInfoFactory({ db }),
-        renderEmail,
-        sendEmail
-      })
+  app.post(
+    '/auth/pwdreset/request',
+    handleErrors({
+      handler: async (req, res) => {
+        const requestPasswordRecovery = requestPasswordRecoveryFactory({
+          getUserByEmail,
+          getPendingToken: getPendingTokenFactory({ db }),
+          createToken: createTokenFactory({ db }),
+          getServerInfo: getServerInfoFactory({ db }),
+          renderEmail,
+          sendEmail
+        })
 
-      const email = req.body.email
-      await requestPasswordRecovery(email)
+        const email = req.body.email
+        await requestPasswordRecovery(email)
 
-      return res.status(200).send('Password reset email sent.')
-    } catch (e: unknown) {
-      req.log.info({ err: e }, 'Error while requesting password recovery.')
-      res.status(400).send(ensureError(e).message)
-    }
-  })
+        return res.status(200).send('Password reset email sent.')
+      },
+      verbPhraseForErrorMessage: 'requesting password recovery',
+      defaultErrorType: InvalidPasswordRecoveryRequestError
+    })
+  )
 
   // Finalizes password recovery.
-  app.post('/auth/pwdreset/finalize', async (req, res) => {
-    try {
-      const finalizePasswordReset = finalizePasswordResetFactory({
-        getUserByEmail,
-        getPendingToken: getPendingTokenFactory({ db }),
-        deleteTokens: deleteTokensFactory({ db }),
-        updateUserPassword: changePasswordFactory({
-          getUser: getUserFactory({ db }),
-          updateUser: updateUserFactory({ db })
-        }),
-        deleteExistingAuthTokens: deleteExistingAuthTokensFactory({ db })
-      })
+  app.post(
+    '/auth/pwdreset/finalize',
+    handleErrors({
+      handler: async (req, res) => {
+        const finalizePasswordReset = finalizePasswordResetFactory({
+          getUserByEmail,
+          getPendingToken: getPendingTokenFactory({ db }),
+          deleteTokens: deleteTokensFactory({ db }),
+          updateUserPassword: changePasswordFactory({
+            getUser: getUserFactory({ db }),
+            updateUser: updateUserFactory({ db })
+          }),
+          deleteExistingAuthTokens: deleteExistingAuthTokensFactory({ db })
+        })
 
-      if (!req.body.tokenId || !req.body.password)
-        throw new BadRequestError('Invalid request.')
-      await finalizePasswordReset(req.body.tokenId, req.body.password)
+        if (!req.body.tokenId || !req.body.password)
+          throw new BadRequestError('Invalid request.')
+        await finalizePasswordReset(req.body.tokenId, req.body.password)
 
-      return res.status(200).send('Password reset. Please log in.')
-    } catch (e: unknown) {
-      req.log.info({ err: e }, 'Error while finalizing password recovery.')
-      res.status(400).send(ensureError(e).message)
-    }
-  })
+        return res.status(200).send('Password reset. Please log in.')
+      },
+      verbPhraseForErrorMessage: 'finalizing password recovery',
+      defaultErrorType: PasswordRecoveryFinalizationError
+    })
+  )
 }

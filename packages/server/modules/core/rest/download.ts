@@ -1,5 +1,5 @@
 import zlib from 'zlib'
-import { corsMiddleware } from '@/modules/core/configs/cors'
+import { corsMiddlewareAllowingAllOrigins } from '@/modules/core/configs/cors'
 
 import { SpeckleObjectsStream } from '@/modules/core/rest/speckleObjectsStream'
 import { pipeline, PassThrough } from 'stream'
@@ -22,122 +22,130 @@ export default (app: express.Express) => {
     authorizeResolver
   })
 
-  app.options('/objects/:streamId/:objectId', corsMiddleware())
+  app.options('/objects/:streamId/:objectId', corsMiddlewareAllowingAllOrigins())
 
-  app.get('/objects/:streamId/:objectId', corsMiddleware(), async (req, res) => {
-    const boundLogger = (req.log || logger).child({
-      requestId: req.id,
-      userId: req.context.userId || '-',
-      streamId: req.params.streamId,
-      objectId: req.params.objectId
-    })
-    const hasStreamAccess = await validatePermissionsReadStream(
-      req.params.streamId,
-      req
-    )
-    if (!hasStreamAccess.result) {
-      return res.status(hasStreamAccess.status).end()
-    }
-    const projectDb = await getProjectDbClient({ projectId: req.params.streamId })
-    const getObject = getFormattedObjectFactory({ db: projectDb })
-    const getObjectChildrenStream = getObjectChildrenStreamFactory({ db: projectDb })
-
-    // Populate first object (the "commit")
-    const obj = await getObject({
-      streamId: req.params.streamId,
-      objectId: req.params.objectId
-    })
-
-    if (!obj) {
-      return res.status(404).send('Failed to find object.')
-    }
-
-    const simpleText = req.headers.accept === 'text/plain'
-
-    res.writeHead(200, {
-      'Content-Encoding': 'gzip',
-      'Content-Type': simpleText ? 'text/plain; charset=UTF-8' : 'application/json'
-    })
-
-    const dbStream = await getObjectChildrenStream({
-      streamId: req.params.streamId,
-      objectId: req.params.objectId
-    })
-
-    // https://knexjs.org/faq/recipes.html#manually-closing-streams
-    // https://github.com/knex/knex/issues/2324
-    const responseCloseHandler = () => {
-      dbStream.end()
-      dbStream.destroy()
-    }
-
-    dbStream.on('close', () => {
-      res.removeListener('close', responseCloseHandler)
-    })
-    res.on('close', responseCloseHandler)
-
-    const speckleObjStream = new SpeckleObjectsStream(simpleText)
-    const gzipStream = zlib.createGzip()
-
-    speckleObjStream.write(obj)
-
-    pipeline(
-      dbStream,
-      speckleObjStream,
-      gzipStream,
-      new PassThrough({ highWaterMark: 16384 * 31 }),
-      res,
-      (err) => {
-        if (err) {
-          switch (err.code) {
-            case 'ERR_STREAM_PREMATURE_CLOSE':
-              boundLogger.info({ err }, 'Client closed connection early')
-              break
-            default:
-              boundLogger.error({ err }, 'Error downloading object from stream')
-              break
-          }
-        } else {
-          boundLogger.info(
-            { megaBytesWritten: gzipStream.bytesWritten / 1000000 },
-            'Downloaded object (size: {megaBytesWritten} MB)'
-          )
-        }
+  app.get(
+    '/objects/:streamId/:objectId',
+    corsMiddlewareAllowingAllOrigins(),
+    async (req, res) => {
+      const boundLogger = (req.log || logger).child({
+        requestId: req.id,
+        userId: req.context.userId || '-',
+        streamId: req.params.streamId,
+        objectId: req.params.objectId
+      })
+      const hasStreamAccess = await validatePermissionsReadStream(
+        req.params.streamId,
+        req
+      )
+      if (!hasStreamAccess.result) {
+        return res.status(hasStreamAccess.status).end()
       }
-    )
-  })
+      const projectDb = await getProjectDbClient({ projectId: req.params.streamId })
+      const getObject = getFormattedObjectFactory({ db: projectDb })
+      const getObjectChildrenStream = getObjectChildrenStreamFactory({ db: projectDb })
 
-  app.options('/objects/:streamId/:objectId/single', corsMiddleware())
-  app.get('/objects/:streamId/:objectId/single', corsMiddleware(), async (req, res) => {
-    const boundLogger = (req.log || logger).child({
-      requestId: req.id,
-      userId: req.context.userId || '-',
-      streamId: req.params.streamId,
-      objectId: req.params.objectId
-    })
-    const hasStreamAccess = await validatePermissionsReadStream(
-      req.params.streamId,
-      req
-    )
-    if (!hasStreamAccess.result) {
-      return res.status(hasStreamAccess.status).end()
+      // Populate first object (the "commit")
+      const obj = await getObject({
+        streamId: req.params.streamId,
+        objectId: req.params.objectId
+      })
+
+      if (!obj) {
+        return res.status(404).send('Failed to find object.')
+      }
+
+      const simpleText = req.headers.accept === 'text/plain'
+
+      res.writeHead(200, {
+        'Content-Encoding': 'gzip',
+        'Content-Type': simpleText ? 'text/plain; charset=UTF-8' : 'application/json'
+      })
+
+      const dbStream = await getObjectChildrenStream({
+        streamId: req.params.streamId,
+        objectId: req.params.objectId
+      })
+
+      // https://knexjs.org/faq/recipes.html#manually-closing-streams
+      // https://github.com/knex/knex/issues/2324
+      const responseCloseHandler = () => {
+        dbStream.end()
+        dbStream.destroy()
+      }
+
+      dbStream.on('close', () => {
+        res.removeListener('close', responseCloseHandler)
+      })
+      res.on('close', responseCloseHandler)
+
+      const speckleObjStream = new SpeckleObjectsStream(simpleText)
+      const gzipStream = zlib.createGzip()
+
+      speckleObjStream.write(obj)
+
+      pipeline(
+        dbStream,
+        speckleObjStream,
+        gzipStream,
+        new PassThrough({ highWaterMark: 16384 * 31 }),
+        res,
+        (err) => {
+          if (err) {
+            switch (err.code) {
+              case 'ERR_STREAM_PREMATURE_CLOSE':
+                boundLogger.info({ err }, 'Client closed connection early')
+                break
+              default:
+                boundLogger.error({ err }, 'Error downloading object from stream')
+                break
+            }
+          } else {
+            boundLogger.info(
+              { megaBytesWritten: gzipStream.bytesWritten / 1000000 },
+              'Downloaded object (size: {megaBytesWritten} MB)'
+            )
+          }
+        }
+      )
     }
+  )
 
-    const projectDb = await getProjectDbClient({ projectId: req.params.streamId })
-    const getObject = getFormattedObjectFactory({ db: projectDb })
+  app.options('/objects/:streamId/:objectId/single', corsMiddlewareAllowingAllOrigins())
+  app.get(
+    '/objects/:streamId/:objectId/single',
+    corsMiddlewareAllowingAllOrigins(),
+    async (req, res) => {
+      const boundLogger = (req.log || logger).child({
+        requestId: req.id,
+        userId: req.context.userId || '-',
+        streamId: req.params.streamId,
+        objectId: req.params.objectId
+      })
+      const hasStreamAccess = await validatePermissionsReadStream(
+        req.params.streamId,
+        req
+      )
+      if (!hasStreamAccess.result) {
+        return res.status(hasStreamAccess.status).end()
+      }
 
-    const obj = await getObject({
-      streamId: req.params.streamId,
-      objectId: req.params.objectId
-    })
+      const projectDb = await getProjectDbClient({ projectId: req.params.streamId })
+      const getObject = getFormattedObjectFactory({ db: projectDb })
 
-    if (!obj) {
-      boundLogger.warn('Failed to find object.')
-      return res.status(404).send('Failed to find object.')
+      const obj = await getObject({
+        streamId: req.params.streamId,
+        objectId: req.params.objectId
+      })
+
+      if (!obj) {
+        boundLogger.warn('Failed to find object.')
+        return res.status(404).send('Failed to find object.')
+      }
+
+      boundLogger.info('Downloaded single object.')
+
+      res.send(obj.data)
     }
-
-    boundLogger.info('Downloaded single object.')
-
-    res.send(obj.data)
-  })
+  )
 }

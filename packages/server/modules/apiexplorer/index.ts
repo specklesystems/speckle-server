@@ -2,6 +2,7 @@ import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import { moduleLogger } from '@/logging/logging'
 import { readFile } from 'fs/promises'
 import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
+import { handleErrors } from '@/modules/shared/helpers/expressHelper'
 
 async function getExplorerHtml() {
   const fileBaseContents = await readFile(
@@ -17,8 +18,13 @@ async function getExplorerHtml() {
 export const init: SpeckleModule['init'] = (app) => {
   moduleLogger.info('💅 Init graphql api explorer module')
 
-  // sweet and simple
-  app.get('/explorer', async (_req, res) => {
-    res.send(await getExplorerHtml())
-  })
+  app.get(
+    '/explorer',
+    handleErrors({
+      handler: async (_req, res) => {
+        res.send(await getExplorerHtml())
+      },
+      verbPhraseForErrorMessage: 'serving the GraphQL explorer'
+    })
+  )
 }

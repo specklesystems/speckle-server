@@ -7,6 +7,7 @@ import { areAllPostgresAlive } from '@/healthchecks/postgres'
 import { Application } from 'express'
 import { knexFreeDbConnectionSamplerFactory } from '@/healthchecks/connectionPool'
 import { getAllRegisteredDbClients } from '@/modules/multiregion/utils/dbSelector'
+import { handleErrors } from '@/modules/shared/helpers/expressHelper'
 
 const knexFreeDbConnectionSamplerLiveness: Record<
   string,
@@ -64,10 +65,16 @@ export const initFactory: () => (
       areAllPostgresAlive,
       getFreeConnectionsCalculators: getKnexFreeDbConnectionSamplerLiveness
     })
-    app.get('/liveness', async (req, res) => {
-      const result = await livenessHandler()
-      res.status(200).json({ status: 'ok', ...result })
-    })
+    app.get(
+      '/liveness',
+      handleErrors({
+        handler: async (req, res) => {
+          const result = await livenessHandler()
+          res.status(200).json({ status: 'ok', ...result })
+        },
+        verbPhraseForErrorMessage: 'checking liveness'
+      })
+    )
 
     const readinessHandler = handleReadinessFactory({
       isRedisAlive,

@@ -2,7 +2,7 @@ import { db } from '@/db/knex'
 import { getAutomationRunLogs } from '@/modules/automate/clients/executionEngine'
 import { ExecutionEngineFailedResponseError } from '@/modules/automate/errors/executionEngine'
 import { getAutomationRunWithTokenFactory } from '@/modules/automate/repositories/automations'
-import { corsMiddleware } from '@/modules/core/configs/cors'
+import { corsMiddlewareAllowingAllOrigins } from '@/modules/core/configs/cors'
 import { getStreamFactory } from '@/modules/core/repositories/streams'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import {
@@ -21,7 +21,7 @@ import { FunctionRunNotFoundError } from '@/modules/automate/errors/runs'
 export default (app: Application) => {
   app.get(
     '/api/v1/projects/:streamId/automations/:automationId/runs/:runId/logs',
-    corsMiddleware(),
+    corsMiddlewareAllowingAllOrigins(),
     authMiddlewareCreator([
       validateServerRoleBuilderFactory({
         getRoles: getRolesFactory({ db })

@@ -41,3 +41,9 @@ export class PassportAuthError extends BaseError {
   static code = 'PASSPORT_AUTH_ERROR'
   static statusCode = 500
 }
+
+export class ExpressSessionError extends BaseError {
+  static defaultMessage = 'Error in Express session middleware'
+  static code = 'EXPRESS_SESSION_ERROR'
+  static statusCode = 500
+}

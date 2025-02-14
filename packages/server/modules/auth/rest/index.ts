@@ -37,6 +37,7 @@ import {
   updateApiTokenFactory
 } from '@/modules/core/repositories/tokens'
 import { getUserRoleFactory } from '@/modules/core/repositories/users'
+import { handleErrors } from '@/modules/shared/helpers/expressHelper'
 
 // TODO: Secure these endpoints!
 export default function (app: Express) {
@@ -44,67 +45,76 @@ export default function (app: Express) {
   Generates an access code for an app.
   TODO: ensure same origin.
    */
-  app.get('/auth/accesscode', async (req, res) => {
-    try {
-      const getApp = getAppFactory({ db })
-      const createAuthorizationCode = createAuthorizationCodeFactory({ db })
-      const validateToken = validateTokenFactory({
-        revokeUserTokenById: revokeUserTokenByIdFactory({ db }),
-        getApiTokenById: getApiTokenByIdFactory({ db }),
-        getTokenAppInfo: getTokenAppInfoFactory({ db }),
-        getTokenScopesById: getTokenScopesByIdFactory({ db }),
-        getUserRole: getUserRoleFactory({ db }),
-        getTokenResourceAccessDefinitionsById:
-          getTokenResourceAccessDefinitionsByIdFactory({ db }),
-        updateApiToken: updateApiTokenFactory({ db })
-      })
+  app.get(
+    '/auth/accesscode',
+    handleErrors({
+      handler: async (req, res, next) => {
+        try {
+          const getApp = getAppFactory({ db })
+          const createAuthorizationCode = createAuthorizationCodeFactory({ db })
+          const validateToken = validateTokenFactory({
+            revokeUserTokenById: revokeUserTokenByIdFactory({ db }),
+            getApiTokenById: getApiTokenByIdFactory({ db }),
+            getTokenAppInfo: getTokenAppInfoFactory({ db }),
+            getTokenScopesById: getTokenScopesByIdFactory({ db }),
+            getUserRole: getUserRoleFactory({ db }),
+            getTokenResourceAccessDefinitionsById:
+              getTokenResourceAccessDefinitionsByIdFactory({ db }),
+            updateApiToken: updateApiTokenFactory({ db })
+          })
 
-      const preventRedirect = !!req.query.preventRedirect
-      const appId = req.query.appId as Optional<string>
-      if (!appId)
-        throw new InvalidAccessCodeRequestError('appId missing from querystring.')
+          const preventRedirect = !!req.query.preventRedirect
+          const appId = req.query.appId as Optional<string>
+          if (!appId)
+            throw new InvalidAccessCodeRequestError('appId missing from querystring.')
 
-      const app = await getApp({ id: appId })
+          const app = await getApp({ id: appId })
 
-      if (!app) throw new InvalidAccessCodeRequestError('App does not exist.')
+          if (!app) throw new InvalidAccessCodeRequestError('App does not exist.')
 
-      const challenge = req.query.challenge as Optional<string>
-      const userToken = req.query.token as Optional<string>
-      if (!challenge) throw new InvalidAccessCodeRequestError('Missing challenge')
-      if (!userToken) throw new InvalidAccessCodeRequestError('Missing token')
+          const challenge = req.query.challenge as Optional<string>
+          const userToken = req.query.token as Optional<string>
+          if (!challenge) throw new InvalidAccessCodeRequestError('Missing challenge')
+          if (!userToken) throw new InvalidAccessCodeRequestError('Missing token')
 
-      // 1. Validate token
-      const tokenValidationResult = await validateToken(userToken)
-      const { valid, scopes, userId } =
-        'scopes' in tokenValidationResult
-          ? tokenValidationResult
-          : { ...tokenValidationResult, scopes: [], userId: null }
-      if (!valid) throw new InvalidAccessCodeRequestError('Invalid token')
+          // 1. Validate token
+          const tokenValidationResult = await validateToken(userToken)
+          const { valid, scopes, userId } =
+            'scopes' in tokenValidationResult
+              ? tokenValidationResult
+              : { ...tokenValidationResult, scopes: [], userId: null }
+          if (!valid) throw new InvalidAccessCodeRequestError('Invalid token')
 
-      // 2. Validate token scopes
-      await validateScopes(scopes, Scopes.Tokens.Write)
+          // 2. Validate token scopes
+          await validateScopes(scopes, Scopes.Tokens.Write)
 
-      const ac = await createAuthorizationCode({ appId, userId, challenge })
+          const ac = await createAuthorizationCode({ appId, userId, challenge })
 
-      const redirectUrl = `${app.redirectUrl}?access_code=${ac}`
-      return preventRedirect
-        ? res.status(200).json({ redirectUrl })
-        : res.redirect(redirectUrl)
-    } catch (err) {
-      if (
-        err instanceof InvalidAccessCodeRequestError ||
-        err instanceof ForbiddenError
-      ) {
-        req.log.info({ err }, 'Invalid access code request error, or Forbidden error.')
-        return res.status(400).send(err.message)
-      } else {
-        req.log.error(err)
-        return res
-          .status(500)
-          .send('Something went wrong while processing your request')
-      }
-    }
-  })
+          const redirectUrl = `${app.redirectUrl}?access_code=${ac}`
+          return preventRedirect
+            ? res.status(200).json({ redirectUrl })
+            : res.redirect(redirectUrl)
+        } catch (err) {
+          if (
+            err instanceof InvalidAccessCodeRequestError ||
+            err instanceof ForbiddenError
+          ) {
+            req.log.info(
+              { err },
+              'Invalid access code request error, or Forbidden error.'
+            )
+            res.status(400).send(err.message)
+            return next(err)
+          } else {
+            req.log.error(err, 'Error while generating access code for an application.')
+            res.status(500).send('Something went wrong while processing your request')
+            return next(err)
+          }
+        }
+      },
+      verbPhraseForErrorMessage: 'generating access code for an application'
+    })
+  )
 
   /*
   Generates a new api token: (1) either via a valid refresh token or (2) via a valid access token

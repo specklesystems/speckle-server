@@ -5,7 +5,7 @@ import './bootstrap'
 import http from 'http'
 import express, { Express } from 'express'
 
-// `express-async-errors` patches express to catch errors in async handlers. no variable needed
+// `express-async-errors` patches Express to catch errors in async handlers. No variable is needed. NB. Largely redundant because of our error handling wrapper `handleErrors`, but retained in case the wrapper is missed.
 import 'express-async-errors'
 import compression from 'compression'
 import cookieParser from 'cookie-parser'
@@ -58,7 +58,7 @@ import { GraphQLContext, Optional } from '@/modules/shared/helpers/typeHelper'
 import { createRateLimiterMiddleware } from '@/modules/core/services/ratelimiter'
 
 import { get, has, isString } from 'lodash'
-import { corsMiddleware } from '@/modules/core/configs/cors'
+import { corsMiddlewareAllowingAllOrigins } from '@/modules/core/configs/cors'
 import {
   authContextMiddleware,
   buildContext,
@@ -92,7 +92,6 @@ import { handleErrors } from '@/modules/shared/helpers/expressHelper'
 import {
   CompressionError,
   CookieParserError,
-  CorsMiddlewareError,
   FrontendProxyError,
   HttpLoggerError
 } from '@/modules/shared/errors/middleware'
@@ -490,13 +489,8 @@ export async function init() {
     )
   }
 
-  app.use(
-    handleErrors({
-      handler: corsMiddleware(),
-      verbPhraseForErrorMessage: 'applying CORS',
-      defaultErrorType: CorsMiddlewareError
-    })
-  )
+  // CORS middleware already has handleErrors applied
+  app.use(corsMiddlewareAllowingAllOrigins())
 
   app.use(
     handleErrors({
