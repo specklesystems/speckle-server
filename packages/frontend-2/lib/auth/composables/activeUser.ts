@@ -27,6 +27,12 @@ export const activeUserQuery = graphql(`
       versions(limit: 0) {
         totalCount
       }
+      workspaces {
+        totalCount
+      }
+      discoverableWorkspaces {
+        id
+      }
     }
   }
 `)

@@ -136,6 +136,7 @@ const documents = {
     "\n  fragment ThreadCommentAttachment on Comment {\n    text {\n      attachments {\n        id\n        fileName\n        fileType\n        fileSize\n      }\n    }\n  }\n": types.ThreadCommentAttachmentFragmentDoc,
     "\n  fragment ViewerCommentsListItem on Comment {\n    id\n    rawText\n    archived\n    author {\n      ...LimitedUserAvatar\n    }\n    createdAt\n    viewedAt\n    replies {\n      totalCount\n      cursor\n      items {\n        ...ViewerCommentsReplyItem\n      }\n    }\n    replyAuthors(limit: 4) {\n      totalCount\n      items {\n        ...FormUsersSelectItem\n      }\n    }\n    resources {\n      resourceId\n      resourceType\n    }\n  }\n": types.ViewerCommentsListItemFragmentDoc,
     "\n  fragment ViewerModelVersionCardItem on Version {\n    id\n    message\n    referencedObject\n    sourceApplication\n    createdAt\n    previewUrl\n    authorUser {\n      ...LimitedUserAvatar\n    }\n  }\n": types.ViewerModelVersionCardItemFragmentDoc,
+    "\n  fragment WorkspaceJoinPage_DiscoverableWorkspaces on User {\n    discoverableWorkspaces {\n      id\n      name\n      logo\n      description\n      slug\n    }\n  }\n": types.WorkspaceJoinPage_DiscoverableWorkspacesFragmentDoc,
     "\n  fragment MoveProjectsDialog_Workspace on Workspace {\n    id\n    ...ProjectsMoveToWorkspaceDialog_Workspace\n    projects {\n      items {\n        id\n        modelCount: models(limit: 0) {\n          totalCount\n        }\n        versions(limit: 0) {\n          totalCount\n        }\n      }\n    }\n  }\n": types.MoveProjectsDialog_WorkspaceFragmentDoc,
     "\n  fragment MoveProjectsDialog_User on User {\n    projects {\n      items {\n        ...ProjectsMoveToWorkspaceDialog_Project\n        role\n        workspace {\n          id\n        }\n      }\n    }\n  }\n": types.MoveProjectsDialog_UserFragmentDoc,
     "\n  fragment WorkspaceProjectList_Workspace on Workspace {\n    id\n    ...WorkspaceBase_Workspace\n    ...WorkspaceTeam_Workspace\n    ...WorkspaceSecurity_Workspace\n    ...BillingAlert_Workspace\n    ...WorkspaceMixpanelUpdateGroup_Workspace\n    ...MoveProjectsDialog_Workspace\n    ...InviteDialogWorkspace_Workspace\n    projects {\n      ...WorkspaceProjectList_ProjectCollection\n    }\n    creationState {\n      completed\n      state\n    }\n    readOnly\n  }\n": types.WorkspaceProjectList_WorkspaceFragmentDoc,
@@ -151,7 +152,7 @@ const documents = {
     "\n  fragment WorkspaceSidebar_Workspace on Workspace {\n    ...WorkspaceDashboardAbout_Workspace\n    ...WorkspaceTeam_Workspace\n    ...WorkspaceSecurity_Workspace\n    slug\n    plan {\n      status\n    }\n  }\n": types.WorkspaceSidebar_WorkspaceFragmentDoc,
     "\n  fragment WorkspaceWizard_Workspace on Workspace {\n    creationState {\n      completed\n      state\n    }\n    name\n    slug\n  }\n": types.WorkspaceWizard_WorkspaceFragmentDoc,
     "\n  fragment WorkspaceWizardStepRegion_ServerInfo on ServerInfo {\n    multiRegion {\n      regions {\n        id\n        ...SettingsWorkspacesRegionsSelect_ServerRegionItem\n      }\n    }\n  }\n": types.WorkspaceWizardStepRegion_ServerInfoFragmentDoc,
-    "\n  query ActiveUserMainMetadata {\n    activeUser {\n      id\n      email\n      emails {\n        id\n        verified\n      }\n      company\n      bio\n      name\n      role\n      avatar\n      isOnboardingFinished\n      createdAt\n      verified\n      notificationPreferences\n      versions(limit: 0) {\n        totalCount\n      }\n    }\n  }\n": types.ActiveUserMainMetadataDocument,
+    "\n  query ActiveUserMainMetadata {\n    activeUser {\n      id\n      email\n      emails {\n        id\n        verified\n      }\n      company\n      bio\n      name\n      role\n      avatar\n      isOnboardingFinished\n      createdAt\n      verified\n      notificationPreferences\n      versions(limit: 0) {\n        totalCount\n      }\n      workspaces {\n        totalCount\n      }\n      discoverableWorkspaces {\n        id\n      }\n    }\n  }\n": types.ActiveUserMainMetadataDocument,
     "\n      mutation CreateOnboardingProject {\n        projectMutations {\n          createForOnboarding {\n            ...ProjectPageProject\n            ...ProjectDashboardItem\n          }\n        }\n      }\n    ": types.CreateOnboardingProjectDocument,
     "\n  mutation FinishOnboarding {\n    activeUserMutations {\n      finishOnboarding\n    }\n  }\n": types.FinishOnboardingDocument,
     "\n  mutation RequestVerificationByEmail($email: String!) {\n    requestVerificationByEmail(email: $email)\n  }\n": types.RequestVerificationByEmailDocument,
@@ -203,7 +204,6 @@ const documents = {
     "\n  query InviteUserSearch($input: UsersRetrievalInput!) {\n    users(input: $input) {\n      items {\n        id\n        name\n        avatar\n      }\n    }\n  }\n": types.InviteUserSearchDocument,
     "\n  mutation CreateNewRegion($input: CreateServerRegionInput!) {\n    serverInfoMutations {\n      multiRegion {\n        create(input: $input) {\n          id\n          ...SettingsServerRegionsAddEditDialog_ServerRegionItem\n          ...SettingsServerRegionsTable_ServerRegionItem\n        }\n      }\n    }\n  }\n": types.CreateNewRegionDocument,
     "\n  mutation UpdateRegion($input: UpdateServerRegionInput!) {\n    serverInfoMutations {\n      multiRegion {\n        update(input: $input) {\n          id\n          ...SettingsServerRegionsAddEditDialog_ServerRegionItem\n          ...SettingsServerRegionsTable_ServerRegionItem\n        }\n      }\n    }\n  }\n": types.UpdateRegionDocument,
-    "\n  query PagesOnboardingDiscoverableWorkspaces_ActiveUser {\n    activeUser {\n      id\n      ...PagesOnboarding_DiscoverableWorkspaces\n    }\n  }\n": types.PagesOnboardingDiscoverableWorkspaces_ActiveUserDocument,
     "\n  fragment ProjectPageTeamInternals_Project on Project {\n    id\n    role\n    invitedTeam {\n      id\n      title\n      role\n      inviteId\n      user {\n        role\n        ...LimitedUserAvatar\n      }\n    }\n    team {\n      role\n      user {\n        id\n        role\n        ...LimitedUserAvatar\n      }\n    }\n  }\n": types.ProjectPageTeamInternals_ProjectFragmentDoc,
     "\n  fragment ProjectPageTeamInternals_Workspace on Workspace {\n    id\n    team {\n      items {\n        id\n        role\n        user {\n          id\n        }\n      }\n    }\n  }\n": types.ProjectPageTeamInternals_WorkspaceFragmentDoc,
     "\n  fragment ProjectDashboardItemNoModels on Project {\n    id\n    name\n    createdAt\n    updatedAt\n    role\n    team {\n      id\n      user {\n        id\n        name\n        avatar\n      }\n    }\n    ...ProjectPageModelsCardProject\n  }\n": types.ProjectDashboardItemNoModelsFragmentDoc,
@@ -375,6 +375,7 @@ const documents = {
     "\n  query WorkspaceSsoCheck($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      ...WorkspaceSsoStatus_Workspace\n    }\n    activeUser {\n      ...WorkspaceSsoStatus_User\n    }\n  }\n": types.WorkspaceSsoCheckDocument,
     "\n  query WorkspaceWizard($workspaceId: String!) {\n    workspace(id: $workspaceId) {\n      id\n      ...WorkspaceWizard_Workspace\n    }\n  }\n": types.WorkspaceWizardDocument,
     "\n  query WorkspaceWizardRegion {\n    serverInfo {\n      ...WorkspaceWizardStepRegion_ServerInfo\n    }\n  }\n": types.WorkspaceWizardRegionDocument,
+    "\n  query DiscoverableWorkspaces_ActiveUser {\n    activeUser {\n      id\n      ...WorkspaceJoinPage_DiscoverableWorkspaces\n    }\n  }\n": types.DiscoverableWorkspaces_ActiveUserDocument,
     "\n  subscription onWorkspaceUpdated(\n    $workspaceId: String\n    $workspaceSlug: String\n    $invitesFilter: PendingWorkspaceCollaboratorsFilter\n  ) {\n    workspaceUpdated(workspaceId: $workspaceId, workspaceSlug: $workspaceSlug) {\n      id\n      workspace {\n        id\n        ...WorkspaceProjectList_Workspace\n      }\n    }\n  }\n": types.OnWorkspaceUpdatedDocument,
     "\n  query LegacyBranchRedirectMetadata($streamId: String!, $branchName: String!) {\n    project(id: $streamId) {\n      modelByName(name: $branchName) {\n        id\n      }\n    }\n  }\n": types.LegacyBranchRedirectMetadataDocument,
     "\n  query LegacyViewerCommitRedirectMetadata($streamId: String!, $commitId: String!) {\n    project(id: $streamId) {\n      version(id: $commitId) {\n        id\n        model {\n          id\n        }\n      }\n    }\n  }\n": types.LegacyViewerCommitRedirectMetadataDocument,
@@ -384,7 +385,6 @@ const documents = {
     "\n  fragment AutomateFunctionPage_AutomateFunction on AutomateFunction {\n    id\n    name\n    description\n    logo\n    supportedSourceApps\n    tags\n    ...AutomateFunctionPageHeader_Function\n    ...AutomateFunctionPageInfo_AutomateFunction\n    ...AutomateAutomationCreateDialog_AutomateFunction\n    creator {\n      id\n    }\n  }\n": types.AutomateFunctionPage_AutomateFunctionFragmentDoc,
     "\n  query AutomateFunctionPage($functionId: ID!) {\n    automateFunction(id: $functionId) {\n      ...AutomateFunctionPage_AutomateFunction\n    }\n    activeUser {\n      workspaces {\n        items {\n          ...AutomateFunctionCreateDialog_Workspace\n          ...AutomateFunctionEditDialog_Workspace\n        }\n      }\n    }\n  }\n": types.AutomateFunctionPageDocument,
     "\n  query AutomateFunctionPageWorkspace($workspaceId: String!) {\n    workspace(id: $workspaceId) {\n      id\n      ...AutomateFunctionPageHeader_Workspace\n    }\n  }\n": types.AutomateFunctionPageWorkspaceDocument,
-    "\n  fragment PagesOnboarding_DiscoverableWorkspaces on User {\n    discoverableWorkspaces {\n      id\n      name\n      logo\n      description\n      slug\n    }\n  }\n": types.PagesOnboarding_DiscoverableWorkspacesFragmentDoc,
     "\n  fragment ProjectPageProject on Project {\n    id\n    createdAt\n    modelCount: models(limit: 0) {\n      totalCount\n    }\n    commentThreadCount: commentThreads(limit: 0) {\n      totalCount\n    }\n    workspace {\n      id\n    }\n    ...ProjectPageTeamInternals_Project\n    ...ProjectPageProjectHeader\n    ...ProjectPageTeamDialog\n    ...ProjectsMoveToWorkspaceDialog_Project\n  }\n": types.ProjectPageProjectFragmentDoc,
     "\n  fragment ProjectPageAutomationPage_Automation on Automation {\n    id\n    ...ProjectPageAutomationHeader_Automation\n    ...ProjectPageAutomationFunctions_Automation\n    ...ProjectPageAutomationRuns_Automation\n  }\n": types.ProjectPageAutomationPage_AutomationFragmentDoc,
     "\n  fragment ProjectPageAutomationPage_Project on Project {\n    id\n    workspaceId\n    ...ProjectPageAutomationHeader_Project\n  }\n": types.ProjectPageAutomationPage_ProjectFragmentDoc,
@@ -905,6 +905,10 @@ export function graphql(source: "\n  fragment ViewerModelVersionCardItem on Vers
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
+export function graphql(source: "\n  fragment WorkspaceJoinPage_DiscoverableWorkspaces on User {\n    discoverableWorkspaces {\n      id\n      name\n      logo\n      description\n      slug\n    }\n  }\n"): (typeof documents)["\n  fragment WorkspaceJoinPage_DiscoverableWorkspaces on User {\n    discoverableWorkspaces {\n      id\n      name\n      logo\n      description\n      slug\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
 export function graphql(source: "\n  fragment MoveProjectsDialog_Workspace on Workspace {\n    id\n    ...ProjectsMoveToWorkspaceDialog_Workspace\n    projects {\n      items {\n        id\n        modelCount: models(limit: 0) {\n          totalCount\n        }\n        versions(limit: 0) {\n          totalCount\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  fragment MoveProjectsDialog_Workspace on Workspace {\n    id\n    ...ProjectsMoveToWorkspaceDialog_Workspace\n    projects {\n      items {\n        id\n        modelCount: models(limit: 0) {\n          totalCount\n        }\n        versions(limit: 0) {\n          totalCount\n        }\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
@@ -965,7 +969,7 @@ export function graphql(source: "\n  fragment WorkspaceWizardStepRegion_ServerIn
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query ActiveUserMainMetadata {\n    activeUser {\n      id\n      email\n      emails {\n        id\n        verified\n      }\n      company\n      bio\n      name\n      role\n      avatar\n      isOnboardingFinished\n      createdAt\n      verified\n      notificationPreferences\n      versions(limit: 0) {\n        totalCount\n      }\n    }\n  }\n"): (typeof documents)["\n  query ActiveUserMainMetadata {\n    activeUser {\n      id\n      email\n      emails {\n        id\n        verified\n      }\n      company\n      bio\n      name\n      role\n      avatar\n      isOnboardingFinished\n      createdAt\n      verified\n      notificationPreferences\n      versions(limit: 0) {\n        totalCount\n      }\n    }\n  }\n"];
+export function graphql(source: "\n  query ActiveUserMainMetadata {\n    activeUser {\n      id\n      email\n      emails {\n        id\n        verified\n      }\n      company\n      bio\n      name\n      role\n      avatar\n      isOnboardingFinished\n      createdAt\n      verified\n      notificationPreferences\n      versions(limit: 0) {\n        totalCount\n      }\n      workspaces {\n        totalCount\n      }\n      discoverableWorkspaces {\n        id\n      }\n    }\n  }\n"): (typeof documents)["\n  query ActiveUserMainMetadata {\n    activeUser {\n      id\n      email\n      emails {\n        id\n        verified\n      }\n      company\n      bio\n      name\n      role\n      avatar\n      isOnboardingFinished\n      createdAt\n      verified\n      notificationPreferences\n      versions(limit: 0) {\n        totalCount\n      }\n      workspaces {\n        totalCount\n      }\n      discoverableWorkspaces {\n        id\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -1170,10 +1174,6 @@ export function graphql(source: "\n  mutation CreateNewRegion($input: CreateServ
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  mutation UpdateRegion($input: UpdateServerRegionInput!) {\n    serverInfoMutations {\n      multiRegion {\n        update(input: $input) {\n          id\n          ...SettingsServerRegionsAddEditDialog_ServerRegionItem\n          ...SettingsServerRegionsTable_ServerRegionItem\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation UpdateRegion($input: UpdateServerRegionInput!) {\n    serverInfoMutations {\n      multiRegion {\n        update(input: $input) {\n          id\n          ...SettingsServerRegionsAddEditDialog_ServerRegionItem\n          ...SettingsServerRegionsTable_ServerRegionItem\n        }\n      }\n    }\n  }\n"];
-/**
- * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function graphql(source: "\n  query PagesOnboardingDiscoverableWorkspaces_ActiveUser {\n    activeUser {\n      id\n      ...PagesOnboarding_DiscoverableWorkspaces\n    }\n  }\n"): (typeof documents)["\n  query PagesOnboardingDiscoverableWorkspaces_ActiveUser {\n    activeUser {\n      id\n      ...PagesOnboarding_DiscoverableWorkspaces\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -1861,6 +1861,10 @@ export function graphql(source: "\n  query WorkspaceWizardRegion {\n    serverIn
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
+export function graphql(source: "\n  query DiscoverableWorkspaces_ActiveUser {\n    activeUser {\n      id\n      ...WorkspaceJoinPage_DiscoverableWorkspaces\n    }\n  }\n"): (typeof documents)["\n  query DiscoverableWorkspaces_ActiveUser {\n    activeUser {\n      id\n      ...WorkspaceJoinPage_DiscoverableWorkspaces\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
 export function graphql(source: "\n  subscription onWorkspaceUpdated(\n    $workspaceId: String\n    $workspaceSlug: String\n    $invitesFilter: PendingWorkspaceCollaboratorsFilter\n  ) {\n    workspaceUpdated(workspaceId: $workspaceId, workspaceSlug: $workspaceSlug) {\n      id\n      workspace {\n        id\n        ...WorkspaceProjectList_Workspace\n      }\n    }\n  }\n"): (typeof documents)["\n  subscription onWorkspaceUpdated(\n    $workspaceId: String\n    $workspaceSlug: String\n    $invitesFilter: PendingWorkspaceCollaboratorsFilter\n  ) {\n    workspaceUpdated(workspaceId: $workspaceId, workspaceSlug: $workspaceSlug) {\n      id\n      workspace {\n        id\n        ...WorkspaceProjectList_Workspace\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
@@ -1894,10 +1898,6 @@ export function graphql(source: "\n  query AutomateFunctionPage($functionId: ID!
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  query AutomateFunctionPageWorkspace($workspaceId: String!) {\n    workspace(id: $workspaceId) {\n      id\n      ...AutomateFunctionPageHeader_Workspace\n    }\n  }\n"): (typeof documents)["\n  query AutomateFunctionPageWorkspace($workspaceId: String!) {\n    workspace(id: $workspaceId) {\n      id\n      ...AutomateFunctionPageHeader_Workspace\n    }\n  }\n"];
-/**
- * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function graphql(source: "\n  fragment PagesOnboarding_DiscoverableWorkspaces on User {\n    discoverableWorkspaces {\n      id\n      name\n      logo\n      description\n      slug\n    }\n  }\n"): (typeof documents)["\n  fragment PagesOnboarding_DiscoverableWorkspaces on User {\n    discoverableWorkspaces {\n      id\n      name\n      logo\n      description\n      slug\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

@@ -125,6 +125,8 @@ export const workspaceSsoRoute = (slug: string) => `/workspaces/${slug}/sso`
 export const workspaceCreateRoute = (slug?: string) =>
   slug ? `/workspaces/${slug}/create` : '/workspaces/create'
 
+export const workspaceJoinRoute = '/workspaces/join'
+
 export const workspaceFunctionsRoute = (slug: string) => `/workspaces/${slug}/functions`
 
 const buildNavigationComposable = (route: string) => () => {
