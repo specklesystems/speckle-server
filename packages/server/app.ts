@@ -24,7 +24,7 @@ import {
   sanitizeHeaders
 } from '@/logging/expressLogging'
 
-import { errorLoggingMiddleware } from '@/logging/errorLogging'
+import { errorMetricsMiddleware } from '@/logging/errorMetrics'
 import prometheusClient from 'prom-client'
 
 import { ApolloServer } from '@apollo/server'
@@ -460,8 +460,6 @@ export async function init() {
   // Trust X-Forwarded-* headers (for https protocol detection)
   app.enable('trust proxy')
 
-  // Log errors
-  app.use(errorLoggingMiddleware)
   app.use(createRateLimiterMiddleware()) // Rate limiting by IP address for all users
   app.use(authContextMiddleware)
   app.use(
@@ -514,6 +512,7 @@ export async function init() {
   })
 
   // At the very end adding default error handler middleware
+  app.use(errorMetricsMiddleware)
   app.use(defaultErrorHandler)
 
   return {
