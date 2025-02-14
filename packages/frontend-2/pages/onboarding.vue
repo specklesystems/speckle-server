@@ -51,17 +51,16 @@ import { useQuery } from '@vue/apollo-composable'
 import { graphql } from '~/lib/common/generated/gql'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { CommonLoadingIcon } from '@speckle/ui-components'
+import { PagesOnboardingDiscoverableWorkspaces } from '~/lib/onboarding/graphql/queries'
 
-const discoverableWorkspacesQuery = graphql(`
-  query DiscoverableWorkspaces {
-    activeUser {
-      discoverableWorkspaces {
-        id
-        name
-        logo
-        description
-        slug
-      }
+graphql(`
+  fragment PagesOnboarding_DiscoverableWorkspaces on User {
+    discoverableWorkspaces {
+      id
+      name
+      logo
+      description
+      slug
     }
   }
 `)
@@ -81,7 +80,7 @@ const { setUserOnboardingComplete, createOnboardingProject } = useProcessOnboard
 const { activeUser } = useActiveUser()
 const { logout } = useAuthManager()
 
-const { result, loading } = useQuery(discoverableWorkspacesQuery)
+const { result, loading } = useQuery(PagesOnboardingDiscoverableWorkspaces)
 
 const currentStage = ref<'join' | 'questions'>('join')
 
