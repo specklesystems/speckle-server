@@ -545,6 +545,7 @@ export type CreateTestAutomationRunDeps = {
   upsertAutomationRun: UpsertAutomationRun
   validateStreamAccess: ValidateStreamAccess
   getBranchLatestCommits: GetBranchLatestCommits
+  emitEvent: EventBusEmit
 } & CreateAutomationRunDataDeps &
   ComposeTriggerDataDeps
 
@@ -560,7 +561,8 @@ export const createTestAutomationRunFactory =
       getFullAutomationRevisionMetadata,
       upsertAutomationRun,
       validateStreamAccess,
-      getBranchLatestCommits
+      getBranchLatestCommits,
+      emitEvent
     } = deps
     const { projectId, automationId, userId } = params
 
@@ -623,6 +625,17 @@ export const createTestAutomationRunFactory =
       automationWithRevision: automationRevisionRecord
     })
     await upsertAutomationRun(automationRunRecord)
+
+    await emitEvent({
+      eventName: 'automationRuns.created',
+      payload: {
+        automation: automationRevisionRecord,
+        run: automationRunRecord,
+        source: RunTriggerSource.Test,
+        manifests: triggerManifests,
+        triggerType: VersionCreationTriggerType
+      }
+    })
 
     // TODO: Test functions only support one function run per automation
     const functionRunId = automationRunRecord.functionRuns[0].id
