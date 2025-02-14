@@ -29,3 +29,15 @@ export class PrometheusExpressMetricsError extends BaseError {
   static code = 'PROMETHEUS_EXPRESS_METRICS_ERROR'
   static statusCode = 500
 }
+
+export class FrontendProxyError extends BaseError {
+  static defaultMessage = 'Error in frontend proxy middleware'
+  static code = 'FRONTEND_PROXY_ERROR'
+  static statusCode = 500
+}
+
+export class PassportAuthError extends BaseError {
+  static defaultMessage = 'Error in Passport authentication middleware'
+  static code = 'PASSPORT_AUTH_ERROR'
+  static statusCode = 500
+}

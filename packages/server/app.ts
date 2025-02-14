@@ -1,6 +1,6 @@
 /* eslint-disable camelcase */
-/* eslint-disable  no-restricted-imports */
 /* istanbul ignore file */
+/* eslint-disable-next-line  no-restricted-imports */
 import './bootstrap'
 import http from 'http'
 import express, { Express } from 'express'
@@ -8,7 +8,7 @@ import express, { Express } from 'express'
 // `express-async-errors` patches express to catch errors in async handlers. no variable needed
 import 'express-async-errors'
 import compression from 'compression'
-
+import cookieParser from 'cookie-parser'
 import { createTerminus } from '@godaddy/terminus'
 import Metrics from '@/logging'
 import {
@@ -88,15 +88,15 @@ import {
   initiateRequestContextMiddleware
 } from '@/logging/requestContext'
 import { randomUUID } from 'crypto'
-import cookieParser from 'cookie-parser'
-import { handleMiddlewareErrors } from './modules/shared/middleware/middlewareWrapper'
+import { handleErrors } from '@/modules/shared/helpers/expressHelper'
 import {
   CompressionError,
   CookieParserError,
   CorsMiddlewareError,
+  FrontendProxyError,
   HttpLoggerError
-} from './modules/shared/errors/middleware'
-import { UserInputError } from './modules/core/errors/userinput'
+} from '@/modules/shared/errors/middleware'
+import { UserInputError } from '@/modules/core/errors/userinput'
 
 const GRAPHQL_PATH = '/graphql'
 
@@ -444,20 +444,20 @@ export async function init() {
   await migrateDbToLatest({ region: 'main', db: knex })
 
   app.use(
-    handleMiddlewareErrors({
+    handleErrors({
       handler: cookieParser(),
       verbPhraseForErrorMessage: 'parsing cookies',
-      expectedErrorType: CookieParserError
+      defaultErrorType: CookieParserError
     })
   )
   app.use(
-    handleMiddlewareErrors({
+    handleErrors({
       handler: DetermineRequestIdMiddleware,
       verbPhraseForErrorMessage: 'determining request id'
     })
   )
   app.use(
-    handleMiddlewareErrors({
+    handleErrors({
       handler: initiateRequestContextMiddleware,
       verbPhraseForErrorMessage: 'initiating request context'
     })
@@ -467,56 +467,56 @@ export async function init() {
   }
 
   app.use(
-    handleMiddlewareErrors({
+    handleErrors({
       handler: determineClientIpAddressMiddleware,
       verbPhraseForErrorMessage: 'determining client IP address'
     })
   )
   app.use(
-    handleMiddlewareErrors({
+    handleErrors({
       handler: LoggingExpressMiddleware,
       verbPhraseForErrorMessage: 'logging http request',
-      expectedErrorType: HttpLoggerError
+      defaultErrorType: HttpLoggerError
     })
   )
 
   if (isCompressionEnabled()) {
     app.use(
-      handleMiddlewareErrors({
+      handleErrors({
         handler: compression(),
         verbPhraseForErrorMessage: 'compressing response',
-        expectedErrorType: CompressionError
+        defaultErrorType: CompressionError
       })
     )
   }
 
   app.use(
-    handleMiddlewareErrors({
+    handleErrors({
       handler: corsMiddleware(),
       verbPhraseForErrorMessage: 'applying CORS',
-      expectedErrorType: CorsMiddlewareError
+      defaultErrorType: CorsMiddlewareError
     })
   )
 
   app.use(
-    handleMiddlewareErrors({
+    handleErrors({
       // there are some paths that need the raw body, not a parsed body
       handler: requestBodyParsingMiddlewareFactory({
         maximumRequestBodySizeMb: getMaximumRequestBodySizeMB()
       }),
       verbPhraseForErrorMessage: 'parsing request body',
-      expectedErrorType: UserInputError
+      defaultErrorType: UserInputError
     })
   )
 
   app.use(
-    handleMiddlewareErrors({
+    handleErrors({
       handler: express.urlencoded({
         limit: `${getFileSizeLimitMB()}mb`,
         extended: false
       }),
       verbPhraseForErrorMessage: 'parsing urlencoded body',
-      expectedErrorType: UserInputError
+      defaultErrorType: UserInputError
     })
   )
 
@@ -524,26 +524,26 @@ export async function init() {
   app.enable('trust proxy')
 
   app.use(
-    handleMiddlewareErrors({
+    handleErrors({
       handler: createRateLimiterMiddleware(), // Rate limiting by IP address for all users
       verbPhraseForErrorMessage: 'rate limiting'
     })
   )
   app.use(
-    handleMiddlewareErrors({
+    handleErrors({
       handler: authContextMiddleware,
       verbPhraseForErrorMessage: 'authenticating user'
     })
   )
   app.use(
-    handleMiddlewareErrors({
+    handleErrors({
       handler: setContentSecurityPolicyHeader,
       verbPhraseForErrorMessage: 'setting content security policy'
     })
   )
   if (enableMixpanel())
     app.use(
-      handleMiddlewareErrors({
+      handleErrors({
         handler: mixpanelTrackerHelperMiddlewareFactory({
           getUser: getUserFactory({ db })
         }),
@@ -633,15 +633,18 @@ export async function startHttp(params: {
 
   if (customPortOverride || customPortOverride === 0) port = customPortOverride
   if (shouldUseFrontendProxy()) {
-    // app.use('/', frontendProxy)
-    app.use(await createFrontendProxy())
+    app.use(
+      handleErrors({
+        handler: await createFrontendProxy(),
+        verbPhraseForErrorMessage: 'proxying frontend',
+        defaultErrorType: FrontendProxyError
+      })
+    )
 
     startupLogger.info('✨ Proxying frontend (dev mode):')
     startupLogger.info(`👉 main application: http://127.0.0.1:${port}/`)
-  }
-
-  // Production mode
-  else {
+  } else {
+    // Production mode
     bindAddress = getBindAddress('0.0.0.0')
   }
 
