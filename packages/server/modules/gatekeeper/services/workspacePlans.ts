@@ -33,10 +33,6 @@ export const updateWorkspacePlanFactory =
         switch (status) {
           case 'trial':
           case 'expired':
-            await upsertWorkspacePlan({
-              workspacePlan: { workspaceId, status, name, createdAt }
-            })
-            break
           case 'valid':
           case 'cancelationScheduled':
           case 'canceled':
