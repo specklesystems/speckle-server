@@ -124,7 +124,11 @@ const localStrategyBuilderFactory =
 
           // 3. Check for blocked email domains
           const emailDomain = req.body.email?.split('@')[1]?.toLowerCase()
-          if (emailDomain && blockedDomains.includes(emailDomain)) {
+          if (
+            !req.session.token &&
+            emailDomain &&
+            blockedDomains.includes(emailDomain)
+          ) {
             throw new BlockedEmailDomainError()
           }
 

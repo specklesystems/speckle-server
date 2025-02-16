@@ -102,7 +102,9 @@ const loading = ref(false)
 const password = ref('')
 const email = ref('')
 
-const emailRules = [isEmail, doesNotContainBlockedDomain]
+const emailRules = computed(() =>
+  inviteToken.value ? [isEmail] : [isEmail, doesNotContainBlockedDomain]
+)
 const nameRules = [isRequired]
 
 const isEmailDisabled = computed(() => !!props.inviteEmail?.length || loading.value)
