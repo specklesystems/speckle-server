@@ -82,10 +82,11 @@ export const getRegionKeyFromStorageFactory =
 export const upsertProjectRegionKeyFactory =
   ({ db }: { db: Knex }): StorageRegionKeyUpdate =>
   async ({ projectId, regionKey }) => {
-    return await tables
+    const projects = await tables
       .streams(db)
       .where({ id: projectId })
       .update({ regionKey })
       .returning('*')
-      .first()
+
+    return projects.at(0)
   }
