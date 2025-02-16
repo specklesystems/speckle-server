@@ -57,7 +57,10 @@ export const buildValidationErrorRedirectUrl = (
   error: string,
   oidcProvider?: OidcProvider
 ) => {
-  const url = new URL(`/workspaces/${workspaceSlug}`, getFrontendOrigin())
+  const url = new URL(
+    `/settings/workspaces/${workspaceSlug}/security`,
+    getFrontendOrigin()
+  )
 
   url.searchParams.set('ssoValidationSuccess', 'false')
   url.searchParams.set('ssoError', error)
