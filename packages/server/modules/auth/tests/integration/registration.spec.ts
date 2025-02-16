@@ -96,6 +96,16 @@ describe('Server registration', () => {
       expect(user.emails.every((e) => !e.verified)).to.be.true
     })
 
+    it('rejects registration with blocked email domain', async () => {
+      const params = generateRegistrationParams()
+      params.user.email = 'test@gmail.com'
+
+      const error = await expectToThrow(() => restApi.register(params))
+      expect(error.message).to.contain(
+        'Please use your work email instead of a personal email address'
+      )
+    })
+
     it('fails without challenge', async () => {
       const params = generateRegistrationParams()
       params.challenge = ''
