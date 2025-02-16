@@ -28,7 +28,10 @@ import {
   assignWorkspaceRegionFactory,
   getAvailableRegionsFactory
 } from '@/modules/workspaces/services/regions'
-import { updateProjectRegionFactory } from '@/modules/workspaces/services/projectRegions'
+import {
+  updateProjectRegionFactory,
+  validateProjectRegionCopyFactory
+} from '@/modules/workspaces/services/projectRegions'
 import { Roles } from '@speckle/shared'
 import { getProjectFactory } from '@/modules/core/repositories/projects'
 import { getStreamBranchCountFactory } from '@/modules/core/repositories/branches'
@@ -106,14 +109,6 @@ export default {
 
       const updateProjectRegion = updateProjectRegionFactory({
         getProject: getProjectFactory({ db: sourceDb }),
-        countProjectModels: getStreamBranchCountFactory({ db: sourceDb }),
-        countProjectVersions: getStreamCommitCountFactory({ db: sourceDb }),
-        countProjectObjects: getStreamObjectCountFactory({ db: sourceDb }),
-        countProjectAutomations: getProjectAutomationsTotalCountFactory({
-          db: sourceDb
-        }),
-        countProjectComments: getStreamCommentCountFactory({ db: sourceDb }),
-        getProjectWebhooks: getStreamWebhooksFactory({ db: sourceDb }),
         getAvailableRegions: getAvailableRegionsFactory({
           getRegions: getRegionsFactory({ db }),
           canWorkspaceUseRegions: canWorkspaceUseRegionsFactory({
@@ -133,6 +128,16 @@ export default {
           sourceObjectStorage,
           targetDb,
           targetObjectStorage
+        }),
+        validateProjectRegionCopy: validateProjectRegionCopyFactory({
+          countProjectModels: getStreamBranchCountFactory({ db: sourceDb }),
+          countProjectVersions: getStreamCommitCountFactory({ db: sourceDb }),
+          countProjectObjects: getStreamObjectCountFactory({ db: sourceDb }),
+          countProjectAutomations: getProjectAutomationsTotalCountFactory({
+            db: sourceDb
+          }),
+          countProjectComments: getStreamCommentCountFactory({ db: sourceDb }),
+          getProjectWebhooks: getStreamWebhooksFactory({ db: sourceDb })
         })
       })
 

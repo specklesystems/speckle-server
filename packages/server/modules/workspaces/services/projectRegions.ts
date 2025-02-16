@@ -16,19 +16,14 @@ import {
   CopyProjectWebhooks,
   CopyWorkspace,
   GetAvailableRegions,
-  UpdateProjectRegion
+  UpdateProjectRegion,
+  ValidateProjectRegionCopy
 } from '@/modules/workspaces/domain/operations'
 import { ProjectRegionAssignmentError } from '@/modules/workspaces/errors/regions'
 
 export const updateProjectRegionFactory =
   (deps: {
     getProject: GetProject
-    countProjectModels: GetStreamBranchCount
-    countProjectVersions: GetStreamCommitCount
-    countProjectObjects: GetStreamObjectCount
-    countProjectAutomations: GetProjectAutomationCount
-    countProjectComments: GetStreamCommentCount
-    getProjectWebhooks: GetStreamWebhooks
     getAvailableRegions: GetAvailableRegions
     copyWorkspace: CopyWorkspace
     copyProjects: CopyProjects
@@ -39,6 +34,7 @@ export const updateProjectRegionFactory =
     copyProjectComments: CopyProjectComments
     copyProjectWebhooks: CopyProjectWebhooks
     copyProjectBlobs: CopyProjectBlobs
+    validateProjectRegionCopy: ValidateProjectRegionCopy
   }): UpdateProjectRegion =>
   async (params) => {
     const { projectId, regionKey } = params
@@ -90,10 +86,43 @@ export const updateProjectRegionFactory =
     // Move webhooks
     const copiedWebhookCount = await deps.copyProjectWebhooks({ projectIds })
 
-    // TODO: Move file blobs
+    // Move file blobs
     await deps.copyProjectBlobs({ projectIds })
 
-    // TODO: Validate state after move captures latest state of project
+    // Validate state after move captures latest state of project
+    const isValidCopy = await deps.validateProjectRegionCopy({
+      projectId,
+      copiedRowCount: {
+        models: copiedModelCount[projectId],
+        versions: copiedVersionCount[projectId],
+        objects: copiedObjectCount[projectId],
+        automations: copiedAutomationCount[projectId],
+        comments: copiedCommentCount[projectId],
+        webhooks: copiedWebhookCount[projectId]
+      }
+    })
+
+    if (!isValidCopy) {
+      // TODO: Move failed or source project added data while changing regions. Retry move.
+      throw new ProjectRegionAssignmentError(
+        'Missing data from source project in target region copy after move.'
+      )
+    }
+
+    // TODO: Update project region in db
+    return { ...project, regionKey }
+  }
+
+export const validateProjectRegionCopyFactory =
+  (deps: {
+    countProjectModels: GetStreamBranchCount
+    countProjectVersions: GetStreamCommitCount
+    countProjectObjects: GetStreamObjectCount
+    countProjectAutomations: GetProjectAutomationCount
+    countProjectComments: GetStreamCommentCount
+    getProjectWebhooks: GetStreamWebhooks
+  }): ValidateProjectRegionCopy =>
+  async ({ projectId, copiedRowCount }): Promise<boolean> => {
     const sourceProjectModelCount = await deps.countProjectModels(projectId)
     const sourceProjectVersionCount = await deps.countProjectVersions(projectId)
     const sourceProjectObjectCount = await deps.countProjectObjects({
@@ -106,21 +135,13 @@ export const updateProjectRegionFactory =
     const sourceProjectWebhooks = await deps.getProjectWebhooks({ streamId: projectId })
 
     const tests = [
-      copiedModelCount[projectId] === sourceProjectModelCount,
-      copiedVersionCount[projectId] === sourceProjectVersionCount,
-      copiedObjectCount[projectId] === sourceProjectObjectCount,
-      copiedAutomationCount[projectId] === sourceProjectAutomationCount,
-      copiedCommentCount[projectId] === sourceProjectCommentCount,
-      copiedWebhookCount[projectId] === sourceProjectWebhooks.length
+      copiedRowCount.models === sourceProjectModelCount,
+      copiedRowCount.versions === sourceProjectVersionCount,
+      copiedRowCount.objects === sourceProjectObjectCount,
+      copiedRowCount.automations === sourceProjectAutomationCount,
+      copiedRowCount.comments === sourceProjectCommentCount,
+      copiedRowCount.webhooks === sourceProjectWebhooks.length
     ]
 
-    if (!tests.every((test) => !!test)) {
-      // TODO: Move failed or source project added data while changing regions. Retry move.
-      throw new ProjectRegionAssignmentError(
-        'Missing data from source project in target region copy after move.'
-      )
-    }
-
-    // TODO: Update project region in db
-    return { ...project, regionKey }
+    return tests.every((test) => !!test)
   }
