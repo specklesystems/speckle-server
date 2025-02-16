@@ -105,7 +105,8 @@ export const onModelVersionCreateFactory =
               projectId,
               modelId: triggeringId,
               triggerType
-            }
+            },
+            source: RunTriggerSource.Automatic
           })
         } catch (error) {
           // TODO: this error should be persisted for automation status display somehow
@@ -226,7 +227,7 @@ export const triggerAutomationRevisionRunFactory =
   async <M extends BaseTriggerManifest = BaseTriggerManifest>(params: {
     revisionId: string
     manifest: M
-    source?: RunTriggerSource
+    source: RunTriggerSource
   }): Promise<{ automationRunId: string }> => {
     const {
       automateRunTrigger,
@@ -237,7 +238,7 @@ export const triggerAutomationRevisionRunFactory =
       getFullAutomationRevisionMetadata,
       getCommit
     } = deps
-    const { revisionId, manifest, source = RunTriggerSource.Automatic } = params
+    const { revisionId, manifest, source } = params
 
     if (!isVersionCreatedTriggerManifest(manifest)) {
       throw new AutomateInvalidTriggerError(
