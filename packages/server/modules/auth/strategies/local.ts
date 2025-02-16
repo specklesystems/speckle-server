@@ -5,7 +5,12 @@ import {
 } from '@/modules/core/services/ratelimiter'
 import { getIpFromRequest } from '@/modules/shared/utils/ip'
 import { InviteNotFoundError } from '@/modules/serverinvites/errors'
-import { UserInputError, PasswordTooShortError } from '@/modules/core/errors/userinput'
+import {
+  UserInputError,
+  PasswordTooShortError,
+  BlockedEmailDomainError
+} from '@/modules/core/errors/userinput'
+import { blockedDomains } from '@speckle/shared'
 
 import { ServerInviteResourceType } from '@/modules/serverinvites/domain/constants'
 import { getResourceTypeRole } from '@/modules/serverinvites/helpers/core'
@@ -117,10 +122,17 @@ const localStrategyBuilderFactory =
             invite = await deps.validateServerInvite(user.email, req.session.token)
           }
 
-          // 3. at this point we know, that we have one of these cases:
+          // 3. Check for blocked email domains
+          const emailDomain = req.body.email?.split('@')[1]?.toLowerCase()
+          if (emailDomain && blockedDomains.includes(emailDomain)) {
+            throw new BlockedEmailDomainError()
+          }
+
+          // 4.. at this point we know, that we have one of these cases:
           //    * the server is invite only and the user has a valid invite
           //    * the server public and the user has a valid invite
           //    * the server public and the user doesn't have an invite
+          //    * the email domain is not blocked
           // so we go ahead and register the user
           const userId = await deps.createUser({
             ...user,
@@ -155,6 +167,7 @@ const localStrategyBuilderFactory =
             case PasswordTooShortError:
             case UserInputError:
             case InviteNotFoundError:
+            case BlockedEmailDomainError:
               req.log.info({ err }, 'Error while registering.')
               return res.status(400).send({ err: e.message })
             default:
