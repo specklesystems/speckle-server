@@ -36,7 +36,8 @@ import { calculateSubscriptionSeats } from '@/modules/gatekeeper/domain/billing'
 import { WorkspacePaymentMethod } from '@/test/graphql/generated/graphql'
 import { LogicError } from '@/modules/shared/errors'
 
-const { FF_GATEKEEPER_MODULE_ENABLED } = getFeatureFlags()
+const { FF_GATEKEEPER_MODULE_ENABLED, FF_BILLING_INTEGRATION_ENABLED } =
+  getFeatureFlags()
 
 const getWorkspacePlan = getWorkspacePlanFactory({ db })
 
@@ -116,6 +117,7 @@ export = FF_GATEKEEPER_MODULE_ENABLED
           return hasAccess
         },
         readOnly: async (parent) => {
+          if (!FF_BILLING_INTEGRATION_ENABLED) return false
           return await isWorkspaceReadOnlyFactory({ getWorkspacePlan })({
             workspaceId: parent.id
           })

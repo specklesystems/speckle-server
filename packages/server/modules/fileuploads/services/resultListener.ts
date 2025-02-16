@@ -11,6 +11,9 @@ import {
 import { GetFileInfo } from '@/modules/fileuploads/domain/operations'
 import { GetStreamBranchByName } from '@/modules/core/domain/branches/operations'
 import { AddBranchCreatedActivity } from '@/modules/activitystream/domain/operations'
+import { fileUploadsLogger as logger } from '@/logging/logging'
+import { FileUploadConvertedStatus } from '@/modules/fileuploads/helpers/types'
+import { FileUploadInternalError } from '@/modules/fileuploads/helpers/errors'
 
 type OnFileImportProcessedDeps = {
   getFileInfo: GetFileInfo
@@ -44,6 +47,19 @@ export const onFileImportProcessedFactory =
       isNewBranch ? deps.getStreamBranchByName(streamId, branchName) : null
     ])
     if (!upload) return
+
+    if (upload.convertedStatus === FileUploadConvertedStatus.Error) {
+      //TODO in future differentiate between internal server errors and user errors
+      const err = new FileUploadInternalError(
+        upload.convertedMessage || 'Unknown error while uploading file.'
+      )
+      logger.error(
+        { err, fileImportDetails: upload },
+        'Error while processing file upload.'
+      )
+    } else {
+      logger.info({ fileImportDetails: upload }, 'File upload processed.')
+    }
 
     if (isNewBranch) {
       await publish(FileImportSubscriptions.ProjectPendingModelsUpdated, {

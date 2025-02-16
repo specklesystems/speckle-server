@@ -13,7 +13,6 @@ import { Commit } from '@/modules/core/domain/commits/types'
 import { Stream } from '@/modules/core/domain/streams/types'
 import {
   BranchCommitRecord,
-  ObjectChildrenClosureRecord,
   ObjectRecord,
   CommitRecord,
   StreamCommitRecord,
@@ -44,8 +43,6 @@ const tables = {
   streamFavorites: (db: Knex) => db<StreamFavoriteRecord>(StreamFavorites.name),
   streamsMeta: (db: Knex) => db(StreamsMeta.name),
   objects: (db: Knex) => db<ObjectRecord>(Objects.name),
-  objectClosures: (db: Knex) =>
-    db<ObjectChildrenClosureRecord>('object_children_closure'),
   objectPreviews: (db: Knex) => db<ObjectPreview>('object_preview')
 }
 
@@ -69,7 +66,7 @@ export const copyWorkspaceFactory =
       .workspaces(deps.targetDb)
       .insert(workspace)
       .onConflict(Workspaces.withoutTablePrefix.col.id)
-      .merge(Workspaces.withoutTablePrefix.cols as (keyof Workspace)[])
+      .ignore()
 
     return workspaceId
   }

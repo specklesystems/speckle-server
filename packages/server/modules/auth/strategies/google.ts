@@ -147,11 +147,12 @@ const googleStrategyBuilderFactory =
             case UserInputError:
             case InviteNotFoundError:
               logger.info({ err: e })
-              break
+              return done(null, false, { message: e.message })
             default:
               logger.error({ err: e })
+              // Only when the server is operating abnormally should err be set, to indicate an internal error.
+              return done(e, false, { message: e.message })
           }
-          return done(e, false, { message: e.message })
         }
       }
     )
