@@ -4,6 +4,7 @@ import { GetStreamBranchCount } from '@/modules/core/domain/branches/operations'
 import { GetStreamCommitCount } from '@/modules/core/domain/commits/operations'
 import { GetStreamObjectCount } from '@/modules/core/domain/objects/operations'
 import { GetProject } from '@/modules/core/domain/projects/operations'
+import { UpdateProjectRegionKey } from '@/modules/multiregion/services/projectRegion'
 import { GetStreamWebhooks } from '@/modules/webhooks/domain/operations'
 import {
   CopyProjectAutomations,
@@ -35,6 +36,7 @@ export const updateProjectRegionFactory =
     copyProjectWebhooks: CopyProjectWebhooks
     copyProjectBlobs: CopyProjectBlobs
     validateProjectRegionCopy: ValidateProjectRegionCopy
+    updateProjectRegionKey: UpdateProjectRegionKey
   }): UpdateProjectRegion =>
   async (params) => {
     const { projectId, regionKey } = params
@@ -89,7 +91,7 @@ export const updateProjectRegionFactory =
     // Move file blobs
     await deps.copyProjectBlobs({ projectIds })
 
-    // Validate state after move captures latest state of project
+    // Validate that state after move captures latest state of project
     const isValidCopy = await deps.validateProjectRegionCopy({
       projectId,
       copiedRowCount: {
@@ -109,8 +111,8 @@ export const updateProjectRegionFactory =
       )
     }
 
-    // TODO: Update project region in db
-    return { ...project, regionKey }
+    // Update project region in db and update relevant caches
+    return await deps.updateProjectRegionKey({ projectId, regionKey })
   }
 
 export const validateProjectRegionCopyFactory =

@@ -47,6 +47,13 @@ import {
   getProjectObjectStorage,
   getRegionObjectStorage
 } from '@/modules/multiregion/utils/blobStorageSelector'
+import { updateProjectRegionKeyFactory } from '@/modules/multiregion/services/projectRegion'
+import {
+  deleteRegionKeyFromCacheFactory,
+  upsertProjectRegionKeyFactory
+} from '@/modules/multiregion/repositories/projectRegion'
+import { getGenericRedis } from '@/modules/shared/redis/redis'
+import { getEventBus } from '@/modules/shared/services/eventBus'
 
 const { FF_MOVE_PROJECT_REGION_ENABLED } = getFeatureFlags()
 
@@ -138,6 +145,13 @@ export default {
           }),
           countProjectComments: getStreamCommentCountFactory({ db: sourceDb }),
           getProjectWebhooks: getStreamWebhooksFactory({ db: sourceDb })
+        }),
+        updateProjectRegionKey: updateProjectRegionKeyFactory({
+          upsertProjectRegionKey: upsertProjectRegionKeyFactory({ db }),
+          cacheDeleteRegionKey: deleteRegionKeyFromCacheFactory({
+            redis: getGenericRedis()
+          }),
+          emitEvent: getEventBus().emit
         })
       })
 
