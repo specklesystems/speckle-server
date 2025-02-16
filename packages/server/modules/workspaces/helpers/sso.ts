@@ -11,7 +11,6 @@ import {
 import { OidcProvider } from '@/modules/workspaces/domain/sso/types'
 import { Request } from 'express'
 import { omit } from 'lodash'
-import { UserinfoResponse } from 'openid-client'
 
 declare module 'express-session' {
   interface SessionData {
@@ -120,10 +119,4 @@ export const getSsoSessionState = (
   }
 
   return state
-}
-
-export const getEmailFromOidcProfile = (
-  profile: UserinfoResponse<{ email: string } | { upn: string }>
-): string => {
-  return 'upn' in profile ? profile.upn : profile.email
 }

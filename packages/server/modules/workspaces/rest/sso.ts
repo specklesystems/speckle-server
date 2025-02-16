@@ -28,6 +28,7 @@ import { getGenericRedis } from '@/modules/shared/redis/redis'
 import { generators, UserinfoResponse } from 'openid-client'
 import { oidcProvider } from '@/modules/workspaces/domain/sso/models'
 import {
+  OidcProfile,
   OidcProvider,
   SsoSessionState,
   WorkspaceSsoProvider
@@ -79,7 +80,11 @@ import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repos
 import { sendEmail } from '@/modules/emails/services/sending'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { createAuthorizationCodeFactory } from '@/modules/auth/repositories/apps'
-import { getDefaultSsoSessionExpirationDate } from '@/modules/workspaces/domain/sso/logic'
+import {
+  getDefaultSsoSessionExpirationDate,
+  isValidOidcProfile,
+  getEmailFromOidcProfile
+} from '@/modules/workspaces/domain/sso/logic'
 import {
   GetWorkspaceBySlug,
   GetWorkspaceRoles
@@ -99,8 +104,7 @@ import {
   getEncryptor,
   getSsoSessionState,
   getErrorMessage,
-  parseCodeVerifier,
-  getEmailFromOidcProfile
+  parseCodeVerifier
 } from '@/modules/workspaces/helpers/sso'
 import {
   OidcStateInvalidError,
@@ -643,7 +647,7 @@ const getOidcProviderUserDataFactory =
       WorkspaceSsoOidcCallbackRequestQuery
     >,
     provider: OidcProvider
-  ): Promise<UserinfoResponse<{ email: string } | { upn: string }>> => {
+  ): Promise<UserinfoResponse<OidcProfile>> => {
     if (!req.session.ssoNonce) throw new OidcStateInvalidError()
 
     const codeVerifier = await parseCodeVerifier(req)
@@ -659,7 +663,7 @@ const getOidcProviderUserDataFactory =
     if (!oidcProviderUserData) {
       throw new SsoProviderProfileMissingError()
     }
-    if (!oidcProviderUserData.email && !oidcProviderUserData.upn) {
+    if (!isValidOidcProfile(oidcProviderUserData)) {
       req.log.error(
         { providedClaims: Object.keys(oidcProviderUserData) },
         'Missing required properties on OIDC provider.'
@@ -667,14 +671,14 @@ const getOidcProviderUserDataFactory =
       throw new SsoProviderProfileMissingPropertiesError(['email'])
     }
 
-    return oidcProviderUserData as UserinfoResponse<{ email: string } | { upn: string }>
+    return oidcProviderUserData as UserinfoResponse<OidcProfile>
   }
 
 const tryGetSpeckleUserDataFactory =
   ({ findEmail, getUser }: { findEmail: FindEmail; getUser: GetUser }) =>
   async (
     req: Request<WorkspaceSsoAuthRequestParams>,
-    oidcProviderUserData: UserinfoResponse<{ email: string } | { upn: string }>
+    oidcProviderUserData: UserinfoResponse<OidcProfile>
   ): Promise<UserWithOptionalRole | null> => {
     // Get currently signed-in user, if available
     const currentSessionUser = await getUser(req.context.userId ?? '')

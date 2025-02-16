@@ -10,7 +10,8 @@ import {
 import {
   OidcProvider,
   OidcProviderRecord,
-  OidcProviderAttributes
+  OidcProviderAttributes,
+  OidcProfile
 } from '@/modules/workspaces/domain/sso/types'
 import cryptoRandomString from 'crypto-random-string'
 import { UserinfoResponse } from 'openid-client'
@@ -33,8 +34,10 @@ import {
 } from '@/modules/workspaces/errors/sso'
 import { WorkspaceInvalidRoleError } from '@/modules/workspaces/errors/workspace'
 import { LimitedWorkspace } from '@/modules/workspacesCore/domain/types'
-import { isValidSsoSession } from '@/modules/workspaces/domain/sso/logic'
-import { getEmailFromOidcProfile } from '@/modules/workspaces/helpers/sso'
+import {
+  getEmailFromOidcProfile,
+  isValidSsoSession
+} from '@/modules/workspaces/domain/sso/logic'
 
 // this probably should go a lean validation endpoint too
 const validateOidcProviderAttributes = ({
@@ -130,7 +133,7 @@ export const createWorkspaceUserFromSsoProfileFactory =
     deleteInvite: DeleteInvite
   }) =>
   async (args: {
-    ssoProfile: UserinfoResponse<{ email: string } | { upn: string }>
+    ssoProfile: UserinfoResponse<OidcProfile>
     workspaceId: string
   }): Promise<Pick<UserWithOptionalRole, 'id' | 'email'>> => {
     // Check if user has email-based invite to given workspace
@@ -195,13 +198,16 @@ export const linkUserWithSsoProviderFactory =
   }) =>
   async (args: {
     userId: string
-    ssoProfile: UserinfoResponse<{ email: string } | { upn: string }>
+    ssoProfile: UserinfoResponse<OidcProfile>
   }): Promise<void> => {
     // TODO: Chuck's soapbox -
     //
     // Assert link between req.user.id & { providerId: decryptedOidcProvider.id, email: oidcProviderUserData.email }
     // Create link implicitly if req.context.userId exists (user performed SSO flow while signed in)
     // If req.context.userId does not exist, and link does not exist, throw and require user to sign in before SSO
+    //
+    // In addition, investigate using oidcProviderUserData.sub as source of truth here. Some providers appear to allow
+    // `email` fields to change, or do not guarantee they will exist (Entra ID)
 
     // Add oidcProviderUserData.email to req.user.id verified emails, if not already present
     const userEmails = await findEmailsByUserId({ userId: args.userId })
