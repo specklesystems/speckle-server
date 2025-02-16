@@ -56,6 +56,11 @@ const parseFeatureFlags = () => {
       schema: z.boolean(),
       defaults: { production: false, _: false }
     },
+    // Enable to not allow personal emails
+    FF_NO_PERSONAL_EMAILS_ENABLED: {
+      schema: z.boolean(),
+      defaults: { production: false, _: false }
+    },
     // Fixes the streaming of objects by ensuring that the database stream is closed properly
     FF_OBJECTS_STREAMING_FIX: {
       schema: z.boolean(),

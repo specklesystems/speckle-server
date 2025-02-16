@@ -64,4 +64,12 @@ export const useIsBillingIntegrationEnabled = () => {
   return ref(FF_BILLING_INTEGRATION_ENABLED)
 }
 
+export const useIsNoPersonalEmailsEnabled = () => {
+  const {
+    public: { FF_NO_PERSONAL_EMAILS_ENABLED }
+  } = useRuntimeConfig()
+
+  return ref(FF_NO_PERSONAL_EMAILS_ENABLED)
+}
+
 export { useGlobalToast, useActiveUser, usePageQueryStandardFetchPolicy }
