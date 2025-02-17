@@ -52,7 +52,7 @@ ${requester.name} is requesting to join your workspace ${workspace.name}.
 
 const buildEmailTemplateParams = (args: WorkspaceJoinRequestReceivedEmailArgs) => {
   const url = new URL(
-    `workspaces/${args.workspace.slug}`,
+    `settings/workspaces/${args.workspace.slug}/members`,
     getFrontendOrigin()
   ).toString()
   return {

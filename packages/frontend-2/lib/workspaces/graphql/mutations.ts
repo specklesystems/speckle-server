@@ -105,3 +105,19 @@ export const workspaceUpdateDiscoverabilityMutation = graphql(`
     }
   }
 `)
+
+export const approveWorkspaceJoinRequestMutation = graphql(`
+  mutation ApproveWorkspaceJoinRequest($input: ApproveWorkspaceJoinRequestInput!) {
+    workspaceJoinRequestMutations {
+      approve(input: $input)
+    }
+  }
+`)
+
+export const denyWorkspaceJoinRequestMutation = graphql(`
+  mutation DenyWorkspaceJoinRequest($input: DenyWorkspaceJoinRequestInput!) {
+    workspaceJoinRequestMutations {
+      deny(input: $input)
+    }
+  }
+`)

@@ -50,6 +50,9 @@ export const workspaceTeamFragment = graphql(`
         }
       }
     }
+    adminWorkspacesJoinRequests {
+      totalCount
+    }
     ...WorkspaceInvitedTeam_Workspace
   }
 `)

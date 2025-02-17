@@ -49,6 +49,7 @@ import { getObjectFactory } from '@/modules/core/repositories/objects'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import coreModule from '@/modules/core'
 import { getEventBus } from '@/modules/shared/services/eventBus'
+import { StreamNotFoundError } from '@/modules/core/errors/stream'
 
 export = {
   Project: {
@@ -86,7 +87,11 @@ export = {
       const stream = await ctx.loaders
         .forRegion({ db: projectDB })
         .commits.getCommitStream.load(parent.id)
-      const path = `/preview/${stream!.id}/commits/${parent.id}`
+      if (!stream)
+        throw new StreamNotFoundError('Project not found', {
+          info: { streamId: parent.streamId }
+        })
+      const path = `/preview/${stream.id}/commits/${parent.id}`
       return new URL(path, getServerOrigin()).toString()
     }
   },

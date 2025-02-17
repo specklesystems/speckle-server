@@ -378,7 +378,6 @@ const handleGetLimitedWorkspaceRequestFactory =
     const limitedWorkspace = {
       name: workspace.name,
       logo: workspace.logo,
-      defaultLogoIndex: workspace.defaultLogoIndex,
       ssoProviderName: ssoProviderData?.provider?.providerName
     }
 
@@ -660,6 +659,10 @@ const getOidcProviderUserDataFactory =
       throw new SsoProviderProfileMissingError()
     }
     if (!oidcProviderUserData.email) {
+      req.log.error(
+        { providedClaims: Object.keys(oidcProviderUserData) },
+        'Missing required properties on OIDC provider.'
+      )
       throw new SsoProviderProfileMissingPropertiesError(['email'])
     }
 

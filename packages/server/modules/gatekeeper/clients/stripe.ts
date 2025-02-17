@@ -8,7 +8,8 @@ import {
 import {
   WorkspacePlanBillingIntervals,
   WorkspacePricingPlans
-} from '@/modules/gatekeeper/domain/workspacePricing'
+} from '@/modules/gatekeeperCore/domain/billing'
+import { EnvironmentResourceError, LogicError } from '@/modules/shared/errors'
 import { Stripe } from 'stripe'
 
 type GetWorkspacePlanPrice = (args: {
@@ -72,7 +73,8 @@ export const createCheckoutSessionFactory =
       cancel_url
     })
 
-    if (!session.url) throw new Error('Failed to create an active checkout session')
+    if (!session.url)
+      throw new EnvironmentResourceError('Failed to create an active checkout session')
     return {
       id: session.id,
       url: session.url,
@@ -148,7 +150,7 @@ export const parseSubscriptionData = (
           : subscriptionItem.price.product.id
       const quantity = subscriptionItem.quantity
       if (!quantity)
-        throw new Error(
+        throw new LogicError(
           'invalid subscription, we do not support products without quantities'
         )
       return {

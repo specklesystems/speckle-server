@@ -4,7 +4,7 @@ import type {
   InjectableViewerState
 } from '~~/lib/viewer/composables/setup'
 import { CameraEvent, ViewerEvent } from '@speckle/viewer'
-import { debounce, isArray, throttle } from 'lodash-es'
+import { isArray, throttle } from 'lodash-es'
 import { until } from '@vueuse/core'
 import { TimeoutError, timeoutAt } from '@speckle/shared'
 import type { MaybeAsync, Nullable } from '@speckle/shared'
@@ -115,18 +115,13 @@ export function useViewerCameraTracker(
   callback: () => void,
   options?: Partial<{
     throttleWait: number
-    debounceWait: number
     onlyInvokeOnMeaningfulChanges: boolean
   }>
 ): void {
   const {
     viewer: { instance }
   } = useInjectedViewerState()
-  const {
-    throttleWait = 50,
-    debounceWait,
-    onlyInvokeOnMeaningfulChanges
-  } = options || {}
+  const { throttleWait = 50, onlyInvokeOnMeaningfulChanges } = options || {}
 
   const lastPos = ref(null as Nullable<Vector3>)
   const lastTarget = ref(null as Nullable<Vector3>)
@@ -158,9 +153,7 @@ export function useViewerCameraTracker(
     }
   }
 
-  const finalCallback = debounceWait
-    ? debounce(callbackChangeTrackerWrapper, debounceWait)
-    : throttleWait
+  const finalCallback = throttleWait
     ? throttle(callbackChangeTrackerWrapper, throttleWait)
     : callbackChangeTrackerWrapper
 
@@ -197,25 +190,18 @@ export function useViewerCameraControlStartTracker(callback: () => void) {
   return removeListener
 }
 
-export function useViewerCameraRestTracker(
-  callback: () => void,
-  options?: Partial<{ debounceWait: number }>
-) {
+export function useViewerCameraRestTracker(callback: () => void) {
   const {
     viewer: { instance }
   } = useInjectedViewerState()
-  // Might need different event
-  const { debounceWait = 200 } = options || {}
 
-  const finalCallback = debounceWait ? debounce(callback, debounceWait) : callback
   const removeListener = () => {
     const extension = instance.getExtension(CameraController)
-
-    extension.removeListener(CameraEvent.Stationary, finalCallback)
+    extension.removeListener(CameraEvent.Stationary, callback)
   }
 
   onMounted(() => {
-    instance.getExtension(CameraController).on(CameraEvent.Stationary, finalCallback)
+    instance.getExtension(CameraController).on(CameraEvent.Stationary, callback)
   })
 
   onBeforeUnmount(() => {
@@ -259,7 +245,6 @@ export function useSelectionEvents(
   },
   options?: Partial<{
     state: InitialStateWithRequestAndResponse
-    debounceWait: number
   }>
 ) {
   if (import.meta.server) return
@@ -268,43 +253,39 @@ export function useSelectionEvents(
   const {
     viewer: { instance }
   } = state
-  const { debounceWait = 50 } = options || {}
 
-  const debouncedSingleClickCallback = singleClickCallback
-    ? debounce((event: Nullable<SelectionEvent>) => {
+  const handleSingleClick = singleClickCallback
+    ? (event: Nullable<SelectionEvent>) => {
         const firstVisibleSelectionHit = event
           ? getFirstVisibleSelectionHit(event, state)
           : null
         return singleClickCallback(event, { firstVisibleSelectionHit })
-      }, debounceWait)
+      }
     : undefined
-  const debouncedDoubleClickCallback = doubleClickCallback
-    ? debounce((event: Nullable<SelectionEvent>) => {
+  const handleDoubleClick = doubleClickCallback
+    ? (event: Nullable<SelectionEvent>) => {
         const firstVisibleSelectionHit = event
           ? getFirstVisibleSelectionHit(event, state)
           : null
         return doubleClickCallback(event, { firstVisibleSelectionHit })
-      }, debounceWait)
+      }
     : undefined
 
   onMounted(() => {
-    if (debouncedDoubleClickCallback) {
-      instance.on(ViewerEvent.ObjectDoubleClicked, debouncedDoubleClickCallback)
+    if (handleDoubleClick) {
+      instance.on(ViewerEvent.ObjectDoubleClicked, handleDoubleClick)
     }
-    if (debouncedSingleClickCallback) {
-      instance.on(ViewerEvent.ObjectClicked, debouncedSingleClickCallback)
+    if (handleSingleClick) {
+      instance.on(ViewerEvent.ObjectClicked, handleSingleClick)
     }
   })
 
   onBeforeUnmount(() => {
-    if (debouncedDoubleClickCallback) {
-      instance.removeListener(
-        ViewerEvent.ObjectDoubleClicked,
-        debouncedDoubleClickCallback
-      )
+    if (handleDoubleClick) {
+      instance.removeListener(ViewerEvent.ObjectDoubleClicked, handleDoubleClick)
     }
-    if (debouncedSingleClickCallback) {
-      instance.removeListener(ViewerEvent.ObjectClicked, debouncedSingleClickCallback)
+    if (handleSingleClick) {
+      instance.removeListener(ViewerEvent.ObjectClicked, handleSingleClick)
     }
   })
 }

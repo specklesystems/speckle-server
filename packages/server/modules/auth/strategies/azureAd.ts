@@ -31,6 +31,8 @@ import {
   LegacyGetUserByEmail
 } from '@/modules/core/domain/users/operations'
 import { GetServerInfo } from '@/modules/core/domain/server/operations'
+import { EnvironmentResourceError } from '@/modules/shared/errors'
+import { InviteNotFoundError } from '@/modules/serverinvites/errors'
 
 const azureAdStrategyBuilderFactory =
   (deps: {
@@ -103,7 +105,7 @@ const azureAdStrategyBuilderFactory =
           // than to refactor everything
           const profile = req.user as Optional<IProfile>
           if (!profile) {
-            throw new Error('No profile provided by Entra ID')
+            throw new EnvironmentResourceError('No profile provided by Entra ID')
           }
 
           logger = logger.child({ profileId: profile.oid })
@@ -194,6 +196,8 @@ const azureAdStrategyBuilderFactory =
 
           switch (e.constructor) {
             case UserInputError:
+            case UnverifiedEmailSSOLoginError:
+            case InviteNotFoundError:
               logger.info(
                 { e },
                 'User input error during Entra ID authentication callback.'

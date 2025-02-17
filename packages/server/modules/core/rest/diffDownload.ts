@@ -11,6 +11,7 @@ import { authorizeResolver, validateScopes } from '@/modules/shared'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { UserInputError } from '@/modules/core/errors/userinput'
 import { ensureError } from '@speckle/shared'
+import { DatabaseError } from '@/modules/shared/errors'
 
 export default (app: Application) => {
   const validatePermissionsReadStream = validatePermissionsReadStreamFactory({
@@ -26,6 +27,7 @@ export default (app: Application) => {
       userId: req.context.userId || '-',
       streamId: req.params.streamId
     })
+
     const hasStreamAccess = await validatePermissionsReadStream(
       req.params.streamId,
       req
@@ -55,7 +57,6 @@ export default (app: Application) => {
     // "output" stream, connected to res with `pipeline` (auto-closing res)
     const speckleObjStream = new SpeckleObjectsStream(simpleText)
     const gzipStream = zlib.createGzip()
-
     pipeline(
       speckleObjStream,
       gzipStream,
@@ -65,7 +66,7 @@ export default (app: Application) => {
         if (err) {
           switch (err.code) {
             case 'ERR_STREAM_PREMATURE_CLOSE':
-              req.log.info({ err }, 'Stream to client has prematurely closed')
+              req.log.debug({ err }, 'Stream to client has prematurely closed')
               break
             default:
               req.log.error(err, 'App error streaming objects')
@@ -73,7 +74,6 @@ export default (app: Application) => {
           }
           return
         }
-
         req.log.info(
           {
             childCount: childrenList.length,
@@ -94,22 +94,28 @@ export default (app: Application) => {
           streamId: req.params.streamId,
           objectIds: childrenChunk
         })
+
         // https://knexjs.org/faq/recipes.html#manually-closing-streams
         // https://github.com/knex/knex/issues/2324
-        req.on('close', () => {
-          dbStream.end.bind(dbStream)
-          dbStream.destroy.bind(dbStream)
+        const responseCloseHandler = () => {
+          dbStream.end()
+          dbStream.destroy()
+        }
+
+        dbStream.on('close', () => {
+          res.removeListener('close', responseCloseHandler)
         })
+        res.on('close', responseCloseHandler)
 
         await new Promise((resolve, reject) => {
-          dbStream.pipe(speckleObjStream, { end: false })
           dbStream.once('end', resolve)
           dbStream.once('error', reject)
+          dbStream.pipe(speckleObjStream, { end: false }) // will not call end on the speckleObjStream, so it remains open for the next batch of objects
         })
       }
     } catch (ex) {
       req.log.error(ex, `DB Error streaming objects`)
-      speckleObjStream.emit('error', new Error('Database streaming error'))
+      speckleObjStream.emit('error', new DatabaseError('Database streaming error'))
     } finally {
       speckleObjStream.end()
     }

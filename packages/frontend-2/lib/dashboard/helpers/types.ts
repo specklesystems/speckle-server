@@ -1,11 +1,8 @@
 import { type LayoutDialogButton } from '@speckle/ui-components'
 
-export type WebflowItem = {
-  id: string
+export type TutorialItem = {
   title: string
-  createdOn: string
-  lastPublished: string
-  featureImageUrl?: string
+  image: string
   url: string
 }
 

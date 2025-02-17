@@ -688,7 +688,7 @@ export default class SpeckleRenderer {
     } else if (Materials.isFilterMaterial(material)) {
       this.setFilterMaterial(rvMap, material)
     } else if (
-      Materials.isRendeMaterial(material) ||
+      Materials.isRenderMaterial(material) ||
       Materials.isDisplayStyle(material)
     ) {
       this.setDataMaterial(rvMap, material)
