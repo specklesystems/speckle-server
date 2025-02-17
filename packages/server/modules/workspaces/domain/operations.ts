@@ -363,3 +363,6 @@ export type CopyProjectModels = (params: {
 export type CopyProjectVersions = (params: {
   projectIds: string[]
 }) => Promise<Record<string, number>>
+export type CopyProjectObjects = (params: {
+  projectIds: string[]
+}) => Promise<Record<string, number>>
