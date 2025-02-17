@@ -50,7 +50,11 @@ const onSubmit = handleSubmit(async () => {
   if (values.role) {
     setMixpanelSegments({ role: values.role })
   }
-  await setUserOnboardingComplete()
+  await setUserOnboardingComplete({
+    role: values.role,
+    plans: values.plan,
+    source: values.source
+  })
   navigateTo(homeRoute)
 })
 </script>
