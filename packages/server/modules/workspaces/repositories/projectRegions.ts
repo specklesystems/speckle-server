@@ -2,6 +2,7 @@ import {
   BranchCommits,
   Branches,
   Commits,
+  Objects,
   StreamCommits,
   StreamFavorites,
   Streams,
@@ -12,6 +13,7 @@ import { Commit } from '@/modules/core/domain/commits/types'
 import { Stream } from '@/modules/core/domain/streams/types'
 import {
   BranchCommitRecord,
+  ObjectRecord,
   CommitRecord,
   StreamCommitRecord,
   StreamFavoriteRecord,
@@ -20,6 +22,7 @@ import {
 import { executeBatchedSelect } from '@/modules/shared/helpers/dbHelper'
 import {
   CopyProjectModels,
+  CopyProjectObjects,
   CopyProjects,
   CopyProjectVersions,
   CopyWorkspace
@@ -28,6 +31,7 @@ import { WorkspaceNotFoundError } from '@/modules/workspaces/errors/workspace'
 import { Knex } from 'knex'
 import { Workspace } from '@/modules/workspacesCore/domain/types'
 import { Workspaces } from '@/modules/workspacesCore/helpers/db'
+import { ObjectPreview } from '@/modules/previews/domain/types'
 
 const tables = {
   workspaces: (db: Knex) => db<Workspace>(Workspaces.name),
@@ -37,9 +41,15 @@ const tables = {
   branchCommits: (db: Knex) => db<BranchCommitRecord>(BranchCommits.name),
   streamCommits: (db: Knex) => db<StreamCommitRecord>(StreamCommits.name),
   streamFavorites: (db: Knex) => db<StreamFavoriteRecord>(StreamFavorites.name),
-  streamsMeta: (db: Knex) => db(StreamsMeta.name)
+  streamsMeta: (db: Knex) => db(StreamsMeta.name),
+  objects: (db: Knex) => db<ObjectRecord>(Objects.name),
+  objectPreviews: (db: Knex) => db<ObjectPreview>('object_preview')
 }
 
+/**
+ * Copies rows from the following tables:
+ * - workspaces
+ */
 export const copyWorkspaceFactory =
   (deps: { sourceDb: Knex; targetDb: Knex }): CopyWorkspace =>
   async ({ workspaceId }) => {
@@ -61,6 +71,12 @@ export const copyWorkspaceFactory =
     return workspaceId
   }
 
+/**
+ * Copies rows from the following tables:
+ * - streams
+ * - streams_meta
+ * - stream_favorites
+ */
 export const copyProjectsFactory =
   (deps: { sourceDb: Knex; targetDb: Knex }): CopyProjects =>
   async ({ projectIds }) => {
@@ -118,6 +134,10 @@ export const copyProjectsFactory =
     return copiedProjectIds
   }
 
+/**
+ * Copies rows from the following tables:
+ * - branches
+ */
 export const copyProjectModelsFactory =
   (deps: { sourceDb: Knex; targetDb: Knex }): CopyProjectModels =>
   async ({ projectIds }) => {
@@ -142,6 +162,12 @@ export const copyProjectModelsFactory =
     return copiedModelCountByProjectId
   }
 
+/**
+ * Copies rows from the following tables:
+ * - commits
+ * - branch_commits
+ * - stream_commits
+ */
 export const copyProjectVersionsFactory =
   (deps: { sourceDb: Knex; targetDb: Knex }): CopyProjectVersions =>
   async ({ projectIds }) => {
@@ -215,4 +241,45 @@ export const copyProjectVersionsFactory =
     }
 
     return copiedVersionCountByProjectId
+  }
+
+/**
+ * Copies rows from the following tables:
+ * - objects
+ * - object_preview
+ */
+export const copyProjectObjectsFactory =
+  (deps: { sourceDb: Knex; targetDb: Knex }): CopyProjectObjects =>
+  async ({ projectIds }) => {
+    const copiedObjectCountByProjectId: Record<string, number> = {}
+
+    // Copy `objects` table rows in batches
+    const selectObjects = tables
+      .objects(deps.sourceDb)
+      .select<ObjectRecord[]>('*')
+      .whereIn(Objects.col.streamId, projectIds)
+      .orderBy(Objects.col.id)
+
+    for await (const objects of executeBatchedSelect(selectObjects)) {
+      // Write `objects` table rows to target db
+      await tables.objects(deps.targetDb).insert(objects).onConflict().ignore()
+
+      for (const object of objects) {
+        copiedObjectCountByProjectId[object.streamId] ??= 0
+        copiedObjectCountByProjectId[object.streamId]++
+      }
+    }
+
+    // Copy `object_preview` rows in batches
+    const selectObjectPreviews = tables
+      .objectPreviews(deps.sourceDb)
+      .select<ObjectPreview[]>('*')
+      .whereIn('streamId', projectIds)
+
+    for await (const previews of executeBatchedSelect(selectObjectPreviews)) {
+      // Write `object_preview` rows to target db
+      await tables.objectPreviews(deps.targetDb).insert(previews).onConflict().ignore()
+    }
+
+    return copiedObjectCountByProjectId
   }
