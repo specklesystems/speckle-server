@@ -276,6 +276,7 @@ export const sendRateLimitResponse = (
   res: express.Response,
   rateLimitBreached: RateLimitBreached
 ): express.Response => {
+  if (res.headersSent) return res
   res.setHeader('Retry-After', rateLimitBreached.msBeforeNext / 1000)
   res.removeHeader('X-RateLimit-Remaining')
   res.setHeader(
@@ -325,6 +326,7 @@ export const createRateLimiterMiddleware = (
       return sendRateLimitResponse(res, rateLimitResult)
     } else {
       try {
+        if (res.headersSent) return res
         res.setHeader('X-RateLimit-Remaining', rateLimitResult.remainingPoints)
         return next()
       } catch (err) {
