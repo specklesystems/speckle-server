@@ -54,9 +54,11 @@ export type SsoSessionState = {
   isValidationFlow: boolean
 }
 
-export type OidcProfile = {
+export type OidcProfile<
+  OidcProviderProperties = SpeckleOidcProfile | MicrosoftEntraIdProfile
+> = {
   sub: string
-} & (SpeckleOidcProfile | MicrosoftEntraIdProfile)
+} & OidcProviderProperties
 
 /**
  * OIDC profile properties required by Speckle SSO logic.

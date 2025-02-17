@@ -1,5 +1,6 @@
 import {
   OidcProfile,
+  SpeckleOidcProfile,
   UserSsoSessionRecord
 } from '@/modules/workspaces/domain/sso/types'
 import { UnknownObject, UserinfoResponse } from 'openid-client'
@@ -24,9 +25,15 @@ export const isValidOidcProfile = (
   return !!profile.email || !!profile.upn
 }
 
+const isSpeckleOidcProfile = (
+  profile: OidcProfile
+): profile is OidcProfile<SpeckleOidcProfile> => {
+  return Object.hasOwn(profile, 'email')
+}
+
 /**
  * Special handling required in case we encounter Entra ID with a particular configuration.
  */
 export const getEmailFromOidcProfile = (profile: OidcProfile): string => {
-  return 'email' in profile ? profile.email : profile.upn
+  return isSpeckleOidcProfile(profile) ? profile.email : profile.upn
 }
