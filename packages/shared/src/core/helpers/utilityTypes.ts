@@ -7,11 +7,6 @@ export type MaybeAsync<T> = T | Promise<T>
 export type MaybeFalsy<T> = T | null | undefined | false | '' | 0
 
 /**
- * Allows some optional properties to be required
- */
-export type ForceRequired<T, K extends keyof T> = T & { [P in K]-?: T[P] }
-
-/**
  * In TS undefined !== void, so use this type guard to check for both
  */
 export const isUndefinedOrVoid = (val: unknown): val is void | undefined =>

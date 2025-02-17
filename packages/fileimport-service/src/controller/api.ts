@@ -1,12 +1,11 @@
 import crypto from 'crypto'
 import crs from 'crypto-random-string'
 import bcrypt from 'bcrypt'
-import { chunk } from 'lodash'
+import { chunk } from 'lodash-es'
 import { logger as parentLogger } from '@/observability/logging.js'
 import Observability from '@speckle/shared/dist/commonjs/observability/index.js'
 import type { Knex } from 'knex'
 import type { Logger } from 'pino'
-import { ForceRequired } from '@speckle/shared/dist/commonjs/index.js'
 
 const tables = (db: Knex) => ({
   objects: db('objects'),
@@ -32,6 +31,10 @@ type SpeckleObject = {
   totalChildrenCount?: number
   totalChildrenCountByDepth?: string
   data: unknown
+}
+
+type SpeckleObjectWithId = SpeckleObject & {
+  id: string
 }
 
 export class ServerAPI {
@@ -109,7 +112,7 @@ export class ServerAPI {
   }
 
   async createObjectsBatched(streamId: string, objects: SpeckleObject[]) {
-    const objsToInsert: ForceRequired<SpeckleObject, 'id'>[] = []
+    const objsToInsert: SpeckleObjectWithId[] = []
     const ids: string[] = []
 
     // Prep objects up
@@ -161,10 +164,7 @@ export class ServerAPI {
     return ids
   }
 
-  prepInsertionObject(
-    streamId: string,
-    obj: SpeckleObject
-  ): ForceRequired<SpeckleObject, 'id'> {
+  prepInsertionObject(streamId: string, obj: SpeckleObject): SpeckleObjectWithId {
     const maximumObjectSizeMB = parseInt(process.env['MAX_OBJECT_SIZE_MB'] || '10')
     const MAX_OBJECT_SIZE = maximumObjectSizeMB * 1024 * 1024
 
