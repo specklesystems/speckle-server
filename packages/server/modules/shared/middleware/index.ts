@@ -5,7 +5,7 @@ import {
   AuthParams,
   authHasFailed
 } from '@/modules/shared/authz'
-import { Request, Response, NextFunction, Handler } from 'express'
+import { Request, Response, NextFunction, Handler, RequestHandler } from 'express'
 import {
   ForbiddenError,
   NotFoundError,
@@ -27,7 +27,10 @@ import { getIpFromRequest } from '@/modules/shared/utils/ip'
 import { Netmask } from 'netmask'
 import { Merge } from 'type-fest'
 import { resourceAccessRuleToIdentifier } from '@/modules/core/helpers/token'
-import { delayGraphqlResponsesBy } from '@/modules/shared/helpers/envHelper'
+import {
+  delayGraphqlResponsesBy,
+  isCompressionEnabled
+} from '@/modules/shared/helpers/envHelper'
 import { subscriptionLogger } from '@/logging/logging'
 import { GetUser } from '@/modules/core/domain/users/operations'
 import { validateTokenFactory } from '@/modules/core/services/tokens'
@@ -41,6 +44,7 @@ import {
 import { db } from '@/db/knex'
 import { getTokenAppInfoFactory } from '@/modules/auth/repositories/apps'
 import { getUserRoleFactory } from '@/modules/core/repositories/users'
+import compression from 'compression'
 
 export const authMiddlewareCreator = (steps: AuthPipelineFunction[]) => {
   const pipeline = authPipelineCreator(steps)
@@ -268,4 +272,9 @@ export async function determineClientIpAddressMiddleware(
     }
   }
   next()
+}
+
+export function compressionMiddleware(): RequestHandler {
+  if (isCompressionEnabled()) return compression()
+  return (_req, _res, next) => next()
 }

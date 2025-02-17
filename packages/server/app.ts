@@ -7,7 +7,6 @@ import express, { Express } from 'express'
 
 // `express-async-errors` patches express to catch errors in async handlers. no variable needed
 import 'express-async-errors'
-import compression from 'compression'
 import cookieParser from 'cookie-parser'
 
 import { createTerminus } from '@godaddy/terminus'
@@ -61,6 +60,7 @@ import { corsMiddleware } from '@/modules/core/configs/cors'
 import {
   authContextMiddleware,
   buildContext,
+  compressionMiddleware,
   determineClientIpAddressMiddleware,
   mixpanelTrackerHelperMiddlewareFactory
 } from '@/modules/shared/middleware'
@@ -441,9 +441,7 @@ export async function init() {
     startupLogger.info('Async request context tracking enabled 👀')
   }
 
-  if (process.env.COMPRESSION) {
-    app.use(compression())
-  }
+  app.use(compressionMiddleware)
 
   app.use(corsMiddleware())
   // there are some paths, that need the raw body
