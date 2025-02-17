@@ -7,7 +7,7 @@ import type express from 'express'
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let metricErrorCount: Nullable<prometheusClient.Counter<any>> = null
 
-export const errorLoggingMiddleware: express.ErrorRequestHandler = (
+export const errorMetricsMiddleware: express.ErrorRequestHandler = (
   err,
   req,
   res,
@@ -33,7 +33,7 @@ export const errorLoggingMiddleware: express.ErrorRequestHandler = (
   }
 
   let route = 'unknown'
-  if (req.route && req.route.path) route = req.route.path
+  if (req.route && req.route.path) route = req.route.path //FIXME this should be the route template, not the actual route.
   metricErrorCount.labels(route).inc()
   next(err)
 }
