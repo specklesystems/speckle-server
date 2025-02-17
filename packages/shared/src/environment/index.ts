@@ -97,6 +97,7 @@ export function getFeatureFlags(): {
   FF_FORCE_ONBOARDING: boolean
   FF_OBJECTS_STREAMING_FIX: boolean
   FF_MOVE_PROJECT_REGION_ENABLED: boolean
+  FF_NO_PERSONAL_EMAILS_ENABLED: boolean
 } {
   if (!parsedFlags) parsedFlags = parseFeatureFlags()
   return parsedFlags

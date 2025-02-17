@@ -10,8 +10,6 @@ import {
   PasswordTooShortError,
   BlockedEmailDomainError
 } from '@/modules/core/errors/userinput'
-import { blockedDomains } from '@speckle/shared'
-
 import { ServerInviteResourceType } from '@/modules/serverinvites/domain/constants'
 import { getResourceTypeRole } from '@/modules/serverinvites/helpers/core'
 import { AuthStrategyMetadata, AuthStrategyBuilder } from '@/modules/auth/helpers/types'
@@ -122,21 +120,10 @@ const localStrategyBuilderFactory =
             invite = await deps.validateServerInvite(user.email, req.session.token)
           }
 
-          // 3. Check for blocked email domains
-          const emailDomain = req.body.email?.split('@')[1]?.toLowerCase()
-          if (
-            !req.session.token &&
-            emailDomain &&
-            blockedDomains.includes(emailDomain)
-          ) {
-            throw new BlockedEmailDomainError()
-          }
-
-          // 4.. at this point we know, that we have one of these cases:
+          // 3.. at this point we know, that we have one of these cases:
           //    * the server is invite only and the user has a valid invite
           //    * the server public and the user has a valid invite
           //    * the server public and the user doesn't have an invite
-          //    * the email domain is not blocked
           // so we go ahead and register the user
           const userId = await deps.createUser({
             ...user,
