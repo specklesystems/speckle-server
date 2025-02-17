@@ -28,8 +28,8 @@
         </div>
         <div class="flex flex-1 items-center truncate justify-between">
           <h6
-            class="font-semibold text-foreground-2 truncate text-body-2xs pr-2"
-            :class="titleClasses"
+            class="truncate text-body-2xs pr-2"
+            :class="[nested ? 'text-foreground' : 'font-semibold text-foreground-2']"
           >
             {{ title }}
           </h6>
@@ -71,7 +71,7 @@ defineProps<{
   iconText?: string
   iconClick?: () => void
   noHover?: boolean
-  titleClasses?: string[]
+  nested?: boolean
 }>()
 
 const isCollapsed = defineModel<boolean>('collapsed')
