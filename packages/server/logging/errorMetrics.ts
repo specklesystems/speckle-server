@@ -1,4 +1,5 @@
 /* istanbul ignore file */
+import { logger } from '@/logging/logging'
 import type { Nullable } from '@speckle/shared'
 import prometheusClient from 'prom-client'
 import type express from 'express'
@@ -18,6 +19,17 @@ export const errorMetricsMiddleware: express.ErrorRequestHandler = (
       help: 'Number of requests that threw exceptions',
       labelNames: ['route']
     })
+  }
+
+  if (!('statusCode' in err) || err.statusCode >= 500) {
+    logger.error({ err }, `Error when handling ${req.originalUrl} from ${req.ip}`)
+  } else if (err.statusCode >= 400) {
+    logger.info({ err }, `Error when handling ${req.originalUrl} from ${req.ip}`)
+  } else {
+    logger.warn(
+      { err },
+      `Error when handling ${req.originalUrl} from ${req.ip}. Error has a statusCode but it is not 4xx or 5xx.`
+    )
   }
 
   let route = 'unknown'
