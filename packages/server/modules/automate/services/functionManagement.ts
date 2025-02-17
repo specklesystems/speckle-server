@@ -47,6 +47,8 @@ import { automateLogger } from '@/logging/logging'
 import { CreateStoredAuthCode } from '@/modules/automate/domain/operations'
 import { GetUser } from '@/modules/core/domain/users/operations'
 import { noop } from 'lodash'
+import { UnknownFunctionTemplateError } from '@/modules/automate/errors/functions'
+import { UserInputError } from '@/modules/core/errors/userinput'
 
 const mapGqlTemplateIdToExecEngineTemplateId = (
   id: AutomateFunctionTemplateLanguage
@@ -59,7 +61,7 @@ const mapGqlTemplateIdToExecEngineTemplateId = (
     case AutomateFunctionTemplateLanguage.Typescript:
       return ExecutionEngineFunctionTemplateId.TypeScript
     default:
-      throw new Error('Unknown template id')
+      throw new UnknownFunctionTemplateError('Unknown template id')
   }
 }
 
@@ -69,7 +71,7 @@ const repoUrlToBasicGitRepositoryMetadata = (
   const repoUrl = new URL(url)
   const pathParts = repoUrl.pathname.split('/').filter(Boolean)
   if (pathParts.length < 2) {
-    throw new Error('Invalid GitHub repository URL')
+    throw new UserInputError('Invalid GitHub repository URL')
   }
 
   const [owner, name] = pathParts

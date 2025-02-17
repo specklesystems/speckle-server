@@ -16,7 +16,6 @@ import {
 import {
   getObjectFactory,
   getStreamObjectsFactory,
-  storeClosuresIfNotFoundFactory,
   storeSingleObjectIfNotFoundFactory
 } from '@/modules/core/repositories/objects'
 import {
@@ -166,8 +165,7 @@ const command: CommandModule<
     const createObject = createObjectFactory({
       storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({
         db: projectDb
-      }),
-      storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db: projectDb })
+      })
     })
     const getUser = getUserFactory({ db })
     const getStreamCollaborators = getStreamCollaboratorsFactory({ db })

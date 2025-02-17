@@ -264,7 +264,7 @@ const openFeedbackDialog = () => {
   isOpenMobile.value = false
 }
 
-const openWorkspaceCreateDialog = () => {
+const openWorkspaceWizard = () => {
   navigateTo(workspaceCreateRoute())
   mixpanel.track('Create Workspace Button Clicked', {
     source: 'sidebar'
@@ -273,7 +273,7 @@ const openWorkspaceCreateDialog = () => {
 
 const handlePlusClick = () => {
   if (route.path === workspacesRoute) {
-    openWorkspaceCreateDialog()
+    openWorkspaceWizard()
   } else {
     mixpanel.track('Clicked Link to Workspace Explainer', {
       source: 'sidebar'

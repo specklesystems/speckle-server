@@ -27,6 +27,8 @@ import {
   LegacyGetUserByEmail
 } from '@/modules/core/domain/users/operations'
 import { GetServerInfo } from '@/modules/core/domain/server/operations'
+import { EnvironmentResourceError } from '@/modules/shared/errors'
+import { InviteNotFoundError } from '@/modules/serverinvites/errors'
 
 const googleStrategyBuilderFactory =
   (deps: {
@@ -72,7 +74,7 @@ const googleStrategyBuilderFactory =
         try {
           const email = profile.emails?.[0].value
           if (!email) {
-            throw new Error('No email provided by Google')
+            throw new EnvironmentResourceError('No email provided by Google')
           }
 
           const name = profile.displayName
@@ -141,13 +143,16 @@ const googleStrategyBuilderFactory =
             'Unexpected issue occured while authenticating with Google'
           )
           switch (e.constructor) {
+            case UnverifiedEmailSSOLoginError:
             case UserInputError:
-              logger.info(err)
-              break
+            case InviteNotFoundError:
+              logger.info({ err: e })
+              return done(null, false, { message: e.message })
             default:
-              logger.error(err)
+              logger.error({ err: e })
+              // Only when the server is operating abnormally should err be set, to indicate an internal error.
+              return done(e, false, { message: e.message })
           }
-          return done(err, false, { message: e.message })
         }
       }
     )

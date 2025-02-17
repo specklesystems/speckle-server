@@ -1,50 +1,14 @@
 import {
-  TrialWorkspacePlans,
+  PaidWorkspacePlan,
   PaidWorkspacePlans,
-  UnpaidWorkspacePlans,
+  TrialWorkspacePlan,
+  UnpaidWorkspacePlan,
+  WorkspacePlan,
   WorkspacePlanBillingIntervals,
   WorkspacePricingPlans
-} from '@/modules/gatekeeper/domain/workspacePricing'
+} from '@/modules/gatekeeperCore/domain/billing'
 import { OverrideProperties } from 'type-fest'
 import { z } from 'zod'
-
-export type UnpaidWorkspacePlanStatuses = 'valid'
-
-export type PaidWorkspacePlanStatuses =
-  | UnpaidWorkspacePlanStatuses
-  // | 'paymentNeeded' // unsure if this is needed
-  | 'paymentFailed'
-  | 'cancelationScheduled'
-  | 'canceled'
-
-export type TrialWorkspacePlanStatuses = 'trial' | 'expired'
-
-export type PlanStatuses =
-  | PaidWorkspacePlanStatuses
-  | TrialWorkspacePlanStatuses
-  | UnpaidWorkspacePlanStatuses
-
-type BaseWorkspacePlan = {
-  workspaceId: string
-  createdAt: Date
-}
-
-export type PaidWorkspacePlan = BaseWorkspacePlan & {
-  name: PaidWorkspacePlans
-  status: PaidWorkspacePlanStatuses
-}
-
-export type TrialWorkspacePlan = BaseWorkspacePlan & {
-  name: TrialWorkspacePlans
-  status: TrialWorkspacePlanStatuses
-}
-
-export type UnpaidWorkspacePlan = BaseWorkspacePlan & {
-  name: UnpaidWorkspacePlans
-  status: UnpaidWorkspacePlanStatuses
-}
-
-export type WorkspacePlan = PaidWorkspacePlan | TrialWorkspacePlan | UnpaidWorkspacePlan
 
 export type GetWorkspacePlan = (args: {
   workspaceId: string

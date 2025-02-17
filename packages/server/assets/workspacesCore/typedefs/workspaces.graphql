@@ -41,7 +41,6 @@ input WorkspaceCreateInput {
   name: String!
   slug: String
   description: String
-  defaultLogoIndex: Int
   """
   Logo image as base64-encoded string
   """
@@ -57,7 +56,6 @@ input WorkspaceUpdateInput {
   Logo image as base64-encoded string
   """
   logo: String
-  defaultLogoIndex: Int
   defaultProjectRole: String
   domainBasedMembershipProtectionEnabled: Boolean
   discoverabilityEnabled: Boolean
@@ -259,10 +257,6 @@ type Workspace {
   """
   logo: String
   """
-  Selected fallback when `logo` not set
-  """
-  defaultLogoIndex: Int!
-  """
   The default role workspace members will receive for workspace projects.
   """
   defaultProjectRole: String!
@@ -318,7 +312,7 @@ type Workspace {
     filter: AdminWorkspaceJoinRequestFilter
     cursor: String
     limit: Int! = 25
-  ): WorkspaceJoinRequestCollection!
+  ): WorkspaceJoinRequestCollection
     @hasServerRole(role: SERVER_USER)
     @hasScope(scope: "workspace:read")
     @hasWorkspaceRole(role: ADMIN)
@@ -373,10 +367,6 @@ type LimitedWorkspace {
   Optional base64 encoded workspace logo image
   """
   logo: String
-  """
-  Index of fallback workspace logo to use
-  """
-  defaultLogoIndex: Int!
 }
 
 type WorkspaceDomain {
@@ -468,6 +458,7 @@ type WorkspaceJoinRequestCollection {
 }
 
 type WorkspaceJoinRequest {
+  id: String!
   workspace: Workspace!
   user: LimitedUser!
   status: WorkspaceJoinRequestStatus!

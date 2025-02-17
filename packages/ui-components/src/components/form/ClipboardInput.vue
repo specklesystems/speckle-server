@@ -16,7 +16,7 @@
       name="contentInput"
       readonly
       :model-value="value"
-      class="relative z-10 text-sm text-foreground font-mono select-all"
+      class="relative z-10 text-body-2xs text-foreground font-mono select-all"
     />
     <div class="absolute top-3 right-2 flex justify-end items-center">
       <FormButton
