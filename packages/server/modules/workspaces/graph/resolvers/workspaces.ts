@@ -143,7 +143,6 @@ import {
   validateStreamAccessFactory
 } from '@/modules/core/services/streams/access'
 import {
-  addStreamInviteAcceptedActivityFactory,
   addStreamPermissionsAddedActivityFactory,
   addStreamPermissionsRevokedActivityFactory
 } from '@/modules/activitystream/services/streamActivity'
@@ -283,10 +282,7 @@ const updateStreamRoleAndNotify = updateStreamRoleAndNotifyFactory({
     validateStreamAccess,
     getUser,
     grantStreamPermissions: grantStreamPermissionsFactory({ db }),
-    addStreamInviteAcceptedActivity: addStreamInviteAcceptedActivityFactory({
-      saveActivity,
-      publish
-    }),
+    emitEvent: getEventBus().emit,
     addStreamPermissionsAddedActivity: addStreamPermissionsAddedActivityFactory({
       saveActivity,
       publish
