@@ -70,6 +70,7 @@ ARG DOTNET_BINARY_PATH=/usr/bin/dotnet
 ENV DOTNET_BINARY_PATH=${DOTNET_BINARY_PATH}
 
 COPY --link --from=dotnet-build-stage /app/output packages/fileimport-service/src/ifc-dotnet
+ENV IFC_DOTNET_DLL_PATH='/speckle-server/packages/fileimport-service/src/ifc-dotnet/ifc-converter.dll'
 
 WORKDIR /speckle-server/packages/fileimport-service
 

@@ -153,7 +153,8 @@ async function doTask(
           taskLogger,
           process.env['DOTNET_BINARY_PATH'] || 'dotnet',
           [
-            '/speckle-server/packages/fileimport-service/ifc-dotnet/ifc-converter.dll',
+            process.env['IFC_DOTNET_DLL_PATH'] ||
+              '/speckle-server/packages/fileimport-service/src/ifc-dotnet/ifc-converter.dll',
             TMP_FILE_PATH,
             TMP_RESULTS_PATH,
             info.streamId,
