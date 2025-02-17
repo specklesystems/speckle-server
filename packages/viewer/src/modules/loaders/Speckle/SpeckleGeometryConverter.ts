@@ -299,7 +299,7 @@ export class SpeckleGeometryConverter extends GeometryConverter {
         )
         normals = undefined
       }
-    }
+    } else normals = undefined
 
     return {
       attributes: {
