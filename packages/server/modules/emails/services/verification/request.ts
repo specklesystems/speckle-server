@@ -101,33 +101,17 @@ const createNewEmailVerificationFactory =
   }
 
 function buildMjmlBody(verificationCode: string) {
-  const bodyStart = `<mj-text>Hello,<br/><br/>You have just registered to the Speckle server, or initiated the email verification process manually. To finalize the verification process, use the code below.</mj-text>`
-  const bodyEnd = `<mj-text>This code expires in <strong>5 minutes</strong>: <br/>
-<strong>${verificationCode}</strong>
-<br />
-  If the code does not work, please proceed by</mj-text><br/>
-  <mj-list>
-    <mj-li>Logging in with your e-mail address and password</mj-li>
-    <mj-li>Clicking on the Notification icon</mj-li>
-    <mj-li>Selecting "Send Verification"</mj-li>
-    <mj-li>Verifying your e-mail address by using the new code</mj-li>
-  </mj-list><br/>
-  <mj-text>
-    See you soon,<br/>
-    Speckle
-  </mj-text>
-  `
-
-  return { bodyStart, bodyEnd }
+  const bodyStart = `<mj-text><p style="text-align: center; line-height: 2; margin-top:0;">You have just registered to the Speckle server, or initiated the email verification process manually. To finalize the verification process, use the code below.</p></mj-text>
+  <mj-text><strong style="font-size: 32px;text-align: center; display:block;margin-bottom: 5px;">${verificationCode}</strong></mj-text>
+  <mj-text><p style="text-align: center">This code will expire in 5 minutes. Please do not disclose this code to others.</p>
+  <p style="text-align: center">If you did not make this request, please disregard this email.</p></mj-text>
+  <mj-text><p style="text-align: center;">See you soon,<br />Speckle</p></mj-text>`
+  return { bodyStart }
 }
 
-function buildTextBody(verificationCode: string) {
-  const bodyStart = `Hello,\n\nYou have just registered to the Speckle server, or initiated the email verification process manually. To finalize the verification process, use the code below:`
-  const bodyEnd = `This code expires in 5 minutes:
-${verificationCode}
-\r\n
-If the code does not work, please proceed by logging in to your Speckle account with your e-mail address and password, clicking the Notification icon, selecting "Send Verification" and verifying your e-mail address by new code.\n\nSee you soon,\nSpeckle
-  `
+function buildTextBody() {
+  const bodyStart = ``
+  const bodyEnd = ``
 
   return { bodyStart, bodyEnd }
 }
@@ -135,7 +119,7 @@ If the code does not work, please proceed by logging in to your Speckle account 
 function buildEmailTemplateParams(verificationCode: string): EmailTemplateParams {
   return {
     mjml: buildMjmlBody(verificationCode),
-    text: buildTextBody(verificationCode)
+    text: buildTextBody()
   }
 }
 

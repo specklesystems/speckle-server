@@ -589,9 +589,6 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 - name: FF_WORKSPACES_MULTI_REGION_ENABLED
   value: {{ .Values.featureFlags.workspacesMultiRegionEnabled | quote }}
 
-- name: FF_FORCE_EMAIL_VERIFICATION
-  value: {{ .Values.featureFlags.forceEmailVerification | quote }}
-
 - name: FF_FORCE_ONBOARDING
   value: {{ .Values.featureFlags.forceOnboarding | quote }}
 

@@ -4,7 +4,6 @@ import {
   updateBranchAndNotifyFactory,
   deleteBranchAndNotifyFactory
 } from '@/modules/core/services/branch/management'
-
 import { Roles } from '@speckle/shared'
 import {
   getBranchByIdFactory,
@@ -17,19 +16,13 @@ import {
 } from '@/modules/core/repositories/branches'
 import { db } from '@/db/knex'
 import {
-  addBranchCreatedActivityFactory,
-  addBranchDeletedActivityFactory,
-  addBranchUpdatedActivityFactory
-} from '@/modules/activitystream/services/branchActivity'
-import {
   getStreamFactory,
   markBranchStreamUpdatedFactory
 } from '@/modules/core/repositories/streams'
 import { legacyGetUserFactory } from '@/modules/core/repositories/users'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { getPaginatedStreamBranchesFactory } from '@/modules/core/services/branch/retrieval'
-import { saveActivityFactory } from '@/modules/activitystream/repositories'
-import { filteredSubscribe, publish } from '@/modules/shared/utils/subscriptions'
+import { filteredSubscribe } from '@/modules/shared/utils/subscriptions'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 
@@ -89,10 +82,7 @@ export = {
       const createBranchAndNotify = createBranchAndNotifyFactory({
         getStreamBranchByName,
         createBranch: createBranchFactory({ db: projectDB }),
-        addBranchCreatedActivity: addBranchCreatedActivityFactory({
-          saveActivity: saveActivityFactory({ db }),
-          publish
-        })
+        eventEmit: getEventBus().emit
       })
       const { id } = await createBranchAndNotify(args.branch, context.userId!)
 
@@ -112,10 +102,7 @@ export = {
       const updateBranchAndNotify = updateBranchAndNotifyFactory({
         getBranchById,
         updateBranch: updateBranchFactory({ db: projectDB }),
-        addBranchUpdatedActivity: addBranchUpdatedActivityFactory({
-          saveActivity: saveActivityFactory({ db }),
-          publish
-        })
+        eventEmit: getEventBus().emit
       })
       const newBranch = await updateBranchAndNotify(args.branch, context.userId!)
       return !!newBranch
@@ -137,10 +124,6 @@ export = {
         getBranchById: getBranchByIdFactory({ db: projectDB }),
         emitEvent: getEventBus().emit,
         markBranchStreamUpdated,
-        addBranchDeletedActivity: addBranchDeletedActivityFactory({
-          saveActivity: saveActivityFactory({ db }),
-          publish
-        }),
         deleteBranchById: deleteBranchByIdFactory({ db: projectDB })
       })
       const deleted = await deleteBranchAndNotify(args.branch, context.userId!)

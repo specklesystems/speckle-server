@@ -27,13 +27,6 @@
         </Portal>
 
         <ClientOnly>
-          <!-- Tour host -->
-          <div
-            v-if="showTour"
-            class="fixed w-full h-[100dvh] flex justify-center items-center pointer-events-none z-[100]"
-          >
-            <TourOnboarding @complete="showTour = false" />
-          </div>
           <!-- Viewer host -->
           <div
             class="viewer special-gradient absolute z-10 overflow-hidden w-screen"
@@ -50,19 +43,22 @@
               enter-from-class="opacity-0"
               enter-active-class="transition duration-1000"
             >
-              <ViewerAnchoredPoints v-show="showControls" />
+              <ViewerAnchoredPoints />
             </Transition>
           </div>
 
           <!-- Global loading bar -->
-          <ViewerLoadingBar class="absolute -top-2 left-0 w-full z-40" />
+          <ViewerLoadingBar
+            class="absolute left-0 w-full z-40 h-30"
+            :class="isEmbedEnabled ? 'top-0' : ' -top-2'"
+          />
 
           <!-- Sidebar controls -->
           <Transition
             enter-from-class="opacity-0"
             enter-active-class="transition duration-1000"
           >
-            <ViewerControls v-show="showControls" class="relative z-20" />
+            <ViewerControls class="relative z-20" />
           </Transition>
 
           <!-- Viewer Object Selection Info Display -->
@@ -71,9 +67,7 @@
             enter-from-class="opacity-0"
             enter-active-class="transition duration-1000"
           >
-            <div v-show="showControls">
-              <ViewerSelectionSidebar class="z-20" />
-            </div>
+            <ViewerSelectionSidebar class="z-20" />
           </Transition>
           <div
             class="absolute z-10 w-screen px-8 grid grid-cols-1 sm:grid-cols-3 gap-2"
@@ -119,7 +113,6 @@ import {
 import dayjs from 'dayjs'
 import { graphql } from '~~/lib/common/generated/gql'
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
-import { useViewerTour } from '~/lib/viewer/composables/tour'
 import { useFilterUtilities } from '~/lib/viewer/composables/ui'
 import { projectsRoute } from '~~/lib/common/helpers/route'
 import { workspaceRoute } from '~/lib/common/helpers/route'
@@ -130,7 +123,6 @@ const emit = defineEmits<{
 }>()
 
 const route = useRoute()
-const { showTour, showControls } = useViewerTour()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
 
 const modelId = computed(() => route.params.modelId as string)
