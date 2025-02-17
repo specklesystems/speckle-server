@@ -51,11 +51,11 @@ export const buildNotificationsQueue = (queueName: string) =>
     ...buildBaseQueueOptions(),
     ...(!isTestEnv()
       ? {
-          limiter: {
-            max: 10,
-            duration: 1000
-          }
+        limiter: {
+          max: 10,
+          duration: 1000
         }
+      }
       : {}),
     defaultJobOptions: {
       attempts: 1,
