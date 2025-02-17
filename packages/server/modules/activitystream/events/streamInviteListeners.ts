@@ -89,7 +89,7 @@ const addStreamInviteDeclinedActivityFactory =
       resourceId: project.id,
       actionType: ActionTypes.Stream.InviteDeclined,
       userId: userTarget.userId!,
-      message: `User ${userTarget!} declined to join the stream ${project.id}`,
+      message: `User ${userTarget.userId!} declined to join the stream ${project.id}`,
       info: { targetId: userTarget!, inviterId: invite.inviterId }
     })
   }
