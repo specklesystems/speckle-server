@@ -326,8 +326,8 @@ export const createRateLimiterMiddleware = (
       return sendRateLimitResponse(res, rateLimitResult)
     } else {
       try {
-        if (!res.headersSent)
-          res.setHeader('X-RateLimit-Remaining', rateLimitResult.remainingPoints)
+        if (res.headersSent) return res
+        res.setHeader('X-RateLimit-Remaining', rateLimitResult.remainingPoints)
         return next()
       } catch (err) {
         if (!(err instanceof RateLimitError)) throw err
