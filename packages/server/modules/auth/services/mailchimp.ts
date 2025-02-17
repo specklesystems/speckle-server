@@ -93,7 +93,7 @@ async function updateMailchimpMemberTags(
   if (onboardingData.plans?.length) {
     onboardingData.plans.forEach((plan) => {
       tags.push({
-        name: `Plan: ${plan}`,
+        name: `Use case: ${plan}`,
         status: 'active'
       })
     })
