@@ -13,7 +13,7 @@ import { mixpanelLogger } from '@/logging/logging'
 let client: Optional<Mixpanel.Mixpanel> = undefined
 let baseTrackingProperties: Optional<Record<string, string>> = undefined
 
-function getBaseTrackingProperties() {
+export function getBaseTrackingProperties() {
   if (baseTrackingProperties) return baseTrackingProperties
   baseTrackingProperties = MixpanelUtils.buildBasePropertiesPayload({
     hostApp: 'serverside',
