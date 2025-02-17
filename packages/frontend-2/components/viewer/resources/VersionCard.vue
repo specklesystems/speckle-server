@@ -1,10 +1,8 @@
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
   <div
-    :class="`bg-foundation group relative block w-full space-y-2 rounded-md pb-2 text-left ${
-      clickable
-        ? 'hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer'
-        : ' bg-primary-muted cursor-default'
+    :class="`bg-foundation-2 group relative block w-full space-y-2 rounded-md pb-2 text-left ${
+      clickable ? 'hover:bg-primary-muted cursor-pointer' : 'cursor-default'
     }
     ${isLoaded ? '' : ''}
     `"
@@ -36,21 +34,25 @@
       </div>
       <div
         v-show="showTimeline"
-        v-tippy="`${createdAt}`"
-        class="bg-foundation-focus inline-block rounded-full px-2 text-xs font-bold shrink-0"
+        v-tippy="createdAt.full"
+        class="bg-foundation-focus inline-block rounded-full px-2 text-body-xs font-medium shrink-0"
       >
-        <span>{{ isLatest ? 'Latest' : timeAgoCreatedAt }}</span>
+        <span>
+          {{ isLatest ? 'Latest' : createdAt.relative }}
+        </span>
       </div>
       <FormButton
         v-if="!isLoaded"
         v-tippy="'Shows a summary of added, deleted and changed elements.'"
-        size="xs"
+        size="sm"
         text
         @click.stop="handleViewChanges"
       >
         View Changes
       </FormButton>
-      <FormButton v-else size="xs" text disabled>Currently Viewing</FormButton>
+      <FormButton v-else size="sm" text class="cursor-not-allowed">
+        Currently Viewing
+      </FormButton>
     </div>
     <!-- Main stuff -->
     <div class="flex items-center space-x-1 pl-5">
@@ -63,7 +65,7 @@
             {{ version.message || 'no message' }}
           </div>
         </div>
-        <div class="text-primary inline-block rounded-full pl-1 text-xs font-bold">
+        <div class="text-primary inline-block rounded-full pl-1 text-xs font-medium">
           {{ version.sourceApplication }}
         </div>
       </div>
@@ -107,12 +109,14 @@ const emit = defineEmits<{
 const isLoaded = computed(() => props.isLoadedVersion)
 const isLatest = computed(() => props.isLatestVersion)
 
-const author = computed(() => props.version.authorUser)
-
-const timeAgoCreatedAt = computed(() => dayjs(props.version.createdAt).from(dayjs()))
 const createdAt = computed(() => {
-  return dayjs(props.version.createdAt).format('LLL')
+  return {
+    full: formattedFullDate(props.version.createdAt),
+    relative: formattedRelativeDate(props.version.createdAt, { capitalize: true })
+  }
 })
+
+const author = computed(() => props.version.authorUser)
 
 const mp = useMixpanel()
 

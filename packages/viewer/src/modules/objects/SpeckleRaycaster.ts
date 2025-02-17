@@ -8,11 +8,14 @@ import {
   Face
 } from 'three'
 import { ExtendedTriangle, ShapecastIntersection } from 'three-mesh-bvh'
-import { BatchObject } from '../batching/BatchObject'
-import { ObjectLayers } from '../../IViewer'
-import SpeckleMesh from './SpeckleMesh'
-import SpeckleInstancedMesh from './SpeckleInstancedMesh'
+import { BatchObject } from '../batching/BatchObject.js'
+import { ObjectLayers } from '../../IViewer.js'
+import SpeckleMesh from './SpeckleMesh.js'
+import SpeckleInstancedMesh from './SpeckleInstancedMesh.js'
 
+export const NOT_INTERSECTED: ShapecastIntersection = 0
+export const INTERSECTED: ShapecastIntersection = 1
+export const CONTAINED: ShapecastIntersection = 2
 export type ExtendedShapeCastCallbacks = {
   intersectsTAS?: (
     box: Box3,
@@ -21,7 +24,7 @@ export type ExtendedShapeCastCallbacks = {
     depth: number,
     nodeIndex: number
   ) => ShapecastIntersection | boolean
-  intersectTASRange?: (batchObject: BatchObject) => ShapecastIntersection | boolean
+  intersectTASRange?: (batchObjects: BatchObject) => ShapecastIntersection | boolean
   intersectsBounds: (
     box: Box3,
     isLeaf: boolean,
@@ -74,6 +77,7 @@ export interface ExtendedRaycasterParameters extends RaycasterParameters {
 }
 
 export class SpeckleRaycaster extends Raycaster {
+  public intersectTASOnly: boolean = false
   public onObjectIntersectionTest: ((object: Object3D) => void) | null = null
   public params: ExtendedRaycasterParameters
 
@@ -92,7 +96,9 @@ export class SpeckleRaycaster extends Raycaster {
 
   public intersectObjects(objects: Array<Object3D>, recursive = true, intersects = []) {
     for (let i = 0, l = objects.length; i < l; i++) {
-      intersectObject(objects[i], this, intersects, recursive)
+      const ret = intersectObject(objects[i], this, intersects, recursive)
+
+      if (this.firstHitOnly === true && !ret) break
     }
 
     intersects.sort(ascSort)
@@ -110,13 +116,19 @@ function intersectObject(
   raycaster: SpeckleRaycaster,
   intersects: Array<Intersection>,
   recursive: boolean
-) {
+): boolean {
+  const len = intersects.length
   if (object.layers.test(raycaster.layers)) {
     if (raycaster.onObjectIntersectionTest) {
       raycaster.onObjectIntersectionTest(object)
     }
     object.raycast(raycaster, intersects)
   }
+  if (raycaster.firstHitOnly === true && intersects.length - len > 0) {
+    return true
+  }
+
+  let ret = false
   recursive &&=
     // eslint-disable-next-line eqeqeq
     object.userData.raycastChildren != undefined
@@ -126,7 +138,9 @@ function intersectObject(
     const children = object.children
 
     for (let i = 0, l = children.length; i < l; i++) {
-      intersectObject(children[i], raycaster, intersects, true)
+      ret = intersectObject(children[i], raycaster, intersects, true)
+      if (raycaster.firstHitOnly === true && ret) break
     }
   }
+  return ret
 }

@@ -1,6 +1,6 @@
 {
   "name": "@speckle/viewer",
-  "version": "2.5.4",
+  "version": "2.20.0-alpha4",
   "description": "A 3d viewer for Speckle, based on threejs.",
   "homepage": "https://speckle.systems",
   "repository": {
@@ -8,24 +8,21 @@
     "url": "https://github.com/specklesystems/speckle-server.git",
     "directory": "packages/viewer"
   },
-  "main": "dist/index.cjs",
+  "main": "dist/index.js",
   "module": "dist/index.js",
+  "type": "module",
+  "sourceType": "module",
   "exports": {
     ".": {
       "import": {
         "types": "./dist/index.d.ts",
         "default": "./dist/index.js"
-      },
-      "require": {
-        "types": "./dist/index.d.ts",
-        "default": "./dist/index.cjs"
       }
     },
     "./dist/assets/*": "./dist/assets/*",
     "./assets/*": "./dist/assets/*"
   },
   "types": "./dist/index.d.ts",
-  "sourceType": "module",
   "files": [
     "dist"
   ],
@@ -58,8 +55,7 @@
     "@speckle/objectloader": "workspace:^",
     "@speckle/shared": "workspace:^",
     "@types/flat": "^5.0.2",
-    "camera-controls": "^1.33.1",
-    "hold-event": "^0.1.0",
+    "flat": "^5.0.2",
     "js-logger": "1.6.1",
     "lodash-es": "^4.17.21",
     "string-to-color": "^2.2.2",
@@ -75,9 +71,10 @@
     "@babel/preset-env": "^7.20.2",
     "@rollup/plugin-babel": "^5.3.1",
     "@rollup/plugin-image": "^3.0.2",
+    "@rollup/plugin-typescript": "^11.1.6",
     "@types/babel__core": "^7.20.1",
     "@types/lodash-es": "4.17.12",
-    "@types/three": "^0.136.0",
+    "@types/three": "^0.140.0",
     "@typescript-eslint/eslint-plugin": "^7.12.0",
     "@typescript-eslint/parser": "^7.12.0",
     "@vitest/ui": "^1.4.0",
@@ -90,7 +87,7 @@
     "rollup": "^2.70.1",
     "rollup-plugin-delete": "^2.0.0",
     "rollup-plugin-terser": "^7.0.2",
-    "rollup-plugin-typescript2": "^0.31.2",
+    "rollup-plugin-typescript2": "^0.36.0",
     "typescript": "^4.5.4",
     "vitest": "^1.4.0"
   },

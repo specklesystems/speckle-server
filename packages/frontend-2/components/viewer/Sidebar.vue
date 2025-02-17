@@ -8,7 +8,7 @@
       open ? '' : 'pointer-events-none',
       isEmbedEnabled === true
         ? 'sm:top-2 sm:h-[calc(100dvh-3.8rem)]'
-        : 'sm:top-[4.2rem] sm:h-[calc(100dvh-4.2rem)]'
+        : 'sm:top-[3.8rem] sm:h-[calc(100dvh-3.8rem)]'
     ]"
   >
     <div
@@ -21,15 +21,13 @@
         class="hidden sm:flex group relative z-30 hover:z-50 w-6 h-full items-center overflow-hidden -mr-1"
       >
         <div
-          class="w-5 h-8 mr-1 bg-foundation group-hover:bg-outline-2 rounded-l translate-x-3 group-hover:translate-x-0.5 transition cursor-ew-resize flex items-center justify-center group-hover:shadow-xl"
+          class="w-7 h-8 mr-1 bg-primary group-hover:primary-focus rounded-l translate-x-1 group-hover:translate-x-0 opacity-0 group-hover:opacity-100 transition cursor-ew-resize flex items-center justify-center"
           @mousedown="startResizing"
         >
-          <ArrowsRightLeftIcon
-            class="h-3 w-3 transition opacity-0 group-hover:opacity-80 text-outline-1 -ml-px"
-          />
+          <ArrowsRightLeftIcon class="h-3 w-3 transition text-foundation" />
         </div>
         <div
-          class="relative z-30 w-1 h-full pt-[4.2rem] -ml-1 bg-transparent group-hover:bg-outline-2 cursor-ew-resize transition rounded-l"
+          class="relative z-30 w-1 h-full pt-[2.5rem] -ml-1 bg-transparent group-hover:bg-primary cursor-ew-resize transition rounded-l"
           @mousedown="startResizing"
         ></div>
       </div>
@@ -43,24 +41,27 @@
           <div
             class="flex items-center justify-between pl-3 pr-2.5 h-10 border-b border-outline-3"
           >
-            <div v-if="$slots.title" class="font-bold text-sm text-primary">
+            <div
+              v-if="$slots.title"
+              class="text-heading-sm text-foreground font-medium"
+            >
               <slot name="title"></slot>
             </div>
             <div class="flex items-center gap-0.5">
               <button class="p-0.5 text-foreground hover:text-primary" @click="onClose">
-                <XMarkIcon class="h-4 w-4" />
+                <XMarkIcon class="size-4" />
               </button>
             </div>
           </div>
           <div v-if="$slots.actions" class="w-full px-3 h-8">
-            <div class="flex items-center gap-1 h-full">
+            <div class="flex items-center justify-end md:justify-start gap-2 h-full">
               <slot name="actions"></slot>
             </div>
           </div>
         </div>
         <div class="w-full" :class="$slots.actions ? 'h-[4.5rem]' : 'h-10'"></div>
         <div
-          class="overflow-y-auto simple-scrollbar h-full bg-foundation w-full pt-2 sm:rounded-b-md"
+          class="overflow-y-auto simple-scrollbar h-full bg-foundation w-full pt-2 sm:rounded-b-md max-h-[220px] sm:max-h-none"
         >
           <slot></slot>
         </div>

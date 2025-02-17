@@ -1,8 +1,8 @@
 import { Matrix4 } from 'three'
-import { type NodeData } from '../../..'
-import { type GeometryData } from '../../converter/Geometry'
-import { GeometryConverter, SpeckleType } from '../GeometryConverter'
-import { mergeVertices } from 'three/examples/jsm/utils/BufferGeometryUtils'
+import { type NodeData } from '../../../index.js'
+import { type GeometryData } from '../../converter/Geometry.js'
+import { GeometryConverter, SpeckleType } from '../GeometryConverter.js'
+import { mergeVertices } from 'three/examples/jsm/utils/BufferGeometryUtils.js'
 
 export class ObjGeometryConverter extends GeometryConverter {
   public getSpeckleType(node: NodeData): SpeckleType {
@@ -33,7 +33,7 @@ export class ObjGeometryConverter extends GeometryConverter {
   }
 
   /** BLOCK INSTANCE */
-  private BlockInstanceToGeometryData(node: NodeData): GeometryData {
+  protected BlockInstanceToGeometryData(node: NodeData): GeometryData {
     const conversionFactor = 1
     const matrix = new Matrix4().copy(node.raw.matrixWorld)
     const transform: Matrix4 = new Matrix4()
@@ -57,7 +57,7 @@ export class ObjGeometryConverter extends GeometryConverter {
   /**
    * MESH
    */
-  private MeshToGeometryData(node: NodeData): GeometryData | null {
+  protected MeshToGeometryData(node: NodeData): GeometryData | null {
     if (!node.raw) return null
 
     const conversionFactor = 1

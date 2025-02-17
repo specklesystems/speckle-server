@@ -57,12 +57,12 @@
           v-if="revisionFn"
           text
           target="_blank"
-          :to="automationFunctionRoute(revisionFn.release.function.id)"
+          :to="automateFunctionRoute(revisionFn.release.function.id)"
         >
           View function
         </FormButton>
         <div class="grow" />
-        <FormButton outlined @click="open = false">Close</FormButton>
+        <FormButton color="outline" @click="open = false">Close</FormButton>
         <FormButton
           :disabled="hasErrors || loading || !hasRequiredData || !selectedModel"
           @click="onSave"
@@ -75,7 +75,7 @@
 </template>
 <script setup lang="ts">
 import type { MaybeNullOrUndefined, Optional } from '@speckle/shared'
-import { automationFunctionRoute } from '~/lib/common/helpers/route'
+import { automateFunctionRoute } from '~/lib/common/helpers/route'
 import {
   useJsonFormsChangeHandler,
   hasJsonFormErrors as hasFormErrors
@@ -112,6 +112,8 @@ graphql(`
     parameters
     release {
       id
+      versionTag
+      createdAt
       inputSchema
       function {
         id
@@ -142,6 +144,7 @@ const emit = defineEmits<{
 
 const props = defineProps<{
   projectId: string
+  workspaceId?: string
   automationId: string
   revisionFn: MaybeNullOrUndefined<AutomationRevisionFunction>
   revision: MaybeNullOrUndefined<AutomationRevision>
@@ -156,7 +159,9 @@ const mixpanel = useMixpanel()
 
 const jsonForm = ref<{ triggerChange: () => Promise<Optional<JsonFormsChangeEvent>> }>()
 const selectedModel = ref<CommonModelSelectorModelFragment>()
-const selectedRelease = ref<SearchAutomateFunctionReleaseItemFragment>()
+const selectedRelease = ref<SearchAutomateFunctionReleaseItemFragment | undefined>(
+  props.revisionFn?.release
+)
 const inputSchema = computed(() =>
   formattedJsonFormSchema(selectedRelease.value?.inputSchema)
 )
@@ -197,6 +202,7 @@ const resolveFirstModelValue = (items: SearchAutomateFunctionReleaseItemFragment
       functionId: functionId.value,
       functionVersionId: currentReleaseId.value
     })
+    return props.revisionFn?.release
   }
 
   return modelValue
@@ -258,7 +264,9 @@ const onSave = async () => {
         projectId: props.projectId,
         functionId: fId,
         functionReleaseId: rId,
-        modelId: model.id
+        modelId: model.id,
+        /* eslint-disable-next-line camelcase */
+        workspace_id: props.workspaceId
       })
     }
   } finally {

@@ -25,7 +25,7 @@ spec:
 
         ports:
           - name: metrics
-            containerPort: 9094
+            containerPort: {{ .Values.preview_service.monitoring.metricsPort }}
             protocol: TCP
 
         livenessProbe:
@@ -35,7 +35,7 @@ spec:
             command:
               - node
               - -e
-              - process.exit(Date.now() - require('fs').readFileSync('/tmp/last_successful_query', 'utf8') > 3600 * 1000)
+              - {{ printf "process.exit(Date.now() - require('fs').readFileSync('/tmp/last_successful_query', 'utf8') > %s)" .Values.preview_service.puppeteer.timeoutMilliseconds }}
 
         resources:
           requests:
@@ -51,33 +51,70 @@ spec:
             drop:
               - ALL
           privileged: false
-          readOnlyRootFilesystem: true
+          # readOnlyRootFilesystem: true #FIXME this currently breaks chromium. Need to identify which directories should be mounted.
           runAsNonRoot: true
-          runAsUser: 20000
+          runAsUser: 800
 
         volumeMounts:
-          - mountPath: /tmp
-            name: tmp
-          - mountPath: /.cache/puppeteer
-            name: puppeteer-cache
         {{- if .Values.db.useCertificate }}
           - name: postgres-certificate
             mountPath: /postgres-certificate
         {{- end }}
+        {{- if .Values.featureFlags.workspacesMultiRegionEnabled }}
+          - name: multi-region-config
+            mountPath: /multi-region-config
+            readOnly: true
+        {{- end }}
 
         env:
+          - name: HOST
+            value: '127.0.0.1' # Only accept connections from localhost, as preview service does not need to be exposed outside the container.
+          - name: METRICS_HOST
+            value: '0.0.0.0' # Expose metrics outside of the container so it can be scraped by Prometheus
+          - name: PORT
+            value: {{ .Values.preview_service.port | quote }}
+
+          - name: PROMETHEUS_METRICS_PORT
+            value: {{ .Values.preview_service.monitoring.metricsPort | quote }}
+
           - name: PG_CONNECTION_STRING
             valueFrom:
               secretKeyRef:
                 name: {{ default .Values.secretName .Values.db.connectionString.secretName }}
                 key: {{ default "postgres_url" .Values.db.connectionString.secretKey }}
+          {{- if .Values.preview_service.postgresMaxConnections }}
+          - name: POSTGRES_MAX_CONNECTIONS_PREVIEW_SERVICE
+            value: {{ .Values.preview_service.postgresMaxConnections | quote }}
+          {{- end }}
+          - name: POSTGRES_CONNECTION_CREATE_TIMEOUT_MILLIS
+            value: {{ .Values.db.connectionCreateTimeoutMillis | quote }}
+          - name: POSTGRES_CONNECTION_ACQUIRE_TIMEOUT_MILLIS
+            value: {{ .Values.db.connectionAcquireTimeoutMillis | quote }}
 
           - name: LOG_LEVEL
             value: {{ .Values.preview_service.logLevel | quote }}
+          - name: LOG_PRETTY
+            value: {{ .Values.preview_service.logPretty | quote }}
 
           {{- if .Values.db.useCertificate }}
           - name: NODE_EXTRA_CA_CERTS
             value: "/postgres-certificate/ca-certificate.crt"
+          {{- end }}
+
+          {{- if .Values.preview_service.puppeteer.userDataDirectory }}
+          - name: USER_DATA_DIR
+            value: {{ .Values.preview_service.puppeteer.userDataDirectory | quote }}
+          {{- end }}
+
+          {{- if .Values.preview_service.puppeteer.timeoutMilliseconds }}
+          - name: PREVIEW_TIMEOUT
+            value: {{ .Values.preview_service.puppeteer.timeoutMilliseconds | quote }}
+          {{- end }}
+          {{- if .Values.featureFlags.workspacesMultiRegionEnabled }}
+          - name: FF_WORKSPACES_MULTI_REGION_ENABLED
+            value: {{ .Values.featureFlags.workspacesMultiRegionEnabled | quote }}
+          - name: MULTI_REGION_CONFIG_PATH
+            value: "/multi-region-config/multi-region-config.json"
           {{- end }}
 
       {{- if .Values.preview_service.affinity }}
@@ -99,7 +136,7 @@ spec:
 
       securityContext:
         runAsNonRoot: true
-        runAsUser: 20000
+        runAsUser: 800
         fsGroup: 25000
         fsGroupChangePolicy: OnRootMismatch
         runAsGroup: 30000
@@ -110,12 +147,16 @@ spec:
       terminationGracePeriodSeconds: 3600
 
       volumes:
-        - name: tmp
-          emptyDir: {}
-        - name: puppeteer-cache
-          emptyDir: {}
       {{- if .Values.db.useCertificate }}
         - name: postgres-certificate
           configMap:
             name: postgres-certificate
+      {{- end }}
+      {{- if .Values.featureFlags.workspacesMultiRegionEnabled }}
+        - name: multi-region-config
+          secret:
+            secretName: {{ .Values.multiRegion.config.secretName }}
+            items:
+            - key: {{ .Values.multiRegion.config.secretKey }}
+              path: "multi-region-config.json"
       {{- end }}

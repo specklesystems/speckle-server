@@ -1,7 +1,7 @@
 import type { ApolloCache } from '@apollo/client/core'
-import { useApolloClient, useSubscription } from '@vue/apollo-composable'
+import type { Optional } from '@speckle/shared'
+import { useApolloClient, useMutation, useSubscription } from '@vue/apollo-composable'
 import type { MaybeRef } from '@vueuse/core'
-import { isArray } from 'lodash-es'
 import type { Get } from 'type-fest'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { useLock } from '~~/lib/common/composables/singleton'
@@ -15,27 +15,40 @@ import type {
   ProjectUpdateInput,
   ProjectUpdateRoleInput,
   UpdateProjectMetadataMutation,
+  WorkspaceProjectInviteCreateInput,
+  InviteProjectUserMutation,
+  Project,
+  WorkspaceProjectCreateInput,
+  CreateWorkspaceProjectMutation,
+  CreateProjectMutation,
   AdminPanelProjectsListQuery
 } from '~~/lib/common/generated/gql/graphql'
 import {
-  ROOT_QUERY,
   convertThrowIntoFetchResult,
   getCacheId,
   getFirstErrorMessage,
+  modifyObjectField,
   modifyObjectFields
 } from '~~/lib/common/helpers/graphql'
-import { useNavigateToHome } from '~~/lib/common/helpers/route'
+import { useNavigateToHome, workspaceRoute } from '~~/lib/common/helpers/route'
 import {
   cancelProjectInviteMutation,
   createProjectMutation,
   deleteProjectMutation,
   inviteProjectUserMutation,
+  inviteWorkspaceProjectUserMutation,
   leaveProjectMutation,
   updateProjectMetadataMutation,
   updateProjectRoleMutation,
-  useProjectInviteMutation
+  updateWorkspaceProjectRoleMutation,
+  useProjectInviteMutation,
+  useMoveProjectToWorkspaceMutation,
+  createWorkspaceProjectMutation
 } from '~~/lib/projects/graphql/mutations'
 import { onProjectUpdatedSubscription } from '~~/lib/projects/graphql/subscriptions'
+import { projectRoute } from '~/lib/common/helpers/route'
+import { useMixpanel } from '~/lib/core/composables/mp'
+import { useRouter } from 'vue-router'
 
 export function useProjectUpdateTracking(
   projectId: MaybeRef<string>,
@@ -85,8 +98,7 @@ export function useProjectUpdateTracking(
       if (redirectOnDeletion || notifyOnUpdate) {
         triggerNotification({
           type: ToastNotificationType.Info,
-          title: isDeleted ? 'Project deleted' : 'Project updated',
-          description: isDeleted ? 'Redirecting to home' : undefined
+          title: isDeleted ? 'Project deleted' : 'Project updated'
         })
       }
     }
@@ -104,64 +116,80 @@ export function useCreateProject() {
   const { triggerNotification } = useGlobalToast()
   const { activeUser } = useActiveUser()
 
-  return async (input: ProjectCreateInput) => {
+  return async (input: ProjectCreateInput | WorkspaceProjectCreateInput) => {
     const userId = activeUser.value?.id
     if (!userId) return
 
     const res = await apollo
       .mutate({
-        mutation: createProjectMutation,
-        variables: { input },
+        ...('workspaceId' in input
+          ? {
+              mutation: createWorkspaceProjectMutation,
+              variables: { input }
+            }
+          : {
+              mutation: createProjectMutation,
+              variables: { input }
+            }),
         update: (cache, { data }) => {
-          if (data?.projectMutations.create.id) {
-            modifyObjectFields<
-              undefined,
-              { [key: string]: AdminPanelProjectsListQuery }
-            >(
-              cache,
-              ROOT_QUERY,
-              (fieldName, _variables, value, details) => {
-                const projectListFields = Object.keys(value).filter(
-                  (k) =>
-                    details.revolveFieldNameAndVariables(k).fieldName === 'projectList'
-                )
-                const newVal: typeof value = { ...value }
-                for (const field of projectListFields) {
-                  delete newVal[field]
-                }
-                return newVal
-              },
-              { fieldNameWhitelist: ['admin'] }
-            )
-          }
+          const typedData = data as
+            | CreateWorkspaceProjectMutation
+            | CreateProjectMutation
+          if (!typedData) return
+
+          modifyObjectFields<undefined, { [key: string]: AdminPanelProjectsListQuery }>(
+            cache,
+            ROOT_QUERY,
+            (_fieldName, _variables, value, details) => {
+              const projectListFields = Object.keys(value).filter(
+                (k) =>
+                  details.revolveFieldNameAndVariables(k).fieldName === 'projectList'
+              )
+              const newVal: typeof value = { ...value }
+              for (const field of projectListFields) {
+                delete newVal[field]
+              }
+              return newVal
+            },
+            { fieldNameWhitelist: ['admin'] }
+          )
         }
       })
       .catch(convertThrowIntoFetchResult)
 
-    if (!res.data?.projectMutations.create.id) {
+    // not sure why this isn't happening automatically
+    const typedData = res.data as Optional<
+      CreateWorkspaceProjectMutation | CreateProjectMutation
+    >
+
+    const newProject = typedData
+      ? 'projectMutations' in typedData
+        ? typedData.projectMutations.create
+        : typedData.workspaceMutations.projects.create
+      : undefined
+
+    if (!newProject?.id) {
       const err = getFirstErrorMessage(res.errors)
       triggerNotification({
         type: ToastNotificationType.Danger,
         title: 'Project creation failed',
         description: err
       })
-    } else {
-      triggerNotification({
-        type: ToastNotificationType.Success,
-        title: 'Project successfully created'
-      })
     }
 
-    return res
+    return newProject
   }
 }
 
-export function useUpdateUserRole() {
+export function useUpdateUserRole(
+  project?: Ref<Pick<Project, 'workspaceId'> | undefined>
+) {
   const apollo = useApolloClient().client
   const { activeUser } = useActiveUser()
   const { triggerNotification } = useGlobalToast()
+  const isWorkspacesEnabled = useIsWorkspacesEnabled()
 
-  return async (input: ProjectUpdateRoleInput) => {
+  const updateProjectRole = async (input: ProjectUpdateRoleInput) => {
     const userId = activeUser.value?.id
     if (!userId) return
 
@@ -188,6 +216,45 @@ export function useUpdateUserRole() {
 
     return data?.projectMutations.updateRole
   }
+
+  const updateWorkspaceProjectRole = async (input: ProjectUpdateRoleInput) => {
+    const userId = activeUser.value?.id
+    if (!userId) return
+
+    const { data, errors } = await apollo
+      .mutate({
+        mutation: updateWorkspaceProjectRoleMutation,
+        variables: { input },
+        update: (cache) => {
+          cache.evict({ id: getCacheId('Project', input.projectId) })
+          cache.evict({
+            id: getCacheId('WorkspaceCollaborator', input.userId)
+          })
+        }
+      })
+      .catch(convertThrowIntoFetchResult)
+
+    if (!data?.workspaceMutations.projects.updateRole.id) {
+      const err = getFirstErrorMessage(errors)
+      triggerNotification({
+        type: ToastNotificationType.Danger,
+        title: 'Permission update failed',
+        description: err
+      })
+    } else {
+      triggerNotification({
+        type: ToastNotificationType.Success,
+        title: 'Workspace project permissions updated'
+      })
+    }
+
+    return data?.workspaceMutations.projects
+  }
+
+  const isWorkspaceProject =
+    isWorkspacesEnabled.value && project?.value?.workspaceId?.length
+
+  return isWorkspaceProject ? updateWorkspaceProjectRole : updateProjectRole
 }
 
 export function useInviteUserToProject() {
@@ -197,33 +264,60 @@ export function useInviteUserToProject() {
 
   return async (
     projectId: string,
-    input: ProjectInviteCreateInput | ProjectInviteCreateInput[]
+    input: ProjectInviteCreateInput[] | WorkspaceProjectInviteCreateInput[],
+    options?: { hideToasts?: boolean }
   ) => {
     const userId = activeUser.value?.id
+    const { hideToasts } = options || {}
     if (!userId) return
 
-    const { data, errors } = await apollo
-      .mutate({
-        mutation: inviteProjectUserMutation,
-        variables: { input: isArray(input) ? input : [input], projectId }
-      })
-      .catch(convertThrowIntoFetchResult)
+    const isWorkspaceInput = (
+      input: ProjectInviteCreateInput[] | WorkspaceProjectInviteCreateInput[]
+    ): input is WorkspaceProjectInviteCreateInput[] => {
+      return input.some((i) => 'workspaceRole' in i)
+    }
 
-    if (!data?.projectMutations.invites.batchCreate.id) {
-      const err = getFirstErrorMessage(errors)
+    let res: Optional<
+      InviteProjectUserMutation['projectMutations']['invites']['batchCreate']
+    > = undefined
+    let err: Optional<string> = undefined
+    if (isWorkspaceInput(input)) {
+      const { data, errors } = await apollo
+        .mutate({
+          mutation: inviteWorkspaceProjectUserMutation,
+          variables: { inputs: input, projectId }
+        })
+        .catch(convertThrowIntoFetchResult)
+      res = data?.projectMutations.invites.createForWorkspace
+      err = !res?.id ? getFirstErrorMessage(errors) : undefined
+    } else {
+      const { data, errors } = await apollo
+        .mutate({
+          mutation: inviteProjectUserMutation,
+          variables: { input, projectId }
+        })
+        .catch(convertThrowIntoFetchResult)
+      res = data?.projectMutations.invites.batchCreate
+      err = !res?.id ? getFirstErrorMessage(errors) : undefined
+    }
+
+    if (err && !hideToasts) {
       triggerNotification({
         type: ToastNotificationType.Danger,
-        title: 'Invitation failed',
+        title: input.length > 1 ? "Couldn't send invites" : "Couldn't send invite",
         description: err
       })
     } else {
-      triggerNotification({
-        type: ToastNotificationType.Success,
-        title: 'Invite successfully sent'
-      })
+      if (!hideToasts) {
+        triggerNotification({
+          type: ToastNotificationType.Success,
+          title:
+            input.length > 1 ? 'Invites successfully send' : 'Invite successfully sent'
+        })
+      }
     }
 
-    return data?.projectMutations.invites.batchCreate
+    return res
   }
 }
 
@@ -308,10 +402,14 @@ export function useDeleteProject() {
   const { activeUser } = useActiveUser()
   const { triggerNotification } = useGlobalToast()
   const navigateHome = useNavigateToHome()
+  const router = useRouter()
 
-  return async (id: string, options?: Partial<{ goHome: boolean }>) => {
+  return async (
+    id: string,
+    options?: Partial<{ goHome: boolean; workspaceSlug?: string }>
+  ) => {
     if (!activeUser.value) return
-    const { goHome } = options || {}
+    const { goHome, workspaceSlug } = options || {}
 
     const result = await apollo
       .mutate({
@@ -323,13 +421,12 @@ export function useDeleteProject() {
       .catch(convertThrowIntoFetchResult)
 
     if (result?.data?.projectMutations.delete) {
-      triggerNotification({
-        type: ToastNotificationType.Info,
-        title: 'Project deleted'
-      })
-
       if (goHome) {
-        navigateHome()
+        if (workspaceSlug) {
+          router.push(workspaceRoute(workspaceSlug))
+        } else {
+          navigateHome()
+        }
       }
 
       // evict project from cache
@@ -356,7 +453,7 @@ export function useProcessProjectInvite() {
 
   return async (
     input: ProjectInviteUseInput,
-    options?: Partial<{ inviteId: string }>
+    options?: Partial<{ inviteId: string; skipToast: boolean }>
   ) => {
     if (!activeUser.value) return
 
@@ -365,28 +462,34 @@ export function useProcessProjectInvite() {
         mutation: useProjectInviteMutation,
         variables: { input },
         update: (cache, { data }) => {
-          if (!data?.projectMutations.invites.use || !options?.inviteId) return
+          if (!data?.projectMutations.invites.use) return
 
-          // Evict PendingStreamCollaborator
-          cache.evict({
-            id: getCacheId('PendingStreamCollaborator', options.inviteId)
-          })
+          if (options?.inviteId) {
+            // Evict PendingStreamCollaborator
+            cache.evict({
+              id: getCacheId('PendingStreamCollaborator', options.inviteId)
+            })
+          }
         }
       })
       .catch(convertThrowIntoFetchResult)
 
-    if (data?.projectMutations.invites.use) {
-      triggerNotification({
-        type: input.accept ? ToastNotificationType.Success : ToastNotificationType.Info,
-        title: input.accept ? 'Invite accepted' : 'Invite dismissed'
-      })
-    } else {
-      const errMsg = getFirstErrorMessage(errors)
-      triggerNotification({
-        type: ToastNotificationType.Danger,
-        title: "Couldn't process invite",
-        description: errMsg
-      })
+    if (!options?.skipToast) {
+      if (data?.projectMutations.invites.use) {
+        triggerNotification({
+          type: input.accept
+            ? ToastNotificationType.Success
+            : ToastNotificationType.Info,
+          title: input.accept ? 'Invite accepted' : 'Invite dismissed'
+        })
+      } else {
+        const errMsg = getFirstErrorMessage(errors)
+        triggerNotification({
+          type: ToastNotificationType.Danger,
+          title: "Couldn't process invite",
+          description: errMsg
+        })
+      }
     }
 
     return data?.projectMutations.invites.use
@@ -431,5 +534,84 @@ export function useLeaveProject() {
         description: errMsg
       })
     }
+  }
+}
+
+export function useMoveProjectToWorkspace() {
+  const { triggerNotification } = useGlobalToast()
+  const mixpanel = useMixpanel()
+  const { mutate } = useMutation(useMoveProjectToWorkspaceMutation)
+
+  return async (params: {
+    projectId: string
+    workspaceId: string
+    workspaceName: string
+    eventSource?: string
+  }) => {
+    const { projectId, workspaceId, workspaceName, eventSource } = params
+
+    const res = await mutate(
+      { projectId, workspaceId },
+      {
+        update: (cache, { data }) => {
+          if (!data?.workspaceMutations.projects.moveToWorkspace) return
+          if (!workspaceId) return
+
+          modifyObjectField(
+            cache,
+            getCacheId('Workspace', workspaceId),
+            'projects',
+            ({ helpers: { createUpdatedValue, ref } }) => {
+              return createUpdatedValue(({ update }) => {
+                update('items', (items) => [ref('Project', projectId), ...items])
+              })
+            }
+          )
+        }
+      }
+    ).catch(convertThrowIntoFetchResult)
+
+    if (res?.data?.workspaceMutations.projects.moveToWorkspace.id) {
+      triggerNotification({
+        type: ToastNotificationType.Success,
+        title: `Moved project to ${workspaceName}`
+      })
+
+      mixpanel.track('Project Moved To Workspace', {
+        projectId,
+        // eslint-disable-next-line camelcase
+        workspace_id: workspaceId,
+        source: eventSource
+      })
+    } else {
+      const errMsg = getFirstErrorMessage(res?.errors)
+      triggerNotification({
+        type: ToastNotificationType.Danger,
+        title: "Couldn't move project",
+        description: errMsg
+      })
+    }
+
+    return res?.data?.workspaceMutations.projects.moveToWorkspace
+  }
+}
+
+export function useCopyProjectLink() {
+  const { copy } = useClipboard()
+  const { triggerNotification } = useGlobalToast()
+
+  return async (projectId: string) => {
+    if (import.meta.server) {
+      throw new Error('Not supported in SSR')
+    }
+
+    const path = projectRoute(projectId)
+    const url = new URL(path, window.location.toString()).toString()
+
+    await copy(url)
+    triggerNotification({
+      type: ToastNotificationType.Success,
+      title: 'Project link copied to clipboard'
+    })
   }
 }

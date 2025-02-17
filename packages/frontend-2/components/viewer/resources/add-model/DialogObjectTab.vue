@@ -1,6 +1,6 @@
 <template>
   <div class="flex flex-col gap-y-4">
-    <div class="text-foreground normal text-sm sm:text-base">
+    <div class="text-foreground text-body-xs">
       Add objects from the current project by their IDs or an Object URL.
     </div>
     <form
@@ -11,31 +11,24 @@
         name="objectIdsOrUrl"
         label="Value"
         full-width
-        :size="isSmallerOrEqualSm ? 'base' : 'lg'"
         :custom-icon="LinkIcon"
         :rules="[isRequired, isValidValue]"
         placeholder="Comma-delimited object IDs/URLs"
+        color="foundation"
         auto-focus
       />
-      <FormButton
-        :icon-left="PlusIcon"
-        :size="isSmallerOrEqualSm ? 'base' : 'lg'"
-        submit
-      >
-        Add
-      </FormButton>
+      <FormButton :icon-left="PlusIcon" submit>Add</FormButton>
     </form>
   </div>
 </template>
 <script setup lang="ts">
 import { useForm } from 'vee-validate'
 import type { RuleExpression } from 'vee-validate'
-import { PlusIcon, LinkIcon } from '@heroicons/vue/24/solid'
+import { PlusIcon, LinkIcon } from '@heroicons/vue/20/solid'
 import { isRequired } from '~~/lib/common/helpers/validation'
 import { isObjectId } from '~~/lib/common/helpers/resources'
 import { useInjectedViewerLoadedResources } from '~~/lib/viewer/composables/setup'
 import { difference } from 'lodash-es'
-import { useIsSmallerOrEqualThanBreakpoint } from '~~/composables/browser'
 
 const emit = defineEmits<{
   (e: 'chosen', val: { objectIds: string[] }): void
@@ -46,7 +39,6 @@ const urlRegexp = /\/models\/([a-zA-Z0-_9,@$]+)$/i
 
 const { handleSubmit } = useForm<FormPayload>()
 const { resourceItems } = useInjectedViewerLoadedResources()
-const { isSmallerOrEqualSm } = useIsSmallerOrEqualThanBreakpoint()
 
 const explodeValidatedObjectIds = (commaDelimitedIdList: string) => {
   const idParts = commaDelimitedIdList.split(',')

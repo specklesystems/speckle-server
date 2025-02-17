@@ -17,7 +17,7 @@ const config: Config = {
   ],
   theme: {
     fontFamily: {
-      sans: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'",
+      sans: "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'",
       mono: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace"
     },
     extend: {
@@ -42,6 +42,7 @@ const config: Config = {
         foreground: {
           DEFAULT: 'var(--foreground)',
           2: 'var(--foreground-2)',
+          3: 'var(--foreground-3)',
           disabled: 'var(--foreground-disabled)',
           'on-primary': 'var(--foreground-on-primary)',
           primary: 'var(--foreground-primary)'
@@ -54,26 +55,37 @@ const config: Config = {
         outline: {
           1: 'var(--outline-1)',
           2: 'var(--outline-2)',
-          3: 'var(--outline-3)'
+          3: 'var(--outline-3)',
+          4: 'var(--outline-4)',
+          5: 'var(--outline-5)'
+        },
+        highlight: {
+          1: 'var(--highlight-1)',
+          2: 'var(--highlight-2)',
+          3: 'var(--highlight-3)'
         },
         success: {
           DEFAULT: 'var(--success)',
           lighter: 'var(--success-lighter)',
+          lightest: 'var(--success-lightest)',
           darker: 'var(--success-darker)'
         },
         warning: {
           DEFAULT: 'var(--warning)',
           lighter: 'var(--warning-lighter)',
+          lightest: 'var(--warning-lightest)',
           darker: 'var(--warning-darker)'
         },
         info: {
           DEFAULT: 'var(--info)',
           lighter: 'var(--info-lighter)',
+          lightest: 'var(--info-lightest)',
           darker: 'var(--info-darker)'
         },
         danger: {
           DEFAULT: 'var(--danger)',
           lighter: 'var(--danger-lighter)',
+          lightest: 'var(--danger-lightest)',
           darker: 'var(--danger-darker)'
         }
       },

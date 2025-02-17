@@ -18,7 +18,7 @@ import {
   ShapecastIntersection,
   SplitStrategy
 } from 'three-mesh-bvh'
-import { MeshIntersection } from './SpeckleRaycaster'
+import { MeshIntersection } from './SpeckleRaycaster.js'
 
 const SKIP_GENERATION = Symbol('skip tree generation')
 
@@ -145,7 +145,7 @@ export class AccelerationStructure {
     materialOrSide: Side | Material | Material[] = FrontSide
   ): MeshIntersection {
     const res = this._bvh.raycastFirst(this.transformInput<Ray>(ray), materialOrSide)
-    res.point = this.transformOutput(res.point)
+    if (res) res.point = this.transformOutput(res.point)
     /** The intersection results from raycasting a bvh will always overlap with MeshIntersection because the bvh uses indexed geometry */
     return res as MeshIntersection
   }

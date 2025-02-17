@@ -1,15 +1,11 @@
-import { getAutomateEncryptionKeysPath } from '@/modules/shared/helpers/envHelper'
+import { getEncryptionKeysPath } from '@/modules/shared/helpers/envHelper'
 import { packageRoot } from '@/bootstrap'
 import path from 'node:path'
 import fs from 'node:fs/promises'
 import { has, isArray, isObjectLike } from 'lodash'
 import { Nullable, Optional } from '@speckle/shared'
 import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
-import { getAutomationRevision } from '@/modules/automate/repositories/automations'
-import {
-  AutomationFunctionInputEncryptionError,
-  AutomationRevisionPublicKeyError
-} from '@/modules/automate/errors/management'
+import { AutomationFunctionInputEncryptionError } from '@/modules/automate/errors/management'
 import { KeyPair, buildDecryptor } from '@/modules/shared/utils/libsodium'
 import { AutomateRevisionFunctionRecord } from '@/modules/automate/helpers/types'
 import { AutomationRevisionFunctionGraphQLReturn } from '@/modules/automate/helpers/graphTypes'
@@ -18,6 +14,10 @@ import { LibsodiumEncryptionError } from '@/modules/shared/errors/encryption'
 import { Merge } from 'type-fest'
 import { convertFunctionReleaseToGraphQLReturn } from '@/modules/automate/services/functionManagement'
 import { redactWriteOnlyInputData } from '@/modules/automate/utils/jsonSchemaRedactor'
+import {
+  GetEncryptionKeyPair,
+  GetEncryptionKeyPairFor
+} from '@/modules/automate/domain/operations'
 
 type KeysFileContents = Array<KeyPair>
 
@@ -36,7 +36,7 @@ const isKeysFileContents = (
 const getEncryptionKeys = async () => {
   if (keys) return keys
 
-  const relativePath = getAutomateEncryptionKeysPath()
+  const relativePath = getEncryptionKeysPath()
   const fullPath = path.resolve(packageRoot, relativePath)
   const file = await fs.readFile(fullPath, 'utf-8')
 
@@ -49,7 +49,7 @@ const getEncryptionKeys = async () => {
   return keys
 }
 
-export const getEncryptionKeyPair = async () => {
+export const getEncryptionKeyPair: GetEncryptionKeyPair = async () => {
   return (await getEncryptionKeys())[0]
 }
 
@@ -57,7 +57,9 @@ export const getEncryptionPublicKey = async () => {
   return (await getEncryptionKeyPair()).publicKey
 }
 
-export const getEncryptionKeyPairFor = async (publicKey: string) => {
+export const getEncryptionKeyPairFor: GetEncryptionKeyPairFor = async (
+  publicKey: string
+) => {
   const keyPairs = await getEncryptionKeys()
   const keyPair = keyPairs.find((keyPair) => keyPair.publicKey === publicKey)
   if (!keyPair) {
@@ -72,35 +74,6 @@ export const getEncryptionKeyPairFor = async (publicKey: string) => {
   return keyPair
 }
 
-export type GetAutomationPublicKeyDeps = {
-  getAutomationRevision: typeof getAutomationRevision
-  getEncryptionKeys: typeof getEncryptionKeys
-}
-
-export const getAutomationPublicKey =
-  (deps: GetAutomationPublicKeyDeps) =>
-  async (params: { automationId: string; automationRevisionId?: string }) => {
-    const { getAutomationRevision, getEncryptionKeys } = deps
-    const { automationId, automationRevisionId } = params
-
-    if (automationRevisionId) {
-      const revision = await getAutomationRevision({ automationRevisionId })
-      if (!revision || revision.automationId !== automationId) {
-        throw new AutomationRevisionPublicKeyError(
-          "Couldn't find automation revision with the given parameters",
-          {
-            info: { automationId, automationRevisionId }
-          }
-        )
-      }
-
-      return revision.publicKey
-    }
-
-    const mainKeys = await getEncryptionKeys()
-    return mainKeys[0].publicKey
-  }
-
 const isValidInputObject = (
   input: unknown
 ): input is Nullable<Record<string, unknown>> => {
@@ -111,7 +84,7 @@ export type GetFunctionInputDecryptorDeps = {
   buildDecryptor: typeof buildDecryptor
 }
 
-export const getFunctionInputDecryptor =
+export const getFunctionInputDecryptorFactory =
   (deps: GetFunctionInputDecryptorDeps) => async (params: { keyPair: KeyPair }) => {
     const { buildDecryptor } = deps
     const { keyPair } = params
@@ -137,9 +110,10 @@ export const getFunctionInputDecryptor =
       dispose: coreDecryptor.dispose
     }
   }
+export type FunctionInputDecryptor = ReturnType<typeof getFunctionInputDecryptorFactory>
 
 export type GetFunctionInputsForFrontendDeps = {
-  getEncryptionKeyPairFor: typeof getEncryptionKeyPairFor
+  getEncryptionKeyPairFor: GetEncryptionKeyPairFor
   redactWriteOnlyInputData: typeof redactWriteOnlyInputData
 } & GetFunctionInputDecryptorDeps
 
@@ -148,7 +122,7 @@ export type AutomationRevisionFunctionForInputRedaction = Merge<
   { release: FunctionReleaseSchemaType }
 >
 
-export const getFunctionInputsForFrontend =
+export const getFunctionInputsForFrontendFactory =
   (deps: GetFunctionInputsForFrontendDeps) =>
   async (params: {
     fns: Array<AutomationRevisionFunctionForInputRedaction>
@@ -158,7 +132,7 @@ export const getFunctionInputsForFrontend =
     const { fns, publicKey } = params
 
     const keyPair = await getEncryptionKeyPairFor(publicKey)
-    const inputDecryptor = await getFunctionInputDecryptor(deps)({ keyPair })
+    const inputDecryptor = await getFunctionInputDecryptorFactory(deps)({ keyPair })
 
     let results: AutomationRevisionFunctionGraphQLReturn[] = []
     try {

@@ -42,7 +42,11 @@
     },
     {
       "path": "packages/objectloader",
-      "name": "🌐 objectloader"
+      "name": "⬇️ objectloader"
+    },
+    {
+      "path": "packages/objectsender",
+      "name": "⬆️ objectsender"
     },
     {
       "path": "packages/shared",
@@ -82,9 +86,21 @@
     },
     "files.eol": "\n",
     "volar.vueserver.maxOldSpaceSize": 4000,
-    "cSpell.words": ["Automations", "Bursty", "Insertable", "mjml"],
+    "cSpell.words": [
+      "Automations",
+      "Bursty",
+      "discoverability",
+      "Encryptor",
+      "Gendo",
+      "GENDOAI",
+      "Insertable",
+      "mjml",
+      "multiregion",
+      "OIDC",
+      "Prorotation"
+    ],
     "tailwindCSS.experimental.configFile": {
-      "packages/frontend-2/tailwind.config.mjs": "packages/frontend-2/**"
+      "packages/frontend-2/tailwind.config.cjs": "packages/frontend-2/**"
     },
     "vue-semantic-server.trace.server": "off",
     "vue-syntactic-server.trace.server": "off",
@@ -130,6 +146,6 @@
       "graphql.vscode-graphql-syntax"
     ],
     // List of extensions recommended by VS Code that should not be recommended for users of this workspace.
-    "unwantedRecommendations": ["octref.vetur", "vscode.typescript-language-features"]
+    "unwantedRecommendations": ["octref.vetur"]
   }
 }

@@ -39,6 +39,13 @@ type ServerInfo {
   Whether or not to show messaging about FE2 (banners etc.)
   """
   enableNewWebUiMessaging: Boolean
+
+  """
+  Configuration values that are specific to this server.
+  These are read-only and can only be adjusted during server setup.
+  Please contact your server administrator if you wish to suggest a change to these values.
+  """
+  configuration: ServerConfiguration!
 }
 
 type Role {
@@ -58,6 +65,14 @@ Available scopes.
 type Scope {
   name: String!
   description: String!
+}
+
+"""
+Server configuration.
+"""
+type ServerConfiguration {
+  objectSizeLimitBytes: Int!
+  objectMultipartUploadSizeLimitBytes: Int!
 }
 
 extend type Mutation {

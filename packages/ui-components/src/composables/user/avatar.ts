@@ -8,7 +8,16 @@ export type AvatarUser = {
 
 export type AvatarUserWithId = AvatarUser & { id: string }
 
-export type UserAvatarSize = 'xs' | 'sm' | 'base' | 'lg' | 'xl' | 'xxl' | 'editable'
+export type UserAvatarSize =
+  | '2xs'
+  | 'xs'
+  | 'sm'
+  | 'base'
+  | 'lg'
+  | 'xl'
+  | 'xxl'
+  | '3xl'
+  | 'editable'
 
 export function useAvatarSizeClasses(params: {
   props: ToRefs<{
@@ -20,6 +29,8 @@ export function useAvatarSizeClasses(params: {
   const heightClasses = computed(() => {
     const size = props.size?.value
     switch (size) {
+      case '2xs':
+        return 'h-4'
       case 'xs':
         return 'h-5'
       case 'sm':
@@ -29,6 +40,8 @@ export function useAvatarSizeClasses(params: {
       case 'xl':
         return 'h-14'
       case 'xxl':
+        return 'h-24'
+      case '3xl':
         return 'h-32'
       case 'editable':
         return 'h-60'
@@ -41,6 +54,8 @@ export function useAvatarSizeClasses(params: {
   const widthClasses = computed(() => {
     const size = props.size?.value
     switch (size) {
+      case '2xs':
+        return 'w-4'
       case 'xs':
         return 'w-5'
       case 'sm':
@@ -50,6 +65,8 @@ export function useAvatarSizeClasses(params: {
       case 'xl':
         return 'w-14'
       case 'xxl':
+        return 'w-24'
+      case '3xl':
         return 'w-32'
       case 'editable':
         return 'w-60'
@@ -62,6 +79,7 @@ export function useAvatarSizeClasses(params: {
   const textClasses = computed(() => {
     const size = props.size?.value
     switch (size) {
+      case '2xs':
       case 'xs':
         return 'text-tiny'
       case 'sm':
@@ -71,18 +89,21 @@ export function useAvatarSizeClasses(params: {
       case 'xl':
         return 'text-2xl'
       case 'xxl':
+        return 'text-2xl'
+      case '3xl':
         return 'text-3xl'
       case 'editable':
         return 'h1'
       case 'base':
       default:
-        return 'text-sm'
+        return 'text-body-2xs'
     }
   })
 
   const iconClasses = computed(() => {
     const size = props.size?.value
     switch (size) {
+      case '2xs':
       case 'xs':
         return 'w-3 h-3'
       case 'sm':

@@ -59,9 +59,9 @@ export const Default: StoryType = {
       type: ToastNotificationType.Info,
       title: 'Title',
       description: 'Description',
+
       cta: {
-        title: 'CTA',
-        onClick: () => console.log('Clicked')
+        title: 'CTA'
       }
     }
   }

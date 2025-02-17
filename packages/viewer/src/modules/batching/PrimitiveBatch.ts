@@ -1,15 +1,16 @@
 import { Material, Object3D, BufferGeometry, BufferAttribute, Box3 } from 'three'
-import { NodeRenderView } from '../..'
+import { NodeRenderView } from '../../index.js'
 import {
   AllBatchUpdateRange,
   type Batch,
   type BatchUpdateRange,
   GeometryType,
   NoneBatchUpdateRange
-} from './Batch'
-import { type DrawGroup } from './Batch'
-import Materials from '../materials/Materials'
-import SpeckleStandardColoredMaterial from '../materials/SpeckleStandardColoredMaterial'
+} from './Batch.js'
+import { type DrawGroup } from './Batch.js'
+import Materials from '../materials/Materials.js'
+import SpeckleStandardColoredMaterial from '../materials/SpeckleStandardColoredMaterial.js'
+import SpecklePointColouredMaterial from '../materials/SpecklePointColouredMaterial.js'
 
 export abstract class Primitive<
   TGeometry extends BufferGeometry = BufferGeometry,
@@ -227,25 +228,27 @@ export abstract class PrimitiveBatch implements Batch {
            *  a ton of artifacts. To avoid this, we are shifting the sampling indices so they're right on the center of each texel, so no inconsistent
            *  sampling can occur.
            */
-          if (range.materialOptions.rampIndex && range.materialOptions.rampWidth) {
-            const shiftedIndex =
-              range.materialOptions.rampIndex + 0.5 / range.materialOptions.rampWidth
-            const minMaxIndices = this.updateGradientIndexBufferData(
-              start,
-              range.count === Infinity
-                ? this.primitive.geometry.attributes['gradientIndex'].array.length
-                : len,
-              shiftedIndex
-            )
-            minGradientIndex = Math.min(minGradientIndex, minMaxIndices.minIndex)
-            maxGradientIndex = Math.max(maxGradientIndex, minMaxIndices.maxIndex)
-          }
+
+          const shiftedIndex =
+            range.materialOptions.rampIndex + 0.5 / range.materialOptions.rampWidth
+          const minMaxIndices = this.updateGradientIndexBufferData(
+            start,
+            range.count === Infinity
+              ? this.primitive.geometry.attributes['gradientIndex'].array.length
+              : len,
+            shiftedIndex
+          )
+          minGradientIndex = Math.min(minGradientIndex, minMaxIndices.minIndex)
+          maxGradientIndex = Math.max(maxGradientIndex, minMaxIndices.maxIndex)
         }
         /** We need to update the texture here, because each batch uses it's own clone for any material we use on it
          *  because otherwise three.js won't properly update our custom uniforms
          */
         if (range.materialOptions.rampTexture !== undefined) {
-          if (range.material instanceof SpeckleStandardColoredMaterial) {
+          if (
+            range.material instanceof SpeckleStandardColoredMaterial ||
+            range.material instanceof SpecklePointColouredMaterial
+          ) {
             range.material.setGradientTexture(range.materialOptions.rampTexture)
           }
         }
@@ -382,7 +385,8 @@ export abstract class PrimitiveBatch implements Batch {
           count: hiddenGroup.start
         }
       ])
-    }
+    } else this.setVisibleRange([AllBatchUpdateRange])
+
     // console.log('Final -> ', this.id, this.groups.slice())
   }
 

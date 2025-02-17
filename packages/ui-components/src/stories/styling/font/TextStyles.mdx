@@ -1,0 +1,47 @@
+import { Story, Meta } from '@storybook/addon-docs'
+import * as Stories from './TextStyles.stories'
+
+<Meta of={Stories} />
+
+# Text Styles
+
+We have introduced new text styles to ensure consistency across the application. These styles are designed to be semantic and clear, so you can easily apply them where appropriate.
+
+### Headings
+
+Our heading styles provide a clear hierarchy for your content:
+
+- **text-heading-2xl**: Large heading for primary titles
+- **text-heading-xl**: Heading for secondary titles
+- **text-heading-lg**: Medium heading for tertiary titles
+- **text-heading**: Standard heading for regular use
+- **text-heading-sm**: Small heading for minor sections
+
+### Body Text
+
+The body text styles are tailored for readability and consistency:
+
+- **text-body-3xs**: Extra small body text for captions or fine print
+- **text-body-2xs**: Very small body text for minor details
+- **text-body-xs**: Small body text for secondary information
+- **text-body-sm**: Regular body text for standard content
+- **text-body**: Base body text for primary content
+
+Each text style is applied using Tailwind's utility classes to maintain a uniform look and feel across the application.
+
+### Weights
+
+Currently font weights are variable, meaning that any of the aforementioned classes can have any kind of font-weight.
+Common font-weight values are mapped to tailwind classes like so:
+
+- **font-thin** - 100
+- **font-extralight** - 200
+- **font-light** - 300
+- **font-normal** - 400
+- **font-medium** - 500
+- **font-semibold** - 600
+- **font-bold** - 700
+- **font-extrabold** - 800
+- **font-black** - 900
+
+<Story id="overview-styling-text-styles--text-styles" />

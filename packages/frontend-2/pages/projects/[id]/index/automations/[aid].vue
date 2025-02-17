@@ -1,6 +1,10 @@
 <template>
   <div v-if="automation && project" class="flex flex-col gap-8 items-start">
-    <ProjectPageAutomationHeader :automation="automation" :project="project" />
+    <ProjectPageAutomationHeader
+      :automation="automation"
+      :project="project"
+      :is-editable="isEditable"
+    />
 
     <div class="grid grid-cols-1 xl:grid-cols-4 gap-6 w-full">
       <div
@@ -8,7 +12,9 @@
       >
         <ProjectPageAutomationFunctions
           :automation="automation"
+          :workspace-id="workspaceId"
           :project-id="projectId"
+          :is-editable="isEditable"
         />
         <ProjectPageAutomationModels :automation="automation" :project="project" />
       </div>
@@ -16,6 +22,7 @@
         class="col-span-1 xl:col-span-3"
         :project-id="projectId"
         :automation="automation"
+        :is-editable="isEditable"
       />
     </div>
   </div>
@@ -23,6 +30,7 @@
   <div v-else />
 </template>
 <script setup lang="ts">
+import { Roles } from '@speckle/shared'
 import { useQuery } from '@vue/apollo-composable'
 import { graphql } from '~/lib/common/generated/gql'
 import { projectAutomationPageQuery } from '~/lib/projects/graphql/queries'
@@ -39,10 +47,12 @@ graphql(`
 graphql(`
   fragment ProjectPageAutomationPage_Project on Project {
     id
+    workspaceId
     ...ProjectPageAutomationHeader_Project
   }
 `)
 
+const pageFetchPolicy = usePageQueryStandardFetchPolicy()
 const route = useRoute()
 const projectId = computed(() => route.params.id as string)
 const automationId = computed(() => route.params.aid as string)
@@ -53,10 +63,15 @@ const { result, loading } = useQuery(
     projectId: projectId.value,
     automationId: automationId.value
   }),
-  {
-    fetchPolicy: 'cache-and-network'
-  }
+  () => ({
+    fetchPolicy: pageFetchPolicy.value
+  })
 )
 const automation = computed(() => result.value?.project.automation || null)
 const project = computed(() => result.value?.project)
+const workspaceId = computed(() => project.value?.workspaceId ?? undefined)
+const isEditable = computed(() => {
+  const allowedRoles: string[] = [Roles.Stream.Owner]
+  return allowedRoles.includes(result.value?.project.role ?? '')
+})
 </script>

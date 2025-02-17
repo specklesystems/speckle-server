@@ -1,16 +1,16 @@
-import SpeckleRenderer from '../../SpeckleRenderer'
+import SpeckleRenderer from '../../SpeckleRenderer.js'
 
-import { type IViewer, ObjectLayers } from '../../../IViewer'
-import { PerpendicularMeasurement } from './PerpendicularMeasurement'
+import { type IViewer, ObjectLayers } from '../../../IViewer.js'
+import { PerpendicularMeasurement } from './PerpendicularMeasurement.js'
 import { Plane, Ray, Raycaster, Vector2, Vector3 } from 'three'
-import { PointToPointMeasurement } from './PointToPointMeasurement'
-import { Measurement, MeasurementState } from './Measurement'
-import { ExtendedMeshIntersection } from '../../objects/SpeckleRaycaster'
-import Logger from 'js-logger'
-import SpeckleGhostMaterial from '../../materials/SpeckleGhostMaterial'
-import { Extension } from '../Extension'
-import { InputEvent } from '../../input/Input'
-import { CameraController } from '../CameraController'
+import { PointToPointMeasurement } from './PointToPointMeasurement.js'
+import { Measurement, MeasurementState } from './Measurement.js'
+import { ExtendedMeshIntersection } from '../../objects/SpeckleRaycaster.js'
+import SpeckleGhostMaterial from '../../materials/SpeckleGhostMaterial.js'
+import { Extension } from '../Extension.js'
+import { InputEvent } from '../../input/Input.js'
+import { CameraController } from '../CameraController.js'
+import Logger from '../../utils/Logger.js'
 
 export enum MeasurementType {
   PERPENDICULAR,
@@ -63,11 +63,10 @@ export class MeasurementsExtension extends Extension {
     this._enabled = value
     if (this._activeMeasurement) {
       this._activeMeasurement.isVisible = value
-      this._activeMeasurement.update()
+      void this._activeMeasurement.update()
       if (!value) this.cancelMeasurement()
     }
-    this.renderer.needsRender = true
-    this.renderer.resetPipeline()
+    this.viewer.requestRender()
   }
 
   public get options(): MeasurementOptions {
@@ -181,10 +180,10 @@ export class MeasurementsExtension extends Extension {
       this._activeMeasurement.endPoint.copy(this.pointBuff)
       this._activeMeasurement.endNormal.copy(this.normalBuff)
     }
-    this._activeMeasurement.update()
+    void this._activeMeasurement.update().then(() => {
+      this.viewer.requestRender()
+    })
 
-    this.renderer.needsRender = true
-    this.renderer.resetPipeline()
     this._frameLock = true
     this._sceneHit = true
     // console.log('Time -> ', performance.now() - start)
@@ -284,8 +283,9 @@ export class MeasurementsExtension extends Extension {
     this._activeMeasurement.endPoint.copy(perpResult[0].point)
     this._activeMeasurement.endNormal.copy(perpResult[0].face.normal)
     this._activeMeasurement.state = MeasurementState.DANGLING_END
-    this._activeMeasurement.update()
-    this.finishMeasurement()
+    void this._activeMeasurement.update().then(() => {
+      this.finishMeasurement()
+    })
   }
 
   protected startMeasurement(): Measurement {
@@ -297,27 +297,35 @@ export class MeasurementsExtension extends Extension {
     else throw new Error('Unsupported measurement type!')
 
     measurement.state = MeasurementState.DANGLING_START
+    measurement.units =
+      this._options.units !== undefined
+        ? this._options.units
+        : DefaultMeasurementsOptions.units
+    measurement.precision =
+      this._options.precision !== undefined
+        ? this._options.precision
+        : DefaultMeasurementsOptions.precision
     measurement.frameUpdate(
       this.renderer.renderingCamera,
       this.screenBuff0,
       this.renderer.sceneBox
     )
     this.renderer.scene.add(measurement)
+
     return measurement
   }
 
   protected cancelMeasurement() {
     if (this._activeMeasurement) this.renderer.scene.remove(this._activeMeasurement)
     this._activeMeasurement = null
-    this.renderer.needsRender = true
-    this.renderer.resetPipeline()
+    this.viewer.requestRender()
   }
 
   protected finishMeasurement() {
     if (!this._activeMeasurement) return
 
     this._activeMeasurement.state = MeasurementState.COMPLETE
-    this._activeMeasurement.update()
+    void this._activeMeasurement.update()
     if (this._activeMeasurement.value > 0) {
       this.measurements.push(this._activeMeasurement)
     } else {
@@ -332,8 +340,7 @@ export class MeasurementsExtension extends Extension {
       this.measurements.splice(this.measurements.indexOf(this._selectedMeasurement), 1)
       this.renderer.scene.remove(this._selectedMeasurement)
       this._selectedMeasurement = null
-      this.renderer.needsRender = true
-      this.renderer.resetPipeline()
+      this.viewer.requestRender()
     } else {
       this.cancelMeasurement()
     }
@@ -357,8 +364,7 @@ export class MeasurementsExtension extends Extension {
         if (flashCount >= maxFlashCount) {
           clearInterval(handle)
         }
-        this.renderer.needsRender = true
-        this.renderer.resetPipeline()
+        this.viewer.requestRender()
       }
     }, 100)
   }
@@ -426,6 +432,7 @@ export class MeasurementsExtension extends Extension {
 
   protected applyOptions() {
     const all = [this._activeMeasurement, ...this.measurements]
+    const updatePromises: Promise<void>[] = []
     all.forEach((value) => {
       if (value) {
         value.units =
@@ -436,7 +443,7 @@ export class MeasurementsExtension extends Extension {
           this._options.precision !== undefined
             ? this._options.precision
             : DefaultMeasurementsOptions.precision
-        value.update()
+        updatePromises.push(value.update())
       }
     })
     this.viewer
@@ -445,19 +452,19 @@ export class MeasurementsExtension extends Extension {
 
     if (this._options.visible) this.raycaster.layers.enable(ObjectLayers.MEASUREMENTS)
     else this.raycaster.layers.disable(ObjectLayers.MEASUREMENTS)
-
-    this.renderer.needsRender = true
-    this.renderer.resetPipeline()
+    void Promise.all(updatePromises).then(() => {
+      this.viewer.requestRender()
+    })
   }
 
-  public fromMeasurementData(startPoint: Vector3, endPoint: Vector3) {
+  public async fromMeasurementData(startPoint: Vector3, endPoint: Vector3) {
     const measurement = new PointToPointMeasurement()
     measurement.startPoint.copy(startPoint)
     measurement.endPoint.copy(endPoint)
     measurement.state = MeasurementState.DANGLING_END
-    measurement.update()
+    await measurement.update()
     measurement.state = MeasurementState.COMPLETE
-    measurement.update()
+    await measurement.update()
     this.measurements.push(measurement)
   }
 }

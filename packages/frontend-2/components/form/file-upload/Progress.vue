@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col space-y-1">
+  <div class="flex flex-col space-y-2">
     <FormFileUploadProgressRow
       v-for="item in items"
       :key="item.id"

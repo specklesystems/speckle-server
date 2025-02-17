@@ -12,28 +12,26 @@
 <script setup lang="ts">
 import { useTheme } from '~~/lib/core/composables/theme'
 import { useAuthManager } from '~~/lib/auth/composables/auth'
-import { useMixpanelInitialization } from '~~/lib/core/composables/mp'
+import { useFixBraveSafariCookies } from '~~/lib/common/composables/reactiveCookie'
 
 const { isDarkTheme } = useTheme()
 
 useHead({
   // Title suffix
-  titleTemplate: (titleChunk) => (titleChunk ? `${titleChunk} - Speckle` : 'Speckle'),
+  titleTemplate: (titleChunk) => (titleChunk ? `${titleChunk} | Speckle` : 'Speckle'),
   htmlAttrs: {
     class: computed(() => (isDarkTheme.value ? `dark` : ``)),
     lang: 'en'
   },
   bodyAttrs: {
     class:
-      'simple-scrollbar overflow-y-scroll has-[.viewer]:overflow-auto bg-foundation-page text-foreground has-[.viewer-transparent]:!bg-transparent'
+      'bg-foundation-page text-foreground has-[.viewer-transparent]:!bg-transparent'
   }
 })
 
 const { watchAuthQueryString } = useAuthManager()
 watchAuthQueryString()
-
-// Awaiting to block the app from continuing until mixpanel tracking is fully initialized
-await useMixpanelInitialization()
+useFixBraveSafariCookies()
 </script>
 <style>
 .page-enter-active,

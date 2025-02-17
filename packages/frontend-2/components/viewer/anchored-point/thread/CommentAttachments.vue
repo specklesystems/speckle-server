@@ -1,13 +1,12 @@
 <template>
-  <div class="flex flex-col w-full items-start">
+  <div class="flex flex-col w-full items-start pt-2">
     <CommonTextLink
       v-for="attachment in attachments.text.attachments || []"
       :key="attachment.id"
       :icon-left="resolveIconComponent(attachment)"
-      size="sm"
       @click="() => onAttachmentClick(attachment)"
     >
-      <span class="truncate relative text-xs">
+      <span class="truncate relative text-xs pl-1">
         {{ attachment.fileName }}
       </span>
     </CommonTextLink>
@@ -151,8 +150,6 @@ const dialogButtons = computed((): Optional<LayoutDialogButton[]> => {
       ? prettyFileSize(dialogAttachment.value.fileSize)
       : 'Download',
     props: {
-      color: 'default',
-      fullWidth: true,
       iconLeft: ArrowDownTrayIcon
     },
     onClick: () => {

@@ -2,14 +2,20 @@
   <div
     :class="[
       'relative w-full h-1 bg-blue-500/30 text-xs text-foreground-on-primary overflow-hidden rounded-xl',
-      loading ? 'opacity-100' : 'opacity-0'
+      showBar ? 'opacity-100' : 'opacity-0'
     ]"
   >
     <div class="swoosher relative top-0 bg-blue-500/50"></div>
   </div>
 </template>
 <script setup lang="ts">
-defineProps<{ loading: boolean }>()
+import { useMounted } from '@vueuse/core'
+import { computed } from 'vue'
+
+const props = defineProps<{ loading: boolean; clientOnly?: boolean }>()
+
+const mounted = useMounted()
+const showBar = computed(() => (mounted.value || !props.clientOnly) && props.loading)
 </script>
 <style scoped>
 .swoosher {

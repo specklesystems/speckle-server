@@ -1,6 +1,6 @@
 /* eslint-disable camelcase */
-import { speckleLineVert } from './shaders/speckle-line-vert'
-import { speckleLineFrag } from './shaders/speckle-line-frag'
+import { speckleLineVert } from './shaders/speckle-line-vert.js'
+import { speckleLineFrag } from './shaders/speckle-line-frag.js'
 import {
   ShaderLib,
   Vector3,
@@ -11,12 +11,12 @@ import {
   BufferGeometry,
   Object3D
 } from 'three'
-import { ExtendedLineMaterial, type Uniforms } from './SpeckleMaterial'
+import { ExtendedLineMaterial, type Uniforms } from './SpeckleMaterial.js'
 import {
   LineMaterial,
   type LineMaterialParameters
 } from 'three/examples/jsm/lines/LineMaterial.js'
-import type { SpeckleWebGLRenderer } from '../objects/SpeckleWebGLRenderer'
+import type { SpeckleWebGLRenderer } from '../objects/SpeckleWebGLRenderer.js'
 
 class SpeckleLineMaterial extends ExtendedLineMaterial {
   protected get vertexProgram(): string {

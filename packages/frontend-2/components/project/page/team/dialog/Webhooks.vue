@@ -6,7 +6,7 @@
       text: 'Manage',
       to: projectWebhooksRoute(project.id),
       iconRight: ChevronRightIcon,
-      color: 'default'
+      color: 'primary'
     }"
   >
     <template #icon>

@@ -1,11 +1,11 @@
 <template>
   <LayoutDialog
     v-model:open="isOpen"
-    :max-width="isPrivate ? 'sm' : 'md'"
+    max-width="lg"
     :buttons="isPrivate ? nonDiscoverableButtons : discoverableButtons"
   >
-    <template v-if="isPrivate" #header>Change Access Permissions</template>
-    <template v-else #header>Embed Model</template>
+    <template v-if="isPrivate" #header>Change access permissions</template>
+    <template v-else #header>Embed model</template>
 
     <div v-if="isPrivate">
       <CommonAlert color="info">
@@ -37,18 +37,15 @@
 
       <div class="flex flex-col lg:flex-row gap-8 mb-6">
         <div class="flex-1 order-1 lg:order-2">
-          <h4 class="font-bold text-sm text-foreground-2 mb-2 ml-0.5">Embed Code</h4>
+          <h4 class="text-heading-sm text-foreground-2 mb-1 ml-0.5">Embed code</h4>
           <FormClipboardInput :value="iframeCode" is-multiline />
-          <p class="text-sm sm:text-base text-foreground-2 mt-2 mb-5 ml-0.5">
+          <p class="text-body-xs text-foreground-2 mt-2 mb-5 ml-0.5">
             Copy this code to embed your model in a webpage or document.
           </p>
+          <h4 class="text-heading-sm text-foreground-2 mb-1 ml-0.5">Embed URL</h4>
+          <FormClipboardInput class="mb-4" :value="updatedUrl" />
           <LayoutDialogSection border-b border-t title="Options">
-            <template #icon>
-              <Cog6ToothIcon class="h-full w-full" />
-            </template>
-            <div
-              class="flex flex-col gap-1.5 sm:gap-2 ml-5 sm:ml-7 text-sm cursor-default"
-            >
+            <div class="flex flex-col gap-1.5 sm:gap-2 text-body-xs cursor-default">
               <div v-for="option in embedDialogOptions" :key="option.id">
                 <label
                   :for="`option-${option.id}`"
@@ -75,16 +72,13 @@
             border-b
             title="Preview"
           >
-            <template #icon>
-              <EyeIcon class="h-full w-full" />
-            </template>
             <ProjectModelPageDialogEmbedIframe
               v-if="!isSmallerOrEqualSm"
               :src="updatedUrl"
               title="Preview"
               width="600"
               height="400"
-              class="shrink-0 w-[600px] h-[400px] mx-auto"
+              class="shrink-0 w-[600px] h-[400px] mx-auto border border-outline-2"
             />
           </LayoutDialogSection>
         </div>
@@ -94,7 +88,6 @@
 </template>
 
 <script setup lang="ts">
-import { Cog6ToothIcon, EyeIcon } from '@heroicons/vue/24/outline'
 import {
   ProjectVisibility,
   type ProjectsModelPageEmbed_ProjectFragment
@@ -197,15 +190,15 @@ const isPrivate = computed(() => {
 
 const discoverableButtons = computed((): LayoutDialogButton[] => [
   {
-    text: 'Cancel',
-    props: { color: 'invert', fullWidth: true, outline: true },
+    text: 'Close',
+    props: { color: 'outline' },
     onClick: () => {
       isOpen.value = false
     }
   },
   {
-    text: 'Copy Embed Code',
-    props: { color: 'default', fullWidth: true },
+    text: 'Copy embed code',
+    props: {},
     onClick: () => {
       handleEmbedCodeCopy(iframeCode.value)
     }
@@ -215,7 +208,7 @@ const discoverableButtons = computed((): LayoutDialogButton[] => [
 const nonDiscoverableButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Close',
-    props: { color: 'invert', fullWidth: true, outline: true },
+    props: { color: 'outline' },
     onClick: () => {
       isOpen.value = false
     }
@@ -223,7 +216,6 @@ const nonDiscoverableButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Save',
     props: {
-      fullWidth: true,
       disabled: projectVisibility.value === props.project.visibility
     },
     onClick: saveProjectVisibility
@@ -275,7 +267,7 @@ const embedDialogOptions = [
   },
   {
     id: 'hideSelectionInfo',
-    label: 'Hide the Selection Info panel',
+    label: 'Hide the selection info panel',
     value: hideSelectionInfo
   },
   {

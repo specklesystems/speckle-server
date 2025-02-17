@@ -1,24 +1,24 @@
+import { db } from '@/db/knex'
+import { getTokenAppInfoFactory } from '@/modules/auth/repositories/apps'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
-import { canCreateAppToken } from '@/modules/core/helpers/token'
-import { getTokenAppInfo } from '@/modules/core/repositories/tokens'
-import { createAppToken } from '@/modules/core/services/tokens'
+import { canCreateAppToken, isValidScope } from '@/modules/core/helpers/token'
+import {
+  storeApiTokenFactory,
+  storeTokenResourceAccessDefinitionsFactory,
+  storeTokenScopesFactory,
+  storeUserServerAppTokenFactory
+} from '@/modules/core/repositories/tokens'
+import { createAppTokenFactory } from '@/modules/core/services/tokens'
 
-/**
- * RESOURCE ACCESS CHECKING:
- *
- * GQL:
- * 1. Scopes - if project scope used, also check resource access rules (also - if ask for all projects, filter out the ones that are not allowed)
- * 2. Project rights (any directives to check?) - not only check access to project (authorizeResolver?), but also check access rules
- * 3. Some resolvers have custom checks, no directives - check manually
- *
- * REST:
- * ???
- *
- * - [X] Validate rules before insert? THat way we can rely on them being correct?
- * - - Not really, user can change roles after token creation
- *
- * - [X] What if rules exist, but only for projects? We still want to treat other types as unlimited
- */
+const getTokenAppInfo = getTokenAppInfoFactory({ db })
+const createAppToken = createAppTokenFactory({
+  storeApiToken: storeApiTokenFactory({ db }),
+  storeTokenScopes: storeTokenScopesFactory({ db }),
+  storeTokenResourceAccessDefinitions: storeTokenResourceAccessDefinitionsFactory({
+    db
+  }),
+  storeUserServerAppToken: storeUserServerAppTokenFactory({ db })
+})
 
 export = {
   Query: {
@@ -49,11 +49,13 @@ export = {
         }
       })
 
+      const scopes = args.token.scopes.filter(isValidScope)
       const token = await createAppToken({
         ...args.token,
         userId: ctx.userId!,
         appId,
-        lifespan: args.token.lifespan || undefined
+        lifespan: args.token.lifespan || undefined,
+        scopes
       })
       return token
     }

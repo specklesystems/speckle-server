@@ -1,12 +1,12 @@
 <template>
   <ViewerLayoutPanel @close="$emit('close')">
     <template #actions>
-      <FormButton size="xs" text :icon-left="ChevronLeftIcon" @click="clearDiff">
+      <FormButton size="sm" text :icon-left="ChevronLeftIcon" @click="clearDiff">
         Back
       </FormButton>
     </template>
     <div class="flex flex-col space-y-2 text-sm p-2">
-      <div class="text-xs bg-blue-500/20 text-primary p-1 rounded">
+      <div class="text-body-2xs bg-foundation-2 text-foreground p-1 rounded">
         This is an experimental feature.
       </div>
       <div class="flex space-x-2">
@@ -28,7 +28,7 @@
         </div>
       </div>
       <div class="grow flex items-center space-x-2 py-2">
-        <label for="diffTime" class="sr-only">Diff Time</label>
+        <label for="diffTime" class="sr-only">Diff time</label>
         <input
           id="diffTime"
           v-model="localDiffTime"
@@ -41,10 +41,12 @@
         />
       </div>
       <div class="flex items-center justify-between w-full px-1">
-        <span class="text-xs text-left">Color objects by status</span>
+        <span class="text-body-xs text-left">Color objects by status</span>
         <FormButton
-          size="xs"
-          :outlined="diffState.mode.value !== VisualDiffMode.COLORED"
+          size="sm"
+          :color="
+            diffState.mode.value !== VisualDiffMode.COLORED ? 'outline' : undefined
+          "
           @click="swapDiffMode()"
         >
           {{ diffState.mode.value === VisualDiffMode.COLORED ? 'ON' : 'OFF' }}
@@ -66,7 +68,7 @@ import { ChevronLeftIcon } from '@heroicons/vue/24/solid'
 import { VisualDiffMode } from '@speckle/viewer'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { uniqBy, debounce } from 'lodash-es'
-import type { SpeckleObject } from '~~/lib/common/helpers/sceneExplorer'
+import type { SpeckleObject } from '~~/lib/viewer/helpers/sceneExplorer'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 
 defineEmits<{

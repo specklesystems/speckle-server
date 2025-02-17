@@ -1,8 +1,8 @@
 import { Box3, Camera, Plane, Raycaster, Vector2, type Intersection } from 'three'
-import { MeasurementPointGizmo } from './MeasurementPointGizmo'
-import { getConversionFactor } from '../../converter/Units'
-import { Measurement, MeasurementState } from './Measurement'
-import { ObjectLayers } from '../../../IViewer'
+import { MeasurementPointGizmo } from './MeasurementPointGizmo.js'
+import { getConversionFactor } from '../../converter/Units.js'
+import { Measurement, MeasurementState } from './Measurement.js'
+import { ObjectLayers } from '../../../IViewer.js'
 
 export class PointToPointMeasurement extends Measurement {
   private startGizmo: MeasurementPointGizmo | null = null
@@ -30,7 +30,8 @@ export class PointToPointMeasurement extends Measurement {
     this.endGizmo?.frameUpdate(camera, bounds)
   }
 
-  public update() {
+  public update(): Promise<void> {
+    let ret: Promise<void> = Promise.resolve()
     this.startGizmo?.updateDisc(this.startPoint, this.startNormal)
     this.startGizmo?.updatePoint(this.startPoint)
     this.endGizmo?.updateDisc(this.endPoint, this.endNormal)
@@ -71,23 +72,26 @@ export class PointToPointMeasurement extends Measurement {
 
       this.startGizmo?.updateLine([this.startPoint, lineEndPoint])
       this.endGizmo?.updatePoint(lineEndPoint)
-      this.startGizmo?.updateText(
-        `${(this.value * getConversionFactor('m', this.units)).toFixed(
-          this.precision
-        )} ${this.units}`,
-        textPos
-      )
+      if (this.startGizmo)
+        ret = this.startGizmo.updateText(
+          `${(this.value * getConversionFactor('m', this.units)).toFixed(
+            this.precision
+          )} ${this.units}`,
+          textPos
+        )
       this.endGizmo?.enable(true, true, true, true)
     }
     if (this._state === MeasurementState.COMPLETE) {
       this.startGizmo?.enable(false, true, true, true)
       this.endGizmo?.enable(false, false, true, false)
-      this.startGizmo?.updateText(
-        `${(this.value * getConversionFactor('m', this.units)).toFixed(
-          this.precision
-        )} ${this.units}`
-      )
+      if (this.startGizmo)
+        ret = this.startGizmo.updateText(
+          `${(this.value * getConversionFactor('m', this.units)).toFixed(
+            this.precision
+          )} ${this.units}`
+        )
     }
+    return ret
   }
 
   public raycast(raycaster: Raycaster, intersects: Array<Intersection>) {

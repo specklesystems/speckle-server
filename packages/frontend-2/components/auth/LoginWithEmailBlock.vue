@@ -6,29 +6,42 @@
         name="email"
         label="E-mail"
         placeholder="Enter your email"
-        size="xl"
+        size="lg"
+        color="foundation"
         :rules="emailRules"
         show-label
-        :disabled="loading"
+        :disabled="!!(loading || shouldForceInviteEmail)"
         auto-focus
+        autocomplete="email"
       />
       <FormTextInput
         type="password"
         name="password"
         label="Password"
         placeholder="Enter your password"
-        size="xl"
+        color="foundation"
+        size="lg"
         :rules="passwordRules"
         show-label
         :disabled="loading"
+        autocomplete="current-password"
       />
     </div>
-    <div class="mt-1">
-      <CommonTextLink :to="forgottenPasswordRoute" size="sm">
-        Forgot your password?
-      </CommonTextLink>
+    <FormButton
+      size="lg"
+      submit
+      full-width
+      class="mt-8 mb-4"
+      :disabled="loading || !isMounted"
+    >
+      Log in
+    </FormButton>
+    <div class="mt-1 text-center text-body-xs text-foreground-3 select-none">
+      Forgot your password?
+      <NuxtLink :to="forgottenPasswordRoute" class="text-foreground">
+        Reset password
+      </NuxtLink>
     </div>
-    <FormButton submit full-width class="my-8" :disabled="loading">Log in</FormButton>
   </form>
 </template>
 <script setup lang="ts">
@@ -38,21 +51,42 @@ import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables
 import { ensureError } from '@speckle/shared'
 import { useAuthManager } from '~~/lib/auth/composables/auth'
 import { forgottenPasswordRoute } from '~~/lib/common/helpers/route'
+import { useMounted } from '@vueuse/core'
+import { graphql } from '~/lib/common/generated/gql'
+import type { AuthLoginWithEmailBlock_PendingWorkspaceCollaboratorFragment } from '~/lib/common/generated/gql/graphql'
 
 type FormValues = { email: string; password: string }
 
+graphql(`
+  fragment AuthLoginWithEmailBlock_PendingWorkspaceCollaborator on PendingWorkspaceCollaborator {
+    id
+    email
+    user {
+      id
+    }
+  }
+`)
+
 const props = defineProps<{
   challenge: string
+  workspaceInvite?: AuthLoginWithEmailBlock_PendingWorkspaceCollaboratorFragment
 }>()
 
-const { handleSubmit } = useForm<FormValues>()
+const { handleSubmit, setValues } = useForm<FormValues>()
 
 const loading = ref(false)
 const emailRules = [isEmail]
 const passwordRules = [isRequired]
 
+const isMounted = useMounted()
 const { loginWithEmail } = useAuthManager()
 const { triggerNotification } = useGlobalToast()
+
+const inviteEmail = computed(() => props.workspaceInvite?.email)
+const isInviteForExistingUser = computed(() => !!props.workspaceInvite?.user)
+const shouldForceInviteEmail = computed(
+  () => !!(inviteEmail.value && isInviteForExistingUser.value)
+)
 
 const onSubmit = handleSubmit(async ({ email, password }) => {
   try {
@@ -68,4 +102,14 @@ const onSubmit = handleSubmit(async ({ email, password }) => {
     loading.value = false
   }
 })
+
+watch(
+  shouldForceInviteEmail,
+  (shouldForce) => {
+    if (shouldForce) {
+      setValues({ email: inviteEmail.value || '' })
+    }
+  },
+  { immediate: true }
+)
 </script>

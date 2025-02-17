@@ -8,34 +8,55 @@ extend type Mutation {
 
   """
   Invite a new or registered user to the specified stream
+  Note: The required scope to invoke this is not given out to app or personal access tokens
   """
   streamInviteCreate(input: StreamInviteCreateInput!): Boolean!
     @hasServerRole(role: SERVER_USER)
     @hasScope(scope: "users:invite")
+    @deprecated(
+      reason: "Part of the old API surface and will be removed in the future. Use ProjectInviteMutations.create instead."
+    )
 
+  """
+  Note: The required scope to invoke this is not given out to app or personal access tokens
+  """
   serverInviteBatchCreate(input: [ServerInviteCreateInput!]!): Boolean!
     @hasServerRole(role: SERVER_USER)
     @hasScope(scope: "users:invite")
 
+  """
+  Note: The required scope to invoke this is not given out to app or personal access tokens
+  """
   streamInviteBatchCreate(input: [StreamInviteCreateInput!]!): Boolean!
     @hasServerRole(role: SERVER_ADMIN)
     @hasScope(scope: "users:invite")
+    @deprecated(
+      reason: "Part of the old API surface and will be removed in the future. Use ProjectInviteMutations.batchCreate instead."
+    )
 
   """
   Accept or decline a stream invite
   """
   streamInviteUse(accept: Boolean!, streamId: String!, token: String!): Boolean!
     @hasServerRole(role: SERVER_GUEST)
+    @deprecated(
+      reason: "Part of the old API surface and will be removed in the future. Use ProjectInviteMutations.use instead."
+    )
 
   """
   Cancel a pending stream invite. Can only be invoked by a stream owner.
+  Note: The required scope to invoke this is not given out to app or personal access tokens
   """
   streamInviteCancel(streamId: String!, inviteId: String!): Boolean!
     @hasServerRole(role: SERVER_GUEST)
     @hasScope(scope: "users:invite")
+    @deprecated(
+      reason: "Part of the old API surface and will be removed in the future. Use ProjectInviteMutations.cancel instead."
+    )
 
   """
   Re-send a pending invite
+  Note: The required scope to invoke this is not given out to app or personal access tokens
   """
   inviteResend(inviteId: String!): Boolean!
     @hasServerRole(role: SERVER_ADMIN)
@@ -43,6 +64,7 @@ extend type Mutation {
 
   """
   Delete a pending invite
+  Note: The required scope to invoke this is not given out to app or personal access tokens
   """
   inviteDelete(inviteId: String!): Boolean!
     @hasServerRole(role: SERVER_ADMIN)
@@ -55,6 +77,9 @@ extend type Query {
   isn't specified, the server will look for any valid invite.
   """
   streamInvite(streamId: String!, token: String): PendingStreamCollaborator
+    @deprecated(
+      reason: "Part of the old API surface and will be removed in the future. Use Query.projectInvite instead."
+    )
 
   """
   Look for an invitation to a project, for the current user (authed or not). If token
@@ -68,11 +93,14 @@ extend type Query {
   streamInvites: [PendingStreamCollaborator!]!
     @hasServerRole(role: SERVER_GUEST)
     @hasScope(scope: "streams:read")
+    @deprecated(
+      reason: "Part of the old API surface and will be removed in the future. Use User.projectInvites instead."
+    )
 
   """
   Receive metadata about an invite by the invite token
   """
-  serverInviteByToken(token: String!): ServerInvite
+  serverInviteByToken(token: String): ServerInvite
 }
 
 type ServerInvite {

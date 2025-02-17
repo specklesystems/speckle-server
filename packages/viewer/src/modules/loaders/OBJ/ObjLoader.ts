@@ -1,16 +1,16 @@
 import { Group } from 'three'
-import { Loader, LoaderEvent } from '../Loader'
-import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader'
-import { ObjConverter } from './ObjConverter'
-import { ObjGeometryConverter } from './ObjGeometryConverter'
-import Logger from 'js-logger'
-import { WorldTree } from '../../..'
+import { Loader, LoaderEvent } from '../Loader.js'
+import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js'
+import { ObjConverter } from './ObjConverter.js'
+import { ObjGeometryConverter } from './ObjGeometryConverter.js'
+import { WorldTree } from '../../../index.js'
+import Logger from '../../utils/Logger.js'
 
 export class ObjLoader extends Loader {
-  private baseLoader: OBJLoader
-  private converter: ObjConverter
-  private tree: WorldTree
-  private isFinished: boolean = false
+  protected baseLoader: OBJLoader
+  protected converter: ObjConverter
+  protected tree: WorldTree
+  protected isFinished: boolean = false
 
   public get resource(): string {
     return this._resource
@@ -20,7 +20,7 @@ export class ObjLoader extends Loader {
     return this.isFinished
   }
 
-  public constructor(targetTree: WorldTree, resource: string, resourceData?: string) {
+  public constructor(targetTree: WorldTree, resource: string, resourceData?: unknown) {
     super(resource, resourceData)
     this.tree = targetTree
     this.baseLoader = new OBJLoader()

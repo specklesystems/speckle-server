@@ -1,14 +1,13 @@
 <template>
   <div class="flex flex-col gap-6">
     <div class="grid gap-4 grid-cols-1 sm:grid-cols-2">
-      <AutomateFunctionPageInfoBlock :icon="CodeBracketIcon" title="Source">
+      <AutomateFunctionPageInfoBlock title="Source">
         <div class="space-y-1">
           <CommonTextLink
             v-tippy="license"
             external
             :to="repoUrl"
             target="_blank"
-            :icon-right="ArrowTopRightOnSquareIcon"
             class="max-w-full"
           >
             <span class="truncate">{{ repo }}</span>
@@ -19,7 +18,6 @@
               external
               :to="githubDetails.owner.html_url"
               target="_blank"
-              :icon-right="ArrowTopRightOnSquareIcon"
               class="max-w-full"
             >
               <span class="truncate">
@@ -34,33 +32,22 @@
           </div>
         </div>
       </AutomateFunctionPageInfoBlock>
-      <AutomateFunctionPageInfoBlock :icon="InformationCircleIcon" title="Info">
-        <div class="space-y-3">
+      <AutomateFunctionPageInfoBlock title="Info">
+        <div class="gap-y-2 text-body-xs">
           <div v-if="latestRelease">
-            <span>Last published:&nbsp;</span>
-            <CommonText class="font-bold" :text="publishedAt" />
+            <span class="font-medium">Last published:&nbsp;</span>
+            <CommonText :text="publishedAt" />
           </div>
-          <div>
-            <span>Used by:&nbsp;</span>
-            <CommonText class="font-bold" :text="`${fn.automationCount} automations`" />
-          </div>
-          <CommonTextLink
-            v-if="latestRelease?.inputSchema"
-            :icon-right="ArrowTopRightOnSquareIcon"
-            @click="onViewParameters"
-          >
-            View Parameters
+          <CommonTextLink v-if="latestRelease?.inputSchema" @click="onViewParameters">
+            View parameters
           </CommonTextLink>
         </div>
       </AutomateFunctionPageInfoBlock>
     </div>
-    <AutomateFunctionPageInfoBlock
-      title="Description"
-      :icon="ChatBubbleBottomCenterTextIcon"
-    >
+    <AutomateFunctionPageInfoBlock title="Description">
       <CommonProseMarkdownDescription :markdown="description" />
     </AutomateFunctionPageInfoBlock>
-    <AutomateFunctionPageInfoBlock title="Readme" :icon="BookOpenIcon">
+    <AutomateFunctionPageInfoBlock title="Readme">
       <CommonProseGithubReadme
         :readme-markdown="rawReadme || ''"
         :repo="repo || ''"
@@ -71,18 +58,25 @@
       class="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-between sm:items-center"
     >
       <div>
-        <div class="font-bold mb-2">Ready to go?</div>
-        <div class="label-light text-foreground-2">
+        <div class="text-heading-lg mb-2">Ready to go?</div>
+        <div class="label-light text-foreground-2 text-body-xs">
           Use this function to create an automation on your project.
         </div>
       </div>
-      <FormButton
-        :icon-left="BoltIcon"
+      <div
+        v-tippy="
+          hasReleases ? undefined : 'Your function needs to have at least one release'
+        "
         class="shrink-0"
-        @click="$emit('createAutomation')"
       >
-        Use in an Automation
-      </FormButton>
+        <FormButton
+          class="shrink-0"
+          :disabled="!hasReleases"
+          @click="$emit('createAutomation')"
+        >
+          Use in automation
+        </FormButton>
+      </div>
     </div>
     <AutomateFunctionPageParametersDialog
       v-if="latestRelease"
@@ -92,14 +86,6 @@
   </div>
 </template>
 <script setup lang="ts">
-import {
-  CodeBracketIcon,
-  InformationCircleIcon,
-  ArrowTopRightOnSquareIcon,
-  BookOpenIcon,
-  BoltIcon,
-  ChatBubbleBottomCenterTextIcon
-} from '@heroicons/vue/24/outline'
 import dayjs from 'dayjs'
 import {
   useGetGithubRepo,
@@ -120,7 +106,6 @@ graphql(`
       owner
       name
     }
-    automationCount
     description
     releases(limit: 1) {
       items {
@@ -163,6 +148,7 @@ const publishedAt = computed(() => dayjs(latestRelease.value?.createdAt).from(da
 const description = computed(() =>
   props.fn.description?.length ? props.fn.description : 'No description provided.'
 )
+const hasReleases = computed(() => !!latestRelease.value)
 
 const onViewParameters = () => {
   if (!latestRelease.value) return

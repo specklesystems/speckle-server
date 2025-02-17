@@ -1,11 +1,8 @@
-import Logger from 'js-logger'
 import {
   BackSide,
   Box3,
-  Box3Helper,
   BufferAttribute,
   BufferGeometry,
-  Color,
   DataTexture,
   DoubleSide,
   FloatType,
@@ -23,10 +20,11 @@ import {
   Vector3,
   type Intersection
 } from 'three'
-import { BatchObject } from '../batching/BatchObject'
-import Materials from '../materials/Materials'
-import { ObjectLayers } from '../../IViewer'
-import { TopLevelAccelerationStructure } from './TopLevelAccelerationStructure'
+import { BatchObject } from '../batching/BatchObject.js'
+import Materials from '../materials/Materials.js'
+import { TopLevelAccelerationStructure } from './TopLevelAccelerationStructure.js'
+import { SpeckleRaycaster } from './SpeckleRaycaster.js'
+import Logger from '../utils/Logger.js'
 
 const _inverseMatrix = new Matrix4()
 const _ray = new Ray()
@@ -66,6 +64,7 @@ export default class SpeckleMesh extends Mesh {
   private batchMaterial: Material
   private materialCache: { [id: string]: Material } = {}
   private materialStack: Array<Material | Material[]> = []
+  private batchMaterialStack: Array<Material> = []
   private materialCacheLUT: { [id: string]: number } = {}
 
   private _batchObjects!: BatchObject[]
@@ -74,9 +73,6 @@ export default class SpeckleMesh extends Mesh {
 
   public transformsTextureUniform: DataTexture
   public transformsArrayUniforms: Matrix4[] | null = null
-
-  private debugBatchBox = false
-  private boxHelper!: Box3Helper
 
   public get TAS(): TopLevelAccelerationStructure {
     return this.tas
@@ -124,6 +120,29 @@ export default class SpeckleMesh extends Mesh {
     this.material.needsUpdate = true
   }
 
+  public setOverrideBatchMaterial(material: Material) {
+    const overrideMaterial = this.getCachedMaterial(material, true)
+    this.batchMaterialStack.push(overrideMaterial)
+    const materials = this.material as Array<Material>
+    for (let k = 0; k < materials.length; k++) {
+      if (materials[k].uuid === this.batchMaterial.uuid) {
+        materials[k] = overrideMaterial
+      }
+    }
+  }
+
+  public restoreBatchMaterial() {
+    const materials = this.material as Array<Material>
+    const overrideBatchMaterial = this.batchMaterialStack.pop()
+    if (!overrideBatchMaterial) return
+
+    for (let k = 0; k < materials.length; k++) {
+      if (materials[k].uuid === overrideBatchMaterial.uuid) {
+        materials[k] = this.batchMaterial
+      }
+    }
+  }
+
   private lookupMaterial(material: Material) {
     return (
       this.materialCache[material.id] ||
@@ -155,6 +174,8 @@ export default class SpeckleMesh extends Mesh {
   }
 
   public updateMaterialTransformsUniform(material: Material) {
+    if (!Materials.isSpeckleMaterial(material)) return
+
     if (!material.defines) material.defines = {}
     material.defines['TRANSFORM_STORAGE'] = this.transformStorage
 
@@ -243,11 +264,6 @@ export default class SpeckleMesh extends Mesh {
       this.geometry.boundingBox.copy(this.tas.bounds)
       if (!this.geometry.boundingSphere) this.geometry.boundingSphere = new Sphere()
       this.geometry.boundingBox.getBoundingSphere(this.geometry.boundingSphere)
-      if (!this.boxHelper && this.debugBatchBox) {
-        this.boxHelper = new Box3Helper(this.tas.bounds, new Color(0xff0000))
-        this.boxHelper.layers.set(ObjectLayers.PROPS)
-        if (this.parent) this.parent.add(this.boxHelper)
-      }
     }
   }
 
@@ -302,7 +318,7 @@ export default class SpeckleMesh extends Mesh {
     }
   }
 
-  raycast(raycaster: Raycaster, intersects: Array<Intersection>) {
+  raycast(raycaster: SpeckleRaycaster, intersects: Array<Intersection>) {
     if (this.tas) {
       if (this.batchMaterial === undefined) return
 
@@ -311,7 +327,7 @@ export default class SpeckleMesh extends Mesh {
 
       if (raycaster.firstHitOnly === true) {
         const hit = this.convertRaycastIntersect(
-          this.tas.raycastFirst(ray, this.batchMaterial),
+          this.tas.raycastFirst(ray, raycaster.intersectTASOnly, this.batchMaterial),
           this,
           raycaster
         )
@@ -319,7 +335,11 @@ export default class SpeckleMesh extends Mesh {
           intersects.push(hit)
         }
       } else {
-        const hits = this.tas.raycast(ray, this.batchMaterial)
+        const hits = this.tas.raycast(
+          ray,
+          raycaster.intersectTASOnly,
+          this.batchMaterial
+        )
         for (let i = 0, l = hits.length; i < l; i++) {
           const hit = this.convertRaycastIntersect(hits[i], this, raycaster)
           if (hit) {

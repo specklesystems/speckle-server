@@ -6,7 +6,7 @@
         <template v-if="versions.length > 1">all of the selected versions</template>
         <template v-else-if="versions.length">
           the selected version
-          <span class="font-bold">"{{ versions[0].message || 'no message' }}"</span>
+          <span class="font-medium">"{{ versions[0].message || 'no message' }}"</span>
         </template>
         will be moved to.
       </div>
@@ -15,6 +15,7 @@
         label="Model Name"
         placeholder="model/name/here"
         help="Use forward slashes in the model name to nest it below other models."
+        color="foundation"
         :custom-icon="CubeIcon"
         :rules="rules"
         :disabled="disabled"
@@ -29,7 +30,7 @@
 <script setup lang="ts">
 import type { ProjectModelPageDialogMoveToVersionFragment } from '~~/lib/common/generated/gql/graphql'
 import { useModelNameValidationRules } from '~~/lib/projects/composables/modelManagement'
-import { CubeIcon } from '@heroicons/vue/24/solid'
+import { CubeIcon } from '@heroicons/vue/24/outline'
 import { useForm } from 'vee-validate'
 import { sanitizeModelName } from '~~/lib/projects/helpers/models'
 

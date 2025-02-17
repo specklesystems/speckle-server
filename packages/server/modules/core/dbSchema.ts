@@ -13,7 +13,7 @@ type BaseInnerSchemaConfig<T extends string, C extends string> = {
   /**
    * Get `knex(tableName)` QueryBuilder instance. Use the generic argument to type the results of the query.
    */
-  knex: <TResult = any>() => Knex.QueryBuilder<any, TResult>
+  knex: <TResult = any>(db?: Knex) => Knex.QueryBuilder<any, TResult>
   /**
    * Get names of table columns. The names can be prefixed with the table name or not, depending
    * on whether `withoutTablePrefix` was set when accessing the helper.
@@ -137,7 +137,7 @@ const createBaseInnerSchemaConfigBuilder =
 
     return {
       name: aliasedTableName as T,
-      knex: () => knex(aliasedTableName),
+      knex: (db?: Knex) => (db || knex)(aliasedTableName),
       col: reduce(
         columns,
         (prev, curr) => {
@@ -163,7 +163,7 @@ const createBaseInnerSchemaConfigBuilder =
  * @param tableName
  * @param columns
  */
-function buildTableHelper<
+export function buildTableHelper<
   T extends string,
   C extends string,
   M extends Optional<MetaSchemaConfig<any, any, any>>
@@ -186,7 +186,11 @@ function buildTableHelper<
 /**
  * Create meta table schema helper
  */
-function buildMetaTableHelper<T extends string, C extends string, MK extends string>(
+export function buildMetaTableHelper<
+  T extends string,
+  C extends string,
+  MK extends string
+>(
   tableName: T,
   extraColumns: C[],
   metaKeys: MK[],
@@ -261,7 +265,9 @@ export const Streams = buildTableHelper(
     'createdAt',
     'updatedAt',
     'allowPublicComments',
-    'isDiscoverable'
+    'isDiscoverable',
+    'workspaceId',
+    'regionKey'
   ],
   StreamsMeta
 )
@@ -337,13 +343,10 @@ export const ServerInvites = buildTableHelper('server_invites', [
   'target',
   'inviterId',
   'createdAt',
-  'used',
+  'updatedAt',
   'message',
-  'resourceTarget',
-  'resourceId',
-  'role',
-  'token',
-  'serverRole'
+  'resource',
+  'token'
 ])
 
 export const PasswordResetTokens = buildTableHelper('pwdreset_tokens', [
@@ -399,7 +402,8 @@ export const EmailVerifications = buildTableHelper('email_verifications', [
   'id',
   'email',
   'createdAt',
-  'used'
+  'used',
+  'code'
 ])
 
 export const ServerAccessRequests = buildTableHelper('server_access_requests', [
@@ -488,46 +492,6 @@ export const FileUploads = buildTableHelper('file_uploads', [
   'convertedMessage',
   'convertedCommitId'
 ])
-
-export const BetaAutomations = buildTableHelper('beta_automations', [
-  'automationId',
-  'automationRevisionId',
-  'automationName',
-  'projectId',
-  'modelId',
-  'createdAt',
-  'updatedAt',
-  'webhookId'
-])
-
-export const BetaAutomationRuns = buildTableHelper('beta_automation_runs', [
-  'automationId',
-  'automationRevisionId',
-  'automationRunId',
-  'versionId',
-  'createdAt',
-  'updatedAt'
-])
-
-export const BetaAutomationFunctionRuns = buildTableHelper(
-  'beta_automation_function_runs',
-  [
-    'automationRunId',
-    'functionId',
-    'functionName',
-    'functionLogo',
-    'elapsed',
-    'status',
-    'contextView',
-    'statusMessage',
-    'results'
-  ]
-)
-
-export const BetaAutomationFunctionRunsResultVersions = buildTableHelper(
-  'beta_automation_function_runs_result_versions',
-  ['automationRunId', 'functionId', 'resultVersionId']
-)
 
 export const ServerAppsScopes = buildTableHelper('server_apps_scopes', [
   'appId',
@@ -636,6 +600,25 @@ export const GendoAIRenders = buildTableHelper('gendo_ai_renders', [
   'camera',
   'baseImage',
   'responseImage'
+])
+
+export const UserEmails = buildTableHelper('user_emails', [
+  'id',
+  'email',
+  'primary',
+  'verified',
+  'userId',
+  'createdAt',
+  'updatedAt'
+])
+
+export const UserRoles = buildTableHelper('user_roles', [
+  'name',
+  'description',
+  'resourceTarget',
+  'aclTableName',
+  'weight',
+  'public'
 ])
 
 export { knex }

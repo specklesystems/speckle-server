@@ -5,33 +5,32 @@
     :buttons="[
       {
         text: 'Cancel',
-        props: { color: 'secondary', fullWidth: true },
+        props: { color: 'outline' },
         onClick: () => {
           isOpen = false
         }
       },
       {
         text: 'Save',
-        props: { color: 'default', fullWidth: true },
+        props: {},
         onClick: () => {
           onSubmit()
         }
       }
     ]"
   >
-    <template #header>Edit Model</template>
+    <template #header>Edit model</template>
     <form class="flex flex-col text-foreground" @submit="onSubmit">
-      <div class="flex flex-col gap-6 mb-6">
+      <div class="flex flex-col gap-4 mb-4">
         <FormTextInput
           v-model="newName"
           name="name"
           show-label
-          label="Model Name"
+          label="Model name"
           placeholder="model/name/here"
-          size="lg"
           :rules="rules"
-          show-required
           auto-focus
+          color="foundation"
           :disabled="loading"
           help="Use forward slashes in the model name to nest it below other models."
           autocomplete="off"
@@ -40,9 +39,10 @@
           v-model="newDescription"
           name="description"
           show-label
-          label="Model Description"
-          placeholder="Description (Optional)"
-          size="lg"
+          label="Model description"
+          show-optional
+          placeholder="Description"
+          color="foundation"
           :disabled="loading"
         />
       </div>

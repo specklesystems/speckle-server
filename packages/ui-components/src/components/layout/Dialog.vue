@@ -1,47 +1,70 @@
 <template>
   <TransitionRoot as="template" :show="open">
-    <Dialog as="div" class="relative z-40" @close="onClose">
+    <Dialog as="div" class="relative z-50" @close="onClose">
       <TransitionChild
         as="template"
         enter="ease-out duration-300"
         enter-from="opacity-0"
         enter-to="opacity-100"
-        leave="ease-in duration-200"
+        leave="ease-in duration-400"
         leave-from="opacity-100"
         leave-to="opacity-0"
       >
         <div
-          class="fixed top-0 left-0 w-full h-full bg-neutral-100/70 dark:bg-neutral-900/70 transition-opacity backdrop-blur-xs"
+          class="fixed top-0 left-0 w-full h-full backdrop-blur-xs bg-black/60 dark:bg-neutral-900/60 transition-opacity"
         />
       </TransitionChild>
       <div class="fixed top-0 left-0 z-10 h-screen !h-[100dvh] w-screen">
-        <div class="flex justify-center items-center h-full w-full p-4 sm:p-0">
+        <div
+          class="flex md:justify-center h-full w-full md:p-6"
+          :class="[
+            fullscreen === 'none' || fullscreen === 'desktop'
+              ? 'p-4 items-center'
+              : 'items-end md:items-center'
+          ]"
+        >
           <TransitionChild
             as="template"
-            enter="ease-out duration-300"
-            enter-from="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-            enter-to="opacity-100 translate-y-0 sm:scale-100"
-            leave="ease-in duration-200"
-            leave-from="opacity-100 translate-y-0 sm:scale-100"
-            leave-to="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+            enter="ease-out duration-5000"
+            :enter-from="`md:opacity-0 ${
+              fullscreen === 'mobile' || fullscreen === 'all'
+                ? 'translate-y-[100%]'
+                : 'translate-y-4'
+            } md:translate-y-4`"
+            enter-to="md:opacity-100 translate-y-0"
+            leave="ease-in duration-5000"
+            leave-from="md:opacity-100 translate-y-0"
+            :leave-to="`md:opacity-0 ${
+              fullscreen === 'mobile' || fullscreen === 'all'
+                ? 'translate-y-[100%]'
+                : 'translate-y-4'
+            } md:translate-y-4`"
             @after-leave="$emit('fully-closed')"
           >
             <DialogPanel
-              :class="[
-                'transform rounded-lg text-foreground overflow-hidden bg-foundation text-left shadow-xl transition-all flex flex-col max-h-[90vh]',
-                widthClasses
-              ]"
+              :class="dialogPanelClasses"
+              dialog-panel-classes
               :as="isForm ? 'form' : 'div'"
               @submit.prevent="onFormSubmit"
             >
-              <div :class="scrolledFromTop && 'relative z-20 shadow-lg'">
+              <div
+                v-if="hasTitle"
+                class="border-b border-outline-3"
+                :class="scrolledFromTop && 'relative z-20 shadow-lg'"
+              >
                 <div
-                  v-if="hasTitle"
-                  class="flex items-center justify-start rounded-t-lg shrink-0 min-h-[2rem] sm:min-h-[4rem] py-2 px-4 sm:px-8 truncate text-lg sm:text-2xl font-bold"
+                  class="flex items-center justify-start rounded-t-lg shrink-0 min-h-[2rem] sm:min-h-[3rem] px-6 py-4 truncate text-heading-sm"
                 >
-                  <div class="w-full truncate pr-12">
-                    {{ title }}
-                    <slot name="header"></slot>
+                  <div class="flex items-center pr-12">
+                    <ChevronLeftIcon
+                      v-if="showBackButton"
+                      class="w-5 h-5 -ml-1 mr-3"
+                      @click="$emit('back')"
+                    />
+                    <div class="w-full truncate">
+                      {{ title }}
+                      <slot name="header" />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -53,28 +76,23 @@
               -->
               <button class="hidden" type="button" />
 
-              <button
+              <FormButton
                 v-if="!hideCloser"
-                type="button"
-                class="absolute z-20 bg-foundation rounded-full p-1"
-                :class="hasTitle ? 'top-2 right-3 sm:top-4' : 'right-4 top-3'"
+                color="subtle"
+                size="sm"
+                class="absolute z-20 top-4 right-5 shrink-0 !w-6 !h-6 !p-0"
                 @click="open = false"
               >
-                <XMarkIcon class="h-5 sm:h-6 w-5 sm:w-6" />
-              </button>
-              <div
-                ref="slotContainer"
-                class="flex-1 simple-scrollbar overflow-y-auto text-sm sm:text-base"
-                :class="hasTitle ? 'p-3 sm:py-6 sm:px-8' : 'p-6 pt-10 sm:p-10'"
-                @scroll="onScroll"
-              >
+                <XMarkIcon class="h-6 w-6 text-foreground-2" />
+              </FormButton>
+              <div ref="slotContainer" :class="slotContainerClasses" @scroll="onScroll">
                 <slot>Put your content here!</slot>
               </div>
               <div
                 v-if="hasButtons"
-                class="relative z-50 flex px-4 py-2 sm:py-4 sm:px-6 gap-2 shrink-0 bg-foundation"
+                class="relative z-50 flex justify-end px-6 pb-6 space-x-2 shrink-0 bg-foundation-page"
                 :class="{
-                  'shadow-t': !scrolledToBottom,
+                  'shadow-t pt-6': !scrolledToBottom,
                   [buttonsWrapperClasses || '']: true
                 }"
               >
@@ -104,38 +122,48 @@
 <script setup lang="ts">
 import { Dialog, DialogPanel, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import { FormButton, type LayoutDialogButton } from '~~/src/lib'
-import { XMarkIcon } from '@heroicons/vue/24/outline'
+import { XMarkIcon, ChevronLeftIcon } from '@heroicons/vue/24/outline'
 import { useResizeObserver, type ResizeObserverCallback } from '@vueuse/core'
 import { computed, ref, useSlots, watch, onUnmounted } from 'vue'
 import { throttle } from 'lodash'
 import { isClient } from '@vueuse/core'
 
-type MaxWidthValue = 'sm' | 'md' | 'lg' | 'xl'
+type MaxWidthValue = 'xs' | 'sm' | 'md' | 'lg' | 'xl'
+type FullscreenValues = 'mobile' | 'desktop' | 'all' | 'none'
 
 const emit = defineEmits<{
   (e: 'update:open', v: boolean): void
   (e: 'fully-closed'): void
+  (e: 'back'): void
 }>()
 
-const props = defineProps<{
-  open: boolean
-  maxWidth?: MaxWidthValue
-  hideCloser?: boolean
-  /**
-   * Prevent modal from closing when the user clicks outside of the modal or presses Esc
-   */
-  preventCloseOnClickOutside?: boolean
-  title?: string
-  buttons?: Array<LayoutDialogButton>
-  /**
-   * Extra classes to apply to the button container.
-   */
-  buttonsWrapperClasses?: string
-  /**
-   * If set, the modal will be wrapped in a form element and the `onSubmit` callback will be invoked when the user submits the form
-   */
-  onSubmit?: (e: SubmitEvent) => void
-}>()
+const props = withDefaults(
+  defineProps<{
+    open: boolean
+    maxWidth?: MaxWidthValue
+    fullscreen?: FullscreenValues
+    hideCloser?: boolean
+    showBackButton?: boolean
+    /**
+     * Prevent modal from closing when the user clicks outside of the modal or presses Esc
+     */
+    preventCloseOnClickOutside?: boolean
+    title?: string
+    buttons?: Array<LayoutDialogButton>
+    /**
+     * Extra classes to apply to the button container.
+     */
+    buttonsWrapperClasses?: string
+    /**
+     * If set, the modal will be wrapped in a form element and the `onSubmit` callback will be invoked when the user submits the form
+     */
+    onSubmit?: (e: SubmitEvent) => void
+    isTransparent?: boolean
+  }>(),
+  {
+    fullscreen: 'mobile'
+  }
+)
 
 const slots = useSlots()
 
@@ -154,7 +182,7 @@ useResizeObserver(
 
 const isForm = computed(() => !!props.onSubmit)
 const hasButtons = computed(() => props.buttons || slots.buttons)
-const hasTitle = computed(() => props.title || slots.header)
+const hasTitle = computed(() => !!props.title || !!slots.header)
 
 const open = computed({
   get: () => props.open,
@@ -163,33 +191,92 @@ const open = computed({
 
 const maxWidthWeight = computed(() => {
   switch (props.maxWidth) {
-    case 'sm':
+    case 'xs':
       return 0
-    case 'md':
+    case 'sm':
       return 1
-    case 'lg':
+    case 'md':
       return 2
-    case 'xl':
+    case 'lg':
       return 3
+    case 'xl':
+      return 4
     default:
       return 10000
   }
 })
 
 const widthClasses = computed(() => {
-  const classParts: string[] = ['w-full', 'sm:w-full sm:max-w-2xl']
+  const classParts: string[] = ['w-full', 'sm:w-full']
 
-  if (maxWidthWeight.value >= 1) {
-    classParts.push('md:max-w-2xl')
+  if (!isFullscreenDesktop.value) {
+    if (maxWidthWeight.value === 0) {
+      classParts.push('md:max-w-sm')
+    }
+    if (maxWidthWeight.value >= 1) {
+      classParts.push('md:max-w-lg')
+    }
+    if (maxWidthWeight.value >= 2) {
+      classParts.push('md:max-w-2xl')
+    }
+    if (maxWidthWeight.value >= 3) {
+      classParts.push('lg:max-w-3xl')
+    }
+    if (maxWidthWeight.value >= 4) {
+      classParts.push('xl:max-w-6xl')
+    } else {
+      classParts.push('md:max-w-2xl')
+    }
   }
-  if (maxWidthWeight.value >= 2) {
-    classParts.push('lg:max-w-4xl')
+
+  return classParts.join(' ')
+})
+
+const isFullscreenDesktop = computed(
+  () => props.fullscreen === 'desktop' || props.fullscreen === 'all'
+)
+
+const dialogPanelClasses = computed(() => {
+  const classParts: string[] = [
+    'transform md:rounded-xl text-foreground overflow-hidden transition-all text-left flex flex-col md:h-auto'
+  ]
+
+  if (!props.isTransparent) {
+    classParts.push('bg-foundation-page shadow-xl border border-outline-2')
   }
-  if (maxWidthWeight.value >= 3) {
-    classParts.push('xl:max-w-6xl')
+
+  if (isFullscreenDesktop.value) {
+    classParts.push('md:h-full')
+  } else {
+    classParts.push('md:max-h-[90vh]')
   }
-  if (maxWidthWeight.value >= 4) {
-    classParts.push('2xl:max-w-7xl')
+
+  if (props.fullscreen === 'mobile' || props.fullscreen === 'all') {
+    classParts.push('max-md:h-[98vh] max-md:!h-[98dvh]')
+  }
+
+  if (props.fullscreen === 'none' || props.fullscreen === 'desktop') {
+    classParts.push('rounded-lg max-h-[90vh]')
+  } else {
+    classParts.push('rounded-t-lg')
+  }
+
+  classParts.push(widthClasses.value)
+  return classParts.join(' ')
+})
+
+const slotContainerClasses = computed(() => {
+  const classParts: string[] = ['flex-1 simple-scrollbar overflow-y-auto text-body-xs']
+
+  if (!props.isTransparent) {
+    if (hasTitle.value) {
+      classParts.push('px-6 py-4')
+      if (isFullscreenDesktop.value) {
+        classParts.push('md:p-0')
+      }
+    } else if (!isFullscreenDesktop.value) {
+      classParts.push('px-6 py-4')
+    }
   }
 
   return classParts.join(' ')

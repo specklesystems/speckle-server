@@ -3,16 +3,18 @@ import {
   AutomationUpdateError
 } from '@/modules/automate/errors/management'
 import {
-  getAutomation,
-  updateAutomation as updateDbAutomation
+  getAutomationFactory,
+  updateAutomationFactory
 } from '@/modules/automate/repositories/automations'
-import { updateAutomation } from '@/modules/automate/services/automationManagement'
-import { createStoredAuthCode } from '@/modules/automate/services/authCode'
-import { getGenericRedis } from '@/modules/core'
+import { validateAndUpdateAutomationFactory } from '@/modules/automate/services/automationManagement'
+import {
+  AuthCodePayloadAction,
+  createStoredAuthCodeFactory
+} from '@/modules/automate/services/authCode'
+import { getGenericRedis } from '@/modules/shared/redis/redis'
 import { ProjectAutomationRevisionCreateInput } from '@/modules/core/graph/generated/graphql'
 import { BranchRecord } from '@/modules/core/helpers/types'
-import { getLatestStreamBranch } from '@/modules/core/repositories/branches'
-import { addOrUpdateStreamCollaborator } from '@/modules/core/services/streams/streamAccessService'
+import { getLatestStreamBranchFactory } from '@/modules/core/repositories/branches'
 import { expectToThrow } from '@/test/assertionHelper'
 import { BasicTestUser, createTestUsers } from '@/test/authHelper'
 import {
@@ -39,6 +41,22 @@ import { Automate, Roles } from '@speckle/shared'
 import { expect } from 'chai'
 import { times } from 'lodash'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
+import { db } from '@/db/knex'
+import {
+  addOrUpdateStreamCollaboratorFactory,
+  validateStreamAccessFactory
+} from '@/modules/core/services/streams/access'
+import { authorizeResolver } from '@/modules/shared'
+import { grantStreamPermissionsFactory } from '@/modules/core/repositories/streams'
+import {
+  addStreamInviteAcceptedActivityFactory,
+  addStreamPermissionsAddedActivityFactory
+} from '@/modules/activitystream/services/streamActivity'
+import { saveActivityFactory } from '@/modules/activitystream/repositories'
+import { publish } from '@/modules/shared/utils/subscriptions'
+import { getUserFactory } from '@/modules/core/repositories/users'
+import { getEventBus } from '@/modules/shared/services/eventBus'
+import { AutomationEvents } from '@/modules/automate/domain/events'
 
 /**
  * TODO: Extra test ideas
@@ -48,10 +66,31 @@ import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 
 const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
 
+const getUser = getUserFactory({ db })
+const saveActivity = saveActivityFactory({ db })
+const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
+const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
+  validateStreamAccess,
+  getUser,
+  grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+  addStreamInviteAcceptedActivity: addStreamInviteAcceptedActivityFactory({
+    saveActivity,
+    publish
+  }),
+  addStreamPermissionsAddedActivity: addStreamPermissionsAddedActivityFactory({
+    saveActivity,
+    publish
+  })
+})
+
 const buildAutomationUpdate = () => {
-  const update = updateAutomation({
+  const getAutomation = getAutomationFactory({ db })
+  const updateDbAutomation = updateAutomationFactory({ db })
+  const update = validateAndUpdateAutomationFactory({
     getAutomation,
-    updateAutomation: updateDbAutomation
+    updateAutomation: updateDbAutomation,
+    validateStreamAccess,
+    eventEmit: getEventBus().emit
   })
 
   return update
@@ -144,10 +183,17 @@ const buildAutomationUpdate = () => {
       })
 
       it('creates an automation', async () => {
+        let eventFired = false
+        const name = 'My Super Automation #1'
+
+        getEventBus().listenOnce(AutomationEvents.Created, async ({ payload }) => {
+          expect(payload.automation.name).to.equal(name)
+          eventFired = true
+        })
         const create = buildAutomationCreate()
 
         const automation = await create({
-          input: { name: 'Automation #1', enabled: true },
+          input: { name, enabled: true },
           projectId: myStream.id,
           userId: me.id
         })
@@ -155,6 +201,8 @@ const buildAutomationUpdate = () => {
         expect(automation).to.be.ok
         expect(automation.automation).to.be.ok
         expect(automation.token).to.be.ok
+        expect(automation.automation.name).to.equal(name)
+        expect(eventFired).to.be.true
       })
     })
 
@@ -226,6 +274,14 @@ const buildAutomationUpdate = () => {
           userId: me.id
         })
 
+        let eventFired = false
+        getEventBus().listenOnce(AutomationEvents.Updated, async ({ payload }) => {
+          expect(payload.automation.name).to.equal(initAutomation.name)
+          expect(payload.automation.enabled).to.be.false
+          expect(payload.automation.id).to.equal(initAutomation.id)
+          eventFired = true
+        })
+
         const updatedAutomation = await update({
           input: { id: initAutomation.id, enabled: false },
           userId: me.id,
@@ -235,6 +291,7 @@ const buildAutomationUpdate = () => {
         expect(updatedAutomation).to.be.ok
         expect(updatedAutomation.enabled).to.be.false
         expect(updatedAutomation.name).to.equal(initAutomation.name)
+        expect(eventFired).to.be.true
       })
 
       it('updates all available properties', async () => {
@@ -297,10 +354,19 @@ const buildAutomationUpdate = () => {
           projectId: myStream.id,
           userId: me.id
         })
-        projectModel = await getLatestStreamBranch(myStream.id)
+        projectModel = await getLatestStreamBranchFactory({ db })(myStream.id)
       })
 
       it('works successfully', async () => {
+        let eventFired = false
+        getEventBus().listenOnce(
+          AutomationEvents.CreatedRevision,
+          async ({ payload }) => {
+            expect(payload.automation.id).to.equal(createdAutomation.automation.id)
+            expect(payload.revision).to.be.ok
+            eventFired = true
+          }
+        )
         const create = buildAutomationRevisionCreate()
 
         const ret = await create({
@@ -314,6 +380,7 @@ const buildAutomationUpdate = () => {
         expect(ret.automationId).to.equal(createdAutomation.automation.id)
         expect(ret.triggers.length).to.be.ok
         expect(ret.functions.length).to.be.ok
+        expect(eventFired).to.be.true
       })
 
       it('fails if automation does not exist', async () => {
@@ -482,21 +549,28 @@ const buildAutomationUpdate = () => {
 
       it('fails if code is invalid', async () => {
         const res = await apollo.execute(AutomateValidateAuthCodeDocument, {
-          code: 'invalid'
+          payload: {
+            code: 'invalid',
+            userId: 'a',
+            action: 'aty'
+          }
         })
 
-        expect(res).to.haveGraphQLErrors('Invalid automate auth code')
+        expect(res).to.haveGraphQLErrors('Invalid automate auth payload')
         expect(res.data?.automateValidateAuthCode).to.not.be.ok
       })
 
       it('succeeds with valid code', async () => {
-        const storeCode = createStoredAuthCode({
+        const storeCode = createStoredAuthCodeFactory({
           redis: getGenericRedis()
         })
-        const code = await storeCode()
+        const code = await storeCode({
+          userId: me.id,
+          action: AuthCodePayloadAction.BecomeFunctionAuthor
+        })
 
         const res = await apollo.execute(AutomateValidateAuthCodeDocument, {
-          code
+          payload: code
         })
 
         expect(res).to.not.haveGraphQLErrors()
@@ -533,7 +607,7 @@ const buildAutomationUpdate = () => {
         )
 
         apollo = await testApolloServer({
-          context: createTestContext({
+          context: await createTestContext({
             userId: me.id,
             token: 'abc',
             role: Roles.Server.User

@@ -14,15 +14,15 @@ import {
   Vector3,
   ZeroFactor
 } from 'three'
-import { Geometry } from './converter/Geometry'
-import SpeckleBasicMaterial from './materials/SpeckleBasicMaterial'
-import { ShadowcatcherPass } from './pipeline/ShadowcatcherPass'
-import { ObjectLayers } from '../IViewer'
+import { Geometry } from './converter/Geometry.js'
+import SpeckleBasicMaterial from './materials/SpeckleBasicMaterial.js'
+import { ShadowcatcherPass } from './pipeline/Passes/ShadowcatcherPass.js'
+import { ObjectLayers } from '../IViewer.js'
 import {
   DefaultShadowcatcherConfig,
   type ShadowcatcherConfig
-} from './ShadowcatcherConfig'
-import type { SpeckleWebGLRenderer } from './objects/SpeckleWebGLRenderer'
+} from './ShadowcatcherConfig.js'
+import type { SpeckleWebGLRenderer } from './objects/SpeckleWebGLRenderer.js'
 
 export class Shadowcatcher {
   public static readonly MESH_NAME = 'Shadowcatcher'
@@ -51,7 +51,6 @@ export class Shadowcatcher {
     this.displayMaterial.map = this.shadowcatcherPass.outputTexture
     // this.displayMaterial.map.wrapS = RepeatWrapping
     // this.displayMaterial.map.repeat.x = -1
-    this.displayMaterial.map.needsUpdate = true
     this.displayMaterial.toneMapped = false
     this.displayMaterial.transparent = true
     this.displayMaterial.blending = CustomBlending

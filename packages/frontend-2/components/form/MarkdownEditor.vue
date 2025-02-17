@@ -1,22 +1,8 @@
 <template>
   <div class="flex flex-col space-y-2">
-    <div class="text-sm font-medium text-foreground-2 flex items-center space-x-1">
-      <span>{{ label }}</span>
-      <InformationCircleIcon
-        v-tippy="{
-          content: tooltipContent,
-          allowHTML: true,
-          interactive: true,
-          appendTo: () => body
-        }"
-        class="w-4 h-4 outline-none"
-      />
-      <div class="grow" />
-      <CommonTextLink
-        v-if="!isEditing || !isPreviewDisabled"
-        size="xs"
-        @click="toggleEditor"
-      >
+    <div class="text-body-xs font-medium text-foreground flex">
+      <span class="flex-1">{{ label }}</span>
+      <CommonTextLink size="sm" @click="toggleEditor">
         {{ isEditing ? 'Preview' : 'Editor' }}
       </CommonTextLink>
     </div>
@@ -25,9 +11,9 @@
       v-model="value"
       textarea-classes="font-mono"
       :name="name"
+      color="foundation"
       :label="label"
       :show-label="false"
-      :show-required="showRequired"
       :placeholder="placeholder"
       :help="help"
       :rules="typesafeRules"
@@ -39,10 +25,20 @@
     >
       <CommonProseMarkdownDescription :markdown="value" />
     </LayoutPanel>
+    <p class="text-body-xs text-foreground-2">
+      This field supports markdown.
+      <NuxtLink
+        href="https://www.markdownguide.org/basic-syntax/"
+        class="underline"
+        external
+      >
+        Click here
+      </NuxtLink>
+      for more info.
+    </p>
   </div>
 </template>
 <script setup lang="ts">
-import { InformationCircleIcon } from '@heroicons/vue/24/outline'
 import { type RuleExpression, useField } from 'vee-validate'
 
 const props = withDefaults(
@@ -63,16 +59,9 @@ const props = withDefaults(
 defineModel<string>()
 const { value } = useField<string>(props.name, props.rules)
 
-const body = computed(() => (import.meta.client ? document.body : undefined))
 const isEditing = ref(true)
-const isPreviewDisabled = computed(() => !(value.value || '').trim().length)
 
 const label = computed(() => props.label || props.name)
-const tooltipContent = computed(
-  () =>
-    `This field supports markdown. <a href="https://www.markdownguide.org/basic-syntax/" class="underline" target="_blank">Click here</a> for more info.`
-)
-
 // Kinda stupid, but we have to do this because of minor vee-validate version mismatches and vue kinda messing up the types on ui-components build
 // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-explicit-any
 const typesafeRules = computed(() => props.rules as any)

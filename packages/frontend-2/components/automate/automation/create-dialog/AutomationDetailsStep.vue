@@ -3,7 +3,7 @@
     <FormSelectProjects
       v-if="!preselectedProject"
       v-model="project"
-      label="Speckle Project"
+      label="Speckle project"
       show-label
       help="Choose the project where your target model is located"
       show-required
@@ -12,6 +12,7 @@
       :allow-unset="false"
       validate-on-value-update
       owned-only
+      :workspace-id="workspaceId"
     />
     <FormSelectModels
       v-if="project?.id"
@@ -29,7 +30,7 @@
     <FormTextInput
       v-model="automationName"
       name="automationName"
-      label="Automation Name"
+      label="Automation name"
       color="foundation"
       show-label
       help="Give your automation a name"
@@ -51,6 +52,7 @@ import type {
 const props = defineProps<{
   preselectedProject?: Optional<FormSelectProjects_ProjectFragment>
   isTestAutomation: boolean
+  workspaceId?: string
 }>()
 const project = defineModel<Optional<FormSelectProjects_ProjectFragment>>('project', {
   required: true

@@ -1,13 +1,14 @@
 <template>
   <div>
     <ViewerLayoutPanel @close="$emit('close')">
-      <template #title>Scene Explorer</template>
+      <template #title>Scene explorer</template>
 
       <template #actions>
         <div class="flex items-center justify-between w-full">
-          <div v-if="!showRaw" class="flex items-center">
+          <div v-if="!showRaw" class="flex items-center gap-1">
             <FormButton
-              size="xs"
+              size="sm"
+              color="primary"
               text
               :icon-left="BarsArrowDownIcon"
               @click="expandLevel++"
@@ -15,7 +16,8 @@
               Unfold
             </FormButton>
             <FormButton
-              size="xs"
+              size="sm"
+              color="primary"
               text
               :icon-left="BarsArrowUpIcon"
               :disabled="expandLevel <= -1 && manualExpandLevel <= -1"
@@ -25,15 +27,14 @@
             </FormButton>
           </div>
           <div v-else>
-            <h4 class="font-bold whitespace-normal text-xs ml-1">Dev Mode</h4>
+            <h4 class="font-medium whitespace-normal text-body-2xs ml-1">Dev mode</h4>
           </div>
 
           <FormButton
             v-tippy="showRaw ? 'Switch back' : 'Switch to Dev Mode'"
-            size="xs"
-            text
-            class="-mr-0.5 sm:-mr-1"
-            color="secondary"
+            size="sm"
+            class="-mr-1"
+            color="subtle"
             @click="showRaw = !showRaw"
           >
             <CodeBracketIcon
@@ -47,15 +48,10 @@
         v-if="!showRaw && rootNodes.length !== 0"
         class="relative flex flex-col gap-y-2 py-2"
       >
-        <div
-          v-for="(rootNode, idx) in rootNodes"
-          :key="idx"
-          class="bg-foundation rounded-lg"
-        >
+        <div v-for="(rootNode, idx) in rootNodes" :key="idx" class="rounded-xl">
           <ViewerExplorerTreeItem
-            :item-id="(rootNode.data?.id as string)"
-            :tree-item="markRaw(rootNode)"
-            :sub-header="'Model Version'"
+            :tree-item="rootNode"
+            :sub-header="'Model version'"
             :debug="false"
             :expand-level="expandLevel"
             :manual-expand-level="manualExpandLevel"
@@ -75,14 +71,17 @@ import {
   CodeBracketIcon
 } from '@heroicons/vue/24/solid'
 import { ViewerEvent } from '@speckle/viewer'
-import type { ExplorerNode } from '~~/lib/common/helpers/sceneExplorer'
+import type {
+  ExplorerNode,
+  TreeItemComponentModel
+} from '~~/lib/viewer/helpers/sceneExplorer'
 import {
   useInjectedViewer,
   useInjectedViewerLoadedResources,
   useInjectedViewerState
 } from '~~/lib/viewer/composables/setup'
-import { markRaw } from 'vue'
 import { useViewerEventListener } from '~~/lib/viewer/composables/viewer'
+import { sortBy, flatten } from 'lodash-es'
 
 defineEmits(['close'])
 
@@ -121,13 +120,21 @@ const rootNodes = computed(() => {
   if (!worldTree.value) return []
   // eslint-disable-next-line vue/no-side-effects-in-computed-properties
   expandLevel.value = -1
-  const nodes = []
   const rootNodes = worldTree.value._root.children as ExplorerNode[]
+
+  const results: Record<number, ExplorerNode[]> = {}
+  const unmatchedNodes: ExplorerNode[] = []
+
   for (const node of rootNodes) {
     const objectId = ((node.model as Record<string, unknown>).id as string)
       .split('/')
       .reverse()[0] as string
-    const resourceItem = resourceItems.value.find((res) => res.objectId === objectId)
+    const resourceItemIdx = resourceItems.value.findIndex(
+      (res) => res.objectId === objectId
+    )
+    const resourceItem =
+      resourceItemIdx !== -1 ? resourceItems.value[resourceItemIdx] : null
+
     const raw = node.model?.raw as Record<string, unknown>
     if (resourceItem?.modelId) {
       // Model resource
@@ -138,11 +145,26 @@ const rootNodes = computed(() => {
       raw.type = model?.id
     } else {
       raw.name = 'Object'
-      raw.type = 'Single Object'
+      raw.type = 'Single object'
     }
-    nodes.push(node.model as ExplorerNode)
+
+    const res = node.model as ExplorerNode
+    if (resourceItem) {
+      ;(results[resourceItemIdx] = results[resourceItemIdx] || []).push(res)
+    } else {
+      unmatchedNodes.push(res)
+    }
   }
 
-  return nodes
+  const nodes = [
+    ...flatten(sortBy(Object.entries(results), (i) => i[0]).map((i) => i[1])),
+    ...unmatchedNodes
+  ]
+
+  return nodes.map(
+    (n): TreeItemComponentModel => ({
+      rawNode: markRaw(n)
+    })
+  )
 })
 </script>

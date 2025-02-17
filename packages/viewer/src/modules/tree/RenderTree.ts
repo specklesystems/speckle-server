@@ -1,18 +1,27 @@
 import { Matrix4 } from 'three'
-import { type TreeNode, WorldTree } from './WorldTree'
-import Materials from '../materials/Materials'
-import { type NodeRenderData, NodeRenderView } from './NodeRenderView'
-import Logger from 'js-logger'
-import { GeometryConverter, SpeckleType } from '../loaders/GeometryConverter'
-import { Geometry } from '../converter/Geometry'
+import { type TreeNode, WorldTree } from './WorldTree.js'
+import Materials from '../materials/Materials.js'
+import { type NodeRenderData, NodeRenderView } from './NodeRenderView.js'
+import { GeometryConverter, SpeckleType } from '../loaders/GeometryConverter.js'
+import { Geometry } from '../converter/Geometry.js'
+import Logger from '../utils/Logger.js'
 
 export class RenderTree {
   private tree: WorldTree
   private root: TreeNode
   private cancel = false
+  public buildNodeTime = 0
+  public applyTransformTime = 0
+  public convertTime = 0
+  public getNodeTime = 0
+  public otherTime = 0
 
   public get id(): string {
     return this.root.model.id
+  }
+
+  public get subtreeId(): number {
+    return this.root.model.subtreeId
   }
 
   public constructor(tree: WorldTree, subtreeRoot: TreeNode) {
@@ -22,9 +31,13 @@ export class RenderTree {
 
   public buildRenderTree(geometryConverter: GeometryConverter): Promise<boolean> {
     const p = this.tree.walkAsync((node: TreeNode): boolean => {
+      let start = performance.now()
       const rendeNode = this.buildRenderNode(node, geometryConverter)
       node.model.renderView = rendeNode ? new NodeRenderView(rendeNode) : null
+      this.buildNodeTime += performance.now() - start
+      start = performance.now()
       this.applyTransforms(node)
+      this.applyTransformTime += performance.now() - start
       if (!node.model.instanced) geometryConverter.disposeNodeGeometryData(node.model)
       return !this.cancel
     }, this.root)
@@ -61,10 +74,16 @@ export class RenderTree {
     geometryConverter: GeometryConverter
   ): NodeRenderData | null {
     let ret: NodeRenderData | null = null
+    let start = performance.now()
     const geometryData = geometryConverter.convertNodeToGeometryData(node.model)
+    this.convertTime += performance.now() - start
     if (geometryData) {
+      start = performance.now()
       const renderMaterialNode = this.getRenderMaterialNode(node)
       const displayStyleNode = this.getDisplayStyleNode(node)
+      const colorMaterialNode = this.getColorMaterialNode(node)
+      this.getNodeTime += performance.now() - start
+      start = performance.now()
       ret = {
         id: node.model.id,
         subtreeId: node.model.subtreeId,
@@ -77,8 +96,10 @@ export class RenderTree {
         /** Line-type geometry can also use a renderMaterial*/
         displayStyle: Materials.displayStyleFromNode(
           displayStyleNode || renderMaterialNode
-        )
+        ),
+        colorMaterial: Materials.colorMaterialFromNode(colorMaterialNode)
       }
+      this.otherTime += performance.now() - start
     }
     return ret
   }
@@ -103,6 +124,19 @@ export class RenderTree {
     const ancestors = this.tree.getAncestors(node)
     for (let k = 0; k < ancestors.length; k++) {
       if (ancestors[k].model.raw.displayStyle) {
+        return ancestors[k]
+      }
+    }
+    return null
+  }
+
+  private getColorMaterialNode(node: TreeNode): TreeNode | null {
+    if (node.model.color) {
+      return node
+    }
+    const ancestors = this.tree.getAncestors(node)
+    for (let k = 0; k < ancestors.length; k++) {
+      if (ancestors[k].model.color) {
         return ancestors[k]
       }
     }
@@ -177,8 +211,11 @@ export class RenderTree {
     })
   }
 
-  public getRenderViewsForNodeId(id: string): NodeRenderView[] | null {
-    const nodes = this.tree.findId(id)
+  public getRenderViewsForNodeId(
+    id: string,
+    subtreeId?: number
+  ): NodeRenderView[] | null {
+    const nodes = this.tree.findId(id, subtreeId)
     if (!nodes) {
       Logger.warn(`Id ${id} does not exist`)
       return null

@@ -1,29 +1,52 @@
-import { EmailVerifications, Users } from '@/modules/core/dbSchema'
+import { EmailVerifications, UserEmails, Users } from '@/modules/core/dbSchema'
 import { BasicTestUser, createTestUser, createTestUsers } from '@/test/authHelper'
 import { buildApp, truncateTables } from '@/test/hooks'
-import {
-  buildAuthenticatedApolloServer,
-  buildUnauthenticatedApolloServer
-} from '@/test/serverHelper'
-import { ApolloServer } from 'apollo-server-express'
 import request from 'supertest'
 import { expect } from 'chai'
-import { deleteVerifications, getPendingToken } from '@/modules/emails/repositories'
+import {
+  deleteOldAndInsertNewVerificationFactory,
+  deleteVerificationsFactory,
+  getPendingTokenFactory
+} from '@/modules/emails/repositories'
 import {
   getPendingEmailVerificationStatus,
   requestVerification
 } from '@/test/graphql/users'
-import { requestEmailVerification } from '@/modules/emails/services/verification/request'
 import { getEmailVerificationFinalizationRoute } from '@/modules/core/helpers/routeHelper'
 import { Express } from 'express'
-import { getUser } from '@/modules/core/repositories/users'
 import dayjs from 'dayjs'
 import { EmailSendingServiceMock } from '@/test/mocks/global'
+import {
+  createAuthedTestContext,
+  createTestContext,
+  ServerAndContext
+} from '@/test/graphqlHelper'
+import { buildApolloServer } from '@/app'
+import { db } from '@/db/knex'
+import { requestEmailVerificationFactory } from '@/modules/emails/services/verification/request'
+import { findPrimaryEmailForUserFactory } from '@/modules/core/repositories/userEmails'
+import { sendEmail } from '@/modules/emails/services/sending'
+import { renderEmail } from '@/modules/emails/services/emailRendering'
+import { getUserFactory } from '@/modules/core/repositories/users'
+import { getServerInfoFactory } from '@/modules/core/repositories/server'
 
 const mailerMock = EmailSendingServiceMock
+const getUser = getUserFactory({ db })
+const getPendingToken = getPendingTokenFactory({ db })
+const deleteVerifications = deleteVerificationsFactory({ db })
+const requestEmailVerification = requestEmailVerificationFactory({
+  getUser,
+  getServerInfo: getServerInfoFactory({ db }),
+  deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({
+    db
+  }),
+  findPrimaryEmailForUser: findPrimaryEmailForUserFactory({ db }),
+  sendEmail,
+  renderEmail
+})
 
 const cleanup = async () => {
-  await truncateTables([Users.name, EmailVerifications.name])
+  await truncateTables([Users.name, EmailVerifications.name, UserEmails.name])
 }
 
 describe('Email verifications @emails', () => {
@@ -47,10 +70,15 @@ describe('Email verifications @emails', () => {
     await cleanup()
   })
 
-  it('sends out verification email immediatelly after new account creation', async () => {
+  afterEach(async () => {
+    mailerMock.resetMockedFunctions()
+  })
+
+  it('sends out 1 verification email immediately after new account creation', async () => {
     const sendEmailInvocations = mailerMock.hijackFunction(
       'sendEmail',
-      async () => true
+      async () => true,
+      { times: 2 }
     )
 
     const newGuy: BasicTestUser = {
@@ -68,13 +96,19 @@ describe('Email verifications @emails', () => {
 
     const verification = await getPendingToken({ email: newGuy.email })
     expect(verification).to.be.ok
+
+    // There should be only 1 email!
+    expect(sendEmailInvocations.args.length).to.eq(1)
   })
 
   describe('when authenticated', () => {
-    let apollo: ApolloServer
+    let apollo: ServerAndContext
 
     before(async () => {
-      apollo = await buildAuthenticatedApolloServer(userA.id)
+      apollo = {
+        apollo: await buildApolloServer(),
+        context: await createAuthedTestContext(userA.id)
+      }
     })
 
     it('pending verification is reported correctly', async () => {
@@ -101,7 +135,10 @@ describe('Email verifications @emails', () => {
 
     describe('and requesting verification', () => {
       const invokeRequestVerification = async (user: BasicTestUser) => {
-        const apollo = await buildAuthenticatedApolloServer(user.id)
+        const apollo = {
+          apollo: await buildApolloServer(),
+          context: await createAuthedTestContext(user.id)
+        }
         return await requestVerification(apollo, {})
       }
 
@@ -147,10 +184,13 @@ describe('Email verifications @emails', () => {
   })
 
   describe('when not authenticated', () => {
-    let apollo: ApolloServer
+    let apollo: ServerAndContext
 
     before(async () => {
-      apollo = await buildUnauthenticatedApolloServer()
+      apollo = {
+        apollo: await buildApolloServer(),
+        context: await createTestContext()
+      }
     })
 
     it('cant request an account verification', async () => {

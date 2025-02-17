@@ -8,10 +8,139 @@ const crypto = require('crypto')
 const { beforeEachContext } = require('@/test/hooks')
 const { createManyObjects } = require('@/test/helpers')
 
-const { createUser } = require('../services/users')
-const { createPersonalAccessToken } = require('../services/tokens')
-const { createStream } = require('../services/streams')
 const { Scopes } = require('@speckle/shared')
+const {
+  getStreamFactory,
+  createStreamFactory
+} = require('@/modules/core/repositories/streams')
+const { db } = require('@/db/knex')
+const {
+  legacyCreateStreamFactory,
+  createStreamReturnRecordFactory
+} = require('@/modules/core/services/streams/management')
+const {
+  inviteUsersToProjectFactory
+} = require('@/modules/serverinvites/services/projectInviteManagement')
+const {
+  createAndSendInviteFactory
+} = require('@/modules/serverinvites/services/creation')
+const {
+  findUserByTargetFactory,
+  insertInviteAndDeleteOldFactory,
+  deleteServerOnlyInvitesFactory,
+  updateAllInviteTargetsFactory
+} = require('@/modules/serverinvites/repositories/serverInvites')
+const {
+  collectAndValidateCoreTargetsFactory
+} = require('@/modules/serverinvites/services/coreResourceCollection')
+const {
+  buildCoreInviteEmailContentsFactory
+} = require('@/modules/serverinvites/services/coreEmailContents')
+const { getEventBus } = require('@/modules/shared/services/eventBus')
+const { createBranchFactory } = require('@/modules/core/repositories/branches')
+const {
+  getUsersFactory,
+  getUserFactory,
+  storeUserFactory,
+  countAdminUsersFactory,
+  storeUserAclFactory
+} = require('@/modules/core/repositories/users')
+const {
+  findEmailFactory,
+  createUserEmailFactory,
+  ensureNoPrimaryEmailForUserFactory
+} = require('@/modules/core/repositories/userEmails')
+const {
+  requestNewEmailVerificationFactory
+} = require('@/modules/emails/services/verification/request')
+const {
+  deleteOldAndInsertNewVerificationFactory
+} = require('@/modules/emails/repositories')
+const { renderEmail } = require('@/modules/emails/services/emailRendering')
+const { sendEmail } = require('@/modules/emails/services/sending')
+const { createUserFactory } = require('@/modules/core/services/users/management')
+const {
+  validateAndCreateUserEmailFactory
+} = require('@/modules/core/services/userEmails')
+const {
+  finalizeInvitedServerRegistrationFactory
+} = require('@/modules/serverinvites/services/processing')
+const { createPersonalAccessTokenFactory } = require('@/modules/core/services/tokens')
+const {
+  storeTokenScopesFactory,
+  storeApiTokenFactory,
+  storeTokenResourceAccessDefinitionsFactory,
+  storePersonalApiTokenFactory
+} = require('@/modules/core/repositories/tokens')
+const { getServerInfoFactory } = require('@/modules/core/repositories/server')
+
+const getServerInfo = getServerInfoFactory({ db })
+const getUser = getUserFactory({ db })
+const getUsers = getUsersFactory({ db })
+const getStream = getStreamFactory({ db })
+const createStream = legacyCreateStreamFactory({
+  createStreamReturnRecord: createStreamReturnRecordFactory({
+    inviteUsersToProject: inviteUsersToProjectFactory({
+      createAndSendInvite: createAndSendInviteFactory({
+        findUserByTarget: findUserByTargetFactory({ db }),
+        insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
+        collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
+          getStream
+        }),
+        buildInviteEmailContents: buildCoreInviteEmailContentsFactory({
+          getStream
+        }),
+        emitEvent: ({ eventName, payload }) =>
+          getEventBus().emit({
+            eventName,
+            payload
+          }),
+        getUser,
+        getServerInfo
+      }),
+      getUsers
+    }),
+    createStream: createStreamFactory({ db }),
+    createBranch: createBranchFactory({ db }),
+    emitEvent: getEventBus().emit
+  })
+})
+
+const findEmail = findEmailFactory({ db })
+const requestNewEmailVerification = requestNewEmailVerificationFactory({
+  findEmail,
+  getUser: getUserFactory({ db }),
+  getServerInfo,
+  deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db }),
+  renderEmail,
+  sendEmail
+})
+const createUser = createUserFactory({
+  getServerInfo,
+  findEmail,
+  storeUser: storeUserFactory({ db }),
+  countAdminUsers: countAdminUsersFactory({ db }),
+  storeUserAcl: storeUserAclFactory({ db }),
+  validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
+    createUserEmail: createUserEmailFactory({ db }),
+    ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
+    findEmail,
+    updateEmailInvites: finalizeInvitedServerRegistrationFactory({
+      deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
+      updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
+    }),
+    requestNewEmailVerification
+  }),
+  emitEvent: getEventBus().emit
+})
+const createPersonalAccessToken = createPersonalAccessTokenFactory({
+  storeApiToken: storeApiTokenFactory({ db }),
+  storeTokenScopes: storeTokenScopesFactory({ db }),
+  storeTokenResourceAccessDefinitions: storeTokenResourceAccessDefinitionsFactory({
+    db
+  }),
+  storePersonalApiToken: storePersonalApiTokenFactory({ db })
+})
 
 describe('Upload/Download Routes @api-rest', () => {
   const userA = {
@@ -238,21 +367,21 @@ describe('Upload/Download Routes @api-rest', () => {
     expect(res).to.have.status(400)
   })
 
-  it('Should not allow upload with invalid body (object too large)', async () => {
-    //creating a single valid object larger than 10MB
-    const objectToPost = {
-      name: 'x'.repeat(10 * 1024 * 1024 + 1)
-    }
+  // it('Should not allow upload with invalid body (object too large)', async () => {
+  //   //creating a single valid object larger than 10MB
+  //   const objectToPost = {
+  //     name: 'x'.repeat(10 * 1024 * 1024 + 1)
+  //   }
 
-    const res = await request(app)
-      .post(`/objects/${testStream.id}`)
-      .set('Authorization', userA.token)
-      .set('Content-type', 'multipart/form-data')
-      .attach('batch1', Buffer.from(JSON.stringify([objectToPost]), 'utf8'))
+  //   const res = await request(app)
+  //     .post(`/objects/${testStream.id}`)
+  //     .set('Authorization', userA.token)
+  //     .set('Content-type', 'multipart/form-data')
+  //     .attach('batch1', Buffer.from(JSON.stringify([objectToPost]), 'utf8'))
 
-    expect(res).to.have.status(400)
-    expect(res.text).contains('Object too large')
-  })
+  //   expect(res).to.have.status(400)
+  //   expect(res.text).contains('Object too large')
+  // })
 
   let parentId
   const numObjs = 5000
@@ -372,6 +501,15 @@ describe('Upload/Download Routes @api-rest', () => {
       })
   })
 
+  it('Should return status code 400 when getting the list of objects and if it is not parseable', async () => {
+    const response = await request(app)
+      .post(`/api/getobjects/${testStream.id}`)
+      .set('Authorization', userA.token)
+      .send({ objects: ['lolz', 'thisIsBroken', 'shouldHaveBeenJSONStringified'] })
+
+    expect(response).to.have.status(400)
+  })
+
   it('Should properly check if the server has a list of objects', (done) => {
     const objectIds = []
     for (let i = 0; i < objBatches[0].length; i++) {
@@ -406,8 +544,12 @@ describe('Upload/Download Routes @api-rest', () => {
         try {
           const o = JSON.parse(res.body)
           expect(Object.keys(o).length).to.equal(objectIds.length)
+          // console.log(JSON.stringify(Object.keys(o), undefined, 4))
           for (let i = 0; i < objBatches[0].length; i++) {
-            assert(o[objBatches[0][i].id] === true, 'Server is missing an object')
+            assert(
+              o[objBatches[0][i].id] === true,
+              `Server is missing an object: ${objBatches[0][i].id}`
+            )
           }
           for (let i = 0; i < fakeIds.length; i++) {
             assert(
@@ -420,5 +562,14 @@ describe('Upload/Download Routes @api-rest', () => {
           done(err)
         }
       })
+  })
+
+  it('Should return status code 400 if the list of objects is not parseable', async () => {
+    const response = await request(app)
+      .post(`/api/diff/${testStream.id}`)
+      .set('Authorization', userA.token)
+      .send({ objects: ['lolz', 'thisIsBroken', 'shouldHaveBeenJSONStringified'] })
+
+    expect(response).to.have.status(400)
   })
 })

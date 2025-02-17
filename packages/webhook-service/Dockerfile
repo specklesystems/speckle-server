@@ -1,6 +1,6 @@
 ARG NODE_ENV=production
 
-FROM node:18-bookworm-slim@sha256:c569d19289293797aefad0473a046d882f1b9eb0f444e9a0018648d5fd03c812 as build-stage
+FROM node:18-bookworm-slim@sha256:408f8cbbb7b33a5bb94bdb8862795a94d2b64c2d516856824fd86c4a5594a443 AS build-stage
 
 ARG NODE_ENV
 ENV NODE_ENV=${NODE_ENV}
@@ -20,19 +20,27 @@ RUN yarn workspaces focus --all
 COPY packages/shared ./packages/shared/
 COPY packages/webhook-service/src ./packages/webhook-service/
 
-RUN yarn workspaces foreach run build
+RUN yarn workspaces foreach -W run build
 
 ARG WAIT_VERSION=2.8.0
 ENV WAIT_VERSION=${WAIT_VERSION}
-ADD https://github.com/ufoscout/docker-compose-wait/releases/download/${WAIT_VERSION}/wait ./wait
-RUN chmod +x ./wait
-
 ARG TINI_VERSION=v0.19.0
 ENV TINI_VERSION=${TINI_VERSION}
-ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini ./tini
-RUN chmod +x ./tini
+RUN apt-get update -y \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y \
+     --no-install-recommends \
+     ca-certificates=20230311 \
+     curl=7.88.1-10+deb12u8 \
+    && curl -fsSL https://github.com/ufoscout/docker-compose-wait/releases/download/${WAIT_VERSION}/wait -o ./wait \
+    && chmod +x ./wait \
+    && curl -fsSL https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini -o ./tini \
+    && chmod +x ./tini \
+    && apt-get remove -y curl \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
-FROM node:18-bookworm-slim@sha256:c569d19289293797aefad0473a046d882f1b9eb0f444e9a0018648d5fd03c812 as dependency-stage
+FROM node:18-bookworm-slim@sha256:408f8cbbb7b33a5bb94bdb8862795a94d2b64c2d516856824fd86c4a5594a443 AS dependency-stage
 # yarn install
 ARG NODE_ENV
 ENV NODE_ENV=${NODE_ENV}
@@ -50,16 +58,16 @@ COPY packages/shared/package.json ./packages/shared/
 WORKDIR /speckle-server/packages/webhook-service
 RUN yarn workspaces focus --production
 
-FROM gcr.io/distroless/nodejs18-debian12:nonroot@sha256:d0a14121fb93c8b71c6f2565ef9dc02afb223d5f8de7cb50fd37c027aad237d9 as production-stage
+FROM gcr.io/distroless/nodejs18-debian12:nonroot@sha256:afdea027580f7afcaf1f316b2b3806690c297cb3ce6ddc5cf6a15804dc1c790f AS production-stage
 ARG NODE_ENV
 ENV NODE_ENV=${NODE_ENV}
 
 WORKDIR /speckle-server/packages/webhook-service/
 COPY packages/webhook-service/src .
-COPY --from=build-stage /speckle-server/wait /usr/bin/wait
-COPY --from=build-stage /speckle-server/tini /usr/bin/tini
-COPY --from=build-stage /speckle-server/packages/shared ./packages/shared
-COPY --from=build-stage /speckle-server/packages/webhook-service ./packages/webhook-service
-COPY --from=dependency-stage /speckle-server/node_modules ./node_modules
+COPY --link --from=build-stage /speckle-server/wait /usr/bin/wait
+COPY --link --from=build-stage /speckle-server/tini /usr/bin/tini
+COPY --link --from=build-stage /speckle-server/packages/shared ./packages/shared
+COPY --link --from=build-stage /speckle-server/packages/webhook-service ./packages/webhook-service
+COPY --link --from=dependency-stage /speckle-server/node_modules ./node_modules
 
 ENTRYPOINT [ "tini", "--", "/nodejs/bin/node", "main.js"]

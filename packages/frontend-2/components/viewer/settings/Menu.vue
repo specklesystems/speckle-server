@@ -1,6 +1,6 @@
 <template>
   <ViewerControlsButtonToggle
-    v-tippy="'Free Orbit'"
+    v-tippy="'Free orbit'"
     flat
     :active="!localViewerSettings.turntableMode"
     secondary
@@ -30,7 +30,7 @@ const { instance } = useInjectedViewer()
 
 const setViewerCameraHandlerControlsMaxPolarAngle = (angle: number) => {
   const extension = instance.getExtension(CameraController)
-  if (extension) extension.controls.maxPolarAngle = angle
+  if (extension) extension.options = { maximumPolarAngle: angle }
 }
 
 const toggleTurntableMode = () => {

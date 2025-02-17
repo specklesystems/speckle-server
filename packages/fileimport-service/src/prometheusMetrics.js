@@ -3,11 +3,14 @@
 
 const http = require('http')
 const prometheusClient = require('prom-client')
-const knex = require('../knex')
+const getDbClients = require('../knex')
 
 let metricFree = null
 let metricUsed = null
 let metricPendingAquires = null
+let metricPendingCreates = null
+let metricPendingValidations = null
+let metricRemainingCapacity = null
 let metricQueryDuration = null
 let metricQueryErrors = null
 
@@ -21,69 +24,105 @@ prometheusClient.collectDefaultMetrics()
 
 let prometheusInitialized = false
 
-function initKnexPrometheusMetrics() {
-  metricFree = new prometheusClient.Gauge({
-    name: 'speckle_server_knex_free',
-    help: 'Number of free DB connections',
-    collect() {
-      this.set(knex.client.pool.numFree())
-    }
-  })
+const initDBPrometheusMetricsFactory =
+  ({ db }) =>
+  () => {
+    metricFree = new prometheusClient.Gauge({
+      name: 'speckle_server_knex_free',
+      help: 'Number of free DB connections',
+      collect() {
+        this.set(db.client.pool.numFree())
+      }
+    })
 
-  metricUsed = new prometheusClient.Gauge({
-    name: 'speckle_server_knex_used',
-    help: 'Number of used DB connections',
-    collect() {
-      this.set(knex.client.pool.numUsed())
-    }
-  })
+    metricUsed = new prometheusClient.Gauge({
+      name: 'speckle_server_knex_used',
+      help: 'Number of used DB connections',
+      collect() {
+        this.set(db.client.pool.numUsed())
+      }
+    })
 
-  metricPendingAquires = new prometheusClient.Gauge({
-    name: 'speckle_server_knex_pending',
-    help: 'Number of pending DB connection aquires',
-    collect() {
-      this.set(knex.client.pool.numPendingAcquires())
-    }
-  })
+    metricPendingAquires = new prometheusClient.Gauge({
+      name: 'speckle_server_knex_pending',
+      help: 'Number of pending DB connection aquires',
+      collect() {
+        this.set(db.client.pool.numPendingAcquires())
+      }
+    })
 
-  metricQueryDuration = new prometheusClient.Summary({
-    name: 'speckle_server_knex_query_duration',
-    help: 'Summary of the DB query durations in seconds'
-  })
+    metricPendingCreates = new prometheusClient.Gauge({
+      name: 'speckle_server_knex_pending_creates',
+      help: 'Number of pending DB connection creates',
+      collect() {
+        this.set(db.client.pool.numPendingCreates())
+      }
+    })
 
-  metricQueryErrors = new prometheusClient.Counter({
-    name: 'speckle_server_knex_query_errors',
-    help: 'Number of DB queries with errors'
-  })
+    metricPendingValidations = new prometheusClient.Gauge({
+      name: 'speckle_server_knex_pending_validations',
+      help: 'Number of pending DB connection validations. This is a state between pending acquisition and acquiring a connection.',
+      collect() {
+        this.set(db.client.pool.numPendingValidations())
+      }
+    })
 
-  knex.on('query', (data) => {
-    const queryId = data.__knexQueryUid + ''
-    queryStartTime[queryId] = Date.now()
-  })
+    metricRemainingCapacity = new prometheusClient.Gauge({
+      name: 'speckle_server_knex_remaining_capacity',
+      help: 'Remaining capacity of the DB connection pool',
+      collect() {
+        const postgresMaxConnections =
+          parseInt(process.env.POSTGRES_MAX_CONNECTIONS_FILE_IMPORT_SERVICE) || 1
+        const demand =
+          db.client.pool.numUsed() +
+          db.client.pool.numPendingCreates() +
+          db.client.pool.numPendingValidations() +
+          db.client.pool.numPendingAcquires()
 
-  knex.on('query-response', (data, obj, builder) => {
-    const queryId = obj.__knexQueryUid + ''
-    const durationSec = (Date.now() - queryStartTime[queryId]) / 1000
-    delete queryStartTime[queryId]
-    if (!isNaN(durationSec)) metricQueryDuration.observe(durationSec)
-  })
+        this.set(Math.max(postgresMaxConnections - demand, 0))
+      }
+    })
 
-  knex.on('query-error', (err, querySpec) => {
-    const queryId = querySpec.__knexQueryUid + ''
-    const durationSec = (Date.now() - queryStartTime[queryId]) / 1000
-    delete queryStartTime[queryId]
+    metricQueryDuration = new prometheusClient.Summary({
+      name: 'speckle_server_knex_query_duration',
+      help: 'Summary of the DB query durations in seconds'
+    })
 
-    if (!isNaN(durationSec)) metricQueryDuration.observe(durationSec)
-    metricQueryErrors.inc()
-  })
-}
+    metricQueryErrors = new prometheusClient.Counter({
+      name: 'speckle_server_knex_query_errors',
+      help: 'Number of DB queries with errors'
+    })
+
+    db.on('query', (data) => {
+      const queryId = data.__knexQueryUid + ''
+      queryStartTime[queryId] = Date.now()
+    })
+
+    db.on('query-response', (data, obj, builder) => {
+      const queryId = obj.__knexQueryUid + ''
+      const durationSec = (Date.now() - queryStartTime[queryId]) / 1000
+      delete queryStartTime[queryId]
+      if (!isNaN(durationSec)) metricQueryDuration.observe(durationSec)
+    })
+
+    db.on('query-error', (err, querySpec) => {
+      const queryId = querySpec.__knexQueryUid + ''
+      const durationSec = (Date.now() - queryStartTime[queryId]) / 1000
+      delete queryStartTime[queryId]
+
+      if (!isNaN(durationSec)) metricQueryDuration.observe(durationSec)
+      metricQueryErrors.inc()
+    })
+  }
 
 module.exports = {
-  initPrometheusMetrics() {
+  async initPrometheusMetrics() {
     if (prometheusInitialized) return
     prometheusInitialized = true
 
-    initKnexPrometheusMetrics()
+    const db = (await getDbClients()).main.public
+
+    initDBPrometheusMetricsFactory({ db })()
 
     // Define the HTTP server
     const server = http.createServer(async (req, res) => {

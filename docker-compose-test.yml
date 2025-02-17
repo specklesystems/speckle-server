@@ -12,8 +12,9 @@ services:
       VERIFY_CERTIFICATE: '0'
     restart: 'no'
 
-  # It wasn't clear that the test was just being deployed or was actually running to completion before docker compose up was exiting.
-  # This service is a hack to make docker compose wait for the test to finish before exiting.
+  # Docker compose run via Tilt just waits for the test to be be deployed.
+  # It does not wait for it to actually run to completion before exiting.
+  # This service ensures docker compose waits for the test to finish before exiting.
   confirm_test_finished:
     image: busybox
     command: sh -c "echo '✅ Deployment of test completed successfully!'"

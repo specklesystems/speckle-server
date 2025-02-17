@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { TokenResourceIdentifierType } from '@/modules/core/graph/generated/graphql'
+import { TokenResourceIdentifierType } from '@/modules/core/domain/tokens/types'
 import { BaseMetaRecord } from '@/modules/core/helpers/meta'
 import { Nullable } from '@/modules/shared/helpers/typeHelper'
 import { ServerRoles } from '@speckle/shared'
@@ -13,7 +13,7 @@ export type UserRecord = {
   company: Nullable<string>
   email: string
   verified: boolean
-  avatar: string
+  avatar: Nullable<string>
   profiles: Nullable<string>
   /**
    * Marked as optional, cause most queries delete it
@@ -29,6 +29,10 @@ export type LimitedUserRecord = Pick<
   UserRecord,
   'id' | 'name' | 'bio' | 'company' | 'verified' | 'avatar' | 'createdAt'
 >
+
+export type UserWithRole<User extends LimitedUserRecord = UserRecord> = User & {
+  role: ServerRoles
+}
 
 export type UsersMetaRecord<V = any> = {
   userId: string
@@ -49,6 +53,8 @@ export type StreamRecord = {
   updatedAt: Date
   allowPublicComments: boolean
   isDiscoverable: boolean
+  workspaceId: Nullable<string>
+  regionKey: Nullable<string>
 }
 
 export type StreamAclRecord = {
@@ -83,6 +89,10 @@ export type ServerInfo = ServerConfigRecord & {
    */
   version: string
   migration?: { movedFrom?: string; movedTo?: string }
+  configuration: {
+    objectSizeLimitBytes: number
+    objectMultipartUploadSizeLimitBytes: number
+  }
 }
 
 export type CommitRecord = {
@@ -109,16 +119,11 @@ export type StreamCommitRecord = {
 export type BranchRecord = {
   id: string
   streamId: string
-  authorId: string
+  authorId: string | null
   name: string
   description: Nullable<string>
   createdAt: Date
   updatedAt: Date
-}
-
-export type ScheduledTaskRecord = {
-  taskName: string
-  lockExpiresAt: Date
 }
 
 export type ObjectRecord = {

@@ -1,10 +1,12 @@
 import { Vector2 } from 'three'
-import EventEmitter from '../EventEmitter'
+import EventEmitter from '../EventEmitter.js'
 
 export enum InputEvent {
   PointerDown = 'pointer-down',
   PointerUp = 'pointer-up',
   PointerMove = 'pointer-move',
+  PointerCancel = 'pointer-cancel',
+  Wheel = 'wheel',
   Click = 'click',
   DoubleClick = 'double-click',
   KeyUp = 'key-up'
@@ -14,6 +16,8 @@ export interface InputEventPayload {
   [InputEvent.PointerDown]: Vector2 & { event: PointerEvent }
   [InputEvent.PointerUp]: Vector2 & { event: PointerEvent }
   [InputEvent.PointerMove]: Vector2 & { event: PointerEvent }
+  [InputEvent.PointerCancel]: void
+  [InputEvent.Wheel]: WheelEvent
   [InputEvent.Click]: Vector2 & { event: PointerEvent; multiSelect: boolean }
   [InputEvent.DoubleClick]: Vector2 & { event: PointerEvent; multiSelect: boolean }
   [InputEvent.KeyUp]: KeyboardEvent
@@ -104,16 +108,17 @@ export default class Input extends EventEmitter {
       this.emit(InputEvent.KeyUp, e)
     })
 
-    // Handle multiple object selection
-    // document.addEventListener('keydown', (e) => {
-    //   if (e.isComposing || e.keyCode === 229) return
-    //   if (e.key === 'Shift') this.multiSelect = true
-    // })
+    document.addEventListener('wheel', (e) => {
+      this.emit(InputEvent.Wheel, e)
+    })
 
-    // document.addEventListener('keyup', (e) => {
-    //   if (e.isComposing || e.keyCode === 229) return
-    //   if (e.key === 'Shift') this.multiSelect = false
-    // })
+    document.addEventListener('pointercancel', (e) => {
+      const loc = this._getNormalisedClickPosition(e)
+      ;(loc as unknown as Record<string, unknown>).event = e
+
+      this.emit(InputEvent.PointerUp, loc)
+      this.emit(InputEvent.PointerCancel, loc)
+    })
   }
 
   public on<T extends InputEvent>(

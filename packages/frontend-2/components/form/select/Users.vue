@@ -33,7 +33,7 @@
               :key="user.id"
               :user="user"
               no-border
-              size="sm"
+              size="xs"
             />
           </div>
           <div v-if="hiddenSelectedItemCount > 0" class="text-foreground-2 normal">
@@ -47,7 +47,7 @@
             :user="isArrayValue(value) ? value[0] : value"
             no-border
             class="mr-2"
-            size="sm"
+            size="xs"
           />
           <span class="truncate label label--light min-w-0">
             {{ (isArrayValue(value) ? value[0] : value).name }}
@@ -58,7 +58,7 @@
     <template #option="{ item }">
       <div class="flex items-center">
         <UserAvatar :user="item" no-border class="mr-2" size="sm" />
-        <span class="truncate">{{ item.name }}</span>
+        <span class="truncate text-body-2xs">{{ item.name }}</span>
       </div>
     </template>
   </FormSelectBase>

@@ -1,24 +1,132 @@
 /* istanbul ignore file */
 const expect = require('chai').expect
 
-const { createUser } = require('../../core/services/users')
-const { createPersonalAccessToken } = require('../../core/services/tokens')
-const { createObject } = require('../../core/services/objects')
-const { getUserActivity } = require('../services')
-
 const { beforeEachContext, initializeTestServer } = require('@/test/hooks')
 const { noErrors } = require('@/test/helpers')
-const {
-  addOrUpdateStreamCollaborator
-} = require('@/modules/core/services/streams/streamAccessService')
-const { Roles, Scopes } = require('@speckle/shared')
 
+const { Roles, Scopes } = require('@speckle/shared')
+const {
+  getUserActivityFactory,
+  saveActivityFactory
+} = require('@/modules/activitystream/repositories')
+const { db } = require('@/db/knex')
+const {
+  validateStreamAccessFactory,
+  addOrUpdateStreamCollaboratorFactory
+} = require('@/modules/core/services/streams/access')
+const { authorizeResolver } = require('@/modules/shared')
+const { grantStreamPermissionsFactory } = require('@/modules/core/repositories/streams')
+const {
+  addStreamInviteAcceptedActivityFactory,
+  addStreamPermissionsAddedActivityFactory
+} = require('@/modules/activitystream/services/streamActivity')
+const { publish } = require('@/modules/shared/utils/subscriptions')
+const {
+  getUserFactory,
+  storeUserFactory,
+  countAdminUsersFactory,
+  storeUserAclFactory
+} = require('@/modules/core/repositories/users')
+const {
+  findEmailFactory,
+  createUserEmailFactory,
+  ensureNoPrimaryEmailForUserFactory
+} = require('@/modules/core/repositories/userEmails')
+const {
+  requestNewEmailVerificationFactory
+} = require('@/modules/emails/services/verification/request')
+const {
+  deleteOldAndInsertNewVerificationFactory
+} = require('@/modules/emails/repositories')
+const { renderEmail } = require('@/modules/emails/services/emailRendering')
+const { sendEmail } = require('@/modules/emails/services/sending')
+const { createUserFactory } = require('@/modules/core/services/users/management')
+const {
+  validateAndCreateUserEmailFactory
+} = require('@/modules/core/services/userEmails')
+const {
+  finalizeInvitedServerRegistrationFactory
+} = require('@/modules/serverinvites/services/processing')
+const {
+  deleteServerOnlyInvitesFactory,
+  updateAllInviteTargetsFactory
+} = require('@/modules/serverinvites/repositories/serverInvites')
+const { createPersonalAccessTokenFactory } = require('@/modules/core/services/tokens')
+const {
+  storePersonalApiTokenFactory,
+  storeApiTokenFactory,
+  storeTokenScopesFactory,
+  storeTokenResourceAccessDefinitionsFactory
+} = require('@/modules/core/repositories/tokens')
+const { getServerInfoFactory } = require('@/modules/core/repositories/server')
+const { createObjectFactory } = require('@/modules/core/services/objects/management')
+const {
+  storeSingleObjectIfNotFoundFactory
+} = require('@/modules/core/repositories/objects')
+const { getEventBus } = require('@/modules/shared/services/eventBus')
+
+const getUser = getUserFactory({ db })
+const getUserActivity = getUserActivityFactory({ db })
+const saveActivity = saveActivityFactory({ db })
+const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
+const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
+  validateStreamAccess,
+  getUser,
+  grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+  addStreamInviteAcceptedActivity: addStreamInviteAcceptedActivityFactory({
+    saveActivity,
+    publish
+  }),
+  addStreamPermissionsAddedActivity: addStreamPermissionsAddedActivityFactory({
+    saveActivity,
+    publish
+  })
+})
+
+const findEmail = findEmailFactory({ db })
+const requestNewEmailVerification = requestNewEmailVerificationFactory({
+  findEmail,
+  getUser: getUserFactory({ db }),
+  getServerInfo: getServerInfoFactory({ db }),
+  deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db }),
+  renderEmail,
+  sendEmail
+})
+const createUser = createUserFactory({
+  getServerInfo: getServerInfoFactory({ db }),
+  findEmail,
+  storeUser: storeUserFactory({ db }),
+  countAdminUsers: countAdminUsersFactory({ db }),
+  storeUserAcl: storeUserAclFactory({ db }),
+  validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
+    createUserEmail: createUserEmailFactory({ db }),
+    ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
+    findEmail,
+    updateEmailInvites: finalizeInvitedServerRegistrationFactory({
+      deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
+      updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
+    }),
+    requestNewEmailVerification
+  }),
+  emitEvent: getEventBus().emit
+})
+
+const createPersonalAccessToken = createPersonalAccessTokenFactory({
+  storeApiToken: storeApiTokenFactory({ db }),
+  storeTokenScopes: storeTokenScopesFactory({ db }),
+  storeTokenResourceAccessDefinitions: storeTokenResourceAccessDefinitionsFactory({
+    db
+  }),
+  storePersonalApiToken: storePersonalApiTokenFactory({ db })
+})
+const createObject = createObjectFactory({
+  storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({ db })
+})
+
+let server
 let sendRequest
 
 describe('Activity @activity', () => {
-  let server
-  let app
-
   const userIz = {
     name: 'Izzy Lyseggen',
     email: 'izzybizzi@speckle.systems',
@@ -75,8 +183,9 @@ describe('Activity @activity', () => {
   }
 
   before(async () => {
-    ;({ server, app } = await beforeEachContext())
-    ;({ sendRequest } = await initializeTestServer(server, app))
+    const ctx = await beforeEachContext()
+    server = ctx.server
+    ;({ sendRequest } = await initializeTestServer(ctx))
 
     const normalScopesList = [
       Scopes.Streams.Read,
@@ -129,7 +238,7 @@ describe('Activity @activity', () => {
     streamSecret.id = resStream1.body.data.streamCreate
 
     // create commit (cr2)
-    testObj2.id = await createObject(streamSecret.id, testObj2)
+    testObj2.id = await createObject({ streamId: streamSecret.id, object: testObj2 })
     const resCommit1 = await sendRequest(userCr.token, {
       query: `mutation { commitCreate(commit: {streamId: "${streamSecret.id}", branchName: "main", objectId: "${testObj2.id}", message: "first commit"})}`
     })
@@ -152,7 +261,7 @@ describe('Activity @activity', () => {
     branchPublic.id = resBranch.body.data.branchCreate
 
     // create commit #2 (iz3)
-    testObj.id = await createObject(streamPublic.id, testObj)
+    testObj.id = await createObject({ streamId: streamPublic.id, object: testObj })
     const resCommit2 = await sendRequest(userIz.token, {
       query: `mutation { commitCreate(commit: { streamId: "${streamPublic.id}", branchName: "${branchPublic.name}", objectId: "${testObj.id}", message: "first commit" })}`
     })

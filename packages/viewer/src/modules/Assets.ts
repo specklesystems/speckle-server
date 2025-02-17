@@ -11,9 +11,9 @@ import {
 import { EXRLoader } from 'three/examples/jsm/loaders/EXRLoader.js'
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js'
 import { FontLoader, Font } from 'three/examples/jsm/loaders/FontLoader.js'
-import { type Asset, AssetType } from '../IViewer'
-import Logger from 'js-logger'
-import { RotatablePMREMGenerator } from './objects/RotatablePMREMGenerator'
+import { type Asset, AssetType } from '../IViewer.js'
+import { RotatablePMREMGenerator } from './objects/RotatablePMREMGenerator.js'
+import Logger from './utils/Logger.js'
 
 export class Assets {
   private static _cache: { [name: string]: Texture | Font } = {}

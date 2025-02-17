@@ -1,44 +1,37 @@
-import { onKeyDown } from '@vueuse/core'
+import { useMagicKeys, whenever } from '@vueuse/core'
 import { OperatingSystem } from '@speckle/shared'
 import { clientOs, ModifierKeys } from '~~/src/helpers/form/input'
 import { computed, ref } from 'vue'
 import type { Ref } from 'vue'
+
+export type LabelPosition = 'top' | 'left'
 
 /**
  * onKeyDown wrapper that also checks for modifier keys being pressed
  */
 export function onKeyboardShortcut(
   modifiers: ModifierKeys[],
-  ...args: Parameters<typeof onKeyDown>
+  key: string,
+  callback: () => void
 ) {
-  onKeyDown(
-    args[0],
-    (e) => {
-      const isAltOrOpt = e.getModifierState('Alt')
-      const isCtrlOrCmd =
-        clientOs === OperatingSystem.Mac
-          ? e.getModifierState('Meta')
-          : e.getModifierState('Control')
-      const isShift = e.getModifierState('Shift')
+  const keys = useMagicKeys()
 
-      for (const modifier of modifiers) {
-        switch (modifier) {
-          case ModifierKeys.CtrlOrCmd:
-            if (!isCtrlOrCmd) return
-            break
-          case ModifierKeys.AltOrOpt:
-            if (!isAltOrOpt) return
-            break
-          case ModifierKeys.Shift:
-            if (!isShift) return
-            break
-        }
-      }
+  const modifierKeys = modifiers.map((modifier) => {
+    switch (modifier) {
+      case ModifierKeys.CtrlOrCmd:
+        return clientOs === OperatingSystem.Mac ? 'Meta' : 'Control'
+      case ModifierKeys.AltOrOpt:
+        return 'Alt'
+      case ModifierKeys.Shift:
+        return 'Shift'
+      default:
+        return ''
+    }
+  })
 
-      args[1](e)
-    },
-    args[2]
-  )
+  const keyCombination = `${modifierKeys.join('+')}+${key}`
+
+  whenever(keys[keyCombination], callback)
 }
 
 /**

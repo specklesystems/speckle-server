@@ -1,11 +1,9 @@
 <template>
   <div
-    :class="`border border-blue-500/10 rounded-md space-y-2 overflow-hidden ${
-      expanded ? 'shadow' : ''
-    }`"
+    class="border border-outline-2 rounded-md space-y-2 overflow-hidden bg-foundation shadow-sm"
   >
     <button
-      class="flex space-x-1 items-center max-w-full w-full px-1 py-1 h-8 transition hover:bg-primary-muted"
+      class="flex space-x-1.5 items-center max-w-full w-full px-2 py-1 h-8 transition hover:bg-primary-muted bg-foundation"
       @click="expanded = !expanded"
     >
       <div>
@@ -16,7 +14,7 @@
         />
       </div>
       <AutomateFunctionLogo :logo="functionRun.function?.logo" size="xs" />
-      <div class="font-bold text-xs truncate">
+      <div class="font-medium text-body-2xs truncate">
         {{ automationName ? automationName + ' / ' : ''
         }}{{ functionRun.function?.name || 'Unknown function' }}
       </div>
@@ -31,33 +29,21 @@
         </button>
       </div>
     </button>
-    <div v-if="expanded" class="px-2 pb-2 space-y-4">
+    <div v-if="expanded" class="px-3 pb-2 space-y-4">
       <!-- Status message -->
       <div class="space-y-1">
-        <div class="text-xs font-bold text-foreground-2">Status</div>
-        <div
-          v-if="
-            [
-              AutomateRunStatus.Initializing,
-              AutomateRunStatus.Running,
-              AutomateRunStatus.Pending
-            ].includes(functionRun.status)
-          "
-          class="text-xs text-foreground-2 italic"
-        >
-          Function is {{ functionRun.status.toLowerCase() }}.
-        </div>
-        <div v-else class="text-xs text-foreground-2 italic">
-          {{ functionRun.statusMessage || 'No status message' }}
+        <div class="text-body-2xs font-medium text-foreground">Status</div>
+        <div class="text-body-2xs text-foreground-2 whitespace-pre-wrap">
+          {{ statusMessage }}
         </div>
       </div>
 
       <!-- Attachments -->
       <div
         v-if="attachments.length !== 0"
-        class="border-t pt-2 border-foreground-2 space-y-1"
+        class="border-t pt-2 border-outline-2 space-y-1"
       >
-        <div class="text-xs font-bold text-foreground-2">Attachments</div>
+        <div class="text-body-2xs font-medium text-foreground-2">Attachments</div>
         <div class="ml-[2px] justify-start">
           <AutomateRunsAttachmentButton
             v-for="id in attachments"
@@ -71,11 +57,11 @@
         </div>
       </div>
       <!-- Context view -->
-      <div v-if="hasValidContextView" class="border-t pt-2 border-foreground-2">
+      <div v-if="hasValidContextView" class="border-t pt-2 border-outline-2">
         <div>
           <FormButton
-            size="xs"
-            link
+            size="sm"
+            color="outline"
             class="truncate max-w-full"
             :to="functionRun.contextView || ''"
           >
@@ -86,9 +72,9 @@
       <!-- Results -->
       <div
         v-if="!!results?.values.objectResults.length"
-        class="border-t pt-2 border-foreground-2"
+        class="border-t pt-2 border-outline-2"
       >
-        <div class="text-xs font-bold text-foreground-2 mb-2">Results</div>
+        <div class="text-body-2xs font-medium text-foreground-2 mb-2">Results</div>
         <div class="space-y-1">
           <AutomateViewerPanelFunctionRunRowObjectResult
             v-for="(result, index) in results.values.objectResults.slice(
@@ -101,8 +87,8 @@
           />
           <FormButton
             v-if="pageRunLimit < results.values.objectResults.length"
-            size="xs"
-            color="card"
+            size="sm"
+            color="outline"
             class="w-full"
             @click="pageRunLimit += 10"
           >
@@ -167,5 +153,17 @@ const hasValidContextView = computed(() => {
 
   const currentPath = route.fullPath
   return !doesRouteFitTarget(ctxView, currentPath)
+})
+
+const statusMessage = computed(() => {
+  const isFinished = ![
+    AutomateRunStatus.Initializing,
+    AutomateRunStatus.Running,
+    AutomateRunStatus.Pending
+  ].includes(props.functionRun.status)
+
+  return isFinished
+    ? props.functionRun.statusMessage ?? 'No status message'
+    : `Function is ${props.functionRun.status.toLowerCase()}.`
 })
 </script>

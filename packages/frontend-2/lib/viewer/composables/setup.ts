@@ -6,16 +6,17 @@ import {
   MeasurementType,
   FilteringExtension
 } from '@speckle/viewer'
-import type {
-  FilteringState,
-  PropertyInfo,
-  SunLightConfiguration,
-  SpeckleView,
-  MeasurementOptions,
-  DiffResult,
-  Viewer,
-  WorldTree,
-  VisualDiffMode
+import {
+  type FilteringState,
+  type PropertyInfo,
+  type SunLightConfiguration,
+  type SpeckleView,
+  type MeasurementOptions,
+  type DiffResult,
+  type Viewer,
+  type WorldTree,
+  type VisualDiffMode,
+  ViewMode
 } from '@speckle/viewer'
 import type { MaybeRef } from '@vueuse/shared'
 import { inject, ref, provide } from 'vue'
@@ -49,7 +50,7 @@ import { nanoid } from 'nanoid'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import type { CommentBubbleModel } from '~~/lib/viewer/composables/commentBubbles'
 import { setupUrlHashState } from '~~/lib/viewer/composables/setup/urlHashState'
-import type { SpeckleObject } from '~~/lib/common/helpers/sceneExplorer'
+import type { SpeckleObject } from '~/lib/viewer/helpers/sceneExplorer'
 import type { Box3 } from 'three'
 import { Vector3 } from 'three'
 import { writableAsyncComputed } from '~~/lib/common/composables/async'
@@ -111,11 +112,18 @@ export type InjectableViewerState = Readonly<{
      * Various values that represent the current Viewer instance state
      */
     metadata: {
+      /**
+       * Based on a shallow ref
+       */
       worldTree: ComputedRef<Optional<WorldTree>>
       availableFilters: ComputedRef<Optional<PropertyInfo[]>>
       views: ComputedRef<SpeckleView[]>
       filteringState: ComputedRef<Optional<FilteringState>>
     }
+    /**
+     * Whether the Viewer has finished doing the initial object loading
+     */
+    hasDoneInitialLoad: Ref<boolean>
   }
   /**
    * Loaded/loadable resources
@@ -251,6 +259,7 @@ export type InjectableViewerState = Readonly<{
       target: Ref<Vector3>
       isOrthoProjection: Ref<boolean>
     }
+    viewMode: Ref<ViewMode>
     diff: {
       newVersion: ComputedRef<ViewerModelVersionCardItemFragment | undefined>
       oldVersion: ComputedRef<ViewerModelVersionCardItemFragment | undefined>
@@ -260,10 +269,15 @@ export type InjectableViewerState = Readonly<{
       enabled: Ref<boolean>
     }
     sectionBox: Ref<Nullable<Box3>>
+    sectionBoxContext: {
+      visible: Ref<boolean>
+      edited: Ref<boolean>
+    }
     highlightedObjectIds: Ref<string[]>
     lightConfig: Ref<SunLightConfiguration>
     explodeFactor: Ref<number>
     viewerBusy: WritableComputedRef<boolean>
+    loadProgress: Ref<number>
     selection: Ref<Nullable<Vector3>>
     measurement: {
       enabled: Ref<boolean>
@@ -395,6 +409,7 @@ function setupInitialState(params: UseSetupViewerParams): InitialSetupState {
     createViewerDataBuilder({ viewerDebug })
   ) || { initPromise: Promise.resolve() }
   initPromise.then(() => (isInitialized.value = true))
+  const hasDoneInitialLoad = ref(false)
 
   return {
     projectId,
@@ -412,7 +427,8 @@ function setupInitialState(params: UseSetupViewerParams): InitialSetupState {
             availableFilters: computed(() => undefined),
             views: computed(() => []),
             filteringState: computed(() => undefined)
-          }
+          },
+          hasDoneInitialLoad
         } as unknown as InitialSetupState['viewer'])
       : {
           instance,
@@ -421,7 +437,8 @@ function setupInitialState(params: UseSetupViewerParams): InitialSetupState {
             promise: initPromise,
             ref: computed(() => isInitialized.value)
           },
-          metadata: setupViewerMetadata({ viewer: instance })
+          metadata: setupViewerMetadata({ viewer: instance }),
+          hasDoneInitialLoad
         },
     urlHashState: setupUrlHashState()
   }
@@ -756,6 +773,12 @@ function setupResponseResourceData(
   })
 
   onViewerLoadedResourcesError((err) => {
+    // Show full page error only if serious error (core data couldn't be loaded)
+    const isWorkingLoad = !!viewerLoadedResourcesResult.value?.project.models.items
+    if (isWorkingLoad) {
+      return
+    }
+
     globalError.value = createError({
       statusCode: 500,
       message: `Viewer loaded resource resolution failed: ${err}`
@@ -831,6 +854,13 @@ function setupResponseResourceData(
   const commentThreads = computed(() => commentThreadsMetadata.value?.items || [])
 
   onViewerLoadedThreadsError((err) => {
+    // Show full page error only if serious error (core data couldn't be loaded)
+    const isWorkingLoad =
+      !!viewerLoadedThreadsResult.value?.project.commentThreads.items
+    if (isWorkingLoad) {
+      return
+    }
+
     triggerNotification({
       type: ToastNotificationType.Danger,
       title: 'Comment loading failed',
@@ -890,6 +920,8 @@ function setupInterfaceState(
     set: (newVal) => (isViewerBusy.value = !!newVal)
   })
 
+  const loadProgress = ref(0)
+
   const isolatedObjectIds = ref([] as string[])
   const hiddenObjectIds = ref([] as string[])
   const selectedObjects = shallowRef<Raw<SpeckleObject>[]>([])
@@ -902,6 +934,7 @@ function setupInterfaceState(
     if (explodeFactor.value !== 0) return true
     return false
   })
+  const viewMode = ref<ViewMode>(ViewMode.DEFAULT)
 
   const highlightedObjectIds = ref([] as string[])
   const spotlightUserSessionId = ref(null as Nullable<string>)
@@ -948,6 +981,7 @@ function setupInterfaceState(
       explodeFactor,
       spotlightUserSessionId,
       viewerBusy,
+      loadProgress,
       threads: {
         items: commentThreads,
         openThread: {
@@ -964,7 +998,12 @@ function setupInterfaceState(
         target,
         isOrthoProjection
       },
+      viewMode,
       sectionBox: ref(null as Nullable<Box3>),
+      sectionBoxContext: {
+        visible: ref(false),
+        edited: ref(false)
+      },
       filters: {
         isolatedObjectIds,
         hiddenObjectIds,
@@ -1045,7 +1084,7 @@ export function useInjectedViewerInterfaceState(): InjectableViewerState['ui'] {
 
 export function useResetUiState() {
   const {
-    ui: { camera, sectionBox, highlightedObjectIds, lightConfig }
+    ui: { camera, sectionBox, highlightedObjectIds, lightConfig, viewMode }
   } = useInjectedViewerState()
   const { resetFilters } = useFilterUtilities()
   const { endDiff } = useDiffUtilities()
@@ -1055,6 +1094,7 @@ export function useResetUiState() {
     sectionBox.value = null
     highlightedObjectIds.value = []
     lightConfig.value = { ...DefaultLightConfiguration }
+    viewMode.value = ViewMode.DEFAULT
     resetFilters()
     endDiff()
   }

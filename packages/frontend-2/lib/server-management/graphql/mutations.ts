@@ -13,8 +13,10 @@ export const adminDeleteUserMutation = graphql(`
 `)
 
 export const adminDeleteProjectMutation = graphql(`
-  mutation AdminPanelDeleteProject($ids: [String!]) {
-    streamsDelete(ids: $ids)
+  mutation AdminPanelDeleteProject($ids: [String!]!) {
+    projectMutations {
+      batchDelete(ids: $ids)
+    }
   }
 `)
 

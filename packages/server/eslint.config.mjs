@@ -38,6 +38,12 @@ const configs = [
       }
     },
     rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: ['.*']
+        }
+      ],
       '@typescript-eslint/no-explicit-any': 'error',
       '@typescript-eslint/no-unsafe-return': 'error',
       '@typescript-eslint/no-base-to-string': 'off',

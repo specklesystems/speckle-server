@@ -1,16 +1,16 @@
 import { Vector3 } from 'three'
-import { type PropertyInfo } from './modules/filtering/PropertyManager'
-import type { Query, QueryArgsResultMap } from './modules/queries/Query'
-import { type TreeNode, WorldTree } from './modules/tree/WorldTree'
-import { type Utils } from './modules/Utils'
+import { type PropertyInfo } from './modules/filtering/PropertyManager.js'
+import type { Query, QueryArgsResultMap } from './modules/queries/Query.js'
+import { type TreeNode, WorldTree } from './modules/tree/WorldTree.js'
+import { type Utils } from './modules/Utils.js'
 import defaultHdri from './assets/hdri/Mild-dwab.png'
-import { World } from './modules/World'
-import SpeckleRenderer from './modules/SpeckleRenderer'
-import { Extension } from './modules/extensions/Extension'
-import { Loader } from './modules/loaders/Loader'
+import { World } from './modules/World.js'
+import SpeckleRenderer from './modules/SpeckleRenderer.js'
+import { Extension } from './modules/extensions/Extension.js'
+import { Loader } from './modules/loaders/Loader.js'
 import { type Constructor } from 'type-fest'
-import type { Vector3Like } from './modules/batching/BatchObject'
-import type { FilteringState } from './modules/extensions/FilteringExtension'
+import type { Vector3Like } from './modules/batching/BatchObject.js'
+import type { FilteringState } from './modules/extensions/FilteringExtension.js'
 
 export type SpeckleReference = {
   referencedId: string
@@ -25,6 +25,7 @@ export type SpeckleObject = {
   name?: string
   referencedId?: string
   units?: string
+  applicationId?: string
 }
 
 export interface ViewerParams {
@@ -150,7 +151,8 @@ export enum ObjectLayers {
 export enum UpdateFlags {
   RENDER = 0b1,
   SHADOWS = 0b10,
-  CLIPPING_PLANES = 0b100
+  CLIPPING_PLANES = 0b100,
+  RENDER_RESET = 0b1000
 }
 
 export interface MaterialOptions {

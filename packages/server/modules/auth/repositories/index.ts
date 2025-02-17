@@ -7,8 +7,14 @@ import {
 } from '@/modules/core/dbSchema'
 import { InvalidArgumentError } from '@/modules/shared/errors'
 import { Nullable } from '@/modules/shared/helpers/typeHelper'
-import { ScopeRecord, ServerAppsScopesRecord } from '@/modules/auth/helpers/types'
+import { ServerAppsScopesRecord } from '@/modules/auth/helpers/types'
 import { groupBy, mapValues } from 'lodash'
+import { TokenScopeData } from '@/modules/shared/domain/rolesAndScopes/types'
+import { Knex } from 'knex'
+import {
+  DeleteExistingUserAuthTokens,
+  GetAppScopes
+} from '@/modules/auth/domain/operations'
 
 export type RefreshTokenRecord = {
   id: string
@@ -35,38 +41,51 @@ export type ApiTokenRecord = {
   name: Nullable<string>
   lastChars: Nullable<string>
   revoked: boolean
-  lifespan: number
-  createdAt: string
-  lastUsed: string
+  lifespan: number | bigint
+  createdAt: Date
+  lastUsed: Date
 }
 
-export async function deleteExistingAuthTokens(userId: string) {
-  if (!userId) throw new InvalidArgumentError('User ID must be set')
+const tables = {
+  serverAppsScopes: (db: Knex) => db<ServerAppsScopesRecord>(ServerAppsScopes.name),
+  authorizationCodes: (db: Knex) =>
+    db<AuthorizationCodeRecord>(AuthorizationCodes.name),
+  refreshTokens: (db: Knex) => db<RefreshTokenRecord>(RefreshTokens.name)
+}
 
-  await RefreshTokens.knex().where(RefreshTokens.col.userId, userId)
-  await AuthorizationCodes.knex().where(AuthorizationCodes.col.userId, userId)
-  await knex.raw(
-    `
+export const deleteExistingAuthTokensFactory =
+  (deps: { db: Knex }): DeleteExistingUserAuthTokens =>
+  async (userId: string) => {
+    if (!userId) throw new InvalidArgumentError('User ID must be set')
+
+    await tables.refreshTokens(deps.db).where(RefreshTokens.col.userId, userId)
+    await tables
+      .authorizationCodes(deps.db)
+      .where(AuthorizationCodes.col.userId, userId)
+    await knex.raw(
+      `
         DELETE FROM api_tokens
         WHERE owner = ?
         AND id NOT IN (
           SELECT p."tokenId" FROM personal_api_tokens p WHERE p."userId" = ?
         )
         `,
-    [userId, userId]
-  )
-}
+      [userId, userId]
+    )
+  }
 
-export async function getAppScopes(appIds: string[]) {
-  const items = await ServerAppsScopes.knex<
-    Array<ServerAppsScopesRecord & ScopeRecord>
-  >()
-    .whereIn(ServerAppsScopes.col.appId, appIds)
-    .innerJoin(Scopes.name, Scopes.col.name, ServerAppsScopes.col.scopeName)
+export const getAppScopesFactory =
+  (deps: { db: Knex }): GetAppScopes =>
+  async (appIds: string[]) => {
+    const items = await tables
+      .serverAppsScopes(deps.db)
+      .select<Array<ServerAppsScopesRecord & TokenScopeData>>('*')
+      .whereIn(ServerAppsScopes.col.appId, appIds)
+      .innerJoin(Scopes.name, Scopes.col.name, ServerAppsScopes.col.scopeName)
 
-  // Return record where each key is an app id and the value is an array of scopes
-  return mapValues(
-    groupBy(items, (i) => i.appId),
-    (v) => v.map((vi) => ({ name: vi.scopeName, description: vi.description }))
-  )
-}
+    // Return record where each key is an app id and the value is an array of scopes
+    return mapValues(
+      groupBy(items, (i) => i.appId),
+      (v) => v.map((vi) => ({ name: vi.scopeName, description: vi.description }))
+    )
+  }

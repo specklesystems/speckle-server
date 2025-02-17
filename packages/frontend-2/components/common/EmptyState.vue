@@ -1,10 +1,9 @@
 <template>
-  <div class="flex flex-col space-y-2 items-center justify-center p-4">
-    <img src="~~/assets/images/boxes/empty.png" alt="No data found" class="h-32" />
-    <div class="text-sm">
+  <div class="flex flex-col space-y-2 items-center justify-center p-4 min-h-32">
+    <div class="text-sm mb-2">
       <slot>No data found!</slot>
     </div>
-    <FormButton v-if="cta" size="sm" :to="cta?.to" @click="onCtaClick">
+    <FormButton v-if="cta" :to="cta?.to" color="outline" @click="onCtaClick">
       {{ cta.text }}
     </FormButton>
   </div>

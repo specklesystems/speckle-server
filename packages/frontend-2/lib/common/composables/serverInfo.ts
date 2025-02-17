@@ -11,7 +11,7 @@ export function useServerFileUploadLimit() {
   const { result } = useQuery(serverInfoBlobSizeLimitQuery)
 
   const maxSizeInBytes = computed(
-    () => result.value?.serverInfo.blobSizeLimitBytes || 0
+    () => result.value?.serverInfo.configuration.blobSizeLimitBytes || 0
   )
   const maxSizeDisplayString = computed(() => prettyFileSize(maxSizeInBytes.value))
 
@@ -27,10 +27,12 @@ export const useServerInfoScopes = () => {
   const scopes = computed(() => {
     const base = result.value?.serverInfo.scopes || []
     const cloned = cloneDeep(base) // cause it might get directly plopped back into the cache by a dev
-    return cloned.map((scope) => ({
-      ...scope,
-      name: scope.name as unknown as (typeof AllScopes)[number]
-    }))
+    return cloned
+      .map((scope) => ({
+        ...scope,
+        name: scope.name as unknown as (typeof AllScopes)[number]
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name))
   })
 
   return {

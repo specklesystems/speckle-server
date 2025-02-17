@@ -1,5 +1,12 @@
 extend type ServerInfo {
   blobSizeLimitBytes: Int!
+    @deprecated(
+      reason: "Use the ServerInfo{configuration{blobSizeLimitBytes}} field instead."
+    )
+}
+
+extend type ServerConfiguration {
+  blobSizeLimitBytes: Int!
 }
 
 extend type Stream {
@@ -11,8 +18,14 @@ extend type Stream {
     limit: Int = 25
     cursor: String = null
   ): BlobMetadataCollection
+    @deprecated(
+      reason: "Part of the old API surface and will be removed in the future. Use Project.blobs instead."
+    )
 
   blob(id: String!): BlobMetadata
+    @deprecated(
+      reason: "Part of the old API surface and will be removed in the future. Use Project.blob instead."
+    )
 }
 
 extend type Project {

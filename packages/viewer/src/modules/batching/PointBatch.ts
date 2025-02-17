@@ -9,13 +9,13 @@ import {
   Uint16BufferAttribute,
   DynamicDrawUsage
 } from 'three'
-import { Geometry } from '../converter/Geometry'
-import { NodeRenderView } from '../tree/NodeRenderView'
-import { type BatchUpdateRange, type DrawGroup, GeometryType } from './Batch'
-import { PrimitiveBatch } from './PrimitiveBatch'
-import { DrawRanges } from './DrawRanges'
-import Logger from 'js-logger'
-import { ObjectLayers } from '../../IViewer'
+import { Geometry } from '../converter/Geometry.js'
+import { NodeRenderView } from '../tree/NodeRenderView.js'
+import { type BatchUpdateRange, type DrawGroup, GeometryType } from './Batch.js'
+import { PrimitiveBatch } from './PrimitiveBatch.js'
+import { DrawRanges } from './DrawRanges.js'
+import { ObjectLayers } from '../../IViewer.js'
+import Logger from '../utils/Logger.js'
 
 export class PointBatch extends PrimitiveBatch {
   protected primitive!: Points
@@ -101,6 +101,7 @@ export class PointBatch extends PrimitiveBatch {
   }
 
   public resetDrawRanges() {
+    super.resetDrawRanges()
     this.primitive.material = [this.batchMaterial]
   }
 

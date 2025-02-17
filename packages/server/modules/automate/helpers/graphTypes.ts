@@ -28,7 +28,13 @@ export type AutomateFunctionGraphQLReturn = Pick<
   | 'logo'
   | 'tags'
   | 'supportedSourceApps'
->
+  | 'workspaceIds'
+> & {
+  functionCreator: Nullable<{
+    speckleUserId: string
+    speckleServerOrigin: string
+  }>
+}
 
 export type AutomateFunctionReleaseGraphQLReturn = Pick<
   AutomateFunctionRelease,
@@ -37,13 +43,17 @@ export type AutomateFunctionReleaseGraphQLReturn = Pick<
 
 export type AutomationGraphQLReturn = AutomationRecord
 
-export type AutomationRevisionGraphQLReturn = AutomationRevisionRecord
+export type AutomationRevisionGraphQLReturn = AutomationRevisionRecord & {
+  projectId: string
+}
 
 export type ProjectAutomationMutationsGraphQLReturn = { projectId: string }
 
 export type AutomationRevisionTriggerDefinitionGraphQLReturn =
-  AutomationTriggerDefinitionRecord
-export type AutomationRunTriggerGraphQLReturn = AutomationRunTriggerRecord
+  AutomationTriggerDefinitionRecord & { projectId: string }
+export type AutomationRunTriggerGraphQLReturn = AutomationRunTriggerRecord & {
+  projectId: string
+}
 
 export type AutomationRevisionFunctionGraphQLReturn = Merge<
   AutomateRevisionFunctionRecord,
@@ -56,9 +66,12 @@ export type AutomationRevisionFunctionGraphQLReturn = Merge<
 export type AutomateRunGraphQLReturn = SetOptional<
   AutomationRunWithTriggersFunctionRuns,
   'triggers'
->
+> & { projectId: string }
 
-export type AutomateFunctionRunGraphQLReturn = AutomationFunctionRunRecord
+export type AutomateFunctionRunGraphQLReturn = AutomationFunctionRunRecord & {
+  automationId: string
+  projectId: string
+}
 
 export type TriggeredAutomationsStatusGraphQLReturn = Merge<
   TriggeredAutomationsStatus,

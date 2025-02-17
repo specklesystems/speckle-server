@@ -1,6 +1,6 @@
 <template>
   <div>
-    <h1 class="block h4 font-bold mb-4 sm:mb-8">Settings</h1>
+    <h1 class="block text-heading-xl mb-4 sm:mb-8">Settings</h1>
     <LayoutTabsVertical
       v-model:active-item="activeSettingsPageTab"
       :items="settingsTabItems"
@@ -38,6 +38,13 @@ const route = useRoute()
 const router = useRouter()
 
 const isOwner = computed(() => attrs.project.role === Roles.Stream.Owner)
+const projectName = computed(() =>
+  attrs.project.name.length ? attrs.project.name : ''
+)
+
+useHead({
+  title: `Settings | ${projectName.value}`
+})
 
 const settingsTabItems = computed((): LayoutPageTabItem[] => [
   {

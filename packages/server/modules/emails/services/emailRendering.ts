@@ -3,46 +3,12 @@ import { packageRoot } from '@/bootstrap'
 import path from 'path'
 import mjml2html from 'mjml'
 import * as ejs from 'ejs'
-
-export type EmailTemplateServerInfo = {
-  name: string
-  canonicalUrl: string
-  company: string
-  adminContact: string
-}
-
-export type EmailCta = {
-  title: string
-  url: string
-}
-
-export type EmailBody = {
-  text: string
-  mjml: string
-}
-
-export type EmailTemplateParams = {
-  mjml: { bodyStart: string; bodyEnd?: string }
-  text: { bodyStart: string; bodyEnd?: string }
-  cta?: {
-    url: string
-    title: string
-    altTitle?: string
-  }
-}
-
-export type EmailInput = {
-  from?: string
-  to: string
-  subject: string
-  text: string
-  html: string
-}
-
-export type EmailContent = {
-  text: string
-  html: string
-}
+import sanitizeHtml from 'sanitize-html'
+import {
+  EmailContent,
+  EmailTemplateParams,
+  EmailTemplateServerInfo
+} from '@/modules/emails/domain/operations'
 
 export const renderEmail = async (
   templateParams: EmailTemplateParams,
@@ -112,4 +78,13 @@ const renderEmailText = async (
     { cache: false, outputFunctionName: 'print' }
   )
   return fullText
+}
+
+/**
+ * Sanitize message that potentially has HTML in it
+ */
+export function sanitizeMessage(message: string, stripAll: boolean = false): string {
+  return sanitizeHtml(message, {
+    allowedTags: stripAll ? [] : ['b', 'i', 'em', 'strong']
+  })
 }

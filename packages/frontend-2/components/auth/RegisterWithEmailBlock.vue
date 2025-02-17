@@ -3,27 +3,30 @@
   <form method="post" @submit="onSubmit">
     <div class="flex flex-col space-y-2">
       <FormTextInput
-        type="text"
-        name="name"
-        label="Full Name"
-        placeholder="My Name"
-        :size="isSmallerOrEqualSm ? 'lg' : 'xl'"
-        :rules="nameRules"
-        :custom-icon="UserIcon"
-        show-label
-        :disabled="loading"
-        auto-focus
-      />
-      <FormTextInput
         v-model="email"
         type="email"
         name="email"
         label="Email"
-        placeholder="example@email.com"
-        :size="isSmallerOrEqualSm ? 'lg' : 'xl'"
+        placeholder="Email"
+        size="lg"
+        color="foundation"
         :rules="emailRules"
         show-label
         :disabled="isEmailDisabled"
+        autocomplete="email"
+      />
+      <FormTextInput
+        type="text"
+        name="name"
+        label="Full name"
+        placeholder="My name"
+        size="lg"
+        :rules="nameRules"
+        color="foundation"
+        show-label
+        :disabled="loading"
+        auto-focus
+        autocomplete="name"
       />
       <FormTextInput
         v-model="password"
@@ -31,44 +34,31 @@
         name="password"
         label="Password"
         placeholder="Type a strong password"
-        :size="isSmallerOrEqualSm ? 'lg' : 'xl'"
+        color="foundation"
+        size="lg"
         :rules="passwordRules"
         show-label
         :disabled="loading"
-        @focus="pwdFocused = true"
-        @blur="pwdFocused = false"
+        autocomplete="new-password"
       />
     </div>
-    <AuthPasswordChecks
-      :password="password"
-      :class="`mt-2 overflow-hidden ${
-        pwdFocused ? 'h-12 sm:h-8' : 'h-0'
-      } transition-[height]`"
-    />
-    <div
-      class="mt-3 text-xs flex items-center justify-center text-foreground-2 space-x-2"
+    <AuthPasswordChecks :password="password" class="mt-2 h-12 sm:h-8" />
+    <div class="mt-8 flex px-2">
+      <AuthRegisterNewsletter v-model:newsletter-consent="newsletterConsent" />
+    </div>
+    <FormButton
+      submit
+      full-width
+      size="lg"
+      class="mt-5"
+      :disabled="loading || !isMounted"
     >
-      <!-- 
-        Note the newsletter consent box is here because i got very confused re layout of the panel
-        and didn't figure out a better way to put it where i needed it to be
-       -->
-      <FormCheckbox
-        v-model="newsletterConsent"
-        name="newsletter"
-        label="Opt in for exclusive Speckle news and tips"
-      />
-    </div>
-    <FormButton submit full-width class="mt-4" :disabled="loading">Sign up</FormButton>
-    <div
-      v-if="serverInfo.termsOfService"
-      class="mt-2 text-xs text-foreground-2 text-center terms-of-service"
-      v-html="serverInfo.termsOfService"
-    />
-    <div class="mt-2 sm:mt-8 text-center text-xs sm:text-base">
-      <span class="mr-2">Already have an account?</span>
-      <CommonTextLink :to="finalLoginRoute" :icon-right="ArrowRightIcon">
-        Log in
-      </CommonTextLink>
+      Sign up
+    </FormButton>
+    <AuthRegisterTerms v-if="serverInfo.termsOfService" :server-info="serverInfo" />
+    <div v-if="!inviteEmail" class="mt-2 sm:mt-4 text-center text-body-xs">
+      <span class="mr-2 text-foreground-3">Already have an account?</span>
+      <NuxtLink class="text-foreground" :to="finalLoginRoute">Log in</NuxtLink>
     </div>
   </form>
 </template>
@@ -82,8 +72,7 @@ import { loginRoute } from '~~/lib/common/helpers/route'
 import { passwordRules } from '~~/lib/auth/helpers/validation'
 import { graphql } from '~~/lib/common/generated/gql'
 import type { ServerTermsOfServicePrivacyPolicyFragmentFragment } from '~~/lib/common/generated/gql/graphql'
-import { UserIcon, ArrowRightIcon } from '@heroicons/vue/20/solid'
-import { useIsSmallerOrEqualThanBreakpoint } from '~~/composables/browser'
+import { useMounted } from '@vueuse/core'
 
 /**
  * TODO:
@@ -109,19 +98,15 @@ const { handleSubmit } = useForm<FormValues>()
 const router = useRouter()
 const { signUpWithEmail, inviteToken } = useAuthManager()
 const { triggerNotification } = useGlobalToast()
+const isMounted = useMounted()
 
+const newsletterConsent = defineModel<boolean>('newsletterConsent', { required: true })
 const loading = ref(false)
 const password = ref('')
 const email = ref('')
 
 const emailRules = [isEmail]
 const nameRules = [isRequired]
-
-const newsletterConsent = inject<Ref<boolean>>('newsletterconsent')
-
-const pwdFocused = ref(false)
-
-const { isSmallerOrEqualSm } = useIsSmallerOrEqualThanBreakpoint()
 
 const isEmailDisabled = computed(() => !!props.inviteEmail?.length || loading.value)
 
@@ -141,7 +126,7 @@ const onSubmit = handleSubmit(async (fullUser) => {
       user,
       challenge: props.challenge,
       inviteToken: inviteToken.value,
-      newsletter: newsletterConsent?.value
+      newsletter: newsletterConsent.value
     })
   } catch (e) {
     triggerNotification({

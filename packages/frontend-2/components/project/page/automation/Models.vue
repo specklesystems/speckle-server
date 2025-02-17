@@ -1,6 +1,6 @@
 <template>
   <div class="col-span-1">
-    <h2 class="h6 font-bold mb-6">Model</h2>
+    <h2 class="h6 font-medium mb-6">Model</h2>
     <div class="w-full">
       <ProjectModelsBasicCardView
         v-if="triggerModels.length"
@@ -44,7 +44,7 @@ graphql(`
 `)
 
 graphql(`
-  fragment ProjectPageAutomationHeader_Project on Project {
+  fragment ProjectPageAutomationModels_Project on Project {
     id
     ...ProjectPageModelsCardProject
   }

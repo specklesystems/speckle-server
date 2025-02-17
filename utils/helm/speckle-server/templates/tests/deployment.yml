@@ -27,6 +27,10 @@ spec:
               value: {{ .Values.docker_image_tag | quote}}
             - name: VERIFY_CERTIFICATE
               value: {{ (default "1" .Values.tlsRejectUnauthorized) | quote }}
+            - name: LOG_LEVEL
+              value: {{ .Values.test.logLevel }}
+            - name: LOG_PRETTY
+              value: {{ .Values.test.logPretty | quote }}
           resources:
             requests:
               cpu: {{ .Values.test.requests.cpu }}

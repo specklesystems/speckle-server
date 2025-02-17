@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 
 import { MeasurementType } from '@speckle/viewer'
-import type { SpeckleObject } from '~~/lib/common/helpers/sceneExplorer'
+import type { SpeckleObject } from '~/lib/viewer/helpers/sceneExplorer'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { useCameraUtilities, useSelectionUtilities } from '~~/lib/viewer/composables/ui'

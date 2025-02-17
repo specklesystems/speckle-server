@@ -4,38 +4,27 @@
   <div class="space-y-4 relative" @mouseleave="showActionsMenu = false">
     <div
       v-if="itemType !== StructureItemType.ModelWithOnlySubmodels"
-      class="group relative bg-foundation w-full py-1 pr-2 sm:pr-4 flex flex-col sm:flex-row rounded-md shadow hover:shadow-xl hover:bg-primary-muted transition-all border-l-2 border-primary-muted hover:border-primary items-stretch"
+      class="group relative bg-foundation w-full p-2 flex flex-row rounded-md transition-all border border-outline-3 items-stretch"
     >
-      <div class="flex items-center flex-grow order-2 sm:order-1">
-        <!-- Icon -->
-        <template v-if="model">
-          <CubeIcon
-            v-if="model.versionCount.totalCount !== 0"
-            class="w-4 h-4 text-foreground-2 mx-2 shrink-0"
-          />
-          <CubeTransparentIcon v-else class="w-4 h-4 text-foreground-2 mx-2 shrink-0" />
-        </template>
-        <template v-else-if="pendingModel">
-          <ArrowUpOnSquareIcon class="w-4 h-4 text-foreground-2 mx-2" />
-        </template>
-        <template v-else>
-          <div class="w-4 h-4 mx-2" />
-        </template>
-
+      <div class="flex items-center flex-grow order-2 sm:order-1 pl-2 sm:pl-4">
         <!-- Name -->
-        <div class="flex justify-start space-x-2 items-center">
-          <NuxtLink :to="modelLink || ''" class="text-lg font-bold text-foreground">
-            {{ name }}
+        <div class="flex gap-2 items-center">
+          <NuxtLink :to="modelLink || undefined">
+            <span class="text-heading text-foreground hover:text-primary">
+              {{ name }}
+            </span>
           </NuxtLink>
-          <span
-            v-if="model"
-            class="opacity-100 sm:opacity-0 group-hover:opacity-100 transition"
-          >
+          <span v-if="model">
             <ProjectPageModelsActions
               v-model:open="showActionsMenu"
               :model="model"
               :project="project"
               :can-edit="canContribute"
+              :menu-position="
+                itemType === StructureItemType.EmptyModel
+                  ? HorizontalDirection.Right
+                  : HorizontalDirection.Left
+              "
               @click.stop.prevent
               @model-updated="$emit('model-updated')"
               @upload-version="triggerVersionUpload"
@@ -62,6 +51,7 @@
           ref="importArea"
           :project-id="project.id"
           :model-name="item.fullName"
+          :disabled="project?.workspace?.readOnly"
           class="hidden"
         />
         <div
@@ -81,38 +71,43 @@
             v-else
             :project-id="project.id"
             :model-name="item.fullName"
+            :disabled="project?.workspace?.readOnly"
             class="h-full w-full"
           />
         </div>
-        <div v-else-if="hasVersions" class="flex items-center space-x-6 sm:space-x-10">
-          <div
-            class="text-xs text-foreground-2 absolute top-2 right-2 z-10 sm:relative sm:top-auto sm:right-auto"
-          >
-            updated
-            <b>{{ updatedAt }}</b>
+        <div v-else-if="hasVersions" class="hidden sm:flex items-center gap-x-2">
+          <div class="text-body-3xs text-foreground-2 text-right">
+            Updated
+            <span v-tippy="updatedAt.full">
+              {{ updatedAt.relative }}
+            </span>
           </div>
-          <div class="text-xs text-foreground-2 flex items-center space-x-1">
-            <span>{{ model?.commentThreadCount.totalCount }}</span>
-            <ChatBubbleLeftRightIcon class="w-4 h-4" />
-          </div>
-          <div v-if="model?.automationsStatus">
-            <AutomateRunsTriggerStatus
-              :project-id="project.id"
-              :status="model.automationsStatus"
-              :model-id="model.id"
-            />
-          </div>
-          <div class="text-xs text-foreground-2">
-            <FormButton
-              v-if="!isPendingFileUpload(item) && item.model"
-              rounded
-              size="xs"
-              :to="modelVersionsRoute(project.id, item.model.id)"
-              class="gap-0.5"
-            >
-              <IconVersions class="h-4 w-4" />
-              {{ model?.versionCount.totalCount }}
-            </FormButton>
+          <div class="space-x-2 flex flex-row pils">
+            <div class="text-body-xs text-foreground flex items-center space-x-1 pl-2">
+              <IconDiscussions class="w-4 h-4" />
+              <span>{{ model?.commentThreadCount.totalCount }}</span>
+            </div>
+            <div v-if="model?.automationsStatus">
+              <AutomateRunsTriggerStatus
+                :project-id="project.id"
+                :status="model.automationsStatus"
+                :model-id="model.id"
+              />
+            </div>
+
+            <div class="flex gap-2 items-center">
+              <FormButton
+                v-if="!isPendingFileUpload(item) && model?.id"
+                rounded
+                size="sm"
+                class="gap-0.5"
+                color="subtle"
+                @click.stop="onVersionsClick"
+              >
+                <IconVersions class="h-4 w-4" />
+                {{ model?.versionCount.totalCount }}
+              </FormButton>
+            </div>
           </div>
         </div>
         <ProjectPendingFileImportStatus
@@ -124,16 +119,18 @@
       <!-- Preview or icon section -->
       <div
         v-if="!isPendingFileUpload(item) && item.model?.previewUrl && !pendingVersion"
-        class="w-24 h-20 ml-4"
+        class="w-20 h-16"
       >
-        <NuxtLink :to="modelLink || ''" class="h-full w-full">
+        <NuxtLink
+          :to="modelLink || ''"
+          class="h-full w-full block bg-foundation-page rounded-lg border border-outline-3 hover:border-outline-5"
+        >
           <PreviewImage
             v-if="item.model?.previewUrl"
             :preview-url="item.model.previewUrl"
           />
         </NuxtLink>
       </div>
-      <div v-else class="h-20" />
     </div>
     <!-- Doubling up for mixed items -->
     <div
@@ -141,24 +138,25 @@
       class="border-l-2 border-primary-muted hover:border-primary transition rounded-md"
     >
       <button
-        class="group bg-foundation w-full py-1 pr-2 sm:pr-4 flex items-center rounded-md shadow hover:shadow-xl cursor-pointer hover:bg-primary-muted transition-all"
+        class="group bg-foundation w-full py-1 pr-2 sm:pr-4 flex items-center rounded-md cursor-pointer hover:border-outline-5 transition-all border border-outline-3 border-l-0"
         href="/test"
         @click.stop="expanded = !expanded"
       >
         <!-- Icon -->
         <div>
-          <div class="mx-2 flex items-center hover:text-primary text-foreground-2 h-16">
+          <div class="mx-2 flex items-center hover:text-primary text-foreground-2 h-14">
             <ChevronDownIcon
               :class="`w-4 h-4 transition ${expanded ? 'rotate-180' : ''}`"
             />
           </div>
         </div>
         <!-- Name -->
-        <div class="text-lg font-bold text-foreground flex-grow text-left">
+        <FolderIcon class="w-4 h-4 text-foreground" />
+        <div class="ml-2 text-heading text-foreground flex-grow text-left">
           {{ name }}
         </div>
         <!-- Preview -->
-        <div class="flex items-center space-x-4">
+        <div class="flex flex-col items-end sm:flex-row sm:items-center gap-1 sm:gap-4">
           <!-- Commented out so that we need to load less data, can be added back -->
           <!-- <div
             v-for="(child, index) in item.children"
@@ -171,35 +169,27 @@
               {{ child?.name }}
             </div>
           </div> -->
-          <div class="text-xs text-foreground-2">
-            updated
-            <b>{{ updatedAt }}</b>
+          <div class="text-body-2xs text-foreground-2">
+            Updated
+            <span v-tippy="updatedAt.full">
+              {{ updatedAt.relative }}
+            </span>
           </div>
-          <div class="text-xs text-foreground-2">
-            <FormButton
-              rounded
-              size="xs"
-              :icon-right="ArrowTopRightOnSquareIcon"
-              :to="viewAllUrl"
-              :disabled="!viewAllUrl"
-              @click.stop="trackFederateModels"
-            >
-              View All
-            </FormButton>
-          </div>
-          <div :class="`ml-4 w-24 h-20`">
-            <div
-              class="w-full h-full rounded-md bg-primary-muted flex items-center justify-center"
-            >
-              <FolderIcon class="w-4 h-4 text-blue-500/50" />
-            </div>
-          </div>
+          <FormButton
+            size="sm"
+            color="outline"
+            :to="viewAllUrl"
+            :disabled="!viewAllUrl"
+            @click.stop="trackFederateModels"
+          >
+            View all
+          </FormButton>
         </div>
       </button>
       <!-- Children list -->
       <div
         v-if="hasChildren && expanded && !isPendingFileUpload(item)"
-        class="pl-8 mt-4 space-y-4"
+        class="pl-8 mt-2 space-y-2"
       >
         <div v-if="childrenLoading" class="mr-8">
           <CommonLoadingBar loading />
@@ -221,29 +211,15 @@
             />
           </div>
         </template>
-        <div v-if="canContribute" class="mr-8">
-          <ProjectPageModelsNewModelStructureItem
-            :project-id="project.id"
-            :parent-model-name="item.fullName"
-          />
-        </div>
+        <div v-if="canContribute" class="mr-8"></div>
       </div>
     </div>
   </div>
 </template>
 <script lang="ts" setup>
-import dayjs from 'dayjs'
 import { modelVersionsRoute, modelRoute } from '~~/lib/common/helpers/route'
-import {
-  ChevronDownIcon,
-  FolderIcon,
-  CubeIcon,
-  CubeTransparentIcon,
-  PlusIcon,
-  ChatBubbleLeftRightIcon,
-  ArrowTopRightOnSquareIcon
-} from '@heroicons/vue/24/solid'
-import { ArrowUpOnSquareIcon } from '@heroicons/vue/24/outline'
+import { ChevronDownIcon, PlusIcon } from '@heroicons/vue/20/solid'
+import { FolderIcon } from '@heroicons/vue/24/outline'
 import type {
   PendingFileUploadFragment,
   ProjectPageModelsStructureItem_ProjectFragment,
@@ -256,6 +232,7 @@ import { has } from 'lodash-es'
 import type { Nullable } from '@speckle/shared'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useIsModelExpanded } from '~~/lib/projects/composables/models'
+import { HorizontalDirection } from '~~/lib/common/composables/window'
 
 /**
  * TODO: The template in this file is a complete mess, needs refactoring
@@ -272,6 +249,10 @@ enum StructureItemType {
 graphql(`
   fragment ProjectPageModelsStructureItem_Project on Project {
     id
+    workspace {
+      id
+      readOnly
+    }
     ...ProjectPageModelsActions_Project
   }
 `)
@@ -306,6 +287,8 @@ const props = defineProps<{
 }>()
 
 provide('projectId', props.project.id)
+
+const router = useRouter()
 
 const importArea = ref(
   null as Nullable<{
@@ -386,7 +369,10 @@ const updatedAt = computed(() => {
     ? props.item.convertedLastUpdate || props.item.uploadDate
     : props.item.updatedAt
 
-  return dayjs(date).from(dayjs())
+  return {
+    full: formattedFullDate(date),
+    relative: formattedRelativeDate(date, { prefix: true })
+  }
 })
 
 const modelLink = computed(() => {
@@ -401,7 +387,9 @@ const modelLink = computed(() => {
 
 const viewAllUrl = computed(() => {
   if (isPendingFileUpload(props.item)) return undefined
-  return modelRoute(props.project.id, `$${props.item.fullName}`)
+  const fullName = props.item.fullName
+  const encodedFullName = `$${fullName}`.replace(/\//g, '%2F')
+  return modelRoute(props.project.id, encodedFullName)
 })
 
 const {
@@ -428,5 +416,11 @@ const onModelUpdated = () => {
 
 const triggerVersionUpload = () => {
   importArea.value?.triggerPicker()
+}
+
+const onVersionsClick = () => {
+  if (model.value) {
+    router.push(modelVersionsRoute(props.project.id, model.value.id))
+  }
 }
 </script>

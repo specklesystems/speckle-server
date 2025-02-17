@@ -1,11 +1,11 @@
 /* eslint-disable camelcase */
 import { Box3, Euler, Matrix4, Quaternion, Vector3 } from 'three'
-import { NodeRenderView } from '../tree/NodeRenderView'
-import { Geometry } from '../converter/Geometry'
+import { NodeRenderView } from '../tree/NodeRenderView.js'
+import { Geometry } from '../converter/Geometry.js'
 import {
   AccelerationStructure,
   DefaultBVHOptions
-} from '../objects/AccelerationStructure'
+} from '../objects/AccelerationStructure.js'
 import { MeshBVH } from 'three-mesh-bvh'
 
 export type VectorLike =

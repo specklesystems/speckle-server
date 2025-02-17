@@ -39,6 +39,7 @@ export function usePreviewImageBlob(
   const shouldLoadPanorama = ref(false)
   const basePanoramaUrl = computed(() => unref(previewUrl) + '/all')
   const isEnabled = computed(() => (import.meta.server ? true : unref(enabled)))
+  const cacheBust = ref(0)
 
   const ret = {
     previewUrl: computed(() => url.value),
@@ -118,8 +119,7 @@ export function usePreviewImageBlob(
     }
 
     if (regenerate) {
-      processBasePreviewUrl(unref(previewUrl))
-      if (shouldLoadPanorama) processPanoramaPreviewUrl()
+      regeneratePreviews()
     }
   })
 
@@ -135,7 +135,9 @@ export function usePreviewImageBlob(
 
       let blobUrl: string
       if (enableDirectPreviews || import.meta.server) {
-        blobUrl = basePreviewUrl
+        const blobUrlConfig = new URL(basePreviewUrl)
+        blobUrlConfig.searchParams.set('v', cacheBust.value.toString())
+        blobUrl = blobUrlConfig.toString()
       } else {
         const res = await fetch(basePreviewUrl, {
           headers: authToken.value ? { Authorization: `Bearer ${authToken.value}` } : {}
@@ -181,7 +183,9 @@ export function usePreviewImageBlob(
 
       let blobUrl: string
       if (enableDirectPreviews || import.meta.server) {
-        blobUrl = basePanoramaUrl.value
+        const blobUrlConfig = new URL(basePanoramaUrl.value)
+        blobUrlConfig.searchParams.set('v', cacheBust.value.toString())
+        blobUrl = blobUrlConfig.toString()
       } else {
         const res = await fetch(basePanoramaUrl.value, {
           headers: authToken.value ? { Authorization: `Bearer ${authToken.value}` } : {}
@@ -224,6 +228,12 @@ export function usePreviewImageBlob(
     }
   }
 
+  const regeneratePreviews = (basePreviewUrl?: string) => {
+    cacheBust.value++
+    processBasePreviewUrl(basePreviewUrl || unref(previewUrl))
+    if (shouldLoadPanorama.value) processPanoramaPreviewUrl()
+  }
+
   watch(shouldLoadPanorama, (newVal) => {
     if (newVal) processPanoramaPreviewUrl()
   })
@@ -231,8 +241,7 @@ export function usePreviewImageBlob(
   watch(
     () => unref(previewUrl),
     (newVal) => {
-      processBasePreviewUrl(newVal)
-      if (shouldLoadPanorama.value) processPanoramaPreviewUrl()
+      regeneratePreviews(newVal || undefined)
     },
     { immediate: true }
   )
@@ -242,8 +251,7 @@ export function usePreviewImageBlob(
     (newVal) => {
       if (!newVal) return
 
-      processBasePreviewUrl(unref(previewUrl))
-      if (shouldLoadPanorama.value) processPanoramaPreviewUrl()
+      regeneratePreviews()
     }
   )
 

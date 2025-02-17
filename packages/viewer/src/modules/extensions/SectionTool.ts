@@ -18,11 +18,11 @@ import {
   Vector2
 } from 'three'
 import { TransformControls } from 'three/examples/jsm/controls/TransformControls.js'
-import { type IViewer, ObjectLayers } from '../../IViewer'
-import { Extension } from './Extension'
-import { CameraEvent } from '../objects/SpeckleCamera'
-import { InputEvent } from '../input/Input'
-import { CameraController } from './CameraController'
+import { type IViewer, ObjectLayers } from '../../IViewer.js'
+import { Extension } from './Extension.js'
+import { CameraEvent } from '../objects/SpeckleCamera.js'
+import { InputEvent } from '../input/Input.js'
+import { CameraController } from './CameraController.js'
 
 export enum SectionToolEvent {
   DragStart = 'section-box-drag-start',
@@ -230,53 +230,56 @@ export class SectionTool extends Extension {
 
   private _draggingChangeHandler() {
     if (!this.display.visible) return
+
     this.boxGeometry.computeBoundingBox()
     this.boxMeshHelper.box.copy(this.boxGeometry.boundingBox || new Box3())
 
-    // Dragging a side / plane
-    if (this.dragging && this.currentRange) {
-      this._generateOrUpdatePlanes()
-      if (this.prevPosition === null)
+    if (this.dragging) {
+      // Dragging a side / plane
+      if (this.currentRange) {
+        this._generateOrUpdatePlanes()
+        if (this.prevPosition === null)
+          this.prevPosition = this.hoverPlane.position.clone()
+        this.prevPosition.sub(this.hoverPlane.position)
+        this.prevPosition.negate()
+        const boxArr = this.boxGeometry.attributes.position.array as number[]
+        for (let i = 0; i < this.currentRange.length; i++) {
+          const index = this.currentRange[i]
+          boxArr[3 * index] += this.prevPosition.x
+          boxArr[3 * index + 1] += this.prevPosition.y
+          boxArr[3 * index + 2] += this.prevPosition.z
+        }
+
         this.prevPosition = this.hoverPlane.position.clone()
-      this.prevPosition.sub(this.hoverPlane.position)
-      this.prevPosition.negate()
-      const boxArr = this.boxGeometry.attributes.position.array as number[]
-      for (let i = 0; i < this.currentRange.length; i++) {
-        const index = this.currentRange[i]
-        boxArr[3 * index] += this.prevPosition.x
-        boxArr[3 * index + 1] += this.prevPosition.y
-        boxArr[3 * index + 2] += this.prevPosition.z
+        this.boxGeometry.attributes.position.needsUpdate = true
+        this.boxGeometry.computeVertexNormals()
+        this.boxGeometry.computeBoundingBox()
+        this.boxGeometry.computeBoundingSphere()
       }
 
-      this.prevPosition = this.hoverPlane.position.clone()
-      this.boxGeometry.attributes.position.needsUpdate = true
-      this.boxGeometry.computeVertexNormals()
-      this.boxGeometry.computeBoundingBox()
-      this.boxGeometry.computeBoundingSphere()
-    }
+      // Dragging the whole section box. This legacy bit seems to never happen ¯\_(ツ)_/¯
+      else {
+        this._generateOrUpdatePlanes()
+        if (this.prevPosition === null) this.prevPosition = this.sphere.position.clone()
+        this.prevPosition.sub(this.sphere.position)
+        this.prevPosition.negate()
+        const verts = this.boxGeometry.attributes.position.array as number[]
+        for (let i = 0; i < verts.length; i += 3) {
+          verts[i] += this.prevPosition.x
+          verts[i + 1] += this.prevPosition.y
+          verts[i + 2] += this.prevPosition.z
+        }
+        this.boxGeometry.attributes.position.needsUpdate = true
+        this.boxGeometry.computeVertexNormals()
+        this.boxGeometry.computeBoundingBox()
+        this.boxGeometry.computeBoundingSphere()
 
-    // Dragging the whole section box
-    if (this.dragging && !this.currentRange) {
-      this._generateOrUpdatePlanes()
-      if (this.prevPosition === null) this.prevPosition = this.sphere.position.clone()
-      this.prevPosition.sub(this.sphere.position)
-      this.prevPosition.negate()
-      const verts = this.boxGeometry.attributes.position.array as number[]
-      for (let i = 0; i < verts.length; i += 3) {
-        verts[i] += this.prevPosition.x
-        verts[i + 1] += this.prevPosition.y
-        verts[i + 2] += this.prevPosition.z
+        this.prevPosition = this.sphere.position.clone()
       }
-      this.boxGeometry.attributes.position.needsUpdate = true
-      this.boxGeometry.computeVertexNormals()
-      this.boxGeometry.computeBoundingBox()
-      this.boxGeometry.computeBoundingSphere()
-
-      this.prevPosition = this.sphere.position.clone()
+      this.viewer.getRenderer().clippingPlanes = this.planes
+      this.viewer.getRenderer().clippingVolume = this.getBox()
+      this.emit(SectionToolEvent.Updated, this.planes)
     }
-    this.viewer.getRenderer().clippingPlanes = this.planes
-    this.viewer.getRenderer().clippingVolume = this.getBox()
-    this.emit(SectionToolEvent.Updated, this.planes)
     this.viewer.requestRender()
   }
 
@@ -464,16 +467,24 @@ export class SectionTool extends Extension {
       box = new Box3(new Vector3(-1, -1, -1), new Vector3(1, 1, 1))
     }
 
-    if (offset === 0) {
-      offset = this.viewer.World.getRelativeOffset()
-    }
+    let x1, y1, z1, x2, y2, z2
 
-    const x1 = box.min.x - (box.max.x - box.min.x) * offset
-    const y1 = box.min.y - (box.max.y - box.min.y) * offset
-    const z1 = box.min.z - (box.max.z - box.min.z) * offset
-    const x2 = box.max.x + (box.max.x - box.min.x) * offset
-    const y2 = box.max.y + (box.max.y - box.min.y) * offset
-    const z2 = box.max.z + (box.max.z - box.min.z) * offset
+    if (offset === 0) {
+      const offsetBox = this.viewer.World.getRelativeOffsetBox(box, 0.0001)
+      x1 = offsetBox.min.x //box.min.x - (box.max.x - box.min.x) * offset
+      y1 = offsetBox.min.y //box.min.y - (box.max.y - box.min.y) * offset
+      z1 = offsetBox.min.z //box.min.z - (box.max.z - box.min.z) * offset
+      x2 = offsetBox.max.x //box.max.x + (box.max.x - box.min.x) * offset
+      y2 = offsetBox.max.y //box.max.y + (box.max.y - box.min.y) * offset
+      z2 = offsetBox.max.z //box.max.z + (box.max.z - box.min.z) * offset
+    } else {
+      x1 = box.min.x - (box.max.x - box.min.x) * offset
+      y1 = box.min.y - (box.max.y - box.min.y) * offset
+      z1 = box.min.z - (box.max.z - box.min.z) * offset
+      x2 = box.max.x + (box.max.x - box.min.x) * offset
+      y2 = box.max.y + (box.max.y - box.min.y) * offset
+      z2 = box.max.z + (box.max.z - box.min.z) * offset
+    }
 
     const newVertices = [
       x1,

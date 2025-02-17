@@ -2,40 +2,38 @@
   <div class="bg-foundation border border-outline-3 rounded-lg pt-5 px-6 pb-6">
     <div class="flex w-full justify-between items-center mb-2">
       <div class="flex flex-col md:flex-row gap-4">
-        <div class="flex flex-row justify-start items-cetner gap-4">
+        <div class="flex flex-row justify-start items-center gap-2">
           <RouterLink
-            class="h5 font-bold text-foreground hover:underline"
+            class="h5 font-medium text-foreground hover:underline"
             :to="projectAutomationRoute(projectId, automation.id)"
           >
             {{ automation.name }}
           </RouterLink>
           <div>
-            <CommonBadge v-if="isTestAutomation" size="base">
-              Test Automation
-            </CommonBadge>
+            <CommonBadge v-if="isTestAutomation" rounded>Test Automation</CommonBadge>
           </div>
         </div>
         <template v-if="!isEnabled">
           <div>
-            <CommonBadge size="lg" color-classes="bg-danger-lighter text-danger-darker">
+            <CommonBadge rounded color-classes="bg-danger-lighter text-danger-darker">
               Disabled
             </CommonBadge>
           </div>
         </template>
       </div>
 
-      <CommonTextLink
-        class="font-bold"
+      <FormButton
+        color="outline"
+        size="sm"
         :to="projectAutomationRoute(projectId, automation.id)"
       >
-        View Details
-        <ChevronRightIcon class="ml-2 w-4 h-4" />
-      </CommonTextLink>
+        View details
+      </FormButton>
     </div>
     <div class="flex flex-col mb-6">
       <template v-if="triggerModels.length">
         <div class="flex gap-2">
-          <div class="mt-1">{{ triggerLabel }}</div>
+          <p class="mt-1 text-body-xs">{{ triggerLabel }}</p>
           <div v-for="model in triggerModels" :key="model.id" class="truncate">
             <CommonTextLink :icon-left="CubeIcon" :to="finalModelUrl(model.id)">
               {{ model.name }}
@@ -45,10 +43,10 @@
       </template>
       <div
         v-else
-        class="flex items-center gap-1 truncate text-foreground-2 label-light"
+        class="flex items-center gap-1.5 truncate text-danger-darker text-body-xs"
       >
-        <ExclamationTriangleIcon class="w-5 h-5" />
-        <span>No valid models attached to this automation</span>
+        <ExclamationTriangleIcon class="w-4 h-4" />
+        <span>No valid models are attached to this automation</span>
       </div>
     </div>
     <AutomateRunsTable
@@ -59,11 +57,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import {
-  ChevronRightIcon,
-  CubeIcon,
-  ExclamationTriangleIcon
-} from '@heroicons/vue/24/outline'
+import { CubeIcon, ExclamationTriangleIcon } from '@heroicons/vue/24/outline'
 import { isNonNullable } from '@speckle/shared'
 import { graphql } from '~/lib/common/generated/gql'
 import { type ProjectPageAutomationsRow_AutomationFragment } from '~/lib/common/generated/gql/graphql'

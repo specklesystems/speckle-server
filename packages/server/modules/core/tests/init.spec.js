@@ -2,7 +2,7 @@
 const expect = require('chai').expect
 
 const { init } = require('@/app')
-const knex = require('@/db/knex')
+const { knex } = require('@/db/knex')
 const { beforeEachContext } = require('@/test/hooks')
 
 // NOTE:

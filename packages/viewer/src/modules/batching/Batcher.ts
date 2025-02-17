@@ -1,29 +1,31 @@
 import { MathUtils } from 'three'
-import LineBatch from './LineBatch'
+import LineBatch from './LineBatch.js'
 import Materials, {
   FilterMaterialType,
+  MinimalMaterial,
   type DisplayStyle,
   type RenderMaterial
-} from '../materials/Materials'
-import { NodeRenderView } from '../tree/NodeRenderView'
+} from '../materials/Materials.js'
+import { NodeRenderView } from '../tree/NodeRenderView.js'
 import {
   type Batch,
   type BatchUpdateRange,
   GeometryType,
   NoneBatchUpdateRange
-} from './Batch'
+} from './Batch.js'
 import { Material, WebGLRenderer } from 'three'
-import Logger from 'js-logger'
-import { AsyncPause } from '../World'
-import { RenderTree } from '../tree/RenderTree'
-import TextBatch from './TextBatch'
-import SpeckleMesh, { TransformStorage } from '../objects/SpeckleMesh'
-import { SpeckleType } from '../loaders/GeometryConverter'
-import { type TreeNode, WorldTree } from '../..'
-import { InstancedMeshBatch } from './InstancedMeshBatch'
-import { Geometry } from '../converter/Geometry'
-import { MeshBatch } from './MeshBatch'
-import { PointBatch } from './PointBatch'
+import { AsyncPause } from '../World.js'
+import { RenderTree } from '../tree/RenderTree.js'
+import TextBatch from './TextBatch.js'
+import SpeckleMesh, { TransformStorage } from '../objects/SpeckleMesh.js'
+import { SpeckleType } from '../loaders/GeometryConverter.js'
+import { type TreeNode, WorldTree } from '../../index.js'
+import { InstancedMeshBatch } from './InstancedMeshBatch.js'
+import { Geometry } from '../converter/Geometry.js'
+import { MeshBatch } from './MeshBatch.js'
+import { PointBatch } from './PointBatch.js'
+import Logger from '../utils/Logger.js'
+import { ObjectVisibility } from '../pipeline/Passes/GPass.js'
 
 type BatchTypeMap = {
   [GeometryType.MESH]: MeshBatch
@@ -73,7 +75,7 @@ export default class Batcher {
         await pause.wait(50)
       }
 
-      let instancedNodes = worldTree.findId(g)
+      let instancedNodes = worldTree.findId(g, renderTree.subtreeId)
       if (!instancedNodes) {
         continue
       }
@@ -98,7 +100,7 @@ export default class Batcher {
     }
     for (const v in instancedBatches) {
       for (let k = 0; k < instancedBatches[v].length; k++) {
-        const nodes = worldTree.findId(instancedBatches[v][k])
+        const nodes = worldTree.findId(instancedBatches[v][k], renderTree.subtreeId)
         if (!nodes) continue
         /** Make sure entire instance set is instanced */
         let instanced = true
@@ -323,15 +325,20 @@ export default class Batcher {
 
     const geometryType =
       batchType !== undefined ? batchType : renderViews[0].geometryType
-    let matRef: RenderMaterial | DisplayStyle | null =
+    let matRef: RenderMaterial | DisplayStyle | MinimalMaterial | null =
       renderViews[0].renderData.renderMaterial
 
     if (geometryType === GeometryType.MESH) {
       matRef = renderViews[0].renderData.renderMaterial
     } else if (geometryType === GeometryType.LINE) {
-      matRef = renderViews[0].renderData.displayStyle
+      matRef = renderViews[0].renderData.colorMaterial
+        ? renderViews[0].renderData.colorMaterial
+        : renderViews[0].renderData.displayStyle
     } else if (geometryType === GeometryType.POINT) {
-      matRef = renderViews[0].renderData.renderMaterial
+      matRef = renderViews[0].renderData.colorMaterial
+        ? renderViews[0].renderData.colorMaterial
+        : renderViews[0].renderData.renderMaterial ||
+          renderViews[0].renderData.displayStyle
     } else if (geometryType === GeometryType.POINT_CLOUD) {
       matRef = renderViews[0].renderData.renderMaterial
     } else if (geometryType === GeometryType.TEXT) {
@@ -407,6 +414,19 @@ export default class Batcher {
     }
   }
 
+  public getVisibility(objectVisibility: ObjectVisibility) {
+    switch (objectVisibility) {
+      case ObjectVisibility.OPAQUE:
+        return this.getOpaque()
+      case ObjectVisibility.TRANSPARENT:
+        return this.getTransparent()
+      case ObjectVisibility.STENCIL:
+        return this.getStencil()
+      case ObjectVisibility.DEPTH:
+        return this.getDepth()
+    }
+  }
+
   public getTransparent(): Record<string, BatchUpdateRange> {
     const visibilityRanges: Record<string, BatchUpdateRange> = {}
     for (const k in this.batches) {
@@ -450,11 +470,30 @@ export default class Batcher {
     }
   }
 
+  public overrideBatchMaterial(
+    ranges: Record<string, BatchUpdateRange>,
+    material: Material
+  ) {
+    for (const k in ranges) {
+      if (this.batches[k].geometryType !== GeometryType.MESH) continue
+      const mesh = this.batches[k].renderObject as SpeckleMesh
+      mesh.setOverrideBatchMaterial(material)
+    }
+  }
+
   public restoreMaterial(ranges: Record<string, BatchUpdateRange>) {
     for (const k in ranges) {
       if (this.batches[k].geometryType !== GeometryType.MESH) continue
       const mesh = this.batches[k].renderObject as SpeckleMesh
       mesh.restoreMaterial()
+    }
+  }
+
+  public restoreBatchMaterial(ranges: Record<string, BatchUpdateRange>) {
+    for (const k in ranges) {
+      if (this.batches[k].geometryType !== GeometryType.MESH) continue
+      const mesh = this.batches[k].renderObject as SpeckleMesh
+      mesh.restoreBatchMaterial()
     }
   }
 

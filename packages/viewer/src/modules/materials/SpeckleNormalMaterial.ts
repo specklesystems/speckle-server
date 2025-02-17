@@ -1,6 +1,6 @@
 /* eslint-disable camelcase */
-import { speckleNormalVert } from './shaders/speckle-normal-vert'
-import { speckleNormalFrag } from './shaders/speckle-normal-frag'
+import { speckleNormalVert } from './shaders/speckle-normal-vert.js'
+import { speckleNormalFrag } from './shaders/speckle-normal-frag.js'
 import {
   BufferGeometry,
   Camera,
@@ -13,8 +13,8 @@ import {
   type MeshNormalMaterialParameters
 } from 'three'
 import { Matrix4 } from 'three'
-import { ExtendedMeshNormalMaterial, type Uniforms } from './SpeckleMaterial'
-import type { SpeckleWebGLRenderer } from '../objects/SpeckleWebGLRenderer'
+import { ExtendedMeshNormalMaterial, type Uniforms } from './SpeckleMaterial.js'
+import type { SpeckleWebGLRenderer } from '../objects/SpeckleWebGLRenderer.js'
 
 class SpeckleNormalMaterial extends ExtendedMeshNormalMaterial {
   protected get vertexProgram(): string {
@@ -62,11 +62,13 @@ class SpeckleNormalMaterial extends ExtendedMeshNormalMaterial {
     _geometry: BufferGeometry,
     object: Object3D
   ) {
-    object.modelViewMatrix.copy(_this.RTEBuffers.rteViewModelMatrix)
-    this.userData.uViewer_low.value.copy(_this.RTEBuffers.viewerLow)
-    this.userData.uViewer_high.value.copy(_this.RTEBuffers.viewerHigh)
+    if (this.defines && this.defines['USE_RTE']) {
+      object.modelViewMatrix.copy(_this.RTEBuffers.rteViewModelMatrix)
+      this.userData.uViewer_low.value.copy(_this.RTEBuffers.viewerLow)
+      this.userData.uViewer_high.value.copy(_this.RTEBuffers.viewerHigh)
 
-    this.needsUpdate = true
+      this.needsUpdate = true
+    }
   }
 }
 

@@ -1,4 +1,4 @@
-import EventEmitter from '../EventEmitter'
+import EventEmitter from '../EventEmitter.js'
 
 export enum LoaderEvent {
   LoadProgress = 'load-progress',
@@ -14,15 +14,12 @@ export interface LoaderEventPayload {
 
 export abstract class Loader extends EventEmitter {
   protected _resource: string
-  protected _resourceData: string | ArrayBuffer | undefined
+  protected _resourceData: unknown
 
   public abstract get resource(): string
   public abstract get finished(): boolean
 
-  protected constructor(
-    resource: string,
-    resourceData?: string | ArrayBuffer | undefined
-  ) {
+  protected constructor(resource: string, resourceData?: unknown) {
     super()
     this._resource = resource
     this._resourceData = resourceData

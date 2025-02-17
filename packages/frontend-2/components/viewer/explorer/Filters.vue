@@ -4,23 +4,24 @@
     <template #actions>
       <div class="flex justify-between items-center w-full">
         <FormButton
-          v-tippy="'Change Filter'"
+          v-tippy="'Change filter'"
           text
-          size="xs"
+          color="subtle"
+          size="sm"
           :icon-right="showAllFilters ? ChevronUpIcon : ChevronDownIcon"
           class="capitalize"
           @click="showAllFilters = !showAllFilters"
         >
           <span class="max-w-20 md:max-w-36 truncate">
-            {{ title.split('.').reverse()[0] || title || 'No Title' }}
+            {{ title.split('.').reverse()[0] || title || 'No title' }}
           </span>
         </FormButton>
-        <div class="flex gap-1 divide-x divide-outline-3">
+        <div class="flex divide-x divide-outline-3">
           <FormButton
             v-if="title !== 'Object Type'"
             text
-            size="xs"
-            class="flex gap-1"
+            size="sm"
+            class="flex gap-1 pr-2"
             @click="
               ;(showAllFilters = false),
                 removePropertyFilter(),
@@ -32,12 +33,14 @@
           </FormButton>
           <FormButton
             v-tippy="'Toggle coloring'"
-            size="xs"
+            class="pl-2"
+            size="sm"
+            color="subtle"
             text
             @click="toggleColors()"
           >
-            <IconColouringOutline v-if="!colors" class="w-4 h-4 text-primary" />
-            <IconColouring v-else class="w-4 h-4 text-primary" />
+            <IconColouringOutline v-if="!colors" class="w-4 h-4" />
+            <IconColouring v-else class="w-4 h-4" />
           </FormButton>
         </div>
       </div>
@@ -70,11 +73,11 @@
                 refreshColorsIfSetOrActiveFilterIsNumeric()
             "
           >
-            {{ filter.key }}
+            {{ getPropertyName(filter.key) }}
           </button>
         </div>
         <div v-if="itemCount < relevantFiltersSearched.length" class="mb-2">
-          <FormButton size="xs" text full-width @click="itemCount += 30">
+          <FormButton size="sm" text full-width @click="itemCount += 30">
             View More ({{ relevantFiltersSearched.length - itemCount }})
           </FormButton>
         </div>
@@ -82,11 +85,11 @@
     </div>
     <div v-if="activeFilter">
       <ViewerExplorerStringFilter
-        v-if="activeFilter.type === 'string'"
+        v-if="stringActiveFilter"
         :filter="stringActiveFilter"
       />
       <ViewerExplorerNumericFilter
-        v-if="activeFilter.type === 'number'"
+        v-if="numericActiveFilter"
         :filter="numericActiveFilter"
       />
     </div>
@@ -95,13 +98,13 @@
 <script setup lang="ts">
 import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/vue/24/solid'
 import { ArrowPathIcon } from '@heroicons/vue/24/outline'
-import type {
-  PropertyInfo,
-  StringPropertyInfo,
-  NumericPropertyInfo
-} from '@speckle/viewer'
+import type { PropertyInfo } from '@speckle/viewer'
 import { useFilterUtilities } from '~~/lib/viewer/composables/ui'
 import { useMixpanel } from '~~/lib/core/composables/mp'
+import {
+  isNumericPropertyInfo,
+  isStringPropertyInfo
+} from '~/lib/viewer/helpers/sceneExplorer'
 
 const {
   setPropertyFilter,
@@ -111,11 +114,26 @@ const {
   filters: { propertyFilter }
 } = useFilterUtilities()
 
+const revitPropertyRegex = /^parameters\./
+// Note: we've split this regex check in two to not clash with navis properties. This makes generally makes dim very sad, as we're layering hacks.
+// Navis object properties come under `properties`, same as revit ones - as such we can't assume they're the same. Here we're targeting revit's
+// specific two subcategories of `properties`.
+const revitPropertyRegexDui3000InstanceProps = /^properties\.Instance/ // note this is partially valid for civil3d, or dim should test against it
+const revitPropertyRegexDui3000TypeProps = /^properties\.Type/ // note this is partially valid for civil3d, or dim should test against it
+
 const showAllFilters = ref(false)
 
 const props = defineProps<{
   filters: PropertyInfo[]
 }>()
+
+const isRevitProperty = (key: string): boolean => {
+  return (
+    revitPropertyRegex.test(key) ||
+    revitPropertyRegexDui3000InstanceProps.test(key) ||
+    revitPropertyRegexDui3000TypeProps.test(key)
+  )
+}
 
 const relevantFilters = computed(() => {
   return props.filters.filter((f) => {
@@ -135,6 +153,9 @@ const relevantFilters = computed(() => {
       f.key.includes('midPoint.') ||
       f.key.includes('startPoint.') ||
       f.key.includes('startPoint.') ||
+      f.key.includes('.materialName') ||
+      f.key.includes('.materialClass') ||
+      f.key.includes('.materialCategory') ||
       f.key.includes('displayStyle') ||
       f.key.includes('displayValue') ||
       f.key.includes('displayMesh')
@@ -142,7 +163,7 @@ const relevantFilters = computed(() => {
       return false
     }
     // handle revit params: the actual one single value we're interested is in paramters.HOST_BLA BLA_.value, the rest are not needed
-    if (f.key.startsWith('parameters')) {
+    if (isRevitProperty(f.key)) {
       if (f.key.endsWith('.value')) return true
       else return false
     }
@@ -150,9 +171,8 @@ const relevantFilters = computed(() => {
   })
 })
 
-const speckleTypeFilter = computed(
-  () =>
-    relevantFilters.value.find((f) => f.key === 'speckle_type') as StringPropertyInfo
+const speckleTypeFilter = computed(() =>
+  relevantFilters.value.find((f) => f.key === 'speckle_type')
 )
 const activeFilter = computed(
   () => propertyFilter.filter.value || speckleTypeFilter.value
@@ -169,18 +189,26 @@ watch(activeFilter, (newVal) => {
   })
 })
 
-// Using these as casting activeFilter as XXX in the prop causes some syntax highliting bug to show. Apologies :)
-const stringActiveFilter = computed(() => activeFilter.value as StringPropertyInfo)
-const numericActiveFilter = computed(() => activeFilter.value as NumericPropertyInfo)
+const stringActiveFilter = computed(() =>
+  isStringPropertyInfo(activeFilter.value) ? activeFilter.value : undefined
+)
+const numericActiveFilter = computed(() =>
+  isNumericPropertyInfo(activeFilter.value) ? activeFilter.value : undefined
+)
 
 const searchString = ref<string | undefined>(undefined)
 const relevantFiltersSearched = computed(() => {
   if (!searchString.value) return relevantFilters.value
+  const searchLower = searchString.value.toLowerCase()
   // eslint-disable-next-line vue/no-side-effects-in-computed-properties
   itemCount.value = 30 // nasty, but yolo - reset max limit on search change
-  return relevantFilters.value.filter((f) =>
-    f.key.toLowerCase().includes((searchString.value as string).toLowerCase())
-  )
+  return relevantFilters.value.filter((f) => {
+    const userFriendlyName = getPropertyName(f.key).toLowerCase()
+    return (
+      f.key.toLowerCase().includes(searchLower) ||
+      userFriendlyName.includes(searchLower)
+    )
+  })
 })
 
 const itemCount = ref(30)
@@ -190,28 +218,7 @@ const relevantFiltersLimited = computed(() => {
     .sort((a, b) => a.key.length - b.key.length)
 })
 
-// Too lazy to follow up in here for now, as i think we need a bit of a better strategy in connectors first :/
-const title = computed(() => {
-  const currentFilterKey = activeFilter.value?.key
-  if (!currentFilterKey) return 'Loading'
-
-  if (currentFilterKey === 'level.name') return 'Level Name'
-  if (currentFilterKey === 'speckle_type') return 'Object Type'
-
-  // Handle revit names :/
-  if (
-    currentFilterKey.startsWith('parameters.') &&
-    currentFilterKey.endsWith('.value')
-  ) {
-    return (
-      props.filters.find(
-        (f) => f.key === currentFilterKey.replace('.value', '.name')
-      ) as StringPropertyInfo
-    ).valueGroups[0].value
-  }
-
-  return currentFilterKey
-})
+const title = computed(() => getPropertyName(activeFilter.value?.key ?? ''))
 
 const colors = computed(() => !!propertyFilter.isApplied.value)
 
@@ -229,7 +236,7 @@ const toggleColors = () => {
 // Handles a rather complicated ux flow: user sets a numeric filter which only makes sense with colors on. we set the force colors flag in that scenario, so we can revert it if user selects a non-numeric filter afterwards.
 let forcedColors = false
 const refreshColorsIfSetOrActiveFilterIsNumeric = () => {
-  if (activeFilter.value.type === 'number' && !colors.value) {
+  if (!!numericActiveFilter.value && !colors.value) {
     forcedColors = true
     applyPropertyFilter()
     return
@@ -245,5 +252,24 @@ const refreshColorsIfSetOrActiveFilterIsNumeric = () => {
 
   // removePropertyFilter()
   applyPropertyFilter()
+}
+
+const getPropertyName = (key: string): string => {
+  if (!key) return 'Loading'
+
+  if (key === 'level.name') return 'Level Name'
+  if (key === 'speckle_type') return 'Object Type'
+
+  if (isRevitProperty(key) && key.endsWith('.value')) {
+    const correspondingProperty = props.filters.find(
+      (f) => f.key === key.replace('.value', '.name')
+    )
+    if (correspondingProperty && isStringPropertyInfo(correspondingProperty)) {
+      return correspondingProperty.valueGroups[0]?.value || key
+    }
+  }
+
+  // Return the key as is for non-Revit properties
+  return key
 }
 </script>

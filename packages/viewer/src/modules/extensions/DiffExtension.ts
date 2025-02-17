@@ -1,16 +1,18 @@
 import { Color, DoubleSide, FrontSide, Material } from 'three'
-import { type TreeNode, WorldTree } from '../tree/WorldTree'
-import Logger from 'js-logger'
+import { type TreeNode, WorldTree } from '../tree/WorldTree.js'
+import Logger from '../utils/Logger.js'
 import { groupBy } from 'lodash-es'
-import { GeometryType } from '../batching/Batch'
-import SpeckleLineMaterial from '../materials/SpeckleLineMaterial'
-import SpecklePointMaterial from '../materials/SpecklePointMaterial'
-import SpeckleStandardMaterial from '../materials/SpeckleStandardMaterial'
-import { NodeRenderView } from '../tree/NodeRenderView'
-import { type IViewer } from '../../IViewer'
-import { Extension } from './Extension'
-import { SpeckleTypeAllRenderables } from '../loaders/GeometryConverter'
-import { SpeckleLoader } from '../loaders/Speckle/SpeckleLoader'
+import { GeometryType } from '../batching/Batch.js'
+import SpeckleLineMaterial from '../materials/SpeckleLineMaterial.js'
+import SpecklePointMaterial from '../materials/SpecklePointMaterial.js'
+import SpeckleStandardMaterial from '../materials/SpeckleStandardMaterial.js'
+import { NodeRenderView } from '../tree/NodeRenderView.js'
+import { type IViewer } from '../../IViewer.js'
+import { Extension } from './Extension.js'
+import { SpeckleTypeAllRenderables } from '../loaders/GeometryConverter.js'
+import { SpeckleLoader } from '../loaders/Speckle/SpeckleLoader.js'
+import { GPass } from '../pipeline/Passes/GPass.js'
+import { DepthPass } from '../pipeline/Passes/DepthPass.js'
 
 type SpeckleMaterialType =
   | SpeckleStandardMaterial
@@ -230,9 +232,10 @@ export class DiffExtension extends Extension {
 
     const diffResult = await this.getDiff(urlA, urlB)
 
-    const pipelineOptions = this.viewer.getRenderer().pipelineOptions
-    pipelineOptions.depthSide = FrontSide
-    this.viewer.getRenderer().pipelineOptions = pipelineOptions
+    const depthPasses = this.viewer.getRenderer().pipeline.getPass('DEPTH')
+    depthPasses.forEach((value: GPass) => {
+      ;(value as DepthPass).depthSide = FrontSide
+    })
 
     this.updateVisualDiff(0, mode)
 
@@ -241,9 +244,10 @@ export class DiffExtension extends Extension {
 
   /** Currently, the diff does not store the existing materials. We can do that if we need to */
   public async undiff(): Promise<void> {
-    const pipelineOptions = this.viewer.getRenderer().pipelineOptions
-    pipelineOptions.depthSide = DoubleSide
-    this.viewer.getRenderer().pipelineOptions = pipelineOptions
+    const depthPasses = this.viewer.getRenderer().pipeline.getPass('DEPTH')
+    depthPasses.forEach((value: GPass) => {
+      ;(value as DepthPass).depthSide = DoubleSide
+    })
     this.resetMaterialGroups()
     this.viewer.getRenderer().resetMaterials()
 

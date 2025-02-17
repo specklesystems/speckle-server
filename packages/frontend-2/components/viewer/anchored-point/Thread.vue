@@ -15,13 +15,13 @@
             ? 'grayscale opacity-80 hover:grayscale-0 hover:opacity-100'
             : ''
         }
-        ${isExpanded ? 'outline outline-2 outline-primary' : ''}  
+        ${isExpanded ? 'outline outline-2 outline-primary' : ''}
         transition bg-foundation shadow hover:shadow-xl flex -space-x-2 items-center p-[2px] rounded-tr-full rounded-tl-full rounded-br-full`"
           @click="onThreadClick"
         >
-          <!-- 
-            Note: Unsure wether to display just a checkmark for "resolved" threads, or the author list and the checkmark. 
-            Both optinos are viable, see below. Uncomment to test. 
+          <!--
+            Note: Unsure wether to display just a checkmark for "resolved" threads, or the author list and the checkmark.
+            Both optinos are viable, see below. Uncomment to test.
           -->
           <!-- <UserAvatarGroup :users="threadAuthors" /> -->
           <UserAvatarGroup v-if="!modelValue.archived" :users="threadAuthors" />
@@ -38,7 +38,7 @@
       <ViewerCommentsPortalOrDiv to="mobileComments">
         <div
           ref="handle"
-          class="sm:p-1.5 cursor-move sm:rounded-lg group hover:sm:bg-blue-500/50 transition h-full transition-all duration-200"
+          class="thread-handle sm:p-1.5 cursor-move sm:rounded-lg group hover:sm:bg-blue-500/50 transition h-full transition-all duration-200"
           :class="{ 'is-dragging bg-blue-500/50': isDragging }"
         >
           <div
@@ -53,7 +53,6 @@
               <div class="flex-grow flex items-center">
                 <FormButton
                   v-tippy="'Previous'"
-                  size="sm"
                   :icon-left="ChevronLeftIcon"
                   text
                   hide-text
@@ -61,7 +60,6 @@
                 ></FormButton>
                 <FormButton
                   v-tippy="'Next'"
-                  size="sm"
                   :icon-left="ChevronRightIcon"
                   text
                   hide-text
@@ -70,8 +68,7 @@
                 <div class="flex-grow"></div>
                 <FormButton
                   v-show="isDragged"
-                  v-tippy="'Pop In'"
-                  size="sm"
+                  v-tippy="'Pop in'"
                   :icon-left="ArrowTopRightOnSquareIcon"
                   text
                   hide-text
@@ -82,26 +79,22 @@
               <div>
                 <FormButton
                   v-tippy="modelValue.archived ? 'Unresolve' : 'Resolve'"
-                  size="sm"
                   :icon-left="
                     modelValue.archived ? CheckCircleIcon : CheckCircleIconOutlined
                   "
                   text
                   hide-text
-                  :color="modelValue.archived ? 'default' : 'default'"
                   :disabled="!canArchiveOrUnarchive"
                   @click="toggleCommentResolvedStatus()"
                 ></FormButton>
                 <FormButton
                   v-tippy="'Copy link'"
-                  size="sm"
                   :icon-left="LinkIcon"
                   text
                   hide-text
                   @click="onCopyLink"
                 ></FormButton>
                 <FormButton
-                  size="sm"
                   :icon-left="XMarkIcon"
                   text
                   hide-text
@@ -123,7 +116,7 @@
                   <span>Conversation started in a different version.</span>
                   <FormButton
                     v-tippy="'Load thread context'"
-                    size="xs"
+                    size="sm"
                     text
                     @click="onLoadThreadContext"
                   >
@@ -400,7 +393,11 @@ const isThreadResourceLoaded = computed(() => {
 })
 
 const toggleCommentResolvedStatus = async () => {
-  await archiveComment(props.modelValue.id, !props.modelValue.archived)
+  await archiveComment({
+    commentId: props.modelValue.id,
+    projectId: projectId.value,
+    archived: !props.modelValue.archived
+  })
   mp.track('Comment Action', {
     type: 'action',
     name: 'archive',
@@ -458,7 +455,7 @@ const onCopyLink = async () => {
 
   triggerNotification({
     type: ToastNotificationType.Info,
-    title: 'Thread link copied'
+    title: 'Link copied'
   })
 }
 

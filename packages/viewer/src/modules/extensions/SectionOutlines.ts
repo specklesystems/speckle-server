@@ -12,16 +12,16 @@ import {
 } from 'three'
 import { LineSegments2 } from 'three/examples/jsm/lines/LineSegments2.js'
 import { LineSegmentsGeometry } from 'three/examples/jsm/lines/LineSegmentsGeometry.js'
-import { Geometry } from '../converter/Geometry'
-import SpeckleGhostMaterial from '../materials/SpeckleGhostMaterial'
-import SpeckleLineMaterial from '../materials/SpeckleLineMaterial'
-import { Extension } from './Extension'
-import { type IViewer } from '../..'
-import { SectionTool, SectionToolEvent } from './SectionTool'
-import { GeometryType } from '../batching/Batch'
-import { ObjectLayers } from '../../IViewer'
-import { MeshBatch } from '../batching/MeshBatch'
-import Logger from 'js-logger'
+import { Geometry } from '../converter/Geometry.js'
+import SpeckleGhostMaterial from '../materials/SpeckleGhostMaterial.js'
+import SpeckleLineMaterial from '../materials/SpeckleLineMaterial.js'
+import { Extension } from './Extension.js'
+import { type IViewer } from '../../index.js'
+import { SectionTool, SectionToolEvent } from './SectionTool.js'
+import { GeometryType } from '../batching/Batch.js'
+import { ObjectLayers } from '../../IViewer.js'
+import { MeshBatch } from '../batching/MeshBatch.js'
+import Logger from '../utils/Logger.js'
 
 export enum PlaneId {
   POSITIVE_X = 'POSITIVE_X',
@@ -115,6 +115,11 @@ export class SectionOutlines extends Extension {
       const clippingPlanes = planes.filter((value) => this.getPlaneId(value) !== plane)
       this.planeOutlines[plane].renderable.material.clippingPlanes = clippingPlanes
     }
+  }
+
+  public requestUpdate() {
+    this.setSectionPlaneChanged(this.viewer.getRenderer().clippingPlanes)
+    this.updateOutlines(this.sectionPlanesChanged)
   }
 
   private updatePlaneOutline(

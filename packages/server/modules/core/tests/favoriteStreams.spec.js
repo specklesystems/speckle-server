@@ -3,13 +3,131 @@ const expect = require('chai').expect
 
 const { buildApolloServer } = require('@/app')
 const { StreamFavorites, Streams, Users } = require('@/modules/core/dbSchema')
-const { Roles, AllScopes } = require('@/modules/core/helpers/mainConstants')
-const { createStream } = require('@/modules/core/services/streams')
-const { createUser } = require('@/modules/core/services/users')
-const { addLoadersToCtx } = require('@/modules/shared/middleware')
 const { truncateTables } = require('@/test/hooks')
-const { gql } = require('apollo-server-express')
+const { gql } = require('graphql-tag')
 const { sleep } = require('@/test/helpers')
+const {
+  createAuthedTestContext,
+  createTestContext,
+  executeOperation
+} = require('@/test/graphqlHelper')
+const {
+  getStreamFactory,
+  createStreamFactory
+} = require('@/modules/core/repositories/streams')
+const { db } = require('@/db/knex')
+const {
+  legacyCreateStreamFactory,
+  createStreamReturnRecordFactory
+} = require('@/modules/core/services/streams/management')
+const {
+  inviteUsersToProjectFactory
+} = require('@/modules/serverinvites/services/projectInviteManagement')
+const {
+  createAndSendInviteFactory
+} = require('@/modules/serverinvites/services/creation')
+const {
+  findUserByTargetFactory,
+  insertInviteAndDeleteOldFactory,
+  deleteServerOnlyInvitesFactory,
+  updateAllInviteTargetsFactory
+} = require('@/modules/serverinvites/repositories/serverInvites')
+const {
+  collectAndValidateCoreTargetsFactory
+} = require('@/modules/serverinvites/services/coreResourceCollection')
+const {
+  buildCoreInviteEmailContentsFactory
+} = require('@/modules/serverinvites/services/coreEmailContents')
+const { getEventBus } = require('@/modules/shared/services/eventBus')
+const { createBranchFactory } = require('@/modules/core/repositories/branches')
+const {
+  getUsersFactory,
+  getUserFactory,
+  storeUserFactory,
+  countAdminUsersFactory,
+  storeUserAclFactory
+} = require('@/modules/core/repositories/users')
+const {
+  findEmailFactory,
+  createUserEmailFactory,
+  ensureNoPrimaryEmailForUserFactory
+} = require('@/modules/core/repositories/userEmails')
+const {
+  requestNewEmailVerificationFactory
+} = require('@/modules/emails/services/verification/request')
+const {
+  deleteOldAndInsertNewVerificationFactory
+} = require('@/modules/emails/repositories')
+const { renderEmail } = require('@/modules/emails/services/emailRendering')
+const { sendEmail } = require('@/modules/emails/services/sending')
+const { createUserFactory } = require('@/modules/core/services/users/management')
+const {
+  validateAndCreateUserEmailFactory
+} = require('@/modules/core/services/userEmails')
+const {
+  finalizeInvitedServerRegistrationFactory
+} = require('@/modules/serverinvites/services/processing')
+const { getServerInfoFactory } = require('@/modules/core/repositories/server')
+
+const getServerInfo = getServerInfoFactory({ db })
+const getUser = getUserFactory({ db })
+const getUsers = getUsersFactory({ db })
+const getStream = getStreamFactory({ db })
+const createStream = legacyCreateStreamFactory({
+  createStreamReturnRecord: createStreamReturnRecordFactory({
+    inviteUsersToProject: inviteUsersToProjectFactory({
+      createAndSendInvite: createAndSendInviteFactory({
+        findUserByTarget: findUserByTargetFactory({ db }),
+        insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
+        collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
+          getStream
+        }),
+        buildInviteEmailContents: buildCoreInviteEmailContentsFactory({
+          getStream
+        }),
+        emitEvent: ({ eventName, payload }) =>
+          getEventBus().emit({
+            eventName,
+            payload
+          }),
+        getUser,
+        getServerInfo
+      }),
+      getUsers
+    }),
+    createStream: createStreamFactory({ db }),
+    createBranch: createBranchFactory({ db }),
+    emitEvent: getEventBus().emit
+  })
+})
+
+const findEmail = findEmailFactory({ db })
+const requestNewEmailVerification = requestNewEmailVerificationFactory({
+  findEmail,
+  getUser: getUserFactory({ db }),
+  getServerInfo,
+  deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db }),
+  renderEmail,
+  sendEmail
+})
+const createUser = createUserFactory({
+  getServerInfo,
+  findEmail,
+  storeUser: storeUserFactory({ db }),
+  countAdminUsers: countAdminUsersFactory({ db }),
+  storeUserAcl: storeUserAclFactory({ db }),
+  validateAndCreateUserEmail: validateAndCreateUserEmailFactory({
+    createUserEmail: createUserEmailFactory({ db }),
+    ensureNoPrimaryEmailForUser: ensureNoPrimaryEmailForUserFactory({ db }),
+    findEmail,
+    updateEmailInvites: finalizeInvitedServerRegistrationFactory({
+      deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
+      updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
+    }),
+    requestNewEmailVerification
+  }),
+  emitEvent: getEventBus().emit
+})
 
 /**
  * Cleaning up relevant tables
@@ -140,26 +258,17 @@ describe('Favorite streams', () => {
   })
 
   describe('when authenticated', () => {
-    /** @type {import('apollo-server-express').ApolloServer} */
+    /** @type {import('@/test/graphqlHelper').ServerAndContext} */
     let apollo
 
     const favoriteStream = async (sid, favorited) =>
-      await apollo.executeOperation({
-        query: favoriteMutationGql,
-        variables: { sid, favorited }
-      })
+      await executeOperation(apollo, favoriteMutationGql, { sid, favorited })
 
     before(async () => {
-      apollo = await buildApolloServer({
-        context: () =>
-          addLoadersToCtx({
-            auth: true,
-            userId: me.id,
-            role: Roles.Server.User,
-            token: 'asd',
-            scopes: AllScopes
-          })
-      })
+      apollo = {
+        apollo: await buildApolloServer(),
+        context: await createAuthedTestContext(me.id)
+      }
 
       // Drop all favorites to ensure we don't favorite already favorited streams
       await StreamFavorites.knex().truncate()
@@ -242,10 +351,7 @@ describe('Favorite streams', () => {
       ]
 
       const getFavorites = async (cursor, limit = 10) =>
-        await apollo.executeOperation({
-          query: favoriteStreamsQueryGql,
-          variables: { cursor, limit }
-        })
+        await executeOperation(apollo, favoriteStreamsQueryGql, { cursor, limit })
 
       const favoritedStreamIds = () => favoritableStreams.map((s) => s.id)
 
@@ -267,10 +373,11 @@ describe('Favorite streams', () => {
       })
 
       it("throw error if trying to get another user's favorite stream collection", async () => {
-        const { data, errors } = await apollo.executeOperation({
-          query: anotherUserFavoriteStreamsQueryGql,
-          variables: { limit: 10, uid: otherGuy.id }
-        })
+        const { data, errors } = await executeOperation(
+          apollo,
+          anotherUserFavoriteStreamsQueryGql,
+          { limit: 10, uid: otherGuy.id }
+        )
 
         expect(data).to.be.ok
         expect(data.otherUser?.favoriteStreams).to.not.be.ok
@@ -327,23 +434,16 @@ describe('Favorite streams', () => {
       oldNewQueryDataset.forEach(({ display, isNew }) => {
         it(`return total favorites count for user (${display} query)`, async () => {
           // "Log in" with other user
-          const apollo = await buildApolloServer({
-            context: () =>
-              addLoadersToCtx({
-                auth: true,
-                userId: otherGuy.id,
-                role: Roles.Server.User,
-                token: 'asd',
-                scopes: AllScopes
-              })
-          })
+          const apollo = {
+            apollo: await buildApolloServer(),
+            context: await createAuthedTestContext(otherGuy.id)
+          }
 
-          const { data, errors } = await apollo.executeOperation({
-            query: isNew
-              ? totalOwnedStreamsFavoritesNew
-              : totalOwnedStreamsFavoritesOld,
-            variables: { uid: me.id }
-          })
+          const { data, errors } = await executeOperation(
+            apollo,
+            isNew ? totalOwnedStreamsFavoritesNew : totalOwnedStreamsFavoritesOld,
+            { uid: me.id }
+          )
 
           expect(errors).to.not.be.ok
 
@@ -356,19 +456,20 @@ describe('Favorite streams', () => {
   })
 
   describe('when not authenticated', () => {
-    /** @type {import('apollo-server-express').ApolloServer} */
+    /** @type {import('@/test/graphqlHelper').ServerAndContext} */
     let apollo
 
     before(async () => {
-      apollo = await buildApolloServer({
-        context: () => ({})
-      })
+      apollo = {
+        apollo: await buildApolloServer(),
+        context: await createTestContext()
+      }
     })
 
     it("can't be favorited", async () => {
-      const result = await apollo.executeOperation({
-        query: favoriteMutationGql,
-        variables: { sid: myPubStream.id, favorited: true }
+      const result = await executeOperation(apollo, favoriteMutationGql, {
+        sid: myPubStream.id,
+        favorited: true
       })
 
       expect(result.data.streamFavorite).to.not.be.ok
@@ -377,9 +478,7 @@ describe('Favorite streams', () => {
     })
 
     it("can't be retrieved", async () => {
-      const result = await apollo.executeOperation({
-        query: favoriteStreamsQueryGql
-      })
+      const result = await executeOperation(apollo, favoriteStreamsQueryGql)
 
       expect(result.data.activeUser).to.be.null
       expect(result.errors).to.not.be.ok

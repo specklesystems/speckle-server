@@ -15,8 +15,9 @@ import {
   ExtendedIntersection,
   ExtendedMeshIntersection,
   SpeckleRaycaster
-} from './objects/SpeckleRaycaster'
-import { ObjectLayers } from '../IViewer'
+} from './objects/SpeckleRaycaster.js'
+import { ObjectLayers } from '../IViewer.js'
+import { World } from './World.js'
 
 export class Intersections {
   protected raycaster: SpeckleRaycaster
@@ -80,7 +81,8 @@ export class Intersections {
     castLayers: ObjectLayers.STREAM_CONTENT_MESH,
     nearest?: boolean,
     bounds?: Box3,
-    firstOnly?: boolean
+    firstOnly?: boolean,
+    tasOnly?: boolean
   ): Array<ExtendedMeshIntersection> | null
   public intersect(
     scene: Scene,
@@ -89,7 +91,8 @@ export class Intersections {
     castLayers?: Array<ObjectLayers>,
     nearest?: boolean,
     bounds?: Box3,
-    firstOnly?: boolean
+    firstOnly?: boolean,
+    tasOnly?: boolean
   ): Array<ExtendedIntersection> | null
 
   public intersect(
@@ -99,10 +102,12 @@ export class Intersections {
     castLayers: Array<ObjectLayers> | ObjectLayers | undefined = undefined,
     nearest = true,
     bounds?: Box3,
-    firstOnly = false
+    firstOnly = false,
+    tasOnly = false
   ): Array<ExtendedMeshIntersection> | Array<ExtendedIntersection> | null {
     this.raycaster.setFromCamera(point, camera)
     this.raycaster.firstHitOnly = firstOnly
+    this.raycaster.intersectTASOnly = tasOnly
     const preserveMask = this.setRaycasterLayers(castLayers)
     let result: Array<ExtendedMeshIntersection> | Array<ExtendedIntersection> | null
     if (castLayers === ObjectLayers.STREAM_CONTENT_MESH) {
@@ -119,7 +124,8 @@ export class Intersections {
     castLayers: ObjectLayers.STREAM_CONTENT_MESH,
     nearest?: boolean,
     bounds?: Box3,
-    firstOnly?: boolean
+    firstOnly?: boolean,
+    tasOnly?: boolean
   ): Array<ExtendedMeshIntersection> | null
   public intersectRay(
     scene: Scene,
@@ -128,7 +134,8 @@ export class Intersections {
     castLayers?: Array<ObjectLayers>,
     nearest?: boolean,
     bounds?: Box3,
-    firstOnly?: boolean
+    firstOnly?: boolean,
+    tasOnly?: boolean
   ): Array<ExtendedIntersection> | null
 
   public intersectRay(
@@ -138,11 +145,13 @@ export class Intersections {
     castLayers: Array<ObjectLayers> | ObjectLayers | undefined = undefined,
     nearest = true,
     bounds?: Box3,
-    firstOnly = false
+    firstOnly = false,
+    tasOnly = false
   ): Array<ExtendedMeshIntersection> | Array<ExtendedIntersection> | null {
     this.raycaster.camera = camera
     this.raycaster.set(ray.origin, ray.direction)
     this.raycaster.firstHitOnly = firstOnly
+    this.raycaster.intersectTASOnly = tasOnly
     const preserveMask = this.setRaycasterLayers(castLayers)
     let result: Array<ExtendedMeshIntersection> | Array<ExtendedIntersection> | null
     if (castLayers === ObjectLayers.STREAM_CONTENT_MESH) {
@@ -189,17 +198,13 @@ export class Intersections {
         return a.distance - b.distance
       })
     if (bounds) {
-      this.boundsBuffer.copy(bounds)
       /** We slightly increase the tested bounds to account for fp precision issues which
-       *  have proven to arise exactly at the edge of the bounds
+       *  have proven to arise exactly at the edge of the bounds. Our BVH returns intersection
+       *  points ever so slightly off the actual surface, so for very thin geometries it might
+       *  fall outside of the bounds
        */
-      this.boundsBuffer.expandByVector(
-        new Vector3(
-          0.0001 * (this.boundsBuffer.max.x - this.boundsBuffer.min.x),
-          0.0001 * (this.boundsBuffer.max.y - this.boundsBuffer.min.y),
-          0.0001 * (this.boundsBuffer.max.z - this.boundsBuffer.min.z)
-        )
-      )
+      this.boundsBuffer.copy(World.expandBoxRelative(bounds))
+
       results = results.filter((result) => {
         return (
           this.boundsBuffer.containsPoint(result.point) ||

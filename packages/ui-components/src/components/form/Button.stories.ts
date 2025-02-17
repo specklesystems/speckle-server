@@ -11,23 +11,8 @@ export default {
   component: FormButton,
   argTypes: {
     color: {
-      options: [
-        'default',
-        'invert',
-        'danger',
-        'warning',
-        'success',
-        'card',
-        'secondary',
-        'info'
-      ],
+      options: ['primary', 'outline', 'subtle', 'danger'],
       control: { type: 'select' }
-    },
-    outlined: {
-      type: 'boolean'
-    },
-    rounded: {
-      type: 'boolean'
     },
     to: {
       type: 'string'
@@ -41,7 +26,7 @@ export default {
       type: 'function'
     },
     size: {
-      options: ['xs', 'sm', 'base', 'lg', 'xl'],
+      options: ['sm', 'base', 'lg'],
       control: { type: 'select' }
     },
     fullWidth: {
@@ -102,16 +87,13 @@ export const Default: StoryObj = {
   play: rightClickPlay,
   args: {
     target: '_blank',
-    to: 'https://google.com',
     default: 'Button text',
     size: 'base',
     type: 'standard',
     fullWidth: false,
-    outlined: false,
-    rounded: false,
     text: false,
     link: false,
-    color: 'default',
+    color: 'primary',
     disabled: false,
     submit: false,
     hideText: false,
@@ -126,71 +108,33 @@ export const Default: StoryObj = {
   }
 }
 
-export const Rounded: StoryObj = mergeStories(Default, {
+export const Subtle: StoryObj = mergeStories(Default, {
   args: {
-    rounded: true
+    color: 'subtle'
   }
 })
 
-export const WarningButton: StoryObj = mergeStories(Default, {
+export const Outlined: StoryObj = mergeStories(Default, {
   args: {
-    color: 'warning'
+    color: 'outline'
   }
 })
 
-export const InfoButton: StoryObj = mergeStories(Default, {
-  args: {
-    color: 'info'
-  }
-})
-
-export const DangerButton: StoryObj = mergeStories(Default, {
+export const Danger: StoryObj = mergeStories(Default, {
   args: {
     color: 'danger'
   }
 })
 
-export const SuccessButton: StoryObj = mergeStories(Default, {
+export const Small: StoryObj = mergeStories(Default, {
   args: {
-    color: 'success'
+    size: 'sm'
   }
 })
 
-export const SecondaryButton: StoryObj = mergeStories(Default, {
+export const Large: StoryObj = mergeStories(Default, {
   args: {
-    color: 'secondary'
-  }
-})
-
-export const SecondaryWithCustomColor: StoryObj = mergeStories(Default, {
-  args: {
-    color: 'secondary',
-    textColor: 'danger'
-  }
-})
-
-export const InvertButton: StoryObj = mergeStories(Default, {
-  args: {
-    color: 'invert'
-  }
-})
-
-export const CardButton: StoryObj = mergeStories(Default, {
-  args: {
-    color: 'card'
-  }
-})
-
-export const RoundedOutlined: StoryObj = mergeStories(Default, {
-  args: {
-    rounded: true,
-    outlined: true
-  }
-})
-
-export const Outline: StoryObj = mergeStories(Default, {
-  args: {
-    outlined: true
+    size: 'lg'
   }
 })
 
@@ -210,30 +154,6 @@ export const Link: StoryObj = mergeStories(Default, {
 export const Text: StoryObj = mergeStories(Default, {
   args: {
     text: true
-  }
-})
-
-export const Small: StoryObj = mergeStories(Default, {
-  args: {
-    size: 'sm'
-  }
-})
-
-export const ExtraSmall: StoryObj = mergeStories(Default, {
-  args: {
-    size: 'xs'
-  }
-})
-
-export const Large: StoryObj = mergeStories(Default, {
-  args: {
-    size: 'lg'
-  }
-})
-
-export const ExtraLarge: StoryObj = mergeStories(Default, {
-  args: {
-    size: 'xl'
   }
 })
 
@@ -261,7 +181,6 @@ export const NoTarget: StoryObj = mergeStories(Default, {
 
 export const FullWidth: StoryObj = mergeStories(Default, {
   args: {
-    fullWidth: true,
     default: 'Full width button'
   }
 })

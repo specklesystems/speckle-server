@@ -5,7 +5,7 @@ services:
   postgres:
     build:
       context: .
-      dockerfile: docker/postgres/Dockerfile
+      dockerfile: utils/postgres/Dockerfile
     restart: always
     environment:
       POSTGRES_DB: speckle
@@ -14,8 +14,41 @@ services:
     volumes:
       - postgres-data:/var/lib/postgresql/data/
       - ./setup/db/10-docker_postgres_init.sql:/docker-entrypoint-initdb.d/10-docker_postgres_init.sql
+      - ./setup/db/11-docker_postgres_keycloack_init.sql:/docker-entrypoint-initdb.d/11-docker_postgres_keycloack_init.sql
     ports:
       - '127.0.0.1:5432:5432'
+
+  postgres-region1:
+    build:
+      context: .
+      dockerfile: utils/postgres/Dockerfile
+    restart: always
+    environment:
+      POSTGRES_DB: speckle
+      POSTGRES_USER: speckle
+      POSTGRES_PASSWORD: speckle
+    volumes:
+      - postgres-region1-data:/var/lib/postgresql/data/
+      - ./setup/db/10-docker_postgres_init.sql:/docker-entrypoint-initdb.d/10-docker_postgres_init.sql
+      - ./setup/db/11-docker_postgres_keycloack_init.sql:/docker-entrypoint-initdb.d/11-docker_postgres_keycloack_init.sql
+    ports:
+      - '127.0.0.1:5401:5432'
+
+  postgres-region2:
+    build:
+      context: .
+      dockerfile: utils/postgres/Dockerfile
+    restart: always
+    environment:
+      POSTGRES_DB: speckle
+      POSTGRES_USER: speckle
+      POSTGRES_PASSWORD: speckle
+    volumes:
+      - postgres-region2-data:/var/lib/postgresql/data/
+      - ./setup/db/10-docker_postgres_init.sql:/docker-entrypoint-initdb.d/10-docker_postgres_init.sql
+      - ./setup/db/11-docker_postgres_keycloack_init.sql:/docker-entrypoint-initdb.d/11-docker_postgres_keycloack_init.sql
+    ports:
+      - '127.0.0.1:5402:5432'
 
   redis:
     image: 'redis:7-alpine'
@@ -35,6 +68,60 @@ services:
       - '127.0.0.1:9000:9000'
       - '127.0.0.1:9001:9001'
 
+  minio-region1:
+    image: 'minio/minio'
+    command: server /data --console-address ":9001"
+    restart: always
+    volumes:
+      - minio-region1-data:/data
+    ports:
+      - '127.0.0.1:9020:9000'
+      - '127.0.0.1:9021:9001'
+
+  minio-region2:
+    image: 'minio/minio'
+    command: server /data --console-address ":9001"
+    restart: always
+    volumes:
+      - minio-region2-data:/data
+    ports:
+      - '127.0.0.1:9040:9000'
+      - '127.0.0.1:9041:9001'
+
+  # Local OIDC provider for testing
+  keycloak:
+    image: quay.io/keycloak/keycloak:25.0
+    depends_on:
+      - postgres
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
+      KC_DB_USERNAME: speckle
+      KC_DB_PASSWORD: speckle
+
+      KC_HOSTNAME: 127.0.0.1
+      KC_HOSTNAME_PORT: 9000
+      KC_HOSTNAME_STRICT: false
+      KC_HOSTNAME_STRICT_HTTPS: false
+
+      KC_LOG_LEVEL: info
+      KC_METRICS_ENABLED: true
+      KC_HEALTH_ENABLED: true
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+    ports:
+      - 8443:8443
+      - 9010:9000
+      - 8090:8080
+    command: start-dev --import-realm
+    volumes:
+      - ./setup/keycloak:/opt/keycloak/data/import
+    # user: root
+    # command: export --dir /opt/keycloak/backup --realm speckle
+    # volumes:
+    #   - ./keycloak-backup:/opt/keycloak/backup
+
+  # Local email server for email troubleshooting
   maildev:
     restart: always
     image: maildev/maildev
@@ -71,7 +158,11 @@ services:
 
 volumes:
   postgres-data:
+  postgres-region1-data:
+  postgres-region2-data:
   redis-data:
   pgadmin-data:
   redis_insight-data:
   minio-data:
+  minio-region1-data:
+  minio-region2-data:

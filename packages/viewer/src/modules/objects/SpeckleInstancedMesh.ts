@@ -11,6 +11,7 @@ import {
   Object3D,
   Ray,
   Raycaster,
+  RGBADepthPacking,
   SkinnedMesh,
   Sphere,
   Triangle,
@@ -18,16 +19,18 @@ import {
   Vector3,
   type Intersection
 } from 'three'
-import { BatchObject } from '../batching/BatchObject'
-import Materials from '../materials/Materials'
-import { TopLevelAccelerationStructure } from './TopLevelAccelerationStructure'
-import { ObjectLayers } from '../../IViewer'
-import Logger from 'js-logger'
+import { BatchObject } from '../batching/BatchObject.js'
+import Materials from '../materials/Materials.js'
+import { TopLevelAccelerationStructure } from './TopLevelAccelerationStructure.js'
+import { ObjectLayers } from '../../IViewer.js'
 import {
   type DrawGroup,
   INSTANCE_GRADIENT_BUFFER_STRIDE,
   INSTANCE_TRANSFORM_BUFFER_STRIDE
-} from '../batching/Batch'
+} from '../batching/Batch.js'
+import { SpeckleRaycaster } from './SpeckleRaycaster.js'
+import Logger from '../utils/Logger.js'
+import SpeckleDepthMaterial from '../materials/SpeckleDepthMaterial.js'
 
 const _inverseMatrix = new Matrix4()
 const _ray = new Ray()
@@ -59,9 +62,10 @@ export default class SpeckleInstancedMesh extends Group {
   public static MeshBatchNumber = 0
 
   private tas: TopLevelAccelerationStructure
-  private batchMaterial: Material | null = null
+  private batchMaterial: Material
   private materialCache: { [id: string]: Material } = {}
   private materialStack: Array<Array<Material | Material[]>> = []
+  private batchMaterialStack: Array<Material> = []
   private materialCacheLUT: { [id: string]: number } = {}
 
   private _batchObjects!: BatchObject[]
@@ -104,6 +108,36 @@ export default class SpeckleInstancedMesh extends Group {
 
     const overrideMaterial = this.getCachedMaterial(material, true)
     this.instances.forEach((value) => (value.material = overrideMaterial))
+  }
+
+  public setOverrideBatchMaterial(material: Material) {
+    const overrideMaterial = this.getCachedMaterial(material, true)
+    this.batchMaterialStack.push(overrideMaterial)
+    const materials = this.materials
+    for (let k = 0; k < materials.length; k++) {
+      if (materials[k].uuid === this.batchMaterial.uuid) {
+        materials[k] = overrideMaterial
+      }
+    }
+    this.instances.forEach((value) => {
+      if ((value.material as Material).uuid === this.batchMaterial.uuid)
+        value.material = overrideMaterial
+    })
+  }
+
+  public restoreBatchMaterial() {
+    const overrideBatchMaterial = this.batchMaterialStack.pop()
+    if (!overrideBatchMaterial) return
+
+    for (let k = 0; k < this.materials.length; k++) {
+      if (this.materials[k].uuid === overrideBatchMaterial.uuid) {
+        this.materials[k] = this.batchMaterial
+      }
+    }
+    this.instances.forEach((value) => {
+      if ((value.material as Material).uuid === overrideBatchMaterial.uuid)
+        value.material = this.batchMaterial
+    })
   }
 
   private lookupMaterial(material: Material) {
@@ -151,6 +185,7 @@ export default class SpeckleInstancedMesh extends Group {
   public updateDrawGroups(transformBuffer: Float32Array, gradientBuffer: Float32Array) {
     this.instances.forEach((value: InstancedMesh) => {
       this.remove(value)
+      value.customDepthMaterial?.dispose()
       value.dispose()
     })
     this.instances.length = 0
@@ -158,7 +193,12 @@ export default class SpeckleInstancedMesh extends Group {
     for (let k = 0; k < this.groups.length; k++) {
       const materialIndex = this.groups[k].materialIndex
       const material = this.materials[materialIndex]
-      const group = new InstancedMesh(this.instanceGeometry, material, 0)
+
+      const group = new InstancedMesh(
+        this.getInstanceGeometryShallowCopy(),
+        material,
+        0
+      )
       group.instanceMatrix = new InstancedBufferAttribute(
         transformBuffer.subarray(
           this.groups[k].start,
@@ -181,6 +221,14 @@ export default class SpeckleInstancedMesh extends Group {
       group.instanceMatrix.needsUpdate = true
       group.layers.set(ObjectLayers.STREAM_CONTENT_MESH)
       group.frustumCulled = false
+      group.customDepthMaterial = new SpeckleDepthMaterial(
+        {
+          depthPacking: RGBADepthPacking
+        },
+        ['USE_RTE', 'ALPHATEST_REJECTION']
+      )
+      group.castShadow = !material.transparent
+      group.receiveShadow = !material.transparent
 
       this.instances.push(group)
       this.add(group)
@@ -237,6 +285,19 @@ export default class SpeckleInstancedMesh extends Group {
     return this.materials[group.materialIndex]
   }
 
+  /** Three's 'clone' and 'copy' from geometry and buffer attributes
+   *  create duplicates of arrays and we don't want that. Most of the
+   *  buffer attributes need to be shared to avoid redundancy
+   */
+  private getInstanceGeometryShallowCopy(): BufferGeometry {
+    const geometry = new BufferGeometry()
+    for (const attr in this.instanceGeometry?.attributes) {
+      geometry.setAttribute(attr, this.instanceGeometry.attributes[attr])
+    }
+    geometry.setIndex(this.instanceGeometry?.index as BufferAttribute)
+    return geometry
+  }
+
   // converts the given BVH raycast intersection to align with the three.js raycast
   // structure (include object, world space distance and point).
   private convertRaycastIntersect(
@@ -259,7 +320,7 @@ export default class SpeckleInstancedMesh extends Group {
     }
   }
 
-  raycast(raycaster: Raycaster, intersects: Array<Intersection>) {
+  raycast(raycaster: SpeckleRaycaster, intersects: Array<Intersection>) {
     if (this.tas) {
       if (!this.batchMaterial) return
 
@@ -268,7 +329,7 @@ export default class SpeckleInstancedMesh extends Group {
 
       if (raycaster.firstHitOnly === true) {
         const hit = this.convertRaycastIntersect(
-          this.tas.raycastFirst(ray, this.batchMaterial),
+          this.tas.raycastFirst(ray, raycaster.intersectTASOnly, this.batchMaterial),
           this,
           raycaster
         )
@@ -276,7 +337,11 @@ export default class SpeckleInstancedMesh extends Group {
           intersects.push(hit)
         }
       } else {
-        const hits = this.tas.raycast(ray, this.batchMaterial)
+        const hits = this.tas.raycast(
+          ray,
+          raycaster.intersectTASOnly,
+          this.batchMaterial
+        )
         for (let i = 0, l = hits.length; i < l; i++) {
           const hit = this.convertRaycastIntersect(hits[i], this, raycaster)
           if (hit) {

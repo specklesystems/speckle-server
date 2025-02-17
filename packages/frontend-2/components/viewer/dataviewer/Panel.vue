@@ -1,7 +1,7 @@
 <template>
   <div class="px-2 divide-y divide-dashed divide-outline-3">
     <div v-for="obj in rootObjs" :key="obj.referencedId" class="py-3">
-      <div class="font-bold text-xs pl-1 mb-2 text-foreground-1">
+      <div class="font-medium text-body-2xs pl-1 mb-2 text-foreground-1">
         {{ obj.name }}
       </div>
       <ViewerDataviewerObject :object="obj" />

@@ -17,19 +17,19 @@
     "
   >
     <template #something-selected="{ value }">
-      <div class="text-sm">
-        <div class="font-bold">
+      <div>
+        <div class="text-body-xs font-medium">
           {{ isArray(value) ? value[0].title : value.title }}
         </div>
-        <span class="text-foreground-2 text-xs sm:text-sm">
+        <span class="text-body-2xs opacity-70">
           {{ isArray(value) ? value[0].description : value.description }}
         </span>
       </div>
     </template>
     <template #option="{ item }">
       <div class="flex flex-col">
-        <div class="label">{{ item.title }}</div>
-        <div class="label label--light text-foreground-2 text-xs sm:text-sm">
+        <div class="text-body-xs font-medium">{{ item.title }}</div>
+        <div class="text-body-2xs opacity-70">
           {{ item.description }}
         </div>
       </div>
@@ -67,7 +67,7 @@ const items = ref<
   [ProjectVisibility.Unlisted]: {
     id: ProjectVisibility.Unlisted,
     description: 'Anyone with the link can view',
-    title: 'Link Shareable'
+    title: 'Link shareable'
   },
   [ProjectVisibility.Private]: {
     id: ProjectVisibility.Private,

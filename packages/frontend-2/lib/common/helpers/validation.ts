@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ValidationHelpers } from '@speckle/ui-components'
 import type { useForm } from 'vee-validate'
+import { validateWorkspaceSlug, InvalidWorkspaceSlugError } from '@speckle/shared'
 
 export const VALID_HTTP_URL = ValidationHelpers.VALID_HTTP_URL
 export const VALID_EMAIL = ValidationHelpers.VALID_EMAIL
@@ -16,6 +17,8 @@ export const VALID_EMAIL = ValidationHelpers.VALID_EMAIL
  */
 export const isEmail = ValidationHelpers.isEmail
 
+export const isEmailOrEmpty = ValidationHelpers.isEmailOrEmpty
+
 export const isOneOrMultipleEmails = ValidationHelpers.isOneOrMultipleEmails
 
 export const isRequired = ValidationHelpers.isRequired
@@ -30,6 +33,8 @@ export const isUrl = ValidationHelpers.isUrl
 
 export const isItemSelected = ValidationHelpers.isItemSelected
 
+export const isMultiItemSelected = ValidationHelpers.isMultiItemSelected
+
 /**
  * Wrapper over useForm's `resetForm` that fully resets the form and its initial values
  * @param veeValidateResetForm The `resetForm` function returned by vee-validate's `useForm`
@@ -38,4 +43,16 @@ export function fullyResetForm(
   veeValidateResetForm: ReturnType<typeof useForm<any>>['resetForm']
 ) {
   veeValidateResetForm({ values: {} })
+}
+
+export const isValidWorkspaceSlug = (value: string) => {
+  try {
+    validateWorkspaceSlug(value)
+    return true
+  } catch (error) {
+    if (error instanceof InvalidWorkspaceSlugError) {
+      return error.message
+    }
+    return 'Invalid workspace slug'
+  }
 }

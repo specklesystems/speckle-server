@@ -1,13 +1,13 @@
 <template>
   <div>
     <Portal to="navigation">
-      <HeaderNavLink :to="'/downloads'" name="Speckle Connectors"></HeaderNavLink>
+      <HeaderNavLink :to="'/downloads'" name="Speckle connectors"></HeaderNavLink>
     </Portal>
     <div
       class="flex flex-col md:flex-row space-y-2 space-x-2 justify-between mb-4 md:items-center"
     >
       <div>
-        <h5 class="h4 font-bold">Connector Downloads</h5>
+        <h5 class="text-heading-lg">Connector downloads</h5>
         <div class="text-sm text-foreground-2 max-w- max-w-sm">
           Most of our connectors are available through Speckle Manager. You can also
           direct download the individual installers below.
@@ -63,7 +63,7 @@ useHead({
 
 const spacesEndpoint = 'https://releases.speckle.dev'
 const cmsTagsEndpoint =
-  'https://speckle.systems/ghost/api/v3/content/tags?key=c895981da23dbb5c87ee7192e2&limit=all'
+  'https://v1.speckle.systems/ghost/api/v3/content/tags?key=c895981da23dbb5c87ee7192e2&limit=all'
 
 const connectorTags = await useAppCached(
   'connector-downloads',

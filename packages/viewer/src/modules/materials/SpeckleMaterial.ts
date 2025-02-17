@@ -10,11 +10,12 @@ import {
   PointsMaterial,
   ReplaceStencilOp,
   UniformsUtils,
-  type Shader
+  type Shader,
+  MeshMatcapMaterial
 } from 'three'
 import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js'
-import { StencilOutlineType } from '../../IViewer'
-import { type MaterialOptions } from './MaterialOptions'
+import { StencilOutlineType } from '../../IViewer.js'
+import { type MaterialOptions } from './MaterialOptions.js'
 
 class SpeckleUserData {
   [k: string]: unknown
@@ -27,7 +28,7 @@ class SpeckleUserData {
 export type Uniforms = Record<string, any>
 
 export class SpeckleMaterial {
-  protected _internalUniforms!: Shader
+  protected _internalUniforms: Shader
   protected _stencilOutline: StencilOutlineType = StencilOutlineType.NONE
   public needsCopy: boolean = false
 
@@ -170,8 +171,6 @@ export class SpeckleMaterial {
     to.depthFunc = from.depthFunc
     to.depthTest = from.depthTest
     to.depthWrite = from.depthWrite
-    to.fog = from.fog
-    to.format = from.format
     to.stencilWrite = from.stencilWrite
     to.stencilFunc = from.stencilFunc
     to.stencilRef = from.stencilRef
@@ -204,6 +203,7 @@ export class ExtendedMeshStandardMaterial extends MeshStandardMaterial {}
 export class ExtendedMeshBasicMaterial extends MeshBasicMaterial {}
 export class ExtendedMeshDepthMaterial extends MeshDepthMaterial {}
 export class ExtendedMeshNormalMaterial extends MeshNormalMaterial {}
+export class ExtendedMatcapMaterial extends MeshMatcapMaterial {}
 export class ExtendedLineMaterial extends LineMaterial {}
 export class ExtendedPointsMaterial extends PointsMaterial {}
 
@@ -215,6 +215,8 @@ export interface ExtendedMeshDepthMaterial extends SpeckleMaterial {}
 
 export interface ExtendedMeshNormalMaterial extends SpeckleMaterial {}
 
+export interface ExtendedMatcapMaterial extends SpeckleMaterial {}
+
 export interface ExtendedLineMaterial extends SpeckleMaterial {}
 
 export interface ExtendedPointsMaterial extends SpeckleMaterial {}
@@ -223,6 +225,7 @@ applyMixins(ExtendedMeshStandardMaterial, [SpeckleMaterial])
 applyMixins(ExtendedMeshBasicMaterial, [SpeckleMaterial])
 applyMixins(ExtendedMeshDepthMaterial, [SpeckleMaterial])
 applyMixins(ExtendedMeshNormalMaterial, [SpeckleMaterial])
+applyMixins(ExtendedMatcapMaterial, [SpeckleMaterial])
 applyMixins(ExtendedLineMaterial, [SpeckleMaterial])
 applyMixins(ExtendedPointsMaterial, [SpeckleMaterial])
 

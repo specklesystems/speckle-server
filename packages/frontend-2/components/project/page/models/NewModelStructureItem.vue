@@ -2,15 +2,15 @@
   <div>
     <button
       v-show="!showNewModelCard"
-      class="group flex w-full rounded-md items-center text-primary text-xs px-2 py-1 transition hover:bg-foundation-focus dark:hover:bg-primary-muted"
+      class="group flex rounded-md items-center text-primary text-xs px-2 py-1 transition hover:bg-foundation-focus dark:hover:bg-primary-muted"
       @click="showNewModelCard = true"
     >
       +
-      <span class="font-bold ml-1">NEW</span>
+      <span class="font-medium ml-1">New</span>
     </button>
     <div
       v-if="showNewModelCard"
-      class="w-full py-2 px-3 flex items-center rounded-md transition bg-foundation-focus dark:bg-primary-muted"
+      class="w-full p-2 flex items-center rounded-md transition bg-foundation-2 border border-outline-3"
     >
       <form
         class="flex items-center justify-between w-full space-x-2"
@@ -21,21 +21,17 @@
             v-model="name"
             name="name"
             label="Model name"
-            placeholder="name"
+            placeholder="Model name"
             auto-focus
+            color="foundation"
             :rules="rules"
             :disabled="anyMutationsLoading"
             autocomplete="off"
           />
         </div>
         <div class="flex flex-wrap gap-1 sm:gap-2">
-          <FormButton submit :disabled="anyMutationsLoading" size="sm">Save</FormButton>
-          <FormButton
-            outlined
-            color="danger"
-            size="sm"
-            @click="showNewModelCard = false"
-          >
+          <FormButton submit :disabled="anyMutationsLoading">Save</FormButton>
+          <FormButton color="outline" @click="showNewModelCard = false">
             Cancel
           </FormButton>
         </div>

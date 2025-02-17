@@ -4,16 +4,11 @@
     <div
       class="w-full text-sm overflow-x-auto overflow-y-visible simple-scrollbar border border-outline-3 rounded-lg"
     >
-      <div
-        v-if="items.length > 0"
-        class="grid z-10 grid-cols-12 items-center gap-6 font-semibold bg-foundation-page rounded-t-lg w-full border-b border-outline-3 pb-2 pt-4 px-4 min-w-[750px]"
-        :style="{ paddingRight: paddingRightStyle }"
-      >
+      <div :class="headerRowClasses" :style="{ paddingRight: paddingRightStyle }">
         <div
           v-for="(column, colIndex) in columns"
           :key="column.id"
           :class="getHeaderClasses(column.id, colIndex)"
-          class="capitalize"
         >
           {{ column.header }}
         </div>
@@ -22,7 +17,14 @@
         class="divide-y divide-outline-3 h-full overflow-visible"
         :class="{ 'pb-32': overflowCells }"
       >
-        <template v-if="items.length">
+        <div
+          v-if="loading || !items"
+          class="flex items-center justify-center py-3"
+          tabindex="0"
+        >
+          <CommonLoadingIcon />
+        </div>
+        <template v-else-if="items?.length">
           <div
             v-for="item in items"
             :key="item.id"
@@ -39,15 +41,18 @@
                 </slot>
               </div>
             </template>
-            <div class="absolute right-1.5 gap-1 flex items-center p-0 h-full">
+            <div
+              v-if="buttons"
+              class="absolute right-1.5 space-x-1 flex items-center p-0 h-full"
+            >
               <div v-for="button in buttons" :key="button.label">
                 <FormButton
+                  v-tippy="button.tooltip"
                   :icon-left="button.icon"
                   size="sm"
-                  color="secondary"
+                  color="outline"
                   hide-text
                   :class="button.class"
-                  :text-color="button.textColor"
                   :to="isString(button.action) ? button.action : undefined"
                   @click.stop="!isString(button.action) ? button.action(item) : noop"
                 />
@@ -73,13 +78,12 @@
     </div>
   </div>
 </template>
-
 <script setup lang="ts" generic="T extends {id: string}, C extends string">
 import { noop, isString } from 'lodash'
 import { computed } from 'vue'
 import type { PropAnyComponent } from '~~/src/helpers/common/components'
-import type { FormButtonTextColor } from '~~/src/helpers/form/button'
-import { FormButton } from '~~/src/lib'
+import { CommonLoadingIcon, FormButton } from '~~/src/lib'
+import { directive as vTippy } from 'vue-tippy'
 
 export type TableColumn<I> = {
   id: I
@@ -87,43 +91,46 @@ export type TableColumn<I> = {
   classes: string
 }
 
-export interface RowButton<T = unknown> {
+export type RowButton<T = unknown> = {
   icon: PropAnyComponent
   label: string
-  action: (item: T) => void | string
+  action: (item: T) => unknown
   class?: string
-  textColor?: FormButtonTextColor
+  tooltip?: string
 }
 
 const props = withDefaults(
   defineProps<{
-    items: T[]
+    items: T[] | undefined | null
     buttons?: RowButton<T>[]
     columns: TableColumn<C>[]
     overflowCells?: boolean
     onRowClick?: (item: T) => void
     rowItemsAlign?: 'center' | 'stretch'
     emptyMessage?: string
+    loading?: boolean
   }>(),
   { rowItemsAlign: 'center', emptyMessage: 'No data found' }
 )
 
+const buttonCount = computed(() => {
+  return (props.buttons || []).length
+})
 const paddingRightStyle = computed(() => {
-  const buttonCount = (props.buttons || []).length
   let padding = 16
-  if (buttonCount > 0) {
-    padding = 48 + (buttonCount - 1) * 42
+  if (buttonCount.value > 0) {
+    padding = 48 + (buttonCount.value - 1) * 42
   }
   return `${padding}px`
 })
 
 const rowsWrapperClasses = computed(() => {
   const classParts = [
-    'relative grid grid-cols-12 items-center gap-6 px-4 py-1 min-w-[750px] bg-foundation'
+    'relative grid grid-cols-12 items-center space-x-6 px-4 py-0.5 min-w-[750px] bg-foundation text-body-xs'
   ]
 
-  if (props.onRowClick && props.items.length) {
-    classParts.push('cursor-pointer hover:bg-primary-muted')
+  if (props.onRowClick && props.items?.length) {
+    classParts.push('cursor-pointer hover:bg-highlight-1')
   }
 
   switch (props.rowItemsAlign) {
@@ -138,25 +145,40 @@ const rowsWrapperClasses = computed(() => {
   return classParts.join(' ')
 })
 
-const getHeaderClasses = (column: C | undefined, colIndex: number): string => {
-  const classParts = [
-    column ? props.columns.find((c) => c.id === column)?.classes : '' || ''
-  ]
+const getHeaderClasses = (
+  column: C | undefined,
+  colIndex: number,
+  options?: Partial<{
+    noPadding: boolean
+  }>
+): string => {
+  const columnClasses = column
+    ? props.columns.find((c) => c.id === column)?.classes
+    : ''
+  const classParts = [columnClasses || '']
 
-  if (colIndex === 0) {
-    classParts.push('px-1')
-  } else {
-    classParts.push('lg:p-0 px-1')
+  if (!options?.noPadding) {
+    if (colIndex === 0) {
+      classParts.push('px-1')
+    } else {
+      classParts.push('lg:p-0 px-1')
+    }
   }
 
   return classParts.join(' ')
 }
 
-const getClasses = (column: C | undefined, colIndex: number): string => {
-  const classParts = [getHeaderClasses(column, colIndex)]
+const getClasses = (
+  column: C | undefined,
+  colIndex: number,
+  options?: Partial<{
+    noPadding: boolean
+  }>
+): string => {
+  const classParts = [getHeaderClasses(column, colIndex, options)]
 
   if (colIndex === 0) {
-    classParts.push(`bg-transparent py-3 ${column ? 'pr-5' : 'col-span-full'}`)
+    classParts.push(`bg-transparent py-2 ${column ? 'pr-5' : 'col-span-full'}`)
   } else {
     classParts.push(`my-2`)
   }
@@ -167,4 +189,13 @@ const getClasses = (column: C | undefined, colIndex: number): string => {
 const handleRowClick = (item: T) => {
   props.onRowClick?.(item)
 }
+
+const headerRowClasses = computed(() => [
+  'z-10 grid grid-cols-12 items-center',
+  'w-full min-w-[750px] space-x-6',
+  'px-4 py-3',
+  'bg-foundation-page rounded-t-lg',
+  'font-medium text-body-2xs text-foreground-2',
+  'border-b border-outline-3'
+])
 </script>

@@ -1,11 +1,23 @@
-import { graphql } from '~~/lib/common/generated/gql'
+import { graphql } from '~/lib/common/generated/gql'
 
-export const profileEditDialogQuery = graphql(`
-  query ProfileEditDialog {
+export const emailFieldsFragment = graphql(`
+  fragment EmailFields on UserEmail {
+    id
+    email
+    verified
+    primary
+    userId
+  }
+`)
+
+export const userEmailsQuery = graphql(`
+  query UserEmails {
     activeUser {
-      ...UserProfileEditDialogBio_User
-      ...UserProfileEditDialogNotificationPreferences_User
-      ...UserProfileEditDialogDeleteAccount_User
+      id
+      emails {
+        ...EmailFields
+      }
+      hasPendingVerification
     }
   }
 `)

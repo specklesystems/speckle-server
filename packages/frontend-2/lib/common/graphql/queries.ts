@@ -1,14 +1,8 @@
 import { graphql } from '~~/lib/common/generated/gql'
 
 export const mentionsUserSearchQuery = graphql(`
-  query MentionsUserSearch($query: String!, $emailOnly: Boolean = false) {
-    userSearch(
-      query: $query
-      limit: 5
-      cursor: null
-      archived: false
-      emailOnly: $emailOnly
-    ) {
+  query MentionsUserSearch($query: String!, $projectId: String) {
+    users(input: { query: $query, limit: 5, cursor: null, projectId: $projectId }) {
       items {
         id
         name
@@ -19,7 +13,13 @@ export const mentionsUserSearchQuery = graphql(`
 `)
 
 export const userSearchQuery = graphql(`
-  query UserSearch($query: String!, $limit: Int, $cursor: String, $archived: Boolean) {
+  query UserSearch(
+    $query: String!
+    $limit: Int
+    $cursor: String
+    $archived: Boolean
+    $workspaceId: String
+  ) {
     userSearch(query: $query, limit: $limit, cursor: $cursor, archived: $archived) {
       cursor
       items {
@@ -30,6 +30,7 @@ export const userSearchQuery = graphql(`
         avatar
         verified
         role
+        workspaceDomainPolicyCompliant(workspaceId: $workspaceId)
       }
     }
   }
@@ -38,7 +39,9 @@ export const userSearchQuery = graphql(`
 export const serverInfoBlobSizeLimitQuery = graphql(`
   query ServerInfoBlobSizeLimit {
     serverInfo {
-      blobSizeLimitBytes
+      configuration {
+        blobSizeLimitBytes
+      }
     }
   }
 `)

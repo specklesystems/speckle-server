@@ -4,13 +4,52 @@ extend type Query {
   """
   streamAccessRequest(streamId: String!): StreamAccessRequest
     @hasServerRole(role: SERVER_GUEST)
+    @deprecated(
+      reason: "Part of the old API surface and will be removed in the future. Use User.projectAccessRequest instead."
+    )
+}
+
+extend type User {
+  """
+  Get pending project access request, that the user made
+  """
+  projectAccessRequest(projectId: String!): ProjectAccessRequest
+    @hasServerRole(role: SERVER_GUEST)
+    @isOwner
 }
 
 extend type Stream {
   """
   Pending stream access requests
   """
-  pendingAccessRequests: [StreamAccessRequest!] @hasStreamRole(role: STREAM_OWNER)
+  pendingAccessRequests: [StreamAccessRequest!]
+    @hasStreamRole(role: STREAM_OWNER)
+    @deprecated(
+      reason: "Part of the old API surface and will be removed in the future. Use Project.pendingAccessRequests instead."
+    )
+}
+
+extend type Project {
+  """
+  Pending project access requests
+  """
+  pendingAccessRequests: [ProjectAccessRequest!] @hasStreamRole(role: STREAM_OWNER)
+}
+
+type ProjectAccessRequestMutations {
+  """
+  Request access to a specific project
+  """
+  create(projectId: String!): ProjectAccessRequest!
+
+  """
+  Accept or decline a project access request. Must be a project owner to invoke this.
+  """
+  use(
+    requestId: String!
+    accept: Boolean!
+    role: StreamRole! = STREAM_CONTRIBUTOR
+  ): Project!
 }
 
 extend type Mutation {
@@ -21,12 +60,29 @@ extend type Mutation {
     requestId: String!
     accept: Boolean!
     role: StreamRole! = STREAM_CONTRIBUTOR
-  ): Boolean! @hasServerRole(role: SERVER_GUEST) @hasScope(scope: "users:invite")
+  ): Boolean!
+    @hasServerRole(role: SERVER_GUEST)
+    @hasScope(scope: "users:invite")
+    @deprecated(
+      reason: "Part of the old API surface and will be removed in the future. Use ProjectAccessRequestMutations.use instead."
+    )
 
   """
   Request access to a specific stream
   """
   streamAccessRequestCreate(streamId: String!): StreamAccessRequest!
+    @hasServerRole(role: SERVER_GUEST)
+    @hasScope(scope: "users:invite")
+    @deprecated(
+      reason: "Part of the old API surface and will be removed in the future. Use ProjectAccessRequestMutations.create instead."
+    )
+}
+
+extend type ProjectMutations {
+  """
+  Access request related mutations
+  """
+  accessRequestMutations: ProjectAccessRequestMutations!
     @hasServerRole(role: SERVER_GUEST)
     @hasScope(scope: "users:invite")
 }
@@ -43,5 +99,20 @@ type StreamAccessRequest {
   Can only be selected if authed user has proper access
   """
   stream: Stream!
+  createdAt: DateTime!
+}
+
+"""
+Created when a user requests to become a contributor on a project
+"""
+type ProjectAccessRequest {
+  id: ID!
+  requester: LimitedUser!
+  requesterId: String!
+  projectId: String!
+  """
+  Can only be selected if authed user has proper access
+  """
+  project: Project!
   createdAt: DateTime!
 }

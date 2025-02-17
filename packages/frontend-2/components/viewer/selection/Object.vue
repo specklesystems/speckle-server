@@ -8,7 +8,7 @@
   >
     <div class="mb-1 flex items-center">
       <button
-        class="flex h-full w-full px-2 py-0.5 items-center gap-1 rounded bg-foundation-2 hover:sm:bg-primary-muted hover:text-primary"
+        class="flex h-full w-full pl-1 pr-2 py-0.5 items-center gap-1 rounded bg-foundation-2 hover:sm:bg-primary-muted hover:text-primary"
         :class="unfold && 'text-primary'"
         @click="unfold = !unfold"
         @mouseenter="highlightObject"
@@ -21,17 +21,18 @@
             !unfold ? '-rotate-90' : 'rotate-0'
           }`"
         />
-        <div :class="`truncate text-xs font-bold ${headerClasses}`">
+        <div :class="`truncate text-body-2xs font-medium ${headerClasses}`">
           {{ title || headerAndSubheader.header }}
           <span
             v-if="(props.root || props.modifiedSibling) && isModifiedQuery.modified"
           >
-            {{ isModifiedQuery.isNew ? '(New)' : '(Old)' }}
+            {{ isModifiedQuery.isNew ? '(new)' : '(old)' }}
           </span>
         </div>
       </button>
     </div>
-    <div v-if="unfold" class="ml-1 space-y-1 px-2 py-1">
+    <div v-if="unfold" class="space-y-1 px-0 py-1">
+      <!-- key value pair display -->
       <div
         v-for="(kvp, index) in [
           ...categorisedValuePairs.primitives,
@@ -41,18 +42,18 @@
         class="flex w-full"
       >
         <div
-          :class="`grid grid-cols-3 w-full pl-2 ${
+          :class="`grid grid-cols-3 w-full pl-2 py-0.5 ${
             kvp.value === null || kvp.value === undefined ? 'text-foreground-2' : ''
           }`"
         >
           <div
-            class="col-span-1 truncate text-xs font-bold mr-2"
+            class="col-span-1 truncate text-body-3xs mr-2 font-medium"
             :title="(kvp.key as string)"
           >
             {{ kvp.key }}
           </div>
           <div
-            class="group col-span-2 pl-1 truncate text-xs flex gap-1 items-center"
+            class="group col-span-2 pl-1 truncate text-body-3xs flex gap-1 items-center"
             :title="(kvp.value as string)"
           >
             <div class="flex gap-1 items-center w-full">
@@ -62,6 +63,9 @@
                 :class="kvp.value === null ? '' : 'group-hover:max-w-[calc(100%-1rem)]'"
               >
                 {{ kvp.value === null ? 'null' : kvp.value }}
+              </span>
+              <span v-if="kvp.units" class="truncate opacity-70">
+                {{ kvp.units }}
               </span>
               <button
                 v-if="isCopyable(kvp)"
@@ -83,7 +87,7 @@
         <ViewerSelectionObject
           :object="(kvp.value as SpeckleObject) || {}"
           :title="(kvp.key as string)"
-          :unfold="false"
+          :unfold="autoUnfoldKeys.includes(kvp.key)"
         />
       </div>
       <div
@@ -91,14 +95,14 @@
         :key="index"
         class="text-xs"
       >
-        <div class="text-foreground-2 grid grid-cols-3">
+        <div class="text-foreground-2 grid grid-cols-3 pl-2">
           <div
-            class="col-span-1 truncate text-xs font-bold"
+            class="col-span-1 truncate text-xs font-medium"
             :title="(kvp.key as string)"
           >
             {{ kvp.key }}
           </div>
-          <div class="col-span-2 flex w-full min-w-0 truncate text-xs">
+          <div class="col-span-2 flex w-full min-w-0 truncate text-xs pl-1">
             <div class="flex-grow truncate">{{ kvp.innerType }} array</div>
             <div class="text-foreground-2">({{ kvp.arrayLength }})</div>
           </div>
@@ -107,7 +111,7 @@
       <div v-for="(kvp, index) in categorisedValuePairs.primitiveArrays" :key="index">
         <div class="grid grid-cols-3">
           <div
-            class="col-span-1 truncate text-xs font-bold"
+            class="col-span-1 truncate text-xs font-medium pl-2"
             :title="(kvp.key as string)"
           >
             {{ kvp.key }}
@@ -131,7 +135,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { ChevronDownIcon } from '@heroicons/vue/24/solid'
 import { ClipboardDocumentIcon } from '@heroicons/vue/24/outline'
-import type { SpeckleObject } from '~~/lib/common/helpers/sceneExplorer'
+import type { SpeckleObject } from '~~/lib/viewer/helpers/sceneExplorer'
 import { getHeaderAndSubheaderForSpeckleObject } from '~~/lib/object-sidebar/helpers'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { useHighlightedObjectsUtilities } from '~/lib/viewer/composables/ui'
@@ -156,6 +160,7 @@ const props = withDefaults(
 const { highlightObjects, unhighlightObjects } = useHighlightedObjectsUtilities()
 
 const unfold = ref(props.unfold)
+const autoUnfoldKeys = ['properties', 'Instance Parameters']
 
 const isAdded = computed(() => {
   if (!diffEnabled.value) return false
@@ -250,7 +255,7 @@ const ignoredProps = [
 ]
 
 const keyValuePairs = computed(() => {
-  const kvps = [] as Record<string, unknown>[]
+  const kvps = [] as (Record<string, unknown> & { key: string; value: unknown })[]
 
   // handle revit paramters
   if (props.title === 'parameters') {
@@ -273,6 +278,7 @@ const keyValuePairs = computed(() => {
   const objectKeys = Object.keys(props.object)
   for (const key of objectKeys) {
     if (ignoredProps.includes(key)) continue
+
     const type = Array.isArray(props.object[key]) ? 'array' : typeof props.object[key]
     let innerType = null
     let arrayLength = null
@@ -282,9 +288,24 @@ const keyValuePairs = computed(() => {
       arrayLength = arr.length
       if (arr.length > 0) {
         innerType = Array.isArray(arr[0]) ? 'array' : typeof arr[0]
-        arrayPreview = arr.slice(0, 3).join(', ')
-        if (arr.length > 10) arrayPreview += ' ...' // in case truncate doesn't hit
+        // We truncate this above with css - but limit to 100 to limit dom size
+        arrayPreview = arr.slice(0, 100).join(', ')
       }
+    }
+
+    if (
+      props.object[key] &&
+      isNameValuePair(props.object[key] as Record<string, unknown>)
+    ) {
+      // note: handles name value pairs from dui3 -
+      const { value, units } = props.object[key] as { value: string; units?: string }
+      kvps.push({
+        key,
+        type: typeof value,
+        value: value as string,
+        units
+      })
+      continue
     }
     kvps.push({
       key,
@@ -299,14 +320,24 @@ const keyValuePairs = computed(() => {
   return kvps
 })
 
+const isNameValuePair = (obj: Record<string, unknown>) => {
+  const keys = Object.keys(obj)
+  return keys.includes('name') && keys.includes('value')
+}
+
 const categorisedValuePairs = computed(() => {
   return {
     primitives: keyValuePairs.value.filter(
       (item) => item.type !== 'object' && item.type !== 'array' && item.value !== null
     ),
-    objects: keyValuePairs.value.filter(
-      (item) => item.type === 'object' && item.value !== null
-    ),
+    objects: keyValuePairs.value
+      .filter((item) => item.type === 'object' && item.value !== null)
+      .filter((item) => {
+        const keys = Object.keys(item.value as unknown as Record<string, unknown>)
+        const nvp = keys.includes('name') && keys.includes('value')
+        return !nvp
+      }) // filters out name value pairs - note on new properties structure coming out of DUI3
+      .sort((a, b) => a.key.toLowerCase().localeCompare(b.key.toLowerCase())),
     nonPrimitiveArrays: keyValuePairs.value.filter(
       (item) =>
         item.type === 'array' &&

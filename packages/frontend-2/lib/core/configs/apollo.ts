@@ -8,21 +8,20 @@ import createUploadLink from 'apollo-upload-client/createUploadLink.mjs'
 import { WebSocketLink } from '@apollo/client/link/ws'
 import { getMainDefinition } from '@apollo/client/utilities'
 import { Kind } from 'graphql'
-import type { OperationDefinitionNode } from 'graphql'
+import type { GraphQLError, OperationDefinitionNode } from 'graphql'
 import type { CookieRef, NuxtApp } from '#app'
 import type { Optional } from '@speckle/shared'
-import { useAuthCookie } from '~~/lib/auth/composables/auth'
+import { useAuthCookie, useAuthManager } from '~~/lib/auth/composables/auth'
 import {
   buildAbstractCollectionMergeFunction,
   buildArrayMergeFunction,
   incomingOverwritesExistingMergeFunction,
   mergeAsObjectsFunction
 } from '~~/lib/core/helpers/apolloSetup'
-import { onError } from '@apollo/client/link/error'
-import { useNavigateToLogin, loginRoute } from '~~/lib/common/helpers/route'
+import { onError, type ErrorResponse } from '@apollo/client/link/error'
 import { useAppErrorState } from '~~/lib/core/composables/error'
 import { isInvalidAuth } from '~~/lib/common/helpers/graphql'
-import { isBoolean, omit } from 'lodash-es'
+import { intersection, isArray, isBoolean, omit } from 'lodash-es'
 import { useRequestId } from '~/lib/core/composables/server'
 
 const appName = 'frontend-2'
@@ -80,9 +79,13 @@ function createCache(): InMemoryCache {
               return original
             }
           },
+          userSearch: {
+            keyArgs: ['query', 'limit', 'archived', 'emailOnly'],
+            merge: buildAbstractCollectionMergeFunction('UserSearchResultCollection')
+          },
           streams: {
             keyArgs: ['query'],
-            merge: buildAbstractCollectionMergeFunction('StreamCollection', {
+            merge: buildAbstractCollectionMergeFunction('UserStreamCollection', {
               checkIdentity: true
             })
           },
@@ -284,6 +287,23 @@ function createCache(): InMemoryCache {
             merge: buildAbstractCollectionMergeFunction('AutomateRunCollection')
           }
         }
+      },
+      Workspace: {
+        fields: {
+          invitedTeam: {
+            merge: (_existing, incoming) => incoming
+          },
+          team: {
+            merge: (_existing, incoming) => incoming
+          },
+          plan: {
+            merge: incomingOverwritesExistingMergeFunction
+          },
+          projects: {
+            keyArgs: ['filter', 'limit'],
+            merge: buildAbstractCollectionMergeFunction('ProjectCollection')
+          }
+        }
       }
     }
   })
@@ -315,15 +335,30 @@ function createWsClient(params: {
   )
 }
 
+const coreShouldSkipLoggingErrors = (err: ErrorResponse): boolean => {
+  // These fields have special auth requirements and will often throw errors that we don't want to log
+  const specialAuthFields = ['invitedTeam', 'billing', 'domains', 'subscription']
+  const specialAuthFieldErrorCodes = ['FORBIDDEN', 'UNAUTHORIZED_ACCESS_ERROR']
+
+  return !!(
+    err.graphQLErrors &&
+    err.graphQLErrors.every(
+      (e) =>
+        intersection(e.path || [], specialAuthFields).length > 0 &&
+        specialAuthFieldErrorCodes.includes(e.extensions?.code as string)
+    )
+  )
+}
+
 function createLink(params: {
   httpEndpoint: string
   wsClient?: SubscriptionClient
   authToken: CookieRef<Optional<string>>
   nuxtApp: NuxtApp
   reqId: string
+  logout: ReturnType<typeof useAuthManager>['logout']
 }): ApolloLink {
-  const { httpEndpoint, wsClient, authToken, nuxtApp, reqId } = params
-  const goToLogin = useNavigateToLogin()
+  const { httpEndpoint, wsClient, authToken, nuxtApp, reqId, logout } = params
   const { registerError, isErrorState } = useAppErrorState()
 
   const errorLink = onError((res) => {
@@ -332,35 +367,44 @@ function createLink(params: {
       'need a token to subscribe'
     )
 
-    const skipLoggingErrors = res.operation.getContext().skipLoggingErrors
-    const shouldSkip = isBoolean(skipLoggingErrors)
-      ? skipLoggingErrors
-      : skipLoggingErrors?.(res)
+    let shouldSkip = coreShouldSkipLoggingErrors(res)
+    const skipLoggingErrorsResolver = res.operation.getContext().skipLoggingErrors
+    if (skipLoggingErrorsResolver) {
+      shouldSkip = isBoolean(skipLoggingErrorsResolver)
+        ? skipLoggingErrorsResolver
+        : skipLoggingErrorsResolver?.(res)
+    }
+
     if (!isSubTokenMissingError && !shouldSkip) {
-      const errMsg = res.networkError?.message || res.graphQLErrors?.[0]?.message
-      logger.error(
-        {
-          ...omit(res, ['forward', 'response']),
-          networkErrorMessage: res.networkError?.message,
-          gqlErrorMessages: res.graphQLErrors?.map((e) => e.message),
-          errorMessage: errMsg,
-          graphql: true
-        },
-        'Apollo Client error: {errorMessage}'
+      const gqlErrors: Array<GraphQLError> = isArray(res.graphQLErrors)
+        ? res.graphQLErrors
+        : []
+      const errMsg = res.networkError?.message || gqlErrors[0]?.message
+
+      // only log as error if at least one error has a status code of 5xx or has no status code
+      const shouldLogAsWarn = gqlErrors.every(
+        (e) =>
+          'statusCode' in e.extensions &&
+          typeof e.extensions.statusCode === 'number' &&
+          e.extensions.statusCode < 500
       )
+      const logContext = {
+        ...omit(res, ['forward', 'response']),
+        networkErrorMessage: res.networkError?.message,
+        gqlErrorMessages: gqlErrors.map((e) => e.message),
+        errorMessage: errMsg,
+        graphql: true
+      }
+      shouldLogAsWarn
+        ? logger.warn(logContext, 'Apollo Client error: {errorMessage}')
+        : logger.error(logContext, 'Apollo Client error: {errorMessage}')
     }
 
     const { networkError } = res
     if (networkError && isInvalidAuth(networkError)) {
       // Reset auth
-      authToken.value = undefined
-
-      // A bit hacky, but since this may happen mid-routing, a standard router.push call may not work
-      if (import.meta.client) {
-        window.location.href = loginRoute
-      } else {
-        goToLogin()
-      }
+      // since this may happen mid-routing, a standard router.push call may not work - do full reload
+      void logout({ skipToast: true, forceFullReload: true })
     }
 
     registerError()
@@ -451,15 +495,18 @@ const defaultConfigResolver: ApolloConfigResolver = () => {
   const apiOrigin = useApiOrigin()
   const nuxtApp = useNuxtApp()
   const reqId = useRequestId()
+  const authToken = useAuthCookie()
+  const { logout } = useAuthManager({
+    deferredApollo: () => nuxtApp.$apollo?.default
+  })
 
   const httpEndpoint = `${apiOrigin}/graphql`
   const wsEndpoint = httpEndpoint.replace('http', 'ws')
 
-  const authToken = useAuthCookie()
   const wsClient = import.meta.client
     ? createWsClient({ wsEndpoint, authToken, reqId })
     : undefined
-  const link = createLink({ httpEndpoint, wsClient, authToken, nuxtApp, reqId })
+  const link = createLink({ httpEndpoint, wsClient, authToken, nuxtApp, reqId, logout })
 
   return {
     // If we don't markRaw the cache, sometimes we get cryptic internal Apollo Client errors that essentially
@@ -467,7 +514,20 @@ const defaultConfigResolver: ApolloConfigResolver = () => {
     cache: markRaw(createCache()),
     link,
     name: appName,
-    version: speckleServerVersion
+    version: speckleServerVersion,
+    defaultOptions: {
+      // We want to retain all data even if there are errors, cause there's often fields with special auth requirements that we don't want
+      // to be able to kill the entire query. Besides - in most cases partial data is better than no data at all.
+      query: {
+        errorPolicy: 'all'
+      },
+      mutate: {
+        errorPolicy: 'all'
+      },
+      watchQuery: {
+        errorPolicy: 'all'
+      }
+    }
   }
 }
 

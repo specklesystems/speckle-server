@@ -4,14 +4,20 @@ extend type Query {
   to see it, for example, if a stream isn't public and the user doesn't have the appropriate rights.
   """
   stream(id: String!): Stream
+    @deprecated(
+      reason: "Part of the old API surface and will be removed in the future. Use Query.project instead."
+    )
 
   """
   Returns all streams that the active user is a collaborator on.
   Pass in the `query` parameter to search by name, description or ID.
   """
-  streams(query: String, limit: Int = 25, cursor: String): StreamCollection
+  streams(query: String, limit: Int = 25, cursor: String): UserStreamCollection
     @hasServerRole(role: SERVER_GUEST)
     @hasScope(scope: "streams:read")
+    @deprecated(
+      reason: "Part of the old API surface and will be removed in the future. Use User.projects instead."
+    )
 
   """
   All the streams of the server. Available to admins only.
@@ -37,6 +43,9 @@ extend type Query {
     """
     sort: DiscoverableStreamsSortingInput
   ): StreamCollection
+    @deprecated(
+      reason: "Part of the old API surface and will be removed in the future."
+    )
 }
 
 type Stream {
@@ -78,9 +87,12 @@ extend type User {
   Returns all streams that the user is a collaborator on. If requested for a user, who isn't the
   authenticated user, then this will only return discoverable streams.
   """
-  streams(limit: Int! = 25, cursor: String): StreamCollection!
+  streams(limit: Int! = 25, cursor: String): UserStreamCollection!
     @hasServerRole(role: SERVER_GUEST)
     @hasScope(scope: "streams:read")
+    @deprecated(
+      reason: "Part of the old API surface and will be removed in the future. Use User.projects instead."
+    )
 
   """
   All the streams that a active user has favorited.
@@ -89,25 +101,37 @@ extend type User {
   favoriteStreams(limit: Int! = 25, cursor: String): StreamCollection!
     @hasServerRole(role: SERVER_GUEST)
     @hasScope(scope: "streams:read")
+    @deprecated(
+      reason: "Part of the old API surface and will be removed in the future."
+    )
 
   """
   Total amount of favorites attached to streams owned by the user
   """
   totalOwnedStreamsFavorites: Int!
+    @deprecated(
+      reason: "Part of the old API surface and will be removed in the future."
+    )
 }
 
 extend type LimitedUser {
   """
   Returns all discoverable streams that the user is a collaborator on
   """
-  streams(limit: Int! = 25, cursor: String): StreamCollection!
+  streams(limit: Int! = 25, cursor: String): UserStreamCollection!
     @hasServerRole(role: SERVER_GUEST)
     @hasScope(scope: "streams:read")
+    @deprecated(
+      reason: "Part of the old API surface and will be removed in the future."
+    )
 
   """
   Total amount of favorites attached to streams owned by the user
   """
   totalOwnedStreamsFavorites: Int!
+    @deprecated(
+      reason: "Part of the old API surface and will be removed in the future."
+    )
 }
 
 type StreamCollaborator {
@@ -124,8 +148,8 @@ type PendingStreamCollaborator {
   inviteId: String!
   projectId: String!
   projectName: String!
-  streamId: String!
-  streamName: String!
+  streamId: String! @deprecated(reason: "Use projectId instead")
+  streamName: String! @deprecated(reason: "Use projectName instead")
   """
   E-mail address or name of the invited user
   """
@@ -142,6 +166,13 @@ type PendingStreamCollaborator {
   token: String
 }
 
+type UserStreamCollection {
+  numberOfHidden: Int!
+  totalCount: Int!
+  cursor: String
+  items: [Stream!]
+}
+
 type StreamCollection {
   totalCount: Int!
   cursor: String
@@ -155,41 +186,71 @@ extend type Mutation {
   streamCreate(stream: StreamCreateInput!): String
     @hasServerRole(role: SERVER_USER)
     @hasScope(scope: "streams:write")
+    @deprecated(
+      reason: "Part of the old API surface and will be removed in the future. Use ProjectMutations.create instead."
+    )
+
   """
   Updates an existing stream.
   """
   streamUpdate(stream: StreamUpdateInput!): Boolean!
     @hasServerRole(role: SERVER_USER)
     @hasScope(scope: "streams:write")
+    @deprecated(
+      reason: "Part of the old API surface and will be removed in the future. Use ProjectMutations.update instead."
+    )
+
   """
   Deletes an existing stream.
   """
   streamDelete(id: String!): Boolean!
     @hasServerRole(role: SERVER_USER)
     @hasScope(scope: "streams:write")
+    @deprecated(
+      reason: "Part of the old API surface and will be removed in the future. Use ProjectMutations.delete instead."
+    )
 
-  streamsDelete(ids: [String!]): Boolean! @hasServerRole(role: SERVER_ADMIN)
+  streamsDelete(ids: [String!]): Boolean!
+    @hasServerRole(role: SERVER_ADMIN)
+    @deprecated(
+      reason: "Part of the old API surface and will be removed in the future. Use ProjectMutations.batchDelete instead."
+    )
+
   """
   Update permissions of a user on a given stream.
   """
   streamUpdatePermission(permissionParams: StreamUpdatePermissionInput!): Boolean
     @hasServerRole(role: SERVER_USER)
     @hasScope(scope: "streams:write")
+    @deprecated(
+      reason: "Part of the old API surface and will be removed in the future. Use ProjectMutations.updateRole instead."
+    )
+
   """
   Revokes the permissions of a user on a given stream.
   """
   streamRevokePermission(permissionParams: StreamRevokePermissionInput!): Boolean
     @hasServerRole(role: SERVER_USER)
     @hasScope(scope: "streams:write")
+    @deprecated(
+      reason: "Part of the old API surface and will be removed in the future. Use ProjectMutations.updateRole instead."
+    )
 
   # Favorite/unfavorite the given stream
   streamFavorite(streamId: String!, favorited: Boolean!): Stream
     @hasServerRole(role: SERVER_GUEST)
+    @deprecated(
+      reason: "Part of the old API surface and will be removed in the future."
+    )
 
   """
   Remove yourself from stream collaborators (not possible for the owner)
   """
-  streamLeave(streamId: String!): Boolean! @hasServerRole(role: SERVER_GUEST)
+  streamLeave(streamId: String!): Boolean!
+    @hasServerRole(role: SERVER_GUEST)
+    @deprecated(
+      reason: "Part of the old API surface and will be removed in the future. Use ProjectMutations.leave instead."
+    )
 }
 
 extend type Subscription {
@@ -205,6 +266,9 @@ extend type Subscription {
   userStreamAdded: JSONObject
     @hasServerRole(role: SERVER_GUEST)
     @hasScope(scope: "profile:read")
+    @deprecated(
+      reason: "Part of the old API surface and will be removed in the future. Use userProjectsUpdated instead."
+    )
 
   """
   Subscribes to stream removed event for your profile. Use this to display an up-to-date list of streams for your profile.
@@ -213,6 +277,9 @@ extend type Subscription {
   userStreamRemoved: JSONObject
     @hasServerRole(role: SERVER_GUEST)
     @hasScope(scope: "profile:read")
+    @deprecated(
+      reason: "Part of the old API surface and will be removed in the future. Use userProjectsUpdated instead."
+    )
 
   #
   # Stream bound subscriptions that operate on the stream itself.
@@ -225,6 +292,9 @@ extend type Subscription {
   streamUpdated(streamId: String): JSONObject
     @hasServerRole(role: SERVER_GUEST)
     @hasScope(scope: "streams:read")
+    @deprecated(
+      reason: "Part of the old API surface and will be removed in the future. Use projectUpdated instead."
+    )
 
   """
   Subscribes to stream deleted event. Use this in clients/components that pertain only to this stream.
@@ -232,6 +302,9 @@ extend type Subscription {
   streamDeleted(streamId: String): JSONObject
     @hasServerRole(role: SERVER_GUEST)
     @hasScope(scope: "streams:read")
+    @deprecated(
+      reason: "Part of the old API surface and will be removed in the future. Use projectUpdated instead."
+    )
 }
 
 input StreamCreateInput {

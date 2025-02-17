@@ -1,35 +1,41 @@
 <template>
-  <template v-if="itemsCount">
-    <ProjectModelsBasicCardView
-      :items="items"
-      :project="project"
-      :project-id="projectId"
-      :small-view="smallView"
-      :show-actions="showActions"
-      :show-versions="showVersions"
-      :disable-default-links="disableDefaultLinks"
-      @model-clicked="$emit('model-clicked', $event)"
+  <div>
+    <template v-if="itemsCount">
+      <ProjectModelsBasicCardView
+        :items="items"
+        :project="project"
+        :project-id="projectId"
+        :small-view="smallView"
+        :show-actions="showActions"
+        :show-versions="showVersions"
+        :disable-default-links="disableDefaultLinks"
+        @model-clicked="$emit('model-clicked', $event)"
+      />
+      <FormButtonSecondaryViewAll
+        v-if="showViewAll"
+        class="mt-4"
+        :to="allProjectModelsRoute(projectId)"
+      />
+    </template>
+    <template v-else-if="!areQueriesLoading">
+      <CommonEmptySearchState
+        v-if="isFiltering"
+        @clear-search="() => $emit('clear-search')"
+      />
+      <div v-else>
+        <ProjectCardImportFileArea
+          :disabled="project?.workspace?.readOnly"
+          :project-id="projectId"
+          class="h-36 col-span-4"
+        />
+      </div>
+    </template>
+    <InfiniteLoading
+      v-if="items?.length && !disablePagination"
+      :settings="{ identifier: infiniteLoaderId }"
+      @infinite="infiniteLoad"
     />
-    <FormButtonSecondaryViewAll
-      v-if="showViewAll"
-      class="mt-4"
-      :to="allProjectModelsRoute(projectId)"
-    />
-  </template>
-  <template v-else-if="!areQueriesLoading">
-    <CommonEmptySearchState
-      v-if="isFiltering"
-      @clear-search="() => $emit('clear-search')"
-    />
-    <div v-else>
-      <ProjectCardImportFileArea :project-id="projectId" class="h-36 col-span-4" />
-    </div>
-  </template>
-  <InfiniteLoading
-    v-if="items?.length && !disablePagination"
-    :settings="{ identifier: infiniteLoaderId }"
-    @infinite="infiniteLoad"
-  />
+  </div>
 </template>
 <script setup lang="ts">
 import type {

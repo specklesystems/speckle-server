@@ -33,14 +33,7 @@ if not SPECKLE_SERVER.startswith("http://") and not SPECKLE_SERVER.startswith(
 
 print(f"ℹ️ Using Speckle server '{SPECKLE_SERVER}'")
 
-# Test if frontend is accessible
-frontend_response = requests.get(SPECKLE_SERVER, verify=VERIFY_CERTIFICATE)
-assert (
-    frontend_response.status_code == 200
-), f"❌ Frontend did not return a 200 status code, instead returned status code is {frontend_response.status_code}."
-print("✅ Frontend accessible")
-
-# Test basic unauthenticated operation using specklepy
+# Test that the server backend is accessible
 client = SpeckleClient(
     SPECKLE_SERVER,
     use_ssl=SPECKLE_SERVER.startswith("https://"),
@@ -49,6 +42,13 @@ client = SpeckleClient(
 server_info = client.server.get()
 assert isinstance(server_info, ServerInfo), "❌ GraphQL ServerInfo query error"
 print(f"✅ GraphQL operation succeeded. Server name: {server_info.name}")
+
+# Test if frontend is accessible
+frontend_response = requests.get(SPECKLE_SERVER, verify=VERIFY_CERTIFICATE)
+assert (
+    frontend_response.status_code == 200
+), f"❌ Frontend did not return a 200 status code, instead returned status code is {frontend_response.status_code}."
+print("✅ Frontend accessible")
 
 # Test that the deployed server version matches the expected version
 SERVER_VERSION = ""

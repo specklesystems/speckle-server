@@ -6,7 +6,7 @@
         <ViewerDataviewerRow :prop="kvp" />
       </div>
       <div v-if="limit < kvps.length">
-        <FormButton text full-width size="xs" @click="limit += 20">
+        <FormButton text full-width size="sm" @click="limit += 20">
           show more
         </FormButton>
       </div>
@@ -14,6 +14,7 @@
   </div>
 </template>
 <script setup lang="ts">
+import { isNullOrUndefined } from '@speckle/shared'
 import { CommonLoadingBar } from '@speckle/ui-components'
 import { useLazyQuery } from '@vue/apollo-composable'
 import { useInjectedViewerState } from '~/lib/viewer/composables/setup'
@@ -26,7 +27,7 @@ const props = defineProps<{
 }>()
 
 const { result, loading, load } = useLazyQuery(viewerRawObjectQuery, () => ({
-  streamId: projectId.value,
+  projectId: projectId.value,
   objectId: props.object['referencedId'] as string
 }))
 
@@ -35,15 +36,14 @@ if (props.object['referencedId']) {
 }
 
 const kvps = computed(() => {
-  const obj = (result.value?.stream?.object?.data || props.object) as Record<
+  const obj = (result.value?.project?.object?.data || props.object) as Record<
     string,
     unknown
   >
   const keys = Object.keys(obj)
   const localKvps = []
   for (const key of keys) {
-    // if (!obj[key]) continue // TODO: deal with null/undef
-    const value = obj[key] || obj[key] === 0 ? obj[key] : 'null'
+    const value = !isNullOrUndefined(obj[key]) ? obj[key] : 'null/undefined'
     localKvps.push({
       key,
       value,

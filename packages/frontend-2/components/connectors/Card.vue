@@ -16,13 +16,16 @@
           v-if="lastUpdated"
           class="bg-primary-muted text-primary rounded-full px-2 py-1 -ml-1"
         >
-          updated {{ lastUpdated }}
+          Updated
+          <span v-tippy="lastUpdatedFormatted.full">
+            {{ lastUpdatedFormatted.relative }}
+          </span>
         </span>
       </div>
       <div class="flex items-center justify-between">
         <div>
           <div class="flex items-center space-x-1">
-            <div class="font-bold truncate text-foreground">{{ tag.name }}</div>
+            <div class="font-medium truncate text-foreground">{{ tag.name }}</div>
             <span
               v-if="lastUpdated"
               class="text-xs bg-primary-muted text-primary rounded-full px-2 py-1 -ml-1 truncate"
@@ -41,24 +44,20 @@
         >
           <FormButton
             v-if="tag.directDownload"
-            size="xs"
+            size="sm"
             text
             @click="dialogOpen = true"
           >
             Downloads
           </FormButton>
           <ConnectorsVersionsDownloadDialog v-model:open="dialogOpen" :tag="tag" />
-          <FormButton size="sm" :to="tag.url" target="_blank" external>
-            Tutorials
-          </FormButton>
+          <FormButton :to="tag.url" target="_blank" external>Tutorials</FormButton>
         </div>
       </div>
     </div>
   </div>
 </template>
 <script setup lang="ts">
-import dayjs from 'dayjs'
-
 import { ShieldCheckIcon, GlobeEuropeAfricaIcon } from '@heroicons/vue/24/solid'
 import type { ConnectorTag } from '~~/lib/connectors'
 
@@ -69,8 +68,15 @@ const props = defineProps<{
 const dialogOpen = ref(false)
 
 const lastUpdated = computed(() =>
-  props.tag.versions?.length > 0
-    ? dayjs(props.tag.versions[0].Date).from(dayjs())
-    : undefined
+  props.tag.versions?.length > 0 ? props.tag.versions[0].Date : undefined
 )
+
+const lastUpdatedFormatted = computed(() => {
+  return {
+    full: lastUpdated.value ? formattedFullDate(lastUpdated.value) : '',
+    relative: lastUpdated.value
+      ? formattedRelativeDate(lastUpdated.value, { prefix: true })
+      : ''
+  }
+})
 </script>

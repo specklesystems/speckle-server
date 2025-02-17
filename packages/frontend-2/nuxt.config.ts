@@ -13,26 +13,27 @@ const buildOutputFileName = (chunkName: string) =>
 const {
   SPECKLE_SERVER_VERSION,
   NUXT_PUBLIC_LOG_LEVEL = 'info',
-  NUXT_PUBLIC_LOG_PRETTY = false
+  NUXT_PUBLIC_LOG_PRETTY = false,
+  BUILD_SOURCEMAPS = 'false'
 } = process.env
 
 const featureFlags = Environment.getFeatureFlags()
 
 const isLogPretty = ['1', 'true', true, 1].includes(NUXT_PUBLIC_LOG_PRETTY)
+const buildSourceMaps = ['1', 'true', true, 1].includes(BUILD_SOURCEMAPS)
 
 // https://v3.nuxtjs.org/api/configuration/nuxt.config
 export default defineNuxtConfig({
+  ...(buildSourceMaps ? { sourcemap: true } : {}),
+  modulesDir: ['./node_modules'],
   typescript: {
     shim: false,
     strict: true
   },
-  features: {
-    // while nuxt's implementation is broken, we disable this: https://github.com/nuxt/nuxt/issues/26369
-    devLogs: false
-  },
   modules: [
     '@nuxt/eslint',
     '@nuxt/devtools',
+    '@nuxt/image',
     '@nuxtjs/tailwindcss',
     [
       '~/lib/core/nuxt-modules/apollo/module.ts',
@@ -63,17 +64,14 @@ export default defineNuxtConfig({
       speckleServerVersion: SPECKLE_SERVER_VERSION || 'unknown',
       serverName: 'UNDEFINED',
       viewerDebug: false,
-      raygunKey: '',
-      logrocketAppId: '',
-      speedcurveId: 0,
-      debugbearId: '',
       debugCoreWebVitals: false,
       datadogAppId: '',
       datadogClientToken: '',
       datadogSite: '',
       datadogService: '',
       datadogEnv: '',
-      enableDirectPreviews: true
+      enableDirectPreviews: true,
+      ghostApiKey: ''
     }
   },
 
@@ -129,7 +127,9 @@ export default defineNuxtConfig({
 
             return buildOutputFileName(chunkInfo.name)
           }
-        }
+        },
+        // Leave imports as is, they're server-side only
+        external: ['jsdom']
       }
       // // optionally disable minification for debugging
       // minify: false,
@@ -157,6 +157,69 @@ export default defineNuxtConfig({
         'access-control-allow-methods': 'GET',
         'Access-Control-Expose-Headers': '*'
       }
+    },
+    '/functions': {
+      redirect: {
+        to: '/',
+        statusCode: 307
+      }
+    },
+    // Redirect old settings pages
+    '/server-management/projects': {
+      redirect: {
+        to: '/?settings=server/projects',
+        statusCode: 301
+      }
+    },
+    '/server-management/active-users': {
+      redirect: {
+        to: '/?settings=server/active-users',
+        statusCode: 301
+      }
+    },
+    '/server-management/pending-invitations': {
+      redirect: {
+        to: '/?settings=server/pending-invitations',
+        statusCode: 301
+      }
+    },
+    '/server-management': {
+      redirect: {
+        to: '/?settings=server/general',
+        statusCode: 301
+      }
+    },
+    '/profile': {
+      redirect: {
+        to: '/?settings/user/profile',
+        statusCode: 301
+      }
+    },
+    '/settings/server/active-users': {
+      redirect: {
+        to: '/settings/server/members',
+        statusCode: 301
+      }
+    },
+    '/settings/server/pending-invitations': {
+      redirect: {
+        to: '/settings/server/members',
+        statusCode: 301
+      }
+    },
+    '/settings/**': {
+      appMiddleware: ['auth', 'settings']
+    },
+    '/settings/server/*': {
+      appMiddleware: ['auth', 'settings', 'admin']
+    },
+    '/settings/workspaces/:slug/*': {
+      appMiddleware: [
+        'auth',
+        'settings',
+        'requires-workspaces-enabled',
+        'require-valid-workspace'
+      ]
     }
   },
 

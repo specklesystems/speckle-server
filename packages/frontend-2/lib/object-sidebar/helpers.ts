@@ -1,4 +1,4 @@
-import type { SpeckleObject } from '~~/lib/common/helpers/sceneExplorer'
+import type { SpeckleObject } from '~/lib/viewer/helpers/sceneExplorer'
 
 export type HeaderSubheader = {
   header: string

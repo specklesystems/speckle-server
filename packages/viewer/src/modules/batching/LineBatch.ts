@@ -11,9 +11,9 @@ import {
 } from 'three'
 import { LineSegments2 } from 'three/examples/jsm/lines/LineSegments2.js'
 import { LineSegmentsGeometry } from 'three/examples/jsm/lines/LineSegmentsGeometry.js'
-import { Geometry } from '../converter/Geometry'
-import SpeckleLineMaterial from '../materials/SpeckleLineMaterial'
-import { NodeRenderView } from '../tree/NodeRenderView'
+import { Geometry } from '../converter/Geometry.js'
+import SpeckleLineMaterial from '../materials/SpeckleLineMaterial.js'
+import { NodeRenderView } from '../tree/NodeRenderView.js'
 import {
   AllBatchUpdateRange,
   type Batch,
@@ -21,9 +21,9 @@ import {
   type DrawGroup,
   GeometryType,
   NoneBatchUpdateRange
-} from './Batch'
-import { ObjectLayers } from '../../IViewer'
-import Materials from '../materials/Materials'
+} from './Batch.js'
+import { ObjectLayers } from '../../IViewer.js'
+import Materials from '../materials/Materials.js'
 
 export default class LineBatch implements Batch {
   public id: string

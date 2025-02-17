@@ -4,33 +4,69 @@ import {
   registerAndGetAccessCode
 } from '~~/lib/auth/services/auth'
 import { ensureError, SafeLocalStorage } from '@speckle/shared'
-import type { MaybeNullOrUndefined, Optional } from '@speckle/shared'
+import type { MaybeAsync, MaybeNullOrUndefined, Optional } from '@speckle/shared'
 import { CookieKeys, LocalStorageKeys } from '~~/lib/common/helpers/constants'
 import { useSynchronizedCookie } from '~~/lib/common/composables/reactiveCookie'
-import { useNavigateToHome, useNavigateToLogin } from '~~/lib/common/helpers/route'
+import {
+  loginRoute,
+  useNavigateToHome,
+  useNavigateToLogin
+} from '~~/lib/common/helpers/route'
 import { useApolloClient } from '@vue/apollo-composable'
 import { speckleWebAppId } from '~~/lib/auth/helpers/strategies'
 import { randomString } from '~~/lib/common/helpers/random'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
-import { useMixpanel } from '~~/lib/core/composables/mp'
+import { useDeferredMixpanel } from '~~/lib/core/composables/mp'
 import {
-  useActiveUser,
+  activeUserQuery,
   useResolveUserDistinctId,
   useWaitForActiveUser
 } from '~~/lib/auth/composables/activeUser'
 import { usePostAuthRedirect } from '~~/lib/auth/composables/postAuthRedirect'
 import type { ActiveUserMainMetadataQuery } from '~~/lib/common/generated/gql/graphql'
 import { useScopedState } from '~/lib/common/composables/scopedState'
+import type { ApolloClient } from '@apollo/client/core'
 
 type UseOnAuthStateChangeCallback = (
   user: MaybeNullOrUndefined<ActiveUserMainMetadataQuery['activeUser']>,
-  extras: { resolveDistinctId: ReturnType<typeof useResolveUserDistinctId> }
-) => void
+  extras: {
+    resolveDistinctId: ReturnType<typeof useResolveUserDistinctId>
+    /**
+     * Whether the auth change was triggered by an auth state reset. The only other scenario is useOnAuthStateChange being called with `immediate: true`
+     */
+    isReset?: boolean
+  }
+) => MaybeAsync<void>
 
 const useOnAuthStateChangeState = () =>
   useScopedState('useOnAuthStateChange', () => ({
     cbs: [] as Array<UseOnAuthStateChangeCallback>
   }))
+
+const useJustLoggedOutInSSRCookie = () =>
+  useSynchronizedCookie<Optional<boolean>>('justLoggedOutInSSR')
+
+/**
+ * There's some thing we can only do from CSR (e.g. do mp.reset()), so we need to track if logout()
+ * happened in SSR and then react in CSR
+ */
+export const useJustLoggedOutTracking = () => {
+  const flag = useJustLoggedOutInSSRCookie()
+
+  return {
+    markLoggedOut: () => {
+      flag.value = true
+    },
+    wasJustLoggedOut: () => {
+      const ret = !!flag.value
+      if (ret) {
+        flag.value = undefined // pop
+      }
+
+      return ret
+    }
+  }
+}
 
 /**
  * Do something when the app auth state changes (user logged in or not). Useful for imperatively
@@ -52,7 +88,7 @@ export const useOnAuthStateChange = () => {
 
     if (options?.immediate) {
       const awaitedUser = await waitForUser()
-      cb(awaitedUser?.data?.activeUser, { resolveDistinctId })
+      await cb(awaitedUser?.data?.activeUser, { resolveDistinctId })
     }
 
     const remove = () => {
@@ -84,25 +120,45 @@ export const useGetInitialAuthState = () => {
 }
 
 /**
- * Composable that builds a function for resetting the active auth state.
- * This means resetting mixpanel identification, wiping apollo `me` cache etc.
+ * Composable that builds a function for resetting the active apollo auth state
+ * and invoking any callbacks that are registered to listen to auth state changes
  */
-const useResetAuthState = () => {
-  const apollo = useApolloClient().client
-  const { refetch } = useActiveUser()
+const useResetAuthState = (
+  options?: Partial<{
+    /**
+     * This composable may be invoked before Apollo is even set up, so we may need to defer
+     * the injection of the Apollo client.
+     *
+     * Note: If deferrence is enabled, but no ApolloClient can be resolved, the reset will
+     * assume there is no logged in user
+     */
+    deferredApollo?: () => MaybeAsync<Optional<ApolloClient<unknown>>>
+  }>
+) => {
+  const apollo = options?.deferredApollo ? undefined : useApolloClient().client
   const resolveDistinctId = useResolveUserDistinctId()
+  const { cbs } = useOnAuthStateChangeState()
 
   return async () => {
-    // evict cache
-    apollo.cache.evict({ id: 'ROOT_QUERY', fieldName: 'activeUser' })
+    const client = apollo || (await options?.deferredApollo?.())
 
-    // wait till active user is reloaded
-    const activeUserRes = await refetch()
-    const user = activeUserRes?.data?.activeUser
+    let user: MaybeNullOrUndefined<ActiveUserMainMetadataQuery['activeUser']> = null
+    if (client) {
+      // evict cache
+      client.cache.evict({ id: 'ROOT_QUERY', fieldName: 'activeUser' })
+
+      // wait till active user is reloaded
+      const { data: activeUserRes } = await client
+        .query({
+          query: activeUserQuery,
+          fetchPolicy: 'network-only'
+        })
+        .catch(convertThrowIntoFetchResult)
+      user = activeUserRes?.activeUser
+    }
 
     // process state change callbacks
-    const { cbs } = useOnAuthStateChangeState()
-    cbs.forEach((cb) => cb(user, { resolveDistinctId }))
+    cbs.forEach((cb) => cb(user, { resolveDistinctId, isReset: true }))
   }
 }
 
@@ -111,15 +167,29 @@ export const useAuthCookie = () =>
     maxAge: 60 * 60 * 24 * 30 // 30 days
   })
 
-export const useAuthManager = () => {
+export const useAuthManager = (
+  options?: Partial<{
+    /**
+     * This composable may be invoked before Apollo is even set up, so we may need to defer
+     * the injection of the Apollo client.
+     *
+     * Note: If deferrence is enabled, but no ApolloClient can be resolved, the reset will
+     * assume there is no logged in user
+     */
+    deferredApollo?: () => MaybeAsync<Optional<ApolloClient<unknown>>>
+  }>
+) => {
+  const { deferredApollo } = options || {}
+
   const apiOrigin = useApiOrigin()
-  const resetAuthState = useResetAuthState()
+  const resetAuthState = useResetAuthState({ deferredApollo })
   const route = useRoute()
   const goHome = useNavigateToHome()
   const goToLogin = useNavigateToLogin()
   const { triggerNotification } = useGlobalToast()
-  const mixpanel = useMixpanel()
+  const getMixpanel = useDeferredMixpanel()
   const postAuthRedirect = usePostAuthRedirect()
+  const { markLoggedOut } = useJustLoggedOutTracking()
 
   /**
    * Invite token, if any
@@ -233,12 +303,6 @@ export const useAuthManager = () => {
               skipRedirect: postAuthRedirect.hadPendingRedirect.value
             })
 
-            triggerNotification({
-              type: ToastNotificationType.Success,
-              title: 'Welcome!',
-              description: "You've been successfully authenticated"
-            })
-
             postAuthRedirect.popAndFollowRedirect()
           } catch (e) {
             triggerNotification({
@@ -281,7 +345,7 @@ export const useAuthManager = () => {
     // eslint-disable-next-line camelcase
     goHome({ query: { access_code: accessCode } })
 
-    mixpanel.track('Log In', { type: 'action' })
+    getMixpanel()?.track('Log In', { type: 'action' })
   }
 
   /**
@@ -308,8 +372,32 @@ export const useAuthManager = () => {
       newsletter
     })
 
+    const registeredThisSession = useRegisteredThisSession()
+    registeredThisSession.value = true
+
     // eslint-disable-next-line camelcase
     goHome({ query: { access_code: accessCode } })
+  }
+
+  /**
+   * Initiate SSO flow. Will create a user if one does not already exist.
+   */
+  const signInOrSignUpWithSso = (params: {
+    challenge: string
+    workspaceSlug: string
+    newsletterConsent?: boolean
+  }) => {
+    postAuthRedirect.set(`/workspaces/${params.workspaceSlug}`)
+
+    const authUrl = new URL(
+      `/api/v1/workspaces/${params.workspaceSlug}/sso/auth`,
+      apiOrigin
+    )
+    authUrl.searchParams.set('challenge', params.challenge)
+    if (params.newsletterConsent) {
+      authUrl.searchParams.set('newsletter_consent', 'true')
+    }
+    navigateTo(authUrl.toString(), { external: true })
   }
 
   /**
@@ -318,6 +406,12 @@ export const useAuthManager = () => {
   const logout = async (
     options?: Partial<{
       skipToast: boolean
+      skipRedirect: boolean
+      /**
+       * If true, will trigger a full page load to /authn/login in CSR, instead of just doing a CSR
+       * redirect to the page. Useful when you want to fully restart the app after logging out.
+       */
+      forceFullReload: boolean
     }>
   ) => {
     await saveNewToken(undefined, { skipRedirect: true })
@@ -331,13 +425,25 @@ export const useAuthManager = () => {
     }
 
     postAuthRedirect.deleteState()
-    goToLogin()
+
+    if (import.meta.server) {
+      markLoggedOut()
+    }
+
+    if (!options?.skipRedirect) {
+      if (options?.forceFullReload && import.meta.client) {
+        window.location.href = loginRoute
+      } else {
+        await goToLogin()
+      }
+    }
   }
 
   return {
     authToken,
     loginWithEmail,
     signUpWithEmail,
+    signInOrSignUpWithSso,
     logout,
     watchAuthQueryString,
     inviteToken
@@ -370,6 +476,12 @@ const useAuthAppIdAndChallenge = () => {
 
   return { appId, challenge }
 }
+
+/**
+ * Indicates whether the user just completed registration
+ */
+export const useRegisteredThisSession = () =>
+  useState<boolean>('registered-this-session', () => false)
 
 export const useLoginOrRegisterUtils = () => {
   const appIdAndChallenge = useAuthAppIdAndChallenge()

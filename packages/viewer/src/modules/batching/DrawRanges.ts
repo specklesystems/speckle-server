@@ -1,6 +1,6 @@
 import { Material } from 'three'
-import { type BatchUpdateRange } from './Batch'
-import { type DrawGroup } from './Batch'
+import { type BatchUpdateRange } from './Batch.js'
+import { type DrawGroup } from './Batch.js'
 
 export class DrawRanges {
   public integrateRanges(

@@ -40,3 +40,17 @@ spec:
             port:
               name: www
 {{- end }}
+      - pathType: Exact
+        path: "/liveness"
+        backend:
+          service:
+            name: speckle-server
+            port:
+              name: web
+      - pathType: Exact
+        path: "/readiness"
+        backend:
+          service:
+            name: speckle-server
+            port:
+              name: web

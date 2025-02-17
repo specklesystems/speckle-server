@@ -1,9 +1,9 @@
 import TreeModel, { type Model } from 'tree-model'
-import { NodeRenderView } from './NodeRenderView'
-import { RenderTree } from './RenderTree'
-import Logger from 'js-logger'
-import { AsyncPause } from '../World'
-import { NodeMap } from './NodeMap'
+import { NodeRenderView } from './NodeRenderView.js'
+import { RenderTree } from './RenderTree.js'
+import { AsyncPause } from '../World.js'
+import { NodeMap } from './NodeMap.js'
+import Logger from '../utils/Logger.js'
 
 export type TreeNode = TreeModel.Node<NodeData>
 export type SearchPredicate = (node: TreeNode) => boolean
@@ -18,6 +18,7 @@ export interface NodeData {
   subtreeId?: number
   renderView?: NodeRenderView | null
   instanced?: boolean
+  color?: number
 }
 
 export class WorldTree {
@@ -108,8 +109,14 @@ export class WorldTree {
     if (this.nodeMaps[parent.model.subtreeId]?.addNode(node)) parent.addChild(node)
   }
 
-  public removeNode(node: TreeNode): void {
+  public removeNode(node: TreeNode, removeChildren: boolean): void {
+    const children = node.children
+    this.nodeMaps[node.model.subtreeId]?.removeNode(node)
     node.drop()
+    if (!removeChildren || !children) return
+    for (let k = 0; k < children.length; k++) {
+      this.removeNode(children[k], removeChildren)
+    }
   }
 
   public findAll(predicate: SearchPredicate, node?: TreeNode): Array<TreeNode> {
@@ -120,6 +127,8 @@ export class WorldTree {
   }
 
   public findId(id: string, subtreeId?: number): TreeNode[] | null {
+    if (!id) return null
+
     let idNode = null
     if (subtreeId) {
       idNode = this.nodeMaps[subtreeId].getNodeById(id)
@@ -195,7 +204,8 @@ export class WorldTree {
       if (subtreeNode) {
         this.nodeMaps[subtreeNode[0].model.subtreeId].purge()
         delete this.nodeMaps[subtreeNode[0].model.subtreeId]
-        this.removeNode(subtreeNode[0])
+        // Potentially true?
+        this.removeNode(subtreeNode[0], false)
       }
       return
     }

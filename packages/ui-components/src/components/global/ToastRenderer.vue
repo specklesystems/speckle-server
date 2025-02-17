@@ -1,9 +1,9 @@
 <template>
   <div
     aria-live="assertive"
-    class="pointer-events-none fixed inset-0 flex items-end px-4 py-6 mt-10 sm:items-start sm:p-6 z-50"
+    class="pointer-events-none fixed top-0 right-0 left-0 bottom-0 flex items-end px-4 py-6 mt-10 sm:items-start sm:p-6 z-[60]"
   >
-    <div class="flex w-full flex-col items-center gap-4 sm:items-end">
+    <div class="flex w-full flex-col items-center space-y-4 sm:items-end">
       <!-- Notification panel, dynamically insert this into the live region when it needs to be displayed -->
       <Transition
         enter-active-class="transform ease-out duration-300 transition"
@@ -15,63 +15,61 @@
       >
         <div
           v-if="notification"
-          class="pointer-events-auto w-full max-w-[20rem] overflow-hidden rounded-lg bg-foundation text-foreground shadow-lg ring-1 ring-primary-muted ring-opacity-5"
-          :class="isTitleOnly ? 'p-2' : 'p-3'"
+          class="pointer-events-auto w-full max-w-[20rem] overflow-hidden rounded bg-foundation text-foreground shadow-lg border border-outline-2 p-3"
+          :class="{ 'pb-2': isTitleOnly }"
         >
-          <div class="flex gap-2" :class="isTitleOnly ? 'items-center' : 'items-start'">
-            <div class="flex-shrink-0">
+          <div class="flex space-x-2">
+            <div class="flex-shrink-0 mt-1">
               <CheckCircleIcon
                 v-if="notification.type === ToastNotificationType.Success"
-                class="text-success"
-                :class="isTitleOnly ? 'h-5 w-5' : 'h-6 w-6'"
+                class="text-success h-4 w-4"
                 aria-hidden="true"
               />
               <XCircleIcon
                 v-else-if="notification.type === ToastNotificationType.Danger"
-                class="text-danger"
-                :class="isTitleOnly ? 'h-5 w-5' : 'h-6 w-6'"
+                class="text-danger h-4 w-4"
                 aria-hidden="true"
               />
               <ExclamationCircleIcon
                 v-else-if="notification.type === ToastNotificationType.Warning"
-                class="text-warning"
-                :class="isTitleOnly ? 'h-5 w-5' : 'h-6 w-6'"
+                class="text-foreground-2 h-4 w-4"
                 aria-hidden="true"
               />
               <InformationCircleIcon
                 v-else-if="notification.type === ToastNotificationType.Info"
-                class="text-info"
-                :class="isTitleOnly ? 'h-5 w-5' : 'h-6 w-6'"
+                class="text-foreground-2 h-4 w-4"
                 aria-hidden="true"
+              />
+              <CommonLoadingIcon
+                v-else-if="notification.type === ToastNotificationType.Loading"
+                class="h-4 w-4 opacity-80"
               />
             </div>
             <div class="w-full min-w-[10rem]">
               <p
                 v-if="notification.title"
-                class="text-foreground font-bold"
-                :class="isTitleOnly ? 'text-sm' : 'text-base'"
+                class="text-foreground-2 font-medium text-body-xs"
               >
                 {{ notification.title }}
               </p>
               <p
                 v-if="notification.description"
-                class="label label--light text-foreground-2 text-sm"
+                class="text-foreground-2 text-body-xs leading-snug"
               >
                 {{ notification.description }}
               </p>
               <div v-if="notification.cta">
-                <CommonTextLink
+                <TextLink
+                  class="mt-1 color-primary"
                   :to="notification.cta.url"
-                  class="label"
-                  size="xs"
-                  primary
+                  size="sm"
                   @click="onCtaClick"
                 >
                   {{ notification.cta.title }}
-                </CommonTextLink>
+                </TextLink>
               </div>
             </div>
-            <div class="ml-2 flex-shrink-0" :class="isTitleOnly ? 'mt-1.5' : ''">
+            <div class="ml-2 flex-shrink-0 mt-0.5">
               <button
                 type="button"
                 class="inline-flex rounded-md bg-foundation text-foreground-2 hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
@@ -88,25 +86,26 @@
   </div>
 </template>
 <script setup lang="ts">
-import CommonTextLink from '~~/src/components/common/text/Link.vue'
+import TextLink from '~~/src/components/common/text/Link.vue'
 import {
   CheckCircleIcon,
   XCircleIcon,
   ExclamationCircleIcon,
-  InformationCircleIcon
-} from '@heroicons/vue/24/outline'
-import { XMarkIcon } from '@heroicons/vue/20/solid'
+  InformationCircleIcon,
+  XMarkIcon
+} from '@heroicons/vue/20/solid'
 import { computed } from 'vue'
-import type { Nullable } from '@speckle/shared'
+import type { MaybeNullOrUndefined } from '@speckle/shared'
 import { ToastNotificationType } from '~~/src/helpers/global/toast'
 import type { ToastNotification } from '~~/src/helpers/global/toast'
+import { CommonLoadingIcon } from '~~/src/lib'
 
 const emit = defineEmits<{
-  (e: 'update:notification', val: Nullable<ToastNotification>): void
+  (e: 'update:notification', val: MaybeNullOrUndefined<ToastNotification>): void
 }>()
 
 const props = defineProps<{
-  notification: Nullable<ToastNotification>
+  notification: MaybeNullOrUndefined<ToastNotification>
 }>()
 
 const isTitleOnly = computed(

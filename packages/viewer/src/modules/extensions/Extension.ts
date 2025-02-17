@@ -1,6 +1,6 @@
 import type { Constructor } from 'type-fest'
-import { type IViewer } from '../..'
-import EventEmitter from '../EventEmitter'
+import { type IViewer } from '../../index.js'
+import EventEmitter from '../EventEmitter.js'
 
 export class Extension extends EventEmitter {
   public get inject(): Array<Constructor<Extension>> {

@@ -29,8 +29,6 @@
     // "moduleResolution": "node",                       /* Specify how TypeScript looks up a file from a given module specifier. */
     "baseUrl": "./" /* Specify the base directory to resolve non-relative module names. */,
     "paths": {
-      "@speckle/shared": ["../shared/dist/esm/index"],
-      "@speckle/viewer": ["../viewer/dist/index"],
       "@/*": ["./*"],
       "#/*": ["./*"]
     },
@@ -108,6 +106,7 @@
   },
   "include": [
     "db/**/*",
+    "healthchecks/**/*",
     "logging/**/*",
     "modules/**/*",
     "bin/**/*",
@@ -115,8 +114,11 @@
     "type-augmentations/**/*",
     "test/**/*",
     "app.ts",
+    "otel.ts",
+    "bootstrap.ts",
+    "knexfile.ts",
     "bootstrap.js",
-    "knexfile.js"
+    "knexfile.ts"
   ],
   "exclude": ["node_modules", "coverage", "reports"]
 }

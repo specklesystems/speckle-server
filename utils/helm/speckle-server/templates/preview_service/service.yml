@@ -12,5 +12,5 @@ spec:
   ports:
     - protocol: TCP
       name: web
-      port: 9094
+      port: {{ .Values.preview_service.monitoring.metricsPort }}
       targetPort: metrics

@@ -7,7 +7,7 @@
         :is="state ? ViewerScope : 'div'"
         :state="state"
         wrapper
-        class="fixed shadow-t bottom-0 left-0 max-h-[65vh] overflow-hidden w-screen z-50 transition-all duration-300 empty:-bottom-[65vh]"
+        class="main-viewer-scope fixed shadow-t bottom-0 left-0 max-h-[65vh] overflow-hidden w-screen z-50 transition-all duration-300 empty:-bottom-[65vh]"
       >
         <PortalTarget name="bottomPanel"></PortalTarget>
         <PortalTarget name="mobileComments"></PortalTarget>
@@ -27,7 +27,7 @@ definePageMeta({
   pageTransition: false, // NOTE: transitions fuck viewer up
   layoutTransition: false,
   key: '/projects/:id/models/resources', // To prevent controls flickering on resource url param changes
-  raygunTags: ['viewer']
+  name: 'model-viewer'
 })
 
 const ViewerScope = resolveComponent('ViewerScope')

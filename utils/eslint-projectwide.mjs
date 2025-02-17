@@ -61,14 +61,15 @@ const resolvePackageContexts = async (absoluteFileNames) => {
       throw new Error(`File ${absoluteFileName} does not belong to any package`)
     }
 
-    if (!contexts.has(pkg.absolutePath)) {
-      contexts.set(pkg, new Set())
+    const contextsKey = pkg.absolutePath
+    if (!contexts.has(contextsKey)) {
+      contexts.set(contextsKey, new Set())
     }
-    contexts.get(pkg).add(absoluteFileName)
+    contexts.get(contextsKey).add(absoluteFileName)
   }
 
-  return [...contexts.entries()].map(([pkg, files]) => ({
-    absolutePath: pkg.absolutePath,
+  return [...contexts.entries()].map(([pkgPath, files]) => ({
+    absolutePath: pkgPath,
     files: [...files]
   }))
 }

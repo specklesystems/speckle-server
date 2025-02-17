@@ -1,4 +1,4 @@
-FROM nginx:1.25-bookworm@sha256:6db391d1c0cfb30588ba0bf72ea999404f2764febf0f1f196acd5867ac7efa7e
+FROM nginx:1.25-bookworm@sha256:a484819eb60211f5299034ac80f6a681b06f89e65866ce91f356ed7c72af059c
 ENV FILE_SIZE_LIMIT_MB=100
 
 RUN mkdir -p /var/nginx

@@ -1,5 +1,5 @@
 <template>
-  <div class="relative z-10 flex gap-4 md:gap-6 flex-col">
+  <div class="relative z-10 flex flex-col !mt-0">
     <!-- Left Arrow Button -->
     <div
       class="absolute left-[-2px] top-[-2px] z-20 pr-8 bg-gradient-to-r from-foundation-page to-transparent"
@@ -15,7 +15,7 @@
     <div class="absolute left-0 z-10 w-full h-[1px] mt-px bg-outline-3 top-8"></div>
     <div
       ref="scrollContainer"
-      class="relative flex overflow-x-auto hide-scrollbar gap-8 w-full"
+      class="relative overflow-x-auto hide-scrollbar w-full"
       @scroll="handleScroll"
     >
       <div
@@ -24,7 +24,7 @@
         :class="isInitialSetup ? 'bg-transparent' : 'bg-primary'"
       ></div>
 
-      <div ref="buttonContainer" class="flex w-full gap-2 sm:gap-3">
+      <div ref="buttonContainer" class="flex w-full space-x-4">
         <button
           v-for="item in items"
           :key="item.id"
@@ -37,22 +37,25 @@
           :disabled="item.disabled"
           @click="setActiveItem(item)"
         >
-          <div
-            v-tippy="
-              item.disabled && item.disabledMessage ? item.disabledMessage : undefined
-            "
-            class="absolute inset-0"
-          ></div>
-          <div class="flex gap-2 items-center px-2">
+          <div class="flex space-x-2 items-center">
             <component
               :is="item.icon"
               v-if="item.icon"
               class="shrink-0 h-4 w-4 stroke-[2px]"
-            ></component>
-            <span class="min-w-6">{{ item.title }}</span>
+            />
+
+            <div class="min-w-6">
+              <span
+                v-if="item.disabled && item.disabledMessage"
+                v-tippy="item.disabledMessage"
+              >
+                {{ item.title }}
+              </span>
+              <span v-else>{{ item.title }}</span>
+            </div>
             <div
               v-if="item.count"
-              class="rounded-full px-2 text-[11px] transition-all min-w-6"
+              class="rounded-full px-2 text-body-3xs transition-all min-w-6"
               :class="
                 activeItem?.id === item.id
                   ? 'text-primary bg-blue-100'
@@ -61,12 +64,9 @@
             >
               <span>{{ item.count }}</span>
             </div>
-            <div
-              v-if="item.tag"
-              class="text-[10px] leading-tight py-0.5 text-foreground-on-primary font-medium px-1.5 rounded-full bg-gradient-to-tr from-[#7025EB] to-primary select-none mt-0.5"
-            >
+            <CommonBadge v-if="item.tag">
               {{ item.tag }}
-            </div>
+            </CommonBadge>
           </div>
         </button>
       </div>
@@ -84,7 +84,7 @@
         <ArrowLongRightIcon class="h-4 w-4" />
       </button>
     </div>
-    <div>
+    <div class="pt-4">
       <slot :active-item="activeItem" />
     </div>
   </div>
@@ -98,17 +98,22 @@ import { isClient } from '@vueuse/core'
 import { ArrowLongRightIcon, ArrowLongLeftIcon } from '@heroicons/vue/24/outline'
 import type { Nullable } from '@speckle/shared'
 import { throttle } from '#lodash'
+import { useElementSize } from '@vueuse/core'
+import CommonBadge from '~~/src/components/common/Badge.vue'
 
 const props = defineProps<{
   items: LayoutPageTabItem[]
 }>()
 
 const activeItem = defineModel<LayoutPageTabItem>('activeItem', { required: true })
+
 const buttonContainer = ref(null as Nullable<HTMLDivElement>)
 const scrollContainer = ref<HTMLElement | null>(null)
 const showLeftArrow = ref(false)
 const showRightArrow = ref(false)
 const isInitialSetup = ref(true)
+
+const { width } = useElementSize(buttonContainer)
 
 const buttonClass = computed(() => {
   return (item: LayoutPageTabItem) => {
@@ -119,8 +124,7 @@ const buttonClass = computed(() => {
       'flex',
       'items-center',
       'disabled:opacity-60 disabled:hover:border-transparent disabled:cursor-not-allowed disabled:hover:bg-transparent',
-      'text-base',
-      'gap-1.5',
+      'text-body-xs',
       'hover:sm:border-outline-2',
       'pb-2',
       'border-b-[2px]',
@@ -149,11 +153,16 @@ const activeItemRef = computed(() => {
 })
 
 const borderStyle = computed<CSSProperties>(() => {
-  const element = activeItemRef.value
-  return {
-    left: `${element?.offsetLeft || 0}px`,
-    width: `${element?.clientWidth || 0}px`
-  }
+  // Using width in calculation to force dependency
+  return width.value
+    ? {
+        left: `${activeItemRef.value?.offsetLeft || 0}px`,
+        width: `${activeItemRef.value?.clientWidth || 0}px`
+      }
+    : {
+        left: '0px',
+        width: '0px'
+      }
 })
 
 const setActiveItem = (item: LayoutPageTabItem) => {

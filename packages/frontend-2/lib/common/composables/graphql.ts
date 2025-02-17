@@ -1,5 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import type { OperationVariables, QueryOptions } from '@apollo/client/core'
+import type {
+  OperationVariables,
+  QueryOptions,
+  WatchQueryFetchPolicy
+} from '@apollo/client/core'
 import type {
   DocumentParameter,
   OptionsParameter
@@ -8,7 +12,8 @@ import { useQuery } from '@vue/apollo-composable'
 import { convertThrowIntoFetchResult } from '~/lib/common/helpers/graphql'
 import type { InfiniteLoaderState } from '@speckle/ui-components'
 import { isUndefined } from 'lodash-es'
-import type { MaybeNullOrUndefined } from '@speckle/shared'
+import { type MaybeNullOrUndefined, type Optional } from '@speckle/shared'
+import { useScopedState } from '~/lib/common/composables/scopedState'
 
 export const useApolloClientIfAvailable = () => {
   const nuxt = useNuxtApp()
@@ -204,4 +209,34 @@ export const usePaginatedQuery = <
     onInfiniteLoad,
     bustCache
   }
+}
+
+/**
+ * We want our page queries to have the cache-and-network fetch policy, so that when you switch to a new page, the data
+ * gets refreshed, but in the background - while the old data is still shown.
+ *
+ * This, however, is unnecessary when hydrating the SSR page in CSR for the first time, and also
+ * causes weird hydration mismatches.
+ *
+ * So this sets the correct fetch policy based on whether this is a CSR->CSR navigation
+ */
+export const usePageQueryStandardFetchPolicy = () => {
+  if (import.meta.server) return computed(() => undefined)
+
+  const router = useRouter()
+  const hasNavigatedInCSR = useScopedState(
+    'usePageQueryStandardFetchPolicy-state',
+    () => ref(false)
+  )
+  const quitTracking = router.beforeEach((to, from) => {
+    if (!from || !to) return
+    hasNavigatedInCSR.value = true
+    quitTracking()
+  })
+
+  return computed((): Optional<WatchQueryFetchPolicy> => {
+    // use cache, but reload in background
+    // we only wanna do this when transitioning between CSR routes
+    return hasNavigatedInCSR.value ? 'cache-and-network' : undefined
+  })
 }

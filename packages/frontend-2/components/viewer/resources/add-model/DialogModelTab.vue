@@ -6,7 +6,7 @@
         name="modelsearch"
         :show-label="false"
         :size="isSmallerOrEqualSm ? 'sm' : 'base'"
-        placeholder="Search"
+        placeholder="Search models..."
         color="foundation"
         class="w-48 sm:w-60"
         :show-clear="search !== ''"

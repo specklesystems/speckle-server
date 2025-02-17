@@ -1,0 +1,621 @@
+extend type Query {
+  workspace(id: String!): Workspace!
+    @hasServerRole(role: SERVER_GUEST)
+    @hasScope(scope: "workspace:read")
+
+  workspaceBySlug(slug: String!): Workspace!
+    @hasServerRole(role: SERVER_GUEST)
+    @hasScope(scope: "workspace:read")
+
+  """
+  Find workspaces a given user email can use SSO to sign with
+  """
+  workspaceSsoByEmail(email: String!): [LimitedWorkspace!]!
+
+  """
+  Look for an invitation to a workspace, for the current user (authed or not).
+
+  If token is specified, it will return the corresponding invite even if it belongs to a different user.
+
+  Either token or workspaceId must be specified, or both
+  """
+  workspaceInvite(
+    workspaceId: String
+    token: String
+    options: WorkspaceInviteLookupOptions
+  ): PendingWorkspaceCollaborator
+  """
+  Validates the slug, to make sure it contains only valid characters and its not taken.
+  """
+  validateWorkspaceSlug(slug: String!): Boolean!
+}
+
+input WorkspaceInviteLookupOptions {
+  """
+  If true, the query will assume workspaceId is actually the workspace slug, and do the lookup by slug
+  """
+  useSlug: Boolean
+}
+
+input WorkspaceCreateInput {
+  name: String!
+  slug: String
+  description: String
+  """
+  Logo image as base64-encoded string
+  """
+  logo: String
+}
+
+input WorkspaceUpdateInput {
+  id: String!
+  name: String
+  slug: String
+  description: String
+  """
+  Logo image as base64-encoded string
+  """
+  logo: String
+  defaultProjectRole: String
+  domainBasedMembershipProtectionEnabled: Boolean
+  discoverabilityEnabled: Boolean
+}
+
+input WorkspaceRoleUpdateInput {
+  userId: String!
+  workspaceId: String!
+  """
+  Leave role null to revoke access entirely
+  """
+  role: String
+}
+
+input WorkspaceRoleDeleteInput {
+  userId: String!
+  workspaceId: String!
+}
+
+input WorkspaceProjectInviteCreateInput {
+  """
+  Either this or userId must be filled
+  """
+  email: String
+  """
+  Either this or email must be filled
+  """
+  userId: String
+  """
+  Defaults to the contributor role, if not specified
+  """
+  role: String
+  """
+  Can only be specified if guest mode is on or if the user is an admin
+  """
+  serverRole: String
+  """
+  Only taken into account, if project belongs to a workspace. Defaults to guest access.
+  """
+  workspaceRole: String
+}
+
+input AddDomainToWorkspaceInput {
+  domain: String!
+  workspaceId: ID!
+}
+
+input JoinWorkspaceInput {
+  workspaceId: ID!
+}
+
+extend type ProjectInviteMutations {
+  """
+  Create invite(-s) for a project in a workspace. Unlike the base create() mutation, this allows
+  configuring the workspace role.
+  """
+  createForWorkspace(
+    projectId: ID!
+    inputs: [WorkspaceProjectInviteCreateInput!]!
+  ): Project! @hasScope(scope: "users:invite") @hasServerRole(role: SERVER_USER)
+}
+
+extend type Mutation {
+  workspaceMutations: WorkspaceMutations! @hasServerRole(role: SERVER_GUEST)
+}
+
+type WorkspaceMutations {
+  create(input: WorkspaceCreateInput!): Workspace!
+    @hasServerRole(role: SERVER_USER)
+    @hasScope(scope: "workspace:create")
+  delete(workspaceId: String!): Boolean!
+    @hasScope(scope: "workspace:delete")
+    @hasServerRole(role: SERVER_USER)
+  update(input: WorkspaceUpdateInput!): Workspace!
+    @hasScope(scope: "workspace:update")
+    @hasServerRole(role: SERVER_USER)
+  updateRole(input: WorkspaceRoleUpdateInput!): Workspace!
+    @hasScope(scope: "workspace:update")
+    @hasServerRole(role: SERVER_USER)
+  leave(id: ID!): Boolean! @hasServerRole(role: SERVER_GUEST)
+  join(input: JoinWorkspaceInput!): Workspace! @hasScope(scope: "workspace:update")
+  # TODO: this mutation should have an hasWorkspaceRole directive to authorize only workspace admin
+  # We are, for the moment, doing the check in the resolver
+  addDomain(input: AddDomainToWorkspaceInput!): Workspace!
+    @hasScope(scope: "workspace:update")
+  # TODO: this mutation should have an hasWorkspaceRole directive to authorize only workspace admin
+  # We are, for the moment, doing the check in the resolver
+  deleteDomain(input: WorkspaceDomainDeleteInput!): Workspace!
+    @hasScope(scope: "workspace:update")
+  deleteSsoProvider(workspaceId: String!): Boolean!
+  invites: WorkspaceInviteMutations!
+  projects: WorkspaceProjectMutations! @hasServerRole(role: SERVER_USER)
+  updateCreationState(input: WorkspaceCreationStateInput!): Boolean!
+  """
+  Dismiss a workspace from the discoverable list, behind the scene a join request is created with the status "dismissed"
+  """
+  dismiss(input: WorkspaceDismissInput!): Boolean! @hasServerRole(role: SERVER_USER)
+  requestToJoin(input: WorkspaceRequestToJoinInput!): Boolean!
+    @hasServerRole(role: SERVER_USER)
+}
+
+input WorkspaceDismissInput {
+  workspaceId: ID!
+}
+
+input WorkspaceRequestToJoinInput {
+  workspaceId: ID!
+}
+
+input WorkspaceCreationStateInput {
+  workspaceId: ID!
+  completed: Boolean!
+  state: JSONObject!
+}
+
+input WorkspaceProjectCreateInput {
+  name: String
+  description: String
+  visibility: ProjectVisibility
+  workspaceId: String!
+}
+
+type WorkspaceProjectMutations {
+  updateRole(input: ProjectUpdateRoleInput!): Project!
+    @hasStreamRole(role: STREAM_OWNER)
+    @hasWorkspaceRole(role: MEMBER)
+  moveToWorkspace(projectId: String!, workspaceId: String!): Project!
+  create(input: WorkspaceProjectCreateInput!): Project!
+}
+
+input WorkspaceDomainDeleteInput {
+  workspaceId: ID!
+  id: ID!
+}
+
+input WorkspaceInviteCreateInput {
+  """
+  Either this or userId must be filled
+  """
+  email: String
+  """
+  Either this or email must be filled
+  """
+  userId: String
+  """
+  Defaults to the member role, if not specified
+  """
+  role: WorkspaceRole
+  """
+  Defaults to User, if not specified
+  """
+  serverRole: ServerRole
+}
+
+input WorkspaceInviteUseInput {
+  token: String!
+  accept: Boolean!
+  """
+  If invite is attached to an unregistered email, the invite can only be used if this is set to true.
+  Upon accepting such an invite, the unregistered email will be added to the user's account as well.
+  """
+  addNewEmail: Boolean
+}
+
+input WorkspaceInviteResendInput {
+  workspaceId: String!
+  inviteId: String!
+}
+
+type WorkspaceInviteMutations {
+  create(workspaceId: String!, input: WorkspaceInviteCreateInput!): Workspace!
+    @hasScope(scope: "users:invite")
+    @hasServerRole(role: SERVER_USER)
+  batchCreate(workspaceId: String!, input: [WorkspaceInviteCreateInput!]!): Workspace!
+    @hasScope(scope: "users:invite")
+    @hasServerRole(role: SERVER_USER)
+  use(input: WorkspaceInviteUseInput!): Boolean!
+  resend(input: WorkspaceInviteResendInput!): Boolean!
+    @hasScope(scope: "users:invite")
+    @hasServerRole(role: SERVER_USER)
+  cancel(workspaceId: String!, inviteId: String!): Workspace!
+    @hasScope(scope: "users:invite")
+    @hasServerRole(role: SERVER_USER)
+}
+
+input PendingWorkspaceCollaboratorsFilter {
+  search: String
+}
+
+type Workspace {
+  id: ID!
+  name: String!
+  slug: String!
+  description: String
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  """
+  Logo image as base64-encoded string
+  """
+  logo: String
+  """
+  The default role workspace members will receive for workspace projects.
+  """
+  defaultProjectRole: String!
+  """
+  Verified workspace domains
+  """
+  domains: [WorkspaceDomain!] @hasWorkspaceRole(role: MEMBER)
+  """
+  Active user's role for this workspace. `null` if request is not authenticated, or the workspace is not explicitly shared with you.
+  """
+  role: String
+  team(
+    limit: Int! = 25
+    cursor: String
+    filter: WorkspaceTeamFilter
+  ): WorkspaceCollaboratorCollection!
+  """
+  Only available to workspace owners/members
+  """
+  invitedTeam(
+    filter: PendingWorkspaceCollaboratorsFilter
+  ): [PendingWorkspaceCollaborator!] @hasWorkspaceRole(role: MEMBER)
+  projects(
+    limit: Int! = 25
+    cursor: String
+    filter: WorkspaceProjectsFilter
+  ): ProjectCollection!
+  automateFunctions(
+    limit: Int! = 25
+    cursor: String
+    filter: AutomateFunctionsFilter
+  ): AutomateFunctionCollection!
+  """
+  Information about the workspace's SSO configuration and the current user's SSO session, if present
+  """
+  sso: WorkspaceSso
+  """
+  Enable/Disable restriction to invite users to workspace as Guests only
+  """
+  domainBasedMembershipProtectionEnabled: Boolean!
+  """
+  Enable/Disable discovery of the workspace
+  """
+  discoverabilityEnabled: Boolean!
+  """
+  Info about the workspace creation state
+  """
+  creationState: WorkspaceCreationState
+  """
+  Get all join requests for all the workspaces the user is an admin of
+  """
+  adminWorkspacesJoinRequests(
+    filter: AdminWorkspaceJoinRequestFilter
+    cursor: String
+    limit: Int! = 25
+  ): WorkspaceJoinRequestCollection
+    @hasServerRole(role: SERVER_USER)
+    @hasScope(scope: "workspace:read")
+    @hasWorkspaceRole(role: ADMIN)
+}
+
+type WorkspaceCreationState {
+  completed: Boolean!
+  state: JSONObject!
+}
+
+type WorkspaceSso {
+  """
+  If null, the workspace does not have SSO configured
+  """
+  provider: WorkspaceSsoProvider
+  session: WorkspaceSsoSession
+}
+
+type WorkspaceSsoProvider {
+  id: ID!
+  name: String!
+  clientId: String!
+  issuerUrl: String!
+}
+
+type WorkspaceSsoSession {
+  createdAt: DateTime!
+  validUntil: DateTime!
+}
+
+"""
+Workspace metadata visible to non-workspace members.
+"""
+type LimitedWorkspace {
+  """
+  Workspace id
+  """
+  id: ID!
+  """
+  Workspace name
+  """
+  name: String!
+  """
+  Unique workspace short id. Used for navigation.
+  """
+  slug: String!
+  """
+  Workspace description
+  """
+  description: String
+  """
+  Optional base64 encoded workspace logo image
+  """
+  logo: String
+}
+
+type WorkspaceDomain {
+  id: ID!
+  domain: String!
+}
+
+input WorkspaceProjectsFilter {
+  """
+  Filter out projects by name
+  """
+  search: String
+}
+
+input WorkspaceTeamFilter {
+  """
+  Limit team members to provided role(s)
+  """
+  roles: [String!]
+  """
+  Search for team members by name or email
+  """
+  search: String
+}
+
+type WorkspaceCollaboratorCollection {
+  totalCount: Int!
+  cursor: String
+  items: [WorkspaceCollaborator!]!
+}
+
+type ProjectRole {
+  role: String!
+  project: Project!
+}
+
+"""
+Overridden by `WorkspaceCollaboratorGraphQLReturn`
+"""
+type WorkspaceCollaborator {
+  id: ID!
+  role: String!
+  user: LimitedUser!
+  projectRoles: [ProjectRole!]!
+}
+
+type PendingWorkspaceCollaborator {
+  id: ID!
+  updatedAt: DateTime!
+  inviteId: String!
+  workspaceId: String!
+  workspaceName: String!
+  workspaceSlug: String!
+  """
+  E-mail address if target is unregistered or primary e-mail of target registered user
+  if token was specified to retrieve this invite
+  """
+  email: String
+  """
+  E-mail address or name of the invited user
+  """
+  title: String!
+  """
+  Target workspace role
+  """
+  role: String!
+  invitedBy: LimitedUser!
+  """
+  Set only if user is registered
+  """
+  user: LimitedUser
+  """
+  Only available if the active user is the pending workspace collaborator or if it was already
+  specified when retrieving this invite
+  """
+  token: String
+}
+
+type WorkspaceCollection {
+  totalCount: Int!
+  cursor: String
+  items: [Workspace!]!
+}
+
+type WorkspaceJoinRequestCollection {
+  totalCount: Int!
+  cursor: String
+  items: [WorkspaceJoinRequest!]!
+}
+
+type WorkspaceJoinRequest {
+  id: String!
+  workspace: Workspace!
+  user: LimitedUser!
+  status: WorkspaceJoinRequestStatus!
+  createdAt: DateTime!
+}
+
+enum WorkspaceJoinRequestStatus {
+  pending
+  approved
+  denied
+}
+
+input AdminWorkspaceJoinRequestFilter {
+  status: WorkspaceJoinRequestStatus
+}
+
+extend type User {
+  """
+  Get discoverable workspaces with verified domains that match the active user's
+  """
+  discoverableWorkspaces: [LimitedWorkspace!]!
+
+  """
+  A list of workspaces for the active user where:
+  (1) The user is a member or admin
+  (2) The workspace has SSO provider enabled
+  (3) The user does not have a valid SSO session for the given SSO provider
+  """
+  expiredSsoSessions: [LimitedWorkspace!]!
+
+  """
+  Get the workspaces for the user
+  """
+  workspaces(
+    limit: Int! = 25
+    cursor: String = null
+    filter: UserWorkspacesFilter
+  ): WorkspaceCollection! @isOwner
+
+  """
+  Get all invitations to workspaces that the active user has
+  """
+  workspaceInvites: [PendingWorkspaceCollaborator!]!
+    @hasServerRole(role: SERVER_GUEST)
+    @hasScope(scope: "workspace:read")
+    @isOwner
+}
+
+extend type Project {
+  workspace: Workspace
+}
+
+type ServerWorkspacesInfo {
+  """
+  This is a backend control variable for the workspaces feature set.
+  Since workspaces need a backend logic to be enabled, this is not enough as a feature flag.
+  """
+  workspacesEnabled: Boolean!
+}
+
+extend type ServerInfo {
+  workspaces: ServerWorkspacesInfo!
+}
+
+extend type AdminQueries {
+  workspaceList(
+    query: String
+    limit: Int! = 25
+    cursor: String = null
+  ): WorkspaceCollection!
+}
+
+input UserWorkspacesFilter {
+  search: String
+}
+
+extend type Project {
+  workspaceId: String
+}
+
+# case of using userSearch, and we alway expose this
+extend type LimitedUser {
+  workspaceDomainPolicyCompliant(workspaceId: String): Boolean
+  workspaceRole(workspaceId: String): String
+  # if workspaceId is undefined | null, just return undefined
+  # this can be implemented by the workspaceCore resolver too, to avoid frontend component duplication
+}
+
+enum WorkspaceProjectsUpdatedMessageType {
+  ADDED
+  REMOVED
+}
+
+type WorkspaceProjectsUpdatedMessage {
+  """
+  Message type
+  """
+  type: WorkspaceProjectsUpdatedMessageType!
+  """
+  Project ID
+  """
+  projectId: String!
+  """
+  Workspace ID
+  """
+  workspaceId: String!
+  """
+  Project entity, null if project was deleted
+  """
+  project: Project
+}
+
+type WorkspaceUpdatedMessage {
+  """
+  Workspace ID
+  """
+  id: String!
+  """
+  Workspace itself
+  """
+  workspace: Workspace!
+}
+
+extend type Subscription {
+  """
+  Track newly added or deleted projects in a specific workspace.
+  Either slug or id must be set.
+  """
+  workspaceProjectsUpdated(
+    workspaceId: String
+    workspaceSlug: String
+  ): WorkspaceProjectsUpdatedMessage!
+    @hasServerRole(role: SERVER_GUEST)
+    @hasScopes(scopes: ["workspace:read", "streams:read"])
+
+  """
+  Track updates to a specific workspace.
+  Either slug or id must be set.
+  """
+  workspaceUpdated(
+    workspaceId: String
+    workspaceSlug: String
+  ): WorkspaceUpdatedMessage!
+    @hasServerRole(role: SERVER_GUEST)
+    @hasScope(scope: "workspace:read")
+}
+
+extend type Mutation {
+  admin: AdminMutations! @hasServerRole(role: SERVER_ADMIN)
+}
+
+input AdminUpdateWorkspacePlanInput {
+  workspaceId: ID!
+  plan: WorkspacePlans!
+  status: WorkspacePlanStatuses!
+}
+
+type AdminMutations {
+  updateWorkspacePlan(input: AdminUpdateWorkspacePlanInput!): Boolean!
+}

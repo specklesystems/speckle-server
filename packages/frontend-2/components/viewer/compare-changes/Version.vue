@@ -4,17 +4,18 @@
       <PreviewImage :preview-url="version.previewUrl" />
     </div>
     <div
-      v-tippy="createdAt"
-      class="bg-foundation-focus inline-block rounded-md px-2 text-xs font-bold truncate text-center py-1"
+      v-tippy="createdAt.full"
+      class="bg-foundation-focus inline-block rounded-md px-2 text-body-2xs font-medium truncate text-center py-1"
     >
-      {{ timeAgoCreatedAt }}
+      <span>
+        {{ createdAt.relative }}
+      </span>
       <br />
-      {{ isNewest ? 'New' : 'Old' }} Version
+      {{ isNewest ? 'New' : 'Old' }} version
     </div>
   </div>
 </template>
 <script setup lang="ts">
-import dayjs from 'dayjs'
 import type { ViewerModelVersionCardItemFragment } from '~~/lib/common/generated/gql/graphql'
 
 const props = defineProps<{
@@ -22,9 +23,10 @@ const props = defineProps<{
   isNewest: boolean
 }>()
 
-const timeAgoCreatedAt = computed(() => dayjs(props.version.createdAt).from(dayjs()))
-
 const createdAt = computed(() => {
-  return dayjs(props.version.createdAt).format('LLL')
+  return {
+    full: formattedFullDate(props.version.createdAt),
+    relative: formattedRelativeDate(props.version.createdAt, { capitalize: true })
+  }
 })
 </script>

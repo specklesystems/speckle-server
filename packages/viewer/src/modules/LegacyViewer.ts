@@ -1,21 +1,21 @@
-import { Box3, MathUtils, Vector2 } from 'three'
+import { Box3, MathUtils, Vector2, Vector3 } from 'three'
 import {
   FilteringExtension,
   type FilteringState
-} from './extensions/FilteringExtension'
+} from './extensions/FilteringExtension.js'
 import {
   type InlineView,
   type PolarView,
   type CanonicalView,
   CameraController
-} from './extensions/CameraController'
-import { SpeckleType } from './loaders/GeometryConverter'
-import { Queries } from './queries/Queries'
-import type { Query, QueryArgsResultMap, QueryResult } from './queries/Query'
+} from './extensions/CameraController.js'
+import { SpeckleType } from './loaders/GeometryConverter.js'
+import { Queries } from './queries/Queries.js'
+import type { Query, QueryArgsResultMap, QueryResult } from './queries/Query.js'
 import {
   SelectionExtension,
   type SelectionExtensionOptions
-} from './extensions/SelectionExtension'
+} from './extensions/SelectionExtension.js'
 import {
   DefaultViewerParams,
   type IViewer,
@@ -24,25 +24,27 @@ import {
   type SunLightConfiguration,
   type ViewerParams,
   StencilOutlineType
-} from '../IViewer'
-import { Viewer } from './Viewer'
-import { SectionTool } from './extensions/SectionTool'
-import { SectionOutlines } from './extensions/SectionOutlines'
-import { type TreeNode, WorldTree } from './tree/WorldTree'
+} from '../IViewer.js'
+import { Viewer } from './Viewer.js'
+import { SectionTool } from './extensions/SectionTool.js'
+import { SectionOutlines } from './extensions/SectionOutlines.js'
+import { type TreeNode, WorldTree } from './tree/WorldTree.js'
 import {
   type MeasurementOptions,
   MeasurementsExtension
-} from './extensions/measurements/MeasurementsExtension'
-import { ExplodeExtension } from './extensions/ExplodeExtension'
+} from './extensions/measurements/MeasurementsExtension.js'
+import { ExplodeExtension } from './extensions/ExplodeExtension.js'
 import {
   DiffExtension,
   type DiffResult,
   VisualDiffMode
-} from './extensions/DiffExtension'
-import { type PropertyInfo } from './filtering/PropertyManager'
-import { BatchObject } from './batching/BatchObject'
-import { SpeckleLoader } from './loaders/Speckle/SpeckleLoader'
-import Logger from 'js-logger'
+} from './extensions/DiffExtension.js'
+import { type PropertyInfo } from './filtering/PropertyManager.js'
+import { BatchObject } from './batching/BatchObject.js'
+import { SpeckleLoader } from './loaders/Speckle/SpeckleLoader.js'
+import Logger from './utils/Logger.js'
+import { ViewModes } from './extensions/ViewModes.js'
+import { HybridCameraController } from './extensions/HybridCameraController.js'
 
 class LegacySelectionExtension extends SelectionExtension {
   /** FE2 'manually' selects objects pon it's own, so we're disabling the extension's event handler
@@ -61,6 +63,7 @@ class HighlightExtension extends SelectionExtension {
       selectionMaterialData: {
         id: MathUtils.generateUUID(),
         color: 0x04cbfb,
+        emissive: 0x0,
         opacity: 1,
         roughness: 1,
         metalness: 0,
@@ -118,7 +121,7 @@ export class LegacyViewer extends Viewer {
     params: ViewerParams = DefaultViewerParams
   ) {
     super(container, params)
-    this.cameraController = this.createExtension(CameraController)
+    this.cameraController = this.createExtension(HybridCameraController)
     this.selection = this.createExtension(LegacySelectionExtension)
     this.sections = this.createExtension(SectionTool)
     this.createExtension(SectionOutlines)
@@ -127,6 +130,7 @@ export class LegacyViewer extends Viewer {
     this.explodeExtension = this.createExtension(ExplodeExtension)
     this.diffExtension = this.createExtension(DiffExtension)
     this.highlightExtension = this.createExtension(HighlightExtension)
+    this.createExtension(ViewModes)
   }
 
   public async init(): Promise<void> {
@@ -152,7 +156,13 @@ export class LegacyViewer extends Viewer {
     if (!box) {
       box = this.speckleRenderer.sceneBox
     }
-    this.sections.setBox(box as Box3, offset)
+    this.sections.setBox(
+      new Box3(
+        new Vector3(box.min.x, box.min.y, box.min.z),
+        new Vector3(box.max.x, box.max.y, box.max.z)
+      ),
+      offset
+    )
   }
 
   public getSectionBoxFromObjects(objectIds: string[]) {
@@ -207,7 +217,7 @@ export class LegacyViewer extends Viewer {
     ghost = false
   ): Promise<FilteringState> {
     return new Promise<FilteringState>((resolve) => {
-      const filteringState = this.preserveSelectionFilter(() => {
+      const filteringState = this.preserveSelectionHighlightFilter(() => {
         return this.filtering.hideObjects(
           objectIds,
           stateKey,
@@ -225,7 +235,7 @@ export class LegacyViewer extends Viewer {
     includeDescendants = false
   ): Promise<FilteringState> {
     return new Promise<FilteringState>((resolve) => {
-      const filteringState = this.preserveSelectionFilter(() => {
+      const filteringState = this.preserveSelectionHighlightFilter(() => {
         return this.filtering.showObjects(objectIds, stateKey, includeDescendants)
       })
       resolve(filteringState)
@@ -239,7 +249,7 @@ export class LegacyViewer extends Viewer {
     ghost = true
   ): Promise<FilteringState> {
     return new Promise<FilteringState>((resolve) => {
-      const filteringState = this.preserveSelectionFilter(() => {
+      const filteringState = this.preserveSelectionHighlightFilter(() => {
         return this.filtering.isolateObjects(
           objectIds,
           stateKey,
@@ -257,7 +267,7 @@ export class LegacyViewer extends Viewer {
     includeDescendants = false
   ): Promise<FilteringState> {
     return new Promise<FilteringState>((resolve) => {
-      const filteringState = this.preserveSelectionFilter(() => {
+      const filteringState = this.preserveSelectionHighlightFilter(() => {
         return this.filtering.unIsolateObjects(objectIds, stateKey, includeDescendants)
       })
       resolve(filteringState)
@@ -277,7 +287,7 @@ export class LegacyViewer extends Viewer {
 
   public setColorFilter(property: PropertyInfo, ghost = true): Promise<FilteringState> {
     return new Promise<FilteringState>((resolve) => {
-      const filteringState = this.preserveSelectionFilter(() => {
+      const filteringState = this.preserveSelectionHighlightFilter(() => {
         return this.filtering.setColorFilter(property, ghost)
       })
       resolve(filteringState)
@@ -286,7 +296,7 @@ export class LegacyViewer extends Viewer {
 
   public removeColorFilter(): Promise<FilteringState> {
     return new Promise<FilteringState>((resolve) => {
-      const filteringState = this.preserveSelectionFilter(() => {
+      const filteringState = this.preserveSelectionHighlightFilter(() => {
         return this.filtering.removeColorFilter()
       })
       resolve(filteringState)
@@ -297,7 +307,7 @@ export class LegacyViewer extends Viewer {
     groups: { objectIds: string[]; color: string }[]
   ): Promise<FilteringState> {
     return new Promise<FilteringState>((resolve) => {
-      const filteringState = this.preserveSelectionFilter(() => {
+      const filteringState = this.preserveSelectionHighlightFilter(() => {
         return this.filtering.setUserObjectColors(groups)
       })
       resolve(filteringState)
@@ -306,20 +316,25 @@ export class LegacyViewer extends Viewer {
 
   public resetFilters(): Promise<FilteringState | null> {
     return new Promise<FilteringState>((resolve) => {
-      const filteringState = this.preserveSelectionFilter(() => {
+      const filteringState = this.preserveSelectionHighlightFilter(() => {
         return this.filtering.resetFilters()
       })
       resolve(filteringState)
     })
   }
 
-  private preserveSelectionFilter(
+  private preserveSelectionHighlightFilter(
     filterFn: () => FilteringState | null
   ): FilteringState {
     const selectedObjects = this.selection
       .getSelectedObjects()
       .map((obj) => obj.id) as string[]
+    const highLightedObjects = this.highlightExtension
+      .getSelectedObjects()
+      .map((obj) => obj.id) as string[]
     if (selectedObjects.length) this.selection.clearSelection()
+    if (highLightedObjects.length)
+      this.highlightExtension.unselectObjects(highLightedObjects)
     const filteringState = filterFn()
     if (filteringState) {
       if (!filteringState.selectedObjects)
@@ -327,6 +342,8 @@ export class LegacyViewer extends Viewer {
 
       this.selection.selectObjects(filteringState.selectedObjects)
     }
+    if (highLightedObjects.length)
+      this.highlightExtension.selectObjects(highLightedObjects)
     return filteringState || this.filtering.filteringState
   }
 

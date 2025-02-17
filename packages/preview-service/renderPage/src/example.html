@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Speckle Viewer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!--
+     <link rel="preconnect" href="https://fonts.gstatic.com">
+      <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,700&display=swap" rel="stylesheet">
+     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.min.css" integrity="sha512-EZLkOqwILORob+p0BXZc+Vm3RgJBOe1Iq/0fiI7r/wJgzOFZMlsqTa29UEl6v6U6gsV4uIpsNZoV32YZqrCRCQ==" crossorigin="anonymous" />
+-->
+    <link href="{%=o.htmlWebpackPlugin.files.favicon%}" rel="shortcut icon" />
+    <style type="text/css">
+      body {
+        font-family: 'Space Mono', monospace !important;
+        margin: 0px;
+      }
+      button {
+        font-family: 'Space Mono', monospace !important;
+        border-color: #0a66ff;
+      }
+      #renderer {
+        height: 400px;
+        width: 700px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="renderer"></div>
+  </body>
+</html>

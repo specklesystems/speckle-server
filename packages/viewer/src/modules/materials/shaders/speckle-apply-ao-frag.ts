@@ -1,20 +1,27 @@
 export const speckleApplyAoFrag = `
-		uniform float opacity;
-		uniform sampler2D tDiffuse;
-        uniform sampler2D tDiffuseInterp;
-		varying vec2 vUv;
-        #if ACCUMULATE == 1
-            uniform float frameIndex;
+
+        #if BLEND_AO == 1
+		    uniform sampler2D tAo;
         #endif
+        #if BLEND_EDGES == 1
+            uniform sampler2D tEdges;
+        #endif
+		varying vec2 vUv;
+
+        #define ONE3 vec3(1.,1.,1.)
 
 		void main() {
-            vec3 currentSample = texture2D( tDiffuse, vUv ).rgb;
+            vec3 ao = ONE3;
+            vec3 edges = ONE3;
             
-            #if ACCUMULATE == 1
-                vec3 interpSample = texture2D( tDiffuseInterp, vUv ).rgb;
-			    gl_FragColor.rgb = mix(interpSample, currentSample, frameIndex/float(NUM_FRAMES));
-            #else
-                gl_FragColor.rgb = currentSample;
+            #if BLEND_AO == 1
+                ao = texture2D( tAo, vUv ).rgb;
             #endif
+
+            #if BLEND_EDGES == 1
+                edges = texture2D (tEdges, vUv).rgb;
+            #endif
+             
+            gl_FragColor.rgb = min(ao, edges);
 			gl_FragColor.a = 1.;
 		}`

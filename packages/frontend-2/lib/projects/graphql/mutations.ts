@@ -21,6 +21,19 @@ export const createProjectMutation = graphql(`
   }
 `)
 
+export const createWorkspaceProjectMutation = graphql(`
+  mutation CreateWorkspaceProject($input: WorkspaceProjectCreateInput!) {
+    workspaceMutations {
+      projects {
+        create(input: $input) {
+          ...ProjectPageProject
+          ...ProjectDashboardItem
+        }
+      }
+    }
+  }
+`)
+
 export const updateModelMutation = graphql(`
   mutation UpdateModel($input: UpdateModelInput!) {
     modelMutations {
@@ -56,11 +69,42 @@ export const updateProjectRoleMutation = graphql(`
   }
 `)
 
+export const updateWorkspaceProjectRoleMutation = graphql(`
+  mutation UpdateWorkspaceProjectRole($input: ProjectUpdateRoleInput!) {
+    workspaceMutations {
+      projects {
+        updateRole(input: $input) {
+          id
+          team {
+            id
+            role
+          }
+        }
+      }
+    }
+  }
+`)
+
 export const inviteProjectUserMutation = graphql(`
   mutation InviteProjectUser($projectId: ID!, $input: [ProjectInviteCreateInput!]!) {
     projectMutations {
       invites {
         batchCreate(projectId: $projectId, input: $input) {
+          ...ProjectPageTeamDialog
+        }
+      }
+    }
+  }
+`)
+
+export const inviteWorkspaceProjectUserMutation = graphql(`
+  mutation InviteWorkspaceProjectUser(
+    $projectId: ID!
+    $inputs: [WorkspaceProjectInviteCreateInput!]!
+  ) {
+    projectMutations {
+      invites {
+        createForWorkspace(projectId: $projectId, inputs: $inputs) {
           ...ProjectPageTeamDialog
         }
       }
@@ -226,6 +270,28 @@ export const createTestAutomationMutation = graphql(`
         createTestAutomation(input: $input) {
           id
           ...ProjectPageAutomationsRow_Automation
+        }
+      }
+    }
+  }
+`)
+
+export const useMoveProjectToWorkspaceMutation = graphql(`
+  mutation MoveProjectToWorkspace($workspaceId: String!, $projectId: String!) {
+    workspaceMutations {
+      projects {
+        moveToWorkspace(workspaceId: $workspaceId, projectId: $projectId) {
+          id
+          workspace {
+            id
+            projects {
+              items {
+                id
+              }
+            }
+            ...ProjectsMoveToWorkspaceDialog_Workspace
+            ...MoveProjectsDialog_Workspace
+          }
         }
       }
     }

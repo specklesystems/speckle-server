@@ -1,6 +1,6 @@
 <template>
   <div>
-    <h1 class="block h4 font-bold my-4">Versions</h1>
+    <h1 class="block text-heading-lg my-4">Versions</h1>
     <div
       v-if="selectedItems.length"
       class="flex flex-col space-y-2 sm:space-y-0 sm:flex-row sm:justify-between sm:items-center"
@@ -12,7 +12,11 @@
       <div
         class="flex flex-wrap space-y-2 sm:items-center sm:space-x-2 sm:space-y-0 sm:flex-nowrap"
       >
-        <FormButton outlined class="w-full sm:w-auto" @click="selectedItems = []">
+        <FormButton
+          color="outline"
+          class="w-full sm:w-auto"
+          @click="selectedItems = []"
+        >
           Clear selection
         </FormButton>
         <div class="flex space-x-2 w-full sm:w-auto">
@@ -25,7 +29,7 @@
     </div>
     <div
       v-if="items?.length && project.model"
-      class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mt-4 relative z-10"
+      class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-3 mt-4 relative z-10"
     >
       <!-- Decrementing z-index necessary for the actions menu to render correctly. Each card has its own stacking context because of the scale property -->
       <template v-for="(item, i) in items" :key="item.id">
@@ -56,6 +60,7 @@
         ref="importArea"
         :project-id="project.id"
         :model-name="project.model.name"
+        :disabled="project.workspace?.readOnly"
         class="h-full w-full"
       />
     </div>
@@ -136,6 +141,10 @@ graphql(`
     }
     ...ProjectModelPageVersionsPagination
     ...ProjectsModelPageEmbed_Project
+    workspace {
+      id
+      readOnly
+    }
   }
 `)
 

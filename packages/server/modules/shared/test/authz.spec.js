@@ -5,18 +5,18 @@ const {
   authSuccess,
   validateRole,
   validateScope,
-  contextRequiresStream,
   allowForAllRegisteredUsersOnPublicStreamsWithPublicComments,
   allowForRegisteredUsersOnPublicStreamsEvenWithoutRole,
   allowForServerAdmins,
-  validateResourceAccess
+  validateResourceAccess,
+  validateRequiredStreamFactory
 } = require('@/modules/shared/authz')
 const {
   ForbiddenError: SFE,
   UnauthorizedError: SUE,
-  BadRequestError,
   UnauthorizedError,
-  ContextError
+  ContextError,
+  NotFoundError
 } = require('@/modules/shared/errors')
 const { Roles } = require('@speckle/shared')
 const {
@@ -188,7 +188,9 @@ describe('AuthZ @shared', () => {
       const step = validateScope({ requiredScope: 'play mahjong' })
       const { authResult } = await step({ context: {}, authResult: {} })
       expect(authResult.authorized).to.equal(false)
-      const expectedError = new SFE('You do not have the required privileges.')
+      const expectedError = new SFE(
+        'Your auth token does not have the required scope: play mahjong.'
+      )
       expect(authResult.error.message).to.equal(expectedError.message)
       expect(authResult.error.name).to.equal(expectedError.name)
     })
@@ -199,7 +201,9 @@ describe('AuthZ @shared', () => {
         authResult: {}
       })
       expect(authResult.authorized).to.equal(false)
-      const expectedError = new SFE('You do not have the required privileges.')
+      const expectedError = new SFE(
+        'Your auth token does not have the required scope: play mahjong.'
+      )
 
       expect(authResult.error.message).to.equal(expectedError.message)
       expect(authResult.error.name).to.equal(expectedError.name)
@@ -264,7 +268,7 @@ describe('AuthZ @shared', () => {
 
       expect(res.authResult.authorized).to.be.false
       expect(res.authResult.error.message).to.equal(
-        'You do not have the required privileges.'
+        'You are not authorized to access this resource.'
       )
     })
 
@@ -306,24 +310,24 @@ describe('AuthZ @shared', () => {
       expect(authResult.error.name).to.equal(expectedError.name)
     }
     it('Without streamId in the params it raises context error', async () => {
-      const step = contextRequiresStream({
+      const step = validateRequiredStreamFactory({
         getStream: async () => ({ ur: 'bamboozled' }),
         getAutomationProject: async () => null
       })
       const { authResult } = await step({ params: {} })
       expectAuthError(
-        new ContextError("The context doesn't have a streamId or automationId"),
+        new ContextError("The context doesn't have a streamId"),
         authResult
       )
     })
     it('If params is not defined it raises context error', async () => {
-      const step = contextRequiresStream({
+      const step = validateRequiredStreamFactory({
         getStream: async () => ({ ur: 'bamboozled' }),
         getAutomationProject: async () => null
       })
       const { authResult } = await step({})
       expectAuthError(
-        new ContextError("The context doesn't have a streamId or automationId"),
+        new ContextError("The context doesn't have a streamId"),
         authResult
       )
     })
@@ -332,7 +336,7 @@ describe('AuthZ @shared', () => {
         id: 'foo',
         name: 'bar'
       }
-      const step = contextRequiresStream({
+      const step = validateRequiredStreamFactory({
         getStream: async () => demoStream,
         getAutomationProject: async () => null
       })
@@ -343,7 +347,7 @@ describe('AuthZ @shared', () => {
       expect(context.stream).to.deep.equal(demoStream)
     })
     it('If context is not defined return auth failure', async () => {
-      const step = contextRequiresStream({
+      const step = validateRequiredStreamFactory({
         getStream: async () => {},
         getAutomationProject: async () => null
       })
@@ -353,7 +357,7 @@ describe('AuthZ @shared', () => {
     })
     it('If stream getter raises, the error is handled', async () => {
       const errorMessage = 'oh dangit'
-      const step = contextRequiresStream({
+      const step = validateRequiredStreamFactory({
         getStream: async () => {
           throw new Error(errorMessage)
         },
@@ -367,7 +371,7 @@ describe('AuthZ @shared', () => {
       expectAuthError(new ContextError(errorMessage), authResult)
     })
     it("If stream getter doesn't find a stream it returns fatal auth failure", async () => {
-      const step = contextRequiresStream({
+      const step = validateRequiredStreamFactory({
         getStream: async () => {},
         getAutomationProject: async () => null
       })
@@ -376,7 +380,13 @@ describe('AuthZ @shared', () => {
         context: {}
       })
 
-      expectAuthError(new BadRequestError('Stream inputs are malformed'), authResult)
+      expectAuthError(
+        new NotFoundError(
+          'Project ID is malformed and cannot be found, or the project does not exist',
+          { info: { projectId: 'the need for stream' } }
+        ),
+        authResult
+      )
     })
   })
   describe('Escape hatches', () => {

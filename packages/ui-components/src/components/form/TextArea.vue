@@ -1,10 +1,23 @@
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
-  <div :class="[fullWidth ? 'w-full' : '']">
-    <label :for="name" :class="labelClasses">
-      <span>{{ title }}</span>
-    </label>
-    <div class="relative">
+  <div :class="computedWrapperClasses">
+    <div
+      :class="
+        labelPosition === 'left'
+          ? 'w-full md:w-6/12 flex flex-col justify-center'
+          : 'w-full'
+      "
+    >
+      <label :for="name" :class="labelClasses">
+        <span>{{ title }}</span>
+        <div v-if="showRequired" class="text-danger text-body-xs opacity-80">*</div>
+        <div v-else-if="showOptional" class="text-body-2xs font-normal">(optional)</div>
+      </label>
+    </div>
+    <div
+      class="relative"
+      :class="labelPosition === 'left' ? 'w-full md:w-6/12' : 'w-full'"
+    >
       <textarea
         :id="name"
         ref="inputElement"
@@ -13,8 +26,9 @@
         :class="[
           coreClasses,
           iconClasses,
+          sizeClasses,
           textareaClasses || '',
-          'min-h-[6rem] sm:min-h-[3rem] simple-scrollbar text-sm'
+          'min-h-[6rem] sm:min-h-[3rem] simple-scrollbar'
         ]"
         :placeholder="placeholder"
         :disabled="disabled"
@@ -23,6 +37,7 @@
         v-bind="$attrs"
         @change="$emit('change', { event: $event, value })"
         @input="$emit('input', { event: $event, value })"
+        @keydown.stop
       />
       <a
         v-if="shouldShowClear"
@@ -37,7 +52,7 @@
       <div
         v-if="errorMessage"
         :class="[
-          'pointer-events-none absolute inset-y-0 right-0 flex items-start mt-2',
+          'pointer-events-none absolute top-0 bottom-0 right-0 flex items-start mt-2',
           shouldShowClear ? 'pr-8' : 'pr-2'
         ]"
       >
@@ -45,13 +60,17 @@
       </div>
       <div
         v-if="showRequired && !errorMessage"
-        class="pointer-events-none absolute inset-y-0 mt-0.5 text-4xl right-0 flex items-start text-danger opacity-50"
+        class="pointer-events-none absolute top-0 bottom-0 mt-0.5 text-4xl right-0 flex items-start text-danger opacity-50"
         :class="[shouldShowClear ? 'pr-8' : 'pr-2']"
       >
         *
       </div>
     </div>
-    <p v-if="helpTipId" :id="helpTipId" :class="helpTipClasses">
+    <p
+      v-if="labelPosition === 'top' && helpTipId"
+      :id="helpTipId"
+      :class="['mt-1.5', helpTipClasses]"
+    >
       {{ helpTip }}
     </p>
   </div>
@@ -61,8 +80,11 @@ import { ExclamationCircleIcon, XMarkIcon } from '@heroicons/vue/20/solid'
 import type { Nullable } from '@speckle/shared'
 import type { RuleExpression } from 'vee-validate'
 import { computed, ref, toRefs } from 'vue'
+import type { LabelPosition } from '~~/src/composables/form/input'
 import type { InputColor } from '~~/src/composables/form/textInput'
 import { useTextInputCore } from '~~/src/composables/form/textInput'
+
+type InputSize = 'sm' | 'base' | 'lg' | 'xl'
 
 const emit = defineEmits<{
   (e: 'update:modelValue', val: string): void
@@ -91,13 +113,19 @@ const props = withDefaults(
     showClear?: boolean
     fullWidth?: boolean
     showRequired?: boolean
+    showOptional?: boolean
     color?: InputColor
     textareaClasses?: string
+    size?: InputSize
+    labelPosition?: LabelPosition
+    wrapperClasses?: string
   }>(),
   {
     useLabelInErrors: true,
     modelValue: '',
-    color: 'page'
+    color: 'page',
+    labelPosition: 'top',
+    wrapperClasses: ''
   }
 )
 
@@ -131,6 +159,37 @@ const iconClasses = computed(() => {
   }
 
   return classParts.join(' ')
+})
+
+const sizeClasses = computed((): string => {
+  switch (props.size) {
+    case 'sm':
+      return 'text-2xs !leading-tight'
+    case 'lg':
+      return 'text-sm'
+    case 'xl':
+      return 'text-base'
+    case 'base':
+    default:
+      return 'text-body-xs'
+  }
+})
+
+const computedWrapperClasses = computed(() => {
+  const classes = ['flex', props.wrapperClasses]
+  if (props.fullWidth) {
+    classes.push('w-full')
+  }
+
+  if (props.labelPosition === 'top') {
+    classes.push('flex-col')
+  }
+  if (props.labelPosition === 'left') {
+    classes.push(
+      'w-full space-y-1 sm:space-y-0 sm:space-x-8 flex-col sm:flex-row items-start'
+    )
+  }
+  return classes.join(' ')
 })
 
 defineExpose({ focus })

@@ -10,8 +10,8 @@ import {
   Uint32BufferAttribute,
   WebGLRenderer
 } from 'three'
-import { Geometry } from '../converter/Geometry'
-import { NodeRenderView } from '../tree/NodeRenderView'
+import { Geometry } from '../converter/Geometry.js'
+import { NodeRenderView } from '../tree/NodeRenderView.js'
 import {
   AllBatchUpdateRange,
   type Batch,
@@ -20,19 +20,19 @@ import {
   GeometryType,
   INSTANCE_TRANSFORM_BUFFER_STRIDE,
   NoneBatchUpdateRange
-} from './Batch'
-import SpeckleInstancedMesh from '../objects/SpeckleInstancedMesh'
-import { ObjectLayers } from '../../IViewer'
+} from './Batch.js'
+import SpeckleInstancedMesh from '../objects/SpeckleInstancedMesh.js'
+import { ObjectLayers } from '../../IViewer.js'
 import {
   AccelerationStructure,
   DefaultBVHOptions
-} from '../objects/AccelerationStructure'
-import { InstancedBatchObject } from './InstancedBatchObject'
-import Logger from 'js-logger'
-import Materials from '../materials/Materials'
-import { DrawRanges } from './DrawRanges'
-import SpeckleStandardColoredMaterial from '../materials/SpeckleStandardColoredMaterial'
-import { BatchObject } from './BatchObject'
+} from '../objects/AccelerationStructure.js'
+import { InstancedBatchObject } from './InstancedBatchObject.js'
+import Materials from '../materials/Materials.js'
+import { DrawRanges } from './DrawRanges.js'
+import SpeckleStandardColoredMaterial from '../materials/SpeckleStandardColoredMaterial.js'
+import { BatchObject } from './BatchObject.js'
+import Logger from '../utils/Logger.js'
 
 export class InstancedMeshBatch implements Batch {
   public id: string
@@ -43,10 +43,10 @@ export class InstancedMeshBatch implements Batch {
   public mesh: SpeckleInstancedMesh
   protected drawRanges: DrawRanges = new DrawRanges()
 
-  private instanceTransformBuffer0!: Float32Array
-  private instanceTransformBuffer1!: Float32Array
+  private instanceTransformBuffer0: Float32Array
+  private instanceTransformBuffer1: Float32Array
   private transformBufferIndex: number = 0
-  private instanceGradientBuffer!: Float32Array
+  private instanceGradientBuffer: Float32Array
 
   private needsShuffle = false
 
@@ -271,11 +271,9 @@ export class InstancedMeshBatch implements Batch {
            *  a ton of artifacts. To avoid this, we are shifting the sampling indices so they're right on the center of each texel, so no inconsistent
            *  sampling can occur.
            */
-          if (range.materialOptions.rampIndex && range.materialOptions.rampWidth) {
-            const shiftedIndex =
-              range.materialOptions.rampIndex + 0.5 / range.materialOptions.rampWidth
-            this.updateGradientIndexBufferData(start / 16, shiftedIndex)
-          }
+          const shiftedIndex =
+            range.materialOptions.rampIndex + 0.5 / range.materialOptions.rampWidth
+          this.updateGradientIndexBufferData(start / 16, shiftedIndex)
         }
         /** We need to update the texture here, because each batch uses it's own clone for any material we use on it
          *  because otherwise three.js won't properly update our custom uniforms
@@ -564,6 +562,9 @@ export class InstancedMeshBatch implements Batch {
     const colors: number[] | undefined =
       this.renderViews[0].renderData.geometry.attributes?.COLOR
 
+    const normals: number[] | undefined =
+      this.renderViews[0].renderData.geometry.attributes?.NORMAL
+
     /** Catering to typescript
      *  There is no unniverse where indices or positions are undefined at this point
      */
@@ -575,6 +576,7 @@ export class InstancedMeshBatch implements Batch {
         ? new Uint32Array(indices)
         : new Uint16Array(indices),
       new Float64Array(positions),
+      normals ? new Float32Array(normals) : undefined,
       colors ? new Float32Array(colors) : undefined
     )
     this.mesh = new SpeckleInstancedMesh(this.geometry)
@@ -633,6 +635,7 @@ export class InstancedMeshBatch implements Batch {
   private makeInstancedMeshGeometry(
     indices: Uint32Array | Uint16Array,
     position: Float64Array,
+    normal?: Float32Array,
     color?: Float32Array
   ): BufferGeometry {
     this.geometry = new BufferGeometry()
@@ -657,7 +660,11 @@ export class InstancedMeshBatch implements Batch {
 
     this.instanceGradientBuffer = new Float32Array(this.renderViews.length)
 
-    Geometry.computeVertexNormals(this.geometry, position)
+    if (normal) {
+      this.geometry
+        .setAttribute('normal', new Float32BufferAttribute(normal, 3))
+        .normalizeNormals()
+    } else Geometry.computeVertexNormals(this.geometry, position)
 
     Geometry.updateRTEGeometry(this.geometry, position)
 

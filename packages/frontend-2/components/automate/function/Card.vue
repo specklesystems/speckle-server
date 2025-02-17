@@ -2,70 +2,71 @@
   <Component
     :is="noButtons ? NuxtLink : 'div'"
     :class="classes"
-    :to="noButtons ? automationFunctionRoute(fn.id) : undefined"
+    :to="noButtons ? automateFunctionRoute(fn.id) : undefined"
     :external="externalMoreInfo"
     :target="externalMoreInfo ? '_blank' : undefined"
+    class="rounded-lg border border-outline-3 bg-foundation overflow-hidden"
   >
-    <div
-      class="px-4 py-4 flex flex-col gap-3 rounded-lg border border-outline-3 bg-foundation relative"
-    >
+    <div class="px-4 py-4 flex flex-col gap-3 relative h-full">
       <div class="flex gap-3 items-center" :class="{ 'w-4/5': hasLabel }">
         <AutomateFunctionLogo :logo="fn.logo" />
         <div class="flex flex-col truncate">
-          <div class="normal font-semibold text-foreground truncate hover:underline">
-            <RouterLink
-              :to="automationFunctionRoute(fn.id)"
+          <div
+            :class="[
+              'text-heading-sm text-foreground truncate',
+              noButtons ? '' : 'hover:underline'
+            ]"
+          >
+            <Component
+              :is="noButtons ? 'div' : NuxtLink"
+              :to="automateFunctionRoute(fn.id)"
               :target="externalMoreInfo ? '_blank' : undefined"
+              class="truncate"
             >
               {{ fn.name }}
-            </RouterLink>
+            </Component>
           </div>
-          <div class="label-light flex items-center space-x-1">
+          <div class="text-body-2xs flex items-center text-foreground-2 space-x-0.5">
             <span>by</span>
-            <CommonTextLink external :to="fn.repo.url" size="sm">
+            <Component :is="noButtons ? 'div' : NuxtLink" :to="fn.repo.url" external>
               {{ fn.repo.owner }}
-            </CommonTextLink>
+            </Component>
           </div>
         </div>
       </div>
-      <div class="label-light text-foreground-2 line-clamp-3 h-16 whitespace-normal">
+      <div class="text-body-xs text-foreground-2 line-clamp-3 h-18 flex-1">
         {{ plaintextDescription }}
       </div>
-      <div v-if="!noButtons" class="flex flex-col sm:flex-row sm:self-end gap-2">
+      <div v-if="!noButtons" class="flex flex-col sm:flex-row gap-x-1">
         <template v-if="showEdit">
-          <FormButton
-            :icon-left="PencilIcon"
-            full-width
-            outlined
-            @click="$emit('edit')"
-          >
-            Edit Details
+          <FormButton full-width color="outline" @click="$emit('edit')">
+            Edit details
           </FormButton>
         </template>
         <template v-else>
-          <FormButton
-            text
-            :to="automationFunctionRoute(fn.id)"
-            :external="externalMoreInfo"
-            :target="externalMoreInfo ? '_blank' : undefined"
-          >
-            Learn More
-          </FormButton>
           <FormButton
             :icon-left="selected ? CheckIcon : undefined"
             @click="$emit('use')"
           >
             {{ selected ? 'Selected' : 'Select' }}
           </FormButton>
+          <FormButton
+            color="subtle"
+            :to="automateFunctionRoute(fn.id)"
+            :external="externalMoreInfo"
+            :target="externalMoreInfo ? '_blank' : undefined"
+          >
+            Learn more
+          </FormButton>
         </template>
       </div>
       <div class="absolute top-0 right-0">
         <div
           v-if="hasLabel"
-          class="rounded-bl-lg rounded-tr-[7px] text-xs px-2 py-1"
+          class="rounded-bl-md rounded-tr-lg font-medium text-body-3xs px-1.5 py-0.5"
           :class="{
-            'bg-foundation-focus text-foreground': fn.isFeatured,
-            'bg-warning text-foreground-on-primary': isOutdated
+            'bg-info-lighter text-primary-focus': fn.isFeatured,
+            'bg-danger-lighter text-danger-darker': isOutdated
           }"
         >
           <template v-if="isOutdated">Outdated</template>
@@ -78,8 +79,8 @@
 <script setup lang="ts">
 import { graphql } from '~/lib/common/generated/gql'
 import type { AutomationsFunctionsCard_AutomateFunctionFragment } from '~/lib/common/generated/gql/graphql'
-import { CheckIcon, PencilIcon } from '@heroicons/vue/24/outline'
-import { automationFunctionRoute } from '~/lib/common/helpers/route'
+import { CheckIcon } from '@heroicons/vue/24/outline'
+import { automateFunctionRoute } from '~/lib/common/helpers/route'
 import { useMarkdown } from '~/lib/common/composables/markdown'
 
 graphql(`
@@ -123,9 +124,9 @@ const classes = computed(() => {
   const classParts = ['rounded-lg']
 
   if (props.selected) {
-    classParts.push('ring-2 ring-primary')
+    classParts.push('border-primary')
   } else if (props.noButtons) {
-    classParts.push('ring-outline-2 hover:ring-2 cursor-pointer')
+    classParts.push('hover:border-outline-5 cursor-pointer')
   }
 
   return classParts.join(' ')

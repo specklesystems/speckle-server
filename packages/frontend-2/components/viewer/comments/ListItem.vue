@@ -2,7 +2,7 @@
 <template>
   <!-- eslint-disable-next-line vuejs-accessibility/click-events-have-key-events -->
   <div
-    :class="`py-1 sm:py-2 my-1 sm:my-2 px-2 flex flex-col space-y-1 bg-foundation border-l-4 hover:shadow-lg hover:bg-primary-muted rounded transition cursor-pointer
+    :class="`py-1 sm:py-2 my-1 sm:my-2 px-2 flex flex-col bg-foundation border-l-4 hover:shadow-lg hover:bg-primary-muted rounded transition cursor-pointer
       ${isOpenInViewer ? 'border-primary' : 'border-transparent'}
     `"
     @click="open(thread.id)"
@@ -11,24 +11,22 @@
       <UserAvatarGroup :users="threadAuthors" />
       <FormButton
         v-tippy="thread.archived ? 'Unresolve' : 'Resolve'"
-        size="sm"
         :icon-left="thread.archived ? CheckCircleIcon : CheckCircleIconOutlined"
         text
         hide-text
         :disabled="!canArchiveOrUnarchive"
-        :color="thread.archived ? 'default' : 'default'"
         @click.stop="toggleCommentResolvedStatus()"
       ></FormButton>
     </div>
     <div class="flex items-center space-x-1">
-      <span class="grow truncate text-xs font-medium text-foreground-2">
+      <span class="grow truncate text-body-xs font-medium text-foreground-2">
         {{ thread.author.name }}
         <span v-if="threadAuthors.length !== 1">
           & {{ thread.replyAuthors.totalCount }} others
         </span>
       </span>
     </div>
-    <div class="truncate text-xs sm:text-sm mb-1">
+    <div class="truncate text-body-xs mb-1">
       {{ thread.rawText }}
     </div>
     <div
@@ -46,8 +44,8 @@
         {{ thread.replies.totalCount }}
         {{ thread.replies.totalCount === 1 ? 'reply' : 'replies' }}
       </span>
-      <span class="text-foreground-2 text-xs">
-        {{ formattedDate }}
+      <span v-tippy="createdAt.full" class="text-foreground-2 text-body-2xs">
+        {{ createdAt.relative }}
       </span>
     </div>
   </div>
@@ -62,7 +60,6 @@ import {
   useInjectedViewerLoadedResources,
   useInjectedViewerState
 } from '~~/lib/viewer/composables/setup'
-import dayjs from 'dayjs'
 import { ResourceType } from '~~/lib/common/generated/gql/graphql'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { useArchiveComment } from '~~/lib/viewer/composables/commentManagement'
@@ -80,6 +77,15 @@ const {
   threads: { openThread }
 } = useInjectedViewerInterfaceState()
 const { open: openThreadRaw } = useThreadUtilities()
+const { activeUser } = useActiveUser()
+const archiveComment = useArchiveComment()
+const { triggerNotification } = useGlobalToast()
+const {
+  projectId,
+  resources: {
+    response: { project }
+  }
+} = useInjectedViewerState()
 
 const mp = useMixpanel()
 const open = (id: string) => {
@@ -92,7 +98,12 @@ const open = (id: string) => {
   })
 }
 
-const formattedDate = computed(() => dayjs(props.thread.createdAt).from(dayjs()))
+const createdAt = computed(() => {
+  return {
+    full: formattedFullDate(props.thread.createdAt),
+    relative: formattedRelativeDate(props.thread.createdAt, { capitalize: true })
+  }
+})
 
 const isThreadResourceLoaded = computed(() => {
   const thread = props.thread
@@ -123,15 +134,6 @@ const threadAuthors = computed(() => {
   return authors
 })
 
-const { activeUser } = useActiveUser()
-const archiveComment = useArchiveComment()
-const { triggerNotification } = useGlobalToast()
-const {
-  resources: {
-    response: { project }
-  }
-} = useInjectedViewerState()
-
 const canArchiveOrUnarchive = computed(
   () =>
     activeUser.value &&
@@ -140,7 +142,11 @@ const canArchiveOrUnarchive = computed(
 )
 
 const toggleCommentResolvedStatus = async () => {
-  await archiveComment(props.thread.id, !props.thread.archived)
+  await archiveComment({
+    commentId: props.thread.id,
+    projectId: projectId.value,
+    archived: !props.thread.archived
+  })
   mp.track('Comment Action', {
     type: 'action',
     name: 'archive',

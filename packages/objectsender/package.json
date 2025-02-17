@@ -1,0 +1,74 @@
+{
+  "name": "@speckle/objectsender",
+  "version": "1.0.1",
+  "description": "Simple API helper to serialize and send objects to the server.",
+  "type": "module",
+  "main": "dist/objectsender.cjs",
+  "module": "dist/objectsender.js",
+  "homepage": "https://speckle.systems",
+  "types": "./dist/index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/specklesystems/speckle-server.git",
+    "directory": "packages/objectsender"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "dev": "vite",
+    "example": "yarn dev",
+    "build": "tsc && vite build",
+    "prepack": "yarn build",
+    "test": "vitest",
+    "test:ci": "vitest --run --coverage"
+  },
+  "keywords": [
+    "speckle",
+    "aec",
+    "speckle api"
+  ],
+  "author": "AEC Systems",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@speckle/shared": "workspace:^",
+    "lodash": "^4.17.21",
+    "lodash-es": "^4.17.21",
+    "reflect-metadata": "^0.2.2"
+  },
+  "devDependencies": {
+    "@types/lodash": "^4.17.5",
+    "@types/lodash-es": "^4.17.12",
+    "@typescript-eslint/eslint-plugin": "^7.12.0",
+    "@typescript-eslint/parser": "^7.12.0",
+    "@vitest/coverage-v8": "^1.6.0",
+    "eslint": "^9.4.0",
+    "eslint-config-prettier": "^9.1.0",
+    "prettier": "^3.3.2",
+    "typescript": "^5.2.2",
+    "vite": "^5.2.0",
+    "vite-plugin-dts": "^3.9.1",
+    "vitest": "^1.6.0"
+  },
+  "exports": {
+    ".": {
+      "import": {
+        "default": "./dist/objectsender.js",
+        "types": "./dist/index.d.ts"
+      },
+      "require": {
+        "default": "./dist/objectsender.cjs",
+        "types": "./dist/index.d.ts"
+      }
+    }
+  },
+  "imports": {
+    "#lodash": {
+      "require": "lodash",
+      "import": "lodash-es",
+      "node": "lodash",
+      "default": "lodash-es"
+    }
+  }
+}

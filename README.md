@@ -2,12 +2,14 @@
   <img src="https://user-images.githubusercontent.com/2679513/131189167-18ea5fe1-c578-47f6-9785-3748178e4312.png" width="150px"/><br/>
   Speckle | Server
 </h1>
+
+<p align="center"><a href="https://twitter.com/SpeckleSystems"><img src="https://img.shields.io/twitter/follow/SpeckleSystems?style=social" alt="Twitter Follow"></a> <a href="https://speckle.community"><img src="https://img.shields.io/discourse/users?server=https%3A%2F%2Fspeckle.community&amp;style=flat-square&amp;logo=discourse&amp;logoColor=white" alt="Community forum users"></a> <a href="https://speckle.systems"><img src="https://img.shields.io/badge/https://-speckle.systems-royalblue?style=flat-square" alt="website"></a> <a href="https://speckle.guide/dev/"><img src="https://img.shields.io/badge/docs-speckle.guide-orange?style=flat-square&amp;logo=read-the-docs&amp;logoColor=white" alt="docs"></a></p>
+
+> Speckle is the first AEC data hub that connects with your favorite AEC tools. Speckle exists to overcome the challenges of working in a fragmented industry where communication, creative workflows, and the exchange of data are often hindered by siloed software and processes. It is here to make the industry better.
+
 <h3 align="center">
     Server and Web packages
 </h3>
-<p align="center"><b>Speckle</b> is data infrastructure for the AEC industry.</p><br/>
-
-<p align="center"><a href="https://twitter.com/SpeckleSystems"><img src="https://img.shields.io/twitter/follow/SpeckleSystems?style=social" alt="Twitter Follow"></a> <a href="https://speckle.community"><img src="https://img.shields.io/discourse/users?server=https%3A%2F%2Fspeckle.community&amp;style=flat-square&amp;logo=discourse&amp;logoColor=white" alt="Community forum users"></a> <a href="https://speckle.systems"><img src="https://img.shields.io/badge/https://-speckle.systems-royalblue?style=flat-square" alt="website"></a> <a href="https://speckle.guide/dev/"><img src="https://img.shields.io/badge/docs-speckle.guide-orange?style=flat-square&amp;logo=read-the-docs&amp;logoColor=white" alt="docs"></a></p>
 
 <p align="center">
 <a href="https://codecov.io/gh/specklesystems/speckle-server">
@@ -17,36 +19,6 @@
 <img src="https://dl.circleci.com/status-badge/img/gh/specklesystems/speckle-server/tree/main.svg?style=svg" alt="CircleCI">
 </a>
 </p>
-
-# About Speckle
-
-What is Speckle? Check our [![YouTube Video Views](https://img.shields.io/youtube/views/B9humiSpHzM?label=Speckle%20in%201%20minute%20video&style=social)](https://www.youtube.com/watch?v=B9humiSpHzM)
-
-## Features
-
-- **Object-based:** say goodbye to files! Speckle is the first object based platform for the AEC industry
-- **Version control:** Speckle is the Git & Hub for geometry and BIM data
-- **Collaboration:** share your designs collaborate with others
-- **3D Viewer:** see your CAD and BIM models online, share and embed them anywhere
-- **Connectivity:** get your CAD and BIM models into other software without exporting or importing
-- **Real time:** get real time updates and notifications and changes
-- **GraphQL API:** get what you need anywhere you want it
-- **Webhooks:** the base for a automation and next-gen pipelines
-- **Built for developers:** we are building Speckle with developers in mind and have tools for every stack
-- **Built for the AEC industry:** Speckle connectors are plugins for the most common software used in the industry such as Revit, Rhino, Grasshopper, AutoCAD, Civil 3D, Excel, Unreal Engine, Unity, QGIS, Blender, ArchiCAD and more!
-
-## Try Speckle now!
-
-Give Speckle a try in no time by:
-
-- [![speckle](https://img.shields.io/badge/https://-app.speckle.systems-0069ff?style=flat-square&logo=hackthebox&logoColor=white)](https://app.speckle.systems) ⇒ creating an account
-- [![create a droplet](https://img.shields.io/badge/Create%20a%20Droplet-0069ff?style=flat-square&logo=digitalocean&logoColor=white)](https://marketplace.digitalocean.com/apps/speckle-server?refcode=947a2b5d7dc1) ⇒ deploying an instance in 1 click
-
-## Resources
-
-- [![Community forum users](https://img.shields.io/badge/community-forum-green?style=for-the-badge&logo=discourse&logoColor=white)](https://speckle.community) for help, feature requests or just to hang with other speckle enthusiasts, check out our community forum!
-- [![website](https://img.shields.io/badge/tutorials-speckle.systems-royalblue?style=for-the-badge&logo=youtube)](https://speckle.systems) our tutorials portal is full of resources to get you started using Speckle
-- [![docs](https://img.shields.io/badge/docs-speckle.guide-orange?style=for-the-badge&logo=read-the-docs&logoColor=white)](https://speckle.guide/dev/) reference on almost any end-user and developer functionality
 
 # Repo structure
 
@@ -64,8 +36,10 @@ This monorepo is the home of the Speckle v2 web packages:
 
 Make sure to also check and ⭐️ these other Speckle repositories:
 
-- [`speckle-sharp`](https://github.com/specklesystems/speckle-sharp): .NET tooling, connectors and interoperability
+- [`speckle-sharp-connectors`](https://github.com/specklesystems/speckle-sharp-connectors): .NET connectors and desktop UI
+- [`speckle-sharp-sdk`](https://github.com/specklesystems/speckle-sharp-sdk): .NET SDK, tests, and Objects
 - [`specklepy`](https://github.com/specklesystems/specklepy): Python SDK 🐍
+- [`speckle-sketchup`](https://github.com/specklesystems/speckle-sketchup): Sketchup connector
 - [`speckle-excel`](https://github.com/specklesystems/speckle-excel): Excel connector
 - [`speckle-unity`](https://github.com/specklesystems/speckle-unity): Unity 3D connector
 - [`speckle-blender`](https://github.com/specklesystems/speckle-blender): Blender connector
@@ -125,6 +99,14 @@ EMAIL_PORT="1025"
 
 The web portal is available at `localhost:1080` and it's listening for mail on port `1025`.
 
+### Minio (S3 storage)
+
+Default credentials are: `minioadmin:minioadmin`
+Main storage Web UI: [http://localhost:9001/](http://localhost:9001/)
+Region1 storage Web UI: [http://localhost:9021/](http://localhost:9021/)
+
+You can use the web UI to validate uploaded blobs
+
 # Contributing
 
 Please make sure you read the [contribution guidelines](https://github.com/specklesystems/speckle-server/blob/main/CONTRIBUTING.md) for an overview of the best practices we try to follow.
@@ -145,6 +127,11 @@ When committing to git, an automated script will run. This will check that your 
 - Please note that these additional checks will be run by Speckle's automated CI environment and non-conformances, if any, may prevent your Pull Request from being merged.
 - Please use the name of the package as the scope of your commit.
 - Note that `ggshield` requires you to [register an account](https://dashboard.gitguardian.com/auth/signup) and then [authorise with GitGuardian](https://github.com/GitGuardian/ggshield#initial-setup) before it can be used: `ggshield auth login`
+- Then run to enable pre-commit. This will run on every commit you make:
+
+  ```bash
+  pre-commit install
+  ```
 
 # Security
 

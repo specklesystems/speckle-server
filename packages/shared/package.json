@@ -1,6 +1,6 @@
 {
   "name": "@speckle/shared",
-  "version": "2.16.1-alpha.1",
+  "version": "2.20.0-alpha4",
   "description": "Shared code between various Speckle JS packages",
   "homepage": "https://speckle.systems",
   "repository": {
@@ -32,15 +32,18 @@
     "3d"
   ],
   "dependencies": {
-    "lodash": "^4.17.0",
+    "lodash": "^4.17.21",
     "lodash-es": "^4.17.21",
     "type-fest": "^3.11.1"
   },
   "peerDependencies": {
     "@tiptap/core": "^2.0.0-beta.176",
+    "knex": "*",
+    "mixpanel": "^0.17.0",
     "pino": "^8.7.0",
     "pino-http": "^8.0.0",
     "pino-pretty": ">=8.0.0",
+    "ua-parser-js": "^1.0.38",
     "znv": "^0.4.0",
     "zod": "^3.22.4"
   },
@@ -48,14 +51,18 @@
     "@tiptap/core": "^2.0.0-beta.176",
     "@types/lodash": "^4.14.184",
     "@types/lodash-es": "^4.17.12",
+    "@types/ua-parser-js": "^0.7.39",
     "@typescript-eslint/eslint-plugin": "^7.12.0",
     "@typescript-eslint/parser": "^7.12.0",
     "eslint": "^9.4.0",
     "eslint-config-prettier": "^9.1.0",
+    "knex": "^2.5.1",
+    "mixpanel": "^0.17.0",
     "pino": "^8.7.0",
     "pino-http": "^8.0.0",
     "tshy": "^1.14.0",
     "typescript": "^4.5.4",
+    "ua-parser-js": "^1.0.38",
     "znv": "^0.4.0",
     "zod": "^3.22.4"
   },
@@ -73,7 +80,9 @@
   "imports": {
     "#lodash": {
       "require": "lodash",
-      "import": "lodash-es"
+      "import": "lodash-es",
+      "node": "lodash",
+      "default": "lodash-es"
     }
   },
   "exports": {

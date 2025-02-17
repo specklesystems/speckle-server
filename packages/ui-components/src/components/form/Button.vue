@@ -8,31 +8,25 @@
     :class="buttonClasses"
     :disabled="isDisabled"
     role="button"
+    :style="
+      color !== 'subtle' && !text
+        ? `box-shadow: -1px 1px 4px 0px #0000000a inset; box-shadow: 0px 2px 2px 0px #0000000d;`
+        : ''
+    "
     @click="onClick"
   >
-    <Component
-      :is="finalLeftIcon"
-      v-if="finalLeftIcon"
-      :class="`${iconClasses} ${hideText ? '' : 'mr-2'}`"
-    />
+    <Component :is="finalLeftIcon" v-if="finalLeftIcon" :class="iconClasses" />
     <slot v-if="!hideText">Button</slot>
-    <Component
-      :is="iconRight"
-      v-if="iconRight || !loading"
-      :class="`${iconClasses} ${hideText ? '' : 'ml-2'}`"
-    />
+    <Component :is="iconRight" v-if="iconRight || !loading" :class="iconClasses" />
   </Component>
 </template>
 <script setup lang="ts">
 import { isObjectLike } from 'lodash'
-import type { PropType } from 'vue'
 import type { PropAnyComponent } from '~~/src/helpers/common/components'
 import { computed, resolveDynamicComponent } from 'vue'
-import type { Nullable, Optional } from '@speckle/shared'
-import { ArrowPathIcon } from '@heroicons/vue/24/solid'
-import type { FormButtonColor, FormButtonTextColor } from '~~/src/helpers/form/button'
-
-type FormButtonSize = 'xs' | 'sm' | 'base' | 'lg' | 'xl'
+import type { Nullable } from '@speckle/shared'
+import type { FormButtonStyle, FormButtonSize } from '~~/src/helpers/form/button'
+import { CommonLoadingIcon } from '~~/src/lib'
 
 const emit = defineEmits<{
   /**
@@ -41,137 +35,74 @@ const emit = defineEmits<{
   (e: 'click', val: MouseEvent): void
 }>()
 
-const props = defineProps({
+const props = defineProps<{
   /**
    * URL to which to navigate - can be a relative (app) path or an absolute link for an external URL
    */
-  to: {
-    type: String as PropType<Optional<string>>,
-    required: false,
-    default: undefined
-  },
+  to?: string
   /**
-   * Choose from one of many button sizes
+   * Choose from one of 3 button sizes
    */
-  size: {
-    type: String as PropType<FormButtonSize>,
-    default: 'base'
-  },
+  size?: FormButtonSize
   /**
    * If set, will make the button take up all available space horizontally
    */
-  fullWidth: {
-    type: Boolean,
-    default: false
-  },
-  /**
-   * Will outline the button.
-   */
-  outlined: {
-    type: Boolean,
-    default: false
-  },
-  /**
-   * Will apply a rounded class.
-   */
-  rounded: {
-    type: Boolean,
-    default: false
-  },
+  fullWidth?: boolean
   /**
    * Similar to "link", but without an underline and possibly in different colors
    */
-  text: {
-    type: Boolean,
-    default: false
-  },
+  text?: boolean
   /**
    * Will remove paddings and background. Use for links.
    */
-  link: {
-    type: Boolean,
-    default: false
-  },
+  link?: boolean
   /**
-   * Colors:
-   * default: the default primary blue.
-   * invert: for when you want to use this button on a primary background.
-   * danger: for dangerous actions (e.g. deletions).
-   * warning: for less dangerous actions (e.g. archival).
+   * color:
+   * primary: the default primary blue.
+   * outline: foundation background and outline
+   * subtle: no styling
    */
-  color: {
-    type: String as PropType<FormButtonColor>,
-    default: 'default'
-  },
+  color?: FormButtonStyle
   /**
-   * Text color, only used when color=secondary
+   * Should rounded-full be added?:
    */
-  textColor: {
-    type: String as PropType<FormButtonTextColor>,
-    default: 'default'
-  },
+  rounded?: boolean
   /**
    * Whether the target location should be forcefully treated as an external URL
    * (for relative paths this will likely cause a redirect)
    */
-  external: {
-    type: Boolean as PropType<Optional<boolean>>,
-    required: false,
-    default: undefined
-  },
+  external?: boolean
   /**
    * Whether to disable the button so that it can't be pressed
    */
-  disabled: {
-    type: Boolean as PropType<Optional<boolean>>,
-    required: false,
-    default: undefined
-  },
+  disabled?: boolean
   /**
    * If set, will have type set to "submit" to enable it to submit any parent forms
    */
-  submit: {
-    type: Boolean,
-    default: false
-  },
+  submit?: boolean
   /**
    * Add icon to the left from the text
    */
-  iconLeft: {
-    type: [Object, Function] as PropType<Nullable<PropAnyComponent>>,
-    default: null
-  },
+  iconLeft?: Nullable<PropAnyComponent>
   /**
    * Add icon to the right from the text
    */
-  iconRight: {
-    type: [Object, Function] as PropType<Nullable<PropAnyComponent>>,
-    default: null
-  },
+  iconRight?: Nullable<PropAnyComponent>
   /**
    * Hide default slot (when you want to show icons only)
    */
-  hideText: {
-    type: Boolean,
-    default: false
-  },
+  hideText?: boolean
   /**
    * Customize component to be used when rendering links.
    *
    * The component will try to dynamically resolve NuxtLink and RouterLink and use those, if this is set to null.
    */
-  linkComponent: {
-    type: [Object, Function] as PropType<Nullable<PropAnyComponent>>,
-    default: null
-  },
+  linkComponent?: Nullable<PropAnyComponent>
   /**
    * Disables the button and shows a spinning loader
    */
-  loading: {
-    type: Boolean,
-    default: false
-  }
-})
+  loading?: boolean
+}>()
 
 const NuxtLink = resolveDynamicComponent('NuxtLink')
 const RouterLink = resolveDynamicComponent('RouterLink')
@@ -191,298 +122,162 @@ const buttonType = computed(() => {
 })
 
 const isDisabled = computed(() => props.disabled || props.loading)
-const finalLeftIcon = computed(() => (props.loading ? ArrowPathIcon : props.iconLeft))
+const finalLeftIcon = computed(() =>
+  props.loading ? CommonLoadingIcon : props.iconLeft
+)
 
 const bgAndBorderClasses = computed(() => {
   const classParts: string[] = []
 
-  classParts.push('border-2')
-  if (isDisabled.value) {
-    classParts.push(
-      props.outlined
-        ? 'border-foreground-disabled'
-        : 'bg-foundation-disabled border-transparent'
-    )
-  } else {
-    switch (props.color) {
-      case 'invert':
-        classParts.push(
-          props.outlined
-            ? 'border-foundation dark:border-foreground'
-            : 'bg-foundation dark:bg-foreground border-transparent'
-        )
-        break
-      case 'card':
-        classParts.push(
-          props.outlined
-            ? 'border-foundation-2 shadow'
-            : 'bg-foundation-2 dark:bg-foundation-2 border-foundation shadow'
-        )
-        break
-      case 'danger':
-        classParts.push(props.outlined ? 'border-danger' : 'bg-danger border-danger')
-        break
-      case 'secondary':
-        classParts.push(
-          props.outlined ? 'border-foundation' : 'bg-foundation border-foundation-2'
-        )
-        break
-      case 'warning':
-        classParts.push(props.outlined ? 'border-warning' : 'bg-warning border-warning')
-        break
-      case 'info':
-        classParts.push(props.outlined ? 'border-info' : 'bg-info border-info')
-        break
-      case 'success':
-        classParts.push(props.outlined ? 'border-success' : 'bg-success border-success')
-        break
-      case 'default':
-      default:
-        classParts.push(
-          props.outlined
-            ? 'border-primary hover:border-primary-focus'
-            : 'bg-primary hover:bg-primary-focus border-transparent'
-        )
-        break
-    }
+  const colorsBgBorder = {
+    subtle: [
+      'bg-transparent border-transparent text-foreground font-medium',
+      'hover:bg-primary-muted disabled:hover:bg-transparent focus-visible:border-foundation'
+    ],
+    outline: [
+      'bg-foundation border-outline-2 text-foreground font-medium',
+      'hover:bg-primary-muted disabled:hover:bg-foundation focus-visible:border-foundation'
+    ],
+    danger: [
+      'bg-danger border-danger-darker text-foundation font-medium',
+      'hover:bg-danger-darker disabled:hover:bg-danger focus-visible:border-foundation'
+    ],
+    primary: [
+      'bg-primary border-outline-1 text-foreground-on-primary font-semibold',
+      'hover:bg-primary-focus disabled:hover:bg-primary focus-visible:border-foundation'
+    ]
   }
 
-  return classParts.join(' ')
-})
+  if (props.rounded) {
+    classParts.push('!rounded-full')
+  }
 
-const foregroundClasses = computed(() => {
-  const classParts: string[] = []
-  const hasCustomTextColor = props.textColor !== 'default'
-
-  if (hasCustomTextColor && !isDisabled.value) {
-    switch (props.textColor) {
+  if (props.text || props.link) {
+    switch (props.color) {
+      case 'subtle':
+        classParts.push('text-foreground')
+        break
+      case 'outline':
+        classParts.push('text-foreground')
+        break
+      case 'danger':
+        classParts.push('text-danger')
+        break
       case 'primary':
+      default:
         classParts.push('text-primary')
         break
-      case 'warning':
-        classParts.push('text-warning')
-        break
-      case 'success':
-        classParts.push('text-success')
-        break
-      case 'danger':
-        classParts.push('text-danger')
-        break
-      case 'info':
-        classParts.push('text-info')
-        break
-    }
-  }
-
-  if (!props.text && !props.link) {
-    if (isDisabled.value) {
-      classParts.push('text-foreground-disabled')
-    } else if (!hasCustomTextColor) {
-      switch (props.color) {
-        case 'invert':
-          classParts.push(
-            props.outlined ? 'text-foundation dark:text-foreground' : 'text-primary'
-          )
-          break
-        case 'card':
-          classParts.push(props.outlined ? 'text-foreground' : 'text-foreground')
-          break
-        case 'danger':
-          classParts.push(
-            props.outlined ? 'text-danger' : 'text-foundation dark:text-foreground'
-          )
-          break
-        case 'warning':
-          classParts.push(
-            props.outlined ? 'text-warning' : 'text-foundation dark:text-foreground'
-          )
-          break
-        case 'info':
-          classParts.push(
-            props.outlined ? 'text-info' : 'text-foundation dark:text-foreground'
-          )
-          break
-        case 'success':
-          classParts.push(
-            props.outlined ? 'text-success' : 'text-foundation dark:text-foreground'
-          )
-          break
-        case 'secondary':
-          classParts.push(
-            props.outlined
-              ? 'text-foreground hover:text-primary'
-              : 'text-foreground hover:text-primary'
-          )
-          break
-        case 'default':
-        default:
-          classParts.push(
-            props.outlined
-              ? 'text-primary hover:text-primary-focus'
-              : 'text-foundation dark:text-foreground'
-          )
-          break
-      }
     }
   } else {
-    if (isDisabled.value) {
-      classParts.push('text-foreground-disabled')
-    } else if (!hasCustomTextColor) {
-      if (props.color === 'invert') {
-        classParts.push(
-          'text-foundation hover:text-foundation-2 dark:text-foreground dark:hover:text-foreground'
-        )
-      } else if (props.color === 'secondary') {
-        classParts.push('text-foreground-2 hover:text-primary-focus')
-      } else if (props.color === 'success') {
-        classParts.push('text-success')
-      } else if (props.color === 'warning') {
-        classParts.push('text-warning')
-      } else if (props.color === 'info') {
-        classParts.push('text-info')
-      } else if (props.color === 'danger') {
-        classParts.push('text-danger')
-      } else {
-        classParts.push('text-primary hover:text-primary-focus')
-      }
-    }
-  }
-  return classParts.join(' ')
-})
-
-const roundedClasses = computed(() => {
-  const classParts: string[] = []
-  classParts.push(props.rounded ? 'rounded-full' : 'rounded-md')
-  return classParts.join(' ')
-})
-
-const ringClasses = computed(() => {
-  const classParts: string[] = []
-  if (!isDisabled.value) {
     switch (props.color) {
-      case 'invert':
-        classParts.push('hover:ring-4 ring-white/50')
+      case 'subtle':
+        classParts.push(...colorsBgBorder.subtle)
+        break
+      case 'outline':
+        classParts.push(...colorsBgBorder.outline)
         break
       case 'danger':
-        classParts.push('hover:ring-4 ring-danger-lighter dark:ring-danger-darker')
+        classParts.push(...colorsBgBorder.danger)
         break
-      case 'warning':
-        classParts.push('hover:ring-4 ring-warning-lighter dark:ring-warning-darker')
-        break
-      case 'info':
-        classParts.push('hover:ring-4 ring-info-lighter dark:ring-info-darker')
-        break
-      case 'success':
-        classParts.push('hover:ring-4 ring-success-lighter dark:ring-success-darker')
-        break
-      case 'default':
+      case 'primary':
       default:
-        classParts.push('hover:ring-2')
+        classParts.push(...colorsBgBorder.primary)
         break
     }
   }
+
   return classParts.join(' ')
 })
 
 const sizeClasses = computed(() => {
   switch (props.size) {
-    case 'xs':
-      return 'h-5 text-xs font-medium xxx-tracking-wide'
     case 'sm':
-      return 'h-6 text-sm font-medium xxx-tracking-wide'
+      return 'h-6 text-body-2xs'
     case 'lg':
-      return 'h-10 text-lg font-semibold xxx-tracking-wide'
-    case 'xl':
-      return 'h-14 text-xl font-bold xxx-tracking-wide'
+      return 'h-10 text-body-sm'
     default:
     case 'base':
-      return 'h-8 text-sm sm:text-base font-medium xxx-tracking-wide'
+      return 'h-8 text-body-xs'
   }
 })
 
 const paddingClasses = computed(() => {
+  if (props.text || props.link) {
+    return 'p-0'
+  }
+
+  const hasIconLeft = !!props.iconLeft
+  const hasIconRight = !!props.iconRight
+  const hideText = props.hideText
+
   switch (props.size) {
-    case 'xs':
-      return 'px-1'
     case 'sm':
-      return 'px-2'
+      if (hideText) return 'w-6'
+      if (hasIconLeft) return 'py-1 pr-2 pl-1'
+      if (hasIconRight) return 'py-1 pl-2 pr-1'
+      return 'px-2 py-1'
     case 'lg':
-      return 'px-4'
-    case 'xl':
-      return 'px-5'
-    default:
+      if (hideText) return 'w-10'
+      if (hasIconLeft) return 'py-2 pr-6 pl-4'
+      if (hasIconRight) return 'py-2 pl-6 pr-4'
+      return 'px-6 py-2'
     case 'base':
-      return 'px-3'
+    default:
+      if (hideText) return 'w-8'
+      if (hasIconLeft) return 'py-0 pr-4 pl-2'
+      if (hasIconRight) return 'py-0 pl-4 pr-2'
+      return 'px-4 py-0'
   }
 })
 
 const generalClasses = computed(() => {
-  const classParts: string[] = []
+  const baseClasses = [
+    'inline-flex justify-center items-center',
+    'text-center select-none whitespace-nowrap',
+    'outline outline-2 outline-transparent',
+    'transition duration-200 ease-in-out focus-visible:outline-outline-4'
+  ]
+
+  const additionalClasses = []
+
+  if (!props.text && !props.link) {
+    additionalClasses.push('rounded-md border')
+  }
 
   if (props.fullWidth) {
-    classParts.push('w-full')
+    additionalClasses.push('w-full')
+  } else if (!props.hideText) {
+    additionalClasses.push('max-w-max')
   }
-
   if (isDisabled.value) {
-    classParts.push('cursor-not-allowed')
+    additionalClasses.push('cursor-not-allowed opacity-60')
   }
 
-  return classParts.join(' ')
-})
-
-const decoratorClasses = computed(() => {
-  const classParts: string[] = []
-  if (!isDisabled.value && !props.link && !props.text) {
-    classParts.push('active:scale-[0.97]')
-  }
-
-  if (!isDisabled.value && props.link) {
-    classParts.push(
-      'underline decoration-transparent decoration-2 underline-offset-4	hover:decoration-inherit'
-    )
-  }
-
-  return classParts.join(' ')
+  return [...baseClasses, ...additionalClasses].join(' ')
 })
 
 const buttonClasses = computed(() => {
-  const isLinkOrText = props.link || props.text
   return [
-    'transition inline-flex justify-center text-center items-center outline-none select-none leading-[0.9rem]',
     generalClasses.value,
     sizeClasses.value,
-    foregroundClasses.value,
-    isLinkOrText ? '' : bgAndBorderClasses.value,
-    isLinkOrText ? '' : roundedClasses.value,
-    isLinkOrText ? '' : ringClasses.value,
-    props.link ? '' : paddingClasses.value,
-    decoratorClasses.value
+    bgAndBorderClasses.value,
+    paddingClasses.value
   ].join(' ')
 })
 
 const iconClasses = computed(() => {
   const classParts: string[] = ['shrink-0']
 
-  if (props.loading) {
-    classParts.push('animate-spin')
-  }
-
   switch (props.size) {
-    case 'xs':
-      classParts.push('h-3 w-3')
-      break
     case 'sm':
-      classParts.push('h-4 w-4')
+      classParts.push('h-5 w-5 p-0.5')
       break
     case 'lg':
-      classParts.push('h-6 w-6')
-      break
-    case 'xl':
-      classParts.push('h-8 w-8')
+      classParts.push('h-6 w-6 p-1')
       break
     case 'base':
     default:
-      classParts.push('h-5 w-5')
+      classParts.push('h-6 w-6 p-1')
       break
   }
 
@@ -500,8 +295,3 @@ const onClick = (e: MouseEvent) => {
   emit('click', e)
 }
 </script>
-<style scoped>
-.icon-slot:empty {
-  display: none;
-}
-</style>

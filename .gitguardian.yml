@@ -1,6 +1,7 @@
 secret:
   ignored_paths:
-    - 'packages/server/modules/emails/tests'
+    - 'packages/server/modules/emails/tests/*'
+    - 'packages/server/modules/core/tests/*'
   ignored_matches:
     - match: acd87c5a50b56df91a795e999812a3a4
       name: 'packages/frontend/src/bootstrapper.ts - mixpanel token'
@@ -8,4 +9,25 @@ secret:
       name: '.circleci/deployment/manifests/speckle-server.secret.yaml - test s3_secret_key'
     - match: 9f1d96876edbf847bb792754025ed131374869e60866d5e9c349c9423b37dd09
       name: '.circleci/deployment/manifests/speckle-server.secret.yaml - test session_secret'
+    - match: 9bf360c5ce31170e8e3cb30e275b2c00224dd97b93282491c60fb1665fac3845
+      name: local test license
+    - match: 7a4ab6f7bfbcc0a37aa3a0fb00fd5b6edd1d524f393a6054e242eb28f5c06be5
+      name: 'packages/server/modules/core/tests/graph.spec.js - test secret'
+    - match: be603148062b367f828a58bdd695149d24f55f7c7f2e2c0bc31abd147cd07e86
+      name: packages/server/modules/webhooks/tests/cleanup.spec.ts - test password
+    - match: d1c44da2d7d52afaf219ff9789df7c04a79be80977336d7c87652db736b07538
+      name: packages/server/.env-example - test password for keycloak
+    - match: 05b116fa36d25a831d96d5b4ecd45b962ebf9345dcf81ac0950c4adb49e10183
+      name: packages/server/modules/serverinvites/tests/invites.spec.ts - test password
+    - match: 22ef4aa9beab564872bb1f15ff7592894ad445a68d6b03364f890cc5c3866b5d
+      name: packages/server/modules/core/tests/users.spec.js - test password
+    - match: 05b116fa36d25a831d96d5b4ecd45b962ebf9345dcf81ac0950c4adb49e10183
+      name: packages/server/modules/core/tests/users.spec.js - test password
+    - match: d1c44da2d7d52afaf219ff9789df7c04a79be80977336d7c87652db736b07538
+      name: setup/keycloak/speckle-realm.json - secret for dev keycloak
+    - match: b92d3b9844a823512dd1831c1eea5d9810c154027e07a36f007232fc26e9f70c
+      name: setup/keycloak/speckle-realm.json - secret for dev keycloak
+    - match: 2e1b3675a4049cd39fe6db081735f747730969071528270800f00fa98720d198
+      name: setup/keycloak/speckle-realm.json - algorithm name
+
 version: 2

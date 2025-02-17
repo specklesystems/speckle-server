@@ -1,16 +1,20 @@
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
   <div
-    :class="`w-full bg-foundation-2 hover:bg-blue-500/5 rounded pl-1 py-1 border-l-2 text-xs ${
-      expandable ? 'border-blue-500' : 'border-transparent'
-    } ${expanded ? 'border-neutral-500 border-opacity-30' : ''}`"
+    class="w-full hover:bg-blue-500/5 rounded pl-1 py-0.5 border-l-2 text-body-3xs"
+    :class="[
+      expandable
+        ? 'border-primary bg-foundation-page'
+        : 'border-transparent bg-foundation',
+      expanded ? 'border-neutral-500 border-opacity-30' : ''
+    ]"
   >
     <!-- eslint-disable-next-line vuejs-accessibility/click-events-have-key-events -->
     <div
       :class="`grid grid-cols-3 pr-1 ${expandable ? 'cursor-pointer' : ''}`"
       @click="handleExpand"
     >
-      <div class="col-span-1 mr-1 flex items-center text-foreground-2 font-semibold">
+      <div class="col-span-1 mr-1 flex items-center font-medium">
         <ChevronRightIcon
           v-if="expandable"
           :class="`w-3 ${expanded ? 'rotate-90' : ''} transition shrink-0 `"
@@ -27,9 +31,7 @@
         class="col-span-2 truncate flex items-center justify-between"
       >
         {{ prop.type }}
-        <span v-if="prop.type === 'array'" class="text-foreground-2 text-xs">
-          ({{ arrayLen }})
-        </span>
+        <span v-if="prop.type === 'array'" class="text-body-3xs">({{ arrayLen }})</span>
         <span v-if="isDetached" class="mr-1 flex space-x-1">
           <!-- eslint-disable-next-line vuejs-accessibility/anchor-has-content -->
           <a

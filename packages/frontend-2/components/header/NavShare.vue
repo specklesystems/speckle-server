@@ -1,21 +1,21 @@
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
-  <Menu
-    as="div"
-    class="flex items-center relative sm:border-r border-outline-1 sm:pr-4"
-  >
+  <Menu as="div" class="flex items-center relative">
     <MenuButton :id="menuButtonId" as="div">
+      <!-- Desktop Button -->
+      <FormButton class="hidden sm:flex" :icon-right="ChevronDownIcon">
+        Share
+      </FormButton>
+      <!-- Mobile Button -->
       <FormButton
-        class="hidden sm:flex"
+        color="subtle"
         size="sm"
-        outlined
-        :icon-right="ChevronDownIcon"
+        class="sm:hidden"
+        :icon-right="ShareIcon"
+        hide-text
       >
         Share
       </FormButton>
-      <button class="sm:hidden mt-1.5">
-        <ShareIcon class="h-5 w-5 text-primary" />
-      </button>
     </MenuButton>
     <Transition
       enter-active-class="transition ease-out duration-200"
@@ -26,45 +26,42 @@
       leave-to-class="transform opacity-0 scale-95"
     >
       <MenuItems
-        class="absolute z-50 flex flex-col gap-1 right-0 sm:right-4 top-12 min-w-max w-full sm:w-44 p-1 origin-top-right bg-foundation-2 outline outline-2 outline-primary-muted rounded-md shadow-lg overflow-hidden text-sm"
+        class="absolute z-50 flex flex-col gap-1 right-0 sm:right-4 top-8 min-w-max w-full sm:w-32 py-1 origin-top-right bg-foundation outline outline-1 outline-primary-muted rounded-md shadow-lg overflow-hidden mt-1"
       >
         <MenuItem v-slot="{ active }">
           <div
             :class="[
-              active ? 'bg-foundation-focus' : '',
-              'flex gap-2 items-center px-2 py-1.5 text-sm text-foreground cursor-pointer transition rounded'
+              active ? 'bg-highlight-1' : '',
+              'text-body-sm flex px-2 py-1.5 text-foreground cursor-pointer transition mx-1.5 rounded'
             ]"
             @click="handleCopyLink"
             @keypress="keyboardClick(handleCopyLink)"
           >
-            <LinkIcon class="w-5 h-5" />
-            Copy Link
+            Copy link
           </div>
         </MenuItem>
         <MenuItem v-if="!isFederated" v-slot="{ active }">
           <div
             :class="[
-              active ? 'bg-foundation-focus' : '',
-              'flex gap-2 items-center px-2 py-1.5 text-sm text-foreground cursor-pointer transition rounded'
+              active ? 'bg-highlight-1' : '',
+              'text-body-sm flex px-2 py-1.5 text-foreground cursor-pointer transition mx-1.5 rounded'
             ]"
             @click="handleCopyId"
             @keypress="keyboardClick(handleCopyId)"
           >
-            <FingerPrintIcon class="w-5 h-5" />
             Copy ID
           </div>
         </MenuItem>
         <MenuItem v-slot="{ active }">
           <div
             :class="[
-              active ? 'bg-foundation-focus' : '',
-              'flex gap-2 items-center px-2 py-1.5 text-sm text-foreground cursor-pointer transition rounded'
+              active ? 'bg-highlight-1' : '',
+              'text-body-sm flex px-2 py-1.5 text-foreground cursor-pointer transition mx-1.5 rounded'
             ]"
             @click="handleEmbed"
             @keypress="keyboardClick(handleEmbed)"
           >
-            <CodeBracketIcon class="w-5 h-5" />
-            Embed Model
+            Embed model
           </div>
         </MenuItem>
       </MenuItems>
@@ -74,13 +71,8 @@
 </template>
 <script setup lang="ts">
 import { Menu, MenuButton, MenuItems, MenuItem } from '@headlessui/vue'
-import {
-  ChevronDownIcon,
-  LinkIcon,
-  FingerPrintIcon,
-  CodeBracketIcon,
-  ShareIcon
-} from '@heroicons/vue/24/outline'
+import { ShareIcon } from '@heroicons/vue/24/outline'
+import { ChevronDownIcon } from '@heroicons/vue/20/solid'
 import { SpeckleViewer } from '@speckle/shared'
 import { keyboardClick } from '@speckle/ui-components'
 import { graphql } from '~/lib/common/generated/gql/gql'

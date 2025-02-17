@@ -1,18 +1,18 @@
 import stc from 'string-to-color'
 import { Color, Texture } from 'three'
 
-import { Assets } from '../Assets'
-import SpeckleRenderer from '../SpeckleRenderer'
-import { FilterMaterialType } from '../materials/Materials'
-import { NodeRenderView } from '../tree/NodeRenderView'
-import { Extension } from './Extension'
-import { type TreeNode, WorldTree } from '../tree/WorldTree'
-import { type IViewer, UpdateFlags, ViewerEvent } from '../../IViewer'
+import { Assets } from '../Assets.js'
+import SpeckleRenderer from '../SpeckleRenderer.js'
+import { FilterMaterialType } from '../materials/Materials.js'
+import { NodeRenderView } from '../tree/NodeRenderView.js'
+import { Extension } from './Extension.js'
+import { type TreeNode, WorldTree } from '../tree/WorldTree.js'
+import { type IViewer, UpdateFlags, ViewerEvent } from '../../IViewer.js'
 import type {
   NumericPropertyInfo,
   PropertyInfo,
   StringPropertyInfo
-} from '../filtering/PropertyManager'
+} from '../filtering/PropertyManager.js'
 
 /** TO DO: Should remove selectedObjects entirely*/
 export type FilteringState = {
@@ -261,7 +261,7 @@ export class FilteringExtension extends Extension {
 
       const rvs = this.WTI.getRenderTree().getRenderViewsForNode(node)
       const idx = matchingIds[node.model.raw.id]
-      if (!idx) {
+      if (idx === undefined) {
         nonMatchingRvs.push(...rvs)
       } else {
         colorGroups.push({
@@ -417,7 +417,9 @@ export class FilteringExtension extends Extension {
     this.UserspaceColorState = null
     this.StateKey = undefined
     this.Renderer.resetMaterials()
-    this.viewer.requestRender(UpdateFlags.RENDER | UpdateFlags.SHADOWS)
+    this.CurrentFilteringState = {}
+    this.viewer.requestRender(UpdateFlags.RENDER_RESET | UpdateFlags.SHADOWS)
+    this.emit(ViewerEvent.FilteringStateSet, this.CurrentFilteringState)
     return null
   }
 
@@ -538,7 +540,7 @@ export class FilteringExtension extends Extension {
     }
 
     this.Renderer.viewer.requestRender(
-      UpdateFlags.RENDER | UpdateFlags.SHADOWS | UpdateFlags.CLIPPING_PLANES
+      UpdateFlags.RENDER_RESET | UpdateFlags.SHADOWS | UpdateFlags.CLIPPING_PLANES
     )
     this.emit(ViewerEvent.FilteringStateSet, this.CurrentFilteringState)
     return this.CurrentFilteringState

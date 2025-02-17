@@ -1,11 +1,10 @@
 <template>
-  <div class="flex flex-col gap-8">
+  <div class="flex flex-col gap-y-4 md:gap-y-6">
     <ProjectPageAutomationsHeader
       v-model:search="search"
+      :workspace-slug="workspace?.slug"
       :show-empty-state="shouldShowEmptyState"
-      :disabled-create-because-of="
-        allowNewCreation !== true ? allowNewCreation : undefined
-      "
+      :creation-disabled-message="disableCreateAutomationMessage"
       @new-automation="onNewAutomation"
     />
     <template v-if="loading">
@@ -14,12 +13,11 @@
     <template v-else>
       <ProjectPageAutomationsEmptyState
         v-if="shouldShowEmptyState"
-        :functions="result"
-        :is-automate-enabled="isAutomateEnabled"
-        :disabled-create-because-of="
-          allowNewCreation !== true ? allowNewCreation : undefined
-        "
+        :workspace-slug="workspace?.slug"
+        :hidden-actions="hiddenActions"
+        :disabled-actions="disabledActions"
         @new-automation="onNewAutomation"
+        @new-function="onNewFunction"
       />
       <template v-else>
         <template v-if="automations.length">
@@ -39,9 +37,18 @@
       </template>
     </template>
     <AutomateAutomationCreateDialog
+      v-if="workspace?.id"
       v-model:open="showNewAutomationDialog"
+      :workspace-id="workspace?.id"
       :preselected-project="project"
       :preselected-function="newAutomationTargetFn"
+    />
+    <AutomateFunctionCreateDialog
+      v-model:open="showNewFunctionDialog"
+      :workspace="workspace"
+      :is-authorized="isGithubAppConfigured"
+      :github-orgs="githubOrgs"
+      :templates="availableFunctionTemplates"
     />
   </div>
 </template>
@@ -53,11 +60,14 @@ import {
 } from '~/lib/projects/graphql/queries'
 import type { CreateAutomationSelectableFunction } from '~/lib/automate/helpers/automations'
 import { usePaginatedQuery } from '~/lib/common/composables/graphql'
+import { Roles } from '@speckle/shared'
+import type { AutomateOnboardingAction } from '~/components/project/page/automations/EmptyState.vue'
 
 const route = useRoute()
 const projectId = computed(() => route.params.id as string)
 const search = ref('')
 const isAutomateEnabled = useIsAutomateModuleEnabled()
+const pageFetchPolicy = usePageQueryStandardFetchPolicy()
 
 // Base tab query (no pagination)
 const { result, loading } = useQuery(
@@ -69,8 +79,62 @@ const { result, loading } = useQuery(
   }),
   () => ({
     enabled: isAutomateEnabled.value,
-    fetchPolicy: 'cache-and-network'
+    fetchPolicy: pageFetchPolicy.value
   })
+)
+
+const workspace = computed(() => result.value?.project?.workspace ?? undefined)
+
+const workspaceFunctionCount = computed(
+  () => result.value?.project.workspace?.automateFunctions.totalCount ?? 0
+)
+const hiddenActions = computed<AutomateOnboardingAction[]>(() => {
+  return workspaceFunctionCount.value > 0 ? [] : ['view-functions']
+})
+const disabledActions = computed<
+  { action: AutomateOnboardingAction; reason: string }[]
+>(() => {
+  if (workspaceFunctionCount.value === 0) {
+    return [
+      {
+        action: 'create-automation',
+        reason:
+          'You must create at least one function before you can create an automation.'
+      }
+    ]
+  }
+  if (result.value?.project?.role !== Roles.Stream.Owner) {
+    return [
+      {
+        action: 'create-automation',
+        reason: 'Only project owners can create new automations.'
+      }
+    ]
+  }
+  if ((result.value?.project?.models?.items.length || 0) === 0) {
+    return [
+      {
+        action: 'create-automation',
+        reason:
+          'Your project should have at least 1 model before you can create an automation.'
+      }
+    ]
+  }
+  return []
+})
+const disableCreateAutomationMessage = computed(
+  () =>
+    disabledActions.value?.find((entry) => entry.action === 'create-automation')?.reason
+)
+
+const isGithubAppConfigured = computed(
+  () => !!result.value?.activeUser?.automateInfo.hasAutomateGithubApp
+)
+const githubOrgs = computed(
+  () => result.value?.activeUser?.automateInfo.availableGithubOrgs || []
+)
+const availableFunctionTemplates = computed(
+  () => result.value?.serverInfo.automate.availableFunctionTemplates || []
 )
 
 // Pagination query
@@ -94,6 +158,7 @@ const {
   resolveCursorFromVariables: (vars) => vars.cursor
 })
 
+const showNewFunctionDialog = ref(false)
 const showNewAutomationDialog = ref(false)
 const newAutomationTargetFn = ref<CreateAutomationSelectableFunction>()
 
@@ -113,14 +178,12 @@ const shouldShowEmptyState = computed(() => {
   return false
 })
 
-const allowNewCreation = computed(() => {
-  return (result.value?.project?.models?.items.length || 0) > 0
-    ? true
-    : 'Your project should have at least 1 model before you can create an automation.'
-})
-
 const onNewAutomation = (fn?: CreateAutomationSelectableFunction) => {
   newAutomationTargetFn.value = fn
   showNewAutomationDialog.value = true
+}
+
+const onNewFunction = () => {
+  showNewFunctionDialog.value = true
 }
 </script>

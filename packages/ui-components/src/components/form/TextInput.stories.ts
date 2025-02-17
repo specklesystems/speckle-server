@@ -53,6 +53,10 @@ export default {
     size: {
       control: { type: 'select' },
       options: ['sm', 'lg', 'base', 'xl']
+    },
+    labelPosition: {
+      control: { type: 'select' },
+      options: ['top', 'left']
     }
   }
 } as Meta
@@ -87,7 +91,8 @@ export const Default: StoryObj = {
     disabled: false,
     validateOnMount: false,
     inputClasses: '',
-    color: 'page'
+    color: 'page',
+    labelPosition: 'top'
   },
   parameters: {
     docs: {
@@ -138,6 +143,29 @@ export const WithClear = mergeStories(Default, {
     name: generateRandomName('withclear'),
     label: 'Click on cross to clear',
     showClear: true
+  }
+})
+
+export const LabelLeft = mergeStories(Default, {
+  args: {
+    name: generateRandomName('labelleft'),
+    label: 'With label left',
+    labelPosition: 'left'
+  }
+})
+
+export const WithTooltip = mergeStories(Default, {
+  args: {
+    name: generateRandomName('withTooltip'),
+    tooltipText: 'Hello, im a tooltip'
+  }
+})
+
+export const Loading = mergeStories(Default, {
+  args: {
+    name: generateRandomName('loading'),
+    label: 'With loading spinner',
+    loading: true
   }
 })
 

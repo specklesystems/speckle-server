@@ -5,9 +5,6 @@ import Redis from 'ioredis'
 import { withFilter } from 'graphql-subscriptions'
 import { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
 import {
-  AutomationRun,
-  AutomationsStatus,
-  ProjectAutomationsStatusUpdatedMessage,
   ProjectCommentsUpdatedMessage,
   ProjectFileImportUpdatedMessage,
   ProjectModelsUpdatedMessage,
@@ -16,7 +13,6 @@ import {
   ProjectUpdatedMessage,
   ProjectVersionsPreviewGeneratedMessage,
   ProjectVersionsUpdatedMessage,
-  SubscriptionProjectAutomationsStatusUpdatedArgs,
   SubscriptionProjectAutomationsUpdatedArgs,
   SubscriptionProjectCommentsUpdatedArgs,
   SubscriptionProjectFileImportUpdatedArgs,
@@ -34,7 +30,31 @@ import {
   ViewerUserActivityMessage,
   GendoAiRender,
   SubscriptionProjectVersionGendoAiRenderUpdatedArgs,
-  SubscriptionProjectVersionGendoAiRenderCreatedArgs
+  SubscriptionProjectVersionGendoAiRenderCreatedArgs,
+  CommentThreadActivityMessage,
+  SubscriptionCommentThreadActivityArgs,
+  MutationUserViewerActivityBroadcastArgs,
+  SubscriptionUserViewerActivityArgs,
+  SubscriptionCommentActivityArgs,
+  StreamUpdateInput,
+  ProjectUpdateInput,
+  SubscriptionStreamUpdatedArgs,
+  SubscriptionStreamDeletedArgs,
+  SubscriptionBranchCreatedArgs,
+  SubscriptionBranchUpdatedArgs,
+  BranchUpdateInput,
+  UpdateModelInput,
+  SubscriptionBranchDeletedArgs,
+  BranchDeleteInput,
+  DeleteModelInput,
+  SubscriptionCommitCreatedArgs,
+  CommitCreateInput,
+  SubscriptionCommitUpdatedArgs,
+  CommitUpdateInput,
+  SubscriptionWorkspaceProjectsUpdatedArgs,
+  WorkspaceProjectsUpdatedMessage,
+  SubscriptionWorkspaceUpdatedArgs,
+  WorkspaceUpdatedMessage
 } from '@/modules/core/graph/generated/graphql'
 import { Merge } from 'type-fest'
 import {
@@ -44,11 +64,14 @@ import {
 } from '@/modules/core/helpers/graphTypes'
 import { CommentGraphQLReturn } from '@/modules/comments/helpers/graphTypes'
 import { FileUploadGraphQLReturn } from '@/modules/fileuploads/helpers/types'
-import { AutomationFunctionRunGraphQLReturn } from '@/modules/betaAutomations/helpers/graphTypes'
 import {
   ProjectTriggeredAutomationsStatusUpdatedMessageGraphQLReturn,
   ProjectAutomationsUpdatedMessageGraphQLReturn
 } from '@/modules/automate/helpers/graphTypes'
+import { CommentRecord } from '@/modules/comments/helpers/types'
+import { CommitRecord } from '@/modules/core/helpers/types'
+import { BranchRecord } from '@/modules/core/helpers/types'
+import { WorkspaceGraphQLReturn } from '@/modules/workspacesCore/helpers/graphTypes'
 
 /**
  * GraphQL Subscription PubSub instance
@@ -100,7 +123,6 @@ export enum ProjectSubscriptions {
   ProjectVersionsPreviewGenerated = 'PROJECT_VERSIONS_PREVIEW_GENERATED',
   ProjectCommentsUpdated = 'PROJECT_COMMENTS_UPDATED',
   // old beta subscription:
-  ProjectAutomationStatusUpdated = 'PROJECT_AUTOMATION_STATUS_UPDATED',
   ProjectTriggeredAutomationsStatusUpdated = 'PROJECT_TRIGGERED_AUTOMATION_STATUS_UPDATED',
   ProjectAutomationsUpdated = 'PROJECT_AUTOMATIONS_UPDATED',
   ProjectVersionGendoAIRenderUpdated = 'PROJECT_VERSION_GENDO_AI_RENDER_UPDATED',
@@ -115,6 +137,15 @@ export enum FileImportSubscriptions {
   ProjectPendingModelsUpdated = 'PROJECT_PENDING_MODELS_UPDATED',
   ProjectPendingVersionsUpdated = 'PROJECT_PENDING_VERSIONS_UPDATED',
   ProjectFileImportUpdated = 'PROJECT_FILE_IMPORT_UPDATED'
+}
+
+export enum TestSubscriptions {
+  Ping = 'PING'
+}
+
+export enum WorkspaceSubscriptions {
+  WorkspaceProjectsUpdated = 'WORKSPACE_PROJECTS_UPDATED',
+  WorkspaceUpdated = 'WORKSPACE_UPDATED'
 }
 
 type NoVariables = Record<string, never>
@@ -166,7 +197,7 @@ type SubscriptionTypeMap = {
     payload: {
       projectVersionsUpdated: Merge<
         ProjectVersionsUpdatedMessage,
-        { version: Nullable<VersionGraphQLReturn> }
+        { version: Nullable<Omit<VersionGraphQLReturn, 'branchId'>> }
       >
       projectId: string
     }
@@ -229,31 +260,6 @@ type SubscriptionTypeMap = {
     }
     variables: SubscriptionProjectFileImportUpdatedArgs
   }
-  [ProjectSubscriptions.ProjectAutomationStatusUpdated]: {
-    payload: {
-      projectAutomationsStatusUpdated: Merge<
-        ProjectAutomationsStatusUpdatedMessage,
-        {
-          version: VersionGraphQLReturn
-          model: ModelGraphQLReturn
-          project: ProjectGraphQLReturn
-          status: Merge<
-            AutomationsStatus,
-            {
-              automationRuns: Array<
-                Merge<
-                  AutomationRun,
-                  { functionRuns: AutomationFunctionRunGraphQLReturn[] }
-                >
-              >
-            }
-          >
-        }
-      >
-      projectId: string
-    }
-    variables: SubscriptionProjectAutomationsStatusUpdatedArgs
-  }
   [ProjectSubscriptions.ProjectTriggeredAutomationsStatusUpdated]: {
     payload: {
       projectTriggeredAutomationsStatusUpdated: ProjectTriggeredAutomationsStatusUpdatedMessageGraphQLReturn
@@ -268,13 +274,130 @@ type SubscriptionTypeMap = {
     }
     variables: SubscriptionProjectAutomationsUpdatedArgs
   }
+  [CommentSubscriptions.CommentThreadActivity]: {
+    payload: {
+      commentThreadActivity: Partial<CommentThreadActivityMessage> &
+        Pick<CommentThreadActivityMessage, 'type'>
+      streamId: string
+      commentId: string
+    }
+    variables: SubscriptionCommentThreadActivityArgs
+  }
+  [CommentSubscriptions.ViewerActivity]: {
+    payload: {
+      userViewerActivity: MutationUserViewerActivityBroadcastArgs
+      streamId: string
+      resourceId: string
+      authorId: string
+    }
+    variables: SubscriptionUserViewerActivityArgs
+  }
+  [CommentSubscriptions.CommentActivity]: {
+    payload: {
+      commentActivity: {
+        type: 'comment-added'
+        comment: CommentRecord
+      }
+      streamId: string
+      resourceIds: string[]
+    }
+    variables: SubscriptionCommentActivityArgs
+  }
+  /**
+   * OLD ONES
+   */
+  [StreamSubscriptions.UserStreamAdded]: {
+    payload: {
+      userStreamAdded: { id: string; sharedBy?: string }
+      ownerId: string
+    }
+    variables: NoVariables
+  }
+  [StreamSubscriptions.UserStreamRemoved]: {
+    payload: {
+      userStreamRemoved: { id: string; revokedBy?: string }
+      ownerId: string
+    }
+    variables: NoVariables
+  }
+  [StreamSubscriptions.StreamUpdated]: {
+    payload: { streamUpdated: StreamUpdateInput | ProjectUpdateInput; id: string }
+    variables: SubscriptionStreamUpdatedArgs
+  }
+  [StreamSubscriptions.StreamDeleted]: {
+    payload: { streamDeleted: { streamId: string }; streamId: string }
+    variables: SubscriptionStreamDeletedArgs
+  }
+  [BranchSubscriptions.BranchCreated]: {
+    payload: { branchCreated: BranchRecord; streamId: string }
+    variables: SubscriptionBranchCreatedArgs
+  }
+  [BranchSubscriptions.BranchUpdated]: {
+    payload: {
+      branchUpdated: BranchUpdateInput | UpdateModelInput
+      streamId: string
+      branchId: string
+    }
+    variables: SubscriptionBranchUpdatedArgs
+  }
+  [BranchSubscriptions.BranchDeleted]: {
+    payload: { branchDeleted: BranchDeleteInput | DeleteModelInput; streamId: string }
+    variables: SubscriptionBranchDeletedArgs
+  }
+  [CommitSubscriptions.CommitCreated]: {
+    payload: {
+      commitCreated: CommitCreateInput & { id: string; authorId: string }
+      streamId: string
+    }
+    variables: SubscriptionCommitCreatedArgs
+  }
+  [CommitSubscriptions.CommitUpdated]: {
+    payload: { commitUpdated: CommitUpdateInput; streamId: string; commitId: string }
+    variables: SubscriptionCommitUpdatedArgs
+  }
+  [CommitSubscriptions.CommitDeleted]: {
+    payload: {
+      commitDeleted: CommitRecord & { streamId: string; branchId: string }
+      streamId: string
+    }
+    variables: SubscriptionCommitUpdatedArgs
+  }
+  [TestSubscriptions.Ping]: {
+    payload: { ping: string }
+    variables: NoVariables
+  }
+  [WorkspaceSubscriptions.WorkspaceProjectsUpdated]: {
+    payload: {
+      workspaceProjectsUpdated: Merge<
+        WorkspaceProjectsUpdatedMessage,
+        { project: Nullable<ProjectGraphQLReturn> }
+      >
+      workspaceId: string
+    }
+    variables: SubscriptionWorkspaceProjectsUpdatedArgs
+  }
+  [WorkspaceSubscriptions.WorkspaceUpdated]: {
+    payload: {
+      workspaceUpdated: Merge<
+        WorkspaceUpdatedMessage,
+        { workspace: WorkspaceGraphQLReturn }
+      >
+    }
+    variables: SubscriptionWorkspaceUpdatedArgs
+  }
 } & { [k in SubscriptionEvent]: { payload: unknown; variables: unknown } }
 
 type SubscriptionEvent =
-  | UserSubscriptions
-  | ProjectSubscriptions
-  | ViewerSubscriptions
+  | CommitSubscriptions
+  | CommentSubscriptions
   | FileImportSubscriptions
+  | ProjectSubscriptions
+  | StreamSubscriptions
+  | UserSubscriptions
+  | ViewerSubscriptions
+  | BranchSubscriptions
+  | TestSubscriptions
+  | WorkspaceSubscriptions
 
 /**
  * Publish a GQL subscription event
@@ -283,6 +406,8 @@ export const publish = <T extends SubscriptionEvent>(
   event: T,
   payload: SubscriptionTypeMap[T]['payload']
 ) => pubsub.publish(event, payload)
+
+export type PublishSubscription = typeof publish
 
 /**
  * Subscribe to a GQL subscription and use the filter function to filter subscribers

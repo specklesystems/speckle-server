@@ -3,11 +3,14 @@
 
 const http = require('http')
 const prometheusClient = require('prom-client')
-const knex = require('../knex')
+const getDbClients = require('../knex')
 
 let metricFree = null
 let metricUsed = null
 let metricPendingAquires = null
+let metricPendingCreates = null
+let metricPendingValidations = null
+let metricRemainingCapacity = null
 let metricQueryDuration = null
 let metricQueryErrors = null
 
@@ -21,7 +24,8 @@ prometheusClient.collectDefaultMetrics()
 
 let prometheusInitialized = false
 
-function initKnexPrometheusMetrics() {
+async function initKnexPrometheusMetrics() {
+  const knex = (await getDbClients()).main.public
   metricFree = new prometheusClient.Gauge({
     name: 'speckle_server_knex_free',
     help: 'Number of free DB connections',
@@ -43,6 +47,39 @@ function initKnexPrometheusMetrics() {
     help: 'Number of pending DB connection aquires',
     collect() {
       this.set(knex.client.pool.numPendingAcquires())
+    }
+  })
+
+  metricPendingCreates = new prometheusClient.Gauge({
+    name: 'speckle_server_knex_pending_creates',
+    help: 'Number of pending DB connection creates',
+    collect() {
+      this.set(knex.client.pool.numPendingCreates())
+    }
+  })
+
+  metricPendingValidations = new prometheusClient.Gauge({
+    name: 'speckle_server_knex_pending_validations',
+    help: 'Number of pending DB connection validations. This is a state between pending acquisition and acquiring a connection.',
+    collect() {
+      this.set(knex.client.pool.numPendingValidations())
+    }
+  })
+
+  metricRemainingCapacity = new prometheusClient.Gauge({
+    name: 'speckle_server_knex_remaining_capacity',
+    help: 'Remaining capacity of the DB connection pool',
+    collect() {
+      const postgresMaxConnections = parseInt(
+        process.env.POSTGRES_MAX_CONNECTIONS_WEBHOOK_SERVICE || '1'
+      )
+      const demand =
+        knex.client.pool.numUsed() +
+        knex.client.pool.numPendingCreates() +
+        knex.client.pool.numPendingValidations() +
+        knex.client.pool.numPendingAcquires()
+
+      this.set(Math.max(postgresMaxConnections - demand, 0))
     }
   })
 
@@ -79,11 +116,11 @@ function initKnexPrometheusMetrics() {
 }
 
 module.exports = {
-  initPrometheusMetrics() {
+  async initPrometheusMetrics() {
     if (prometheusInitialized) return
     prometheusInitialized = true
 
-    initKnexPrometheusMetrics()
+    await initKnexPrometheusMetrics()
 
     // Define the HTTP server
     const server = http.createServer(async (req, res) => {

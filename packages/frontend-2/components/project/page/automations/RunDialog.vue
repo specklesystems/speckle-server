@@ -7,14 +7,13 @@
         onClick: () => {
           open = false
         },
-        props: { color: 'secondary', fullWidth: true }
+        props: { color: 'outline' }
       },
       ...(run && projectId && run.trigger.model && run.trigger.version
         ? [
             {
-              text: 'View Model Version',
+              text: 'View model version',
               props: {
-                fullWidth: true,
                 to: versionUrl({
                   projectId,
                   modelId: run.trigger.model.id,
@@ -29,31 +28,26 @@
     <template #header>
       <div class="flex flex-col">
         <div class="flex items-center space-x-2 max-w-full w-full">
-          <div class="mt-[6px] shrink-0">
-            <AutomateRunsTriggerStatusIcon
-              :summary="summary"
-              class="h-6 w-6 sm:h-10 sm:w-10"
-            />
-          </div>
-          <div>Run Details</div>
+          <AutomateRunsTriggerStatusIcon :summary="summary" class="h-5 w-5" />
+          <div>Run details</div>
         </div>
       </div>
     </template>
     <div v-if="run && projectId && automationId" class="flex flex-col gap-2">
       <div class="grid gap-2 grid-cols-[auto,1fr] items-center">
-        <div class="font-bold">Run ID:</div>
+        <div class="font-medium">Run ID:</div>
         <div>{{ run.id }}</div>
-        <div class="font-bold">Status:</div>
+        <div class="font-medium">Status:</div>
         <AutomateRunsStatusBadge :run="run" />
         <template v-if="summary.errorMessage">
-          <div class="font-bold">Error:</div>
+          <div class="font-medium">Error:</div>
           <div>{{ summary.errorMessage }}</div>
         </template>
-        <div class="font-bold">Time started:</div>
+        <div class="font-medium">Time started:</div>
         <div>{{ runDate(run) }}</div>
-        <div class="font-bold">Duration:</div>
+        <div class="font-medium">Duration:</div>
         <div>{{ runDuration(run) }}</div>
-        <div class="font-bold">Log output:</div>
+        <div class="font-medium">Log output:</div>
         <CommonLoadingIcon v-if="showLoader" size="sm" />
       </div>
       <div class="flex flex-col gap-2">
@@ -90,6 +84,7 @@ const {
   isDataLoaded: areLogsFullyRead,
   loading: logsLoading
 } = useAutomationRunLogs({
+  projectId: computed(() => props.projectId),
   automationId: computed(() => props.automationId),
   runId: computed(() => props.run?.id)
 })

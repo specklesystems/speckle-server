@@ -8,6 +8,9 @@ extend type Query {
   Returns all the publicly available apps on this server.
   """
   apps: [ServerAppListItem]
+    @deprecated(
+      reason: "Part of the old API surface and will be removed in the future."
+    )
 }
 
 type ServerApp {

@@ -10,7 +10,7 @@
   >
     <div class="relative">
       <button
-        v-tippy="!modelValue.isExpanded ? 'New Comment' : 'Close'"
+        v-tippy="!modelValue.isExpanded ? 'New comment' : 'Close'"
         :class="`bg-foundation-2 ${
           modelValue.isExpanded ? 'outline outline-2 outline-primary' : ''
         } rounded-tr-full rounded-tl-full rounded-br-full w-8 h-8 -top-10 absolute flex justify-center items-center hover:shadow-md`"
@@ -35,7 +35,7 @@
         <div
           v-if="modelValue.isExpanded && canPostComment"
           ref="threadContainer"
-          class="sm:absolute min-w-[200px] hover:bg-foundation bg-white/80 dark:bg-neutral-800/90 dark:hover:bg-neutral-800 backdrop-blur-sm sm:rounded-lg shadow-md"
+          class="sm:absolute min-w-[200px] bg-foundation sm:rounded-lg shadow-md"
         >
           <div class="relative">
             <ViewerCommentsEditor
@@ -48,24 +48,22 @@
               @submit="() => onSubmit()"
               @keydown="onKeyDownHandler"
             />
-            <div class="w-full flex justify-end p-2 space-x-2">
-              <div class="space-x-2">
-                <FormButton
-                  v-tippy="'Attach'"
-                  :icon-left="PaperClipIcon"
-                  hide-text
-                  text
-                  :disabled="isPostingNewThread"
-                  @click="trackAttachAndOpenFilePicker()"
-                />
-
-                <FormButton
-                  :icon-left="PaperAirplaneIcon"
-                  hide-text
-                  :loading="isPostingNewThread"
-                  @click="() => onSubmit()"
-                />
-              </div>
+            <div class="w-full flex p-2 justify-between">
+              <FormButton
+                v-tippy="'Attach'"
+                :icon-left="PaperClipIcon"
+                hide-text
+                text
+                class="sm:px-1"
+                :disabled="isPostingNewThread"
+                @click="trackAttachAndOpenFilePicker()"
+              />
+              <FormButton
+                :icon-left="PaperAirplaneIcon"
+                hide-text
+                :loading="isPostingNewThread"
+                @click="() => onSubmit()"
+              />
             </div>
           </div>
         </div>

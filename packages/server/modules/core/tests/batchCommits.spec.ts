@@ -1,18 +1,32 @@
+import { buildApolloServer } from '@/app'
+import { db } from '@/db/knex'
+import { saveActivityFactory } from '@/modules/activitystream/repositories'
+import {
+  addStreamInviteAcceptedActivityFactory,
+  addStreamPermissionsAddedActivityFactory
+} from '@/modules/activitystream/services/streamActivity'
 import { Commits, Streams, Users } from '@/modules/core/dbSchema'
 import { Roles } from '@/modules/core/helpers/mainConstants'
-import { getCommits } from '@/modules/core/repositories/commits'
-import { createBranch } from '@/modules/core/services/branches'
-import { addOrUpdateStreamCollaborator } from '@/modules/core/services/streams/streamAccessService'
+import { createBranchFactory } from '@/modules/core/repositories/branches'
+import { getCommitsFactory } from '@/modules/core/repositories/commits'
+import { grantStreamPermissionsFactory } from '@/modules/core/repositories/streams'
+import { getUserFactory } from '@/modules/core/repositories/users'
+import {
+  addOrUpdateStreamCollaboratorFactory,
+  validateStreamAccessFactory
+} from '@/modules/core/services/streams/access'
+import { authorizeResolver } from '@/modules/shared'
+import { publish } from '@/modules/shared/utils/subscriptions'
 import { BasicTestUser, createTestUsers } from '@/test/authHelper'
 import { deleteCommits, moveCommits } from '@/test/graphql/commits'
-import { truncateTables } from '@/test/hooks'
 import {
-  buildAuthenticatedApolloServer,
-  buildUnauthenticatedApolloServer
-} from '@/test/serverHelper'
+  createAuthedTestContext,
+  createTestContext,
+  ServerAndContext
+} from '@/test/graphqlHelper'
+import { truncateTables } from '@/test/hooks'
 import { BasicTestCommit, createTestCommits } from '@/test/speckle-helpers/commitHelper'
 import { BasicTestStream, createTestStreams } from '@/test/speckle-helpers/streamHelper'
-import { ApolloServer } from 'apollo-server-express'
 import { expect } from 'chai'
 import { times } from 'lodash'
 import { describe } from 'mocha'
@@ -21,6 +35,25 @@ enum BatchActionType {
   Move,
   Delete
 }
+
+const getUser = getUserFactory({ db })
+const createBranch = createBranchFactory({ db })
+const getCommits = getCommitsFactory({ db })
+const saveActivity = saveActivityFactory({ db })
+const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
+const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
+  validateStreamAccess,
+  getUser,
+  grantStreamPermissions: grantStreamPermissionsFactory({ db }),
+  addStreamInviteAcceptedActivity: addStreamInviteAcceptedActivityFactory({
+    saveActivity,
+    publish
+  }),
+  addStreamPermissionsAddedActivity: addStreamPermissionsAddedActivityFactory({
+    saveActivity,
+    publish
+  })
+})
 
 const cleanup = async () => {
   await truncateTables([Streams.name, Users.name, Commits.name])
@@ -61,6 +94,8 @@ describe('Batch commits', () => {
 
   let otherCommits: BasicTestCommit[]
 
+  let streamId: string
+
   before(async () => {
     await cleanup()
     await createTestUsers([me, otherGuy])
@@ -92,15 +127,15 @@ describe('Batch commits', () => {
       )
     ])
 
-    myCommits = times(
-      userCommmitCount,
-      (i): BasicTestCommit => ({
+    myCommits = times(userCommmitCount, (i): BasicTestCommit => {
+      streamId = i % 2 === 0 ? myStream.id : otherStream.id
+      return {
         id: '',
         objectId: '',
-        streamId: i % 2 === 0 ? myStream.id : otherStream.id,
+        streamId,
         authorId: me.id
-      })
-    )
+      }
+    })
     otherCommits = times(
       userCommmitCount,
       (): BasicTestCommit => ({
@@ -120,12 +155,12 @@ describe('Batch commits', () => {
   ]
 
   const buildBatchActionInvoker =
-    (apollo: ApolloServer) => (type: BatchActionType, commitIds: string[]) => {
+    (apollo: ServerAndContext) => (type: BatchActionType, commitIds: string[]) => {
       if (type === BatchActionType.Delete) {
-        return deleteCommits(apollo, { input: { commitIds } })
+        return deleteCommits(apollo, { input: { commitIds, streamId } })
       } else if (type === BatchActionType.Move) {
         return moveCommits(apollo, {
-          input: { commitIds, targetBranch: secondBranchName }
+          input: { commitIds, targetBranch: secondBranchName, streamId }
         })
       } else {
         throw new Error('Unexpected batch action type')
@@ -135,11 +170,14 @@ describe('Batch commits', () => {
   type BatchActionInvoker = ReturnType<typeof buildBatchActionInvoker>
 
   describe('when authenticated', () => {
-    let apollo: ApolloServer
+    let apollo: ServerAndContext
     let invokeBatchAction: BatchActionInvoker
 
     before(async () => {
-      apollo = await buildAuthenticatedApolloServer(me.id)
+      apollo = {
+        apollo: await buildApolloServer(),
+        context: await createAuthedTestContext(me.id)
+      }
       invokeBatchAction = buildBatchActionInvoker(apollo)
     })
 
@@ -175,21 +213,21 @@ describe('Batch commits', () => {
       let myDeletableCommits: BasicTestCommit[]
 
       beforeEach(async () => {
-        myDeletableCommits = times(
-          deletableCommitCount,
-          (i): BasicTestCommit => ({
+        myDeletableCommits = times(deletableCommitCount, (i): BasicTestCommit => {
+          streamId = i % 2 === 0 ? myStream.id : otherStream.id
+          return {
             id: '',
+            streamId,
             objectId: '',
-            streamId: i % 2 === 0 ? myStream.id : otherStream.id,
             authorId: me.id
-          })
-        )
+          }
+        })
 
         await createTestCommits(myDeletableCommits)
       })
 
       const invokeDelete = (commitIds: string[]) =>
-        deleteCommits(apollo, { input: { commitIds } })
+        deleteCommits(apollo, { input: { commitIds, streamId } })
 
       const validateDeleted = async (commitIds: string[]) => {
         const commits = await getCommits(commitIds)
@@ -209,23 +247,24 @@ describe('Batch commits', () => {
       const movableCommitCount = 5
 
       let myMovableCommits: BasicTestCommit[]
+      let streamId: string
 
       before(async () => {
-        myMovableCommits = times(
-          movableCommitCount,
-          (i): BasicTestCommit => ({
+        myMovableCommits = times(movableCommitCount, (i): BasicTestCommit => {
+          streamId = i % 2 === 0 ? myStream.id : otherStream.id
+          return {
             id: '',
             objectId: '',
-            streamId: i % 2 === 0 ? myStream.id : otherStream.id,
+            streamId,
             authorId: me.id
-          })
-        )
+          }
+        })
 
         await createTestCommits(myMovableCommits)
       })
 
       const invokeMove = (commitIds: string[], targetBranch = secondBranchName) =>
-        moveCommits(apollo, { input: { commitIds, targetBranch } })
+        moveCommits(apollo, { input: { commitIds, targetBranch, streamId } })
       const validateMoved = async (
         commitIds: string[],
         targetBranch = secondBranchName
@@ -268,11 +307,14 @@ describe('Batch commits', () => {
   })
 
   describe('when not authenticated', () => {
-    let apollo: ApolloServer
+    let apollo: ServerAndContext
     let invokeBatchAction: BatchActionInvoker
 
     before(async () => {
-      apollo = await buildUnauthenticatedApolloServer()
+      apollo = {
+        apollo: await buildApolloServer(),
+        context: await createTestContext()
+      }
       invokeBatchAction = buildBatchActionInvoker(apollo)
     })
 
@@ -283,7 +325,9 @@ describe('Batch commits', () => {
           myCommits.map((c) => c.id)
         )
 
-        expect(result).to.haveGraphQLErrors('you do not have the required privileges')
+        expect(result).to.haveGraphQLErrors(
+          'Your auth token does not have the required scope'
+        )
       })
     })
   })

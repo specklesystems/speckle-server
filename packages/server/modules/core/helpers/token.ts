@@ -1,12 +1,25 @@
-import { TokenCreateError } from '@/modules/core/errors/user'
 import {
   TokenResourceIdentifier,
   TokenResourceIdentifierType
-} from '@/modules/core/graph/generated/graphql'
+} from '@/modules/core/domain/tokens/types'
+import { TokenCreateError } from '@/modules/core/errors/user'
 import { TokenResourceAccessRecord } from '@/modules/core/helpers/types'
-import { ResourceTargets } from '@/modules/serverinvites/helpers/inviteHelper'
-import { MaybeNullOrUndefined, Nullable, Optional, Scopes } from '@speckle/shared'
+import { UserRole } from '@/modules/shared/domain/rolesAndScopes/types'
+import {
+  AllScopes,
+  MaybeNullOrUndefined,
+  Nullable,
+  Optional,
+  Scopes,
+  ServerScope
+} from '@speckle/shared'
 import { differenceBy } from 'lodash'
+
+export enum RoleResourceTargets {
+  Streams = 'streams',
+  Server = 'server',
+  Workspaces = 'workspaces'
+}
 
 export type ContextResourceAccessRules = MaybeNullOrUndefined<TokenResourceIdentifier[]>
 
@@ -20,11 +33,13 @@ export const resourceAccessRuleToIdentifier = (
 }
 
 export const roleResourceTypeToTokenResourceType = (
-  type: string
+  type: RoleResourceTargets | UserRole['resourceTarget']
 ): Nullable<TokenResourceIdentifierType> => {
   switch (type) {
-    case ResourceTargets.Streams:
-      return TokenResourceIdentifierType.Project
+    case RoleResourceTargets.Streams:
+      return 'project'
+    case RoleResourceTargets.Workspaces:
+      return 'workspace'
     default:
       return null
   }
@@ -52,9 +67,7 @@ export const isNewResourceAllowed = (params: {
 export const toProjectIdWhitelist = (
   resourceAccessRules: ContextResourceAccessRules
 ): Optional<string[]> => {
-  const projectRules = resourceAccessRules?.filter(
-    (r) => r.type === TokenResourceIdentifierType.Project
-  )
+  const projectRules = resourceAccessRules?.filter((r) => r.type === 'project')
   return projectRules?.map((r) => r.id)
 }
 
@@ -144,3 +157,6 @@ export const canCreateAppToken = (params: {
 
   return canCreateToken(params)
 }
+
+export const isValidScope = (scope: string): scope is ServerScope =>
+  (AllScopes as string[]).includes(scope)

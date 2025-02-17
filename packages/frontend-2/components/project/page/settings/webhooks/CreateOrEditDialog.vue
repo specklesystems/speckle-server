@@ -6,17 +6,16 @@
     prevent-close-on-click-outside
   >
     <template #header>
-      {{ props.webhook ? 'Edit Webhook' : 'Create Webhook' }}
+      {{ props.webhook ? 'Edit webhook' : 'Create webhook' }}
     </template>
     <form @submit="onSubmit">
-      <div class="flex flex-col gap-4">
+      <div class="flex flex-col gap-3">
         <FormTextInput
           v-model="url"
           label="URL"
           help="A POST request will be sent to this URL when this webhook is triggered"
           name="hookUrl"
           show-label
-          show-required
           :rules="[isRequired, isUrl]"
           type="text"
           color="foundation"
@@ -27,6 +26,7 @@
           help="An optional name to help you identify this webhook"
           name="hookName"
           show-label
+          show-optional
           type="text"
           color="foundation"
         />
@@ -37,6 +37,7 @@
           help="An optional secret. You'll be able to change this in the future, but you won't be able to retrieve it."
           name="hookSecret"
           show-label
+          show-optional
           type="text"
           color="foundation"
         />
@@ -45,10 +46,9 @@
           multiple
           name="triggers"
           label="Events"
-          placeholder="Choose Events"
+          placeholder="Choose events"
           mount-menu-on-body
           help="Choose what events will trigger this webhook."
-          show-required
           :rules="[isItemSelected]"
           show-label
           :items="webhookTriggerItems"
@@ -225,14 +225,14 @@ const resetWebhookModel = () => {
 const dialogButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Cancel',
-    props: { color: 'secondary', fullWidth: true, outline: true },
+    props: { color: 'outline' },
     onClick: () => {
       isOpen.value = false
     }
   },
   {
     text: props.webhook ? 'Save' : 'Create',
-    props: { color: 'default', fullWidth: true },
+    props: {},
     onClick: onSubmit
   }
 ])

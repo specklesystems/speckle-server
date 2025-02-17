@@ -1,144 +1,193 @@
 import { authorizeResolver } from '@/modules/shared'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { Roles } from '@speckle/shared'
-import {
-  getGendoAIAPIEndpoint,
-  getGendoAIKey
-} from '@/modules/shared/helpers/envHelper'
-import {
-  createGendoAIRenderRequest,
-  getGendoAIRenderRequest,
-  getGendoAIRenderRequests
-} from '@/modules/gendo/services'
-import crs from 'crypto-random-string'
+import { createRenderRequestFactory } from '@/modules/gendo/services'
 import {
   ProjectSubscriptions,
-  filteredSubscribe
+  filteredSubscribe,
+  publish
 } from '@/modules/shared/utils/subscriptions'
-import { GendoAiRender } from '@/test/graphql/generated/graphql'
 import {
   getRateLimitResult,
   isRateLimitBreached
 } from '@/modules/core/services/ratelimiter'
 import { RateLimitError } from '@/modules/core/errors/ratelimit'
-import { ApolloError } from 'apollo-server-express'
+import { uploadFileStreamFactory } from '@/modules/blobstorage/services/management'
+import {
+  updateBlobFactory,
+  upsertBlobFactory
+} from '@/modules/blobstorage/repositories'
+import {
+  getLatestVersionRenderRequestsFactory,
+  getUserCreditsFactory,
+  getVersionRenderRequestFactory,
+  storeRenderFactory,
+  upsertUserCreditsFactory
+} from '@/modules/gendo/repositories'
+import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
+import { requestNewImageGenerationFactory } from '@/modules/gendo/clients/gendo'
+import {
+  getUserGendoAiCreditsFactory,
+  useUserGendoAiCreditsFactory
+} from '@/modules/gendo/services/userCredits'
+import { db } from '@/db/knex'
+import {
+  getGendoAiApiEndpoint,
+  getGendoAIKey,
+  getGendoAICreditLimit,
+  getServerOrigin,
+  getFeatureFlags
+} from '@/modules/shared/helpers/envHelper'
+import { getProjectObjectStorage } from '@/modules/multiregion/utils/blobStorageSelector'
+import { storeFileStreamFactory } from '@/modules/blobstorage/repositories/blobs'
 
-export = {
-  Version: {
-    async gendoAIRenders(parent) {
-      const items = await getGendoAIRenderRequests(parent.id)
-      return {
-        totalCount: items.length,
-        items
-      }
-    },
-    async gendoAIRender(parent, args) {
-      const item = await getGendoAIRenderRequest(parent.id, args.id)
-      const response = {
-        ...item,
-        user: { name: item.userName, avatar: item.userAvatar, id: item.userId }
-      }
-      return response as GendoAiRender
-    }
-  },
-  VersionMutations: {
-    async requestGendoAIRender(__parent, args, ctx) {
-      await authorizeResolver(
-        ctx.userId,
-        args.input.projectId,
-        Roles.Stream.Reviewer,
-        ctx.resourceAccessRules
-      )
+const upsertUserCredits = upsertUserCreditsFactory({ db })
+const getUserGendoAiCredits = getUserGendoAiCreditsFactory({
+  getUserCredits: getUserCreditsFactory({ db }),
+  upsertUserCredits
+})
 
-      const rateLimitResult = await getRateLimitResult(
-        'GENDO_AI_RENDER_REQUEST',
-        ctx.userId as string
-      )
-      if (isRateLimitBreached(rateLimitResult)) {
-        throw new RateLimitError(rateLimitResult)
-      }
+const { FF_GENDOAI_MODULE_ENABLED } = getFeatureFlags()
 
-      const endpoint = getGendoAIAPIEndpoint() as string
-      const bearer = getGendoAIKey() as string
-      const webhookUrl = `${process.env.CANONICAL_URL}/api/thirdparty/gendo`
-
-      // TODO Fire off request to gendo api & get generationId, create record in db. Note: use gendo api key from env
-      const gendoRequestBody = {
-        userId: ctx.userId,
-        depthMap: args.input.baseImage,
-        prompt: args.input.prompt,
-        webhookUrl
-      }
-
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${bearer}`
+export = FF_GENDOAI_MODULE_ENABLED
+  ? ({
+      Version: {
+        async gendoAIRenders(parent) {
+          const projectDb = await getProjectDbClient({ projectId: parent.streamId })
+          const items = await getLatestVersionRenderRequestsFactory({ db: projectDb })({
+            versionId: parent.id
+          })
+          return {
+            totalCount: items.length,
+            items
+          }
         },
-        body: JSON.stringify(gendoRequestBody)
-      })
+        async gendoAIRender(parent, args) {
+          const projectDb = await getProjectDbClient({ projectId: parent.streamId })
+          const item = await getVersionRenderRequestFactory({ db: projectDb })({
+            versionId: parent.id,
+            id: args.id
+          })
 
-      const status = response.status
+          return item
+        }
+      },
+      GendoAIRender: {
+        async user(parent, __args, ctx) {
+          return await ctx.loaders.users.getUser.load(parent.userId)
+        }
+      },
+      VersionMutations: {
+        async requestGendoAIRender(__parent, args, ctx) {
+          await authorizeResolver(
+            ctx.userId,
+            args.input.projectId,
+            Roles.Stream.Reviewer,
+            ctx.resourceAccessRules
+          )
 
-      if (status === 200) {
-        const body = (await response.json()) as { status: string; generationId: string }
-        await createGendoAIRenderRequest({
-          ...args.input,
-          userId: ctx.userId as string,
-          status: body.status,
-          gendoGenerationId: body.generationId,
-          id: crs({ length: 10 })
-        })
-      } else {
-        const body = await response.json()
-        throw new ApolloError('Failed to enque gendo render. ' + body)
+          const rateLimitResult = await getRateLimitResult(
+            'GENDO_AI_RENDER_REQUEST',
+            ctx.userId as string
+          )
+          if (isRateLimitBreached(rateLimitResult)) {
+            throw new RateLimitError(rateLimitResult)
+          }
+
+          const userId = ctx.userId!
+
+          const projectId = args.input.projectId
+          const [projectDb, projectStorage] = await Promise.all([
+            getProjectDbClient({
+              projectId
+            }),
+            getProjectObjectStorage({ projectId })
+          ])
+
+          await useUserGendoAiCreditsFactory({
+            getUserGendoAiCredits,
+            upsertUserCredits,
+            maxCredits: getGendoAICreditLimit()
+          })({ userId, credits: 1 })
+
+          const requestNewImageGeneration = requestNewImageGenerationFactory({
+            endpoint: getGendoAiApiEndpoint(),
+            serverOrigin: getServerOrigin(),
+            token: getGendoAIKey()
+          })
+
+          const storeFileStream = storeFileStreamFactory({ storage: projectStorage })
+          const createRenderRequest = createRenderRequestFactory({
+            uploadFileStream: uploadFileStreamFactory({
+              storeFileStream,
+              upsertBlob: upsertBlobFactory({ db: projectDb }),
+              updateBlob: updateBlobFactory({ db: projectDb })
+            }),
+            requestNewImageGeneration,
+            storeRender: storeRenderFactory({ db: projectDb }),
+            publish
+          })
+
+          await createRenderRequest({
+            ...args.input,
+            userId
+          })
+
+          return true
+        }
+      },
+      User: {
+        gendoAICredits: async (_parent, _args, ctx) => {
+          const userCredits = await getUserGendoAiCredits({ userId: ctx.userId! })
+          return {
+            limit: getGendoAICreditLimit(),
+            ...userCredits
+          }
+        }
+      },
+      Subscription: {
+        projectVersionGendoAIRenderCreated: {
+          subscribe: filteredSubscribe(
+            ProjectSubscriptions.ProjectVersionGendoAIRenderCreated,
+            async (payload, args, ctx) => {
+              if (
+                args.id !== payload.projectVersionGendoAIRenderCreated.projectId ||
+                args.versionId !== payload.projectVersionGendoAIRenderCreated.versionId
+              )
+                return false
+
+              await authorizeResolver(
+                ctx.userId,
+                args.id,
+                Roles.Stream.Reviewer,
+                ctx.resourceAccessRules
+              )
+
+              return true
+            }
+          )
+        },
+        projectVersionGendoAIRenderUpdated: {
+          subscribe: filteredSubscribe(
+            ProjectSubscriptions.ProjectVersionGendoAIRenderUpdated,
+            async (payload, args, ctx) => {
+              if (
+                args.id !== payload.projectVersionGendoAIRenderUpdated.projectId ||
+                args.versionId !== payload.projectVersionGendoAIRenderUpdated.versionId
+              )
+                return false
+
+              await authorizeResolver(
+                ctx.userId,
+                args.id,
+                Roles.Stream.Reviewer,
+                ctx.resourceAccessRules
+              )
+
+              return true
+            }
+          )
+        }
       }
-      return true
-    }
-  },
-  Subscription: {
-    projectVersionGendoAIRenderCreated: {
-      subscribe: filteredSubscribe(
-        ProjectSubscriptions.ProjectVersionGendoAIRenderCreated,
-        async (payload, args, ctx) => {
-          if (
-            args.id !== payload.projectVersionGendoAIRenderCreated.projectId ||
-            args.versionId !== payload.projectVersionGendoAIRenderCreated.versionId
-          )
-            return false
-
-          await authorizeResolver(
-            ctx.userId,
-            args.id,
-            Roles.Stream.Reviewer,
-            ctx.resourceAccessRules
-          )
-
-          return true
-        }
-      )
-    },
-    projectVersionGendoAIRenderUpdated: {
-      subscribe: filteredSubscribe(
-        ProjectSubscriptions.ProjectVersionGendoAIRenderUpdated,
-        async (payload, args, ctx) => {
-          if (
-            args.id !== payload.projectVersionGendoAIRenderUpdated.projectId ||
-            args.versionId !== payload.projectVersionGendoAIRenderUpdated.versionId
-          )
-            return false
-
-          await authorizeResolver(
-            ctx.userId,
-            args.id,
-            Roles.Stream.Reviewer,
-            ctx.resourceAccessRules
-          )
-
-          return true
-        }
-      )
-    }
-  }
-} as Resolvers
+    } as Resolvers)
+  : {}

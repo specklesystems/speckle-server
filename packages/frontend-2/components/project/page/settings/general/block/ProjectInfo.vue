@@ -2,31 +2,31 @@
   <div class="flex flex-col gap-4">
     <ProjectPageSettingsBlock
       background
-      title="Project Info"
+      title="Project info"
       :disabled-message="disabled ? 'You must be a project owner' : undefined"
-      :icon="PencilIcon"
     >
       <FormTextInput
         v-model="localProjectName"
         name="projectName"
-        label="Project Name"
-        placeholder="Project Name"
+        label="Project name"
+        placeholder="Project name"
         show-label
         color="foundation"
-        class="mb-4"
+        class="mb-2"
         :disabled="disabled"
       />
       <FormTextArea
         v-model="localProjectDescription"
         name="projectDescription"
-        label="Project Description"
-        placeholder="Description (optional)"
+        label="Project description"
+        placeholder="Description"
         show-label
+        show-optional
         color="foundation"
         :disabled="disabled"
       />
       <template #bottom-buttons>
-        <FormButton text :disabled="!hasChanges" @click="resetLocalState">
+        <FormButton color="subtle" :disabled="!hasChanges" @click="resetLocalState">
           Cancel
         </FormButton>
         <FormButton :disabled="!hasChanges" @click="emitUpdate">Update</FormButton>
@@ -38,7 +38,7 @@
       max-width="md"
       :buttons="dialogButtons"
     >
-      <template #header>Unsaved Changes</template>
+      <template #header>Unsaved changes</template>
       <div class="space-y-4">
         <p>You have unsaved changes. Do you want to save them before leaving?</p>
       </div>
@@ -48,7 +48,6 @@
 
 <script setup lang="ts">
 import { onBeforeRouteLeave, useRouter } from 'vue-router'
-import { PencilIcon } from '@heroicons/vue/24/outline'
 import {
   FormTextInput,
   FormTextArea,
@@ -114,15 +113,13 @@ const resetLocalState = () => {
 
 const dialogButtons = computed<LayoutDialogButton[]>(() => [
   {
-    text: 'Discard Changes',
-    props: { color: 'secondary', fullWidth: true, outline: true },
+    text: 'Discard changes',
+    props: { color: 'outline' },
     onClick: handleRedirection
   },
   {
-    text: 'Save Changes',
+    text: 'Save changes',
     props: {
-      fullWidth: true,
-      outline: true,
       submit: true
     },
     onClick: () => {

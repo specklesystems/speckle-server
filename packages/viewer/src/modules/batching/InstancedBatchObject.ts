@@ -1,7 +1,7 @@
-import { BatchObject, type Vector3Like } from './BatchObject'
+import { BatchObject, type Vector3Like } from './BatchObject.js'
 
 import { Matrix4 } from 'three'
-import { NodeRenderView } from '../tree/NodeRenderView'
+import { NodeRenderView } from '../tree/NodeRenderView.js'
 
 export class InstancedBatchObject extends BatchObject {
   protected instanceTransform: Matrix4 = new Matrix4()

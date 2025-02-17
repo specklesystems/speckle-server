@@ -1,18 +1,18 @@
 <template>
   <LayoutDialog
     v-model:open="isOpen"
-    max-width="sm"
+    max-width="xs"
     :buttons="[
       {
         text: 'Cancel',
-        props: { color: 'secondary', fullWidth: true },
+        props: { color: 'outline' },
         onClick: () => {
           isOpen = false
         }
       },
       {
         text: 'Save',
-        props: { color: 'default', fullWidth: true, disabled: loading },
+        props: { disabled: loading },
         onClick: () => {
           onSubmit()
         }
@@ -20,14 +20,15 @@
     ]"
     @fully-closed="$emit('fully-closed')"
   >
-    <template #header>Edit Version Message</template>
-    <form class="flex flex-col text-foreground space-y-4" @submit="onSubmit">
-      <FormTextInput
+    <template #header>Edit version message</template>
+    <form class="flex flex-col text-foreground space-y-4 mb-2" @submit="onSubmit">
+      <FormTextArea
         v-model="message"
         name="newMessage"
         label="Version message"
         placeholder="Version message"
-        show-required
+        show-label
+        color="foundation"
         :rules="[isRequired]"
         :disabled="loading"
       />
@@ -56,6 +57,7 @@ const emit = defineEmits<{
 }>()
 
 const props = defineProps<{
+  projectId: string
   version: Nullable<ProjectModelPageDialogDeleteVersionFragment>
   open: boolean
 }>()
@@ -84,6 +86,7 @@ const onSubmit = handleSubmit(async ({ newMessage }) => {
 
   loading.value = true
   const success = !!(await updateVersion({
+    projectId: props.projectId,
     versionId: props.version?.id,
     message: newMessage
   }))

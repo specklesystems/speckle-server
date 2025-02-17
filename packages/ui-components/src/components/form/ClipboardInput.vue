@@ -1,9 +1,11 @@
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
-  <div class="relative group bg-foundation-page p-2 rounded-lg pr-12">
+  <div
+    class="relative group bg-foundation border border-outline-2 p-2 rounded-lg pr-20"
+  >
     <div
       v-if="isMultiline"
-      class="relative z-10 text-xs sm:text-sm text-foreground font-mono break-all p-2 pl-3 max-h-[4.8rem] simple-scrollbar overflow-y-auto"
+      class="relative z-10 text-body-2xs select-all text-foreground font-mono break-all p-2 pl-3 max-h-[4.8rem] simple-scrollbar overflow-y-auto"
       @keypress="keyboardClick(selectAllText)"
     >
       {{ value }}
@@ -14,16 +16,24 @@
       name="contentInput"
       readonly
       :model-value="value"
-      class="relative z-10 text-sm text-foreground font-mono"
+      class="relative z-10 text-body-2xs text-foreground font-mono select-all"
     />
-    <div class="absolute inset-0 right-2 flex justify-end items-center">
+    <div class="absolute top-3 right-2 flex justify-end items-center">
       <FormButton
-        color="invert"
+        color="outline"
         size="sm"
-        :icon-left="copied ? ClipboardDocumentCheckIcon : ClipboardDocumentIcon"
-        hide-text
+        :icon-left="
+          isIconButton
+            ? copied
+              ? ClipboardDocumentCheckIcon
+              : ClipboardDocumentIcon
+            : undefined
+        "
+        :hide-text="isIconButton"
         @click="handleCopy"
-      ></FormButton>
+      >
+        {{ copied ? 'Copied' : 'Copy' }}
+      </FormButton>
     </div>
   </div>
 </template>
@@ -41,6 +51,7 @@ import { keyboardClick } from '~~/src/helpers/global/accessibility'
 type Props = {
   value: string
   isMultiline?: boolean
+  isIconButton?: boolean
   rows?: number
 }
 

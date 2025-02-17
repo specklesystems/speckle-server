@@ -1,7 +1,7 @@
 <template>
   <LayoutDialog
     v-model:open="open"
-    title="Edit Function"
+    title="Edit function"
     :buttons="buttons"
     max-width="md"
     buttons-wrapper-classes="justify-between"
@@ -18,10 +18,20 @@ import { difference, differenceBy } from 'lodash-es'
 import { useForm } from 'vee-validate'
 import { useUpdateAutomateFunction } from '~/lib/automate/composables/management'
 import type { FunctionDetailsFormValues } from '~/lib/automate/helpers/functions'
+import { graphql } from '~/lib/common/generated/gql'
+import type { AutomateFunctionEditDialog_WorkspaceFragment } from '~/lib/common/generated/gql/graphql'
+
+graphql(`
+  fragment AutomateFunctionEditDialog_Workspace on Workspace {
+    id
+    name
+  }
+`)
 
 const props = defineProps<{
   model: FunctionDetailsFormValues
   fnId: string
+  workspaces?: AutomateFunctionEditDialog_WorkspaceFragment[]
 }>()
 const open = defineModel<boolean>('open', { required: true })
 const { handleSubmit, setValues } = useForm<FunctionDetailsFormValues>()
@@ -32,8 +42,8 @@ const buttons = computed((): LayoutDialogButton[] => [
   {
     text: 'Cancel',
     props: {
-      color: 'secondary',
-      textColor: 'primary'
+      color: 'outline',
+      class: '!text-primary'
     },
     onClick: () => (open.value = false)
   },
@@ -53,6 +63,7 @@ const onSubmit = handleSubmit(async (values) => {
         values.description !== props.model.description ? values.description : null,
       logo: values.image !== props.model.image ? values.image : null,
       tags: difference(values.tags, props.model.tags || []).length ? values.tags : null,
+      workspaceIds: values.workspace ? [values.workspace.id] : [],
       supportedSourceApps: differenceBy(
         values.allowedSourceApps,
         props.model.allowedSourceApps || [],
@@ -69,7 +80,10 @@ const onSubmit = handleSubmit(async (values) => {
 })
 
 const reset = () => {
-  setValues(props.model)
+  // Temp hack while FormSelectBase has a bug where it rewrites form value with initialValue
+  nextTick(() => {
+    setValues(props.model)
+  })
 }
 
 watch(

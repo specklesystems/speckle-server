@@ -1,104 +1,47 @@
 import DataLoader from 'dataloader'
-import {
-  getBatchUserFavoriteData,
-  getBatchStreamFavoritesCounts,
-  getOwnedFavoritesCountByUserIds,
-  getStreams,
-  getStreamRoles,
-  getStreamsSourceApps,
-  getCommitStreams,
-  StreamWithCommitId,
-  getUserStreamCounts
-} from '@/modules/core/repositories/streams'
-import { UserWithOptionalRole, getUsers } from '@/modules/core/repositories/users'
-import { keyBy } from 'lodash'
-import { getInvites } from '@/modules/serverinvites/repositories'
 import { AuthContext } from '@/modules/shared/authz'
-import {
-  BranchRecord,
-  CommitRecord,
-  LimitedUserRecord,
-  StreamFavoriteRecord,
-  StreamRecord,
-  UsersMetaRecord
-} from '@/modules/core/helpers/types'
-import { Nullable } from '@/modules/shared/helpers/typeHelper'
-import { ServerInviteRecord } from '@/modules/serverinvites/helpers/types'
-import {
-  getCommitBranches,
-  getCommits,
-  getSpecificBranchCommits,
-  getStreamCommitCounts,
-  getUserAuthoredCommitCounts,
-  getUserStreamCommitCounts
-} from '@/modules/core/repositories/commits'
-import { ResourceIdentifier, Scope } from '@/modules/core/graph/generated/graphql'
-import {
-  getBranchCommentCounts,
-  getCommentParents,
-  getCommentReplyAuthorIds,
-  getCommentReplyCounts,
-  getCommentsResources,
-  getCommentsViewedAt,
-  getCommitCommentCounts,
-  getStreamCommentCounts
-} from '@/modules/comments/repositories/comments'
-import {
-  getBranchCommitCounts,
-  getBranchesByIds,
-  getBranchLatestCommits,
-  getStreamBranchCounts,
-  getStreamBranchesByName
-} from '@/modules/core/repositories/branches'
-import { CommentRecord } from '@/modules/comments/helpers/types'
-import { metaHelpers } from '@/modules/core/helpers/meta'
-import { Users } from '@/modules/core/dbSchema'
-import { getStreamPendingModels } from '@/modules/fileuploads/repositories/fileUploads'
-import { FileUploadRecord } from '@/modules/fileuploads/helpers/types'
-import { getAutomationFunctionRunResultVersions } from '@/modules/betaAutomations/repositories/automations'
-import { getAppScopes } from '@/modules/auth/repositories'
-import {
-  AutomateRevisionFunctionRecord,
-  AutomationRecord,
-  AutomationRevisionRecord,
-  AutomationRunTriggerRecord,
-  AutomationTriggerDefinitionRecord
-} from '@/modules/automate/helpers/types'
-import {
-  getAutomationRevisions,
-  getAutomationRunsTriggers,
-  getAutomations,
-  getFunctionAutomationCounts,
-  getLatestAutomationRevisions,
-  getRevisionsFunctions,
-  getRevisionsTriggerDefinitions
-} from '@/modules/automate/repositories/automations'
-import {
-  getFunction,
-  getFunctionReleases
-} from '@/modules/automate/clients/executionEngine'
-import {
-  FunctionReleaseSchemaType,
-  FunctionSchemaType
-} from '@/modules/automate/helpers/executionEngine'
-import {
-  ExecutionEngineFailedResponseError,
-  ExecutionEngineNetworkError
-} from '@/modules/automate/errors/executionEngine'
-
-const simpleTupleCacheKey = (key: [string, string]) => `${key[0]}:${key[1]}`
+import { graphDataloadersBuilders } from '@/modules'
+import { ModularizedDataLoadersConstraint } from '@/modules/shared/helpers/graphqlHelper'
+import { Knex } from 'knex'
+import { isNonNullable, Optional } from '@speckle/shared'
+import { flatten, noop, isFunction } from 'lodash'
+import { db } from '@/db/knex'
 
 /**
- * TODO: Lazy load DataLoaders to reduce memory usage
- * - Instead of keeping them request scoped, cache them identified by request (user ID) with a TTL,
- * so that users with the same ID can re-use them across requests/subscriptions
+ * Lets not waste memory on loaders that may not actually be invoked
  */
+const makeLazyDataLoader = <K, V, C = K>(
+  ...args: ConstructorParameters<typeof DataLoader<K, V, C>>
+): DataLoader<K, V, C> => {
+  let dataloader: Optional<DataLoader<K, V, C>> = undefined
+
+  return new Proxy({} as DataLoader<K, V, C>, {
+    get(_target, prop) {
+      if (!dataloader) {
+        // If invoking clearAll() - we don't really need to do anything, no loader exists
+        if (prop === 'clearAll') {
+          return noop
+        }
+
+        dataloader = new DataLoader<K, V, C>(...args)
+      }
+
+      const ret = dataloader[prop as keyof DataLoader<K, V, C>]
+      if (isFunction(ret)) {
+        return ret.bind(dataloader)
+      } else {
+        return ret
+      }
+    }
+  })
+}
 
 const makeSelfClearingDataloader = <K, V, C = K>(
-  batchLoadFn: DataLoader.BatchLoadFn<K, V>,
-  options?: DataLoader.Options<K, V, C>
+  ...args: ConstructorParameters<typeof DataLoader<K, V, C>>
 ) => {
-  const dataloader = new DataLoader<K, V, C>((ids) => {
+  const [batchLoadFn, options] = args
+
+  const dataloader = makeLazyDataLoader<K, V, C>((ids) => {
     dataloader.clearAll()
     return batchLoadFn(ids)
   }, options)
@@ -106,10 +49,9 @@ const makeSelfClearingDataloader = <K, V, C = K>(
 }
 
 const buildDataLoaderCreator = (selfClearing = false) => {
-  return <K, V, C = K>(
-    batchLoadFn: DataLoader.BatchLoadFn<K, V>,
-    options?: DataLoader.Options<K, V, C>
-  ) => {
+  return <K, V, C = K>(...args: ConstructorParameters<typeof DataLoader<K, V, C>>) => {
+    const [batchLoadFn, options] = args
+
     if (selfClearing) {
       return makeSelfClearingDataloader<K, V, C>(batchLoadFn, {
         ...(options || {}),
@@ -117,7 +59,7 @@ const buildDataLoaderCreator = (selfClearing = false) => {
         cache: false
       })
     } else {
-      return new DataLoader<K, V, C>(batchLoadFn, options)
+      return makeLazyDataLoader(batchLoadFn, options)
     }
   }
 }
@@ -126,546 +68,71 @@ const buildDataLoaderCreator = (selfClearing = false) => {
  * Build request-scoped dataloaders
  * @param ctx GraphQL context w/o loaders
  */
-export function buildRequestLoaders(
+export async function buildRequestLoaders(
   ctx: AuthContext,
   options?: Partial<{ cleanLoadersEarly: boolean }>
 ) {
-  const userId = ctx.userId
-
   const createLoader = buildDataLoaderCreator(options?.cleanLoadersEarly || false)
+  const modulesLoaders = graphDataloadersBuilders()
 
-  const loaders = {
-    streams: {
-      getAutomation: (() => {
-        type AutomationDataLoader = DataLoader<string, Nullable<AutomationRecord>>
-        const streamAutomationLoaders = new Map<string, AutomationDataLoader>()
-        return {
-          clearAll: () => streamAutomationLoaders.clear(),
-          forStream(streamId: string): AutomationDataLoader {
-            let loader = streamAutomationLoaders.get(streamId)
-            if (!loader) {
-              loader = createLoader<string, Nullable<AutomationRecord>>(
-                async (automationIds) => {
-                  const results = keyBy(
-                    await getAutomations({ automationIds: automationIds.slice() }),
-                    (a) => a.id
-                  )
-                  return automationIds.map((i) => results[i] || null)
-                }
-              )
-              streamAutomationLoaders.set(streamId, loader)
-            }
+  const mainDb = db
 
-            return loader
-          }
-        }
-      })(),
+  /**
+   * Dataloaders autoloaded from various speckle modules, created for the specified region DB
+   */
+  const createLoadersForRegion = (deps: { db: Knex }) => {
+    return {
+      ...(Object.assign(
+        {},
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+        ...modulesLoaders.map((l) => l({ ctx, createLoader, deps }))
+      ) as Record<string, unknown>)
+    } as ModularizedDataLoaders
+  }
 
-      /**
-       * Get a specific commit of a specific stream. Each stream ID technically has its own loader &
-       * thus its own query.
-       */
-      getStreamCommit: (() => {
-        type CommitDataLoader = DataLoader<string, Nullable<CommitRecord>>
-        const streamCommitLoaders = new Map<string, CommitDataLoader>()
-        return {
-          clearAll: () => streamCommitLoaders.clear(),
-          forStream(streamId: string): CommitDataLoader {
-            let loader = streamCommitLoaders.get(streamId)
-            if (!loader) {
-              loader = createLoader<string, Nullable<CommitRecord>>(
-                async (commitIds) => {
-                  const results = keyBy(
-                    await getCommits(commitIds.slice(), { streamId }),
-                    'id'
-                  )
-                  return commitIds.map((i) => results[i] || null)
-                }
-              )
-              streamCommitLoaders.set(streamId, loader)
-            }
+  const mainDbLoaders = createLoadersForRegion({ db: mainDb })
+  const regionLoaders = new Map<Knex, ModularizedDataLoaders>()
 
-            return loader
-          }
-        }
-      })(),
+  // Extra utilities to add on top:
 
-      /**
-       * Get favorite metadata for a specific stream and user
-       */
-      getUserFavoriteData: createLoader<string, Nullable<StreamFavoriteRecord>>(
-        async (streamIds) => {
-          if (!userId) {
-            return streamIds.map(() => null)
-          }
-
-          const results = await getBatchUserFavoriteData({
-            userId,
-            streamIds: streamIds.slice()
-          })
-          return streamIds.map((k) => results[k])
-        }
-      ),
-
-      /**
-       * Get amount of favorites for a specific stream
-       */
-      getFavoritesCount: createLoader<string, number>(async (streamIds) => {
-        const results = await getBatchStreamFavoritesCounts(streamIds.slice())
-        return streamIds.map((k) => results[k] || 0)
-      }),
-
-      /**
-       * Get total amount of favorites of owned streams
-       */
-      getOwnedFavoritesCount: createLoader<string, number>(async (userIds) => {
-        const results = await getOwnedFavoritesCountByUserIds(userIds.slice())
-        return userIds.map((i) => results[i] || 0)
-      }),
-
-      /**
-       * Get stream from DB
-       *
-       * Note: Considering the difficulty of writing a single query that queries for multiple stream IDs
-       * and multiple user IDs also, currently this dataloader will only use a single userId
-       */
-      getStream: createLoader<string, Nullable<StreamRecord>>(async (streamIds) => {
-        const results = keyBy(await getStreams(streamIds.slice()), 'id')
-        return streamIds.map((i) => results[i] || null)
-      }),
-
-      /**
-       * Get stream role from DB
-       */
-      getRole: createLoader<string, Nullable<string>>(async (streamIds) => {
-        if (!userId) return streamIds.map(() => null)
-
-        const results = await getStreamRoles(userId, streamIds.slice())
-        return streamIds.map((id) => results[id] || null)
-      }),
-      /**
-       * Works in FE2 mode - skips `main` if it doesn't have any versions
-       */
-      getBranchCount: createLoader<string, number>(async (streamIds) => {
-        const results = keyBy(
-          await getStreamBranchCounts(streamIds.slice(), { skipEmptyMain: true }),
-          'streamId'
-        )
-        return streamIds.map((i) => results[i]?.count || 0)
-      }),
-      getCommitCountWithoutGlobals: createLoader<string, number>(async (streamIds) => {
-        const results = keyBy(
-          await getStreamCommitCounts(streamIds.slice(), {
-            ignoreGlobalsBranch: true
-          }),
-          'streamId'
-        )
-        return streamIds.map((i) => results[i]?.count || 0)
-      }),
-      getCommentThreadCount: createLoader<string, number>(async (streamIds) => {
-        const results = keyBy(
-          await getStreamCommentCounts(streamIds.slice(), { threadsOnly: true }),
-          'streamId'
-        )
-        return streamIds.map((i) => results[i]?.count || 0)
-      }),
-      getSourceApps: createLoader<string, string[]>(async (streamIds) => {
-        const results = await getStreamsSourceApps(streamIds.slice())
-        return streamIds.map((i) => results[i] || [])
-      }),
-      /**
-       * Get a specific branch of a specific stream. Each stream ID technically has its own loader &
-       * thus its own query.
-       */
-      getStreamBranchByName: (() => {
-        type BranchDataLoader = DataLoader<string, Nullable<BranchRecord>>
-        const streamBranchLoaders = new Map<string, BranchDataLoader>()
-        return {
-          clearAll: () => streamBranchLoaders.clear(),
-          forStream(streamId: string): BranchDataLoader {
-            let loader = streamBranchLoaders.get(streamId)
-            if (!loader) {
-              loader = createLoader<string, Nullable<BranchRecord>>(
-                async (branchNames) => {
-                  const results = keyBy(
-                    await getStreamBranchesByName(streamId, branchNames.slice()),
-                    'name'
-                  )
-                  return branchNames.map((n) => results[n] || null)
-                }
-              )
-              streamBranchLoaders.set(streamId, loader)
-            }
-
-            return loader
-          }
-        }
-      })(),
-      /**
-       * Get a specific pending model (upload) of a specific stream. Each stream ID technically has its own loader &
-       * thus its own query.
-       */
-      getStreamPendingBranchByName: (() => {
-        type BranchDataLoader = DataLoader<string, Nullable<FileUploadRecord>>
-        const streamBranchLoaders = new Map<string, BranchDataLoader>()
-        return {
-          clearAll: () => streamBranchLoaders.clear(),
-          forStream(streamId: string): BranchDataLoader {
-            let loader = streamBranchLoaders.get(streamId)
-            if (!loader) {
-              loader = createLoader<string, Nullable<FileUploadRecord>>(
-                async (branchNames) => {
-                  const results = keyBy(
-                    await getStreamPendingModels(streamId, {
-                      branchNamePattern: `(${branchNames.slice().join('|')})`
-                    }),
-                    'branchName'
-                  )
-                  return branchNames.map((n) => results[n] || null)
-                }
-              )
-              streamBranchLoaders.set(streamId, loader)
-            }
-
-            return loader
-          }
-        }
-      })()
-    },
-    branches: {
-      getCommitCount: createLoader<string, number>(async (branchIds) => {
-        const results = keyBy(await getBranchCommitCounts(branchIds.slice()), 'id')
-        return branchIds.map((i) => results[i]?.count || 0)
-      }),
-      getLatestCommit: createLoader<string, Nullable<CommitRecord>>(
-        async (branchIds) => {
-          const results = keyBy(
-            await getBranchLatestCommits(branchIds.slice()),
-            'branchId'
-          )
-          return branchIds.map((i) => results[i] || null)
-        }
-      ),
-      getCommentThreadCount: createLoader<string, number>(async (branchIds) => {
-        const results = keyBy(
-          await getBranchCommentCounts(branchIds.slice(), { threadsOnly: true }),
-          'id'
-        )
-        return branchIds.map((i) => results[i]?.count || 0)
-      }),
-      getById: createLoader<string, Nullable<BranchRecord>>(async (branchIds) => {
-        const results = keyBy(await getBranchesByIds(branchIds.slice()), 'id')
-        return branchIds.map((i) => results[i] || null)
-      }),
-      getBranchCommit: createLoader<
-        { branchId: string; commitId: string },
-        Nullable<CommitRecord>,
-        string
-      >(
-        async (idPairs) => {
-          const results = keyBy(await getSpecificBranchCommits(idPairs.slice()), 'id')
-          return idPairs.map((p) => {
-            const commit = results[p.commitId]
-            return commit?.id === p.commitId && commit?.branchId === p.branchId
-              ? commit
-              : null
-          })
-        },
-        { cacheKeyFn: (key) => `${key.branchId}:${key.commitId}` }
-      )
-    },
-    commits: {
-      /**
-       * Get a commit's stream from DB
-       */
-      getCommitStream: createLoader<string, Nullable<StreamWithCommitId>>(
-        async (commitIds) => {
-          const results = keyBy(
-            await getCommitStreams({ commitIds: commitIds.slice(), userId }),
-            'commitId'
-          )
-          return commitIds.map((id) => results[id] || null)
-        }
-      ),
-
-      getCommitBranch: createLoader<string, Nullable<BranchRecord>>(
-        async (commitIds) => {
-          const results = keyBy(await getCommitBranches(commitIds.slice()), 'commitId')
-          return commitIds.map((id) => results[id] || null)
-        }
-      ),
-      getCommentThreadCount: createLoader<string, number>(async (commitIds) => {
-        const results = keyBy(
-          await getCommitCommentCounts(commitIds.slice(), { threadsOnly: true }),
-          'commitId'
-        )
-        return commitIds.map((i) => results[i]?.count || 0)
-      }),
-      getById: createLoader<string, Nullable<CommitRecord>>(async (commitIds) => {
-        const results = keyBy(await getCommits(commitIds.slice()), (c) => c.id)
-        return commitIds.map((i) => results[i] || null)
-      })
-    },
-    comments: {
-      getViewedAt: createLoader<string, Nullable<Date>>(async (commentIds) => {
-        if (!userId) return commentIds.slice().map(() => null)
-
-        const results = keyBy(
-          await getCommentsViewedAt(commentIds.slice(), userId),
-          'commentId'
-        )
-        return commentIds.map((id) => results[id]?.viewedAt || null)
-      }),
-      getResources: createLoader<string, ResourceIdentifier[]>(async (commentIds) => {
-        const results = await getCommentsResources(commentIds.slice())
-        return commentIds.map((id) => results[id]?.resources || [])
-      }),
-      getReplyCount: createLoader<string, number>(async (threadIds) => {
-        const results = keyBy(
-          await getCommentReplyCounts(threadIds.slice()),
-          'threadId'
-        )
-        return threadIds.map((id) => results[id]?.count || 0)
-      }),
-      getReplyAuthorIds: createLoader<string, string[]>(async (threadIds) => {
-        const results = await getCommentReplyAuthorIds(threadIds.slice())
-        return threadIds.map((id) => results[id] || [])
-      }),
-      getReplyParent: createLoader<string, Nullable<CommentRecord>>(
-        async (replyIds) => {
-          const results = keyBy(await getCommentParents(replyIds.slice()), 'replyId')
-          return replyIds.map((id) => results[id] || null)
-        }
-      )
-    },
-    users: {
-      /**
-       * Get user from DB
-       */
-      getUser: createLoader<string, Nullable<UserWithOptionalRole<LimitedUserRecord>>>(
-        async (userIds) => {
-          const results = keyBy(
-            await getUsers(userIds.slice(), { withRole: true }),
-            'id'
-          )
-          return userIds.map((i) => results[i] || null)
-        }
-      ),
-
-      /**
-       * Get meta values associated with one or more users
-       */
-      getUserMeta: createLoader<
-        { userId: string; key: keyof (typeof Users)['meta']['metaKey'] },
-        Nullable<UsersMetaRecord & { id: string }>,
-        string
-      >(
-        async (requests) => {
-          const meta = metaHelpers<UsersMetaRecord, typeof Users>(Users)
-          const results = await meta.getMultiple(
-            requests.map((r) => ({
-              id: r.userId,
-              key: r.key
-            }))
-          )
-          return requests.map((r) => {
-            const resultItem = results[r.userId]?.[r.key]
-            return resultItem
-              ? { ...resultItem, id: meta.getGraphqlId(resultItem) }
-              : null
-          })
-        },
-        { cacheKeyFn: (key) => `${key.userId}:${key.key}` }
-      ),
-
-      /**
-       * Get user stream count. Includes private streams.
-       */
-      getOwnStreamCount: createLoader<string, number>(async (userIds) => {
-        const results = await getUserStreamCounts({
-          publicOnly: false,
-          userIds: userIds.slice()
-        })
-        return userIds.map((i) => results[i] || 0)
-      }),
-
-      /**
-       * Get authored commit count. Includes commits from private streams.
-       */
-      getAuthoredCommitCount: createLoader<string, number>(async (userIds) => {
-        const results = await getUserAuthoredCommitCounts({
-          userIds: userIds.slice(),
-          publicOnly: false
-        })
-
-        return userIds.map((i) => results[i] || 0)
-      }),
-
-      /**
-       * Get count of commits in streams that the user is a contributor in. Includes private streams.
-       */
-      getStreamCommitCount: createLoader<string, number>(async (userIds) => {
-        const results = await getUserStreamCommitCounts({
-          userIds: userIds.slice(),
-          publicOnly: false
-        })
-
-        return userIds.map((i) => results[i] || 0)
-      })
-    },
-    invites: {
-      /**
-       * Get invite from DB
-       */
-      getInvite: createLoader<string, Nullable<ServerInviteRecord>>(
-        async (inviteIds) => {
-          const results = keyBy(await getInvites(inviteIds), 'id')
-          return inviteIds.map((i) => results[i] || null)
-        }
-      )
-    },
-    apps: {
-      getAppScopes: createLoader<string, Array<Scope>>(async (appIds) => {
-        const results = await getAppScopes(appIds.slice())
-        return appIds.map((i) => results[i] || [])
-      })
-    },
-    automationFunctionRuns: {
-      /**
-       * Get result versions/commits from function runs
-       */
-      getResultVersions: createLoader<
-        [automationRunId: string, functionId: string],
-        CommitRecord[],
-        string
-      >(
-        async (ids) => {
-          const results = await getAutomationFunctionRunResultVersions(ids.slice())
-          return ids.map((i) => {
-            const [automationRunId, functionId] = i
-            return results[automationRunId]?.[functionId] || []
-          })
-        },
-        { cacheKeyFn: (key) => `${key[0]}:${key[1]}` }
-      )
-    },
-    automations: {
-      getFunctionAutomationCount: createLoader<string, number>(async (functionIds) => {
-        const results = await getFunctionAutomationCounts({
-          functionIds: functionIds.slice()
-        })
-        return functionIds.map((i) => results[i] || 0)
-      }),
-      getAutomation: createLoader<string, Nullable<AutomationRecord>>(async (ids) => {
-        const results = keyBy(
-          await getAutomations({ automationIds: ids.slice() }),
-          (a) => a.id
-        )
-        return ids.map((i) => results[i] || null)
-      }),
-      getAutomationRevision: createLoader<string, Nullable<AutomationRevisionRecord>>(
-        async (ids) => {
-          const results = keyBy(
-            await getAutomationRevisions({ automationRevisionIds: ids.slice() }),
-            (a) => a.id
-          )
-          return ids.map((i) => results[i] || null)
-        }
-      ),
-      getLatestAutomationRevision: createLoader<
-        string,
-        Nullable<AutomationRevisionRecord>
-      >(async (ids) => {
-        const results = await getLatestAutomationRevisions({
-          automationIds: ids.slice()
-        })
-        return ids.map((i) => results[i] || null)
-      }),
-      getRevisionTriggerDefinitions: createLoader<
-        string,
-        AutomationTriggerDefinitionRecord[]
-      >(async (ids) => {
-        const results = await getRevisionsTriggerDefinitions({
-          automationRevisionIds: ids.slice()
-        })
-        return ids.map((i) => results[i] || [])
-      }),
-      getRevisionFunctions: createLoader<string, AutomateRevisionFunctionRecord[]>(
-        async (ids) => {
-          const results = await getRevisionsFunctions({
-            automationRevisionIds: ids.slice()
-          })
-          return ids.map((i) => results[i] || [])
-        }
-      ),
-      getRunTriggers: createLoader<string, AutomationRunTriggerRecord[]>(
-        async (ids) => {
-          const results = await getAutomationRunsTriggers({
-            automationRunIds: ids.slice()
-          })
-          return ids.map((i) => results[i] || [])
-        }
-      )
-    },
-    automationsApi: {
-      getFunction: createLoader<string, Nullable<FunctionSchemaType>>(async (fnIds) => {
-        const results = await Promise.all(
-          fnIds.map(async (fnId) => {
-            try {
-              return await getFunction({ functionId: fnId })
-            } catch (e) {
-              const isNotFound =
-                e instanceof ExecutionEngineFailedResponseError &&
-                e.response.statusMessage === 'FunctionNotFound'
-              if (e instanceof ExecutionEngineNetworkError || isNotFound) {
-                return null
-              }
-
-              throw e
-            }
-          })
-        )
-
-        return results
-      }),
-      getFunctionRelease: createLoader<
-        [fnId: string, fnReleaseId: string],
-        Nullable<FunctionReleaseSchemaType>,
-        string
-      >(
-        async (keys) => {
-          const results = keyBy(
-            await getFunctionReleases({
-              ids: keys.map(([fnId, fnReleaseId]) => ({
-                functionId: fnId,
-                functionReleaseId: fnReleaseId
-              }))
-            }),
-            (r) => simpleTupleCacheKey([r.functionId, r.functionVersionId])
-          )
-
-          return keys.map((k) => results[simpleTupleCacheKey(k)] || null)
-        },
-        { cacheKeyFn: simpleTupleCacheKey }
-      )
+  /**
+   * Get dataloaders for specific region
+   */
+  const forRegion = (deps: { db: Knex }) => {
+    if (deps.db === mainDb) {
+      return mainDbLoaders
     }
+
+    if (!regionLoaders.has(deps.db)) {
+      regionLoaders.set(deps.db, createLoadersForRegion(deps))
+    }
+    return regionLoaders.get(deps.db) as ModularizedDataLoaders
   }
 
   /**
-   * Clear all loaders
+   * Clear all request loaders across all regions
    */
   const clearAll = () => {
-    for (const groupedLoaders of Object.values(loaders)) {
+    const allLoaderGroups = flatten(
+      [mainDbLoaders, ...regionLoaders.values()].map((l) =>
+        Object.values(l || {}).filter(isNonNullable)
+      )
+    )
+
+    for (const groupedLoaders of allLoaderGroups) {
       for (const loaderItem of Object.values(groupedLoaders)) {
-        ;(loaderItem as DataLoader<unknown, unknown>).clearAll()
+        loaderItem.clearAll()
       }
     }
   }
 
   return {
-    ...loaders,
-    clearAll
+    ...mainDbLoaders,
+    clearAll,
+    forRegion
   }
 }
 
-export type RequestDataLoaders = ReturnType<typeof buildRequestLoaders>
+export interface ModularizedDataLoaders extends ModularizedDataLoadersConstraint {}
+
+export type RequestDataLoaders = Awaited<ReturnType<typeof buildRequestLoaders>>

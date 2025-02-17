@@ -8,7 +8,7 @@
     }"
   >
     <div
-      class="flex justify-between items-center gap-4 sm:gap-8 py-3 sm:py-4 px-2"
+      class="flex justify-between items-center space-x-4 sm:space-x-8 py-2.5 px-2"
       :class="backgroundClass"
       tabindex="0"
       v-on="
@@ -21,13 +21,10 @@
       "
     >
       <div
-        class="text-sm sm:text-base font-bold flex items-center gap-1 sm:gap-2 select-none"
+        class="text-heading-sm flex items-center space-x-1 sm:space-x-2 select-none"
         :class="titleClasses"
       >
-        <div
-          v-if="$slots.icon || icon"
-          class="h-4 sm:h-5 w-4 sm:w-5 empty:h-0 empty:w-0"
-        >
+        <div v-if="$slots.icon || icon" class="h-4 w-4 empty:h-0 empty:w-0">
           <slot v-if="$slots.icon" name="icon" />
           <Component :is="icon" v-if="icon" class="w-full h-full" />
         </div>
@@ -36,17 +33,17 @@
       <div>
         <ChevronDownIcon
           v-if="!button && !alwaysOpen"
-          class="w-4 h-4 sm:w-5 sm:h-5 transition-all duration-400"
+          class="w-4 h-4 transition-all duration-400"
           :class="isExpanded && 'rotate-180'"
         />
         <FormButton
           v-if="button"
-          size="sm"
           :to="button.expandContent ? undefined : button.to"
-          :color="button.expandContent && isExpanded ? 'invert' : button.color"
+          :color="button.expandContent && isExpanded ? 'outline' : button.color"
           :icon-right="
             button.expandContent && isExpanded ? undefined : button.iconRight
           "
+          size="sm"
           @click="button?.onClick"
           v-on="button?.expandContent ? { click: toggleExpansion } : {}"
         >
@@ -58,8 +55,8 @@
       class="transition-all duration-300 overflow-hidden"
       :class="[
         allowOverflow && isExpanded ? '!overflow-visible' : '',
-        isExpanded ? 'mb-3 mt-1' : '',
-        !button && !alwaysOpen ? 'cursor-pointer hover:bg-foundation' : ''
+        isExpanded ? 'mb-2 mt-1' : '',
+        !button && !alwaysOpen ? 'cursor-pointer hover:bg-foundation-page' : ''
       ]"
       :style="
         alwaysOpen
@@ -93,18 +90,9 @@ import { ChevronDownIcon } from '@heroicons/vue/24/outline'
 import { FormButton } from '~~/src/lib'
 import { keyboardClick } from '~~/src/helpers/global/accessibility'
 import type { PropAnyComponent } from '~~/src/helpers/common/components'
+import type { FormButtonStyle } from '~~/src/helpers/form/button'
 
 type TitleColor = 'default' | 'danger' | 'warning' | 'success' | 'secondary' | 'info'
-
-type FormButtonColor =
-  | 'default'
-  | 'invert'
-  | 'danger'
-  | 'warning'
-  | 'success'
-  | 'card'
-  | 'secondary'
-  | 'info'
 
 const props = defineProps({
   title: String,
@@ -120,7 +108,7 @@ const props = defineProps({
         expandContent?: boolean
         text: string
         to?: string
-        color: FormButtonColor
+        color: FormButtonStyle
         iconRight?: PropAnyComponent | undefined
         onClick?: () => void
       }
@@ -144,11 +132,7 @@ const backgroundClass = computed(() => {
   const classes = []
 
   if (!props.button && !props.alwaysOpen) {
-    classes.push('cursor-pointer', 'hover:bg-foundation')
-  }
-
-  if (isExpanded.value) {
-    classes.push('bg-foundation')
+    classes.push('cursor-pointer', 'hover:bg-foundation-page-2')
   }
 
   return classes

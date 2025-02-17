@@ -1,8 +1,8 @@
-import { speckleDisplaceVert } from './shaders/speckle-displace.vert'
-import { speckleDisplaceFrag } from './shaders/speckle-displace-frag'
+import { speckleDisplaceVert } from './shaders/speckle-displace.vert.js'
+import { speckleDisplaceFrag } from './shaders/speckle-displace-frag.js'
 import { Material, Vector2, type MeshBasicMaterialParameters } from 'three'
-import SpeckleBasicMaterial from './SpeckleBasicMaterial'
-import { type Uniforms } from './SpeckleMaterial'
+import SpeckleBasicMaterial from './SpeckleBasicMaterial.js'
+import { type Uniforms } from './SpeckleMaterial.js'
 
 class SpeckleDisplaceMaterial extends SpeckleBasicMaterial {
   protected get vertexProgram(): string {

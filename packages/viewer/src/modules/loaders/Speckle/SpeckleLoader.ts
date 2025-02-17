@@ -1,17 +1,17 @@
-import Logger from 'js-logger'
-import SpeckleConverter from './SpeckleConverter'
-import { Loader, LoaderEvent } from '../Loader'
+import SpeckleConverter from './SpeckleConverter.js'
+import { Loader, LoaderEvent } from '../Loader.js'
 import ObjectLoader from '@speckle/objectloader'
-import { SpeckleGeometryConverter } from './SpeckleGeometryConverter'
-import { WorldTree, type SpeckleObject } from '../../..'
-import { AsyncPause } from '../../World'
+import { SpeckleGeometryConverter } from './SpeckleGeometryConverter.js'
+import { WorldTree, type SpeckleObject } from '../../../index.js'
+import { AsyncPause } from '../../World.js'
+import Logger from '../../utils/Logger.js'
 
 export class SpeckleLoader extends Loader {
-  private loader: ObjectLoader
-  private converter: SpeckleConverter
-  private tree: WorldTree
-  private isCancelled = false
-  private isFinished = false
+  protected loader: ObjectLoader
+  protected converter: SpeckleConverter
+  protected tree: WorldTree
+  protected isCancelled = false
+  protected isFinished = false
 
   public get resource(): string {
     return this._resource
@@ -26,10 +26,32 @@ export class SpeckleLoader extends Loader {
     resource: string,
     authToken?: string,
     enableCaching?: boolean,
-    resourceData?: string | ArrayBuffer
+    resourceData?: unknown
   ) {
     super(resource, resourceData)
     this.tree = targetTree
+    try {
+      this.loader = this.initObjectLoader(
+        resource,
+        authToken,
+        enableCaching,
+        resourceData
+      )
+    } catch (e) {
+      Logger.error(e)
+      return
+    }
+
+    this.converter = new SpeckleConverter(this.loader, this.tree)
+  }
+
+  protected initObjectLoader(
+    resource: string,
+    authToken?: string,
+    enableCaching?: boolean,
+    resourceData?: unknown
+  ): ObjectLoader {
+    resourceData
     let token = undefined
     try {
       token = authToken || (localStorage.getItem('AuthToken') as string | undefined)
@@ -58,7 +80,7 @@ export class SpeckleLoader extends Loader {
     const streamId = segments[2]
     const objectId = segments[4]
 
-    this.loader = new ObjectLoader({
+    return new ObjectLoader({
       serverUrl,
       token,
       streamId,
@@ -66,29 +88,28 @@ export class SpeckleLoader extends Loader {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       options: { enableCaching, customLogger: (Logger as any).log }
     })
-
-    this.converter = new SpeckleConverter(this.loader, this.tree)
   }
 
   public async load(): Promise<boolean> {
     const start = performance.now()
     let first = true
     let current = 0
-    let total = 0
+    const total = await this.loader.getTotalObjectCount()
     let viewerLoads = 0
     let firstObjectPromise = null
 
-    Logger.warn('Downloading object ', this._resource)
+    Logger.warn('Downloading object ', this.resource)
 
     const pause = new AsyncPause()
+
     for await (const obj of this.loader.getObjectIterator()) {
       if (this.isCancelled) {
-        this.emit(LoaderEvent.LoadCancelled, this._resource)
+        this.emit(LoaderEvent.LoadCancelled, this.resource)
         return Promise.resolve(false)
       }
       if (first) {
         firstObjectPromise = this.converter.traverse(
-          this._resource,
+          this.resource,
           obj as SpeckleObject,
           async () => {
             viewerLoads++
@@ -99,12 +120,11 @@ export class SpeckleLoader extends Loader {
           }
         )
         first = false
-        total = obj.totalChildrenCount as number
       }
       current++
       this.emit(LoaderEvent.LoadProgress, {
         progress: current / (total + 1),
-        id: this._resource
+        id: this.resource
       })
     }
 
@@ -113,30 +133,44 @@ export class SpeckleLoader extends Loader {
     }
 
     Logger.warn(
-      `Finished converting object ${this._resource} in ${
+      `Finished converting object ${this.resource} in ${
         (performance.now() - start) / 1000
       } seconds. Node count: ${this.tree.nodeCount}`
     )
 
     if (viewerLoads === 0) {
-      Logger.warn(`Viewer: no 3d objects found in object ${this._resource}`)
+      Logger.warn(`Viewer: no 3d objects found in object ${this.resource}`)
       this.emit(LoaderEvent.LoadWarning, {
-        message: `No displayable objects found in object ${this._resource}.`
+        message: `No displayable objects found in object ${this.resource}.`
       })
     }
     if (this.isCancelled) {
       return Promise.resolve(false)
     }
 
+    await this.converter.convertInstances()
+    await this.converter.applyMaterials()
+
     const t0 = performance.now()
     const geometryConverter = new SpeckleGeometryConverter()
 
-    const renderTree = this.tree.getRenderTree(this._resource)
+    const renderTree = this.tree.getRenderTree(this.resource)
     if (!renderTree) return Promise.resolve(false)
     const p = renderTree.buildRenderTree(geometryConverter)
 
     void p.then(() => {
       Logger.log('ASYNC Tree build time -> ', performance.now() - t0)
+      Logger.log('Node build time -> ', renderTree.buildNodeTime)
+      Logger.log('Apply transform time -> ', renderTree.applyTransformTime)
+      Logger.log('Geometry build time -> ', renderTree.convertTime)
+      Logger.log('Get Node time -> ', renderTree.getNodeTime)
+      Logger.log('Other time -> ', renderTree.otherTime)
+      Logger.log('Triangulation time -> ', geometryConverter.meshTriangulationTime)
+      Logger.log(
+        'ACTUAL Triangulation time -> ',
+        geometryConverter.actualTriangulateTime
+      )
+      Logger.log('Push time -> ', geometryConverter.pushTime)
       this.isFinished = true
     })
 

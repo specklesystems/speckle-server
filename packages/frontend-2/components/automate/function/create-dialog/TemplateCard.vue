@@ -2,27 +2,31 @@
   <LayoutPanel
     ring
     class="cursor-pointer"
-    :panel-classes="selected ? 'ring-2' : ''"
+    :panel-classes="selected ? 'ring-1' : ''"
     @click="$emit('click', $event)"
   >
-    <div class="flex space-x-4">
+    <div class="flex space-x-4 items-center">
       <div
-        class="w-1/3 bg-center bg-no-repeat bg-contain aspect-square max-w-[100px]"
+        class="w-1/3 bg-center bg-no-repeat bg-contain aspect-square max-w-[45px]"
         :style="{ backgroundImage: `url(${template.logo})` }"
       />
-      <div class="flex space-x-1 justify-start items-center self-start">
-        <div class="h6 font-bold text-foreground">{{ template.title }}</div>
-        <div v-tippy="'Click to read more'">
-          <CommonTextLink size="xs" external :to="template.url" target="_blank">
-            <InformationCircleIcon class="h-4 w-4 hover:text-primary" />
-          </CommonTextLink>
+      <div class="flex flex-col space-y-2">
+        <div class="text-heading-sm font-medium text-foreground leading-none">
+          {{ template.title }}
         </div>
+        <CommonTextLink
+          class="h-auto leading-none"
+          :to="template.url"
+          target="_blank"
+          size="sm"
+        >
+          Read more
+        </CommonTextLink>
       </div>
     </div>
   </LayoutPanel>
 </template>
 <script setup lang="ts">
-import { InformationCircleIcon } from '@heroicons/vue/24/outline'
 import type { CreatableFunctionTemplate } from '~/lib/automate/helpers/functions'
 
 defineEmits<{

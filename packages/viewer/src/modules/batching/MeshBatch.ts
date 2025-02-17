@@ -9,15 +9,15 @@ import {
   DynamicDrawUsage,
   Sphere
 } from 'three'
-import { PrimitiveBatch } from './PrimitiveBatch'
-import SpeckleMesh, { TransformStorage } from '../objects/SpeckleMesh'
-import Logger from 'js-logger'
-import { DrawRanges } from './DrawRanges'
-import { NodeRenderView } from '../tree/NodeRenderView'
-import { type BatchUpdateRange, type DrawGroup, GeometryType } from './Batch'
-import { BatchObject } from './BatchObject'
-import { Geometry } from '../converter/Geometry'
-import { ObjectLayers } from '../../IViewer'
+import { PrimitiveBatch } from './PrimitiveBatch.js'
+import SpeckleMesh, { TransformStorage } from '../objects/SpeckleMesh.js'
+import { DrawRanges } from './DrawRanges.js'
+import { NodeRenderView } from '../tree/NodeRenderView.js'
+import { type BatchUpdateRange, type DrawGroup, GeometryType } from './Batch.js'
+import { BatchObject } from './BatchObject.js'
+import { Geometry } from '../converter/Geometry.js'
+import { ObjectLayers } from '../../IViewer.js'
+import Logger from '../utils/Logger.js'
 
 export class MeshBatch extends PrimitiveBatch {
   protected primitive!: SpeckleMesh
@@ -160,23 +160,25 @@ export class MeshBatch extends PrimitiveBatch {
     if (this.drawCalls > this.minDrawCalls + 2) {
       this.needsShuffle = true
     } else {
-      const transparentOrHiddenGroup = this.groups.find(
+      const transparentDepthHiddenGroup = this.groups.find(
         (value) =>
           this.materials[value.materialIndex].transparent === true ||
           this.materials[value.materialIndex].visible === false ||
           this.materials[value.materialIndex].colorWrite === false
       )
 
-      if (transparentOrHiddenGroup) {
+      if (transparentDepthHiddenGroup) {
         for (
-          let k = this.groups.indexOf(transparentOrHiddenGroup);
+          let k = this.groups.indexOf(transparentDepthHiddenGroup);
           k < this.groups.length;
           k++
         ) {
           const material = this.materials[this.groups[k].materialIndex]
-          if (material.transparent !== true && material.visible !== false) {
-            this.needsShuffle = true
-            break
+          if (material.visible) {
+            if (!material.transparent || material.colorWrite) {
+              this.needsShuffle = true
+              break
+            }
           }
         }
       }
@@ -213,6 +215,7 @@ export class MeshBatch extends PrimitiveBatch {
     const color = new Float32Array(hasVertexColors ? attributeCount : 0)
     color.fill(1)
     const batchIndices = new Float32Array(attributeCount / 3)
+    const normals = new Float32Array(attributeCount)
 
     let offset = 0
     let arrayOffset = 0
@@ -232,6 +235,21 @@ export class MeshBatch extends PrimitiveBatch {
       )
       position.set(geometry.attributes.POSITION, offset)
       if (geometry.attributes.COLOR) color.set(geometry.attributes.COLOR, offset)
+
+      /** We either copy over the provided vertex normals */
+      if (geometry.attributes.NORMAL) {
+        normals.set(geometry.attributes.NORMAL, offset)
+      } else {
+        /** Either we compute them ourselves */
+        Geometry.computeVertexNormalsBuffer(
+          normals.subarray(
+            offset,
+            offset + geometry.attributes.POSITION.length
+          ) as unknown as number[],
+          geometry.attributes.POSITION,
+          geometry.attributes.INDEX
+        )
+      }
       batchIndices.fill(
         k,
         offset / 3,
@@ -256,6 +274,7 @@ export class MeshBatch extends PrimitiveBatch {
     const geometry = this.makeMeshGeometry(
       indices,
       position,
+      normals,
       batchIndices,
       hasVertexColors ? color : undefined
     )
@@ -283,6 +302,7 @@ export class MeshBatch extends PrimitiveBatch {
   protected makeMeshGeometry(
     indices: Uint32Array | Uint16Array,
     position: Float64Array,
+    normals: Float32Array,
     batchIndices: Float32Array,
     color?: Float32Array
   ): BufferGeometry {
@@ -304,6 +324,12 @@ export class MeshBatch extends PrimitiveBatch {
       geometry.setAttribute('position', new Float32BufferAttribute(position, 3))
     }
 
+    if (normals) {
+      geometry
+        .setAttribute('normal', new Float32BufferAttribute(normals, 3))
+        .normalizeNormals()
+    }
+
     if (batchIndices) {
       geometry.setAttribute('objIndex', new Float32BufferAttribute(batchIndices, 1))
     }
@@ -317,7 +343,6 @@ export class MeshBatch extends PrimitiveBatch {
     this.gradientIndexBuffer.setUsage(DynamicDrawUsage)
     geometry.setAttribute('gradientIndex', this.gradientIndexBuffer)
 
-    Geometry.computeVertexNormals(geometry, position)
     Geometry.updateRTEGeometry(geometry, position)
 
     return geometry

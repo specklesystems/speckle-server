@@ -1,13 +1,32 @@
-import * as THREE from 'three'
-import CameraControls from 'camera-controls'
-import { Extension } from './Extension'
-import { SpeckleCameraControls } from '../objects/SpeckleCameraControls'
-import { Box3, OrthographicCamera, PerspectiveCamera, Sphere, Vector3 } from 'three'
-import { KeyboardKeyHold, HOLD_EVENT_TYPE } from 'hold-event'
-import { CameraProjection, type CameraEventPayload } from '../objects/SpeckleCamera'
-import { CameraEvent, type SpeckleCamera } from '../objects/SpeckleCamera'
-import Logger from 'js-logger'
-import type { IViewer, SpeckleView } from '../../IViewer'
+import { Extension } from './Extension.js'
+import {
+  Box3,
+  Camera,
+  MathUtils,
+  OrthographicCamera,
+  PerspectiveCamera,
+  Quaternion,
+  Sphere,
+  Vector2,
+  Vector3
+} from 'three'
+
+import { CameraProjection, type CameraEventPayload } from '../objects/SpeckleCamera.js'
+import { CameraEvent, type SpeckleCamera } from '../objects/SpeckleCamera.js'
+import { FlyControls, FlyControlsOptions } from './controls/FlyControls.js'
+import { SpeckleControls } from './controls/SpeckleControls.js'
+import Logger from '../utils/Logger.js'
+import { GeometryType } from '../batching/Batch.js'
+import { IViewer, SpeckleView, UpdateFlags } from '../../IViewer.js'
+import {
+  SmoothOrbitControlsOptions,
+  SmoothOrbitControls
+} from './controls/SmoothOrbitControls.js'
+
+export enum NearPlaneCalculation {
+  EMPIRIC,
+  ACCURATE
+}
 
 export type CanonicalView =
   | 'front'
@@ -32,11 +51,65 @@ export type PolarView = {
   origin?: Vector3
 }
 
+export type CameraControllerOptions = SmoothOrbitControlsOptions &
+  FlyControlsOptions & { nearPlaneCalculation?: NearPlaneCalculation }
+
+export function isPerspectiveCamera(camera: Camera): camera is PerspectiveCamera {
+  return (camera as PerspectiveCamera).isPerspectiveCamera
+}
+
+export function isOrthographicCamera(camera: Camera): camera is OrthographicCamera {
+  return (camera as OrthographicCamera).isOrthographicCamera
+}
+
+export function computeOrthographicSize(
+  distance: number,
+  fov: number,
+  aspect: number
+): Vector2 {
+  const height = Math.tan(MathUtils.DEG2RAD * (fov / 2)) * 2.0 * distance
+  const width = height * aspect
+  return new Vector2(width, height)
+}
+
+export const DefaultOrbitControlsOptions: Required<CameraControllerOptions> = {
+  enableOrbit: true,
+  enableZoom: true,
+  enablePan: true,
+  orbitSensitivity: 1,
+  zoomSensitivity: 1,
+  panSensitivity: 1,
+  inputSensitivity: 1,
+  minimumRadius: 0,
+  maximumRadius: Infinity,
+  minimumPolarAngle: 0,
+  maximumPolarAngle: Math.PI,
+  minimumAzimuthalAngle: -Infinity,
+  maximumAzimuthalAngle: Infinity,
+  minimumFieldOfView: 40,
+  maximumFieldOfView: 60,
+  touchAction: 'none',
+  infiniteZoom: true,
+  zoomToCursor: true,
+  orbitAroundCursor: true,
+  showOrbitPoint: true,
+  lookSpeed: 1,
+  moveSpeed: 1,
+  damperDecay: 30,
+  enableLook: true,
+  relativeUpDown: false,
+  nearPlaneCalculation: NearPlaneCalculation.ACCURATE
+}
+
 export class CameraController extends Extension implements SpeckleCamera {
-  protected _renderingCamera!: PerspectiveCamera | OrthographicCamera
+  protected _renderingCamera: PerspectiveCamera | OrthographicCamera
   protected perspectiveCamera: PerspectiveCamera
   protected orthographicCamera: OrthographicCamera
-  protected _controls: SpeckleCameraControls
+  protected _lastCameraChanged: boolean = false
+  protected _options: Required<CameraControllerOptions> = DefaultOrbitControlsOptions
+  protected _activeControls: SpeckleControls
+  protected _orbitControls: SmoothOrbitControls
+  protected _flyControls: FlyControls
 
   get renderingCamera(): PerspectiveCamera | OrthographicCamera {
     return this._renderingCamera
@@ -46,12 +119,12 @@ export class CameraController extends Extension implements SpeckleCamera {
     this._renderingCamera = value
   }
 
-  public get enabled(): boolean {
-    return this._controls.enabled
+  public get enabled() {
+    return this._activeControls.enabled
   }
 
-  public set enabled(val: boolean) {
-    this._controls.enabled = val
+  public set enabled(val) {
+    this.controls.enabled = val
   }
 
   public get fieldOfView(): number {
@@ -67,25 +140,33 @@ export class CameraController extends Extension implements SpeckleCamera {
     return this.perspectiveCamera.aspect
   }
 
-  public get controls(): SpeckleCameraControls {
-    return this._controls
+  public get controls(): SpeckleControls {
+    return this._activeControls
+  }
+
+  public get options(): Required<CameraControllerOptions> {
+    return this._options
+  }
+
+  public set options(value: CameraControllerOptions) {
+    Object.assign(this._options, value)
+    this._orbitControls.options = value
+    this._flyControls.options = value
   }
 
   public constructor(viewer: IViewer) {
     super(viewer)
+
     /** Create the default perspective camera */
     this.perspectiveCamera = new PerspectiveCamera(
       55,
       window.innerWidth / window.innerHeight
     )
-    this.perspectiveCamera.up.set(0, 0, 1)
-    this.perspectiveCamera.position.set(1, 1, 1)
-    this.perspectiveCamera.updateProjectionMatrix()
 
     const aspect =
       this.viewer.getContainer().offsetWidth / this.viewer.getContainer().offsetHeight
 
-    /** Create the defaultorthographic camera */
+    /** Create the default orthographic camera */
     const fustrumSize = 50
     this.orthographicCamera = new OrthographicCamera(
       (-fustrumSize * aspect) / 2,
@@ -95,40 +176,42 @@ export class CameraController extends Extension implements SpeckleCamera {
       0.001,
       10000
     )
-    this.orthographicCamera.up.set(0, 0, 1)
-    this.orthographicCamera.position.set(100, 100, 100)
-    this.orthographicCamera.updateProjectionMatrix()
 
     /** Perspective camera as default on startup */
     this.renderingCamera = this.perspectiveCamera
 
-    /** Setup the controls library (urgh...) */
-    CameraControls.install({ THREE })
-    SpeckleCameraControls.install()
-    this._controls = new SpeckleCameraControls(
-      this.perspectiveCamera,
-      this.viewer.getContainer()
+    this._flyControls = new FlyControls(
+      this._renderingCamera,
+      this.viewer.getContainer(),
+      this.viewer.World,
+      this._options
     )
-    this._controls.maxPolarAngle = Math.PI / 2
-    this._controls.restThreshold = 0.001
-    this.setupWASDControls()
+    this._flyControls.enabled = false
+    this._flyControls.setDamperDecayTime(30)
+    this._flyControls.up = new Vector3(0, 0, 1)
 
-    this._controls.addEventListener('rest', () => {
-      this.emit(CameraEvent.Stationary)
-    })
-    this._controls.addEventListener('controlstart', () => {
-      this.emit(CameraEvent.Dynamic)
-    })
-
-    this._controls.addEventListener('controlend', () => {
-      if (this._controls.hasRested) this.emit(CameraEvent.Stationary)
-    })
-
-    this._controls.addEventListener('control', () => {
-      this.emit(CameraEvent.Dynamic)
-    })
+    this._orbitControls = new SmoothOrbitControls(
+      this.perspectiveCamera,
+      this.viewer.getContainer(),
+      this.viewer.World,
+      this.viewer.getRenderer(),
+      this._options
+    )
+    this._orbitControls.enabled = true
 
     this.viewer.getRenderer().speckleCamera = this
+
+    this._activeControls = this._orbitControls
+
+    this.default()
+  }
+
+  public default() {
+    if (this._activeControls instanceof SmoothOrbitControls) {
+      this._activeControls.up = new Vector3(0, 0, 1)
+      this._activeControls.setOrbit(2.356, 0.955)
+      this._activeControls.jumpToGoal()
+    }
   }
 
   public on<T extends CameraEvent>(
@@ -138,18 +221,54 @@ export class CameraController extends Extension implements SpeckleCamera {
     super.on(eventType, listener)
   }
 
-  setCameraView(
+  public getTarget(): Vector3 {
+    return this._activeControls.getTarget()
+  }
+
+  public getPosition(): Vector3 {
+    return this._activeControls.getPosition()
+  }
+
+  public toggleControls() {
+    const oldControls: SpeckleControls = this._activeControls
+    let newControls: SpeckleControls | undefined = undefined
+
+    if (this._activeControls instanceof SmoothOrbitControls) {
+      newControls = this._flyControls
+    } else if (this._activeControls instanceof FlyControls) {
+      newControls = this._orbitControls
+    }
+
+    if (!newControls) throw new Error('Not controls found!')
+
+    oldControls.enabled = false
+    newControls.enabled = true
+
+    newControls.fromPositionAndTarget(
+      oldControls.getCurrentPosition(),
+      oldControls.getCurrentTarget()
+    )
+    newControls.jumpToGoal()
+    this._activeControls = newControls
+    this.viewer.requestRender()
+  }
+
+  public setCameraView(
     objectIds: string[] | undefined,
     transition: boolean | undefined,
     fit?: number
   ): void
-  setCameraView(
+  public setCameraView(
     view: CanonicalView | SpeckleView | InlineView | PolarView,
     transition: boolean | undefined,
     fit?: number
   ): void
-  setCameraView(bounds: Box3, transition: boolean | undefined, fit?: number): void
-  setCameraView(
+  public setCameraView(
+    bounds: Box3,
+    transition: boolean | undefined,
+    fit?: number
+  ): void
+  public setCameraView(
     arg0:
       | string[]
       | CanonicalView
@@ -173,36 +292,42 @@ export class CameraController extends Extension implements SpeckleCamera {
     this.emit(CameraEvent.Dynamic)
   }
 
-  public onEarlyUpdate(deltaTime: number) {
-    const changed = this._controls.update(deltaTime)
+  public onEarlyUpdate(_delta?: number) {
+    const changed = this._activeControls.update(_delta)
+    if (changed !== this._lastCameraChanged) {
+      this.emit(changed ? CameraEvent.Dynamic : CameraEvent.Stationary)
+    }
     this.emit(CameraEvent.FrameUpdate, changed)
+    this._lastCameraChanged = changed
+
+    if (changed) {
+      this.updateCameraPlanes()
+    }
+  }
+
+  public onLateUpdate(): void {
+    this.emit(CameraEvent.LateFrameUpdate, this._lastCameraChanged)
   }
 
   public onResize() {
-    this.perspectiveCamera.aspect =
+    const aspect =
       this.viewer.getContainer().offsetWidth / this.viewer.getContainer().offsetHeight
+    this.perspectiveCamera.aspect = aspect
     this.perspectiveCamera.updateProjectionMatrix()
 
-    const lineOfSight = new Vector3()
-    this.perspectiveCamera.getWorldDirection(lineOfSight)
-    const target = new Vector3()
-    this._controls.getTarget(target)
-    const distance = target.clone().sub(this.perspectiveCamera.position)
-    const depth = distance.dot(lineOfSight)
-    const dims = {
-      x: this.viewer.getContainer().offsetWidth,
-      y: this.viewer.getContainer().offsetHeight
-    }
-    const aspect = dims.x / dims.y
-    const fov = this.perspectiveCamera.fov
-    const height = depth * 2 * Math.atan((fov * (Math.PI / 180)) / 2)
-    const width = height * aspect
-
+    const distance = this._activeControls
+      .getPosition()
+      .distanceTo(this._activeControls.getTarget())
+    const orthographicSize = computeOrthographicSize(
+      distance,
+      this.perspectiveCamera.fov,
+      aspect
+    )
     this.orthographicCamera.zoom = 1
-    this.orthographicCamera.left = width / -2
-    this.orthographicCamera.right = width / 2
-    this.orthographicCamera.top = height / 2
-    this.orthographicCamera.bottom = height / -2
+    this.orthographicCamera.left = orthographicSize.x / -2
+    this.orthographicCamera.right = orthographicSize.x / 2
+    this.orthographicCamera.top = orthographicSize.y / 2
+    this.orthographicCamera.bottom = orthographicSize.y / -2
     this.orthographicCamera.updateProjectionMatrix()
   }
 
@@ -210,14 +335,14 @@ export class CameraController extends Extension implements SpeckleCamera {
     if (this._renderingCamera === this.perspectiveCamera) return
     this.renderingCamera = this.perspectiveCamera
     this.setupPerspectiveCamera()
-    this.viewer.requestRender()
+    this.viewer.requestRender(UpdateFlags.RENDER_RESET)
   }
 
   public setOrthoCameraOn(): void {
     if (this._renderingCamera === this.orthographicCamera) return
     this.renderingCamera = this.orthographicCamera
     this.setupOrthoCamera()
-    this.viewer.requestRender()
+    this.viewer.requestRender(UpdateFlags.RENDER_RESET)
   }
 
   public toggleCameras(): void {
@@ -225,145 +350,55 @@ export class CameraController extends Extension implements SpeckleCamera {
     else this.setPerspectiveCameraOn()
   }
 
-  protected setupOrthoCamera(): void {
-    this._controls.mouseButtons.wheel = CameraControls.ACTION.ZOOM
-
-    const lineOfSight = new Vector3()
-    this.perspectiveCamera.getWorldDirection(lineOfSight)
-    const target = new Vector3().copy(this.viewer.World.worldOrigin)
-    const distance = target.clone().sub(this.perspectiveCamera.position)
-    const depth = distance.length()
-    const dims = {
-      x: this.viewer.getContainer().offsetWidth,
-      y: this.viewer.getContainer().offsetHeight
-    }
-    const aspect = dims.x / dims.y
-    const fov = this.perspectiveCamera.fov
-    const height = depth * 2 * Math.atan((fov * (Math.PI / 180)) / 2)
-    const width = height * aspect
-
-    this.orthographicCamera.zoom = 1
-    this.orthographicCamera.left = width / -2
-    this.orthographicCamera.right = width / 2
-    this.orthographicCamera.top = height / 2
-    this.orthographicCamera.bottom = height / -2
-    this.orthographicCamera.far = this.perspectiveCamera.far
-    this.orthographicCamera.near = 0.0001
-    this.orthographicCamera.updateProjectionMatrix()
-    this.orthographicCamera.position.copy(this.perspectiveCamera.position)
-    this.orthographicCamera.quaternion.copy(this.perspectiveCamera.quaternion)
-    this.orthographicCamera.updateProjectionMatrix()
-
-    this._controls.camera = this.orthographicCamera
-    this.setCameraPlanes(this.viewer.getRenderer().sceneBox)
+  protected setupOrthoCamera() {
+    this.controls.targetCamera = this.orthographicCamera
+    this.enableRotations()
+    this.updateCameraPlanes(this.viewer.getRenderer().sceneBox)
     this.emit(CameraEvent.ProjectionChanged, CameraProjection.ORTHOGRAPHIC)
   }
 
   protected setupPerspectiveCamera() {
-    this._controls.mouseButtons.wheel = CameraControls.ACTION.DOLLY
-    this.perspectiveCamera.position.copy(this.perspectiveCamera.position)
-    this.perspectiveCamera.quaternion.copy(this.perspectiveCamera.quaternion)
-    this.perspectiveCamera.updateProjectionMatrix()
-    this._controls.camera = this.perspectiveCamera
-    void this._controls.zoomTo(1)
+    this.controls.targetCamera = this.perspectiveCamera
     this.enableRotations()
-    this.setCameraPlanes(this.viewer.getRenderer().sceneBox)
+    this.updateCameraPlanes(this.viewer.getRenderer().sceneBox)
     this.emit(CameraEvent.ProjectionChanged, CameraProjection.PERSPECTIVE)
   }
 
-  public disableRotations(): void {
-    this._controls.mouseButtons.left = CameraControls.ACTION.TRUCK
+  public disableRotations() {
+    this.options = { enableOrbit: false, enableLook: false }
   }
 
-  public enableRotations(): void {
-    this._controls.mouseButtons.left = CameraControls.ACTION.ROTATE
+  public enableRotations() {
+    this.options = { enableOrbit: true, enableLook: true }
   }
 
-  protected setupWASDControls() {
-    const KEYCODE = { W: 87, A: 65, S: 83, D: 68 }
+  public updateCameraPlanes(targetVolume?: Box3, offsetScale: number = 1) {
+    const renderer = this.viewer.getRenderer()
+    if (!renderer.renderingCamera) return
 
-    const wKey = new KeyboardKeyHold(KEYCODE.W, 16.666)
-    const aKey = new KeyboardKeyHold(KEYCODE.A, 16.666)
-    const sKey = new KeyboardKeyHold(KEYCODE.S, 16.666)
-    const dKey = new KeyboardKeyHold(KEYCODE.D, 16.666)
-    const isTruckingGroup = new Array(4)
-
-    const setTrucking = (index: number, value: boolean) => {
-      isTruckingGroup[index] = value
-      if (isTruckingGroup.every((element) => element === false)) {
-        this._controls.isTrucking = false
-        this._controls['dispatchEvent']({ type: 'rest' })
-      } else this._controls.isTrucking = true
+    if (!targetVolume) targetVolume = this.viewer.getRenderer().sceneBox
+    let nearPlane = this.computeNearCameraPlaneEmpiric(targetVolume, offsetScale)
+    if (this._options.nearPlaneCalculation === NearPlaneCalculation.ACCURATE)
+      nearPlane = this.computeNearCameraPlaneAccurate(
+        targetVolume,
+        offsetScale,
+        nearPlane
+      )
+    if (nearPlane) {
+      renderer.renderingCamera.near = nearPlane
+      renderer.renderingCamera.updateProjectionMatrix()
     }
-
-    aKey.addEventListener(HOLD_EVENT_TYPE.HOLD_START, () => {
-      this.controls['dispatchEvent']({ type: 'controlstart' })
-    })
-    aKey.addEventListener('holding', (event) => {
-      if (!event) return
-      setTrucking(0, true)
-      void this.controls.truck(-0.01 * event.deltaTime, 0, false)
-      return
-    })
-    aKey.addEventListener(
-      HOLD_EVENT_TYPE.HOLD_END,
-      function () {
-        setTrucking(0, false)
-      }.bind(this)
-    )
-
-    dKey.addEventListener(HOLD_EVENT_TYPE.HOLD_START, () => {
-      this.controls['dispatchEvent']({ type: 'controlstart' })
-    })
-    dKey.addEventListener('holding', (event) => {
-      if (!event) return
-      setTrucking(1, true)
-      void this.controls.truck(0.01 * event.deltaTime, 0, false)
-      return
-    })
-    dKey.addEventListener(
-      HOLD_EVENT_TYPE.HOLD_END,
-      function () {
-        setTrucking(1, false)
-      }.bind(this)
-    )
-
-    wKey.addEventListener(HOLD_EVENT_TYPE.HOLD_START, () => {
-      this.controls['dispatchEvent']({ type: 'controlstart' })
-    })
-    wKey.addEventListener('holding', (event) => {
-      if (!event) return
-      setTrucking(2, true)
-      void this.controls.forward(0.01 * event.deltaTime, false)
-      return
-    })
-    wKey.addEventListener(
-      HOLD_EVENT_TYPE.HOLD_END,
-      function () {
-        setTrucking(2, false)
-      }.bind(this)
-    )
-
-    sKey.addEventListener(HOLD_EVENT_TYPE.HOLD_START, () => {
-      this.controls['dispatchEvent']({ type: 'controlstart' })
-    })
-    sKey.addEventListener('holding', (event) => {
-      if (!event) return
-      setTrucking(3, true)
-      void this.controls.forward(-0.01 * event.deltaTime, false)
-      return
-    })
-    sKey.addEventListener(
-      HOLD_EVENT_TYPE.HOLD_END,
-      function () {
-        setTrucking(3, false)
-      }.bind(this)
-    )
+    this.updateFarCameraPlane()
   }
 
-  public setCameraPlanes(targetVolume: Box3, offsetScale: number = 1) {
+  protected computeNearCameraPlaneEmpiric(
+    targetVolume?: Box3,
+    offsetScale: number = 1
+  ): number | undefined {
+    if (!targetVolume) return
+
     if (targetVolume.isEmpty()) {
-      Logger.error('Cannot set camera planes for empty volume')
+      Logger.warn('Cannot set camera planes for empty volume')
       return
     }
 
@@ -377,12 +412,84 @@ export class CameraController extends Extension implements SpeckleCamera {
     const fitWidthDistance = fitHeightDistance / camAspect
     const distance = offsetScale * Math.max(fitHeightDistance, fitWidthDistance)
 
-    this._controls.minDistance = distance / 100
-    this._controls.maxDistance = distance * 100
+    return this.perspectiveCamera ? distance / 100 : 0.001
+  }
 
-    this._renderingCamera.near = distance / 100
-    this._renderingCamera.far = distance * 100
-    this._renderingCamera.updateProjectionMatrix()
+  protected computeNearCameraPlaneAccurate(
+    targetVolume?: Box3,
+    offsetScale: number = 1,
+    fallback?: number
+  ): number | undefined {
+    const minDist = this.getClosestGeometryDistance(fallback)
+    this._flyControls.minDist = minDist
+    this._orbitControls.minDist = minDist
+
+    if (minDist === Number.POSITIVE_INFINITY) {
+      return this.computeNearCameraPlaneEmpiric(targetVolume, offsetScale)
+    }
+
+    const camFov =
+      this._renderingCamera === this.perspectiveCamera ? this.fieldOfView : 55
+    const camAspect =
+      this._renderingCamera === this.perspectiveCamera ? this.aspect : 1.2
+    const nearPlane =
+      Math.max(minDist, 0) /
+      Math.sqrt(
+        1 +
+          Math.pow(Math.tan(((camFov / 180) * Math.PI) / 2), 2) *
+            (Math.pow(camAspect, 2) + 1)
+      )
+    // console.log(minDist, nearPlane)
+    return nearPlane
+  }
+
+  protected updateFarCameraPlane() {
+    const renderer = this.viewer.getRenderer()
+    if (!renderer.renderingCamera) return
+
+    const v = new Vector3()
+    const box = renderer.sceneBox
+    const camPos = new Vector3().copy(renderer.renderingCamera.position)
+    let d = 0
+    v.set(box.min.x, box.min.y, box.min.z) // 000
+    d = Math.max(camPos.distanceTo(v), d)
+    v.set(box.min.x, box.min.y, box.max.z) // 001
+    d = Math.max(camPos.distanceTo(v), d)
+    v.set(box.min.x, box.max.y, box.min.z) // 010
+    d = Math.max(camPos.distanceTo(v), d)
+    v.set(box.min.x, box.max.y, box.max.z) // 011
+    d = Math.max(camPos.distanceTo(v), d)
+    v.set(box.max.x, box.min.y, box.min.z) // 100
+    d = Math.max(camPos.distanceTo(v), d)
+    v.set(box.max.x, box.min.y, box.max.z) // 101
+    d = Math.max(camPos.distanceTo(v), d)
+    v.set(box.max.x, box.max.y, box.min.z) // 110
+    d = Math.max(camPos.distanceTo(v), d)
+    v.set(box.max.x, box.max.y, box.max.z) // 111
+    d = Math.max(camPos.distanceTo(v), d)
+    renderer.renderingCamera.far = d * 2
+    renderer.renderingCamera.updateProjectionMatrix()
+  }
+
+  protected getClosestGeometryDistance(fallback?: number): number {
+    const cameraPosition = this._activeControls.getCurrentPosition()
+    const cameraTarget = this._activeControls.getCurrentTarget()
+    const cameraDir = new Vector3().subVectors(cameraTarget, cameraPosition).normalize()
+
+    const batches = this.viewer
+      .getRenderer()
+      .batcher.getBatches(undefined, GeometryType.MESH)
+    let minDist = Number.POSITIVE_INFINITY
+    for (let b = 0; b < batches.length; b++) {
+      const result = batches[b].mesh.TAS.closestPointToPointHalfplane(
+        cameraPosition,
+        cameraDir,
+        fallback
+      )
+      if (!result) continue
+      minDist = Math.min(minDist, result.distance)
+    }
+    return minDist
   }
 
   protected zoom(objectIds?: string[], fit?: number, transition?: boolean) {
@@ -393,7 +500,7 @@ export class CameraController extends Extension implements SpeckleCamera {
     this.zoomToBox(this.viewer.getRenderer().boxFromObjects(objectIds), fit, transition)
   }
 
-  private zoomExtents(fit = 1.2, transition = true) {
+  protected zoomExtents(fit = 1.2, transition = true) {
     if (this.viewer.getRenderer().clippingVolume.isEmpty()) {
       const box = new Box3(new Vector3(-1, -1, -1), new Vector3(1, 1, 1))
       this.zoomToBox(box, fit, transition)
@@ -410,50 +517,46 @@ export class CameraController extends Extension implements SpeckleCamera {
       box.expandByVector(new Vector3(1, 1, 1))
     }
     this.zoomToBox(box, fit, transition)
-    // this.viewer.controls.setBoundary( box )
   }
 
-  private zoomToBox(box: Box3, fit = 1.2, transition = true) {
+  protected zoomToBox(box: Box3, fit = 1.2, transition = true) {
     if (box.max.x === Infinity || box.max.x === -Infinity) {
       box = new Box3(new Vector3(-1, -1, -1), new Vector3(1, 1, 1))
     }
 
-    const target = new Sphere()
-    box.getBoundingSphere(target)
-    target.radius = target.radius * fit
-    void this._controls.fitToSphere(target, transition)
+    const targetSphere = new Sphere()
+    box.getBoundingSphere(targetSphere)
+    targetSphere.radius = this.fitToRadius(targetSphere.radius) * fit
+    this._activeControls.fitToSphere(targetSphere)
 
-    this.setCameraPlanes(box, fit)
+    this.updateCameraPlanes(box, fit)
 
-    if (this._renderingCamera === this.orthographicCamera) {
-      // fit the camera inside, so we don't have clipping plane issues.
-      // WIP implementation
-      const camPos = this._renderingCamera.position
-      let dist = target.distanceToPoint(camPos)
-      if (dist < 0) {
-        dist *= -1
-        void this._controls.setPosition(
-          camPos.x + dist,
-          camPos.y + dist,
-          camPos.z + dist
-        )
-      }
+    if (!transition) {
+      this._activeControls.jumpToGoal()
     }
   }
 
-  private isSpeckleView(
+  protected fitToRadius(radius: number) {
+    // https://stackoverflow.com/a/44849975
+    const vFOV = this.perspectiveCamera.getEffectiveFOV() * MathUtils.DEG2RAD
+    const hFOV = Math.atan(Math.tan(vFOV * 0.5) * this.perspectiveCamera.aspect) * 2
+    const fov = 1 < this.perspectiveCamera.aspect ? vFOV : hFOV
+    return radius / Math.sin(fov * 0.5)
+  }
+
+  protected isSpeckleView(
     view: CanonicalView | SpeckleView | InlineView | PolarView
   ): view is SpeckleView {
     return (view as SpeckleView).name !== undefined
   }
 
-  private isCanonicalView(
+  protected isCanonicalView(
     view: CanonicalView | SpeckleView | InlineView | PolarView
   ): view is CanonicalView {
     return typeof (view as CanonicalView) === 'string'
   }
 
-  private isInlineView(
+  protected isInlineView(
     view: CanonicalView | SpeckleView | InlineView | PolarView
   ): view is InlineView {
     return (
@@ -462,7 +565,7 @@ export class CameraController extends Extension implements SpeckleCamera {
     )
   }
 
-  private isPolarView(
+  protected isPolarView(
     view: CanonicalView | SpeckleView | InlineView | PolarView
   ): view is PolarView {
     return (
@@ -471,7 +574,7 @@ export class CameraController extends Extension implements SpeckleCamera {
     )
   }
 
-  private isBox3(
+  protected isBox3(
     view: CanonicalView | SpeckleView | InlineView | PolarView | Box3
   ): view is Box3 {
     return view instanceof Box3
@@ -495,16 +598,13 @@ export class CameraController extends Extension implements SpeckleCamera {
     }
   }
 
-  private setViewSpeckle(view: SpeckleView, transition = true) {
-    void this._controls.setLookAt(
-      view.origin.x,
-      view.origin.y,
-      view.origin.z,
-      view.target.x,
-      view.target.y,
-      view.target.z,
-      transition
+  protected setViewSpeckle(view: SpeckleView, transition = true) {
+    this._activeControls.fromPositionAndTarget(
+      new Vector3(view.origin.x, view.origin.y, view.origin.z),
+      new Vector3(view.target.x, view.target.y, view.target.z)
     )
+    if (!transition) this._activeControls.jumpToGoal()
+
     this.enableRotations()
   }
 
@@ -515,82 +615,119 @@ export class CameraController extends Extension implements SpeckleCamera {
    * @param  {Boolean} transition [description]
    * @return {[type]}             [description]
    */
-  private setViewCanonical(side: string, transition = true) {
-    const DEG90 = Math.PI * 0.5
-    const DEG180 = Math.PI
+  protected setViewCanonical(side: string, transition = true) {
+    const targetSphere = new Sphere()
+    this.viewer.World.worldBox.getBoundingSphere(targetSphere)
+    const distance = this.fitToRadius(targetSphere.radius)
 
+    const canonicalPosition = new Vector3().copy(
+      this.viewer.World.worldBox.getCenter(new Vector3())
+    )
+
+    const canonicalTarget = new Vector3().copy(canonicalPosition)
+    const controlerBasis = new Quaternion().setFromUnitVectors(
+      new Vector3(0, 1, 0),
+      this._activeControls.up
+    )
     switch (side) {
       case 'front':
-        this.zoomExtents()
-        void this._controls.rotateTo(0, DEG90, transition)
+        this._activeControls.fromPositionAndTarget(
+          canonicalPosition.add(
+            new Vector3(0, 0, 1)
+              .applyQuaternion(controlerBasis)
+              .multiplyScalar(distance)
+          ),
+          canonicalTarget
+        )
         if (this._renderingCamera === this.orthographicCamera) this.disableRotations()
         break
 
       case 'back':
-        this.zoomExtents()
-        void this._controls.rotateTo(DEG180, DEG90, transition)
+        this._activeControls.fromPositionAndTarget(
+          canonicalPosition.add(
+            new Vector3(0, 0, -1)
+              .applyQuaternion(controlerBasis)
+              .multiplyScalar(distance)
+          ),
+          canonicalTarget
+        )
         if (this._renderingCamera === this.orthographicCamera) this.disableRotations()
         break
 
       case 'up':
       case 'top':
-        this.zoomExtents()
-        void this._controls.rotateTo(0, 0, transition)
+        this._activeControls.fromPositionAndTarget(
+          canonicalPosition.add(
+            new Vector3(0, 1, 0)
+              .applyQuaternion(controlerBasis)
+              .multiplyScalar(distance)
+          ),
+          canonicalTarget
+        )
         if (this._renderingCamera === this.orthographicCamera) this.disableRotations()
         break
 
       case 'down':
       case 'bottom':
-        this.zoomExtents()
-        void this._controls.rotateTo(0, DEG180, transition)
+        this._activeControls.fromPositionAndTarget(
+          canonicalPosition.add(
+            new Vector3(0, -1, 0)
+              .applyQuaternion(controlerBasis)
+              .multiplyScalar(distance)
+          ),
+          canonicalTarget
+        )
         if (this._renderingCamera === this.orthographicCamera) this.disableRotations()
         break
 
       case 'right':
-        this.zoomExtents()
-        void this._controls.rotateTo(DEG90, DEG90, transition)
+        this._activeControls.fromPositionAndTarget(
+          canonicalPosition.add(
+            new Vector3(1, 0, 0)
+              .applyQuaternion(controlerBasis)
+              .multiplyScalar(distance)
+          ),
+          canonicalTarget
+        )
         if (this._renderingCamera === this.orthographicCamera) this.disableRotations()
         break
 
       case 'left':
-        this.zoomExtents()
-        void this._controls.rotateTo(-DEG90, DEG90, transition)
+        this._activeControls.fromPositionAndTarget(
+          canonicalPosition.add(
+            new Vector3(-1, 0, 0)
+              .applyQuaternion(controlerBasis)
+              .multiplyScalar(distance)
+          ),
+          canonicalTarget
+        )
         if (this._renderingCamera === this.orthographicCamera) this.disableRotations()
         break
 
       case '3d':
       case '3D':
       default: {
-        let box
-        if (this.viewer.getRenderer().allObjects.children.length === 0)
-          box = new Box3(new Vector3(-1, -1, -1), new Vector3(1, 1, 1))
-        else box = new Box3().setFromObject(this.viewer.getRenderer().allObjects)
-        if (box.max.x === Infinity || box.max.x === -Infinity) {
-          box = new Box3(new Vector3(-1, -1, -1), new Vector3(1, 1, 1))
-        }
-        void this._controls.setPosition(box.max.x, box.max.y, box.max.z, transition)
-        this.zoomExtents()
         this.enableRotations()
         break
       }
     }
+    if (!transition) this._activeControls.jumpToGoal()
   }
 
-  private setViewInline(view: InlineView, transition = true) {
-    void this._controls.setLookAt(
-      view.position.x,
-      view.position.y,
-      view.position.z,
-      view.target.x,
-      view.target.y,
-      view.target.z,
-      transition
-    )
+  protected setViewInline(view: InlineView, transition = true) {
+    this._activeControls.fromPositionAndTarget(view.position, view.target)
+    if (!transition) this._activeControls.jumpToGoal()
+
     this.enableRotations()
   }
 
   private setViewPolar(view: PolarView, transition = true) {
-    void this._controls.rotate(view.azimuth, view.polar, transition)
+    ;(this._activeControls as SmoothOrbitControls).adjustOrbit(
+      view.azimuth,
+      view.polar,
+      view.radius ? view.radius : 0
+    )
+    if (!transition) this._activeControls.jumpToGoal()
     this.enableRotations()
   }
 }

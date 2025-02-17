@@ -34,7 +34,7 @@ spec:
           periodSeconds: 60
           exec:
             command:
-              - /nodejs/bin/node
+              - /usr/bin/node
               - -e
               - process.exit(Date.now() - require('fs').readFileSync('/tmp/last_successful_query', 'utf8') > 25 * 60 * 1000)
 
@@ -59,9 +59,16 @@ spec:
         volumeMounts:
           - mountPath: /tmp
             name: tmp
+          - mountPath: /.config
+            name: dotconfig
         {{- if .Values.db.useCertificate }}
           - name: postgres-certificate
             mountPath: /postgres-certificate
+        {{- end }}
+        {{- if .Values.featureFlags.workspacesMultiRegionEnabled }}
+          - name: multi-region-config
+            mountPath: /multi-region-config
+            readOnly: true
         {{- end }}
 
         env:
@@ -73,9 +80,20 @@ spec:
               secretKeyRef:
                 name: {{ default .Values.secretName .Values.db.connectionString.secretName }}
                 key: {{ default "postgres_url" .Values.db.connectionString.secretKey }}
+          {{- if .Values.fileimport_service.postgresMaxConnections }}
+          - name: POSTGRES_MAX_CONNECTIONS_FILE_IMPORT_SERVICE
+            value: {{ .Values.fileimport_service.postgresMaxConnections | quote }}
+          {{- end }}
+          - name: POSTGRES_CONNECTION_CREATE_TIMEOUT_MILLIS
+            value: {{ .Values.db.connectionCreateTimeoutMillis | quote }}
+          - name: POSTGRES_CONNECTION_ACQUIRE_TIMEOUT_MILLIS
+            value: {{ .Values.db.connectionAcquireTimeoutMillis | quote }}
 
           - name: LOG_LEVEL
             value: {{ .Values.fileimport_service.logLevel | quote }}
+
+          - name: LOG_PRETTY
+            value: {{ .Values.fileimport_service.logPretty | quote }}
 
           {{- if .Values.db.useCertificate }}
           - name: NODE_EXTRA_CA_CERTS
@@ -86,6 +104,16 @@ spec:
             value: {{ .Values.fileimport_service.time_limit_min | quote }}
           - name: MAX_OBJECT_SIZE_MB
             value: {{ .Values.objects.max_object_size_mb | quote }}
+          {{- if .Values.featureFlags.workspacesMultiRegionEnabled }}
+          - name: FF_WORKSPACES_MULTI_REGION_ENABLED
+            value: {{ .Values.featureFlags.workspacesMultiRegionEnabled | quote }}
+          - name: MULTI_REGION_CONFIG_PATH
+            value: "/multi-region-config/multi-region-config.json"
+          {{- end }}
+          {{- if .Values.featureFlags.fileImportIFCDotNetEnabled }}
+          - name: FF_FILEIMPORT_IFC_DOTNET_ENABLED
+            value: {{ .Values.featureFlags.fileImportIFCDotNetEnabled | quote }}
+          {{- end }}
       {{- if .Values.fileimport_service.affinity }}
       affinity: {{- include "speckle.renderTpl" (dict "value" .Values.fileimport_service.affinity "context" $) | nindent 8 }}
       {{- end }}
@@ -116,9 +144,19 @@ spec:
       volumes:
         - name: tmp
           emptyDir: {}
+        - name: dotconfig
+          emptyDir: {}
       {{- if .Values.db.useCertificate }}
         - name: postgres-certificate
           configMap:
             name: postgres-certificate
+      {{- end }}
+      {{- if .Values.featureFlags.workspacesMultiRegionEnabled }}
+        - name: multi-region-config
+          secret:
+            secretName: {{ .Values.multiRegion.config.secretName }}
+            items:
+            - key: {{ .Values.multiRegion.config.secretKey }}
+              path: "multi-region-config.json"
       {{- end }}
 {{- end }}

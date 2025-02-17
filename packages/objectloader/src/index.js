@@ -7,13 +7,13 @@ import {
   ObjectLoaderRuntimeError
 } from './errors/index.js'
 import { polyfillReadableStreamForAsyncIterator } from './helpers/stream.js'
-import { chunk } from 'lodash'
+import { chunk, isString } from '#lodash'
 /**
  * Simple client that streams object info from a Speckle Server.
  * TODO: Object construction progress reporting is weird.
  */
 
-export default class ObjectLoader {
+class ObjectLoader {
   /**
    * Creates a new object loader instance.
    * @param {*} param0
@@ -107,6 +107,74 @@ export default class ObjectLoader {
     }
   }
 
+  static createFromObjects(objects) {
+    const rootObject = objects[0]
+
+    const loader = new (class extends ObjectLoader {
+      constructor() {
+        super({
+          serverUrl: 'dummy',
+          streamId: 'dummy',
+          undefined,
+          objectId: rootObject.id
+        })
+
+        this.objectId = rootObject.id
+      }
+
+      async getRootObject() {
+        return rootObject
+      }
+
+      async getTotalObjectCount() {
+        return Object.keys(rootObject?.__closure || {}).length
+      }
+
+      async *getObjectIterator() {
+        const t0 = Date.now()
+        let count = 0
+        for await (const { id, obj } of this.getRawObjectIterator(objects)) {
+          this.buffer[id] = obj
+          count += 1
+          yield obj
+        }
+        this.logger(`Loaded ${count} objects in: ${(Date.now() - t0) / 1000}`)
+      }
+
+      async *getRawObjectIterator(data) {
+        yield { id: data[0].id, obj: data[0] }
+
+        const rootObj = data[0]
+        if (!rootObj.__closure) return
+
+        // const childrenIds = Object.keys(rootObj.__closure)
+        //   .filter((id) => !id.includes('blob'))
+        //   .sort((a, b) => rootObj.__closure[a] - rootObj.__closure[b])
+
+        // for (const id of childrenIds) {
+        //   const obj = data.find((value) => value.id === id)
+        //   // Sleep 1 ms
+        //   await new Promise((resolve) => {
+        //     setTimeout(resolve, 1)
+        //   })
+        //   yield { id, obj }
+        // }
+        for (const item of data) {
+          yield { id: item.id, obj: item }
+        }
+      }
+    })()
+    return loader
+  }
+
+  static createFromJSON(json) {
+    const start = performance.now()
+    const jsonObj = JSON.parse(json)
+    console.warn('JSON Parse Time -> ', performance.now() - start)
+
+    return this.createFromObjects(jsonObj)
+  }
+
   async asyncPause() {
     // Don't freeze the UI
     // while ( this.existingAsyncPause ) {
@@ -126,6 +194,23 @@ export default class ObjectLoader {
     this.buffer = []
     this.promises = []
     Object.values(this.intervals).forEach((i) => clearInterval(i.interval))
+  }
+
+  async getTotalObjectCount() {
+    /** This is fine, because it gets cached */
+    const rootObjJson = await this.getRawRootObject()
+    /** Ideally we shouldn't to a `parse` here since it's going to pointlessly allocate
+     *  But doing string gymnastics in order to get closure length is going to be the same
+     *  if not even more memory constly
+     */
+    const rootObj = JSON.parse(rootObjJson)
+    const totalChildrenCount = Object.keys(rootObj?.__closure || {}).length
+    return totalChildrenCount
+  }
+
+  async getRootObject() {
+    const rootObjJson = await this.getRawRootObject()
+    return JSON.parse(rootObjJson)
   }
 
   /**
@@ -545,6 +630,10 @@ export default class ObjectLoader {
       return {}
     }
 
+    if (this.cacheDB === null) {
+      await this.setupCacheDb()
+    }
+
     const ret = {}
 
     for (let i = 0; i < ids.length; i += 500) {
@@ -561,9 +650,13 @@ export default class ObjectLoader {
       // this.logger("Cache check for : ", idsChunk.length, Date.now() - t0)
 
       for (const cachedObj of cachedData) {
-        if (!cachedObj.data)
-          // non-existent objects are retrieved with `undefined` data
+        if (
+          !cachedObj.data ||
+          (isString(cachedObj.data) && cachedObj.data.startsWith('<html'))
+        ) {
+          // non-existent/invalid objects are retrieved with `undefined` data
           continue
+        }
         ret[cachedObj.id] = cachedObj.data
       }
     }
@@ -571,20 +664,32 @@ export default class ObjectLoader {
     return ret
   }
 
-  cacheStoreObjects(objects) {
+  async cacheStoreObjects(objects) {
     if (!this.supportsCache()) {
       return {}
     }
 
-    const store = this.cacheDB
-      .transaction('objects', 'readwrite')
-      .objectStore('objects')
-    for (const obj of objects) {
-      const idAndData = obj.split('\t')
-      store.put(idAndData[1], idAndData[0])
+    if (this.cacheDB === null) {
+      await this.setupCacheDb()
     }
 
-    return this.promisifyIdbRequest(store.transaction)
+    try {
+      const store = this.cacheDB
+        .transaction('objects', 'readwrite')
+        .objectStore('objects')
+      for (const obj of objects) {
+        const [key, value] = obj.split('\t')
+        if (!value || !isString(value) || value.startsWith('<html')) {
+          continue
+        }
+
+        store.put(value, key)
+      }
+      return this.promisifyIdbRequest(store.transaction)
+    } catch (e) {
+      this.logger.error(e)
+    }
+    return Promise.resolve()
   }
 }
 
@@ -609,3 +714,5 @@ function safariFix() {
     tryIdb()
   }).finally(() => clearInterval(intervalId))
 }
+
+export default ObjectLoader

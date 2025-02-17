@@ -10,11 +10,11 @@ if k8s_context() != 'kind-speckle-server':
 load('ext://helm_resource', 'helm_resource', 'helm_repo')
 load('ext://k8s_yaml_glob', 'k8s_yaml_glob')
 symbols = None
-IS_CI = os.getenv('CI', "false") == "true"
-if IS_CI:
-  symbols = load_dynamic('./Tiltfile.ci')
+IS_LOAD_DOCKER = os.getenv('LOAD_DOCKER', "false") == "true"
+if IS_LOAD_DOCKER:
+  symbols = load_dynamic('./Tiltfile.load')
 else:
-  symbols = load_dynamic('./Tiltfile.local')
+  symbols = load_dynamic('./Tiltfile.build')
 
 # Prepare the Speckle images
 # (loads the images from tgz file if CI, otherwise builds them or pulls them from remote as a fallback on non-amd64 machines)
@@ -45,11 +45,12 @@ k8s_yaml('./manifests/priorityclass.yaml')
 k8s_yaml('./manifests/speckle-server.secret.yaml')
 
 # Install charts
+# Postgres 16.4 is packaged in chart 15.5.38
 helm_resource('postgresql',
             release_name='postgresql',
             namespace='postgres',
             chart='oci://registry-1.docker.io/bitnamicharts/postgresql',
-            flags=['--version=^12.0.0',
+            flags=['--version=^15.5.38',
                     '--values=./values/postgres.values.yaml',
                     '--kube-context=kind-speckle-server'],
             deps=['./values/postgres.values.yaml'],

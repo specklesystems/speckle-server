@@ -39,7 +39,12 @@ extend type Project {
   """
   Retrieve a specific project version by its ID
   """
-  version(id: String!): Version
+  version(id: String!): Version!
+
+  """
+  Retrieve a specific project model by its ID
+  """
+  modelByName(name: String!): Model!
 }
 
 extend type User {
@@ -101,7 +106,7 @@ type Model {
   The shortened/display name that doesn't include the names of parent models
   """
   displayName: String!
-  author: LimitedUser!
+  author: LimitedUser
   description: String
   createdAt: DateTime!
   updatedAt: DateTime!
@@ -155,7 +160,8 @@ type ModelMutations {
 }
 
 input MoveVersionsInput {
-  versionIds: [String!]!
+  projectId: ID!
+  versionIds: [ID!]!
   """
   If the name references a nonexistant model, it will be created
   """
@@ -163,14 +169,33 @@ input MoveVersionsInput {
 }
 
 input DeleteVersionsInput {
-  versionIds: [String!]!
+  projectId: ID!
+  versionIds: [ID!]!
 }
 
 """
 Only non-null values will be updated
 """
 input UpdateVersionInput {
+  projectId: ID!
+  versionId: ID!
+  message: String
+}
+
+input CreateVersionInput {
+  projectId: String!
+  modelId: String!
+  objectId: String!
+  message: String
+  sourceApplication: String
+  totalChildrenCount: Int
+  parents: [String!]
+}
+
+input MarkReceivedVersionInput {
+  projectId: String!
   versionId: String!
+  sourceApplication: String!
   message: String
 }
 
@@ -178,6 +203,8 @@ type VersionMutations {
   moveToModel(input: MoveVersionsInput!): Model!
   delete(input: DeleteVersionsInput!): Boolean!
   update(input: UpdateVersionInput!): Version!
+  create(input: CreateVersionInput!): Version!
+  markReceived(input: MarkReceivedVersionInput!): Boolean!
 }
 
 extend type Mutation {
@@ -301,9 +328,9 @@ type ProjectVersionsUpdatedMessage {
   """
   version: Version
   """
-  Only set if version was deleted, in other scenarios can be queried from 'version'
+  Version's model ID
   """
-  modelId: String
+  modelId: String!
 }
 
 type ProjectVersionsPreviewGeneratedMessage {
@@ -317,12 +344,19 @@ extend type Subscription {
   Subscribe to changes to a project's models. Optionally specify modelIds to track.
   """
   projectModelsUpdated(id: String!, modelIds: [String!]): ProjectModelsUpdatedMessage!
+    @hasServerRole(role: SERVER_GUEST)
+    @hasScope(scope: "streams:read")
+
   """
   Subscribe to changes to a project's versions.
   """
   projectVersionsUpdated(id: String!): ProjectVersionsUpdatedMessage!
+    @hasServerRole(role: SERVER_GUEST)
+    @hasScope(scope: "streams:read")
   """
   Subscribe to when a project's versions get their preview image fully generated.
   """
   projectVersionsPreviewGenerated(id: String!): ProjectVersionsPreviewGeneratedMessage!
+    @hasServerRole(role: SERVER_GUEST)
+    @hasScope(scope: "streams:read")
 }

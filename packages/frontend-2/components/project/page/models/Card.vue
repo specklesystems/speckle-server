@@ -1,21 +1,68 @@
+<!-- eslint-disable vuejs-accessibility/click-events-have-key-events -->
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <!-- eslint-disable vuejs-accessibility/mouse-events-have-key-events -->
 <template>
   <div
+    v-keyboard-clickable
     :class="containerClasses"
+    @click="onCardClick"
     @mouseleave=";(showActionsMenu = false), (hovered = false)"
     @mouseenter="hovered = true"
   >
-    <div
-      :class="['relative', defaultLinkDisabled ? 'cursor-pointer' : '']"
-      @click="$emit('click', $event)"
-      @keypress="keyboardClick((e) => emit('click', e))"
-    >
-      <div :class="`${height} flex items-center justify-center`">
+    <div class="relative p-2 h-full flex flex-col">
+      <NuxtLink
+        v-if="!defaultLinkDisabled"
+        :to="modelRoute(projectId, model.id)"
+        class="absolute z-10 inset-0"
+      />
+      <div class="relative z-40 flex justify-between items-center h-10">
+        <NuxtLink
+          :to="!defaultLinkDisabled ? modelRoute(projectId, model.id) : undefined"
+          class="truncate"
+        >
+          <div class="px-1 select-none w-full">
+            <div
+              v-if="nameParts[0]"
+              class="text-body-2xs text-foreground-2 relative truncate"
+            >
+              {{ nameParts[0] }}
+            </div>
+            <div
+              class="text-body-xs font-medium truncate text-foreground flex-shrink min-w-0"
+            >
+              {{ nameParts[1] }}
+            </div>
+          </div>
+        </NuxtLink>
+        <ProjectPageModelsActions
+          v-if="project && showActions && !isPendingModelFragment(model)"
+          v-model:open="showActionsMenu"
+          :model="model"
+          :project="project"
+          :can-edit="canEdit"
+          @click.stop.prevent
+          @upload-version="triggerVersionUpload"
+        />
+      </div>
+      <div class="relative flex items-center justify-center my-1 flex-1">
+        <div
+          v-if="
+            isAutomateModuleEnabled &&
+            !isPendingModelFragment(model) &&
+            model.automationsStatus
+          "
+          class="z-30 absolute top-0 left-0"
+        >
+          <AutomateRunsTriggerStatus
+            :project-id="projectId"
+            :status="model.automationsStatus"
+            :model-id="model.id"
+          />
+        </div>
         <ProjectPendingFileImportStatus
           v-if="isPendingModelFragment(model)"
           :upload="model"
-          class="px-4 w-full"
+          class="px-4 w-full h-full"
         />
         <ProjectPendingFileImportStatus
           v-else-if="pendingVersion"
@@ -24,112 +71,69 @@
           class="px-4 w-full text-foreground-2 text-sm flex flex-col items-center space-y-1"
         />
         <template v-else-if="previewUrl">
-          <NuxtLink :href="finalModelUrl" class="w-full h-full">
+          <NuxtLink
+            :to="!defaultLinkDisabled ? modelRoute(projectId, model.id) : undefined"
+            class="relative z-20 bg-foundation-page w-full h-48 rounded-xl border border-outline-2"
+          >
             <PreviewImage :preview-url="previewUrl" />
           </NuxtLink>
         </template>
         <div
           v-if="!isPendingModelFragment(model)"
           v-show="!previewUrl && !pendingVersion"
-          class="h-full w-full p-4"
+          class="h-48 w-full relative z-30"
         >
           <ProjectCardImportFileArea
             ref="importArea"
             :project-id="projectId"
             :model-name="model.name"
-            class="h-full w-full"
+            class="w-full h-full"
+            :disabled="project?.workspace?.readOnly"
           />
         </div>
       </div>
-      <div
-        class="h-auto sm:h-12 flex flex-col sm:flex-row sm:items-center px-2 py-1 gap-x-1"
-      >
-        <NuxtLink class="min-w-0 max-w-full cursor-pointer" :href="finalModelUrl">
+      <div class="relative z-20 flex justify-between items-center w-full h-8 pl-2">
+        <ProjectPageModelsCardUpdatedTime
+          class="text-body-3xs text-foreground-2"
+          :updated-at="updatedAtFullDate"
+        />
+        <div class="flex items-center gap-1">
           <div
-            v-if="nameParts[0]"
-            class="text-xs text-foreground-2 relative -mb-1 truncate"
-          >
-            {{ nameParts[0] }}
-          </div>
-          <div
-            class="font-bold text-sm sm:text-base truncate text-foreground flex-shrink min-w-0"
-          >
-            {{ nameParts[1] }}
-          </div>
-        </NuxtLink>
-        <div class="hidden sm:flex grow" />
-        <div class="flex items-center">
-          <ProjectPageModelsCardUpdatedTime
-            :updated-at="updatedAt"
-            :class="`text-xs w-full text-foreground-2 sm:mr-1 truncate transition ${
-              hovered ? 'sm:w-auto' : 'sm:w-0'
-            }`"
-          />
-          <FormButton
-            v-if="finalShowVersions"
-            v-tippy="'View Version Gallery'"
-            rounded
-            size="xs"
+            v-if="!isPendingModelFragment(model)"
+            class="flex items-center gap-1 !text-foreground-2"
             :to="modelVersionsRoute(projectId, model.id)"
-            :class="`transition gap-0.5 ml-1 ${
-              hovered ? 'inline-block opacity-100' : 'sm:hidden sm:opacity-0'
-            }`"
+          >
+            <IconDiscussions class="h-4 w-4" />
+            <span class="text-body-2xs font-medium">
+              {{ model.commentThreadCount.totalCount }}
+            </span>
+          </div>
+          <FormButton
+            v-tippy="'View Versions'"
+            color="subtle"
+            size="sm"
+            class="flex items-center gap-1 !text-foreground-2"
+            @click.stop="router.push(modelVersionsRoute(projectId, model.id))"
           >
             <IconVersions class="h-4 w-4" />
             {{ versionCount }}
           </FormButton>
-          <ProjectPageModelsActions
-            v-if="project && showActions && !isPendingModelFragment(model)"
-            v-model:open="showActionsMenu"
-            :model="model"
-            :project="project"
-            :can-edit="canEdit"
-            @click.stop.prevent
-            @upload-version="triggerVersionUpload"
-          />
         </div>
-      </div>
-      <div
-        v-if="
-          !isPendingModelFragment(model) && model.commentThreadCount.totalCount !== 0
-        "
-        :class="[
-          `z-10 absolute opacity-100 top-0 right-0 p-2 flex items-center transition`,
-          'border-2 border-primary-muted h-8 bg-foundation shadow-md justify-center',
-          'rounded-tr-full rounded-tl-full rounded-br-full text-xs m-2',
-          hovered ? 'sm:opacity-100' : 'sm:opacity-0'
-        ]"
-      >
-        <ChatBubbleLeftRightIcon class="w-4 h-4" />
-        <span>{{ model.commentThreadCount.totalCount }}</span>
-      </div>
-      <div
-        v-if="!isPendingModelFragment(model) && model.automationsStatus"
-        class="z-20 absolute top-0 left-0"
-      >
-        <AutomateRunsTriggerStatus
-          :project-id="projectId"
-          :status="model.automationsStatus"
-          :model-id="model.id"
-        />
       </div>
     </div>
   </div>
 </template>
 <script lang="ts" setup>
-import dayjs from 'dayjs'
 import type {
   PendingFileUploadFragment,
   ProjectPageLatestItemsModelItemFragment,
   ProjectPageModelsCardProjectFragment
 } from '~~/lib/common/generated/gql/graphql'
-import { ChatBubbleLeftRightIcon } from '@heroicons/vue/24/solid'
-import { modelRoute, modelVersionsRoute } from '~~/lib/common/helpers/route'
+import { modelVersionsRoute, modelRoute } from '~~/lib/common/helpers/route'
 import { graphql } from '~~/lib/common/generated/gql'
 import { canModifyModels } from '~~/lib/projects/helpers/permissions'
 import { isPendingModelFragment } from '~~/lib/projects/helpers/models'
 import type { Nullable, Optional } from '@speckle/shared'
-import { keyboardClick } from '@speckle/ui-components'
 
 graphql(`
   fragment ProjectPageModelsCardProject on Project {
@@ -137,6 +141,10 @@ graphql(`
     role
     visibility
     ...ProjectPageModelsActions_Project
+    workspace {
+      id
+      readOnly
+    }
   }
 `)
 
@@ -152,17 +160,18 @@ const props = withDefaults(
     showVersions?: boolean
     showActions?: boolean
     disableDefaultLink?: boolean
-    height?: string
   }>(),
   {
     showVersions: true,
-    showActions: true,
-    height: 'h-64'
+    showActions: true
   }
 )
 
 // TODO: Get rid of this, its not reactive. Is it even necessary?
 provide('projectId', props.projectId)
+
+const router = useRouter()
+const isAutomateModuleEnabled = useIsAutomateModuleEnabled()
 
 const importArea = ref(
   null as Nullable<{
@@ -174,11 +183,11 @@ const hovered = ref(false)
 
 const containerClasses = computed(() => {
   const classParts = [
-    'group rounded-md bg-foundation shadow transition border-2 border-transparent'
+    'group rounded-xl bg-foundation border border-outline-3 hover:border-outline-5 w-full z-[0]'
   ]
 
-  if (!isPendingModelFragment(props.model)) {
-    classParts.push('hover:scale-[1.02] hover:border-outline-2 hover:shadow-xl')
+  if (versionCount.value > 0) {
+    classParts.push('cursor-pointer')
   }
 
   return classParts.join(' ')
@@ -200,15 +209,12 @@ const defaultLinkDisabled = computed(
   () => props.disableDefaultLink || versionCount.value < 1
 )
 
-const updatedAt = computed(() => {
-  const date = isPendingModelFragment(props.model)
+const updatedAtFullDate = computed(() => {
+  return isPendingModelFragment(props.model)
     ? props.model.convertedLastUpdate || props.model.uploadDate
     : props.model.updatedAt
-  return dayjs(date).from(dayjs())
 })
-const finalShowVersions = computed(
-  () => props.showVersions && !isPendingModelFragment(props.model)
-)
+
 const canEdit = computed(() => (props.project ? canModifyModels(props.project) : false))
 const versionCount = computed(() => {
   return isPendingModelFragment(props.model) ? 0 : props.model.versionCount.totalCount
@@ -220,9 +226,16 @@ const pendingVersion = computed(() => {
     : props.model.pendingImportedVersions[0]
 })
 
-const finalModelUrl = computed(() =>
-  defaultLinkDisabled.value ? undefined : modelRoute(props.projectId, props.model.id)
-)
+const onCardClick = (event: KeyboardEvent | MouseEvent) => {
+  if (
+    !previewUrl.value &&
+    !pendingVersion.value &&
+    !isPendingModelFragment(props.model)
+  ) {
+    return
+  }
+  emit('click', event)
+}
 
 const triggerVersionUpload = () => {
   importArea.value?.triggerPicker()

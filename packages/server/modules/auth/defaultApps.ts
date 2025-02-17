@@ -1,5 +1,11 @@
 import { Scopes } from '@/modules/core/helpers/mainConstants'
-import { speckleAutomateUrl, getServerOrigin } from '@/modules/shared/helpers/envHelper'
+import {
+  speckleAutomateUrl,
+  getServerOrigin,
+  getFeatureFlags
+} from '@/modules/shared/helpers/envHelper'
+import { ServerScope } from '@speckle/shared'
+import { Merge } from 'type-fest'
 
 export enum DefaultAppIds {
   Web = 'spklwebapp',
@@ -123,7 +129,9 @@ const SpeckleAutomate = {
     Scopes.Tokens.Write,
     Scopes.Streams.Read,
     Scopes.Streams.Write,
-    Scopes.Automate.ReportResults
+    ...(getFeatureFlags().FF_AUTOMATE_MODULE_ENABLED
+      ? [Scopes.Automate.ReportResults]
+      : [])
   ]
 }
 
@@ -144,3 +152,10 @@ export function getDefaultApps() {
 export function getDefaultApp({ id }: { id: string }) {
   return defaultApps.find((app) => app.id === id) || null
 }
+
+export type DefaultApp = (typeof defaultApps)[number]
+
+/**
+ * Some workflows need 'all' unwrapped into the actual scopes
+ */
+export type DefaultAppWithUnwrappedScopes = Merge<DefaultApp, { scopes: ServerScope[] }>
