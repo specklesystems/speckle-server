@@ -6,7 +6,6 @@ import {
   GetWorkspaceSubscription,
   GetWorkspaceSubscriptionBySubscriptionId,
   GetWorkspaceSubscriptions,
-  PaidWorkspacePlanStatuses,
   ReconcileSubscriptionData,
   SubscriptionData,
   SubscriptionDataInput,
@@ -15,17 +14,18 @@ import {
   WorkspaceSubscription
 } from '@/modules/gatekeeper/domain/billing'
 import {
-  PaidWorkspacePlans,
-  WorkspacePlanBillingIntervals,
-  WorkspacePricingPlans
-} from '@/modules/gatekeeper/domain/workspacePricing'
-import {
   WorkspaceNotPaidPlanError,
   WorkspacePlanDowngradeError,
   WorkspacePlanMismatchError,
   WorkspacePlanNotFoundError,
   WorkspaceSubscriptionNotFoundError
 } from '@/modules/gatekeeper/errors/billing'
+import {
+  PaidWorkspacePlans,
+  PaidWorkspacePlanStatuses,
+  WorkspacePlanBillingIntervals,
+  WorkspacePricingPlans
+} from '@/modules/gatekeeperCore/domain/billing'
 import { LogicError } from '@/modules/shared/errors'
 import { CountWorkspaceRoleWithOptionalProjectRole } from '@/modules/workspaces/domain/operations'
 import { throwUncoveredError, WorkspaceRoles } from '@speckle/shared'

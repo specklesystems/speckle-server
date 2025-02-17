@@ -141,12 +141,8 @@ export const findEmailFactory =
 
 export const findEmailsByUserIdFactory =
   ({ db }: { db: Knex }): FindEmailsByUserId =>
-  async ({ userId }) => {
-    if (!userId) return []
-    return db(UserEmails.name).where({
-      [UserEmails.col.userId]: userId
-    })
-  }
+  async ({ userId }) =>
+    userId ? db(UserEmails.name).where({ userId }) : []
 
 export const setPrimaryUserEmailFactory =
   ({ db }: { db: Knex }): SetPrimaryUserEmail =>
