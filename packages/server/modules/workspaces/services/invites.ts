@@ -53,7 +53,7 @@ import {
 } from '@/modules/serverinvites/services/operations'
 import { authorizeResolver } from '@/modules/shared'
 import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
-import { WorkspaceInviteResourceType } from '@/modules/workspaces/domain/constants'
+import { WorkspaceInviteResourceType } from '@/modules/workspacesCore/domain/constants'
 import {
   GetWorkspace,
   GetWorkspaceBySlug,
