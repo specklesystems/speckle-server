@@ -8,9 +8,9 @@ export function buildBaseQueueOptions(): Bull.QueueOptions {
       const client = createRedisClient(getRedisUrl(), {
         ...(['bclient', 'subscriber'].includes(type)
           ? {
-            enableReadyCheck: false,
-            maxRetriesPerRequest: null
-          }
+              enableReadyCheck: false,
+              maxRetriesPerRequest: null
+            }
           : {})
       })
 
