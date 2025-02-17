@@ -22,7 +22,8 @@ const {
   markCommentViewedFactory,
   insertCommentsFactory,
   insertCommentLinksFactory,
-  deleteCommentFactory
+  deleteCommentFactory,
+  getCommentsResourcesFactory
 } = require('@/modules/comments/repositories/comments')
 const { db } = require('@/db/knex')
 const {
@@ -36,7 +37,8 @@ const {
 const {
   createCommitFactory,
   insertStreamCommitsFactory,
-  insertBranchCommitsFactory
+  insertBranchCommitsFactory,
+  getCommitsAndTheirBranchIdsFactory
 } = require('@/modules/core/repositories/commits')
 const {
   getBranchByIdFactory,
@@ -53,7 +55,8 @@ const {
 } = require('@/modules/core/repositories/streams')
 const {
   getObjectFactory,
-  storeSingleObjectIfNotFoundFactory
+  storeSingleObjectIfNotFoundFactory,
+  getStreamObjectsFactory
 } = require('@/modules/core/repositories/objects')
 const {
   legacyCreateStreamFactory,
@@ -108,6 +111,10 @@ const {
 } = require('@/modules/serverinvites/services/processing')
 const { getServerInfoFactory } = require('@/modules/core/repositories/server')
 const { createObjectFactory } = require('@/modules/core/services/objects/management')
+const {
+  getViewerResourcesFromLegacyIdentifiersFactory,
+  getViewerResourcesForCommentsFactory
+} = require('@/modules/core/services/commit/viewerResources')
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = getUserFactory({ db })
@@ -117,6 +124,18 @@ const streamResourceCheck = streamResourceCheckFactory({
   checkStreamResourceAccess: checkStreamResourceAccessFactory({ db })
 })
 const markCommentViewed = markCommentViewedFactory({ db })
+
+const getViewerResourcesFromLegacyIdentifiers =
+  getViewerResourcesFromLegacyIdentifiersFactory({
+    getViewerResourcesForComments: getViewerResourcesForCommentsFactory({
+      getCommentsResources: getCommentsResourcesFactory({ db }),
+      getViewerResourcesFromLegacyIdentifiers: (...args) =>
+        getViewerResourcesFromLegacyIdentifiers(...args) // recursive dep
+    }),
+    getCommitsAndTheirBranchIds: getCommitsAndTheirBranchIdsFactory({ db }),
+    getStreamObjects: getStreamObjectsFactory({ db })
+  })
+
 const createComment = createCommentFactory({
   checkStreamResourcesAccess: streamResourceCheck,
   validateInputAttachments: validateInputAttachmentsFactory({
@@ -126,7 +145,8 @@ const createComment = createCommentFactory({
   insertCommentLinks: insertCommentLinksFactory({ db }),
   deleteComment: deleteCommentFactory({ db }),
   markCommentViewed,
-  emitEvent: getEventBus().emit
+  emitEvent: getEventBus().emit,
+  getViewerResourcesFromLegacyIdentifiers
 })
 
 const getObject = getObjectFactory({ db })
