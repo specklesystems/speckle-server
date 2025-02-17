@@ -8,6 +8,7 @@ import {
   Optional,
   ServerRoles
 } from '@speckle/shared'
+import { OperationTypeNode } from 'graphql'
 
 export type GetUserAclRole = (params: {
   aclTableName: typeof ServerAcl.name | typeof StreamAcl.name | typeof WorkspaceAcl.name
@@ -28,7 +29,8 @@ export type AuthorizeResolver = (
   userId: MaybeNullOrUndefined<string>,
   resourceId: string,
   requiredRole: AvailableRoles,
-  userResourceAccessLimits: MaybeNullOrUndefined<TokenResourceIdentifier[]>
+  userResourceAccessLimits: MaybeNullOrUndefined<TokenResourceIdentifier[]>,
+  operationType?: OperationTypeNode // This is needed to block write operations when user is server admin
 ) => Promise<void>
 
 export type ValidateUserServerRole = (

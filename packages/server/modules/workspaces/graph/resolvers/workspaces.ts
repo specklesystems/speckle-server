@@ -204,6 +204,7 @@ import {
 } from '@/modules/workspaces/repositories/workspaceJoinRequests'
 import { sendWorkspaceJoinRequestReceivedEmailFactory } from '@/modules/workspaces/services/workspaceJoinRequestEmails/received'
 import { getProjectFactory } from '@/modules/core/repositories/projects'
+import { OperationTypeNode } from 'graphql'
 import { updateWorkspacePlanFactory } from '@/modules/gatekeeper/services/workspacePlans'
 
 const eventBus = getEventBus()
@@ -936,7 +937,8 @@ export = FF_WORKSPACES_MODULE_ENABLED
             context.userId!,
             args.input.workspaceId,
             Roles.Workspace.Member,
-            context.resourceAccessRules
+            context.resourceAccessRules,
+            OperationTypeNode.MUTATION
           )
 
           const createWorkspaceProject = createWorkspaceProjectFactory({
@@ -971,13 +973,15 @@ export = FF_WORKSPACES_MODULE_ENABLED
             context.userId,
             projectId,
             Roles.Stream.Owner,
-            context.resourceAccessRules
+            context.resourceAccessRules,
+            OperationTypeNode.MUTATION
           )
           await authorizeResolver(
             context.userId,
             workspaceId,
             Roles.Workspace.Admin,
-            context.resourceAccessRules
+            context.resourceAccessRules,
+            OperationTypeNode.MUTATION
           )
 
           const moveProjectToWorkspace = commandFactory({
