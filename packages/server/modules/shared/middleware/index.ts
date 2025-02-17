@@ -307,6 +307,8 @@ export const requestBodyParsingMiddlewareFactory =
           res,
           nextWithWrappedError
         )
+
+        // expressRawBodyParser calls `next` internally, so we cannot call it again here
         return
       }
 
@@ -316,9 +318,17 @@ export const requestBodyParsingMiddlewareFactory =
         res,
         nextWithWrappedError
       )
+
+      // expressJsonBodyParser calls `next` internally, so we cannot call it again here
       return
     } catch (err) {
-      const e = ensureError(err, 'Unknown error parsing request body')
+      // something blew up, so let's wrap it and pass it to the error handler
+      const e = new UserInputError(
+        'Error unexpectedly encountered when parsing the request body',
+        {
+          info: { cause: ensureError(err, 'Unknown error parsing request body') }
+        }
+      )
       next(e)
       return
     }
