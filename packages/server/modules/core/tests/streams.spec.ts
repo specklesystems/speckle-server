@@ -61,7 +61,6 @@ import {
 } from '@/modules/core/repositories/commits'
 import {
   getObjectFactory,
-  storeClosuresIfNotFoundFactory,
   storeSingleObjectIfNotFoundFactory
 } from '@/modules/core/repositories/objects'
 import {
@@ -184,8 +183,7 @@ const isStreamCollaborator = isStreamCollaboratorFactory({
 const grantPermissionsStream = grantStreamPermissionsFactory({ db })
 const getStreamsUsers = getStreamsCollaboratorsFactory({ db })
 const createObject = createObjectFactory({
-  storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({ db }),
-  storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db })
+  storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({ db })
 })
 
 describe('Streams @core-streams', () => {

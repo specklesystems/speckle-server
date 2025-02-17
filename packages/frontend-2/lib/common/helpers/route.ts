@@ -13,6 +13,8 @@ export const registerRoute = '/authn/register'
 export const ssoLoginRoute = '/authn/sso'
 export const forgottenPasswordRoute = '/authn/forgotten-password'
 export const onboardingRoute = '/onboarding'
+export const verifyEmailRoute = '/verify-email'
+export const verifyEmailCountdownRoute = '/verify-email?source=registration'
 export const serverManagementRoute = '/server-management'
 export const downloadManagerUrl = 'https://speckle.systems/download'
 export const docsPageUrl = 'https://speckle.guide/'
@@ -112,10 +114,10 @@ export const automateGithubAppAuthorizationRoute = (workspaceSlug?: string) => {
   }`
 }
 
-export const automationFunctionsRoute = '/functions'
+export const publicAutomateFunctionsRoute = '/functions'
 
-export const automationFunctionRoute = (functionId: string) =>
-  `${automationFunctionsRoute}/${functionId}`
+export const automateFunctionRoute = (functionId: string) =>
+  `${publicAutomateFunctionsRoute}/${functionId}`
 
 export const workspaceRoute = (slug: string) => `/workspaces/${slug}`
 export const workspaceSsoRoute = (slug: string) => `/workspaces/${slug}/sso`

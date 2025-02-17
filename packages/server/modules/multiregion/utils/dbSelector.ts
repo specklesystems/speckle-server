@@ -6,7 +6,11 @@ import {
 } from '@/modules/multiregion/services/projectRegion'
 import { Knex } from 'knex'
 import { getRegionFactory } from '@/modules/multiregion/repositories'
-import { DatabaseError, MisconfiguredEnvironmentError } from '@/modules/shared/errors'
+import {
+  DatabaseError,
+  LogicError,
+  MisconfiguredEnvironmentError
+} from '@/modules/shared/errors'
 import { configureClient } from '@/knexfile'
 import { InitializeRegion } from '@/modules/multiregion/domain/operations'
 import {
@@ -37,12 +41,14 @@ export const getRegionDb: GetRegionDb = async ({ regionKey }) => {
   const regionClients = await getRegisteredRegionClients()
   if (!(regionKey in regionClients)) {
     const region = await getRegion({ key: regionKey })
-    if (!region) throw new Error('Invalid region key')
+    if (!region) throw new LogicError('Invalid region key')
 
     // the region was initialized in a different server instance
     const regionConfigs = await getAvailableRegionConfig()
     if (!(regionKey in regionConfigs))
-      throw new Error(`RegionKey ${regionKey} not available in config`)
+      throw new MisconfiguredEnvironmentError(
+        `RegionKey ${regionKey} not available in config`
+      )
 
     const newRegionConfig = regionConfigs[regionKey]
     const regionDb = configureClient(newRegionConfig).public
@@ -155,7 +161,9 @@ export const getAllRegisteredDbClients = async (): Promise<
 export const initializeRegion: InitializeRegion = async ({ regionKey }) => {
   const regionConfigs = await getAvailableRegionConfig()
   if (!(regionKey in regionConfigs))
-    throw new Error(`RegionKey ${regionKey} not available in config`)
+    throw new MisconfiguredEnvironmentError(
+      `RegionKey ${regionKey} not available in config`
+    )
 
   const newRegionConfig = regionConfigs[regionKey]
   const regionDb = configureClient(newRegionConfig)
@@ -206,7 +214,7 @@ const setUpUserReplication = async ({
   try {
     await from.public.raw(`CREATE PUBLICATION ${pubName} FOR TABLE users;`)
   } catch (err) {
-    if (!(err instanceof Error))
+    if (!(err instanceof Error)) {
       throw new DatabaseError(
         'Could not create publication {pubName} when setting up user replication for region {regionName}',
         from.public,
@@ -215,7 +223,16 @@ const setUpUserReplication = async ({
           info: { pubName, regionName }
         }
       )
-    if (!err.message.includes('already exists')) throw err
+    }
+
+    const errorMessage = err.message
+
+    if (
+      !['already exists', 'violates unique constraint'].some((message) =>
+        errorMessage.includes(message)
+      )
+    )
+      throw err
   }
 
   const fromUrl = new URL(

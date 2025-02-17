@@ -22,6 +22,7 @@ import { Knex } from 'knex'
 import type express from 'express'
 import { ProjectCreateArgs } from '@/modules/core/domain/projects/operations'
 import { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
+import type { Logger } from 'pino'
 
 export type LegacyGetStreams = (params: {
   cursor?: string | Date | null | undefined
@@ -322,10 +323,11 @@ export type RemoveStreamCollaborator = (
 
 export type CloneStream = (userId: string, sourceStreamId: string) => Promise<Stream>
 
-export type CreateOnboardingStream = (
-  targetUserId: string,
+export type CreateOnboardingStream = (params: {
+  targetUserId: string
   targetUserResourceAccessRules: ContextResourceAccessRules
-) => Promise<Stream>
+  logger: Logger
+}) => Promise<Stream>
 
 export type GetDiscoverableStreams = (
   args: QueryDiscoverableStreamsArgs,

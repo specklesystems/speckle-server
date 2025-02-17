@@ -56,7 +56,6 @@ const {
 const {
   getObjectFactory,
   storeSingleObjectIfNotFoundFactory,
-  storeClosuresIfNotFoundFactory,
   getStreamObjectsFactory
 } = require('@/modules/core/repositories/objects')
 const {
@@ -230,8 +229,7 @@ const createUser = createUserFactory({
   emitEvent: getEventBus().emit
 })
 const createObject = createObjectFactory({
-  storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({ db }),
-  storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db })
+  storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({ db })
 })
 
 function buildCommentInputFromString(textString) {

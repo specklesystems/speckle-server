@@ -202,6 +202,8 @@ export = {
     },
 
     async streams(_, args, ctx) {
+      const countOnly = args.limit === 0 && !args.query
+
       const [totalCount, visibleCount, { cursor, streams }] = await Promise.all([
         getUserStreamsCount({
           userId: ctx.userId!,
@@ -216,15 +218,17 @@ export = {
           streamIdWhitelist: toProjectIdWhitelist(ctx.resourceAccessRules),
           onlyWithActiveSsoSession: true
         }),
-        getUserStreams({
-          userId: ctx.userId!,
-          limit: args.limit,
-          cursor: args.cursor || undefined,
-          searchQuery: args.query || undefined,
-          forOtherUser: false,
-          streamIdWhitelist: toProjectIdWhitelist(ctx.resourceAccessRules),
-          onlyWithActiveSsoSession: true
-        })
+        !countOnly
+          ? getUserStreams({
+              userId: ctx.userId!,
+              limit: args.limit,
+              cursor: args.cursor || undefined,
+              searchQuery: args.query || undefined,
+              forOtherUser: false,
+              streamIdWhitelist: toProjectIdWhitelist(ctx.resourceAccessRules),
+              onlyWithActiveSsoSession: true
+            })
+          : { cursor: null, streams: [] }
       ])
 
       return {

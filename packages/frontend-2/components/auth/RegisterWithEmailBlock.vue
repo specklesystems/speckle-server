@@ -13,6 +13,7 @@
         :rules="emailRules"
         show-label
         :disabled="isEmailDisabled"
+        autocomplete="email"
       />
       <FormTextInput
         type="text"
@@ -25,6 +26,7 @@
         show-label
         :disabled="loading"
         auto-focus
+        autocomplete="name"
       />
       <FormTextInput
         v-model="password"
@@ -37,6 +39,7 @@
         :rules="passwordRules"
         show-label
         :disabled="loading"
+        autocomplete="new-password"
       />
     </div>
     <AuthPasswordChecks :password="password" class="mt-2 h-12 sm:h-8" />
@@ -55,7 +58,7 @@
     <AuthRegisterTerms v-if="serverInfo.termsOfService" :server-info="serverInfo" />
     <div v-if="!inviteEmail" class="mt-2 sm:mt-4 text-center text-body-xs">
       <span class="mr-2 text-foreground-3">Already have an account?</span>
-      <CommonTextLink :to="finalLoginRoute">Log in</CommonTextLink>
+      <NuxtLink class="text-foreground" :to="finalLoginRoute">Log in</NuxtLink>
     </div>
   </form>
 </template>
