@@ -126,17 +126,17 @@ const onDelete = async () => {
       workspace_id: workspaceId,
       feedback: feedback.value
     })
-    mixpanel.get_group('workspace_id', workspaceId).set_once({
-      isDeleted: true
-    })
 
     await sendWebhook(defaultZapierWebhookUrl, {
-      userId: activeUser.value?.id ?? '',
-      feedback: `Action: Workspace Deleted (${workspaceName}) - User ID: ${
-        activeUser.value?.id
-      } - Workspace ID: ${workspaceId} - ${
-        feedback.value ? `Feedback: ${feedback.value}` : 'No feedback provided'
-      }`
+      feedback: [
+        `**Action:** Workspace Deleted`,
+        `**Workspace:** ${workspaceName}`,
+        `**User ID:** ${activeUser.value?.id}`,
+        `**Workspace ID:** ${workspaceId}`,
+        feedback.value
+          ? `**Feedback:** ${feedback.value}`
+          : '**Feedback:** No feedback provided'
+      ].join('\n')
     })
 
     triggerNotification({

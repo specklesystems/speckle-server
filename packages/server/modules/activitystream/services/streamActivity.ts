@@ -24,8 +24,6 @@ import {
 import {
   AddStreamCommentMentionActivity,
   AddStreamDeletedActivity,
-  AddStreamInviteDeclinedActivity,
-  AddStreamInviteSentOutActivity,
   AddStreamUpdatedActivity,
   SaveActivity
 } from '@/modules/activitystream/domain/operations'
@@ -335,60 +333,6 @@ export const addStreamPermissionsAddedActivityFactory =
   }
 
 /**
- * Save "user accepted stream invite" activity item
- */
-export const addStreamInviteAcceptedActivityFactory =
-  ({
-    saveActivity,
-    publish
-  }: {
-    saveActivity: SaveActivity
-    publish: PublishSubscription
-  }) =>
-  async (params: {
-    streamId: string
-    inviteTargetId: string
-    inviterId: string
-    role: StreamRoles
-    stream: StreamRecord
-  }) => {
-    const { streamId, inviteTargetId, inviterId, role, stream } = params
-    await Promise.all([
-      saveActivity({
-        streamId,
-        resourceType: ResourceTypes.Stream,
-        resourceId: streamId,
-        actionType: ActionTypes.Stream.InviteAccepted,
-        userId: inviteTargetId,
-        info: { inviterUser: inviterId, role },
-        message: `User ${inviteTargetId} has accepted an invitation to become a ${role}`
-      }),
-      publish(StreamPubsubEvents.UserStreamAdded, {
-        userStreamAdded: {
-          id: streamId,
-          sharedBy: inviterId
-        },
-        ownerId: inviteTargetId
-      }),
-      publish(UserSubscriptions.UserProjectsUpdated, {
-        userProjectsUpdated: {
-          id: streamId,
-          type: UserProjectsUpdatedMessageType.Added,
-          project: stream
-        },
-        ownerId: inviteTargetId
-      }),
-      publish(ProjectSubscriptions.ProjectUpdated, {
-        projectUpdated: {
-          id: streamId,
-          type: ProjectUpdatedMessageType.Updated,
-          project: stream
-        }
-      })
-    ])
-  }
-
-/**
  * Save "stream permissions revoked for user" activity item
  */
 export const addStreamPermissionsRevokedActivityFactory =
@@ -434,75 +378,6 @@ export const addStreamPermissionsRevokedActivityFactory =
           project: null
         },
         ownerId: removedUserId
-      }),
-      publish(ProjectSubscriptions.ProjectUpdated, {
-        projectUpdated: {
-          id: streamId,
-          type: ProjectUpdatedMessageType.Updated,
-          project: stream
-        }
-      })
-    ])
-  }
-
-/**
- * Save "user invited another user to stream" activity item
- */
-export const addStreamInviteSentOutActivityFactory =
-  ({
-    saveActivity,
-    publish
-  }: {
-    saveActivity: SaveActivity
-    publish: PublishSubscription
-  }): AddStreamInviteSentOutActivity =>
-  async ({ streamId, inviteTargetId, inviterId, inviteTargetEmail, stream }) => {
-    const targetDisplay = inviteTargetId || inviteTargetEmail
-
-    await Promise.all([
-      saveActivity({
-        streamId,
-        resourceType: ResourceTypes.Stream,
-        resourceId: streamId,
-        actionType: ActionTypes.Stream.InviteSent,
-        userId: inviterId,
-        message: `User ${inviterId} has invited ${targetDisplay} to stream ${streamId}`,
-        info: {
-          targetId: inviteTargetId || null,
-          targetEmail: inviteTargetEmail || null
-        }
-      }),
-      publish(ProjectSubscriptions.ProjectUpdated, {
-        projectUpdated: {
-          id: streamId,
-          type: ProjectUpdatedMessageType.Updated,
-          project: stream
-        }
-      })
-    ])
-  }
-
-/**
- * Save "user declined an invite" activity item
- */
-export const addStreamInviteDeclinedActivityFactory =
-  ({
-    saveActivity,
-    publish
-  }: {
-    saveActivity: SaveActivity
-    publish: PublishSubscription
-  }): AddStreamInviteDeclinedActivity =>
-  async ({ streamId, inviteTargetId, inviterId, stream }) => {
-    await Promise.all([
-      saveActivity({
-        streamId,
-        resourceType: ResourceTypes.Stream,
-        resourceId: streamId,
-        actionType: ActionTypes.Stream.InviteDeclined,
-        userId: inviteTargetId,
-        message: `User ${inviteTargetId} declined to join the stream ${streamId}`,
-        info: { targetId: inviteTargetId, inviterId }
       }),
       publish(ProjectSubscriptions.ProjectUpdated, {
         projectUpdated: {

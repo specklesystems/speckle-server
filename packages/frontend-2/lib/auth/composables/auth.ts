@@ -303,12 +303,6 @@ export const useAuthManager = (
               skipRedirect: postAuthRedirect.hadPendingRedirect.value
             })
 
-            triggerNotification({
-              type: ToastNotificationType.Success,
-              title: 'Welcome!',
-              description: "You've been successfully authenticated"
-            })
-
             postAuthRedirect.popAndFollowRedirect()
           } catch (e) {
             triggerNotification({
@@ -377,6 +371,9 @@ export const useAuthManager = (
       inviteToken,
       newsletter
     })
+
+    const registeredThisSession = useRegisteredThisSession()
+    registeredThisSession.value = true
 
     // eslint-disable-next-line camelcase
     goHome({ query: { access_code: accessCode } })
@@ -479,6 +476,12 @@ const useAuthAppIdAndChallenge = () => {
 
   return { appId, challenge }
 }
+
+/**
+ * Indicates whether the user just completed registration
+ */
+export const useRegisteredThisSession = () =>
+  useState<boolean>('registered-this-session', () => false)
 
 export const useLoginOrRegisterUtils = () => {
   const appIdAndChallenge = useAuthAppIdAndChallenge()

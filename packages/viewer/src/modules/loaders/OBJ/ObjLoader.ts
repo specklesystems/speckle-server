@@ -20,7 +20,7 @@ export class ObjLoader extends Loader {
     return this.isFinished
   }
 
-  public constructor(targetTree: WorldTree, resource: string, resourceData?: string) {
+  public constructor(targetTree: WorldTree, resource: string, resourceData?: unknown) {
     super(resource, resourceData)
     this.tree = targetTree
     this.baseLoader = new OBJLoader()
