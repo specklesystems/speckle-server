@@ -12,15 +12,15 @@ import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
 import {
   CheckoutSession,
-  PaidWorkspacePlan,
   SubscriptionData,
   WorkspaceSubscription
 } from '@/modules/gatekeeper/domain/billing'
+import { omit } from 'lodash'
 import {
+  PaidWorkspacePlan,
   PaidWorkspacePlans,
   WorkspacePlanBillingIntervals
-} from '@/modules/gatekeeper/domain/workspacePricing'
-import { omit } from 'lodash'
+} from '@/modules/gatekeeperCore/domain/billing'
 
 describe('checkout @gatekeeper', () => {
   describe('startCheckoutSessionFactory creates a function, that', () => {
@@ -509,6 +509,9 @@ describe('checkout @gatekeeper', () => {
           getSubscriptionData: async () => {
             expect.fail()
           },
+          emitEvent: async () => {
+            expect.fail()
+          },
           upsertWorkspaceSubscription: async () => {
             expect.fail()
           }
@@ -539,6 +542,9 @@ describe('checkout @gatekeeper', () => {
             expect.fail()
           },
           getSubscriptionData: async () => {
+            expect.fail()
+          },
+          emitEvent: async () => {
             expect.fail()
           },
           upsertWorkspaceSubscription: async () => {
@@ -585,6 +591,10 @@ describe('checkout @gatekeeper', () => {
           let storedWorkspaceSubscriptionData: WorkspaceSubscription | undefined =
             undefined
 
+          let emittedEventName: string | undefined = undefined
+
+          let eventWorkspacePlan: unknown
+
           await completeCheckoutSessionFactory({
             getCheckoutSession: async () => storedCheckoutSession,
             updateCheckoutSessionStatus: async ({ paymentStatus }) => {
@@ -596,6 +606,10 @@ describe('checkout @gatekeeper', () => {
             getSubscriptionData: async () => subscriptionData,
             upsertWorkspaceSubscription: async ({ workspaceSubscription }) => {
               storedWorkspaceSubscriptionData = workspaceSubscription
+            },
+            emitEvent: async ({ eventName, payload }) => {
+              emittedEventName = eventName
+              eventWorkspacePlan = payload
             }
           })({ sessionId, subscriptionId })
 
@@ -604,6 +618,14 @@ describe('checkout @gatekeeper', () => {
             workspaceId,
             name: storedCheckoutSession.workspacePlan,
             status: 'valid'
+          })
+          expect(emittedEventName).to.equal('gatekeeper.workspace-plan-updated')
+          expect(eventWorkspacePlan).to.deep.equal({
+            workspacePlan: {
+              workspaceId,
+              name: storedCheckoutSession.workspacePlan,
+              status: 'valid'
+            }
           })
           expect(storedWorkspaceSubscriptionData!.billingInterval).to.equal(
             storedCheckoutSession.billingInterval

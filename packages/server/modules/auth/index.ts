@@ -66,10 +66,13 @@ const requestNewEmailVerification = requestNewEmailVerificationFactory({
   findEmail,
   getUser: getUserFactory({ db }),
   getServerInfo: getServerInfoFactory({ db }),
-  deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db }),
+  deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({
+    db
+  }),
   renderEmail,
   sendEmail
 })
+
 const createUser = createUserFactory({
   getServerInfo: getServerInfoFactory({ db }),
   findEmail,

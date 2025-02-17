@@ -81,6 +81,7 @@
                   ? 'TRIAL'
                   : undefined
               "
+              nested
             >
               <template #title-icon>
                 <WorkspaceAvatar
@@ -98,7 +99,10 @@
                 <LayoutSidebarMenuGroupItem
                   v-if="workspaceMenuItem.permission?.includes(workspaceItem.role as WorkspaceRoles)"
                   :label="workspaceMenuItem.title"
-                  :active="route.name === workspaceMenuItem.name"
+                  :active="
+                    route.name === workspaceMenuItem.name &&
+                    route.params.slug === workspaceItem.slug
+                  "
                   :tooltip-text="
                     needsSsoSession(workspaceItem, workspaceMenuItem.name)
                       ? 'Log in with your SSO provider to access this page'
@@ -215,7 +219,10 @@ const needsSsoSession = (
     : false
 }
 
-const exitSettingsRoute = computed(
-  () => settingsMenuState.value.previousRoute ?? homeRoute
-)
+const exitSettingsRoute = computed(() => {
+  if (import.meta.server || !settingsMenuState.value.previousRoute) {
+    return homeRoute
+  }
+  return settingsMenuState.value.previousRoute
+})
 </script>

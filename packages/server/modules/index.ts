@@ -84,8 +84,9 @@ const getEnabledModuleNames = () => {
 
   if (FF_AUTOMATE_MODULE_ENABLED) moduleNames.push('automate')
   if (FF_GENDOAI_MODULE_ENABLED) moduleNames.push('gendo')
-  if (FF_WORKSPACES_MODULE_ENABLED) moduleNames.push('workspaces')
+  // the order of the event listeners matters
   if (FF_GATEKEEPER_MODULE_ENABLED) moduleNames.push('gatekeeper')
+  if (FF_WORKSPACES_MODULE_ENABLED) moduleNames.push('workspaces')
   return moduleNames
 }
 

@@ -13,6 +13,7 @@ import {
   UpdateModelInput
 } from '@/modules/core/graph/generated/graphql'
 import { ModelsTreeItemGraphQLReturn } from '@/modules/core/helpers/graphTypes'
+import { EmailVerification } from '@/modules/emails/domain/types'
 import { BatchedSelectOptions } from '@/modules/shared/helpers/dbHelper'
 import { MaybeNullOrUndefined, Nullable, Optional } from '@speckle/shared'
 import { Knex } from 'knex'
@@ -212,3 +213,8 @@ export type GetPaginatedStreamBranches = (
   cursor?: MaybeNullOrUndefined<string>
   items: Branch[]
 }>
+
+export type VerifyUserEmail = ({
+  email,
+  code
+}: Pick<EmailVerification, 'email' | 'code'>) => Promise<void>

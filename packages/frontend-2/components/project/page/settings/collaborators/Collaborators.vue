@@ -6,7 +6,7 @@
       </p>
     </template>
     <template #top-buttons>
-      <FormButton @click="toggleInviteDialog">Invite</FormButton>
+      <FormButton :disabled="!canInvite" @click="toggleInviteDialog">Invite</FormButton>
     </template>
 
     <div class="flex flex-col mt-6">
@@ -21,19 +21,17 @@
       />
     </div>
 
-    <ProjectPageInviteDialog
+    <InviteDialogProject
       v-if="project"
       v-model:open="showInviteDialog"
       :project="project"
-      :project-id="projectId"
-      :disabled="!isOwner"
     />
   </ProjectPageSettingsBlock>
 </template>
 <script setup lang="ts">
 import type { Project } from '~~/lib/common/generated/gql/graphql'
 import type { ProjectCollaboratorListItem } from '~~/lib/projects/helpers/components'
-import type { Nullable, StreamRoles } from '@speckle/shared'
+import { type Nullable, type StreamRoles, Roles } from '@speckle/shared'
 import { useQuery, useApolloClient } from '@vue/apollo-composable'
 import { useTeamInternals } from '~~/lib/projects/composables/team'
 import { graphql } from '~~/lib/common/generated/gql'
@@ -53,7 +51,8 @@ const projectPageSettingsCollaboratorsQuery = graphql(`
     project(id: $projectId) {
       id
       ...ProjectPageTeamInternals_Project
-      ...ProjectPageInviteDialog_Project
+      ...InviteDialogProject_Project
+      workspaceId
     }
   }
 `)
@@ -83,15 +82,16 @@ const { result: pageResult } = useQuery(projectPageSettingsCollaboratorsQuery, (
 const { result: workspaceResult } = useQuery(
   projectPageSettingsCollaboratorWorkspaceQuery,
   () => ({
-    workspaceId: pageResult.value!.project.workspaceId!
+    workspaceId: pageResult.value!.project.workspace!.id
   }),
   () => ({
-    enabled: isWorkspacesEnabled.value && !!pageResult.value?.project.workspaceId
+    enabled: isWorkspacesEnabled.value && !!pageResult.value?.project.workspace?.id
   })
 )
 
 const project = computed(() => pageResult.value?.project)
 const workspace = computed(() => workspaceResult.value?.workspace)
+const projectRole = computed(() => project.value?.role)
 const updateRole = useUpdateUserRole(project)
 
 const toggleInviteDialog = () => {
@@ -104,6 +104,9 @@ const { collaboratorListItems, isOwner, isServerGuest } = useTeamInternals(
 )
 
 const canEdit = computed(() => isOwner.value && !isServerGuest.value)
+const canInvite = computed(() =>
+  workspace?.value?.id ? projectRole.value !== Roles.Stream.Reviewer : isOwner.value
+)
 
 const onCollaboratorRoleChange = async (
   collaborator: ProjectCollaboratorListItem,

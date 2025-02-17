@@ -5,7 +5,8 @@ import {
   ensureNoPrimaryEmailForUserFactory,
   findEmailFactory,
   findEmailsByUserIdFactory,
-  setPrimaryUserEmailFactory
+  setPrimaryUserEmailFactory,
+  updateUserEmailFactory
 } from '@/modules/core/repositories/userEmails'
 import { db } from '@/db/knex'
 import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
@@ -15,18 +16,29 @@ import {
   updateAllInviteTargetsFactory
 } from '@/modules/serverinvites/repositories/serverInvites'
 import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
-import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
+import {
+  deleteOldAndInsertNewVerificationFactory,
+  deleteVerificationsFactory,
+  getPendingVerificationByEmailFactory
+} from '@/modules/emails/repositories'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
 import { getUserFactory } from '@/modules/core/repositories/users'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
+import {
+  markUserEmailAsVerifiedFactory,
+  verifyUserEmailFactory
+} from '@/modules/core/services/users/emailVerification'
+import { commandFactory } from '@/modules/shared/command'
 
 const getUser = getUserFactory({ db })
 const requestNewEmailVerification = requestNewEmailVerificationFactory({
   findEmail: findEmailFactory({ db }),
   getUser,
   getServerInfo: getServerInfoFactory({ db }),
-  deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({ db }),
+  deleteOldAndInsertNewVerification: deleteOldAndInsertNewVerificationFactory({
+    db
+  }),
   renderEmail,
   sendEmail
 })
@@ -80,6 +92,22 @@ export = {
     requestNewEmailVerification: async (_parent, args) => {
       await requestNewEmailVerification(args.input.id)
       return null
+    },
+    verify: async (_parent, args) => {
+      const { email, code } = args.input
+      const verifyUserEmail = commandFactory({
+        db,
+        operationFactory: ({ db }) =>
+          verifyUserEmailFactory({
+            getPendingVerificationByEmail: getPendingVerificationByEmailFactory({ db }),
+            markUserEmailAsVerified: markUserEmailAsVerifiedFactory({
+              updateUserEmail: updateUserEmailFactory({ db })
+            }),
+            deleteVerifications: deleteVerificationsFactory({ db })
+          })
+      })
+      await verifyUserEmail({ email, code })
+      return true
     }
   }
 } as Resolvers

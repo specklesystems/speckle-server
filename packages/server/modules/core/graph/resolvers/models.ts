@@ -211,6 +211,7 @@ export = {
   },
   Model: {
     async author(parent, _args, ctx) {
+      if (!parent.authorId) return null
       return await ctx.loaders.users.getUser.load(parent.authorId)
     },
     async previewUrl(parent, _args, ctx) {
@@ -309,6 +310,17 @@ export = {
         ctx.resourceAccessRules
       )
       const projectDB = await getProjectDbClient({ projectId: args.input.projectId })
+
+      // Sanitize model name by trimming spaces around slashes
+      const sanitizedInput = {
+        ...args.input,
+        name: args.input.name
+          .split('/')
+          .map((part) => part.trim())
+          .filter((part) => part.length > 0)
+          .join('/')
+      }
+
       const createBranchAndNotify = createBranchAndNotifyFactory({
         getStreamBranchByName: getStreamBranchByNameFactory({ db: projectDB }),
         createBranch: createBranchFactory({ db: projectDB }),
@@ -317,7 +329,7 @@ export = {
           publish
         })
       })
-      return await createBranchAndNotify(args.input, ctx.userId!)
+      return await createBranchAndNotify(sanitizedInput, ctx.userId!)
     },
     async update(_parent, args, ctx) {
       await authorizeResolver(

@@ -45,11 +45,6 @@
           "description": "High level flag that toggles the Gendo AI render module",
           "default": false
         },
-        "noClosureWrites": {
-          "type": "boolean",
-          "description": "Toggles whether to stop writing to the closure table",
-          "default": false
-        },
         "workspacesModuleEnabled": {
           "type": "boolean",
           "description": "High level flag fully toggles the workspaces module",
@@ -83,6 +78,16 @@
         "fileImportIFCDotNetEnabled": {
           "type": "boolean",
           "description": "Toggles whether the experimental .Net IFC importer is used for importing IFC files.",
+          "default": false
+        },
+        "forceEmailVerification": {
+          "type": "boolean",
+          "description": "Forces email verification for all users",
+          "default": false
+        },
+        "forceOnboarding": {
+          "type": "boolean",
+          "description": "Forces onboarding for all users",
           "default": false
         }
       }

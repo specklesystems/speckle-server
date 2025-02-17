@@ -2,9 +2,12 @@ import { CommandModule } from 'yargs'
 import { cliLogger } from '@/logging/logging'
 import { getWorkspaceBySlugOrIdFactory } from '@/modules/workspaces/repositories/workspaces'
 import { db } from '@/db/knex'
-import { PaidWorkspacePlanStatuses } from '@/modules/gatekeeper/domain/billing'
 import { upsertPaidWorkspacePlanFactory } from '@/modules/gatekeeper/repositories/billing'
-import { PaidWorkspacePlans } from '@/modules/gatekeeper/domain/workspacePricing'
+import {
+  PaidWorkspacePlans,
+  PaidWorkspacePlanStatuses
+} from '@/modules/gatekeeperCore/domain/billing'
+import { WorkspaceNotFoundError } from '@/modules/workspaces/errors/workspace'
 
 const command: CommandModule<
   unknown,
@@ -47,7 +50,9 @@ const command: CommandModule<
     )
     const workspace = await getWorkspaceBySlugOrIdFactory({ db })(args)
     if (!workspace) {
-      throw new Error(`Workspace w/ slug or id '${args.workspaceSlugOrId}' not found`)
+      throw new WorkspaceNotFoundError(
+        `Workspace w/ slug or id '${args.workspaceSlugOrId}' not found`
+      )
     }
 
     await upsertPaidWorkspacePlanFactory({ db })({

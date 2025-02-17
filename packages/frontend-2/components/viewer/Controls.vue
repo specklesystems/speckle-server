@@ -1,15 +1,9 @@
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
-  <div v-if="showControls">
+  <div>
     <div
       class="absolute z-20 flex max-h-screen simple-scrollbar flex-col space-y-1 md:space-y-2 px-2"
-      :class="
-        showNavbar && !isEmbedEnabled
-          ? 'pt-[3.8rem]'
-          : isTransparent
-          ? 'pt-2'
-          : 'pt-2 pb-16'
-      "
+      :class="!isEmbedEnabled ? 'pt-[3.8rem]' : isTransparent ? 'pt-2' : 'pt-2 pb-16'"
     >
       <!-- Models -->
       <ViewerControlsButtonToggle
@@ -164,7 +158,7 @@
     <div
       v-if="activePanel !== 'none'"
       ref="resizeHandle"
-      class="absolute z-10 max-h-[calc(100dvh-4rem)] w-7 mt-[3.9rem] hidden sm:flex group overflow-hidden items-center rounded-r cursor-ew-resize z-30"
+      class="absolute max-h-[calc(100dvh-4rem)] w-7 mt-[3.9rem] hidden sm:flex group overflow-hidden items-center rounded-r cursor-ew-resize z-30"
       :style="`left:${width - 2}px; height:${height ? height - 10 : 0}px`"
       @mousedown="startResizing"
     >
@@ -181,7 +175,7 @@
     </div>
     <div
       ref="scrollableControlsContainer"
-      :class="`simple-scrollbar absolute z-10 pl-12 pr-2 md:pr-0 md:pl-14 mb-4 max-h-[calc(100dvh-4.5rem)] overflow-y-auto px-[2px] py-[2px] ${
+      :class="`simple-scrollbar absolute z-10 pl-12 pr-2 md:pr-0 md:pl-14 mb-4 max-h-[calc(100dvh-3.5rem)] overflow-y-auto px-[2px] py-[2px] ${
         activePanel !== 'none' ? 'opacity-100' : 'opacity-0'
       } ${isEmbedEnabled ? 'mt-1.5' : 'mt-[3.7rem]'}`"
       :style="`width: ${isMobile ? '100%' : `${width + 4}px`};`"
@@ -252,7 +246,6 @@
       <FormButton @click="resetSectionBox()">Reset section box</FormButton>
     </Portal>
   </div>
-  <div v-else />
 </template>
 <script setup lang="ts">
 import {
@@ -278,7 +271,6 @@ import {
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useIsSmallerOrEqualThanBreakpoint } from '~~/composables/browser'
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
-import { useViewerTour } from '~/lib/viewer/composables/tour'
 import {
   onKeyStroke,
   useEventListener,
@@ -361,7 +353,6 @@ const {
 } = useSectionBoxUtilities()
 const { getActiveMeasurement, removeMeasurement, enableMeasurements } =
   useMeasurementUtilities()
-const { showNavbar, showControls } = useViewerTour()
 const { isTransparent, isEnabled: isEmbedEnabled } = useEmbed()
 const {
   zoomExtentsOrSelection,

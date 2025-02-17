@@ -54,7 +54,7 @@ import {
   filterByResource,
   InvitesRetrievalValidityFilter
 } from '@/modules/serverinvites/repositories/serverInvites'
-import { WorkspaceInviteResourceType } from '@/modules/workspaces/domain/constants'
+import { WorkspaceInviteResourceType } from '@/modules/workspacesCore/domain/constants'
 import { clamp } from 'lodash'
 import {
   WorkspaceCreationState,
@@ -81,14 +81,7 @@ export const getUserDiscoverableWorkspacesFactory =
     }
     return (await tables
       .workspaces(db)
-      .select(
-        'workspaces.id as id',
-        'name',
-        'slug',
-        'description',
-        'logo',
-        'defaultLogoIndex'
-      )
+      .select('workspaces.id as id', 'name', 'slug', 'description', 'logo')
       .distinctOn('workspaces.id')
       .join('workspace_domains', 'workspace_domains.workspaceId', 'workspaces.id')
       .leftJoin(
@@ -111,7 +104,7 @@ export const getUserDiscoverableWorkspacesFactory =
       .where('verified', true)
       .where('role', null)) as Pick<
       Workspace,
-      'id' | 'name' | 'slug' | 'description' | 'logo' | 'defaultLogoIndex'
+      'id' | 'name' | 'slug' | 'description' | 'logo'
     >[]
   }
 
@@ -143,17 +136,10 @@ const workspaceWithRoleBaseQuery = ({
 
 export const getWorkspacesFactory =
   ({ db }: { db: Knex }): GetWorkspaces =>
-  async (params: {
-    workspaceIds: string[]
-    /**
-     * Optionally - for each workspace, return the user's role in that workspace
-     */
-    userId?: string
-  }) => {
-    const { workspaceIds, userId } = params
-
+  async ({ workspaceIds, userId }) => {
     const q = workspaceWithRoleBaseQuery({ db, userId })
-    const results = await q.whereIn(Workspaces.col.id, workspaceIds)
+    if (workspaceIds !== undefined) q.whereIn(Workspaces.col.id, workspaceIds)
+    const results = await q
     return results
   }
 
@@ -237,7 +223,6 @@ export const upsertWorkspaceFactory =
         'description',
         'logo',
         'slug',
-        'defaultLogoIndex',
         'defaultProjectRole',
         'name',
         'updatedAt',
