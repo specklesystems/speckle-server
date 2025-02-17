@@ -173,7 +173,7 @@ async function doTask(
           process.env['NODE_BINARY_PATH'] || 'node',
           [
             '--no-experimental-fetch',
-            './ifc/import_file.js',
+            './src/ifc/import_file.js',
             TMP_FILE_PATH,
             TMP_RESULTS_PATH,
             info.userId,
@@ -195,7 +195,7 @@ async function doTask(
         taskLogger,
         process.env['PYTHON_BINARY_PATH'] || 'python3',
         [
-          './stl/import_file.py',
+          './src/stl/import_file.py',
           TMP_FILE_PATH,
           TMP_RESULTS_PATH,
           info.userId,
@@ -224,7 +224,7 @@ async function doTask(
         process.env['PYTHON_BINARY_PATH'] || 'python3',
         [
           '-u',
-          './obj/import_file.py',
+          './src/obj/import_file.py',
           TMP_FILE_PATH,
           TMP_RESULTS_PATH,
           info.userId,
