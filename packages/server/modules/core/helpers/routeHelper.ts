@@ -8,12 +8,6 @@ import { MaybeNullOrUndefined } from '@/modules/shared/helpers/typeHelper'
  */
 
 export function getWorkspaceRoute(workspaceSlug: string): string {
-  if (!useNewFrontend()) {
-    // TODO: This should throw, but tests run in FE1 mode, and if we switch FE2 mode on, a bunch of old auth tests fail
-    return '/'
-    // throw new LogicError('Workspaces are not supported in the old frontend')
-  }
-
   return `/workspaces/${workspaceSlug}`
 }
 
