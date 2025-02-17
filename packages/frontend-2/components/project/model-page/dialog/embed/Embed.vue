@@ -42,6 +42,8 @@
           <p class="text-body-xs text-foreground-2 mt-2 mb-5 ml-0.5">
             Copy this code to embed your model in a webpage or document.
           </p>
+          <h4 class="text-heading-sm text-foreground-2 mb-1 ml-0.5">Embed URL</h4>
+          <FormClipboardInput class="mb-4" :value="updatedUrl" />
           <LayoutDialogSection border-b border-t title="Options">
             <div class="flex flex-col gap-1.5 sm:gap-2 text-body-xs cursor-default">
               <div v-for="option in embedDialogOptions" :key="option.id">

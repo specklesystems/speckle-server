@@ -21,6 +21,7 @@ import { WorkspaceAlreadyPaidError } from '@/modules/gatekeeper/errors/billing'
 import { withTransaction } from '@/modules/shared/helpers/dbHelper'
 import { getStripeClient } from '@/modules/gatekeeper/stripe'
 import { handleSubscriptionUpdateFactory } from '@/modules/gatekeeper/services/subscriptions'
+import { getEventBus } from '@/modules/shared/services/eventBus'
 
 export const getBillingRouter = (): Router => {
   const router = Router()
@@ -96,7 +97,8 @@ export const getBillingRouter = (): Router => {
               }),
               getSubscriptionData: getSubscriptionDataFactory({
                 stripe
-              })
+              }),
+              emitEvent: getEventBus().emit
             })
 
             try {

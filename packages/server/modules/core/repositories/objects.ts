@@ -14,6 +14,7 @@ import {
   GetObjectChildrenQuery,
   GetObjectChildrenStream,
   GetObjectsStream,
+  GetStreamObjectCount,
   GetStreamObjects,
   HasObjects,
   StoreObjects,
@@ -80,6 +81,17 @@ export const getBatchedStreamObjectsFactory =
       .orderBy(Objects.col.id)
 
     return executeBatchedSelect(baseQuery, options)
+  }
+
+export const getStreamObjectCountFactory =
+  (deps: { db: Knex }): GetStreamObjectCount =>
+  async ({ streamId }) => {
+    const [res] = await tables
+      .objects(deps.db)
+      .where(Objects.col.streamId, streamId)
+      .count()
+
+    return parseInt(res.count as string)
   }
 
 export const insertObjectsFactory =

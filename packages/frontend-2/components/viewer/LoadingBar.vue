@@ -2,7 +2,7 @@
   <div :class="`${loadProgress < 1 && viewerBusy ? 'mt-0' : '-mt-5'} transition-all`">
     <div
       :class="`absolute w-full max-w-screen flex justify-center ${
-        showNavbar && !isEmbedEnabled ? 'mt-14' : 'mt-0'
+        !isEmbedEnabled ? 'mt-14' : 'mt-0'
       }  z-50`"
     >
       <div
@@ -23,10 +23,7 @@
 </template>
 <script setup lang="ts">
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
-import { useViewerTour } from '~/lib/viewer/composables/tour'
 import { useInjectedViewerInterfaceState } from '~~/lib/viewer/composables/setup'
 const { isEnabled: isEmbedEnabled } = useEmbed()
-
 const { viewerBusy, loadProgress } = useInjectedViewerInterfaceState()
-const { showNavbar } = useViewerTour()
 </script>

@@ -8,7 +8,7 @@ import {
 import {
   WorkspacePlanBillingIntervals,
   WorkspacePricingPlans
-} from '@/modules/gatekeeper/domain/workspacePricing'
+} from '@/modules/gatekeeperCore/domain/billing'
 import { EnvironmentResourceError, LogicError } from '@/modules/shared/errors'
 import { Stripe } from 'stripe'
 
