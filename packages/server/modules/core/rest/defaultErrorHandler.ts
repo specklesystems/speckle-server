@@ -56,7 +56,7 @@ export const defaultErrorHandler: ErrorRequestHandler = (err, req, res, next) =>
 
   const logger = req.log || defaultLogger
 
-  // Log unexpected types of errors which are not instances of BaseError or have a valid 'code' or 'statusCode' property
+  // Log unexpected types of errors which are not instances of BaseError
   if (!(err instanceof BaseError)) {
     logger.warn(
       { err },

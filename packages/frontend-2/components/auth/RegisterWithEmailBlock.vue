@@ -13,6 +13,7 @@
         :rules="emailRules"
         show-label
         :disabled="isEmailDisabled"
+        autocomplete="email"
       />
       <FormTextInput
         type="text"
@@ -25,6 +26,7 @@
         show-label
         :disabled="loading"
         auto-focus
+        autocomplete="name"
       />
       <FormTextInput
         v-model="password"
@@ -37,6 +39,7 @@
         :rules="passwordRules"
         show-label
         :disabled="loading"
+        autocomplete="new-password"
       />
     </div>
     <AuthPasswordChecks :password="password" class="mt-2 h-12 sm:h-8" />

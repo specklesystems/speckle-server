@@ -68,7 +68,7 @@ export type GetWorkspaceBySlugOrId = (args: {
 }) => Promise<Workspace | null>
 
 export type GetWorkspaces = (args: {
-  workspaceIds: string[]
+  workspaceIds?: string[]
   userId?: string
 }) => Promise<WorkspaceWithOptionalRole[]>
 
@@ -361,5 +361,8 @@ export type CopyProjectModels = (params: {
   projectIds: string[]
 }) => Promise<Record<string, number>>
 export type CopyProjectVersions = (params: {
+  projectIds: string[]
+}) => Promise<Record<string, number>>
+export type CopyProjectObjects = (params: {
   projectIds: string[]
 }) => Promise<Record<string, number>>
