@@ -15,7 +15,7 @@
           link
           color="subtle"
           full-width
-          @click="setUserOnboardingComplete"
+          @click="() => setUserOnboardingComplete()"
         >
           Skip
         </FormButton>

@@ -63,4 +63,58 @@ async function triggerMailchimpCustomerJourney(
   })
 }
 
-export { addToMailchimpAudience, triggerMailchimpCustomerJourney }
+async function updateMailchimpMemberTags(
+  user: UserRecord,
+  listId: string,
+  onboardingData: {
+    role?: string
+    plans?: string[]
+    source?: string
+  }
+) {
+  initializeMailchimp()
+  const subscriberHash = md5(user.email.toLowerCase())
+
+  // First ensure user is in the audience
+  await addToMailchimpAudience(user, listId)
+
+  // Build tags array
+  const tags: { name: string; status: 'active' | 'inactive' }[] = []
+
+  // Add role tag if present
+  if (onboardingData.role) {
+    tags.push({
+      name: `Role: ${onboardingData.role}`,
+      status: 'active'
+    })
+  }
+
+  // Add plan tags if present
+  if (onboardingData.plans?.length) {
+    onboardingData.plans.forEach((plan) => {
+      tags.push({
+        name: `Plan: ${plan}`,
+        status: 'active'
+      })
+    })
+  }
+
+  // Add source tag if present
+  if (onboardingData.source) {
+    tags.push({
+      name: `Source: ${onboardingData.source}`,
+      status: 'active'
+    })
+  }
+
+  // Update member tags
+  await mailchimp.lists.updateListMemberTags(listId, subscriberHash, {
+    tags
+  })
+}
+
+export {
+  addToMailchimpAudience,
+  triggerMailchimpCustomerJourney,
+  updateMailchimpMemberTags
+}
