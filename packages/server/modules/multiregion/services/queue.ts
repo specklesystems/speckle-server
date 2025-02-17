@@ -128,7 +128,7 @@ const isMultiregionJob = (job: Bull.Job): job is Bull.Job<MultiregionJob> => {
     'move-project-region',
     'delete-project-region-data'
   ]
-  return !!job.data.type && jobTypes.includes(job.data.types)
+  return !!job.data.type && jobTypes.includes(job.data.type)
 }
 
 /**
