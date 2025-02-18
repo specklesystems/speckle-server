@@ -209,10 +209,10 @@ export const linkUserWithSsoProviderFactory =
     // In addition, investigate using oidcProviderUserData.sub as source of truth here. Some providers appear to allow
     // `email` fields to change, or do not guarantee they will exist (Entra ID)
 
-    // Add oidcProviderUserData.email to req.user.id verified emails, if not already present
+    // Add SSO provider email to req.user.id verified emails, if not already present
     const userEmails = await findEmailsByUserId({ userId: args.userId })
     const maybeSsoEmail = userEmails.find(
-      (entry) => entry.email === args.ssoProfile.email
+      (entry) => entry.email === getEmailFromOidcProfile(args.ssoProfile)
     )
 
     if (!maybeSsoEmail) {

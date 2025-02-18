@@ -70,6 +70,10 @@ export function getFileSizeLimitMB() {
   return getIntFromEnv('FILE_SIZE_LIMIT_MB', '100')
 }
 
+export function getMaximumRequestBodySizeMB() {
+  return getIntFromEnv('MAX_REQUEST_BODY_SIZE_MB', '100')
+}
+
 export function getMaximumObjectSizeMB() {
   return getIntFromEnv('MAX_OBJECT_SIZE_MB', '100')
 }

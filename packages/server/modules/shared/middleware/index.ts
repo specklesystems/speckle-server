@@ -5,7 +5,15 @@ import {
   AuthParams,
   authHasFailed
 } from '@/modules/shared/authz'
-import { Request, Response, NextFunction, Handler, RequestHandler } from 'express'
+import {
+  Request,
+  Response,
+  NextFunction,
+  Handler,
+  RequestHandler,
+  raw as expressRawBodyParser,
+  json as expressJsonBodyParser
+} from 'express'
 import {
   ForbiddenError,
   NotFoundError,
@@ -27,10 +35,7 @@ import { getIpFromRequest } from '@/modules/shared/utils/ip'
 import { Netmask } from 'netmask'
 import { Merge } from 'type-fest'
 import { resourceAccessRuleToIdentifier } from '@/modules/core/helpers/token'
-import {
-  delayGraphqlResponsesBy,
-  isCompressionEnabled
-} from '@/modules/shared/helpers/envHelper'
+import { delayGraphqlResponsesBy } from '@/modules/shared/helpers/envHelper'
 import { subscriptionLogger } from '@/logging/logging'
 import { GetUser } from '@/modules/core/domain/users/operations'
 import { validateTokenFactory } from '@/modules/core/services/tokens'
@@ -44,6 +49,7 @@ import {
 import { db } from '@/db/knex'
 import { getTokenAppInfoFactory } from '@/modules/auth/repositories/apps'
 import { getUserRoleFactory } from '@/modules/core/repositories/users'
+import { UserInputError } from '@/modules/core/errors/userinput'
 import compression from 'compression'
 
 export const authMiddlewareCreator = (steps: AuthPipelineFunction[]) => {
@@ -274,7 +280,65 @@ export async function determineClientIpAddressMiddleware(
   next()
 }
 
-export function compressionMiddleware(): RequestHandler {
-  if (isCompressionEnabled()) return compression()
+//TODO ideally these should be identified alongside the route handlers
+const RAW_BODY_PATH_PREFIXES = ['/api/v1/billing/webhooks', '/api/thirdparty/gendo/']
+
+export const requestBodyParsingMiddlewareFactory =
+  (deps: { maximumRequestBodySizeMb: number }) =>
+  async (req: Request, res: Response, next: NextFunction) => {
+    const maxRequestBodySize = `${deps.maximumRequestBodySizeMb}mb`
+
+    const nextWithWrappedError = (err: unknown) => {
+      if (!err) {
+        next()
+        return
+      }
+
+      next(
+        new UserInputError('Invalid request body', {
+          cause: ensureError(err, 'Unknown error parsing request body')
+        })
+      )
+      return
+    }
+
+    try {
+      if (RAW_BODY_PATH_PREFIXES.some((p) => req.path.startsWith(p))) {
+        expressRawBodyParser({ type: 'application/json', limit: maxRequestBodySize })(
+          req,
+          res,
+          nextWithWrappedError
+        )
+
+        // expressRawBodyParser calls `next` internally, so we cannot call it again here
+        return
+      }
+
+      //default
+      expressJsonBodyParser({ limit: maxRequestBodySize })(
+        req,
+        res,
+        nextWithWrappedError
+      )
+
+      // expressJsonBodyParser calls `next` internally, so we cannot call it again here
+      return
+    } catch (err) {
+      // something blew up, so let's wrap it and pass it to the error handler
+      const e = new UserInputError(
+        'Error unexpectedly encountered when parsing the request body',
+        {
+          info: { cause: ensureError(err, 'Unknown error parsing request body') }
+        }
+      )
+      next(e)
+      return
+    }
+  }
+
+export function compressionMiddlewareFactory(deps: {
+  isCompressionEnabled: boolean
+}): RequestHandler {
+  if (deps.isCompressionEnabled) return compression()
   return (_req, _res, next) => next()
 }

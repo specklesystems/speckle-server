@@ -49,7 +49,9 @@ import {
   getPort,
   getBindAddress,
   shutdownTimeoutSeconds,
-  asyncRequestContextEnabled
+  asyncRequestContextEnabled,
+  getMaximumRequestBodySizeMB,
+  isCompressionEnabled
 } from '@/modules/shared/helpers/envHelper'
 import * as ModulesSetup from '@/modules'
 import { GraphQLContext, Optional } from '@/modules/shared/helpers/typeHelper'
@@ -60,9 +62,10 @@ import { corsMiddleware } from '@/modules/core/configs/cors'
 import {
   authContextMiddleware,
   buildContext,
-  compressionMiddleware,
+  compressionMiddlewareFactory,
   determineClientIpAddressMiddleware,
-  mixpanelTrackerHelperMiddlewareFactory
+  mixpanelTrackerHelperMiddlewareFactory,
+  requestBodyParsingMiddlewareFactory
 } from '@/modules/shared/middleware'
 import { GraphQLError } from 'graphql'
 import { redactSensitiveVariables } from '@/logging/loggingHelper'
@@ -441,18 +444,17 @@ export async function init() {
     startupLogger.info('Async request context tracking enabled 👀')
   }
 
-  app.use(compressionMiddleware)
+  app.use(
+    compressionMiddlewareFactory({ isCompressionEnabled: isCompressionEnabled() })
+  )
 
   app.use(corsMiddleware())
-  // there are some paths, that need the raw body
-  app.use((req, res, next) => {
-    const rawPaths = ['/api/v1/billing/webhooks', '/api/thirdparty/gendo/']
-    if (rawPaths.some((p) => req.path.startsWith(p))) {
-      express.raw({ type: 'application/json', limit: '100mb' })(req, res, next)
-    } else {
-      express.json({ limit: '100mb' })(req, res, next)
-    }
-  })
+
+  app.use(
+    requestBodyParsingMiddlewareFactory({
+      maximumRequestBodySizeMb: getMaximumRequestBodySizeMB()
+    })
+  ) // there are some paths that need the raw body, not a parsed body
   app.use(express.urlencoded({ limit: `${getFileSizeLimitMB()}mb`, extended: false }))
 
   // Trust X-Forwarded-* headers (for https protocol detection)
@@ -498,16 +500,6 @@ export async function init() {
       context: buildContext
     })
   )
-
-  // Expose prometheus metrics
-  app.get('/metrics', async (req, res) => {
-    try {
-      res.set('Content-Type', prometheusClient.register.contentType)
-      res.end(await prometheusClient.register.metrics())
-    } catch (ex: unknown) {
-      res.status(500).end(ex instanceof Error ? ex.message : `${ex}`)
-    }
-  })
 
   // At the very end adding default error handler middleware
   app.use(errorMetricsMiddleware)
