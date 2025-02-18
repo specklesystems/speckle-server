@@ -12,6 +12,7 @@ export enum DefaultAppIds {
   Explorer = 'explorer',
   DesktopManager = 'sdm',
   Connector = 'sca',
+  SpeckleDesktopAuthService = 'sdas',
   Excel = 'spklexcel',
   PowerBI = 'spklpwerbi',
   Automate = 'spklautoma'
@@ -67,6 +68,25 @@ const SpeckleConnectorApp = {
   trustByDefault: true,
   public: true,
   redirectUrl: 'http://localhost:29363',
+  scopes: [
+    Scopes.Streams.Read,
+    Scopes.Streams.Write,
+    Scopes.Profile.Read,
+    Scopes.Profile.Email,
+    Scopes.Users.Read,
+    Scopes.Users.Invite
+  ]
+}
+
+/** Next gen connectors */
+const SpeckleDesktopAuthService = {
+  id: DefaultAppIds.SpeckleDesktopAuthService,
+  secret: DefaultAppIds.SpeckleDesktopAuthService,
+  name: 'Speckle Connector',
+  description: 'Speckle host application conntectors.',
+  trustByDefault: true,
+  public: true,
+  redirectUrl: 'http://localhost:29364',
   scopes: [
     Scopes.Streams.Read,
     Scopes.Streams.Write,
@@ -140,6 +160,7 @@ const defaultApps = [
   SpeckleApiExplorer,
   SpeckleDesktopApp,
   SpeckleConnectorApp,
+  SpeckleDesktopAuthService,
   SpeckleExcel,
   SpecklePowerBi,
   SpeckleAutomate
