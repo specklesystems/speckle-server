@@ -2,15 +2,6 @@
 <template>
   <form method="post" @submit="onSubmit">
     <div class="flex flex-col space-y-2">
-      <pre class="text-xs">{{
-        {
-          isNoPersonalEmailsEnabled: isNoPersonalEmailsEnabled,
-          runtimeConfig: useRuntimeConfig().public,
-          hasInviteToken: !!inviteToken,
-          rulesLength: emailRules.length,
-          rules: emailRules.map((r) => r.toString())
-        }
-      }}</pre>
       <FormTextInput
         v-model="email"
         type="email"
