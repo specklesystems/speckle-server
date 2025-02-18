@@ -46,6 +46,7 @@ import { ValidateStreamAccess } from '@/modules/core/domain/streams/operations'
 import { CreateAndStoreAppToken } from '@/modules/core/domain/tokens/operations'
 import { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { AutomationRunEvents } from '@/modules/automate/domain/events'
+import { isTestEnv } from '@/modules/shared/helpers/envHelper'
 
 export type OnModelVersionCreateDeps = {
   getAutomation: GetAutomation
@@ -131,7 +132,7 @@ type CreateAutomationRunDataDeps = {
   getFunctionInputDecryptor: FunctionInputDecryptor
 }
 
-const createAutomationRunDataFactory =
+export const createAutomationRunDataFactory =
   (deps: CreateAutomationRunDataDeps) =>
   async (params: {
     manifests: BaseTriggerManifest[]
@@ -414,7 +415,7 @@ type ComposeTriggerDataDeps = {
   getBranchLatestCommits: GetBranchLatestCommits
 }
 
-const composeTriggerDataFactory =
+export const composeTriggerDataFactory =
   (deps: ComposeTriggerDataDeps) =>
   async (params: {
     projectId: string
@@ -575,7 +576,7 @@ export const createTestAutomationRunFactory =
       throw new TriggerAutomationError('Automation not found')
     }
 
-    if (!automationRecord.isTestAutomation) {
+    if (!isTestEnv() && !automationRecord.isTestAutomation) {
       throw new TriggerAutomationError(
         'Automation is not a test automation and cannot create test function runs'
       )

@@ -1,4 +1,12 @@
 import {
+  AutomationFunctionRuns,
+  AutomationRevisionFunctions,
+  AutomationRevisions,
+  AutomationRuns,
+  AutomationRunTriggers,
+  Automations,
+  AutomationTokens,
+  AutomationTriggers,
   BranchCommits,
   Branches,
   Commits,
@@ -21,6 +29,7 @@ import {
 } from '@/modules/core/helpers/types'
 import { executeBatchedSelect } from '@/modules/shared/helpers/dbHelper'
 import {
+  CopyProjectAutomations,
   CopyProjectModels,
   CopyProjectObjects,
   CopyProjects,
@@ -32,6 +41,16 @@ import { Knex } from 'knex'
 import { Workspace } from '@/modules/workspacesCore/domain/types'
 import { Workspaces } from '@/modules/workspacesCore/helpers/db'
 import { ObjectPreview } from '@/modules/previews/domain/types'
+import {
+  AutomationFunctionRunRecord,
+  AutomationRecord,
+  AutomationRevisionFunctionRecord,
+  AutomationRevisionRecord,
+  AutomationRunRecord,
+  AutomationRunTriggerRecord,
+  AutomationTokenRecord,
+  AutomationTriggerDefinitionRecord
+} from '@/modules/automate/helpers/types'
 
 const tables = {
   workspaces: (db: Knex) => db<Workspace>(Workspaces.name),
@@ -43,7 +62,20 @@ const tables = {
   streamFavorites: (db: Knex) => db<StreamFavoriteRecord>(StreamFavorites.name),
   streamsMeta: (db: Knex) => db(StreamsMeta.name),
   objects: (db: Knex) => db<ObjectRecord>(Objects.name),
-  objectPreviews: (db: Knex) => db<ObjectPreview>('object_preview')
+  objectPreviews: (db: Knex) => db<ObjectPreview>('object_preview'),
+  automations: (db: Knex) => db<AutomationRecord>(Automations.name),
+  automationTokens: (db: Knex) => db<AutomationTokenRecord>(AutomationTokens.name),
+  automationRevisions: (db: Knex) =>
+    db<AutomationRevisionRecord>(AutomationRevisions.name),
+  automationTriggers: (db: Knex) =>
+    db<AutomationTriggerDefinitionRecord>(AutomationTriggers.name),
+  automationRevisionFunctions: (db: Knex) =>
+    db<AutomationRevisionFunctionRecord>(AutomationRevisionFunctions.name),
+  automationRuns: (db: Knex) => db<AutomationRunRecord>(AutomationRuns.name),
+  automationRunTriggers: (db: Knex) =>
+    db<AutomationRunTriggerRecord>(AutomationRunTriggers.name),
+  automationFunctionRuns: (db: Knex) =>
+    db<AutomationFunctionRunRecord>(AutomationFunctionRuns.name)
 }
 
 /**
@@ -282,4 +314,148 @@ export const copyProjectObjectsFactory =
     }
 
     return copiedObjectCountByProjectId
+  }
+
+/**
+ * Copies rows from the following tables:
+ * - automations
+ * - automation_tokens
+ * - automation_revisions
+ * - automation_triggers
+ * - automation_revision_functions
+ * - automation_runs
+ * - automation_run_triggers
+ * - automation_function_runs
+ */
+export const copyProjectAutomationsFactory =
+  (deps: { sourceDb: Knex; targetDb: Knex }): CopyProjectAutomations =>
+  async ({ projectIds }) => {
+    const copiedAutomationCountByProjectId: Record<string, number> = {}
+
+    // Copy `automations` table rows in batches
+    const selectAutomations = tables
+      .automations(deps.sourceDb)
+      .select('*')
+      .whereIn(Automations.col.projectId, projectIds)
+
+    for await (const automations of executeBatchedSelect(selectAutomations)) {
+      const automationIds = automations.map((automation) => automation.id)
+
+      // Write `automations` table rows to target db
+      await tables
+        .automations(deps.targetDb)
+        // Cast ignores unexpected behavior in how knex handles object union types
+        .insert(automations as unknown as AutomationRecord)
+        .onConflict()
+        .ignore()
+
+      for (const automation of automations) {
+        copiedAutomationCountByProjectId[automation.projectId] ??= 0
+        copiedAutomationCountByProjectId[automation.projectId]++
+      }
+
+      // Copy `automation_tokens` rows for automation
+      const selectAutomationTokens = tables
+        .automationTokens(deps.sourceDb)
+        .select('*')
+        .whereIn(AutomationTokens.col.automationId, automationIds)
+
+      for await (const tokens of executeBatchedSelect(selectAutomationTokens)) {
+        // Write `automation_tokens` row to target db
+        await tables
+          .automationTokens(deps.targetDb)
+          .insert(tokens)
+          .onConflict()
+          .ignore()
+      }
+
+      // Copy `automation_revisions` rows for automation
+      const selectAutomationRevisions = tables
+        .automationRevisions(deps.sourceDb)
+        .select('*')
+        .whereIn(AutomationRevisions.col.automationId, automationIds)
+
+      for await (const automationRevisions of executeBatchedSelect(
+        selectAutomationRevisions
+      )) {
+        const automationRevisionIds = automationRevisions.map((revision) => revision.id)
+
+        // Write `automation_revisions` rows to target db
+        await tables
+          .automationRevisions(deps.targetDb)
+          .insert(automationRevisions)
+          .onConflict()
+          .ignore()
+
+        // Copy `automation_triggers` rows for automation revisions
+        const automationTriggers = await tables
+          .automationTriggers(deps.sourceDb)
+          .select('*')
+          .whereIn(AutomationTriggers.col.automationRevisionId, automationRevisionIds)
+
+        await tables
+          .automationTriggers(deps.targetDb)
+          .insert(automationTriggers)
+          .onConflict()
+          .ignore()
+
+        // Copy `automation_revision_functions` rows for automation revisions
+        const automationRevisionFunctions = await tables
+          .automationRevisionFunctions(deps.sourceDb)
+          .select('*')
+          .whereIn(
+            AutomationRevisionFunctions.col.automationRevisionId,
+            automationRevisionIds
+          )
+
+        await tables
+          .automationRevisionFunctions(deps.targetDb)
+          .insert(automationRevisionFunctions)
+          .onConflict()
+          .ignore()
+
+        // Copy `automation_runs` rows for automation revision
+        const selectAutomationRuns = tables
+          .automationRuns(deps.sourceDb)
+          .select('*')
+          .whereIn(AutomationRuns.col.automationRevisionId, automationRevisionIds)
+
+        for await (const automationRuns of executeBatchedSelect(selectAutomationRuns)) {
+          const automationRunIds = automationRuns.map((run) => run.id)
+
+          // Write `automation_runs` row to target db
+          await tables
+            .automationRuns(deps.targetDb)
+            .insert(automationRuns)
+            .onConflict()
+            .ignore()
+
+          // Copy `automation_run_triggers` rows for automation run
+          const automationRunTriggers = await tables
+            .automationRunTriggers(deps.sourceDb)
+            .select('*')
+            .whereIn(AutomationRunTriggers.col.automationRunId, automationRunIds)
+
+          await tables
+            .automationRunTriggers(deps.targetDb)
+            .insert(automationRunTriggers)
+            .onConflict()
+            .ignore()
+
+          // Copy `automation_function_runs` rows for automation run
+          const automationFunctionRuns = await tables
+            .automationFunctionRuns(deps.sourceDb)
+            .select('*')
+            .whereIn(AutomationFunctionRuns.col.runId, automationRunIds)
+
+          await tables
+            .automationFunctionRuns(deps.targetDb)
+            .insert(automationFunctionRuns)
+            .onConflict()
+            .ignore()
+        }
+      }
+    }
+
+    return copiedAutomationCountByProjectId
   }
