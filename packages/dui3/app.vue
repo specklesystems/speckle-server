@@ -3,7 +3,7 @@
     <NuxtLayout>
       <NuxtPage />
     </NuxtLayout>
-    <!-- Teleport is fixing the non-clickable toast notifications if any dialog is active. It was marking div as invert and causing the issue -->
+    <!-- Teleport is fixing the non-clickable toast notifications if any dialog is active. It was marking div as inert and causing the issue -->
     <Teleport to="body">
       <SingletonToastManager />
     </Teleport>
