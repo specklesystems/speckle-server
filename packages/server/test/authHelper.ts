@@ -35,6 +35,7 @@ import { getEventBus } from '@/modules/shared/services/eventBus'
 import { createTestContext, testApolloServer } from '@/test/graphqlHelper'
 import { faker } from '@faker-js/faker'
 import { ServerScope, wait } from '@speckle/shared'
+import cryptoRandomString from 'crypto-random-string'
 import { isArray, isNumber, kebabCase, omit, times } from 'lodash'
 
 const getServerInfo = getServerInfoFactory({ db })
@@ -88,7 +89,7 @@ export type BasicTestUser = {
 
 const initTestUser = (user: Partial<BasicTestUser>): BasicTestUser => ({
   name: faker.person.fullName(),
-  email: faker.internet.email(),
+  email: `${cryptoRandomString({ length: 15 })}@example.org`,
   id: '',
   ...user
 })
