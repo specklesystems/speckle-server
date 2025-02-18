@@ -507,7 +507,7 @@ export const getObjectChildrenQueryFactory =
         let k = 0
         for (const field of select || []) {
           const val =
-            o[k++] ?? (uniqueObjs.get(o.id) as Optional<typeof no>)?.data[field]
+            o[k++] ?? (uniqueObjs.get(o.id) as Optional<typeof no>)?.data[field] ?? null
           set(no.data, field, val)
         }
 
