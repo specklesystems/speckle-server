@@ -28,6 +28,7 @@ import type {
   ProjectsDashboardHeaderWorkspaces_UserFragment
 } from '~/lib/common/generated/gql/graphql'
 import { CookieKeys } from '~/lib/common/helpers/constants'
+import type { MaybeNullOrUndefined } from '@speckle/shared'
 
 graphql(`
   fragment ProjectsDashboardHeaderProjects_User on User {
@@ -49,8 +50,8 @@ graphql(`
 `)
 
 const props = defineProps<{
-  projectsInvites?: ProjectsDashboardHeaderProjects_UserFragment
-  workspacesInvites?: ProjectsDashboardHeaderWorkspaces_UserFragment
+  projectsInvites: MaybeNullOrUndefined<ProjectsDashboardHeaderProjects_UserFragment>
+  workspacesInvites: MaybeNullOrUndefined<ProjectsDashboardHeaderWorkspaces_UserFragment>
 }>()
 
 const dismissedDiscoverableWorkspaces = useSynchronizedCookie<string[]>(
