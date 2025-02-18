@@ -3,7 +3,10 @@
     <NuxtLayout>
       <NuxtPage />
     </NuxtLayout>
-    <SingletonToastManager />
+    <!-- Teleport is fixing the non-clickable toast notifications if any dialog is active. It was marking div as inert and causing the issue -->
+    <Teleport to="body">
+      <SingletonToastManager />
+    </Teleport>
   </div>
 </template>
 <script setup lang="ts">
