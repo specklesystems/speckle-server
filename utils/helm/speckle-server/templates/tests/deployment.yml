@@ -25,12 +25,6 @@ spec:
               value: https://{{ .Values.domain }}
             - name: SERVER_VERSION
               value: {{ .Values.docker_image_tag | quote}}
-            - name: FRONTEND_VERSION
-              {{- if .Values.frontend_2.enabled }}
-              value: {{ "2" | quote }}
-              {{- else }}
-              value: {{ "1" | quote }}
-              {{- end }}
             - name: VERIFY_CERTIFICATE
               value: {{ (default "1" .Values.tlsRejectUnauthorized) | quote }}
             - name: LOG_LEVEL

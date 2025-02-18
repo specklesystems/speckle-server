@@ -72,7 +72,6 @@ services:
       FILE_SIZE_LIMIT_MB: 100
       EMAIL_FROM: 'no-reply@example.org'
 
-      USE_FRONTEND_2: true
       FRONTEND_ORIGIN: 'http://127.0.0.1'
       ONBOARDING_STREAM_URL: 'https://latest.speckle.systems/projects/843d07eb10'
 
