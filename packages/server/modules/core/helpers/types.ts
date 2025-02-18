@@ -136,13 +136,6 @@ export type ObjectRecord = {
   streamId: string
 }
 
-export type ObjectChildrenClosureRecord = {
-  parent: string
-  child: string
-  minDepth: number
-  streamId: string
-}
-
 export type InvalidTokenResult = {
   valid: false
 }

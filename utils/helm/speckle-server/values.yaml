@@ -39,8 +39,6 @@ featureFlags:
   automateModuleEnabled: false
   ## @param featureFlags.gendoAIModuleEnabled High level flag that toggles the Gendo AI render module
   gendoAIModuleEnabled: false
-  ## @param featureFlags.noClosureWrites Toggles whether to stop writing to the closure table
-  noClosureWrites: false
   ## @param featureFlags.workspacesModuleEnabled High level flag fully toggles the workspaces module
   workspacesModuleEnabled: false
   ## @param featureFlags.workspacesSSOEnabled High level flag fully toggles the workspaces dynamic sso

@@ -1,4 +1,8 @@
-import { z } from 'zod'
+import {
+  PaidWorkspacePlans,
+  UnpaidWorkspacePlans,
+  WorkspacePlans
+} from '@/modules/gatekeeperCore/domain/billing'
 import type { MaybeNullOrUndefined } from '@speckle/shared'
 
 export type WorkspaceFeatureName =
@@ -72,47 +76,6 @@ const baseFeatures = {
   domainBasedSecurityPolicies: true,
   workspace: true
 }
-
-// team
-export const trialWorkspacePlans = z.literal('starter')
-
-export type TrialWorkspacePlans = z.infer<typeof trialWorkspacePlans>
-
-export const paidWorkspacePlans = z.union([
-  trialWorkspacePlans,
-  // pro
-  z.literal('plus'),
-  z.literal('business')
-])
-
-export type PaidWorkspacePlans = z.infer<typeof paidWorkspacePlans>
-
-// these are not publicly exposed for general use on billing enabled servers
-export const unpaidWorkspacePlans = z.union([
-  z.literal('unlimited'),
-  z.literal('academia'),
-  z.literal('starterInvoiced'),
-  z.literal('plusInvoiced'),
-  z.literal('businessInvoiced')
-])
-
-export type UnpaidWorkspacePlans = z.infer<typeof unpaidWorkspacePlans>
-
-export const workspacePlans = z.union([paidWorkspacePlans, unpaidWorkspacePlans])
-
-// this includes the plans your workspace can be on
-export type WorkspacePlans = z.infer<typeof workspacePlans>
-
-// this includes the pricing plans a customer can sub to
-export type WorkspacePricingPlans = PaidWorkspacePlans | 'guest'
-
-export const workspacePlanBillingIntervals = z.union([
-  z.literal('monthly'),
-  z.literal('yearly')
-])
-export type WorkspacePlanBillingIntervals = z.infer<
-  typeof workspacePlanBillingIntervals
->
 
 const starter: WorkspacePlanFeaturesAndLimits = {
   ...baseFeatures,

@@ -42,14 +42,11 @@ import { Scopes } from '@speckle/shared'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { generateManyObjects } from '@/test/helpers'
 import { RawSpeckleObject } from '@/modules/core/domain/objects/types'
-import { createObjectsBatchedFactory } from '@/modules/core/services/objects/management'
-import {
-  storeClosuresIfNotFoundFactory,
-  storeObjectsIfNotFoundFactory
-} from '@/modules/core/repositories/objects'
+import { storeObjectsIfNotFoundFactory } from '@/modules/core/repositories/objects'
 import { expect } from 'chai'
 import { parse, Parser } from 'csv-parse'
 import { createReadStream } from 'fs'
+import { createObjectsBatchedAndNoClosuresFactory } from '@/modules/core/services/objects/management'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = legacyGetUserFactory({ db })
@@ -92,9 +89,8 @@ const createPersonalAccessToken = createPersonalAccessTokenFactory({
   }),
   storePersonalApiToken: storePersonalApiTokenFactory({ db })
 })
-const createObjectsBatched = createObjectsBatchedFactory({
-  storeObjectsIfNotFoundFactory: storeObjectsIfNotFoundFactory({ db }),
-  storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db })
+const createObjectsBatched = createObjectsBatchedAndNoClosuresFactory({
+  storeObjectsIfNotFoundFactory: storeObjectsIfNotFoundFactory({ db })
 })
 
 describe('Objects streaming REST @core', () => {

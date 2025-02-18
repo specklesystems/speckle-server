@@ -897,6 +897,9 @@ export default class SpeckleConverter {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     //@ts-ignore
     node.model.raw.colors = await this.dechunk(obj.colors)
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    //@ts-ignore
+    node.model.raw.vertexNormals = await this.dechunk(obj.vertexNormals)
   }
 
   private async TextToNode(_obj: SpeckleObject, _node: TreeNode) {

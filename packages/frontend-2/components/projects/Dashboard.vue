@@ -2,8 +2,8 @@
   <div>
     <Portal to="primary-actions"></Portal>
     <ProjectsDashboardHeader
-      :projects-invites="projectsPanelResult?.activeUser || undefined"
-      :workspaces-invites="workspacesResult?.activeUser || undefined"
+      :projects-invites="projectsPanelResult?.activeUser"
+      :workspaces-invites="workspacesResult?.activeUser"
     />
 
     <div v-if="!showEmptyState" class="flex flex-col gap-4">
@@ -24,7 +24,7 @@
             :show-clear="!!search"
             v-bind="bind"
             v-on="on"
-          ></FormTextInput>
+          />
           <FormSelectProjectRoles
             v-if="!showEmptyState"
             v-model="selectedRoles"
@@ -65,25 +65,16 @@
 </template>
 
 <script setup lang="ts">
-import {
-  useApolloClient,
-  useQuery,
-  useQueryLoading,
-  useSubscription
-} from '@vue/apollo-composable'
+import { useQuery, useQueryLoading } from '@vue/apollo-composable'
 import {
   projectsDashboardQuery,
   projectsDashboardWorkspaceQuery
 } from '~~/lib/projects/graphql/queries'
 import { graphql } from '~~/lib/common/generated/gql'
-import { getCacheId, modifyObjectField } from '~~/lib/common/helpers/graphql'
-import { UserProjectsUpdatedMessageType } from '~~/lib/common/generated/gql/graphql'
-import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
-import { projectRoute } from '~~/lib/common/helpers/route'
-import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import type { Nullable, Optional, StreamRoles } from '@speckle/shared'
 import { useDebouncedTextInput, type InfiniteLoaderState } from '@speckle/ui-components'
 import { MagnifyingGlassIcon, Squares2X2Icon } from '@heroicons/vue/24/outline'
+import { useUserProjectsUpdatedTracking } from '~~/lib/user/composables/projectUpdates'
 
 graphql(`
   fragment ProjectsDashboard_UserProjectCollection on UserProjectCollection {
@@ -98,11 +89,10 @@ const cursor = ref(null as Nullable<string>)
 const selectedRoles = ref(undefined as Optional<StreamRoles[]>)
 const openNewProject = ref(false)
 const showLoadingBar = ref(false)
-const { activeUser, isGuest } = useActiveUser()
-const { triggerNotification } = useGlobalToast()
 const areQueriesLoading = useQueryLoading()
-const apollo = useApolloClient().client
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
+const { isGuest } = useActiveUser()
+useUserProjectsUpdatedTracking()
 
 const {
   on,
@@ -138,20 +128,6 @@ onProjectsResult((res) => {
   infiniteLoaderId.value = JSON.stringify(projectsVariables.value?.filter || {})
 })
 
-const { onResult: onUserProjectsUpdate } = useSubscription(
-  graphql(`
-    subscription OnUserProjectsUpdate {
-      userProjectsUpdated {
-        type
-        id
-        project {
-          ...ProjectDashboardItem
-        }
-      }
-    }
-  `)
-)
-
 const projects = computed(() => projectsPanelResult.value?.activeUser?.projects)
 const showEmptyState = computed(() => {
   const isFiltering =
@@ -167,56 +143,6 @@ const moreToLoad = computed(
     (!projects.value || projects.value.items.length < projects.value.totalCount) &&
     cursor.value
 )
-
-onUserProjectsUpdate((res) => {
-  const activeUserId = activeUser.value?.id
-  const event = res.data?.userProjectsUpdated
-
-  if (!event) return
-  if (!activeUserId) return
-
-  const isNewProject = event.type === UserProjectsUpdatedMessageType.Added
-  const incomingProject = event.project
-  const cache = apollo.cache
-
-  if (isNewProject && incomingProject) {
-    // Add to User.projects where possible
-    modifyObjectField(
-      cache,
-      getCacheId('User', activeUserId),
-      'projects',
-      ({ helpers: { ref, createUpdatedValue } }) =>
-        createUpdatedValue(({ update }) => {
-          update('items', (items) => [
-            ref('Project', incomingProject.id),
-            ...(items || [])
-          ])
-          update('totalCount', (count) => count + 1)
-        }),
-      { autoEvictFiltered: true }
-    )
-  }
-
-  if (!isNewProject) {
-    // Evict old project from cache entirely to remove it from all searches
-    cache.evict({
-      id: getCacheId('Project', event.id)
-    })
-  }
-
-  // Emit toast notification
-  triggerNotification({
-    type: ToastNotificationType.Info,
-    title: isNewProject ? 'New project added' : 'A project has been removed',
-    cta:
-      isNewProject && incomingProject
-        ? {
-            url: projectRoute(incomingProject.id),
-            title: 'View project'
-          }
-        : undefined
-  })
-})
 
 const infiniteLoad = async (state: InfiniteLoaderState) => {
   if (!moreToLoad.value) return state.complete()
