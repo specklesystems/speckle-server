@@ -1,6 +1,6 @@
 import { Optional, SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import { publishNotification } from '@/modules/notifications/services/publication'
-import { activitiesLogger, logger, moduleLogger } from '@/logging/logging'
+import { activitiesLogger, moduleLogger } from '@/logging/logging'
 import { weeklyEmailDigestEnabled } from '@/modules/shared/helpers/envHelper'
 import { EventBus, getEventBus } from '@/modules/shared/services/eventBus'
 import { sendActivityNotificationsFactory } from '@/modules/activitystream/services/summary'
@@ -9,10 +9,7 @@ import {
   saveActivityFactory
 } from '@/modules/activitystream/repositories'
 import { db } from '@/db/knex'
-import {
-  addStreamCreatedActivityFactory,
-  addStreamInviteSentOutActivityFactory
-} from '@/modules/activitystream/services/streamActivity'
+import { addStreamCreatedActivityFactory } from '@/modules/activitystream/services/streamActivity'
 import { getStreamFactory } from '@/modules/core/repositories/streams'
 import { ScheduleExecution } from '@/modules/core/domain/scheduledTasks/operations'
 import { scheduleExecutionFactory } from '@/modules/core/services/taskScheduler'
@@ -21,13 +18,15 @@ import {
   releaseTaskLockFactory
 } from '@/modules/core/repositories/scheduledTasks'
 import { Knex } from 'knex'
-import { onServerInviteCreatedFactory } from '@/modules/activitystream/services/eventListener'
-import { isProjectResourceTarget } from '@/modules/serverinvites/helpers/core'
 import { publish } from '@/modules/shared/utils/subscriptions'
-import { ServerInvitesEvents } from '@/modules/serverinvites/domain/events'
 import { ProjectEvents } from '@/modules/core/domain/projects/events'
 import { reportUserActivityFactory } from '@/modules/activitystream/events/userListeners'
 import { reportAccessRequestActivityFactory } from '@/modules/activitystream/events/accessRequestListeners'
+import { reportBranchActivityFactory } from '@/modules/activitystream/events/branchListeners'
+import { reportCommitActivityFactory } from '@/modules/activitystream/events/commitListeners'
+import { reportCommentActivityFactory } from '@/modules/activitystream/events/commentListeners'
+import { reportStreamInviteActivityFactory } from '@/modules/activitystream/events/streamInviteListeners'
+import { getProjectInviteProjectFactory } from '@/modules/serverinvites/services/projectInviteManagement'
 
 let scheduledTask: ReturnType<ScheduleExecution> | null = null
 let quitEventListeners: Optional<() => void> = undefined
@@ -52,21 +51,33 @@ const initializeEventListeners = ({
     eventListen: eventBus.listen,
     saveActivity
   })
+  const reportBranchActivity = reportBranchActivityFactory({
+    eventListen: eventBus.listen,
+    saveActivity
+  })
+  const reportCommitActivity = reportCommitActivityFactory({
+    eventListen: eventBus.listen,
+    saveActivity
+  })
+  const reportCommentActivity = reportCommentActivityFactory({
+    eventListen: eventBus.listen,
+    saveActivity
+  })
+  const reportStreamInviteActivity = reportStreamInviteActivityFactory({
+    eventListen: eventBus.listen,
+    saveActivity,
+    getProjectInviteProject: getProjectInviteProjectFactory({
+      getStream: getStreamFactory({ db })
+    })
+  })
 
   const quitCbs = [
     reportUserActivity(),
     reportAccessRequestActivity(),
-    eventBus.listen(ServerInvitesEvents.Created, async ({ payload }) => {
-      if (!isProjectResourceTarget(payload.invite.resource)) return
-      await onServerInviteCreatedFactory({
-        addStreamInviteSentOutActivity: addStreamInviteSentOutActivityFactory({
-          publish,
-          saveActivity: saveActivityFactory({ db })
-        }),
-        logger,
-        getStream: getStreamFactory({ db })
-      })(payload)
-    }),
+    reportBranchActivity(),
+    reportCommitActivity(),
+    reportCommentActivity(),
+    reportStreamInviteActivity(),
     eventBus.listen(
       ProjectEvents.Created,
       async ({ payload: { ownerId, project } }) => {
