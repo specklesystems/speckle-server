@@ -12,6 +12,7 @@ import {
 import { Project } from '@/modules/core/domain/streams/types'
 import { RegionalProjectCreationError } from '@/modules/core/errors/projects'
 import { StreamNotFoundError } from '@/modules/core/errors/stream'
+import { ProjectVisibility as GqlProjectVisibility } from '@/modules/core/graph/generated/graphql'
 import { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { retry } from '@lifeomic/attempt'
 import { Roles } from '@speckle/shared'
@@ -80,6 +81,21 @@ export const createNewProjectFactory =
       projectId,
       authorId: ownerId
     })
-    await emitEvent({ eventName: ProjectEvents.Created, payload: { project, ownerId } })
+    await emitEvent({
+      eventName: ProjectEvents.Created,
+      payload: {
+        project,
+        ownerId,
+        input: {
+          description: project.description,
+          name: project.name,
+          visibility: (isPublic
+            ? 'PUBLIC'
+            : isDiscoverable
+            ? 'UNLISTED'
+            : 'PRIVATE') as GqlProjectVisibility
+        }
+      }
+    })
     return project
   }
