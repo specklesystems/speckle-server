@@ -83,7 +83,8 @@ const SpeckleDesktopAuthService = {
   id: DefaultAppIds.SpeckleDesktopAuthService,
   secret: DefaultAppIds.SpeckleDesktopAuthService,
   name: 'Speckle Connector',
-  description: 'Speckle host application conntectors.',
+  description:
+    'Speckle desktop authentication service. This application helps link your Speckle account with all host application connectors, like Revit, Rhino etc.',
   trustByDefault: true,
   public: true,
   redirectUrl: 'http://localhost:29364',
