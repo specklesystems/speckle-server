@@ -1,8 +1,7 @@
 import crypto from 'crypto'
 import {
   InsertableSpeckleObject,
-  RawSpeckleObject,
-  SpeckleObjectClosureEntry
+  RawSpeckleObject
 } from '@/modules/core/domain/objects/types'
 import { getMaximumObjectSizeMB } from '@/modules/shared/helpers/envHelper'
 import {
@@ -14,13 +13,10 @@ import { servicesLogger } from '@/logging/logging'
 import {
   CreateObject,
   CreateObjects,
-  CreateObjectsBatched,
   CreateObjectsBatchedAndNoClosures,
-  StoreClosuresIfNotFound,
   StoreObjectsIfNotFound,
   StoreSingleObjectIfNotFound
 } from '@/modules/core/domain/objects/operations'
-import { chunk } from 'lodash'
 
 /**
  * Note: we're generating the hash here, rather than on the db side, as there are
@@ -59,23 +55,16 @@ const prepInsertionObject = (
 export const createObjectFactory =
   (deps: {
     storeSingleObjectIfNotFoundFactory: StoreSingleObjectIfNotFound
-    storeClosuresIfNotFound: StoreClosuresIfNotFound
   }): CreateObject =>
   async ({ streamId, object, logger = servicesLogger }) => {
     const insertionObject = prepInsertionObject(streamId, object)
 
-    const closures: Array<SpeckleObjectClosureEntry> = []
     const totalChildrenCountByDepth: Record<string, number> = {}
 
+    let totalChildrenCount = 0
     if (object.__closure !== null) {
       for (const prop in object.__closure) {
-        closures.push({
-          streamId,
-          parent: insertionObject.id,
-          child: prop,
-          minDepth: object.__closure[prop]
-        })
-
+        totalChildrenCount++
         if (totalChildrenCountByDepth[object.__closure[prop].toString()])
           totalChildrenCountByDepth[object.__closure[prop].toString()]++
         else totalChildrenCountByDepth[object.__closure[prop].toString()] = 1
@@ -84,19 +73,11 @@ export const createObjectFactory =
 
     const finalInsertionObject: InsertableSpeckleObject = {
       ...insertionObject,
-      totalChildrenCount: closures.length,
+      totalChildrenCount,
       totalChildrenCountByDepth: JSON.stringify(totalChildrenCountByDepth)
     }
 
     await deps.storeSingleObjectIfNotFoundFactory(finalInsertionObject)
-
-    if (closures.length > 0) {
-      const batchSize = 10000
-      while (closures.length > 0) {
-        const closuresBatch = closures.splice(0, batchSize) // splice so that we don't take up more memory
-        await deps.storeClosuresIfNotFound(closuresBatch)
-      }
-    }
 
     logger.debug({ objectId: insertionObject.id }, 'Inserted object: {objectId}')
 
@@ -107,84 +88,6 @@ export const createObjectFactory =
 const prepInsertionObjectBatch = (batch: InsertableSpeckleObject[]) => {
   batch.sort((a, b) => (a.id > b.id ? 1 : -1))
 }
-
-const prepInsertionClosureBatch = (batch: SpeckleObjectClosureEntry[]) => {
-  batch.sort((a, b) =>
-    a.parent > b.parent ? 1 : a.parent === b.parent ? (a.child > b.child ? 1 : -1) : -1
-  )
-}
-
-export const createObjectsBatchedFactory =
-  (deps: {
-    storeObjectsIfNotFoundFactory: StoreObjectsIfNotFound
-    storeClosuresIfNotFound: StoreClosuresIfNotFound
-  }): CreateObjectsBatched =>
-  async ({ streamId, objects, logger = servicesLogger }) => {
-    const closures: SpeckleObjectClosureEntry[] = []
-    const objsToInsert: InsertableSpeckleObject[] = []
-    const ids: string[] = []
-
-    // Prep objects up
-    objects.forEach((obj) => {
-      const insertionObject = prepInsertionObject(streamId, obj)
-      let totalChildrenCountGlobal = 0
-      const totalChildrenCountByDepth: Record<string, number> = {}
-
-      if (obj.__closure !== null) {
-        for (const prop in obj.__closure) {
-          closures.push({
-            streamId,
-            parent: insertionObject.id,
-            child: prop,
-            minDepth: obj.__closure[prop]
-          })
-          totalChildrenCountGlobal++
-          if (totalChildrenCountByDepth[obj.__closure[prop].toString()])
-            totalChildrenCountByDepth[obj.__closure[prop].toString()]++
-          else totalChildrenCountByDepth[obj.__closure[prop].toString()] = 1
-        }
-      }
-
-      const finalInsertionObject: InsertableSpeckleObject = {
-        ...insertionObject,
-        totalChildrenCount: totalChildrenCountGlobal,
-        totalChildrenCountByDepth: JSON.stringify(totalChildrenCountByDepth)
-      }
-
-      objsToInsert.push(finalInsertionObject)
-      ids.push(insertionObject.id)
-    })
-
-    const closureBatchSize = 1000
-    const objectsBatchSize = 500
-
-    // step 1: insert objects
-    if (objsToInsert.length > 0) {
-      // const batches = chunk(objsToInsert, objectsBatchSize)
-      const batches = chunkInsertionObjectArray({
-        objects: objsToInsert,
-        chunkLengthLimit: objectsBatchSize,
-        chunkSizeLimitMb: 2
-      })
-      for (const batch of batches) {
-        prepInsertionObjectBatch(batch)
-        await deps.storeObjectsIfNotFoundFactory(batch)
-        logger.info({ objectCount: batch.length }, 'Inserted {objectCount} objects')
-      }
-    }
-
-    // step 2: insert closures
-    if (closures.length > 0) {
-      const batches = chunk(closures, closureBatchSize)
-
-      for (const batch of batches) {
-        prepInsertionClosureBatch(batch)
-        await deps.storeClosuresIfNotFound(batch)
-        logger.info({ batchLength: batch.length }, 'Inserted {batchLength} closures')
-      }
-    }
-    return true
-  }
 
 export const createObjectsBatchedAndNoClosuresFactory =
   (deps: {
@@ -221,10 +124,7 @@ export const createObjectsBatchedAndNoClosuresFactory =
   }
 
 export const createObjectsFactory =
-  (deps: {
-    storeObjectsIfNotFoundFactory: StoreObjectsIfNotFound
-    storeClosuresIfNotFound: StoreClosuresIfNotFound
-  }): CreateObjects =>
+  (deps: { storeObjectsIfNotFoundFactory: StoreObjectsIfNotFound }): CreateObjects =>
   async ({ streamId, objects, logger = servicesLogger }) => {
     // TODO: Switch to knex batch inserting functionality
     // see http://knexjs.org/#Utility-BatchInsert
@@ -242,7 +142,6 @@ export const createObjectsFactory =
     const ids: string[] = []
 
     const insertBatch = async (batch: RawSpeckleObject[], index: number) => {
-      const closures: SpeckleObjectClosureEntry[] = []
       const objsToInsert: InsertableSpeckleObject[] = []
 
       const t0 = performance.now()
@@ -255,13 +154,6 @@ export const createObjectsFactory =
         let totalChildrenCountGlobal = 0
         if (obj.__closure !== null) {
           for (const prop in obj.__closure) {
-            closures.push({
-              streamId,
-              parent: insertionObject.id,
-              child: prop,
-              minDepth: obj.__closure[prop]
-            })
-
             totalChildrenCountGlobal++
 
             if (totalChildrenCountByDepth[obj.__closure[prop].toString()])
@@ -283,17 +175,12 @@ export const createObjectsFactory =
         await deps.storeObjectsIfNotFoundFactory(objsToInsert)
       }
 
-      if (closures.length > 0) {
-        await deps.storeClosuresIfNotFound(closures)
-      }
-
       const t1 = performance.now()
 
       logger.info(
         {
           batchIndex: index + 1,
           totalCountOfBatches: batches.length,
-          countStoredObjects: closures.length + objsToInsert.length,
           elapsedTimeMs: t1 - t0
         },
         'Batch {batchIndex}/{totalCountOfBatches}: Stored {countStoredObjects} objects in {elapsedTimeMs}ms.'

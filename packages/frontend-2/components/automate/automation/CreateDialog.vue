@@ -232,7 +232,7 @@ const buttons = computed((): LayoutDialogButton[] => {
       return [
         {
           id: 'fnParamsPrev',
-          text: 'Previous',
+          text: 'Back',
           props: {
             color: 'outline'
           },
@@ -254,7 +254,7 @@ const buttons = computed((): LayoutDialogButton[] => {
       const automationButtons: LayoutDialogButton[] = [
         {
           id: 'detailsPrev',
-          text: 'Previous',
+          text: 'Back',
           props: {
             color: 'outline'
           },

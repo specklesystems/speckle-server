@@ -3,8 +3,7 @@ import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { authorizeResolver } from '@/modules/shared'
 import {
   filteredSubscribe,
-  ProjectSubscriptions,
-  publish
+  ProjectSubscriptions
 } from '@/modules/shared/utils/subscriptions'
 import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
 import {
@@ -34,7 +33,6 @@ import {
   switchCommitBranchFactory,
   updateCommitFactory
 } from '@/modules/core/repositories/commits'
-import { db } from '@/db/knex'
 import {
   createBranchFactory,
   getBranchByIdFactory,
@@ -47,17 +45,11 @@ import {
   getStreamsFactory,
   markCommitStreamUpdatedFactory
 } from '@/modules/core/repositories/streams'
-import {
-  addCommitCreatedActivityFactory,
-  addCommitDeletedActivityFactory,
-  addCommitMovedActivityFactory,
-  addCommitUpdatedActivityFactory
-} from '@/modules/activitystream/services/commitActivity'
 import { getObjectFactory } from '@/modules/core/repositories/objects'
-import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import coreModule from '@/modules/core'
 import { getEventBus } from '@/modules/shared/services/eventBus'
+import { StreamNotFoundError } from '@/modules/core/errors/stream'
 
 export = {
   Project: {
@@ -95,7 +87,11 @@ export = {
       const stream = await ctx.loaders
         .forRegion({ db: projectDB })
         .commits.getCommitStream.load(parent.id)
-      const path = `/preview/${stream!.id}/commits/${parent.id}`
+      if (!stream)
+        throw new StreamNotFoundError('Project not found', {
+          info: { streamId: parent.streamId }
+        })
+      const path = `/preview/${stream.id}/commits/${parent.id}`
       return new URL(path, getServerOrigin()).toString()
     }
   },
@@ -113,10 +109,7 @@ export = {
         getStreamBranchByName: getStreamBranchByNameFactory({ db: projectDb }),
         createBranch: createBranchFactory({ db: projectDb }),
         moveCommitsToBranch: moveCommitsToBranchFactory({ db: projectDb }),
-        addCommitMovedActivity: addCommitMovedActivityFactory({
-          saveActivity: saveActivityFactory({ db }),
-          publish
-        })
+        emitEvent: getEventBus().emit
       })
       return await batchMoveCommits(args.input, ctx.userId!)
     },
@@ -128,10 +121,7 @@ export = {
         getCommits: getCommitsFactory({ db: projectDb }),
         getStreams: getStreamsFactory({ db: projectDb }),
         deleteCommits: deleteCommitsFactory({ db: projectDb }),
-        addCommitDeletedActivity: addCommitDeletedActivityFactory({
-          saveActivity: saveActivityFactory({ db }),
-          publish
-        })
+        emitEvent: getEventBus().emit
       })
       await batchDeleteCommits(args.input, ctx.userId!)
       return true
@@ -161,10 +151,7 @@ export = {
         getCommitBranch: getCommitBranchFactory({ db: projectDb }),
         switchCommitBranch: switchCommitBranchFactory({ db: projectDb }),
         updateCommit: updateCommitFactory({ db: projectDb }),
-        addCommitUpdatedActivity: addCommitUpdatedActivityFactory({
-          saveActivity: saveActivityFactory({ db }),
-          publish
-        }),
+        emitEvent: getEventBus().emit,
         markCommitStreamUpdated: markCommitStreamUpdatedFactory({ db: projectDb }),
         markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db: projectDb })
       })
@@ -197,11 +184,7 @@ export = {
         insertBranchCommits: insertBranchCommitsFactory({ db: projectDb }),
         markCommitStreamUpdated: markCommitStreamUpdatedFactory({ db: projectDb }),
         markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db: projectDb }),
-        emitEvent: getEventBus().emit,
-        addCommitCreatedActivity: addCommitCreatedActivityFactory({
-          saveActivity: saveActivityFactory({ db }),
-          publish
-        })
+        emitEvent: getEventBus().emit
       })
 
       const commit = await createCommitByBranchId({
@@ -228,7 +211,7 @@ export = {
 
       await markCommitReceivedAndNotifyFactory({
         getCommit: getCommitFactory({ db: projectDb }),
-        saveActivity: saveActivityFactory({ db })
+        emitEvent: getEventBus().emit
       })({
         input: args.input,
         userId: ctx.userId!

@@ -25,7 +25,7 @@ import {
   sanitizeHeaders
 } from '@/logging/expressLogging'
 
-import { errorLoggingMiddleware } from '@/logging/errorLogging'
+import { errorMetricsMiddleware } from '@/logging/errorMetrics'
 import prometheusClient from 'prom-client'
 
 import { ApolloServer } from '@apollo/server'
@@ -52,6 +52,7 @@ import {
   getBindAddress,
   shutdownTimeoutSeconds,
   asyncRequestContextEnabled,
+  getMaximumRequestBodySizeMB,
   getFeatureFlags,
   getCacheAuthPipelineTtlSeconds
 } from '@/modules/shared/helpers/envHelper'
@@ -66,7 +67,8 @@ import {
   authContextMiddlewareFactory,
   buildContext,
   determineClientIpAddressMiddleware,
-  mixpanelTrackerHelperMiddlewareFactory
+  mixpanelTrackerHelperMiddlewareFactory,
+  requestBodyParsingMiddlewareFactory
 } from '@/modules/shared/middleware'
 import { GraphQLError } from 'graphql'
 import { redactSensitiveVariables } from '@/logging/loggingHelper'
@@ -453,22 +455,17 @@ export async function init() {
   }
 
   app.use(corsMiddleware())
-  // there are some paths, that need the raw body
-  app.use((req, res, next) => {
-    const rawPaths = ['/api/v1/billing/webhooks', '/api/thirdparty/gendo/']
-    if (rawPaths.some((p) => req.path.startsWith(p))) {
-      express.raw({ type: 'application/json', limit: '100mb' })(req, res, next)
-    } else {
-      express.json({ limit: '100mb' })(req, res, next)
-    }
-  })
+
+  app.use(
+    requestBodyParsingMiddlewareFactory({
+      maximumRequestBodySizeMb: getMaximumRequestBodySizeMB()
+    })
+  ) // there are some paths that need the raw body, not a parsed body
   app.use(express.urlencoded({ limit: `${getFileSizeLimitMB()}mb`, extended: false }))
 
   // Trust X-Forwarded-* headers (for https protocol detection)
   app.enable('trust proxy')
 
-  // Log errors
-  app.use(errorLoggingMiddleware)
   app.use(rateLimiterMiddlewareFactory()) // Rate limiting by IP address for all users
   if (FF_CACHE_AUTH_PIPELINE) {
     app.use(
@@ -524,17 +521,8 @@ export async function init() {
     })
   )
 
-  // Expose prometheus metrics
-  app.get('/metrics', async (req, res) => {
-    try {
-      res.set('Content-Type', prometheusClient.register.contentType)
-      res.end(await prometheusClient.register.metrics())
-    } catch (ex: unknown) {
-      res.status(500).end(ex instanceof Error ? ex.message : `${ex}`)
-    }
-  })
-
   // At the very end adding default error handler middleware
+  app.use(errorMetricsMiddleware)
   app.use(defaultErrorHandler)
 
   return {

@@ -37,6 +37,7 @@
         v-bind="$attrs"
         @change="$emit('change', { event: $event, value })"
         @input="$emit('input', { event: $event, value })"
+        @keydown.stop
       />
       <a
         v-if="shouldShowClear"

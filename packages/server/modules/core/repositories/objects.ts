@@ -1,6 +1,6 @@
 import { Optional } from '@speckle/shared'
-import { buildTableHelper, knex, Objects } from '@/modules/core/dbSchema'
-import { ObjectChildrenClosureRecord, ObjectRecord } from '@/modules/core/helpers/types'
+import { knex, Objects } from '@/modules/core/dbSchema'
+import { ObjectRecord } from '@/modules/core/helpers/types'
 import {
   BatchedSelectOptions,
   executeBatchedSelect
@@ -14,9 +14,9 @@ import {
   GetObjectChildrenQuery,
   GetObjectChildrenStream,
   GetObjectsStream,
+  GetStreamObjectCount,
   GetStreamObjects,
   HasObjects,
-  StoreClosuresIfNotFound,
   StoreObjects,
   StoreObjectsIfNotFound,
   StoreSingleObjectIfNotFound
@@ -26,17 +26,8 @@ import { SetOptional } from 'type-fest'
 import { get, set, toNumber } from 'lodash'
 import { UserInputError } from '@/modules/core/errors/userinput'
 
-const ObjectChildrenClosure = buildTableHelper('object_children_closure', [
-  'parent',
-  'child',
-  'minDepth',
-  'streamId'
-])
-
 const tables = {
-  objects: (db: Knex) => db<ObjectRecord>(Objects.name),
-  objectChildrenClosure: (db: Knex) =>
-    db<ObjectChildrenClosureRecord>(ObjectChildrenClosure.name)
+  objects: (db: Knex) => db<ObjectRecord>(Objects.name)
 }
 
 export const getStreamObjectsFactory =
@@ -92,6 +83,17 @@ export const getBatchedStreamObjectsFactory =
     return executeBatchedSelect(baseQuery, options)
   }
 
+export const getStreamObjectCountFactory =
+  (deps: { db: Knex }): GetStreamObjectCount =>
+  async ({ streamId }) => {
+    const [res] = await tables
+      .objects(deps.db)
+      .where(Objects.col.streamId, streamId)
+      .count()
+
+    return parseInt(res.count as string)
+  }
+
 export const insertObjectsFactory =
   (deps: { db: Knex }): StoreObjects =>
   async (objects: ObjectRecord[], options?: Partial<{ trx: Knex.Transaction }>) => {
@@ -122,16 +124,6 @@ export const storeObjectsIfNotFoundFactory =
         // knex is bothered by string being inserted into jsonb, which is actually fine
         batch as SpeckleObject[]
       )
-      .onConflict()
-      .ignore()
-  }
-
-export const storeClosuresIfNotFoundFactory =
-  (deps: { db: Knex }): StoreClosuresIfNotFound =>
-  async (closuresBatch) => {
-    await tables
-      .objectChildrenClosure(deps.db)
-      .insert(closuresBatch)
       .onConflict()
       .ignore()
   }

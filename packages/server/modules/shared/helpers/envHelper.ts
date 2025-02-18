@@ -66,6 +66,10 @@ export function getFileSizeLimitMB() {
   return getIntFromEnv('FILE_SIZE_LIMIT_MB', '100')
 }
 
+export function getMaximumRequestBodySizeMB() {
+  return getIntFromEnv('MAX_REQUEST_BODY_SIZE_MB', '100')
+}
+
 export function getMaximumObjectSizeMB() {
   return getIntFromEnv('MAX_OBJECT_SIZE_MB', '100')
 }
@@ -206,7 +210,7 @@ export function getServerOrigin() {
     const err = ensureError(e)
     if (e instanceof TypeError && e.message === 'Invalid URL') {
       throw new MisconfiguredEnvironmentError(
-        `Server origin environment variable (CANONICAL_URL) is not a valid URL: ${err.message}`,
+        `Server origin environment variable (CANONICAL_URL) is not a valid URL: ${process.env.CANONICAL_URL} ${err.message}`,
         {
           cause: e,
           info: {
@@ -446,6 +450,10 @@ export const asyncRequestContextEnabled = () => {
 
 export function enableImprovedKnexTelemetryStackTraces() {
   return getBooleanFromEnv('KNEX_IMPROVED_TELEMETRY_STACK_TRACES')
+}
+
+export function disablePreviews() {
+  return getBooleanFromEnv('DISABLE_PREVIEWS')
 }
 
 export const getCacheAuthPipelineTtlSeconds = () =>

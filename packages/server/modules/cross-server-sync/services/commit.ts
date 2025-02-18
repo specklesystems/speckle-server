@@ -473,19 +473,16 @@ const saveNewCommitFactory =
     const sourceApplication = commit.sourceApplication || null
     const totalChildrenCount = commit.totalChildrenCount
 
-    const newCommit = await deps.createCommitByBranchId(
-      {
-        streamId,
-        branchId: targetBranch.id,
-        objectId,
-        authorId: owner.id,
-        message,
-        sourceApplication,
-        totalChildrenCount,
-        parents: parents.length ? parents : null
-      },
-      { notify: true }
-    )
+    const newCommit = await deps.createCommitByBranchId({
+      streamId,
+      branchId: targetBranch.id,
+      objectId,
+      authorId: owner.id,
+      message,
+      sourceApplication,
+      totalChildrenCount,
+      parents: parents.length ? parents : null
+    })
     const id = newCommit.id
 
     return id

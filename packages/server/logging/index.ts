@@ -34,14 +34,26 @@ export default async function (app: express.Express) {
       getAllDbClients: getAllRegisteredDbClients,
       logger
     })
-    const expressMetricsMiddleware = promBundle({
-      includeMethod: true,
-      includePath: true,
-      httpDurationMetricName: 'speckle_server_request_duration',
-      metricType: 'summary',
-      autoregister: false
-    })
 
-    app.use(expressMetricsMiddleware)
+    app.use(
+      promBundle({
+        includeMethod: true,
+        includePath: true,
+        httpDurationMetricName: 'speckle_server_request_duration',
+        metricType: 'summary',
+        autoregister: false
+      })
+    )
   }
+
+  // Expose prometheus metrics
+  app.get('/metrics', async (req, res, next) => {
+    try {
+      res.set('Content-Type', prometheusClient.register.contentType)
+      res.end(await prometheusClient.register.metrics())
+    } catch (ex: unknown) {
+      res.status(500).end(ex instanceof Error ? ex.message : `${ex}`)
+      next(ex)
+    }
+  })
 }
