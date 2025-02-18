@@ -93,7 +93,6 @@ const documents = {
     "\n  fragment ProjectsAddDialog_Workspace on Workspace {\n    id\n    ...ProjectsWorkspaceSelect_Workspace\n  }\n": types.ProjectsAddDialog_WorkspaceFragmentDoc,
     "\n  fragment ProjectsAddDialog_User on User {\n    workspaces {\n      items {\n        ...ProjectsAddDialog_Workspace\n      }\n    }\n  }\n": types.ProjectsAddDialog_UserFragmentDoc,
     "\n  fragment ProjectsDashboard_UserProjectCollection on UserProjectCollection {\n    numberOfHidden\n  }\n": types.ProjectsDashboard_UserProjectCollectionFragmentDoc,
-    "\n    subscription OnUserProjectsUpdate {\n      userProjectsUpdated {\n        type\n        id\n        project {\n          ...ProjectDashboardItem\n        }\n      }\n    }\n  ": types.OnUserProjectsUpdateDocument,
     "\n  fragment ProjectsDashboardFilledProject on ProjectCollection {\n    items {\n      ...ProjectDashboardItem\n    }\n  }\n": types.ProjectsDashboardFilledProjectFragmentDoc,
     "\n  fragment ProjectsDashboardFilledUser on UserProjectCollection {\n    items {\n      ...ProjectDashboardItem\n    }\n  }\n": types.ProjectsDashboardFilledUserFragmentDoc,
     "\n  fragment ProjectsDashboardHeaderProjects_User on User {\n    projectInvites {\n      ...ProjectsInviteBanner\n    }\n  }\n": types.ProjectsDashboardHeaderProjects_UserFragmentDoc,
@@ -317,6 +316,7 @@ const documents = {
     "\n  fragment AppAuthorAvatar on AppAuthor {\n    id\n    name\n    avatar\n  }\n": types.AppAuthorAvatarFragmentDoc,
     "\n  fragment LimitedUserAvatar on LimitedUser {\n    id\n    name\n    avatar\n  }\n": types.LimitedUserAvatarFragmentDoc,
     "\n  fragment ActiveUserAvatar on User {\n    id\n    name\n    avatar\n  }\n": types.ActiveUserAvatarFragmentDoc,
+    "\n      subscription OnUserProjectsUpdate {\n        userProjectsUpdated {\n          type\n          id\n          project {\n            ...ProjectDashboardItem\n          }\n        }\n      }\n    ": types.OnUserProjectsUpdateDocument,
     "\n  mutation UpdateUser($input: UserUpdateInput!) {\n    activeUserMutations {\n      update(user: $input) {\n        id\n        name\n        bio\n        company\n        avatar\n      }\n    }\n  }\n": types.UpdateUserDocument,
     "\n  mutation UpdateNotificationPreferences($input: JSONObject!) {\n    userNotificationPreferencesUpdate(preferences: $input)\n  }\n": types.UpdateNotificationPreferencesDocument,
     "\n  mutation DeleteAccount($input: UserDeleteInput!) {\n    userDelete(userConfirmation: $input)\n  }\n": types.DeleteAccountDocument,
@@ -728,10 +728,6 @@ export function graphql(source: "\n  fragment ProjectsAddDialog_User on User {\n
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  fragment ProjectsDashboard_UserProjectCollection on UserProjectCollection {\n    numberOfHidden\n  }\n"): (typeof documents)["\n  fragment ProjectsDashboard_UserProjectCollection on UserProjectCollection {\n    numberOfHidden\n  }\n"];
-/**
- * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function graphql(source: "\n    subscription OnUserProjectsUpdate {\n      userProjectsUpdated {\n        type\n        id\n        project {\n          ...ProjectDashboardItem\n        }\n      }\n    }\n  "): (typeof documents)["\n    subscription OnUserProjectsUpdate {\n      userProjectsUpdated {\n        type\n        id\n        project {\n          ...ProjectDashboardItem\n        }\n      }\n    }\n  "];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -1624,6 +1620,10 @@ export function graphql(source: "\n  fragment LimitedUserAvatar on LimitedUser {
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  fragment ActiveUserAvatar on User {\n    id\n    name\n    avatar\n  }\n"): (typeof documents)["\n  fragment ActiveUserAvatar on User {\n    id\n    name\n    avatar\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n      subscription OnUserProjectsUpdate {\n        userProjectsUpdated {\n          type\n          id\n          project {\n            ...ProjectDashboardItem\n          }\n        }\n      }\n    "): (typeof documents)["\n      subscription OnUserProjectsUpdate {\n        userProjectsUpdated {\n          type\n          id\n          project {\n            ...ProjectDashboardItem\n          }\n        }\n      }\n    "];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

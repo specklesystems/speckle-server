@@ -5,6 +5,7 @@ import { Optional, ensureError } from '@speckle/shared'
 import { ErrorRequestHandler } from 'express'
 import { get, isNumber } from 'lodash'
 import { VError } from 'verror'
+import { logger as defaultLogger } from '@/logging/logging'
 
 const resolveStatusCode = (e: Error): number => {
   if (e instanceof BaseError) {
@@ -51,6 +52,16 @@ const resolveErrorInfo = (e: Error): Record<string, unknown> => {
 export const defaultErrorHandler: ErrorRequestHandler = (err, req, res, next) => {
   if (!err) {
     return next()
+  }
+
+  const logger = req.log || defaultLogger
+
+  // Log unexpected types of errors which are not instances of BaseError
+  if (!(err instanceof BaseError)) {
+    logger.warn(
+      { err },
+      `Unexpected type of error when handling ${req.originalUrl} from ${req.ip}. Please raise a bug report to the developers.`
+    )
   }
 
   const e = ensureError(err)

@@ -107,6 +107,7 @@ export const useProcessOnboarding = () => {
         }
       })
       .catch(convertThrowIntoFetchResult)
+    goHome()
   }
 
   /**
