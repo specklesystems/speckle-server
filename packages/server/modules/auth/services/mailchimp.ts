@@ -4,6 +4,7 @@ import { md5 } from '@/modules/shared/helpers/cryptoHelper'
 import { getMailchimpConfig } from '@/modules/shared/helpers/envHelper'
 import { UserRecord } from '@/modules/core/helpers/types'
 import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
+import { OnboardingState } from '@speckle/shared'
 
 let mailchimpInitialized = false
 
@@ -66,11 +67,7 @@ async function triggerMailchimpCustomerJourney(
 async function updateMailchimpMemberTags(
   user: UserRecord,
   listId: string,
-  onboardingData: {
-    role?: string
-    plans?: string[]
-    source?: string
-  }
+  onboardingData: OnboardingState
 ) {
   initializeMailchimp()
   const subscriberHash = md5(user.email.toLowerCase())

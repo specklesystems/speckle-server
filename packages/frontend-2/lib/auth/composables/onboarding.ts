@@ -6,7 +6,7 @@ import type {
   OnboardingRole,
   OnboardingSource,
   OnboardingState
-} from '~~/lib/auth/helpers/onboarding'
+} from '@speckle/shared'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { OnboardingError } from '~~/lib/auth/errors/errors'
 import { finishOnboardingMutation } from '~~/lib/auth/graphql/mutations'
