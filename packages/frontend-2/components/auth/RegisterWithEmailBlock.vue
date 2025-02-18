@@ -2,6 +2,15 @@
 <template>
   <form method="post" @submit="onSubmit">
     <div class="flex flex-col space-y-2">
+      <pre class="text-xs">{{
+        {
+          isNoPersonalEmailsEnabled: isNoPersonalEmailsEnabled,
+          runtimeConfig: useRuntimeConfig().public,
+          hasInviteToken: !!inviteToken,
+          rulesLength: emailRules.length,
+          rules: emailRules.map((r) => r.toString())
+        }
+      }}</pre>
       <FormTextInput
         v-model="email"
         type="email"
@@ -96,6 +105,7 @@ const router = useRouter()
 const { signUpWithEmail, inviteToken } = useAuthManager()
 const { triggerNotification } = useGlobalToast()
 const isMounted = useMounted()
+const isNoPersonalEmailsEnabled = useIsNoPersonalEmailsEnabled()
 
 const newsletterConsent = defineModel<boolean>('newsletterConsent', { required: true })
 const loading = ref(false)
@@ -103,7 +113,9 @@ const password = ref('')
 const email = ref('')
 
 const emailRules = computed(() =>
-  inviteToken.value ? [isEmail] : [isEmail, doesNotContainBlockedDomain]
+  inviteToken.value || !isNoPersonalEmailsEnabled.value
+    ? [isEmail]
+    : [isEmail, doesNotContainBlockedDomain]
 )
 const nameRules = [isRequired]
 
