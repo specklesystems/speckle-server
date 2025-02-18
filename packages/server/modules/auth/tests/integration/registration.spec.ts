@@ -8,6 +8,7 @@ import {
 import { AllScopes } from '@/modules/core/helpers/mainConstants'
 import { updateServerInfoFactory } from '@/modules/core/repositories/server'
 import { findInviteFactory } from '@/modules/serverinvites/repositories/serverInvites'
+import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { expectToThrow, itEach } from '@/test/assertionHelper'
 import { BasicTestUser, createTestUsers } from '@/test/authHelper'
 import {
@@ -32,6 +33,8 @@ import {
 } from '@/test/speckle-helpers/streamHelper'
 import { Roles } from '@speckle/shared'
 import { expect } from 'chai'
+
+const { FF_NO_PERSONAL_EMAILS_ENABLED } = getFeatureFlags()
 
 const updateServerInfo = updateServerInfoFactory({ db })
 
@@ -96,15 +99,17 @@ describe('Server registration', () => {
       expect(user.emails.every((e) => !e.verified)).to.be.true
     })
 
-    it('rejects registration with blocked email domain', async () => {
-      const params = generateRegistrationParams()
-      params.user.email = 'test@gmail.com'
+    FF_NO_PERSONAL_EMAILS_ENABLED
+      ? it('rejects registration with blocked email domain', async () => {
+          const params = generateRegistrationParams()
+          params.user.email = 'test@gmail.com'
 
-      const error = await expectToThrow(() => restApi.register(params))
-      expect(error.message).to.contain(
-        'Please use your work email instead of a personal email address'
-      )
-    })
+          const error = await expectToThrow(() => restApi.register(params))
+          expect(error.message).to.contain(
+            'Please use your work email instead of a personal email address'
+          )
+        })
+      : null
 
     it('fails without challenge', async () => {
       const params = generateRegistrationParams()

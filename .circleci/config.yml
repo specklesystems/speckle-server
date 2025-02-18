@@ -496,6 +496,7 @@ jobs:
       S3_REGION: '' # optional, defaults to 'us-east-1'
       ENCRYPTION_KEYS_PATH: 'test/assets/automate/encryptionKeys.json'
       FF_BILLING_INTEGRATION_ENABLED: 'true'
+      FF_NO_PERSONAL_EMAILS_ENABLED: 'true'
       RATELIMITER_ENABLED: 'false'
     steps:
       - checkout
