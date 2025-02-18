@@ -473,19 +473,16 @@ const saveNewCommitFactory =
     const sourceApplication = commit.sourceApplication || null
     const totalChildrenCount = commit.totalChildrenCount
 
-    const newCommit = await deps.createCommitByBranchId(
-      {
-        streamId,
-        branchId: targetBranch.id,
-        objectId,
-        authorId: owner.id,
-        message,
-        sourceApplication,
-        totalChildrenCount,
-        parents: parents.length ? parents : null
-      },
-      { notify: true }
-    )
+    const newCommit = await deps.createCommitByBranchId({
+      streamId,
+      branchId: targetBranch.id,
+      objectId,
+      authorId: owner.id,
+      message,
+      sourceApplication,
+      totalChildrenCount,
+      parents: parents.length ? parents : null
+    })
     const id = newCommit.id
 
     return id
@@ -662,11 +659,10 @@ export const downloadCommitFactory =
       await saveNewThreadsFactory(deps)(threads, newResources, { logger })
     }
 
-    const linkToNewCommit = parsedCommitUrl.isFe2
-      ? `${getFrontendOrigin(true)}/projects/${targetStreamId}/models/${
-          localResources.targetBranch.id
-        }@${newCommitId}`
-      : `${getFrontendOrigin()}/streams/${targetStreamId}/commits/${newCommitId}`
+    const linkToNewCommit = `${getFrontendOrigin()}/projects/${targetStreamId}/models/${
+      localResources.targetBranch.id
+    }@${newCommitId}`
+
     logger.debug(`All done! Find your commit here: ${linkToNewCommit}`)
 
     return {

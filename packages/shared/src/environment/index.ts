@@ -3,6 +3,8 @@ import { z } from 'zod'
 
 const isDisableAllFFsMode = () =>
   ['true', '1'].includes(process.env.DISABLE_ALL_FFS || '')
+const isEnableAllFFsMode = () =>
+  ['true', '1'].includes(process.env.ENABLE_ALL_FFS || '')
 
 const parseFeatureFlags = () => {
   //INFO
@@ -51,11 +53,6 @@ const parseFeatureFlags = () => {
       schema: z.boolean(),
       defaults: { production: false, _: false }
     },
-    // Forces email verification for all users
-    FF_FORCE_EMAIL_VERIFICATION: {
-      schema: z.boolean(),
-      defaults: { production: false, _: false }
-    },
     // Forces onboarding for all users
     FF_FORCE_ONBOARDING: {
       schema: z.boolean(),
@@ -73,10 +70,10 @@ const parseFeatureFlags = () => {
     }
   })
 
-  // Can be used to disable all feature flags for testing purposes
-  if (isDisableAllFFsMode()) {
+  // Can be used to disable/enable all feature flags for testing purposes
+  if (isDisableAllFFsMode() || isEnableAllFFsMode()) {
     for (const key of Object.keys(res)) {
-      ;(res as Record<string, boolean>)[key] = false
+      ;(res as Record<string, boolean>)[key] = !isDisableAllFFsMode() // disable takes precedence
     }
   }
 
@@ -94,7 +91,6 @@ export function getFeatureFlags(): {
   FF_BILLING_INTEGRATION_ENABLED: boolean
   FF_WORKSPACES_MULTI_REGION_ENABLED: boolean
   FF_FILEIMPORT_IFC_DOTNET_ENABLED: boolean
-  FF_FORCE_EMAIL_VERIFICATION: boolean
   FF_FORCE_ONBOARDING: boolean
   FF_OBJECTS_STREAMING_FIX: boolean
   FF_MOVE_PROJECT_REGION_ENABLED: boolean

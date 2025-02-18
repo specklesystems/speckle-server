@@ -14,9 +14,12 @@ import {
   getFullAutomationRunByIdFactory,
   upsertAutomationRunFactory
 } from '@/modules/automate/repositories/automations'
-import { isNonNullable, Scopes, throwUncoveredError } from '@speckle/shared'
+import { isNonNullable, Scopes } from '@speckle/shared'
 import { registerOrUpdateScopeFactory } from '@/modules/shared/repositories/scopes'
-import { triggerAutomationRun } from '@/modules/automate/clients/executionEngine'
+import {
+  getFunction,
+  triggerAutomationRun
+} from '@/modules/automate/clients/executionEngine'
 import logStreamRest from '@/modules/automate/rest/logStream'
 import {
   getEncryptionKeyPairFor,
@@ -25,7 +28,7 @@ import {
 import { buildDecryptor } from '@/modules/shared/utils/libsodium'
 import { getUserEmailFromAutomationRunFactory } from '@/modules/automate/services/tracking'
 import authGithubAppRest from '@/modules/automate/rest/authGithubApp'
-import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
+import { getFeatureFlags, isTestEnv } from '@/modules/shared/helpers/envHelper'
 import { TokenScopeData } from '@/modules/shared/domain/rolesAndScopes/types'
 import { db } from '@/db/knex'
 import { ProjectSubscriptions, publish } from '@/modules/shared/utils/subscriptions'
@@ -46,7 +49,6 @@ import {
 } from '@/modules/core/graph/generated/graphql'
 import {
   isVersionCreatedTriggerManifest,
-  RunTriggerSource,
   VersionCreationTriggerType
 } from '@/modules/automate/helpers/types'
 import { isFinished } from '@/modules/automate/domain/logic'
@@ -285,6 +287,10 @@ const initializeEventListeners = () => {
           return
         }
 
+        const fn = isTestEnv()
+          ? null
+          : await getFunction({ functionId: functionRun.functionId })
+
         const userEmail = await getUserEmailFromAutomationRunFactory({
           getFullAutomationRevisionMetadata: getFullAutomationRevisionMetadataFactory({
             db: projectDb
@@ -300,6 +306,9 @@ const initializeEventListeners = () => {
           automationRevisionId: automationWithRevision.id,
           automationName: automationWithRevision.name,
           runId: run.id,
+          functionId: fn?.functionId,
+          functionName: fn?.functionName,
+          functionType: fn?.isFeatured ? 'public' : 'private',
           functionRunId: functionRun.id,
           status: functionRun.status,
           durationInSeconds: functionRun.elapsed / 1000,
@@ -328,36 +337,27 @@ const initializeEventListeners = () => {
           projectId: manifest.projectId
         })
 
-        // all triggers, that are automatic result of an action are in a need to be tracked
-        switch (source) {
-          case RunTriggerSource.Automatic: {
-            const userEmail = await getUserEmailFromAutomationRunFactory({
-              getFullAutomationRevisionMetadata:
-                getFullAutomationRevisionMetadataFactory({ db: projectDb }),
-              getFullAutomationRunById: getFullAutomationRunByIdFactory({
-                db: projectDb
-              }),
-              getCommit: getCommitFactory({ db: projectDb }),
-              getUser: legacyGetUserFactory({ db: projectDb })
-            })(automationRun, automation.projectId)
-            const mp = mixpanel({ userEmail, req: undefined })
-            await mp.track('Automation Run Triggered', {
-              automationId: automation.id,
-              automationName: automation.name,
-              automationRunId: automationRun.id,
-              projectId: automation.projectId,
-              source,
-              /* eslint-disable-next-line camelcase */
-              workspace_id: project?.workspaceId
-            })
-            break
-          }
-          // runs created from a user interaction are tracked in the frontend
-          case RunTriggerSource.Manual:
-            return
-          default:
-            throwUncoveredError(source)
-        }
+        const userEmail = await getUserEmailFromAutomationRunFactory({
+          getFullAutomationRevisionMetadata: getFullAutomationRevisionMetadataFactory({
+            db: projectDb
+          }),
+          getFullAutomationRunById: getFullAutomationRunByIdFactory({
+            db: projectDb
+          }),
+          getCommit: getCommitFactory({ db: projectDb }),
+          getUser: legacyGetUserFactory({ db: projectDb })
+        })(automationRun, automation.projectId)
+
+        const mp = mixpanel({ userEmail, req: undefined })
+        await mp.track('Automation Run Triggered', {
+          automationId: automation.id,
+          automationName: automation.name,
+          automationRunId: automationRun.id,
+          projectId: automation.projectId,
+          source,
+          /* eslint-disable-next-line camelcase */
+          workspace_id: project?.workspaceId
+        })
       }
     )
   ]

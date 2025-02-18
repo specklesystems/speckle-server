@@ -28,6 +28,7 @@ import { getGenericRedis } from '@/modules/shared/redis/redis'
 import { generators, UserinfoResponse } from 'openid-client'
 import { oidcProvider } from '@/modules/workspaces/domain/sso/models'
 import {
+  OidcProfile,
   OidcProvider,
   SsoSessionState,
   WorkspaceSsoProvider
@@ -79,7 +80,11 @@ import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repos
 import { sendEmail } from '@/modules/emails/services/sending'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { createAuthorizationCodeFactory } from '@/modules/auth/repositories/apps'
-import { getDefaultSsoSessionExpirationDate } from '@/modules/workspaces/domain/sso/logic'
+import {
+  getDefaultSsoSessionExpirationDate,
+  isValidOidcProfile,
+  getEmailFromOidcProfile
+} from '@/modules/workspaces/domain/sso/logic'
 import {
   GetWorkspaceBySlug,
   GetWorkspaceRoles
@@ -321,7 +326,8 @@ export const getSsoRouter = (): Router => {
         linkUserWithSsoProvider: linkUserWithSsoProviderFactory({
           findEmailsByUserId: findEmailsByUserIdFactory({ db: trx }),
           createUserEmail: createUserEmailFactory({ db: trx }),
-          updateUserEmail: updateUserEmailFactory({ db: trx })
+          updateUserEmail: updateUserEmailFactory({ db: trx }),
+          logger: req.log
         }),
         upsertUserSsoSession: upsertUserSsoSessionFactory({ db: trx })
       })
@@ -642,7 +648,7 @@ const getOidcProviderUserDataFactory =
       WorkspaceSsoOidcCallbackRequestQuery
     >,
     provider: OidcProvider
-  ): Promise<UserinfoResponse<{ email: string }>> => {
+  ): Promise<UserinfoResponse<OidcProfile>> => {
     if (!req.session.ssoNonce) throw new OidcStateInvalidError()
 
     const codeVerifier = await parseCodeVerifier(req)
@@ -658,24 +664,29 @@ const getOidcProviderUserDataFactory =
     if (!oidcProviderUserData) {
       throw new SsoProviderProfileMissingError()
     }
-    if (!oidcProviderUserData.email) {
+    if (!isValidOidcProfile(oidcProviderUserData)) {
+      req.log.error(
+        { providedClaims: Object.keys(oidcProviderUserData) },
+        'Missing required properties on OIDC provider.'
+      )
       throw new SsoProviderProfileMissingPropertiesError(['email'])
     }
 
-    return oidcProviderUserData as UserinfoResponse<{ email: string }>
+    return oidcProviderUserData as UserinfoResponse<OidcProfile>
   }
 
 const tryGetSpeckleUserDataFactory =
   ({ findEmail, getUser }: { findEmail: FindEmail; getUser: GetUser }) =>
   async (
     req: Request<WorkspaceSsoAuthRequestParams>,
-    oidcProviderUserData: UserinfoResponse<{ email: string }>
+    oidcProviderUserData: UserinfoResponse<OidcProfile>
   ): Promise<UserWithOptionalRole | null> => {
     // Get currently signed-in user, if available
     const currentSessionUser = await getUser(req.context.userId ?? '')
 
     // Get user with email that matches OIDC provider user email, if match exists
-    const userEmail = await findEmail({ email: oidcProviderUserData.email })
+    const providerEmail = getEmailFromOidcProfile(oidcProviderUserData)
+    const userEmail = await findEmail({ email: providerEmail })
     if (!!userEmail && !userEmail.verified) throw new SsoUserEmailUnverifiedError()
     const existingSpeckleUser = await getUser(userEmail?.userId ?? '')
 

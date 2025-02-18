@@ -1,8 +1,9 @@
-import { PlanStatuses, WorkspacePlan } from '@/modules/gatekeeper/domain/billing'
+import { WorkspaceFeatureName } from '@/modules/gatekeeper/domain/workspacePricing'
 import {
-  WorkspaceFeatureName,
+  PlanStatuses,
+  WorkspacePlan,
   WorkspacePlans
-} from '@/modules/gatekeeper/domain/workspacePricing'
+} from '@/modules/gatekeeperCore/domain/billing'
 import { Workspace } from '@/modules/workspacesCore/domain/types'
 
 export type CanWorkspaceAccessFeature = (args: {

@@ -582,6 +582,7 @@ isMultiRegionTestMode()
 
         expect(res).to.not.haveGraphQLErrors()
 
+        // TODO: Replace with gql query when possible
         const automation = await tables
           .automations(targetRegionDb)
           .select('*')
@@ -623,6 +624,7 @@ isMultiRegionTestMode()
 
         expect(res).to.not.haveGraphQLErrors()
 
+        // TODO: Replace with gql query when possible
         const automationRun = await tables
           .automationRuns(targetRegionDb)
           .select('*')
@@ -658,6 +660,7 @@ isMultiRegionTestMode()
 
         expect(res).to.not.haveGraphQLErrors()
 
+        // TODO: Replace with gql query when possible
         const comment = await tables
           .comments(targetRegionDb)
           .select('*')

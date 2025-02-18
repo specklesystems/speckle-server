@@ -1,5 +1,5 @@
 import zlib from 'zlib'
-import { corsMiddleware } from '@/modules/core/configs/cors'
+import { corsMiddlewareFactory } from '@/modules/core/configs/cors'
 import Busboy from 'busboy'
 import { maximumObjectUploadFileSizeMb } from '@/modules/shared/helpers/envHelper'
 import { ObjectHandlingError } from '@/modules/core/errors/object'
@@ -21,9 +21,9 @@ export default (app: Router, { executeHooks }: { executeHooks: ExecuteHooks }) =
     authorizeResolver
   })
 
-  app.options('/objects/:streamId', corsMiddleware())
+  app.options('/objects/:streamId', corsMiddlewareFactory())
 
-  app.post('/objects/:streamId', corsMiddleware(), async (req, res) => {
+  app.post('/objects/:streamId', corsMiddlewareFactory(), async (req, res) => {
     const calculateLogMetadata = (params: {
       batchSizeMb: number
       start: number

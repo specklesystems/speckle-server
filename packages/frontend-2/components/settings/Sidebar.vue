@@ -81,6 +81,7 @@
                   ? 'TRIAL'
                   : undefined
               "
+              nested
             >
               <template #title-icon>
                 <WorkspaceAvatar
