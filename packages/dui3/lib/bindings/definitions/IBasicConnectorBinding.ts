@@ -1,78 +1,55 @@
-/* eslint-disable @typescript-eslint/require-await */
-
-import { BaseBridge } from '~~/lib/bridge/base'
-import type { IBinding } from '~~/lib/bindings/definitions/IBinding'
+import type {
+  IBinding,
+  IBindingSharedEvents
+} from '~~/lib/bindings/definitions/IBinding'
+import type { IModelCard, IModelCardSharedEvents } from '~~/lib/models/card'
 
 export const IBasicConnectorBindingKey = 'baseBinding'
 
 // Needs to be agreed between Frontend and Core
 export interface IBasicConnectorBinding
   extends IBinding<IBasicConnectorBindingHostEvents> {
-  getAccounts: () => Promise<Account[]>
+  // Various
   getSourceApplicationName: () => Promise<string>
   getSourceApplicationVersion: () => Promise<string>
+  getConnectorVersion: () => Promise<string>
   getDocumentInfo: () => Promise<DocumentInfo>
+
+  // Document state calls
+  getDocumentState: () => Promise<DocumentModelStore>
+  addModel: (model: IModelCard) => Promise<void>
+  updateModel: (model: IModelCard) => Promise<void>
+  highlightModel: (modelCardId: string) => Promise<void>
+  highlightObjects: (objectIds: string[]) => Promise<void>
+  removeModel: (model: IModelCard) => Promise<void>
 }
 
-export interface IBasicConnectorBindingHostEvents {
-  displayToastNotification: (args: ToastInfo) => void
+export interface IBasicConnectorBindingHostEvents
+  extends IBindingSharedEvents,
+    IModelCardSharedEvents {
   documentChanged: () => void
 }
 
-// An almost 1-1 mapping of what we need from the Core accounts class.
-export type Account = {
-  id: string
-  isDefault: boolean
-  token: string
-  serverInfo: {
-    name: string
-    url: string
-  }
-  userInfo: {
-    id: string
-    avatar: string
-    email: string
-    name: string
-    commits: { totalCount: number }
-    streams: { totalCount: number }
-  }
+export type DocumentModelStore = {
+  models: IModelCard[]
 }
 
 export type DocumentInfo = {
   location: string
   name: string
   id: string
+  message?: string
 }
 
-// NOTE: just a reminder for now
 export type ToastInfo = {
+  modelCardId: string
   text: string
-  details?: string
-  type: 'info' | 'error' | 'warning'
+  level: 'info' | 'danger' | 'warning' | 'success'
+  action?: ToastAction
+  timeout?: number
 }
 
-export class MockedBaseBinding extends BaseBridge {
-  public async getAccounts() {
-    return []
-  }
-
-  public async getSourceApplicationName() {
-    return 'Mocks'
-  }
-
-  public async getSourceApplicationVersion() {
-    return Math.random().toString()
-  }
-
-  public async getDocumentInfo() {
-    return {
-      name: 'Mocked File',
-      location: 'www',
-      id: Math.random().toString()
-    }
-  }
-
-  public async showDevTools() {
-    console.log('Mocked bindings cannot do this')
-  }
+export type ToastAction = {
+  url: string
+  name: string
 }

@@ -37,6 +37,7 @@ import FormSwitch from '~~/src/components/form/Switch.vue'
 import FormClipboardInput from '~~/src/components/form/ClipboardInput.vue'
 import FormCodeInput from '~~/src/components/form/CodeInput.vue'
 import CommonLoadingBar from '~~/src/components/common/loading/Bar.vue'
+import CommonLoadingProgressBar from '~~/src/components/common/loading/ProgressBar.vue'
 import SourceAppBadge from '~~/src/components/SourceAppBadge.vue'
 import { onKeyboardShortcut, useFormCheckboxModel } from '~~/src/composables/form/input'
 import {
@@ -140,6 +141,7 @@ export {
   FormSelectSourceApps,
   FormSelectMulti,
   CommonLoadingBar,
+  CommonLoadingProgressBar,
   SourceAppBadge,
   onKeyboardShortcut,
   ModifierKeys,
