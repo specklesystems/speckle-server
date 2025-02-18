@@ -1,5 +1,5 @@
 <template>
-  <Dashboard />
+  <DashboardPage />
 </template>
 
 <script setup lang="ts">
