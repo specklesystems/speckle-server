@@ -102,7 +102,7 @@ describe('Server registration', () => {
     FF_NO_PERSONAL_EMAILS_ENABLED
       ? it('rejects registration with blocked email domain', async () => {
           const params = generateRegistrationParams()
-          params.user.email = 'test@gmail.com'
+          params.user.email = 'test@example.org'
 
           const error = await expectToThrow(() => restApi.register(params))
           expect(error.message).to.contain(

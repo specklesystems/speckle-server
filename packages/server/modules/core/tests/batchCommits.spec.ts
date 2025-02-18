@@ -61,13 +61,13 @@ describe('Batch commits', () => {
 
   const me: BasicTestUser = {
     name: 'batch commit dude',
-    email: 'batchcommitguy@gmail.com',
+    email: 'batchcommitguy@example.org',
     id: ''
   }
 
   const otherGuy: BasicTestUser = {
     name: 'other batch commit guy',
-    email: 'otherbatchcommitguy@gmail.com',
+    email: 'otherbatchcommitguy@example.org',
     id: ''
   }
 

@@ -158,7 +158,7 @@ const validateToken = validateTokenFactory({
 describe('Services @apps-services', () => {
   const actor = {
     name: 'Dimitrie Stefanescu',
-    email: 'didimitrie@gmail.com',
+    email: 'didimitrie@example.org',
     password: 'wtfwtfwtf'
   }
 
@@ -495,7 +495,7 @@ describe('Services @apps-services', () => {
     })
     const secondUser = {
       name: 'Dimitrie Stefanescu',
-      email: 'didimitrie.wow@gmail.com',
+      email: 'didimitrie.wow@example.org',
       password: 'wtfwtfwtf'
     }
 

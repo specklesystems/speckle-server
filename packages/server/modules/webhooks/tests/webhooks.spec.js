@@ -165,7 +165,7 @@ describe('Webhooks @webhooks', () => {
 
   const userOne = {
     name: 'User',
-    email: 'user@gmail.com',
+    email: 'user@example.org',
     password: 'jdsadjsadasfdsa'
   }
 
@@ -327,7 +327,7 @@ describe('Webhooks @webhooks', () => {
   describe('GraphQL API Webhooks @webhooks-api', () => {
     const userTwo = {
       name: 'User2',
-      email: 'user2@gmail.com',
+      email: 'user2@example.org',
       password: 'jdsadjsadasfdsa'
     }
 
