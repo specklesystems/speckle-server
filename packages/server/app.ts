@@ -7,7 +7,6 @@ import express, { Express } from 'express'
 
 // `express-async-errors` patches express to catch errors in async handlers. no variable needed
 import 'express-async-errors'
-import compression from 'compression'
 import cookieParser from 'cookie-parser'
 
 import { createTerminus } from '@godaddy/terminus'
@@ -50,7 +49,8 @@ import {
   getBindAddress,
   shutdownTimeoutSeconds,
   asyncRequestContextEnabled,
-  getMaximumRequestBodySizeMB
+  getMaximumRequestBodySizeMB,
+  isCompressionEnabled
 } from '@/modules/shared/helpers/envHelper'
 import * as ModulesSetup from '@/modules'
 import { GraphQLContext, Optional } from '@/modules/shared/helpers/typeHelper'
@@ -61,6 +61,7 @@ import { corsMiddleware } from '@/modules/core/configs/cors'
 import {
   authContextMiddleware,
   buildContext,
+  compressionMiddlewareFactory,
   determineClientIpAddressMiddleware,
   mixpanelTrackerHelperMiddlewareFactory,
   requestBodyParsingMiddlewareFactory
@@ -440,9 +441,9 @@ export async function init() {
     startupLogger.info('Async request context tracking enabled 👀')
   }
 
-  if (process.env.COMPRESSION) {
-    app.use(compression())
-  }
+  app.use(
+    compressionMiddlewareFactory({ isCompressionEnabled: isCompressionEnabled() })
+  )
 
   app.use(corsMiddleware())
 
