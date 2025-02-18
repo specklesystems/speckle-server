@@ -32,7 +32,6 @@
     "dev:minimal": "yarn workspaces foreach -pivW -j unlimited --include '{@speckle/server,@speckle/frontend-2}' run dev",
     "gqlgen": "yarn workspaces foreach -pivW -j unlimited --include '{@speckle/server,@speckle/frontend,@speckle/frontend-2,@speckle/dui3}' run gqlgen",
     "dev:server": "yarn workspace @speckle/server dev",
-    "dev:frontend": "yarn workspace @speckle/frontend dev",
     "dev:frontend-2": "yarn workspace @speckle/frontend-2 dev",
     "dev:shared": "yarn workspace @speckle/shared dev",
     "prepare": "husky install",

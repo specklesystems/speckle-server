@@ -74,13 +74,6 @@ export function getMaximumObjectSizeMB() {
   return getIntFromEnv('MAX_OBJECT_SIZE_MB', '100')
 }
 
-/**
- * Whether the server is supposed to serve frontend 2.0
- */
-export function useNewFrontend() {
-  return getBooleanFromEnv('USE_FRONTEND_2')
-}
-
 export function enableNewFrontendMessaging() {
   return getBooleanFromEnv('ENABLE_FE2_MESSAGING')
 }
@@ -181,13 +174,12 @@ export function shouldDisableNotificationsConsumption() {
 /**
  * Get frontend app origin/base URL
  */
-export function getFrontendOrigin(forceFe2?: boolean) {
-  const envKey = useNewFrontend() || forceFe2 ? 'FRONTEND_ORIGIN' : 'CANONICAL_URL'
-  const trimmedOrigin = trimEnd(process.env[envKey], '/')
+export function getFrontendOrigin() {
+  const trimmedOrigin = trimEnd(process.env['FRONTEND_ORIGIN'], '/')
 
   if (!trimmedOrigin) {
     throw new MisconfiguredEnvironmentError(
-      `Frontend origin env var (${envKey}) not configured!`
+      `Frontend origin env var (FRONTEND_ORIGIN) not configured!`
     )
   }
 
