@@ -284,16 +284,20 @@ export const requestBodyParsingMiddlewareFactory =
         res,
         next
       )
+
+      // expressRawBodyParser calls `next` internally, so we cannot call it again here
       return
     }
 
     //default
     expressJsonBodyParser({ limit: maxRequestBodySize })(req, res, next)
+
+    // expressRawBodyParser calls `next` internally, so we cannot call it again here
     return
   }
 
 export const setContentSecurityPolicyHeader: RequestHandler = (req, res, next) => {
-  if (!res.headersSent)
-    res.setHeader('Content-Security-Policy', "frame-ancestors 'none'")
+  if (res.headersSent) return next()
+  res.setHeader('Content-Security-Policy', "frame-ancestors 'none'")
   next()
 }

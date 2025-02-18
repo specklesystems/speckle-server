@@ -12,6 +12,7 @@
         show-label
         :disabled="!!(loading || shouldForceInviteEmail)"
         auto-focus
+        autocomplete="email"
       />
       <FormTextInput
         type="password"
@@ -23,6 +24,7 @@
         :rules="passwordRules"
         show-label
         :disabled="loading"
+        autocomplete="current-password"
       />
     </div>
     <FormButton

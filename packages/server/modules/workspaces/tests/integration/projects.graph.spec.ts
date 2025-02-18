@@ -5,6 +5,7 @@ import {
   BranchCommitRecord,
   BranchRecord,
   CommitRecord,
+  ObjectRecord,
   StreamCommitRecord,
   StreamRecord
 } from '@/modules/core/helpers/types'
@@ -50,6 +51,15 @@ import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
 import { Knex } from 'knex'
 import { SetOptional } from 'type-fest'
+
+const tables = {
+  projects: (db: Knex) => db.table<StreamRecord>('streams'),
+  models: (db: Knex) => db.table<BranchRecord>('branches'),
+  versions: (db: Knex) => db.table<CommitRecord>('commits'),
+  streamCommits: (db: Knex) => db.table<StreamCommitRecord>('stream_commits'),
+  branchCommits: (db: Knex) => db.table<BranchCommitRecord>('branch_commits'),
+  objects: (db: Knex) => db.table<ObjectRecord>('objects')
+}
 
 const grantStreamPermissions = grantStreamPermissionsFactory({ db })
 
@@ -383,8 +393,8 @@ isMultiRegionTestMode()
         expect(res).to.not.haveGraphQLErrors()
 
         // TODO: Replace with gql query when possible
-        const project = await targetRegionDb
-          .table<StreamRecord>('streams')
+        const project = await tables
+          .projects(targetRegionDb)
           .select('*')
           .where({ id: testProject.id })
           .first()
@@ -419,28 +429,44 @@ isMultiRegionTestMode()
         expect(res).to.not.haveGraphQLErrors()
 
         // TODO: Replace with gql query when possible
-        const version = await targetRegionDb
-          .table<CommitRecord>('commits')
+        const version = await tables
+          .versions(targetRegionDb)
           .select('*')
           .where({ id: testVersion.id })
           .first()
         expect(version).to.not.be.undefined
 
-        // TODO: Replace with gql query when possible
-        const streamCommitsRecord = await targetRegionDb
-          .table<StreamCommitRecord>('stream_commits')
+        const streamCommitsRecord = await tables
+          .streamCommits(targetRegionDb)
           .select('*')
           .where({ commitId: testVersion.id })
           .first()
         expect(streamCommitsRecord).to.not.be.undefined
 
-        // TODO: Replace with gql query when possible
-        const branchCommitsRecord = await targetRegionDb
-          .table<BranchCommitRecord>('branch_commits')
+        const branchCommitsRecord = await tables
+          .branchCommits(targetRegionDb)
           .select('*')
           .where({ commitId: testVersion.id })
           .first()
         expect(branchCommitsRecord).to.not.be.undefined
+      })
+
+      it('moves project version objects to target regional db', async () => {
+        const res = await apollo.execute(UpdateProjectRegionDocument, {
+          projectId: testProject.id,
+          regionKey: regionKey2
+        })
+
+        expect(res).to.not.haveGraphQLErrors()
+
+        // TODO: Replace with gql query when possible
+        const object = await tables
+          .objects(targetRegionDb)
+          .select('*')
+          .where({ id: testVersion.objectId })
+          .first()
+
+        expect(object).to.not.be.undefined
       })
     })
   : void 0

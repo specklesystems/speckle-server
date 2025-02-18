@@ -17,6 +17,9 @@ export default defineNuxtRouteMiddleware(async (to) => {
   // Ignore if not logged in
   if (!data?.activeUser?.id) return
 
+  // Ignore if user has not verified their email yet
+  if (!data?.activeUser?.verified) return
+
   const isOnboardingFinished = data?.activeUser?.isOnboardingFinished
   const isGoingToOnboarding = to.path === onboardingRoute
   const shouldRedirectToOnboarding =

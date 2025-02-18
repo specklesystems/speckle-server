@@ -360,8 +360,6 @@ const iconClasses = computed((): string => {
 
   if (props.customIcon) {
     classParts.push('pl-8')
-  } else {
-    classParts.push('pl-2')
   }
 
   if (!slots['input-right']) {

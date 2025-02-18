@@ -2,16 +2,7 @@
 import { db } from '@/db/knex'
 import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import {
-  addBranchDeletedActivityFactory,
-  addBranchUpdatedActivityFactory
-} from '@/modules/activitystream/services/branchActivity'
-import {
-  addCommitDeletedActivityFactory,
-  addCommitUpdatedActivityFactory
-} from '@/modules/activitystream/services/commitActivity'
-import {
   addStreamDeletedActivityFactory,
-  addStreamInviteAcceptedActivityFactory,
   addStreamPermissionsAddedActivityFactory,
   addStreamPermissionsRevokedActivityFactory,
   addStreamUpdatedActivityFactory
@@ -159,10 +150,7 @@ const buildUpdateModel = async (params: { projectId: string }) => {
   const updateBranchAndNotify = updateBranchAndNotifyFactory({
     getBranchById: getBranchByIdFactory({ db: projectDB }),
     updateBranch: updateBranchFactory({ db: projectDB }),
-    addBranchUpdatedActivity: addBranchUpdatedActivityFactory({
-      saveActivity: saveActivityFactory({ db }),
-      publish
-    })
+    eventEmit: getEventBus().emit
   })
   return updateBranchAndNotify
 }
@@ -179,10 +167,6 @@ const buildDeleteModel = async (params: { projectId: string }) => {
     getBranchById: getBranchByIdFactory({ db: projectDB }),
     emitEvent: getEventBus().emit,
     markBranchStreamUpdated,
-    addBranchDeletedActivity: addBranchDeletedActivityFactory({
-      saveActivity: saveActivityFactory({ db }),
-      publish
-    }),
     deleteBranchById: deleteBranchByIdFactory({ db: projectDB })
   })
   return deleteBranchAndNotify
@@ -196,10 +180,7 @@ const buildDeleteVersion = async (params: { projectId: string }) => {
     getCommits: getCommitsFactory({ db: projectDb }),
     getStreams: getStreamsFactory({ db: projectDb }),
     deleteCommits: deleteCommitsFactory({ db: projectDb }),
-    addCommitDeletedActivity: addCommitDeletedActivityFactory({
-      saveActivity: saveActivityFactory({ db }),
-      publish
-    })
+    emitEvent: getEventBus().emit
   })
   return batchDeleteCommits
 }
@@ -215,10 +196,7 @@ const buildUpdateVersion = async (params: { projectId: string }) => {
     getCommitBranch: getCommitBranchFactory({ db: projectDb }),
     switchCommitBranch: switchCommitBranchFactory({ db: projectDb }),
     updateCommit: updateCommitFactory({ db: projectDb }),
-    addCommitUpdatedActivity: addCommitUpdatedActivityFactory({
-      saveActivity: saveActivityFactory({ db }),
-      publish
-    }),
+    emitEvent: getEventBus().emit,
     markCommitStreamUpdated: markCommitStreamUpdatedFactory({ db: projectDb }),
     markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db: projectDb })
   })
@@ -229,10 +207,7 @@ const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
   validateStreamAccess,
   getUser: getUserFactory({ db }),
   grantStreamPermissions: grantStreamPermissionsFactory({ db }),
-  addStreamInviteAcceptedActivity: addStreamInviteAcceptedActivityFactory({
-    saveActivity,
-    publish
-  }),
+  emitEvent: getEventBus().emit,
   addStreamPermissionsAddedActivity: addStreamPermissionsAddedActivityFactory({
     saveActivity,
     publish

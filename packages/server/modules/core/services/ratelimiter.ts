@@ -330,8 +330,8 @@ export const createRateLimiterMiddleware = (
       if (isRateLimitBreached(rateLimitResult)) {
         return sendRateLimitResponse(res, rateLimitResult)
       } else {
-        if (!res.headersSent)
-          res.setHeader('X-RateLimit-Remaining', rateLimitResult.remainingPoints)
+        if (res.headersSent) return
+        res.setHeader('X-RateLimit-Remaining', rateLimitResult.remainingPoints)
         return next()
       }
     } catch (err) {
