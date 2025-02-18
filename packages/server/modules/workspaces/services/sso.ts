@@ -197,7 +197,7 @@ export const linkUserWithSsoProviderFactory =
     findEmailsByUserId: FindEmailsByUserId
     createUserEmail: CreateUserEmail
     updateUserEmail: UpdateUserEmail
-    logger: Logger
+    logger?: Logger
   }) =>
   async (args: {
     userId: string
@@ -219,7 +219,7 @@ export const linkUserWithSsoProviderFactory =
       (entry) => entry.email === providerEmail.toLowerCase()
     )
 
-    logger.info({
+    logger?.info({
       userEmails: userEmails.map((entry) => entry.email),
       providerEmail
     })
