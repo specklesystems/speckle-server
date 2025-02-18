@@ -1,8 +1,8 @@
 <template>
   <div>
-    <div class="flex flex-col items-center gap-y-3">
-      <h1 class="text-heading-xl text-center">{{ title }}</h1>
-      <p v-if="description" class="text-body text-foreground-2">
+    <div class="flex flex-col items-center gap-y-3 max-w-sm mx-auto text-center">
+      <h1 class="text-heading-xl">{{ title }}</h1>
+      <p v-if="description" class="text-body-xs text-foreground-2">
         {{ description }}
       </p>
     </div>

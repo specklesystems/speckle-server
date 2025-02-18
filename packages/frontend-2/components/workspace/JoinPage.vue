@@ -47,7 +47,14 @@
         </div>
       </CommonCard>
       <div class="mt-2 w-full">
-        <FormButton size="lg" full-width @click="$emit('next')">Continue</FormButton>
+        <FormButton
+          size="lg"
+          full-width
+          color="outline"
+          @click="navigateTo(workspaceCreateRoute())"
+        >
+          Create a new workspace
+        </FormButton>
       </div>
     </div>
   </HeaderWithEmptyPage>
@@ -64,6 +71,8 @@ import { useMutation, useQuery } from '@vue/apollo-composable'
 import { useAuthManager } from '~/lib/auth/composables/auth'
 import { graphql } from '~/lib/common/generated/gql'
 import { discoverableWorkspacesQuery } from '~~/lib/workspaces/graphql/queries'
+import { workspaceCreateRoute } from '~~/lib/common/helpers/route'
+
 graphql(`
   fragment WorkspaceJoinPage_DiscoverableWorkspaces on User {
     discoverableWorkspaces {
