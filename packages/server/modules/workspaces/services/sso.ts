@@ -219,10 +219,13 @@ export const linkUserWithSsoProviderFactory =
       (entry) => entry.email === providerEmail.toLowerCase()
     )
 
-    logger?.info({
-      userEmails: userEmails.map((entry) => entry.email),
-      providerEmail
-    })
+    logger?.info(
+      {
+        userEmails: userEmails.map((entry) => entry.email),
+        providerEmail
+      },
+      'Comparing existing user emails against SSO provider email:'
+    )
 
     if (!maybeExistingEmail) {
       await createUserEmail({
