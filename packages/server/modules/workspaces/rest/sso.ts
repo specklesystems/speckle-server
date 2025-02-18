@@ -326,7 +326,8 @@ export const getSsoRouter = (): Router => {
         linkUserWithSsoProvider: linkUserWithSsoProviderFactory({
           findEmailsByUserId: findEmailsByUserIdFactory({ db: trx }),
           createUserEmail: createUserEmailFactory({ db: trx }),
-          updateUserEmail: updateUserEmailFactory({ db: trx })
+          updateUserEmail: updateUserEmailFactory({ db: trx }),
+          logger: req.log
         }),
         upsertUserSsoSession: upsertUserSsoSessionFactory({ db: trx })
       })
