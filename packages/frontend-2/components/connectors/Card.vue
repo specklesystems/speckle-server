@@ -1,5 +1,5 @@
 <template>
-  <NuxtLink :to="connector.url" target="_blank" class="flex">
+  <NuxtLink :to="connector.url" target="_blank" class="flex" @click="handleClick">
     <CommonCard
       class="flex flex-1 flex-col gap-1 !p-4 !pt-2 !pb-3 hover:border-outline-2"
     >
@@ -23,8 +23,18 @@
 
 <script setup lang="ts">
 import type { ConnectorItem } from '~~/lib/dashboard/helpers/types'
+import { useMixpanel } from '~/lib/core/composables/mp'
 
-defineProps<{
+const props = defineProps<{
   connector: ConnectorItem
 }>()
+
+const mixpanel = useMixpanel()
+
+const handleClick = () => {
+  mixpanel.track('Connector Card Clicked', {
+    connector: props.connector.title,
+    url: props.connector.url
+  })
+}
 </script>
