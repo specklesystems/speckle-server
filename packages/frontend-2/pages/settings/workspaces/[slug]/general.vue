@@ -18,9 +18,9 @@
           validate-on-value-update
           @change="save()"
         />
-
         <hr class="my-4 border-outline-3" />
         <FormTextInput
+          id="short-id"
           v-model="slug"
           color="foundation"
           label="Short ID"
@@ -63,7 +63,7 @@
               v-if="workspaceResult?.workspaceBySlug"
               :workspace="workspaceResult?.workspaceBySlug"
               :disabled="!isAdmin || needsSsoLogin"
-              size="xxl"
+              size="3xl"
             />
           </div>
         </div>
@@ -126,7 +126,7 @@
           </div>
         </div>
       </template>
-      <template v-if="isServerAdmin || isAdmin">
+      <template v-if="(isServerAdmin || isAdmin) && workspaceId">
         <hr class="mb-6 mt-8 border-outline-2" />
         <p class="text-body-2xs text-foreground-2">
           Workspace ID: #{{ workspaceResult?.workspaceBySlug?.id }}
@@ -135,22 +135,19 @@
     </div>
 
     <SettingsWorkspacesGeneralLeaveDialog
-      v-if="workspaceResult"
       v-model:open="showLeaveDialog"
-      :workspace="workspaceResult.workspaceBySlug"
+      :workspace="workspaceResult?.workspaceBySlug"
     />
 
     <SettingsWorkspacesGeneralDeleteDialog
-      v-if="workspaceResult && isAdmin"
       v-model:open="showDeleteDialog"
-      :workspace="workspaceResult.workspaceBySlug"
+      :workspace="workspaceResult?.workspaceBySlug"
     />
 
     <SettingsWorkspacesGeneralEditSlugDialog
-      v-if="workspaceResult && isAdmin"
       v-model:open="showEditSlugDialog"
       :base-url="baseUrl"
-      :workspace="workspaceResult.workspaceBySlug"
+      :workspace="workspaceResult?.workspaceBySlug"
       @update:slug="updateWorkspaceSlug"
     />
   </section>
@@ -235,11 +232,12 @@ const description = ref('')
 const showDeleteDialog = ref(false)
 const showEditSlugDialog = ref(false)
 const showLeaveDialog = ref(false)
-const defaultProjectRole = ref<StreamRoles>()
+const defaultProjectRole = ref<StreamRoles>(Roles.Stream.Contributor)
 
 const isAdmin = computed(
   () => workspaceResult.value?.workspaceBySlug?.role === Roles.Workspace.Admin
 )
+const workspaceId = computed(() => workspaceResult.value?.workspaceBySlug?.id)
 const canDeleteWorkspace = computed(
   () =>
     isAdmin.value &&
@@ -311,6 +309,8 @@ watch(
       name.value = workspaceResult.value.workspaceBySlug.name
       description.value = workspaceResult.value.workspaceBySlug.description ?? ''
       slug.value = workspaceResult.value.workspaceBySlug.slug ?? ''
+      defaultProjectRole.value = workspaceResult.value.workspaceBySlug
+        .defaultProjectRole as StreamRoles
     }
   },
   { deep: true, immediate: true }
@@ -326,9 +326,12 @@ onResult((res) => {
 const baseUrl = config.public.baseUrl
 
 const slugHelp = computed(() => {
-  return `${baseUrl}/workspaces/${slug.value}`
+  // Ensure the correct slug is used both on the server and client
+  if (!workspaceResult.value?.workspaceBySlug) {
+    return `${baseUrl}/workspaces/${routeSlug.value}`
+  }
+  return `${baseUrl}/workspaces/${workspaceResult.value.workspaceBySlug.slug}`
 })
-
 // Using toRef to fix reactivity bug around tooltips
 const adminRef = toRef(isAdmin)
 

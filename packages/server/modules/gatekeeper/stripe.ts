@@ -5,7 +5,7 @@ import {
 import {
   WorkspacePlanBillingIntervals,
   WorkspacePricingPlans
-} from '@/modules/gatekeeper/domain/workspacePricing'
+} from '@/modules/gatekeeperCore/domain/billing'
 import { getStringFromEnv, getStripeApiKey } from '@/modules/shared/helpers/envHelper'
 import { Stripe } from 'stripe'
 

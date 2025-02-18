@@ -2,7 +2,6 @@ import { logger } from '@/logging/logging'
 import {
   SubscriptionData,
   SubscriptionDataInput,
-  WorkspacePlan,
   WorkspaceSubscription
 } from '@/modules/gatekeeper/domain/billing'
 import {
@@ -23,6 +22,7 @@ import {
   createTestSubscriptionData,
   createTestWorkspaceSubscription
 } from '@/modules/gatekeeper/tests/helpers'
+import { WorkspacePlan } from '@/modules/gatekeeperCore/domain/billing'
 import { expectToThrow } from '@/test/assertionHelper'
 import { throwUncoveredError } from '@speckle/shared'
 import { expect } from 'chai'

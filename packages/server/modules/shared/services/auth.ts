@@ -16,6 +16,7 @@ import { adminOverrideEnabled } from '@/modules/shared/helpers/envHelper'
 import { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { WorkspaceEvents } from '@/modules/workspacesCore/domain/events'
 import { isNullOrUndefined, Roles } from '@speckle/shared'
+import { OperationTypeNode } from 'graphql'
 
 /**
  * Validates the scope against a list of scopes of the current session.
@@ -42,7 +43,7 @@ export const authorizeResolverFactory =
     getUserAclRole: GetUserAclRole
     emitWorkspaceEvent: EventBusEmit
   }): AuthorizeResolver =>
-  async (userId, resourceId, requiredRole, userResourceAccessLimits) => {
+  async (userId, resourceId, requiredRole, userResourceAccessLimits, operationType) => {
     userId = userId || null
     const roles = await deps.getRoles()
 
@@ -63,7 +64,11 @@ export const authorizeResolverFactory =
       throw new ForbiddenError('You are not authorized to access this resource.')
     }
 
-    if (deps.adminOverrideEnabled() && userId) {
+    if (
+      deps.adminOverrideEnabled() &&
+      userId &&
+      (!operationType || operationType === OperationTypeNode.QUERY)
+    ) {
       const serverRole = await deps.getUserServerRole({ userId })
       if (serverRole === Roles.Server.Admin) return
     }

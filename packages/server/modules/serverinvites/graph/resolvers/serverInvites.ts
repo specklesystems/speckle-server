@@ -56,11 +56,7 @@ import {
   processFinalizedProjectInviteFactory,
   validateProjectInviteBeforeFinalizationFactory
 } from '@/modules/serverinvites/services/coreFinalization'
-import {
-  addStreamInviteAcceptedActivityFactory,
-  addStreamInviteDeclinedActivityFactory,
-  addStreamPermissionsAddedActivityFactory
-} from '@/modules/activitystream/services/streamActivity'
+import { addStreamPermissionsAddedActivityFactory } from '@/modules/activitystream/services/streamActivity'
 import {
   createUserEmailFactory,
   ensureNoPrimaryEmailForUserFactory,
@@ -93,10 +89,7 @@ const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
   validateStreamAccess,
   getUser,
   grantStreamPermissions: grantStreamPermissionsFactory({ db }),
-  addStreamInviteAcceptedActivity: addStreamInviteAcceptedActivityFactory({
-    saveActivity,
-    publish
-  }),
+  emitEvent: getEventBus().emit,
   addStreamPermissionsAddedActivity: addStreamPermissionsAddedActivityFactory({
     saveActivity,
     publish
@@ -321,10 +314,6 @@ export = {
           }),
           processInvite: processFinalizedProjectInviteFactory({
             getProject: getStream,
-            addInviteDeclinedActivity: addStreamInviteDeclinedActivityFactory({
-              saveActivity: saveActivityFactory({ db }),
-              publish
-            }),
             addProjectRole: addOrUpdateStreamCollaborator
           }),
           deleteInvitesByTarget: deleteInvitesByTargetFactory({ db }),
@@ -470,10 +459,6 @@ export = {
           }),
           processInvite: processFinalizedProjectInviteFactory({
             getProject: getStream,
-            addInviteDeclinedActivity: addStreamInviteDeclinedActivityFactory({
-              saveActivity: saveActivityFactory({ db }),
-              publish
-            }),
             addProjectRole: addOrUpdateStreamCollaborator
           }),
           deleteInvitesByTarget: deleteInvitesByTargetFactory({ db }),

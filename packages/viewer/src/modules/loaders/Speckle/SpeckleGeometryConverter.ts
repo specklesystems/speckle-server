@@ -250,6 +250,7 @@ export class SpeckleGeometryConverter extends GeometryConverter {
     const vertices = node.raw.vertices
     const faces = node.raw.faces
     const colorsRaw = node.raw.colors
+    let normals = node.raw.vertexNormals
     let colors = undefined
     let k = 0
     while (k < faces.length) {
@@ -291,11 +292,21 @@ export class SpeckleGeometryConverter extends GeometryConverter {
         colors = this.unpackColors(colorsRaw, true)
     }
 
+    if (normals && normals.length !== 0) {
+      if (normals.length !== vertices.length) {
+        Logger.warn(
+          `Mesh (id ${node.raw.id}) normals are mismatched with vertice counts. The number of normals must equal the number of vertices.`
+        )
+        normals = undefined
+      }
+    } else normals = undefined
+
     return {
       attributes: {
         POSITION: vertices,
         INDEX: indices,
-        ...(colors && { COLOR: colors })
+        ...(colors && { COLOR: colors }),
+        ...(normals && { NORMAL: normals })
       },
       bakeTransform: new Matrix4().makeScale(
         conversionFactor,

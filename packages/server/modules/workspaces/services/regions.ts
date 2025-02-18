@@ -1,7 +1,7 @@
 import { WorkspaceFeatureAccessFunction } from '@/modules/gatekeeper/domain/operations'
 import { GetRegions } from '@/modules/multiregion/domain/operations'
 import {
-  AssignRegion,
+  AssignWorkspaceRegion,
   GetAvailableRegions,
   GetDefaultRegion,
   GetWorkspace,
@@ -25,14 +25,14 @@ export const getAvailableRegionsFactory =
     return await deps.getRegions()
   }
 
-export const assignRegionFactory =
+export const assignWorkspaceRegionFactory =
   (deps: {
     getAvailableRegions: GetAvailableRegions
     upsertRegionAssignment: UpsertRegionAssignment
     getDefaultRegion: GetDefaultRegion
     getWorkspace: GetWorkspace
     insertRegionWorkspace: UpsertWorkspace
-  }): AssignRegion =>
+  }): AssignWorkspaceRegion =>
   async (params) => {
     const { workspaceId, regionKey } = params
 

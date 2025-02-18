@@ -81,6 +81,7 @@
                   ? 'TRIAL'
                   : undefined
               "
+              nested
             >
               <template #title-icon>
                 <WorkspaceAvatar
@@ -218,7 +219,10 @@ const needsSsoSession = (
     : false
 }
 
-const exitSettingsRoute = computed(
-  () => settingsMenuState.value.previousRoute ?? homeRoute
-)
+const exitSettingsRoute = computed(() => {
+  if (import.meta.server || !settingsMenuState.value.previousRoute) {
+    return homeRoute
+  }
+  return settingsMenuState.value.previousRoute
+})
 </script>

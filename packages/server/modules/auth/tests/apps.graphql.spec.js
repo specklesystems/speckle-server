@@ -63,7 +63,6 @@ const { getServerInfoFactory } = require('@/modules/core/repositories/server')
 const { getEventBus } = require('@/modules/shared/services/eventBus')
 
 let sendRequest
-let server
 
 const createAppToken = createAppTokenFactory({
   storeApiToken: storeApiTokenFactory({ db }),
@@ -128,7 +127,6 @@ describe('GraphQL @apps-api', () => {
 
   before(async () => {
     const ctx = await beforeEachContext()
-    server = ctx.server
     ;({ sendRequest } = await initializeTestServer(ctx))
     testUser = {
       name: 'Dimitrie Stefanescu',
@@ -155,10 +153,6 @@ describe('GraphQL @apps-api', () => {
       Scopes.Apps.Read,
       Scopes.Apps.Write
     ])}`
-  })
-
-  after(async () => {
-    await server.close()
   })
 
   let testAppId
@@ -238,7 +232,7 @@ describe('GraphQL @apps-api', () => {
     expect(res).to.be.json
     expect(res.body.errors).to.not.exist
     expect(res.body.data.apps).to.be.an('array')
-    expect(res.body.data.apps.length).to.equal(8)
+    expect(res.body.data.apps.length).to.equal(9)
   })
 
   it('Should get app info without secret if not authenticated and owner', async () => {
