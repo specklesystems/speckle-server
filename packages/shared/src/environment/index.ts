@@ -3,6 +3,8 @@ import { z } from 'zod'
 
 const isDisableAllFFsMode = () =>
   ['true', '1'].includes(process.env.DISABLE_ALL_FFS || '')
+const isEnableAllFFsMode = () =>
+  ['true', '1'].includes(process.env.ENABLE_ALL_FFS || '')
 
 const parseFeatureFlags = () => {
   //INFO
@@ -73,10 +75,10 @@ const parseFeatureFlags = () => {
     }
   })
 
-  // Can be used to disable all feature flags for testing purposes
-  if (isDisableAllFFsMode()) {
+  // Can be used to disable/enable all feature flags for testing purposes
+  if (isDisableAllFFsMode() || isEnableAllFFsMode()) {
     for (const key of Object.keys(res)) {
-      ;(res as Record<string, boolean>)[key] = false
+      ;(res as Record<string, boolean>)[key] = !isDisableAllFFsMode() // disable takes precedence
     }
   }
 

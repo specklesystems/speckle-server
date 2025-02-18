@@ -189,7 +189,7 @@ describe('Services @apps-services', () => {
   it('Should get all the public apps on this server', async () => {
     const apps = await getAllPublicApps()
     expect(apps).to.be.an('array')
-    expect(apps.length).to.equal(8)
+    expect(apps.length).to.equal(9)
   })
 
   it('Should fail to register an app with no scopes', async () => {
