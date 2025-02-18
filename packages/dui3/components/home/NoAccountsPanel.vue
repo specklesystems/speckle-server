@@ -36,13 +36,9 @@
 </template>
 <script setup lang="ts">
 import { useAccountStore } from '~~/store/accounts'
-// import { useHostAppStore } from '~~/store/hostApp'
-import { useMixpanel } from '~/lib/core/composables/mixpanel'
 import { useDesktopService } from '~/lib/core/composables/desktopService'
 
 const accountStore = useAccountStore()
-
-const { trackEvent } = useMixpanel()
 const { pingDesktopService } = useDesktopService()
 
 const isDesktopServiceAvailable = ref(false) // this should be false default because there is a delay if /ping is not successful.

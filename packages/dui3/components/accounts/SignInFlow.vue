@@ -44,10 +44,12 @@ import { useIntervalFn } from '@vueuse/core'
 import { useAccountStore } from '~~/store/accounts'
 import { useHostAppStore } from '~/store/hostApp'
 import { ToastNotificationType } from '@speckle/ui-components'
+import { useMixpanel } from '~/lib/core/composables/mixpanel'
 
 const accountStore = useAccountStore()
 const hostApp = useHostAppStore()
 const app = useNuxtApp()
+const { trackEvent } = useMixpanel()
 
 const customServerUrl = ref<string | undefined>(undefined)
 const isAddingAccount = ref(false)
@@ -63,6 +65,7 @@ const accountCheckerIntervalFn = useIntervalFn(
       isAddingAccount.value = false
       showCustomServerInput.value = false
       accountCheckerIntervalFn.pause()
+      trackEvent('DUI Account Added')
     }
   },
   1000,
@@ -94,6 +97,7 @@ const startAccountAddFlow = () => {
         description:
           'Sign in timed out. This may have happened because you tried adding an existing account.'
       })
+      // TODO: we could log it to sentry/seq later to see how likely it happens?
     }
   }, 30_000)
 }
