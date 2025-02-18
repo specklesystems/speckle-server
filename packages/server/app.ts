@@ -500,16 +500,6 @@ export async function init() {
     })
   )
 
-  // Expose prometheus metrics
-  app.get('/metrics', async (req, res) => {
-    try {
-      res.set('Content-Type', prometheusClient.register.contentType)
-      res.end(await prometheusClient.register.metrics())
-    } catch (ex: unknown) {
-      res.status(500).end(ex instanceof Error ? ex.message : `${ex}`)
-    }
-  })
-
   // At the very end adding default error handler middleware
   app.use(errorMetricsMiddleware)
   app.use(defaultErrorHandler)
