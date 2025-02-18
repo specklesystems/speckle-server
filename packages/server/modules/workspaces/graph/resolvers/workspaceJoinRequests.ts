@@ -14,8 +14,10 @@ import {
 } from '@/modules/workspaces/domain/operations'
 import {
   countAdminWorkspaceJoinRequestsFactory,
+  countWorkspaceJoinRequestsFactory,
   getAdminWorkspaceJoinRequestsFactory,
   getWorkspaceJoinRequestFactory,
+  getWorkspaceJoinRequestsFactory,
   updateWorkspaceJoinRequestStatusFactory
 } from '@/modules/workspaces/repositories/workspaceJoinRequests'
 import {
@@ -72,6 +74,33 @@ export default {
     },
     workspace: async (parent, _args, ctx) => {
       return await ctx.loaders.workspaces!.getWorkspace.load(parent.workspaceId)
+    }
+  },
+  User: {
+    workspaceJoinRequests: async (parent, args) => {
+      const { filter, cursor, limit } = args
+
+      return await getPaginatedItemsFactory<
+        {
+          limit: number
+          cursor?: string
+          filter: {
+            userId: string
+            status?: WorkspaceJoinRequestStatus | null
+          }
+        },
+        WorkspaceJoinRequestGraphQLReturn
+      >({
+        getItems: getWorkspaceJoinRequestsFactory({ db }),
+        getTotalCount: countWorkspaceJoinRequestsFactory({ db })
+      })({
+        filter: {
+          userId: parent.id,
+          status: filter?.status ?? undefined
+        },
+        cursor: cursor ?? undefined,
+        limit
+      })
     }
   },
   Mutation: {

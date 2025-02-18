@@ -7,6 +7,7 @@ import {
   createTestUser
 } from '@/test/authHelper'
 import {
+  GetActiveUserDocument,
   GetWorkspaceWithJoinRequestsDocument,
   RequestToJoinWorkspaceDocument
 } from '@/test/graphql/generated/graphql'
@@ -152,6 +153,75 @@ describe('WorkspaceJoinRequests GQL', () => {
       expect(items2[0].status).to.equal('pending')
       expect(items2[0].workspace.id).to.equal(workspace2.id)
       expect(items2[0].user.id).to.equal(user2.id)
+    })
+  })
+
+  describe('User.workspaceJoinRequests', () => {
+    it('should return the workspace join requests for the user', async () => {
+      const admin = await createTestUser({
+        name: 'admin user',
+        role: Roles.Server.User,
+        email: `${createRandomString()}@example.org`,
+        verified: true
+      })
+
+      const user = await createTestUser({
+        name: 'user 1',
+        role: Roles.Server.User,
+        email: `${createRandomString()}@example.org`,
+        verified: true
+      })
+
+      const workspace1 = {
+        id: createRandomString(),
+        name: 'Workspace 1',
+        ownerId: admin.id,
+        description: '',
+        discoverabilityEnabled: true
+      }
+      await createTestWorkspace(workspace1, admin, { domain: 'example.org' })
+
+      const workspace2 = {
+        id: createRandomString(),
+        name: 'Workspace 2',
+        ownerId: admin.id,
+        description: '',
+        discoverabilityEnabled: true
+      }
+      await createTestWorkspace(workspace2, admin, { domain: 'example.org' })
+
+      const sessionUser = await login(user)
+
+      // User requests to join workspace1
+      const joinReq1 = await sessionUser.execute(RequestToJoinWorkspaceDocument, {
+        input: {
+          workspaceId: workspace1.id
+        }
+      })
+      expect(joinReq1).to.not.haveGraphQLErrors()
+
+      // User requests to join workspace2
+      const joinReq2 = await sessionUser.execute(RequestToJoinWorkspaceDocument, {
+        input: {
+          workspaceId: workspace2.id
+        }
+      })
+      expect(joinReq2).to.not.haveGraphQLErrors()
+
+      const res = await sessionUser.execute(GetActiveUserDocument, {})
+      expect(res).to.not.haveGraphQLErrors()
+
+      const { items, totalCount } = res.data!.activeUser!.workspaceJoinRequests!
+
+      expect(totalCount).to.equal(2)
+
+      expect(items).to.have.length(2)
+      expect(items[0].status).to.equal('pending')
+      expect(items[0].workspace.id).to.equal(workspace2.id)
+      expect(items[0].user.id).to.equal(user.id)
+      expect(items[1].status).to.equal('pending')
+      expect(items[1].workspace.id).to.equal(workspace1.id)
+      expect(items[1].user.id).to.equal(user.id)
     })
   })
 })

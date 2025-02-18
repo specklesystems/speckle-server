@@ -41,6 +41,22 @@ const getActiveUserQuery = gql`
   query GetActiveUser {
     activeUser {
       ...BaseUserFields
+      workspaceJoinRequests {
+        totalCount
+        cursor
+        items {
+          id
+          workspace {
+            id
+            name
+          }
+          user {
+            id
+            name
+          }
+          status
+        }
+      }
     }
   }
 

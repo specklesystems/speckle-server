@@ -23,3 +23,23 @@ type WorkspaceJoinRequestMutations {
     @hasScope(scope: "workspace:update")
     @hasWorkspaceRole(role: ADMIN)
 }
+
+type WorkspaceJoinRequestCollection {
+  totalCount: Int!
+  cursor: String
+  items: [WorkspaceJoinRequest!]!
+}
+
+input WorkspaceJoinRequestFilter {
+  status: WorkspaceJoinRequestStatus
+}
+
+extend type User {
+  workspaceJoinRequests(
+    filter: WorkspaceJoinRequestFilter
+    cursor: String
+    limit: Int! = 25
+  ): WorkspaceJoinRequestCollection
+    @hasServerRole(role: SERVER_GUEST)
+    @hasScope(scope: "workspace:read")
+}
