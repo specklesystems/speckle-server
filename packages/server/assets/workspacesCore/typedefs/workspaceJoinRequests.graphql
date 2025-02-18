@@ -24,10 +24,18 @@ type WorkspaceJoinRequestMutations {
     @hasWorkspaceRole(role: ADMIN)
 }
 
-type WorkspaceJoinRequestCollection {
+type LimitedWorkspaceJoinRequest {
+  id: String!
+  workspace: LimitedWorkspace!
+  user: LimitedUser!
+  status: WorkspaceJoinRequestStatus!
+  createdAt: DateTime!
+}
+
+type LimitedWorkspaceJoinRequestCollection {
   totalCount: Int!
   cursor: String
-  items: [WorkspaceJoinRequest!]!
+  items: [LimitedWorkspaceJoinRequest!]!
 }
 
 input WorkspaceJoinRequestFilter {
@@ -39,7 +47,7 @@ extend type User {
     filter: WorkspaceJoinRequestFilter
     cursor: String
     limit: Int! = 25
-  ): WorkspaceJoinRequestCollection
+  ): LimitedWorkspaceJoinRequestCollection
     @hasServerRole(role: SERVER_GUEST)
     @hasScope(scope: "workspace:read")
 }
