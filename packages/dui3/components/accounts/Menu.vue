@@ -20,13 +20,18 @@
         class="rounded-lg mb-2"
         @select="selectAccount(acc as DUIAccount)"
       />
-      <div class="flex flex-wrap justify-center space-x-4 max-width">
-        <FormButton text size="xs" @click="$openUrl(`speckle://accounts`)">
-          Add account via Manager
-        </FormButton>
-        <FormButton text size="xs" @click="accountStore.refreshAccounts()">
-          Refresh accounts
-        </FormButton>
+      <div class="mt-4">
+        <div v-if="isDesktopServiceAvailable">
+          <AccountsSignInFlow />
+        </div>
+        <div v-else class="flex flex-wrap justify-center space-x-4 max-width">
+          <FormButton text @click="$openUrl(`speckle://accounts`)">
+            Add account via Manager
+          </FormButton>
+          <FormButton text @click="accountStore.refreshAccounts()">
+            Refresh accounts
+          </FormButton>
+        </div>
       </div>
     </LayoutDialog>
   </div>
@@ -37,10 +42,12 @@ import { XMarkIcon } from '@heroicons/vue/20/solid'
 import type { DUIAccount } from '~/store/accounts'
 import { useAccountStore } from '~/store/accounts'
 import { useMixpanel } from '~/lib/core/composables/mixpanel'
+import { useDesktopService } from '~/lib/core/composables/desktopService'
 
 const { trackEvent } = useMixpanel()
 const app = useNuxtApp()
 const { $openUrl } = useNuxtApp()
+const { pingDesktopService } = useDesktopService()
 
 const props = defineProps<{
   currentSelectedAccountId?: string
@@ -51,6 +58,7 @@ defineEmits<{
 }>()
 
 const showAccountsDialog = ref(false)
+const isDesktopServiceAvailable = ref(false) // this should be false default because there is a delay if /ping is not successful.
 
 app.$baseBinding.on('documentChanged', () => {
   showAccountsDialog.value = false
@@ -86,5 +94,9 @@ const user = computed(() => {
     name: acc.accountInfo.userInfo.name,
     avatar: acc.accountInfo.userInfo.avatar
   }
+})
+
+onMounted(async () => {
+  isDesktopServiceAvailable.value = await pingDesktopService()
 })
 </script>

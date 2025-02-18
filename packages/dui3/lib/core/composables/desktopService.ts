@@ -1,7 +1,7 @@
 export function useDesktopService() {
   const pingDesktopService = async () => {
     try {
-      const response = await fetch('http://localhost:29363/ping', { method: 'GET' })
+      const response = await fetch('http://localhost:29364/ping', { method: 'GET' })
       if (response.ok) {
         return true
       }
