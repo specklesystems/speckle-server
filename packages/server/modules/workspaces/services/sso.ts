@@ -219,7 +219,7 @@ export const linkUserWithSsoProviderFactory =
       await createUserEmail({
         userEmail: {
           userId: args.userId,
-          email: getEmailFromOidcProfile(args.ssoProfile).toLowerCase(),
+          email: getEmailFromOidcProfile(args.ssoProfile),
           verified: true
         }
       })
