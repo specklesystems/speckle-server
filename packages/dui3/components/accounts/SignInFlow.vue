@@ -42,9 +42,11 @@
 import { ref } from 'vue'
 import { useIntervalFn } from '@vueuse/core'
 import { useAccountStore } from '~~/store/accounts'
+import { useHostAppStore } from '~/store/hostApp'
+import { ToastNotificationType } from '@speckle/ui-components'
 
 const accountStore = useAccountStore()
-
+const hostApp = useHostAppStore()
 const app = useNuxtApp()
 
 const customServerUrl = ref<string | undefined>(undefined)
@@ -78,6 +80,22 @@ const startAccountAddFlow = () => {
     : `http://localhost:29364/auth/add-account`
 
   app.$openUrl(url)
+
+  // this is a annoying timeout that we cannot detect if user added same account or not.
+  setTimeout(() => {
+    if (isAddingAccount.value) {
+      isAddingAccount.value = false
+      showCustomServerInput.value = false
+      accountCheckerIntervalFn.pause()
+      // Note to Dim: not sure about toast
+      hostApp.setNotification({
+        title: 'Sign In',
+        type: ToastNotificationType.Info,
+        description:
+          'Sign in timed out. This may have happened because you tried adding an existing account.'
+      })
+    }
+  }, 30_000)
 }
 
 const restartFlow = () => {
