@@ -372,7 +372,6 @@ export const workspaceTrackingFactory =
         })
         break
       case 'workspace.updated':
-      case 'workspace.metrics':
         // just updating workspace props
         mixpanel.groups.set(
           'workspace_id',
