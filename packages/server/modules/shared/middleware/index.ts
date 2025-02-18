@@ -10,6 +10,7 @@ import {
   Response,
   NextFunction,
   Handler,
+  RequestHandler,
   raw as expressRawBodyParser,
   json as expressJsonBodyParser
 } from 'express'
@@ -49,6 +50,7 @@ import { db } from '@/db/knex'
 import { getTokenAppInfoFactory } from '@/modules/auth/repositories/apps'
 import { getUserRoleFactory } from '@/modules/core/repositories/users'
 import { UserInputError } from '@/modules/core/errors/userinput'
+import compression from 'compression'
 
 export const authMiddlewareCreator = (steps: AuthPipelineFunction[]) => {
   const pipeline = authPipelineCreator(steps)
@@ -333,3 +335,10 @@ export const requestBodyParsingMiddlewareFactory =
       return
     }
   }
+
+export function compressionMiddlewareFactory(deps: {
+  isCompressionEnabled: boolean
+}): RequestHandler {
+  if (deps.isCompressionEnabled) return compression()
+  return (_req, _res, next) => next()
+}

@@ -50,6 +50,10 @@ export function isProdEnv() {
   return process.env.NODE_ENV === 'production'
 }
 
+export function isCompressionEnabled() {
+  return getBooleanFromEnv('COMPRESSION')
+}
+
 export function getServerVersion() {
   return process.env.SPECKLE_SERVER_VERSION || 'dev'
 }

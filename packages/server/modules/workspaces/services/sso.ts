@@ -38,6 +38,7 @@ import {
   getEmailFromOidcProfile,
   isValidSsoSession
 } from '@/modules/workspaces/domain/sso/logic'
+import { Logger } from '@/logging/logging'
 
 // this probably should go a lean validation endpoint too
 const validateOidcProviderAttributes = ({
@@ -190,11 +191,13 @@ export const linkUserWithSsoProviderFactory =
   ({
     findEmailsByUserId,
     createUserEmail,
-    updateUserEmail
+    updateUserEmail,
+    logger
   }: {
     findEmailsByUserId: FindEmailsByUserId
     createUserEmail: CreateUserEmail
     updateUserEmail: UpdateUserEmail
+    logger?: Logger
   }) =>
   async (args: {
     userId: string
@@ -211,11 +214,20 @@ export const linkUserWithSsoProviderFactory =
 
     // Add SSO provider email to req.user.id verified emails, if not already present
     const userEmails = await findEmailsByUserId({ userId: args.userId })
-    const maybeSsoEmail = userEmails.find(
-      (entry) => entry.email === getEmailFromOidcProfile(args.ssoProfile)
+    const providerEmail = getEmailFromOidcProfile(args.ssoProfile)
+    const maybeExistingEmail = userEmails.find(
+      (entry) => entry.email === providerEmail.toLowerCase()
     )
 
-    if (!maybeSsoEmail) {
+    logger?.info(
+      {
+        userEmails: userEmails.map((entry) => entry.email),
+        providerEmail
+      },
+      'Comparing existing user emails against SSO provider email:'
+    )
+
+    if (!maybeExistingEmail) {
       await createUserEmail({
         userEmail: {
           userId: args.userId,
@@ -225,10 +237,10 @@ export const linkUserWithSsoProviderFactory =
       })
     }
 
-    if (!!maybeSsoEmail && !maybeSsoEmail.verified) {
+    if (!!maybeExistingEmail && !maybeExistingEmail.verified) {
       await updateUserEmail({
         query: {
-          id: maybeSsoEmail.id,
+          id: maybeExistingEmail.id,
           userId: args.userId
         },
         update: {
