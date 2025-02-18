@@ -20,13 +20,34 @@
         class="rounded-lg mb-2"
         @select="selectAccount(acc as DUIAccount)"
       />
-      <div class="flex flex-wrap justify-center space-x-4 max-width">
-        <FormButton text size="xs" @click="$openUrl(`speckle://accounts`)">
-          Add account via Manager
+      <div class="mt-4">
+        <FormButton
+          text
+          full-width
+          size="sm"
+          @click="showAddNewAccount = !showAddNewAccount"
+        >
+          Add a new account
         </FormButton>
-        <FormButton text size="xs" @click="accountStore.refreshAccounts()">
-          Refresh accounts
-        </FormButton>
+        <LayoutDialog
+          v-model:open="showAddNewAccount"
+          title="Add a new account"
+          fullscreen="none"
+        >
+          <div>
+            <div v-if="isDesktopServiceAvailable">
+              <AccountsSignInFlow />
+            </div>
+            <div v-else class="flex flex-wrap justify-center space-x-4 max-width">
+              <FormButton text @click="$openUrl(`speckle://accounts`)">
+                Add account via Manager
+              </FormButton>
+              <FormButton text @click="accountStore.refreshAccounts()">
+                Refresh accounts
+              </FormButton>
+            </div>
+          </div>
+        </LayoutDialog>
       </div>
     </LayoutDialog>
   </div>
@@ -37,10 +58,12 @@ import { XMarkIcon } from '@heroicons/vue/20/solid'
 import type { DUIAccount } from '~/store/accounts'
 import { useAccountStore } from '~/store/accounts'
 import { useMixpanel } from '~/lib/core/composables/mixpanel'
+import { useDesktopService } from '~/lib/core/composables/desktopService'
 
 const { trackEvent } = useMixpanel()
 const app = useNuxtApp()
 const { $openUrl } = useNuxtApp()
+const { pingDesktopService } = useDesktopService()
 
 const props = defineProps<{
   currentSelectedAccountId?: string
@@ -50,7 +73,9 @@ defineEmits<{
   (e: 'select', account: DUIAccount): void
 }>()
 
+const showAddNewAccount = ref(false)
 const showAccountsDialog = ref(false)
+const isDesktopServiceAvailable = ref(false) // this should be false default because there is a delay if /ping is not successful.
 
 app.$baseBinding.on('documentChanged', () => {
   showAccountsDialog.value = false
@@ -66,6 +91,12 @@ watch(showAccountsDialog, (newVal) => {
 const accountStore = useAccountStore()
 const { accounts, defaultAccount, userSelectedAccount, isLoading } =
   storeToRefs(accountStore)
+
+watch(accounts, (newVal, oldVal) => {
+  if (newVal.length !== oldVal.length) {
+    showAddNewAccount.value = false
+  }
+})
 
 const selectAccount = (acc: DUIAccount) => {
   userSelectedAccount.value = acc
@@ -86,5 +117,9 @@ const user = computed(() => {
     name: acc.accountInfo.userInfo.name,
     avatar: acc.accountInfo.userInfo.avatar
   }
+})
+
+onMounted(async () => {
+  isDesktopServiceAvailable.value = await pingDesktopService()
 })
 </script>
