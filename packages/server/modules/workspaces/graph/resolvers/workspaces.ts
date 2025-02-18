@@ -496,6 +496,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
                   default:
                     throwUncoveredError(workspacePlan)
                 }
+              case 'free':
               case 'unlimited':
               case 'academia':
               case 'starterInvoiced':

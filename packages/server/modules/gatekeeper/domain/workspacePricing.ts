@@ -77,6 +77,16 @@ const baseFeatures = {
   workspace: true
 }
 
+const free: WorkspacePlanFeaturesAndLimits = {
+  ...baseFeatures,
+  name: 'free',
+  description: 'The free plan',
+  oidcSso: false,
+  workspaceDataRegionSpecificity: false,
+  automateMinutes: 300,
+  uploadSize: 100
+}
+
 const starter: WorkspacePlanFeaturesAndLimits = {
   ...baseFeatures,
   name: 'starter',
@@ -84,7 +94,7 @@ const starter: WorkspacePlanFeaturesAndLimits = {
   oidcSso: false,
   workspaceDataRegionSpecificity: false,
   automateMinutes: 300,
-  uploadSize: 500
+  uploadSize: 100
 }
 
 const plus: WorkspacePlanFeaturesAndLimits = {
@@ -94,7 +104,7 @@ const plus: WorkspacePlanFeaturesAndLimits = {
   oidcSso: true,
   workspaceDataRegionSpecificity: false,
   automateMinutes: 900,
-  uploadSize: 1000
+  uploadSize: 100
 }
 
 const business: WorkspacePlanFeaturesAndLimits = {
@@ -104,7 +114,7 @@ const business: WorkspacePlanFeaturesAndLimits = {
   oidcSso: true,
   workspaceDataRegionSpecificity: true,
   automateMinutes: 900,
-  uploadSize: 1000
+  uploadSize: 100
 }
 
 const unlimited: WorkspacePlanFeaturesAndLimits = {
@@ -114,7 +124,7 @@ const unlimited: WorkspacePlanFeaturesAndLimits = {
   oidcSso: true,
   workspaceDataRegionSpecificity: true,
   automateMinutes: null,
-  uploadSize: 1000
+  uploadSize: 100
 }
 
 const academia: WorkspacePlanFeaturesAndLimits = {
@@ -124,7 +134,7 @@ const academia: WorkspacePlanFeaturesAndLimits = {
   oidcSso: true,
   workspaceDataRegionSpecificity: true,
   automateMinutes: 900,
-  uploadSize: 1000
+  uploadSize: 100
 }
 
 const paidWorkspacePlanFeatures: Record<
@@ -140,6 +150,7 @@ export const unpaidWorkspacePlanFeatures: Record<
   UnpaidWorkspacePlans,
   WorkspacePlanFeaturesAndLimits
 > = {
+  free,
   academia,
   unlimited,
   starterInvoiced: starter,
