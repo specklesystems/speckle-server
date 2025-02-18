@@ -34,7 +34,7 @@
     "./fonts/*": "./fonts/*"
   },
   "engines": {
-    "node": "^22.6.0"
+    "node": ">=18.19.0"
   },
   "peerDependencies": {
     "postcss": "^8.4.18",
