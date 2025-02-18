@@ -115,7 +115,7 @@ export async function createTestUser(userObj?: Partial<BasicTestUser>) {
   }
 
   if (!baseUser.email) {
-    setVal('email', `${kebabCase(baseUser.name)}@someemail.com`)
+    setVal('email', `${kebabCase(baseUser.name)}@example.org`)
   }
 
   const id = await createUser(omit(baseUser, ['id']), { skipPropertyValidation: true })
