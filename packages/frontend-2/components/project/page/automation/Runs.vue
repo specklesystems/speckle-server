@@ -22,7 +22,6 @@
 import { usePaginatedQuery } from '~/lib/common/composables/graphql'
 import { graphql } from '~/lib/common/generated/gql'
 import type { ProjectPageAutomationRuns_AutomationFragment } from '~/lib/common/generated/gql/graphql'
-import { useMixpanel } from '~/lib/core/composables/mp'
 import { useTriggerAutomation } from '~/lib/projects/composables/automationManagement'
 import { projectAutomationPagePaginatedRunsQuery } from '~/lib/projects/graphql/queries'
 
@@ -66,18 +65,8 @@ const { identifier, onInfiniteLoad } = usePaginatedQuery({
   resolveCursorFromVariables: (vars) => vars.cursor
 })
 const triggerAutomation = useTriggerAutomation()
-const mixpanel = useMixpanel()
 
 const onTrigger = async () => {
-  const res = await triggerAutomation(props.projectId, props.automation.id)
-  if (res) {
-    mixpanel.track('Automation Run Triggered', {
-      automationId: props.automation.id,
-      automationName: props.automation.name,
-      automationRunId: res,
-      projectId: props.projectId,
-      source: 'manual'
-    })
-  }
+  await triggerAutomation(props.projectId, props.automation.id)
 }
 </script>

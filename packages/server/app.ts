@@ -7,7 +7,6 @@ import express, { Express } from 'express'
 
 // `express-async-errors` patches express to catch errors in async handlers. no variable needed
 import 'express-async-errors'
-import compression from 'compression'
 import cookieParser from 'cookie-parser'
 
 import { createTerminus } from '@godaddy/terminus'
@@ -44,24 +43,25 @@ import {
   getFileSizeLimitMB,
   isDevEnv,
   isTestEnv,
-  useNewFrontend,
   isApolloMonitoringEnabled,
   enableMixpanel,
   getPort,
   getBindAddress,
   shutdownTimeoutSeconds,
   asyncRequestContextEnabled,
-  getMaximumRequestBodySizeMB
+  getMaximumRequestBodySizeMB,
+  isCompressionEnabled
 } from '@/modules/shared/helpers/envHelper'
 import * as ModulesSetup from '@/modules'
 import { GraphQLContext, Optional } from '@/modules/shared/helpers/typeHelper'
 import { createRateLimiterMiddleware } from '@/modules/core/services/ratelimiter'
 
 import { get, has, isString } from 'lodash'
-import { corsMiddleware } from '@/modules/core/configs/cors'
+import { corsMiddlewareFactory } from '@/modules/core/configs/cors'
 import {
   authContextMiddleware,
   buildContext,
+  compressionMiddlewareFactory,
   determineClientIpAddressMiddleware,
   mixpanelTrackerHelperMiddlewareFactory,
   requestBodyParsingMiddlewareFactory
@@ -422,9 +422,7 @@ export async function buildApolloServer(options?: {
  * Initialises all server (express/subscription/http) instances
  */
 export async function init() {
-  if (useNewFrontend()) {
-    startupLogger.info('🖼️  Serving for frontend-2...')
-  }
+  startupLogger.info('🖼️  Serving for frontend-2...')
 
   const app = express()
   app.disable('x-powered-by')
@@ -443,11 +441,11 @@ export async function init() {
     startupLogger.info('Async request context tracking enabled 👀')
   }
 
-  if (process.env.COMPRESSION) {
-    app.use(compression())
-  }
+  app.use(
+    compressionMiddlewareFactory({ isCompressionEnabled: isCompressionEnabled() })
+  )
 
-  app.use(corsMiddleware())
+  app.use(corsMiddlewareFactory())
 
   app.use(
     requestBodyParsingMiddlewareFactory({
@@ -520,12 +518,11 @@ export async function shutdown(params: {
   await ModulesSetup.shutdown()
 }
 
-const shouldUseFrontendProxy = () =>
-  process.env.NODE_ENV === 'development' && process.env.USE_FRONTEND_PROXY === 'true'
+const shouldUseFrontendProxy = () => isDevEnv()
 
 async function createFrontendProxy() {
   const frontendHost = process.env.FRONTEND_HOST || '127.0.0.1'
-  const frontendPort = process.env.FRONTEND_PORT || 8080
+  const frontendPort = process.env.FRONTEND_PORT || 8081
   const { createProxyMiddleware } = await import('http-proxy-middleware')
 
   // even tho it has default values, it fixes http-proxy setting `Connection: close` on each request
