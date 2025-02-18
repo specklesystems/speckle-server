@@ -212,14 +212,14 @@ export const linkUserWithSsoProviderFactory =
     // Add SSO provider email to req.user.id verified emails, if not already present
     const userEmails = await findEmailsByUserId({ userId: args.userId })
     const maybeSsoEmail = userEmails.find(
-      (entry) => entry.email === getEmailFromOidcProfile(args.ssoProfile)
+      (entry) => entry.email === getEmailFromOidcProfile(args.ssoProfile).toLowerCase()
     )
 
     if (!maybeSsoEmail) {
       await createUserEmail({
         userEmail: {
           userId: args.userId,
-          email: getEmailFromOidcProfile(args.ssoProfile),
+          email: getEmailFromOidcProfile(args.ssoProfile).toLowerCase(),
           verified: true
         }
       })
