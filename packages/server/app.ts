@@ -57,7 +57,7 @@ import { GraphQLContext, Optional } from '@/modules/shared/helpers/typeHelper'
 import { createRateLimiterMiddleware } from '@/modules/core/services/ratelimiter'
 
 import { get, has, isString } from 'lodash'
-import { corsMiddleware } from '@/modules/core/configs/cors'
+import { corsMiddlewareFactory } from '@/modules/core/configs/cors'
 import {
   authContextMiddleware,
   buildContext,
@@ -445,7 +445,7 @@ export async function init() {
     compressionMiddlewareFactory({ isCompressionEnabled: isCompressionEnabled() })
   )
 
-  app.use(corsMiddleware())
+  app.use(corsMiddlewareFactory())
 
   app.use(
     requestBodyParsingMiddlewareFactory({
