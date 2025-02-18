@@ -235,7 +235,17 @@ const setUpUserReplication = async ({
         errorMessage.includes(message)
       )
     )
-      throw sanitizeError(err)
+      throw new DatabaseError(
+        'Unknown error while creating publication {pubName} when setting up user replication for region {regionName}',
+        from.public,
+        {
+          cause: ensureError(
+            sanitizeError(err),
+            'Unknown database error when creating publication'
+          ),
+          info: { pubName, regionName }
+        }
+      )
   }
 
   const fromUrl = new URL(
@@ -278,7 +288,17 @@ const setUpUserReplication = async ({
       !err.message.includes('already exists') &&
       !err.message.includes('duplicate key value violates unique constraint')
     )
-      throw sanitizeError(err)
+      throw new DatabaseError(
+        'Unknown error while creating subscription {subName} to {pubName} when setting up user replication for region {regionName}',
+        to.public,
+        {
+          cause: ensureError(
+            sanitizeError(err),
+            'Unknown database error when creating subscription'
+          ),
+          info: { subName, pubName, regionName }
+        }
+      )
   }
 }
 
@@ -310,7 +330,17 @@ const setUpProjectReplication = async ({
       !err.message.includes('already exists') &&
       !err.message.includes('duplicate key value violates unique constraint')
     )
-      throw sanitizeError(err)
+      throw new DatabaseError(
+        'Unknown error while creating publication {pubName} when setting up project replication for region {regionName}',
+        from.public,
+        {
+          cause: ensureError(
+            sanitizeError(err),
+            'Unknown database error when creating publication'
+          ),
+          info: { pubName, regionName }
+        }
+      )
   }
 
   const fromUrl = new URL(
@@ -353,7 +383,17 @@ const setUpProjectReplication = async ({
       !err.message.includes('already exists') &&
       !err.message.includes('duplicate key value violates unique constraint')
     )
-      throw sanitizeError(err)
+      throw new DatabaseError(
+        'Unknown error while creating subscription {subName} to {pubName} when setting up project replication for region {regionName}',
+        to.public,
+        {
+          cause: ensureError(
+            sanitizeError(err),
+            'Unknown database error when creating subscription'
+          ),
+          info: { subName, pubName, regionName }
+        }
+      )
   }
 }
 
