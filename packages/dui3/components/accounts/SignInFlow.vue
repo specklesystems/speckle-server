@@ -6,14 +6,21 @@
           v-model="customServerUrl"
           name="name"
           :show-label="false"
-          placeholder="app.speckle.systems"
+          placeholder="https://app.speckle.systems"
           color="foundation"
           autocomplete="off"
+          show-clear
+          @clear="showCustomServerInput = false"
         />
       </div>
       <FormButton full-width @click="startAccountAddFlow()">Sign In</FormButton>
-      <FormButton text size="sm" full-width @click="showCustomServerInput = true">
-        Sign in to custom server
+      <FormButton
+        text
+        size="sm"
+        full-width
+        @click="showCustomServerInput = !showCustomServerInput"
+      >
+        {{ showCustomServerInput ? 'Use default server' : 'Set custom server url' }}
       </FormButton>
     </div>
 

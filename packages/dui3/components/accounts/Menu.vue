@@ -21,17 +21,33 @@
         @select="selectAccount(acc as DUIAccount)"
       />
       <div class="mt-4">
-        <div v-if="isDesktopServiceAvailable">
-          <AccountsSignInFlow />
-        </div>
-        <div v-else class="flex flex-wrap justify-center space-x-4 max-width">
-          <FormButton text @click="$openUrl(`speckle://accounts`)">
-            Add account via Manager
-          </FormButton>
-          <FormButton text @click="accountStore.refreshAccounts()">
-            Refresh accounts
-          </FormButton>
-        </div>
+        <FormButton
+          text
+          full-width
+          size="sm"
+          @click="showAddNewAccount = !showAddNewAccount"
+        >
+          Add a new account
+        </FormButton>
+        <LayoutDialog
+          v-model:open="showAddNewAccount"
+          title="Add a new account"
+          fullscreen="none"
+        >
+          <div>
+            <div v-if="isDesktopServiceAvailable">
+              <AccountsSignInFlow />
+            </div>
+            <div v-else class="flex flex-wrap justify-center space-x-4 max-width">
+              <FormButton text @click="$openUrl(`speckle://accounts`)">
+                Add account via Manager
+              </FormButton>
+              <FormButton text @click="accountStore.refreshAccounts()">
+                Refresh accounts
+              </FormButton>
+            </div>
+          </div>
+        </LayoutDialog>
       </div>
     </LayoutDialog>
   </div>
@@ -57,6 +73,7 @@ defineEmits<{
   (e: 'select', account: DUIAccount): void
 }>()
 
+const showAddNewAccount = ref(false)
 const showAccountsDialog = ref(false)
 const isDesktopServiceAvailable = ref(false) // this should be false default because there is a delay if /ping is not successful.
 
@@ -74,6 +91,12 @@ watch(showAccountsDialog, (newVal) => {
 const accountStore = useAccountStore()
 const { accounts, defaultAccount, userSelectedAccount, isLoading } =
   storeToRefs(accountStore)
+
+watch(accounts, (newVal, oldVal) => {
+  if (newVal.length !== oldVal.length) {
+    showAddNewAccount.value = false
+  }
+})
 
 const selectAccount = (acc: DUIAccount) => {
   userSelectedAccount.value = acc
