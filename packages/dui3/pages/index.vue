@@ -130,44 +130,7 @@
         <div
           class="fixed h-screen w-screen flex items-center justify-center pr-2 pointer-events-none"
         >
-          <LayoutPanel fancy-glow class="transition pointer-events-auto w-[90%]">
-            <h1
-              class="h4 font-bold bg-gradient-to-r from-blue-500 via-blue-400 to-blue-600 inline-block py-1 text-transparent bg-clip-text"
-            >
-              Welcome to Speckle!
-            </h1>
-
-            <div class="text-foreground-2 mt-2 mb-4">
-              Click the button below to sign into Speckle. This will allow you to
-              publish or load data.
-            </div>
-            <div class="text-foreground-2 text-sm mt-2 mb-4"></div>
-            <div class="flex flex-wrap justify-center space-y-2 max-width">
-              <FormButton full-width @click="$openUrl(`speckle://accounts`)">
-                Sign In
-              </FormButton>
-              <div>
-                <div class="text-xs">Already done?</div>
-                <FormButton
-                  size="sm"
-                  full-width
-                  text
-                  link
-                  @click="accountStore.refreshAccounts()"
-                >
-                  Click to refresh
-                </FormButton>
-              </div>
-            </div>
-            <CommonLoadingBar :loading="isLoading" />
-            <!-- 
-          TODO: Either
-          - make an open manager button, or
-          - enable auth flow from here
-         -->
-            <!-- <FormButton full-width >Open Manager</FormButton> -->
-            <!-- Test chane -->
-          </LayoutPanel>
+          <HomeNoAccountsPanel />
         </div>
       </div>
     </div>
