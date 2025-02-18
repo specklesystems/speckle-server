@@ -1,5 +1,5 @@
 import zlib from 'zlib'
-import { corsMiddleware } from '@/modules/core/configs/cors'
+import { corsMiddlewareFactory } from '@/modules/core/configs/cors'
 import { chunk } from 'lodash'
 import type { Application } from 'express'
 import { hasObjectsFactory } from '@/modules/core/repositories/objects'
@@ -15,9 +15,9 @@ export default (app: Application) => {
     authorizeResolver
   })
 
-  app.options('/api/diff/:streamId', corsMiddleware())
+  app.options('/api/diff/:streamId', corsMiddlewareFactory())
 
-  app.post('/api/diff/:streamId', corsMiddleware(), async (req, res) => {
+  app.post('/api/diff/:streamId', corsMiddlewareFactory(), async (req, res) => {
     req.log = req.log.child({
       userId: req.context.userId || '-',
       streamId: req.params.streamId
