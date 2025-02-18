@@ -72,13 +72,15 @@ async function updateMailchimpMemberTags(
   initializeMailchimp()
   const subscriberHash = md5(user.email.toLowerCase())
 
-  // First ensure user is in the audience
-  await addToMailchimpAudience(user, listId)
+  // Check if user is already in audience (meaning they consented to marketing emails)
+  try {
+    await mailchimp.lists.getListMember(listId, subscriberHash)
+  } catch (e) {
+    return
+  }
 
-  // Build tags array
   const tags: { name: string; status: 'active' | 'inactive' }[] = []
 
-  // Add role tag if present
   if (onboardingData.role) {
     tags.push({
       name: `Role: ${onboardingData.role}`,
@@ -86,7 +88,6 @@ async function updateMailchimpMemberTags(
     })
   }
 
-  // Add plan tags if present
   if (onboardingData.plans?.length) {
     onboardingData.plans.forEach((plan) => {
       tags.push({
@@ -96,7 +97,6 @@ async function updateMailchimpMemberTags(
     })
   }
 
-  // Add source tag if present
   if (onboardingData.source) {
     tags.push({
       name: `Source: ${onboardingData.source}`,
@@ -104,7 +104,6 @@ async function updateMailchimpMemberTags(
     })
   }
 
-  // Update member tags
   await mailchimp.lists.updateListMemberTags(listId, subscriberHash, {
     tags
   })
