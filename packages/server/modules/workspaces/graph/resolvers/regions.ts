@@ -11,6 +11,7 @@ import {
 } from '@/modules/workspaces/repositories/regions'
 import {
   copyProjectModelsFactory,
+  copyProjectObjectsFactory,
   copyProjectsFactory,
   copyProjectVersionsFactory,
   copyWorkspaceFactory
@@ -29,6 +30,7 @@ import { getProjectFactory } from '@/modules/core/repositories/projects'
 import { getStreamBranchCountFactory } from '@/modules/core/repositories/branches'
 import { getStreamCommitCountFactory } from '@/modules/core/repositories/commits'
 import { withTransaction } from '@/modules/shared/helpers/dbHelper'
+import { getStreamObjectCountFactory } from '@/modules/core/repositories/objects'
 import { getFeatureFlags, isTestEnv } from '@/modules/shared/helpers/envHelper'
 import { WorkspacesNotYetImplementedError } from '@/modules/workspaces/errors/workspace'
 
@@ -89,6 +91,7 @@ export default {
         getProject: getProjectFactory({ db: sourceDb }),
         countProjectModels: getStreamBranchCountFactory({ db: sourceDb }),
         countProjectVersions: getStreamCommitCountFactory({ db: sourceDb }),
+        countProjectObjects: getStreamObjectCountFactory({ db: sourceDb }),
         getAvailableRegions: getAvailableRegionsFactory({
           getRegions: getRegionsFactory({ db }),
           canWorkspaceUseRegions: canWorkspaceUseRegionsFactory({
@@ -98,7 +101,8 @@ export default {
         copyWorkspace: copyWorkspaceFactory({ sourceDb, targetDb }),
         copyProjects: copyProjectsFactory({ sourceDb, targetDb }),
         copyProjectModels: copyProjectModelsFactory({ sourceDb, targetDb }),
-        copyProjectVersions: copyProjectVersionsFactory({ sourceDb, targetDb })
+        copyProjectVersions: copyProjectVersionsFactory({ sourceDb, targetDb }),
+        copyProjectObjects: copyProjectObjectsFactory({ sourceDb, targetDb })
       })
 
       return await withTransaction(updateProjectRegion(args), targetDb)
