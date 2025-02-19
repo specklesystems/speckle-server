@@ -64,4 +64,11 @@ export const useIsBillingIntegrationEnabled = () => {
   return ref(FF_BILLING_INTEGRATION_ENABLED)
 }
 
+export const useIsNewBillingEnabled = () => {
+  const {
+    public: { FF_NEW_BILLING_ENABLED }
+  } = useRuntimeConfig()
+  return ref(FF_NEW_BILLING_ENABLED)
+}
+
 export { useGlobalToast, useActiveUser, usePageQueryStandardFetchPolicy }

@@ -31,10 +31,14 @@ const emptyState: WorkspaceWizardState = {
   ssoEnabled: undefined
 }
 
-// TODO: Add FF
-const isNewWizardEnabled = true
-
 const steps: readonly WizardSteps[] = [
+  WizardSteps.Details,
+  WizardSteps.Invites,
+  WizardSteps.Pricing,
+  WizardSteps.Region
+] as const
+
+const newSteps: readonly WizardSteps[] = [
   WizardSteps.Details,
   WizardSteps.Invites,
   WizardSteps.Pricing,
@@ -42,8 +46,12 @@ const steps: readonly WizardSteps[] = [
   WizardSteps.Region
 ] as const
 
-export const useWorkspaceWizardState = () =>
-  useState<{
+export const useWorkspaceWizardState = () => {
+  const isNewBillingEnabled = useIsNewBillingEnabled()
+
+  const activeSteps = computed(() => (isNewBillingEnabled.value ? newSteps : steps))
+
+  return useState<{
     isLoading: boolean
     currentStepIndex: number
     currentStep: WizardSteps
@@ -51,9 +59,10 @@ export const useWorkspaceWizardState = () =>
   }>('workspace-wizard-state', () => ({
     isLoading: false,
     currentStepIndex: 0,
-    currentStep: steps[0],
+    currentStep: activeSteps.value[0],
     state: { ...emptyState }
   }))
+}
 
 export const useWorkspacesWizard = () => {
   const wizardState = useWorkspaceWizardState()
@@ -63,10 +72,12 @@ export const useWorkspacesWizard = () => {
   const { triggerNotification } = useGlobalToast()
   const mixpanel = useMixpanel()
   const inviteToWorkspace = useInviteUserToWorkspace()
+  const isNewBillingEnabled = useIsNewBillingEnabled()
   const { mutate: updateWorkspaceDefaultRegion } = useMutation(setDefaultRegionMutation)
   const { mutate: updateWorkspaceCreationState } = useMutation(
     updateWorkspaceCreationStateMutation
   )
+  const activeSteps = computed(() => (isNewBillingEnabled.value ? newSteps : steps))
 
   const isLoading = computed({
     get: () => wizardState.value.isLoading,
@@ -91,13 +102,13 @@ export const useWorkspacesWizard = () => {
   })
 
   const goToNextStep = () => {
-    if (!isNewWizardEnabled) {
-      // Original logic
-      if (wizardState.value.currentStepIndex === steps.length - 1) {
+    if (!isNewBillingEnabled.value) {
+      if (wizardState.value.currentStepIndex === activeSteps.value.length - 1) {
         return completeWizard()
       }
       wizardState.value.currentStepIndex++
-      wizardState.value.currentStep = steps[wizardState.value.currentStepIndex]
+      wizardState.value.currentStep =
+        activeSteps.value[wizardState.value.currentStepIndex]
       return
     }
 
@@ -121,27 +132,29 @@ export const useWorkspacesWizard = () => {
     }
 
     // If we're on the last step, complete wizard
-    if (wizardState.value.currentStepIndex === steps.length - 1) {
+    if (wizardState.value.currentStepIndex === activeSteps.value.length - 1) {
       return completeWizard()
     }
 
     // Otherwise proceed to next step
     wizardState.value.currentStepIndex++
-    wizardState.value.currentStep = steps[wizardState.value.currentStepIndex]
+    wizardState.value.currentStep =
+      activeSteps.value[wizardState.value.currentStepIndex]
   }
 
   const goToPreviousStep = () => {
     if (wizardState.value.currentStepIndex > 0) {
       wizardState.value.currentStepIndex--
-      wizardState.value.currentStep = steps[wizardState.value.currentStepIndex]
+      wizardState.value.currentStep =
+        activeSteps.value[wizardState.value.currentStepIndex]
     }
   }
 
   const goToStep = (step: WizardSteps) => {
-    const stepIndex = steps.indexOf(step)
+    const stepIndex = activeSteps.value.indexOf(step)
     if (stepIndex !== -1) {
       wizardState.value.currentStepIndex = stepIndex
-      wizardState.value.currentStep = steps[stepIndex]
+      wizardState.value.currentStep = activeSteps.value[stepIndex]
     }
   }
 
@@ -178,11 +191,11 @@ export const useWorkspacesWizard = () => {
           ...wizardState.value.state,
           invites: wizardState.value.state.invites.filter((invite) => !!invite),
           region:
-            isNewWizardEnabled &&
+            isNewBillingEnabled &&
             wizardState.value.state.plan === PaidWorkspacePlans.Business
               ? wizardState.value.state.region
               : null,
-          ssoEnabled: isNewWizardEnabled
+          ssoEnabled: isNewBillingEnabled
             ? wizardState.value.state.ssoEnabled
             : undefined
         },
@@ -311,7 +324,7 @@ export const useWorkspacesWizard = () => {
   const resetWizardState = () => {
     state.value = { ...emptyState }
     wizardState.value.currentStepIndex = 0
-    currentStep.value = steps[0]
+    currentStep.value = activeSteps.value[0]
   }
 
   return {

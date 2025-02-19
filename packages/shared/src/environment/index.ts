@@ -67,6 +67,11 @@ const parseFeatureFlags = () => {
     FF_MOVE_PROJECT_REGION_ENABLED: {
       schema: z.boolean(),
       defaults: { production: false, _: true }
+    },
+    // Enables the new billing flow
+    FF_NEW_BILLING_ENABLED: {
+      schema: z.boolean(),
+      defaults: { production: false, _: true }
     }
   })
 
