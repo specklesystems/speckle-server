@@ -292,7 +292,7 @@ export const requestBodyParsingMiddlewareFactory =
     //default
     expressJsonBodyParser({ limit: maxRequestBodySize })(req, res, next)
 
-    // expressRawBodyParser calls `next` internally, so we cannot call it again here
+    // expressJsonBodyParser calls `next` internally, so we cannot call it again here
     return
   }
 
