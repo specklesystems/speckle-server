@@ -7,49 +7,44 @@ import { workspaceCreateRoute, workspaceJoinRoute } from '~~/lib/common/helpers/
  * Redirect user to /workspaces/create, if they haven't done it yet
  */
 export default defineNuxtRouteMiddleware(async (to) => {
-  // const isOnboardingForced = useIsOnboardingForced()
   const isOnboardingForced = useIsOnboardingForced()
+  const isNewBillingEnabled = useIsNewBillingEnabled()
+
+  if (!isNewBillingEnabled.value) return
 
   const client = useApolloClientFromNuxt()
   const { data } = await client
     .query({
-      query: activeUserQuery
+      query: activeUserQuery,
+      fetchPolicy: 'network-only'
     })
     .catch(convertThrowIntoFetchResult)
 
   // Ignore if not logged in
   if (!data?.activeUser?.id) return
 
-  // Ignore if force workspace ff is false
-  if (!isOnboardingForced.value) return
-
   // Ignore if user has not verified their email yet
   if (!data?.activeUser?.verified) return
 
   // Ignore if user has not completed onboarding yet
-  if (!data?.activeUser?.isOnboardingFinished) return
+  if (isOnboardingForced.value && !data?.activeUser?.isOnboardingFinished) return
 
   const isMemberOfWorkspace = data?.activeUser?.workspaces?.totalCount > 0
   const hasDiscoverableWorkspaces = data?.activeUser?.discoverableWorkspaces?.length > 0
 
   const isGoingToJoinWorkspace = to.path === workspaceJoinRoute
   const isGoingToCreateWorkspace = to.path === workspaceCreateRoute()
-  const isCreatingOrJoiningWorkspace =
-    isGoingToJoinWorkspace || isGoingToCreateWorkspace
 
-  if (
-    !isMemberOfWorkspace &&
-    hasDiscoverableWorkspaces &&
-    !isCreatingOrJoiningWorkspace
-  ) {
-    return navigateTo(workspaceJoinRoute)
-  }
-
-  if (
-    !isMemberOfWorkspace &&
-    !hasDiscoverableWorkspaces &&
-    !isCreatingOrJoiningWorkspace
-  ) {
-    return navigateTo(workspaceCreateRoute())
+  if (!isMemberOfWorkspace) {
+    if (
+      hasDiscoverableWorkspaces &&
+      !isGoingToJoinWorkspace &&
+      !isGoingToCreateWorkspace
+    ) {
+      return navigateTo(workspaceJoinRoute)
+    }
+    if (!hasDiscoverableWorkspaces && !isGoingToCreateWorkspace) {
+      return navigateTo(workspaceCreateRoute())
+    }
   }
 })
