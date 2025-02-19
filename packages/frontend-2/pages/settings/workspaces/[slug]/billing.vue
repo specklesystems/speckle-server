@@ -4,10 +4,10 @@
       <FormButton
         v-if="isWorkspaceNewPlansEnabled && isServerAdmin"
         size="lg"
-        class="mb-4"
+        class="!bg-pink-500 !border-pink-700 mb-4"
         @click="handleUpgradeClick"
       >
-        Change to new plan 💸
+        𝓒𝓱𝓪𝓷𝓰𝓮 𝓽𝓸 𝓷𝓮𝔀 𝓹𝓵𝓪𝓷 💸
       </FormButton>
       <SettingsSectionHeader title="Billing" text="Your workspace billing details" />
       <template v-if="isBillingIntegrationEnabled">
