@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div class="flex flex-col items-center gap-y-3 max-w-sm mx-auto text-center">
+    <div class="flex flex-col items-center gap-y-3 max-w-md mx-auto text-center">
       <h1 class="text-heading-xl">{{ title }}</h1>
       <p v-if="description" class="text-body-xs text-foreground-2">
         {{ description }}

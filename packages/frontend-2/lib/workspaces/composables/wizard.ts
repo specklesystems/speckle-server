@@ -27,13 +27,18 @@ const emptyState: WorkspaceWizardState = {
   plan: null,
   billingInterval: BillingInterval.Monthly,
   id: '',
-  region: null
+  region: undefined,
+  ssoEnabled: undefined
 }
+
+// TODO: Add FF
+const isNewWizardEnabled = true
 
 const steps: readonly WizardSteps[] = [
   WizardSteps.Details,
   WizardSteps.Invites,
   WizardSteps.Pricing,
+  WizardSteps.Sso,
   WizardSteps.Region
 ] as const
 
@@ -86,16 +91,43 @@ export const useWorkspacesWizard = () => {
   })
 
   const goToNextStep = () => {
-    const shouldComplete =
-      wizardState.value.currentStepIndex === steps.length - 1 ||
-      (wizardState.value.currentStep === WizardSteps.Pricing &&
-        wizardState.value.state.plan !== PaidWorkspacePlans.Business)
-
-    if (!shouldComplete) {
+    if (!isNewWizardEnabled) {
+      // Original logic
+      if (wizardState.value.currentStepIndex === steps.length - 1) {
+        return completeWizard()
+      }
       wizardState.value.currentStepIndex++
       wizardState.value.currentStep = steps[wizardState.value.currentStepIndex]
+      return
     }
-    return shouldComplete ? completeWizard() : undefined
+
+    const currentPlan = wizardState.value.state.plan
+    const currentStep = wizardState.value.currentStep
+
+    // If we're on pricing and selected the free plan, complete wizard
+    if (
+      currentStep === WizardSteps.Pricing &&
+      currentPlan === PaidWorkspacePlans.Starter
+    ) {
+      return completeWizard()
+    }
+
+    // If we're on SSO and not on business plan, complete wizard
+    if (
+      currentStep === WizardSteps.Sso &&
+      currentPlan !== PaidWorkspacePlans.Business
+    ) {
+      return completeWizard()
+    }
+
+    // If we're on the last step, complete wizard
+    if (wizardState.value.currentStepIndex === steps.length - 1) {
+      return completeWizard()
+    }
+
+    // Otherwise proceed to next step
+    wizardState.value.currentStepIndex++
+    wizardState.value.currentStep = steps[wizardState.value.currentStepIndex]
   }
 
   const goToPreviousStep = () => {
@@ -146,9 +178,13 @@ export const useWorkspacesWizard = () => {
           ...wizardState.value.state,
           invites: wizardState.value.state.invites.filter((invite) => !!invite),
           region:
+            isNewWizardEnabled &&
             wizardState.value.state.plan === PaidWorkspacePlans.Business
               ? wizardState.value.state.region
-              : null
+              : null,
+          ssoEnabled: isNewWizardEnabled
+            ? wizardState.value.state.ssoEnabled
+            : undefined
         },
         workspaceId: workspaceId.value
       }

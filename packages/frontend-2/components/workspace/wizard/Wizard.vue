@@ -18,6 +18,9 @@
       <WorkspaceWizardStepInvites v-else-if="currentStep === WizardSteps.Invites" />
       <WorkspaceWizardStepPricing v-else-if="currentStep === WizardSteps.Pricing" />
       <WorkspaceWizardStepRegion v-else-if="currentStep === WizardSteps.Region" />
+      <template v-if="isNewWizardEnabled">
+        <WorkspaceWizardStepSso v-if="currentStep === WizardSteps.Sso" />
+      </template>
     </template>
   </div>
 </template>
@@ -31,6 +34,9 @@ import type { WorkspaceWizardState } from '~~/lib/workspaces/helpers/types'
 import { PaidWorkspacePlans } from '~/lib/common/generated/gql/graphql'
 import { useMixpanel } from '~/lib/core/composables/mp'
 import { useBillingActions } from '~/lib/billing/composables/actions'
+
+// TODO: Add FF
+const isNewWizardEnabled = true
 
 graphql(`
   fragment WorkspaceWizard_Workspace on Workspace {

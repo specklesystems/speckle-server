@@ -7,6 +7,7 @@ import { useStorybookVmodel } from '~~/src/composables/testing' // Adjust this p
 type RadioGroupStoryType = StoryObj<{
   'update:modelValue'?: (val: string) => void
   modelValue: string
+  stackOptions?: boolean
   options: Array<{
     value: string
     title: string
@@ -51,6 +52,7 @@ export const Default: RadioGroupStoryType = {
   }),
   args: {
     modelValue: 'option1',
+    stackOptions: false,
     options: [
       {
         value: 'option1',
@@ -73,5 +75,13 @@ export const Default: RadioGroupStoryType = {
         help: 'This is an example helper'
       }
     ]
+  }
+}
+
+export const Stacked: RadioGroupStoryType = {
+  render: Default.render,
+  args: {
+    ...Default.args,
+    stackOptions: true
   }
 }

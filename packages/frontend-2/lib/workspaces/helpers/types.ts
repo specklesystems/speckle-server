@@ -37,12 +37,14 @@ export type WorkspaceWizardState = {
   plan: PaidWorkspacePlans | null
   billingInterval: BillingInterval | null
   id: string
-  region: SettingsWorkspacesRegionsSelect_ServerRegionItemFragment | null
+  region?: SettingsWorkspacesRegionsSelect_ServerRegionItemFragment | null
+  ssoEnabled?: boolean
 }
 
 export enum WizardSteps {
   Details = 'Details',
   Invites = 'Invites',
   Pricing = 'Pricing',
-  Region = 'Region'
+  Region = 'Region',
+  Sso = 'Sso'
 }
