@@ -41,11 +41,20 @@ const getActiveUserQuery = gql`
   query GetActiveUser {
     activeUser {
       ...BaseUserFields
+    }
+  }
+
+  ${baseUserFieldsFragment}
+`
+
+export const getActiveUserWithWorkspaceJoinRequestsQuery = gql`
+  query GetActiveUserWithWorkspaceJoinRequests {
+    activeUser {
+      ...BaseUserFields
       workspaceJoinRequests {
         totalCount
         cursor
         items {
-          id
           workspace {
             id
             name

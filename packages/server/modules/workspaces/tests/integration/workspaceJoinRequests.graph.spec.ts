@@ -7,7 +7,7 @@ import {
   createTestUser
 } from '@/test/authHelper'
 import {
-  GetActiveUserDocument,
+  GetActiveUserWithWorkspaceJoinRequestsDocument,
   GetWorkspaceWithJoinRequestsDocument,
   RequestToJoinWorkspaceDocument
 } from '@/test/graphql/generated/graphql'
@@ -208,7 +208,10 @@ describe('WorkspaceJoinRequests GQL', () => {
       })
       expect(joinReq2).to.not.haveGraphQLErrors()
 
-      const res = await sessionUser.execute(GetActiveUserDocument, {})
+      const res = await sessionUser.execute(
+        GetActiveUserWithWorkspaceJoinRequestsDocument,
+        {}
+      )
       expect(res).to.not.haveGraphQLErrors()
 
       const { items, totalCount } = res.data!.activeUser!.workspaceJoinRequests!

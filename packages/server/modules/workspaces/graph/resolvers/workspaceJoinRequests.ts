@@ -76,6 +76,17 @@ export default {
       return await ctx.loaders.workspaces!.getWorkspace.load(parent.workspaceId)
     }
   },
+  LimitedWorkspaceJoinRequest: {
+    id: async (parent) => {
+      return parent.userId + parent.workspaceId
+    },
+    user: async (parent, _args, ctx) => {
+      return await ctx.loaders.users.getUser.load(parent.userId)
+    },
+    workspace: async (parent, _args, ctx) => {
+      return await ctx.loaders.workspaces!.getWorkspace.load(parent.workspaceId)
+    }
+  },
   User: {
     workspaceJoinRequests: async (parent, args) => {
       const { filter, cursor, limit } = args

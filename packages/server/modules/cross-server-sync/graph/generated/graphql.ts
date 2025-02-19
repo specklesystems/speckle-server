@@ -1156,6 +1156,22 @@ export type LimitedWorkspace = {
   slug: Scalars['String']['output'];
 };
 
+export type LimitedWorkspaceJoinRequest = {
+  __typename?: 'LimitedWorkspaceJoinRequest';
+  createdAt: Scalars['DateTime']['output'];
+  id: Scalars['String']['output'];
+  status: WorkspaceJoinRequestStatus;
+  user: LimitedUser;
+  workspace: LimitedWorkspace;
+};
+
+export type LimitedWorkspaceJoinRequestCollection = {
+  __typename?: 'LimitedWorkspaceJoinRequestCollection';
+  cursor?: Maybe<Scalars['String']['output']>;
+  items: Array<LimitedWorkspaceJoinRequest>;
+  totalCount: Scalars['Int']['output'];
+};
+
 export type MarkCommentViewedInput = {
   commentId: Scalars['String']['input'];
   projectId: Scalars['String']['input'];
@@ -3710,7 +3726,7 @@ export type User = {
   versions: CountOnlyCollection;
   /** Get all invitations to workspaces that the active user has */
   workspaceInvites: Array<PendingWorkspaceCollaborator>;
-  workspaceJoinRequests?: Maybe<WorkspaceJoinRequestCollection>;
+  workspaceJoinRequests?: Maybe<LimitedWorkspaceJoinRequestCollection>;
   /** Get the workspaces for the user */
   workspaces: WorkspaceCollection;
 };
