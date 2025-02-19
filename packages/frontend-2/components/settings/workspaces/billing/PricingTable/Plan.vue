@@ -112,6 +112,7 @@ import { startCase } from 'lodash'
 import { pricingPlansConfig } from '~/lib/billing/helpers/constants'
 import type { PlanFeaturesList } from '~/lib/billing/helpers/types'
 import { XMarkIcon } from '@heroicons/vue/24/outline'
+import type { SetupContext } from 'vue'
 
 const emit = defineEmits<{
   (e: 'onYearlyIntervalSelected', value: boolean): void
@@ -129,7 +130,7 @@ const props = defineProps<{
   activeBillingInterval?: BillingInterval
 }>()
 
-const slots = useSlots()
+const slots: SetupContext['slots'] = useSlots()
 
 const features = ref(pricingPlansConfig.features)
 const isUpgradeDialogOpen = ref(false)

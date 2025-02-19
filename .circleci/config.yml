@@ -442,7 +442,7 @@ jobs:
 
   test-server: &test-server-job
     docker:
-      - image: cimg/node:18.19.0
+      - image: cimg/node:22.14.0
       - image: cimg/redis:7.2.4
       - image: 'speckle/speckle-postgres'
         environment:

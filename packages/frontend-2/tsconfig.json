@@ -4,6 +4,8 @@
   "include": ["./.nuxt/nuxt.d.ts", "**/*", ".storybook/**/*"],
   "exclude": [
     "./lib/core/nuxt-modules/**/templates/*.js",
-    "./type-augmentations/eslint-only/*.d.ts"
+    "./type-augmentations/eslint-only/*.d.ts",
+    "./node_modules/**/*.vue",
+    "node_modules/@nuxt/image/dist/runtime/components/NuxtImg.vue"
   ]
 }
