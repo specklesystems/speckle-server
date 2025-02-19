@@ -72,7 +72,7 @@ import { isArray } from 'lodash-es'
 import type { ConnectorCategory } from '~~/lib/dashboard/helpers/types'
 
 type CategoryFilter = {
-  id: string
+  id: ConnectorCategory
   name: (typeof connectorCategories)[keyof typeof connectorCategories]
 }
 
@@ -90,9 +90,9 @@ const buttonId = useId()
 const selectedCategory = ref<CategoryFilter>()
 const connectors = shallowRef<ConnectorItem[]>(connectorItems)
 const categories = shallowRef(
-  Object.keys(connectorCategories).map((key) => ({
-    id: key,
-    name: connectorCategories[key as keyof typeof connectorCategories]
+  Object.entries(connectorCategories).map(([key, name]) => ({
+    id: key as ConnectorCategory,
+    name
   }))
 )
 
@@ -101,7 +101,7 @@ const filteredConnectors = computed(() => {
 
   if (selectedCategory.value) {
     filteredItems = filteredItems.filter((item) =>
-      item.categories?.includes(selectedCategory.value!.id as ConnectorCategory)
+      item.categories?.includes(selectedCategory.value!.id)
     )
   }
 
