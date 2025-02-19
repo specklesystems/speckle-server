@@ -17,11 +17,11 @@
         <FormTextInput
           id="workspace-slug"
           v-model:model-value="state.slug"
-          name="slug"
+          name="Short ID"
           label="Short ID"
           color="foundation"
           :loading="loading"
-          :rules="isStringOfLength({ maxLength: 50, minLength: 3 })"
+          :rules="isStringOfLength({ maxLength: 30, minLength: 3 })"
           :custom-error-message="error?.graphQLErrors[0]?.message"
           show-label
           size="lg"

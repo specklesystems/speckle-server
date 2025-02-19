@@ -15,6 +15,7 @@ export const generateSlugFromName = ({ name }: { name: string }): string => {
     .replace(/ /g, '-')
     .toLowerCase()
     .replace(/[^a-z0-9-]/g, '')
+    .slice(0, MAX_SLUG_LENGTH)
 }
 
 export function validateWorkspaceSlug(slug: string): void {
