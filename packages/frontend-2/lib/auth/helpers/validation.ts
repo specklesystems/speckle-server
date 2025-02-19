@@ -14,17 +14,17 @@ export const passwordHasAtLeastOneUppercaseLetter = stringContains({
   match: /[A-Z]/,
   message: 'Must have at least one uppercase letter'
 })
+
+export const passwordRules = [
+  passwordLongEnough,
+  passwordHasAtLeastOneNumber,
+  passwordHasAtLeastOneLowercaseLetter,
+  passwordHasAtLeastOneUppercaseLetter
+]
+
 export const doesNotContainBlockedDomain = (val: string) => {
   const domain = val.split('@')[1]?.toLowerCase()
   return domain && blockedDomains.includes(domain)
     ? 'Please use your work email instead of a personal email address'
     : true
 }
-
-export const passwordRules = [
-  passwordLongEnough,
-  doesNotContainBlockedDomain,
-  passwordHasAtLeastOneNumber,
-  passwordHasAtLeastOneLowercaseLetter,
-  passwordHasAtLeastOneUppercaseLetter
-]
