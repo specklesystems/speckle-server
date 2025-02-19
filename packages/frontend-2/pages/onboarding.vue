@@ -26,7 +26,17 @@
       <p class="text-center text-body-sm text-foreground-2 mb-8">
         Your answers will help us improve
       </p>
-      <OnboardingQuestionsForm />
+      <template v-if="!loading">
+        <DiscoverableList
+          v-if="
+            !isNewBillingEnabled && currentStage === 'join' && hasDiscoverableWorkspaces
+          "
+          :show-header="false"
+          @workspace-joined="currentStage = 'questions'"
+        />
+        <OnboardingQuestionsForm v-else />
+      </template>
+      <CommonLoadingIcon v-else size="lg" />
     </div>
   </HeaderWithEmptyPage>
 </template>
@@ -35,6 +45,8 @@
 import { useProcessOnboarding } from '~~/lib/auth/composables/onboarding'
 import { useAuthManager } from '~/lib/auth/composables/auth'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
+import { useDiscoverableWorkspaces } from '~/lib/workspaces/composables/discoverableWorkspaces'
+import { useIsNewBillingEnabled } from '~/composables/globals'
 
 useHead({
   title: 'Welcome to Speckle'
@@ -46,10 +58,16 @@ definePageMeta({
 })
 
 const isOnboardingForced = useIsOnboardingForced()
+const isNewBillingEnabled = useIsNewBillingEnabled()
 
 const { setUserOnboardingComplete, createOnboardingProject } = useProcessOnboarding()
 const { activeUser } = useActiveUser()
 const { logout } = useAuthManager()
+const { hasDiscoverableWorkspaces, loading } = useDiscoverableWorkspaces()
+
+const currentStage = ref<'join' | 'questions'>(
+  isNewBillingEnabled.value ? 'questions' : 'join'
+)
 
 onMounted(() => {
   if (activeUser.value?.versions.totalCount === 0) {
