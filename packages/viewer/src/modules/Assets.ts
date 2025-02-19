@@ -134,7 +134,7 @@ export class Assets {
 
     return new Promise<Font>((resolve, reject) => {
       new FontLoader().load(
-        srcUrl as string,
+        srcUrl,
         (font: Font) => {
           resolve(font)
         },
