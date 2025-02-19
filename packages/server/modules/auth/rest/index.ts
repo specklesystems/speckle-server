@@ -1,4 +1,3 @@
-import cors from 'cors'
 import {
   createBareToken,
   createAppTokenFactory,
@@ -37,6 +36,7 @@ import {
   updateApiTokenFactory
 } from '@/modules/core/repositories/tokens'
 import { getUserRoleFactory } from '@/modules/core/repositories/users'
+import { corsMiddlewareFactory } from '@/modules/core/configs/cors'
 
 // TODO: Secure these endpoints!
 export default function (app: Express) {
@@ -109,8 +109,8 @@ export default function (app: Express) {
   /*
   Generates a new api token: (1) either via a valid refresh token or (2) via a valid access token
    */
-  app.options('/auth/token', cors())
-  app.post('/auth/token', cors(), async (req, res) => {
+  app.options('/auth/token', corsMiddlewareFactory())
+  app.post('/auth/token', corsMiddlewareFactory(), async (req, res) => {
     try {
       const createRefreshToken = createRefreshTokenFactory({ db })
       const getApp = getAppFactory({ db })

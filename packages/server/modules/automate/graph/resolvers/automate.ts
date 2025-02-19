@@ -718,6 +718,7 @@ export = (FF_AUTOMATE_MODULE_ENABLED
             getBranchLatestCommits: getBranchLatestCommitsFactory({
               db: projectDb
             }),
+            emitEvent: getEventBus().emit,
             validateStreamAccess
           })
 

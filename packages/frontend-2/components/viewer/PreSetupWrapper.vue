@@ -54,12 +54,7 @@
           />
 
           <!-- Sidebar controls -->
-          <Transition
-            enter-from-class="opacity-0"
-            enter-active-class="transition duration-1000"
-          >
-            <ViewerControls class="relative z-20" />
-          </Transition>
+          <ViewerControls v-if="showControls" class="relative z-20" />
 
           <!-- Viewer Object Selection Info Display -->
           <Transition
@@ -135,7 +130,12 @@ const state = useSetupViewer({
 const {
   filters: { hasAnyFiltersApplied }
 } = useFilterUtilities({ state })
-const { isEnabled: isEmbedEnabled, hideSelectionInfo, isTransparent } = useEmbed()
+const {
+  isEnabled: isEmbedEnabled,
+  hideSelectionInfo,
+  isTransparent,
+  showControls
+} = useEmbed()
 
 emit('setup', state)
 
