@@ -12,7 +12,7 @@ export const speckleStandardVert = /* glsl */ `
 
 #ifdef TRANSFORM_STORAGE
     attribute float objIndex;
-
+    varying float vObjIndex;
     #if TRANSFORM_STORAGE == 0
         #if __VERSION__ == 300
             #define TRANSFORM_STRIDE 4
@@ -171,6 +171,7 @@ void main() {
         #ifdef TRANSFORM_STORAGE
             vec4 rtePivot = computeRelativePosition(tPivotLow.xyz, tPivotHigh.xyz, uViewer_low, uViewer_high);
             rteLocalPosition.xyz = rotate_vertex_position_delta(rteLocalPosition, rtePivot, tQuaternion) * tScale.xyz + rtePivot.xyz + tTranslation.xyz;
+            vObjIndex = objIndex;
         #endif
         #ifdef USE_INSTANCING
             vec4 instancePivot = computeRelativePosition(ZERO3, ZERO3, uViewer_low, uViewer_high);
