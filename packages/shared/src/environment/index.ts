@@ -25,6 +25,10 @@ const parseFeatureFlags = () => {
       schema: z.boolean(),
       defaults: { production: false, _: true }
     },
+    FF_WORKSPACES_NEW_PLANS_ENABLED: {
+      schema: z.boolean(),
+      defaults: { production: false, _: true }
+    },
     FF_GATEKEEPER_MODULE_ENABLED: {
       schema: z.boolean(),
       defaults: { production: false, _: true }
@@ -86,6 +90,7 @@ export function getFeatureFlags(): {
   FF_AUTOMATE_MODULE_ENABLED: boolean
   FF_GENDOAI_MODULE_ENABLED: boolean
   FF_WORKSPACES_MODULE_ENABLED: boolean
+  FF_WORKSPACES_NEW_PLANS_ENABLED: boolean
   FF_WORKSPACES_SSO_ENABLED: boolean
   FF_GATEKEEPER_MODULE_ENABLED: boolean
   FF_BILLING_INTEGRATION_ENABLED: boolean

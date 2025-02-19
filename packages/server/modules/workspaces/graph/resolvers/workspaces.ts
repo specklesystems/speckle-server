@@ -206,6 +206,7 @@ import { sendWorkspaceJoinRequestReceivedEmailFactory } from '@/modules/workspac
 import { getProjectFactory } from '@/modules/core/repositories/projects'
 import { OperationTypeNode } from 'graphql'
 import { updateWorkspacePlanFactory } from '@/modules/gatekeeper/services/workspacePlans'
+import { UserInputError } from '@/modules/core/errors/userinput'
 
 const eventBus = getEventBus()
 const getServerInfo = getServerInfoFactory({ db })
@@ -294,7 +295,8 @@ const updateStreamRoleAndNotify = updateStreamRoleAndNotifyFactory({
 const getUserStreams = getUserStreamsPageFactory({ db })
 const getUserStreamsCount = getUserStreamsCountFactory({ db })
 
-const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
+const { FF_WORKSPACES_MODULE_ENABLED, FF_WORKSPACES_NEW_PLANS_ENABLED } =
+  getFeatureFlags()
 
 export = FF_WORKSPACES_MODULE_ENABLED
   ? ({
@@ -497,6 +499,11 @@ export = FF_WORKSPACES_MODULE_ENABLED
                     throwUncoveredError(workspacePlan)
                 }
               case 'free':
+                if (FF_WORKSPACES_NEW_PLANS_ENABLED) {
+                  break
+                } else {
+                  throw new UserInputError('Workspace plan not implemented')
+                }
               case 'unlimited':
               case 'academia':
               case 'starterInvoiced':

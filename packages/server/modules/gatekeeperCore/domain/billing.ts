@@ -14,7 +14,10 @@ export const paidWorkspacePlans = z.union([
 
 // new plan stuff below
 
-export const paidWorkspacePlansNew = z.union([z.literal('kezdo'), z.literal('uzleti')])
+export const paidWorkspacePlansNew = z.union([
+  z.literal('ottoman'),
+  z.literal('habsburg')
+])
 export type PaidWorkspacePlansNew = z.infer<typeof paidWorkspacePlansNew>
 
 export type PaidWorkspacePlans = z.infer<typeof paidWorkspacePlans>
