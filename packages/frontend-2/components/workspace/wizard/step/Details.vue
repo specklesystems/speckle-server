@@ -17,7 +17,7 @@
         <FormTextInput
           id="workspace-slug"
           v-model:model-value="state.slug"
-          name="Short ID"
+          name="short-id"
           label="Short ID"
           color="foundation"
           :loading="loading"

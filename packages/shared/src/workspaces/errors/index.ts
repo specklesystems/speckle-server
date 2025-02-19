@@ -21,25 +21,25 @@ export const generateSlugFromName = ({ name }: { name: string }): string => {
 export function validateWorkspaceSlug(slug: string): void {
   if (slug.length < MIN_SLUG_LENGTH) {
     throw new InvalidWorkspaceSlugError(
-      `Workspace slug must be at least ${MIN_SLUG_LENGTH} characters long.`
+      `Short ID slug must be at least ${MIN_SLUG_LENGTH} characters long.`
     )
   }
 
   if (slug.length > MAX_SLUG_LENGTH) {
     throw new InvalidWorkspaceSlugError(
-      `Workspace slug must not exceed ${MAX_SLUG_LENGTH} characters.`
+      `Short ID must not exceed ${MAX_SLUG_LENGTH} characters.`
     )
   }
 
   if (!VALID_SLUG_CHARACTERS_REGEX.test(slug)) {
     throw new InvalidWorkspaceSlugError(
-      'Workspace slug must contain only lowercase letters, numbers, and hyphens.'
+      'Short ID slug must contain only lowercase letters, numbers, and hyphens.'
     )
   }
 
   if (!VALID_SLUG_BOUNDARY_REGEX.test(slug)) {
     throw new InvalidWorkspaceSlugError(
-      'Workspace slug cannot start or end with a hyphen.'
+      'Short ID slug cannot start or end with a hyphen.'
     )
   }
 }
