@@ -206,6 +206,8 @@ import { sendWorkspaceJoinRequestReceivedEmailFactory } from '@/modules/workspac
 import { getProjectFactory } from '@/modules/core/repositories/projects'
 import { OperationTypeNode } from 'graphql'
 import { updateWorkspacePlanFactory } from '@/modules/gatekeeper/services/workspacePlans'
+import { GetWorkspaceCollaboratorsArgs } from '@/modules/workspaces/domain/operations'
+import { WorkspaceTeamMember } from '@/modules/workspaces/domain/types'
 
 const eventBus = getEventBus()
 const getServerInfo = getServerInfoFactory({ db })
@@ -1378,6 +1380,22 @@ export = FF_WORKSPACES_MODULE_ENABLED
       },
       ServerWorkspacesInfo: {
         workspacesEnabled: () => true
+      },
+      LimitedWorkspace: {
+        team: async (parent, args) => {
+          const team = await getPaginatedItemsFactory<
+            Pick<GetWorkspaceCollaboratorsArgs, 'workspaceId' | 'limit' | 'cursor'>,
+            WorkspaceTeamMember
+          >({
+            getItems: getWorkspaceCollaboratorsFactory({ db }),
+            getTotalCount: getWorkspaceCollaboratorsTotalCountFactory({ db })
+          })({
+            workspaceId: parent.id,
+            limit: args.limit,
+            cursor: args.cursor ?? undefined
+          })
+          return team
+        }
       },
       Subscription: {
         workspaceProjectsUpdated: {
