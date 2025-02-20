@@ -48,10 +48,7 @@ import {
 } from '@/modules/core/services/streams/access'
 import { authorizeResolver } from '@/modules/shared'
 import { grantStreamPermissionsFactory } from '@/modules/core/repositories/streams'
-import {
-  addStreamInviteAcceptedActivityFactory,
-  addStreamPermissionsAddedActivityFactory
-} from '@/modules/activitystream/services/streamActivity'
+import { addStreamPermissionsAddedActivityFactory } from '@/modules/activitystream/services/streamActivity'
 import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import { publish } from '@/modules/shared/utils/subscriptions'
 import { getUserFactory } from '@/modules/core/repositories/users'
@@ -73,10 +70,7 @@ const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
   validateStreamAccess,
   getUser,
   grantStreamPermissions: grantStreamPermissionsFactory({ db }),
-  addStreamInviteAcceptedActivity: addStreamInviteAcceptedActivityFactory({
-    saveActivity,
-    publish
-  }),
+  emitEvent: getEventBus().emit,
   addStreamPermissionsAddedActivity: addStreamPermissionsAddedActivityFactory({
     saveActivity,
     publish
@@ -516,9 +510,11 @@ const buildAutomationUpdate = () => {
 
       it('fails when refering to nonexistent function releases', async () => {
         const create = buildAutomationRevisionCreate({
-          getFunctionRelease: async () => {
-            // TODO: Update once we know how exec engine should respond
-            throw new Error('Function release with ID XXX not found')
+          overrides: {
+            getFunctionRelease: async () => {
+              // TODO: Update once we know how exec engine should respond
+              throw new Error('Function release with ID XXX not found')
+            }
           }
         })
 

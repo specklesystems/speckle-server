@@ -1,13 +1,8 @@
 <mj-section>
   <mj-column>
-    <mj-spacer height="10px" />
-  </mj-column>
-</mj-section>
-<mj-section border-radius="8px" mj-class="bgblue" padding="10px 0 15px 0">
-  <mj-column>
     <mj-image
-      width="100px"
-      src="<%- params.serverInfo.canonicalUrl -%>/static/logo-slab-white.png"
+      width="150px"
+      src="<%- params.serverInfo.canonicalUrl -%>/static/speckle-email-logo.png"
       alt="Speckle"
     />
   </mj-column>

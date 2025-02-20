@@ -1,5 +1,5 @@
 import zlib from 'zlib'
-import { corsMiddleware } from '@/modules/core/configs/cors'
+import { corsMiddlewareFactory } from '@/modules/core/configs/cors'
 
 import { SpeckleObjectsStream } from '@/modules/core/rest/speckleObjectsStream'
 import { pipeline, PassThrough } from 'stream'
@@ -22,9 +22,9 @@ export default (app: express.Express) => {
     authorizeResolver
   })
 
-  app.options('/objects/:streamId/:objectId', corsMiddleware())
+  app.options('/objects/:streamId/:objectId', corsMiddlewareFactory())
 
-  app.get('/objects/:streamId/:objectId', corsMiddleware(), async (req, res) => {
+  app.get('/objects/:streamId/:objectId', corsMiddlewareFactory(), async (req, res) => {
     const boundLogger = (req.log || logger).child({
       requestId: req.id,
       userId: req.context.userId || '-',
@@ -63,12 +63,19 @@ export default (app: express.Express) => {
       streamId: req.params.streamId,
       objectId: req.params.objectId
     })
+
     // https://knexjs.org/faq/recipes.html#manually-closing-streams
     // https://github.com/knex/knex/issues/2324
-    res.on('close', () => {
+    const responseCloseHandler = () => {
       dbStream.end()
       dbStream.destroy()
+    }
+
+    dbStream.on('close', () => {
+      res.removeListener('close', responseCloseHandler)
     })
+    res.on('close', responseCloseHandler)
+
     const speckleObjStream = new SpeckleObjectsStream(simpleText)
     const gzipStream = zlib.createGzip()
 
@@ -82,7 +89,14 @@ export default (app: express.Express) => {
       res,
       (err) => {
         if (err) {
-          boundLogger.error(err, 'Error downloading object.')
+          switch (err.code) {
+            case 'ERR_STREAM_PREMATURE_CLOSE':
+              boundLogger.info({ err }, 'Client closed connection early')
+              break
+            default:
+              boundLogger.error({ err }, 'Error downloading object from stream')
+              break
+          }
         } else {
           boundLogger.info(
             { megaBytesWritten: gzipStream.bytesWritten / 1000000 },
@@ -93,37 +107,41 @@ export default (app: express.Express) => {
     )
   })
 
-  app.options('/objects/:streamId/:objectId/single', corsMiddleware())
-  app.get('/objects/:streamId/:objectId/single', corsMiddleware(), async (req, res) => {
-    const boundLogger = (req.log || logger).child({
-      requestId: req.id,
-      userId: req.context.userId || '-',
-      streamId: req.params.streamId,
-      objectId: req.params.objectId
-    })
-    const hasStreamAccess = await validatePermissionsReadStream(
-      req.params.streamId,
-      req
-    )
-    if (!hasStreamAccess.result) {
-      return res.status(hasStreamAccess.status).end()
+  app.options('/objects/:streamId/:objectId/single', corsMiddlewareFactory())
+  app.get(
+    '/objects/:streamId/:objectId/single',
+    corsMiddlewareFactory(),
+    async (req, res) => {
+      const boundLogger = (req.log || logger).child({
+        requestId: req.id,
+        userId: req.context.userId || '-',
+        streamId: req.params.streamId,
+        objectId: req.params.objectId
+      })
+      const hasStreamAccess = await validatePermissionsReadStream(
+        req.params.streamId,
+        req
+      )
+      if (!hasStreamAccess.result) {
+        return res.status(hasStreamAccess.status).end()
+      }
+
+      const projectDb = await getProjectDbClient({ projectId: req.params.streamId })
+      const getObject = getFormattedObjectFactory({ db: projectDb })
+
+      const obj = await getObject({
+        streamId: req.params.streamId,
+        objectId: req.params.objectId
+      })
+
+      if (!obj) {
+        boundLogger.warn('Failed to find object.')
+        return res.status(404).send('Failed to find object.')
+      }
+
+      boundLogger.info('Downloaded single object.')
+
+      res.send(obj.data)
     }
-
-    const projectDb = await getProjectDbClient({ projectId: req.params.streamId })
-    const getObject = getFormattedObjectFactory({ db: projectDb })
-
-    const obj = await getObject({
-      streamId: req.params.streamId,
-      objectId: req.params.objectId
-    })
-
-    if (!obj) {
-      boundLogger.warn('Failed to find object.')
-      return res.status(404).send('Failed to find object.')
-    }
-
-    boundLogger.info('Downloaded single object.')
-
-    res.send(obj.data)
-  })
+  )
 }

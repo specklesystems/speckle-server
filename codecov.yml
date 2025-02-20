@@ -1,0 +1,4 @@
+codecov:
+  notify:
+    notify_error: true
+  require_ci_to_pass: false

@@ -1,7 +1,7 @@
 <template>
   <Component
     :is="mainComponent"
-    class="flex items-center shrink-0"
+    class="flex items-center shrink-0 select-none"
     :to="to"
     :target="target"
   >

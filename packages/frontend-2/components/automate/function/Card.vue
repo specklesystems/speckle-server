@@ -34,7 +34,7 @@
           </div>
         </div>
       </div>
-      <div class="text-body-xs text-foreground-2 line-clamp-3 h-18">
+      <div class="text-body-xs text-foreground-2 line-clamp-3 h-18 flex-1">
         {{ plaintextDescription }}
       </div>
       <div v-if="!noButtons" class="flex flex-col sm:flex-row gap-x-1">
@@ -63,9 +63,9 @@
       <div class="absolute top-0 right-0">
         <div
           v-if="hasLabel"
-          class="rounded-bl-md rounded-tr-lg font-medium text-body-3xs px-2 py-1"
+          class="rounded-bl-md rounded-tr-lg font-medium text-body-3xs px-1.5 py-0.5"
           :class="{
-            'bg-info-lighter text-outline-4': fn.isFeatured,
+            'bg-info-lighter text-primary-focus': fn.isFeatured,
             'bg-danger-lighter text-danger-darker': isOutdated
           }"
         >

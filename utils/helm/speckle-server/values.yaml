@@ -39,8 +39,6 @@ featureFlags:
   automateModuleEnabled: false
   ## @param featureFlags.gendoAIModuleEnabled High level flag that toggles the Gendo AI render module
   gendoAIModuleEnabled: false
-  ## @param featureFlags.noClosureWrites Toggles whether to stop writing to the closure table
-  noClosureWrites: false
   ## @param featureFlags.workspacesModuleEnabled High level flag fully toggles the workspaces module
   workspacesModuleEnabled: false
   ## @param featureFlags.workspacesSSOEnabled High level flag fully toggles the workspaces dynamic sso
@@ -978,77 +976,6 @@ objects:
   ## ref: https://kubernetes.io/docs/concepts/workloads/pods/pod-topology-spread-constraints/
   ##
   topologySpreadConstraints: []
-
-## @section Frontend
-## @descriptionStart
-## Defines parameters related to the frontend server component of Speckle.
-## @descriptionEnd
-##
-frontend:
-  ## @param frontend.replicas The number of instances of the Frontend pod to be deployed within the cluster.
-  ##
-  replicas: 1
-  ## @param frontend.logLevel The minimum level of logs which will be output. Suitable values are trace, debug, info, warn, error, fatal, or silent
-  ##
-  logLevel: 'info'
-  ## @param frontend.logPretty If enabled, will output logs in a human-readable format. Otherwise, logs will be output in JSON format.
-  ##
-  logPretty: false
-
-  ## @param frontend.image The Docker image to be used for the Speckle Frontend component. If blank, defaults to speckle/speckle-frontend:{{ .Values.docker_image_tag }}. If provided, this value should be the full path including tag. The docker_image_tag value will be ignored.
-  ##
-  image: ''
-
-  requests:
-    ## @param frontend.requests.cpu The CPU that should be available on a node when scheduling this pod.
-    ## ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
-    ##
-    cpu: 250m
-    ## @param frontend.requests.memory The Memory that should be available on a node when scheduling this pod.
-    ## Depending on the Kubernetes cluster's configuration, exceeding this value may result in pod eviction from a node.
-    ## ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
-    ##
-    memory: 256Mi
-  limits:
-    ## @param frontend.limits.cpu The maximum CPU that will be made available to the frontend Pod in a given period.
-    ## If this limit is exceeded, execution of the Pod will be paused until the next period.
-    ## ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
-    ##
-    cpu: 1000m
-    ## @param frontend.limits.memory The maximum Memory that will be made available to the frontend Pod.
-    ## If this limit is exceeded, processes within the pod that request additional memory may be stopped.
-    ## ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
-    ##
-    memory: 512Mi
-  networkPolicy:
-    ## @param frontend.networkPolicy.enabled If enabled, will provide additional security be limiting network traffic into and out of the pod to only the required endpoints and ports.
-    ## If enabled, the `ingress` parameters need be configured.
-    ## ref: https://kubernetes.io/docs/concepts/services-networking/network-policies/
-    ##
-    enabled: false
-  ## @param frontend.affinity Affinity for Speckle frontend pod scheduling
-  ## ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
-  ##
-  affinity: {}
-  ## @param frontend.nodeSelector Node labels for Speckle frontend pods scheduling
-  ## ref: https://kubernetes.io/docs/user-guide/node-selection/
-  ##
-  nodeSelector: {}
-  ## @param frontend.tolerations Tolerations for Speckle frontend pods scheduling
-  ## ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
-  ##
-  tolerations: []
-  ## @param frontend.topologySpreadConstraints Spread Constraints for Speckle frontend pod scheduling
-  ## ref: https://kubernetes.io/docs/concepts/workloads/pods/pod-topology-spread-constraints/
-  ##
-  topologySpreadConstraints: []
-  serviceAccount:
-    ## @param frontend.serviceAccount.create If enabled, a Kubernetes Service Account will be created for this pod.
-    ## This provides additional security by limiting this pod's access to the Kubernetes API and to Secrets on the Kubernetes cluster.
-    ## If disabled, the default Service Account will be used which in most Kubernetes configurations will grant this pod
-    ## access to most secrets on the cluster and access to the Kubernetes API.
-    ##
-    create: true
 
 ## @section frontend_2
 ## @descriptionStart

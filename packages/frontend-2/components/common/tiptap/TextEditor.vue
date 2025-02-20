@@ -8,7 +8,7 @@
       :editor="editor"
       :style="maxHeight ? `max-height: ${maxHeight}; overflow-y: auto;` : ''"
       @click="onEditorContentClick"
-      @keydown="onKeyDownHandler"
+      @keydown.stop="onKeyDownHandler"
     />
     <div v-if="$slots.actions && !readonly">
       <slot name="actions" />

@@ -1,5 +1,5 @@
 import zlib from 'zlib'
-import { corsMiddleware } from '@/modules/core/configs/cors'
+import { corsMiddlewareFactory } from '@/modules/core/configs/cors'
 import type { Application } from 'express'
 import { SpeckleObjectsStream } from '@/modules/core/rest/speckleObjectsStream'
 import { pipeline, PassThrough } from 'stream'
@@ -20,9 +20,9 @@ export default (app: Application) => {
     authorizeResolver
   })
 
-  app.options('/api/getobjects/:streamId', corsMiddleware())
+  app.options('/api/getobjects/:streamId', corsMiddlewareFactory())
 
-  app.post('/api/getobjects/:streamId', corsMiddleware(), async (req, res) => {
+  app.post('/api/getobjects/:streamId', corsMiddlewareFactory(), async (req, res) => {
     req.log = req.log.child({
       userId: req.context.userId || '-',
       streamId: req.params.streamId
@@ -94,12 +94,18 @@ export default (app: Application) => {
           streamId: req.params.streamId,
           objectIds: childrenChunk
         })
+
         // https://knexjs.org/faq/recipes.html#manually-closing-streams
         // https://github.com/knex/knex/issues/2324
-        res.on('close', () => {
+        const responseCloseHandler = () => {
           dbStream.end()
           dbStream.destroy()
+        }
+
+        dbStream.on('close', () => {
+          res.removeListener('close', responseCloseHandler)
         })
+        res.on('close', responseCloseHandler)
 
         await new Promise((resolve, reject) => {
           dbStream.once('end', resolve)

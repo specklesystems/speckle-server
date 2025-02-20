@@ -2,7 +2,6 @@
   <div>
     <div class="flex flex-col gap-4">
       <div class="flex items-center gap-2 mb-2">
-        <IconBolt class="h-5 w-5" />
         <h1 class="text-heading-lg">Workspace functions</h1>
       </div>
       <AutomateFunctionsPageHeader
