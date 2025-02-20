@@ -295,13 +295,15 @@ export class ArchicadBridge {
 
     const hostAppStore = useHostAppStore()
 
+    const hostAppName = `Archicad ${hostAppStore.hostAppVersion}`
+
     const args: CreateVersionArgs = {
       modelCardId,
       projectId,
       modelId,
       accountId,
       referencedObjectId: rootCommitObjectId,
-      sourceApplication: hostAppStore.hostAppName?.toLowerCase(),
+      sourceApplication: hostAppName,
       message: message || `send from ${hostAppStore.hostAppName?.toLowerCase()}`
     }
     const versionId = await this.createVersion(args)
