@@ -132,9 +132,14 @@ const createNewWorkspaceProjectResolver = () => {
   // count projects in DB
   const newProjectCount = 10 + 1
 
-  const authFunction = authFunctionStore.createWorkspaceProject({
-    newProjectCount
-  })
+  const authFunction = authPipelineCreator([
+    checkWorkspaceRoleFactory({ workspaceRole: 'workspace:member' }),
+    checkPlanLimitFactory({ newProjectCount })
+  ])
+
+  // const authFunction = authFunctionStore.createWorkspaceProject({
+  //   newProjectCount
+  // })
 
   // const canCreateNewProject = authFunctionCreation.createWorkspaceProject(10)
   // based on userID
@@ -151,20 +156,99 @@ const createNewWorkspaceProjectResolver = () => {
 
 createNewWorkspaceProjectResolver()
 
-type AuthFunctionStore = {
-  createWorkspaceProject: (args: { newProjectCount: number }) => AuthPipeline
-  foobar: () => AuthPipeline
-}
+// type AuthFunctionStore = {
+//   createWorkspaceProject: (args: { newProjectCount: number }) => AuthPipeline
+//   foobar: () => AuthPipeline
+// }
 
 // type AuthActions = keyof AuthFunctionStore
 
-const authFunctionStore: AuthFunctionStore = {
-  createWorkspaceProject: ({ newProjectCount }: { newProjectCount: number }) =>
-    authPipelineCreator([
-      checkWorkspaceRoleFactory({ workspaceRole: 'workspace:member' }),
-      checkPlanLimitFactory({ newProjectCount })
-    ]),
-  foobar: () => {
-    throw 'foobar'
-  }
-}
+// const authFunctionStore: AuthFunctionStore = {
+//   createWorkspaceProject: ({ newProjectCount }: { newProjectCount: number }) =>
+//     authPipelineCreator([
+//       checkWorkspaceRoleFactory({ workspaceRole: 'workspace:member' }),
+//       checkPlanLimitFactory({ newProjectCount })
+//     ]),
+//   foobar: () => {
+//     throw 'foobar'
+//   }
+// }
+
+// enum ResourceLoader {
+//   Workspace,
+//   User,
+//   Project,
+// }
+
+// // Same in BE & FE
+// type WorkspaceInterface = {
+//   id: string
+//   name: string
+// }
+
+// type ResourceReturnTypeMap = {
+//   [ResourceLoader.Workspace]: WorkspaceInterface
+// }
+
+// const accessSystemFactory = (params: {
+//   loaders: {
+//     [ResourceLoader.Workspace]: () => {}, // Differs between BE & FE
+//     [ResourceLoader.User]: () => {}, // Differs between BE & FE
+//     [ResourceLoader.Project]: () => {}, // Differs between BE & FE
+//   }
+// }) => {
+
+//   const canCreateLegacyProject = (userId: string) => {
+//     if (!FF_WORKSPACES_ENABLED) return false;
+
+//     const user = await params.loaders.[ResourceLoader.User](userId)
+//     return !!user
+//   }
+
+//   const canViewProject = (userId: string, projectId: string) => {
+//     const project  = await params.loaders.[ResourceLoader.Project](projectId, userId)
+//     if (!project) return false
+//     if (project.isPublic) return true
+//     if (project.role) return true
+//     if (!project.workspaceId) return false
+
+//     const workspace = await params.loaders.[ResourceLoader.Workspace](workspaceId)
+//     return !!workspace.role
+//   }
+
+//   const canDoAction = <Action extends ActionType>(userId: string, action: Action, resource: ResourceMap<Action>): boolean => {
+//     // can be cleaner, not just if statements
+//     if (action === ActionType.CreateProject) {
+//       return canCreateLegacyProject(    }
+
+//       }
+
+//   return {
+//     canDoAction
+//   }
+// }
+
+/// ------ START IAIN
+
+// canDoAction(actor, subject, action) <- this is a pipeline with truth tables
+
+// canCreateProjectInWorkspaceFactory(
+//   deps: {
+//     projectLimitGetter,
+//     userRolesGetter,
+//     existingNumberOfProjectsInWorkspaceGetter
+//   }
+// ) => {
+
+//   //canCreateProjectInWorkspace
+//   return (userId, workspaceId) => {
+//     const userRoleInWorkspace = deps.userRolesGetter({userId, workspaceId})
+//     const workspaceProjectLimit = deps.projectLimitGetter()
+//     const existingNumberOfProjectsInWorkspace = deps.existingNumberOfProjectsInWorkspaceGetter()
+
+//     // the results of the below can be cached
+//     return canDoAction({userRoleInWorkspace}, {existingNumberOfProjectsInWorkspace, workspaceProjectLimit }, ActionType.CreateWorkspaceProject) // <-- the ActionType will define the expected types
+//   }
+// }
+
+// ------ END IAIN
