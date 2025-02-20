@@ -1,5 +1,4 @@
 import { Serializer } from './utils/Serializer'
-import type { SerializerParams } from './utils/Serializer'
 import { ServerTransport } from './transports/ServerTransport'
 import type { TransportOptions } from './transports/ServerTransport'
 import { Base } from './utils/Base'
@@ -17,7 +16,8 @@ export type SendParams = {
   }
   options?: {
     transport: TransportOptions
-    serializer: Omit<SerializerParams, 'transport'>
+    chunkSize?: number
+    hashingFunction?: (s: string) => string
   }
 }
 
@@ -44,13 +44,12 @@ export const send = async (
 ) => {
   const t0 = performance.now()
   logger?.log('Starting to send')
-  const transport = new ServerTransport({
-    serverUrl,
-    projectId,
-    authToken: token,
-    options: options?.transport
-  })
-  const serializer = new Serializer({ ...options?.serializer, transport })
+  const transport = new ServerTransport(serverUrl, projectId, token, options?.transport)
+  const serializer = new Serializer(
+    transport,
+    options?.chunkSize,
+    options?.hashingFunction
+  )
 
   let result: SendResult
   try {
