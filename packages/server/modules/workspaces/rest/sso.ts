@@ -694,8 +694,8 @@ const tryGetSpeckleUserDataFactory =
     req.log.info(
       {
         providerEmail,
-        currentSessionUser,
-        existingSpeckleUser
+        currentSessionUserId: currentSessionUser?.id,
+        existingSpeckleUserId: existingSpeckleUser?.id
       },
       'Computing active user information given current auth context:'
     )
