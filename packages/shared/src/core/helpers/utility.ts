@@ -93,9 +93,7 @@ export const retry = async <V = unknown>(
       }
     }
   }
-  if (lastError) {
-    throw lastError
-  }
+  throw lastError || new Error('Unexpected retry() failure')
 }
 
 /**

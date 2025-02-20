@@ -687,7 +687,7 @@ const tryGetSpeckleUserDataFactory =
 
     // Get user with email that matches OIDC provider user email, if match exists
     const providerEmail = getEmailFromOidcProfile(oidcProviderUserData)
-    const userEmail = await findEmail({ email: providerEmail })
+    const userEmail = await findEmail({ email: providerEmail.toLowerCase() })
     if (!!userEmail && !userEmail.verified) throw new SsoUserEmailUnverifiedError()
     const existingSpeckleUser = await getUser(userEmail?.userId ?? '')
 
