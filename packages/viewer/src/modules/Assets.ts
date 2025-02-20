@@ -71,11 +71,11 @@ export class Assets {
           },
           undefined,
           (error: ErrorEvent) => {
-            reject(`Loading asset ${asset.id} failed ${error.message}`)
+            reject(new Error(`Loading asset ${asset.id} failed ${error.message}`))
           }
         )
       } else {
-        reject(`Loading asset ${asset.id} failed`)
+        reject(new Error(`Loading asset ${asset.id} failed`))
       }
     })
   }
@@ -97,7 +97,7 @@ export class Assets {
           resolve(texture)
         }
         image.onerror = (ev) => {
-          reject(`Loading asset ${asset.id} failed with ${ev.toString()}`)
+          reject(new Error(`Loading asset ${asset.id} failed with ${ev.toString()}`))
         }
       } else {
         const loader = Assets.getLoader(asset.src, asset.type)
@@ -110,11 +110,11 @@ export class Assets {
             },
             undefined,
             (error: ErrorEvent) => {
-              reject(`Loading asset ${asset.id} failed ${error.message}`)
+              reject(new Error(`Loading asset ${asset.id} failed ${error.message}`))
             }
           )
         } else {
-          reject(`Loading asset ${asset.id} failed`)
+          reject(new Error(`Loading asset ${asset.id} failed`))
         }
       }
     })
@@ -140,7 +140,7 @@ export class Assets {
         },
         undefined,
         (error: ErrorEvent) => {
-          reject(`Loading asset ${srcUrl} failed ${error.message}`)
+          reject(new Error(`Loading asset ${srcUrl} failed ${error.message}`))
         }
       )
     })
@@ -169,13 +169,13 @@ export class Assets {
   }
 
   public static generateGradientRampTexture(
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     fromColor: string,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     toColor: string,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     steps: number
   ) {
-    fromColor
-    toColor
-    steps
     // NOT NECESSARY AT THE MOMENT. USING STATIC GRADIENT RAMP
   }
 

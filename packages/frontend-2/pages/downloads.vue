@@ -110,7 +110,7 @@ const connectorTags = await useAppCached(
             connectorTag.directDownload = false
             connectorTag.versions = []
           }
-        } catch (e) {
+        } catch {
           connectorTag.directDownload = false
           connectorTag.versions = []
           // gotta catch 'em all!

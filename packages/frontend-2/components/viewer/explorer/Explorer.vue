@@ -115,6 +115,7 @@ useViewerEventListener(ViewerEvent.Busy, (isBusy: boolean) => {
 })
 
 const rootNodes = computed(() => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-expressions
   refhack.value
 
   if (!worldTree.value) return []

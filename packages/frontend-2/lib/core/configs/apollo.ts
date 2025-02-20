@@ -395,9 +395,12 @@ function createLink(params: {
         errorMessage: errMsg,
         graphql: true
       }
-      shouldLogAsWarn
-        ? logger.warn(logContext, 'Apollo Client error: {errorMessage}')
-        : logger.error(logContext, 'Apollo Client error: {errorMessage}')
+
+      if (shouldLogAsWarn) {
+        logger.warn(logContext, 'Apollo Client error: {errorMessage}')
+      } else {
+        logger.error(logContext, 'Apollo Client error: {errorMessage}')
+      }
     }
 
     const { networkError } = res
@@ -452,6 +455,7 @@ function createLink(params: {
             return // never invokes next() - essentially stuck
           }
 
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-call
           next()
         }
       }

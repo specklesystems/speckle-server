@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-var-requires */
 import { MaybeAsync } from '@/modules/shared/helpers/typeHelper'
 import { isArray, isFunction } from 'lodash'
 import mock from 'mock-require'
@@ -41,6 +40,7 @@ export function mockRequireModule<
     Record<MockTypeFunctionProp, MockedFunc<MockTypeFunctionProp>>
   > = {}
 
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const originalModule = require(modulePaths[0]) as MockType
   const mockDefinition = new Proxy<MockType>(originalModule, {
     get(target, prop) {

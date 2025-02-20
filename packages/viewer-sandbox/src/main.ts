@@ -58,16 +58,6 @@ const createViewer = async (containerName: string, _stream: string) => {
   const boxSelect = viewer.createExtension(BoxSelection)
   boxSelect.realtimeSelection = false
   viewer.createExtension(PassReader)
-  // const rotateCamera = viewer.createExtension(RotateCamera)
-  cameraController // use it
-  selection // use it
-  sections // use it
-  measurements // use it
-  filtering // use it
-  explode // use it
-  diff // use it
-  // rotateCamera // use it
-  // boxSelect // use it
 
   const sandbox = new Sandbox(controlsContainer, viewer, multiSelectList)
 

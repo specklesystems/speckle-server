@@ -93,7 +93,9 @@ export const retry = async <V = unknown>(
       }
     }
   }
-  throw lastError
+  if (lastError) {
+    throw lastError
+  }
 }
 
 /**

@@ -79,13 +79,22 @@ const execEslintFromPackageContexts = async (packageContexts) => {
 
   /** @type {Array<import('zx').ProcessPromise>} */
   const processes = packageContexts.map(async ({ absolutePath, files }) => {
+    const prefix = `[${path.relative(rootDir, absolutePath)}]`
+    process.stdout.write(`${prefix} Starting...\n`)
+
     const exec = zx.$({ cwd: absolutePath, signal: ac.signal })
     const run =
       exec`yarn eslint --cache --max-warnings=0 --no-warn-ignored ${files}`.pipe(
         process.stdout
       )
 
-    return run
+    try {
+      await run
+      process.stdout.write(`${prefix} Finished\n`)
+    } catch (e) {
+      process.stdout.write(`${prefix} Error occurred\n`)
+      throw e
+    }
   })
 
   // Wait for all to finish

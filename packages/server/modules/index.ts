@@ -35,21 +35,22 @@ const loadedModules: SpeckleModule[] = []
  */
 let hasInitializationOccurred = false
 
-function autoloadFromDirectory(dirPath: string) {
+async function autoloadFromDirectory(dirPath: string) {
   if (!fs.existsSync(dirPath)) return
 
   const results: Record<string, any> = {}
-  fs.readdirSync(dirPath).forEach((file) => {
+  const files = fs.readdirSync(dirPath)
+  for (const file of files) {
     const pathToFile = path.join(dirPath, file)
     const stat = fs.statSync(pathToFile)
     if (stat.isFile()) {
       const ext = path.extname(file)
       if (['.js', '.ts'].includes(ext)) {
         const name = camelCase(path.basename(file, ext))
-        results[name] = require(pathToFile)
+        results[name] = await import(pathToFile)
       }
     }
-  })
+  }
 
   return results
 }

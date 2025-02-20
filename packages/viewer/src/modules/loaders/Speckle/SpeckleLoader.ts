@@ -55,7 +55,7 @@ export class SpeckleLoader extends Loader {
     let token = undefined
     try {
       token = authToken || (localStorage.getItem('AuthToken') as string | undefined)
-    } catch (error) {
+    } catch {
       // Accessing localStorage may throw when executing on sandboxed document, ignore.
     }
 
@@ -102,6 +102,7 @@ export class SpeckleLoader extends Loader {
 
     const pause = new AsyncPause()
 
+    // eslint-disable-next-line @typescript-eslint/await-thenable
     for await (const obj of this.loader.getObjectIterator()) {
       if (this.isCancelled) {
         this.emit(LoaderEvent.LoadCancelled, this.resource)
