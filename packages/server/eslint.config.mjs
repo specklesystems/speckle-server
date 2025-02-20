@@ -13,16 +13,16 @@ const configs = [
   ...baseConfigs,
   {
     languageOptions: {
-      sourceType: 'commonjs',
+      sourceType: 'module',
       globals: {
         ...globals.node
       }
     }
   },
   {
-    files: ['**/*.mjs'],
+    files: ['**/*.cjs'],
     languageOptions: {
-      sourceType: 'module'
+      sourceType: 'commonjs'
     }
   },
   ...tseslint.configs.recommendedTypeChecked.map((c) => ({

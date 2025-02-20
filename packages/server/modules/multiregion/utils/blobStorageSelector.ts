@@ -17,7 +17,7 @@ import {
 import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { Optional } from '@speckle/shared'
-import { BlobStorageConfig } from '@speckle/shared/dist/commonjs/environment/multiRegionConfig'
+import { BlobStorageConfig } from '@speckle/shared/dist/esm/environment/multiRegionConfig.js'
 
 type RegionStorageClients = {
   [regionKey: string]: ObjectStorage

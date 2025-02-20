@@ -156,7 +156,7 @@ const getStreamCommentFactory =
     return comment
   }
 
-export = {
+export default {
   Query: {
     async comment(_parent, args, context) {
       const projectId = args.streamId

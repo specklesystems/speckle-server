@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 'use strict'
 
-const { logger } = require('../dist/logging/logging')
-const { init, startHttp } = require('../dist/app')
+import { logger } from '../dist/logging/logging.js'
+import { init, startHttp } from '../dist/app.js'
 
 init()
   .then(({ app, graphqlServer, server, readinessCheck }) =>

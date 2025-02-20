@@ -31,9 +31,10 @@ import { disablePreviews } from '@/modules/shared/helpers/envHelper'
 import { corsMiddlewareFactory } from '@/modules/core/configs/cors'
 
 const httpErrorImage = (httpErrorCode: number) =>
-  require.resolve(`#/assets/previews/images/preview_${httpErrorCode}.png`)
+  import.meta.resolve!(`#/assets/previews/images/preview_${httpErrorCode}.png`)
 
-const noPreviewImage = require.resolve('#/assets/previews/images/no_preview.png')
+const noPreviewImage = () =>
+  import.meta.resolve!('#/assets/previews/images/no_preview.png')
 
 export const init: SpeckleModule['init'] = (app, isInitial) => {
   if (disablePreviews()) {
@@ -54,7 +55,7 @@ export const init: SpeckleModule['init'] = (app, isInitial) => {
     const { hasPermissions, httpErrorCode } = await checkStreamPermissions(req)
     if (!hasPermissions) {
       // return res.status( httpErrorCode ).end()
-      return res.sendFile(httpErrorImage(httpErrorCode))
+      return res.sendFile(await httpErrorImage(httpErrorCode))
     }
 
     const getCommitsByStreamId = legacyGetPaginatedStreamCommitsPageFactory({
@@ -68,7 +69,7 @@ export const init: SpeckleModule['init'] = (app, isInitial) => {
       cursor: undefined
     })
     if (!commits || commits.length === 0) {
-      return res.sendFile(noPreviewImage)
+      return res.sendFile(await noPreviewImage())
     }
     const lastCommit = commits[0]
     const getObjectPreviewBufferOrFilepath = getObjectPreviewBufferOrFilepathFactory({
@@ -112,7 +113,7 @@ export const init: SpeckleModule['init'] = (app, isInitial) => {
       const { hasPermissions, httpErrorCode } = await checkStreamPermissions(req)
       if (!hasPermissions) {
         // return res.status( httpErrorCode ).end()
-        return res.sendFile(httpErrorImage(httpErrorCode))
+        return res.sendFile(await httpErrorImage(httpErrorCode))
       }
 
       const projectDb = await getProjectDbClient({ projectId: req.params.streamId })
@@ -136,7 +137,7 @@ export const init: SpeckleModule['init'] = (app, isInitial) => {
       }
       const { commits } = commitsObj
       if (!commits || commits.length === 0) {
-        return res.sendFile(noPreviewImage)
+        return res.sendFile(await noPreviewImage())
       }
       const lastCommit = commits[0]
 
@@ -179,7 +180,7 @@ export const init: SpeckleModule['init'] = (app, isInitial) => {
       const { hasPermissions, httpErrorCode } = await checkStreamPermissions(req)
       if (!hasPermissions) {
         // return res.status( httpErrorCode ).end()
-        return res.sendFile(httpErrorImage(httpErrorCode))
+        return res.sendFile(await httpErrorImage(httpErrorCode))
       }
 
       const projectDb = await getProjectDbClient({ projectId: req.params.streamId })
@@ -188,7 +189,7 @@ export const init: SpeckleModule['init'] = (app, isInitial) => {
       const commit = await getCommit(req.params.commitId, {
         streamId: req.params.streamId
       })
-      if (!commit) return res.sendFile(noPreviewImage)
+      if (!commit) return res.sendFile(await noPreviewImage())
 
       const getObjectPreviewBufferOrFilepath = getObjectPreviewBufferOrFilepathFactory({
         getObject: getFormattedObjectFactory({ db: projectDb }),

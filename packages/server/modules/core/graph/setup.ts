@@ -1,7 +1,7 @@
 import { ApolloServerOptions, BaseContext } from '@apollo/server'
 import { GraphQLError } from 'graphql'
 import _ from 'lodash'
-import { VError } from 'verror'
+import VError from 'verror'
 import { ZodError } from 'zod'
 import { fromZodError } from 'zod-validation-error'
 

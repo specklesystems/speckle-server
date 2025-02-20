@@ -61,4 +61,4 @@ const resolvers = {
   }
 } as Resolvers
 
-export = resolvers
+export default resolvers

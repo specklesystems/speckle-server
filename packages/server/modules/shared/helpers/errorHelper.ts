@@ -1,5 +1,5 @@
 import { ensureError } from '@speckle/shared'
-import { VError } from 'verror'
+import VError from 'verror'
 
 /**
  * Resolve cause correctly depending on whether its a VError or basic Error

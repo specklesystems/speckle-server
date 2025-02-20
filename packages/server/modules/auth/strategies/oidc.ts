@@ -201,4 +201,4 @@ const oidcStrategyBuilderFactory =
     }
   }
 
-export = oidcStrategyBuilderFactory
+export default oidcStrategyBuilderFactory

@@ -26,4 +26,4 @@ const ServerAccessRequestsModule: SpeckleModule = {
   }
 }
 
-export = ServerAccessRequestsModule
+export default ServerAccessRequestsModule

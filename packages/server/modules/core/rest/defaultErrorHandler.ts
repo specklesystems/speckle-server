@@ -4,7 +4,7 @@ import { getCause } from '@/modules/shared/helpers/errorHelper'
 import { Optional, ensureError } from '@speckle/shared'
 import { ErrorRequestHandler } from 'express'
 import { get, isNumber } from 'lodash'
-import { VError } from 'verror'
+import VError from 'verror'
 import { logger as defaultLogger } from '@/logging/logging'
 
 const resolveStatusCode = (e: Error): number => {

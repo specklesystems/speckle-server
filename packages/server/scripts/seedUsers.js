@@ -1,4 +1,4 @@
-require('../bootstrap')
+require('../bootstrap.js')
 const { db } = require('@/db/knex')
 const { logger } = require('@/logging/logging')
 const { getServerInfoFactory } = require('@/modules/core/repositories/server')

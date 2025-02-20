@@ -178,7 +178,7 @@ const getUserStreamsCount = getUserStreamsCountFactory({ db })
 /**
  * @type {import('@/modules/core/graph/generated/graphql').Resolvers}
  */
-export = {
+export default {
   Query: {
     async stream(_, args, context) {
       const stream = await getStream({ streamId: args.id, userId: context.userId })

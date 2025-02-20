@@ -3,6 +3,7 @@ import { moduleLogger } from '@/logging/logging'
 import * as SendingService from '@/modules/emails/services/sending'
 import { initializeTransporter } from '@/modules/emails/utils/transporter'
 import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
+import emailsRest from '@/modules/emails/rest/index'
 
 const emailsModule: SpeckleModule = {
   init: async (app) => {
@@ -12,7 +13,7 @@ const emailsModule: SpeckleModule = {
     await initializeTransporter()
 
     // init rest api
-    ;(await import('./rest')).default(app)
+    emailsRest(app)
   }
 }
 
@@ -35,7 +36,7 @@ async function sendEmail({
   return SendingService.sendEmail({ from, to, subject, text, html })
 }
 
-export = {
+export default {
   ...emailsModule,
   sendEmail
 }

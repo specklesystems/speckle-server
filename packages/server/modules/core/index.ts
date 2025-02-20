@@ -93,4 +93,4 @@ const coreModule: SpeckleModule<{
   }
 }
 
-export = coreModule
+export default coreModule

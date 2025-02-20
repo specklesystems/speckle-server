@@ -59,7 +59,7 @@ import {
 } from '@/modules/multiregion/utils/dbSelector'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 
-export = {
+export default {
   User: {
     async versions(parent, args, ctx) {
       const authoredOnly = args.authoredOnly

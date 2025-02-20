@@ -11,13 +11,14 @@
     "type": "git",
     "url": "https://github.com/specklesystems/Server.git"
   },
+  "type": "module",
   "engines": {
     "node": "^18.19.0"
   },
   "scripts": {
     "build": "tsc -p ./tsconfig.build.json",
     "build:watch": "tsc -p ./tsconfig.build.json -w",
-    "run:watch": "cross-env NODE_ENV=development LOG_PRETTY=true nodemon --inspect ./bin/www --watch ./dist --watch ./assets --watch ./bin/www --watch .env --watch multiregion.json -e js,ts,graphql,env,gql",
+    "run:watch": "cross-env NODE_ENV=development LOG_PRETTY=true nodemon --inspect --import=./esmLoader.js ./bin/www --watch ./dist --watch ./assets --watch ./bin/www --watch .env --watch multiregion.json -e js,ts,graphql,env,gql",
     "dev": "concurrently \"npm:build:watch\" \"npm:run:watch\" \"yarn gqlgen:watch\" -n tsc,server,gqlgen",
     "build:clean": "rimraf ./dist && yarn build",
     "dev:clean": "yarn build:clean && yarn dev",
@@ -80,9 +81,10 @@
     "express-async-errors": "^3.1.1",
     "express-prom-bundle": "^6.6.0",
     "express-session": "^1.17.1",
+    "extensionless": "^1.9.9",
     "graphql": "^16.6.0",
     "graphql-redis-subscriptions": "^2.2.2",
-    "graphql-scalars": "^1.18.0",
+    "graphql-scalars": "^1.24.1",
     "graphql-subscriptions": "^2.0.0",
     "graphql-tag": "^2.12.6",
     "ioredis": "^5.2.2",

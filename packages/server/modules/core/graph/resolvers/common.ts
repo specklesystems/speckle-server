@@ -5,7 +5,7 @@ import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { isNonNullable } from '@speckle/shared'
 import { keyBy } from 'lodash'
 
-export = {
+export default {
   SmartTextEditorValue: {
     async attachments(parent) {
       const { blobIds, projectId } = parent

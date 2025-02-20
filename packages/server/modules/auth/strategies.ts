@@ -78,4 +78,4 @@ const setupStrategiesFactory =
     return authStrategies
   }
 
-export = setupStrategiesFactory
+export default setupStrategiesFactory

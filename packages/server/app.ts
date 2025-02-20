@@ -1,7 +1,7 @@
 /* eslint-disable camelcase */
 /* eslint-disable  no-restricted-imports */
 /* istanbul ignore file */
-import './bootstrap'
+import './bootstrap.js'
 import http from 'http'
 import express, { Express } from 'express'
 

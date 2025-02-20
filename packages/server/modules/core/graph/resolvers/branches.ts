@@ -26,7 +26,7 @@ import { filteredSubscribe } from '@/modules/shared/utils/subscriptions'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 
-export = {
+export default {
   Query: {},
   Stream: {
     async branches(parent, args) {

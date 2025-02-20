@@ -20,7 +20,7 @@ const createAppToken = createAppTokenFactory({
   storeUserServerAppToken: storeUserServerAppTokenFactory({ db })
 })
 
-export = {
+export default {
   Query: {
     async authenticatedAsApp(_parent, _args, ctx) {
       const { appId, token } = ctx

@@ -41,7 +41,7 @@ const { FF_GATEKEEPER_MODULE_ENABLED, FF_BILLING_INTEGRATION_ENABLED } =
 
 const getWorkspacePlan = getWorkspacePlanFactory({ db })
 
-export = FF_GATEKEEPER_MODULE_ENABLED
+export default FF_GATEKEEPER_MODULE_ENABLED
   ? ({
       Query: {
         workspacePricingPlans: async () => {

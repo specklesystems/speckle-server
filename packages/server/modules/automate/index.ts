@@ -386,4 +386,4 @@ const automateModule: SpeckleModule = {
   }
 }
 
-export = automateModule
+export default automateModule

@@ -23,4 +23,4 @@ const command: CommandModule<unknown, CommonDbArgs> = {
   }
 }
 
-export = command
+export default command

@@ -1,7 +1,7 @@
 /* eslint-disable no-restricted-imports */
 import path from 'path'
 import yargs from 'yargs'
-import '../../bootstrap'
+import '../../bootstrap.js'
 import { cliLogger, logger } from '@/logging/logging'
 import { isTestEnv } from '@/modules/shared/helpers/envHelper'
 import { mochaHooks } from '@/test/hooks'

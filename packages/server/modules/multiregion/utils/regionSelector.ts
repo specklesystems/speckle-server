@@ -15,7 +15,7 @@ import {
 import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
 import { getGenericRedis } from '@/modules/shared/redis/redis'
 import { Optional } from '@speckle/shared'
-import { DataRegionsConfig } from '@speckle/shared/dist/commonjs/environment/multiRegionConfig'
+import { DataRegionsConfig } from '@speckle/shared/dist/esm/environment/multiRegionConfig.js'
 
 export const getRegisteredRegionConfigs = async () => {
   const registeredKeys = (await getRegionsFactory({ db: mainDb })()).map((r) => r.key)

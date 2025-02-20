@@ -10,7 +10,7 @@ import {
 import { db } from '@/db/knex'
 import { markUserAsVerifiedFactory } from '@/modules/core/repositories/users'
 
-export = (app: Express) => {
+export default (app: Express) => {
   app.get('/auth/verifyemail', async (req, res) => {
     try {
       const finalizeEmailVerification = finalizeEmailVerificationFactory({

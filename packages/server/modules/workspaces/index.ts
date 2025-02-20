@@ -51,4 +51,4 @@ const workspacesModule: SpeckleModule = {
   }
 }
 
-export = workspacesModule
+export default workspacesModule

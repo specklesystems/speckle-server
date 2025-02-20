@@ -1,5 +1,5 @@
 // eslint-disable-next-line no-restricted-imports
-import '../bootstrap'
+import '../bootstrap.js'
 
 import { configureClient } from '@/knexfile'
 import {

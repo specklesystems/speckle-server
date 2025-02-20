@@ -19,4 +19,4 @@ const command: CommandModule = {
   }
 }
 
-export = command
+export default command

@@ -195,7 +195,7 @@ const createOnboardingStream = createOnboardingStreamFactory({
 const getUserStreams = getUserStreamsPageFactory({ db })
 const getUserStreamsCount = getUserStreamsCountFactory({ db })
 
-export = {
+export default {
   Query: {
     async project(_parent, args, context) {
       const getStream = getStreamFactory({ db })

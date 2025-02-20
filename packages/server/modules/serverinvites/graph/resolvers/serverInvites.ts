@@ -128,7 +128,7 @@ const buildCreateAndSendServerOrProjectInvite = () =>
     getServerInfo
   })
 
-export = {
+export default {
   Query: {
     async streamInvite(_parent, args, context) {
       const { streamId, token } = args

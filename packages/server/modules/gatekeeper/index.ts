@@ -232,4 +232,4 @@ async function isProjectReadOnly({ projectId }: { projectId: string }) {
   if (readOnly) throw new WorkspaceReadOnlyError()
 }
 
-export = gatekeeperModule
+export default gatekeeperModule

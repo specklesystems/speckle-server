@@ -13,7 +13,7 @@ import {
 } from '@/modules/shared/utils/subscriptions'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 
-export = {
+export default {
   Stream: {
     async fileUploads(parent) {
       const projectDb = await getProjectDbClient({ projectId: parent.id })

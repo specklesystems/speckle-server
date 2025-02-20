@@ -13,9 +13,11 @@ import { authorizeResolver, validateScopes } from '@/modules/shared'
 import { disablePreviews } from '@/modules/shared/helpers/envHelper'
 import { Roles, Scopes } from '@speckle/shared'
 import type { Logger } from 'pino'
+// import { createRequire } from 'node:module'
 
-const noPreviewImage = require.resolve('#/assets/previews/images/no_preview.png')
-const previewErrorImage = require.resolve('#/assets/previews/images/preview_error.png')
+// const require = createRequire(import.meta.url)
+// const noPreviewImage = require.resolve('#/assets/previews/images/no_preview.png')
+// const previewErrorImage = require.resolve('#/assets/previews/images/preview_error.png')
 const defaultAngle = '0'
 
 export const getObjectPreviewBufferOrFilepathFactory =
@@ -27,6 +29,11 @@ export const getObjectPreviewBufferOrFilepathFactory =
     logger: Logger
   }): GetObjectPreviewBufferOrFilepath =>
   async ({ streamId, objectId, angle }) => {
+    const [noPreviewImage, previewErrorImage] = await Promise.all([
+      import.meta.resolve!('#/assets/previews/images/no_preview.png'),
+      import.meta.resolve!('#/assets/previews/images/preview_error.png')
+    ])
+
     angle = angle || defaultAngle
     const boundLogger = deps.logger.child({ streamId, objectId, angle })
 

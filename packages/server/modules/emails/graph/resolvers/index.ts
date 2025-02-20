@@ -25,7 +25,7 @@ const requestEmailVerification = requestEmailVerificationFactory({
 })
 const getUserByEmail = getUserByEmailFactory({ db })
 
-export = {
+export default {
   User: {
     async hasPendingVerification(parent) {
       const email = parent.email

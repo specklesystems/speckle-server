@@ -24,7 +24,7 @@ const getStreamObject: NonNullable<Resolvers['Stream']>['object'] =
     )
   }
 
-export = {
+export default {
   Stream: {
     object: getStreamObject
   },

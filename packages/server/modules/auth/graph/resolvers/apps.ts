@@ -24,7 +24,7 @@ const revokeExistingAppCredentialsForUser = revokeExistingAppCredentialsForUserF
   db
 })
 
-export = {
+export default {
   Query: {
     async app(_parent, args) {
       const app = await getApp({ id: args.id })

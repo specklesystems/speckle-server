@@ -49,7 +49,7 @@ const getUserGendoAiCredits = getUserGendoAiCreditsFactory({
 
 const { FF_GENDOAI_MODULE_ENABLED } = getFeatureFlags()
 
-export = FF_GENDOAI_MODULE_ENABLED
+export default FF_GENDOAI_MODULE_ENABLED
   ? ({
       Version: {
         async gendoAIRenders(parent) {

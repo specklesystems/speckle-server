@@ -19,7 +19,7 @@ const updateNotificationPreferences = updateNotificationPreferencesFactory({
   saveUserNotificationPreferences: saveUserNotificationPreferencesFactory({ db })
 })
 
-export = {
+export default {
   User: {
     async notificationPreferences(parent) {
       const preferences = await getUserNotificationPreferences(parent.id)

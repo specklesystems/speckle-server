@@ -17520,9 +17520,10 @@ __metadata:
     express-async-errors: "npm:^3.1.1"
     express-prom-bundle: "npm:^6.6.0"
     express-session: "npm:^1.17.1"
+    extensionless: "npm:^1.9.9"
     graphql: "npm:^16.6.0"
     graphql-redis-subscriptions: "npm:^2.2.2"
-    graphql-scalars: "npm:^1.18.0"
+    graphql-scalars: "npm:^1.24.1"
     graphql-subscriptions: "npm:^2.0.0"
     graphql-tag: "npm:^2.12.6"
     http-proxy-middleware: "npm:v3.0.0-beta.0"
@@ -31188,6 +31189,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"extensionless@npm:^1.9.9":
+  version: 1.9.9
+  resolution: "extensionless@npm:1.9.9"
+  checksum: 10/5d28368b7397629579aca1e8e9c8d101f44eeab693164bb1db6071b01f378ebaba3c8b1c0c900346ba3295e4d595b4060b14450804977228c22695deda788a3d
+  languageName: node
+  linkType: hard
+
 "external-editor@npm:^3.0.3":
   version: 3.1.0
   resolution: "external-editor@npm:3.1.0"
@@ -33287,14 +33295,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"graphql-scalars@npm:^1.18.0":
-  version: 1.18.0
-  resolution: "graphql-scalars@npm:1.18.0"
+"graphql-scalars@npm:^1.24.1":
+  version: 1.24.1
+  resolution: "graphql-scalars@npm:1.24.1"
   dependencies:
-    tslib: "npm:~2.4.0"
+    tslib: "npm:^2.5.0"
   peerDependencies:
     graphql: ^0.8.0 || ^0.9.0 || ^0.10.0 || ^0.11.0 || ^0.12.0 || ^0.13.0 || ^14.0.0 || ^15.0.0 || ^16.0.0
-  checksum: 10/3c27b5266cda12a6505562e1c38b1e5c1f00e2953dac2e1b618aaac834dbbe3154b7ea640f0ad63baec9bbcde1d177f3de9dc1bd4e6464f25b16a10d27f9eea6
+  checksum: 10/e142c60097ef071d26373b67955f22861a9818efd94115ff11355f5f420f19cf3ed7397d10626700801368e71cf269fb697766c5edf9a3353684c91b37ac831a
   languageName: node
   linkType: hard
 

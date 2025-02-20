@@ -8,7 +8,7 @@ import {
 
 const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
 
-export = !FF_WORKSPACES_MODULE_ENABLED
+export default !FF_WORKSPACES_MODULE_ENABLED
   ? ({
       Query: {
         workspace: async () => {

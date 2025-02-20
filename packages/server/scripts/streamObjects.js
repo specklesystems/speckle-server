@@ -1,4 +1,4 @@
-require('../bootstrap')
+require('../bootstrap.js')
 const { createManyObjects } = require('@/test/helpers')
 const { fetch } = require('undici')
 const { init } = require(`@/app`)

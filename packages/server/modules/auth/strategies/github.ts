@@ -195,4 +195,4 @@ const githubStrategyBuilderFactory =
     return strategy
   }
 
-export = githubStrategyBuilderFactory
+export default githubStrategyBuilderFactory

@@ -115,7 +115,7 @@ const getUserCommitsFactory =
     return { items, cursor, totalCount }
   }
 
-export = {
+export default {
   Query: {},
   Commit: {
     async stream(parent, _args, ctx) {

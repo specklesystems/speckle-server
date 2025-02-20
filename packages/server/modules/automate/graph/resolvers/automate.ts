@@ -138,7 +138,7 @@ const createAppToken = createAppTokenFactory({
   storeUserServerAppToken: storeUserServerAppTokenFactory({ db })
 })
 
-export = (FF_AUTOMATE_MODULE_ENABLED
+export default (FF_AUTOMATE_MODULE_ENABLED
   ? {
       /**
        * If automate module is enabled
