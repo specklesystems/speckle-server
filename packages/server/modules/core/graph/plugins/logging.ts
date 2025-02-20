@@ -97,7 +97,6 @@ export const loggingPluginFactory: (deps: {
           logger.error({ err: e, transaction }, 'Error while defining action name')
         }
 
-        ctx.request.http
         ctx.request.transaction = transaction
         ctx.contextValue.log = logger
       },

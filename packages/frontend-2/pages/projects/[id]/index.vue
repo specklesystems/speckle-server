@@ -157,7 +157,7 @@ const modelCount = computed(() => project.value?.modelCount.totalCount)
 const commentCount = computed(() => project.value?.commentThreadCount.totalCount)
 const hasRole = computed(() => project.value?.role)
 const canEdit = computed(() => (project.value ? canEditProject(project.value) : false))
-const teamUsers = computed(() => project.value?.team.map((t) => t.user))
+const teamUsers = computed(() => project.value?.team.map((t) => t.user) || [])
 const actionsItems = computed<LayoutMenuItem[][]>(() => {
   const items: LayoutMenuItem[][] = [
     [

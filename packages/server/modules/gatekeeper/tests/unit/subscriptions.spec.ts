@@ -867,7 +867,7 @@ describe('subscriptions @gatekeeper', () => {
         logger,
         getWorkspaceSubscriptions: async () => [testWorkspaceSubscription],
         downscaleWorkspaceSubscription: async () => {
-          throw 'kabumm'
+          throw new Error('kabumm')
         },
         updateWorkspaceSubscription: async ({ workspaceSubscription }) => {
           updatedWorkspaceSubscription = workspaceSubscription
@@ -890,7 +890,7 @@ describe('subscriptions @gatekeeper', () => {
         logger,
         getWorkspaceSubscriptions: async () => [testWorkspaceSubscription],
         downscaleWorkspaceSubscription: async () => {
-          throw 'kabumm'
+          throw new Error('kabumm')
         },
         updateWorkspaceSubscription: async ({ workspaceSubscription }) => {
           updatedWorkspaceSubscription = workspaceSubscription

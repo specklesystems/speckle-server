@@ -358,6 +358,7 @@ export const getSsoRouter = (): Router => {
   return router
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const workspaceSsoAuthRequestParams = z.object({
   workspaceSlug: z.string().min(1)
 })

@@ -134,7 +134,7 @@ export const darkThemeVariables = {
   '--danger-darker': '#AB3E3E'
 }
 
-const plugin = buildPlugin(function ({ addComponents, addBase }) {
+const plugin = buildPlugin(({ addComponents, addBase }) => {
   addBase({
     /* cyrillic-ext */
     '@font-face': {

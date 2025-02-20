@@ -39,12 +39,7 @@ type WorkspaceInfoDetails = {
   description: MaybeNullOrUndefined<string>
 }
 
-const info: WorkspaceInfoDetails = {
-  name: null,
-  description: null
-}
-
-type WorkspaceInfo = Record<keyof typeof info, MaybeNullOrUndefined<string>>
+type WorkspaceInfo = Record<keyof WorkspaceInfoDetails, MaybeNullOrUndefined<string>>
 
 type Limits = 'uploadSize' | 'automateMinutes'
 

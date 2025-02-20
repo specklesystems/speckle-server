@@ -49,7 +49,7 @@ import {
   ExclamationCircleIcon
 } from '@heroicons/vue/24/outline'
 import { noop } from 'lodash'
-import { computed, useSlots } from 'vue'
+import { computed, useSlots, type SetupContext } from 'vue'
 import FormButton from '~~/src/components/form/Button.vue'
 import type {
   PropAnyComponent,
@@ -76,7 +76,7 @@ const props = withDefaults(
   }
 )
 
-const slots = useSlots()
+const slots: SetupContext['slots'] = useSlots()
 const hasDescription = computed(() => !!slots['description'])
 const hasTitle = computed(() => !!slots['title'])
 

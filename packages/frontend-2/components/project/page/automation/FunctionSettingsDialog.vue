@@ -247,7 +247,7 @@ const onSave = async () => {
             parameters
           }
         ],
-        triggerDefinitions: <Automate.AutomateTypes.TriggerDefinitionsSchema>{
+        triggerDefinitions: {
           version: Automate.AutomateTypes.TRIGGER_DEFINITIONS_SCHEMA_VERSION,
           definitions: [
             {
@@ -255,7 +255,7 @@ const onSave = async () => {
               modelId: model.id
             }
           ]
-        }
+        } satisfies Automate.AutomateTypes.TriggerDefinitionsSchema
       }
     })
     if (res?.id) {
@@ -280,7 +280,7 @@ const onSave = async () => {
 
 // Reset everything if props change
 watch(
-  () => <const>[props.revisionFn?.release.function.id, props.revisionFn?.release.id],
+  () => [props.revisionFn?.release.function.id, props.revisionFn?.release.id] as const,
   ([newFunctionId, newFunctionRevisionId], [oldFunctionId, oldFunctionRevisionId]) => {
     if (
       newFunctionId === oldFunctionId &&

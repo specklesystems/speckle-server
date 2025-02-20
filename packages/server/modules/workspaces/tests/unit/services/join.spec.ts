@@ -18,7 +18,7 @@ import { expect } from 'chai'
 import { assign } from 'lodash'
 
 const createTestWorkspaceWithDomains = (
-  arg?: Partial<WorkspaceWithDomains> | undefined
+  arg?: Partial<WorkspaceWithDomains>
 ): WorkspaceWithDomains => {
   const workspace: WorkspaceWithDomains = {
     createdAt: new Date(),

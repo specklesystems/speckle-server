@@ -59,7 +59,7 @@ export default defineComponent({
 
         if (expectStyle) {
           for (const [key, value] of Object.entries(expectStyle)) {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             if (el.style[key as any] !== value) {
               return false
             }
