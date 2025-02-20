@@ -95,7 +95,7 @@
     "@graphql-codegen/typescript": "^4.1.1",
     "@graphql-codegen/visitor-plugin-common": "5.5.0",
     "@nuxt/devtools": "^1.7.0",
-    "@nuxt/eslint": "^0.3.13",
+    "@nuxt/eslint": "^1.1.0",
     "@nuxt/image": "^1.8.1",
     "@nuxtjs/tailwindcss": "^6.12.2",
     "@parcel/watcher": "^2.4.1",

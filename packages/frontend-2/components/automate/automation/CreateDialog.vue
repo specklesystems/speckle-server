@@ -420,7 +420,7 @@ const onDetailsSubmit = handleDetailsSubmit(async () => {
               parameters: encryptedParams
             }
           ],
-          triggerDefinitions: <Automate.AutomateTypes.TriggerDefinitionsSchema>{
+          triggerDefinitions: {
             version: Automate.AutomateTypes.TRIGGER_DEFINITIONS_SCHEMA_VERSION,
             definitions: [
               {
@@ -428,7 +428,7 @@ const onDetailsSubmit = handleDetailsSubmit(async () => {
                 modelId: model.id
               }
             ]
-          }
+          } satisfies Automate.AutomateTypes.TriggerDefinitionsSchema
         }
       },
       { hideSuccessToast: true }

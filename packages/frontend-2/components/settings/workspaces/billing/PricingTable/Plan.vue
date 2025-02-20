@@ -99,7 +99,7 @@
 </template>
 
 <script setup lang="ts">
-import { type PricingPlan } from '@/lib/billing/helpers/types'
+import type { PricingPlan } from '@/lib/billing/helpers/types'
 import { Roles } from '@speckle/shared'
 import {
   type WorkspacePlan,

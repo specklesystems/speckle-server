@@ -45,7 +45,7 @@
 </template>
 
 <script setup lang="ts">
-import { type MaybeNullOrUndefined } from '@speckle/shared'
+import type { MaybeNullOrUndefined } from '@speckle/shared'
 import type {
   SettingsWorkspacesMembersRequestsTable_WorkspaceFragment,
   WorkspaceJoinRequestApproveDialog_WorkspaceJoinRequestFragment
