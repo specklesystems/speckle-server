@@ -169,13 +169,13 @@ export class Assets {
   }
 
   public static generateGradientRampTexture(
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     fromColor: string,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     toColor: string,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     steps: number
   ) {
+    fromColor
+    toColor
+    steps
     // NOT NECESSARY AT THE MOMENT. USING STATIC GRADIENT RAMP
   }
 

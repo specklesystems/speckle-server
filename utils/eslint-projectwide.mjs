@@ -4,7 +4,7 @@ import { getESMDirname } from '../eslint.config.mjs'
 import * as zx from 'zx'
 import events from 'events'
 
-events.setMaxListeners(30)
+events.setMaxListeners(31)
 process.env.FORCE_COLOR = '1'
 const rootDir = path.resolve(getESMDirname(import.meta.url), '../')
 
