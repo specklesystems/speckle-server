@@ -298,6 +298,7 @@ export class SketchupBridge extends BaseBridge {
 
   public async createVersion(args: CreateVersionArgs) {
     const accountStore = useAccountStore()
+    const hostAppStore = useHostAppStore()
     const { accounts } = storeToRefs(accountStore)
     const account = accounts.value.find((acc) => acc.accountInfo.id === args.accountId)
 
@@ -305,11 +306,15 @@ export class SketchupBridge extends BaseBridge {
       useMutation(createVersionMutation)
     )
 
+    // sketchup versions are provided as 2 digit. i.e. 22, 23, 24
+    // we are safe with this string concatanation for 77 years
+    const hostAppName = `SketchUp 20${hostAppStore.hostAppVersion}`
+
     const result = await createVersion.mutate({
       input: {
         modelId: args.modelId,
         objectId: args.referencedObjectId,
-        sourceApplication: 'sketchup',
+        sourceApplication: hostAppName,
         projectId: args.projectId
       }
     })
