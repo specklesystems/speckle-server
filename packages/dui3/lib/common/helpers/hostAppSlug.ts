@@ -10,6 +10,7 @@ export function getSlugFromHostAppNameAndVersion(appname: string) {
   // delete space if any
   appname = appname.toLowerCase().replace(/\s/g, '')
 
+  // `NEW CONNECTOR CHECK`
   const keywords = [
     'dynamo',
     'revit',
