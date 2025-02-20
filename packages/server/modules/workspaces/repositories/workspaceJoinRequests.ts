@@ -13,6 +13,7 @@ import {
 } from '@/modules/workspacesCore/helpers/db'
 import { Roles } from '@speckle/shared'
 import { Knex } from 'knex'
+import { SetRequired } from 'type-fest'
 
 const tables = {
   workspaceJoinRequests: (db: Knex) =>
@@ -57,10 +58,7 @@ type WorkspaceJoinRequestFilter = {
 }
 
 const adminWorkspaceJoinRequestsBaseQueryFactory =
-  (db: Knex) =>
-  (
-    filter: Omit<WorkspaceJoinRequestFilter, 'workspaceId'> & { workspaceId: string }
-  ) => {
+  (db: Knex) => (filter: SetRequired<WorkspaceJoinRequestFilter, 'workspaceId'>) => {
     const query = tables
       .workspaceJoinRequests(db)
       .innerJoin(
@@ -82,7 +80,7 @@ export const getAdminWorkspaceJoinRequestsFactory =
     cursor,
     limit
   }: {
-    filter: Omit<WorkspaceJoinRequestFilter, 'workspaceId'> & { workspaceId: string }
+    filter: SetRequired<WorkspaceJoinRequestFilter, 'workspaceId'>
     cursor?: string
     limit: number
   }) => {
@@ -102,7 +100,7 @@ export const countAdminWorkspaceJoinRequestsFactory =
   async ({
     filter
   }: {
-    filter: Omit<WorkspaceJoinRequestFilter, 'workspaceId'> & { workspaceId: string }
+    filter: SetRequired<WorkspaceJoinRequestFilter, 'workspaceId'>
   }) => {
     const query = adminWorkspaceJoinRequestsBaseQueryFactory(db)(filter)
 

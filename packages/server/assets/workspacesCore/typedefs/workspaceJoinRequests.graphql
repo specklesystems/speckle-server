@@ -50,4 +50,5 @@ extend type User {
   ): LimitedWorkspaceJoinRequestCollection
     @hasServerRole(role: SERVER_GUEST)
     @hasScope(scope: "workspace:read")
+    @isOwner
 }
