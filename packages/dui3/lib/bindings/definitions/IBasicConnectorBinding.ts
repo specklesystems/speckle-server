@@ -10,6 +10,9 @@ export const IBasicConnectorBindingKey = 'baseBinding'
 export interface IBasicConnectorBinding
   extends IBinding<IBasicConnectorBindingHostEvents> {
   // Various
+  /**
+   * return `slug` from connectors, we should have name it better at the beginning
+   */
   getSourceApplicationName: () => Promise<string>
   getSourceApplicationVersion: () => Promise<string>
   getConnectorVersion: () => Promise<string>
