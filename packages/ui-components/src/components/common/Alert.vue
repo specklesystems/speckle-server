@@ -166,7 +166,7 @@ const iconClasses = computed(() => {
       classParts.push('text-success-darker')
       break
     case 'info':
-      classParts.push('text-info-darker')
+      classParts.push('text-info-darker dark:text-primary')
       break
     case 'danger':
       classParts.push('text-danger-darker')

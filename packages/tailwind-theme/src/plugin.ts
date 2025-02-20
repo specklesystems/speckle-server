@@ -123,8 +123,8 @@ export const darkThemeVariables = {
 
   /* info variations */
   '--info': '#B8C0CC',
-  '--info-lighter': '#E0ECFF',
-  '--info-lightest': '#030330',
+  '--info-lighter': '#0043B2',
+  '--info-lightest': '#0043B2',
   '--info-darker': '#6B7D99',
 
   /* danger variations */
