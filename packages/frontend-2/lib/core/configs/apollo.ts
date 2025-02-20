@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-return */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { ApolloLink, InMemoryCache, split, from } from '@apollo/client/core'
 import { setContext } from '@apollo/client/link/context'
 import { SubscriptionClient } from 'subscriptions-transport-ws'
@@ -455,7 +453,6 @@ function createLink(params: {
             return // never invokes next() - essentially stuck
           }
 
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-call
           next()
         }
       }
