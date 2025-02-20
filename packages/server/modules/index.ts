@@ -35,7 +35,7 @@ const loadedModules: SpeckleModule[] = []
  */
 let hasInitializationOccurred = false
 
-async function autoloadFromDirectory(dirPath: string) {
+function autoloadFromDirectory(dirPath: string) {
   if (!fs.existsSync(dirPath)) return
 
   const results: Record<string, any> = {}
@@ -47,7 +47,8 @@ async function autoloadFromDirectory(dirPath: string) {
       const ext = path.extname(file)
       if (['.js', '.ts'].includes(ext)) {
         const name = camelCase(path.basename(file, ext))
-        results[name] = await import(pathToFile)
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        results[name] = require(pathToFile)
       }
     }
   }
