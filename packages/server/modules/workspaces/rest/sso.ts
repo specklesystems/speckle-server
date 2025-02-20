@@ -690,6 +690,16 @@ const tryGetSpeckleUserDataFactory =
     if (!!userEmail && !userEmail.verified) throw new SsoUserEmailUnverifiedError()
     const existingSpeckleUser = await getUser(userEmail?.userId ?? '')
 
+    // Log details about users we're comparing
+    req.log.info(
+      {
+        providerEmail,
+        currentSessionUserId: currentSessionUser?.id,
+        existingSpeckleUserId: existingSpeckleUser?.id
+      },
+      'Computing active user information given current auth context:'
+    )
+
     // Confirm existing user matches signed-in user, if both are present
     if (!!currentSessionUser && !!existingSpeckleUser) {
       if (currentSessionUser.id !== existingSpeckleUser.id) {
