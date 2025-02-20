@@ -88,6 +88,7 @@ import { ChevronRightIcon } from '@heroicons/vue/24/solid'
 import { ReceiverModelCard } from '~/lib/models/card/receiver'
 import { useMixpanel } from '~/lib/core/composables/mixpanel'
 import { useAddByUrl } from '~/lib/core/composables/addByUrl'
+import { getSlugFromHostAppNameAndVersion } from '~/lib/common/helpers/hostAppSlug'
 
 const { trackEvent } = useMixpanel()
 
@@ -175,6 +176,15 @@ const selectVersionAndAddModel = async (
     return
   }
 
+  // We were tracking the source host app wrong before `getHostAppFromString`
+  // i.e. we were having `Revit 2023` instead of `revit`
+  const selectedVersionSourceApp = getSlugFromHostAppNameAndVersion(
+    version.sourceApplication as string
+  )
+  const latestVersionSourceApp = getSlugFromHostAppNameAndVersion(
+    latestVersion.sourceApplication as string
+  )
+
   const modelCard = new ReceiverModelCard()
   modelCard.accountId = selectedAccountId.value
   modelCard.serverUrl = activeAccount.value.accountInfo.serverInfo.url
@@ -187,11 +197,11 @@ const selectVersionAndAddModel = async (
   modelCard.modelName = selectedModel.value?.name as string
 
   modelCard.selectedVersionId = version.id
-  modelCard.selectedVersionSourceApp = version.sourceApplication as string
+  modelCard.selectedVersionSourceApp = selectedVersionSourceApp
   modelCard.selectedVersionUserId = version.authorUser?.id as string
 
   modelCard.latestVersionId = latestVersion.id
-  modelCard.latestVersionSourceApp = latestVersion.sourceApplication as string
+  modelCard.latestVersionSourceApp = latestVersionSourceApp
   modelCard.latestVersionUserId = latestVersion.authorUser?.id as string
 
   modelCard.hasDismissedUpdateWarning = true
