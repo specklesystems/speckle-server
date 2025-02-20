@@ -7,6 +7,7 @@ export function getSlugFromHostAppNameAndVersion(appname: string) {
     return 'other'
   }
 
+  // delete space if any
   appname = appname.toLowerCase().replace(/\s/g, '')
 
   const keywords = [
