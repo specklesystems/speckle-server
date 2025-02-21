@@ -139,7 +139,8 @@ const {
   query: getUsersQuery,
   baseVariables: computed(() => ({
     query: search.value?.length ? search.value : null,
-    limit: 50
+    limit: 50,
+    cursor: null as Nullable<string>
   })),
   resolveKey: (vars) => [vars.query || ''],
   resolveCurrentResult: (res) => res?.admin.userList,

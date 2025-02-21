@@ -116,7 +116,7 @@ describe('Workspace services', () => {
       const err = await expectToThrow(() => {
         validateWorkspaceSlug(cryptoRandomString({ length: 31 }))
       })
-      expect(err.message).to.contain('slug must not exceed')
+      expect(err.message).to.contain('must not exceed')
     })
     it('throws for invalid start', async () => {
       const err = await expectToThrow(() => {
