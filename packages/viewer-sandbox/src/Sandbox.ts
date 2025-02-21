@@ -917,7 +917,7 @@ export default class Sandbox {
         min: 0,
         max: 10
       })
-      .on('change', (value) => {
+      .on('change', () => {
         this.viewer.setLightConfiguration(this.lightParams)
       })
 
@@ -928,7 +928,7 @@ export default class Sandbox {
 
     shadowcatcherFolder
       .addInput(this.lightParams, 'shadowcatcher', { label: 'Enabled' })
-      .on('change', (value) => {
+      .on('change', () => {
         this.viewer.setLightConfiguration(this.lightParams)
       })
 
@@ -1066,7 +1066,7 @@ export default class Sandbox {
         max: 1,
         step: 0.001
       })
-      .on('change', (value) => {
+      .on('change', () => {
         this.viewer
           .getExtension(ExplodeExtension)
           .setExplode(this.batchesParams.explode)

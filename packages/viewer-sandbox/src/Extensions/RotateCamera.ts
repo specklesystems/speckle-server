@@ -23,7 +23,7 @@ export class RotateCamera extends Extension {
     super(viewer)
   }
 
-  public onUpdate(deltaTime: number) {
+  public onUpdate(_deltaTime: number) {
     this.cameraController.setCameraView(this.polar, false)
   }
   public onRender() {
