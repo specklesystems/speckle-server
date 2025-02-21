@@ -148,7 +148,8 @@ const canUpgradeToPlan = computed(() => {
     [WorkspacePlans.Unlimited]: [],
     [WorkspacePlans.StarterInvoiced]: [],
     [WorkspacePlans.PlusInvoiced]: [],
-    [WorkspacePlans.BusinessInvoiced]: []
+    [WorkspacePlans.BusinessInvoiced]: [],
+    [WorkspacePlans.Free]: []
   }
 
   return allowedUpgrades[props.currentPlan.name].includes(props.plan.name)

@@ -173,6 +173,7 @@ const documents = {
     "\n  fragment BillingActions_Workspace on Workspace {\n    id\n    name\n    invitedTeam(filter: $invitesFilter) {\n      id\n    }\n    plan {\n      name\n      status\n    }\n    subscription {\n      billingInterval\n    }\n    team {\n      totalCount\n    }\n    defaultRegion {\n      name\n    }\n  }\n": types.BillingActions_WorkspaceFragmentDoc,
     "\n  mutation BillingCreateCheckoutSession($input: CheckoutSessionInput!) {\n    workspaceMutations {\n      billing {\n        createCheckoutSession(input: $input) {\n          url\n          id\n        }\n      }\n    }\n  }\n": types.BillingCreateCheckoutSessionDocument,
     "\n  mutation BillingUpgradePlan($input: UpgradePlanInput!) {\n    workspaceMutations {\n      billing {\n        upgradePlan(input: $input)\n      }\n    }\n  }\n": types.BillingUpgradePlanDocument,
+    "\n  mutation AdminUpdateWorkspacePlan($input: AdminUpdateWorkspacePlanInput!) {\n    admin {\n      updateWorkspacePlan(input: $input)\n    }\n  }\n": types.AdminUpdateWorkspacePlanDocument,
     "\n  query MentionsUserSearch($query: String!, $projectId: String) {\n    users(input: { query: $query, limit: 5, cursor: null, projectId: $projectId }) {\n      items {\n        id\n        name\n        company\n      }\n    }\n  }\n": types.MentionsUserSearchDocument,
     "\n  query UserSearch(\n    $query: String!\n    $limit: Int\n    $cursor: String\n    $archived: Boolean\n    $workspaceId: String\n  ) {\n    userSearch(query: $query, limit: $limit, cursor: $cursor, archived: $archived) {\n      cursor\n      items {\n        id\n        name\n        bio\n        company\n        avatar\n        verified\n        role\n        workspaceDomainPolicyCompliant(workspaceId: $workspaceId)\n      }\n    }\n  }\n": types.UserSearchDocument,
     "\n  query ServerInfoBlobSizeLimit {\n    serverInfo {\n      configuration {\n        blobSizeLimitBytes\n      }\n    }\n  }\n": types.ServerInfoBlobSizeLimitDocument,
@@ -1048,6 +1049,10 @@ export function graphql(source: "\n  mutation BillingCreateCheckoutSession($inpu
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  mutation BillingUpgradePlan($input: UpgradePlanInput!) {\n    workspaceMutations {\n      billing {\n        upgradePlan(input: $input)\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation BillingUpgradePlan($input: UpgradePlanInput!) {\n    workspaceMutations {\n      billing {\n        upgradePlan(input: $input)\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  mutation AdminUpdateWorkspacePlan($input: AdminUpdateWorkspacePlanInput!) {\n    admin {\n      updateWorkspacePlan(input: $input)\n    }\n  }\n"): (typeof documents)["\n  mutation AdminUpdateWorkspacePlan($input: AdminUpdateWorkspacePlanInput!) {\n    admin {\n      updateWorkspacePlan(input: $input)\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
