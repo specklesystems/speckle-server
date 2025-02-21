@@ -6,6 +6,7 @@ import type {
 import type { CardSetting } from '~/lib/models/card/setting'
 import type { IModelCardSharedEvents } from '~/lib/models/card'
 import type { ConversionResult } from 'lib/conversions/conversionResult'
+import type { CreateVersionArgs } from '~/lib/bridge/server'
 
 export const ISendBindingKey = 'sendBinding'
 
@@ -35,4 +36,5 @@ export interface ISendBindingEvents
    * Use whenever want to cancel model card progress, it is used on Archicad so far since send operation blocks the UI thread.
    */
   triggerCancel: (modelCardId: string) => void
+  triggerCreateVersion: (args: CreateVersionArgs) => void
 }

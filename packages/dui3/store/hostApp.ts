@@ -17,11 +17,14 @@ import type { HostAppError } from '~/lib/bridge/errorHandler'
 import type { ConversionResult } from 'lib/conversions/conversionResult'
 import { defineStore } from 'pinia'
 import type { CardSetting } from '~/lib/models/card/setting'
+import type { DUIAccount } from '~/store/accounts'
 import { useAccountStore } from '~/store/accounts'
 import {
   useUpdateConnector,
   type Version
 } from '~/lib/core/composables/updateConnector'
+import { provideApolloClient, useMutation } from '@vue/apollo-composable'
+import { createVersionMutation } from '~/lib/graphql/mutationsAndQueries'
 
 export type ProjectModelGroup = {
   projectId: string
@@ -236,6 +239,32 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
       // filter.expired =
       //   filter.selectedObjectIds.filter((id) => !selInfo.selectedObjectIds.includes(id))
       //     .length !== 0
+    }
+  })
+
+  /**
+   * It is needed for connectors that send data with REST API on host app side but do not have graphql logic to create version.
+   * Currently it is the case with Vectorworks only which asked by a extarnal collaborator.
+   */
+  app.$sendBinding?.on('triggerCreateVersion', async (args) => {
+    const accountStore = useAccountStore()
+    const account = accountStore.accounts.find(
+      (acc) => acc.accountInfo.id === args.accountId
+    )
+    try {
+      const createVersion = provideApolloClient((account as DUIAccount).client)(() =>
+        useMutation(createVersionMutation)
+      )
+      await createVersion.mutate({
+        input: {
+          modelId: args.modelId,
+          objectId: args.referencedObjectId,
+          sourceApplication: args.sourceApplication,
+          projectId: args.projectId
+        }
+      })
+    } catch (err) {
+      console.error(`triggerCreateVersion is failed: ${err}`)
     }
   })
 
