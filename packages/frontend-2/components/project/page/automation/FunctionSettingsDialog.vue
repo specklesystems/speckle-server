@@ -255,7 +255,7 @@ const onSave = async () => {
               modelId: model.id
             }
           ]
-        } satisfies Automate.AutomateTypes.TriggerDefinitionsSchema
+        } as Automate.AutomateTypes.TriggerDefinitionsSchema
       }
     })
     if (res?.id) {
