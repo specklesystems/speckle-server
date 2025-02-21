@@ -305,7 +305,7 @@ export function getOnboardingStreamUrl() {
   try {
     // validating that the URL is valid
     return new URL(val).toString()
-  } catch (e) {
+  } catch {
     // suppress
   }
 

@@ -8,7 +8,7 @@ const AUTOMATION_REVISION_ID = 'automationRevisionId'
 
 export async function up(knex: Knex): Promise<void> {
   await knex.schema.createTable(AUTOMATIONS_TABLE_NAME, (table) => {
-    table.string(AUTOMATION_ID).notNullable
+    table.string(AUTOMATION_ID).notNullable()
     table.string(AUTOMATION_REVISION_ID).notNullable()
     table.string('automationName').notNullable()
     table.string('projectId').notNullable().references('id').inTable('streams')

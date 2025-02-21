@@ -19,7 +19,7 @@ export default defineEventHandler((event) => {
         if (isValidTempCookieValue(parsedVal)) {
           tempCookieVal = parsedVal
         }
-      } catch (e) {
+      } catch {
         deleteCookie(event, key)
         continue
       }

@@ -256,7 +256,7 @@ export function buildApolloSubscriptionServer(
           if (!token) {
             throw new BadRequestError("Couldn't resolve token from auth header")
           }
-        } catch (e) {
+        } catch {
           throw new ForbiddenError('You need a token to subscribe')
         }
 
@@ -279,7 +279,7 @@ export function buildApolloSubscriptionServer(
             'Websocket connected and subscription context built.'
           )
           return buildCtx
-        } catch (e) {
+        } catch {
           throw new ForbiddenError('Subscription context build failed')
         }
       },

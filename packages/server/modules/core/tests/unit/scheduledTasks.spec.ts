@@ -61,7 +61,7 @@ describe('Scheduled tasks @core', () => {
           100,
           async () => {
             callbackExecuted = true
-            throw 'catch this'
+            throw new Error('catch this')
           },
           // fake lock aquire, always returning an invalid lock
           async () => ({ taskName, lockExpiresAt: new Date() }),

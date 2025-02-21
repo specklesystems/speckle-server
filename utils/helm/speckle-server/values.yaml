@@ -1006,9 +1006,6 @@ frontend_2:
     enabled: false
     ## @param frontend_2.inspect.port The port on which the nodejs inspect feature should be exposed
     port: '7000'
-  ## @param frontend_2.enabled Feature flag to enable running the new web application frontend.
-  ##
-  enabled: true
   ## @param frontend_2.replicas The number of instances of the Frontend 2 server prod to be deployed withing the cluster.
   ##
   replicas: 1

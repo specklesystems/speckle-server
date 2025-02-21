@@ -382,7 +382,7 @@ export const queryServerInvitesFactory =
     q.limit(limit)
 
     if (cursor) q.where(ServerInvites.col.createdAt, '<', cursor.toISOString())
-    return q
+    return (await q) as ServerInviteRecord[]
   }
 
 export const findInviteFactory =

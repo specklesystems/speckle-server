@@ -57,7 +57,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, useSlots } from 'vue'
+import { ref, useSlots, type SetupContext } from 'vue'
 import ArrowFilled from '~~/src/components/global/icon/ArrowFilled.vue'
 import { ArrowUpRightIcon } from '@heroicons/vue/24/outline'
 import CommonBadge from '~~/src/components/common/Badge.vue'
@@ -75,7 +75,7 @@ const props = defineProps<{
 
 const isOpen = ref(true)
 
-const slots = useSlots()
+const slots: SetupContext['slots'] = useSlots()
 
 const hasChildren = !!slots.default
 
