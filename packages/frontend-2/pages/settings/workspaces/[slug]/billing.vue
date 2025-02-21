@@ -456,7 +456,7 @@ const handleUpgradeClick = () => {
   mutateWorkspacePlan({
     input: {
       workspaceId: workspace.value?.id,
-      plan: 'free',
+      plan: WorkspacePlans.Free,
       status: WorkspacePlanStatuses.Valid
     }
   })
