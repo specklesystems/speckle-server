@@ -428,7 +428,7 @@ const onDetailsSubmit = handleDetailsSubmit(async () => {
                 modelId: model.id
               }
             ]
-          } satisfies Automate.AutomateTypes.TriggerDefinitionsSchema
+          } as Automate.AutomateTypes.TriggerDefinitionsSchema
         }
       },
       { hideSuccessToast: true }
