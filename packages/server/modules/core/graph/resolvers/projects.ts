@@ -91,6 +91,7 @@ import { createAndSendInviteFactory } from '@/modules/serverinvites/services/cre
 import { inviteUsersToProjectFactory } from '@/modules/serverinvites/services/projectInviteManagement'
 import { authorizeResolver, validateScopes } from '@/modules/shared'
 import { throwForNotHavingServerRole } from '@/modules/shared/authz'
+import { isRateLimiterEnabled } from '@/modules/shared/helpers/envHelper'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import {
   filteredSubscribe,
@@ -289,9 +290,14 @@ export = {
     },
     // This one is only used outside of a workspace, so the project is always created in the main db
     async create(_parent, args, context) {
-      const rateLimitResult = await getRateLimitResult('STREAM_CREATE', context.userId!)
-      if (isRateLimitBreached(rateLimitResult)) {
-        throw new RateLimitError(rateLimitResult)
+      if (isRateLimiterEnabled()) {
+        const rateLimitResult = await getRateLimitResult(
+          'STREAM_CREATE',
+          context.userId!
+        )
+        if (isRateLimitBreached(rateLimitResult)) {
+          throw new RateLimitError(rateLimitResult)
+        }
       }
 
       const regionKey = await getValidDefaultProjectRegionKey()

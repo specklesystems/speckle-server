@@ -1,11 +1,9 @@
 /* istanbul ignore file */
 import { TIME } from '@speckle/shared'
 import {
-  createRateLimiterMiddleware,
   getRateLimitResult,
   isRateLimitBreached,
   getActionForPath,
-  sendRateLimitResponse,
   RateLimitBreached,
   RateLimits,
   createConsumer,
@@ -16,6 +14,10 @@ import {
 import { expect } from 'chai'
 import httpMocks from 'node-mocks-http'
 import { RateLimiterMemory } from 'rate-limiter-flexible'
+import {
+  addRateLimitHeadersToResponse,
+  createRateLimiterMiddleware
+} from '@/modules/core/rest/ratelimiter'
 
 type RateLimiterOptions = {
   [key in RateLimitAction]: RateLimits
@@ -90,7 +92,7 @@ describe('Rate Limiting', () => {
         msBeforeNext: 4900
       }
       const response = httpMocks.createResponse()
-      await sendRateLimitResponse(response, breached)
+      await addRateLimitHeadersToResponse(response, breached)
       assert429response(response)
     })
   })
@@ -139,9 +141,16 @@ describe('Rate Limiting', () => {
       })
 
       let response = httpMocks.createResponse()
-      let nextCalled = 0
-      const next = () => {
-        nextCalled++
+      let nextCalledWithErr = 0
+      let nextCalledWithoutErr = 0
+      const next = (err: unknown) => {
+        if (err) {
+          nextCalledWithErr++
+        } else {
+          nextCalledWithoutErr++
+        }
+        expect(err).to.not.be.undefined
+        expect(err).to.have.property('rateLimitBreached')
       }
 
       const SUT = createRateLimiterMiddleware(createTestRateLimiterMappings())
@@ -151,7 +160,8 @@ describe('Rate Limiting', () => {
         await SUT(request, response, next)
       })
 
-      expect(nextCalled).to.equal(0)
+      expect(nextCalledWithErr).to.equal(1)
+      expect(nextCalledWithoutErr).to.equal(0)
       assert429response(response)
     })
   })
@@ -170,5 +180,5 @@ const assert429response = (response: any) => {
   expect(response.getHeader('X-RateLimit-Remaining')).to.be.undefined
   expect(response.getHeader('Retry-After')).to.be.greaterThanOrEqual(4)
   expect(response.getHeader('X-RateLimit-Reset')).to.not.be.undefined
-  expect(response.statusCode).to.equal(429)
+  // expect(response.statusCode).to.equal(429) // response status code is added by the error handler, which is not part of this integration test
 }

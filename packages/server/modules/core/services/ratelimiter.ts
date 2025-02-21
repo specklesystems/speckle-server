@@ -1,9 +1,5 @@
 import express from 'express'
-import {
-  getRedisUrl,
-  getIntFromEnv,
-  getBooleanFromEnv
-} from '@/modules/shared/helpers/envHelper'
+import { getRedisUrl, getIntFromEnv } from '@/modules/shared/helpers/envHelper'
 import {
   BurstyRateLimiter,
   RateLimiterAbstract,
@@ -13,10 +9,8 @@ import {
 } from 'rate-limiter-flexible'
 import { TIME } from '@speckle/shared'
 import { getIpFromRequest } from '@/modules/shared/utils/ip'
-import { RateLimitError } from '@/modules/core/errors/ratelimit'
 import { rateLimiterLogger } from '@/logging/logging'
 import { createRedisClient } from '@/modules/shared/redis/redis'
-import { getRequestPath } from '@/modules/core/helpers/server'
 import { getTokenFromRequest } from '@/modules/shared/middleware'
 
 export interface RateLimitResult {
@@ -55,10 +49,6 @@ export type RateLimiterMapping = {
 }
 
 export type RateLimitAction = keyof typeof LIMITS
-
-export const isRateLimiterEnabled = (): boolean => {
-  return getBooleanFromEnv('RATELIMITER_ENABLED', true)
-}
 
 export const LIMITS = <const>{
   ALL_REQUESTS: {
@@ -272,23 +262,6 @@ export const LIMITS = <const>{
 
 export const allActions = Object.keys(LIMITS) as RateLimitAction[]
 
-export const sendRateLimitResponse = (
-  res: express.Response,
-  rateLimitBreached: RateLimitBreached
-): express.Response => {
-  if (res.headersSent) return res
-  res.setHeader('Retry-After', rateLimitBreached.msBeforeNext / 1000)
-  res.removeHeader('X-RateLimit-Remaining')
-  res.setHeader(
-    'X-RateLimit-Reset',
-    new Date(Date.now() + rateLimitBreached.msBeforeNext).toISOString()
-  )
-  res.setHeader('X-Speckle-Meditation', 'https://http.cat/429')
-  return res.status(429).send({
-    err: 'You are sending too many requests. You have been rate limited. Please try again later.'
-  })
-}
-
 export const getActionForPath = (path: string, verb: string): RateLimitAction => {
   const maybeAction = `${verb} ${path}` as RateLimitAction
   const maybeActionNoVerb = path as RateLimitAction
@@ -306,35 +279,6 @@ export const getSourceFromRequest = (req: express.Request): string => {
 
   if (!source) source = 'unknown'
   return source
-}
-
-export const createRateLimiterMiddleware = (
-  rateLimiterMapping: RateLimiterMapping = RATE_LIMITERS
-) => {
-  return async (
-    req: express.Request,
-    res: express.Response,
-    next: express.NextFunction
-  ) => {
-    if (!isRateLimiterEnabled()) return next()
-    const path = getRequestPath(req) || ''
-    const action = getActionForPath(path, req.method)
-    const source = getSourceFromRequest(req)
-
-    const rateLimitResult = await getRateLimitResult(action, source, rateLimiterMapping)
-    if (isRateLimitBreached(rateLimitResult)) {
-      return sendRateLimitResponse(res, rateLimitResult)
-    } else {
-      try {
-        if (res.headersSent) return res
-        res.setHeader('X-RateLimit-Remaining', rateLimitResult.remainingPoints)
-        return next()
-      } catch (err) {
-        if (!(err instanceof RateLimitError)) throw err
-        return sendRateLimitResponse(res, err.rateLimitBreached)
-      }
-    }
-  }
 }
 
 // we need to take the `BurstyRateLimiter` specific type because

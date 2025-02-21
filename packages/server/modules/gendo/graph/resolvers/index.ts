@@ -36,7 +36,8 @@ import {
   getGendoAIKey,
   getGendoAICreditLimit,
   getServerOrigin,
-  getFeatureFlags
+  getFeatureFlags,
+  isRateLimiterEnabled
 } from '@/modules/shared/helpers/envHelper'
 import { getProjectObjectStorage } from '@/modules/multiregion/utils/blobStorageSelector'
 import { storeFileStreamFactory } from '@/modules/blobstorage/repositories/blobs'
@@ -86,12 +87,14 @@ export = FF_GENDOAI_MODULE_ENABLED
             ctx.resourceAccessRules
           )
 
-          const rateLimitResult = await getRateLimitResult(
-            'GENDO_AI_RENDER_REQUEST',
-            ctx.userId as string
-          )
-          if (isRateLimitBreached(rateLimitResult)) {
-            throw new RateLimitError(rateLimitResult)
+          if (isRateLimiterEnabled()) {
+            const rateLimitResult = await getRateLimitResult(
+              'GENDO_AI_RENDER_REQUEST',
+              ctx.userId as string
+            )
+            if (isRateLimitBreached(rateLimitResult)) {
+              throw new RateLimitError(rateLimitResult)
+            }
           }
 
           const userId = ctx.userId!

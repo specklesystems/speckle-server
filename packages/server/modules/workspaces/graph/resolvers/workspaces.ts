@@ -41,7 +41,11 @@ import {
 import { createProjectInviteFactory } from '@/modules/serverinvites/services/projectInviteManagement'
 import { getInvitationTargetUsersFactory } from '@/modules/serverinvites/services/retrieval'
 import { authorizeResolver } from '@/modules/shared'
-import { getFeatureFlags, getServerOrigin } from '@/modules/shared/helpers/envHelper'
+import {
+  getFeatureFlags,
+  getServerOrigin,
+  isRateLimiterEnabled
+} from '@/modules/shared/helpers/envHelper'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { WorkspaceInviteResourceType } from '@/modules/workspacesCore/domain/constants'
 import {
@@ -933,12 +937,14 @@ export = FF_WORKSPACES_MODULE_ENABLED
       },
       WorkspaceProjectMutations: {
         create: async (_parent, args, context) => {
-          const rateLimitResult = await getRateLimitResult(
-            'STREAM_CREATE',
-            context.userId!
-          )
-          if (isRateLimitBreached(rateLimitResult)) {
-            throw new RateLimitError(rateLimitResult)
+          if (isRateLimiterEnabled()) {
+            const rateLimitResult = await getRateLimitResult(
+              'STREAM_CREATE',
+              context.userId!
+            )
+            if (isRateLimitBreached(rateLimitResult)) {
+              throw new RateLimitError(rateLimitResult)
+            }
           }
 
           await authorizeResolver(

@@ -75,6 +75,7 @@ import {
 import { LegacyUserCommit } from '@/modules/core/domain/commits/types'
 import coreModule from '@/modules/core'
 import { getEventBus } from '@/modules/shared/services/eventBus'
+import { isRateLimiterEnabled } from '@/modules/shared/helpers/envHelper'
 
 const getStreams = getStreamsFactory({ db })
 
@@ -340,9 +341,14 @@ export = {
         context.resourceAccessRules
       )
 
-      const rateLimitResult = await getRateLimitResult('COMMIT_CREATE', context.userId!)
-      if (isRateLimitBreached(rateLimitResult)) {
-        throw new RateLimitError(rateLimitResult)
+      if (isRateLimiterEnabled()) {
+        const rateLimitResult = await getRateLimitResult(
+          'COMMIT_CREATE',
+          context.userId!
+        )
+        if (isRateLimitBreached(rateLimitResult)) {
+          throw new RateLimitError(rateLimitResult)
+        }
       }
 
       const createCommitByBranchId = createCommitByBranchIdFactory({

@@ -1,5 +1,4 @@
 import {
-  sendRateLimitResponse,
   getRateLimitResult,
   isRateLimitBreached
 } from '@/modules/core/services/ratelimiter'
@@ -24,6 +23,9 @@ import {
 } from '@/modules/core/domain/users/operations'
 import { GetServerInfo } from '@/modules/core/domain/server/operations'
 import { UserValidationError } from '@/modules/core/errors/user'
+import { RateLimitError } from '@/modules/core/errors/ratelimit'
+import { isRateLimiterEnabled } from '@/modules/shared/helpers/envHelper'
+import { addRateLimitHeadersToResponse } from '@/modules/core/rest/ratelimiter'
 
 const localStrategyBuilderFactory =
   (deps: {
@@ -97,12 +99,16 @@ const localStrategyBuilderFactory =
           if (!req.body.password) throw new UserInputError('Password missing')
 
           const user = req.body
-          const ip = getIpFromRequest(req)
-          if (ip) user.ip = ip
-          const source = ip ? ip : 'unknown'
-          const rateLimitResult = await deps.getRateLimitResult('USER_CREATE', source)
-          if (isRateLimitBreached(rateLimitResult)) {
-            return sendRateLimitResponse(res, rateLimitResult)
+
+          if (isRateLimiterEnabled()) {
+            const ip = getIpFromRequest(req)
+            if (ip) user.ip = ip
+            const source = ip ? ip : 'unknown'
+            const rateLimitResult = await deps.getRateLimitResult('USER_CREATE', source)
+            if (isRateLimitBreached(rateLimitResult)) {
+              addRateLimitHeadersToResponse(res, rateLimitResult)
+              return next(new RateLimitError(rateLimitResult))
+            }
           }
 
           // 1. if the server is invite only you must have an invite

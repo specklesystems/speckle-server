@@ -54,7 +54,6 @@ import {
 } from '@/modules/shared/helpers/envHelper'
 import * as ModulesSetup from '@/modules'
 import { GraphQLContext, Optional } from '@/modules/shared/helpers/typeHelper'
-import { createRateLimiterMiddleware } from '@/modules/core/services/ratelimiter'
 
 import { get, has, isString } from 'lodash'
 import { corsMiddlewareFactory } from '@/modules/core/configs/cors'
@@ -87,6 +86,7 @@ import {
   initiateRequestContextMiddleware
 } from '@/logging/requestContext'
 import { randomUUID } from 'crypto'
+import { createRateLimiterMiddleware } from '@/modules/core/rest/ratelimiter'
 
 const GRAPHQL_PATH = '/graphql'
 

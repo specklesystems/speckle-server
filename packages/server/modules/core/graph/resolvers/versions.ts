@@ -5,7 +5,10 @@ import {
   filteredSubscribe,
   ProjectSubscriptions
 } from '@/modules/shared/utils/subscriptions'
-import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
+import {
+  getServerOrigin,
+  isRateLimiterEnabled
+} from '@/modules/shared/helpers/envHelper'
 import {
   batchDeleteCommitsFactory,
   batchMoveCommitsFactory
@@ -169,9 +172,11 @@ export = {
         projectId: args.input.projectId
       })
 
-      const rateLimitResult = await getRateLimitResult('COMMIT_CREATE', ctx.userId!)
-      if (isRateLimitBreached(rateLimitResult)) {
-        throw new RateLimitError(rateLimitResult)
+      if (isRateLimiterEnabled()) {
+        const rateLimitResult = await getRateLimitResult('COMMIT_CREATE', ctx.userId!)
+        if (isRateLimitBreached(rateLimitResult)) {
+          throw new RateLimitError(rateLimitResult)
+        }
       }
 
       const projectDb = await getProjectDbClient({ projectId: args.input.projectId })

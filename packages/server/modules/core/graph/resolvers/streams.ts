@@ -82,7 +82,10 @@ import {
 } from '@/modules/core/services/streams/favorite'
 import { getUserFactory, getUsersFactory } from '@/modules/core/repositories/users'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
-import { adminOverrideEnabled } from '@/modules/shared/helpers/envHelper'
+import {
+  adminOverrideEnabled,
+  isRateLimiterEnabled
+} from '@/modules/shared/helpers/envHelper'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUsers = getUsersFactory({ db })
@@ -435,9 +438,14 @@ export = {
   },
   Mutation: {
     async streamCreate(_, args, context) {
-      const rateLimitResult = await getRateLimitResult('STREAM_CREATE', context.userId!)
-      if (isRateLimitBreached(rateLimitResult)) {
-        throw new RateLimitError(rateLimitResult)
+      if (isRateLimiterEnabled()) {
+        const rateLimitResult = await getRateLimitResult(
+          'STREAM_CREATE',
+          context.userId!
+        )
+        if (isRateLimitBreached(rateLimitResult)) {
+          throw new RateLimitError(rateLimitResult)
+        }
       }
 
       const { id } = await createStreamReturnRecord({
