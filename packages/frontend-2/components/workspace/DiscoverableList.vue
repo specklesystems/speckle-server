@@ -4,7 +4,7 @@
       {{ title }}
     </h1>
     <p v-if="showHeader" class="text-center text-body-sm text-foreground-2 mb-8">
-      {{ description }}
+      {{ displayDescription }}
     </p>
     <CommonCard
       v-for="workspace in discoverableWorkspaces"
@@ -60,7 +60,7 @@ import { useMutation } from '@vue/apollo-composable'
 import { workspaceCreateRoute } from '~~/lib/common/helpers/route'
 import { useDiscoverableWorkspaces } from '~/lib/workspaces/composables/discoverableWorkspaces'
 
-withDefaults(
+const props = withDefaults(
   defineProps<{
     title?: string
     description?: string
@@ -68,12 +68,20 @@ withDefaults(
   }>(),
   {
     title: 'Join teammates',
-    description: 'We found a workspace that matches your email domain',
     showHeader: true
   }
 )
 
 const { discoverableWorkspaces } = useDiscoverableWorkspaces()
+
+const defaultDescription = computed(() => {
+  const count = discoverableWorkspaces.value.length
+  if (count === 0) return 'No workspaces found matching your email domain'
+  if (count === 1) return 'We found a workspace that matches your email domain'
+  return `We found ${count} workspaces that match your email domain`
+})
+
+const displayDescription = computed(() => props.description ?? defaultDescription.value)
 
 const emit = defineEmits<{
   (e: 'workspace-joined'): void
