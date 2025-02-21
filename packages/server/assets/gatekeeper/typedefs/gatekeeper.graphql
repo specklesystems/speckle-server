@@ -57,6 +57,7 @@ type WorkspaceBillingMutations {
 }
 
 enum WorkspacePlans {
+  free
   starter
   plus
   business
