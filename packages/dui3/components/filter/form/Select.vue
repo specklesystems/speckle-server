@@ -62,8 +62,6 @@ watch(
     }
     // unless isMultiSelectable, newValue arrives as ISendFilterSelectItem
     if (!Array.isArray(newValue)) {
-      console.log(newValue)
-
       const filter = { ...props.filter } as SendFilterSelect
       filter.selectedItems = [newValue]
       filter.summary = (newValue as ISendFilterSelectItem).name
