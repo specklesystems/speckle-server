@@ -43,8 +43,9 @@
       </div>
       <div v-else-if="selectedFilter.id === 'layers'">TODO</div>
       <div v-else-if="selectedFilter.id === 'revitViews'">
-        <FilterRevitViews
-          :filter="(selectedFilter as RevitViewsSendFilter)"
+        <FilterFormSelect
+          :items="(store.revitAvailableViews as ISendFilterSelectItem[])"
+          :filter="(selectedFilter as SendFilterSelect)"
           @update:filter="(filter : ISendFilter) => (selectedFilter = filter)"
         />
       </div>
@@ -54,6 +55,7 @@
           @update:filter="(filter : ISendFilter) => (selectedFilter = filter)"
         />
       </div>
+      <div v-else-if="selectedFilter.id === 'navisworksSavedSets'"></div>
     </div>
     <div v-if="!!filter" class="text-xs caption rounded p-2 bg-orange-500/10">
       This action will replace the existing
@@ -66,9 +68,10 @@
 import type {
   ISendFilter,
   IDirectSelectionSendFilter,
-  RevitViewsSendFilter,
-  RevitCategoriesSendFilter
-} from 'lib/models/card/send'
+  RevitCategoriesSendFilter,
+  ISendFilterSelectItem,
+  SendFilterSelect
+} from '~/lib/models/card/send'
 import { useHostAppStore } from '~~/store/hostApp'
 import { storeToRefs } from 'pinia'
 

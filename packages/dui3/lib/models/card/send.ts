@@ -26,19 +26,33 @@ export interface ISendFilter extends IDiscriminatedObject {
 
 export interface IDirectSelectionSendFilter extends ISendFilter {}
 
-export interface RevitViewsSendFilter extends ISendFilter {
+export interface RevitViewsSendFilter extends SendFilterSelect {
   selectedView: string
   availableViews: string[]
 }
 
-export interface CategoriesData {
+export type ISendFilterSelectItem = {
   name: string
   id: string
 }
 
+export interface CategoriesData extends ISendFilterSelectItem {}
+export interface NavisworksSavedSetsData extends ISendFilterSelectItem {} // TODO: check type names are important or not? Previously it was with Discriminated object
+
 export interface RevitCategoriesSendFilter extends ISendFilter {
   selectedCategories: string[]
   availableCategories: CategoriesData[]
+}
+
+export interface SendFilterSelect extends ISendFilter {
+  isMultiSelectable: boolean
+  selectedItems: ISendFilterSelectItem[]
+  items: ISendFilterSelectItem[]
+}
+
+export interface NavisworksSavedSetsSendFilter extends ISendFilter {
+  selectedSavedSet: string
+  availableCategories: NavisworksSavedSetsData[]
 }
 
 export class SenderModelCard extends ModelCard implements ISenderModelCard {

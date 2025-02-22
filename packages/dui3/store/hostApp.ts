@@ -8,6 +8,7 @@ import type { IReceiverModelCard } from '~/lib/models/card/receiver'
 import type {
   IDirectSelectionSendFilter,
   ISendFilter,
+  ISendFilterSelectItem,
   ISenderModelCard,
   RevitViewsSendFilter
 } from 'lib/models/card/send'
@@ -53,7 +54,7 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
   const documentInfo = ref<DocumentInfo>()
   const documentModelStore = ref<DocumentModelStore>({ models: [] })
 
-  const availableViews = ref<string[]>()
+  const revitAvailableViews = ref<ISendFilterSelectItem[]>()
 
   const dismissNotification = () => {
     currentNotification.value = null
@@ -532,7 +533,9 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
       (f) => f.id === 'revitViews'
     ) as RevitViewsSendFilter
     if (revitViews) {
-      availableViews.value = revitViews.availableViews
+      revitAvailableViews.value = revitViews.availableViews.map(
+        (v) => ({ id: v, name: v } as ISendFilterSelectItem) // this is shit backward compatibility...
+      )
     }
   }
 
@@ -639,7 +642,7 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     currentNotification,
     showErrorDialog,
     hostAppError,
-    availableViews,
+    revitAvailableViews,
     setNotification,
     setModelError,
     setLatestAvailableVersion,
