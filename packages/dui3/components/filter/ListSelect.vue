@@ -109,8 +109,6 @@ watch(selectedFilterName, (newValue) => {
 })
 
 watch(selectedFilter, (newValue) => {
-  console.log(selectedFilter)
-
   emit('update:filter', newValue)
 })
 </script>
