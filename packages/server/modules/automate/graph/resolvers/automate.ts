@@ -124,6 +124,7 @@ import {
 } from '@/modules/core/repositories/tokens'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
+import { BranchNotFoundError } from '@/modules/core/errors/branch'
 
 const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
 
@@ -287,7 +288,7 @@ export = (FF_AUTOMATE_MODULE_ENABLED
           const branch = await ctx.loaders
             .forRegion({ db: projectDb })
             .commits.getCommitBranch.load(versionId)
-          if (!branch) throw Error('Invalid version Id')
+          if (!branch) throw new BranchNotFoundError('Invalid version Id')
 
           const projectId = branch.streamId
           const modelId = branch.id
@@ -473,6 +474,14 @@ export = (FF_AUTOMATE_MODULE_ENABLED
                   : {}
             })
 
+            if (!fn) {
+              return {
+                cursor: null,
+                totalCount: 0,
+                items: []
+              }
+            }
+
             return {
               cursor: fn.versionCursor,
               totalCount: fn.versionCount,
@@ -547,7 +556,11 @@ export = (FF_AUTOMATE_MODULE_ENABLED
                 origin: getServerOrigin()
               },
               functionName: args.input.name,
-              description: args.input.description
+              description: args.input.description,
+              repositoryUrl:
+                'https://github.com/specklesystems/speckle_automate_python_example',
+              supportedSourceApps: [],
+              tags: []
             }
           })
         },
@@ -705,6 +718,7 @@ export = (FF_AUTOMATE_MODULE_ENABLED
             getBranchLatestCommits: getBranchLatestCommitsFactory({
               db: projectDb
             }),
+            emitEvent: getEventBus().emit,
             validateStreamAccess
           })
 
@@ -748,6 +762,14 @@ export = (FF_AUTOMATE_MODULE_ENABLED
                   args.filter?.functionsWithoutReleases || undefined
               }
             })
+
+            if (!res) {
+              return {
+                cursor: null,
+                totalCount: 0,
+                items: []
+              }
+            }
 
             const items = res.items.map(convertFunctionToGraphQLReturn)
 
@@ -797,6 +819,14 @@ export = (FF_AUTOMATE_MODULE_ENABLED
                 }
               }
             })
+
+            if (!res) {
+              return {
+                cursor: null,
+                totalCount: 0,
+                items: []
+              }
+            }
 
             const items = res.functions.map(convertFunctionToGraphQLReturn)
 

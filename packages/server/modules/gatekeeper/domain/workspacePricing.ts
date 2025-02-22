@@ -1,4 +1,8 @@
-import { z } from 'zod'
+import {
+  PaidWorkspacePlans,
+  UnpaidWorkspacePlans,
+  WorkspacePlans
+} from '@/modules/gatekeeperCore/domain/billing'
 import type { MaybeNullOrUndefined } from '@speckle/shared'
 
 export type WorkspaceFeatureName =
@@ -35,12 +39,7 @@ type WorkspaceInfoDetails = {
   description: MaybeNullOrUndefined<string>
 }
 
-const info: WorkspaceInfoDetails = {
-  name: null,
-  description: null
-}
-
-type WorkspaceInfo = Record<keyof typeof info, MaybeNullOrUndefined<string>>
+type WorkspaceInfo = Record<keyof WorkspaceInfoDetails, MaybeNullOrUndefined<string>>
 
 type Limits = 'uploadSize' | 'automateMinutes'
 
@@ -73,46 +72,15 @@ const baseFeatures = {
   workspace: true
 }
 
-// team
-export const trialWorkspacePlans = z.literal('starter')
-
-export type TrialWorkspacePlans = z.infer<typeof trialWorkspacePlans>
-
-export const paidWorkspacePlans = z.union([
-  trialWorkspacePlans,
-  // pro
-  z.literal('plus'),
-  z.literal('business')
-])
-
-export type PaidWorkspacePlans = z.infer<typeof paidWorkspacePlans>
-
-// these are not publicly exposed for general use on billing enabled servers
-export const unpaidWorkspacePlans = z.union([
-  z.literal('unlimited'),
-  z.literal('academia'),
-  z.literal('starterInvoiced'),
-  z.literal('plusInvoiced'),
-  z.literal('businessInvoiced')
-])
-
-export type UnpaidWorkspacePlans = z.infer<typeof unpaidWorkspacePlans>
-
-export const workspacePlans = z.union([paidWorkspacePlans, unpaidWorkspacePlans])
-
-// this includes the plans your workspace can be on
-export type WorkspacePlans = z.infer<typeof workspacePlans>
-
-// this includes the pricing plans a customer can sub to
-export type WorkspacePricingPlans = PaidWorkspacePlans | 'guest'
-
-export const workspacePlanBillingIntervals = z.union([
-  z.literal('monthly'),
-  z.literal('yearly')
-])
-export type WorkspacePlanBillingIntervals = z.infer<
-  typeof workspacePlanBillingIntervals
->
+const free: WorkspacePlanFeaturesAndLimits = {
+  ...baseFeatures,
+  name: 'free',
+  description: 'The free plan',
+  oidcSso: false,
+  workspaceDataRegionSpecificity: false,
+  automateMinutes: 300,
+  uploadSize: 100
+}
 
 const starter: WorkspacePlanFeaturesAndLimits = {
   ...baseFeatures,
@@ -121,7 +89,7 @@ const starter: WorkspacePlanFeaturesAndLimits = {
   oidcSso: false,
   workspaceDataRegionSpecificity: false,
   automateMinutes: 300,
-  uploadSize: 500
+  uploadSize: 100
 }
 
 const plus: WorkspacePlanFeaturesAndLimits = {
@@ -131,7 +99,7 @@ const plus: WorkspacePlanFeaturesAndLimits = {
   oidcSso: true,
   workspaceDataRegionSpecificity: false,
   automateMinutes: 900,
-  uploadSize: 1000
+  uploadSize: 100
 }
 
 const business: WorkspacePlanFeaturesAndLimits = {
@@ -141,7 +109,7 @@ const business: WorkspacePlanFeaturesAndLimits = {
   oidcSso: true,
   workspaceDataRegionSpecificity: true,
   automateMinutes: 900,
-  uploadSize: 1000
+  uploadSize: 100
 }
 
 const unlimited: WorkspacePlanFeaturesAndLimits = {
@@ -151,7 +119,7 @@ const unlimited: WorkspacePlanFeaturesAndLimits = {
   oidcSso: true,
   workspaceDataRegionSpecificity: true,
   automateMinutes: null,
-  uploadSize: 1000
+  uploadSize: 100
 }
 
 const academia: WorkspacePlanFeaturesAndLimits = {
@@ -161,7 +129,7 @@ const academia: WorkspacePlanFeaturesAndLimits = {
   oidcSso: true,
   workspaceDataRegionSpecificity: true,
   automateMinutes: 900,
-  uploadSize: 1000
+  uploadSize: 100
 }
 
 const paidWorkspacePlanFeatures: Record<
@@ -177,6 +145,7 @@ export const unpaidWorkspacePlanFeatures: Record<
   UnpaidWorkspacePlans,
   WorkspacePlanFeaturesAndLimits
 > = {
+  free,
   academia,
   unlimited,
   starterInvoiced: starter,

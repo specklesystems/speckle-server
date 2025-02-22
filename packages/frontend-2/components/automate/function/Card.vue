@@ -2,7 +2,7 @@
   <Component
     :is="noButtons ? NuxtLink : 'div'"
     :class="classes"
-    :to="noButtons ? automationFunctionRoute(fn.id) : undefined"
+    :to="noButtons ? automateFunctionRoute(fn.id) : undefined"
     :external="externalMoreInfo"
     :target="externalMoreInfo ? '_blank' : undefined"
     class="rounded-lg border border-outline-3 bg-foundation overflow-hidden"
@@ -19,7 +19,7 @@
           >
             <Component
               :is="noButtons ? 'div' : NuxtLink"
-              :to="automationFunctionRoute(fn.id)"
+              :to="automateFunctionRoute(fn.id)"
               :target="externalMoreInfo ? '_blank' : undefined"
               class="truncate"
             >
@@ -34,7 +34,7 @@
           </div>
         </div>
       </div>
-      <div class="text-body-xs text-foreground-2 line-clamp-3 h-18">
+      <div class="text-body-xs text-foreground-2 line-clamp-3 h-18 flex-1">
         {{ plaintextDescription }}
       </div>
       <div v-if="!noButtons" class="flex flex-col sm:flex-row gap-x-1">
@@ -52,7 +52,7 @@
           </FormButton>
           <FormButton
             color="subtle"
-            :to="automationFunctionRoute(fn.id)"
+            :to="automateFunctionRoute(fn.id)"
             :external="externalMoreInfo"
             :target="externalMoreInfo ? '_blank' : undefined"
           >
@@ -63,9 +63,9 @@
       <div class="absolute top-0 right-0">
         <div
           v-if="hasLabel"
-          class="rounded-bl-md rounded-tr-lg font-medium text-body-3xs px-2 py-1"
+          class="rounded-bl-md rounded-tr-lg font-medium text-body-3xs px-1.5 py-0.5"
           :class="{
-            'bg-info-lighter text-outline-4': fn.isFeatured,
+            'bg-info-lighter text-primary-focus': fn.isFeatured,
             'bg-danger-lighter text-danger-darker': isOutdated
           }"
         >
@@ -80,7 +80,7 @@
 import { graphql } from '~/lib/common/generated/gql'
 import type { AutomationsFunctionsCard_AutomateFunctionFragment } from '~/lib/common/generated/gql/graphql'
 import { CheckIcon } from '@heroicons/vue/24/outline'
-import { automationFunctionRoute } from '~/lib/common/helpers/route'
+import { automateFunctionRoute } from '~/lib/common/helpers/route'
 import { useMarkdown } from '~/lib/common/composables/markdown'
 
 graphql(`

@@ -22,8 +22,7 @@ import {
   MaybeAsync,
   MaybeNullOrUndefined,
   Nullable,
-  Optional,
-  wait
+  Optional
 } from '@speckle/shared'
 import * as mocha from 'mocha'
 import {
@@ -199,19 +198,18 @@ export const resetPubSubFactory = (deps: { db: Knex }) => async () => {
     await deps.db.raw(
       `SELECT * FROM aiven_extras.pg_alter_subscription_disable('${info.subname}');`
     )
-    await wait(500)
     await deps.db.raw(
       `SELECT * FROM aiven_extras.pg_drop_subscription('${info.subname}');`
     )
-    await wait(1000)
     await deps.db.raw(
       `SELECT * FROM aiven_extras.dblink_slot_create_or_drop('${info.subconninfo}', '${info.subslotname}', 'drop');`
     )
   }
 
   // Drop all subs
-  // (concurrently, cause it seems possible and we have those delays there)
-  await Promise.all(subscriptions.rows.map(dropSubs))
+  for (const sub of subscriptions.rows) {
+    await dropSubs(sub)
+  }
 
   // Drop all pubs
   for (const pub of publications.rows) {

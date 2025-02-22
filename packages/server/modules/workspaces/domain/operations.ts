@@ -38,7 +38,6 @@ export type UpsertWorkspaceArgs = {
       NullableKeysToOptional<Workspace>,
       | 'domainBasedMembershipProtectionEnabled'
       | 'discoverabilityEnabled'
-      | 'defaultLogoIndex'
       | 'defaultProjectRole'
       | 'slug'
     >,
@@ -51,12 +50,7 @@ export type UpsertWorkspace = (args: UpsertWorkspaceArgs) => Promise<void>
 export type GetUserDiscoverableWorkspaces = (args: {
   domains: string[]
   userId: string
-}) => Promise<
-  Pick<
-    Workspace,
-    'id' | 'name' | 'slug' | 'description' | 'logo' | 'defaultLogoIndex'
-  >[]
->
+}) => Promise<Pick<Workspace, 'id' | 'name' | 'slug' | 'description' | 'logo'>[]>
 
 export type GetWorkspace = (args: {
   workspaceId: string
@@ -74,7 +68,7 @@ export type GetWorkspaceBySlugOrId = (args: {
 }) => Promise<Workspace | null>
 
 export type GetWorkspaces = (args: {
-  workspaceIds: string[]
+  workspaceIds?: string[]
   userId?: string
 }) => Promise<WorkspaceWithOptionalRole[]>
 
@@ -289,7 +283,7 @@ export type GetAvailableRegions = (params: {
   workspaceId: string
 }) => Promise<ServerRegion[]>
 
-export type AssignRegion = (params: {
+export type AssignWorkspaceRegion = (params: {
   workspaceId: string
   regionKey: string
 }) => Promise<void>
@@ -348,3 +342,30 @@ export type ApproveWorkspaceJoinRequest = (
 export type DenyWorkspaceJoinRequest = (
   params: Pick<WorkspaceJoinRequest, 'workspaceId' | 'userId'>
 ) => Promise<boolean>
+
+/**
+ * Project regions
+ */
+
+/**
+ * Updates project region and moves all regional data to target regional db
+ */
+export type UpdateProjectRegion = (params: {
+  projectId: string
+  regionKey: string
+}) => Promise<Stream>
+
+export type CopyWorkspace = (params: { workspaceId: string }) => Promise<string>
+export type CopyProjects = (params: { projectIds: string[] }) => Promise<string[]>
+export type CopyProjectModels = (params: {
+  projectIds: string[]
+}) => Promise<Record<string, number>>
+export type CopyProjectVersions = (params: {
+  projectIds: string[]
+}) => Promise<Record<string, number>>
+export type CopyProjectObjects = (params: {
+  projectIds: string[]
+}) => Promise<Record<string, number>>
+export type CopyProjectAutomations = (params: {
+  projectIds: string[]
+}) => Promise<Record<string, number>>

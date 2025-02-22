@@ -1,29 +1,19 @@
 import zlib from 'zlib'
-import { corsMiddleware } from '@/modules/core/configs/cors'
+import { corsMiddlewareFactory } from '@/modules/core/configs/cors'
 import Busboy from 'busboy'
-import {
-  getFeatureFlags,
-  maximumObjectUploadFileSizeMb
-} from '@/modules/shared/helpers/envHelper'
+import { maximumObjectUploadFileSizeMb } from '@/modules/shared/helpers/envHelper'
 import { ObjectHandlingError } from '@/modules/core/errors/object'
 import { estimateStringMegabyteSize } from '@/modules/core/utils/chunking'
 import { toMegabytesWith1DecimalPlace } from '@/modules/core/utils/formatting'
 import { Router } from 'express'
-import {
-  createObjectsBatchedAndNoClosuresFactory,
-  createObjectsBatchedFactory
-} from '@/modules/core/services/objects/management'
-import {
-  storeClosuresIfNotFoundFactory,
-  storeObjectsIfNotFoundFactory
-} from '@/modules/core/repositories/objects'
+import { createObjectsBatchedAndNoClosuresFactory } from '@/modules/core/services/objects/management'
+import { storeObjectsIfNotFoundFactory } from '@/modules/core/repositories/objects'
 import { validatePermissionsWriteStreamFactory } from '@/modules/core/services/streams/auth'
 import { authorizeResolver, validateScopes } from '@/modules/shared'
 import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { ExecuteHooks } from '@/modules/core/hooks'
 
 const MAX_FILE_SIZE = maximumObjectUploadFileSizeMb() * 1024 * 1024
-const { FF_NO_CLOSURE_WRITES } = getFeatureFlags()
 
 export default (app: Router, { executeHooks }: { executeHooks: ExecuteHooks }) => {
   const validatePermissionsWriteStream = validatePermissionsWriteStreamFactory({
@@ -31,9 +21,9 @@ export default (app: Router, { executeHooks }: { executeHooks: ExecuteHooks }) =
     authorizeResolver
   })
 
-  app.options('/objects/:streamId', corsMiddleware())
+  app.options('/objects/:streamId', corsMiddlewareFactory())
 
-  app.post('/objects/:streamId', corsMiddleware(), async (req, res) => {
+  app.post('/objects/:streamId', corsMiddlewareFactory(), async (req, res) => {
     const calculateLogMetadata = (params: {
       batchSizeMb: number
       start: number
@@ -70,18 +60,11 @@ export default (app: Router, { executeHooks }: { executeHooks: ExecuteHooks }) =
 
     const projectDb = await getProjectDbClient({ projectId: req.params.streamId })
 
-    const objectInsertionService = FF_NO_CLOSURE_WRITES
-      ? createObjectsBatchedAndNoClosuresFactory({
-          storeObjectsIfNotFoundFactory: storeObjectsIfNotFoundFactory({
-            db: projectDb
-          })
-        })
-      : createObjectsBatchedFactory({
-          storeObjectsIfNotFoundFactory: storeObjectsIfNotFoundFactory({
-            db: projectDb
-          }),
-          storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db: projectDb })
-        })
+    const objectInsertionService = createObjectsBatchedAndNoClosuresFactory({
+      storeObjectsIfNotFoundFactory: storeObjectsIfNotFoundFactory({
+        db: projectDb
+      })
+    })
 
     let busboy
     try {
@@ -142,7 +125,9 @@ export default (app: Router, { executeHooks }: { executeHooks: ExecuteHooks }) =
             requestDropped = true
           }
 
-          const gunzippedBuffer = zlib.gunzipSync(gzippedBuffer).toString()
+          const gunzippedBuffer = zlib
+            .gunzipSync(new Uint8Array(gzippedBuffer))
+            .toString()
           const gunzippedBufferMegabyteSize =
             estimateStringMegabyteSize(gunzippedBuffer)
           if (gunzippedBufferMegabyteSize > MAX_FILE_SIZE) {
@@ -167,7 +152,7 @@ export default (app: Router, { executeHooks }: { executeHooks: ExecuteHooks }) =
           try {
             objs = JSON.parse(gunzippedBuffer)
           } catch {
-            req.log.error(
+            req.log.info(
               calculateLogMetadata({
                 batchSizeMb: gunzippedBufferMegabyteSize,
                 start,

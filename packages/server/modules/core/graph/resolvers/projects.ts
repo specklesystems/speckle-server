@@ -3,7 +3,6 @@ import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import {
   addStreamClonedActivityFactory,
   addStreamDeletedActivityFactory,
-  addStreamInviteAcceptedActivityFactory,
   addStreamPermissionsAddedActivityFactory,
   addStreamPermissionsRevokedActivityFactory,
   addStreamUpdatedActivityFactory
@@ -150,10 +149,7 @@ const updateStreamRoleAndNotify = updateStreamRoleAndNotifyFactory({
     validateStreamAccess,
     getUser,
     grantStreamPermissions: grantStreamPermissionsFactory({ db }),
-    addStreamInviteAcceptedActivity: addStreamInviteAcceptedActivityFactory({
-      saveActivity,
-      publish
-    }),
+    emitEvent: getEventBus().emit,
     addStreamPermissionsAddedActivity: addStreamPermissionsAddedActivityFactory({
       saveActivity,
       publish
@@ -271,8 +267,12 @@ export = {
       })
       return await deleteStreamAndNotify(id, userId!, resourceAccessRules)
     },
-    async createForOnboarding(_parent, _args, { userId, resourceAccessRules }) {
-      return await createOnboardingStream(userId!, resourceAccessRules)
+    async createForOnboarding(_parent, _args, { userId, resourceAccessRules, log }) {
+      return await createOnboardingStream({
+        targetUserId: userId!,
+        targetUserResourceAccessRules: resourceAccessRules,
+        logger: log
+      })
     },
     async update(_parent, { update }, { userId, resourceAccessRules }) {
       const projectDB = await getProjectDbClient({ projectId: update.id })

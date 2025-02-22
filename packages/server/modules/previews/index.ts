@@ -4,6 +4,7 @@ import { consumePreviewResultFactory } from '@/modules/previews/resultListener'
 
 import { db } from '@/db/knex'
 import {
+  disablePreviews,
   getPreviewServiceRedisUrl,
   getRedisUrl,
   getServerOrigin
@@ -66,7 +67,7 @@ const getPreviewQueues = ({ responseQueueName }: { responseQueueName: string }) 
 }
 
 export const init: SpeckleModule['init'] = (app, isInitial) => {
-  if (process.env.DISABLE_PREVIEWS) {
+  if (disablePreviews()) {
     moduleLogger.warn('📸 Object preview module is DISABLED')
   } else {
     moduleLogger.info('📸 Init object preview module')
@@ -125,7 +126,6 @@ export const init: SpeckleModule['init'] = (app, isInitial) => {
         })
       }
     })
-    // listenFor('preview_generation_update', messageProcessor)
   }
 }
 

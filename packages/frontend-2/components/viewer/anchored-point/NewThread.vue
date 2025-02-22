@@ -106,7 +106,7 @@ const { onKeyDownHandler, updateIsTyping, pauseAutomaticUpdates } =
 const { closeAllThreads, open } = useThreadUtilities()
 
 const editor = ref(null as Nullable<{ openFilePicker: () => void }>)
-const commentValue = ref(<CommentEditorValue>{ doc: undefined, attachments: undefined })
+const commentValue = ref<CommentEditorValue>({ doc: undefined, attachments: undefined })
 const threadContainer = ref(null as Nullable<HTMLElement>)
 const isPostingNewThread = ref(false)
 

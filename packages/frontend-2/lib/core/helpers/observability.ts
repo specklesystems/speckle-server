@@ -1,9 +1,7 @@
 /* eslint-disable no-console */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unsafe-return */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 
-import { type Optional } from '@speckle/shared'
+import type { Optional } from '@speckle/shared'
 import type * as Observability from '@speckle/shared/dist/esm/observability/index'
 import {
   upperFirst,

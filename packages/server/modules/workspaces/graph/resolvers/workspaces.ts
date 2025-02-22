@@ -1,9 +1,5 @@
 import { db } from '@/db/knex'
-import {
-  Resolvers,
-  WorkspacePlans,
-  WorkspacePlanStatuses
-} from '@/modules/core/graph/generated/graphql'
+import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
 import {
   getProjectCollaboratorsFactory,
@@ -47,7 +43,7 @@ import { getInvitationTargetUsersFactory } from '@/modules/serverinvites/service
 import { authorizeResolver } from '@/modules/shared'
 import { getFeatureFlags, getServerOrigin } from '@/modules/shared/helpers/envHelper'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import { WorkspaceInviteResourceType } from '@/modules/workspaces/domain/constants'
+import { WorkspaceInviteResourceType } from '@/modules/workspacesCore/domain/constants'
 import {
   WorkspaceInvalidRoleError,
   WorkspaceJoinNotAllowedError,
@@ -147,7 +143,6 @@ import {
   validateStreamAccessFactory
 } from '@/modules/core/services/streams/access'
 import {
-  addStreamInviteAcceptedActivityFactory,
   addStreamPermissionsAddedActivityFactory,
   addStreamPermissionsRevokedActivityFactory
 } from '@/modules/activitystream/services/streamActivity'
@@ -194,13 +189,10 @@ import { getGenericRedis } from '@/modules/shared/redis/redis'
 import { convertFunctionToGraphQLReturn } from '@/modules/automate/services/functionManagement'
 import {
   getWorkspacePlanFactory,
-  upsertPaidWorkspacePlanFactory,
-  upsertTrialWorkspacePlanFactory,
-  upsertUnpaidWorkspacePlanFactory
+  upsertWorkspacePlanFactory
 } from '@/modules/gatekeeper/repositories/billing'
 import { Knex } from 'knex'
 import { getPaginatedItemsFactory } from '@/modules/shared/services/paginatedItems'
-import { InvalidWorkspacePlanStatus } from '@/modules/gatekeeper/errors/billing'
 import { BadRequestError } from '@/modules/shared/errors'
 import {
   dismissWorkspaceJoinRequestFactory,
@@ -212,6 +204,9 @@ import {
 } from '@/modules/workspaces/repositories/workspaceJoinRequests'
 import { sendWorkspaceJoinRequestReceivedEmailFactory } from '@/modules/workspaces/services/workspaceJoinRequestEmails/received'
 import { getProjectFactory } from '@/modules/core/repositories/projects'
+import { OperationTypeNode } from 'graphql'
+import { updateWorkspacePlanFactory } from '@/modules/gatekeeper/services/workspacePlans'
+import { UserInputError } from '@/modules/core/errors/userinput'
 
 const eventBus = getEventBus()
 const getServerInfo = getServerInfoFactory({ db })
@@ -289,10 +284,7 @@ const updateStreamRoleAndNotify = updateStreamRoleAndNotifyFactory({
     validateStreamAccess,
     getUser,
     grantStreamPermissions: grantStreamPermissionsFactory({ db }),
-    addStreamInviteAcceptedActivity: addStreamInviteAcceptedActivityFactory({
-      saveActivity,
-      publish
-    }),
+    emitEvent: getEventBus().emit,
     addStreamPermissionsAddedActivity: addStreamPermissionsAddedActivityFactory({
       saveActivity,
       publish
@@ -303,7 +295,8 @@ const updateStreamRoleAndNotify = updateStreamRoleAndNotifyFactory({
 const getUserStreams = getUserStreamsPageFactory({ db })
 const getUserStreamsCount = getUserStreamsCountFactory({ db })
 
-const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
+const { FF_WORKSPACES_MODULE_ENABLED, FF_WORKSPACES_NEW_PLANS_ENABLED } =
+  getFeatureFlags()
 
 export = FF_WORKSPACES_MODULE_ENABLED
   ? ({
@@ -439,78 +432,18 @@ export = FF_WORKSPACES_MODULE_ENABLED
       AdminMutations: {
         updateWorkspacePlan: async (_parent, { input }) => {
           const { workspaceId, plan: name, status } = input
-          const workspace = await getWorkspaceFactory({ db })({
-            workspaceId
-          })
-          const createdAt = new Date()
-          if (!workspace) throw new WorkspaceNotFoundError()
-          switch (name) {
-            case WorkspacePlans.Starter:
-              switch (status) {
-                case WorkspacePlanStatuses.Trial:
-                case WorkspacePlanStatuses.Expired:
-                  await upsertTrialWorkspacePlanFactory({ db })({
-                    workspacePlan: { workspaceId, status, name, createdAt }
-                  })
-                  return true
-                case WorkspacePlanStatuses.Valid:
-                case WorkspacePlanStatuses.CancelationScheduled:
-                case WorkspacePlanStatuses.Canceled:
-                case WorkspacePlanStatuses.PaymentFailed:
-                  await upsertPaidWorkspacePlanFactory({ db })({
-                    workspacePlan: { workspaceId, status, name, createdAt }
-                  })
-                  return true
-                default:
-                  throwUncoveredError(status)
-              }
-            case WorkspacePlans.Business:
-            case WorkspacePlans.Plus:
-              switch (status) {
-                case WorkspacePlanStatuses.Trial:
-                case WorkspacePlanStatuses.Expired:
-                  throw new InvalidWorkspacePlanStatus()
-                case WorkspacePlanStatuses.Valid:
-                case WorkspacePlanStatuses.CancelationScheduled:
-                case WorkspacePlanStatuses.Canceled:
-                case WorkspacePlanStatuses.PaymentFailed:
-                  await upsertPaidWorkspacePlanFactory({ db })({
-                    workspacePlan: { workspaceId, status, name, createdAt }
-                  })
-                  return true
-                default:
-                  throwUncoveredError(status)
-              }
 
-            case WorkspacePlans.Academia:
-            case WorkspacePlans.Unlimited:
-            case WorkspacePlans.StarterInvoiced:
-            case WorkspacePlans.PlusInvoiced:
-            case WorkspacePlans.BusinessInvoiced:
-              switch (status) {
-                case WorkspacePlanStatuses.Valid:
-                  await upsertUnpaidWorkspacePlanFactory({ db })({
-                    workspacePlan: { workspaceId, status, name, createdAt }
-                  })
-
-                  return true
-                case WorkspacePlanStatuses.CancelationScheduled:
-                case WorkspacePlanStatuses.Canceled:
-                case WorkspacePlanStatuses.Expired:
-                case WorkspacePlanStatuses.PaymentFailed:
-                case WorkspacePlanStatuses.Trial:
-                  throw new InvalidWorkspacePlanStatus()
-                default:
-                  throwUncoveredError(status)
-              }
-            default:
-              throwUncoveredError(name)
-          }
+          await updateWorkspacePlanFactory({
+            getWorkspace: getWorkspaceFactory({ db }),
+            upsertWorkspacePlan: upsertWorkspacePlanFactory({ db }),
+            emitEvent: getEventBus().emit
+          })({ workspaceId, name, status })
+          return true
         }
       },
       WorkspaceMutations: {
         create: async (_parent, args, context) => {
-          const { name, description, defaultLogoIndex, logo, slug } = args.input
+          const { name, description, logo, slug } = args.input
 
           const createWorkspace = createWorkspaceFactory({
             validateSlug: validateSlugFactory({
@@ -530,8 +463,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
               name,
               slug,
               description: description ?? null,
-              logo: logo ?? null,
-              defaultLogoIndex: defaultLogoIndex ?? 0
+              logo: logo ?? null
             },
             userResourceAccessLimits: context.resourceAccessRules
           })
@@ -566,6 +498,12 @@ export = FF_WORKSPACES_MODULE_ENABLED
                   default:
                     throwUncoveredError(workspacePlan)
                 }
+              case 'free':
+                if (FF_WORKSPACES_NEW_PLANS_ENABLED) {
+                  break
+                } else {
+                  throw new UserInputError('Workspace plan not implemented')
+                }
               case 'unlimited':
               case 'academia':
               case 'starterInvoiced':
@@ -585,7 +523,8 @@ export = FF_WORKSPACES_MODULE_ENABLED
               queryAllWorkspaceProjects: queryAllWorkspaceProjectsFactory({
                 getStreams: legacyGetStreamsFactory({ db })
               }),
-              deleteSsoProvider: deleteSsoProviderFactory({ db })
+              deleteSsoProvider: deleteSsoProviderFactory({ db }),
+              emitWorkspaceEvent: getEventBus().emit
             })
 
           // this should be turned into a get all regions and map over the regions...
@@ -1006,7 +945,8 @@ export = FF_WORKSPACES_MODULE_ENABLED
             context.userId!,
             args.input.workspaceId,
             Roles.Workspace.Member,
-            context.resourceAccessRules
+            context.resourceAccessRules,
+            OperationTypeNode.MUTATION
           )
 
           const createWorkspaceProject = createWorkspaceProjectFactory({
@@ -1041,13 +981,15 @@ export = FF_WORKSPACES_MODULE_ENABLED
             context.userId,
             projectId,
             Roles.Stream.Owner,
-            context.resourceAccessRules
+            context.resourceAccessRules,
+            OperationTypeNode.MUTATION
           )
           await authorizeResolver(
             context.userId,
             workspaceId,
             Roles.Workspace.Admin,
-            context.resourceAccessRules
+            context.resourceAccessRules,
+            OperationTypeNode.MUTATION
           )
 
           const moveProjectToWorkspace = commandFactory({
@@ -1171,6 +1113,14 @@ export = FF_WORKSPACES_MODULE_ENABLED
                 }
               }
             })
+
+            if (!res) {
+              return {
+                cursor: null,
+                totalCount: 0,
+                items: []
+              }
+            }
 
             const items = res.functions.map(convertFunctionToGraphQLReturn)
 

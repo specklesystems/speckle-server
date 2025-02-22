@@ -1144,8 +1144,6 @@ export type LimitedUserWorkspaceRoleArgs = {
 /** Workspace metadata visible to non-workspace members. */
 export type LimitedWorkspace = {
   __typename?: 'LimitedWorkspace';
-  /** Index of fallback workspace logo to use */
-  defaultLogoIndex: Scalars['Int']['output'];
   /** Workspace description */
   description?: Maybe<Scalars['String']['output']>;
   /** Workspace id */
@@ -4182,8 +4180,6 @@ export type Workspace = {
   /** Info about the workspace creation state */
   creationState?: Maybe<WorkspaceCreationState>;
   customerPortalUrl?: Maybe<Scalars['String']['output']>;
-  /** Selected fallback when `logo` not set */
-  defaultLogoIndex: Scalars['Int']['output'];
   /** The default role workspace members will receive for workspace projects. */
   defaultProjectRole: Scalars['String']['output'];
   /**
@@ -4303,7 +4299,6 @@ export type WorkspaceCollection = {
 };
 
 export type WorkspaceCreateInput = {
-  defaultLogoIndex?: InputMaybe<Scalars['Int']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
   /** Logo image as base64-encoded string */
   logo?: InputMaybe<Scalars['String']['input']>;
@@ -4595,6 +4590,11 @@ export type WorkspaceProjectInviteCreateInput = {
 export type WorkspaceProjectMutations = {
   __typename?: 'WorkspaceProjectMutations';
   create: Project;
+  /**
+   * Update project region and move all regional data to new db.
+   * TODO: Currently performs all operations synchronously in request, should probably be scheduled.
+   */
+  moveToRegion: Project;
   moveToWorkspace: Project;
   updateRole: Project;
 };
@@ -4602,6 +4602,12 @@ export type WorkspaceProjectMutations = {
 
 export type WorkspaceProjectMutationsCreateArgs = {
   input: WorkspaceProjectCreateInput;
+};
+
+
+export type WorkspaceProjectMutationsMoveToRegionArgs = {
+  projectId: Scalars['String']['input'];
+  regionKey: Scalars['String']['input'];
 };
 
 
@@ -4703,7 +4709,6 @@ export type WorkspaceTeamFilter = {
 };
 
 export type WorkspaceUpdateInput = {
-  defaultLogoIndex?: InputMaybe<Scalars['Int']['input']>;
   defaultProjectRole?: InputMaybe<Scalars['String']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
   discoverabilityEnabled?: InputMaybe<Scalars['Boolean']['input']>;

@@ -2,7 +2,7 @@ version: 2.1
 
 orbs:
   snyk: snyk/snyk@2.0.3
-  # codecov: codecov/codecov@4.1.0
+  codecov: codecov/codecov@5.0.3
 
 workflows:
   test-build:
@@ -20,6 +20,7 @@ workflows:
           context:
             - speckle-server-licensing
             - stripe-integration
+            - speckle-server-codecov
           filters: &filters-allow-all
             tags:
               # run tests for any commit on any branch, including any tags
@@ -93,7 +94,6 @@ workflows:
             - get-version
             - deployment-testing-approval
             - docker-build-server
-            - docker-build-frontend
             - docker-build-frontend-2
             - docker-build-previews
             - docker-build-webhooks
@@ -113,12 +113,6 @@ workflows:
           filters: &filters-build
             tags:
               only: /.*/
-          requires:
-            - get-version
-
-      - docker-build-frontend:
-          context: *build-context
-          filters: *filters-build
           requires:
             - get-version
 
@@ -184,22 +178,6 @@ workflows:
               only: /.*/
           requires:
             - docker-build-server
-            - get-version
-            - pre-commit
-            - publish-approval
-            - test-frontend-2
-            - test-viewer
-            - test-objectsender
-            - test-server
-            - test-server-no-ff
-            - test-server-multiregion
-            - test-preview-service
-
-      - docker-publish-frontend:
-          context: *docker-hub-context
-          filters: *filters-publish
-          requires:
-            - docker-build-frontend
             - get-version
             - pre-commit
             - publish-approval
@@ -340,7 +318,6 @@ workflows:
             - deployment-test-helm-chart
             - docker-publish-docker-compose-ingress
             - docker-publish-file-imports
-            - docker-publish-frontend
             - docker-publish-frontend-2
             - docker-publish-monitor-container
             - docker-publish-previews
@@ -494,8 +471,9 @@ jobs:
       S3_CREATE_BUCKET: 'true'
       REDIS_URL: 'redis://127.0.0.1:6379'
       S3_REGION: '' # optional, defaults to 'us-east-1'
+      FRONTEND_ORIGIN: 'http://127.0.0.1:8081'
       ENCRYPTION_KEYS_PATH: 'test/assets/automate/encryptionKeys.json'
-      FF_BILLING_INTEGRATION_ENABLED: 'true'
+      ENABLE_ALL_FFS: 'true'
       RATELIMITER_ENABLED: 'false'
     steps:
       - checkout
@@ -535,8 +513,8 @@ jobs:
           command: yarn test:report
           working_directory: 'packages/server'
 
-      # - codecov/upload:
-      #     file: packages/server/coverage/lcov.info
+      - codecov/upload:
+          files: packages/server/coverage/lcov.info
 
       - run:
           name: Introspect GQL schema for subsequent checks
@@ -566,6 +544,7 @@ jobs:
       NODE_ENV: test
       DATABASE_URL: 'postgres://speckle:speckle@127.0.0.1:5432/speckle2_test'
       PGDATABASE: speckle2_test
+      POSTGRES_MAX_CONNECTIONS_SERVER: 20
       PGUSER: speckle
       SESSION_SECRET: 'keyboard cat'
       STRATEGY_LOCAL: 'true'
@@ -577,6 +556,7 @@ jobs:
       S3_CREATE_BUCKET: 'true'
       REDIS_URL: 'redis://127.0.0.1:6379'
       S3_REGION: '' # optional, defaults to 'us-east-1'
+      FRONTEND_ORIGIN: 'http://127.0.0.1:8081'
       ENCRYPTION_KEYS_PATH: 'test/assets/automate/encryptionKeys.json'
       DISABLE_ALL_FFS: 'true'
       RATELIMITER_ENABLED: 'false'
@@ -598,16 +578,24 @@ jobs:
           POSTGRES_PASSWORD: speckle
           POSTGRES_USER: speckle
         command: -c 'max_connections=1000' -c 'port=5433' -c 'wal_level=logical'
+      - image: 'speckle/speckle-postgres'
+        environment:
+          POSTGRES_DB: speckle2_test
+          POSTGRES_PASSWORD: speckle
+          POSTGRES_USER: speckle
+        command: -c 'max_connections=1000' -c 'port=5434' -c 'wal_level=logical'
       - image: 'minio/minio'
         command: server /data --console-address ":9001" --address "0.0.0.0:9000"
       - image: 'minio/minio'
         command: server /data --console-address ":9021" --address "0.0.0.0:9020"
+      - image: 'minio/minio'
+        command: server /data --console-address ":9041" --address "0.0.0.0:9040"
     environment:
       # Same as test-server:
       NODE_ENV: test
       DATABASE_URL: 'postgres://speckle:speckle@127.0.0.1:5432/speckle2_test'
       PGDATABASE: speckle2_test
-      POSTGRES_MAX_CONNECTIONS_SERVER: 20
+      POSTGRES_MAX_CONNECTIONS_SERVER: 50
       PGUSER: speckle
       SESSION_SECRET: 'keyboard cat'
       STRATEGY_LOCAL: 'true'
@@ -619,6 +607,7 @@ jobs:
       S3_CREATE_BUCKET: 'true'
       REDIS_URL: 'redis://127.0.0.1:6379'
       S3_REGION: '' # optional, defaults to 'us-east-1'
+      FRONTEND_ORIGIN: 'http://127.0.0.1:8081'
       ENCRYPTION_KEYS_PATH: 'test/assets/automate/encryptionKeys.json'
       FF_BILLING_INTEGRATION_ENABLED: 'true'
       # These are the only different env keys:
@@ -1010,11 +999,6 @@ jobs:
     environment:
       SPECKLE_SERVER_PACKAGE: server
 
-  docker-build-frontend:
-    <<: *build-job
-    environment:
-      SPECKLE_SERVER_PACKAGE: frontend
-
   docker-build-frontend-2:
     <<: *build-job
     resource_class: xlarge
@@ -1079,11 +1063,6 @@ jobs:
     <<: *publish-job
     environment:
       SPECKLE_SERVER_PACKAGE: server
-
-  docker-publish-frontend:
-    <<: *publish-job
-    environment:
-      SPECKLE_SERVER_PACKAGE: frontend
 
   docker-publish-frontend-2:
     <<: *publish-job

@@ -15,7 +15,8 @@
         </CommonBadge>
       </div>
     </template>
-    <div v-if="!loading" class="pt-3">
+
+    <div class="pt-3">
       <div class="px-3 flex flex-col gap-y-3">
         <CommonAlert v-if="!activeUser" color="danger" size="xs">
           <template #title>Sign in required</template>
@@ -83,9 +84,6 @@
           </div>
         </FormButton>
       </div>
-    </div>
-    <div v-else class="flex w-full h-full items-center justify-center">
-      <CommonLoadingIcon />
     </div>
     <template v-if="!loading && limits" #actions>
       <div class="text-body-2xs p-1">

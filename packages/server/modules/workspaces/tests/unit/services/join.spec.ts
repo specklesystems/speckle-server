@@ -18,7 +18,7 @@ import { expect } from 'chai'
 import { assign } from 'lodash'
 
 const createTestWorkspaceWithDomains = (
-  arg?: Partial<WorkspaceWithDomains> | undefined
+  arg?: Partial<WorkspaceWithDomains>
 ): WorkspaceWithDomains => {
   const workspace: WorkspaceWithDomains = {
     createdAt: new Date(),
@@ -31,8 +31,7 @@ const createTestWorkspaceWithDomains = (
     domains: [],
     discoverabilityEnabled: false,
     domainBasedMembershipProtectionEnabled: false,
-    defaultProjectRole: Roles.Stream.Contributor,
-    defaultLogoIndex: 0
+    defaultProjectRole: Roles.Stream.Contributor
   }
   if (arg) assign(workspace, arg)
   return workspace

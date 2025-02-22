@@ -34,8 +34,10 @@ import { upgradeWorkspaceSubscriptionFactory } from '@/modules/gatekeeper/servic
 import { isWorkspaceReadOnlyFactory } from '@/modules/gatekeeper/services/readOnly'
 import { calculateSubscriptionSeats } from '@/modules/gatekeeper/domain/billing'
 import { WorkspacePaymentMethod } from '@/test/graphql/generated/graphql'
+import { LogicError } from '@/modules/shared/errors'
 
-const { FF_GATEKEEPER_MODULE_ENABLED } = getFeatureFlags()
+const { FF_GATEKEEPER_MODULE_ENABLED, FF_BILLING_INTEGRATION_ENABLED } =
+  getFeatureFlags()
 
 const getWorkspacePlan = getWorkspacePlanFactory({ db })
 
@@ -61,6 +63,7 @@ export = FF_GATEKEEPER_MODULE_ENABLED
               break
             case 'unlimited':
             case 'academia':
+            case 'free':
               paymentMethod = WorkspacePaymentMethod.Unpaid
               break
             case 'starterInvoiced':
@@ -93,7 +96,9 @@ export = FF_GATEKEEPER_MODULE_ENABLED
           if (!workspaceSubscription) return null
           const workspace = await getWorkspaceFactory({ db })({ workspaceId })
           if (!workspace)
-            throw new Error('This cannot be, if there is a sub, there is a workspace')
+            throw new LogicError(
+              'This cannot be, if there is a sub, there is a workspace'
+            )
           return await createCustomerPortalUrlFactory({
             stripe: getStripeClient(),
             frontendOrigin: getFrontendOrigin()
@@ -113,6 +118,7 @@ export = FF_GATEKEEPER_MODULE_ENABLED
           return hasAccess
         },
         readOnly: async (parent) => {
+          if (!FF_BILLING_INTEGRATION_ENABLED) return false
           return await isWorkspaceReadOnlyFactory({ getWorkspacePlan })({
             workspaceId: parent.id
           })
