@@ -10,6 +10,7 @@ import type {
   ISendFilter,
   ISendFilterSelectItem,
   ISenderModelCard,
+  NavisworksSavedSetsSendFilter,
   RevitViewsSendFilter
 } from 'lib/models/card/send'
 import type { ToastNotification } from '@speckle/ui-components'
@@ -55,6 +56,7 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
   const documentModelStore = ref<DocumentModelStore>({ models: [] })
 
   const revitAvailableViews = ref<ISendFilterSelectItem[]>()
+  const navisworksAvailableSavedSets = ref<ISendFilterSelectItem[]>()
 
   const dismissNotification = () => {
     currentNotification.value = null
@@ -537,6 +539,13 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
         (v) => ({ id: v, name: v } as ISendFilterSelectItem) // this is shit backward compatibility...
       )
     }
+
+    const navisworksSavedSetsFromSendFilters = sendFilters.value.find(
+      (f) => f.id === 'navisworksSavedSets'
+    ) as NavisworksSavedSetsSendFilter
+    if (navisworksSavedSetsFromSendFilters) {
+      navisworksAvailableSavedSets.value = navisworksSavedSetsFromSendFilters.items
+    }
   }
 
   const getSendSettings = async () => {
@@ -643,6 +652,7 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     showErrorDialog,
     hostAppError,
     revitAvailableViews,
+    navisworksAvailableSavedSets,
     setNotification,
     setModelError,
     setLatestAvailableVersion,

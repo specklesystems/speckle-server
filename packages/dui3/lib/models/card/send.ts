@@ -50,10 +50,7 @@ export interface SendFilterSelect extends ISendFilter {
   items: ISendFilterSelectItem[]
 }
 
-export interface NavisworksSavedSetsSendFilter extends ISendFilter {
-  selectedSavedSet: string
-  availableCategories: NavisworksSavedSetsData[]
-}
+export interface NavisworksSavedSetsSendFilter extends SendFilterSelect {}
 
 export class SenderModelCard extends ModelCard implements ISenderModelCard {
   sendFilter?: ISendFilter | undefined
