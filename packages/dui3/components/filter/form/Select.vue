@@ -6,8 +6,8 @@
     :search="true"
     :search-placeholder="''"
     :filter-predicate="searchFilterPredicate"
-    name="view"
-    label="View"
+    :label="label"
+    :name="label"
     placeholder="Nothing selected"
     class="w-full"
     fixed-height
@@ -20,7 +20,13 @@
       <span class="text-base text-sm">{{ item.name }}</span>
     </template>
     <template #something-selected="{ value }">
-      <span class="text-primary text-base text-sm">{{ value.name }}</span>
+      <span class="text-primary text-base text-sm">
+        {{
+          filter.isMultiSelectable
+            ? (value as ISendFilterSelectItem[]).map((v) => v.name).join(', ')
+            : (value as ISendFilterSelectItem).name
+        }}
+      </span>
     </template>
   </FormSelectBase>
 </template>
@@ -37,6 +43,7 @@ const emit = defineEmits<{
 }>()
 
 const props = defineProps<{
+  label: string
   filter: SendFilterSelect
   items: ISendFilterSelectItem[]
 }>()

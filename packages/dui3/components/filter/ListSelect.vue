@@ -44,6 +44,7 @@
       <div v-else-if="selectedFilter.id === 'layers'">TODO</div>
       <div v-else-if="selectedFilter.id === 'revitViews'">
         <FilterFormSelect
+          label="Views"
           :items="(store.revitAvailableViews as ISendFilterSelectItem[])"
           :filter="(selectedFilter as SendFilterSelect)"
           @update:filter="(filter : ISendFilter) => (selectedFilter = filter)"
@@ -57,6 +58,7 @@
       </div>
       <div v-else-if="selectedFilter.id === 'navisworksSavedSets'">
         <FilterFormSelect
+          label="Saved Sets"
           :items="(store.navisworksAvailableSavedSets as ISendFilterSelectItem[])"
           :filter="(selectedFilter as SendFilterSelect)"
           @update:filter="(filter : ISendFilter) => (selectedFilter = filter)"
