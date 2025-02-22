@@ -1,6 +1,5 @@
 <template>
   <FormSelectBase
-    key="id"
     v-model="selectedItems"
     :items="items"
     :search="true"
@@ -15,6 +14,7 @@
     :allow-unset="false"
     mount-menu-on-body
     :multiple="filter.isMultiSelectable"
+    by="id"
   >
     <template #option="{ item }">
       <span class="text-base text-sm">{{ item.name }}</span>
