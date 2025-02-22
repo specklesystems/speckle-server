@@ -1,28 +1,30 @@
 import { type WorkspaceRoles, Roles } from '../core/constants.js'
 
-type AuthResult = {
+export type AuthBase = {
   authorized: boolean
 }
 
-type AuthFailedResult = AuthResult & {
+export type AuthFailedResult = {
   authorized: false
   errorMessage: string
-  errorStatusCode: number
+  // errorStatusCode: number
   // error: BaseError | null
   fatal?: boolean
 }
 
-// type AuthSuccessResult = AuthResult & {
-//   authorized: true
-// }
+type AuthSuccessResult = {
+  authorized: true
+}
 
-type WorkspacePlans = 'free' | 'starter' | 'business' | 'unlimited'
+export type AuthResult = AuthFailedResult | AuthSuccessResult
+
+export type WorkspacePlans = 'free' | 'starter' | 'business' | 'unlimited'
 
 type AuthContext = {
   authResult: AuthResult
   context: {
-    userWorkspaceRole?: WorkspaceRoles
     workspace?: {
+      userWorkspaceRole?: WorkspaceRoles
       plan?: WorkspacePlans
     }
   }
@@ -42,9 +44,12 @@ type AuthPipeline = (ctx: Omit<AuthContext, 'authResult'>) => AuthResult
 export const authHasFailed = (authResult: AuthResult): authResult is AuthFailedResult =>
   'error' in authResult
 
-const authPipelineCreator = (steps: AuthFunction[]): AuthPipeline => {
+export const authPipelineCreator = (steps: AuthFunction[]): AuthPipeline => {
   const pipeline: AuthPipeline = ({ context }) => {
-    let authResult = { authorized: false }
+    let authResult: AuthResult = {
+      authorized: false,
+      errorMessage: 'you are not authorized'
+    }
     for (const step of steps) {
       authResult = step({ authResult, context })
       if (authHasFailed(authResult) && authResult?.fatal) break
@@ -56,7 +61,7 @@ const authPipelineCreator = (steps: AuthFunction[]): AuthPipeline => {
   return pipeline
 }
 
-const checkWorkspaceRoleFactory = ({
+export const checkWorkspaceRoleFactory = ({
   workspaceRole
 }: {
   workspaceRole: WorkspaceRoles
@@ -79,7 +84,9 @@ const checkWorkspaceRoleFactory = ({
   if (!requiredRole) throw new Error('you cannot validate against a non existing role')
 
   return ({ context }) => {
-    const userRole = workspaceRoles.find((r) => r.name === context.userWorkspaceRole)
+    const userRole = workspaceRoles.find(
+      (r) => r.name === context?.workspace?.userWorkspaceRole
+    )
     if (!userRole || userRole.weight < requiredRole.weight)
       return {
         authorized: false,
@@ -90,14 +97,16 @@ const checkWorkspaceRoleFactory = ({
   }
 }
 
-const workspacePlanLimits: { [P in WorkspacePlans]: { projectLimit?: number } } = {
+export const workspacePlanLimits: {
+  [P in WorkspacePlans]: { projectLimit: number | null }
+} = {
   starter: { projectLimit: 3 },
   free: { projectLimit: 1 },
   business: { projectLimit: 100 },
-  unlimited: {}
+  unlimited: { projectLimit: null }
 }
 
-const checkPlanLimitFactory =
+export const checkPlanLimitFactory =
   ({ newProjectCount }: { newProjectCount: number }): AuthFunction =>
   ({ context }) => {
     if (
@@ -143,13 +152,13 @@ const createNewWorkspaceProjectResolver = () => {
 
   // const canCreateNewProject = authFunctionCreation.createWorkspaceProject(10)
   // based on userID
-  const userWorkspaceRole = 'workspace:member'
+  // const userWorkspaceRole = 'workspace:member'
   // based on workspaceId
-  const workspace = { plan: 'starter' } as const
+  // const workspace = { plan: 'starter' } as const
 
   authFunction({
     // authResult: { authorized: false },
-    context: { userWorkspaceRole, workspace }
+    context: { workspace: { plan: 'starter', userWorkspaceRole: 'workspace:member' } }
   })
   //... continue creating a new project
 }
