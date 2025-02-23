@@ -273,7 +273,7 @@ export async function determineClientIpAddressMiddleware(
         const mask = new Netmask(`${ip}/24`)
         req.headers[X_SPECKLE_CLIENT_IP_HEADER] = mask.broadcast
       }
-    } catch (e) {
+    } catch {
       req.headers[X_SPECKLE_CLIENT_IP_HEADER] = ip || 'ip-parse-error'
     }
   }

@@ -81,13 +81,15 @@
             <ViewerViewModesMenu
               :open="viewModesOpen"
               @force-close-others="activeControl = 'none'"
-              @update:open="(value: boolean) => toggleActiveControl(value ? 'viewModes' : 'none')"
+              @update:open="
+                (value) => toggleActiveControl(value ? 'viewModes' : 'none')
+              "
             />
             <!-- Views -->
             <ViewerViewsMenu
               :open="viewsOpen"
               @force-close-others="activeControl = 'none'"
-              @update:open="(value: boolean) => toggleActiveControl(value ? 'views' : 'none')"
+              @update:open="(value) => toggleActiveControl(value ? 'views' : 'none')"
             />
             <!-- Zoom extents -->
             <ViewerControlsButtonToggle
@@ -101,7 +103,7 @@
             <!-- Sun and lights -->
             <ViewerSunMenu
               :open="activeControl === 'sun'"
-              @update:open="(value: boolean) => toggleActiveControl(value ? 'sun' : 'none')"
+              @update:open="(value) => toggleActiveControl(value ? 'sun' : 'none')"
             />
           </ViewerControlsButtonGroup>
           <ViewerControlsButtonGroup>
@@ -133,7 +135,7 @@
             <ViewerExplodeMenu
               :open="explodeOpen"
               @force-close-others="activeControl = 'none'"
-              @update:open="(value: boolean) => toggleActiveControl(value ? 'explode' : 'none')"
+              @update:open="(value) => toggleActiveControl(value ? 'explode' : 'none')"
             />
             <!-- Settings -->
             <ViewerSettingsMenu />

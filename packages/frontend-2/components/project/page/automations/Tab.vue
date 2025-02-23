@@ -60,7 +60,7 @@ import {
 } from '~/lib/projects/graphql/queries'
 import type { CreateAutomationSelectableFunction } from '~/lib/automate/helpers/automations'
 import { usePaginatedQuery } from '~/lib/common/composables/graphql'
-import { Roles } from '@speckle/shared'
+import { Roles, type Nullable } from '@speckle/shared'
 import type { AutomateOnboardingAction } from '~/components/project/page/automations/EmptyState.vue'
 
 const route = useRoute()
@@ -146,7 +146,8 @@ const {
   query: projectAutomationsTabAutomationsPaginationQuery,
   baseVariables: computed(() => ({
     projectId: projectId.value,
-    search: search.value?.length ? search.value : null
+    search: search.value?.length ? search.value : null,
+    cursor: null as Nullable<string>
   })),
   options: () => ({
     enabled: isAutomateEnabled.value

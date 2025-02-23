@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-unsafe-return */
-/* eslint-disable @typescript-eslint/ban-types */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { db } from '@/db/knex'
 import { ResolverFn, Resolvers } from '@/modules/core/graph/generated/graphql'

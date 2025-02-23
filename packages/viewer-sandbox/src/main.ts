@@ -45,29 +45,19 @@ const createViewer = async (containerName: string, _stream: string) => {
   const viewer: Viewer = new Viewer(container, params)
   await viewer.init()
 
-  const cameraController = viewer.createExtension(HybridCameraController)
-  const selection = viewer.createExtension(SelectionExtension)
-  const sections = viewer.createExtension(SectionTool)
+  viewer.createExtension(HybridCameraController)
+  viewer.createExtension(SelectionExtension)
+  viewer.createExtension(SectionTool)
   viewer.createExtension(SectionOutlines)
-  const measurements = viewer.createExtension(MeasurementsExtension)
-  const filtering = viewer.createExtension(FilteringExtension)
-  const explode = viewer.createExtension(ExplodeExtension)
-  const diff = viewer.createExtension(DiffExtension)
+  viewer.createExtension(MeasurementsExtension)
+  viewer.createExtension(FilteringExtension)
+  viewer.createExtension(ExplodeExtension)
+  viewer.createExtension(DiffExtension)
   viewer.createExtension(ViewModes)
   viewer.createExtension(ViewModesKeys)
   const boxSelect = viewer.createExtension(BoxSelection)
   boxSelect.realtimeSelection = false
   viewer.createExtension(PassReader)
-  // const rotateCamera = viewer.createExtension(RotateCamera)
-  cameraController // use it
-  selection // use it
-  sections // use it
-  measurements // use it
-  filtering // use it
-  explode // use it
-  diff // use it
-  // rotateCamera // use it
-  // boxSelect // use it
 
   const sandbox = new Sandbox(controlsContainer, viewer, multiSelectList)
 

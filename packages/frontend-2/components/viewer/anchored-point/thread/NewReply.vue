@@ -59,7 +59,7 @@ const { projectId } = useInjectedViewerState()
 
 const loading = ref(false)
 const editor = ref(null as Nullable<{ openFilePicker: () => void }>)
-const commentValue = ref(<CommentEditorValue>{ doc: undefined, attachments: undefined })
+const commentValue = ref<CommentEditorValue>({ doc: undefined, attachments: undefined })
 const threadId = computed(() => props.modelValue.id)
 
 const mp = useMixpanel()

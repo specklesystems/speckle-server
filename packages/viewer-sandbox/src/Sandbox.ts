@@ -179,7 +179,6 @@ export default class Sandbox {
     this.properties = []
 
     viewer.on(ViewerEvent.LoadComplete, async (url: string) => {
-      url
       this.viewer.setLightConfiguration(DefaultLightConfiguration)
       this.addStreamControls(url)
       this.addViewControls()
@@ -918,8 +917,7 @@ export default class Sandbox {
         min: 0,
         max: 10
       })
-      .on('change', (value) => {
-        value
+      .on('change', () => {
         this.viewer.setLightConfiguration(this.lightParams)
       })
 
@@ -930,8 +928,7 @@ export default class Sandbox {
 
     shadowcatcherFolder
       .addInput(this.lightParams, 'shadowcatcher', { label: 'Enabled' })
-      .on('change', (value) => {
-        value
+      .on('change', () => {
         this.viewer.setLightConfiguration(this.lightParams)
       })
 
@@ -1069,8 +1066,7 @@ export default class Sandbox {
         max: 1,
         step: 0.001
       })
-      .on('change', (value) => {
-        value
+      .on('change', () => {
         this.viewer
           .getExtension(ExplodeExtension)
           .setExplode(this.batchesParams.explode)
