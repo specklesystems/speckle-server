@@ -19,11 +19,17 @@
     "link:frontend": "yarn build:frontend && rimraf ./public && ln -s ../preview-frontend/dist ./public",
     "dev": "tsx --env-file=.env --watch src/main.ts",
     "publishTask": "tsx --env-file=.env scripts/publishTask.ts",
+    "lint": "yarn lint:tsc && yarn lint:eslint",
+    "lint:ci": "yarn lint:tsc",
+    "lint:tsc": "tsc --noEmit",
+    "lint:eslint": "eslint .",
     "build": "tsc -p ./tsconfig.build.json"
   },
   "dependencies": {
     "@speckle/shared": "workspace:^",
     "bull": "^4.16.4",
+    "dotenv": "^16.4.7",
+    "esm-module-alias": "^2.2.1",
     "express": "^4.19.2",
     "pino": "^8.7.0",
     "pino-http": "^8.6.1",

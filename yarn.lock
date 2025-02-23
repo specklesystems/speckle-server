@@ -16573,9 +16573,11 @@ __metadata:
     "@types/express": "npm:^4.17.13"
     "@types/node": "npm:^18.19.38"
     bull: "npm:^4.16.4"
+    dotenv: "npm:^16.4.7"
     eslint: "npm:^9.4.0"
     eslint-config-prettier: "npm:^9.1.0"
     eslint-plugin-vitest: "npm:^0.5.4"
+    esm-module-alias: "npm:^2.2.1"
     express: "npm:^4.19.2"
     pino: "npm:^8.7.0"
     pino-http: "npm:^8.6.1"
@@ -16685,6 +16687,7 @@ __metadata:
     cross-env: "npm:^7.0.3"
     cross-fetch: "npm:^3.1.5"
     crypto-random-string: "npm:^3.2.0"
+    csv-parse: "npm:^5.6.0"
     dataloader: "npm:^2.2.3"
     dayjs: "npm:^1.11.5"
     deep-equal-in-any-order: "npm:^1.1.15"
@@ -27025,6 +27028,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"csv-parse@npm:^5.6.0":
+  version: 5.6.0
+  resolution: "csv-parse@npm:5.6.0"
+  checksum: 10/4c82e11f50ae0ccbac2aed716ef2502d0468bf96552083561db789fc0258ee4bb0a30106fcfb2684f153cb4042f0413e0eac3645d5466874803b7ccdeba67ac8
+  languageName: node
+  linkType: hard
+
 "cuint@npm:^0.2.2":
   version: 0.2.2
   resolution: "cuint@npm:0.2.2"
@@ -29970,6 +29980,13 @@ __metadata:
   version: 2.2.0
   resolution: "esm-module-alias@npm:2.2.0"
   checksum: 10/baf90732dd45442f6ef1ad34f1d864f772d45366ea43d3f5f4d3337d7badf75e2f48ef611fa14bd09a4180699f385eee18ce8561026f677d6a988385094098ce
+  languageName: node
+  linkType: hard
+
+"esm-module-alias@npm:^2.2.1":
+  version: 2.2.1
+  resolution: "esm-module-alias@npm:2.2.1"
+  checksum: 10/2dda8bdde12b7b6fdfe7dd0efc4abe15c09af26f62cf5540d3df464dfe1be6a9a627105d5b6ea940f0be4d87c78c15db192fff821be7869b16cc9a1e678b8b31
   languageName: node
   linkType: hard
 
