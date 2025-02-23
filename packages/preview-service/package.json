@@ -12,13 +12,14 @@
   },
   "type": "module",
   "engines": {
-    "node": "^22.9.0"
+    "node": "^18.19.0"
   },
   "scripts": {
     "build:frontend": "yarn workspace @speckle/preview-frontend build",
     "link:frontend": "yarn build:frontend && rimraf ./public && ln -s ../preview-frontend/dist ./public",
     "dev": "tsx --env-file=.env --watch src/main.ts",
     "publishTask": "tsx --env-file=.env scripts/publishTask.ts",
+    "test": "echo 'no tests configured'",
     "lint": "yarn lint:tsc && yarn lint:eslint",
     "lint:ci": "yarn lint:tsc",
     "lint:tsc": "tsc --noEmit",
