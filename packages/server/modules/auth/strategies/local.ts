@@ -3,8 +3,7 @@ import {
   isRateLimitBreached
 } from '@/modules/core/services/ratelimiter'
 import { getIpFromRequest } from '@/modules/shared/utils/ip'
-import { InviteNotFoundError } from '@/modules/serverinvites/errors'
-import { UserInputError, PasswordTooShortError } from '@/modules/core/errors/userinput'
+import { UserInputError } from '@/modules/core/errors/userinput'
 
 import { ServerInviteResourceType } from '@/modules/serverinvites/domain/constants'
 import { getResourceTypeRole } from '@/modules/serverinvites/helpers/core'
@@ -26,6 +25,10 @@ import { UserValidationError } from '@/modules/core/errors/user'
 import { RateLimitError } from '@/modules/core/errors/ratelimit'
 import { isRateLimiterEnabled } from '@/modules/shared/helpers/envHelper'
 import { addRateLimitHeadersToResponse } from '@/modules/core/rest/ratelimiter'
+import {
+  resolveErrorInfo,
+  resolveStatusCode
+} from '@/modules/core/rest/defaultErrorHandler'
 
 const localStrategyBuilderFactory =
   (deps: {
@@ -157,18 +160,7 @@ const localStrategyBuilderFactory =
           return next()
         } catch (err) {
           const e = ensureError(err, 'Unexpected issue occured while registering')
-          switch (e.constructor) {
-            case RateLimitError:
-              return res.status(429).send({ err: e.message })
-            case PasswordTooShortError:
-            case UserInputError:
-            case InviteNotFoundError:
-              req.log.info({ err }, 'Error while registering.')
-              return res.status(400).send({ err: e.message })
-            default:
-              req.log.error(err, 'Error while registering.')
-              return res.status(500).send({ err: e.message })
-          }
+          return res.status(resolveStatusCode(e)).json({ error: resolveErrorInfo(e) })
         }
       },
       finalizeAuthMiddleware

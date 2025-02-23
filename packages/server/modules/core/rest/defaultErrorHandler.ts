@@ -7,7 +7,7 @@ import { get, isNumber } from 'lodash'
 import { VError } from 'verror'
 import { logger as defaultLogger } from '@/logging/logging'
 
-const resolveStatusCode = (e: Error): number => {
+export const resolveStatusCode = (e: Error): number => {
   if (e instanceof BaseError) {
     const infoStatus =
       e.info().statusCode && isNumber(e.info().statusCode)
@@ -20,7 +20,7 @@ const resolveStatusCode = (e: Error): number => {
   return 500
 }
 
-const resolveErrorInfo = (e: Error): Record<string, unknown> => {
+export const resolveErrorInfo = (e: Error): Record<string, unknown> => {
   const cause = getCause(e)
   const message = e.message
   let info = undefined
