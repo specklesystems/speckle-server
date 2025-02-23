@@ -158,11 +158,14 @@ describe('Rate Limiting', () => {
 })
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const temporarilyEnableRateLimiter = async (callback: () => Promise<any>) => {
+export const temporarilyEnableRateLimiter = async (callback: () => Promise<any>) => {
   const oldRateLimiterEnabledFlag = process.env.RATELIMITER_ENABLED
   process.env.RATELIMITER_ENABLED = 'true'
-  await callback()
-  process.env.RATELIMITER_ENABLED = oldRateLimiterEnabledFlag
+  try {
+    await callback()
+  } finally {
+    process.env.RATELIMITER_ENABLED = oldRateLimiterEnabledFlag
+  }
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
