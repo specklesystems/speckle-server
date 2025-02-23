@@ -72,12 +72,13 @@ export const consumePreviewResultFactory =
     const lastUpdate = new Date()
     const priority = 0
     const previewStatus = 2
+    const log = logger.child({
+      ...previewResult,
+      projectId: streamId
+    })
+
     switch (previewResult.status) {
       case 'error':
-        logger.error(
-          { error: previewResult.reason },
-          'Consumed preview generation error message payload.'
-        )
         await upsertObjectPreview({
           objectPreview: {
             objectId,
@@ -88,10 +89,13 @@ export const consumePreviewResultFactory =
             previewStatus
           }
         })
+
+        log.error('Preview generation failed for {jobId}.')
         // store preview error in the db
-        return
+        break
 
       case 'success':
+        log.info('Consumed preview generation {status} message payload for {jobId}.')
         const preview: Record<string, string> = {}
         const allImgsArr: Buffer[] = []
         let i = 0
@@ -137,7 +141,7 @@ export const consumePreviewResultFactory =
         const commits = await getObjectCommitsWithStreamIds([objectId], {
           streamIds: [streamId]
         })
-        if (!commits.length) return
+        if (!commits.length) break
 
         await Promise.all(
           commits.map((c) =>
@@ -150,7 +154,7 @@ export const consumePreviewResultFactory =
             })
           )
         )
-        return
+        break
 
       default:
         throwUncoveredError(previewResult)

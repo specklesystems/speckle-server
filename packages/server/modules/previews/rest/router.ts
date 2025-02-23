@@ -114,6 +114,7 @@ export const previewRouterFactory = ({
     }
     const lastCommit = commits[0]
     const getObjectPreviewBufferOrFilepath = getObjectPreviewBufferOrFilepathFactory({
+      logger: req.log,
       getObject: getFormattedObjectFactory({ db: projectDb }),
       getObjectPreviewInfo: getObjectPreviewInfoFactory({ db: projectDb }),
       createObjectPreview: buildCreateObjectPreviewFunction({
@@ -183,6 +184,7 @@ export const previewRouterFactory = ({
       const lastCommit = commits[0]
 
       const getObjectPreviewBufferOrFilepath = getObjectPreviewBufferOrFilepathFactory({
+        logger: req.log,
         getObject: getFormattedObjectFactory({ db: projectDb }),
         getObjectPreviewInfo: getObjectPreviewInfoFactory({ db: projectDb }),
         createObjectPreview: buildCreateObjectPreviewFunction({
@@ -233,6 +235,7 @@ export const previewRouterFactory = ({
     if (!commit) return res.sendFile(noPreviewImage)
 
     const getObjectPreviewBufferOrFilepath = getObjectPreviewBufferOrFilepathFactory({
+      logger: req.log,
       getObject: getFormattedObjectFactory({ db: projectDb }),
       getObjectPreviewInfo: getObjectPreviewInfoFactory({ db: projectDb }),
       createObjectPreview: buildCreateObjectPreviewFunction({
@@ -273,6 +276,7 @@ export const previewRouterFactory = ({
     const projectDb = await getProjectDbClient({ projectId: req.params.streamId })
 
     const getObjectPreviewBufferOrFilepath = getObjectPreviewBufferOrFilepathFactory({
+      logger: req.log,
       getObject: getFormattedObjectFactory({ db: projectDb }),
       getObjectPreviewInfo: getObjectPreviewInfoFactory({ db: projectDb }),
       createObjectPreview: buildCreateObjectPreviewFunction({

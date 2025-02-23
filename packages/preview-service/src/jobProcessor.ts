@@ -21,9 +21,9 @@ export const jobProcessor = async ({
   job: JobPayload
 }): Promise<PreviewResultPayload> => {
   const jobId = job.jobId
-  const jobLogger = logger.child({ jobId })
+  const jobLogger = logger.child({ jobId, serverUrl: job.url })
   const start = new Date()
-  jobLogger.info({ start }, 'Picking up job {jobId}')
+  jobLogger.info('Picked up job {jobId} for {serverUrl}')
 
   let page: Page | undefined = undefined
   try {
@@ -35,6 +35,7 @@ export const jobProcessor = async ({
     //     return
     //   })
     // ])
+
     const result = await pageFunction({ page, job, jobLogger })
     const elapsed = (new Date().getTime() - start.getTime()) / 1000
     jobLogger.info(
