@@ -1,4 +1,3 @@
-import express from 'express'
 import { getRedisUrl, getIntFromEnv } from '@/modules/shared/helpers/envHelper'
 import {
   BurstyRateLimiter,
@@ -8,10 +7,8 @@ import {
   RateLimiterRes
 } from 'rate-limiter-flexible'
 import { TIME } from '@speckle/shared'
-import { getIpFromRequest } from '@/modules/shared/utils/ip'
 import { rateLimiterLogger } from '@/logging/logging'
 import { createRedisClient } from '@/modules/shared/redis/redis'
-import { getTokenFromRequest } from '@/modules/shared/middleware'
 
 export interface RateLimitResult {
   isWithinLimits: boolean
@@ -269,16 +266,6 @@ export const getActionForPath = (path: string, verb: string): RateLimitAction =>
   if (LIMITS[maybeAction]) return maybeAction
   if (LIMITS[maybeActionNoVerb]) return maybeActionNoVerb
   return 'ALL_REQUESTS'
-}
-
-export const getSourceFromRequest = (req: express.Request): string => {
-  let source: string | null =
-    req?.context?.userId ||
-    getTokenFromRequest(req)?.substring(10) || // token ID
-    getIpFromRequest(req)
-
-  if (!source) source = 'unknown'
-  return source
 }
 
 // we need to take the `BurstyRateLimiter` specific type because

@@ -1,8 +1,7 @@
-import type { RequestHandler, Response } from 'express'
+import type { Request, RequestHandler, Response } from 'express'
 import {
   getActionForPath,
   getRateLimitResult,
-  getSourceFromRequest,
   isRateLimitBreached,
   RATE_LIMITERS,
   type RateLimitBreached,
@@ -12,6 +11,8 @@ import { isRateLimiterEnabled } from '@/modules/shared/helpers/envHelper'
 import { getRequestPath } from '@/modules/core/helpers/server'
 import { RateLimitError } from '@/modules/core/errors/ratelimit'
 import { ensureError } from '@speckle/shared'
+import { getTokenFromRequest } from '@/modules/shared/middleware'
+import { getIpFromRequest } from '@/modules/shared/utils/ip'
 
 export const createRateLimiterMiddleware = (
   rateLimiterMapping: RateLimiterMapping = RATE_LIMITERS
@@ -66,4 +67,14 @@ export const addRateLimitHeadersToResponse = (
     new Date(Date.now() + rateLimitBreached.msBeforeNext).toISOString()
   )
   res.setHeader('X-Speckle-Meditation', 'https://http.cat/429')
+}
+
+export const getSourceFromRequest = (req: Request): string => {
+  let source: string | null =
+    req?.context?.userId ||
+    getTokenFromRequest(req)?.substring(10) || // token ID
+    getIpFromRequest(req)
+
+  if (!source) source = 'unknown'
+  return source
 }

@@ -107,7 +107,7 @@ const localStrategyBuilderFactory =
             const rateLimitResult = await deps.getRateLimitResult('USER_CREATE', source)
             if (isRateLimitBreached(rateLimitResult)) {
               addRateLimitHeadersToResponse(res, rateLimitResult)
-              return next(new RateLimitError(rateLimitResult))
+              throw new RateLimitError(rateLimitResult, 'Created too many new users')
             }
           }
 
@@ -158,6 +158,8 @@ const localStrategyBuilderFactory =
         } catch (err) {
           const e = ensureError(err, 'Unexpected issue occured while registering')
           switch (e.constructor) {
+            case RateLimitError:
+              return res.status(429).send({ err: e.message })
             case PasswordTooShortError:
             case UserInputError:
             case InviteNotFoundError:
