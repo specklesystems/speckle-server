@@ -48,8 +48,7 @@ export const createTestComment = async (params: {
     insertComments: insertCommentsFactory({ db: projectDb }),
     insertCommentLinks: insertCommentLinksFactory({ db: projectDb }),
     markCommentViewed: markCommentViewedFactory({ db: projectDb }),
-    emitEvent: async () => {},
-    addCommentCreatedActivity: async () => {}
+    emitEvent: async () => {}
   })
 
   return await createComment(

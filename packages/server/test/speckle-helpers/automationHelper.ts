@@ -237,7 +237,8 @@ export const createTestAutomationRun = async (params: {
     getBranchLatestCommits: getBranchLatestCommitsFactory({
       db: projectDb
     }),
-    validateStreamAccess
+    validateStreamAccess,
+    emitEvent: async () => {}
   })({ projectId, automationId, userId })
 
   const automationRunData = await getFullAutomationRunByIdFactory({ db: projectDb })(
