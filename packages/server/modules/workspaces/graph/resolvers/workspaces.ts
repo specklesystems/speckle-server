@@ -212,6 +212,8 @@ import {
 } from '@/modules/workspaces/repositories/workspaceJoinRequests'
 import { sendWorkspaceJoinRequestReceivedEmailFactory } from '@/modules/workspaces/services/workspaceJoinRequestEmails/received'
 import { getProjectFactory } from '@/modules/core/repositories/projects'
+import { getProjectRegionKey } from '@/modules/multiregion/utils/regionSelector'
+import { scheduleJob } from '@/modules/multiregion/services/queue'
 
 const eventBus = getEventBus()
 const getServerInfo = getServerInfoFactory({ db })
@@ -1075,7 +1077,28 @@ export = FF_WORKSPACES_MODULE_ENABLED
               })
           })
 
-          return await moveProjectToWorkspace({ projectId, workspaceId })
+          const updatedProject = await moveProjectToWorkspace({
+            projectId,
+            workspaceId
+          })
+
+          // Trigger project region change, if necessary
+          const projectRegion = await getProjectRegionKey({
+            projectId: updatedProject.id
+          })
+          const workspaceRegion = await getDefaultRegionFactory({ db })({ workspaceId })
+
+          if (!!workspaceRegion && workspaceRegion.key !== projectRegion) {
+            await scheduleJob({
+              type: 'move-project-region',
+              payload: {
+                projectId,
+                regionKey: workspaceRegion.key
+              }
+            })
+          }
+
+          return updatedProject
         }
       },
       Workspace: {
