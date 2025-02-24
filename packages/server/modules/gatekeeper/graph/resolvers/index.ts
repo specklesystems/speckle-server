@@ -63,6 +63,7 @@ export = FF_GATEKEEPER_MODULE_ENABLED
               break
             case 'unlimited':
             case 'academia':
+            case 'free':
               paymentMethod = WorkspacePaymentMethod.Unpaid
               break
             case 'starterInvoiced':
