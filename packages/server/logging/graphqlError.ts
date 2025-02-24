@@ -32,6 +32,12 @@ export const shouldLogAsWarnLevel = (err: unknown): boolean => {
     )
   )
     return true
+  if (
+    /Cannot query field\s"([^\s]+)"\son type\s"([^\s]+)"\. Did you mean\s"([^\s]+)"\?/.test(
+      err.message
+    )
+  )
+    return true
   if (!!err.cause && shouldLogAsWarnLevel(err.cause)) return true
   if (!!err.originalError && shouldLogAsWarnLevel(err.originalError)) return true
 
