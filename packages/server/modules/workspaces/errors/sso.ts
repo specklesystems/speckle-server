@@ -75,7 +75,7 @@ export class SsoUserClaimedError extends BaseError {
     currentUser: User
     currentUserEmails: UserEmail[]
     existingUser: User
-    existingUserEmails: UserEmail[]
+    existingUserEmail: string
   }) {
     super(
       [
@@ -83,7 +83,7 @@ export class SsoUserClaimedError extends BaseError {
         `Currently signed in as ${params.currentUser.name}`,
         `(${params.currentUserEmails.map((record) => record.email).join(',')})`,
         `but attempted to sign in as ${params.existingUser.name}`,
-        `(${params.existingUserEmails.map((record) => record.email).join(',')})`
+        `(${params.existingUserEmail})`
       ].join(' ')
     )
   }

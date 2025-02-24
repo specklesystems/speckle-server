@@ -719,14 +719,12 @@ const tryGetSpeckleUserDataFactory =
         const currentSessionUserEmails = await getUserEmails({
           userId: currentSessionUser.id
         })
-        const existingSpeckleUserEmails = await getUserEmails({
-          userId: existingSpeckleUser.id
-        })
+
         throw new SsoUserClaimedError({
           currentUser: currentSessionUser,
           currentUserEmails: currentSessionUserEmails,
           existingUser: existingSpeckleUser,
-          existingUserEmails: existingSpeckleUserEmails
+          existingUserEmail: providerEmail
         })
       }
     }
