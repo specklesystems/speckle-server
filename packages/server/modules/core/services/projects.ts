@@ -80,6 +80,17 @@ export const createNewProjectFactory =
       projectId,
       authorId: ownerId
     })
-    await emitEvent({ eventName: ProjectEvents.Created, payload: { project, ownerId } })
+    await emitEvent({
+      eventName: ProjectEvents.Created,
+      payload: {
+        project,
+        ownerId,
+        input: {
+          description: project.description,
+          name: project.name,
+          visibility: isPublic ? 'PUBLIC' : isDiscoverable ? 'UNLISTED' : 'PRIVATE'
+        }
+      }
+    })
     return project
   }

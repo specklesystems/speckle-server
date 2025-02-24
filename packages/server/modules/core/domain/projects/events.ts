@@ -1,11 +1,66 @@
+import { ProjectVisibility } from '@/modules/core/domain/projects/operations'
 import { Project } from '@/modules/core/domain/streams/types'
+import {
+  ProjectCreateInput,
+  ProjectUpdateInput,
+  StreamCreateInput,
+  StreamUpdateInput
+} from '@/modules/core/graph/generated/graphql'
+import { StreamRoles } from '@speckle/shared'
+import { OverrideProperties } from 'type-fest'
 
 export const projectEventsNamespace = 'projects' as const
 
 export const ProjectEvents = {
-  Created: `${projectEventsNamespace}.created`
+  Created: `${projectEventsNamespace}.created`,
+  Updated: `${projectEventsNamespace}.updated`,
+  Deleted: `${projectEventsNamespace}.deleted`,
+  Cloned: `${projectEventsNamespace}.cloned`,
+  PermissionsAdded: `${projectEventsNamespace}.permissionsAdded`,
+  PermissionsRevoked: `${projectEventsNamespace}.permissionsRevoked`
 } as const
 
 export type ProjectEventsPayloads = {
-  [ProjectEvents.Created]: { project: Project; ownerId: string }
+  [ProjectEvents.Created]: {
+    project: Project
+    ownerId: string
+    input:
+      | StreamCreateInput
+      | OverrideProperties<
+          ProjectCreateInput,
+          { visibility: ProjectCreateInput['visibility'] | ProjectVisibility }
+        >
+  }
+  [ProjectEvents.Updated]: {
+    updaterId: string
+    oldProject: Project
+    newProject: Project
+    update:
+      | OverrideProperties<
+          ProjectUpdateInput,
+          { visibility: ProjectUpdateInput['visibility'] | ProjectVisibility }
+        >
+      | StreamUpdateInput
+  }
+  [ProjectEvents.Deleted]: {
+    deleterId: string
+    project: Project
+    projectId: string
+  }
+  [ProjectEvents.Cloned]: {
+    clonerId: string
+    sourceProject: Project
+    newProject: Project
+  }
+  [ProjectEvents.PermissionsAdded]: {
+    activityUserId: string
+    targetUserId: string
+    role: StreamRoles
+    project: Project
+  }
+  [ProjectEvents.PermissionsRevoked]: {
+    activityUserId: string
+    removedUserId: string
+    project: Project
+  }
 }

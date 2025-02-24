@@ -22,6 +22,7 @@ import { HooksConfig, Hook, ExecuteHooks } from '@/modules/core/hooks'
 import { reportSubscriptionEventsFactory } from '@/modules/core/events/subscriptionListeners'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { publish } from '@/modules/shared/utils/subscriptions'
+import { getStreamCollaboratorsFactory } from '@/modules/core/repositories/streams'
 
 let stopTestSubs: (() => void) | undefined = undefined
 
@@ -82,7 +83,8 @@ const coreModule: SpeckleModule<{
       // Setup GQL sub emits
       reportSubscriptionEventsFactory({
         eventListen: getEventBus().listen,
-        publish
+        publish,
+        getStreamCollaborators: getStreamCollaboratorsFactory({ db })
       })()
     }
   },
