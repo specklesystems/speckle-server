@@ -47,7 +47,7 @@ export const updateWorkspacePlanFactory =
         break
       case 'business':
       case 'plus':
-      case 'team': // TODO: Do we want to allow trials for one of the new plans?
+      case 'team':
       case 'pro':
         switch (status) {
           case 'trial':

@@ -138,11 +138,13 @@ export const addWorkspaceSubscriptionSeatIfNeededFactory =
     // if (!workspaceSubscription) throw new WorkspaceSubscriptionNotFoundError()
 
     switch (workspacePlan.name) {
+      case 'team':
+      case 'pro':
+        // Cause seat types matter, a future issue. ProductId should change based on seat type
+        throw new NotImplementedError()
       case 'starter':
       case 'plus':
       case 'business':
-      case 'team':
-      case 'pro':
         break
       case 'unlimited':
       case 'academia':
@@ -274,11 +276,13 @@ export const downscaleWorkspaceSubscriptionFactory =
     if (!workspacePlan) throw new WorkspacePlanNotFoundError()
 
     switch (workspacePlan.name) {
+      case 'team':
+      case 'pro':
+        // Cause seat types matter, a future issue
+        throw new NotImplementedError()
       case 'starter':
       case 'plus':
       case 'business':
-      case 'team':
-      case 'pro':
         break
       case 'unlimited':
       case 'academia':
@@ -456,6 +460,11 @@ export const upgradeWorkspaceSubscriptionFactory =
           'Attempting to switch between incompatible plan types'
         )
       }
+    }
+
+    if (isNewPlanType(targetPlan) || isNewPlanType(workspacePlan.name)) {
+      // Needs custom logic below for seats
+      throw new NotImplementedError()
     }
 
     if (
