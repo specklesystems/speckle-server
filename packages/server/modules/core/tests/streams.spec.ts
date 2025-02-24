@@ -65,21 +65,20 @@ import {
 } from '@/modules/core/repositories/objects'
 import {
   createStreamReturnRecordFactory,
+  deleteStreamAndNotifyFactory,
   legacyCreateStreamFactory,
-  legacyUpdateStreamFactory
+  updateStreamAndNotifyFactory
 } from '@/modules/core/services/streams/management'
 import { inviteUsersToProjectFactory } from '@/modules/serverinvites/services/projectInviteManagement'
 import { createAndSendInviteFactory } from '@/modules/serverinvites/services/creation'
 import {
+  deleteAllResourceInvitesFactory,
   findUserByTargetFactory,
   insertInviteAndDeleteOldFactory
 } from '@/modules/serverinvites/repositories/serverInvites'
 import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
 import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import { addStreamPermissionsAddedActivityFactory } from '@/modules/activitystream/services/streamActivity'
-import { saveActivityFactory } from '@/modules/activitystream/repositories'
-import { publish } from '@/modules/shared/utils/subscriptions'
 import {
   addOrUpdateStreamCollaboratorFactory,
   isStreamCollaboratorFactory,
@@ -157,13 +156,22 @@ const createStream = legacyCreateStreamFactory({
     emitEvent: getEventBus().emit
   })
 })
-const deleteStream = deleteStreamFactory({ db })
-const updateStream = legacyUpdateStreamFactory({
-  updateStream: updateStreamFactory({ db })
+const deleteStream = deleteStreamAndNotifyFactory({
+  deleteStream: deleteStreamFactory({ db }),
+  authorizeResolver,
+  getStream,
+  emitEvent: getEventBus().emit,
+  deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db })
+})
+
+const updateStream = updateStreamAndNotifyFactory({
+  authorizeResolver,
+  getStream,
+  updateStream: updateStreamFactory({ db }),
+  emitEvent: getEventBus().emit
 })
 
 const revokeStreamPermissions = revokeStreamPermissionsFactory({ db })
-const saveActivity = saveActivityFactory({ db })
 const validateStreamAccess = validateStreamAccessFactory({
   authorizeResolver
 })
@@ -171,11 +179,7 @@ const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
   validateStreamAccess,
   getUser,
   grantStreamPermissions: grantStreamPermissionsFactory({ db }),
-  emitEvent: getEventBus().emit,
-  addStreamPermissionsAddedActivity: addStreamPermissionsAddedActivityFactory({
-    saveActivity,
-    publish
-  })
+  emitEvent: getEventBus().emit
 })
 const isStreamCollaborator = isStreamCollaboratorFactory({
   getStream
@@ -267,11 +271,15 @@ describe('Streams @core-streams', () => {
     })
 
     it('Should update a stream', async () => {
-      await updateStream({
-        id: testStream.id,
-        name: 'Modified Name',
-        description: 'Wooot'
-      })
+      await updateStream(
+        {
+          id: testStream.id,
+          name: 'Modified Name',
+          description: 'Wooot'
+        },
+        userOne.id,
+        null
+      )
       const stream = await getStream({ streamId: testStream.id })
       expect(stream?.name).to.equal('Modified Name')
       expect(stream?.description).to.equal('Wooot')
@@ -302,7 +310,7 @@ describe('Streams @core-streams', () => {
         ownerId: userOne.id
       })
 
-      await deleteStream(id)
+      await deleteStream(id, userOne.id, null)
       const stream = await getStream({ streamId: id })
 
       expect(stream).to.not.be.ok
@@ -431,7 +439,7 @@ describe('Streams @core-streams', () => {
     })
 
     it('Should update stream updatedAt on stream update ', async () => {
-      await updateStream({ id: updatableStream.id, name: 'TU1' })
+      await updateStream({ id: updatableStream.id, name: 'TU1' }, userOne.id, null)
       const su = await getStream({ streamId: updatableStream.id })
 
       expect(su?.updatedAt).to.be.ok

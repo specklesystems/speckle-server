@@ -56,7 +56,6 @@ import {
   processFinalizedProjectInviteFactory,
   validateProjectInviteBeforeFinalizationFactory
 } from '@/modules/serverinvites/services/coreFinalization'
-import { addStreamPermissionsAddedActivityFactory } from '@/modules/activitystream/services/streamActivity'
 import {
   createUserEmailFactory,
   ensureNoPrimaryEmailForUserFactory,
@@ -67,8 +66,6 @@ import { requestNewEmailVerificationFactory } from '@/modules/emails/services/ve
 import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { sendEmail } from '@/modules/emails/services/sending'
-import { publish } from '@/modules/shared/utils/subscriptions'
-import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import {
   getStreamFactory,
   grantStreamPermissionsFactory
@@ -80,7 +77,6 @@ import {
 import { getUserFactory, getUsersFactory } from '@/modules/core/repositories/users'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 
-const saveActivity = saveActivityFactory({ db })
 const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
 
 const getUser = getUserFactory({ db })
@@ -89,11 +85,7 @@ const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
   validateStreamAccess,
   getUser,
   grantStreamPermissions: grantStreamPermissionsFactory({ db }),
-  emitEvent: getEventBus().emit,
-  addStreamPermissionsAddedActivity: addStreamPermissionsAddedActivityFactory({
-    saveActivity,
-    publish
-  })
+  emitEvent: getEventBus().emit
 })
 const getServerInfo = getServerInfoFactory({ db })
 const getStream = getStreamFactory({ db })

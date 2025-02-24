@@ -9,7 +9,6 @@ import {
   saveActivityFactory
 } from '@/modules/activitystream/repositories'
 import { db } from '@/db/knex'
-import { addStreamCreatedActivityFactory } from '@/modules/activitystream/services/streamActivity'
 import { getStreamFactory } from '@/modules/core/repositories/streams'
 import { ScheduleExecution } from '@/modules/core/domain/scheduledTasks/operations'
 import { scheduleExecutionFactory } from '@/modules/core/services/taskScheduler'
@@ -18,8 +17,6 @@ import {
   releaseTaskLockFactory
 } from '@/modules/core/repositories/scheduledTasks'
 import { Knex } from 'knex'
-import { publish } from '@/modules/shared/utils/subscriptions'
-import { ProjectEvents } from '@/modules/core/domain/projects/events'
 import { reportUserActivityFactory } from '@/modules/activitystream/events/userListeners'
 import { reportAccessRequestActivityFactory } from '@/modules/activitystream/events/accessRequestListeners'
 import { reportBranchActivityFactory } from '@/modules/activitystream/events/branchListeners'
@@ -27,6 +24,7 @@ import { reportCommitActivityFactory } from '@/modules/activitystream/events/com
 import { reportCommentActivityFactory } from '@/modules/activitystream/events/commentListeners'
 import { reportStreamInviteActivityFactory } from '@/modules/activitystream/events/streamInviteListeners'
 import { getProjectInviteProjectFactory } from '@/modules/serverinvites/services/projectInviteManagement'
+import { reportStreamActivityFactory } from '@/modules/activitystream/events/streamListeners'
 
 let scheduledTask: ReturnType<ScheduleExecution> | null = null
 let quitEventListeners: Optional<() => void> = undefined
@@ -70,6 +68,10 @@ const initializeEventListeners = ({
       getStream: getStreamFactory({ db })
     })
   })
+  const reportStreamActivity = reportStreamActivityFactory({
+    eventListen: eventBus.listen,
+    saveActivity
+  })
 
   const quitCbs = [
     reportUserActivity(),
@@ -78,20 +80,7 @@ const initializeEventListeners = ({
     reportCommitActivity(),
     reportCommentActivity(),
     reportStreamInviteActivity(),
-    eventBus.listen(
-      ProjectEvents.Created,
-      async ({ payload: { ownerId, project } }) => {
-        await addStreamCreatedActivityFactory({
-          saveActivity: saveActivityFactory({ db }),
-          publish
-        })({
-          streamId: project.id,
-          creatorId: ownerId,
-          stream: project,
-          input: project
-        })
-      }
-    )
+    reportStreamActivity()
   ]
 
   return () => quitCbs.forEach((quit) => quit())

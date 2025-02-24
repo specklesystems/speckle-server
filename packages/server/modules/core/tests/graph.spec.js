@@ -7,7 +7,6 @@ const { generateManyObjects } = require(`@/test/helpers`)
 
 const { Roles, Scopes } = require('@speckle/shared')
 const cryptoRandomString = require('crypto-random-string')
-const { saveActivityFactory } = require('@/modules/activitystream/repositories')
 const { db } = require('@/db/knex')
 const {
   validateStreamAccessFactory,
@@ -21,11 +20,6 @@ const {
   revokeStreamPermissionsFactory,
   grantStreamPermissionsFactory
 } = require('@/modules/core/repositories/streams')
-const {
-  addStreamPermissionsRevokedActivityFactory,
-  addStreamPermissionsAddedActivityFactory
-} = require('@/modules/activitystream/services/streamActivity')
-const { publish } = require('@/modules/shared/utils/subscriptions')
 const {
   getUserFactory,
   legacyGetPaginatedUsersFactory,
@@ -74,7 +68,6 @@ const { getEventBus } = require('@/modules/shared/services/eventBus')
 
 const getUser = getUserFactory({ db })
 const getStream = getStreamFactory({ db })
-const saveActivity = saveActivityFactory({ db })
 const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
 const isStreamCollaborator = isStreamCollaboratorFactory({
   getStream
@@ -83,21 +76,14 @@ const removeStreamCollaborator = removeStreamCollaboratorFactory({
   validateStreamAccess,
   isStreamCollaborator,
   revokeStreamPermissions: revokeStreamPermissionsFactory({ db }),
-  addStreamPermissionsRevokedActivity: addStreamPermissionsRevokedActivityFactory({
-    saveActivity,
-    publish
-  })
+  emitEvent: getEventBus().emit
 })
 
 const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
   validateStreamAccess,
   getUser,
   grantStreamPermissions: grantStreamPermissionsFactory({ db }),
-  emitEvent: getEventBus().emit,
-  addStreamPermissionsAddedActivity: addStreamPermissionsAddedActivityFactory({
-    saveActivity,
-    publish
-  })
+  emitEvent: getEventBus().emit
 })
 const getUsers = legacyGetPaginatedUsersFactory({ db })
 
