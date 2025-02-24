@@ -26,7 +26,7 @@ const resolveInfoMessage = (
   return null
 }
 
-const passportAuthenticationCallbackFactory =
+export const passportAuthenticationCallbackFactory =
   (context: {
     strategy: Strategy | string
     req: Request

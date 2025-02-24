@@ -2,6 +2,7 @@ const crs = require('crypto-random-string')
 const chai = require('chai')
 const request = require('supertest')
 
+const httpMocks = require('node-mocks-http')
 const { TIME } = require('@speckle/shared')
 const { RATE_LIMITERS, createConsumer } = require('@/modules/core/services/ratelimiter')
 const { beforeEachContext, initializeTestServer } = require('@/test/hooks')
@@ -72,6 +73,10 @@ const {
 const {
   temporarilyEnableRateLimiter
 } = require('@/modules/core/tests/ratelimiter.spec')
+const {
+  passportAuthenticationCallbackFactory
+} = require('@/modules/auth/services/passportService')
+const { testLogger } = require('@/logging/logging')
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = getUserFactory({ db })
@@ -607,6 +612,138 @@ describe('Auth @auth', () => {
       })
 
       RATE_LIMITERS.USER_CREATE = oldRateLimiter
+    })
+  })
+
+  describe('passportAuthenticationCallbackFactory', () => {
+    it('Should handle a successful passport authentication (a user exists)', async () => {
+      const req = httpMocks.createRequest({})
+      const res = httpMocks.createResponse()
+      let errorCalledCounter = 0
+      let nextCalledCounter = 0
+      const next = (err) => {
+        if (err) {
+          errorCalledCounter++
+        }
+        nextCalledCounter++
+      }
+      const SUT = passportAuthenticationCallbackFactory({
+        strategy: 'wotStrategy',
+        req,
+        res,
+        next
+      })
+
+      SUT(null, { id: '123', email: 'weLoveAuth@example.org' })
+
+      expect(req).to.have.property('user')
+      expect(req.user.id).to.equal('123')
+      expect(
+        errorCalledCounter,
+        'error request handler "next(err)" should not have been called'
+      ).to.equal(0)
+      expect(
+        nextCalledCounter,
+        'next request handler should have been called'
+      ).to.equal(1)
+    })
+    it('Should handle case where there is an error but no user', async () => {
+      const req = httpMocks.createRequest()
+      req.log = testLogger
+      const res = httpMocks.createResponse()
+      let errorCalledCounter = 0
+      let nextCalledCounter = 0
+      const next = (err) => {
+        if (err) {
+          errorCalledCounter++
+        }
+        nextCalledCounter++
+      }
+      const SUT = passportAuthenticationCallbackFactory({
+        strategy: 'wotStrategy',
+        req,
+        res,
+        next
+      })
+
+      SUT(new Error('I brrrrroke'), undefined)
+      expect(
+        res._getRedirectUrl().includes('/error'),
+        `Redirect url was '${res._getRedirectUrl()}'`
+      ).to.be.true
+      expect(req).not.to.have.property('user')
+      expect(
+        errorCalledCounter,
+        'error request handler "next(err)" should not have been called'
+      ).to.equal(0)
+      expect(
+        nextCalledCounter,
+        'next request handler should not have been called'
+      ).to.equal(0)
+    })
+    it('Should handle case where there is an error and a user', async () => {
+      const req = httpMocks.createRequest()
+      req.log = testLogger
+      const res = httpMocks.createResponse()
+      let errorCalledCounter = 0
+      let nextCalledCounter = 0
+      const next = (err) => {
+        if (err) {
+          errorCalledCounter++
+        }
+        nextCalledCounter++
+      }
+      const SUT = passportAuthenticationCallbackFactory({
+        strategy: 'wotStrategy',
+        req,
+        res,
+        next
+      })
+
+      SUT(new Error('I brrrrrooooken'), { id: '1234', email: 'allFizzy@example.org' })
+      expect(req).to.have.property('user')
+      expect(
+        errorCalledCounter,
+        'error request handler "next(err)" should have been called'
+      ).to.equal(1)
+      expect(
+        nextCalledCounter,
+        'next request handler should have been called'
+      ).to.equal(1)
+    })
+    it('Should handle the case where there is no user and no error', async () => {
+      const req = httpMocks.createRequest()
+      req.log = testLogger
+      const res = httpMocks.createResponse()
+      let errorCalledCounter = 0
+      let nextCalledCounter = 0
+      const next = (err) => {
+        if (err) {
+          errorCalledCounter++
+        }
+        nextCalledCounter++
+      }
+      const SUT = passportAuthenticationCallbackFactory({
+        strategy: 'wotStrategy',
+        req,
+        res,
+        next
+      })
+
+      SUT(null, undefined)
+      expect(
+        res._getRedirectUrl().includes('/error'),
+        `Redirect url was '${res._getRedirectUrl()}'`
+      ).to.be.true
+      expect(req).not.to.have.property('user')
+      expect(
+        errorCalledCounter,
+        'error request handler "next(err)" should not have been called'
+      ).to.equal(0)
+      expect(
+        nextCalledCounter,
+        'next request handler should not have been called'
+      ).to.equal(0)
     })
   })
 })
