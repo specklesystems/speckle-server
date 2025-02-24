@@ -94,7 +94,10 @@ import {
   UpsertUserSsoSession
 } from '@/modules/workspaces/domain/sso/operations'
 import { GetUser } from '@/modules/core/domain/users/operations'
-import { FindEmail } from '@/modules/core/domain/userEmails/operations'
+import {
+  FindEmail,
+  FindEmailsByUserId
+} from '@/modules/core/domain/userEmails/operations'
 import {
   buildAuthErrorRedirectUrl,
   buildAuthFinalizeRedirectUrl,
@@ -288,7 +291,8 @@ export const getSsoRouter = (): Router => {
         getOidcProviderUserData: getOidcProviderUserDataFactory(),
         tryGetSpeckleUserData: tryGetSpeckleUserDataFactory({
           findEmail: findEmailFactory({ db: trx }),
-          getUser: getUserFactory({ db: trx })
+          getUser: getUserFactory({ db: trx }),
+          getUserEmails: findEmailsByUserIdFactory({ db: trx })
         }),
         createWorkspaceUserFromSsoProfile: createWorkspaceUserFromSsoProfileFactory({
           createUser: createUserFactory({
@@ -677,7 +681,15 @@ const getOidcProviderUserDataFactory =
   }
 
 const tryGetSpeckleUserDataFactory =
-  ({ findEmail, getUser }: { findEmail: FindEmail; getUser: GetUser }) =>
+  ({
+    findEmail,
+    getUser,
+    getUserEmails
+  }: {
+    findEmail: FindEmail
+    getUser: GetUser
+    getUserEmails: FindEmailsByUserId
+  }) =>
   async (
     req: Request<WorkspaceSsoAuthRequestParams>,
     oidcProviderUserData: UserinfoResponse<OidcProfile>
@@ -704,7 +716,18 @@ const tryGetSpeckleUserDataFactory =
     // Confirm existing user matches signed-in user, if both are present
     if (!!currentSessionUser && !!existingSpeckleUser) {
       if (currentSessionUser.id !== existingSpeckleUser.id) {
-        throw new SsoUserClaimedError()
+        const currentSessionUserEmails = await getUserEmails({
+          userId: currentSessionUser.id
+        })
+        const existingSpeckleUserEmails = await getUserEmails({
+          userId: existingSpeckleUser.id
+        })
+        throw new SsoUserClaimedError({
+          currentUser: currentSessionUser,
+          currentUserEmails: currentSessionUserEmails,
+          existingUser: existingSpeckleUser,
+          existingUserEmails: existingSpeckleUserEmails
+        })
       }
     }
 

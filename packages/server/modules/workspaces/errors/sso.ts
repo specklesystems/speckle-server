@@ -1,3 +1,5 @@
+import { UserEmail } from '@/modules/core/domain/userEmails/types'
+import { User } from '@/modules/core/domain/users/types'
 import { BaseError } from '@/modules/shared/errors/base'
 
 export class SsoSessionMissingOrExpiredError extends BaseError {
@@ -69,6 +71,22 @@ export class SsoUserClaimedError extends BaseError {
   static defaultMessage =
     'OIDC provider user already associated with another Speckle account.'
   static code = 'SSO_USER_ALREADY_CLAIMED_ERROR'
+  constructor(params: {
+    currentUser: User
+    currentUserEmails: UserEmail[]
+    existingUser: User
+    existingUserEmails: UserEmail[]
+  }) {
+    super(
+      [
+        'User from SSO provider already exists as another Speckle user.',
+        `Currently signed in as ${params.currentUser.name}`,
+        `(${params.currentUserEmails.map((record) => record.email).join(',')})`,
+        `but attempted to sign in as ${params.existingUser.name}`,
+        `(${params.existingUserEmails.map((record) => record.email).join(',')})`
+      ].join(' ')
+    )
+  }
 }
 
 export class SsoUserInviteRequiredError extends BaseError {
