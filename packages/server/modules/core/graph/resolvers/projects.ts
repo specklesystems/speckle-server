@@ -1,12 +1,4 @@
 import { db } from '@/db/knex'
-import { saveActivityFactory } from '@/modules/activitystream/repositories'
-import {
-  addStreamClonedActivityFactory,
-  addStreamDeletedActivityFactory,
-  addStreamPermissionsAddedActivityFactory,
-  addStreamPermissionsRevokedActivityFactory,
-  addStreamUpdatedActivityFactory
-} from '@/modules/activitystream/services/streamActivity'
 import {
   getBatchedStreamCommentsFactory,
   getCommentLinksFactory,
@@ -43,7 +35,6 @@ import {
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import {
   getStreamFactory,
-  getStreamCollaboratorsFactory,
   createStreamFactory,
   deleteStreamFactory,
   updateStreamFactory,
@@ -92,7 +83,6 @@ import { getEventBus } from '@/modules/shared/services/eventBus'
 import {
   filteredSubscribe,
   ProjectSubscriptions,
-  publish,
   UserSubscriptions
 } from '@/modules/shared/utils/subscriptions'
 import { has } from 'lodash'
@@ -100,7 +90,6 @@ import { has } from 'lodash'
 const getServerInfo = getServerInfoFactory({ db })
 const getUsers = getUsersFactory({ db })
 const getUser = getUserFactory({ db })
-const saveActivity = saveActivityFactory({ db })
 const getStream = getStreamFactory({ db })
 const createStreamReturnRecord = createStreamReturnRecordFactory({
   inviteUsersToProject: inviteUsersToProjectFactory({
@@ -135,10 +124,7 @@ const removeStreamCollaborator = removeStreamCollaboratorFactory({
   validateStreamAccess,
   isStreamCollaborator,
   revokeStreamPermissions: revokeStreamPermissionsFactory({ db }),
-  addStreamPermissionsRevokedActivity: addStreamPermissionsRevokedActivityFactory({
-    saveActivity,
-    publish
-  })
+  emitEvent: getEventBus().emit
 })
 const updateStreamRoleAndNotify = updateStreamRoleAndNotifyFactory({
   isStreamCollaborator,
@@ -146,11 +132,7 @@ const updateStreamRoleAndNotify = updateStreamRoleAndNotifyFactory({
     validateStreamAccess,
     getUser,
     grantStreamPermissions: grantStreamPermissionsFactory({ db }),
-    emitEvent: getEventBus().emit,
-    addStreamPermissionsAddedActivity: addStreamPermissionsAddedActivityFactory({
-      saveActivity,
-      publish
-    })
+    emitEvent: getEventBus().emit
   }),
   removeStreamCollaborator
 })
@@ -173,10 +155,7 @@ const cloneStream = cloneStreamFactory({
   insertComments: insertCommentsFactory({ db }),
   getCommentLinks: getCommentLinksFactory({ db }),
   insertCommentLinks: insertCommentLinksFactory({ db }),
-  addStreamClonedActivity: addStreamClonedActivityFactory({
-    saveActivity: saveActivityFactory({ db }),
-    publish
-  })
+  emitEvent: getEventBus().emit
 })
 
 // We want to read & write from main DB - this isn't occuring in a multi region workspace ctx
@@ -232,11 +211,7 @@ export = {
               db: projectDb
             }),
             authorizeResolver,
-            addStreamDeletedActivity: addStreamDeletedActivityFactory({
-              saveActivity: saveActivityFactory({ db }),
-              publish,
-              getStreamCollaborators: getStreamCollaboratorsFactory({ db })
-            }),
+            emitEvent: getEventBus().emit,
             deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db }),
             getStream: getStreamFactory({ db: projectDb })
           })
@@ -254,11 +229,7 @@ export = {
           db: projectDb
         }),
         authorizeResolver,
-        addStreamDeletedActivity: addStreamDeletedActivityFactory({
-          saveActivity: saveActivityFactory({ db }),
-          publish,
-          getStreamCollaborators: getStreamCollaboratorsFactory({ db })
-        }),
+        emitEvent: getEventBus().emit,
         deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db }),
         getStream: getStreamFactory({ db: projectDb })
       })
@@ -277,10 +248,7 @@ export = {
         authorizeResolver,
         getStream: getStreamFactory({ db: projectDB }),
         updateStream: updateStreamFactory({ db: projectDB }),
-        addStreamUpdatedActivity: addStreamUpdatedActivityFactory({
-          saveActivity,
-          publish
-        })
+        emitEvent: getEventBus().emit
       })
       return await updateStreamAndNotify(update, userId!, resourceAccessRules)
     },

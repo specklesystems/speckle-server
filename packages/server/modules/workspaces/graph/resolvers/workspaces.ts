@@ -139,7 +139,6 @@ import {
   isWorkspaceRole,
   parseDefaultProjectRole
 } from '@/modules/workspaces/domain/logic'
-import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import {
   addOrUpdateStreamCollaboratorFactory,
   isStreamCollaboratorFactory,
@@ -147,12 +146,7 @@ import {
   validateStreamAccessFactory
 } from '@/modules/core/services/streams/access'
 import {
-  addStreamPermissionsAddedActivityFactory,
-  addStreamPermissionsRevokedActivityFactory
-} from '@/modules/activitystream/services/streamActivity'
-import {
   filteredSubscribe,
-  publish,
   WorkspaceSubscriptions
 } from '@/modules/shared/utils/subscriptions'
 import { updateStreamRoleAndNotifyFactory } from '@/modules/core/services/streams/management'
@@ -264,7 +258,6 @@ const buildCreateAndSendWorkspaceInvite = () =>
     getUser,
     getServerInfo
   })
-const saveActivity = saveActivityFactory({ db })
 const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
 const isStreamCollaborator = isStreamCollaboratorFactory({
   getStream
@@ -273,10 +266,7 @@ const removeStreamCollaborator = removeStreamCollaboratorFactory({
   validateStreamAccess,
   isStreamCollaborator,
   revokeStreamPermissions: revokeStreamPermissionsFactory({ db }),
-  addStreamPermissionsRevokedActivity: addStreamPermissionsRevokedActivityFactory({
-    saveActivity,
-    publish
-  })
+  emitEvent: getEventBus().emit
 })
 const updateStreamRoleAndNotify = updateStreamRoleAndNotifyFactory({
   isStreamCollaborator,
@@ -284,11 +274,7 @@ const updateStreamRoleAndNotify = updateStreamRoleAndNotifyFactory({
     validateStreamAccess,
     getUser,
     grantStreamPermissions: grantStreamPermissionsFactory({ db }),
-    emitEvent: getEventBus().emit,
-    addStreamPermissionsAddedActivity: addStreamPermissionsAddedActivityFactory({
-      saveActivity,
-      publish
-    })
+    emitEvent: getEventBus().emit
   }),
   removeStreamCollaborator
 })
