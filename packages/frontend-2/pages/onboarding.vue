@@ -19,7 +19,12 @@
         </FormButton>
       </div>
     </template>
-    <div class="flex flex-col items-center justify-center p-4 max-w-lg mx-auto">
+    <template v-if="isLoading">
+      <div class="py-12 flex flex-col items-center gap-2">
+        <CommonLoadingIcon />
+      </div>
+    </template>
+    <div v-else class="flex flex-col items-center justify-center p-4 max-w-lg mx-auto">
       <h1 class="text-heading-xl text-forefround mb-2 font-normal">
         {{ currentStage === 'join' ? 'Join your teammates' : 'Tell us about yourself' }}
       </h1>
@@ -31,15 +36,12 @@
         }}
       </p>
 
-      <template v-if="!loading">
-        <OnboardingJoinTeammates
-          v-if="currentStage === 'join' && discoverableWorkspaces.length > 0"
-          :workspaces="discoverableWorkspaces"
-          @next="currentStage = 'questions'"
-        />
-        <OnboardingQuestionsForm v-else />
-      </template>
-      <CommonLoadingIcon v-else size="lg" />
+      <OnboardingJoinTeammates
+        v-if="currentStage === 'join' && discoverableWorkspaces.length > 0"
+        :workspaces="discoverableWorkspaces"
+        @next="currentStage = 'questions'"
+      />
+      <OnboardingQuestionsForm v-else />
     </div>
   </HeaderWithEmptyPage>
 </template>
@@ -49,9 +51,9 @@ import { useProcessOnboarding } from '~~/lib/auth/composables/onboarding'
 import { useAuthManager } from '~/lib/auth/composables/auth'
 import { useQuery } from '@vue/apollo-composable'
 import { graphql } from '~/lib/common/generated/gql'
-import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { CommonLoadingIcon } from '@speckle/ui-components'
 import { PagesOnboardingDiscoverableWorkspaces } from '~/lib/onboarding/graphql/queries'
+import { until } from '@vueuse/core'
 
 graphql(`
   fragment PagesOnboarding_DiscoverableWorkspaces on User {
@@ -76,31 +78,34 @@ definePageMeta({
 
 const isOnboardingForced = useIsOnboardingForced()
 
-const { setUserOnboardingComplete, createOnboardingProject } = useProcessOnboarding()
-const { activeUser } = useActiveUser()
+const { setUserOnboardingComplete } = useProcessOnboarding()
 const { logout } = useAuthManager()
 
-const { result, loading } = useQuery(PagesOnboardingDiscoverableWorkspaces)
+const isLoading = ref(true)
+const currentStage = ref<'join' | 'questions'>('questions')
+const isWorkspacesEnabled = useIsWorkspacesEnabled()
 
-const currentStage = ref<'join' | 'questions'>('join')
+const { result, loading } = useQuery(PagesOnboardingDiscoverableWorkspaces, undefined, {
+  enabled: isWorkspacesEnabled.value
+})
 
 const discoverableWorkspaces = computed(
   () => result.value?.activeUser?.discoverableWorkspaces || []
 )
 
-watch(
-  loading,
-  (isLoading) => {
-    if (!isLoading && discoverableWorkspaces.value.length === 0) {
-      currentStage.value = 'questions'
-    }
-  },
-  { immediate: true }
-)
-
-onMounted(() => {
-  if (activeUser.value?.versions.totalCount === 0) {
-    createOnboardingProject()
+onMounted(async () => {
+  // If workspaces feature is disabled, go straight to questions
+  if (!isWorkspacesEnabled.value) {
+    currentStage.value = 'questions'
+    isLoading.value = false
+    return
   }
+
+  // Wait for query to complete
+  await until(loading).toBe(false)
+  const hasWorkspaces =
+    (result.value?.activeUser?.discoverableWorkspaces?.length ?? 0) > 0
+  currentStage.value = hasWorkspaces ? 'join' : 'questions'
+  isLoading.value = false
 })
 </script>
