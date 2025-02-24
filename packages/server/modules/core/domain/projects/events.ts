@@ -1,3 +1,4 @@
+import { ProjectVisibility } from '@/modules/core/domain/projects/operations'
 import { Project } from '@/modules/core/domain/streams/types'
 import {
   ProjectCreateInput,
@@ -6,6 +7,7 @@ import {
   StreamUpdateInput
 } from '@/modules/core/graph/generated/graphql'
 import { StreamRoles } from '@speckle/shared'
+import { OverrideProperties } from 'type-fest'
 
 export const projectEventsNamespace = 'projects' as const
 
@@ -22,13 +24,23 @@ export type ProjectEventsPayloads = {
   [ProjectEvents.Created]: {
     project: Project
     ownerId: string
-    input: StreamCreateInput | ProjectCreateInput
+    input:
+      | StreamCreateInput
+      | OverrideProperties<
+          ProjectCreateInput,
+          { visibility: ProjectCreateInput['visibility'] | ProjectVisibility }
+        >
   }
   [ProjectEvents.Updated]: {
     updaterId: string
     oldProject: Project
     newProject: Project
-    update: ProjectUpdateInput | StreamUpdateInput
+    update:
+      | OverrideProperties<
+          ProjectUpdateInput,
+          { visibility: ProjectUpdateInput['visibility'] | ProjectVisibility }
+        >
+      | StreamUpdateInput
   }
   [ProjectEvents.Deleted]: {
     deleterId: string

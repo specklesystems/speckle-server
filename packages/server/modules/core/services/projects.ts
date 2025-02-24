@@ -12,7 +12,6 @@ import {
 import { Project } from '@/modules/core/domain/streams/types'
 import { RegionalProjectCreationError } from '@/modules/core/errors/projects'
 import { StreamNotFoundError } from '@/modules/core/errors/stream'
-import { ProjectVisibility as GqlProjectVisibility } from '@/modules/core/graph/generated/graphql'
 import { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { retry } from '@lifeomic/attempt'
 import { Roles } from '@speckle/shared'
@@ -89,11 +88,7 @@ export const createNewProjectFactory =
         input: {
           description: project.description,
           name: project.name,
-          visibility: (isPublic
-            ? 'PUBLIC'
-            : isDiscoverable
-            ? 'UNLISTED'
-            : 'PRIVATE') as GqlProjectVisibility
+          visibility: isPublic ? 'PUBLIC' : isDiscoverable ? 'UNLISTED' : 'PRIVATE'
         }
       }
     })
