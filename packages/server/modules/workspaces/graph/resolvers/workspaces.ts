@@ -483,6 +483,11 @@ export = FF_WORKSPACES_MODULE_ENABLED
           const workspacePlan = await getWorkspacePlanFactory({ db })({ workspaceId })
           if (workspacePlan) {
             switch (workspacePlan.name) {
+              case 'team':
+              case 'pro':
+                if (!FF_WORKSPACES_NEW_PLANS_ENABLED) {
+                  throw new UserInputError('Workspace plan not implemented')
+                }
               case 'starter':
               case 'plus':
               case 'business':
