@@ -1,16 +1,19 @@
+<!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
+<!-- eslint-disable vuejs-accessibility/click-events-have-key-events -->
 <template>
   <FormFileUploadZone
     ref="uploadZone"
-    v-slot="{ isDraggingFiles }"
+    v-slot="{ isDraggingFiles, openFilePicker }"
     :disabled="isUploading || disabled"
     :size-limit="maxSizeInBytes"
     :accept="accept"
-    class="flex items-center h-full"
+    class="flex items-center h-full cursor-pointer"
     @files-selected="onFilesSelected"
   >
     <div
       class="w-full h-full border-dashed border rounded-md p-4 flex items-center justify-center text-sm"
       :class="[getDashedBorderClasses(isDraggingFiles)]"
+      @click="openFilePicker"
     >
       <div
         v-if="fileUpload"
@@ -34,7 +37,12 @@
       </div>
       <span v-else class="text-body-xs text-foreground-2 text-center select-none">
         Use our
-        <NuxtLink target="_blank" :to="downloadManagerUrl" class="font-medium">
+        <NuxtLink
+          target="_blank"
+          :to="downloadManagerUrl"
+          class="font-medium underline"
+          @click.stop
+        >
           connectors
         </NuxtLink>
         to publish a {{ modelName ? '' : 'new model' }} version to
