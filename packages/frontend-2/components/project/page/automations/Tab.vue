@@ -3,7 +3,7 @@
     <ProjectPageAutomationsHeader
       v-model:search="search"
       :workspace-slug="workspace?.slug"
-      :show-empty-state="shouldShowEmptyState"
+      :show-header="!shouldShowEmptyState && !loading"
       :creation-disabled-message="disableCreateAutomationMessage"
       @new-automation="onNewAutomation"
     />
