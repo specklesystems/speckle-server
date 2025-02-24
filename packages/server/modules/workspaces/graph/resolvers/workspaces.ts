@@ -160,11 +160,7 @@ import { getUserFactory, getUsersFactory } from '@/modules/core/repositories/use
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { commandFactory } from '@/modules/shared/command'
 import { withTransaction } from '@/modules/shared/helpers/dbHelper'
-import {
-  getRateLimitResult,
-  isRateLimitBreached
-} from '@/modules/core/services/ratelimiter'
-import { RateLimitError } from '@/modules/core/errors/ratelimit'
+import { throwIfRateLimited } from '@/modules/core/services/ratelimiter'
 import { getRegionDb } from '@/modules/multiregion/utils/dbSelector'
 import {
   listUserExpiredSsoSessionsFactory,
@@ -937,15 +933,11 @@ export = FF_WORKSPACES_MODULE_ENABLED
       },
       WorkspaceProjectMutations: {
         create: async (_parent, args, context) => {
-          if (isRateLimiterEnabled()) {
-            const rateLimitResult = await getRateLimitResult(
-              'STREAM_CREATE',
-              context.userId!
-            )
-            if (isRateLimitBreached(rateLimitResult)) {
-              throw new RateLimitError(rateLimitResult)
-            }
-          }
+          await throwIfRateLimited({
+            rateLimiterEnabled: isRateLimiterEnabled(),
+            action: 'STREAM_CREATE',
+            source: context.userId!
+          })
 
           await authorizeResolver(
             context.userId!,

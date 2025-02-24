@@ -6,9 +6,10 @@ import {
   RateLimiterRedis,
   RateLimiterRes
 } from 'rate-limiter-flexible'
-import { TIME } from '@speckle/shared'
+import { Nullable, TIME } from '@speckle/shared'
 import { rateLimiterLogger } from '@/logging/logging'
 import { createRedisClient } from '@/modules/shared/redis/redis'
+import { RateLimitError } from '@/modules/core/errors/ratelimit'
 
 export interface RateLimitResult {
   isWithinLimits: boolean
@@ -351,4 +352,28 @@ export async function getRateLimitResult(
 ): Promise<RateLimitSuccess | RateLimitBreached> {
   const consumerFunc = rateLimiterMapping[action]
   return await consumerFunc(source)
+}
+
+export async function throwIfRateLimited(params: {
+  rateLimiterEnabled: boolean
+  rateLimiterMapping?: RateLimiterMapping
+  action: RateLimitAction
+  source: string
+  handleRateLimitBreachPriorToThrowing?: (rateLimitResult: RateLimitBreached) => void
+}): Promise<Nullable<RateLimitSuccess>> {
+  const {
+    rateLimiterEnabled,
+    rateLimiterMapping,
+    action,
+    source,
+    handleRateLimitBreachPriorToThrowing
+  } = params
+  if (!rateLimiterEnabled) return null
+
+  const rateLimitResult = await getRateLimitResult(action, source, rateLimiterMapping)
+  if (isRateLimitBreached(rateLimitResult)) {
+    handleRateLimitBreachPriorToThrowing?.(rateLimitResult)
+    throw new RateLimitError(rateLimitResult)
+  }
+  return rateLimitResult
 }

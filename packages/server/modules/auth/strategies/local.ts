@@ -1,6 +1,6 @@
 import {
   getRateLimitResult,
-  isRateLimitBreached
+  throwIfRateLimited
 } from '@/modules/core/services/ratelimiter'
 import { getIpFromRequest } from '@/modules/shared/utils/ip'
 import { UserInputError } from '@/modules/core/errors/userinput'
@@ -22,9 +22,8 @@ import {
 } from '@/modules/core/domain/users/operations'
 import { GetServerInfo } from '@/modules/core/domain/server/operations'
 import { UserValidationError } from '@/modules/core/errors/user'
-import { RateLimitError } from '@/modules/core/errors/ratelimit'
 import { isRateLimiterEnabled } from '@/modules/shared/helpers/envHelper'
-import { addRateLimitHeadersToResponse } from '@/modules/core/rest/ratelimiter'
+import { addRateLimitHeadersToResponseFactory } from '@/modules/core/rest/ratelimiter'
 import {
   resolveErrorInfo,
   resolveStatusCode
@@ -103,16 +102,16 @@ const localStrategyBuilderFactory =
 
           const user = req.body
 
-          if (isRateLimiterEnabled()) {
-            const ip = getIpFromRequest(req)
-            if (ip) user.ip = ip
-            const source = ip ? ip : 'unknown'
-            const rateLimitResult = await deps.getRateLimitResult('USER_CREATE', source)
-            if (isRateLimitBreached(rateLimitResult)) {
-              addRateLimitHeadersToResponse(res, rateLimitResult)
-              throw new RateLimitError(rateLimitResult, 'Created too many new users')
-            }
-          }
+          const ip = getIpFromRequest(req)
+          if (ip) user.ip = ip
+          const source = ip ? ip : 'unknown'
+          await throwIfRateLimited({
+            rateLimiterEnabled: isRateLimiterEnabled(),
+            action: 'USER_CREATE',
+            source,
+            handleRateLimitBreachPriorToThrowing:
+              addRateLimitHeadersToResponseFactory(res)
+          })
 
           // 1. if the server is invite only you must have an invite
           if (serverInfo.inviteOnly && !req.session.token)

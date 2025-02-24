@@ -7,11 +7,7 @@ import {
   filteredSubscribe,
   publish
 } from '@/modules/shared/utils/subscriptions'
-import {
-  getRateLimitResult,
-  isRateLimitBreached
-} from '@/modules/core/services/ratelimiter'
-import { RateLimitError } from '@/modules/core/errors/ratelimit'
+import { throwIfRateLimited } from '@/modules/core/services/ratelimiter'
 import { uploadFileStreamFactory } from '@/modules/blobstorage/services/management'
 import {
   updateBlobFactory,
@@ -80,22 +76,18 @@ export = FF_GENDOAI_MODULE_ENABLED
       },
       VersionMutations: {
         async requestGendoAIRender(__parent, args, ctx) {
+          await throwIfRateLimited({
+            rateLimiterEnabled: isRateLimiterEnabled(),
+            action: 'GENDO_AI_RENDER_REQUEST',
+            source: ctx.userId as string
+          })
+
           await authorizeResolver(
             ctx.userId,
             args.input.projectId,
             Roles.Stream.Reviewer,
             ctx.resourceAccessRules
           )
-
-          if (isRateLimiterEnabled()) {
-            const rateLimitResult = await getRateLimitResult(
-              'GENDO_AI_RENDER_REQUEST',
-              ctx.userId as string
-            )
-            if (isRateLimitBreached(rateLimitResult)) {
-              throw new RateLimitError(rateLimitResult)
-            }
-          }
 
           const userId = ctx.userId!
 

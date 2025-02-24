@@ -13,7 +13,6 @@ import {
   insertCommentLinksFactory,
   insertCommentsFactory
 } from '@/modules/comments/repositories/comments'
-import { RateLimitError } from '@/modules/core/errors/ratelimit'
 import { StreamNotFoundError } from '@/modules/core/errors/stream'
 import {
   ProjectVisibility,
@@ -56,10 +55,7 @@ import {
 } from '@/modules/core/repositories/streams'
 import { getUserFactory, getUsersFactory } from '@/modules/core/repositories/users'
 import { createNewProjectFactory } from '@/modules/core/services/projects'
-import {
-  getRateLimitResult,
-  isRateLimitBreached
-} from '@/modules/core/services/ratelimiter'
+import { throwIfRateLimited } from '@/modules/core/services/ratelimiter'
 import {
   addOrUpdateStreamCollaboratorFactory,
   isStreamCollaboratorFactory,
@@ -290,15 +286,11 @@ export = {
     },
     // This one is only used outside of a workspace, so the project is always created in the main db
     async create(_parent, args, context) {
-      if (isRateLimiterEnabled()) {
-        const rateLimitResult = await getRateLimitResult(
-          'STREAM_CREATE',
-          context.userId!
-        )
-        if (isRateLimitBreached(rateLimitResult)) {
-          throw new RateLimitError(rateLimitResult)
-        }
-      }
+      await throwIfRateLimited({
+        rateLimiterEnabled: isRateLimiterEnabled(),
+        action: 'STREAM_CREATE',
+        source: context.userId!
+      })
 
       const regionKey = await getValidDefaultProjectRegionKey()
       const projectDb = await getDb({ regionKey })

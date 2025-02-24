@@ -1,58 +1,43 @@
 import type { Request, RequestHandler, Response } from 'express'
 import {
   getActionForPath,
-  getRateLimitResult,
-  isRateLimitBreached,
-  RATE_LIMITERS,
+  throwIfRateLimited,
   type RateLimitBreached,
   type RateLimiterMapping
 } from '@/modules/core/services/ratelimiter'
 import { isRateLimiterEnabled } from '@/modules/shared/helpers/envHelper'
 import { getRequestPath } from '@/modules/core/helpers/server'
-import { RateLimitError } from '@/modules/core/errors/ratelimit'
-import { ensureError } from '@speckle/shared'
 import { getTokenFromRequest } from '@/modules/shared/middleware'
 import { getIpFromRequest } from '@/modules/shared/utils/ip'
 
-export const createRateLimiterMiddleware = (
-  rateLimiterMapping: RateLimiterMapping = RATE_LIMITERS
-): RequestHandler => {
+export const createRateLimiterMiddleware = (params?: {
+  rateLimiterMapping?: RateLimiterMapping
+}): RequestHandler => {
+  const { rateLimiterMapping } = params || {}
   return async (req, res, next) => {
-    if (!isRateLimiterEnabled()) return next()
+    const rateLimiterEnabled = isRateLimiterEnabled()
+    if (!rateLimiterEnabled) return next()
     const path = getRequestPath(req) || ''
     const action = getActionForPath(path, req.method)
     const source = getSourceFromRequest(req)
-    try {
-      const rateLimitResult = await getRateLimitResult(
-        action,
-        source,
-        rateLimiterMapping
-      )
-      if (isRateLimitBreached(rateLimitResult)) {
-        addRateLimitHeadersToResponse(res, rateLimitResult)
-        return next(new RateLimitError(rateLimitResult))
-      } else {
-        if (res.headersSent) return res
-        res.setHeader('X-RateLimit-Remaining', rateLimitResult.remainingPoints)
-        return next()
-      }
-    } catch (err) {
-      const e = !(err instanceof RateLimitError)
-        ? new RateLimitError(
-            {
-              isWithinLimits: false,
-              msBeforeNext: 0,
-              action
-            },
-            'Unknown rate limit error',
-            { cause: ensureError(err) }
-          )
-        : err
+    const rateLimitResult = await throwIfRateLimited({
+      rateLimiterEnabled,
+      rateLimiterMapping,
+      action,
+      source,
+      handleRateLimitBreachPriorToThrowing: addRateLimitHeadersToResponseFactory(res)
+    })
 
-      addRateLimitHeadersToResponse(res, e.rateLimitBreached)
-      return next(e)
-    }
+    if (res.headersSent) return res
+    if (rateLimitResult)
+      res.setHeader('X-RateLimit-Remaining', rateLimitResult.remainingPoints)
+    return next()
   }
+}
+
+export const addRateLimitHeadersToResponseFactory = (res: Response) => {
+  return (rateLimitBreached: RateLimitBreached) =>
+    addRateLimitHeadersToResponse(res, rateLimitBreached)
 }
 
 export const addRateLimitHeadersToResponse = (

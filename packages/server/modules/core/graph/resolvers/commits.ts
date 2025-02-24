@@ -17,12 +17,7 @@ import {
   createCommitByBranchNameFactory,
   updateCommitAndNotifyFactory
 } from '@/modules/core/services/commit/management'
-
-import { RateLimitError } from '@/modules/core/errors/ratelimit'
-import {
-  isRateLimitBreached,
-  getRateLimitResult
-} from '@/modules/core/services/ratelimiter'
+import { throwIfRateLimited } from '@/modules/core/services/ratelimiter'
 import {
   batchDeleteCommitsFactory,
   batchMoveCommitsFactory
@@ -341,15 +336,11 @@ export = {
         context.resourceAccessRules
       )
 
-      if (isRateLimiterEnabled()) {
-        const rateLimitResult = await getRateLimitResult(
-          'COMMIT_CREATE',
-          context.userId!
-        )
-        if (isRateLimitBreached(rateLimitResult)) {
-          throw new RateLimitError(rateLimitResult)
-        }
-      }
+      await throwIfRateLimited({
+        rateLimiterEnabled: isRateLimiterEnabled(),
+        action: 'COMMIT_CREATE',
+        source: context.userId!
+      })
 
       const createCommitByBranchId = createCommitByBranchIdFactory({
         createCommit: createCommitFactory({ db: projectDb }),

@@ -4,10 +4,7 @@ import {
   StreamSubscriptions
 } from '@/modules/shared/utils/subscriptions'
 import { authorizeResolver, validateScopes } from '@/modules/shared'
-import {
-  getRateLimitResult,
-  isRateLimitBreached
-} from '@/modules/core/services/ratelimiter'
+import { throwIfRateLimited } from '@/modules/core/services/ratelimiter'
 import {
   getPendingProjectCollaboratorsFactory,
   inviteUsersToProjectFactory
@@ -41,7 +38,6 @@ import {
 import { Roles, Scopes } from '@speckle/shared'
 import { StreamNotFoundError } from '@/modules/core/errors/stream'
 import { throwForNotHavingServerRole } from '@/modules/shared/authz'
-import { RateLimitError } from '@/modules/core/errors/ratelimit'
 
 import { toProjectIdWhitelist, isResourceAllowed } from '@/modules/core/helpers/token'
 import {
@@ -438,15 +434,11 @@ export = {
   },
   Mutation: {
     async streamCreate(_, args, context) {
-      if (isRateLimiterEnabled()) {
-        const rateLimitResult = await getRateLimitResult(
-          'STREAM_CREATE',
-          context.userId!
-        )
-        if (isRateLimitBreached(rateLimitResult)) {
-          throw new RateLimitError(rateLimitResult)
-        }
-      }
+      await throwIfRateLimited({
+        rateLimiterEnabled: isRateLimiterEnabled(),
+        action: 'STREAM_CREATE',
+        source: context.userId!
+      })
 
       const { id } = await createStreamReturnRecord({
         ...args.stream,

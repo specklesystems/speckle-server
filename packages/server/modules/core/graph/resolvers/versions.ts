@@ -19,11 +19,7 @@ import {
   markCommitReceivedAndNotifyFactory,
   updateCommitAndNotifyFactory
 } from '@/modules/core/services/commit/management'
-import {
-  getRateLimitResult,
-  isRateLimitBreached
-} from '@/modules/core/services/ratelimiter'
-import { RateLimitError } from '@/modules/core/errors/ratelimit'
+import { throwIfRateLimited } from '@/modules/core/services/ratelimiter'
 import {
   createCommitFactory,
   deleteCommitsFactory,
@@ -172,12 +168,11 @@ export = {
         projectId: args.input.projectId
       })
 
-      if (isRateLimiterEnabled()) {
-        const rateLimitResult = await getRateLimitResult('COMMIT_CREATE', ctx.userId!)
-        if (isRateLimitBreached(rateLimitResult)) {
-          throw new RateLimitError(rateLimitResult)
-        }
-      }
+      await throwIfRateLimited({
+        rateLimiterEnabled: isRateLimiterEnabled(),
+        action: 'COMMIT_CREATE',
+        source: ctx.userId!
+      })
 
       const projectDb = await getProjectDbClient({ projectId: args.input.projectId })
 
