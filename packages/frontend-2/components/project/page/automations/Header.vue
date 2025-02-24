@@ -3,7 +3,7 @@
     class="flex flex-col gap-y-2 md:gap-y-0 md:flex-row md:justify-between md:items-center"
   >
     <h1 class="block text-heading-xl">Automations</h1>
-    <div v-if="!showEmptyState" class="flex flex-col gap-2 md:flex-row md:items-center">
+    <div v-if="showHeader" class="flex flex-col gap-2 md:flex-row md:items-center">
       <FormTextInput
         name="search"
         color="foundation"
@@ -41,7 +41,7 @@ defineEmits<{
 
 const props = defineProps<{
   workspaceSlug?: string
-  showEmptyState?: boolean
+  showHeader?: boolean
   creationDisabledMessage?: string
 }>()
 
