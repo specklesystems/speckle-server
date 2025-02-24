@@ -363,8 +363,6 @@ export const workspaceTrackingFactory =
       case 'workspace.authorized':
         break
       case 'workspace.created':
-        payload.createdByUserId
-
         // we're setting workspace props and attributing to speckle users
         mixpanel.groups.set('workspace_id', payload.workspace.id, {
           ...(await calculateProperties(payload.workspace)),
@@ -372,7 +370,6 @@ export const workspaceTrackingFactory =
         })
         break
       case 'workspace.updated':
-      case 'workspace.metrics':
         // just updating workspace props
         mixpanel.groups.set(
           'workspace_id',

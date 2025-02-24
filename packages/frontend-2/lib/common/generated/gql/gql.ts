@@ -93,7 +93,6 @@ const documents = {
     "\n  fragment ProjectsAddDialog_Workspace on Workspace {\n    id\n    ...ProjectsWorkspaceSelect_Workspace\n  }\n": types.ProjectsAddDialog_WorkspaceFragmentDoc,
     "\n  fragment ProjectsAddDialog_User on User {\n    workspaces {\n      items {\n        ...ProjectsAddDialog_Workspace\n      }\n    }\n  }\n": types.ProjectsAddDialog_UserFragmentDoc,
     "\n  fragment ProjectsDashboard_UserProjectCollection on UserProjectCollection {\n    numberOfHidden\n  }\n": types.ProjectsDashboard_UserProjectCollectionFragmentDoc,
-    "\n    subscription OnUserProjectsUpdate {\n      userProjectsUpdated {\n        type\n        id\n        project {\n          ...ProjectDashboardItem\n        }\n      }\n    }\n  ": types.OnUserProjectsUpdateDocument,
     "\n  fragment ProjectsDashboardFilledProject on ProjectCollection {\n    items {\n      ...ProjectDashboardItem\n    }\n  }\n": types.ProjectsDashboardFilledProjectFragmentDoc,
     "\n  fragment ProjectsDashboardFilledUser on UserProjectCollection {\n    items {\n      ...ProjectDashboardItem\n    }\n  }\n": types.ProjectsDashboardFilledUserFragmentDoc,
     "\n  fragment ProjectsDashboardHeaderProjects_User on User {\n    projectInvites {\n      ...ProjectsInviteBanner\n    }\n  }\n": types.ProjectsDashboardHeaderProjects_UserFragmentDoc,
@@ -174,6 +173,7 @@ const documents = {
     "\n  fragment BillingActions_Workspace on Workspace {\n    id\n    name\n    invitedTeam(filter: $invitesFilter) {\n      id\n    }\n    plan {\n      name\n      status\n    }\n    subscription {\n      billingInterval\n    }\n    team {\n      totalCount\n    }\n    defaultRegion {\n      name\n    }\n  }\n": types.BillingActions_WorkspaceFragmentDoc,
     "\n  mutation BillingCreateCheckoutSession($input: CheckoutSessionInput!) {\n    workspaceMutations {\n      billing {\n        createCheckoutSession(input: $input) {\n          url\n          id\n        }\n      }\n    }\n  }\n": types.BillingCreateCheckoutSessionDocument,
     "\n  mutation BillingUpgradePlan($input: UpgradePlanInput!) {\n    workspaceMutations {\n      billing {\n        upgradePlan(input: $input)\n      }\n    }\n  }\n": types.BillingUpgradePlanDocument,
+    "\n  mutation AdminUpdateWorkspacePlan($input: AdminUpdateWorkspacePlanInput!) {\n    admin {\n      updateWorkspacePlan(input: $input)\n    }\n  }\n": types.AdminUpdateWorkspacePlanDocument,
     "\n  query MentionsUserSearch($query: String!, $projectId: String) {\n    users(input: { query: $query, limit: 5, cursor: null, projectId: $projectId }) {\n      items {\n        id\n        name\n        company\n      }\n    }\n  }\n": types.MentionsUserSearchDocument,
     "\n  query UserSearch(\n    $query: String!\n    $limit: Int\n    $cursor: String\n    $archived: Boolean\n    $workspaceId: String\n  ) {\n    userSearch(query: $query, limit: $limit, cursor: $cursor, archived: $archived) {\n      cursor\n      items {\n        id\n        name\n        bio\n        company\n        avatar\n        verified\n        role\n        workspaceDomainPolicyCompliant(workspaceId: $workspaceId)\n      }\n    }\n  }\n": types.UserSearchDocument,
     "\n  query ServerInfoBlobSizeLimit {\n    serverInfo {\n      configuration {\n        blobSizeLimitBytes\n      }\n    }\n  }\n": types.ServerInfoBlobSizeLimitDocument,
@@ -317,6 +317,7 @@ const documents = {
     "\n  fragment AppAuthorAvatar on AppAuthor {\n    id\n    name\n    avatar\n  }\n": types.AppAuthorAvatarFragmentDoc,
     "\n  fragment LimitedUserAvatar on LimitedUser {\n    id\n    name\n    avatar\n  }\n": types.LimitedUserAvatarFragmentDoc,
     "\n  fragment ActiveUserAvatar on User {\n    id\n    name\n    avatar\n  }\n": types.ActiveUserAvatarFragmentDoc,
+    "\n      subscription OnUserProjectsUpdate {\n        userProjectsUpdated {\n          type\n          id\n          project {\n            ...ProjectDashboardItem\n          }\n        }\n      }\n    ": types.OnUserProjectsUpdateDocument,
     "\n  mutation UpdateUser($input: UserUpdateInput!) {\n    activeUserMutations {\n      update(user: $input) {\n        id\n        name\n        bio\n        company\n        avatar\n      }\n    }\n  }\n": types.UpdateUserDocument,
     "\n  mutation UpdateNotificationPreferences($input: JSONObject!) {\n    userNotificationPreferencesUpdate(preferences: $input)\n  }\n": types.UpdateNotificationPreferencesDocument,
     "\n  mutation DeleteAccount($input: UserDeleteInput!) {\n    userDelete(userConfirmation: $input)\n  }\n": types.DeleteAccountDocument,
@@ -731,10 +732,6 @@ export function graphql(source: "\n  fragment ProjectsDashboard_UserProjectColle
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n    subscription OnUserProjectsUpdate {\n      userProjectsUpdated {\n        type\n        id\n        project {\n          ...ProjectDashboardItem\n        }\n      }\n    }\n  "): (typeof documents)["\n    subscription OnUserProjectsUpdate {\n      userProjectsUpdated {\n        type\n        id\n        project {\n          ...ProjectDashboardItem\n        }\n      }\n    }\n  "];
-/**
- * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
 export function graphql(source: "\n  fragment ProjectsDashboardFilledProject on ProjectCollection {\n    items {\n      ...ProjectDashboardItem\n    }\n  }\n"): (typeof documents)["\n  fragment ProjectsDashboardFilledProject on ProjectCollection {\n    items {\n      ...ProjectDashboardItem\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
@@ -1052,6 +1049,10 @@ export function graphql(source: "\n  mutation BillingCreateCheckoutSession($inpu
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  mutation BillingUpgradePlan($input: UpgradePlanInput!) {\n    workspaceMutations {\n      billing {\n        upgradePlan(input: $input)\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation BillingUpgradePlan($input: UpgradePlanInput!) {\n    workspaceMutations {\n      billing {\n        upgradePlan(input: $input)\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  mutation AdminUpdateWorkspacePlan($input: AdminUpdateWorkspacePlanInput!) {\n    admin {\n      updateWorkspacePlan(input: $input)\n    }\n  }\n"): (typeof documents)["\n  mutation AdminUpdateWorkspacePlan($input: AdminUpdateWorkspacePlanInput!) {\n    admin {\n      updateWorkspacePlan(input: $input)\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -1624,6 +1625,10 @@ export function graphql(source: "\n  fragment LimitedUserAvatar on LimitedUser {
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  fragment ActiveUserAvatar on User {\n    id\n    name\n    avatar\n  }\n"): (typeof documents)["\n  fragment ActiveUserAvatar on User {\n    id\n    name\n    avatar\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n      subscription OnUserProjectsUpdate {\n        userProjectsUpdated {\n          type\n          id\n          project {\n            ...ProjectDashboardItem\n          }\n        }\n      }\n    "): (typeof documents)["\n      subscription OnUserProjectsUpdate {\n        userProjectsUpdated {\n          type\n          id\n          project {\n            ...ProjectDashboardItem\n          }\n        }\n      }\n    "];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

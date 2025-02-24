@@ -118,8 +118,8 @@ export class DatabaseError<I extends Info = Info> extends EnvironmentResourceErr
   static statusCode = 502
 
   constructor(
-    message?: string | null | undefined,
-    dbClient?: Knex | undefined,
+    message?: string | null,
+    dbClient?: Knex,
     options: ExtendedOptions<I> | Error | undefined = undefined
   ) {
     const additionalInfo = retrieveMetadataFromDatabaseClient(dbClient)

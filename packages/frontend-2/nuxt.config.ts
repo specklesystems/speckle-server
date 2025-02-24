@@ -220,6 +220,12 @@ export default defineNuxtConfig({
         'requires-workspaces-enabled',
         'require-valid-workspace'
       ]
+    },
+    '/downloads': {
+      redirect: {
+        to: 'https://www.speckle.systems/connectors',
+        statusCode: 301
+      }
     }
   },
 

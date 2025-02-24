@@ -1,10 +1,10 @@
 import type { MaybeNullOrUndefined } from '@speckle/shared'
-import {
-  type NumericPropertyInfo,
-  type PropertyInfo,
-  type SpeckleObject,
-  type SpeckleReference,
-  type StringPropertyInfo
+import type {
+  NumericPropertyInfo,
+  PropertyInfo,
+  SpeckleObject,
+  SpeckleReference,
+  StringPropertyInfo
 } from '@speckle/viewer'
 import type { Raw } from 'vue'
 

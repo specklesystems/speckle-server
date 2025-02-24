@@ -1,5 +1,5 @@
 <template>
-  <Menu v-slot="{ open: isMenuOpen }" as="div" class="relative inline-block">
+  <HeadlessMenu v-slot="{ open: isMenuOpen }" as="div" class="relative inline-block">
     <div>
       <MenuButton :id="menuId" ref="menuButton" class="hidden" @click.stop.prevent />
       <!-- conditional pointer-events-none is necessary to avoid double events when clicking on the button when the menu is already open -->
@@ -41,12 +41,12 @@
         </div>
       </MenuItems>
     </Teleport>
-  </Menu>
+  </HeadlessMenu>
 </template>
 
 <script setup lang="ts">
 import { directive as vTippy } from 'vue-tippy'
-import { Menu, MenuButton, MenuItems, MenuItem } from '@headlessui/vue'
+import { Menu as HeadlessMenu, MenuButton, MenuItems, MenuItem } from '@headlessui/vue'
 import type { Nullable } from '@speckle/shared'
 import { computed, ref, watch, onMounted } from 'vue'
 import {

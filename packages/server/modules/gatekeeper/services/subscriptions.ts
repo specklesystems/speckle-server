@@ -85,6 +85,7 @@ export const handleSubscriptionUpdateFactory =
         case 'starterInvoiced':
         case 'plusInvoiced':
         case 'businessInvoiced':
+        case 'free':
           throw new WorkspacePlanMismatchError()
         default:
           throwUncoveredError(workspacePlan)
@@ -138,6 +139,7 @@ export const addWorkspaceSubscriptionSeatIfNeededFactory =
       case 'starterInvoiced':
       case 'plusInvoiced':
       case 'businessInvoiced':
+      case 'free':
         throw new WorkspacePlanMismatchError()
       default:
         throwUncoveredError(workspacePlan)
@@ -271,6 +273,7 @@ export const downscaleWorkspaceSubscriptionFactory =
       case 'starterInvoiced':
       case 'plusInvoiced':
       case 'businessInvoiced':
+      case 'free':
         throw new WorkspacePlanMismatchError()
       default:
         throwUncoveredError(workspacePlan)
@@ -386,6 +389,7 @@ export const upgradeWorkspaceSubscriptionFactory =
       case 'starterInvoiced':
       case 'plusInvoiced':
       case 'businessInvoiced':
+      case 'free':
         throw new WorkspaceNotPaidPlanError()
       case 'starter':
       case 'plus':

@@ -96,8 +96,8 @@ const onSubmit = handleSubmit(async (tokenFormValues) => {
     emit('token-created', result.data.apiTokenCreate)
     triggerNotification({
       type: ToastNotificationType.Success,
-      title: 'Webhook created',
-      description: 'The webhook has been successfully created'
+      title: 'Token created',
+      description: 'The token has been successfully created'
     })
   } else {
     const errorMessage = getFirstErrorMessage(result?.errors)
