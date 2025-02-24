@@ -1,5 +1,4 @@
 import passport, { Strategy, AuthenticateOptions } from 'passport'
-import { logger } from '@/logging/logging'
 import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
 import {
   UnverifiedEmailSSOLoginError,
@@ -41,7 +40,7 @@ const passportAuthenticationCallbackFactory =
   ) => {
     const { strategy, req, res, next } = context
     if (err && !(err instanceof UserInputError))
-      logger.error({ err, strategy }, 'Authentication error for strategy "{strategy}"')
+      req.log.error({ err, strategy }, 'Authentication error for strategy "{strategy}"')
 
     if (!user) {
       const infoMsg = resolveInfoMessage(info)
