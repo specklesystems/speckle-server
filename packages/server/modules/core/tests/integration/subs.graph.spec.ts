@@ -1,12 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { db } from '@/db/knex'
-import { saveActivityFactory } from '@/modules/activitystream/repositories'
-import {
-  addStreamDeletedActivityFactory,
-  addStreamPermissionsAddedActivityFactory,
-  addStreamPermissionsRevokedActivityFactory,
-  addStreamUpdatedActivityFactory
-} from '@/modules/activitystream/services/streamActivity'
 import { AllScopes } from '@/modules/core/helpers/mainConstants'
 import {
   deleteBranchByIdFactory,
@@ -26,7 +19,6 @@ import {
 import {
   deleteStreamFactory,
   getCommitStreamFactory,
-  getStreamCollaboratorsFactory,
   getStreamFactory,
   getStreamsFactory,
   grantStreamPermissionsFactory,
@@ -56,7 +48,6 @@ import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { deleteAllResourceInvitesFactory } from '@/modules/serverinvites/repositories/serverInvites'
 import { authorizeResolver } from '@/modules/shared'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import { publish } from '@/modules/shared/utils/subscriptions'
 import {
   BasicTestWorkspace,
   createTestWorkspace
@@ -104,7 +95,6 @@ import { faker } from '@faker-js/faker'
 import { Optional, Roles, Scopes, ServerScope } from '@speckle/shared'
 import { expect } from 'chai'
 
-const saveActivity = saveActivityFactory({ db })
 const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
 const isStreamCollaborator = isStreamCollaboratorFactory({
   getStream: getStreamFactory({ db })
@@ -118,11 +108,7 @@ const buildDeleteProject = async (params: { projectId: string; ownerId: string }
       db: projectDb
     }),
     authorizeResolver,
-    addStreamDeletedActivity: addStreamDeletedActivityFactory({
-      saveActivity,
-      publish,
-      getStreamCollaborators: getStreamCollaboratorsFactory({ db })
-    }),
+    emitEvent: getEventBus().emit,
     deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db }),
     getStream: getStreamFactory({ db: projectDb })
   })
@@ -136,10 +122,7 @@ const buildUpdateProject = async (params: { projectId: string }) => {
     authorizeResolver,
     getStream: getStreamFactory({ db: projectDB }),
     updateStream: updateStreamFactory({ db: projectDB }),
-    addStreamUpdatedActivity: addStreamUpdatedActivityFactory({
-      saveActivity,
-      publish
-    })
+    emitEvent: getEventBus().emit
   })
   return updateStreamAndNotify
 }
@@ -207,21 +190,14 @@ const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
   validateStreamAccess,
   getUser: getUserFactory({ db }),
   grantStreamPermissions: grantStreamPermissionsFactory({ db }),
-  emitEvent: getEventBus().emit,
-  addStreamPermissionsAddedActivity: addStreamPermissionsAddedActivityFactory({
-    saveActivity,
-    publish
-  })
+  emitEvent: getEventBus().emit
 })
 
 const removeStreamCollaborator = removeStreamCollaboratorFactory({
   validateStreamAccess,
   isStreamCollaborator,
   revokeStreamPermissions: revokeStreamPermissionsFactory({ db }),
-  addStreamPermissionsRevokedActivity: addStreamPermissionsRevokedActivityFactory({
-    saveActivity,
-    publish
-  })
+  emitEvent: getEventBus().emit
 })
 
 describe('Core GraphQL Subscriptions (New)', () => {

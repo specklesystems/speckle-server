@@ -1,7 +1,5 @@
 import { buildApolloServer } from '@/app'
 import { db } from '@/db/knex'
-import { saveActivityFactory } from '@/modules/activitystream/repositories'
-import { addStreamPermissionsAddedActivityFactory } from '@/modules/activitystream/services/streamActivity'
 import { Commits, Streams, Users } from '@/modules/core/dbSchema'
 import { Roles } from '@/modules/core/helpers/mainConstants'
 import { grantStreamPermissionsFactory } from '@/modules/core/repositories/streams'
@@ -13,7 +11,6 @@ import {
 import { authorizeResolver } from '@/modules/shared'
 import { Nullable } from '@/modules/shared/helpers/typeHelper'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import { publish } from '@/modules/shared/utils/subscriptions'
 import { BasicTestUser, createTestUsers } from '@/test/authHelper'
 import { readOtherUsersCommits, readOwnCommits } from '@/test/graphql/commits'
 import { createAuthedTestContext, ServerAndContext } from '@/test/graphqlHelper'
@@ -23,17 +20,12 @@ import { BasicTestStream, createTestStreams } from '@/test/speckle-helpers/strea
 import { expect } from 'chai'
 
 const getUser = getUserFactory({ db })
-const saveActivity = saveActivityFactory({ db })
 const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
 const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
   validateStreamAccess,
   getUser,
   grantStreamPermissions: grantStreamPermissionsFactory({ db }),
-  emitEvent: getEventBus().emit,
-  addStreamPermissionsAddedActivity: addStreamPermissionsAddedActivityFactory({
-    saveActivity,
-    publish
-  })
+  emitEvent: getEventBus().emit
 })
 
 describe('Commits (GraphQL)', () => {

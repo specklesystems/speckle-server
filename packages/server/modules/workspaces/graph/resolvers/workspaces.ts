@@ -135,7 +135,6 @@ import {
   isWorkspaceRole,
   parseDefaultProjectRole
 } from '@/modules/workspaces/domain/logic'
-import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import {
   addOrUpdateStreamCollaboratorFactory,
   isStreamCollaboratorFactory,
@@ -143,12 +142,7 @@ import {
   validateStreamAccessFactory
 } from '@/modules/core/services/streams/access'
 import {
-  addStreamPermissionsAddedActivityFactory,
-  addStreamPermissionsRevokedActivityFactory
-} from '@/modules/activitystream/services/streamActivity'
-import {
   filteredSubscribe,
-  publish,
   WorkspaceSubscriptions
 } from '@/modules/shared/utils/subscriptions'
 import { updateStreamRoleAndNotifyFactory } from '@/modules/core/services/streams/management'
@@ -206,6 +200,7 @@ import { sendWorkspaceJoinRequestReceivedEmailFactory } from '@/modules/workspac
 import { getProjectFactory } from '@/modules/core/repositories/projects'
 import { OperationTypeNode } from 'graphql'
 import { updateWorkspacePlanFactory } from '@/modules/gatekeeper/services/workspacePlans'
+import { UserInputError } from '@/modules/core/errors/userinput'
 
 const eventBus = getEventBus()
 const getServerInfo = getServerInfoFactory({ db })
@@ -263,7 +258,6 @@ const buildCreateAndSendWorkspaceInvite = () =>
     getUser,
     getServerInfo
   })
-const saveActivity = saveActivityFactory({ db })
 const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
 const isStreamCollaborator = isStreamCollaboratorFactory({
   getStream
@@ -272,10 +266,7 @@ const removeStreamCollaborator = removeStreamCollaboratorFactory({
   validateStreamAccess,
   isStreamCollaborator,
   revokeStreamPermissions: revokeStreamPermissionsFactory({ db }),
-  addStreamPermissionsRevokedActivity: addStreamPermissionsRevokedActivityFactory({
-    saveActivity,
-    publish
-  })
+  emitEvent: getEventBus().emit
 })
 const updateStreamRoleAndNotify = updateStreamRoleAndNotifyFactory({
   isStreamCollaborator,
@@ -283,18 +274,15 @@ const updateStreamRoleAndNotify = updateStreamRoleAndNotifyFactory({
     validateStreamAccess,
     getUser,
     grantStreamPermissions: grantStreamPermissionsFactory({ db }),
-    emitEvent: getEventBus().emit,
-    addStreamPermissionsAddedActivity: addStreamPermissionsAddedActivityFactory({
-      saveActivity,
-      publish
-    })
+    emitEvent: getEventBus().emit
   }),
   removeStreamCollaborator
 })
 const getUserStreams = getUserStreamsPageFactory({ db })
 const getUserStreamsCount = getUserStreamsCountFactory({ db })
 
-const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
+const { FF_WORKSPACES_MODULE_ENABLED, FF_WORKSPACES_NEW_PLANS_ENABLED } =
+  getFeatureFlags()
 
 export = FF_WORKSPACES_MODULE_ENABLED
   ? ({
@@ -495,6 +483,12 @@ export = FF_WORKSPACES_MODULE_ENABLED
                     break
                   default:
                     throwUncoveredError(workspacePlan)
+                }
+              case 'free':
+                if (FF_WORKSPACES_NEW_PLANS_ENABLED) {
+                  break
+                } else {
+                  throw new UserInputError('Workspace plan not implemented')
                 }
               case 'unlimited':
               case 'academia':
