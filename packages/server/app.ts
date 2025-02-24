@@ -65,7 +65,7 @@ import {
   determineClientIpAddressMiddleware,
   mixpanelTrackerHelperMiddlewareFactory,
   requestBodyParsingMiddlewareFactory,
-  setContentSecurityPolicyHeader
+  setContentSecurityPolicyHeaderMiddleware
 } from '@/modules/shared/middleware'
 import { GraphQLError } from 'graphql'
 import { redactSensitiveVariables } from '@/logging/loggingHelper'
@@ -460,7 +460,7 @@ export async function init() {
 
   app.use(createRateLimiterMiddleware()) // Rate limiting by IP address for all users
   app.use(authContextMiddleware)
-  app.use(setContentSecurityPolicyHeader)
+  app.use(setContentSecurityPolicyHeaderMiddleware)
   if (enableMixpanel())
     app.use(mixpanelTrackerHelperMiddlewareFactory({ getUser: getUserFactory({ db }) }))
 

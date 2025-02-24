@@ -337,7 +337,11 @@ export function compressionMiddlewareFactory(deps: {
   return (_req, _res, next) => next()
 }
 
-export const setContentSecurityPolicyHeader: RequestHandler = (_req, res, next) => {
+export const setContentSecurityPolicyHeaderMiddleware: RequestHandler = (
+  _req,
+  res,
+  next
+) => {
   if (res.headersSent) return next()
   res.setHeader('Content-Security-Policy', "frame-ancestors 'none'")
   next()
