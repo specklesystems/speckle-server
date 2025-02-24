@@ -4592,6 +4592,7 @@ export enum WorkspacePlans {
   Academia = 'academia',
   Business = 'business',
   BusinessInvoiced = 'businessInvoiced',
+  Free = 'free',
   Plus = 'plus',
   PlusInvoiced = 'plusInvoiced',
   Starter = 'starter',

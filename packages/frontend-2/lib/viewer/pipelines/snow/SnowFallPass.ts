@@ -61,7 +61,7 @@ export class SnowFallPass extends BaseGPass {
 
   public setSize(width: number, height: number) {
     super.setSize(width, height)
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+
     this.snowfallMaterial.uniforms['iResolution'].value.set(width, height)
     this.snowfallMaterial.needsUpdate = true
   }

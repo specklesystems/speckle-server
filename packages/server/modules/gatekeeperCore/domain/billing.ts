@@ -12,23 +12,25 @@ export const paidWorkspacePlans = z.union([
   z.literal('business')
 ])
 
+// new plan stuff below
+
+export const paidWorkspacePlansNew = z.union([
+  z.literal('ottoman'),
+  z.literal('habsburg')
+])
+export type PaidWorkspacePlansNew = z.infer<typeof paidWorkspacePlansNew>
+
 export type PaidWorkspacePlans = z.infer<typeof paidWorkspacePlans>
 
 // these are not publicly exposed for general use on billing enabled servers
 export const unpaidWorkspacePlans = z.union([
+  z.literal('free'),
   z.literal('unlimited'),
   z.literal('academia'),
   z.literal('starterInvoiced'),
   z.literal('plusInvoiced'),
   z.literal('businessInvoiced')
 ])
-
-// export const freeWorkspacePlans = z
-
-// export const newPaidWorkspacePlans = z.union([
-//   z.literal('starter2'),
-//   z.literal('business2')
-// ])
 
 export type UnpaidWorkspacePlans = z.infer<typeof unpaidWorkspacePlans>
 

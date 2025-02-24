@@ -125,7 +125,9 @@ export default (app: Router, { executeHooks }: { executeHooks: ExecuteHooks }) =
             requestDropped = true
           }
 
-          const gunzippedBuffer = zlib.gunzipSync(gzippedBuffer).toString()
+          const gunzippedBuffer = zlib
+            .gunzipSync(new Uint8Array(gzippedBuffer))
+            .toString()
           const gunzippedBufferMegabyteSize =
             estimateStringMegabyteSize(gunzippedBuffer)
           if (gunzippedBufferMegabyteSize > MAX_FILE_SIZE) {

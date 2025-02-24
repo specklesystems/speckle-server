@@ -12,7 +12,7 @@
 import { useMutation } from '@vue/apollo-composable'
 import { useSynchronizedCookie } from '~/lib/common/composables/reactiveCookie'
 import { graphql } from '~/lib/common/generated/gql'
-import { type WorkspaceInviteDiscoverableWorkspaceBanner_LimitedWorkspaceFragment } from '~/lib/common/generated/gql/graphql'
+import type { WorkspaceInviteDiscoverableWorkspaceBanner_LimitedWorkspaceFragment } from '~/lib/common/generated/gql/graphql'
 import { CookieKeys } from '~/lib/common/helpers/constants'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { dashboardRequestToJoinWorkspaceMutation } from '~~/lib/dashboard/graphql/mutations'

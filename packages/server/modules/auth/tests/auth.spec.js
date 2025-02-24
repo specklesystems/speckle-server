@@ -69,6 +69,9 @@ const {
   getServerInfoFactory,
   updateServerInfoFactory
 } = require('@/modules/core/repositories/server')
+const {
+  temporarilyEnableRateLimiter
+} = require('@/modules/core/tests/ratelimiter.spec')
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = getUserFactory({ db })
@@ -586,26 +589,24 @@ describe('Auth @auth', () => {
         })
       )
 
-      const oldNodeEnv = process.env.NODE_ENV
-      process.env.NODE_ENV = 'temporarily-disabled-test'
+      await temporarilyEnableRateLimiter(async () => {
+        // 1 users should be fine
+        await newUser(`test0`, '1.2.3.4', 302)
 
-      // 1 users should be fine
-      await newUser(`test0`, '1.2.3.4', 302)
+        // should fail the next user
+        await newUser(`test1`, '1.2.3.4', 429)
 
-      // should fail the next user
-      await newUser(`test1`, '1.2.3.4', 429)
+        // should be able to create from different ip
+        await newUser(`othertest0`, '1.2.3.5', 302)
 
-      // should be able to create from different ip
-      await newUser(`othertest0`, '1.2.3.5', 302)
+        // should be limited from unknown ip addresses
+        await newUser(`unknown0`, '', 302)
 
-      // should be limited from unknown ip addresses
-      await newUser(`unknown0`, '', 302)
-
-      // should fail the additional user from unknown ip address
-      await newUser(`unknown1`, '', 429)
+        // should fail the additional user from unknown ip address
+        await newUser(`unknown1`, '', 429)
+      })
 
       RATE_LIMITERS.USER_CREATE = oldRateLimiter
-      process.env.NODE_ENV = oldNodeEnv
     })
   })
 })

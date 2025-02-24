@@ -358,6 +358,7 @@ export const getSsoRouter = (): Router => {
   return router
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const workspaceSsoAuthRequestParams = z.object({
   workspaceSlug: z.string().min(1)
 })
@@ -686,9 +687,19 @@ const tryGetSpeckleUserDataFactory =
 
     // Get user with email that matches OIDC provider user email, if match exists
     const providerEmail = getEmailFromOidcProfile(oidcProviderUserData)
-    const userEmail = await findEmail({ email: providerEmail })
+    const userEmail = await findEmail({ email: providerEmail.toLowerCase() })
     if (!!userEmail && !userEmail.verified) throw new SsoUserEmailUnverifiedError()
     const existingSpeckleUser = await getUser(userEmail?.userId ?? '')
+
+    // Log details about users we're comparing
+    req.log.info(
+      {
+        providerEmail,
+        currentSessionUserId: currentSessionUser?.id,
+        existingSpeckleUserId: existingSpeckleUser?.id
+      },
+      'Computing active user information given current auth context:'
+    )
 
     // Confirm existing user matches signed-in user, if both are present
     if (!!currentSessionUser && !!existingSpeckleUser) {

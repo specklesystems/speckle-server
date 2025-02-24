@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/ban-types */
 import { Knex } from 'knex'
 import { isString } from 'lodash'
 import { postgresMaxConnections } from '@/modules/shared/helpers/envHelper'

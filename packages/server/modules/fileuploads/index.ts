@@ -119,7 +119,7 @@ export const init: SpeckleModule['init'] = async (app, isInitial) => {
         }
       )
 
-      req.pipe(pipedReq)
+      req.pipe(pipedReq as unknown as NodeJS.WritableStream)
     }
   )
 

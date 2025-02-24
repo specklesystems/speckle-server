@@ -1712,11 +1712,6 @@
             }
           }
         },
-        "enabled": {
-          "type": "boolean",
-          "description": "Feature flag to enable running the new web application frontend.",
-          "default": true
-        },
         "replicas": {
           "type": "number",
           "description": "The number of instances of the Frontend 2 server prod to be deployed withing the cluster.",

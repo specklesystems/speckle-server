@@ -8,7 +8,7 @@ export const parseGithubRepoUrl = (
   let repoUrl: URL
   try {
     repoUrl = new URL(url)
-  } catch (e) {
+  } catch {
     return null
   }
 
