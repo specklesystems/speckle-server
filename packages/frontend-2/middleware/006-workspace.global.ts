@@ -7,13 +7,15 @@ import { workspaceCreateRoute, workspaceJoinRoute } from '~~/lib/common/helpers/
  * Redirect user to /workspaces/join or /workspaces/create, if they have no workspaces
  */
 export default defineNuxtRouteMiddleware(async (to) => {
+  const isAuthPage = to.path.startsWith('/authn/')
+  if (isAuthPage) return
+
   const isOnboardingForced = useIsOnboardingForced()
   const isWorkspaceNewPlansEnabled = useWorkspaceNewPlansEnabled()
+  const isWorkspacesEnabled = useIsWorkspacesEnabled()
 
-  const isAuthPage = to.path.startsWith('/authn/')
-
-  if (isAuthPage) return
   if (!isWorkspaceNewPlansEnabled.value) return
+  if (!isWorkspacesEnabled.value) return
 
   const client = useApolloClientFromNuxt()
   const { data } = await client
