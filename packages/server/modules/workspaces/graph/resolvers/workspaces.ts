@@ -200,7 +200,8 @@ import { sendWorkspaceJoinRequestReceivedEmailFactory } from '@/modules/workspac
 import { getProjectFactory } from '@/modules/core/repositories/projects'
 import { OperationTypeNode } from 'graphql'
 import { updateWorkspacePlanFactory } from '@/modules/gatekeeper/services/workspacePlans'
-import { UserInputError } from '@/modules/core/errors/userinput'
+import { GetWorkspaceCollaboratorsArgs } from '@/modules/workspaces/domain/operations'
+import { WorkspaceTeamMember } from '@/modules/workspaces/domain/types'
 
 const eventBus = getEventBus()
 const getServerInfo = getServerInfoFactory({ db })
@@ -281,8 +282,7 @@ const updateStreamRoleAndNotify = updateStreamRoleAndNotifyFactory({
 const getUserStreams = getUserStreamsPageFactory({ db })
 const getUserStreamsCount = getUserStreamsCountFactory({ db })
 
-const { FF_WORKSPACES_MODULE_ENABLED, FF_WORKSPACES_NEW_PLANS_ENABLED } =
-  getFeatureFlags()
+const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
 
 export = FF_WORKSPACES_MODULE_ENABLED
   ? ({
@@ -469,6 +469,8 @@ export = FF_WORKSPACES_MODULE_ENABLED
           const workspacePlan = await getWorkspacePlanFactory({ db })({ workspaceId })
           if (workspacePlan) {
             switch (workspacePlan.name) {
+              case 'team':
+              case 'pro':
               case 'starter':
               case 'plus':
               case 'business':
@@ -485,11 +487,6 @@ export = FF_WORKSPACES_MODULE_ENABLED
                     throwUncoveredError(workspacePlan)
                 }
               case 'free':
-                if (FF_WORKSPACES_NEW_PLANS_ENABLED) {
-                  break
-                } else {
-                  throw new UserInputError('Workspace plan not implemented')
-                }
               case 'unlimited':
               case 'academia':
               case 'starterInvoiced':
@@ -1372,6 +1369,22 @@ export = FF_WORKSPACES_MODULE_ENABLED
       },
       ServerWorkspacesInfo: {
         workspacesEnabled: () => true
+      },
+      LimitedWorkspace: {
+        team: async (parent, args) => {
+          const team = await getPaginatedItemsFactory<
+            Pick<GetWorkspaceCollaboratorsArgs, 'workspaceId' | 'limit' | 'cursor'>,
+            WorkspaceTeamMember
+          >({
+            getItems: getWorkspaceCollaboratorsFactory({ db }),
+            getTotalCount: getWorkspaceCollaboratorsTotalCountFactory({ db })
+          })({
+            workspaceId: parent.id,
+            limit: args.limit,
+            cursor: args.cursor ?? undefined
+          })
+          return team
+        }
       },
       Subscription: {
         workspaceProjectsUpdated: {

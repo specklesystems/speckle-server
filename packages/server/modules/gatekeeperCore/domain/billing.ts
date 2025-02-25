@@ -1,29 +1,27 @@
 import { z } from 'zod'
 
-// team
-export const trialWorkspacePlans = z.literal('starter')
+const trialWorkspacePlans = z.literal('starter')
 
-export type TrialWorkspacePlans = z.infer<typeof trialWorkspacePlans>
+type TrialWorkspacePlans = z.infer<typeof trialWorkspacePlans>
 
-export const paidWorkspacePlans = z.union([
+export const paidWorkspacePlansOldSchema = z.union([
   trialWorkspacePlans,
   // pro
   z.literal('plus'),
   z.literal('business')
 ])
-
-// new plan stuff below
-
-export const paidWorkspacePlansNew = z.union([
-  z.literal('ottoman'),
-  z.literal('habsburg')
+export const paidWorkspacePlansNewSchema = z.union([
+  z.literal('team'),
+  z.literal('pro')
 ])
-export type PaidWorkspacePlansNew = z.infer<typeof paidWorkspacePlansNew>
+const paidWorkspacePlansSchema = z.union([
+  paidWorkspacePlansOldSchema,
+  paidWorkspacePlansNewSchema
+])
 
-export type PaidWorkspacePlans = z.infer<typeof paidWorkspacePlans>
+export type PaidWorkspacePlans = z.infer<typeof paidWorkspacePlansSchema>
 
-// these are not publicly exposed for general use on billing enabled servers
-export const unpaidWorkspacePlans = z.union([
+const unpaidWorkspacePlans = z.union([
   z.literal('free'),
   z.literal('unlimited'),
   z.literal('academia'),
@@ -34,23 +32,23 @@ export const unpaidWorkspacePlans = z.union([
 
 export type UnpaidWorkspacePlans = z.infer<typeof unpaidWorkspacePlans>
 
-export const workspacePlans = z.union([paidWorkspacePlans, unpaidWorkspacePlans])
+const workspacePlansSchema = z.union([paidWorkspacePlansSchema, unpaidWorkspacePlans])
 
 // this includes the plans your workspace can be on
-export type WorkspacePlans = z.infer<typeof workspacePlans>
+export type WorkspacePlans = z.infer<typeof workspacePlansSchema>
 
-// this includes the pricing plans a customer can sub to
+// this includes the pricing plans (Stripe products) a customer can sub to
 export type WorkspacePricingPlans = PaidWorkspacePlans | 'guest'
 
-export const workspacePlanBillingIntervals = z.union([
+const workspacePlanBillingIntervalsSchema = z.union([
   z.literal('monthly'),
   z.literal('yearly')
 ])
 export type WorkspacePlanBillingIntervals = z.infer<
-  typeof workspacePlanBillingIntervals
+  typeof workspacePlanBillingIntervalsSchema
 >
 
-export type UnpaidWorkspacePlanStatuses = 'valid'
+type UnpaidWorkspacePlanStatuses = 'valid'
 
 export type PaidWorkspacePlanStatuses =
   | UnpaidWorkspacePlanStatuses

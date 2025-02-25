@@ -148,3 +148,8 @@ export const isArrayOf = <T>(arr: unknown, guard: (v: unknown) => v is T): arr i
   Array.isArray(arr) && arr.every(guard)
 
 export const waitForever = (): Promise<never> => new Promise<never>(noop)
+
+/**
+ * Returns true if only one of the arguments is truthy
+ */
+export const xor = (a: unknown, b: unknown) => !!((a || b) && !(a && b))
