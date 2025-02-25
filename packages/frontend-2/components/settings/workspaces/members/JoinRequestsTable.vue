@@ -107,10 +107,7 @@ const joinRequests = computed(() => {
 
   return orderBy(
     filtered,
-    [
-      (request) => (request.status === WorkspaceJoinRequestStatus.Pending ? 0 : 1),
-      'createdAt'
-    ],
+    [(request) => request.status === WorkspaceJoinRequestStatus.Pending, 'createdAt'],
     ['asc', 'desc']
   )
 })
