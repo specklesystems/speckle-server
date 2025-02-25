@@ -10,8 +10,8 @@ import type {
   ISendFilter,
   ISendFilterSelectItem,
   ISenderModelCard,
-  NavisworksSavedSetsSendFilter,
-  RevitViewsSendFilter
+  RevitViewsSendFilter,
+  SendFilterSelect
 } from 'lib/models/card/send'
 import type { ToastNotification } from '@speckle/ui-components'
 import type { Nullable } from '@speckle/shared'
@@ -540,7 +540,7 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
 
     const navisworksSavedSetsFromSendFilters = sendFilters.value.find(
       (f) => f.id === 'navisworksSavedSets'
-    ) as NavisworksSavedSetsSendFilter
+    ) as SendFilterSelect
     if (navisworksSavedSetsFromSendFilters) {
       navisworksAvailableSavedSets.value = navisworksSavedSetsFromSendFilters.items
     }
