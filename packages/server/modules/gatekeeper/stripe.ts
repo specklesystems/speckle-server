@@ -6,7 +6,11 @@ import {
   WorkspacePlanBillingIntervals,
   WorkspacePricingPlans
 } from '@/modules/gatekeeperCore/domain/billing'
-import { getStringFromEnv, getStripeApiKey } from '@/modules/shared/helpers/envHelper'
+import {
+  getFeatureFlags,
+  getStringFromEnv,
+  getStripeApiKey
+} from '@/modules/shared/helpers/envHelper'
 import { Stripe } from 'stripe'
 
 let stripeClient: Stripe | undefined = undefined
@@ -15,6 +19,8 @@ export const getStripeClient = () => {
   if (!stripeClient) stripeClient = new Stripe(getStripeApiKey(), { typescript: true })
   return stripeClient
 }
+
+const { FF_WORKSPACES_NEW_PLAN } = getFeatureFlags()
 
 export const workspacePlanPrices = (): Record<
   WorkspacePricingPlans,
@@ -42,16 +48,23 @@ export const workspacePlanPrices = (): Record<
     yearly: getStringFromEnv('WORKSPACE_YEARLY_BUSINESS_SEAT_STRIPE_PRICE_ID')
   },
   // new
-  team: {
-    productId: getStringFromEnv('WORKSPACE_TEAM_SEAT_STRIPE_PRODUCT_ID'),
-    monthly: getStringFromEnv('WORKSPACE_MONTHLY_TEAM_SEAT_STRIPE_PRICE_ID'),
-    yearly: getStringFromEnv('WORKSPACE_YEARLY_TEAM_SEAT_STRIPE_PRICE_ID')
-  },
-  pro: {
-    productId: getStringFromEnv('WORKSPACE_PRO_SEAT_STRIPE_PRODUCT_ID'),
-    monthly: getStringFromEnv('WORKSPACE_MONTHLY_PRO_SEAT_STRIPE_PRICE_ID'),
-    yearly: getStringFromEnv('WORKSPACE_YEARLY_PRO_SEAT_STRIPE_PRICE_ID')
-  }
+  ...((FF_WORKSPACES_NEW_PLAN
+    ? {
+        team: {
+          productId: getStringFromEnv('WORKSPACE_TEAM_SEAT_STRIPE_PRODUCT_ID'),
+          monthly: getStringFromEnv('WORKSPACE_MONTHLY_TEAM_SEAT_STRIPE_PRICE_ID'),
+          yearly: getStringFromEnv('WORKSPACE_YEARLY_TEAM_SEAT_STRIPE_PRICE_ID')
+        },
+        pro: {
+          productId: getStringFromEnv('WORKSPACE_PRO_SEAT_STRIPE_PRODUCT_ID'),
+          monthly: getStringFromEnv('WORKSPACE_MONTHLY_PRO_SEAT_STRIPE_PRICE_ID'),
+          yearly: getStringFromEnv('WORKSPACE_YEARLY_PRO_SEAT_STRIPE_PRICE_ID')
+        }
+      }
+    : {}) as Record<
+    'team' | 'pro',
+    Record<WorkspacePlanBillingIntervals, string> & { productId: string }
+  >)
 })
 
 export const getWorkspacePlanPrice: GetWorkspacePlanPrice = ({
