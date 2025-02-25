@@ -146,10 +146,10 @@ const googleStrategyBuilderFactory =
             case UnverifiedEmailSSOLoginError:
             case UserInputError:
             case InviteNotFoundError:
-              logger.info({ err: e })
+              logger.info({ err: e }, 'Auth error for Google strategy')
               return done(null, false, { message: e.message })
             default:
-              logger.error({ err: e })
+              logger.error({ err: e }, 'Auth error for Google strategy')
               // Only when the server is operating abnormally should err be set, to indicate an internal error.
               return done(e, false, { message: e.message })
           }

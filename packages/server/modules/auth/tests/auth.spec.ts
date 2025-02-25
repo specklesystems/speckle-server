@@ -695,7 +695,9 @@ describe('Auth @auth', () => {
         { id: '1234', email: 'allFizzy@example.org' },
         undefined
       )
-      expect(req).to.have.property('user')
+
+      // Should not have set the user if there was an error
+      expect(req).to.not.have.property('user')
       expect(
         errorCalledCounter,
         'error request handler "next(err)" should have been called'

@@ -63,8 +63,8 @@ export const passportAuthenticationCallbackFactory =
       return
     }
 
-    req.user = user
     if (err && !(err instanceof UserInputError)) return next(err)
+    req.user = user
     next()
   }
 
