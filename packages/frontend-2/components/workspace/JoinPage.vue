@@ -13,7 +13,7 @@
       </FormButton>
     </template>
 
-    <WorkspaceDiscoverableList :use-composable="true" />
+    <WorkspaceDiscoverableList />
   </HeaderWithEmptyPage>
 </template>
 

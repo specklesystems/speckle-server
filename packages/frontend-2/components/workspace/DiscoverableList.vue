@@ -1,10 +1,10 @@
 <template>
   <div class="flex flex-col items-center gap-2 w-full max-w-lg mx-auto">
-    <h1 v-if="showHeader" class="text-heading-xl text-forefround mb-2 font-normal mt-4">
-      {{ title }}
+    <h1 class="text-heading-xl text-forefround mb-2 font-normal mt-4">
+      Join teammates
     </h1>
-    <p v-if="showHeader" class="text-center text-body-sm text-foreground-2 mb-8">
-      {{ displayDescription }}
+    <p class="text-center text-body-sm text-foreground-2 mb-8">
+      {{ description }}
     </p>
     <CommonCard
       v-for="workspace in allWorkspaces"
@@ -61,22 +61,10 @@
 import { workspaceCreateRoute } from '~~/lib/common/helpers/route'
 import { useDiscoverableWorkspaces } from '~/lib/workspaces/composables/discoverableWorkspaces'
 
-const props = withDefaults(
-  defineProps<{
-    title?: string
-    description?: string
-    showHeader?: boolean
-  }>(),
-  {
-    title: 'Join teammates',
-    showHeader: true
-  }
-)
-
 const { discoverableWorkspaces, workspaceJoinRequests, processRequest } =
   useDiscoverableWorkspaces()
 
-const defaultDescription = computed(() => {
+const description = computed(() => {
   const discoverableCount = discoverableWorkspaces.value.length
   const requestCount =
     'items' in workspaceJoinRequests.value
@@ -88,8 +76,6 @@ const defaultDescription = computed(() => {
     ? 'We found a workspace that matches your email domain'
     : 'We found workspaces that match your email domain'
 })
-
-const displayDescription = computed(() => props.description ?? defaultDescription.value)
 
 const allWorkspaces = computed(() => {
   const requested = (
