@@ -169,3 +169,13 @@ export type ReconcileSubscriptionData = (args: {
   subscriptionData: SubscriptionDataInput
   applyProrotation: boolean
 }) => Promise<void>
+
+export type WorkspaceSeatType = 'viewer' | 'editor'
+
+export type WorkspaceSeat = {
+  workspaceId: string
+  userId: string
+  type: WorkspaceSeatType
+  createdAt: Date
+  updatedAt: Date
+}
