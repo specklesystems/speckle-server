@@ -217,13 +217,14 @@ import {
   type PaidWorkspacePlans
 } from '~/lib/common/generated/gql/graphql'
 import { useBillingActions } from '~/lib/billing/composables/actions'
-import { pricingPlansConfig } from '~/lib/billing/helpers/constants'
+import type { PaidWorkspacePlansOld } from '@speckle/shared'
 import { Roles } from '@speckle/shared'
 import { InformationCircleIcon } from '@heroicons/vue/24/outline'
 import { isPaidPlan } from '@/lib/billing/helpers/types'
 import { useMixpanel } from '~/lib/core/composables/mp'
 import { guideBillingUrl } from '~/lib/common/helpers/route'
 import { adminUpdateWorkspacePlanMutation } from '~/lib/billing/graphql/mutations'
+import { WorkspaceOldPaidPlanPrices } from '~/lib/billing/helpers/constants'
 
 graphql(`
   fragment SettingsWorkspacesBilling_Workspace on Workspace {
@@ -280,15 +281,15 @@ const { billingPortalRedirect, redirectToCheckout } = useBillingActions()
 const mixpanel = useMixpanel()
 const { mutate: mutateWorkspacePlan } = useMutation(adminUpdateWorkspacePlanMutation)
 
-const seatPrices = ref({
-  [WorkspacePlans.Starter]: pricingPlansConfig.plans[WorkspacePlans.Starter].cost,
-  [WorkspacePlans.Plus]: pricingPlansConfig.plans[WorkspacePlans.Plus].cost,
-  [WorkspacePlans.Business]: pricingPlansConfig.plans[WorkspacePlans.Business].cost
-})
-const selectedPlanName = ref<WorkspacePlans>()
+const selectedPlanName = ref<PaidWorkspacePlansOld>()
 const selectedPlanCycle = ref<BillingInterval>()
 const isUpgradeDialogOpen = ref(false)
 
+const seatPrices = computed(() => ({
+  [WorkspacePlans.Starter]: WorkspaceOldPaidPlanPrices[WorkspacePlans.Starter],
+  [WorkspacePlans.Plus]: WorkspaceOldPaidPlanPrices[WorkspacePlans.Plus],
+  [WorkspacePlans.Business]: WorkspaceOldPaidPlanPrices[WorkspacePlans.Business]
+}))
 const workspace = computed(() => workspaceResult.value?.workspaceBySlug)
 const currentPlan = computed(() => workspace.value?.plan)
 const subscription = computed(() => workspace.value?.subscription)
@@ -422,7 +423,10 @@ const showStatusBadge = computed(() => {
   )
 })
 
-const onPlanSelected = (plan: { name: WorkspacePlans; cycle: BillingInterval }) => {
+const onPlanSelected = (plan: {
+  name: PaidWorkspacePlansOld
+  cycle: BillingInterval
+}) => {
   const { name, cycle } = plan
   if (!isPaidPlan(name) || !workspace.value?.id) return
 
