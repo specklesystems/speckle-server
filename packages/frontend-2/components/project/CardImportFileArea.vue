@@ -7,11 +7,11 @@
     :disabled="isUploading || disabled"
     :size-limit="maxSizeInBytes"
     :accept="accept"
-    class="flex items-center h-full cursor-pointer"
+    class="flex items-center h-full"
     @files-selected="onFilesSelected"
   >
     <div
-      class="w-full h-full border-dashed border rounded-md p-4 flex items-center justify-center text-sm"
+      class="w-full h-full border-dashed border rounded-md p-4 flex items-center justify-center text-sm cursor-pointer"
       :class="[getDashedBorderClasses(isDraggingFiles)]"
       @click="openFilePicker"
     >
@@ -40,10 +40,10 @@
         <NuxtLink
           target="_blank"
           :to="downloadManagerUrl"
-          class="font-medium underline"
+          class="font-medium"
           @click.stop
         >
-          connectors
+          <span class="underline">connectors</span>
         </NuxtLink>
         to publish a {{ modelName ? '' : 'new model' }} version to
         {{ modelName ? 'this model' : 'this project' }}, or drag and drop a IFC/OBJ/STL

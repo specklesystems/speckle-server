@@ -112,6 +112,12 @@ export class EnvironmentResourceError extends BaseError {
   static statusCode = 502
 }
 
+export class NotImplementedError extends BaseError {
+  static code = 'NOT_IMPLEMENTED'
+  static defaultMessage = 'This feature is not yet implemented'
+  static statusCode = 500
+}
+
 export class DatabaseError<I extends Info = Info> extends EnvironmentResourceError {
   static code = 'DATABASE_ERROR'
   static defaultMessage = 'An error occurred while trying to access the database.'

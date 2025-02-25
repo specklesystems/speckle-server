@@ -19,24 +19,29 @@
         </FormButton>
       </div>
     </template>
-    <div class="flex flex-col items-center justify-center p-4 max-w-lg mx-auto">
+    <template v-if="isLoading">
+      <div class="py-12 flex flex-col items-center gap-2">
+        <CommonLoadingIcon />
+      </div>
+    </template>
+    <div v-else class="flex flex-col items-center justify-center p-4 max-w-lg mx-auto">
       <h1 class="text-heading-xl text-forefround mb-2 font-normal">
-        Tell us about yourself
+        {{ currentStage === 'join' ? 'Join your teammates' : 'Tell us about yourself' }}
       </h1>
       <p class="text-center text-body-sm text-foreground-2 mb-8">
-        Your answers will help us improve
+        {{
+          currentStage === 'join'
+            ? 'We found a workspace that matches your email domain'
+            : 'Your answers will help us improve'
+        }}
       </p>
-      <template v-if="!loading">
-        <DiscoverableList
-          v-if="
-            !isNewBillingEnabled && currentStage === 'join' && hasDiscoverableWorkspaces
-          "
-          :show-header="false"
-          @workspace-joined="currentStage = 'questions'"
-        />
-        <OnboardingQuestionsForm v-else />
-      </template>
-      <CommonLoadingIcon v-else size="lg" />
+
+      <OnboardingJoinTeammates
+        v-if="currentStage === 'join' && discoverableWorkspaces.length > 0"
+        :workspaces="discoverableWorkspaces"
+        @next="currentStage = 'questions'"
+      />
+      <OnboardingQuestionsForm v-else />
     </div>
   </HeaderWithEmptyPage>
 </template>
@@ -44,9 +49,23 @@
 <script setup lang="ts">
 import { useProcessOnboarding } from '~~/lib/auth/composables/onboarding'
 import { useAuthManager } from '~/lib/auth/composables/auth'
-import { useActiveUser } from '~~/lib/auth/composables/activeUser'
-import { useDiscoverableWorkspaces } from '~/lib/workspaces/composables/discoverableWorkspaces'
-import { useIsNewBillingEnabled } from '~/composables/globals'
+import { useQuery } from '@vue/apollo-composable'
+import { graphql } from '~/lib/common/generated/gql'
+import { CommonLoadingIcon } from '@speckle/ui-components'
+import { PagesOnboardingDiscoverableWorkspaces } from '~/lib/onboarding/graphql/queries'
+import { until } from '@vueuse/core'
+
+graphql(`
+  fragment PagesOnboarding_DiscoverableWorkspaces on User {
+    discoverableWorkspaces {
+      id
+      name
+      logo
+      description
+      slug
+    }
+  }
+`)
 
 useHead({
   title: 'Welcome to Speckle'
@@ -58,20 +77,35 @@ definePageMeta({
 })
 
 const isOnboardingForced = useIsOnboardingForced()
-const isNewBillingEnabled = useIsNewBillingEnabled()
 
-const { setUserOnboardingComplete, createOnboardingProject } = useProcessOnboarding()
-const { activeUser } = useActiveUser()
+const { setUserOnboardingComplete } = useProcessOnboarding()
 const { logout } = useAuthManager()
-const { hasDiscoverableWorkspaces, loading } = useDiscoverableWorkspaces()
 
-const currentStage = ref<'join' | 'questions'>(
-  isNewBillingEnabled.value ? 'questions' : 'join'
+const isLoading = ref(true)
+const currentStage = ref<'join' | 'questions'>('questions')
+const isWorkspacesEnabled = useIsWorkspacesEnabled()
+
+const { result, loading } = useQuery(PagesOnboardingDiscoverableWorkspaces, undefined, {
+  enabled: isWorkspacesEnabled.value
+})
+
+const discoverableWorkspaces = computed(
+  () => result.value?.activeUser?.discoverableWorkspaces || []
 )
 
-onMounted(() => {
-  if (activeUser.value?.versions.totalCount === 0) {
-    createOnboardingProject()
+onMounted(async () => {
+  // If workspaces feature is disabled, go straight to questions
+  if (!isWorkspacesEnabled.value) {
+    currentStage.value = 'questions'
+    isLoading.value = false
+    return
   }
+
+  // Wait for query to complete
+  await until(loading).toBe(false)
+  const hasWorkspaces =
+    (result.value?.activeUser?.discoverableWorkspaces?.length ?? 0) > 0
+  currentStage.value = hasWorkspaces ? 'join' : 'questions'
+  isLoading.value = false
 })
 </script>
