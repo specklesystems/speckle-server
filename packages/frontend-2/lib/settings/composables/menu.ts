@@ -39,8 +39,8 @@ export const useSettingsMenu = () => {
     },
     {
       title: 'Members',
-      name: settingsWorkspaceRoutes.membersMembers.name,
-      route: (slug: string) => settingsWorkspaceRoutes.membersMembers.route(slug),
+      name: settingsWorkspaceRoutes.members.name,
+      route: (slug: string) => settingsWorkspaceRoutes.members.route(slug),
       permission: [Roles.Workspace.Admin, Roles.Workspace.Member]
     },
     {
