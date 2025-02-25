@@ -96,7 +96,7 @@ const documents = {
     "\n  fragment ProjectsDashboardFilledProject on ProjectCollection {\n    items {\n      ...ProjectDashboardItem\n    }\n  }\n": types.ProjectsDashboardFilledProjectFragmentDoc,
     "\n  fragment ProjectsDashboardFilledUser on UserProjectCollection {\n    items {\n      ...ProjectDashboardItem\n    }\n  }\n": types.ProjectsDashboardFilledUserFragmentDoc,
     "\n  fragment ProjectsDashboardHeaderProjects_User on User {\n    projectInvites {\n      ...ProjectsInviteBanner\n    }\n  }\n": types.ProjectsDashboardHeaderProjects_UserFragmentDoc,
-    "\n  fragment ProjectsDashboardHeaderWorkspaces_User on User {\n    discoverableWorkspaces {\n      ...WorkspaceInviteDiscoverableWorkspaceBanner_LimitedWorkspace\n    }\n    workspaceInvites {\n      ...WorkspaceInviteBanner_PendingWorkspaceCollaborator\n    }\n  }\n": types.ProjectsDashboardHeaderWorkspaces_UserFragmentDoc,
+    "\n  fragment ProjectsDashboardHeaderWorkspaces_User on User {\n    workspaceInvites {\n      ...WorkspaceInviteBanner_PendingWorkspaceCollaborator\n    }\n  }\n": types.ProjectsDashboardHeaderWorkspaces_UserFragmentDoc,
     "\n  fragment ProjectsDeleteDialog_Project on Project {\n    id\n    name\n    role\n    models(limit: 0) {\n      totalCount\n    }\n    workspace {\n      slug\n      id\n    }\n    versions(limit: 0) {\n      totalCount\n    }\n  }\n": types.ProjectsDeleteDialog_ProjectFragmentDoc,
     "\n  fragment ProjectsHiddenProjectWarning_User on User {\n    id\n    expiredSsoSessions {\n      id\n      slug\n      name\n      logo\n    }\n  }\n": types.ProjectsHiddenProjectWarning_UserFragmentDoc,
     "\n  fragment ProjectsMoveToWorkspaceDialog_Workspace on Workspace {\n    id\n    role\n    name\n    logo\n    ...WorkspaceHasCustomDataResidency_Workspace\n    ...ProjectsWorkspaceSelect_Workspace\n  }\n": types.ProjectsMoveToWorkspaceDialog_WorkspaceFragmentDoc,
@@ -142,7 +142,6 @@ const documents = {
     "\n  fragment WorkspaceHeader_Workspace on Workspace {\n    ...WorkspaceBase_Workspace\n    ...WorkspaceTeam_Workspace\n    ...BillingAlert_Workspace\n    slug\n    readOnly\n  }\n": types.WorkspaceHeader_WorkspaceFragmentDoc,
     "\n  fragment WorkspaceInviteBanner_PendingWorkspaceCollaborator on PendingWorkspaceCollaborator {\n    id\n    invitedBy {\n      id\n      ...LimitedUserAvatar\n    }\n    workspaceId\n    workspaceName\n    token\n    user {\n      id\n    }\n    ...UseWorkspaceInviteManager_PendingWorkspaceCollaborator\n  }\n": types.WorkspaceInviteBanner_PendingWorkspaceCollaboratorFragmentDoc,
     "\n  fragment WorkspaceInviteBlock_PendingWorkspaceCollaborator on PendingWorkspaceCollaborator {\n    id\n    workspaceId\n    workspaceName\n    token\n    user {\n      id\n      name\n      ...LimitedUserAvatar\n    }\n    title\n    email\n    ...UseWorkspaceInviteManager_PendingWorkspaceCollaborator\n  }\n": types.WorkspaceInviteBlock_PendingWorkspaceCollaboratorFragmentDoc,
-    "\n  fragment WorkspaceInviteDiscoverableWorkspaceBanner_LimitedWorkspace on LimitedWorkspace {\n    id\n    name\n    slug\n    description\n    logo\n  }\n": types.WorkspaceInviteDiscoverableWorkspaceBanner_LimitedWorkspaceFragmentDoc,
     "\n  fragment WorkspaceJoinRequestApproveDialog_WorkspaceJoinRequest on WorkspaceJoinRequest {\n    id\n    user {\n      id\n      name\n    }\n    workspace {\n      id\n    }\n  }\n": types.WorkspaceJoinRequestApproveDialog_WorkspaceJoinRequestFragmentDoc,
     "\n  fragment WorkspaceSidebarAbout_Workspace on Workspace {\n    ...WorkspaceDashboardAbout_Workspace\n  }\n": types.WorkspaceSidebarAbout_WorkspaceFragmentDoc,
     "\n  fragment WorkspaceSidebarMembers_Workspace on Workspace {\n    ...WorkspaceTeam_Workspace\n  }\n": types.WorkspaceSidebarMembers_WorkspaceFragmentDoc,
@@ -746,7 +745,7 @@ export function graphql(source: "\n  fragment ProjectsDashboardHeaderProjects_Us
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment ProjectsDashboardHeaderWorkspaces_User on User {\n    discoverableWorkspaces {\n      ...WorkspaceInviteDiscoverableWorkspaceBanner_LimitedWorkspace\n    }\n    workspaceInvites {\n      ...WorkspaceInviteBanner_PendingWorkspaceCollaborator\n    }\n  }\n"): (typeof documents)["\n  fragment ProjectsDashboardHeaderWorkspaces_User on User {\n    discoverableWorkspaces {\n      ...WorkspaceInviteDiscoverableWorkspaceBanner_LimitedWorkspace\n    }\n    workspaceInvites {\n      ...WorkspaceInviteBanner_PendingWorkspaceCollaborator\n    }\n  }\n"];
+export function graphql(source: "\n  fragment ProjectsDashboardHeaderWorkspaces_User on User {\n    workspaceInvites {\n      ...WorkspaceInviteBanner_PendingWorkspaceCollaborator\n    }\n  }\n"): (typeof documents)["\n  fragment ProjectsDashboardHeaderWorkspaces_User on User {\n    workspaceInvites {\n      ...WorkspaceInviteBanner_PendingWorkspaceCollaborator\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -927,10 +926,6 @@ export function graphql(source: "\n  fragment WorkspaceInviteBanner_PendingWorks
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  fragment WorkspaceInviteBlock_PendingWorkspaceCollaborator on PendingWorkspaceCollaborator {\n    id\n    workspaceId\n    workspaceName\n    token\n    user {\n      id\n      name\n      ...LimitedUserAvatar\n    }\n    title\n    email\n    ...UseWorkspaceInviteManager_PendingWorkspaceCollaborator\n  }\n"): (typeof documents)["\n  fragment WorkspaceInviteBlock_PendingWorkspaceCollaborator on PendingWorkspaceCollaborator {\n    id\n    workspaceId\n    workspaceName\n    token\n    user {\n      id\n      name\n      ...LimitedUserAvatar\n    }\n    title\n    email\n    ...UseWorkspaceInviteManager_PendingWorkspaceCollaborator\n  }\n"];
-/**
- * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function graphql(source: "\n  fragment WorkspaceInviteDiscoverableWorkspaceBanner_LimitedWorkspace on LimitedWorkspace {\n    id\n    name\n    slug\n    description\n    logo\n  }\n"): (typeof documents)["\n  fragment WorkspaceInviteDiscoverableWorkspaceBanner_LimitedWorkspace on LimitedWorkspace {\n    id\n    name\n    slug\n    description\n    logo\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
