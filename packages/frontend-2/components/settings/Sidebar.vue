@@ -100,7 +100,7 @@
                   v-if="workspaceMenuItem.permission?.includes(workspaceItem.role as WorkspaceRoles)"
                   :label="workspaceMenuItem.title"
                   :active="
-                    route.name === workspaceMenuItem.name &&
+                    route.name?.toString().startsWith(workspaceMenuItem.name) &&
                     route.params.slug === workspaceItem.slug
                   "
                   :tooltip-text="
