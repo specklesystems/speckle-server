@@ -7,7 +7,7 @@ import {
   filteredSubscribe,
   publish
 } from '@/modules/shared/utils/subscriptions'
-import { throwIfRateLimited } from '@/modules/core/services/ratelimiter'
+import { throwIfRateLimited } from '@/modules/core/utils/ratelimiter'
 import { uploadFileStreamFactory } from '@/modules/blobstorage/services/management'
 import {
   updateBlobFactory,

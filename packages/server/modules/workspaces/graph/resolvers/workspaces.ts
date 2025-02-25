@@ -154,7 +154,7 @@ import { getUserFactory, getUsersFactory } from '@/modules/core/repositories/use
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { commandFactory } from '@/modules/shared/command'
 import { withTransaction } from '@/modules/shared/helpers/dbHelper'
-import { throwIfRateLimited } from '@/modules/core/services/ratelimiter'
+import { throwIfRateLimited } from '@/modules/core/utils/ratelimiter'
 import { getRegionDb } from '@/modules/multiregion/utils/dbSelector'
 import {
   listUserExpiredSsoSessionsFactory,

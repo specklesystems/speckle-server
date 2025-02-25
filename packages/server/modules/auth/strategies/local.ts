@@ -1,7 +1,7 @@
 import {
   getRateLimitResult,
   throwIfRateLimited
-} from '@/modules/core/services/ratelimiter'
+} from '@/modules/core/utils/ratelimiter'
 import { getIpFromRequest } from '@/modules/shared/utils/ip'
 import { UserInputError } from '@/modules/core/errors/userinput'
 

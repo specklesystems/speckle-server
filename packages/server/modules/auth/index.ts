@@ -30,7 +30,7 @@ import azureAdStrategyBuilderFactory from '@/modules/auth/strategies/azureAd'
 import googleStrategyBuilderFactory from '@/modules/auth/strategies/google'
 import localStrategyBuilderFactory from '@/modules/auth/strategies/local'
 import oidcStrategyBuilderFactory from '@/modules/auth/strategies/oidc'
-import { getRateLimitResult } from '@/modules/core/services/ratelimiter'
+import { getRateLimitResult } from '@/modules/core/utils/ratelimiter'
 import { passportAuthenticateHandlerBuilderFactory } from '@/modules/auth/services/passportService'
 import {
   countAdminUsersFactory,

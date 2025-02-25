@@ -17,7 +17,7 @@ import {
   createCommitByBranchNameFactory,
   updateCommitAndNotifyFactory
 } from '@/modules/core/services/commit/management'
-import { throwIfRateLimited } from '@/modules/core/services/ratelimiter'
+import { throwIfRateLimited } from '@/modules/core/utils/ratelimiter'
 import {
   batchDeleteCommitsFactory,
   batchMoveCommitsFactory

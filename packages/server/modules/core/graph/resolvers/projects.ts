@@ -46,7 +46,7 @@ import {
 } from '@/modules/core/repositories/streams'
 import { getUserFactory, getUsersFactory } from '@/modules/core/repositories/users'
 import { createNewProjectFactory } from '@/modules/core/services/projects'
-import { throwIfRateLimited } from '@/modules/core/services/ratelimiter'
+import { throwIfRateLimited } from '@/modules/core/utils/ratelimiter'
 import {
   addOrUpdateStreamCollaboratorFactory,
   isStreamCollaboratorFactory,

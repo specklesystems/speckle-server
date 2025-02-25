@@ -11,7 +11,7 @@ import {
   allActions,
   RateLimitAction,
   throwIfRateLimited
-} from '@/modules/core/services/ratelimiter'
+} from '@/modules/core/utils/ratelimiter'
 import { expect } from 'chai'
 import httpMocks from 'node-mocks-http'
 import { RateLimiterMemory } from 'rate-limiter-flexible'

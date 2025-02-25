@@ -4,7 +4,7 @@ import {
   throwIfRateLimited,
   type RateLimitBreached,
   type RateLimiterMapping
-} from '@/modules/core/services/ratelimiter'
+} from '@/modules/core/utils/ratelimiter'
 import { isRateLimiterEnabled } from '@/modules/shared/helpers/envHelper'
 import { getRequestPath } from '@/modules/core/helpers/server'
 import { getTokenFromRequest } from '@/modules/shared/middleware'

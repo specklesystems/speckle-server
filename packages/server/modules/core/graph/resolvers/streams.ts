@@ -3,7 +3,7 @@ import {
   StreamSubscriptions
 } from '@/modules/shared/utils/subscriptions'
 import { authorizeResolver, validateScopes } from '@/modules/shared'
-import { throwIfRateLimited } from '@/modules/core/services/ratelimiter'
+import { throwIfRateLimited } from '@/modules/core/utils/ratelimiter'
 import {
   getPendingProjectCollaboratorsFactory,
   inviteUsersToProjectFactory

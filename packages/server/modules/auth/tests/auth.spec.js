@@ -3,7 +3,7 @@ const chai = require('chai')
 const request = require('supertest')
 
 const { TIME } = require('@speckle/shared')
-const { RATE_LIMITERS, createConsumer } = require('@/modules/core/services/ratelimiter')
+const { RATE_LIMITERS, createConsumer } = require('@/modules/core/utils/ratelimiter')
 const { beforeEachContext, initializeTestServer } = require('@/test/hooks')
 const { createStreamInviteDirectly } = require('@/test/speckle-helpers/inviteHelper')
 const { RateLimiterMemory } = require('rate-limiter-flexible')
