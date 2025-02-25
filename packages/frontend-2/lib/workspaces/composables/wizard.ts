@@ -27,8 +27,8 @@ const emptyState: WorkspaceWizardState = {
   plan: null,
   billingInterval: BillingInterval.Monthly,
   id: '',
-  region: undefined,
-  ssoEnabled: undefined
+  region: null,
+  ssoEnabled: null
 }
 
 const steps: readonly WizardSteps[] = [
