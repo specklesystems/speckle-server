@@ -1,8 +1,8 @@
 import { getFeatureFlags, getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
-import { Resolvers } from '@/modules/core/graph/generated/graphql'
+import type { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { pricingTable } from '@/modules/gatekeeper/domain/workspacePricing'
 import { authorizeResolver } from '@/modules/shared'
-import { Roles, throwUncoveredError } from '@speckle/shared'
+import { ensureError, Roles, throwUncoveredError } from '@speckle/shared'
 import {
   countWorkspaceRoleWithOptionalProjectRoleFactory,
   getWorkspaceFactory
@@ -36,6 +36,11 @@ import { calculateSubscriptionSeats } from '@/modules/gatekeeper/domain/billing'
 import { WorkspacePaymentMethod } from '@/test/graphql/generated/graphql'
 import { LogicError, NotImplementedError } from '@/modules/shared/errors'
 import { isNewPlanType } from '@/modules/gatekeeper/helpers/plans'
+import { extendLoggerComponent } from '@/logging/logging'
+import {
+  WorkspaceAlreadyPaidError,
+  WorkspaceCheckoutSessionInProgressError
+} from '@/modules/gatekeeper/errors/billing'
 
 const { FF_GATEKEEPER_MODULE_ENABLED, FF_BILLING_INTEGRATION_ENABLED } =
   getFeatureFlags()
@@ -144,8 +149,15 @@ export = FF_GATEKEEPER_MODULE_ENABLED
           return true
         },
         createCheckoutSession: async (parent, args, ctx) => {
+          let logger = extendLoggerComponent(
+            ctx.log,
+            'gatekeeper',
+            'resolvers',
+            'createCheckoutSession'
+          )
           const { workspaceId, workspacePlan, billingInterval, isCreateFlow } =
             args.input
+          logger = logger.child({ workspaceId, workspacePlan })
           const workspace = await getWorkspaceFactory({ db })({ workspaceId })
 
           if (!workspace) throw new WorkspaceNotFoundError()
@@ -165,22 +177,45 @@ export = FF_GATEKEEPER_MODULE_ENABLED
 
           const countRole = countWorkspaceRoleWithOptionalProjectRoleFactory({ db })
 
-          const session = await startCheckoutSessionFactory({
-            getWorkspaceCheckoutSession: getWorkspaceCheckoutSessionFactory({ db }),
-            getWorkspacePlan: getWorkspacePlanFactory({ db }),
-            countRole,
-            createCheckoutSession,
-            saveCheckoutSession: saveCheckoutSessionFactory({ db }),
-            deleteCheckoutSession: deleteCheckoutSessionFactory({ db })
-          })({
-            workspacePlan,
-            workspaceId,
-            workspaceSlug: workspace.slug,
-            isCreateFlow: isCreateFlow || false,
-            billingInterval
-          })
-
-          return session
+          try {
+            logger.info('Attempting to create checkout session')
+            const session = await startCheckoutSessionFactory({
+              getWorkspaceCheckoutSession: getWorkspaceCheckoutSessionFactory({ db }),
+              getWorkspacePlan: getWorkspacePlanFactory({ db }),
+              countRole,
+              createCheckoutSession,
+              saveCheckoutSession: saveCheckoutSessionFactory({ db }),
+              deleteCheckoutSession: deleteCheckoutSessionFactory({ db })
+            })({
+              workspacePlan,
+              workspaceId,
+              workspaceSlug: workspace.slug,
+              isCreateFlow: isCreateFlow || false,
+              billingInterval
+            })
+            logger.info({ sessionId: session.id }, 'Checkout session created')
+            return session
+          } catch (err) {
+            const e = ensureError(err, 'Unknown error creating checkout session')
+            switch (e.constructor) {
+              case WorkspaceAlreadyPaidError:
+                logger.info(
+                  { err: e },
+                  'Workspace already paid, cancelling creation of checkout session'
+                )
+                break
+              case WorkspaceCheckoutSessionInProgressError:
+                logger.info(
+                  { err: e },
+                  'Workspace checkout session in progress, cannot create a new session. Some one else may be trying to pay.'
+                )
+                break
+              default:
+                logger.error({ err: e }, 'Error creating checkout session')
+                break
+            }
+            throw e
+          }
         },
         upgradePlan: async (_parent, args, ctx) => {
           const { workspaceId, workspacePlan, billingInterval } = args.input
