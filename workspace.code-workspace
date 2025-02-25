@@ -60,6 +60,10 @@
       "path": "packages/ui-components-nuxt",
       "name": "🌟 ui-components-nuxt"
     },
+    .{
+      "path": "packages/website",
+      "name": "🕸️ website"
+    },
     {
       "path": ".",
       "name": "🏡 root"
