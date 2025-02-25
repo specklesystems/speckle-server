@@ -8,8 +8,10 @@ import type { IReceiverModelCard } from '~/lib/models/card/receiver'
 import type {
   IDirectSelectionSendFilter,
   ISendFilter,
+  ISendFilterSelectItem,
   ISenderModelCard,
-  RevitViewsSendFilter
+  RevitViewsSendFilter,
+  SendFilterSelect
 } from 'lib/models/card/send'
 import type { ToastNotification } from '@speckle/ui-components'
 import type { Nullable } from '@speckle/shared'
@@ -53,7 +55,8 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
   const documentInfo = ref<DocumentInfo>()
   const documentModelStore = ref<DocumentModelStore>({ models: [] })
 
-  const availableViews = ref<string[]>()
+  const availableViews = ref<string[]>() // TODO: later we can align views with -> const revitAvailableViews = ref<ISendFilterSelectItem[]>()
+  const navisworksAvailableSavedSets = ref<ISendFilterSelectItem[]>()
 
   const dismissNotification = () => {
     currentNotification.value = null
@@ -534,6 +537,13 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     if (revitViews) {
       availableViews.value = revitViews.availableViews
     }
+
+    const navisworksSavedSetsFromSendFilters = sendFilters.value.find(
+      (f) => f.id === 'navisworksSavedSets'
+    ) as SendFilterSelect
+    if (navisworksSavedSetsFromSendFilters) {
+      navisworksAvailableSavedSets.value = navisworksSavedSetsFromSendFilters.items
+    }
   }
 
   const getSendSettings = async () => {
@@ -640,6 +650,7 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     showErrorDialog,
     hostAppError,
     availableViews,
+    navisworksAvailableSavedSets,
     setNotification,
     setModelError,
     setLatestAvailableVersion,
