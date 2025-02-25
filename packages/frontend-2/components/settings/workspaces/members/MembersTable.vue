@@ -13,12 +13,11 @@
       :columns="[
         { id: 'name', header: 'Name', classes: 'col-span-3' },
         { id: 'company', header: 'Company', classes: 'col-span-3' },
-        { id: 'verified', header: 'Status', classes: 'col-span-3' },
         { id: 'role', header: 'Role', classes: 'col-span-2' },
         {
           id: 'actions',
           header: '',
-          classes: 'col-span-1 flex items-center justify-end'
+          classes: 'col-span-4 flex items-center justify-end'
         }
       ]"
       :items="members"
@@ -47,11 +46,6 @@
       <template #company="{ item }">
         <span class="text-body-xs text-foreground">
           {{ item.company ? item.company : '-' }}
-        </span>
-      </template>
-      <template #verified="{ item }">
-        <span class="text-body-xs text-foreground-2">
-          {{ item.verified ? 'Verified' : 'Unverified' }}
         </span>
       </template>
       <template #role="{ item }">
@@ -128,7 +122,6 @@ graphql(`
       avatar
       name
       company
-      verified
       workspaceDomainPolicyCompliant
     }
   }

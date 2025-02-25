@@ -42,8 +42,7 @@ import { graphql } from '~/lib/common/generated/gql'
 import { settingsWorkspacesMembersQuery } from '~/lib/settings/graphql/queries'
 import type { LayoutPageTabItem } from '~~/lib/layout/helpers/components'
 import { useOnWorkspaceUpdated } from '~/lib/workspaces/composables/management'
-import { WorkspaceJoinRequestStatus } from '~/lib/common/generated/gql/graphql'
-
+import { WorkspaceJoinRequestStatus } from '~~/lib/common/generated/gql/graphql'
 graphql(`
   fragment SettingsWorkspacesMembers_Workspace on Workspace {
     id
@@ -76,10 +75,7 @@ const route = useRoute()
 const slug = computed(() => (route.params.slug as string) || '')
 
 const { result } = useQuery(settingsWorkspacesMembersQuery, () => ({
-  slug: slug.value,
-  joinRequestsFilter: {
-    status: WorkspaceJoinRequestStatus.Pending
-  }
+  slug: slug.value
 }))
 
 const workspace = computed(() => result.value?.workspaceBySlug)
@@ -96,7 +92,10 @@ const guestCount = computed(
 )
 const invitedCount = computed(() => workspace.value?.invitedTeam?.length)
 const joinRequestCount = computed(
-  () => workspace.value?.adminWorkspacesJoinRequests?.totalCount
+  () =>
+    workspace.value?.adminWorkspacesJoinRequests?.items.filter(
+      (item) => item.status === WorkspaceJoinRequestStatus.Pending
+    ).length
 )
 const tabItems = computed<LayoutPageTabItem[]>(() => [
   { title: 'Members', id: 'members', count: memberCount.value },
