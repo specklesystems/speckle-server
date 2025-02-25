@@ -14,7 +14,7 @@ import Redis, { RedisOptions } from 'ioredis'
 import { createBullBoard } from 'bull-board'
 import { BullMQAdapter } from 'bull-board/bullMQAdapter'
 import { authMiddlewareCreator } from '@/modules/shared/middleware'
-import { Roles } from '@speckle/shared'
+import { Roles, TIME } from '@speckle/shared'
 import { validateServerRoleBuilderFactory } from '@/modules/shared/authz'
 import { getRolesFactory } from '@/modules/shared/repositories/roles'
 import { previewRouterFactory } from '@/modules/previews/rest/router'
@@ -28,7 +28,8 @@ import {
 import { getObjectCommitsWithStreamIdsFactory } from '@/modules/core/repositories/commits'
 import prometheusClient from 'prom-client'
 
-const getPreviewQueues = ({ responseQueueName }: { responseQueueName: string }) => {
+const getPreviewQueues = (params: { responseQueueName: string }) => {
+  const { responseQueueName } = params
   let client: Redis
   let subscriber: Redis
   const redisUrl = getPreviewServiceRedisUrl() ?? getRedisUrl()
@@ -90,17 +91,53 @@ export const init: SpeckleModule['init'] = (app, isInitial) => {
     const responseQueueName = `preview-service-results-${
       new URL(getServerOrigin()).hostname
     }`
-    const { previewRequestQueue, previewResponseQueue } = getPreviewQueues({
-      responseQueueName
-    })
 
     // add a metric to gauge the length of the preview job queue
     new prometheusClient.Gauge({
-      name: 'speckle_server_preview_jobs_queue_count',
+      name: 'speckle_server_preview_jobs_queue_pending',
       help: 'Number of preview jobs waiting in the job queue',
       async collect() {
         this.set(await previewRequestQueue.count())
       }
+    })
+
+    const previewJobsCounter = new prometheusClient.Counter({
+      name: 'speckle_server_preview_jobs_count',
+      help: 'Total number of preview jobs which have been requested to be processed.'
+    })
+    const previewJobsFailedCounter = new prometheusClient.Counter({
+      name: 'speckle_server_preview_jobs_request_failed_count',
+      help: 'Total number of preview jobs which have been requested but failed to be processed.'
+    })
+    const previewJobsResponseCounter = new prometheusClient.Counter<'status'>({
+      name: 'speckle_server_preview_jobs_response_count',
+      help: 'Number of preview jobs which have been responded to, and their status (success or error)',
+      labelNames: ['status']
+    })
+    const previewJobsProcessedHistogram = new prometheusClient.Histogram({
+      name: 'speckle_server_preview_jobs_processed_duration_seconds',
+      help: 'Duration of preview job processing',
+      labelNames: ['status'],
+      buckets: [
+        10 * TIME.second,
+        30 * TIME.second,
+        1 * TIME.minute,
+        3 * TIME.minute,
+        15 * TIME.minute,
+        30 * TIME.minute,
+        60 * TIME.minute
+      ]
+    })
+
+    const { previewRequestQueue, previewResponseQueue } = getPreviewQueues({
+      responseQueueName
+    })
+
+    previewRequestQueue.on('added', () => {
+      previewJobsCounter.inc()
+    })
+    previewRequestQueue.on('failed', () => {
+      previewJobsFailedCounter.inc()
     })
 
     const router = createBullBoard([
@@ -150,6 +187,15 @@ export const init: SpeckleModule['init'] = (app, isInitial) => {
         objectId,
         previewResult: parsedMessage.data
       })
+
+      previewJobsResponseCounter.inc({ status: parsedMessage.data.status })
+      if (parsedMessage.data.status === 'success') {
+        previewJobsProcessedHistogram.observe(
+          { status: parsedMessage.data.status },
+          parsedMessage.data.result.duration * TIME.second //FIXME is this milliseconds or seconds? Assuming seconds
+        )
+        //TODO error status responses do not have a duration, but probably should - useful to know if the error was immediate or after a long time
+      }
       done()
     })
   }
