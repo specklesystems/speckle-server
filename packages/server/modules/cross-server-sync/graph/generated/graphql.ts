@@ -941,6 +941,18 @@ export type DiscoverableStreamsSortingInput = {
   type: DiscoverableStreamsSortType;
 };
 
+export type DiscoverableWorkspaceCollaborator = {
+  __typename?: 'DiscoverableWorkspaceCollaborator';
+  avatar: Scalars['String']['output'];
+};
+
+export type DiscoverableWorkspaceCollaboratorCollection = {
+  __typename?: 'DiscoverableWorkspaceCollaboratorCollection';
+  cursor?: Maybe<Scalars['String']['output']>;
+  items: Array<DiscoverableWorkspaceCollaborator>;
+  totalCount: Scalars['Int']['output'];
+};
+
 export type EditCommentInput = {
   commentId: Scalars['String']['input'];
   content: CommentContentInput;
@@ -1154,6 +1166,31 @@ export type LimitedWorkspace = {
   name: Scalars['String']['output'];
   /** Unique workspace short id. Used for navigation. */
   slug: Scalars['String']['output'];
+  /** Workspace members visible to people with verified email domain */
+  team?: Maybe<DiscoverableWorkspaceCollaboratorCollection>;
+};
+
+
+/** Workspace metadata visible to non-workspace members. */
+export type LimitedWorkspaceTeamArgs = {
+  cursor?: InputMaybe<Scalars['String']['input']>;
+  limit?: Scalars['Int']['input'];
+};
+
+export type LimitedWorkspaceJoinRequest = {
+  __typename?: 'LimitedWorkspaceJoinRequest';
+  createdAt: Scalars['DateTime']['output'];
+  id: Scalars['String']['output'];
+  status: WorkspaceJoinRequestStatus;
+  user: LimitedUser;
+  workspace: LimitedWorkspace;
+};
+
+export type LimitedWorkspaceJoinRequestCollection = {
+  __typename?: 'LimitedWorkspaceJoinRequestCollection';
+  cursor?: Maybe<Scalars['String']['output']>;
+  items: Array<LimitedWorkspaceJoinRequest>;
+  totalCount: Scalars['Int']['output'];
 };
 
 export type MarkCommentViewedInput = {
@@ -3710,6 +3747,7 @@ export type User = {
   versions: CountOnlyCollection;
   /** Get all invitations to workspaces that the active user has */
   workspaceInvites: Array<PendingWorkspaceCollaborator>;
+  workspaceJoinRequests?: Maybe<LimitedWorkspaceJoinRequestCollection>;
   /** Get the workspaces for the user */
   workspaces: WorkspaceCollection;
 };
@@ -3807,6 +3845,17 @@ export type UserTimelineArgs = {
  */
 export type UserVersionsArgs = {
   authoredOnly?: Scalars['Boolean']['input'];
+  limit?: Scalars['Int']['input'];
+};
+
+
+/**
+ * Full user type, should only be used in the context of admin operations or
+ * when a user is reading/writing info about himself
+ */
+export type UserWorkspaceJoinRequestsArgs = {
+  cursor?: InputMaybe<Scalars['String']['input']>;
+  filter?: InputMaybe<WorkspaceJoinRequestFilter>;
   limit?: Scalars['Int']['input'];
 };
 
@@ -4421,6 +4470,10 @@ export type WorkspaceJoinRequestCollection = {
   cursor?: Maybe<Scalars['String']['output']>;
   items: Array<WorkspaceJoinRequest>;
   totalCount: Scalars['Int']['output'];
+};
+
+export type WorkspaceJoinRequestFilter = {
+  status?: InputMaybe<WorkspaceJoinRequestStatus>;
 };
 
 export type WorkspaceJoinRequestMutations = {
