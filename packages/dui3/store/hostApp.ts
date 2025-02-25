@@ -55,7 +55,7 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
   const documentInfo = ref<DocumentInfo>()
   const documentModelStore = ref<DocumentModelStore>({ models: [] })
 
-  const revitAvailableViews = ref<ISendFilterSelectItem[]>()
+  const availableViews = ref<string[]>() // TODO: later we can align views with -> const revitAvailableViews = ref<ISendFilterSelectItem[]>()
   const navisworksAvailableSavedSets = ref<ISendFilterSelectItem[]>()
 
   const dismissNotification = () => {
@@ -535,9 +535,7 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
       (f) => f.id === 'revitViews'
     ) as RevitViewsSendFilter
     if (revitViews) {
-      revitAvailableViews.value = revitViews.availableViews.map(
-        (v) => ({ id: v, name: v } as ISendFilterSelectItem) // this is shit backward compatibility...
-      )
+      availableViews.value = revitViews.availableViews
     }
 
     const navisworksSavedSetsFromSendFilters = sendFilters.value.find(
@@ -651,7 +649,7 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     currentNotification,
     showErrorDialog,
     hostAppError,
-    revitAvailableViews,
+    availableViews,
     navisworksAvailableSavedSets,
     setNotification,
     setModelError,

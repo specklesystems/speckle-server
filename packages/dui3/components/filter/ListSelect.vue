@@ -43,10 +43,8 @@
       </div>
       <div v-else-if="selectedFilter.id === 'layers'">TODO</div>
       <div v-else-if="selectedFilter.id === 'revitViews'">
-        <FilterFormSelect
-          label="Views"
-          :items="(store.revitAvailableViews as ISendFilterSelectItem[])"
-          :filter="(selectedFilter as SendFilterSelect)"
+        <FilterRevitViews
+          :filter="(selectedFilter as RevitViewsSendFilter)"
           @update:filter="(filter : ISendFilter) => (selectedFilter = filter)"
         />
       </div>
@@ -78,7 +76,8 @@ import type {
   IDirectSelectionSendFilter,
   RevitCategoriesSendFilter,
   ISendFilterSelectItem,
-  SendFilterSelect
+  SendFilterSelect,
+  RevitViewsSendFilter
 } from '~/lib/models/card/send'
 import { useHostAppStore } from '~~/store/hostApp'
 import { storeToRefs } from 'pinia'

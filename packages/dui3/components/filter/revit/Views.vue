@@ -12,7 +12,7 @@
       class="w-full"
       fixed-height
       show-label
-      :items="store.revitAvailableViews?.map((v) => v.name)"
+      :items="store.availableViews"
       :allow-unset="false"
       mount-menu-on-body
     >
