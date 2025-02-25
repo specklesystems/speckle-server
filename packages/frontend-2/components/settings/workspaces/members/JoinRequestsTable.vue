@@ -43,6 +43,7 @@
           </FormButton>
           <FormButton color="outline" size="sm" @click="onDeny(item)">Deny</FormButton>
         </div>
+        <span v-else />
       </template>
     </LayoutTable>
 
@@ -107,8 +108,11 @@ const joinRequests = computed(() => {
 
   return orderBy(
     filtered,
-    [(request) => request.status === WorkspaceJoinRequestStatus.Pending, 'createdAt'],
-    ['asc', 'desc']
+    [
+      (request) => (request.status === WorkspaceJoinRequestStatus.Pending ? 1 : 0),
+      'createdAt'
+    ],
+    ['desc', 'desc']
   )
 })
 
