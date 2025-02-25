@@ -22,6 +22,7 @@ import { withTransaction } from '@/modules/shared/helpers/dbHelper'
 import { getStripeClient } from '@/modules/gatekeeper/stripe'
 import { handleSubscriptionUpdateFactory } from '@/modules/gatekeeper/services/subscriptions'
 import { getEventBus } from '@/modules/shared/services/eventBus'
+import { extendLoggerComponent } from '@/logging/logging'
 
 export const getBillingRouter = (): Router => {
   const router = Router()
@@ -34,6 +35,9 @@ export const getBillingRouter = (): Router => {
       return
     }
 
+    // req.log will have request ID property, so all subsequent log messages can be traced
+    let logger = extendLoggerComponent(req.log, 'gatekeeper', 'rest', 'billing')
+
     const stripe = getStripeClient()
     let event: Stripe.Event
 
@@ -45,27 +49,43 @@ export const getBillingRouter = (): Router => {
         endpointSecret
       )
     } catch (err) {
-      res.status(400).send(`Webhook Error: ${ensureError(err).message}`)
+      const e = ensureError(err, 'Unknown error constructing Stripe webhook event')
+      res.status(400).json({ error: e.message })
       return
     }
 
     switch (event.type) {
       case 'checkout.session.async_payment_failed':
         // if payment fails, we delete the failed session
-        await deleteCheckoutSessionFactory({ db })({
-          checkoutSessionId: event.data.object.id
-        })
+        logger.info(
+          { stripeEventId: event.data.object.id },
+          'Payment failed, attempting to delete checkout session'
+        )
+        try {
+          await deleteCheckoutSessionFactory({ db })({
+            checkoutSessionId: event.data.object.id
+          })
+          logger.info('Checkout session deleted')
+        } catch (err) {
+          logger.error({ err }, 'Failed to delete checkout session')
+        }
         break
       case 'checkout.session.async_payment_succeeded':
       case 'checkout.session.completed':
         const session = event.data.object
+        logger = logger.child({ stripeEventId: session.id })
 
-        if (!session.subscription)
+        if (!session.subscription) {
+          logger.warn('Received a checkout session without a subscription')
           return res.status(400).send('We only support subscription type checkouts')
+        }
 
         switch (session.payment_status) {
           case 'no_payment_required':
             // we do not need to support this status
+            logger.info(
+              'Payment succeeded or Stripe session completed, and no payment was required'
+            )
             break
           case 'paid':
             // If the workspace is already on a paid plan, we made a bo bo.
@@ -81,6 +101,11 @@ export const getBillingRouter = (): Router => {
               typeof session.subscription === 'string'
                 ? session.subscription
                 : session.subscription.id
+
+            logger = logger.child({ subscriptionId })
+            logger.info(
+              'Payment succeeded or Stripe session completed, and payment was paid. Attepmt to complete checkout session'
+            )
 
             // this must use a transaction
 
@@ -109,10 +134,13 @@ export const getBillingRouter = (): Router => {
                 }),
                 trx
               )
+              logger.info('Checkout session completed')
             } catch (err) {
               if (err instanceof WorkspaceAlreadyPaidError) {
                 // ignore the request, this is prob a replay from stripe
+                logger.info('Workspace is already paid, ignoring')
               } else {
+                logger.error({ err }, 'Failed to complete checkout session')
                 throw err
               }
             }
@@ -120,29 +148,56 @@ export const getBillingRouter = (): Router => {
             break
           case 'unpaid':
             // if payment fails, we delete the failed session
-            await deleteCheckoutSessionFactory({ db })({
-              checkoutSessionId: event.data.object.id
-            })
+            try {
+              logger.info(
+                'Payment succeeded or Stripe session completed, but payment was not made. Attempting to delete the failed checkout session'
+              )
+              await deleteCheckoutSessionFactory({ db })({
+                checkoutSessionId: event.data.object.id
+              })
+              logger.info('Checkout session deleted')
+            } catch (err) {
+              const e = ensureError(err, 'Unknown error deleting checkout session')
+              logger.error({ err: e }, 'Failed to delete checkout session')
+            }
         }
         break
 
       case 'checkout.session.expired':
-        // delete the checkout session from the DB
-        await deleteCheckoutSessionFactory({ db })({
-          checkoutSessionId: event.data.object.id
-        })
+        try {
+          logger.info(
+            { stripeEventId: event.data.object.id },
+            'Checkout session expired, attempting to delete checkout session'
+          )
+          // delete the checkout session from the DB
+          await deleteCheckoutSessionFactory({ db })({
+            checkoutSessionId: event.data.object.id
+          })
+        } catch (err) {
+          const e = ensureError(err, 'Unknown error deleting checkout session')
+          logger.error({ err: e }, 'Failed to delete checkout session')
+        }
         break
 
       case 'customer.subscription.updated':
       case 'customer.subscription.deleted':
-        await handleSubscriptionUpdateFactory({
-          getWorkspacePlan: getWorkspacePlanFactory({ db }),
-          upsertPaidWorkspacePlan: upsertPaidWorkspacePlanFactory({ db }),
-          getWorkspaceSubscriptionBySubscriptionId:
-            getWorkspaceSubscriptionBySubscriptionIdFactory({ db }),
-          upsertWorkspaceSubscription: upsertWorkspaceSubscriptionFactory({ db })
-        })({ subscriptionData: parseSubscriptionData(event.data.object) })
-
+        logger = logger.child({ stripeSubscriptionId: event.data.object.id })
+        try {
+          logger.info(
+            'Received subscription update event. Attempting to update workspace subscription'
+          )
+          await handleSubscriptionUpdateFactory({
+            getWorkspacePlan: getWorkspacePlanFactory({ db }),
+            upsertPaidWorkspacePlan: upsertPaidWorkspacePlanFactory({ db }),
+            getWorkspaceSubscriptionBySubscriptionId:
+              getWorkspaceSubscriptionBySubscriptionIdFactory({ db }),
+            upsertWorkspaceSubscription: upsertWorkspaceSubscriptionFactory({ db })
+          })({ subscriptionData: parseSubscriptionData(event.data.object) })
+          logger.info('Workspace subscription successfully updated')
+        } catch (err) {
+          const e = ensureError(err, 'Unknown error handling subscription update')
+          logger.error({ err: e }, 'Failed to handle subscription update')
+        }
         break
 
       default:
