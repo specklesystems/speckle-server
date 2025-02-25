@@ -9,11 +9,13 @@ import { workspaceCreateRoute, workspaceJoinRoute } from '~~/lib/common/helpers/
 export default defineNuxtRouteMiddleware(async (to) => {
   const isOnboardingForced = useIsOnboardingForced()
   const isWorkspaceNewPlansEnabled = useWorkspaceNewPlansEnabled()
+  const isForceWorkspaceMembershipEnabled = useIsForceWorkspaceMembershipEnabled()
 
   const isAuthPage = to.path.startsWith('/authn/')
 
-  if (!isWorkspaceNewPlansEnabled.value) return
   if (isAuthPage) return
+  if (!isWorkspaceNewPlansEnabled.value) return
+  if (!isForceWorkspaceMembershipEnabled.value) return
 
   const client = useApolloClientFromNuxt()
   const { data } = await client
