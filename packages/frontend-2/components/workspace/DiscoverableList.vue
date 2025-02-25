@@ -77,10 +77,16 @@ const { discoverableWorkspaces, workspaceJoinRequests, processRequest } =
   useDiscoverableWorkspaces()
 
 const defaultDescription = computed(() => {
-  const count = discoverableWorkspaces.value.length
-  if (count === 0) return 'No workspaces found matching your email domain'
-  if (count === 1) return 'We found a workspace that matches your email domain'
-  return `We found ${count} workspaces that match your email domain`
+  const discoverableCount = discoverableWorkspaces.value.length
+  const requestCount =
+    'items' in workspaceJoinRequests.value
+      ? workspaceJoinRequests.value.items.length
+      : 0
+
+  const totalCount = discoverableCount + requestCount
+  return totalCount === 1
+    ? 'We found a workspace that matches your email domain'
+    : 'We found workspaces that match your email domain'
 })
 
 const displayDescription = computed(() => props.description ?? defaultDescription.value)

@@ -9,6 +9,7 @@ import { workspaceCreateRoute, workspaceJoinRoute } from '~~/lib/common/helpers/
 export default defineNuxtRouteMiddleware(async (to) => {
   const isOnboardingForced = useIsOnboardingForced()
   const isWorkspaceNewPlansEnabled = useWorkspaceNewPlansEnabled()
+
   const isAuthPage = to.path.startsWith('/authn/')
 
   if (!isWorkspaceNewPlansEnabled.value) return
