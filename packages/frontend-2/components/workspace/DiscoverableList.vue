@@ -7,7 +7,7 @@
       {{ displayDescription }}
     </p>
     <CommonCard
-      v-for="workspace in discoverableWorkspaces"
+      v-for="workspace in allWorkspaces"
       :key="workspace.id"
       class="w-full bg-foundation"
     >
@@ -18,20 +18,28 @@
         <div class="flex flex-col sm:flex-row gap-4 justify-between flex-1">
           <div class="flex flex-col flex-1">
             <h6 class="text-heading-sm">{{ workspace.name }}</h6>
-            <p class="text-body-2xs text-foreground-2">{{ workspace.description }}</p>
+            <p class="text-body-2xs text-foreground-2">
+              {{ workspace.team?.totalCount }}
+              {{ workspace.team?.totalCount === 1 ? 'member' : 'members' }}
+            </p>
           </div>
           <FormButton
+            v-if="workspace.status !== 'Request to join'"
             color="outline"
             size="sm"
-            :loading="loadingStates[workspace.id]"
-            :disabled="requestedWorkspaces.includes(workspace.id)"
+            disabled
+            class="capitalize"
             @click="() => processRequest(true, workspace.id)"
           >
-            {{
-              requestedWorkspaces.includes(workspace.id)
-                ? 'Requested'
-                : 'Request to join'
-            }}
+            {{ workspace.status }}
+          </FormButton>
+          <FormButton
+            v-else
+            color="outline"
+            size="sm"
+            @click="() => processRequest(true, workspace.id)"
+          >
+            {{ workspace.status }}
           </FormButton>
         </div>
       </div>
@@ -50,13 +58,6 @@
 </template>
 
 <script setup lang="ts">
-import { dashboardRequestToJoinWorkspaceMutation } from '~~/lib/dashboard/graphql/mutations'
-import {
-  convertThrowIntoFetchResult,
-  getFirstErrorMessage
-} from '~~/lib/common/helpers/graphql'
-import { useMixpanel } from '~~/lib/core/composables/mp'
-import { useMutation } from '@vue/apollo-composable'
 import { workspaceCreateRoute } from '~~/lib/common/helpers/route'
 import { useDiscoverableWorkspaces } from '~/lib/workspaces/composables/discoverableWorkspaces'
 
@@ -72,7 +73,8 @@ const props = withDefaults(
   }
 )
 
-const { discoverableWorkspaces } = useDiscoverableWorkspaces()
+const { discoverableWorkspaces, workspaceJoinRequests, processRequest } =
+  useDiscoverableWorkspaces()
 
 const defaultDescription = computed(() => {
   const count = discoverableWorkspaces.value.length
@@ -83,53 +85,19 @@ const defaultDescription = computed(() => {
 
 const displayDescription = computed(() => props.description ?? defaultDescription.value)
 
-const emit = defineEmits<{
-  (e: 'workspace-joined'): void
-}>()
+const allWorkspaces = computed(() => {
+  const requested = (
+    'items' in workspaceJoinRequests.value ? workspaceJoinRequests.value.items : []
+  ).map((request) => ({
+    ...request.workspace,
+    status: request.status
+  }))
 
-const mixpanel = useMixpanel()
-const { triggerNotification } = useGlobalToast()
-const { mutate: requestToJoin } = useMutation(dashboardRequestToJoinWorkspaceMutation)
+  const discoverable = discoverableWorkspaces.value.map((workspace) => ({
+    ...workspace,
+    status: 'Request to join'
+  }))
 
-const loadingStates = ref<Record<string, boolean>>({})
-const requestedWorkspaces = ref<string[]>([])
-
-const processRequest = async (accept: boolean, workspaceId: string) => {
-  if (accept) {
-    loadingStates.value[workspaceId] = true
-
-    try {
-      const result = await requestToJoin({
-        input: { workspaceId }
-      }).catch(convertThrowIntoFetchResult)
-
-      if (result?.data) {
-        requestedWorkspaces.value.push(workspaceId)
-        mixpanel.track('Workspace Join Request Sent', {
-          workspaceId,
-          location: 'onboarding',
-          // eslint-disable-next-line camelcase
-          workspace_id: workspaceId
-        })
-
-        triggerNotification({
-          title: 'Request sent',
-          description: 'Your request to join the workspace has been sent.',
-          type: ToastNotificationType.Success
-        })
-
-        emit('workspace-joined')
-      } else {
-        const errorMessage = getFirstErrorMessage(result?.errors)
-        triggerNotification({
-          title: 'Failed to send request',
-          description: errorMessage,
-          type: ToastNotificationType.Danger
-        })
-      }
-    } finally {
-      loadingStates.value[workspaceId] = false
-    }
-  }
-}
+  return [...requested, ...discoverable]
+})
 </script>

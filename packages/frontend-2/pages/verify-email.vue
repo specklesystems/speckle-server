@@ -61,7 +61,7 @@
         </div>
       </div>
       <div v-if="!registeredThisSession" class="w-full max-w-sm mx-auto mt-8">
-        <CommonAlert color="neutral" size="xs">
+        <CommonAlert color="neutral" size="xs" hide-icon>
           <template #title>Why am I seeing this?</template>
           <template #description>
             This server now requires you to verify all email addresses before you can

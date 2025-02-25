@@ -128,7 +128,16 @@ export const discoverableWorkspacesQuery = graphql(`
   query DiscoverableWorkspaces_ActiveUser {
     activeUser {
       id
-      ...DiscoverableList_Workspaces
+      ...DiscoverableList_Discoverable
+    }
+  }
+`)
+
+export const discoverableWorkspacesRequestsQuery = graphql(`
+  query DiscoverableWorkspacesRequests_ActiveUser {
+    activeUser {
+      id
+      ...DiscoverableList_Requests
     }
   }
 `)

@@ -33,6 +33,11 @@ export const activeUserQuery = graphql(`
       discoverableWorkspaces {
         id
       }
+      workspaceJoinRequests {
+        items {
+          id
+        }
+      }
     }
   }
 `)

@@ -4,7 +4,11 @@
       <HeaderLogoBlock :active="false" class="min-w-40 cursor-pointer" no-link />
     </template>
     <template #header-right>
-      <FormButton color="outline" @click="() => logout({ skipRedirect: false })">
+      <FormButton
+        size="sm"
+        color="outline"
+        @click="() => logout({ skipRedirect: false })"
+      >
         Sign out
       </FormButton>
     </template>

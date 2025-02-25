@@ -4,13 +4,15 @@ import { convertThrowIntoFetchResult } from '~~/lib/common/helpers/graphql'
 import { workspaceCreateRoute, workspaceJoinRoute } from '~~/lib/common/helpers/route'
 
 /**
- * Redirect user to /workspaces/create, if they haven't done it yet
+ * Redirect user to /workspaces/join or /workspaces/create, if they have no workspaces
  */
 export default defineNuxtRouteMiddleware(async (to) => {
   const isOnboardingForced = useIsOnboardingForced()
   const isWorkspaceNewPlansEnabled = useWorkspaceNewPlansEnabled()
+  const isAuthPage = to.path.startsWith('/authn/')
 
   if (!isWorkspaceNewPlansEnabled.value) return
+  if (isAuthPage) return
 
   const client = useApolloClientFromNuxt()
   const { data } = await client
@@ -30,7 +32,9 @@ export default defineNuxtRouteMiddleware(async (to) => {
   if (isOnboardingForced.value && !data?.activeUser?.isOnboardingFinished) return
 
   const isMemberOfWorkspace = data?.activeUser?.workspaces?.totalCount > 0
-  const hasDiscoverableWorkspaces = data?.activeUser?.discoverableWorkspaces?.length > 0
+  const hasDiscoverableWorkspaces =
+    (data?.activeUser?.discoverableWorkspaces?.length ?? 0) > 0 ||
+    (data?.activeUser?.workspaceJoinRequests?.items?.length ?? 0) > 0
 
   const isGoingToJoinWorkspace = to.path === workspaceJoinRoute
   const isGoingToCreateWorkspace = to.path === workspaceCreateRoute()

@@ -75,6 +75,11 @@ const parseFeatureFlags = () => {
     FF_MOVE_PROJECT_REGION_ENABLED: {
       schema: z.boolean(),
       defaults: { production: false, _: true }
+    },
+    // Forces the user to be a member of a workspace
+    FF_FORCE_WORKSPACE_MEMBERSHIP: {
+      schema: z.boolean(),
+      defaults: { production: false, _: false }
     }
   })
 
