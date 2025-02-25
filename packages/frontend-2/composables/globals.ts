@@ -71,11 +71,4 @@ export const useIsBillingIntegrationEnabled = () => {
   return ref(FF_BILLING_INTEGRATION_ENABLED)
 }
 
-export const useIsForceWorkspaceMembershipEnabled = () => {
-  const {
-    public: { FF_FORCE_WORKSPACE_MEMBERSHIP }
-  } = useRuntimeConfig()
-  return ref(FF_FORCE_WORKSPACE_MEMBERSHIP)
-}
-
 export { useGlobalToast, useActiveUser, usePageQueryStandardFetchPolicy }

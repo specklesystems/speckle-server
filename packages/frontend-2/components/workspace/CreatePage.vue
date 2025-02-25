@@ -50,7 +50,7 @@ defineProps<{
 const { currentStep, resetWizardState } = useWorkspacesWizard()
 const mixpanel = useMixpanel()
 const { logout } = useAuthManager()
-const isForceWorkspaceMembershipEnabled = useIsForceWorkspaceMembershipEnabled()
+const isWorkspaceNewPlansEnabled = useWorkspaceNewPlansEnabled()
 const { activeUser } = useActiveUser()
 
 const isCancelDialogOpen = ref(false)
@@ -66,7 +66,7 @@ const hasDiscoverableWorkspaces = computed(() => {
 
 const isForcedCreation = computed(() => {
   return (
-    isForceWorkspaceMembershipEnabled.value &&
+    isWorkspaceNewPlansEnabled.value &&
     activeUser.value?.workspaces?.items?.length === 0 &&
     !hasDiscoverableWorkspaces.value
   )
