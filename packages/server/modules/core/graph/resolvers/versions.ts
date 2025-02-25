@@ -19,7 +19,7 @@ import {
   markCommitReceivedAndNotifyFactory,
   updateCommitAndNotifyFactory
 } from '@/modules/core/services/commit/management'
-import { throwIfRateLimited } from '@/modules/core/utils/ratelimiter'
+import { throwIfRateLimitedFactory } from '@/modules/core/utils/ratelimiter'
 import {
   createCommitFactory,
   deleteCommitsFactory,
@@ -49,6 +49,10 @@ import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import coreModule from '@/modules/core'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { StreamNotFoundError } from '@/modules/core/errors/stream'
+
+const throwIfRateLimited = throwIfRateLimitedFactory({
+  rateLimiterEnabled: isRateLimiterEnabled()
+})
 
 export = {
   Project: {
@@ -169,7 +173,6 @@ export = {
       })
 
       await throwIfRateLimited({
-        rateLimiterEnabled: isRateLimiterEnabled(),
         action: 'COMMIT_CREATE',
         source: ctx.userId!
       })

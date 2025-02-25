@@ -17,7 +17,7 @@ import {
   createCommitByBranchNameFactory,
   updateCommitAndNotifyFactory
 } from '@/modules/core/services/commit/management'
-import { throwIfRateLimited } from '@/modules/core/utils/ratelimiter'
+import { throwIfRateLimitedFactory } from '@/modules/core/utils/ratelimiter'
 import {
   batchDeleteCommitsFactory,
   batchMoveCommitsFactory
@@ -110,6 +110,10 @@ const getUserCommitsFactory =
 
     return { items, cursor, totalCount }
   }
+
+const throwIfRateLimited = throwIfRateLimitedFactory({
+  rateLimiterEnabled: isRateLimiterEnabled()
+})
 
 export = {
   Query: {},
@@ -337,7 +341,6 @@ export = {
       )
 
       await throwIfRateLimited({
-        rateLimiterEnabled: isRateLimiterEnabled(),
         action: 'COMMIT_CREATE',
         source: context.userId!
       })

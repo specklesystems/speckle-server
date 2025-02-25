@@ -46,7 +46,7 @@ import {
 } from '@/modules/core/repositories/streams'
 import { getUserFactory, getUsersFactory } from '@/modules/core/repositories/users'
 import { createNewProjectFactory } from '@/modules/core/services/projects'
-import { throwIfRateLimited } from '@/modules/core/utils/ratelimiter'
+import { throwIfRateLimitedFactory } from '@/modules/core/utils/ratelimiter'
 import {
   addOrUpdateStreamCollaboratorFactory,
   isStreamCollaboratorFactory,
@@ -170,6 +170,9 @@ const createOnboardingStream = createOnboardingStreamFactory({
 })
 const getUserStreams = getUserStreamsPageFactory({ db })
 const getUserStreamsCount = getUserStreamsCountFactory({ db })
+const throwIfRateLimited = throwIfRateLimitedFactory({
+  rateLimiterEnabled: isRateLimiterEnabled()
+})
 
 export = {
   Query: {
@@ -255,7 +258,6 @@ export = {
     // This one is only used outside of a workspace, so the project is always created in the main db
     async create(_parent, args, context) {
       await throwIfRateLimited({
-        rateLimiterEnabled: isRateLimiterEnabled(),
         action: 'STREAM_CREATE',
         source: context.userId!
       })

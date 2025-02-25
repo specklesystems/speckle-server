@@ -50,7 +50,8 @@ import {
   shutdownTimeoutSeconds,
   asyncRequestContextEnabled,
   getMaximumRequestBodySizeMB,
-  isCompressionEnabled
+  isCompressionEnabled,
+  isRateLimiterEnabled
 } from '@/modules/shared/helpers/envHelper'
 import * as ModulesSetup from '@/modules'
 import { GraphQLContext, Optional } from '@/modules/shared/helpers/typeHelper'
@@ -458,7 +459,7 @@ export async function init() {
   // Trust X-Forwarded-* headers (for https protocol detection)
   app.enable('trust proxy')
 
-  app.use(createRateLimiterMiddleware()) // Rate limiting by IP address for all users
+  app.use(createRateLimiterMiddleware({ rateLimiterEnabled: isRateLimiterEnabled() })) // Rate limiting by IP address for all users
   app.use(authContextMiddleware)
   app.use(setContentSecurityPolicyHeaderMiddleware)
   if (enableMixpanel())

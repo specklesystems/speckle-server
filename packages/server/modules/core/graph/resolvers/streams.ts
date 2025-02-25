@@ -3,7 +3,7 @@ import {
   StreamSubscriptions
 } from '@/modules/shared/utils/subscriptions'
 import { authorizeResolver, validateScopes } from '@/modules/shared'
-import { throwIfRateLimited } from '@/modules/core/utils/ratelimiter'
+import { throwIfRateLimitedFactory } from '@/modules/core/utils/ratelimiter'
 import {
   getPendingProjectCollaboratorsFactory,
   inviteUsersToProjectFactory
@@ -152,6 +152,9 @@ const favoriteStream = favoriteStreamFactory({
 })
 const getUserStreams = getUserStreamsPageFactory({ db })
 const getUserStreamsCount = getUserStreamsCountFactory({ db })
+const throwIfRateLimited = throwIfRateLimitedFactory({
+  rateLimiterEnabled: isRateLimiterEnabled()
+})
 
 /**
  * @type {import('@/modules/core/graph/generated/graphql').Resolvers}
@@ -414,7 +417,6 @@ export = {
   Mutation: {
     async streamCreate(_, args, context) {
       await throwIfRateLimited({
-        rateLimiterEnabled: isRateLimiterEnabled(),
         action: 'STREAM_CREATE',
         source: context.userId!
       })

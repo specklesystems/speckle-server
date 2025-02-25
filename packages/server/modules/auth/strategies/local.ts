@@ -1,7 +1,4 @@
-import {
-  getRateLimitResult,
-  throwIfRateLimited
-} from '@/modules/core/utils/ratelimiter'
+import type { ThrowIfRateLimited } from '@/modules/core/utils/ratelimiter'
 import { getIpFromRequest } from '@/modules/shared/utils/ip'
 import { UserInputError } from '@/modules/core/errors/userinput'
 
@@ -22,23 +19,22 @@ import {
 } from '@/modules/core/domain/users/operations'
 import { GetServerInfo } from '@/modules/core/domain/server/operations'
 import { UserValidationError } from '@/modules/core/errors/user'
-import { isRateLimiterEnabled } from '@/modules/shared/helpers/envHelper'
-import { addRateLimitHeadersToResponseFactory } from '@/modules/core/rest/ratelimiter'
 import {
   resolveErrorInfo,
   resolveStatusCode
 } from '@/modules/core/rest/defaultErrorHandler'
+import { addRateLimitHeadersToResponseFactory } from '@/modules/core/rest/ratelimiter'
 
 const localStrategyBuilderFactory =
   (deps: {
     validateUserPassword: ValidateUserPassword
     getUserByEmail: LegacyGetUserByEmail
     getServerInfo: GetServerInfo
-    getRateLimitResult: typeof getRateLimitResult
     validateServerInvite: ValidateServerInvite
     createUser: CreateValidatedUser
     finalizeInvitedServerRegistration: FinalizeInvitedServerRegistration
     resolveAuthRedirectPath: ResolveAuthRedirectPath
+    throwIfRateLimited: ThrowIfRateLimited
   }): AuthStrategyBuilder =>
   async (
     app,
@@ -105,8 +101,7 @@ const localStrategyBuilderFactory =
           const ip = getIpFromRequest(req)
           if (ip) user.ip = ip
           const source = ip ? ip : 'unknown'
-          await throwIfRateLimited({
-            rateLimiterEnabled: isRateLimiterEnabled(),
+          await deps.throwIfRateLimited({
             action: 'USER_CREATE',
             source,
             handleRateLimitBreachPriorToThrowing:

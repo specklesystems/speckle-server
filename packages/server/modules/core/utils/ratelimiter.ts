@@ -354,26 +354,26 @@ export async function getRateLimitResult(
   return await consumerFunc(source)
 }
 
-export async function throwIfRateLimited(params: {
-  rateLimiterEnabled: boolean
-  rateLimiterMapping?: RateLimiterMapping
+export type ThrowIfRateLimited = (params: {
   action: RateLimitAction
   source: string
   handleRateLimitBreachPriorToThrowing?: (rateLimitResult: RateLimitBreached) => void
-}): Promise<Nullable<RateLimitSuccess>> {
-  const {
-    rateLimiterEnabled,
-    rateLimiterMapping,
-    action,
-    source,
-    handleRateLimitBreachPriorToThrowing
-  } = params
-  if (!rateLimiterEnabled) return null
+}) => Promise<Nullable<RateLimitSuccess>>
 
-  const rateLimitResult = await getRateLimitResult(action, source, rateLimiterMapping)
-  if (isRateLimitBreached(rateLimitResult)) {
-    handleRateLimitBreachPriorToThrowing?.(rateLimitResult)
-    throw new RateLimitError(rateLimitResult)
+export function throwIfRateLimitedFactory(opts: {
+  rateLimiterEnabled: boolean
+  rateLimiterMapping?: RateLimiterMapping
+}): ThrowIfRateLimited {
+  const { rateLimiterEnabled, rateLimiterMapping } = opts
+  return async (params) => {
+    const { action, source, handleRateLimitBreachPriorToThrowing } = params
+    if (!rateLimiterEnabled) return null
+
+    const rateLimitResult = await getRateLimitResult(action, source, rateLimiterMapping)
+    if (isRateLimitBreached(rateLimitResult)) {
+      handleRateLimitBreachPriorToThrowing?.(rateLimitResult)
+      throw new RateLimitError(rateLimitResult)
+    }
+    return rateLimitResult
   }
-  return rateLimitResult
 }

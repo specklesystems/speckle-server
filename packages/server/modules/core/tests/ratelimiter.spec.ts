@@ -10,13 +10,13 @@ import {
   RateLimiterMapping,
   allActions,
   RateLimitAction,
-  throwIfRateLimited
+  throwIfRateLimitedFactory
 } from '@/modules/core/utils/ratelimiter'
 import { expect } from 'chai'
 import httpMocks from 'node-mocks-http'
 import { RateLimiterMemory } from 'rate-limiter-flexible'
 import {
-  addRateLimitHeadersToResponse,
+  addRateLimitHeadersToResponseFactory,
   createRateLimiterMiddleware
 } from '@/modules/core/rest/ratelimiter'
 import { RateLimitError } from '@/modules/core/errors/ratelimit'
@@ -106,7 +106,7 @@ describe('Rate Limiting', () => {
         msBeforeNext: 4900
       }
       const response = httpMocks.createResponse()
-      addRateLimitHeadersToResponse(response, breached)
+      addRateLimitHeadersToResponseFactory(response)(breached)
       assertRateLimiterHeadersResponse(response)
     })
   })
@@ -127,11 +127,12 @@ describe('Rate Limiting', () => {
 
       const testMappings = createTestRateLimiterPassingMappings()
 
-      const SUT = createRateLimiterMiddleware({ rateLimiterMapping: testMappings })
-
-      await temporarilyEnableRateLimiter(async () => {
-        await SUT(request, response, next)
+      const SUT = createRateLimiterMiddleware({
+        rateLimiterEnabled: true,
+        rateLimiterMapping: testMappings
       })
+
+      await SUT(request, response, next)
 
       expect(nextCalled).to.equal(1)
       expect(response.getHeader('X-RateLimit-Remaining')).to.equal(
@@ -160,14 +161,13 @@ describe('Rate Limiting', () => {
       }
 
       const SUT = createRateLimiterMiddleware({
+        rateLimiterEnabled: true,
         rateLimiterMapping: createTestRateLimiterFailingMappings()
       })
       response = httpMocks.createResponse()
 
-      await temporarilyEnableRateLimiter(async () => {
-        const e = await expectToThrow(async () => await SUT(request, response, next))
-        expect(e).to.be.instanceOf(RateLimitError)
-      })
+      const e = await expectToThrow(async () => await SUT(request, response, next))
+      expect(e).to.be.instanceOf(RateLimitError)
 
       // next should be called as it instead throws an error
       expect(nextCalledWithErr).to.equal(0)
@@ -178,17 +178,21 @@ describe('Rate Limiting', () => {
 
   describe('throwIfRateLimited', () => {
     it('returns null if rate limiter is not enabled', async () => {
+      const throwIfRateLimited = throwIfRateLimitedFactory({
+        rateLimiterEnabled: false
+      })
       const result = await throwIfRateLimited({
-        rateLimiterEnabled: false,
         action: 'POST /graphql',
         source: 'some-source'
       })
       expect(result).to.be.null
     })
     it('returns rate limit success if rate limit is not breached', async () => {
-      const result = await throwIfRateLimited({
+      const throwIfRateLimited = throwIfRateLimitedFactory({
         rateLimiterEnabled: true,
-        rateLimiterMapping: createTestRateLimiterPassingMappings(),
+        rateLimiterMapping: createTestRateLimiterPassingMappings()
+      })
+      const result = await throwIfRateLimited({
         action: 'POST /graphql',
         source: 'some-source'
       })
@@ -196,13 +200,15 @@ describe('Rate Limiting', () => {
       expect(result?.remainingPoints).to.equal(PASSING_RATE_LIMIT_COUNT - 1)
     })
     it('throws RateLimitError if rate limit is breached', async () => {
+      const throwIfRateLimited = throwIfRateLimitedFactory({
+        rateLimiterEnabled: true,
+        rateLimiterMapping: createTestRateLimiterFailingMappings()
+      })
       let handlerCalled = 0
       let result: RateLimitBreached | null = null
       const e = await expectToThrow(
         async () =>
           await throwIfRateLimited({
-            rateLimiterEnabled: true,
-            rateLimiterMapping: createTestRateLimiterFailingMappings(),
             action: 'POST /graphql',
             handleRateLimitBreachPriorToThrowing: (rateLimitResult) => {
               handlerCalled++
@@ -220,17 +226,6 @@ describe('Rate Limiting', () => {
     })
   })
 })
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const temporarilyEnableRateLimiter = async (callback: () => Promise<any>) => {
-  const oldRateLimiterEnabledFlag = process.env.RATELIMITER_ENABLED
-  process.env.RATELIMITER_ENABLED = 'true'
-  try {
-    await callback()
-  } finally {
-    process.env.RATELIMITER_ENABLED = oldRateLimiterEnabledFlag
-  }
-}
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const assertRateLimiterHeadersResponse = (response: any) => {

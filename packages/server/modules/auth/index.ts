@@ -30,7 +30,7 @@ import azureAdStrategyBuilderFactory from '@/modules/auth/strategies/azureAd'
 import googleStrategyBuilderFactory from '@/modules/auth/strategies/google'
 import localStrategyBuilderFactory from '@/modules/auth/strategies/local'
 import oidcStrategyBuilderFactory from '@/modules/auth/strategies/oidc'
-import { getRateLimitResult } from '@/modules/core/utils/ratelimiter'
+import { throwIfRateLimitedFactory } from '@/modules/core/utils/ratelimiter'
 import { passportAuthenticateHandlerBuilderFactory } from '@/modules/auth/services/passportService'
 import {
   countAdminUsersFactory,
@@ -60,6 +60,7 @@ import { sendEmail } from '@/modules/emails/services/sending'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { initializeEventListenerFactory } from '@/modules/auth/services/postAuth'
 import { getEventBus } from '@/modules/shared/services/eventBus'
+import { isRateLimiterEnabled } from '@/modules/shared/helpers/envHelper'
 
 const findEmail = findEmailFactory({ db })
 const requestNewEmailVerification = requestNewEmailVerificationFactory({
@@ -133,8 +134,10 @@ const setupStrategies = setupStrategiesFactory({
     validateUserPassword: validateUserPasswordFactory({
       getUserByEmail: getUserByEmailFactory({ db })
     }),
-    getRateLimitResult,
-    createUser
+    createUser,
+    throwIfRateLimited: throwIfRateLimitedFactory({
+      rateLimiterEnabled: isRateLimiterEnabled()
+    })
   }),
   oidcStrategyBuilder: oidcStrategyBuilderFactory({ ...commonBuilderDeps }),
   createAuthorizationCode: createAuthorizationCodeFactory({ db }),

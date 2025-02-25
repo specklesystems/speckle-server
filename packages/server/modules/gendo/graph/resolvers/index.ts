@@ -7,7 +7,7 @@ import {
   filteredSubscribe,
   publish
 } from '@/modules/shared/utils/subscriptions'
-import { throwIfRateLimited } from '@/modules/core/utils/ratelimiter'
+import { throwIfRateLimitedFactory } from '@/modules/core/utils/ratelimiter'
 import { uploadFileStreamFactory } from '@/modules/blobstorage/services/management'
 import {
   updateBlobFactory,
@@ -45,6 +45,9 @@ const getUserGendoAiCredits = getUserGendoAiCreditsFactory({
 })
 
 const { FF_GENDOAI_MODULE_ENABLED } = getFeatureFlags()
+const throwIfRateLimited = throwIfRateLimitedFactory({
+  rateLimiterEnabled: isRateLimiterEnabled()
+})
 
 export = FF_GENDOAI_MODULE_ENABLED
   ? ({
@@ -77,7 +80,6 @@ export = FF_GENDOAI_MODULE_ENABLED
       VersionMutations: {
         async requestGendoAIRender(__parent, args, ctx) {
           await throwIfRateLimited({
-            rateLimiterEnabled: isRateLimiterEnabled(),
             action: 'GENDO_AI_RENDER_REQUEST',
             source: ctx.userId as string
           })

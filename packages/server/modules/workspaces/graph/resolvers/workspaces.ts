@@ -154,7 +154,7 @@ import { getUserFactory, getUsersFactory } from '@/modules/core/repositories/use
 import { getServerInfoFactory } from '@/modules/core/repositories/server'
 import { commandFactory } from '@/modules/shared/command'
 import { withTransaction } from '@/modules/shared/helpers/dbHelper'
-import { throwIfRateLimited } from '@/modules/core/utils/ratelimiter'
+import { throwIfRateLimitedFactory } from '@/modules/core/utils/ratelimiter'
 import { getRegionDb } from '@/modules/multiregion/utils/dbSelector'
 import {
   listUserExpiredSsoSessionsFactory,
@@ -281,6 +281,9 @@ const getUserStreams = getUserStreamsPageFactory({ db })
 const getUserStreamsCount = getUserStreamsCountFactory({ db })
 
 const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
+const throwIfRateLimited = throwIfRateLimitedFactory({
+  rateLimiterEnabled: isRateLimiterEnabled()
+})
 
 export = FF_WORKSPACES_MODULE_ENABLED
   ? ({
@@ -915,7 +918,6 @@ export = FF_WORKSPACES_MODULE_ENABLED
       WorkspaceProjectMutations: {
         create: async (_parent, args, context) => {
           await throwIfRateLimited({
-            rateLimiterEnabled: isRateLimiterEnabled(),
             action: 'STREAM_CREATE',
             source: context.userId!
           })
