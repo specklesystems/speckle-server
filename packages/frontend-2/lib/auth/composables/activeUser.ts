@@ -28,7 +28,9 @@ export const activeUserQuery = graphql(`
         totalCount
       }
       workspaces {
-        totalCount
+        items {
+          id
+        }
       }
       discoverableWorkspaces {
         id

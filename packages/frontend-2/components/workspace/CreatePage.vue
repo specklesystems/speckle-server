@@ -67,7 +67,7 @@ const hasDiscoverableWorkspaces = computed(() => {
 const isForcedCreation = computed(() => {
   return (
     isForceWorkspaceMembershipEnabled.value &&
-    activeUser.value?.workspaces?.totalCount === 0 &&
+    activeUser.value?.workspaces?.items?.length === 0 &&
     !hasDiscoverableWorkspaces.value
   )
 })

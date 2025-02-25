@@ -34,7 +34,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
   // Ignore if user has not completed onboarding yet
   if (isOnboardingForced.value && !data?.activeUser?.isOnboardingFinished) return
 
-  const isMemberOfWorkspace = data?.activeUser?.workspaces?.totalCount > 0
+  const isMemberOfWorkspace = data?.activeUser?.workspaces?.items?.length > 0
   const hasDiscoverableWorkspaces =
     (data?.activeUser?.discoverableWorkspaces?.length ?? 0) > 0 ||
     (data?.activeUser?.workspaceJoinRequests?.items?.length ?? 0) > 0
