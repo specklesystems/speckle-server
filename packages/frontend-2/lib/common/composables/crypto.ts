@@ -1,4 +1,4 @@
-import { type Optional } from '@speckle/shared'
+import type { Optional } from '@speckle/shared'
 
 type EncryptionUtilsModule = typeof import('~/lib/common/utils/tweetnacl')
 type EncryptionUtilsModulePromise = Promise<EncryptionUtilsModule>

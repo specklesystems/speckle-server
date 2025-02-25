@@ -19,7 +19,6 @@ const config: StorybookConfig = {
   },
   viteFinal(config) {
     // Remove dts plugin, we don't need it and it only causes issues
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     config.plugins = (config.plugins || []).filter(
       (p) => !isObjectLike(p) || get(p, 'name') !== 'vite:dts'
     )

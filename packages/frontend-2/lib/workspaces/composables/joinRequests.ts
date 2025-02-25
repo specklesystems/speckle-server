@@ -3,9 +3,10 @@ import {
   approveWorkspaceJoinRequestMutation,
   denyWorkspaceJoinRequestMutation
 } from '~/lib/workspaces/graphql/mutations'
-import type {
-  ApproveWorkspaceJoinRequestInput,
-  DenyWorkspaceJoinRequestInput
+import {
+  type ApproveWorkspaceJoinRequestInput,
+  type DenyWorkspaceJoinRequestInput,
+  WorkspaceJoinRequestStatus
 } from '~~/lib/common/generated/gql/graphql'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import {
@@ -30,22 +31,11 @@ export const useWorkspaceJoinRequest = () => {
       { input },
       {
         update: (cache) => {
-          cache.evict({
-            id: getCacheId('WorkspaceJoinRequest', requestId)
-          })
-
           modifyObjectField(
             cache,
-            getCacheId('Workspace', input.workspaceId),
-            'adminWorkspacesJoinRequests',
-            ({ helpers: { createUpdatedValue } }) => {
-              return createUpdatedValue(({ update }) => {
-                update('totalCount', (totalCount) => totalCount - 1)
-              })
-            },
-            {
-              autoEvictFiltered: true
-            }
+            getCacheId('WorkspaceJoinRequest', requestId),
+            'status',
+            () => WorkspaceJoinRequestStatus.Approved
           )
         }
       }
@@ -76,22 +66,11 @@ export const useWorkspaceJoinRequest = () => {
       { input },
       {
         update: (cache) => {
-          cache.evict({
-            id: getCacheId('WorkspaceJoinRequest', requestId)
-          })
-
           modifyObjectField(
             cache,
-            getCacheId('Workspace', input.workspaceId),
-            'adminWorkspacesJoinRequests',
-            ({ helpers: { createUpdatedValue } }) => {
-              return createUpdatedValue(({ update }) => {
-                update('totalCount', (totalCount) => totalCount - 1)
-              })
-            },
-            {
-              autoEvictFiltered: true
-            }
+            getCacheId('WorkspaceJoinRequest', requestId),
+            'status',
+            () => WorkspaceJoinRequestStatus.Denied
           )
         }
       }

@@ -57,14 +57,15 @@ import { GraphQLContext, Optional } from '@/modules/shared/helpers/typeHelper'
 import { createRateLimiterMiddleware } from '@/modules/core/services/ratelimiter'
 
 import { get, has, isString } from 'lodash'
-import { corsMiddleware } from '@/modules/core/configs/cors'
+import { corsMiddlewareFactory } from '@/modules/core/configs/cors'
 import {
   authContextMiddleware,
   buildContext,
   compressionMiddlewareFactory,
   determineClientIpAddressMiddleware,
   mixpanelTrackerHelperMiddlewareFactory,
-  requestBodyParsingMiddlewareFactory
+  requestBodyParsingMiddlewareFactory,
+  setContentSecurityPolicyHeaderMiddleware
 } from '@/modules/shared/middleware'
 import { GraphQLError } from 'graphql'
 import { redactSensitiveVariables } from '@/logging/loggingHelper'
@@ -256,7 +257,7 @@ export function buildApolloSubscriptionServer(
           if (!token) {
             throw new BadRequestError("Couldn't resolve token from auth header")
           }
-        } catch (e) {
+        } catch {
           throw new ForbiddenError('You need a token to subscribe')
         }
 
@@ -279,7 +280,7 @@ export function buildApolloSubscriptionServer(
             'Websocket connected and subscription context built.'
           )
           return buildCtx
-        } catch (e) {
+        } catch {
           throw new ForbiddenError('Subscription context build failed')
         }
       },
@@ -445,7 +446,7 @@ export async function init() {
     compressionMiddlewareFactory({ isCompressionEnabled: isCompressionEnabled() })
   )
 
-  app.use(corsMiddleware())
+  app.use(corsMiddlewareFactory())
 
   app.use(
     requestBodyParsingMiddlewareFactory({
@@ -459,16 +460,7 @@ export async function init() {
 
   app.use(createRateLimiterMiddleware()) // Rate limiting by IP address for all users
   app.use(authContextMiddleware)
-  app.use(
-    async (
-      _req: express.Request,
-      res: express.Response,
-      next: express.NextFunction
-    ) => {
-      res.setHeader('Content-Security-Policy', "frame-ancestors 'none'")
-      next()
-    }
-  )
+  app.use(setContentSecurityPolicyHeaderMiddleware)
   if (enableMixpanel())
     app.use(mixpanelTrackerHelperMiddlewareFactory({ getUser: getUserFactory({ db }) }))
 

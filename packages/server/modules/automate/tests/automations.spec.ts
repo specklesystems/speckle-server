@@ -48,9 +48,6 @@ import {
 } from '@/modules/core/services/streams/access'
 import { authorizeResolver } from '@/modules/shared'
 import { grantStreamPermissionsFactory } from '@/modules/core/repositories/streams'
-import { addStreamPermissionsAddedActivityFactory } from '@/modules/activitystream/services/streamActivity'
-import { saveActivityFactory } from '@/modules/activitystream/repositories'
-import { publish } from '@/modules/shared/utils/subscriptions'
 import { getUserFactory } from '@/modules/core/repositories/users'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { AutomationEvents } from '@/modules/automate/domain/events'
@@ -64,17 +61,12 @@ import { AutomationEvents } from '@/modules/automate/domain/events'
 const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
 
 const getUser = getUserFactory({ db })
-const saveActivity = saveActivityFactory({ db })
 const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
 const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
   validateStreamAccess,
   getUser,
   grantStreamPermissions: grantStreamPermissionsFactory({ db }),
-  emitEvent: getEventBus().emit,
-  addStreamPermissionsAddedActivity: addStreamPermissionsAddedActivityFactory({
-    saveActivity,
-    publish
-  })
+  emitEvent: getEventBus().emit
 })
 
 const buildAutomationUpdate = () => {
@@ -510,9 +502,11 @@ const buildAutomationUpdate = () => {
 
       it('fails when refering to nonexistent function releases', async () => {
         const create = buildAutomationRevisionCreate({
-          getFunctionRelease: async () => {
-            // TODO: Update once we know how exec engine should respond
-            throw new Error('Function release with ID XXX not found')
+          overrides: {
+            getFunctionRelease: async () => {
+              // TODO: Update once we know how exec engine should respond
+              throw new Error('Function release with ID XXX not found')
+            }
           }
         })
 

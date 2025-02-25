@@ -14,6 +14,9 @@ export default defineNuxtRouteMiddleware(async (to) => {
     })
     .catch(convertThrowIntoFetchResult)
 
+  const isAuthPage = to.path.startsWith('/authn/')
+  if (isAuthPage) return
+
   // Ignore if not logged in
   if (!data?.activeUser?.id) return
 

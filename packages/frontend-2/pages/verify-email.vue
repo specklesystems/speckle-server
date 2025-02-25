@@ -73,7 +73,7 @@
       <SettingsUserEmailDeleteDialog
         v-model:open="showDeleteDialog"
         :email="currentEmail"
-        cancel
+        is-adding
       />
     </div>
   </HeaderWithEmptyPage>

@@ -1,8 +1,10 @@
+import { GetProjectAutomationCount } from '@/modules/automate/domain/operations'
 import { GetStreamBranchCount } from '@/modules/core/domain/branches/operations'
 import { GetStreamCommitCount } from '@/modules/core/domain/commits/operations'
 import { GetStreamObjectCount } from '@/modules/core/domain/objects/operations'
 import { GetProject } from '@/modules/core/domain/projects/operations'
 import {
+  CopyProjectAutomations,
   CopyProjectModels,
   CopyProjectObjects,
   CopyProjects,
@@ -19,12 +21,14 @@ export const updateProjectRegionFactory =
     countProjectModels: GetStreamBranchCount
     countProjectVersions: GetStreamCommitCount
     countProjectObjects: GetStreamObjectCount
+    countProjectAutomations: GetProjectAutomationCount
     getAvailableRegions: GetAvailableRegions
     copyWorkspace: CopyWorkspace
     copyProjects: CopyProjects
     copyProjectModels: CopyProjectModels
     copyProjectVersions: CopyProjectVersions
     copyProjectObjects: CopyProjectObjects
+    copyProjectAutomations: CopyProjectAutomations
   }): UpdateProjectRegion =>
   async (params) => {
     const { projectId, regionKey } = params
@@ -67,7 +71,9 @@ export const updateProjectRegionFactory =
     // Move objects
     const copiedObjectCount = await deps.copyProjectObjects({ projectIds })
 
-    // TODO: Move automations
+    // Move automations
+    const copiedAutomationCount = await deps.copyProjectAutomations({ projectIds })
+
     // TODO: Move comments
     // TODO: Move file blobs
     // TODO: Move webhooks
@@ -78,11 +84,15 @@ export const updateProjectRegionFactory =
     const sourceProjectObjectCount = await deps.countProjectObjects({
       streamId: projectId
     })
+    const sourceProjectAutomationCount = await deps.countProjectAutomations({
+      projectId
+    })
 
     const tests = [
       copiedModelCount[projectId] === sourceProjectModelCount,
       copiedVersionCount[projectId] === sourceProjectVersionCount,
-      copiedObjectCount[projectId] === sourceProjectObjectCount
+      copiedObjectCount[projectId] === sourceProjectObjectCount,
+      copiedAutomationCount[projectId] === sourceProjectAutomationCount
     ]
 
     if (!tests.every((test) => !!test)) {
