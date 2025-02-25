@@ -35,7 +35,118 @@ import { GetServerInfo } from '@/modules/core/domain/server/operations'
 import { EnvironmentResourceError } from '@/modules/shared/errors'
 import { InviteNotFoundError } from '@/modules/serverinvites/errors'
 
-const githubStrategyBuilderFactory =
+export const githubVerifyFunctionFactory = (deps: {
+  getServerInfo: GetServerInfo
+  getUserByEmail: LegacyGetUserByEmail
+  findOrCreateUser: FindOrCreateValidatedUser
+  validateServerInvite: ValidateServerInvite
+  finalizeInvitedServerRegistration: FinalizeInvitedServerRegistration
+  resolveAuthRedirectPath: ResolveAuthRedirectPath
+}) => {
+  return async (
+    req: Request,
+    _accessToken: string,
+    _refreshToken: string,
+    profile: Profile,
+    done: VerifyCallback
+  ) => {
+    const serverInfo = await deps.getServerInfo()
+    const logger = req.log.child({
+      authStrategy: 'github',
+      profileId: profile.id,
+      serverVersion: serverInfo.version
+    })
+
+    try {
+      const email = profile.emails?.[0].value
+      if (!email) {
+        throw new EnvironmentResourceError('No email provided by Github')
+      }
+
+      const name = profile.displayName || profile.username || crs({ length: 10 })
+      const bio = get(profile, '_json.bio') || undefined
+
+      const user = { email, name, bio }
+
+      const existingUser = await deps.getUserByEmail({ email: user.email })
+
+      if (existingUser && !existingUser.verified) {
+        throw new UnverifiedEmailSSOLoginError(undefined, {
+          info: {
+            email: user.email
+          }
+        })
+      }
+
+      // if there is an existing user, go ahead and log them in (regardless of
+      // whether the server is invite only or not).
+      if (existingUser) {
+        const myUser = await deps.findOrCreateUser({ user })
+        return done(null, myUser)
+      }
+
+      // if the server is invite only and we have no invite id, throw.
+      if (serverInfo.inviteOnly && !req.session.token) {
+        throw new UserInputError(
+          'This server is invite only. Please authenticate yourself through a valid invite link.'
+        )
+      }
+
+      // validate the invite, if any
+      let invite: Optional<ServerInviteRecord> = undefined
+      if (req.session.token) {
+        invite = await deps.validateServerInvite(user.email, req.session.token)
+      }
+
+      // create the user
+      const myUser = await deps.findOrCreateUser({
+        user: {
+          ...user,
+          role: invite
+            ? getResourceTypeRole(invite.resource, ServerInviteResourceType)
+            : undefined,
+          verified: !!invite,
+          signUpContext: {
+            req,
+            isInvite: !!invite,
+            newsletterConsent: !!req.session.newsletterConsent
+          }
+        }
+      })
+
+      // use the invite
+      await deps.finalizeInvitedServerRegistration(user.email, myUser.id)
+
+      // Resolve redirect path
+      req.authRedirectPath = deps.resolveAuthRedirectPath(invite)
+
+      // return to the auth flow
+      return done(null, {
+        ...myUser,
+        isInvite: !!invite
+      })
+    } catch (err) {
+      const e = ensureError(
+        err,
+        'Unexpected issue occured while authenticating with GitHub'
+      )
+      switch (e.constructor) {
+        case UserInputError:
+        case InviteNotFoundError:
+        case UnverifiedEmailSSOLoginError:
+          logger.info({ err: e }, 'Auth error for GitHub strategy')
+          // note; passportjs suggests that err should be null for user input errors.
+          // However, we are relying on the error being passed to `passportAuthenticationCallbackFactory` and handling it there
+          return done(e, false, { message: e.message })
+        default:
+          logger.error({ err: e }, 'Auth error for GitHub strategy')
+          return done(e, false, { message: e.message })
+      }
+    }
+  }
+}
+
+export const githubStrategyBuilderFactory =
   (deps: {
     getServerInfo: GetServerInfo
     getUserByEmail: LegacyGetUserByEmail
@@ -71,107 +182,7 @@ const githubStrategyBuilderFactory =
         scope: ['profile', 'user:email'],
         passReqToCallback: true
       },
-      // I've no idea why, but TS refuses to type these params
-      async (
-        req: Request,
-        _accessToken: string,
-        _refreshToken: string,
-        profile: Profile,
-        done: VerifyCallback
-      ) => {
-        const serverInfo = await deps.getServerInfo()
-        const logger = req.log.child({
-          authStrategy: 'github',
-          profileId: profile.id,
-          serverVersion: serverInfo.version
-        })
-
-        try {
-          const email = profile.emails?.[0].value
-          if (!email) {
-            throw new EnvironmentResourceError('No email provided by Github')
-          }
-
-          const name = profile.displayName || profile.username || crs({ length: 10 })
-          const bio = get(profile, '_json.bio') || undefined
-
-          const user = { email, name, bio }
-
-          const existingUser = await deps.getUserByEmail({ email: user.email })
-
-          if (existingUser && !existingUser.verified) {
-            throw new UnverifiedEmailSSOLoginError(undefined, {
-              info: {
-                email: user.email
-              }
-            })
-          }
-
-          // if there is an existing user, go ahead and log them in (regardless of
-          // whether the server is invite only or not).
-          if (existingUser) {
-            const myUser = await deps.findOrCreateUser({ user })
-            return done(null, myUser)
-          }
-
-          // if the server is invite only and we have no invite id, throw.
-          if (serverInfo.inviteOnly && !req.session.token) {
-            throw new UserInputError(
-              'This server is invite only. Please authenticate yourself through a valid invite link.'
-            )
-          }
-
-          // validate the invite, if any
-          let invite: Optional<ServerInviteRecord> = undefined
-          if (req.session.token) {
-            invite = await deps.validateServerInvite(user.email, req.session.token)
-          }
-
-          // create the user
-          const myUser = await deps.findOrCreateUser({
-            user: {
-              ...user,
-              role: invite
-                ? getResourceTypeRole(invite.resource, ServerInviteResourceType)
-                : undefined,
-              verified: !!invite,
-              signUpContext: {
-                req,
-                isInvite: !!invite,
-                newsletterConsent: !!req.session.newsletterConsent
-              }
-            }
-          })
-
-          // use the invite
-          await deps.finalizeInvitedServerRegistration(user.email, myUser.id)
-
-          // Resolve redirect path
-          req.authRedirectPath = deps.resolveAuthRedirectPath(invite)
-
-          // return to the auth flow
-          return done(null, {
-            ...myUser,
-            isInvite: !!invite
-          })
-        } catch (err) {
-          const e = ensureError(
-            err,
-            'Unexpected issue occured while authenticating with GitHub'
-          )
-          switch (e.constructor) {
-            case UserInputError:
-            case InviteNotFoundError:
-            case UnverifiedEmailSSOLoginError:
-              logger.info({ err: e }, 'Auth error for GitHub strategy')
-              return done(null, false, { message: e.message })
-            default:
-              logger.error({ err: e }, 'Auth error for GitHub strategy')
-              // Only when the server is operating abnormally should err be set, to indicate an internal error.
-              return done(e, false, { message: e.message })
-          }
-        }
-      }
+      githubVerifyFunctionFactory(deps)
     )
 
     passport.use(myStrategy)
@@ -194,5 +205,3 @@ const githubStrategyBuilderFactory =
 
     return strategy
   }
-
-export = githubStrategyBuilderFactory

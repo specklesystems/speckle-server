@@ -1,6 +1,10 @@
 /* istanbul ignore file */
 import passport from 'passport'
-import { Strategy as GoogleStrategy } from 'passport-google-oauth20'
+import {
+  Strategy as GoogleStrategy,
+  type Profile,
+  type VerifyCallback
+} from 'passport-google-oauth20'
 
 import {
   UserInputError,
@@ -29,8 +33,118 @@ import {
 import { GetServerInfo } from '@/modules/core/domain/server/operations'
 import { EnvironmentResourceError } from '@/modules/shared/errors'
 import { InviteNotFoundError } from '@/modules/serverinvites/errors'
+import type { Request } from 'express'
 
-const googleStrategyBuilderFactory =
+export const googleAuthStrategyVerifyCallbackFactory =
+  (deps: {
+    getServerInfo: GetServerInfo
+    getUserByEmail: LegacyGetUserByEmail
+    findOrCreateUser: FindOrCreateValidatedUser
+    validateServerInvite: ValidateServerInvite
+    finalizeInvitedServerRegistration: FinalizeInvitedServerRegistration
+    resolveAuthRedirectPath: ResolveAuthRedirectPath
+  }): ((
+    req: Request,
+    accessToken: string,
+    refreshToken: string,
+    profile: Profile,
+    done: VerifyCallback
+  ) => void) =>
+  async (req, _accessToken, _refreshToken, profile, done) => {
+    const serverInfo = await deps.getServerInfo()
+    const logger = req.log.child({
+      authStrategy: 'google',
+      profileId: profile.id,
+      serverVersion: serverInfo.version
+    })
+
+    try {
+      const email = profile.emails?.[0].value
+      if (!email) {
+        throw new EnvironmentResourceError('No email provided by Google')
+      }
+
+      const name = profile.displayName
+      const user = { email, name, avatar: profile._json.picture }
+
+      const existingUser = await deps.getUserByEmail({ email: user.email })
+
+      if (existingUser && !existingUser.verified) {
+        throw new UnverifiedEmailSSOLoginError(undefined, {
+          info: {
+            email: user.email
+          }
+        })
+      }
+
+      // if there is an existing user, go ahead and log them in (regardless of
+      // whether the server is invite only or not).
+      if (existingUser) {
+        const myUser = await deps.findOrCreateUser({ user })
+        return done(null, myUser)
+      }
+
+      // if the server is invite only and we have no invite id, throw.
+      if (serverInfo.inviteOnly && !req.session.token) {
+        throw new UserInputError(
+          'This server is invite only. Please authenticate yourself through a valid invite link.'
+        )
+      }
+
+      // validate the invite, if any
+      let invite: Optional<ServerInviteRecord> = undefined
+      if (req.session.token) {
+        invite = await deps.validateServerInvite(user.email, req.session.token)
+      }
+
+      // create the user
+      const myUser = await deps.findOrCreateUser({
+        user: {
+          ...user,
+          role: invite
+            ? getResourceTypeRole(invite.resource, ServerInviteResourceType)
+            : undefined,
+          verified: !!invite,
+          signUpContext: {
+            req,
+            isInvite: !!invite,
+            newsletterConsent: !!req.session.newsletterConsent
+          }
+        }
+      })
+
+      // use the invite
+      await deps.finalizeInvitedServerRegistration(user.email, myUser.id)
+
+      // Resolve redirect path
+      req.authRedirectPath = deps.resolveAuthRedirectPath(invite)
+
+      // return to the auth flow
+      return done(null, {
+        ...myUser,
+        isInvite: !!invite
+      })
+    } catch (err) {
+      const e = ensureError(
+        err,
+        'Unexpected issue occured while authenticating with Google'
+      )
+      switch (e.constructor) {
+        case UnverifiedEmailSSOLoginError:
+        case UserInputError:
+        case InviteNotFoundError:
+          logger.info({ err: e }, 'Auth error for Google strategy')
+          // note; passportjs suggests that err should be null for user input errors.
+          // However, we are relying on the error being passed to `passportAuthenticationCallbackFactory` and handling it there
+          return done(e, false, { message: e.message })
+        default:
+          logger.error({ err: e }, 'Auth error for Google strategy')
+          return done(e, false, { message: e.message })
+      }
+    }
+  }
+
+export const googleStrategyBuilderFactory =
   (deps: {
     getServerInfo: GetServerInfo
     getUserByEmail: LegacyGetUserByEmail
@@ -63,98 +177,7 @@ const googleStrategyBuilderFactory =
         scope: ['profile', 'email'],
         passReqToCallback: true
       },
-      async (req, _accessToken, _refreshToken, profile, done) => {
-        const serverInfo = await deps.getServerInfo()
-        const logger = req.log.child({
-          authStrategy: 'google',
-          profileId: profile.id,
-          serverVersion: serverInfo.version
-        })
-
-        try {
-          const email = profile.emails?.[0].value
-          if (!email) {
-            throw new EnvironmentResourceError('No email provided by Google')
-          }
-
-          const name = profile.displayName
-          const user = { email, name, avatar: profile._json.picture }
-
-          const existingUser = await deps.getUserByEmail({ email: user.email })
-
-          if (existingUser && !existingUser.verified) {
-            throw new UnverifiedEmailSSOLoginError(undefined, {
-              info: {
-                email: user.email
-              }
-            })
-          }
-
-          // if there is an existing user, go ahead and log them in (regardless of
-          // whether the server is invite only or not).
-          if (existingUser) {
-            const myUser = await deps.findOrCreateUser({ user })
-            return done(null, myUser)
-          }
-
-          // if the server is invite only and we have no invite id, throw.
-          if (serverInfo.inviteOnly && !req.session.token) {
-            throw new UserInputError(
-              'This server is invite only. Please authenticate yourself through a valid invite link.'
-            )
-          }
-
-          // validate the invite, if any
-          let invite: Optional<ServerInviteRecord> = undefined
-          if (req.session.token) {
-            invite = await deps.validateServerInvite(user.email, req.session.token)
-          }
-
-          // create the user
-          const myUser = await deps.findOrCreateUser({
-            user: {
-              ...user,
-              role: invite
-                ? getResourceTypeRole(invite.resource, ServerInviteResourceType)
-                : undefined,
-              verified: !!invite,
-              signUpContext: {
-                req,
-                isInvite: !!invite,
-                newsletterConsent: !!req.session.newsletterConsent
-              }
-            }
-          })
-
-          // use the invite
-          await deps.finalizeInvitedServerRegistration(user.email, myUser.id)
-
-          // Resolve redirect path
-          req.authRedirectPath = deps.resolveAuthRedirectPath(invite)
-
-          // return to the auth flow
-          return done(null, {
-            ...myUser,
-            isInvite: !!invite
-          })
-        } catch (err) {
-          const e = ensureError(
-            err,
-            'Unexpected issue occured while authenticating with Google'
-          )
-          switch (e.constructor) {
-            case UnverifiedEmailSSOLoginError:
-            case UserInputError:
-            case InviteNotFoundError:
-              logger.info({ err: e }, 'Auth error for Google strategy')
-              return done(null, false, { message: e.message })
-            default:
-              logger.error({ err: e }, 'Auth error for Google strategy')
-              // Only when the server is operating abnormally should err be set, to indicate an internal error.
-              return done(e, false, { message: e.message })
-          }
-        }
-      }
+      googleAuthStrategyVerifyCallbackFactory(deps)
     )
 
     passport.use(myStrategy)
@@ -177,5 +200,3 @@ const googleStrategyBuilderFactory =
 
     return strategy
   }
-
-export = googleStrategyBuilderFactory
