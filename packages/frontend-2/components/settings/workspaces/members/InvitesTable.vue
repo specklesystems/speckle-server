@@ -108,7 +108,7 @@ graphql(`
   fragment SettingsWorkspacesMembersInvitesTable_Workspace on Workspace {
     id
     ...SettingsWorkspacesMembersTableHeader_Workspace
-    invitedTeam(filter: $invitesFilter) {
+    invitedTeam {
       ...SettingsWorkspacesMembersInvitesTable_PendingWorkspaceCollaborator
     }
   }
