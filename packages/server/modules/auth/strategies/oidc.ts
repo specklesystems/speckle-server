@@ -162,10 +162,11 @@ const oidcStrategyBuilderFactory =
               case UserInputError:
               case InviteNotFoundError:
                 logger.info({ err: e }, 'Auth error for OIDC strategy')
-                return done(null, undefined)
+                // note; passportjs suggests that err should be null for user input errors.
+                // However, we are relying on the error being passed to `passportAuthenticationCallbackFactory` and handling it there
+                return done(e, undefined)
               default:
                 logger.error({ err: e }, 'Auth error for OIDC strategy')
-                // Only when the server is operating abnormally should err be set, to indicate an internal error.
                 return done(e, undefined)
             }
           }
