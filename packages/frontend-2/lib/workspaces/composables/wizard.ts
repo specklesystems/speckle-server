@@ -47,9 +47,11 @@ const newSteps: readonly WizardSteps[] = [
 ] as const
 
 export const useWorkspaceWizardState = () => {
-  const isNewBillingEnabled = useIsNewBillingEnabled()
+  const isWorkspaceNewPlansEnabled = useWorkspaceNewPlansEnabled()
 
-  const activeSteps = computed(() => (isNewBillingEnabled.value ? newSteps : steps))
+  const activeSteps = computed(() =>
+    isWorkspaceNewPlansEnabled.value ? newSteps : steps
+  )
 
   return useState<{
     isLoading: boolean
@@ -72,12 +74,14 @@ export const useWorkspacesWizard = () => {
   const { triggerNotification } = useGlobalToast()
   const mixpanel = useMixpanel()
   const inviteToWorkspace = useInviteUserToWorkspace()
-  const isNewBillingEnabled = useIsNewBillingEnabled()
+  const isWorkspaceNewPlansEnabled = useWorkspaceNewPlansEnabled()
   const { mutate: updateWorkspaceDefaultRegion } = useMutation(setDefaultRegionMutation)
   const { mutate: updateWorkspaceCreationState } = useMutation(
     updateWorkspaceCreationStateMutation
   )
-  const activeSteps = computed(() => (isNewBillingEnabled.value ? newSteps : steps))
+  const activeSteps = computed(() =>
+    isWorkspaceNewPlansEnabled.value ? newSteps : steps
+  )
 
   const isLoading = computed({
     get: () => wizardState.value.isLoading,
@@ -102,7 +106,7 @@ export const useWorkspacesWizard = () => {
   })
 
   const goToNextStep = () => {
-    if (!isNewBillingEnabled.value) {
+    if (!isWorkspaceNewPlansEnabled.value) {
       if (wizardState.value.currentStepIndex === activeSteps.value.length - 1) {
         return completeWizard()
       }
@@ -191,11 +195,11 @@ export const useWorkspacesWizard = () => {
           ...wizardState.value.state,
           invites: wizardState.value.state.invites.filter((invite) => !!invite),
           region:
-            isNewBillingEnabled &&
+            isWorkspaceNewPlansEnabled &&
             wizardState.value.state.plan === PaidWorkspacePlans.Business
               ? wizardState.value.state.region
               : null,
-          ssoEnabled: isNewBillingEnabled
+          ssoEnabled: isWorkspaceNewPlansEnabled
             ? wizardState.value.state.ssoEnabled
             : undefined
         },

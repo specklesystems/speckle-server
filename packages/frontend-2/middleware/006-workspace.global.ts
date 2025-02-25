@@ -8,9 +8,9 @@ import { workspaceCreateRoute, workspaceJoinRoute } from '~~/lib/common/helpers/
  */
 export default defineNuxtRouteMiddleware(async (to) => {
   const isOnboardingForced = useIsOnboardingForced()
-  const isNewBillingEnabled = useIsNewBillingEnabled()
+  const isWorkspaceNewPlansEnabled = useWorkspaceNewPlansEnabled()
 
-  if (!isNewBillingEnabled.value) return
+  if (!isWorkspaceNewPlansEnabled.value) return
 
   const client = useApolloClientFromNuxt()
   const { data } = await client
