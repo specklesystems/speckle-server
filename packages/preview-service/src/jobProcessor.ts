@@ -59,6 +59,9 @@ export const jobProcessor = async ({
     return {
       jobId: job.jobId,
       status: 'error',
+      result: {
+        durationSeconds: elapsed
+      },
       reason
     }
   } finally {

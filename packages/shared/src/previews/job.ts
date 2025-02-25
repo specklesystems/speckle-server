@@ -14,7 +14,7 @@ export const jobPayload = job.merge(
 export type JobPayload = z.infer<typeof jobPayload>
 
 const previewResult = z.object({
-  duration: z.number(),
+  durationSeconds: z.number().describe('Duration to generate the preview, in seconds'),
   screenshots: z.record(z.string(), z.string())
 })
 
@@ -32,7 +32,12 @@ export type PreviewSuccessPayload = z.infer<typeof previewSuccessPayload>
 const previewErrorPayload = job.merge(
   z.object({
     status: z.literal('error'),
-    reason: z.string()
+    reason: z.string(),
+    result: z.object({
+      durationSeconds: z
+        .number()
+        .describe('Duration spent processing the job before erroring, in seconds')
+    })
   })
 )
 

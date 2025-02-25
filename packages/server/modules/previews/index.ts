@@ -93,6 +93,9 @@ export const init: SpeckleModule['init'] = (app, isInitial) => {
     }`
 
     // add a metric to gauge the length of the preview job queue
+    prometheusClient.register.removeSingleMetric(
+      'speckle_server_preview_jobs_queue_pending'
+    )
     new prometheusClient.Gauge({
       name: 'speckle_server_preview_jobs_queue_pending',
       help: 'Number of preview jobs waiting in the job queue',
@@ -101,32 +104,27 @@ export const init: SpeckleModule['init'] = (app, isInitial) => {
       }
     })
 
+    prometheusClient.register.removeSingleMetric('speckle_server_preview_jobs_count')
     const previewJobsCounter = new prometheusClient.Counter({
       name: 'speckle_server_preview_jobs_count',
       help: 'Total number of preview jobs which have been requested to be processed.'
     })
+
+    prometheusClient.register.removeSingleMetric(
+      'speckle_server_preview_jobs_request_failed_count'
+    )
     const previewJobsFailedCounter = new prometheusClient.Counter({
       name: 'speckle_server_preview_jobs_request_failed_count',
       help: 'Total number of preview jobs which have been requested but failed to be processed.'
     })
-    const previewJobsResponseCounter = new prometheusClient.Counter<'status'>({
-      name: 'speckle_server_preview_jobs_response_count',
-      help: 'Number of preview jobs which have been responded to, and their status (success or error)',
-      labelNames: ['status']
-    })
-    const previewJobsProcessedHistogram = new prometheusClient.Histogram({
+
+    prometheusClient.register.removeSingleMetric(
+      'speckle_server_preview_jobs_processed_duration_seconds'
+    )
+    const previewJobsProcessedSummary = new prometheusClient.Summary({
       name: 'speckle_server_preview_jobs_processed_duration_seconds',
-      help: 'Duration of preview job processing',
-      labelNames: ['status'],
-      buckets: [
-        10 * TIME.second,
-        30 * TIME.second,
-        1 * TIME.minute,
-        3 * TIME.minute,
-        15 * TIME.minute,
-        30 * TIME.minute,
-        60 * TIME.minute
-      ]
+      help: 'Duration of preview job processing, in seconds',
+      labelNames: ['status']
     })
 
     const { previewRequestQueue, previewResponseQueue } = getPreviewQueues({
@@ -188,14 +186,11 @@ export const init: SpeckleModule['init'] = (app, isInitial) => {
         previewResult: parsedMessage.data
       })
 
-      previewJobsResponseCounter.inc({ status: parsedMessage.data.status })
-      if (parsedMessage.data.status === 'success') {
-        previewJobsProcessedHistogram.observe(
-          { status: parsedMessage.data.status },
-          parsedMessage.data.result.duration * TIME.second //FIXME is this milliseconds or seconds? Assuming seconds
-        )
-        //TODO error status responses do not have a duration, but probably should - useful to know if the error was immediate or after a long time
-      }
+      previewJobsProcessedSummary.observe(
+        { status: parsedMessage.data.status },
+        parsedMessage.data.result.durationSeconds * TIME.second
+      )
+
       done()
     })
   }

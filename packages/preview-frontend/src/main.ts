@@ -62,7 +62,7 @@ const waitForAnimation = async (ms = 70) =>
 const takeScreenshot: TakeScreenshot = async () => {
   if (!viewer) viewer = await init()
   const ret: PreviewResult = {
-    duration: 0,
+    durationSeconds: 0,
     screenshots: {}
   }
 
@@ -79,7 +79,7 @@ const takeScreenshot: TakeScreenshot = async () => {
     await waitForAnimation(10)
     ret.screenshots[i + ''] = await viewer.screenshot()
   }
-  ret.duration = (Date.now() - t0) / 1000
+  ret.durationSeconds = (Date.now() - t0) / 1000
   return ret
 }
 window.takeScreenshot = takeScreenshot
