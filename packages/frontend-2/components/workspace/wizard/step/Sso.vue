@@ -44,10 +44,6 @@ const selectedOption = ref<string | undefined>(
     : 'disabled'
 )
 
-watch(selectedOption, (newVal) => {
-  state.value.ssoEnabled = newVal === 'enabled'
-})
-
 const radioOptions = computed(() => [
   {
     value: 'enabled',
@@ -74,5 +70,9 @@ const onEnableClick = () => {
 
 onMounted(() => {
   mixpanel.track('Workspace SSO Step Viewed')
+})
+
+watch(selectedOption, (newVal) => {
+  state.value.ssoEnabled = newVal === 'enabled'
 })
 </script>

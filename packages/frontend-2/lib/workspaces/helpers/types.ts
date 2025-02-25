@@ -37,8 +37,8 @@ export type WorkspaceWizardState = {
   plan: PaidWorkspacePlans | null
   billingInterval: BillingInterval | null
   id: string
-  region?: SettingsWorkspacesRegionsSelect_ServerRegionItemFragment | null
-  ssoEnabled?: boolean
+  region: SettingsWorkspacesRegionsSelect_ServerRegionItemFragment | null
+  ssoEnabled: boolean | null
 }
 
 export enum WizardSteps {

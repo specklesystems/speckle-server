@@ -144,7 +144,6 @@ const documents = {
     "\n  fragment WorkspaceInviteBlock_PendingWorkspaceCollaborator on PendingWorkspaceCollaborator {\n    id\n    workspaceId\n    workspaceName\n    token\n    user {\n      id\n      name\n      ...LimitedUserAvatar\n    }\n    title\n    email\n    ...UseWorkspaceInviteManager_PendingWorkspaceCollaborator\n  }\n": types.WorkspaceInviteBlock_PendingWorkspaceCollaboratorFragmentDoc,
     "\n  fragment WorkspaceJoinRequestApproveDialog_WorkspaceJoinRequest on WorkspaceJoinRequest {\n    id\n    user {\n      id\n      name\n    }\n    workspace {\n      id\n    }\n  }\n": types.WorkspaceJoinRequestApproveDialog_WorkspaceJoinRequestFragmentDoc,
     "\n  fragment WorkspaceSidebarAbout_Workspace on Workspace {\n    ...WorkspaceDashboardAbout_Workspace\n  }\n": types.WorkspaceSidebarAbout_WorkspaceFragmentDoc,
-    "\n  fragment WorkspaceSidebarMembers_Workspace on Workspace {\n    ...WorkspaceTeam_Workspace\n  }\n": types.WorkspaceSidebarMembers_WorkspaceFragmentDoc,
     "\n  fragment WorkspaceSidebarSecurity_Workspace on Workspace {\n    ...WorkspaceSecurity_Workspace\n  }\n": types.WorkspaceSidebarSecurity_WorkspaceFragmentDoc,
     "\n  fragment WorkspaceSidebar_Workspace on Workspace {\n    ...WorkspaceDashboardAbout_Workspace\n    ...WorkspaceTeam_Workspace\n    ...WorkspaceSecurity_Workspace\n    slug\n    plan {\n      status\n    }\n  }\n": types.WorkspaceSidebar_WorkspaceFragmentDoc,
     "\n  fragment WorkspaceWizard_Workspace on Workspace {\n    creationState {\n      completed\n      state\n    }\n    name\n    slug\n  }\n": types.WorkspaceWizard_WorkspaceFragmentDoc,
@@ -350,7 +349,7 @@ const documents = {
     "\n  fragment WorkspaceBase_Workspace on Workspace {\n    id\n    name\n    slug\n    role\n    description\n    logo\n    plan {\n      status\n      createdAt\n    }\n  }\n": types.WorkspaceBase_WorkspaceFragmentDoc,
     "\n  fragment WorkspaceDashboardAbout_Workspace on Workspace {\n    id\n    name\n    description\n  }\n": types.WorkspaceDashboardAbout_WorkspaceFragmentDoc,
     "\n  fragment WorkspaceInvitedTeam_Workspace on Workspace {\n    id\n    invitedTeam(filter: $invitesFilter) {\n      id\n      role\n      email\n    }\n  }\n": types.WorkspaceInvitedTeam_WorkspaceFragmentDoc,
-    "\n  fragment WorkspaceTeam_Workspace on Workspace {\n    id\n    slug\n    team {\n      totalCount\n      items {\n        id\n        user {\n          id\n          name\n          ...LimitedUserAvatar\n        }\n      }\n    }\n    adminWorkspacesJoinRequests {\n      totalCount\n    }\n    ...WorkspaceInvitedTeam_Workspace\n  }\n": types.WorkspaceTeam_WorkspaceFragmentDoc,
+    "\n  fragment WorkspaceTeam_Workspace on Workspace {\n    id\n    slug\n    team {\n      totalCount\n      items {\n        id\n        user {\n          id\n          name\n          ...LimitedUserAvatar\n        }\n      }\n    }\n    adminWorkspacesJoinRequests {\n      totalCount\n      items {\n        status\n        id\n      }\n    }\n    ...WorkspaceInvitedTeam_Workspace\n  }\n": types.WorkspaceTeam_WorkspaceFragmentDoc,
     "\n  fragment WorkspaceSecurity_Workspace on Workspace {\n    id\n    slug\n    domains {\n      id\n      domain\n    }\n  }\n": types.WorkspaceSecurity_WorkspaceFragmentDoc,
     "\n  mutation UpdateRole($input: WorkspaceRoleUpdateInput!) {\n    workspaceMutations {\n      updateRole(input: $input) {\n        team {\n          items {\n            id\n            role\n          }\n        }\n      }\n    }\n  }\n": types.UpdateRoleDocument,
     "\n  mutation InviteToWorkspace(\n    $workspaceId: String!\n    $input: [WorkspaceInviteCreateInput!]!\n  ) {\n    workspaceMutations {\n      invites {\n        batchCreate(workspaceId: $workspaceId, input: $input) {\n          id\n          invitedTeam {\n            ...SettingsWorkspacesMembersInvitesTable_PendingWorkspaceCollaborator\n          }\n        }\n      }\n    }\n  }\n": types.InviteToWorkspaceDocument,
@@ -934,10 +933,6 @@ export function graphql(source: "\n  fragment WorkspaceJoinRequestApproveDialog_
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  fragment WorkspaceSidebarAbout_Workspace on Workspace {\n    ...WorkspaceDashboardAbout_Workspace\n  }\n"): (typeof documents)["\n  fragment WorkspaceSidebarAbout_Workspace on Workspace {\n    ...WorkspaceDashboardAbout_Workspace\n  }\n"];
-/**
- * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function graphql(source: "\n  fragment WorkspaceSidebarMembers_Workspace on Workspace {\n    ...WorkspaceTeam_Workspace\n  }\n"): (typeof documents)["\n  fragment WorkspaceSidebarMembers_Workspace on Workspace {\n    ...WorkspaceTeam_Workspace\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -1761,7 +1756,7 @@ export function graphql(source: "\n  fragment WorkspaceInvitedTeam_Workspace on 
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment WorkspaceTeam_Workspace on Workspace {\n    id\n    slug\n    team {\n      totalCount\n      items {\n        id\n        user {\n          id\n          name\n          ...LimitedUserAvatar\n        }\n      }\n    }\n    adminWorkspacesJoinRequests {\n      totalCount\n    }\n    ...WorkspaceInvitedTeam_Workspace\n  }\n"): (typeof documents)["\n  fragment WorkspaceTeam_Workspace on Workspace {\n    id\n    slug\n    team {\n      totalCount\n      items {\n        id\n        user {\n          id\n          name\n          ...LimitedUserAvatar\n        }\n      }\n    }\n    adminWorkspacesJoinRequests {\n      totalCount\n    }\n    ...WorkspaceInvitedTeam_Workspace\n  }\n"];
+export function graphql(source: "\n  fragment WorkspaceTeam_Workspace on Workspace {\n    id\n    slug\n    team {\n      totalCount\n      items {\n        id\n        user {\n          id\n          name\n          ...LimitedUserAvatar\n        }\n      }\n    }\n    adminWorkspacesJoinRequests {\n      totalCount\n      items {\n        status\n        id\n      }\n    }\n    ...WorkspaceInvitedTeam_Workspace\n  }\n"): (typeof documents)["\n  fragment WorkspaceTeam_Workspace on Workspace {\n    id\n    slug\n    team {\n      totalCount\n      items {\n        id\n        user {\n          id\n          name\n          ...LimitedUserAvatar\n        }\n      }\n    }\n    adminWorkspacesJoinRequests {\n      totalCount\n      items {\n        status\n        id\n      }\n    }\n    ...WorkspaceInvitedTeam_Workspace\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
