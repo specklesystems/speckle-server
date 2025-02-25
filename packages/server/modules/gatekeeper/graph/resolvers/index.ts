@@ -41,6 +41,7 @@ import {
   WorkspaceAlreadyPaidError,
   WorkspaceCheckoutSessionInProgressError
 } from '@/modules/gatekeeper/errors/billing'
+import { STATUS } from '@/logging/operationConstants'
 
 const { FF_GATEKEEPER_MODULE_ENABLED, FF_BILLING_INTEGRATION_ENABLED } =
   getFeatureFlags()
@@ -154,7 +155,7 @@ export = FF_GATEKEEPER_MODULE_ENABLED
             'gatekeeper',
             'resolvers',
             'createCheckoutSession'
-          )
+          ).child({ operationName: 'createCheckoutSession' })
           const { workspaceId, workspacePlan, billingInterval, isCreateFlow } =
             args.input
           logger = logger.child({ workspaceId, workspacePlan })
@@ -178,7 +179,10 @@ export = FF_GATEKEEPER_MODULE_ENABLED
           const countRole = countWorkspaceRoleWithOptionalProjectRoleFactory({ db })
 
           try {
-            logger.info('Attempting to create checkout session')
+            logger.info(
+              { operationStatus: STATUS.START },
+              'Attempting to create checkout session'
+            )
             const session = await startCheckoutSessionFactory({
               getWorkspaceCheckoutSession: getWorkspaceCheckoutSessionFactory({ db }),
               getWorkspacePlan: getWorkspacePlanFactory({ db }),
@@ -193,25 +197,31 @@ export = FF_GATEKEEPER_MODULE_ENABLED
               isCreateFlow: isCreateFlow || false,
               billingInterval
             })
-            logger.info({ sessionId: session.id }, 'Checkout session created')
+            logger.info(
+              { sessionId: session.id, operationStatus: STATUS.SUCCESS },
+              'Checkout session created'
+            )
             return session
           } catch (err) {
             const e = ensureError(err, 'Unknown error creating checkout session')
             switch (e.constructor) {
               case WorkspaceAlreadyPaidError:
                 logger.info(
-                  { err: e },
+                  { err: e, operationStatus: STATUS.FAILURE },
                   'Workspace already paid, cancelling creation of checkout session'
                 )
                 break
               case WorkspaceCheckoutSessionInProgressError:
                 logger.info(
-                  { err: e },
+                  { err: e, operationStatus: STATUS.FAILURE },
                   'Workspace checkout session in progress, cannot create a new session. Some one else may be trying to pay.'
                 )
                 break
               default:
-                logger.error({ err: e }, 'Error creating checkout session')
+                logger.error(
+                  { err: e, operationStatus: STATUS.FAILURE },
+                  'Error creating checkout session'
+                )
                 break
             }
             throw e
