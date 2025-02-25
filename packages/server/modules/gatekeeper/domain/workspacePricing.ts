@@ -72,16 +72,40 @@ const baseFeatures = {
   workspace: true
 }
 
+// new
 const free: WorkspacePlanFeaturesAndLimits = {
   ...baseFeatures,
   name: 'free',
-  description: 'The free plan',
+  description: 'For individuals, small teams and basic usage',
   oidcSso: false,
   workspaceDataRegionSpecificity: false,
   automateMinutes: 300,
   uploadSize: 100
 }
 
+const team: WorkspacePlanFeaturesAndLimits = {
+  ...baseFeatures,
+  name: 'team',
+  description: 'For small teams and advanced usage',
+  oidcSso: false,
+  workspaceDataRegionSpecificity: false,
+  // TODO: What should be the real numbers here for the new plans (free/team/pro?
+  automateMinutes: 300,
+  uploadSize: 100
+}
+
+const pro: WorkspacePlanFeaturesAndLimits = {
+  ...baseFeatures,
+  name: 'pro',
+  description: 'For larger teams and advanced usage',
+  // TODO: The following 2 will become conditional based on purchased addons
+  oidcSso: true,
+  workspaceDataRegionSpecificity: true,
+  automateMinutes: 900,
+  uploadSize: 100
+}
+
+// old
 const starter: WorkspacePlanFeaturesAndLimits = {
   ...baseFeatures,
   name: 'starter',
@@ -112,6 +136,7 @@ const business: WorkspacePlanFeaturesAndLimits = {
   uploadSize: 100
 }
 
+// custom
 const unlimited: WorkspacePlanFeaturesAndLimits = {
   ...baseFeatures,
   name: 'unlimited',
@@ -136,9 +161,13 @@ const paidWorkspacePlanFeatures: Record<
   PaidWorkspacePlans,
   WorkspacePlanFeaturesAndLimits
 > = {
+  // old
   starter,
   plus,
-  business
+  business,
+  // new
+  team,
+  pro
 }
 
 export const unpaidWorkspacePlanFeatures: Record<

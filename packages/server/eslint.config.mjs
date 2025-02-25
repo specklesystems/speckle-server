@@ -55,6 +55,12 @@ const configs = [
       '@typescript-eslint/no-unnecessary-type-assertion': 'off', // false positives - sometimes they are actually necessary
       '@typescript-eslint/no-empty-object-type': 'off', // too restrictive
       '@typescript-eslint/only-throw-error': ['error', { allow: ['AssertionError'] }],
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
+          varsIgnorePattern: 'Schema$'
+        }
+      ],
 
       // TODO: Enable these
       '@typescript-eslint/require-await': 'off', // can be turned on, but there's a lot of fixing to do
