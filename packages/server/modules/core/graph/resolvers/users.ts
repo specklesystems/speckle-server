@@ -45,7 +45,6 @@ import {
   getMailchimpOnboardingIds
 } from '@/modules/shared/helpers/envHelper'
 import { updateMailchimpMemberTags } from '@/modules/auth/services/mailchimp'
-import { OnboardingRole, OnboardingPlan, OnboardingSource } from '@speckle/shared'
 
 const getUser = legacyGetUserFactory({ db })
 const getUserByEmail = legacyGetUserByEmailFactory({ db })
@@ -267,9 +266,9 @@ export = {
           const { listId } = getMailchimpOnboardingIds()
 
           await updateMailchimpMemberTags(user, listId, {
-            role: args.input?.role as OnboardingRole | undefined,
-            plans: args.input?.plans as OnboardingPlan[] | undefined,
-            source: args.input?.source as OnboardingSource | undefined
+            role: args.input?.role || undefined,
+            plans: args.input?.plans || undefined,
+            source: args.input?.source || undefined
           })
         } catch (error) {
           // Log but don't fail the request

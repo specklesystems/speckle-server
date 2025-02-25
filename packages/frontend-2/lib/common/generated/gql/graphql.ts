@@ -943,6 +943,18 @@ export type DiscoverableStreamsSortingInput = {
   type: DiscoverableStreamsSortType;
 };
 
+export type DiscoverableWorkspaceCollaborator = {
+  __typename?: 'DiscoverableWorkspaceCollaborator';
+  avatar?: Maybe<Scalars['String']['output']>;
+};
+
+export type DiscoverableWorkspaceCollaboratorCollection = {
+  __typename?: 'DiscoverableWorkspaceCollaboratorCollection';
+  cursor?: Maybe<Scalars['String']['output']>;
+  items: Array<DiscoverableWorkspaceCollaborator>;
+  totalCount: Scalars['Int']['output'];
+};
+
 export type EditCommentInput = {
   commentId: Scalars['String']['input'];
   content: CommentContentInput;
@@ -1156,6 +1168,15 @@ export type LimitedWorkspace = {
   name: Scalars['String']['output'];
   /** Unique workspace short id. Used for navigation. */
   slug: Scalars['String']['output'];
+  /** Workspace members visible to people with verified email domain */
+  team?: Maybe<DiscoverableWorkspaceCollaboratorCollection>;
+};
+
+
+/** Workspace metadata visible to non-workspace members. */
+export type LimitedWorkspaceTeamArgs = {
+  cursor?: InputMaybe<Scalars['String']['input']>;
+  limit?: Scalars['Int']['input'];
 };
 
 export type LimitedWorkspaceJoinRequest = {
@@ -7029,6 +7050,8 @@ export type AllObjectTypes = {
   Commit: Commit,
   CommitCollection: CommitCollection,
   CountOnlyCollection: CountOnlyCollection,
+  DiscoverableWorkspaceCollaborator: DiscoverableWorkspaceCollaborator,
+  DiscoverableWorkspaceCollaboratorCollection: DiscoverableWorkspaceCollaboratorCollection,
   FileUpload: FileUpload,
   GendoAIRender: GendoAiRender,
   GendoAIRenderCollection: GendoAiRenderCollection,
@@ -7450,6 +7473,14 @@ export type CommitCollectionFieldArgs = {
 export type CountOnlyCollectionFieldArgs = {
   totalCount: {},
 }
+export type DiscoverableWorkspaceCollaboratorFieldArgs = {
+  avatar: {},
+}
+export type DiscoverableWorkspaceCollaboratorCollectionFieldArgs = {
+  cursor: {},
+  items: {},
+  totalCount: {},
+}
 export type FileUploadFieldArgs = {
   branchName: {},
   convertedCommitId: {},
@@ -7517,6 +7548,7 @@ export type LimitedWorkspaceFieldArgs = {
   logo: {},
   name: {},
   slug: {},
+  team: LimitedWorkspaceTeamArgs,
 }
 export type LimitedWorkspaceJoinRequestFieldArgs = {
   createdAt: {},
@@ -8452,6 +8484,8 @@ export type AllObjectFieldArgTypes = {
   Commit: CommitFieldArgs,
   CommitCollection: CommitCollectionFieldArgs,
   CountOnlyCollection: CountOnlyCollectionFieldArgs,
+  DiscoverableWorkspaceCollaborator: DiscoverableWorkspaceCollaboratorFieldArgs,
+  DiscoverableWorkspaceCollaboratorCollection: DiscoverableWorkspaceCollaboratorCollectionFieldArgs,
   FileUpload: FileUploadFieldArgs,
   GendoAIRender: GendoAiRenderFieldArgs,
   GendoAIRenderCollection: GendoAiRenderCollectionFieldArgs,

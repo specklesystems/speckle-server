@@ -4,7 +4,7 @@ import { md5 } from '@/modules/shared/helpers/cryptoHelper'
 import { getMailchimpConfig } from '@/modules/shared/helpers/envHelper'
 import { UserRecord } from '@/modules/core/helpers/types'
 import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
-import { OnboardingState } from '@speckle/shared'
+import { OnboardingCompletionInput } from '@/modules/core/graph/generated/graphql'
 
 let mailchimpInitialized = false
 
@@ -67,7 +67,7 @@ async function triggerMailchimpCustomerJourney(
 async function updateMailchimpMemberTags(
   user: UserRecord,
   listId: string,
-  onboardingData: OnboardingState
+  onboardingData: OnboardingCompletionInput
 ) {
   initializeMailchimp()
   const subscriberHash = md5(user.email.toLowerCase())
@@ -75,8 +75,10 @@ async function updateMailchimpMemberTags(
   // Check if user is already in audience (meaning they consented to marketing emails)
   try {
     await mailchimp.lists.getListMember(listId, subscriberHash)
-  } catch (e) {
-    return
+  } catch {
+    throw new Error(
+      `User ${user.email} not found in Mailchimp audience. They should have been added during registration.`
+    )
   }
 
   const tags: { name: string; status: 'active' | 'inactive' }[] = []

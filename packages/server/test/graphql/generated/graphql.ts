@@ -949,7 +949,7 @@ export type DiscoverableStreamsSortingInput = {
 
 export type DiscoverableWorkspaceCollaborator = {
   __typename?: 'DiscoverableWorkspaceCollaborator';
-  avatar: Scalars['String']['output'];
+  avatar?: Maybe<Scalars['String']['output']>;
 };
 
 export type DiscoverableWorkspaceCollaboratorCollection = {
@@ -5674,7 +5674,7 @@ export type GetWorkspaceBySlugQuery = { __typename?: 'Query', workspaceBySlug: {
 export type GetActiveUserDiscoverableWorkspacesQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetActiveUserDiscoverableWorkspacesQuery = { __typename?: 'Query', activeUser?: { __typename?: 'User', discoverableWorkspaces: Array<{ __typename?: 'LimitedWorkspace', id: string, name: string, description?: string | null, team?: { __typename?: 'DiscoverableWorkspaceCollaboratorCollection', totalCount: number, cursor?: string | null, items: Array<{ __typename?: 'DiscoverableWorkspaceCollaborator', avatar: string }> } | null }> } | null };
+export type GetActiveUserDiscoverableWorkspacesQuery = { __typename?: 'Query', activeUser?: { __typename?: 'User', discoverableWorkspaces: Array<{ __typename?: 'LimitedWorkspace', id: string, name: string, description?: string | null, team?: { __typename?: 'DiscoverableWorkspaceCollaboratorCollection', totalCount: number, cursor?: string | null, items: Array<{ __typename?: 'DiscoverableWorkspaceCollaborator', avatar?: string | null }> } | null }> } | null };
 
 export type UpdateWorkspaceMutationVariables = Exact<{
   input: WorkspaceUpdateInput;

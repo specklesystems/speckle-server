@@ -948,7 +948,7 @@ export type DiscoverableStreamsSortingInput = {
 
 export type DiscoverableWorkspaceCollaborator = {
   __typename?: 'DiscoverableWorkspaceCollaborator';
-  avatar: Scalars['String']['output'];
+  avatar?: Maybe<Scalars['String']['output']>;
 };
 
 export type DiscoverableWorkspaceCollaboratorCollection = {

@@ -967,7 +967,7 @@ export type DiscoverableStreamsSortingInput = {
 
 export type DiscoverableWorkspaceCollaborator = {
   __typename?: 'DiscoverableWorkspaceCollaborator';
-  avatar: Scalars['String']['output'];
+  avatar?: Maybe<Scalars['String']['output']>;
 };
 
 export type DiscoverableWorkspaceCollaboratorCollection = {
@@ -5921,7 +5921,7 @@ export interface DateTimeScalarConfig extends GraphQLScalarTypeConfig<ResolversT
 }
 
 export type DiscoverableWorkspaceCollaboratorResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['DiscoverableWorkspaceCollaborator'] = ResolversParentTypes['DiscoverableWorkspaceCollaborator']> = {
-  avatar?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  avatar?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
