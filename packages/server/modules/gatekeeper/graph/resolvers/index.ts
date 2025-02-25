@@ -34,7 +34,8 @@ import { upgradeWorkspaceSubscriptionFactory } from '@/modules/gatekeeper/servic
 import { isWorkspaceReadOnlyFactory } from '@/modules/gatekeeper/services/readOnly'
 import { calculateSubscriptionSeats } from '@/modules/gatekeeper/domain/billing'
 import { WorkspacePaymentMethod } from '@/test/graphql/generated/graphql'
-import { LogicError } from '@/modules/shared/errors'
+import { LogicError, NotImplementedError } from '@/modules/shared/errors'
+import { isNewPlanType } from '@/modules/gatekeeper/helpers/plans'
 
 const { FF_GATEKEEPER_MODULE_ENABLED, FF_BILLING_INTEGRATION_ENABLED } =
   getFeatureFlags()
@@ -59,6 +60,8 @@ export = FF_GATEKEEPER_MODULE_ENABLED
             case 'starter':
             case 'plus':
             case 'business':
+            case 'team':
+            case 'pro':
               paymentMethod = WorkspacePaymentMethod.Billing
               break
             case 'unlimited':
@@ -179,8 +182,12 @@ export = FF_GATEKEEPER_MODULE_ENABLED
 
           return session
         },
-        upgradePlan: async (parent, args, ctx) => {
+        upgradePlan: async (_parent, args, ctx) => {
           const { workspaceId, workspacePlan, billingInterval } = args.input
+          if (isNewPlanType(workspacePlan)) {
+            throw new NotImplementedError()
+          }
+
           await authorizeResolver(
             ctx.userId,
             workspaceId,
