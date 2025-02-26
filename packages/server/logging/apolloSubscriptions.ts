@@ -1,7 +1,7 @@
 /* eslint-disable camelcase */
 import type { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
 import type { ExecutionParams } from 'subscriptions-transport-ws'
-import { shouldLogAsInfoLevel, shouldLogAsWarnLevel } from '@/logging/graphqlError'
+import { logWithErr } from '@/logging/graphqlError'
 import { BaseError } from '@/modules/shared/errors'
 import { GraphQLError } from 'graphql'
 import { redactSensitiveVariables } from '@/logging/loggingHelper'
@@ -105,13 +105,7 @@ export function logSubscriptionOperation(params: {
       if (error instanceof BaseError) {
         errorLogger = errorLogger.child({ ...error.info() })
       }
-      if (shouldLogAsInfoLevel(error)) {
-        errorLogger.info({ err: error }, errMsg)
-      } else if (shouldLogAsWarnLevel(error)) {
-        errorLogger.warn({ err: error }, errMsg)
-      } else {
-        errorLogger.error({ err: error }, errMsg)
-      }
+      logWithErr(errorLogger, error)(errMsg)
     }
   } else if (response?.data) {
     logger.info('GQL subscription event {graphql_operation_name} emitted')

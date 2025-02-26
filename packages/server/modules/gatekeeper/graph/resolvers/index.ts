@@ -37,11 +37,8 @@ import { WorkspacePaymentMethod } from '@/test/graphql/generated/graphql'
 import { LogicError, NotImplementedError } from '@/modules/shared/errors'
 import { isNewPlanType } from '@/modules/gatekeeper/helpers/plans'
 import { extendLoggerComponent } from '@/logging/logging'
-import {
-  WorkspaceAlreadyPaidError,
-  WorkspaceCheckoutSessionInProgressError
-} from '@/modules/gatekeeper/errors/billing'
 import { OperationName, OperationStatus } from '@/logging/domain/fields'
+import { logWithErr } from '@/logging/graphqlError'
 
 const { FF_GATEKEEPER_MODULE_ENABLED, FF_BILLING_INTEGRATION_ENABLED } =
   getFeatureFlags()
@@ -201,26 +198,10 @@ export = FF_GATEKEEPER_MODULE_ENABLED
             return session
           } catch (err) {
             const e = ensureError(err, 'Unknown error creating checkout session')
-            switch (e.constructor) {
-              case WorkspaceAlreadyPaidError:
-                logger.info(
-                  { ...OperationStatus.failure, err: e },
-                  '[{operationName} ({operationStatus})] Workspace already paid, cancelling creation of checkout session'
-                )
-                break
-              case WorkspaceCheckoutSessionInProgressError:
-                logger.info(
-                  { ...OperationStatus.failure, err: e },
-                  '[{operationName} ({operationStatus})] Workspace checkout session in progress, cannot create a new session. Some one else may be trying to pay.'
-                )
-                break
-              default:
-                logger.error(
-                  { ...OperationStatus.failure, err: e },
-                  '[{operationName} ({operationStatus})] Error creating checkout session'
-                )
-                break
-            }
+            logWithErr(logger, e)(
+              { ...OperationStatus.failure },
+              '[{operationName} ({operationStatus})]'
+            )
             throw e
           }
         },
