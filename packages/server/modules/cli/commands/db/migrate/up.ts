@@ -1,4 +1,4 @@
-import { logger } from '@/observability/logging'
+import { cliLogger as logger } from '@/observability/logging'
 import { CommonDbArgs, getTargettedDbClients } from '@/modules/cli/commands/db/helpers'
 import { CommandModule } from 'yargs'
 

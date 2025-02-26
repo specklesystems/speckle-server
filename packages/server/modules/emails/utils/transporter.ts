@@ -1,4 +1,4 @@
-import { logger, moduleLogger } from '@/observability/logging'
+import { emailLogger as logger } from '@/observability/logging'
 import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
 import { isEmailEnabled, isTestEnv } from '@/modules/shared/helpers/envHelper'
 import { createTransport, Transporter } from 'nodemailer'
@@ -37,7 +37,7 @@ export async function initializeTransporter(): Promise<Transporter | undefined> 
     if (!newTransporter) {
       const message =
         '📧 Email provider is enabled but transport has not initialized correctly. Please review the email configuration or your email system for problems.'
-      moduleLogger.error(message)
+      logger.error(message)
       throw new MisconfiguredEnvironmentError(message)
     }
   }
@@ -47,13 +47,13 @@ export async function initializeTransporter(): Promise<Transporter | undefined> 
     if (!newTransporter) {
       const message =
         '📧 In testing a mock email provider is enabled but transport has not initialized correctly.'
-      moduleLogger.error(message)
+      logger.error(message)
       throw new MisconfiguredEnvironmentError(message)
     }
   }
 
   if (!newTransporter) {
-    moduleLogger.warn(
+    logger.warn(
       '📧 Email provider is not configured. Server functionality will be limited.'
     )
   }
