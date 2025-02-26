@@ -27,10 +27,17 @@ const config = {
         'slide-left': {
           from: { transform: 'translateX(0)' },
           to: { transform: 'translateX(-100%)' }
+        },
+        'slide-right': {
+          from: { transform: 'translateX(-100%)' },
+          to: { transform: 'translateX(0)' }
         }
       },
       animation: {
-        'slide-left-infinite': 'slide-left 20s linear infinite'
+        'slide-left-infinite': 'slide-left 20s linear infinite',
+        'slide-left-infinite-slower': 'slide-left 60s linear infinite',
+        'slide-right-infinite': 'slide-right 20s linear infinite',
+        'slide-right-infinite-slower': 'slide-right 60s linear infinite'
       }
     }
   }

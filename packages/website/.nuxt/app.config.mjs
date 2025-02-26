@@ -1,8 +1,18 @@
 
-import { defuFn } from '/home/bender/source/server-website/packages/website/node_modules/defu/dist/defu.mjs'
+import { updateAppConfig } from '#app/config'
+import { defuFn } from 'defu'
 
-const inlineConfig = {}
+const inlineConfig = {
+  "nuxt": {}
+}
+
+// Vite - webpack is handled directly in #app/config
+if (import.meta.hot) {
+  import.meta.hot.accept((newModule) => {
+    updateAppConfig(newModule.default)
+  })
+}
 
 
 
-export default /* #__PURE__ */ defuFn(inlineConfig)
+export default /*@__PURE__*/ defuFn(inlineConfig)

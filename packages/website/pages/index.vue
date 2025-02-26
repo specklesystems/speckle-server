@@ -131,7 +131,7 @@
       </div>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 perspective-400">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 perspective-400">
       <LayoutPanel fancy-glow>
         <template #header>
           <h4 class="text-heading-lg line-clamp-2">
@@ -162,150 +162,100 @@
           Collaborate with ease while tracking changes in real-time.
         </div>
       </LayoutPanel>
+      <LayoutPanel fancy-glow>
+        <template #header>
+          <h4 class="text-heading-lg line-clamp-2">
+            Generate deliverables on every model change
+          </h4>
+        </template>
+        <div class="text-body-xs">
+          Collaborate with ease while tracking changes in real-time.
+        </div>
+      </LayoutPanel>
     </div>
-    <div class="py-10 mt-20 rounded-lg">
-      <div class="mx-auto">
-        <h2 class="text-base/7 font-semibold text-primary">Deploy faster</h2>
-        <p
-          class="mt-2 max-w-lg text-pretty text-4xl font-semibold tracking-tight sm:text-5xl"
-        >
-          Everything you need to deploy your app
-        </p>
-        <div
-          class="mt-10 grid grid-cols-1 gap-4 sm:mt-16 lg:grid-cols-6 lg:grid-rows-2"
-        >
-          <div class="relative lg:col-span-3">
-            <div
-              class="absolute inset-px rounded-lg bg-foundation max-lg:rounded-t-[2rem] lg:rounded-tl-[2rem]"
-            />
-            <div
-              class="relative flex h-full flex-col overflow-hidden rounded-[calc(theme(borderRadius.lg)+1px)] max-lg:rounded-t-[calc(2rem+1px)] lg:rounded-tl-[calc(2rem+1px)]"
-            >
-              <img
-                class="h-80 object-cover object-left"
-                src="https://tailwindui.com/plus-assets/img/component-images/bento-01-performance.png"
-                alt=""
-              />
-              <div class="p-10 pt-4">
-                <h3 class="text-sm/4 font-semibold text-primary">Performance</h3>
-                <p class="mt-2 text-lg font-medium tracking-tight">
-                  Lightning-fast builds
-                </p>
-                <p class="mt-2 max-w-lg text-sm/6 text-gray-600">
-                  Lorem ipsum dolor sit amet, consectetur adipiscing elit. In gravida
-                  justo et nulla efficitur, maximus egestas sem pellentesque.
-                </p>
-              </div>
-            </div>
-            <div
-              class="pointer-events-none absolute inset-px rounded-lg shadow ring-1 ring-black/5 max-lg:rounded-t-[2rem] lg:rounded-tl-[2rem]"
-            />
-          </div>
-          <div class="relative lg:col-span-3">
-            <div
-              class="absolute inset-px rounded-lg bg-foundation lg:rounded-tr-[2rem]"
-            />
-            <div
-              class="relative flex h-full flex-col overflow-hidden rounded-[calc(theme(borderRadius.lg)+1px)] lg:rounded-tr-[calc(2rem+1px)]"
-            >
-              <img
-                class="h-80 object-cover object-left lg:object-right"
-                src="https://tailwindui.com/plus-assets/img/component-images/bento-01-releases.png"
-                alt=""
-              />
-              <div class="p-10 pt-4">
-                <h3 class="text-sm/4 font-semibold text-primary">Releases</h3>
-                <p class="mt-2 text-lg font-medium tracking-tight">Push to deploy</p>
-                <p class="mt-2 max-w-lg text-sm/6 text-gray-600">
-                  Curabitur auctor, ex quis auctor venenatis, eros arcu rhoncus massa,
-                  laoreet dapibus ex elit vitae odio.
-                </p>
-              </div>
-            </div>
-            <div
-              class="pointer-events-none absolute inset-px rounded-lg shadow ring-1 ring-black/5 lg:rounded-tr-[2rem]"
-            />
-          </div>
-          <div class="relative lg:col-span-2">
-            <div
-              class="absolute inset-px rounded-lg bg-foundation lg:rounded-bl-[2rem]"
-            />
-            <div
-              class="relative flex h-full flex-col overflow-hidden rounded-[calc(theme(borderRadius.lg)+1px)] lg:rounded-bl-[calc(2rem+1px)]"
-            >
-              <img
-                class="h-80 object-cover object-left"
-                src="https://tailwindui.com/plus-assets/img/component-images/bento-01-speed.png"
-                alt=""
-              />
-              <div class="p-10 pt-4">
-                <h3 class="text-sm/4 font-semibold text-primary">Speed</h3>
-                <p class="mt-2 text-lg font-medium tracking-tight">
-                  Built for power users
-                </p>
-                <p class="mt-2 max-w-lg text-sm/6 text-gray-600">
-                  Sed congue eros non finibus molestie. Vestibulum euismod augue.
-                </p>
-              </div>
-            </div>
-            <div
-              class="pointer-events-none absolute inset-px rounded-lg shadow ring-1 ring-black/5 lg:rounded-bl-[2rem]"
-            />
-          </div>
-          <div class="relative lg:col-span-2">
-            <div class="absolute inset-px rounded-lg bg-foundation" />
-            <div
-              class="relative flex h-full flex-col overflow-hidden rounded-[calc(theme(borderRadius.lg)+1px)]"
-            >
-              <img
-                class="h-80 object-cover"
-                src="https://tailwindui.com/plus-assets/img/component-images/bento-01-integrations.png"
-                alt=""
-              />
-              <div class="p-10 pt-4">
-                <h3 class="text-sm/4 font-semibold text-primary">Integrations</h3>
-                <p class="mt-2 text-lg font-medium tracking-tight">
-                  Connect your favorite tools
-                </p>
-                <p class="mt-2 max-w-lg text-sm/6 text-gray-600">
-                  Maecenas at augue sed elit dictum vulputate, in nisi aliquam maximus
-                  arcu.
-                </p>
-              </div>
-            </div>
-            <div
-              class="pointer-events-none absolute inset-px rounded-lg shadow ring-1 ring-black/5"
-            />
-          </div>
-          <div class="relative lg:col-span-2">
-            <div
-              class="absolute inset-px rounded-lg bg-foundation max-lg:rounded-b-[2rem] lg:rounded-br-[2rem]"
-            />
-            <div
-              class="relative flex h-full flex-col overflow-hidden rounded-[calc(theme(borderRadius.lg)+1px)] max-lg:rounded-b-[calc(2rem+1px)] lg:rounded-br-[calc(2rem+1px)]"
-            >
-              <img
-                class="h-80 object-cover"
-                src="https://tailwindui.com/plus-assets/img/component-images/bento-01-network.png"
-                alt=""
-              />
-              <div class="p-10 pt-4">
-                <h3 class="text-sm/4 font-semibold text-primary">Network</h3>
-                <p class="mt-2 text-lg font-medium tracking-tight">
-                  Globally distributed CDN
-                </p>
-                <p class="mt-2 max-w-lg text-sm/6 text-gray-600">
-                  Aenean vulputate justo commodo auctor vehicula in malesuada semper.
-                </p>
-              </div>
-            </div>
-            <div
-              class="pointer-events-none absolute inset-px rounded-lg shadow ring-1 ring-black/5 max-lg:rounded-b-[2rem] lg:rounded-br-[2rem]"
-            />
-          </div>
+
+    <div class="grid grid-cols-2 py-10">
+      <div class="flex items-center">
+        <h3 class="text-4xl font-bold tracking-tight">
+          Productive workflows that save you time
+        </h3>
+      </div>
+      <div class="flex items-center h-32">
+        <div class="text-body text-right text-foreground-2">
+          Unify your tech stack & gain data-driven insights for decision making and Set
+          the maximum width of an element using the max-w-* utilities.
         </div>
       </div>
     </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 perspective-400">
+      <NuxtLink
+        v-for="workflow in workflows"
+        :key="workflow._id"
+        :to="`/workflows/${workflow.slug.current}`"
+        class="block h-full"
+      >
+        <LayoutPanel fancy-glow>
+          <template #header>
+            <h4 class="text-heading-lg line-clamp-2 flex items-center space-x-1">
+              <NuxtImg :src="workflow?.source.imageUrl" class="h-8 rounded-md" />
+              <b>{{ workflow?.source.name }}</b>
+              <span>to</span>
+              <NuxtImg :src="workflow?.receiver.imageUrl" class="h-8 rounded-md" />
+              <b>{{ workflow?.receiver.name }}</b>
+            </h4>
+          </template>
+          <div class="text-body-xs text-foreground-2">
+            Collaborate with ease while tracking changes in real-time.
+          </div>
+          <!-- <template #footer>
+            <div class="flex justify-between items-center">
+              <CommonBadge size="lg">
+                {{ workflow?.useCase.title }}
+              </CommonBadge>
+            </div>
+          </template> -->
+        </LayoutPanel>
+      </NuxtLink>
+    </div>
   </div>
+  <!-- <div
+    class="logos relative overflow-hidden whitespace-nowrap py-10 [mask-image:_linear-gradient(to_right,_transparent_0,_white_128px,white_calc(100%-128px),_transparent_100%)]"
+  >
+    <div class="animate-slide-left-infinite hover:animation-pause flex space-x-4 w-max">
+      <NuxtLink
+        v-for="workflow in workflows"
+        :key="workflow._id"
+        :to="`/workflows/${workflow.slug.current}`"
+        class="inline-block h-full w-80"
+      >
+        <LayoutPanel fancy-glow>
+          <template #header>
+            <h4 class="text-heading-lg line-clamp-2 flex items-center space-x-1">
+              <NuxtImg :src="workflow?.source.imageUrl" class="h-8 rounded-md" />
+              <b>{{ workflow?.source.name }}</b>
+              <span>to</span>
+              <NuxtImg :src="workflow?.receiver.imageUrl" class="h-8 rounded-md" />
+              <b>{{ workflow?.receiver.name }}</b>
+            </h4>
+          </template>
+          <div class="text-body-xs">
+            Collaborate with ease while tracking changes in real-time.
+          </div>
+          <template #footer>
+            <div class="flex justify-between items-center">
+              <CommonBadge size="lg">
+                {{ workflow?.useCase.title }}
+              </CommonBadge>
+            </div>
+          </template>
+        </LayoutPanel>
+      </NuxtLink>
+    </div>
+  </div> -->
 </template>
-<script setup lang="ts"></script>
+<script setup lang="ts">
+const query = groq`*[_type == "workflow"]{_id, title, slug, content, useCase->{title}, source -> {name, "imageUrl": image.asset->url}, receiver -> {name, "imageUrl": image.asset->url}}`
+
+const { data: workflows } = useSanityQuery(query)
+</script>

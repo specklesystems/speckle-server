@@ -2,66 +2,174 @@
   "compilerOptions": {
     "forceConsistentCasingInFileNames": true,
     "strict": true,
+    "noEmit": true,
     "target": "ESNext",
     "module": "ESNext",
-    "moduleResolution": "Node",
+    "moduleResolution": "Bundler",
     "allowJs": true,
     "resolveJsonModule": true,
     "jsx": "preserve",
+    "allowSyntheticDefaultImports": true,
     "jsxFactory": "h",
     "jsxFragmentFactory": "Fragment",
     "paths": {
       "#imports": [
-        "/home/bender/source/server-website/packages/website/.nuxt/types/nitro-imports"
-      ],
-      "#paths": [
-        "/home/bender/source/server-website/packages/website/node_modules/nuxt/dist/core/runtime/nitro/paths"
-      ],
-      "~": [
-        "/home/bender/source/server-website/packages/website"
+        "./types/nitro-imports"
       ],
       "~/*": [
-        "/home/bender/source/server-website/packages/website/*"
-      ],
-      "@": [
-        "/home/bender/source/server-website/packages/website"
+        "../*",
+        "../*"
       ],
       "@/*": [
-        "/home/bender/source/server-website/packages/website/*"
-      ],
-      "~~": [
-        "/home/bender/source/server-website/packages/website"
+        "../*",
+        "../*"
       ],
       "~~/*": [
-        "/home/bender/source/server-website/packages/website/*"
-      ],
-      "@@": [
-        "/home/bender/source/server-website/packages/website"
+        "../*",
+        "../*"
       ],
       "@@/*": [
-        "/home/bender/source/server-website/packages/website/*"
+        "../*",
+        "../*"
+      ],
+      "#sanity-client": [
+        "../node_modules/@sanity/client/dist/index"
+      ],
+      "#sanity-composables": [
+        "../node_modules/@nuxtjs/sanity/dist/runtime/composables/index"
+      ],
+      "nitropack/types": [
+        "../node_modules/nitropack/types"
+      ],
+      "nitropack/runtime": [
+        "../node_modules/nitropack/runtime"
+      ],
+      "nitropack": [
+        "../node_modules/nitropack"
+      ],
+      "defu": [
+        "../node_modules/defu"
+      ],
+      "h3": [
+        "../node_modules/h3"
+      ],
+      "consola": [
+        "../node_modules/consola"
+      ],
+      "ofetch": [
+        "../node_modules/ofetch"
+      ],
+      "@unhead/vue": [
+        "../node_modules/@unhead/vue"
+      ],
+      "@nuxt/devtools": [
+        "../node_modules/@nuxt/devtools"
+      ],
+      "vue": [
+        "../node_modules/vue"
+      ],
+      "@vue/runtime-core": [
+        "../node_modules/@vue/runtime-core"
+      ],
+      "@vue/compiler-sfc": [
+        "../node_modules/@vue/compiler-sfc"
+      ],
+      "vue-router": [
+        "../node_modules/vue-router"
+      ],
+      "vue-router/auto-routes": [
+        "../node_modules/vue-router/vue-router-auto-routes"
+      ],
+      "unplugin-vue-router/client": [
+        "../node_modules/unplugin-vue-router/client"
+      ],
+      "@nuxt/schema": [
+        "../node_modules/@nuxt/schema"
+      ],
+      "nuxt": [
+        "../node_modules/nuxt"
+      ],
+      "vite/client": [
+        "../node_modules/vite/client"
+      ],
+      "~": [
+        "./.."
+      ],
+      "@": [
+        "./.."
+      ],
+      "~~": [
+        "./.."
+      ],
+      "@@": [
+        "./.."
+      ],
+      "#shared": [
+        "../shared"
       ],
       "assets": [
-        "/home/bender/source/server-website/packages/website/assets"
+        "../assets"
       ],
       "assets/*": [
-        "/home/bender/source/server-website/packages/website/assets/*"
+        "../assets/*"
       ],
       "public": [
-        "/home/bender/source/server-website/packages/website/public"
+        "../public"
       ],
       "public/*": [
-        "/home/bender/source/server-website/packages/website/public/*"
+        "../public/*"
       ],
-      "pinia": [
-        "/home/bender/source/server-website/packages/website/node_modules/pinia/dist/pinia"
+      "#build": [
+        "./"
+      ],
+      "#build/*": [
+        "./*"
+      ],
+      "#internal/nuxt/paths": [
+        "../node_modules/nuxt/dist/core/runtime/nitro/paths"
+      ],
+      "#image": [
+        "../node_modules/@nuxt/image/dist/runtime"
+      ],
+      "#image/*": [
+        "../node_modules/@nuxt/image/dist/runtime/*"
+      ],
+      "#vue-router": [
+        "./vue-router"
       ]
-    }
+    },
+    "lib": [
+      "esnext",
+      "webworker",
+      "dom.iterable"
+    ]
   },
   "include": [
-    "/home/bender/source/server-website/packages/website/.nuxt/types/nitro-nuxt.d.ts",
+    "./types/nitro-nuxt.d.ts",
+    "../node_modules/@nuxt/eslint/runtime/server",
+    "../node_modules/@nuxtjs/tailwindcss/runtime/server",
+    "../../../../server/runtime/server",
+    "../../../../../../bende/runtime/server",
+    "../node_modules/@nuxtjs/sanity/runtime/server",
+    "../node_modules/@nuxt/image/runtime/server",
+    "../node_modules/@nuxt/devtools/runtime/server",
+    "../node_modules/@nuxt/telemetry/runtime/server",
     "./types/nitro.d.ts",
     "../**/*",
     "../server/**/*"
+  ],
+  "exclude": [
+    "../node_modules",
+    "../../../node_modules",
+    "../node_modules/nuxt/node_modules",
+    "../node_modules/@nuxt/eslint/node_modules",
+    "../node_modules/@nuxtjs/tailwindcss/node_modules",
+    "../../ui-components-nuxt/node_modules",
+    "../node_modules/reka-ui/node_modules",
+    "../node_modules/@nuxtjs/sanity/node_modules",
+    "../node_modules/@nuxt/image/node_modules",
+    "../node_modules/@nuxt/devtools/node_modules",
+    "../node_modules/@nuxt/telemetry/node_modules",
+    "../dist"
   ]
 }

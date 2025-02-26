@@ -100,14 +100,10 @@
         />
       </NavigationMenuIndicator>
     </NavigationMenuList>
-    <div class="">
-      <div
-        class="fixed top-full -mt-4 left-1/2 right-1/2 ml-[-50vw] mr-[-50vw] flex w-screen"
-      >
-        <NavigationMenuViewport
-          class="w-full overflow-hidden data-[state=open]:animate-scaleIn data-[state=closed]:animate-scaleOut relative mt-[10px] h-[var(--reka-navigation-menu-viewport-height)] origin-[top_center] transition-[width,_height] duration-300"
-        />
-      </div>
+    <div class="fixed top-full -mt-4 left-1/2 right-1/2 ml-[-50vw] mr-[-50vw] flex">
+      <NavigationMenuViewport
+        class="w-full overflow-hidden data-[state=open]:animate-scaleIn data-[state=closed]:animate-scaleOut relative mt-[10px] h-[var(--reka-navigation-menu-viewport-height)] origin-[top_center] transition-[width,_height] duration-300"
+      />
     </div>
   </NavigationMenuRoot>
 </template>

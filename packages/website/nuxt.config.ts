@@ -10,27 +10,25 @@ export default defineNuxtConfig({
     '@nuxt/eslint',
     '@nuxtjs/tailwindcss',
     '@speckle/ui-components-nuxt',
-    '@pinia/nuxt',
-    'reka-ui/nuxt'
+    'reka-ui/nuxt',
+    '@nuxtjs/sanity',
+    '@nuxt/image'
   ],
+  image: {
+    inject: true
+  },
+  sanity: {
+    projectId: '6kukgozu',
+    useCdn: false
+  },
   alias: {
     // Rewriting all lodash calls to lodash-es for proper tree-shaking & chunk splitting
     // lodash: 'lodash-es'
   },
-
-  // pinia: {
-  //   autoImports: ['defineStore', 'storeToRefs']
-  // },
   runtimeConfig: {
     public: {
       mixpanelApiHost: 'UNDEFINED',
-      mixpanelTokenId: 'UNDEFINED',
-      speckleAccountId: process.env.SPECKLE_ACCOUNT_ID,
-      speckleToken: process.env.SPECKLE_TOKEN,
-      speckleUserId: process.env.SPECKLE_USER_ID,
-      speckleUrl: process.env.SPECKLE_URL,
-      speckleSampleProjectId: process.env.SPECKLE_SAMPLE_PROJECT_ID,
-      speckleSampleModelId: process.env.SPECKLE_SAMPLE_MODEL_ID
+      mixpanelTokenId: 'UNDEFINED'
     }
   },
   vite: {
@@ -56,9 +54,7 @@ export default defineNuxtConfig({
   ssr: false,
   build: {
     transpile: [
-      /^@apollo\/client/,
       'ts-invariant/process',
-      '@vue/apollo-composable',
       '@headlessui/vue',
       /^@heroicons\/vue/,
       '@vueuse/core',
