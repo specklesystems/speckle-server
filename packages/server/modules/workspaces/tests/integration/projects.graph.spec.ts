@@ -9,6 +9,7 @@ import {
   AutomationTokenRecord,
   AutomationTriggerDefinitionRecord
 } from '@/modules/automate/helpers/types'
+import { CommentRecord } from '@/modules/comments/helpers/types'
 import {
   AutomationFunctionRuns,
   AutomationRevisionFunctions,
@@ -16,7 +17,8 @@ import {
   AutomationRuns,
   AutomationRunTriggers,
   AutomationTokens,
-  AutomationTriggers
+  AutomationTriggers,
+  Comments
 } from '@/modules/core/dbSchema'
 import { AllScopes } from '@/modules/core/helpers/mainConstants'
 import { createRandomEmail } from '@/modules/core/helpers/testHelpers'
@@ -30,6 +32,11 @@ import {
 } from '@/modules/core/helpers/types'
 import { grantStreamPermissionsFactory } from '@/modules/core/repositories/streams'
 import { getDb } from '@/modules/multiregion/utils/dbSelector'
+import { Webhook, WebhookEvent } from '@/modules/webhooks/domain/types'
+import {
+  createWebhookConfigFactory,
+  createWebhookEventFactory
+} from '@/modules/webhooks/repositories/webhooks'
 import {
   BasicTestWorkspace,
   createTestWorkspace
@@ -59,6 +66,7 @@ import {
   createTestAutomationRun
 } from '@/test/speckle-helpers/automationHelper'
 import { BasicTestBranch, createTestBranch } from '@/test/speckle-helpers/branchHelper'
+import { createTestComment } from '@/test/speckle-helpers/commentHelper'
 import {
   BasicTestCommit,
   createTestCommit,
@@ -94,7 +102,10 @@ const tables = {
   automationRunTriggers: (db: Knex) =>
     db<AutomationRunTriggerRecord>(AutomationRunTriggers.name),
   automationFunctionRuns: (db: Knex) =>
-    db<AutomationFunctionRunRecord>(AutomationFunctionRuns.name)
+    db<AutomationFunctionRunRecord>(AutomationFunctionRuns.name),
+  comments: (db: Knex) => db.table<CommentRecord>(Comments.name),
+  webhooks: (db: Knex) => db.table<Webhook>('webhooks_config'),
+  webhookEvents: (db: Knex) => db.table<WebhookEvent>('webhooks_events')
 }
 
 const grantStreamPermissions = grantStreamPermissionsFactory({ db })
@@ -386,7 +397,11 @@ isMultiRegionTestMode()
       let testAutomationRun: AutomationRunRecord
       let testAutomationFunctionRuns: AutomationFunctionRunRecord[]
 
+      let testComment: CommentRecord
+      let testWebhookId: string
+
       let apollo: TestApolloServer
+      let sourceRegionDb: Knex
       let targetRegionDb: Knex
 
       before(async () => {
@@ -394,6 +409,7 @@ isMultiRegionTestMode()
         await waitForRegionUser(adminUser)
 
         apollo = await testApolloServer({ authUserId: adminUser.id })
+        sourceRegionDb = await getDb({ regionKey: regionKey1 })
         targetRegionDb = await getDb({ regionKey: regionKey2 })
       })
 
@@ -450,6 +466,27 @@ isMultiRegionTestMode()
 
         testAutomationRun = automationRun
         testAutomationFunctionRuns = functionRuns
+
+        testComment = await createTestComment({
+          userId: adminUser.id,
+          projectId: testProject.id,
+          objectId: testVersion.objectId
+        })
+
+        testWebhookId = await createWebhookConfigFactory({ db: sourceRegionDb })({
+          id: cryptoRandomString({ length: 9 }),
+          streamId: testProject.id,
+          url: 'https://example.org',
+          description: cryptoRandomString({ length: 9 }),
+          secret: cryptoRandomString({ length: 9 }),
+          enabled: false,
+          triggers: ['branch_create']
+        })
+        await createWebhookEventFactory({ db: sourceRegionDb })({
+          id: cryptoRandomString({ length: 9 }),
+          webhookId: testWebhookId,
+          payload: cryptoRandomString({ length: 9 })
+        })
       })
 
       it('moves project record to target regional db', async () => {
@@ -613,6 +650,47 @@ isMultiRegionTestMode()
             testAutomationFunctionRuns.some((testRun) => testRun.id === run.id)
           )
         )
+      })
+
+      it('moves project comments to target regional db', async () => {
+        const res = await apollo.execute(UpdateProjectRegionDocument, {
+          projectId: testProject.id,
+          regionKey: regionKey2
+        })
+
+        expect(res).to.not.haveGraphQLErrors()
+
+        // TODO: Replace with gql query when possible
+        const comment = await tables
+          .comments(targetRegionDb)
+          .select('*')
+          .where({ id: testComment.id })
+          .first()
+
+        expect(comment).to.not.be.undefined
+      })
+
+      it('moves project webhooks to target regional db', async () => {
+        const res = await apollo.execute(UpdateProjectRegionDocument, {
+          projectId: testProject.id,
+          regionKey: regionKey2
+        })
+
+        expect(res).to.not.haveGraphQLErrors()
+
+        const webhook = await tables
+          .webhooks(targetRegionDb)
+          .select('*')
+          .where({ id: testWebhookId })
+          .first()
+        expect(webhook).to.not.be.undefined
+
+        const webhookEvent = await tables
+          .webhookEvents(targetRegionDb)
+          .select('*')
+          .where({ webhookId: testWebhookId })
+          .first()
+        expect(webhookEvent).to.not.be.undefined
       })
     })
   : void 0

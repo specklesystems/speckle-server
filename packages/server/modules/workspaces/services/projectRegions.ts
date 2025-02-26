@@ -1,14 +1,18 @@
 import { GetProjectAutomationCount } from '@/modules/automate/domain/operations'
+import { GetStreamCommentCount } from '@/modules/comments/domain/operations'
 import { GetStreamBranchCount } from '@/modules/core/domain/branches/operations'
 import { GetStreamCommitCount } from '@/modules/core/domain/commits/operations'
 import { GetStreamObjectCount } from '@/modules/core/domain/objects/operations'
 import { GetProject } from '@/modules/core/domain/projects/operations'
+import { GetStreamWebhooks } from '@/modules/webhooks/domain/operations'
 import {
   CopyProjectAutomations,
+  CopyProjectComments,
   CopyProjectModels,
   CopyProjectObjects,
   CopyProjects,
   CopyProjectVersions,
+  CopyProjectWebhooks,
   CopyWorkspace,
   GetAvailableRegions,
   UpdateProjectRegion
@@ -22,6 +26,8 @@ export const updateProjectRegionFactory =
     countProjectVersions: GetStreamCommitCount
     countProjectObjects: GetStreamObjectCount
     countProjectAutomations: GetProjectAutomationCount
+    countProjectComments: GetStreamCommentCount
+    getProjectWebhooks: GetStreamWebhooks
     getAvailableRegions: GetAvailableRegions
     copyWorkspace: CopyWorkspace
     copyProjects: CopyProjects
@@ -29,6 +35,8 @@ export const updateProjectRegionFactory =
     copyProjectVersions: CopyProjectVersions
     copyProjectObjects: CopyProjectObjects
     copyProjectAutomations: CopyProjectAutomations
+    copyProjectComments: CopyProjectComments
+    copyProjectWebhooks: CopyProjectWebhooks
   }): UpdateProjectRegion =>
   async (params) => {
     const { projectId, regionKey } = params
@@ -74,9 +82,13 @@ export const updateProjectRegionFactory =
     // Move automations
     const copiedAutomationCount = await deps.copyProjectAutomations({ projectIds })
 
-    // TODO: Move comments
+    // Move comments
+    const copiedCommentCount = await deps.copyProjectComments({ projectIds })
+
+    // Move webhooks
+    const copiedWebhookCount = await deps.copyProjectWebhooks({ projectIds })
+
     // TODO: Move file blobs
-    // TODO: Move webhooks
 
     // TODO: Validate state after move captures latest state of project
     const sourceProjectModelCount = await deps.countProjectModels(projectId)
@@ -87,12 +99,16 @@ export const updateProjectRegionFactory =
     const sourceProjectAutomationCount = await deps.countProjectAutomations({
       projectId
     })
+    const sourceProjectCommentCount = await deps.countProjectComments(projectId)
+    const sourceProjectWebhooks = await deps.getProjectWebhooks({ streamId: projectId })
 
     const tests = [
       copiedModelCount[projectId] === sourceProjectModelCount,
       copiedVersionCount[projectId] === sourceProjectVersionCount,
       copiedObjectCount[projectId] === sourceProjectObjectCount,
-      copiedAutomationCount[projectId] === sourceProjectAutomationCount
+      copiedAutomationCount[projectId] === sourceProjectAutomationCount,
+      copiedCommentCount[projectId] === sourceProjectCommentCount,
+      copiedWebhookCount[projectId] === sourceProjectWebhooks.length
     ]
 
     if (!tests.every((test) => !!test)) {
