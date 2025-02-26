@@ -579,5 +579,21 @@ isMultiRegionTestMode()
 
         expect(resB.data?.project.blob).to.not.be.undefined
       })
+
+      it('moves project files and associated blobs to target regional db and object storage', async () => {
+        const resA = await apollo.execute(UpdateProjectRegionDocument, {
+          projectId: testProject.id,
+          regionKey: regionKey2
+        })
+        expect(resA).to.not.haveGraphQLErrors()
+
+        const resB = await apollo.execute(GetRegionalProjectBlobDocument, {
+          projectId: testProject.id,
+          blobId: testBlobId
+        })
+        expect(resB).to.not.haveGraphQLErrors()
+
+        expect(resB.data?.project.blob).to.not.be.undefined
+      })
     })
   : void 0

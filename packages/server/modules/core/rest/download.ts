@@ -1,5 +1,5 @@
 import zlib from 'zlib'
-import { corsMiddleware } from '@/modules/core/configs/cors'
+import { corsMiddlewareFactory } from '@/modules/core/configs/cors'
 
 import { SpeckleObjectsStream } from '@/modules/core/rest/speckleObjectsStream'
 import { pipeline, PassThrough } from 'stream'
@@ -22,9 +22,9 @@ export default (app: express.Express) => {
     authorizeResolver
   })
 
-  app.options('/objects/:streamId/:objectId', corsMiddleware())
+  app.options('/objects/:streamId/:objectId', corsMiddlewareFactory())
 
-  app.get('/objects/:streamId/:objectId', corsMiddleware(), async (req, res) => {
+  app.get('/objects/:streamId/:objectId', corsMiddlewareFactory(), async (req, res) => {
     const boundLogger = (req.log || logger).child({
       requestId: req.id,
       userId: req.context.userId || '-',
@@ -107,37 +107,41 @@ export default (app: express.Express) => {
     )
   })
 
-  app.options('/objects/:streamId/:objectId/single', corsMiddleware())
-  app.get('/objects/:streamId/:objectId/single', corsMiddleware(), async (req, res) => {
-    const boundLogger = (req.log || logger).child({
-      requestId: req.id,
-      userId: req.context.userId || '-',
-      streamId: req.params.streamId,
-      objectId: req.params.objectId
-    })
-    const hasStreamAccess = await validatePermissionsReadStream(
-      req.params.streamId,
-      req
-    )
-    if (!hasStreamAccess.result) {
-      return res.status(hasStreamAccess.status).end()
+  app.options('/objects/:streamId/:objectId/single', corsMiddlewareFactory())
+  app.get(
+    '/objects/:streamId/:objectId/single',
+    corsMiddlewareFactory(),
+    async (req, res) => {
+      const boundLogger = (req.log || logger).child({
+        requestId: req.id,
+        userId: req.context.userId || '-',
+        streamId: req.params.streamId,
+        objectId: req.params.objectId
+      })
+      const hasStreamAccess = await validatePermissionsReadStream(
+        req.params.streamId,
+        req
+      )
+      if (!hasStreamAccess.result) {
+        return res.status(hasStreamAccess.status).end()
+      }
+
+      const projectDb = await getProjectDbClient({ projectId: req.params.streamId })
+      const getObject = getFormattedObjectFactory({ db: projectDb })
+
+      const obj = await getObject({
+        streamId: req.params.streamId,
+        objectId: req.params.objectId
+      })
+
+      if (!obj) {
+        boundLogger.warn('Failed to find object.')
+        return res.status(404).send('Failed to find object.')
+      }
+
+      boundLogger.info('Downloaded single object.')
+
+      res.send(obj.data)
     }
-
-    const projectDb = await getProjectDbClient({ projectId: req.params.streamId })
-    const getObject = getFormattedObjectFactory({ db: projectDb })
-
-    const obj = await getObject({
-      streamId: req.params.streamId,
-      objectId: req.params.objectId
-    })
-
-    if (!obj) {
-      boundLogger.warn('Failed to find object.')
-      return res.status(404).send('Failed to find object.')
-    }
-
-    boundLogger.info('Downloaded single object.')
-
-    res.send(obj.data)
-  })
+  )
 }

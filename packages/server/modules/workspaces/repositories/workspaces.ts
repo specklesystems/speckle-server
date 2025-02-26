@@ -54,7 +54,7 @@ import {
   filterByResource,
   InvitesRetrievalValidityFilter
 } from '@/modules/serverinvites/repositories/serverInvites'
-import { WorkspaceInviteResourceType } from '@/modules/workspaces/domain/constants'
+import { WorkspaceInviteResourceType } from '@/modules/workspacesCore/domain/constants'
 import { clamp } from 'lodash'
 import {
   WorkspaceCreationState,
@@ -136,17 +136,10 @@ const workspaceWithRoleBaseQuery = ({
 
 export const getWorkspacesFactory =
   ({ db }: { db: Knex }): GetWorkspaces =>
-  async (params: {
-    workspaceIds: string[]
-    /**
-     * Optionally - for each workspace, return the user's role in that workspace
-     */
-    userId?: string
-  }) => {
-    const { workspaceIds, userId } = params
-
+  async ({ workspaceIds, userId }) => {
     const q = workspaceWithRoleBaseQuery({ db, userId })
-    const results = await q.whereIn(Workspaces.col.id, workspaceIds)
+    if (workspaceIds !== undefined) q.whereIn(Workspaces.col.id, workspaceIds)
+    const results = await q
     return results
   }
 

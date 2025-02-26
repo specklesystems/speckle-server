@@ -3,6 +3,8 @@ import { z } from 'zod'
 
 const isDisableAllFFsMode = () =>
   ['true', '1'].includes(process.env.DISABLE_ALL_FFS || '')
+const isEnableAllFFsMode = () =>
+  ['true', '1'].includes(process.env.ENABLE_ALL_FFS || '')
 
 const parseFeatureFlags = () => {
   //INFO
@@ -22,6 +24,14 @@ const parseFeatureFlags = () => {
     FF_WORKSPACES_MODULE_ENABLED: {
       schema: z.boolean(),
       defaults: { production: false, _: true }
+    },
+    FF_WORKSPACES_NEW_PLANS_ENABLED: {
+      schema: z.boolean(),
+      defaults: { production: false, _: true }
+    },
+    FF_GATEKEEPER_FORCE_FREE_PLAN: {
+      schema: z.boolean(),
+      defaults: { production: false, _: false }
     },
     FF_GATEKEEPER_MODULE_ENABLED: {
       schema: z.boolean(),
@@ -51,13 +61,13 @@ const parseFeatureFlags = () => {
       schema: z.boolean(),
       defaults: { production: false, _: false }
     },
-    // Forces email verification for all users
-    FF_FORCE_EMAIL_VERIFICATION: {
+    // Forces onboarding for all users
+    FF_FORCE_ONBOARDING: {
       schema: z.boolean(),
       defaults: { production: false, _: false }
     },
-    // Forces onboarding for all users
-    FF_FORCE_ONBOARDING: {
+    // Enable to not allow personal emails
+    FF_NO_PERSONAL_EMAILS_ENABLED: {
       schema: z.boolean(),
       defaults: { production: false, _: false }
     },
@@ -73,10 +83,10 @@ const parseFeatureFlags = () => {
     }
   })
 
-  // Can be used to disable all feature flags for testing purposes
-  if (isDisableAllFFsMode()) {
+  // Can be used to disable/enable all feature flags for testing purposes
+  if (isDisableAllFFsMode() || isEnableAllFFsMode()) {
     for (const key of Object.keys(res)) {
-      ;(res as Record<string, boolean>)[key] = false
+      ;(res as Record<string, boolean>)[key] = !isDisableAllFFsMode() // disable takes precedence
     }
   }
 
@@ -89,15 +99,17 @@ export function getFeatureFlags(): {
   FF_AUTOMATE_MODULE_ENABLED: boolean
   FF_GENDOAI_MODULE_ENABLED: boolean
   FF_WORKSPACES_MODULE_ENABLED: boolean
+  FF_WORKSPACES_NEW_PLANS_ENABLED: boolean
   FF_WORKSPACES_SSO_ENABLED: boolean
   FF_GATEKEEPER_MODULE_ENABLED: boolean
+  FF_GATEKEEPER_FORCE_FREE_PLAN: boolean
   FF_BILLING_INTEGRATION_ENABLED: boolean
   FF_WORKSPACES_MULTI_REGION_ENABLED: boolean
   FF_FILEIMPORT_IFC_DOTNET_ENABLED: boolean
-  FF_FORCE_EMAIL_VERIFICATION: boolean
   FF_FORCE_ONBOARDING: boolean
   FF_OBJECTS_STREAMING_FIX: boolean
   FF_MOVE_PROJECT_REGION_ENABLED: boolean
+  FF_NO_PERSONAL_EMAILS_ENABLED: boolean
 } {
   if (!parsedFlags) parsedFlags = parseFeatureFlags()
   return parsedFlags

@@ -1,4 +1,3 @@
-import { getStreamRoute } from '@/modules/core/helpers/routeHelper'
 import {
   InviteCreateValidationError,
   InviteFinalizedForNewEmail,
@@ -7,12 +6,11 @@ import {
 } from '@/modules/serverinvites/errors'
 import {
   buildUserTarget,
-  isProjectResourceTarget,
   ResolvedTargetData,
   resolveTarget
 } from '@/modules/serverinvites/helpers/core'
 
-import { getFrontendOrigin, useNewFrontend } from '@/modules/shared/helpers/envHelper'
+import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
 import {
   InviteResourceTargetType,
   ServerInviteRecord
@@ -114,27 +112,10 @@ export const convertToFinalizationValidation = (params: {
  * Note: Important auth query string params like the access_code are added separately
  * in auth middlewares
  */
-export const resolveAuthRedirectPathFactory =
-  (): ResolveAuthRedirectPath => (invite?: ServerInviteRecord) => {
-    if (useNewFrontend()) {
-      // All post-auth redirects are handled by the frontend itself
-      return getFrontendOrigin()
-    }
-
-    /**
-     * @deprecated Deprecated user flow, only relevant in FE1. Thus no need to update it w/ support for workspaces
-     * and other new features.
-     */
-    if (invite) {
-      const primaryTarget = invite.resource
-      if (isProjectResourceTarget(primaryTarget)) {
-        return `${getStreamRoute(primaryTarget.resourceId)}`
-      }
-    }
-
-    // Fall-back to base URL (for server invites)
-    return getFrontendOrigin()
-  }
+export const resolveAuthRedirectPathFactory = (): ResolveAuthRedirectPath => () => {
+  // All post-auth redirects are handled by the frontend itself
+  return getFrontendOrigin()
+}
 
 /**
  * Validate that the new user has a valid invite for registering to the server

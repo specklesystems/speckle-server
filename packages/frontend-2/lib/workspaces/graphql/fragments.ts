@@ -52,6 +52,10 @@ export const workspaceTeamFragment = graphql(`
     }
     adminWorkspacesJoinRequests {
       totalCount
+      items {
+        status
+        id
+      }
     }
     ...WorkspaceInvitedTeam_Workspace
   }

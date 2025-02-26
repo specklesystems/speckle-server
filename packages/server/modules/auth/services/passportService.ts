@@ -1,6 +1,6 @@
 import passport, { Strategy, AuthenticateOptions } from 'passport'
 import { logger } from '@/logging/logging'
-import { useNewFrontend, getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
+import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
 import {
   UnverifiedEmailSSOLoginError,
   UserInputError
@@ -66,9 +66,7 @@ export const passportAuthenticateHandlerBuilderFactory =
               errPath = `/error-email-verify?email=${email}`
             }
 
-            return useNewFrontend()
-              ? res.redirect(new URL(errPath, getFrontendOrigin()).toString())
-              : res.redirect(errPath)
+            res.redirect(new URL(errPath, getFrontendOrigin()).toString())
           }
 
           req.user = user

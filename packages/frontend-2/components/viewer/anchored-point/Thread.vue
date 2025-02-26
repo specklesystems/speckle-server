@@ -466,7 +466,7 @@ onKeyDown('Escape', () => {
 })
 
 watch(
-  () => <const>[isExpanded.value, isViewed.value],
+  () => [isExpanded.value, isViewed.value] as const,
   (newVals, oldVals) => {
     const [newIsExpanded, newIsViewed] = newVals
     const [oldIsExpanded] = oldVals || [false]

@@ -48,7 +48,8 @@ const configs = [
       '@typescript-eslint/no-unsafe-enum-comparison': 'off', // too restrictive
       '@typescript-eslint/require-await': 'off', // too restrictive
       '@typescript-eslint/unbound-method': 'off', // too restrictive
-      '@typescript-eslint/no-misused-promises': 'off'
+      '@typescript-eslint/no-misused-promises': 'off',
+      '@typescript-eslint/prefer-promise-reject-errors': 'off'
     }
   },
   {

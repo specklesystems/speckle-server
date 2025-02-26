@@ -7,7 +7,7 @@ type InsertionObject = Pick<InsertableSpeckleObject, 'data'>
 export class ArgumentError extends BaseError {
   static defaultMessage = 'Invalid argument value provided'
 
-  constructor(message?: string | undefined, options?: Options | Error | undefined) {
+  constructor(message?: string, options?: Options | Error) {
     super(message, options)
   }
   static statusCode = 400

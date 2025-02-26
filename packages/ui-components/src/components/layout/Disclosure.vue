@@ -1,6 +1,6 @@
 <template>
   <div>
-    <Disclosure v-slot="{ open }">
+    <HeadlessDisclosure v-slot="{ open }">
       <DisclosureButton :class="buttonClasses">
         <div class="inline-flex items-center space-x-2">
           <Component :is="icon" v-if="icon" class="h-5 w-5" />
@@ -13,11 +13,15 @@
           <slot>Panel contents</slot>
         </div>
       </DisclosurePanel>
-    </Disclosure>
+    </HeadlessDisclosure>
   </div>
 </template>
 <script setup lang="ts">
-import { DisclosureButton, Disclosure, DisclosurePanel } from '@headlessui/vue'
+import {
+  DisclosureButton,
+  Disclosure as HeadlessDisclosure,
+  DisclosurePanel
+} from '@headlessui/vue'
 import { ChevronUpIcon } from '@heroicons/vue/24/solid'
 import { computed } from 'vue'
 import type { PropAnyComponent } from '~~/src/helpers/common/components'

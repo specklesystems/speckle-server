@@ -202,7 +202,7 @@ export type TriggerAutomationRevisionRun = <
 >(params: {
   revisionId: string
   manifest: M
-  source?: RunTriggerSource
+  source: RunTriggerSource
 }) => Promise<{ automationRunId: string }>
 
 export type GetProjectAutomationCount = (params: {

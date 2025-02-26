@@ -9,7 +9,6 @@ services:
     environment:
       SPECKLE_SERVER: http://127.0.0.1 # this is the canonical url
       SERVER_VERSION: 2
-      FRONTEND_VERSION: '2'
       VERIFY_CERTIFICATE: '0'
     restart: 'no'
 

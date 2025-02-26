@@ -1,3 +1,4 @@
+import { Project } from '@/modules/core/domain/streams/types'
 import { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
 import { ServerInfo } from '@/modules/core/helpers/types'
 import { UserWithOptionalRole } from '@/modules/core/repositories/users'
@@ -109,3 +110,7 @@ export type FinalizeInvitedServerRegistration = (
 ) => Promise<void>
 
 export type ResolveAuthRedirectPath = (invite?: ServerInviteRecord) => string
+
+export type GetProjectInviteProject = (params: {
+  invite: ServerInviteRecord
+}) => Promise<Project | undefined>

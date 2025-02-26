@@ -9,6 +9,7 @@ export const WorkspaceEvents = {
   Authorized: `${eventPrefix}authorized`,
   Created: `${eventPrefix}created`,
   Updated: `${eventPrefix}updated`,
+  Deleted: `${eventPrefix}deleted`,
   RoleDeleted: `${eventPrefix}role-deleted`,
   RoleUpdated: `${eventPrefix}role-updated`,
   JoinedFromDiscovery: `${eventPrefix}joined-from-discovery`
@@ -40,6 +41,7 @@ export type WorkspaceEventsPayloads = {
   [WorkspaceEvents.Authorized]: WorkspaceAuthorizedPayload
   [WorkspaceEvents.Created]: WorkspaceCreatedPayload
   [WorkspaceEvents.Updated]: WorkspaceUpdatedPayload
+  [WorkspaceEvents.Deleted]: { workspaceId: string }
   [WorkspaceEvents.RoleDeleted]: WorkspaceRoleDeletedPayload
   [WorkspaceEvents.RoleUpdated]: WorkspaceRoleUpdatedPayload
   [WorkspaceEvents.JoinedFromDiscovery]: WorkspaceJoinedFromDiscoveryPayload

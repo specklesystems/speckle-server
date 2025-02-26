@@ -1,12 +1,5 @@
 import { db } from '@/db/knex'
 import { moduleLogger, crossServerSyncLogger } from '@/logging/logging'
-import { saveActivityFactory } from '@/modules/activitystream/repositories'
-import { addBranchCreatedActivityFactory } from '@/modules/activitystream/services/branchActivity'
-import {
-  addCommentCreatedActivityFactory,
-  addReplyAddedActivityFactory
-} from '@/modules/activitystream/services/commentActivity'
-import { addCommitCreatedActivityFactory } from '@/modules/activitystream/services/commitActivity'
 import { getBlobsFactory } from '@/modules/blobstorage/repositories'
 import {
   getCommentFactory,
@@ -73,7 +66,6 @@ import { ensureOnboardingProjectFactory } from '@/modules/cross-server-sync/serv
 import { downloadProjectFactory } from '@/modules/cross-server-sync/services/project'
 import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import { publish } from '@/modules/shared/utils/subscriptions'
 
 const crossServerSyncModule: SpeckleModule = {
   init() {
@@ -120,13 +112,7 @@ const crossServerSyncModule: SpeckleModule = {
       insertComments,
       insertCommentLinks,
       markCommentViewed,
-      emitEvent: getEventBus().emit,
-      addCommentCreatedActivity: addCommentCreatedActivityFactory({
-        getViewerResourcesFromLegacyIdentifiers,
-        getViewerResourceItemsUngrouped,
-        saveActivity: saveActivityFactory({ db }),
-        publish
-      })
+      emitEvent: getEventBus().emit
     })
     const createCommentReplyAndNotify = createCommentReplyAndNotifyFactory({
       getComment: getCommentFactory({ db }),
@@ -135,13 +121,9 @@ const crossServerSyncModule: SpeckleModule = {
       insertCommentLinks,
       markCommentUpdated: markCommentUpdatedFactory({ db }),
       emitEvent: getEventBus().emit,
-      addReplyAddedActivity: addReplyAddedActivityFactory({
-        getViewerResourcesForComment: getViewerResourcesForCommentFactory({
-          getCommentsResources: getCommentsResourcesFactory({ db }),
-          getViewerResourcesFromLegacyIdentifiers
-        }),
-        saveActivity: saveActivityFactory({ db }),
-        publish
+      getViewerResourcesForComment: getViewerResourcesForCommentFactory({
+        getCommentsResources: getCommentsResourcesFactory({ db }),
+        getViewerResourcesFromLegacyIdentifiers
       })
     })
     const getStreamBranchByName = getStreamBranchByNameFactory({ db })
@@ -153,11 +135,7 @@ const crossServerSyncModule: SpeckleModule = {
       insertBranchCommits: insertBranchCommitsFactory({ db }),
       markCommitStreamUpdated,
       markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
-      emitEvent: getEventBus().emit,
-      addCommitCreatedActivity: addCommitCreatedActivityFactory({
-        saveActivity: saveActivityFactory({ db }),
-        publish
-      })
+      emitEvent: getEventBus().emit
     })
 
     const createObject = createObjectFactory({
@@ -194,10 +172,7 @@ const crossServerSyncModule: SpeckleModule = {
         createBranchAndNotify: createBranchAndNotifyFactory({
           createBranch: createBranchFactory({ db }),
           getStreamBranchByName,
-          addBranchCreatedActivity: addBranchCreatedActivityFactory({
-            saveActivity: saveActivityFactory({ db }),
-            publish
-          })
+          eventEmit: getEventBus().emit
         })
       }),
       markOnboardingBaseStream
