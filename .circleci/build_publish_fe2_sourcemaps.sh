@@ -18,7 +18,7 @@ fi
 export DOCKER_BUILDKIT=1
 docker build --build-arg BUILD_SOURCEMAPS=true --build-arg SPECKLE_SERVER_VERSION="${IMAGE_VERSION_TAG}" --tag "${DOCKER_IMAGE_TAG}:${IMAGE_VERSION_TAG}-sourcemaps" --file "${FE2_DIR_PATH}/Dockerfile" .
 container_id=$(docker create "${DOCKER_IMAGE_TAG}:${IMAGE_VERSION_TAG}-sourcemaps")
-docker cp "$container_id":/speckle-server/packages/frontend-2/.output ./packages/frontend-2
+docker cp "$container_id":/speckle-server ./packages/frontend-2/.output
 docker rm "$container_id"
 
 # Publish sourcemaps
