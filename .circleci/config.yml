@@ -1022,6 +1022,9 @@ jobs:
       - attach_workspace:
           at: /tmp/ci/workspace
       - run: cat workspace/env-vars >> $BASH_ENV
+      - setup_remote_docker:
+          version: default
+          docker_layer_caching: true
       - run:
           name: Build and Save
           command: ./.circleci/build_publish_fe2_sourcemaps.sh
