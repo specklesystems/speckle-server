@@ -23,7 +23,7 @@ docker rm "$container_id"
 
 # Publish sourcemaps
 pushd "${GIT_ROOT}/${FE2_DIR_PATH}"
-DATADOG_SITE="${DATADOG_SITE:-"datadoghq.eu"}" yarn dlx @datadog/datadog-ci sourcemaps upload ./.output/public/_nuxt \
+DATADOG_SITE="${DATADOG_SITE:-"datadoghq.eu"}" npx --yes @datadog/datadog-ci sourcemaps upload ./.output/public/_nuxt \
 --service="${FE2_DATADOG_SERVICE}" \
 --release-version="${IMAGE_VERSION_TAG}" \
 --minified-path-prefix=/_nuxt
