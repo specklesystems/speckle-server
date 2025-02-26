@@ -1,5 +1,5 @@
 import { CommandModule } from 'yargs'
-import { cliLogger } from '@/observability/logging'
+import { cliLogger as logger } from '@/observability/logging'
 import { downloadProjectFactory } from '@/modules/cross-server-sync/services/project'
 import { downloadCommitFactory } from '@/modules/cross-server-sync/services/commit'
 import {
@@ -226,7 +226,7 @@ const command: CommandModule<
         eventEmit: getEventBus().emit
       })
     })
-    await downloadProject({ ...argv, regionKey }, { logger: cliLogger })
+    await downloadProject({ ...argv, regionKey }, { logger })
   }
 }
 

@@ -1,5 +1,5 @@
 import { db } from '@/db/knex'
-import { cliLogger } from '@/observability/logging'
+import { cliLogger as logger } from '@/observability/logging'
 import { StreamNotFoundError } from '@/modules/core/errors/stream'
 import { UserNotFoundError } from '@/modules/core/errors/user'
 import { getStreamFactory } from '@/modules/core/repositories/streams'
@@ -55,7 +55,7 @@ const command: CommandModule<
       )
     }
 
-    cliLogger.info(`Generating ${count} objects & commits for stream ${streamId}...`)
+    logger.info(`Generating ${count} objects & commits for stream ${streamId}...`)
     await createTestCommits(
       times(
         count,
@@ -68,7 +68,7 @@ const command: CommandModule<
         })
       )
     )
-    cliLogger.info(`...done`)
+    logger.info(`...done`)
   }
 }
 

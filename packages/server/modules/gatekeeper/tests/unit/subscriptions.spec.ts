@@ -1,4 +1,4 @@
-import { testLogger } from '@/observability/logging'
+import { testLogger as logger } from '@/observability/logging'
 import {
   SubscriptionData,
   SubscriptionDataInput,
@@ -878,7 +878,7 @@ describe('subscriptions @gatekeeper', () => {
       })
       let updatedWorkspaceSubscription: WorkspaceSubscription | undefined = undefined
       await manageSubscriptionDownscaleFactory({
-        logger: testLogger,
+        logger,
         getWorkspaceSubscriptions: async () => [testWorkspaceSubscription],
         downscaleWorkspaceSubscription: async () => {
           throw new Error('kabumm')
@@ -901,7 +901,7 @@ describe('subscriptions @gatekeeper', () => {
       })
       let updatedWorkspaceSubscription: WorkspaceSubscription | undefined = undefined
       await manageSubscriptionDownscaleFactory({
-        logger: testLogger,
+        logger,
         getWorkspaceSubscriptions: async () => [testWorkspaceSubscription],
         downscaleWorkspaceSubscription: async () => {
           throw new Error('kabumm')
