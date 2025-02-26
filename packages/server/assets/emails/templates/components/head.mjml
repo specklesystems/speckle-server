@@ -1,6 +1,6 @@
 <mj-head>
   <mj-attributes>
-    <mj-class name="bgblue" background-color="#3b82f6" />
+    <mj-class name="bgblue" background-color="#146CFF" />
   </mj-attributes>
   <mj-style inline="inline">
     h1 { font-size: 2em } h2 { font-size: 1.5em } h3 { font-size: 1.17em } h4 {

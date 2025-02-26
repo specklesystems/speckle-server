@@ -16,7 +16,7 @@ import {
 import { GetUser } from '@/modules/core/domain/users/operations'
 import { GetServerInfo } from '@/modules/core/domain/server/operations'
 
-const EMAIL_SUBJECT = 'Speckle Account E-mail Verification'
+const EMAIL_SUBJECT = 'Speckle account email verification'
 
 type CreateNewVerificationDeps = {
   getUser: GetUser
@@ -101,11 +101,11 @@ const createNewEmailVerificationFactory =
   }
 
 function buildMjmlBody(verificationCode: string) {
-  const bodyStart = `<mj-text><p style="text-align: center; line-height: 2; margin-top:0;">You have just registered to the Speckle server, or initiated the email verification process manually. To finalize the verification process, use the code below.</p></mj-text>
-  <mj-text><strong style="font-size: 32px;text-align: center; display:block;margin-bottom: 5px;">${verificationCode}</strong></mj-text>
-  <mj-text><p style="text-align: center">This code will expire in 5 minutes. Please do not disclose this code to others.</p>
-  <p style="text-align: center">If you did not make this request, please disregard this email.</p></mj-text>
-  <mj-text><p style="text-align: center;">See you soon,<br />Speckle</p></mj-text>`
+  const bodyStart = `<mj-text align="center" line-height="2">You have just registered to the Speckle server, or initiated the email verification process manually. To finalize the verification process, use the code below.</mj-text>
+  <mj-text align="center" font-size="32px" font-weight="bold" padding-bottom="5px" line-height="2">${verificationCode}</mj-text>
+  <mj-text align="center" line-height="2">This code will expire in 5 minutes. Please do not disclose this code to others.</mj-text>
+  <mj-text align="center" line-height="2">If you did not make this request, please disregard this email.</mj-text>
+  <mj-text align="center" line-height="2">See you soon,<br />Speckle</mj-text>`
   return { bodyStart }
 }
 

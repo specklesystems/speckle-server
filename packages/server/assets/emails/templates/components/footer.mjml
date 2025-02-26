@@ -1,4 +1,4 @@
-<mj-section padding-top="0" border-bottom="1px solid #e0e0e0">
+<mj-section padding-top="0" padding-bottom="10px" border-bottom="1px solid #e0e0e0">
   <mj-column>
     <mj-text font-size="12px" line-height="18px" align="center" color="#999">
       Sent from <%- params.serverInfo.name -%> at
@@ -16,7 +16,7 @@
     </mj-text>
   </mj-column>
 </mj-section>
-<mj-section padding-top="20px">
+<mj-section padding-top="10px" padding-bottom="30px">
   <mj-column>
     <mj-text font-size="12px" line-height="18px" align="center" color="#999999">
       Brought to you by
