@@ -6,12 +6,12 @@
         <div class="flex items-center gap-2 p-0.5 hover:bg-highlight-2 rounded">
           <template v-if="hasWorkspaces">
             <WorkspaceAvatar
-              :name="workspacesItems[0].name"
-              :logo="workspacesItems[0].logo"
+              :name="workspaces[0].name"
+              :logo="workspaces[0].logo"
               size="sm"
             />
             <p class="text-body-xs text-foreground">
-              {{ workspacesItems[0].name }}
+              {{ workspaces[0].name }}
             </p>
           </template>
           <ChevronDownIcon :class="userOpen ? 'rotate-180' : ''" class="h-3 w-3" />
@@ -26,21 +26,43 @@
         leave-to-class="transform opacity-0 scale-95"
       >
         <MenuItems
-          class="absolute left-4 top-14 w-56 origin-top-right bg-foundation outline outline-1 outline-primary-muted rounded-md shadow-lg overflow-hidden divide-y divide-outline-2"
+          class="absolute left-4 top-14 w-64 origin-top-right bg-foundation outline outline-1 outline-primary-muted rounded-md shadow-lg overflow-hidden divide-y divide-outline-2"
         >
-          <div class="flex gap-x-2 p-2 pb-3">
-            <FormButton full-width color="outline" size="sm">Settings</FormButton>
-            <FormButton full-width color="outline" size="sm">Invite members</FormButton>
+          <div class="p-2 pb-4 flex flex-col gap-y-4">
+            <div class="flex gap-x-2 items-center">
+              <WorkspaceAvatar
+                :name="workspaces[0].name"
+                :logo="workspaces[0].logo"
+                size="lg"
+              />
+              <div class="flex flex-col space-between">
+                <p class="text-body-xs text-foreground">
+                  {{ workspaces[0].name }}
+                </p>
+                <p class="text-body-2xs text-foreground-2 capitalize">
+                  {{ workspaces[0].plan?.name }}
+                </p>
+              </div>
+            </div>
+            <div class="flex gap-x-2">
+              <FormButton full-width color="outline" size="sm">Settings</FormButton>
+              <FormButton full-width color="outline" size="sm">
+                Invite members
+              </FormButton>
+            </div>
           </div>
-          <div class="p-2 pt-1">
+          <div class="p-3 pt-1">
             <LayoutSidebarMenuGroup
               title="Workspaces"
               :icon-click="isGuest ? undefined : handlePlusClick"
               icon-text="Create workspace"
             >
               <div v-if="hasWorkspaces">
-                <template v-for="(item, key) in workspacesItems" :key="key">
-                  <NuxtLink v-if="item.creationState.completed !== false" :to="item.to">
+                <template v-for="(item, key) in workspaces" :key="key">
+                  <NuxtLink
+                    v-if="item.creationState?.completed !== false"
+                    :to="workspaceRoute(item.slug)"
+                  >
                     <LayoutSidebarMenuGroupItem :label="item.name">
                       <template #icon>
                         <WorkspaceAvatar
@@ -55,6 +77,14 @@
               </div>
             </LayoutSidebarMenuGroup>
           </div>
+          <div v-if="hasDiscoverableWorkspaces" class="p-3">
+            <NuxtLink class="flex justify-between items-center">
+              <p class="text-body-xs text-foreground">Join existing workspaces</p>
+              <CommonBadge color-classes="bg-foundation-2 text-foreground-2" rounded>
+                {{ discoverableWorkspacesCount }}
+              </CommonBadge>
+            </NuxtLink>
+          </div>
         </MenuItems>
       </Transition>
     </Menu>
@@ -65,18 +95,20 @@ import { Menu, MenuButton, MenuItems } from '@headlessui/vue'
 import { ChevronDownIcon } from '@heroicons/vue/24/outline'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { workspaceCreateRoute, workspaceRoute } from '~/lib/common/helpers/route'
-import { useQuery } from '@vue/apollo-composable'
-import { settingsSidebarQuery } from '~/lib/settings/graphql/queries'
 import { useMixpanel } from '~~/lib/core/composables/mp'
+import {
+  useUserWorkspaces,
+  useUserDiscoverableWorkspaces
+} from '~/lib/user/composables/workspaces'
 
 const { isGuest } = useActiveUser()
 const menuButtonId = useId()
 const mixpanel = useMixpanel()
+const { workspaces, hasWorkspaces } = useUserWorkspaces()
+const { hasDiscoverableWorkspaces, discoverableWorkspacesCount } =
+  useUserDiscoverableWorkspaces()
 
-const isWorkspacesEnabled = useIsWorkspacesEnabled()
-const { result: workspaceResult } = useQuery(settingsSidebarQuery, null, {
-  enabled: isWorkspacesEnabled.value
-})
+// const isWorkspacesEnabled = useIsWorkspacesEnabled()
 
 const handlePlusClick = () => {
   navigateTo(workspaceCreateRoute())
@@ -84,21 +116,6 @@ const handlePlusClick = () => {
     source: 'sidebar'
   })
 }
-
-const workspacesItems = computed(() =>
-  workspaceResult.value?.activeUser
-    ? workspaceResult.value.activeUser.workspaces.items.map((workspace) => ({
-        name: workspace.name,
-        id: workspace.id,
-        to: workspaceRoute(workspace.slug),
-        logo: workspace.logo,
-        creationState: {
-          completed: workspace.creationState?.completed
-        }
-      }))
-    : []
-)
-const hasWorkspaces = computed(() => workspacesItems.value.length > 0)
 
 // const isCurrentWorkspace = (...routes: string[]): boolean => {
 //   return routes.some((routeTo) => route.path === routeTo)

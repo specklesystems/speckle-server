@@ -105,8 +105,8 @@ const documents = {
     "\n  query ProjectsMoveToWorkspaceDialog {\n    activeUser {\n      id\n      ...ProjectsMoveToWorkspaceDialog_User\n    }\n  }\n": types.ProjectsMoveToWorkspaceDialogDocument,
     "\n  fragment ProjectsWorkspaceSelect_Workspace on Workspace {\n    id\n    role\n    name\n    logo\n    readOnly\n    slug\n  }\n": types.ProjectsWorkspaceSelect_WorkspaceFragmentDoc,
     "\n  fragment ProjectsInviteBanner on PendingStreamCollaborator {\n    id\n    invitedBy {\n      ...LimitedUserAvatar\n    }\n    projectId\n    projectName\n    token\n    user {\n      id\n    }\n  }\n": types.ProjectsInviteBannerFragmentDoc,
-    "\n  fragment SettingsDialog_Workspace on Workspace {\n    ...SettingsMenu_Workspace\n    id\n    slug\n    role\n    name\n    logo\n    plan {\n      status\n    }\n    creationState {\n      completed\n    }\n  }\n": types.SettingsDialog_WorkspaceFragmentDoc,
-    "\n  fragment SettingsDialog_User on User {\n    id\n    workspaces {\n      items {\n        ...SettingsDialog_Workspace\n      }\n    }\n  }\n": types.SettingsDialog_UserFragmentDoc,
+    "\n  fragment SettingsSidebar_Workspace on Workspace {\n    ...SettingsMenu_Workspace\n    id\n    slug\n    role\n    name\n    logo\n    plan {\n      status\n      name\n    }\n    creationState {\n      completed\n    }\n  }\n": types.SettingsSidebar_WorkspaceFragmentDoc,
+    "\n  fragment SettingsSidebar_User on User {\n    id\n    workspaces {\n      items {\n        ...SettingsSidebar_Workspace\n      }\n    }\n  }\n": types.SettingsSidebar_UserFragmentDoc,
     "\n  fragment SettingsServerRegionsAddEditDialog_ServerRegionItem on ServerRegionItem {\n    id\n    name\n    description\n    key\n  }\n": types.SettingsServerRegionsAddEditDialog_ServerRegionItemFragmentDoc,
     "\n  fragment SettingsServerRegionsTable_ServerRegionItem on ServerRegionItem {\n    id\n    name\n    key\n    description\n  }\n": types.SettingsServerRegionsTable_ServerRegionItemFragmentDoc,
     "\n  fragment SettingsSharedDeleteUserDialog_Workspace on Workspace {\n    id\n    plan {\n      status\n      name\n    }\n    subscription {\n      currentBillingCycleEnd\n      seats {\n        guest\n        plan\n      }\n    }\n  }\n": types.SettingsSharedDeleteUserDialog_WorkspaceFragmentDoc,
@@ -301,7 +301,7 @@ const documents = {
     "\n  mutation DeleteWorkspaceDomain($input: WorkspaceDomainDeleteInput!) {\n    workspaceMutations {\n      deleteDomain(input: $input) {\n        ...SettingsWorkspacesSecurityDomainRemoveDialog_Workspace\n      }\n    }\n  }\n": types.DeleteWorkspaceDomainDocument,
     "\n  mutation SettingsLeaveWorkspace($leaveId: ID!) {\n    workspaceMutations {\n      leave(id: $leaveId)\n    }\n  }\n": types.SettingsLeaveWorkspaceDocument,
     "\n  mutation SettingsBillingCancelCheckoutSession($input: CancelCheckoutSessionInput!) {\n    workspaceMutations {\n      billing {\n        cancelCheckoutSession(input: $input)\n      }\n    }\n  }\n": types.SettingsBillingCancelCheckoutSessionDocument,
-    "\n  query SettingsSidebar {\n    activeUser {\n      ...SettingsDialog_User\n    }\n  }\n": types.SettingsSidebarDocument,
+    "\n  query SettingsSidebar {\n    activeUser {\n      ...SettingsSidebar_User\n    }\n  }\n": types.SettingsSidebarDocument,
     "\n  query SettingsSidebarAutomateFunctions {\n    activeUser {\n      ...Sidebar_User\n    }\n  }\n": types.SettingsSidebarAutomateFunctionsDocument,
     "\n  query SettingsWorkspaceGeneral($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      ...SettingsWorkspacesGeneral_Workspace\n    }\n  }\n": types.SettingsWorkspaceGeneralDocument,
     "\n  query SettingsWorkspaceBilling($slug: String!) {\n    workspaceBySlug(slug: $slug) {\n      id\n      ...SettingsWorkspacesBilling_Workspace\n    }\n  }\n": types.SettingsWorkspaceBillingDocument,
@@ -353,7 +353,7 @@ const documents = {
     "\n  fragment WorkspaceSecurity_Workspace on Workspace {\n    id\n    slug\n    domains {\n      id\n      domain\n    }\n  }\n": types.WorkspaceSecurity_WorkspaceFragmentDoc,
     "\n  mutation UpdateRole($input: WorkspaceRoleUpdateInput!) {\n    workspaceMutations {\n      updateRole(input: $input) {\n        team {\n          items {\n            id\n            role\n          }\n        }\n      }\n    }\n  }\n": types.UpdateRoleDocument,
     "\n  mutation InviteToWorkspace(\n    $workspaceId: String!\n    $input: [WorkspaceInviteCreateInput!]!\n  ) {\n    workspaceMutations {\n      invites {\n        batchCreate(workspaceId: $workspaceId, input: $input) {\n          id\n          invitedTeam {\n            ...SettingsWorkspacesMembersInvitesTable_PendingWorkspaceCollaborator\n          }\n        }\n      }\n    }\n  }\n": types.InviteToWorkspaceDocument,
-    "\n  mutation CreateWorkspace($input: WorkspaceCreateInput!) {\n    workspaceMutations {\n      create(input: $input) {\n        id\n        ...SettingsDialog_Workspace\n      }\n    }\n  }\n": types.CreateWorkspaceDocument,
+    "\n  mutation CreateWorkspace($input: WorkspaceCreateInput!) {\n    workspaceMutations {\n      create(input: $input) {\n        id\n        ...SettingsSidebar_Workspace\n      }\n    }\n  }\n": types.CreateWorkspaceDocument,
     "\n  mutation ProcessWorkspaceInvite($input: WorkspaceInviteUseInput!) {\n    workspaceMutations {\n      invites {\n        use(input: $input)\n      }\n    }\n  }\n": types.ProcessWorkspaceInviteDocument,
     "\n  mutation SetDefaultWorkspaceRegion($workspaceId: String!, $regionKey: String!) {\n    workspaceMutations {\n      setDefaultRegion(workspaceId: $workspaceId, regionKey: $regionKey) {\n        id\n        defaultRegion {\n          id\n          ...SettingsWorkspacesRegionsSelect_ServerRegionItem\n        }\n      }\n    }\n  }\n": types.SetDefaultWorkspaceRegionDocument,
     "\n  mutation DeleteWorkspaceSsoProvider($workspaceId: String!) {\n    workspaceMutations {\n      deleteSsoProvider(workspaceId: $workspaceId)\n    }\n  }\n": types.DeleteWorkspaceSsoProviderDocument,
@@ -779,11 +779,11 @@ export function graphql(source: "\n  fragment ProjectsInviteBanner on PendingStr
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment SettingsDialog_Workspace on Workspace {\n    ...SettingsMenu_Workspace\n    id\n    slug\n    role\n    name\n    logo\n    plan {\n      status\n    }\n    creationState {\n      completed\n    }\n  }\n"): (typeof documents)["\n  fragment SettingsDialog_Workspace on Workspace {\n    ...SettingsMenu_Workspace\n    id\n    slug\n    role\n    name\n    logo\n    plan {\n      status\n    }\n    creationState {\n      completed\n    }\n  }\n"];
+export function graphql(source: "\n  fragment SettingsSidebar_Workspace on Workspace {\n    ...SettingsMenu_Workspace\n    id\n    slug\n    role\n    name\n    logo\n    plan {\n      status\n      name\n    }\n    creationState {\n      completed\n    }\n  }\n"): (typeof documents)["\n  fragment SettingsSidebar_Workspace on Workspace {\n    ...SettingsMenu_Workspace\n    id\n    slug\n    role\n    name\n    logo\n    plan {\n      status\n      name\n    }\n    creationState {\n      completed\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment SettingsDialog_User on User {\n    id\n    workspaces {\n      items {\n        ...SettingsDialog_Workspace\n      }\n    }\n  }\n"): (typeof documents)["\n  fragment SettingsDialog_User on User {\n    id\n    workspaces {\n      items {\n        ...SettingsDialog_Workspace\n      }\n    }\n  }\n"];
+export function graphql(source: "\n  fragment SettingsSidebar_User on User {\n    id\n    workspaces {\n      items {\n        ...SettingsSidebar_Workspace\n      }\n    }\n  }\n"): (typeof documents)["\n  fragment SettingsSidebar_User on User {\n    id\n    workspaces {\n      items {\n        ...SettingsSidebar_Workspace\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -1563,7 +1563,7 @@ export function graphql(source: "\n  mutation SettingsBillingCancelCheckoutSessi
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query SettingsSidebar {\n    activeUser {\n      ...SettingsDialog_User\n    }\n  }\n"): (typeof documents)["\n  query SettingsSidebar {\n    activeUser {\n      ...SettingsDialog_User\n    }\n  }\n"];
+export function graphql(source: "\n  query SettingsSidebar {\n    activeUser {\n      ...SettingsSidebar_User\n    }\n  }\n"): (typeof documents)["\n  query SettingsSidebar {\n    activeUser {\n      ...SettingsSidebar_User\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -1771,7 +1771,7 @@ export function graphql(source: "\n  mutation InviteToWorkspace(\n    $workspace
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  mutation CreateWorkspace($input: WorkspaceCreateInput!) {\n    workspaceMutations {\n      create(input: $input) {\n        id\n        ...SettingsDialog_Workspace\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation CreateWorkspace($input: WorkspaceCreateInput!) {\n    workspaceMutations {\n      create(input: $input) {\n        id\n        ...SettingsDialog_Workspace\n      }\n    }\n  }\n"];
+export function graphql(source: "\n  mutation CreateWorkspace($input: WorkspaceCreateInput!) {\n    workspaceMutations {\n      create(input: $input) {\n        id\n        ...SettingsSidebar_Workspace\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation CreateWorkspace($input: WorkspaceCreateInput!) {\n    workspaceMutations {\n      create(input: $input) {\n        id\n        ...SettingsSidebar_Workspace\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

@@ -153,7 +153,7 @@ import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
 import { useBreakpoints } from '@vueuse/core'
 
 graphql(`
-  fragment SettingsDialog_Workspace on Workspace {
+  fragment SettingsSidebar_Workspace on Workspace {
     ...SettingsMenu_Workspace
     id
     slug
@@ -162,6 +162,7 @@ graphql(`
     logo
     plan {
       status
+      name
     }
     creationState {
       completed
@@ -170,11 +171,11 @@ graphql(`
 `)
 
 graphql(`
-  fragment SettingsDialog_User on User {
+  fragment SettingsSidebar_User on User {
     id
     workspaces {
       items {
-        ...SettingsDialog_Workspace
+        ...SettingsSidebar_Workspace
       }
     }
   }
