@@ -7,6 +7,7 @@ import { GetProject } from '@/modules/core/domain/projects/operations'
 import { GetStreamWebhooks } from '@/modules/webhooks/domain/operations'
 import {
   CopyProjectAutomations,
+  CopyProjectBlobs,
   CopyProjectComments,
   CopyProjectModels,
   CopyProjectObjects,
@@ -37,6 +38,7 @@ export const updateProjectRegionFactory =
     copyProjectAutomations: CopyProjectAutomations
     copyProjectComments: CopyProjectComments
     copyProjectWebhooks: CopyProjectWebhooks
+    copyProjectBlobs: CopyProjectBlobs
   }): UpdateProjectRegion =>
   async (params) => {
     const { projectId, regionKey } = params
@@ -89,6 +91,7 @@ export const updateProjectRegionFactory =
     const copiedWebhookCount = await deps.copyProjectWebhooks({ projectIds })
 
     // TODO: Move file blobs
+    await deps.copyProjectBlobs({ projectIds })
 
     // TODO: Validate state after move captures latest state of project
     const sourceProjectModelCount = await deps.countProjectModels(projectId)
