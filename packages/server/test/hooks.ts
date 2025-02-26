@@ -200,7 +200,7 @@ export const resetPubSubFactory = (deps: { db: Knex }) => async () => {
       `SELECT * FROM aiven_extras.pg_alter_subscription_disable('${info.subname}');`
     )
     // If we do not wait, the following call occasionally fails because a replication slot is still in use.
-    await wait(250)
+    await wait(1000)
     await deps.db.raw(
       `SELECT * FROM aiven_extras.pg_drop_subscription('${info.subname}');`
     )
