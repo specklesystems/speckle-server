@@ -126,7 +126,7 @@ workflows:
           context:
             - github-readonly-public-repos
             - datadog-sourcemaps-publish
-          filters: *filters-build
+          filters: *filters-build # TODO: Switch to *filters-publish before merge
           requires:
             - get-version
 
@@ -1014,8 +1014,8 @@ jobs:
       SPECKLE_SERVER_PACKAGE: frontend-2
 
   docker-build-frontend-2-sourcemaps:
-    docker: *docker-base-image
-    resource_class: medium
+    docker: *docker-node-image
+    resource_class: xlarge
     working_directory: *work-dir
     environment:
       SPECKLE_SERVER_PACKAGE: frontend-2
