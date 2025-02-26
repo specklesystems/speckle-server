@@ -1017,6 +1017,8 @@ jobs:
     docker: *docker-base-image
     resource_class: medium
     working_directory: *work-dir
+    environment:
+      SPECKLE_SERVER_PACKAGE: frontend-2
     steps:
       - checkout
       - attach_workspace:
