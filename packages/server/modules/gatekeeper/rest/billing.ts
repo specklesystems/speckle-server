@@ -23,6 +23,8 @@ import { getStripeClient } from '@/modules/gatekeeper/stripe'
 import { handleSubscriptionUpdateFactory } from '@/modules/gatekeeper/services/subscriptions'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { extendLoggerComponent } from '@/logging/logging'
+import { OperationName, OperationStatus, stripeEventId } from '@/logging/domain/fields'
+import { logWithErr } from '@/logging/graphqlError'
 
 export const getBillingRouter = (): Router => {
   const router = Router()
@@ -53,27 +55,32 @@ export const getBillingRouter = (): Router => {
       res.status(400).json({ error: e.message })
       return
     }
+    if ('id' in event.data.object)
+      logger = logger.child(stripeEventId(event.data.object.id))
 
     switch (event.type) {
       case 'checkout.session.async_payment_failed':
         // if payment fails, we delete the failed session
-        logger.info(
-          { stripeEventId: event.data.object.id },
-          'Payment failed, attempting to delete checkout session'
-        )
         try {
+          logger = logger.child(OperationName('deleteCheckoutSession'))
+          logger.info(
+            OperationStatus.start,
+            '[{operationName} ({operationStatus})] Payment failed.'
+          )
           await deleteCheckoutSessionFactory({ db })({
             checkoutSessionId: event.data.object.id
           })
-          logger.info('Checkout session deleted')
+          logger.info(OperationStatus.success, '[{operationName} ({operationStatus})]')
         } catch (err) {
-          logger.error({ err }, 'Failed to delete checkout session')
+          logWithErr(logger, err)(
+            OperationStatus.failure,
+            '[{operationName} ({operationStatus})]'
+          )
         }
         break
       case 'checkout.session.async_payment_succeeded':
       case 'checkout.session.completed':
         const session = event.data.object
-        logger = logger.child({ stripeEventId: session.id })
 
         if (!session.subscription) {
           logger.warn('Received a checkout session without a subscription')
@@ -102,9 +109,13 @@ export const getBillingRouter = (): Router => {
                 ? session.subscription
                 : session.subscription.id
 
-            logger = logger.child({ subscriptionId })
+            logger = logger.child({
+              subscriptionId,
+              ...OperationName('completeCheckoutSession')
+            })
             logger.info(
-              'Payment succeeded or Stripe session completed, and payment was paid. Attepmt to complete checkout session'
+              OperationStatus.start,
+              '[{operationName} ({operationStatus})] Payment succeeded or Stripe session completed, and payment was paid'
             )
 
             // this must use a transaction
@@ -134,13 +145,19 @@ export const getBillingRouter = (): Router => {
                 }),
                 trx
               )
-              logger.info('Checkout session completed')
+              logger.info(
+                OperationStatus.success,
+                '[{operationName} ({operationStatus})]'
+              )
             } catch (err) {
               if (err instanceof WorkspaceAlreadyPaidError) {
                 // ignore the request, this is prob a replay from stripe
                 logger.info('Workspace is already paid, ignoring')
               } else {
-                logger.error({ err }, 'Failed to complete checkout session')
+                logWithErr(logger, err)(
+                  OperationStatus.failure,
+                  '[{operationName} ({operationStatus})]'
+                )
                 throw err
               }
             }
@@ -149,26 +166,31 @@ export const getBillingRouter = (): Router => {
           case 'unpaid':
             // if payment fails, we delete the failed session
             try {
+              logger = logger.child(OperationName('deleteCheckoutSession'))
               logger.info(
-                'Payment succeeded or Stripe session completed, but payment was not made. Attempting to delete the failed checkout session'
+                OperationStatus.start,
+                '[{operationName} ({operationStatus})] Payment succeeded or Stripe session completed, but payment was not made.'
               )
               await deleteCheckoutSessionFactory({ db })({
                 checkoutSessionId: event.data.object.id
               })
-              logger.info('Checkout session deleted')
+              logger.info(
+                OperationStatus.success,
+                '[{operationName} ({operationStatus})]'
+              )
             } catch (err) {
               const e = ensureError(err, 'Unknown error deleting checkout session')
-              logger.error({ err: e }, 'Failed to delete checkout session')
+              logWithErr(logger, e)(
+                OperationStatus.failure,
+                '[{operationName} ({operationStatus})]'
+              )
             }
         }
         break
 
       case 'checkout.session.expired':
         try {
-          logger.info(
-            { stripeEventId: event.data.object.id },
-            'Checkout session expired, attempting to delete checkout session'
-          )
+          logger.info('Checkout session expired, attempting to delete checkout session')
           // delete the checkout session from the DB
           await deleteCheckoutSessionFactory({ db })({
             checkoutSessionId: event.data.object.id
@@ -181,7 +203,6 @@ export const getBillingRouter = (): Router => {
 
       case 'customer.subscription.updated':
       case 'customer.subscription.deleted':
-        logger = logger.child({ stripeEventId: event.data.object.id })
         try {
           logger.info(
             'Received subscription update event. Attempting to update workspace subscription'
