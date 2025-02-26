@@ -157,7 +157,7 @@ export function enableCustomLoggerHandling(params: {
 
           const firstString = args.find(isString)
           const otherData: unknown[] = args.filter(
-            (o) => !(o instanceof Error) && o !== firstString
+            (o) => o !== firstString && o !== firstError
           )
 
           const errorMessage = firstError?.message ?? firstString ?? `Unknown error`
