@@ -1,4 +1,4 @@
-import { automateLogger } from '@/logging/logging'
+import { automateLogger } from '@/observability/logging'
 import {
   ExecutionEngineBadResponseBodyError,
   type ExecutionEngineErrorResponse,

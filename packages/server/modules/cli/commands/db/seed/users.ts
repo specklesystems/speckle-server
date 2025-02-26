@@ -1,4 +1,4 @@
-import { logger } from '@/logging/logging'
+import { logger } from '@/observability/logging'
 import { Users, ServerAcl } from '@/modules/core/dbSchema'
 import { Roles } from '@/modules/core/helpers/mainConstants'
 import { faker } from '@faker-js/faker'

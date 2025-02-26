@@ -1,4 +1,4 @@
-import { Logger } from '@/logging/logging'
+import type { Logger } from '@/observability/logging'
 import {
   GetWorkspacePlan,
   GetWorkspacePlanPrice,

@@ -1,6 +1,6 @@
 import cron from 'node-cron'
 import { InvalidArgumentError } from '@/modules/shared/errors'
-import { logger } from '@/logging/logging'
+import { logger } from '@/observability/logging'
 import {
   AcquireTaskLock,
   ReleaseTaskLock,

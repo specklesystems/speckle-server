@@ -1,4 +1,4 @@
-import { logger } from '@/logging/logging'
+import { logger } from '@/observability/logging'
 import { CommonDbArgs, getTargettedDbClients } from '@/modules/cli/commands/db/helpers'
 import { resetPubSubFactory } from '@/test/hooks'
 import { CommandModule } from 'yargs'

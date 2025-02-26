@@ -12,7 +12,7 @@ import deepEqualInAnyOrder from 'deep-equal-in-any-order'
 import { knex as mainDb } from '@/db/knex'
 import { init, startHttp, shutdown } from '@/app'
 import graphqlChaiPlugin from '@/test/plugins/graphql'
-import { logger } from '@/logging/logging'
+import { testLogger } from '@/observability/logging'
 import { once } from 'events'
 import type http from 'http'
 import type express from 'express'
@@ -348,7 +348,7 @@ export const mochaHooks: mocha.RootHookObject = {
       console.log('Running tests in multi-region mode...')
     }
 
-    logger.info('running before all')
+    testLogger.info('running before all')
 
     // Init (or cleanup) test databases
     await setupDatabases()
@@ -357,7 +357,7 @@ export const mochaHooks: mocha.RootHookObject = {
     ;({ graphqlServer } = await init())
   },
   afterAll: async () => {
-    logger.info('running after all')
+    testLogger.info('running after all')
     await inEachDb(async (db) => {
       await unlockFactory({ db })()
     })

@@ -1,5 +1,5 @@
 import { db } from '@/db/knex'
-import { cliLogger } from '@/logging/logging'
+import { cliLogger } from '@/observability/logging'
 import { StreamNotFoundError } from '@/modules/core/errors/stream'
 import { UserNotFoundError } from '@/modules/core/errors/user'
 import { getStreamFactory } from '@/modules/core/repositories/streams'

@@ -1,5 +1,5 @@
 import { CommandModule } from 'yargs'
-import { cliLogger } from '@/logging/logging'
+import { cliLogger } from '@/observability/logging'
 import { getWorkspaceBySlugOrIdFactory } from '@/modules/workspaces/repositories/workspaces'
 import { db } from '@/db/knex'
 import { upsertPaidWorkspacePlanFactory } from '@/modules/gatekeeper/repositories/billing'

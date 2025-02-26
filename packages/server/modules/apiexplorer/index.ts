@@ -1,5 +1,5 @@
 import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
-import { moduleLogger } from '@/logging/logging'
+import { moduleLogger } from '@/observability/logging'
 import { readFile } from 'fs/promises'
 import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
 

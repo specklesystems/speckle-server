@@ -1,5 +1,5 @@
 import { CommandModule } from 'yargs'
-import { cliLogger } from '@/logging/logging'
+import { cliLogger } from '@/observability/logging'
 import * as ModulesSetup from '@/modules'
 import { printSchema } from 'graphql/utilities'
 import fs from 'node:fs/promises'

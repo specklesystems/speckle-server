@@ -2,7 +2,7 @@
 import path from 'path'
 import yargs from 'yargs'
 import '../../bootstrap'
-import { cliLogger, logger } from '@/logging/logging'
+import { cliLogger, logger } from '@/observability/logging'
 import { isTestEnv } from '@/modules/shared/helpers/envHelper'
 import { mochaHooks } from '@/test/hooks'
 

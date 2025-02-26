@@ -1,6 +1,6 @@
 import { Optional, SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import { publishNotification } from '@/modules/notifications/services/publication'
-import { activitiesLogger, moduleLogger } from '@/logging/logging'
+import { activitiesLogger, moduleLogger } from '@/observability/logging'
 import { weeklyEmailDigestEnabled } from '@/modules/shared/helpers/envHelper'
 import { EventBus, getEventBus } from '@/modules/shared/services/eventBus'
 import { sendActivityNotificationsFactory } from '@/modules/activitystream/services/summary'

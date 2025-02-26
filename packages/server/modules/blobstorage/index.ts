@@ -15,7 +15,7 @@ import {
   ResourceMismatch,
   BadRequestError
 } from '@/modules/shared/errors'
-import { moduleLogger, logger } from '@/logging/logging'
+import { moduleLogger, logger } from '@/observability/logging'
 import {
   getAllStreamBlobIdsFactory,
   upsertBlobFactory,

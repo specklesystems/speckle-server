@@ -1,4 +1,4 @@
-import { logger, moduleLogger } from '@/logging/logging'
+import { logger, moduleLogger } from '@/observability/logging'
 import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
 import { isEmailEnabled, isTestEnv } from '@/modules/shared/helpers/envHelper'
 import { createTransport, Transporter } from 'nodemailer'

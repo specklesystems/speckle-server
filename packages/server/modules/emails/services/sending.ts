@@ -1,4 +1,4 @@
-import { logger } from '@/logging/logging'
+import { logger } from '@/observability/logging'
 import { SendEmail, SendEmailParams } from '@/modules/emails/domain/operations'
 import { getTransporter } from '@/modules/emails/utils/transporter'
 import { getEmailFromAddress } from '@/modules/shared/helpers/envHelper'

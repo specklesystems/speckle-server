@@ -48,7 +48,7 @@ import {
   DeleteStreamRecord,
   GetUserDeletableStreams
 } from '@/modules/core/domain/streams/operations'
-import { Logger } from '@/logging/logging'
+import type { Logger } from '@/observability/logging'
 import { DeleteAllUserInvites } from '@/modules/serverinvites/domain/operations'
 import { GetServerInfo } from '@/modules/core/domain/server/operations'
 import { EventBusEmit } from '@/modules/shared/services/eventBus'

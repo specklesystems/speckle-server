@@ -1,5 +1,5 @@
 import { db } from '@/db/knex'
-import { cliLogger } from '@/logging/logging'
+import { cliLogger } from '@/observability/logging'
 import {
   getBatchedStreamCommentsFactory,
   getCommentLinksFactory,

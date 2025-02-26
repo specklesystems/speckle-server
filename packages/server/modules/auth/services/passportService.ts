@@ -1,5 +1,4 @@
 import passport, { Strategy, AuthenticateOptions } from 'passport'
-import { logger } from '@/logging/logging'
 import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
 import {
   UnverifiedEmailSSOLoginError,
@@ -47,7 +46,7 @@ export const passportAuthenticateHandlerBuilderFactory =
           user: Optional<Express.User>,
           info: Optional<string | Record<string, unknown> | Array<string | undefined>>
         ) => {
-          if (err && !(err instanceof UserInputError)) logger.error(err)
+          if (err && !(err instanceof UserInputError)) req.log.error(err)
 
           if (!user) {
             const infoMsg = resolveInfoMessage(info)
