@@ -18,7 +18,7 @@ export const logWithErr = (logger: Logger, e: unknown) => {
   return logger.child({ err }).error
 }
 
-const shouldLogAsInfoLevel = (err: unknown): boolean => {
+export const shouldLogAsInfoLevel = (err: unknown): boolean => {
   if (err instanceof GraphQLError) {
     if (isUserGraphqlError(err)) return true
     if (err.message === 'Connection is closed.') return true
