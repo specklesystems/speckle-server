@@ -36,6 +36,8 @@
             class="md:min-w-80"
             allow-unset
             :items="categories"
+            size="base"
+            color="foundation"
           >
             <template #something-selected="{ value }">
               {{ isArray(value) ? value[0].name : value.name }}

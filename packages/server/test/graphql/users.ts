@@ -47,6 +47,31 @@ const getActiveUserQuery = gql`
   ${baseUserFieldsFragment}
 `
 
+export const getActiveUserWithWorkspaceJoinRequestsQuery = gql`
+  query GetActiveUserWithWorkspaceJoinRequests {
+    activeUser {
+      ...BaseUserFields
+      workspaceJoinRequests {
+        totalCount
+        cursor
+        items {
+          workspace {
+            id
+            name
+          }
+          user {
+            id
+            name
+          }
+          status
+        }
+      }
+    }
+  }
+
+  ${baseUserFieldsFragment}
+`
+
 const getOtherUserQuery = gql`
   query GetOtherUser($id: String!) {
     otherUser(id: $id) {

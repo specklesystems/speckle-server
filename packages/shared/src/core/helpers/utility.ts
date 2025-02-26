@@ -61,12 +61,16 @@ export const isNonNullable = <V>(v: V): v is NonNullable<typeof v> => !!v
 /**
  * Make the promise throw after enough time has passed. Useful for implementing timeout functionality in various flows.
  */
-export const timeoutAt = (ms: number, optionalMessage?: string) =>
-  new Promise<never>((_resolve, reject) =>
+export const timeoutAt = (ms: number, optionalMessage?: string) => {
+  // create error beforehand, so we have a better stack trace
+  const err = new TimeoutError(optionalMessage || 'timeoutAt() timed out')
+
+  return new Promise<never>((_resolve, reject) =>
     setTimeout(() => {
-      reject(new TimeoutError(optionalMessage || 'timeoutAt() timed out'))
+      reject(err)
     }, ms)
   )
+}
 
 /**
  * Invoke and return fn(), but retry it up to n times if it throws

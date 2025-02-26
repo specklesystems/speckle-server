@@ -31,8 +31,7 @@ import { expressMiddleware } from '@apollo/server/express4'
 import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin/landingPage/default'
 import { ApolloServerPluginUsageReporting } from '@apollo/server/plugin/usageReporting'
 import { ApolloServerPluginUsageReportingDisabled } from '@apollo/server/plugin/disabled'
-
-import type { ConnectionContext, ExecutionParams } from 'subscriptions-transport-ws'
+import type { ConnectionContext } from 'subscriptions-transport-ws'
 import { SubscriptionServer } from 'subscriptions-transport-ws'
 import { execute, subscribe } from 'graphql'
 
@@ -67,15 +66,12 @@ import {
   requestBodyParsingMiddlewareFactory,
   setContentSecurityPolicyHeaderMiddleware
 } from '@/modules/shared/middleware'
-import { GraphQLError } from 'graphql'
-import { redactSensitiveVariables } from '@/logging/loggingHelper'
 import { buildMocksConfig } from '@/modules/mocks'
 import { defaultErrorHandler } from '@/modules/core/rest/defaultErrorHandler'
 import { migrateDbToLatest } from '@/db/migrations'
 import { statusCodePlugin } from '@/modules/core/graph/plugins/statusCode'
-import { BadRequestError, BaseError, ForbiddenError } from '@/modules/shared/errors'
+import { BadRequestError, ForbiddenError } from '@/modules/shared/errors'
 import { loggingPluginFactory } from '@/modules/core/graph/plugins/logging'
-import { shouldLogAsInfoLevel } from '@/logging/graphqlError'
 import { getUserFactory } from '@/modules/core/repositories/users'
 import { initFactory as healthchecksInitFactory } from '@/healthchecks'
 import type { ReadinessHandler } from '@/healthchecks/types'
@@ -88,62 +84,16 @@ import {
   initiateRequestContextMiddleware
 } from '@/logging/requestContext'
 import { randomUUID } from 'crypto'
+import { onOperationHandlerFactory } from '@/logging/apolloSubscriptions'
+import { initApolloSubscriptionMonitoring } from './logging/apolloSubscriptionMonitoring'
 import { createRateLimiterMiddleware } from '@/modules/core/rest/ratelimiter'
 
 const GRAPHQL_PATH = '/graphql'
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type SubscriptionResponse = { errors?: GraphQLError[]; data?: any }
 
 /**
  * In mocked Ws connections, request will be undefined
  */
 type PossiblyMockedConnectionContext = SetOptional<ConnectionContext, 'request'>
-
-function logSubscriptionOperation(params: {
-  ctx: GraphQLContext
-  execParams: ExecutionParams
-  error?: Error
-  response?: SubscriptionResponse
-}) {
-  const { error, response, ctx, execParams } = params
-  const userId = ctx.userId
-  if (!error && !response) return
-
-  const reqCtx = getRequestContext()
-
-  const logger = ctx.log.child({
-    graphql_query: execParams.query.toString(),
-    graphql_variables: redactSensitiveVariables(execParams.variables),
-    graphql_operation_name: execParams.operationName,
-    graphql_operation_type: 'subscription',
-    userId,
-    ...(reqCtx
-      ? {
-          req: { id: reqCtx.requestId },
-          dbMetrics: reqCtx.dbMetrics
-        }
-      : {})
-  })
-
-  const errMsg = 'GQL subscription event {graphql_operation_name} errored'
-  const errors = response?.errors || (error ? [error] : [])
-  if (errors.length) {
-    for (const error of errors) {
-      let errorLogger = logger
-      if (error instanceof BaseError) {
-        errorLogger = errorLogger.child({ ...error.info() })
-      }
-      if (shouldLogAsInfoLevel(error)) {
-        errorLogger.info({ err: error }, errMsg)
-      } else {
-        errorLogger.error({ err: error }, errMsg)
-      }
-    }
-  } else if (response?.data) {
-    logger.info('GQL subscription event {graphql_operation_name} emitted')
-  }
-}
 
 const isWsServer = (server: http.Server | MockWsServer): server is MockWsServer => {
   return 'on' in server && 'clients' in server
@@ -164,35 +114,12 @@ export function buildApolloSubscriptionServer(
   const wsServer = mockServer ? (mockServer as unknown as ws.Server) : undefined
   const schema = ModulesSetup.graphSchema()
 
-  // Init metrics
-  prometheusClient.register.removeSingleMetric('speckle_server_apollo_connect')
-  const metricConnectCounter = new prometheusClient.Counter({
-    name: 'speckle_server_apollo_connect',
-    help: 'Number of connects'
-  })
-  prometheusClient.register.removeSingleMetric('speckle_server_apollo_clients')
-  const metricConnectedClients = new prometheusClient.Gauge({
-    name: 'speckle_server_apollo_clients',
-    help: 'Number of currently connected clients'
-  })
-
-  prometheusClient.register.removeSingleMetric(
-    'speckle_server_apollo_graphql_total_subscription_operations'
-  )
-  const metricSubscriptionTotalOperations = new prometheusClient.Counter({
-    name: 'speckle_server_apollo_graphql_total_subscription_operations',
-    help: 'Number of total subscription operations served by this instance',
-    labelNames: ['subscriptionType'] as const
-  })
-
-  prometheusClient.register.removeSingleMetric(
-    'speckle_server_apollo_graphql_total_subscription_responses'
-  )
-  const metricSubscriptionTotalResponses = new prometheusClient.Counter({
-    name: 'speckle_server_apollo_graphql_total_subscription_responses',
-    help: 'Number of total subscription responses served by this instance',
-    labelNames: ['subscriptionType', 'status'] as const
-  })
+  const {
+    metricConnectCounter,
+    metricConnectedClients,
+    metricSubscriptionTotalOperations,
+    metricSubscriptionTotalResponses
+  } = initApolloSubscriptionMonitoring()
 
   const getHeaders = (params: {
     connContext?: PossiblyMockedConnectionContext
@@ -303,58 +230,10 @@ export function buildApolloSubscriptionServer(
         )
         metricConnectedClients.dec()
       },
-      onOperation: (...params: [() => void, ExecutionParams]) => {
-        // kinda hacky, but we're using this as an "subscription event emitted"
-        // callback to clear subscription connection dataloaders to avoid stale cache
-        const baseParams = params[1]
-
-        metricSubscriptionTotalOperations.inc({
-          subscriptionType: baseParams.operationName // FIXME: operationName can be empty
-        })
-        const ctx = baseParams.context as GraphQLContext
-
-        const reqCtx = getRequestContext()
-        if (reqCtx) {
-          // Reset db metrics for each event
-          reqCtx.dbMetrics.totalCount = 0
-          reqCtx.dbMetrics.totalDuration = 0
-        }
-
-        const logger = ctx.log || subscriptionLogger
-        logger.info(
-          {
-            graphql_operation_name: baseParams.operationName,
-            userId: baseParams.context.userId,
-            graphql_query: baseParams.query.toString(),
-            graphql_variables: redactSensitiveVariables(baseParams.variables),
-            graphql_operation_type: 'subscription',
-            ...(reqCtx ? { req: { id: reqCtx.requestId } } : {})
-          },
-          'Subscription event fired for {graphql_operation_name}'
-        )
-
-        baseParams.formatResponse = (val: SubscriptionResponse) => {
-          ctx.loaders.clearAll()
-          logSubscriptionOperation({ ctx, execParams: baseParams, response: val })
-          metricSubscriptionTotalResponses.inc({
-            subscriptionType: baseParams.operationName,
-            status: 'success'
-          })
-          return val
-        }
-        baseParams.formatError = (e: Error) => {
-          ctx.loaders.clearAll()
-          logSubscriptionOperation({ ctx, execParams: baseParams, error: e })
-
-          metricSubscriptionTotalResponses.inc({
-            subscriptionType: baseParams.operationName,
-            status: 'error'
-          })
-          return e
-        }
-
-        return baseParams
-      },
+      onOperation: onOperationHandlerFactory({
+        metricSubscriptionTotalOperations,
+        metricSubscriptionTotalResponses
+      }),
       keepAlive: 30000 //milliseconds. Loadbalancers may close the connection after inactivity. e.g. nginx default is 60000ms.
     },
     wsServer || {
