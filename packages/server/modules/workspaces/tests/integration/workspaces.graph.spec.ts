@@ -9,7 +9,8 @@ import {
   BasicTestUser,
   createAuthTokenForUser,
   createTestUser,
-  createTestUsers
+  createTestUsers,
+  login
 } from '@/test/authHelper'
 import { Roles, wait, WorkspaceRoles } from '@speckle/shared'
 import {
@@ -27,7 +28,8 @@ import {
   AddWorkspaceDomainDocument,
   DeleteWorkspaceDomainDocument,
   CreateWorkspaceProjectDocument,
-  DismissWorkspaceDocument
+  DismissWorkspaceDocument,
+  GetActiveUserDiscoverableWorkspacesDocument
 } from '@/test/graphql/generated/graphql'
 import { beforeEachContext } from '@/test/hooks'
 import { AllScopes } from '@/modules/core/helpers/mainConstants'
@@ -487,6 +489,84 @@ describe('Workspaces GQL CRUD', () => {
             }
           }
         ])
+      })
+    })
+
+    describe('LimitedWorkspace.team', () => {
+      it('should return a limited workspace team', async () => {
+        const email = createRandomEmail()
+        const domain = email.split('@')[1]
+        const user = await createTestUser({
+          id: createRandomString(),
+          name: createRandomString(),
+          email,
+          role: Roles.Server.Admin,
+          verified: true
+        })
+        const session = await login(user)
+
+        const workspaceAdmin = await createTestUser({
+          id: createRandomString(),
+          name: 'John Speckle',
+          email: createRandomEmail(),
+          role: Roles.Server.Admin,
+          verified: true,
+          avatar: 'data:image/png;base64,foobar'
+        })
+
+        await createTestWorkspace(
+          {
+            id: createRandomString(),
+            ownerId: workspaceAdmin.id,
+            name: 'Workspace A',
+            slug: cryptoRandomString({ length: 10 }),
+            discoverabilityEnabled: true
+          },
+          workspaceAdmin,
+          {
+            domain
+          }
+        )
+        await createTestWorkspace(
+          {
+            id: createRandomString(),
+            ownerId: workspaceAdmin.id,
+            name: 'Workspace B',
+            slug: cryptoRandomString({ length: 10 }),
+            discoverabilityEnabled: true
+          },
+          workspaceAdmin,
+          {
+            domain
+          }
+        )
+        // Workspace without domain should not be returned
+        await createTestWorkspace(
+          {
+            id: createRandomString(),
+            ownerId: workspaceAdmin.id,
+            name: 'Workspace C',
+            slug: cryptoRandomString({ length: 10 })
+          },
+          workspaceAdmin
+        )
+
+        const res = await session.execute(
+          GetActiveUserDiscoverableWorkspacesDocument,
+          {}
+        )
+        expect(res).to.not.haveGraphQLErrors()
+
+        expect(res.data?.activeUser?.discoverableWorkspaces).to.have.length(2)
+        const discoverableWorkspaces = res.data?.activeUser?.discoverableWorkspaces
+        expect(discoverableWorkspaces?.[0].team?.items).to.have.length(1)
+        expect(discoverableWorkspaces?.[0].team?.items[0].avatar).to.eq(
+          workspaceAdmin.avatar
+        )
+        expect(discoverableWorkspaces?.[1].team?.items).to.have.length(1)
+        expect(discoverableWorkspaces?.[1].team?.items[0].avatar).to.eq(
+          workspaceAdmin.avatar
+        )
       })
     })
 

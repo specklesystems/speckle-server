@@ -6,7 +6,6 @@ import {
 } from '@/modules/gatekeeper/domain/billing'
 import {
   WorkspaceNotPaidPlanError,
-  WorkspacePlanDowngradeError,
   WorkspacePlanMismatchError,
   WorkspacePlanNotFoundError,
   WorkspaceSubscriptionNotFoundError
@@ -22,12 +21,19 @@ import {
   createTestSubscriptionData,
   createTestWorkspaceSubscription
 } from '@/modules/gatekeeper/tests/helpers'
-import { WorkspacePlan } from '@/modules/gatekeeperCore/domain/billing'
-import { expectToThrow } from '@/test/assertionHelper'
+import {
+  PaidWorkspacePlans,
+  WorkspacePlan
+} from '@/modules/gatekeeperCore/domain/billing'
+import { NotImplementedError } from '@/modules/shared/errors'
+import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
+import { expectToThrow, itEach } from '@/test/assertionHelper'
 import { throwUncoveredError } from '@speckle/shared'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
 import { omit } from 'lodash'
+
+const { FF_WORKSPACES_NEW_PLANS_ENABLED } = getFeatureFlags()
 
 describe('subscriptions @gatekeeper', () => {
   describe('handleSubscriptionUpdateFactory creates a function, that', () => {
@@ -446,6 +452,8 @@ describe('subscriptions @gatekeeper', () => {
               case 'business':
               case 'starter':
               case 'plus':
+              case 'team':
+              case 'pro':
                 expect.fail()
               case 'guest':
                 return priceId
@@ -509,6 +517,8 @@ describe('subscriptions @gatekeeper', () => {
                 case 'business':
                 case 'plus':
                 case 'guest':
+                case 'team':
+                case 'pro':
                   expect.fail()
                 case 'starter':
                   return priceId
@@ -585,6 +595,8 @@ describe('subscriptions @gatekeeper', () => {
               case 'business':
               case 'plus':
               case 'guest':
+              case 'team':
+              case 'pro':
                 expect.fail()
               case 'starter':
                 return priceId
@@ -656,6 +668,8 @@ describe('subscriptions @gatekeeper', () => {
               case 'business':
               case 'plus':
               case 'guest':
+              case 'team':
+              case 'pro':
                 expect.fail()
               case 'starter':
                 return priceId
@@ -867,7 +881,7 @@ describe('subscriptions @gatekeeper', () => {
         logger,
         getWorkspaceSubscriptions: async () => [testWorkspaceSubscription],
         downscaleWorkspaceSubscription: async () => {
-          throw 'kabumm'
+          throw new Error('kabumm')
         },
         updateWorkspaceSubscription: async ({ workspaceSubscription }) => {
           updatedWorkspaceSubscription = workspaceSubscription
@@ -890,7 +904,7 @@ describe('subscriptions @gatekeeper', () => {
         logger,
         getWorkspaceSubscriptions: async () => [testWorkspaceSubscription],
         downscaleWorkspaceSubscription: async () => {
-          throw 'kabumm'
+          throw new Error('kabumm')
         },
         updateWorkspaceSubscription: async ({ workspaceSubscription }) => {
           updatedWorkspaceSubscription = workspaceSubscription
@@ -1117,7 +1131,70 @@ describe('subscriptions @gatekeeper', () => {
 
       expect(err.message).to.equal(new WorkspaceSubscriptionNotFoundError().message)
     })
-    it('throws WorkspacePlanDowngradeError for downgrading the plan', async () => {
+
+    itEach(
+      <
+        Array<{
+          oldPlan: PaidWorkspacePlans
+          newPlan: PaidWorkspacePlans
+        }>
+      >[
+        { oldPlan: 'starter', newPlan: 'team' },
+        { oldPlan: 'team', newPlan: 'starter' }
+      ],
+      ({ oldPlan, newPlan }) =>
+        `throws WorkspacePlanUpgradeError for switching between incompatible plan types: ${oldPlan} -> ${newPlan}`,
+      async ({ oldPlan, newPlan }) => {
+        const workspaceId = cryptoRandomString({ length: 10 })
+        const workspaceSubscription = createTestWorkspaceSubscription()
+        const upgradeWorkspaceSubscription = upgradeWorkspaceSubscriptionFactory({
+          getWorkspacePlan: async () => ({
+            workspaceId,
+            createdAt: new Date(),
+            name: oldPlan,
+            status: 'valid'
+          }),
+          getWorkspacePlanProductId: () => {
+            expect.fail()
+          },
+          getWorkspacePlanPrice: () => {
+            expect.fail()
+          },
+          getWorkspaceSubscription: async () => {
+            return workspaceSubscription
+          },
+          reconcileSubscriptionData: () => {
+            expect.fail()
+          },
+          upsertWorkspacePlan: () => {
+            expect.fail()
+          },
+          updateWorkspaceSubscription: () => {
+            expect.fail()
+          },
+          countWorkspaceRole: () => {
+            expect.fail()
+          }
+        })
+        const err = await expectToThrow(async () => {
+          await upgradeWorkspaceSubscription({
+            workspaceId,
+            targetPlan: newPlan,
+            billingInterval: 'yearly'
+          })
+        })
+
+        if (FF_WORKSPACES_NEW_PLANS_ENABLED) {
+          expect(err.message).to.equal(
+            'Attempting to switch between incompatible plan types'
+          )
+        } else {
+          expect(err.message).to.equal(NotImplementedError.defaultMessage)
+        }
+      }
+    )
+
+    it('throws WorkspacePlanUpgradeError for downgrading the plan', async () => {
       const workspaceId = cryptoRandomString({ length: 10 })
       const workspaceSubscription = createTestWorkspaceSubscription()
       const upgradeWorkspaceSubscription = upgradeWorkspaceSubscriptionFactory({
@@ -1152,15 +1229,15 @@ describe('subscriptions @gatekeeper', () => {
       const err = await expectToThrow(async () => {
         await upgradeWorkspaceSubscription({
           workspaceId,
-          targetPlan: 'business',
-          billingInterval: 'monthly'
+          targetPlan: 'starter',
+          billingInterval: 'yearly'
         })
       })
 
-      expect(err.message).to.equal(new WorkspacePlanDowngradeError().message)
+      expect(err.message).to.equal("Can't upgrade to a less expensive plan")
     })
 
-    it('throws WorkspacePlanDowngradeError for downgrading the billing interval', async () => {
+    it('throws WorkspacePlanUpgradeError for downgrading the billing interval', async () => {
       const workspaceId = cryptoRandomString({ length: 10 })
       const workspaceSubscription = createTestWorkspaceSubscription({
         billingInterval: 'yearly'
@@ -1202,7 +1279,7 @@ describe('subscriptions @gatekeeper', () => {
         })
       })
 
-      expect(err.message).to.equal(new WorkspacePlanDowngradeError().message)
+      expect(err.message).to.equal("Can't upgrade from yearly to monthly billing cycle")
     })
     it('throws WorkspacePlanDowngradeError for noop requests', async () => {
       const workspaceId = cryptoRandomString({ length: 10 })
@@ -1246,7 +1323,7 @@ describe('subscriptions @gatekeeper', () => {
         })
       })
 
-      expect(err.message).to.equal(new WorkspacePlanDowngradeError().message)
+      expect(err.message).to.equal("Can't upgrade to the same plan")
     })
     it('throws WorkspacePlanMismatchError if subscription has no seats for the current plan', async () => {
       const workspaceId = cryptoRandomString({ length: 10 })
@@ -1346,6 +1423,10 @@ describe('subscriptions @gatekeeper', () => {
               return 'businessProduct'
             case 'guest':
               return 'guestProduct'
+            case 'team':
+              return 'teamProduct'
+            case 'pro':
+              return 'proProduct'
           }
         },
         getWorkspacePlanPrice: () => {

@@ -52,14 +52,11 @@ import { createRandomPassword } from '@/modules/core/helpers/testHelpers'
 import { WorkspaceProtectedError } from '@/modules/workspaces/errors/workspace'
 import cryptoRandomString from 'crypto-random-string'
 import { grantStreamPermissionsFactory } from '@/modules/core/repositories/streams'
-import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import {
   addOrUpdateStreamCollaboratorFactory,
   validateStreamAccessFactory
 } from '@/modules/core/services/streams/access'
 import { authorizeResolver } from '@/modules/shared'
-import { addStreamPermissionsAddedActivityFactory } from '@/modules/activitystream/services/streamActivity'
-import { publish } from '@/modules/shared/utils/subscriptions'
 import { getUserFactory } from '@/modules/core/repositories/users'
 import {
   TestInvitesGraphQLOperations,
@@ -72,7 +69,6 @@ enum InviteByTarget {
   Id = 'id'
 }
 
-const saveActivity = saveActivityFactory({ db })
 const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
 
 const getUser = getUserFactory({ db })
@@ -80,11 +76,7 @@ const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
   validateStreamAccess,
   getUser,
   grantStreamPermissions: grantStreamPermissionsFactory({ db }),
-  emitEvent: getEventBus().emit,
-  addStreamPermissionsAddedActivity: addStreamPermissionsAddedActivityFactory({
-    saveActivity,
-    publish
-  })
+  emitEvent: getEventBus().emit
 })
 
 describe('Workspaces Invites GQL', () => {

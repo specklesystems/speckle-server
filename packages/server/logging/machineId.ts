@@ -7,7 +7,7 @@ export const getMachineId = () => {
   try {
     const deviceId = machineIdSync()
     return deviceId
-  } catch (error) {
+  } catch {
     const deviceId = uuidv4()
     return deviceId
   }

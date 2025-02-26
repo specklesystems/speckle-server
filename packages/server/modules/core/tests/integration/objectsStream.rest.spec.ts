@@ -202,6 +202,7 @@ describe('Objects streaming REST @core', () => {
           objsIds.push(row[0])
         })
         stream.on('end', () => resolve({ manyObjs, objsIds }))
+        // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
         stream.on('error', (error: unknown) => reject(error))
       })
     }

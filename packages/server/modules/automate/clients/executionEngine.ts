@@ -65,7 +65,7 @@ const getApiUrl = (
       if (isNullOrUndefined(val)) return
       try {
         url.searchParams.append(key, val.toString())
-      } catch (e) {
+      } catch {
         console.log({ val })
       }
     })
@@ -149,7 +149,7 @@ const invokeRequest = async (params: {
     let errorResponse: unknown
     try {
       errorResponse = await response.json()
-    } catch (e) {
+    } catch {
       throw new ExecutionEngineBadResponseBodyError(errorReq)
     }
 

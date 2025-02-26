@@ -249,7 +249,11 @@ describe('project services @core', () => {
         authorId: ownerId
       })
       expect(emitedEvent).to.equal(ProjectEvents.Created)
-      expect(eventPayload).deep.equal({ ownerId, project })
+      expect(eventPayload).deep.equal({
+        ownerId,
+        project,
+        input: { description: '', name: project.name, visibility: 'PUBLIC' }
+      })
     })
     it('successfully creates a project', async () => {
       const ownerId = cryptoRandomString({ length: 10 })
@@ -309,7 +313,11 @@ describe('project services @core', () => {
         authorId: ownerId
       })
       expect(emitedEvent).to.equal(ProjectEvents.Created)
-      expect(eventPayload).deep.equal({ ownerId, project })
+      expect(eventPayload).deep.equal({
+        ownerId,
+        project,
+        input: { description: '', name: project.name, visibility: 'PUBLIC' }
+      })
     })
   })
 })

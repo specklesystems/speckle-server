@@ -99,6 +99,13 @@ export const getActiveUserDiscoverableWorkspacesQuery = gql`
         id
         name
         description
+        team {
+          items {
+            avatar
+          }
+          totalCount
+          cursor
+        }
       }
     }
   }

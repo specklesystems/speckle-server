@@ -63,7 +63,7 @@ const isEditing = ref(true)
 
 const label = computed(() => props.label || props.name)
 // Kinda stupid, but we have to do this because of minor vee-validate version mismatches and vue kinda messing up the types on ui-components build
-// eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-explicit-any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const typesafeRules = computed(() => props.rules as any)
 
 const toggleEditor = () => (isEditing.value = !isEditing.value)

@@ -8,7 +8,7 @@ export class UserInputError<I extends Info = Info> extends BaseError<I> {
 }
 
 export class PasswordTooShortError extends UserInputError {
-  constructor(minPasswordLength: number, options?: Options | Error | undefined) {
+  constructor(minPasswordLength: number, options?: Options | Error) {
     super(
       `Password too short; needs to be ${minPasswordLength} characters or longer.`,
       options

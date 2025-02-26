@@ -50,6 +50,10 @@ export function isProdEnv() {
   return process.env.NODE_ENV === 'production'
 }
 
+export function isCompressionEnabled() {
+  return getBooleanFromEnv('COMPRESSION')
+}
+
 export function getServerVersion() {
   return process.env.SPECKLE_SERVER_VERSION || 'dev'
 }
@@ -72,13 +76,6 @@ export function getMaximumRequestBodySizeMB() {
 
 export function getMaximumObjectSizeMB() {
   return getIntFromEnv('MAX_OBJECT_SIZE_MB', '100')
-}
-
-/**
- * Whether the server is supposed to serve frontend 2.0
- */
-export function useNewFrontend() {
-  return getBooleanFromEnv('USE_FRONTEND_2')
 }
 
 export function enableNewFrontendMessaging() {
@@ -181,13 +178,12 @@ export function shouldDisableNotificationsConsumption() {
 /**
  * Get frontend app origin/base URL
  */
-export function getFrontendOrigin(forceFe2?: boolean) {
-  const envKey = useNewFrontend() || forceFe2 ? 'FRONTEND_ORIGIN' : 'CANONICAL_URL'
-  const trimmedOrigin = trimEnd(process.env[envKey], '/')
+export function getFrontendOrigin() {
+  const trimmedOrigin = trimEnd(process.env['FRONTEND_ORIGIN'], '/')
 
   if (!trimmedOrigin) {
     throw new MisconfiguredEnvironmentError(
-      `Frontend origin env var (${envKey}) not configured!`
+      `Frontend origin env var (FRONTEND_ORIGIN) not configured!`
     )
   }
 
@@ -309,7 +305,7 @@ export function getOnboardingStreamUrl() {
   try {
     // validating that the URL is valid
     return new URL(val).toString()
-  } catch (e) {
+  } catch {
     // suppress
   }
 

@@ -205,6 +205,7 @@ export class Serializer implements IDisposable {
       return res.traversed
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-base-to-string
     throw new Error(`Unsupported type '${typeof value}': ${value}.`)
   }
 

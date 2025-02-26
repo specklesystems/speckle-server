@@ -1,4 +1,4 @@
-import { type Optional } from '@speckle/shared'
+import type { Optional } from '@speckle/shared'
 import { omit } from 'lodash-es'
 import { activeUserQuery } from '~/lib/auth/composables/activeUser'
 import { useApolloClientFromNuxt } from '~/lib/common/composables/graphql'

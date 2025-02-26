@@ -659,11 +659,10 @@ export const downloadCommitFactory =
       await saveNewThreadsFactory(deps)(threads, newResources, { logger })
     }
 
-    const linkToNewCommit = parsedCommitUrl.isFe2
-      ? `${getFrontendOrigin(true)}/projects/${targetStreamId}/models/${
-          localResources.targetBranch.id
-        }@${newCommitId}`
-      : `${getFrontendOrigin()}/streams/${targetStreamId}/commits/${newCommitId}`
+    const linkToNewCommit = `${getFrontendOrigin()}/projects/${targetStreamId}/models/${
+      localResources.targetBranch.id
+    }@${newCommitId}`
+
     logger.debug(`All done! Find your commit here: ${linkToNewCommit}`)
 
     return {
