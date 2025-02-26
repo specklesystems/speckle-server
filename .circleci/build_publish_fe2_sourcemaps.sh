@@ -23,7 +23,7 @@ container_id=$(docker create "${DOCKER_IMAGE_TAG}:${IMAGE_VERSION_TAG}-sourcemap
 
 # Clean target location and copy sourcemaps into it
 rm -rf "${GIT_ROOT}/${FE2_DIR_PATH}/.output"
-docker cp "$container_id":/speckle-server ./packages/frontend-2/.output
+docker cp "$container_id":/speckle-server "${GIT_ROOT}/${FE2_DIR_PATH}/.output"
 docker rm "$container_id"
 
 # Publish sourcemaps
