@@ -181,7 +181,7 @@ export const getBillingRouter = (): Router => {
 
       case 'customer.subscription.updated':
       case 'customer.subscription.deleted':
-        logger = logger.child({ stripeSubscriptionId: event.data.object.id })
+        logger = logger.child({ stripeEventId: event.data.object.id })
         try {
           logger.info(
             'Received subscription update event. Attempting to update workspace subscription'
