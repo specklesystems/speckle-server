@@ -5,8 +5,11 @@ import {
 } from '@/modules/core/services/ratelimiter'
 import { getIpFromRequest } from '@/modules/shared/utils/ip'
 import { InviteNotFoundError } from '@/modules/serverinvites/errors'
-import { UserInputError, PasswordTooShortError } from '@/modules/core/errors/userinput'
-
+import {
+  UserInputError,
+  PasswordTooShortError,
+  BlockedEmailDomainError
+} from '@/modules/core/errors/userinput'
 import { ServerInviteResourceType } from '@/modules/serverinvites/domain/constants'
 import { getResourceTypeRole } from '@/modules/serverinvites/helpers/core'
 import { AuthStrategyMetadata, AuthStrategyBuilder } from '@/modules/auth/helpers/types'
@@ -133,6 +136,7 @@ export const verifyRegistrationRequestHandlerFactory =
         case PasswordTooShortError:
         case UserInputError:
         case InviteNotFoundError:
+        case BlockedEmailDomainError:
           req.log.info({ err }, 'Error while registering.')
           return res.status(400).send({ err: e.message })
         default:

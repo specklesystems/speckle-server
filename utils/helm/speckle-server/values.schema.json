@@ -89,6 +89,11 @@
           "type": "boolean",
           "description": "Forces onboarding for all users",
           "default": false
+        },
+        "noPersonalEmailsEnabled": {
+          "type": "boolean",
+          "description": "Disables the ability sign up with personal email addresses",
+          "default": false
         }
       }
     },
