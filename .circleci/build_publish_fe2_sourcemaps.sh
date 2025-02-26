@@ -14,7 +14,7 @@ if [[ -z "${DATADOG_API_KEY}" ]]; then
   exit 1
 fi
 
-# Build docker image w/ specific target
+# Build same prod docker image just w/ sourcemaps enabled
 export DOCKER_BUILDKIT=1
 docker build --build-arg BUILD_SOURCEMAPS=true --build-arg SPECKLE_SERVER_VERSION="${IMAGE_VERSION_TAG}" --tag "${DOCKER_IMAGE_TAG}:${IMAGE_VERSION_TAG}-sourcemaps" --file "${FE2_DIR_PATH}/Dockerfile" .
 container_id=$(docker create "${DOCKER_IMAGE_TAG}:${IMAGE_VERSION_TAG}-sourcemaps")

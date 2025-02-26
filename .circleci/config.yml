@@ -366,16 +366,6 @@ workflows:
           requires:
             - test-viewer
 
-      # - frontend-2-sourcemaps:
-      #     context:
-      #       - datadog-sourcemaps-publish
-      #     filters: *filters-publish
-      #     requires:
-      #       - get-version
-      #       - docker-build-frontend-2
-      #       - test-frontend-2
-      #       - publish-helm-chart
-
 jobs:
   get-version:
     docker: &docker-base-image
@@ -1242,36 +1232,3 @@ jobs:
           environment:
             CLOUDFLARE_PAGES_PROJECT_NAME: viewer
             VIEWER_SANDBOX_DIR_PATH: packages/viewer-sandbox
-
-  # frontend-2-sourcemaps:
-  #   docker: *docker-node-image
-  #   resource_class: large
-  #   working_directory: *work-dir
-  #   steps:
-  #     - checkout
-  #     - attach_workspace:
-  #         at: /tmp/ci/workspace
-  #     - run: cat workspace/env-vars >> $BASH_ENV
-  #     - restore_cache:
-  #         name: Restore Yarn Package Cache
-  #         keys:
-  #           - yarn-packages-server-{{ checksum "yarn.lock" }}
-  #     - run:
-  #         name: Install Dependencies
-  #         command: yarn
-  #     - save_cache:
-  #         name: Save Yarn Package Cache
-  #         key: yarn-packages-server-{{ checksum "yarn.lock" }}
-  #         paths:
-  #           - .yarn/cache
-  #           - .yarn/unplugged
-  #     - run:
-  #         name: Build public packages
-  #         command: yarn build:public
-  #     - run:
-  #         name: Build FE2
-  #         command: NODE_ENV=production SPECKLE_SERVER_VERSION="${IMAGE_VERSION_TAG}" yarn build:sourcemaps
-  #         working_directory: 'packages/frontend-2'
-  #     - run:
-  #         name: Upload source maps
-  #         command: ./.circleci/publish_fe2_sourcemaps.sh
