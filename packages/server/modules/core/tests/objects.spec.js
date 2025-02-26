@@ -179,7 +179,7 @@ const getObjects = getStreamObjectsFactory({ db })
 describe('Objects @core-objects', () => {
   const userOne = {
     name: 'Dimitrie Stefanescu',
-    email: 'didimitrie43@gmail.com',
+    email: 'didimitrie43@example.org',
     password: 'sn3aky-1337-b1m'
   }
 

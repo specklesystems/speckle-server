@@ -83,7 +83,7 @@ import {
   type WorkspaceHeader_WorkspaceFragment
 } from '~~/lib/common/generated/gql/graphql'
 import { Cog8ToothIcon } from '@heroicons/vue/24/outline'
-import { type AlertAction } from '@speckle/ui-components'
+import type { AlertAction } from '@speckle/ui-components'
 import { Roles } from '@speckle/shared'
 import { settingsWorkspaceRoutes } from '~/lib/common/helpers/route'
 

@@ -8,7 +8,7 @@ function checkLocalStorageAvailability(): boolean {
     storage.getItem(testKey)
     storage.removeItem(testKey)
     return true
-  } catch (e) {
+  } catch {
     return false
   }
 }

@@ -70,12 +70,12 @@
   </div>
 </template>
 
-<script setup lang="ts">
+<script setup lang="ts" generic="Value extends string">
 import { CheckIcon, InformationCircleIcon } from '@heroicons/vue/24/outline'
 import type { ConcreteComponent } from 'vue'
 
 type OptionType = {
-  value: string
+  value: Value
   title: string
   introduction?: string
   icon: ConcreteComponent
@@ -87,9 +87,9 @@ defineProps<{
   disabled?: boolean
 }>()
 
-const selected = defineModel<string>()
+const selected = defineModel<Value>()
 
-const selectItem = (value: string) => {
+const selectItem = (value: Value) => {
   selected.value = value
 }
 </script>

@@ -61,7 +61,7 @@ export const createNewProjectFactory =
             const replicatedProject = await getProject({ projectId })
             if (!replicatedProject) throw new StreamNotFoundError()
           },
-          { maxAttempts: 100 }
+          { maxAttempts: 10 }
         )
       } catch (err) {
         if (err instanceof StreamNotFoundError) {
@@ -80,6 +80,17 @@ export const createNewProjectFactory =
       projectId,
       authorId: ownerId
     })
-    await emitEvent({ eventName: ProjectEvents.Created, payload: { project, ownerId } })
+    await emitEvent({
+      eventName: ProjectEvents.Created,
+      payload: {
+        project,
+        ownerId,
+        input: {
+          description: project.description,
+          name: project.name,
+          visibility: isPublic ? 'PUBLIC' : isDiscoverable ? 'UNLISTED' : 'PRIVATE'
+        }
+      }
+    })
     return project
   }

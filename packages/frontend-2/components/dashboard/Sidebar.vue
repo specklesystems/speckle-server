@@ -52,6 +52,17 @@
                   </template>
                 </LayoutSidebarMenuGroupItem>
               </NuxtLink>
+
+              <NuxtLink :to="connectorsRoute" @click="isOpenMobile = false">
+                <LayoutSidebarMenuGroupItem
+                  label="Connectors"
+                  :active="isActive(connectorsRoute)"
+                >
+                  <template #icon>
+                    <IconConnectors class="size-4 ml-px text-foreground-2" />
+                  </template>
+                </LayoutSidebarMenuGroupItem>
+              </NuxtLink>
             </LayoutSidebarMenuGroup>
 
             <LayoutSidebarMenuGroup
@@ -99,18 +110,6 @@
             </LayoutSidebarMenuGroup>
 
             <LayoutSidebarMenuGroup title="Resources" collapsible>
-              <NuxtLink
-                :to="downloadManagerUrl"
-                target="_blank"
-                @click="isOpenMobile = false"
-              >
-                <LayoutSidebarMenuGroupItem label="Connectors" external>
-                  <template #icon>
-                    <IconConnectors class="size-4 ml-px text-foreground-2" />
-                  </template>
-                </LayoutSidebarMenuGroupItem>
-              </NuxtLink>
-
               <NuxtLink
                 to="https://speckle.community/"
                 target="_blank"
@@ -178,8 +177,8 @@ import {
   projectsRoute,
   workspaceRoute,
   workspacesRoute,
-  downloadManagerUrl,
-  workspaceCreateRoute
+  workspaceCreateRoute,
+  connectorsRoute
 } from '~/lib/common/helpers/route'
 import { useRoute } from 'vue-router'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'

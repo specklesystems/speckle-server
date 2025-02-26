@@ -1,21 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { db } from '@/db/knex'
-import { saveActivityFactory } from '@/modules/activitystream/repositories'
-import {
-  addBranchDeletedActivityFactory,
-  addBranchUpdatedActivityFactory
-} from '@/modules/activitystream/services/branchActivity'
-import {
-  addCommitDeletedActivityFactory,
-  addCommitUpdatedActivityFactory
-} from '@/modules/activitystream/services/commitActivity'
-import {
-  addStreamDeletedActivityFactory,
-  addStreamInviteAcceptedActivityFactory,
-  addStreamPermissionsAddedActivityFactory,
-  addStreamPermissionsRevokedActivityFactory,
-  addStreamUpdatedActivityFactory
-} from '@/modules/activitystream/services/streamActivity'
 import { AllScopes } from '@/modules/core/helpers/mainConstants'
 import {
   deleteBranchByIdFactory,
@@ -35,7 +19,6 @@ import {
 import {
   deleteStreamFactory,
   getCommitStreamFactory,
-  getStreamCollaboratorsFactory,
   getStreamFactory,
   getStreamsFactory,
   grantStreamPermissionsFactory,
@@ -65,7 +48,6 @@ import { getProjectDbClient } from '@/modules/multiregion/utils/dbSelector'
 import { deleteAllResourceInvitesFactory } from '@/modules/serverinvites/repositories/serverInvites'
 import { authorizeResolver } from '@/modules/shared'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import { publish } from '@/modules/shared/utils/subscriptions'
 import {
   BasicTestWorkspace,
   createTestWorkspace
@@ -113,7 +95,6 @@ import { faker } from '@faker-js/faker'
 import { Optional, Roles, Scopes, ServerScope } from '@speckle/shared'
 import { expect } from 'chai'
 
-const saveActivity = saveActivityFactory({ db })
 const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
 const isStreamCollaborator = isStreamCollaboratorFactory({
   getStream: getStreamFactory({ db })
@@ -127,11 +108,7 @@ const buildDeleteProject = async (params: { projectId: string; ownerId: string }
       db: projectDb
     }),
     authorizeResolver,
-    addStreamDeletedActivity: addStreamDeletedActivityFactory({
-      saveActivity,
-      publish,
-      getStreamCollaborators: getStreamCollaboratorsFactory({ db })
-    }),
+    emitEvent: getEventBus().emit,
     deleteAllResourceInvites: deleteAllResourceInvitesFactory({ db }),
     getStream: getStreamFactory({ db: projectDb })
   })
@@ -145,10 +122,7 @@ const buildUpdateProject = async (params: { projectId: string }) => {
     authorizeResolver,
     getStream: getStreamFactory({ db: projectDB }),
     updateStream: updateStreamFactory({ db: projectDB }),
-    addStreamUpdatedActivity: addStreamUpdatedActivityFactory({
-      saveActivity,
-      publish
-    })
+    emitEvent: getEventBus().emit
   })
   return updateStreamAndNotify
 }
@@ -159,10 +133,7 @@ const buildUpdateModel = async (params: { projectId: string }) => {
   const updateBranchAndNotify = updateBranchAndNotifyFactory({
     getBranchById: getBranchByIdFactory({ db: projectDB }),
     updateBranch: updateBranchFactory({ db: projectDB }),
-    addBranchUpdatedActivity: addBranchUpdatedActivityFactory({
-      saveActivity: saveActivityFactory({ db }),
-      publish
-    })
+    eventEmit: getEventBus().emit
   })
   return updateBranchAndNotify
 }
@@ -179,10 +150,6 @@ const buildDeleteModel = async (params: { projectId: string }) => {
     getBranchById: getBranchByIdFactory({ db: projectDB }),
     emitEvent: getEventBus().emit,
     markBranchStreamUpdated,
-    addBranchDeletedActivity: addBranchDeletedActivityFactory({
-      saveActivity: saveActivityFactory({ db }),
-      publish
-    }),
     deleteBranchById: deleteBranchByIdFactory({ db: projectDB })
   })
   return deleteBranchAndNotify
@@ -196,10 +163,7 @@ const buildDeleteVersion = async (params: { projectId: string }) => {
     getCommits: getCommitsFactory({ db: projectDb }),
     getStreams: getStreamsFactory({ db: projectDb }),
     deleteCommits: deleteCommitsFactory({ db: projectDb }),
-    addCommitDeletedActivity: addCommitDeletedActivityFactory({
-      saveActivity: saveActivityFactory({ db }),
-      publish
-    })
+    emitEvent: getEventBus().emit
   })
   return batchDeleteCommits
 }
@@ -215,10 +179,7 @@ const buildUpdateVersion = async (params: { projectId: string }) => {
     getCommitBranch: getCommitBranchFactory({ db: projectDb }),
     switchCommitBranch: switchCommitBranchFactory({ db: projectDb }),
     updateCommit: updateCommitFactory({ db: projectDb }),
-    addCommitUpdatedActivity: addCommitUpdatedActivityFactory({
-      saveActivity: saveActivityFactory({ db }),
-      publish
-    }),
+    emitEvent: getEventBus().emit,
     markCommitStreamUpdated: markCommitStreamUpdatedFactory({ db: projectDb }),
     markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db: projectDb })
   })
@@ -229,24 +190,14 @@ const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
   validateStreamAccess,
   getUser: getUserFactory({ db }),
   grantStreamPermissions: grantStreamPermissionsFactory({ db }),
-  addStreamInviteAcceptedActivity: addStreamInviteAcceptedActivityFactory({
-    saveActivity,
-    publish
-  }),
-  addStreamPermissionsAddedActivity: addStreamPermissionsAddedActivityFactory({
-    saveActivity,
-    publish
-  })
+  emitEvent: getEventBus().emit
 })
 
 const removeStreamCollaborator = removeStreamCollaboratorFactory({
   validateStreamAccess,
   isStreamCollaborator,
   revokeStreamPermissions: revokeStreamPermissionsFactory({ db }),
-  addStreamPermissionsRevokedActivity: addStreamPermissionsRevokedActivityFactory({
-    saveActivity,
-    publish
-  })
+  emitEvent: getEventBus().emit
 })
 
 describe('Core GraphQL Subscriptions (New)', () => {

@@ -491,6 +491,9 @@ export const getObjectChildrenQueryFactory =
     if (totalCount === 0) return { totalCount, objects: [], cursor: null }
 
     // Reconstruct the object based on the provided select paths.
+    // Whenever the paths return arrays, the non-array fields end up being null, so we need to reconstruct
+    // them from previous rows, hence the map
+    const uniqueObjs = new Map<string, Record<string, unknown>>()
     if (!fullObjectSelect) {
       rows.forEach((o, i, arr) => {
         const no = {
@@ -498,15 +501,21 @@ export const getObjectChildrenQueryFactory =
           createdAt: o.createdAt,
           speckleType: o.speckleType,
           totalChildrenCount: o.totalChildrenCount,
-          data: {}
+          data: {} as Record<string, unknown>
         }
+
         let k = 0
         for (const field of select || []) {
-          set(no.data, field, o[k++])
+          const val =
+            o[k++] ?? (uniqueObjs.get(o.id) as Optional<typeof no>)?.data[field] ?? null
+          set(no.data, field, val)
         }
+
         arr[i] = no
+        uniqueObjs.set(o.id, no)
       })
     }
+    uniqueObjs.clear()
 
     // Assemble the cursor for an eventual next call
     const cursorObj: typeof cursor = {

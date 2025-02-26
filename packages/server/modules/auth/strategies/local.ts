@@ -5,8 +5,11 @@ import {
 } from '@/modules/core/services/ratelimiter'
 import { getIpFromRequest } from '@/modules/shared/utils/ip'
 import { InviteNotFoundError } from '@/modules/serverinvites/errors'
-import { UserInputError, PasswordTooShortError } from '@/modules/core/errors/userinput'
-
+import {
+  UserInputError,
+  PasswordTooShortError,
+  BlockedEmailDomainError
+} from '@/modules/core/errors/userinput'
 import { ServerInviteResourceType } from '@/modules/serverinvites/domain/constants'
 import { getResourceTypeRole } from '@/modules/serverinvites/helpers/core'
 import { AuthStrategyMetadata, AuthStrategyBuilder } from '@/modules/auth/helpers/types'
@@ -23,6 +26,7 @@ import {
   ValidateUserPassword
 } from '@/modules/core/domain/users/operations'
 import { GetServerInfo } from '@/modules/core/domain/server/operations'
+import { UserValidationError } from '@/modules/core/errors/user'
 
 const localStrategyBuilderFactory =
   (deps: {
@@ -69,7 +73,16 @@ const localStrategyBuilderFactory =
 
           return next()
         } catch (err) {
-          req.log.info({ err }, 'Error while logging in.')
+          const e = ensureError(err, 'Unexpected issue occured while logging in')
+          switch (e.constructor) {
+            case UserInputError:
+            case UserValidationError:
+              req.log.info({ err }, 'Error while logging in.')
+              break
+            default:
+              req.log.error({ err }, 'Error while logging in.')
+              break
+          }
           return res.status(401).send({ err: true, message: 'Invalid credentials.' })
         }
       },
@@ -107,7 +120,7 @@ const localStrategyBuilderFactory =
             invite = await deps.validateServerInvite(user.email, req.session.token)
           }
 
-          // 3. at this point we know, that we have one of these cases:
+          // 3.. at this point we know, that we have one of these cases:
           //    * the server is invite only and the user has a valid invite
           //    * the server public and the user has a valid invite
           //    * the server public and the user doesn't have an invite
@@ -145,6 +158,7 @@ const localStrategyBuilderFactory =
             case PasswordTooShortError:
             case UserInputError:
             case InviteNotFoundError:
+            case BlockedEmailDomainError:
               req.log.info({ err }, 'Error while registering.')
               return res.status(400).send({ err: e.message })
             default:

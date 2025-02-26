@@ -1,49 +1,44 @@
 <template>
   <LayoutDialog
     v-model:open="isOpen"
-    title="Delete email address"
+    :title="isAdding ? 'Stop adding email?' : 'Delete email address'"
     max-width="xs"
     :buttons="dialogButtons"
   >
     <p class="text-body-xs text-foreground mb-2">
-      Are you sure you want to delete
-      <span class="font-medium">{{ email }}</span>
-      from your account?
+      {{
+        isAdding
+          ? `Do you want to stop adding ${email?.email}? Any progress will be discarded.`
+          : `Are you sure you want to delete ${email?.email} from your account?`
+      }}
     </p>
   </LayoutDialog>
 </template>
 
 <script setup lang="ts">
 import type { LayoutDialogButton } from '@speckle/ui-components'
-import { settingsDeleteUserEmailMutation } from '~/lib/settings/graphql/mutations'
-import { useMutation } from '@vue/apollo-composable'
-import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
-import {
-  getFirstErrorMessage,
-  convertThrowIntoFetchResult
-} from '~~/lib/common/helpers/graphql'
-import { useMixpanel } from '~/lib/core/composables/mp'
+import type { UserEmail } from '~/lib/common/generated/gql/graphql'
+import { useUserEmails } from '~/lib/user/composables/emails'
 
 const props = defineProps<{
-  emailId: string
-  email: string
+  email?: UserEmail
+  isAdding?: boolean
 }>()
+
 const isOpen = defineModel<boolean>('open', { required: true })
 
-const { mutate: deleteMutation } = useMutation(settingsDeleteUserEmailMutation)
-const { triggerNotification } = useGlobalToast()
-const mixpanel = useMixpanel()
+const { deleteUserEmail } = useUserEmails()
 
 const dialogButtons = computed((): LayoutDialogButton[] => [
   {
-    text: 'Cancel',
+    text: props.isAdding ? 'No' : 'Cancel',
     props: { color: 'outline' },
     onClick: () => {
       isOpen.value = false
     }
   },
   {
-    text: 'Delete',
+    text: props.isAdding ? 'Yes' : 'Delete',
     props: { color: 'primary' },
     onClick: () => {
       onDeleteEmail()
@@ -52,24 +47,13 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
 ])
 
 const onDeleteEmail = async () => {
-  const result = await deleteMutation({ input: { id: props.emailId } }).catch(
-    convertThrowIntoFetchResult
-  )
-  if (result?.data) {
-    triggerNotification({
-      type: ToastNotificationType.Success,
-      title: `${props.email} deleted`
-    })
-
-    mixpanel.track('Email Deleted')
-  } else {
-    const errorMessage = getFirstErrorMessage(result?.errors)
-    triggerNotification({
-      type: ToastNotificationType.Danger,
-      title: errorMessage
-    })
+  if (!props.email) return
+  const success = await deleteUserEmail({
+    email: props.email,
+    hideToast: props.isAdding
+  })
+  if (success) {
+    isOpen.value = false
   }
-
-  isOpen.value = false
 }
 </script>

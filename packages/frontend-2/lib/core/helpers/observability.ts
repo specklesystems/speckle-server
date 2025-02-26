@@ -1,9 +1,7 @@
 /* eslint-disable no-console */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unsafe-return */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 
-import { type Optional } from '@speckle/shared'
+import type { Optional } from '@speckle/shared'
 import type * as Observability from '@speckle/shared/dist/esm/observability/index'
 import {
   upperFirst,
@@ -159,7 +157,7 @@ export function enableCustomLoggerHandling(params: {
 
           const firstString = args.find(isString)
           const otherData: unknown[] = args.filter(
-            (o) => !(o instanceof Error) && o !== firstString
+            (o) => o !== firstString && o !== firstError
           )
 
           const errorMessage = firstError?.message ?? firstString ?? `Unknown error`
