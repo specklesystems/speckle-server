@@ -266,7 +266,7 @@ const createObject = createObjectFactory({
 describe('Actors & Tokens @user-services', () => {
   const myTestActor = {
     name: 'Dimitrie Stefanescu',
-    email: 'didimitrie@gmail.com',
+    email: 'didimitrie@example.org',
     password: 'sn3aky-1337-b1m',
     id: ''
   }
