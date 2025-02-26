@@ -49,7 +49,7 @@ const createAppToken = createAppTokenFactory({
 describe('API Tokens', () => {
   const user1: BasicTestUser = {
     name: 'Dimitrie Stefanescu',
-    email: 'didimitrie@gmail.com',
+    email: 'didimitrie@example.org',
     password: 'sn3aky-1337-b1m',
     id: ''
   }
@@ -321,7 +321,7 @@ describe('API Tokens', () => {
     describe('with limited resource access', () => {
       const user2: BasicTestUser = {
         name: 'Some other guy',
-        email: 'bababooey@gmail.com',
+        email: 'bababooey@example.org',
         password: 'sn3aky-1337-b1m',
         id: ''
       }
