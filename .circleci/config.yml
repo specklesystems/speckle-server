@@ -123,8 +123,10 @@ workflows:
             - get-version
 
       - docker-build-frontend-2-sourcemaps:
-          context: *build-context
-          filters: *filters-allow-all # TODO: Switch to filters-build
+          context:
+            - github-readonly-public-repos
+            - datadog-sourcemaps-publish
+          filters: *filters-build
           requires:
             - get-version
 
