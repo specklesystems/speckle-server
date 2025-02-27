@@ -367,6 +367,20 @@ type LimitedWorkspace {
   Optional base64 encoded workspace logo image
   """
   logo: String
+  """
+  Workspace members visible to people with verified email domain
+  """
+  team(cursor: String, limit: Int! = 25): DiscoverableWorkspaceCollaboratorCollection
+}
+
+type DiscoverableWorkspaceCollaboratorCollection {
+  totalCount: Int!
+  cursor: String
+  items: [DiscoverableWorkspaceCollaborator!]!
+}
+
+type DiscoverableWorkspaceCollaborator {
+  avatar: String
 }
 
 type WorkspaceDomain {

@@ -48,9 +48,9 @@ export class WorkspaceNotPaidPlanError extends BaseError {
   static statusCode = 400
 }
 
-export class WorkspacePlanDowngradeError extends BaseError {
-  static defaultMessage = 'Workspace plan cannot be downgraded to a smaller plan'
-  static code = 'WORKSPACE_PLAN_DOWNGRADE_ERROR'
+export class WorkspacePlanUpgradeError extends BaseError {
+  static defaultMessage = 'An issue occurred while upgrading workspace plan'
+  static code = 'WORKSPACE_PLAN_UPGRADE_ERROR'
   static statusCode = 400
 }
 
