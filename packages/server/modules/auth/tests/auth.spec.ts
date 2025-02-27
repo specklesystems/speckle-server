@@ -55,7 +55,7 @@ import {
 } from '@/modules/core/repositories/server'
 import { temporarilyEnableRateLimiter } from '@/modules/core/tests/ratelimiter.spec'
 import { passportAuthenticationCallbackFactory } from '@/modules/auth/services/passportService'
-import { testLogger } from '@/logging/logging'
+import { testLogger as logger } from '@/observability/logging'
 import { Application } from 'express'
 
 const getServerInfo = getServerInfoFactory({ db })
@@ -639,7 +639,7 @@ describe('Auth @auth', () => {
     })
     it('Should handle case where there is an error but no user', async () => {
       const req = httpMocks.createRequest()
-      req.log = testLogger
+      req.log = logger
       const res = httpMocks.createResponse()
       let errorCalledCounter = 0
       let nextCalledCounter = 0
@@ -673,7 +673,7 @@ describe('Auth @auth', () => {
     })
     it('Should handle case where there is an error and a user', async () => {
       const req = httpMocks.createRequest()
-      req.log = testLogger
+      req.log = logger
       const res = httpMocks.createResponse()
       let errorCalledCounter = 0
       let nextCalledCounter = 0
@@ -709,7 +709,7 @@ describe('Auth @auth', () => {
     })
     it('Should handle the case where there is no user and no error', async () => {
       const req = httpMocks.createRequest()
-      req.log = testLogger
+      req.log = logger
       const res = httpMocks.createResponse()
       let errorCalledCounter = 0
       let nextCalledCounter = 0
