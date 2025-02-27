@@ -132,6 +132,7 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 ENV CHROMIUM_EXECUTABLE_PATH="/usr/bin/google-chrome"
+ENV USER_DATA_DIR='/tmp/puppeteer'
 
 # Run everything after as non-privileged user.
 USER pptruser
