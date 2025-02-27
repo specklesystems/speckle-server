@@ -173,11 +173,17 @@ type UserSearchResultCollection {
   items: [LimitedUser!]!
 }
 
+input OnboardingCompletionInput {
+  role: String
+  plans: [String!]
+  source: String
+}
+
 type ActiveUserMutations {
   """
   Mark onboarding as complete
   """
-  finishOnboarding: Boolean!
+  finishOnboarding(input: OnboardingCompletionInput): Boolean!
 
   """
   Edit a user's profile
