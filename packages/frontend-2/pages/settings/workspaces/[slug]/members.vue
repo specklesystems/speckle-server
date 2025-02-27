@@ -8,7 +8,12 @@
         class="mb-6"
       />
       <LayoutTabsHorizontal v-model:active-item="activeTab" :items="tabItems">
-        <NuxtPage />
+        <SettingsWorkspacesMembersTable
+          v-if="activeTab === tabItems[0]"
+          :workspace="workspace"
+          :workspace-slug="slug"
+        />
+        <NuxtPage v-else />
       </LayoutTabsHorizontal>
     </div>
   </section>
@@ -26,6 +31,7 @@ import { settingsWorkspaceRoutes } from '~/lib/common/helpers/route'
 
 graphql(`
   fragment SettingsWorkspacesMembers_Workspace on Workspace {
+    ...SettingsWorkspacesMembersTable_Workspace
     id
     role
     team {
@@ -106,16 +112,16 @@ const tabItems = computed<LayoutPageTabItem[]>(() => [
 const activeTab = computed({
   get: () => {
     const path = route.path
-    if (path.includes('/members/members')) return tabItems.value[0]
     if (path.includes('/members/guests')) return tabItems.value[1]
     if (path.includes('/members/invites')) return tabItems.value[2]
     if (path.includes('/members/requests')) return tabItems.value[3]
+    if (path.includes('/members')) return tabItems.value[0]
     return tabItems.value[0]
   },
   set: (val: LayoutPageTabItem) => {
     switch (val.id) {
       case 'members':
-        router.push(settingsWorkspaceRoutes.membersMembers.route(slug.value))
+        router.push(settingsWorkspaceRoutes.members.route(slug.value))
         break
       case 'guests':
         router.push(settingsWorkspaceRoutes.membersGuests.route(slug.value))

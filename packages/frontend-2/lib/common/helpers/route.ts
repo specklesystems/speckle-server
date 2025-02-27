@@ -47,10 +47,6 @@ export const settingsWorkspaceRoutes = {
     name: 'settings-workspaces-slug-members',
     route: (slug: string) => `/settings/workspaces/${slug}/members`
   },
-  membersMembers: {
-    name: 'settings-workspaces-slug-members-members',
-    route: (slug: string) => `/settings/workspaces/${slug}/members/members`
-  },
   membersGuests: {
     name: 'settings-workspaces-slug-members-guests',
     route: (slug: string) => `/settings/workspaces/${slug}/members/guests`
