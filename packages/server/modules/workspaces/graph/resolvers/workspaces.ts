@@ -197,6 +197,11 @@ import { OperationTypeNode } from 'graphql'
 import { updateWorkspacePlanFactory } from '@/modules/gatekeeper/services/workspacePlans'
 import { GetWorkspaceCollaboratorsArgs } from '@/modules/workspaces/domain/operations'
 import { WorkspaceTeamMember } from '@/modules/workspaces/domain/types'
+import { getGenericRedis } from '@/modules/shared/redis/redis'
+import {
+  AuthCodePayloadAction,
+  createStoredAuthCodeFactory
+} from '@/modules/automate/services/authCode'
 
 const eventBus = getEventBus()
 const getServerInfo = getServerInfoFactory({ db })
@@ -1072,23 +1077,33 @@ export = FF_WORKSPACES_MODULE_ENABLED
             })
           }
         },
-        automateFunctions: async (parent, args) => {
+        automateFunctions: async (parent, args, context) => {
           try {
-            // const authCode = await createStoredAuthCodeFactory({
-            //   redis: getGenericRedis()
-            // })({
-            //   userId: context.userId!,
-            //   action: AuthCodePayloadAction.ListWorkspaceFunctions
-            // })
+            await authorizeResolver(
+              context.userId,
+              parent.id,
+              Roles.Workspace.Member,
+              context.resourceAccessRules
+            )
+
+            const authCode = await createStoredAuthCodeFactory({
+              redis: getGenericRedis()
+            })({
+              userId: context.userId!,
+              action: AuthCodePayloadAction.ListWorkspaceFunctions
+            })
 
             const res = await getFunctions({
-              query: args.filter?.search ?? undefined,
-              cursor: args.cursor ?? undefined,
-              limit: args.limit,
-              requireRelease: true,
-              includeFeatured: true,
-              includeWorkspaces: [parent.id, '7443511bbb'],
-              includeUsers: []
+              auth: authCode,
+              filters: {
+                query: args.filter?.search ?? undefined,
+                cursor: args.cursor ?? undefined,
+                limit: args.limit,
+                requireRelease: true,
+                includeFeatured: true,
+                includeWorkspaces: [parent.id],
+                includeUsers: []
+              }
             })
 
             if (!res) {

@@ -461,31 +461,46 @@ export const getFunctionRelease = async (params: {
     : null
 }
 
+export type GetFunctionsParams = {
+  auth?: AuthCodePayload
+  filters: {
+    query?: string
+    cursor?: string
+    limit?: number
+    requireRelease?: boolean
+    includeFeatured?: boolean
+    includeWorkspaces?: string[]
+    includeUsers?: string[]
+  }
+}
+
 export type GetFunctionsResponse = {
-  items: (FunctionSchemaType & { functionCreatorSpeckleUserId: Nullable<string> })[]
+  items: FunctionSchemaType[]
   cursor: Nullable<string>
   totalCount: number
 }
 
-export const getFunctions = async (params: {
-  query?: string
-  cursor?: string
-  limit?: number
-  requireRelease?: boolean
-  includeFeatured?: boolean
-  includeWorkspaces?: string[]
-  includeUsers?: string[]
-}) => {
+export const getFunctions = async (params: GetFunctionsParams) => {
   const url = getApiUrl(`/api/v2/functions`, {
     query: {
       requireRelease: true,
-      ...params
+      ...params.filters
     }
   })
 
+  const authToken = params.auth
+    ? btoa(
+        JSON.stringify({
+          ...params.auth,
+          origin: getServerOrigin()
+        })
+      )
+    : undefined
+
   return await invokeSafeJsonRequest<GetFunctionsResponse>({
     url,
-    method: 'get'
+    method: 'get',
+    token: authToken
   })
 }
 
