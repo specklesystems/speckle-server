@@ -1,34 +1,16 @@
 import { db } from '@/db/knex'
 import { createRandomString } from '@/modules/core/helpers/testHelpers'
 import { createTestWorkspace } from '@/modules/workspaces/tests/helpers/creation'
-import {
-  BasicTestUser,
-  createAuthTokenForUser,
-  createTestUser
-} from '@/test/authHelper'
+import { createTestUser, login } from '@/test/authHelper'
 import {
   GetActiveUserWithWorkspaceJoinRequestsDocument,
   GetWorkspaceWithJoinRequestsDocument,
   RequestToJoinWorkspaceDocument
 } from '@/test/graphql/generated/graphql'
-import { createTestContext, testApolloServer } from '@/test/graphqlHelper'
 import { beforeEachContext } from '@/test/hooks'
-import { AllScopes, Roles } from '@speckle/shared'
+import { Roles } from '@speckle/shared'
 import { expect } from 'chai'
 import { upsertWorkspaceRoleFactory } from '@/modules/workspaces/repositories/workspaces'
-
-async function login(user: BasicTestUser) {
-  const token = await createAuthTokenForUser(user.id, AllScopes)
-  return await testApolloServer({
-    context: await createTestContext({
-      auth: true,
-      userId: user.id,
-      token,
-      role: user.role,
-      scopes: AllScopes
-    })
-  })
-}
 
 before(async () => {
   await beforeEachContext()

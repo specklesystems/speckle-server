@@ -7,6 +7,7 @@ import {
   UpsertBlob
 } from '@/modules/blobstorage/domain/operations'
 import { BlobStorageItem } from '@/modules/blobstorage/domain/types'
+import { getObjectKey } from '@/modules/blobstorage/helpers/blobs'
 import { BadRequestError } from '@/modules/shared/errors'
 import { getFileSizeLimitMB } from '@/modules/shared/helpers/envHelper'
 import { MaybeAsync } from '@speckle/shared'
@@ -31,7 +32,7 @@ export const uploadFileStreamFactory =
     if (!userId || userId.length !== 10)
       throw new BadRequestError('The user id has to be of length 10')
 
-    const objectKey = `assets/${streamId}/${blobId}`
+    const objectKey = getObjectKey(streamId, blobId)
     const dbFile = {
       id: blobId,
       streamId,
@@ -40,8 +41,9 @@ export const uploadFileStreamFactory =
       fileName,
       fileType
     }
+
     // need to insert the upload data before starting otherwise the upload finished
-    // even might fire faster, than the db insert, causing missing asset data in the db
+    // event might fire faster, than the db insert, causing missing asset data in the db
     await deps.upsertBlob(dbFile)
 
     const { fileHash } = await deps.storeFileStream({ objectKey, fileStream })
