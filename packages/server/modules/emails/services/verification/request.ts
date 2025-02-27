@@ -105,7 +105,7 @@ function buildMjmlBody(verificationCode: string) {
   <mj-text align="center" font-size="32px" font-weight="bold" padding-bottom="5px" line-height="2">${verificationCode}</mj-text>
   <mj-text align="center" line-height="2">This code will expire in 5 minutes. Please do not disclose this code to others.</mj-text>
   <mj-text align="center" line-height="2">If you did not make this request, please disregard this email.</mj-text>
-  <mj-text align="center" line-height="2">See you soon,<br />Speckle</mj-text>`
+  <mj-text align="center" line-height="1.8">See you soon,<br />Speckle</mj-text>`
   return { bodyStart }
 }
 

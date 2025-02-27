@@ -1,6 +1,6 @@
 <mj-section padding-top="0" padding-bottom="10px" border-bottom="1px solid #e0e0e0">
   <mj-column>
-    <mj-text font-size="12px" line-height="18px" align="center" color="#999">
+    <mj-text font-size="12px" line-height="18px" align="center" color="#626263">
       Sent from <%- params.serverInfo.name -%> at
       <a
         href="<%- params.serverInfo.canonicalUrl -%>"
@@ -8,7 +8,9 @@
       >
         <%- params.serverInfo.canonicalUrl -%>
       </a>
-      , deployed and managed by <%- params.serverInfo.company -%>. Your admin contact is
+      , deployed and managed by <%- params.serverInfo.company -%>.
+      <br />
+      Your admin contact is
       <a href="mailto:<%- params.serverInfo.adminContact -%>">
         <%- params.serverInfo.adminContact -%>
       </a>
@@ -18,19 +20,81 @@
 </mj-section>
 <mj-section padding-top="10px" padding-bottom="30px">
   <mj-column>
-    <mj-text font-size="12px" line-height="18px" align="center" color="#999999">
+    <mj-text font-size="12px" line-height="18px" align="center" color="#626263">
       Brought to you by
       <a href="https://speckle.systems" target="_blank">Speckle</a>
-      , the Open Source Data Platform for 3D Data. Follow Us
+      , the Open Source Data Platform for 3D Data.
       <br />
-      <a href="https://www.linkedin.com/company/specklesystems/" target="_blank">
-        LinkedIn
+      <br />
+      Join our
+      <a href="https://speckle.community/" target="_blank">Community forum</a>
+      <br />
+      <br />
+      <span style="display: block; margin-bottom: 5px">Follow us</span>
+      <a
+        href="https://www.linkedin.com/company/specklesystems/"
+        target="_blank"
+        style="display: inline-block; vertical-align: middle"
+      >
+        <img
+          src="<%- params.serverInfo.canonicalUrl -%>/static/social/linkedin.svg"
+          width="16"
+          height="16"
+          alt="LinkedIn"
+        />
       </a>
-      <a href="https://twitter.com/SpeckleSystems" target="_blank">Twitter</a>
-      <a href="https://www.instagram.com/specklesystems/" target="_blank">Instagram</a>
-      <a href="https://www.facebook.com/specklesytems/" target="_blank">Facebook</a>
-      <a href="https://www.youtube.com/c/SpeckleSystems" target="_blank">YouTube</a>
-      <a href="https://speckle.community/" target="_blank">Community</a>
+      &nbsp;&nbsp;&nbsp;
+      <a
+        href="https://x.com/SpeckleSystems"
+        target="_blank"
+        style="display: inline-block; vertical-align: middle"
+      >
+        <img
+          src="<%- params.serverInfo.canonicalUrl -%>/static/social/x.svg"
+          width="16"
+          height="16"
+          alt="X"
+        />
+      </a>
+      &nbsp;&nbsp;&nbsp;
+      <a
+        href="https://www.instagram.com/specklesystems/"
+        target="_blank"
+        style="display: inline-block; vertical-align: middle"
+      >
+        <img
+          src="<%- params.serverInfo.canonicalUrl -%>/static/social/instagram.svg"
+          width="16"
+          height="16"
+          alt="Instagram"
+        />
+      </a>
+      &nbsp;&nbsp;&nbsp;
+      <a
+        href="https://www.facebook.com/specklesytems/"
+        target="_blank"
+        style="display: inline-block; vertical-align: middle"
+      >
+        <img
+          src="<%- params.serverInfo.canonicalUrl -%>/static/social/facebook.svg"
+          width="16"
+          height="16"
+          alt="Facebook"
+        />
+      </a>
+      &nbsp;&nbsp;&nbsp;
+      <a
+        href="https://www.youtube.com/c/SpeckleSystems"
+        target="_blank"
+        style="display: inline-block; vertical-align: middle"
+      >
+        <img
+          src="<%- params.serverInfo.canonicalUrl -%>/static/social/youtube.svg"
+          width="16"
+          height="16"
+          alt="YouTube"
+        />
+      </a>
     </mj-text>
   </mj-column>
 </mj-section>
