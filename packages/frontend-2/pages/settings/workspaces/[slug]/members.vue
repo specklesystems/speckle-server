@@ -8,12 +8,7 @@
         class="mb-6"
       />
       <LayoutTabsHorizontal v-model:active-item="activeTab" :items="tabItems">
-        <SettingsWorkspacesMembersTable
-          v-if="activeTab === tabItems[0]"
-          :workspace="workspace"
-          :workspace-slug="slug"
-        />
-        <NuxtPage v-else />
+        <NuxtPage />
       </LayoutTabsHorizontal>
     </div>
   </section>
@@ -31,7 +26,6 @@ import { settingsWorkspaceRoutes } from '~/lib/common/helpers/route'
 
 graphql(`
   fragment SettingsWorkspacesMembers_Workspace on Workspace {
-    ...SettingsWorkspacesMembersTable_Workspace
     id
     role
     team {
