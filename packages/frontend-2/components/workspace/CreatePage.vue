@@ -42,6 +42,7 @@ import { WizardSteps } from '~/lib/workspaces/helpers/types'
 import { useWorkspacesWizard } from '~/lib/workspaces/composables/wizard'
 import { useMixpanel } from '~/lib/core/composables/mp'
 import { useAuthManager } from '~/lib/auth/composables/auth'
+import { useDiscoverableWorkspaces } from '~/lib/workspaces/composables/discoverableWorkspaces'
 
 defineProps<{
   workspaceId?: string
@@ -50,25 +51,16 @@ defineProps<{
 const { currentStep, resetWizardState } = useWorkspacesWizard()
 const mixpanel = useMixpanel()
 const { logout } = useAuthManager()
-const isWorkspaceNewPlansEnabled = useWorkspaceNewPlansEnabled()
-const { activeUser } = useActiveUser()
+const { hasDiscoverableWorkspacesOrJoinRequests } = useDiscoverableWorkspaces()
+const { requiresWorkspaceCreation } = useActiveUser()
 
 const isCancelDialogOpen = ref(false)
 
 const isFirstStep = computed(() => currentStep.value === WizardSteps.Details)
 
-const hasDiscoverableWorkspaces = computed(() => {
-  return (
-    (activeUser.value?.workspaceJoinRequests?.items?.length ?? 0) > 0 ||
-    (activeUser.value?.discoverableWorkspaces?.length ?? 0) > 0
-  )
-})
-
 const isForcedCreation = computed(() => {
   return (
-    isWorkspaceNewPlansEnabled.value &&
-    activeUser.value?.workspaces?.items?.length === 0 &&
-    !hasDiscoverableWorkspaces.value
+    requiresWorkspaceCreation.value && !hasDiscoverableWorkspacesOrJoinRequests.value
   )
 })
 

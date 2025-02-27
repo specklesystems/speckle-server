@@ -20,7 +20,5 @@
 <script setup lang="ts">
 import { useAuthManager } from '~/lib/auth/composables/auth'
 
-defineEmits(['next'])
-
 const { logout } = useAuthManager()
 </script>

@@ -64,15 +64,37 @@ export const useDiscoverableWorkspaces = () => {
   const apollo = useApolloClient().client
 
   const discoverableWorkspaces = computed(
-    () => discoverableResult.value?.activeUser?.discoverableWorkspaces || []
+    () => discoverableResult.value?.activeUser?.discoverableWorkspaces || null
   )
 
   const workspaceJoinRequests = computed(
-    () => requestsResult.value?.activeUser?.workspaceJoinRequests || []
+    () => requestsResult.value?.activeUser?.workspaceJoinRequests || null
   )
 
   const hasDiscoverableWorkspaces = computed(
-    () => discoverableWorkspaces.value.length > 0
+    () => discoverableWorkspaces.value !== null
+  )
+
+  const hasDiscoverableJoinRequests = computed(
+    () => workspaceJoinRequests.value !== null
+  )
+
+  const hasDiscoverableWorkspacesOrJoinRequests = computed(() => {
+    return hasDiscoverableJoinRequests.value || hasDiscoverableWorkspaces.value
+  })
+
+  const discoverableWorkspacesCount = computed(
+    () => discoverableWorkspaces.value?.length || 0
+  )
+
+  const discoverableJoinRequestsCount = computed(() =>
+    workspaceJoinRequests.value && 'items' in workspaceJoinRequests.value
+      ? workspaceJoinRequests.value.items.length
+      : 0
+  )
+
+  const discoverableWorkspacesAndJoinRequestsCount = computed(
+    () => discoverableWorkspacesCount.value + discoverableJoinRequestsCount.value
   )
 
   const processRequest = async (accept: boolean, workspaceId: string) => {
@@ -112,11 +134,32 @@ export const useDiscoverableWorkspaces = () => {
     }
   }
 
+  const discoverableWorkspacesAndJoinRequests = computed(() => {
+    const joinRequests = (
+      workspaceJoinRequests.value ? workspaceJoinRequests.value.items : []
+    ).map((request) => ({
+      ...request.workspace,
+      requestStatus: request.status
+    }))
+
+    const discoverable = (discoverableWorkspaces.value || []).map((workspace) => ({
+      ...workspace,
+      requestStatus: null
+    }))
+
+    return [...joinRequests, ...discoverable]
+  })
+
   return {
-    discoverableWorkspaces,
     hasDiscoverableWorkspaces,
-    processRequest,
+    hasDiscoverableJoinRequests,
+    hasDiscoverableWorkspacesOrJoinRequests,
+    discoverableJoinRequestsCount,
+    discoverableWorkspacesCount,
+    discoverableWorkspacesAndJoinRequestsCount,
+    discoverableWorkspaces,
     workspaceJoinRequests,
-    requestToJoin
+    discoverableWorkspacesAndJoinRequests,
+    processRequest
   }
 }

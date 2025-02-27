@@ -38,8 +38,8 @@
       </p>
 
       <OnboardingJoinTeammates
-        v-if="currentStage === 'join' && discoverableWorkspaces.length > 0"
-        :workspaces="discoverableWorkspaces"
+        v-if="currentStage === 'join' && hasDiscoverableWorkspaces"
+        :workspaces="discoverableWorkspaces || []"
         @next="currentStage = 'questions'"
       />
       <OnboardingQuestionsForm v-else />

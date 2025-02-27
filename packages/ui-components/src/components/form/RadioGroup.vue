@@ -3,7 +3,7 @@
     <div
       class="flex items-stretch w-full"
       :class="
-        stackOptions
+        isStacked
           ? 'flex-col space-y-3 '
           : 'flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3'
       "
@@ -38,7 +38,7 @@
               </div>
               <div
                 class="h-6 w-6 rounded-full flex items-center justify-center border-[1.5px] border-outline-5"
-                :class="stackOptions ? 'mr-4' : ''"
+                :class="isStacked ? 'mr-4' : ''"
               >
                 <div
                   v-if="selected === option.value"
@@ -64,7 +64,7 @@
         </div>
       </div>
     </div>
-    <div v-if="!stackOptions" class="hidden sm:flex space-x-3 w-full">
+    <div v-if="!isStacked" class="hidden sm:flex space-x-3 w-full">
       <div v-for="option in options" :key="option.value" class="w-full">
         <div
           v-if="option.help"
@@ -94,7 +94,7 @@ type OptionType = {
 defineProps<{
   options: OptionType[]
   disabled?: boolean
-  stackOptions?: boolean
+  isStacked?: boolean
 }>()
 
 const selected = defineModel<Value>()

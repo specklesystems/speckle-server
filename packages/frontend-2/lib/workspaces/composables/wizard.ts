@@ -31,6 +31,7 @@ const emptyState: WorkspaceWizardState = {
   ssoEnabled: null
 }
 
+// FF-CLEANUP
 const steps: readonly WizardSteps[] = [
   WizardSteps.Details,
   WizardSteps.Invites,

@@ -1,21 +1,26 @@
 <template>
   <WorkspaceWizardStep
-    title="Set a data region"
-    description="Choose where your workspace data is hosted"
+    title="Do you want to enable data residency?"
+    description="Manage where your workspace data resides."
   >
-    <form class="flex flex-col gap-4 w-full md:w-96" @submit="onSubmit">
+    <form class="flex flex-col gap-4 w-full max-w-md" @submit.prevent="onSubmit">
       <CommonLoadingIcon v-if="isQueryLoading" class="justify-self-center" />
       <template v-else>
-        <SettingsWorkspacesRegionsSelect
-          v-model="defaultRegion"
-          show-label
-          label="Default region"
-          :items="availableRegions || []"
-          label-position="top"
-          size="lg"
-        />
+        <FormRadioGroup v-model="selectedOption" :options="radioOptions" is-stacked>
+          <template #enabled>
+            <div v-show="selectedOption === 'enabled'" class="pt-2">
+              <SettingsWorkspacesRegionsSelect
+                v-model="defaultRegion"
+                label="Default region"
+                :items="availableRegions || []"
+                label-position="top"
+                size="lg"
+              />
+            </div>
+          </template>
+        </FormRadioGroup>
         <div class="flex flex-col gap-3 mt-4 w-full">
-          <FormButton :disabled="!hasDefaultRegion" size="lg" full-width submit>
+          <FormButton size="lg" full-width :disabled="!canContinue" @click="onSubmit">
             Continue
           </FormButton>
           <FormButton
@@ -59,10 +64,35 @@ const isQueryLoading = useQueryLoading()
 const { result } = useQuery(workspaceWizardRegionQuery)
 const mixpanel = useMixpanel()
 
-const hasDefaultRegion = computed(() => !!defaultRegion.value)
+const selectedOption = ref<string | undefined>(
+  state.value.region === undefined
+    ? undefined
+    : state.value.region
+    ? 'enabled'
+    : 'disabled'
+)
+
+const radioOptions = computed(() => [
+  {
+    value: 'enabled',
+    title: 'Yes',
+    subtitle: 'Plus £20 / month'
+  },
+  {
+    value: 'disabled',
+    title: 'No, maybe later'
+  }
+])
+
 const availableRegions = computed(
   () => result.value?.serverInfo.multiRegion.regions || []
 )
+
+const canContinue = computed(() => {
+  if (!selectedOption.value) return false
+  if (selectedOption.value === 'disabled') return true
+  return !!defaultRegion.value
+})
 
 const onSubmit = () => {
   if (!defaultRegion.value) return
@@ -75,13 +105,17 @@ const onSubmit = () => {
   goToNextStep()
 }
 
+watch(selectedOption, (newVal) => {
+  if (newVal === 'disabled') {
+    state.value.region = null
+  }
+})
+
 watch(
-  () => state.value.region,
-  () => {
-    defaultRegion.value = state.value
-      .region as SettingsWorkspacesRegionsSelect_ServerRegionItemFragment
-  },
-  { immediate: true }
+  () => defaultRegion.value,
+  (newVal) => {
+    state.value.region = newVal || null
+  }
 )
 
 onMounted(() => {

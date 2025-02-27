@@ -17,7 +17,13 @@
       />
       <WorkspaceWizardStepInvites v-else-if="currentStep === WizardSteps.Invites" />
       <WorkspaceWizardStepPricing v-else-if="currentStep === WizardSteps.Pricing" />
-      <WorkspaceWizardStepRegion v-else-if="currentStep === WizardSteps.Region" />
+      <!-- FF-CLEANUP -->
+      <WorkspaceWizardStepRegion
+        v-else-if="currentStep === WizardSteps.Region && !isWorkspaceNewPlansEnabled"
+      />
+      <WorkspaceWizardStepRegionNew
+        v-else-if="currentStep === WizardSteps.Region && isWorkspaceNewPlansEnabled"
+      />
       <WorkspaceWizardStepSso v-else-if="currentStep === WizardSteps.Sso" />
     </template>
   </div>
@@ -52,6 +58,7 @@ const { cancelCheckoutSession } = useBillingActions()
 const route = useRoute()
 const mixpanel = useMixpanel()
 const { goToStep, currentStep, isLoading, state } = useWorkspacesWizard()
+const isWorkspaceNewPlansEnabled = useWorkspaceNewPlansEnabled()
 
 const { loading: queryLoading, onResult } = useQuery(
   workspaceWizardQuery,

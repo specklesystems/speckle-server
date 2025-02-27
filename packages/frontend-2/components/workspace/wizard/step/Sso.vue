@@ -7,7 +7,7 @@
       <FormRadioGroup
         :model-value="selectedOption"
         :options="radioOptions"
-        stack-options
+        is-stacked
         @update:model-value="(val) => (selectedOption = val)"
       />
       <div class="flex flex-col gap-3 w-full max-w-md mt-8">
