@@ -489,12 +489,12 @@ export const getFunctions = async (params: GetFunctionsParams) => {
   })
 
   const authToken = params.auth
-    ? btoa(
+    ? Buffer.from(
         JSON.stringify({
           ...params.auth,
           origin: getServerOrigin()
         })
-      )
+      ).toString('base64')
     : undefined
 
   return await invokeSafeJsonRequest<GetFunctionsResponse>({
