@@ -12,6 +12,7 @@ import {
 import {
   copyProjectAutomationsFactory,
   copyProjectCommentsFactory,
+  copyProjectBlobs,
   copyProjectModelsFactory,
   copyProjectObjectsFactory,
   copyProjectsFactory,
@@ -39,6 +40,10 @@ import { getFeatureFlags, isTestEnv } from '@/modules/shared/helpers/envHelper'
 import { WorkspacesNotYetImplementedError } from '@/modules/workspaces/errors/workspace'
 import { getStreamCommentCountFactory } from '@/modules/comments/repositories/comments'
 import { getStreamWebhooksFactory } from '@/modules/webhooks/repositories/webhooks'
+import {
+  getProjectObjectStorage,
+  getRegionObjectStorage
+} from '@/modules/multiregion/utils/blobStorageSelector'
 
 const { FF_MOVE_PROJECT_REGION_ENABLED } = getFeatureFlags()
 
@@ -91,7 +96,13 @@ export default {
       )
 
       const sourceDb = await getProjectDbClient({ projectId: args.projectId })
+      const sourceObjectStorage = await getProjectObjectStorage({
+        projectId: args.projectId
+      })
       const targetDb = await (await getDb({ regionKey: args.regionKey })).transaction()
+      const targetObjectStorage = await getRegionObjectStorage({
+        regionKey: args.regionKey
+      })
 
       const updateProjectRegion = updateProjectRegionFactory({
         getProject: getProjectFactory({ db: sourceDb }),
@@ -116,7 +127,13 @@ export default {
         copyProjectObjects: copyProjectObjectsFactory({ sourceDb, targetDb }),
         copyProjectAutomations: copyProjectAutomationsFactory({ sourceDb, targetDb }),
         copyProjectComments: copyProjectCommentsFactory({ sourceDb, targetDb }),
-        copyProjectWebhooks: copyProjectWebhooksFactory({ sourceDb, targetDb })
+        copyProjectWebhooks: copyProjectWebhooksFactory({ sourceDb, targetDb }),
+        copyProjectBlobs: copyProjectBlobs({
+          sourceDb,
+          sourceObjectStorage,
+          targetDb,
+          targetObjectStorage
+        })
       })
 
       return await withTransaction(updateProjectRegion(args), targetDb)

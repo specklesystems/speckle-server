@@ -183,7 +183,13 @@ const actionsItems = computed<LayoutMenuItem[][]>(() => {
 })
 
 useHead({
-  title: projectName
+  title: projectName,
+  meta: [
+    {
+      name: 'robots',
+      content: 'noindex, nofollow'
+    }
+  ]
 })
 
 const onInviteAccepted = async (params: { accepted: boolean }) => {
