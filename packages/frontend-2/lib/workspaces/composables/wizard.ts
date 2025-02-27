@@ -27,8 +27,7 @@ const emptyState: WorkspaceWizardState = {
   plan: null,
   billingInterval: BillingInterval.Monthly,
   id: '',
-  region: null,
-  ssoEnabled: null
+  region: null
 }
 
 const steps: readonly WizardSteps[] = [
@@ -38,8 +37,8 @@ const steps: readonly WizardSteps[] = [
   WizardSteps.Region
 ] as const
 
-export const useWorkspaceWizardState = () => {
-  return useState<{
+export const useWorkspaceWizardState = () =>
+  useState<{
     isLoading: boolean
     currentStepIndex: number
     currentStep: WizardSteps
@@ -50,7 +49,6 @@ export const useWorkspaceWizardState = () => {
     currentStep: steps[0],
     state: { ...emptyState }
   }))
-}
 
 export const useWorkspacesWizard = () => {
   const wizardState = useWorkspaceWizardState()
@@ -60,7 +58,6 @@ export const useWorkspacesWizard = () => {
   const { triggerNotification } = useGlobalToast()
   const mixpanel = useMixpanel()
   const inviteToWorkspace = useInviteUserToWorkspace()
-  const isWorkspaceNewPlansEnabled = useWorkspaceNewPlansEnabled()
   const { mutate: updateWorkspaceDefaultRegion } = useMutation(setDefaultRegionMutation)
   const { mutate: updateWorkspaceCreationState } = useMutation(
     updateWorkspaceCreationStateMutation
@@ -89,42 +86,16 @@ export const useWorkspacesWizard = () => {
   })
 
   const goToNextStep = () => {
-    if (!isWorkspaceNewPlansEnabled.value) {
-      if (wizardState.value.currentStepIndex === steps.length - 1) {
-        return completeWizard()
-      }
+    const shouldComplete =
+      wizardState.value.currentStepIndex === steps.length - 1 ||
+      (wizardState.value.currentStep === WizardSteps.Pricing &&
+        wizardState.value.state.plan !== PaidWorkspacePlans.Business)
+
+    if (!shouldComplete) {
       wizardState.value.currentStepIndex++
       wizardState.value.currentStep = steps[wizardState.value.currentStepIndex]
-      return
     }
-
-    const currentPlan = wizardState.value.state.plan
-    const currentStep = wizardState.value.currentStep
-
-    // If we're on pricing and selected the free plan, complete wizard
-    if (
-      currentStep === WizardSteps.Pricing &&
-      currentPlan === PaidWorkspacePlans.Starter
-    ) {
-      return completeWizard()
-    }
-
-    // If we're on SSO and not on business plan, complete wizard
-    if (
-      currentStep === WizardSteps.Sso &&
-      currentPlan !== PaidWorkspacePlans.Business
-    ) {
-      return completeWizard()
-    }
-
-    // If we're on the last step, complete wizard
-    if (wizardState.value.currentStepIndex === steps.length - 1) {
-      return completeWizard()
-    }
-
-    // Otherwise proceed to next step
-    wizardState.value.currentStepIndex++
-    wizardState.value.currentStep = steps[wizardState.value.currentStepIndex]
+    return shouldComplete ? completeWizard() : undefined
   }
 
   const goToPreviousStep = () => {
@@ -175,13 +146,9 @@ export const useWorkspacesWizard = () => {
           ...wizardState.value.state,
           invites: wizardState.value.state.invites.filter((invite) => !!invite),
           region:
-            isWorkspaceNewPlansEnabled &&
             wizardState.value.state.plan === PaidWorkspacePlans.Business
               ? wizardState.value.state.region
-              : null,
-          ssoEnabled: isWorkspaceNewPlansEnabled
-            ? wizardState.value.state.ssoEnabled
-            : undefined
+              : null
         },
         workspaceId: workspaceId.value
       }

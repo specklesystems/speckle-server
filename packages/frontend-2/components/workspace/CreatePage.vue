@@ -9,7 +9,12 @@
       />
     </template>
     <template #header-right>
-      <FormButton v-if="isForcedCreation" size="sm" color="outline" @click="logout()">
+      <FormButton
+        v-if="requiresWorkspaceCreation"
+        size="sm"
+        color="outline"
+        @click="logout()"
+      >
         Sign out
       </FormButton>
       <FormButton v-else size="sm" color="outline" @click="onCancelClick">
@@ -19,7 +24,10 @@
 
     <WorkspaceWizard :workspace-id="workspaceId" />
 
-    <div v-if="isForcedCreation && isFirstStep" class="w-full max-w-sm mx-auto mt-4">
+    <div
+      v-if="requiresWorkspaceCreation && isFirstStep"
+      class="w-full max-w-sm mx-auto mt-4"
+    >
       <CommonAlert color="neutral" size="xs" hide-icon>
         <template #title>Why am I seeing this?</template>
         <template #description>
@@ -42,7 +50,6 @@ import { WizardSteps } from '~/lib/workspaces/helpers/types'
 import { useWorkspacesWizard } from '~/lib/workspaces/composables/wizard'
 import { useMixpanel } from '~/lib/core/composables/mp'
 import { useAuthManager } from '~/lib/auth/composables/auth'
-import { useDiscoverableWorkspaces } from '~/lib/workspaces/composables/discoverableWorkspaces'
 
 defineProps<{
   workspaceId?: string
@@ -51,18 +58,11 @@ defineProps<{
 const { currentStep, resetWizardState } = useWorkspacesWizard()
 const mixpanel = useMixpanel()
 const { logout } = useAuthManager()
-const { hasDiscoverableWorkspacesOrJoinRequests } = useDiscoverableWorkspaces()
 const { requiresWorkspaceCreation } = useActiveUser()
 
 const isCancelDialogOpen = ref(false)
 
 const isFirstStep = computed(() => currentStep.value === WizardSteps.Details)
-
-const isForcedCreation = computed(() => {
-  return (
-    requiresWorkspaceCreation.value && !hasDiscoverableWorkspacesOrJoinRequests.value
-  )
-})
 
 const onCancelClick = () => {
   if (isFirstStep.value) {
