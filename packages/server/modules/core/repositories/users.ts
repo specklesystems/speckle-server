@@ -30,6 +30,8 @@ import {
   MarkOnboardingComplete,
   MarkUserAsVerified,
   SearchLimitedUsers,
+  SetUserActiveProject,
+  SetUserActiveWorkspace,
   StoreUser,
   StoreUserAcl,
   UpdateUser,
@@ -569,4 +571,18 @@ export const searchUsersFactory =
       users: res.users.map(removePrivateFields),
       cursor: res.cursor
     }
+  }
+
+export const setUserActiveWorkspaceFactory =
+  (deps: { db: Knex }): SetUserActiveWorkspace =>
+  async ({ userId, workspaceSlug }) => {
+    const meta = metaHelpers(Users, deps.db)
+    await meta.set(userId, 'activeWorkspace', workspaceSlug)
+  }
+
+export const setUserActiveProjectFactory =
+  (deps: { db: Knex }): SetUserActiveProject =>
+  async ({ userId, projectId }) => {
+    const meta = metaHelpers(Users, deps.db)
+    await meta.set(userId, 'activeProject', projectId)
   }

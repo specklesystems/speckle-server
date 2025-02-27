@@ -15,7 +15,9 @@ import {
   legacyGetPaginatedUsersCountFactory,
   legacyGetPaginatedUsersFactory,
   lookupUsersFactory,
-  bulkLookupUsersFactory
+  bulkLookupUsersFactory,
+  setUserActiveWorkspaceFactory,
+  setUserActiveProjectFactory
 } from '@/modules/core/repositories/users'
 import { UsersMeta } from '@/modules/core/dbSchema'
 import { throwForNotHavingServerRole } from '@/modules/shared/authz'
@@ -45,6 +47,8 @@ import {
   getMailchimpOnboardingIds
 } from '@/modules/shared/helpers/envHelper'
 import { updateMailchimpMemberTags } from '@/modules/auth/services/mailchimp'
+import { getWorkspaceBySlugFactory } from '@/modules/workspaces/repositories/workspaces'
+import { getProjectFactory } from '@/modules/core/repositories/projects'
 
 const getUser = legacyGetUserFactory({ db })
 const getUserByEmail = legacyGetUserByEmailFactory({ db })
@@ -201,6 +205,30 @@ export = {
         key: UsersMeta.metaKey.isOnboardingFinished
       })
       return !!metaVal?.value
+    },
+    async activeWorkspace(parent, _args, ctx) {
+      const metaVal = await ctx.loaders.users.getUserMeta.load({
+        userId: parent.id,
+        key: UsersMeta.metaKey.activeWorkspace
+      })
+
+      if (!metaVal?.value) return null
+
+      return await getWorkspaceBySlugFactory({ db })({
+        workspaceSlug: metaVal.value
+      })
+    },
+    async activeProject(parent, _args, ctx) {
+      const metaVal = await ctx.loaders.users.getUserMeta.load({
+        userId: parent.id,
+        key: UsersMeta.metaKey.activeProject
+      })
+
+      if (!metaVal?.value) return null
+
+      return await getProjectFactory({ db })({
+        projectId: metaVal.value
+      })
     }
   },
   LimitedUser: {
@@ -277,6 +305,38 @@ export = {
       }
 
       return success
+    },
+    async setActiveWorkspace(_parent, args, ctx) {
+      const userId = ctx.userId
+      if (!userId) return false
+
+      await ctx.loaders.users.getUserMeta.clear({
+        userId,
+        key: UsersMeta.metaKey.activeWorkspace
+      })
+
+      await setUserActiveWorkspaceFactory({ db })({
+        userId,
+        workspaceSlug: args.slug ?? null
+      })
+
+      return true
+    },
+    async setActiveProject(_parent, args, ctx) {
+      const userId = ctx.userId
+      if (!userId) return false
+
+      await ctx.loaders.users.getUserMeta.clear({
+        userId,
+        key: UsersMeta.metaKey.activeProject
+      })
+
+      await setUserActiveProjectFactory({ db })({
+        userId,
+        projectId: args.id ?? null
+      })
+
+      return true
     },
     async update(_parent, args, context) {
       const newUser = await updateUserAndNotify(context.userId!, args.user)

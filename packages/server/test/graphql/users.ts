@@ -124,6 +124,37 @@ const requestVerificationMutation = gql`
   }
 `
 
+export const getUserActiveResources = gql`
+  query UserActiveResources {
+    activeUser {
+      activeWorkspace {
+        id
+        name
+      }
+      activeProject {
+        id
+        name
+      }
+    }
+  }
+`
+
+export const setUserActiveWorkspaceMutation = gql`
+  mutation SetUserActiveWorkspace($slug: String) {
+    activeUserMutations {
+      setActiveWorkspace(slug: $slug)
+    }
+  }
+`
+
+export const setUserActiveProjectMutation = gql`
+  mutation SetUserActiveProject($id: String) {
+    activeUserMutations {
+      setActiveProject(id: $id)
+    }
+  }
+`
+
 export const getActiveUser = (apollo: ExecuteOperationServer) =>
   executeOperation<GetActiveUserQuery, GetActiveUserQueryVariables>(
     apollo,

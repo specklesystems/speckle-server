@@ -6,6 +6,9 @@ import {
 } from '@/modules/workspaces/tests/helpers/creation'
 import { BasicTestUser, createTestUser, createTestUsers } from '@/test/authHelper'
 import {
+  SetUserActiveProjectDocument,
+  SetUserActiveWorkspaceDocument,
+  UserActiveResourcesDocument,
   UsersRetrievalDocument,
   UsersRetrievalInput
 } from '@/test/graphql/generated/graphql'
@@ -23,6 +26,7 @@ import {
 } from '@/test/speckle-helpers/streamHelper'
 import { Roles } from '@speckle/shared'
 import { expect } from 'chai'
+import cryptoRandomString from 'crypto-random-string'
 
 const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
 
@@ -301,6 +305,77 @@ describe('Users @graphql', () => {
 
       expect(res3.data?.users.items || []).to.have.lengthOf(0)
       expect(res3.data?.users.cursor).to.be.not.ok
+    })
+  })
+
+  describe('meta active workspace and project', () => {
+    const workspace: BasicTestWorkspace = {
+      id: '',
+      ownerId: '',
+      name: 'My Workspace',
+      slug: ''
+    }
+
+    const project: BasicTestStream = {
+      id: '',
+      ownerId: '',
+      name: 'My Project',
+      isPublic: true
+    }
+
+    before(async () => {
+      await createTestWorkspace(workspace, me)
+      await createTestStream(project, me)
+    })
+
+    it('should accurately report active workspace', async () => {
+      const resA = await apollo.execute(SetUserActiveWorkspaceDocument, {
+        slug: workspace.slug
+      })
+      expect(resA).to.not.haveGraphQLErrors()
+
+      const resB = await apollo.execute(UserActiveResourcesDocument, {})
+      expect(resB).to.not.haveGraphQLErrors()
+
+      expect(resB?.data?.activeUser?.activeWorkspace?.id).to.equal(workspace.id)
+    })
+
+    it('should accurately report active project', async () => {
+      const resA = await apollo.execute(SetUserActiveProjectDocument, {
+        id: project.id
+      })
+      expect(resA).to.not.haveGraphQLErrors()
+
+      const resB = await apollo.execute(UserActiveResourcesDocument, {})
+      expect(resB).to.not.haveGraphQLErrors()
+
+      expect(resB?.data?.activeUser?.activeProject?.name).to.equal('My Project')
+    })
+
+    it('should allow values to be cleared with null input', async () => {
+      const resA = await apollo.execute(SetUserActiveWorkspaceDocument, {
+        slug: workspace.slug
+      })
+      expect(resA).to.not.haveGraphQLErrors()
+      const resB = await apollo.execute(SetUserActiveWorkspaceDocument, { slug: null })
+      expect(resB).to.not.haveGraphQLErrors()
+
+      const resC = await apollo.execute(UserActiveResourcesDocument, {})
+      expect(resC).to.not.haveGraphQLErrors()
+
+      expect(resC.data?.activeUser?.activeWorkspace).to.be.null
+    })
+
+    it('should return null if workspace or project are not found or were deleted', async () => {
+      const resA = await apollo.execute(SetUserActiveWorkspaceDocument, {
+        slug: cryptoRandomString({ length: 9 })
+      })
+      expect(resA).to.not.haveGraphQLErrors()
+
+      const resB = await apollo.execute(UserActiveResourcesDocument, {})
+      expect(resB).to.not.haveGraphQLErrors()
+
+      expect(resB?.data?.activeUser?.activeWorkspace).to.be.null
     })
   })
 })

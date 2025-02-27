@@ -25,6 +25,8 @@ export type ActiveUserMutations = {
   emailMutations: UserEmailMutations;
   /** Mark onboarding as complete */
   finishOnboarding: Scalars['Boolean']['output'];
+  setActiveProject: Scalars['Boolean']['output'];
+  setActiveWorkspace: Scalars['Boolean']['output'];
   /** Edit a user's profile */
   update: User;
 };
@@ -32,6 +34,16 @@ export type ActiveUserMutations = {
 
 export type ActiveUserMutationsFinishOnboardingArgs = {
   input?: InputMaybe<OnboardingCompletionInput>;
+};
+
+
+export type ActiveUserMutationsSetActiveProjectArgs = {
+  id?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type ActiveUserMutationsSetActiveWorkspaceArgs = {
+  slug?: InputMaybe<Scalars['String']['input']>;
 };
 
 
@@ -3696,6 +3708,8 @@ export type UpgradePlanInput = {
  */
 export type User = {
   __typename?: 'User';
+  activeProject?: Maybe<Project>;
+  activeWorkspace?: Maybe<Workspace>;
   /**
    * All the recent activity from this user in chronological order
    * @deprecated Part of the old API surface and will be removed in the future.
