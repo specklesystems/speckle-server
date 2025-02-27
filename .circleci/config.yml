@@ -44,6 +44,9 @@ workflows:
       - test-objectsender:
           filters: *filters-allow-all
 
+      - test-shared:
+          filters: *filters-allow-all
+
       - test-preview-service:
           filters: *filters-allow-all
 
@@ -184,6 +187,7 @@ workflows:
             - test-frontend-2
             - test-viewer
             - test-objectsender
+            - test-shared
             - test-server
             - test-server-no-ff
             - test-server-multiregion
@@ -200,6 +204,7 @@ workflows:
             - test-frontend-2
             - test-viewer
             - test-objectsender
+            - test-shared
             - test-server
             - test-server-no-ff
             - test-server-multiregion
@@ -224,6 +229,7 @@ workflows:
             - test-frontend-2
             - test-viewer
             - test-objectsender
+            - test-shared
             - test-server
             - test-server-no-ff
             - test-server-multiregion
@@ -240,6 +246,7 @@ workflows:
             - test-frontend-2
             - test-viewer
             - test-objectsender
+            - test-shared
             - test-server
             - test-server-no-ff
             - test-server-multiregion
@@ -256,6 +263,7 @@ workflows:
             - test-frontend-2
             - test-viewer
             - test-objectsender
+            - test-shared
             - test-server
             - test-server-no-ff
             - test-server-multiregion
@@ -272,6 +280,7 @@ workflows:
             - test-frontend-2
             - test-viewer
             - test-objectsender
+            - test-shared
             - test-server
             - test-server-no-ff
             - test-server-multiregion
@@ -294,6 +303,7 @@ workflows:
             - test-frontend-2
             - test-viewer
             - test-objectsender
+            - test-shared
             - test-server
             - test-server-no-ff
             - test-server-multiregion
@@ -310,6 +320,7 @@ workflows:
             - test-frontend-2
             - test-viewer
             - test-objectsender
+            - test-shared
             - test-server
             - test-server-no-ff
             - test-server-multiregion
@@ -357,6 +368,7 @@ workflows:
             - test-frontend-2
             - test-viewer
             - test-objectsender
+            - test-shared
             - test-preview-service
 
       - publish-viewer-sandbox-cloudflare-pages:
@@ -726,6 +738,36 @@ jobs:
           name: Run tests
           command: yarn test
           working_directory: 'packages/preview-service'
+
+  test-shared:
+    docker: *docker-node-browsers-image
+    resource_class: medium+
+    steps:
+      - checkout
+      - restore_cache:
+          name: Restore Yarn Package Cache
+          keys:
+            - yarn-packages-server-{{ checksum "yarn.lock" }}
+      - run:
+          name: Install Dependencies
+          command: yarn
+
+      - save_cache:
+          name: Save Yarn Package Cache
+          key: yarn-packages-server-{{ checksum "yarn.lock" }}
+          paths:
+            - .yarn/cache
+            - .yarn/unplugged
+
+      - run:
+          name: Lint
+          command: yarn lint:ci
+          working_directory: 'packages/shared'
+
+      - run:
+          name: Run tests
+          command: yarn test:single-run
+          working_directory: 'packages/shared'
 
   test-objectsender:
     docker: *docker-node-browsers-image

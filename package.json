@@ -63,6 +63,7 @@
     "prettier": "^2.5.1",
     "ts-node": "^10.9.1",
     "tsconfig-paths": "^4.0.0",
+    "vitest": "^3.0.7",
     "zx": "^8.1.2"
   },
   "resolutions": {
@@ -91,7 +92,8 @@
     "typescript": "^5.7.3",
     "typescript-eslint": "^8.20.0",
     "wait-on": ">=7.2.0",
-    "vue-tsc@npm:2.2.2/@vue/language-core": "2.2.0"
+    "vue-tsc@npm:2.2.2/@vue/language-core": "2.2.0",
+    "vitest": "^3.0.7"
   },
   "config": {
     "commitizen": {

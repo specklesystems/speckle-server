@@ -8,6 +8,7 @@ generates:
       - 'typescript'
       - 'typescript-resolvers'
     config:
+      enumsAsConst: true
       contextType: '@/modules/shared/helpers/typeHelper#GraphQLContext'
       mappers:
         Stream: '@/modules/core/helpers/graphTypes#StreamGraphQLReturn'
@@ -89,6 +90,7 @@ generates:
     documents:
       - 'modules/cross-server-sync/**/*.{js,ts}'
     config:
+      enumsAsConst: true
       scalars:
         JSONObject: Record<string, unknown>
         DateTime: string
@@ -101,10 +103,12 @@ generates:
       - 'test/graphql/*.{js,ts}'
       - 'modules/**/tests/helpers/graphql.ts'
     config:
+      enumsAsConst: true
       scalars:
         JSONObject: Record<string, unknown>
         DateTime: string
 config:
+  enumsAsConst: true
   scalars:
     JSONObject: Record<string, unknown>
     DateTime: Date

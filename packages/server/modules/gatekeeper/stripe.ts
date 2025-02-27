@@ -2,11 +2,9 @@ import {
   GetWorkspacePlanPrice,
   GetWorkspacePlanProductId
 } from '@/modules/gatekeeper/domain/billing'
-import {
-  WorkspacePlanBillingIntervals,
-  WorkspacePricingPlans
-} from '@/modules/gatekeeperCore/domain/billing'
+import { WorkspacePricingProducts } from '@/modules/gatekeeperCore/domain/billing'
 import { getStringFromEnv, getStripeApiKey } from '@/modules/shared/helpers/envHelper'
+import { WorkspacePlanBillingIntervals } from '@speckle/shared'
 import { Stripe } from 'stripe'
 
 let stripeClient: Stripe | undefined = undefined
@@ -17,7 +15,7 @@ export const getStripeClient = () => {
 }
 
 export const workspacePlanPrices = (): Record<
-  WorkspacePricingPlans,
+  WorkspacePricingProducts,
   Record<WorkspacePlanBillingIntervals, string> & { productId: string }
 > => ({
   // old

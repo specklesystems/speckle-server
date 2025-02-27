@@ -1,6 +1,5 @@
 import { getFeatureFlags, getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
 import type { Resolvers } from '@/modules/core/graph/generated/graphql'
-import { pricingTable } from '@/modules/gatekeeper/domain/workspacePricing'
 import { authorizeResolver } from '@/modules/shared'
 import { ensureError, Roles, throwUncoveredError } from '@speckle/shared'
 import {
@@ -47,11 +46,6 @@ const getWorkspacePlan = getWorkspacePlanFactory({ db })
 
 export = FF_GATEKEEPER_MODULE_ENABLED
   ? ({
-      Query: {
-        workspacePricingPlans: async () => {
-          return pricingTable
-        }
-      },
       Workspace: {
         plan: async (parent) => {
           const workspacePlan = await getWorkspacePlanFactory({ db })({
