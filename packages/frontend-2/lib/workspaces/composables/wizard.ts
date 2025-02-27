@@ -31,7 +31,6 @@ const emptyState: WorkspaceWizardState = {
   ssoEnabled: null
 }
 
-// FF-CLEANUP
 const steps: readonly WizardSteps[] = [
   WizardSteps.Details,
   WizardSteps.Invites,
@@ -39,21 +38,7 @@ const steps: readonly WizardSteps[] = [
   WizardSteps.Region
 ] as const
 
-const newSteps: readonly WizardSteps[] = [
-  WizardSteps.Details,
-  WizardSteps.Invites,
-  WizardSteps.Pricing,
-  WizardSteps.Sso,
-  WizardSteps.Region
-] as const
-
 export const useWorkspaceWizardState = () => {
-  const isWorkspaceNewPlansEnabled = useWorkspaceNewPlansEnabled()
-
-  const activeSteps = computed(() =>
-    isWorkspaceNewPlansEnabled.value ? newSteps : steps
-  )
-
   return useState<{
     isLoading: boolean
     currentStepIndex: number
@@ -62,7 +47,7 @@ export const useWorkspaceWizardState = () => {
   }>('workspace-wizard-state', () => ({
     isLoading: false,
     currentStepIndex: 0,
-    currentStep: activeSteps.value[0],
+    currentStep: steps[0],
     state: { ...emptyState }
   }))
 }
@@ -79,9 +64,6 @@ export const useWorkspacesWizard = () => {
   const { mutate: updateWorkspaceDefaultRegion } = useMutation(setDefaultRegionMutation)
   const { mutate: updateWorkspaceCreationState } = useMutation(
     updateWorkspaceCreationStateMutation
-  )
-  const activeSteps = computed(() =>
-    isWorkspaceNewPlansEnabled.value ? newSteps : steps
   )
 
   const isLoading = computed({
@@ -108,12 +90,11 @@ export const useWorkspacesWizard = () => {
 
   const goToNextStep = () => {
     if (!isWorkspaceNewPlansEnabled.value) {
-      if (wizardState.value.currentStepIndex === activeSteps.value.length - 1) {
+      if (wizardState.value.currentStepIndex === steps.length - 1) {
         return completeWizard()
       }
       wizardState.value.currentStepIndex++
-      wizardState.value.currentStep =
-        activeSteps.value[wizardState.value.currentStepIndex]
+      wizardState.value.currentStep = steps[wizardState.value.currentStepIndex]
       return
     }
 
@@ -137,29 +118,27 @@ export const useWorkspacesWizard = () => {
     }
 
     // If we're on the last step, complete wizard
-    if (wizardState.value.currentStepIndex === activeSteps.value.length - 1) {
+    if (wizardState.value.currentStepIndex === steps.length - 1) {
       return completeWizard()
     }
 
     // Otherwise proceed to next step
     wizardState.value.currentStepIndex++
-    wizardState.value.currentStep =
-      activeSteps.value[wizardState.value.currentStepIndex]
+    wizardState.value.currentStep = steps[wizardState.value.currentStepIndex]
   }
 
   const goToPreviousStep = () => {
     if (wizardState.value.currentStepIndex > 0) {
       wizardState.value.currentStepIndex--
-      wizardState.value.currentStep =
-        activeSteps.value[wizardState.value.currentStepIndex]
+      wizardState.value.currentStep = steps[wizardState.value.currentStepIndex]
     }
   }
 
   const goToStep = (step: WizardSteps) => {
-    const stepIndex = activeSteps.value.indexOf(step)
+    const stepIndex = steps.indexOf(step)
     if (stepIndex !== -1) {
       wizardState.value.currentStepIndex = stepIndex
-      wizardState.value.currentStep = activeSteps.value[stepIndex]
+      wizardState.value.currentStep = steps[stepIndex]
     }
   }
 
@@ -329,7 +308,7 @@ export const useWorkspacesWizard = () => {
   const resetWizardState = () => {
     state.value = { ...emptyState }
     wizardState.value.currentStepIndex = 0
-    currentStep.value = activeSteps.value[0]
+    currentStep.value = steps[0]
   }
 
   return {
