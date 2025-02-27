@@ -70,7 +70,7 @@ graphql(`
   fragment SettingsWorkspacesMembersRequestsTable_Workspace on Workspace {
     ...SettingsWorkspacesMembersTableHeader_Workspace
     id
-    adminWorkspacesJoinRequests(filter: $joinRequestsFilter) {
+    adminWorkspacesJoinRequests {
       totalCount
       items {
         ...WorkspaceJoinRequestApproveDialog_WorkspaceJoinRequest

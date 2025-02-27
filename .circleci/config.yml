@@ -44,6 +44,9 @@ workflows:
       - test-objectsender:
           filters: *filters-allow-all
 
+      - test-shared:
+          filters: *filters-allow-all
+
       - test-preview-service:
           filters: *filters-allow-all
 
@@ -184,6 +187,7 @@ workflows:
             - test-frontend-2
             - test-viewer
             - test-objectsender
+            - test-shared
             - test-server
             - test-server-no-ff
             - test-server-multiregion
@@ -200,10 +204,19 @@ workflows:
             - test-frontend-2
             - test-viewer
             - test-objectsender
+            - test-shared
             - test-server
             - test-server-no-ff
             - test-server-multiregion
             - test-preview-service
+
+      - docker-publish-frontend-2-sourcemaps:
+          context:
+            - github-readonly-public-repos
+            - datadog-sourcemaps-publish
+          filters: *filters-publish
+          requires:
+            - get-version
 
       - docker-publish-webhooks:
           context: *docker-hub-context
@@ -216,6 +229,7 @@ workflows:
             - test-frontend-2
             - test-viewer
             - test-objectsender
+            - test-shared
             - test-server
             - test-server-no-ff
             - test-server-multiregion
@@ -232,6 +246,7 @@ workflows:
             - test-frontend-2
             - test-viewer
             - test-objectsender
+            - test-shared
             - test-server
             - test-server-no-ff
             - test-server-multiregion
@@ -248,6 +263,7 @@ workflows:
             - test-frontend-2
             - test-viewer
             - test-objectsender
+            - test-shared
             - test-server
             - test-server-no-ff
             - test-server-multiregion
@@ -264,6 +280,7 @@ workflows:
             - test-frontend-2
             - test-viewer
             - test-objectsender
+            - test-shared
             - test-server
             - test-server-no-ff
             - test-server-multiregion
@@ -286,6 +303,7 @@ workflows:
             - test-frontend-2
             - test-viewer
             - test-objectsender
+            - test-shared
             - test-server
             - test-server-no-ff
             - test-server-multiregion
@@ -302,6 +320,7 @@ workflows:
             - test-frontend-2
             - test-viewer
             - test-objectsender
+            - test-shared
             - test-server
             - test-server-no-ff
             - test-server-multiregion
@@ -349,6 +368,7 @@ workflows:
             - test-frontend-2
             - test-viewer
             - test-objectsender
+            - test-shared
             - test-preview-service
 
       - publish-viewer-sandbox-cloudflare-pages:
@@ -357,16 +377,6 @@ workflows:
             - cloudflare-pages-edit
           requires:
             - test-viewer
-
-      - frontend-2-sourcemaps:
-          context:
-            - datadog-sourcemaps-publish
-          filters: *filters-publish
-          requires:
-            - get-version
-            - docker-build-frontend-2
-            - test-frontend-2
-            - publish-helm-chart
 
 jobs:
   get-version:
@@ -729,6 +739,36 @@ jobs:
           command: yarn test
           working_directory: 'packages/preview-service'
 
+  test-shared:
+    docker: *docker-node-browsers-image
+    resource_class: medium+
+    steps:
+      - checkout
+      - restore_cache:
+          name: Restore Yarn Package Cache
+          keys:
+            - yarn-packages-server-{{ checksum "yarn.lock" }}
+      - run:
+          name: Install Dependencies
+          command: yarn
+
+      - save_cache:
+          name: Save Yarn Package Cache
+          key: yarn-packages-server-{{ checksum "yarn.lock" }}
+          paths:
+            - .yarn/cache
+            - .yarn/unplugged
+
+      - run:
+          name: Lint
+          command: yarn lint:ci
+          working_directory: 'packages/shared'
+
+      - run:
+          name: Run tests
+          command: yarn test:single-run
+          working_directory: 'packages/shared'
+
   test-objectsender:
     docker: *docker-node-browsers-image
     resource_class: large
@@ -1005,6 +1045,24 @@ jobs:
     environment:
       SPECKLE_SERVER_PACKAGE: frontend-2
 
+  docker-publish-frontend-2-sourcemaps:
+    docker: *docker-node-image
+    resource_class: xlarge
+    working_directory: *work-dir
+    environment:
+      SPECKLE_SERVER_PACKAGE: frontend-2
+    steps:
+      - checkout
+      - attach_workspace:
+          at: /tmp/ci/workspace
+      - run: cat workspace/env-vars >> $BASH_ENV
+      - setup_remote_docker:
+          version: default
+          docker_layer_caching: true
+      - run:
+          name: Build and Save
+          command: ./.circleci/build_publish_fe2_sourcemaps.sh
+
   docker-build-previews:
     <<: *build-job
     environment:
@@ -1216,36 +1274,3 @@ jobs:
           environment:
             CLOUDFLARE_PAGES_PROJECT_NAME: viewer
             VIEWER_SANDBOX_DIR_PATH: packages/viewer-sandbox
-
-  frontend-2-sourcemaps:
-    docker: *docker-node-image
-    resource_class: large
-    working_directory: *work-dir
-    steps:
-      - checkout
-      - attach_workspace:
-          at: /tmp/ci/workspace
-      - run: cat workspace/env-vars >> $BASH_ENV
-      - restore_cache:
-          name: Restore Yarn Package Cache
-          keys:
-            - yarn-packages-server-{{ checksum "yarn.lock" }}
-      - run:
-          name: Install Dependencies
-          command: yarn
-      - save_cache:
-          name: Save Yarn Package Cache
-          key: yarn-packages-server-{{ checksum "yarn.lock" }}
-          paths:
-            - .yarn/cache
-            - .yarn/unplugged
-      - run:
-          name: Build public packages
-          command: yarn build:public
-      - run:
-          name: Build FE2
-          command: NODE_ENV=production SPECKLE_SERVER_VERSION="${IMAGE_VERSION_TAG}" yarn build:sourcemaps
-          working_directory: 'packages/frontend-2'
-      - run:
-          name: Upload source maps
-          command: ./.circleci/publish_fe2_sourcemaps.sh
