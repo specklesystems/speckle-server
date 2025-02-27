@@ -6,20 +6,17 @@ import {
   SubscriptionData
 } from '@/modules/gatekeeper/domain/billing'
 import { isNewPlanType } from '@/modules/gatekeeper/helpers/plans'
-import {
-  paidWorkspacePlansNewSchema,
-  WorkspacePlanBillingIntervals,
-  WorkspacePricingPlans
-} from '@/modules/gatekeeperCore/domain/billing'
+import { WorkspacePricingProducts } from '@/modules/gatekeeperCore/domain/billing'
 import {
   EnvironmentResourceError,
   LogicError,
   NotImplementedError
 } from '@/modules/shared/errors'
+import { WorkspacePlanBillingIntervals } from '@speckle/shared'
 import { Stripe } from 'stripe'
 
 type GetWorkspacePlanPrice = (args: {
-  workspacePlan: WorkspacePricingPlans
+  workspacePlan: WorkspacePricingProducts
   billingInterval: WorkspacePlanBillingIntervals
 }) => string
 
