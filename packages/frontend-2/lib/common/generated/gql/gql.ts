@@ -151,7 +151,7 @@ type Documents = {
     "\n  fragment WorkspaceWizardStepRegion_ServerInfo on ServerInfo {\n    multiRegion {\n      regions {\n        id\n        ...SettingsWorkspacesRegionsSelect_ServerRegionItem\n      }\n    }\n  }\n": typeof types.WorkspaceWizardStepRegion_ServerInfoFragmentDoc,
     "\n  query ActiveUserMainMetadata {\n    activeUser {\n      id\n      email\n      emails {\n        id\n        verified\n      }\n      company\n      bio\n      name\n      role\n      avatar\n      isOnboardingFinished\n      createdAt\n      verified\n      notificationPreferences\n      versions(limit: 0) {\n        totalCount\n      }\n    }\n  }\n": typeof types.ActiveUserMainMetadataDocument,
     "\n      mutation CreateOnboardingProject {\n        projectMutations {\n          createForOnboarding {\n            ...ProjectPageProject\n            ...ProjectDashboardItem\n          }\n        }\n      }\n    ": typeof types.CreateOnboardingProjectDocument,
-    "\n  mutation FinishOnboarding {\n    activeUserMutations {\n      finishOnboarding\n    }\n  }\n": typeof types.FinishOnboardingDocument,
+    "\n  mutation FinishOnboarding($input: OnboardingCompletionInput) {\n    activeUserMutations {\n      finishOnboarding(input: $input)\n    }\n  }\n": typeof types.FinishOnboardingDocument,
     "\n  mutation RequestVerificationByEmail($email: String!) {\n    requestVerificationByEmail(email: $email)\n  }\n": typeof types.RequestVerificationByEmailDocument,
     "\n  query AuthLoginPanel {\n    serverInfo {\n      authStrategies {\n        id\n      }\n      ...AuthStategiesServerInfoFragment\n    }\n  }\n": typeof types.AuthLoginPanelDocument,
     "\n  query AuthRegisterPanel($token: String) {\n    serverInfo {\n      inviteOnly\n      authStrategies {\n        id\n      }\n      ...AuthStategiesServerInfoFragment\n      ...ServerTermsOfServicePrivacyPolicyFragment\n    }\n    serverInviteByToken(token: $token) {\n      id\n      email\n    }\n  }\n": typeof types.AuthRegisterPanelDocument,
@@ -538,7 +538,7 @@ const documents: Documents = {
     "\n  fragment WorkspaceWizardStepRegion_ServerInfo on ServerInfo {\n    multiRegion {\n      regions {\n        id\n        ...SettingsWorkspacesRegionsSelect_ServerRegionItem\n      }\n    }\n  }\n": types.WorkspaceWizardStepRegion_ServerInfoFragmentDoc,
     "\n  query ActiveUserMainMetadata {\n    activeUser {\n      id\n      email\n      emails {\n        id\n        verified\n      }\n      company\n      bio\n      name\n      role\n      avatar\n      isOnboardingFinished\n      createdAt\n      verified\n      notificationPreferences\n      versions(limit: 0) {\n        totalCount\n      }\n    }\n  }\n": types.ActiveUserMainMetadataDocument,
     "\n      mutation CreateOnboardingProject {\n        projectMutations {\n          createForOnboarding {\n            ...ProjectPageProject\n            ...ProjectDashboardItem\n          }\n        }\n      }\n    ": types.CreateOnboardingProjectDocument,
-    "\n  mutation FinishOnboarding {\n    activeUserMutations {\n      finishOnboarding\n    }\n  }\n": types.FinishOnboardingDocument,
+    "\n  mutation FinishOnboarding($input: OnboardingCompletionInput) {\n    activeUserMutations {\n      finishOnboarding(input: $input)\n    }\n  }\n": types.FinishOnboardingDocument,
     "\n  mutation RequestVerificationByEmail($email: String!) {\n    requestVerificationByEmail(email: $email)\n  }\n": types.RequestVerificationByEmailDocument,
     "\n  query AuthLoginPanel {\n    serverInfo {\n      authStrategies {\n        id\n      }\n      ...AuthStategiesServerInfoFragment\n    }\n  }\n": types.AuthLoginPanelDocument,
     "\n  query AuthRegisterPanel($token: String) {\n    serverInfo {\n      inviteOnly\n      authStrategies {\n        id\n      }\n      ...AuthStategiesServerInfoFragment\n      ...ServerTermsOfServicePrivacyPolicyFragment\n    }\n    serverInviteByToken(token: $token) {\n      id\n      email\n    }\n  }\n": types.AuthRegisterPanelDocument,
@@ -1353,7 +1353,7 @@ export function graphql(source: "\n      mutation CreateOnboardingProject {\n   
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  mutation FinishOnboarding {\n    activeUserMutations {\n      finishOnboarding\n    }\n  }\n"): (typeof documents)["\n  mutation FinishOnboarding {\n    activeUserMutations {\n      finishOnboarding\n    }\n  }\n"];
+export function graphql(source: "\n  mutation FinishOnboarding($input: OnboardingCompletionInput) {\n    activeUserMutations {\n      finishOnboarding(input: $input)\n    }\n  }\n"): (typeof documents)["\n  mutation FinishOnboarding($input: OnboardingCompletionInput) {\n    activeUserMutations {\n      finishOnboarding(input: $input)\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
