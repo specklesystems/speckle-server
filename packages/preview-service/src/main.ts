@@ -42,7 +42,7 @@ let subscriber: Redis
 
 const opts = {
   // redisOpts here will contain at least a property of connectionName which will identify the queue based on its name
-  createClient: function (type: string, redisOpts: RedisOptions) {
+  createClient(type: string, redisOpts: RedisOptions) {
     switch (type) {
       case 'client':
         if (!client) {
@@ -71,7 +71,7 @@ const opts = {
 }
 const jobQueue = new Bull('preview-service-jobs', opts)
 
-jobQueue.process(async (payload, done) => {
+await jobQueue.process(async (payload, done) => {
   const parseResult = jobPayload.safeParse(payload.data)
   if (!parseResult.success) {
     logger.error({ parseError: parseResult.error }, 'Invalid job payload')
@@ -89,7 +89,7 @@ jobQueue.process(async (payload, done) => {
 
 process.on('SIGINT', async () => {
   logger.info('Received signal to shut down')
-  browser.close()
+  await browser.close()
   server.close(() => {
     logger.debug('Exiting the express server')
     process.exit()

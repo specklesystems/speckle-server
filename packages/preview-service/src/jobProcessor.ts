@@ -8,6 +8,7 @@ import {
 import { Logger } from 'pino'
 
 declare global {
+  // eslint-disable-next-line @typescript-eslint/no-empty-object-type
   interface Window extends PreviewGenerator {}
 }
 
@@ -28,13 +29,6 @@ export const jobProcessor = async ({
   let page: Page | undefined = undefined
   try {
     page = await browser.newPage()
-    // const a = await Promise.race([
-    //   pageFunction({ page, job, jobLogger }),
-    //   new Promise((resolve, reject) => {
-    //     setTimeout(resolve, 500, 'one')
-    //     return
-    //   })
-    // ])
 
     const result = await pageFunction({ page, job, jobLogger })
     const elapsed = (new Date().getTime() - start.getTime()) / 1000
