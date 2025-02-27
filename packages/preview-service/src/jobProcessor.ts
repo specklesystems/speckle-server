@@ -6,6 +6,7 @@ import {
   PreviewSuccessPayload
 } from '@speckle/shared/dist/esm/previews/job.js'
 import { Logger } from 'pino'
+import { PORT } from '@/config'
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-empty-object-type
@@ -76,7 +77,7 @@ const pageFunction = async ({
     jobLogger.error({ err }, 'Page crashed')
     throw err
   })
-  await page.goto('http://127.0.0.1:3001/index.html')
+  await page.goto(`http://127.0.0.1:${PORT}/index.html`)
   // page.setDefaultTimeout(deps.timeoutMilliseconds)
 
   const previewResult = await page.evaluate(async (job: JobPayload) => {

@@ -92,9 +92,9 @@ COPY packages/preview-service/package.json ./packages/preview-service/
 
 WORKDIR /speckle-server/packages
 
-COPY --from=build-stage /speckle-server/packages/shared ./shared
-COPY --from=build-stage /speckle-server/packages/preview-service ./preview-service
-COPY --from=build-stage /speckle-server/packages/preview-frontend/dist ./preview-service/public
+COPY --link --from=build-stage /speckle-server/packages/shared ./shared
+COPY --link --from=build-stage /speckle-server/packages/preview-service ./preview-service
+COPY --link --from=build-stage /speckle-server/packages/preview-frontend/dist ./preview-service/public
 
 WORKDIR /speckle-server/packages/preview-service
 
@@ -130,6 +130,8 @@ RUN apt-get update && \
     # Clean up
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
+
+ENV CHROMIUM_EXECUTABLE_PATH="/usr/bin/google-chrome"
 
 # Run everything after as non-privileged user.
 USER pptruser
