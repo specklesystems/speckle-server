@@ -20,7 +20,7 @@ import {
 import { MaybeNullOrUndefined, Nullable } from '@speckle/shared'
 import { Knex } from 'knex'
 
-const BlobStorage = buildTableHelper('blob_storage', [
+export const BlobStorage = buildTableHelper('blob_storage', [
   'id',
   'streamId',
   'userId',

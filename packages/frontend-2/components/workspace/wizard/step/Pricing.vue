@@ -3,12 +3,12 @@
     <div class="flex flex-col max-w-5xl w-full items-center">
       <div class="grid lg:grid-cols-3 gap-y-2 gap-x-2 w-full">
         <SettingsWorkspacesBillingPricingTablePlan
-          v-for="plan in plans"
-          :key="plan.name"
+          v-for="plan in oldPlans"
+          :key="plan"
           :plan="plan"
           :yearly-interval-selected="isYearlySelected"
           :badge-text="
-            plan.name === WorkspacePlans.Starter && !isYearlySelected
+            plan === WorkspacePlans.Starter && !isYearlySelected
               ? '30-day free trial'
               : undefined
           "
@@ -16,14 +16,14 @@
         >
           <template #cta>
             <FormButton
-              :color="plan.name === WorkspacePlans.Starter ? 'primary' : 'outline'"
+              :color="plan === WorkspacePlans.Starter ? 'primary' : 'outline'"
               full-width
-              @click="onCtaClick(plan.name)"
+              @click="onCtaClick(plan)"
             >
               {{
-                plan.name === WorkspacePlans.Starter && !isYearlySelected
+                plan === WorkspacePlans.Starter && !isYearlySelected
                   ? 'Start 30-day free trial'
-                  : `Subscribe to ${startCase(plan.name)}`
+                  : `Subscribe to ${startCase(plan)}`
               }}
             </FormButton>
           </template>
@@ -45,15 +45,16 @@ import {
   WorkspacePlans
 } from '~/lib/common/generated/gql/graphql'
 import { useWorkspacesWizard } from '~/lib/workspaces/composables/wizard'
-import { pricingPlansConfig } from '~/lib/billing/helpers/constants'
 import { useMixpanel } from '~/lib/core/composables/mp'
 import { startCase } from 'lodash'
+import { PaidWorkspacePlansOld } from '@speckle/shared'
 
 const { goToNextStep, goToPreviousStep, state } = useWorkspacesWizard()
 const mixpanel = useMixpanel()
 
-const plans = ref(pricingPlansConfig.plans)
 const isYearlySelected = ref(false)
+
+const oldPlans = computed(() => Object.values(PaidWorkspacePlansOld))
 
 const onCtaClick = (plan: WorkspacePlans) => {
   state.value.plan = plan as unknown as PaidWorkspacePlans
