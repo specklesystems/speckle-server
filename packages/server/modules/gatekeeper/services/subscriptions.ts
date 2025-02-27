@@ -6,7 +6,6 @@ import {
   GetWorkspaceSubscription,
   GetWorkspaceSubscriptionBySubscriptionId,
   GetWorkspaceSubscriptions,
-  PaidWorkspacePlanStatuses,
   ReconcileSubscriptionData,
   SubscriptionData,
   SubscriptionDataInput,
@@ -15,20 +14,28 @@ import {
   WorkspaceSubscription
 } from '@/modules/gatekeeper/domain/billing'
 import {
-  PaidWorkspacePlans,
-  WorkspacePlanBillingIntervals,
-  WorkspacePricingPlans
-} from '@/modules/gatekeeper/domain/workspacePricing'
-import {
   WorkspaceNotPaidPlanError,
-  WorkspacePlanDowngradeError,
+  WorkspacePlanUpgradeError,
   WorkspacePlanMismatchError,
   WorkspacePlanNotFoundError,
   WorkspaceSubscriptionNotFoundError
 } from '@/modules/gatekeeper/errors/billing'
+import { isNewPlanType, isOldPaidPlanType } from '@/modules/gatekeeper/helpers/plans'
+import { WorkspacePricingProducts } from '@/modules/gatekeeperCore/domain/billing'
+import { LogicError, NotImplementedError } from '@/modules/shared/errors'
+import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { CountWorkspaceRoleWithOptionalProjectRole } from '@/modules/workspaces/domain/operations'
-import { throwUncoveredError, WorkspaceRoles } from '@speckle/shared'
+import {
+  PaidWorkspacePlans,
+  PaidWorkspacePlanStatuses,
+  throwUncoveredError,
+  WorkspacePlanBillingIntervals,
+  WorkspaceRoles,
+  xor
+} from '@speckle/shared'
 import { cloneDeep, isEqual, sum } from 'lodash'
+
+const { FF_WORKSPACES_NEW_PLANS_ENABLED } = getFeatureFlags()
 
 export const handleSubscriptionUpdateFactory =
   ({
@@ -78,12 +85,15 @@ export const handleSubscriptionUpdateFactory =
         case 'starter':
         case 'plus':
         case 'business':
+        case 'team':
+        case 'pro':
           break
         case 'unlimited':
         case 'academia':
         case 'starterInvoiced':
         case 'plusInvoiced':
         case 'businessInvoiced':
+        case 'free':
           throw new WorkspacePlanMismatchError()
         default:
           throwUncoveredError(workspacePlan)
@@ -128,6 +138,10 @@ export const addWorkspaceSubscriptionSeatIfNeededFactory =
     // if (!workspaceSubscription) throw new WorkspaceSubscriptionNotFoundError()
 
     switch (workspacePlan.name) {
+      case 'team':
+      case 'pro':
+        // Cause seat types matter, a future issue. ProductId should change based on seat type
+        throw new NotImplementedError()
       case 'starter':
       case 'plus':
       case 'business':
@@ -137,6 +151,7 @@ export const addWorkspaceSubscriptionSeatIfNeededFactory =
       case 'starterInvoiced':
       case 'plusInvoiced':
       case 'businessInvoiced':
+      case 'free':
         throw new WorkspacePlanMismatchError()
       default:
         throwUncoveredError(workspacePlan)
@@ -198,7 +213,7 @@ const mutateSubscriptionDataWithNewValidSeatNumbers = ({
   subscriptionData
 }: {
   seatCount: number
-  workspacePlan: WorkspacePricingPlans
+  workspacePlan: WorkspacePricingProducts
   getWorkspacePlanProductId: GetWorkspacePlanProductId
   subscriptionData: SubscriptionDataInput
 }): void => {
@@ -206,7 +221,7 @@ const mutateSubscriptionDataWithNewValidSeatNumbers = ({
   const product = subscriptionData.products.find(
     (product) => product.productId === productId
   )
-  if (seatCount < 0) throw new Error('Invalid seat count, cannot be negative')
+  if (seatCount < 0) throw new LogicError('Invalid seat count, cannot be negative')
 
   if (seatCount === 0 && product === undefined) return
   if (seatCount === 0 && product !== undefined) {
@@ -215,7 +230,7 @@ const mutateSubscriptionDataWithNewValidSeatNumbers = ({
   } else if (product !== undefined && product.quantity >= seatCount) {
     product.quantity = seatCount
   } else {
-    throw new Error('Invalid subscription state')
+    throw new LogicError('Invalid subscription state')
   }
 }
 
@@ -261,6 +276,10 @@ export const downscaleWorkspaceSubscriptionFactory =
     if (!workspacePlan) throw new WorkspacePlanNotFoundError()
 
     switch (workspacePlan.name) {
+      case 'team':
+      case 'pro':
+        // Cause seat types matter, a future issue
+        throw new NotImplementedError()
       case 'starter':
       case 'plus':
       case 'business':
@@ -270,6 +289,7 @@ export const downscaleWorkspaceSubscriptionFactory =
       case 'starterInvoiced':
       case 'plusInvoiced':
       case 'businessInvoiced':
+      case 'free':
         throw new WorkspacePlanMismatchError()
       default:
         throwUncoveredError(workspacePlan)
@@ -277,6 +297,7 @@ export const downscaleWorkspaceSubscriptionFactory =
 
     if (workspacePlan.status === 'canceled') return false
 
+    // TODO: Guests will be able to have a paid seat
     const [guestCount, memberCount, adminCount] = await Promise.all([
       countWorkspaceRole({ workspaceId, workspaceRole: 'workspace:guest' }),
       countWorkspaceRole({ workspaceId, workspaceRole: 'workspace:member' }),
@@ -385,10 +406,13 @@ export const upgradeWorkspaceSubscriptionFactory =
       case 'starterInvoiced':
       case 'plusInvoiced':
       case 'businessInvoiced':
+      case 'free': // TODO: Don't we want to allow upgrades from free to paid?
         throw new WorkspaceNotPaidPlanError()
       case 'starter':
       case 'plus':
       case 'business':
+      case 'team':
+      case 'pro':
         break
       default:
         throwUncoveredError(workspacePlan)
@@ -411,23 +435,53 @@ export const upgradeWorkspaceSubscriptionFactory =
     if (!workspaceSubscription) throw new WorkspaceSubscriptionNotFoundError()
 
     const planOrder: Record<PaidWorkspacePlans, number> = {
+      // old
       business: 3,
       plus: 2,
-      starter: 1
+      starter: 1,
+      // new
+      team: 1,
+      pro: 2
+    }
+
+    if (
+      !FF_WORKSPACES_NEW_PLANS_ENABLED &&
+      (isNewPlanType(workspacePlan.name) || isNewPlanType(targetPlan))
+    ) {
+      throw new NotImplementedError()
+    }
+
+    const planCheckers = [isNewPlanType, isOldPaidPlanType]
+    for (const isSpecificPlanType of planCheckers) {
+      const oldPlanFitsSchema = isSpecificPlanType(workspacePlan.name)
+      const newPlanFitsSchema = isSpecificPlanType(targetPlan)
+      if (xor(oldPlanFitsSchema, newPlanFitsSchema)) {
+        throw new WorkspacePlanUpgradeError(
+          'Attempting to switch between incompatible plan types'
+        )
+      }
+    }
+
+    if (isNewPlanType(targetPlan) || isNewPlanType(workspacePlan.name)) {
+      // Needs custom logic below for seats
+      throw new NotImplementedError()
     }
 
     if (
       planOrder[workspacePlan.name] === planOrder[targetPlan] &&
       workspaceSubscription.billingInterval === billingInterval
     )
-      throw new WorkspacePlanDowngradeError()
+      throw new WorkspacePlanUpgradeError("Can't upgrade to the same plan")
+
     if (planOrder[workspacePlan.name] > planOrder[targetPlan])
-      throw new WorkspacePlanDowngradeError()
+      throw new WorkspacePlanUpgradeError("Can't upgrade to a less expensive plan")
 
     switch (billingInterval) {
       case 'monthly':
         if (workspaceSubscription.billingInterval === 'yearly')
-          throw new WorkspacePlanDowngradeError()
+          throw new WorkspacePlanUpgradeError(
+            "Can't upgrade from yearly to monthly billing cycle"
+          )
       case 'yearly':
         break
       default:

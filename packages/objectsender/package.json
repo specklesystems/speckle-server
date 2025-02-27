@@ -42,7 +42,7 @@
     "@types/lodash-es": "^4.17.12",
     "@typescript-eslint/eslint-plugin": "^7.12.0",
     "@typescript-eslint/parser": "^7.12.0",
-    "@vitest/coverage-v8": "^1.6.0",
+    "@vitest/coverage-v8": "^3.0.7",
     "eslint": "^9.4.0",
     "eslint-config-prettier": "^9.1.0",
     "prettier": "^3.3.2",
@@ -54,21 +54,19 @@
   "exports": {
     ".": {
       "import": {
-        "default": "./dist/objectsender.js",
-        "types": "./dist/index.d.ts"
+        "types": "./dist/index.d.ts",
+        "default": "./dist/objectsender.js"
       },
       "require": {
-        "default": "./dist/objectsender.cjs",
-        "types": "./dist/index.d.ts"
+        "types": "./dist/index.d.ts",
+        "default": "./dist/objectsender.cjs"
       }
     }
   },
   "imports": {
     "#lodash": {
       "require": "lodash",
-      "import": "lodash-es",
-      "node": "lodash",
-      "default": "lodash-es"
+      "import": "lodash-es"
     }
   }
 }

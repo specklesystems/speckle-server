@@ -45,11 +45,6 @@
           "description": "High level flag that toggles the Gendo AI render module",
           "default": false
         },
-        "noClosureWrites": {
-          "type": "boolean",
-          "description": "Toggles whether to stop writing to the closure table",
-          "default": false
-        },
         "workspacesModuleEnabled": {
           "type": "boolean",
           "description": "High level flag fully toggles the workspaces module",
@@ -95,9 +90,9 @@
           "description": "Forces onboarding for all users",
           "default": false
         },
-        "objectsStreamingFix": {
+        "noPersonalEmailsEnabled": {
           "type": "boolean",
-          "description": "Enables the fix for the objects streaming issue when client prematurely closes the connection",
+          "description": "Disables the ability sign up with personal email addresses",
           "default": false
         }
       }
@@ -1674,103 +1669,6 @@
         }
       }
     },
-    "frontend": {
-      "type": "object",
-      "properties": {
-        "replicas": {
-          "type": "number",
-          "description": "The number of instances of the Frontend pod to be deployed within the cluster.",
-          "default": 1
-        },
-        "logLevel": {
-          "type": "string",
-          "description": "The minimum level of logs which will be output. Suitable values are trace, debug, info, warn, error, fatal, or silent",
-          "default": "info"
-        },
-        "logPretty": {
-          "type": "boolean",
-          "description": "If enabled, will output logs in a human-readable format. Otherwise, logs will be output in JSON format.",
-          "default": false
-        },
-        "image": {
-          "type": "string",
-          "description": "The Docker image to be used for the Speckle Frontend component. If blank, defaults to speckle/speckle-frontend:{{ .Values.docker_image_tag }}. If provided, this value should be the full path including tag. The docker_image_tag value will be ignored.",
-          "default": ""
-        },
-        "requests": {
-          "type": "object",
-          "properties": {
-            "cpu": {
-              "type": "string",
-              "description": "The CPU that should be available on a node when scheduling this pod.",
-              "default": "250m"
-            },
-            "memory": {
-              "type": "string",
-              "description": "The Memory that should be available on a node when scheduling this pod.",
-              "default": "256Mi"
-            }
-          }
-        },
-        "limits": {
-          "type": "object",
-          "properties": {
-            "cpu": {
-              "type": "string",
-              "description": "The maximum CPU that will be made available to the frontend Pod in a given period.",
-              "default": "1000m"
-            },
-            "memory": {
-              "type": "string",
-              "description": "The maximum Memory that will be made available to the frontend Pod.",
-              "default": "512Mi"
-            }
-          }
-        },
-        "networkPolicy": {
-          "type": "object",
-          "properties": {
-            "enabled": {
-              "type": "boolean",
-              "description": "If enabled, will provide additional security be limiting network traffic into and out of the pod to only the required endpoints and ports.",
-              "default": false
-            }
-          }
-        },
-        "affinity": {
-          "type": "object",
-          "description": "Affinity for Speckle frontend pod scheduling",
-          "default": {}
-        },
-        "nodeSelector": {
-          "type": "object",
-          "description": "Node labels for Speckle frontend pods scheduling",
-          "default": {}
-        },
-        "tolerations": {
-          "type": "array",
-          "description": "Tolerations for Speckle frontend pods scheduling",
-          "default": [],
-          "items": {}
-        },
-        "topologySpreadConstraints": {
-          "type": "array",
-          "description": "Spread Constraints for Speckle frontend pod scheduling",
-          "default": [],
-          "items": {}
-        },
-        "serviceAccount": {
-          "type": "object",
-          "properties": {
-            "create": {
-              "type": "boolean",
-              "description": "If enabled, a Kubernetes Service Account will be created for this pod.",
-              "default": true
-            }
-          }
-        }
-      }
-    },
     "frontend_2": {
       "type": "object",
       "properties": {
@@ -1818,11 +1716,6 @@
               "default": "7000"
             }
           }
-        },
-        "enabled": {
-          "type": "boolean",
-          "description": "Feature flag to enable running the new web application frontend.",
-          "default": true
         },
         "replicas": {
           "type": "number",

@@ -26,9 +26,7 @@
   "imports": {
     "#lodash": {
       "require": "lodash",
-      "import": "lodash-es",
-      "node": "lodash",
-      "default": "lodash-es"
+      "import": "lodash-es"
     }
   },
   "exports": {
@@ -78,7 +76,7 @@
     "@types/lodash-es": "^4.17.12",
     "@typescript-eslint/eslint-plugin": "^7.12.0",
     "@typescript-eslint/parser": "^7.12.0",
-    "@vitejs/plugin-vue": "^4.5.0",
+    "@vitejs/plugin-vue": "^5.2.1",
     "autoprefixer": "^10.4.14",
     "browserify-zlib": "^0.2.0",
     "chromatic": "^6.17.4",
@@ -96,12 +94,11 @@
     "tailwindcss": "^3.3.2",
     "type-fest": "^2.13.1",
     "typescript": "^5.0.4",
-    "unplugin-vue-macros": "^2.7.0",
     "vee-validate": "4.7.0",
     "vite": "^4.5.2",
-    "vite-plugin-dts": "^3.6.3",
-    "vue": "^3.3.8",
-    "vue-tsc": "^1.8.22",
+    "vite-plugin-dts": "^4.5.0",
+    "vue": "^3.5.13",
+    "vue-tsc": "^2.2.2",
     "wait-on": "^6.0.1"
   },
   "installConfig": {

@@ -5,14 +5,18 @@ import {
   ReconcileSubscriptionData,
   SubscriptionData
 } from '@/modules/gatekeeper/domain/billing'
+import { isNewPlanType } from '@/modules/gatekeeper/helpers/plans'
+import { WorkspacePricingProducts } from '@/modules/gatekeeperCore/domain/billing'
 import {
-  WorkspacePlanBillingIntervals,
-  WorkspacePricingPlans
-} from '@/modules/gatekeeper/domain/workspacePricing'
+  EnvironmentResourceError,
+  LogicError,
+  NotImplementedError
+} from '@/modules/shared/errors'
+import { WorkspacePlanBillingIntervals } from '@speckle/shared'
 import { Stripe } from 'stripe'
 
 type GetWorkspacePlanPrice = (args: {
-  workspacePlan: WorkspacePricingPlans
+  workspacePlan: WorkspacePricingProducts
   billingInterval: WorkspacePlanBillingIntervals
 }) => string
 
@@ -45,6 +49,11 @@ export const createCheckoutSessionFactory =
     workspaceId,
     isCreateFlow
   }) => {
+    if (isNewPlanType(workspacePlan)) {
+      // TODO: Supported in follow up task
+      throw new NotImplementedError()
+    }
+
     const resultUrl = getResultUrl({ frontendOrigin, workspaceId, workspaceSlug })
     const price = getWorkspacePlanPrice({ billingInterval, workspacePlan })
     const costLineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = [
@@ -72,7 +81,8 @@ export const createCheckoutSessionFactory =
       cancel_url
     })
 
-    if (!session.url) throw new Error('Failed to create an active checkout session')
+    if (!session.url)
+      throw new EnvironmentResourceError('Failed to create an active checkout session')
     return {
       id: session.id,
       url: session.url,
@@ -148,7 +158,7 @@ export const parseSubscriptionData = (
           : subscriptionItem.price.product.id
       const quantity = subscriptionItem.quantity
       if (!quantity)
-        throw new Error(
+        throw new LogicError(
           'invalid subscription, we do not support products without quantities'
         )
       return {

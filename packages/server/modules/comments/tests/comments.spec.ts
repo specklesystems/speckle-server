@@ -43,7 +43,8 @@ import {
   updateCommentFactory,
   getCommentsLegacyFactory,
   getResourceCommentCountFactory,
-  getStreamCommentCountFactory
+  getStreamCommentCountFactory,
+  getCommentsResourcesFactory
 } from '@/modules/comments/repositories/comments'
 import { db } from '@/db/knex'
 import { getBlobsFactory } from '@/modules/blobstorage/repositories'
@@ -59,7 +60,8 @@ import {
 import {
   createCommitFactory,
   insertStreamCommitsFactory,
-  insertBranchCommitsFactory
+  insertBranchCommitsFactory,
+  getCommitsAndTheirBranchIdsFactory
 } from '@/modules/core/repositories/commits'
 import {
   getBranchByIdFactory,
@@ -70,7 +72,7 @@ import {
 import {
   getObjectFactory,
   storeSingleObjectIfNotFoundFactory,
-  storeClosuresIfNotFoundFactory
+  getStreamObjectsFactory
 } from '@/modules/core/repositories/objects'
 import {
   legacyCreateStreamFactory,
@@ -87,9 +89,6 @@ import {
 import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
 import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import { saveActivityFactory } from '@/modules/activitystream/repositories'
-import { publish } from '@/modules/shared/utils/subscriptions'
-import { addCommitCreatedActivityFactory } from '@/modules/activitystream/services/commitActivity'
 import {
   getUsersFactory,
   getUserFactory,
@@ -121,6 +120,11 @@ import {
 import { CommentRecord } from '@/modules/comments/helpers/types'
 import { MaybeNullOrUndefined } from '@speckle/shared'
 import { CommentEvents } from '@/modules/comments/domain/events'
+import {
+  getViewerResourcesForCommentFactory,
+  getViewerResourcesForCommentsFactory,
+  getViewerResourcesFromLegacyIdentifiersFactory
+} from '@/modules/core/services/commit/viewerResources'
 
 type LegacyCommentRecord = CommentRecord & {
   total_count: string
@@ -141,6 +145,17 @@ const validateInputAttachments = validateInputAttachmentsFactory({
 const insertComments = insertCommentsFactory({ db })
 const insertCommentLinks = insertCommentLinksFactory({ db })
 const deleteComment = deleteCommentFactory({ db })
+
+const getViewerResourcesFromLegacyIdentifiers =
+  getViewerResourcesFromLegacyIdentifiersFactory({
+    getViewerResourcesForComments: getViewerResourcesForCommentsFactory({
+      getCommentsResources: getCommentsResourcesFactory({ db }),
+      getViewerResourcesFromLegacyIdentifiers: (...args) =>
+        getViewerResourcesFromLegacyIdentifiers(...args) // recursive dep
+    }),
+    getCommitsAndTheirBranchIds: getCommitsAndTheirBranchIdsFactory({ db }),
+    getStreamObjects: getStreamObjectsFactory({ db })
+  })
 const createComment = createCommentFactory({
   checkStreamResourcesAccess: streamResourceCheck,
   validateInputAttachments,
@@ -148,7 +163,13 @@ const createComment = createCommentFactory({
   insertCommentLinks,
   deleteComment,
   markCommentViewed,
-  emitEvent: getEventBus().emit
+  emitEvent: getEventBus().emit,
+  getViewerResourcesFromLegacyIdentifiers
+})
+const getViewerResourcesForComment = getViewerResourcesForCommentFactory({
+  getCommentsResources: getCommentsResourcesFactory({ db }),
+  getViewerResourcesFromLegacyIdentifiers: (...args) =>
+    getViewerResourcesFromLegacyIdentifiers(...args) // recursive dep
 })
 const createCommentReply = createCommentReplyFactory({
   validateInputAttachments,
@@ -157,7 +178,8 @@ const createCommentReply = createCommentReplyFactory({
   checkStreamResourcesAccess: streamResourceCheck,
   deleteComment,
   markCommentUpdated: markCommentUpdatedFactory({ db }),
-  emitEvent: getEventBus().emit
+  emitEvent: getEventBus().emit,
+  getViewerResourcesForComment
 })
 const getComment = getCommentFactory({ db })
 const updateComment = updateCommentFactory({ db })
@@ -170,7 +192,8 @@ const editComment = editCommentFactory({
 const archiveComment = archiveCommentFactory({
   getComment,
   getStream,
-  updateComment
+  updateComment,
+  emitEvent: getEventBus().emit
 })
 const getComments = getCommentsLegacyFactory({ db })
 const getResourceCommentCount = getResourceCommentCountFactory({ db })
@@ -186,11 +209,7 @@ const createCommitByBranchId = createCommitByBranchIdFactory({
   insertBranchCommits: insertBranchCommitsFactory({ db }),
   markCommitStreamUpdated,
   markCommitBranchUpdated: markCommitBranchUpdatedFactory({ db }),
-  emitEvent: getEventBus().emit,
-  addCommitCreatedActivity: addCommitCreatedActivityFactory({
-    saveActivity: saveActivityFactory({ db }),
-    publish
-  })
+  emitEvent: getEventBus().emit
 })
 
 const createCommitByBranchName = createCommitByBranchNameFactory({
@@ -255,8 +274,7 @@ const createUser = createUserFactory({
   emitEvent: getEventBus().emit
 })
 const createObject = createObjectFactory({
-  storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({ db }),
-  storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db })
+  storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({ db })
 })
 
 function buildCommentInputFromString(textString?: string) {

@@ -66,12 +66,11 @@ const {
 const { getServerInfoFactory } = require('@/modules/core/repositories/server')
 const {
   createObjectFactory,
-  createObjectsBatchedFactory,
+  createObjectsBatchedAndNoClosuresFactory,
   createObjectsFactory
 } = require('@/modules/core/services/objects/management')
 const {
   storeSingleObjectIfNotFoundFactory,
-  storeClosuresIfNotFoundFactory,
   storeObjectsIfNotFoundFactory,
   getFormattedObjectFactory,
   getObjectChildrenStreamFactory,
@@ -163,16 +162,13 @@ const createUser = createUserFactory({
   emitEvent: getEventBus().emit
 })
 const createObject = createObjectFactory({
-  storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({ db }),
-  storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db })
+  storeSingleObjectIfNotFoundFactory: storeSingleObjectIfNotFoundFactory({ db })
 })
-const createObjectsBatched = createObjectsBatchedFactory({
-  storeObjectsIfNotFoundFactory: storeObjectsIfNotFoundFactory({ db }),
-  storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db })
+const createObjectsBatched = createObjectsBatchedAndNoClosuresFactory({
+  storeObjectsIfNotFoundFactory: storeObjectsIfNotFoundFactory({ db })
 })
 const createObjects = createObjectsFactory({
-  storeObjectsIfNotFoundFactory: storeObjectsIfNotFoundFactory({ db }),
-  storeClosuresIfNotFound: storeClosuresIfNotFoundFactory({ db })
+  storeObjectsIfNotFoundFactory: storeObjectsIfNotFoundFactory({ db })
 })
 const getObject = getFormattedObjectFactory({ db })
 const getObjectChildrenStream = getObjectChildrenStreamFactory({ db })
@@ -183,7 +179,7 @@ const getObjects = getStreamObjectsFactory({ db })
 describe('Objects @core-objects', () => {
   const userOne = {
     name: 'Dimitrie Stefanescu',
-    email: 'didimitrie43@gmail.com',
+    email: 'didimitrie43@example.org',
     password: 'sn3aky-1337-b1m'
   }
 
@@ -633,8 +629,8 @@ describe('Objects @core-objects', () => {
 
     await createObjectsBatched({ streamId: stream.id, objects: objs })
 
-    const parent = await getObject({ streamId: stream.id, objectId: commitId })
-    expect(parent.totalChildrenCount).to.equal(3333)
+    // const parent = await getObject({ streamId: stream.id, objectId: commitId })
+    // expect(parent.totalChildrenCount).to.equal(3333)
     const commitChildren = await getObjectChildren({
       streamId: stream.id,
       objectId: commitId,

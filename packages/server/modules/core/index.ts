@@ -19,6 +19,10 @@ import db from '@/db/knex'
 import { registerOrUpdateRole } from '@/modules/shared/repositories/roles'
 import { isTestEnv } from '@/modules/shared/helpers/envHelper'
 import { HooksConfig, Hook, ExecuteHooks } from '@/modules/core/hooks'
+import { reportSubscriptionEventsFactory } from '@/modules/core/events/subscriptionListeners'
+import { getEventBus } from '@/modules/shared/services/eventBus'
+import { publish } from '@/modules/shared/utils/subscriptions'
+import { getStreamCollaboratorsFactory } from '@/modules/core/repositories/streams'
 
 let stopTestSubs: (() => void) | undefined = undefined
 
@@ -75,6 +79,13 @@ const coreModule: SpeckleModule<{
         const { startEmittingTestSubs } = await import('@/test/graphqlHelper')
         stopTestSubs = await startEmittingTestSubs()
       }
+
+      // Setup GQL sub emits
+      reportSubscriptionEventsFactory({
+        eventListen: getEventBus().listen,
+        publish,
+        getStreamCollaborators: getStreamCollaboratorsFactory({ db })
+      })()
     }
   },
   async shutdown() {

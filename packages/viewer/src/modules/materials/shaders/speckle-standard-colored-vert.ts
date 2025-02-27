@@ -120,51 +120,24 @@ attribute float gradientIndex;
 varying float vGradientIndex;
 
 #ifdef USE_RTE
-    vec4 computeRelativePositionSeparate(in vec3 position_low, in vec3 position_high, in vec3 relativeTo_low, in vec3 relativeTo_high){
-        /* 
-        Vector calculation for the high and low differences works on everything 
-        *BESIDES* Apple Silicon (or whatever they call it) GPUs
-
-        It would seem that when this code gets compiled, vector types get a lower precision(?)
-        which completely brakes the 2 float -> double reconstructio. Doing it separately for each 
-        vector component using floats works fine.
-        */
-        vec3 highDifference;
-        vec3 lowDifference;
-        float t1 = position_low.x - relativeTo_low.x;
-        float e = t1 - position_low.x;
-        float t2 = ((-relativeTo_low.x - e) + (position_low.x - (t1 - e))) + position_high.x - relativeTo_high.x;
-        highDifference.x = t1 + t2;
-        lowDifference.x = t2 - (highDifference.x - t1);
-
-        t1 = position_low.y - relativeTo_low.y;
-        e = t1 - position_low.y;
-        t2 = ((-relativeTo_low.y - e) + (position_low.y - (t1 - e))) + position_high.y - relativeTo_high.y;
-        highDifference.y = t1 + t2;
-        lowDifference.y = t2 - (highDifference.y - t1);
-
-        t1 = position_low.z - relativeTo_low.z;
-        e = t1 - position_low.z;
-        t2 = ((-relativeTo_low.z - e) + (position_low.z - (t1 - e))) + position_high.z - relativeTo_high.z;
-        highDifference.z = t1 + t2;
-        lowDifference.z = t2 - (highDifference.z - t1);
-
-        vec3 position = highDifference.xyz + lowDifference.xyz;
-        return vec4(position, 1.);
-    }
-
-    vec4 computeRelativePosition(in vec3 position_low, in vec3 position_high, in vec3 relativeTo_low, in vec3 relativeTo_high){
+    highp vec4 computeRelativePosition(in highp vec3 position_low, in highp vec3 position_high, in highp vec3 relativeTo_low, in highp vec3 relativeTo_high){
         /* 
         Source https://github.com/virtualglobebook/OpenGlobe/blob/master/Source/Examples/Chapter05/Jitter/GPURelativeToEyeDSFUN90/Shaders/VS.glsl 
         Note here, we're storing the high part of the position encoding inside three's default 'position' attribute buffer so we avoid redundancy 
         */
-        vec3 t1 = position_low.xyz - relativeTo_low;
-        vec3 e = t1 - position_low.xyz;
-        vec3 t2 = ((-relativeTo_low - e) + (position_low.xyz - (t1 - e))) + position_high.xyz - relativeTo_high;
-        vec3 highDifference = t1 + t2;
-        vec3 lowDifference = t2 - (highDifference - t1);
+        highp vec3 t1 = position_low.xyz - relativeTo_low.xyz;
+        highp vec3 e = t1 - position_low.xyz;
+        /** This is redunant, but necessary as a workaround for Apple platforms */
+        highp float x = position_high.x - relativeTo_high.x;
+        highp float y = position_high.y - relativeTo_high.y;
+        highp float z = position_high.z - relativeTo_high.z;
+        highp vec3 v = vec3(x, y, z);
+        /** End of redundant part */
+        highp vec3 t2 = ((-relativeTo_low - e) + (position_low.xyz - (t1 - e))) + v;
+        highp vec3 highDifference = t1 + t2;
+        highp vec3 lowDifference = t2 - (highDifference.xyz - t1.xyz);
         
-        vec3 position = highDifference.xyz + lowDifference.xyz;
+        highp vec3 position = highDifference.xyz + lowDifference.xyz;
         return vec4(position, 1.);
     }
 #endif
@@ -196,13 +169,13 @@ void main() {
         vec4 position_highT = vec4(position, 1.);
         const vec3 ZERO3 = vec3(0., 0., 0.);
 
-        vec4 rteLocalPosition = computeRelativePositionSeparate(position_lowT.xyz, position_highT.xyz, uViewer_low, uViewer_high);
+        vec4 rteLocalPosition = computeRelativePosition(position_lowT.xyz, position_highT.xyz, uViewer_low, uViewer_high);
         #ifdef TRANSFORM_STORAGE
-            vec4 rtePivot = computeRelativePositionSeparate(tPivotLow.xyz, tPivotHigh.xyz, uViewer_low, uViewer_high);
+            vec4 rtePivot = computeRelativePosition(tPivotLow.xyz, tPivotHigh.xyz, uViewer_low, uViewer_high);
             rteLocalPosition.xyz = rotate_vertex_position_delta(rteLocalPosition, rtePivot, tQuaternion) * tScale.xyz + rtePivot.xyz + tTranslation.xyz;
         #endif
         #ifdef USE_INSTANCING
-            vec4 instancePivot = computeRelativePositionSeparate(ZERO3, ZERO3, uViewer_low, uViewer_high);
+            vec4 instancePivot = computeRelativePosition(ZERO3, ZERO3, uViewer_low, uViewer_high);
             rteLocalPosition.xyz = (mat3(instanceMatrix) * (rteLocalPosition - instancePivot).xyz) + instancePivot.xyz + instanceMatrix[3].xyz;
         #endif
     #endif
@@ -242,15 +215,15 @@ void main() {
         mat4 shadowMatrix = directionalShadowMatrix[ i ];
 
         #ifdef USE_RTE
-            shadowPosition = computeRelativePositionSeparate(position_low.xyz, position.xyz, uShadowViewer_low, uShadowViewer_high);
+            shadowPosition = computeRelativePosition(position_low.xyz, position.xyz, uShadowViewer_low, uShadowViewer_high);
             shadowMatrix = rteShadowMatrix;
         #endif
         #ifdef TRANSFORM_STORAGE
-            vec4 rtePivotShadow = computeRelativePositionSeparate(tPivotLow.xyz, tPivotHigh.xyz, uShadowViewer_low, uShadowViewer_high);
+            vec4 rtePivotShadow = computeRelativePosition(tPivotLow.xyz, tPivotHigh.xyz, uShadowViewer_low, uShadowViewer_high);
             shadowPosition.xyz = rotate_vertex_position_delta(shadowPosition, rtePivotShadow, tQuaternion) * tScale.xyz + rtePivotShadow.xyz + tTranslation.xyz;
         #endif
         #ifdef USE_INSTANCING
-            vec4 rtePivotShadow = computeRelativePositionSeparate(ZERO3, ZERO3, uShadowViewer_low, uShadowViewer_high);
+            vec4 rtePivotShadow = computeRelativePosition(ZERO3, ZERO3, uShadowViewer_low, uShadowViewer_high);
             shadowPosition.xyz = (mat3(instanceMatrix) * (shadowPosition - rtePivotShadow).xyz) + rtePivotShadow.xyz + instanceMatrix[3].xyz;
         #endif
         shadowWorldPosition = modelMatrix * shadowPosition + vec4( shadowWorldNormal * directionalLightShadows[ i ].shadowNormalBias, 0 );

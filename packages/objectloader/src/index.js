@@ -107,12 +107,9 @@ class ObjectLoader {
     }
   }
 
-  static createFromJSON(json) {
-    const start = performance.now()
-    const jsonObj = JSON.parse(json)
-    console.warn('JSON Parse Time -> ', performance.now() - start)
+  static createFromObjects(objects) {
+    const rootObject = objects[0]
 
-    const rootObject = jsonObj[0]
     const loader = new (class extends ObjectLoader {
       constructor() {
         super({
@@ -136,7 +133,7 @@ class ObjectLoader {
       async *getObjectIterator() {
         const t0 = Date.now()
         let count = 0
-        for await (const { id, obj } of this.getRawObjectIterator(jsonObj)) {
+        for await (const { id, obj } of this.getRawObjectIterator(objects)) {
           this.buffer[id] = obj
           count += 1
           yield obj
@@ -168,6 +165,14 @@ class ObjectLoader {
       }
     })()
     return loader
+  }
+
+  static createFromJSON(json) {
+    const start = performance.now()
+    const jsonObj = JSON.parse(json)
+    console.warn('JSON Parse Time -> ', performance.now() - start)
+
+    return this.createFromObjects(jsonObj)
   }
 
   async asyncPause() {

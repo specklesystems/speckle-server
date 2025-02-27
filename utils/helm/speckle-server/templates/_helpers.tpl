@@ -547,9 +547,6 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 - name: LOG_PRETTY
   value: {{ .Values.server.logPretty | quote }}
 
-- name: USE_FRONTEND_2
-  value: {{ .Values.frontend_2.enabled | quote }}
-
 - name: FRONTEND_ORIGIN
   {{- if .Values.ssl_canonical_url }}
   value: https://{{ .Values.domain }}
@@ -565,6 +562,9 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 
 - name: FF_WORKSPACES_MODULE_ENABLED
   value: {{ .Values.featureFlags.workspacesModuleEnabled | quote }}
+
+- name: FF_NO_PERSONAL_EMAILS_ENABLED
+  value: {{ .Values.featureFlags.noPersonalEmailsEnabled | quote }}
 
 - name: FF_WORKSPACES_SSO_ENABLED
   value: {{ .Values.featureFlags.workspacesSSOEnabled | quote }}
@@ -589,14 +589,8 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 - name: FF_WORKSPACES_MULTI_REGION_ENABLED
   value: {{ .Values.featureFlags.workspacesMultiRegionEnabled | quote }}
 
-- name: FF_FORCE_EMAIL_VERIFICATION
-  value: {{ .Values.featureFlags.forceEmailVerification | quote }}
-
 - name: FF_FORCE_ONBOARDING
   value: {{ .Values.featureFlags.forceOnboarding | quote }}
-
-- name: FF_OBJECTS_STREAMING_FIX
-  value: {{ .Values.featureFlags.objectsStreamingFix | quote }}
 
 {{- if .Values.featureFlags.billingIntegrationEnabled }}
 - name: STRIPE_API_KEY
@@ -731,10 +725,6 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 - name: ASYNC_REQUEST_CONTEXT_ENABLED
   value: {{ .Values.server.asyncRequestContextEnabled | quote }}
 {{- end}}
-
-# *** No more closures flag - prevents writing to the closure table ***
-- name: FF_NO_CLOSURE_WRITES
-  value: {{ .Values.featureFlags.noClosureWrites | quote }}
 
 # *** Gendo render module ***
 - name: FF_GENDOAI_MODULE_ENABLED

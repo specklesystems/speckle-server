@@ -16,12 +16,21 @@ import {
   UpdateUserServerRole,
   ValidateUserPassword
 } from '@/modules/core/domain/users/operations'
-import { UserUpdateError, UserValidationError } from '@/modules/core/errors/user'
-import { PasswordTooShortError, UserInputError } from '@/modules/core/errors/userinput'
+import {
+  UserCreateError,
+  UserUpdateError,
+  UserValidationError
+} from '@/modules/core/errors/user'
+import {
+  BlockedEmailDomainError,
+  PasswordTooShortError,
+  UserInputError
+} from '@/modules/core/errors/userinput'
 import { UserUpdateInput } from '@/modules/core/graph/generated/graphql'
 import type { UserRecord } from '@/modules/core/helpers/userHelper'
 import { sanitizeImageUrl } from '@/modules/shared/helpers/sanitization'
 import {
+  blockedDomains,
   isNullOrUndefined,
   NullableKeysToOptional,
   Roles,
@@ -44,6 +53,9 @@ import { DeleteAllUserInvites } from '@/modules/serverinvites/domain/operations'
 import { GetServerInfo } from '@/modules/core/domain/server/operations'
 import { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { UserEvents } from '@/modules/core/domain/users/events'
+import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
+
+const { FF_NO_PERSONAL_EMAILS_ENABLED } = getFeatureFlags()
 
 export const MINIMUM_PASSWORD_LENGTH = 8
 
@@ -159,6 +171,15 @@ export const createUserFactory =
 
     if (!finalUser.email?.length) throw new UserInputError('E-mail address is required')
 
+    // Temporary experiment: require work emails for all new users
+    const isBlockedDomain = blockedDomains.includes(
+      finalUser.email.split('@')[1]?.toLowerCase()
+    )
+    const requireWorkDomain =
+      !user?.signUpContext?.isInvite && FF_NO_PERSONAL_EMAILS_ENABLED
+
+    if (requireWorkDomain && isBlockedDomain) throw new BlockedEmailDomainError()
+
     let expectedRole = null
     if (finalUser.role) {
       const isValidRole = Object.values(Roles.Server).includes(finalUser.role)
@@ -203,7 +224,7 @@ export const createUserFactory =
     if (userEmail) throw new UserInputError('Email taken. Try logging in?')
 
     const newUser = await deps.storeUser({ user: finalUser })
-    if (!newUser) throw new Error("Couldn't create user")
+    if (!newUser) throw new UserCreateError("Couldn't create user")
 
     const userRole =
       (await deps.countAdminUsers()) === 0
