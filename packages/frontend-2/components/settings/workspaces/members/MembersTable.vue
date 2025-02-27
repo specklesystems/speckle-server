@@ -99,7 +99,7 @@
 import { Roles, type WorkspaceRoles, type MaybeNullOrUndefined } from '@speckle/shared'
 import { settingsWorkspacesMembersSearchQuery } from '~~/lib/settings/graphql/queries'
 import { useQuery } from '@vue/apollo-composable'
-import type { SettingsWorkspacesMembersMembersTable_WorkspaceFragment } from '~~/lib/common/generated/gql/graphql'
+import type { SettingsWorkspacesMembersTable_WorkspaceFragment } from '~~/lib/common/generated/gql/graphql'
 import { graphql } from '~/lib/common/generated/gql'
 import {
   EllipsisHorizontalIcon,
@@ -114,7 +114,7 @@ import { getRoleLabel } from '~~/lib/settings/helpers/utils'
 type UserItem = (typeof members)['value'][0]
 
 graphql(`
-  fragment SettingsWorkspacesMembersMembersTable_WorkspaceCollaborator on WorkspaceCollaborator {
+  fragment SettingsWorkspacesMembersTable_WorkspaceCollaborator on WorkspaceCollaborator {
     id
     role
     user {
@@ -128,7 +128,7 @@ graphql(`
 `)
 
 graphql(`
-  fragment SettingsWorkspacesMembersMembersTable_Workspace on Workspace {
+  fragment SettingsWorkspacesMembersTable_Workspace on Workspace {
     id
     name
     ...SettingsSharedDeleteUserDialog_Workspace
@@ -137,7 +137,7 @@ graphql(`
     team {
       items {
         id
-        ...SettingsWorkspacesMembersMembersTable_WorkspaceCollaborator
+        ...SettingsWorkspacesMembersTable_WorkspaceCollaborator
       }
     }
   }
@@ -150,7 +150,7 @@ enum ActionTypes {
 }
 
 const props = defineProps<{
-  workspace: MaybeNullOrUndefined<SettingsWorkspacesMembersMembersTable_WorkspaceFragment>
+  workspace: MaybeNullOrUndefined<SettingsWorkspacesMembersTable_WorkspaceFragment>
   workspaceSlug: string
 }>()
 
