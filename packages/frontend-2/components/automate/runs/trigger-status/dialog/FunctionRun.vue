@@ -22,13 +22,7 @@
           <div class="flex flex-col sm:flex-row gap-2 sm:items-center truncate">
             <div class="sm:truncate">
               <div
-                v-if="
-                  [
-                    AutomateRunStatus.Initializing,
-                    AutomateRunStatus.Running,
-                    AutomateRunStatus.Pending
-                  ].includes(functionRun.status)
-                "
+                v-if="isStartingOrRunning"
                 class="text-body-2xs text-foreground-2 italic whitespace-normal sm:truncate"
               >
                 Function is {{ functionRun.status.toLowerCase() }}.
@@ -141,4 +135,14 @@ const results = useAutomationFunctionRunResults({
 const showAttachmentDialog = ref(false)
 
 const attachments = computed(() => results.value?.values.blobIds || [])
+
+const isStartingOrRunning = computed(() =>
+  (
+    [
+      AutomateRunStatus.Initializing,
+      AutomateRunStatus.Running,
+      AutomateRunStatus.Pending
+    ] as string[]
+  ).includes(props.functionRun.status)
+)
 </script>

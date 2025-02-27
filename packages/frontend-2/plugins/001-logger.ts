@@ -1,3 +1,4 @@
+import { collectLongTrace } from '@speckle/shared'
 import { omit } from 'lodash-es'
 import type { SetRequired } from 'type-fest'
 import { useReadUserId } from '~/lib/auth/composables/activeUser'
@@ -170,6 +171,7 @@ export default defineNuxtPlugin(async (nuxtApp) => {
       }) => {
         if (!args.length) return
 
+        const stack = collectLongTrace()
         const isError = ['error', 'fatal'].includes(level)
         const isImportant = !!otherData?.important
         if (!isError && !isImportant) return
@@ -189,6 +191,9 @@ export default defineNuxtPlugin(async (nuxtApp) => {
             properties: {
               mainSeqErrorMessage: errorMessage, // weird name to avoid collision with otherData
               extraData: nonObjectOtherData,
+              stack,
+              firstError,
+              firstString,
               ...otherData,
               ...collectCoreInfo()
             },
@@ -202,6 +207,7 @@ export default defineNuxtPlugin(async (nuxtApp) => {
             properties: {
               extraData: nonObjectOtherData,
               firstError,
+              stack,
               ...otherData,
               ...collectCoreInfo()
             }

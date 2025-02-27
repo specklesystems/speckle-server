@@ -11,10 +11,13 @@ import {
 } from '@/modules/workspaces/repositories/regions'
 import {
   copyProjectAutomationsFactory,
+  copyProjectCommentsFactory,
+  copyProjectBlobs,
   copyProjectModelsFactory,
   copyProjectObjectsFactory,
   copyProjectsFactory,
   copyProjectVersionsFactory,
+  copyProjectWebhooksFactory,
   copyWorkspaceFactory
 } from '@/modules/workspaces/repositories/projectRegions'
 import {
@@ -35,6 +38,12 @@ import { getStreamObjectCountFactory } from '@/modules/core/repositories/objects
 import { getProjectAutomationsTotalCountFactory } from '@/modules/automate/repositories/automations'
 import { getFeatureFlags, isTestEnv } from '@/modules/shared/helpers/envHelper'
 import { WorkspacesNotYetImplementedError } from '@/modules/workspaces/errors/workspace'
+import { getStreamCommentCountFactory } from '@/modules/comments/repositories/comments'
+import { getStreamWebhooksFactory } from '@/modules/webhooks/repositories/webhooks'
+import {
+  getProjectObjectStorage,
+  getRegionObjectStorage
+} from '@/modules/multiregion/utils/blobStorageSelector'
 
 const { FF_MOVE_PROJECT_REGION_ENABLED } = getFeatureFlags()
 
@@ -87,7 +96,13 @@ export default {
       )
 
       const sourceDb = await getProjectDbClient({ projectId: args.projectId })
+      const sourceObjectStorage = await getProjectObjectStorage({
+        projectId: args.projectId
+      })
       const targetDb = await (await getDb({ regionKey: args.regionKey })).transaction()
+      const targetObjectStorage = await getRegionObjectStorage({
+        regionKey: args.regionKey
+      })
 
       const updateProjectRegion = updateProjectRegionFactory({
         getProject: getProjectFactory({ db: sourceDb }),
@@ -97,6 +112,8 @@ export default {
         countProjectAutomations: getProjectAutomationsTotalCountFactory({
           db: sourceDb
         }),
+        countProjectComments: getStreamCommentCountFactory({ db: sourceDb }),
+        getProjectWebhooks: getStreamWebhooksFactory({ db: sourceDb }),
         getAvailableRegions: getAvailableRegionsFactory({
           getRegions: getRegionsFactory({ db }),
           canWorkspaceUseRegions: canWorkspaceUseRegionsFactory({
@@ -108,7 +125,15 @@ export default {
         copyProjectModels: copyProjectModelsFactory({ sourceDb, targetDb }),
         copyProjectVersions: copyProjectVersionsFactory({ sourceDb, targetDb }),
         copyProjectObjects: copyProjectObjectsFactory({ sourceDb, targetDb }),
-        copyProjectAutomations: copyProjectAutomationsFactory({ sourceDb, targetDb })
+        copyProjectAutomations: copyProjectAutomationsFactory({ sourceDb, targetDb }),
+        copyProjectComments: copyProjectCommentsFactory({ sourceDb, targetDb }),
+        copyProjectWebhooks: copyProjectWebhooksFactory({ sourceDb, targetDb }),
+        copyProjectBlobs: copyProjectBlobs({
+          sourceDb,
+          sourceObjectStorage,
+          targetDb,
+          targetObjectStorage
+        })
       })
 
       return await withTransaction(updateProjectRegion(args), targetDb)

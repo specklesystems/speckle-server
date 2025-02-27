@@ -72,6 +72,13 @@ export const finalizeAuthMiddlewareFactory =
         throw new ForbiddenError('Cannot finalize auth - No user attached to session')
       }
 
+      if (res.headersSent) {
+        req.log.info(
+          'Headers already sent, probably by Passport if prior steps fail; skipping auth finalization'
+        )
+        return
+      }
+
       const ac = await deps.createAuthorizationCode({
         appId: 'spklwebapp',
         userId: req.user.id,

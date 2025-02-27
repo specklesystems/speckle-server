@@ -18,7 +18,9 @@
     "lint:eslint": "eslint .",
     "lint:tsc": "tsc --noEmit",
     "lint": "yarn lint:eslint && yarn lint:tsc",
-    "lint:ci": "yarn lint:tsc"
+    "lint:ci": "yarn lint:tsc",
+    "test": "vitest",
+    "test:single-run": "vitest run"
   },
   "sideEffects": false,
   "engines": {
@@ -63,6 +65,7 @@
     "tshy": "^1.14.0",
     "typescript": "^4.5.4",
     "ua-parser-js": "^1.0.38",
+    "vitest": "^3.0.7",
     "znv": "^0.4.0",
     "zod": "^3.22.4"
   },
@@ -75,14 +78,15 @@
       "./observability": "./src/observability/index.ts",
       "./dist/*": "./dist/*",
       ".": "./src/index.ts"
-    }
+    },
+    "exclude": [
+      "**/*.spec.ts"
+    ]
   },
   "imports": {
     "#lodash": {
       "require": "lodash",
-      "import": "lodash-es",
-      "node": "lodash",
-      "default": "lodash-es"
+      "import": "lodash-es"
     }
   },
   "exports": {

@@ -16,13 +16,14 @@ import {
   WorkspaceAlreadyPaidError,
   WorkspaceCheckoutSessionInProgressError
 } from '@/modules/gatekeeper/errors/billing'
-import {
-  PaidWorkspacePlans,
-  WorkspacePlanBillingIntervals
-} from '@/modules/gatekeeperCore/domain/billing'
 import { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { CountWorkspaceRoleWithOptionalProjectRole } from '@/modules/workspaces/domain/operations'
-import { Roles, throwUncoveredError } from '@speckle/shared'
+import {
+  PaidWorkspacePlans,
+  Roles,
+  throwUncoveredError,
+  WorkspacePlanBillingIntervals
+} from '@speckle/shared'
 
 export const startCheckoutSessionFactory =
   ({
