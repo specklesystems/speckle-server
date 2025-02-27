@@ -1,13 +1,16 @@
-version: '3.8'
 services:
   devcontainer:
     image: 'mcr.microsoft.com/devcontainers/typescript-node:1-18-bullseye'
     volumes:
       - ..:/workspaces:cached # mounts our local directory (git root) to the container in /workspaces directory (with access mode of cached)
+
+      # We need to override all node_modules directories
+      # by mounting an empty volume to avoid conflicting
+      # CPU build instructions between the host machine and the DevContainer's docker image
+      # (this allows the devcontainer to be based on linux yet work on Apple Silicon etc..)
+      # If you add a new package with a new `node_modules`, it needs to be added here
       - type: volume
         source: node_modules # top-level volume
-        # we override the node_modules from the above access-mode volume
-        # with an empty volume to avoid conflicting CPU build instructions
         target: /workspaces/speckle-server/node_modules
         read_only: false
       - type: volume
@@ -77,16 +80,28 @@ services:
     command: sleep infinity
     depends_on:
       - init
+    # 'host' network_mode makes services provided via docker-compose-deps available at 127.0.0.1 or localhost.
+    # They are not available via Docker Compose DNS resolution of the service name e.g. `postgres`.
+    # This is to ensure that the .env file used for local development remains compatible when running in devcontainer
+    network_mode: host
+
+  # The mcr.microsoft.com/devcontainers/typescript-node docker image used for devcontainer
+  # runs as user 'node' and not as 'root'
+  # The mounted volumes (for the node_module CPU architecture build hack) are owned by 'root' by default
+  # This container will chown these node_modules volumes to the 'node' user
   init:
     image: debian:bookworm-slim
     restart: 'no'
     entrypoint: |
       /bin/bash -c "groupadd --gid 1000 node && useradd --uid 1000 --gid node --shell /bin/bash --create-home node && find . -type d -name 'node_modules' | grep '\/node_modules$' | xargs chown node:node {}"
     volumes:
+      # We need to override all node_modules directories
+      # by mounting an empty volume to avoid conflicting
+      # CPU build instructions between the host machine and the DevContainer's docker image
+      # (this allows the devcontainer to be based on linux yet work on Apple Silicon etc..)
+      # If you add a new package with a new `node_modules`, it needs to be added here
       - type: volume
-        source: node_modules # top-level volume
-        # we override the node_modules from the above access-mode volume
-        # with an empty volume to avoid conflicting CPU build instructions
+        source: node_modules
         target: /workspaces/speckle-server/node_modules
         read_only: false
       - type: volume
@@ -153,7 +168,13 @@ services:
         source: webhook-service-node_modules
         target: /workspaces/speckle-server/packages/webhook-service/node_modules
         read_only: false
+
 volumes:
+  # We need to override all node_modules directories
+  # by mounting an empty volume to avoid conflicting
+  # CPU build instructions between the host machine and the DevContainer's docker image
+  # (this allows the devcontainer to be based on linux yet work on Apple Silicon etc..)
+  # If you add a new package with a new `node_modules`, it needs to be added here
   node_modules:
   dui3-node_modules:
   fileimport-service-node_modules:
