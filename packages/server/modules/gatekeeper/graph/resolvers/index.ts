@@ -198,7 +198,9 @@ export = FF_GATEKEEPER_MODULE_ENABLED
             return session
           } catch (err) {
             const e = ensureError(err, 'Unknown error creating checkout session')
-            logWithErr(logger, e)(
+            logWithErr(
+              logger,
+              e,
               { ...OperationStatus.failure },
               '[{operationName} ({operationStatus})]'
             )

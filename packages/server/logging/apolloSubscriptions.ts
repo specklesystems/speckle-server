@@ -105,7 +105,7 @@ export function logSubscriptionOperation(params: {
       if (error instanceof BaseError) {
         errorLogger = errorLogger.child({ ...error.info() })
       }
-      logWithErr(errorLogger, error)(errMsg)
+      logWithErr(errorLogger, error, errMsg)
     }
   } else if (response?.data) {
     logger.info('GQL subscription event {graphql_operation_name} emitted')
