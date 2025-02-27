@@ -16649,7 +16649,7 @@ __metadata:
     "@types/mock-require": "npm:^2.0.1"
     "@types/module-alias": "npm:^2.0.1"
     "@types/netmask": "npm:^2.0.0"
-    "@types/node": "npm:^22.13.5"
+    "@types/node": "npm:^18.19.38"
     "@types/node-cron": "npm:^3.0.2"
     "@types/nodemailer": "npm:^6.4.5"
     "@types/passport": "npm:^1.0.16"
@@ -19893,15 +19893,6 @@ __metadata:
   dependencies:
     undici-types: "npm:~5.26.4"
   checksum: 10/d2fe84adf087a4184217b666f675e99678060d15f84882a4a1c3e49c3dca521a7e99a201a3c073c2b60b00419f1f4c3b357d8f7397f65e400dc3b77b0145a1da
-  languageName: node
-  linkType: hard
-
-"@types/node@npm:^22.13.5":
-  version: 22.13.5
-  resolution: "@types/node@npm:22.13.5"
-  dependencies:
-    undici-types: "npm:~6.20.0"
-  checksum: 10/a69ec8dba36a58a93e3ec3709a6a362ca0cdd8443310bb5e43b0c1f560c57bcc120c96fabb301ef42c2901f46103adad5158b6923ea14e8e14a432af20a2bb24
   languageName: node
   linkType: hard
 
@@ -50232,13 +50223,6 @@ __metadata:
   version: 6.19.8
   resolution: "undici-types@npm:6.19.8"
   checksum: 10/cf0b48ed4fc99baf56584afa91aaffa5010c268b8842f62e02f752df209e3dea138b372a60a963b3b2576ed932f32329ce7ddb9cb5f27a6c83040d8cd74b7a70
-  languageName: node
-  linkType: hard
-
-"undici-types@npm:~6.20.0":
-  version: 6.20.0
-  resolution: "undici-types@npm:6.20.0"
-  checksum: 10/583ac7bbf4ff69931d3985f4762cde2690bb607844c16a5e2fbb92ed312fe4fa1b365e953032d469fa28ba8b224e88a595f0b10a449332f83fa77c695e567dbe
   languageName: node
   linkType: hard
 

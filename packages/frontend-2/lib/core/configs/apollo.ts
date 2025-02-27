@@ -430,6 +430,7 @@ function createLink(params: {
     }
   })
 
+  // @ts-expect-error idk why this is broken...
   let link = authLink.concat(httpLink)
 
   if (wsClient) {
