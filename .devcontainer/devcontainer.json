@@ -31,7 +31,7 @@
   ],
 
   // Use 'postCreateCommand' to run commands after the container is created.
-  "postCreateCommand": "yarn && yarn build:public && cp -n ${localWorkspaceFolder}/packages/server/.env-example ${localWorkspaceFolder}/packages/server/.env && cp -n ${localWorkspaceFolder}/packages/frontend-2/.env.example ${localWorkspaceFolder}/packages/frontend-2/.env",
+  "postCreateCommand": "yarn && yarn build:public && cp -n /workspaces/${localWorkspaceFolderBasename}/packages/server/.env-example /workspaces/${localWorkspaceFolderBasename}/packages/server/.env && cp -n /workspaces/${localWorkspaceFolderBasename}/packages/frontend-2/.env.example /workspaces/${localWorkspaceFolderBasename}/packages/frontend-2/.env",
 
   // Configure tool-specific properties.
   // "customizations": {},
