@@ -1,4 +1,5 @@
 import { WorkspaceSeat } from '@/modules/gatekeeper/domain/billing'
+import { CreateWorkspaceSeat } from '@/modules/gatekeeper/domain/operations'
 import { Knex } from 'knex'
 
 const tables = {
@@ -16,4 +17,14 @@ export const countSeatsByTypeInWorkspaceFactory =
       .where({ workspaceId, type })
       .count('id')
     return parseInt(count.toString())
+  }
+
+export const createWorkspaceSeatFactory =
+  ({ db }: { db: Knex }): CreateWorkspaceSeat =>
+  async ({ userId, workspaceId, type }) => {
+    return await tables.workspaceSeats(db).insert({
+      workspaceId,
+      userId,
+      type
+    })
   }
