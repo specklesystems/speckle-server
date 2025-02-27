@@ -8,9 +8,166 @@ services:
         source: node_modules # top-level volume
         # we override the node_modules from the above access-mode volume
         # with an empty volume to avoid conflicting CPU build instructions
-        target: /workspaces/node_modules
+        target: /workspaces/speckle-server/node_modules
+        read_only: false
+      - type: volume
+        source: dui3-node_modules
+        target: /workspaces/speckle-server/packages/dui3/node_modules
+        read_only: false
+      - type: volume
+        source: fileimport-service-node_modules
+        target: /workspaces/speckle-server/packages/fileimport-service/node_modules
+        read_only: false
+      - type: volume
+        source: frontend-2-node_modules
+        target: /workspaces/speckle-server/packages/frontend-2/node_modules
+        read_only: false
+      - type: volume
+        source: monitor-deployment-node_modules
+        target: /workspaces/speckle-server/packages/monitor-deployment/node_modules
+        read_only: false
+      - type: volume
+        source: objectloader-node_modules
+        target: /workspaces/speckle-server/packages/objectloader/node_modules
+        read_only: false
+      - type: volume
+        source: objectsender-node_modules
+        target: /workspaces/speckle-server/packages/objectsender/node_modules
+        read_only: false
+      - type: volume
+        source: preview-frontend-node_modules
+        target: /workspaces/speckle-server/packages/preview-frontend/node_modules
+        read_only: false
+      - type: volume
+        source: preview-service-node_modules
+        target: /workspaces/speckle-server/packages/preview-service/node_modules
+        read_only: false
+      - type: volume
+        source: server-node_modules
+        target: /workspaces/speckle-server/packages/server/node_modules
+        read_only: false
+      - type: volume
+        source: shared-node_modules
+        target: /workspaces/speckle-server/packages/shared/node_modules
+        read_only: false
+      - type: volume
+        source: tailwind-theme-node_modules
+        target: /workspaces/speckle-server/packages/tailwind-theme/node_modules
+        read_only: false
+      - type: volume
+        source: ui-components-node_modules
+        target: /workspaces/speckle-server/packages/ui-components/node_modules
+        read_only: false
+      - type: volume
+        source: ui-components-nuxt-node_modules
+        target: /workspaces/speckle-server/packages/ui-components-nuxt/node_modules
+        read_only: false
+      - type: volume
+        source: viewer-node_modules
+        target: /workspaces/speckle-server/packages/viewer/node_modules
+        read_only: false
+      - type: volume
+        source: viewer-sandbox-node_modules
+        target: /workspaces/speckle-server/packages/viewer-sandbox/node_modules
+        read_only: false
+      - type: volume
+        source: webhook-service-node_modules
+        target: /workspaces/speckle-server/packages/webhook-service/node_modules
         read_only: false
     command: sleep infinity
-
+    depends_on:
+      - init
+  init:
+    image: debian:bookworm-slim
+    restart: 'no'
+    entrypoint: |
+      /bin/bash -c "groupadd --gid 1000 node && useradd --uid 1000 --gid node --shell /bin/bash --create-home node && find . -type d -name 'node_modules' | grep '\/node_modules$' | xargs chown node:node {}"
+    volumes:
+      - type: volume
+        source: node_modules # top-level volume
+        # we override the node_modules from the above access-mode volume
+        # with an empty volume to avoid conflicting CPU build instructions
+        target: /workspaces/speckle-server/node_modules
+        read_only: false
+      - type: volume
+        source: dui3-node_modules
+        target: /workspaces/speckle-server/packages/dui3/node_modules
+        read_only: false
+      - type: volume
+        source: fileimport-service-node_modules
+        target: /workspaces/speckle-server/packages/fileimport-service/node_modules
+        read_only: false
+      - type: volume
+        source: frontend-2-node_modules
+        target: /workspaces/speckle-server/packages/frontend-2/node_modules
+        read_only: false
+      - type: volume
+        source: monitor-deployment-node_modules
+        target: /workspaces/speckle-server/packages/monitor-deployment/node_modules
+        read_only: false
+      - type: volume
+        source: objectloader-node_modules
+        target: /workspaces/speckle-server/packages/objectloader/node_modules
+        read_only: false
+      - type: volume
+        source: objectsender-node_modules
+        target: /workspaces/speckle-server/packages/objectsender/node_modules
+        read_only: false
+      - type: volume
+        source: preview-frontend-node_modules
+        target: /workspaces/speckle-server/packages/preview-frontend/node_modules
+        read_only: false
+      - type: volume
+        source: preview-service-node_modules
+        target: /workspaces/speckle-server/packages/preview-service/node_modules
+        read_only: false
+      - type: volume
+        source: server-node_modules
+        target: /workspaces/speckle-server/packages/server/node_modules
+        read_only: false
+      - type: volume
+        source: shared-node_modules
+        target: /workspaces/speckle-server/packages/shared/node_modules
+        read_only: false
+      - type: volume
+        source: tailwind-theme-node_modules
+        target: /workspaces/speckle-server/packages/tailwind-theme/node_modules
+        read_only: false
+      - type: volume
+        source: ui-components-node_modules
+        target: /workspaces/speckle-server/packages/ui-components/node_modules
+        read_only: false
+      - type: volume
+        source: ui-components-nuxt-node_modules
+        target: /workspaces/speckle-server/packages/ui-components-nuxt/node_modules
+        read_only: false
+      - type: volume
+        source: viewer-node_modules
+        target: /workspaces/speckle-server/packages/viewer/node_modules
+        read_only: false
+      - type: volume
+        source: viewer-sandbox-node_modules
+        target: /workspaces/speckle-server/packages/viewer-sandbox/node_modules
+        read_only: false
+      - type: volume
+        source: webhook-service-node_modules
+        target: /workspaces/speckle-server/packages/webhook-service/node_modules
+        read_only: false
 volumes:
   node_modules:
+  dui3-node_modules:
+  fileimport-service-node_modules:
+  frontend-2-node_modules:
+  monitor-deployment-node_modules:
+  objectloader-node_modules:
+  objectsender-node_modules:
+  preview-frontend-node_modules:
+  preview-service-node_modules:
+  server-node_modules:
+  shared-node_modules:
+  tailwind-theme-node_modules:
+  ui-components-node_modules:
+  ui-components-nuxt-node_modules:
+  viewer-node_modules:
+  viewer-sandbox-node_modules:
+  webhook-service-node_modules:
