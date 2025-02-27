@@ -193,14 +193,14 @@ const createObject = createObjectFactory({
 describe('Streams @core-streams', () => {
   const userOne: BasicTestUser = {
     name: 'Dimitrie Stefanescu',
-    email: 'didimitrie@gmail.com',
+    email: 'didimitrie@example.org',
     password: 'sn3aky-1337-b1m',
     id: ''
   }
 
   const userTwo: BasicTestUser = {
     name: 'Dimitrie Stefanescu 2',
-    email: 'didimitrie2@gmail.com',
+    email: 'didimitrie2@example.org',
     password: 'sn3aky-1337-b1m',
     id: ''
   }

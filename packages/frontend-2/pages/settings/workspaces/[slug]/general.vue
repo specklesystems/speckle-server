@@ -244,11 +244,13 @@ const canDeleteWorkspace = computed(
     !needsSsoLogin.value &&
     (!isBillingIntegrationEnabled ||
       !(
-        [
-          WorkspacePlanStatuses.Valid,
-          WorkspacePlanStatuses.PaymentFailed,
-          WorkspacePlanStatuses.CancelationScheduled
-        ].includes(
+        (
+          [
+            WorkspacePlanStatuses.Valid,
+            WorkspacePlanStatuses.PaymentFailed,
+            WorkspacePlanStatuses.CancelationScheduled
+          ] as string[]
+        ).includes(
           workspaceResult.value?.workspaceBySlug?.plan?.status as WorkspacePlanStatuses
         ) && isPaidPlan(workspaceResult.value?.workspaceBySlug?.plan?.name)
       ))

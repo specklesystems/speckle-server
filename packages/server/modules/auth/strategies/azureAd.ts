@@ -199,14 +199,15 @@ const azureAdStrategyBuilderFactory =
             case UnverifiedEmailSSOLoginError:
             case InviteNotFoundError:
               logger.info(
-                { e },
+                { err: e },
                 'User input error during Entra ID authentication callback.'
               )
               break
             default:
               logger.error(e, 'Error during Entra ID authentication callback.')
           }
-          return next()
+          //skip remaining route handlers and go to error handler
+          return next(e)
         }
       },
       finalizeAuthMiddleware

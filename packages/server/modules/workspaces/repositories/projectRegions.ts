@@ -9,7 +9,11 @@ import {
   AutomationTriggers,
   BranchCommits,
   Branches,
+  CommentLinks,
+  Comments,
+  CommentViews,
   Commits,
+  FileUploads,
   Objects,
   StreamCommits,
   StreamFavorites,
@@ -30,10 +34,13 @@ import {
 import { executeBatchedSelect } from '@/modules/shared/helpers/dbHelper'
 import {
   CopyProjectAutomations,
+  CopyProjectBlobs,
+  CopyProjectComments,
   CopyProjectModels,
   CopyProjectObjects,
   CopyProjects,
   CopyProjectVersions,
+  CopyProjectWebhooks,
   CopyWorkspace
 } from '@/modules/workspaces/domain/operations'
 import { WorkspaceNotFoundError } from '@/modules/workspaces/errors/workspace'
@@ -51,6 +58,18 @@ import {
   AutomationTokenRecord,
   AutomationTriggerDefinitionRecord
 } from '@/modules/automate/helpers/types'
+import {
+  CommentLinkRecord,
+  CommentRecord,
+  CommentViewRecord
+} from '@/modules/comments/helpers/types'
+import { Webhook, WebhookEvent } from '@/modules/webhooks/domain/types'
+import { ObjectStorage } from '@/modules/blobstorage/clients/objectStorage'
+import { BlobStorage } from '@/modules/blobstorage/repositories'
+import { BlobStorageItem } from '@/modules/blobstorage/domain/types'
+import { GetObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3'
+import { FileUploadRecord } from '@/modules/fileuploads/helpers/types'
+import { getObjectKey } from '@/modules/blobstorage/helpers/blobs'
 
 const tables = {
   workspaces: (db: Knex) => db<Workspace>(Workspaces.name),
@@ -75,7 +94,14 @@ const tables = {
   automationRunTriggers: (db: Knex) =>
     db<AutomationRunTriggerRecord>(AutomationRunTriggers.name),
   automationFunctionRuns: (db: Knex) =>
-    db<AutomationFunctionRunRecord>(AutomationFunctionRuns.name)
+    db<AutomationFunctionRunRecord>(AutomationFunctionRuns.name),
+  comments: (db: Knex) => db.table<CommentRecord>(Comments.name),
+  commentViews: (db: Knex) => db.table<CommentViewRecord>(CommentViews.name),
+  commentLinks: (db: Knex) => db.table<CommentLinkRecord>(CommentLinks.name),
+  webhooks: (db: Knex) => db.table<Webhook>('webhooks_config'),
+  webhookEvents: (db: Knex) => db.table<WebhookEvent>('webhooks_events'),
+  fileUploads: (db: Knex) => db.table<FileUploadRecord>(FileUploads.name),
+  blobStorage: (db: Knex) => db.table<BlobStorageItem>(BlobStorage.name)
 }
 
 /**
@@ -458,4 +484,169 @@ export const copyProjectAutomationsFactory =
     }
 
     return copiedAutomationCountByProjectId
+  }
+
+/**
+ * Copies rows from the following tables:
+ * - comments
+ * - comment_views
+ * - comment_links
+ */
+export const copyProjectCommentsFactory =
+  (deps: { sourceDb: Knex; targetDb: Knex }): CopyProjectComments =>
+  async ({ projectIds }) => {
+    const copiedCommentCountByProjectId: Record<string, number> = {}
+
+    // Copy `comments` table rows in batches
+    const selectComments = tables
+      .comments(deps.sourceDb)
+      .select('*')
+      .whereIn(Comments.col.streamId, projectIds)
+
+    for await (const comments of executeBatchedSelect(selectComments)) {
+      const commentIds = comments.map((comment) => comment.id)
+
+      // Write `comments` rows to target db
+      await tables.comments(deps.targetDb).insert(comments).onConflict().ignore()
+
+      for (const comment of comments) {
+        copiedCommentCountByProjectId[comment.streamId] ??= 0
+        copiedCommentCountByProjectId[comment.streamId]++
+      }
+
+      // Copy `comment_views` table rows
+      const commentViews = await tables
+        .commentViews(deps.sourceDb)
+        .select('*')
+        .whereIn(CommentViews.col.commentId, commentIds)
+
+      await tables
+        .commentViews(deps.targetDb)
+        .insert(commentViews)
+        .onConflict()
+        .ignore()
+
+      // Copy `comment_links` table rows
+      const commentLinks = await tables
+        .commentLinks(deps.sourceDb)
+        .select('*')
+        .whereIn(CommentLinks.col.commentId, commentIds)
+
+      await tables
+        .commentLinks(deps.targetDb)
+        .insert(commentLinks)
+        .onConflict()
+        .ignore()
+    }
+
+    return copiedCommentCountByProjectId
+  }
+
+/**
+ * Copies rows from the following tables:
+ * - webhooks_config
+ * - webhooks_events
+ */
+export const copyProjectWebhooksFactory =
+  (deps: { sourceDb: Knex; targetDb: Knex }): CopyProjectWebhooks =>
+  async ({ projectIds }) => {
+    const copiedWebhookCountByProjectId: Record<string, number> = {}
+
+    // Copy `webhooks_config` table rows in batches
+    const selectWebhooks = tables
+      .webhooks(deps.sourceDb)
+      .select('*')
+      .whereIn('streamId', projectIds)
+
+    for await (const webhooks of executeBatchedSelect(selectWebhooks)) {
+      const webhookIds = webhooks.map((webhook) => webhook.id)
+
+      // Write `webhooks_config` rows to target db
+      await tables.webhooks(deps.targetDb).insert(webhooks).onConflict().ignore()
+
+      for (const webhook of webhooks) {
+        copiedWebhookCountByProjectId[webhook.streamId] ??= 0
+        copiedWebhookCountByProjectId[webhook.streamId]++
+      }
+
+      // Copy `webhooks_events` table rows in batches
+      const selectWebhookEvents = tables
+        .webhookEvents(deps.sourceDb)
+        .select('*')
+        .whereIn('webhookId', webhookIds)
+
+      for await (const webhookEvents of executeBatchedSelect(selectWebhookEvents)) {
+        // Write `webhooks_events` rows to target db
+        await tables
+          .webhookEvents(deps.targetDb)
+          .insert(webhookEvents)
+          .onConflict()
+          .ignore()
+      }
+    }
+
+    return copiedWebhookCountByProjectId
+  }
+
+/**
+ * Copies rows from the following tables:
+ * - file_uploads
+ * - blob_storage
+ * Also copies blobs in storage from one region to the other.
+ */
+export const copyProjectBlobs =
+  (deps: {
+    sourceDb: Knex
+    sourceObjectStorage: ObjectStorage
+    targetDb: Knex
+    targetObjectStorage: ObjectStorage
+  }): CopyProjectBlobs =>
+  async ({ projectIds }) => {
+    const copiedBlobsCountByProjectId: Record<string, number> = {}
+
+    // Copy `blob_storage` table rows in batches
+    const selectBlobs = tables
+      .blobStorage(deps.sourceDb)
+      .select('*')
+      .whereIn(BlobStorage.col.streamId, projectIds)
+
+    for await (const blobs of executeBatchedSelect(selectBlobs)) {
+      // Write `blob_storage` rows to target db
+      await tables.blobStorage(deps.targetDb).insert(blobs).onConflict().ignore()
+
+      for (const blob of blobs) {
+        copiedBlobsCountByProjectId[blob.streamId] ??= 0
+        copiedBlobsCountByProjectId[blob.streamId]++
+
+        // Copy file blob from one regional storage to the other
+        const objectKey = getObjectKey(blob.streamId, blob.id)
+        const sourceBlob = await deps.sourceObjectStorage.client.send(
+          new GetObjectCommand({
+            Bucket: deps.sourceObjectStorage.bucket,
+            Key: objectKey
+          })
+        )
+        await deps.targetObjectStorage.client.send(
+          new PutObjectCommand({
+            Bucket: deps.targetObjectStorage.bucket,
+            Key: objectKey,
+            Body: sourceBlob.Body,
+            ContentLength: sourceBlob.ContentLength
+          })
+        )
+      }
+    }
+
+    // Copy `file_uploads` table rows in batches
+    const selectFileUploads = tables
+      .fileUploads(deps.sourceDb)
+      .select('*')
+      .whereIn(FileUploads.col.streamId, projectIds)
+
+    for await (const fileUploads of executeBatchedSelect(selectFileUploads)) {
+      // Write `file_uploads` rows to target db
+      await tables.fileUploads(deps.targetDb).insert(fileUploads).onConflict().ignore()
+    }
+
+    return copiedBlobsCountByProjectId
   }

@@ -22,18 +22,18 @@
 <script setup lang="ts">
 import type { LayoutDialogButton } from '@speckle/ui-components'
 import {
-  type WorkspacePlans,
   BillingInterval,
   type PaidWorkspacePlans
 } from '~/lib/common/generated/gql/graphql'
 import { useBillingActions } from '~/lib/billing/composables/actions'
 import { startCase } from 'lodash'
-import { pricingPlansConfig } from '~/lib/billing/helpers/constants'
+import type { PaidWorkspacePlansOld } from '@speckle/shared'
 import { Roles } from '@speckle/shared'
 import { isPaidPlan } from '~/lib/billing/helpers/types'
+import { WorkspaceOldPaidPlanPrices } from '~/lib/billing/helpers/constants'
 
 const props = defineProps<{
-  plan: WorkspacePlans
+  plan: PaidWorkspacePlansOld
   billingInterval: BillingInterval
   workspaceId: string
 }>()
@@ -43,9 +43,8 @@ const { upgradePlan } = useBillingActions()
 
 const seatPrice = computed(() => {
   if (isPaidPlan(props.plan)) {
-    const planConfig =
-      pricingPlansConfig.plans[props.plan as unknown as PaidWorkspacePlans]
-    return planConfig.cost[props.billingInterval][Roles.Workspace.Member]
+    const prices = WorkspaceOldPaidPlanPrices[props.plan]
+    return prices[props.billingInterval][Roles.Workspace.Member]
   }
 
   return 0
