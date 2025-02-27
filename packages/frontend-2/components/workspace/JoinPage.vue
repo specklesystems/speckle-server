@@ -13,7 +13,7 @@
       </FormButton>
     </template>
 
-    <WorkspaceDiscoverableWorkspaces />
+    <WorkspaceDiscoverableWorkspacesPage />
   </HeaderWithEmptyPage>
 </template>
 
