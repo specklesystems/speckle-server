@@ -1,32 +1,4 @@
-export enum OnboardingRole {
-  ComputationalDesign = 'computational-design',
-  BIM = 'bim',
-  ArchitecturePlanning = 'architecture-planning',
-  EngineeringAEC = 'engineering-aec',
-  EngineeringSoftware = 'engineering-software',
-  Education = 'education',
-  Management = 'management',
-  Other = 'other'
-}
-
-export enum OnboardingPlan {
-  Exploring = 'exploring',
-  DataExchange = 'data-exchange',
-  Analytics = 'analytics',
-  Collaboration = 'collaboration',
-  DataWarehouse = 'data-warehouse',
-  Development = 'development',
-  Other = 'other'
-}
-
-export enum OnboardingSource {
-  SocialMedia = 'social-media',
-  Search = 'internet-search',
-  Referral = 'friend-or-colleague',
-  Event = 'event-conference',
-  Education = 'university-course',
-  Other = 'other'
-}
+import { OnboardingRole, OnboardingPlan, OnboardingSource } from '@speckle/shared'
 
 export const RoleTitleMap: Record<OnboardingRole, string> = {
   [OnboardingRole.ComputationalDesign]: 'Computational Design',
@@ -57,10 +29,4 @@ export const SourceTitleMap: Record<OnboardingSource, string> = {
   [OnboardingSource.Event]: 'Event or conference',
   [OnboardingSource.Education]: 'University or course',
   [OnboardingSource.Other]: 'Other'
-}
-
-export type OnboardingState = {
-  role?: OnboardingRole
-  plans?: OnboardingPlan[]
-  source?: OnboardingSource
 }
