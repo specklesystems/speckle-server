@@ -5,7 +5,7 @@
     <div class="flex items-center gap-x-2">
       <h4 class="text-body font-medium">
         Workspace
-        <span class="capitalize">{{ plan.name }}</span>
+        <span class="capitalize">{{ plan }}</span>
       </h4>
       <CommonBadge v-if="badgeText" rounded>
         {{ badgeText }}
@@ -15,8 +15,8 @@
       <span class="font-medium">
         £{{
           yearlyIntervalSelected
-            ? plan.cost.yearly[Roles.Workspace.Member]
-            : plan.cost.monthly[Roles.Workspace.Member]
+            ? planPrices.yearly[Roles.Workspace.Member]
+            : planPrices.monthly[Roles.Workspace.Member]
         }}
       </span>
       per seat/month
@@ -40,7 +40,7 @@
       <div v-else>
         <!-- Key to fix tippy reactivity -->
         <div
-          :key="`tooltip-${yearlyIntervalSelected}-${plan.name}-${currentPlan?.name}`"
+          :key="`tooltip-${yearlyIntervalSelected}-${plan}-${currentPlan?.name}`"
           v-tippy="buttonTooltip"
         >
           <FormButton
@@ -56,32 +56,35 @@
     </div>
     <ul class="flex flex-col gap-y-2 mt-4 pt-3 border-t border-outline-3">
       <li
-        v-for="feature in features"
-        :key="feature.name"
+        v-for="(featureMetadata, feature) in WorkspacePlanFeaturesMetadata"
+        :key="feature"
         class="flex items-center text-body-xs"
         :class="{
-            'lg:hidden': !plan.features.includes(feature.name as PlanFeaturesList)
-          }"
+          'lg:hidden': !planFeatures.includes(feature)
+        }"
       >
         <IconCheck
-          v-if="plan.features.includes(feature.name as PlanFeaturesList)"
+          v-if="planFeatures.includes(feature)"
           class="w-4 h-4 text-foreground mx-2"
         />
         <XMarkIcon v-else class="w-4 h-4 mx-2 text-foreground-3" />
         <span
           v-tippy="
-            feature.description(
-              yearlyIntervalSelected
-                ? plan.cost.yearly[Roles.Workspace.Guest]
-                : plan.cost.monthly[Roles.Workspace.Guest]
-            )
+            isFunction(featureMetadata.description)
+              ? featureMetadata.description({
+                  price: (yearlyIntervalSelected
+                    ? planPrices.yearly[Roles.Workspace.Guest]
+                    : planPrices.monthly[Roles.Workspace.Guest]
+                  ).toString()
+                })
+              : featureMetadata.description
           "
           class="underline decoration-outline-5 decoration-dashed underline-offset-4 cursor-help"
           :class="{
-            'text-foreground-2': !plan.features.includes(feature.name as PlanFeaturesList)
+            'text-foreground-2': !planFeatures.includes(feature)
           }"
         >
-          {{ feature.name }}
+          {{ featureMetadata.displayName }}
         </span>
       </li>
     </ul>
@@ -89,7 +92,7 @@
     <SettingsWorkspacesBillingUpgradeDialog
       v-if="currentPlan?.name && workspaceId"
       v-model:open="isUpgradeDialogOpen"
-      :plan="plan.name"
+      :plan="plan"
       :billing-interval="
         yearlyIntervalSelected ? BillingInterval.Yearly : BillingInterval.Monthly
       "
@@ -99,28 +102,30 @@
 </template>
 
 <script setup lang="ts">
-import type { PricingPlan } from '@/lib/billing/helpers/types'
-import { Roles } from '@speckle/shared'
+import {
+  type PaidWorkspacePlansOld,
+  type MaybeNullOrUndefined,
+  WorkspacePlans,
+  WorkspacePlanFeaturesMetadata
+} from '@speckle/shared'
+import { Roles, WorkspacePlanConfigs } from '@speckle/shared'
 import {
   type WorkspacePlan,
   WorkspacePlanStatuses,
-  WorkspacePlans,
   BillingInterval
 } from '~/lib/common/generated/gql/graphql'
-import type { MaybeNullOrUndefined } from '@speckle/shared'
-import { startCase } from 'lodash'
-import { pricingPlansConfig } from '~/lib/billing/helpers/constants'
-import type { PlanFeaturesList } from '~/lib/billing/helpers/types'
+import { startCase, isFunction } from 'lodash'
 import { XMarkIcon } from '@heroicons/vue/24/outline'
 import type { SetupContext } from 'vue'
+import { WorkspaceOldPaidPlanPrices } from '~/lib/billing/helpers/constants'
 
 const emit = defineEmits<{
   (e: 'onYearlyIntervalSelected', value: boolean): void
-  (e: 'onPlanSelected', value: WorkspacePlans): void
+  (e: 'onPlanSelected', value: PaidWorkspacePlansOld): void
 }>()
 
 const props = defineProps<{
-  plan: PricingPlan
+  plan: PaidWorkspacePlansOld
   yearlyIntervalSelected: boolean
   badgeText?: string
   // The following props are optional if the table is for informational purposes
@@ -132,9 +137,11 @@ const props = defineProps<{
 
 const slots: SetupContext['slots'] = useSlots()
 
-const features = ref(pricingPlansConfig.features)
 const isUpgradeDialogOpen = ref(false)
 const isYearlyIntervalSelected = ref(props.yearlyIntervalSelected)
+
+const planPrices = computed(() => WorkspaceOldPaidPlanPrices[props.plan])
+const planFeatures = computed(() => WorkspacePlanConfigs[props.plan].features)
 
 const hasCta = computed(() => !!slots.cta)
 const canUpgradeToPlan = computed(() => {
@@ -149,10 +156,13 @@ const canUpgradeToPlan = computed(() => {
     [WorkspacePlans.StarterInvoiced]: [],
     [WorkspacePlans.PlusInvoiced]: [],
     [WorkspacePlans.BusinessInvoiced]: [],
-    [WorkspacePlans.Free]: []
+    // New
+    [WorkspacePlans.Free]: [],
+    [WorkspacePlans.Team]: [],
+    [WorkspacePlans.Pro]: []
   }
 
-  return allowedUpgrades[props.currentPlan.name].includes(props.plan.name)
+  return allowedUpgrades[props.currentPlan.name].includes(props.plan)
 })
 
 const statusIsTrial = computed(
@@ -166,17 +176,17 @@ const isMatchingInterval = computed(
 )
 
 const isDowngrade = computed(() => {
-  return !canUpgradeToPlan.value && props.currentPlan?.name !== props.plan.name
+  return !canUpgradeToPlan.value && props.currentPlan?.name !== props.plan
 })
 
 const isCurrentPlan = computed(
-  () => isMatchingInterval.value && props.currentPlan?.name === props.plan.name
+  () => isMatchingInterval.value && props.currentPlan?.name === props.plan
 )
 
 const isAnnualToMonthly = computed(() => {
   return (
     !isMatchingInterval.value &&
-    props.currentPlan?.name === props.plan.name &&
+    props.currentPlan?.name === props.plan &&
     !props.yearlyIntervalSelected
   )
 })
@@ -184,7 +194,7 @@ const isAnnualToMonthly = computed(() => {
 const isMonthlyToAnnual = computed(() => {
   return (
     !isMatchingInterval.value &&
-    props.currentPlan?.name === props.plan.name &&
+    props.currentPlan?.name === props.plan &&
     props.yearlyIntervalSelected
   )
 })
@@ -200,8 +210,7 @@ const isSelectable = computed(() => {
     return true
 
   // Allow selection if switching from monthly to yearly for the same plan
-  if (isMonthlyToAnnual.value && props.currentPlan?.name === props.plan.name)
-    return true
+  if (isMonthlyToAnnual.value && props.currentPlan?.name === props.plan) return true
 
   // Disable if current plan and intervals match
   if (isCurrentPlan.value) return false
@@ -227,7 +236,7 @@ const buttonColor = computed(() => {
     statusIsTrial.value ||
     props.currentPlan?.status === WorkspacePlanStatuses.Expired
   ) {
-    return props.plan.name === WorkspacePlans.Starter ? 'primary' : 'outline'
+    return props.plan === WorkspacePlans.Starter ? 'primary' : 'outline'
   }
   return 'outline'
 })
@@ -239,7 +248,7 @@ const buttonText = computed(() => {
     props.currentPlan?.status === WorkspacePlanStatuses.Expired ||
     props.currentPlan?.status === WorkspacePlanStatuses.Canceled
   ) {
-    return `Subscribe to ${startCase(props.plan.name)}`
+    return `Subscribe to ${startCase(props.plan)}`
   }
   // Current plan case
   if (isCurrentPlan.value) {
@@ -247,7 +256,7 @@ const buttonText = computed(() => {
   }
   // Billing interval and lower plan case
   if (isDowngrade.value) {
-    return `Downgrade to ${props.plan.name}`
+    return `Downgrade to ${props.plan}`
   }
   // Billing interval change and current plan
   if (isAnnualToMonthly.value) {
@@ -257,7 +266,7 @@ const buttonText = computed(() => {
     return 'Change to annual plan'
   }
   // Upgrade case
-  return canUpgradeToPlan.value ? `Upgrade to ${startCase(props.plan.name)}` : ''
+  return canUpgradeToPlan.value ? `Upgrade to ${startCase(props.plan)}` : ''
 })
 
 const buttonTooltip = computed(() => {
@@ -293,7 +302,7 @@ const buttonTooltip = computed(() => {
 })
 
 const onCtaClick = () => {
-  emit('onPlanSelected', props.plan.name)
+  emit('onPlanSelected', props.plan)
 }
 
 watch(

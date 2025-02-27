@@ -23,6 +23,7 @@ const config: CodegenConfig = {
     './lib/common/generated/gql/': {
       preset: 'client',
       config: {
+        enumsAsConst: true,
         useTypeImports: true,
         fragmentMasking: false,
         dedupeFragments: true,
