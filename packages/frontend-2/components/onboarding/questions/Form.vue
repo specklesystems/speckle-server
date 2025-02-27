@@ -26,11 +26,7 @@
 
 <script setup lang="ts">
 import { useForm } from 'vee-validate'
-import type {
-  OnboardingRole,
-  OnboardingPlan,
-  OnboardingSource
-} from '~/lib/auth/helpers/onboarding'
+import type { OnboardingRole, OnboardingPlan, OnboardingSource } from '@speckle/shared'
 import { useProcessOnboarding } from '~~/lib/auth/composables/onboarding'
 import { homeRoute } from '~/lib/common/helpers/route'
 
@@ -50,7 +46,11 @@ const onSubmit = handleSubmit(async () => {
   if (values.role) {
     setMixpanelSegments({ role: values.role })
   }
-  await setUserOnboardingComplete()
+  await setUserOnboardingComplete({
+    role: values.role,
+    plans: values.plan,
+    source: values.source
+  })
   navigateTo(homeRoute)
 })
 </script>
