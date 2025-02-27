@@ -49,6 +49,11 @@ export type ActiveUserMutations = {
 };
 
 
+export type ActiveUserMutationsFinishOnboardingArgs = {
+  input?: InputMaybe<OnboardingCompletionInput>;
+};
+
+
 export type ActiveUserMutationsUpdateArgs = {
   user: UserUpdateInput;
 };
@@ -1873,6 +1878,12 @@ export type ObjectCreateInput = {
   objects: Array<InputMaybe<Scalars['JSONObject']['input']>>;
   /** The stream against which these objects will be created. */
   streamId: Scalars['String']['input'];
+};
+
+export type OnboardingCompletionInput = {
+  plans?: InputMaybe<Array<Scalars['String']['input']>>;
+  role?: InputMaybe<Scalars['String']['input']>;
+  source?: InputMaybe<Scalars['String']['input']>;
 };
 
 export const PaidWorkspacePlans = {
@@ -5031,6 +5042,7 @@ export type ResolversTypes = {
   Object: ResolverTypeWrapper<ObjectGraphQLReturn>;
   ObjectCollection: ResolverTypeWrapper<Omit<ObjectCollection, 'objects'> & { objects: Array<ResolversTypes['Object']> }>;
   ObjectCreateInput: ObjectCreateInput;
+  OnboardingCompletionInput: OnboardingCompletionInput;
   PaidWorkspacePlans: PaidWorkspacePlans;
   PasswordStrengthCheckFeedback: ResolverTypeWrapper<PasswordStrengthCheckFeedback>;
   PasswordStrengthCheckResults: ResolverTypeWrapper<PasswordStrengthCheckResults>;
@@ -5338,6 +5350,7 @@ export type ResolversParentTypes = {
   Object: ObjectGraphQLReturn;
   ObjectCollection: Omit<ObjectCollection, 'objects'> & { objects: Array<ResolversParentTypes['Object']> };
   ObjectCreateInput: ObjectCreateInput;
+  OnboardingCompletionInput: OnboardingCompletionInput;
   PasswordStrengthCheckFeedback: PasswordStrengthCheckFeedback;
   PasswordStrengthCheckResults: PasswordStrengthCheckResults;
   PendingStreamCollaborator: PendingStreamCollaboratorGraphQLReturn;
@@ -5531,7 +5544,7 @@ export type IsOwnerDirectiveResolver<Result, Parent, ContextType = GraphQLContex
 
 export type ActiveUserMutationsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ActiveUserMutations'] = ResolversParentTypes['ActiveUserMutations']> = {
   emailMutations?: Resolver<ResolversTypes['UserEmailMutations'], ParentType, ContextType>;
-  finishOnboarding?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  finishOnboarding?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, Partial<ActiveUserMutationsFinishOnboardingArgs>>;
   update?: Resolver<ResolversTypes['User'], ParentType, ContextType, RequireFields<ActiveUserMutationsUpdateArgs, 'user'>>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
