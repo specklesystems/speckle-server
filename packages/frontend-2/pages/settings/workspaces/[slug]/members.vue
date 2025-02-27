@@ -8,28 +8,7 @@
         class="mb-6"
       />
       <LayoutTabsHorizontal v-model:active-item="activeTab" :items="tabItems">
-        <template #default="{ activeItem }">
-          <SettingsWorkspacesMembersTable
-            v-if="activeItem.id === 'members'"
-            :workspace="workspace"
-            :workspace-slug="slug"
-          />
-          <SettingsWorkspacesMembersGuestsTable
-            v-if="activeItem.id === 'guests'"
-            :workspace="workspace"
-            :workspace-slug="slug"
-          />
-          <SettingsWorkspacesMembersInvitesTable
-            v-if="activeItem.id === 'invites'"
-            :workspace="workspace"
-            :workspace-slug="slug"
-          />
-          <SettingsWorkspacesMembersJoinRequestsTable
-            v-if="activeItem.id === 'joinRequests'"
-            :workspace="workspace"
-            :workspace-slug="slug"
-          />
-        </template>
+        <NuxtPage />
       </LayoutTabsHorizontal>
     </div>
   </section>
@@ -43,6 +22,8 @@ import { settingsWorkspacesMembersQuery } from '~/lib/settings/graphql/queries'
 import type { LayoutPageTabItem } from '~~/lib/layout/helpers/components'
 import { useOnWorkspaceUpdated } from '~/lib/workspaces/composables/management'
 import { WorkspaceJoinRequestStatus } from '~~/lib/common/generated/gql/graphql'
+import { settingsWorkspaceRoutes } from '~/lib/common/helpers/route'
+
 graphql(`
   fragment SettingsWorkspacesMembers_Workspace on Workspace {
     id
@@ -50,14 +31,19 @@ graphql(`
     team {
       items {
         id
+        role
       }
     }
-    invitedTeam(filter: $invitesFilter) {
+    invitedTeam {
       user {
         id
       }
     }
-    adminWorkspacesJoinRequests(filter: $joinRequestsFilter) {
+    adminWorkspacesJoinRequests {
+      items {
+        id
+        status
+      }
       totalCount
     }
   }
@@ -74,6 +60,7 @@ useHead({
 const route = useRoute()
 const slug = computed(() => (route.params.slug as string) || '')
 
+const router = useRouter()
 const { result } = useQuery(settingsWorkspacesMembersQuery, () => ({
   slug: slug.value
 }))
@@ -116,7 +103,32 @@ const tabItems = computed<LayoutPageTabItem[]>(() => [
   }
 ])
 
-const activeTab = ref(tabItems.value[0])
+const activeTab = computed({
+  get: () => {
+    const path = route.path
+    if (path.includes('/members/guests')) return tabItems.value[1]
+    if (path.includes('/members/invites')) return tabItems.value[2]
+    if (path.includes('/members/requests')) return tabItems.value[3]
+    if (path.includes('/members')) return tabItems.value[0]
+    return tabItems.value[0]
+  },
+  set: (val: LayoutPageTabItem) => {
+    switch (val.id) {
+      case 'members':
+        router.push(settingsWorkspaceRoutes.members.route(slug.value))
+        break
+      case 'guests':
+        router.push(settingsWorkspaceRoutes.membersGuests.route(slug.value))
+        break
+      case 'invites':
+        router.push(settingsWorkspaceRoutes.membersInvites.route(slug.value))
+        break
+      case 'joinRequests':
+        router.push(settingsWorkspaceRoutes.membersRequests.route(slug.value))
+        break
+    }
+  }
+})
 
 useOnWorkspaceUpdated({ workspaceSlug: slug })
 </script>

@@ -20,19 +20,19 @@ import {
   WorkspacePlanNotFoundError,
   WorkspaceSubscriptionNotFoundError
 } from '@/modules/gatekeeper/errors/billing'
-import { isNewPlanType, isOldPlanType } from '@/modules/gatekeeper/helpers/plans'
-import {
-  PaidWorkspacePlans,
-  paidWorkspacePlansNewSchema,
-  paidWorkspacePlansOldSchema,
-  PaidWorkspacePlanStatuses,
-  WorkspacePlanBillingIntervals,
-  WorkspacePricingPlans
-} from '@/modules/gatekeeperCore/domain/billing'
+import { isNewPlanType, isOldPaidPlanType } from '@/modules/gatekeeper/helpers/plans'
+import { WorkspacePricingProducts } from '@/modules/gatekeeperCore/domain/billing'
 import { LogicError, NotImplementedError } from '@/modules/shared/errors'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { CountWorkspaceRoleWithOptionalProjectRole } from '@/modules/workspaces/domain/operations'
-import { throwUncoveredError, WorkspaceRoles, xor } from '@speckle/shared'
+import {
+  PaidWorkspacePlans,
+  PaidWorkspacePlanStatuses,
+  throwUncoveredError,
+  WorkspacePlanBillingIntervals,
+  WorkspaceRoles,
+  xor
+} from '@speckle/shared'
 import { cloneDeep, isEqual, sum } from 'lodash'
 
 const { FF_WORKSPACES_NEW_PLANS_ENABLED } = getFeatureFlags()
@@ -213,7 +213,7 @@ const mutateSubscriptionDataWithNewValidSeatNumbers = ({
   subscriptionData
 }: {
   seatCount: number
-  workspacePlan: WorkspacePricingPlans
+  workspacePlan: WorkspacePricingProducts
   getWorkspacePlanProductId: GetWorkspacePlanProductId
   subscriptionData: SubscriptionDataInput
 }): void => {
@@ -451,7 +451,7 @@ export const upgradeWorkspaceSubscriptionFactory =
       throw new NotImplementedError()
     }
 
-    const planCheckers = [isNewPlanType, isOldPlanType]
+    const planCheckers = [isNewPlanType, isOldPaidPlanType]
     for (const isSpecificPlanType of planCheckers) {
       const oldPlanFitsSchema = isSpecificPlanType(workspacePlan.name)
       const newPlanFitsSchema = isSpecificPlanType(targetPlan)

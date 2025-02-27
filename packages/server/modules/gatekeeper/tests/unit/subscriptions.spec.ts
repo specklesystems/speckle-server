@@ -21,14 +21,11 @@ import {
   createTestSubscriptionData,
   createTestWorkspaceSubscription
 } from '@/modules/gatekeeper/tests/helpers'
-import {
-  PaidWorkspacePlans,
-  WorkspacePlan
-} from '@/modules/gatekeeperCore/domain/billing'
+import { WorkspacePlan } from '@/modules/gatekeeperCore/domain/billing'
 import { NotImplementedError } from '@/modules/shared/errors'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { expectToThrow, itEach } from '@/test/assertionHelper'
-import { throwUncoveredError } from '@speckle/shared'
+import { PaidWorkspacePlans, throwUncoveredError } from '@speckle/shared'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
 import { omit } from 'lodash'

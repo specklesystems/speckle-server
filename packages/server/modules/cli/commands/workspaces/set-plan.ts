@@ -3,11 +3,8 @@ import { cliLogger as logger } from '@/observability/logging'
 import { getWorkspaceBySlugOrIdFactory } from '@/modules/workspaces/repositories/workspaces'
 import { db } from '@/db/knex'
 import { upsertPaidWorkspacePlanFactory } from '@/modules/gatekeeper/repositories/billing'
-import {
-  PaidWorkspacePlans,
-  PaidWorkspacePlanStatuses
-} from '@/modules/gatekeeperCore/domain/billing'
 import { WorkspaceNotFoundError } from '@/modules/workspaces/errors/workspace'
+import { PaidWorkspacePlans, PaidWorkspacePlanStatuses } from '@speckle/shared'
 
 const command: CommandModule<
   unknown,
