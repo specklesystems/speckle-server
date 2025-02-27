@@ -6,7 +6,7 @@ import {
   PreviewSuccessPayload
 } from '@speckle/shared/dist/esm/previews/job.js'
 import { Logger } from 'pino'
-import { PORT } from '@/config'
+import { PORT } from '@/config.js'
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-empty-object-type

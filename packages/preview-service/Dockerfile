@@ -136,4 +136,4 @@ ENV CHROMIUM_EXECUTABLE_PATH="/usr/bin/google-chrome"
 # Run everything after as non-privileged user.
 USER pptruser
 
-CMD [ "tini", "--", "node", "dist/main" ]
+CMD [ "tini", "--", "node", "--loader=./dist/bootstrap.js", "dist/main.js" ]
