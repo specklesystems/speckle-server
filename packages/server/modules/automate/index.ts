@@ -17,7 +17,7 @@ import {
 import { isNonNullable, Scopes } from '@speckle/shared'
 import { registerOrUpdateScopeFactory } from '@/modules/shared/repositories/scopes'
 import {
-  getFunction,
+  getFunctionFactory,
   triggerAutomationRun
 } from '@/modules/automate/clients/executionEngine'
 import logStreamRest from '@/modules/automate/rest/logStream'
@@ -289,7 +289,7 @@ const initializeEventListeners = () => {
 
         const fn = isTestEnv()
           ? null
-          : await getFunction({ functionId: functionRun.functionId })
+          : await getFunctionFactory({ logger })({ functionId: functionRun.functionId })
 
         const userEmail = await getUserEmailFromAutomationRunFactory({
           getFullAutomationRevisionMetadata: getFullAutomationRevisionMetadataFactory({

@@ -5,6 +5,7 @@ import { EventBus } from '@/modules/shared/services/eventBus'
 import cryptoRandomString from 'crypto-random-string'
 import Redis from 'ioredis'
 import { get, has, isObjectLike } from 'lodash'
+import { Logger } from 'pino'
 
 export enum AuthCodePayloadAction {
   CreateAutomation = 'createAutomation',
@@ -47,14 +48,14 @@ export const createStoredAuthCodeFactory =
   }
 
 export const validateStoredAuthCodeFactory =
-  (deps: { redis: Redis; emit: EventBus['emit'] }) =>
+  (deps: { redis: Redis; logger: Logger; emit: EventBus['emit'] }) =>
   async (params: {
     payload: AuthCodePayload
     resources?: {
       workspaceId?: string
     }
   }) => {
-    const { redis, emit } = deps
+    const { redis, logger, emit } = deps
     const { payload, resources } = params
 
     const potentialPayloadString = await redis.get(payload.code)
@@ -62,6 +63,17 @@ export const validateStoredAuthCodeFactory =
       ? JSON.parse(potentialPayloadString)
       : null
     const formattedPayload = isPayload(potentialPayload) ? potentialPayload : null
+
+    logger.info(
+      {
+        payloadString: potentialPayloadString,
+        payload: {
+          ...formattedPayload,
+          code: null
+        }
+      },
+      'Validating execution engine request with provided auth payload.'
+    )
 
     if (
       !formattedPayload ||
