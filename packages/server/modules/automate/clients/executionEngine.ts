@@ -82,7 +82,7 @@ const invokeSafeJsonRequest = async <
 ): Promise<Response | null> => {
   const [{ url, method, logger }] = args
   try {
-    return await invokeJsonRequest<Response>(...args)
+    return await invokeJsonRequest<Response>({...args, requestId: logger.bindings().req.id})
   } catch (e) {
     logger.error(
       { url, method, err: e },
@@ -489,8 +489,7 @@ export const getPublicFunctions = async (params: {
   return await invokeSafeJsonRequest<GetFunctionsResponse>({
     url,
     method: 'get',
-    logger,
-    requestId: logger.bindings().req.id
+    logger
   })
 }
 
