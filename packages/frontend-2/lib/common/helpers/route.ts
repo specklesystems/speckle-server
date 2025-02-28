@@ -23,9 +23,6 @@ export const defaultZapierWebhookUrl =
   'https://hooks.zapier.com/hooks/catch/12120532/2m4okri/'
 export const guideBillingUrl = 'https://speckle.guide/workspaces/billing.html'
 
-// FF-CLEANUP: Remove when workspaces plans released
-// Onboarding routes - To be updated when new billing FF is live
-export const onboardingJoinRoute = '/onboarding-join'
 export const onboardingRoute = '/onboarding'
 
 export const settingsUserRoutes = {

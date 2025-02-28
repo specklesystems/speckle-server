@@ -53,10 +53,15 @@ graphql(`
 `)
 
 export const useDiscoverableWorkspaces = () => {
-  const { result: discoverableResult } = useQuery(discoverableWorkspacesQuery)
-  const { result: requestsResult, refetch } = useQuery(
-    discoverableWorkspacesRequestsQuery
+  const { result: discoverableResult, loading: discoverableLoading } = useQuery(
+    discoverableWorkspacesQuery
   )
+  const {
+    result: requestsResult,
+    refetch,
+    loading: joinRequestsLoading
+  } = useQuery(discoverableWorkspacesRequestsQuery)
+
   const { mutate: requestToJoin } = useMutation(dashboardRequestToJoinWorkspaceMutation)
 
   const mixpanel = useMixpanel()
@@ -64,33 +69,49 @@ export const useDiscoverableWorkspaces = () => {
   const apollo = useApolloClient().client
 
   const discoverableWorkspaces = computed(
-    () => discoverableResult.value?.activeUser?.discoverableWorkspaces || null
+    () => discoverableResult.value?.activeUser?.discoverableWorkspaces
   )
 
   const workspaceJoinRequests = computed(
-    () => requestsResult.value?.activeUser?.workspaceJoinRequests || null
+    () => requestsResult.value?.activeUser?.workspaceJoinRequests
   )
 
+  const discoverableWorkspacesAndJoinRequests = computed(() => {
+    if (loading.value) return false
+    const joinRequests =
+      workspaceJoinRequests.value?.items?.map((request) => ({
+        ...request.workspace,
+        requestStatus: request.status
+      })) || []
+
+    const discoverable =
+      discoverableWorkspaces.value?.map((workspace) => ({
+        ...workspace,
+        requestStatus: null
+      })) || []
+
+    return [...joinRequests, ...discoverable]
+  })
+
   const hasDiscoverableWorkspaces = computed(
-    () => discoverableWorkspaces.value !== null
+    () => discoverableWorkspaces.value && discoverableWorkspaces.value?.length > 0
   )
 
   const hasDiscoverableJoinRequests = computed(
-    () => workspaceJoinRequests.value !== null
+    () => workspaceJoinRequests.value && workspaceJoinRequests.value?.items.length > 0
   )
 
   const hasDiscoverableWorkspacesOrJoinRequests = computed(() => {
-    return hasDiscoverableJoinRequests.value || hasDiscoverableWorkspaces.value
+    const requests = discoverableWorkspacesAndJoinRequests.value
+    return requests && requests.length > 0
   })
 
   const discoverableWorkspacesCount = computed(
     () => discoverableWorkspaces.value?.length || 0
   )
 
-  const discoverableJoinRequestsCount = computed(() =>
-    workspaceJoinRequests.value && 'items' in workspaceJoinRequests.value
-      ? workspaceJoinRequests.value.items.length
-      : 0
+  const discoverableJoinRequestsCount = computed(
+    () => workspaceJoinRequests.value?.items.length || 0
   )
 
   const discoverableWorkspacesAndJoinRequestsCount = computed(
@@ -134,20 +155,8 @@ export const useDiscoverableWorkspaces = () => {
     }
   }
 
-  const discoverableWorkspacesAndJoinRequests = computed(() => {
-    const joinRequests = (
-      workspaceJoinRequests.value ? workspaceJoinRequests.value.items : []
-    ).map((request) => ({
-      ...request.workspace,
-      requestStatus: request.status
-    }))
-
-    const discoverable = (discoverableWorkspaces.value || []).map((workspace) => ({
-      ...workspace,
-      requestStatus: null
-    }))
-
-    return [...joinRequests, ...discoverable]
+  const loading = computed(() => {
+    return discoverableLoading.value || joinRequestsLoading.value
   })
 
   return {
@@ -160,6 +169,7 @@ export const useDiscoverableWorkspaces = () => {
     discoverableWorkspaces,
     workspaceJoinRequests,
     discoverableWorkspacesAndJoinRequests,
-    processRequest
+    processRequest,
+    loading
   }
 }
