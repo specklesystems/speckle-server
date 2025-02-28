@@ -66,10 +66,13 @@ export const validateStoredAuthCodeFactory =
 
     logger.info(
       {
-        ...formattedPayload,
-        code: null
+        payloadString: potentialPayloadString,
+        payload: {
+          ...formattedPayload,
+          code: null
+        }
       },
-      'Validating execution engine request with provided token.'
+      'Validating execution engine request with provided auth payload.'
     )
 
     if (
