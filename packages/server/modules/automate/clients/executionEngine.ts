@@ -29,6 +29,7 @@ import {
   timeoutAt
 } from '@speckle/shared'
 import { has, isObjectLike } from 'lodash'
+import { Logger } from 'pino'
 
 export type AuthCodePayloadWithOrigin = AuthCodePayload & { origin: string }
 
@@ -77,13 +78,13 @@ const getApiUrl = (
 const invokeSafeJsonRequest = async <
   Response extends Record<string, unknown> = Record<string, unknown>
 >(
-  ...args: Parameters<typeof invokeRequest>
+  ...args: Parameters<typeof invokeRequest> & { logger: Logger }
 ): Promise<Response | null> => {
-  const [{ url, method }] = args
+  const [{ url, method, logger }] = args
   try {
     return await invokeJsonRequest<Response>(...args)
   } catch (e) {
-    automateLogger.error(
+    logger.error(
       { url, method, err: e },
       'Automate API request error suppressed.'
     )
@@ -472,7 +473,8 @@ export const getPublicFunctions = async (params: {
     cursor?: string
     limit?: number
     functionsWithoutVersions?: boolean
-  }
+  },
+  logger: Logger
 }) => {
   const { query } = params
   const url = getApiUrl(`/api/v1/functions`, {

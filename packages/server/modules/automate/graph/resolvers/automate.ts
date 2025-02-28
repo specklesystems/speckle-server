@@ -730,7 +730,8 @@ export = (FF_AUTOMATE_MODULE_ENABLED
         }
       },
       Query: {
-        async automateValidateAuthCode(_parent, args) {
+        async automateValidateAuthCode(_parent, args, ctx) {
+          const logger = ctx.log
           const validate = validateStoredAuthCodeFactory({
             redis: getGenericRedis(),
             emit: getEventBus().emit
@@ -760,7 +761,8 @@ export = (FF_AUTOMATE_MODULE_ENABLED
                 limit: isNullOrUndefined(args.limit) ? undefined : args.limit,
                 functionsWithoutVersions:
                   args.filter?.functionsWithoutReleases || undefined
-              }
+              },
+              logger
             })
 
             if (!res) {
