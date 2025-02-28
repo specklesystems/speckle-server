@@ -74,6 +74,10 @@ export default defineNuxtConfig({
     }
   },
 
+  experimental: {
+    emitRouteChunkError: 'automatic-immediate'
+  },
+
   alias: {
     // Rewriting all lodash calls to lodash-es for proper tree-shaking & chunk splitting
     // lodash: 'lodash-es'

@@ -1,13 +1,16 @@
 /* eslint-disable camelcase */
 import type { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
 import type { ExecutionParams } from 'subscriptions-transport-ws'
-import { shouldLogAsInfoLevel, shouldLogAsWarnLevel } from '@/logging/graphqlError'
+import {
+  shouldLogAsInfoLevel,
+  shouldLogAsWarnLevel
+} from '@/observability/utils/logLevels'
 import { BaseError } from '@/modules/shared/errors'
 import { GraphQLError } from 'graphql'
-import { redactSensitiveVariables } from '@/logging/loggingHelper'
+import { redactSensitiveVariables } from '@/observability/utils/redact'
 import type { Counter } from 'prom-client'
-import { getRequestContext } from '@/logging/requestContext'
-import { subscriptionLogger } from '@/logging/logging'
+import { getRequestContext } from '@/observability/components/express/requestContext'
+import { subscriptionLogger } from '@/observability/logging'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type SubscriptionResponse = { errors?: GraphQLError[]; data?: any }

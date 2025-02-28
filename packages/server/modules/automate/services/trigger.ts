@@ -25,7 +25,7 @@ import {
 import { TriggerAutomationError } from '@/modules/automate/errors/runs'
 import { ContextResourceAccessRules } from '@/modules/core/helpers/token'
 import { TokenResourceIdentifierType } from '@/modules/core/graph/generated/graphql'
-import { automateLogger } from '@/logging/logging'
+import { automateLogger } from '@/observability/logging'
 import { FunctionInputDecryptor } from '@/modules/automate/services/encryption'
 import { LibsodiumEncryptionError } from '@/modules/shared/errors/encryption'
 import {

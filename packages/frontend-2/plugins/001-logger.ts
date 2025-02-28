@@ -324,7 +324,8 @@ export default defineNuxtPlugin(async (nuxtApp) => {
   if (!import.meta.server) {
     nuxtApp.hook('app:mounted', () => {
       logger.info('App mounted in the client', {
-        important: true
+        important: true,
+        speckleServerVersion
       })
     })
   }

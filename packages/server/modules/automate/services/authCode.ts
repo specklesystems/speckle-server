@@ -1,4 +1,4 @@
-import { automateLogger } from '@/logging/logging'
+import { automateLogger } from '@/observability/logging'
 import { CreateStoredAuthCode } from '@/modules/automate/domain/operations'
 import { AutomateAuthCodeHandshakeError } from '@/modules/automate/errors/management'
 import { EventBus } from '@/modules/shared/services/eventBus'

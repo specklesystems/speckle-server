@@ -7,7 +7,7 @@ import {
   RateLimiterRes
 } from 'rate-limiter-flexible'
 import { Nullable, TIME } from '@speckle/shared'
-import { rateLimiterLogger } from '@/logging/logging'
+import { rateLimiterLogger } from '@/observability/logging'
 import { createRedisClient } from '@/modules/shared/redis/redis'
 import { RateLimitError } from '@/modules/core/errors/ratelimit'
 
