@@ -29,8 +29,8 @@ import {
   timeoutAt
 } from '@speckle/shared'
 import { randomUUID } from 'crypto'
-import { has, isObjectLike } from 'lodash'
 import { Logger } from 'pino'
+import { has, isObjectLike, isEmpty } from 'lodash'
 
 export type AuthCodePayloadWithOrigin = AuthCodePayload & { origin: string }
 
@@ -50,7 +50,7 @@ export type AutomationCreateResponse = {
 const getApiUrl = (
   path?: string,
   options?: Partial<{
-    query: Record<string, string | number | boolean | undefined>
+    query: Record<string, string[] | string | number | boolean | undefined>
   }>
 ) => {
   const automateUrl = speckleAutomateUrl()
@@ -64,9 +64,10 @@ const getApiUrl = (
   const url = new URL(path, automateUrl)
   if (options?.query) {
     Object.entries(options.query).forEach(([key, val]) => {
-      if (isNullOrUndefined(val)) return
+      if (isEmpty(val) || isNullOrUndefined(val)) return
       try {
-        url.searchParams.append(key, val.toString())
+        const urlValue = typeof val === 'object' ? val.join(',') : val.toString()
+        url.searchParams.append(key, urlValue)
       } catch {
         console.log({ val })
       }
@@ -478,7 +479,53 @@ export const getFunctionReleaseFactory =
       : null
   }
 
+export type GetFunctionsParams = {
+  auth?: AuthCodePayload
+  filters: {
+    query?: string
+    cursor?: string
+    limit?: number
+    requireRelease?: boolean
+    includeFeatured?: boolean
+    includeWorkspaces?: string[]
+    includeUsers?: string[]
+  }
+}
+
 export type GetFunctionsResponse = {
+  items: FunctionSchemaType[]
+  cursor: Nullable<string>
+  totalCount: number
+}
+
+export const getFunctionsFactory =
+  (deps: { logger: Logger }) => async (params: GetFunctionsParams) => {
+    const { logger } = deps
+
+    const url = getApiUrl(`/api/v2/functions`, {
+      query: {
+        requireRelease: true,
+        ...params.filters
+      }
+    })
+
+    const authToken = params.auth
+      ? Buffer.from(
+          JSON.stringify({
+            ...params.auth,
+            origin: getServerOrigin()
+          })
+        ).toString('base64')
+      : undefined
+
+    return await invokeSafeJsonRequestFactory<GetFunctionsResponse>({ logger })({
+      url,
+      method: 'get',
+      token: authToken
+    })
+  }
+
+export type GetPublicFunctionsResponse = {
   totalCount: number
   cursor: Nullable<string>
   items: FunctionWithVersionsSchemaType[]

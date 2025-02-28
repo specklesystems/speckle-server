@@ -20,7 +20,6 @@ export enum AuthCodePayloadAction {
 export type AuthCodePayload = {
   code: string
   userId: string
-  workspaceId?: string
   action: AuthCodePayloadAction
 }
 
@@ -50,8 +49,14 @@ export const createStoredAuthCodeFactory =
 
 export const validateStoredAuthCodeFactory =
   (deps: { redis: Redis; logger: Logger; emit: EventBus['emit'] }) =>
-  async (payload: AuthCodePayload) => {
+  async (params: {
+    payload: AuthCodePayload
+    resources?: {
+      workspaceId?: string
+    }
+  }) => {
     const { redis, logger, emit } = deps
+    const { payload, resources } = params
 
     const potentialPayloadString = await redis.get(payload.code)
     const potentialPayload: unknown = potentialPayloadString
@@ -76,10 +81,11 @@ export const validateStoredAuthCodeFactory =
       throw new AutomateAuthCodeHandshakeError('Invalid automate auth payload')
     }
 
-    if (payload.workspaceId) {
+    // Token is valid, confirm user is authorized to access specified resources.
+    if (resources?.workspaceId) {
       emit({
         eventName: 'workspace.authorized',
-        payload: { userId: payload.userId, workspaceId: payload.workspaceId }
+        payload: { userId: payload.userId, workspaceId: resources?.workspaceId }
       })
     }
 

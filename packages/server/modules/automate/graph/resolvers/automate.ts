@@ -740,9 +740,13 @@ export = (FF_AUTOMATE_MODULE_ENABLED
             logger: ctx.log
           })
           const payload = removeNullOrUndefinedKeys(args.payload)
+          const resources = removeNullOrUndefinedKeys(args.resources ?? {})
           return await validate({
-            ...payload,
-            action: args.payload.action as AuthCodePayloadAction
+            payload: {
+              ...payload,
+              action: args.payload.action as AuthCodePayloadAction
+            },
+            resources
           })
         },
         async automateFunction(_parent, { id }, ctx) {
