@@ -77,7 +77,6 @@ export const useDiscoverableWorkspaces = () => {
   )
 
   const discoverableWorkspacesAndJoinRequests = computed(() => {
-    if (loading.value) return false
     const joinRequests =
       workspaceJoinRequests.value?.items?.map((request) => ({
         ...request.workspace,
