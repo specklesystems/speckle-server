@@ -104,7 +104,7 @@ export const formatAppError = (err: SimpleError): SimpleError => {
     finalStatusCode = 429
   }
 
-  if (finalMessage.match(/\/_nuxt\/builds\/meta.*?404 not found/i)) {
+  if (finalMessage.match(/\/_nuxt\/builds\/meta.*?404/i)) {
     finalMessage =
       'Speckle is currently upgrading to a newer version. Please reload the page in a few seconds.'
     finalStatusCode = 500
@@ -171,7 +171,7 @@ export function enableCustomLoggerHandling(params: {
             })
             .filter((arg) => {
               // Filter out falsy values
-              return !!arg
+              return !!arg && !(['null', 'undefined'] as unknown[]).includes(arg)
             })
 
           // If nothing valid to log, skip entirely
