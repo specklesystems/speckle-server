@@ -87,7 +87,7 @@ const invokeSafeJsonRequestFactory =
     try {
       return await invokeJsonRequest<Response>({
         ...args[0],
-        requestId: logger.bindings().req.id
+        requestId: logger.bindings?.()?.req?.id
       })
     } catch (e) {
       logger.error({ url, method, err: e }, 'Automate API request error suppressed.')
