@@ -5,7 +5,7 @@ import {
   AssignWorkspaceSeat,
   GetWorkspaceRoleForUser
 } from '@/modules/workspaces/domain/operations'
-import { InvalidWorkspaceSeatType } from '@/modules/workspaces/errors/workspaceSeat'
+import { InvalidWorkspaceSeatTypeError } from '@/modules/workspaces/errors/workspaceSeat'
 import { Roles, WorkspaceRoles } from '@speckle/shared'
 import { z } from 'zod'
 
@@ -82,7 +82,7 @@ export const assignWorkspaceSeatFactory =
         workspaceSeatType: type
       })
     ) {
-      throw new InvalidWorkspaceSeatType(
+      throw new InvalidWorkspaceSeatTypeError(
         `User with workspace role ${workspaceAcl.role} cannot have a seat of type ${type}`,
         {
           info: {

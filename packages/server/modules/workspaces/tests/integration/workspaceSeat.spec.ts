@@ -5,7 +5,7 @@ import {
 } from '@/modules/core/helpers/testHelpers'
 import { createWorkspaceSeatFactory } from '@/modules/gatekeeper/repositories/workspaceSeat'
 import { NotFoundError } from '@/modules/shared/errors'
-import { InvalidWorkspaceSeatType } from '@/modules/workspaces/errors/workspaceSeat'
+import { InvalidWorkspaceSeatTypeError } from '@/modules/workspaces/errors/workspaceSeat'
 import { getWorkspaceRoleForUserFactory } from '@/modules/workspaces/repositories/workspaces'
 import { assignWorkspaceSeatFactory } from '@/modules/workspaces/services/workspaceSeat'
 import {
@@ -177,7 +177,51 @@ describe('Workspace workspaceSeat services', () => {
         })({ userId: user.id, workspaceId: workspace.id, type: 'viewer' })
       )
 
-      expect(err.name).to.eq(InvalidWorkspaceSeatType.name)
+      expect(err.name).to.eq(InvalidWorkspaceSeatTypeError.name)
+    })
+    it('should update seat type on role change', async () => {
+      const workspaceAdmin: BasicTestUser = {
+        id: createRandomString(),
+        name: createRandomString(),
+        email: createRandomEmail(),
+        role: Roles.Server.Admin,
+        verified: true
+      }
+      await createTestUser(workspaceAdmin)
+
+      const workspace: BasicTestWorkspace = {
+        id: createRandomString(),
+        slug: createRandomString(),
+        ownerId: workspaceAdmin.id,
+        name: cryptoRandomString({ length: 6 }),
+        description: cryptoRandomString({ length: 12 })
+      }
+      await createTestWorkspace(workspace, workspaceAdmin)
+
+      const user: BasicTestUser = {
+        id: createRandomString(),
+        name: createRandomString(),
+        email: createRandomEmail(),
+        role: Roles.Server.User,
+        verified: true
+      }
+      await createTestUser(user)
+
+      await assignToWorkspace(workspace, user, Roles.Workspace.Member)
+      const workspaceSeat = await db('workspace_seats')
+        .where({ userId: user.id, workspaceId: workspace.id })
+        .first()
+
+      expect(workspaceSeat.type).to.eq('viewer')
+
+      // Change workspace role
+      await assignToWorkspace(workspace, user, Roles.Workspace.Admin)
+
+      const workspaceSeatUpdated = await db('workspace_seats')
+        .where({ userId: user.id, workspaceId: workspace.id })
+        .first()
+
+      expect(workspaceSeatUpdated.type).to.eq('editor')
     })
   })
 })

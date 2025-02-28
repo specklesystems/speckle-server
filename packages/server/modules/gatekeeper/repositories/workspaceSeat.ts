@@ -22,9 +22,13 @@ export const countSeatsByTypeInWorkspaceFactory =
 export const createWorkspaceSeatFactory =
   ({ db }: { db: Knex }): CreateWorkspaceSeat =>
   async ({ userId, workspaceId, type }) => {
-    return await tables.workspaceSeats(db).insert({
-      workspaceId,
-      userId,
-      type
-    })
+    await tables
+      .workspaceSeats(db)
+      .insert({
+        workspaceId,
+        userId,
+        type
+      })
+      .onConflict(['workspaceId', 'userId'])
+      .merge()
   }

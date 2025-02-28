@@ -34,4 +34,4 @@ export type GetWorkspacePlanByProjectId = ({
 
 export type CreateWorkspaceSeat = (
   args: Pick<WorkspaceSeat, 'workspaceId' | 'userId' | 'type'>
-) => Promise<WorkspaceSeat>
+) => Promise<void>
