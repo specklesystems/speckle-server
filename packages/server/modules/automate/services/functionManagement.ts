@@ -89,6 +89,14 @@ const cleanFunctionLogo = (logo: MaybeNullOrUndefined<string>): Nullable<string>
 export const convertFunctionToGraphQLReturn = (
   fn: FunctionSchemaType
 ): AutomateFunctionGraphQLReturn => {
+  const functionCreator: FunctionSchemaType['functionCreator'] =
+    fn.functionCreatorSpeckleUserId && fn.functionCreatorSpeckleServerOrigin
+      ? {
+          speckleUserId: fn.functionCreatorSpeckleUserId,
+          speckleServerOrigin: fn.functionCreatorSpeckleServerOrigin
+        }
+      : fn.functionCreator
+
   const ret: AutomateFunctionGraphQLReturn = {
     id: fn.functionId,
     name: fn.functionName,
@@ -98,7 +106,7 @@ export const convertFunctionToGraphQLReturn = (
     logo: cleanFunctionLogo(fn.logo),
     tags: fn.tags,
     supportedSourceApps: fn.supportedSourceApps,
-    functionCreator: fn.functionCreator,
+    functionCreator,
     workspaceIds: fn.workspaceIds
   }
 
