@@ -57,7 +57,6 @@ import { TIME } from '@speckle/shared'
 import type { Application } from 'express'
 import { passportAuthenticationCallbackFactory } from '@/modules/auth/services/passportService'
 import { testLogger as logger } from '@/observability/logging'
-import { Application } from 'express'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = getUserFactory({ db })
