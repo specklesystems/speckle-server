@@ -5,11 +5,13 @@
         <span class="sr-only">Open workspace menu</span>
         <div class="flex items-center gap-2 p-0.5 hover:bg-highlight-2 rounded">
           <WorkspaceAvatar
-            :name="activeWorkspace?.name || ''"
+            :name="
+              (isProjectsActive ? 'Personal projects' : activeWorkspace?.name) || ''
+            "
             :logo="activeWorkspace?.logo"
           />
           <p class="text-body-xs text-foreground">
-            {{ activeWorkspace?.name }}
+            {{ isProjectsActive ? 'Personal projects' : activeWorkspace?.name }}
           </p>
           <ChevronDownIcon :class="userOpen ? 'rotate-180' : ''" class="h-3 w-3" />
         </div>
@@ -28,31 +30,49 @@
           <div class="p-2 pb-3 flex flex-col gap-y-4">
             <div class="flex gap-x-2 items-center">
               <WorkspaceAvatar
-                :name="activeWorkspace?.name || ''"
+                :name="
+                  (isProjectsActive ? 'Personal projects' : activeWorkspace?.name) || ''
+                "
                 :logo="activeWorkspace?.logo"
                 size="lg"
               />
               <div class="flex flex-col space-between">
                 <p class="text-body-xs text-foreground">
-                  {{ activeWorkspace?.name }}
+                  {{ isProjectsActive ? 'Personal projects' : activeWorkspace?.name }}
                 </p>
-                <p class="text-body-2xs text-foreground-2 capitalize">
-                  {{ activeWorkspace?.plan?.name }}
+                <p
+                  v-if="activeWorkspace"
+                  class="text-body-2xs text-foreground-2 capitalize"
+                >
+                  {{ activeWorkspace?.plan?.name }} ·
+                  {{ activeWorkspace?.team?.totalCount }} member{{
+                    activeWorkspace?.team?.totalCount > 1 ? 's' : ''
+                  }}
                 </p>
+                <p v-else class="text-body-2xs text-foreground-2">2 projects to move</p>
               </div>
             </div>
-            <div class="flex gap-x-2">
-              <FormButton
-                color="outline"
-                full-width
-                size="sm"
-                @click="goToSettingsRoute"
-              >
-                Settings
-              </FormButton>
-              <FormButton full-width color="outline" size="sm">
-                Invite members
-              </FormButton>
+            <div v-if="activeWorkspaceSlug" class="flex gap-x-2">
+              <MenuItem>
+                <FormButton
+                  color="outline"
+                  full-width
+                  size="sm"
+                  @click="goToSettingsRoute"
+                >
+                  Settings
+                </FormButton>
+              </MenuItem>
+              <MenuItem>
+                <FormButton
+                  full-width
+                  color="outline"
+                  size="sm"
+                  @click="showInviteDialog = true"
+                >
+                  Invite members
+                </FormButton>
+              </MenuItem>
             </div>
           </div>
           <div class="p-2 pt-1">
@@ -62,45 +82,40 @@
               icon-text="Create workspace"
             >
               <div v-if="hasWorkspaces">
-                <MenuItem v-for="(item, key) in workspaces" :key="key">
-                  <div class="flex items-center">
-                    <div class="w-6">
-                      <IconCheck
-                        v-if="item.slug === activeWorkspaceSlug"
-                        class="w-4 h-4 mx-1 text-foreground"
-                      />
-                    </div>
-                    <NuxtLink
-                      v-if="item.creationState?.completed !== false"
-                      class="flex-1"
-                      @click="onWorkspaceSelect(item.slug)"
-                    >
-                      <LayoutSidebarMenuGroupItem :label="item.name">
-                        <template #icon>
-                          <WorkspaceAvatar
-                            :name="item.name"
-                            :logo="item.logo"
-                            size="sm"
-                          />
-                        </template>
-                      </LayoutSidebarMenuGroupItem>
-                    </NuxtLink>
-                  </div>
-                </MenuItem>
+                <template v-for="item in workspaces" :key="`menu-item-${item.id}`">
+                  <DashboardSidebarWorkspaceItem
+                    :is-active="item.slug === activeWorkspaceSlug"
+                    :name="item.name"
+                    :logo="item.logo"
+                    @on-click="onWorkspaceSelect(item.slug)"
+                  />
+                </template>
+                <DashboardSidebarWorkspaceItem
+                  :is-active="route.path === projectsRoute"
+                  name="Personal projects"
+                  tag="LEGACY"
+                  @on-click="onProjectsSelect"
+                />
               </div>
             </LayoutSidebarMenuGroup>
           </div>
-          <div v-if="hasDiscoverableWorkspaces" class="p-3">
+          <MenuItem v-if="hasDiscoverableWorkspaces" class="p-3">
             <NuxtLink class="flex justify-between items-center">
               <p class="text-body-xs text-foreground">Join existing workspaces</p>
               <CommonBadge color-classes="bg-foundation-2 text-foreground-2" rounded>
                 {{ discoverableWorkspacesCount }}
               </CommonBadge>
             </NuxtLink>
-          </div>
+          </MenuItem>
         </MenuItems>
       </Transition>
     </Menu>
+
+    <InviteDialogWorkspace
+      v-if="activeWorkspace"
+      v-model:open="showInviteDialog"
+      :workspace="activeWorkspace"
+    />
   </div>
 </template>
 <script setup lang="ts">
@@ -110,7 +125,8 @@ import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import {
   workspaceCreateRoute,
   workspaceRoute,
-  settingsWorkspaceRoutes
+  settingsWorkspaceRoutes,
+  projectsRoute
 } from '~/lib/common/helpers/route'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import {
@@ -124,33 +140,38 @@ import { useNavigation } from '~~/lib/navigation/composables/navigation'
 
 graphql(`
   fragment HeaderWorkspaceSwitcher_Workspace on Workspace {
+    ...InviteDialogWorkspace_Workspace
     id
     name
     logo
     plan {
       name
     }
+    team {
+      totalCount
+    }
   }
 `)
 
+const route = useRoute()
 const { isGuest } = useActiveUser()
 const menuButtonId = useId()
 const mixpanel = useMixpanel()
 const { workspaces, hasWorkspaces } = useUserWorkspaces()
 const { hasDiscoverableWorkspaces, discoverableWorkspacesCount } =
   useUserDiscoverableWorkspaces()
-const { activeWorkspaceSlug } = useNavigation()
-// const isWorkspacesEnabled = useIsWorkspacesEnabled()
-
+const { activeWorkspaceSlug, isProjectsActive } = useNavigation()
 const { result } = useQuery(
   headerWorkspaceSwitcherQuery,
   () => ({
-    slug: activeWorkspaceSlug.value
+    slug: activeWorkspaceSlug.value || ''
   }),
   () => ({
     enabled: !!activeWorkspaceSlug.value
   })
 )
+
+const showInviteDialog = ref(false)
 
 const activeWorkspace = computed(() => {
   return result.value?.workspaceBySlug
@@ -158,10 +179,18 @@ const activeWorkspace = computed(() => {
 
 const onWorkspaceSelect = (slug: string) => {
   navigateTo(workspaceRoute(slug))
+  isProjectsActive.value = false
   activeWorkspaceSlug.value = slug
 }
 
+const onProjectsSelect = () => {
+  activeWorkspaceSlug.value = null
+  isProjectsActive.value = true
+  navigateTo(projectsRoute)
+}
+
 const goToSettingsRoute = () => {
+  if (!activeWorkspaceSlug.value) return
   navigateTo(settingsWorkspaceRoutes.general.route(activeWorkspaceSlug.value))
 }
 

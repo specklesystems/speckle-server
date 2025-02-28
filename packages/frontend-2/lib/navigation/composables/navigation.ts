@@ -1,8 +1,10 @@
 export const useNavigationState = () =>
   useState<{
-    activeWorkspaceSlug: string
+    activeWorkspaceSlug: string | null
+    isProjectsActive: boolean
   }>('navigation-state', () => ({
-    activeWorkspaceSlug: 'raid-hq'
+    activeWorkspaceSlug: null,
+    isProjectsActive: false
   }))
 
 export const useNavigation = () => {
@@ -13,7 +15,13 @@ export const useNavigation = () => {
     set: (newVal) => (state.value.activeWorkspaceSlug = newVal)
   })
 
+  const isProjectsActive = computed({
+    get: () => state.value.isProjectsActive,
+    set: (newVal) => (state.value.isProjectsActive = newVal)
+  })
+
   return {
-    activeWorkspaceSlug
+    activeWorkspaceSlug,
+    isProjectsActive
   }
 }

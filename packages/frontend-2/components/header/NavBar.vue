@@ -4,8 +4,10 @@
       <div
         class="flex gap-4 items-center justify-between h-full w-screen py-4 px-3 sm:px-4"
       >
-        <!-- <HeaderLogoBlock :active="false" to="/" class="hidden lg:flex lg:min-w-40" /> -->
-        <HeaderWorkspaceSwitcher />
+        <div class="w-[17rem]">
+          <!-- <HeaderLogoBlock :active="false" to="/" class="hidden lg:flex lg:min-w-40" /> -->
+          <HeaderWorkspaceSwitcher />
+        </div>
         <div class="flex items-center truncate">
           <ClientOnly>
             <PortalTarget name="mobile-navigation"></PortalTarget>
@@ -19,16 +21,18 @@
             <PortalTarget name="secondary-actions"></PortalTarget>
             <PortalTarget name="primary-actions"></PortalTarget>
           </ClientOnly>
-          <FormButton
-            v-if="!activeUser"
-            :to="loginUrl.fullPath"
-            color="outline"
-            class="hidden md:flex"
-          >
-            Sign in
-          </FormButton>
-          <!-- Profile dropdown -->
-          <HeaderNavUserMenu :login-url="loginUrl" />
+          <div class="w-[17rem] flex justify-end">
+            <FormButton
+              v-if="!activeUser"
+              :to="loginUrl.fullPath"
+              color="outline"
+              class="hidden md:flex"
+            >
+              Sign in
+            </FormButton>
+            <!-- Profile dropdown -->
+            <HeaderNavUserMenu :login-url="loginUrl" />
+          </div>
         </div>
       </div>
     </nav>

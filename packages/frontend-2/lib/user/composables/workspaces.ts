@@ -9,7 +9,11 @@ export const useUserWorkspaces = () => {
   })
 
   const workspaces = computed(() =>
-    result.value?.activeUser ? result.value.activeUser.workspaces.items : []
+    result.value?.activeUser
+      ? result.value.activeUser.workspaces.items.filter(
+          (workspace) => workspace.creationState?.completed !== false
+        )
+      : []
   )
 
   const hasWorkspaces = computed(() => workspaces.value.length > 0)

@@ -69,60 +69,99 @@
             </NuxtLink>
           </LayoutSidebarMenuGroup>
           <LayoutSidebarMenuGroup v-if="isWorkspacesEnabled" title="Workspace settings">
-            <LayoutSidebarMenuGroup
-              v-for="workspaceItem in workspaceItems"
-              :key="`workspace-item-${workspaceItem.slug}`"
-              :title="workspaceItem.name"
-              collapsible
-              :collapsed="slug !== workspaceItem.slug"
-              :tag="
-                workspaceItem.plan?.status === WorkspacePlanStatuses.Trial ||
-                !workspaceItem.plan?.status
-                  ? 'TRIAL'
-                  : undefined
-              "
-              nested
-            >
-              <template #title-icon>
-                <WorkspaceAvatar
-                  :logo="workspaceItem.logo"
-                  :name="workspaceItem.name"
-                  size="sm"
-                />
-              </template>
+            <template v-if="isWorkspaceNewPlansEnabled" #title-icon>
+              <IconWorkspaces class="size-4" />
+            </template>
+            <template v-if="!isWorkspaceNewPlansEnabled">
+              <LayoutSidebarMenuGroup
+                v-for="workspaceItem in workspaceItems"
+                :key="`workspace-item-${workspaceItem.slug}`"
+                :title="workspaceItem.name"
+                collapsible
+                :collapsed="slug !== workspaceItem.slug"
+                :tag="
+                  workspaceItem.plan?.status === WorkspacePlanStatuses.Trial ||
+                  !workspaceItem.plan?.status
+                    ? 'TRIAL'
+                    : undefined
+                "
+                nested
+              >
+                <template #title-icon>
+                  <WorkspaceAvatar
+                    :logo="workspaceItem.logo"
+                    :name="workspaceItem.name"
+                    size="sm"
+                  />
+                </template>
+                <NuxtLink
+                  v-for="workspaceMenuItem in workspaceMenuItems"
+                  :key="`workspace-menu-item-${workspaceMenuItem.name}-${workspaceItem.slug}`"
+                  :to="
+                    !isAdmin &&
+                    (workspaceMenuItem.disabled ||
+                      needsSsoSession(workspaceItem, workspaceMenuItem.name))
+                      ? undefined
+                      : workspaceMenuItem.route(workspaceItem.slug)
+                  "
+                  @click="isOpenMobile = false"
+                >
+                  <LayoutSidebarMenuGroupItem
+                    v-if="workspaceMenuItem.permission?.includes(workspaceItem.role as WorkspaceRoles)"
+                    :label="workspaceMenuItem.title"
+                    :active="
+                      route.name?.toString().startsWith(workspaceMenuItem.name) &&
+                      route.params.slug === workspaceItem.slug
+                    "
+                    :tooltip-text="
+                      needsSsoSession(workspaceItem, workspaceMenuItem.name)
+                        ? 'Log in with your SSO provider to access this page'
+                        : workspaceMenuItem.tooltipText
+                    "
+                    :disabled="
+                      !isAdmin &&
+                      (workspaceMenuItem.disabled ||
+                        needsSsoSession(workspaceItem, workspaceMenuItem.name))
+                    "
+                    class="!pl-8"
+                  />
+                </NuxtLink>
+              </LayoutSidebarMenuGroup>
+            </template>
+            <template v-else-if="activeWorkspaceItem">
               <NuxtLink
                 v-for="workspaceMenuItem in workspaceMenuItems"
-                :key="`workspace-menu-item-${workspaceMenuItem.name}-${workspaceItem.slug}`"
+                :key="`workspace-menu-item-${workspaceMenuItem.name}-${activeWorkspaceItem}`"
                 :to="
                   !isAdmin &&
                   (workspaceMenuItem.disabled ||
-                    needsSsoSession(workspaceItem, workspaceMenuItem.name))
+                    needsSsoSession(activeWorkspaceItem, workspaceMenuItem.name))
                     ? undefined
-                    : workspaceMenuItem.route(workspaceItem.slug)
+                    : workspaceMenuItem.route(activeWorkspaceItem.slug)
                 "
                 @click="isOpenMobile = false"
               >
                 <LayoutSidebarMenuGroupItem
-                  v-if="workspaceMenuItem.permission?.includes(workspaceItem.role as WorkspaceRoles)"
+                  v-if="workspaceMenuItem.permission?.includes(activeWorkspaceItem.role as WorkspaceRoles)"
                   :label="workspaceMenuItem.title"
                   :active="
                     route.name?.toString().startsWith(workspaceMenuItem.name) &&
-                    route.params.slug === workspaceItem.slug
+                    route.params.slug === activeWorkspaceItem.slug
                   "
                   :tooltip-text="
-                    needsSsoSession(workspaceItem, workspaceMenuItem.name)
+                    needsSsoSession(activeWorkspaceItem, workspaceMenuItem.name)
                       ? 'Log in with your SSO provider to access this page'
                       : workspaceMenuItem.tooltipText
                   "
                   :disabled="
                     !isAdmin &&
                     (workspaceMenuItem.disabled ||
-                      needsSsoSession(workspaceItem, workspaceMenuItem.name))
+                      needsSsoSession(activeWorkspaceItem, workspaceMenuItem.name))
                   "
                   class="!pl-8"
                 />
               </NuxtLink>
-            </LayoutSidebarMenuGroup>
+            </template>
           </LayoutSidebarMenuGroup>
         </LayoutSidebarMenu>
       </LayoutSidebar>
@@ -151,6 +190,7 @@ import {
 } from '~/lib/common/generated/gql/graphql'
 import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
 import { useBreakpoints } from '@vueuse/core'
+import { useNavigation } from '~~/lib/navigation/composables/navigation'
 
 graphql(`
   fragment SettingsSidebar_Workspace on Workspace {
@@ -181,6 +221,8 @@ graphql(`
   }
 `)
 
+const { activeWorkspaceSlug } = useNavigation()
+const isWorkspaceNewPlansEnabled = useWorkspaceNewPlansEnabled()
 const settingsMenuState = useSettingsMenuState()
 const { isAdmin } = useActiveUser()
 const route = useRoute()
@@ -200,6 +242,9 @@ const workspaceItems = computed(
     workspaceResult.value?.activeUser?.workspaces.items.filter(
       (item) => item.creationState?.completed !== false // Removed workspaces that are not completely created
     ) || []
+)
+const activeWorkspaceItem = computed(() =>
+  workspaceItems.value.find((item) => item.slug === activeWorkspaceSlug.value)
 )
 
 const needsSsoSession = (

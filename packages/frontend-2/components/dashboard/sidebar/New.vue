@@ -1,7 +1,7 @@
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <!-- eslint-disable vuejs-accessibility/click-events-have-key-events -->
 <template>
-  <div class="group">
+  <div class="group h-full">
     <template v-if="isLoggedIn">
       <Portal to="mobile-navigation">
         <div class="lg:hidden">
@@ -54,7 +54,11 @@
                 </NuxtLink>
               </template>
 
-              <NuxtLink :to="homeRoute" @click="isOpenMobile = false">
+              <NuxtLink
+                v-if="activeWorkspaceSlug"
+                :to="workspaceRoute(activeWorkspaceSlug)"
+                @click="isOpenMobile = false"
+              >
                 <LayoutSidebarMenuGroupItem
                   label="Home"
                   :active="route.name === 'workspaces-slug'"
@@ -64,6 +68,18 @@
                   </template>
                 </LayoutSidebarMenuGroupItem>
               </NuxtLink>
+
+              <NuxtLink v-else :to="projectsRoute" @click="isOpenMobile = false">
+                <LayoutSidebarMenuGroupItem
+                  label="Projects"
+                  :active="isActive(projectsRoute)"
+                >
+                  <template #icon>
+                    <IconProjects class="size-4 text-foreground-2" />
+                  </template>
+                </LayoutSidebarMenuGroupItem>
+              </NuxtLink>
+
               <NuxtLink :to="connectorsRoute" @click="isOpenMobile = false">
                 <LayoutSidebarMenuGroupItem
                   label="Connectors"
@@ -137,14 +153,21 @@ import {
   LayoutSidebarMenuGroup,
   LayoutSidebarMenuGroupItem
 } from '@speckle/ui-components'
-import { homeRoute, projectsRoute, connectorsRoute } from '~/lib/common/helpers/route'
+import {
+  homeRoute,
+  projectsRoute,
+  connectorsRoute,
+  workspaceRoute
+} from '~/lib/common/helpers/route'
 import { useRoute } from 'vue-router'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { HomeIcon } from '@heroicons/vue/24/outline'
+import { useNavigation } from '~~/lib/navigation/composables/navigation'
 
 const { isLoggedIn } = useActiveUser()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
 const route = useRoute()
+const { activeWorkspaceSlug } = useNavigation()
 
 const isOpenMobile = ref(false)
 const showFeedbackDialog = ref(false)
