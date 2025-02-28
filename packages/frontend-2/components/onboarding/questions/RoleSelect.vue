@@ -26,7 +26,8 @@
 
 <script setup lang="ts">
 import { useFormSelectChildInternals } from '@speckle/ui-components'
-import { OnboardingRole, RoleTitleMap } from '~/lib/auth/helpers/onboarding'
+import { RoleTitleMap } from '~/lib/auth/helpers/onboarding'
+import { OnboardingRole } from '@speckle/shared'
 import { isRequired } from '~~/lib/common/helpers/validation'
 
 const props = defineProps<{

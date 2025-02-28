@@ -1,5 +1,5 @@
-import { authLogger, type Logger } from '@/logging/logging'
-import { maybeLoggerWithContext } from '@/logging/requestContext'
+import { authLogger, type Logger } from '@/observability/logging'
+import { maybeLoggerWithContext } from '@/observability/components/express/requestContext'
 import {
   addToMailchimpAudience,
   triggerMailchimpCustomerJourney

@@ -2,21 +2,48 @@
 // README at: https://github.com/devcontainers/templates/tree/main/src/typescript-node
 {
   "name": "Node.js & TypeScript",
-  // Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
-  "image": "mcr.microsoft.com/devcontainers/typescript-node:1-18-bullseye",
+
+  // We want to deploy all the dependencies (Postgres, Redis, etc.) alongside the devcontainer
+  // so we can run the app in the container.
+  "dockerComposeFile": [
+    "../docker-compose-deps.yml",
+    "./docker-compose-devcontainer.yml"
+  ],
+  // name of the service within the docker-compose file which devcontainer tools should connect to
+  "service": "devcontainer",
+  //services in the docker-compose file which should run when the devcontainer starts
+  //"runServices": [] // defaults to all
+
+  // Path to the workspace within the container.
+  // Needs to match destination volume ('volumes' property) in docker-compose-devcontainer.yml.
+  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
 
   // Features to add to the dev container. More info: https://containers.dev/features.
-  // "features": {},
+  "features": {
+    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {}
+  },
 
-  // Use 'forwardPorts' to make a list of ports inside the container available locally.
-  // "forwardPorts": [],
+  // Use 'forwardPorts' to make a list of ports inside the container available locally (e.g. via your browser on your desktop)
+  "forwardPorts": [
+    3000, //speckle server
+    6006, //storybook
+    8081 //speckle frontend
+  ],
 
   // Use 'postCreateCommand' to run commands after the container is created.
-  "postCreateCommand": "yarn && yarn build:public"
+  "postCreateCommand": "yarn && yarn build:public && cp -n /workspaces/${localWorkspaceFolderBasename}/packages/server/.env-example /workspaces/${localWorkspaceFolderBasename}/packages/server/.env && cp -n /workspaces/${localWorkspaceFolderBasename}/packages/frontend-2/.env.example /workspaces/${localWorkspaceFolderBasename}/packages/frontend-2/.env",
 
   // Configure tool-specific properties.
   // "customizations": {},
 
   // Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
   // "remoteUser": "root"
+
+  "hostRequirements": {
+    "cpus": 4,
+    "memory": "8gb"
+  },
+
+  // Environment variables to set in the container.
+  "remoteEnv": { "LOCAL_WORKSPACE_FOLDER": "${localWorkspaceFolder}" }
 }

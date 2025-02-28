@@ -1,35 +1,14 @@
 import { db } from '@/db/knex'
-import {
-  AutomationFunctionRunRecord,
-  AutomationRecord,
-  AutomationRevisionFunctionRecord,
-  AutomationRevisionRecord,
-  AutomationRunRecord,
-  AutomationRunTriggerRecord,
-  AutomationTokenRecord,
-  AutomationTriggerDefinitionRecord
-} from '@/modules/automate/helpers/types'
-import {
-  AutomationFunctionRuns,
-  AutomationRevisionFunctions,
-  AutomationRevisions,
-  AutomationRuns,
-  AutomationRunTriggers,
-  AutomationTokens,
-  AutomationTriggers
-} from '@/modules/core/dbSchema'
+import { AutomationRecord, AutomationRunRecord } from '@/modules/automate/helpers/types'
+import { CommentRecord } from '@/modules/comments/helpers/types'
 import { AllScopes } from '@/modules/core/helpers/mainConstants'
 import { createRandomEmail } from '@/modules/core/helpers/testHelpers'
-import {
-  BranchCommitRecord,
-  BranchRecord,
-  CommitRecord,
-  ObjectRecord,
-  StreamCommitRecord,
-  StreamRecord
-} from '@/modules/core/helpers/types'
 import { grantStreamPermissionsFactory } from '@/modules/core/repositories/streams'
 import { getDb } from '@/modules/multiregion/utils/dbSelector'
+import {
+  createWebhookConfigFactory,
+  createWebhookEventFactory
+} from '@/modules/webhooks/repositories/webhooks'
 import {
   BasicTestWorkspace,
   createTestWorkspace
@@ -43,6 +22,14 @@ import {
 import {
   ActiveUserProjectsWorkspaceDocument,
   CreateWorkspaceProjectDocument,
+  GetProjectDocument,
+  GetRegionalProjectAutomationDocument,
+  GetRegionalProjectBlobDocument,
+  GetRegionalProjectCommentDocument,
+  GetRegionalProjectModelDocument,
+  GetRegionalProjectObjectDocument,
+  GetRegionalProjectVersionDocument,
+  GetRegionalProjectWebhookDocument,
   GetWorkspaceProjectsDocument,
   GetWorkspaceTeamDocument,
   MoveProjectToWorkspaceDocument,
@@ -58,7 +45,9 @@ import {
   createTestAutomation,
   createTestAutomationRun
 } from '@/test/speckle-helpers/automationHelper'
+import { createTestBlob } from '@/test/speckle-helpers/blobHelper'
 import { BasicTestBranch, createTestBranch } from '@/test/speckle-helpers/branchHelper'
+import { createTestComment } from '@/test/speckle-helpers/commentHelper'
 import {
   BasicTestCommit,
   createTestCommit,
@@ -74,28 +63,6 @@ import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
 import { Knex } from 'knex'
 import { SetOptional } from 'type-fest'
-
-const tables = {
-  projects: (db: Knex) => db.table<StreamRecord>('streams'),
-  models: (db: Knex) => db.table<BranchRecord>('branches'),
-  versions: (db: Knex) => db.table<CommitRecord>('commits'),
-  streamCommits: (db: Knex) => db.table<StreamCommitRecord>('stream_commits'),
-  branchCommits: (db: Knex) => db.table<BranchCommitRecord>('branch_commits'),
-  objects: (db: Knex) => db.table<ObjectRecord>('objects'),
-  automations: (db: Knex) => db.table<AutomationRecord>('automations'),
-  automationTokens: (db: Knex) => db<AutomationTokenRecord>(AutomationTokens.name),
-  automationRevisions: (db: Knex) =>
-    db<AutomationRevisionRecord>(AutomationRevisions.name),
-  automationTriggers: (db: Knex) =>
-    db<AutomationTriggerDefinitionRecord>(AutomationTriggers.name),
-  automationRevisionFunctions: (db: Knex) =>
-    db<AutomationRevisionFunctionRecord>(AutomationRevisionFunctions.name),
-  automationRuns: (db: Knex) => db<AutomationRunRecord>(AutomationRuns.name),
-  automationRunTriggers: (db: Knex) =>
-    db<AutomationRunTriggerRecord>(AutomationRunTriggers.name),
-  automationFunctionRuns: (db: Knex) =>
-    db<AutomationFunctionRunRecord>(AutomationFunctionRuns.name)
-}
 
 const grantStreamPermissions = grantStreamPermissionsFactory({ db })
 
@@ -381,20 +348,21 @@ isMultiRegionTestMode()
       }
 
       let testAutomation: AutomationRecord
-      let testAutomationToken: AutomationTokenRecord
-      let testAutomationRevision: AutomationRevisionRecord
       let testAutomationRun: AutomationRunRecord
-      let testAutomationFunctionRuns: AutomationFunctionRunRecord[]
+
+      let testComment: CommentRecord
+      let testWebhookId: string
+      let testBlobId: string
 
       let apollo: TestApolloServer
-      let targetRegionDb: Knex
+      let sourceRegionDb: Knex
 
       before(async () => {
         await createTestUser(adminUser)
         await waitForRegionUser(adminUser)
 
         apollo = await testApolloServer({ authUserId: adminUser.id })
-        targetRegionDb = await getDb({ regionKey: regionKey2 })
+        sourceRegionDb = await getDb({ regionKey: regionKey1 })
       })
 
       beforeEach(async () => {
@@ -439,180 +407,193 @@ isMultiRegionTestMode()
         }
 
         testAutomation = automation.automation
-        testAutomationToken = automation.token
-        testAutomationRevision = revision
 
-        const { automationRun, functionRuns } = await createTestAutomationRun({
+        const { automationRun } = await createTestAutomationRun({
           userId: adminUser.id,
           projectId: testProject.id,
           automationId: testAutomation.id
         })
 
         testAutomationRun = automationRun
-        testAutomationFunctionRuns = functionRuns
+
+        testComment = await createTestComment({
+          userId: adminUser.id,
+          projectId: testProject.id,
+          objectId: testVersion.objectId
+        })
+
+        testWebhookId = await createWebhookConfigFactory({ db: sourceRegionDb })({
+          id: cryptoRandomString({ length: 9 }),
+          streamId: testProject.id,
+          url: 'https://example.org',
+          description: cryptoRandomString({ length: 9 }),
+          secret: cryptoRandomString({ length: 9 }),
+          enabled: false,
+          triggers: ['branch_create']
+        })
+        await createWebhookEventFactory({ db: sourceRegionDb })({
+          id: cryptoRandomString({ length: 9 }),
+          webhookId: testWebhookId,
+          payload: cryptoRandomString({ length: 9 })
+        })
+
+        const testBlob = await createTestBlob({
+          userId: adminUser.id,
+          projectId: testProject.id
+        })
+        testBlobId = testBlob.blobId
       })
 
       it('moves project record to target regional db', async () => {
-        const res = await apollo.execute(UpdateProjectRegionDocument, {
+        const resA = await apollo.execute(UpdateProjectRegionDocument, {
           projectId: testProject.id,
           regionKey: regionKey2
         })
+        expect(resA).to.not.haveGraphQLErrors()
 
-        expect(res).to.not.haveGraphQLErrors()
+        const resB = await apollo.execute(GetProjectDocument, {
+          id: testProject.id
+        })
+        expect(resB).to.not.haveGraphQLErrors()
 
-        // TODO: Replace with gql query when possible
-        const project = await tables
-          .projects(targetRegionDb)
-          .select('*')
-          .where({ id: testProject.id })
-          .first()
-
-        expect(project).to.not.be.undefined
+        expect(resB.data?.project.name).to.equal(testProject.name)
       })
 
       it('moves project models to target regional db', async () => {
-        const res = await apollo.execute(UpdateProjectRegionDocument, {
+        const resA = await apollo.execute(UpdateProjectRegionDocument, {
           projectId: testProject.id,
           regionKey: regionKey2
         })
+        expect(resA).to.not.haveGraphQLErrors()
 
-        expect(res).to.not.haveGraphQLErrors()
+        const resB = await apollo.execute(GetRegionalProjectModelDocument, {
+          projectId: testProject.id,
+          modelId: testModel.id
+        })
+        expect(resB).to.not.haveGraphQLErrors()
 
-        // TODO: Replace with gql query when possible
-        const branch = await targetRegionDb
-          .table<BranchRecord>('branches')
-          .select('*')
-          .where({ id: testModel.id })
-          .first()
-
-        expect(branch).to.not.be.undefined
+        expect(resB.data?.project.model.name).to.equal(testModel.name)
       })
 
       it('moves project model versions to target regional db', async () => {
-        const res = await apollo.execute(UpdateProjectRegionDocument, {
+        const resA = await apollo.execute(UpdateProjectRegionDocument, {
           projectId: testProject.id,
           regionKey: regionKey2
         })
+        expect(resA).to.not.haveGraphQLErrors()
 
-        expect(res).to.not.haveGraphQLErrors()
+        const resB = await apollo.execute(GetRegionalProjectVersionDocument, {
+          projectId: testProject.id,
+          modelId: testModel.id,
+          versionId: testVersion.id
+        })
+        expect(resB).to.not.haveGraphQLErrors()
 
-        // TODO: Replace with gql query when possible
-        const version = await tables
-          .versions(targetRegionDb)
-          .select('*')
-          .where({ id: testVersion.id })
-          .first()
-        expect(version).to.not.be.undefined
-
-        const streamCommitsRecord = await tables
-          .streamCommits(targetRegionDb)
-          .select('*')
-          .where({ commitId: testVersion.id })
-          .first()
-        expect(streamCommitsRecord).to.not.be.undefined
-
-        const branchCommitsRecord = await tables
-          .branchCommits(targetRegionDb)
-          .select('*')
-          .where({ commitId: testVersion.id })
-          .first()
-        expect(branchCommitsRecord).to.not.be.undefined
+        expect(resB.data?.project.model.version.referencedObject).to.equal(
+          testVersion.objectId
+        )
       })
 
       it('moves project version objects to target regional db', async () => {
-        const res = await apollo.execute(UpdateProjectRegionDocument, {
+        const resA = await apollo.execute(UpdateProjectRegionDocument, {
           projectId: testProject.id,
           regionKey: regionKey2
         })
+        expect(resA).to.not.haveGraphQLErrors()
 
-        expect(res).to.not.haveGraphQLErrors()
+        const resB = await apollo.execute(GetRegionalProjectObjectDocument, {
+          projectId: testProject.id,
+          objectId: testVersion.objectId
+        })
+        expect(resB).to.not.haveGraphQLErrors()
 
-        // TODO: Replace with gql query when possible
-        const object = await tables
-          .objects(targetRegionDb)
-          .select('*')
-          .where({ id: testVersion.objectId })
-          .first()
-
-        expect(object).to.not.be.undefined
+        expect(resB.data?.project.object).to.not.be.undefined
       })
 
-      it('moves project automation data to target regional db', async () => {
-        const res = await apollo.execute(UpdateProjectRegionDocument, {
+      it('moves project automations to target regional db', async () => {
+        const resA = await apollo.execute(UpdateProjectRegionDocument, {
           projectId: testProject.id,
           regionKey: regionKey2
         })
+        expect(resA).to.not.haveGraphQLErrors()
 
-        expect(res).to.not.haveGraphQLErrors()
-
-        // TODO: Replace with gql query when possible
-        const automation = await tables
-          .automations(targetRegionDb)
-          .select('*')
-          .where({ id: testAutomation.id })
-          .first()
-        expect(automation).to.not.be.undefined
-
-        const automationToken = await tables
-          .automationTokens(targetRegionDb)
-          .select('*')
-          .where({ automationId: testAutomation.id })
-          .first()
-        expect(automationToken).to.not.be.undefined
-        expect(automationToken?.automateToken).to.equal(
-          testAutomationToken.automateToken
-        )
-
-        const automationRevision = await tables
-          .automationRevisions(targetRegionDb)
-          .select('*')
-          .where({ automationId: testAutomation.id })
-          .first()
-        expect(automationRevision).to.not.be.undefined
-        expect(automationRevision?.id).to.equal(testAutomationRevision.id)
-
-        const automationTrigger = await tables
-          .automationTriggers(targetRegionDb)
-          .select('*')
-          .where({ automationRevisionId: testAutomationRevision.id })
-          .first()
-        expect(automationTrigger).to.not.be.undefined
-      })
-
-      it('moves project automation runs to target regional db', async () => {
-        const res = await apollo.execute(UpdateProjectRegionDocument, {
+        const resB = await apollo.execute(GetRegionalProjectAutomationDocument, {
           projectId: testProject.id,
-          regionKey: regionKey2
+          automationId: testAutomation.id
         })
+        expect(resB).to.not.haveGraphQLErrors()
 
-        expect(res).to.not.haveGraphQLErrors()
-
-        // TODO: Replace with gql query when possible
-        const automationRun = await tables
-          .automationRuns(targetRegionDb)
-          .select('*')
-          .where({ id: testAutomationRun.id })
-          .first()
-        expect(automationRun).to.not.be.undefined
-
-        const automationRunTriggers = await tables
-          .automationRunTriggers(targetRegionDb)
-          .select('*')
-          .where({ automationRunId: testAutomationRun.id })
-        expect(automationRunTriggers.length).to.not.equal(0)
-
-        const automationFunctionRuns = await tables
-          .automationFunctionRuns(targetRegionDb)
-          .select('*')
-          .where({ runId: testAutomationRun.id })
-        expect(automationFunctionRuns.length).to.equal(
-          testAutomationFunctionRuns.length
+        expect(resB.data?.project.automation.id).to.equal(testAutomation.id)
+        expect(resB.data?.project.automation.runs.items.at(0)?.id).to.equal(
+          testAutomationRun.id
         )
         expect(
-          automationFunctionRuns.every((run) =>
-            testAutomationFunctionRuns.some((testRun) => testRun.id === run.id)
-          )
-        )
+          resB.data?.project.automation.runs.items.at(0)?.functionRuns.length
+        ).to.not.equal(0)
+      })
+
+      it('moves project comments to target regional db', async () => {
+        const resA = await apollo.execute(UpdateProjectRegionDocument, {
+          projectId: testProject.id,
+          regionKey: regionKey2
+        })
+        expect(resA).to.not.haveGraphQLErrors()
+
+        const resB = await apollo.execute(GetRegionalProjectCommentDocument, {
+          projectId: testProject.id,
+          commentId: testComment.id
+        })
+        expect(resB).to.not.haveGraphQLErrors()
+
+        expect(resB.data?.project.comment).to.not.be.undefined
+      })
+
+      it('moves project webhooks to target regional db', async () => {
+        const resA = await apollo.execute(UpdateProjectRegionDocument, {
+          projectId: testProject.id,
+          regionKey: regionKey2
+        })
+        expect(resA).to.not.haveGraphQLErrors()
+
+        const resB = await apollo.execute(GetRegionalProjectWebhookDocument, {
+          projectId: testProject.id,
+          webhookId: testWebhookId
+        })
+        expect(resB).to.not.haveGraphQLErrors()
+
+        expect(resB.data?.project.webhooks.items.length).to.equal(1)
+      })
+
+      it('moves project files and associated blobs to target regional db and object storage', async () => {
+        const resA = await apollo.execute(UpdateProjectRegionDocument, {
+          projectId: testProject.id,
+          regionKey: regionKey2
+        })
+        expect(resA).to.not.haveGraphQLErrors()
+
+        const resB = await apollo.execute(GetRegionalProjectBlobDocument, {
+          projectId: testProject.id,
+          blobId: testBlobId
+        })
+        expect(resB).to.not.haveGraphQLErrors()
+
+        expect(resB.data?.project.blob).to.not.be.undefined
+      })
+
+      it('moves project files and associated blobs to target regional db and object storage', async () => {
+        const resA = await apollo.execute(UpdateProjectRegionDocument, {
+          projectId: testProject.id,
+          regionKey: regionKey2
+        })
+        expect(resA).to.not.haveGraphQLErrors()
+
+        const resB = await apollo.execute(GetRegionalProjectBlobDocument, {
+          projectId: testProject.id,
+          blobId: testBlobId
+        })
+        expect(resB).to.not.haveGraphQLErrors()
+
+        expect(resB.data?.project.blob).to.not.be.undefined
       })
     })
   : void 0

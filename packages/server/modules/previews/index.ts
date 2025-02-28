@@ -2,7 +2,7 @@
 import { validateScopes, authorizeResolver } from '@/modules/shared'
 
 import { makeOgImage } from '@/modules/previews/ogImage'
-import { moduleLogger } from '@/logging/logging'
+import { moduleLogger } from '@/observability/logging'
 import { messageProcessor } from '@/modules/previews/resultListener'
 import { db } from '@/db/knex'
 import {

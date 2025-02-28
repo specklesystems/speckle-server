@@ -3,7 +3,8 @@ import {
   waitIntervalUntil,
   type Nullable,
   timeoutAt,
-  WaitIntervalUntilCanceledError
+  WaitIntervalUntilCanceledError,
+  TimeoutError
 } from '@speckle/shared'
 import { until } from '@vueuse/core'
 import type { CSSProperties } from 'vue'
@@ -26,6 +27,8 @@ export default defineComponent({
     }
   },
   setup(props, { slots, expose }) {
+    const logger = useLogger()
+
     const transitioning = ref(false)
     const newWrapperRef = ref(null as Nullable<HTMLDivElement>)
     const oldWrapperRef = ref(null as Nullable<HTMLDivElement>)
@@ -102,6 +105,8 @@ export default defineComponent({
      * Cause default slot to update with an opacity transition
      */
     const updateContents = async () => {
+      transitioning.value = true
+
       // Stage 1: Just move new -> old w/o any transitions (visually should look the same)
       oldContents.value = newContents.value
       newContents.value = slots.default?.()
@@ -155,15 +160,23 @@ export default defineComponent({
 
     const triggerTransition = async () => {
       if (!transitioning.value) {
-        transitioning.value = true
         await updateContents()
         return
       }
 
-      await Promise.race([
-        until(transitioning).toBe(false),
-        timeoutAt(props.duration + 1000)
-      ])
+      try {
+        await Promise.race([
+          until(transitioning).toBe(false),
+          timeoutAt(props.duration + 1000, 'Waiting for transition to finish timed out')
+        ])
+      } catch (e) {
+        if (!(e instanceof TimeoutError)) {
+          throw e
+        } else {
+          logger.warn(e)
+        }
+      }
+
       await updateContents()
     }
 

@@ -43,7 +43,7 @@ import {
   speckleAutomateUrl
 } from '@/modules/shared/helpers/envHelper'
 import { getFunctionsMarketplaceUrl } from '@/modules/core/helpers/routeHelper'
-import { automateLogger } from '@/logging/logging'
+import { automateLogger } from '@/observability/logging'
 import { CreateStoredAuthCode } from '@/modules/automate/domain/operations'
 import { GetUser } from '@/modules/core/domain/users/operations'
 import { noop } from 'lodash'
