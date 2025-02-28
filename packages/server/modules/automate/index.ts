@@ -1,4 +1,4 @@
-import { automateLogger, moduleLogger } from '@/logging/logging'
+import { automateLogger, moduleLogger } from '@/observability/logging'
 import { Optional, SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import {
   onModelVersionCreateFactory,
@@ -58,7 +58,7 @@ import { getEventBus } from '@/modules/shared/services/eventBus'
 import { VersionEvents } from '@/modules/core/domain/commits/events'
 import { AutomationEvents, AutomationRunEvents } from '@/modules/automate/domain/events'
 import { LogicError } from '@/modules/shared/errors'
-import { maybeLoggerWithContext } from '@/logging/requestContext'
+import { maybeLoggerWithContext } from '@/observability/components/express/requestContext'
 
 const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
 let quitListeners: Optional<() => void> = undefined

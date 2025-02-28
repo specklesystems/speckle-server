@@ -5,9 +5,9 @@
  */
 
 import { Histogram, Registry } from 'prom-client'
-import { processCpuTotal } from '@/logging/highFrequencyMetrics/processCPUTotal'
-import { heapSizeAndUsed } from '@/logging/highFrequencyMetrics/heapSizeAndUsed'
-import { knexConnections } from '@/logging/highFrequencyMetrics/knexConnectionPool'
+import { processCpuTotal } from '@/observability/components/highFrequencyMetrics/processCPUTotal'
+import { heapSizeAndUsed } from '@/observability/components/highFrequencyMetrics/heapSizeAndUsed'
+import { knexConnections } from '@/observability/components/highFrequencyMetrics/knexConnectionPool'
 import { type Knex } from 'knex'
 
 type MetricConfig = {

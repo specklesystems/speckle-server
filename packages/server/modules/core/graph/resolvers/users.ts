@@ -35,7 +35,7 @@ import {
   deleteStreamFactory,
   getUserDeletableStreamsFactory
 } from '@/modules/core/repositories/streams'
-import { dbLogger } from '@/logging/logging'
+import { dbLogger } from '@/observability/logging'
 import { getAdminUsersListCollectionFactory } from '@/modules/core/services/users/legacyAdminUsersList'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { getServerInfoFactory } from '@/modules/core/repositories/server'

@@ -17,7 +17,7 @@
  */
 
 import { Histogram, Registry } from 'prom-client'
-import type { Metric } from '@/logging/highFrequencyMetrics/highfrequencyMonitoring'
+import type { Metric } from '@/observability/components/highFrequencyMetrics/highfrequencyMonitoring'
 
 const PROCESS_CPU_USER_SECONDS = 'process_cpu_user_seconds_total_high_frequency'
 const PROCESS_CPU_SYSTEM_SECONDS = 'process_cpu_system_seconds_total_high_frequency'

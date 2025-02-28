@@ -2,7 +2,7 @@
 import { insertNewUploadAndNotifyFactory } from '@/modules/fileuploads/services/management'
 import request from 'request'
 import { authMiddlewareCreator } from '@/modules/shared/middleware'
-import { moduleLogger } from '@/logging/logging'
+import { moduleLogger } from '@/observability/logging'
 import {
   onFileImportProcessedFactory,
   onFileProcessingFactory,

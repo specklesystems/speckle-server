@@ -1,5 +1,5 @@
 import cron from 'node-cron'
-import { logger, moduleLogger } from '@/logging/logging'
+import { logger, moduleLogger } from '@/observability/logging'
 import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { validateModuleLicense } from '@/modules/gatekeeper/services/validateLicense'

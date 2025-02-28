@@ -1,5 +1,5 @@
 import { CommandModule } from 'yargs'
-import { cliLogger } from '@/logging/logging'
+import { cliLogger as logger } from '@/observability/logging'
 import { getWorkspaceBySlugOrIdFactory } from '@/modules/workspaces/repositories/workspaces'
 import { db } from '@/db/knex'
 import { upsertPaidWorkspacePlanFactory } from '@/modules/gatekeeper/repositories/billing'
@@ -42,7 +42,7 @@ const command: CommandModule<
     }
   },
   handler: async (args) => {
-    cliLogger.info(
+    logger.info(
       `Setting plan for workspace '${args.workspaceSlugOrId}' to '${args.plan}' with status '${args.status}'`
     )
     const workspace = await getWorkspaceBySlugOrIdFactory({ db })(args)
@@ -60,7 +60,7 @@ const command: CommandModule<
         status: args.status
       }
     })
-    cliLogger.info(`Plan set!`)
+    logger.info(`Plan set!`)
   }
 }
 

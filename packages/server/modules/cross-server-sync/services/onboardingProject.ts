@@ -1,4 +1,4 @@
-import { crossServerSyncLogger } from '@/logging/logging'
+import { crossServerSyncLogger } from '@/observability/logging'
 import {
   GetOnboardingBaseStream,
   MarkOnboardingBaseStream

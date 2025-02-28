@@ -96,7 +96,7 @@ import {
 } from '@/modules/core/services/users/management'
 import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
 import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
-import { dbLogger } from '@/logging/logging'
+import { dbLogger } from '@/observability/logging'
 import {
   storeApiTokenFactory,
   storeTokenScopesFactory,
