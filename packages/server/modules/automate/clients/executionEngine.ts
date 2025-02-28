@@ -109,11 +109,12 @@ const invokeJsonRequest = async <R = Record<string, unknown>>(
 const invokeRequest = async (params: {
   url: string
   method?: RequestInit['method']
-  body?: Record<string, unknown>
+  body?: Record<string, unknown>,
+  requestId?: string
   token?: string
   retry?: boolean
 }) => {
-  const { url, method = 'get', body, token } = params
+  const { url, method = 'get', body, token, requestId } = params
 
   const response = await retry(
     async () =>
@@ -122,6 +123,7 @@ const invokeRequest = async (params: {
           method,
           headers: {
             'Content-Type': 'application/json',
+            ...(requestId ? {'X-Request-Id': requestId} : {}),
             ...(token?.length ? { Authorization: `Bearer ${token}` } : {})
           },
           body: body && isObjectLike(body) ? JSON.stringify(body) : undefined
@@ -476,7 +478,7 @@ export const getPublicFunctions = async (params: {
   },
   logger: Logger
 }) => {
-  const { query } = params
+  const { query, logger } = params
   const url = getApiUrl(`/api/v1/functions`, {
     query: {
       ...query,
@@ -486,7 +488,9 @@ export const getPublicFunctions = async (params: {
 
   return await invokeSafeJsonRequest<GetFunctionsResponse>({
     url,
-    method: 'get'
+    method: 'get',
+    logger,
+    requestId: logger.bindings().req.id
   })
 }
 
