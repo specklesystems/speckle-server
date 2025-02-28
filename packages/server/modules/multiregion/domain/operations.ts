@@ -8,6 +8,7 @@ import { UpdateServerRegionInput } from '@/modules/core/graph/generated/graphql'
 import { InsertableRegionRecord } from '@/modules/multiregion/helpers/types'
 import { Optional } from '@speckle/shared'
 import { ObjectStorage } from '@/modules/blobstorage/clients/objectStorage'
+import { Stream } from '@/modules/core/domain/streams/types'
 
 export type GetRegions = () => Promise<ServerRegion[]>
 export type GetRegion = (params: { key: string }) => Promise<Optional<ServerRegion>>
@@ -43,6 +44,8 @@ export type CachedRegionKeyLookup = (
   args: RegionKeyLookupArgs
 ) => Promise<MaybeRegionKeyLookupResult>
 
+export type CachedRegionKeyDelete = (args: RegionKeyLookupArgs) => Promise<void>
+
 export type StorageRegionKeyLookup = (
   args: RegionKeyLookupArgs
 ) => Promise<MaybeRegionKeyLookupResult>
@@ -51,6 +54,9 @@ type RegionKeyStoreArgs = { projectId: string; regionKey: string | null }
 export type SyncRegionKeyStore = (args: RegionKeyStoreArgs) => void
 // i want this guy to throw, to not care about nulls
 export type AsyncRegionKeyStore = (args: RegionKeyStoreArgs) => Promise<void>
+export type StorageRegionKeyUpdate = (
+  args: RegionKeyStoreArgs
+) => Promise<Stream | undefined>
 
 export type UpdateAndValidateRegion = (params: {
   input: UpdateServerRegionInput
