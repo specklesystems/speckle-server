@@ -34,7 +34,6 @@ const launchBrowser = async (): Promise<Browser> => {
     args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
   })
 }
-const browser = await launchBrowser()
 logger.debug('Starting message queues')
 
 let client: Redis
@@ -72,6 +71,7 @@ const opts = {
 const jobQueue = new Bull('preview-service-jobs', opts)
 
 await jobQueue.process(async (payload, done) => {
+  const browser = await launchBrowser()
   const parseResult = jobPayload.safeParse(payload.data)
   if (!parseResult.success) {
     logger.error({ parseError: parseResult.error }, 'Invalid job payload')
@@ -84,12 +84,12 @@ await jobQueue.process(async (payload, done) => {
   // with removeOnComplete, the job response potentially containing a large images,
   // is cleared from the response queue
   await resultsQueue.add(result, { removeOnComplete: true })
+  await browser.close()
   done()
 })
 
 process.on('SIGINT', async () => {
   logger.info('Received signal to shut down')
-  await browser.close()
   server.close(() => {
     logger.debug('Exiting the express server')
     process.exit()
