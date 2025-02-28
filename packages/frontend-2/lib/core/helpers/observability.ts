@@ -104,6 +104,12 @@ export const formatAppError = (err: SimpleError): SimpleError => {
     finalStatusCode = 429
   }
 
+  if (finalMessage.match(/\/_nuxt\/builds\/meta.*?404 not found/i)) {
+    finalMessage =
+      'Speckle is currently upgrading to a newer version. Please reload the page in a few seconds.'
+    finalStatusCode = 500
+  }
+
   finalMessage = upperFirst(finalMessage)
 
   return {
