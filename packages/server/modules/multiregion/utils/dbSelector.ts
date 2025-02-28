@@ -25,7 +25,7 @@ import {
   getProjectRegionKey,
   getRegisteredRegionConfigs
 } from '@/modules/multiregion/utils/regionSelector'
-import { mapValues } from 'lodash'
+import { get, mapValues } from 'lodash'
 import { isMultiRegionEnabled } from '@/modules/multiregion/helpers'
 
 let getter: GetProjectDb | undefined = undefined
@@ -219,7 +219,10 @@ const setUpUserReplication = async ({
         'Could not create publication {pubName} when setting up user replication for region {regionName}',
         from.public,
         {
-          cause: ensureError(err, 'Unknown database error when creating publication'),
+          cause: ensureError(
+            sanitizeError(err),
+            'Unknown database error when creating publication'
+          ),
           info: { pubName, regionName }
         }
       )
@@ -232,7 +235,17 @@ const setUpUserReplication = async ({
         errorMessage.includes(message)
       )
     )
-      throw err
+      throw new DatabaseError(
+        'Unknown error while creating publication {pubName} when setting up user replication for region {regionName}',
+        from.public,
+        {
+          cause: ensureError(
+            sanitizeError(err),
+            'Unknown database error when creating publication'
+          ),
+          info: { pubName, regionName }
+        }
+      )
   }
 
   const fromUrl = new URL(
@@ -264,11 +277,28 @@ const setUpUserReplication = async ({
         'Could not create subscription {subName} to {pubName} when setting up user replication for region {regionName}',
         to.public,
         {
-          cause: ensureError(err, 'Unknown database error when creating subscription'),
+          cause: ensureError(
+            sanitizeError(err),
+            'Unknown database error when creating subscription'
+          ),
           info: { subName, pubName, regionName }
         }
       )
-    if (!err.message.includes('already exists')) throw err
+    if (
+      !err.message.includes('already exists') &&
+      !err.message.includes('duplicate key value violates unique constraint')
+    )
+      throw new DatabaseError(
+        'Unknown error while creating subscription {subName} to {pubName} when setting up user replication for region {regionName}',
+        to.public,
+        {
+          cause: ensureError(
+            sanitizeError(err),
+            'Unknown database error when creating subscription'
+          ),
+          info: { subName, pubName, regionName }
+        }
+      )
   }
 }
 
@@ -289,11 +319,28 @@ const setUpProjectReplication = async ({
         'Could not create publication {pubName} when setting up project replication for region {regionName}',
         from.public,
         {
-          cause: ensureError(err, 'Unknown database error when creating publication'),
+          cause: ensureError(
+            sanitizeError(err),
+            'Unknown database error when creating publication'
+          ),
           info: { pubName, regionName }
         }
       )
-    if (!err.message.includes('already exists')) throw err
+    if (
+      !err.message.includes('already exists') &&
+      !err.message.includes('duplicate key value violates unique constraint')
+    )
+      throw new DatabaseError(
+        'Unknown error while creating publication {pubName} when setting up project replication for region {regionName}',
+        from.public,
+        {
+          cause: ensureError(
+            sanitizeError(err),
+            'Unknown database error when creating publication'
+          ),
+          info: { pubName, regionName }
+        }
+      )
   }
 
   const fromUrl = new URL(
@@ -325,10 +372,33 @@ const setUpProjectReplication = async ({
         'Could not create subscription {subName} to {pubName} when setting up project replication for region {regionName}',
         to.public,
         {
-          cause: ensureError(err, 'Unknown database error when creating subscription'),
+          cause: ensureError(
+            sanitizeError(err),
+            'Unknown database error when creating subscription'
+          ),
           info: { subName, pubName, regionName }
         }
       )
-    if (!err.message.includes('already exists')) throw err
+    if (
+      !err.message.includes('already exists') &&
+      !err.message.includes('duplicate key value violates unique constraint')
+    )
+      throw new DatabaseError(
+        'Unknown error while creating subscription {subName} to {pubName} when setting up project replication for region {regionName}',
+        to.public,
+        {
+          cause: ensureError(
+            sanitizeError(err),
+            'Unknown database error when creating subscription'
+          ),
+          info: { subName, pubName, regionName }
+        }
+      )
   }
+}
+
+const sanitizeError = (err: unknown): unknown => {
+  if (!err) return err
+  if (get(err, 'where').includes('password='))
+    return { ...err, where: '[REDACTED AS IT CONTAINS CONNECTION STRING]' }
 }

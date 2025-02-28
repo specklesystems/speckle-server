@@ -1,70 +1,111 @@
 <template>
-  <div class="w-full h-full bg-foundation flex items-center justify-center">
-    <!-- 
-    Note: You might be asking yourself why do we need this route: the answer is that cloning 
-    a project is not instant, and it might take some time to get it done. We want to display
-    some sort of progress to the user in the meantime. Moreover, it makes various composables 
-    more sane to use rather than in the router navigation guards.
-  -->
-    <!-- 
-    TODO: Make this page nicer :)  
-  -->
-    <div class="w-1/5 flex flex-col space-y-2 justify-center text-center">
-      <div class="text-xs text-foreground-2">{{ status }}</div>
-      <CommonLoadingBar loading />
-      <!-- <div class="mx-auto w-20"><LogoTextWhite /></div> -->
+  <HeaderWithEmptyPage empty-header>
+    <template #header-left>
+      <HeaderLogoBlock no-link />
+    </template>
+    <template #header-right>
+      <div class="flex gap-2 items-center">
+        <FormButton
+          v-if="!isOnboardingForced"
+          class="opacity-70 hover:opacity-100 p-1"
+          size="sm"
+          color="subtle"
+          @click="setUserOnboardingComplete()"
+        >
+          Skip
+        </FormButton>
+        <FormButton color="outline" @click="() => logout({ skipRedirect: false })">
+          Sign out
+        </FormButton>
+      </div>
+    </template>
+    <template v-if="isLoading">
+      <div class="py-12 flex flex-col items-center gap-2">
+        <CommonLoadingIcon />
+      </div>
+    </template>
+    <div v-else class="flex flex-col items-center justify-center p-4 max-w-lg mx-auto">
+      <h1 class="text-heading-xl text-forefround mb-2 font-normal">
+        {{ currentStage === 'join' ? 'Join your teammates' : 'Tell us about yourself' }}
+      </h1>
+      <p class="text-center text-body-sm text-foreground-2 mb-8">
+        {{
+          currentStage === 'join'
+            ? 'We found a workspace that matches your email domain'
+            : 'Your answers will help us improve'
+        }}
+      </p>
+
+      <OnboardingJoinTeammates
+        v-if="currentStage === 'join' && discoverableWorkspaces.length > 0"
+        :workspaces="discoverableWorkspaces"
+        @next="currentStage = 'questions'"
+      />
+      <OnboardingQuestionsForm v-else />
     </div>
-  </div>
+  </HeaderWithEmptyPage>
 </template>
+
 <script setup lang="ts">
-import { useViewerTour } from '~/lib/viewer/composables/tour'
-import {
-  useProcessOnboarding,
-  FIRST_MODEL_NAME
-} from '~~/lib/auth/composables/onboarding'
-import { homeRoute, modelRoute, projectRoute } from '~~/lib/common/helpers/route'
+import { useProcessOnboarding } from '~~/lib/auth/composables/onboarding'
+import { useAuthManager } from '~/lib/auth/composables/auth'
+import { useQuery } from '@vue/apollo-composable'
+import { graphql } from '~/lib/common/generated/gql'
+import { CommonLoadingIcon } from '@speckle/ui-components'
+import { PagesOnboardingDiscoverableWorkspaces } from '~/lib/onboarding/graphql/queries'
+import { until } from '@vueuse/core'
+
+graphql(`
+  fragment PagesOnboarding_DiscoverableWorkspaces on User {
+    discoverableWorkspaces {
+      id
+      name
+      logo
+      description
+      slug
+    }
+  }
+`)
 
 useHead({
-  title: 'Setting up'
+  title: 'Welcome to Speckle'
 })
 
 definePageMeta({
   middleware: ['auth'],
-  layout: 'onboarding'
+  layout: 'empty'
 })
 
-const router = useRouter()
-const { createOnboardingProject, setUserOnboardingComplete } = useProcessOnboarding()
-const tourStage = useViewerTour()
+const isOnboardingForced = useIsOnboardingForced()
 
-const status = ref('Setting up your account')
+const { setUserOnboardingComplete } = useProcessOnboarding()
+const { logout } = useAuthManager()
+
+const isLoading = ref(true)
+const currentStage = ref<'join' | 'questions'>('questions')
+const isWorkspacesEnabled = useIsWorkspacesEnabled()
+
+const { result, loading } = useQuery(PagesOnboardingDiscoverableWorkspaces, undefined, {
+  enabled: isWorkspacesEnabled.value
+})
+
+const discoverableWorkspaces = computed(
+  () => result.value?.activeUser?.discoverableWorkspaces || []
+)
 
 onMounted(async () => {
-  // Little hacks to make things more exciting
-  setTimeout(() => {
-    status.value = 'Getting there...'
-  }, 2000)
-  const { projectId, project } = await createOnboardingProject()
-
-  await setUserOnboardingComplete()
-  status.value = 'Almost done!'
-
-  tourStage.showNavbar.value = false
-  tourStage.showControls.value = false
-  tourStage.showTour.value = true
-
-  const firstModelToLoad = project?.models.items.find(
-    (model) => model.name === FIRST_MODEL_NAME
-  )
-
-  if (projectId) {
-    if (firstModelToLoad) {
-      router.push({ path: modelRoute(projectId, firstModelToLoad.id) })
-    } else {
-      router.push({ path: projectRoute(projectId) })
-    }
-  } else {
-    router.push({ path: homeRoute })
+  // If workspaces feature is disabled, go straight to questions
+  if (!isWorkspacesEnabled.value) {
+    currentStage.value = 'questions'
+    isLoading.value = false
+    return
   }
+
+  // Wait for query to complete
+  await until(loading).toBe(false)
+  const hasWorkspaces =
+    (result.value?.activeUser?.discoverableWorkspaces?.length ?? 0) > 0
+  currentStage.value = hasWorkspaces ? 'join' : 'questions'
+  isLoading.value = false
 })
 </script>

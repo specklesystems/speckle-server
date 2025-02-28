@@ -20,6 +20,32 @@
           type="text"
           color="foundation"
         />
+        <FormSelectMulti
+          v-model="triggers"
+          name="triggers"
+          label="Events"
+          placeholder="Choose events"
+          help="Choose what events will trigger this webhook."
+          :rules="[isMultiItemSelected]"
+          show-label
+          :items="webhookTriggerItems"
+          mount-menu-on-body
+          :label-id="badgesLabelId"
+          :button-id="badgesButtonId"
+          by="id"
+        >
+          <template #something-selected="{ value }">
+            <template v-if="value.length === 1">
+              {{ value[0].text }}
+            </template>
+            <template v-else>{{ value.length }} items selected</template>
+          </template>
+          <template #option="{ item }">
+            <div class="flex items-center w-full">
+              <span class="text-xs text-foreground-2">{{ item.text }}</span>
+            </div>
+          </template>
+        </FormSelectMulti>
         <FormTextInput
           v-model="description"
           label="Webhook name"
@@ -41,21 +67,6 @@
           type="text"
           color="foundation"
         />
-        <FormSelectBadges
-          v-model="triggers"
-          multiple
-          name="triggers"
-          label="Events"
-          placeholder="Choose events"
-          mount-menu-on-body
-          help="Choose what events will trigger this webhook."
-          :rules="[isItemSelected]"
-          show-label
-          :items="webhookTriggerItems"
-          :label-id="badgesLabelId"
-          :button-id="badgesButtonId"
-          by="id"
-        />
       </div>
     </form>
   </LayoutDialog>
@@ -66,7 +77,7 @@ import { useMutation } from '@vue/apollo-composable'
 import { WebhookTriggers } from '@speckle/shared'
 import {
   LayoutDialog,
-  FormSelectBadges,
+  FormSelectMulti,
   type LayoutDialogButton
 } from '@speckle/ui-components'
 import type { WebhookItem, WebhookFormValues } from '~~/lib/projects/helpers/types'
@@ -77,7 +88,7 @@ import {
 import {
   isRequired,
   isUrl,
-  isItemSelected,
+  isMultiItemSelected,
   fullyResetForm
 } from '~~/lib/common/helpers/validation'
 import { useForm } from 'vee-validate'
@@ -88,6 +99,7 @@ import {
 } from '~~/lib/common/helpers/graphql'
 import { useGlobalToast, ToastNotificationType } from '~~/lib/common/composables/toast'
 import type { ValueOf } from 'type-fest'
+import { webhookTriggerDisplayNames } from '~~/lib/projects/composables/webhooks'
 
 const props = defineProps<{
   webhook?: WebhookItem | null
@@ -115,7 +127,7 @@ const badgesButtonId = useId()
 const webhookTriggerItems = computed(() => {
   return Object.values(WebhookTriggers).map((value) => ({
     id: value,
-    text: value
+    text: webhookTriggerDisplayNames[value]
   }))
 })
 

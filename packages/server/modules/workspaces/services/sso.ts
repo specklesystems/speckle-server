@@ -10,7 +10,8 @@ import {
 import {
   OidcProvider,
   OidcProviderRecord,
-  OidcProviderAttributes
+  OidcProviderAttributes,
+  OidcProfile
 } from '@/modules/workspaces/domain/sso/types'
 import cryptoRandomString from 'crypto-random-string'
 import { UserinfoResponse } from 'openid-client'
@@ -33,7 +34,11 @@ import {
 } from '@/modules/workspaces/errors/sso'
 import { WorkspaceInvalidRoleError } from '@/modules/workspaces/errors/workspace'
 import { LimitedWorkspace } from '@/modules/workspacesCore/domain/types'
-import { isValidSsoSession } from '@/modules/workspaces/domain/sso/logic'
+import {
+  getEmailFromOidcProfile,
+  isValidSsoSession
+} from '@/modules/workspaces/domain/sso/logic'
+import type { Logger } from '@/observability/logging'
 
 // this probably should go a lean validation endpoint too
 const validateOidcProviderAttributes = ({
@@ -129,7 +134,7 @@ export const createWorkspaceUserFromSsoProfileFactory =
     deleteInvite: DeleteInvite
   }) =>
   async (args: {
-    ssoProfile: UserinfoResponse<{ email: string }>
+    ssoProfile: UserinfoResponse<OidcProfile>
     workspaceId: string
   }): Promise<Pick<UserWithOptionalRole, 'id' | 'email'>> => {
     // Check if user has email-based invite to given workspace
@@ -146,7 +151,8 @@ export const createWorkspaceUserFromSsoProfileFactory =
     }
 
     // Create Speckle user
-    const { name, email } = args.ssoProfile
+    const { name } = args.ssoProfile
+    const email = getEmailFromOidcProfile(args.ssoProfile)
 
     if (!name) {
       throw new SsoProviderProfileInvalidError('SSO provider user requires a name')
@@ -185,42 +191,56 @@ export const linkUserWithSsoProviderFactory =
   ({
     findEmailsByUserId,
     createUserEmail,
-    updateUserEmail
+    updateUserEmail,
+    logger
   }: {
     findEmailsByUserId: FindEmailsByUserId
     createUserEmail: CreateUserEmail
     updateUserEmail: UpdateUserEmail
+    logger?: Logger
   }) =>
   async (args: {
     userId: string
-    ssoProfile: UserinfoResponse<{ email: string }>
+    ssoProfile: UserinfoResponse<OidcProfile>
   }): Promise<void> => {
     // TODO: Chuck's soapbox -
     //
     // Assert link between req.user.id & { providerId: decryptedOidcProvider.id, email: oidcProviderUserData.email }
     // Create link implicitly if req.context.userId exists (user performed SSO flow while signed in)
     // If req.context.userId does not exist, and link does not exist, throw and require user to sign in before SSO
+    //
+    // In addition, investigate using oidcProviderUserData.sub as source of truth here. Some providers appear to allow
+    // `email` fields to change, or do not guarantee they will exist (Entra ID)
 
-    // Add oidcProviderUserData.email to req.user.id verified emails, if not already present
+    // Add SSO provider email to req.user.id verified emails, if not already present
     const userEmails = await findEmailsByUserId({ userId: args.userId })
-    const maybeSsoEmail = userEmails.find(
-      (entry) => entry.email === args.ssoProfile.email
+    const providerEmail = getEmailFromOidcProfile(args.ssoProfile)
+    const maybeExistingEmail = userEmails.find(
+      (entry) => entry.email === providerEmail.toLowerCase()
     )
 
-    if (!maybeSsoEmail) {
+    logger?.info(
+      {
+        userEmails: userEmails.map((entry) => entry.email),
+        providerEmail
+      },
+      'Comparing existing user emails against SSO provider email:'
+    )
+
+    if (!maybeExistingEmail) {
       await createUserEmail({
         userEmail: {
           userId: args.userId,
-          email: args.ssoProfile.email,
+          email: getEmailFromOidcProfile(args.ssoProfile),
           verified: true
         }
       })
     }
 
-    if (!!maybeSsoEmail && !maybeSsoEmail.verified) {
+    if (!!maybeExistingEmail && !maybeExistingEmail.verified) {
       await updateUserEmail({
         query: {
-          id: maybeSsoEmail.id,
+          id: maybeExistingEmail.id,
           userId: args.userId
         },
         update: {

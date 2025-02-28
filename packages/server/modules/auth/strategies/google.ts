@@ -146,12 +146,14 @@ const googleStrategyBuilderFactory =
             case UnverifiedEmailSSOLoginError:
             case UserInputError:
             case InviteNotFoundError:
-              logger.info({ err: e })
-              break
+              logger.info({ err: e }, 'Auth error for Google strategy')
+              // note; passportjs suggests that err should be null for user input errors.
+              // However, we are relying on the error being passed to `passportAuthenticationCallbackFactory` and handling it there
+              return done(e, false, { message: e.message })
             default:
-              logger.error({ err: e })
+              logger.error({ err: e }, 'Auth error for Google strategy')
+              return done(e, false, { message: e.message })
           }
-          return done(e, false, { message: e.message })
         }
       }
     )

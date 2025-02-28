@@ -240,12 +240,12 @@ describe('Generic AuthN & AuthZ controller tests', () => {
     }
     const serverOwner = {
       name: 'Itsa Me',
-      email: 'me@gmail.com',
+      email: 'me@example.org',
       password: 'sn3aky-1337-b1m'
     }
     const otherGuy = {
       name: 'Some Other DUde',
-      email: 'otherguy@gmail.com',
+      email: 'otherguy@example.org',
       password: 'sn3aky-1337-b1m'
     }
 

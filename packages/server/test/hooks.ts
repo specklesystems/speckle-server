@@ -12,7 +12,7 @@ import deepEqualInAnyOrder from 'deep-equal-in-any-order'
 import { knex as mainDb } from '@/db/knex'
 import { init, startHttp, shutdown } from '@/app'
 import graphqlChaiPlugin from '@/test/plugins/graphql'
-import { logger } from '@/logging/logging'
+import { testLogger as logger } from '@/observability/logging'
 import { once } from 'events'
 import type http from 'http'
 import type express from 'express'
@@ -22,7 +22,8 @@ import {
   MaybeAsync,
   MaybeNullOrUndefined,
   Nullable,
-  Optional
+  Optional,
+  wait
 } from '@speckle/shared'
 import * as mocha from 'mocha'
 import {
@@ -198,6 +199,8 @@ export const resetPubSubFactory = (deps: { db: Knex }) => async () => {
     await deps.db.raw(
       `SELECT * FROM aiven_extras.pg_alter_subscription_disable('${info.subname}');`
     )
+    // If we do not wait, the following call occasionally fails because a replication slot is still in use.
+    await wait(1000)
     await deps.db.raw(
       `SELECT * FROM aiven_extras.pg_drop_subscription('${info.subname}');`
     )

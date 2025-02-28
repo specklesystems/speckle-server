@@ -25,7 +25,7 @@ import {
 import { TriggerAutomationError } from '@/modules/automate/errors/runs'
 import { ContextResourceAccessRules } from '@/modules/core/helpers/token'
 import { TokenResourceIdentifierType } from '@/modules/core/graph/generated/graphql'
-import { automateLogger } from '@/logging/logging'
+import { automateLogger } from '@/observability/logging'
 import { FunctionInputDecryptor } from '@/modules/automate/services/encryption'
 import { LibsodiumEncryptionError } from '@/modules/shared/errors/encryption'
 import {
@@ -106,7 +106,8 @@ export const onModelVersionCreateFactory =
               projectId,
               modelId: triggeringId,
               triggerType
-            }
+            },
+            source: RunTriggerSource.Automatic
           })
         } catch (error) {
           // TODO: this error should be persisted for automation status display somehow
@@ -227,7 +228,7 @@ export const triggerAutomationRevisionRunFactory =
   async <M extends BaseTriggerManifest = BaseTriggerManifest>(params: {
     revisionId: string
     manifest: M
-    source?: RunTriggerSource
+    source: RunTriggerSource
   }): Promise<{ automationRunId: string }> => {
     const {
       automateRunTrigger,
@@ -238,7 +239,7 @@ export const triggerAutomationRevisionRunFactory =
       getFullAutomationRevisionMetadata,
       getCommit
     } = deps
-    const { revisionId, manifest, source = RunTriggerSource.Automatic } = params
+    const { revisionId, manifest, source } = params
 
     if (!isVersionCreatedTriggerManifest(manifest)) {
       throw new AutomateInvalidTriggerError(
@@ -546,6 +547,7 @@ export type CreateTestAutomationRunDeps = {
   upsertAutomationRun: UpsertAutomationRun
   validateStreamAccess: ValidateStreamAccess
   getBranchLatestCommits: GetBranchLatestCommits
+  emitEvent: EventBusEmit
 } & CreateAutomationRunDataDeps &
   ComposeTriggerDataDeps
 
@@ -561,7 +563,8 @@ export const createTestAutomationRunFactory =
       getFullAutomationRevisionMetadata,
       upsertAutomationRun,
       validateStreamAccess,
-      getBranchLatestCommits
+      getBranchLatestCommits,
+      emitEvent
     } = deps
     const { projectId, automationId, userId } = params
 
@@ -624,6 +627,17 @@ export const createTestAutomationRunFactory =
       automationWithRevision: automationRevisionRecord
     })
     await upsertAutomationRun(automationRunRecord)
+
+    await emitEvent({
+      eventName: 'automationRuns.created',
+      payload: {
+        automation: automationRevisionRecord,
+        run: automationRunRecord,
+        source: RunTriggerSource.Test,
+        manifests: triggerManifests,
+        triggerType: VersionCreationTriggerType
+      }
+    })
 
     // TODO: Test functions only support one function run per automation
     const functionRunId = automationRunRecord.functionRuns[0].id

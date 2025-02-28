@@ -13,7 +13,10 @@ export const registerRoute = '/authn/register'
 export const ssoLoginRoute = '/authn/sso'
 export const forgottenPasswordRoute = '/authn/forgotten-password'
 export const onboardingRoute = '/onboarding'
+export const verifyEmailRoute = '/verify-email'
+export const verifyEmailCountdownRoute = '/verify-email?source=registration'
 export const serverManagementRoute = '/server-management'
+export const connectorsRoute = '/connectors'
 export const downloadManagerUrl = 'https://speckle.systems/download'
 export const docsPageUrl = 'https://speckle.guide/'
 export const forumPageUrl = 'https://speckle.community/'
@@ -43,6 +46,18 @@ export const settingsWorkspaceRoutes = {
   members: {
     name: 'settings-workspaces-slug-members',
     route: (slug: string) => `/settings/workspaces/${slug}/members`
+  },
+  membersGuests: {
+    name: 'settings-workspaces-slug-members-guests',
+    route: (slug: string) => `/settings/workspaces/${slug}/members/guests`
+  },
+  membersInvites: {
+    name: 'settings-workspaces-slug-members-invites',
+    route: (slug: string) => `/settings/workspaces/${slug}/members/invites`
+  },
+  membersRequests: {
+    name: 'settings-workspaces-slug-members-requests',
+    route: (slug: string) => `/settings/workspaces/${slug}/members/requests`
   },
   projects: {
     name: 'settings-workspaces-slug-projects',

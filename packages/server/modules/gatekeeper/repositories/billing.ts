@@ -8,7 +8,6 @@ import {
   UpsertWorkspacePlan,
   UpsertWorkspaceSubscription,
   WorkspaceSubscription,
-  WorkspacePlan,
   UpsertPaidWorkspacePlan,
   DeleteCheckoutSession,
   GetWorkspaceCheckoutSession,
@@ -23,6 +22,7 @@ import {
   GetWorkspacesByPlanDaysTillExpiry,
   GetWorkspacePlanByProjectId
 } from '@/modules/gatekeeper/domain/operations'
+import { WorkspacePlan } from '@/modules/gatekeeperCore/domain/billing'
 import { Workspace } from '@/modules/workspacesCore/domain/types'
 import { Workspaces } from '@/modules/workspacesCore/helpers/db'
 import { Knex } from 'knex'
@@ -47,7 +47,7 @@ export const getWorkspacePlanFactory =
     return workspacePlan ?? null
   }
 
-const upsertWorkspacePlanFactory =
+export const upsertWorkspacePlanFactory =
   ({ db }: { db: Knex }): UpsertWorkspacePlan =>
   async ({ workspacePlan }) => {
     await tables

@@ -40,6 +40,10 @@
                 class="text-foreground-2 h-4 w-4"
                 aria-hidden="true"
               />
+              <CommonLoadingIcon
+                v-else-if="notification.type === ToastNotificationType.Loading"
+                class="h-4 w-4 opacity-80"
+              />
             </div>
             <div class="w-full min-w-[10rem]">
               <p
@@ -94,6 +98,7 @@ import { computed } from 'vue'
 import type { MaybeNullOrUndefined } from '@speckle/shared'
 import { ToastNotificationType } from '~~/src/helpers/global/toast'
 import type { ToastNotification } from '~~/src/helpers/global/toast'
+import { CommonLoadingIcon } from '~~/src/lib'
 
 const emit = defineEmits<{
   (e: 'update:notification', val: MaybeNullOrUndefined<ToastNotification>): void

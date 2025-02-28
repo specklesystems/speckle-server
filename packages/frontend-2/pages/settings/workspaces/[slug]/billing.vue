@@ -1,6 +1,14 @@
 <template>
   <section>
     <div class="md:max-w-5xl md:mx-auto pb-6 md:pb-0">
+      <FormButton
+        v-if="isWorkspaceNewPlansEnabled && isServerAdmin"
+        size="lg"
+        class="!bg-pink-500 !border-pink-700 mb-4"
+        @click="handleUpgradeClick"
+      >
+        𝓒𝓱𝓪𝓷𝓰𝓮 𝓽𝓸 𝓷𝓮𝔀 𝓹𝓵𝓪𝓷 💸
+      </FormButton>
       <SettingsSectionHeader title="Billing" text="Your workspace billing details" />
       <template v-if="isBillingIntegrationEnabled">
         <div class="flex flex-col gap-y-4 md:gap-y-6">
@@ -198,7 +206,7 @@
 <script setup lang="ts">
 import dayjs from 'dayjs'
 import { graphql } from '~/lib/common/generated/gql'
-import { useQuery } from '@vue/apollo-composable'
+import { useQuery, useMutation } from '@vue/apollo-composable'
 import { settingsWorkspaceBillingQuery } from '~/lib/settings/graphql/queries'
 import { useIsBillingIntegrationEnabled } from '~/composables/globals'
 import {
@@ -209,12 +217,14 @@ import {
   type PaidWorkspacePlans
 } from '~/lib/common/generated/gql/graphql'
 import { useBillingActions } from '~/lib/billing/composables/actions'
-import { pricingPlansConfig } from '~/lib/billing/helpers/constants'
+import type { PaidWorkspacePlansOld } from '@speckle/shared'
 import { Roles } from '@speckle/shared'
 import { InformationCircleIcon } from '@heroicons/vue/24/outline'
 import { isPaidPlan } from '@/lib/billing/helpers/types'
 import { useMixpanel } from '~/lib/core/composables/mp'
 import { guideBillingUrl } from '~/lib/common/helpers/route'
+import { adminUpdateWorkspacePlanMutation } from '~/lib/billing/graphql/mutations'
+import { WorkspaceOldPaidPlanPrices } from '~/lib/billing/helpers/constants'
 
 graphql(`
   fragment SettingsWorkspacesBilling_Workspace on Workspace {
@@ -254,7 +264,9 @@ useHead({
 
 const slug = computed(() => (route.params.slug as string) || '')
 
+const { isAdmin: isServerAdmin } = useActiveUser()
 const route = useRoute()
+const isWorkspaceNewPlansEnabled = useWorkspaceNewPlansEnabled()
 const isBillingIntegrationEnabled = useIsBillingIntegrationEnabled()
 const { result: workspaceResult } = useQuery(
   settingsWorkspaceBillingQuery,
@@ -267,16 +279,17 @@ const { result: workspaceResult } = useQuery(
 )
 const { billingPortalRedirect, redirectToCheckout } = useBillingActions()
 const mixpanel = useMixpanel()
+const { mutate: mutateWorkspacePlan } = useMutation(adminUpdateWorkspacePlanMutation)
 
-const seatPrices = ref({
-  [WorkspacePlans.Starter]: pricingPlansConfig.plans[WorkspacePlans.Starter].cost,
-  [WorkspacePlans.Plus]: pricingPlansConfig.plans[WorkspacePlans.Plus].cost,
-  [WorkspacePlans.Business]: pricingPlansConfig.plans[WorkspacePlans.Business].cost
-})
-const selectedPlanName = ref<WorkspacePlans>()
+const selectedPlanName = ref<PaidWorkspacePlansOld>()
 const selectedPlanCycle = ref<BillingInterval>()
 const isUpgradeDialogOpen = ref(false)
 
+const seatPrices = computed(() => ({
+  [WorkspacePlans.Starter]: WorkspaceOldPaidPlanPrices[WorkspacePlans.Starter],
+  [WorkspacePlans.Plus]: WorkspaceOldPaidPlanPrices[WorkspacePlans.Plus],
+  [WorkspacePlans.Business]: WorkspaceOldPaidPlanPrices[WorkspacePlans.Business]
+}))
 const workspace = computed(() => workspaceResult.value?.workspaceBySlug)
 const currentPlan = computed(() => workspace.value?.plan)
 const subscription = computed(() => workspace.value?.subscription)
@@ -410,7 +423,10 @@ const showStatusBadge = computed(() => {
   )
 })
 
-const onPlanSelected = (plan: { name: WorkspacePlans; cycle: BillingInterval }) => {
+const onPlanSelected = (plan: {
+  name: PaidWorkspacePlansOld
+  cycle: BillingInterval
+}) => {
   const { name, cycle } = plan
   if (!isPaidPlan(name) || !workspace.value?.id) return
 
@@ -436,5 +452,17 @@ const onPlanSelected = (plan: { name: WorkspacePlans; cycle: BillingInterval }) 
     selectedPlanCycle.value = cycle
     isUpgradeDialogOpen.value = true
   }
+}
+
+const handleUpgradeClick = () => {
+  if (!workspace.value?.id) return
+  // Temporary hack to change workspace plans to the new free plan
+  mutateWorkspacePlan({
+    input: {
+      workspaceId: workspace.value?.id,
+      plan: WorkspacePlans.Free,
+      status: WorkspacePlanStatuses.Valid
+    }
+  })
 }
 </script>

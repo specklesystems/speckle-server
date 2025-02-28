@@ -1,5 +1,5 @@
 import Bull from 'bull'
-import { logger } from '@/logging/logging'
+import { logger } from '@/observability/logging'
 import { isProdEnv, isTestEnv } from '@/modules/shared/helpers/envHelper'
 import cryptoRandomString from 'crypto-random-string'
 import { Optional } from '@speckle/shared'

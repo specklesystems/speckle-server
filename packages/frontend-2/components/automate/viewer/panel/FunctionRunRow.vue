@@ -156,11 +156,13 @@ const hasValidContextView = computed(() => {
 })
 
 const statusMessage = computed(() => {
-  const isFinished = ![
-    AutomateRunStatus.Initializing,
-    AutomateRunStatus.Running,
-    AutomateRunStatus.Pending
-  ].includes(props.functionRun.status)
+  const isFinished = !(
+    [
+      AutomateRunStatus.Initializing,
+      AutomateRunStatus.Running,
+      AutomateRunStatus.Pending
+    ] as string[]
+  ).includes(props.functionRun.status)
 
   return isFinished
     ? props.functionRun.statusMessage ?? 'No status message'
