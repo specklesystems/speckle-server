@@ -35,9 +35,9 @@ import { calculateSubscriptionSeats } from '@/modules/gatekeeper/domain/billing'
 import { WorkspacePaymentMethod } from '@/test/graphql/generated/graphql'
 import { LogicError, NotImplementedError } from '@/modules/shared/errors'
 import { isNewPlanType } from '@/modules/gatekeeper/helpers/plans'
-import { extendLoggerComponent } from '@/logging/logging'
-import { OperationName, OperationStatus } from '@/logging/domain/fields'
-import { logWithErr } from '@/logging/graphqlError'
+import { extendLoggerComponent } from '@/observability/logging'
+import { OperationName, OperationStatus } from '@/observability/domain/fields'
+import { logWithErr } from '@/observability/utils/logLevels'
 
 const { FF_GATEKEEPER_MODULE_ENABLED, FF_BILLING_INTEGRATION_ENABLED } =
   getFeatureFlags()
