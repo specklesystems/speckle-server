@@ -105,18 +105,15 @@
     "swc": true
   },
   "include": [
+    "bin/**/*",
     "db/**/*",
     "healthchecks/**/*",
-    "logging/**/*",
     "modules/**/*",
-    "bin/**/*",
+    "observability/**/*",
     "scripts/**/*",
-    "type-augmentations/**/*",
     "test/**/*",
+    "type-augmentations/**/*",
     "app.ts",
-    "otel.ts",
-    "bootstrap.ts",
-    "knexfile.ts",
     "bootstrap.js",
     "knexfile.ts"
   ],

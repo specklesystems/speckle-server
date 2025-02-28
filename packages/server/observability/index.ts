@@ -2,10 +2,10 @@
 import prometheusClient from 'prom-client'
 import promBundle from 'express-prom-bundle'
 
-import { initKnexPrometheusMetrics } from '@/logging/knexMonitoring'
-import { initHighFrequencyMonitoring } from '@/logging/highFrequencyMetrics/highfrequencyMonitoring'
+import { initKnexPrometheusMetrics } from '@/observability/components/knex/knexMonitoring'
+import { initHighFrequencyMonitoring } from '@/observability/components/highFrequencyMetrics/highfrequencyMonitoring'
 import { highFrequencyMetricsCollectionPeriodMs } from '@/modules/shared/helpers/envHelper'
-import { startupLogger as logger } from '@/logging/logging'
+import { startupLogger as logger } from '@/observability/logging'
 import type express from 'express'
 import { getAllRegisteredDbClients } from '@/modules/multiregion/utils/dbSelector'
 

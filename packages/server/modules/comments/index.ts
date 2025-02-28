@@ -1,5 +1,5 @@
 import { db } from '@/db/knex'
-import { moduleLogger } from '@/logging/logging'
+import { moduleLogger } from '@/observability/logging'
 import { saveActivityFactory } from '@/modules/activitystream/repositories'
 import { reportSubscriptionEventsFactory } from '@/modules/comments/events/subscriptionListeners'
 import { getCommentsResourcesFactory } from '@/modules/comments/repositories/comments'

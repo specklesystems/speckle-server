@@ -33,7 +33,7 @@ import { Netmask } from 'netmask'
 import { Merge } from 'type-fest'
 import { resourceAccessRuleToIdentifier } from '@/modules/core/helpers/token'
 import { delayGraphqlResponsesBy } from '@/modules/shared/helpers/envHelper'
-import { subscriptionLogger } from '@/logging/logging'
+import { subscriptionLogger } from '@/observability/logging'
 import { GetUser } from '@/modules/core/domain/users/operations'
 import { validateTokenFactory } from '@/modules/core/services/tokens'
 import {
