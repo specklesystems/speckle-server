@@ -14,7 +14,7 @@ import {
   reconcileWorkspaceSubscriptionFactory
 } from '@/modules/gatekeeper/clients/stripe'
 import {
-  getWorkspacePlanPrice,
+  getWorkspacePlanPriceId,
   getStripeClient,
   getWorkspacePlanProductId
 } from '@/modules/gatekeeper/stripe'
@@ -154,7 +154,7 @@ export = FF_GATEKEEPER_MODULE_ENABLED
           const createCheckoutSession = createCheckoutSessionFactory({
             stripe: getStripeClient(),
             frontendOrigin: getFrontendOrigin(),
-            getWorkspacePlanPrice
+            getWorkspacePlanPrice: getWorkspacePlanPriceId
           })
 
           const countRole = countWorkspaceRoleWithOptionalProjectRoleFactory({ db })
@@ -200,7 +200,7 @@ export = FF_GATEKEEPER_MODULE_ENABLED
             }),
             countWorkspaceRole,
             getWorkspaceSubscription: getWorkspaceSubscriptionFactory({ db }),
-            getWorkspacePlanPrice,
+            getWorkspacePlanPriceId,
             getWorkspacePlanProductId,
             upsertWorkspacePlan: upsertPaidWorkspacePlanFactory({ db }),
             updateWorkspaceSubscription: upsertWorkspaceSubscriptionFactory({ db })

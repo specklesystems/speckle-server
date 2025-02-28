@@ -3,6 +3,8 @@ import {
   TrialWorkspacePlan,
   UnpaidWorkspacePlan,
   WorkspacePlan,
+  WorkspacePlanProductAndPriceIds,
+  WorkspacePlanProductPrices,
   WorkspacePricingProducts
 } from '@/modules/gatekeeperCore/domain/billing'
 import { PaidWorkspacePlans, WorkspacePlanBillingIntervals } from '@speckle/shared'
@@ -148,7 +150,7 @@ export type GetSubscriptionData = (args: {
   subscriptionId: string
 }) => Promise<SubscriptionData>
 
-export type GetWorkspacePlanPrice = (args: {
+export type GetWorkspacePlanPriceId = (args: {
   workspacePlan: WorkspacePricingProducts
   billingInterval: WorkspacePlanBillingIntervals
 }) => string
@@ -156,6 +158,8 @@ export type GetWorkspacePlanPrice = (args: {
 export type GetWorkspacePlanProductId = (args: {
   workspacePlan: WorkspacePricingProducts
 }) => string
+
+export type GetWorkspacePlanProductAndPriceIds = () => WorkspacePlanProductAndPriceIds
 
 export type SubscriptionDataInput = OverrideProperties<
   SubscriptionData,
@@ -178,3 +182,14 @@ export type WorkspaceSeat = {
   createdAt: Date
   updatedAt: Date
 }
+// Prices
+export type GetRecurringPrices = () => Promise<
+  {
+    id: string
+    currency: string
+    unitAmount: number
+    productId: string
+  }[]
+>
+
+export type GetWorkspacePlanPrices = () => Promise<WorkspacePlanProductPrices>
