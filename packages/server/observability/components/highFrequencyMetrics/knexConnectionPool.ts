@@ -1,5 +1,5 @@
 import { Histogram, Registry } from 'prom-client'
-import type { Metric } from '@/logging/highFrequencyMetrics/highfrequencyMonitoring'
+import type { Metric } from '@/observability/components/highFrequencyMetrics/highfrequencyMonitoring'
 import type { Knex } from 'knex'
 import { numberOfFreeConnections } from '@/modules/shared/helpers/dbHelper'
 

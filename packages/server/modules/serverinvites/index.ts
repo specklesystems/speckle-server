@@ -1,5 +1,5 @@
 import { registerOrUpdateScopeFactory } from '@/modules/shared/repositories/scopes'
-import { moduleLogger } from '@/logging/logging'
+import { moduleLogger } from '@/observability/logging'
 import db from '@/db/knex'
 import { Scopes } from '@speckle/shared'
 import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'

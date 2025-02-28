@@ -1,4 +1,4 @@
-import { redisLogger } from '@/logging/logging'
+import { redisLogger } from '@/observability/logging'
 import Redis, { RedisOptions } from 'ioredis'
 import {
   EnvironmentResourceError,

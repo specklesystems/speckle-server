@@ -1,4 +1,4 @@
-import { moduleLogger } from '@/logging/logging'
+import { moduleLogger } from '@/observability/logging'
 import RestSetup from '@/modules/pwdreset/rest'
 import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import { noop } from 'lodash'
