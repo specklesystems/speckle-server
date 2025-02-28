@@ -1,5 +1,5 @@
-import { WorkspacePlan } from '@/modules/gatekeeper/domain/billing'
 import { canWorkspaceAccessFeatureFactory } from '@/modules/gatekeeper/services/featureAuthorization'
+import { WorkspacePlan } from '@/modules/gatekeeperCore/domain/billing'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
 

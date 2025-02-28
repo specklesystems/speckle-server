@@ -1,50 +1,13 @@
 import {
-  TrialWorkspacePlans,
-  PaidWorkspacePlans,
-  UnpaidWorkspacePlans,
-  WorkspacePlanBillingIntervals,
-  WorkspacePricingPlans
-} from '@/modules/gatekeeper/domain/workspacePricing'
+  PaidWorkspacePlan,
+  TrialWorkspacePlan,
+  UnpaidWorkspacePlan,
+  WorkspacePlan,
+  WorkspacePricingProducts
+} from '@/modules/gatekeeperCore/domain/billing'
+import { PaidWorkspacePlans, WorkspacePlanBillingIntervals } from '@speckle/shared'
 import { OverrideProperties } from 'type-fest'
 import { z } from 'zod'
-
-export type UnpaidWorkspacePlanStatuses = 'valid'
-
-export type PaidWorkspacePlanStatuses =
-  | UnpaidWorkspacePlanStatuses
-  // | 'paymentNeeded' // unsure if this is needed
-  | 'paymentFailed'
-  | 'cancelationScheduled'
-  | 'canceled'
-
-export type TrialWorkspacePlanStatuses = 'trial' | 'expired'
-
-export type PlanStatuses =
-  | PaidWorkspacePlanStatuses
-  | TrialWorkspacePlanStatuses
-  | UnpaidWorkspacePlanStatuses
-
-type BaseWorkspacePlan = {
-  workspaceId: string
-  createdAt: Date
-}
-
-export type PaidWorkspacePlan = BaseWorkspacePlan & {
-  name: PaidWorkspacePlans
-  status: PaidWorkspacePlanStatuses
-}
-
-export type TrialWorkspacePlan = BaseWorkspacePlan & {
-  name: TrialWorkspacePlans
-  status: TrialWorkspacePlanStatuses
-}
-
-export type UnpaidWorkspacePlan = BaseWorkspacePlan & {
-  name: UnpaidWorkspacePlans
-  status: UnpaidWorkspacePlanStatuses
-}
-
-export type WorkspacePlan = PaidWorkspacePlan | TrialWorkspacePlan | UnpaidWorkspacePlan
 
 export type GetWorkspacePlan = (args: {
   workspaceId: string
@@ -186,12 +149,12 @@ export type GetSubscriptionData = (args: {
 }) => Promise<SubscriptionData>
 
 export type GetWorkspacePlanPrice = (args: {
-  workspacePlan: WorkspacePricingPlans
+  workspacePlan: WorkspacePricingProducts
   billingInterval: WorkspacePlanBillingIntervals
 }) => string
 
 export type GetWorkspacePlanProductId = (args: {
-  workspacePlan: WorkspacePricingPlans
+  workspacePlan: WorkspacePricingProducts
 }) => string
 
 export type SubscriptionDataInput = OverrideProperties<
@@ -205,3 +168,13 @@ export type ReconcileSubscriptionData = (args: {
   subscriptionData: SubscriptionDataInput
   applyProrotation: boolean
 }) => Promise<void>
+
+export type WorkspaceSeatType = 'viewer' | 'editor'
+
+export type WorkspaceSeat = {
+  workspaceId: string
+  userId: string
+  type: WorkspaceSeatType
+  createdAt: Date
+  updatedAt: Date
+}

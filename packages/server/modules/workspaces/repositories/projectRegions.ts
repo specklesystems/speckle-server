@@ -124,7 +124,7 @@ export const copyWorkspaceFactory =
       .workspaces(deps.targetDb)
       .insert(workspace)
       .onConflict(Workspaces.withoutTablePrefix.col.id)
-      .merge(Workspaces.withoutTablePrefix.cols as (keyof Workspace)[])
+      .ignore()
 
     return workspaceId
   }

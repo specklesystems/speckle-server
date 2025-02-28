@@ -1,4 +1,4 @@
-import { moduleLogger } from '@/logging/logging'
+import { moduleLogger } from '@/observability/logging'
 import {
   getValidDefaultProjectRegionKey,
   initializeRegisteredRegionClients as initDb

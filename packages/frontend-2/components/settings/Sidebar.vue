@@ -81,6 +81,7 @@
                   ? 'TRIAL'
                   : undefined
               "
+              nested
             >
               <template #title-icon>
                 <WorkspaceAvatar
@@ -92,14 +93,20 @@
               <NuxtLink
                 v-for="workspaceMenuItem in workspaceMenuItems"
                 :key="`workspace-menu-item-${workspaceMenuItem.name}-${workspaceItem.slug}`"
-                :to="workspaceMenuItem.route(workspaceItem.slug)"
+                :to="
+                  !isAdmin &&
+                  (workspaceMenuItem.disabled ||
+                    needsSsoSession(workspaceItem, workspaceMenuItem.name))
+                    ? undefined
+                    : workspaceMenuItem.route(workspaceItem.slug)
+                "
                 @click="isOpenMobile = false"
               >
                 <LayoutSidebarMenuGroupItem
                   v-if="workspaceMenuItem.permission?.includes(workspaceItem.role as WorkspaceRoles)"
                   :label="workspaceMenuItem.title"
                   :active="
-                    route.name === workspaceMenuItem.name &&
+                    route.name?.toString().startsWith(workspaceMenuItem.name) &&
                     route.params.slug === workspaceItem.slug
                   "
                   :tooltip-text="
@@ -116,13 +123,6 @@
                 />
               </NuxtLink>
             </LayoutSidebarMenuGroup>
-            <NuxtLink v-if="!isGuest" :to="workspacesRoute">
-              <LayoutSidebarMenuGroupItem label="Create workspace">
-                <template #icon>
-                  <PlusIcon class="h-4 w-4 text-foreground-2" />
-                </template>
-              </LayoutSidebarMenuGroupItem>
-            </NuxtLink>
           </LayoutSidebarMenuGroup>
         </LayoutSidebarMenu>
       </LayoutSidebar>
@@ -131,11 +131,10 @@
 </template>
 
 <script setup lang="ts">
-import { Roles } from '@speckle/shared'
 import { useIsWorkspacesEnabled } from '~/composables/globals'
 import { useQuery } from '@vue/apollo-composable'
 import { settingsSidebarQuery } from '~/lib/settings/graphql/queries'
-import { PlusIcon, ChevronLeftIcon } from '@heroicons/vue/24/outline'
+import { ChevronLeftIcon } from '@heroicons/vue/24/outline'
 import { useActiveUser } from '~/lib/auth/composables/activeUser'
 import { useSettingsMenu, useSettingsMenuState } from '~/lib/settings/composables/menu'
 import {
@@ -145,11 +144,7 @@ import {
 } from '@speckle/ui-components'
 import { graphql } from '~~/lib/common/generated/gql'
 import type { WorkspaceRoles } from '@speckle/shared'
-import {
-  workspacesRoute,
-  homeRoute,
-  settingsWorkspaceRoutes
-} from '~/lib/common/helpers/route'
+import { homeRoute, settingsWorkspaceRoutes } from '~/lib/common/helpers/route'
 import {
   WorkspacePlanStatuses,
   type SettingsMenu_WorkspaceFragment
@@ -186,7 +181,7 @@ graphql(`
 `)
 
 const settingsMenuState = useSettingsMenuState()
-const { activeUser: user } = useActiveUser()
+const { isAdmin } = useActiveUser()
 const route = useRoute()
 const isWorkspacesEnabled = useIsWorkspacesEnabled()
 const { result: workspaceResult } = useQuery(settingsSidebarQuery, null, {
@@ -205,8 +200,6 @@ const workspaceItems = computed(
       (item) => item.creationState?.completed !== false // Removed workspaces that are not completely created
     ) || []
 )
-const isAdmin = computed(() => user.value?.role === Roles.Server.Admin)
-const isGuest = computed(() => user.value?.role === Roles.Server.Guest)
 
 const needsSsoSession = (
   workspace: SettingsMenu_WorkspaceFragment,

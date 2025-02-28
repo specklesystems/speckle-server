@@ -48,12 +48,6 @@ import {
 } from '@/modules/core/services/streams/access'
 import { authorizeResolver } from '@/modules/shared'
 import { grantStreamPermissionsFactory } from '@/modules/core/repositories/streams'
-import {
-  addStreamInviteAcceptedActivityFactory,
-  addStreamPermissionsAddedActivityFactory
-} from '@/modules/activitystream/services/streamActivity'
-import { saveActivityFactory } from '@/modules/activitystream/repositories'
-import { publish } from '@/modules/shared/utils/subscriptions'
 import { getUserFactory } from '@/modules/core/repositories/users'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { AutomationEvents } from '@/modules/automate/domain/events'
@@ -67,20 +61,12 @@ import { AutomationEvents } from '@/modules/automate/domain/events'
 const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
 
 const getUser = getUserFactory({ db })
-const saveActivity = saveActivityFactory({ db })
 const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
 const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
   validateStreamAccess,
   getUser,
   grantStreamPermissions: grantStreamPermissionsFactory({ db }),
-  addStreamInviteAcceptedActivity: addStreamInviteAcceptedActivityFactory({
-    saveActivity,
-    publish
-  }),
-  addStreamPermissionsAddedActivity: addStreamPermissionsAddedActivityFactory({
-    saveActivity,
-    publish
-  })
+  emitEvent: getEventBus().emit
 })
 
 const buildAutomationUpdate = () => {

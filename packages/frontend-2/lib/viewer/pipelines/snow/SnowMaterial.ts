@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { SpeckleStandardMaterial, type SpeckleWebGLRenderer } from '@speckle/viewer'
 import {
   type MeshStandardMaterialParameters,

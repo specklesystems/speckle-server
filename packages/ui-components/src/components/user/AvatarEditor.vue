@@ -129,9 +129,13 @@ const activeImageUrl = ref(null as Nullable<string>)
 
 const canvasSize = computed(() => {
   switch (props.size) {
-    case 'xs' || 'sm' || 'lg' || 'xl':
+    case 'xs':
+    case 'sm':
+    case 'lg':
+    case 'xl':
       return { width: 64, height: 64 }
     case 'xxl':
+    case '3xl':
       return { width: 140, height: 140 }
     case 'editable':
       return { width: 240, height: 240 }

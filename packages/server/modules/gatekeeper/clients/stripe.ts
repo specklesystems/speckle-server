@@ -5,15 +5,18 @@ import {
   ReconcileSubscriptionData,
   SubscriptionData
 } from '@/modules/gatekeeper/domain/billing'
+import { isNewPlanType } from '@/modules/gatekeeper/helpers/plans'
+import { WorkspacePricingProducts } from '@/modules/gatekeeperCore/domain/billing'
 import {
-  WorkspacePlanBillingIntervals,
-  WorkspacePricingPlans
-} from '@/modules/gatekeeper/domain/workspacePricing'
-import { EnvironmentResourceError, LogicError } from '@/modules/shared/errors'
+  EnvironmentResourceError,
+  LogicError,
+  NotImplementedError
+} from '@/modules/shared/errors'
+import { WorkspacePlanBillingIntervals } from '@speckle/shared'
 import { Stripe } from 'stripe'
 
 type GetWorkspacePlanPrice = (args: {
-  workspacePlan: WorkspacePricingPlans
+  workspacePlan: WorkspacePricingProducts
   billingInterval: WorkspacePlanBillingIntervals
 }) => string
 
@@ -46,6 +49,11 @@ export const createCheckoutSessionFactory =
     workspaceId,
     isCreateFlow
   }) => {
+    if (isNewPlanType(workspacePlan)) {
+      // TODO: Supported in follow up task
+      throw new NotImplementedError()
+    }
+
     const resultUrl = getResultUrl({ frontendOrigin, workspaceId, workspaceSlug })
     const price = getWorkspacePlanPrice({ billingInterval, workspacePlan })
     const costLineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = [

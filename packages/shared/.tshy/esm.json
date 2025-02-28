@@ -5,7 +5,9 @@
     "../src/**/*.mts",
     "../src/**/*.tsx"
   ],
-  "exclude": [],
+  "exclude": [
+    "../**/*.spec.ts"
+  ],
   "compilerOptions": {
     "outDir": "../.tshy-build/esm"
   }

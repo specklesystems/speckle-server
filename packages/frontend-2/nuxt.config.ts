@@ -70,9 +70,12 @@ export default defineNuxtConfig({
       datadogSite: '',
       datadogService: '',
       datadogEnv: '',
-      enableDirectPreviews: true,
       ghostApiKey: ''
     }
+  },
+
+  experimental: {
+    emitRouteChunkError: 'automatic-immediate'
   },
 
   alias: {
@@ -158,6 +161,12 @@ export default defineNuxtConfig({
         'Access-Control-Expose-Headers': '*'
       }
     },
+    '/functions': {
+      redirect: {
+        to: '/',
+        statusCode: 307
+      }
+    },
     // Redirect old settings pages
     '/server-management/projects': {
       redirect: {
@@ -207,13 +216,19 @@ export default defineNuxtConfig({
     '/settings/server/*': {
       appMiddleware: ['auth', 'settings', 'admin']
     },
-    '/settings/workspaces/*': {
+    '/settings/workspaces/:slug/*': {
       appMiddleware: [
         'auth',
         'settings',
         'requires-workspaces-enabled',
         'require-valid-workspace'
       ]
+    },
+    '/downloads': {
+      redirect: {
+        to: 'https://www.speckle.systems/connectors',
+        statusCode: 301
+      }
     }
   },
 

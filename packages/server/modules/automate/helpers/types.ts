@@ -74,8 +74,12 @@ export type AutomationRevisionFunctionRecord = {
 }
 
 export enum RunTriggerSource {
+  /** Triggered in response to an external event like a new version. */
   Automatic = 'automatic',
-  Manual = 'manual'
+  /** Requested directly by the user in-app. */
+  Manual = 'manual',
+  /** Requested as part of a test automation. */
+  Test = 'test'
 }
 
 export const VersionCreationTriggerType = <const>'versionCreation'

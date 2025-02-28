@@ -1,10 +1,4 @@
 import { db } from '@/db/knex'
-import { saveActivityFactory } from '@/modules/activitystream/repositories'
-import {
-  addStreamInviteAcceptedActivityFactory,
-  addStreamPermissionsAddedActivityFactory,
-  addStreamPermissionsRevokedActivityFactory
-} from '@/modules/activitystream/services/streamActivity'
 import { StreamAcl } from '@/modules/core/dbSchema'
 import { StreamAclRecord, StreamRecord } from '@/modules/core/helpers/types'
 import { createBranchFactory } from '@/modules/core/repositories/branches'
@@ -38,7 +32,6 @@ import { inviteUsersToProjectFactory } from '@/modules/serverinvites/services/pr
 import { authorizeResolver } from '@/modules/shared'
 import { Nullable } from '@/modules/shared/helpers/typeHelper'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import { publish } from '@/modules/shared/utils/subscriptions'
 import { getDefaultRegionFactory } from '@/modules/workspaces/repositories/regions'
 import { createWorkspaceProjectFactory } from '@/modules/workspaces/services/projects'
 import { BasicTestUser } from '@/test/authHelper'
@@ -79,7 +72,6 @@ const createStream = legacyCreateStreamFactory({
   })
 })
 
-const saveActivity = saveActivityFactory({ db })
 const validateStreamAccess = validateStreamAccessFactory({ authorizeResolver })
 const isStreamCollaborator = isStreamCollaboratorFactory({
   getStream
@@ -88,24 +80,14 @@ const removeStreamCollaborator = removeStreamCollaboratorFactory({
   validateStreamAccess,
   isStreamCollaborator,
   revokeStreamPermissions: revokeStreamPermissionsFactory({ db }),
-  addStreamPermissionsRevokedActivity: addStreamPermissionsRevokedActivityFactory({
-    saveActivity,
-    publish
-  })
+  emitEvent: getEventBus().emit
 })
 
 const addOrUpdateStreamCollaborator = addOrUpdateStreamCollaboratorFactory({
   validateStreamAccess,
   getUser,
   grantStreamPermissions: grantStreamPermissionsFactory({ db }),
-  addStreamInviteAcceptedActivity: addStreamInviteAcceptedActivityFactory({
-    saveActivity,
-    publish
-  }),
-  addStreamPermissionsAddedActivity: addStreamPermissionsAddedActivityFactory({
-    saveActivity,
-    publish
-  })
+  emitEvent: getEventBus().emit
 })
 
 export type BasicTestStream = {

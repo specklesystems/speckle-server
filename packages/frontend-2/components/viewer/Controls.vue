@@ -1,15 +1,9 @@
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
-  <div v-if="showControls">
+  <div>
     <div
       class="absolute z-20 flex max-h-screen simple-scrollbar flex-col space-y-1 md:space-y-2 px-2"
-      :class="
-        showNavbar && !isEmbedEnabled
-          ? 'pt-[3.8rem]'
-          : isTransparent
-          ? 'pt-2'
-          : 'pt-2 pb-16'
-      "
+      :class="!isEmbedEnabled ? 'pt-[3.8rem]' : isTransparent ? 'pt-2' : 'pt-2 pb-16'"
     >
       <!-- Models -->
       <ViewerControlsButtonToggle
@@ -87,13 +81,15 @@
             <ViewerViewModesMenu
               :open="viewModesOpen"
               @force-close-others="activeControl = 'none'"
-              @update:open="(value: boolean) => toggleActiveControl(value ? 'viewModes' : 'none')"
+              @update:open="
+                (value) => toggleActiveControl(value ? 'viewModes' : 'none')
+              "
             />
             <!-- Views -->
             <ViewerViewsMenu
               :open="viewsOpen"
               @force-close-others="activeControl = 'none'"
-              @update:open="(value: boolean) => toggleActiveControl(value ? 'views' : 'none')"
+              @update:open="(value) => toggleActiveControl(value ? 'views' : 'none')"
             />
             <!-- Zoom extents -->
             <ViewerControlsButtonToggle
@@ -107,7 +103,7 @@
             <!-- Sun and lights -->
             <ViewerSunMenu
               :open="activeControl === 'sun'"
-              @update:open="(value: boolean) => toggleActiveControl(value ? 'sun' : 'none')"
+              @update:open="(value) => toggleActiveControl(value ? 'sun' : 'none')"
             />
           </ViewerControlsButtonGroup>
           <ViewerControlsButtonGroup>
@@ -139,7 +135,7 @@
             <ViewerExplodeMenu
               :open="explodeOpen"
               @force-close-others="activeControl = 'none'"
-              @update:open="(value: boolean) => toggleActiveControl(value ? 'explode' : 'none')"
+              @update:open="(value) => toggleActiveControl(value ? 'explode' : 'none')"
             />
             <!-- Settings -->
             <ViewerSettingsMenu />
@@ -164,7 +160,7 @@
     <div
       v-if="activePanel !== 'none'"
       ref="resizeHandle"
-      class="absolute z-10 max-h-[calc(100dvh-4rem)] w-7 mt-[3.9rem] hidden sm:flex group overflow-hidden items-center rounded-r cursor-ew-resize z-30"
+      class="absolute max-h-[calc(100dvh-4rem)] w-7 mt-[3.9rem] hidden sm:flex group overflow-hidden items-center rounded-r cursor-ew-resize z-30"
       :style="`left:${width - 2}px; height:${height ? height - 10 : 0}px`"
       @mousedown="startResizing"
     >
@@ -252,7 +248,6 @@
       <FormButton @click="resetSectionBox()">Reset section box</FormButton>
     </Portal>
   </div>
-  <div v-else />
 </template>
 <script setup lang="ts">
 import {
@@ -278,7 +273,6 @@ import {
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useIsSmallerOrEqualThanBreakpoint } from '~~/composables/browser'
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
-import { useViewerTour } from '~/lib/viewer/composables/tour'
 import {
   onKeyStroke,
   useEventListener,
@@ -361,7 +355,6 @@ const {
 } = useSectionBoxUtilities()
 const { getActiveMeasurement, removeMeasurement, enableMeasurements } =
   useMeasurementUtilities()
-const { showNavbar, showControls } = useViewerTour()
 const { isTransparent, isEnabled: isEmbedEnabled } = useEmbed()
 const {
   zoomExtentsOrSelection,

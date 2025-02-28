@@ -1,4 +1,4 @@
-import { crossServerSyncLogger, Logger } from '@/logging/logging'
+import { crossServerSyncLogger, Logger } from '@/observability/logging'
 import { CrossServerProjectSyncError } from '@/modules/cross-server-sync/errors'
 import {
   createApolloClient,
@@ -239,7 +239,7 @@ export const downloadProjectFactory =
 
     const newProjectUrl = new URL(
       `/projects/${project.id}`,
-      getFrontendOrigin(true)
+      getFrontendOrigin()
     ).toString()
     logger.info(`New Project URL: ${newProjectUrl}`)
 

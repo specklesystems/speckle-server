@@ -12,16 +12,18 @@ import {
   DeleteCheckoutSession
 } from '@/modules/gatekeeper/domain/billing'
 import {
-  PaidWorkspacePlans,
-  WorkspacePlanBillingIntervals
-} from '@/modules/gatekeeper/domain/workspacePricing'
-import {
   CheckoutSessionNotFoundError,
   WorkspaceAlreadyPaidError,
   WorkspaceCheckoutSessionInProgressError
 } from '@/modules/gatekeeper/errors/billing'
+import { EventBusEmit } from '@/modules/shared/services/eventBus'
 import { CountWorkspaceRoleWithOptionalProjectRole } from '@/modules/workspaces/domain/operations'
-import { Roles, throwUncoveredError } from '@speckle/shared'
+import {
+  PaidWorkspacePlans,
+  Roles,
+  throwUncoveredError,
+  WorkspacePlanBillingIntervals
+} from '@speckle/shared'
 
 export const startCheckoutSessionFactory =
   ({
@@ -135,13 +137,15 @@ export const completeCheckoutSessionFactory =
     updateCheckoutSessionStatus,
     upsertWorkspaceSubscription,
     upsertPaidWorkspacePlan,
-    getSubscriptionData
+    getSubscriptionData,
+    emitEvent
   }: {
     getCheckoutSession: GetCheckoutSession
     updateCheckoutSessionStatus: UpdateCheckoutSessionStatus
     upsertWorkspaceSubscription: UpsertWorkspaceSubscription
     upsertPaidWorkspacePlan: UpsertPaidWorkspacePlan
     getSubscriptionData: GetSubscriptionData
+    emitEvent: EventBusEmit
   }) =>
   /**
    * Complete a paid checkout session
@@ -169,13 +173,14 @@ export const completeCheckoutSessionFactory =
 
     await updateCheckoutSessionStatus({ sessionId, paymentStatus: 'paid' })
     // a plan determines the workspace feature set
+    const workspacePlan = {
+      createdAt: new Date(),
+      workspaceId: checkoutSession.workspaceId,
+      name: checkoutSession.workspacePlan,
+      status: 'valid'
+    } as const
     await upsertPaidWorkspacePlan({
-      workspacePlan: {
-        createdAt: new Date(),
-        workspaceId: checkoutSession.workspaceId,
-        name: checkoutSession.workspacePlan,
-        status: 'valid'
-      }
+      workspacePlan
     })
     const subscriptionData = await getSubscriptionData({
       subscriptionId
@@ -204,5 +209,15 @@ export const completeCheckoutSessionFactory =
 
     await upsertWorkspaceSubscription({
       workspaceSubscription
+    })
+    await emitEvent({
+      eventName: 'gatekeeper.workspace-plan-updated',
+      payload: {
+        workspacePlan: {
+          workspaceId: workspacePlan.workspaceId,
+          status: workspacePlan.status,
+          name: workspacePlan.name
+        }
+      }
     })
   }
