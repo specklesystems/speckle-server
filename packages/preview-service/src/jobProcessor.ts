@@ -6,22 +6,35 @@ import {
   PreviewSuccessPayload
 } from '@speckle/shared/dist/esm/previews/job.js'
 import { Logger } from 'pino'
-import { PORT } from '@/config.js'
+import { timeoutAt } from '@speckle/shared'
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-empty-object-type
   interface Window extends PreviewGenerator {}
 }
 
+type SharedArgs = {
+  job: JobPayload
+  port: number
+  timeout: number
+  logger: Logger
+}
+
+type JobArgs = SharedArgs & {
+  browser: Browser
+}
+
+type PageArgs = SharedArgs & {
+  page: Page
+}
+
 export const jobProcessor = async ({
   logger,
   browser,
-  job
-}: {
-  logger: Logger
-  browser: Browser
-  job: JobPayload
-}): Promise<PreviewResultPayload> => {
+  job,
+  port,
+  timeout
+}: JobArgs): Promise<PreviewResultPayload> => {
   const jobId = job.jobId
   const jobLogger = logger.child({ jobId, serverUrl: job.url })
   const start = new Date()
@@ -31,7 +44,7 @@ export const jobProcessor = async ({
   try {
     page = await browser.newPage()
 
-    const result = await pageFunction({ page, job, jobLogger })
+    const result = await pageFunction({ page, job, logger: jobLogger, port, timeout })
     const elapsed = (new Date().getTime() - start.getTime()) / 1000
     jobLogger.info(
       { status: result.status, elapsed },
@@ -67,23 +80,24 @@ export const jobProcessor = async ({
 const pageFunction = async ({
   page,
   job,
-  jobLogger
-}: {
-  page: Page
-  job: JobPayload
-  jobLogger: Logger
-}): Promise<PreviewSuccessPayload> => {
+  port,
+  timeout,
+  logger
+}: PageArgs): Promise<PreviewSuccessPayload> => {
   page.on('error', (err) => {
-    jobLogger.error({ err }, 'Page crashed')
+    logger.error({ err }, 'Page crashed')
     throw err
   })
-  await page.goto(`http://127.0.0.1:${PORT}/index.html`)
+  await page.goto(`http://127.0.0.1:${port}/index.html`)
+  page.setDefaultTimeout(timeout)
   // page.setDefaultTimeout(deps.timeoutMilliseconds)
-
-  const previewResult = await page.evaluate(async (job: JobPayload) => {
-    await window.load(job)
-    return await window.takeScreenshot()
-  }, job)
+  const previewResult = await Promise.race([
+    page.evaluate(async (job: JobPayload) => {
+      await window.load(job)
+      return await window.takeScreenshot()
+    }, job),
+    timeoutAt(timeout)
+  ])
 
   return { jobId: job.jobId, status: 'success', result: previewResult }
 }

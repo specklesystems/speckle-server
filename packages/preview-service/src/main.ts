@@ -5,13 +5,15 @@ import {
   PORT,
   CHROMIUM_EXECUTABLE_PATH,
   PREVIEWS_HEADED,
-  USER_DATA_DIR
+  USER_DATA_DIR,
+  PREVIEW_TIMEOUT
 } from '@/config.js'
 import Bull from 'bull'
 import { logger } from '@/logging.js'
 import { jobProcessor } from '@/jobProcessor.js'
 import { Redis, RedisOptions } from 'ioredis'
 import { jobPayload } from '@speckle/shared/dist/esm/previews/job.js'
+import { wait } from '@speckle/shared'
 
 const app = express()
 const port = PORT
@@ -78,7 +80,13 @@ await jobQueue.process(async (payload, done) => {
     return done(parseResult.error)
   }
   const job = parseResult.data
-  const result = await jobProcessor({ logger, browser, job: parseResult.data })
+  const result = await jobProcessor({
+    logger,
+    browser,
+    job: parseResult.data,
+    port: PORT,
+    timeout: PREVIEW_TIMEOUT
+  })
 
   const resultsQueue = new Bull(job.responseQueue, opts)
   // with removeOnComplete, the job response potentially containing a large images,
