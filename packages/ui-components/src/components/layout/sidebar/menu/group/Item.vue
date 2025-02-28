@@ -6,6 +6,7 @@
     class="group/item flex items-center justify-between space-x-2 shrink-0 text-body-xs text-foreground select-none rounded-md w-full py-1"
     :class="[
       !disabled && 'cursor-pointer hover:bg-highlight-1',
+      disabled && 'cursor-not-allowed',
       active && 'bg-highlight-3 hover:!bg-highlight-3',
       $slots.icon ? 'pl-1 pr-2' : 'pr-2 pl-7',
       extraPadding && '!pl-14'

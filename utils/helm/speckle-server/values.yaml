@@ -57,6 +57,8 @@ featureFlags:
   forceEmailVerification: false
   ## @param featureFlags.forceOnboarding Forces onboarding for all users
   forceOnboarding: false
+  ## @param featureFlags.noPersonalEmailsEnabled Disables the ability sign up with personal email addresses
+  noPersonalEmailsEnabled: false
 
 analytics:
   ## @param analytics.enabled Enable or disable analytics

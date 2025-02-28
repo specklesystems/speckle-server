@@ -319,3 +319,8 @@ export type GetPaginatedProjectComments = (
   items: CommentRecord[]
   cursor: string | null
 }>
+
+export type GetStreamCommentCount = (
+  streamId: string,
+  options?: Partial<{ threadsOnly: boolean; includeArchived: boolean }>
+) => Promise<number>

@@ -40,9 +40,11 @@ export class SsoProviderProfileMissingPropertiesError extends BaseError {
   static code = 'SSO_PROVIDER_PROFILE_MISSING_PROPERTIES_ERROR'
   constructor(properties: string[]) {
     super(
-      `User profile from identity provider missing required properties: ${properties.join(
-        ', '
-      )}`
+      [
+        'Login was successful, but your identity provider is not configured correctly for Speckle.',
+        'The following required properties were not present on your user profile:',
+        properties.join(', ')
+      ].join(' ')
     )
   }
 }

@@ -3,15 +3,13 @@ import {
   GetWorkspacePlanProductId
 } from '@/modules/gatekeeper/domain/billing'
 import {
-  WorkspacePlanBillingIntervals,
-  WorkspacePricingPlans
-} from '@/modules/gatekeeperCore/domain/billing'
-import {
   getFeatureFlags,
   getStringFromEnv,
   getStripeApiKey
 } from '@/modules/shared/helpers/envHelper'
+import { WorkspacePricingProducts } from '@/modules/gatekeeperCore/domain/billing'
 import { Stripe } from 'stripe'
+import { WorkspacePlanBillingIntervals } from '@speckle/shared'
 
 let stripeClient: Stripe | undefined = undefined
 
@@ -20,10 +18,10 @@ export const getStripeClient = () => {
   return stripeClient
 }
 
-const { FF_WORKSPACES_NEW_PLAN } = getFeatureFlags()
+const { FF_WORKSPACES_NEW_PLAN_ENABLED } = getFeatureFlags()
 
 export const workspacePlanPrices = (): Record<
-  WorkspacePricingPlans,
+  WorkspacePricingProducts,
   Record<WorkspacePlanBillingIntervals, string> & { productId: string }
 > => ({
   // old
@@ -48,7 +46,7 @@ export const workspacePlanPrices = (): Record<
     yearly: getStringFromEnv('WORKSPACE_YEARLY_BUSINESS_SEAT_STRIPE_PRICE_ID')
   },
   // new
-  ...((FF_WORKSPACES_NEW_PLAN
+  ...((FF_WORKSPACES_NEW_PLAN_ENABLED
     ? {
         team: {
           productId: getStringFromEnv('WORKSPACE_TEAM_SEAT_STRIPE_PRODUCT_ID'),

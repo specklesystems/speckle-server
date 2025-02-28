@@ -563,6 +563,9 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 - name: FF_WORKSPACES_MODULE_ENABLED
   value: {{ .Values.featureFlags.workspacesModuleEnabled | quote }}
 
+- name: FF_NO_PERSONAL_EMAILS_ENABLED
+  value: {{ .Values.featureFlags.noPersonalEmailsEnabled | quote }}
+
 - name: FF_WORKSPACES_SSO_ENABLED
   value: {{ .Values.featureFlags.workspacesSSOEnabled | quote }}
 
