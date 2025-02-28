@@ -169,7 +169,7 @@ import {
   listWorkspaceSsoMembershipsFactory
 } from '@/modules/workspaces/repositories/sso'
 import { getDecryptor } from '@/modules/workspaces/helpers/sso'
-import { getWorkspaceFunctions } from '@/modules/automate/clients/executionEngine'
+import { getWorkspaceFunctionsFactory } from '@/modules/automate/clients/executionEngine'
 import {
   ExecutionEngineFailedResponseError,
   ExecutionEngineNetworkError
@@ -1086,7 +1086,9 @@ export = FF_WORKSPACES_MODULE_ENABLED
               action: AuthCodePayloadAction.ListWorkspaceFunctions
             })
 
-            const res = await getWorkspaceFunctions({
+            const res = await getWorkspaceFunctionsFactory({
+              logger: context.log
+            })({
               workspaceId: parent.id,
               query: removeNullOrUndefinedKeys(args),
               body: {

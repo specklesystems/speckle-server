@@ -28,6 +28,7 @@ import {
   retry,
   timeoutAt
 } from '@speckle/shared'
+import { randomUUID } from 'crypto'
 import { has, isObjectLike } from 'lodash'
 import { Logger } from 'pino'
 
@@ -75,22 +76,23 @@ const getApiUrl = (
   return url.toString()
 }
 
-const invokeSafeJsonRequest = async <
-  Response extends Record<string, unknown> = Record<string, unknown>
->(
-  ...args: Parameters<typeof invokeRequest> & { logger: Logger }
-): Promise<Response | null> => {
-  const [{ url, method, logger }] = args
-  try {
-    return await invokeJsonRequest<Response>({...args, requestId: logger.bindings().req.id})
-  } catch (e) {
-    logger.error(
-      { url, method, err: e },
-      'Automate API request error suppressed.'
-    )
-    return null
+const invokeSafeJsonRequestFactory =
+  <Response extends Record<string, unknown> = Record<string, unknown>>(deps: {
+    logger: Logger
+  }) =>
+  async (...args: Parameters<typeof invokeRequest>): Promise<Response | null> => {
+    const { logger } = deps
+    const [{ url, method }] = args
+    try {
+      return await invokeJsonRequest<Response>({
+        ...args[0],
+        requestId: logger.bindings().req.id
+      })
+    } catch (e) {
+      logger.error({ url, method, err: e }, 'Automate API request error suppressed.')
+      return null
+    }
   }
-}
 
 const invokeJsonRequest = async <R = Record<string, unknown>>(
   ...args: Parameters<typeof invokeRequest>
@@ -109,7 +111,7 @@ const invokeJsonRequest = async <R = Record<string, unknown>>(
 const invokeRequest = async (params: {
   url: string
   method?: RequestInit['method']
-  body?: Record<string, unknown>,
+  body?: Record<string, unknown>
   requestId?: string
   token?: string
   retry?: boolean
@@ -123,7 +125,7 @@ const invokeRequest = async (params: {
           method,
           headers: {
             'Content-Type': 'application/json',
-            ...(requestId ? {'X-Request-Id': requestId} : {}),
+            'X-Request-Id': requestId ?? randomUUID(),
             ...(token?.length ? { Authorization: `Bearer ${token}` } : {})
           },
           body: body && isObjectLike(body) ? JSON.stringify(body) : undefined
@@ -390,78 +392,91 @@ export type GetFunctionResponse = FunctionWithVersionsSchemaType & {
   versionCursor: Nullable<string>
 }
 
-export const getFunction = async (params: {
-  functionId: string
-  token?: string
-  releases?: { cursor?: string; limit?: number; versionsFilter?: string }
-}) => {
-  const { functionId, token } = params
-  const query = Object.values(params.releases || {}).filter(isNonNullable).length
-    ? params.releases
-    : undefined
+export const getFunctionFactory =
+  (deps: { logger: Logger }) =>
+  async (params: {
+    functionId: string
+    token?: string
+    releases?: { cursor?: string; limit?: number; versionsFilter?: string }
+  }) => {
+    const { logger } = deps
+    const { functionId, token } = params
+    const query = Object.values(params.releases || {}).filter(isNonNullable).length
+      ? params.releases
+      : undefined
 
-  const url = getApiUrl(`/api/v1/functions/${functionId}`, {
-    query
-  })
+    const url = getApiUrl(`/api/v1/functions/${functionId}`, {
+      query
+    })
 
-  return await invokeSafeJsonRequest<GetFunctionResponse>({
-    url,
-    method: 'get',
-    token
-  })
-}
+    return await invokeSafeJsonRequestFactory<GetFunctionResponse>({
+      logger
+    })({
+      url,
+      method: 'get',
+      token
+    })
+  }
 
 export type GetFunctionReleaseResponse = FunctionReleaseSchemaType
 
 /**
  * TODO: Build optimized exec engine endpoint for this
  */
-export const getFunctionReleases = async (params: {
-  ids: Array<{ functionId: string; functionReleaseId: string }>
-}) => {
-  const { ids } = params
-  const results = await Promise.all(
-    ids.map(async ({ functionId, functionReleaseId }) => {
-      try {
-        return await getFunctionRelease({ functionId, functionReleaseId })
-      } catch (e) {
-        if (e instanceof ExecutionEngineNetworkError) {
-          return null
-        }
-        if (
-          e instanceof ExecutionEngineFailedResponseError &&
-          e.response.statusMessage === 'FunctionNotFound'
-        ) {
-          return null
-        }
+export const getFunctionReleasesFactory =
+  (deps: { logger: Logger }) =>
+  async (params: { ids: Array<{ functionId: string; functionReleaseId: string }> }) => {
+    const { logger } = deps
+    const { ids } = params
+    const results = await Promise.all(
+      ids.map(async ({ functionId, functionReleaseId }) => {
+        try {
+          return await getFunctionReleaseFactory({ logger })({
+            functionId,
+            functionReleaseId
+          })
+        } catch (e) {
+          if (e instanceof ExecutionEngineNetworkError) {
+            return null
+          }
+          if (
+            e instanceof ExecutionEngineFailedResponseError &&
+            e.response.statusMessage === 'FunctionNotFound'
+          ) {
+            return null
+          }
 
-        throw e
-      }
+          throw e
+        }
+      })
+    )
+
+    return results.filter(isNonNullable)
+  }
+
+export const getFunctionReleaseFactory =
+  (deps: { logger: Logger }) =>
+  async (params: { functionId: string; functionReleaseId: string }) => {
+    const { logger } = deps
+    const { functionId, functionReleaseId } = params
+    const url = getApiUrl(
+      `/api/v1/functions/${functionId}/versions/${functionReleaseId}`
+    )
+
+    const result = await invokeSafeJsonRequestFactory<GetFunctionReleaseResponse>({
+      logger
+    })({
+      url,
+      method: 'get'
     })
-  )
 
-  return results.filter(isNonNullable)
-}
-
-export const getFunctionRelease = async (params: {
-  functionId: string
-  functionReleaseId: string
-}) => {
-  const { functionId, functionReleaseId } = params
-  const url = getApiUrl(`/api/v1/functions/${functionId}/versions/${functionReleaseId}`)
-
-  const result = await invokeSafeJsonRequest<GetFunctionReleaseResponse>({
-    url,
-    method: 'get'
-  })
-
-  return result
-    ? {
-        ...result,
-        functionId
-      }
-    : null
-}
+    return result
+      ? {
+          ...result,
+          functionId
+        }
+      : null
+  }
 
 export type GetFunctionsResponse = {
   totalCount: number
@@ -469,81 +484,94 @@ export type GetFunctionsResponse = {
   items: FunctionWithVersionsSchemaType[]
 }
 
-export const getPublicFunctions = async (params: {
-  query?: {
-    query?: string
-    cursor?: string
-    limit?: number
-    functionsWithoutVersions?: boolean
-  },
-  logger: Logger
-}) => {
-  const { query, logger } = params
-  const url = getApiUrl(`/api/v1/functions`, {
-    query: {
-      ...query,
-      featuredFunctionsOnly: true
+export const getPublicFunctionsFactory =
+  (deps: { logger: Logger }) =>
+  async (params: {
+    query?: {
+      query?: string
+      cursor?: string
+      limit?: number
+      functionsWithoutVersions?: boolean
     }
-  })
+  }) => {
+    const { logger } = deps
+    const { query } = params
+    const url = getApiUrl(`/api/v1/functions`, {
+      query: {
+        ...query,
+        featuredFunctionsOnly: true
+      }
+    })
 
-  return await invokeSafeJsonRequest<GetFunctionsResponse>({
-    url,
-    method: 'get',
-    logger
-  })
-}
+    return await invokeSafeJsonRequestFactory<GetFunctionsResponse>({
+      logger
+    })({
+      url,
+      method: 'get'
+    })
+  }
 
 type GetUserFunctionsResponse = {
   functions: FunctionWithVersionsSchemaType[]
 }
 
-export const getUserFunctions = async (params: {
-  userId: string
-  query?: {
-    query?: string
-    cursor?: string
-    limit?: number
-  }
-  body: {
-    speckleServerAuthenticationPayload: AuthCodePayloadWithOrigin
-  }
-}) => {
-  const { userId, query, body } = params
-  const url = getApiUrl(`/api/v2/users/${userId}/functions`, { query })
+export const getUserFunctionsFactory =
+  (deps: { logger: Logger }) =>
+  async (params: {
+    userId: string
+    query?: {
+      query?: string
+      cursor?: string
+      limit?: number
+    }
+    body: {
+      speckleServerAuthenticationPayload: AuthCodePayloadWithOrigin
+    }
+  }) => {
+    const { logger } = deps
+    const { userId, query, body } = params
+    const url = getApiUrl(`/api/v2/users/${userId}/functions`, { query })
 
-  return await invokeSafeJsonRequest<GetUserFunctionsResponse>({
-    url,
-    method: 'POST',
-    body,
-    retry: false
-  })
-}
+    return await invokeSafeJsonRequestFactory<GetUserFunctionsResponse>({
+      logger
+    })({
+      url,
+      method: 'POST',
+      body,
+      retry: false
+    })
+  }
 
 type GetWorkspaceFunctionsResponse = {
   functions: FunctionWithVersionsSchemaType[]
 }
 
-export const getWorkspaceFunctions = async (params: {
-  workspaceId: string
-  query?: {
-    query?: string
-    cursor?: string
-    limit?: number
-  }
-  body: {
-    speckleServerAuthenticationPayload: AuthCodePayloadWithOrigin
-  }
-}) => {
-  const { workspaceId, query, body } = params
-  const url = getApiUrl(`/api/v2/workspaces/${workspaceId}/functions`, { query })
+export const getWorkspaceFunctionsFactory =
+  (deps: { logger: Logger }) =>
+  async (params: {
+    workspaceId: string
+    query?: {
+      query?: string
+      cursor?: string
+      limit?: number
+    }
+    body: {
+      speckleServerAuthenticationPayload: AuthCodePayloadWithOrigin
+    }
+  }) => {
+    const { logger } = deps
+    const { workspaceId, query, body } = params
+    const url = getApiUrl(`/api/v2/workspaces/${workspaceId}/functions`, { query })
 
-  return await invokeSafeJsonRequest<GetWorkspaceFunctionsResponse>({
-    url,
-    method: 'POST',
-    body,
-    retry: false
-  })
-}
+    return await invokeSafeJsonRequestFactory<GetWorkspaceFunctionsResponse>({
+      logger
+    })({
+      url,
+      method: 'POST',
+      body,
+      retry: false
+    })
+  }
 
 type UserGithubAuthStateResponse = {
   userHasAuthorizedGitHubApp: boolean
