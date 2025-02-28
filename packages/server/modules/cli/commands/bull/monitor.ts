@@ -8,7 +8,7 @@ import {
   buildNotificationsQueue
 } from '@/modules/notifications/services/queue'
 import { noop } from 'lodash'
-import { cliLogger } from '@/logging/logging'
+import { cliLogger } from '@/observability/logging'
 
 const PORT = 3032
 

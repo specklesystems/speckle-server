@@ -1,15 +1,15 @@
 import { WorkspaceSeat } from '@/modules/gatekeeper/domain/billing'
-import { WorkspaceFeatureName } from '@/modules/gatekeeper/domain/workspacePricing'
-import {
-  PlanStatuses,
-  WorkspacePlan,
-  WorkspacePlans
-} from '@/modules/gatekeeperCore/domain/billing'
+import { WorkspacePlan } from '@/modules/gatekeeperCore/domain/billing'
 import { Workspace } from '@/modules/workspacesCore/domain/types'
+import {
+  WorkspacePlanFeatures,
+  WorkspacePlans,
+  WorkspacePlanStatuses
+} from '@speckle/shared'
 
 export type CanWorkspaceAccessFeature = (args: {
   workspaceId: string
-  workspaceFeature: WorkspaceFeatureName
+  workspaceFeature: WorkspacePlanFeatures
 }) => Promise<boolean>
 
 export type WorkspaceFeatureAccessFunction = (args: {
@@ -24,7 +24,7 @@ export type GetWorkspacesByPlanDaysTillExpiry = (args: {
   daysTillExpiry: number
   planValidFor: number
   plan: WorkspacePlans
-  status: PlanStatuses
+  status: WorkspacePlanStatuses
 }) => Promise<Workspace[]>
 export type GetWorkspacePlanByProjectId = ({
   projectId

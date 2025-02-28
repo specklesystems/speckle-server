@@ -25,3 +25,9 @@ export class UnverifiedEmailSSOLoginError extends UserInputError<UnverifiedEmail
     'Email already in use by a user with unverified email. Verify the email on the existing user to be able to log in with this method.'
   static code = 'UNVERIFIED_EMAIL_SSO_LOGIN_ERROR'
 }
+
+export class BlockedEmailDomainError extends UserInputError {
+  static defaultMessage =
+    'Please use your work email instead of a personal email address'
+  static code = 'BLOCKED_EMAIL_DOMAIN_ERROR'
+}

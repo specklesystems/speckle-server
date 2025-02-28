@@ -22,7 +22,7 @@ import {
   isProjectResourceTarget,
   resolveTarget
 } from '@/modules/serverinvites/helpers/core'
-import { logger, moduleLogger } from '@/logging/logging'
+import { logger, moduleLogger } from '@/observability/logging'
 import { updateWorkspaceRoleFactory } from '@/modules/workspaces/services/management'
 import { EventPayload, getEventBus } from '@/modules/shared/services/eventBus'
 import { WorkspaceInviteResourceType } from '@/modules/workspacesCore/domain/constants'

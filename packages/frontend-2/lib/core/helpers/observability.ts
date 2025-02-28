@@ -13,6 +13,7 @@ import {
   noop
 } from 'lodash-es'
 import type { Logger, Level } from 'pino'
+import { ResourceLoadError } from '~/lib/core/errors/base'
 
 /**
  * Add pino-pretty like formatting
@@ -103,6 +104,12 @@ export const formatAppError = (err: SimpleError): SimpleError => {
     finalStatusCode = 429
   }
 
+  if (finalMessage.match(/\/_nuxt\/builds\/meta.*?404/i)) {
+    finalMessage =
+      'Speckle is currently upgrading to a newer version. Please reload the page in a few seconds.'
+    finalStatusCode = 500
+  }
+
   finalMessage = upperFirst(finalMessage)
 
   return {
@@ -152,12 +159,30 @@ export function enableCustomLoggerHandling(params: {
         return (...args: unknown[]) => {
           const log = logMethod.bind(target)
 
+          // Format passed in data, if needed
+          args = args
+            .map((arg) => {
+              // Convert error events to error type
+              if (arg instanceof Event && arg.type === 'error') {
+                return new ResourceLoadError()
+              }
+
+              return arg
+            })
+            .filter((arg) => {
+              // Filter out falsy values
+              return !!arg && !(['null', 'undefined'] as unknown[]).includes(arg)
+            })
+
+          // If nothing valid to log, skip entirely
+          if (args.length === 0) return
+
           const level = prop as Level
           const firstError = args.find((arg): arg is Error => arg instanceof Error)
 
           const firstString = args.find(isString)
           const otherData: unknown[] = args.filter(
-            (o) => !(o instanceof Error) && o !== firstString
+            (o) => o !== firstString && o !== firstError
           )
 
           const errorMessage = firstError?.message ?? firstString ?? `Unknown error`

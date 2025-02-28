@@ -1,12 +1,12 @@
 /* eslint-disable camelcase */
 import { type Registry, Counter } from 'prom-client'
-import { graphqlLogger } from '@/logging/logging'
-import { redactSensitiveVariables } from '@/logging/loggingHelper'
+import { graphqlLogger } from '@/observability/logging'
+import { redactSensitiveVariables } from '@/observability/utils/redact'
 import { FieldNode, SelectionNode } from 'graphql'
 import { ApolloServerPlugin } from '@apollo/server'
 import { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
-import { shouldLogAsInfoLevel } from '@/logging/graphqlError'
-import { getRequestContext } from '@/logging/requestContext'
+import { shouldLogAsInfoLevel } from '@/observability/utils/logLevels'
+import { getRequestContext } from '@/observability/components/express/requestContext'
 
 type ApolloLoggingPluginTransaction = {
   start: number

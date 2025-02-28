@@ -66,6 +66,11 @@ const parseFeatureFlags = () => {
       schema: z.boolean(),
       defaults: { production: false, _: false }
     },
+    // Enable to not allow personal emails
+    FF_NO_PERSONAL_EMAILS_ENABLED: {
+      schema: z.boolean(),
+      defaults: { production: false, _: false }
+    },
     // Fixes the streaming of objects by ensuring that the database stream is closed properly
     FF_OBJECTS_STREAMING_FIX: {
       schema: z.boolean(),
@@ -75,6 +80,10 @@ const parseFeatureFlags = () => {
     FF_MOVE_PROJECT_REGION_ENABLED: {
       schema: z.boolean(),
       defaults: { production: false, _: true }
+    },
+    FF_WORKSPACES_NEW_PLAN_ENABLED: {
+      schema: z.boolean(),
+      defaults: { production: false, _: false }
     }
   })
 
@@ -104,6 +113,8 @@ export function getFeatureFlags(): {
   FF_FORCE_ONBOARDING: boolean
   FF_OBJECTS_STREAMING_FIX: boolean
   FF_MOVE_PROJECT_REGION_ENABLED: boolean
+  FF_WORKSPACES_NEW_PLAN_ENABLED: boolean
+  FF_NO_PERSONAL_EMAILS_ENABLED: boolean
 } {
   if (!parsedFlags) parsedFlags = parseFeatureFlags()
   return parsedFlags

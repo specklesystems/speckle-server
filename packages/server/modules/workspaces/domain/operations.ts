@@ -356,6 +356,22 @@ export type UpdateProjectRegion = (params: {
   regionKey: string
 }) => Promise<Stream>
 
+/**
+ * Given a count of objects successfully copied to another region, confirm that these counts
+ * match the current state of the source project in its original region.
+ */
+export type ValidateProjectRegionCopy = (params: {
+  projectId: string
+  copiedRowCount: {
+    models: number
+    versions: number
+    objects: number
+    automations: number
+    comments: number
+    webhooks: number
+  }
+}) => Promise<boolean>
+
 export type CopyWorkspace = (params: { workspaceId: string }) => Promise<string>
 export type CopyProjects = (params: { projectIds: string[] }) => Promise<string[]>
 export type CopyProjectModels = (params: {
@@ -374,3 +390,12 @@ export type CopyProjectAutomations = (params: {
 export type AssignWorkspaceSeat = (
   params: Pick<WorkspaceSeat, 'userId' | 'workspaceId'> & { type?: WorkspaceSeatType }
 ) => Promise<WorkspaceSeat>
+export type CopyProjectComments = (params: {
+  projectIds: string[]
+}) => Promise<Record<string, number>>
+export type CopyProjectWebhooks = (params: {
+  projectIds: string[]
+}) => Promise<Record<string, number>>
+export type CopyProjectBlobs = (params: {
+  projectIds: string[]
+}) => Promise<Record<string, number>>

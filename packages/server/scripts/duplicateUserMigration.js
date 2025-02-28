@@ -1,5 +1,5 @@
 const { knex } = require('@/db/knex')
-const { logger } = require('@/logging/logging')
+const { logger } = require('@/observability/logging')
 const roles = require('@/modules/core/roles.js')
 const { Roles } = require('@speckle/shared')
 

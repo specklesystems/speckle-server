@@ -1,77 +1,62 @@
-const crs = require('crypto-random-string')
-const chai = require('chai')
-const request = require('supertest')
-
-const { TIME } = require('@speckle/shared')
-const { RATE_LIMITERS, createConsumer } = require('@/modules/core/services/ratelimiter')
-const { beforeEachContext, initializeTestServer } = require('@/test/hooks')
-const { createStreamInviteDirectly } = require('@/test/speckle-helpers/inviteHelper')
-const { RateLimiterMemory } = require('rate-limiter-flexible')
-const {
+import crs from 'crypto-random-string'
+import chai from 'chai'
+import request from 'supertest'
+import httpMocks from 'node-mocks-http'
+import { TIME } from '@speckle/shared'
+import { RATE_LIMITERS, createConsumer } from '@/modules/core/services/ratelimiter'
+import { beforeEachContext, initializeTestServer } from '@/test/hooks'
+import { createStreamInviteDirectly } from '@/test/speckle-helpers/inviteHelper'
+import { RateLimiterMemory } from 'rate-limiter-flexible'
+import {
   findInviteFactory,
   findUserByTargetFactory,
   insertInviteAndDeleteOldFactory,
   deleteServerOnlyInvitesFactory,
   updateAllInviteTargetsFactory
-} = require('@/modules/serverinvites/repositories/serverInvites')
-const { db } = require('@/db/knex')
-const {
+} from '@/modules/serverinvites/repositories/serverInvites'
+import { db } from '@/db/knex'
+import {
   legacyCreateStreamFactory,
   createStreamReturnRecordFactory
-} = require('@/modules/core/services/streams/management')
-const {
-  inviteUsersToProjectFactory
-} = require('@/modules/serverinvites/services/projectInviteManagement')
-const {
-  createAndSendInviteFactory
-} = require('@/modules/serverinvites/services/creation')
-const {
-  collectAndValidateCoreTargetsFactory
-} = require('@/modules/serverinvites/services/coreResourceCollection')
-const {
+} from '@/modules/core/services/streams/management'
+import { inviteUsersToProjectFactory } from '@/modules/serverinvites/services/projectInviteManagement'
+import { createAndSendInviteFactory } from '@/modules/serverinvites/services/creation'
+import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
+import {
   getStreamFactory,
   createStreamFactory
-} = require('@/modules/core/repositories/streams')
-const {
-  buildCoreInviteEmailContentsFactory
-} = require('@/modules/serverinvites/services/coreEmailContents')
-const { getEventBus } = require('@/modules/shared/services/eventBus')
-const { createBranchFactory } = require('@/modules/core/repositories/branches')
-const {
+} from '@/modules/core/repositories/streams'
+import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
+import { getEventBus } from '@/modules/shared/services/eventBus'
+import { createBranchFactory } from '@/modules/core/repositories/branches'
+import {
   getUsersFactory,
   getUserFactory,
   storeUserFactory,
   countAdminUsersFactory,
   storeUserAclFactory,
   legacyGetUserByEmailFactory
-} = require('@/modules/core/repositories/users')
-const {
+} from '@/modules/core/repositories/users'
+import {
   findEmailFactory,
   createUserEmailFactory,
   ensureNoPrimaryEmailForUserFactory
-} = require('@/modules/core/repositories/userEmails')
-const {
-  requestNewEmailVerificationFactory
-} = require('@/modules/emails/services/verification/request')
-const {
-  deleteOldAndInsertNewVerificationFactory
-} = require('@/modules/emails/repositories')
-const { renderEmail } = require('@/modules/emails/services/emailRendering')
-const { sendEmail } = require('@/modules/emails/services/sending')
-const { createUserFactory } = require('@/modules/core/services/users/management')
-const {
-  validateAndCreateUserEmailFactory
-} = require('@/modules/core/services/userEmails')
-const {
-  finalizeInvitedServerRegistrationFactory
-} = require('@/modules/serverinvites/services/processing')
-const {
+} from '@/modules/core/repositories/userEmails'
+import { requestNewEmailVerificationFactory } from '@/modules/emails/services/verification/request'
+import { deleteOldAndInsertNewVerificationFactory } from '@/modules/emails/repositories'
+import { renderEmail } from '@/modules/emails/services/emailRendering'
+import { sendEmail } from '@/modules/emails/services/sending'
+import { createUserFactory } from '@/modules/core/services/users/management'
+import { validateAndCreateUserEmailFactory } from '@/modules/core/services/userEmails'
+import { finalizeInvitedServerRegistrationFactory } from '@/modules/serverinvites/services/processing'
+import {
   getServerInfoFactory,
   updateServerInfoFactory
-} = require('@/modules/core/repositories/server')
-const {
-  temporarilyEnableRateLimiter
-} = require('@/modules/core/tests/ratelimiter.spec')
+} from '@/modules/core/repositories/server'
+import { temporarilyEnableRateLimiter } from '@/modules/core/tests/ratelimiter.spec'
+import { passportAuthenticationCallbackFactory } from '@/modules/auth/services/passportService'
+import { testLogger as logger } from '@/observability/logging'
+import { Application } from 'express'
 
 const getServerInfo = getServerInfoFactory({ db })
 const getUser = getUserFactory({ db })
@@ -139,14 +124,20 @@ const updateServerInfo = updateServerInfoFactory({ db })
 
 const expect = chai.expect
 
-let app
-let sendRequest
+let app: Application
+let sendRequest: Awaited<ReturnType<typeof initializeTestServer>>['sendRequest']
 
 describe('Auth @auth', () => {
   describe('Local authN & authZ (token endpoints)', () => {
     const registeredUserEmail = 'registered@speckle.systems'
 
-    const me = {
+    const me: {
+      name: string
+      company: string
+      email: string
+      password: string
+      id?: string
+    } = {
       name: 'dimitrie stefanescu',
       company: 'speckle',
       email: registeredUserEmail,
@@ -154,7 +145,11 @@ describe('Auth @auth', () => {
       id: undefined
     }
 
-    const myPrivateStream = {
+    const myPrivateStream: {
+      name: string
+      isPublic: boolean
+      id?: string
+    } = {
       name: 'My Private Stream 1',
       isPublic: false,
       id: undefined
@@ -169,7 +164,7 @@ describe('Auth @auth', () => {
       await createUser(me).then((id) => (me.id = id))
 
       // Create a test stream for testing stream invites
-      await createStream({ ...myPrivateStream, ownerId: me.id }).then(
+      await createStream({ ...myPrivateStream, ownerId: me.id! }).then(
         (id) => (myPrivateStream.id = id)
       )
     })
@@ -219,7 +214,7 @@ describe('Auth @auth', () => {
             : {
                 email: targetEmail
               },
-          inviterUser.id
+          inviterUser!.id
         )
 
         // No invite
@@ -483,7 +478,7 @@ describe('Auth @auth', () => {
         .expect(401)
     })
 
-    let frontendCredentials
+    let frontendCredentials: { token: string; refreshToken: string }
 
     it('Should get an access code (redirected response)', async () => {
       const appId = 'spklwebapp'
@@ -565,7 +560,7 @@ describe('Auth @auth', () => {
     })
 
     it('Should rate-limit user creation', async () => {
-      const newUser = async (id, ip, expectCode) => {
+      const newUser = async (id: string, ip: string, expectCode: number) => {
         await request(app)
           .post(`/auth/local/register?challenge=test`)
           .set('CF-Connecting-IP', ip)
@@ -607,6 +602,144 @@ describe('Auth @auth', () => {
       })
 
       RATE_LIMITERS.USER_CREATE = oldRateLimiter
+    })
+  })
+
+  describe('passportAuthenticationCallbackFactory', () => {
+    it('Should handle a successful passport authentication (a user exists)', async () => {
+      const req = httpMocks.createRequest({})
+      const res = httpMocks.createResponse()
+      let errorCalledCounter = 0
+      let nextCalledCounter = 0
+      const next = (err: unknown) => {
+        if (err) {
+          errorCalledCounter++
+        }
+        nextCalledCounter++
+      }
+      const SUT = passportAuthenticationCallbackFactory({
+        strategy: 'wotStrategy',
+        req,
+        res,
+        next
+      })
+
+      SUT(null, { id: '123', email: 'weLoveAuth@example.org' }, undefined)
+
+      expect(req).to.have.property('user')
+      expect(req.user?.id).to.equal('123')
+      expect(
+        errorCalledCounter,
+        'error request handler "next(err)" should not have been called'
+      ).to.equal(0)
+      expect(
+        nextCalledCounter,
+        'next request handler should have been called'
+      ).to.equal(1)
+    })
+    it('Should handle case where there is an error but no user', async () => {
+      const req = httpMocks.createRequest()
+      req.log = logger
+      const res = httpMocks.createResponse()
+      let errorCalledCounter = 0
+      let nextCalledCounter = 0
+      const next = (err: unknown) => {
+        if (err) {
+          errorCalledCounter++
+        }
+        nextCalledCounter++
+      }
+      const SUT = passportAuthenticationCallbackFactory({
+        strategy: 'wotStrategy',
+        req,
+        res,
+        next
+      })
+
+      SUT(new Error('I brrrrroke'), undefined, undefined)
+      expect(
+        res._getRedirectUrl().includes('/error'),
+        `Redirect url was '${res._getRedirectUrl()}'`
+      ).to.be.true
+      expect(req).not.to.have.property('user')
+      expect(
+        errorCalledCounter,
+        'error request handler "next(err)" should not have been called'
+      ).to.equal(0)
+      expect(
+        nextCalledCounter,
+        'next request handler should not have been called'
+      ).to.equal(0)
+    })
+    it('Should handle case where there is an error and a user', async () => {
+      const req = httpMocks.createRequest()
+      req.log = logger
+      const res = httpMocks.createResponse()
+      let errorCalledCounter = 0
+      let nextCalledCounter = 0
+      const next = (err: unknown) => {
+        if (err) {
+          errorCalledCounter++
+        }
+        nextCalledCounter++
+      }
+      const SUT = passportAuthenticationCallbackFactory({
+        strategy: 'wotStrategy',
+        req,
+        res,
+        next
+      })
+
+      SUT(
+        new Error('I brrrrrooooken'),
+        { id: '1234', email: 'allFizzy@example.org' },
+        undefined
+      )
+
+      // Should not have set the user if there was an error
+      expect(req).to.not.have.property('user')
+      expect(
+        errorCalledCounter,
+        'error request handler "next(err)" should have been called'
+      ).to.equal(1)
+      expect(
+        nextCalledCounter,
+        'next request handler should have been called'
+      ).to.equal(1)
+    })
+    it('Should handle the case where there is no user and no error', async () => {
+      const req = httpMocks.createRequest()
+      req.log = logger
+      const res = httpMocks.createResponse()
+      let errorCalledCounter = 0
+      let nextCalledCounter = 0
+      const next = (err: unknown) => {
+        if (err) {
+          errorCalledCounter++
+        }
+        nextCalledCounter++
+      }
+      const SUT = passportAuthenticationCallbackFactory({
+        strategy: 'wotStrategy',
+        req,
+        res,
+        next
+      })
+
+      SUT(null, undefined, undefined)
+      expect(
+        res._getRedirectUrl().includes('/error'),
+        `Redirect url was '${res._getRedirectUrl()}'`
+      ).to.be.true
+      expect(req).not.to.have.property('user')
+      expect(
+        errorCalledCounter,
+        'error request handler "next(err)" should not have been called'
+      ).to.equal(0)
+      expect(
+        nextCalledCounter,
+        'next request handler should not have been called'
+      ).to.equal(0)
     })
   })
 })

@@ -1,5 +1,5 @@
 /* istanbul ignore file */
-// const { logger } = require('@/logging/logging')
+// const { logger } = require('@/observability/logging')
 const crypto = require('crypto')
 
 function generateManyObjects(shitTon, noise) {
