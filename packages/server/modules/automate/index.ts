@@ -58,7 +58,7 @@ import { getEventBus } from '@/modules/shared/services/eventBus'
 import { VersionEvents } from '@/modules/core/domain/commits/events'
 import { AutomationEvents, AutomationRunEvents } from '@/modules/automate/domain/events'
 import { LogicError } from '@/modules/shared/errors'
-import { maybeLoggerWithContext } from '@/observability/components/express/requestContext'
+import { loggerWithMaybeContext } from '@/observability/components/express/requestContext'
 
 const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
 let quitListeners: Optional<() => void> = undefined
@@ -177,7 +177,7 @@ const initializeEventListeners = () => {
     getEventBus().listen(
       AutomationRunEvents.Created,
       async ({ payload: { manifests, run, automation } }) => {
-        const logger = maybeLoggerWithContext({ logger: automateLogger })!
+        const logger = loggerWithMaybeContext({ logger: automateLogger })
         const validatedManifests = manifests
           .map((manifest) => {
             if (isVersionCreatedTriggerManifest(manifest)) {
@@ -267,7 +267,7 @@ const initializeEventListeners = () => {
       AutomationRunEvents.StatusUpdated,
       async ({ payload: { run, functionRun, automationId, projectId } }) => {
         if (!isFinished(run.status)) return
-        const logger = maybeLoggerWithContext({ logger: automateLogger })!
+        const logger = loggerWithMaybeContext({ logger: automateLogger })
         const projectDb = await getProjectDbClient({ projectId })
         const project = await getProjectFactory({ db: projectDb })({ projectId })
 
@@ -321,7 +321,7 @@ const initializeEventListeners = () => {
     getEventBus().listen(
       AutomationRunEvents.Created,
       async ({ payload: { automation, run: automationRun, source, manifests } }) => {
-        const logger = maybeLoggerWithContext({ logger: automateLogger })!
+        const logger = loggerWithMaybeContext({ logger: automateLogger })
         const manifest = manifests.at(0)
         if (!manifest || !isVersionCreatedTriggerManifest(manifest)) {
           logger.error(
