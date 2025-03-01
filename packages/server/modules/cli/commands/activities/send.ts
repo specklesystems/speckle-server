@@ -1,7 +1,7 @@
 import { CommandModule } from 'yargs'
 import { initializeQueue } from '@/modules/notifications/services/queue'
 import { publishNotification } from '@/modules/notifications/services/publication'
-import { cliLogger } from '@/logging/logging'
+import { cliLogger } from '@/observability/logging'
 import { sendActivityNotificationsFactory } from '@/modules/activitystream/services/summary'
 import { getActiveUserStreamsFactory } from '@/modules/activitystream/repositories'
 import { db } from '@/db/knex'

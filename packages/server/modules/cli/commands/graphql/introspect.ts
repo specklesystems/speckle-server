@@ -1,5 +1,5 @@
 import { CommandModule } from 'yargs'
-import { cliLogger } from '@/logging/logging'
+import { cliLogger as logger } from '@/observability/logging'
 import * as ModulesSetup from '@/modules'
 import { printSchema } from 'graphql/utilities'
 import fs from 'node:fs/promises'
@@ -17,11 +17,11 @@ const command: CommandModule<unknown, { file: string }> = {
     }
   },
   handler: async ({ file }) => {
-    cliLogger.info('Loading GQL schema...')
+    logger.info('Loading GQL schema...')
     const schema = ModulesSetup.graphSchema()
     const schemaString = printSchema(schema)
 
-    cliLogger.info(`Saving to "${file}"...`)
+    logger.info(`Saving to "${file}"...`)
     const absolutePath = path.isAbsolute(file)
       ? file
       : path.resolve(process.cwd(), file)

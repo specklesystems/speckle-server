@@ -1,4 +1,4 @@
-import { REQUEST_ID_HEADER } from '@/logging/expressLogging'
+import { REQUEST_ID_HEADER } from '@/observability/components/express/expressLogging'
 import { asyncRequestContextEnabled } from '@/modules/shared/helpers/envHelper'
 import type express from 'express'
 import { AsyncLocalStorage } from 'node:async_hooks'

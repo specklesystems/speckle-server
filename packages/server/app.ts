@@ -1,6 +1,6 @@
 /* eslint-disable camelcase */
-/* eslint-disable  no-restricted-imports */
 /* istanbul ignore file */
+// eslint-disable-next-line no-restricted-imports
 import './bootstrap'
 import http from 'http'
 import express, { Express } from 'express'
@@ -10,20 +10,20 @@ import 'express-async-errors'
 import cookieParser from 'cookie-parser'
 
 import { createTerminus } from '@godaddy/terminus'
-import Metrics from '@/logging'
+import Metrics from '@/observability'
 import {
   startupLogger,
   shutdownLogger,
   subscriptionLogger,
   graphqlLogger
-} from '@/logging/logging'
+} from '@/observability/logging'
 import {
   DetermineRequestIdMiddleware,
   LoggingExpressMiddleware,
   sanitizeHeaders
-} from '@/logging/expressLogging'
+} from '@/observability/components/express/expressLogging'
 
-import { errorMetricsMiddleware } from '@/logging/errorMetrics'
+import { errorMetricsMiddleware } from '@/observability/components/express/metrics/errorMetrics'
 import prometheusClient from 'prom-client'
 
 import { ApolloServer } from '@apollo/server'
@@ -36,7 +36,7 @@ import { SubscriptionServer } from 'subscriptions-transport-ws'
 import { execute, subscribe } from 'graphql'
 
 import knex, { db } from '@/db/knex'
-import { monitorActiveConnections } from '@/logging/httpServerMonitoring'
+import { monitorActiveConnections } from '@/observability/components/httpServer/httpServerMonitoring'
 import { buildErrorFormatter } from '@/modules/core/graph/setup'
 import {
   getFileSizeLimitMB,
@@ -82,10 +82,10 @@ import {
   enterNewRequestContext,
   getRequestContext,
   initiateRequestContextMiddleware
-} from '@/logging/requestContext'
+} from '@/observability/components/express/requestContext'
 import { randomUUID } from 'crypto'
-import { onOperationHandlerFactory } from '@/logging/apolloSubscriptions'
-import { initApolloSubscriptionMonitoring } from './logging/apolloSubscriptionMonitoring'
+import { onOperationHandlerFactory } from '@/observability/components/apollo/apolloSubscriptions'
+import { initApolloSubscriptionMonitoring } from '@/observability/components/apollo/metrics/apolloSubscriptionMonitoring'
 
 const GRAPHQL_PATH = '/graphql'
 

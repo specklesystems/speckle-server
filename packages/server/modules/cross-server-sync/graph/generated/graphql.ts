@@ -246,6 +246,11 @@ export type AutomateAuthCodePayloadTest = {
   workspaceId?: InputMaybe<Scalars['String']['input']>;
 };
 
+/** Additional resources to validate user access to. */
+export type AutomateAuthCodeResources = {
+  workspaceId?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type AutomateFunction = {
   __typename?: 'AutomateFunction';
   /** Only returned if user is a part of this speckle server */
@@ -2728,6 +2733,7 @@ export type QueryAutomateFunctionsArgs = {
 
 export type QueryAutomateValidateAuthCodeArgs = {
   payload: AutomateAuthCodePayloadTest;
+  resources?: InputMaybe<AutomateAuthCodeResources>;
 };
 
 

@@ -1,4 +1,4 @@
-import { automateLogger, moduleLogger } from '@/logging/logging'
+import { automateLogger, moduleLogger } from '@/observability/logging'
 import { Optional, SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import {
   onModelVersionCreateFactory,
@@ -17,7 +17,7 @@ import {
 import { isNonNullable, Scopes } from '@speckle/shared'
 import { registerOrUpdateScopeFactory } from '@/modules/shared/repositories/scopes'
 import {
-  getFunction,
+  getFunctionFactory,
   triggerAutomationRun
 } from '@/modules/automate/clients/executionEngine'
 import logStreamRest from '@/modules/automate/rest/logStream'
@@ -58,7 +58,7 @@ import { getEventBus } from '@/modules/shared/services/eventBus'
 import { VersionEvents } from '@/modules/core/domain/commits/events'
 import { AutomationEvents, AutomationRunEvents } from '@/modules/automate/domain/events'
 import { LogicError } from '@/modules/shared/errors'
-import { maybeLoggerWithContext } from '@/logging/requestContext'
+import { maybeLoggerWithContext } from '@/observability/components/express/requestContext'
 
 const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
 let quitListeners: Optional<() => void> = undefined
@@ -289,7 +289,7 @@ const initializeEventListeners = () => {
 
         const fn = isTestEnv()
           ? null
-          : await getFunction({ functionId: functionRun.functionId })
+          : await getFunctionFactory({ logger })({ functionId: functionRun.functionId })
 
         const userEmail = await getUserEmailFromAutomationRunFactory({
           getFullAutomationRevisionMetadata: getFullAutomationRevisionMetadataFactory({

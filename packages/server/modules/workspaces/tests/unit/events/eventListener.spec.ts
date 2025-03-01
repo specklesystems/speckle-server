@@ -84,7 +84,8 @@ describe('Event handlers', () => {
         },
         upsertProjectRole: async () => {
           expect.fail()
-        }
+        },
+        assignWorkspaceSeat: async () => undefined
       })({
         role: Roles.Workspace.Guest,
         userId: cryptoRandomString({ length: 10 }),
@@ -123,7 +124,8 @@ describe('Event handlers', () => {
           storedRoles.push(args)
           trackProjectUpdate = trackProjectUpdate || options?.trackProjectUpdate
           return {} as StreamRecord
-        }
+        },
+        assignWorkspaceSeat: async () => undefined
       })({
         role: Roles.Workspace.Member,
         userId,

@@ -382,6 +382,7 @@ function createLink(params: {
       // only log as error if at least one error has a status code of 5xx or has no status code
       const shouldLogAsWarn = gqlErrors.every(
         (e) =>
+          e.extensions &&
           'statusCode' in e.extensions &&
           typeof e.extensions.statusCode === 'number' &&
           e.extensions.statusCode < 500

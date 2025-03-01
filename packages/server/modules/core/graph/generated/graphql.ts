@@ -265,6 +265,11 @@ export type AutomateAuthCodePayloadTest = {
   workspaceId?: InputMaybe<Scalars['String']['input']>;
 };
 
+/** Additional resources to validate user access to. */
+export type AutomateAuthCodeResources = {
+  workspaceId?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type AutomateFunction = {
   __typename?: 'AutomateFunction';
   /** Only returned if user is a part of this speckle server */
@@ -2747,6 +2752,7 @@ export type QueryAutomateFunctionsArgs = {
 
 export type QueryAutomateValidateAuthCodeArgs = {
   payload: AutomateAuthCodePayloadTest;
+  resources?: InputMaybe<AutomateAuthCodeResources>;
 };
 
 
@@ -4938,6 +4944,7 @@ export type ResolversTypes = {
   ArchiveCommentInput: ArchiveCommentInput;
   AuthStrategy: ResolverTypeWrapper<AuthStrategy>;
   AutomateAuthCodePayloadTest: AutomateAuthCodePayloadTest;
+  AutomateAuthCodeResources: AutomateAuthCodeResources;
   AutomateFunction: ResolverTypeWrapper<AutomateFunctionGraphQLReturn>;
   AutomateFunctionCollection: ResolverTypeWrapper<Omit<AutomateFunctionCollection, 'items'> & { items: Array<ResolversTypes['AutomateFunction']> }>;
   AutomateFunctionRelease: ResolverTypeWrapper<AutomateFunctionReleaseGraphQLReturn>;
@@ -5251,6 +5258,7 @@ export type ResolversParentTypes = {
   ArchiveCommentInput: ArchiveCommentInput;
   AuthStrategy: AuthStrategy;
   AutomateAuthCodePayloadTest: AutomateAuthCodePayloadTest;
+  AutomateAuthCodeResources: AutomateAuthCodeResources;
   AutomateFunction: AutomateFunctionGraphQLReturn;
   AutomateFunctionCollection: Omit<AutomateFunctionCollection, 'items'> & { items: Array<ResolversParentTypes['AutomateFunction']> };
   AutomateFunctionRelease: AutomateFunctionReleaseGraphQLReturn;
