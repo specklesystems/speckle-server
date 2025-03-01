@@ -22,9 +22,13 @@ import { withTransaction } from '@/modules/shared/helpers/dbHelper'
 import { getStripeClient } from '@/modules/gatekeeper/stripe'
 import { handleSubscriptionUpdateFactory } from '@/modules/gatekeeper/services/subscriptions'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import { extendLoggerComponent } from '@/logging/logging'
-import { OperationName, OperationStatus, stripeEventId } from '@/logging/domain/fields'
-import { logWithErr } from '@/logging/graphqlError'
+import { extendLoggerComponent } from '@/observability/logging'
+import {
+  OperationName,
+  OperationStatus,
+  stripeEventId
+} from '@/observability/domain/fields'
+import { logWithErr } from '@/observability/utils/logLevels'
 
 export const getBillingRouter = (): Router => {
   const router = Router()
