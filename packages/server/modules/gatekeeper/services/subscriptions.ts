@@ -328,7 +328,6 @@ export const downscaleWorkspaceSubscriptionFactory =
 
 export const manageSubscriptionDownscaleFactory =
   ({
-    logger,
     getWorkspaceSubscriptions,
     downscaleWorkspaceSubscription,
     updateWorkspaceSubscription
@@ -336,9 +335,9 @@ export const manageSubscriptionDownscaleFactory =
     getWorkspaceSubscriptions: GetWorkspaceSubscriptions
     downscaleWorkspaceSubscription: DownscaleWorkspaceSubscription
     updateWorkspaceSubscription: UpsertWorkspaceSubscription
-    logger: Logger
   }) =>
-  async () => {
+  async (context: { logger: Logger }) => {
+    const { logger } = context
     const subscriptions = await getWorkspaceSubscriptions()
     for (const workspaceSubscription of subscriptions) {
       const log = logger.child({ workspaceId: workspaceSubscription.workspaceId })
