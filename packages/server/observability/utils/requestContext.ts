@@ -1,11 +1,11 @@
-import { REQUEST_ID_HEADER } from '@/observability/components/express/expressLogging'
 import { asyncRequestContextEnabled } from '@/modules/shared/helpers/envHelper'
-import type express from 'express'
 import { AsyncLocalStorage } from 'node:async_hooks'
 import type { Logger } from 'pino'
 
 type StorageType = {
-  requestId: string
+  requestId?: string
+  taskId?: string
+  taskName?: string
   dbMetrics: {
     totalDuration: number
     totalCount: number
@@ -16,20 +16,16 @@ const storage = asyncRequestContextEnabled()
   ? new AsyncLocalStorage<StorageType>()
   : undefined
 
-export const initiateRequestContextMiddleware: express.RequestHandler = (
-  req,
-  _res,
-  next
-) => {
-  const reqId = req.id || req.headers[REQUEST_ID_HEADER] || 'unknown'
-  enterNewRequestContext({ reqId: reqId as string })
-  next()
-}
-
-export const enterNewRequestContext = (params: { reqId: string }) => {
+export const enterNewRequestContext = (params: {
+  reqId?: string
+  taskId?: string
+  taskName?: string
+}) => {
   const { reqId } = params
   const store: StorageType = {
     requestId: reqId,
+    taskId: params.taskId,
+    taskName: params.taskName,
     dbMetrics: {
       totalCount: 0,
       totalDuration: 0
@@ -44,7 +40,9 @@ export const loggerWithMaybeContext = ({ logger }: { logger: Logger }) => {
   const reqCtx = getRequestContext()
   if (!reqCtx) return logger
   return logger.child({
-    req: { id: reqCtx.requestId },
+    req: reqCtx.requestId ? { id: reqCtx.requestId } : undefined,
+    taskId: reqCtx.taskId,
+    taskName: reqCtx.taskName,
     dbMetrics: reqCtx.dbMetrics
   })
 }

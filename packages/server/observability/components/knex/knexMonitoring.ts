@@ -4,7 +4,7 @@ import { type Knex } from 'knex'
 import { Logger } from 'pino'
 import { toNDecimalPlaces } from '@/modules/core/utils/formatting'
 import { omit } from 'lodash'
-import { getRequestContext } from '@/observability/components/express/requestContext'
+import { getRequestContext } from '@/observability/utils/requestContext'
 import { collectLongTrace } from '@speckle/shared'
 
 let metricQueryDuration: prometheusClient.Summary<string>

@@ -80,12 +80,12 @@ import type { Server as MockWsServer } from 'mock-socket'
 import { SetOptional } from 'type-fest'
 import {
   enterNewRequestContext,
-  getRequestContext,
-  initiateRequestContextMiddleware
-} from '@/observability/components/express/requestContext'
+  getRequestContext
+} from '@/observability/utils/requestContext'
 import { randomUUID } from 'crypto'
 import { onOperationHandlerFactory } from '@/observability/components/apollo/apolloSubscriptions'
 import { initApolloSubscriptionMonitoring } from '@/observability/components/apollo/metrics/apolloSubscriptionMonitoring'
+import { initiateRequestContextMiddleware } from '@/observability/components/express/requestContextMiddleware'
 
 const GRAPHQL_PATH = '/graphql'
 

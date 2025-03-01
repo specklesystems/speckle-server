@@ -6,7 +6,7 @@ import { BaseError } from '@/modules/shared/errors'
 import { GraphQLError } from 'graphql'
 import { redactSensitiveVariables } from '@/observability/utils/redact'
 import type { Counter } from 'prom-client'
-import { getRequestContext } from '@/observability/components/express/requestContext'
+import { getRequestContext } from '@/observability/utils/requestContext'
 import { subscriptionLogger } from '@/observability/logging'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
