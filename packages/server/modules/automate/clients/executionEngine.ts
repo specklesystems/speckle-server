@@ -502,12 +502,21 @@ export const getFunctionsFactory =
   (deps: { logger: Logger }) => async (params: GetFunctionsParams) => {
     const { logger } = deps
 
+    logger.info(
+      {
+        params
+      },
+      'Listing functions with these parameters'
+    )
+
     const url = getApiUrl(`/api/v2/functions`, {
       query: {
         requireRelease: true,
         ...params.filters
       }
     })
+
+    logger.info({ url }, 'Issuing request to this url')
 
     const authToken = params.auth
       ? Buffer.from(
