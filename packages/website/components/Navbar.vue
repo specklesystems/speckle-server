@@ -18,7 +18,7 @@
           >
             Log in
           </button>
-          <FormButton size="">Sign up</FormButton>
+          <FormButton>Sign up</FormButton>
         </div>
       </div>
     </div>
