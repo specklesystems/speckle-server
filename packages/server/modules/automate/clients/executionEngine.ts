@@ -1,4 +1,4 @@
-import { automateLogger } from '@/observability/logging'
+import { automateLogger, logger } from '@/observability/logging'
 import {
   ExecutionEngineBadResponseBodyError,
   type ExecutionEngineErrorResponse,
@@ -62,8 +62,21 @@ const getApiUrl = (
   if (!path?.length) return automateUrl
 
   const url = new URL(path, automateUrl)
+  logger.info(
+    {
+      query: options?.query
+    },
+    'Converting query to search parameters'
+  )
   if (options?.query) {
     Object.entries(options.query).forEach(([key, val]) => {
+      logger.info(
+        {
+          key,
+          val
+        },
+        'Setting search parameter'
+      )
       if (isEmpty(val) || isNullOrUndefined(val)) return
       try {
         const urlValue = typeof val === 'object' ? val.join(',') : val.toString()
@@ -509,11 +522,20 @@ export const getFunctionsFactory =
       'Listing functions with these parameters'
     )
 
+    const query = {
+      requireRelease: true,
+      ...params.filters
+    }
+
+    logger.info(
+      {
+        query
+      },
+      'Parameters parsed as this query'
+    )
+
     const url = getApiUrl(`/api/v2/functions`, {
-      query: {
-        requireRelease: true,
-        ...params.filters
-      }
+      query
     })
 
     logger.info({ url }, 'Issuing request to this url')
