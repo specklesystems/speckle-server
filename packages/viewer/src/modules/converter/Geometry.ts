@@ -101,15 +101,16 @@ export class Geometry {
 
     for (let i = 0; i < indexAttributes.length; ++i) {
       const index = indexAttributes[i]
-      if (!index || !positionAttributes) {
+      const positions = positionAttributes[i]
+      if (!index || !positions) {
         throw new Error('Cannot merge geometries. Indices or positions are undefined')
       }
 
       for (let j = 0; j < index.length; ++j) {
-        mergedIndex.push(index[j] + indexOffset)
+        mergedIndex.push(index[j] + indexOffset / 3)
       }
 
-      indexOffset += positionAttributes.length
+      indexOffset += positions.length
     }
     return mergedIndex
   }
