@@ -64,7 +64,8 @@ const getApiUrl = (
   const url = new URL(path, automateUrl)
   if (options?.query) {
     Object.entries(options.query).forEach(([key, val]) => {
-      if (isEmpty(val) || isNullOrUndefined(val)) return
+      if (isNullOrUndefined(val)) return
+      if (typeof val === 'object' && isEmpty(val)) return
       try {
         const urlValue = typeof val === 'object' ? val.join(',') : val.toString()
         url.searchParams.append(key, urlValue)
