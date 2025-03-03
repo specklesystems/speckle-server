@@ -57,7 +57,8 @@ export default async function (params: { app: express.Express; registry: Registr
         includePath: true,
         httpDurationMetricName: 'speckle_server_request_duration',
         metricType: 'summary',
-        autoregister: false
+        autoregister: false,
+        promRegistry: registry
       })
     )
   }
