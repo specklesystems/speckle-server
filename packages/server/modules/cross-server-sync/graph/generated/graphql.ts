@@ -25,7 +25,6 @@ export type ActiveUserMutations = {
   emailMutations: UserEmailMutations;
   /** Mark onboarding as complete */
   finishOnboarding: Scalars['Boolean']['output'];
-  setActiveProject: Scalars['Boolean']['output'];
   setActiveWorkspace: Scalars['Boolean']['output'];
   /** Edit a user's profile */
   update: User;
@@ -37,12 +36,8 @@ export type ActiveUserMutationsFinishOnboardingArgs = {
 };
 
 
-export type ActiveUserMutationsSetActiveProjectArgs = {
-  id?: InputMaybe<Scalars['String']['input']>;
-};
-
-
 export type ActiveUserMutationsSetActiveWorkspaceArgs = {
+  isProjectsActive?: InputMaybe<Scalars['Boolean']['input']>;
   slug?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -3708,7 +3703,7 @@ export type UpgradePlanInput = {
  */
 export type User = {
   __typename?: 'User';
-  activeProject?: Maybe<Project>;
+  /** The last-visited workspace for the given user */
   activeWorkspace?: Maybe<Workspace>;
   /**
    * All the recent activity from this user in chronological order
@@ -3757,6 +3752,8 @@ export type User = {
   id: Scalars['ID']['output'];
   /** Whether post-sign up onboarding has been finished or skipped entirely */
   isOnboardingFinished?: Maybe<Scalars['Boolean']['output']>;
+  /** Returns `true` if last visited project was "legacy" "personal project" outside of a workspace */
+  isProjectsActive?: Maybe<Scalars['Boolean']['output']>;
   name: Scalars['String']['output'];
   notificationPreferences: Scalars['JSONObject']['output'];
   profiles?: Maybe<Scalars['JSONObject']['output']>;

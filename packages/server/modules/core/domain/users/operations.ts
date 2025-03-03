@@ -256,12 +256,3 @@ export type AdminGetInviteList = (args: CollectionQueryArgs) => Promise<{
   totalCount: number
   items: ServerInviteGraphQLReturnType[]
 }>
-
-export type SetUserActiveWorkspace = (args: {
-  userId: string
-  workspaceSlug: string | null
-}) => Promise<void>
-export type SetUserActiveProject = (args: {
-  userId: string
-  projectId: string | null
-}) => Promise<void>

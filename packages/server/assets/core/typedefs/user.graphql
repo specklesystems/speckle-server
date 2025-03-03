@@ -137,8 +137,6 @@ type User {
   """
   isOnboardingFinished: Boolean @isOwner
   createdAt: DateTime @isOwner
-  activeWorkspace: Workspace
-  activeProject: Project
 }
 
 """
@@ -191,9 +189,6 @@ type ActiveUserMutations {
   Edit a user's profile
   """
   update(user: UserUpdateInput!): User!
-
-  setActiveWorkspace(slug: String): Boolean!
-  setActiveProject(id: String): Boolean!
 }
 
 extend type Mutation {
