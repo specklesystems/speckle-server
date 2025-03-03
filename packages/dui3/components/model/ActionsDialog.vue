@@ -36,6 +36,18 @@
             </button>
           </template>
         </SendSettingsDialog>
+        <CommentsDialog
+          v-if="modelComments && modelComments.items.length !== 0"
+          :threads="modelComments.items"
+          :model-card="modelCard"
+        >
+          <template #activator="{ toggle }">
+            <button class="action action-normal" @click="toggle()">
+              <div class="truncate max-[275px]:text-xs">Comments</div>
+              <div><ChatBubbleLeftRightIcon class="w-5 h-5" /></div>
+            </button>
+          </template>
+        </CommentsDialog>
         <ReportBase v-if="modelCard.report" :report="modelCard.report">
           <template #activator="{ toggle }">
             <button class="action action-normal" @click="toggle()">
@@ -65,10 +77,14 @@ import {
   Cog6ToothIcon,
   ArrowTopRightOnSquareIcon,
   ClockIcon,
-  ArchiveBoxXMarkIcon
+  ArchiveBoxXMarkIcon,
+  ChatBubbleLeftRightIcon
 } from '@heroicons/vue/24/outline'
 import type { IModelCard } from '~/lib/models/card'
 import { useMixpanel } from '~/lib/core/composables/mixpanel'
+import { commentsQuery } from '~/lib/graphql/mutationsAndQueries'
+import { useQuery } from '@vue/apollo-composable'
+import { useAccountStore } from '~/store/accounts'
 
 const { trackEvent } = useMixpanel()
 
@@ -80,6 +96,8 @@ const props = defineProps<{
   modelCard: IModelCard
 }>()
 
+const accountStore = useAccountStore()
+
 const hasSettings = computed(() => {
   return !!props.modelCard.settings
 })
@@ -88,6 +106,22 @@ const app = useNuxtApp()
 app.$baseBinding.on('documentChanged', () => {
   openModelCardActionsDialog.value = false
 })
+
+const projectAccount = computed(() =>
+  accountStore.accountWithFallback(props.modelCard.accountId, props.modelCard.serverUrl)
+)
+
+const clientId = projectAccount.value.accountInfo.id
+
+const { result: modelCommentsResult } = useQuery(
+  commentsQuery,
+  () => ({ projectId: props.modelCard.projectId, modelId: props.modelCard.modelId }),
+  () => ({ clientId })
+)
+
+const modelComments = computed(
+  () => modelCommentsResult.value?.project.model.commentThreads
+)
 
 const items = [
   {
