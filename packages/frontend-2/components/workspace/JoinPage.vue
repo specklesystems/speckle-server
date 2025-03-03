@@ -14,7 +14,7 @@
     </template>
 
     <div class="flex flex-col items-center gap-2 w-full max-w-lg mx-auto">
-      <h1 class="text-heading-xl text-forefround mb-2 font-normal mt-4">
+      <h1 class="text-heading-xl text-foreground mb-2 font-normal mt-4">
         Join teammates
       </h1>
       <p class="text-center text-body-sm text-foreground-2 mb-8">
