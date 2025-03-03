@@ -53,7 +53,10 @@ type WorkspacePlanProductsMetadata<PriceData = string> = OverrideProperties<
   }
 >
 
-export type WorkspacePlanProductAndPriceIds = WorkspacePlanProductsMetadata<string>
+export type WorkspacePlanProductAndPriceIds = SetOptional<
+  WorkspacePlanProductsMetadata<string>,
+  typeof WorkspacePlans.Team | typeof WorkspacePlans.Pro
+>
 export type WorkspacePlanProductPrices = SetOptional<
   WorkspacePlanProductsMetadata<{
     amount: number
